@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — Spike A 通过：pi 可嵌入，schema 被引擎强制且带自动重试
+### 2026-08-08 — Spike B 通过：PTY + MCP 注入 + Hook 完成信号打通，并修掉 node-pty 的隐性失效
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Phase 0 决策门 G0 的第二项。PTY Runtime 的可行性取决于四件事：claude 能否在 PTY 里跑、能否注入 MCP、能否拿到回合结束信号、以及**这一切能否在不污染用户全局配置的前提下做到**。最后一条尤其关键——DAWN 要托管用户自己的 agent CLI，弄脏他的配置是不可接受的。
+- **What**:
+  - 新增 `spikes/b-pty-mcp-hook.ts`、`spikes/mcp-probe-server.ts`、`spikes/hook-probe.sh`，`FINDINGS.md` 补齐 Spike B 一节。
+  - **claude 四问全过**：TUI 在 PTY 中完整渲染、键盘输入生效、MCP 工具被调用、Stop hook 触发（TUI 中可见 `running stop hook … 0/4`）、全局 `settings.json` md5 前后一致。**回合结束信号有确定来源，不必只靠超时兜底。**
+  - **隔离机制改用显式标志，不用计划假设的 `CLAUDE_CONFIG_DIR`**。实测发现一个此前未预见的取舍：`CLAUDE_CONFIG_DIR` 隔离得**更彻底**（`.claude.json`/`projects`/`sessions` 全在隔离目录内，全局文件 md5 纹丝不动），**但会一并隔离掉认证**，报 `Not logged in`；且**复制 `.credentials.json` 进去不足以恢复**——认证的门是 `~/.claude.json` 里的 `oauthAccount`，而那个文件恰好也被隔离了。故改用 `--mcp-config` + `--strict-mcp-config` + `--settings`，保住认证，且 `--strict-mcp-config` 给出「只用我注入的 MCP」的正向保证。**已知代价**：会话历史仍会累积进用户全局 `~/.claude.json`。
+  - **修掉一个隐性失效**：首次 `pty.spawn` 报 `posix_spawnp failed`，错误信息毫无线索。根因是 node-pty 的 `spawn-helper` 停在 `0644`——本机 npm 的 allowScripts 策略拦掉了 node-pty 的 post-install，而那个脚本负责加执行位。新增 `scripts/fix-node-pty.mjs` 与 `postinstall` 兜底。
+  - **Step 6 codex 部分完成**：`CODEX_HOME` 隔离成立、播种 `auth.json` 可恢复认证（与 claude 不同，codex 凭证就在 `$CODEX_HOME/auth.json`）、`codex mcp list` 确认注入的 MCP 状态为 `enabled`；但 `codex exec` 超过 5 分钟无输出，MCP 调用与 `notify` 回路**未验证**，原因未查明。
+- **Impact**: PTY Runtime 与阶段①-A 的 Task 1.7（per-session 隔离配置目录）现在有了确切的实现依据——包括一条必须写进设计的取舍：**完整隔离与可用认证目前不可兼得**，Task 1.7 需在两条未验证路径（播种 `oauthAccount` / 用 `ANTHROPIC_API_KEY`）中择一验证。`postinstall` 使新克隆的仓库 `npm install` 后 PTY 直接可用，不会重蹈这次的排查成本。codex 未完成部分不阻塞 G0——Tier-1 provider 已验证。
+- **Verification**: claude 四问由脚本自动判定并打印 md5 对比（`4edd24e1…` 前后一致）。`CLAUDE_CONFIG_DIR` 的两个结论各由一次独立运行确证：隔离成立（全局 md5 不变 + 隔离目录被填充）、认证丢失（`Not logged in`，播种 credentials 后仍然如此）。`fix-node-pty.mjs` 经「故意 `chmod 644` 后重跑」验证能恢复执行位。**测试期间产生的两份凭证副本（`.credentials.json` / `auth.json`）已在验证结束后立即删除，并复查无残留。**
+
+### 2026-08-08 — Spike A 通过：pi 可嵌入，schema 被引擎强制且带自动重试
+
+- **Type**: feat
+- **Commit**: `a664109`
 - **Motivation**: Phase 0 决策门 G0 的第一项。Native Runtime 是走 pi 还是自建 agent loop，取决于三个事实：能否注入自定义工具、schema 是否被强制、能否拿到事件流与用量。计划要求「按实际导出符号写，不凭印象」。
 - **What**:
   - 新增 `spikes/a-pi-embed.ts`：注册一个带严格 TypeBox schema 的 `report` 工具（`verdict` 限 pass/fail/unknown），跑两轮——合法路径一轮，诱导模型填非法值 `"maybe"` 一轮。

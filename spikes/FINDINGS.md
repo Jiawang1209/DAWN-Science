@@ -144,9 +144,107 @@ agent_start
 
 ---
 
-## Spike B — PTY + MCP + Hook 三件套
+## Spike B — PTY + MCP + Hook 三件套 ✅ 通过（claude）／⚠️ 部分验证（codex）
 
-> 待跑。前置条件已满足：`claude` CLI 在 `~/.local/bin/claude`。
+- **日期**：2026-08-08
+- **版本**：`claude` 2.1.225 · `codex-cli` 0.146.0 · `node-pty` 1.1.0 · `@modelcontextprotocol/sdk` 1.30.0
+- **脚本**：`spikes/b-pty-mcp-hook.ts` · `spikes/mcp-probe-server.ts` · `spikes/hook-probe.sh`（`npm run spike:b`）
+
+### 判定表（claude）
+
+| 问题 | 结果 |
+|---|---|
+| Q1 claude 在 PTY 中启动并有输出 | ✅ 是，TUI 完整渲染，键盘输入生效 |
+| Q2 MCP 工具可见且被调用 | ✅ 是 |
+| Q3 Stop hook 触发（回合结束信号） | ✅ 是，TUI 中可见 `running stop hook … 0/4` |
+| Q4 全局 `~/.claude/settings.json` 未被修改 | ✅ 是，md5 前后一致 |
+
+**结论：PTY Runtime 可行。回合结束信号有确定来源，不必只靠超时兜底。**
+
+### 隔离机制：改用显式标志，不用 CLAUDE_CONFIG_DIR
+
+计划原本假设用 `CLAUDE_CONFIG_DIR` 做 per-session 隔离。**实测该假设可行但有代价**：
+
+| 方案 | MCP/hook 隔离 | 会话历史隔离 | 认证 |
+|---|---|---|---|
+| `--mcp-config` + `--strict-mcp-config` + `--settings` | ✅ | ❌ 进用户全局 `~/.claude.json` | ✅ 保留 |
+| `CLAUDE_CONFIG_DIR=<dir>` | ✅ | ✅ 彻底 | ❌ **丢失** |
+
+- `CLAUDE_CONFIG_DIR` **确实被尊重**：指向新目录后，`.claude.json` / `projects/` / `sessions/` / `backups/` 全部在该目录内生成，`~/.claude.json` 的 md5 前后完全一致。
+- 但该目录下的 claude **报 `Not logged in · Please run /login`**。
+- **把 `~/.claude/.credentials.json` 复制进隔离目录不足以恢复认证**（已实测）。认证的门是 `~/.claude.json` 里的 `oauthAccount` 键，而该文件恰好也被 `CLAUDE_CONFIG_DIR` 隔离掉了。
+
+**故 spike 采用显式标志方案**，它保住认证，且 `--strict-mcp-config` 给出「**只**使用我们注入的 MCP，忽略其它一切 MCP 配置」的正向保证——比环境变量的隐式行为更可控。
+
+> **给 Task 1.7 的待决项**：若要同时拿到「完整隔离」与「可用认证」，尚需验证两条路径之一：
+> ① 向隔离的 `.claude.json` 播种 `oauthAccount`；② 用 `ANTHROPIC_API_KEY` 环境变量（`--bare` 的帮助文本说明该模式下认证严格取自 `ANTHROPIC_API_KEY` 或 `apiKeyHelper`）。
+> 二者均**未验证**。在验证前，`--settings` 方案的已知代价是：**每个 DAWN 会话都会在用户全局 `~/.claude.json` 里累积历史记录**。
+
+### 生效的配置结构（claude）
+
+MCP —— 传给 `--mcp-config <file>`：
+
+```json
+{ "mcpServers": { "dawn-probe": {
+    "command": "<abs>/node_modules/.bin/tsx",
+    "args": ["<abs>/spikes/mcp-probe-server.ts"],
+    "env": { "DAWN_PROBE_LOG": "<abs>/probe.jsonl" } } } }
+```
+
+Hook —— 传给 `--settings <file>`：
+
+```json
+{ "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "<abs>/spikes/hook-probe.sh" } ] } ] } }
+```
+
+- 两者是**不同的标志、不同的文件**，`settings.json` 里放 `mcpServers` 无效。
+- `--settings` 的语义是 "load **additional** settings"——**与用户全局设置合并，不是替换**。因此用户全局的 hook 仍会触发。若 DAWN 需要「只跑我的 hook」，`--settings` 给不了这个保证（对比 MCP 有 `--strict-mcp-config`）。
+- MCP 工具的权限名形如 `mcp__<server>__<tool>`，本例为 `mcp__dawn-probe__dawn_probe`，经 `--allowedTools` 免去交互授权。
+- hook 脚本从 claude 进程继承环境变量（`DAWN_PROBE_LOG` 即由此传入）。
+
+### ⚠️ node-pty 陷阱：spawn-helper 的执行位
+
+**首次运行 `pty.spawn('claude', ...)` 直接失败，报 `Error: posix_spawnp failed.`**，错误信息不含任何线索。
+
+根因：node-pty 的 Unix 实现依赖辅助可执行文件 `node_modules/node-pty/prebuilds/<platform>/spawn-helper`，其执行位由 node-pty 自己的 `post-install` 脚本设置。本机 npm 配置了 allowScripts 策略，**该脚本被拦截**（`npm install` 时有 warning，但 `require('node-pty')` 仍成功，所以此前的加载测试没能暴露问题），spawn-helper 停在 `0644`。
+
+**已加入兜底**：`scripts/fix-node-pty.mjs` + `package.json` 的 `postinstall`。更干净的替代是 `npm install-scripts approve node-pty`，两者不冲突。
+
+> **教训**：`require()` 成功不等于原生模块可用。带辅助可执行文件的原生依赖，验收判据必须是「真的 spawn 一次」。
+
+### Step 6 · codex 复验（部分完成）
+
+| 项 | 结果 |
+|---|---|
+| `CODEX_HOME` 隔离 | ✅ 状态文件（`state_*.sqlite` 等）全部生成在隔离目录内 |
+| 播种 `auth.json` 恢复认证 | ✅ 被接受——与 claude 不同，codex 的凭证就在 `$CODEX_HOME/auth.json` |
+| `config.toml` 注入 MCP | ✅ `codex mcp list` 显示 `dawn-probe` 状态 `enabled` |
+| 全局 `~/.codex/config.toml` 未被修改 | ✅ |
+| **MCP 工具实际被调用 + `notify` 触发** | ❌ **未验证** |
+
+`codex exec` 在隔离配置下运行超过 5 分钟无输出、探针日志为空，被超时终止。原因未查明（可能是审批等待或 MCP 启动阻塞）。
+
+**这不阻塞 Phase 0**：Tier-1 provider（claude）四问全过，PTY Runtime 的可行性已经确立。codex 的完整回路留作后续排查，届时应先用 `codex exec` 加详细日志定位卡在哪一步。
+
+**codex 的配置结构（已验证可被解析）**：
+
+```toml
+notify = ["<abs>/spikes/hook-probe.sh"]
+
+[mcp_servers.dawn-probe]
+command = "<abs>/node_modules/.bin/tsx"
+args = ["<abs>/spikes/mcp-probe-server.ts"]
+env = { DAWN_PROBE_LOG = "<abs>/probe.jsonl" }
+```
+
+注意：`notify` 是**单值字段**，注入即覆盖用户原有的 notify 程序——本机用户的 `notify` 原本指向 Codex Computer Use。这是必须走 `CODEX_HOME` 隔离而非 `-c` 覆盖的理由。
+
+### 遗留 / 未验证
+
+- codex 的 MCP 调用与 notify 回路（见上）。
+- 隔离 + 认证两全的方案（`oauthAccount` 播种 或 `ANTHROPIC_API_KEY`）。
+- `--settings` 无法排除用户全局 hook，尚无对应的 `--strict-settings`。
+- PTY 进程组终止（规格 7.18）未在本 spike 覆盖，属 Task 1.9 范围。
 
 ## Spike C — Electron 终端可用性
 

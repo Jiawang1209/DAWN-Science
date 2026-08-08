@@ -9,6 +9,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "postinstall": "node scripts/fix-node-pty.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

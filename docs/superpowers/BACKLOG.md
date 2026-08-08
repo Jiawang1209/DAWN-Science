@@ -77,6 +77,14 @@
 - **服务于**：不变式 3（没有不可见的行动）的安全侧推论——PTY Runtime 以 `env: { ...process.env, ... }` 派生第三方 agent CLI，等于把**全部**模型密钥交给每一个被托管的 agent 进程。一个被诱导的 agent 可以直接 `echo $ANTHROPIC_API_KEY`。规格 7.24 已为**验证命令**做了环境净化，但 agent 进程本身尚未净化
 - **预估归属**：①-B（Electron 外壳到位后可用 `safeStorage` / macOS Keychain）。在此之前 `.env` 是可接受的过渡方案
 - **记录日期**：2026-08-08
+- **2026-08-08 更新**：①-B 已实现 `electron/credentials.ts`（safeStorage），但**返工 R3 将其改造为 pi `AuthStorageBackend` 的一个实现**——pi 的 `AuthStorage` 有 418 行的文件锁 / revision 校验 / stale 检测，我们自写的 130 行里没有并发处理。**加密仍由 safeStorage 提供，并发正确性白拿 pi 的。**
+  **本条未解决的那一半仍然成立**：PTY Runtime 派生第三方 CLI 时的**环境净化**尚未做——那与凭证存在哪无关，是另一个问题
+
+### PTY 派生进程的环境净化
+- **来源**：上一条拆出的独立问题。凭证从 `.env` 挪进 keychain**并不解决**它
+- **服务于**：不变式 3。`PtyRuntime` 以 `env: { ...process.env, ... }` 起 claude / codex，等于把宿主环境里的全部密钥交给每一个被托管的 agent 进程
+- **预估归属**：③（capability 授权与隔离一并做）
+- **记录日期**：2026-08-08
 
 ---
 

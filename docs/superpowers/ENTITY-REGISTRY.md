@@ -35,7 +35,11 @@
 | 5 | 启动对账 `reconcileOnStartup()` | 把上次遗留的 `starting`/`alive` 显式转 `exited` | SQLite | 📐 **wisp-science** —— 启动时把 queued/running 子任务显式转为 failed，**不静默重放** |
 | 6 | `runtime/types.ts` | `AgentRuntime` 接口：三种实现共用 | TS interface | 📐 **wisp-science** —— 其 Native / ACP 双 executor 抽象；本项目改为 Native / PTY / ACP 三种 |
 | 7 | `runtime/fake.ts` | 测试替身，业务逻辑 TDD 用 | `vitest` | ✍️ 自研（TDD 需要） |
-| 8 | `runtime/native.ts` | 用 agent loop 驱动任意 API 端点（DeepSeek 等） | 🔧 `pi-agent-core` · `pi-ai` | 🔧 **pi**（直接 import）+ 🔧 **Buzz** `buzz-agent`（会话与上下文管理的完整参考实现） |
+| 8 | `runtime/native.ts` | 用 agent loop 驱动任意 API 端点（DeepSeek 等） | 🔧 **`pi-coding-agent` 的 `createAgentSession()`（第三层）**——不是只用第二层的 `Agent` 类 | 🔧 **pi**（直接 import）+ 🔧 **Buzz** `buzz-agent`（会话与上下文管理的完整参考实现） |
+
+> **#8 的技术栈栏 2026-08-08 改写。** 原文写的是「`pi-agent-core` · `pi-ai`」——
+> **那不构成决策**，`new Agent({tools: []})` 也满足它，而实现正是落成了这个，agent 一个工具都没有。
+> 本表的「技术栈」栏今后必须具体到**导出符号**，不能只写包名。见规格 §4 的分层纪律。
 | 9 | `runtime/pty.ts` | 托管真实 CLI agent，可接管 | `node-pty` | 📐 **hive**（node-pty 选型与终端托管）+ 🔧 **Buzz**（终止序列，见 #10） |
 | 10 | 进程组终止 | `SIGTERM` → 200ms → `SIGKILL`，**发给整组**，防孤儿 | `process.kill(-pid)` | 🔧 **Buzz** `buzz-dev-mcp/src/shell.rs` 的 `KillGroup`（`process_group(0)` / `killpg` / Drop 兜底 / `disarm`） |
 | 11 | `runtime/session-dir.ts` | per-session 隔离配置目录，绝不碰用户全局配置 | Node `fs` | 📐 **ccb** —— `claude-session-isolation-contract.md` / `codex-session-isolation-contract.md` |

@@ -44,14 +44,26 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 42,
-      "lastAccessed": 1786186316388,
+      "accessCount": 43,
+      "lastAccessed": 1786193953060,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
+      "accessCount": 12,
+      "lastAccessed": 1786193847691,
       "type": "file"
     },
     {
       "path": "src/session/manager.ts",
       "accessCount": 9,
       "lastAccessed": 1786182257463,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md",
+      "accessCount": 7,
+      "lastAccessed": 1786193734835,
       "type": "file"
     },
     {
@@ -73,12 +85,6 @@
       "type": "file"
     },
     {
-      "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
-      "accessCount": 5,
-      "lastAccessed": 1786165174586,
-      "type": "file"
-    },
-    {
       "path": "spikes/FINDINGS.md",
       "accessCount": 4,
       "lastAccessed": 1786159942490,
@@ -88,12 +94,6 @@
       "path": "package.json",
       "accessCount": 4,
       "lastAccessed": 1786163262944,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md",
-      "accessCount": 4,
-      "lastAccessed": 1786166044586,
       "type": "file"
     },
     {
@@ -145,6 +145,18 @@
       "type": "file"
     },
     {
+      "path": "docs/superpowers/plans/2026-08-08-phase1b-workbench.md",
+      "accessCount": 3,
+      "lastAccessed": 1786193861268,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/BACKLOG.md",
+      "accessCount": 3,
+      "lastAccessed": 1786193921265,
+      "type": "file"
+    },
+    {
       "path": "spikes/d-jupyter-kernel.ts",
       "accessCount": 2,
       "lastAccessed": 1786159067103,
@@ -163,21 +175,9 @@
       "type": "file"
     },
     {
-      "path": "docs/superpowers/BACKLOG.md",
-      "accessCount": 2,
-      "lastAccessed": 1786165188402,
-      "type": "file"
-    },
-    {
       "path": "src/store/schema.ts",
       "accessCount": 2,
       "lastAccessed": 1786166818779,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-08-08-phase1b-workbench.md",
-      "accessCount": 2,
-      "lastAccessed": 1786181974318,
       "type": "file"
     },
     {
@@ -190,6 +190,12 @@
       "path": "src/protocol/index.ts",
       "accessCount": 2,
       "lastAccessed": 1786182153511,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/ENTITY-REGISTRY.md",
+      "accessCount": 2,
+      "lastAccessed": 1786193878649,
       "type": "file"
     },
     {
@@ -328,12 +334,6 @@
       "path": "tests/integration/concurrent-sessions.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786164085298,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/ENTITY-REGISTRY.md",
-      "accessCount": 1,
-      "lastAccessed": 1786164993915,
       "type": "file"
     },
     {

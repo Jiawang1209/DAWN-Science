@@ -107,12 +107,28 @@
 | GPU shader、终端主题系统、SSH 端口转发、内嵌浏览器、图形协议 | wispterm | 与核心命题正交 |
 | Marketplace、远程访问中继 | hive | 与核心命题正交 |
 | 消息平台网关（Telegram / Slack / 飞书 等） | Hermes | 需求中不存在 |
-| 自建 agent loop | — | 使用 pi-agent-core |
-| 自建 LLM provider 抽象 | — | 使用 pi-ai |
+| 自建 agent loop、工具、harness、压缩、skills | — | **坐 pi 第三层 `pi-coding-agent` 的 `createAgentSession()`**，不是只用第二层的 `Agent` 类 |
+| 自建 LLM provider 抽象、模型目录、凭证并发处理 | — | **使用 pi-ai 的 provider 注册表与 `AuthStorage`**（凭证经自定义 `AuthStorageBackend` 接 OS 加密） |
+| 自建会话协议的形状 | — | **借 `pi-protocol` 的 `snapshot + revision` 重连模型**（不引其 UDS 传输层） |
 | 自建终端模拟器 | — | 使用 xterm.js + node-pty |
 | Jupyter Server / JupyterLab / notebook 运行时 | — | 只使用 Jupyter **消息协议**，不引入其服务端 |
 
 **范围纪律**：任何新增功能必须先回答"它服务于第 2 节的命题吗"。回答不是"是"的，进非目标清单。
+
+> **分层纪律（2026-08-08 新增，由一次真实失败确立）**
+>
+> 本表前几行原先写的是「使用 pi-agent-core」「使用 pi-ai」——**那不构成决策**。
+> pi 是分层库，`new Agent({tools: []})` 与 `createAgentSession()` 都满足「使用 pi-agent-core」，
+> 两者差着一整套 harness 和全部工具。实现因此落成了前者，agent 一个工具都没有。
+>
+> 反观本表 Jupyter 那一行——「只使用 Jupyter **消息协议**，不引入其服务端」——
+> **写明了层与边界，是唯一合格的写法。同一张表里标准出现过，只是没用在 pi 上。**
+>
+> **今后任何第三方依赖进本表，必须写清三件事**：
+> ① **坐在哪一层**（具体到导出符号，不是包名）② **放弃了什么** ③ **我们的不变式挂在哪个钩子上**。
+> **该决策对 Spike 有约束力**：spike 必须验证「所选那一层的接口」，而不是「这个包能跑起来」。
+>
+> 逐能力的完整决策见 `plans/../specs/2026-08-08-dependency-layering-decision.md`。
 
 ### 4.1 主动否决的常见做法
 
@@ -1080,7 +1096,7 @@ graph TB
 |---|---|---|
 | Provider Registry | 两段式 YAML：`endpoints`（地址+凭证）与 `agents`（loop 宿主 + 端点） | YAML + zod 校验 |
 | 会话生命周期 | 创建 / 恢复 / 崩溃重启；**状态先落库再改内存** | SQLite |
-| Native Runtime | 封装 `createAgentSession()`，注入工具与强制 schema | pi-agent-core |
+| Native Runtime | 封装 `createAgentSession()`，**内置工具（bash/read/write/edit/grep/find/ls）开箱启用**；不变式挂在扩展的 `tool_call`（`{block, reason}` 即授权门）与 `tool_result`（`usage` 即成本与溯源记录点） | **pi-coding-agent（第三层）** |
 | External PTY Runtime | 托管 CLI agent，生成 per-session 隔离配置目录 | node-pty |
 | ACP Runtime（阶段 ③ 后期） | 驱动原生 ACP agent；补上无可靠 hook 的 provider 的完成信号 | `@zed-industries/agent-client-protocol`（JSON-RPC / stdio） |
 | 输入租约 | 同一时刻只有一方能写入 PTY；**用户永远可抢占引擎** | 自建 |

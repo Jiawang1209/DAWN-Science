@@ -3,7 +3,19 @@
 - **日期**：2026-08-08
 - **前置**：阶段 ①-A 完成，G1 通过（125 测试）
 - **产出**：一个能日常替代裸终端的桌面 App
-- **状态**：Part 0–3 与 Part 5（MVP 闭环）已完成并提交；Part 4 验收待作者本人
+- **状态**：Part 0–3 与 Part 5（MVP 闭环）已完成并提交；**Part 4 验收暂缓，先做返工 R**
+
+> **2026-08-08 部分作废。** 依赖分层决策（`../specs/2026-08-08-dependency-layering-decision.md`）
+> 定案坐 pi 第三层后，本计划有三处产出被取代：
+>
+> | 本计划的产出 | 处置 |
+> |---|---|
+> | 协议的**事件通道**（`seq` + 环形缓冲 + `dropped` + `truncated`，Task 2.16–2.18） | **改为 `snapshot + revision`**。原设计是为一个本不该存在的问题设计的——transcript 持久化后不需要为内存溢出道歉 |
+> | 凭证库 `electron/credentials.ts`（Task 由作者反馈新增） | **改为 pi `AuthStorageBackend` 的一个实现**，保留 safeStorage 加密，丢掉自写的并发处理 |
+> | 配置的 `endpoints` 两段式（承自 ①-A） | **改为 pi 的 model registry** |
+>
+> **未受影响**：协议实体、Run 存储、Project 管理、git 产出事实、租约、PTY、Electron 壳、UI 视图。
+> §0 与 Task 2.23 的方法论结论（判据来源、接线要有 App 级测试）**继续有效**。
 - **估算**：3–4 周
 - **决策门**：G2
 

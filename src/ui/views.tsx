@@ -15,6 +15,8 @@ import type { TranscriptItem } from "../protocol/index.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
+import { AgentMarkdown } from "./markdown.js"
+import { StickToBottom } from "use-stick-to-bottom"
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
@@ -169,12 +171,6 @@ export function ConversationView({
    */
   const drafts = useStore($drafts)
   const draft = drafts[session.sessionId] ?? ""
-  const bottom = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    // 可选调用：jsdom 没有实现 scrollIntoView。滚动失败不该让整个视图崩掉
-    bottom.current?.scrollIntoView?.()
-  }, [items.length])
 
   /** agent 还在说话（最后一条 turn 未收尾）时才给停止按钮 */
   const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
@@ -192,15 +188,25 @@ export function ConversationView({
         ) : null}
       </header>
 
-      <div className="turns">
-        {terminalTrimmed ? <p className="hint">终端只保留最近的输出，更早的已滚出缓冲</p> : null}
-        {items.length === 0 ? (
-          <p className="empty">还没有对话</p>
-        ) : (
-          items.map((item) => <TranscriptRow key={item.id} item={item} agentId={session.agentId} />)
-        )}
-        <div ref={bottom} />
-      </div>
+      {/**
+       * 贴底滚动交给 `use-stick-to-bottom`。
+       *
+       * 此前是手写的 `scrollIntoView()`，它有个硬毛病：**只要有新内容就往下拽**——
+       * 用户往上翻去看前面说了什么，下一个 token 到达时又被弹回底部。
+       * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
+       */}
+      <StickToBottom className="turns" resize="smooth" initial="smooth">
+        <StickToBottom.Content>
+          {terminalTrimmed ? <p className="hint">终端只保留最近的输出，更早的已滚出缓冲</p> : null}
+          {items.length === 0 ? (
+            <p className="empty">还没有对话</p>
+          ) : (
+            items.map((item) => (
+              <TranscriptRow key={item.id} item={item} agentId={session.agentId} />
+            ))
+          )}
+        </StickToBottom.Content>
+      </StickToBottom>
 
       <form
         className="composer"
@@ -248,7 +254,17 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
   return (
     <div className={`turn ${item.who}`}>
       <span className="who">{item.who === "user" ? "你" : agentId}</span>
-      <pre className="text">{item.text}</pre>
+      {/**
+       * **只有 agent 的发言走 markdown。**
+       *
+       * 把用户输入也当 markdown 渲染，等于替他改写他说的话——
+       * 他写的 `**这里**` 就是想让人看见那四个星号（多半正是在问它为什么报错）。
+       */}
+      {item.who === "user" ? (
+        <pre className="text">{item.text}</pre>
+      ) : (
+        <AgentMarkdown text={item.text} streaming={!item.final} />
+      )}
       {item.final ? null : <span className="hint">…</span>}
     </div>
   )

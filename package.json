@@ -39,8 +39,11 @@
     "nanostores": "^1.4.2",
     "node-pty": "^1.1.0",
     "rxjs": "^7.8.2",
+    "shiki": "^4.4.2",
     "simple-git": "^3.36.0",
     "spawnteract": "^5.0.1",
+    "streamdown": "^2.5.0",
+    "use-stick-to-bottom": "^1.1.6",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"
   },

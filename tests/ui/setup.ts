@@ -16,5 +16,24 @@ import { cleanup } from "@testing-library/react"
 import { afterEach, beforeEach } from "vitest"
 import { resetAllState } from "../../src/ui/state/index.js"
 
+/**
+ * jsdom 没有实现 `ResizeObserver`，但真实 Chromium 有。
+ *
+ * `use-stick-to-bottom`（贴底滚动）与终端的重算宽度都依赖它。
+ * **这是测试环境的缺口，不是实现的缺陷**——所以补一个不做事的替身，
+ * 而不是为了迁就 jsdom 去改生产代码。
+ *
+ * **代价要说清楚**：贴底滚动的真实行为（用户上滚后不被拽回）
+ * 在 jsdom 里验不了，只能靠 Task 3.10 的 Playwright 在真浏览器里验。
+ * 这里的替身只保证「渲染不崩」。
+ */
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  } as unknown as typeof ResizeObserver
+}
+
 beforeEach(resetAllState)
 afterEach(cleanup)

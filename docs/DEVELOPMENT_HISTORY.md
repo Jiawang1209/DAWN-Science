@@ -43,10 +43,27 @@
 
 ## 变更日志
 
+### 2026-08-09 — agent 发言改走流式 markdown；贴底滚动不再拽回用户
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: Task 3.9 · S6。此前 agent 的回复渲染成 `<pre>` 纯文本——**列表是星号、标题是井号、代码块是三个反引号**。对一个以「读代码、给方案」为主要输出的工具来说，等于把它最主要的形态废掉了。
+- **What**: 新增 `src/ui/markdown.tsx`（`AgentMarkdown`），装 `streamdown` + `shiki` + `use-stick-to-bottom`（计划 §2 已声明分层）。**未引入 `@assistant-ui/react`**——那是「坐在哪一层」的决策，且我们的 transcript 要显示 Run 与来源，与通用聊天不同。
+- **实测发现：streamdown 是 Tailwind 优先的**（据此修正了接法）:
+  1. 它默认把 `**粗体**` 渲染成 `<span class="font-semibold" data-streamdown="strong">`，**不是 `<strong>`**。这是**可访问性退化**——读屏软件把 `<strong>` 念成强调，一个带 class 的 `span` 只是普通文本。**语义标签不是装饰。**
+  2. 它发的是 **Tailwind 类名**，而本项目**没有 Tailwind**（那也是个「坐在哪一层」的决策，不在计划里）。那些类名在我们这儿什么都不做。
+  → 用 `components` 把 `strong`/`em`/`a` 换回真 HTML 标签；样式由 `styles.css` 的 `.md` 一段用 `--dawn-*` 令牌自己给；**代码块留给 streamdown**（那里有 shiki 高亮，是选它的主要理由）。外链加 `target="_blank" rel="noreferrer noopener"`——桌面应用里点外链不该把 Electron 窗口导航走。
+- **用户发言不走 markdown**: 把人打的字当 markdown 渲染，等于**替他改写他说的话**——他写的 `**这里**` 多半正是在问它为什么报错。
+- **贴底滚动换掉手写的 `scrollIntoView()`**: 旧写法只要有新内容就往下拽——用户往上翻看前文，下一个 token 到达就被弹回底部。`use-stick-to-bottom` 的行为是**贴底时才跟随，一旦用户主动上滚就撒手**。
+- **测试环境补 `ResizeObserver` 替身**: jsdom 没实现它，真实 Chromium 有。**这是测试环境的缺口，不是实现缺陷**——所以补替身，而不是为迁就 jsdom 改生产代码。**代价说清楚**：贴底滚动的真实行为在 jsdom 里验不了，只能靠 3.10 的 Playwright；这里的替身只保证「渲染不崩」。
+- **Impact**: 主包 290 kB → **775 kB**（gzip 89 → 237 kB），shiki 的高亮语法是主要来源。桌面应用本地加载，可接受，**但记在这里**——将来若要瘦身，按需加载语言是第一刀。
+- **Verification**: 11 条测试先 FAIL（4/11）再转绿；524 tests passed（42 文件，+11）；typecheck 与 build 干净；**真 Electron 启动零错误**（shiki 带 wasm，启动崩不崩是真风险）。
+  **诚实说明**：markdown 在真引擎里长什么样、贴底滚动是否真的撒手，**本 Task 没有看过**——那要等 3.10。
+
 ### 2026-08-09 — 切会话是换个家不是重启：草稿不再渗进另一个会话
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `b3fe1f1`
 - **Motivation**: Task 3.8 · S5。Hermes `AGENTS.md`：*"Changing profile, connection, or mode is a workspace switch, not a cold start. The shell and whatever the user was doing stay put; only the gateway-bound view is cleared and repopulated, and **the previous context must not leak into the next one**."*
 - **写测试时撞出的真缺陷**: `ConversationView` 的输入框草稿是组件本地 `useState`。切会话时这个组件**不卸载**（在树里位置没变、实例复用），于是**在 A 里打了一半的话，切到 B 之后还在输入框里**。测试直接抓到：`expected '这句话是给 A 的' to be ''`。
 - **根因是作用域搞错了**: 草稿属于「**这个会话**」，却被存成了「这个组件」。Hermes 把这条单独写明：*"Persisted state must declare its scope in its own key … **Getting the scope wrong is how one profile's setting bleeds into another**."*

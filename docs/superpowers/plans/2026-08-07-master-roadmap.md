@@ -76,7 +76,7 @@ spec 第 5 节的五条不变式高于任何阶段目标。**任何阶段的实�
 | # | 计划文档 | 范围 | 何时编写 | 前置 |
 |---|---|---|---|---|
 | 1 | `2026-08-06-phase0-and-session-core.md` ✅ **已完成** | Phase 0 四个 spike + 阶段①-A 会话核心 | 已写 | — |
-| 2 | `stage1b-desktop-shell.md` | Electron 外壳 · **Project 管理（打开文件夹为项目）** · **Entry 序列与三视图（对话/笔记本/并排）** · **cell 编辑器** · **模型切换器** · **Skills 市场与用户自建 Skill** · 终端组件 | ①-A 验收后 | 计划 1 |
+| 2 | `2026-08-08-phase1b-workbench.md` ✅ **已完成** | **Workbench Protocol（协议优先）** · Run 序列存储 · **Project 管理** · **项目面板（状态/产出/成本/历史）** · Electron 外壳与 IPC · 对话视图 · 终端下钻 | 已写 | 计划 1 |
 | 3 | `stage2a-jupyter-kernels.md` | Jupyter 协议客户端、Ark(R)、ipykernel、中断、富输出、REPL UI | ①-B 验收后 | 计划 2 |
 | 4 | `stage2b-exec-environments.md` | 本地/WSL/SSH/GPU 环境探测、Run 管理、凭证、Skills、产物存储 | ②-A 验收后 | 计划 3 |
 | 5 | `stage3a-event-log-and-members.md` | 统一事件流、成员注册表、`mode` 派生、协作空间、可见范围过滤 | ②-B 验收后 | 计划 4 + **契约冻结**（§4.2） |
@@ -336,7 +336,8 @@ graph LR
 | Phase 0 + ①-A 详细计划 | ✅ 完成（2,556 行，16 任务 92 步骤） |
 | **Phase 0（四个 spike）** | ✅ **完成，2026-08-08。四项全过，G0 通过** |
 | **阶段 ①-A 代码** | ✅ **完成，2026-08-08。125 测试通过，G1 通过** |
-| 阶段 ①-B 详细计划 | ⬜ 未开始（下一步） |
+| **阶段 ①-B 详细计划** | ✅ **完成，2026-08-08**（`2026-08-08-phase1b-workbench.md`，15 个 Task） |
+| 阶段 ①-B 代码 | ⬜ 未开始（下一步：Task 2.1 协议实体 schema） |
 
 **G0 判定（2026-08-08）**：四个 spike 全部通过，结论见 `spikes/FINDINGS.md` 顶部汇总表。
 

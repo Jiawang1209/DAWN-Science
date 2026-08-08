@@ -47,14 +47,21 @@
 
 ## 阶段 ①-B · 桌面壳（15 个实体）
 
-| # | 实体 | 职责 | 技术栈 | 构思来源 |
-|---|---|---|---|---|
-| 15 | Electron 主进程 | 承载会话核心；窗口与系统集成 | `Electron` | 🎨 **Claude app / VS Code** 形态 |
-| 16 | IPC 桥 | 渲染进程 ↔ 主进程；`contextBridge` 白名单 | Electron IPC | 📐 **AgentDeck** `ui.py` —— GUI 只经固定的少数只读端点取数，可写操作走显式注册的控件表，**不靠开洞** |
-| 17 | **Workbench Protocol** | 版本化契约：UI 只依赖它，不依赖 Electron / node-pty / pi 内部 | TS types + `zod` | 📐 **Rho** —— *"The UI must depend on a versioned Rho Workbench Protocol, not directly on Tauri commands, Ark, Jupyter messages, or aisdk internals"* |
-| 18 | 终端组件 | 渲染 PTY 输出，处理输入与 resize | `xterm.js` | 📐 **wispterm**（终端交互）+ 📐 **Rho**（**xterm.js 只用于真 shell，绝不用于 REPL**） |
-| 19 | 终端墙布局 | 多会话并排：网格 / 标签 / 可拖拽分屏 | React | 🎨 **hive** team 面板 + 🎨 **wispterm** 分屏与标签 |
-| 20 | 会话侧栏 | 列表、创建、切换、状态指示 | React | 🎨 **Claude app** · 🎨 **hive** |
+> **2026-08-08 定位修正（见规格 7.33 与阶段 ① 节的修正框）**：①-B 的主体**不是**多会话终端墙，而是**项目面板 + 单会话三视图**。
+> 实现顺序相应改为 **#17 协议优先**——UI 依赖版本化协议，先画 UI 会让协议被 UI 的偶然形状绑架。
+> 下表已按修正后的顺序重排，原编号保留以便跨文档引用。
+
+| 顺序 | # | 实体 | 职责 | 技术栈 | 构思来源 |
+|---|---|---|---|---|---|
+| **1** | 17 | **Workbench Protocol** | 版本化契约：UI 只依赖它，不依赖 Electron / node-pty / pi 内部。实体模型见规格 7.33 | TS types + `zod` | 📐 **Rho** `crates/rho-protocol/src/workbench.rs`（493 行，已实读）——*"The UI must depend on a versioned Rho Workbench Protocol, not directly on Tauri commands, Ark, Jupyter messages, or aisdk internals"* |
+| **2** | 21c | **Entry / Run 序列存储** | append-only 有序；**Run 是统一抽象**（内核执行与 agent 回合共用），`origin` 区分人/agent，`parent_run_id` 表达重跑 | SQLite | ✍️ 自研（规格 8.2/8.6）；事件流模型源自 🔧 **Buzz**；`origin` / `parent_run_id` / `provenance_complete` 采自 📐 **Rho** |
+| **3** | 21b | **Project 管理** | 打开文件夹为新项目、绑定 workspace、项目切换、项目级配置。**项目是用户切换的单位** | React + 原生目录对话框 | 📐 **Rho** `ProjectSummary` / `WorkspaceStatus`（实质模型）+ 🎨 Claude app / Codex app（信息架构外壳）。**wisp-science 无此概念，已实测确认，不作参考** |
+| **4** | — | **项目面板** | 状态 · 产出 · 成本 · 历史四栏；产出从 git 事实算，不听 agent 声明（不变式 5）；溯源链带 `provenance_complete` | React | 📐 **Rho** `ProvenanceLink` / `EnvironmentEvidence`；**成本与跨工具为自研**（Rho 不跑模型、只有 R） |
+| **5** | 15 | Electron 主进程 | 承载会话核心；窗口与系统集成 | `Electron` | 🎨 **Claude app / VS Code** 形态 |
+| **6** | 16 | IPC 桥 | 渲染进程 ↔ 主进程；`contextBridge` 白名单 | Electron IPC | 📐 **AgentDeck** `ui.py` —— GUI 只经固定的少数只读端点取数，可写操作走显式注册的控件表，**不靠开洞** |
+| **7** | 18 | 终端组件 | 渲染 PTY 输出，处理输入与 resize。**定位为下钻视图，非主界面** | `xterm.js` | 📐 **wispterm**（终端交互）+ 📐 **Rho**（**xterm.js 只用于真 shell，绝不用于 REPL**） |
+| **8** | 20 | 会话侧栏 | 列表、创建、切换、状态指示 | React | 🎨 **Claude app** · 🎨 **hive** |
+| ~~—~~ | ~~19~~ | ~~终端墙布局~~ | **推迟到阶段 ③ 重新评估。** 理由：`claude --bg` + `claude agents` + `--tmux` 已解决窗口管理，tmux/zellij 亦然；做成主界面即「更差的 tmux」，G2 判据（是否真的替代裸终端）会不通过。③ 届时需要的多半是**编排进度视图**而非四个终端 | — | 🎨 hive / wispterm（保留待评估） |
 | 21 | 接管控件 | 显示当前写权持有者；**夺权前先展示预览** | React | 📐 **AgentDeck** `TakeoverPreview` |
 | 21b | **Project 管理** | 打开文件夹为新项目、绑定 workspace、项目切换、项目级配置 | React + 原生目录对话框 | 🎨 **Claude app / Codex app / Hermes** 的信息架构 |
 | 21c | **Entry 序列存储** | append-only 有序 Entry；`rerunOf` / `supersedes` 表达重跑与编辑 | SQLite | ✍️ **自研**（规格 8.2/8.6）；事件流模型源自 🔧 **Buzz** |

@@ -758,6 +758,49 @@ pi-crew 用 JSONL + 跨进程文件锁。为此他们付出的代价：
 
 > **这是本项目相对 pi-crew 的一个明确技术优势**，且不是靠更聪明，是靠没有它的约束。
 
+### 7.33 Rho 的 Workbench Protocol：①-B 的骨架（2026-08-08 实读）
+
+读 `Rho-main/crates/rho-protocol/src/workbench.rs`（493 行）后确认：**我们为 ①-B 推演的项目面板，Rho 已经做成了一份成熟协议**。其实体模型：
+
+```rust
+ProjectSummary      { project_id, total_run_count, total_artifact_count,
+                      total_plot_count, unresolved_problem_count }
+WorkspaceStatus     { running, execution_seq, state_revision, project_revision, started_at }
+RunSummary          { run_id, parent_run_id, origin, status, started_at, finished_at,
+                      request_type, source_path, has_error, artifact_count }
+RunDetail           { code_preview, code_truncated, stdout_preview, stdout_truncated,
+                      environment_snapshot_id, artifact_ids, ... }
+ProvenanceLink      { resource_id, producing_run_id, environment_snapshot_id,
+                      source_path, provenance_complete, incomplete_reason }
+EnvironmentEvidence { evidence_id, evidence_kind, captured_at }
+ApprovalSummary     { turn_id, tool, policy, status, decision, reason }
+WorkbenchCapabilities { workbench_protocol_version, operations, entity_types,
+                        max_page_size, read_only }
+```
+
+**四条采纳**：
+
+**① `RunSummary.origin: "user" | "agent" | "system"`。** 一次运行只用一个字段区分人做的还是 agent 做的——正是 7.22「人与 agent 同构，只差 `author` 字段」，Rho 已在生产代码里这么做。
+
+**② `parent_run_id` 表达重试与续跑链**，即 8.6 的 `rerunOf`。
+
+**③ `ProvenanceLink.provenance_complete: bool` + `incomplete_reason`。** 这条**解决了 PTY agent 的可见性不对称难题**——
+
+| Runtime | 我们能看到什么 |
+|---|---|
+| native（pi） | 完整：每次工具调用、参数、token、成本 |
+| PTY（claude / codex） | 只有回合边界（Stop hook）+ **我方注入的** MCP 工具调用 |
+
+claude 内置的 Read / Edit / Bash 不经过我方注入的 MCP，故不可见。原本的纠结是「UI 上要不要标注」。Rho 的答案更干脆：**溯源链自带「完不完整」标志位，不完整就写明原因**。不隐藏、不留白，与 7.5「无静默回退」及 Phase 0 的 false-green 教训同一原则。
+
+**④ 全套 `*_truncated` 标志**（`code_truncated` / `stdout_truncated` / `value_truncated`），与 7.19「截断必须出声」一致。
+
+**一条统一决定**：**Run 是统一抽象——一次内核执行是 Run，一次 agent 回合也是 Run**，由 `request_type` 区分（`execute_r` / `agent_turn` / …），由 `origin` 区分人与 agent。这使阶段 ①（agent 会话）与阶段 ②（内核执行）共用同一套项目面板与溯源模型，不必造两套。
+
+**Rho 给不了的两样**，需自研：**成本**（它不跑模型，无 token/费用概念）与**跨工具**（它只有 R）。
+
+> **同时修正一处此前的误判**：实体清单把 #21b Project 管理的来源写作「Claude app / Codex app / Hermes 的信息架构」，并把 wisp-science 列为参考。**实测 wisp-science 没有 project / workspace 概念**——其 UI 是 `notebook.rs` / `channels_view.rs` 的平铺结构，不是项目制。故「模仿 wisp-science 的项目管理」不成立；Claude app / Codex app 只能提供**信息架构外壳**（项目=文件夹、侧栏），**实质模型来自 Rho**。
+
 ---
 
 ## 8. 主体核心抽象：对话—笔记本统一模型
@@ -1353,6 +1396,30 @@ graph LR
 | agent loop 与 provider 层 | **pi**（直接 import，非借鉴） |
 
 **验收**：同时开 4 个会话（2 个 Native DeepSeek + claude + codex），全部可正常对话；claude / codex 那两个能真接管键盘；应用重启后会话可恢复。**此时编排一行未写，产品已可日常使用。**
+
+> ### 2026-08-08 定位修正：①-B 的主体不是「多会话 UI」
+>
+> 上表「多会话 UI｜标签 / 分屏；xterm.js 渲染；会话切换」这一行**降级**。三条理由：
+>
+> **① 「窗口来回切」已被现成工具解决。** 实测本机 `claude --help`：已自带 `--bg`（后台 agent，`claude agents` 管理）与 `--tmux --worktree`；tmux / zellij 本就是做窗口管理的。把终端墙做成主界面，等于做一个**更差的 tmux**——而 G2 的判据是「你是否真的用它替代裸终端」，答案会是否。
+>
+> **② 「四个会话并存」是引擎的要求，不是界面的要求。** 阶段 ③ 的编排确实需要并发（G1 已验证引擎支持），但**那个场景里用户也不看四个终端**，看的是编排结果。并发是实现细节，不该被抬到主界面。
+>
+> **③ 作者的实际工作方式是「一次一个项目，注意力串行」。** 真正的痛点是另外三条：看不到历史、不知道 agent 在干什么、成本不明——它们**都挂在「项目」这一层，不是「会话墙」这一层**。
+>
+> **修正后的 ①-B 形状**：
+>
+> ```
+> 一个 App
+>  └ 项目（= 一个文件夹）          ← 用户切换的单位
+>     ├ 会话（通常 1 个）
+>     │   └ 三视图：对话 / 笔记本 / 并排（同一 Entry 序列的三种投影，见第 8 节）
+>     └ 项目面板：状态 · 产出 · 成本 · 历史
+> ```
+>
+> 终端从「主界面」降为「下钻视图」。终端墙（实体 #19）推迟到阶段 ③ 重新评估——届时需要的多半也不是四个终端，而是**编排进度视图**。
+>
+> **实现顺序同步修正**：**先定 Workbench Protocol（实体 #17），再写 UI**，而不是原先的「Electron 壳 → IPC 桥 → 协议」。依据是 Rho 自己的原则（本节下方 10.x 已引）——UI 依赖版本化协议，不依赖实现内部。先画 UI 会让协议被 UI 的偶然形状绑架。该协议现在就能动工，因为它要描述的会话、租约、产出在阶段 ①-A 都已落地。
 
 ---
 

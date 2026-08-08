@@ -43,10 +43,25 @@
 
 ## 变更日志
 
+### 2026-08-08 — ①-B 定位修正：主体由「终端墙」改为「项目面板 + 单会话三视图」，协议优先
+
+- **Type**: docs
+- **Commit**: 待回填
+- **Motivation**: 准备写 ①-B 计划前，先问了作者用裸终端的真实痛点：切换窗口、看不到历史、不知道 agent 在干什么。**作者随即反问：切换窗口不是已经被 claude / codex / tmux 解决了吗？为什么要纠结「四个 agent 同时干活」？** 这一问推翻了 ①-B 原本的主体设定，必须先修正定位再写计划——否则会做出一个功能齐全但作者自己不用的东西，G2 门（判据是行为：是否真的替代裸终端）必然不过。
+- **What**:
+  - **规格阶段 ① 节新增定位修正框**，三条理由：① 实测本机 `claude --help` 已自带 `--bg` + `claude agents` + `--tmux --worktree`，加上 tmux/zellij，窗口管理已被解决，终端墙做主界面等于「更差的 tmux」；② **「四个会话并存」是引擎要求而非界面要求**——阶段 ③ 编排需要并发（G1 已验证引擎支持），但那时用户看的是编排结果不是四个终端；③ 作者的实际工作方式是「一次一个项目，注意力串行」，另外三个痛点都挂在**项目**这一层。
+  - **规格新增 7.33**，记录实读 `Rho-main/crates/rho-protocol/src/workbench.rs`（493 行）的结果：**我们为 ①-B 推演的项目面板，Rho 已做成成熟协议**。采纳四条——`RunSummary.origin`（人/agent 同构，印证 7.22）、`parent_run_id`（即 8.6 的 `rerunOf`）、**`ProvenanceLink.provenance_complete` + `incomplete_reason`**、全套 `*_truncated` 标志（印证 7.19）。
+  - **`provenance_complete` 解决了 PTY agent 的可见性不对称难题**：claude 内置的 Read/Edit/Bash 不经过我方注入的 MCP，故不可见。原本纠结「UI 要不要标注」，Rho 的答案是**溯源链自带完整性标志位，不完整就写明原因**——不隐藏、不留白，与 7.5 及 Phase 0 的 false-green 教训同一原则。
+  - **一条统一决定**：**Run 是统一抽象**——一次内核执行是 Run，一次 agent 回合也是 Run，`request_type` 区分类型、`origin` 区分人与 agent。使阶段 ①（agent 会话）与 ②（内核执行）共用同一套项目面板与溯源模型，不必造两套。
+  - **纠正一处此前的误判**：实体清单把 wisp-science 列为 Project 管理的参考。**实测其无 project / workspace 概念**（UI 是 `notebook.rs` / `channels_view.rs` 的平铺结构），故该参考不成立；Claude app / Codex app 只提供信息架构外壳，**实质模型来自 Rho**。
+  - 实体清单 ①-B 段按修正后顺序重排：**#17 协议 → 21c Run 存储 → 21b Project → 项目面板 → Electron 壳 → IPC → 终端组件 → 侧栏**；**#19 终端墙划掉，推迟到 ③ 重新评估**；终端组件降级为「下钻视图」。
+- **Impact**: ①-B 的实现顺序由「先搭壳、后定协议」改为「**协议优先**」，依据是 Rho 自己的原则——UI 依赖版本化协议而非实现内部，先画 UI 会让协议被 UI 的偶然形状绑架。该协议现在就能动工，因为它要描述的会话、租约、产出在 ①-A 已全部落地。**Rho 给不了的两样需自研**：成本（它不跑模型）与跨工具（它只有 R）。
+- **Verification**: 全部结论来自实读源码，非推测——`workbench.rs` 的 8 个实体类型逐个读过字段；wisp-science 无 project 概念经 `find` 搜索 project/workspace 目录确认（0 命中）并核对其 `ui/src` 实际文件名；`claude --bg` / `--tmux` 取自本机 `claude --help` 实际输出。
+
 ### 2026-08-08 — G1 决策门通过：补测「四个会话能并存」，阶段①-A 正式验收
 
 - **Type**: test
-- **Commit**: 待回填
+- **Commit**: `fd2babb`
 - **Motivation**: 作者本人实测确认了 G1 的第二问（CLI 能真接管）。但核对主规划 §5 后发现——**G1 有三问，而实施计划 Task 1.11 的验收清单只覆盖了其中两问**，「四个会话能并存」在主规划里却没进详细计划，一直没被验证过。不补上就宣布 G1 通过，等于让一条判据凭空消失。
 - **What**:
   - 新增 `tests/integration/concurrent-sessions.test.ts`，5 个跨真实进程的用例：四会话同时存活且 pid 互不相同、并存 pty 会话输出互不串台、每会话租约独立（一个会话上 engine 抢不动 user 不影响另一会话）、停掉其一不影响其余且存活者仍可写入、每会话 sessionDir 独立。

@@ -97,7 +97,7 @@ interface ToolResultEventResult { content?; details?; isError?; usage? }  // ←
 | 1 | Provider + 模型目录 | **pi-ai**（39 provider） | `config/schema.ts` 的 endpoints/models 两段式、`runtime/native.ts` 手搓 provider | anthropic / google / openai 原生 API（现在走不通）、模型目录、`getEnvApiKey` 认已有环境变量 |
 | 2 | Agent loop + harness + 基础工具 | **pi-agent-core**（`agent-loop.ts` · `harness/agent-harness.ts` · `harness/tools/`：bash · read · write · edit） | `runtime/native.ts` 全部 | 四个基础工具 —— 现在是 `tools: []` |
 | 2b | grep · find · ls | **pi-coding-agent**（`core/tools/`） | — | 三个额外工具 |
-| 3 | 凭证 | **pi-coding-agent** `core/auth-storage.ts`（`AuthStorage` + `AuthStorageBackend` 接口） | `electron/credentials.ts` 主体（约 130 行） | 文件锁、revision 校验、stale 检测、AbortSignal —— **418 行并发处理** |
+| 3 | 凭证 | **pi-ai** 的 `CredentialStore` 接口（`ModelRuntime.create({ credentials })` 直接接受）<br>~~pi-coding-agent `AuthStorageBackend`~~ | `electron/credentials.ts` 主体（约 130 行） | 与 pi 一致的凭证语义；**只需实现 `read`/`list`/`modify`/`delete` 四个方法** |
 | 4 | 输出截断 | **pi-agent-core** `harness/utils/truncate.ts` + **pi-coding-agent** `core/output-guard.ts` | `session/stream.ts` 的截断部分 | — |
 | 5 | 用量 | **pi-protocol** 的 `UsageSchema` | 自定义 Cost 的可见分支 | 与 pi 一致的字段 |
 | 6 | 上下文压缩 | **pi-agent-core** `harness/compaction/` | —（我们还没做） | branch-summarization |
@@ -202,7 +202,7 @@ pi 的是连接级互斥，没有 holder 身份、没有抢占语义。
 
 | 批次 | 内容 | 验收 |
 |---|---|---|
-| **R1** | Spike A-2：验证第三层接口——`createAgentSession` 起会话、工具真的能跑、扩展的 `tool_call` 能 block、`AuthStorageBackend` 能换 | FINDINGS 里补上「工具注入与 provider 选择」一节（**当初该有而没有的那一节**） |
+| **R1** ✅ | Spike A-2：验证第三层接口 | **已完成 2026-08-08，GR 门十项全过**，见 `spikes/FINDINGS.md` 的 Spike A-2 一节 |
 | **R2** | 重写 `native.ts` + 配置层 | 一次真实对话里 agent 能读文件、能跑命令 |
 | **R3** | 凭证换 backend | 设置里填 key，仍由 safeStorage 加密 |
 | **R4** | 协议与事件通道改 snapshot + revision | 切会话重放正确；补 steer / abort |

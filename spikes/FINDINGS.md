@@ -190,6 +190,105 @@ agent_start
 - 未验证中断（`agent.abort()`）的实际行为——阶段①-A 的输入租约与会话生命周期会用到，Task 1.6 需补测。
 - 未验证多工具并发（`toolExecution: "parallel"`）。
 
+> **⚠️ 2026-08-08 追记：上面这条「遗留」是本项目最贵的一行字。**
+>
+> 「未验证 `AgentHarness`……留待 Task 1.10 评估」——**Task 1.10 并没有评估**。
+> 它按本 spike 的探针写法照抄，于是 Native Runtime 落成了裸 `Agent` + 手搓 provider + **`tools: []`**：
+> **agent 一个工具都没有**，而这个洞一路活到作者试用时。
+>
+> **根因不在这条遗留，在这个 spike 的范围**：它只问了「pi 能不能嵌入」，
+> 没问「我们该坐哪一层、那一层怎么调」。FINDINGS 里因此没有工具注入的签名可抄。
+> 补救见下方 **Spike A-2**——那才是当初该有的那一节。
+
+---
+
+## Spike A-2 — pi 第三层入口 ✅ 通过（返工 R1 / GR 门）
+
+- **日期**：2026-08-08
+- **版本**：`@earendil-works/pi-coding-agent` 0.84.1
+- **脚本**：`spikes/a2-pi-third-layer.ts`（`npm run spike:a2`）
+- **为什么补这个 spike**：见上方追记。原 Spike A 验的是「pi 能不能跑起来」，
+  本 spike 验的是「**我们选定的那一层怎么调**」。主规划 §5.2 的 GR 门据此设立。
+
+### 判定表
+
+| 问题 | 结论 | 证据 |
+|---|---|---|
+| Q1 `createAgentSession()` 起得来？ | ✅ | 会话建立，模型为显式指定的 `deepseek/deepseek-v4-flash` |
+| Q1 与用户全局配置隔离？ | ✅ | 显式 `agentDir` / `authPath` / `modelsPath` 指向临时目录，`~/.pi` 指纹前后一致 |
+| Q2 内置工具真能读文件？ | ✅ | `read` 被调用，**且 agent 复述出了文件里的暗号** |
+| Q2 内置工具真能跑命令？ | ✅ | `bash` 被调用，**且目标文件真的被创建**（不看模型自述，看副作用） |
+| Q3 扩展能拦下一次执行？ | ✅ | `tool_call` 返回 `{block:true, reason}`，**工具结果里出现该 reason，且命令的副作用文件不存在** |
+| Q4 凭证能换成我们的实现？ | ✅ | 注入自定义 `CredentialStore`，pi 确实调用了它；`auth.json` 未落盘 |
+
+### 实际使用的导入符号
+
+```ts
+import { createAgentSession, ModelRuntime } from "@earendil-works/pi-coding-agent"
+import type { Credential, CredentialInfo, CredentialStore } from "@earendil-works/pi-ai"
+```
+
+### 完整调用签名（这就是当初缺的那段）
+
+```ts
+const modelRuntime = await ModelRuntime.create({
+  credentials,                              // ← 我们的 CredentialStore
+  authPath:   join(agentDir, "auth.json"),  // 显式给临时目录，隔离用户 ~/.pi
+  modelsPath: join(agentDir, "models.json"),
+})
+const model = modelRuntime.getModel("deepseek", "deepseek-v4-flash")
+const { session } = await createAgentSession({ cwd, agentDir, model, modelRuntime })
+
+const unsubscribe = session.subscribe((event) => { /* ... */ })
+await session.prompt(text)
+await session.waitForIdle()
+session.dispose()
+```
+
+**内置工具默认开启**（`read` · `bash` · `edit` · `write`），无需注册。
+`tools` / `excludeTools` / `noTools` 三个选项分别是白名单、黑名单、全关。
+`pi-coding-agent` 另有 `grep` / `find` / `ls`，可经 `createCodingTools()` 取。
+
+> **对照**：`tools: []` 是**显式把工具关掉**。默认什么都不传反而全都有。
+> 这个错误代价最大的地方在于——它看起来像「还没填」，实际是「明确关闭」。
+
+### 凭证注入点：`CredentialStore`，不是 `AuthStorageBackend`
+
+分层决策原本写的是实现 `AuthStorageBackend`。**实测发现更靠上的接口更合适**：
+`ModelRuntime.create({ credentials })` 直接接受 pi-ai 的 `CredentialStore`，
+只需四个方法 `read` / `list` / `modify` / `delete`，不必处理文件锁语义。
+
+**决策文档 §3 第 3 行据此修正。**
+
+### ⚠️ 关键发现：`read()` 会被调用 202 次
+
+pi 会遍历**全部 39 个内置 provider** 探测可用性，且探测不止一轮。单次会话实测 202 次调用。
+
+> **推论（R3 必须落实）**：DAWN 的 `CredentialStore` 实现**必须带缓存**。
+> 一个 naive 的 Electron `safeStorage` 实现会触发 202 次 keychain 解密——
+> 那不只是慢，macOS 还可能弹权限提示。**缓存不是优化，是可用性前提。**
+
+### 事件流形状（第三层）
+
+```
+agent_start → turn_start → message_start → message_update(text_delta)
+            → tool_execution_start → tool_execution_update → tool_execution_end
+            → message_end → turn_end → agent_end → agent_settled
+```
+
+与第二层同构，多了 `agent_settled`（重试 / 压缩 / 跟进都结束）。
+**`tool_execution_start` / `_end` 带 `toolName` 与结果**——这是 ①-B 「显示 agent 在做什么」缺的那部分数据。
+
+### 遗留 / 未验证
+
+- **未验证 `AgentSessionConfig { agent: Agent }` 这条逃生口**：分层决策称第二层的
+  `beforeToolCall` 等钩子在第三层照样挂得上，本 spike 未实测。**扩展的 `tool_call`
+  已足够做授权门，故不阻断 R2**；若将来需要 `transformContext` 级别的介入再补验。
+- 未验证中断（`session.abort()`）。R4 补 `abort` 操作时一并验。
+- 未验证压缩（compaction）触发行为。
+- 扩展从 `<agentDir>/extensions/*.ts` 自动发现——**未验证打包进 Electron 后这条路径是否仍可用**
+  （asar 内的动态 import）。R2 需当场确认，否则授权门在生产构建里会静默失效。
+
 ---
 
 ## Spike B — PTY + MCP + Hook 三件套 ✅ 通过（claude）／⚠️ 部分验证（codex）

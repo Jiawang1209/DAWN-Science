@@ -23,7 +23,8 @@
     "build": "npm run build:electron && npm run build:ui",
     "app": "npm run build && electron dist/electron/main.js",
     "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
-    "ui:dev": "vite"
+    "ui:dev": "vite",
+    "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",

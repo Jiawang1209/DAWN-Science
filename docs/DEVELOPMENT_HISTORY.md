@@ -43,10 +43,31 @@
 
 ## 变更日志
 
+### 2026-08-08 — R1 / Spike A-2：pi 第三层入口验证通过，GR 门十项全过
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 返工 R 的第一批，也是 GR 门。**这个 spike 是为一次失败补的**——原 Spike A 只验了「pi 能不能嵌入进程内跑起来」，FINDINGS 里因此没有工具注入的签名可抄，Task 1.10 就填了 `tools: []`。
+- **What**: 新增 `spikes/a2-pi-third-layer.ts`（`npm run spike:a2`），四问十项判据。
+  - **判据刻意不看模型自述，只看副作用**：`bash` 是否真执行，判据是**目标文件是否被创建**；扩展是否真拦下，判据是**被拦命令的副作用文件不存在**。模型说「我执行了」不算数——Spike C 报过一次假绿，教训在此复用。
+  - 全程临时 `agentDir` / `cwd`，并在前后核对 `~/.pi` 指纹（Spike B 的隔离纪律）。
+- **结果**：**十项全过，GR 门通过，可进 R2。**
+  - `createAgentSession()` 起得来，模型为显式指定的 `deepseek/deepseek-v4-flash`
+  - `read` 被调用**且 agent 复述出了文件里的暗号**；`bash` 被调用**且目标文件真的被创建**
+  - 扩展的 `tool_call` 返回 `{block:true, reason}` **确实拦下了执行**，被拦命令的副作用文件不存在 ← **capability 授权门的地基成立**
+  - 自定义 `CredentialStore` 被 pi 真实调用，`auth.json` 未落盘
+- **两处实测修正了分层决策**：
+  1. **凭证注入点应是 pi-ai 的 `CredentialStore`，不是 pi-coding-agent 的 `AuthStorageBackend`**。`ModelRuntime.create({ credentials })` 直接接受前者，只需 `read`/`list`/`modify`/`delete` 四个方法，不必处理文件锁语义。决策文档 §3 第 3 行已改。
+  2. **`read()` 一次会话被调用 202 次**——pi 会遍历全部 39 个内置 provider 探测可用性且不止一轮。**推论：DAWN 的实现必须带缓存**，naive 的 safeStorage 实现会触发 202 次 keychain 解密，macOS 还可能弹权限提示。**缓存不是优化，是可用性前提。**
+- **一处认知修正写进 FINDINGS**：`tools: []` 不是「还没填」，是**显式把工具关掉**——默认什么都不传反而 `read`/`bash`/`edit`/`write` 全都有。**这个错误代价最大的地方，正是它看起来像未完成。**
+- **在 Spike A 的「遗留」处补了追记**：「未验证 `AgentHarness`……留待 Task 1.10 评估」是本项目最贵的一行字——Task 1.10 并没有评估，而是照抄了探针写法。**根因不在这条遗留，在 Spike A 的范围只问了「能不能跑」，没问「该坐哪一层、那一层怎么调」。**
+- **新增四条遗留**，其中一条要在 R2 当场确认：扩展从 `<agentDir>/extensions/*.ts` 自动发现，**打包进 Electron（asar）后这条路径是否仍可用未验证——若失效，授权门会在生产构建里静默失效**。
+- **Verification**: `npm run spike:a2` 十项全过；typecheck 零错误。判据均为副作用而非模型自述。
+
 ### 2026-08-08 — 修正分层表述：把「谁提供能力」与「从哪个入口进」分开（作者指正）
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `a0ce6ae`
 - **Motivation**: 作者读规格 §4 改后的表格，指出「自建 agent loop、工具、harness、压缩、skills → 坐 pi 第三层 `pi-coding-agent`」这一行不对——**「应该用 pi-agent-core 啊」**。核实属实。
 - **核实结果**：`packages/agent`（即 `pi-agent-core`）提供 `agent.ts` · `agent-loop.ts` · `harness/agent-harness.ts` · `harness/compaction/` · `harness/skills.ts` · `harness/system-prompt.ts` · `harness/session/`（jsonl）· `harness/tools/`（**bash · read · write · edit** 四个基础工具）· `harness/utils/truncate.ts`，且全部从 `index.ts` 公开导出。`pi-coding-agent` 在其上**加的**是 grep / find / ls、model-registry、auth-storage、扩展系统、project-trust、slash-commands、event-bus、output-guard、usage-totals。
 - **我错在哪**：把**「谁提供这个能力」**与**「我们从哪个入口拿」**混成了一句话。**而这恰恰是这份文档立的分层纪律要防的含混——我在实现那条纪律的那一行里又犯了同一种错。**

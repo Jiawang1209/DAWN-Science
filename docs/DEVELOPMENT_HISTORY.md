@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B Task 2.4：projects / runs / provenance 表，schema 升到 v2
+### 2026-08-08 — ①-B Task 2.5：从 git 事实计算产出，用内容哈希消掉一处精度上限
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 项目面板「产出」栏的数据来源。**不变式 5**——这一栏回答「仓库里实际变了什么」，不是「agent 说它改了什么」。后者不可信，那正是本项目要防的东西。
+- **What**:
+  - 新增 `src/project/git-facts.ts`：`snapshot(workspace)` 取基线，`diffSince(workspace, baseline)` 算变更集，`NotAGitRepoError` 用于非 git 目录。
+  - **两个来源合并**：基线之后的提交（`git diff base..HEAD`）+ 当前工作区未提交改动（`git status --porcelain`）。只看其一都会漏——agent 可能自己 commit 了，也可能改完没提交。
+  - **测试逼出一次实现升级**：初版基线只记脏文件的**文件名**，于是无法区分「基线时脏、之后没再动」（该剔除）与「基线时脏、之后又被改」（必须保留）。我原本把它当作已知精度上限写进注释——**但测试证明这个限制可以直接消掉**：基线时顺手记下每个脏文件的 `git hash-object`，比对内容而非文件名。代价只是基线时多跑一次哈希。
+  - **降噪但不冒进**：哈希对得上才剔除；对不上、或基线时没记到哈希（文件当时已删除），一律保留。**分不清就不剔除**——宁可多报也不漏报。
+  - **`mayIncludeUserEdits` 默认 true**，仅在显式声明 `isolated: true`（阶段 ③ 的 worktree 隔离）时才为 false。
+  - **只读 git 命令也净化环境**（规格 7.31 第 ⑥ 条）：仓库内的 hook / alias / credential-helper 会在普通 git 操作时被触发并读到环境变量。
+- **Impact**: Task 2.6 与项目面板的「产出」栏有了可信数据源。**一处限制被消除而非被记录**——这是本次的主要收获：`mayIncludeUserEdits` 仍为 true（因为并发编辑无法排除），但「同一文件是否被再次修改」现在是确定的。
+- **Verification**: 严格 TDD，15 个测试，**全部用真临时 git 仓库跑真命令、不 mock**——「产出」的可信度全靠它，mock 出来的 diff 证明不了任何事。含两条互补用例：基线时脏且未再动 → 不算产出；基线时脏且又被改 → 仍算产出。全仓库 245 passed，typecheck 零错误。
+
+### 2026-08-08 — ①-B Task 2.4：projects / runs / provenance 表，schema 升到 v2
+
+- **Type**: feat
+- **Commit**: `2b93142`
 - **Motivation**: Part 1 的地基。协议定义了 Run 与溯源，但它们得有地方存。同时这是第一次做 schema 迁移——①-A 的库里已有 `sessions` 表，不能推倒重来。
 - **What**:
   - `src/store/schema.ts` 升到 `SCHEMA_VERSION = 2`，新增 `projects` / `runs` / `provenance` 三张表，`sessions` 补 `project_id` 列。迁移幂等，且**从 v1 升级时保留老数据**。

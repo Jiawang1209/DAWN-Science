@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — Spike B 通过：PTY + MCP 注入 + Hook 完成信号打通，并修掉 node-pty 的隐性失效
+### 2026-08-08 — Spike C 通过：Electron 四终端并发刷屏无冻结；验证代码自身的 false-green 已修
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Phase 0 决策门 G0 的第三项，决定桌面壳是否用 Electron。计划要求人工观察「是否卡死 / 能否交互 / resize 是否跟随」——但肉眼判断不可复核也无法回归，故改为程序自测量。
+- **What**:
+  - 新增 `spikes/c-electron-term/`（`main.js` / `preload.js` / `index.html`），四个阶段全自动：回显 → 压力灌注 → Ctrl-C 中断 → resize，跑完自行打印判定并退出，无需人工干预。
+  - **四问全过**：四路各 20 万行共 **29.0 MB** 在 **0.7s** 内灌完（44.3 MB/s），**冻结帧 0、卡顿帧 0，最长单帧 59.2 ms**；CPU 峰值 25.3%、内存峰值 526 MB；Ctrl-C 前 1.5s 增量 43.8 MB → 之后 0 字节；resize 后 xterm 与 pty 两侧尺寸同步（94×29 → 60×20）。**桌面壳定 Electron。**
+  - **第一版报了假的「通过」，已修并记录**：四问全打 ✅ 而 P2 的数字是 `0.0 MB / 0.0s / 0 帧`——压力测试根本没跑。根因是等待逻辑在 pty 输出里搜哨兵字符串，而**终端会回显命令行本身**，命令里就含着哨兵，于是它在命令敲进去的瞬间即命中。两处修正：哨兵的命令行形态与输出形态必须不同（`__DAWN"_"DONE_0__`）；新增**完整性闸门**——实测字节数低于预期 80% 即判「无效」而非「通过」。
+  - **记录两个 node-pty 陷阱**：① 嵌套 `node_modules` 的 `spawn-helper` 同样停在 `0644`，`fix-node-pty.mjs` 已改为全仓库扫描；② **对已退出的 pty 再 `kill()` 会让进程 SIGABRT**（native 层抛 `Napi::Error`，异步异常 `try/catch` 拦不住），第一版即因此崩溃，现改为先解绑 `onData` 再逐个 kill。
+- **Impact**: G0 三项已过，只剩 Spike D。Task 1.8 拿到了确切的调参依据——当前规模下**不需要**输出节流，但帧率确实从 60fps 掉到约 27fps，建议以 100ms 单帧为节流触发线；且 **`scrollback` 是内存主控参数**（20 万行只留 5 千行，内存才稳在 526 MB），不是显示偏好。Task 1.9 的 `PtyRuntime.stop()` 须避开重复 kill 的 SIGABRT——这与规格 7.18 的进程组终止是两个不同问题。
+  **另有一条超出 Phase 0 的收获**：这次 false-green 发生在本项目自己的验证代码里，正是规格 7.24 描述的失效模式。由此得出一条应写入阶段 ③ 验收设计的原则——任何「等待完成信号」的机制都必须回答「**该信号能否在工作真正发生之前被触发**」，而对照预期产出量的完整性闸门是唯一能挡住这类失效的手段。
+- **Verification**: 修正后重跑，完整性闸门实测 29.0 MB / 预期 28.2 MB 判定有效；P3 的判据由「绝对字节数」改为「等长观察窗口的增量对比」（43,795,848 → 0），避免被前序阶段的累计值污染。修正前后两次运行的输出均已留存对比。**未验证项已显式记录**：本机 `require('node-pty')` 在 Electron 43 下直接可用，故 `@electron/rebuild` 这一步未执行也未验证，换 Electron 大版本或换机器需重测。
+
+### 2026-08-08 — Spike B 通过：PTY + MCP 注入 + Hook 完成信号打通，并修掉 node-pty 的隐性失效
+
+- **Type**: feat
+- **Commit**: `fc0cc6f`
 - **Motivation**: Phase 0 决策门 G0 的第二项。PTY Runtime 的可行性取决于四件事：claude 能否在 PTY 里跑、能否注入 MCP、能否拿到回合结束信号、以及**这一切能否在不污染用户全局配置的前提下做到**。最后一条尤其关键——DAWN 要托管用户自己的 agent CLI，弄脏他的配置是不可接受的。
 - **What**:
   - 新增 `spikes/b-pty-mcp-hook.ts`、`spikes/mcp-probe-server.ts`、`spikes/hook-probe.sh`，`FINDINGS.md` 补齐 Spike B 一节。

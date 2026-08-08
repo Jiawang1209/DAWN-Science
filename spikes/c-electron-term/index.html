@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
+  <style>
+    body { margin:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+           gap:4px; height:100vh; background:#111 }
+    .pane { overflow:hidden; min-width:0; min-height:0 }
+  </style>
+</head>
+<body>
+  <div class="pane" id="p0"></div><div class="pane" id="p1"></div>
+  <div class="pane" id="p2"></div><div class="pane" id="p3"></div>
+
+  <script type="module">
+    import { Terminal } from "./node_modules/@xterm/xterm/lib/xterm.mjs"
+    import { FitAddon } from "./node_modules/@xterm/addon-fit/lib/addon-fit.mjs"
+
+    // ── 卡顿计量：rAF 间隔就是渲染线程的真实响应能力 ──────────────────
+    // 主线程被 xterm 的写入阻塞时，rAF 会被推迟，间隔即卡顿时长。
+    const jank = { frames: 0, slow100: 0, slow250: 0, maxFrameMs: 0, on: false, last: 0 }
+    function tick(now) {
+      if (jank.on) {
+        const dt = now - jank.last
+        if (jank.last) {
+          jank.frames++
+          if (dt > 100) jank.slow100++
+          if (dt > 250) jank.slow250++
+          if (dt > jank.maxFrameMs) jank.maxFrameMs = dt
+        }
+        jank.last = now
+      }
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+
+    window.__jank = {
+      reset() { Object.assign(jank, { frames:0, slow100:0, slow250:0, maxFrameMs:0, on:true, last:0 }) },
+      read()  { jank.on = false
+                return { frames: jank.frames, slow100: jank.slow100,
+                         slow250: jank.slow250, maxFrameMs: jank.maxFrameMs } },
+    }
+
+    const terms = {}, fits = {}
+    for (let i = 0; i < 4; i++) {
+      const t = new Terminal({ fontSize: 12, scrollback: 5000 })
+      const f = new FitAddon()
+      t.loadAddon(f)
+      t.open(document.getElementById("p" + i))
+      f.fit()
+      t.onData((d) => window.term.input(i, d))
+      terms[i] = t; fits[i] = f
+      window.term.spawn(i)
+      window.term.resize(i, t.cols, t.rows)
+    }
+
+    window.term.onData((id, d) => terms[id].write(d))
+
+    window.__dims = () => Object.keys(terms).map((i) => `${terms[i].cols}x${terms[i].rows}`)
+
+    window.addEventListener("resize", () => {
+      for (let i = 0; i < 4; i++) {
+        fits[i].fit()
+        window.term.resize(i, terms[i].cols, terms[i].rows)
+      }
+    })
+
+    window.term.ready()
+  </script>
+</body>
+</html>

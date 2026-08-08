@@ -10,11 +10,23 @@
  *     npm install-scripts approve node-pty
  * 那样本脚本就是无操作。两者不冲突。
  */
-import { chmodSync, existsSync, statSync } from "node:fs"
+import { chmodSync, existsSync, readdirSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-const targets = ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64"]
-  .map((p) => join("node_modules", "node-pty", "prebuilds", p, "spawn-helper"))
+// spike 目录有自己的 node_modules（Electron 那份），也会中招，故全仓库扫描
+const roots = ["node_modules"]
+if (existsSync("spikes")) {
+  for (const d of readdirSync("spikes", { withFileTypes: true })) {
+    if (d.isDirectory() && existsSync(join("spikes", d.name, "node_modules"))) {
+      roots.push(join("spikes", d.name, "node_modules"))
+    }
+  }
+}
+
+const targets = roots
+  .flatMap((r) =>
+    ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64"]
+      .map((p) => join(r, "node-pty", "prebuilds", p, "spawn-helper")))
   .filter(existsSync)
 
 let fixed = 0

@@ -67,3 +67,7 @@ spikes/**/node_modules/
 # 工具的会话级状态（project-memory.json 例外，那个要入库）
 .omc/state/
 .omc/sessions/
+
+# Electron / UI 构建产物
+dist/electron/
+dist/ui/

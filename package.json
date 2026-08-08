@@ -17,7 +17,13 @@
     "smoke:native": "tsx --env-file-if-exists=.env scripts/smoke-native.ts",
     "spike:a": "tsx --env-file-if-exists=.env spikes/a-pi-embed.ts",
     "spike:b": "tsx --env-file-if-exists=.env spikes/b-pty-mcp-hook.ts",
-    "spike:d": "tsx --env-file-if-exists=.env spikes/d-jupyter-kernel.ts"
+    "spike:d": "tsx --env-file-if-exists=.env spikes/d-jupyter-kernel.ts",
+    "build:electron": "node scripts/build-electron.mjs",
+    "build:ui": "vite build",
+    "build": "npm run build:electron && npm run build:ui",
+    "app": "npm run build && electron dist/electron/main.js",
+    "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
+    "ui:dev": "vite"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",
@@ -35,10 +41,22 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "electron": "^43.3.0",
+    "jsdom": "^30.0.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tsx": "^4.23.11",
     "typescript": "^7.0.2",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10"
   }
 }

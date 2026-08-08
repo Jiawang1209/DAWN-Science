@@ -43,10 +43,26 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B 补 Part 1 收口：真实后端接上服务端，并修一处会话归属缺口
+### 2026-08-08 — ①-B Task 2.7–2.9：Electron 壳、单入口 IPC 桥、构建
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 让协议层与数据层能被一个真实窗口消费。难点在于 Electron 相关代码天然难测，必须把可测的部分先剥出来。
+- **What**:
+  - **沿用 Task 2.3 的手法把可测核心剥离**：`src/electron/wiring.ts`（装配，纯逻辑）与 `src/electron/ipc.ts`（桥接逻辑）**都不 import electron**，因此可以单测；`main.ts` 只剩「开窗口 + 注册一个 IPC 通道」，`preload.ts` 只剩一次 `contextBridge` 暴露——那两个文件是「测不了、也不值得测」的部分。
+  - **`createWorkbench` 显式接收 `env` 而非直接读 `process.env`**：装配层偷偷读全局状态会让测试无法隔离，也让「这个 key 从哪来」不可追。
+  - **IPC 只开一个通道 `dawn:workbench:invoke`**（依据 AgentDeck `ui.py` 的「不靠开洞」）。单一入口使「UI 能做什么」完全由协议的操作清单决定，而不是由暴露了多少个通道决定。桥在边界上收窄类型——**渲染进程送来的东西一律不可信，哪怕 preload 是我们自己写的**，devtools 里手敲一行就能绕过。
+  - preload 只暴露 `window.dawn.invoke`，**不暴露 `ipcRenderer` 本身**——暴露后者等于把整个 IPC 表面开给渲染进程。渲染进程 `nodeIntegration: false` + `contextIsolation: true` + `sandbox: true`。
+  - **配置错误弹对话框并退出，不开空窗口让人猜**（规格 7.5）。`will-quit` 关数据库句柄（Phase 0 通则 ②：关停顺序是正式代码）。
+  - `scripts/build-electron.mjs`：**main 用 ESM、preload 用 CJS**——后者是 `sandbox: true` 下 Electron 的硬约束；原生依赖标 external，打进 bundle 只会得到坏文件。**并内置 spawn-helper 执行位修复**（Spike B 教训，打包后同样会丢，失败表现是毫无线索的 `posix_spawnp failed`）。
+  - `vitest.config.ts` 改为双 project（node / jsdom）以支持后续 UI 组件测试。
+- **Impact**: Electron 可启动并服务真实数据。UI 可以对着 `window.dawn.invoke` 编程。
+- **Verification**: 13 个测试（wiring 7 + ipc 6），**全部不起 Electron**。`npm run build:electron` 产出 main.js + preload.cjs。**改测试配置时踩到一个坑并已修**：根层写了 `include` 会被两个 project 同时继承，导致每个测试跑两遍（283 → 566），已移除根层 include 并加注释说明。全仓库 283 passed，typecheck 零错误。
+
+### 2026-08-08 — ①-B 补 Part 1 收口：真实后端接上服务端，并修一处会话归属缺口
+
+- **Type**: feat
+- **Commit**: `c8b25bd`
 - **Motivation**: 准备开 Part 2（Electron）时发现 Part 1 没有收口——Task 2.3 只交付了 `WorkbenchBackend` 接口与 Fake，真实现一直没写。没有它，Electron 起来也没数据可服务。
 - **What**:
   - **修一处真实缺口**：`SessionManager.create(agentId, workspace)` 不接受 `projectId`，于是通过它建的会话**不挂在任何项目下**，`ProjectManager.sessions()` 永远返回空。已加可选参数；**不提供时留空而非编一个**——没有归属依据时填一个等于伪造事实（不变式 5）。

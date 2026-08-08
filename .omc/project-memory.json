@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -2 && npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3",
-    "testCommand": "npx vitest run 2>&1 | tail -5 && git add -A && git commit -q -F - <<'EOF'\nfeat: R1 / Spike A-2：pi 第三层入口验证通过，GR 门十项全过\n\n判据刻意不看模型自述只看副作用：bash 是否真执行看目标文件是否创建，\n扩展是否真拦下看被拦命令的副作用文件不存在。\n\n结果：createAgentSession 起得来、read 复述出暗号、bash 创建了文件、\n扩展的 tool_call 确实拦下执行、自定义 CredentialStore 被真实调用。\n\n两处实测修正分层决策：凭证注入点应是 pi-ai 的 CredentialStore 而非\nAuthStorageBackend；read() 一次会话被调用 202 次，实现必须带缓存，\n否则会触发 202 次 keychain 解密。\n\n在 Spike A 的遗留处补了追记：「未验证 AgentHarness，留待 Task 1.10\n评估」是本项目最贵的一行字——Task 1.10 并没有评估。\nEOF\ngit log --oneline -2",
+    "buildCommand": "R=/Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\np='src/electron/wiring.ts'\ns=open(p).read()\ns=s.replace('''    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,\n  })''','''    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,\n    // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到\n    invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),\n  })''')\nopen(p,'w').write(s)\nPY\nnpm run typecheck 2>&1 | tail -3 && npm run build 2>&1 | tail -3",
+    "testCommand": "R=/Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport re\np='tests/ui/settings.test.tsx'\ns=open(p).read()\ns=s.replace('endpoints={','providers={')\ns=s.replace('还没有声明任何 endpoint','还没有声明任何 native agent')\ns=s.replace('配置里没有 endpoint 时如实说明','配置里没有 native agent 时如实说明')\nopen(p,'w').write(s)\n\n# app-mvp 夹具：getProviders 的形状\np='tests/ui/app-mvp.test.tsx'\ns=open(p).read()\ns=s.replace('''        return {\n          agents: [{ agentId: \"ds-chat\", kind: \"native\", endpoint: \"ds\", model: \"m\" }],\n          endpoints: [{ endpointId: \"ds\", baseUrl: \"https://x\", models: [\"m\"], hasKeyInConfig: false }],\n        }''','''        return {\n          agents: [{ agentId: \"ds-chat\", kind: \"native\", provider: \"deepseek\", model: \"m\" }],\n          providers: [{ providerId: \"deepseek\", models: [\"m\"] }],\n        }''')\nopen(p,'w').write(s)\n\n# CredentialsPort 的参数名跟着改\np='src/workbench/backend.ts'\ns=open(p).read()\ns=s.replace('''/** 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。 */\nexport interface CredentialsPort {\n  get(endpointId: string): string | undefined\n  set(endpointId: string, secret: string): void\n  delete(endpointId: string): void''','''/**\n * 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。\n *\n * **2026-08-08 返工 R2：键从 endpointId 改为 providerId。**\n * 配置里已经没有 endpoints 段了，凭证按 pi 的 provider 存。\n */\nexport interface CredentialsPort {\n  get(providerId: string): string | undefined\n  set(providerId: string, secret: string): void\n  delete(providerId: string): void''')\nopen(p,'w').write(s)\nPY\nnpm run typecheck 2>&1 | grep -E \"^(src|tests)/\" | head -5; echo \"=== TESTS ===\"; npx vitest run 2>&1 | grep -E \"Tests |×\" | head -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -56,8 +56,8 @@
     },
     {
       "path": "src/session/manager.ts",
-      "accessCount": 9,
-      "lastAccessed": 1786182257463,
+      "accessCount": 11,
+      "lastAccessed": 1786195323173,
       "type": "file"
     },
     {
@@ -91,15 +91,27 @@
       "type": "file"
     },
     {
-      "path": "package.json",
-      "accessCount": 4,
-      "lastAccessed": 1786163262944,
+      "path": "src/runtime/types.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786195213728,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/native.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786195270236,
       "type": "file"
     },
     {
       "path": "src/protocol/operations.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786195366881,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
       "accessCount": 4,
-      "lastAccessed": 1786182149950,
+      "lastAccessed": 1786163262944,
       "type": "file"
     },
     {
@@ -109,9 +121,9 @@
       "type": "file"
     },
     {
-      "path": "src/runtime/native.ts",
+      "path": "src/config/loader.ts",
       "accessCount": 4,
-      "lastAccessed": 1786182349571,
+      "lastAccessed": 1786195127371,
       "type": "file"
     },
     {
@@ -133,18 +145,6 @@
       "type": "file"
     },
     {
-      "path": "src/runtime/types.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786182344138,
-      "type": "file"
-    },
-    {
-      "path": "src/config/loader.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786185912268,
-      "type": "file"
-    },
-    {
       "path": "docs/superpowers/plans/2026-08-08-phase1b-workbench.md",
       "accessCount": 3,
       "lastAccessed": 1786193861268,
@@ -160,6 +160,12 @@
       "path": "docs/superpowers/ENTITY-REGISTRY.md",
       "accessCount": 3,
       "lastAccessed": 1786194190545,
+      "type": "file"
+    },
+    {
+      "path": "src/config/schema.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786195107898,
       "type": "file"
     },
     {
@@ -196,6 +202,12 @@
       "path": "src/protocol/index.ts",
       "accessCount": 2,
       "lastAccessed": 1786182153511,
+      "type": "file"
+    },
+    {
+      "path": "tests/runtime/native.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786195583549,
       "type": "file"
     },
     {
@@ -238,12 +250,6 @@
       "path": "spikes/d-electron-zmq/main.js",
       "accessCount": 1,
       "lastAccessed": 1786159135325,
-      "type": "file"
-    },
-    {
-      "path": "src/config/schema.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786160097762,
       "type": "file"
     },
     {
@@ -316,12 +322,6 @@
       "path": "tests/integration/pty.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786162738741,
-      "type": "file"
-    },
-    {
-      "path": "tests/runtime/native.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786163174796,
       "type": "file"
     },
     {

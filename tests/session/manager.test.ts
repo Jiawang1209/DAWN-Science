@@ -9,11 +9,8 @@ import type { ProviderRegistry } from "../../src/config/schema.js"
 import type { AgentRuntime, SessionSpec } from "../../src/runtime/types.js"
 
 const registry: ProviderRegistry = {
-  endpoints: {
-    ds: { baseUrl: "https://api.deepseek.com/v1", apiKey: "sk-test", models: ["deepseek-v4-flash"] },
-  },
   agents: {
-    "ds-agent": { kind: "native", endpoint: "ds", model: "deepseek-v4-flash", capabilities: ["exec"] },
+    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["exec"] },
     "claude-code": { kind: "pty", command: "claude", args: [], capabilities: ["mcp", "hooks"] },
   },
 }
@@ -68,7 +65,7 @@ describe("SessionManager · 创建与销毁", () => {
     expect(ctx.store.list()).toHaveLength(0)
   })
 
-  it("native agent 的 spec 带上 endpoint 的连接信息", async () => {
+  it("native agent 的 spec 带上 provider 与 model —— 不再是 baseUrl + apiKey", async () => {
     let seen: SessionSpec | undefined
     const db = new Database(":memory:")
     migrate(db)
@@ -83,14 +80,11 @@ describe("SessionManager · 创建与销毁", () => {
       store, registry, runtimes: { native: rt, pty: rt }, workspaceRoot: "/tmp/x",
     })
     await mgr.create("ds-agent", "/tmp/w")
-    expect(seen?.endpoint).toEqual({
-      baseUrl: "https://api.deepseek.com/v1",
-      apiKey: "sk-test",
-      model: "deepseek-v4-flash",
-    })
+    // 连接细节与凭证都交给 pi，上层只说「哪个 provider 的哪个模型」
+    expect(seen?.native).toEqual({ provider: "deepseek", model: "deepseek-v4-flash" })
   })
 
-  it("pty agent 的 spec 不带 endpoint", async () => {
+  it("pty agent 的 spec 不带 native", async () => {
     let seen: SessionSpec | undefined
     const db = new Database(":memory:")
     migrate(db)
@@ -105,7 +99,7 @@ describe("SessionManager · 创建与销毁", () => {
       store, registry, runtimes: { native: rt, pty: rt }, workspaceRoot: "/tmp/x",
     })
     await mgr.create("claude-code", "/tmp/w")
-    expect(seen?.endpoint).toBeUndefined()
+    expect(seen?.native).toBeUndefined()
   })
 
   it("运行时启动失败时，会话被标为 exited 而非留在 starting", async () => {
@@ -314,9 +308,8 @@ describe("SessionManager · 凭证在建会话时解析", () => {
   // 2026-08-08 行为变更：配置加载不再因缺凭证失败（桌面应用不该起不来）。
   // 失败推迟到这里——这才是真正需要凭证的时刻，报错也才有可操作性。
   const noKeyRegistry: ProviderRegistry = {
-    endpoints: { ds: { baseUrl: "https://api.deepseek.com/v1", models: ["deepseek-v4-flash"] } },
     agents: {
-      "ds-agent": { kind: "native", endpoint: "ds", model: "deepseek-v4-flash", capabilities: ["chat"] },
+      "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
       "claude-code": { kind: "pty", command: "claude", args: [], capabilities: [] },
     },
   }
@@ -330,6 +323,9 @@ describe("SessionManager · 凭证在建会话时解析", () => {
       store, registry: noKeyRegistry,
       runtimes: { native: rt, pty: rt },
       workspaceRoot: "/tmp/x",
+      // 默认「一个都没配」。**不注入时管理器不做检查**——CLI 场景下凭证由 pi
+      // 自己从环境变量解析，管理器无从知晓，那时不该抢着报错
+      hasCredential: () => false,
       ...over,
     })
   }
@@ -338,39 +334,19 @@ describe("SessionManager · 凭证在建会话时解析", () => {
     await expect(mgrWith().create("ds-agent", "/tmp/w")).rejects.toThrow(/未配置凭证/)
   })
 
-  it("报错点名是哪个 endpoint", async () => {
-    await expect(mgrWith().create("ds-agent", "/tmp/w")).rejects.toThrow(/"ds"/)
+  it("报错点名是哪个 provider", async () => {
+    await expect(mgrWith().create("ds-agent", "/tmp/w")).rejects.toThrow(/"deepseek"/)
   })
 
-  it("凭证解析器能补上 —— app 的凭证库从这里注入", async () => {
-    const mgr = mgrWith({ resolveCredential: (id) => (id === "ds" ? "sk-from-store" : undefined) })
+  it("凭证已配置时放行 —— app 的凭证库从这里回答有无", async () => {
+    const mgr = mgrWith({ hasCredential: (id: string) => id === "deepseek" })
     const s = await mgr.create("ds-agent", "/tmp/w")
     expect(s.agentId).toBe("ds-agent")
   })
 
-  it("配置里写死的 apiKey 优先于解析器 —— 显式配置不被悄悄覆盖", async () => {
-    let seen: string | undefined
-    const rt: AgentRuntime = {
-      start: async (spec) => {
-        seen = spec.endpoint?.apiKey
-        return { sessionId: spec.sessionId, pid: 1 }
-      },
-      attach: () => () => {}, write: () => {}, stop: async () => {},
-    }
-    const db = new Database(":memory:"); migrate(db)
-    const mgr = new SessionManager({
-      store: new SessionStore(db),
-      registry: {
-        endpoints: { ds: { baseUrl: "https://x/v1", apiKey: "sk-from-config", models: ["m"] } },
-        agents: { a: { kind: "native", endpoint: "ds", model: "m", capabilities: [] } },
-      },
-      runtimes: { native: rt, pty: rt },
-      resolveCredential: () => "sk-from-store",
-      workspaceRoot: "/tmp/x",
-    })
-    await mgr.create("a", "/tmp/w")
-    expect(seen).toBe("sk-from-config")
-  })
+  // 「配置里写死的 apiKey 优先于解析器」一条已删除：
+  // 返工 R2 之后配置文件里根本没有 apiKey 字段，凭证只有一个来源（app 的凭证库）。
+  // **少一个来源就少一处「谁覆盖谁」的规则要记。**
 
   it("pty agent 不需要凭证，缺了也能起 —— 它用的是自己的登录态", async () => {
     const s = await mgrWith().create("claude-code", "/tmp/w")

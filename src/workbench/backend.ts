@@ -17,11 +17,16 @@ import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../proj
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionEventHub } from "./events.js"
 
-/** 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。 */
+/**
+ * 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。
+ *
+ * **2026-08-08 返工 R2：键从 endpointId 改为 providerId。**
+ * 配置里已经没有 endpoints 段了，凭证按 pi 的 provider 存。
+ */
 export interface CredentialsPort {
-  get(endpointId: string): string | undefined
-  set(endpointId: string, secret: string): void
-  delete(endpointId: string): void
+  get(providerId: string): string | undefined
+  set(providerId: string, secret: string): void
+  delete(providerId: string): void
   configured(): string[]
   isEncrypted(): boolean
 }
@@ -36,10 +41,12 @@ export interface WorkbenchBackendOptions {
   registry: ProviderRegistry
   /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
   events: SessionEventHub
+  /** 凭证变更后让 pi 侧缓存失效。不给则不失效（测试场景） */
+  invalidateCredentials?: (providerId: string) => void
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -53,20 +60,34 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   return {
     listProjects: async () => projects.list(),
 
-    /** **不回传任何凭证**，只回传「配置里有没有写死 key」这个布尔 */
-    getProviders: async () => ({
-      agents: Object.entries(registry.agents).map(([agentId, def]) => ({
-        agentId,
-        kind: def.kind,
-        ...(def.kind === "native" ? { endpoint: def.endpoint, model: def.model } : { command: def.command }),
-      })),
-      endpoints: Object.entries(registry.endpoints).map(([endpointId, ep]) => ({
-        endpointId,
-        baseUrl: ep.baseUrl,
-        models: ep.models,
-        hasKeyInConfig: ep.apiKey !== undefined,
-      })),
-    }),
+    /**
+     * 界面要列出可选 agent 才能新建会话，要列出 provider 才能填凭证。
+     *
+     * **2026-08-08 返工 R2**：`endpoints` 段没了，改为回传**本配置实际用到的
+     * provider 集合**——不是 pi 内置的全部 39 个。理由：设置界面该问的是
+     * 「你声明要用的这些 provider，凭证配了吗」，而不是把 39 个都列出来让人挑。
+     *
+     * **不回传任何凭证**。
+     */
+    getProviders: async () => {
+      const nativeAgents = Object.values(registry.agents).filter(
+        (d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native",
+      )
+      const used = [...new Set(nativeAgents.map((d) => d.provider))].sort()
+      return {
+        agents: Object.entries(registry.agents).map(([agentId, def]) => ({
+          agentId,
+          kind: def.kind,
+          ...(def.kind === "native"
+            ? { provider: def.provider, model: def.model }
+            : { command: def.command }),
+        })),
+        providers: used.map((providerId) => ({
+          providerId,
+          models: [...new Set(nativeAgents.filter((d) => d.provider === providerId).map((d) => d.model))],
+        })),
+      }
+    },
 
     /** **只回报配没配，绝不回报凭证本身**——界面不需要知道值 */
     listCredentials: async () => ({
@@ -74,13 +95,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       encrypted: credentials.isEncrypted(),
     }),
 
-    setCredential: async ({ endpointId, secret }) => {
-      credentials.set(endpointId, secret)
+    setCredential: async ({ providerId, secret }) => {
+      credentials.set(providerId, secret)
+      // 凭证变了必须让 pi 侧的缓存失效，否则刚填的 key 不会生效
+      // （缓存的存在理由见 credential-store.ts：一次会话 202 次 read）
+      invalidateCredentials?.(providerId)
       return {}
     },
 
-    deleteCredential: async ({ endpointId }) => {
-      credentials.delete(endpointId)
+    deleteCredential: async ({ providerId }) => {
+      credentials.delete(providerId)
+      invalidateCredentials?.(providerId)
       return {}
     },
 

@@ -1,31 +1,25 @@
-# DAWN Science —— provider 注册表示例
+# DAWN Science —— agent 注册表
 #
-# 用法：cp providers.example.yaml providers.yaml
-# apiKey 里的 ${VAR} 会从环境变量展开，凭证放 .env（见 .env.example），不要写在这里。
+# **这里不放凭证。** API key 在 app 的设置界面里填，由 OS 安全存储加密。
+# 也不放 baseUrl 与模型清单——pi-ai 内置 39 个 provider 并自带模型目录，
+# 手写那些等于自建 provider 抽象（规格 §4 非目标清单明令不做）。
 #
-# 模型 id 必须钉具体版本：Spike A 实测 pi 内置的 deepseek provider 只认
+# provider 必须是 pi 认识的 id，写错会在启动时报错并列出可选项。
+# model 必须钉具体版本：Spike A 实测 pi 的 deepseek provider 只认
 # deepseek-v4-flash / deepseek-v4-pro，别名 deepseek-chat 不在其注册表内；
-# 且指向会漂移的别名与本项目「可追溯」的核心主张冲突。见 spikes/FINDINGS.md。
-
-endpoints:
-  deepseek:
-    baseUrl: https://api.deepseek.com/v1
-    apiKey: ${DEEPSEEK_API_KEY}
-    models:
-      - deepseek-v4-flash
-      - deepseek-v4-pro
+# 且指向会漂移的别名与本项目「可追溯」的核心主张冲突。
 
 agents:
-  # 进程内跑 pi 的 agentLoop，直连模型服务
+  # 进程内跑 pi 的编码 agent（read / bash / edit / write / grep / find / ls）
   ds-chat:
     kind: native
-    endpoint: deepseek
+    provider: deepseek
     model: deepseek-v4-flash
     capabilities: [exec, chat]
 
   ds-pro:
     kind: native
-    endpoint: deepseek
+    provider: deepseek
     model: deepseek-v4-pro
     capabilities: [exec, chat]
 

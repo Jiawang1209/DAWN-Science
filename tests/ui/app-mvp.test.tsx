@@ -96,8 +96,8 @@ function harness(over: { projects?: unknown[]; runs?: unknown[]; pick?: string |
         return { configured: ["ds"], encrypted: true }
       case "getProviders":
         return {
-          agents: [{ agentId: "ds-chat", kind: "native", endpoint: "ds", model: "m" }],
-          endpoints: [{ endpointId: "ds", baseUrl: "https://x", models: ["m"], hasKeyInConfig: false }],
+          agents: [{ agentId: "ds-chat", kind: "native", provider: "deepseek", model: "m" }],
+          providers: [{ providerId: "deepseek", models: ["m"] }],
         }
       case "listSessions":
         return sessions

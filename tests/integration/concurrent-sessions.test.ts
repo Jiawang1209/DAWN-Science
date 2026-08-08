@@ -18,14 +18,11 @@ import type { ProviderRegistry } from "../../src/config/schema.js"
 import type { AgentEvent } from "../../src/runtime/types.js"
 
 const registry: ProviderRegistry = {
-  endpoints: {
-    ds: { baseUrl: "https://api.deepseek.com/v1", apiKey: "sk-test", models: ["deepseek-v4-flash"] },
-  },
   agents: {
     "sh-a": { kind: "pty", command: "bash", args: ["--norc", "--noprofile"], capabilities: ["exec"] },
     "sh-b": { kind: "pty", command: "bash", args: ["--norc", "--noprofile"], capabilities: ["exec"] },
     "sh-c": { kind: "pty", command: "sh", args: [], capabilities: ["exec"] },
-    "ds-agent": { kind: "native", endpoint: "ds", model: "deepseek-v4-flash", capabilities: ["chat"] },
+    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
   },
 }
 

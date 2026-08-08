@@ -17,16 +17,16 @@ export interface CredentialState {
 }
 
 export function SettingsPanel({
-  endpoints,
+  providers,
   credentials,
   onSet,
   onDelete,
 }: {
-  /** 配置里声明的所有 endpoint id */
-  endpoints: string[]
+  /** 本配置实际用到的 provider id（pi 的 provider，如 deepseek / anthropic） */
+  providers: string[]
   credentials: CredentialState
-  onSet: (endpointId: string, secret: string) => void
-  onDelete: (endpointId: string) => void
+  onSet: (providerId: string, secret: string) => void
+  onDelete: (providerId: string) => void
 }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({})
 
@@ -42,11 +42,11 @@ export function SettingsPanel({
           </p>
         )}
 
-        {endpoints.length === 0 ? (
-          <p className="empty">providers.yaml 里还没有声明任何 endpoint</p>
+        {providers.length === 0 ? (
+          <p className="empty">providers.yaml 里还没有声明任何 native agent</p>
         ) : (
           <ul className="cred-list">
-            {endpoints.map((id) => {
+            {providers.map((id) => {
               const isSet = credentials.configured.includes(id)
               return (
                 <li key={id} className="cred">

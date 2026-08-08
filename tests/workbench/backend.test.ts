@@ -18,11 +18,8 @@ import { WorkbenchServer } from "../../src/workbench/server.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
 
 const registry: ProviderRegistry = {
-  endpoints: {
-    ds: { baseUrl: "https://api.deepseek.com/v1", apiKey: "k", models: ["deepseek-v4-flash"] },
-  },
   agents: {
-    "ds-chat": { kind: "native", endpoint: "ds", model: "deepseek-v4-flash", capabilities: ["chat"] },
+    "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
   },
 }
 

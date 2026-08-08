@@ -1,13 +1,21 @@
 /**
- * Provider 注册表的类型与校验（实施计划 Task 1.1）。
+ * Provider 注册表的类型与校验。
  *
- * 两段式结构，刻意把「连哪个服务」与「哪个 agent」分开：
- *   endpoints —— 模型服务的连接信息（baseUrl / apiKey / 可用模型）
- *   agents    —— 具体的 agent 定义，native 引用某个 endpoint，pty 直接起一个命令
- * 好处是多个 agent 可共用一份凭证，换 key 只改一处。
+ * **2026-08-08 返工 R2：删掉 `endpoints` 段。**
  *
- * 这里用 zod。注意与工具 schema 的分工：**zod 管配置校验，TypeBox 管 agent 工具 schema**
- * （pi 的 AgentTool 要求 TSchema）。两者并存，不做转换。见 spikes/FINDINGS.md · Spike A。
+ * 原设计是两段式——`endpoints`（baseUrl + apiKey + models 清单）与 `agents`。
+ * 它要求用户手写模型服务的连接信息，**那是自建 LLM provider 抽象**，
+ * 正是规格 §4 非目标清单里明令不做的一条。
+ *
+ * pi-ai 内置 39 个 provider，各自带 baseUrl、API 形态与生成的模型目录。
+ * 配置只需说「用哪个 provider 的哪个模型」，连接细节交给 pi。
+ * 顺带修好的两件事：
+ *   - **anthropic / google 的原生 API 现在走得通**——旧实现写死 `openAICompletionsApi()`
+ *   - **模型目录不必手维护**——旧配置里 models 清单要人跟着 provider 一起更新
+ *
+ * 凭证按 **provider** 存（原来按 endpoint），由 app 的凭证库管，配置文件里不出现。
+ *
+ * 这里用 zod。与工具 schema 的分工不变：**zod 管配置校验，TypeBox 管 agent 工具 schema**。
  */
 import { z } from "zod"
 
@@ -15,48 +23,48 @@ import { z } from "zod"
 export const CapabilitySchema = z.enum(["fs_write", "exec", "mcp", "hooks", "chat"])
 export type Capability = z.infer<typeof CapabilitySchema>
 
-export const EndpointSchema = z.object({
-  baseUrl: z.url(),
-  /**
-   * 凭证。**可选**——桌面应用里凭证由 app 自己管（Electron safeStorage），
-   * 不该要求用户手写进配置文件；配置只声明「有哪些服务」。
-   *
-   * 若这里写了 `${ENV_VAR}` 且该变量存在，loader 会展开；
-   * **变量不存在时本字段被丢弃而非留下占位符**——占位符会被当成真 key 发到网络上。
-   * 解析不到时，凭证在建会话时从 app 的凭证库取；仍然没有则那时报错，
-   * 因为那才是需要它的时刻，报错也才有可操作性。
-   */
-  apiKey: z.string().min(1).optional(),
-  /**
-   * 必须钉具体版本的 model id。Spike A 实测：pi 的 deepseek provider 只认
-   * deepseek-v4-flash / deepseek-v4-pro，别名 deepseek-chat 不在注册表内。
-   * 且指向会漂移的别名与本项目「可追溯」的核心主张冲突。
-   */
-  models: z.array(z.string().min(1)).min(1),
-})
-export type Endpoint = z.infer<typeof EndpointSchema>
-
-/** 进程内跑 pi 的 agentLoop，通过 endpoint 直连模型服务。 */
-const NativeAgentSchema = z.object({
-  kind: z.literal("native"),
-  endpoint: z.string().min(1),
-  model: z.string().min(1),
-  capabilities: z.array(CapabilitySchema),
-})
+/**
+ * 进程内跑 pi 的编码 agent，直连 pi 内置 provider。
+ *
+ * `provider` 必须是 pi 认识的 id（`knownProviders()`），**由 loader 在加载期校验**——
+ * 拼错一个 provider 名不该留到建会话时才崩。
+ */
+const NativeAgentSchema = z
+  .object({
+    kind: z.literal("native"),
+    /** pi 的内置 provider id，如 deepseek / anthropic / openai */
+    provider: z.string().min(1),
+    /**
+     * 必须钉具体版本的 model id。Spike A 实测：pi 的 deepseek provider 只认
+     * deepseek-v4-flash / deepseek-v4-pro，别名 deepseek-chat 不在注册表内。
+     * 且指向会漂移的别名与本项目「可追溯」的核心主张冲突。
+     */
+    model: z.string().min(1),
+    capabilities: z.array(CapabilitySchema),
+  })
+  .strict()
 
 /** 在 PTY 里起一个外部 CLI（claude / codex 等），我方只管进程与隔离配置。 */
-const PtyAgentSchema = z.object({
-  kind: z.literal("pty"),
-  command: z.string().min(1),
-  args: z.array(z.string()).default([]),
-  capabilities: z.array(CapabilitySchema),
-})
+const PtyAgentSchema = z
+  .object({
+    kind: z.literal("pty"),
+    command: z.string().min(1),
+    args: z.array(z.string()).default([]),
+    capabilities: z.array(CapabilitySchema),
+  })
+  .strict()
 
 export const AgentDefSchema = z.discriminatedUnion("kind", [NativeAgentSchema, PtyAgentSchema])
 export type AgentDef = z.infer<typeof AgentDefSchema>
 
-export const ProviderRegistrySchema = z.object({
-  endpoints: z.record(z.string(), EndpointSchema),
-  agents: z.record(z.string(), AgentDefSchema),
-})
+/**
+ * `.strict()`：**多余的顶层段一律拒绝**。
+ * 这条不是洁癖——旧配置里的 `endpoints` 若被静默忽略，用户会以为它还生效，
+ * 而实际上凭证与 baseUrl 全都没被读。**失败必须出声（规格 7.5）。**
+ */
+export const ProviderRegistrySchema = z
+  .object({
+    agents: z.record(z.string(), AgentDefSchema),
+  })
+  .strict()
 export type ProviderRegistry = z.infer<typeof ProviderRegistrySchema>

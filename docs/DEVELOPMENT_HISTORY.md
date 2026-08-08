@@ -43,10 +43,28 @@
 
 ## 变更日志
 
+### 2026-08-08 — R2：native runtime 与配置层重写，agent 终于能干活了
+
+- **Type**: refactor
+- **Commit**: 待回填
+- **Motivation**: 返工 R 的主体。旧 `native.ts` 坐在第二层最底下——裸 `Agent` + 手搓 `createProvider({baseUrl, api: openAICompletionsApi()})` + **`tools: []`**。
+- **What**:
+  - **`runtime/native.ts` 整体重写**，改用 `createAgentSession()`。内置工具（read/bash/edit/write）默认开启，provider 与模型目录来自 pi-ai 的 39 个内置。**全进程共享一个 `ModelRuntime`**——Spike A-2 实测单次会话 `credentials.read()` 被调 202 次，每会话各建一个就会把这个代价乘以会话数。
+  - **配置层删掉 `endpoints` 段**。原两段式要求用户手写 baseUrl 与 models 清单，那是自建 provider 抽象。现在 native agent 只写 `provider` + `model`，**provider 的合法性在加载期校验并列出可选项**。`ProviderRegistrySchema` 加 `.strict()`：**旧配置里的 `endpoints` 若被静默忽略，用户会以为它还生效**——失败必须出声。
+  - **`${ENV}` 展开逻辑整体删除**（含「未解析即丢弃」那套）。配置文件里已经没有凭证字段，它服务的需求不存在了。CLI 的凭证改由 pi 的 `getEnvApiKey()` 认 `DEEPSEEK_API_KEY` 这类既有环境变量。
+  - **新增 `workbench/credential-store.ts`**：DAWN 凭证库 → pi 的 `CredentialStore`。**必须带缓存**，直接透传会触发 202 次 keychain 解密，macOS 还可能弹权限提示；「没有」也要缓存，未配置的 provider 占了这 202 次的大多数；**抛错不缓存**，一次瞬时故障不该被永久记住。设置界面改完凭证要 `invalidate`，否则刚填的 key 读不到。
+  - **`AgentEvent` 新增 `tool_start` / `tool_end`**。①-B 的界面「看不见 agent 在干什么」，根因之一就是 runtime 只转发文本增量，工具调用整个被丢掉。
+  - **授权门的接线就位**（`NativeRuntimeOptions.gate`）：给出时切到 `noTools:"builtin"` + 包装过的 `customTools`。**机制先接上而不是留个 TODO**——这次返工的教训正是「spike 验过的东西没进实现」。
+  - 凭证键从 `endpointId` 改为 `providerId`（协议、后端、UI、设置界面同步）；`SessionManager.resolveCredential` 改为 `hasCredential`——**管理器只问有无，不经手凭证明文**，取值发生在 pi 内部。
+- **Impact**: **验收通过**：真实对话里 agent 读出了文件里的暗号（`DAWN-R2-7bc4`），`touch` 出的文件真的存在于工作目录。返工前这两件事一件都做不了。anthropic / google 的原生 API 现在也走得通。
+- **删掉的一条测试值得记**：「配置里写死的 apiKey 优先于解析器」——配置里已经没有 apiKey 字段，凭证只剩一个来源。**少一个来源就少一处「谁覆盖谁」的规则要记。**
+- **验收时踩到的一个坑**：第一次用 `npm --prefix` 跑，cwd 停在仓库根目录，**agent 于是把文件建进了本仓库**。是我的调用方式错，不是代码缺陷——但它说明 **agent 的 cwd 就是它能改的范围**，工作区路径与配置路径必须分离（CLI 已分离：`DAWN_CONFIG` 独立于 cwd）。
+- **Verification**: 437 passed（配置层新增 8 条、凭证适配器新增 11 条；`native.test.ts` 八条旧用例随实现作废、重写为 6 条离线契约用例），typecheck 零错误，`npm run build` 通过，真实对话端到端验收通过（判据为副作用，非模型自述）。
+
 ### 2026-08-08 — Spike A-2 补场景 2：授权门改走包装工具，取消 asar 风险
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `3b6789d`
 - **Motivation**: R1 留下一条高危遗留——pi 的扩展只能从 `<agentDir>/extensions/*.ts` 加载并靠 jiti 运行时转译 TypeScript，**打包进 Electron（asar）后是否还通无法先验断言**。而授权门若在生产构建里静默失效，比根本没有还危险：开发时一切正常，打包后拦不住任何东西。
 - **What**: 给 spike 加场景 2（判据由 10 项增至 14 项）。**解法不是去验证那条路，是不依赖它**——工具定义工厂（`createBashToolDefinition` 等）全部从包入口导出，包装其 `execute` 再经 `customTools` 传回，不碰文件系统、不碰转译器、不受打包影响。
 - **两处实测要点**：

@@ -24,8 +24,14 @@ export interface SessionSpec {
   workspace: string
   /** per-session 隔离配置目录，绝不使用用户全局配置 */
   sessionDir: string
-  /** 仅 native runtime 使用 */
-  endpoint?: { baseUrl: string; apiKey: string; model: string }
+  /**
+   * 仅 native runtime 使用：pi 的 provider id 与 model id。
+   *
+   * **2026-08-08 返工 R2**：原来是 `{ baseUrl, apiKey, model }`——那要求上层
+   * 自己知道服务地址并持有凭证，是自建 provider 抽象的残留。
+   * 现在只说「哪个 provider 的哪个模型」，连接与凭证解析都交给 pi。
+   */
+  native?: { provider: string; model: string }
   /** 注入给该会话的 MCP server（阶段③ 才会非空） */
   mcpServers?: McpServerSpec[]
 }
@@ -46,6 +52,23 @@ export type AgentEvent =
    * 对话气泡时只能猜。轮次边界是语义，不能编码进正文。
    */
   | { kind: "turn_end"; sessionId: SessionId }
+  /**
+   * agent 正在用一个工具。**只有 native 会发**——PTY 里工具调用发生在
+   * 我们看不见的进程内部（规格 7.33 的可见性分级：PTY 的 `provenanceComplete` 为 false）。
+   *
+   * 2026-08-08 新增。①-B 的界面「看不见 agent 在干什么」，根因之一就是
+   * runtime 层只转发了文本增量，工具调用整个被丢掉了。
+   */
+  | { kind: "tool_start"; sessionId: SessionId; toolCallId: string; toolName: string; input: unknown }
+  | {
+      kind: "tool_end"
+      sessionId: SessionId
+      toolCallId: string
+      toolName: string
+      isError: boolean
+      /** 结果正文（已截断）。完整结果留在 pi 的会话记录里 */
+      text: string
+    }
   | { kind: "exited"; sessionId: SessionId; exitCode: number }
 
 export type EventSink = (event: AgentEvent) => void

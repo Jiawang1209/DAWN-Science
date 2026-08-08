@@ -180,18 +180,20 @@ export const OPERATIONS = {
         z.object({
           agentId: z.string(),
           kind: z.enum(["native", "pty"]),
-          endpoint: z.string().optional(),
+          /** native：pi 的 provider id */
+          provider: z.string().optional(),
           model: z.string().optional(),
           command: z.string().optional(),
         }),
       ),
-      endpoints: z.array(
+      /**
+       * **本配置实际用到的 provider**，不是 pi 内置的全部 39 个。
+       * 设置界面该问的是「你声明要用的这些，凭证配了吗」。
+       */
+      providers: z.array(
         z.object({
-          endpointId: z.string(),
-          baseUrl: z.string(),
+          providerId: z.string(),
           models: z.array(z.string()),
-          /** 配置文件里是否写死了 key。凭证本身绝不回传 */
-          hasKeyInConfig: z.boolean(),
         }),
       ),
     }),
@@ -277,14 +279,15 @@ export const OPERATIONS = {
   },
   setCredential: {
     request: z.object({
-      endpointId: z.string().min(1),
+      /** pi 的 provider id。**2026-08-08 由 endpointId 改名**——凭证按 provider 存 */
+      providerId: z.string().min(1),
       secret: z.string().min(1),
     }),
     response: Empty,
     mutating: true,
   },
   deleteCredential: {
-    request: z.object({ endpointId: z.string().min(1) }),
+    request: z.object({ providerId: z.string().min(1) }),
     response: Empty,
     mutating: true,
   },

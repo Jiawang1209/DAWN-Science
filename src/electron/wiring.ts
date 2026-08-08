@@ -19,6 +19,7 @@ import { NativeRuntime } from "../runtime/native.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
+import { createPiCredentialStore } from "../workbench/credential-store.js"
 import { SessionEventHub } from "../workbench/events.js"
 import { WorkbenchServer } from "../workbench/server.js"
 
@@ -34,11 +35,6 @@ export const DEFAULT_EVENT_BUFFER_CHARS = 200_000
 export interface CreateWorkbenchOptions {
   configPath: string
   dbPath: string
-  /**
-   * 用于展开配置里的 `${ENV}`。**显式传入而非直接读 `process.env`**——
-   * 装配层偷偷读全局状态会让测试无法隔离，也让「这个 key 从哪来」变得不可追。
-   */
-  env?: Record<string, string | undefined>
   readOnly?: boolean
   onInternalError?: (operation: string, err: unknown) => void
   /** 凭证库。**app 自己管凭证**，不要求用户手写进配置文件 */
@@ -59,7 +55,7 @@ export interface Workbench {
 }
 
 export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
-  const registry = loadRegistry(opts.configPath, opts.env ?? process.env)
+  const registry = loadRegistry(opts.configPath)
 
   mkdirSync(dirname(opts.dbPath), { recursive: true })
   const db = new Database(opts.dbPath)
@@ -69,10 +65,16 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const sessionStore = new SessionStore(db)
   const runStore = new RunStore(db)
 
+  // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
+  const piCredentials = createPiCredentialStore(opts.credentials)
+
   const sessions = new SessionManager({
     store: sessionStore,
     registry,
-    runtimes: { native: new NativeRuntime(), pty: new PtyRuntime({ command: "sh" }) },
+    runtimes: {
+      native: new NativeRuntime({ credentials: piCredentials }),
+      pty: new PtyRuntime({ command: "sh" }),
+    },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime
     ptyRuntimeFor: (_id: string, def: PtyAgentDef) => {
       const family = familyOf(def.command)
@@ -82,8 +84,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         ...(family ? { family } : {}),
       })
     },
-    // 凭证在建会话时才解析——配置里没写的从凭证库取
-    resolveCredential: (endpointId) => opts.credentials.get(endpointId),
+    // 只问有无，取值由 pi 内部经 piCredentials 完成
+    hasCredential: (providerId) => opts.credentials.configured().includes(providerId),
     workspaceRoot: process.cwd(),
   })
 
@@ -103,6 +105,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const backend = createWorkbenchBackend({
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
+    // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
+    invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),
   })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),

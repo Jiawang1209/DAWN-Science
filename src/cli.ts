@@ -57,7 +57,7 @@ function makeManager(registry: ProviderRegistry, store: SessionStore, fake = fal
     registry,
     runtimes: fake
       ? { native: fakeRt, pty: fakeRt }
-      : { native: new NativeRuntime(), pty: new PtyRuntime({ command: "sh" }) },
+      : { native: new NativeRuntime(), pty: new PtyRuntime({ command: "sh" }) },  // CLI 的凭证走 pi 默认（环境变量 / ~/.pi）
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime
     ...(fake
       ? {}
@@ -85,12 +85,15 @@ function cmdAgents(): void {
     Object.entries(reg.agents).map(([id, def]) => ({
       agent: id,
       kind: def.kind,
-      目标: def.kind === "native" ? `${def.endpoint} / ${def.model}` : [def.command, ...def.args].join(" "),
+      目标: def.kind === "native" ? `${def.provider} / ${def.model}` : [def.command, ...def.args].join(" "),
       家族: def.kind === "pty" ? (familyOf(def.command) ?? "（无隔离配置）") : "—",
       capabilities: def.capabilities.join(","),
     })),
   )
-  console.log(`endpoints：${Object.keys(reg.endpoints).join(", ") || "（无）"}`)
+  const providers = [
+    ...new Set(Object.values(reg.agents).flatMap((d) => (d.kind === "native" ? [d.provider] : []))),
+  ]
+  console.log(`用到的 provider：${providers.join(", ") || "（无）"}`)
 }
 
 function cmdSessions(): void {

@@ -30,13 +30,13 @@ export interface SessionManagerOptions {
    */
   ptyRuntimeFor?: (agentId: string, def: PtyAgentDef) => AgentRuntime
   /**
-   * 按 endpoint 取凭证。**app 的凭证库从这里注入**（Electron safeStorage）。
+   * 某个 provider 配没配凭证。**只问有无，不取值**——
+   * 真正的取值发生在 pi 内部（`ModelRuntime` 持有我们的 `CredentialStore`），
+   * 会话管理器不该经手凭证明文。
    *
-   * 配置里写死的 `apiKey` 优先于本解析器——显式配置不该被悄悄覆盖。
-   * 两者都拿不到时在 `create()` 报错，而不是在加载配置时：
-   * **桌面应用不该因为缺凭证就起不来**，但也不该带着空 key 去发请求。
+   * 不注入时不做检查（CLI 与测试场景）。
    */
-  resolveCredential?: (endpointId: string) => string | undefined
+  hasCredential?: (providerId: string) => boolean
   workspaceRoot: string
   leaseTtlSeconds?: number
 }
@@ -47,7 +47,7 @@ export class SessionManager {
   private readonly registry: ProviderRegistry
   private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime }
   private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
-  private readonly resolveCredential: ((endpointId: string) => string | undefined) | undefined
+  private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
   private readonly bound = new Map<SessionId, AgentRuntime>()
 
@@ -56,7 +56,7 @@ export class SessionManager {
     this.registry = opts.registry
     this.runtimes = opts.runtimes
     this.ptyRuntimeFor = opts.ptyRuntimeFor
-    this.resolveCredential = opts.resolveCredential
+    this.hasCredential = opts.hasCredential
     this.leases = new LeaseManager({ ttlSeconds: opts.leaseTtlSeconds ?? 300 })
   }
 
@@ -88,20 +88,17 @@ export class SessionManager {
 
     const spec: SessionSpec = { sessionId: id, workspace, sessionDir }
     if (def.kind === "native") {
-      // 引用完整性已由 config/loader 的 assertReferences 在加载期保证，此处必然存在
-      const ep = this.registry.endpoints[def.endpoint]!
-      // 配置里写死的优先——显式配置不该被凭证库悄悄覆盖
-      const apiKey = ep.apiKey ?? this.resolveCredential?.(def.endpoint)
-      if (!apiKey) {
-        // 这里是失败的正确时机：真正要用凭证的时刻，且报错能指出去哪配。
+      // 凭证的有无在这里检查，而不是加载配置时：**桌面应用不该因为还没填 key 就起不来**，
+      // 但也不该带着空 key 去发请求。这里是真正要用它的时刻，报错也才有可操作性。
+      if (this.hasCredential && !this.hasCredential(def.provider)) {
         // 已落库的记录要收尾，不能留在 starting
         this.store.updateState(id, "exited", { exitCode: -1 })
         throw new Error(
-          `endpoint "${def.endpoint}" 未配置凭证——请在设置里填写它的 API key，` +
-            `或在 providers.yaml 中为它写明 apiKey`,
+          `provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`,
         )
       }
-      spec.endpoint = { baseUrl: ep.baseUrl, apiKey, model: def.model }
+      // provider 的合法性已由 config/loader 的 assertProviders 在加载期保证
+      spec.native = { provider: def.provider, model: def.model }
     }
 
     const runtime =

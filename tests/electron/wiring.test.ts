@@ -36,15 +36,10 @@ function configFile(): string {
   const file = join(dir, "providers.yaml")
   writeFileSync(
     file,
-    `endpoints:
-  ds:
-    baseUrl: https://api.deepseek.com/v1
-    apiKey: \${TEST_KEY}
-    models: [deepseek-v4-flash]
-agents:
+    `agents:
   ds-chat:
     kind: native
-    endpoint: ds
+    provider: deepseek
     model: deepseek-v4-flash
     capabilities: [chat]
 `,
@@ -64,7 +59,6 @@ describe("createWorkbench", () => {
     const wb = createWorkbench({
       configPath: configFile(),
       dbPath: newDbPath(),
-      env: { TEST_KEY: "sk-x" },
       credentials: memoryCredentials(),
     })
     cleanups.push(() => wb.close())
@@ -74,7 +68,7 @@ describe("createWorkbench", () => {
 
   it("数据库文件被真正创建", () => {
     const dbPath = newDbPath()
-    const wb = createWorkbench({ configPath: configFile(), dbPath, env: { TEST_KEY: "sk-x" }, credentials: memoryCredentials() })
+    const wb = createWorkbench({ configPath: configFile(), dbPath, credentials: memoryCredentials() })
     cleanups.push(() => wb.close())
     expect(existsSync(dbPath)).toBe(true)
   })
@@ -83,7 +77,6 @@ describe("createWorkbench", () => {
     const wb = createWorkbench({
       configPath: configFile(),
       dbPath: newDbPath(),
-      env: { TEST_KEY: "sk-x" },
       credentials: memoryCredentials(),
     })
     cleanups.push(() => wb.close())
@@ -99,7 +92,7 @@ describe("createWorkbench", () => {
 
   it("缺凭证时仍然起得来 —— 桌面应用不该因为配置里少个变量就打不开", () => {
     const wb = createWorkbench({
-      configPath: configFile(), dbPath: newDbPath(), env: {}, credentials: memoryCredentials(),
+      configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials(),
     })
     cleanups.push(() => wb.close())
     expect(wb.server).toBeDefined()
@@ -107,14 +100,14 @@ describe("createWorkbench", () => {
 
   it("配置文件不存在时响亮报错", () => {
     expect(() =>
-      createWorkbench({ configPath: "/nonexistent/providers.yaml", dbPath: newDbPath(), env: {}, credentials: memoryCredentials() }),
+      createWorkbench({ configPath: "/nonexistent/providers.yaml", dbPath: newDbPath(), credentials: memoryCredentials() }),
     ).toThrow()
   })
 
   it("启动时执行对账，并把修正条数报出来", () => {
     const dbPath = newDbPath()
     const cfg = configFile()
-    const first = createWorkbench({ configPath: cfg, dbPath, env: { TEST_KEY: "sk-x" }, credentials: memoryCredentials() })
+    const first = createWorkbench({ configPath: cfg, dbPath, credentials: memoryCredentials() })
     // 手工塞一条残留的 alive 记录，模拟上次进程没走干净
     first.db
       .prepare(
@@ -124,13 +117,13 @@ describe("createWorkbench", () => {
       .run()
     first.close()
 
-    const second = createWorkbench({ configPath: cfg, dbPath, env: { TEST_KEY: "sk-x" }, credentials: memoryCredentials() })
+    const second = createWorkbench({ configPath: cfg, dbPath, credentials: memoryCredentials() })
     cleanups.push(() => second.close())
     expect(second.reconciled).toBe(1)
   })
 
   it("close 之后数据库句柄被释放，可重复调用", () => {
-    const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), env: { TEST_KEY: "sk-x" }, credentials: memoryCredentials() })
+    const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
     expect(() => wb.close()).not.toThrow()
     expect(() => wb.close()).not.toThrow()
   })

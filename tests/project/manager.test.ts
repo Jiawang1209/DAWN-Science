@@ -97,7 +97,6 @@ describe("ProjectManager · 查询", () => {
       sessions: ctx.sessions,
       runs: ctx.runs,
       registry: {
-        endpoints: {},
         agents: { "claude-code": { kind: "pty", command: "claude", args: [], capabilities: [] } },
       },
     })

@@ -203,8 +203,8 @@ pi 的是连接级互斥，没有 holder 身份、没有抢占语义。
 | 批次 | 内容 | 验收 |
 |---|---|---|
 | **R1** ✅ | Spike A-2：验证第三层接口 | **已完成 2026-08-08，GR 门十项全过**，见 `spikes/FINDINGS.md` 的 Spike A-2 一节 |
-| **R2** | 重写 `native.ts` + 配置层 | 一次真实对话里 agent 能读文件、能跑命令 |
-| **R3** | 凭证换 backend | 设置里填 key，仍由 safeStorage 加密 |
+| **R2** ✅ | 重写 `native.ts` + 配置层 | **已完成 2026-08-08**：真实对话里 agent 读出了文件里的暗号、`touch` 出的文件真的存在 |
+| **R3** ◐ | 凭证换 `CredentialStore` | **适配器已随 R2 落地**（含缓存）；剩「设置界面改完立即生效」的真机验证 |
 | **R4** | 协议与事件通道改 snapshot + revision | 切会话重放正确；补 steer / abort |
 | **R5** | UI 接上工具调用的显示 | 看得见 agent 在做什么 |
 

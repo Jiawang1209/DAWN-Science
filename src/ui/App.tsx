@@ -43,7 +43,7 @@ type RunDetail = RunSummary & { fileChanges?: FileChangeFacts; cost?: Cost }
 
 interface Providers {
   agents: { agentId: string; kind: "native" | "pty" }[]
-  endpoints: { endpointId: string }[]
+  providers: { providerId: string; models: string[] }[]
 }
 
 type View = "conversation" | "panel" | "settings"
@@ -59,7 +59,7 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
   /** 最新一个 Run 的详情。**产出与成本只有它带得来**——listRuns 只给摘要 */
   const [runDetail, setRunDetail] = useState<RunDetail | undefined>()
   const [provenance, setProvenance] = useState<ProvenanceLink | undefined>()
-  const [providers, setProviders] = useState<Providers>({ agents: [], endpoints: [] })
+  const [providers, setProviders] = useState<Providers>({ agents: [], providers: [] })
   const [creds, setCreds] = useState<CredentialState>({ configured: [], encrypted: false })
 
   const [projectId, setProjectId] = useState<string | undefined>()
@@ -304,13 +304,13 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
           {view === "settings" ? (
             <div className="panels">
               <SettingsPanel
-                endpoints={providers.endpoints.map((e) => e.endpointId)}
+                providers={providers.providers.map((p) => p.providerId)}
                 credentials={creds}
                 onSet={(id, secret) =>
-                  client.get("setCredential", { endpointId: id, secret }).then(refreshCreds).catch(fail)
+                  client.get("setCredential", { providerId: id, secret }).then(refreshCreds).catch(fail)
                 }
                 onDelete={(id) =>
-                  client.get("deleteCredential", { endpointId: id }).then(refreshCreds).catch(fail)
+                  client.get("deleteCredential", { providerId: id }).then(refreshCreds).catch(fail)
                 }
               />
             </div>
@@ -365,7 +365,7 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
 
       <div className="statusbar">
         <span>{ready ? "已连接" : "连接中…"}</span>
-        {creds.configured.length === 0 && providers.endpoints.length > 0 ? (
+        {creds.configured.length === 0 && providers.providers.length > 0 ? (
           <span className="caveat">未配置任何 API key——native agent 无法建会话，点「设置」填写</span>
         ) : null}
         {notes.map((n, i) => (

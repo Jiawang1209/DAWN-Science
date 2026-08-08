@@ -28,7 +28,19 @@ export {
   resetTranscript,
 } from "./transcript.js"
 
-export { $ready, $fatal, $notes, note } from "./connection.js"
+export {
+  $connection,
+  $ready,
+  $notes,
+  note,
+  connectStarted,
+  connectSucceeded,
+  connectFailed,
+  markStale,
+  fatalReason,
+  MAX_CONNECT_ATTEMPTS,
+  type ConnectionState,
+} from "./connection.js"
 
 export {
   $projects,
@@ -77,7 +89,7 @@ export {
 } from "./sync.js"
 
 import { $items, $terminal, $terminalTrimmed } from "./transcript.js"
-import { $fatal, $notes, $ready } from "./connection.js"
+import { $connection, $notes, $ready } from "./connection.js"
 import {
   $credentials,
   $projects,
@@ -106,8 +118,8 @@ import { invalidate as invalidateGeneration } from "./guard.js"
  * 那条路径也应当走这里，而不是各自 `set()` 一遍。
  */
 export function resetAllState(): void {
+  $connection.set({ phase: "connecting" })
   $ready.set(false)
-  $fatal.set(undefined)
   $notes.set([])
   $projects.set([])
   $sessions.set([])

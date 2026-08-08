@@ -27,18 +27,19 @@ import {
 } from "./views.js"
 import { SettingsPanel } from "./Settings.js"
 import { Button } from "./primitives.js"
+import { ConnectionSurface } from "./connection.js"
 import { createClient, type WorkbenchClient } from "./client.js"
 import {
   $activeProjectId,
   $activeSessionId,
   $credentials,
   $dockOpen,
-  $fatal,
   $items,
   $notes,
   $projects,
   $providers,
   $provenance,
+  $connection,
   $ready,
   $runDetail,
   $runs,
@@ -48,7 +49,11 @@ import {
   $view,
   appendBytes,
   applySnapshot,
+  connectFailed,
+  connectStarted,
+  connectSucceeded,
   fail,
+  fatalReason,
   loadCredentials,
   loadProjects,
   loadProviders,
@@ -85,7 +90,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 现在不需要了：atom 本来就是同步可读的。
    */
   const ready = useStore($ready)
-  const fatal = useStore($fatal)
+  const connection = useStore($connection)
   const notes = useStore($notes)
   const projects = useStore($projects)
   const sessions = useStore($sessions)
@@ -102,12 +107,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
 
-  useEffect(() => {
+  /**
+   * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
+   * 重试有界，用尽后给出真的能点的出路（见 state/connection.ts）。
+   */
+  const connect = useCallback(() => {
+    connectStarted()
     client
       .handshake()
-      .then(() => $ready.set(true))
-      .catch((e: unknown) => $fatal.set(e instanceof Error ? e.message : String(e)))
+      .then(connectSucceeded)
+      .catch((e: unknown) => connectFailed(e instanceof Error ? e.message : String(e)))
   }, [client])
+
+  useEffect(connect, [connect])
 
   useEffect(() => {
     if (!ready) return
@@ -220,20 +232,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client],
   )
 
-  if (fatal) {
+  // **只有 exhausted 才配得上占满全屏。** connecting/reconnecting/degraded
+  // 各有各的呈现，由 ConnectionSurface 决定——见它的文件头
+  if (connection.phase === "exhausted") {
     return (
       <div className="app-shell">
         <div className="topbar">
           <span className="brand">DAWN Science</span>
         </div>
-        <div className="panels">
-          <section className="panel">
-            <h3 className="panel-title">无法启动</h3>
-            <div className="panel-body">
-              <p className="caveat">{fatal}</p>
-            </div>
-          </section>
-        </div>
+        <ConnectionSurface onRetry={connect} onOpenSettings={() => setView("settings")} />
         <div className="statusbar" />
       </div>
     )
@@ -368,8 +375,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         </main>
       </div>
 
+      <ConnectionSurface onRetry={connect} onOpenSettings={() => setView("settings")} />
+
       <div className="statusbar">
-        <span>{ready ? "已连接" : "连接中…"}</span>
+        <span>{ready ? "已连接" : "未连接"}</span>
         {creds.configured.length === 0 && providers.providers.length > 0 ? (
           <span className="caveat">未配置任何 API key——native agent 无法建会话，点「设置」填写</span>
         ) : null}

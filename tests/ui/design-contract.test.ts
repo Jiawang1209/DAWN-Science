@@ -32,7 +32,7 @@ const tsxFiles = () => readdirSync(UI_DIR).filter((f) => f.endsWith(".tsx"))
  * 本文件第一版把 `primitives.tsx` 里一句解释「不要写字面加载中」的**注释**
  * 判成了违规——那会逼着规则的解释者不许提到规则本身。
  */
-const isComment = (line: string) => /^\s*(\/\/|\/\*|\*)/.test(line)
+const isComment = (line: string) => /^\s*(\/\/|\/\*|\*|\{\/\*)/.test(line)
 
 /** 逐行扫描并给出「行号: 内容」，报错时能直接跳过去 */
 function findLines(text: string, pred: (line: string) => boolean): string[] {

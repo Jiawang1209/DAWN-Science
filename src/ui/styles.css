@@ -385,3 +385,34 @@ pre {
 .cred-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
 .cred-form { display: flex; gap: 6px; align-items: flex-start; }
 .cred-form .field { flex: 1; margin-bottom: 0; }
+
+/* ── 连接状态 ───────────────────────────────────────────────────────
+   哪一种状态配得上占满全屏，是 connection.tsx 的全部内容。
+   这里只提供两种容器：全屏遮罩，与不挡内容的横幅。 */
+
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-connecting);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--dawn-surface-app);
+}
+
+/* 横幅：**不挡内容**。degraded 与 reconnecting 用它——
+   后端还在，已有内容仍然可读可用，全屏会把这个事实变得不可用 */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--dawn-stroke-4);
+  font-size: 12px;
+}
+.banner-warn { background: var(--dawn-fill-4); color: var(--dawn-text-2); }
+.banner-stale { background: var(--dawn-fill-5); color: var(--dawn-text-3); }
+
+/* 多个出路并排。**每一态都要有出路**，有时不止一条 */
+.state-actions { display: flex; gap: 8px; align-items: center; }

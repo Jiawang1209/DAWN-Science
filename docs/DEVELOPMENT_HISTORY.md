@@ -43,10 +43,28 @@
 
 ## 变更日志
 
-### 2026-08-09 — Run 记账员：账本第一次有了真实记录
+### 2026-08-09 — 连接状态改成五态状态机：重试有界，降级不挡界面
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Task 3.6 · S3。Hermes：*"The states around loading are distinct experiences — empty, loading, reconnecting, degraded/stale, and exhausted-recovery **each deserve their own honest copy and their own way out**."*
+- **两态模型把三件事混成了一件**（此前只有 `ready` 布尔 + `fatal` 字符串）:
+  1. 「正在连」与「连不上了」长得一样——都是那句「连接中…」
+  2. 「后端挂了」与「还没选项目」都占满全屏，而后者根本不该
+  3. **重试无界**，最终表现为一个永远转不完的圈
+- **What**: `ConnectionState` 五态判别联合 + `ConnectionSurface`
+  - `connecting` / `ready` / `reconnecting{attempt,reason}` / `degraded{reason}` / `exhausted{reason,attempts}`
+  - **`MAX_CONNECT_ATTEMPTS = 3`，有界是硬要求不是调优参数。** Hermes：*"Retries are bounded and end in a real recovery affordance — **never an infinite spinner or a hot loop**."* 无界重试给用户的感受是「它好像卡住了，但我不知道该不该继续等」——比直接说失败更糟。
+  - **哪一态配得上全屏，是 `ConnectionSurface` 的全部内容**：`connecting`/`exhausted` 全屏（后端确实用不了），`reconnecting`/`degraded` 只给横幅（**已有内容仍然可读可用**，全屏会把这个事实变得不可用），`ready` 什么都不画。
+  - `degraded` 不是断线，也不是单向门——再成功一次就回 `ready`。
+  - `exhausted` 给两条出路：「重试」与「检查配置」。
+- **契约扫描的第二次自我修正**: 它抓到了 `connection.tsx` 里一句解释规则的 **JSX 注释** `{/* label 是必填的：…「加载中」… */}`。`isComment` 原先只认 `//` / `/*` / `*` 开头。同一类误报的第二次——**规则是关于代码的，不是关于文档的**，扩了判定。
+- **Verification**: 14 条测试先 FAIL 再转绿（状态机 7 条 + 界面 7 条，含「degraded 不出现 `.boot-overlay`」这条最要紧的）；500 tests passed（39 文件，+14）；typecheck 与 build 干净；**真 Electron 全新目录启动零错误**。
+
+### 2026-08-09 — Run 记账员：账本第一次有了真实记录
+
+- **Type**: feat
+- **Commit**: `3d2dc97`
 - **Motivation**: Task 3.5 · S16′。**`RunStore` 写好了、协议有 `listRuns`/`getRun`、界面有历史栏——但那张表从头到尾是空的。** 没有任何生产代码创建过 Run。测试全绿，功能是死的：这是同一类缺陷的第六次。
 - **为什么前移到 ①-B′**: 其余功能都是**新增路径**，随时可加；Run 不是——它要求**每条执行路径在诞生时就记账**。桌面全建完再补，每个已有的执行入口都要回头改。Rho 的前车之鉴：其 durable run 行少一个 `project_root`，整个「运行对比」被阻塞，必须先做 BH1–BH3 三个基线加固包。**三个包的代价，换一个字段。**
 - **What**:

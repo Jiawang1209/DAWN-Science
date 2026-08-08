@@ -26,6 +26,7 @@ import {
   createWriteToolDefinition,
   ModelRuntime,
 } from "@earendil-works/pi-coding-agent"
+import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
@@ -76,6 +77,11 @@ interface NativeSession {
    * 真正开始之前的那一小段时间里，pi 认为自己是空闲的，`waitForIdle()` 立刻返回。
    */
   pending: Promise<void> | undefined
+  /**
+   * 卡死守卫。**每会话一个**——两个会话各自打转，互不相干。
+   * pi 自己不管这件事，模型退化时会一路烧到迭代上限。
+   */
+  stuck: StuckGuard
 }
 
 /** pi 的会话事件（结构化程度足够，但类型不从包里导出，故在此收窄） */
@@ -211,7 +217,13 @@ export class NativeRuntime implements AgentRuntime {
     const unsubscribe = session.subscribe((raw) => this.translate(spec.sessionId, raw as PiEvent))
 
     const pid = this.nextPid++
-    this.sessions.set(spec.sessionId, { session, unsubscribe, pid, pending: undefined })
+    this.sessions.set(spec.sessionId, {
+      session,
+      unsubscribe,
+      pid,
+      pending: undefined,
+      stuck: new StuckGuard(),
+    })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     return { sessionId: spec.sessionId, pid }
   }
@@ -224,15 +236,21 @@ export class NativeRuntime implements AgentRuntime {
           this.emit({ kind: "output", sessionId, data: e.assistantMessageEvent.delta ?? "" })
         }
         return
-      case "tool_execution_start":
+      case "tool_execution_start": {
+        const toolName = String(e.toolName ?? "?")
+        const input = e.args ?? e.input
         this.emit({
           kind: "tool_start",
           sessionId,
           toolCallId: String(e.toolCallId ?? ""),
-          toolName: String(e.toolName ?? "?"),
-          input: e.args ?? e.input,
+          toolName,
+          input,
         })
+        // **先发事件再判定**：这次调用真的发生了，界面上就该看得见它，
+        // 哪怕它正是压垮骆驼的那一根
+        this.guardAgainstStuckLoop(sessionId, [{ name: toolName, input }])
         return
+      }
       case "tool_execution_end": {
         const content = e.result?.content ?? []
         this.emit({
@@ -246,6 +264,9 @@ export class NativeRuntime implements AgentRuntime {
         return
       }
       case "turn_end":
+        // **不在这里重置守卫。** pi 每次模型响应后都发一次 turn_end，
+        // 在这里重置等于每次工具调用后清零——守卫永远数不到阈值。
+        // 实测：877 次工具调用 = 877 次 turn_end，守卫一次都没触发
         this.emit({ kind: "turn_end", sessionId })
         return
       case "error":
@@ -282,14 +303,40 @@ export class NativeRuntime implements AgentRuntime {
   write(sessionId: SessionId, data: string): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    // 新的一轮开始：上一轮的重复不该算到这一轮头上
+    s.stuck.reset()
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
-    const run = s.session.prompt(data).catch((err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err)
-      this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
-    })
+    const run = s.session
+      .prompt(data)
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err)
+        this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
+      })
+      .finally(() => {
+        // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
+        this.emit({ kind: "idle", sessionId })
+      })
     // 串起来而不是覆盖：连发两轮时，等待必须覆盖两轮，不能只等最后一轮
     s.pending = s.pending ? s.pending.then(() => run) : run
     void s.pending
+  }
+
+  /**
+   * 卡死判定。触发则**先出声再中止**。
+   *
+   * 顺序要紧：静默中止会让用户看到一个突然停下的会话且不知道为什么——
+   * 那比继续烧钱更难排查（规格 7.5）。
+   */
+  private guardAgainstStuckLoop(sessionId: SessionId, calls: GuardedCall[]): void {
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    const reason = s.stuck.check(calls)
+    if (!reason) return
+    s.stuck.reset()
+    this.emit({ kind: "notice", sessionId, text: reason })
+    void this.abort(sessionId).catch(() => {
+      // 中止失败也不能再吞——但此刻原因已经发出去了，用户至少知道发生了什么
+    })
   }
 
   /** 中止当前回合。会话仍然活着，可以继续对话 */

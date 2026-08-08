@@ -159,6 +159,15 @@ export class SessionTranscripts {
         }
         return
 
+      case "notice":
+        // 系统提示独立成条。**不并进 agent 的发言**——那会让用户以为是模型说的
+        this.putItem(sessionId, e, {
+          type: "notice",
+          id: `notice-${++e.turnSeq}`,
+          text: event.text,
+        })
+        return
+
       case "turn_end": {
         if (e.kind !== "native") return
         // 收尾当前发言。没有正在累积的发言时什么都不做——

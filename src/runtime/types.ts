@@ -53,6 +53,24 @@ export type AgentEvent =
    */
   | { kind: "turn_end"; sessionId: SessionId }
   /**
+   * 系统提示。**既不是对话也不是工具**——混进 turn 会污染对话记录。
+   *
+   * 协议里 `NoticeItem` 一直存在，但在此之前**没有任何东西能产出它**。
+   * 卡死守卫是第一个真实的用例：中断必须带原因出声（规格 7.5）。
+   */
+  | { kind: "notice"; sessionId: SessionId; text: string }
+  /**
+   * **一整轮真正结束**（用户发话 → 若干次模型响应与工具执行 → 收工）。
+   *
+   * 与 `turn_end` 不是一回事，这是 2026-08-09 真机实测才看清的：
+   * **pi 在每次模型响应后都发一次 `turn_end`**——877 次工具调用对应 877 次
+   * `turn_end`。它的语义是「这一段模型输出说完了」，不是「这一轮干完了」。
+   *
+   * 真正的边界是 `prompt()` 的 promise resolve。搞混这两者会让
+   * 「一轮里的第二次工具调用」变成没有父账的孤儿。
+   */
+  | { kind: "idle"; sessionId: SessionId }
+  /**
    * agent 正在用一个工具。**只有 native 会发**——PTY 里工具调用发生在
    * 我们看不见的进程内部（规格 7.33 的可见性分级：PTY 的 `provenanceComplete` 为 false）。
    *

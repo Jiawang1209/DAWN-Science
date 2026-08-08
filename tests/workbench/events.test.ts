@@ -234,3 +234,36 @@ describe("记录中枢 · 状态与订阅", () => {
     expect(cb).not.toHaveBeenCalled()
   })
 })
+
+describe("系统提示（notice）", () => {
+  // `NoticeItem` 在协议里一直存在，但在卡死守卫之前**没有任何东西能产出它**。
+  // 「定义了却没人产出」是本项目反复出现的那类缺口。
+  it("notice 独立成条，不并进 agent 的发言", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.ingest("a", { kind: "output", sessionId: "a", data: "我在想" })
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "检测到重复调用，已中断" })
+    const items = h.subscribe("a").items
+    expect(items.map((i) => i.type)).toEqual(["turn", "notice"])
+    const notice = items[1]!
+    expect(notice.type === "notice" && notice.text).toContain("已中断")
+  })
+
+  it("notice 有独立的 id，不和 turn 撞", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "一" })
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "二" })
+    const ids = h.subscribe("a").items.map((i) => i.id)
+    expect(new Set(ids).size).toBe(2)
+  })
+
+  it("会推送给订阅者 —— 中断的原因必须到得了界面", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    const seen = collector(h)
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "停了" })
+    expect(seen).toHaveLength(1)
+  })
+})

@@ -64,25 +64,52 @@ describe("agent 回合", () => {
     expect(all[0]!.projectId).toBe(PROJECT)
   })
 
-  it("turn_end 收尾为 completed 并写 finishedAt", () => {
+  it("idle 收尾为 completed 并写 finishedAt", () => {
     rec.beginTurn(SESSION)
-    rec.ingest({ kind: "turn_end", sessionId: SESSION })
+    rec.ingest({ kind: "idle", sessionId: SESSION })
     const r = list()[0]!
     expect(r.status).toBe("completed")
     expect(r.finishedAt).toBeDefined()
     expect(r.hasError).toBe(false)
   })
 
-  it("**没有开着的回合时，turn_end 不凭空造一条** —— 记账不能记出不存在的事", () => {
-    rec.ingest({ kind: "turn_end", sessionId: SESSION })
+  it("**没有开着的回合时，idle 不凭空造一条** —— 记账不能记出不存在的事", () => {
+    rec.ingest({ kind: "idle", sessionId: SESSION })
     expect(list()).toHaveLength(0)
+  })
+
+  /**
+   * **2026-08-09 真机实测抓到的缺陷。**
+   *
+   * pi 在每次模型响应后都发 `turn_end`（877 次工具调用 = 877 次 turn_end）。
+   * 原实现在 `turn_end` 收尾回合，于是一轮里第二次之后的工具调用
+   * **全部变成没有父账的孤儿**。上一次验证只有一次工具调用，掩盖了它。
+   */
+  it("turn_end **不**收尾回合 —— pi 每次模型响应都发它", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "turn_end", sessionId: SESSION })
+    expect(list()[0]!.status).toBe("running")
+  })
+
+  it("一轮里的多次工具调用，parent 都指向同一个回合", () => {
+    rec.beginTurn(SESSION)
+    const turnId = list()[0]!.runId
+    for (const id of ["c1", "c2", "c3"]) {
+      rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: id, toolName: "bash", input: {} })
+      rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: id, toolName: "bash", isError: false, text: "" })
+      // pi 在每次模型响应后发 turn_end —— 它不该打断父子关系
+      rec.ingest({ kind: "turn_end", sessionId: SESSION })
+    }
+    const tools = list().filter((r) => r.requestType === "tool_call")
+    expect(tools).toHaveLength(3)
+    expect(tools.every((t) => t.parentRunId === turnId), "有工具调用成了孤儿").toBe(true)
   })
 
   it("连发两轮各自成账，不互相顶掉", () => {
     rec.beginTurn(SESSION)
-    rec.ingest({ kind: "turn_end", sessionId: SESSION })
+    rec.ingest({ kind: "idle", sessionId: SESSION })
     rec.beginTurn(SESSION)
-    rec.ingest({ kind: "turn_end", sessionId: SESSION })
+    rec.ingest({ kind: "idle", sessionId: SESSION })
     expect(list()).toHaveLength(2)
     expect(list().every((r) => r.status === "completed")).toBe(true)
   })
@@ -179,7 +206,7 @@ describe("PTY 会话", () => {
 describe("时间戳", () => {
   it("单调递增 —— 冻结点要求「可重建事件序列」", () => {
     rec.beginTurn(SESSION)
-    rec.ingest({ kind: "turn_end", sessionId: SESSION })
+    rec.ingest({ kind: "idle", sessionId: SESSION })
     rec.beginTurn(SESSION)
     const stamps = list().map((r) => r.startedAt)
     const sorted = [...stamps].sort()

@@ -144,9 +144,17 @@ export class RunRecorder {
       return
     }
 
-    if (event.kind === "turn_end") {
-      // **没有开着的回合时什么都不做。** 记账不能记出不存在的事——
-      // 凭空造一条会让「这个回合是什么时候开始的」变成一个编造的答案
+    if (event.kind === "idle") {
+      /**
+       * **回合在这里收尾，不在 `turn_end`。**
+       *
+       * 2026-08-09 真机实测：pi 在**每次模型响应后**都发一次 `turn_end`——
+       * 877 次工具调用对应 877 次 `turn_end`。若在那里收尾，
+       * 一轮里的第二次之后的工具调用就全成了**没有父账的孤儿**。
+       * 上一次验证只有一次工具调用，正好把这个缺陷掩盖了。
+       *
+       * 真正的边界是 `prompt()` resolve，运行时把它翻译成 `idle`。
+       */
       const runId = s?.turnRunId
       if (!runId) return
       s!.turnRunId = undefined

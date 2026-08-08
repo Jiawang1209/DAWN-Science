@@ -19,7 +19,17 @@ import { NativeRuntime } from "../runtime/native.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
+import { SessionEventHub } from "../workbench/events.js"
 import { WorkbenchServer } from "../workbench/server.js"
+
+/**
+ * 每会话事件缓冲的字符上限。
+ *
+ * 取值依据 Spike C：xterm 的 5000 行 scrollback 是 20 万行输入下内存仍稳在
+ * 526 MB 的原因，而 scrollback 是内存的主控参数。20 万字符约合数千行，
+ * 与该量级同阶。**它是内存预算，不是显示偏好**——调大之前先算会话数 × 上限。
+ */
+export const DEFAULT_EVENT_BUFFER_CHARS = 200_000
 
 export interface CreateWorkbenchOptions {
   configPath: string
@@ -33,12 +43,16 @@ export interface CreateWorkbenchOptions {
   onInternalError?: (operation: string, err: unknown) => void
   /** 凭证库。**app 自己管凭证**，不要求用户手写进配置文件 */
   credentials: CredentialsPort
+  /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_EVENT_BUFFER_CHARS` */
+  eventBufferChars?: number
 }
 
 export interface Workbench {
   server: WorkbenchServer
   db: Database.Database
   sessions: SessionManager
+  /** 事件中枢。`main.ts` 把它的推送接到 webContents */
+  events: SessionEventHub
   /** 启动对账修正的残留会话条数 */
   reconciled: number
   close(): void
@@ -83,8 +97,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     registry,
   })
 
+  const events = new SessionEventHub({
+    maxChars: opts.eventBufferChars ?? DEFAULT_EVENT_BUFFER_CHARS,
+  })
+
   const backend = createWorkbenchBackend({
-    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry,
+    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
   })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),
@@ -96,11 +114,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     server,
     db,
     sessions,
+    events,
     reconciled,
     close() {
       // 幂等：Electron 的 will-quit 与显式关闭可能都会走到这里
       if (closed) return
       closed = true
+      events.dispose()
       db.close()
     },
   }

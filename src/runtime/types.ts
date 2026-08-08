@@ -38,6 +38,14 @@ export interface SessionHandle {
 export type AgentEvent =
   | { kind: "started"; sessionId: SessionId; pid: number }
   | { kind: "output"; sessionId: SessionId; data: string }
+  /**
+   * agent 说完了一轮。**只有 native 会发**——PTY 是字节流，没有轮次概念。
+   *
+   * 2026-08-08 新增。此前 native 在 `turn_end` 时发一条 `data: "\n"` 的 output
+   * 来表示轮次结束，但**那和正文里的换行完全无法区分**——上层要据此切分
+   * 对话气泡时只能猜。轮次边界是语义，不能编码进正文。
+   */
+  | { kind: "turn_end"; sessionId: SessionId }
   | { kind: "exited"; sessionId: SessionId; exitCode: number }
 
 export type EventSink = (event: AgentEvent) => void

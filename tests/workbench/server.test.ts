@@ -27,6 +27,8 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
       throw new Error("未实现")
     },
     getProvenance: async () => ({ resourceId: "a1", provenanceComplete: true }),
+    subscribeSession: async () => ({ sessionId: "s1", events: [], latestSeq: 0, truncated: false }),
+    unsubscribeSession: async () => ({}),
     previewTakeover: async () => ({
       sessionId: "s1",
       currentHolder: null,

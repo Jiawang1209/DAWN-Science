@@ -15,6 +15,7 @@ import type { RunStore } from "../store/runs.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { fault, type WorkbenchBackend } from "./server.js"
+import type { SessionEventHub } from "./events.js"
 
 /** 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。 */
 export interface CredentialsPort {
@@ -33,10 +34,12 @@ export interface WorkbenchBackendOptions {
   credentials: CredentialsPort
   /** 配置里的 provider 注册表，供界面列出可选 agent */
   registry: ProviderRegistry
+  /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
+  events: SessionEventHub
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -132,9 +135,28 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return projects.summary(rec.projectId)!
     },
 
+    subscribeSession: async ({ sessionId, fromSeq }) => {
+      try {
+        return events.subscribe(sessionId, fromSeq)
+      } catch (err) {
+        // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
+        // 界面要能分辨它和「数据库炸了」
+        throw fault("not_found", err instanceof Error ? err.message : String(err))
+      }
+    },
+
+    unsubscribeSession: async ({ sessionId }) => {
+      events.unsubscribe(sessionId)
+      return {}
+    },
+
     createSession: async ({ projectId, agentId }) => {
       const project = requireProject(projectId)
       const rec = await sessions.create(agentId, project.workspace, { projectId })
+
+      // 先登记再接线：attach 的回调可能同步就来一条事件
+      events.track(rec.id, registry.agents[agentId]?.kind ?? "native")
+      sessions.attach(rec.id, (e) => events.ingest(rec.id, e))
 
       // 记下 git 基线，供之后算「这次会话改了什么」。
       // 拿不到（非 git 仓库）就不记——后续 getRun 会因此不返回 fileChanges，
@@ -151,6 +173,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     writeToSession: async ({ sessionId, data, as }) => {
       try {
         sessions.write(sessionId, data, as)
+        // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
+        // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
+        // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。
+        if (as === "user") events.userTurn(sessionId, data)
       } catch (err) {
         // 写权被拒是业务性失败，不是内部错误——UI 要能分辨并提示用户去抢租约
         throw fault("conflict", err instanceof Error ? err.message : String(err))

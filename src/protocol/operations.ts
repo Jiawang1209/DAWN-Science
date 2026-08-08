@@ -22,6 +22,7 @@ import {
   SessionSummarySchema,
   WorkbenchCapabilitiesSchema,
 } from "./entities.js"
+import { SubscribeResultSchema } from "./events.js"
 
 /** 客户端不能请求无限结果——上限由服务端定，不由调用方定。 */
 export const DEFAULT_PAGE_SIZE = 50
@@ -208,6 +209,30 @@ export const OPERATIONS = {
       /** 当前是否由系统安全存储加密。false 时界面须提示用户 */
       encrypted: z.boolean(),
     }),
+    mutating: false,
+  },
+
+  /**
+   * 订阅会话事件（协议 1.3）。
+   *
+   * **归为只读**：它不改变会话，只是开始看。服务端内部会记下订阅者，
+   * 但那是传输层的簿记，不是被观察对象的状态变化——
+   * 若判为 mutating，`readOnly` 模式下界面就连回读都做不了，那毫无道理。
+   *
+   * `fromSeq` 省略 = 要缓冲区里的全部历史；给了就从该 seq（含）起。
+   */
+  subscribeSession: {
+    request: z.object({
+      sessionId: z.string().min(1),
+      /** 正整数。0 无法与「还没有事件」区分，故不接受 */
+      fromSeq: z.int().min(1).optional(),
+    }),
+    response: SubscribeResultSchema,
+    mutating: false,
+  },
+  unsubscribeSession: {
+    request: z.object({ sessionId: z.string().min(1) }),
+    response: Empty,
     mutating: false,
   },
 

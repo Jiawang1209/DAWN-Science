@@ -121,7 +121,9 @@ export class NativeRuntime implements AgentRuntime {
         this.emit({ kind: "output", sessionId: spec.sessionId, data: event.assistantMessageEvent.delta })
       }
       if (event.type === "turn_end") {
-        this.emit({ kind: "output", sessionId: spec.sessionId, data: "\n" })
+        // 发语义化的边界事件，**不再发一条 "\n" 的 output**——
+        // 那和正文里的换行无法区分，上层切分对话气泡时只能猜
+        this.emit({ kind: "turn_end", sessionId: spec.sessionId })
       }
     })
 

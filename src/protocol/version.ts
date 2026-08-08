@@ -9,8 +9,11 @@
  * 1.1（2026-08-08）：新增凭证的三个操作。
  * 1.2（2026-08-08）：新增 `getProviders`——界面要列出可选 agent 才能建会话，
  *   此前只能靠硬编码猜。minor 递增 = 向后兼容的新增。
+ * 1.3（2026-08-08）：新增 `subscribeSession` / `unsubscribeSession`。
+ *   此前协议**只能写不能读会话**——`writeToSession` 有，读的一个都没有，
+ *   也就是说界面根本拿不到 agent 的回复。这是 MVP 那条路上断掉的一环。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "1.2"
+export const WORKBENCH_PROTOCOL_VERSION = "1.3"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

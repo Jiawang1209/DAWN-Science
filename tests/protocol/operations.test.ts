@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("17 个操作齐全（原冻结 13 + 凭证 3 + getProviders 1，均为 2026-08-08 补）", () => {
+  it("19 个操作齐全（原冻结 13 + 凭证 3 + getProviders 1 + 订阅 2，均为 2026-08-08 补）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
@@ -33,6 +33,8 @@ describe("操作注册表", () => {
         "openProject",
         "previewTakeover",
         "stopSession",
+        "subscribeSession",
+        "unsubscribeSession",
         "writeToSession",
       ].sort(),
     )

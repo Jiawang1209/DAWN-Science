@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { SessionEventHub } from "../../src/workbench/events.js"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
 import { RunStore } from "../../src/store/runs.js"
@@ -55,8 +56,9 @@ function make() {
   const projects = new ProjectManager({
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry })
-  return { db, projectStore, runStore, sessions, projects, backend, server: new WorkbenchServer(backend) }
+  const events = new SessionEventHub({ maxChars: 10_000 })
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events })
+  return { db, projectStore, runStore, sessions, projects, backend, events, server: new WorkbenchServer(backend) }
 }
 
 describe("真实后端 · 经服务端端到端", () => {
@@ -118,6 +120,31 @@ describe("真实后端 · 经服务端端到端", () => {
 
     expect((await ctx.server.handle("acquireLease", { sessionId: sid, holder: "user" })).ok).toBe(true)
     expect((await ctx.server.handle("writeToSession", { sessionId: sid, data: "hi", as: "user" })).ok).toBe(true)
+  })
+
+  it("说了一句话，subscribeSession 里能看见自己说的和 agent 回的 —— MVP 那条路的核心一环", async () => {
+    const p = await ctx.server.handle("openProject", { workspace: repo })
+    const pid = (p as { data: { projectId: string } }).data.projectId
+    const c = await ctx.server.handle("createSession", { projectId: pid, agentId: "ds-chat" })
+    const sid = (c as { data: { sessionId: string } }).data.sessionId
+
+    await ctx.server.handle("acquireLease", { sessionId: sid, holder: "user" })
+    await ctx.server.handle("writeToSession", { sessionId: sid, data: "你好", as: "user" })
+
+    const s = await ctx.server.handle("subscribeSession", { sessionId: sid })
+    expect(s.ok).toBe(true)
+    const events = (s as { data: { events: { kind: string; who?: string; text?: string }[] } }).data.events
+    const turns = events.filter((e) => e.kind === "turn")
+    expect(turns.map((t) => t.who)).toContain("user")
+    expect(turns.map((t) => t.who)).toContain("agent")
+    expect(turns.find((t) => t.who === "agent")?.text).toContain("echo:你好")
+  })
+
+  it("会话不在本进程中活动 → not_found，而不是一个空历史", async () => {
+    // 空历史会被读成「这个会话什么都没说过」，那和「这个会话不存在」是两回事
+    const s = await ctx.server.handle("subscribeSession", { sessionId: "no-such" })
+    expect(s.ok).toBe(false)
+    if (!s.ok) expect(s.error.code).toBe("not_found")
   })
 
   it("getRun 带上 git 产出事实，且标注可能混入手动修改", async () => {

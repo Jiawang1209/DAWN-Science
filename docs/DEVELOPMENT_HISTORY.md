@@ -43,10 +43,27 @@
 
 ## 变更日志
 
+### 2026-08-08 — 协议 1.3 与会话事件中枢：让界面终于能读到 agent 说了什么
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: Task 2.16 + 2.17。协议此前**只能写不能读会话**——`writeToSession` 有，读的一个都没有，界面因此永远看不见 agent 的回复。这是 MVP 那条路上断掉的一环。
+- **What**:
+  - **协议 1.2 → 1.3**，新增 `subscribeSession(sessionId, fromSeq?)` / `unsubscribeSession`，以及新文件 `src/protocol/events.ts`（事件信封与订阅结果）。三条纪律全部写进 schema 而非留给调用方自觉：**seq 从 1 起且拒绝 0 与小数**（0 无法与「还没有事件」区分）、**`dropped` 必须带正的 `droppedChars`**（「丢了 0 个字符」不是丢弃事件是噪音）、**`truncated` 为真时必须给出 `earliestSeq`**（只说「丢了」而不说「从哪起还有」等于让界面去猜）。未知 `kind` 一律拒绝——事件通道恰恰是最难发现静默丢失的地方。
+  - **新增 `src/workbench/events.ts`（`SessionEventHub`）**：编号、翻译、背压三件事。native 的逐 token 增量翻成带 `turnId` 的 turn 事件，PTY 的字节原样成 bytes 事件；**溢出丢最旧的并发一条 `dropped` 说明丢了多少**。`dropped` 与 `state` 计重为 0，因此丢弃通知本身不会触发第二轮丢弃（无套娃，有测试）。
+  - **未订阅就不推**：背压的第一道闸放在源头。一个没人在看的 PTY 每秒吐几百 KB，推过 IPC 再让渲染进程扔掉，代价全白付。
+  - **用户自己的发言也进事件流**，界面不做本地乐观追加——**事件流是对话的唯一事实来源**，两条路各写一半迟早对不上。PTY 会话由中枢自行忽略（终端本来就回显，再补一条是重复），该判断放在中枢而非各调用方，因为 kind 是中枢已知的事实。
+  - 后端接线：`createSession` 登记并 attach，`writeToSession` 回灌用户 turn，两个订阅操作接到中枢；`wiring.ts` 装配并在 `close()` 里 dispose。缓冲上限 `DEFAULT_EVENT_BUFFER_CHARS = 200_000`，取值依据 Spike C（scrollback 是内存主控参数）。
+- **Impact**: 读路径在**后端层已端到端跑通**——新增测试：建会话 → 取租约 → 说一句 → `subscribeSession` 里同时看得到自己说的和 agent 回的。UI 侧接线是 Task 2.19/2.20。
+- **实测修正两处计划外的缺陷**：
+  1. **native 的「一轮说完」原本是发一条 `data: "\n"` 的 output 表示的，和正文里的换行完全无法区分**——上层要据此切分对话气泡时只能猜。新增语义化的 `AgentEvent.turn_end`（只有 native 会发），并据此在协议的 turn 事件上加了 `turnId` 与 `final`：**轮次边界是语义，不能编码进正文**。
+  2. **Task 2.16 无法单独提交**：`WorkbenchBackend` 的类型是从操作注册表推导的，加操作即要求同时给实现，否则 typecheck 红。这不是缺陷而是设计奏效——但它意味着「协议」与「主进程实现」在本项目里是同一次逻辑变更，故 2.16 与 2.17 合为一条记录、一个 commit。
+- **Verification**: 402 passed（新增 22：协议事件 15 + 中枢 19 中的增量 + 后端端到端 2；操作数断言 17 → 19），typecheck 零错误，`npm run build` 通过。背压的溢出路径与「dropped 不套娃」均有专门用例——**这是最容易只写不测的分支**。
+
 ### 2026-08-08 — 追加 ①-B Part 5：MVP 闭环计划，并定死事件通道设计
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `38fc23c`
 - **Motivation**: 作者问「现在还有什么问题」。实查发现**同一类缺陷共四处**，且**根因只有一个**：
   1. **agent 的回复看不见**——协议 17 个操作里**没有一个是读会话的**。`writeToSession` 有，读没有。①-A 的 `session/stream.ts` 早就写好了订阅与截断，**从未暴露到协议**。能发不能收，不叫对话。
   2. **终端永远空白**——`App.tsx` 里 `output=""` 写死。

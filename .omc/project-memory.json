@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "python3 - <<'PYEOF'\nimport pathlib\np = pathlib.Path(\"docs/DEVELOPMENT_HISTORY.md\")\ns = p.read_text()\nentry = '''### 2026-08-08 — UI 重做为对话优先：初版 UI 里根本没有「新建会话」（作者反馈驱动）\n\n- **Type**: fix\n- **Commit**: 待回填\n- **Motivation**: 作者看过界面后说「和 claude code app 完全不一样」。核查后发现问题比「风格不像」严重——**有三处偏差，第一处是坏的**：\n  1. **UI 里根本没有「新建会话」入口**——`createSession` 一次都没被调用。**也就是说这个 app 做不了它最该做的那件事。**\n  2. **侧栏默认隐藏**——我把 Rho 的 `agent-first` 单栏照搬过来，**却没察觉它与作者「模仿 Claude app」的指示直接冲突**，两个都塞进去了。\n  3. **打开后看到的是一页统计面板**——我把作者说想知道的四样（状态/产出/成本/历史）做成了**首页**。但那是**偶尔查**的东西，不是**打开 app 时要看**的东西。打开 app 时要做的事是跟 agent 说话。\n- **What**:\n  - **侧栏常驻**，含项目切换器（下拉，一行——它是上下文不是主角）、**「＋ 新建会话」作为主动作**、会话列表、底部「项目概览」入口。\n  - **新建会话点开列出可选 agent，选中即创建并直接进入对话**——新建的目的就是开始聊，不该还要再点一下。**并自动取写权**，否则第一句就会被租约挡下。\n  - **默认视图是对话**；没有会话时给的是「点左上角新建会话开始」而不是一片空白。项目面板降为侧栏入口。\n  - **新增协议操作 `getProviders`**（版本 1.1 → 1.2）：界面要列出可选 agent 才能新建会话，此前没有这个操作，界面只能硬编码猜——**而那正是「新建会话」做不出来的直接原因**。它不回传任何凭证，只回传「配置里有没有写死 key」这个布尔。\n- **Impact**: app 现在能完成它的基本动作了。**根因值得记**：我把「作者说想知道什么」直接当成了「作者打开时想看到什么」——**前者是信息需求，后者是行为入口，两者不是一回事**。这类错误靠读代码发现不了，只能靠真的打开它。\n- **Verification**: 363 passed（新增 8 条侧栏与空态用例，其中 4 条专验新建会话流程），typecheck 零错误，`npm run build` 通过，Electron 冒烟启动无报错。操作数断言 16 → 17。\n\n'''\ns = s.replace(\"### 2026-08-08 — 凭证改由 app 自管：桌面应用不该因缺配置就起不来（作者反馈驱动）\\n\\n- **Type**: fix\\n- **Commit**: 待回填\",\n              entry + \"### 2026-08-08 — 凭证改由 app 自管：桌面应用不该因缺配置就起不来（作者反馈驱动）\\n\\n- **Type**: fix\\n- **Commit**: `7959f9f`\")\np.write_text(s)\nPYEOF\ngit add -A && git commit -q -m \"fix(ui): 重做为对话优先——初版 UI 里根本没有「新建会话」\n\n作者说「和 claude code app 完全不一样」。核查后发现问题比风格不像严重，\n三处偏差第一处是坏的：\n\n1. UI 里根本没有「新建会话」入口，createSession 一次都没被调用——也就是\n   说这个 app 做不了它最该做的那件事。\n2. 侧栏默认隐藏。我把 Rho 的 agent-first 单栏照搬过来，却没察觉它与\n   「模仿 Claude app」直接冲突，两个都塞进去了。\n3. 打开后看到的是一页统计面板。我把作者说想知道的四样做成了首页，但那是\n   偶尔查的东西，不是打开时要看的东西。\n\n改为：侧栏常驻（项目切换器 + 新建会话 + 会话列表 + 项目概览入口），默认\n视图是对话，新建会话选完 agent 直接进对话并自动取写权（否则第一句会被\n租约挡下），项目面板降为侧栏入口。\n\n新增协议操作 getProviders（1.1 → 1.2）：界面要列出可选 agent 才能新建\n会话，此前没有这个操作只能硬编码猜——那正是「新建会话」做不出来的直接\n原因。不回传任何凭证。\n\n根因值得记：我把「作者说想知道什么」当成了「作者打开时想看到什么」。\n前者是信息需求，后者是行为入口，两者不是一回事。这类错误靠读代码发现\n不了，只能靠真的打开它。\n\n363 passed（新增 8 条，4 条专验新建会话流程）。\n回填上一条历史记录的 commit 号 7959f9f。\" && git log --oneline -1",
-    "testCommand": "python3 - <<'PYEOF'\nimport pathlib\np = pathlib.Path(\"tests/protocol/operations.test.ts\")\ns = p.read_text()\ns = s.replace('it(\"16 个操作齐全（原冻结 13 个 + 2026-08-08 补的凭证 3 个）\", () => {',\n              'it(\"17 个操作齐全（原冻结 13 + 凭证 3 + getProviders 1，均为 2026-08-08 补）\", () => {')\ns = s.replace('        \"getProvenance\",\\n', '        \"getProvenance\",\\n        \"getProviders\",\\n')\ns = s.replace('\"previewTakeover\", \"listCredentials\"]', '\"previewTakeover\", \"listCredentials\", \"getProviders\"]')\np.write_text(s)\nprint(\"已更新为 17 个操作\")\nPYEOF\nnpx vitest run 2>&1 | tail -6; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | grep -v '^npm notice' | head -3",
+    "buildCommand": "npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3 && npm run build 2>&1 | tail -6",
+    "testCommand": "npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3 && npm run build 2>&1 | tail -6",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,14 +44,14 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 37,
-      "lastAccessed": 1786182011288,
+      "accessCount": 38,
+      "lastAccessed": 1786182672352,
       "type": "file"
     },
     {
       "path": "src/session/manager.ts",
-      "accessCount": 8,
-      "lastAccessed": 1786163596864,
+      "accessCount": 9,
+      "lastAccessed": 1786182257463,
       "type": "file"
     },
     {
@@ -97,6 +97,24 @@
       "type": "file"
     },
     {
+      "path": "src/protocol/operations.ts",
+      "accessCount": 4,
+      "lastAccessed": 1786182149950,
+      "type": "file"
+    },
+    {
+      "path": "tests/protocol/operations.test.ts",
+      "accessCount": 4,
+      "lastAccessed": 1786182225227,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/native.ts",
+      "accessCount": 4,
+      "lastAccessed": 1786182349571,
+      "type": "file"
+    },
+    {
       "path": "tests/protocol/entities.test.ts",
       "accessCount": 3,
       "lastAccessed": 1786165861865,
@@ -109,6 +127,18 @@
       "type": "file"
     },
     {
+      "path": "src/protocol/version.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786182137584,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/types.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786182344138,
+      "type": "file"
+    },
+    {
       "path": "spikes/d-jupyter-kernel.ts",
       "accessCount": 2,
       "lastAccessed": 1786159067103,
@@ -118,12 +148,6 @@
       "path": "tests/config/loader.test.ts",
       "accessCount": 2,
       "lastAccessed": 1786160162940,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/native.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786163201552,
       "type": "file"
     },
     {
@@ -154,6 +178,18 @@
       "path": "docs/superpowers/plans/2026-08-08-phase1b-workbench.md",
       "accessCount": 2,
       "lastAccessed": 1786181974318,
+      "type": "file"
+    },
+    {
+      "path": "src/session/stream.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786182048647,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786182153511,
       "type": "file"
     },
     {
@@ -223,12 +259,6 @@
       "type": "file"
     },
     {
-      "path": "src/runtime/types.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786160913943,
-      "type": "file"
-    },
-    {
       "path": "src/runtime/fake.ts",
       "accessCount": 1,
       "lastAccessed": 1786160926423,
@@ -277,12 +307,6 @@
       "type": "file"
     },
     {
-      "path": "src/session/stream.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786162538111,
-      "type": "file"
-    },
-    {
       "path": "tests/integration/pty.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786162738741,
@@ -313,33 +337,9 @@
       "type": "file"
     },
     {
-      "path": "src/protocol/version.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786165734774,
-      "type": "file"
-    },
-    {
       "path": "src/protocol/entities.ts",
       "accessCount": 1,
       "lastAccessed": 1786165815577,
-      "type": "file"
-    },
-    {
-      "path": "tests/protocol/operations.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786166226666,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/operations.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786166275167,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/index.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786166297689,
       "type": "file"
     }
   ],

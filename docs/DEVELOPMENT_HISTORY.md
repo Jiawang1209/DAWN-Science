@@ -43,10 +43,26 @@
 
 ## 变更日志
 
+### 2026-08-08 — Spike A 通过：pi 可嵌入，schema 被引擎强制且带自动重试
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: Phase 0 决策门 G0 的第一项。Native Runtime 是走 pi 还是自建 agent loop，取决于三个事实：能否注入自定义工具、schema 是否被强制、能否拿到事件流与用量。计划要求「按实际导出符号写，不凭印象」。
+- **What**:
+  - 新增 `spikes/a-pi-embed.ts`：注册一个带严格 TypeBox schema 的 `report` 工具（`verdict` 限 pass/fail/unknown），跑两轮——合法路径一轮，诱导模型填非法值 `"maybe"` 一轮。
+  - 新增 `spikes/FINDINGS.md`，写入 Spike A 全部结论。
+  - **三个问题全为「是」→ 决策门通过，Native Runtime 走 pi，不自建 loop。**
+  - **Q2 的结果强于预期**：模型确实填了 `"maybe"` → pi 校验失败（`isError: true`）→ **`beforeToolCall` 未触发、`execute()` 未被调用** → 错误回传模型后，模型自行改填 `"unknown"` 重试成功。即 schema 不仅被强制，还带自动纠错闭环，Native Runtime **不需要**自建校验层。
+  - **发现 pi 内置 `deepseekProvider()`**，自带成本与上下文窗口元数据，省掉自建 provider。但它只认 `deepseek-v4-flash` / `deepseek-v4-pro` 两个 id——计划中沿用的 `deepseek-chat` / `deepseek-reasoner` 打 HTTP 虽仍返回 200，却**不在 pi 注册表内**，`getModel()` 会返回 `undefined`。至此模型 id 从「建议钉版本」升级为「**必须钉版本**」。
+  - **确认 zod 与 typebox 的分工**：pi 的工具 schema 用 TypeBox（`Type.*`），故 **zod 管配置校验、typebox 管工具 schema**，两者并存，不需要转换层。
+  - **记录一条给 Task 1.6 的告警**：`tool_execution_start` 携带的是**校验前**的原始 args，`beforeToolCall` 与 `execute()` 收到的才是校验后的。审计日志若从前者取值，记的是未校验数据；两者需分别命名标注。
+- **Impact**: G0 的四个 spike 过了第一个，且过的是「不用自建 loop」这个省工最多的分支。`FINDINGS.md` 中的调用签名与工具注册方式将被 Task 1.6 直接引用。实施计划中所有 `deepseek-chat` 引用需在 Task 1.11 前改为 v4 id。
+- **Verification**: 两次独立运行结果一致——非法值均在第 1 次被拒、第 2 次被模型自行修正，`handlerCalls` 两轮都只含合法值。判定逻辑本身修过一次真实缺陷：初版读 `tool_execution_start` 的 args 判断「非法值是否透传」，因该事件在校验前触发而误报为「schema 未强制」；已改为以「什么抵达 handler」为判据。`npm run typecheck` 零错误。实测成本 $0.000006–0.000034 / 轮。
+
 ### 2026-08-08 — 确立开发历史记录规范、凭证方案与仓库路径基线
 
 - **Type**: chore
-- **Commit**: 待回填
+- **Commit**: `dfdd72a`
 - **Motivation**: 开工前需定死三件事：① 每次变更如何留痕（含 commit 号，此前两条记录都没有）；② API 密钥放哪——这决定它会不会被 agent 子进程读到、会不会误入版本库；③ 实施计划的路径前缀与实际仓库结构对不上，不解决则每个 Task 的第一步都要人肉换算。
 - **What**:
   - **本文件新增「记录规范」章节**：条目模板加入 `**Commit**` 字段；确立 commit 号的**下次提交时回填**机制（先写 `待回填` → 下次提交前 `git log` 查出上一条 hash 一并补上），以保持「一次逻辑变更 = 一个 commit」不被拆成两个；并补一条硬规则——**commit 标题行必须等于条目标题**，使得即便 hash 未回填也能靠 `git log --oneline | grep` 唯一定位。已回填前两条记录的 hash（`594ac96` / `fe0cf4a`）。

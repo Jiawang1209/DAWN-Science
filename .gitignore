@@ -35,6 +35,8 @@ prebuilds/
 *.key
 
 # 内核与运行时缓存
+.venv*/
+venv/
 .ipynb_checkpoints/
 __pycache__/
 *.pyc

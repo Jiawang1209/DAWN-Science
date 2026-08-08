@@ -43,10 +43,24 @@
 
 ## 变更日志
 
+### 2026-08-08 — 阶段①-A 配置层：Provider 注册表 schema 与加载器（Task 1.1–1.2）
+
+- **Type**: feat
+- **Commit**: `1a2234b` · 待回填
+- **Motivation**: 阶段①-A 的第一块。会话管理、Runtime、CLI 都要先知道「有哪些 agent、连哪个服务、用什么模型」。这一层若不把错误挡在加载期，就会变成运行期起 agent 时才崩。
+- **What**:
+  - 新增 `src/config/schema.ts`：**两段式结构**——`endpoints`（连接信息）与 `agents`（agent 定义）分离，多个 agent 可共用一份凭证，换 key 只改一处。`native`（进程内跑 pi）与 `pty`（起外部 CLI）用 zod 的 `discriminatedUnion` 区分，前者引用 endpoint，后者自带 command。
+  - 新增 `src/config/loader.ts`：读 YAML → 展开 `${ENV}` → schema 校验 → **跨段引用完整性校验**。四步顺序不可调换（展开须在校验前，否则校验的是占位符字面量；引用校验须在 schema 校验后，否则拿不到可信结构）。
+  - **`${ENV}` 缺失或为空串一律响亮报错**，且报错带配置路径（如 `providers.endpoints.deepseek.apiKey`）。依据规格 7.5「无静默回退」——留着占位符会让请求带着字面量 `"${DEEPSEEK_API_KEY}"` 发出去，错误延后到 401 才暴露且信息量为零。
+  - **引用完整性校验补 zod 管不到的一层**：zod 只校验单个节点的形状，管不了「这个 endpoint 名字是否存在」「这个 model 是否在该 endpoint 声明过」。两者都在加载期拦下，且报错列出该 endpoint 实际声明了哪些 model。
+  - **落实 Spike A 的结论**：schema 注释与全部测试夹具改用 `deepseek-v4-flash` / `deepseek-v4-pro`，不再出现计划原稿里的 `deepseek-chat`。
+- **Impact**: 配置层完成，Task 1.3（SQLite 存储层）起可依赖 `ProviderRegistry` 类型。**测试数 15 个，高于计划预估的 7 个**——增补了 `args` 缺省值、未知 kind、未知 capability、非法 baseUrl、空 models、空串环境变量、报错路径、pty 不参与引用校验共 8 项。阶段①-A 的测试总数预计将高于计划的 48。
+- **Verification**: 严格 TDD——两个 Task 均先写测试确认 FAIL（`Cannot find module`），再写实现确认 PASS。15 passed，`npm run typecheck` 零错误。
+
 ### 2026-08-08 — Phase 0 收官：G0 四项全过，放行进入阶段 ①-A
 
 - **Type**: chore
-- **Commit**: 待回填
+- **Commit**: `f4888ed`
 - **Motivation**: 四个 spike 各自留下了结论，但**决策门要的是一个合并判断**——放行还是停下。同时 Phase 0 期间有多条既有决策被实测推翻，散落在各 spike 章节里，需要收敛成一张表，否则写 Part 1 时会照着旧假设敲。
 - **What**:
   - `spikes/FINDINGS.md` 顶部新增**汇总与 G0 放行判断**：四项判定表、「由 spike 确定或修改的技术决策」7 条、遗留项归属表。

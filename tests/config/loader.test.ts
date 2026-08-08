@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest"
+import { mkdtempSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { ProviderRegistrySchema } from "../../src/config/schema.js"
+import { loadRegistry } from "../../src/config/loader.js"
+
+function writeYaml(body: string): string {
+  const dir = mkdtempSync(join(tmpdir(), "dawn-cfg-"))
+  const file = join(dir, "providers.yaml")
+  writeFileSync(file, body)
+  return file
+}
 
 // model id 用 v4 系列：Spike A 实测 pi 的 deepseek provider 只认这两个，
 // deepseek-chat 会让 getModel() 返回 undefined。见 spikes/FINDINGS.md。
@@ -93,5 +104,104 @@ describe("ProviderRegistrySchema", () => {
         agents: {},
       }),
     ).toThrow()
+  })
+})
+
+describe("loadRegistry", () => {
+  it("展开 ${ENV} 占位符", () => {
+    const file = writeYaml(`
+endpoints:
+  deepseek:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: \${TEST_DS_KEY}
+    models: [deepseek-v4-flash]
+agents:
+  a:
+    kind: native
+    endpoint: deepseek
+    model: deepseek-v4-flash
+    capabilities: [exec]
+`)
+    const reg = loadRegistry(file, { TEST_DS_KEY: "sk-real-value" })
+    expect(reg.endpoints.deepseek!.apiKey).toBe("sk-real-value")
+  })
+
+  it("环境变量缺失时响亮报错，不静默留占位符", () => {
+    const file = writeYaml(`
+endpoints:
+  deepseek:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: \${MISSING_KEY}
+    models: [deepseek-v4-flash]
+agents: {}
+`)
+    expect(() => loadRegistry(file, {})).toThrow(/MISSING_KEY/)
+  })
+
+  it("环境变量存在但为空串，同样报错", () => {
+    const file = writeYaml(`
+endpoints:
+  deepseek:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: \${EMPTY_KEY}
+    models: [deepseek-v4-flash]
+agents: {}
+`)
+    expect(() => loadRegistry(file, { EMPTY_KEY: "" })).toThrow(/EMPTY_KEY/)
+  })
+
+  it("报错信息包含出错位置的路径", () => {
+    const file = writeYaml(`
+endpoints:
+  deepseek:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: \${MISSING_KEY}
+    models: [deepseek-v4-flash]
+agents: {}
+`)
+    expect(() => loadRegistry(file, {})).toThrow(/providers\.endpoints\.deepseek\.apiKey/)
+  })
+
+  it("native agent 引用不存在的 endpoint 时报错", () => {
+    const file = writeYaml(`
+endpoints: {}
+agents:
+  a:
+    kind: native
+    endpoint: nope
+    model: m
+    capabilities: [exec]
+`)
+    expect(() => loadRegistry(file, {})).toThrow(/nope/)
+  })
+
+  it("native agent 引用 endpoint 未声明的 model 时报错", () => {
+    const file = writeYaml(`
+endpoints:
+  ds:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: k
+    models: [deepseek-v4-flash]
+agents:
+  a:
+    kind: native
+    endpoint: ds
+    model: gpt-4
+    capabilities: [exec]
+`)
+    expect(() => loadRegistry(file, {})).toThrow(/gpt-4/)
+  })
+
+  it("pty agent 不需要 endpoint，不参与引用校验", () => {
+    const file = writeYaml(`
+endpoints: {}
+agents:
+  claude-code:
+    kind: pty
+    command: claude
+    capabilities: [exec, mcp, hooks]
+`)
+    const reg = loadRegistry(file, {})
+    expect(Object.keys(reg.agents)).toEqual(["claude-code"])
   })
 })

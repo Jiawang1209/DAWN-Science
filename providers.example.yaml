@@ -1,0 +1,43 @@
+# DAWN Science —— provider 注册表示例
+#
+# 用法：cp providers.example.yaml providers.yaml
+# apiKey 里的 ${VAR} 会从环境变量展开，凭证放 .env（见 .env.example），不要写在这里。
+#
+# 模型 id 必须钉具体版本：Spike A 实测 pi 内置的 deepseek provider 只认
+# deepseek-v4-flash / deepseek-v4-pro，别名 deepseek-chat 不在其注册表内；
+# 且指向会漂移的别名与本项目「可追溯」的核心主张冲突。见 spikes/FINDINGS.md。
+
+endpoints:
+  deepseek:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: ${DEEPSEEK_API_KEY}
+    models:
+      - deepseek-v4-flash
+      - deepseek-v4-pro
+
+agents:
+  # 进程内跑 pi 的 agentLoop，直连模型服务
+  ds-chat:
+    kind: native
+    endpoint: deepseek
+    model: deepseek-v4-flash
+    capabilities: [exec, chat]
+
+  ds-pro:
+    kind: native
+    endpoint: deepseek
+    model: deepseek-v4-pro
+    capabilities: [exec, chat]
+
+  # 在 PTY 里起外部 CLI，我方只管进程与隔离配置
+  claude-code:
+    kind: pty
+    command: claude
+    args: []
+    capabilities: [fs_write, exec, mcp, hooks]
+
+  codex:
+    kind: pty
+    command: codex
+    args: []
+    capabilities: [fs_write, exec, mcp]

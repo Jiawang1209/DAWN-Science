@@ -43,10 +43,23 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A 会话生命周期：先落库再改内存、租约守卫写入（Task 1.6）
+### 2026-08-08 — 提前插入临时 CLI，使已完成的四层可上手运行（计划外）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: **这是计划外的插入，理由是主规划 §5 的 G2 决策门**——「判据不是功能清单，是行为：你是否真的开始用它」。按原计划要到 Task 1.11 才有入口，意味着作者要等 6 个任务才能上手；而配置层、存储层、Runtime 契约、会话层四块此时已经贯通，让它们可运行的边际成本很低。越早上手，越早发现设计上不合用的地方。
+- **What**:
+  - 新增 `src/cli.ts`（**临时版，文件头已显式标注**，Task 1.11 会补全）：`dawn agents` / `dawn sessions` / `dawn demo`。`dawn run <agent>` 尚不能做——需要 Task 1.9–1.10 的真实 Runtime。
+  - 新增 `providers.example.yaml`：四个 agent（两个 native + 两个 pty），model id 全部钉 v4 版本并在注释里写明理由。
+  - `dawn demo` 用 FakeRuntime 串起完整生命周期：创建会话 → engine 取租约 → 写入 → **预览抢占** → user 抢占 → **engine 被拒** → user 写入 → 停止 → **打印租约审计链**。这是把四层的行为一次性可视化。
+  - `providers.yaml`（本地配置）加入 `.gitignore`。
+- **Impact**: 已完成的四层现在可以直接运行验证，而不只是靠测试。**顺带端到端验证了此前只有单元测试覆盖的一条链路**：`.env` → `--env-file-if-exists` → loader 的 `${ENV}` 展开 → schema 校验，`dawn agents` 能正确显示说明整条链是活的。会话跨进程持久化也得到验证（第二次运行仍能读到上次的记录）。
+- **Verification**: `dawn agents` 正确列出 4 个 agent 与 endpoint；`dawn demo` 完整走通并打印出三条审计记录（acquire → takeover → release），engine 抢占被拒的报错信息符合预期；`dawn sessions` 在独立进程中读到上次 demo 落库的会话（state=exited, pid=1000, exit=0）。`npm run typecheck` 零错误，73 个既有测试不受影响。
+
+### 2026-08-08 — 阶段①-A 会话生命周期：先落库再改内存、租约守卫写入（Task 1.6）
+
+- **Type**: feat
+- **Commit**: `fd9efe2`
 - **Motivation**: 把配置层、存储层、Runtime 契约、租约四块接起来。这一层的核心风险是**状态裂缝**——内存说会话活着而库里没有，进程崩溃后这种不一致无法分辨，UI 会拿着一个不存在的会话去连一个不存在的进程。
 - **What**:
   - 新增 `src/session/manager.ts`：`create` / `attach` / `write` / `stop` / `list` / `reconcileOnStartup`，租约作为公开成员暴露。

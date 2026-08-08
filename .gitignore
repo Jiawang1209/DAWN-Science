@@ -31,6 +31,9 @@ prebuilds/
 .env
 .env.*
 !.env.example
+
+# 本地 provider 配置（由 providers.example.yaml 复制而来，可能含机器特定路径）
+providers.yaml
 *.pem
 *.key
 

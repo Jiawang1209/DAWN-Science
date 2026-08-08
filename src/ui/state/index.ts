@@ -65,8 +65,12 @@ export {
 export {
   $view,
   $dockOpen,
+  $drafts,
   $activeProjectId,
   $activeSessionId,
+  draftOf,
+  setDraft,
+  clearDraft,
   setView,
   setDockOpen,
   setActiveProjectId,
@@ -99,7 +103,7 @@ import {
   $runs,
   $sessions,
 } from "./catalog.js"
-import { $activeProjectId, $activeSessionId, $dockOpen, $view } from "./view.js"
+import { $activeProjectId, $activeSessionId, $dockOpen, $drafts, $view } from "./view.js"
 import { invalidate as invalidateGeneration } from "./guard.js"
 
 /**
@@ -132,6 +136,7 @@ export function resetAllState(): void {
   $activeSessionId.set(undefined)
   $view.set("conversation")
   $dockOpen.set(false)
+  $drafts.set({})
   $items.set([])
   $terminal.set([])
   $terminalTrimmed.set(false)

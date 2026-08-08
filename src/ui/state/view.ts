@@ -29,6 +29,41 @@ export const $dockOpen = atom(false)
 export const $activeProjectId = atom<string | undefined>(undefined)
 export const $activeSessionId = atom<string | undefined>(undefined)
 
+/**
+ * 每个会话各自的输入框草稿。**key 就是作用域声明。**
+ *
+ * Hermes：*"Persisted state must declare its scope in its own key: is this
+ * global, or does it belong to a connection, a profile, a stored session, a
+ * project, or a window? **Getting the scope wrong is how one profile's setting
+ * bleeds into another**."*
+ *
+ * 此前草稿是 `ConversationView` 里的一个 `useState`。切会话时那个组件**不卸载**
+ * （位置没变、实例复用），于是草稿原样留着——**在 A 里打了一半的话，
+ * 切到 B 之后还在输入框里**。作用域写成了「这个组件」，而它实际属于「这个会话」。
+ *
+ * 渗漏比重启更糟：重启至少是可见的。
+ */
+export const $drafts = atom<Readonly<Record<string, string>>>({})
+
+export function draftOf(sessionId: string | undefined): string {
+  return sessionId ? ($drafts.get()[sessionId] ?? "") : ""
+}
+
+export function setDraft(sessionId: string, text: string): void {
+  const prev = $drafts.get()
+  if (prev[sessionId] === text) return
+  $drafts.set({ ...prev, [sessionId]: text })
+}
+
+/** 发出去之后清掉。**只清这一个会话的** */
+export function clearDraft(sessionId: string): void {
+  const prev = $drafts.get()
+  if (!(sessionId in prev)) return
+  const next = { ...prev }
+  delete next[sessionId]
+  $drafts.set(next)
+}
+
 export const setView = (v: View) => setValue($view, v)
 export const setDockOpen = (v: boolean) => setValue($dockOpen, v)
 export const setActiveProjectId = (v: string | undefined) => setValue($activeProjectId, v)

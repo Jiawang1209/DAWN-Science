@@ -9,10 +9,12 @@
  * 打开 app 时要做的事是跟 agent 说话。
  */
 import { useEffect, useRef, useState } from "react"
+import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
 import type { TranscriptItem } from "../protocol/index.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
+import { $drafts, clearDraft, setDraft } from "./state/view.js"
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
@@ -159,7 +161,14 @@ export function ConversationView({
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
 }) {
-  const [draft, setDraft] = useState("")
+  /**
+   * 草稿按**会话**取，不是按组件。
+   *
+   * 切会话时这个组件不卸载（位置没变、实例复用），所以本地 `useState`
+   * 会把 A 的半句话原样带到 B。作用域必须写在 key 里——见 state/view.ts。
+   */
+  const drafts = useStore($drafts)
+  const draft = drafts[session.sessionId] ?? ""
   const bottom = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -200,12 +209,12 @@ export function ConversationView({
           const text = draft.trim()
           if (!text) return
           onSend(text)
-          setDraft("")
+          clearDraft(session.sessionId)
         }}
       >
         <textarea
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => setDraft(session.sessionId, e.target.value)}
           placeholder={disabled ? "会话已结束" : "输入内容，回车发送"}
           disabled={disabled ?? false}
           onKeyDown={(e) => {

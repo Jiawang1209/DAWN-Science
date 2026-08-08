@@ -43,10 +43,23 @@
 
 ## 变更日志
 
-### 2026-08-09 — 终端隐藏时不再卸载；补齐 CJK 宽度与链接 addon
+### 2026-08-09 — 切会话是换个家不是重启：草稿不再渗进另一个会话
 
 - **Type**: fix
 - **Commit**: 待回填
+- **Motivation**: Task 3.8 · S5。Hermes `AGENTS.md`：*"Changing profile, connection, or mode is a workspace switch, not a cold start. The shell and whatever the user was doing stay put; only the gateway-bound view is cleared and repopulated, and **the previous context must not leak into the next one**."*
+- **写测试时撞出的真缺陷**: `ConversationView` 的输入框草稿是组件本地 `useState`。切会话时这个组件**不卸载**（在树里位置没变、实例复用），于是**在 A 里打了一半的话，切到 B 之后还在输入框里**。测试直接抓到：`expected '这句话是给 A 的' to be ''`。
+- **根因是作用域搞错了**: 草稿属于「**这个会话**」，却被存成了「这个组件」。Hermes 把这条单独写明：*"Persisted state must declare its scope in its own key … **Getting the scope wrong is how one profile's setting bleeds into another**."*
+  **渗漏比重启更糟——重启至少是可见的。**
+- **What**: `$drafts: Record<sessionId, string>` 进 `state/view.ts`，配 `draftOf` / `setDraft` / `clearDraft`；`ConversationView` 改为按会话读写。副作用是**切回来时草稿还在**——这正是 re-home 该有的样子：各自的东西各自留着。
+- **本 Task 未新增 re-home 机制**: 世代守卫与 `resetTranscript()` 在 3.3 已建好，`resyncSession` 已有「世代 + 会话 id」两道防线。这里补的是**上一个上下文不许渗漏**这一半，以及把它锁进测试。
+- **Verification**: 9 条测试，先 FAIL（2/9，正是草稿那两条）再转绿；513 tests passed（41 文件，+8）；typecheck 与 build 干净；真 Electron 启动零错误。
+  **诚实说明**：「A 流式输出中途切 B 再切回 A」的**点击流**验证要等 Task 3.10 的 Playwright——现在没有驱动真实 UI 的手段，本 Task 验的是状态层与组件层。
+
+### 2026-08-09 — 终端隐藏时不再卸载；补齐 CJK 宽度与链接 addon
+
+- **Type**: fix
+- **Commit**: `a47a561`
 - **Motivation**: Task 3.7 · S4。Hermes `DESIGN.md`：*"Expensive, stateful surfaces (terminals, live tools) stay alive when hidden. **Visibility is not lifecycle.**"*
 - **原缺陷**: `TerminalDock` 收起时把 `TerminalPane` 整个卸载——xterm 实例 dispose、写入游标归零，**滚屏内容全没了**。而那些字节是 agent 干活的唯一现场记录。**更麻烦的是它悄无声息**：收起再展开看到一片空白，很容易被读成「这个会话本来就没输出」。**丢数据而不出声，是最坏的一种。**
 - **What**:

@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "dawn": "tsx --env-file-if-exists=.env src/cli.ts",
+    "smoke:native": "tsx --env-file-if-exists=.env scripts/smoke-native.ts",
     "spike:a": "tsx --env-file-if-exists=.env spikes/a-pi-embed.ts",
     "spike:b": "tsx --env-file-if-exists=.env spikes/b-pty-mcp-hook.ts",
     "spike:d": "tsx --env-file-if-exists=.env spikes/d-jupyter-kernel.ts"

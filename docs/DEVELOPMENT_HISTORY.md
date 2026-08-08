@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A PTY Runtime：进程树终止证伪了规格 7.18 的核心假设（Task 1.9）
+### 2026-08-08 — 阶段①-A Native Runtime：pi agent loop 适配器，真实对话打通（Task 1.10）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 阶段①-A 的最后一块运行时。它决定 `dawn run ds-chat` 能否真的跟模型对话，也是 Spike A 结论的兑现点。
+- **What**:
+  - 新增 `src/runtime/native.ts`：`NativeRuntime`，用 `pi-agent-core` 的 `Agent` + `pi-ai` 的 provider 层。
+  - **走通用 `createProvider` 路径而非 pi 内置的 `deepseekProvider()`**。理由：内置 provider 从环境变量读 key 且 baseUrl 写死，而本项目的 `SessionSpec.endpoint` 携带显式 baseUrl / apiKey / model（来自 `providers.yaml`，已由 loader 展开 `${ENV}`）。显式 key 通过自定义 `auth.apiKey.resolve()` 注入——**`ProviderAuth` 是 `{apiKey?, oauth?}` 的包装层**，直接把 `{name, resolve}` 放在 `auth` 下会 typecheck 失败。
+  - **计划 Step 3 的「zod 校验 + 重试」补丁不需要写**：Spike A 已实测 schema 由引擎强制且失败自动重试，非法参数根本到不了 handler。这是 spike 直接省掉一整层实现的实例。
+  - 事件转换只取 `text_delta`（逐 token 的正文增量），`turn_end` 补一个换行。`write` 接口是同步的而 `agent.prompt` 是异步的，故 fire-and-forget，但**失败必须出声**——转成 output 事件送到终端，不静默吞掉。
+  - 新增 `scripts/smoke-native.ts` + `npm run smoke:native`：把计划 Step 4 的「手工冒烟」做成可重复执行的脚本。
+  - **合成 pid 的语义差异已写进注释**：native 会话不对应真实进程，pid 是序号，**不可用于 `process.kill`**，与 PtyRuntime 的 pid 语义不同。
+- **Impact**: 三种 Runtime（fake / pty / native）全部就位，Task 1.11 可以把 `dawn run` 接起来。**一处已知限制**：通用端点的 `cost` / `contextWindow` / `maxTokens` 无法预知，当前用保守占位值（cost 全 0、128k 窗口）。后果是 `calculateCost` 会算出 0、上下文压缩触发点偏保守；阶段 ②-A 引入压缩时需让 `providers.yaml` 能声明这些值，或对已知 provider 走 pi 内置模型表。
+- **Verification**: 9 个契约测试（不打网络，建 provider 与 Agent 均不产生请求）。**真实链路由冒烟脚本验证**：向 DeepSeek 发一轮对话，事件种类 `started, output, exited` 齐全，收到 45 字正文。计划 Step 4 的示例用 `deepseek-chat`，已按 Spike A 结论改为 `deepseek-v4-flash`。全仓库 117 passed，typecheck 零错误。
+
+### 2026-08-08 — 阶段①-A PTY Runtime：进程树终止证伪了规格 7.18 的核心假设（Task 1.9）
+
+- **Type**: feat
+- **Commit**: `ee5dc7c`
 - **Motivation**: 第一个真起进程的 Runtime。核心风险是**孤儿进程**——数据科学 agent 会起 `python train.py`、`npm test` 这类长任务，杀不干净会持续占用 CPU 与 GPU，而显存不释放会卡死后续全部工作。
 - **What**:
   - 新增 `src/runtime/pty.ts`：`PtyRuntime`，node-pty 起真实进程，接入 Task 1.7 的隔离配置。

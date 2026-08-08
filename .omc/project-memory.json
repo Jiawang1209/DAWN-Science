@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -5",
-    "testCommand": "npm run typecheck 2>&1 | tail -5 && npx vitest run 2>&1 | tail -6",
+    "buildCommand": "npm run typecheck 2>&1 | tail -5 && npx vitest run 2>&1 | tail -6 && npm run build 2>&1 | tail -4",
+    "testCommand": "npm run typecheck 2>&1 | tail -5 && npx vitest run 2>&1 | tail -6 && npm run build 2>&1 | tail -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,8 +44,8 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 39,
-      "lastAccessed": 1786182862590,
+      "accessCount": 40,
+      "lastAccessed": 1786183677520,
       "type": "file"
     },
     {

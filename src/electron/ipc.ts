@@ -22,6 +22,16 @@ export const IPC_CHANNEL = "dawn:workbench:invoke"
  */
 export const IPC_EVENT_CHANNEL = "dawn:workbench:event"
 
+/**
+ * 选目录。**刻意不做成协议操作**——它要用 Electron 的 `dialog`，
+ * 而 `WorkbenchServer` 必须能在 node 下测（Task 2.3 的前提）。
+ * 把一个只有 Electron 才跑得起来的东西塞进协议，等于毁掉那个前提。
+ *
+ * 这是一条**窄通道**：没有入参，只回一个绝对路径或 `null`（用户取消）。
+ * 取消返回 null 而不是报错——用户改主意不是错误。
+ */
+export const IPC_PICK_DIRECTORY = "dawn:shell:pick-directory"
+
 export interface IpcHandler {
   (operation: unknown, request: unknown, ctx?: { requestId?: string }): Promise<WorkbenchResponse>
 }

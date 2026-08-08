@@ -15,10 +15,14 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron"
 
 const CHANNEL = "dawn:workbench:invoke"
 const EVENT_CHANNEL = "dawn:workbench:event"
+const PICK_DIRECTORY = "dawn:shell:pick-directory"
 
 contextBridge.exposeInMainWorld("dawn", {
   invoke: (operation: string, request: unknown, requestId?: string) =>
     ipcRenderer.invoke(CHANNEL, operation, request, requestId),
+
+  /** 原生目录选择器。取消时得到 null——用户改主意不是错误 */
+  pickDirectory: (): Promise<string | null> => ipcRenderer.invoke(PICK_DIRECTORY),
 
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)

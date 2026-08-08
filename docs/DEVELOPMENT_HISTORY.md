@@ -43,10 +43,29 @@
 
 ## 变更日志
 
-### 2026-08-08 — 渲染侧事件通道：单向开口与跳号出声
+### 2026-08-08 — MVP 闭环：对话看得见回复、终端接 xterm、产出接真实数据、原生选目录
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Task 2.19–2.23，把 Part 5 的 MVP 那条路接通：打开 App → 打开项目文件夹 → 新建会话 → 说一句话 → **看见回复** → 看见改了哪些文件 → 看见花了多少钱。
+- **What**:
+  - **2.19 对话回读**：新增 `src/ui/turns.ts`（事件流 → 对话气泡的纯函数，单独成文件是为了能脱离 React 测）。同一 `turnId` 的增量拼成一段，到达顺序即渲染顺序——**不做重排**，seq 已经保证了顺序，界面再按时间戳排一次只会引入第二套真相。**非对话事件原样返回同一个数组**，引用不变则 React 不重绘：一个 PTY 每秒几百条 bytes，若每条都造新数组，对话区会跟着白白重绘几百次。切会话改为 `subscribeSession` 重放而非清空；`expectSeq` 把游标推到历史末尾。**去掉本地乐观追加**——事件流是对话的唯一事实来源。缓冲截断时对话顶部显示「更早的输出已丢失」。
+  - **2.20 终端**：新增 `src/ui/terminal.tsx`，用 `@xterm/xterm`。**动态 import**，xterm 因此独立成 331 KB 的 chunk，只在真的打开终端时才加载——多数会话根本没有终端。只写新增片段（整份重写会让光标位置与滚动全部错乱），键盘输入回 `writeToSession`。
+  - **2.21 产出与成本**：App 取 `getRun` 拿 `fileChanges` 与 `cost`，取 `getProvenance` 喂 ProvenanceBadge。**溯源取不到不算错误**，静静留空即可，面板自己会说。
+  - **2.22 原生目录选择器**：`dialog.showOpenDialog` 替掉 `window.prompt`，走独立窄通道 `dawn:shell:pick-directory`——**刻意不做成协议操作**，因为它要 Electron 的 `dialog`，而 `WorkbenchServer` 必须能在 node 下测（Task 2.3 的前提），把只有 Electron 才跑得起来的东西塞进协议等于毁掉那个前提。取消返回 null 而不是报错：用户改主意不是错误。
+  - **2.23 App 级主路径测试**（13 条）：**只渲染 `App`，断言用户看得见的结果**，并且用**真的 `createClient` 配假传输**——这样 seq 连续性、信封校验、版本判断走的都是真实逻辑，而不是在测试里再写一遍。
+- **Impact**: MVP 那条路在**测试层已经闭合**。是否在真机上闭合，要作者亲自跑一遍 `npm run app` 才算数。
+- **2.23 当场抓到三处，正是它存在的理由**：
+  1. **有项目却不自动选中**——重开 app 时侧栏列着项目、「＋ 新建会话」却禁用并提示「先打开一个项目文件夹」，而项目明明就在那里。**叶子组件测试碰不到这种缺陷**，它只存在于「谁给谁喂数据」的接线里。
+  2. **我自己的测试夹具形状是错的**：`FileChangeFacts.files` 是 `string[]`，我按对象数组写；`Cost` 要 `totalUSD`，我写了 `totalTokens`。因此给夹具加了一道「过协议 response schema」的关卡——**写错形状当场炸，而不是留到界面上以更难懂的方式失败**。这暴露了一个更深的问题：叶子组件测试的手喂 props **从来没有被协议校验过**，它们可以长期与后端真实返回的形状不一致而无人发现。
+  3. **等待点选错会造出假绿**：`openAndStart` 原本只等 `createSession` 落进 calls 就返回，但那一刻 `setSessionId` 还没被 React 处理完，推来的事件会因为「不是当前会话」被静静滤掉。改为等到输入框出现且 `subscribeSession` 已发出。
+- **另一处实测修正**：native 会话的「一轮说完」此前靠一条 `data: "\n"` 表示，与正文换行无法区分——已在上一条记录里改为语义化的 `turn_end` 事件。
+- **Verification**: 437 passed（新增 13 条 App 级 + 10 条 turns + 终端 dock 契约改写），typecheck 零错误，`npm run build` 通过（xterm 独立分包）。**回头扫过一遍 `src/ui/App.tsx`，确认已无写死的字面量 props**——每一处都追得到 client。
+
+### 2026-08-08 — 渲染侧事件通道：单向开口与跳号出声
+
+- **Type**: feat
+- **Commit**: `744c307`
 - **Motivation**: Task 2.18。事件中枢已就位，但事件还进不了渲染进程——preload 只暴露了 `invoke`。
 - **What**:
   - **preload 新增 `window.dawn.onEvent(cb)`，只挂 `on` 不给发送能力**：这条通道是单向的，开一个反向口子等于把它变成第二个 `invoke`。返回退订函数——热重载与组件卸载都会走到这里，不退订就会越积越多。

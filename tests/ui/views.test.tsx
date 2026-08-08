@@ -136,8 +136,8 @@ describe("对话视图", () => {
       <ConversationView
         session={session()}
         turns={[
-          { id: "1", who: "user", text: "你好" },
-          { id: "2", who: "agent", text: "在" },
+          { id: "1", who: "user", text: "你好", final: true },
+          { id: "2", who: "agent", text: "在", final: true },
         ]}
         onSend={noop}
       />,
@@ -177,31 +177,40 @@ describe("对话视图", () => {
 })
 
 describe("终端 dock", () => {
+  // xterm 的真实渲染不在 jsdom 里验（它要字体度量与 canvas）。
+  // 这里只验容器契约：什么时候挂载窗格、按钮什么时候可用。
+  const paneCount = () => document.querySelectorAll(".term-host").length
+
   it("默认收起 —— 终端是下钻视图，不是主界面", () => {
-    render(<TerminalDock open={false} onToggle={noop} output="hi" available />)
-    expect(screen.queryByText("hi")).toBeNull()
+    render(<TerminalDock open={false} onToggle={noop} chunks={["hi"]} available />)
+    expect(paneCount()).toBe(0)
   })
 
-  it("展开后显示输出", () => {
-    render(<TerminalDock open onToggle={noop} output="hello from pty" available />)
-    expect(screen.getByText(/hello from pty/)).toBeDefined()
+  it("展开后挂载终端窗格", () => {
+    render(<TerminalDock open onToggle={noop} chunks={["hello from pty"]} available />)
+    expect(paneCount()).toBe(1)
   })
 
   it("native 会话没有终端，按钮禁用并说明原因", () => {
-    render(<TerminalDock open={false} onToggle={noop} output="" available={false} />)
+    render(<TerminalDock open={false} onToggle={noop} chunks={[]} available={false} />)
     expect((screen.getByRole("button", { name: /终端/ }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText(/仅外部 CLI 会话有终端/)).toBeDefined()
   })
 
+  it("不可用时即便 open 也不挂窗格 —— 免得白白初始化一个 xterm", () => {
+    render(<TerminalDock open onToggle={noop} chunks={[]} available={false} />)
+    expect(paneCount()).toBe(0)
+  })
+
   it("点击切换触发回调", () => {
     const onToggle = vi.fn()
-    render(<TerminalDock open={false} onToggle={onToggle} output="" available />)
+    render(<TerminalDock open={false} onToggle={onToggle} chunks={[]} available />)
     fireEvent.click(screen.getByRole("button", { name: /终端/ }))
     expect(onToggle).toHaveBeenCalled()
   })
 
-  it("展开但无输出时如实说暂无，而不是留白", () => {
-    render(<TerminalDock open onToggle={noop} output="" available />)
+  it("无输出时如实说暂无，而不是留白", () => {
+    render(<TerminalDock open={false} onToggle={noop} chunks={[]} available />)
     expect(screen.getByText(/暂无输出/)).toBeDefined()
   })
 })

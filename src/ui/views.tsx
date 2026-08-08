@@ -10,6 +10,10 @@
  */
 import { useEffect, useRef, useState } from "react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
+import type { Turn } from "./turns.js"
+import { TerminalPane } from "./terminal.js"
+
+export type { Turn } from "./turns.js"
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
@@ -134,22 +138,19 @@ export function SessionSidebar({
 
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
-export interface Turn {
-  id: string
-  who: "user" | "agent"
-  text: string
-}
-
 export function ConversationView({
   session,
   turns,
   onSend,
   disabled,
+  lostEarlier,
 }: {
   session: SessionSummary
   turns: Turn[]
   onSend: (text: string) => void
   disabled?: boolean
+  /** 缓冲窗口之前的输出已经不在了。**必须说出来**，不能让人以为对话就是从这里开始的 */
+  lostEarlier?: boolean
 }) {
   const [draft, setDraft] = useState("")
   const bottom = useRef<HTMLDivElement>(null)
@@ -168,6 +169,7 @@ export function ConversationView({
       </header>
 
       <div className="turns">
+        {lostEarlier ? <p className="caveat">更早的输出已丢失（超出缓冲窗口）</p> : null}
         {turns.length === 0 ? (
           <p className="empty">还没有对话</p>
         ) : (
@@ -175,6 +177,7 @@ export function ConversationView({
             <div key={t.id} className={`turn ${t.who}`}>
               <span className="who">{t.who === "user" ? "你" : session.agentId}</span>
               <pre className="text">{t.text}</pre>
+              {t.final ? null : <span className="hint">…</span>}
             </div>
           ))
         )}
@@ -231,13 +234,16 @@ export function EmptyConversation({ canStart }: { canStart: boolean }) {
 export function TerminalDock({
   open,
   onToggle,
-  output,
+  chunks,
   available,
+  onInput,
 }: {
   open: boolean
   onToggle: () => void
-  output: string
+  /** 累积的字节片段。展开时交给 xterm */
+  chunks: string[]
   available: boolean
+  onInput?: (data: string) => void
 }) {
   return (
     <div className={open ? "dock open" : "dock"}>
@@ -246,10 +252,11 @@ export function TerminalDock({
           终端 {open ? "▾" : "▸"}
         </button>
         {!available ? <span className="hint">仅外部 CLI 会话有终端</span> : null}
+        {available && chunks.length === 0 ? <span className="hint">暂无输出</span> : null}
       </div>
       {open && available ? (
         <div className="dock-content">
-          <pre className="term">{output || "（暂无输出）"}</pre>
+          <TerminalPane chunks={chunks} {...(onInput ? { onInput } : {})} />
         </div>
       ) : null}
     </div>

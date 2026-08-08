@@ -60,6 +60,8 @@ pre { margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-s
 .dock-tabs { display:flex; gap:10px; align-items:center; padding:4px 12px; }
 .dock-content { max-height:280px; overflow:auto; padding:8px 12px; background:#161617; }
 .term { color:#cfcfd2; font-size:12px; }
+/* xterm 需要一个有确定高度的宿主，否则 fit() 算出 0 行 */
+.term-host { height:260px; }
 
 /* 凭证设置 */
 .cred-list { list-style:none; margin:8px 0 0; padding:0; }

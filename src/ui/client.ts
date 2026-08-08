@@ -34,6 +34,8 @@ declare global {
     dawn?: {
       invoke(operation: string, request: unknown, requestId?: string): Promise<RawResponse>
       onEvent?: EventSource
+      /** 原生目录选择器。取消时 null */
+      pickDirectory?: () => Promise<string | null>
     }
   }
 }
@@ -72,8 +74,13 @@ export interface EventSubscription {
  * @param invoke 注入点。默认取 `window.dawn.invoke`；测试传入自己的桩，
  *   这样客户端逻辑不必依赖 Electron 也能验。
  * @param eventSource 同理，默认取 `window.dawn.onEvent`。
+ * @param pickDirectory 同理，默认取 `window.dawn.pickDirectory`。
  */
-export function createClient(invoke?: Invoker, eventSource?: EventSource) {
+export function createClient(
+  invoke?: Invoker,
+  eventSource?: EventSource,
+  pickDirectory?: () => Promise<string | null>,
+) {
   const call: Invoker = invoke ?? ((op, req, id) => {
     if (!window.dawn) {
       // 在浏览器里直接开 index.html 会走到这里。说清楚而不是抛一个 undefined 错误
@@ -167,6 +174,19 @@ export function createClient(invoke?: Invoker, eventSource?: EventSource) {
           problem(`处理会话事件时出错：${err instanceof Error ? err.message : String(err)}`)
         }
       })
+    },
+
+    /**
+     * 打开原生目录选择器。取消或没有桥接时返回 null。
+     *
+     * **这不是协议操作**，故不走 `invoke`：它要用 Electron 的 `dialog`，
+     * 而协议服务端必须能在 node 下测。放这里是因为客户端本来就是
+     * 「包住 window.dawn」的那一层，多开一个注入点只会多一处要接。
+     */
+    async pickDirectory(): Promise<string | null> {
+      const pick = pickDirectory ?? window.dawn?.pickDirectory
+      if (!pick) return null
+      return pick()
     },
 
     /** 取数据，丢弃 warnings。多数调用点用这个。 */

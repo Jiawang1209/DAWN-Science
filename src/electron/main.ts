@@ -7,7 +7,7 @@
  */
 import { app, BrowserWindow, dialog, ipcMain, safeStorage } from "electron"
 import { join } from "node:path"
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, createIpcHandler } from "./ipc.js"
+import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } from "./ipc.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 
@@ -70,6 +70,16 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC_CHANNEL, (_e, operation: unknown, request: unknown, requestId?: string) =>
     handle(operation, request, requestId ? { requestId } : {}),
   )
+
+  // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
+  ipcMain.handle(IPC_PICK_DIRECTORY, async (e) => {
+    const owner = BrowserWindow.fromWebContents(e.sender)
+    const r = owner
+      ? await dialog.showOpenDialog(owner, { properties: ["openDirectory"] })
+      : await dialog.showOpenDialog({ properties: ["openDirectory"] })
+    // 取消返回 null，不报错——用户改主意不是错误
+    return r.canceled ? null : (r.filePaths[0] ?? null)
+  })
 
   createWindow()
   app.on("activate", () => {

@@ -17,8 +17,16 @@ export type Capability = z.infer<typeof CapabilitySchema>
 
 export const EndpointSchema = z.object({
   baseUrl: z.url(),
-  /** 支持 ${ENV_VAR} 占位，由 loader 展开（Task 1.2）。此处只校验非空。 */
-  apiKey: z.string().min(1),
+  /**
+   * 凭证。**可选**——桌面应用里凭证由 app 自己管（Electron safeStorage），
+   * 不该要求用户手写进配置文件；配置只声明「有哪些服务」。
+   *
+   * 若这里写了 `${ENV_VAR}` 且该变量存在，loader 会展开；
+   * **变量不存在时本字段被丢弃而非留下占位符**——占位符会被当成真 key 发到网络上。
+   * 解析不到时，凭证在建会话时从 app 的凭证库取；仍然没有则那时报错，
+   * 因为那才是需要它的时刻，报错也才有可操作性。
+   */
+  apiKey: z.string().min(1).optional(),
   /**
    * 必须钉具体版本的 model id。Spike A 实测：pi 的 deepseek provider 只认
    * deepseek-v4-flash / deepseek-v4-pro，别名 deepseek-chat 不在注册表内。

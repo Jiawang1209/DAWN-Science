@@ -12,6 +12,7 @@ import { ProjectManager } from "../../src/project/manager.js"
 import { SessionManager } from "../../src/session/manager.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
 import { createWorkbenchBackend } from "../../src/workbench/backend.js"
+import { memoryCredentials } from "../helpers/credentials.js"
 import { WorkbenchServer } from "../../src/workbench/server.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
 
@@ -54,7 +55,7 @@ function make() {
   const projects = new ProjectManager({
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions })
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials() })
   return { db, projectStore, runStore, sessions, projects, backend, server: new WorkbenchServer(backend) }
 }
 

@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npx vitest run 2>&1 | tail -5; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | grep -v '^npm notice' | head -4; echo \"=== 完整构建 ===\"; npm run build 2>&1 | grep -v '^npm notice' | tail -6",
-    "testCommand": "npx vitest run 2>&1 | tail -5; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | grep -v '^npm notice' | head -4; echo \"=== 完整构建 ===\"; npm run build 2>&1 | grep -v '^npm notice' | tail -6",
+    "buildCommand": "cat >> src/ui/styles.css <<'EOF'\n\n/* 凭证设置 */\n.cred-list { list-style:none; margin:8px 0 0; padding:0; }\n.cred { padding:8px 0; border-bottom:1px solid #2a2a2c; }\n.cred-head { display:flex; justify-content:space-between; margin-bottom:6px; }\n.cred-form { display:flex; gap:6px; }\n.cred-form input { flex:1; background:#252527; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; }\n.cred-form button { padding:0 12px; border:1px solid var(--line); border-radius:6px; }\nEOF\nnpm run build 2>&1 | grep -v '^npm notice' | tail -5\necho \"=== 冒烟：起 app 看有没有报错 ===\"\n( npx electron dist/electron/main.js > /tmp/dawn-app2.log 2>&1 & echo $! > /tmp/dawn-app2.pid )\nfor i in $(seq 1 8); do sleep 1; done\nPID=$(cat /tmp/dawn-app2.pid); pkill -P \"$PID\" 2>/dev/null; kill \"$PID\" 2>/dev/null; sleep 1\ngrep -v 'SIGTERM\\|npm notice' /tmp/dawn-app2.log | head -10; echo \"（以上无输出即为无报错）\"",
+    "testCommand": "python3 - <<'PYEOF'\nimport pathlib\np = pathlib.Path(\"src/ui/App.tsx\")\ns = p.read_text()\n\ns = s.replace('import { ConversationView, SessionSidebar, TerminalDock, type Turn } from \"./views.js\"',\n              'import { ConversationView, SessionSidebar, TerminalDock, type Turn } from \"./views.js\"\\n'\n              'import { SettingsPanel, type CredentialState } from \"./Settings.js\"')\n\ns = s.replace('''  const [sidebar, setSidebar] = useState(false) // 默认 agent-first：侧栏收起''',\n'''  const [creds, setCreds] = useState<CredentialState>({ configured: [], encrypted: false })\n  const [endpoints, setEndpoints] = useState<string[]>([])\n  const [showSettings, setShowSettings] = useState(false)\n\n  const [sidebar, setSidebar] = useState(false) // 默认 agent-first：侧栏收起''')\n\ns = s.replace('''  const refreshProjects = useCallback(() => {\n    client.get<ProjectSummary[]>(\"listProjects\").then(setProjects).catch(fail)\n  }, [client, fail])''',\n'''  const refreshProjects = useCallback(() => {\n    client.get<ProjectSummary[]>(\"listProjects\").then(setProjects).catch(fail)\n  }, [client, fail])\n\n  const refreshCreds = useCallback(() => {\n    client.get<CredentialState>(\"listCredentials\").then(setCreds).catch(fail)\n  }, [client, fail])''')\n\ns = s.replace('''  useEffect(() => {\n    if (ready) refreshProjects()\n  }, [ready, refreshProjects])''',\n'''  useEffect(() => {\n    if (!ready) return\n    refreshProjects()\n    refreshCreds()\n    // endpoint 清单来自 capabilities 之外的一次查询；①-B 先从 listCredentials\n    // 的已配置项 + 一个静态兜底推导，等 providers 暴露到协议后再改\n    client\n      .get<{ configured: string[] }>(\"listCredentials\")\n      .then((c) => setEndpoints((e) => [...new Set([...e, ...c.configured, \"deepseek\"])]))\n      .catch(fail)\n  }, [ready, refreshProjects, refreshCreds, client, fail])''')\n\ns = s.replace('''        <button type=\"button\" onClick={() => setSidebar((v) => !v)}>\n          {sidebar ? \"隐藏侧栏\" : \"显示侧栏\"}\n        </button>''',\n'''        <button type=\"button\" onClick={() => setSidebar((v) => !v)}>\n          {sidebar ? \"隐藏侧栏\" : \"显示侧栏\"}\n        </button>\n        <button type=\"button\" onClick={() => setShowSettings((v) => !v)}>\n          {showSettings ? \"返回\" : \"设置\"}\n        </button>''')\n\ns = s.replace('''        <main className=\"main\">\n          {session ? (''',\n'''        <main className=\"main\">\n          {showSettings ? (\n            <div className=\"panels\">\n              <SettingsPanel\n                endpoints={endpoints}\n                credentials={creds}\n                onSet={(id, secret) => {\n                  client\n                    .get(\"setCredential\", { endpointId: id, secret })\n                    .then(refreshCreds)\n                    .catch(fail)\n                }}\n                onDelete={(id) => {\n                  client.get(\"deleteCredential\", { endpointId: id }).then(refreshCreds).catch(fail)\n                }}\n              />\n            </div>\n          ) : session ? (''')\n\ns = s.replace('''            <div className=\"panels\">\n              <StatusPanel sessions={sessions} />''',\n'''            <div className=\"panels\">\n              {creds.configured.length === 0 ? (\n                <section className=\"panel\">\n                  <h3 className=\"panel-title\">先配置凭证</h3>\n                  <div className=\"panel-body\">\n                    <p className=\"caveat\">\n                      还没有配置任何 API key —— native agent 无法建会话。点顶栏「设置」填写。\n                    </p>\n                  </div>\n                </section>\n              ) : null}\n              <StatusPanel sessions={sessions} />''')\np.write_text(s)\nprint(\"App 已接入设置\")\nPYEOF\nnpm run typecheck 2>&1 | grep -v '^npm notice' | head -5; echo \"--- typecheck ---\"; npx vitest run 2>&1 | tail -5",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -145,6 +145,12 @@
       "type": "file"
     },
     {
+      "path": "src/config/loader.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786173105232,
+      "type": "file"
+    },
+    {
       "path": ".env.example",
       "accessCount": 1,
       "lastAccessed": 1786155524001,
@@ -190,12 +196,6 @@
       "path": "src/config/schema.ts",
       "accessCount": 1,
       "lastAccessed": 1786160097762,
-      "type": "file"
-    },
-    {
-      "path": "src/config/loader.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786160195653,
       "type": "file"
     },
     {

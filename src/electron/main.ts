@@ -5,10 +5,11 @@
  * 装配在 `wiring.ts`、派发在 `workbench/server.ts`、桥接逻辑在 `ipc.ts`——
  * 三者都不认识 Electron，因此都能单独测。这里剩下的部分正是「测不了、也不值得测」的那些。
  */
-import { app, BrowserWindow, dialog, ipcMain } from "electron"
+import { app, BrowserWindow, dialog, ipcMain, safeStorage } from "electron"
 import { join } from "node:path"
 import { IPC_CHANNEL, createIpcHandler } from "./ipc.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
+import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 
 const CONFIG = process.env.DAWN_CONFIG ?? join(process.cwd(), "providers.yaml")
 const DB = process.env.DAWN_DB ?? join(app.getPath("userData"), "dawn.db")
@@ -39,6 +40,11 @@ app.whenReady().then(() => {
     workbench = createWorkbench({
       configPath: CONFIG,
       dbPath: DB,
+      // 凭证由 app 管：加密交给 OS（macOS Keychain / DPAPI / libsecret）
+      credentials: new CredentialStore({
+        file: defaultCredentialFile(app.getPath("userData")),
+        safeStorage,
+      }),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })
     if (workbench.reconciled > 0) {

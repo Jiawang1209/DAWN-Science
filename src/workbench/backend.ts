@@ -15,15 +15,25 @@ import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 
+/** 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。 */
+export interface CredentialsPort {
+  get(endpointId: string): string | undefined
+  set(endpointId: string, secret: string): void
+  delete(endpointId: string): void
+  configured(): string[]
+  isEncrypted(): boolean
+}
+
 export interface WorkbenchBackendOptions {
   projects: ProjectManager
   projectStore: ProjectStore
   runs: RunStore
   sessions: SessionManager
+  credentials: CredentialsPort
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions } = opts
+  const { projects, projectStore, runs, sessions, credentials } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -36,6 +46,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
   return {
     listProjects: async () => projects.list(),
+
+    /** **只回报配没配，绝不回报凭证本身**——界面不需要知道值 */
+    listCredentials: async () => ({
+      configured: credentials.configured(),
+      encrypted: credentials.isEncrypted(),
+    }),
+
+    setCredential: async ({ endpointId, secret }) => {
+      credentials.set(endpointId, secret)
+      return {}
+    },
+
+    deleteCredential: async ({ endpointId }) => {
+      credentials.delete(endpointId)
+      return {}
+    },
 
     getProject: async ({ projectId }) => requireProject(projectId),
 

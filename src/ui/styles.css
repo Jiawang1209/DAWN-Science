@@ -60,3 +60,11 @@ pre { margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-s
 .dock-tabs { display:flex; gap:10px; align-items:center; padding:4px 12px; }
 .dock-content { max-height:280px; overflow:auto; padding:8px 12px; background:#161617; }
 .term { color:#cfcfd2; font-size:12px; }
+
+/* 凭证设置 */
+.cred-list { list-style:none; margin:8px 0 0; padding:0; }
+.cred { padding:8px 0; border-bottom:1px solid #2a2a2c; }
+.cred-head { display:flex; justify-content:space-between; margin-bottom:6px; }
+.cred-form { display:flex; gap:6px; }
+.cred-form input { flex:1; background:#252527; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; }
+.cred-form button { padding:0 12px; border:1px solid var(--line); border-radius:6px; }

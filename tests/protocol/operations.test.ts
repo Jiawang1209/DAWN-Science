@@ -14,11 +14,14 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("计划 §Task 2.2 冻结的 13 个操作齐全", () => {
+  it("16 个操作齐全（原冻结 13 个 + 2026-08-08 补的凭证 3 个）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
         "createSession",
+        "deleteCredential",
+        "listCredentials",
+        "setCredential",
         "getCapabilities",
         "getProject",
         "getProvenance",
@@ -42,10 +45,10 @@ describe("操作注册表", () => {
   })
 
   it("读写分明：只读操作不得标为 mutating", () => {
-    for (const name of ["getCapabilities", "listProjects", "getProject", "listSessions", "listRuns", "getRun", "getProvenance", "previewTakeover"]) {
+    for (const name of ["getCapabilities", "listProjects", "getProject", "listSessions", "listRuns", "getRun", "getProvenance", "previewTakeover", "listCredentials"]) {
       expect(isMutating(name), `${name} 应为只读`).toBe(false)
     }
-    for (const name of ["openProject", "createSession", "writeToSession", "stopSession", "acquireLease"]) {
+    for (const name of ["openProject", "createSession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential"]) {
       expect(isMutating(name), `${name} 应为可写`).toBe(true)
     }
   })

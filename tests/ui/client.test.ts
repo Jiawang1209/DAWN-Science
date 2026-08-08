@@ -63,12 +63,15 @@ describe("客户端 · 握手", () => {
     await expect(c.handshake()).rejects.toMatchObject({ code: "version_mismatch" })
   })
 
-  it("界面比服务端新时也失败 —— 它会去读服务端不返回的字段", async () => {
-    const c = createClient(async () => caps("1.0"))
-    // 需要界面版本高于 1.0 才能触发；用一个畸形版本代替，效果等价：不兼容即失败
+  it("界面比服务端新时失败 —— 它会去读服务端不返回的字段", async () => {
+    // 界面现在是 1.1；服务端 1.0 缺少凭证那三个操作，握过手也用不了
+    const older = createClient(async () => caps("1.0"))
+    await expect(older.handshake()).rejects.toMatchObject({ code: "version_mismatch" })
+  })
+
+  it("畸形版本号一律判不兼容，而不是放行", async () => {
     const bad = createClient(async () => caps("abc"))
     await expect(bad.handshake()).rejects.toMatchObject({ code: "version_mismatch" })
-    await expect(c.handshake()).resolves.toBeDefined()
   })
 })
 

@@ -9,6 +9,9 @@ function backend(): WorkbenchBackend {
   }
   return {
     listProjects: async () => [project],
+    listCredentials: async () => ({ configured: [], encrypted: false }),
+    setCredential: async () => ({}),
+    deleteCredential: async () => ({}),
     getProject: async () => project,
     listSessions: async () => [],
     listRuns: async () => [],

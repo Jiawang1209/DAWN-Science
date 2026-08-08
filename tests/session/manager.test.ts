@@ -309,3 +309,71 @@ describe("SessionManager · 项目归属", () => {
     expect(ctx.store.get(s.id)?.projectId).toBeUndefined()
   })
 })
+
+describe("SessionManager · 凭证在建会话时解析", () => {
+  // 2026-08-08 行为变更：配置加载不再因缺凭证失败（桌面应用不该起不来）。
+  // 失败推迟到这里——这才是真正需要凭证的时刻，报错也才有可操作性。
+  const noKeyRegistry: ProviderRegistry = {
+    endpoints: { ds: { baseUrl: "https://api.deepseek.com/v1", models: ["deepseek-v4-flash"] } },
+    agents: {
+      "ds-agent": { kind: "native", endpoint: "ds", model: "deepseek-v4-flash", capabilities: ["chat"] },
+      "claude-code": { kind: "pty", command: "claude", args: [], capabilities: [] },
+    },
+  }
+
+  function mgrWith(over: Partial<ConstructorParameters<typeof SessionManager>[0]> = {}) {
+    const db = new Database(":memory:")
+    migrate(db)
+    const store = new SessionStore(db)
+    const rt = new FakeRuntime()
+    return new SessionManager({
+      store, registry: noKeyRegistry,
+      runtimes: { native: rt, pty: rt },
+      workspaceRoot: "/tmp/x",
+      ...over,
+    })
+  }
+
+  it("native agent 缺凭证时报错，且说清楚去哪配", async () => {
+    await expect(mgrWith().create("ds-agent", "/tmp/w")).rejects.toThrow(/未配置凭证/)
+  })
+
+  it("报错点名是哪个 endpoint", async () => {
+    await expect(mgrWith().create("ds-agent", "/tmp/w")).rejects.toThrow(/"ds"/)
+  })
+
+  it("凭证解析器能补上 —— app 的凭证库从这里注入", async () => {
+    const mgr = mgrWith({ resolveCredential: (id) => (id === "ds" ? "sk-from-store" : undefined) })
+    const s = await mgr.create("ds-agent", "/tmp/w")
+    expect(s.agentId).toBe("ds-agent")
+  })
+
+  it("配置里写死的 apiKey 优先于解析器 —— 显式配置不被悄悄覆盖", async () => {
+    let seen: string | undefined
+    const rt: AgentRuntime = {
+      start: async (spec) => {
+        seen = spec.endpoint?.apiKey
+        return { sessionId: spec.sessionId, pid: 1 }
+      },
+      attach: () => () => {}, write: () => {}, stop: async () => {},
+    }
+    const db = new Database(":memory:"); migrate(db)
+    const mgr = new SessionManager({
+      store: new SessionStore(db),
+      registry: {
+        endpoints: { ds: { baseUrl: "https://x/v1", apiKey: "sk-from-config", models: ["m"] } },
+        agents: { a: { kind: "native", endpoint: "ds", model: "m", capabilities: [] } },
+      },
+      runtimes: { native: rt, pty: rt },
+      resolveCredential: () => "sk-from-store",
+      workspaceRoot: "/tmp/x",
+    })
+    await mgr.create("a", "/tmp/w")
+    expect(seen).toBe("sk-from-config")
+  })
+
+  it("pty agent 不需要凭证，缺了也能起 —— 它用的是自己的登录态", async () => {
+    const s = await mgrWith().create("claude-code", "/tmp/w")
+    expect(s.agentId).toBe("claude-code")
+  })
+})

@@ -115,8 +115,11 @@ export interface OperationDef {
 }
 
 /**
- * **操作清单在此冻结**（计划 §4 风险表）。①-B 期间不再新增——
- * 新操作一律推迟，避免「协议设计过度、迟迟进不了 UI」。
+ * 操作清单原定在 Task 2.2 冻结（计划 §4 风险表：避免协议设计过度）。
+ *
+ * **2026-08-08 解冻一次，新增凭证的三个操作**。理由是作者首次启动桌面版时
+ * 指出的真实缺陷：桌面应用的凭证应当在 app 里设置，而当时没有任何操作能做到
+ * ——冻结是为了防范围蔓延，不是为了拒绝必要的补漏。协议版本随之 1.0 → 1.1。
  */
 export const OPERATIONS = {
   // ── 只读 ──
@@ -162,6 +165,20 @@ export const OPERATIONS = {
     response: ProvenanceLinkSchema,
     mutating: false,
   },
+  /**
+   * 已配置凭证的 endpoint 清单。**只返回 id，绝不返回凭证本身**——
+   * 界面只需要知道「配没配」，不需要知道「是什么」。
+   */
+  listCredentials: {
+    request: Empty,
+    response: z.object({
+      configured: z.array(z.string()),
+      /** 当前是否由系统安全存储加密。false 时界面须提示用户 */
+      encrypted: z.boolean(),
+    }),
+    mutating: false,
+  },
+
   /** 预览不得改变状态——规格 7.1，①-A 已有对应测试 */
   previewTakeover: {
     request: z.object({ sessionId: z.string().min(1), requester: HolderSchema }),
@@ -198,6 +215,19 @@ export const OPERATIONS = {
   },
   stopSession: {
     request: z.object({ sessionId: z.string().min(1) }),
+    response: Empty,
+    mutating: true,
+  },
+  setCredential: {
+    request: z.object({
+      endpointId: z.string().min(1),
+      secret: z.string().min(1),
+    }),
+    response: Empty,
+    mutating: true,
+  },
+  deleteCredential: {
+    request: z.object({ endpointId: z.string().min(1) }),
     response: Empty,
     mutating: true,
   },

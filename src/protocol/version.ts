@@ -5,7 +5,11 @@
  * 版本号是这条依赖关系的唯一凭据——UI 启动时握手，不匹配就响亮报错，
  * 不静默降级（规格 7.5）。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "1.0"
+/**
+ * 1.1（2026-08-08）：新增凭证的三个操作。minor 递增 = 向后兼容的新增，
+ * 旧界面不会因此坏掉——它只是用不到新操作。
+ */
+export const WORKBENCH_PROTOCOL_VERSION = "1.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

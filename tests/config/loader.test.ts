@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { ProviderRegistrySchema } from "../../src/config/schema.js"
-import { loadRegistry } from "../../src/config/loader.js"
+import { loadRegistry, loadRegistryDetailed } from "../../src/config/loader.js"
 
 function writeYaml(body: string): string {
   const dir = mkdtempSync(join(tmpdir(), "dawn-cfg-"))
@@ -126,7 +126,10 @@ agents:
     expect(reg.endpoints.deepseek!.apiKey).toBe("sk-real-value")
   })
 
-  it("环境变量缺失时响亮报错，不静默留占位符", () => {
+  // 2026-08-08 行为变更：未解析的 ${ENV} 不再让加载失败。
+  // 桌面应用不该因为配置文件缺个变量就起不来——凭证在 app 里设置。
+  // **但原纪律保住了**：绝不留占位符，字段直接丢弃。
+  it("环境变量缺失时丢弃该字段，且绝不留下占位符", () => {
     const file = writeYaml(`
 endpoints:
   deepseek:
@@ -135,10 +138,14 @@ endpoints:
     models: [deepseek-v4-flash]
 agents: {}
 `)
-    expect(() => loadRegistry(file, {})).toThrow(/MISSING_KEY/)
+    const reg = loadRegistry(file, {})
+    expect(reg.endpoints.deepseek!.apiKey).toBeUndefined()
+    // 关键：占位符字面量绝不能留下来当成真 key 发到网络上
+    expect(JSON.stringify(reg)).not.toContain("MISSING_KEY")
+    expect(JSON.stringify(reg)).not.toContain("${")
   })
 
-  it("环境变量存在但为空串，同样报错", () => {
+  it("环境变量存在但为空串，同样视为未解析", () => {
     const file = writeYaml(`
 endpoints:
   deepseek:
@@ -147,10 +154,10 @@ endpoints:
     models: [deepseek-v4-flash]
 agents: {}
 `)
-    expect(() => loadRegistry(file, { EMPTY_KEY: "" })).toThrow(/EMPTY_KEY/)
+    expect(loadRegistry(file, { EMPTY_KEY: "" }).endpoints.deepseek!.apiKey).toBeUndefined()
   })
 
-  it("报错信息包含出错位置的路径", () => {
+  it("未解析项被记录下来，含位置与变量名 —— 调用方据此提示用户", () => {
     const file = writeYaml(`
 endpoints:
   deepseek:
@@ -159,7 +166,23 @@ endpoints:
     models: [deepseek-v4-flash]
 agents: {}
 `)
-    expect(() => loadRegistry(file, {})).toThrow(/providers\.endpoints\.deepseek\.apiKey/)
+    const { unresolved } = loadRegistryDetailed(file, {})
+    expect(unresolved).toEqual([
+      { path: "providers.endpoints.deepseek.apiKey", variable: "MISSING_KEY" },
+    ])
+  })
+
+  it("半截替换不允许发生 —— 一处未解析则整个字段作废", () => {
+    // "sk-${A}-${B}" 里 A 有值 B 没有：结果不能是 "sk-x--"，那看起来像个真 key
+    const file = writeYaml(`
+endpoints:
+  deepseek:
+    baseUrl: https://api.deepseek.com/v1
+    apiKey: sk-\${HAVE}-\${MISSING}
+    models: [deepseek-v4-flash]
+agents: {}
+`)
+    expect(loadRegistry(file, { HAVE: "x" }).endpoints.deepseek!.apiKey).toBeUndefined()
   })
 
   it("native agent 引用不存在的 endpoint 时报错", () => {

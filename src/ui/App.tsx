@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react"
 import type { ProjectSummary, RunSummary, SessionSummary } from "../protocol/index.js"
 import { ChangesPanel, CostPanel, RunsPanel, StatusPanel } from "./panels.js"
 import { ConversationView, SessionSidebar, TerminalDock, type Turn } from "./views.js"
+import { SettingsPanel, type CredentialState } from "./Settings.js"
 import { WorkbenchClientError, createClient, type WorkbenchClient } from "./client.js"
 
 export function App({ client = createClient() }: { client?: WorkbenchClient }) {
@@ -26,6 +27,10 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
   const [runs, setRuns] = useState<RunSummary[]>([])
   const [projectId, setProjectId] = useState<string | undefined>()
   const [sessionId, setSessionId] = useState<string | undefined>()
+
+  const [creds, setCreds] = useState<CredentialState>({ configured: [], encrypted: false })
+  const [endpoints, setEndpoints] = useState<string[]>([])
+  const [showSettings, setShowSettings] = useState(false)
 
   const [sidebar, setSidebar] = useState(false) // 默认 agent-first：侧栏收起
   const [dockOpen, setDockOpen] = useState(false)
@@ -48,9 +53,21 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
     client.get<ProjectSummary[]>("listProjects").then(setProjects).catch(fail)
   }, [client, fail])
 
+  const refreshCreds = useCallback(() => {
+    client.get<CredentialState>("listCredentials").then(setCreds).catch(fail)
+  }, [client, fail])
+
   useEffect(() => {
-    if (ready) refreshProjects()
-  }, [ready, refreshProjects])
+    if (!ready) return
+    refreshProjects()
+    refreshCreds()
+    // endpoint 清单来自 capabilities 之外的一次查询；①-B 先从 listCredentials
+    // 的已配置项 + 一个静态兜底推导，等 providers 暴露到协议后再改
+    client
+      .get<{ configured: string[] }>("listCredentials")
+      .then((c) => setEndpoints((e) => [...new Set([...e, ...c.configured, "deepseek"])]))
+      .catch(fail)
+  }, [ready, refreshProjects, refreshCreds, client, fail])
 
   useEffect(() => {
     if (!projectId) return
@@ -88,6 +105,9 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
         <button type="button" onClick={() => setSidebar((v) => !v)}>
           {sidebar ? "隐藏侧栏" : "显示侧栏"}
         </button>
+        <button type="button" onClick={() => setShowSettings((v) => !v)}>
+          {showSettings ? "返回" : "设置"}
+        </button>
         <span className="hint">{projects.find((p) => p.projectId === projectId)?.name ?? "未选择项目"}</span>
       </div>
 
@@ -118,7 +138,23 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
         />
 
         <main className="main">
-          {session ? (
+          {showSettings ? (
+            <div className="panels">
+              <SettingsPanel
+                endpoints={endpoints}
+                credentials={creds}
+                onSet={(id, secret) => {
+                  client
+                    .get("setCredential", { endpointId: id, secret })
+                    .then(refreshCreds)
+                    .catch(fail)
+                }}
+                onDelete={(id) => {
+                  client.get("deleteCredential", { endpointId: id }).then(refreshCreds).catch(fail)
+                }}
+              />
+            </div>
+          ) : session ? (
             <>
               <ConversationView
                 session={session}
@@ -140,6 +176,16 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
             </>
           ) : (
             <div className="panels">
+              {creds.configured.length === 0 ? (
+                <section className="panel">
+                  <h3 className="panel-title">先配置凭证</h3>
+                  <div className="panel-body">
+                    <p className="caveat">
+                      还没有配置任何 API key —— native agent 无法建会话。点顶栏「设置」填写。
+                    </p>
+                  </div>
+                </section>
+              ) : null}
               <StatusPanel sessions={sessions} />
               <ChangesPanel facts={undefined} />
               <CostPanel cost={latest?.cost} />

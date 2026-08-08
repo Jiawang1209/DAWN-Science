@@ -43,10 +43,27 @@
 
 ## 变更日志
 
+### 2026-08-08 — 凭证改由 app 自管：桌面应用不该因缺配置就起不来（作者反馈驱动）
+
+- **Type**: fix
+- **Commit**: 待回填
+- **Motivation**: 作者首次启动桌面版即失败：`配置 providers.endpoints.deepseek.apiKey 引用了环境变量 ${DEEPSEEK_API_KEY}，但它未设置或为空`。
+  我最初的判断是「Electron 没加载 `.env`」，并已开始写 `src/electron/env.ts` 补加载。**作者随即指出：「DeepSeek API 不应该是我自己开启 app 之后才自己设置的吗？」——这一问是对的，我在修错的问题。**
+  给 app 加载 `.env` 只让开发流程能跑，却保留了一个根本错误的模型：**桌面应用不该因为一个要用户手写的配置文件缺了变量就起不来**。那是 CLI 的思路漏进了产品里。该走的路 BACKLOG 早已登记：「凭证移出 process.env → OS keychain + 按 endpoint 定向注入，归属 ①-B」。Electron 外壳到位，正是现在。
+- **What**:
+  - 删除方向错误的 `src/electron/env.ts`。
+  - **`loadRegistry` 不再因 `${ENV}` 未解析而抛错**——app 照常启动。**但原纪律完整保住**：未解析的字段**被丢弃而非留下占位符**，因为 `"${DEEPSEEK_API_KEY}"` 字面量会被当成真 key 发到网络上，错误延后到 401 才暴露且信息量为零。**且一处未解析则整个字段作废**——`"sk-x--"` 这种半截替换比缺字段更危险，它看起来像个真值。新增 `loadRegistryDetailed` 返回未解析清单供调用方呈现。
+  - **失败时机从「加载配置」推迟到「建会话」**：`SessionManager.create` 在 native agent 拿不到凭证时报错，且报错说明去哪配。**那才是真正需要凭证的时刻，报错也才有可操作性。** 新增 `resolveCredential` 注入点；**配置里写死的 `apiKey` 优先于凭证库**——显式配置不该被悄悄覆盖。
+  - **新增 `CredentialStore`**：加密交给 OS（`safeStorage` → macOS Keychain / DPAPI / libsecret），本文件不发明任何加密。落盘 0600。**`safeStorage` 不可用时明确降级并出声**，而不是偷偷明文存盘让人以为加了密。解不开的密文视为没有，**绝不返回乱码去当 key 用**。
+  - **协议解冻一次**：新增 `listCredentials` / `setCredential` / `deleteCredential`，版本 1.0 → 1.1。操作清单原定在 Task 2.2 冻结，但**冻结是为了防范围蔓延，不是为了拒绝必要的补漏**。`listCredentials` **只返回 id，绝不返回凭证本身**。
+  - **新增设置界面**：两条显示纪律写成测试——**绝不回显已存的凭证**（输入框为 password 类型，整个 DOM 里不出现 `sk-`）、**加密状态如实告知**（没有 keychain 时明说是明文）。项目主页在未配置凭证时主动引导去设置。
+- **Impact**: **app 现在能起来了**，凭证在界面里填。这条修正同时暴露一个更普遍的问题：①-B 全程我都在用 CLI 的假设做桌面产品——`.env`、启动参数、命令行环境。**作者第一次真正打开它，两分钟就撞上了。这正是 G2「你是否真的用它」作为决策门的意义**：不用，就发现不了。
+- **Verification**: 356 passed（新增 22：凭证库 13 + 设置界面 9），typecheck 零错误，`npm run build` 通过，Electron 冒烟启动无报错。**5 条既有测试按新行为重写**——loader 的三条（改为「丢弃字段且不留占位符」）、wiring 的一条（改为「缺凭证仍起得来」）、client 的一条（协议升 1.1 后正好能真实表达「界面比服务端新」）。操作数断言 13 → 16。
+
 ### 2026-08-08 — ①-B Task 2.11–2.13：对话视图、终端下钻、外壳，并把依赖边界写成测试
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `9969906`
 - **Motivation**: ①-B 的最后三块。UI 的正确性我无法用眼睛判断，所以能钉成测试的部分必须钉住——尤其是「UI 只依赖协议」这条，**原则不写成测试就会被绕过，尤其在赶工时**：加一行 import 比走协议快得多，代价要到几个月后想换掉某个实现时才显现。
 - **What**:
   - 新增 `src/ui/client.ts`：包住 `window.dawn.invoke` 这一个开口。**握手校验版本，不匹配立即失败**；拆信封使调用方不必每次判断；**`warnings` 被保住而不是吞掉**。`invoke` 可注入，故客户端逻辑不依赖 Electron 也能测。没有桥时报 `no_bridge` 并说明「本页面必须在 DAWN 的 Electron 壳里打开」，而不是抛一个 undefined 错误。

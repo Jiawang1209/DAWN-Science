@@ -18,7 +18,7 @@ import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { familyOf } from "../runtime/family.js"
-import { createWorkbenchBackend } from "../workbench/backend.js"
+import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
 import { WorkbenchServer } from "../workbench/server.js"
 
 export interface CreateWorkbenchOptions {
@@ -31,6 +31,8 @@ export interface CreateWorkbenchOptions {
   env?: Record<string, string | undefined>
   readOnly?: boolean
   onInternalError?: (operation: string, err: unknown) => void
+  /** 凭证库。**app 自己管凭证**，不要求用户手写进配置文件 */
+  credentials: CredentialsPort
 }
 
 export interface Workbench {
@@ -66,6 +68,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         ...(family ? { family } : {}),
       })
     },
+    // 凭证在建会话时才解析——配置里没写的从凭证库取
+    resolveCredential: (endpointId) => opts.credentials.get(endpointId),
     workspaceRoot: process.cwd(),
   })
 
@@ -79,7 +83,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     registry,
   })
 
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions })
+  const backend = createWorkbenchBackend({
+    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials,
+  })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),
     ...(opts.onInternalError ? { onInternalError: opts.onInternalError } : {}),

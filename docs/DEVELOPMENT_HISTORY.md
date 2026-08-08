@@ -43,11 +43,25 @@
 
 ## 变更日志
 
+### 2026-08-08 — Phase 0 收官：G0 四项全过，放行进入阶段 ①-A
+
+- **Type**: chore
+- **Commit**: 待回填
+- **Motivation**: 四个 spike 各自留下了结论，但**决策门要的是一个合并判断**——放行还是停下。同时 Phase 0 期间有多条既有决策被实测推翻，散落在各 spike 章节里，需要收敛成一张表，否则写 Part 1 时会照着旧假设敲。
+- **What**:
+  - `spikes/FINDINGS.md` 顶部新增**汇总与 G0 放行判断**：四项判定表、「由 spike 确定或修改的技术决策」7 条、遗留项归属表。
+  - **G0 判定：四项全部通过 → 放行进入 Part 1。**
+  - **明确列出 Phase 0 推翻的既有假设**（这是本条记录的主要价值）：① 工具 schema 用 TypeBox 而非 zod；② DeepSeek 的 model id 必须钉 v4 版本，`deepseek-chat` 不在 pi 注册表内；③ 隔离用 claude 的显式标志而非 `CLAUDE_CONFIG_DIR`；④ 计划预留的「自建 agent loop」分支作废；⑤ 计划预留的 `electron-rebuild` 步骤当前不需要；⑥ ②-A 新增约束：用薄适配器隔离 rxjs。
+  - **提炼三条跨 spike 通则**，它们不属于任何单个 spike 却都得遵守：**①「`require()` 成功 ≠ 模块可用」**（node-pty 能 import 却不能 spawn）；**②「原生模块必须先自行关闭，运行时才能退出」**（同一类 `Napi::Error` + SIGABRT 在 node-pty 与 zeromq 上各出现一次，异步异常 `try/catch` 拦不住）；**③「等待完成信号的机制必须能回答：该信号会不会在工作真正发生之前被触发」**（Spike C 的 false-green），并指明完整性闸门是唯一解法，应写入阶段 ③ 的验收设计。
+  - 主规划 §11 状态更新：Phase 0 标记完成，下一步改为 Task 1.1。
+- **Impact**: 项目从「设计与验证」正式进入**实现**。技术栈选型不再有悬念——四个 spike 分别锁定了 agent 运行时、进程隔离、桌面壳与科学计算内核。Part 1 的 Task 1.1–1.11 现在可以逐字执行，且照着的是**实测修正后**的假设而非计划初稿。三条通则中的第 ③ 条超出 Phase 0 范围，是对阶段 ③ 防幻觉设计的直接输入。
+- **Verification**: 四份 spike 结论逐条核对，汇总表的每一格都能追溯到对应章节的实测记录；7 条技术决策变更均标注了「相对计划的变化」，无一条来自推测。遗留项 6 项全部标明归属阶段，未出现「待定」。
+
 ### 2026-08-08 — Spike D 通过：Jupyter 内核链路打通且中断生效，TypeScript 方案确认
 
 - **Type**: feat
+- **Commit**: `e6499e8`
 - **Motivation**: Phase 0 决策门 G0 的第四项，也是**唯一能推翻整个技术栈的一项**。规格 10.1 把主体定为 TypeScript，依据是「nteract 栈已提供 jupyter_client 的等价能力」——该判断此前只经过 npm 元数据与 `.d.ts` 核对，从未真跑过。不通过则回退 Python，Part 1 整体重写。
-- **Commit**: 待回填
 - **What**:
   - 建 Python 内核环境（`uv venv .venv-kernel` + `ipykernel`，注册 kernelspec `dawn-spike`），装 nteract 栈，新增 `spikes/d-jupyter-kernel.ts`、`spikes/types/spawnteract.d.ts`、`spikes/d-electron-zmq/`。
   - **三项全过**：zeromq 可用（libzmq 4.3.5）；起内核并从 iopub 取回 `DAWN_MARKER_OK`；**中断生效——SIGINT → KeyboardInterrupt → `execute_reply status=error`**。第三项是分量所在，规格 10.4 的硬要求，**wisp-science 的自研 JSON-lines worker 方案正是败在这条**。

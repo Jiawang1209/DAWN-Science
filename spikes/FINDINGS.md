@@ -5,6 +5,54 @@
 
 ---
 
+## 汇总与 G0 放行判断
+
+**状态：四项全部通过 → G0 通过，放行进入 Part 1（阶段 ①-A）。** 判定日期 2026-08-08。
+
+| Spike | 问题 | 结论 | 对后续的影响 |
+|---|---|---|---|
+| **A · pi 可嵌入性** | 能否注入工具并强制 schema | ✅ **通过（强于预期）** | Task 1.10 **直接用 pi 的 `agentLoop`，不自建**；schema 由引擎强制且带自动重试，**不需要自建校验层** |
+| **B · PTY+MCP+Hook** | 能否隔离注入并接到完成信号 | ✅ **通过（claude）**<br>⚠️ 部分（codex） | Task 1.7 用 `--mcp-config` + `--strict-mcp-config` + `--settings`，**不用 `CLAUDE_CONFIG_DIR`**；Task 1.9 的回合结束信号取自 Stop hook，不必只靠超时 |
+| **C · Electron 终端** | 4 终端并发是否流畅 | ✅ **通过，当前规模无需节流** | Task 1.8 **暂不需要背压**，但以「单帧 100ms」为将来的节流触发线；`scrollback` 是内存主控参数 |
+| **D · Jupyter 内核链路** | 能否起内核、拿输出、**中断**；Electron 下 zeromq 能否用 | ✅ **通过，且 Electron 下无需 rebuild** | **整个技术栈选型确认：规格 10.1 的 TypeScript 定案成立，不回退 Python**；②-A 需用薄适配器隔离 rxjs |
+
+### 由 spike 确定或修改的技术决策
+
+| # | 决策 | 依据 | 相对计划的变化 |
+|---|---|---|---|
+| 1 | Native Runtime 用 pi 的 `agentLoop` | Spike A | 计划预留的「自建 loop」分支作废 |
+| 2 | 工具 schema 用 **TypeBox**，配置校验用 **zod**，两者并存 | Spike A | 计划原以 zod 写工具 schema，错误 |
+| 3 | provider 用 pi 内置 `deepseekProvider()`；**model id 必须钉 v4 版本** | Spike A | `deepseek-chat` 不在 pi 注册表内，计划中全部引用需改 |
+| 4 | 隔离用显式标志，不用 `CLAUDE_CONFIG_DIR` | Spike B | 计划假设作废；**已知代价**：会话历史仍进用户全局 `~/.claude.json` |
+| 5 | 桌面壳定 **Electron 43** | Spike C | 与计划一致 |
+| 6 | **TypeScript 主体成立** | Spike D | 与规格 10.1 一致，但此前无实测支撑，现已补上 |
+| 7 | ②-A 在 `createMainChannel` 外包薄适配器，rxjs 不进 DAWN 代码 | Spike D | 计划未涉及，新增约束 |
+
+### 三条跨 spike 的通则（不属于任何单个 spike，但都得遵守）
+
+**① `require()` 成功 ≠ 模块可用。**
+node-pty 在 Spike B 前的加载测试是通过的，真正 `spawn` 时才报 `posix_spawnp failed`——`spawn-helper` 缺执行位。**带辅助可执行文件或子进程的原生依赖，验收判据必须是「真的用一次」，不是「能 import」。**
+
+**② 原生模块必须先自行关闭，运行时才能退出。**
+同一类 `Napi::Error` + SIGABRT 在两个互不相干的模块上各出现一次——Spike C 的 node-pty（对已退出的 pty 重复 `kill()`）、Spike D 的 zeromq（socket 未关就 `app.exit()`）。**该异常是异步的，`try/catch` 拦不住。退出路径要和启动路径一样当作正式代码写。**
+附带的诊断陷阱：**成功结论打印在前、崩溃在后**，只看日志末尾会误判——判定必须看退出码。
+
+**③ 「等待完成信号」的机制必须能回答：该信号会不会在工作真正发生之前被触发？**
+Spike C 第一版四问全绿，而压力测试根本没跑——哨兵字符串被终端回显的命令行提前命中。**这正是规格 7.24 描述的 false-green，且发生在本项目自己的验证代码里。** 唯一挡得住的手段是**完整性闸门**：按预期产出量校验，不达标则判「无效」而非「通过」。这条应写入阶段 ③ 的验收设计。
+
+### 遗留项（不阻断 G0，但需在对应阶段处理）
+
+| 项 | 归属 |
+|---|---|
+| codex 的 MCP 调用与 `notify` 回路未验证（`codex exec` 超时） | ①-A 或按需 |
+| 「完整隔离 + 可用认证」两全方案（播种 `oauthAccount` 或用 `ANTHROPIC_API_KEY`） | Task 1.7 |
+| `--settings` 无法排除用户全局 hook（无 `--strict-settings`） | Task 1.7 |
+| R 内核（本机 `ir` kernelspec 过期且 `IRkernel` 未装） | ②-A |
+| `interrupt_mode: "message"` 分支未被执行过 | ②-A |
+| 原生模块的 Electron ABI：本机免 rebuild，换版本/平台需重测 | ①-B |
+
+---
+
 ## Spike A — pi 可嵌入性 ✅ 通过
 
 - **日期**：2026-08-08

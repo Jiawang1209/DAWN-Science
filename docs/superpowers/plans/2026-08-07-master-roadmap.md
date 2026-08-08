@@ -334,11 +334,21 @@ graph LR
 | 设计规格 | ✅ 完成（1,093 行，五条不变式，八个参考项目定位明确） |
 | 主规划 | ✅ 本文档 |
 | Phase 0 + ①-A 详细计划 | ✅ 完成（2,556 行，16 任务 92 步骤） |
-| 代码 | ⬜ 未开始 |
+| **Phase 0（四个 spike）** | ✅ **完成，2026-08-08。四项全过，G0 通过** |
+| 阶段 ①-A 代码 | ⬜ 未开始（下一步：Task 1.1） |
 
-**下一步**：执行 Phase 0 的四个 spike。
+**G0 判定（2026-08-08）**：四个 spike 全部通过，结论见 `spikes/FINDINGS.md` 顶部汇总表。
 
-**需要你本人在自己机器上完成的部分**：Spike A 与 B 需要真实 API 凭证与已安装的 claude / codex CLI；Spike B 还需在运行前后对比 `~/.claude/settings.json` 的 md5 以确认隔离有效。这几步无法代为验证。
+- **A** pi 可嵌入且 schema 由引擎强制并自动重试 → Native Runtime 用 pi，**不自建 loop**
+- **B** PTY + MCP 注入 + Stop hook 全通（claude）→ 回合结束信号可靠，**不必只靠超时**
+- **C** 四终端并发刷屏无冻结 → 桌面壳定 Electron，**当前规模无需背压**
+- **D** 内核可起、可取输出、**可中断**，Electron 下 zeromq 免 rebuild → **规格 10.1 的 TypeScript 定案成立，不回退 Python**
+
+**下一步**：执行 Part 1 的 Task 1.1（Provider 注册表 schema），进入阶段 ①-A。
+
+**Phase 0 期间修改的既有决策**（详见 FINDINGS 的「由 spike 确定或修改的技术决策」表）：工具 schema 改用 TypeBox（zod 仅管配置）；DeepSeek 的 model id 必须钉 v4 版本；隔离改用 claude 的显式标志而非 `CLAUDE_CONFIG_DIR`；②-A 新增约束——用薄适配器隔离 rxjs。
+
+**仍需你本人在自己机器上完成的部分**：codex 的 MCP + `notify` 回路未跑通（`codex exec` 超时）；R 内核需先修复 `ir` kernelspec 或改用 Ark（归属 ②-A）。
 
 ---
 

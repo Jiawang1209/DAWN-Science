@@ -43,10 +43,32 @@
 
 ## 变更日志
 
+### 2026-08-09 — 拆掉第一次启动的三道门槛：装好就能打开，打开就能说话
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: Task 3.4。作者的原话：**「claude code, codex 其实上来也没有要求我一定要配置工作目录的。」**
+- **实测发现门槛不止一道，而且最严重的那道计划里没写**:
+  1. **`providers.yaml` 不存在 ⇒ 应用直接起不来。** `loadRegistry` 用 `readFileSync`，缺文件抛 ENOENT；而默认路径是 `join(process.cwd(), "providers.yaml")`——**打包后的桌面应用 cwd 是任意目录**（从 Finder 启动通常是 `/`）。**全新安装必然撞上，结果是「装好了，打不开」，且没有任何可执行的提示。**
+  2. 必须先打开项目文件夹，否则「新建会话」禁用
+  3. 没有可用 agent 时是死路，不是引导
+- **What**:
+  - `loadRegistryOrDefault()`：缺文件就写一份**带注释的**默认配置再加载。**已存在的绝不覆盖**——用户的配置比默认值重要，哪怕它当前是坏的（坏配置应当报错让人去修，而不是被悄悄替换）。默认模板含 `ds-chat`(native) + `claude`/`codex`(pty)，后两者用各自 CLI 已有的登录，**没填任何 key 时也能直接用**。
+  - `CONFIG` 默认路径 `process.cwd()` → `app.getPath("userData")`。
+  - `ProjectManager.ensureDefault(workspace)`：一个项目都没有时建 `~/DAWN/scratch`。**已经有项目时什么都不做，那个目录也不创建**——用户没要它。
+  - 侧栏删掉「先打开一个项目文件夹」；没有 agent 时给「去设置」按钮。`EmptyConversation` 改为带真按钮的引导（`＋ 用 ds-chat 开始` / `去设置`）。
+  - `startSession` 抽成一个回调，侧栏与空对话区共用——Hermes：*"**One action, one home.** Do not fork behavior per entry point."*
+- **一句描述不是一条出路**: 旧界面在无项目时，侧栏和主区都写「先打开一个项目文件夹」。那句话既不是按钮也不指向任何地方。Hermes：*"...each deserve their own honest copy and **their own way out**."* 作者三次打开三次不知道点哪里，根因就是这个。
+- **Verification**:
+  - 后端 7 条 + 界面 8 条，先跑出 FAIL（7/7、5/5）再转绿。
+  - **真 Electron 在一个全新临时目录上跑通**（`DAWN_CONFIG`/`DAWN_DB`/`DAWN_DEFAULT_WORKSPACE` 全指向空目录）：零错误启动、`providers.yaml` 自动生成且带注释、`scratch/` 已建、数据库里有默认项目 `scratch`。**这是「装好就能打开」的直接证据**，不是推断。
+  - 完整的「说一句话看见回复」点击流留给 Task 3.10 的 Playwright——现在没有驱动 UI 的手段（`DAWN_PROBE` 已在 3.2 删除）。
+  - 472 tests passed（37 文件，+12），typecheck 零错误，build 干净。
+
 ### 2026-08-09 — 状态按权威归位：14 个 useState 搬进 src/ui/state/
 
 - **Type**: refactor
-- **Commit**: 待回填
+- **Commit**: `39cdbc9`
 - **Motivation**: Task 3.3。Hermes `AGENTS.md`：*"The first question for any piece of state is **who is allowed to be right about it**, not where it is convenient to store it."* 此前 14 个 `useState` 全堆在 `App.tsx` 里，这个问题从来没被问过——后果是具体的：`client` 身份每渲染一次变一次，**渲染进程 18 秒吃满 4 GB**。那不是一次 React 使用失误，是缺一条纪律。
 - **What**: 新增 `src/ui/state/`，按权威分家
   - `connection.ts` 主进程权威 · `catalog.ts` 后端权威（项目/会话/Run/provider/凭证）· `transcript.ts` 后端权威（对话与终端字节）· `view.ts` **渲染进程自有**（看哪个面、哪个会话、dock 开没开）

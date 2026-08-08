@@ -5,6 +5,7 @@
  * 这一层把三个 store 拼成协议实体，是 Workbench 后端的主要数据来源。
  */
 import { randomUUID } from "node:crypto"
+import { mkdirSync } from "node:fs"
 import { basename, resolve } from "node:path"
 import type { ProviderRegistry } from "../config/schema.js"
 import type { ProjectRecord, ProjectStore } from "../store/projects.js"
@@ -56,6 +57,26 @@ export class ProjectManager {
     }
     this.projectStore.insert(rec)
     return rec
+  }
+
+  /**
+   * 保证至少有一个项目可用。
+   *
+   * **作者的原话：「claude code, codex 其实上来也没有要求我一定要配置工作目录的。」**
+   * 此前 DAWN 把「打开文件夹」做成了准入门槛——后端完全可用，界面却什么都不让做。
+   * Hermes 的 DESIGN.md 早写明了正解：*"Reserve the full-screen boot/connecting
+   * experience for a genuinely unusable backend."* 没有项目不属于那种情况。
+   *
+   * 注意它**不是**「总是创建默认项目」：
+   *   - 已经有项目 ⇒ 什么都不做，返回第一个。不往用户的列表里塞东西，
+   *     **也不创建那个目录**——用户没要它。
+   *   - 一个都没有 ⇒ 建目录 + 建项目，幂等（`open()` 命中已有路径会复用）。
+   */
+  ensureDefault(workspace: string): ProjectRecord {
+    const existing = this.projectStore.list()
+    if (existing.length > 0) return existing[0]!
+    mkdirSync(workspace, { recursive: true })
+    return this.open(workspace)
   }
 
   summary(projectId: string): ProjectSummary | undefined {

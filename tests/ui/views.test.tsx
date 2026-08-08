@@ -60,10 +60,13 @@ describe("侧栏 · 新建会话是主动作", () => {
     expect(onNewSession).toHaveBeenCalledWith("claude-code")
   })
 
-  it("没有项目时禁用，并说明先打开文件夹", () => {
+  // **2026-08-09 改写。** 原来这条断言「没有项目 ⇒ 禁用 + 提示先打开文件夹」。
+  // Task 3.4 之后那个状态在正常路径上不再出现（启动即保证有默认项目），
+  // 而那句提示是描述不是出路，已删。这里只保留防御性行为：真出现无项目时不崩、且仍禁用。
+  it("万一一个项目都没有，按钮禁用但不崩", () => {
     render(<SessionSidebar {...base} projects={[]} activeProjectId={undefined} />)
     expect((screen.getByRole("button", { name: /新建会话/ }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText(/先打开一个项目文件夹/)).toBeDefined()
+    expect(screen.queryByText(/先打开一个项目文件夹/)).toBeNull()
   })
 
   it("配置里没有 agent 时禁用，并说明原因", () => {
@@ -114,14 +117,15 @@ describe("侧栏 · 项目与会话", () => {
 })
 
 describe("空对话态", () => {
-  it("有项目时告诉你去点新建会话", () => {
-    render(<EmptyConversation canStart />)
-    expect(screen.getByText(/新建会话/)).toBeDefined()
-  })
-
-  it("没有项目时告诉你先打开文件夹 —— 给下一步动作，不留白", () => {
-    render(<EmptyConversation canStart={false} />)
-    expect(screen.getByText(/先打开一个项目文件夹/)).toBeDefined()
+  // **2026-08-09 改写。** 原来两条测的是 `canStart` 那套：有项目就说「去点新建会话」，
+  // 没项目就说「先打开一个项目文件夹」。后者已随 Task 3.4 删除——
+  // 启动时保证至少有一个默认项目，而且**「先打开文件夹」是一句描述、不是一条出路**。
+  // 完整覆盖见 tests/ui/first-run-ui.test.tsx。
+  it("给出一个真的能点的开始动作，而不只是一句提示", () => {
+    const onStart = vi.fn()
+    render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={noop} />)
+    fireEvent.click(screen.getByRole("button", { name: /开始|新建/ }))
+    expect(onStart).toHaveBeenCalledWith("ds-chat")
   })
 })
 

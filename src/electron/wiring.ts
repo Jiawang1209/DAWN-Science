@@ -8,7 +8,7 @@
 import Database from "better-sqlite3"
 import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
-import { loadRegistry } from "../config/loader.js"
+import { loadRegistryOrDefault } from "../config/loader.js"
 import { migrate } from "../store/schema.js"
 import { ProjectStore } from "../store/projects.js"
 import { RunStore } from "../store/runs.js"
@@ -42,6 +42,13 @@ export interface CreateWorkbenchOptions {
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
   /**
+   * 一个项目都没有时使用的默认工作区。
+   *
+   * 给出时启动阶段会保证至少存在一个项目——**「打开文件夹」因此不再是准入门槛**。
+   * 已经有项目时这个值不生效，目录也不会被创建。
+   */
+  defaultWorkspace?: string
+  /**
    * pi 的 `models.json` 路径。给出时可覆盖内置 provider 的 baseUrl 与凭证。
    *
    * **这是 mock 模式的入口**：`scripts/dev-mock.mjs` 写一份指向本地假推理
@@ -69,7 +76,8 @@ export interface Workbench {
 }
 
 export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
-  const registry = loadRegistry(opts.configPath)
+  // 缺配置就写一份带注释的默认模板，**不是抛 ENOENT**——见 loader.ts 的说明
+  const registry = loadRegistryOrDefault(opts.configPath)
 
   mkdirSync(dirname(opts.dbPath), { recursive: true })
   const db = new Database(opts.dbPath)
@@ -117,6 +125,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     runs: runStore,
     registry,
   })
+
+  // **打开就能说话**：一个项目都没有时建一个默认工作区。
+  // 已经有项目时什么都不做，也不创建那个目录
+  if (opts.defaultWorkspace) projects.ensureDefault(opts.defaultWorkspace)
 
   const events = new SessionTranscripts({
     terminalMaxChars: opts.terminalScrollbackChars ?? DEFAULT_TERMINAL_SCROLLBACK_CHARS,

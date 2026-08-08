@@ -11,8 +11,23 @@ import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } 
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 
-const CONFIG = process.env.DAWN_CONFIG ?? join(process.cwd(), "providers.yaml")
+/**
+ * 配置落在 `userData`，**不是 `process.cwd()`**。
+ *
+ * 打包后的桌面应用，cwd 是个任意目录（从 Finder 启动时通常是 `/`）。
+ * 旧默认值意味着**全新安装必然找不到配置**，而 `loadRegistry` 缺文件会抛
+ * ENOENT——结果是「装好了，打不开」，且没有任何可执行的提示。
+ */
+const CONFIG = process.env.DAWN_CONFIG ?? join(app.getPath("userData"), "providers.yaml")
 const DB = process.env.DAWN_DB ?? join(app.getPath("userData"), "dawn.db")
+/**
+ * 没有任何项目时的默认工作区。
+ *
+ * **不要求先选文件夹**——claude code 与 codex 上来都不要求，DAWN 也不该要求。
+ * 用户随时可以在侧栏打开自己的项目；这只是保证「打开就能说话」。
+ */
+const DEFAULT_WORKSPACE =
+  process.env.DAWN_DEFAULT_WORKSPACE ?? join(app.getPath("home"), "DAWN", "scratch")
 const DEV_URL = process.env.DAWN_DEV_SERVER
 /**
  * mock 模式：pi 的 provider 被 models.json 重定向到本地假推理服务器。
@@ -81,6 +96,7 @@ app.whenReady().then(() => {
         file: defaultCredentialFile(app.getPath("userData")),
         safeStorage,
       }),
+      defaultWorkspace: DEFAULT_WORKSPACE,
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })

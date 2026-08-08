@@ -12,7 +12,8 @@
  * 2. **引用完整性校验从「agent → endpoint」改为「agent → pi 的 provider」。**
  *    拼错一个 provider 名不该留到建会话时才崩，加载期就该报错并列出可选项。
  */
-import { readFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { dirname } from "node:path"
 import { parse as parseYaml } from "yaml"
 import { getBuiltinProviders } from "@earendil-works/pi-ai/providers/all"
 import { ProviderRegistrySchema, type ProviderRegistry } from "./schema.js"
@@ -54,4 +55,66 @@ export function loadRegistry(file: string): ProviderRegistry {
   const registry = ProviderRegistrySchema.parse(raw)
   assertProviders(registry)
   return registry
+}
+
+/**
+ * 全新安装时写出的默认配置。
+ *
+ * **它是一份模板，不是一坨机器产物**——所以带注释。用户打开它时应当立刻
+ * 明白能改什么；一个只有键值对的文件只会让人去翻文档。
+ *
+ * 选这三个 agent 的理由：
+ *   - `ds-chat` 便宜、够用，是"先跑起来"的默认
+ *   - `claude` / `codex` 走 PTY 托管本地 CLI，**不需要在这里配 key**
+ *     （它们用各自 CLI 已有的登录），所以在没填任何 key 时也能直接用
+ */
+export const DEFAULT_CONFIG_YAML = `# DAWN Science —— agent 配置
+#
+# 这份文件是第一次启动时自动生成的，可以随意修改；DAWN 不会覆盖它。
+# 改完重启应用生效。
+#
+# 两种 agent：
+#   kind: native  —— 由 DAWN 内置的 agent 直接调模型 API，需要在「设置」里填 key
+#   kind: pty     —— 托管一个本地命令行 agent（claude / codex），
+#                    用它自己的登录，**不需要在 DAWN 里配 key**
+
+agents:
+  # 内置 agent。用前先到「设置」里填 deepseek 的 API key
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat, exec]
+
+  # 托管本地的 claude CLI。装了 claude 且已登录就能直接用
+  claude:
+    kind: pty
+    command: claude
+    args: []
+    capabilities: [chat, exec]
+
+  # 托管本地的 codex CLI
+  codex:
+    kind: pty
+    command: codex
+    args: []
+    capabilities: [chat, exec]
+`
+
+/**
+ * 加载配置；**文件不存在就先写一份默认的**。
+ *
+ * 全新安装必然撞上缺文件这条路：`loadRegistry` 里的 `readFileSync` 会抛
+ * ENOENT，而默认路径此前还是 `process.cwd()`——打包后的桌面应用，
+ * cwd 是个任意目录。**结果是「装好了，打不开」，且没有任何可执行的提示。**
+ *
+ * 已存在的文件**绝不覆盖**：用户的配置比我们的默认值重要，
+ * 哪怕它当前是坏的——坏的配置应当报错让人去修，而不是被悄悄替换掉。
+ */
+export function loadRegistryOrDefault(file: string): ProviderRegistry {
+  if (!existsSync(file)) {
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, DEFAULT_CONFIG_YAML, "utf8")
+  }
+  return loadRegistry(file)
 }

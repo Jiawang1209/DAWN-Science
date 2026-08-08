@@ -15,7 +15,7 @@
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import { ChangesPanel, CostPanel, ProvenanceBadge, RunsPanel, StatusPanel } from "./panels.js"
@@ -193,6 +193,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     loadRunDetail(client, latestRunId)
   }, [client, latestRunId])
 
+  const agentIds = useMemo(() => providers.agents.map((a) => a.agentId), [providers])
+
+  /**
+   * 新建会话并直接进对话。
+   *
+   * **侧栏与空对话区共用它**——Hermes：*"One action, one home. A command may have
+   * keyboard, palette, and visible affordances, but they invoke the same action
+   * and state. Do not fork behavior per entry point."*
+   */
+  const startSession = useCallback(
+    (agentId: string) => {
+      const pid = $activeProjectId.get()
+      if (!pid) return
+      client
+        .get<SessionSummary>("createSession", { projectId: pid, agentId })
+        .then((s) => {
+          void loadSessions(client, pid)
+          setActiveSessionId(s.sessionId)
+          setView("conversation")
+          // 取写权，否则第一句就会被租约挡下
+          return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+        })
+        .catch(fail)
+    },
+    [client],
+  )
+
   if (fatal) {
     return (
       <div className="app-shell">
@@ -233,7 +260,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         <SessionSidebar
           projects={projects}
           sessions={sessions}
-          agents={providers.agents.map((a) => a.agentId)}
+          agents={agentIds}
           activeProjectId={projectId}
           activeSessionId={sessionId}
           showingPanel={view === "panel"}
@@ -265,20 +292,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               })
               .catch(fail)
           }}
-          onNewSession={(agentId) => {
-            if (!projectId) return
-            client
-              .get<SessionSummary>("createSession", { projectId, agentId })
-              .then((s) => {
-                void loadSessions(client, projectId)
-                // 建完直接进对话——新建会话的目的就是开始聊，不该还要再点一下
-                setActiveSessionId(s.sessionId)
-                setView("conversation")
-                // 取写权，否则第一句就会被租约挡下
-                return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
-              })
-              .catch(fail)
-          }}
+          onNewSession={startSession}
+          onOpenSettings={() => setView("settings")}
         />
 
         <main className="main">
@@ -344,7 +359,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               />
             </>
           ) : (
-            <EmptyConversation canStart={Boolean(projectId)} />
+            <EmptyConversation
+              agents={agentIds}
+              onStart={startSession}
+              onOpenSettings={() => setView("settings")}
+            />
           )}
         </main>
       </div>

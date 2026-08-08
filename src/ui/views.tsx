@@ -28,6 +28,7 @@ export function SessionSidebar({
   onOpenProject,
   onNewSession,
   onShowPanel,
+  onOpenSettings,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -41,6 +42,8 @@ export function SessionSidebar({
   onOpenProject: () => void
   onNewSession: (agentId: string) => void
   onShowPanel: () => void
+  /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
+  onOpenSettings?: (() => void) | undefined
 }) {
   const [picking, setPicking] = useState(false)
   const active = projects.find((p) => p.projectId === activeProjectId)
@@ -76,10 +79,17 @@ export function SessionSidebar({
       >
         ＋ 新建会话
       </Button>
-      {!active ? (
-        <p className="hint pad">先打开一个项目文件夹</p>
-      ) : agents.length === 0 ? (
-        <p className="hint pad">providers.yaml 里还没有可用的 agent</p>
+      {/* 此前这里有一句「先打开一个项目文件夹」。**那是一句描述，不是一条出路**——
+          而且它已经不成立了：启动时保证至少有一个默认项目（ProjectManager.ensureDefault） */}
+      {agents.length === 0 ? (
+        <div className="pad">
+          <p className="hint">配置里还没有可用的 agent</p>
+          {onOpenSettings ? (
+            <Button variant="text" size="inline" onClick={onOpenSettings}>
+              去设置
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       {picking && active ? (
@@ -339,15 +349,39 @@ function clip(s: string): { text: string; truncated: boolean } {
 }
 
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */
-export function EmptyConversation({ canStart }: { canStart: boolean }) {
+export function EmptyConversation({
+  agents,
+  onStart,
+  onOpenSettings,
+}: {
+  agents: readonly string[]
+  onStart: (agentId: string) => void
+  onOpenSettings: () => void
+}) {
+  const first = agents[0]
   return (
     <div className="conversation empty-conv">
-      <EmptyState
-        title={canStart ? "还没有会话" : "还没有项目"}
-        description={
-          canStart ? "点左上角「＋ 新建会话」开始" : "先打开一个项目文件夹，再新建会话"
-        }
-      />
+      {first ? (
+        <EmptyState
+          title="开始一段对话"
+          description={`当前工作区已就绪。用 ${first} 开始，或在左栏挑一个别的 agent。`}
+          action={
+            <Button variant="primary" onClick={() => onStart(first)}>
+              ＋ 用 {first} 开始
+            </Button>
+          }
+        />
+      ) : (
+        <EmptyState
+          title="还没有可用的 agent"
+          description="配置文件里没有 agent，或它需要的 API key 还没填。"
+          action={
+            <Button variant="primary" onClick={onOpenSettings}>
+              去设置
+            </Button>
+          }
+        />
+      )}
     </div>
   )
 }

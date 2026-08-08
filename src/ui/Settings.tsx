@@ -10,6 +10,7 @@
  *      不能让人以为加了密
  */
 import { useState } from "react"
+import { Button, Field } from "./primitives.js"
 
 export interface CredentialState {
   configured: string[]
@@ -66,19 +67,24 @@ export function SettingsPanel({
                       setDrafts((d) => ({ ...d, [id]: "" }))
                     }}
                   >
-                    <input
-                      type="password"
-                      value={drafts[id] ?? ""}
-                      onChange={(e) => setDrafts((d) => ({ ...d, [id]: e.target.value }))}
-                      // 已配置时也不回显原值——界面拿不到它，也不该拿到
-                      placeholder={isSet ? "已配置（输入新值可替换）" : "粘贴 API key"}
-                      aria-label={`${id} 的 API key`}
-                    />
-                    <button type="submit">保存</button>
+                    <Field id={`cred-${id}`} label={`${id} 的 API key`}>
+                      <input
+                        id={`cred-${id}`}
+                        className="control"
+                        type="password"
+                        value={drafts[id] ?? ""}
+                        onChange={(e) => setDrafts((d) => ({ ...d, [id]: e.target.value }))}
+                        // 已配置时也不回显原值——界面拿不到它，也不该拿到
+                        placeholder={isSet ? "已配置（输入新值可替换）" : "粘贴 API key"}
+                      />
+                    </Field>
+                    <Button type="submit" variant="primary" size="sm">
+                      保存
+                    </Button>
                     {isSet ? (
-                      <button type="button" onClick={() => onDelete(id)}>
+                      <Button variant="text" size="sm" onClick={() => onDelete(id)}>
                         删除
-                      </button>
+                      </Button>
                     ) : null}
                   </form>
                 </li>

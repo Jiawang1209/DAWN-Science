@@ -180,7 +180,7 @@ const agentSays = (text: string, revision: number, final = false): SessionUpdate
 /** 走完「打开项目 → 新建会话」。 */
 async function openAndStart(h: Harness) {
   render(<App client={h.client} />)
-  fireEvent.click(await screen.findByTitle("打开文件夹为新项目"))
+  fireEvent.click(await screen.findByRole("button", { name: "打开文件夹为新项目" }))
   await waitFor(() => expect(h.calls.some((c) => c.op === "openProject")).toBe(true))
 
   fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
@@ -196,7 +196,7 @@ describe("MVP 主路径 · 打开项目", () => {
   it("用原生目录选择器，不是让人往 prompt 里粘路径", async () => {
     const h = harness()
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByTitle("打开文件夹为新项目"))
+    fireEvent.click(await screen.findByRole("button", { name: "打开文件夹为新项目" }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
     expect(h.calls.find((c) => c.op === "openProject")?.req).toEqual({ workspace: "/w/proj" })
   })
@@ -204,7 +204,7 @@ describe("MVP 主路径 · 打开项目", () => {
   it("用户取消选择 ⇒ 什么都不做，不报错", async () => {
     const h = harness({ pick: null })
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByTitle("打开文件夹为新项目"))
+    fireEvent.click(await screen.findByRole("button", { name: "打开文件夹为新项目" }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
     expect(h.calls.some((c) => c.op === "openProject")).toBe(false)
   })

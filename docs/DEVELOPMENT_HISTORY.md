@@ -43,10 +43,33 @@
 
 ## 变更日志
 
-### 2026-08-09 — R5：工具调用看得见；并抓到 waitForIdle 会提前返回
+### 2026-08-09 — 设计契约与 primitive 地基：令牌化、扁平化、并用测试强制
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Task 3.2，①-B′ 的地基。作者选定**照抄 Hermes 的视觉语言**（蓝主色、扁平、无框浮层）。先立契约再改界面——否则后面七个 Task 各自发明一套。
+- **What**:
+  - `src/ui/tokens.css`：三层令牌。**架构学自 Hermes，值是自己写的。** 核心想法是那套**派生关系**——描边、填充、hover 态都不是灰色，而是**主色以极低浓度混进底色**（`--mix-stroke-1…4` = 24/16/10/6%）。灰描边配蓝主调会显脏，因为色相不同源；写成 color-mix 之后整个界面色相统一，且换主色时一切自动跟着变。stroke 分四档、fill 分五档不是二十个独立颜色，是**同一个公式的二十个浓度**。
+  - **暗色只覆盖种子与混合比例，不覆盖 `--dawn-*`**——逐个改派生令牌会立刻退化成两套各自维护的颜色表。
+  - `src/ui/primitives.tsx`：`Button`（6 variant × 5 size）· `Row` · `Loader` · `EmptyState` · `ErrorState` · `LogView` · `Field`。
+  - `src/ui/layout-constants.ts`：`PAGE_INSET_X` / `PAGE_MAX_W` / `SIDEBAR_COLLAPSE_BREAKPOINT_PX`（断点是**唯一真值**，媒体查询与 `matchMedia` 共用）。
+  - `styles.css` 重写：**零裸色值**，扁平化（面板不再是边框盒子，改为单条发丝线分隔标题），z-index 全部走令牌梯子。
+  - `docs/DESIGN.md`：按 Hermes 两分法维护——**原则耐久 / 具名契约与代码同步，过时的名字算 bug**。
+  - 迁移 12 处裸 `<button>`（`views.tsx` 9 · `Settings.tsx` 2 · `App.tsx` 1）到 primitive。
+  - **删掉 `src/electron/main.ts` 里的 `DAWN_PROBE` 块**——一个由环境变量开关的任意代码执行入口，留在生产代码里无论怎么解释都是个洞。
+- **`Row` 为什么要单独存在**: 行的几何与按钮的几何是两套。同时挂 `.btn-default` 和 `.row` 会让两个内距打架，而「谁赢」取决于样式表里谁写在后面——**位置依赖是最坏的一种耦合**。`Row` 用 `size="inline"` 清零按钮盒子，几何全部由 `.row` 拥有。
+- **契约用测试强制**（`tests/ui/design-contract.test.ts`，9 条）: 裸色值 / 令牌命名前缀 / className 覆写 primitive 几何 / 裸 `<button>` / 原生 `title=` / 字面「加载中」 / `window.prompt`·`alert`·`confirm` / `z-index` 字面量。理由 Hermes 与 Rho 各自独立写过一遍（Rho：*"Prefer automated enforcement over remembered convention … in the same workstream."*）。**本项目已经证明过一次：「不要用 `window.prompt`」是我自己写下的规则，然后我自己违反了它，直到作者打开发现白屏。**
+- **扫描器的一处自我修正**: 第一版把 `primitives.tsx` 里一句解释「不要写字面加载中」的**注释**判成了违规——那会逼着规则的解释者不许提到规则本身。加了注释行豁免。
+- **Verification**:
+  - 契约测试先跑出 **3 failed** 确认 FAIL，迁移后 9/9 通过。
+  - **真 Electron 读计算样式**（DESIGN.md 最后一条是「我自己打开看过了吗」，而 `color-mix()` 在 jsdom 里测不出来）：`--dawn-surface-app` → `color(srgb 0.971 0.978 0.996)`、`--dawn-text-1` → `color(srgb 0.09 0.09 0.102 / 0.94)`、`.btn-sm` → `4px 9px`、`.btn-default` → `6px 12px`。**令牌真的解析了，几何真的来自 primitive。**
+  - 既有 3 处 `findByTitle` 改为 `findByRole(… { name })`——按可访问名称查本来就是更好的查法。
+  - 444 tests passed（34 文件，+9），typecheck 零错误，build 干净。
+
+### 2026-08-09 — R5：工具调用看得见；并抓到 waitForIdle 会提前返回
+
+- **Type**: feat
+- **Commit**: `bdd45c2`
 - **Motivation**: Task 3.1，返工 R 的收尾。数据通路在 R4 就建好了，但 `grep -rn "tool" tests/ui/*.tsx` 在开工前返回**空**——「界面能不能让人看见 agent 在干什么」从来没被验证过。这与本项目已犯过五次的缺陷同源：**内部模型完整，用户可见的那一端没人接。**
 - **What（界面）**: `TranscriptRow` 的工具分支抽成 `ToolRow`，补三条纪律
   - **长结果默认折叠**（前 12 行）。一次 `bash` 的输出此前会把整个对话区淹掉。

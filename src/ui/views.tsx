@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
 import type { TranscriptItem } from "../protocol/index.js"
 import { TerminalPane } from "./terminal.js"
+import { Button, EmptyState, Row } from "./primitives.js"
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
@@ -60,20 +61,21 @@ export function SessionSidebar({
             </option>
           ))}
         </select>
-        <button type="button" onClick={onOpenProject} title="打开文件夹为新项目">
+        {/* 原生 title= 无样式、约 500ms 系统延迟、与主题不符——用 aria-label */}
+        <Button variant="ghost" size="icon" onClick={onOpenProject} aria-label="打开文件夹为新项目">
           ＋
-        </button>
+        </Button>
       </div>
 
       {/* 新建会话是主动作，放显眼位置——Claude app 的「新建对话」 */}
-      <button
-        type="button"
+      <Button
+        variant="outline"
         className="new-session"
         disabled={!active || agents.length === 0}
         onClick={() => setPicking((v) => !v)}
       >
         ＋ 新建会话
-      </button>
+      </Button>
       {!active ? (
         <p className="hint pad">先打开一个项目文件夹</p>
       ) : agents.length === 0 ? (
@@ -84,16 +86,14 @@ export function SessionSidebar({
         <ul className="agent-pick">
           {agents.map((a) => (
             <li key={a}>
-              <button
-                type="button"
-                className="row"
+              <Row
                 onClick={() => {
                   setPicking(false)
                   onNewSession(a)
                 }}
               >
                 {a}
-              </button>
+              </Row>
             </li>
           ))}
         </ul>
@@ -107,14 +107,13 @@ export function SessionSidebar({
         ) : (
           sessions.map((s) => (
             <li key={s.sessionId}>
-              <button
-                type="button"
-                className={s.sessionId === activeSessionId && !showingPanel ? "row active" : "row"}
+              <Row
+                active={s.sessionId === activeSessionId && !showingPanel}
                 onClick={() => onPickSession(s.sessionId)}
               >
                 <span className="name">{s.agentId}</span>
                 <span className={`state ${s.state}`}>{s.state}</span>
-              </button>
+              </Row>
             </li>
           ))
         )}
@@ -122,13 +121,9 @@ export function SessionSidebar({
 
       {/* 项目面板降为侧栏底部的一个入口，不再是首页 */}
       {active ? (
-        <button
-          type="button"
-          className={showingPanel ? "row panel-entry active" : "row panel-entry"}
-          onClick={onShowPanel}
-        >
+        <Row active={showingPanel} className="panel-entry" onClick={onShowPanel}>
           项目概览
-        </button>
+        </Row>
       ) : null}
     </aside>
   )
@@ -172,9 +167,9 @@ export function ConversationView({
         <span className={`state ${session.state}`}>{session.state}</span>
         <span className="kind">{session.kind === "pty" ? "外部 CLI" : "内置"}</span>
         {busy && onAbort ? (
-          <button type="button" className="abort" onClick={onAbort}>
+          <Button variant="outline" size="sm" className="abort" onClick={onAbort}>
             停止
-          </button>
+          </Button>
         ) : null}
       </header>
 
@@ -210,9 +205,9 @@ export function ConversationView({
             }
           }}
         />
-        <button type="submit" disabled={disabled ?? false}>
+        <Button type="submit" variant="primary" disabled={disabled ?? false}>
           发送
-        </button>
+        </Button>
       </form>
     </div>
   )
@@ -291,14 +286,15 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
         <>
           <pre className="tool-result">{result.text}</pre>
           {result.hidden > 0 ? (
-            <button
-              type="button"
+            <Button
+              variant="text"
+              size="inline"
               className="tool-expand"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
             >
               {expanded ? "收起" : `展开全部（还有 ${result.hidden} 行）`}
-            </button>
+            </Button>
           ) : null}
         </>
       ) : item.status === "error" ? (
@@ -346,9 +342,12 @@ function clip(s: string): { text: string; truncated: boolean } {
 export function EmptyConversation({ canStart }: { canStart: boolean }) {
   return (
     <div className="conversation empty-conv">
-      <p className="empty">
-        {canStart ? "点左上角「＋ 新建会话」开始" : "先打开一个项目文件夹，再新建会话"}
-      </p>
+      <EmptyState
+        title={canStart ? "还没有会话" : "还没有项目"}
+        description={
+          canStart ? "点左上角「＋ 新建会话」开始" : "先打开一个项目文件夹，再新建会话"
+        }
+      />
     </div>
   )
 }
@@ -376,9 +375,9 @@ export function TerminalDock({
   return (
     <div className={open ? "dock open" : "dock"}>
       <div className="dock-tabs">
-        <button type="button" className="dock-handle" onClick={onToggle} disabled={!available}>
+        <Button variant="ghost" size="sm" onClick={onToggle} disabled={!available}>
           终端 {open ? "▾" : "▸"}
-        </button>
+        </Button>
         {!available ? <span className="hint">仅外部 CLI 会话有终端</span> : null}
         {available && chunks.length === 0 ? <span className="hint">暂无输出</span> : null}
       </div>

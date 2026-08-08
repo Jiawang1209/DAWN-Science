@@ -35,6 +35,7 @@ import {
   TerminalDock,
 } from "./views.js"
 import { SettingsPanel, type CredentialState } from "./Settings.js"
+import { Button } from "./primitives.js"
 import { WorkbenchClientError, createClient, type WorkbenchClient } from "./client.js"
 
 /** `getRun` 的返回：Run 摘要 + 可选的产出事实与成本 */
@@ -263,9 +264,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <div className="topbar">
         <span className="brand">DAWN Science</span>
         <span className="spacer" />
-        <button type="button" onClick={() => setView(view === "settings" ? "conversation" : "settings")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setView(view === "settings" ? "conversation" : "settings")}
+        >
           {view === "settings" ? "返回" : "设置"}
-        </button>
+        </Button>
       </div>
 
       <div className="body">

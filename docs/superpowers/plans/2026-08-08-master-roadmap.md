@@ -672,7 +672,8 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 | mock 推理服务器 | ✅ `npm run dev:mock` |
 | 阶段 ①-B′ 详细计划 | ✅ `plans/2026-08-08-phase1b-prime-desktop.md`（10 个 Task） |
 | **阶段 ①-B′ 代码** | ✅ **10 个 Task 全部完成，2026-08-09**。524 单元/集成 + **15 条 Playwright e2e** |
-| **G2′** | 🔵 **机器判据已过**，待作者本人试用（见 §6 的第二问） |
+| **G2′** | ✅ **通过，2026-08-09**。作者试用后确认「完全可以作为一个 agent 去工作了」，已接入 deepseek |
+| **阶段 ①-B″** | ⬜ `plans/2026-08-09-phase1b-double-prime.md`（runtime 补强 · 桌面加厚 · subagent） |
 
 **代码规模**（2026-08-09）：**524 个单元/集成测试**（42 文件）+ **15 条 e2e**；commit `81dd7ce`。
 
@@ -717,6 +718,7 @@ docs/
     │   ├── 2026-08-08-master-roadmap.md                     ← 本文档
     │   ├── 2026-08-06-phase0-and-session-core.md            Phase 0 + ①-A
     │   ├── 2026-08-08-phase1b-workbench.md                  ①-B
-    │   └── 2026-08-08-phase1b-prime-desktop.md              ①-B′ 桌面成型（按 Hermes 做）
+    │   ├── 2026-08-08-phase1b-prime-desktop.md              ①-B′ 桌面成型（按 Hermes 做）
+    │   └── 2026-08-09-phase1b-double-prime.md              ①-B″ runtime 补强 · 桌面加厚 · subagent
     └── ENTITY-REGISTRY.md                                   68 个实体，含构思来源
 ```

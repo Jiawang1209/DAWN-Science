@@ -12,10 +12,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "dawn": "tsx src/cli.ts",
-    "spike:a": "tsx spikes/a-pi-embed.ts",
-    "spike:b": "tsx spikes/b-pty-mcp-hook.ts",
-    "spike:d": "tsx spikes/d-jupyter-kernel.ts"
+    "dawn": "tsx --env-file-if-exists=.env src/cli.ts",
+    "spike:a": "tsx --env-file-if-exists=.env spikes/a-pi-embed.ts",
+    "spike:b": "tsx --env-file-if-exists=.env spikes/b-pty-mcp-hook.ts",
+    "spike:d": "tsx --env-file-if-exists=.env spikes/d-jupyter-kernel.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",

@@ -58,3 +58,6 @@ coverage/
 tmp/
 .tmp/
 spikes/**/node_modules/
+
+# 工具的会话级状态（project-memory.json 例外，那个要入库）
+.omc/state/

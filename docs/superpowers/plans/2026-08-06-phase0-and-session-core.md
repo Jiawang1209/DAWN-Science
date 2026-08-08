@@ -25,7 +25,7 @@
 ## 文件结构
 
 ```
-dawn/
+dawn-science/                       # 仓库根目录
 ├── package.json
 ├── tsconfig.json
 ├── vitest.config.ts
@@ -79,16 +79,15 @@ dawn/
 ## Task 0.1: 项目骨架与工具链
 
 **Files:**
-- Create: `dawn/package.json`
-- Create: `dawn/tsconfig.json`
-- Create: `dawn/vitest.config.ts`
-- Create: `dawn/.gitignore`
+- Create: `package.json`
+- Create: `tsconfig.json`
+- Create: `vitest.config.ts`
+- Create: `.gitignore`
 
 - [ ] **Step 1: 创建目录并初始化**
 
 ```bash
-mkdir -p dawn/src dawn/tests dawn/spikes
-cd dawn
+mkdir -p src tests spikes
 ```
 
 - [ ] **Step 2: 写 package.json**
@@ -180,7 +179,7 @@ Expected: 安装成功；`tsc --noEmit` 无输出（零错误）。
 - [ ] **Step 7: 提交**
 
 ```bash
-git add dawn/
+git add .
 git commit -m "chore: 初始化 dawn 项目骨架与工具链"
 ```
 
@@ -191,12 +190,11 @@ git commit -m "chore: 初始化 dawn 项目骨架与工具链"
 **验证问题：** `pi` 能否被当作库嵌入，注入自定义工具，并**强制 JSON Schema**？
 
 **Files:**
-- Create: `dawn/spikes/a-pi-embed.ts`
+- Create: `spikes/a-pi-embed.ts`
 
 - [ ] **Step 1: 探明 pi 的实际导出**
 
 ```bash
-cd dawn
 node -e "import('@earendil-works/pi-agent-core').then(m => console.log(Object.keys(m).sort().join('\n')))" > /tmp/pi-agent-exports.txt
 node -e "import('@earendil-works/pi-ai').then(m => console.log(Object.keys(m).sort().join('\n')))" > /tmp/pi-ai-exports.txt
 head -50 /tmp/pi-agent-exports.txt /tmp/pi-ai-exports.txt
@@ -260,7 +258,7 @@ Expected: 若 schema 真被强制，应看到重试或校验错误，而非 `ver
 
 - [ ] **Step 5: 写入结论**
 
-创建 `dawn/spikes/FINDINGS.md`，写入 Spike A 一节：实际使用的导入符号、创建会话的完整调用签名、工具注册方式、schema 强制的观察结果、事件流形状。**Task 1.6 会直接依赖这份记录。**
+创建 `spikes/FINDINGS.md`，写入 Spike A 一节：实际使用的导入符号、创建会话的完整调用签名、工具注册方式、schema 强制的观察结果、事件流形状。**Task 1.6 会直接依赖这份记录。**
 
 - [ ] **Step 6: 决策门**
 
@@ -271,7 +269,7 @@ Expected: 若 schema 真被强制，应看到重试或校验错误，而非 `ver
 - [ ] **Step 7: 提交**
 
 ```bash
-git add dawn/spikes/a-pi-embed.ts dawn/spikes/FINDINGS.md
+git add spikes/a-pi-embed.ts spikes/FINDINGS.md
 git commit -m "spike: 验证 pi 可嵌入性与 schema 强制"
 ```
 
@@ -282,7 +280,7 @@ git commit -m "spike: 验证 pi 可嵌入性与 schema 强制"
 **验证问题：** 能否在**不污染用户全局配置**的前提下，给一个 PTY 里的 claude 注入 MCP server，并接到回合结束 hook？
 
 **Files:**
-- Create: `dawn/spikes/b-pty-mcp-hook.ts`
+- Create: `spikes/b-pty-mcp-hook.ts`
 
 - [ ] **Step 1: 写一个最小 MCP server**
 
@@ -321,7 +319,7 @@ echo "{\"kind\":\"hook\",\"at\":\"$(date -Iseconds)\"}" >> "$DAWN_PROBE_LOG"
 exit 0
 ```
 
-Run: `chmod +x dawn/spikes/hook-probe.sh`
+Run: `chmod +x spikes/hook-probe.sh`
 
 - [ ] **Step 3: 写 spike 脚本（生成隔离配置 + 起 PTY）**
 
@@ -376,7 +374,7 @@ setTimeout(() => {
 
 - [ ] **Step 4: 运行并观察**
 
-Run: `cd dawn && npx tsx spikes/b-pty-mcp-hook.ts`
+Run: `npx tsx spikes/b-pty-mcp-hook.ts`
 
 必须回答：
 1. `claude` 是否在隔离配置下启动（`CLAUDE_CONFIG_DIR` 是否被尊重）？
@@ -408,7 +406,7 @@ Expected: 同样拿到 tool 与 hook 两条记录。
 - [ ] **Step 8: 提交**
 
 ```bash
-git add dawn/spikes/
+git add spikes/
 git commit -m "spike: 验证 PTY + MCP 注入 + Hook 完成信号与配置隔离"
 ```
 
@@ -419,16 +417,16 @@ git commit -m "spike: 验证 PTY + MCP 注入 + Hook 完成信号与配置隔离
 **验证问题：** Electron 里同时跑 4 个 `node-pty` + `xterm.js` 是否流畅？
 
 **Files:**
-- Create: `dawn/spikes/c-electron-term/package.json`
-- Create: `dawn/spikes/c-electron-term/main.js`
-- Create: `dawn/spikes/c-electron-term/preload.js`
-- Create: `dawn/spikes/c-electron-term/index.html`
+- Create: `spikes/c-electron-term/package.json`
+- Create: `spikes/c-electron-term/main.js`
+- Create: `spikes/c-electron-term/preload.js`
+- Create: `spikes/c-electron-term/index.html`
 
 - [ ] **Step 1: 建目录与依赖**
 
 ```bash
-mkdir -p dawn/spikes/c-electron-term
-cd dawn/spikes/c-electron-term
+mkdir -p spikes/c-electron-term
+cd spikes/c-electron-term
 npm init -y
 npm i electron node-pty @xterm/xterm @xterm/addon-fit
 ```
@@ -505,7 +503,7 @@ contextBridge.exposeInMainWorld('term', {
 
 - [ ] **Step 5: 运行压力测试**
 
-Run: `cd dawn/spikes/c-electron-term && npx electron .`
+Run: `cd spikes/c-electron-term && npx electron .`
 
 在四个终端里同时执行大量输出：
 ```bash
@@ -528,7 +526,7 @@ yes "0123456789abcdefghijklmnopqrstuvwxyz" | head -200000
 - [ ] **Step 7: 提交**
 
 ```bash
-git add dawn/spikes/c-electron-term
+git add spikes/c-electron-term
 git commit -m "spike: 验证 Electron 多终端并发渲染性能"
 ```
 
@@ -541,9 +539,9 @@ git commit -m "spike: 验证 Electron 多终端并发渲染性能"
 > **这是语言决策的唯一风险点。** 规格 10.1 把主体定为 TypeScript，依据是「nteract 栈已提供 `jupyter_client` 的等价能力」。本 spike 若不通过，回退 Python 方案。
 
 **Files:**
-- Create: `dawn/spikes/d-jupyter-kernel.ts`
-- Create: `dawn/spikes/types/spawnteract.d.ts`
-- Create: `dawn/spikes/d-electron-zmq/`
+- Create: `spikes/d-jupyter-kernel.ts`
+- Create: `spikes/types/spawnteract.d.ts`
+- Create: `spikes/d-electron-zmq/`
 
 - [ ] **Step 1: 确认本机有 Python 内核**
 
@@ -558,7 +556,6 @@ Expected: 列表中出现 `dawn-spike`。若 `jupyter` 命令不存在，`pip in
 - [ ] **Step 2: 装依赖**
 
 ```bash
-cd dawn
 npm i spawnteract@5 enchannel-zmq-backend@10 @nteract/messaging@7 rxjs
 ```
 
@@ -718,7 +715,7 @@ main().catch((e) => {
 
 - [ ] **Step 5: 运行并记录**
 
-Run: `cd dawn && npx tsx spikes/d-jupyter-kernel.ts`
+Run: `npx tsx spikes/d-jupyter-kernel.ts`
 
 Expected: 三项全 ✅，退出码 0。
 
@@ -732,7 +729,7 @@ Expected: 三项全 ✅，退出码 0。
 Node 与 Electron 的 V8 ABI 不同，原生模块必须为 Electron 单独编译。
 
 ```bash
-mkdir -p dawn/spikes/d-electron-zmq && cd dawn/spikes/d-electron-zmq
+mkdir -p spikes/d-electron-zmq && cd spikes/d-electron-zmq
 npm init -y
 npm i electron @electron/rebuild spawnteract@5 enchannel-zmq-backend@10 @nteract/messaging@7 rxjs
 npx electron-rebuild -f -w zeromq
@@ -799,7 +796,7 @@ Expected: 同样三项通过（R 的死循环用 `while(TRUE) Sys.sleep(0.1)`，
 
 - [ ] **Step 8: 写入结论与决策门**
 
-在 `dawn/spikes/FINDINGS.md` 增加 Spike D 一节，记录：实际使用的包版本、`interrupt_mode` 实测值、`electron-rebuild` 是否顺利、以及 R 内核结果。
+在 `spikes/FINDINGS.md` 增加 Spike D 一节，记录：实际使用的包版本、`interrupt_mode` 实测值、`electron-rebuild` 是否顺利、以及 R 内核结果。
 
 | 结果 | 决策 |
 |---|---|
@@ -811,7 +808,7 @@ Expected: 同样三项通过（R 的死循环用 `while(TRUE) Sys.sleep(0.1)`，
 - [ ] **Step 9: 提交**
 
 ```bash
-git add dawn/spikes/d-jupyter-kernel.ts dawn/spikes/types/ dawn/spikes/d-electron-zmq dawn/spikes/FINDINGS.md
+git add spikes/d-jupyter-kernel.ts spikes/types/ spikes/d-electron-zmq spikes/FINDINGS.md
 git commit -m "spike: 验证 Jupyter 内核链路与 Electron 下的 zeromq"
 ```
 
@@ -820,7 +817,7 @@ git commit -m "spike: 验证 Jupyter 内核链路与 Electron 下的 zeromq"
 ## Task 0.6: Phase 0 结论汇总与放行
 
 **Files:**
-- Modify: `dawn/spikes/FINDINGS.md`
+- Modify: `spikes/FINDINGS.md`
 - Modify: `docs/DEVELOPMENT_HISTORY.md`
 
 - [ ] **Step 1: 补齐 FINDINGS.md 的汇总表**
@@ -849,7 +846,7 @@ git commit -m "spike: 验证 Jupyter 内核链路与 Electron 下的 zeromq"
 - [ ] **Step 4: 提交**
 
 ```bash
-git add dawn/spikes/FINDINGS.md docs/DEVELOPMENT_HISTORY.md
+git add spikes/FINDINGS.md docs/DEVELOPMENT_HISTORY.md
 git commit -m "docs: Phase 0 spike 结论汇总与放行判断"
 ```
 
@@ -860,8 +857,8 @@ git commit -m "docs: Phase 0 spike 结论汇总与放行判断"
 ## Task 1.1: Provider 注册表的类型与校验
 
 **Files:**
-- Create: `dawn/src/config/schema.ts`
-- Test: `dawn/tests/config/loader.test.ts`
+- Create: `src/config/schema.ts`
+- Test: `tests/config/loader.test.ts`
 
 - [ ] **Step 1: 写失败的测试**
 
@@ -920,7 +917,7 @@ describe('ProviderRegistrySchema', () => {
 
 - [ ] **Step 2: 运行测试确认失败**
 
-Run: `cd dawn && npx vitest run tests/config/loader.test.ts`
+Run: `npx vitest run tests/config/loader.test.ts`
 Expected: FAIL — 无法解析模块 `../../src/config/schema.js`
 
 - [ ] **Step 3: 写实现**
@@ -971,7 +968,7 @@ Expected: PASS — 3 passed
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/config/schema.ts dawn/tests/config/loader.test.ts
+git add src/config/schema.ts tests/config/loader.test.ts
 git commit -m "feat(config): 两段式 provider 注册表 schema"
 ```
 
@@ -980,8 +977,8 @@ git commit -m "feat(config): 两段式 provider 注册表 schema"
 ## Task 1.2: 配置加载与引用完整性校验
 
 **Files:**
-- Create: `dawn/src/config/loader.ts`
-- Modify: `dawn/tests/config/loader.test.ts`
+- Create: `src/config/loader.ts`
+- Modify: `tests/config/loader.test.ts`
 
 - [ ] **Step 1: 追加失败的测试**
 
@@ -1133,7 +1130,7 @@ Expected: PASS — 7 passed
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/config/loader.ts dawn/tests/config/loader.test.ts
+git add src/config/loader.ts tests/config/loader.test.ts
 git commit -m "feat(config): 配置加载、环境变量展开与引用完整性校验"
 ```
 
@@ -1142,9 +1139,9 @@ git commit -m "feat(config): 配置加载、环境变量展开与引用完整性
 ## Task 1.3: SQLite 存储层
 
 **Files:**
-- Create: `dawn/src/store/schema.ts`
-- Create: `dawn/src/store/sessions.ts`
-- Test: `dawn/tests/store/sessions.test.ts`
+- Create: `src/store/schema.ts`
+- Create: `src/store/sessions.ts`
+- Test: `tests/store/sessions.test.ts`
 
 - [ ] **Step 1: 写失败的测试**
 
@@ -1335,7 +1332,7 @@ Expected: PASS — 5 passed
 - [ ] **Step 6: 提交**
 
 ```bash
-git add dawn/src/store dawn/tests/store
+git add src/store tests/store
 git commit -m "feat(store): SQLite 会话表、迁移与启动对账"
 ```
 
@@ -1344,9 +1341,9 @@ git commit -m "feat(store): SQLite 会话表、迁移与启动对账"
 ## Task 1.4: AgentRuntime 接口与 FakeRuntime
 
 **Files:**
-- Create: `dawn/src/runtime/types.ts`
-- Create: `dawn/src/runtime/fake.ts`
-- Test: `dawn/tests/runtime/fake.test.ts`
+- Create: `src/runtime/types.ts`
+- Create: `src/runtime/fake.ts`
+- Test: `tests/runtime/fake.test.ts`
 
 - [ ] **Step 1: 写失败的测试**
 
@@ -1509,7 +1506,7 @@ Expected: PASS — 5 passed
 - [ ] **Step 6: 提交**
 
 ```bash
-git add dawn/src/runtime dawn/tests/runtime
+git add src/runtime tests/runtime
 git commit -m "feat(runtime): AgentRuntime 接口与 FakeRuntime 测试替身"
 ```
 
@@ -1518,8 +1515,8 @@ git commit -m "feat(runtime): AgentRuntime 接口与 FakeRuntime 测试替身"
 ## Task 1.5: 输入租约
 
 **Files:**
-- Create: `dawn/src/session/lease.ts`
-- Test: `dawn/tests/session/lease.test.ts`
+- Create: `src/session/lease.ts`
+- Test: `tests/session/lease.test.ts`
 
 > 设计依据：spec 7.1。四个要点——TTL、观察者与控制者分离、夺权前可预览、每次转移留审计。**user 可抢占 engine，反向不可。**
 
@@ -1761,7 +1758,7 @@ Expected: PASS — 9 passed
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/session/lease.ts dawn/tests/session/lease.test.ts
+git add src/session/lease.ts tests/session/lease.test.ts
 git commit -m "feat(session): 输入租约——TTL、观察者分离、夺权预览与审计"
 ```
 
@@ -1770,8 +1767,8 @@ git commit -m "feat(session): 输入租约——TTL、观察者分离、夺权�
 ## Task 1.6: 会话生命周期管理器
 
 **Files:**
-- Create: `dawn/src/session/manager.ts`
-- Test: `dawn/tests/session/manager.test.ts`
+- Create: `src/session/manager.ts`
+- Test: `tests/session/manager.test.ts`
 
 > 核心约束：**状态先落库再改内存**。任何持久化失败都不得留下"内存说活着、库里没有"的裂缝。
 
@@ -1998,7 +1995,7 @@ Expected: PASS — 8 passed
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/session/manager.ts dawn/tests/session/manager.test.ts
+git add src/session/manager.ts tests/session/manager.test.ts
 git commit -m "feat(session): 生命周期管理——先落库再改内存、租约守卫写入"
 ```
 
@@ -2007,8 +2004,8 @@ git commit -m "feat(session): 生命周期管理——先落库再改内存、�
 ## Task 1.7: per-session 隔离配置目录
 
 **Files:**
-- Create: `dawn/src/runtime/session-dir.ts`
-- Test: `dawn/tests/runtime/session-dir.test.ts`
+- Create: `src/runtime/session-dir.ts`
+- Test: `tests/runtime/session-dir.test.ts`
 
 > **依赖 Spike B 的 FINDINGS.md**：claude / codex 各自的环境变量名与配置文件名以那份记录为准。下方使用 Spike B 骨架中的取值（`CLAUDE_CONFIG_DIR` + `settings.json`；`CODEX_HOME` + `config.toml`），若 FINDINGS 记录不同，以 FINDINGS 为准并同步修改测试。
 
@@ -2155,7 +2152,7 @@ Expected: PASS — 5 passed
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/runtime/session-dir.ts dawn/tests/runtime/session-dir.test.ts
+git add src/runtime/session-dir.ts tests/runtime/session-dir.test.ts
 git commit -m "feat(runtime): per-session 隔离配置目录生成"
 ```
 
@@ -2164,8 +2161,8 @@ git commit -m "feat(runtime): per-session 隔离配置目录生成"
 ## Task 1.8: 终端流 ring buffer 与背压
 
 **Files:**
-- Create: `dawn/src/session/stream.ts`
-- Test: `dawn/tests/session/stream.test.ts`
+- Create: `src/session/stream.ts`
+- Test: `tests/session/stream.test.ts`
 
 > Spike C 若判定"需节流"，本任务的 `flushIntervalMs` 取 FINDINGS 中记录的可接受阈值。
 
@@ -2308,7 +2305,7 @@ Expected: PASS — 6 passed
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/session/stream.ts dawn/tests/session/stream.test.ts
+git add src/session/stream.ts tests/session/stream.test.ts
 git commit -m "feat(session): 终端流 ring buffer 与节流合并投递"
 ```
 
@@ -2317,8 +2314,8 @@ git commit -m "feat(session): 终端流 ring buffer 与节流合并投递"
 ## Task 1.9: PTY Runtime（真实现）
 
 **Files:**
-- Create: `dawn/src/runtime/pty.ts`
-- Test: `dawn/tests/integration/pty.test.ts`
+- Create: `src/runtime/pty.ts`
+- Test: `tests/integration/pty.test.ts`
 
 - [ ] **Step 1: 写失败的集成测试**
 
@@ -2526,7 +2523,7 @@ Expected: PASS — 3 passed（含孙子进程回归）
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/runtime/pty.ts dawn/tests/integration/pty.test.ts
+git add src/runtime/pty.ts tests/integration/pty.test.ts
 git commit -m "feat(runtime): PTY 运行时与隔离配置注入"
 ```
 
@@ -2535,14 +2532,14 @@ git commit -m "feat(runtime): PTY 运行时与隔离配置注入"
 ## Task 1.10: Native Runtime（pi 适配器）
 
 **Files:**
-- Create: `dawn/src/runtime/native.ts`
+- Create: `src/runtime/native.ts`
 - Test: 手工冒烟（见 Step 4）
 
 > **本任务的实现体依赖 `spikes/FINDINGS.md` 的 Spike A 一节。** 接口已在 Task 1.4 完全定义，pi 的具体调用按 FINDINGS 记录的真实签名填写。若 Spike A 判定"schema 未被强制"，本任务必须额外实现一层 zod 校验与重试（见 Step 3 的注释位）。
 
 - [ ] **Step 1: 重读 Spike A 结论**
 
-Run: `sed -n '/## Spike A/,/## Spike B/p' dawn/spikes/FINDINGS.md`
+Run: `sed -n '/## Spike A/,/## Spike B/p' spikes/FINDINGS.md`
 把其中记录的导入符号、会话创建签名、工具注册方式抄到手边。
 
 - [ ] **Step 2: 写实现骨架**
@@ -2624,7 +2621,6 @@ export class NativeRuntime implements AgentRuntime {
 - [ ] **Step 4: 手工冒烟验证**
 
 ```bash
-cd dawn
 DEEPSEEK_API_KEY=<key> npx tsx -e "
 import { NativeRuntime } from './src/runtime/native.js'
 const rt = new NativeRuntime()
@@ -2642,7 +2638,7 @@ Expected: 依次看到 `started` 事件、若干 `output` 事件（含模型回�
 - [ ] **Step 5: 提交**
 
 ```bash
-git add dawn/src/runtime/native.ts
+git add src/runtime/native.ts
 git commit -m "feat(runtime): Native 运行时——pi agent loop 适配器"
 ```
 
@@ -2651,11 +2647,15 @@ git commit -m "feat(runtime): Native 运行时——pi agent loop 适配器"
 ## Task 1.11: CLI 冒烟入口与阶段验收
 
 **Files:**
-- Create: `dawn/src/cli.ts`
-- Create: `dawn/providers.example.yaml`
-- Modify: `dawn/package.json`
+- Create: `src/cli.ts`
+- Create: `providers.example.yaml`
+- Modify: `package.json`
 
 - [ ] **Step 1: 写示例配置**
+
+> **模型 id 的实测记录（2026-08-08）**：`GET https://api.deepseek.com/models` 只返回两个 id——**`deepseek-v4-flash`** 与 **`deepseek-v4-pro`**。
+> `deepseek-chat` 与 `deepseek-reasoner` 经实测**仍可用**（`chat/completions` 均返回 200），但它们不在 `/models` 列表中，属于**未公开的别名**，背后指向哪个 v4 模型由官方决定且会随时间变化。
+> 下面的示例沿用别名以保持可读性；但**正式的 `providers.yaml` 应钉死带版本的 id**——本项目以「可追溯」为核心主张，配置里指向一个会漂移的别名与该主张直接冲突。此项待作者决定后落实。
 
 ```yaml
 # providers.example.yaml
@@ -2759,7 +2759,7 @@ if (cmd === 'agents') {
 
 - [ ] **Step 3: 注册 bin**
 
-在 `dawn/package.json` 的 `scripts` 中追加：
+在 `package.json` 的 `scripts` 中追加：
 
 ```json
 "dawn": "tsx src/cli.ts"
@@ -2767,13 +2767,12 @@ if (cmd === 'agents') {
 
 - [ ] **Step 4: 跑全量测试**
 
-Run: `cd dawn && npm test && npm run typecheck`
+Run: `npm test && npm run typecheck`
 Expected: 全部 PASS（config 7 + store 5 + runtime fake 5 + session-dir 5 + lease 9 + manager 8 + stream 6 + pty 3 = 48 passed），typecheck 零错误。
 
 - [ ] **Step 5: 阶段①-A 验收**
 
 ```bash
-cd dawn
 cp providers.example.yaml providers.yaml
 export DEEPSEEK_API_KEY=<key>
 
@@ -2807,7 +2806,7 @@ md5 ~/.claude/settings.json
 - [ ] **Step 7: 提交**
 
 ```bash
-git add dawn/src/cli.ts dawn/providers.example.yaml dawn/package.json docs/DEVELOPMENT_HISTORY.md
+git add src/cli.ts providers.example.yaml package.json docs/DEVELOPMENT_HISTORY.md
 git commit -m "feat(cli): 冒烟入口，完成阶段①-A 会话核心"
 ```
 

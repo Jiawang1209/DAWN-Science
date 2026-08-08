@@ -1,14 +1,67 @@
 # 开发历史
 
-本文件记录本项目的所有开发变更，最新的在最上面。
+本文件是本项目**唯一**的开发历史记录，最新的在最上面。
+
+---
+
+## 记录规范
+
+**每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
+
+### 条目格式
+
+```markdown
+### YYYY-MM-DD — <一句话标题>
+
+- **Type**: feat | fix | refactor | docs | data | perf | chore
+- **Commit**: `<短 hash>`（尚未提交时写 `待回填`）
+- **Motivation**: 为什么做（问题 / 需求）。
+- **What**: 改了哪些模块 / 数据产品，关键决策是什么。
+- **Impact**: 对数据产品 / 下游 / 可复现性的影响；破坏性变更必须标注。
+- **Verification**: 怎么确认它是对的（测试、计数、抽查）。
+```
+
+### commit 号怎么填
+
+存在一个先后矛盾：条目要和代码同一个 commit 提交，但 commit 号在提交完成前不存在。本项目的解法是**下次提交时回填**，以保持「一次逻辑变更 = 一个 commit」的节奏：
+
+1. 写条目时 `**Commit**: 待回填`，连同代码一起 `git commit`；
+2. **下一次**提交前，先 `git log --oneline -3` 查出上一条的短 hash，填进上一条条目；
+3. 该回填与本次的新条目一起提交。
+
+因此顶部条目通常是 `待回填`，其余条目都有确切 hash。这不影响可追溯性——因为还有第二条硬规则：
+
+> **commit 的标题行必须等于条目标题（可带 `type:` 前缀）。**
+
+例如条目 `### 2026-08-08 — 建立 dawn-science 仓库，项目定名 DAWN Science` 对应 commit `chore: 建立 dawn-science 仓库，项目定名 DAWN Science`。即使 hash 还没回填，`git log --oneline | grep '<标题>'` 也能唯一定位。
+
+### 粒度
+
+一条逻辑变更一条记录（可以跨多个 commit——此时 **Commit** 字段列出该逻辑变更的全部 hash）。不要为「改个错别字」单开一条，也不要把两件不相干的事塞进一条。
 
 ---
 
 ## 变更日志
 
+### 2026-08-08 — 确立开发历史记录规范、凭证方案与仓库路径基线
+
+- **Type**: chore
+- **Commit**: 待回填
+- **Motivation**: 开工前需定死三件事：① 每次变更如何留痕（含 commit 号，此前两条记录都没有）；② API 密钥放哪——这决定它会不会被 agent 子进程读到、会不会误入版本库；③ 实施计划的路径前缀与实际仓库结构对不上，不解决则每个 Task 的第一步都要人肉换算。
+- **What**:
+  - **本文件新增「记录规范」章节**：条目模板加入 `**Commit**` 字段；确立 commit 号的**下次提交时回填**机制（先写 `待回填` → 下次提交前 `git log` 查出上一条 hash 一并补上），以保持「一次逻辑变更 = 一个 commit」不被拆成两个；并补一条硬规则——**commit 标题行必须等于条目标题**，使得即便 hash 未回填也能靠 `git log --oneline | grep` 唯一定位。已回填前两条记录的 hash（`594ac96` / `fe0cf4a`）。
+  - **凭证方案定为项目级 `.env`，而非 `~/.zshrc`**。理由是本项目会以 `env: { ...process.env, ... }` 派生第三方 agent CLI 作为子进程（实施计划 Task 1.9），写进 shell rc 意味着机器上**每个**进程、包括每个被托管的 agent，都能读到 DeepSeek 密钥；`.env` 至少把暴露面收敛到本项目的运行时。新增 `.env.example` 作为模板（只含占位符）。
+  - **加载机制不引入依赖**：`package.json` 的四个入口脚本改用 `tsx --env-file-if-exists=.env`。选 `--env-file-if-exists` 而非 `--env-file`，是因为后者在文件缺失时直接抛错——新克隆的仓库还没有 `.env`，不该连 `npm run` 都跑不起来。
+  - **实施计划去掉 `dawn/` 路径前缀**：该前缀是文档还在 `ccb_hive_code_learn` 里时的假设，而现在仓库根目录本身就是 `dawn-science`，且已提交的 `package.json` 写的就是 `src/cli.ts` / `spikes/a-pi-embed.ts`——事实上的决定已经做了。共改 145 行（含删除 5 处独占一行的 `cd dawn`）。**`.dawn/` 与 `~/.dawn/` 未受影响**——那是运行时的 per-session 配置目录，不是源码路径，靠负向后顾 `(?<![.\w~-])dawn/` 守住。
+  - 执行 `npm install`（Task 0.1 Step 6）。
+  - **记录 DeepSeek 模型 id 的实测结果**（写入实施计划 Task 1.11 Step 1）：`/models` 只返回 `deepseek-v4-flash` 与 `deepseek-v4-pro`；计划中沿用的 `deepseek-chat` / `deepseek-reasoner` 仍可用但**不在列表中，是未公开的别名**，指向哪个 v4 模型由官方决定。已标注为待决事项——配置里钉死一个会漂移的别名，与本项目「可追溯」的核心主张冲突。
+- **Impact**: 后续所有开发都按此规范留痕。实施计划现在可以逐字执行，不需要人工换算路径。`providers.yaml` 里的 `${DEEPSEEK_API_KEY}` 现在无需手动 `export` 即可由 `npm run` 系列命令解析。**遗留待办**：密钥仍经 `process.env` 全量继承给 PTY 子进程，彻底的解法是 OS keychain + 只向需要的 endpoint 注入，已记入 Backlog。
+- **Verification**: `--env-file-if-exists` 的两项行为均实测——`tsx` 确实透传该 node flag 并读到值、文件缺失时打印提示后继续而不报错（Node v22.23.0）。`git status` 确认 `.env.probe` 被忽略而 `.env.example` 未被忽略（`.gitignore` 的 `.env.*` + `!.env.example` 组合有效）。两个原生模块经 `require()` 实测可加载——`better-sqlite3` 与 `node-pty` 的 install script 均被 npm 的 allowScripts 策略拦截，但二者都自带 prebuild，无实际影响。`npm run typecheck` 目前报 TS18003（`src` / `tests` / `spikes` 尚不存在），属预期，首个源文件落地后自动消失。真实 key 配好后端到端验证：`GET /models` 返回 200，`chat/completions` 对 4 个 model id 均返回 200。路径改写后 grep 复核——源码型 `dawn/` 前缀残留 0 处、`cd dawn` 残留 0 处、6 处 `.dawn/` 运行时路径全部完好。
+
 ### 2026-08-08 — 许可改为 AGPL-3.0，建立项目骨架与参考地图
 
 - **Type**: chore
+- **Commit**: `fe0cf4a`
 - **Motivation**: 仓库建立后需要三样才能开工：正式许可、可安装的依赖配置、以及「实现某个实体时去哪读参考」的索引。
 - **What**:
   - **许可由 Apache-2.0 改为 AGPL-3.0-or-later**。这是主动选择而非被动继承——独立实现让本项目本可选任何许可，选 AGPL 是希望改进版本同样对所有人开放，包括以网络服务形式提供的版本。规格 3.3 相应重写，并记录两条推论：① 作为唯一版权人仍保留 dual-license 与更换许可的权利；② 一旦接受无 CLA 的外部贡献，该权利即受限。LICENSE 采用 FSF 规范全文（661 行）。
@@ -22,6 +75,7 @@
 ### 2026-08-08 — 建立 dawn-science 仓库，项目定名 DAWN Science
 
 - **Type**: chore
+- **Commit**: `594ac96`
 - **Motivation**: 设计阶段的全部产出此前存放在 `ccb_hive_code_learn`——那是一个研读参考项目的研究仓库（含七个第三方仓库、约 398 MB），不适合承载产品代码。项目需要自己的仓库与正式名称。
 - **What**:
   - 新建 `~/Desktop/Github_repos/dawn-science/`，采用小写连字符命名（npm 禁止大写；大小写敏感的 Linux 与不敏感的 macOS/Windows 混用会导致"本地能跑、CI 挂掉"）。展示名 `DAWN Science` 与标识符 `dawn-science` 分置。

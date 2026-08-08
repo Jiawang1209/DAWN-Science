@@ -10,7 +10,7 @@
   },
   "build": {
     "buildCommand": null,
-    "testCommand": null,
+    "testCommand": "grep -n 'dawn/' docs/superpowers/plans/2026-08-06-phase0-and-session-core.md | grep -v '\\.dawn/' | grep -vE 'dawn/(src|tests|spikes|package\\.json|providers\\.example\\.yaml|vitest\\.config\\.ts|tsconfig\\.json|\\.gitignore)' ",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -41,6 +41,43 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "docs/DEVELOPMENT_HISTORY.md",
+      "accessCount": 8,
+      "lastAccessed": 1786156333219,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 2,
+      "lastAccessed": 1786155620891,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 1,
+      "lastAccessed": 1786155524001,
+      "type": "file"
+    },
+    {
+      "path": "vitest.config.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786155634652,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/BACKLOG.md",
+      "accessCount": 1,
+      "lastAccessed": 1786155673766,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-06-phase0-and-session-core.md",
+      "accessCount": 1,
+      "lastAccessed": 1786156294584,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

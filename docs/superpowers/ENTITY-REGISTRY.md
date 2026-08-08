@@ -2,7 +2,7 @@
 
 - **日期**：2026-08-07
 - **用途**：项目要造的**每一个部件**，逐个标注职责、技术栈、构思来源。
-- **上游**：规格 `specs/2026-08-06-multi-agent-ds-workbench-design.md`、主规划 `plans/2026-08-07-master-roadmap.md`
+- **上游**：规格 `specs/2026-08-06-multi-agent-ds-workbench-design.md`、主规划 `plans/2026-08-08-master-roadmap.md`
 
 ## 怎么用这份文档
 

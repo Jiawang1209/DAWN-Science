@@ -3,6 +3,35 @@
 - **日期**：2026-08-08
 - **用途**：实体清单里的「构思来源」只写了项目名与文件名。本文档补上**本地路径与具体位置**——实现某个实体时，一查就知道去读哪里。
 
+---
+
+## 各自教什么（先看这张表）
+
+**两种关系，不可混淆**：
+
+> **Hermes / wisp-science / Rho：读设计，不复用代码。**
+> **pi：直接坐在上面。我们不学它，我们用它。**
+
+把 pi 说成「教会我们 agent 怎么写」，隐含的下一步是「学会了 → 自己写一个」——那正是本项目已经推翻过一次的路线（见 `specs/2026-08-08-dependency-layering-decision.md`）。
+
+| 学什么 | 谁 | 许可 | **关系** | 去哪读 |
+|---|---|---|---|---|
+| 桌面应用怎么写 | **Hermes** | MIT | 读设计 | `«REF»hermes-agent-main/apps/desktop/` — `DESIGN.md`(337) + `AGENTS.md`(210) + `e2e/`(19 spec) + `src/store/`(140 文件) |
+| 科学工作台 × agent 怎么合成 | **Rho** | MIT | 读设计 | `«REF»Rho-main/crates/rho-protocol/src/workbench.rs`(493) · `docs/design/proposed-2026-07-26-{reproducibility-audit,evidence-workspace}*.md` |
+| 科学证据与发表级溯源 | **wisp-science** | AGPL | 读设计 | `«REF»wisp-science-main/docs/publication-evidence.md` |
+| 多 agent 编排与防幻觉 | **wisp-science** | AGPL | 读设计 | `«REF»wisp-science-main/docs/agent-delegation.md`(562) |
+| 记忆投影（不变式 4） | AgentDeck（自有）+ Buzz | 自有 / Apache-2.0 | 设计萃取 | `«OWN»multi-agent-explore/` · `«REF»buzz-main/buzz-agent/src/handoff.rs` |
+| AI agent 怎么跑 | **pi** | MIT | **运行依赖** | `@earendil-works/pi-coding-agent` → `pi-agent-core`(=`packages/agent`) → `pi-ai` |
+
+**两处曾经的误判，已修正**：
+
+1. ~~「Rho 是科学场景的呈现层参考」~~ → **Rho 与 DAWN 是同物种**。`rho-store` 10,835 行里 audit+evidence+compare 占 4,680 行（43%）
+2. ~~「多 agent 编排没有外部老师」~~ → **wisp-science 有完整实现**：有界 DAG、能力解析、Roundtable 交叉评审、worktree 隔离
+
+详见 `plans/2026-08-08-master-roadmap.md` §2–§3。
+
+---
+
 ## 纪律
 
 **参考代码不进本仓库。** 原因有二：

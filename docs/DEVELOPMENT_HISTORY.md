@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A per-session 隔离配置：按 Spike B 实测重写 claude 分支（Task 1.7）
+### 2026-08-08 — 阶段①-A 终端流：scrollback ring buffer 与节流合并投递（Task 1.8）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 终端输出可能瞬间涌入几十 MB（Spike C 实测四路 29 MB / 0.7s），需要一个既能保住历史、又不把 UI 打死的中间层。本任务的参数取值直接由 Spike C 的实测数字决定。
+- **What**:
+  - 新增 `src/session/stream.ts`：`TerminalStream`，scrollback ring buffer + 可选的节流合并投递。
+  - **默认不节流**（`flushIntervalMs: 0`）。依据 Spike C：四终端并发灌 29 MB，**冻结帧 0、卡顿帧 0、最长单帧 59.2 ms**，未触及 100ms 卡顿线。但帧率确实从 60fps 掉到约 27fps，故保留节流能力并以「单帧 100ms」为将来的触发线。
+  - **`maxBytes` 更名为 `maxChars`**。计划初稿的字段叫 `maxBytes` 但实现是字符切片，两者在 CJK 下差 3 倍。选择改名而非改成按字节切，理由是 **JS 字符串是 UTF-16，内存占用与字符数成正比而非 UTF-8 字节数**——字符计数本就是更准的内存代理量，且按字节切还有把多字节字符截半的风险。
+  - **修掉计划初稿的一处真实缺陷**：节流开启时，若新观察者在 pending 未投递的窗口内订阅，会**收到重复数据**——`subscribe` 先给它整个 buffer（scrollback 是即时更新的，已含 pending），定时器到期又把 pending 投递一遍。改为**订阅前先冲掉 pending**。
+  - `deliver` 遍历前复制集合（沿用 Task 1.4/1.5 的同一修法），`dispose` 一并清空 pending。
+  - **scrollback 与投递节奏解耦**：`push` 无论是否节流都立即更新 buffer——UI 卡顿不该导致历史丢失。
+- **Impact**: Task 1.9 的 PtyRuntime 可直接把 pty 输出灌进 `TerminalStream`。Spike C 的另一条结论也落进了注释：**scrollback 是内存主控参数，不是显示偏好**——xterm 的 5000 行上限正是 20 万行输入下内存仍稳在 526 MB 的原因。
+- **Verification**: 严格 TDD，13 个测试（计划预估 6 个）。增补的用例包括：单块超限只留尾部、多字节字符不被截半、空 scrollback 不投递空块、观察者在回调里退订不打乱本次投递、**pending 窗口内订阅不收重复数据**、订阅提前冲刷不让既有观察者丢数据、`dispose` 后定时器被清理。全仓库 99 passed，typecheck 零错误。
+
+### 2026-08-08 — 阶段①-A per-session 隔离配置：按 Spike B 实测重写 claude 分支（Task 1.7）
+
+- **Type**: feat
+- **Commit**: `445e65e`
 - **Motivation**: 给一个会话注入 MCP server 与回合结束 hook，且**绝不触碰用户全局配置**。计划在本任务开头就写明「以 FINDINGS 为准，若不同则同步修改测试」——而 Spike B 的实测与计划初稿有两处实质冲突，必须按实测改。
 - **What**:
   - 新增 `src/runtime/session-dir.ts`：`materializeSessionDir(family, dir, opts)`，支持 claude / codex 两个家族。

@@ -43,10 +43,28 @@
 
 ## 变更日志
 
+### 2026-08-08 — 依赖分层决策：坐 pi 第三层，native 线推倒重写（作者严重质疑驱动）
+
+- **Type**: docs
+- **Commit**: 待回填
+- **Motivation**: 作者发现 native agent `tools: []`、手搓 provider、写死 `openAICompletionsApi()`，而 pi 全都提供，并对项目规划提出严肃质疑：「我们本可以在项目规划里面写好，是否直接调用 pi-coding-agent 以及 pi 其他的生态。」**质疑成立。**
+- **根因（比我最初的诊断更靠上游）**：我最初把断点归到「Spike A 范围太窄」和「G1 判据只覆盖 PTY」——那是下游。真正的缺陷是**规格只写了「使用 pi-agent-core」而没写「坐在哪一层」**。pi 是分层库，`new Agent({tools:[]})` 与 `createAgentSession()` 都满足「使用 pi-agent-core」，两者差着一整套 harness 和全部工具。若规格定死了层，spike 的验证目标与决策门的判据都是被规定死的，两个下游缺陷都不会发生。
+  **更难看的是这个标准我写过**：同一张非目标表里，Jupyter 那一行写的是「只使用 Jupyter 消息协议，不引入其服务端」——明确了层与边界。pi 那三行只写了「用」。而 REFERENCES 里「`createAgentSession()`（第三层，可选）」是我写的，说明我当时就知道 pi 分层，却把唯一该决策的地方主动降级成了参考索引里的备注。
+- **What**: 新增 `docs/superpowers/specs/2026-08-08-dependency-layering-decision.md`。逐能力给出「坐哪一层 / 放弃什么 / 不变式挂哪」。
+  - **定案坐第三层 `pi-coding-agent`**。最初「harness 会挡住不变式挂载点」的顾虑**已读源码证伪**：`AgentSessionConfig { agent: Agent }` 接受自建 Agent，钩子照挂；且扩展系统的 tool 事件**按工具分型**（Bash/Read/Edit/Write/Grep/Find/Ls/Custom），`ToolCallEventResult{block, reason}` 可拒绝执行、`ToolResultEventResult.usage` 可记用量——**比第二层笼统的 `beforeToolCall` 更适合做 capability 授权门与溯源记录点**。
+  - **凭证不是二选一**：`AuthStorageBackend` 是接口（`withLock`/`withLockAsync`），`FileAuthStorageBackend` 只是默认实现。→ 实现一个 safeStorage 加密的 backend，**白拿 pi 那 418 行的文件锁 / revision 校验 / stale 检测**，同时保住 OS 加密。
+  - **协议借形状不引传输**：`pi-protocol`（447 行）覆盖了 Workbench Protocol 会话的那一半且更完整（多 steer / abort / set_model / thinkingLevel，`TranscriptProgress` 还分了 thinking/toolCall/text）。但 `pi-server` 的 transport 只有 UDS，我们是 Electron 同机 IPC，引入等于多一个进程换不到东西。**采用其 `snapshot + revision` 的重连形状，不引传输层。**
+  - **一处自我否定**：我昨晚写的 seq + 环形缓冲 + `dropped` + `truncated` 那套「丢弃必须出声」的纪律，**是为一个本不该存在的问题设计的**——只要 transcript 是持久的，就不需要在内存缓冲溢出时向用户道歉。pi 的 snapshot + revision 更简单也更对。
+  - **保留清单经 grep 全仓库确认 pi 确实没有**：PTY 托管外部 CLI（pi 无 node-pty 依赖）、项目/Run/溯源账本（`provenance` 只在 CHANGELOG/docs/一个测试里出现）、git 产出事实、Electron 壳与 UI、SQLite（pi 用 JSONL，规格 7.32 理由仍成立）。**这五项是 DAWN 区别于「pi 的一个壳」的全部内容。**
+  - 租约**部分重叠但不可替代**：pi 有 `SessionLeaseMode: shared|exclusive` 与 `session_locked`，但那是连接级互斥，没有 holder 身份与抢占语义。保留 `session/lease.ts`，错误码对齐。
+- **Impact**: **返工，非重做**。约 7 个文件删除或重写，437 条测试中约 90–130 条作废；`project/` `store/` `lease` `pty` `ui/` 基本不受影响。分 R1–R5 五批，**R1（Spike A-2 验第三层接口）不通过不进 R2**——上次的错误正是拿只验了「能跑起来」的 spike 去指导实现。
+- **确立两条纪律**：①依赖决策必须写明坐在哪一层（具体到导出符号），并对 spike 有约束力；②决策门判据必须逐条对照规格能力清单生成、覆盖每一种 runtime，不得由实现者临时拟定（G1 三条全是 PTY 的，所以看不见 `tools: []`）。
+- **Verification**: 结论全部来自读源码，非推测。关键行号已写进决策文档（`core/sdk.ts:38-86`、`core/agent-session.ts:198/306`、`core/extensions/types.ts:858-959/1071`、`client/src/session-handle.ts:13`、`config.ts:515`）。
+
 ### 2026-08-08 — 让渲染进程的报错能被看见，并禁掉浏览器对话框（作者反馈驱动）
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `9e49492`
 - **Motivation**: 作者报告两个症状：「在里面无法输入 api key」、「点击什么都没有任何用处」。
   **实测确诊：`window.prompt` 在 Electron 里直接抛错**（`prompt() is not supported.`，经真机探针取得原话）。它在「打开文件夹」的 onClick 里抛，React 根随之死掉，此后整个界面点什么都没反应——**包括进不去设置页填 API key**。一个函数调用，两个症状。
   修复本身已随 Task 2.22（原生目录选择器）落在 `41e9fca`，本条记录的是**为什么这个缺陷能活到作者手上**。

@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B Task 2.5：从 git 事实计算产出，用内容哈希消掉一处精度上限
+### 2026-08-08 — ①-B Task 2.6：项目管理器，把三个 store 拼成协议实体
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 把 `ProjectStore` / `SessionStore` / `RunStore` 拼成 UI 能直接消费的协议实体，是 Workbench 后端的主要数据来源。
+- **What**:
+  - 新增 `src/project/manager.ts`：`open` / `summary` / `list` / `sessions` / `runs`。
+  - **`open()` 是 find-or-create，不是 create**。重复打开同一目录必须命中原项目，否则历史会被切成碎片。路径先 `resolve()` 规范化再比对——`/w` 与 `/w/` 是同一个项目。
+  - **相对路径响亮报错**：相对路径在多窗口/多进程下会指向不同位置，静默接受等于埋一个「同一项目分裂成两个」的雷。
+  - **agent 的 `kind` 取自 registry，取不到时回退 `native` 且这是显式行为**——注释里写明这不是猜测，而是「没有配置依据时的已声明默认值」。
+  - 不存在的项目：`summary()` 返回 undefined，`sessions()` / `runs()` 返回空数组。**摘要用 undefined 区分「项目没了」与「项目是空的」，列表用空数组因为「没有会话」本身就是一个有效答案。**
+- **Impact**: Part 1（存储与项目）完成。Task 2.7 起的 Electron 与 UI 可以直接消费这一层。
+- **Verification**: 严格 TDD，12 个测试。含路径规范化（末尾斜杠不产生第二个项目）、相对路径被拒、registry 有无两种情况下的 `kind` 推断。**产出逐项过协议 schema 校验**——`ProjectSummarySchema` 与 `SessionSummarySchema` 各有一条用例。实现过程中撞到一次字段名与方法名冲突（`sessions` 既是私有字段又是查询方法），已改名为 `sessionStore` 等。全仓库 257 passed，typecheck 零错误。
+
+### 2026-08-08 — ①-B Task 2.5：从 git 事实计算产出，用内容哈希消掉一处精度上限
+
+- **Type**: feat
+- **Commit**: `0d3c952`
 - **Motivation**: 项目面板「产出」栏的数据来源。**不变式 5**——这一栏回答「仓库里实际变了什么」，不是「agent 说它改了什么」。后者不可信，那正是本项目要防的东西。
 - **What**:
   - 新增 `src/project/git-facts.ts`：`snapshot(workspace)` 取基线，`diffSince(workspace, baseline)` 算变更集，`NotAGitRepoError` 用于非 git 目录。

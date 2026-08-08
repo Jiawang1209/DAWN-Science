@@ -43,10 +43,26 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A Runtime 契约：AgentRuntime 接口与 FakeRuntime（Task 1.4）
+### 2026-08-08 — 阶段①-A 输入租约：写权归属、抢占规则与审计链（Task 1.5）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 规格 7.1 的落地，也是阶段①-A 最复杂的一块。人与引擎会同时想往一个会话里写，需要一个明确的仲裁机制；更重要的是**写权的每一次转移都要可追责**——这是不变式 3「没有不可见的行动」在会话层的体现。
+- **What**:
+  - 新增 `src/session/lease.ts`：`LeaseManager`，含 `acquire` / `release` / `current` / `previewTakeover` / `observe` / `observers` / `audit`。
+  - **不对称抢占：user 可抢占 engine，engine 不可抢占 user。** 理由写进了代码注释——二者代价不对称：engine 被打断只是重跑一次，人被打断可能丢掉正在输入的内容，且人无法像引擎那样重试。
+  - **补上计划的一处审计断链**：`LeaseAuditEvent` 声明了 `'expire'` 动作，但计划的实现从不发它——租约过期在审计里是空白。这会让「engine 为什么突然拿到了写权」在日志里无法解释。新增 `reapExpired()`，在 `acquire` / `release` 时补记 `expire` 事件，**事件时间取租约的 `expiresAt` 而非发现它的时刻**（前者才是它真正失效的时间）。
+  - **`previewTakeover` 保持纯查询**：不改状态、不写审计、**不推进时间戳**。已为最后一点单独写测试——预览用一个很晚的时间点，之后用较早时间 `acquire` 仍须合法。
+  - **拒绝路径不改动任何状态**：失败的抢占既不留痕也不破坏现有租约，有对应测试。
+  - `observe` 的退订闭包沿用 Task 1.4 的修法（固定引用而非 `set!`）。
+  - 单调时间断言：写权审计链若允许时间回退就失去证据价值——「谁先谁后」是判定责任的唯一依据。
+- **Impact**: Task 1.6（会话生命周期）可直接使用租约做写权仲裁。审计链现在覆盖四种转移（acquire / takeover / release / expire），无断点。
+- **Verification**: 严格 TDD，先确认 FAIL 再实现。20 个测试，高于计划预估的 9 个——增补了抢占被拒后原租约不受影响、同一持有者续期不算 takeover、过期后 `current` 为 undefined、预览三种分支、预览不推进时间戳、过期补记审计且记的是失去写权的一方、指纹不同、释放不存在的租约不留痕、观察者退订与跨会话隔离。全仓库 57 passed，typecheck 零错误。
+
+### 2026-08-08 — 阶段①-A Runtime 契约：AgentRuntime 接口与 FakeRuntime（Task 1.4）
+
+- **Type**: feat
+- **Commit**: `b2fc5a3`
 - **Motivation**: 确立 `runtime/*` 与 `session/*` 的责任边界，并让后续的业务逻辑（租约、生命周期、背压）能在**不依赖真实进程**的前提下做 TDD。Task 1.5–1.8 全部基于 FakeRuntime 写测试，真实现留到 1.9–1.10。
 - **What**:
   - 新增 `src/runtime/types.ts`：`AgentRuntime` 接口（`start` / `attach` / `write` / `resize?` / `stop`）、`SessionSpec`、`SessionHandle`、三种 `AgentEvent`。**责任边界写进文件头**——runtime 只管「怎么跟一个 agent 进程说话」，不知道生命周期、租约与持久化。

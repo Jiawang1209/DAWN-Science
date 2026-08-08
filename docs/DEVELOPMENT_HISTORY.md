@@ -43,10 +43,31 @@
 
 ## 变更日志
 
+### 2026-08-09 — R5：工具调用看得见；并抓到 waitForIdle 会提前返回
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: Task 3.1，返工 R 的收尾。数据通路在 R4 就建好了，但 `grep -rn "tool" tests/ui/*.tsx` 在开工前返回**空**——「界面能不能让人看见 agent 在干什么」从来没被验证过。这与本项目已犯过五次的缺陷同源：**内部模型完整，用户可见的那一端没人接。**
+- **What（界面）**: `TranscriptRow` 的工具分支抽成 `ToolRow`，补三条纪律
+  - **长结果默认折叠**（前 12 行）。一次 `bash` 的输出此前会把整个对话区淹掉。
+  - **截断出声，且说清省了多少**——展开按钮的文案是「展开全部（还有 N 行）」。一个省略号不构成说明；Rho 的每个预览字段都配显式的 `*_truncated` 布尔，而不是让读者从标点里猜。入参截断同理，补「入参已截断」。
+  - **失败不许静默**——`status: "error"` 而 `result` 为空时，此前渲染成**空白**，一次失败被整个吞掉。现在写「这次调用失败了，但没有给出原因」。
+  - 另加状态的**文字**标签（执行中/成功/失败）与 `data-status`：只有 ✓/✗ 等同于「只用颜色表达含义」，DESIGN.md 禁止。
+- **What（运行时，计划外的真缺陷）**: `NativeRuntime.waitForIdle()` **在 prompt 尚未开始时会立刻返回**。
+  - **成因**：`write()` 刻意不 await `prompt()`（契约是同步的），而 pi 的 `session.waitForIdle()` 判的是「此刻有没有在跑」。两者之间存在一个窗口，窗口里 pi 认为自己空闲。
+  - **生产后果**：`echo ... | dawn run` 会在模型答完之前切断——**而这正是 `waitForIdle` 存在的唯一理由**。
+  - **修复**：`NativeSession` 增加 `pending`，`write()` 把这一轮的 promise 串上去（串而不是覆盖：连发两轮时等待必须覆盖两轮），`waitForIdle()` 先等 `pending` 再问 pi。
+- **Verification**（**本条的重点**）:
+  - `tests/ui/tool-rows.test.tsx` 11 条，先跑出 **6 failed / 5 passed** 确认 FAIL，实现后全绿。
+  - `tests/integration/native-tool-call.test.ts` —— **真链路**：真 `ModelRuntime`、真 pi agent loop、真工具执行、真 `SessionTranscripts`，只有模型回复由本地假服务器给定。它同时兑现了 `mock-inference-server.mjs` 文件头写下的纪律：**该模块同时供 `dev:mock` 与测试使用**（Hermes 的理由：两套 mock 会各自漂移，那时「本地是好的」就不再意味着什么）。
+  - **`waitForIdle` 的缺陷正是这条真链路测试抓到的**，单元测试永远抓不到它——探针实测 `idle. events: 1 server requests: 0`，即在 0 次模型调用时就宣告空闲。
+  - 测试内加了一条**反空转断言**：`server.requests.length >= 2`（一次取工具调用，一次取工具结果后的收尾回复），否则一个什么都不做的实现也可能让后面的断言碰巧不被执行到。
+  - 435 tests passed（33 文件，+12），typecheck 零错误，build 干净。
+
 ### 2026-08-08 — ①-B′ 详细计划：桌面按 Hermes 做，并把 Run 骨架前移
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `48fb37c`
 - **Motivation**: 作者定调「第一步先搞一个 agent 桌面工作台，能调本地 codex/claude、能接各种 API key，UI 基本上全都按照 Hermes 做」，并同意把 Run 最小骨架前移。
 - **What**:
   - 新增 `plans/2026-08-08-phase1b-prime-desktop.md`：Hermes 信息架构的**照做清单**（三类界面、chat 为根路由、右栏三 pane、布局常量、三层令牌、z-index 梯子、契约用测试强制）、**依赖分层声明**（每个新依赖写明坐哪层/放弃什么/不变式挂点）、**10 个 Task** 与执行顺序、明确不做清单、交付前品味测试。

@@ -68,6 +68,14 @@ interface NativeSession {
   session: Awaited<ReturnType<typeof createAgentSession>>["session"]
   unsubscribe: () => void
   pid: number
+  /**
+   * 最近一次 `prompt()` 的 promise（已挂 catch，永不 reject）。
+   *
+   * **`waitForIdle` 必须先等它。** pi 自己的 `session.waitForIdle()` 判的是
+   * 「此刻有没有在跑」，而 `write()` 刻意不 await `prompt()`——于是在 prompt
+   * 真正开始之前的那一小段时间里，pi 认为自己是空闲的，`waitForIdle()` 立刻返回。
+   */
+  pending: Promise<void> | undefined
 }
 
 /** pi 的会话事件（结构化程度足够，但类型不从包里导出，故在此收窄） */
@@ -118,7 +126,13 @@ export class NativeRuntime implements AgentRuntime {
    * 所以「跑完了没有」必须另有一问。
    */
   async waitForIdle(sessionId: SessionId): Promise<void> {
-    await this.sessions.get(sessionId)?.session.waitForIdle()
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    // **顺序要紧。** 先等我们自己发出去的那一轮——见 `NativeSession.pending` 的注释：
+    // prompt 还没开始时 pi 认为自己空闲，只问它会立刻拿到「已空闲」。
+    // 2026-08-09 由 R5 的真链路测试抓到：`waitForIdle` 在 0 个请求、1 个事件时就返回了。
+    await s.pending
+    await s.session.waitForIdle()
   }
 
   private emit(event: AgentEvent): void {
@@ -197,7 +211,7 @@ export class NativeRuntime implements AgentRuntime {
     const unsubscribe = session.subscribe((raw) => this.translate(spec.sessionId, raw as PiEvent))
 
     const pid = this.nextPid++
-    this.sessions.set(spec.sessionId, { session, unsubscribe, pid })
+    this.sessions.set(spec.sessionId, { session, unsubscribe, pid, pending: undefined })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     return { sessionId: spec.sessionId, pid }
   }
@@ -268,10 +282,14 @@ export class NativeRuntime implements AgentRuntime {
   write(sessionId: SessionId, data: string): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
-    void s.session.prompt(data).catch((err: unknown) => {
+    // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
+    const run = s.session.prompt(data).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err)
       this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
     })
+    // 串起来而不是覆盖：连发两轮时，等待必须覆盖两轮，不能只等最后一轮
+    s.pending = s.pending ? s.pending.then(() => run) : run
+    void s.pending
   }
 
   /** 中止当前回合。会话仍然活着，可以继续对话 */

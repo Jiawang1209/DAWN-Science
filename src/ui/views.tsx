@@ -229,16 +229,7 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
     return <p className="caveat">{item.text}</p>
   }
   if (item.type === "tool") {
-    const mark = item.status === "running" ? "…" : item.status === "ok" ? "✓" : "✗"
-    return (
-      <div className={`tool ${item.status}`}>
-        <span className="tool-name">
-          {mark} {item.name}
-        </span>
-        <pre className="tool-input">{summarize(item.input)}</pre>
-        {item.result ? <pre className="tool-result">{item.result}</pre> : null}
-      </div>
-    )
+    return <ToolRow item={item} />
   }
   return (
     <div className={`turn ${item.who}`}>
@@ -249,15 +240,106 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
   )
 }
 
-/** 工具入参的一行摘要。**不展开整个对象**——那会把对话区淹掉 */
-function summarize(input: unknown): string {
-  if (input === undefined || input === null) return ""
-  if (typeof input === "string") return input
+/** 折叠前展示的结果行数。**十几行足够判断发生了什么**，再多就该主动展开 */
+const TOOL_RESULT_HEAD_LINES = 12
+/** 入参摘要的字符上界 */
+const TOOL_INPUT_MAX = 200
+
+/**
+ * 状态的**文字**标签。
+ *
+ * 图形符号（…/✓/✗）留着，但不能只有它——DESIGN.md 的
+ * 「no meaning conveyed by color alone」同样适用于「只靠一个符号」。
+ * 无障碍树里必须能读到「执行中 / 成功 / 失败」。
+ */
+const TOOL_STATUS = {
+  running: { mark: "…", label: "执行中" },
+  ok: { mark: "✓", label: "成功" },
+  error: { mark: "✗", label: "失败" },
+} as const
+
+/**
+ * 一次工具调用的呈现。
+ *
+ * 三条纪律，都是踩过或读到的：
+ *
+ * 1. **长结果默认折叠** —— 一次 `bash` 的输出能把整个对话区淹掉。
+ * 2. **截断必须出声，且说清省了多少**（规格 7.5）。一个省略号不构成说明——
+ *    Rho 的每个预览字段都配一个显式的 `*_truncated` 布尔，而不是让读者
+ *    从标点里猜。这里给的是行数。
+ * 3. **失败不许静默** —— `status: "error"` 而 `result` 为空时，界面上此前
+ *    什么都不显示，等于一次失败被吞掉。宁可说「没有给出原因」，
+ *    也不能让它看起来什么都没发生。
+ */
+function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) {
+  const [expanded, setExpanded] = useState(false)
+  const { mark, label } = TOOL_STATUS[item.status]
+  const input = summarize(item.input)
+  const result = foldResult(item.result, expanded)
+
+  return (
+    <div className={`tool ${item.status}`} data-status={item.status}>
+      <span className="tool-name">
+        {mark} {item.name}
+      </span>
+      <span className="tool-status">{label}</span>
+
+      {input.text ? <pre className="tool-input">{input.text}</pre> : null}
+      {input.truncated ? <span className="hint">入参已截断</span> : null}
+
+      {result ? (
+        <>
+          <pre className="tool-result">{result.text}</pre>
+          {result.hidden > 0 ? (
+            <button
+              type="button"
+              className="tool-expand"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+            >
+              {expanded ? "收起" : `展开全部（还有 ${result.hidden} 行）`}
+            </button>
+          ) : null}
+        </>
+      ) : item.status === "error" ? (
+        // 失败且无正文。**这一支是本次修复的重点**：此前它渲染成空白
+        <p className="caveat">这次调用失败了，但没有给出原因</p>
+      ) : null}
+    </div>
+  )
+}
+
+/** 按行折叠结果，并如实返回**被藏起来多少行** */
+function foldResult(
+  result: string | undefined,
+  expanded: boolean,
+): { text: string; hidden: number } | undefined {
+  if (result === undefined) return undefined
+  const lines = result.split("\n")
+  const hidden = Math.max(0, lines.length - TOOL_RESULT_HEAD_LINES)
+  if (expanded || hidden === 0) return { text: result, hidden }
+  return { text: lines.slice(0, TOOL_RESULT_HEAD_LINES).join("\n"), hidden }
+}
+
+/**
+ * 工具入参的一行摘要。**不展开整个对象**——那会把对话区淹掉。
+ *
+ * 返回值带 `truncated`，因为调用方需要**说出来**，而不是靠省略号暗示。
+ */
+function summarize(input: unknown): { text: string; truncated: boolean } {
+  if (input === undefined || input === null) return { text: "", truncated: false }
+  if (typeof input === "string") return clip(input)
   const o = input as Record<string, unknown>
+  // 常见工具的主参数直接提出来——`bash` 看命令、读写文件看路径、搜索看模式
   const first = o.command ?? o.path ?? o.pattern ?? o.file_path
-  if (typeof first === "string") return first
-  const json = JSON.stringify(input)
-  return json.length > 200 ? `${json.slice(0, 200)}…` : json
+  if (typeof first === "string") return clip(first)
+  return clip(JSON.stringify(input))
+}
+
+function clip(s: string): { text: string; truncated: boolean } {
+  return s.length > TOOL_INPUT_MAX
+    ? { text: `${s.slice(0, TOOL_INPUT_MAX)}…`, truncated: true }
+    : { text: s, truncated: false }
 }
 
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */

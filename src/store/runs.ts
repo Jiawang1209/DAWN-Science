@@ -20,6 +20,8 @@ export interface RunInsert {
   finishedAt?: string
   terminalReason?: string
   hasError: boolean
+  /** 退出码。**结构化字段**，见协议 `RunSummarySchema.exitCode` */
+  exitCode?: number
   artifactCount?: number
   cost?: Cost
 }
@@ -29,6 +31,7 @@ export interface RunFinish {
   finishedAt: string
   hasError: boolean
   terminalReason?: string
+  exitCode?: number
   artifactCount?: number
   cost?: Cost
 }
@@ -45,6 +48,7 @@ interface RunRow {
   finished_at: string | null
   terminal_reason: string | null
   has_error: number
+  exit_code: number | null
   artifact_count: number | null
   cost_visible: number | null
   cost_input_tokens: number | null
@@ -115,6 +119,7 @@ function toRun(r: RunRow): RunSummary {
     ...(r.parent_run_id === null ? {} : { parentRunId: r.parent_run_id }),
     ...(r.finished_at === null ? {} : { finishedAt: r.finished_at }),
     ...(r.terminal_reason === null ? {} : { terminalReason: r.terminal_reason }),
+    ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
     ...(r.artifact_count === null ? {} : { artifactCount: r.artifact_count }),
     ...(cost === undefined ? {} : { cost }),
   }
@@ -148,12 +153,12 @@ export class RunStore {
       .prepare(`
         INSERT INTO runs (
           id, project_id, session_id, parent_run_id, origin, request_type, status,
-          started_at, finished_at, terminal_reason, has_error, artifact_count,
+          started_at, finished_at, terminal_reason, has_error, exit_code, artifact_count,
           cost_visible, cost_input_tokens, cost_output_tokens, cost_cache_read_tokens,
           cost_total_usd, cost_invisible_reason
         ) VALUES (
           @runId, @projectId, @sessionId, @parentRunId, @origin, @requestType, @status,
-          @startedAt, @finishedAt, @terminalReason, @hasError, @artifactCount,
+          @startedAt, @finishedAt, @terminalReason, @hasError, @exitCode, @artifactCount,
           @cost_visible, @cost_input_tokens, @cost_output_tokens, @cost_cache_read_tokens,
           @cost_total_usd, @cost_invisible_reason
         )`)
@@ -163,6 +168,7 @@ export class RunStore {
         finishedAt: rec.finishedAt ?? null,
         terminalReason: rec.terminalReason ?? null,
         hasError: rec.hasError ? 1 : 0,
+        exitCode: rec.exitCode ?? null,
         artifactCount: rec.artifactCount ?? null,
         ...costColumns(rec.cost),
       })
@@ -177,6 +183,7 @@ export class RunStore {
           finished_at = @finishedAt,
           terminal_reason = COALESCE(@terminalReason, terminal_reason),
           has_error = @hasError,
+          exit_code = COALESCE(@exitCode, exit_code),
           artifact_count = COALESCE(@artifactCount, artifact_count),
           cost_visible = COALESCE(@cost_visible, cost_visible),
           cost_input_tokens = COALESCE(@cost_input_tokens, cost_input_tokens),
@@ -191,6 +198,7 @@ export class RunStore {
         finishedAt: fin.finishedAt,
         terminalReason: fin.terminalReason ?? null,
         hasError: fin.hasError ? 1 : 0,
+        exitCode: fin.exitCode ?? null,
         artifactCount: fin.artifactCount ?? null,
         ...costColumns(fin.cost),
       })

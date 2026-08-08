@@ -14,6 +14,7 @@ import { ProjectStore } from "../store/projects.js"
 import { RunStore } from "../store/runs.js"
 import { SessionStore } from "../store/sessions.js"
 import { ProjectManager } from "../project/manager.js"
+import { RunRecorder } from "../project/run-recorder.js"
 import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { PtyRuntime } from "../runtime/pty.js"
@@ -130,12 +131,24 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   // 已经有项目时什么都不做，也不创建那个目录
   if (opts.defaultWorkspace) projects.ensureDefault(opts.defaultWorkspace)
 
+  /**
+   * Run 记账员。**不变式 3 的落地点**——每条执行路径在诞生时就记账。
+   *
+   * `projectOf` 走会话表：**取不到就不记，绝不猜**。Rho 的教训是
+   * 猜 project 归属会让整个运行对比功能失去依据（run-recorder.ts 有原文）。
+   */
+  const runRecorder = new RunRecorder({
+    runs: runStore,
+    projectOf: (sessionId) => sessionStore.get(sessionId)?.projectId,
+  })
+
   const events = new SessionTranscripts({
     terminalMaxChars: opts.terminalScrollbackChars ?? DEFAULT_TERMINAL_SCROLLBACK_CHARS,
   })
 
   const backend = createWorkbenchBackend({
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
+    runRecorder,
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
     invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),
   })

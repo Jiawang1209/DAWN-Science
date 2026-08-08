@@ -61,6 +61,14 @@ export const RunSummarySchema = z
     /** 异常结束的原因 */
     terminalReason: z.string().min(1).optional(),
     hasError: z.boolean(),
+    /**
+     * 退出码。**结构化字段，不是日志文本里的一行。**
+     *
+     * 契约冻结点八项之一：阶段 ④ 要回答「这次测试过没过」，
+     * 它必须能直接读，不能靠解析输出。缺省表示**尚未结束、或该类 Run
+     * 没有退出码概念**——与「退出码为 0」是两回事。
+     */
+    exitCode: z.number().int().optional(),
     artifactCount: NonNegInt.optional(),
     cost: CostSchema.optional(),
   })

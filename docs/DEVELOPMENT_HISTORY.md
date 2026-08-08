@@ -43,10 +43,33 @@
 
 ## 变更日志
 
-### 2026-08-09 — 拆掉第一次启动的三道门槛：装好就能打开，打开就能说话
+### 2026-08-09 — Run 记账员：账本第一次有了真实记录
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Task 3.5 · S16′。**`RunStore` 写好了、协议有 `listRuns`/`getRun`、界面有历史栏——但那张表从头到尾是空的。** 没有任何生产代码创建过 Run。测试全绿，功能是死的：这是同一类缺陷的第六次。
+- **为什么前移到 ①-B′**: 其余功能都是**新增路径**，随时可加；Run 不是——它要求**每条执行路径在诞生时就记账**。桌面全建完再补，每个已有的执行入口都要回头改。Rho 的前车之鉴：其 durable run 行少一个 `project_root`，整个「运行对比」被阻塞，必须先做 BH1–BH3 三个基线加固包。**三个包的代价，换一个字段。**
+- **What**:
+  - schema v2 → **v3**：`runs` 加 `exit_code`（**结构化字段，不是日志文本里的一行**）。老数据留 NULL——它们产生时没记，补一个等于伪造事实；**「不知道」与「成功退出」必须是两种东西**。
+  - 协议 `RunSummary` 加 `exitCode`；`RunStore` 的 insert/finish/读取全线打通。
+  - 新增 `src/project/run-recorder.ts`：`beginTurn` / `beginPtySession` / `ingest(event)`，接进 `backend.createSession` 与 `writeToSession`，并在 `wiring.ts` 装配。
+- **四条记账纪律**（都写成了测试）:
+  1. **取不到 projectId 就不记，绝不猜。** Rho 原文：*"Inferring project identity from source paths, the current open project, adjacent timestamps, or artifact filenames is **forbidden**."*
+  2. **没有开着的回合时，`turn_end` 不凭空造一条**——记账不能记出不存在的事。
+  3. **没有 parent 的工具调用照样记**，只是没有 parent，不是丢掉它。丢掉等于让一次真实发生的执行不留痕迹。
+  4. **会话结束时收尾所有还开着的账目，不留永久 running 的孤儿。** 一条永远 running 的 Run 比没有记录更坏——它让「有没有跑完」得到一个**错误答案**，而错误答案比"不知道"危险。被动收尾的记 `terminalReason`。
+- **按实测修正计划**: 计划写的是「PTY **命令**」一条 Run。实测下来 **PTY 只给字节流，命令的边界不可观测**——按回车算一条？被 TUI 吃掉的按键算不算？粘贴的多行呢？猜边界就是在编造事实（不变式 5）。**可观测的是会话**，所以改为 `pty_session` 粒度，并在退出时带上真实退出码——这也正好让 `exit_code` 有了真实来源。同理 `beginTurn` 对 PTY 会话是 no-op：往 PTY 里写的是**按键，不是发话**。
+- **Verification**:
+  - 14 条记账测试先 FAIL 再转绿；schema 版本测试如期抓到 v2→v3（它就是干这个的）。
+  - **真链路探针**（真 `createWorkbench` + 真 pi agent loop + 真工具执行 + 真 SQLite，只有模型是假的）：
+    `agent_turn`(origin=user, completed, project ✓) → `tool_call`(origin=agent, completed, **parent 指向那个回合** ✓, project ✓)。
+    **这是 `runs` 表自项目开始以来第一次有生产代码写入的行。**
+  - 486 tests passed（38 文件，+14），typecheck 零错误，build 干净。
+
+### 2026-08-09 — 拆掉第一次启动的三道门槛：装好就能打开，打开就能说话
+
+- **Type**: feat
+- **Commit**: `48db1fa`
 - **Motivation**: Task 3.4。作者的原话：**「claude code, codex 其实上来也没有要求我一定要配置工作目录的。」**
 - **实测发现门槛不止一道，而且最严重的那道计划里没写**:
   1. **`providers.yaml` 不存在 ⇒ 应用直接起不来。** `loadRegistry` 用 `readFileSync`，缺文件抛 ENOENT；而默认路径是 `join(process.cwd(), "providers.yaml")`——**打包后的桌面应用 cwd 是任意目录**（从 Finder 启动通常是 `/`）。**全新安装必然撞上，结果是「装好了，打不开」，且没有任何可执行的提示。**

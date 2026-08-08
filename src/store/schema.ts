@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -82,6 +82,11 @@ export function migrate(db: Database.Database): void {
       has_error     INTEGER NOT NULL CHECK (has_error IN (0,1)),
       artifact_count INTEGER,
 
+      -- 退出码是**结构化字段，不是日志文本里的一行**。
+      -- 冻结点八项之一：阶段 ④ 要回答「测试过没过」，它必须能直接读，
+      -- 不能靠解析输出。NULL = 尚未结束或该类 Run 没有退出码概念
+      exit_code     INTEGER,
+
       -- 成本。cost_visible 为 NULL 表示「尚未记录」，与「不可见」是两回事
       cost_visible           INTEGER CHECK (cost_visible IN (0,1)),
       cost_input_tokens      INTEGER,
@@ -130,6 +135,13 @@ export function migrate(db: Database.Database): void {
     db.exec(`ALTER TABLE sessions ADD COLUMN project_id TEXT REFERENCES projects(id)`)
   }
   db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`)
+
+  // 从 v2 升级：runs 补 exit_code。
+  // **老数据留 NULL**——它们产生时没记退出码，补一个等于伪造事实（不变式 5）。
+  // NULL 的含义是「不知道」，而「不知道」与「成功退出」必须是两种东西
+  if (!hasColumn(db, "runs", "exit_code")) {
+    db.exec(`ALTER TABLE runs ADD COLUMN exit_code INTEGER`)
+  }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

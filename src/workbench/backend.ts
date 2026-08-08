@@ -12,6 +12,7 @@ import type { ProviderRegistry } from "../config/schema.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
+import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { fault, type WorkbenchBackend } from "./server.js"
@@ -43,10 +44,15 @@ export interface WorkbenchBackendOptions {
   events: SessionTranscripts
   /** 凭证变更后让 pi 侧缓存失效。不给则不失效（测试场景） */
   invalidateCredentials?: (providerId: string) => void
+  /**
+   * Run 记账员。**不给则不记账**——但那意味着 Runs 面板永远是空的，
+   * 只有不关心历史的测试才该省略它（不变式 3）。
+   */
+  runRecorder?: RunRecorder
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -180,8 +186,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const rec = await sessions.create(agentId, project.workspace, { projectId })
 
       // 先登记再接线：attach 的回调可能同步就来一条事件
-      events.track(rec.id, registry.agents[agentId]?.kind ?? "native")
-      sessions.attach(rec.id, (e) => events.ingest(rec.id, e))
+      const kind = registry.agents[agentId]?.kind ?? "native"
+      events.track(rec.id, kind)
+      sessions.attach(rec.id, (e) => {
+        events.ingest(rec.id, e)
+        // **记账与呈现是两件事，各走各的。** 中枢管「界面看得见什么」，
+        // 记账员管「账本上留下什么」——把它们合成一条会让任何一方的改动
+        // 都可能悄悄影响另一方
+        runRecorder?.ingest(e)
+      })
+      // PTY 的「命令」不可观测（只有字节流），可观测的是会话本身。见 run-recorder.ts
+      if (kind === "pty") runRecorder?.beginPtySession(rec.id)
 
       // 记下 git 基线，供之后算「这次会话改了什么」。
       // 拿不到（非 git 仓库）就不记——后续 getRun 会因此不返回 fileChanges，
@@ -201,7 +216,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。
-        if (as === "user") events.userTurn(sessionId, data)
+        if (as === "user") {
+          events.userTurn(sessionId, data)
+          // 运行时没有 turn_start 事件——回合的起点只有这里知道。
+          // PTY 会话由记账员自己忽略（那是按键，不是发话），见 run-recorder.ts
+          runRecorder?.beginTurn(sessionId)
+        }
       } catch (err) {
         // 写权被拒是业务性失败，不是内部错误——UI 要能分辨并提示用户去抢租约
         throw fault("conflict", err instanceof Error ? err.message : String(err))

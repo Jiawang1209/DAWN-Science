@@ -43,10 +43,25 @@
 
 ## 变更日志
 
+### 2026-08-08 — 修正 7.33 对 Claude 项目模型的不准确表述，补三方对比与选型依据
+
+- **Type**: docs
+- **Commit**: 待回填
+- **Motivation**: 作者追问「Rho 有项目概念，Claude app / Codex app / Hermes 不是也都有吗」。核查后发现 **7.33 初稿的表述不准确**——它暗示 Claude app 只提供「信息架构外壳」。这个判断若不纠正，后续会照着一个错的对比做选型。
+- **What**:
+  - **纠正**：实测 `~/.claude.json` 的 `projects` 段（本机 70 个项目），每个条目确实记了 `lastCost`、`lastLinesAdded` / `lastLinesRemoved`、各类 token 与 `lastModelUsage`。**「只有外壳」是错的**。
+  - **但找到了真正的差别**：所有字段以 `last` 为前缀，**只存最近一次会话，不累计、不成史**；`~/.claude/projects/<slug>/*.jsonl` 是给 resume 用的重放日志，不是可查询记录。**缺的不是数据，是粒度与累计。**
+  - **Codex 的项目更薄**：`config.toml` 的 `[projects."<路径>"]` 段**只有 `trust_level`**，纯信任边界；其真正的组织单位是 **thread**（四个 sqlite 库全是 `thread_*` 表）。
+  - 新增 **7.33.1 三方项目模型对比表**，并给出一句话概括：**Claude / Codex 的项目装的是「会话」，Rho 的项目装的是「可追溯的运行记录」**。
+  - **写明选型依据**：按本项目的四项需求（状态/产出/成本/历史），**Rho 覆盖 3/4 且缺项是「加一个字段」；Claude 覆盖 2/4 且缺项是「把存储单位从 session 换成 run」——那是重写而非补丁**。另有领域契合度：Rho 的 `plot_count` / `unresolved_problem_count` 是科研工作的概念，与阶段 ② 定位同类。
+  - **明确这不是二选一而是两层**：Run（账本层，Rho 模型）记「发生过什么」，Entry（内容层，Claude 模型）记「聊了什么」并支撑 resume 与三视图。实体 21c 即指这两层。
+- **Impact**: 选型有了可核查的依据而非印象。Task 2.1 已建的 `RunSummary` + `Cost` 正是「Rho 模型 + 成本字段」，与本结论一致，无需返工。
+- **Verification**: 全部数据来自本机实测——`~/.claude.json` 的字段清单由 `Object.keys` 打印；`~/.codex/config.toml` 的 `[projects]` 段与四个 sqlite 的 `.tables` 逐个查看；Rho 的字段取自已实读的 `workbench.rs`。**本条同时记录一次自我纠错：初稿的判断过快，未经核查即下结论。**
+
 ### 2026-08-08 — ①-B Task 2.1：协议版本与实体 schema，三条硬要求上升为类型约束
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `1f52626`
 - **Motivation**: ①-B 的第一块。计划 §2 有三条「硬要求」原本写在 UI 任务里——但**写在 UI 里就是约定，约定会被绕过，尤其在赶工时**。本任务把它们上升为协议层的类型约束。
 - **What**:
   - 新增 `src/protocol/version.ts`：`WORKBENCH_PROTOCOL_VERSION = "1.0"` 与 `isCompatible(ui, server)`。规则是 **major 必须相同、UI 的 minor 不得高于服务端**（服务端更新无害，UI 更新会去读服务端不返回的字段）。**格式非法一律判不兼容——不抛错也不放行**，放行会让畸形版本号静默通过握手，那正是握手要防的。

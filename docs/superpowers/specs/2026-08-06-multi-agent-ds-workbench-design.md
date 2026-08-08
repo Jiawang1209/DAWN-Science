@@ -799,6 +799,33 @@ claude 内置的 Read / Edit / Bash 不经过我方注入的 MCP，故不可见�
 
 **Rho 给不了的两样**，需自研：**成本**（它不跑模型，无 token/费用概念）与**跨工具**（它只有 R）。
 
+#### 7.33.1 三方项目模型对比（2026-08-08 本机实测）
+
+| | Rho | Claude | Codex |
+|---|---|---|---|
+| 项目存在哪 | `ProjectSummary` 实体 | `~/.claude.json` 的 `projects`（本机 70 个）+ `~/.claude/projects/<slug>/*.jsonl` | `~/.codex/config.toml` 的 `[projects."<路径>"]` |
+| 项目里存什么 | run 数 / artifact 数 / plot 数 / 未解决问题数 | 最近一次会话的指标 + 逐会话 transcript | **只有 `trust_level`** |
+| 组织单位 | **Run** | **Session** | **Thread**（`thread_goals` / `thread_sections` / `thread_spawn_edges`） |
+| 成本 | ❌ | ✅ `lastCost` + 各类 token | 项目层未见 |
+| 文件改动 | 走 artifact + provenance | ✅ `lastLinesAdded` / `lastLinesRemoved` | 项目层未见 |
+| 溯源 | ✅ `ProvenanceLink` + `provenance_complete` | ❌ | ❌ |
+
+**一句话概括**：**Claude / Codex 的项目装的是「会话」，Rho 的项目装的是「可追溯的运行记录」。** 前者能回答「我上次跟它聊了什么」，后者能回答「这个文件是哪次运行、在什么环境下产生的」。
+
+> **修正一处此前的不准确表述**：本节初稿暗示 Claude app 只提供「信息架构外壳」。**实测不成立**——它每个项目确实记了成本与增删行数。但**所有字段都以 `last` 为前缀，只存最近一次会话，不累计、不成史**；`projects/<slug>/*.jsonl` 是给 resume 用的重放日志，不是可查询的记录。**缺的不是数据，是粒度与累计。**
+
+**选型结论**：**采用 Rho 的模型，补上成本字段。** 依据是扩展代价——按本项目的四项需求（状态/产出/成本/历史），Rho 覆盖 3/4 且缺项是「加一个字段」；Claude 覆盖 2/4 且缺项是「把存储单位从 session 换成 run」，那是重写。
+另有领域契合度的考量：Rho 的 `plot_count` / `unresolved_problem_count` 是**科研工作的概念**，与本项目阶段 ② 的定位同类；Claude / Codex 的模型是为「写代码的对话」设计的。
+
+**但这不是二选一，是两层**——Claude 的 transcript-per-session 在「恢复上次对话」这件事上是对的，本项目同样需要：
+
+| 层 | 模型来源 | 回答什么 |
+|---|---|---|
+| **Run（账本层）** | Rho | 发生过什么——可查询、可累计、可归因 |
+| **Entry（内容层）** | Claude | 聊了什么——支撑 resume 与第 8 节的三视图 |
+
+二者不冲突：一个记事实，一个记内容。实体 21c「Entry / Run 序列存储」即指这两层。
+
 > **同时修正一处此前的误判**：实体清单把 #21b Project 管理的来源写作「Claude app / Codex app / Hermes 的信息架构」，并把 wisp-science 列为参考。**实测 wisp-science 没有 project / workspace 概念**——其 UI 是 `notebook.rs` / `channels_view.rs` 的平铺结构，不是项目制。故「模仿 wisp-science 的项目管理」不成立；Claude app / Codex app 只能提供**信息架构外壳**（项目=文件夹、侧栏），**实质模型来自 Rho**。
 
 ---

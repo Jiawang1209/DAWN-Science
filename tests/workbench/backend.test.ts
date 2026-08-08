@@ -55,7 +55,7 @@ function make() {
   const projects = new ProjectManager({
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials() })
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry })
   return { db, projectStore, runStore, sessions, projects, backend, server: new WorkbenchServer(backend) }
 }
 

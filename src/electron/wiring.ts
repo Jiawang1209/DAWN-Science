@@ -84,7 +84,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   const backend = createWorkbenchBackend({
-    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials,
+    projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry,
   })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),

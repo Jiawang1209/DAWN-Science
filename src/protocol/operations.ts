@@ -166,6 +166,38 @@ export const OPERATIONS = {
     mutating: false,
   },
   /**
+   * 配置里声明了哪些 agent 与 endpoint。
+   *
+   * **界面要列出可选 agent 才能让用户新建会话**——此前没有这个操作，
+   * 界面只能硬编码猜，而那意味着「新建会话」这个主动作根本做不出来。
+   * **不回传任何凭证**，只回传「配置里有没有写死 key」这个布尔。
+   */
+  getProviders: {
+    request: Empty,
+    response: z.object({
+      agents: z.array(
+        z.object({
+          agentId: z.string(),
+          kind: z.enum(["native", "pty"]),
+          endpoint: z.string().optional(),
+          model: z.string().optional(),
+          command: z.string().optional(),
+        }),
+      ),
+      endpoints: z.array(
+        z.object({
+          endpointId: z.string(),
+          baseUrl: z.string(),
+          models: z.array(z.string()),
+          /** 配置文件里是否写死了 key。凭证本身绝不回传 */
+          hasKeyInConfig: z.boolean(),
+        }),
+      ),
+    }),
+    mutating: false,
+  },
+
+  /**
    * 已配置凭证的 endpoint 清单。**只返回 id，绝不返回凭证本身**——
    * 界面只需要知道「配没配」，不需要知道「是什么」。
    */

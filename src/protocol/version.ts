@@ -6,10 +6,11 @@
  * 不静默降级（规格 7.5）。
  */
 /**
- * 1.1（2026-08-08）：新增凭证的三个操作。minor 递增 = 向后兼容的新增，
- * 旧界面不会因此坏掉——它只是用不到新操作。
+ * 1.1（2026-08-08）：新增凭证的三个操作。
+ * 1.2（2026-08-08）：新增 `getProviders`——界面要列出可选 agent 才能建会话，
+ *   此前只能靠硬编码猜。minor 递增 = 向后兼容的新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "1.1"
+export const WORKBENCH_PROTOCOL_VERSION = "1.2"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

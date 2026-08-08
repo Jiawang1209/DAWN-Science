@@ -1,12 +1,12 @@
 /**
- * 会话侧栏、对话视图、终端 dock（Task 2.11 / 2.12）。
+ * 会话侧栏、对话视图、终端 dock。
  *
- * **外壳学 Claude app**：左侧栏列项目与会话，主区是对话。
- * **终端是下钻视图，不是主界面**——放在底部 dock，按需开启
- * （Rho 实测把 consoleTerminal 放在 .dock-content 里）。
+ * **信息架构学 Claude app：打开就是对话，侧栏一直在。**
  *
- * ⚠️ **「Claude app 开启终端的具体交互」未经核实**，此处按「底部 dock、
- * 点标签开启」实现，待作者确认。
+ * 2026-08-08 修正：初版把项目面板做成首页、侧栏默认隐藏，作者反馈
+ * 「和 Claude app 完全不一样」。根因是我把「你想知道的四样（状态/产出/成本/历史）」
+ * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
+ * 打开 app 时要做的事是跟 agent 说话。
  */
 import { useEffect, useRef, useState } from "react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
@@ -16,77 +16,117 @@ import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
 export function SessionSidebar({
   projects,
   sessions,
+  agents,
   activeProjectId,
   activeSessionId,
+  showingPanel,
   onPickProject,
   onPickSession,
   onOpenProject,
+  onNewSession,
+  onShowPanel,
 }: {
   projects: ProjectSummary[]
   sessions: SessionSummary[]
+  /** 可选的 agent（来自 providers.yaml）。空数组时新建按钮禁用并说明原因 */
+  agents: string[]
   activeProjectId: string | undefined
   activeSessionId: string | undefined
+  showingPanel: boolean
   onPickProject: (id: string) => void
-  onPickSession: (id: string | undefined) => void
+  onPickSession: (id: string) => void
   onOpenProject: () => void
+  onNewSession: (agentId: string) => void
+  onShowPanel: () => void
 }) {
+  const [picking, setPicking] = useState(false)
+  const active = projects.find((p) => p.projectId === activeProjectId)
+
   return (
     <aside className="sidebar">
-      <div className="side-head">
-        <span>项目</span>
-        <button type="button" onClick={onOpenProject}>
-          打开文件夹
+      {/* 项目切换器放最上面，一行——它是上下文，不是主角 */}
+      <div className="proj-switch">
+        <select
+          value={activeProjectId ?? ""}
+          onChange={(e) => onPickProject(e.target.value)}
+          aria-label="当前项目"
+        >
+          {projects.length === 0 ? <option value="">（还没有项目）</option> : null}
+          {projects.map((p) => (
+            <option key={p.projectId} value={p.projectId}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        <button type="button" onClick={onOpenProject} title="打开文件夹为新项目">
+          ＋
         </button>
       </div>
 
-      {projects.length === 0 ? (
-        <p className="empty">还没有项目——点「打开文件夹」开始</p>
-      ) : (
-        <ul className="project-list">
-          {projects.map((p) => (
-            <li key={p.projectId}>
+      {/* 新建会话是主动作，放显眼位置——Claude app 的「新建对话」 */}
+      <button
+        type="button"
+        className="new-session"
+        disabled={!active || agents.length === 0}
+        onClick={() => setPicking((v) => !v)}
+      >
+        ＋ 新建会话
+      </button>
+      {!active ? (
+        <p className="hint pad">先打开一个项目文件夹</p>
+      ) : agents.length === 0 ? (
+        <p className="hint pad">providers.yaml 里还没有可用的 agent</p>
+      ) : null}
+
+      {picking && active ? (
+        <ul className="agent-pick">
+          {agents.map((a) => (
+            <li key={a}>
               <button
                 type="button"
-                className={p.projectId === activeProjectId ? "row active" : "row"}
-                onClick={() => onPickProject(p.projectId)}
+                className="row"
+                onClick={() => {
+                  setPicking(false)
+                  onNewSession(a)
+                }}
               >
-                <span className="name">{p.name}</span>
-                <span className="sub">{p.totalRunCount} 次运行</span>
+                {a}
               </button>
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
 
-      {activeProjectId ? (
-        <>
-          <div className="side-head">
-            <span>会话</span>
-          </div>
-          <ul className="session-list">
-            <li>
+      <ul className="session-list">
+        {sessions.length === 0 ? (
+          <li>
+            <p className="hint pad">还没有会话</p>
+          </li>
+        ) : (
+          sessions.map((s) => (
+            <li key={s.sessionId}>
               <button
                 type="button"
-                className={activeSessionId === undefined ? "row active" : "row"}
-                onClick={() => onPickSession(undefined)}
+                className={s.sessionId === activeSessionId && !showingPanel ? "row active" : "row"}
+                onClick={() => onPickSession(s.sessionId)}
               >
-                项目主页
+                <span className="name">{s.agentId}</span>
+                <span className={`state ${s.state}`}>{s.state}</span>
               </button>
             </li>
-            {sessions.map((s) => (
-              <li key={s.sessionId}>
-                <button
-                  type="button"
-                  className={s.sessionId === activeSessionId ? "row active" : "row"}
-                  onClick={() => onPickSession(s.sessionId)}
-                >
-                  <span className="name">{s.agentId}</span>
-                  <span className={`state ${s.state}`}>{s.state}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
+          ))
+        )}
+      </ul>
+
+      {/* 项目面板降为侧栏底部的一个入口，不再是首页 */}
+      {active ? (
+        <button
+          type="button"
+          className={showingPanel ? "row panel-entry active" : "row panel-entry"}
+          onClick={onShowPanel}
+        >
+          项目概览
+        </button>
       ) : null}
     </aside>
   )
@@ -115,8 +155,7 @@ export function ConversationView({
   const bottom = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // 可选调用：jsdom 没有实现 scrollIntoView。滚动失败不该让整个视图崩掉——
-    // 它是锦上添花，不是功能本体
+    // 可选调用：jsdom 没有实现 scrollIntoView。滚动失败不该让整个视图崩掉
     bottom.current?.scrollIntoView?.()
   }, [turns.length])
 
@@ -172,12 +211,21 @@ export function ConversationView({
   )
 }
 
+/** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */
+export function EmptyConversation({ canStart }: { canStart: boolean }) {
+  return (
+    <div className="conversation empty-conv">
+      <p className="empty">
+        {canStart ? "点左上角「＋ 新建会话」开始" : "先打开一个项目文件夹，再新建会话"}
+      </p>
+    </div>
+  )
+}
+
 /* ── 终端 dock ────────────────────────────────────────────────────── */
 
 /**
- * 终端下钻。**默认收起**——终端在本项目里是下钻视图而非主界面
- * （规格阶段 ① 定位修正框）。
- *
+ * 终端下钻。**默认收起**——终端是下钻视图而非主界面（规格阶段 ① 定位修正框）。
  * ①-B 只渲染原始字节流；xterm.js 的接入留到有真实 PTY 事件流之后。
  */
 export function TerminalDock({

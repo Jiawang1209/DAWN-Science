@@ -68,3 +68,18 @@ pre { margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-s
 .cred-form { display:flex; gap:6px; }
 .cred-form input { flex:1; background:#252527; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; }
 .cred-form button { padding:0 12px; border:1px solid var(--line); border-radius:6px; }
+
+/* 侧栏常驻：项目切换器 + 新建会话 + 会话列表 + 项目概览入口 */
+.topbar .spacer { flex:1; }
+.proj-switch { display:flex; gap:6px; padding:8px; border-bottom:1px solid var(--line); }
+.proj-switch select { flex:1; background:#252527; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 6px; font:inherit; }
+.proj-switch button { width:28px; border:1px solid var(--line); border-radius:6px; }
+.new-session { display:block; width:calc(100% - 16px); margin:8px; padding:7px 10px; text-align:left; border:1px solid var(--line); border-radius:6px; color:var(--accent); }
+.new-session:hover:not(:disabled) { background:#2a2a2c; }
+.agent-pick { list-style:none; margin:0 8px 8px; padding:4px; border:1px solid var(--line); border-radius:6px; background:#232325; }
+.hint.pad { padding:0 12px 8px; margin:0; }
+.panel-entry { margin-top:auto; border-top:1px solid var(--line); }
+.sidebar { display:flex; flex-direction:column; }
+.session-list { flex:1; }
+.empty-conv { align-items:center; justify-content:center; }
+.empty-conv .empty { margin:auto; }

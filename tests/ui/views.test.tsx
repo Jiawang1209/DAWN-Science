@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
 import { fireEvent, render, screen } from "@testing-library/react"
-import { ConversationView, SessionSidebar, TerminalDock } from "../../src/ui/views.js"
+import {
+  ConversationView,
+  EmptyConversation,
+  SessionSidebar,
+  TerminalDock,
+} from "../../src/ui/views.js"
 import type { ProjectSummary, SessionSummary } from "../../src/protocol/index.js"
 
 const project = (over: Partial<ProjectSummary> = {}): ProjectSummary => ({
@@ -24,58 +29,105 @@ const session = (over: Partial<SessionSummary> = {}): SessionSummary => ({
   ...over,
 })
 
-describe("会话侧栏", () => {
-  const noop = () => {}
+const noop = () => {}
+const base = {
+  projects: [project()],
+  sessions: [] as SessionSummary[],
+  agents: ["ds-chat", "claude-code"],
+  activeProjectId: "p1" as string | undefined,
+  activeSessionId: undefined as string | undefined,
+  showingPanel: false,
+  onPickProject: noop,
+  onPickSession: noop,
+  onOpenProject: noop,
+  onNewSession: noop as (a: string) => void,
+  onShowPanel: noop,
+}
 
-  it("没有项目时给出下一步动作，而不是空白", () => {
-    render(
-      <SessionSidebar
-        projects={[]} sessions={[]} activeProjectId={undefined} activeSessionId={undefined}
-        onPickProject={noop} onPickSession={noop} onOpenProject={noop}
-      />,
-    )
-    expect(screen.getByText(/还没有项目/)).toBeDefined()
-    expect(screen.getByRole("button", { name: /打开文件夹/ })).toBeDefined()
+describe("侧栏 · 新建会话是主动作", () => {
+  // 这一组是 2026-08-08 修正的核心：初版 UI 里 createSession 一次都没被调用，
+  // 也就是说这个 app 做不了它最该做的那件事。
+  it("有「新建会话」入口", () => {
+    render(<SessionSidebar {...base} />)
+    expect(screen.getByRole("button", { name: /新建会话/ })).toBeDefined()
   })
 
-  it("列出项目及其运行次数", () => {
-    render(
-      <SessionSidebar
-        projects={[project()]} sessions={[]} activeProjectId={undefined} activeSessionId={undefined}
-        onPickProject={noop} onPickSession={noop} onOpenProject={noop}
-      />,
-    )
-    expect(screen.getByText("dawn-science")).toBeDefined()
-    expect(screen.getByText(/3 次运行/)).toBeDefined()
+  it("点开后列出可选 agent，选中即触发创建", () => {
+    const onNewSession = vi.fn()
+    render(<SessionSidebar {...base} onNewSession={onNewSession} />)
+    fireEvent.click(screen.getByRole("button", { name: /新建会话/ }))
+    fireEvent.click(screen.getByRole("button", { name: "claude-code" }))
+    expect(onNewSession).toHaveBeenCalledWith("claude-code")
   })
 
-  it("点项目触发回调", () => {
-    const onPick = vi.fn()
-    render(
-      <SessionSidebar
-        projects={[project()]} sessions={[]} activeProjectId={undefined} activeSessionId={undefined}
-        onPickProject={onPick} onPickSession={noop} onOpenProject={noop}
-      />,
-    )
-    fireEvent.click(screen.getByText("dawn-science"))
-    expect(onPick).toHaveBeenCalledWith("p1")
+  it("没有项目时禁用，并说明先打开文件夹", () => {
+    render(<SessionSidebar {...base} projects={[]} activeProjectId={undefined} />)
+    expect((screen.getByRole("button", { name: /新建会话/ }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/先打开一个项目文件夹/)).toBeDefined()
   })
 
-  it("选中项目后才显示会话区，并有「项目主页」入口", () => {
+  it("配置里没有 agent 时禁用，并说明原因", () => {
+    render(<SessionSidebar {...base} agents={[]} />)
+    expect((screen.getByRole("button", { name: /新建会话/ }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/还没有可用的 agent/)).toBeDefined()
+  })
+})
+
+describe("侧栏 · 项目与会话", () => {
+  it("项目切换器列出全部项目", () => {
+    render(<SessionSidebar {...base} projects={[project(), project({ projectId: "p2", name: "other" })]} />)
+    const select = screen.getByLabelText("当前项目") as HTMLSelectElement
+    expect([...select.options].map((o) => o.textContent)).toEqual(["dawn-science", "other"])
+  })
+
+  it("切换项目触发回调", () => {
+    const onPickProject = vi.fn()
     render(
       <SessionSidebar
-        projects={[project()]} sessions={[session()]} activeProjectId="p1" activeSessionId={undefined}
-        onPickProject={noop} onPickSession={noop} onOpenProject={noop}
+        {...base}
+        projects={[project(), project({ projectId: "p2", name: "other" })]}
+        onPickProject={onPickProject}
       />,
     )
-    expect(screen.getByText("项目主页")).toBeDefined()
-    expect(screen.getByText("ds-chat")).toBeDefined()
+    fireEvent.change(screen.getByLabelText("当前项目"), { target: { value: "p2" } })
+    expect(onPickProject).toHaveBeenCalledWith("p2")
+  })
+
+  it("列出会话，点击触发回调", () => {
+    const onPickSession = vi.fn()
+    render(<SessionSidebar {...base} sessions={[session()]} onPickSession={onPickSession} />)
+    fireEvent.click(screen.getByText("ds-chat"))
+    expect(onPickSession).toHaveBeenCalledWith("s1")
+  })
+
+  it("没有会话时如实说明", () => {
+    render(<SessionSidebar {...base} />)
+    expect(screen.getByText(/还没有会话/)).toBeDefined()
+  })
+
+  it("项目概览是侧栏底部入口，不是首页", () => {
+    const onShowPanel = vi.fn()
+    render(<SessionSidebar {...base} onShowPanel={onShowPanel} />)
+    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
+    expect(onShowPanel).toHaveBeenCalled()
+  })
+})
+
+describe("空对话态", () => {
+  it("有项目时告诉你去点新建会话", () => {
+    render(<EmptyConversation canStart />)
+    expect(screen.getByText(/新建会话/)).toBeDefined()
+  })
+
+  it("没有项目时告诉你先打开文件夹 —— 给下一步动作，不留白", () => {
+    render(<EmptyConversation canStart={false} />)
+    expect(screen.getByText(/先打开一个项目文件夹/)).toBeDefined()
   })
 })
 
 describe("对话视图", () => {
   it("空对话如实说没有", () => {
-    render(<ConversationView session={session()} turns={[]} onSend={() => {}} />)
+    render(<ConversationView session={session()} turns={[]} onSend={noop} />)
     expect(screen.getByText(/还没有对话/)).toBeDefined()
   })
 
@@ -87,7 +139,7 @@ describe("对话视图", () => {
           { id: "1", who: "user", text: "你好" },
           { id: "2", who: "agent", text: "在" },
         ]}
-        onSend={() => {}}
+        onSend={noop}
       />,
     )
     expect(screen.getByText("你")).toBeDefined()
@@ -114,31 +166,29 @@ describe("对话视图", () => {
   })
 
   it("会话已结束时输入被禁用，并说明原因", () => {
-    render(
-      <ConversationView session={session({ state: "exited" })} turns={[]} onSend={() => {}} disabled />,
-    )
+    render(<ConversationView session={session({ state: "exited" })} turns={[]} onSend={noop} disabled />)
     expect((screen.getByPlaceholderText(/会话已结束/) as HTMLTextAreaElement).disabled).toBe(true)
   })
 
   it("标出会话是外部 CLI 还是内置", () => {
-    render(<ConversationView session={session({ kind: "pty" })} turns={[]} onSend={() => {}} />)
+    render(<ConversationView session={session({ kind: "pty" })} turns={[]} onSend={noop} />)
     expect(screen.getByText("外部 CLI")).toBeDefined()
   })
 })
 
 describe("终端 dock", () => {
   it("默认收起 —— 终端是下钻视图，不是主界面", () => {
-    render(<TerminalDock open={false} onToggle={() => {}} output="hi" available />)
+    render(<TerminalDock open={false} onToggle={noop} output="hi" available />)
     expect(screen.queryByText("hi")).toBeNull()
   })
 
   it("展开后显示输出", () => {
-    render(<TerminalDock open onToggle={() => {}} output="hello from pty" available />)
+    render(<TerminalDock open onToggle={noop} output="hello from pty" available />)
     expect(screen.getByText(/hello from pty/)).toBeDefined()
   })
 
   it("native 会话没有终端，按钮禁用并说明原因", () => {
-    render(<TerminalDock open={false} onToggle={() => {}} output="" available={false} />)
+    render(<TerminalDock open={false} onToggle={noop} output="" available={false} />)
     expect((screen.getByRole("button", { name: /终端/ }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText(/仅外部 CLI 会话有终端/)).toBeDefined()
   })
@@ -151,7 +201,7 @@ describe("终端 dock", () => {
   })
 
   it("展开但无输出时如实说暂无，而不是留白", () => {
-    render(<TerminalDock open onToggle={() => {}} output="" available />)
+    render(<TerminalDock open onToggle={noop} output="" available />)
     expect(screen.getByText(/暂无输出/)).toBeDefined()
   })
 })

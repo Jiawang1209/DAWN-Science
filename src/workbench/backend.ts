@@ -8,6 +8,7 @@
  * **业务性失败一律抛 `fault(code, message)`**，而不是让它变成 `internal_error`——
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
+import type { ProviderRegistry } from "../config/schema.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
@@ -30,10 +31,12 @@ export interface WorkbenchBackendOptions {
   runs: RunStore
   sessions: SessionManager
   credentials: CredentialsPort
+  /** 配置里的 provider 注册表，供界面列出可选 agent */
+  registry: ProviderRegistry
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -46,6 +49,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
   return {
     listProjects: async () => projects.list(),
+
+    /** **不回传任何凭证**，只回传「配置里有没有写死 key」这个布尔 */
+    getProviders: async () => ({
+      agents: Object.entries(registry.agents).map(([agentId, def]) => ({
+        agentId,
+        kind: def.kind,
+        ...(def.kind === "native" ? { endpoint: def.endpoint, model: def.model } : { command: def.command }),
+      })),
+      endpoints: Object.entries(registry.endpoints).map(([endpointId, ep]) => ({
+        endpointId,
+        baseUrl: ep.baseUrl,
+        models: ep.models,
+        hasKeyInConfig: ep.apiKey !== undefined,
+      })),
+    }),
 
     /** **只回报配没配，绝不回报凭证本身**——界面不需要知道值 */
     listCredentials: async () => ({

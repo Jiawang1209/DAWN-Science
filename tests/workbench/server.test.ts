@@ -16,6 +16,7 @@ const project = {
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
     listProjects: async () => [project],
+    getProviders: async () => ({ agents: [], endpoints: [] }),
     listCredentials: async () => ({ configured: [], encrypted: false }),
     setCredential: async () => ({}),
     deleteCredential: async () => ({}),

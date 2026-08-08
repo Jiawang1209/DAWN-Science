@@ -1,21 +1,39 @@
 /**
- * 外壳（Task 2.11 / 2.12）。
+ * 外壳。
  *
- * **Rho 的 grid 骨架**：46px 顶栏 / 主体 / 24px 状态栏。
- * **默认 agent-first 单栏**——Rho 源码注释写的是
- * *"task interaction first, contextual work on demand"*，与本项目
- * 「一次一个项目、注意力串行」的结论一致。侧栏可切出来。
+ * **信息架构学 Claude app：打开就是对话，侧栏常驻。**
  *
- * 信息层级学 Claude app：项目 → 会话 → 对话。
- * **点项目名进「项目主页」（四块面板），点会话才进对话视图**——
- * 那四样是「关于项目」的，不是「关于本次对话」的。
+ * 2026-08-08 修正（作者反馈「和 Claude app 完全不一样」）。初版有三处偏差，
+ * 第一处是坏的：
+ *   1. **UI 里根本没有「新建会话」入口**——`createSession` 一次都没被调用，
+ *      也就是说这个 app 做不了它最该做的那件事
+ *   2. 侧栏默认隐藏——我把 Rho 的 agent-first 单栏照搬过来，
+ *      **却没察觉它与「模仿 Claude app」直接冲突**
+ *   3. 打开后看到的是一页统计面板——我把作者说想知道的四样
+ *      （状态/产出/成本/历史）做成了首页，但那是**偶尔查**的东西，
+ *      不是**打开时要看**的东西
+ *
+ * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
 import { useCallback, useEffect, useState } from "react"
 import type { ProjectSummary, RunSummary, SessionSummary } from "../protocol/index.js"
 import { ChangesPanel, CostPanel, RunsPanel, StatusPanel } from "./panels.js"
-import { ConversationView, SessionSidebar, TerminalDock, type Turn } from "./views.js"
+import {
+  ConversationView,
+  EmptyConversation,
+  SessionSidebar,
+  TerminalDock,
+  type Turn,
+} from "./views.js"
 import { SettingsPanel, type CredentialState } from "./Settings.js"
 import { WorkbenchClientError, createClient, type WorkbenchClient } from "./client.js"
+
+interface Providers {
+  agents: { agentId: string; kind: "native" | "pty" }[]
+  endpoints: { endpointId: string }[]
+}
+
+type View = "conversation" | "panel" | "settings"
 
 export function App({ client = createClient() }: { client?: WorkbenchClient }) {
   const [ready, setReady] = useState(false)
@@ -25,21 +43,20 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
   const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   const [runs, setRuns] = useState<RunSummary[]>([])
+  const [providers, setProviders] = useState<Providers>({ agents: [], endpoints: [] })
+  const [creds, setCreds] = useState<CredentialState>({ configured: [], encrypted: false })
+
   const [projectId, setProjectId] = useState<string | undefined>()
   const [sessionId, setSessionId] = useState<string | undefined>()
+  const [view, setView] = useState<View>("conversation")
 
-  const [creds, setCreds] = useState<CredentialState>({ configured: [], encrypted: false })
-  const [endpoints, setEndpoints] = useState<string[]>([])
-  const [showSettings, setShowSettings] = useState(false)
-
-  const [sidebar, setSidebar] = useState(false) // 默认 agent-first：侧栏收起
   const [dockOpen, setDockOpen] = useState(false)
   const [turns, setTurns] = useState<Turn[]>([])
 
   const fail = useCallback((e: unknown) => {
     const msg = e instanceof WorkbenchClientError ? e.message : String(e)
     // 失败必须出声。宁可多一条提示，也不要让界面默默停在旧数据上（规格 7.5）
-    setNotes((n) => [...n.slice(-4), msg])
+    setNotes((n) => [...n.slice(-3), msg])
   }, [])
 
   useEffect(() => {
@@ -49,31 +66,31 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
       .catch((e: unknown) => setFatal(e instanceof Error ? e.message : String(e)))
   }, [client])
 
-  const refreshProjects = useCallback(() => {
-    client.get<ProjectSummary[]>("listProjects").then(setProjects).catch(fail)
-  }, [client, fail])
-
-  const refreshCreds = useCallback(() => {
-    client.get<CredentialState>("listCredentials").then(setCreds).catch(fail)
-  }, [client, fail])
+  const refreshProjects = useCallback(
+    () => client.get<ProjectSummary[]>("listProjects").then(setProjects).catch(fail),
+    [client, fail],
+  )
+  const refreshCreds = useCallback(
+    () => client.get<CredentialState>("listCredentials").then(setCreds).catch(fail),
+    [client, fail],
+  )
+  const refreshSessions = useCallback(
+    (pid: string) => client.get<SessionSummary[]>("listSessions", { projectId: pid }).then(setSessions).catch(fail),
+    [client, fail],
+  )
 
   useEffect(() => {
     if (!ready) return
-    refreshProjects()
-    refreshCreds()
-    // endpoint 清单来自 capabilities 之外的一次查询；①-B 先从 listCredentials
-    // 的已配置项 + 一个静态兜底推导，等 providers 暴露到协议后再改
-    client
-      .get<{ configured: string[] }>("listCredentials")
-      .then((c) => setEndpoints((e) => [...new Set([...e, ...c.configured, "deepseek"])]))
-      .catch(fail)
+    void refreshProjects()
+    void refreshCreds()
+    client.get<Providers>("getProviders").then(setProviders).catch(fail)
   }, [ready, refreshProjects, refreshCreds, client, fail])
 
   useEffect(() => {
     if (!projectId) return
-    client.get<SessionSummary[]>("listSessions", { projectId }).then(setSessions).catch(fail)
+    void refreshSessions(projectId)
     client.get<RunSummary[]>("listRuns", { projectId }).then(setRuns).catch(fail)
-  }, [client, projectId, fail])
+  }, [client, projectId, refreshSessions, fail])
 
   if (fatal) {
     return (
@@ -82,12 +99,12 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
           <span className="brand">DAWN Science</span>
         </div>
         <div className="panels">
-          <div className="panel">
+          <section className="panel">
             <h3 className="panel-title">无法启动</h3>
             <div className="panel-body">
               <p className="caveat">{fatal}</p>
             </div>
-          </div>
+          </section>
         </div>
         <div className="statusbar" />
       </div>
@@ -95,64 +112,90 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
   }
 
   const session = sessions.find((s) => s.sessionId === sessionId)
-  const sessionRuns = sessionId ? runs.filter((r) => r.sessionId === sessionId) : runs
-  const latest = sessionRuns[0]
+  const latestRun = runs[0]
 
   return (
-    <div className={sidebar ? "app-shell" : "app-shell agent-first"}>
+    <div className="app-shell">
       <div className="topbar">
         <span className="brand">DAWN Science</span>
-        <button type="button" onClick={() => setSidebar((v) => !v)}>
-          {sidebar ? "隐藏侧栏" : "显示侧栏"}
+        <span className="spacer" />
+        <button type="button" onClick={() => setView(view === "settings" ? "conversation" : "settings")}>
+          {view === "settings" ? "返回" : "设置"}
         </button>
-        <button type="button" onClick={() => setShowSettings((v) => !v)}>
-          {showSettings ? "返回" : "设置"}
-        </button>
-        <span className="hint">{projects.find((p) => p.projectId === projectId)?.name ?? "未选择项目"}</span>
       </div>
 
       <div className="body">
         <SessionSidebar
           projects={projects}
           sessions={sessions}
+          agents={providers.agents.map((a) => a.agentId)}
           activeProjectId={projectId}
           activeSessionId={sessionId}
+          showingPanel={view === "panel"}
           onPickProject={(id) => {
             setProjectId(id)
             setSessionId(undefined)
+            setTurns([])
+            setView("conversation")
           }}
-          onPickSession={setSessionId}
+          onPickSession={(id) => {
+            setSessionId(id)
+            setTurns([])
+            setView("conversation")
+          }}
+          onShowPanel={() => setView("panel")}
           onOpenProject={() => {
-            // ①-B 暂用 prompt 取路径；原生目录对话框留到有真实使用反馈后再做
+            // ①-B 暂用 prompt 取路径。**这也是命令行思路的残留**，
+            // 原生目录对话框已记为待办——但它不阻塞「能不能聊起来」
             const ws = window.prompt("输入项目文件夹的绝对路径")
             if (!ws) return
             client
               .get<ProjectSummary>("openProject", { workspace: ws })
               .then((p) => {
-                refreshProjects()
+                void refreshProjects()
                 setProjectId(p.projectId)
                 setSessionId(undefined)
+                setView("conversation")
+              })
+              .catch(fail)
+          }}
+          onNewSession={(agentId) => {
+            if (!projectId) return
+            client
+              .get<SessionSummary>("createSession", { projectId, agentId })
+              .then((s) => {
+                void refreshSessions(projectId)
+                // 建完直接进对话——新建会话的目的就是开始聊，不该还要再点一下
+                setSessionId(s.sessionId)
+                setTurns([])
+                setView("conversation")
+                // 取写权，否则第一句就会被租约挡下
+                return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
               })
               .catch(fail)
           }}
         />
 
         <main className="main">
-          {showSettings ? (
+          {view === "settings" ? (
             <div className="panels">
               <SettingsPanel
-                endpoints={endpoints}
+                endpoints={providers.endpoints.map((e) => e.endpointId)}
                 credentials={creds}
-                onSet={(id, secret) => {
-                  client
-                    .get("setCredential", { endpointId: id, secret })
-                    .then(refreshCreds)
-                    .catch(fail)
-                }}
-                onDelete={(id) => {
+                onSet={(id, secret) =>
+                  client.get("setCredential", { endpointId: id, secret }).then(refreshCreds).catch(fail)
+                }
+                onDelete={(id) =>
                   client.get("deleteCredential", { endpointId: id }).then(refreshCreds).catch(fail)
-                }}
+                }
               />
+            </div>
+          ) : view === "panel" ? (
+            <div className="panels">
+              <StatusPanel sessions={sessions} />
+              <ChangesPanel facts={undefined} />
+              <CostPanel cost={latestRun?.cost} />
+              <RunsPanel runs={runs} />
             </div>
           ) : session ? (
             <>
@@ -175,28 +218,16 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
               />
             </>
           ) : (
-            <div className="panels">
-              {creds.configured.length === 0 ? (
-                <section className="panel">
-                  <h3 className="panel-title">先配置凭证</h3>
-                  <div className="panel-body">
-                    <p className="caveat">
-                      还没有配置任何 API key —— native agent 无法建会话。点顶栏「设置」填写。
-                    </p>
-                  </div>
-                </section>
-              ) : null}
-              <StatusPanel sessions={sessions} />
-              <ChangesPanel facts={undefined} />
-              <CostPanel cost={latest?.cost} />
-              <RunsPanel runs={runs} />
-            </div>
+            <EmptyConversation canStart={Boolean(projectId)} />
           )}
         </main>
       </div>
 
       <div className="statusbar">
         <span>{ready ? "已连接" : "连接中…"}</span>
+        {creds.configured.length === 0 && providers.endpoints.length > 0 ? (
+          <span className="caveat">未配置任何 API key——native agent 无法建会话，点「设置」填写</span>
+        ) : null}
         {notes.map((n, i) => (
           <span key={i} className="hint">
             {n}

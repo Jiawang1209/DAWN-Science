@@ -43,10 +43,22 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A 存储层：SQLite 会话表、迁移与启动对账（Task 1.3）
+### 2026-08-08 — 阶段①-A Runtime 契约：AgentRuntime 接口与 FakeRuntime（Task 1.4）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 确立 `runtime/*` 与 `session/*` 的责任边界，并让后续的业务逻辑（租约、生命周期、背压）能在**不依赖真实进程**的前提下做 TDD。Task 1.5–1.8 全部基于 FakeRuntime 写测试，真实现留到 1.9–1.10。
+- **What**:
+  - 新增 `src/runtime/types.ts`：`AgentRuntime` 接口（`start` / `attach` / `write` / `resize?` / `stop`）、`SessionSpec`、`SessionHandle`、三种 `AgentEvent`。**责任边界写进文件头**——runtime 只管「怎么跟一个 agent 进程说话」，不知道生命周期、租约与持久化。
+  - 新增 `src/runtime/fake.ts`：`FakeRuntime`，`write` 原样 echo，`stop` 幂等。
+  - **修正计划示例代码里的两处真实缺陷**：① `emit` 遍历 sink 集合时未复制——若某个 sink 在回调里退订，会在遍历中修改集合；② `attach` 返回的退订闭包捕获的是 `set!`，若集合被重建则会误删新集合的成员。两处均已改为先固定引用/先复制。
+- **Impact**: Task 1.5 起可用 FakeRuntime 驱动全部业务逻辑测试，无需起进程。三种 Runtime 实现（native / pty / fake）从此有统一契约。
+- **Verification**: 严格 TDD，先确认 FAIL 再实现。10 个测试，高于计划预估的 5 个——增补了退订函数生效且不影响其它观察者、stop 后 write 抛错、stop 幂等不重复发事件、不同会话事件互不串台、并存会话 pid 不同。全仓库 37 passed，typecheck 零错误。
+
+### 2026-08-08 — 阶段①-A 存储层：SQLite 会话表、迁移与启动对账（Task 1.3）
+
+- **Type**: feat
+- **Commit**: `06991a1`
 - **Motivation**: 会话生命周期管理器（Task 1.6）的契约是「先落库再改内存」，所以存储层必须先于它存在，且写入必须同步可靠。另有一个必须在这一层解决的问题：进程重启后，上次留下的「存活中」记录已经不可能是真的。
 - **What**:
   - 新增 `src/store/schema.ts`：`sessions` 表 + `schema_meta` 版本表，WAL 模式，`state` 上加 **CHECK 约束**。

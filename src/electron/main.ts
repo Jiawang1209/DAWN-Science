@@ -14,6 +14,11 @@ import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 const CONFIG = process.env.DAWN_CONFIG ?? join(process.cwd(), "providers.yaml")
 const DB = process.env.DAWN_DB ?? join(app.getPath("userData"), "dawn.db")
 const DEV_URL = process.env.DAWN_DEV_SERVER
+/**
+ * mock 模式：pi 的 provider 被 models.json 重定向到本地假推理服务器。
+ * 由 `scripts/dev-mock.mjs` 设置。**整条真链路照跑，只有模型是假的。**
+ */
+const MODELS_JSON = process.env.DAWN_MODELS_JSON
 
 let workbench: Workbench | undefined
 
@@ -96,6 +101,7 @@ app.whenReady().then(() => {
         file: defaultCredentialFile(app.getPath("userData")),
         safeStorage,
       }),
+      ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })
     if (workbench.reconciled > 0) {

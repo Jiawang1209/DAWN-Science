@@ -41,6 +41,20 @@ export interface CreateWorkbenchOptions {
   credentials: CredentialsPort
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
+  /**
+   * pi 的 `models.json` 路径。给出时可覆盖内置 provider 的 baseUrl 与凭证。
+   *
+   * **这是 mock 模式的入口**：`scripts/dev-mock.mjs` 写一份指向本地假推理
+   * 服务器的 models.json，于是整条真链路照跑、只有模型是假的。
+   */
+  modelsPath?: string
+  /**
+   * 跳过「建会话前检查凭证」这道自有守卫。
+   *
+   * **只在 mock 模式下为真**：那时凭证由 models.json 提供，我们的守卫
+   * （它的存在理由是「不要带着空 key 去发请求」）就成了多余的阻拦。
+   */
+  skipCredentialGate?: boolean
 }
 
 export interface Workbench {
@@ -72,7 +86,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     store: sessionStore,
     registry,
     runtimes: {
-      native: new NativeRuntime({ credentials: piCredentials }),
+      native: new NativeRuntime({
+        credentials: piCredentials,
+        ...(opts.modelsPath ? { modelsPath: opts.modelsPath } : {}),
+      }),
       pty: new PtyRuntime({ command: "sh" }),
     },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime
@@ -85,7 +102,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       })
     },
     // 只问有无，取值由 pi 内部经 piCredentials 完成
-    hasCredential: (providerId) => opts.credentials.configured().includes(providerId),
+    ...(opts.skipCredentialGate
+      ? {}
+      : { hasCredential: (providerId: string) => opts.credentials.configured().includes(providerId) }),
     workspaceRoot: process.cwd(),
   })
 

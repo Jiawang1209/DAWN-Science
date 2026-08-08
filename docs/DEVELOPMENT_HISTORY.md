@@ -43,10 +43,26 @@
 
 ## 变更日志
 
+### 2026-08-08 — mock 推理服务器：我终于能自己验证界面了
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 作者定调「既然 Hermes 的这一套有用，那我们就学着做」。按方法论文档的顺序，**先补机制**——而机制里最要紧的一件是：**我改完界面之后没法自己看它对不对**。此前每一版都得作者打开、由作者告诉我哪里不对，三次全是这样。
+- **What**:
+  - `scripts/mock-inference-server.mjs`：本地 OpenAI 兼容假服务器，固定回复、切成多段发（**一次性发完等于没测流式**）、支持让模型「调用工具」以便确定性地触发工具路径、请求原样留存供断言。**同一模块将同时供 `dev:mock` 与 e2e 使用**——Hermes 明确写下的理由：两套 mock 会各自漂移，那时「本地是好的」就不再意味着什么。
+  - `scripts/dev-mock.mjs` + `npm run dev:mock`：写出隔离的 providers.yaml / models.json / 数据库 / 演示工作区，启动**已构建的真实 app**。不碰真实凭证与真实数据库。
+  - 接线：`DAWN_MODELS_JSON` → `NativeRuntime.modelsPath`；mock 模式下跳过我们自有的凭证守卫（那道守卫的存在理由是「不要带着空 key 发请求」，而 models.json 已提供 key，此时它只是多余的阻拦）。
+- **关键设计（与我上一轮的设想相反）**：我原本打算做「UI 的 mock bridge，把界面从后端摘下来单独看」。**那是错的**——摘掉后端看到的是界面的幻觉，接线错了照样看不出来，**而那正是前三次翻车的根因**。Hermes 的做法是反过来的：**整条真链路照跑，只把最外面那个不确定的东西（模型）换成确定的**。协议、IPC、事件流、pi 的 agent loop、渲染全都是真的。
+  怎么让 pi 连过来：pi 内置 provider 的 baseUrl 写死在目录里，覆盖入口是 `models.json` 的 `providers.<id>.baseUrl`，经 `ModelRuntime.create({ modelsPath })` 生效（schema 见 `«REF»/pi-main/.../model-config.ts` 的 `ProviderConfigSchema`，**读准了才写，没有猜格式**）。
+- **Verification**（**本条是这次变更的意义所在**）：用探针在**真实 Electron 窗口**里驱动完整主路径，结果：
+  `openProject:ok → createSession:ok → acquireLease:ok → writeToSession:ok → subscribeSession:ok`，
+  transcript 里同时有用户发言与 agent 的固定回复（两条均 `final`），`revision: 5`，假服务器收到 1 次请求。
+  **这是我第一次自己验证 GUI 主路径，没有让作者代看。** 423 tests passed，typecheck 零错误。
+
 ### 2026-08-08 — 修掉渲染进程无限循环，加错误边界；读 Hermes 桌面源码得出方法论（作者指路）
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `f987834`
 - **Motivation**: 作者第四次打开：「桌面样式已经出来了，但我不知道是否有功能。」我用探针驱动真实窗口跑主路径，抓到**渲染进程 18 秒吃满 4 GB**（`<--- Near heap limit --->`）。
 - **根因**：`export function App({ client = createClient() })`——**默认参数每次渲染都求值**，于是每渲染一次就造一个新 client 身份，每个依赖 `client` 的 effect 都跟着重跑：重新订阅（IPC 监听器越积越多）+ 重新取数（setState）→ 再渲染 → **无限循环**。界面画得出来，里面在空转。
   **419 个测试一个都没拦住，因为它们全都显式传了 client**——生产环境唯一走的那条默认路径从来没被跑过。**与「叶子组件测试证明不了有没有人给它数据」同源：被测的形态和真实运行的形态不是同一个。**

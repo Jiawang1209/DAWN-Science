@@ -43,10 +43,25 @@
 
 ## 变更日志
 
+### 2026-08-08 — 阶段①-A 存储层：SQLite 会话表、迁移与启动对账（Task 1.3）
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 会话生命周期管理器（Task 1.6）的契约是「先落库再改内存」，所以存储层必须先于它存在，且写入必须同步可靠。另有一个必须在这一层解决的问题：进程重启后，上次留下的「存活中」记录已经不可能是真的。
+- **What**:
+  - 新增 `src/store/schema.ts`：`sessions` 表 + `schema_meta` 版本表，WAL 模式，`state` 上加 **CHECK 约束**。
+  - 新增 `src/store/sessions.ts`：`SessionStore` 的 `insert` / `get` / `list` / `updateState` / `reconcileOnStartup`。
+  - **`reconcileOnStartup()` 是这一层的关键**：启动时把残留的 `starting`/`alive` 显式转为 `exited`，并返回修正条数。依据规格 7.5「无静默回退」——宁可显式标记「它已经死了」，也不要让 UI 拿着一个假的存活状态去连一个不存在的进程。
+  - **`updateState` 用 COALESCE 而非覆盖式写入**：状态推进往往分多次发生（先拿到 pid，后拿到 exitCode），覆盖式写入会把上一次记下的 pid 抹成 null。已为此单独写了回归测试。
+  - **`toRecord` 对未设置的字段整个省略，而不是留 `null`/`undefined`**，使 `"pid" in rec` 能真实反映「有没有这个信息」。
+  - **CHECK 约束是有意的第二道防线**：应用层的 TypeScript 联合类型只在编译期有效，挡不住迁移脚本或将来其它写入方直接写库。
+- **Impact**: Task 1.4 起可依赖 `SessionRecord` 与 `SessionState`。存储选型的优势在此兑现——规格 7.32 记录过 pi-crew 为 JSONL 付出的六项工程代价（跨进程锁、手写轮转、流式读、增量读器、序列号缓存、用 worker 线程绕开疑似 event-loop 竞态），本项目用 SQLite WAL 后这六项全部不存在。
+- **Verification**: 严格 TDD，先确认 FAIL 再实现。12 个测试，高于计划预估的 5 个——增补了 schema 版本记录、`migrate` 幂等性、CHECK 约束确实拒绝非法 state、可选字段不出现在记录里、COALESCE 不覆盖既有字段、对账区分三种 state 且不抹掉已有退出码、无残留时返回 0。全仓库 27 passed，typecheck 零错误。
+
 ### 2026-08-08 — 阶段①-A 配置层：Provider 注册表 schema 与加载器（Task 1.1–1.2）
 
 - **Type**: feat
-- **Commit**: `1a2234b` · 待回填
+- **Commit**: `1a2234b` · `1401e51`
 - **Motivation**: 阶段①-A 的第一块。会话管理、Runtime、CLI 都要先知道「有哪些 agent、连哪个服务、用什么模型」。这一层若不把错误挡在加载期，就会变成运行期起 agent 时才崩。
 - **What**:
   - 新增 `src/config/schema.ts`：**两段式结构**——`endpoints`（连接信息）与 `agents`（agent 定义）分离，多个 agent 可共用一份凭证，换 key 只改一处。`native`（进程内跑 pi）与 `pty`（起外部 CLI）用 zod 的 `discriminatedUnion` 区分，前者引用 endpoint，后者自带 command。

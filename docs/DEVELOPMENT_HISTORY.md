@@ -43,10 +43,28 @@
 
 ## 变更日志
 
+### 2026-08-09 — 状态按权威归位：14 个 useState 搬进 src/ui/state/
+
+- **Type**: refactor
+- **Commit**: 待回填
+- **Motivation**: Task 3.3。Hermes `AGENTS.md`：*"The first question for any piece of state is **who is allowed to be right about it**, not where it is convenient to store it."* 此前 14 个 `useState` 全堆在 `App.tsx` 里，这个问题从来没被问过——后果是具体的：`client` 身份每渲染一次变一次，**渲染进程 18 秒吃满 4 GB**。那不是一次 React 使用失误，是缺一条纪律。
+- **What**: 新增 `src/ui/state/`，按权威分家
+  - `connection.ts` 主进程权威 · `catalog.ts` 后端权威（项目/会话/Run/provider/凭证）· `transcript.ts` 后端权威（对话与终端字节）· `view.ts` **渲染进程自有**（看哪个面、哪个会话、dock 开没开）
+  - 两个横切工具：`identity.ts`（规则 6：无变化时保持引用同一）· `guard.ts`（规则 3：提防过去）
+  - `sync.ts`：把「该调哪个协议操作、结果塞进哪个 atom、失败怎么办」从组件里搬走。Hermes：*"**Colocated action modules over god hooks.** A hook owns one narrow job."*
+  - `App.tsx` **412 → 365 行**，7 个 effect 只剩「什么时候调」
+- **三个开发中发现的真问题**（都不是计划里写的）:
+  1. **世代号归零会让新旧请求撞车。** 初版 `resetGeneration()` 归零，于是旧请求持有的 `mine = 1` 与归零后新请求的 `mine = 1` 相等，**旧请求被误判为新鲜**——正好是这套机制要防的那件事。改成只增不减的 `invalidate()`，并补测试锁住。
+  2. **`src/ui/store/` 与 `src/store/`（SQLite 持久层）重名**，被既有的架构守卫测试当场抓住。守卫是对的，改名为 `src/ui/state/`。
+  3. **模块级 atom 在测试之间是全局的。** 一个测试留下的 `$activeProjectId` 指向下一个测试里并不存在的项目，「新建会话」按钮于是一直禁用——**表现为「点了没反应」，而不是一条清楚的错误**。加 `resetAllState()` 并挂进 `tests/ui/setup.ts` 的 `beforeEach`。Hermes 把同一件事写成纪律：*"Query invalidation alone cannot evict live session stores — **wipe them**."*
+- **顺带消掉的两处重复**: `resync` 用 `watching.current` ref、Run 详情用 `let stale = false` 闭包——**两套写法就是两处各自漂移**，现在都走 `guard()`。`watching` ref 存在的唯一理由是绕开闭包捕获的旧值，atom 同步可读，不再需要。
+- **Impact**: 无行为变更。数组类 props 收窄为 `readonly`（组件本就不改它们）；3 处 `findByTitle` 之前已改为 `findByRole`。新增依赖 `nanostores` + `@nanostores/react`（计划 §2 已声明分层）。
+- **Verification**: 状态层 16 条新测试先跑出 FAIL 再转绿；全量 **460 tests passed**（35 文件，+16）；typecheck 零错误；build 干净；**真 Electron 启动冒烟零错误**（这是个大重构，光靠测试不够）。
+
 ### 2026-08-09 — 设计契约与 primitive 地基：令牌化、扁平化、并用测试强制
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `03e9626`
 - **Motivation**: Task 3.2，①-B′ 的地基。作者选定**照抄 Hermes 的视觉语言**（蓝主色、扁平、无框浮层）。先立契约再改界面——否则后面七个 Task 各自发明一套。
 - **What**:
   - `src/ui/tokens.css`：三层令牌。**架构学自 Hermes，值是自己写的。** 核心想法是那套**派生关系**——描边、填充、hover 态都不是灰色，而是**主色以极低浓度混进底色**（`--mix-stroke-1…4` = 24/16/10/6%）。灰描边配蓝主调会显脏，因为色相不同源；写成 color-mix 之后整个界面色相统一，且换主色时一切自动跟着变。stroke 分四档、fill 分五档不是二十个独立颜色，是**同一个公式的二十个浓度**。

@@ -29,8 +29,8 @@ export function SessionSidebar({
   onNewSession,
   onShowPanel,
 }: {
-  projects: ProjectSummary[]
-  sessions: SessionSummary[]
+  projects: readonly ProjectSummary[]
+  sessions: readonly SessionSummary[]
   /** 可选的 agent（来自 providers.yaml）。空数组时新建按钮禁用并说明原因 */
   agents: string[]
   activeProjectId: string | undefined
@@ -141,7 +141,7 @@ export function ConversationView({
 }: {
   session: SessionSummary
   /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
-  items: TranscriptItem[]
+  items: readonly TranscriptItem[]
   onSend: (text: string) => void
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
@@ -368,7 +368,7 @@ export function TerminalDock({
   open: boolean
   onToggle: () => void
   /** 累积的字节片段。展开时交给 xterm */
-  chunks: string[]
+  chunks: readonly string[]
   available: boolean
   onInput?: (data: string) => void
 }) {

@@ -15,18 +15,9 @@
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import type {
-  Cost,
-  FileChangeFacts,
-  ProjectSummary,
-  ProvenanceLink,
-  RunSummary,
-  SessionSnapshot,
-  SessionSummary,
-  SessionUpdate,
-  TranscriptItem,
-} from "../protocol/index.js"
+import { useEffect, useMemo } from "react"
+import { useStore } from "@nanostores/react"
+import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import { ChangesPanel, CostPanel, ProvenanceBadge, RunsPanel, StatusPanel } from "./panels.js"
 import {
   ConversationView,
@@ -34,19 +25,45 @@ import {
   SessionSidebar,
   TerminalDock,
 } from "./views.js"
-import { SettingsPanel, type CredentialState } from "./Settings.js"
+import { SettingsPanel } from "./Settings.js"
 import { Button } from "./primitives.js"
-import { WorkbenchClientError, createClient, type WorkbenchClient } from "./client.js"
-
-/** `getRun` 的返回：Run 摘要 + 可选的产出事实与成本 */
-type RunDetail = RunSummary & { fileChanges?: FileChangeFacts; cost?: Cost }
-
-interface Providers {
-  agents: { agentId: string; kind: "native" | "pty" }[]
-  providers: { providerId: string; models: string[] }[]
-}
-
-type View = "conversation" | "panel" | "settings"
+import { createClient, type WorkbenchClient } from "./client.js"
+import {
+  $activeProjectId,
+  $activeSessionId,
+  $credentials,
+  $dockOpen,
+  $fatal,
+  $items,
+  $notes,
+  $projects,
+  $providers,
+  $provenance,
+  $ready,
+  $runDetail,
+  $runs,
+  $sessions,
+  $terminal,
+  $terminalTrimmed,
+  $view,
+  appendBytes,
+  applySnapshot,
+  fail,
+  loadCredentials,
+  loadProjects,
+  loadProviders,
+  loadRunDetail,
+  loadRuns,
+  loadSessions,
+  note,
+  resyncSession,
+  resetTranscript,
+  setActiveProjectId,
+  setActiveSessionId,
+  setDockOpen,
+  setView,
+  upsertItem,
+} from "./state/index.js"
 
 /**
  * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
@@ -59,65 +76,45 @@ type View = "conversation" | "panel" | "settings"
 export function App({ client: injected }: { client?: WorkbenchClient }) {
   const client = useMemo(() => injected ?? createClient(), [injected])
 
-  const [ready, setReady] = useState(false)
-  const [fatal, setFatal] = useState<string | undefined>()
-  const [notes, setNotes] = useState<string[]>([])
-
-  const [projects, setProjects] = useState<ProjectSummary[]>([])
-  const [sessions, setSessions] = useState<SessionSummary[]>([])
-  const [runs, setRuns] = useState<RunSummary[]>([])
-  /** 最新一个 Run 的详情。**产出与成本只有它带得来**——listRuns 只给摘要 */
-  const [runDetail, setRunDetail] = useState<RunDetail | undefined>()
-  const [provenance, setProvenance] = useState<ProvenanceLink | undefined>()
-  const [providers, setProviders] = useState<Providers>({ agents: [], providers: [] })
-  const [creds, setCreds] = useState<CredentialState>({ configured: [], encrypted: false })
-
-  const [projectId, setProjectId] = useState<string | undefined>()
-  const [sessionId, setSessionId] = useState<string | undefined>()
-  const [view, setView] = useState<View>("conversation")
-
-  const [dockOpen, setDockOpen] = useState(false)
-  /** 当前会话的 transcript。**按 id 覆盖**，不必自己拼增量 */
-  const [items, setItems] = useState<TranscriptItem[]>([])
-  /** 终端 scrollback 是否被裁过。**如实标注，但这不是故障**——终端本就有限回滚 */
-  const [termTrimmed, setTermTrimmed] = useState(false)
-  /** 终端字节片段。首帧是快照里的整段，之后是增量 */
-  const [termChunks, setTermChunks] = useState<string[]>([])
-  /** 当前正在看的会话。事件回调里要用最新值，故用 ref 而非闭包捕获 */
-  const watching = useRef<string | undefined>(undefined)
-
-  const fail = useCallback((e: unknown) => {
-    const msg = e instanceof WorkbenchClientError ? e.message : String(e)
-    // 失败必须出声。宁可多一条提示，也不要让界面默默停在旧数据上（规格 7.5）
-    setNotes((n) => [...n.slice(-3), msg])
-  }, [])
+  /**
+   * 状态**全部住在 state/ 里，按权威分家**（`state/index.ts` 的文件头有分家表）。
+   *
+   * 这里只订阅要渲染的部分。**非渲染路径一律用 `$atom.get()` 直读**——
+   * 那样既拿到最新值，又不会让这个组件因为它变化而重渲染。
+   * 此前 `watching` 那个 ref 存在的唯一理由就是绕开闭包捕获的旧值，
+   * 现在不需要了：atom 本来就是同步可读的。
+   */
+  const ready = useStore($ready)
+  const fatal = useStore($fatal)
+  const notes = useStore($notes)
+  const projects = useStore($projects)
+  const sessions = useStore($sessions)
+  const runs = useStore($runs)
+  const runDetail = useStore($runDetail)
+  const provenance = useStore($provenance)
+  const providers = useStore($providers)
+  const creds = useStore($credentials)
+  const projectId = useStore($activeProjectId)
+  const sessionId = useStore($activeSessionId)
+  const view = useStore($view)
+  const dockOpen = useStore($dockOpen)
+  const items = useStore($items)
+  const termChunks = useStore($terminal)
+  const termTrimmed = useStore($terminalTrimmed)
 
   useEffect(() => {
     client
       .handshake()
-      .then(() => setReady(true))
-      .catch((e: unknown) => setFatal(e instanceof Error ? e.message : String(e)))
+      .then(() => $ready.set(true))
+      .catch((e: unknown) => $fatal.set(e instanceof Error ? e.message : String(e)))
   }, [client])
-
-  const refreshProjects = useCallback(
-    () => client.get<ProjectSummary[]>("listProjects").then(setProjects).catch(fail),
-    [client, fail],
-  )
-  const refreshCreds = useCallback(
-    () => client.get<CredentialState>("listCredentials").then(setCreds).catch(fail),
-    [client, fail],
-  )
-  const refreshSessions = useCallback(
-    (pid: string) => client.get<SessionSummary[]>("listSessions", { projectId: pid }).then(setSessions).catch(fail),
-    [client, fail],
-  )
 
   useEffect(() => {
     if (!ready) return
-    void refreshProjects()
-    void refreshCreds()
-    client.get<Providers>("getProviders").then(setProviders).catch(fail)
-  }, [ready, refreshProjects, refreshCreds, client, fail])
+    void loadProjects(client)
+    void loadCredentials(client)
+    void loadProviders(client)
+  }, [ready, client])
 
   /**
    * 有项目就选中第一个。
@@ -127,32 +124,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 这个缺陷是 Task 2.23 的 App 级测试撞出来的，叶子组件测试碰不到它。
    */
   useEffect(() => {
-    if (projectId === undefined && projects.length > 0) setProjectId(projects[0]!.projectId)
+    if (projectId === undefined && projects.length > 0) setActiveProjectId(projects[0]!.projectId)
   }, [projects, projectId])
 
   useEffect(() => {
     if (!projectId) return
-    void refreshSessions(projectId)
-    client.get<RunSummary[]>("listRuns", { projectId }).then(setRuns).catch(fail)
-  }, [client, projectId, refreshSessions, fail])
-
-  /** 取一次快照并同步 revision。跳号自愈与切会话都走这里 */
-  const resync = useCallback(
-    (sessionId: string) => {
-      client
-        .get<SessionSnapshot>("subscribeSession", { sessionId })
-        .then((snap) => {
-          // 请求飞行期间用户可能又切走了，不认迟到的结果
-          if (snap.sessionId !== watching.current) return
-          setItems(snap.items)
-          setTermChunks(snap.terminal ? [snap.terminal] : [])
-          setTermTrimmed(snap.terminalTrimmed)
-          client.expectRevision(sessionId, snap.revision)
-        })
-        .catch(fail)
-    },
-    [client, fail],
-  )
+    void loadSessions(client, projectId)
+    void loadRuns(client, projectId)
+  }, [client, projectId])
 
   /**
    * 推送流。**只订阅一次**，进来的更新按当前正在看的会话过滤——
@@ -162,48 +141,45 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (!ready) return
     return client.subscribeUpdates({
       onUpdate: (u: SessionUpdate) => {
-        if (u.sessionId !== watching.current) return
-        if (u.type === "item") {
-          // 按 id 覆盖：服务端推的是累积后的整条，界面不必拼
-          setItems((prev) => {
-            const i = prev.findIndex((x) => x.id === u.item.id)
-            if (i < 0) return [...prev, u.item]
-            const next = [...prev]
-            next[i] = u.item
-            return next
+        // **直读 atom，不用闭包捕获的值。** 这个订阅只建立一次，
+        // 闭包里的 sessionId 会永远停在建立那一刻
+        if (u.sessionId !== $activeSessionId.get()) return
+        if (u.type === "item") upsertItem(u.item)
+        if (u.type === "bytes") appendBytes(u.data)
+        if (u.type === "snapshot") {
+          applySnapshot({
+            items: u.snapshot.items,
+            terminal: u.snapshot.terminal,
+            trimmed: u.snapshot.terminalTrimmed,
           })
         }
-        if (u.type === "bytes") setTermChunks((c) => [...c, u.data])
-        if (u.type === "snapshot") {
-          setItems(u.snapshot.items)
-          setTermChunks(u.snapshot.terminal ? [u.snapshot.terminal] : [])
-          setTermTrimmed(u.snapshot.terminalTrimmed)
-        }
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
-        if (u.type === "state" && u.state === "exited" && projectId) void refreshSessions(projectId)
+        if (u.type === "state" && u.state === "exited") {
+          const pid = $activeProjectId.get()
+          if (pid) void loadSessions(client, pid)
+        }
       },
       /**
        * **跳号不再只是报警，而是重新同步。**
        * 旧设计（seq + 环形缓冲）少的那一段补不回来，只能告诉用户「丢了」。
        */
-      onResync: (sessionId) => resync(sessionId),
-      onProblem: (m) => setNotes((n) => [...n.slice(-3), m]),
+      onResync: (sessionId) => void resyncSession(client, sessionId),
+      onProblem: note,
     })
-  }, [ready, client, projectId, refreshSessions, resync])
+    // **依赖里刻意不放 projectId**：它变化时不该退订重订，
+    // 那会在切换的空隙里漏掉更新。回调内部直读 atom 拿最新值
+  }, [ready, client])
 
-  /** 切会话：退订旧的，订阅新的并取全量快照。**不再无脑清空。** */
+  /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {
-    watching.current = sessionId
-    setItems([])
-    setTermChunks([])
-    setTermTrimmed(false)
+    resetTranscript()
     if (!sessionId) return
-    resync(sessionId)
+    void resyncSession(client, sessionId)
     return () => {
       client.forgetRevision(sessionId)
       client.get("unsubscribeSession", { sessionId }).catch(fail)
     }
-  }, [client, sessionId, fail, resync])
+  }, [client, sessionId])
 
   /**
    * 最新 Run 的详情：**产出与成本从这里来**。
@@ -214,28 +190,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const latestRunId = runs[0]?.runId
   useEffect(() => {
-    setRunDetail(undefined)
-    setProvenance(undefined)
-    if (!latestRunId) return
-    let stale = false
-    client
-      .get<RunDetail>("getRun", { runId: latestRunId })
-      .then((r) => {
-        if (!stale) setRunDetail(r)
-      })
-      .catch(fail)
-    // 溯源可能压根没记过。**那不是错误**，是「不知道」——静静地留空即可，
-    // 面板自己会说「无溯源记录」
-    client
-      .get<ProvenanceLink>("getProvenance", { resourceId: latestRunId })
-      .then((p) => {
-        if (!stale) setProvenance(p)
-      })
-      .catch(() => {})
-    return () => {
-      stale = true
-    }
-  }, [client, latestRunId, fail])
+    loadRunDetail(client, latestRunId)
+  }, [client, latestRunId])
 
   if (fatal) {
     return (
@@ -282,14 +238,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           activeSessionId={sessionId}
           showingPanel={view === "panel"}
           onPickProject={(id) => {
-            setProjectId(id)
-            setSessionId(undefined)
-            setItems([])
+            setActiveProjectId(id)
+            setActiveSessionId(undefined)
             setView("conversation")
           }}
           onPickSession={(id) => {
-            setSessionId(id)
-            setItems([])
+            setActiveSessionId(id)
             setView("conversation")
           }}
           onShowPanel={() => setView("panel")}
@@ -303,9 +257,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 return client
                   .get<ProjectSummary>("openProject", { workspace: ws })
                   .then((p) => {
-                    void refreshProjects()
-                    setProjectId(p.projectId)
-                    setSessionId(undefined)
+                    void loadProjects(client)
+                    setActiveProjectId(p.projectId)
+                    setActiveSessionId(undefined)
                     setView("conversation")
                   })
               })
@@ -316,10 +270,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             client
               .get<SessionSummary>("createSession", { projectId, agentId })
               .then((s) => {
-                void refreshSessions(projectId)
+                void loadSessions(client, projectId)
                 // 建完直接进对话——新建会话的目的就是开始聊，不该还要再点一下
-                setSessionId(s.sessionId)
-                setItems([])
+                setActiveSessionId(s.sessionId)
                 setView("conversation")
                 // 取写权，否则第一句就会被租约挡下
                 return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
@@ -335,10 +288,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 providers={providers.providers.map((p) => p.providerId)}
                 credentials={creds}
                 onSet={(id, secret) =>
-                  client.get("setCredential", { providerId: id, secret }).then(refreshCreds).catch(fail)
+                  client.get("setCredential", { providerId: id, secret }).then(() => loadCredentials(client)).catch(fail)
                 }
                 onDelete={(id) =>
-                  client.get("deleteCredential", { providerId: id }).then(refreshCreds).catch(fail)
+                  client.get("deleteCredential", { providerId: id }).then(() => loadCredentials(client)).catch(fail)
                 }
               />
             </div>
@@ -380,7 +333,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               />
               <TerminalDock
                 open={dockOpen}
-                onToggle={() => setDockOpen((v) => !v)}
+                onToggle={() => setDockOpen(!$dockOpen.get())}
                 chunks={termChunks}
                 available={session.kind === "pty"}
                 onInput={(data) =>

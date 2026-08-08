@@ -18,7 +18,7 @@ export function TerminalPane({
   onInput,
 }: {
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
-  chunks: string[]
+  chunks: readonly string[]
   onInput?: (data: string) => void
 }) {
   const host = useRef<HTMLDivElement>(null)

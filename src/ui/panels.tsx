@@ -31,7 +31,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 /* ── 状态 ─────────────────────────────────────────────────────────── */
 
-export function StatusPanel({ sessions }: { sessions: SessionSummary[] }) {
+export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] }) {
   if (sessions.length === 0) {
     return (
       <Panel title="状态">
@@ -156,7 +156,7 @@ function duration(run: RunSummary): string | undefined {
   return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`
 }
 
-export function RunsPanel({ runs }: { runs: RunSummary[] }) {
+export function RunsPanel({ runs }: { runs: readonly RunSummary[] }) {
   if (runs.length === 0) {
     return (
       <Panel title="历史">

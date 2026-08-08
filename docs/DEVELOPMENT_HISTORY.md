@@ -43,10 +43,26 @@
 
 ## 变更日志
 
+### 2026-08-08 — ①-B Task 2.2：操作契约与错误码，13 个操作冻结
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 协议的第二块。有了实体还不够——UI 要能调用，就得先定死「有哪些操作、请求长什么样、错误怎么表达」。
+- **What**:
+  - 新增 `src/protocol/operations.ts` 与 `src/protocol/index.ts`（对外唯一出口）。**13 个操作就此冻结**：8 个只读 + 5 个可写。
+  - **信封与错误码取自 Rho 的 `workbench.rs`**，三处设计直接照搬：① **每个响应都带协议版本**，不只握手时带——过期的 UI 在**任何一次调用**上都能察觉版本漂移；② **错误带 `retryable`**（必填），客户端据此决定重试而非猜测错误码语义；③ **成功响应带 `warnings`**——没有这个字段，「部分成功」只能二选一：谎报全成或整体失败，两个都不对。
+  - **错误码 9 个**：7 项采自 Rho，另加两项本项目特有的——`invalid_request`（请求不合 schema）与 `conflict`（租约冲突，Rho 无租约概念）。
+  - **分页上限照搬 Rho**：`DEFAULT_PAGE_SIZE = 50` / `MAX_PAGE_SIZE = 200`，且 `pageSize` 超限即拒——**客户端不能请求无限结果**。
+  - **`isMutating()` 对未知操作抛错而非默认只读**。默认只读看似安全实则相反——拼错的操作名会被静默当查询放行，掩盖调用方的 bug。
+  - **`writeToSession.as` 必填**：不能匿名写，写权可追责的唯一入口（规格 7.1）。**`previewTakeover` 标为只读**，与 ①-A 的「预览不改状态」测试一致。
+  - 一处刻意偏离 Rho：其成功信封的 `project_id` 必填，但我们有 `getCapabilities` / `listProjects` 这类不属于单一项目的操作，故改为可选。
+- **Impact**: Task 2.3（协议服务端）可据此把 ①-A 的 `SessionManager` / `SessionStore` / `LeaseManager` 包装成 operations。操作清单冻结也落实了计划 §4 的风险应对——避免「协议设计过度、迟迟进不了 UI」。
+- **Verification**: 严格 TDD，23 个测试。含**双向校验**用例——响应的 `data` 也过一遍 schema，服务端返回错结构同样被拒。全仓库 180 passed，typecheck 零错误。
+
 ### 2026-08-08 — 修正 7.33 对 Claude 项目模型的不准确表述，补三方对比与选型依据
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `0e70f76`
 - **Motivation**: 作者追问「Rho 有项目概念，Claude app / Codex app / Hermes 不是也都有吗」。核查后发现 **7.33 初稿的表述不准确**——它暗示 Claude app 只提供「信息架构外壳」。这个判断若不纠正，后续会照着一个错的对比做选型。
 - **What**:
   - **纠正**：实测 `~/.claude.json` 的 `projects` 段（本机 70 个项目），每个条目确实记了 `lastCost`、`lastLinesAdded` / `lastLinesRemoved`、各类 token 与 `lastModelUsage`。**「只有外壳」是错的**。

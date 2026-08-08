@@ -17,6 +17,8 @@ export interface SessionRecord {
   pid?: number
   exitCode?: number
   createdAt: string
+  /** v2 起：会话归属的项目。v1 遗留记录为空——它们产生时还没有项目概念 */
+  projectId?: string
 }
 
 interface Row {
@@ -28,6 +30,7 @@ interface Row {
   pid: number | null
   exit_code: number | null
   created_at: string
+  project_id: string | null
 }
 
 function toRecord(r: Row): SessionRecord {
@@ -42,6 +45,7 @@ function toRecord(r: Row): SessionRecord {
     // 这样 `"pid" in rec` 能真实反映「有没有这个信息」。
     ...(r.pid === null ? {} : { pid: r.pid }),
     ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
+    ...(r.project_id === null || r.project_id === undefined ? {} : { projectId: r.project_id }),
   }
 }
 
@@ -51,10 +55,15 @@ export class SessionStore {
   insert(rec: SessionRecord): void {
     this.db
       .prepare(`
-        INSERT INTO sessions (id, agent_id, workspace, session_dir, state, pid, exit_code, created_at)
-        VALUES (@id, @agentId, @workspace, @sessionDir, @state, @pid, @exitCode, @createdAt)
+        INSERT INTO sessions (id, agent_id, workspace, session_dir, state, pid, exit_code, created_at, project_id)
+        VALUES (@id, @agentId, @workspace, @sessionDir, @state, @pid, @exitCode, @createdAt, @projectId)
       `)
-      .run({ ...rec, pid: rec.pid ?? null, exitCode: rec.exitCode ?? null })
+      .run({
+        ...rec,
+        pid: rec.pid ?? null,
+        exitCode: rec.exitCode ?? null,
+        projectId: rec.projectId ?? null,
+      })
   }
 
   get(id: string): SessionRecord | undefined {
@@ -64,6 +73,13 @@ export class SessionStore {
 
   list(): SessionRecord[] {
     const rows = this.db.prepare(`SELECT * FROM sessions ORDER BY created_at`).all() as Row[]
+    return rows.map(toRecord)
+  }
+
+  listByProject(projectId: string): SessionRecord[] {
+    const rows = this.db
+      .prepare(`SELECT * FROM sessions WHERE project_id = ? ORDER BY created_at DESC`)
+      .all(projectId) as Row[]
     return rows.map(toRecord)
   }
 

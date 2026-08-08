@@ -43,10 +43,26 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B Task 2.3：协议服务端，派发 + 双向校验 + 错误归一
+### 2026-08-08 — ①-B Task 2.4：projects / runs / provenance 表，schema 升到 v2
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Part 1 的地基。协议定义了 Run 与溯源，但它们得有地方存。同时这是第一次做 schema 迁移——①-A 的库里已有 `sessions` 表，不能推倒重来。
+- **What**:
+  - `src/store/schema.ts` 升到 `SCHEMA_VERSION = 2`，新增 `projects` / `runs` / `provenance` 三张表，`sessions` 补 `project_id` 列。迁移幂等，且**从 v1 升级时保留老数据**。
+  - **把协议层的三条 `superRefine` 约束在数据库层各配一道 CHECK**——同一条规则，两处独立强制：① `status='running'` 不得有 `finished_at`、终态必须有；② **成本「不可见」不得带金额、「可见」必须有金额**；③ **溯源不完整必须写明原因**。理由沿用 ①-A 的纪律：应用层的类型与 zod 只在各自边界有效，挡不住迁移脚本或将来其它写入方直接写库。
+  - **v1 遗留会话的 `project_id` 留空，不编造归属**。它们产生时还没有项目概念，填一个等于伪造事实（不变式 5）。已写测试确认老数据仍在且该列为 `NULL`。
+  - **`workspace` 唯一**：一个文件夹只能对应一个项目。否则重复打开同一目录会不断新建项目，把历史切成碎片。
+  - 新增 `src/store/projects.ts` 与 `src/store/runs.ts`。**`ProjectStore.summary()` 的计数是算出来的，不是存出来的**——存一份计数意味着每次增删都要同步更新，任何一处漏更新都会让 UI 显示一个永远对不上的数字，那比没有更糟。
+  - **项目不存在时 `summary()` 返回 undefined，而不是全零的假摘要**——后者会让「项目没了」看起来像「项目是空的」。
+  - `cost_visible IS NULL` 表示「尚未记录」，与「不可见」是两回事——三态，不是两态。
+- **Impact**: Task 2.5（git 事实）与 2.6（Project 管理器）可在此之上写。②-A 加内核类型时**不需要改表**——`request_type` 是开放字符串。
+- **Verification**: 严格 TDD。33 个新测试，其中 7 个专门验证数据库层的 CHECK 确实会拒（而非只靠应用层）。含 v1→v2 迁移用例：手工造一个 v1 的库，迁移后确认新增了 `project_id` 列且老数据未丢。全仓库 230 passed，typecheck 零错误。
+
+### 2026-08-08 — ①-B Task 2.3：协议服务端，派发 + 双向校验 + 错误归一
+
+- **Type**: feat
+- **Commit**: `735eeee`
 - **Motivation**: Part 0 的最后一块。有了实体与操作，还需要一个把它们执行起来的外壳——且这个外壳必须**不认识 Electron**，否则协议层就被 GUI 绑架了。
 - **What**:
   - 新增 `src/workbench/server.ts`：`WorkbenchServer.handle(operation, request, ctx)`。职责恰好三件——**派发**、**双向校验**、**错误归一**。

@@ -1,0 +1,38 @@
+{
+  "name": "dawn-science",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Data Agent Workbench with Notebooks — for science.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "dawn": "tsx src/cli.ts",
+    "spike:a": "tsx spikes/a-pi-embed.ts",
+    "spike:b": "tsx spikes/b-pty-mcp-hook.ts",
+    "spike:d": "tsx spikes/d-jupyter-kernel.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "^0.84.1",
+    "@earendil-works/pi-ai": "^0.84.1",
+    "@earendil-works/pi-coding-agent": "^0.84.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "better-sqlite3": "^13.0.3",
+    "node-pty": "^1.1.0",
+    "simple-git": "^3.36.0",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.11",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

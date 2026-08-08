@@ -119,6 +119,7 @@ agent 说「可合并」，但 diff 与计划不一致     → 回到 REWORKING
 | [设计规格](docs/superpowers/specs/) | 建什么、为什么、什么绝不做 |
 | [主开发规划](docs/superpowers/plans/2026-08-07-master-roadmap.md) | 按什么顺序、在哪停下判断、风险怎么应对 |
 | [实体清单](docs/superpowers/ENTITY-REGISTRY.md) | 每个部件用什么技术、照着谁的设计做 |
+| [参考地图](docs/REFERENCES.md) | 实现某个部件时，去读哪个文件的哪一段 |
 | [实施计划](docs/superpowers/plans/) | 这一步具体敲什么 |
 | [Backlog](docs/superpowers/BACKLOG.md) | 想到但暂不做的 |
 | [开发历史](docs/DEVELOPMENT_HISTORY.md) | 每次变更与其理由 |
@@ -144,4 +145,17 @@ agent 说「可合并」，但 diff 与计划不一致     → 回到 REWORKING
 
 ## 许可
 
-[Apache License 2.0](LICENSE)
+[GNU Affero General Public License v3.0 or later](LICENSE)
+
+```
+Copyright (C) 2026  DAWN Science contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+```
+
+**选择 AGPL 的理由**：这是一个面向科研的开源工具，我们希望它的改进版本同样对所有人开放——包括以网络服务形式提供的版本。同类的 [wisp-science](https://github.com/xuzhougeng/wisp-science) 与 [ccb](https://github.com/SeemSeam/claude_codex_bridge) 也采用 AGPL。
+
+依赖的第三方库（`pi` 等）为 MIT / Apache-2.0，与 AGPL 兼容。

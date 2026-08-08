@@ -43,10 +43,26 @@
 
 ## 变更日志
 
+### 2026-08-08 — Spike D 通过：Jupyter 内核链路打通且中断生效，TypeScript 方案确认
+
+- **Type**: feat
+- **Motivation**: Phase 0 决策门 G0 的第四项，也是**唯一能推翻整个技术栈的一项**。规格 10.1 把主体定为 TypeScript，依据是「nteract 栈已提供 jupyter_client 的等价能力」——该判断此前只经过 npm 元数据与 `.d.ts` 核对，从未真跑过。不通过则回退 Python，Part 1 整体重写。
+- **Commit**: 待回填
+- **What**:
+  - 建 Python 内核环境（`uv venv .venv-kernel` + `ipykernel`，注册 kernelspec `dawn-spike`），装 nteract 栈，新增 `spikes/d-jupyter-kernel.ts`、`spikes/types/spawnteract.d.ts`、`spikes/d-electron-zmq/`。
+  - **三项全过**：zeromq 可用（libzmq 4.3.5）；起内核并从 iopub 取回 `DAWN_MARKER_OK`；**中断生效——SIGINT → KeyboardInterrupt → `execute_reply status=error`**。第三项是分量所在，规格 10.4 的硬要求，**wisp-science 的自研 JSON-lines worker 方案正是败在这条**。
+  - **Step 6：Electron 下 zeromq 无需 `electron-rebuild`**（Electron 43.3.0 / Node 24.18.1 / V8 ABI 148）——zeromq 6.x 走 Node-API，ABI 跨运行时稳定。计划预留的 rebuild 步骤实测不需要，但已注明这是「当前版本组合下」的结论，非永久结论。
+  - **发现 rxjs 版本分裂**：`@nteract/messaging` 与 `@nteract/types` 各自嵌套 rxjs 6.6.7，而顶层是 7.8.2，两者 Observable 类型不兼容（实测 4 处 TS2345）。spike 改为只用 nteract 自带算子、等待逻辑手写为 Promise。**据此给出 ②-A 的架构建议：在 `createMainChannel` 外立刻包薄适配器，不让 rxjs 进入 DAWN 自己的代码。**
+  - **确认握手是必需的**：内核就绪前发出的 `execute_request` 会被静默丢弃，必须先 `kernel_info_request` 等到 reply。
+  - **原生模块关停顺序**：Electron 版首次运行「打印成功结论、进程却 SIGABRT」——`app.exit()` 时 zmq socket 未关，native 层抛 `Napi::Error`。改为「先停内核 → 再 `channels.complete()` → 留 300ms → 才退出」后干净退出。
+  - **Step 7（R 内核）未通过，但属环境问题**：本机 `ir` kernelspec 指向旧 R 安装且 `IRkernel` 包未安装，内核进程起得来却不回话。与协议栈无关，按计划不阻断，R 支持后移至 ②-A。
+- **Impact**: **G0 四项全过，Phase 0 的技术风险全部出清，规格 10.1 的 TypeScript 定案成立。** 阶段 ②-A 拿到三条硬约束：① 用薄适配器隔离 rxjs；② 内核就绪必须走握手且带超时；③ 关停顺序是正式代码。另有一条产品级要求：内核起不来时的表现是**静默挂起**而非报错，DAWN 必须为此设计显式失败态并呈现内核 stderr，这与规格 7.5「无静默回退」一致。
+- **Verification**: Python 内核链路与 Electron 链路各自独立跑通并打印判定。中断的判据取 `execute_reply` 的 `status === "error"` 且 `ename` 匹配 KeyboardInterrupt，而非「有没有收到 reply」——后者会把「内核根本没在跑死循环」误判为「中断成功」，此类失误在 Spike C 已栽过一次。SIGABRT 修正后重跑确认干净退出。**记录一个诊断陷阱**：成功结论打印在前、崩溃在后，只看日志末尾会误判，判定必须看退出码。R 内核的失败根因经 `cat kernel.json` 与 `Rscript -e requireNamespace("IRkernel")` 两步确证，未凭猜测归因。
+
 ### 2026-08-08 — Spike C 通过：Electron 四终端并发刷屏无冻结；验证代码自身的 false-green 已修
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `1b46c28`
 - **Motivation**: Phase 0 决策门 G0 的第三项，决定桌面壳是否用 Electron。计划要求人工观察「是否卡死 / 能否交互 / resize 是否跟随」——但肉眼判断不可复核也无法回归，故改为程序自测量。
 - **What**:
   - 新增 `spikes/c-electron-term/`（`main.js` / `preload.js` / `index.html`），四个阶段全自动：回显 → 压力灌注 → Ctrl-C 中断 → resize，跑完自行打印判定并退出，无需人工干预。

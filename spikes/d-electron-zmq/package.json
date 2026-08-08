@@ -1,0 +1,1 @@
+{"name":"dawn-spike-d-electron","version":"0.0.1","private":true,"main":"main.js","dependencies":{"@nteract/messaging":"^7.0.20","electron":"^43.3.0","enchannel-zmq-backend":"^10.0.0","rxjs":"^6.6.7","spawnteract":"^5.0.1"}}

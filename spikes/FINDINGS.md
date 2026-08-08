@@ -311,12 +311,93 @@ env = { DAWN_PROBE_LOG = "<abs>/probe.jsonl" }
 - 超过 4 个终端、或单终端长时间持续高速输出的表现。
 - Windows / Linux 平台。
 
-## Spike D — Jupyter 内核链路
+## Spike D — Jupyter 内核链路 ✅ 通过 → **TypeScript 方案确认**
 
-> 待跑。需先建 Python 环境并注册 kernelspec：
-> ```bash
-> uv venv .venv-kernel && source .venv-kernel/bin/activate
-> uv pip install ipykernel
-> python -m ipykernel install --user --name dawn-spike --display-name "DAWN Spike"
-> ```
-> 本机已有 R 4.6.1，可选的 Ark（R 内核）验证有条件执行。
+- **日期**：2026-08-08
+- **版本**：`spawnteract` 5.0.1 · `enchannel-zmq-backend` 10.0.0 · `@nteract/messaging` 7.0.20 · `zeromq` npm **6.5.0**（libzmq **4.3.5**）· `ipykernel` on Python 3.11.15
+- **脚本**：`spikes/d-jupyter-kernel.ts`（`npm run spike:d`）· `spikes/d-electron-zmq/`（`npx electron .`）
+- **结论**：**三项全过，规格 10.1 的 TypeScript 定案成立，不回退 Python。**
+
+### 判定表
+
+| 问题 | 结果 |
+|---|---|
+| Q3 zeromq 原生模块可用 | ✅ libzmq 4.3.5 |
+| Q1 起内核并从 iopub 拿到输出 | ✅ `stream: {"name":"stdout","text":"DAWN_MARKER_OK\n"}` |
+| **Q2 能中断执行中的 cell** | ✅ **SIGINT → KeyboardInterrupt → `execute_reply status=error`** |
+| Step 6 Electron 下 zeromq 可用 | ✅ **无需 `electron-rebuild`** |
+| Step 7 R 内核（可选） | ❌ 环境问题，非协议问题，详见下文 |
+
+> Q2 是本 spike 的分量所在——规格 10.4 的硬要求，**wisp-science 的自研 JSON-lines worker 方案正是败在这一条**。现已证实 Jupyter 协议路线能做到。
+
+### 实测的完整调用链
+
+```ts
+const kernel   = await launch("dawn-spike")            // spawnteract
+const channels = await createMainChannel(kernel.config) // enchannel-zmq-backend → RxJS Subject
+channels.next(kernelInfoRequest())                      // 握手（必须）
+channels.next(executeRequest('print("...")'))           // @nteract/messaging
+```
+
+- `kernel.config`：`{ip: "127.0.0.1", transport: "tcp", shell_port, iopub_port, control_port, stdin_port, hb_port, key, signature_scheme}`。HMAC 签名由 enchannel 内部处理，**我方无需自己实现**——这正是当初判断「TS 需手搓 Jupyter 协议 3–4 周」为误判的依据。
+- **握手是必需的，不是可选优化**：内核就绪前发出的 `execute_request` 会被**静默丢弃**。必须先 `kernel_info_request` 等到 `kernel_info_reply` 再发执行请求。
+- `interrupt_mode` 实测为 **`signal`**（ipykernel 的 kernelspec 未声明该字段，默认即 signal）→ 中断方式是**向内核进程发 SIGINT**，不是走 control 通道的 `interrupt_request`。两种模式的代码路径都已写进脚本。
+
+### ⚠️ rxjs 版本分裂：6.6.7 vs 7.8.2
+
+`@nteract/messaging` 与 `@nteract/types` **各自嵌套 rxjs 6.6.7**，而 `npm i rxjs` 装的是 7.8.2。两者的 `Observable` / `Subscriber` 类型结构不兼容，把 rxjs 7 的 `take` / `timeout` / `firstValueFrom` 用在 nteract 返回的 Observable 上会直接 typecheck 失败（实测 4 处 TS2345）。
+
+本 spike 的处理：**只使用 nteract 自带的算子**（`childOf` / `ofMessageType`），等待与超时全部手写为 Promise。
+
+> **给阶段 ②-A 的架构建议**：不要让 rxjs 出现在 DAWN 自己的代码里。
+> 在 `createMainChannel` 之外立刻包一层**薄适配器**，对内暴露 `send(msg)` / `on(type, cb)` / `request(msg): Promise<reply>` 这类普通接口。
+> 理由有二：① 绕开 rxjs 6/7 的版本分裂，且 nteract 已多年未更新，将来若换掉它，改动被限制在适配器内；② 规格第 8 节的统一事件流本就不该以 RxJS 为其数据模型。
+
+### ⚠️ 原生模块的关停顺序（第二次遇到同一类问题）
+
+Electron 版首次运行**打印了成功结论，进程却以 SIGABRT 结束**：
+
+```
+✅ Electron 中 zeromq + Jupyter 链路工作正常
+libc++abi: terminating due to uncaught exception of type Napi::Error
+... exited with signal SIGABRT
+```
+
+原因：`app.exit()` 时 zmq socket 仍开着，native 层在拆卸中抛出 `Napi::Error`——**异步异常，`try/catch` 拦不住**。
+
+修法（已落实在 `d-electron-zmq/main.js` 的 `shutdown()`）：**先停内核进程 → 再 `channels.complete()` 关 socket → 留 ~300ms 给 native 层收尾 → 才 `app.exit()`**。修正后干净退出。
+
+> **这与 Spike C 中 node-pty 重复 `kill()` 的 SIGABRT 是同一类失效，出现在两个互不相干的原生模块上，因此应视为通则而非个案**：
+> **原生模块必须先自行关闭，才能让运行时退出；退出路径要和启动路径一样被当作正式代码写。**
+> 阶段 ①-A 的 Task 1.9（`PtyRuntime.stop()`）与阶段 ②-A 的内核关停都受此约束。
+> 另注意一个诊断陷阱：**结论打印在前、崩溃在后**，只看日志末尾几行会以为成功——判定必须看**退出码**。
+
+### Step 6 · Electron 下的 zeromq（无需 rebuild）
+
+```
+Electron 43.3.0 · Node 24.18.1 · V8 ABI 148
+✓ zeromq 加载成功（libzmq 4.3.5）—— 无需 electron-rebuild
+✓ 内核已启动 → 内核就绪：python 3.11.15 → DAWN_ELECTRON_OK
+```
+
+计划原本预留了 `npx @electron/rebuild -f -w zeromq` 这一步，**实测不需要**：zeromq 6.x 用 **Node-API（N-API）**，ABI 跨 Node 与 Electron 稳定。与 Spike C 中 node-pty 的情况一致。
+
+> **但不要把它当作永久结论**：这是「当前版本组合下不需要」，不是「原生模块不需要 rebuild」。换 Electron 大版本、换平台、或引入非 N-API 的原生依赖时都需重测。`@electron/rebuild` 这条退路应保留在文档里。
+
+### Step 7 · R 内核（未通过 —— 环境问题，不阻断）
+
+`DAWN_KERNEL=ir` 运行，内核进程起得来（`pid`、`interrupt_mode=signal` 都拿到了），但 **25 秒内未响应 `kernel_info_request`**。
+
+根因：本机 `ir` kernelspec 指向 `/Library/Frameworks/R.framework/Resources/bin/R`（旧安装），而当前 R 是 `/usr/local/bin/R` 4.6.1，且 **`IRkernel` 包根本没装**——是一条过期的注册项。**与协议栈无关**，故不影响 Spike D 判定。
+
+按计划 Step 7 的规定，R 支持后移到阶段 ②-A。届时两条路可选：装 `IRkernel`，或用 Rho 采用的 **Ark**（Posit 出品，Rust 实现）。
+
+> **附带的产品级发现**：内核起不来时，表现是**静默挂起 25 秒**，而不是报错——因为进程确实启动了，只是永远不回话。
+> **DAWN 必须为此设计显式的失败态**：内核就绪握手要有超时，超时后应捕获内核进程的 stderr 并呈现给用户，而不是让 UI 转圈。这与规格 7.5「无静默回退」一致。
+
+### 未验证
+
+- R / Ark 内核（见上）。
+- `interrupt_mode: "message"`（control 通道的 `interrupt_request`）——代码路径已写但本机 ipykernel 走的是 signal，**该分支未被执行过**。
+- 内核崩溃、内核重启、多内核并发。
+- Windows / Linux。

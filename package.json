@@ -23,9 +23,13 @@
     "@earendil-works/pi-ai": "^0.84.1",
     "@earendil-works/pi-coding-agent": "^0.84.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "@nteract/messaging": "^7.0.20",
     "better-sqlite3": "^13.0.3",
+    "enchannel-zmq-backend": "^10.0.0",
     "node-pty": "^1.1.0",
+    "rxjs": "^7.8.2",
     "simple-git": "^3.36.0",
+    "spawnteract": "^5.0.1",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"
   },

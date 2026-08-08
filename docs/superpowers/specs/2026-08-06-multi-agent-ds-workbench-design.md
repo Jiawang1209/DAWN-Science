@@ -476,6 +476,18 @@ GUI 只经由固定的少数只读端点取数，所有载荷流经 contract val
 
 **为什么对本项目尤其关键**：数据科学 agent 会起 `python train.py`、`npm test` 这类长任务。只杀 shell 会让它们变成孤儿，持续占用 CPU 与 **GPU**——而 GPU 显存不释放会直接卡死后续所有工作。
 
+> **2026-08-08 实测修正：「发给整个进程组」并不足够。**
+> Task 1.9 的孙子进程回归测试证伪了上表第二行的隐含假设。原因是 **job control**：
+> shell 在 PTY 里拿到终端后会启用它，`cmd &` 起的后台任务会被放进**它自己的新进程组**，
+> 于是 `kill(-ptyPid)` 根本够不着——实测 `sleep 600 &` 在整组 SIGTERM+SIGKILL 后依然存活。
+>
+> **正确做法**：终止前**先快照整棵进程树**（`ps -A -o pid=,ppid=,pgid=` 自根 BFS），
+> 再逐进程组 + 逐 pid 地扫。快照必须在杀之前做——进程一死，其子进程即被 reparent 到 `init(1)`，
+> 那时再遍历已找不到亲子关系。实现见 `src/runtime/pty.ts` 的 `collectTree()` 与 `stop()`。
+>
+> 这条同时说明 Buzz 的 `KillGroup` 模型不能直接照搬：它管的是自己 `spawn` 且显式设过
+> `process_group(0)` 的子进程，而我们要管的是**一个会自行创建进程组的交互式 shell 的全部后代**。
+
 ### 7.19 边界常量与截断保全
 
 采纳 Buzz 的一组具体上限作为起始值：

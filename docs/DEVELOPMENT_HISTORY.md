@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A 终端流：scrollback ring buffer 与节流合并投递（Task 1.8）
+### 2026-08-08 — 阶段①-A PTY Runtime：进程树终止证伪了规格 7.18 的核心假设（Task 1.9）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 第一个真起进程的 Runtime。核心风险是**孤儿进程**——数据科学 agent 会起 `python train.py`、`npm test` 这类长任务，杀不干净会持续占用 CPU 与 GPU，而显存不释放会卡死后续全部工作。
+- **What**:
+  - 新增 `src/runtime/pty.ts`：`PtyRuntime`，node-pty 起真实进程，接入 Task 1.7 的隔离配置。
+  - **把 `materializeSessionDir` 的 `args` 也拼进命令行**。计划初稿只用了 `env`——Task 1.7 之后 claude 的 MCP 与 hook 全靠命令行标志，只传 `env` 会让它完全收不到注入的配置，**而进程照样起得来**，失效方式极其隐蔽。已为此单独写测试：用 `/bin/echo` 当命令，它把收到的参数原样打印，直接验证 args 确实传下去了。
+  - **证伪并修正了规格 7.18 的核心假设**（详见下）。
+  - `resize` 包 try/catch（进程退出中调用会从 native 层抛错），`stop` 幂等，`emit`/`attach` 沿用前几个 Task 的集合安全修法。
+- **Impact / 关键发现**: 规格 7.18 原文写「**SIGTERM → 200ms → SIGKILL，发给整个进程组**」，隐含假设是「pty 的 pid 即 pgid，覆盖它派生的全部后代」。**孙子进程回归测试直接把它证伪**：`sleep 600 &` 在整组 SIGTERM + SIGKILL 之后**依然存活**。
+  根因是 **job control**——shell 在 PTY 里拿到终端后会启用它，`cmd &` 起的后台任务被放进**它自己的新进程组**，`kill(-ptyPid)` 够不着。
+  改为**先快照整棵进程树**（`ps -A -o pid=,ppid=,pgid=` 自根 BFS），再逐进程组 + 逐 pid 地扫。**快照必须在杀之前做**——进程一死，其子进程立即被 reparent 到 `init(1)`，那时再遍历已找不到亲子关系。规格 7.18 已补写实测修正段，并指出 **Buzz 的 `KillGroup` 模型不能直接照搬**：它管的是自己 `spawn` 且显式设过 `process_group(0)` 的子进程，而我们要管的是一个**会自行创建进程组的交互式 shell 的全部后代**。
+- **Verification**: 严格 TDD。9 个集成测试（计划预估 3 个），全部跨真实进程边界、无 mock。孙子进程回归**先失败后通过**——这正是它存在的意义，修正后耗时从 6.5s 降到 1.7s（孙子进程秒死而非等超时）。增补用例：started 事件 pid 与 handle 一致、stop 对已退出会话幂等（对应 Spike C 的 `Napi::Error` SIGABRT）、未启动会话 write 抛错、退订生效、**family 设定时 args 拼进命令行且配置文件落地**、未设 family 时不写任何配置。全仓库 108 passed，typecheck 零错误。
+
+### 2026-08-08 — 阶段①-A 终端流：scrollback ring buffer 与节流合并投递（Task 1.8）
+
+- **Type**: feat
+- **Commit**: `37d39e6`
 - **Motivation**: 终端输出可能瞬间涌入几十 MB（Spike C 实测四路 29 MB / 0.7s），需要一个既能保住历史、又不把 UI 打死的中间层。本任务的参数取值直接由 Spike C 的实测数字决定。
 - **What**:
   - 新增 `src/session/stream.ts`：`TerminalStream`，scrollback ring buffer + 可选的节流合并投递。

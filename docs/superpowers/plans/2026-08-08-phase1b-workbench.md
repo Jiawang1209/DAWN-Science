@@ -3,6 +3,7 @@
 - **日期**：2026-08-08
 - **前置**：阶段 ①-A 完成，G1 通过（125 测试）
 - **产出**：一个能日常替代裸终端的桌面 App
+- **状态**：Part 0–3 与 Part 5（MVP 闭环）已完成并提交；Part 4 验收待作者本人
 - **估算**：3–4 周
 - **决策门**：G2
 
@@ -320,59 +321,59 @@ Part 3 交付后作者问「现在还有什么问题」，实查发现**同一�
 
 **Files:** `src/protocol/version.ts`、`src/protocol/events.ts`(新)、`src/protocol/operations.ts`
 
-- [ ] 事件信封 schema；`kind` 判别联合，`dropped` 必须携带丢弃量
-- [ ] `subscribeSession` / `unsubscribeSession` 两个操作与错误码
-- [ ] `truncated: true` 时**必须**同时给出最早可用 seq（superRefine 强制）
-- [ ] 版本升 1.3，`isCompatible` 既有测试不变
+- [x] 事件信封 schema；`kind` 判别联合，`dropped` 必须携带丢弃量
+- [x] `subscribeSession` / `unsubscribeSession` 两个操作与错误码
+- [x] `truncated: true` 时**必须**同时给出最早可用 seq（superRefine 强制）
+- [x] 版本升 1.3，`isCompatible` 既有测试不变
 
 ## Task 2.17: 主进程侧 — SessionManager 输出接入事件通道
 
 **Files:** `src/workbench/events.ts`(新)、`src/workbench/backend.ts`、`src/electron/wiring.ts`
 
-- [ ] 每会话一个带 seq 的环形缓冲；native 出 `turn`，PTY 出 `bytes`
-- [ ] 溢出发 `dropped`，**测试必须覆盖溢出路径**（这是最容易只写不测的分支）
-- [ ] 会话退出发 `state` 事件，订阅自动清理，不泄漏 listener
+- [x] 每会话一个带 seq 的环形缓冲；native 出 `turn`，PTY 出 `bytes`
+- [x] 溢出发 `dropped`，**测试必须覆盖溢出路径**（这是最容易只写不测的分支）
+- [x] 会话退出发 `state` 事件，订阅自动清理，不泄漏 listener
 
 ## Task 2.18: 渲染侧 — preload 事件 API 与 client 事件流
 
 **Files:** `src/electron/preload.ts`、`src/electron/ipc.ts`、`src/ui/client.ts`
 
-- [ ] `window.dawn.onEvent(cb)` 单一入口，返回退订函数
-- [ ] client 侧校验信封与 seq 连续性；跳号 ⇒ 抛出可见的警告，不吞
-- [ ] 无桥接时与既有 `no_bridge` 错误行为一致
+- [x] `window.dawn.onEvent(cb)` 单一入口，返回退订函数
+- [x] client 侧校验信封与 seq 连续性；跳号 ⇒ 抛出可见的警告，不吞
+- [x] 无桥接时与既有 `no_bridge` 错误行为一致
 
 ## Task 2.19: 对话回读
 
 **Files:** `src/ui/App.tsx`、`src/ui/views.tsx`
 
-- [ ] agent 的 `turn` 事件进 `turns`，与用户发言区分渲染
-- [ ] 切换会话时用 `subscribeSession` 重放，**不再无脑 `setTurns([])`**
-- [ ] 缓冲截断时在对话顶部显示「更早的输出已丢失」
+- [x] agent 的 `turn` 事件进 `turns`，与用户发言区分渲染
+- [x] 切换会话时用 `subscribeSession` 重放，**不再无脑 `setTurns([])`**
+- [x] 缓冲截断时在对话顶部显示「更早的输出已丢失」
 
 ## Task 2.20: 终端接真实字节流
 
 **Files:** `src/ui/terminal.tsx`(新)、`src/ui/App.tsx`
 
-- [ ] 用 `@xterm/xterm`（已在 devDependencies），**不用 `<pre>`**——
+- [x] 用 `@xterm/xterm`（已在 devDependencies），**不用 `<pre>`**——
       裸 `pre` 渲染 claude/codex 的 TUI 就是一团 ANSI 乱码，等于没做
-- [ ] `bytes` 事件写入 xterm；键盘输入回 `writeToSession`
-- [ ] 尺寸变化调 `resize`（①-A 已有）
+- [x] `bytes` 事件写入 xterm；键盘输入回 `writeToSession`
+- [x] 尺寸变化调 `resize`（①-A 已有）
 
 ## Task 2.21: 产出栏接真实数据
 
 **Files:** `src/ui/App.tsx`
 
-- [ ] 选中 Run 时取 `getRun`，把 `fileChanges` 喂给 `ChangesPanel`
-- [ ] 后端不返回 `fileChanges` 时仍走「无法确定」分支——**三态必须都能在真实界面上出现**
-- [ ] `getProvenance` 接入 ProvenanceBadge
+- [x] 选中 Run 时取 `getRun`，把 `fileChanges` 喂给 `ChangesPanel`
+- [x] 后端不返回 `fileChanges` 时仍走「无法确定」分支——**三态必须都能在真实界面上出现**
+- [x] `getProvenance` 接入 ProvenanceBadge
 
 ## Task 2.22: 原生目录选择器
 
 **Files:** `src/electron/main.ts`、`src/electron/ipc.ts`、`src/ui/App.tsx`
 
-- [ ] `dialog.showOpenDialog({ properties: ["openDirectory"] })` 替掉 `window.prompt`
-- [ ] 用户取消 ⇒ 什么都不做，**不报错**
-- [ ] 因为要用 `dialog`，这个入口不能放进 `WorkbenchServer`（它必须可在 node 下测）——
+- [x] `dialog.showOpenDialog({ properties: ["openDirectory"] })` 替掉 `window.prompt`
+- [x] 用户取消 ⇒ 什么都不做，**不报错**
+- [x] 因为要用 `dialog`，这个入口不能放进 `WorkbenchServer`（它必须可在 node 下测）——
       走 IPC 上一个独立的窄通道，并在 Task 2.13 的边界扫描里显式放行
 
 ## Task 2.23: MVP 主路径的 App 级测试 ★
@@ -381,10 +382,10 @@ Part 3 交付后作者问「现在还有什么问题」，实查发现**同一�
 
 **这是本 Part 最重要的一条，也是四处缺陷复发的唯一防线。**
 
-- [ ] 假 client + 假事件源，从「打开项目」一路点到「看见回复」「看见产出」「看见成本」
-- [ ] 断言 agent 的回复出现在界面上——**上一版四处缺陷，这一条测试全都会拦下**
-- [ ] 断言 `ChangesPanel` 收到的是 client 返回的数据，不是字面量
-- [ ] 事件跳号时断言界面出声
+- [x] 假 client + 假事件源，从「打开项目」一路点到「看见回复」「看见产出」「看见成本」
+- [x] 断言 agent 的回复出现在界面上——**上一版四处缺陷，这一条测试全都会拦下**
+- [x] 断言 `ChangesPanel` 收到的是 client 返回的数据，不是字面量
+- [x] 事件跳号时断言界面出声
 
 > 教训写在这里：**叶子组件测试证明「给它数据它显示得对」，
 > 证明不了「有没有人给它数据」。** 后者才是用户打开 app 时唯一在意的事。

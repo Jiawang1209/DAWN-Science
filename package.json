@@ -25,7 +25,9 @@
     "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
     "ui:dev": "vite",
     "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts",
-    "dev:mock": "node scripts/dev-mock.mjs"
+    "dev:mock": "node scripts/dev-mock.mjs",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:only": "playwright test"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",
@@ -48,6 +50,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/better-sqlite3": "^9.6.0",

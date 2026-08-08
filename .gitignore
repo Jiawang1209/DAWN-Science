@@ -71,3 +71,7 @@ spikes/**/node_modules/
 # Electron / UI 构建产物
 dist/electron/
 dist/ui/
+
+# Playwright
+test-results/
+playwright-report/

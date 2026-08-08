@@ -28,7 +28,9 @@
   "include": [
     "src",
     "tests",
-    "spikes"
+    "spikes",
+    "e2e",
+    "playwright.config.ts"
   ],
   "exclude": [
     "node_modules",

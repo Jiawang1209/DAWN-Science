@@ -43,10 +43,28 @@
 
 ## 变更日志
 
-### 2026-08-09 — agent 发言改走流式 markdown；贴底滚动不再拽回用户
+### 2026-08-09 — Playwright e2e：15 条用例驱动真实构建产物，G2′ 主路径第一次被机器验证
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Task 3.10 · S7，①-B′ 的最后一步。**单元测试证明不了「真的能用」——419 个测试全绿的那一版，打开之后点什么都没反应。** 这是本项目重复五次的缺陷形态，e2e 是唯一有效的应对（风险登记册 R12）。
+- **What**: `playwright.config.ts` + `e2e/`（夹具 + 4 个 spec，共 **15 条用例**），跑 `_electron.launch()` 起的**真实构建产物**。
+  - 夹具每个用例一套**全新的**配置目录 / 数据库 / 工作区——测试之间不许有暗管道（3.3 被模块级 atom 咬过一次）。
+  - **`DAWN_CONFIG` 刻意指向不存在的文件**：第一次启动应当自己写出默认配置，而那正是「装好了打不开」缺陷的所在，必须被真的走一遍。
+  - **假推理服务器与 `npm run dev:mock` 是同一个模块**——Hermes 明确写下的理由：两套 mock 会各自漂移。
+  - `npm run test:e2e`（先 build 再跑）/ `test:e2e:only`。
+- **四条 spec**: `boot`（4）· `chat`（3）· `session-switch`（3）· `sidebar-states`（5）
+  - `chat` 那条是 **G2′ 判据的核心**：说一句话 → **界面上出现回复** → **`runs` 表有 `agent_turn`** → 假服务器**真的被调用过**（反空转断言）。
+- **e2e 抓到的第一个东西，是我自己测试里的错误假设**（值得记）: `session-switch` 首跑两条失败，报「草稿跟着切过去了」。查下去是 `listByProject` 用 `ORDER BY created_at DESC`——**最新的在前**，我想当然拿 `.first()` 当「先建的那个」，于是点到的正是当前已激活的会话，**根本没切走**。**实现是对的，断言的假设错了。** 加了 `newest`/`oldest` 两个别名把顺序写明，免得再猜。
+- **顺带补上两个缺口**:
+  - `tsconfig.json` 的 `include` 原先不含 `e2e`——**新写的 15 条 spec 没有任何类型保护**。补进去后仍然干净。
+  - 新增项目级 `CLAUDE.md`，写死三条准入规则：①新增协议操作必须同一次改动补 mock 分支（学自 Rho）②能判定的设计规则配扫描测试 ③改了主路径必须自己验证一次。
+- **Verification**: **15 条 e2e 全过**（跑真实构建产物，18.8s）；524 单元/集成测试全过；typecheck（含 e2e）与 build 干净。
+
+### 2026-08-09 — agent 发言改走流式 markdown；贴底滚动不再拽回用户
+
+- **Type**: feat
+- **Commit**: `7d87c29`
 - **Motivation**: Task 3.9 · S6。此前 agent 的回复渲染成 `<pre>` 纯文本——**列表是星号、标题是井号、代码块是三个反引号**。对一个以「读代码、给方案」为主要输出的工具来说，等于把它最主要的形态废掉了。
 - **What**: 新增 `src/ui/markdown.tsx`（`AgentMarkdown`），装 `streamdown` + `shiki` + `use-stick-to-bottom`（计划 §2 已声明分层）。**未引入 `@assistant-ui/react`**——那是「坐在哪一层」的决策，且我们的 transcript 要显示 Run 与来源，与通用聊天不同。
 - **实测发现：streamdown 是 Tailwind 优先的**（据此修正了接法）:

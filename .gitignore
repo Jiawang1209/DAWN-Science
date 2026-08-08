@@ -1,0 +1,60 @@
+# 依赖
+node_modules/
+.pnp.*
+.yarn/
+
+# 构建产物
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Electron 打包
+release/
+*.dmg
+*.exe
+*.AppImage
+
+# 原生模块编译产物
+build/Release/
+prebuilds/
+
+# 本地数据与状态
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.dawn/
+~/.dawn/
+
+# 凭证 —— 绝不入库
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 内核与运行时缓存
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.Rhistory
+.RData
+
+# 测试与覆盖率
+coverage/
+.nyc_output/
+*.log
+
+# 编辑器与系统
+.DS_Store
+.idea/
+*.swp
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# 临时
+tmp/
+.tmp/
+spikes/**/node_modules/

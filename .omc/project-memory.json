@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": null,
-    "testCommand": "grep -n 'dawn/' docs/superpowers/plans/2026-08-06-phase0-and-session-core.md | grep -v '\\.dawn/' | grep -vE 'dawn/(src|tests|spikes|package\\.json|providers\\.example\\.yaml|vitest\\.config\\.ts|tsconfig\\.json|\\.gitignore)' ",
+    "buildCommand": "npx vitest run 2>&1 | tail -5; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | grep -v '^npm notice' | head -4; echo \"=== 完整构建 ===\"; npm run build 2>&1 | grep -v '^npm notice' | tail -6",
+    "testCommand": "npx vitest run 2>&1 | tail -5; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | grep -v '^npm notice' | head -4; echo \"=== 完整构建 ===\"; npm run build 2>&1 | grep -v '^npm notice' | tail -6",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,14 +44,104 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
+      "accessCount": 36,
+      "lastAccessed": 1786167973364,
+      "type": "file"
+    },
+    {
+      "path": "src/session/manager.ts",
       "accessCount": 8,
-      "lastAccessed": 1786156333219,
+      "lastAccessed": 1786163596864,
+      "type": "file"
+    },
+    {
+      "path": "spikes/a-pi-embed.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786156778022,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/pty.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786162866184,
+      "type": "file"
+    },
+    {
+      "path": "src/cli.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786163589653,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
+      "accessCount": 5,
+      "lastAccessed": 1786165174586,
+      "type": "file"
+    },
+    {
+      "path": "spikes/FINDINGS.md",
+      "accessCount": 4,
+      "lastAccessed": 1786159942490,
       "type": "file"
     },
     {
       "path": "package.json",
+      "accessCount": 4,
+      "lastAccessed": 1786163262944,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md",
+      "accessCount": 4,
+      "lastAccessed": 1786166044586,
+      "type": "file"
+    },
+    {
+      "path": "tests/protocol/entities.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786165861865,
+      "type": "file"
+    },
+    {
+      "path": "vitest.config.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786168356492,
+      "type": "file"
+    },
+    {
+      "path": "spikes/d-jupyter-kernel.ts",
       "accessCount": 2,
-      "lastAccessed": 1786155620891,
+      "lastAccessed": 1786159067103,
+      "type": "file"
+    },
+    {
+      "path": "tests/config/loader.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786160162940,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/native.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786163201552,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-06-phase0-and-session-core.md",
+      "accessCount": 2,
+      "lastAccessed": 1786163715401,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/BACKLOG.md",
+      "accessCount": 2,
+      "lastAccessed": 1786165188402,
+      "type": "file"
+    },
+    {
+      "path": "src/store/schema.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786166818779,
       "type": "file"
     },
     {
@@ -61,21 +151,195 @@
       "type": "file"
     },
     {
-      "path": "vitest.config.ts",
+      "path": "spikes/mcp-probe-server.ts",
       "accessCount": 1,
-      "lastAccessed": 1786155634652,
+      "lastAccessed": 1786157187352,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/BACKLOG.md",
+      "path": "spikes/hook-probe.sh",
       "accessCount": 1,
-      "lastAccessed": 1786155673766,
+      "lastAccessed": 1786157192305,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/plans/2026-08-06-phase0-and-session-core.md",
+      "path": "spikes/b-pty-mcp-hook.ts",
       "accessCount": 1,
-      "lastAccessed": 1786156294584,
+      "lastAccessed": 1786157371064,
+      "type": "file"
+    },
+    {
+      "path": "scripts/fix-node-pty.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1786157911053,
+      "type": "file"
+    },
+    {
+      "path": "spikes/types/spawnteract.d.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786158889177,
+      "type": "file"
+    },
+    {
+      "path": "spikes/d-electron-zmq/main.js",
+      "accessCount": 1,
+      "lastAccessed": 1786159135325,
+      "type": "file"
+    },
+    {
+      "path": "src/config/schema.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160097762,
+      "type": "file"
+    },
+    {
+      "path": "src/config/loader.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160195653,
+      "type": "file"
+    },
+    {
+      "path": "tests/store/sessions.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160774305,
+      "type": "file"
+    },
+    {
+      "path": "src/store/sessions.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160820279,
+      "type": "file"
+    },
+    {
+      "path": "tests/runtime/fake.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160894668,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160913943,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/fake.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786160926423,
+      "type": "file"
+    },
+    {
+      "path": "tests/session/lease.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786161189905,
+      "type": "file"
+    },
+    {
+      "path": "src/session/lease.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786161244075,
+      "type": "file"
+    },
+    {
+      "path": "tests/session/manager.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786161411572,
+      "type": "file"
+    },
+    {
+      "path": "providers.example.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1786161514860,
+      "type": "file"
+    },
+    {
+      "path": "tests/runtime/session-dir.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786161752833,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/session-dir.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786161806592,
+      "type": "file"
+    },
+    {
+      "path": "tests/session/stream.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786162497301,
+      "type": "file"
+    },
+    {
+      "path": "src/session/stream.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786162538111,
+      "type": "file"
+    },
+    {
+      "path": "tests/integration/pty.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786162738741,
+      "type": "file"
+    },
+    {
+      "path": "tests/runtime/native.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786163174796,
+      "type": "file"
+    },
+    {
+      "path": "scripts/smoke-native.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786163257663,
+      "type": "file"
+    },
+    {
+      "path": "tests/integration/concurrent-sessions.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786164085298,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/ENTITY-REGISTRY.md",
+      "accessCount": 1,
+      "lastAccessed": 1786164993915,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-08-phase1b-workbench.md",
+      "accessCount": 1,
+      "lastAccessed": 1786165150553,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/version.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786165734774,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/entities.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786165815577,
+      "type": "file"
+    },
+    {
+      "path": "tests/protocol/operations.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786166226666,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/operations.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786166275167,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786166297689,
       "type": "file"
     }
   ],

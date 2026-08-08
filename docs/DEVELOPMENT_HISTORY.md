@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B Task 2.10：项目面板四块，三条硬要求钉成组件测试
+### 2026-08-08 — ①-B Task 2.11–2.13：对话视图、终端下钻、外壳，并把依赖边界写成测试
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: ①-B 的最后三块。UI 的正确性我无法用眼睛判断，所以能钉成测试的部分必须钉住——尤其是「UI 只依赖协议」这条，**原则不写成测试就会被绕过，尤其在赶工时**：加一行 import 比走协议快得多，代价要到几个月后想换掉某个实现时才显现。
+- **What**:
+  - 新增 `src/ui/client.ts`：包住 `window.dawn.invoke` 这一个开口。**握手校验版本，不匹配立即失败**；拆信封使调用方不必每次判断；**`warnings` 被保住而不是吞掉**。`invoke` 可注入，故客户端逻辑不依赖 Electron 也能测。没有桥时报 `no_bridge` 并说明「本页面必须在 DAWN 的 Electron 壳里打开」，而不是抛一个 undefined 错误。
+  - 新增 `src/ui/views.tsx`：会话侧栏（Claude app 式：项目 → 会话）、对话视图、**终端 dock（默认收起）**。**终端是下钻视图而非主界面**——`available=false` 时按钮禁用并说明「仅外部 CLI 会话有终端」，展开但无输出时说「暂无输出」而不是留白。
+  - 新增 `src/ui/App.tsx` 外壳：**Rho 的 grid 骨架**（46px 顶栏 / 主体 / 24px 状态栏）+ **默认 agent-first 单栏**（Rho 源码注释：*task interaction first, contextual work on demand*），侧栏可切出。**点项目名进「项目主页」（四块面板），点会话才进对话视图**——那四样是「关于项目」的，不是「关于本次对话」的。
+  - **Task 2.13 把依赖边界写成扫描测试**：`src/ui/**` 出现 `runtime/` `session/` `store/` `workbench/` `project/` `config/` `electron/` 即失败。**并含一条反向自检**——把一个违规 import 喂给检查器，它必须报出来。没有这条，检查器自己写错了也会一直「全绿」，那是最坏的一种假通过。
+  - `tsconfig` 补 `jsx: react-jsx` 与 DOM lib；vite/vitest 配置分离；`scrollIntoView` 改为可选调用（jsdom 未实现，且滚动失败不该让整个视图崩掉）。
+- **Impact**: **①-B 的 13 个开发任务全部完成**（2.14 功能验收与 2.15 两周观察期需作者本人）。`npm run build` 可产出完整应用。
+- **待作者确认**：**「Claude app 开启终端的具体交互」未经核实**，此处按「底部 dock、点标签开启」实现——这是本轮唯一凭判断而非依据做的取舍。另有两处提案：项目面板作为「项目主页」的位置、终端作为对话视图下方 dock 的形态。
+- **Verification**: 严格 TDD，本轮新增 29 个测试（client 9 + views 15 + boundary 4 + 外壳修正）。**一处失败值得记**：`scrollIntoView is not a function` 让 6 条对话视图用例全挂——jsdom 未实现该 API。判定是**两边都该改**：测试环境的限制是真的，但代码本身也不该因为一个锦上添花的滚动而崩掉。全仓库 327 passed，typecheck 零错误，`npm run build` 通过。
+
+### 2026-08-08 — ①-B Task 2.10：项目面板四块，三条硬要求钉成组件测试
+
+- **Type**: feat
+- **Commit**: `88140d2`
 - **Motivation**: 计划 §Part 3 的三条硬要求验的都是「**显示了什么**」——那恰恰是作者能一眼判断、而我完全看不见的部分。把它们钉成测试，UI 之后怎么改都不会把这三条改丢。
 - **What**:
   - 新增 `src/ui/panels.tsx`：状态 · 产出 · 成本 · 历史 四块。**学 Rho 拆成一组而非一个**（其实测有七个独立面板，正好对应 `ProjectSummary` 的计数）。

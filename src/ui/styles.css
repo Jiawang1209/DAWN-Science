@@ -1,0 +1,62 @@
+/* Rho 的 grid 骨架：46px 顶栏 / 主体 / 24px 状态栏。
+   默认 agent-first 单栏（Rho 源码注释：task interaction first, contextual work on demand）。
+   刻意不做动画、不调像素——作者尚未看过效果，打磨是浪费。 */
+:root { --bg:#1c1c1e; --fg:#e8e8ea; --dim:#98989d; --line:#38383a; --accent:#d77757; --warn:#e0a030; }
+* { box-sizing:border-box; }
+body { margin:0; font:13px/1.55 -apple-system,"PingFang SC",system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+button:disabled { opacity:.45; cursor:default; }
+pre { margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre-wrap; word-break:break-word; }
+
+.app-shell { display:grid; grid-template-rows:46px minmax(0,1fr) 24px; height:100vh; }
+.app-shell .body { display:grid; grid-template-columns:240px minmax(420px,1fr); min-height:0; }
+/* agent-first：侧栏收起，单栏 */
+.app-shell.agent-first .body { grid-template-columns:minmax(0,1fr); }
+.app-shell.agent-first .sidebar { display:none; }
+
+.topbar { display:flex; align-items:center; gap:12px; padding:0 12px; border-bottom:1px solid var(--line); }
+.topbar .brand { font-weight:600; color:var(--accent); }
+.statusbar { display:flex; align-items:center; gap:12px; padding:0 12px; border-top:1px solid var(--line); color:var(--dim); font-size:11px; }
+
+.sidebar { border-right:1px solid var(--line); overflow:auto; padding-bottom:12px; }
+.side-head { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; color:var(--dim); font-size:11px; text-transform:uppercase; }
+.side-head button { color:var(--accent); }
+.project-list,.session-list { list-style:none; margin:0; padding:0; }
+.row { display:flex; justify-content:space-between; gap:8px; width:100%; padding:6px 12px; text-align:left; }
+.row:hover { background:#2a2a2c; }
+.row.active { background:#2f2f31; box-shadow:inset 2px 0 0 var(--accent); }
+.row .sub,.row .state { color:var(--dim); font-size:11px; }
+.state.alive { color:#4caf7d; } .state.exited { color:var(--dim); } .state.starting { color:var(--warn); }
+
+.main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+.panels { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; padding:12px; overflow:auto; }
+.panel { border:1px solid var(--line); border-radius:6px; }
+.panel-title { margin:0; padding:8px 10px; font-size:11px; color:var(--dim); border-bottom:1px solid var(--line); text-transform:uppercase; }
+.panel-body { padding:10px; }
+.empty { margin:0; color:var(--dim); }
+.caveat { margin:0 0 8px; color:var(--warn); }
+.unknown { margin:0 0 4px; font-size:16px; }
+.amount { margin:0 0 4px; font-size:18px; }
+.tokens,.hint { color:var(--dim); font-size:11px; }
+.stat-row,.file-list,.run-list { list-style:none; margin:0; padding:0; }
+.stat-row { display:flex; gap:14px; }
+.file-list li,.run-list li { padding:2px 0; border-bottom:1px solid #2a2a2c; }
+.run-list .origin { color:var(--accent); margin-right:8px; }
+.run-list .req,.run-list .status,.run-list .dur { color:var(--dim); margin-right:8px; font-size:11px; }
+.run.err .status { color:#e05a5a; }
+.prov.ok { color:#4caf7d; } .prov.partial { color:var(--warn); }
+
+.conversation { display:flex; flex-direction:column; min-height:0; flex:1; }
+.conv-head { display:flex; gap:10px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); }
+.conv-head .kind { color:var(--dim); font-size:11px; }
+.turns { flex:1; overflow:auto; padding:12px; }
+.turn { margin-bottom:12px; }
+.turn .who { display:block; color:var(--dim); font-size:11px; margin-bottom:2px; }
+.composer { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--line); }
+.composer textarea { flex:1; min-height:52px; resize:vertical; background:#252527; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:8px; font:inherit; }
+.composer button { padding:0 14px; border:1px solid var(--line); border-radius:6px; }
+
+.dock { border-top:1px solid var(--line); }
+.dock-tabs { display:flex; gap:10px; align-items:center; padding:4px 12px; }
+.dock-content { max-height:280px; overflow:auto; padding:8px 12px; background:#161617; }
+.term { color:#cfcfd2; font-size:12px; }

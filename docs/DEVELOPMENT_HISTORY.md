@@ -43,10 +43,27 @@
 
 ## 变更日志
 
-### 2026-08-08 — 规划文档按分层决策更新：补 GR 门、返工 R 批次、判据生成纪律
+### 2026-08-08 — 修正分层表述：把「谁提供能力」与「从哪个入口进」分开（作者指正）
 
 - **Type**: docs
 - **Commit**: 待回填
+- **Motivation**: 作者读规格 §4 改后的表格，指出「自建 agent loop、工具、harness、压缩、skills → 坐 pi 第三层 `pi-coding-agent`」这一行不对——**「应该用 pi-agent-core 啊」**。核实属实。
+- **核实结果**：`packages/agent`（即 `pi-agent-core`）提供 `agent.ts` · `agent-loop.ts` · `harness/agent-harness.ts` · `harness/compaction/` · `harness/skills.ts` · `harness/system-prompt.ts` · `harness/session/`（jsonl）· `harness/tools/`（**bash · read · write · edit** 四个基础工具）· `harness/utils/truncate.ts`，且全部从 `index.ts` 公开导出。`pi-coding-agent` 在其上**加的**是 grep / find / ls、model-registry、auth-storage、扩展系统、project-trust、slash-commands、event-bus、output-guard、usage-totals。
+- **我错在哪**：把**「谁提供这个能力」**与**「我们从哪个入口拿」**混成了一句话。**而这恰恰是这份文档立的分层纪律要防的含混——我在实现那条纪律的那一行里又犯了同一种错。**
+  正确的表述是两句：**能力由 `pi-agent-core` 提供**；**入口是第三层 `createAgentSession()`**。**坐第三层不是放弃 agent-core，是连它一起拿到**——`pi-coding-agent` 依赖 `pi-agent-core`，harness 已在其中装配好；从第二层进则要自己装配那一整套，而实现落成的正是这条，且装配漏了工具。
+- **What**:
+  - **规格 §4 表**：一行拆成四行，按**提供方**分列（pi-agent-core / pi-coding-agent / pi-ai / pi-protocol），每行给出具体路径。
+  - **规格 §4 新增「坐哪一层」独立段落**，与上表**分开陈述**，并写明逃生口：`AgentSessionConfig { agent: Agent }` 接受自建 Agent，**第二层的钩子在第三层照样挂得上，两层不是二选一**。
+  - **决策文档 §3**：表头「pi 提供」改为「来自哪个包」，逐行标明提供方；新增 2b（grep/find/ls）与 9（JSONL 会话持久化，**明确不采纳**，规格 7.32 理由仍成立）；表前加「先分清两个问题」。
+  - **实体清单 #8**：技术栈栏拆成「入口」与「能力来自」两行；注记记下**两次改写都是被指出的**，并把纪律升级为「必须分开写入口与能力来源」。
+  - **主规划 §1.6**：改为「入口坐第三层，**连带拿到** agent-core 与 pi-ai」。
+- **Impact**: 仅文档，但修的是一处会误导实现的表述——照原表述读，容易以为坐第三层就不用 agent-core 了。
+- **Verification**: 归属逐条核对源码目录（`packages/agent/src/harness/` 与 `packages/coding-agent/src/core/tools/` 实际文件列表），非推测。
+
+### 2026-08-08 — 规划文档按分层决策更新：补 GR 门、返工 R 批次、判据生成纪律
+
+- **Type**: docs
+- **Commit**: `993fa15`
 - **Motivation**: 分层决策通过后，规格、主规划、①-B 计划、实体清单、BACKLOG 里的相关表述都还停在旧决策上。**决策若不落回规划文档，下一次仍会照旧文档实现。**
 - **What**:
   - **规格 §4 非目标表**：pi 那两行改写为合格的分层决策（写明层与放弃项），新增「自建会话协议的形状」一行。表下新增**分层纪律**框：任何依赖必须写清「坐哪一层 / 放弃什么 / 不变式挂哪」，且**对 spike 有约束力**。框里点明——**同一张表里 Jupyter 那行写对过，标准出现过只是没用在 pi 上**。

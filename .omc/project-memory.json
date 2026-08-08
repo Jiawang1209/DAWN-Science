@@ -44,14 +44,14 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 43,
-      "lastAccessed": 1786193953060,
+      "accessCount": 44,
+      "lastAccessed": 1786194228267,
       "type": "file"
     },
     {
       "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
-      "accessCount": 12,
-      "lastAccessed": 1786193847691,
+      "accessCount": 13,
+      "lastAccessed": 1786194203803,
       "type": "file"
     },
     {
@@ -62,8 +62,8 @@
     },
     {
       "path": "docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md",
-      "accessCount": 7,
-      "lastAccessed": 1786193734835,
+      "accessCount": 9,
+      "lastAccessed": 1786194147408,
       "type": "file"
     },
     {
@@ -157,6 +157,12 @@
       "type": "file"
     },
     {
+      "path": "docs/superpowers/ENTITY-REGISTRY.md",
+      "accessCount": 3,
+      "lastAccessed": 1786194190545,
+      "type": "file"
+    },
+    {
       "path": "spikes/d-jupyter-kernel.ts",
       "accessCount": 2,
       "lastAccessed": 1786159067103,
@@ -190,12 +196,6 @@
       "path": "src/protocol/index.ts",
       "accessCount": 2,
       "lastAccessed": 1786182153511,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/ENTITY-REGISTRY.md",
-      "accessCount": 2,
-      "lastAccessed": 1786193878649,
       "type": "file"
     },
     {

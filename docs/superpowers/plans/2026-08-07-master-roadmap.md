@@ -45,7 +45,7 @@ spec 第 5 节的五条不变式高于任何阶段目标。**任何阶段的实�
 | 界面模型 | **对话 / 笔记本 / 并排三视图，同一 Entry 序列的三种投影** | 2026-08-07 |
 | 编排定位 | **可插拔模块**，经 MCP 与子进程边界解耦 | 2026-08-07 |
 | 默认 agent | **DeepSeek + Native loop**，可切 claude / codex / kimi / qwen | 2026-08-07 |
-| **pi 的分层** | **坐第三层 `pi-coding-agent` 的 `createAgentSession()`**；provider / 模型目录 / 工具 / 凭证并发 / 压缩 / skills 全部用 pi 的，不手搓 | **2026-08-08** |
+| **pi 的分层** | **入口坐第三层 `pi-coding-agent` 的 `createAgentSession()`**——**连带拿到 `pi-agent-core` 的 loop / harness / 压缩 / skills / 基础工具与 `pi-ai` 的 39 个 provider**，三者都不手搓 | **2026-08-08** |
 
 重开任一条需走 §8.3 的修订流程。
 

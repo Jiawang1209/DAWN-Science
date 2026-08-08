@@ -87,16 +87,23 @@ interface ToolResultEventResult { content?; details?; isError?; usage? }  // ←
 
 ## 3. 采纳清单：删掉我的，换成 pi 的
 
-| # | 能力 | pi 提供 | 删掉 | 白拿到什么 |
+**先分清两个问题**（作者 2026-08-08 指出我把它们混成了一句）：
+
+- **谁提供**：下表「来自哪个包」一栏。**agent loop / harness / 压缩 / skills / 四个基础工具是 `pi-agent-core` 的**，不是 `pi-coding-agent` 的。
+- **从哪进**：统一从第三层 `createAgentSession()` 进。**坐第三层不是放弃 `pi-agent-core`，是连它一起拿到**——`pi-coding-agent` 依赖 `pi-agent-core`，harness 已在其中装配好。从第二层进则要自己装配那一整套，而实现落成的正是这条，且装配漏了工具。
+
+| # | 能力 | 来自哪个包 | 删掉 | 白拿到什么 |
 |---|---|---|---|---|
-| 1 | Provider + 模型目录 | pi-ai（39 provider） | `config/schema.ts` 的 endpoints/models 两段式、`runtime/native.ts` 手搓 provider | anthropic / google / openai 原生 API（现在走不通）、模型目录、`getEnvApiKey` 认已有环境变量 |
-| 2 | Agent 装配 + 工具 | `createAgentSession()` | `runtime/native.ts` 全部 | **bash · read · write · edit · grep · find · ls** —— 现在是 `tools: []` |
-| 3 | 凭证 | `AuthStorage` + `AuthStorageBackend` 接口 | `electron/credentials.ts` 主体（约 130 行） | 文件锁、revision 校验、stale 检测、AbortSignal —— **418 行并发处理** |
-| 4 | 输出截断 | `core/output-guard.ts` · `tools/truncate.ts` | `session/stream.ts` 的截断部分 | — |
-| 5 | 用量 | 协议的 `UsageSchema` | 自定义 Cost 的可见分支 | 与 pi 一致的字段 |
-| 6 | 上下文压缩 | `harness/compaction/` | —（我们还没做） | branch-summarization |
-| 7 | Skills / 斜杠命令 | `core/skills.ts` · `slash-commands.ts` | —（还没做） | — |
-| 8 | 项目信任 | `core/project-trust.ts` · `trust-manager.ts` | —（还没做） | — |
+| 1 | Provider + 模型目录 | **pi-ai**（39 provider） | `config/schema.ts` 的 endpoints/models 两段式、`runtime/native.ts` 手搓 provider | anthropic / google / openai 原生 API（现在走不通）、模型目录、`getEnvApiKey` 认已有环境变量 |
+| 2 | Agent loop + harness + 基础工具 | **pi-agent-core**（`agent-loop.ts` · `harness/agent-harness.ts` · `harness/tools/`：bash · read · write · edit） | `runtime/native.ts` 全部 | 四个基础工具 —— 现在是 `tools: []` |
+| 2b | grep · find · ls | **pi-coding-agent**（`core/tools/`） | — | 三个额外工具 |
+| 3 | 凭证 | **pi-coding-agent** `core/auth-storage.ts`（`AuthStorage` + `AuthStorageBackend` 接口） | `electron/credentials.ts` 主体（约 130 行） | 文件锁、revision 校验、stale 检测、AbortSignal —— **418 行并发处理** |
+| 4 | 输出截断 | **pi-agent-core** `harness/utils/truncate.ts` + **pi-coding-agent** `core/output-guard.ts` | `session/stream.ts` 的截断部分 | — |
+| 5 | 用量 | **pi-protocol** 的 `UsageSchema` | 自定义 Cost 的可见分支 | 与 pi 一致的字段 |
+| 6 | 上下文压缩 | **pi-agent-core** `harness/compaction/` | —（我们还没做） | branch-summarization |
+| 7 | Skills | **pi-agent-core** `harness/skills.ts`；斜杠命令 **pi-coding-agent** `core/slash-commands.ts` | —（还没做） | — |
+| 8 | 项目信任 | **pi-coding-agent** `core/project-trust.ts` · `trust-manager.ts` | —（还没做） | — |
+| 9 | 会话持久化（JSONL） | **pi-agent-core** `harness/session/jsonl/` | —（我们用 SQLite，见 §5） | 不采纳，规格 7.32 的理由仍成立 |
 
 **第 3 条是关键**：`AuthStorageBackend` 是**接口**（`withLock` / `withLockAsync` 两个方法），
 `FileAuthStorageBackend` 只是默认实现，且构造函数接受 `authPath`。

@@ -107,14 +107,29 @@
 | GPU shader、终端主题系统、SSH 端口转发、内嵌浏览器、图形协议 | wispterm | 与核心命题正交 |
 | Marketplace、远程访问中继 | hive | 与核心命题正交 |
 | 消息平台网关（Telegram / Slack / 飞书 等） | Hermes | 需求中不存在 |
-| 自建 agent loop、工具、harness、压缩、skills | — | **坐 pi 第三层 `pi-coding-agent` 的 `createAgentSession()`**，不是只用第二层的 `Agent` 类 |
-| 自建 LLM provider 抽象、模型目录、凭证并发处理 | — | **使用 pi-ai 的 provider 注册表与 `AuthStorage`**（凭证经自定义 `AuthStorageBackend` 接 OS 加密） |
-| 自建会话协议的形状 | — | **借 `pi-protocol` 的 `snapshot + revision` 重连模型**（不引其 UDS 传输层） |
+| 自建 agent loop、harness、上下文压缩、skills、基础工具（bash/read/write/edit） | — | **由 `pi-agent-core` 提供**（`agent-loop.ts` · `harness/agent-harness.ts` · `harness/compaction/` · `harness/skills.ts` · `harness/tools/`） |
+| 自建 grep/find/ls 工具、模型注册表、凭证并发处理、扩展与授权钩子 | — | **由 `pi-coding-agent` 提供**（`core/tools/` · `core/model-registry.ts` · `core/auth-storage.ts` · `core/extensions/`） |
+| 自建 LLM provider 抽象与模型目录 | — | **由 `pi-ai` 提供**（39 个内置 provider + 生成的模型目录 + `getEnvApiKey`） |
+| 自建会话协议的形状 | — | **借 `pi-protocol` 的 `snapshot + revision` 重连模型**（只借形状，不引其 UDS 传输层） |
 | 自建终端模拟器 | — | 使用 xterm.js + node-pty |
 | Jupyter Server / JupyterLab / notebook 运行时 | — | 只使用 Jupyter **消息协议**，不引入其服务端 |
 
 **范围纪律**：任何新增功能必须先回答"它服务于第 2 节的命题吗"。回答不是"是"的，进非目标清单。
 
+> **坐哪一层（与上表分开陈述——这是两个问题）**
+>
+> 上表回答的是「**谁提供这个能力**」。本条回答「**我们从哪个入口拿**」：
+>
+> **入口是第三层 `pi-coding-agent` 的 `createAgentSession()`。**
+>
+> **坐第三层不是放弃 `pi-agent-core`，而是连它一起拿到**——`pi-coding-agent` 依赖
+> `pi-agent-core`，harness / 压缩 / skills / 基础工具都已在其中装配好。
+> 从第二层的 `Agent` 类进入，则要自己装配那一整套；实现落成的正是这条，且装配漏了工具。
+>
+> **逃生口是开着的**：`AgentSessionConfig { agent: Agent }` 接受自建 Agent，
+> 所以第二层的 `beforeToolCall` / `transformContext` 等钩子在第三层照样挂得上。
+> 两层不是二选一。
+>
 > **分层纪律（2026-08-08 新增，由一次真实失败确立）**
 >
 > 本表前几行原先写的是「使用 pi-agent-core」「使用 pi-ai」——**那不构成决策**。

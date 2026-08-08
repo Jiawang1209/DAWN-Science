@@ -43,10 +43,25 @@
 
 ## 变更日志
 
+### 2026-08-09 — 终端隐藏时不再卸载；补齐 CJK 宽度与链接 addon
+
+- **Type**: fix
+- **Commit**: 待回填
+- **Motivation**: Task 3.7 · S4。Hermes `DESIGN.md`：*"Expensive, stateful surfaces (terminals, live tools) stay alive when hidden. **Visibility is not lifecycle.**"*
+- **原缺陷**: `TerminalDock` 收起时把 `TerminalPane` 整个卸载——xterm 实例 dispose、写入游标归零，**滚屏内容全没了**。而那些字节是 agent 干活的唯一现场记录。**更麻烦的是它悄无声息**：收起再展开看到一片空白，很容易被读成「这个会话本来就没输出」。**丢数据而不出声，是最坏的一种。**
+- **What**:
+  - `{open && available ? … : null}` → `available ? <div hidden={!open}>…</div> : null`。`available === false` 才是真的不挂——那不是"隐藏"，是这类会话**本来就没有**终端。
+  - 接入 **`Unicode11Addon`**：没有它中文与 emoji 按一格算，而终端里占两格——整行错位，claude/codex 的 TUI 框线会散架。**本项目界面全中文，这条不是可选项。**
+  - 接入 **`WebLinksAddon`**：agent 经常吐文档链接与报错页地址。
+  - `@xterm/addon-serialize` 一并装上，供将来的会话恢复用（本次未接线）。
+- **「不卸载」换来的新问题，一并处理**: **隐藏元素的尺寸是 0**，此间到达的 resize 会把终端算成 0 列，展开后看到一团按错误宽度折行的内容。加了 `ResizeObserver`，仅在 `offsetParent !== null`（真的可见）时才 `fit()`。
+- **一条旧测试改断言、不改意图**: 「默认收起」原来用 `.term-host` **数量为 0** 来证明，但那测的是**挂载**。挂载与可见现在是两件事，改为断言 `hidden`。意图「终端是下钻视图、不占主界面」不变。
+- **Verification**: 5 条新测试先 FAIL（3/5）再转绿，含「展开与收起之间宿主是**同一个元素**」——重建会 dispose 掉实例，这条才是真正防住回归的那一条。505 tests passed（40 文件，+5），typecheck 与 build 干净，真 Electron 启动零错误。
+
 ### 2026-08-09 — 连接状态改成五态状态机：重试有界，降级不挡界面
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `c689c2a`
 - **Motivation**: Task 3.6 · S3。Hermes：*"The states around loading are distinct experiences — empty, loading, reconnecting, degraded/stale, and exhausted-recovery **each deserve their own honest copy and their own way out**."*
 - **两态模型把三件事混成了一件**（此前只有 `ready` 布尔 + `fatal` 字符串）:
   1. 「正在连」与「连不上了」长得一样——都是那句「连接中…」

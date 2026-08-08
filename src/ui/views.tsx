@@ -415,8 +415,21 @@ export function TerminalDock({
         {!available ? <span className="hint">仅外部 CLI 会话有终端</span> : null}
         {available && chunks.length === 0 ? <span className="hint">暂无输出</span> : null}
       </div>
-      {open && available ? (
-        <div className="dock-content">
+      {/**
+       * **可见性不是生命周期。**
+       *
+       * 此前这里是 `{open && available ? <TerminalPane/> : null}`——收起即卸载，
+       * xterm 实例 dispose、写入游标归零，**滚屏内容全没了**。
+       * 而那些字节是 agent 干活的唯一现场记录。
+       *
+       * 更麻烦的是它悄无声息：收起再展开看到一片空白，很容易被读成
+       * 「这个会话本来就没输出」。丢数据而不出声，是最坏的一种。
+       *
+       * 现在用 `hidden` 隐藏而不是卸载。`available === false` 才是真的不挂——
+       * 那不是"隐藏"，是这类会话本来就没有终端。
+       */}
+      {available ? (
+        <div className="dock-content" hidden={!open}>
           <TerminalPane chunks={chunks} {...(onInput ? { onInput } : {})} />
         </div>
       ) : null}

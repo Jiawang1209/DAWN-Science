@@ -185,9 +185,14 @@ describe("终端 dock", () => {
   // 这里只验容器契约：什么时候挂载窗格、按钮什么时候可用。
   const paneCount = () => document.querySelectorAll(".term-host").length
 
+  // **2026-08-09 改断言，不改意图。** 原来用「窗格数量为 0」证明"收起"，
+  // 但那测的是**挂载**。Task 3.7 之后挂载与可见是两件事：收起只是 hidden，
+  // 实例仍在（visibility is not lifecycle）。意图「默认不占主界面」不变。
   it("默认收起 —— 终端是下钻视图，不是主界面", () => {
-    render(<TerminalDock open={false} onToggle={noop} chunks={["hi"]} available />)
-    expect(paneCount()).toBe(0)
+    const { container } = render(
+      <TerminalDock open={false} onToggle={noop} chunks={["hi"]} available />,
+    )
+    expect(container.querySelector(".dock-content")?.hasAttribute("hidden")).toBe(true)
   })
 
   it("展开后挂载终端窗格", () => {

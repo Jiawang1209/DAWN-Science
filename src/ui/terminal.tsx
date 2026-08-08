@@ -38,9 +38,11 @@ export function TerminalPane({
     // 动态 import：xterm 只在真的要显示终端时才加载。
     // 它带样式与字体度量，放进首屏包会拖慢启动，而多数会话根本没有终端。
     void (async () => {
-      const [{ Terminal }, { FitAddon }] = await Promise.all([
+      const [{ Terminal }, { FitAddon }, { Unicode11Addon }, { WebLinksAddon }] = await Promise.all([
         import("@xterm/xterm"),
         import("@xterm/addon-fit"),
+        import("@xterm/addon-unicode11"),
+        import("@xterm/addon-web-links"),
       ])
       if (disposed) return
       instance = new Terminal({
@@ -51,6 +53,16 @@ export function TerminalPane({
       })
       const addon = new FitAddon()
       instance.loadAddon(addon)
+      /**
+       * **CJK 宽度。** 没有它，中文与 emoji 按一格算，
+       * 而终端里它们占两格——整行会错位，claude/codex 的 TUI 框线会散架。
+       * 本项目界面全中文，这条不是可选项。
+       */
+      const unicode = new Unicode11Addon()
+      instance.loadAddon(unicode)
+      instance.unicode.activeVersion = "11"
+      // 输出里的 URL 可点。agent 经常吐出文档链接与报错页地址
+      instance.loadAddon(new WebLinksAddon())
       instance.open(el)
       addon.fit()
       instance.onData((d) => inputRef.current?.(d))
@@ -84,6 +96,23 @@ export function TerminalPane({
 
   // 只写新增的部分。整份重写会让光标位置与滚动全部错乱
   useEffect(flush, [chunks])
+
+  /**
+   * 从隐藏变回可见时重新 `fit()`。
+   *
+   * **隐藏的元素尺寸是 0**，此间到达的 resize 会把终端算成 0 列。
+   * 不重算的话展开后看到的是一团按错误宽度折行的内容——
+   * 这正是「不卸载」换来的新问题，得一并处理。
+   */
+  useEffect(() => {
+    const el = host.current
+    if (!el || typeof ResizeObserver === "undefined") return
+    const ro = new ResizeObserver(() => {
+      if (el.offsetParent !== null) fit.current?.fit()
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   return <div className="term-host" ref={host} />
 }

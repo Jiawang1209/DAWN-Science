@@ -10,8 +10,17 @@
  */
 import type { WorkbenchServer, WorkbenchResponse } from "../workbench/server.js"
 
-/** 渲染进程与主进程之间唯一的通道名。 */
+/** 请求/响应通道。渲染进程主动发起，主进程回。 */
 export const IPC_CHANNEL = "dawn:workbench:invoke"
+
+/**
+ * 事件通道。**方向相反：主进程主动推，渲染进程只听。**
+ *
+ * 与请求/响应通道**刻意不合并**——两者的错误语义完全不同：
+ * 请求失败要回给发起者并可重试，事件推送失败没有发起者可回。
+ * 合并会逼着其中一方接受另一方的语义。
+ */
+export const IPC_EVENT_CHANNEL = "dawn:workbench:event"
 
 export interface IpcHandler {
   (operation: unknown, request: unknown, ctx?: { requestId?: string }): Promise<WorkbenchResponse>

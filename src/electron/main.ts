@@ -7,7 +7,7 @@
  */
 import { app, BrowserWindow, dialog, ipcMain, safeStorage } from "electron"
 import { join } from "node:path"
-import { IPC_CHANNEL, createIpcHandler } from "./ipc.js"
+import { IPC_CHANNEL, IPC_EVENT_CHANNEL, createIpcHandler } from "./ipc.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 
@@ -30,6 +30,14 @@ function createWindow(): void {
       sandbox: true,
     },
   })
+
+  // 事件中枢 → 这个窗口。**销毁后要停手**：往已销毁的 webContents 发送会抛，
+  // 而这条路径在关窗时必然发生（PTY 还在吐字节）
+  const off = workbench?.events.onEvent((event) => {
+    if (win.isDestroyed()) return
+    win.webContents.send(IPC_EVENT_CHANNEL, event)
+  })
+  win.on("closed", () => off?.())
 
   if (DEV_URL) void win.loadURL(DEV_URL)
   else void win.loadFile(join(import.meta.dirname, "../ui/index.html"))

@@ -2768,7 +2768,12 @@ if (cmd === 'agents') {
 - [ ] **Step 4: 跑全量测试**
 
 Run: `npm test && npm run typecheck`
-Expected: 全部 PASS（config 7 + store 5 + runtime fake 5 + session-dir 5 + lease 9 + manager 8 + stream 6 + pty 3 = 48 passed），typecheck 零错误。
+
+> **实测结果（2026-08-08）：120 passed**，高于本行原先预估的 48。
+> 差额全部来自边界情况的增补，逐项见开发历史。各文件实测：
+> config 15 · store 12 · runtime fake 10 · session-dir 13 · native 9 · lease 20 · manager 19 · stream 13 · pty 9。
+> **原预估已作废**，此处保留是为了记录预估与实测的差距——
+> 详细计划能定到步骤级，但定不到「有多少条边界需要护」。
 
 - [ ] **Step 5: 阶段①-A 验收**
 

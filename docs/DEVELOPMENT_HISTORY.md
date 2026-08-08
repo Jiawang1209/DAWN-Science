@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A Native Runtime：pi agent loop 适配器，真实对话打通（Task 1.10）
+### 2026-08-08 — 阶段①-A 完成：CLI 补全与验收，五项判据四项自动通过（Task 1.11）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 阶段①-A 的收尾。把配置、存储、租约、生命周期、三种 Runtime 接成一个能用的命令行工作台，并对照验收判据逐项核验。
+- **What**:
+  - `src/cli.ts` 补全：`agents` / `run <agent>` / `sessions` / `demo`。`run` 起会话并接管当前终端——**user 持有租约**（规格 7.1，engine 不得抢占），pty 会话进原始模式使按键原样透传（含 Ctrl-C），native 会话保持常规模式让 Ctrl-C 仍能终止 CLI 自身；转发 SIGWINCH 给 pty，退出时恢复终端模式。
+  - **修正计划 CLI 的一处实质缺陷**：计划把 pty runtime 写死成 `{command:'claude'}`，而 pty agent 的命令是 registry 逐个定义的——配置里的 `codex` 会被**错误地起成 claude**，且进程照样起得来，失效方式很隐蔽。为此给 `SessionManager` 新增 `ptyRuntimeFor(agentId, def)` 钩子（未提供时回退到 `runtimes.pty`，既有测试不受影响），CLI 据此按 agent 定义构造 runtime，并从命令名推断 CLI 家族——**认不出就不写任何配置**，因为猜错家族会生成一份该 CLI 读不懂的配置而进程照常启动。
+  - 新增 `SessionManager.runtimeOf()` 与 `resize()`，避免 CLI 用类型断言掏私有字段。
+  - **补一个真实缺口**：管道输入到 EOF 时会话不会结束。新增 stdin `end` 处理，native 会话**等当前回合跑完再收摊**，否则 `echo ... | dawn run` 会在模型还没答完时被切断。
+  - 计划 Step 4 的「预期 48 passed」已作废，改为记录实测 120 并保留差额说明。
+- **Impact**: **阶段①-A 完成。** 模块清单：配置层（schema/loader）、存储层（schema/sessions）、租约、会话生命周期、隔离配置生成、终端流、三种 Runtime（fake/pty/native）、CLI。**已知缺口**：无 UI（①-B）、无编排（③）、无科学计算内核（②）。
+- **Verification**: 全仓库 **120 passed**，typecheck 零错误。阶段验收五项判据：**① `agents` 列出 native 与 pty 两类 ✅；② `run ds-chat` 真实问答 ✅**（DeepSeek 正确回答了 PCA 的定义）；**④ `sessions` 落库且启动对账生效 ✅**（手工插入一条残留 `alive` 记录，重启后被显式修正为 `exited`）；**⑤ 全局 `~/.claude/settings.json` md5 前后一致 ✅**。**③「`run claude-code` 起真终端且键盘可用」只完成了一半**——已自动验证 claude 在 PTY 中启动（TUI 输出 5267 字节）、per-session `mcp.json` 落地、全局配置未被污染，但「真的敲字、真的 Ctrl-C」属手感判断，**必须由作者本人在键盘前确认**，G1 决策门就此保持未决。
+
+### 2026-08-08 — 阶段①-A Native Runtime：pi agent loop 适配器，真实对话打通（Task 1.10）
+
+- **Type**: feat
+- **Commit**: `0ce7a5e`
 - **Motivation**: 阶段①-A 的最后一块运行时。它决定 `dawn run ds-chat` 能否真的跟模型对话，也是 Spike A 结论的兑现点。
 - **What**:
   - 新增 `src/runtime/native.ts`：`NativeRuntime`，用 `pi-agent-core` 的 `Agent` + `pi-ai` 的 provider 层。

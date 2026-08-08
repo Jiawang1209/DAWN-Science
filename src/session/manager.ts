@@ -10,15 +10,25 @@
  */
 import { randomUUID } from "node:crypto"
 import { join } from "node:path"
-import type { ProviderRegistry } from "../config/schema.js"
+import type { AgentDef, ProviderRegistry } from "../config/schema.js"
 import type { SessionRecord, SessionStore } from "../store/sessions.js"
 import type { AgentRuntime, EventSink, SessionId, SessionSpec } from "../runtime/types.js"
 import { LeaseManager, type Holder } from "./lease.js"
+
+export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
 
 export interface SessionManagerOptions {
   store: SessionStore
   registry: ProviderRegistry
   runtimes: { native: AgentRuntime; pty: AgentRuntime }
+  /**
+   * 按 agent 定义构造 pty runtime。给出时优先于 `runtimes.pty`。
+   *
+   * 存在的理由：pty agent 的**命令由 registry 逐个定义**（claude / codex / …），
+   * 单一共享的 pty runtime 只能起一种命令。没有这个钩子，配置里的 `codex`
+   * 会被错误地起成 claude——而进程照样起得来，失效方式很隐蔽。
+   */
+  ptyRuntimeFor?: (agentId: string, def: PtyAgentDef) => AgentRuntime
   workspaceRoot: string
   leaseTtlSeconds?: number
 }
@@ -28,6 +38,7 @@ export class SessionManager {
   private readonly store: SessionStore
   private readonly registry: ProviderRegistry
   private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime }
+  private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
   private readonly bound = new Map<SessionId, AgentRuntime>()
 
@@ -35,6 +46,7 @@ export class SessionManager {
     this.store = opts.store
     this.registry = opts.registry
     this.runtimes = opts.runtimes
+    this.ptyRuntimeFor = opts.ptyRuntimeFor
     this.leases = new LeaseManager({ ttlSeconds: opts.leaseTtlSeconds ?? 300 })
   }
 
@@ -62,7 +74,10 @@ export class SessionManager {
       spec.endpoint = { baseUrl: ep.baseUrl, apiKey: ep.apiKey, model: def.model }
     }
 
-    const runtime = def.kind === "native" ? this.runtimes.native : this.runtimes.pty
+    const runtime =
+      def.kind === "native"
+        ? this.runtimes.native
+        : (this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty)
     try {
       const handle = await runtime.start(spec)
       this.bound.set(id, runtime)
@@ -96,6 +111,16 @@ export class SessionManager {
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     rt.write(sessionId, data)
+  }
+
+  /** 本进程内该会话绑定的 runtime。调用方需要区分 runtime 类型时用它。 */
+  runtimeOf(sessionId: SessionId): AgentRuntime | undefined {
+    return this.bound.get(sessionId)
+  }
+
+  /** 转发终端尺寸变化。只有 pty runtime 实现了 resize，其余是空操作。 */
+  resize(sessionId: SessionId, cols: number, rows: number): void {
+    this.bound.get(sessionId)?.resize?.(sessionId, cols, rows)
   }
 
   async stop(sessionId: SessionId): Promise<void> {

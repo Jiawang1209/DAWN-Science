@@ -212,3 +212,72 @@ describe("SessionManager · 启动对账", () => {
     expect(ctx.store.get("stale")?.state).toBe("exited")
   })
 })
+
+describe("SessionManager · 按 agent 定义构造 pty runtime", () => {
+  // 计划的 CLI 把 pty runtime 写死成 command:'claude'，这样 registry 里
+  // 命令不同的 pty agent（如 codex）会错误地起成 claude。
+  // G1 判据之一是「四个会话能并存」，混合不同 CLI 的场景必须成立。
+  it("ptyRuntimeFor 优先于 runtimes.pty，且能拿到该 agent 的定义", async () => {
+    const db = new Database(":memory:")
+    migrate(db)
+    const store = new SessionStore(db)
+    const wrong = stubRuntime()
+    const seen: { agentId: string; command: string }[] = []
+
+    const mgr = new SessionManager({
+      store,
+      registry,
+      runtimes: { native: stubRuntime(), pty: wrong },
+      ptyRuntimeFor: (agentId, def) => {
+        seen.push({ agentId, command: def.command })
+        return stubRuntime()
+      },
+      workspaceRoot: "/tmp/x",
+    })
+
+    await mgr.create("claude-code", "/tmp/w")
+    expect(seen).toEqual([{ agentId: "claude-code", command: "claude" }])
+  })
+
+  it("未提供 ptyRuntimeFor 时回退到 runtimes.pty", async () => {
+    const db = new Database(":memory:")
+    migrate(db)
+    const store = new SessionStore(db)
+    let used = false
+    const mgr = new SessionManager({
+      store,
+      registry,
+      runtimes: {
+        native: stubRuntime(),
+        pty: stubRuntime({
+          start: async (s) => {
+            used = true
+            return { sessionId: s.sessionId, pid: 1 }
+          },
+        }),
+      },
+      workspaceRoot: "/tmp/x",
+    })
+    await mgr.create("claude-code", "/tmp/w")
+    expect(used).toBe(true)
+  })
+
+  it("native agent 不走 ptyRuntimeFor", async () => {
+    const db = new Database(":memory:")
+    migrate(db)
+    const store = new SessionStore(db)
+    let called = false
+    const mgr = new SessionManager({
+      store,
+      registry,
+      runtimes: { native: stubRuntime(), pty: stubRuntime() },
+      ptyRuntimeFor: () => {
+        called = true
+        return stubRuntime()
+      },
+      workspaceRoot: "/tmp/x",
+    })
+    await mgr.create("ds-agent", "/tmp/w")
+    expect(called).toBe(false)
+  })
+})

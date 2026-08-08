@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B Task 2.2：操作契约与错误码，13 个操作冻结
+### 2026-08-08 — ①-B Task 2.3：协议服务端，派发 + 双向校验 + 错误归一
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: Part 0 的最后一块。有了实体与操作，还需要一个把它们执行起来的外壳——且这个外壳必须**不认识 Electron**，否则协议层就被 GUI 绑架了。
+- **What**:
+  - 新增 `src/workbench/server.ts`：`WorkbenchServer.handle(operation, request, ctx)`。职责恰好三件——**派发**、**双向校验**、**错误归一**。
+  - **修正计划的一处依赖倒置**：计划把服务端（2.3）排在存储（2.4）之前，但 `listRuns` / `getProject` 需要 2.4 才有的表。解法沿用 ①-A 已验证的模式——**接口 + Fake 先行，真实现随后**（当初 `AgentRuntime` + `FakeRuntime` 即如此）。本任务交付 `WorkbenchBackend` 接口与服务端，Task 2.4–2.6 补真实后端。**顺序不变，依赖方向倒过来。**
+  - **双向校验**：请求进来过一遍 schema，**响应出去再过一遍**。后端返回错结构会被拦成 `internal_error` 而不漏给 UI——否则 UI 要到运行期才崩，且现场已经丢了。
+  - **错误不泄露内部细节**：意外异常一律归一为 `internal_error`，原始消息只进 `onInternalError` 日志回调。理由与 Rho 注释一致（*details are not exposed publicly*）——异常消息可能含路径、连接串、密钥片段。已写测试：后端抛出含 `hunter2` 的错误，响应的 message 与 details 都不得出现该串。
+  - **但业务性失败保留错误码**：后端可抛 `WorkbenchFault`（带 `workbenchCode`），使「项目不存在」与「数据库炸了」在 UI 上不同。否则一切压成 `internal_error`，UI 无法分辨。
+  - **测试逼出一处设计修正**：`readOnly` 用例失败，暴露出 **`getCapabilities` 根本不该由后端回答**——协议版本、操作清单、只读模式都是**协议层与服务端配置的事实**，后端不知道也不该知道自己被架在什么模式下。让后端回答它，等于**让被观察者自报观察条件**。已从 `WorkbenchBackend` 接口中移除，改由服务端自答。
+- **Impact**: **Part 0（协议三件套）完成。** 服务端可在 Node 里直接测——不用起 GUI、不用 IPC；Electron 的 IPC 桥（Task 2.8）只是把 `invoke` 转接到这里，不含业务逻辑。①-B 进度 3/15。
+- **Verification**: 严格 TDD，15 个测试，覆盖派发、双向校验、后端异常、只读模式、握手五组。全仓库 195 passed，typecheck 零错误。
+
+### 2026-08-08 — ①-B Task 2.2：操作契约与错误码，13 个操作冻结
+
+- **Type**: feat
+- **Commit**: `be38dc8`
 - **Motivation**: 协议的第二块。有了实体还不够——UI 要能调用，就得先定死「有哪些操作、请求长什么样、错误怎么表达」。
 - **What**:
   - 新增 `src/protocol/operations.ts` 与 `src/protocol/index.ts`（对外唯一出口）。**13 个操作就此冻结**：8 个只读 + 5 个可写。

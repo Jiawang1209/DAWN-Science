@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — 阶段①-A 输入租约：写权归属、抢占规则与审计链（Task 1.5）
+### 2026-08-08 — 阶段①-A 会话生命周期：先落库再改内存、租约守卫写入（Task 1.6）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 把配置层、存储层、Runtime 契约、租约四块接起来。这一层的核心风险是**状态裂缝**——内存说会话活着而库里没有，进程崩溃后这种不一致无法分辨，UI 会拿着一个不存在的会话去连一个不存在的进程。
+- **What**:
+  - 新增 `src/session/manager.ts`：`create` / `attach` / `write` / `stop` / `list` / `reconcileOnStartup`，租约作为公开成员暴露。
+  - **状态先落库再改内存**，且失败路径同样落库：未知 agent 在**插入之前**失败（不留半截记录），运行时启动失败则显式转 `exited` 并记 `exitCode: -1`，**绝不留在 `starting`**。
+  - **进程自行退出时回写 `exitCode`**：`create` 内注册的观察者监听 `exited` 事件并落库，否则库里会永远停在 `alive`。已单独写测试——绕过 manager 直接让 runtime 退出，验证库中状态与退出码都被更新。
+  - **`write` 以租约为唯一入口**：无租约或持有者不符即拒绝，这是规格 7.1 写权可追责的守卫点。`stop` 连带释放租约。
+  - 责任边界写进文件头：本类知道 registry / store / lease，但**不知道任何 provider 细节**——「怎么跟进程说话」全部委托给 `AgentRuntime`。
+- **Impact**: 阶段①-A 的核心链路贯通。Task 1.7 起可在此基础上加隔离配置目录与真实 Runtime。
+- **Verification**: 严格 TDD，先确认 FAIL 再实现。16 个测试，高于计划预估的 8 个——增补了 pty agent 可创建、**native agent 的 spec 确实带上 endpoint 的连接信息**（验证 apiKey/model 的装配链路）、pty agent 的 spec 不带 endpoint、进程自行退出时 exitCode 回写、`list` 返回落库记录、抢占后 user 自己可写、`stop` 释放租约、对未活动会话附加观察者报错。测试桩沿用计划自检时发现的写法——**用完整桩对象而非 `{ ...实例 }`**，因为展开只复制自有属性，类方法在原型上会全部丢失。全仓库 73 passed，typecheck 零错误。
+
+### 2026-08-08 — 阶段①-A 输入租约：写权归属、抢占规则与审计链（Task 1.5）
+
+- **Type**: feat
+- **Commit**: `04e931b`
 - **Motivation**: 规格 7.1 的落地，也是阶段①-A 最复杂的一块。人与引擎会同时想往一个会话里写，需要一个明确的仲裁机制；更重要的是**写权的每一次转移都要可追责**——这是不变式 3「没有不可见的行动」在会话层的体现。
 - **What**:
   - 新增 `src/session/lease.ts`：`LeaseManager`，含 `acquire` / `release` / `current` / `previewTakeover` / `observe` / `observers` / `audit`。

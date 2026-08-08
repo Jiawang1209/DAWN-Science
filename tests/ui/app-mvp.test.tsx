@@ -22,7 +22,7 @@ import { act, render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { App } from "../../src/ui/App.js"
 import { createClient, type RawResponse } from "../../src/ui/client.js"
 import { OPERATIONS, WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
-import type { SessionEvent } from "../../src/protocol/index.js"
+import type { SessionUpdate } from "../../src/protocol/index.js"
 
 const RUN = {
   runId: "r1",
@@ -116,7 +116,10 @@ function harness(over: { projects?: unknown[]; runs?: unknown[]; pick?: string |
         sessions.push(SESSION)
         return SESSION
       case "subscribeSession":
-        return { sessionId: "s1", events: [], latestSeq: 0, truncated: false }
+        return {
+          sessionId: "s1", kind: "native", revision: 0, items: [],
+          terminal: "", terminalTrimmed: false, state: "alive",
+        }
       case "acquireLease":
         return {
           sessionId: "s1",
@@ -164,17 +167,15 @@ function harness(over: { projects?: unknown[]; runs?: unknown[]; pick?: string |
 
 type Harness = ReturnType<typeof harness>
 
-const agentSays = (text: string, seq: number, final = false): SessionEvent =>
+/** 服务端推的是**累积后的整条**——界面按 id 覆盖，不必自己拼增量 */
+const agentSays = (text: string, revision: number, final = false): SessionUpdate =>
   ({
     workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
     sessionId: "s1",
-    seq,
-    kind: "turn",
-    who: "agent",
-    text,
-    turnId: "a1",
-    final,
-  }) as SessionEvent
+    revision,
+    type: "item",
+    item: { type: "turn", id: "a1", who: "agent", text, final },
+  }) as SessionUpdate
 
 /** 走完「打开项目 → 新建会话」。 */
 async function openAndStart(h: Harness) {
@@ -227,7 +228,7 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
     await waitFor(() => expect(h.calls.some((c) => c.op === "writeToSession")).toBe(true))
 
     h.push(agentSays("在", 1))
-    h.push(agentSays("，我在", 2, true))
+    h.push(agentSays("在，我在", 2, true))
 
     // **这一条就是上一版做不到的事**
     expect(await screen.findByText("在，我在")).toBeDefined()
@@ -247,8 +248,8 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
 
     h.push({
       workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
-      sessionId: "s1", seq: 1, kind: "turn", who: "user",
-      text: "跑一下测试", turnId: "u1", final: true,
+      sessionId: "s1", revision: 1, type: "item",
+      item: { type: "turn", id: "u1", who: "user", text: "跑一下测试", final: true },
     })
     expect(await screen.findByText("跑一下测试")).toBeDefined()
   })
@@ -293,25 +294,35 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
 })
 
 describe("MVP 主路径 · 异常要出声", () => {
-  it("事件跳号时界面上有提示，而不是默默少一段", async () => {
+  it("**revision 跳号时重新取快照，而不是只报警**", async () => {
+    // 这是 snapshot + revision 相对旧设计（seq + 环形缓冲）真正的收获：
+    // 旧设计少的那一段补不回来，只能告诉用户「丢了」；新设计能自愈。
     const h = harness()
     await openAndStart(h)
+    const before = h.calls.filter((c) => c.op === "subscribeSession").length
+
     h.push(agentSays("一", 1))
     h.push(agentSays("五", 9))
-    expect(await screen.findByText(/跳号/)).toBeDefined()
+
+    await waitFor(() =>
+      expect(h.calls.filter((c) => c.op === "subscribeSession").length).toBeGreaterThan(before),
+    )
   })
 
-  it("输出被丢弃时说明丢了多少", async () => {
+  it("跳号后连着来的更新不会每条都触发一次重取", async () => {
     const h = harness()
     await openAndStart(h)
-    h.push({
-      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
-      sessionId: "s1", seq: 1, kind: "dropped", droppedChars: 4096,
-    })
-    expect(await screen.findByText(/4096/)).toBeDefined()
+    const before = h.calls.filter((c) => c.op === "subscribeSession").length
+    h.push(agentSays("一", 1))
+    h.push(agentSays("五", 9))
+    h.push(agentSays("六", 10))
+    h.push(agentSays("七", 11))
+    await waitFor(() =>
+      expect(h.calls.filter((c) => c.op === "subscribeSession").length).toBe(before + 1),
+    )
   })
 
-  it("畸形事件被丢弃并出声，不流进对话", async () => {
+  it("畸形更新被丢弃并出声，不流进对话", async () => {
     const h = harness()
     await openAndStart(h)
     h.push({ garbage: true })

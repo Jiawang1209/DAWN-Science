@@ -54,12 +54,12 @@ describe("客户端 · 握手", () => {
   })
 
   it("服务端 minor 更高时兼容（多出的字段界面用不到，无害）", async () => {
-    const c = createClient(async () => caps("1.9"))
+    const c = createClient(async () => caps("2.9"))
     await expect(c.handshake()).resolves.toBeDefined()
   })
 
   it("major 不同时立即失败 —— 不静默降级", async () => {
-    const c = createClient(async () => caps("2.0"))
+    const c = createClient(async () => caps("3.0"))
     await expect(c.handshake()).rejects.toMatchObject({ code: "version_mismatch" })
   })
 

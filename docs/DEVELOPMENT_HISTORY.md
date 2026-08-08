@@ -43,10 +43,27 @@
 
 ## 变更日志
 
-### 2026-08-08 — R2：native runtime 与配置层重写，agent 终于能干活了
+### 2026-08-08 — R4：协议升 2.0，会话读取改 snapshot + revision，跳号从「出声」变成「自愈」
 
 - **Type**: refactor
 - **Commit**: 待回填
+- **Motivation**: 返工 R4。旧设计是 **seq + 环形缓冲 + `dropped` + `truncated` + `earliestSeq`**——那是我前一天刚写的，而它**为一个本不该存在的问题而设**：只要服务端持有一份完整 transcript，重连给全量即可，根本不存在「丢了一段要道歉」。
+- **What**（借 `pi-protocol` 的形状，不引其 UDS 传输层）：
+  - **协议 1.3 → 2.0**（破坏性）。`subscribeSession` 返回 `SessionSnapshot{revision, items, terminal, ...}`，不再有 `fromSeq`；事件信封整体换成 `SessionUpdate`（item / bytes / state / snapshot）。
+  - **跳号的处置变了，这是本次重写真正的收获**：旧设计只能出声，少的那段补不回来；新设计调 `onResync` **重新取一次快照**，缺的内容被完整补上。**能自愈的机制不需要道歉。** 并加了「已在重取就不再喊」的抑制，否则跳号后每条更新都会触发一次重取。
+  - **`TranscriptItem` 三态**：turn / **tool** / notice。工具调用终于有了自己的条目——①-B「看不见 agent 在干什么」的根因之一就是它在 runtime 层就被丢掉了。`notice` 单列是因为**错误与系统提示既不是对话也不是工具**，混进 turn 会污染对话记录。
+  - **服务端推累积后的整条，按 id 覆盖**，界面不必自己拼增量——比旧设计的「文本增量靠 turnId 归拢」少一层客户端状态。
+  - **新增 `abortSession` / `steerSession`**，runtime 与 SessionManager 一并接通。**不支持时明确抛错，不静默成功**（PTY 的中止是送 Ctrl-C，走 `write`，语义不同，不挤进同一个方法）。界面在 agent 说话未收尾时显示「停止」。
+  - `ConversationView` 改渲染 transcript，工具行显示名字、入参摘要与结果；入参**只取一行摘要**，展开整个对象会把对话区淹掉。
+- **一处观念修正**：**终端 scrollback 被裁掉不是异常。** 旧设计为此发 `dropped` 事件要求界面道歉；但终端本来就是有限回滚的，xterm 自己也只留 5000 行。现在快照如实标注 `terminalTrimmed`，不发故障事件——**把正常契约当成故障来播报，是把噪音当成诚实**。
+- **真机冒烟抓到一个打包缺陷**：把 pi 打进主进程 ESM bundle 后 `SyntaxError: Identifier 'createRequire' has already been declared`——**主进程根本起不来**。pi 自己注入 `createRequire`，与我们为 external 包注入的那份重名。已把 pi 三个包标为 external（纯 JS，本就不必打包）。**这个缺陷 419 个单测与 typecheck 都发现不了，只有真启动一次才会撞上。**
+- **Impact**: 协议 major 升级，1.x 的界面连不上。会话读取的整条链路（协议 / 中枢 / 客户端 / 界面）全部替换。
+- **Verification**: 419 passed（协议事件 20 条重写、记录中枢 20 条重写、`turns.ts` 与其 10 条用例随设计删除；app-mvp 的「跳号出声」改为断言**重新取快照**并新增「不重复重取」一条），typecheck 零错误，`npm run build` 通过，Electron 真机冷启动无报错。
+
+### 2026-08-08 — R2：native runtime 与配置层重写，agent 终于能干活了
+
+- **Type**: refactor
+- **Commit**: `77d3b31`
 - **Motivation**: 返工 R 的主体。旧 `native.ts` 坐在第二层最底下——裸 `Agent` + 手搓 `createProvider({baseUrl, api: openAICompletionsApi()})` + **`tools: []`**。
 - **What**:
   - **`runtime/native.ts` 整体重写**，改用 `createAgentSession()`。内置工具（read/bash/edit/write）默认开启，provider 与模型目录来自 pi-ai 的 39 个内置。**全进程共享一个 `ModelRuntime`**——Spike A-2 实测单次会话 `credentials.read()` 被调 202 次，每会话各建一个就会把这个代价乘以会话数。

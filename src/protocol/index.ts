@@ -33,8 +33,8 @@ export type {
   WorkbenchCapabilities,
 } from "./entities.js"
 
-export { SessionEventSchema, SubscribeResultSchema } from "./events.js"
-export type { SessionEvent, SubscribeResult } from "./events.js"
+export { SessionSnapshotSchema, SessionUpdateSchema, TranscriptItemSchema } from "./events.js"
+export type { SessionSnapshot, SessionUpdate, TranscriptItem } from "./events.js"
 
 export {
   DEFAULT_PAGE_SIZE,

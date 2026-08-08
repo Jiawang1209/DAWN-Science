@@ -12,7 +12,27 @@ import { build } from "esbuild"
 import { chmodSync, existsSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-const external = ["electron", "better-sqlite3", "node-pty", "zeromq"]
+/**
+ * external 清单。
+ *
+ * 原生依赖（better-sqlite3 / node-pty / zeromq）是 .node 二进制，打进 bundle 只会
+ * 得到一个坏掉的文件。
+ *
+ * **pi 全家（2026-08-08 R4 加入）**：它自己会注入 `createRequire`，与我们为
+ * external 包注入的那份重名，bundle 后直接 `SyntaxError: Identifier
+ * 'createRequire' has already been declared`——**主进程根本起不来**。
+ * 它们是纯 JS，不打进 bundle 也照样能从 node_modules 解析。
+ * 这个缺陷单测与 typecheck 都发现不了，**只有真启动一次才会撞上**。
+ */
+const external = [
+  "electron",
+  "better-sqlite3",
+  "node-pty",
+  "zeromq",
+  "@earendil-works/pi-ai",
+  "@earendil-works/pi-agent-core",
+  "@earendil-works/pi-coding-agent",
+]
 
 await build({
   entryPoints: ["src/electron/main.ts"],

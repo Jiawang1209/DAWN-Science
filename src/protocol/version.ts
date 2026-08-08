@@ -12,8 +12,12 @@
  * 1.3（2026-08-08）：新增 `subscribeSession` / `unsubscribeSession`。
  *   此前协议**只能写不能读会话**——`writeToSession` 有，读的一个都没有，
  *   也就是说界面根本拿不到 agent 的回复。这是 MVP 那条路上断掉的一环。
+ * **2.0（2026-08-08，破坏性）**：会话读取从 `seq + 环形缓冲 + dropped` 改为
+ *   `snapshot + revision`（借自 pi-protocol）。`subscribeSession` 的响应形状变了，
+ *   事件信封整体替换，故 major 递增。同批新增 `abortSession` / `steerSession`。
+ *   **换来的不只是简单**：旧设计跳号只能出声，新设计跳号可以重新取快照——能自愈。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "1.3"
+export const WORKBENCH_PROTOCOL_VERSION = "2.0"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -9,12 +9,12 @@
  * 本文件只 import `src/protocol`，不碰 runtime / session / store。
  */
 import {
-  SessionEventSchema,
+  SessionUpdateSchema,
   WORKBENCH_PROTOCOL_VERSION,
   isCompatible,
   type ErrorCode,
   type OperationName,
-  type SessionEvent,
+  type SessionUpdate,
 } from "../protocol/index.js"
 
 export interface RawResponse {
@@ -59,10 +59,17 @@ export interface InvokeResult<T> {
 
 export type Invoker = (operation: string, request: unknown, requestId?: string) => Promise<RawResponse>
 
-export interface EventSubscription {
-  onEvent: (e: SessionEvent) => void
+export interface UpdateSubscription {
+  onUpdate: (u: SessionUpdate) => void
   /**
-   * 出了问题就叫一声：跳号、畸形事件、版本不符、处理者抛错。
+   * revision 跳号时调用：**应当重新取一次快照**。
+   *
+   * 这是 snapshot + revision 相对旧设计（seq + 环形缓冲）真正的收获——
+   * 旧设计跳号只能出声，新设计跳号可以自愈。
+   */
+  onResync: (sessionId: string) => void
+  /**
+   * 出了问题就叫一声：畸形更新、版本不符、处理者抛错。
    *
    * **不给默认的静默兜底**是有意的——事件通道恰恰是最难发现静默丢失的地方
    * （规格 7.5）。省略它意味着调用方明确选择不听，而不是忘了。
@@ -105,73 +112,81 @@ export function createClient(
     return { data: res.data as T, warnings: res.warnings ?? [] }
   }
 
-  /** 每会话已见到的最大 seq。跳号判断的唯一依据。 */
-  const lastSeq = new Map<string, number>()
+  /** 每会话已确认的 revision。跳号判断的唯一依据 */
+  const lastRevision = new Map<string, number>()
+  /** 已经请求过重取快照、还没等到新快照的会话。**防止跳号后每条都再喊一次** */
+  const resyncing = new Set<string>()
 
   return {
     raw,
 
     /**
-     * 订阅历史之后告诉客户端「我已经看到第 N 号了」，
-     * 使之后推来的增量能接着往下校验。
+     * 取到快照后告诉客户端「我已经同步到第 N 版了」。
      *
-     * **历史与增量是同一套编号**（协议 §5.2），没有这一步的话，
-     * 订阅完历史再收到第 11 号会被误判成从 1 跳到 11。
+     * 快照与增量共用同一个 revision 计数，没有这一步，
+     * 订阅完快照再收到第 11 版会被误判成跳号。
      */
-    expectSeq(sessionId: string, seq: number): void {
-      lastSeq.set(sessionId, seq)
+    expectRevision(sessionId: string, revision: number): void {
+      lastRevision.set(sessionId, revision)
+      resyncing.delete(sessionId)
     },
 
-    /** 会话切走时忘掉它的编号，避免下次订阅时拿旧号去比。 */
-    forgetSeq(sessionId: string): void {
-      lastSeq.delete(sessionId)
+    /** 会话切走时忘掉它的版本号，避免下次订阅时拿旧号去比。 */
+    forgetRevision(sessionId: string): void {
+      lastRevision.delete(sessionId)
+      resyncing.delete(sessionId)
     },
 
     /**
-     * 订阅事件推送。返回退订函数。
+     * 订阅推送。返回退订函数。
      *
-     * 四种异常都**出声**而不静默：
-     *   - 畸形 / 版本不符 ⇒ **丢弃并出声**。让它流进界面状态只会在更远处崩。
-     *   - 跳号 ⇒ **交付并出声**。丢了反而更糟：界面会少一段内容且毫无提示。
-     *   - 处理者抛错 ⇒ **出声并继续**。一个渲染错误不该让整条流从此断掉。
+     * **跳号的处置是本次重写的核心差别。**
+     * 旧设计（seq + 环形缓冲）只能出声——界面少了一段内容，而且补不回来。
+     * 现在改为**请求重取快照**：调用 `onResync`，由调用方再要一次全量。
+     * 少的那一段会被完整补上。**能自愈的机制不需要道歉。**
+     *
+     * 其余三种异常仍然出声：
+     *   - 畸形 / 版本不符 ⇒ 丢弃并出声
+     *   - 处理者抛错 ⇒ 出声并继续（一个渲染错误不该让整条流断掉）
      */
-    subscribeEvents({ onEvent, onProblem }: EventSubscription): () => void {
+    subscribeUpdates({ onUpdate, onResync, onProblem }: UpdateSubscription): () => void {
       const problem = (m: string) => onProblem?.(m)
       const src = eventSource ?? window.dawn?.onEvent
       if (!src) {
-        problem("找不到 window.dawn.onEvent —— 本页面必须在 DAWN 的 Electron 壳里打开，否则收不到会话事件")
+        problem("找不到 window.dawn.onEvent —— 本页面必须在 DAWN 的 Electron 壳里打开，否则收不到会话更新")
         return () => {}
       }
 
-      return src((rawEvent) => {
-        const parsed = SessionEventSchema.safeParse(rawEvent)
+      return src((raw) => {
+        const parsed = SessionUpdateSchema.safeParse(raw)
         if (!parsed.success) {
-          problem(`收到不合协议的会话事件，已丢弃：${parsed.error.issues[0]?.message ?? "结构不符"}`)
+          problem(`收到不合协议的会话更新，已丢弃：${parsed.error.issues[0]?.message ?? "结构不符"}`)
           return
         }
-        const e = parsed.data
-        if (!isCompatible(WORKBENCH_PROTOCOL_VERSION, e.workbenchProtocolVersion)) {
+        const u = parsed.data
+        if (!isCompatible(WORKBENCH_PROTOCOL_VERSION, u.workbenchProtocolVersion)) {
           problem(
-            `会话事件的协议版本不兼容（界面 ${WORKBENCH_PROTOCOL_VERSION}，事件 ${e.workbenchProtocolVersion}），已丢弃`,
+            `会话更新的协议版本不兼容（界面 ${WORKBENCH_PROTOCOL_VERSION}，更新 ${u.workbenchProtocolVersion}），已丢弃`,
           )
           return
         }
 
-        const prev = lastSeq.get(e.sessionId)
-        if (prev !== undefined && e.seq !== prev + 1) {
-          problem(
-            e.seq > prev + 1
-              ? `会话 ${e.sessionId} 的事件跳号：第 ${prev + 1}–${e.seq - 1} 号没有收到`
-              : `会话 ${e.sessionId} 的事件编号回退：收到第 ${e.seq} 号，但已经看过第 ${prev} 号`,
-          )
+        const prev = lastRevision.get(u.sessionId)
+        if (prev !== undefined && u.revision !== prev + 1) {
+          // 已经在等新快照了就别再喊——否则跳号之后每一条都会触发一次重取
+          if (!resyncing.has(u.sessionId)) {
+            resyncing.add(u.sessionId)
+            onResync(u.sessionId)
+          }
+          // **不交付**：快照会覆盖这一切，交付一条错位的更新只会让界面先错一下
+          return
         }
-        // 回退时不要把游标往回拨，否则后面每一条都会再报一次
-        lastSeq.set(e.sessionId, Math.max(prev ?? 0, e.seq))
+        lastRevision.set(u.sessionId, u.revision)
 
         try {
-          onEvent(e)
+          onUpdate(u)
         } catch (err) {
-          problem(`处理会话事件时出错：${err instanceof Error ? err.message : String(err)}`)
+          problem(`处理会话更新时出错：${err instanceof Error ? err.message : String(err)}`)
         }
       })
     },

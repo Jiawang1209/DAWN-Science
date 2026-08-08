@@ -22,7 +22,7 @@ import {
   SessionSummarySchema,
   WorkbenchCapabilitiesSchema,
 } from "./entities.js"
-import { SubscribeResultSchema } from "./events.js"
+import { SessionSnapshotSchema } from "./events.js"
 
 /** 客户端不能请求无限结果——上限由服务端定，不由调用方定。 */
 export const DEFAULT_PAGE_SIZE = 50
@@ -221,15 +221,12 @@ export const OPERATIONS = {
    * 但那是传输层的簿记，不是被观察对象的状态变化——
    * 若判为 mutating，`readOnly` 模式下界面就连回读都做不了，那毫无道理。
    *
-   * `fromSeq` 省略 = 要缓冲区里的全部历史；给了就从该 seq（含）起。
+   * **2.0 起不再有 `fromSeq`**：订阅一律给全量快照。断线重连、revision 跳号，
+   * 处理方式都是同一个——再要一次快照。少一个参数就少一条要对齐的规则。
    */
   subscribeSession: {
-    request: z.object({
-      sessionId: z.string().min(1),
-      /** 正整数。0 无法与「还没有事件」区分，故不接受 */
-      fromSeq: z.int().min(1).optional(),
-    }),
-    response: SubscribeResultSchema,
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: SessionSnapshotSchema,
     mutating: false,
   },
   unsubscribeSession: {
@@ -291,6 +288,28 @@ export const OPERATIONS = {
     response: Empty,
     mutating: true,
   },
+  /**
+   * 中止当前回合。**界面终于能有一个停止按钮**——
+   * 此前 agent 一旦跑起来就只能等它自己停。
+   */
+  abortSession: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: Empty,
+    mutating: true,
+  },
+
+  /**
+   * 插一句引导，**不打断整轮**。
+   *
+   * 与 `writeToSession` 的区别：后者是「说完了，该你了」，
+   * 前者是「你继续，但注意这个」。pi 的 `steer` 直接支持。
+   */
+  steerSession: {
+    request: z.object({ sessionId: z.string().min(1), text: z.string().min(1) }).strict(),
+    response: Empty,
+    mutating: true,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

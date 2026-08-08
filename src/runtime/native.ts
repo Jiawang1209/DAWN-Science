@@ -274,6 +274,22 @@ export class NativeRuntime implements AgentRuntime {
     })
   }
 
+  /** 中止当前回合。会话仍然活着，可以继续对话 */
+  async abort(sessionId: SessionId): Promise<void> {
+    await this.sessions.get(sessionId)?.session.abort()
+  }
+
+  /**
+   * 插一句引导，不打断整轮。
+   *
+   * 与 `write` 的区别：后者是「说完了，该你了」，前者是「你继续，但注意这个」。
+   */
+  async steer(sessionId: SessionId, text: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    await s.session.steer(text)
+  }
+
   async stop(sessionId: SessionId): Promise<void> {
     const s = this.sessions.get(sessionId)
     if (!s) return

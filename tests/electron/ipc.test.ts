@@ -9,7 +9,7 @@ function backend(): WorkbenchBackend {
   }
   return {
     listProjects: async () => [project],
-    getProviders: async () => ({ agents: [], endpoints: [] }),
+    getProviders: async () => ({ agents: [], providers: [] }),
     listCredentials: async () => ({ configured: [], encrypted: false }),
     setCredential: async () => ({}),
     deleteCredential: async () => ({}),
@@ -22,8 +22,13 @@ function backend(): WorkbenchBackend {
       startedAt: "2026-08-08T00:00:00Z", hasError: false,
     }),
     getProvenance: async () => ({ resourceId: "a", provenanceComplete: true }),
-    subscribeSession: async () => ({ sessionId: "s1", events: [], latestSeq: 0, truncated: false }),
+    subscribeSession: async () => ({
+      sessionId: "s1", kind: "native" as const, revision: 0, items: [],
+      terminal: "", terminalTrimmed: false, state: "alive" as const,
+    }),
     unsubscribeSession: async () => ({}),
+    abortSession: async () => ({}),
+    steerSession: async () => ({}),
     previewTakeover: async () => ({
       sessionId: "s1", currentHolder: null, requester: "user" as const,
       wouldPreempt: false, allowed: true,

@@ -78,6 +78,13 @@ export interface AgentRuntime {
   /** 注册观察者。可多个，互不影响。返回退订函数。 */
   attach(sessionId: SessionId, sink: EventSink): () => void
   write(sessionId: SessionId, data: string): void
+  /**
+   * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
+   * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。
+   */
+  abort?(sessionId: SessionId): Promise<void>
+  /** 插一句引导，不打断整轮。只有 native 有 */
+  steer?(sessionId: SessionId, text: string): Promise<void>
   resize?(sessionId: SessionId, cols: number, rows: number): void
   stop(sessionId: SessionId): Promise<void>
 }

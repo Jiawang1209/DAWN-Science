@@ -33,7 +33,7 @@ function createWindow(): void {
 
   // 事件中枢 → 这个窗口。**销毁后要停手**：往已销毁的 webContents 发送会抛，
   // 而这条路径在关窗时必然发生（PTY 还在吐字节）
-  const off = workbench?.events.onEvent((event) => {
+  const off = workbench?.events.onUpdate((event) => {
     if (win.isDestroyed()) return
     win.webContents.send(IPC_EVENT_CHANNEL, event)
   })

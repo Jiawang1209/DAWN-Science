@@ -16,7 +16,7 @@ const project = {
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
     listProjects: async () => [project],
-    getProviders: async () => ({ agents: [], endpoints: [] }),
+    getProviders: async () => ({ agents: [], providers: [] }),
     listCredentials: async () => ({ configured: [], encrypted: false }),
     setCredential: async () => ({}),
     deleteCredential: async () => ({}),
@@ -27,8 +27,13 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
       throw new Error("未实现")
     },
     getProvenance: async () => ({ resourceId: "a1", provenanceComplete: true }),
-    subscribeSession: async () => ({ sessionId: "s1", events: [], latestSeq: 0, truncated: false }),
+    subscribeSession: async () => ({
+      sessionId: "s1", kind: "native" as const, revision: 0, items: [],
+      terminal: "", terminalTrimmed: false, state: "alive" as const,
+    }),
     unsubscribeSession: async () => ({}),
+    abortSession: async () => ({}),
+    steerSession: async () => ({}),
     previewTakeover: async () => ({
       sessionId: "s1",
       currentHolder: null,

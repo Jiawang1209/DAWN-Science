@@ -1,115 +1,117 @@
 /**
- * 会话事件通道（Task 2.16）。
+ * 会话快照与增量更新（返工 R4 重写）。
  *
- * **方向单一：主进程 → 渲染进程。** 与请求/响应通道
- * `dawn:workbench:invoke` **不合并**——两者的错误语义完全不同：
- * 请求失败要回给发起者并可重试，事件推送失败没有发起者可回。
+ * ## 为什么推倒重来
  *
- * 作者在「轮询」与「事件通道」之间选定后者（2026-08-08），理由是终端下钻
- * 用轮询基本没法要，早晚要走这条路，晚走一次就是白写一遍。
+ * 旧设计是 **seq + 环形缓冲 + `dropped` + `truncated` + `earliestSeq`**：
+ * 每会话一条单调递增的序号，缓冲溢出时发一条 `dropped` 说明丢了多少，
+ * 重连时若 `fromSeq` 超出窗口就回 `truncated` 并要求界面显示「更早的输出已丢失」。
  *
- * ## 三条纪律（都由本文件的 schema 强制，而不是靠调用方自觉）
+ * 那一整套纪律**是为一个本不该存在的问题设计的**。只要服务端持有一份完整的
+ * transcript，重连时给全量就行，根本不存在「丢了一段要道歉」这回事。
  *
- *   1. **`seq` 每会话单调递增，从 1 起。** 它是连续性判断的唯一依据，
- *      所以 0 和小数一律拒绝——`seq: 0` 无法与「还没有事件」区分。
- *      渲染侧发现跳号必须出声（规格 7.5），那一半在 `src/ui/client.ts`。
- *   2. **丢弃必须说清丢了多少。** 背压导致的截断发 `dropped` 事件并携带
- *      `droppedChars`，**绝不静默**。`droppedChars: 0` 也拒绝——
- *      「丢了 0 个字符」不是丢弃事件，是噪音。
- *   3. **截断必须可定位。** 订阅结果 `truncated: true` 时**必须**同时给出
- *      最早可用 seq，否则界面只知道「丢了」而不知道「从哪起还有」，
- *      就只能去猜。
+ * 新设计借自 `pi-protocol`：**snapshot + revision**。
+ *   - 订阅 → 全量 `SessionSnapshot`（含 `revision`）
+ *   - 之后收增量，每条带 `revision`
+ *   - **发现 revision 跳号 → 重新取一次快照**
  *
- * 一处与计划 §5.2 的措辞偏差：计划写的字段名是 `protocolVersion`，
- * 这里用 `workbenchProtocolVersion`——与既有的成功/错误信封保持一致，
- * 两套命名会让「版本字段叫什么」变成一个要记的事。
+ * 差别不只是简单：**旧设计只能「出声」，新设计能「自愈」。**
+ * 跳号在旧设计里是一条无法补救的警告，在新设计里是一次重新同步。
+ *
+ * ## 终端 scrollback 是例外，而且它不是异常
+ *
+ * PTY 的字节流没有天然边界，仍需上限。但**终端本来就是有限回滚的**——
+ * xterm 自己也只留 5000 行。快照如实标注 `terminalTrimmed`，
+ * **不发事件、不要求界面道歉**：把正常契约当成故障来播报，是把噪音当成诚实。
  */
 import { z } from "zod"
 
-/** 信封的公共字段。事件的 kind 与其载荷平铺在同一层。 */
+/** 一条对话发言。native 会话由 pi 的文本增量累积而成 */
+const TurnItem = z
+  .object({
+    type: z.literal("turn"),
+    id: z.string().min(1),
+    who: z.enum(["user", "agent"]),
+    text: z.string(),
+    /** 这一轮说完了没有。未完时界面可显示还在输入 */
+    final: z.boolean(),
+  })
+  .strict()
+
+/**
+ * 一次工具调用。
+ *
+ * **①-B 的界面看不见 agent 在干什么，根因就是没有这个条目**——
+ * runtime 只转发文本增量，工具调用整个被丢掉了。
+ */
+const ToolItem = z
+  .object({
+    type: z.literal("tool"),
+    id: z.string().min(1),
+    name: z.string().min(1),
+    input: z.unknown(),
+    status: z.enum(["running", "ok", "error"]),
+    /** 结果正文（已截断）。running 时没有 */
+    result: z.string().optional(),
+  })
+  .strict()
+
+/** 错误与系统提示。**它们既不是对话也不是工具**，混进 turn 会污染对话记录 */
+const NoticeItem = z
+  .object({
+    type: z.literal("notice"),
+    id: z.string().min(1),
+    text: z.string().min(1),
+  })
+  .strict()
+
+export const TranscriptItemSchema = z.discriminatedUnion("type", [TurnItem, ToolItem, NoticeItem])
+export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
+
+export const SessionSnapshotSchema = z
+  .object({
+    sessionId: z.string().min(1),
+    kind: z.enum(["native", "pty"]),
+    /** 单调递增。**0 表示还什么都没发生**，增量的 revision 从 1 起 */
+    revision: z.int().min(0),
+    items: z.array(TranscriptItemSchema),
+    /** PTY 的 scrollback。native 会话恒为空串 */
+    terminal: z.string(),
+    /** scrollback 已达上限、更早的部分被裁掉。**如实标注，但这不是故障** */
+    terminalTrimmed: z.boolean(),
+    state: z.enum(["alive", "exited"]),
+    exitCode: z.int().optional(),
+  })
+  .strict()
+export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>
+
+/** 更新信封的公共字段 */
 const envelope = {
   workbenchProtocolVersion: z.string().regex(/^\d+\.\d+$/),
   sessionId: z.string().min(1),
-  /** 每会话单调递增，从 1 起 */
-  seq: z.int().min(1),
+  /** 本次更新之后的 revision。**从 1 起**——0 是快照的初值，不会作为增量出现 */
+  revision: z.int().min(1),
 }
 
 /**
- * 会话事件。以 `kind` 判别，**未知 kind 一律拒绝**——
- * 把不认识的 kind 当作「可忽略的扩展」放行，等于让一个拼错的事件类型
- * 静默消失，而事件通道恰恰是最难发现静默丢失的地方。
+ * 服务端推给界面的增量。
+ *
+ * `item` 是**按 id 覆盖**的：同一条 turn 在流式过程中会多次更新，
+ * 界面按 id 替换即可，不必自己拼接增量。这比旧设计的「文本增量靠 turnId 归拢」
+ * 少了一层客户端状态。
  */
-export const SessionEventSchema = z.discriminatedUnion("kind", [
+export const SessionUpdateSchema = z.discriminatedUnion("type", [
+  z.object({ ...envelope, type: z.literal("item"), item: TranscriptItemSchema }).strict(),
+  z.object({ ...envelope, type: z.literal("bytes"), data: z.string() }).strict(),
   z
     .object({
       ...envelope,
-      kind: z.literal("turn"),
-      /** 必填：分不清人和 agent 的对话没有意义 */
-      who: z.enum(["user", "agent"]),
-      /**
-       * **本次增量**，不是整段发言。同一 `turnId` 的增量按 seq 顺序拼接
-       * 才是完整的一轮。做成增量而非整段是为了流式显示——
-       * 等一整段说完再显示，等待期间界面是死的。
-       */
-      text: z.string(),
-      /** 把增量归拢成一个对话气泡。同一轮内所有增量共用 */
-      turnId: z.string().min(1),
-      /** 该轮的最后一条增量。**边界是语义，不能靠正文里的换行去猜** */
-      final: z.boolean(),
-    })
-    .strict(),
-  z
-    .object({
-      ...envelope,
-      kind: z.literal("bytes"),
-      /** PTY 原始字节（含 ANSI 控制序列），交给 xterm 解析 */
-      data: z.string(),
-    })
-    .strict(),
-  z
-    .object({
-      ...envelope,
-      kind: z.literal("state"),
+      type: z.literal("state"),
       state: z.enum(["alive", "exited"]),
       exitCode: z.int().optional(),
     })
     .strict(),
-  z
-    .object({
-      ...envelope,
-      kind: z.literal("dropped"),
-      /** 必须为正。见文件头纪律 2 */
-      droppedChars: z.int().min(1),
-    })
-    .strict(),
+  /** 全量重放。客户端发现 revision 跳号后由服务端补发，或订阅时的首帧 */
+  z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])
-export type SessionEvent = z.infer<typeof SessionEventSchema>
-
-/**
- * 订阅结果：缓冲区内的历史 + 之后走推送。
- *
- * **历史与增量由同一 seq 序列串起**——这是重连不重复也不丢字的前提。
- * 若历史与推送各有各的编号，客户端就无法判断「这条我是不是已经有了」。
- */
-export const SubscribeResultSchema = z
-  .object({
-    sessionId: z.string().min(1),
-    events: z.array(SessionEventSchema),
-    /** 服务端当前发到第几号。0 表示这个会话还没产生过事件 */
-    latestSeq: z.int().min(0),
-    /** 请求的 fromSeq 早于缓冲窗口 ⇒ true */
-    truncated: z.boolean(),
-    /** 缓冲区里最早还留着的 seq。截断时必填 */
-    earliestSeq: z.int().min(1).optional(),
-  })
-  .strict()
-  .superRefine((v, ctx) => {
-    if (v.truncated && v.earliestSeq === undefined) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["earliestSeq"],
-        message: "truncated 为真时必须给出最早可用 seq——否则界面只知道丢了，不知道从哪起还有",
-      })
-    }
-  })
-export type SubscribeResult = z.infer<typeof SubscribeResultSchema>
+export type SessionUpdate = z.infer<typeof SessionUpdateSchema>

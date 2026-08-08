@@ -1,142 +1,180 @@
+/**
+ * 会话协议（返工 R4 重写）。
+ *
+ * **旧设计：seq + 环形缓冲 + `dropped` + `truncated` + `earliestSeq`。**
+ * 那套「丢弃必须出声」的纪律是为一个本不该存在的问题设计的——
+ * 只要有一份完整的 transcript，就不需要在内存缓冲溢出时向用户道歉。
+ *
+ * **新设计（借自 pi-protocol）：snapshot + revision。**
+ * 订阅拿全量快照，之后收增量；发现 revision 跳号就**重新取一次快照**。
+ * 旧设计只能「出声」，新设计能**自愈**——这是这次重写真正换来的东西。
+ */
 import { describe, expect, it } from "vitest"
 import {
-  SessionEventSchema,
-  SubscribeResultSchema,
-  type SessionEvent,
+  SessionSnapshotSchema,
+  SessionUpdateSchema,
+  TranscriptItemSchema,
 } from "../../src/protocol/events.js"
 import { OPERATIONS, operationNames } from "../../src/protocol/operations.js"
 import { WORKBENCH_PROTOCOL_VERSION, isCompatible } from "../../src/protocol/version.js"
 
-/**
- * 只含信封公共字段。载荷由各用例自己拼——`.strict()` 下多带一个
- * `who: undefined` 也算多余字段，**不能靠覆盖为 undefined 来「去掉」它**。
- * （初稿就是这么写的，两条用例因此假红。）
- */
-const head = (over: Record<string, unknown> = {}) => ({
-  workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
-  sessionId: "s1",
-  seq: 1,
-  ...over,
-})
-
 const turn = (over: Record<string, unknown> = {}) => ({
-  ...head(),
-  kind: "turn",
+  type: "turn",
+  id: "a1",
   who: "agent",
   text: "在",
-  turnId: "t1",
   final: false,
   ...over,
 })
 
-const ANSI_RED = "[31mred"
-
-describe("事件信封", () => {
-  it("接受一条正常的 turn 事件", () => {
-    expect(SessionEventSchema.parse(turn()).kind).toBe("turn")
-  })
-
-  it("seq 从 1 起，0 与负数与小数一律拒绝 —— seq 是连续性判断的唯一依据", () => {
-    expect(SessionEventSchema.safeParse(turn({ seq: 0 })).success).toBe(false)
-    expect(SessionEventSchema.safeParse(turn({ seq: -1 })).success).toBe(false)
-    expect(SessionEventSchema.safeParse(turn({ seq: 1.5 })).success).toBe(false)
-  })
-
-  it("未知 kind 拒绝，不当作可忽略的扩展放行", () => {
-    expect(SessionEventSchema.safeParse(turn({ kind: "whatever" })).success).toBe(false)
-  })
-
-  it("多余字段拒绝 —— 信封是契约，不是自由字典", () => {
-    expect(SessionEventSchema.safeParse(turn({ extra: 1 })).success).toBe(false)
-  })
-
-  it("turn 必须说明是谁在说 —— 分不清人和 agent 的对话没有意义", () => {
-    const { who: _drop, ...noWho } = turn()
-    expect(SessionEventSchema.safeParse(noWho).success).toBe(false)
-  })
-
-  it("turn 必须带 turnId 与 final —— 轮次边界是语义，不能靠正文里的换行去猜", () => {
-    const { turnId: _a, ...noId } = turn()
-    const { final: _b, ...noFinal } = turn()
-    expect(SessionEventSchema.safeParse(noId).success).toBe(false)
-    expect(SessionEventSchema.safeParse(noFinal).success).toBe(false)
-  })
-
-  it("bytes 事件原样带 ANSI 控制序列 —— 解析是 xterm 的事，协议不插手", () => {
-    const e = SessionEventSchema.parse({ ...head(), kind: "bytes", data: ANSI_RED })
-    expect(e.kind === "bytes" && e.data).toBe(ANSI_RED)
-  })
-
-  it("state 事件带会话状态", () => {
-    const e = SessionEventSchema.parse({ ...head(), kind: "state", state: "exited", exitCode: 0 })
-    expect(e.kind === "state" && e.state).toBe("exited")
-  })
+const tool = (over: Record<string, unknown> = {}) => ({
+  type: "tool",
+  id: "t1",
+  name: "bash",
+  input: { command: "ls" },
+  status: "running",
+  ...over,
 })
 
-describe("dropped 事件 · 丢弃必须说清丢了多少", () => {
-  it("dropped 必须带丢弃字符数", () => {
-    const base = { ...head(), kind: "dropped" }
-    expect(SessionEventSchema.safeParse(base).success).toBe(false)
-    expect(SessionEventSchema.safeParse({ ...base, droppedChars: 4096 }).success).toBe(true)
-  })
-
-  it("丢弃量必须为正 —— 「丢了 0 个字符」不是丢弃事件，是噪音", () => {
-    const base = { ...head(), kind: "dropped", droppedChars: 0 }
-    expect(SessionEventSchema.safeParse(base).success).toBe(false)
-  })
+const snapshot = (over: Record<string, unknown> = {}) => ({
+  sessionId: "s1",
+  kind: "native",
+  revision: 0,
+  items: [],
+  terminal: "",
+  terminalTrimmed: false,
+  state: "alive",
+  ...over,
 })
 
-describe("订阅结果 · 截断必须可定位", () => {
-  const ok = {
-    sessionId: "s1",
-    events: [] as SessionEvent[],
-    latestSeq: 0,
-    truncated: false,
-  }
-
-  it("未截断时不需要 earliestSeq", () => {
-    expect(SubscribeResultSchema.safeParse(ok).success).toBe(true)
+describe("transcript 条目", () => {
+  it("turn 必须说明是谁在说、说完没有", () => {
+    expect(TranscriptItemSchema.safeParse(turn()).success).toBe(true)
+    const { who: _w, ...noWho } = turn()
+    expect(TranscriptItemSchema.safeParse(noWho).success).toBe(false)
+    const { final: _f, ...noFinal } = turn()
+    expect(TranscriptItemSchema.safeParse(noFinal).success).toBe(false)
   })
 
-  it("truncated 为真却不给最早可用 seq —— 拒绝", () => {
-    // 界面要显示「更早的输出已丢失」，但必须能说清「从哪起还在」。
-    // 只说「丢了」而不说「从哪起还有」，等于让界面去猜。
-    expect(SubscribeResultSchema.safeParse({ ...ok, truncated: true }).success).toBe(false)
+  it("tool 条目带名字、入参与状态", () => {
+    expect(TranscriptItemSchema.safeParse(tool()).success).toBe(true)
+    expect(TranscriptItemSchema.safeParse(tool({ status: "ok", result: "done" })).success).toBe(true)
   })
 
-  it("truncated 为真且给了 earliestSeq —— 通过", () => {
+  it("tool 的状态只有三种 —— running / ok / error", () => {
+    expect(TranscriptItemSchema.safeParse(tool({ status: "maybe" })).success).toBe(false)
+  })
+
+  it("未知 type 拒绝，多余字段拒绝", () => {
+    expect(TranscriptItemSchema.safeParse({ ...turn(), type: "whatever" }).success).toBe(false)
+    expect(TranscriptItemSchema.safeParse({ ...turn(), extra: 1 }).success).toBe(false)
+  })
+
+  it("notice 用于错误与系统提示 —— 它们既不是对话也不是工具", () => {
     expect(
-      SubscribeResultSchema.safeParse({ ...ok, truncated: true, earliestSeq: 120 }).success,
+      TranscriptItemSchema.safeParse({ type: "notice", id: "n1", text: "会话已退出" }).success,
     ).toBe(true)
   })
 })
 
-describe("协议操作 · 订阅进入操作清单", () => {
-  it("新增 subscribeSession / unsubscribeSession", () => {
-    expect(operationNames()).toContain("subscribeSession")
-    expect(operationNames()).toContain("unsubscribeSession")
+describe("会话快照", () => {
+  it("接受一份空快照 —— revision 0 表示还什么都没发生", () => {
+    expect(SessionSnapshotSchema.safeParse(snapshot()).success).toBe(true)
   })
 
-  it("订阅是只读的 —— 它不改变会话，只是开始看", () => {
-    expect(OPERATIONS.subscribeSession.mutating).toBe(false)
-    expect(OPERATIONS.unsubscribeSession.mutating).toBe(false)
+  it("revision 从 0 起且不接受负数", () => {
+    expect(SessionSnapshotSchema.safeParse(snapshot({ revision: -1 })).success).toBe(false)
+    expect(SessionSnapshotSchema.safeParse(snapshot({ revision: 1.5 })).success).toBe(false)
   })
 
-  it("fromSeq 可省略；给了就必须是正整数", () => {
-    expect(OPERATIONS.subscribeSession.request.safeParse({ sessionId: "s1" }).success).toBe(true)
-    expect(
-      OPERATIONS.subscribeSession.request.safeParse({ sessionId: "s1", fromSeq: 0 }).success,
-    ).toBe(false)
+  it("退出的会话可带 exitCode", () => {
+    expect(SessionSnapshotSchema.safeParse(snapshot({ state: "exited", exitCode: 0 })).success).toBe(true)
+  })
+
+  it("**终端 scrollback 被裁掉不是异常**，只是如实标注", () => {
+    // 旧设计为此发 `dropped` 事件并要求界面道歉。但终端本来就是有限回滚的，
+    // xterm 自己也只留 5000 行——**把正常契约当成故障来播报，是把噪音当成诚实**。
+    const r = SessionSnapshotSchema.safeParse(
+      snapshot({ kind: "pty", terminal: "…", terminalTrimmed: true }),
+    )
+    expect(r.success).toBe(true)
   })
 })
 
-describe("协议版本 · 1.3", () => {
-  it("升到 1.3", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("1.3")
+describe("增量更新", () => {
+  const base = { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: "s1" }
+
+  it("item 更新带 revision 与条目", () => {
+    expect(
+      SessionUpdateSchema.safeParse({ ...base, type: "item", revision: 1, item: turn() }).success,
+    ).toBe(true)
   })
 
-  it("既有兼容规则不变：UI 比服务端新即不兼容", () => {
-    expect(isCompatible("1.3", "1.2")).toBe(false)
-    expect(isCompatible("1.2", "1.3")).toBe(true)
+  it("bytes 更新用于 PTY", () => {
+    expect(
+      SessionUpdateSchema.safeParse({ ...base, type: "bytes", revision: 1, data: "[31m" }).success,
+    ).toBe(true)
+  })
+
+  it("state 更新带状态", () => {
+    expect(
+      SessionUpdateSchema.safeParse({ ...base, type: "state", revision: 2, state: "exited", exitCode: 0 })
+        .success,
+    ).toBe(true)
+  })
+
+  it("snapshot 更新用于重放全量", () => {
+    expect(
+      SessionUpdateSchema.safeParse({ ...base, type: "snapshot", revision: 5, snapshot: snapshot({ revision: 5 }) })
+        .success,
+    ).toBe(true)
+  })
+
+  it("revision 从 1 起 —— 0 是「还没有任何更新」的快照初值，不会作为增量出现", () => {
+    expect(
+      SessionUpdateSchema.safeParse({ ...base, type: "item", revision: 0, item: turn() }).success,
+    ).toBe(false)
+  })
+
+  it("版本不符的信封仍然合 schema —— 版本判断是客户端的事，不是 schema 的事", () => {
+    const r = SessionUpdateSchema.safeParse({
+      ...base,
+      workbenchProtocolVersion: "9.9",
+      type: "item",
+      revision: 1,
+      item: turn(),
+    })
+    expect(r.success).toBe(true)
+  })
+})
+
+describe("协议操作 · 订阅与控制", () => {
+  it("subscribeSession 不再有 fromSeq —— 订阅一律给全量快照", () => {
+    expect(OPERATIONS.subscribeSession.request.safeParse({ sessionId: "s1" }).success).toBe(true)
+    expect(
+      OPERATIONS.subscribeSession.request.safeParse({ sessionId: "s1", fromSeq: 3 }).success,
+    ).toBe(false)
+  })
+
+  it("新增 abortSession —— 界面终于能有一个停止按钮", () => {
+    expect(operationNames()).toContain("abortSession")
+    expect(OPERATIONS.abortSession.mutating).toBe(true)
+  })
+
+  it("新增 steerSession —— 不打断整轮，只插一句引导", () => {
+    expect(operationNames()).toContain("steerSession")
+    expect(OPERATIONS.steerSession.request.safeParse({ sessionId: "s1", text: "换个思路" }).success).toBe(true)
+    expect(OPERATIONS.steerSession.request.safeParse({ sessionId: "s1", text: "" }).success).toBe(false)
+  })
+})
+
+describe("协议版本 · 2.0", () => {
+  it("升到 2.0 —— 订阅的响应形状变了，是破坏性变更", () => {
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.0")
+  })
+
+  it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
+    expect(isCompatible("1.3", "2.0")).toBe(false)
+    expect(isCompatible("2.0", "2.0")).toBe(true)
   })
 })

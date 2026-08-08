@@ -145,6 +145,31 @@ export class SessionManager {
     return this.bound.get(sessionId)
   }
 
+  /**
+   * 中止当前回合。**只有 native runtime 实现**——PTY 的中止是送 Ctrl-C，走 `write`。
+   * 不支持时明确抛错，不静默成功（规格 7.5）。
+   */
+  async abort(sessionId: SessionId): Promise<void> {
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.abort) throw new Error(`该会话的运行时不支持中止——外部 CLI 请在终端里按 Ctrl-C`)
+    await rt.abort(sessionId)
+  }
+
+  /** 插一句引导。同样只有 native 有。**写权守卫照旧**——引导也是写入。 */
+  async steer(sessionId: SessionId, text: string, as: Holder): Promise<void> {
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) {
+      throw new Error(
+        `引导被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`,
+      )
+    }
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.steer) throw new Error(`该会话的运行时不支持引导`)
+    await rt.steer(sessionId, text)
+  }
+
   /** 转发终端尺寸变化。只有 pty runtime 实现了 resize，其余是空操作。 */
   resize(sessionId: SessionId, cols: number, rows: number): void {
     this.bound.get(sessionId)?.resize?.(sessionId, cols, rows)

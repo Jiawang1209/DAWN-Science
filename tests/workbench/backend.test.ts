@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { SessionEventHub } from "../../src/workbench/events.js"
+import { SessionTranscripts } from "../../src/workbench/events.js"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
 import { RunStore } from "../../src/store/runs.js"
@@ -53,7 +53,7 @@ function make() {
   const projects = new ProjectManager({
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
-  const events = new SessionEventHub({ maxChars: 10_000 })
+  const events = new SessionTranscripts({ terminalMaxChars: 10_000 })
   const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events })
   return { db, projectStore, runStore, sessions, projects, backend, events, server: new WorkbenchServer(backend) }
 }
@@ -130,8 +130,8 @@ describe("真实后端 · 经服务端端到端", () => {
 
     const s = await ctx.server.handle("subscribeSession", { sessionId: sid })
     expect(s.ok).toBe(true)
-    const events = (s as { data: { events: { kind: string; who?: string; text?: string }[] } }).data.events
-    const turns = events.filter((e) => e.kind === "turn")
+    const items = (s as { data: { items: { type: string; who?: string; text?: string }[] } }).data.items
+    const turns = items.filter((i) => i.type === "turn")
     expect(turns.map((t) => t.who)).toContain("user")
     expect(turns.map((t) => t.who)).toContain("agent")
     expect(turns.find((t) => t.who === "agent")?.text).toContain("echo:你好")

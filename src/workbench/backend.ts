@@ -15,7 +15,7 @@ import type { RunStore } from "../store/runs.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { fault, type WorkbenchBackend } from "./server.js"
-import type { SessionEventHub } from "./events.js"
+import type { SessionTranscripts } from "./events.js"
 
 /**
  * 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。
@@ -40,7 +40,7 @@ export interface WorkbenchBackendOptions {
   /** 配置里的 provider 注册表，供界面列出可选 agent */
   registry: ProviderRegistry
   /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
-  events: SessionEventHub
+  events: SessionTranscripts
   /** 凭证变更后让 pi 侧缓存失效。不给则不失效（测试场景） */
   invalidateCredentials?: (providerId: string) => void
 }
@@ -160,9 +160,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return projects.summary(rec.projectId)!
     },
 
-    subscribeSession: async ({ sessionId, fromSeq }) => {
+    subscribeSession: async ({ sessionId }) => {
       try {
-        return events.subscribe(sessionId, fromSeq)
+        return events.subscribe(sessionId)
       } catch (err) {
         // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
         // 界面要能分辨它和「数据库炸了」
@@ -212,6 +212,26 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     stopSession: async ({ sessionId }) => {
       await sessions.stop(sessionId)
       baselines.delete(sessionId)
+      return {}
+    },
+
+    abortSession: async ({ sessionId }) => {
+      try {
+        await sessions.abort(sessionId)
+      } catch (err) {
+        // 「运行时不支持中止」是业务性失败，界面要能分辨并提示去终端按 Ctrl-C
+        throw fault("conflict", err instanceof Error ? err.message : String(err))
+      }
+      return {}
+    },
+
+    steerSession: async ({ sessionId, text }) => {
+      try {
+        await sessions.steer(sessionId, text, "user")
+        events.userTurn(sessionId, text)
+      } catch (err) {
+        throw fault("conflict", err instanceof Error ? err.message : String(err))
+      }
       return {}
     },
 

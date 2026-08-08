@@ -127,7 +127,7 @@ describe("空对话态", () => {
 
 describe("对话视图", () => {
   it("空对话如实说没有", () => {
-    render(<ConversationView session={session()} turns={[]} onSend={noop} />)
+    render(<ConversationView session={session()} items={[]} onSend={noop} />)
     expect(screen.getByText(/还没有对话/)).toBeDefined()
   })
 
@@ -135,9 +135,9 @@ describe("对话视图", () => {
     render(
       <ConversationView
         session={session()}
-        turns={[
-          { id: "1", who: "user", text: "你好", final: true },
-          { id: "2", who: "agent", text: "在", final: true },
+        items={[
+          { type: "turn" as const, id: "1", who: "user" as const, text: "你好", final: true },
+          { type: "turn" as const, id: "2", who: "agent" as const, text: "在", final: true },
         ]}
         onSend={noop}
       />,
@@ -148,7 +148,7 @@ describe("对话视图", () => {
 
   it("提交非空内容触发发送并清空输入框", () => {
     const onSend = vi.fn()
-    render(<ConversationView session={session()} turns={[]} onSend={onSend} />)
+    render(<ConversationView session={session()} items={[]} onSend={onSend} />)
     const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "跑一下测试" } })
     fireEvent.submit(box.form!)
@@ -158,7 +158,7 @@ describe("对话视图", () => {
 
   it("空白内容不触发发送", () => {
     const onSend = vi.fn()
-    render(<ConversationView session={session()} turns={[]} onSend={onSend} />)
+    render(<ConversationView session={session()} items={[]} onSend={onSend} />)
     const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "   " } })
     fireEvent.submit(box.form!)
@@ -166,12 +166,12 @@ describe("对话视图", () => {
   })
 
   it("会话已结束时输入被禁用，并说明原因", () => {
-    render(<ConversationView session={session({ state: "exited" })} turns={[]} onSend={noop} disabled />)
+    render(<ConversationView session={session({ state: "exited" })} items={[]} onSend={noop} disabled />)
     expect((screen.getByPlaceholderText(/会话已结束/) as HTMLTextAreaElement).disabled).toBe(true)
   })
 
   it("标出会话是外部 CLI 还是内置", () => {
-    render(<ConversationView session={session({ kind: "pty" })} turns={[]} onSend={noop} />)
+    render(<ConversationView session={session({ kind: "pty" })} items={[]} onSend={noop} />)
     expect(screen.getByText("外部 CLI")).toBeDefined()
   })
 })

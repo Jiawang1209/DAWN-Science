@@ -10,10 +10,8 @@
  */
 import { useEffect, useRef, useState } from "react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
-import type { Turn } from "./turns.js"
+import type { TranscriptItem } from "../protocol/index.js"
 import { TerminalPane } from "./terminal.js"
-
-export type { Turn } from "./turns.js"
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
@@ -140,17 +138,21 @@ export function SessionSidebar({
 
 export function ConversationView({
   session,
-  turns,
+  items,
   onSend,
+  onAbort,
   disabled,
-  lostEarlier,
+  terminalTrimmed,
 }: {
   session: SessionSummary
-  turns: Turn[]
+  /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
+  items: TranscriptItem[]
   onSend: (text: string) => void
-  disabled?: boolean
-  /** 缓冲窗口之前的输出已经不在了。**必须说出来**，不能让人以为对话就是从这里开始的 */
-  lostEarlier?: boolean
+  /** 中止当前回合。native 会话才有 */
+  onAbort?: (() => void) | undefined
+  disabled?: boolean | undefined
+  /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
+  terminalTrimmed?: boolean | undefined
 }) {
   const [draft, setDraft] = useState("")
   const bottom = useRef<HTMLDivElement>(null)
@@ -158,7 +160,10 @@ export function ConversationView({
   useEffect(() => {
     // 可选调用：jsdom 没有实现 scrollIntoView。滚动失败不该让整个视图崩掉
     bottom.current?.scrollIntoView?.()
-  }, [turns.length])
+  }, [items.length])
+
+  /** agent 还在说话（最后一条 turn 未收尾）时才给停止按钮 */
+  const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
 
   return (
     <div className="conversation">
@@ -166,20 +171,19 @@ export function ConversationView({
         <span className="agent">{session.agentId}</span>
         <span className={`state ${session.state}`}>{session.state}</span>
         <span className="kind">{session.kind === "pty" ? "外部 CLI" : "内置"}</span>
+        {busy && onAbort ? (
+          <button type="button" className="abort" onClick={onAbort}>
+            停止
+          </button>
+        ) : null}
       </header>
 
       <div className="turns">
-        {lostEarlier ? <p className="caveat">更早的输出已丢失（超出缓冲窗口）</p> : null}
-        {turns.length === 0 ? (
+        {terminalTrimmed ? <p className="hint">终端只保留最近的输出，更早的已滚出缓冲</p> : null}
+        {items.length === 0 ? (
           <p className="empty">还没有对话</p>
         ) : (
-          turns.map((t) => (
-            <div key={t.id} className={`turn ${t.who}`}>
-              <span className="who">{t.who === "user" ? "你" : session.agentId}</span>
-              <pre className="text">{t.text}</pre>
-              {t.final ? null : <span className="hint">…</span>}
-            </div>
-          ))
+          items.map((item) => <TranscriptRow key={item.id} item={item} agentId={session.agentId} />)
         )}
         <div ref={bottom} />
       </div>
@@ -212,6 +216,48 @@ export function ConversationView({
       </form>
     </div>
   )
+}
+
+/**
+ * 一条 transcript。
+ *
+ * **工具调用要显示出来**——①-B 的界面「看不见 agent 在干什么」，
+ * 根因之一就是工具调用在 runtime 层就被丢掉了，界面连数据都拿不到。
+ */
+function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: string }) {
+  if (item.type === "notice") {
+    return <p className="caveat">{item.text}</p>
+  }
+  if (item.type === "tool") {
+    const mark = item.status === "running" ? "…" : item.status === "ok" ? "✓" : "✗"
+    return (
+      <div className={`tool ${item.status}`}>
+        <span className="tool-name">
+          {mark} {item.name}
+        </span>
+        <pre className="tool-input">{summarize(item.input)}</pre>
+        {item.result ? <pre className="tool-result">{item.result}</pre> : null}
+      </div>
+    )
+  }
+  return (
+    <div className={`turn ${item.who}`}>
+      <span className="who">{item.who === "user" ? "你" : agentId}</span>
+      <pre className="text">{item.text}</pre>
+      {item.final ? null : <span className="hint">…</span>}
+    </div>
+  )
+}
+
+/** 工具入参的一行摘要。**不展开整个对象**——那会把对话区淹掉 */
+function summarize(input: unknown): string {
+  if (input === undefined || input === null) return ""
+  if (typeof input === "string") return input
+  const o = input as Record<string, unknown>
+  const first = o.command ?? o.path ?? o.pattern ?? o.file_path
+  if (typeof first === "string") return first
+  const json = JSON.stringify(input)
+  return json.length > 200 ? `${json.slice(0, 200)}…` : json
 }
 
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */

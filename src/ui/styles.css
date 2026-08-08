@@ -85,3 +85,10 @@ pre { margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-s
 .session-list { flex:1; }
 .empty-conv { align-items:center; justify-content:center; }
 .empty-conv .empty { margin:auto; }
+
+/* transcript 里的工具调用 —— 看得见 agent 在干什么 */
+.tool { margin:6px 0; padding:6px 10px; border-left:2px solid var(--line); font-size:12px; }
+.tool.error { border-left-color:#c0554d; }
+.tool-name { color:#9a9aa0; }
+.tool-input, .tool-result { margin:2px 0 0; color:#8a8a90; white-space:pre-wrap; }
+.abort { margin-left:auto; }

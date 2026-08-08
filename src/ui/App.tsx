@@ -22,18 +22,17 @@ import type {
   ProjectSummary,
   ProvenanceLink,
   RunSummary,
-  SessionEvent,
+  SessionSnapshot,
   SessionSummary,
-  SubscribeResult,
+  SessionUpdate,
+  TranscriptItem,
 } from "../protocol/index.js"
-import { applyEvent, turnsFromEvents } from "./turns.js"
 import { ChangesPanel, CostPanel, ProvenanceBadge, RunsPanel, StatusPanel } from "./panels.js"
 import {
   ConversationView,
   EmptyConversation,
   SessionSidebar,
   TerminalDock,
-  type Turn,
 } from "./views.js"
 import { SettingsPanel, type CredentialState } from "./Settings.js"
 import { WorkbenchClientError, createClient, type WorkbenchClient } from "./client.js"
@@ -67,10 +66,11 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
   const [view, setView] = useState<View>("conversation")
 
   const [dockOpen, setDockOpen] = useState(false)
-  const [turns, setTurns] = useState<Turn[]>([])
-  /** 缓冲窗口之前的输出已丢失。要在对话顶部说出来，不能让人以为对话从这里开始 */
-  const [lostEarlier, setLostEarlier] = useState(false)
-  /** 终端字节。切会话时清空；由事件流追加 */
+  /** 当前会话的 transcript。**按 id 覆盖**，不必自己拼增量 */
+  const [items, setItems] = useState<TranscriptItem[]>([])
+  /** 终端 scrollback 是否被裁过。**如实标注，但这不是故障**——终端本就有限回滚 */
+  const [termTrimmed, setTermTrimmed] = useState(false)
+  /** 终端字节片段。首帧是快照里的整段，之后是增量 */
   const [termChunks, setTermChunks] = useState<string[]>([])
   /** 当前正在看的会话。事件回调里要用最新值，故用 ref 而非闭包捕获 */
   const watching = useRef<string | undefined>(undefined)
@@ -125,61 +125,74 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
     client.get<RunSummary[]>("listRuns", { projectId }).then(setRuns).catch(fail)
   }, [client, projectId, refreshSessions, fail])
 
+  /** 取一次快照并同步 revision。跳号自愈与切会话都走这里 */
+  const resync = useCallback(
+    (sessionId: string) => {
+      client
+        .get<SessionSnapshot>("subscribeSession", { sessionId })
+        .then((snap) => {
+          // 请求飞行期间用户可能又切走了，不认迟到的结果
+          if (snap.sessionId !== watching.current) return
+          setItems(snap.items)
+          setTermChunks(snap.terminal ? [snap.terminal] : [])
+          setTermTrimmed(snap.terminalTrimmed)
+          client.expectRevision(sessionId, snap.revision)
+        })
+        .catch(fail)
+    },
+    [client, fail],
+  )
+
   /**
-   * 事件流。**只订阅一次**，进来的事件按当前正在看的会话过滤——
-   * 每次切会话都退订重订会在切换的空隙里漏掉事件。
+   * 推送流。**只订阅一次**，进来的更新按当前正在看的会话过滤——
+   * 每次切会话都退订重订会在切换的空隙里漏掉更新。
    */
   useEffect(() => {
     if (!ready) return
-    return client.subscribeEvents({
-      onEvent: (e: SessionEvent) => {
-        if (e.sessionId !== watching.current) return
-        setTurns((t) => applyEvent(t, e))
-        if (e.kind === "bytes") setTermChunks((c) => [...c, e.data])
-        if (e.kind === "dropped") {
-          setLostEarlier(true)
-          setNotes((n) => [...n.slice(-3), `会话输出过快，丢弃了 ${e.droppedChars} 个字符`])
+    return client.subscribeUpdates({
+      onUpdate: (u: SessionUpdate) => {
+        if (u.sessionId !== watching.current) return
+        if (u.type === "item") {
+          // 按 id 覆盖：服务端推的是累积后的整条，界面不必拼
+          setItems((prev) => {
+            const i = prev.findIndex((x) => x.id === u.item.id)
+            if (i < 0) return [...prev, u.item]
+            const next = [...prev]
+            next[i] = u.item
+            return next
+          })
+        }
+        if (u.type === "bytes") setTermChunks((c) => [...c, u.data])
+        if (u.type === "snapshot") {
+          setItems(u.snapshot.items)
+          setTermChunks(u.snapshot.terminal ? [u.snapshot.terminal] : [])
+          setTermTrimmed(u.snapshot.terminalTrimmed)
         }
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
-        if (e.kind === "state" && e.state === "exited" && projectId) void refreshSessions(projectId)
+        if (u.type === "state" && u.state === "exited" && projectId) void refreshSessions(projectId)
       },
-      // 跳号、畸形、版本不符一律显示出来（规格 7.5）
+      /**
+       * **跳号不再只是报警，而是重新同步。**
+       * 旧设计（seq + 环形缓冲）少的那一段补不回来，只能告诉用户「丢了」。
+       */
+      onResync: (sessionId) => resync(sessionId),
       onProblem: (m) => setNotes((n) => [...n.slice(-3), m]),
     })
-  }, [ready, client, projectId, refreshSessions])
+  }, [ready, client, projectId, refreshSessions, resync])
 
-  /**
-   * 切会话：退订旧的，订阅新的并重放历史。
-   *
-   * **不再无脑清空**——初版切回旧会话就是一片空白，那等于对话没被记住。
-   */
+  /** 切会话：退订旧的，订阅新的并取全量快照。**不再无脑清空。** */
   useEffect(() => {
     watching.current = sessionId
-    setTurns([])
+    setItems([])
     setTermChunks([])
-    setLostEarlier(false)
+    setTermTrimmed(false)
     if (!sessionId) return
-
-    let stale = false
-    client
-      .get<SubscribeResult>("subscribeSession", { sessionId })
-      .then((r) => {
-        // 请求飞行期间用户可能又切走了。用返回值里的 sessionId 核对，不认迟到的结果
-        if (stale || r.sessionId !== watching.current) return
-        setTurns(turnsFromEvents(r.events))
-        setTermChunks(r.events.flatMap((e) => (e.kind === "bytes" ? [e.data] : [])))
-        setLostEarlier(r.truncated)
-        // 让之后推来的增量接着历史往下校验（协议 §5.2：历史与增量同一套编号）
-        client.expectSeq(sessionId, r.latestSeq)
-      })
-      .catch(fail)
-
+    resync(sessionId)
     return () => {
-      stale = true
-      client.forgetSeq(sessionId)
+      client.forgetRevision(sessionId)
       client.get("unsubscribeSession", { sessionId }).catch(fail)
     }
-  }, [client, sessionId, fail])
+  }, [client, sessionId, fail, resync])
 
   /**
    * 最新 Run 的详情：**产出与成本从这里来**。
@@ -256,12 +269,12 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
           onPickProject={(id) => {
             setProjectId(id)
             setSessionId(undefined)
-            setTurns([])
+            setItems([])
             setView("conversation")
           }}
           onPickSession={(id) => {
             setSessionId(id)
-            setTurns([])
+            setItems([])
             setView("conversation")
           }}
           onShowPanel={() => setView("panel")}
@@ -291,7 +304,7 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
                 void refreshSessions(projectId)
                 // 建完直接进对话——新建会话的目的就是开始聊，不该还要再点一下
                 setSessionId(s.sessionId)
-                setTurns([])
+                setItems([])
                 setView("conversation")
                 // 取写权，否则第一句就会被租约挡下
                 return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
@@ -334,9 +347,14 @@ export function App({ client = createClient() }: { client?: WorkbenchClient }) {
             <>
               <ConversationView
                 session={session}
-                turns={turns}
-                lostEarlier={lostEarlier}
+                items={items}
+                terminalTrimmed={termTrimmed}
                 disabled={session.state === "exited"}
+                onAbort={
+                  session.kind === "native"
+                    ? () => client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
+                    : undefined
+                }
                 onSend={(text) => {
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。
                   // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。

@@ -43,10 +43,24 @@
 
 ## 变更日志
 
+### 2026-08-08 — ①-B Task 2.1：协议版本与实体 schema，三条硬要求上升为类型约束
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: ①-B 的第一块。计划 §2 有三条「硬要求」原本写在 UI 任务里——但**写在 UI 里就是约定，约定会被绕过，尤其在赶工时**。本任务把它们上升为协议层的类型约束。
+- **What**:
+  - 新增 `src/protocol/version.ts`：`WORKBENCH_PROTOCOL_VERSION = "1.0"` 与 `isCompatible(ui, server)`。规则是 **major 必须相同、UI 的 minor 不得高于服务端**（服务端更新无害，UI 更新会去读服务端不返回的字段）。**格式非法一律判不兼容——不抛错也不放行**，放行会让畸形版本号静默通过握手，那正是握手要防的。
+  - 新增 `src/protocol/entities.ts`：`RunSummary` / `Cost` / `ProvenanceLink` / `FileChangeFacts` / `ProjectSummary` / `SessionSummary` / `WorkbenchCapabilities`。
+  - **三条硬要求落成类型**：① `Cost` 是 `visible` 上的可辨识联合——不可见时**必须给原因且不得夹带金额**（`.strict()` 强制），因为「0」与「不可见」是两种东西，显示 0 会让人以为免费；② `ProvenanceLink` 用 `superRefine` 强制 `provenanceComplete=false` 必须带 `incompleteReason`，且完整时不得带（自相矛盾）；③ `FileChangeFacts.mayIncludeUserEdits` 是**必填而非可选**——不能指望 UI 记得加脚注。
+  - **`RunSummary` 增加一条计划外的约束**：`status="running"` 不得带 `finishedAt`，终态必须带。理由是自相矛盾的记录与其让 UI 去猜，不如在协议边界拒掉。
+  - `requestType` 刻意保持开放字符串而非枚举——①-B 只产生 `agent_turn`，②-A 要加 `execute_r` / `execute_py`，写死枚举会逼 ②-A 改 major 版本。
+- **Impact**: UI 与核心之间有了唯一契约。Task 2.2（操作契约）可在此之上定义请求/响应。
+- **Verification**: 严格 TDD。32 个测试。**过程中测试抓到我自己写的夹具缺陷**——`baseRun` 是 `status:"completed"` 却没有 `finishedAt`，与新加的约束冲突；判定是**约束对、夹具错**，修夹具而非放宽约束。全仓库 157 passed，typecheck 零错误。
+
 ### 2026-08-08 — 编写阶段①-B 详细计划：协议优先，15 个 Task
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `8cf121e`
 - **Motivation**: 定位修正落地后，需要一份可逐字执行的计划。同时要落实 G1 留下的教训——①-A 的计划漏掉了主规划 G1 的一条判据。
 - **What**:
   - 新增 `docs/superpowers/plans/2026-08-08-phase1b-workbench.md`，15 个 Task 分四部分：**Part 0 协议**（实体 schema / 操作契约 / 服务端）→ **Part 1 存储与项目**（Run 表 / git 事实 / Project 管理）→ **Part 2 Electron 壳与 IPC** → **Part 3 UI**（项目面板 / 对话视图 / 终端下钻 / 边界检查）→ **Part 4 验收**。

@@ -246,6 +246,8 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 ### 阶段 ①-B′ 桌面成型
 
 > **本阶段的判据不是「功能齐了」，是「作者自己打开，不用问我，就知道下一步该点哪里」。**
+>
+> **详细计划**：[`2026-08-08-phase1b-prime-desktop.md`](./2026-08-08-phase1b-prime-desktop.md) —— 含 Hermes 信息架构的照做清单、依赖分层声明、10 个 Task 与执行顺序。
 
 #### S1 · 状态按权威归位 ⬜
 
@@ -294,6 +296,19 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **效果**：从 `<pre>` 纯文本升级为可读的技术对话
 - **来源**：Hermes 用了 `streamdown` + `shiki` + `katex` + `mermaid` + `use-stick-to-bottom`
 - **对标**：Hermes 的 transcript 建在 `@assistant-ui/react` 上。**我们只取下层三件，不取它** —— 按 §4 分层纪律：`@assistant-ui/react` 会决定整个对话区的形态，是又一个「坐在哪一层」的决策，而 `streamdown`/`shiki` 是可替换的叶子依赖。放弃项：要自己维护消息/工具调用/审批三类渲染器
+
+#### S16′ · Run 最小骨架 ⬜ 〔从 ②-B 前移〕
+
+> **本阶段唯一一件「不做会很贵」的事。** 其余功能都是新增路径，随时可加；Run 不是——它要求**每条执行路径在诞生时就记账**。
+
+- **技术栈**：`better-sqlite3`；协议新增两个只读操作 `listRuns` / `getRun`
+- **成果**：`runs` 表 + 三个写入点（agent 回合 · 工具调用 · PTY 命令）。字段：`run_id` / `parent_run_id` / **`project_id`** / `session_id` / `origin` / `request_type` / `status` / `started_at` / `finished_at` / `terminal_reason` / **`exit_code`**。**只落记录，不做审计、对比、溯源面板、成本核算**（那些是 S16 / S21–S24）
+- **效果**：**不变式 3（没有不可见的行动）在第一版就成立**；同时补上 §9.2 记录的已知缺口——「没有任何生产代码创建 Run」
+- **来源**：Rho `RunSummary` 的字段集合
+- **对标 —— 前移的直接依据**：Rho `reproducibility-audit` 设计文档原文
+  > *"Current durable run rows **do not directly carry `project_root`**. Therefore RA-RC1 is **blocked** until its interface checkpoint defines one canonical, testable run-to-project identity contract. **Inferring project identity from source paths, the current open project, adjacent timestamps, or artifact filenames is forbidden.**"*
+
+  Run 行少一个字段，整个「运行对比」被阻塞，必须先做 BH1–BH3 三个基线加固包才能继续。**三个包的代价，换一个字段。** 因此 `project_id` 与 `exit_code`（结构化，非日志文本）现在就钉死——这两项正是冻结点八项里的两项
 
 #### S7 · mock 链路 + Playwright e2e + DESIGN.md ⬜（mock 部分 ✅）
 
@@ -655,23 +670,29 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 | 返工 R | 🔄 R1–R4 ✅ / **R5 ⬜** |
 | 桌面经验萃取（Hermes） | ✅ `specs/2026-08-08-desktop-lessons-from-hermes.md` |
 | mock 推理服务器 | ✅ `npm run dev:mock` |
-| 阶段 ①-B′ 桌面成型 | ⬜ **S1–S7 待开工** |
+| 阶段 ①-B′ 详细计划 | ✅ `plans/2026-08-08-phase1b-prime-desktop.md`（10 个 Task） |
+| 阶段 ①-B′ 代码 | ⬜ **S1–S7 + S16′ 待开工** |
 
 **代码规模**：41 个源文件 / 5,884 行；**423 个测试通过**（31 个文件）；commit `e69e485`。
 
 ### 9.2 已知的、诚实的缺口
 
-1. **没有任何生产代码创建 `Run`** —— Runs / 成本 / 溯源面板在真实使用中是空的。这不是 bug，是 S16 还没做
+1. ~~**没有任何生产代码创建 `Run`**~~ —— 已由 **S16′** 前移到 ①-B′ 解决（Task 3.5）。前移理由见 S16′ 的「对标」栏
 2. **不变式 4 没有落点**（R11）
 3. **G2 原判据判的是功能齐不齐**，已改为 G2′
 4. `src/electron/main.ts` 里还留着临时的 `DAWN_PROBE` 调试块，需清理
 
 ### 9.3 下一步
 
-**R5 → 然后 S1。**
+**按 `phase1b-prime-desktop.md` §6 的顺序执行**：
 
-R5（UI 显示工具调用）是返工 R 的最后一步，数据通路已在 R4 建好，只剩呈现。
-S1（状态按权威归位）是 ①-B′ 的地基，后面六步都踩在它上面——**先搬状态，再改界面**，顺序不能反。
+```
+3.1 R5 工具调用显示 → 3.2 设计契约与 primitive → 3.3 S1 状态归位
+  → 3.4 S2 删门槛 ∥ 3.5 S16′ Run 骨架
+  → 3.6 加载态 → 3.7 终端常驻 → 3.8 re-home → 3.9 markdown → 3.10 e2e
+```
+
+**3.2 与 3.3 的顺序不能反**：契约先立，否则每个 Task 各自发明；状态先搬，否则改完界面还要再搬一次。
 
 ### 9.4 需要作者定的
 
@@ -696,6 +717,7 @@ docs/
     ├── plans/
     │   ├── 2026-08-08-master-roadmap.md                     ← 本文档
     │   ├── 2026-08-06-phase0-and-session-core.md            Phase 0 + ①-A
-    │   └── 2026-08-08-phase1b-workbench.md                  ①-B
+    │   ├── 2026-08-08-phase1b-workbench.md                  ①-B
+    │   └── 2026-08-08-phase1b-prime-desktop.md              ①-B′ 桌面成型（按 Hermes 做）
     └── ENTITY-REGISTRY.md                                   68 个实体，含构思来源
 ```

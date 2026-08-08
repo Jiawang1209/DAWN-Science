@@ -43,10 +43,25 @@
 
 ## 变更日志
 
-### 2026-08-08 — 重写主规划 v2：读完四个参考项目，每步补齐五项
+### 2026-08-08 — ①-B′ 详细计划：桌面按 Hermes 做，并把 Run 骨架前移
 
 - **Type**: docs
 - **Commit**: 待回填
+- **Motivation**: 作者定调「第一步先搞一个 agent 桌面工作台，能调本地 codex/claude、能接各种 API key，UI 基本上全都按照 Hermes 做」，并同意把 Run 最小骨架前移。
+- **What**:
+  - 新增 `plans/2026-08-08-phase1b-prime-desktop.md`：Hermes 信息架构的**照做清单**（三类界面、chat 为根路由、右栏三 pane、布局常量、三层令牌、z-index 梯子、契约用测试强制）、**依赖分层声明**（每个新依赖写明坐哪层/放弃什么/不变式挂点）、**10 个 Task** 与执行顺序、明确不做清单、交付前品味测试。
+  - 主规划新增 **S16′ Run 最小骨架**（从 ②-B 前移到 ①-B′），并把 §9.2 的已知缺口「没有任何生产代码创建 Run」标记为由它解决。
+- **两个经查证后否掉的选项**（记录理由，避免以后重问）:
+  - **`pi-client` / `pi-server`**：读后确认它们是**远程会话**传输层（*"Transport-neutral client for **remote** pi sessions over framed CBOR bytes"*），而我们是同机 Electron 主↔渲染进程 IPC；且 `pi-server` README 首句为 *"**Experimental.** … may change or be removed without notice."*，正撞风险 R10。**S15（远程/SSH 执行环境）时再评估。** 附带发现：`pi-client` 已有我们手写过的会话租约（exclusive/shared + `PiSessionOwnershipError`）与 snapshot 权威语义（*"Server snapshots … are authoritative, while progress events do not mutate snapshot state optimistically"*）——**说明 R4 的设计方向对，也说明早读一天能少写一些**。
+  - **`@assistant-ui/react`**：主动放弃。它会决定整个对话区形态，是又一个「坐哪一层」的决策；且我们的 transcript 要显示 Run 与来源，形态与通用聊天不同。只取其下层三件：`streamdown` / `shiki` / `use-stick-to-bottom`。
+- **S16′ 前移的依据**（不是我的推测，是 Rho 的前车之鉴）: Rho `reproducibility-audit` 设计文档原文——*"Current durable run rows **do not directly carry `project_root`**. Therefore RA-RC1 is **blocked** until … Inferring project identity from source paths, the current open project, adjacent timestamps, or artifact filenames is **forbidden**."* Run 行少一个字段，整个运行对比被阻塞，必须先做 BH1–BH3 三个基线加固包。**三个包的代价，换一个字段。** 因此 `project_id` 与 `exit_code`（结构化，非日志文本）现在就钉死——二者正是契约冻结点八项里的两项。
+- **Impact**: 无代码变更。①-B′ 从 7 步变为 8 步（S1–S7 + S16′）；G2′ 判据加上「都在 Runs 里留下记录」。
+- **Verification**: 423 tests passed，typecheck 零错误——未动代码，跑一遍确认基线未受影响。计划中对 Hermes 的每条引用均来自本次实读（`routes.ts` 的 `NEW_CHAT_ROUTE = '/'`、`layout-constants.ts` 的三个常量、`right-sidebar/` 的三个 pane、`components/ui/__tests__/no-native-title.test.ts`），**未凭记忆书写**。
+
+### 2026-08-08 — 重写主规划 v2：读完四个参考项目，每步补齐五项
+
+- **Type**: docs
+- **Commit**: `5e617f3`
 - **Motivation**: 作者要求重写主规划，且**必须先详细阅读 Hermes / wisp-science / Rho / pi 四个项目的代码**，每个开发步骤写明技术栈、成果、效果、技术栈来源与对标，并「积极保护终极目标」。旧规划不是写错了，是**写浅了**——它回答了「先做哪个阶段」，没回答「每一步交出什么、凭什么这么做、做到什么程度算数」。
 - **What**:
   - 新增 `plans/2026-08-08-master-roadmap.md`；旧 `2026-08-07-master-roadmap.md` **降为存根**（两份都自称权威 = Rho `AGENTS.md` 明列的必须停下来处理的条件）。

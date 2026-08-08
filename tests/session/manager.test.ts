@@ -4,6 +4,7 @@ import { migrate } from "../../src/store/schema.js"
 import { SessionStore } from "../../src/store/sessions.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
 import { SessionManager } from "../../src/session/manager.js"
+import { ProjectStore } from "../../src/store/projects.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
 import type { AgentRuntime, SessionSpec } from "../../src/runtime/types.js"
 
@@ -28,7 +29,7 @@ function makeManager() {
     runtimes: { native: runtime, pty: runtime },
     workspaceRoot: "/tmp/dawn-test",
   })
-  return { mgr, store, runtime }
+  return { mgr, store, runtime, db }
 }
 
 /**
@@ -279,5 +280,32 @@ describe("SessionManager · 按 agent 定义构造 pty runtime", () => {
     })
     await mgr.create("ds-agent", "/tmp/w")
     expect(called).toBe(false)
+  })
+})
+
+describe("SessionManager · 项目归属", () => {
+  // Part 1 发现的缺口：create() 原本不带 projectId，导致通过它建的会话
+  // 不挂在任何项目下，ProjectManager.sessions() 永远返回空。
+  it("create 可指定 projectId 并落库", async () => {
+    const ctx = makeManager()
+    // 外键约束要求项目先存在——会话不能挂到不存在的项目上
+    new ProjectStore(ctx.db).insert({
+      projectId: "p1", name: "w", workspace: "/tmp/w", createdAt: "2026-08-08T00:00:00Z",
+    })
+    const s = await ctx.mgr.create("ds-agent", "/tmp/w", { projectId: "p1" })
+    expect(ctx.store.get(s.id)?.projectId).toBe("p1")
+  })
+
+  it("指向不存在的项目会被外键拒绝 —— 数据库层不允许悬空归属", async () => {
+    const ctx = makeManager()
+    await expect(ctx.mgr.create("ds-agent", "/tmp/w", { projectId: "nope" })).rejects.toThrow(
+      /FOREIGN KEY/i,
+    )
+  })
+
+  it("不指定 projectId 时留空，而不是编一个 —— 不变式 5", async () => {
+    const ctx = makeManager()
+    const s = await ctx.mgr.create("ds-agent", "/tmp/w")
+    expect(ctx.store.get(s.id)?.projectId).toBeUndefined()
   })
 })

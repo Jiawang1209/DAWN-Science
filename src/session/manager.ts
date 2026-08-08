@@ -50,7 +50,15 @@ export class SessionManager {
     this.leases = new LeaseManager({ ttlSeconds: opts.leaseTtlSeconds ?? 300 })
   }
 
-  async create(agentId: string, workspace: string): Promise<SessionRecord> {
+  /**
+   * @param opts.projectId 会话归属的项目。**不提供时留空而非编一个**——
+   *   没有归属依据时填一个等于伪造事实（不变式 5）。
+   */
+  async create(
+    agentId: string,
+    workspace: string,
+    opts: { projectId?: string } = {},
+  ): Promise<SessionRecord> {
     const def = this.registry.agents[agentId]
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
     if (!def) throw new Error(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
@@ -64,6 +72,7 @@ export class SessionManager {
       sessionDir,
       state: "starting",
       createdAt: new Date().toISOString(),
+      ...(opts.projectId ? { projectId: opts.projectId } : {}),
     }
     this.store.insert(rec) // 先落库
 

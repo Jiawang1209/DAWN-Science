@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — ①-B Task 2.6：项目管理器，把三个 store 拼成协议实体
+### 2026-08-08 — ①-B 补 Part 1 收口：真实后端接上服务端，并修一处会话归属缺口
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 准备开 Part 2（Electron）时发现 Part 1 没有收口——Task 2.3 只交付了 `WorkbenchBackend` 接口与 Fake，真实现一直没写。没有它，Electron 起来也没数据可服务。
+- **What**:
+  - **修一处真实缺口**：`SessionManager.create(agentId, workspace)` 不接受 `projectId`，于是通过它建的会话**不挂在任何项目下**，`ProjectManager.sessions()` 永远返回空。已加可选参数；**不提供时留空而非编一个**——没有归属依据时填一个等于伪造事实（不变式 5）。
+  - **测试撞上外键约束并证明它是对的**：初版测试用了一个不存在的 `projectId`，被 `FOREIGN KEY constraint failed` 拒掉。判定是**约束对、测试错**——会话不该挂到不存在的项目上。改测试并补一条用例专门验证这个拒绝行为。
+  - 新增 `src/workbench/backend.ts`：把 `ProjectManager` / `RunStore` / `SessionManager` / git 事实拼成真实 `WorkbenchBackend`。
+  - **业务性失败一律抛 `fault(code, message)`**：项目不存在 → `not_found`，写权被拒 → `conflict`。否则它们会被压成 `internal_error`，UI 无法分辨「该去抢租约」和「服务器炸了」。
+  - **拿不到 git 基线时不返回 `fileChanges` 字段，而不是返回空数组**。空数组会被读成「什么都没改」——那是错的；缺字段读成「不知道」，才对。进程重启后基线丢失、非 git 仓库两种情况都走这条路径。
+- **Impact**: Part 1 真正收口。Electron 与 UI 可以直接对着 `WorkbenchServer` 编程，数据是真的。
+- **Verification**: 10 个端到端测试**经服务端调用**（不直接调后端），用真临时 git 仓库。含三条错误码归类用例（not_found / conflict）与两条「不编造」用例（无基线不返回 fileChanges、无溯源记录返回 not_found 而非空链）。全仓库 270 passed，typecheck 零错误。
+
+### 2026-08-08 — ①-B Task 2.6：项目管理器，把三个 store 拼成协议实体
+
+- **Type**: feat
+- **Commit**: `cd623a9`
 - **Motivation**: 把 `ProjectStore` / `SessionStore` / `RunStore` 拼成 UI 能直接消费的协议实体，是 Workbench 后端的主要数据来源。
 - **What**:
   - 新增 `src/project/manager.ts`：`open` / `summary` / `list` / `sessions` / `runs`。

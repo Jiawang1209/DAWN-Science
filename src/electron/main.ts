@@ -39,6 +39,24 @@ function createWindow(): void {
   })
   win.on("closed", () => off?.())
 
+  // **渲染进程的报错必须能被看见。**
+  // 此前它们只进 devtools，而 devtools 默认不开——于是「界面死了但主进程一切正常」
+  // 这种最难查的情况，终端上一个字都没有。规格 7.5：失败必须出声。
+  win.webContents.on("console-message", (e) => {
+    if (e.level === "warning" || e.level === "error") {
+      console.error(`[渲染进程] ${e.sourceId}:${e.lineNumber} ${e.message}`)
+    }
+  })
+  win.webContents.on("render-process-gone", (_e, details) => {
+    console.error(`[渲染进程崩溃] ${details.reason}（exitCode=${details.exitCode}）`)
+  })
+  win.webContents.on("did-fail-load", (_e, code, desc, url) => {
+    console.error(`[页面加载失败] ${desc}（${code}）${url}`)
+  })
+  win.webContents.on("preload-error", (_e, path, err) => {
+    console.error(`[preload 出错] ${path}:`, err)
+  })
+
   if (DEV_URL) void win.loadURL(DEV_URL)
   else void win.loadFile(join(import.meta.dirname, "../ui/index.html"))
 }

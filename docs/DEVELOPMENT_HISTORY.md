@@ -43,10 +43,25 @@
 
 ## 变更日志
 
+### 2026-08-08 — 让渲染进程的报错能被看见，并禁掉浏览器对话框（作者反馈驱动）
+
+- **Type**: fix
+- **Commit**: 待回填
+- **Motivation**: 作者报告两个症状：「在里面无法输入 api key」、「点击什么都没有任何用处」。
+  **实测确诊：`window.prompt` 在 Electron 里直接抛错**（`prompt() is not supported.`，经真机探针取得原话）。它在「打开文件夹」的 onClick 里抛，React 根随之死掉，此后整个界面点什么都没反应——**包括进不去设置页填 API key**。一个函数调用，两个症状。
+  修复本身已随 Task 2.22（原生目录选择器）落在 `41e9fca`，本条记录的是**为什么这个缺陷能活到作者手上**。
+- **What**:
+  - **主进程转发渲染进程的报错**：`console-message` / `render-process-gone` / `did-fail-load` / `preload-error` 四个事件打到终端。此前渲染进程的异常只进 devtools，而 devtools 默认不开——**于是「界面死了但主进程一切正常」这种最难查的情况，终端上一个字都没有**。这正是本次排查最初两轮全无线索的原因。
+  - **边界扫描新增一条**：`src/ui/**` 不得调用 `window.prompt` / `alert` / `confirm`，三者 Electron 一律不支持。与 Task 2.13 的 import 扫描同一手法——**原则不写成测试就会被绕过**。
+- **Impact**: 同类缺陷以后会在测试阶段被拦下，且真机上任何渲染进程异常都会出现在终端里。
+- **排查过程中一并证实（此前只是「代码写了没真跑过」）**：桥接三个开口齐全（`invoke` / `pickDirectory` / `onEvent`）、`getCapabilities` 握手返回 1.3、`getProviders` 正确列出 `deepseek`、**凭证读写全通且 `encrypted: true`**（macOS Keychain 可用）、React 树正常挂载。也就是说「无法输入 API key」不是凭证链路的问题，纯粹是界面已经死了。
+- **教训**：这个缺陷 438 个测试一个都没拦住，因为 **jsdom 实现了 `window.prompt` 而 Electron 没有**——测试环境比生产环境「更宽容」的地方，就是缺陷的藏身处。它和上一轮的四处接线缺陷同源：**只有真的打开它才会撞上**。
+- **Verification**: 438 passed（新增 1 条对话框扫描），typecheck 零错误，`npm run build` 通过。诊断证据来自真机探针（`executeJavaScript` 注入渲染进程取回 JSON），非推测。
+
 ### 2026-08-08 — ①-B 计划状态更新：Part 5 完成，验收待作者
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `3d4dac5`
 - **Motivation**: Part 5 的 8 个 Task 全部完成，计划里的勾选与状态需要同步，否则下次回看会以为还没做。
 - **What**: 勾选 Part 5 的 26 项，计划头部加「状态」一行说明 Part 0–3 与 Part 5 已完成、Part 4 验收待作者本人。
 - **Impact**: 仅文档。

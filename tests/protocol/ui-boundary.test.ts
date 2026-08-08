@@ -63,6 +63,31 @@ describe("UI 依赖边界", () => {
     expect(all.some((s) => s.includes("protocol/"))).toBe(true)
   })
 
+  /**
+   * 2026-08-08 新增。作者报告「点击什么都没有任何用处」，实测原因是
+   * **`window.prompt` 在 Electron 里直接抛错**（`prompt() is not supported.`）——
+   * 它在 onClick 里抛，React 根随之死掉，此后整个界面点什么都没反应，
+   * 包括进不去设置页填 API key。**一个函数调用，两个症状。**
+   *
+   * 这三个浏览器对话框 Electron 一律不支持。要用就用原生 dialog 走 IPC。
+   */
+  const BROWSER_DIALOGS = ["window.prompt", "window.alert", "window.confirm"]
+
+  it("src/ui/** 不得使用 window.prompt / alert / confirm —— Electron 里它们会抛错", () => {
+    const violations: string[] = []
+    for (const file of files) {
+      const src = readFileSync(file, "utf8")
+      for (const bad of BROWSER_DIALOGS) {
+        // 注释里提这几个名字是允许的（本项目的注释就在解释为什么不能用），
+        // 只抓真正的调用
+        if (new RegExp(`${bad.replace(".", "\\.")}\\s*\\(`).test(src)) {
+          violations.push(`${file} → ${bad}()`)
+        }
+      }
+    }
+    expect(violations, `Electron 不支持这些浏览器对话框：\n${violations.join("\n")}`).toEqual([])
+  })
+
   it("反向自检：把一个违规 import 喂给检查器，它必须报出来", () => {
     // 防止检查器本身写错了却一直「全绿」——那是最坏的一种假通过
     const fake = `import { SessionStore } from "../store/sessions.js"\n`

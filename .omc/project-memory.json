@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npm run typecheck 2>&1 | tail -5 && npx vitest run 2>&1 | tail -6 && npm run build 2>&1 | tail -4",
-    "testCommand": "npm run typecheck 2>&1 | tail -5 && npx vitest run 2>&1 | tail -6 && npm run build 2>&1 | tail -4",
+    "buildCommand": "npm run build 2>&1 | tail -2 && npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3",
+    "testCommand": "npm run build 2>&1 | tail -2 && npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,8 +44,8 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 41,
-      "lastAccessed": 1786183753266,
+      "accessCount": 42,
+      "lastAccessed": 1786186316388,
       "type": "file"
     },
     {
@@ -139,6 +139,12 @@
       "type": "file"
     },
     {
+      "path": "src/config/loader.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786185912268,
+      "type": "file"
+    },
+    {
       "path": "spikes/d-jupyter-kernel.ts",
       "accessCount": 2,
       "lastAccessed": 1786159067103,
@@ -166,12 +172,6 @@
       "path": "src/store/schema.ts",
       "accessCount": 2,
       "lastAccessed": 1786166818779,
-      "type": "file"
-    },
-    {
-      "path": "src/config/loader.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786173105232,
       "type": "file"
     },
     {

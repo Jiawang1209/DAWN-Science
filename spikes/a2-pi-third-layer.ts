@@ -20,7 +20,12 @@ import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { homedir, tmpdir } from "node:os"
 import { join } from "node:path"
-import { createAgentSession, ModelRuntime } from "@earendil-works/pi-coding-agent"
+import {
+  createAgentSession,
+  createBashToolDefinition,
+  createReadToolDefinition,
+  ModelRuntime,
+} from "@earendil-works/pi-coding-agent"
 import type { Credential, CredentialInfo, CredentialStore } from "@earendil-works/pi-ai"
 
 const PROVIDER = "deepseek"
@@ -32,6 +37,9 @@ const READ_SENTINEL = "DAWN-READ-9f3a1c"
 const BASH_MARKER = "dawn-bash-ran.txt"
 /** 扩展要拦截的命令特征。被拦下时该文件必须不存在 */
 const FORBIDDEN_MARKER = "dawn-should-be-blocked.txt"
+/** 场景 2（包装工具）用的两个标记 */
+const WRAP_ALLOWED = "dawn-wrap-allowed.txt"
+const WRAP_BLOCKED = "dawn-wrap-blocked.txt"
 
 if (!process.env.DEEPSEEK_API_KEY) {
   console.error("缺少 DEEPSEEK_API_KEY。把它写进项目根目录的 .env（见 .env.example）。")
@@ -104,6 +112,64 @@ export default function (pi: ExtensionAPI) {
   })
 }
 `
+
+/* ── 场景 2：不用文件扩展，直接包装工具定义 ─────────────────────── */
+
+/**
+ * **这条路是为了绕开一个真实风险**：pi 的扩展只能从
+ * `<agentDir>/extensions/*.ts` 加载，靠 jiti 在运行时转译 TypeScript。
+ * 打包进 Electron（asar）后这条路是否还通，无法先验断言——
+ * 而**授权门若在生产构建里静默失效，比没有还危险**。
+ *
+ * 包装工具定义则完全不碰文件系统与转译器：拿 pi 的 `ToolDefinition`，
+ * 换掉它的 `execute`，经 `customTools` 传回去。
+ */
+interface GateRecord {
+  tool: string
+  command: string
+  blocked: boolean
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyToolDefinition = any
+
+/**
+ * 给一个工具定义套上授权门。
+ *
+ * 类型用 `any`：`ToolDefinition` 的三个泛型参数由各工具自己特化，
+ * 想在包装器里精确保留它们需要高阶泛型体操，而**包装器对参数只做一件事
+ * ——转发**。这里换取的是可读性，代价可控。
+ */
+function gate(
+  definition: AnyToolDefinition,
+  policy: (params: Record<string, unknown>) => string | undefined,
+  log: GateRecord[],
+): AnyToolDefinition {
+  const original = definition.execute.bind(definition)
+  return {
+    ...definition,
+    async execute(
+      toolCallId: string,
+      params: Record<string, unknown>,
+      signal: AbortSignal | undefined,
+      onUpdate: unknown,
+      ctx: unknown,
+    ) {
+      const reason = policy(params)
+      log.push({
+        tool: definition.name,
+        command: String(params.command ?? params.path ?? ""),
+        blocked: reason !== undefined,
+      })
+      if (reason !== undefined) {
+        // 拒绝要**回给模型一条可理解的错误**，而不是抛异常——
+        // 抛异常会中断整轮，模型学不到"这条被拒了"
+        return { content: [{ type: "text", text: reason }], isError: true, details: undefined }
+      }
+      return original(toolCallId, params, signal, onUpdate, ctx)
+    },
+  }
+}
 
 /* ── 证据收集 ───────────────────────────────────────────────────── */
 
@@ -201,6 +267,56 @@ async function main(): Promise<void> {
   unsubscribe()
   session.dispose()
 
+  /* ── 场景 2：包装工具定义，完全不用文件扩展 ─────────────────── */
+
+  const gateLog: GateRecord[] = []
+  const cwd2 = join(root, "workspace2")
+  mkdirSync(cwd2, { recursive: true })
+
+  const wrappedTools = [
+    gate(
+      createBashToolDefinition(cwd2),
+      (p) => (String(p.command ?? "").includes(WRAP_BLOCKED) ? "DAWN-GATE-DENIED：该命令未获授权" : undefined),
+      gateLog,
+    ),
+    gate(createReadToolDefinition(cwd2), () => undefined, gateLog),
+  ]
+
+  const { session: session2 } = await createAgentSession({
+    cwd: cwd2,
+    agentDir,
+    model,
+    modelRuntime,
+    // 关掉内置工具，只用我们包装过的——**否则模型会绕过门去用原始的 bash**
+    noTools: "builtin",
+    customTools: wrappedTools,
+  })
+
+  const ev2: Evidence = {
+    toolCalls: [],
+    toolResults: [],
+    assistantText: "",
+    eventTypes: new Set(),
+    errors: [],
+  }
+  const unsubscribe2 = collect(session2 as never, ev2)
+  await session2.prompt(
+    [
+      `请用 bash 依次执行两条命令，每条都必须真的调用工具：`,
+      `1. touch ${WRAP_ALLOWED}`,
+      `2. touch ${WRAP_BLOCKED}`,
+      `第 2 条如果被拒绝，如实说明，不要重试也不要绕过。`,
+    ].join("\n"),
+  )
+  await session2.waitForIdle()
+  unsubscribe2()
+  session2.dispose()
+
+  const wrapAllowedRan = existsSync(join(cwd2, WRAP_ALLOWED))
+  const wrapBlockedAbsent = !existsSync(join(cwd2, WRAP_BLOCKED))
+  const gateSawBlock = gateLog.some((g) => g.blocked && g.command.includes(WRAP_BLOCKED))
+  const gateSawAllow = gateLog.some((g) => !g.blocked && g.command.includes(WRAP_ALLOWED))
+
   const after = fingerprintPiHome()
 
   /* ── 判定 ─────────────────────────────────────────────────────── */
@@ -219,8 +335,14 @@ async function main(): Promise<void> {
     ["Q2 bash 真的执行了（文件已创建）", bashRan, `${BASH_MARKER} exists = ${bashRan}`],
     ["Q3 扩展拦下了执行（结果里有拦截理由）", blockEvidence, ev.toolResults.filter((r) => r.isError).map((r) => r.text.slice(0, 80)).join(" | ")],
     ["Q3 被拦的命令确实没执行（文件不存在）", blockedFileAbsent, `${FORBIDDEN_MARKER} absent = ${blockedFileAbsent}`],
-    ["Q4 pi 来读了我们的凭证库", credentials.reads.includes(PROVIDER), `read() 被调用 ${credentials.reads.length} 次：${credentials.reads.join(", ")}`],
+    ["Q4 pi 来读了我们的凭证库", credentials.reads.includes(PROVIDER), `read() 被调用 ${credentials.reads.length} 次（遍历全部 provider 探测可用性）`],
     ["Q4 凭证未落盘到 auth.json", !existsSync(join(agentDir, "auth.json")), ""],
+
+    // 场景 2：不用文件扩展的授权门
+    ["Q5 包装后的工具能被模型调用", ev2.toolCalls.some((c) => c.name === "bash"), ev2.toolCalls.map((c) => c.name).join(", ") || "(无工具调用)"],
+    ["Q5 允许的命令照常执行", wrapAllowedRan, `${WRAP_ALLOWED} exists = ${wrapAllowedRan}`],
+    ["Q5 门拦下了未授权命令", gateSawBlock && wrapBlockedAbsent, `门记录 blocked=${gateSawBlock} / ${WRAP_BLOCKED} absent = ${wrapBlockedAbsent}`],
+    ["Q5 门放行的那条确有记录（不是全拦）", gateSawAllow, gateLog.map((g) => `${g.tool}:${g.blocked ? "拦" : "放"}`).join(" ")],
   ]
 
   console.log("\n══════ Spike A-2 判定 ══════\n")
@@ -238,8 +360,12 @@ async function main(): Promise<void> {
     console.log("\n── 报错 ──")
     for (const e of ev.errors) console.log(`  ${e}`)
   }
-  console.log("\n── agent 最终文本 ──")
-  console.log(ev.assistantText.trim().slice(0, 600) || "(空)")
+  console.log("\n── agent 最终文本（场景 1）──")
+  console.log(ev.assistantText.trim().slice(0, 400) || "(空)")
+
+  console.log("\n── 场景 2：包装工具的门 ──")
+  for (const g of gateLog) console.log(`  ${g.tool} ${g.blocked ? "❌拦下" : "✅放行"}  ${g.command}`)
+  console.log(`  agent 最终文本：${ev2.assistantText.trim().slice(0, 300) || "(空)"}`)
 
   const passed = results.every(([, ok]) => ok)
   console.log(`\n══════ ${passed ? "GR 门通过" : "GR 门未通过——停在 R1，不进 R2"} ══════`)

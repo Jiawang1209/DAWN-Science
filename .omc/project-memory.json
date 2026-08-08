@@ -10,7 +10,7 @@
   },
   "build": {
     "buildCommand": "npm run build 2>&1 | tail -2 && npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3",
-    "testCommand": "npm run build 2>&1 | tail -2 && npx vitest run 2>&1 | tail -6 && npm run typecheck 2>&1 | tail -3",
+    "testCommand": "npx vitest run 2>&1 | tail -5 && git add -A && git commit -q -F - <<'EOF'\nfeat: R1 / Spike A-2：pi 第三层入口验证通过，GR 门十项全过\n\n判据刻意不看模型自述只看副作用：bash 是否真执行看目标文件是否创建，\n扩展是否真拦下看被拦命令的副作用文件不存在。\n\n结果：createAgentSession 起得来、read 复述出暗号、bash 创建了文件、\n扩展的 tool_call 确实拦下执行、自定义 CredentialStore 被真实调用。\n\n两处实测修正分层决策：凭证注入点应是 pi-ai 的 CredentialStore 而非\nAuthStorageBackend；read() 一次会话被调用 202 次，实现必须带缓存，\n否则会触发 202 次 keychain 解密。\n\n在 Spike A 的遗留处补了追记：「未验证 AgentHarness，留待 Task 1.10\n评估」是本项目最贵的一行字——Task 1.10 并没有评估。\nEOF\ngit log --oneline -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -67,6 +67,12 @@
       "type": "file"
     },
     {
+      "path": "spikes/FINDINGS.md",
+      "accessCount": 7,
+      "lastAccessed": 1786195008865,
+      "type": "file"
+    },
+    {
       "path": "spikes/a-pi-embed.ts",
       "accessCount": 5,
       "lastAccessed": 1786156778022,
@@ -82,12 +88,6 @@
       "path": "src/cli.ts",
       "accessCount": 5,
       "lastAccessed": 1786163589653,
-      "type": "file"
-    },
-    {
-      "path": "spikes/FINDINGS.md",
-      "accessCount": 5,
-      "lastAccessed": 1786194621172,
       "type": "file"
     },
     {

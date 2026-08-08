@@ -220,6 +220,43 @@ agent_start
 | Q2 内置工具真能跑命令？ | ✅ | `bash` 被调用，**且目标文件真的被创建**（不看模型自述，看副作用） |
 | Q3 扩展能拦下一次执行？ | ✅ | `tool_call` 返回 `{block:true, reason}`，**工具结果里出现该 reason，且命令的副作用文件不存在** |
 | Q4 凭证能换成我们的实现？ | ✅ | 注入自定义 `CredentialStore`，pi 确实调用了它；`auth.json` 未落盘 |
+| Q5 **不用文件扩展**也能做授权门？ | ✅ | 包装 `ToolDefinition.execute` + `noTools:"builtin"` + `customTools`，放行的执行、拦下的没执行 |
+
+### Q5 是本 spike 最有价值的一项：它取消了一个风险，而不是接受它
+
+pi 的扩展**只能从 `<agentDir>/extensions/*.ts` 加载**（`loadExtensionFromFactory`
+没有从包入口导出），靠 **jiti 2.7.0** 在运行时转译 TypeScript。
+打包进 Electron（asar）后这条路是否还通，无法先验断言——
+而**授权门若在生产构建里静默失效，比根本没有还危险**：开发时一切正常，打包后拦不住任何东西。
+
+**解法不是去验证它，是不依赖它。** 工具定义工厂全部从包入口导出：
+
+```ts
+import { createBashToolDefinition, createReadToolDefinition } from "@earendil-works/pi-coding-agent"
+
+const gated = { ...createBashToolDefinition(cwd),
+  async execute(id, params, signal, onUpdate, ctx) {
+    const reason = policy(params)
+    if (reason) return { content: [{ type: "text", text: reason }], isError: true, details: undefined }
+    return original(id, params, signal, onUpdate, ctx)
+  } }
+
+await createAgentSession({ cwd, agentDir, model, modelRuntime,
+  noTools: "builtin",        // ← 必须关掉内置的，否则模型会绕过门去用原始 bash
+  customTools: [gated, ...] })
+```
+
+不碰文件系统、不碰转译器、不受打包影响。**`noTools: "builtin"` 这一行是关键**——
+不关内置工具，等于门旁边留着一扇没锁的侧门。
+
+**拒绝要回一条 `isError` 的结果，不要抛异常**：抛异常会中断整轮，模型学不到「这条被拒了」，
+实测中模型收到错误文本后会如实汇报并停止绕过。
+
+### ⚠️ 附带观察：朴素的子串策略会过度拦截
+
+场景 1 的探针扩展按「命令含标记字符串」拦截，结果连 `ls -la <被拦文件>` 也被拦下——
+模型只是想查看结果，并非重试。**真实的授权门策略不能是子串匹配**，
+需要解析命令与目标路径。归入 ③ 的 capability 授权设计。
 
 ### 实际使用的导入符号
 
@@ -286,8 +323,10 @@ agent_start → turn_start → message_start → message_update(text_delta)
   已足够做授权门，故不阻断 R2**；若将来需要 `transformContext` 级别的介入再补验。
 - 未验证中断（`session.abort()`）。R4 补 `abort` 操作时一并验。
 - 未验证压缩（compaction）触发行为。
-- 扩展从 `<agentDir>/extensions/*.ts` 自动发现——**未验证打包进 Electron 后这条路径是否仍可用**
-  （asar 内的动态 import）。R2 需当场确认，否则授权门在生产构建里会静默失效。
+- ~~扩展从 `<agentDir>/extensions/*.ts` 自动发现——未验证打包进 Electron 后是否仍可用~~
+  **已由 Q5 取消**：授权门改走包装 `ToolDefinition` 的路，不依赖文件扩展。
+  文件扩展在 asar 下能否工作仍未知，但**它不再位于关键路径上**——
+  将来若要支持用户自写扩展，再单独验。
 
 ---
 

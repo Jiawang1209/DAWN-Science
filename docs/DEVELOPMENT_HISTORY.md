@@ -43,10 +43,24 @@
 
 ## 变更日志
 
-### 2026-08-08 — 提前插入临时 CLI，使已完成的四层可上手运行（计划外）
+### 2026-08-08 — 阶段①-A per-session 隔离配置：按 Spike B 实测重写 claude 分支（Task 1.7）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 给一个会话注入 MCP server 与回合结束 hook，且**绝不触碰用户全局配置**。计划在本任务开头就写明「以 FINDINGS 为准，若不同则同步修改测试」——而 Spike B 的实测与计划初稿有两处实质冲突，必须按实测改。
+- **What**:
+  - 新增 `src/runtime/session-dir.ts`：`materializeSessionDir(family, dir, opts)`，支持 claude / codex 两个家族。
+  - **按实测推翻计划初稿的两处假设**：① 计划把 MCP 写进 `settings.json` 的 `mcpServers`——**claude 根本不从那里读**，MCP 走 `--mcp-config <file>`、hook 才走 `--settings <file>`，是两个不同的标志与文件；② 计划用 `CLAUDE_CONFIG_DIR` 做隔离——实测隔离确实成立但**会一并隔离掉认证**（`Not logged in`），且复制 `.credentials.json` 不足以恢复。
+  - **因此返回值新增 `args` 字段**（要追加到命令行的参数），claude 分支返回 `--mcp-config … --strict-mcp-config [--settings …]` 且 `env` 为空；codex 分支保持 `CODEX_HOME` 完整隔离（其凭证就在 `$CODEX_HOME/auth.json`，播种即可恢复）。
+  - **即使没有 MCP server 也照写 `mcp.json`**：配合 `--strict-mcp-config`，空表意味着「这个会话没有任何 MCP」，是个确定的保证而非默认行为。反之没有 hook 就不生成 `settings.json`——`--settings` 的语义是「叠加额外设置」，空文件只增噪音。
+  - 未知 CLI 家族响亮报错。理由写进注释：静默生成空配置的失效方式最糟——**进程起得来，但注入的工具与 hook 全都没生效，而调用方以为一切正常**。
+- **Impact**: Task 1.9 的 PtyRuntime 可直接用 `{env, args}` 组装启动参数。**已知代价**（FINDINGS 已记为 Task 1.7 遗留项）：claude 这条路下，会话历史仍会累积进用户全局 `~/.claude.json`；要两全需验证「向隔离的 `.claude.json` 播种 `oauthAccount`」或「用 `ANTHROPIC_API_KEY`」，二者均未验证。
+- **Verification**: 严格 TDD，13 个测试（计划预估 5 个）。**但单元测试不足以验收本任务**——Spike B 验证的是手写配置，不是本函数的产出，故补做了一次端到端验证：用 `materializeSessionDir` 生成的 `args` 真的驱动了一次 `claude -p`，探针日志同时出现 `{"kind":"tool"}` 与 `{"kind":"hook"}`，且全局 `settings.json` 的 md5 前后一致。全仓库 86 passed，typecheck 零错误。
+
+### 2026-08-08 — 提前插入临时 CLI，使已完成的四层可上手运行（计划外）
+
+- **Type**: feat
+- **Commit**: `badd686`
 - **Motivation**: **这是计划外的插入，理由是主规划 §5 的 G2 决策门**——「判据不是功能清单，是行为：你是否真的开始用它」。按原计划要到 Task 1.11 才有入口，意味着作者要等 6 个任务才能上手；而配置层、存储层、Runtime 契约、会话层四块此时已经贯通，让它们可运行的边际成本很低。越早上手，越早发现设计上不合用的地方。
 - **What**:
   - 新增 `src/cli.ts`（**临时版，文件头已显式标注**，Task 1.11 会补全）：`dawn agents` / `dawn sessions` / `dawn demo`。`dawn run <agent>` 尚不能做——需要 Task 1.9–1.10 的真实 Runtime。

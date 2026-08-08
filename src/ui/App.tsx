@@ -15,7 +15,7 @@
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type {
   Cost,
   FileChangeFacts,
@@ -47,7 +47,17 @@ interface Providers {
 
 type View = "conversation" | "panel" | "settings"
 
-export function App({ client = createClient() }: { client?: WorkbenchClient }) {
+/**
+ * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
+ *   默认参数每次渲染都求值，于是每次渲染都得到一个新的 client 身份，
+ *   每个依赖 `client` 的 effect 就每次渲染都重跑：重新订阅（累积 IPC 监听器）
+ *   + 重新取数（setState）→ 再渲染 → **无限循环**。
+ *   真机后果是渲染进程 18 秒吃满 4 GB。而 419 个测试全都显式传了 client，
+ *   **那条生产环境唯一走的默认路径从来没被跑过**。见 tests/ui/app-default-client.test.tsx。
+ */
+export function App({ client: injected }: { client?: WorkbenchClient }) {
+  const client = useMemo(() => injected ?? createClient(), [injected])
+
   const [ready, setReady] = useState(false)
   const [fatal, setFatal] = useState<string | undefined>()
   const [notes, setNotes] = useState<string[]>([])

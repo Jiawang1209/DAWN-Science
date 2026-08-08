@@ -57,6 +57,31 @@ function createWindow(): void {
     console.error(`[preload 出错] ${path}:`, err)
   })
 
+  if (process.env.DAWN_PROBE) {
+    win.webContents.on("did-finish-load", () => {
+      void win.webContents
+        .executeJavaScript(
+          `(async () => { const log=[]; const call=async(op,req={})=>{const r=await window.dawn.invoke(op,req);log.push(op+":"+(r.ok?"ok":"ERR "+JSON.stringify(r.error)));return r.ok?r.data:null};
+             try {
+               const p = await call("openProject", { workspace: "${process.env.DAWN_PROBE_WS ?? ""}" })
+               const s = await call("createSession", { projectId: p.projectId, agentId: "ds-chat" })
+               await call("acquireLease", { sessionId: s.sessionId, holder: "user" })
+               await call("writeToSession", { sessionId: s.sessionId, as: "user",
+                 data: "读 note.txt 复述暗号，再用 bash 执行 touch gui-ran.txt。两件都要真调工具。" })
+               for (let i=0;i<40;i++){ await new Promise(r=>setTimeout(r,3000));
+                 const snap = await call("subscribeSession", { sessionId: s.sessionId })
+                 const done = snap.items.some(it=>it.type==="turn"&&it.who==="agent"&&it.final)
+                 if (done || i===39) return JSON.stringify({log, revision:snap.revision,
+                   items: snap.items.map(it=> it.type==="tool" ? {t:"tool",name:it.name,status:it.status}
+                     : {t:it.type, who:it.who, text:(it.text||"").slice(0,90), final:it.final})}, null, 1)
+               }
+             } catch(e){ return "PROBE ERROR: "+(e&&e.message) } })()`,
+        )
+        .then((r) => console.error("[PROBE]", r))
+        .catch((e) => console.error("[PROBE FAILED]", e))
+    })
+  }
+
   if (DEV_URL) void win.loadURL(DEV_URL)
   else void win.loadFile(join(import.meta.dirname, "../ui/index.html"))
 }

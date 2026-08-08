@@ -26,6 +26,7 @@
 │
 └── ccb_hive_code_learn/         ← 第三方参考（研究档案，不再维护）
     ├── pi-main/                 MIT   —— 同时是运行依赖
+    ├── hermes-agent-main/       MIT   —— Nous Research；apps/desktop 与 DAWN 同栈
     ├── buzz-main/               Apache-2.0
     ├── Rho-main/                MIT
     ├── wispterm-main/           MIT

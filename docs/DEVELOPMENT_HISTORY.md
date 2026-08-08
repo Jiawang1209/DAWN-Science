@@ -43,10 +43,30 @@
 
 ## 变更日志
 
+### 2026-08-08 — 修掉渲染进程无限循环，加错误边界；读 Hermes 桌面源码得出方法论（作者指路）
+
+- **Type**: fix
+- **Commit**: 待回填
+- **Motivation**: 作者第四次打开：「桌面样式已经出来了，但我不知道是否有功能。」我用探针驱动真实窗口跑主路径，抓到**渲染进程 18 秒吃满 4 GB**（`<--- Near heap limit --->`）。
+- **根因**：`export function App({ client = createClient() })`——**默认参数每次渲染都求值**，于是每渲染一次就造一个新 client 身份，每个依赖 `client` 的 effect 都跟着重跑：重新订阅（IPC 监听器越积越多）+ 重新取数（setState）→ 再渲染 → **无限循环**。界面画得出来，里面在空转。
+  **419 个测试一个都没拦住，因为它们全都显式传了 client**——生产环境唯一走的那条默认路径从来没被跑过。**与「叶子组件测试证明不了有没有人给它数据」同源：被测的形态和真实运行的形态不是同一个。**
+- **What**:
+  - `useMemo` 修复；新增 `tests/ui/app-default-client.test.tsx` **专测默认路径**（取数次数收敛、IPC 监听器只注册一次、重渲染不产生取数风暴、注入点仍有效）。**写完测试时它直接跑不完——那就是最强的复现。**
+  - 新增 `src/ui/ErrorBoundary.tsx` 并挂在根上。今天两次白屏（`window.prompt` 抛错、本次循环）**共同点都是故障没有出口**：主进程一切正常，终端一个字都没有，用户只看到一个不响应的窗口。边界不修复任何东西，它只保证**你知道它坏了、坏在哪**，并把堆栈打到已接通的终端转发里。
+- **作者的方法论指正（比缺陷本身重要）**：「**你不要光靠你自己看的结果去推算**，应该去读成熟项目的源代码。」并提供了 `hermes-agent`（MIT，Nous Research）。
+  **这个判断是对的**：我今天三次界面失败全部由作者打开时发现，模式一致——**逻辑写得对，但看不见自己写的界面**，于是把「测试绿了」当成「能用了」。
+- **读 Hermes `apps/desktop`（与 DAWN 同栈：Electron + React + Vite，1,211 文件 / 256,929 行）后新增 `docs/superpowers/specs/2026-08-08-desktop-lessons-from-hermes.md`**，要点：
+  1. **我原先设想的「UI mock bridge」方向是错的**。把 UI 从后端摘下来单独看，看到的是 UI 的幻觉——接线错了照样看不出来，**而那正是我三次翻车的根因**。Hermes 的 `dev-mock.mjs` 相反：**整条真链路照跑，只把最外面那个不确定的东西（模型）换成本地 OpenAI 兼容的固定回复**，并且**与 e2e fixtures 共用同一个 mock server**，使本地开发与 CI 测同一条链。
+  2. **它把我今天的事故都写成了原则**：`Preserve reference identity on no-ops`（就是本次的无限循环）、`Visibility is not lifecycle`（我的终端收起即卸载）、`Switching context is a re-home, not a reboot`（我切会话清空重来）、`Reserve the full-screen boot experience for a genuinely unusable backend`（我把「没有项目」做成了准入门槛）。**同一个错误，在有纪律的地方是被预防的，在没纪律的地方是被用户发现的。**
+  3. **项目模型我没错，错在把它变成门槛**：Hermes 同样让项目持有 workspace cwd、同样放侧栏，但它有 `onboarding.spec.ts`——**门槛的正解是 onboarding，不是禁用一切**。
+  4. 它有 18 个 Playwright e2e spec，含 `launch-packaged-app.spec.ts`（连打包产物都测）与视觉快照；`DESIGN.md` 与 `AGENTS.md` 两份文档两种维护规则，其中一条直接可抄：**「本文件里一个过时的名字就是 bug，和一个过时的类型一样。」**
+- **Impact**: 无限循环修复后 app 可用；方法论文档给出「先补机制、再碰界面」的顺序，并列出三条待作者决定的事项。
+- **Verification**: 423 passed，typecheck 零错误，`npm run build` 通过。修复前该回归测试跑不完（无限循环），修复后 3/4 通过、第 4 条因我的桩不完整而失败并已修正——**顺带暴露了渲染期异常会变成白屏，这正是加错误边界的直接理由**。
+
 ### 2026-08-08 — R4：协议升 2.0，会话读取改 snapshot + revision，跳号从「出声」变成「自愈」
 
 - **Type**: refactor
-- **Commit**: 待回填
+- **Commit**: `197be4c`
 - **Motivation**: 返工 R4。旧设计是 **seq + 环形缓冲 + `dropped` + `truncated` + `earliestSeq`**——那是我前一天刚写的，而它**为一个本不该存在的问题而设**：只要服务端持有一份完整 transcript，重连给全量即可，根本不存在「丢了一段要道歉」。
 - **What**（借 `pi-protocol` 的形状，不引其 UDS 传输层）：
   - **协议 1.3 → 2.0**（破坏性）。`subscribeSession` 返回 `SessionSnapshot{revision, items, terminal, ...}`，不再有 `fromSeq`；事件信封整体换成 `SessionUpdate`（item / bytes / state / snapshot）。

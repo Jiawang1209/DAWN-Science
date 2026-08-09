@@ -179,7 +179,16 @@ export const OPERATIONS = {
       agents: z.array(
         z.object({
           agentId: z.string(),
-          kind: z.enum(["native", "pty"]),
+          kind: z.enum([
+            "native",
+            "pty",
+            /**
+             * 外部 CLI 的 headless 模式（①-C）。**与 `pty` 是两件事**：
+             * `pty` 是字节流终端，`cli` 拿到的是结构化事件——界面正靠这个判别式
+             * 决定画对话还是画终端。
+             */
+            "cli",
+          ]),
           /** native：pi 的 provider id */
           provider: z.string().optional(),
           model: z.string().optional(),

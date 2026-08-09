@@ -124,7 +124,16 @@ export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 export const SessionSnapshotSchema = z
   .object({
     sessionId: z.string().min(1),
-    kind: z.enum(["native", "pty"]),
+    kind: z.enum([
+      "native",
+      "pty",
+      /**
+       * 外部 CLI 的 headless 模式（①-C）。**与 `pty` 是两件事**：
+       * `pty` 是字节流终端，`cli` 拿到的是结构化事件——界面正靠这个判别式
+       * 决定画对话还是画终端。
+       */
+      "cli",
+    ]),
     /** 单调递增。**0 表示还什么都没发生**，增量的 revision 从 1 起 */
     revision: z.int().min(0),
     items: z.array(TranscriptItemSchema),

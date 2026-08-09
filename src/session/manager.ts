@@ -19,6 +19,33 @@ import { LeaseManager, type Holder } from "./lease.js"
 export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
 
 /**
+ * **打算给用户看的失败。**
+ *
+ * 协议服务端对异常的策略是刻意的（`workbench/server.ts`）：
+ * 只有 `fault()` 抛出的业务性失败会把消息原样交给界面，
+ * 其余一律归一成 `internal_error`，原始信息**只进日志**——
+ * 因为它可能含路径、连接串、密钥片段（学自 Rho）。
+ *
+ * 那条策略是对的，**问题在抛错的一侧**：这一层此前抛的是普通 `Error`，
+ * 于是「provider 未配置凭证——请在设置里填写它的 API key」这种
+ * **写得很清楚、也很该给用户看**的话，在界面上变成了
+ * `操作 "createSession" 执行失败`。
+ *
+ * 2026-08-09 由 ①-C 的第一条 e2e 撞出来。
+ * **想让用户看见，就得显式声明「这句话是给他看的」**——
+ * 而不是指望下游去猜哪条消息安全。
+ *
+ * 本层不引 `fault()`：那是 workbench 的东西，会把依赖方向倒过来。
+ */
+export class SessionSetupError extends Error {
+  readonly userFacing = true as const
+  constructor(message: string) {
+    super(message)
+    this.name = "SessionSetupError"
+  }
+}
+
+/**
  * 让 `<workspace>/.dawn/` 对 git 隐形。
  *
  * **2026-08-09 由 e2e「外部改文件切回来」撞出来的缺陷。** 会话目录写在用户的
@@ -109,7 +136,7 @@ export class SessionManager {
   ): Promise<SessionRecord> {
     const def = this.registry.agents[agentId]
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
-    if (!def) throw new Error(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
+    if (!def) throw new SessionSetupError(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
 
     const id = randomUUID()
     const sessionDir = join(workspace, ".dawn", "sessions", id)
@@ -132,12 +159,31 @@ export class SessionManager {
       if (this.hasCredential && !this.hasCredential(def.provider)) {
         // 已落库的记录要收尾，不能留在 starting
         this.store.updateState(id, "exited", { exitCode: -1 })
-        throw new Error(
+        throw new SessionSetupError(
           `provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`,
         )
       }
       // provider 的合法性已由 config/loader 的 assertProviders 在加载期保证
       spec.native = { provider: def.provider, model: def.model }
+    }
+
+    /**
+     * **按 kind 显式分支，不用「非 native 即 pty」。**
+     *
+     * ①-C 加了第三种 `cli`。原来那个三元是「native ? native : pty」——
+     * 加一种 kind 之后它会让 `cli` **悄悄落进 PTY 运行时**：进程照样起得来，
+     * 用户看到一个终端，而他配的是一个对话式 agent。
+     * **那正是本项目反复栽的静默回退**（规格 7.5）。
+     *
+     * `cli` 的运行时是 C2/C3 的事；在它到位之前，这里**响亮地失败**。
+     */
+    if (def.kind === "cli") {
+      this.store.updateState(id, "exited", { exitCode: 1 })
+      throw new SessionSetupError(
+        `agent "${agentId}" 的 kind 是 cli（外部 CLI 的对话模式），` +
+          `但 CLI 运行时尚未实现（①-C 的 C2/C3）。` +
+          `暂时可把它改成 kind: pty 在终端里用，或改用内置 agent。`,
+      )
     }
 
     const runtime =

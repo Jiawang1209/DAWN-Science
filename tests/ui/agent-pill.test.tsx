@@ -68,8 +68,16 @@ describe("agent pill · 位置", () => {
     expect(container.querySelector(".agent-pill")!.textContent).toContain("codex-cli")
   })
 
-  it("顺带说清它是内置还是外部 CLI", () => {
-    const { container } = conv({ session: { ...session, kind: "pty" } })
+  /**
+   * **2026-08-09（①-C · C1）：分类从两种变成三种。**
+   *
+   * 原来是 `pty ? "外部 CLI" : "内置"`——那时 claude/codex 确实是 pty 托管的。
+   * 现在 `pty` 的语义是**一个真终端**（通用 shell），
+   * 外部 CLI 的对话模式是新的 `cli`。
+   * **那个二元三元表达式会把 `cli` 说成「内置」，而它恰恰是最外部的那个。**
+   */
+  it("顺带说清它是内置、外部 CLI 还是终端", () => {
+    const { container } = conv({ session: { ...session, kind: "cli" } })
     expect(container.querySelector(".agent-pill")!.textContent).toMatch(/外部 CLI/)
   })
 })

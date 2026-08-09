@@ -15,6 +15,7 @@ import type { RunStore } from "../store/runs.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { SessionSetupError } from "../session/manager.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
 
@@ -196,7 +197,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     createSession: async ({ projectId, agentId }) => {
       const project = requireProject(projectId)
-      const rec = await sessions.create(agentId, project.workspace, { projectId })
+      /**
+       * **把「打算给用户看的失败」翻成 fault，其余照旧归一成 internal_error。**
+       *
+       * 服务端只把 `fault()` 的消息原样交给界面，其余只进日志——那条策略是对的
+       * （消息里可能有路径、连接串、密钥片段）。所以要让一句话到达用户，
+       * **必须在抛出的一侧显式声明它是给用户看的**，而不是让下游去猜哪条安全。
+       *
+       * 2026-08-09 由 ①-C 的第一条 e2e 撞出来：会话层写得很清楚的
+       * 「provider 未配置凭证——请在设置里填写它的 API key」，
+       * 在界面上是 `操作 "createSession" 执行失败`。
+       */
+      const rec = await sessions.create(agentId, project.workspace, { projectId }).catch((err: unknown) => {
+        if (err instanceof SessionSetupError) throw fault("invalid_request", err.message)
+        throw err
+      })
 
       // 先登记再接线：attach 的回调可能同步就来一条事件
       const kind = registry.agents[agentId]?.kind ?? "native"

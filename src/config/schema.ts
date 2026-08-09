@@ -54,7 +54,48 @@ const PtyAgentSchema = z
   })
   .strict()
 
-export const AgentDefSchema = z.discriminatedUnion("kind", [NativeAgentSchema, PtyAgentSchema])
+/**
+ * 外部 CLI 的 **headless 模式**（①-C）：我方驱动它、并翻译它吐出的结构化事件。
+ *
+ * ## 与 `pty` 的区别不是形态，是语义
+ *
+ * `pty` 拿到的是**终端字节流**——ANSI 转义、边框、spinner。那里面没有
+ * 「工具调用」这个概念，所以一个 PTY 托管的 claude 会话在账本上只能是
+ * **一条 `pty_session` Run**：它读了什么、改了什么、花了多少，一概不知道。
+ * **不是我们没记，是拿不到。**
+ *
+ * `cli` 拿到的是**结构化事件**（Spike G 实测）：
+ * ```
+ * claude  --print --output-format stream-json --input-format stream-json
+ * codex   exec --json  /  exec resume <thread_id> --json
+ * ```
+ * 于是它的工具调用、消息、用量能落进已有的那一套——transcript、
+ * `tool_call:<工具名>` 的 Run、变更 pane、成本栏。
+ * **不变式 3 与 5 第一次能覆盖外部 CLI。**
+ *
+ * ## 所以刻意新增一种，而不是复用 `pty`
+ *
+ * 形态像不等于语义同。复用会让「这个会话有没有终端」这个判断从此不可靠，
+ * 而界面正靠它决定画对话还是画终端。
+ *
+ * **`pty` 没有被取代**：它作为**通用终端**保留（跑任意命令，也可手动起
+ * 那两个 CLI 的 TUI）——作者定的定位。
+ */
+const CliAgentSchema = z
+  .object({
+    kind: z.literal("cli"),
+    /** 可执行文件名或路径，如 `claude` / `codex` */
+    command: z.string().min(1),
+    args: z.array(z.string()).default([]),
+    capabilities: z.array(CapabilitySchema),
+  })
+  .strict()
+
+export const AgentDefSchema = z.discriminatedUnion("kind", [
+  NativeAgentSchema,
+  PtyAgentSchema,
+  CliAgentSchema,
+])
 export type AgentDef = z.infer<typeof AgentDefSchema>
 
 /**

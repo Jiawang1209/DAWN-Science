@@ -94,7 +94,7 @@ export class ProjectManager {
    * agent 的 kind 来自 registry。**取不到时回退 native 并且这是显式行为**——
    * 不是猜测，而是「没有配置依据时的已声明默认值」。
    */
-  private kindOf(agentId: string): "native" | "pty" {
+  private kindOf(agentId: string): "native" | "pty" | "cli" {
     return this.registry?.agents[agentId]?.kind ?? "native"
   }
 

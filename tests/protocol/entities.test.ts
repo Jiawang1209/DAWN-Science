@@ -277,3 +277,36 @@ describe("WorkbenchCapabilities", () => {
     ).toThrow()
   })
 })
+
+describe("会话 kind 新增 cli（①-C · C1）", () => {
+  /**
+   * **判别式在协议里出现三处**：`entities`（SessionSummary）、
+   * `operations`（getProviders 的响应）、`events`（SessionSnapshot）。
+   *
+   * 三处必须一起加——**漏一处的表现是「某条路径上这个会话凭空消失」**，
+   * 而 zod 的 strict 校验会把它变成一个和业务无关的报错信息。
+   */
+  it("SessionSummary 接受 kind: cli", () => {
+    const r = SessionSummarySchema.safeParse({
+      sessionId: "s1",
+      projectId: "p1",
+      agentId: "claude",
+      kind: "cli",
+      state: "alive",
+      createdAt: "2026-08-09T00:00:00.000Z",
+    })
+    expect(r.success, JSON.stringify(r.error?.issues)).toBe(true)
+  })
+
+  it("**仍然拒绝没听说过的 kind** —— 判别式是封闭的", () => {
+    const r = SessionSummarySchema.safeParse({
+      sessionId: "s1",
+      projectId: "p1",
+      agentId: "x",
+      kind: "魔法",
+      state: "alive",
+      createdAt: "2026-08-09T00:00:00.000Z",
+    })
+    expect(r.success).toBe(false)
+  })
+})

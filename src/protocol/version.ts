@@ -23,8 +23,13 @@
  *   **一条记录装一组子 agent**，界面据此画 chip 组。
  *   minor 递增 = 向后兼容的新增：老界面遇到不认识的条目类型会被 zod 挡下，
  *   而握手时版本不匹配已经会响亮报错，所以不会静默画错。
+ * 2.3（2026-08-09）：会话 `kind` 新增 `cli`（①-C）——外部 CLI 的 headless 模式。
+ *   **判别式在协议里出现三处**（SessionSummary / getProviders / SessionSnapshot），
+ *   三处一起加。漏一处的表现是「某条路径上这个会话凭空消失」，
+ *   而 strict 校验会把它变成一个与业务无关的报错信息。
+ *   仍是 minor：既有取值一个没动。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.2"
+export const WORKBENCH_PROTOCOL_VERSION = "2.3"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

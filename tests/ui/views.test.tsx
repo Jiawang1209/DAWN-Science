@@ -184,7 +184,15 @@ describe("对话视图", () => {
   // **2026-08-09：这个事实搬了家，但必须还在。**
   // 它原来在会话头部，现在在 composer 右下角那颗 pill 里——
   // 同一个事实显示两次会各自漂移，所以头部那份撤掉了
-  it("标出会话是外部 CLI 还是内置", () => {
+  /**
+   * **2026-08-09（①-C · C1）：分类从两种变成三种。**
+   *
+   * 原来是 `pty ? "外部 CLI" : "内置"`——那时 claude/codex 确实是 pty 托管的。
+   * 现在 `pty` 的语义是**一个真终端**（通用 shell），
+   * 外部 CLI 的对话模式是新的 `cli`。
+   * **那个二元三元表达式会把 `cli` 说成「内置」，而它恰恰是最外部的那个。**
+   */
+  it("标出会话是外部 CLI、内置还是终端", () => {
     render(
       <ConversationView
         session={session({ kind: "pty" })}
@@ -194,7 +202,7 @@ describe("对话视图", () => {
         onSend={noop}
       />,
     )
-    expect(screen.getByText("外部 CLI")).toBeDefined()
+    expect(screen.getByText("终端")).toBeDefined()
   })
 })
 

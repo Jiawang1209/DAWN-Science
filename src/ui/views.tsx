@@ -155,6 +155,20 @@ export function SessionSidebar({
  * 让人以为是就地切换、实际悄悄开了个新会话，属于静默偏离（规格 7.5）。
  * 所以菜单标题写死「新建会话，用：」——**歧义在文案里消掉，不留给用户猜**。
  */
+/**
+ * agent 的类别标签。
+ *
+ * **三种是三件事**（①-C 起）：`native` 是我们进程内跑的 pi；
+ * `cli` 是外部 CLI 的对话模式；`pty` 是一个真终端。
+ * 此前只有两种，写法是 `kind === "pty" ? "外部 CLI" : "内置"`——
+ * 加第三种之后那个三元会把 `cli` 说成「内置」，**而它恰恰是最外部的那个**。
+ */
+const KIND_LABEL: Record<"native" | "pty" | "cli", string> = {
+  native: "内置",
+  cli: "外部 CLI",
+  pty: "终端",
+}
+
 export function AgentPill({
   agents,
   current,
@@ -165,7 +179,7 @@ export function AgentPill({
   agents: readonly string[]
   /** 当前会话用的 agent。空态没有会话，因此可缺省 */
   current?: string | undefined
-  kind?: "native" | "pty" | undefined
+  kind?: "native" | "pty" | "cli" | undefined
   onPick: (agentId: string) => void
   /** 空态用「换一个 agent」，有会话时用 agent 名本身 */
   triggerLabel?: string | undefined
@@ -195,7 +209,7 @@ export function AgentPill({
         onClick={() => setOpen((v) => !v)}
       >
         {triggerLabel ?? current ?? "选择 agent"}
-        {kind ? <span className="kind">{kind === "pty" ? "外部 CLI" : "内置"}</span> : null}
+        {kind ? <span className="kind">{KIND_LABEL[kind]}</span> : null}
         <span aria-hidden="true">▾</span>
       </Button>
 

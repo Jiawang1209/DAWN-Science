@@ -33,6 +33,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     }),
     unsubscribeSession: async () => ({}),
     abortSession: async () => ({}),
+    setSessionModel: async () => ({}),
     steerSession: async () => ({}),
     previewTakeover: async () => ({
       sessionId: "s1",

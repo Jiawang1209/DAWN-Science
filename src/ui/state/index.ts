@@ -49,6 +49,7 @@ export {
   $runDetail,
   $provenance,
   $providers,
+  $sessionModels,
   $credentials,
   setProjects,
   setSessions,
@@ -57,6 +58,7 @@ export {
   setProvenance,
   setProviders,
   setCredentials,
+  setSessionModel,
   type RunDetail,
   type Providers,
   type CredentialState,
@@ -114,6 +116,7 @@ import {
   $projects,
   $providers,
   $provenance,
+  $sessionModels,
   $runDetail,
   $runs,
   $sessions,
@@ -154,6 +157,7 @@ export function resetAllState(): void {
   $runDetail.set(undefined)
   $provenance.set(undefined)
   $providers.set({ agents: [], providers: [] })
+  $sessionModels.set({})
   $credentials.set({ configured: [], encrypted: false })
   $activeProjectId.set(undefined)
   $activeSessionId.set(undefined)

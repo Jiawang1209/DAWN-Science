@@ -28,6 +28,7 @@ function backend(): WorkbenchBackend {
     }),
     unsubscribeSession: async () => ({}),
     abortSession: async () => ({}),
+    setSessionModel: async () => ({}),
     steerSession: async () => ({}),
     previewTakeover: async () => ({
       sessionId: "s1", currentHolder: null, requester: "user" as const,

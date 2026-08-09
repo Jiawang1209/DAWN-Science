@@ -212,19 +212,7 @@ export class NativeRuntime implements AgentRuntime {
       throw new Error(`native 运行时需要 provider 与 model，会话 "${spec.sessionId}" 未提供`)
     }
 
-    const modelRuntime = await this.runtime()
-    const model = modelRuntime.getModel(native.provider, native.model)
-    if (!model) {
-      // 无静默回退：模型不在 pi 的目录里就立即失败，并说清它有哪些
-      const available = modelRuntime
-        .getModels()
-        .filter((m) => m.provider === native.provider)
-        .map((m) => m.id)
-      throw new Error(
-        `provider "${native.provider}" 没有模型 "${native.model}"。` +
-          `该 provider 可用的模型：${available.join(", ") || "(空——可能是模型目录尚未同步)"}`,
-      )
-    }
+    const model = await this.resolveModel(native.provider, native.model)
 
     // per-session agentDir：会话的设置、记录、扩展全部隔离在自己的目录里，
     /**
@@ -241,6 +229,7 @@ export class NativeRuntime implements AgentRuntime {
     const agentDir = join(spec.sessionDir, "pi")
     mkdirSync(agentDir, { recursive: true })
 
+    const modelRuntime = await this.runtime()
     const customTools = this.gatedTools(spec.workspace, spec.sessionId)
     const { session } = await createAgentSession({
       cwd: spec.workspace,
@@ -389,6 +378,72 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /** 中止当前回合。会话仍然活着，可以继续对话 */
+  /**
+   * 把 provider + model 名解析成 pi 的 Model 对象。
+   *
+   * **无静默回退**：不在 pi 的目录里就立即失败，并说清该 provider 有哪些。
+   * `start()` 与 `setModel()` 共用它——两处各写一份错误信息，
+   * 迟早会有一处说得比另一处含糊。
+   */
+  private async resolveModel(provider: string, modelId: string) {
+    const modelRuntime = await this.runtime()
+    const model = modelRuntime.getModel(provider, modelId)
+    if (model) return model
+
+    const all = modelRuntime.getModels()
+    const known = all.filter((m) => m.provider === provider)
+    if (known.length === 0) {
+      const providers = [...new Set(all.map((m) => m.provider))]
+      throw new Error(
+        `没有 provider "${provider}"。已知的：${providers.join(", ") || "(空——模型目录尚未同步)"}`,
+      )
+    }
+    throw new Error(
+      `provider "${provider}" 没有模型 "${modelId}"。` +
+        `该 provider 可用的模型：${known.map((m) => m.id).join(", ")}`,
+    )
+  }
+
+  /**
+   * 会话中途换模型（①-B″ · U2）。
+   *
+   * **能力由 Spike E 在真链路上验过**：`flash → deep`，且下一次请求确实打到新模型
+   * （从假后端记下的请求体证明，不是"调用没抛异常"）。
+   *
+   * ## 「正在说话时不许换」这道门为什么在这一层
+   *
+   * Spike E 查出 `session.isStreaming` **在 prompt 真正开始之前是 `false`**——
+   * 与本项目早先在 `waitForIdle` 上栽的是同一件事。所以判断依据是
+   * **运行时自己跟踪的 `pending`**，不是问 pi。
+   *
+   * 而且门开在这里，界面、CLI、命令面板三个入口共用同一道——
+   * 放到界面里就意味着每加一个入口要记得补一次。
+   *
+   * ## 没配凭证时的错误要翻成人话
+   *
+   * pi 抛的是 `No API key for <provider>/<model>`（Spike E 实测）。
+   * 原样丢给用户等于让他自己猜下一步该干什么。
+   */
+  async setModel(sessionId: SessionId, provider: string, modelId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法换模型`)
+    if (s.pending) {
+      throw new Error("这一轮还没说完。等它结束或先中止，再换模型")
+    }
+
+    const model = await this.resolveModel(provider, modelId)
+    try {
+      await s.session.setModel(model)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (/no api key/i.test(msg)) {
+        throw new Error(`provider "${provider}" 还没有配置 API key——在「设置」里填好之后再换`)
+      }
+      throw e
+    }
+    this.emit({ kind: "model", sessionId, provider, model: modelId })
+  }
+
   async abort(sessionId: SessionId): Promise<void> {
     await this.sessions.get(sessionId)?.session.abort()
   }

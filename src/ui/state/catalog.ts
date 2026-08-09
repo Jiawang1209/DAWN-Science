@@ -20,7 +20,12 @@ import { setList, setValue } from "./identity.js"
 export type RunDetail = RunSummary & { fileChanges?: FileChangeFacts; cost?: Cost }
 
 export interface Providers {
-  agents: { agentId: string; kind: "native" | "pty" }[]
+  /**
+   * `provider` / `model` 是 native agent 配置里的**初始**模型。
+   * 协议一直在回传它们，此前界面没用上——U2 的模型选择器需要它作为初值。
+   * PTY agent 没有这两样（它的模型由外部 CLI 自己管），故可缺省。
+   */
+  agents: { agentId: string; kind: "native" | "pty"; provider?: string; model?: string }[]
   providers: { providerId: string; models: string[] }[]
 }
 
@@ -74,4 +79,23 @@ export function setCredentials(v: CredentialState): void {
     return
   }
   $credentials.set(v)
+}
+
+/**
+ * 每个会话**当前**用的模型（①-B″ · U2）。
+ *
+ * **后端权威，这里只是缓存**（本文件的定位）。初值来自 `getProviders` 里
+ * 该 agent 配置的模型；换过之后以 `setSessionModel` **成功返回**为准——
+ * 不是乐观更新：调用失败时（没配 key、这一轮还没说完）不能显示成换过了。
+ *
+ * key 是 sessionId，**作用域写在 key 里**：模型是会话级的，
+ * 不是窗口级也不是全局的。pi 那边 `setModel` 会写 agentDir 的全局默认，
+ * 但我们每会话一个 agentDir，所以那份全局默认也被关在会话里（Spike E）。
+ */
+export const $sessionModels = atom<Readonly<Record<string, string>>>({})
+
+export function setSessionModel(sessionId: string, model: string): void {
+  const prev = $sessionModels.get()
+  if (prev[sessionId] === model) return
+  $sessionModels.set({ ...prev, [sessionId]: model })
 }

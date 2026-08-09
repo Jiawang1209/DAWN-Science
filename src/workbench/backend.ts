@@ -245,6 +245,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
+    setSessionModel: async ({ sessionId, provider, model }) => {
+      try {
+        await sessions.setModel(sessionId, provider, model)
+      } catch (err) {
+        // **全是业务性失败**：模型不存在、没配 key、这一轮还没说完。
+        // 界面要原样把理由说给人听，所以不能吞成一句「操作失败」
+        throw fault("conflict", err instanceof Error ? err.message : String(err))
+      }
+      return {}
+    },
+
     steerSession: async ({ sessionId, text }) => {
       try {
         await sessions.steer(sessionId, text, "user")

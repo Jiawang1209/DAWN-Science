@@ -17,7 +17,7 @@
  *   事件信封整体替换，故 major 递增。同批新增 `abortSession` / `steerSession`。
  *   **换来的不只是简单**：旧设计跳号只能出声，新设计跳号可以重新取快照——能自愈。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.0"
+export const WORKBENCH_PROTOCOL_VERSION = "2.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

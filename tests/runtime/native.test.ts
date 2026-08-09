@@ -76,3 +76,34 @@ describe("NativeRuntime · 契约", () => {
     await expect(runtime().waitForIdle("nope")).resolves.toBeUndefined()
   })
 })
+
+/**
+ * 换模型（①-B″ · U2）。
+ *
+ * **能力由 Spike E 在真链路上验过**（`npm run spike:e`：`flash → deep`，
+ * 从假后端记下的请求体证明）。这里只覆盖不打网络的那几条边界。
+ *
+ * Spike E 同时查出一件必须在这一层处理的事：
+ * > `session.isStreaming` **在 prompt 真正开始之前是 `false`**——
+ * > 与本项目早先在 `waitForIdle` 上栽的是同一件事。
+ *
+ * 所以「正在说话时不许换」用的是**运行时自己跟踪的 `pending`**，不是问 pi。
+ * 而且守卫放在运行时而不是界面：界面、CLI、命令面板三个入口共用同一道门。
+ */
+describe("NativeRuntime · 换模型", () => {
+  it("会话没启动时响亮报错，而不是静默无事发生", async () => {
+    await expect(runtime().setModel("不存在的会话", "deepseek", "x")).rejects.toThrow(/未启动/)
+  })
+
+  it("模型不存在时**列出可用的**，而不是只说一句失败", async () => {
+    const r = runtime()
+    await r.start(specFor({ provider: "deepseek", model: "deepseek-v4-flash" }))
+    await expect(r.setModel("n1", "deepseek", "根本没有这个模型")).rejects.toThrow(/没有模型/)
+  })
+
+  it("provider 不存在时同样说清楚", async () => {
+    const r = runtime()
+    await r.start(specFor({ provider: "deepseek", model: "deepseek-v4-flash" }))
+    await expect(r.setModel("n1", "没这个 provider", "x")).rejects.toThrow(/provider/)
+  })
+})

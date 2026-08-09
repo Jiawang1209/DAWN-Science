@@ -35,6 +35,7 @@ import {
   $activeProjectId,
   $activeSessionId,
   $credentials,
+  $sessionModels,
   $dockOpen,
   $items,
   $notes,
@@ -68,6 +69,7 @@ import {
   setActiveProjectId,
   setActiveSessionId,
   setDockOpen,
+  setSessionModel,
   setTheme,
   setView,
   upsertItem,
@@ -102,6 +104,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const provenance = useStore($provenance)
   const providers = useStore($providers)
   const creds = useStore($credentials)
+  const sessionModels = useStore($sessionModels)
   const projectId = useStore($activeProjectId)
   const sessionId = useStore($activeSessionId)
   const view = useStore($view)
@@ -236,6 +239,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
 
   const session = sessions.find((s) => s.sessionId === sessionId)
+
+  /**
+   * 当前会话可选的模型与正在用的那个（①-B″ · U2）。
+   *
+   * **可选清单不必新造查询**——`getProviders` 已经回传了 `providers[].models`。
+   * 当前值：配置里的默认值，换过之后以 `$sessionModels` 为准
+   * （那份缓存只在 `setSessionModel` **成功返回**后才更新，不做乐观更新——
+   * 没配 key 或这一轮还没说完时，不能显示成换过了）。
+   */
+  const agentCfg = providers.agents.find((a) => a.agentId === session?.agentId)
+  const modelChoices =
+    providers.providers.find((p) => p.providerId === agentCfg?.provider)?.models ?? []
+  const currentModel = sessionId ? (sessionModels[sessionId] ?? agentCfg?.model) : undefined
 
   /**
    * **界面上所有动作的唯一定义处**（①-B″ · U1）。

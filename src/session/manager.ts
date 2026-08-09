@@ -156,6 +156,20 @@ export class SessionManager {
     await rt.abort(sessionId)
   }
 
+  /**
+   * 换模型。只有 native 有。
+   *
+   * **不查写权租约**：换模型不是往会话里写内容，它改的是「下一轮用谁」。
+   * 「这一轮还没说完不许换」由运行时自己把（它跟踪着 pending），
+   * 见 `NativeRuntime.setModel` 的注释。
+   */
+  async setModel(sessionId: SessionId, provider: string, model: string): Promise<void> {
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.setModel) throw new Error("该会话的运行时不支持换模型——外部 CLI 的模型由它自己管")
+    await rt.setModel(sessionId, provider, model)
+  }
+
   /** 插一句引导。同样只有 native 有。**写权守卫照旧**——引导也是写入。 */
   async steer(sessionId: SessionId, text: string, as: Holder): Promise<void> {
     const lease = this.leases.current(sessionId)

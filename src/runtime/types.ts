@@ -88,6 +88,14 @@ export type AgentEvent =
    */
   | { kind: "idle"; sessionId: SessionId }
   /**
+   * 会话换了模型（①-B″ · U2）。
+   *
+   * **pi 自己把它记成会话记录里的一等条目**（`{"type":"model_change",...}`，
+   * Spike E 实测），我们这里同样让它成为事件而不是让界面自己记一份——
+   * 换模型可能来自界面、命令面板、将来的 CLI，**只有事件能让三处保持一致**。
+   */
+  | { kind: "model"; sessionId: SessionId; provider: string; model: string }
+  /**
    * agent 正在用一个工具。**只有 native 会发**——PTY 里工具调用发生在
    * 我们看不见的进程内部（规格 7.33 的可见性分级：PTY 的 `provenanceComplete` 为 false）。
    *
@@ -124,6 +132,13 @@ export interface AgentRuntime {
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。
    */
   abort?(sessionId: SessionId): Promise<void>
+  /**
+   * 会话中途换模型。**只有 native 有**（①-B″ · U2，能力由 Spike E 验过）。
+   *
+   * 「正在说话时不许换」这道门开在实现里而不是调用点：
+   * 界面、命令面板、将来的 CLI 共用同一道，加入口时不必记得补一次。
+   */
+  setModel?(sessionId: SessionId, provider: string, model: string): Promise<void>
   /** 插一句引导，不打断整轮。只有 native 有 */
   steer?(sessionId: SessionId, text: string): Promise<void>
   resize?(sessionId: SessionId, cols: number, rows: number): void

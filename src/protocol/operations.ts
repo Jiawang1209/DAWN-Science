@@ -299,6 +299,28 @@ export const OPERATIONS = {
   },
 
   /**
+   * 会话中途换模型（①-B″ · U2）。
+   *
+   * **能力由 Spike E 在真链路上验过**：换了之后下一次请求确实打到新模型
+   * （从假后端记下的请求体证明）。可选模型来自 `getProviders` 已有的
+   * `providers[].models`——不必再造一个查询。
+   *
+   * 失败是**业务性**的，界面要能分辨并给出路：
+   * 模型不存在 / 没配 API key / 这一轮还没说完。
+   */
+  setSessionModel: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        provider: z.string().min(1),
+        model: z.string().min(1),
+      })
+      .strict(),
+    response: Empty,
+    mutating: true,
+  },
+
+  /**
    * 插一句引导，**不打断整轮**。
    *
    * 与 `writeToSession` 的区别：后者是「说完了，该你了」，

@@ -233,14 +233,106 @@ export function AgentPill({
   )
 }
 
+/**
+ * 模型 pill（①-B″ · U2）。**与 agent pill 并排，但语义完全不同。**
+ *
+ * agent 是建会话时绑死的，换 agent 只能新建；**模型可以真正就地切换**——
+ * 这一点由 Spike E 在真链路上验过（`flash → deep`，从假后端记下的请求体证明）。
+ * 所以两个菜单的标题必须不一样：一个说「新建会话，用：」，一个说「切换模型」。
+ * **同样的形状配不同的语义，是最容易让人按错的一种设计。**
+ *
+ * 「这一轮还没说完不许换」由运行时把门（它跟踪着 pending；
+ * pi 自己的 `isStreaming` 在 prompt 开始前是 false，不可信——同样是 Spike E 查出来的）。
+ * 这里把理由**提前显示出来**，而不是等人点了才报错。
+ */
+export function ModelPill({
+  models,
+  current,
+  busy,
+  onPick,
+}: {
+  /** 该 provider 可选的模型。来自 `getProviders` 已有的 `providers[].models` */
+  models: readonly string[]
+  current: string | undefined
+  /** agent 还在说话。**用我们自己的判定，不问 pi** */
+  busy?: boolean | undefined
+  onPick: (model: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("pointerdown", away)
+    return () => document.removeEventListener("pointerdown", away)
+  }, [open])
+
+  if (models.length === 0 || !current) return null
+
+  return (
+    <div className="agent-pill model-pill" ref={box}>
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {current}
+        <span aria-hidden="true">▾</span>
+      </Button>
+
+      {open ? (
+        <div
+          className="agent-menu"
+          role="menu"
+          aria-label="切换模型"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false)
+          }}
+        >
+          <p className="agent-menu-head">切换模型</p>
+          {/* **理由提前说，不等人点了才报错。** 门在运行时，这里只是把它显示出来 */}
+          {busy ? <p className="hint pad">这一轮还没说完，先等它结束或中止</p> : null}
+          <ul>
+            {models.map((m) => (
+              <li key={m}>
+                <Row
+                  role="menuitem"
+                  aria-disabled={Boolean(busy)}
+                  onClick={() => {
+                    if (busy) return
+                    setOpen(false)
+                    onPick(m)
+                  }}
+                >
+                  <span className="name">{m}</span>
+                  {m === current ? <span className="hint">当前</span> : null}
+                </Row>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
   session,
   items,
   agents,
+  models,
+  model,
   onSend,
   onNewSession,
+  onPickModel,
   onAbort,
   disabled,
   terminalTrimmed,
@@ -250,6 +342,11 @@ export function ConversationView({
   agents?: readonly string[] | undefined
   /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
   onNewSession?: ((agentId: string) => void) | undefined
+  /** 该会话 provider 下可选的模型 */
+  models?: readonly string[] | undefined
+  /** 当前模型。与 agent 不同，**它可以就地换** */
+  model?: string | undefined
+  onPickModel?: ((model: string) => void) | undefined
   /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
   items: readonly TranscriptItem[]
   onSend: (text: string) => void
@@ -335,6 +432,9 @@ export function ConversationView({
          * 但"用另一个 agent 开一个新的"恰恰是那时最该给的出路。
          */}
         <div className="composer-controls">
+          {models && onPickModel ? (
+            <ModelPill models={models} current={model} busy={busy} onPick={onPickModel} />
+          ) : null}
           {agents && onNewSession ? (
             <AgentPill
               agents={agents}

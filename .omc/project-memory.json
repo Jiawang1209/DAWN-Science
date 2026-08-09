@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | tail -5",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnode -e \"\nconst fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));\np.scripts['spike:e']='tsx spikes/e-model-switch.ts';\nfs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n');\n\"\nnpm test 2>&1 | grep -E 'Tests |Test Files|×' | head -5\nnpm run typecheck 2>&1 | grep error | head -3",
+    "buildCommand": "npm run build 2>&1 | tail -2 && npx playwright test e2e/model-switch.spec.ts --reporter=list 2>&1 | tail -14",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -3\nnpm run typecheck 2>&1 | grep error | head -3\nnpx playwright test --reporter=list 2>&1 | tail -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}

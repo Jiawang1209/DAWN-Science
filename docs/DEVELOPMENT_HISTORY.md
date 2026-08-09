@@ -43,10 +43,47 @@
 
 ## 变更日志
 
+### 2026-08-09 — 换模型打通运行时到界面；协议升 2.1（**尚差可选清单的来源**）
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: ①-B″ · U2。Spike E 已证实 pi 能就地换模型，本条把它接到界面。
+- **What（四层都通了）**:
+  - **运行时** `NativeRuntime.setModel()`：解析模型 → 换 → 发 `model` 事件。
+    抽出 `resolveModel()` 给 `start()` 与它共用——**两处各写一份错误信息，
+    迟早有一处说得比另一处含糊**。
+  - **「这一轮还没说完不许换」的门开在运行时**，不在界面。依据是运行时自己跟踪的
+    `pending`：Spike E 查出 `session.isStreaming` 在 prompt 真正开始前是 `false`
+    （与早先 `waitForIdle` 那次同源），**问 pi 会得到错的答案**。
+    门在这一层，界面/命令面板/将来的 CLI 共用同一道。
+  - **错误翻成人话**：pi 抛 `No API key for <p>/<m>`，我们转成
+    「provider "X" 还没有配置 API key——在「设置」里填好之后再换」。
+  - **协议** 新增 `setSessionModel`，版本 `2.0 → 2.1`（**只加操作、不改既有形状，
+    故 minor**）。新增 `AgentEvent.model`。
+  - **界面** `ModelPill`，与 agent pill 并排。**两个菜单标题必须不同**：
+    一个「新建会话，用：」（agent 建会话时绑死），一个「切换模型」（可就地换）。
+    同样的形状配不同语义，是最容易让人按错的一种设计。
+  - `$sessionModels` 放在 `catalog.ts`（后端权威的缓存），
+    **只在 `setSessionModel` 成功返回后才更新，不做乐观更新**——
+    没配 key 或这一轮没说完时，不能显示成换过了。
+- **未完成，且已让它出声**：`e2e/model-switch.spec.ts` 三条标为 `fixme`。
+  原因是**「这个 provider 有哪些模型可选」缺一个来源**：
+  `getProviders` 的 `providers[].models` 不是 provider 的模型目录，而是
+  「providers.yaml 里声明过的 agent 各自用了哪个模型」——它当初是为凭证界面设计的。
+  于是假后端 `models.json` 里的第二个模型不会出现在清单里，`ModelPill` 直接不渲染。
+  **下一步**：把 `ModelRuntime.getModels()` 里该 provider 的真实目录透出来，
+  作为与 `models` 并列的另一个字段——**两者语义不同，不能合并**。
+- **Impact**: 协议 2.1。界面新增一个 pill，但在可选清单接通之前它不显示。
+  两个测试用的假后端被类型系统当场逼着补上了新操作——**准入规则 ① 的自动化形态**。
+- **Verification**: 653 单元测试全绿；typecheck 干净；46 条 e2e 通过 + 3 条挂起。
+  换模型的能力本身由 `npm run spike:e` 在真链路上验过。
+
+---
+
 ### 2026-08-09 — Spike E：pi 能会话中途换模型，并查清它把选择写到了哪儿
 
 - **Type**: chore
-- **Commit**: 待回填
+- **Commit**: `1cf88f6`
 - **Motivation**: ①-B″ · U2 计划里标着「需要一个小 spike：pi 能不能会话中途换模型」。
   读类型声明已经能看到 `AgentSession.setModel()`，但**读到签名不等于验过行为**。
 - **What**: `spikes/e-model-switch.ts`（`npm run spike:e`，用假后端不烧真 key）；

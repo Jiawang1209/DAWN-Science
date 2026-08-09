@@ -99,13 +99,9 @@ export function ToolChangesPanel({ runs }: { runs: readonly RunSummary[] }) {
     else groups.push({ key, items: [r] })
   }
 
-  const anyUserEdits = tools.some((r) => r.mayIncludeUserEdits)
-
   return (
     <Panel title="变更">
-      {anyUserEdits ? (
-        <p className="caveat">⚠ 可能包含你自己的修改——本阶段没有 worktree 隔离，分不清是谁改的</p>
-      ) : null}
+      {/* 归属告知**不在这里**——它是项目级的事实，由 `AttributionCaveat` 在概览顶上说一次 */}
       {groups.map((g) => (
         <div key={g.key} className="turn-group">
           {g.items.map((r) => {
@@ -135,6 +131,42 @@ export function ToolChangesPanel({ runs }: { runs: readonly RunSummary[] }) {
   )
 }
 
+/**
+ * 归属告知：**这一屏上的文件改动分不清是谁改的。**
+ *
+ * ## 为什么它不长在面板里
+ *
+ * 2026-08-09 之前它同时长在「产出」和「变更」两个面板里，于是
+ * **同一句四十字的橙色警告在概览上并排出现两次**——那是整屏最响的东西，
+ * 而它说的是同一件事。本项目在别处已经写过这条：*「一个事实只显示一次」*。
+ *
+ * 但也不能简单地删掉其中一个：两个面板的数据来源不同
+ * （一个来自 git 基线，一个来自逐次工具调用），
+ * **只留一个的话，另一个有而这一个没有时，警告会整个消失**——
+ * 那是静默吞掉告知，规格 7.5 明令禁止。
+ *
+ * 所以它提到概览层，由**两个来源合并**判定，说一次。
+ */
+export function AttributionCaveat({ show }: { show: boolean }) {
+  if (!show) return null
+  return (
+    <p className="caveat panel-wide">
+      ⚠ 可能包含你自己的修改——本阶段没有 worktree 隔离，分不清是谁改的
+    </p>
+  )
+}
+
+/** 两个来源合并：git 基线说的，或任何一次工具调用说的 */
+export function mayIncludeUserEdits(
+  facts: FileChangeFacts | undefined,
+  runs: readonly RunSummary[],
+): boolean {
+  return (
+    facts?.mayIncludeUserEdits === true ||
+    runs.some((r) => r.requestType.startsWith("tool_call") && r.mayIncludeUserEdits)
+  )
+}
+
 export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) {
   if (!facts) {
     return (
@@ -145,9 +177,6 @@ export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) 
   }
   return (
     <Panel title="产出">
-      {facts.mayIncludeUserEdits ? (
-        <p className="caveat">⚠ 可能包含你自己的修改——本阶段没有 worktree 隔离，分不清是谁改的</p>
-      ) : null}
       {facts.files.length === 0 ? (
         <Empty>未改动任何文件</Empty>
       ) : (
@@ -228,12 +257,35 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
       </p>
       {/* **这一行是整个面板的要害。** 不写清楚，人就会把下表当成 token 分解 */}
       <p className="hint">下表按字节，不是 token</p>
+      {/**
+       * 三档占比的堆叠条。**它表达的是下面那张表，不是新事实**——
+       * 宽度就是字节占比，与「下表按字节，不是 token」那句话说的是同一件事。
+       *
+       * 宽度用行内样式，因为它**是数据**：百分比来自这一次的实际字节数，
+       * 不是某个设计决定。颜色仍然只从令牌来。
+       */}
+      {total > 0 ? (
+        <div className="ctx-bar" aria-hidden="true">
+          {rows.map((r) => (
+            <span
+              key={r.label}
+              className={`ctx-seg seg-${rows.indexOf(r) + 1}`}
+              style={{ width: `${(r.n / total) * 100}%` }}
+            />
+          ))}
+        </div>
+      ) : null}
       <ul className="stat-row ctx-rows">
         {rows.map((r) => (
           <li key={r.label} className="ctx-row">
             <span className="name">{r.label}</span>
-            <span className="amount">{KB(r.n)}</span>
-            <span className="hint">{total > 0 ? `${Math.round((r.n / total) * 100)}%` : "—"}</span>
+            {/* 值与百分比必须在同一行里，且中间有间距。
+                上一版三个 span 直接并排、没有任何分隔，渲染出来是
+                「系统提示词7.5 KB59%」，而且会在 `7.5` 和 `KB` 之间断行 */}
+            <span className="ctx-value">
+              <span className="amount">{KB(r.n)}</span>
+              <span className="hint">{total > 0 ? `${Math.round((r.n / total) * 100)}%` : "—"}</span>
+            </span>
           </li>
         ))}
       </ul>
@@ -282,7 +334,14 @@ export function ProvenanceBadge({ link }: { link: ProvenanceLink }) {
 
 /* ── 历史 ─────────────────────────────────────────────────────────── */
 
-const ORIGIN_LABEL = { user: "人", agent: "agent", system: "系统" } as const
+/**
+ * 谁发起的这一次 run。
+ *
+ * `user` 上一版写的是**「人」**——一个孤零零的汉字挨着绿色的 `agent`，
+ * 看着像乱码。改成「你」，与 transcript 里用户发言的标签**同一个词**：
+ * 同一个概念在两处叫两个名字，读的人得先想一下它们是不是一回事。
+ */
+const ORIGIN_LABEL = { user: "你", agent: "agent", system: "系统" } as const
 const STATUS_LABEL = {
   running: "进行中",
   completed: "完成",

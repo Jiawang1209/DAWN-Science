@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { render, screen } from "@testing-library/react"
-import { ToolChangesPanel } from "../../src/ui/panels.js"
+import { mayIncludeUserEdits, ToolChangesPanel } from "../../src/ui/panels.js"
 import type { RunSummary } from "../../src/protocol/index.js"
 
 const run = (over: Partial<RunSummary>): RunSummary =>
@@ -83,18 +83,30 @@ describe("变更 pane · 「不知道」不等于「没改」", () => {
 })
 
 describe("变更 pane · 可能混入作者改动要出声", () => {
-  it("mayIncludeUserEdits 为真时给出警示", () => {
+  /**
+   * **2026-08-09：这句告知搬到概览层了。**
+   *
+   * 它此前同时长在「产出」与「变更」里，于是同一句四十字的橙色警告
+   * 在概览上并排出现两次——那是整屏最响的东西，而它说的是同一件事。
+   *
+   * 现在由 `AttributionCaveat` 说一次，判定走
+   * `mayIncludeUserEdits(facts, runs)`（**两个来源合并**，
+   * 判定本身的测试在 `panels.test.tsx`）。
+   * 这里改为盯住反面：**面板自己不许再说一遍**。
+   */
+  it("面板自己不再说 —— 重复的警告是这次修掉的缺陷", () => {
     const { container } = render(
       <ToolChangesPanel runs={[run({ filesWritten: ["a.ts"], mayIncludeUserEdits: true })]} />,
     )
-    expect(container.textContent).toMatch(/可能包含你自己的修改/)
+    expect(container.textContent).not.toMatch(/可能包含你自己的修改/)
   })
 
-  it("为假时不加噪音", () => {
-    const { container } = render(
-      <ToolChangesPanel runs={[run({ filesWritten: ["a.ts"], mayIncludeUserEdits: false })]} />,
-    )
-    expect(container.textContent).not.toMatch(/可能包含你自己的修改/)
+  it("**但那条事实没被丢掉** —— 合并判定仍然说要警示", () => {
+    expect(
+      mayIncludeUserEdits(undefined, [
+        run({ requestType: "tool_call:write", filesWritten: ["a.ts"], mayIncludeUserEdits: true }),
+      ]),
+    ).toBe(true)
   })
 })
 

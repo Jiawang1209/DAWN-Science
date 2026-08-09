@@ -306,7 +306,10 @@ pre {
 .panels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  /* 行距比列距大一档：**面板高度参差不齐**，行距等于列距时下一行会像贴上来 */
+  gap: var(--dawn-space-6) var(--dawn-space-3);
+  /* 内容少时贴顶，不要被拉伸 */
+  align-content: start;
   padding: var(--dawn-space-3) var(--dawn-page-inset-x);
   max-width: var(--dawn-page-max-w);
   width: 100%;
@@ -324,6 +327,47 @@ pre {
   text-transform: uppercase;
 }
 .panel-body { padding: 0; }
+/* 横跨整个网格的一条（概览顶上的归属告知） */
+.panel-wide { grid-column: 1 / -1; }
+
+/* ── 面板里的层次：**数值是主角，标签退后** ──────────────────────────
+   2026-08-09 之前所有东西都是 13px 的灰字——标签、数值、单位一样响，
+   于是一屏六个面板读起来像六段说明文，看不出哪个是结论。 */
+
+/* 数值。等宽数字，**不然一列数字对不齐** */
+.amount {
+  font-size: 18px;
+  font-weight: var(--dawn-weight-medium);
+  color: var(--dawn-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.unknown { color: var(--dawn-text-2); }
+
+/* 上下文的三档：标签一行、数值一行。
+   上一版三个 span 直接并排、没有任何间距，渲染成「系统提示词7.5 KB59%」，
+   而且会在 `7.5` 和 `KB` 之间断行——**那不是不好看，那是坏了** */
+.ctx-rows { flex-wrap: wrap; gap: var(--dawn-space-4); }
+.ctx-row { display: flex; flex-direction: column; gap: 2px; }
+.ctx-row .name { color: var(--dawn-text-3); font-size: 11px; }
+.ctx-value { display: flex; align-items: baseline; gap: var(--dawn-space-1); }
+
+/* 三档占比的堆叠条。宽度是数据（行内样式），颜色仍只从令牌来 */
+.ctx-bar {
+  display: flex;
+  width: 100%;
+  height: 6px;
+  margin: var(--dawn-space-2) 0;
+  border-radius: var(--dawn-radius-full);
+  overflow: hidden;
+  background: var(--dawn-fill-5);
+}
+.ctx-seg { display: block; height: 100%; }
+/* **三段是同一个量的三份，所以是同一个色相的三档**，不是三种灰。
+   第一版后两段用的是 `--dawn-fill-1/2`（前景兑的极淡灰），
+   彼此以及与轨道都分不出来——那条就等于只画了第一段。 */
+.ctx-seg.seg-1 { background: var(--dawn-accent); }
+.ctx-seg.seg-2 { background: color-mix(in srgb, var(--dawn-accent) 55%, transparent); }
+.ctx-seg.seg-3 { background: color-mix(in srgb, var(--dawn-accent) 25%, transparent); }
 /* 主题三选一。radiogroup 的几何由这里拥有，按钮只负责自己那一格 */
 .theme-choices { display: flex; gap: 6px; margin-bottom: 6px; }
 .empty { margin: 0; color: var(--dawn-text-3); }
@@ -334,8 +378,20 @@ pre {
 .hint.pad { padding: 0 12px 8px; margin: 0; }
 .stat-row, .file-list, .run-list { list-style: none; margin: 0; padding: 0; }
 .stat-row { display: flex; gap: 14px; }
-.file-list li, .run-list li { padding: 2px 0; border-bottom: 1px solid var(--dawn-stroke-4); }
-.run-list .origin { color: var(--dawn-accent); margin-right: 8px; }
+.file-list li, .run-list li { padding: var(--dawn-space-1) 0; border-bottom: 1px solid var(--dawn-stroke-4); }
+/* 发起方是**标签，不是链接**。上一版用强调色文字，
+   而这一屏里强调色的其他用法都是可点的，读起来像它能点 */
+.run-list .origin {
+  display: inline-block;
+  min-width: 3.2em;
+  margin-right: var(--dawn-space-2);
+  padding: 0 var(--dawn-space-1);
+  border-radius: var(--dawn-radius-xs);
+  background: var(--dawn-fill-4);
+  color: var(--dawn-text-2);
+  font-size: 11px;
+  text-align: center;
+}
 .run-list .req, .run-list .status, .run-list .dur {
   color: var(--dawn-text-3);
   margin-right: 8px;

@@ -8,6 +8,8 @@
 import { describe, expect, it } from "vitest"
 import { render, screen } from "@testing-library/react"
 import {
+  AttributionCaveat,
+  mayIncludeUserEdits,
   ChangesPanel,
   CostPanel,
   ProvenanceBadge,
@@ -39,7 +41,7 @@ const session = (over: Partial<SessionSummary> = {}): SessionSummary => ({
   ...over,
 })
 
-describe("硬要求 ① 产出栏必须标注可能混入手动修改", () => {
+describe("硬要求 ① 必须标注可能混入手动修改", () => {
   const facts = (over: Partial<FileChangeFacts> = {}): FileChangeFacts => ({
     files: ["src/a.ts", "src/b.ts"],
     mayIncludeUserEdits: true,
@@ -48,14 +50,49 @@ describe("硬要求 ① 产出栏必须标注可能混入手动修改", () => {
     ...over,
   })
 
-  it("mayIncludeUserEdits 为 true 时显示告知", () => {
-    render(<ChangesPanel facts={facts()} />)
+  /**
+   * **2026-08-09：这条告知搬家了。**
+   *
+   * 它此前同时长在「产出」与「变更」两个面板里，于是同一句四十字的橙色警告
+   * 在概览上并排出现两次。现在由 `AttributionCaveat` 在概览顶上说一次，
+   * 判定来自 `mayIncludeUserEdits(facts, runs)`——**两个来源合并**。
+   *
+   * 只留其中一个面板是不行的：两边数据来源不同，
+   * 另一个有而这一个没有时警告会整个消失，那是静默吞掉告知（规格 7.5）。
+   */
+  it("显示告知", () => {
+    render(<AttributionCaveat show={true} />)
     expect(screen.getByText(/可能包含你自己的修改/)).toBeDefined()
   })
 
   it("隔离环境（false）时不显示该告知", () => {
-    render(<ChangesPanel facts={facts({ mayIncludeUserEdits: false })} />)
+    render(<AttributionCaveat show={false} />)
     expect(screen.queryByText(/可能包含你自己的修改/)).toBeNull()
+  })
+
+  it("**面板自己不再各说一遍** —— 重复的警告是这次修掉的缺陷", () => {
+    render(<ChangesPanel facts={facts()} />)
+    expect(screen.queryByText(/可能包含你自己的修改/)).toBeNull()
+  })
+
+  describe("判定：两个来源合并，任一为真就要说", () => {
+    const toolRun = (may: boolean): RunSummary =>
+      run({ requestType: "tool_call:write", mayIncludeUserEdits: may })
+
+    it("git 基线说可能混入 → 要说", () => {
+      expect(mayIncludeUserEdits(facts(), [])).toBe(true)
+    })
+    it("**只有工具调用说可能混入 → 也要说**（此前这一支会整个丢掉告知）", () => {
+      expect(mayIncludeUserEdits(undefined, [toolRun(true)])).toBe(true)
+    })
+    it("两边都说没有 → 不说", () => {
+      expect(mayIncludeUserEdits(facts({ mayIncludeUserEdits: false }), [toolRun(false)])).toBe(false)
+    })
+    it("非工具调用的 run 不参与判定", () => {
+      expect(
+        mayIncludeUserEdits(undefined, [run({ requestType: "agent_turn", mayIncludeUserEdits: true })]),
+      ).toBe(false)
+    })
   })
 
   it("列出变更文件", () => {
@@ -140,7 +177,8 @@ describe("历史栏", () => {
   it("列出 run，并显示是人做的还是 agent 做的", () => {
     render(<RunsPanel runs={[run({ origin: "user" }), run({ runId: "r2", origin: "agent" })]} />)
     // 用精确匹配：requestType 是 "agent_turn"，模糊匹配 /agent/i 会同时命中它
-    expect(screen.getByText("人")).toBeDefined()
+    // 「人」→「你」：与 transcript 里用户发言的标签同一个词
+    expect(screen.getByText("你")).toBeDefined()
     expect(screen.getByText("agent")).toBeDefined()
   })
 

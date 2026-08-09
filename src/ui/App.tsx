@@ -19,11 +19,13 @@ import { useCallback, useEffect, useMemo } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import {
+  AttributionCaveat,
   ChangesPanel,
   ContextPanel,
   CostPanel,
   ProvenanceBadge,
   RunsPanel,
+  mayIncludeUserEdits,
   StatusPanel,
   ToolChangesPanel,
 } from "./panels.js"
@@ -495,6 +497,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </div>
           ) : view === "panel" ? (
             <div className="panels">
+              {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
+                  另一个有而这一个没有时警告会整个消失（规格 7.5 禁止静默吞掉） */}
+              <AttributionCaveat show={mayIncludeUserEdits(runDetail?.fileChanges, runs)} />
               <StatusPanel sessions={sessions} />
               <ChangesPanel facts={runDetail?.fileChanges} />
               {/* 逐次工具调用那一层。**不变式 5 第一次有用户可见面** */}

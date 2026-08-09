@@ -58,6 +58,18 @@ npm run dev:mock     真链路 + 假模型，人肉看
 
 **写「测试绿了」不等于「能用了」。**
 
+### 视觉基线的一条纪律
+
+`e2e/__screenshots__/` 里那八张图归 `test:e2e:visual` 管。**红了先看 diff 图，再决定是不是重存。**
+
+```
+test-results/<用例>/<名字>-diff.png    ← 差异用红色标出来，先看这个
+```
+
+条件反射地 `--update-snapshots` 是这类测试唯一的死法：更新一次不痛不痒，
+更新成习惯之后它就什么都不证明了。**它红了通常是对的**——
+逐像素阈值是 0，颜色差一点点都会说话（这个值是试出来的，理由写在 `e2e/visual.spec.ts` 里）。
+
 ---
 
 ## 常用命令
@@ -68,6 +80,8 @@ npm run typecheck
 npm run build
 npm run test:e2e      # 先 build，再 Playwright（跑真实产物）
 npm run test:e2e:only # 跳过 build
+npm run test:e2e:visual         # 只跑视觉基线（8 张：四个屏 × 明暗）
+npm run test:e2e:visual:update  # 改了样式之后重存基线
 npm run dev:mock      # 真链路 + 假模型，隔离目录，不碰真实凭证与数据库
 npm run app           # 构建并启动
 ```

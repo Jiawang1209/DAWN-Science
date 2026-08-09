@@ -27,7 +27,9 @@
     "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts",
     "dev:mock": "node scripts/dev-mock.mjs",
     "test:e2e": "npm run build && playwright test",
-    "test:e2e:only": "playwright test"
+    "test:e2e:only": "playwright test",
+    "test:e2e:visual": "playwright test e2e/visual.spec.ts",
+    "test:e2e:visual:update": "playwright test e2e/visual.spec.ts --update-snapshots"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",

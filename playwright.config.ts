@@ -21,5 +21,13 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   // 失败时留下现场。**第一次失败就留**——e2e 的失败往往难以复现
   use: { trace: "retain-on-failure", screenshot: "only-on-failure" },
+  /**
+   * 视觉基线放一个显眼的目录，而不是默认的 `<spec>-snapshots/`。
+   *
+   * **`{platform}` 必须留在文件名里**：基线是逐平台的，macOS 上存的图在 Linux 上
+   * 必然全红。名字里带着 `-darwin`，看见全红的人第一眼就知道那不是回归，
+   * 是没有那个平台的基线——而不是去调容差。
+   */
+  snapshotPathTemplate: "e2e/__screenshots__/{arg}-{platform}{ext}",
   reporter: [["list"]],
 })

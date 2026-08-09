@@ -160,12 +160,42 @@ interface KernelChannel {
 
 ---
 
+## 4.1 设置里必须看得见解释器路径（作者 2026-08-10 提）
+
+> *「我觉得有必要在 app 的设置里面，让用户配置一下 R 和 Python 的路径，否则很盲目。」*
+
+实测印证了这句话。本机扫出来的五个内核是：
+
+```
+d2l            python   ~/miniconda3/envs/d2l/bin/python
+datascience    python   ~/miniconda3/envs/DataScience/bin/python
+dawn-spike     python   <仓库>/.venv-kernel/bin/python
+ir             R        /Library/Frameworks/R.framework/Resources/bin/R
+python_learn   python   ~/miniconda3/envs/python_learn/bin/python
+```
+
+**光看名字完全分不出哪个是哪个**——三个 conda 环境加一个仓库 venv。
+挑错的后果不是报错，是**跑在了另一个环境里而不自知**（§4 那条）。
+
+这件事其实是两件，代价差很远：
+
+| | 做什么 | 代价 |
+|---|---|---|
+| **A · 看得见** | 内核选择器与设置里**一律连解释器路径一起显示**，同名被挡住的也标出来 | 几乎为零——`discoverKernelSpecs` 已经把 `executable` 拿到了 |
+| **B · 配得了** | 让用户直接指一个解释器（那个环境**没有注册 kernelspec**也能用） | 要判断该解释器有没有 ipykernel / IRkernel，并在没有时按 §4 的三种实情说话 |
+
+**A 是 K2 的必做项**（没有它，「能选」等于让人蒙）。
+**B 也放进 K2**，但实现上不写 kernelspec 到用户的 Jupyter 目录——
+**不替用户改他的 Jupyter 配置**，而是 DAWN 自己记住这条路径、启动时按它拼 argv。
+理由：写进 `~/Library/Jupyter/kernels` 会影响他所有别的 Jupyter 工具，
+那是越界；而且卸载 DAWN 之后那条注册项还留着。
+
 ## 5. 批次划分
 
 | 批次 | 内容 | 判据 |
 |---|---|---|
 | **K1** | 传输适配器（S8）：`KernelChannel` + 握手 + 关停顺序 + `Tagged` 三件套 | 一次 `execute_request` 从发出到 iopub 输出全程可测；退出码为 0 |
-| **K2** | 内核生命周期（S9）：kernelspec 发现/选择、`kernelInstanceId`、起不来时的响亮失败 | 能列出本机内核、能选、选错能说清原因 |
+| **K2** | 内核生命周期（S9）：kernelspec 发现/选择、**设置里看得见并配得了解释器路径**、`kernelInstanceId`、起不来时的响亮失败 | 能列出本机内核（**带解释器路径**）、能选、能手动指定一个解释器、选错能说清原因 |
 | **K3** | 中断（S10）：signal 与 message 两条路；`abort` 与 `error` 都算中断成功 | 打断长任务后**内核仍可用**（再执行一次成功）。**判据不许写成「reply 是某个 status」** |
 | **K4** | 结构化 Console（S11）+ 富输出（S12） | 输出带 `runId`/`kernelInstanceId`；图能显示 |
 | **K5** | 陈旧标记（S13）+ 变量面板（S14） | 重启后旧 output 显式标记为陈旧 |

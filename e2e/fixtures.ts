@@ -10,6 +10,7 @@
  * 两套 mock 会各自漂移，那时「本地是好的」就不再意味着什么。
  */
 import { test as base, _electron, type ElectronApplication, type Page } from "@playwright/test"
+import { execFileSync } from "node:child_process"
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
@@ -31,13 +32,76 @@ export interface DawnFixture {
   requests: unknown[]
 }
 
-export const test = base.extend<{ dawn: DawnFixture }>({
-  dawn: async ({}, use) => {
-    const server = await startMockInferenceServer()
+/**
+ * 让假模型确定性地**调一次工具**。
+ *
+ * **刻意是声明式的，不是回调。** mock 那一侧的入口是
+ * `(body) => {toolName, args} | undefined`，够灵活，但两件事让它不适合直接
+ * 当夹具选项：一是 Playwright 的 `test.use()` 传函数要担心跨进程；
+ * 二是用例真正要说的只有「调什么、带什么参数、调几次」，
+ * **把闭包写进每个用例等于把同一段状态机抄一遍**。翻译在下面做一次。
+ */
+export interface MockToolCallSpec {
+  toolName: string
+  args: Record<string, unknown>
+  /**
+   * 只在第一次请求时触发。**默认 true，而且几乎总该是 true**——
+   * 否则模型拿到工具结果后会再调一次，一路循环到撞上限，用例表现为超时。
+   */
+  once?: boolean
+}
+
+export interface DawnOptions {
+  toolCall?: MockToolCallSpec
+  /**
+   * 把工作区变成 git 仓库并做一次初始提交。**默认 false。**
+   *
+   * 默认值是 false 而不是 true，有两条理由：
+   * ① 现有用例（含八张视觉基线）都是在**非** git 工作区下存的，
+   *   改默认值会让「产出」栏换一种说法，基线全红；
+   * ② 非 git 恰好是溯源的「不知道」那一支，本身值得被守住。
+   *
+   * **想验「知道」那一支的用例必须显式打开它**：`git-facts.ts` 的
+   * `snapshot()` 第一句是 `git rev-parse HEAD`，空仓库没有 HEAD 就抛错，
+   * 探针于是返回 undefined——**用例会绿，但绿得毫无意义**，
+   * 它走的是「无法确定」那一支。所以初始提交也不是可选的。
+   */
+  gitInit?: boolean
+}
+
+/** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
+function toolCallHook(spec: MockToolCallSpec | undefined) {
+  if (!spec) return undefined
+  let fired = false
+  return () => {
+    if (fired && (spec.once ?? true)) return undefined
+    fired = true
+    return { toolName: spec.toolName, args: spec.args }
+  }
+}
+
+function initRepo(workspace: string): void {
+  const run = (...args: string[]) => execFileSync("git", args, { cwd: workspace, stdio: "pipe" })
+  run("init", "-q")
+  // **仓库级配置，不碰全局**：CI 与开发机上都可能没有 user.name
+  run("config", "user.email", "e2e@example.com")
+  run("config", "user.name", "dawn-e2e")
+  run("add", "-A")
+  run("commit", "-qm", "e2e 基线")
+}
+
+export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>({
+  // 用例侧：`test.use({ dawnOptions: { … } })`。**不写就是现状**，
+  // 这是现有 10 个 spec 一行都不用改的原因
+  dawnOptions: [{}, { option: true }],
+
+  dawn: async ({ dawnOptions }, use) => {
+    const server = await startMockInferenceServer({ toolCall: toolCallHook(dawnOptions.toolCall) })
     const dir = mkdtempSync(join(tmpdir(), "dawn-e2e-"))
     const workspace = join(dir, "workspace")
     mkdirSync(workspace, { recursive: true })
     writeFileSync(join(workspace, "README.md"), "# e2e 工作区\n")
+    if (dawnOptions.gitInit) initRepo(workspace)
 
     const modelsPath = join(dir, "models.json")
     writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))

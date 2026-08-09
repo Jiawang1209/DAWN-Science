@@ -64,7 +64,13 @@ export interface ToolFileFacts {
 }
 
 export interface ProvenanceHandle {
-  finish(): Promise<ToolFileFacts>
+  /**
+   * 工具执行完毕，算这一次的差集。
+   *
+   * @returns 事实；**算不出来时返回 `undefined`**——与 `begin()` 同一个含义，
+   *   由调用方翻译成「那条 Run 上没有这个字段」。见下方 `finish` 的实现注释。
+   */
+  finish(): Promise<ToolFileFacts | undefined>
 }
 
 export class ProvenanceProbe {
@@ -87,7 +93,7 @@ export class ProvenanceProbe {
     }
     const workspace = this.workspace
     return {
-      async finish(): Promise<ToolFileFacts> {
+      async finish(): Promise<ToolFileFacts | undefined> {
         try {
           const facts = await diffSince(workspace, before)
           return {
@@ -96,8 +102,18 @@ export class ProvenanceProbe {
             mayIncludeUserEdits: facts.mayIncludeUserEdits,
           }
         } catch {
-          // 前面拍到了、后面算不出来——**这一次的事实就是"不知道"**
-          return { filesWritten: [], filesRead: [], mayIncludeUserEdits: true }
+          /**
+           * 前面拍到了、后面算不出来——**这一次的事实就是"不知道"**。
+           *
+           * **2026-08-09 修**：此前这里返回 `{ filesWritten: [], … }`。
+           * 注释说的是「不知道」，返回的却是空数组，而空数组在变更 pane 上
+           * 被渲染成**「没有改动文件」**——恰好是本文件开头第 20-23 行
+           * 自己写下的禁令：*「返回空数组会被读成『确认没改任何文件』，那是编造」*。
+           *
+           * 它只在 diff 失败这条罕见路径上触发（仓库中途消失、git 崩了），
+           * 所以带着这个缺陷活了一整个 Task。**「不知道」的唯一诚实表达是不发这个事实。**
+           */
+          return undefined
         }
       },
     }

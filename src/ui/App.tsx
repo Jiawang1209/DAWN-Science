@@ -199,6 +199,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 那会在切换的空隙里漏掉更新。回调内部直读 atom 拿最新值
   }, [ready, client])
 
+  /**
+   * **一整轮是不是还开着。** 由 `items` 派生，但它一轮只翻两次
+   * （false→true→false），不像 `items` 每来一个 token 就变一次——
+   * 所以它可以进 effect 依赖，`items` 不行。下面那个 effect 依赖的就是这个区别。
+   */
+  const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+
   // 上下文用量随会话走。**没有会话时清掉**——留着上一个会话的数字是最坏的一种，
   // 它看起来是真的
   useEffect(() => {
@@ -208,7 +215,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 面板只在项目概览里显示，所以在打开它的时候取一次就够了
     if (view !== "panel") return
     void loadContextUsage(client, sessionId)
-  }, [client, sessionId, view])
+    /**
+     * **账本也要在这里重取一次。**
+     *
+     * 2026-08-09（U4 补验的 e2e 撞出来的生产缺陷）：`loadRuns` 此前**只挂在
+     * `projectId` 变化上**，而项目在启动时就定下来了——于是这份列表永远停在
+     * 「打开项目那一刻」，之后账本记了什么，界面一概不知道。
+     *
+     * 后果不止变更 pane：`runs[0]` 还喂着**产出**与**成本**两个面板。
+     * 三个面板一起在真实产物上是死的，而它们各自的单元测试全绿。
+     * **这和第 225 行那条注释记的是同一种死法**，隔了几个 Task 又来一次。
+     *
+     * `busy` 进依赖是为了**回合结束时再取一次**：人可以开着概览等结果，
+     * 只在打开时取一次的话，那一屏会一直停在回合开始前的样子。
+     * 代价是每轮多两次 IPC——`busy` 一轮只翻两次，不是每个 token 一次。
+     */
+    if (projectId) void loadRuns(client, projectId)
+  }, [client, sessionId, view, projectId, busy])
 
   /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {
@@ -321,7 +344,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, startSession, session],
   )
 
-  const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
   const commands = useMemo(
     () => buildCommands({ actions, agents: agentIds, session, busy, view }),
     [actions, agentIds, session, busy, view],

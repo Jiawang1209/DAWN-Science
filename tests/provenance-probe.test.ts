@@ -23,7 +23,26 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { ProvenanceProbe, isProducing, PRODUCING_TOOLS } from "../src/runtime/provenance.js"
+import {
+  ProvenanceProbe,
+  isProducing,
+  PRODUCING_TOOLS,
+  type ProvenanceHandle,
+  type ToolFileFacts,
+} from "../src/runtime/provenance.js"
+
+/**
+ * `finish()` 有两种结局，**返回 undefined 是其中之一**（算不出来 = 不知道）。
+ *
+ * 下面这些用例验的都是「算得出来」那一支，所以在这里一次性断言它非空——
+ * 比在每个断言上撒一个 `!` 更能说明意图：**它不是在绕过类型，是在声明前提。**
+ */
+async function factsOf(h: ProvenanceHandle | undefined): Promise<ToolFileFacts> {
+  expect(h, "这一支应当拍得到基线").toBeDefined()
+  const facts = await h!.finish()
+  expect(facts, "这一支应当算得出事实").toBeDefined()
+  return facts!
+}
 
 function repo(): string {
   const dir = mkdtempSync(join(tmpdir(), "dawn-prov-"))
@@ -63,7 +82,7 @@ describe("单次调用的文件事实", () => {
     const h = await probe.begin("write")
     expect(h).toBeDefined()
     writeFileSync(join(dir, "新文件.ts"), "x\n")
-    const facts = await h!.finish()
+    const facts = await factsOf(h)
     expect(facts.filesWritten).toContain("新文件.ts")
     rmSync(dir, { recursive: true, force: true })
   })
@@ -73,7 +92,7 @@ describe("单次调用的文件事实", () => {
     const probe = new ProvenanceProbe(dir)
     const h = await probe.begin("edit")
     writeFileSync(join(dir, "seed.txt"), "改过了\n")
-    const facts = await h!.finish()
+    const facts = await factsOf(h)
     expect(facts.filesWritten).toContain("seed.txt")
     rmSync(dir, { recursive: true, force: true })
   })
@@ -82,7 +101,7 @@ describe("单次调用的文件事实", () => {
     const dir = repo()
     const probe = new ProvenanceProbe(dir)
     const h = await probe.begin("bash")
-    const facts = await h!.finish()
+    const facts = await factsOf(h)
     expect(facts.filesWritten).toEqual([])
     rmSync(dir, { recursive: true, force: true })
   })
@@ -93,11 +112,11 @@ describe("单次调用的文件事实", () => {
 
     const h1 = await probe.begin("write")
     writeFileSync(join(dir, "第一次.ts"), "1\n")
-    await h1!.finish()
+    await factsOf(h1)
 
     const h2 = await probe.begin("write")
     writeFileSync(join(dir, "第二次.ts"), "2\n")
-    const facts = await h2!.finish()
+    const facts = await factsOf(h2)
 
     expect(facts.filesWritten).toContain("第二次.ts")
     // 第一次的改动已经是「基线的一部分」，不该再算到第二次头上
@@ -112,7 +131,7 @@ describe("单次调用的文件事实", () => {
     const probe = new ProvenanceProbe(dir)
     const h = await probe.begin("write")
     writeFileSync(join(dir, "agent改的.txt"), "agent\n")
-    const facts = await h!.finish()
+    const facts = await factsOf(h)
     expect(facts.filesWritten).toContain("agent改的.txt")
     expect(facts.filesWritten).not.toContain("作者改的.txt")
     rmSync(dir, { recursive: true, force: true })
@@ -127,6 +146,33 @@ describe("不是 git 仓库时", () => {
     const h = await probe.begin("write")
     // 拿不到事实时留空，比编一个空数组诚实——空数组会被读成「确认没改任何文件」
     expect(h).toBeUndefined()
+    rmSync(dir, { recursive: true, force: true })
+  })
+})
+
+describe("拍到了、但算不出来", () => {
+  /**
+   * **2026-08-09（①-B″ · U4 补验）由 e2e 那一片顺手查出来的缺陷。**
+   *
+   * `finish()` 的 catch 分支注释写着「这一次的事实就是"不知道"」，
+   * **返回的却是 `filesWritten: []`**——而空数组在变更 pane 上被渲染成
+   * 「没有改动文件」（`panels.tsx` 那一支）。
+   *
+   * 那正是本模块开头第 20-23 行自己写下的禁令：
+   * *「返回空数组会被读成『确认没改任何文件』，那是编造」*。
+   * 它只在 diff 失败这条罕见路径上触发，所以一直没被看见。
+   *
+   * **「不知道」的唯一诚实表达是不发这个事实**，与非 git 仓库那一支一致。
+   */
+  it("**diff 算不出来时返回 undefined** —— 空数组会被读成「确认没改」", async () => {
+    const dir = repo()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write")
+    expect(h).toBeDefined()
+    writeFileSync(join(dir, "写了一个文件.ts"), "x\n")
+    // 拍完之后仓库没了：before 有、after 算不出来。**这一次的事实就是"不知道"**
+    rmSync(join(dir, ".git"), { recursive: true, force: true })
+    expect(await h!.finish()).toBeUndefined()
     rmSync(dir, { recursive: true, force: true })
   })
 })
@@ -156,7 +202,7 @@ describe("中文文件名不能变成乱码", () => {
     const probe = new ProvenanceProbe(dir)
     const h = await probe.begin("write")
     writeFileSync(join(dir, "中文名称.ts"), "x\n")
-    const facts = await h!.finish()
+    const facts = await factsOf(h)
     expect(facts.filesWritten).toContain("中文名称.ts")
     expect(facts.filesWritten.join("")).not.toMatch(/\\3\d\d/)
     rmSync(dir, { recursive: true, force: true })
@@ -167,7 +213,7 @@ describe("中文文件名不能变成乱码", () => {
     const probe = new ProvenanceProbe(dir)
     const h = await probe.begin("write")
     writeFileSync(join(dir, "有 空格.txt"), "x\n")
-    const facts = await h!.finish()
+    const facts = await factsOf(h)
     expect(facts.filesWritten).toContain("有 空格.txt")
     rmSync(dir, { recursive: true, force: true })
   })

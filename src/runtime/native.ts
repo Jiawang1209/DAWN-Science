@@ -217,7 +217,10 @@ export class NativeRuntime implements AgentRuntime {
           } finally {
             if (handle) {
               const facts = await handle.finish()
-              emit({ kind: "tool_files", sessionId, toolCallId, ...facts })
+              // **算不出来就不发。** 发一个空的 `filesWritten` 会让那条 Run
+              // 说出「确认没改任何文件」，而实情是「不知道」——两者不得混为一谈
+              // （`types.ts` 的 `tool_files` 注释：只在拿得到事实时发）
+              if (facts) emit({ kind: "tool_files", sessionId, toolCallId, ...facts })
             }
           }
         },

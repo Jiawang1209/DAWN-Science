@@ -43,6 +43,33 @@
 
 ## 变更日志
 
+### 2026-08-10 — ②-A · K3：中断（前置门），Python 与 R 都验穿
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: **这是前置门，不是普通功能**——规格 10.4 的硬要求，
+  而 wisp-science 的自研 JSON-lines worker 方案正是败在这一条。
+- **What**:
+  - `KernelChannel.interrupt()`：两条路由 kernelspec 的 `interrupt_mode` 决定。
+    `signal`（默认，本机 Python 与 R 都是）→ 向内核进程发 **SIGINT**；
+    `message` → 往 **control 通道**发 `interrupt_request`。
+  - `specs.ts` 读出 `interrupt_mode`，**只认 `message`，其余一律 signal**
+    ——那是 Jupyter 的默认，不猜。
+  - 集成测试跑真内核，Python 与 R 各一遍。
+- **Impact**:
+  - **`interrupt()` 刻意不返回「成没成」。** 中断后内核回什么因语言而异且都合法
+    （Python `status=error`+`KeyboardInterrupt`，**R `status=abort` 且无 ename**）。
+    唯一与语言无关的判据是「内核还能不能算对一道题」，那要再发一次执行才知道，
+    **返回一个假答案比不返回更坏**。
+  - `message` 模式必须走 control 通道：**正在执行时 shell 是堵着的**，
+    发到 shell 上会排在死循环后面，等于没发。
+  - 中断不让 `kernelRevision` +1——它不是一次执行。
+  - 中断走 `rawSend` 不进握手队列：**排队的中断到达时早就没意义了**。
+- **Verification**: 939 单元全绿。**这道门做了变异验证**：把 `interrupt()` 掏空成
+  空实现之后，Python 与 R 两条都红，且红在正确的断言上
+  （「中断之后那一轮必须收口」，30s 等不到 `execute_reply`）。
+  只断言「绿」的门等于没有门。
+
 ### 2026-08-10 — ②-A · K2 收尾：真起内核、三种诊断接上真实失败
 
 - **Type**: feat

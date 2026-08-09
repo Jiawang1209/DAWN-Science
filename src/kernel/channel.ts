@@ -73,6 +73,11 @@ export interface KernelChannelOptions {
    * **Spike D 实测约 300ms**；给 0 会撞上 SIGABRT。
    */
   nativeDrainMs?: number
+  /**
+   * 怎么中断。**缺省 `signal`**——Jupyter 自己的默认，也是本机
+   * ipykernel 与 IRkernel 的实测值（两者的 kernel.json 都没声明这个字段）。
+   */
+  interruptMode?: "signal" | "message"
   /** 让测试可以不真的等 */
   sleep?: (ms: number) => Promise<void>
 }
@@ -194,6 +199,56 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     }
   })()
 
+  /**
+   * 打断正在执行的那一段。**不杀内核。**
+   *
+   * ## 两条路，走错的症状是「点了停止什么也没发生」
+   *
+   * | `interrupt_mode` | 怎么打断 |
+   * |---|---|
+   * | `signal`（默认，本机 Python 与 R 都是） | 向**内核进程**发 SIGINT |
+   * | `message` | 往 **control 通道**发 `interrupt_request` |
+   *
+   * ## 为什么它不返回「成没成」
+   *
+   * 中断之后内核回什么**因语言而异且都合法**：Python 回
+   * `execute_reply status=error` + `KeyboardInterrupt`，**R 回 `status=abort`
+   * 且没有 ename**（2026-08-10 实测）。Spike D 原来的判据按 Python 的形状写死，
+   * 把一个工作正常的 R 内核判成了失败。
+   *
+   * **唯一与语言无关的判据是「内核还能不能算对一道题」**——
+   * 内核串行执行，后一条能跑完就同时证明了死循环停了、内核也没被打死。
+   * 那要再发一次执行才知道，不是这个方法能回答的，
+   * 所以它不返回 boolean：**返回一个假答案比不返回更坏**。
+   */
+  const interrupt = (): void => {
+    if (closed) throw new Error("内核通道已关闭，不能再中断")
+    if ((opts.interruptMode ?? "signal") === "message") {
+      /**
+       * **走 control 通道**。它与 shell 是两条独立的 socket——
+       * 正在执行时 shell 是堵着的，`interrupt_request` 发到 shell 上会排在
+       * 那条死循环后面，**等于没发**。
+       */
+      rawSend({
+        header: {
+          msg_id: `interrupt-${opts.kernelInstanceId}-${revision}`,
+          msg_type: "interrupt_request",
+        },
+        parent_header: {},
+        metadata: {},
+        content: {},
+        channel: "control",
+      })
+      return
+    }
+    try {
+      opts.process.kill("SIGINT")
+    } catch (err) {
+      // **打不中要出声**：进程已经没了的话，「中断」这个动作本身失去了对象
+      throw new Error(`发不出中断信号：${message(err)}`)
+    }
+  }
+
   const close = async (): Promise<void> => {
     if (closed) return
     closed = true
@@ -228,6 +283,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     send,
     on,
     request,
+    interrupt,
     close,
     ready,
   }
@@ -338,6 +394,8 @@ export async function launchKernelChannel(
     channel: (await createMainChannel(kernel.config as never)) as unknown as RawChannel,
     process: kernel.spawn,
     kernelInstanceId: newInstanceId(opts.kernelName),
+    // **由 kernelspec 说了算**，不猜——走错路的症状是「点了停止什么也没发生」
+    interruptMode: spec.interruptMode,
     ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
     handshake: kernelInfoRequest() as unknown as JupyterMessage,
     ...(opts.handshakeTimeoutMs ? { handshakeTimeoutMs: opts.handshakeTimeoutMs } : {}),

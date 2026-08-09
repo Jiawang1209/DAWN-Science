@@ -38,6 +38,14 @@ export interface KernelSpec {
   dir: string
   /** argv[0]。空 argv 时缺省 */
   executable?: string
+  /**
+   * 怎么中断这个内核。
+   *
+   * **kernel.json 不声明时默认 `signal`**——这是 Jupyter 自己的默认，
+   * 也是本机 ipykernel 与 IRkernel 的实测值（两者都没声明这个字段）。
+   * **不猜成 `message`**：走错路的症状是「点了停止什么也没发生」。
+   */
+  interruptMode: "signal" | "message"
 }
 
 /** 读不出来的那些。**不静默跳过**——一条坏的注册项要能被看见 */
@@ -146,6 +154,8 @@ export function discoverKernelSpecs(o: DiscoverOptions = {}): Discovery {
         argv: j.argv as string[],
         dir,
         executable: j.argv[0],
+        // 只认 `message`，其余（含缺省、含写错）一律 signal —— 那是 Jupyter 的默认
+        interruptMode: (j as { interrupt_mode?: unknown }).interrupt_mode === "message" ? "message" : "signal",
       }
       if (seen.has(name)) shadowed.push(spec)
       else {

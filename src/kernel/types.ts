@@ -73,6 +73,17 @@ export interface KernelChannel {
   /** 发一条并等它的回复（按 parent_header 配对） */
   request(message: JupyterMessage, opts?: { replyType?: string; timeoutMs?: number }): Promise<TaggedMessage>
   /**
+   * 打断正在执行的那一段。**不杀内核。**
+   *
+   * 两条路由 kernelspec 的 `interrupt_mode` 决定（signal / message），
+   * 见 `channel.ts`。**调用方不该关心是哪一条**。
+   *
+   * **它不返回「成没成」**：中断成没成的唯一判据是
+   * *「内核还能不能算对一道题」*，那要再发一次执行才知道，
+   * 不是这个方法能回答的。返回一个 boolean 会诱导调用方去信一个假答案。
+   */
+  interrupt(): void
+  /**
    * 关停。**顺序是正式代码，不是收尾**——见 `channel.ts`。
    * 反复调用是安全的。
    */

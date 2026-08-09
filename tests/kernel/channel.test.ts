@@ -272,3 +272,65 @@ describe("订阅", () => {
     expect(() => m.f.incoming({ 乱七八糟: true } as unknown as JupyterMessage)).not.toThrow()
   })
 })
+
+/**
+ * 中断（②-A · K3）。
+ *
+ * **这是 ②-A 的前置门**，不是普通功能：规格 10.4 的硬要求，
+ * 而 wisp-science 的自研 JSON-lines worker 方案正是败在这一条。
+ */
+describe("中断：两条路，走错的症状是「点了停止什么也没发生」", () => {
+  it("默认走 signal —— 向内核进程发 SIGINT", async () => {
+    const m = make()
+    await shake(m)
+    m.ch.interrupt()
+    expect(m.f.killed).toEqual(["SIGINT"])
+    // **不是 SIGKILL**：那是杀内核，不是打断它
+    expect(m.f.killed).not.toContain("SIGKILL")
+  })
+
+  it("**`message` 模式走 control 通道** —— 发到 shell 上会排在死循环后面，等于没发", async () => {
+    const m = make({ interruptMode: "message" })
+    await shake(m)
+    m.ch.interrupt()
+    const sent = m.f.sent.at(-1)!
+    expect(sent.header.msg_type).toBe("interrupt_request")
+    expect(sent.channel).toBe("control")
+    // 这条路不碰进程
+    expect(m.f.killed).toEqual([])
+  })
+
+  it("**中断不让 revision +1** —— 它不是一次执行", async () => {
+    const m = make({ interruptMode: "message" })
+    await shake(m)
+    m.ch.send(msg("execute_request"))
+    expect(m.ch.kernelRevision).toBe(1)
+    m.ch.interrupt()
+    expect(m.ch.kernelRevision).toBe(1)
+  })
+
+  it("**中断走 rawSend，不进握手队列** —— 排队的中断到达时早就没意义了", () => {
+    const m = make({ interruptMode: "message" })
+    // 故意不握手
+    m.ch.interrupt()
+    expect(m.f.sent.map((x) => x.header.msg_type)).toEqual(["interrupt_request"])
+  })
+
+  it("信号发不出去要出声 —— 进程没了的话「中断」这个动作失去了对象", async () => {
+    const f = fake()
+    const ch = createKernelChannel({
+      channel: f.channel,
+      process: { pid: 1, kill: () => { throw new Error("ESRCH") } },
+      kernelInstanceId: "k",
+      handshake: msg("kernel_info_request"),
+      sleep: async () => {},
+    })
+    expect(() => ch.interrupt()).toThrow(/发不出中断信号/)
+  })
+
+  it("关了之后不能再中断", async () => {
+    const m = make()
+    await m.ch.close()
+    expect(() => m.ch.interrupt()).toThrow(/已关闭/)
+  })
+})

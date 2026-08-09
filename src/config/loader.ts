@@ -114,6 +114,9 @@ agents:
     kind: cli
     command: claude
     args: []
+    # model = 当前用哪个；models = 选择器里能选哪些。**两个都要写**——
+    # 只写 models 的话选择器不会出现（它要知道「当前是哪个」才画得出来）
+    model: sonnet
     models: [sonnet, opus, haiku]
     capabilities: [chat, exec]
 
@@ -122,6 +125,7 @@ agents:
     kind: cli
     command: codex
     args: []
+    model: gpt-5.1-codex
     models: [gpt-5.1-codex, gpt-5.1-codex-mini]
     capabilities: [chat, exec]
 

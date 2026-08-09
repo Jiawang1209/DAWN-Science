@@ -142,10 +142,24 @@ describe("默认配置的形状（①-C · C5）", () => {
     expect(parsed().agents["shell"]).toMatchObject({ kind: "pty", command: "bash" })
   })
 
-  it("**cli agent 带模型清单** —— 没有它就没有模型选择器（Spike H）", () => {
+  /**
+   * **2026-08-09：这条测试原来是不够的。**
+   *
+   * 它只断言了 `models`（清单），而选择器的渲染条件是
+   * 「有清单 **且** 知道当前是哪个」。我发出去的默认配置只写了 `models`——
+   * **于是选择器在真机上根本不出现**，作者看到的是「好像没有任何变化」。
+   *
+   * **一条只验了一半条件的断言，会让另一半悄悄坏掉。**
+   */
+  it("**cli agent 的 model 与 models 都要有** —— 少一个选择器就不出现", () => {
     const reg = parsed()
-    expect(reg.agents["claude"]).toMatchObject({ models: expect.arrayContaining(["sonnet"]) })
-    expect(reg.agents["codex"]).toMatchObject({ models: expect.any(Array) })
+    for (const id of ["claude", "codex"]) {
+      const a = reg.agents[id] as { model?: string; models?: string[] }
+      expect(a.model, `${id} 缺 model：选择器要知道「当前是哪个」才画得出来`).toBeTruthy()
+      expect((a.models ?? []).length, `${id} 的 models 至少要两项才谈得上「选」`).toBeGreaterThan(1)
+      // 当前那个必须在清单里，否则 pill 上显示的东西选不回来
+      expect(a.models).toContain(a.model)
+    }
   })
 
   it("内置 agent 仍在 —— 它是「先跑起来」的默认", () => {

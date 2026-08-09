@@ -31,6 +31,8 @@ const PROVIDERS = `agents:
     kind: cli
     command: "${FAKE}"
     args: []
+    model: sonnet
+    models: [sonnet, opus, haiku]
     capabilities: [chat, exec]
 `
 
@@ -63,6 +65,18 @@ test.describe("CLI agent 在对话框里", () => {
     await page.getByPlaceholder(/回车发送/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 CLI 已应答：你好/)).toBeVisible({ timeout: 30_000 })
+  })
+
+  test("**模型选择器真的出现** —— 上一轮就是漏了这一条，发了个哑的出去", async ({ dawn }) => {
+    const { page } = dawn
+    await startFakeClaude(page)
+    /**
+     * 它的渲染条件是「有清单 **且** 知道当前是哪个」。
+     * 只声明 `models` 不声明 `model` 时，**整个选择器不渲染**——
+     * 而单元测试当时只断言了 `models`，于是那一半悄悄坏掉，
+     * 作者试用时看到的是「好像没有任何变化」。
+     */
+    await expect(page.getByRole("button", { name: /^sonnet/ })).toBeVisible()
   })
 
   test("**你自己说的话也要在对话里** —— 作者试用时报的那个", async ({ dawn }) => {

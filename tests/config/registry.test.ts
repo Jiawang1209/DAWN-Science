@@ -153,3 +153,54 @@ describe("配置 schema · cli agent（①-C · C1）", () => {
     expect("provider" in reg.agents["claude"]!).toBe(false)
   })
 })
+
+describe("声明了 models 就必须声明 model（①-C 后续）", () => {
+  /**
+   * **2026-08-09 作者试用时撞到的，而且是我发的默认配置就错的。**
+   *
+   * 界面上模型选择器的渲染条件是「有清单 **且** 知道当前是哪个」。
+   * 只声明 `models` 不声明 `model` 时，`current` 是 undefined，
+   * **整个选择器不渲染**——作者看到的就是「好像没有任何变化」。
+   *
+   * **不能靠「记得两个都写」**。它必须在加载配置时就响亮失败：
+   * 一份看起来没问题、实际什么都不做的配置，比一份报错的配置坏得多。
+   *
+   * **为什么不猜 `models[0]` 是当前**：外部 CLI 有它自己的默认模型，
+   * 我们不知道是哪个。把清单里的第一个说成「当前」是**编造**（不变式 5）。
+   */
+  it("**只有 models、没有 model —— 响亮失败**", () => {
+    const r = ProviderRegistrySchema.safeParse({
+      agents: {
+        claude: { kind: "cli", command: "claude", models: ["opus", "sonnet"], capabilities: ["chat"] },
+      },
+    })
+    expect(r.success).toBe(false)
+    expect(JSON.stringify(r.error?.issues)).toMatch(/model/)
+  })
+
+  it("两个都声明 —— 通过", () => {
+    const r = ProviderRegistrySchema.safeParse({
+      agents: {
+        claude: {
+          kind: "cli", command: "claude",
+          model: "sonnet", models: ["opus", "sonnet"], capabilities: ["chat"],
+        },
+      },
+    })
+    expect(r.success, JSON.stringify(r.error?.issues)).toBe(true)
+  })
+
+  it("**两个都不声明 —— 通过**：那是「不换模型」，是正当的用法", () => {
+    const r = ProviderRegistrySchema.safeParse({
+      agents: { claude: { kind: "cli", command: "claude", capabilities: ["chat"] } },
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it("只有 model、没有 models —— 通过：钉死一个模型，不给选", () => {
+    const r = ProviderRegistrySchema.safeParse({
+      agents: { claude: { kind: "cli", command: "claude", model: "opus", capabilities: ["chat"] } },
+    })
+    expect(r.success).toBe(true)
+  })
+})

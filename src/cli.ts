@@ -85,7 +85,13 @@ function cmdAgents(): void {
     Object.entries(reg.agents).map(([id, def]) => ({
       agent: id,
       kind: def.kind,
-      目标: def.kind === "native" ? `${def.provider} / ${def.model}` : [def.command, ...def.args].join(" "),
+      目标:
+        def.kind === "native"
+          ? `${def.provider} / ${def.model}`
+          // kernel 没有 args——它的 argv 由 kernelspec 决定，不由配置拼
+          : def.kind === "kernel"
+            ? `kernelspec: ${def.command}`
+            : [def.command, ...def.args].join(" "),
       家族: def.kind === "pty" ? (familyOf(def.command) ?? "（无隔离配置）") : "—",
       capabilities: def.capabilities.join(","),
     })),

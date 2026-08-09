@@ -19,6 +19,7 @@ import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
 import { PtyRuntime } from "../runtime/pty.js"
+import { KernelRuntime } from "../runtime/kernel.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
 import { createPiCredentialStore } from "../workbench/credential-store.js"
@@ -117,6 +118,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     runtimes: {
       native: nativeRuntime,
       pty: new PtyRuntime({ command: "sh" }),
+      /**
+       * Jupyter 内核（②-A · K4）。
+       *
+       * **必须装配**——不装的话 `kind: kernel` 的 agent 会在建会话时
+       * 响亮失败（`SessionManager` 里那条显式分支），而不是悄悄变成一个 PTY。
+       */
+      kernel: new KernelRuntime(),
       /**
        * 外部 CLI 的对话模式（①-C）。
        *

@@ -197,7 +197,7 @@ python_learn   python   ~/miniconda3/envs/python_learn/bin/python
 | ~~**K1**~~ ✅ | 传输适配器（S8）：`KernelChannel` + 握手 + 关停顺序 + `Tagged` 三件套 | 一次 `execute_request` 从发出到 iopub 输出全程可测；退出码为 0 |
 | ~~**K2**~~ ✅ | 内核生命周期（S9）：kernelspec 发现/选择、**设置里看得见并配得了解释器路径**、`kernelInstanceId`、起不来时的响亮失败 | 能列出本机内核（**带解释器路径**）、能选、能手动指定一个解释器、选错能说清原因 |
 | ~~**K3**~~ ✅ | 中断（S10）：signal 与 message 两条路；`abort` 与 `error` 都算中断成功 | 打断长任务后**内核仍可用**（再执行一次成功）。**判据不许写成「reply 是某个 status」** |
-| **K4** | 结构化 Console（S11）+ 富输出（S12） | 输出带 `runId`/`kernelInstanceId`；图能显示 |
+| ~~**K4**~~ ✅ | 结构化 Console（S11）+ 富输出（S12） | 输出带 `runId`/`kernelInstanceId`；图能显示 |
 | **K5** | 陈旧标记（S13）+ 变量面板（S14） | 重启后旧 output 显式标记为陈旧 |
 
 **K1 与 K2 之间有一道门**：K1 用 `dawn-spike` 这个已知 kernelspec 硬编码跑通即可，

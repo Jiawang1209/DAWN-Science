@@ -45,7 +45,7 @@ interface Entry {
    * 下面 `output` 分支判的正是这一件事。保留 `cli` 这个取值而不是映射成
    * `native`，是因为**丢掉它就再也答不出「这个会话是谁在跑」**。
    */
-  kind: "native" | "pty" | "cli"
+  kind: "native" | "pty" | "cli" | "kernel"
   revision: number
   items: TranscriptItem[]
   terminal: string
@@ -65,7 +65,7 @@ export class SessionTranscripts {
   constructor(private readonly opts: SessionTranscriptsOptions) {}
 
   /** 会话创建时登记。`kind` 决定字节进终端还是进对话，之后不会变。 */
-  track(sessionId: SessionId, kind: "native" | "pty" | "cli"): void {
+  track(sessionId: SessionId, kind: "native" | "pty" | "cli" | "kernel"): void {
     if (this.entries.has(sessionId)) return
     this.entries.set(sessionId, {
       kind,

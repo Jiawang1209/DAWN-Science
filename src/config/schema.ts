@@ -125,10 +125,40 @@ const CliAgentSchema = z
    * 选择器照常显示，当前那格标「CLI 默认」——**那是实情，不是缺陷**。
    */
 
+/**
+ * 一个 **Jupyter 内核**（②-A · K4）。
+ *
+ * ## 为什么 `command` 是 kernelspec 的名字，不是解释器路径
+ *
+ * 路径由 kernelspec 决定，**我们的发现是唯一事实来源**——
+ * K2 收尾时正是修掉了「两个事实来源」：原本用 `spawnteract.launch(名字)`，
+ * 它走自己那套发现，于是「DAWN 看得见的内核」与「起得来的内核」
+ * 可能不是同一批，症状是**「设置里列着，点了起不来」**。
+ *
+ * 想知道本机有哪些名字、各自指向哪个解释器：**设置 → 内核**。
+ * 那一页把解释器路径连同名字一起列出来，就是为了不让人蒙着选
+ * （作者 2026-08-10：*「否则很盲目」*）。
+ *
+ * ## 与前三种的区别
+ *
+ * `native` / `cli` 是**agent**（会自己思考），`pty` 是**终端**（字节流），
+ * 而 `kernel` 是**执行器**：它不思考，只执行你给的代码，
+ * 输出是**结构化条目**（图/表/报错各是一种东西）。
+ */
+const KernelAgentSchema = z
+  .object({
+    kind: z.literal("kernel"),
+    /** **kernelspec 的名字**（`ir` / `python3` / …），不是解释器路径 */
+    command: z.string().min(1),
+    capabilities: z.array(CapabilitySchema),
+  })
+  .strict()
+
 export const AgentDefSchema = z.discriminatedUnion("kind", [
   NativeAgentSchema,
   PtyAgentSchema,
   CliAgentSchema,
+  KernelAgentSchema,
 ])
 export type AgentDef = z.infer<typeof AgentDefSchema>
 

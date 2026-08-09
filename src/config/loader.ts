@@ -96,6 +96,23 @@ export const DEFAULT_CONFIG_YAML = `# DAWN Science —— agent 配置
 #                    用它自己的登录，不需要在 DAWN 里配 key。
 #                    它的工具调用会落在账本上（项目概览里看得到）
 #   kind: pty     —— 一个**终端**：跑任意命令，也可以在里面手动起 claude / codex 的 TUI
+#   kind: kernel  —— 一个 **Jupyter 内核**（Python / R）：不思考，只执行你给的代码，
+#                    输出是结构化的（图、表、报错各是一种东西，不是一段文本）
+#
+# 内核**刻意没有预置**：kernelspec 的名字随机器而变，
+# 预置一个必然在别人机器上起不来。先到「设置 → 内核」看本机有哪些名字
+# （那一页连解释器路径一起列出来，免得三个 conda 环境分不清哪个是哪个），
+# 再照下面这样写：
+#
+#   py:
+#     kind: kernel
+#     command: python3        # ← kernelspec 的**名字**，不是解释器路径
+#     capabilities: [exec]
+#
+#   r:
+#     kind: kernel
+#     command: ir
+#     capabilities: [exec]
 
 agents:
   # 内置 agent。用前先到「设置」里填 deepseek 的 API key

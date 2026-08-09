@@ -145,7 +145,7 @@ agents/
 export interface SessionManagerOptions {
   store: SessionStore
   registry: ProviderRegistry
-  runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime }
+  runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime }
   /**
    * 按 agent 定义构造 pty runtime。给出时优先于 `runtimes.pty`。
    *
@@ -170,7 +170,7 @@ export class SessionManager {
   readonly leases: LeaseManager
   private readonly store: SessionStore
   private readonly registry: ProviderRegistry
-  private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime }
+  private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime }
   private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
@@ -256,6 +256,22 @@ export class SessionManager {
        */
       const prior = this.store.get(id)?.cliThreadId
       if (prior) spec.cli = { threadId: prior }
+    } else if (def.kind === "kernel") {
+      /**
+       * **必须是显式分支。** 落进下面那个 `else` 的话，一个内核会话会
+       * 悄悄变成一个 PTY——进程起得来、界面画出个终端，
+       * 而用户配的是一个执行器。**那正是上面那段注释说的静默回退。**
+       */
+      const kernel = this.runtimes.kernel
+      if (!kernel) {
+        this.store.updateState(id, "exited", { exitCode: 1 })
+        throw new UserFacingError(
+          `agent "${agentId}" 的 kind 是 kernel，但本次运行没有装配内核运行时`,
+        )
+      }
+      runtime = kernel
+      // kernelspec 的名字写在 `command` 里——路径由 spec 决定，见 config/schema.ts
+      spec.kernel = { kernelName: def.command }
     } else {
       runtime = this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
     }

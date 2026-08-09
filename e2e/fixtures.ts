@@ -68,6 +68,14 @@ export interface DawnOptions {
    */
   gitInit?: boolean
   /**
+   * 用**本机真实的** kernelspec，而不是夹具那份假的。
+   *
+   * 默认隔离是为了让视觉基线确定、且不把开发者的个人路径提交进仓库。
+   * 但「从界面点到真内核输出」这条只能用真内核——**它因此是机器相关的，
+   * 拿不到就跳过，并说清为什么**（跳过不出声等于假装跑过）。
+   */
+  realKernels?: boolean
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -183,7 +191,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
          * ① 基线在别的机器上必然红，② **把开发者的个人路径以图片形式提交进仓库**。
          * 这里指向夹具里那一份固定的 kernelspec（见下面的 `seedKernelSpec`）。
          */
-        DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels"),
+        ...(dawnOptions.realKernels
+          ? {}
+          : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
       },
     })
     const page = await app.firstWindow()

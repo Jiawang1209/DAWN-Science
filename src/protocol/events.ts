@@ -51,8 +51,25 @@ const ToolItem = z
     name: z.string().min(1),
     input: z.unknown(),
     status: z.enum(["running", "ok", "error"]),
-    /** 结果正文（已截断）。running 时没有 */
+    /** 结果正文（可能已截断）。running 时没有 */
     result: z.string().optional(),
+    /**
+     * 结果被截断了。**必须出声**（规格 7.5）。
+     *
+     * 此前 runtime 层硬砍 2000 字符且不留任何痕迹，界面却在认真地说
+     * 「还有 N 行」——那个「全文」本身就是残缺品。
+     */
+    resultTruncated: z.boolean().optional(),
+    /**
+     * **进入本项目时**的字节数，不是我们截断后的。界面靠它说真话。
+     *
+     * **注意它不等于命令的真实输出量**：pi 的 bash 工具自己先截过一次
+     * （实测 20 万字节的输出交到我们手上时是 5.1 万）。所以这个数的准确含义是
+     * 「pi 交给我们多少」，而不是「命令产出了多少」——**标错含义比不标更坏**。
+     */
+    resultBytes: z.number().int().nonnegative().optional(),
+    /** 全文落盘位置。写盘失败时缺省——那时正文里会说明内容已丢失 */
+    fullOutputPath: z.string().min(1).optional(),
   })
   .strict()
 

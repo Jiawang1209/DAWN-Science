@@ -472,3 +472,6 @@ pre {
   border-left: 2px solid var(--dawn-stroke-4);
   color: var(--dawn-text-2);
 }
+
+/* 工具输出被截断时的说明行。**它是「出声」本身**，不是装饰 */
+.tool-spill { margin: 2px 0 0; word-break: break-all; }

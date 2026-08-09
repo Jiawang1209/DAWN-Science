@@ -43,10 +43,38 @@
 
 ## 变更日志
 
+### 2026-08-09 — 工具输出双份处理：不再悄悄砍掉 2000 字符之后的内容
+
+- **Type**: fix
+- **Commit**: 待回填
+- **Motivation**: ①-B″ · R2。**这是修一个正在生效的缺陷，不是加功能。**
+  ```ts
+  // 修复前 src/runtime/native.ts
+  text: content.map(c => c.text ?? "").join("").slice(0, RESULT_PREVIEW_CHARS)  // 2000
+  ```
+  runtime 层硬砍 2000 字符，**不出声、不留路径**。它违反规格 7.5，而且与 Task 3.1 **自相矛盾**——界面层认真做了「还有 N 行」的出声，而更早的 runtime 层已经把内容砍掉了。**界面折叠里那个「全文」本身就是残缺品，「还有 N 行」是对残缺品数出来的。**
+- **What**: 新增 `src/runtime/tool-output.ts`
+  ```
+  完整输出 → 写盘 <sessionDir>/tool-output/<tool>-<ts>.txt
+  摘要     → 头 + 说明 + 尾（16 KiB 预算）
+  字节数   → 如实上报
+  ```
+  协议 `ToolItem` 加 `resultTruncated` / `resultBytes` / `fullOutputPath` 三件套；`AgentEvent.tool_end` 同步；界面显示「输出共 5.0 MB，已截断；完整内容：<路径>」。
+- **三处刻意的设计**:
+  1. **尾巴必须留。** 头尾各一半，不是只留头——**错误信息、退出码、最后一行的结论都在尾部**，只留头等于把最有用的部分砍掉。
+  2. **按字节切且不劈开多字节字符。** `String.slice` 按 UTF-16 码元切会算错中文长度，直接切 Buffer 又会把一个汉字劈成两半渲染成乱码。
+  3. **写盘失败时更要说清楚**——正文改成「省略约 N 字节，且**未能写盘保存**，完整内容已丢失」。丢内容而不出声是最坏的一种。
+- **模型侧的预算不归我们管**：那是 pi 的职责（它对 bash 已有 `fullOutputPath`），**不越界重做一套**。
+- **真机探针暴露的一个含义问题（已写进协议注释）**: 让模型跑 `print('D'*200000)`，我们收到的「原始字节」是 **51,338 而不是 200,000**——**pi 的 bash 工具自己先截过一次**。所以 `resultBytes` 的准确含义是「**pi 交给我们多少**」，不是「命令产出了多少」。**标错含义比不标更坏**，因此在 schema 注释里写死了这一点。
+- **Verification**:
+  - 预算函数 10 条 + 协议透传 2 条 + 界面 5 条，先 FAIL 再转绿。
+  - **真链路探针**：51,338 字节 → 事件流 16,548 字符，**全文落盘且字节数完整一致**，路径可达。
+  - 556 tests passed（44 文件，+17），typecheck 与 build 干净。
+
 ### 2026-08-09 — 卡死守卫；并抓到 pi 的 turn_end 语义与我以为的不同
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `8deb729`
 - **Motivation**: ①-B″ · R1。模型退化时会反复发出**完全相同的工具调用**，每次拿回同样的结果、毫无进展。**pi 不管这件事**（全包 grep `stuck|repeated|no_progress` 零命中），于是一路烧到迭代上限——烧的是作者的钱。
 - **直接从窗口式起步，不重走别人的弯路**: wisp-science 在这里留了一道疤，测试名就叫 `interspersed_tool_call_loop_breaks_the_loop`，注释是 *"the case the **old consecutive-only guard** let run to max_iter"*。**连续式守卫会被 A/B/A/B 绕过去**——任意相邻两批都不同，但整体在原地打转。他们踩过一次才改成窗口式。
 - **What**: `src/runtime/stuck-guard.ts`（窗口 16 / 阈值 5）。签名对**键排序**（`JSON.stringify` 对键序敏感，`{path,content}` 与 `{content,path}` 是同一个调用），循环引用不抛错（**工具入参是模型给的，不可信**——守卫自己崩掉比不守卫更糟）。阈值取 5 而非 2–3：**宁可晚一点停，也不要误伤**一个合理地反复读同一文件的流程。

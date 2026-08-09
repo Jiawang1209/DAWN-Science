@@ -96,7 +96,7 @@ describe("agent 回合", () => {
     const turnId = list()[0]!.runId
     for (const id of ["c1", "c2", "c3"]) {
       rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: id, toolName: "bash", input: {} })
-      rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: id, toolName: "bash", isError: false, text: "" })
+      rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: id, toolName: "bash", isError: false, text: "", truncated: false, bytes: 0 })
       // pi 在每次模型响应后发 turn_end —— 它不该打断父子关系
       rec.ingest({ kind: "turn_end", sessionId: SESSION })
     }
@@ -140,7 +140,7 @@ describe("工具调用", () => {
   it("失败的工具调用记成 failed 且 hasError", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "bash", input: {} })
-    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "bash", isError: true, text: "boom" })
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "bash", isError: true, text: "boom", truncated: false, bytes: 0 })
     const tool = list().find((r) => r.requestType === "tool_call")!
     expect(tool.status).toBe("failed")
     expect(tool.hasError).toBe(true)
@@ -149,7 +149,7 @@ describe("工具调用", () => {
   it("成功的记成 completed", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "read", input: {} })
-    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "read", isError: false, text: "ok" })
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "read", isError: false, text: "ok", truncated: false, bytes: 0 })
     const tool = list().find((r) => r.requestType === "tool_call")!
     expect(tool.status).toBe("completed")
     expect(tool.hasError).toBe(false)

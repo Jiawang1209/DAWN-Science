@@ -202,6 +202,11 @@ export class SessionTranscripts {
             : undefined,
           status: event.isError ? "error" : "ok",
           result: event.text,
+          // **截断的三件套一起走。** 只传正文等于把「这是残缺品」这个事实丢掉，
+          // 界面就只能猜——那正是修复前的样子（规格 7.5）
+          resultTruncated: event.truncated,
+          resultBytes: event.bytes,
+          ...(event.fullOutputPath ? { fullOutputPath: event.fullOutputPath } : {}),
         })
         return
       }

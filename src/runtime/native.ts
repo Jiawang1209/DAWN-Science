@@ -27,6 +27,7 @@ import {
   ModelRuntime,
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
+import { budgetToolResult } from "./tool-output.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
@@ -38,7 +39,6 @@ import type {
 } from "./types.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
-const RESULT_PREVIEW_CHARS = 2000
 
 /**
  * 工具授权门。返回字符串即**拒绝执行**，字符串是给模型看的理由。
@@ -77,6 +77,8 @@ interface NativeSession {
    * 真正开始之前的那一小段时间里，pi 认为自己是空闲的，`waitForIdle()` 立刻返回。
    */
   pending: Promise<void> | undefined
+  /** 该会话的隔离目录。工具输出的全文写在它下面 */
+  sessionDir: string
   /**
    * 卡死守卫。**每会话一个**——两个会话各自打转，互不相干。
    * pi 自己不管这件事，模型退化时会一路烧到迭代上限。
@@ -222,6 +224,7 @@ export class NativeRuntime implements AgentRuntime {
       unsubscribe,
       pid,
       pending: undefined,
+      sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
     })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
@@ -253,13 +256,24 @@ export class NativeRuntime implements AgentRuntime {
       }
       case "tool_execution_end": {
         const content = e.result?.content ?? []
+        const toolName = String(e.toolName ?? "?")
+        const full = content.map((c) => c.text ?? "").join("")
+        // **此前这里是 `.slice(0, 2000)`：硬砍、不出声、不留路径。**
+        // 现在全文写盘、摘要进事件流、字节数如实上报（规格 7.5）
+        const sessionDir = this.sessions.get(sessionId)?.sessionDir
+        const out = sessionDir
+          ? budgetToolResult(full, { sessionDir, toolName })
+          : { text: full, truncated: false, bytes: Buffer.byteLength(full, "utf8") }
         this.emit({
           kind: "tool_end",
           sessionId,
           toolCallId: String(e.toolCallId ?? ""),
-          toolName: String(e.toolName ?? "?"),
+          toolName,
           isError: Boolean(e.result?.isError),
-          text: content.map((c) => c.text ?? "").join("").slice(0, RESULT_PREVIEW_CHARS),
+          text: out.text,
+          truncated: out.truncated,
+          bytes: out.bytes,
+          ...(out.fullOutputPath ? { fullOutputPath: out.fullOutputPath } : {}),
         })
         return
       }

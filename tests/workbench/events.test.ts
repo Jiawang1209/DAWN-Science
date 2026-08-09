@@ -121,7 +121,7 @@ describe("记录中枢 · 工具调用（界面靠它才看得见 agent 在干�
     h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
     h.ingest("a", {
       kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "bash",
-      isError: false, text: "done",
+      isError: false, text: "done", truncated: false, bytes: 4,
     })
     const items = h.subscribe("a").items
     expect(items).toHaveLength(1)
@@ -134,7 +134,7 @@ describe("记录中枢 · 工具调用（界面靠它才看得见 agent 在干�
     h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
     h.ingest("a", {
       kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "bash",
-      isError: true, text: "拒绝执行",
+      isError: true, text: "拒绝执行", truncated: false, bytes: 12,
     })
     expect(h.subscribe("a").items[0]).toMatchObject({ status: "error", result: "拒绝执行" })
   })
@@ -144,7 +144,7 @@ describe("记录中枢 · 工具调用（界面靠它才看得见 agent 在干�
     h.track("a", "native")
     h.ingest("a", {
       kind: "tool_end", sessionId: "a", toolCallId: "orphan", toolName: "read",
-      isError: false, text: "x",
+      isError: false, text: "x", truncated: false, bytes: 1,
     })
     expect(h.subscribe("a").items).toHaveLength(1)
   })
@@ -265,5 +265,34 @@ describe("系统提示（notice）", () => {
     const seen = collector(h)
     h.ingest("a", { kind: "notice", sessionId: "a", text: "停了" })
     expect(seen).toHaveLength(1)
+  })
+})
+
+describe("截断的三件套一起走", () => {
+  // 修复前：runtime 层 `.slice(0, 2000)` 硬砍，只传正文。
+  // 界面拿不到「这是残缺品」这个事实，却在认真地说「还有 N 行」。
+  it("truncated / bytes / fullOutputPath 都传到协议层", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.ingest("a", {
+      kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "bash",
+      isError: false, text: "头…尾", truncated: true, bytes: 999_999,
+      fullOutputPath: "/tmp/sess/tool-output/bash-1.txt",
+    })
+    expect(h.subscribe("a").items[0]).toMatchObject({
+      resultTruncated: true,
+      resultBytes: 999_999,
+      fullOutputPath: "/tmp/sess/tool-output/bash-1.txt",
+    })
+  })
+
+  it("没截断时 bytes 仍是真数 —— 界面靠它说话，不能只在截断时才给", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.ingest("a", {
+      kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "read",
+      isError: false, text: "短", truncated: false, bytes: 3,
+    })
+    expect(h.subscribe("a").items[0]).toMatchObject({ resultTruncated: false, resultBytes: 3 })
   })
 })

@@ -270,6 +270,13 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
   )
 }
 
+/** 字节数的人类可读形式。**不四舍五入到 0**——「0 KB」会让人以为什么都没有 */
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} 字节`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
 /** 折叠前展示的结果行数。**十几行足够判断发生了什么**，再多就该主动展开 */
 const TOOL_RESULT_HEAD_LINES = 12
 /** 入参摘要的字符上界 */
@@ -316,6 +323,15 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
 
       {input.text ? <pre className="tool-input">{input.text}</pre> : null}
       {input.truncated ? <span className="hint">入参已截断</span> : null}
+
+      {item.resultTruncated ? (
+        <p className="hint tool-spill">
+          {/* **这一行是修复的证据。** 修复前 runtime 层砍掉 2000 字符之后的内容且
+              不留痕迹，界面却在说「还有 N 行」——那个数是对残缺品数出来的 */}
+          输出共 {formatBytes(item.resultBytes ?? 0)}，已截断
+          {item.fullOutputPath ? `；完整内容：${item.fullOutputPath}` : "，且未能保存全文"}
+        </p>
+      ) : null}
 
       {result ? (
         <>

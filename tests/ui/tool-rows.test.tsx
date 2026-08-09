@@ -120,3 +120,35 @@ describe("工具调用行 · 失败不许静默", () => {
     expect(container.textContent).toContain("command not found: qq")
   })
 })
+
+describe("工具调用行 · 截断的证据要显示出来", () => {
+  // **这一组是 R2 的验收。** 修复前 runtime 层砍掉 2000 字符之后的内容且不留痕迹，
+  // 界面却在说「还有 N 行」——那个数是对残缺品数出来的。
+  it("截断时说清原始大小", () => {
+    const { container } = show([tool({ result: "头…尾", resultTruncated: true, resultBytes: 5_242_880 })])
+    expect(container.textContent).toMatch(/5\.0 MB/)
+    expect(container.textContent).toMatch(/已截断/)
+  })
+
+  it("给出全文去处", () => {
+    const { container } = show([
+      tool({ result: "头…尾", resultTruncated: true, resultBytes: 99_999, fullOutputPath: "/s/tool-output/bash-1.txt" }),
+    ])
+    expect(container.textContent).toContain("/s/tool-output/bash-1.txt")
+  })
+
+  it("**写盘失败时更要说清楚** —— 内容真的丢了", () => {
+    const { container } = show([tool({ result: "头…尾", resultTruncated: true, resultBytes: 99_999 })])
+    expect(container.textContent).toMatch(/未能保存全文/)
+  })
+
+  it("没截断时不出现这一行 —— 不给不需要的东西加噪音", () => {
+    const { container } = show([tool({ result: "短", resultTruncated: false, resultBytes: 3 })])
+    expect(container.querySelector(".tool-spill")).toBeNull()
+  })
+
+  it("小于 1 KB 用字节 —— 「0.0 KB」会让人以为什么都没有", () => {
+    const { container } = show([tool({ result: "x", resultTruncated: true, resultBytes: 512 })])
+    expect(container.textContent).toMatch(/512 字节/)
+  })
+})

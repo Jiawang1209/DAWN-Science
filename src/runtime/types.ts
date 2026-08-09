@@ -84,8 +84,14 @@ export type AgentEvent =
       toolCallId: string
       toolName: string
       isError: boolean
-      /** 结果正文（已截断）。完整结果留在 pi 的会话记录里 */
+      /** 结果正文（可能已截断）。截断时形如「头 + 说明 + 尾」 */
       text: string
+      /** 被截断了。**必须出声**（规格 7.5） */
+      truncated: boolean
+      /** **原始**字节数，不是截断后的 */
+      bytes: number
+      /** 全文落盘位置。写盘失败时缺省 */
+      fullOutputPath?: string
     }
   | { kind: "exited"; sessionId: SessionId; exitCode: number }
 

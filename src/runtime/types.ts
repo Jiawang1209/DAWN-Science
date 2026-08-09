@@ -10,6 +10,7 @@
  *   pty    —— node-pty 起外部 CLI（Spike B 确认可行）
  *   fake   —— 测试替身，不起任何进程
  */
+import type { Cost } from "../protocol/index.js"
 export type SessionId = string
 
 export interface McpServerSpec {
@@ -123,6 +124,31 @@ export type AgentEvent =
    * 「一轮里的第二次工具调用」变成没有父账的孤儿。
    */
   | { kind: "idle"; sessionId: SessionId }
+  /**
+   * 这一轮的成本（①-C 后续，2026-08-09）。
+   *
+   * ## 为什么它承载的是协议里的 `Cost`，而不是几个裸数字
+   *
+   * **三个运行时知道的东西不一样多**：
+   *
+   * | | token | 金额 |
+   * |---|---|---|
+   * | claude | 有 | **有**（`result.total_cost_usd`，真数） |
+   * | codex | 有 | 没有 |
+   * | native | 有（已在上下文栏显示） | 没有 |
+   *
+   * 让事件带一个 `{input, output, usd?}` 之类的裸结构，就会把
+   * 「没给 usd」与「usd 是 0」交给下游去猜。`Cost` 是可辨识联合，
+   * **在类型层面强制区分「可见」与「不可见 + 原因」**，
+   * 于是「不知道多少钱」这件事必须被明确说出来，而不是留空。
+   *
+   * **拿不到金额时不替它算一个。** 按价目表乘 token 得到的是估算，
+   * 而账本上的估算会被当成事实——那正是不变式 5 禁止的编造。
+   * 我们说「该 agent 不报金额」，并指向上下文栏里那个真 token 数。
+   *
+   * 发在 `idle` 之前：账本要把它记到**这一轮**那条 run 上。
+   */
+  | { kind: "cost"; sessionId: SessionId; cost: Cost }
   /**
    * 会话换了模型（①-B″ · U2）。
    *

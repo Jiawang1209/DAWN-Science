@@ -324,8 +324,16 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     expect(screen.getByText(/可能包含你自己的修改/)).toBeDefined()
   })
 
+  /**
+   * **成本记在 run 上，`listRuns` 与 `getRun` 都带着它**
+   * （`store/runs.ts` 的 `toRun` 里就有）。上一版夹具只在 `getRun` 里给成本、
+   * 列表里不给——**那是现实中不存在的形状**，同一条 run 不会一边有一边没有。
+   *
+   * 「只有 getRun 带得来」说的是**产出**（`fileChanges` 是每次现算的 diff），
+   * 不是成本。下面那条测试盯的正是产出，与这条不冲突。
+   */
   it("成本栏显示真实数字", async () => {
-    const h = harness({ runs: [RUN] })
+    const h = harness({ runs: [{ ...RUN, cost: COST }] })
     await openAndStart(h)
     fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
     expect(await screen.findByText(/1200/)).toBeDefined()

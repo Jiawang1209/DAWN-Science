@@ -16,7 +16,15 @@ test("说过一句话之后，上下文面板给出真实的 token 数", async (
   await expect(page.getByText(/假模型已应答/)).toBeVisible()
 
   await page.getByRole("button", { name: "项目概览" }).click()
-  const panel = page.locator(".panel", { hasText: "上下文" })
+  /**
+   * **按标题定位，不按「面板里含这三个字」。**
+   *
+   * `hasText: "上下文"` 是整块文本的子串匹配——2026-08-09 成本栏接线之后，
+   * native 的成本原因里写着「token 用量见上下文栏」，
+   * 于是这个定位器一下子匹配到两个面板，strict 模式直接报错。
+   * **定位器松，就迟早会被别处的一句话撞上。**
+   */
+  const panel = page.locator(".panel", { has: page.getByText("上下文", { exact: true }) })
   // 假后端报的是 prompt_tokens: 12
   await expect(panel).toContainText("12")
   await expect(panel).toContainText("tokens")

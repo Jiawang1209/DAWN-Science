@@ -444,6 +444,21 @@ export class NativeRuntime implements AgentRuntime {
       })
       .finally(() => {
         s.inFlight -= 1
+        /**
+         * **成本：我们知道 token，不知道钱。**
+         *
+         * provider 报的是 token（`s.lastUsage`，上下文栏用的就是它），
+         * **金额一处都没有**——要得到金额只能自己维护一张价目表再乘一遍，
+         * 那是估算，而账本上的估算会被当成事实（不变式 5 禁止编造）。
+         *
+         * 所以如实说「不可见 + 为什么」，而不是让成本栏永远停在
+         * 「尚未记录」——那句话是错的：**我们记了，只是记不到钱。**
+         */
+        this.emit({
+          kind: "cost",
+          sessionId,
+          cost: { visible: false, reason: "该 provider 只报 token，不报金额；token 用量见上下文栏" },
+        })
         // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
         this.emit({ kind: "idle", sessionId })
       })
@@ -510,8 +525,11 @@ export class NativeRuntime implements AgentRuntime {
    *   - `contextWindow`：模型自带的上限，**真数**
    *   - `bytes`：系统提示词 / 工具 schema / 对话历史三档的**字节数，不是 token**
    *
-   * `usedTokens` 暂缺——provider 报的 usage 目前一处都没采集。
-   * **缺就是缺**，界面显示「尚未采集」，不拿字节去凑。
+   * `usedTokens` 来自 provider 报的真 usage（`s.lastUsage`，见 `translate`）。
+   * **拿不到就不给这个字段**，界面显示「尚未采集」，不拿字节去凑。
+   *
+   * （这段注释一度写着「usage 目前一处都没采集」，而同一个文件下面就在采——
+   * 那是接线之前留下的，2026-08-10 随成本接线一并更正。）
    */
   contextUsage(sessionId: SessionId): ContextUsage | undefined {
     const s = this.sessions.get(sessionId)

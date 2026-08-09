@@ -29,6 +29,7 @@
  * 每轮开头会刷出 9 条通知——**那种噪声会让真正的告警没人看**。
  * 所以有一张显式的「认得但不产出」清单。
  */
+import type { Cost } from "../../protocol/index.js"
 import type { AgentEvent, SessionId } from "../types.js"
 
 /** 跨事件要记住的东西。**由调用方持有**，这样翻译本身仍是纯函数 */
@@ -164,6 +165,16 @@ function fromResult(sessionId: SessionId, e: ClaudeEvent): AgentEvent[] {
    * **顺序要紧**：先收尾气泡，再收尾回合。
    */
   out.push({ kind: "turn_end", sessionId })
+  /**
+   * **成本：claude 是三个运行时里唯一报金额的。**
+   *
+   * `result.total_cost_usd` 是它自己算的**真数**，不是我们乘出来的估算。
+   * 拿不到时不退化成 0——**0 会被读成「免费」**，那是错的；
+   * 缺了就说「不可见 + 为什么」。
+   *
+   * 发在 `idle` 之前：账本要把它记到**这一轮**那条 run 上。
+   */
+  out.push({ kind: "cost", sessionId, cost: costOf(e) })
   // **无论成败都要 idle**：账本靠它给回合收口，不收口就是一条永久 running 的 Run
   out.push({ kind: "idle", sessionId })
   return out
@@ -196,4 +207,30 @@ function flatten(content: unknown): string {
     return content.map((b) => (typeof b?.text === "string" ? b.text : "")).join("")
   }
   return content === undefined || content === null ? "" : JSON.stringify(content)
+}
+
+/**
+ * 从 `result` 事件里取成本。
+ *
+ * **两件事各自可缺**：金额来自 `total_cost_usd`，token 来自 `usage`。
+ * 金额缺了就整体「不可见」——`Cost` 的可见分支要求金额必须在，
+ * 那条约束是刻意的：**成本栏讲的是钱**，没有钱就不该假装有。
+ */
+function costOf(e: ClaudeEvent): Cost {
+  const usd = (e as { total_cost_usd?: unknown }).total_cost_usd
+  if (typeof usd !== "number" || !Number.isFinite(usd) || usd < 0) {
+    return { visible: false, reason: "这一轮 CLI 没有报告金额（result 里没有 total_cost_usd）" }
+  }
+  const u = (e as { usage?: { input_tokens?: unknown; output_tokens?: unknown; cache_read_input_tokens?: unknown } })
+    .usage
+  const int = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.trunc(v) : 0)
+  const cacheRead = u?.cache_read_input_tokens
+  return {
+    visible: true,
+    inputTokens: int(u?.input_tokens),
+    outputTokens: int(u?.output_tokens),
+    // **缺省不等于 0**：没报缓存读就不给这个字段
+    ...(typeof cacheRead === "number" ? { cacheReadTokens: int(cacheRead) } : {}),
+    totalUSD: usd,
+  }
 }

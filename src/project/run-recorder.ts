@@ -22,6 +22,7 @@
  */
 import { randomUUID } from "node:crypto"
 import type { RunStore } from "../store/runs.js"
+import type { Cost } from "../protocol/index.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
 
 export interface RunRecorderOptions {
@@ -42,6 +43,14 @@ export interface RunRecorderOptions {
 interface Open {
   /** 正在进行的 agent 回合。同一时刻至多一个 */
   turnRunId?: string | undefined
+  /**
+   * 这一轮的成本，等着在 `idle` 时落到那条 run 上。
+   *
+   * **运行时在 `idle` 之前发它**，因为收口那一刻才写库。
+   * 收不到的会话，run 上就**没有**成本字段——那是「尚未记录」，
+   * 与「不可见」是两回事（数据库那层用 `cost_visible IS NULL` 表达）。
+   */
+  pendingCost?: Cost | undefined
   /** 正在执行的工具，按 pi 的 toolCallId 索引 */
   tools: Map<string, string>
   /**
@@ -131,6 +140,20 @@ export class RunRecorder {
   /** 把运行时事件记成账 */
   ingest(event: AgentEvent): void {
     const s = this.open.get(event.sessionId)
+
+    if (event.kind === "cost") {
+      /**
+       * **先记下，`idle` 时才落库。**
+       *
+       * 成本属于**这一轮**，而这一轮的 run 要到 `idle` 才收口。
+       * 提前 `finish` 会把回合关早，之后的工具调用就变成没有父账的孤儿。
+       *
+       * 没有开着的回合时丢弃：那意味着这条成本没有归属，
+       * 硬记到上一轮上就是把 A 的账算到 B 头上。
+       */
+      if (s?.turnRunId) s.pendingCost = event.cost
+      return
+    }
 
     if (event.kind === "tool_start") {
       // 没有开着的回合也要记——**只是没有 parent，不是丢掉它**。
@@ -225,8 +248,18 @@ export class RunRecorder {
        */
       const runId = s?.turnRunId
       if (!runId) return
+      const cost = s!.pendingCost
       s!.turnRunId = undefined
-      this.runs.finish(runId, { status: "completed", finishedAt: this.now(), hasError: false })
+      s!.pendingCost = undefined
+      this.runs.finish(runId, {
+        status: "completed",
+        finishedAt: this.now(),
+        hasError: false,
+        // **没收到就整个不给这个字段**：`finish` 用 COALESCE，
+        // 给 undefined 与不给是一回事，但显式写出来是为了说清楚
+        // 「没记到成本」不该被写成 0（那会被读成「免费」）
+        ...(cost ? { cost } : {}),
+      })
       return
     }
 

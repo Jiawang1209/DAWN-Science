@@ -293,6 +293,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     loadRunDetail(client, latestRunId)
   }, [client, latestRunId])
 
+  /**
+   * 成本属于**回合**，不属于工具调用。
+   *
+   * 上一版取的是 `runDetail?.cost ?? latestRun?.cost`，而 `latestRun` 是
+   * `runs[0]`——**最新那条 run**。一轮里只要有过一次工具调用，
+   * 最新那条就是 `tool_call:...`，它身上没有成本，于是成本栏显示「尚未记录」。
+   *
+   * **native 的那条 e2e 之所以是绿的，是因为它那一轮没有工具调用**，
+   * 正好把这个掩盖了。claude 那条（假 CLI 会调一次工具）当场就红了。
+   */
+  const latestCost = useMemo(
+    () => runs.find((r) => r.requestType === "agent_turn" && r.cost !== undefined)?.cost,
+    [runs],
+  )
+
   const agentIds = useMemo(() => providers.agents.map((a) => a.agentId), [providers])
 
   /**
@@ -504,8 +519,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ChangesPanel facts={runDetail?.fileChanges} />
               {/* 逐次工具调用那一层。**不变式 5 第一次有用户可见面** */}
               <ToolChangesPanel runs={runs} />
-              {/* 成本优先用 getRun 的详情，退回摘要里的——两处都没有时面板说「尚未记录」 */}
-              <CostPanel cost={runDetail?.cost ?? latestRun?.cost} />
+              {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
+                  见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
+              <CostPanel cost={latestCost} />
               {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
               <ContextPanel usage={contextUsage} />
               <RunsPanel runs={runs} />

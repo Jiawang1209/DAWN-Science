@@ -104,7 +104,22 @@ export function translateCodexEvent(
    * **顺序要紧**：先收尾气泡，再收尾回合。
    */
   if (type === "turn.completed") {
-    return [{ kind: "turn_end", sessionId }, { kind: "idle", sessionId }]
+    /**
+     * **codex 只报 token，不报金额**（本文件开头那张对照表的第三行）。
+     *
+     * 不拿 token 乘一张价目表凑出金额——那是估算，而账本上的估算
+     * 会被当成事实（不变式 5）。如实说「不可见 + 为什么」，
+     * 而不是让成本栏停在「尚未记录」：**我们记了，只是记不到钱。**
+     */
+    return [
+      { kind: "turn_end", sessionId },
+      {
+        kind: "cost",
+        sessionId,
+        cost: { visible: false, reason: "codex 只报 token，不报金额" },
+      },
+      { kind: "idle", sessionId },
+    ]
   }
 
   if (type === "turn.failed") {

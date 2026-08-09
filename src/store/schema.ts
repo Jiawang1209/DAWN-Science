@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -82,6 +82,14 @@ export function migrate(db: Database.Database): void {
       has_error     INTEGER NOT NULL CHECK (has_error IN (0,1)),
       artifact_count INTEGER,
 
+      -- 这一次调用改了/读了哪些文件（JSON 数组）。**不变式 5 的物理载体**。
+      -- NULL = **不知道**（非 git 仓库、只读工具、快照失败），
+      -- 与「空数组」（确认没改任何文件）是两回事——把"不知道"写成"没有"就是编造
+      files_written TEXT,
+      files_read    TEXT,
+      -- 可能混入作者自己的改动。与 agent 共用工作目录时无法区分谁改的
+      may_include_user_edits INTEGER CHECK (may_include_user_edits IN (0,1)),
+
       -- 退出码是**结构化字段，不是日志文本里的一行**。
       -- 冻结点八项之一：阶段 ④ 要回答「测试过没过」，它必须能直接读，
       -- 不能靠解析输出。NULL = 尚未结束或该类 Run 没有退出码概念
@@ -141,6 +149,14 @@ export function migrate(db: Database.Database): void {
   // NULL 的含义是「不知道」，而「不知道」与「成功退出」必须是两种东西
   if (!hasColumn(db, "runs", "exit_code")) {
     db.exec(`ALTER TABLE runs ADD COLUMN exit_code INTEGER`)
+  }
+
+  // 从 v3 升级：runs 补文件事实三列。
+  // **老数据留 NULL** —— 它们产生时没记，补一个空数组等于宣称"确认没改文件"
+  if (!hasColumn(db, "runs", "files_written")) {
+    db.exec(`ALTER TABLE runs ADD COLUMN files_written TEXT`)
+    db.exec(`ALTER TABLE runs ADD COLUMN files_read TEXT`)
+    db.exec(`ALTER TABLE runs ADD COLUMN may_include_user_edits INTEGER`)
   }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(

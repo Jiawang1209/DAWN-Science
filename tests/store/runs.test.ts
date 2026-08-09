@@ -45,11 +45,11 @@ const baseRun = {
 }
 
 describe("migrate v2", () => {
-  it("版本号升到 3 —— v3 给 runs 加了 exit_code", () => {
+  it("版本号升到 4 —— v4 给 runs 加了文件事实三列", () => {
     const db = makeDb()
     const row = db.prepare(`SELECT value FROM schema_meta WHERE key='version'`).get() as { value: string }
     expect(row.value).toBe(String(SCHEMA_VERSION))
-    expect(SCHEMA_VERSION).toBe(3)
+    expect(SCHEMA_VERSION).toBe(4)
   })
 
   it("可重复执行（幂等）", () => {

@@ -45,7 +45,21 @@ async function git(workspace: string, args: string[]): Promise<string> {
   try {
     // 只读命令也要净化环境：仓库内的 git hook / alias / credential-helper
     // 会在普通 git 操作时被触发并读到环境变量（规格 7.31 第 ⑥ 条）
-    const { stdout } = await exec("git", args, {
+    const { stdout } = await exec("git", [
+      /**
+       * **非 ASCII 路径不要转义。**
+       *
+       * git 默认把中文文件名写成 `"\346\226\260..."` 这种八进制转义，
+       * 于是产出事实里出现的是乱码路径——**用户在界面上看到的是一串反斜杠**，
+       * 而不是他刚建的那个文件。本项目界面全中文，这条不是边角情况。
+       *
+       * 2026-08-09 由 R3 的逐次溯源测试撞出来；它同时修掉了**会话级**产出事实
+       * 里同样的乱码（那一处从 ①-B 起就带着这个缺陷）。
+       */
+      "-c",
+      "core.quotePath=false",
+      ...args,
+    ], {
       cwd: workspace,
       env: {
         PATH: process.env.PATH ?? "",
@@ -63,6 +77,27 @@ async function git(workspace: string, args: string[]): Promise<string> {
   }
 }
 
+/**
+ * 去掉 git 给路径加的外层引号。
+ *
+ * **`core.quotePath=false` 只管非 ASCII，管不了这个。** 路径里有空格、引号、
+ * 反斜杠等字符时，git 仍会整体加引号并做 C 风格转义——于是产出事实里出现的是
+ * `"有 空格.txt"`（**带着那对引号**），点开必然找不到文件。
+ *
+ * 2026-08-09 与 quotePath 那条一起，由 R3 的逐次溯源测试撞出来。
+ */
+function unquotePath(raw: string): string {
+  if (!raw.startsWith('"') || !raw.endsWith('"') || raw.length < 2) return raw
+  const inner = raw.slice(1, -1)
+  // C 风格转义：git 只会产出这几种（quotePath=false 时不会有 \NNN 八进制）
+  return inner.replace(/\\(["\\abfnrtv])/g, (_m, c: string) => {
+    const map: Record<string, string> = {
+      '"': '"', "\\": "\\", a: "\x07", b: "\b", f: "\f", n: "\n", r: "\r", t: "\t", v: "\v",
+    }
+    return map[c] ?? c
+  })
+}
+
 /** `git status --porcelain` 的路径解析。重命名形如 `R  old -> new`，取新名。 */
 function parsePorcelain(stdout: string): string[] {
   const files = new Set<string>()
@@ -70,7 +105,7 @@ function parsePorcelain(stdout: string): string[] {
     if (!line.trim()) continue
     const path = line.slice(3)
     const arrow = path.indexOf(" -> ")
-    files.add(arrow >= 0 ? path.slice(arrow + 4) : path)
+    files.add(unquotePath(arrow >= 0 ? path.slice(arrow + 4) : path))
   }
   return [...files]
 }

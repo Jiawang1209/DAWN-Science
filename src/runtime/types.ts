@@ -60,6 +60,23 @@ export type AgentEvent =
    */
   | { kind: "notice"; sessionId: SessionId; text: string }
   /**
+   * 一次工具调用的**文件事实**（不变式 5：从 git 事实算，不听 agent 声明）。
+   *
+   * 在 `tool_end` **之前**到达——它由工具包装器在真正执行完之后立刻算出，
+   * 而 pi 的 end 事件还要再走一圈。账本据此更新那条仍然开着的 tool_call Run。
+   *
+   * **只在拿得到事实时发**。非 git 仓库、只读工具一律不发，
+   * 那条 Run 上于是没有这个字段——「不知道」与「没改」是两回事。
+   */
+  | {
+      kind: "tool_files"
+      sessionId: SessionId
+      toolCallId: string
+      filesWritten: string[]
+      filesRead: string[]
+      mayIncludeUserEdits: boolean
+    }
+  /**
    * **一整轮真正结束**（用户发话 → 若干次模型响应与工具执行 → 收工）。
    *
    * 与 `turn_end` 不是一回事，这是 2026-08-09 真机实测才看清的：

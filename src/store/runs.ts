@@ -22,6 +22,10 @@ export interface RunInsert {
   hasError: boolean
   /** 退出码。**结构化字段**，见协议 `RunSummarySchema.exitCode` */
   exitCode?: number
+  /** 文件事实。**缺省 = 不知道**，与空数组不是一回事 */
+  filesWritten?: string[]
+  filesRead?: string[]
+  mayIncludeUserEdits?: boolean
   artifactCount?: number
   cost?: Cost
 }
@@ -32,6 +36,9 @@ export interface RunFinish {
   hasError: boolean
   terminalReason?: string
   exitCode?: number
+  filesWritten?: string[]
+  filesRead?: string[]
+  mayIncludeUserEdits?: boolean
   artifactCount?: number
   cost?: Cost
 }
@@ -49,6 +56,9 @@ interface RunRow {
   terminal_reason: string | null
   has_error: number
   exit_code: number | null
+  files_written: string | null
+  files_read: string | null
+  may_include_user_edits: number | null
   artifact_count: number | null
   cost_visible: number | null
   cost_input_tokens: number | null
@@ -120,6 +130,7 @@ function toRun(r: RunRow): RunSummary {
     ...(r.finished_at === null ? {} : { finishedAt: r.finished_at }),
     ...(r.terminal_reason === null ? {} : { terminalReason: r.terminal_reason }),
     ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
+    ...parseFiles(r),
     ...(r.artifact_count === null ? {} : { artifactCount: r.artifact_count }),
     ...(cost === undefined ? {} : { cost }),
   }
@@ -145,6 +156,29 @@ function toProvenance(r: ProvRow): ProvenanceLink {
   }
 }
 
+/**
+ * 把三列文件事实解回协议形状。
+ *
+ * **解析失败时整组留空**，而不是给一个空数组——空数组会被读成
+ * 「确认没改任何文件」，那是编造（不变式 5）。
+ */
+function parseFiles(r: RunRow): Partial<RunSummary> {
+  if (r.files_written === null) return {}
+  try {
+    const written = JSON.parse(r.files_written) as string[]
+    const read = r.files_read === null ? [] : (JSON.parse(r.files_read) as string[])
+    return {
+      filesWritten: written,
+      filesRead: read,
+      ...(r.may_include_user_edits === null
+        ? {}
+        : { mayIncludeUserEdits: r.may_include_user_edits === 1 }),
+    }
+  } catch {
+    return {}
+  }
+}
+
 export class RunStore {
   constructor(private readonly db: Database.Database) {}
 
@@ -153,12 +187,14 @@ export class RunStore {
       .prepare(`
         INSERT INTO runs (
           id, project_id, session_id, parent_run_id, origin, request_type, status,
-          started_at, finished_at, terminal_reason, has_error, exit_code, artifact_count,
+          started_at, finished_at, terminal_reason, has_error, exit_code,
+          files_written, files_read, may_include_user_edits, artifact_count,
           cost_visible, cost_input_tokens, cost_output_tokens, cost_cache_read_tokens,
           cost_total_usd, cost_invisible_reason
         ) VALUES (
           @runId, @projectId, @sessionId, @parentRunId, @origin, @requestType, @status,
-          @startedAt, @finishedAt, @terminalReason, @hasError, @exitCode, @artifactCount,
+          @startedAt, @finishedAt, @terminalReason, @hasError, @exitCode,
+          @filesWritten, @filesRead, @mayIncludeUserEdits, @artifactCount,
           @cost_visible, @cost_input_tokens, @cost_output_tokens, @cost_cache_read_tokens,
           @cost_total_usd, @cost_invisible_reason
         )`)
@@ -169,6 +205,10 @@ export class RunStore {
         terminalReason: rec.terminalReason ?? null,
         hasError: rec.hasError ? 1 : 0,
         exitCode: rec.exitCode ?? null,
+        filesWritten: rec.filesWritten ? JSON.stringify(rec.filesWritten) : null,
+        filesRead: rec.filesRead ? JSON.stringify(rec.filesRead) : null,
+        mayIncludeUserEdits:
+          rec.mayIncludeUserEdits === undefined ? null : rec.mayIncludeUserEdits ? 1 : 0,
         artifactCount: rec.artifactCount ?? null,
         ...costColumns(rec.cost),
       })
@@ -184,6 +224,9 @@ export class RunStore {
           terminal_reason = COALESCE(@terminalReason, terminal_reason),
           has_error = @hasError,
           exit_code = COALESCE(@exitCode, exit_code),
+          files_written = COALESCE(@filesWritten, files_written),
+          files_read = COALESCE(@filesRead, files_read),
+          may_include_user_edits = COALESCE(@mayIncludeUserEdits, may_include_user_edits),
           artifact_count = COALESCE(@artifactCount, artifact_count),
           cost_visible = COALESCE(@cost_visible, cost_visible),
           cost_input_tokens = COALESCE(@cost_input_tokens, cost_input_tokens),
@@ -199,8 +242,38 @@ export class RunStore {
         terminalReason: fin.terminalReason ?? null,
         hasError: fin.hasError ? 1 : 0,
         exitCode: fin.exitCode ?? null,
+        filesWritten: fin.filesWritten ? JSON.stringify(fin.filesWritten) : null,
+        filesRead: fin.filesRead ? JSON.stringify(fin.filesRead) : null,
+        mayIncludeUserEdits:
+          fin.mayIncludeUserEdits === undefined ? null : fin.mayIncludeUserEdits ? 1 : 0,
         artifactCount: fin.artifactCount ?? null,
         ...costColumns(fin.cost),
+      })
+  }
+
+  /**
+   * 只补文件事实，不动状态。
+   *
+   * 单独一个方法而不是塞进 `finish`：文件事实到得比终态早
+   * （包装器算完就发），而 `finish` 要求 run 已经结束——合并会逼出一个
+   * 「先假装结束再改回去」的丑陋写法。
+   */
+  patchFiles(
+    runId: string,
+    files: { filesWritten: string[]; filesRead: string[]; mayIncludeUserEdits: boolean },
+  ): void {
+    this.db
+      .prepare(`
+        UPDATE runs SET
+          files_written = @filesWritten,
+          files_read = @filesRead,
+          may_include_user_edits = @mayIncludeUserEdits
+        WHERE id = @runId`)
+      .run({
+        runId,
+        filesWritten: JSON.stringify(files.filesWritten),
+        filesRead: JSON.stringify(files.filesRead),
+        mayIncludeUserEdits: files.mayIncludeUserEdits ? 1 : 0,
       })
   }
 

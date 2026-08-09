@@ -69,6 +69,16 @@ export const RunSummarySchema = z
      * 没有退出码概念**——与「退出码为 0」是两回事。
      */
     exitCode: z.number().int().optional(),
+    /**
+     * 这一次运行改了哪些文件（**从 git 事实算，不听 agent 声明**——不变式 5）。
+     *
+     * **缺省 = 不知道**（非 git 仓库、只读工具、快照失败），
+     * 与「空数组」（确认没改任何文件）是两回事。把"不知道"写成"没有"就是编造。
+     */
+    filesWritten: z.array(z.string().min(1)).optional(),
+    filesRead: z.array(z.string().min(1)).optional(),
+    /** 可能混入作者自己的改动。共用工作目录时无法区分谁改的，**如实标注** */
+    mayIncludeUserEdits: z.boolean().optional(),
     artifactCount: NonNegInt.optional(),
     cost: CostSchema.optional(),
   })

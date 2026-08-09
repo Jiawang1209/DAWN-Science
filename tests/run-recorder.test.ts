@@ -213,3 +213,49 @@ describe("时间戳", () => {
     expect(stamps).toEqual([...sorted].reverse())
   })
 })
+
+describe("文件事实（不变式 5）", () => {
+  it("tool_files 补进那条仍然开着的 tool_call Run", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "write", input: {} })
+    rec.ingest({
+      kind: "tool_files", sessionId: SESSION, toolCallId: "c1",
+      filesWritten: ["src/a.ts", "src/b.ts"], filesRead: [], mayIncludeUserEdits: true,
+    })
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "write", isError: false, text: "", truncated: false, bytes: 0 })
+    const tool = list().find((r) => r.requestType === "tool_call")!
+    expect(tool.filesWritten).toEqual(["src/a.ts", "src/b.ts"])
+    expect(tool.mayIncludeUserEdits).toBe(true)
+  })
+
+  it("**没收到 tool_files 的调用，字段就是缺省** —— 「不知道」不能写成「没改」", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "read", input: {} })
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "read", isError: false, text: "", truncated: false, bytes: 0 })
+    const tool = list().find((r) => r.requestType === "tool_call")!
+    expect(tool.filesWritten).toBeUndefined()
+  })
+
+  it("确认没改文件时是**空数组**，与缺省可区分", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "bash", input: {} })
+    rec.ingest({
+      kind: "tool_files", sessionId: SESSION, toolCallId: "c1",
+      filesWritten: [], filesRead: [], mayIncludeUserEdits: false,
+    })
+    const tool = list().find((r) => r.requestType === "tool_call")!
+    expect(tool.filesWritten).toEqual([])
+    expect(tool.filesWritten).not.toBeUndefined()
+  })
+
+  it("不认识的 toolCallId 不乱写 —— 宁可丢这条事实，不可写错行", () => {
+    rec.beginTurn(SESSION)
+    expect(() =>
+      rec.ingest({
+        kind: "tool_files", sessionId: SESSION, toolCallId: "从没见过",
+        filesWritten: ["x"], filesRead: [], mayIncludeUserEdits: false,
+      }),
+    ).not.toThrow()
+    expect(list().filter((r) => r.requestType === "tool_call")).toHaveLength(0)
+  })
+})

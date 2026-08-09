@@ -132,6 +132,24 @@ export class RunRecorder {
       return
     }
 
+    if (event.kind === "tool_files") {
+      /**
+       * **文件事实到达得比 `tool_end` 早**（包装器算完就发，pi 的 end 事件还要再走一圈），
+       * 所以那条 Run 还开着，直接补上即可。
+       *
+       * 收不到这个事件的工具调用，Run 上就**没有**这几个字段——
+       * 「不知道」与「确认没改」是两回事（不变式 5）。
+       */
+      const runId = s?.tools.get(event.toolCallId)
+      if (!runId) return
+      this.runs.patchFiles(runId, {
+        filesWritten: event.filesWritten,
+        filesRead: event.filesRead,
+        mayIncludeUserEdits: event.mayIncludeUserEdits,
+      })
+      return
+    }
+
     if (event.kind === "tool_end") {
       const runId = s?.tools.get(event.toolCallId)
       if (!runId) return

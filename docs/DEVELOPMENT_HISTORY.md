@@ -43,10 +43,35 @@
 
 ## 变更日志
 
+### 2026-08-09 — 逐次工具调用的溯源；并修掉 git 路径的两处乱码
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: ①-B″ · R3，批次 1 收尾。**不变式 5 的物理载体。** `git-facts.ts` 只能回答「**这个会话**从开始到现在改了哪些文件」——那个粒度回答不了真正要紧的问题：**是哪一次工具调用改的**。没有这一层，「产出从 git 事实算，不听 agent 声明」只是口号：你能证明"有人改了 a.ts"，证明不了"是那次 write 改的"。
+- **钩子挂在哪**：**包装工具定义**，不用 pi 的文件扩展。Spike A-2 已记录理由——*pi 的扩展只能从 `<agentDir>/extensions/*.ts` 加载、靠 jiti 运行时转译，打包进 asar 后是否还通无法先验断言*。包装器的 `execute` 是 before/after 的**精确**位置，且**天然是同步点**（可以 await 快照），而普通事件订阅不阻塞；对并行执行的工具同样成立。
+- **What**: `src/runtime/provenance.ts`（白名单 + before/after 快照 + diff）· `AgentEvent.tool_files` · schema **v4**（`files_written` / `files_read` / `may_include_user_edits`）· `RunStore.patchFiles` · 协议 `RunSummary` 三个字段。
+- **三条如实纪律**:
+  1. **缺省 ≠ 空数组。** 非 git 仓库、只读工具、快照失败 → 那条 Run 上**没有**这些字段。空数组会被读成「确认没改任何文件」，那是编造。
+  2. **成本控制在入口。** `PRODUCING_TOOLS` 白名单（write/edit/multiedit/bash/apply_patch），`read`/`grep`/`find`/`ls` 一律不拍——它们每轮被调很多次却永不改文件。不认识的工具名**不观察**，保守优于昂贵。
+  3. **`mayIncludeUserEdits` 如实标注**——与 agent 共用工作目录时分不清谁改的，worktree 隔离之后才能置 false。
+- **顺手修掉两个已在生产代码里的缺陷**（都由这份测试撞出来，且都跟中文直接相关）:
+  1. **中文文件名变成乱码**：git 默认把非 ASCII 路径写成 `"\346\226\260..."` 八进制转义。所有 git 调用改带 `-c core.quotePath=false`。
+  2. **带空格的路径带着引号**：`core.quotePath=false` 管不了这个，git 仍会整体加引号并做 C 风格转义，于是产出事实里是 `"有 空格.txt"`（**引号是内容的一部分**），点开必然找不到文件。补 `unquotePath()`。
+  → **两处从 ①-B 起就在，会话级产出面板里的中文路径一直是坏的**，只是此前没往那儿放过中文文件。本项目界面全中文，这不是边角情况。
+- **Verification**:
+  - 溯源探针 12 条 + 账本 4 条，先 FAIL 再转绿。
+  - **真链路探针**（真 pi loop，让模型 `write` 一个叫「报告 初稿.md」的文件——**同时带中文和空格**）：
+    ```
+    tool_call   | files_written = ["报告 初稿.md"] | 可能混入作者改动=true
+    agent_turn  | files_written = （缺省＝不知道）
+    ```
+    **账本第一次能指认「哪次调用改了哪个文件」**，且路径不再是乱码。
+  - 572 tests passed（45 文件，+16），typecheck 与 build 干净。
+
 ### 2026-08-09 — 工具输出双份处理：不再悄悄砍掉 2000 字符之后的内容
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `10ff8c6`
 - **Motivation**: ①-B″ · R2。**这是修一个正在生效的缺陷，不是加功能。**
   ```ts
   // 修复前 src/runtime/native.ts

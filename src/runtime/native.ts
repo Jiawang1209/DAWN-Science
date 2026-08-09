@@ -28,6 +28,7 @@ import {
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
+import { ProvenanceProbe } from "./provenance.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
@@ -63,6 +64,13 @@ export interface NativeRuntimeOptions {
   modelsPath?: string
   /** 可选的授权门。给出时内置工具被替换为包装过的版本 */
   gate?: ToolGate
+  /**
+   * 记录每次工具调用改了哪些文件（不变式 5）。
+   *
+   * **默认开**：它是防幻觉的地基，关掉等于放弃「产出从 git 事实算」。
+   * 只在明确不需要时置 false（例如纯对话的性能测试）。
+   */
+  provenance?: boolean
 }
 
 interface NativeSession {
@@ -148,9 +156,13 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /** 把 pi 的工具定义套上授权门。不给 gate 时返回 undefined，走 pi 的内置工具。 */
-  private gatedTools(cwd: string): unknown[] | undefined {
+  private gatedTools(cwd: string, sessionId: SessionId): unknown[] | undefined {
     const gate = this.opts.gate
-    if (!gate) return undefined
+    const provenance = this.opts.provenance !== false
+    // 两样都不要就别包——包装本身也有成本
+    if (!gate && !provenance) return undefined
+    const probe = provenance ? new ProvenanceProbe(cwd) : undefined
+    const emit = (e: AgentEvent) => this.emit(e)
     const wrap = (definition: Record<string, unknown>) => {
       const original = (definition.execute as (...a: unknown[]) => Promise<unknown>).bind(definition)
       const name = String(definition.name)
@@ -163,13 +175,26 @@ export class NativeRuntime implements AgentRuntime {
           onUpdate: unknown,
           ctx: unknown,
         ) {
-          const reason = gate(name, params)
-          if (reason !== undefined) {
-            // **回一条 isError 结果，不要抛异常**——抛异常会中断整轮，
-            // 模型学不到「这条被拒了」。Spike A-2 实测确认。
-            return { content: [{ type: "text", text: reason }], isError: true, details: undefined }
+          if (gate) {
+            const reason = gate(name, params)
+            if (reason !== undefined) {
+              // **回一条 isError 结果，不要抛异常**——抛异常会中断整轮，
+              // 模型学不到「这条被拒了」。Spike A-2 实测确认。
+              return { content: [{ type: "text", text: reason }], isError: true, details: undefined }
+            }
           }
-          return original(toolCallId, params, signal, onUpdate, ctx)
+          // **before 快照必须在真正执行之前完成**，所以要 await。
+          // 这正是 Spike A-2 选「包装工具定义」而非 pi 文件扩展的原因之一：
+          // 包装器天然是同步点，而普通事件订阅不阻塞
+          const handle = await probe?.begin(name)
+          try {
+            return await original(toolCallId, params, signal, onUpdate, ctx)
+          } finally {
+            if (handle) {
+              const facts = await handle.finish()
+              emit({ kind: "tool_files", sessionId, toolCallId, ...facts })
+            }
+          }
         },
       }
     }
@@ -206,7 +231,7 @@ export class NativeRuntime implements AgentRuntime {
     const agentDir = join(spec.sessionDir, "pi")
     mkdirSync(agentDir, { recursive: true })
 
-    const customTools = this.gatedTools(spec.workspace)
+    const customTools = this.gatedTools(spec.workspace, spec.sessionId)
     const { session } = await createAgentSession({
       cwd: spec.workspace,
       agentDir,

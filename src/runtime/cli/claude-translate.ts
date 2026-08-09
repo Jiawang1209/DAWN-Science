@@ -37,6 +37,14 @@ export interface ClaudeTranslateState {
   unknownKinds: Map<string, number>
   /** `tool_use_id` → 工具名。`tool_result` 里没有名字，只能从 start 那边记住 */
   toolNames: Map<string, string>
+  /**
+   * 最近一轮的 `session_id`（来自 `result` 事件）。
+   *
+   * **换模型时靠它把上下文接回来**：claude 的 `--model` 是启动时定的，
+   * 换模型只能杀进程重开，而 `--resume <session_id>` 让上下文不丢
+   * （Spike H 实测）。没有它就只能开一段新对话。
+   */
+  resumeId?: string
 }
 
 /**
@@ -63,6 +71,7 @@ interface Block {
 
 interface ClaudeEvent {
   type?: string
+  session_id?: string
   message?: { role?: string; content?: Block[] }
   is_error?: boolean
   stop_reason?: string
@@ -84,7 +93,11 @@ export function translateClaudeEvent(
 
   if (type === "assistant") return fromAssistant(sessionId, e, st)
   if (type === "user") return fromUser(sessionId, e, st)
-  if (type === "result") return fromResult(sessionId, e)
+  if (type === "result") {
+    // **接线信息，不是对话内容**——记住，但不产出事件
+    if (typeof e.session_id === "string") st.resumeId = e.session_id
+    return fromResult(sessionId, e)
+  }
 
   return unknown(sessionId, type, st)
 }

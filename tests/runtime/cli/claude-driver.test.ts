@@ -24,6 +24,7 @@ const SESSION = "s1"
 const FAKE = `
 let buf = ""
 let n = 0
+const argv = process.argv.slice(2).join(" ")
 const say = (o) => process.stdout.write(JSON.stringify(o) + "\\n")
 say({ type: "system", subtype: "init" })
 process.stdin.setEncoding("utf8")
@@ -41,8 +42,8 @@ process.stdin.on("data", (d) => {
       say({ type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "t" + n, content: "文件内容", is_error: false }] } })
     }
     if (text.includes("崩")) { process.exit(7) }
-    say({ type: "assistant", message: { role: "assistant", content: [{ type: "text", text: "第" + n + "轮：" + text }] } })
-    say({ type: "result", is_error: false, stop_reason: "end_turn", total_cost_usd: 0.001, usage: { input_tokens: 1, output_tokens: 2 } })
+    say({ type: "assistant", message: { role: "assistant", content: [{ type: "text", text: "第" + n + "轮：" + text + " argv=" + argv }] } })
+    say({ type: "result", is_error: false, stop_reason: "end_turn", session_id: "sid-" + n, total_cost_usd: 0.001, usage: { input_tokens: 1, output_tokens: 2 } })
   }
 })
 `
@@ -79,7 +80,9 @@ describe("一轮", () => {
   it("说一句，拿到回复，并在这一轮结束时 resolve", async () => {
     const { d, events } = driver()
     await d.startTurn("你好")
-    expect(texts(events)).toEqual(["第1轮：你好"])
+    // 用包含匹配：假 CLI 现在会把自己收到的 argv 回显在文本里（换模型那几条要看它）。
+    // **意图不变**——验的是「第几轮」，不是文本的确切格式
+    expect(texts(events)[0]).toContain("第1轮：你好")
     expect(events.some((e) => e.kind === "idle")).toBe(true)
     await d.close()
   })
@@ -99,7 +102,8 @@ describe("多轮：同一个进程", () => {
     await d.startTurn("第一句")
     await d.startTurn("第二句")
     // 计数器是进程内的：重开进程的话第二轮还会是「第1轮」
-    expect(texts(events)).toEqual(["第1轮：第一句", "第2轮：第二句"])
+    expect(texts(events)[0]).toContain("第1轮：第一句")
+    expect(texts(events)[1]).toContain("第2轮：第二句")
     await d.close()
   })
 })
@@ -131,6 +135,44 @@ describe("进程出问题时", () => {
     const { d } = driver()
     await d.startTurn("崩")
     await expect(d.startTurn("还在吗")).rejects.toThrow()
+  })
+})
+
+describe("会话中途换模型（Spike H）", () => {
+  /**
+   * **claude 换模型 = 杀进程 + 带 `--resume <session_id>` 与新 `--model` 重开。**
+   *
+   * 它不是「就地切换」——进程真的重来一次，上下文靠 `--resume` 接回来
+   * （Spike H 实测：换成 haiku 之后仍答得出上一轮记的数，
+   * 且 `result.modelUsage` 确认模型真的变了）。
+   * **这个代价必须让读代码的人看见**，别以为它是无痛的。
+   */
+  it("**换完之后的那一轮带上 --resume 与 --model**", async () => {
+    const { d, events } = driver()
+    await d.startTurn("第一句")
+    await d.setModel("haiku")
+    await d.startTurn("第二句")
+    // 假 CLI 把自己收到的 argv 回显在文本里
+    const said = texts(events).join(" | ")
+    expect(said).toContain("--resume")
+    expect(said).toContain("--model haiku")
+  })
+
+  it("**换模型之前那一轮的 session_id 要记住** —— 没有它就接不回来", async () => {
+    const { d, events } = driver()
+    await d.startTurn("第一句")
+    await d.setModel("haiku")
+    await d.startTurn("第二句")
+    expect(texts(events).join(" | ")).toContain("--resume sid-1")
+  })
+
+  it("**没跑过任何一轮就换模型** —— 不带 resume，只带 model", async () => {
+    const { d, events } = driver()
+    await d.setModel("opus")
+    await d.startTurn("第一句")
+    const said = texts(events).join(" | ")
+    expect(said).toContain("--model opus")
+    expect(said).not.toContain("--resume")
   })
 })
 

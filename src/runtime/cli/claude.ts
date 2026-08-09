@@ -52,6 +52,17 @@ export class ClaudeDriver {
   /** 当前这一轮的收尾钩子。**一轮至多一个**——claude 的 stdin 是串行的 */
   private pending: (() => void) | undefined
   private dead = false
+  /**
+   * 下一次起进程时要用的模型。**缺省 = 用 CLI 自己的默认**，不替它选一个。
+   */
+  private model: string | undefined
+  /**
+   * 这次进程结束是**我们为了换模型主动杀的**，不是它自己死的。
+   *
+   * 没有这个区分的话，`close` 回调会把换模型当成意外退出：标 `dead`、
+   * 发 `exited`、下一轮直接抛「进程已结束」。**换模型于是变成了结束会话。**
+   */
+  private restarting = false
 
   constructor(private readonly opts: ClaudeDriverOptions) {}
 
@@ -75,6 +86,28 @@ export class ClaudeDriver {
     })
   }
 
+  /**
+   * 会话中途换模型。
+   *
+   * **claude 的换模型 = 杀进程 + 带 `--resume` 与新 `--model` 重开**，
+   * 不是「就地切换」。`--model` 是启动时定的（Spike H 实测），
+   * 所以只能重来一次；上下文靠 `--resume <session_id>` 接回来——
+   * 实测换成 haiku 之后仍答得出上一轮记的数，且 `modelUsage` 确认模型真的变了。
+   *
+   * **进程真的重来一次，这个代价别当成无痛的。** 下一轮才生效：
+   * 这里只放下模型并把进程停掉，重开发生在下一次 `startTurn`。
+   */
+  async setModel(model: string): Promise<void> {
+    this.model = model
+    const child = this.child
+    this.child = undefined
+    // **不置 `dead`**：会话没结束，只是换了个模型重开
+    if (child) {
+      this.restarting = true
+      child.kill("SIGKILL")
+    }
+  }
+
   abortTurn(): void {
     // claude 的 headless 模式没有「中断当前轮」的入口，只能整个停掉。
     // **如实反映**：这会结束会话，不是中断一轮
@@ -92,7 +125,13 @@ export class ClaudeDriver {
   private spawnChild(): void {
     let child: ChildProcessWithoutNullStreams
     try {
-      child = spawn(this.opts.command, [...this.opts.args, ...HEADLESS_ARGS], {
+      /**
+       * **`--resume` 只在「重开」时给**：第一次起进程时还没有 session_id，
+       * 那时给它等于让 claude 去找一个不存在的会话。
+       */
+      const resumeArgs = this.st.resumeId ? ["--resume", this.st.resumeId] : []
+      const modelArgs = this.model ? ["--model", this.model] : []
+      child = spawn(this.opts.command, [...this.opts.args, ...HEADLESS_ARGS, ...resumeArgs, ...modelArgs], {
         cwd: this.opts.cwd,
         stdio: ["pipe", "pipe", "pipe"],
       })
@@ -117,6 +156,11 @@ export class ClaudeDriver {
     child.stdin.on("error", () => {})
     child.on("error", (e) => this.fatal(`起不来外部 CLI「${this.opts.command}」：${e.message}`))
     child.on("close", (code) => {
+      if (this.restarting) {
+        // 换模型主动杀的。**不是坏消息**，下一轮会带着 `--resume` 重开
+        this.restarting = false
+        return
+      }
       if (this.dead) return // 我们自己 close 掉的，不必再报
       const tail = this.stderrTail.trim()
       this.fatal(

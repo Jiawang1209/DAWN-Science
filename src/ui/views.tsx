@@ -186,7 +186,7 @@ export function AgentPill({
   if (agents.length === 0) return null
 
   return (
-    <div className="agent-pill" ref={box}>
+    <div className="pill agent-pill" ref={box}>
       <Button
         variant="ghost"
         size="sm"
@@ -273,7 +273,7 @@ export function ModelPill({
   if (models.length === 0 || !current) return null
 
   return (
-    <div className="agent-pill model-pill" ref={box}>
+    <div className="pill model-pill" ref={box}>
       <Button
         variant="ghost"
         size="sm"

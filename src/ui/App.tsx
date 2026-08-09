@@ -249,8 +249,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 没配 key 或这一轮还没说完时，不能显示成换过了）。
    */
   const agentCfg = providers.agents.find((a) => a.agentId === session?.agentId)
+  // **看 `available` 不是 `models`。** 后者是「配置里声明用到的」，
+  // 前者才是「这个 provider 能用哪些」。缺省时给空数组 → pill 不显示，
+  // 那正是「不知道」该有的表现：不假装有得选
   const modelChoices =
-    providers.providers.find((p) => p.providerId === agentCfg?.provider)?.models ?? []
+    providers.providers.find((p) => p.providerId === agentCfg?.provider)?.available ?? []
   const currentModel = sessionId ? (sessionModels[sessionId] ?? agentCfg?.model) : undefined
 
   /**
@@ -393,6 +396,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 items={items}
                 agents={agentIds}
                 onNewSession={actions.newSession}
+                models={modelChoices}
+                model={currentModel}
+                onPickModel={(m) => {
+                  if (!session || !agentCfg?.provider) return
+                  client
+                    .get("setSessionModel", {
+                      sessionId: session.sessionId,
+                      provider: agentCfg.provider,
+                      model: m,
+                    })
+                    // **成功之后才更新缓存。** 失败时 fail() 会把后端给的理由
+                    // （没配 key / 这一轮还没说完）原样显示出来
+                    .then(() => setSessionModel(session.sessionId, m))
+                    .catch(fail)
+                }}
                 terminalTrimmed={termTrimmed}
                 disabled={session.state === "exited"}
                 onAbort={

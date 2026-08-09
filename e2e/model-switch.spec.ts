@@ -7,7 +7,7 @@
  * 假后端从 2026-08-09 起默认提供两个模型（`mockModelsJson`）：
  * 一个模型的假后端能让选择器渲染出来，却证明不了切换真的发生了。
  */
-import { test as base, expect } from "./fixtures.js"
+import { test, expect } from "./fixtures.js"
 import type { Page } from "@playwright/test"
 
 /**
@@ -32,8 +32,6 @@ import type { Page } from "@playwright/test"
  *
  * 用 `fixme` 而不是删掉：**缺口要出声。**
  */
-const test = base.fixme
-
 const A = "deepseek-v4-flash"
 const B = "deepseek-v4-deep"
 
@@ -84,6 +82,6 @@ test("菜单标题是「切换模型」，与 agent pill 的「新建会话」�
   await page.locator(".composer .model-pill").getByRole("button").click()
   await expect(page.getByRole("menu", { name: "切换模型" })).toBeVisible()
   await page.keyboard.press("Escape")
-  await page.locator(".composer .agent-pill:not(.model-pill)").getByRole("button").click()
+  await page.locator(".composer .agent-pill").getByRole("button").click()
   await expect(page.getByRole("menu", { name: "新建会话" })).toBeVisible()
 })

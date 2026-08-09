@@ -26,7 +26,12 @@ export interface Providers {
    * PTY agent 没有这两样（它的模型由外部 CLI 自己管），故可缺省。
    */
   agents: { agentId: string; kind: "native" | "pty"; provider?: string; model?: string }[]
-  providers: { providerId: string; models: string[] }[]
+  /**
+   * `models` 是**配置里声明过的**（凭证界面看它）；
+   * `available` 是**目录里真正有的**（模型选择器看它）。
+   * **两者语义不同，不能合并。** `available` 缺省 = 不知道，不是没有。
+   */
+  providers: { providerId: string; models: string[]; available?: string[] }[]
 }
 
 export interface CredentialState {

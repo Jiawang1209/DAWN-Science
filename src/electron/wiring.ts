@@ -91,14 +91,17 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
   const piCredentials = createPiCredentialStore(opts.credentials)
 
+  /** **提出来复用**：模型目录端口要问的就是这一个实例（它持有 ModelRuntime 缓存） */
+  const nativeRuntime = new NativeRuntime({
+    credentials: piCredentials,
+    ...(opts.modelsPath ? { modelsPath: opts.modelsPath } : {}),
+  })
+
   const sessions = new SessionManager({
     store: sessionStore,
     registry,
     runtimes: {
-      native: new NativeRuntime({
-        credentials: piCredentials,
-        ...(opts.modelsPath ? { modelsPath: opts.modelsPath } : {}),
-      }),
+      native: nativeRuntime,
       pty: new PtyRuntime({ command: "sh" }),
     },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime
@@ -151,6 +154,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     runRecorder,
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
     invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),
+    // 模型选择器要问「这个 provider 能用哪些模型」——那份目录只有运行时知道
+    models: { available: (providerId) => nativeRuntime.availableModels(providerId) },
   })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),

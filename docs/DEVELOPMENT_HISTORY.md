@@ -43,10 +43,33 @@
 
 ## 变更日志
 
-### 2026-08-09 — 换模型打通运行时到界面；协议升 2.1（**尚差可选清单的来源**）
+### 2026-08-09 — 模型选择器接通：换完之后请求真的打到新模型
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 补上上一条留的缺口——「这个 provider 有哪些模型可选」没有来源。
+- **What**:
+  - **`NativeRuntime.availableModels(provider)`**：从 pi 的模型目录取该 provider
+    真正有哪些模型。**与 `getProviders` 的 `providers[].models` 语义不同**：
+    那一份是「配置里声明过的 agent 各自用了哪个模型」（为凭证界面设计），
+    这一份是「你能用哪些」。**两者并列，不合并**——合并会让两边都说不清。
+  - 协议 `providers[].available?`（**缺省 = 不知道，不是没有**）；
+    后端加可选端口 `models`；`wiring.ts` 把 `NativeRuntime` 提出来复用
+    （模型目录端口问的就是那个实例，它持有 ModelRuntime 缓存）。
+  - CSS 拆分：`.pill` 是共享几何，`.agent-pill` / `.model-pill` 只是身份。
+- **修掉一个自己刚种下的缺陷**：换模型的守卫写的是 `if (s.pending)`，
+  而 **`pending` 是一条只增不清的 promise 链**（连发两轮时等待必须覆盖两轮，
+  所以它 resolve 之后仍是真值）。后果：**第一句话之后永远换不了模型**，
+  界面只表现为"点了没反应"。改用 `inFlight` 计数，并把理由写进字段注释。
+- **Impact**: 模型选择器可用。协议 2.1 增加一个可选字段（向后兼容）。
+  对话屏的视觉基线各重存一张——**diff 图确认只多了那颗 pill，别处一个像素没动**。
+- **Verification**: 653 单元测试；typecheck 干净；**49 条 e2e 全过**。
+  验收是 `expect(modelsUsed(requests)).toEqual([A, B])`——
+  **界面说换了不算，假后端收到的模型名说了算**。
+- **第四次「静默替换」**：用脚本往 JSX 里插 props，目标串因 U1 的改名已不存在，
+  于是**静默什么也没做**，而我先去怀疑后端。后来改用会报错的编辑方式才发现。
+  同一个错误本次会话出现四次（`sed \b`、两次 python replace、探针放错目录）。
+  **教训升级为：改文件的操作必须选「匹配不上就报错」的那一种。**
 - **Motivation**: ①-B″ · U2。Spike E 已证实 pi 能就地换模型，本条把它接到界面。
 - **What（四层都通了）**:
   - **运行时** `NativeRuntime.setModel()`：解析模型 → 换 → 发 `model` 事件。

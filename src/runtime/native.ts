@@ -85,6 +85,15 @@ interface NativeSession {
    * 真正开始之前的那一小段时间里，pi 认为自己是空闲的，`waitForIdle()` 立刻返回。
    */
   pending: Promise<void> | undefined
+  /**
+   * 此刻有几轮在飞。
+   *
+   * **不能用 `pending` 判断「正在说话」**——它是一条只增不清的链
+   * （连发两轮时等待必须覆盖两轮，所以它 resolve 之后仍然是个真值）。
+   * 2026-08-09 换模型的守卫就栽在这里：第一句话之后 `pending` 永远为真，
+   * 于是**任何时候都换不了模型**，而界面只表现为"点了没反应"。
+   */
+  inFlight: number
   /** 该会话的隔离目录。工具输出的全文写在它下面 */
   sessionDir: string
   /**
@@ -248,6 +257,7 @@ export class NativeRuntime implements AgentRuntime {
       unsubscribe,
       pid,
       pending: undefined,
+      inFlight: 0,
       sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
     })
@@ -343,6 +353,7 @@ export class NativeRuntime implements AgentRuntime {
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
     s.stuck.reset()
+    s.inFlight += 1
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
     const run = s.session
       .prompt(data)
@@ -351,6 +362,7 @@ export class NativeRuntime implements AgentRuntime {
         this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
       })
       .finally(() => {
+        s.inFlight -= 1
         // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
         this.emit({ kind: "idle", sessionId })
       })
@@ -405,6 +417,24 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /**
+   * 该 provider 在 pi 的模型目录里**真正有哪些模型**（①-B″ · U2）。
+   *
+   * **与 `getProviders` 的 `providers[].models` 不是一回事**：那一份是
+   * 「providers.yaml 里声明过的 agent 各自用了哪个模型」，为凭证界面设计的。
+   * 模型选择器要问的是这一份——**两者语义不同，合并会让两边都说不清**。
+   *
+   * 认不出 provider 时返回空数组：**「不知道」由调用方决定怎么表达**，
+   * 这一层不该替它编一个默认值。
+   */
+  async availableModels(provider: string): Promise<string[]> {
+    const rt = await this.runtime()
+    return rt
+      .getModels()
+      .filter((m) => m.provider === provider)
+      .map((m) => m.id)
+  }
+
+  /**
    * 会话中途换模型（①-B″ · U2）。
    *
    * **能力由 Spike E 在真链路上验过**：`flash → deep`，且下一次请求确实打到新模型
@@ -427,7 +457,7 @@ export class NativeRuntime implements AgentRuntime {
   async setModel(sessionId: SessionId, provider: string, modelId: string): Promise<void> {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法换模型`)
-    if (s.pending) {
+    if (s.inFlight > 0) {
       throw new Error("这一轮还没说完。等它结束或先中止，再换模型")
     }
 

@@ -360,9 +360,12 @@ pre {
   padding: 5px 6px;
 }
 .new-session { display: flex; width: calc(100% - 16px); margin: 8px; }
-/* agent pill 与它的菜单。**菜单向上弹**——pill 本身就贴在窗口底部 */
-.agent-pill { position: relative; display: inline-flex; }
-.agent-pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: 11px; }
+/* pill 与它的菜单。**菜单向上弹**——pill 本身就贴在窗口底部。
+   `.pill` 是共享的几何，`.agent-pill` / `.model-pill` 只是身份——
+   **两者曾经共用同一个类名，于是 `.composer .agent-pill` 一下子匹配到两个元素**，
+   agent pill 的几何断言量到了模型 pill 上 */
+.pill { position: relative; display: inline-flex; }
+.pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: 11px; }
 .agent-menu ul { list-style: none; margin: 0; padding: 0; }
 .agent-menu .name { flex: 1; }
 .agent-menu-head {

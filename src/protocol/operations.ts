@@ -193,7 +193,18 @@ export const OPERATIONS = {
       providers: z.array(
         z.object({
           providerId: z.string(),
+          /** **配置里声明过的 agent 各自用了哪个模型。** 凭证界面看这一份 */
           models: z.array(z.string()),
+          /**
+           * **该 provider 在模型目录里真正有哪些模型**（①-B″ · U2）。
+           *
+           * 与上面那一份**语义不同，不能合并**：一个回答「你要用哪些」，
+           * 一个回答「你能用哪些」。模型选择器问的是后者。
+           *
+           * **缺省 = 不知道**（后端没接模型目录端口），与「空数组」
+           * （确认该 provider 一个模型都没有）是两回事。
+           */
+          available: z.array(z.string()).optional(),
         }),
       ),
     }),

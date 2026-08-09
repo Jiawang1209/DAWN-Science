@@ -42,6 +42,13 @@ export interface WorkbenchBackendOptions {
   registry: ProviderRegistry
   /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
   events: SessionTranscripts
+  /**
+   * 模型目录：该 provider 真正有哪些模型（①-B″ · U2）。
+   *
+   * **不给则 `available` 缺省**——缺省的含义是「不知道」，不是「没有」。
+   * 界面因此不会把「后端没接这个端口」显示成「这个 provider 一个模型都没有」。
+   */
+  models?: { available(providerId: string): Promise<string[]> }
   /** 凭证变更后让 pi 侧缓存失效。不给则不失效（测试场景） */
   invalidateCredentials?: (providerId: string) => void
   /**
@@ -52,7 +59,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -88,10 +95,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             ? { provider: def.provider, model: def.model }
             : { command: def.command }),
         })),
-        providers: used.map((providerId) => ({
-          providerId,
-          models: [...new Set(nativeAgents.filter((d) => d.provider === providerId).map((d) => d.model))],
-        })),
+        providers: await Promise.all(
+          used.map(async (providerId) => ({
+            providerId,
+            // 配置里声明过的（凭证界面看这一份）
+            models: [...new Set(nativeAgents.filter((d) => d.provider === providerId).map((d) => d.model))],
+            // 目录里真正有的（模型选择器看这一份）。**取不到就不给字段**——
+            // 缺省是「不知道」，空数组是「确认没有」，两者不能混
+            ...(models ? { available: await models.available(providerId) } : {}),
+          })),
+        ),
       }
     },
 

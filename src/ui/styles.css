@@ -926,3 +926,13 @@ pre {
 
 /* 「截断了多少」「有别的形态」这类说明。**它们是出声本身，不是装饰** */
 .kout-note { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: 11px; }
+
+/* ── 陈旧标记（②-A · K5 · S13）──────────────────────────────────────
+   **notebook 最经典的谎言**：单元格显示的结果，可能来自三次重启之前的状态。
+   所以陈旧不是"淡一点"就够——**要有一句话说清它为什么不算数**。 */
+.kout-is-stale { opacity: 0.6; }
+.kout-stale {
+  margin: 0 0 var(--dawn-space-1);
+  color: var(--dawn-warning);
+  font-size: 11px;
+}

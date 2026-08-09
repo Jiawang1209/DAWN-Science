@@ -59,6 +59,7 @@ import {
   $sessions,
   $terminal,
   $terminalTrimmed,
+  $kernelInstanceId,
   $view,
   appendBytes,
   applySnapshot,
@@ -122,6 +123,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const items = useStore($items)
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
+  const kernelInstanceId = useStore($kernelInstanceId)
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -179,6 +181,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             items: u.snapshot.items,
             terminal: u.snapshot.terminal,
             trimmed: u.snapshot.terminalTrimmed,
+            // **当前**内核实例。缺省 = 还没有内核，不是「不陈旧」
+            kernelInstanceId: u.snapshot.kernelInstanceId,
           })
         }
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
@@ -604,6 +608,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     .catch(fail)
                 }}
                 terminalTrimmed={termTrimmed}
+                kernelInstanceId={kernelInstanceId}
                 disabled={session.state === "exited"}
                 onAbort={
                   session.kind === "native" ? actions.abort : undefined

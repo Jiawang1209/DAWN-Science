@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 2.6", () => {
+describe("协议版本 · 2.7", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,7 +176,11 @@ describe("协议版本 · 2.6", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
-   * **2.6（2026-08-10）：会话 `kind` 新增 `kernel` + transcript 新增
+   * **2.7（2026-08-10）：`SessionSnapshot` 新增 `kernelInstanceId`（S13）。**
+   *   界面据它判断一条输出是不是**上一个内核**算出来的。
+   *   **缺省 = 还没有内核，不是「不陈旧」。**
+   *
+   * 2.6（2026-08-10）：会话 `kind` 新增 `kernel` + transcript 新增
    *   `kernelOutput` 条目（②-A · K4）。** 判别式的**三处一起加**——
    *   这是 2.3 留下的教训：漏一处的症状是「某条路径上这个会话凭空消失」。
    *
@@ -188,7 +192,7 @@ describe("协议版本 · 2.6", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("新增操作、新增条目、新增 kind 都只升 minor", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.6")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.7")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

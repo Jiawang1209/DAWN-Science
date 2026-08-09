@@ -54,6 +54,13 @@ interface Entry {
   exitCode: number | undefined
   /** 当前正在累积的 agent 发言的 id。turn_end 时清空 */
   openTurnId: string | undefined
+  /**
+   * **当前**内核实例（②-A · K5 · S13）。每收到一条内核输出就更新。
+   *
+   * 界面拿它与每条输出自带的那个一比，就知道那条是不是**上一个内核**算出来的。
+   * **缺省 = 还没有内核**，不是「不陈旧」。
+   */
+  kernelInstanceId: string | undefined
   turnSeq: number
 }
 
@@ -73,6 +80,7 @@ export class SessionTranscripts {
       items: [],
       terminal: "",
       terminalTrimmed: false,
+      kernelInstanceId: undefined,
       state: "alive",
       exitCode: undefined,
       openTurnId: undefined,
@@ -185,6 +193,14 @@ export class SessionTranscripts {
        * 塞进去会让 Console 里每执行一次多两条 busy/idle 噪声。
        */
       case "kernel_output": {
+        /**
+         * **`status` 也要更新「当前实例」，只是不进 transcript。**
+         *
+         * 重启之后第一条到达的往往是 `status: starting`——若只在别的条目上更新，
+         * 「当前实例」会在重启后停在旧值，于是**旧输出不会被标成陈旧**，
+         * 而那正是这条特性要拆穿的谎言本身。
+         */
+        e.kernelInstanceId = event.entry.provenance.kernelInstanceId
         if (event.entry.kind === "status") return
         const p = event.entry.provenance
         this.putItem(sessionId, e, {
@@ -349,6 +365,7 @@ export class SessionTranscripts {
       terminalTrimmed: e.terminalTrimmed,
       state: e.state,
       ...(e.exitCode === undefined ? {} : { exitCode: e.exitCode }),
+      ...(e.kernelInstanceId ? { kernelInstanceId: e.kernelInstanceId } : {}),
     }
   }
 }

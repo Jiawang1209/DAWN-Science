@@ -42,8 +42,12 @@
  *   **判别式的三处一起加**（SessionSummary / getProviders / SessionSnapshot）——
  *   这条是 2.3 留下的教训：漏一处的症状是「某条路径上这个会话凭空消失」。
  *   仍是 minor：既有取值一个没动。
+ * 2.7（2026-08-10）：`SessionSnapshot` 新增 `kernelInstanceId`（②-A · K5 · S13）。
+ *   界面据它与每条输出自带的那个一比，判断输出是不是**上一个内核**算出来的。
+ *   **缺省 = 还没有内核**，不是「不陈旧」——拿不到就不判断，不猜。
+ *   纯新增可选字段，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.6"
+export const WORKBENCH_PROTOCOL_VERSION = "2.7"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

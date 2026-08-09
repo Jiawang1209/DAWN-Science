@@ -59,12 +59,27 @@ export function applySnapshot(snap: {
   items: readonly TranscriptItem[]
   terminal: string
   trimmed: boolean
+  /** **当前**内核实例（②-A · K5 · S13）。缺省 = 还没有内核 */
+  kernelInstanceId?: string | undefined
 }): void {
   setItems(snap.items)
   const term = snap.terminal ? [snap.terminal] : []
   if (!sameList($terminal.get(), term)) $terminal.set(term)
   setValue($terminalTrimmed, snap.trimmed)
+  setValue($kernelInstanceId, snap.kernelInstanceId)
 }
+
+/**
+ * **当前**内核实例的身份（②-A · K5 · S13）。
+ *
+ * 界面拿它与每条输出自带的那个一比，就知道那条输出是不是
+ * **上一个内核**算出来的——那时它描述的状态已经不存在了。
+ * 这正是 notebook 最经典的那个谎言：
+ * *「单元格显示的结果，可能来自三次重启之前的状态。」*
+ *
+ * **缺省 = 还没有内核，不是「不陈旧」**。拿不到就不做判断，不猜。
+ */
+export const $kernelInstanceId = atom<string | undefined>(undefined)
 
 /**
  * 切会话时清空。

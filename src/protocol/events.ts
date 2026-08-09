@@ -218,6 +218,19 @@ export const SessionSnapshotSchema = z
     terminalTrimmed: z.boolean(),
     state: z.enum(["alive", "exited"]),
     exitCode: z.int().optional(),
+    /**
+     * **当前**内核实例的身份（②-A · K5 · S13）。只有 `kind: kernel` 有。
+     *
+     * ## 它存在，是为了拆穿 notebook 最经典的谎言
+     *
+     * *「单元格显示的结果，可能来自三次重启之前的状态。」*
+     * 每条输出都记着**它诞生时**的 `kernelInstanceId`；界面拿它与这里这个一比，
+     * 就知道那条输出是不是上一个内核算出来的——**那时它描述的状态已经不存在了**。
+     *
+     * **缺省 = 还没有内核**（会话刚建、或已退出），不是「不陈旧」。
+     * 拿不到就不做陈旧判断，**不猜**。
+     */
+    kernelInstanceId: z.string().optional(),
   })
   .strict()
 export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>

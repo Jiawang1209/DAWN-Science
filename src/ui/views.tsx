@@ -362,6 +362,7 @@ export function ConversationView({
   onAbort,
   disabled,
   terminalTrimmed,
+  kernelInstanceId,
 }: {
   session: SessionSummary
   /** 可选的 agent 清单，给 composer 右下角那颗 pill 用 */
@@ -381,6 +382,12 @@ export function ConversationView({
   disabled?: boolean | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
+  /**
+   * **当前**内核实例（②-A · K5 · S13）。
+   * 与每条输出自带的那个一比，就知道它是不是上一个内核算出来的。
+   * **缺省 = 还没有内核，不做陈旧判断**——不猜。
+   */
+  kernelInstanceId?: string | undefined
 }) {
   /**
    * 草稿按**会话**取，不是按组件。
@@ -421,7 +428,12 @@ export function ConversationView({
             <p className="empty">还没有对话</p>
           ) : (
             items.map((item) => (
-              <TranscriptRow key={item.id} item={item} agentId={session.agentId} />
+              <TranscriptRow
+                key={item.id}
+                item={item}
+                agentId={session.agentId}
+                currentKernel={kernelInstanceId}
+              />
             ))
           )}
         </StickToBottom.Content>
@@ -496,7 +508,15 @@ export function ConversationView({
  * **工具调用要显示出来**——①-B 的界面「看不见 agent 在干什么」，
  * 根因之一就是工具调用在 runtime 层就被丢掉了，界面连数据都拿不到。
  */
-function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: string }) {
+function TranscriptRow({
+  item,
+  agentId,
+  currentKernel,
+}: {
+  item: TranscriptItem
+  agentId: string
+  currentKernel?: string | undefined
+}) {
   if (item.type === "notice") {
     return <p className="caveat">{item.text}</p>
   }
@@ -507,7 +527,7 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
     return <SubagentChips item={item} />
   }
   if (item.type === "kernelOutput") {
-    return <KernelOutputRow item={item} />
+    return <KernelOutputRow item={item} currentKernel={currentKernel} />
   }
   const mine = item.who === "user"
   return (
@@ -549,12 +569,35 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
  * 在渲染层的样子——Rho 明令禁止后者，理由是
  * **ANSI 字节流里的输出不可查询、不可溯源、不可审计**。
  */
-function KernelOutputRow({ item }: { item: Extract<TranscriptItem, { type: "kernelOutput" }> }) {
+function KernelOutputRow({
+  item,
+  currentKernel,
+}: {
+  item: Extract<TranscriptItem, { type: "kernelOutput" }>
+  currentKernel?: string | undefined
+}) {
   const o = item.output
+  /**
+   * **陈旧 = 这条输出是上一个内核算出来的**（S13）。
+   *
+   * 内核重启之后，它描述的状态已经不存在了——而 notebook 最经典的谎言
+   * 正是让那样一条结果继续躺在那里，看起来像当前状态。
+   *
+   * **`currentKernel` 缺省时不做判断**：那意味着还没有内核（会话刚建或已退出），
+   * 不是「不陈旧」。拿不到就不说话，不猜。
+   */
+  const stale = currentKernel !== undefined && item.kernelInstanceId !== currentKernel
+  const mark = stale ? (
+    <p className="kout-stale">
+      {/* 纯文本里不写 markdown 记号——它不会被渲染，只会显示成星号 */}
+      ⚠ 这条结果来自上一个内核实例，它描述的状态已经不存在了
+    </p>
+  ) : null
 
   if (o.kind === "stream") {
     return (
-      <div className={`kout kout-${o.stream}`}>
+      <div className={`kout kout-${o.stream}${stale ? " kout-is-stale" : ""}`}>
+        {mark}
         <pre className="kout-text">{o.text}</pre>
         {/* **截断要说清省了多少**（规格 7.5），不是「已截断」三个字 */}
         {o.truncated ? (
@@ -569,7 +612,8 @@ function KernelOutputRow({ item }: { item: Extract<TranscriptItem, { type: "kern
 
   if (o.kind === "error") {
     return (
-      <div className="kout kout-error">
+      <div className={`kout kout-error${stale ? " kout-is-stale" : ""}`}>
+        {mark}
         <p className="kout-ename">
           {o.ename}
           {o.evalue ? `: ${o.evalue}` : ""}
@@ -582,7 +626,8 @@ function KernelOutputRow({ item }: { item: Extract<TranscriptItem, { type: "kern
 
   // result / display：按 mime 画
   return (
-    <div className="kout kout-rich">
+    <div className={`kout kout-rich${stale ? " kout-is-stale" : ""}`}>
+      {mark}
       {o.tooLarge ? (
         /* **不渲染，但要说清它有多大**——界面卡死比「这张图没显示」难查得多 */
         <p className="kout-note">

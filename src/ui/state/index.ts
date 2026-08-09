@@ -25,6 +25,7 @@ export {
   upsertItem,
   appendBytes,
   applySnapshot,
+  $kernelInstanceId,
   resetTranscript,
 } from "./transcript.js"
 

@@ -1,3 +1,27 @@
+### 2026-08-09 — 量一遍「为什么这么慢」：不是 harness，是外部 CLI 的启动
+
+- **Type**: perf
+- **Motivation**: 作者问*「deepseek 以及其他模型，回复的那么慢，是不是 harness 的原因呢」*。
+  这个问题**不该靠猜**——假推理服务器是本地的、零网络延迟，拿它跑一遍，
+  「我们这一层的时间」和「模型/网络的时间」就分开了。
+- **What**:
+  - 两个一次性探针（**已删**）：一个直接量 `NativeRuntime`（不经 Electron），
+    一个用 Playwright 量真实构建产物「点发送 → 屏幕上看见字」。
+  - 实测真实 CLI 的启动开销，**发现 `claude --bare` 快 7 倍**。
+  - 结论记入 `spikes/FINDINGS.md` Spike I；`DEFAULT_CONFIG_YAML` 里给 claude
+    加注释写明这个取舍（**默认不加 `--bare`**）。
+- **Impact**:
+  - **回答了作者的问题：不是 harness。** 运行时首字 36ms / 第二轮 4ms；
+    端到端 77ms / 29ms。整条链路不到 100ms。
+  - **发现一个 7 倍的可选加速**：`claude --bare` 整轮 6.3s → 0.9s。
+    但它会跳过 hooks、LSP、auto-memory 与 **CLAUDE.md 自动发现**——
+    **静默丢掉 CLAUDE.md 比慢更坏**，所以默认不加，写在注释里让用户自己选
+    （`args: ["--bare"]` 本来就能用，我们原样传 `args`）。
+  - **codex 的 19 秒主要不是启动**（首字节 2.3s），是模型自己在想；换轻模型有效。
+- **Verification**: 859 个单元/集成测试全绿；两个探针都跑过真实链路（一个跑真实构建产物），
+  用完删掉。deepseek 的真实往返**没有实测**——key 在 Electron 的 safeStorage 里，
+  进程外读不到，这一条如实记为未验证。
+
 # 开发历史
 
 本文件是本项目**唯一**的开发历史记录，最新的在最上面。

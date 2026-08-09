@@ -117,6 +117,10 @@ agents:
   claude:
     kind: cli
     command: claude
+    # 想更快？加上 --bare：实测首字节 1647ms → 319ms、整轮 6.3s → 0.9s（7 倍）。
+    # 代价是它会跳过 hooks、LSP、插件同步、auto-memory，以及 CLAUDE.md 自动发现——
+    # 在项目里干活时丢掉 CLAUDE.md 是实质的行为变化，所以默认不加。
+    #   args: ["--bare"]
     args: []
     models: [opus, sonnet, fable]
     capabilities: [chat, exec]

@@ -96,6 +96,8 @@
   --mix-accent-soft: 12%;
   /* 实心强调按钮在亮色下要压暗，否则白字对比度不达标（见下） */
   --mix-accent-solid: 72%;
+  /* 模态背后那层压暗。暗色下要更重才压得住——**只有这个比例被覆盖，令牌本身不变** */
+  --mix-scrim: 32%;
 
   /* ── 文字：前景兑透明，四档 ──────────────────────────────────── */
   --dawn-text-1: var(--theme-base);
@@ -161,6 +163,9 @@
   --dawn-danger: #ba2623;
   --dawn-success: #00692a;
   --dawn-warning: #e25507;
+
+  /** 遮罩：模态背后那层压暗。恒以灰阶最深那一档为底，两个主题只差浓度 */
+  --dawn-scrim: color-mix(in srgb, var(--theme-gray-1000) var(--mix-scrim), transparent);
 
   /* ── 圆角：一个标量统管，方便整体调"软硬" ──────────────────── */
   --radius-scalar: 1;
@@ -228,6 +233,8 @@
   /* 暗底上强调色已经够亮，实心按钮直接用它，配深色字 */
   --mix-accent-solid: 100%;
   --dawn-on-accent: var(--theme-gray-1000);
+
+  --mix-scrim: 58%;
 
   --dawn-danger: #ff6764;
   --dawn-success: #40c977;

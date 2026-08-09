@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nr() { npm run build >/dev/null 2>&1; npm run test:e2e:visual 2>&1 | grep -E 'passed \\(|failed$' | tail -2 | tr '\\n' ' '; echo; }\necho \"① 强调色 ΔRGB=(2,5,5)\"\nperl -pi -e 's/--theme-accent: #10a37f;/--theme-accent: #12a884;/' src/ui/tokens.css\nr; cp /tmp/t.bak src/ui/tokens.css\necho \"② 描边浓度 8% → 10%\"\nperl -pi -e 's/--mix-stroke-3: 8%;/--mix-stroke-3: 10%;/' src/ui/tokens.css\nr; cp /tmp/t.bak src/ui/tokens.css\necho \"③ 还原\"\nr",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -rf test-results\nnpm test 2>&1 | grep -E 'Tests |Test Files'\nnpm run typecheck 2>&1 | tail -2\necho \"=== e2e 全量（含视觉基线）===\"\nnpx playwright test --reporter=list 2>&1 | tail -5",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -f e2e/_probe-key.spec.ts\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/palette.spec.ts --reporter=list 2>&1 | grep -B3 -A12 'Error:' | head -30",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -rf test-results\nnpm test 2>&1 | grep -E 'Tests |Test Files|×' | head -5\nnpm run typecheck 2>&1 | grep -E 'error' | head -3\necho \"=== e2e 全量 ===\"\nnpx playwright test --reporter=list 2>&1 | tail -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,8 +44,8 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 63,
-      "lastAccessed": 1786241980430,
+      "accessCount": 64,
+      "lastAccessed": 1786243460038,
       "type": "file"
     },
     {

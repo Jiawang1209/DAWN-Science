@@ -169,6 +169,40 @@ describe("设计契约 · 可访问性与文案", () => {
   })
 })
 
+describe("设计契约 · 一个动作一个家", () => {
+  /**
+   * Hermes：
+   * > ***"One action, one home."*** *A command may have keyboard, palette, and visible
+   * > affordances, but they **invoke the same action and state**.
+   * > **Do not fork behavior per entry point.**"*
+   *
+   * **这句话此前只写在文档里，没有任何东西强制它。** 做 U1 之前，
+   * `App.tsx` 里 `() => setView("settings")` 写了四遍，中止与打开项目还各自带着实现——
+   * 命令面板再加一个入口就是第五份。
+   *
+   * 现在动作只有 `Actions` 这一份定义，下面两条把它钉住。
+   */
+  it("**命令的 run 只许转发，不许自己实现** —— 自己实现一遍就是第二个家", () => {
+    // commands.ts 只负责"有哪些命令、什么时候可用"，行为一律来自传进来的 Actions
+    const FORBIDDEN = /\bclient\.|\bawait\b|\.then\(|\bsetView\(|\bsetActive|\bfetch\(/
+    const hits = findLines(readFileSync(join(UI_DIR, "commands.ts"), "utf8"), (l) =>
+      FORBIDDEN.test(l),
+    )
+    expect(hits, "commands.ts 出现了实现。run 只许调用 actions.*").toEqual([])
+  })
+
+  it("**导航状态只在 App.tsx 里改** —— 叶子组件走回调", () => {
+    // 叶子组件自己 setView 的话，同一个跳转就会有两个来源，
+    // 而"谁先谁后"取决于渲染顺序——位置依赖是最坏的一种耦合
+    const MUTATE = /\bset(View|DockOpen|ActiveSessionId|ActiveProjectId)\(/
+    for (const f of tsxFiles()) {
+      if (f === "App.tsx") continue
+      const hits = findLines(read(f), (l) => MUTATE.test(l))
+      expect(hits, `${f}：把它做成 prop 回调，动作的家在 App 的 actions 里`).toEqual([])
+    }
+  })
+})
+
 describe("设计契约 · 表单控件一律走 .control", () => {
   /**
    * **2026-08-09 由一张截图撞出来的生产缺陷。**

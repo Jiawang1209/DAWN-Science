@@ -64,6 +64,31 @@ export function clearDraft(sessionId: string): void {
   $drafts.set(next)
 }
 
+/**
+ * 命令面板（①-B″ · U1）。
+ *
+ * **查询词跟着面板一起清。** 上一次搜的东西留到下一次打开，
+ * 表现为「打开就已经过滤掉了大半命令」——人会以为命令不见了。
+ * 作用域是「这一次打开」，所以关闭就是它的生命终点。
+ */
+export const $paletteOpen = atom(false)
+export const $paletteQuery = atom("")
+
+export function openPalette(): void {
+  $paletteQuery.set("")
+  setValue($paletteOpen, true)
+}
+
+export function closePalette(): void {
+  setValue($paletteOpen, false)
+  $paletteQuery.set("")
+}
+
+export function togglePalette(): void {
+  if ($paletteOpen.get()) closePalette()
+  else openPalette()
+}
+
 export const setView = (v: View) => setValue($view, v)
 export const setDockOpen = (v: boolean) => setValue($dockOpen, v)
 export const setActiveProjectId = (v: string | undefined) => setValue($activeProjectId, v)

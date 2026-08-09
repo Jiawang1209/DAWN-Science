@@ -28,6 +28,8 @@ import {
 import { AppearancePanel, SettingsPanel } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { ConnectionSurface } from "./connection.js"
+import { CommandPalette } from "./palette.js"
+import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
 import {
   $activeProjectId,
@@ -66,6 +68,7 @@ import {
   setActiveProjectId,
   setActiveSessionId,
   setDockOpen,
+  setTheme,
   setView,
   upsertItem,
 } from "./state/index.js"
@@ -232,6 +235,57 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client],
   )
 
+  const session = sessions.find((s) => s.sessionId === sessionId)
+
+  /**
+   * **界面上所有动作的唯一定义处**（①-B″ · U1）。
+   *
+   * Hermes：*"One action, one home. A command may have keyboard, palette, and
+   * visible affordances, but they **invoke the same action and state**.
+   * **Do not fork behavior per entry point**."*
+   *
+   * 这个对象出现之前，`() => setView("settings")` 在本文件里**写了四遍**，
+   * 中止与打开项目还各自带着实现——命令面板再加一个入口就是第五份。
+   * 现在按钮、快捷键、命令面板拿到的是同一个函数。
+   */
+  const actions = useMemo<Actions>(
+    () => ({
+      openSettings: () => setView("settings"),
+      showConversation: () => setView("conversation"),
+      showProjectPanel: () => setView("panel"),
+      newSession: startSession,
+      abort: () => {
+        if (!session) return
+        client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
+      },
+      openProject: () => {
+        // 原生目录选择器。初版让人往 prompt 里粘绝对路径——**那是命令行思路的残留**
+        client
+          .pickDirectory()
+          .then((ws) => {
+            // 取消：什么都不做，不报错
+            if (!ws) return
+            return client.get<ProjectSummary>("openProject", { workspace: ws }).then((p) => {
+              void loadProjects(client)
+              setActiveProjectId(p.projectId)
+              setActiveSessionId(undefined)
+              setView("conversation")
+            })
+          })
+          .catch(fail)
+      },
+      toggleTerminal: () => setDockOpen(!$dockOpen.get()),
+      setTheme,
+    }),
+    [client, startSession, session],
+  )
+
+  const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+  const commands = useMemo(
+    () => buildCommands({ actions, agents: agentIds, session, busy, view }),
+    [actions, agentIds, session, busy, view],
+  )
+
   // **只有 exhausted 才配得上占满全屏。** connecting/reconnecting/degraded
   // 各有各的呈现，由 ConnectionSurface 决定——见它的文件头
   if (connection.phase === "exhausted") {
@@ -240,13 +294,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         <div className="topbar">
           <span className="brand">DAWN Science</span>
         </div>
-        <ConnectionSurface onRetry={connect} onOpenSettings={() => setView("settings")} />
+        <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />
         <div className="statusbar" />
       </div>
     )
   }
 
-  const session = sessions.find((s) => s.sessionId === sessionId)
   const latestRun = runs[0]
 
   return (
@@ -280,27 +333,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setActiveSessionId(id)
             setView("conversation")
           }}
-          onShowPanel={() => setView("panel")}
-          onOpenProject={() => {
-            // 原生目录选择器。初版让人往 prompt 里粘绝对路径——**那是命令行思路的残留**
-            client
-              .pickDirectory()
-              .then((ws) => {
-                // 取消：什么都不做，不报错
-                if (!ws) return
-                return client
-                  .get<ProjectSummary>("openProject", { workspace: ws })
-                  .then((p) => {
-                    void loadProjects(client)
-                    setActiveProjectId(p.projectId)
-                    setActiveSessionId(undefined)
-                    setView("conversation")
-                  })
-              })
-              .catch(fail)
-          }}
-          onNewSession={startSession}
-          onOpenSettings={() => setView("settings")}
+          onShowPanel={actions.showProjectPanel}
+          onOpenProject={actions.openProject}
+          onNewSession={actions.newSession}
+          onOpenSettings={actions.openSettings}
         />
 
         <main className="main">
@@ -340,13 +376,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 session={session}
                 items={items}
                 agents={agentIds}
-                onNewSession={startSession}
+                onNewSession={actions.newSession}
                 terminalTrimmed={termTrimmed}
                 disabled={session.state === "exited"}
                 onAbort={
-                  session.kind === "native"
-                    ? () => client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
-                    : undefined
+                  session.kind === "native" ? actions.abort : undefined
                 }
                 onSend={(text) => {
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。
@@ -358,7 +392,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               />
               <TerminalDock
                 open={dockOpen}
-                onToggle={() => setDockOpen(!$dockOpen.get())}
+                onToggle={actions.toggleTerminal}
                 chunks={termChunks}
                 available={session.kind === "pty"}
                 onInput={(data) =>
@@ -371,14 +405,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ) : (
             <EmptyConversation
               agents={agentIds}
-              onStart={startSession}
-              onOpenSettings={() => setView("settings")}
+              onStart={actions.newSession}
+              onOpenSettings={actions.openSettings}
             />
           )}
         </main>
       </div>
 
-      <ConnectionSurface onRetry={connect} onOpenSettings={() => setView("settings")} />
+      <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />
+
+      {/* 命令面板。**放在最外层**——它盖住整个窗口，且要在任何视图下都能叫出来 */}
+      <CommandPalette commands={commands} />
 
       <div className="statusbar">
         <span>{ready ? "已连接" : "未连接"}</span>

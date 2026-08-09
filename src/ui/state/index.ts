@@ -66,6 +66,11 @@ export {
   $view,
   $dockOpen,
   $drafts,
+  $paletteOpen,
+  $paletteQuery,
+  openPalette,
+  closePalette,
+  togglePalette,
   $activeProjectId,
   $activeSessionId,
   draftOf,
@@ -113,7 +118,15 @@ import {
   $runs,
   $sessions,
 } from "./catalog.js"
-import { $activeProjectId, $activeSessionId, $dockOpen, $drafts, $view } from "./view.js"
+import {
+  $activeProjectId,
+  $activeSessionId,
+  $dockOpen,
+  $drafts,
+  $paletteOpen,
+  $paletteQuery,
+  $view,
+} from "./view.js"
 import { invalidate as invalidateGeneration } from "./guard.js"
 
 /**
@@ -147,6 +160,8 @@ export function resetAllState(): void {
   $view.set("conversation")
   $dockOpen.set(false)
   $drafts.set({})
+  $paletteOpen.set(false)
+  $paletteQuery.set("")
   $items.set([])
   $terminal.set([])
   $terminalTrimmed.set(false)

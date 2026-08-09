@@ -102,6 +102,17 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
     },
   },
   {
+    name: "命令面板",
+    // 浮层 + 遮罩 + 分组列表 + **不可用那一条的样子**
+    go: async (page) => {
+      await expect(page.getByRole("button", { name: /用 .* 开始/ })).toBeVisible()
+      await page.keyboard.press("ControlOrMeta+k")
+      await expect(page.getByRole("dialog", { name: "命令面板" })).toBeVisible()
+      // 等到列表画完再截，否则会截到只有输入框的那一帧
+      await expect(page.getByRole("option", { name: /中止当前回合/ })).toBeVisible()
+    },
+  },
+  {
     name: "项目概览",
     // 多个面板并排 + 列表 + 空态
     go: async (page) => {
@@ -131,6 +142,18 @@ for (const theme of ["亮色", "暗色"] as const) {
        * 这条等待放在**所有**屏之前，因为状态栏在每一屏都在。
        */
       await expect(page.locator(".statusbar .caveat")).toBeVisible()
+
+      /**
+       * **把鼠标挪开。**
+       *
+       * 走到某一屏往往要点几下，点完鼠标就停在最后那个按钮上——
+       * 于是 `:hover` 生效（`.btn-primary:hover { filter: brightness(1.08) }`），
+       * 而截图那一刻它有没有合成完是碰运气的。
+       *
+       * 表现为「只有那一个按钮在变、别的一个像素不动」，
+       * 看着像图片对比不稳定，其实是**测试自己把界面留在了 hover 态**。
+       */
+      await page.mouse.move(0, 0)
 
       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {
         animations: "disabled",

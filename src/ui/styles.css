@@ -501,3 +501,42 @@ pre {
 
 /* 工具输出被截断时的说明行。**它是「出声」本身**，不是装饰 */
 .tool-spill { margin: 2px 0 0; word-break: break-all; }
+
+/* ── 命令面板（①-B″ · U1）──────────────────────────────────────── */
+
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  justify-content: center;
+  /* 贴上方而不是垂直居中：列表往下长，居中会让它随内容多少上下跳 */
+  align-items: flex-start;
+  padding-top: 12vh;
+  background: var(--dawn-scrim);
+}
+.palette {
+  width: min(560px, calc(100vw - 48px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-surface-elevated);
+  box-shadow: var(--dawn-shadow-float);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+}
+.palette-input { font-size: 14px; }
+.palette-list { max-height: 46vh; overflow-y: auto; }
+.palette-group + .palette-group { margin-top: 4px; }
+.palette-group-title {
+  margin: 0;
+  padding: 4px 8px 2px;
+  color: var(--dawn-text-4);
+  font-size: 11px;
+}
+.palette-item .name { flex: 1; }
+/* 不可用的原因跟在后面。**不是隐藏，是摆出来** */
+.palette-item .why { color: var(--dawn-text-4); font-size: 11px; }
+.palette-item[aria-disabled="true"] { opacity: 0.55; cursor: default; }
+.palette-item .keys { color: var(--dawn-text-4); font-size: 11px; }

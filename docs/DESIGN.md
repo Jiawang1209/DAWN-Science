@@ -196,6 +196,45 @@
 > 三个控件里两个中招，所以这不是一次疏忽，是缺一条规则。现在有两条扫描守着：
 > 控件必须带 `control` 类；样式表里不许有别的选择器重新定义 `.control` 的盒子。
 
+### 一个动作一个家（`src/ui/commands.ts` 的 `Actions`）
+
+Hermes：
+
+> ***"One action, one home."*** *A command may have keyboard, palette, and visible
+> affordances, but they **invoke the same action and state**.
+> **Do not fork behavior per entry point.**"*
+
+**这句话此前只写在文档里。** 做命令面板之前，`App.tsx` 里 `() => setView("settings")`
+写了**四遍**，中止与打开项目还各自带着实现——面板再加一个入口就是第五份。
+
+现在动作只有一处定义：
+
+```
+Actions（App 里 useMemo 一次）
+   ├── 按钮 / 侧栏 / 空态   ← 拿到的是同一个函数
+   └── buildCommands()      ← run 只许转发
+```
+
+两条扫描守着（`tests/ui/design-contract.test.ts`）：
+
+1. **`commands.ts` 里不许出现实现**——`client.` / `await` / `.then(` / `setView(` 一律拦下
+2. **导航状态只在 `App.tsx` 里改**，叶子组件走 prop 回调
+
+e2e 里还有一条从行为上验的：同一个动作走两遍——一遍从面板，一遍从按钮——
+**断言两条路落在同一个 DOM 状态**。
+
+### 命令面板（⌘K）
+
+分组：会话 / 模型 / 项目 / 视图 / 设置。标题与**关键词**一起参与匹配——
+人记得的往往不是我们起的那个名字（想换主题的人会搜「主题」，也可能搜「暗色」或 `theme`）。
+
+**不可用的命令留在列表里，并写明原因。** Rho 的规矩：**缺失不等于不支持**。
+一条命令搜不到时，人无法区分「没有这个功能」和「它现在用不了」。
+而且原因要说清是哪一种——「还没有会话」和「当前没有正在进行的回合」是两件事，
+笼统写「不可用」等于没说。这与协议层 `ProvenanceLink` 必须给 `incompleteReason` 同源。
+
+不可用的条目**方向键会跳过**：停在一条按不动的命令上很别扭。
+
 ### agent 选择器长在 composer 右下角
 
 对标 Hermes `app/chat/composer/model-pill.tsx`，它自己的注释就是这次搬家的理由：

@@ -43,10 +43,53 @@
 
 ## 变更日志
 
-### 2026-08-09 — ①-C · C1：协议与配置新增 `kind: cli`；并修好一条「出了声但没内容」的路
+### 2026-08-09 — ①-C · C2：claude driver（长驻进程 + stream-json）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: ①-C 的第二片。Spike G 已验「一个进程连喂多轮，第二轮记得第一轮」，
+  这一片把它变成代码。
+- **动手前补了一次实测**：Spike G 主体只验了**纯文本**回复，
+  **带工具调用的一轮长什么样我没见过**。补验后拿到真实序列：
+  ```
+  system ×9 → assistant(tool_use) → rate_limit_event
+            → user(tool_result) → assistant(text) → result
+  ```
+  形状记进 `spikes/FINDINGS.md`。**这套形状能一一映到已有的 `AgentEvent`**，
+  所以不为 CLI 新造事件概念——账本、变更 pane、成本栏、chip 组因此一并生效。
+  另外 `result` 里带 `total_cost_usd`，**成本栏对 CLI 会话也能有真数**。
+- **拆成两层，分开测**
+  - `claude-translate.ts`：**纯函数**，一条 CLI 事件进、零到多条 `AgentEvent` 出
+  - `claude.ts`：进程管理
+  理由是可测：翻译的边角情形（认不出的类型、配不上对的 `tool_result`）
+  **在真进程上很难稳定复现**，而它们恰恰最容易出错。
+- **「认得但不关心」与「不认得」必须分开**：每轮开头有 9 条 `system`。
+  若「认不出就出声」不区分这两者，**每轮开头会刷出 9 条通知**——
+  那种噪声会让真正的告警没人看。所以有一张显式的忽略清单，
+  加一种就要写一笔，**逼人回答「这个事件我们真的不需要吗」**。
+  真认不出的**只在第一次出声，但一直记数**。
+- **一轮的边界只认 `result`**，不认「stdout 安静了」。后者会把一次慢的工具调用
+  误判成收工，而那之后的回复会被算进下一轮——**表现是「答非所问」**。
+- **`tool_result` 里没有工具名**（形状如此），只能从 `tool_use` 那边记住；
+  记不住时如实留 `?`，**宁可多一条匿名的，不可丢一条**。
+- **进程出事时三件缺一不可**：出声、收口（`exited`）、**放掉在等的那一轮**。
+  少了最后一件，`startTurn` 的 promise 会永远挂着——而调用方正 await 它。
+- **假 CLI 踩的一个坑**：第一版用 `node -e <脚本>` 当假 CLI，全挂了——
+  driver 会把 `--print --output-format stream-json …` 追加到命令后面，
+  而 **`--print` 也是 node 自己的选项**，node 把它当成自己的参数就炸了。
+  改成写成脚本文件跑：**脚本路径之后的参数只是 argv**。
+- **Verification**: 785 单元测试（+22）；typecheck 干净。
+  driver 的 8 条**用假 CLI 起真进程**（不 mock `child_process`）——
+  这一层最可能坏的地方全在进程边界上，把进程 mock 掉测的就正好不是那些。
+  **尚未真机验证**：CLI 运行时还没接进会话管理器，那是 C3/C4 之后的事。
+- **下一片**：C3 codex driver（一轮一进程 + `thread_id` 落库）。
+
+---
+
+### 2026-08-09 — ①-C · C1：协议与配置新增 `kind: cli`；并修好一条「出了声但没内容」的路
+
+- **Type**: feat
+- **Commit**: `ee36be2`
 - **Motivation**: ①-C 的第一片。`kind` 是后面每一层的判别式，必须先立。
 - **What**: `config/schema.ts` 加第三个成员 `CliAgentSchema`；
   协议三处 enum（`entities` / `operations` / `events`）加 `"cli"`；**协议升 2.3**。

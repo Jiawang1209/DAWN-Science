@@ -722,6 +722,32 @@ codex   exec 一轮 → thread_id；resume <id> 再问 → ["4127"]  记得 ✅
    消息、用量**第一次能落进我们已有的账本**。走 PTY 时 claude 会话对账本是个黑盒，
    只有一条 `pty_session` Run。**不变式 3 与 5 第一次能覆盖外部 CLI。**
 
+### 追加实测（2026-08-09，C2 前）：**带工具调用的一轮长什么样**
+
+Spike G 主体只验了纯文本回复。做 C2 前补验了一轮**会调工具**的：
+
+```
+事件序列： system ×9 → assistant(tool_use) → rate_limit_event
+           → user(tool_result) → assistant(text) → result
+```
+
+| 位置 | 形状 |
+|---|---|
+| `assistant.message.content[]` | `{type:"tool_use", id, name, input, caller}` 或 `{type:"text", text}` |
+| `user.message.content[]` | `{type:"tool_result", content, is_error, tool_use_id}` |
+| `result` | `usage`（`input_tokens` / `output_tokens` / `cache_read_input_tokens` / `cache_creation_input_tokens`）、`total_cost_usd`、`stop_reason`、`session_id`、`is_error` |
+
+**三条直接影响实现的**：
+
+1. **这套形状能一一映到已有的 `AgentEvent`**：`tool_use` → `tool_start`，
+   `tool_result` → `tool_end`（靠 `tool_use_id` 配对），`text` → `output`，
+   `result` → `idle`。**不需要为 CLI 新造一套事件概念。**
+2. **`total_cost_usd` 是现成的** —— 成本栏对 CLI 会话也能有真数，
+   不必像 native 那样只能报 token。
+3. **开头有 9 条 `system`**（init/config）。它们**认得但不关心**——
+   必须与「不认得」区分开，否则「认不出就出声」这条规则会在每轮开头
+   刷出 9 条通知。**认得但不关心 ≠ 不认得。**
+
 ### 未验证
 
 - claude 的 `--include-partial-messages` 实际增量粒度

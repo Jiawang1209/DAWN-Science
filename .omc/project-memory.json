@@ -53,7 +53,7 @@
   },
   "build": {
     "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"e2e/fixtures.ts\"); s = p.read_text(encoding=\"utf8\")\nold = \"    mkdirSync(workspace, { recursive: true })\"\nnew = \"    mkdirSync(workspace, { recursive: true })\\n    seedKernelSpec(dir)\"\nassert old in s; s = s.replace(old, new, 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run typecheck 2>&1 | grep error | head -3 || echo \"类型干净\"\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/kernels.spec.ts --reporter=list 2>&1 | tail -5",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run typecheck 2>&1 | grep error | head -3 || echo \"类型干净\"\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

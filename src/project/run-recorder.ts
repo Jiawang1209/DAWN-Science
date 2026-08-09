@@ -127,7 +127,19 @@ export class RunRecorder {
     if (event.kind === "tool_start") {
       // 没有开着的回合也要记——**只是没有 parent，不是丢掉它**。
       // 丢掉等于让一次真实发生的工具执行不留痕迹，违反不变式 3
-      const runId = this.begin(event.sessionId, "tool_call", "agent", s?.turnRunId)
+      /**
+       * **把工具名记进 `requestType`。**
+       *
+       * R3 之后账本能回答「哪次工具调用改了哪个文件」，却回答不了
+       * 「那是什么工具」——而 U4 的变更 pane 要求**标明是哪次工具调用改的**，
+       * 只给一个匿名序号等于没标。
+       *
+       * `requestType` 本来就是开放字符串（协议注释：「①-B 只产生 agent_turn，
+       * ②-A 会加 execute_r / execute_py」），正好承载它。
+       * **拿不到名字时退回裸 `tool_call`，不编一个**。
+       */
+      const kind = event.toolName ? `tool_call:${event.toolName}` : "tool_call"
+      const runId = this.begin(event.sessionId, kind, "agent", s?.turnRunId)
       if (runId) this.slot(event.sessionId).tools.set(event.toolCallId, runId)
       return
     }

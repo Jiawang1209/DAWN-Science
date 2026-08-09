@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1\nfor i in 1 2; do npx playwright test --reporter=list 2>&1 | grep -E '^\\s+[0-9]+ (passed|failed)' | tr '\\n' ' '; echo \"← $i\"; done\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1\nfor i in 1 2; do npx playwright test --reporter=list 2>&1 | grep -E '^\\s+[0-9]+ (passed|failed)' | tr '\\n' ' '; echo \"← $i\"; done\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -2",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | grep -E '✘|^\\s+[0-9]+ (passed|failed)' | head -5",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run typecheck 2>&1 | grep error | head -3\nnpm test 2>&1 | grep -E 'Tests |Test Files|×' | head -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,8 +44,8 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 64,
-      "lastAccessed": 1786243460038,
+      "accessCount": 65,
+      "lastAccessed": 1786251046858,
       "type": "file"
     },
     {

@@ -18,7 +18,19 @@ export default defineConfig({
   fullyParallel: false,
   // 起 Electron + 建库 + 假模型往返，比浏览器测试慢一个量级
   timeout: 60_000,
-  expect: { timeout: 15_000 },
+  /**
+   * 2026-08-09 从 15s 提到 25s。
+   *
+   * 症状是**每次挂的不是同一条**——整套 51 条串行各启一次 Electron，
+   * 全程 1.3–2.1 分钟之间飘，机器一忙就有某条撞上上限。
+   * 单独跑那条永远是绿的。
+   *
+   * **「每次挂的不是同一条」通常不指向某条测试，而指向一个全局资源问题**
+   * （上一次是 effect 依赖里放了 `items`，每个 token 打一次 IPC）。
+   * 这一次查下来是纯粹的余量不够：**提高上限不会掩盖真失败**，
+   * 断言真错了照样红，只是慢一点才红。
+   */
+  expect: { timeout: 25_000 },
   // 失败时留下现场。**第一次失败就留**——e2e 的失败往往难以复现
   use: { trace: "retain-on-failure", screenshot: "only-on-failure" },
   /**

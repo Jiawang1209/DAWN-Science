@@ -100,7 +100,7 @@ describe("agent 回合", () => {
       // pi 在每次模型响应后发 turn_end —— 它不该打断父子关系
       rec.ingest({ kind: "turn_end", sessionId: SESSION })
     }
-    const tools = list().filter((r) => r.requestType === "tool_call")
+    const tools = list().filter((r) => r.requestType.startsWith("tool_call"))
     expect(tools).toHaveLength(3)
     expect(tools.every((t) => t.parentRunId === turnId), "有工具调用成了孤儿").toBe(true)
   })
@@ -131,7 +131,7 @@ describe("工具调用", () => {
       toolName: "bash",
       input: { command: "ls" },
     })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool).toBeDefined()
     expect(tool.parentRunId).toBe(turnId)
     expect(tool.origin).toBe("agent")
@@ -141,7 +141,7 @@ describe("工具调用", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "bash", input: {} })
     rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "bash", isError: true, text: "boom", truncated: false, bytes: 0 })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool.status).toBe("failed")
     expect(tool.hasError).toBe(true)
   })
@@ -150,14 +150,14 @@ describe("工具调用", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "read", input: {} })
     rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "read", isError: false, text: "ok", truncated: false, bytes: 0 })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool.status).toBe("completed")
     expect(tool.hasError).toBe(false)
   })
 
   it("没有开着的回合也能记工具调用 —— 只是没有 parent，不是丢掉它", () => {
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "bash", input: {} })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool).toBeDefined()
     expect(tool.parentRunId).toBeUndefined()
   })
@@ -223,7 +223,7 @@ describe("文件事实（不变式 5）", () => {
       filesWritten: ["src/a.ts", "src/b.ts"], filesRead: [], mayIncludeUserEdits: true,
     })
     rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "write", isError: false, text: "", truncated: false, bytes: 0 })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool.filesWritten).toEqual(["src/a.ts", "src/b.ts"])
     expect(tool.mayIncludeUserEdits).toBe(true)
   })
@@ -232,7 +232,7 @@ describe("文件事实（不变式 5）", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "read", input: {} })
     rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "read", isError: false, text: "", truncated: false, bytes: 0 })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool.filesWritten).toBeUndefined()
   })
 
@@ -243,7 +243,7 @@ describe("文件事实（不变式 5）", () => {
       kind: "tool_files", sessionId: SESSION, toolCallId: "c1",
       filesWritten: [], filesRead: [], mayIncludeUserEdits: false,
     })
-    const tool = list().find((r) => r.requestType === "tool_call")!
+    const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool.filesWritten).toEqual([])
     expect(tool.filesWritten).not.toBeUndefined()
   })
@@ -256,6 +256,30 @@ describe("文件事实（不变式 5）", () => {
         filesWritten: ["x"], filesRead: [], mayIncludeUserEdits: false,
       }),
     ).not.toThrow()
-    expect(list().filter((r) => r.requestType === "tool_call")).toHaveLength(0)
+    expect(list().filter((r) => r.requestType.startsWith("tool_call"))).toHaveLength(0)
+  })
+})
+
+/**
+ * 账本要记「是哪个工具改的」（①-B″ · U4 前置）。
+ *
+ * R3 已经能回答「哪次工具调用改了哪个文件」，但**回答不了「那是什么工具」**——
+ * `requestType` 一律是字面量 `"tool_call"`。而 U4 的变更 pane 要求
+ * **标明是哪次工具调用改的**，只显示一个匿名序号等于没标。
+ *
+ * `requestType` 本来就是**开放字符串**（协议注释：「①-B 只产生 agent_turn，
+ * ②-A 会加 execute_r / execute_py」），正好用来承载它。
+ */
+describe("Run 记账 · 记下是哪个工具", () => {
+  it("requestType 带上工具名", () => {
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "bash", input: {} })
+    const tool = list().find((x) => x.requestType.startsWith("tool_call"))!
+    expect(tool.requestType).toBe("tool_call:bash")
+  })
+
+  it("**拿不到工具名时不编一个**，退回裸 tool_call", () => {
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "", input: {} })
+    const tool = list().find((x) => x.requestType.startsWith("tool_call"))!
+    expect(tool.requestType).toBe("tool_call")
   })
 })

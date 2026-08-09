@@ -64,6 +64,77 @@ export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] 
  * 把第三种显示成第二种是撒谎——本项目最不能犯的错。
  * 后端在拿不到 git 基线时不返回 `fileChanges` 字段，正是为了让这里能区分。
  */
+/**
+ * 变更 pane（①-B″ · U4）。**不变式 5 第一次有用户可见面。**
+ *
+ * R3 早就把「哪次工具调用改了哪个文件」记进账本了，此前只是没人显示。
+ * 与上面那个会话级的 `ChangesPanel` 不同，这里是**逐次工具调用**那一层。
+ *
+ * ## 两条不能松的纪律
+ *
+ * **① 「不知道」与「确认没改」必须看得出区别。** 账本里前者是缺省
+ * （非 git 仓库、快照失败、只读工具），后者是空数组。R3 刻意保留了这个区别，
+ * 界面上把它们画成同一个样子，就等于把「不知道」说成了「没改」——那是编造。
+ *
+ * **② `mayIncludeUserEdits` 必须显示。** 本阶段没有 worktree 隔离，
+ * 分不清是 agent 改的还是作者自己改的。**不能指望人记得加脚注。**
+ */
+export function ToolChangesPanel({ runs }: { runs: readonly RunSummary[] }) {
+  const tools = runs.filter((r) => r.requestType.startsWith("tool_call"))
+  if (tools.length === 0) {
+    return (
+      <Panel title="变更">
+        <Empty>还没有工具调用</Empty>
+      </Panel>
+    )
+  }
+
+  // 按回合归组。**没有 parent 的也要显示**——RunRecorder 的注释写得很清楚：
+  // 没有开着的回合也要记，丢掉等于让一次真实发生的执行不留痕迹
+  const groups: { key: string; items: RunSummary[] }[] = []
+  for (const r of tools) {
+    const key = r.parentRunId ?? `孤立:${r.runId}`
+    const slot = groups.find((g) => g.key === key)
+    if (slot) slot.items.push(r)
+    else groups.push({ key, items: [r] })
+  }
+
+  const anyUserEdits = tools.some((r) => r.mayIncludeUserEdits)
+
+  return (
+    <Panel title="变更">
+      {anyUserEdits ? (
+        <p className="caveat">⚠ 可能包含你自己的修改——本阶段没有 worktree 隔离，分不清是谁改的</p>
+      ) : null}
+      {groups.map((g) => (
+        <div key={g.key} className="turn-group">
+          {g.items.map((r) => {
+            // `tool_call:write` → `write`；裸 `tool_call` 说明账本没记下名字
+            const name = r.requestType.slice("tool_call".length).replace(/^:/, "")
+            return (
+              <div key={r.runId} className="tool-change">
+                <span className="name">{name || "未记录工具名"}</span>
+                {r.filesWritten === undefined ? (
+                  /* **缺省 = 不知道。** 与下面那一支的措辞必须不同 */
+                  <span className="hint">无法确定改了什么</span>
+                ) : r.filesWritten.length === 0 ? (
+                  <span className="hint">没有改动文件</span>
+                ) : (
+                  <ul className="file-list">
+                    {r.filesWritten.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ))}
+    </Panel>
+  )
+}
+
 export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) {
   if (!facts) {
     return (

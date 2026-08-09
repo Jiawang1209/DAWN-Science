@@ -18,7 +18,15 @@
 import { useCallback, useEffect, useMemo } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
-import { ChangesPanel, ContextPanel, CostPanel, ProvenanceBadge, RunsPanel, StatusPanel } from "./panels.js"
+import {
+  ChangesPanel,
+  ContextPanel,
+  CostPanel,
+  ProvenanceBadge,
+  RunsPanel,
+  StatusPanel,
+  ToolChangesPanel,
+} from "./panels.js"
 import {
   ConversationView,
   EmptyConversation,
@@ -391,6 +399,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <div className="panels">
               <StatusPanel sessions={sessions} />
               <ChangesPanel facts={runDetail?.fileChanges} />
+              {/* 逐次工具调用那一层。**不变式 5 第一次有用户可见面** */}
+              <ToolChangesPanel runs={runs} />
               {/* 成本优先用 getRun 的详情，退回摘要里的——两处都没有时面板说「尚未记录」 */}
               <CostPanel cost={runDetail?.cost ?? latestRun?.cost} />
               {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}

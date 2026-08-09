@@ -106,17 +106,23 @@ agents:
     capabilities: [chat, exec]
 
   # 托管本地的 claude CLI，以对话形态呈现。装了 claude 且已登录就能直接用
+  #
+  # models 是**模型选择器里能选哪些**。两个外部 CLI 都没有「列出可选项」的接口，
+  # 所以只能在这里声明；不写就不显示选择器（不假装有得选）。
+  # claude 认别名（opus / sonnet / haiku），也认完整模型名。
   claude:
     kind: cli
     command: claude
     args: []
+    models: [sonnet, opus, haiku]
     capabilities: [chat, exec]
 
-  # 托管本地的 codex CLI，以对话形态呈现
+  # 托管本地的 codex CLI，以对话形态呈现。models 同上，按需增删
   codex:
     kind: cli
     command: codex
     args: []
+    models: [gpt-5.1-codex, gpt-5.1-codex-mini]
     capabilities: [chat, exec]
 
   # 一个通用终端。想用 claude / codex 的 TUI，在这里手动起即可

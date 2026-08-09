@@ -57,6 +57,15 @@ export class CodexDriver {
   private buf = ""
   private stderrTail = ""
   private settled = false
+  /**
+   * 下一轮要用的模型。**缺省 = 用 CLI 自己的默认**，不替它选一个。
+   *
+   * **codex 换模型几乎不花什么**：它本来就是一轮一个进程，
+   * 下一轮的命令行多一个 `--model` 就换了，上下文靠 `thread_id` 保住。
+   * 与 claude 恰好相反——那边的 `--model` 是启动时定的，
+   * 换模型要杀进程 + `--resume` 重开。**同一个能力，两种代价。**
+   */
+  private model: string | undefined
 
   constructor(private readonly opts: CodexDriverOptions) {
     this.st = { unknownKinds: new Map(), threadId: opts.threadId }
@@ -66,9 +75,10 @@ export class CodexDriver {
     const before = this.st.threadId
     // **有 thread_id 就 resume**：没有的话每一轮都是全新的对话，
     // 而它看起来是好的（每轮都答得出话），只是不记得上文——**那种坏法最难被发现**
+    const modelArgs = this.model ? ["--model", this.model] : []
     const args = before
-      ? [...this.opts.args, "exec", "resume", before, ...EXEC_ARGS, text]
-      : [...this.opts.args, "exec", ...EXEC_ARGS, text]
+      ? [...this.opts.args, "exec", "resume", before, ...EXEC_ARGS, ...modelArgs, text]
+      : [...this.opts.args, "exec", ...EXEC_ARGS, ...modelArgs, text]
 
     this.buf = ""
     this.stderrTail = ""
@@ -121,6 +131,11 @@ export class CodexDriver {
 
     // 第一轮之后 thread_id 才有；**变了就报给上层落库**
     if (this.st.threadId && this.st.threadId !== before) this.opts.onThreadId(this.st.threadId)
+  }
+
+  /** 换模型。**下一轮生效**——这一轮的进程已经带着旧参数起来了 */
+  async setModel(model: string): Promise<void> {
+    this.model = model
   }
 
   abortTurn(): void {

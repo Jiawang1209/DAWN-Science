@@ -42,7 +42,7 @@ const say = (o) => process.stdout.write(JSON.stringify(o) + "\\n")
 const argv = process.argv.slice(2)
 const isResume = argv.includes("resume")
 say({ type: "thread.started", thread_id: isResume ? argv[argv.indexOf("resume") + 1] : "线程-A" })
-say({ type: "item.completed", item: { id: "i", type: "agent_message", text: (isResume ? "codex 续接：" : "codex 首轮：") + argv[argv.length - 1] } })
+say({ type: "item.completed", item: { id: "i", type: "agent_message", text: (isResume ? "codex 续接：" : "codex 首轮：") + argv[argv.length - 1] + " argv=" + argv.join(" ") } })
 say({ type: "turn.completed", usage: {} })
 `
 
@@ -99,7 +99,8 @@ describe("按命令名挑 driver", () => {
     await rt.start(spec())
     await say(rt, "s1", "第一句")
     await say(rt, "s1", "第二句")
-    expect(texts(events)).toEqual(["codex 首轮：第一句", "codex 续接：第二句"])
+    expect(texts(events)[0]).toContain("codex 首轮：第一句")
+    expect(texts(events)[1]).toContain("codex 续接：第二句")
     // **thread_id 报出去了** —— 上层靠它落库
     expect(threads).toEqual(["线程-A"])
     await rt.stop("s1")
@@ -130,13 +131,54 @@ describe("write 的契约与 native 一致", () => {
   })
 })
 
+describe("换模型", () => {
+  it("转发给 driver —— 下一轮用新模型", async () => {
+    const { rt, events } = runtime("codex", [CODEX])
+    rt.attach("s1", (e) => events.push(e))
+    await rt.start(spec())
+    await say(rt, "s1", "第一句")
+    await rt.setModel!("s1", "", "o3")
+    await say(rt, "s1", "第二句")
+    expect(texts(events)[1]).toContain("--model o3")
+  })
+
+  /**
+   * **「正在说话时不许换」这道门开在实现里，不在调用点。**
+   *
+   * 与 `NativeRuntime.setModel` 同一条理由（①-B″ · U2）：
+   * 界面、命令面板、将来的 CLI 共用同一道门，**加入口时不必记得补一次**。
+   */
+  it("**这一轮还没说完，不许换** —— 换了的话这一轮的归属就说不清了", async () => {
+    const { rt, events } = runtime("claude", [CLAUDE])
+    rt.attach("s1", (e) => events.push(e))
+    await rt.start(spec())
+    rt.write("s1", "慢慢说") // 不 await：这一轮还开着
+    await expect(rt.setModel!("s1", "", "haiku")).rejects.toThrow(/还没说完|正在/)
+    await rt.waitForIdle("s1")
+    await rt.stop("s1")
+  })
+
+  it("没这个会话 —— 明确报错", async () => {
+    const { rt } = runtime("claude", [CLAUDE])
+    await expect(rt.setModel!("没这个会话", "", "x")).rejects.toThrow()
+  })
+
+  it("**换完要发一条 model 事件** —— 界面与命令面板靠它保持一致", async () => {
+    const { rt, events } = runtime("codex", [CODEX])
+    rt.attach("s1", (e) => events.push(e))
+    await rt.start(spec())
+    await rt.setModel!("s1", "", "o3")
+    expect(events.find((e) => e.kind === "model")).toMatchObject({ model: "o3" })
+  })
+})
+
 describe("续接", () => {
   it("**spec 里给了 thread_id 就直接 resume** —— 重开应用后接得上", async () => {
     const { rt, events } = runtime("codex", [CODEX])
     rt.attach("s1", (e) => events.push(e))
     await rt.start(spec({ cli: { threadId: "旧线程-7" } }))
     await say(rt, "s1", "接着说")
-    expect(texts(events)).toEqual(["codex 续接：接着说"])
+    expect(texts(events)[0]).toContain("codex 续接：接着说")
     await rt.stop("s1")
   })
 })

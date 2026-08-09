@@ -142,6 +142,12 @@ describe("默认配置的形状（①-C · C5）", () => {
     expect(parsed().agents["shell"]).toMatchObject({ kind: "pty", command: "bash" })
   })
 
+  it("**cli agent 带模型清单** —— 没有它就没有模型选择器（Spike H）", () => {
+    const reg = parsed()
+    expect(reg.agents["claude"]).toMatchObject({ models: expect.arrayContaining(["sonnet"]) })
+    expect(reg.agents["codex"]).toMatchObject({ models: expect.any(Array) })
+  })
+
   it("内置 agent 仍在 —— 它是「先跑起来」的默认", () => {
     expect(parsed().agents["ds-chat"]).toMatchObject({ kind: "native", provider: "deepseek" })
   })

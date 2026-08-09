@@ -34,6 +34,8 @@ interface Driver {
   startTurn(text: string): Promise<void>
   abortTurn(): void
   close(): Promise<void>
+  /** 换模型。**两个 driver 的代价完全不同**，差异留在各自实现里（Spike H） */
+  setModel(model: string): Promise<void>
 }
 
 export interface CliRuntimeOptions {
@@ -53,6 +55,15 @@ interface Live {
   driver: Driver
   /** 最近一轮的 promise。`waitForIdle` 等它——与 NativeRuntime 的 `pending` 同源 */
   pending: Promise<void> | undefined
+  /**
+   * 此刻有几轮在飞。
+   *
+   * **不能用 `pending` 判断「正在说话」**——它是一条只增不清的链
+   * （连发两轮时等待必须覆盖两轮，所以它 resolve 之后仍然是个真值）。
+   * ①-B″ · U2 的换模型守卫就栽在这里：第一句话之后 `pending` 永远为真，
+   * 于是**任何时候都换不了模型**，而界面只表现为「点了没反应」。
+   */
+  inFlight: number
 }
 
 export class CliRuntime implements AgentRuntime {
@@ -98,7 +109,7 @@ export class CliRuntime implements AgentRuntime {
       )
     }
 
-    this.sessions.set(spec.sessionId, { driver, pending: undefined })
+    this.sessions.set(spec.sessionId, { driver, pending: undefined, inFlight: 0 })
     const pid = this.nextPid++
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     return { sessionId: spec.sessionId, pid }
@@ -120,15 +131,21 @@ export class CliRuntime implements AgentRuntime {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     // **不 await**：见文件头。失败经事件流出声，不静默吞
-    const run = s.driver.startTurn(data).catch((err: unknown) => {
+    s.inFlight += 1
+    const run = s.driver
+      .startTurn(data)
+      .catch((err: unknown) => {
       this.emit({
         kind: "notice",
         sessionId,
         text: `外部 CLI 这一轮没跑起来：${err instanceof Error ? err.message : String(err)}`,
       })
-      // **收口**：不发 idle 的话，账本上那条回合会永远 running
-      this.emit({ kind: "idle", sessionId })
-    })
+        // **收口**：不发 idle 的话，账本上那条回合会永远 running
+        this.emit({ kind: "idle", sessionId })
+      })
+      .finally(() => {
+        s.inFlight -= 1
+      })
     // 串起来而不是覆盖：连发两轮时等待必须覆盖两轮
     s.pending = s.pending ? s.pending.then(() => run) : run
     void s.pending
@@ -137,6 +154,37 @@ export class CliRuntime implements AgentRuntime {
   /** 等当前回合跑完。CLI 的管道模式与测试需要它 */
   async waitForIdle(sessionId: SessionId): Promise<void> {
     await this.sessions.get(sessionId)?.pending
+  }
+
+  /**
+   * 会话中途换模型。
+   *
+   * **两个 CLI 的代价完全不同**（Spike H 实测）：codex 一轮一个进程，
+   * 下一轮多一个 `--model` 就换了；claude 的 `--model` 是启动时定的，
+   * 换模型要**杀进程 + `--resume` 重开**。差异留在各自的 driver 里。
+   *
+   * **`provider` 参数在这里用不上**——外部 CLI 没有 provider 概念。
+   * 保留它是为了与 `AgentRuntime.setModel` 的签名一致：
+   * 界面与命令面板调的是同一个方法，**不该按 runtime 分叉**。
+   */
+  async setModel(sessionId: SessionId, _provider: string, model: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    /**
+     * **这一轮还没说完就不许换。**
+     *
+     * 门开在实现里而不是调用点：界面、命令面板、将来的 CLI 共用同一道，
+     * 加入口时不必记得补一次（与 `NativeRuntime.setModel` 同源）。
+     */
+    if (s.inFlight > 0) {
+      throw new Error("这一轮还没说完，说完再换模型")
+    }
+    await s.driver.setModel(model)
+    /**
+     * **发一条 `model` 事件**，不让界面自己记一份。
+     * 换模型可能来自界面、命令面板、将来的 CLI——**只有事件能让三处保持一致**。
+     */
+    this.emit({ kind: "model", sessionId, provider: _provider, model })
   }
 
   async abort(sessionId: SessionId): Promise<void> {

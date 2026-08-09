@@ -346,8 +346,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   // **看 `available` 不是 `models`。** 后者是「配置里声明用到的」，
   // 前者才是「这个 provider 能用哪些」。缺省时给空数组 → pill 不显示，
   // 那正是「不知道」该有的表现：不假装有得选
+  /**
+   * 能选哪些模型。**两类会话的来源不同，但纪律是同一条：取不到就不假装有得选。**
+   *
+   * - **native**：问 pi 的模型目录（`available`）。看它不看 `models`——
+   *   后者是「配置里声明用到的」，前者才是「这个 provider 能用哪些」。
+   * - **cli**：只能由配置声明（Spike H）。claude / codex **都没有
+   *   「列出可选项」的接口**，所以问配置；没声明就空着。
+   *
+   * 2026-08-09（作者试用后补）：此前只有 native 那一支，于是 cli 会话里
+   * 根本没有模型选择器——**用户只看得见 agent pill，而它点了必然新建会话**。
+   */
   const modelChoices =
-    providers.providers.find((p) => p.providerId === agentCfg?.provider)?.available ?? []
+    agentCfg?.kind === "cli"
+      ? (agentCfg.models ?? [])
+      : (providers.providers.find((p) => p.providerId === agentCfg?.provider)?.available ?? [])
   const currentModel = sessionId ? (sessionModels[sessionId] ?? agentCfg?.model) : undefined
 
   /**
@@ -511,11 +524,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 models={modelChoices}
                 model={currentModel}
                 onPickModel={(m) => {
-                  if (!session || !agentCfg?.provider) return
+                  if (!session) return
+                  /**
+                   * **`provider` 只有 native 有。**
+                   *
+                   * 此前这里写的是 `if (!session || !agentCfg?.provider) return`——
+                   * 加了 cli 之后，那个卫语句会让**换模型静静地什么都不做**：
+                   * 点了没反应，而用户无从知道为什么。协议已把它放宽为可选（2.4）。
+                   */
                   client
                     .get("setSessionModel", {
                       sessionId: session.sessionId,
-                      provider: agentCfg.provider,
+                      ...(agentCfg?.provider ? { provider: agentCfg.provider } : {}),
                       model: m,
                     })
                     // **成功之后才更新缓存。** 失败时 fail() 会把后端给的理由

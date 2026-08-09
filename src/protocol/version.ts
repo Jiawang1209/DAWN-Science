@@ -28,8 +28,11 @@
  *   三处一起加。漏一处的表现是「某条路径上这个会话凭空消失」，
  *   而 strict 校验会把它变成一个与业务无关的报错信息。
  *   仍是 minor：既有取值一个没动。
+ * 2.4（2026-08-09）：cli agent 能报模型清单（`getProviders` 的 `models`），
+ *   且 `setSessionModel` 的 `provider` 放宽为可选——**外部 CLI 没有 provider 概念**。
+ *   放宽必填字段是**兼容的方向**（老客户端照旧会传），故仍是 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.3"
+export const WORKBENCH_PROTOCOL_VERSION = "2.4"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

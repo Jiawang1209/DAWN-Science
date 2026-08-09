@@ -19,6 +19,8 @@ const PROVIDERS = `agents:
     kind: cli
     command: "${FAKE}"
     args: []
+    model: gpt-5.1-codex
+    models: [gpt-5.1-codex, gpt-5.1-codex-mini]
     capabilities: [chat, exec]
 `
 
@@ -85,5 +87,41 @@ test.describe("codex：一轮一进程 + 续接", () => {
     db.close()
     // 工具名用 item 类型原样记 —— 不归一成 bash（那等于声称两者等价）
     expect(types).toContain("tool_call:command_execution")
+  })
+})
+
+test.describe("在一个对话里换模型（作者试用后补）", () => {
+  test.use({ dawnOptions: { providersYaml: PROVIDERS, gitInit: true } })
+
+  /**
+   * **作者报的那件事**：*「我的一个对话里面，不能切换不同的模型。
+   * 点击新的模型之后，就默认的跳入新的对话里面了。」*
+   *
+   * 根因不是坏了，是没做——cli 会话里没有模型选择器，
+   * 只有 agent pill，而它点了必然新建会话。
+   */
+  test("**换完之后是同一个对话，且下一轮真的用了新模型**", async ({ dawn }) => {
+    const { page, dbPath } = dawn
+    await startCodex(page)
+    await say(page, "第一句")
+    await expect(page.getByText(/假 codex 首轮/)).toBeVisible({ timeout: 30_000 })
+
+    // 模型选择器在 composer 右下角——**它存在本身就是这次修的东西**
+    await page.getByRole("button", { name: /gpt-5\.1-codex$/ }).click()
+    await page.getByRole("menuitem", { name: /gpt-5\.1-codex-mini/ }).click()
+
+    await say(page, "第二句")
+    // **同一个对话**：第一句仍在，且第二轮走的是 resume（续接）
+    await expect(page.getByText(/假 codex 首轮：第一句/)).toBeVisible()
+    await expect(page.getByText(/假 codex 续接：第二句/)).toBeVisible({ timeout: 30_000 })
+    // **新模型真的传下去了**
+    await expect(page.locator(".turn.agent").last()).toContainText("--model gpt-5.1-codex-mini")
+
+    // 而且**没有新建会话**
+    const { default: Database } = await import("better-sqlite3")
+    const db = new Database(dbPath, { readonly: true })
+    const n = (db.prepare("SELECT COUNT(*) c FROM sessions").get() as { c: number }).c
+    db.close()
+    expect(n).toBe(1)
   })
 })

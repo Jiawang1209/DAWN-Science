@@ -6,6 +6,8 @@
  * 不是可以丢掉活跃行的替换。写入一律走 `setList`，内容没变就不换引用。
  */
 import { atom } from "nanostores"
+import { z } from "zod"
+import { OPERATIONS } from "../../protocol/index.js"
 import type {
   Cost,
   FileChangeFacts,
@@ -20,20 +22,24 @@ import type { ContextUsage } from "../panels.js"
 /** `getRun` 的返回：Run 摘要 + 可选的产出事实与成本 */
 export type RunDetail = RunSummary & { fileChanges?: FileChangeFacts; cost?: Cost }
 
-export interface Providers {
-  /**
-   * `provider` / `model` 是 native agent 配置里的**初始**模型。
-   * 协议一直在回传它们，此前界面没用上——U2 的模型选择器需要它作为初值。
-   * PTY agent 没有这两样（它的模型由外部 CLI 自己管），故可缺省。
-   */
-  agents: { agentId: string; kind: "native" | "pty"; provider?: string; model?: string }[]
-  /**
-   * `models` 是**配置里声明过的**（凭证界面看它）；
-   * `available` 是**目录里真正有的**（模型选择器看它）。
-   * **两者语义不同，不能合并。** `available` 缺省 = 不知道，不是没有。
-   */
-  providers: { providerId: string; models: string[]; available?: string[] }[]
-}
+/**
+ * `getProviders` 的返回。**从协议推导，不手抄一份。**
+ *
+ * 2026-08-09（①-C）：这里原本是手写的一份结构，于是它和协议**各自漂移**——
+ * 协议加了 `kind: "cli"` 与 cli 的 `models`，这份没跟上，
+ * 界面因此看不见 cli agent 的模型清单，而 typecheck 报的是
+ * 「`"native" | "pty"` 与 `"cli"` 没有重叠」——**指向的是抄件，不是原件**。
+ *
+ * 推导之后这类漂移不会再有：协议改了，这里跟着改，改不动就编译不过。
+ *
+ * 各字段的语义（协议里也写了，这里留一份给读界面代码的人）：
+ * - `provider` / `model` 是 agent 配置里的**初始**模型
+ * - `providers[].models` 是**配置里声明过的**（凭证界面看它）
+ * - `providers[].available` 是**目录里真正有的**（模型选择器看它）。
+ *   **两者语义不同，不能合并**；`available` 缺省 = 不知道，不是没有
+ * - cli agent 的 `models` 由配置声明（Spike H：两个 CLI 都没有「列出可选项」的接口）
+ */
+export type Providers = z.infer<(typeof OPERATIONS)["getProviders"]["response"]>
 
 export interface CredentialState {
   configured: string[]

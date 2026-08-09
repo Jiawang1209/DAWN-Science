@@ -86,6 +86,8 @@ function harness(
     deferCreateSession?: boolean
     /** 建出来的会话是 pty（托管 claude / codex），不是内置 native */
     pty?: boolean
+    /** 建出来的会话是 cli（外部 CLI 的对话模式），可带模型清单 */
+    cliAgent?: { models?: string[] | undefined }
   } = {},
 ) {
   const calls: { op: string; req: unknown }[] = []
@@ -113,10 +115,23 @@ function harness(
       case "listCredentials":
         return { configured: ["ds"], encrypted: true }
       case "getProviders":
-        return {
-          agents: [{ agentId: "ds-chat", kind: "native", provider: "deepseek", model: "m" }],
-          providers: [{ providerId: "deepseek", models: ["m"] }],
-        }
+        return over.cliAgent
+          ? {
+              agents: [
+                {
+                  agentId: "claude",
+                  kind: "cli",
+                  command: "claude",
+                  model: "sonnet",
+                  ...(over.cliAgent.models ? { models: over.cliAgent.models } : {}),
+                },
+              ],
+              providers: [],
+            }
+          : {
+              agents: [{ agentId: "ds-chat", kind: "native", provider: "deepseek", model: "m" }],
+              providers: [{ providerId: "deepseek", models: ["m"] }],
+            }
       case "listSessions":
         return sessions
       case "listRuns":
@@ -131,13 +146,17 @@ function harness(
         return p
       }
       case "createSession": {
-        const made = over.pty ? { ...SESSION, agentId: "claude", kind: "pty" as const } : SESSION
+        const made = over.cliAgent
+          ? { ...SESSION, agentId: "claude", kind: "cli" as const }
+          : over.pty
+            ? { ...SESSION, agentId: "claude", kind: "pty" as const }
+            : SESSION
         sessions.push(made)
         return made
       }
       case "subscribeSession":
         return {
-          sessionId: "s1", kind: over.pty ? "pty" : "native", revision: 0, items: [],
+          sessionId: "s1", kind: over.cliAgent ? "cli" : over.pty ? "pty" : "native", revision: 0, items: [],
           terminal: over.pty ? "$ claude\r\n" : "", terminalTrimmed: false, state: "alive",
         }
       case "acquireLease":
@@ -487,5 +506,50 @@ describe("PTY 会话：终端就是这个会话本身", () => {
     expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
     expect(container.querySelector(".term-host")).toBeNull()
     expect(screen.queryByRole("button", { name: /终端/ })).toBeNull()
+  })
+})
+
+describe("cli 会话也能换模型（①-C 后续）", () => {
+  /**
+   * **作者试用后报的**：*「我的一个对话里面，不能切换不同的模型。
+   * 点击新的模型之后，就默认的跳入新的对话里面了。」*
+   *
+   * 根因不是坏了，是**没做**：cli 会话里根本没有 model pill——
+   * 那里只有 agent pill，而它的菜单是「新建会话，用：」，点了必然新建。
+   *
+   * 模型清单**只能由配置声明**（Spike H）：两个外部 CLI 都没有
+   * 「列出可选项」的接口。没声明就不显示 pill——**不假装有得选**。
+   */
+  const cliHarness = (models?: string[]) =>
+    harness({
+      projects: [proj("/w/proj")],
+      pty: false,
+      cliAgent: { models: models ?? undefined },
+    })
+
+  it("**声明了 models 就显示模型选择器**", async () => {
+    const h = cliHarness(["opus", "sonnet"])
+    render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    expect(await screen.findByRole("button", { name: /sonnet/ })).toBeDefined()
+  })
+
+  it("**没声明就不显示** —— 取不到就不假装有得选", async () => {
+    const h = cliHarness(undefined)
+    render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    await screen.findByPlaceholderText(/回车发送/)
+    expect(screen.queryByRole("button", { name: /sonnet|opus/ })).toBeNull()
+  })
+
+  it("**选一个之后走 setSessionModel，不是新建会话**", async () => {
+    const h = cliHarness(["opus", "sonnet"])
+    render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /sonnet/ }))
+    fireEvent.click(await screen.findByRole("menuitem", { name: /opus/ }))
+    await waitFor(() => expect(h.calls.some((c) => c.op === "setSessionModel")).toBe(true))
+    // **不是新建**：会话数没变
+    expect(h.calls.filter((c) => c.op === "createSession")).toHaveLength(1)
   })
 })

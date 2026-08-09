@@ -87,6 +87,21 @@ const CliAgentSchema = z
     /** 可执行文件名或路径，如 `claude` / `codex` */
     command: z.string().min(1),
     args: z.array(z.string()).default([]),
+    /**
+     * 默认用哪个模型。**缺省 = 用 CLI 自己的默认**，不替它选一个。
+     */
+    model: z.string().min(1).optional(),
+    /**
+     * 模型选择器里能选哪些。**只能由配置声明**（Spike H）。
+     *
+     * pi 那边有模型目录（`availableModels(provider)`），**两个 CLI 都没有
+     * 对应的接口**：claude 认别名（`opus`/`sonnet`/`haiku`）也认全名，
+     * codex 认模型名，但**都没有「列出可选项」的方式**。
+     *
+     * 没声明就不显示模型选择器——**与 native 那边「取不到就不假装有得选」
+     * 是同一条纪律**。
+     */
+    models: z.array(z.string().min(1)).optional(),
     capabilities: z.array(CapabilitySchema),
   })
   .strict()

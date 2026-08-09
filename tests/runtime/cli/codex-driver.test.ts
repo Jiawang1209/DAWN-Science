@@ -32,7 +32,7 @@ if (prompt.includes("工具")) {
   say({ type: "item.started", item: { id: "item_0", type: "command_execution", command: "ls", status: "in_progress" } })
   say({ type: "item.completed", item: { id: "item_0", type: "command_execution", command: "ls", aggregated_output: "a\\nb", exit_code: 0, status: "completed" } })
 }
-say({ type: "item.completed", item: { id: "item_1", type: "agent_message", text: (isResume ? "续接:" : "首轮:") + prompt } })
+say({ type: "item.completed", item: { id: "item_1", type: "agent_message", text: (isResume ? "续接:" : "首轮:") + prompt + " argv=" + argv.join(" ") } })
 say({ type: "turn.completed", usage: { input_tokens: 1, output_tokens: 2 } })
 `
 
@@ -63,7 +63,7 @@ describe("第一轮", () => {
   it("跑得起来，回复回得来", async () => {
     const { d, events } = driver()
     await d.startTurn("你好")
-    expect(texts(events)).toEqual(["首轮:你好"])
+    expect(texts(events)[0]).toContain("首轮:你好")
     expect(events.some((e) => e.kind === "idle")).toBe(true)
   })
 
@@ -87,13 +87,47 @@ describe("第二轮：必须 resume", () => {
     await d.startTurn("第一句")
     await d.startTurn("第二句")
     // 假 CLI 在 resume 时回「续接:」——不带 resume 的话它会回「首轮:」
-    expect(texts(events)).toEqual(["首轮:第一句", "续接:第二句"])
+    expect(texts(events)[0]).toContain("首轮:第一句")
+    expect(texts(events)[1]).toContain("续接:第二句")
   })
 
   it("**给了已有 thread_id 时，第一轮就 resume** —— 重开应用后要接得上", async () => {
     const { d, events } = driver({ threadId: "旧线程-9" })
     await d.startTurn("接着说")
-    expect(texts(events)).toEqual(["续接:接着说"])
+    expect(texts(events)[0]).toContain("续接:接着说")
+  })
+})
+
+describe("会话中途换模型（Spike H）", () => {
+  /**
+   * **codex 换模型几乎不花什么**——它本来就是一轮一个进程，
+   * 下一轮的命令行多一个 `--model` 就换了，上下文靠 `thread_id` 保住。
+   *
+   * **与 claude 恰好相反**：那边的 `--model` 是启动时定的，
+   * 换模型要杀进程 + `--resume` 重开。**同一个能力，两种代价。**
+   */
+  it("**换完之后的那一轮带上 --model**", async () => {
+    const { d, events } = driver()
+    await d.startTurn("第一句")
+    await d.setModel("o3")
+    await d.startTurn("第二句")
+    expect(texts(events)[1]).toContain("--model o3")
+  })
+
+  it("**换模型不影响续接** —— 仍然走 resume，上下文不丢", async () => {
+    const { d, events } = driver()
+    await d.startTurn("第一句")
+    await d.setModel("o3")
+    await d.startTurn("第二句")
+    expect(texts(events)[1]).toContain("续接:")
+  })
+
+  it("第一轮之前就换 —— 第一轮直接用新模型", async () => {
+    const { d, events } = driver()
+    await d.setModel("o3")
+    await d.startTurn("你好")
+    expect(texts(events)[0]).toContain("--model o3")
+    expect(texts(events)[0]).toContain("首轮:")
   })
 })
 
@@ -128,6 +162,7 @@ describe("codex 没有长驻进程", () => {
     await d.close()
     await d.startTurn("第二句")
     // 与 claude driver 相反：那边 close 之后再说话要报错
-    expect(texts(events)).toEqual(["首轮:第一句", "续接:第二句"])
+    expect(texts(events)[0]).toContain("首轮:第一句")
+    expect(texts(events)[1]).toContain("续接:第二句")
   })
 })

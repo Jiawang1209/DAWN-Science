@@ -193,6 +193,12 @@ export const OPERATIONS = {
           provider: z.string().optional(),
           model: z.string().optional(),
           command: z.string().optional(),
+          /**
+           * cli：这个 agent 能选哪些模型（**由配置声明**，Spike H）。
+           * 两个外部 CLI 都没有「列出可选项」的接口，所以只能问配置。
+           * **缺省 = 没声明**，那时界面不显示模型选择器——不假装有得选。
+           */
+          models: z.array(z.string()).optional(),
         }),
       ),
       /**
@@ -363,7 +369,12 @@ export const OPERATIONS = {
     request: z
       .object({
         sessionId: z.string().min(1),
-        provider: z.string().min(1),
+        /**
+         * pi 的 provider id。**cli 会话没有这个概念**（①-C），故放宽为可选。
+         *
+         * 放宽是**兼容的方向**：老界面照旧会传，新界面对 cli 会话不传。
+         */
+        provider: z.string().min(1).optional(),
         model: z.string().min(1),
       })
       .strict(),

@@ -94,7 +94,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           kind: def.kind,
           ...(def.kind === "native"
             ? { provider: def.provider, model: def.model }
-            : { command: def.command }),
+            : {
+                command: def.command,
+                // cli 的模型清单由配置声明（Spike H）。**没声明就不给字段**——
+                // 缺省是「没得选」，空数组会被读成「确认一个都没有」
+                ...(def.kind === "cli" && def.model ? { model: def.model } : {}),
+                ...(def.kind === "cli" && def.models ? { models: def.models } : {}),
+              }),
         })),
         providers: await Promise.all(
           used.map(async (providerId) => ({
@@ -282,7 +288,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     setSessionModel: async ({ sessionId, provider, model }) => {
       try {
-        await sessions.setModel(sessionId, provider, model)
+        // **provider 对 cli 会话没有意义**（外部 CLI 没这个概念），
+        // 放宽之后这里给空串——运行时那边也只是为了签名一致才留着这个参数
+        await sessions.setModel(sessionId, provider ?? "", model)
       } catch (err) {
         // **全是业务性失败**：模型不存在、没配 key、这一轮还没说完。
         // 界面要原样把理由说给人听，所以不能吞成一句「操作失败」

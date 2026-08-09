@@ -30,6 +30,6 @@ say({
 })
 say({
   type: "item.completed",
-  item: { id: "item_1", type: "agent_message", text: (isResume ? "假 codex 续接：" : "假 codex 首轮：") + prompt },
+  item: { id: "item_1", type: "agent_message", text: (isResume ? "假 codex 续接：" : "假 codex 首轮：") + prompt + " argv=" + argv.join(" ") },
 })
 say({ type: "turn.completed", usage: { input_tokens: 1, output_tokens: 2 } })

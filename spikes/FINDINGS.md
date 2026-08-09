@@ -780,3 +780,48 @@ thread.started(thread_id) → turn.started
 - 两个 CLI 在**权限/审批**上的行为（headless 下工具调用怎么放行）——
   这条与阶段 ④ 的授权门直接相关，做之前必须单独验
 - codex `exec` 的并发：同一个 thread 能不能同时跑两轮（应当不行，但没验）
+
+---
+
+## Spike H —— 外部 CLI 能不能会话中途换模型？（2026-08-09，①-C 后续）
+
+**触发**：作者试用后说*「我的一个对话里面，不能切换不同的模型。点击新的模型之后，
+就默认的跳入新的对话里面了」*。
+
+**先厘清一件事**：native（deepseek）那条**是好的**——pi 报了两个模型，
+model pill 会渲染，就地切换由 U2 做过、`model-switch.spec.ts` 守着。
+作者撞到的是 **cli 会话里根本没有 model pill**，那里只有 agent pill，
+而它的菜单是「新建会话，用：」——点了必然新建。
+
+### 结论：**两个都能，但机制不同**
+
+| | claude | codex |
+|---|---|---|
+| 换模型的入口 | `--model <name>`（**启动时**定） | `-m/--model`（**每次 exec** 都给） |
+| 会话延续 | `--resume <session_id>` | `exec resume <thread_id>` |
+| 换模型 = | **杀进程 → 带 `--resume` + 新 `--model` 重开** | 下一轮的参数换一下，**进程本来就是新的** |
+
+**实测证据**：
+
+```
+① claude 第一轮：记住 8461 → 拿到 session_id
+② claude --resume <sid> --model haiku → 回复 "8461"（记得），
+   result.modelUsage 确认实际用的是 claude-haiku-4-5-20251001
+```
+
+**所以 claude 换模型是「重开 + 接回」**，不是「就地切换」——上下文不丢，
+但**进程会重来一次**。这个代价必须写在实现的注释里，别让后来的人以为它是无痛的。
+
+### 一个没有答案的问题：**模型清单从哪来**
+
+pi 有模型目录（`availableModels(provider)`），**两个 CLI 都没有对应的东西**：
+claude 认别名（`opus` / `sonnet` / `haiku`）也认全名，codex 认模型名，
+但**都没有「列出可选项」的接口**。
+
+**所以只能由配置声明**（`providers.yaml` 的 cli agent 上写 `models: [...]`）。
+没声明就不显示 model pill——**与 native 那边「取不到就不假装有得选」是同一条纪律**。
+
+### 未验证
+
+- claude `--resume` 在**进程被 SIGKILL** 之后是否同样接得上（本次是正常退出后 resume）
+- 换模型的那一刻若有一轮正在跑，会怎样（实现里要挡住）

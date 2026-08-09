@@ -122,6 +122,20 @@ export type AgentEvent =
 
 export type EventSink = (event: AgentEvent) => void
 
+/**
+ * 上下文用量（①-B″ · U3）。**每个字段各自为真，缺的就缺着。**
+ *
+ * `bytes` 是**字节，不是 token**——`pi-ai` 没有 tokenizer，
+ * 拿字节占比去凑一个 token 分解就是编造。
+ */
+export interface ContextUsage {
+  model?: string
+  /** 模型自带的上下文上限（token）。**真数** */
+  contextWindow?: number
+  /** 三档内容的字节数。**不是 token** */
+  bytes: { system: number; tools: number; history: number }
+}
+
 export interface AgentRuntime {
   start(spec: SessionSpec): Promise<SessionHandle>
   /** 注册观察者。可多个，互不影响。返回退订函数。 */
@@ -139,6 +153,8 @@ export interface AgentRuntime {
    * 界面、命令面板、将来的 CLI 共用同一道，加入口时不必记得补一次。
    */
   setModel?(sessionId: SessionId, provider: string, model: string): Promise<void>
+  /** 上下文用量。只有 native 有；拿不到时返回 undefined（**缺就是缺**） */
+  contextUsage?(sessionId: SessionId): ContextUsage | undefined
   /** 插一句引导，不打断整轮。只有 native 有 */
   steer?(sessionId: SessionId, text: string): Promise<void>
   resize?(sessionId: SessionId, cols: number, rows: number): void

@@ -100,6 +100,72 @@ export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) 
  *
  * 把「不可见」显示成 0 会让人以为免费，那是错的。
  */
+export interface ContextUsage {
+  model?: string
+  contextWindow?: number
+  bytes: { system: number; tools: number; history: number }
+}
+
+const KB = (n: number): string =>
+  n < 1024 ? `${n} 字节` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`
+
+/**
+ * 上下文用量（①-B″ · U3）。
+ *
+ * ## 这个面板最要紧的一件事：**不把字节说成 token**
+ *
+ * `pi-ai` 里没有 tokenizer。三档内容的**字节数可以精确量，token 不能**。
+ * 拿字节占比乘上一个 token 总数假装成分解，就是编造——
+ * 而计划里那条纪律说得很直白：**分解不准比不分解更坏，
+ * 它会让人据此做错决定**。
+ *
+ * 所以这里两块并列，各自为真：
+ *   - **上限**：模型自带的 `contextWindow`，真数（拿不到就说拿不到）
+ *   - **构成**：三档的字节数与占比，**标题里写死「按字节，不是 token」**
+ *
+ * 已用了多少 token 目前**尚未采集**（provider 报的 usage 一处都没接），
+ * 面板如实说「尚未采集」，不拿字节去凑。
+ */
+export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
+  if (!usage) {
+    return (
+      <Panel title="上下文">
+        <Empty>尚未记录</Empty>
+      </Panel>
+    )
+  }
+  const { system, tools, history } = usage.bytes
+  const total = system + tools + history
+  const rows: { label: string; n: number }[] = [
+    { label: "系统提示词", n: system },
+    { label: "工具 schema", n: tools },
+    { label: "对话历史", n: history },
+  ]
+  return (
+    <Panel title="上下文">
+      {usage.contextWindow ? (
+        <p className="tokens">
+          模型上限 {usage.contextWindow.toLocaleString()} tokens
+          {usage.model ? ` · ${usage.model}` : ""}
+        </p>
+      ) : (
+        <p className="tokens">模型上限：拿不到</p>
+      )}
+      {/* **这一行是整个面板的要害。** 不写清楚，人就会把它当成 token 分解 */}
+      <p className="hint">已用 token 尚未采集；下表是**按字节**，不是 token</p>
+      <ul className="stat-row ctx-rows">
+        {rows.map((r) => (
+          <li key={r.label} className="ctx-row">
+            <span className="name">{r.label}</span>
+            <span className="amount">{KB(r.n)}</span>
+            <span className="hint">{total > 0 ? `${Math.round((r.n / total) * 100)}%` : "—"}</span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
 export function CostPanel({ cost }: { cost: Cost | undefined }) {
   if (!cost) {
     return (

@@ -50,6 +50,7 @@ export {
   $provenance,
   $providers,
   $sessionModels,
+  $contextUsage,
   $credentials,
   setProjects,
   setSessions,
@@ -59,6 +60,7 @@ export {
   setProviders,
   setCredentials,
   setSessionModel,
+  setContextUsage,
   type RunDetail,
   type Providers,
   type CredentialState,
@@ -103,6 +105,7 @@ export {
   loadProjects,
   loadCredentials,
   loadProviders,
+  loadContextUsage,
   loadSessions,
   loadRuns,
   loadRunDetail,
@@ -112,6 +115,7 @@ export {
 import { $items, $terminal, $terminalTrimmed } from "./transcript.js"
 import { $connection, $notes, $ready } from "./connection.js"
 import {
+  $contextUsage,
   $credentials,
   $projects,
   $providers,
@@ -158,6 +162,7 @@ export function resetAllState(): void {
   $provenance.set(undefined)
   $providers.set({ agents: [], providers: [] })
   $sessionModels.set({})
+  $contextUsage.set(undefined)
   $credentials.set({ configured: [], encrypted: false })
   $activeProjectId.set(undefined)
   $activeSessionId.set(undefined)

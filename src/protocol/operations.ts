@@ -310,6 +310,32 @@ export const OPERATIONS = {
   },
 
   /**
+   * 上下文用量（①-B″ · U3）。
+   *
+   * **每个字段各自为真，缺的就缺着。** `bytes` 是**字节，不是 token**——
+   * `pi-ai` 没有 tokenizer，拿字节占比去凑一个 token 分解就是编造，
+   * 而分解不准比不分解更坏：它会让人据此做错决定。
+   *
+   * `usedTokens` 暂缺（provider 报的 usage 尚未采集），界面应显示「尚未采集」，
+   * **不要用字节去估**。
+   */
+  getContextUsage: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z.object({
+      model: z.string().optional(),
+      /** 模型自带的上下文上限（token）。**真数**；缺省 = 不知道 */
+      contextWindow: z.int().min(0).optional(),
+      /** 三档内容的**字节数，不是 token** */
+      bytes: z.object({
+        system: z.int().min(0),
+        tools: z.int().min(0),
+        history: z.int().min(0),
+      }),
+    }),
+    mutating: false,
+  },
+
+  /**
    * 会话中途换模型（①-B″ · U2）。
    *
    * **能力由 Spike E 在真链路上验过**：换了之后下一次请求确实打到新模型

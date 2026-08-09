@@ -157,6 +157,14 @@ export class SessionManager {
   }
 
   /**
+   * 上下文用量。只有 native 有；**拿不到就返回 undefined**——
+   * 编一个零出来会让界面显示「上下文是空的」，那是假话。
+   */
+  contextUsage(sessionId: SessionId) {
+    return this.bound.get(sessionId)?.contextUsage?.(sessionId)
+  }
+
+  /**
    * 换模型。只有 native 有。
    *
    * **不查写权租约**：换模型不是往会话里写内容，它改的是「下一轮用谁」。

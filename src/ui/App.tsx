@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useMemo } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
-import { ChangesPanel, CostPanel, ProvenanceBadge, RunsPanel, StatusPanel } from "./panels.js"
+import { ChangesPanel, ContextPanel, CostPanel, ProvenanceBadge, RunsPanel, StatusPanel } from "./panels.js"
 import {
   ConversationView,
   EmptyConversation,
@@ -36,6 +36,7 @@ import {
   $activeSessionId,
   $credentials,
   $sessionModels,
+  $contextUsage,
   $dockOpen,
   $items,
   $notes,
@@ -60,6 +61,7 @@ import {
   loadCredentials,
   loadProjects,
   loadProviders,
+  loadContextUsage,
   loadRunDetail,
   loadRuns,
   loadSessions,
@@ -105,6 +107,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const providers = useStore($providers)
   const creds = useStore($credentials)
   const sessionModels = useStore($sessionModels)
+  const contextUsage = useStore($contextUsage)
   const projectId = useStore($activeProjectId)
   const sessionId = useStore($activeSessionId)
   const view = useStore($view)
@@ -187,6 +190,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // **依赖里刻意不放 projectId**：它变化时不该退订重订，
     // 那会在切换的空隙里漏掉更新。回调内部直读 atom 拿最新值
   }, [ready, client])
+
+  // 上下文用量随会话走。**没有会话时清掉**——留着上一个会话的数字是最坏的一种，
+  // 它看起来是真的
+  useEffect(() => {
+    void loadContextUsage(client, sessionId)
+  }, [client, sessionId, items])
 
   /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {
@@ -379,6 +388,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ChangesPanel facts={runDetail?.fileChanges} />
               {/* 成本优先用 getRun 的详情，退回摘要里的——两处都没有时面板说「尚未记录」 */}
               <CostPanel cost={runDetail?.cost ?? latestRun?.cost} />
+              {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
+              <ContextPanel usage={contextUsage} />
               <RunsPanel runs={runs} />
               {provenance ? (
                 <section className="panel">

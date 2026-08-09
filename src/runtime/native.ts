@@ -33,6 +33,7 @@ import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
   AgentRuntime,
+  ContextUsage,
   EventSink,
   SessionHandle,
   SessionId,
@@ -414,6 +415,46 @@ export class NativeRuntime implements AgentRuntime {
       `provider "${provider}" 没有模型 "${modelId}"。` +
         `该 provider 可用的模型：${known.map((m) => m.id).join(", ")}`,
     )
+  }
+
+  /**
+   * 上下文用量（①-B″ · U3）。
+   *
+   * ## 只报能精确量的，不估算
+   *
+   * `pi-ai` 里**没有 tokenizer**。字节数可以精确量，token 不能——
+   * 把字节占比乘上一个 token 总数假装成分解，就是编造，
+   * 而**分解不准比不分解更坏：它会让人据此做错决定**。
+   *
+   * 所以这里回两样各自为真的东西：
+   *   - `contextWindow`：模型自带的上限，**真数**
+   *   - `bytes`：系统提示词 / 工具 schema / 对话历史三档的**字节数，不是 token**
+   *
+   * `usedTokens` 暂缺——provider 报的 usage 目前一处都没采集。
+   * **缺就是缺**，界面显示「尚未采集」，不拿字节去凑。
+   */
+  contextUsage(sessionId: SessionId): ContextUsage | undefined {
+    const s = this.sessions.get(sessionId)
+    if (!s) return undefined
+    const st = s.session.state as {
+      systemPrompt?: string
+      tools?: unknown[]
+      messages?: unknown[]
+      model?: { contextWindow?: number; id?: string }
+    }
+    const size = (v: unknown): number =>
+      v === undefined ? 0 : Buffer.byteLength(typeof v === "string" ? v : JSON.stringify(v), "utf8")
+    return {
+      // `exactOptionalPropertyTypes`：**缺省与「值为 undefined」不是一回事**，
+      // 所以拿不到就不给这个字段，而不是给一个 undefined
+      ...(st.model?.id ? { model: st.model.id } : {}),
+      ...(st.model?.contextWindow ? { contextWindow: st.model.contextWindow } : {}),
+      bytes: {
+        system: size(st.systemPrompt),
+        tools: size(st.tools),
+        history: size(st.messages),
+      },
+    }
   }
 
   /**

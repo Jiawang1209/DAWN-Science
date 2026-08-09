@@ -30,6 +30,7 @@ import {
   setRuns,
   setSessions,
   setProviders,
+  setContextUsage,
   type CredentialState,
   type Providers,
   type RunDetail,
@@ -57,6 +58,19 @@ export const loadCredentials = (c: WorkbenchClient): Promise<void> =>
       setCredentials(v)
     })
     .catch(fail)
+
+export const loadContextUsage = async (
+  c: WorkbenchClient,
+  sessionId: string | undefined,
+): Promise<void> => {
+  // 没有会话就把它清掉。**留着上一个会话的数字是最坏的一种**——
+  // 它看起来是真的
+  if (!sessionId) return setContextUsage(undefined)
+  await c
+    .get<import("../panels.js").ContextUsage>("getContextUsage", { sessionId })
+    .then(setContextUsage)
+    .catch(fail)
+}
 
 export const loadProviders = (c: WorkbenchClient): Promise<void> =>
   c.get<Providers>("getProviders").then(setProviders).catch(fail)

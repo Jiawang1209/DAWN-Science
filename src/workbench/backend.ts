@@ -258,6 +258,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
+    getContextUsage: async ({ sessionId }) => {
+      const u = sessions.contextUsage(sessionId)
+      // 拿不到时给一个**三档全零、且没有上限**的结果：
+      // 上限缺省的含义是"不知道"，界面据此显示「尚未采集」而不是「用了 0%」
+      return u ?? { bytes: { system: 0, tools: 0, history: 0 } }
+    },
+
     setSessionModel: async ({ sessionId, provider, model }) => {
       try {
         await sessions.setModel(sessionId, provider, model)

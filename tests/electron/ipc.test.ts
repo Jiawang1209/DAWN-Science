@@ -29,6 +29,7 @@ function backend(): WorkbenchBackend {
     unsubscribeSession: async () => ({}),
     abortSession: async () => ({}),
     setSessionModel: async () => ({}),
+    getContextUsage: async () => ({ bytes: { system: 0, tools: 0, history: 0 } }),
     steerSession: async () => ({}),
     previewTakeover: async () => ({
       sessionId: "s1", currentHolder: null, requester: "user" as const,

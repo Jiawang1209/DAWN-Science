@@ -15,6 +15,7 @@ import type {
   SessionSummary,
 } from "../../protocol/index.js"
 import { setList, setValue } from "./identity.js"
+import type { ContextUsage } from "../panels.js"
 
 /** `getRun` 的返回：Run 摘要 + 可选的产出事实与成本 */
 export type RunDetail = RunSummary & { fileChanges?: FileChangeFacts; cost?: Cost }
@@ -104,3 +105,7 @@ export function setSessionModel(sessionId: string, model: string): void {
   if (prev[sessionId] === model) return
   $sessionModels.set({ ...prev, [sessionId]: model })
 }
+
+/** 当前会话的上下文用量（①-B″ · U3）。后端权威，这里只是缓存 */
+export const $contextUsage = atom<ContextUsage | undefined>(undefined)
+export const setContextUsage = (v: ContextUsage | undefined) => $contextUsage.set(v)

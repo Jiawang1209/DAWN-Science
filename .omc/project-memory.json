@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nperl -pi -e 's/\\.composer \\.agent-pill:not\\(\\.model-pill\\)/.composer .agent-pill/g' e2e/model-switch.spec.ts\nnpm run typecheck 2>&1 | grep error | head -3\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/agent-pill.spec.ts e2e/model-switch.spec.ts --reporter=list 2>&1 | tail -6",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -3\nnpm run typecheck 2>&1 | grep error | head -3\nnpx playwright test --reporter=list 2>&1 | tail -4",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | grep -E '✘|passed|failed' | tail -6",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -rf test-results\nnpm run test:e2e:visual:update >/dev/null 2>&1\nnpx playwright test --reporter=list 2>&1 | grep -E '^\\s+[0-9]+ (passed|failed)' | head -3\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -50,8 +50,8 @@
     },
     {
       "path": "src/runtime/native.ts",
-      "accessCount": 16,
-      "lastAccessed": 1786247135598,
+      "accessCount": 17,
+      "lastAccessed": 1786247813392,
       "type": "file"
     },
     {

@@ -15,7 +15,7 @@ import type { RunStore } from "../store/runs.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
-import { SessionSetupError } from "../session/manager.js"
+import { UserFacingError } from "../errors.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
 
@@ -209,7 +209,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 在界面上是 `操作 "createSession" 执行失败`。
        */
       const rec = await sessions.create(agentId, project.workspace, { projectId }).catch((err: unknown) => {
-        if (err instanceof SessionSetupError) throw fault("invalid_request", err.message)
+        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
         throw err
       })
 

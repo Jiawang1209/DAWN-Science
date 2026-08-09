@@ -1,69 +1,236 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1786154361818,
+  "lastScanned": 1786252306946,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
-    "languages": [],
-    "frameworks": [],
-    "packageManager": null,
-    "runtime": null
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=22",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@playwright/test",
+        "version": "1.62.1",
+        "category": "testing"
+      },
+      {
+        "name": "react",
+        "version": "19.2.8",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.8",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "8.2.1",
+        "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.10",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | grep -E '✘|^\\s+[0-9]+ (passed|failed)' | head -5",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run typecheck 2>&1 | grep error | head -3\nnpm test 2>&1 | grep -E 'Tests |Test Files|×' | head -4",
+    "buildCommand": "npm run typecheck 2>&1 | grep \"error TS\" | head -3; npm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2 && npm run build 2>&1 | tail -1 && npx playwright test e2e/cli-agent-kind.spec.ts e2e/cli-agent.spec.ts --reporter=list 2>&1 | grep -E \"✓|✘|passed|failed\" | head -8",
+    "testCommand": "npm run typecheck 2>&1 | grep \"error TS\" | head -3; npm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2 && npm run build 2>&1 | tail -1 && npx playwright test e2e/cli-agent-kind.spec.ts e2e/cli-agent.spec.ts --reporter=list 2>&1 | grep -E \"✓|✘|passed|failed\" | head -8",
     "lintCommand": null,
     "devCommand": null,
-    "scripts": {}
+    "scripts": {
+      "postinstall": "node scripts/fix-node-pty.mjs",
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "typecheck": "tsc --noEmit",
+      "dawn": "tsx --env-file-if-exists=.env src/cli.ts",
+      "smoke:native": "tsx --env-file-if-exists=.env scripts/smoke-native.ts",
+      "spike:a": "tsx --env-file-if-exists=.env spikes/a-pi-embed.ts",
+      "spike:b": "tsx --env-file-if-exists=.env spikes/b-pty-mcp-hook.ts",
+      "spike:d": "tsx --env-file-if-exists=.env spikes/d-jupyter-kernel.ts",
+      "build:electron": "node scripts/build-electron.mjs",
+      "build:ui": "vite build",
+      "build": "npm run build:electron && npm run build:ui",
+      "app": "npm run build && electron dist/electron/main.js",
+      "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
+      "ui:dev": "vite",
+      "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts",
+      "dev:mock": "node scripts/dev-mock.mjs",
+      "test:e2e": "npm run build && playwright test",
+      "test:e2e:only": "playwright test",
+      "test:e2e:visual": "playwright test e2e/visual.spec.ts",
+      "test:e2e:visual:update": "playwright test e2e/visual.spec.ts --update-snapshots",
+      "spike:e": "tsx spikes/e-model-switch.ts"
+    }
   },
   "conventions": {
-    "namingStyle": null,
+    "namingStyle": "camelCase",
     "importStyle": null,
-    "testPattern": null,
+    "testPattern": "*.test.ts",
     "fileOrganization": null
   },
   "structure": {
     "isMonorepo": false,
     "workspaces": [],
     "mainDirectories": [
-      "docs"
+      "docs",
+      "scripts",
+      "src",
+      "tests"
     ],
     "gitBranches": null
   },
   "customNotes": [],
   "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 0,
+      "lastAccessed": 1786252306879,
+      "keyFiles": []
+    },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 2,
-      "lastAccessed": 1786154361790,
+      "fileCount": 4,
+      "lastAccessed": 1786252306880,
       "keyFiles": [
-        "DEVELOPMENT_HISTORY.md"
+        "DESIGN.md",
+        "DEVELOPMENT_HISTORY.md",
+        "REFERENCES.md"
+      ]
+    },
+    "e2e": {
+      "path": "e2e",
+      "purpose": null,
+      "fileCount": 11,
+      "lastAccessed": 1786252306901,
+      "keyFiles": [
+        "agent-pill.spec.ts",
+        "boot.spec.ts",
+        "chat.spec.ts",
+        "context-usage.spec.ts",
+        "fixtures.ts"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 5,
+      "lastAccessed": 1786252306902,
+      "keyFiles": [
+        "build-electron.mjs",
+        "dev-mock.mjs",
+        "fix-node-pty.mjs",
+        "mock-inference-server.mjs",
+        "smoke-native.ts"
+      ]
+    },
+    "spikes": {
+      "path": "spikes",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1786252306902,
+      "keyFiles": [
+        "FINDINGS.md",
+        "a-pi-embed.ts",
+        "a2-pi-third-layer.ts",
+        "b-pty-mcp-hook.ts",
+        "d-jupyter-kernel.ts"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 1,
+      "lastAccessed": 1786252306903,
+      "keyFiles": [
+        "cli.ts"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 5,
+      "lastAccessed": 1786252306906,
+      "keyFiles": [
+        "first-run.test.ts",
+        "provenance-probe.test.ts",
+        "run-recorder.test.ts",
+        "stuck-guard.test.ts",
+        "tool-output.test.ts"
+      ]
+    },
+    "src/config": {
+      "path": "src/config",
+      "purpose": "Configuration files",
+      "fileCount": 2,
+      "lastAccessed": 1786252306911,
+      "keyFiles": [
+        "loader.ts",
+        "schema.ts"
+      ]
+    },
+    "tests/config": {
+      "path": "tests/config",
+      "purpose": "Configuration files",
+      "fileCount": 1,
+      "lastAccessed": 1786252306912,
+      "keyFiles": [
+        "registry.test.ts"
+      ]
+    },
+    "tests/helpers": {
+      "path": "tests/helpers",
+      "purpose": "Helper functions",
+      "fileCount": 1,
+      "lastAccessed": 1786252306913,
+      "keyFiles": [
+        "credentials.ts"
       ]
     }
   },
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 65,
-      "lastAccessed": 1786251046858,
+      "accessCount": 74,
+      "lastAccessed": 1786259584640,
       "type": "file"
     },
     {
       "path": "src/runtime/native.ts",
-      "accessCount": 17,
-      "lastAccessed": 1786247813392,
+      "accessCount": 20,
+      "lastAccessed": 1786257138721,
+      "type": "file"
+    },
+    {
+      "path": "src/session/manager.ts",
+      "accessCount": 20,
+      "lastAccessed": 1786271929030,
       "type": "file"
     },
     {
       "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
       "accessCount": 14,
       "lastAccessed": 1786203858192,
-      "type": "file"
-    },
-    {
-      "path": "src/session/manager.ts",
-      "accessCount": 11,
-      "lastAccessed": 1786195323173,
       "type": "file"
     },
     {
@@ -85,6 +252,12 @@
       "type": "file"
     },
     {
+      "path": "src/runtime/types.ts",
+      "accessCount": 6,
+      "lastAccessed": 1786256769240,
+      "type": "file"
+    },
+    {
       "path": "spikes/a-pi-embed.ts",
       "accessCount": 5,
       "lastAccessed": 1786156778022,
@@ -103,12 +276,6 @@
       "type": "file"
     },
     {
-      "path": "src/runtime/types.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786195213728,
-      "type": "file"
-    },
-    {
       "path": "src/protocol/operations.ts",
       "accessCount": 5,
       "lastAccessed": 1786195366881,
@@ -118,6 +285,12 @@
       "path": "src/store/schema.ts",
       "accessCount": 5,
       "lastAccessed": 1786212663510,
+      "type": "file"
+    },
+    {
+      "path": "tests/session/manager.test.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786254297078,
       "type": "file"
     },
     {
@@ -139,6 +312,12 @@
       "type": "file"
     },
     {
+      "path": "src/protocol/version.ts",
+      "accessCount": 4,
+      "lastAccessed": 1786258138640,
+      "type": "file"
+    },
+    {
       "path": "tests/protocol/entities.test.ts",
       "accessCount": 3,
       "lastAccessed": 1786165861865,
@@ -148,12 +327,6 @@
       "path": "vitest.config.ts",
       "accessCount": 3,
       "lastAccessed": 1786168356492,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/version.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786182137584,
       "type": "file"
     },
     {
@@ -214,6 +387,12 @@
       "path": "src/protocol/entities.ts",
       "accessCount": 2,
       "lastAccessed": 1786212672645,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/session-dir.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786254147093,
       "type": "file"
     },
     {
@@ -295,12 +474,6 @@
       "type": "file"
     },
     {
-      "path": "tests/session/manager.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786161411572,
-      "type": "file"
-    },
-    {
       "path": "providers.example.yaml",
       "accessCount": 1,
       "lastAccessed": 1786161514860,
@@ -310,12 +483,6 @@
       "path": "tests/runtime/session-dir.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786161752833,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/session-dir.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786161806592,
       "type": "file"
     },
     {

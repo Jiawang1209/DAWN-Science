@@ -119,3 +119,35 @@ describe("SessionStore", () => {
     expect(store.reconcileOnStartup()).toBe(0)
   })
 })
+
+describe("codex 的续接凭据（①-C · v5）", () => {
+  /**
+   * **`thread_id` 丢了等于会话断了。**
+   *
+   * codex 一轮一个进程，多轮全靠 `codex exec resume <thread_id>`。
+   * 进程随时会退出，所以它**一拿到就落库**，不留在内存里。
+   */
+  it("写得进、读得出", () => {
+    const store = makeStore()
+    const rec = { ...base, id: "s1", sessionDir: "/w/.dawn/s1" }
+    store.insert(rec)
+    store.setCliThreadId(rec.id, "线程-42")
+    expect(store.get(rec.id)?.cliThreadId).toBe("线程-42")
+  })
+
+  it("**没设过就是缺省，不是空串** —— claude 会话恒为缺省（它用不上）", () => {
+    const store = makeStore()
+    const rec = { ...base, id: "s1", sessionDir: "/w/.dawn/s1" }
+    store.insert(rec)
+    expect("cliThreadId" in (store.get(rec.id) as object)).toBe(false)
+  })
+
+  it("可以更新 —— 同一个会话换了线程时要盖掉旧的", () => {
+    const store = makeStore()
+    const rec = { ...base, id: "s1", sessionDir: "/w/.dawn/s1" }
+    store.insert(rec)
+    store.setCliThreadId(rec.id, "旧")
+    store.setCliThreadId(rec.id, "新")
+    expect(store.get(rec.id)?.cliThreadId).toBe("新")
+  })
+})

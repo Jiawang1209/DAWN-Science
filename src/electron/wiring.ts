@@ -17,6 +17,7 @@ import { ProjectManager } from "../project/manager.js"
 import { RunRecorder } from "../project/run-recorder.js"
 import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
+import { CliRuntime } from "../runtime/cli/runtime.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
@@ -111,6 +112,28 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     runtimes: {
       native: nativeRuntime,
       pty: new PtyRuntime({ command: "sh" }),
+      /**
+       * 外部 CLI 的对话模式（①-C）。
+       *
+       * 命令来自 registry 的 agent 定义，**由 `commandOf` 现查**——
+       * 与 `ptyRuntimeFor` 同一个理由：写死一个命令的话，
+       * 配置里的 `codex` 会被起成 claude，**而进程照样起得来**。
+       *
+       * `onThreadId` **一拿到就落库**：codex 一轮一个进程，
+       * 进程随时会退出，留在内存里等于随时会丢。
+       */
+      cli: new CliRuntime({
+        commandOf: (spec) => {
+          const rec = sessionStore.get(spec.sessionId)
+          const def = rec ? registry.agents[rec.agentId] : undefined
+          if (!def || def.kind !== "cli") {
+            throw new Error(`会话 "${spec.sessionId}" 不是 cli agent，无法起外部 CLI`)
+          }
+          const family = familyOf(def.command)
+          return { command: def.command, args: def.args, ...(family ? { family } : {}) }
+        },
+        onThreadId: (sessionId, threadId) => sessionStore.setCliThreadId(sessionId, threadId),
+      }),
     },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime
     ptyRuntimeFor: (_id: string, def: PtyAgentDef) => {

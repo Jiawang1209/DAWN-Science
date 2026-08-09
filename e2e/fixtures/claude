@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+/**
+ * 假的 claude CLI，供 e2e 用。**文件名必须叫 `claude`**——**形状取自 Spike G 的实测**，不是编的。
+ *
+ * `familyOf(command)` 按**命令名**判该用哪个 driver，
+ * 所以假 CLI 不能是「node + 脚本路径」：那样命令名是 node，认不出家族。
+ * 带 shebang、直接可执行，也更接近真实（用户 PATH 上的 claude 就是这样）。
+ *
+ * **为什么不用真 claude**：那会把「装没装、登没登录、余额够不够」
+ * 变成这条测试的前置条件——红了分不清是我们坏了还是环境坏了。
+ * 真 CLI 的形状由 Spike G 负责，e2e 负责我们这一侧的接线。
+ */
+let buf = ""
+const say = (o) => process.stdout.write(JSON.stringify(o) + "\n")
+say({ type: "system", subtype: "init" })
+process.stdin.setEncoding("utf8")
+process.stdin.on("data", (d) => {
+  buf += d
+  let i
+  while ((i = buf.indexOf("\n")) >= 0) {
+    const line = buf.slice(0, i)
+    buf = buf.slice(i + 1)
+    if (!line.trim()) continue
+    const text = JSON.parse(line).message.content
+    // 一次工具调用 + 一句回复：让账本那条链有东西可验
+    say({ type: "assistant", message: { role: "assistant", content: [{ type: "tool_use", id: "tu_1", name: "Read", input: { file_path: "README.md" } }] } })
+    say({ type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "tu_1", content: "# e2e 工作区", is_error: false }] } })
+    say({ type: "assistant", message: { role: "assistant", content: [{ type: "text", text: "假 CLI 已应答：" + text }] } })
+    say({ type: "result", is_error: false, stop_reason: "end_turn", total_cost_usd: 0.001, usage: { input_tokens: 1, output_tokens: 2 } })
+  }
+})

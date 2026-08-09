@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = 5
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -157,6 +157,20 @@ export function migrate(db: Database.Database): void {
     db.exec(`ALTER TABLE runs ADD COLUMN files_written TEXT`)
     db.exec(`ALTER TABLE runs ADD COLUMN files_read TEXT`)
     db.exec(`ALTER TABLE runs ADD COLUMN may_include_user_edits INTEGER`)
+  }
+
+  /**
+   * 从 v4 升级：sessions 补 `cli_thread_id`（①-C · C3/C4）。
+   *
+   * **codex 的会话续接凭据。** 它一轮一个进程，多轮全靠
+   * `codex exec resume <thread_id>`——**丢了等于会话断了**，
+   * 所以它是会话记录，不是内存状态。
+   *
+   * **老数据留 NULL**：它们产生时还没有这个概念，编一个等于伪造事实。
+   * NULL 的含义是「这个会话没有可续接的线程」，claude 会话恒为 NULL（它用不上）。
+   */
+  if (!hasColumn(db, "sessions", "cli_thread_id")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN cli_thread_id TEXT`)
   }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(

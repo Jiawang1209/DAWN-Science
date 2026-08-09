@@ -32,6 +32,14 @@ export interface SessionSpec {
    * 现在只说「哪个 provider 的哪个模型」，连接与凭证解析都交给 pi。
    */
   native?: { provider: string; model: string }
+  /**
+   * 仅 cli runtime 使用（①-C）。
+   *
+   * `threadId` 是 **codex 的会话续接凭据**：它一轮一个进程，
+   * 多轮全靠 `exec resume <thread_id>`。**丢了等于会话断了**，
+   * 所以它是会话记录（落库），不是内存状态。claude 用不上它（长驻进程）。
+   */
+  cli?: { threadId?: string }
   /** 注入给该会话的 MCP server（阶段③ 才会非空） */
   mcpServers?: McpServerSpec[]
 }

@@ -43,10 +43,54 @@
 
 ## 变更日志
 
-### 2026-08-09 — ①-C · C3：codex driver（一轮一进程 + thread_id 续接）
+### 2026-08-09 — ①-C · C4：CLI agent 接通，**判据 ① 与 ② 达成**
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: ①-C 的转折点。C1–C3 都没有可运行路径，接上它之后
+  claude / codex 第一次能在对话框里说话，**而且它们的工具调用第一次落进账本**。
+- **What**: `CliRuntime` 实现 `AgentRuntime`，按命令名挑 driver；
+  会话管理器把 `cli` 路由过去；`sessions` 表加 `cli_thread_id`（schema v5）；
+  wiring 装配并把 `thread_id` **一拿到就落库**。
+- **`write` 的契约与 native 一致**：同步返回、不 await 一整轮——
+  调用方是租约守卫，它只管「准不准写」，不该被一轮对话阻塞。
+- **续接凭据从库里来**：`SessionManager` 建会话时读 `cliThreadId` 塞进 spec。
+  codex 一轮一个进程，**重开应用后靠它接上上一次的对话**；claude 恒为空。
+- **真机验证（e2e，跑构建产物）**：判据 ① 与 ② 的验收点
+  - 打一句它答一句，**且是对话视图不是终端**
+  - **账本上 `tool_call:Read` 挂在 `agent_turn` 下、状态 completed**——
+    走 PTY 时这里只有一团字节
+  - 工具调用在对话里看得见
+- **用假 CLI，不用真 claude**：真 CLI 会把「装没装、登没登录、余额够不够」
+  变成测试的前置条件，红了分不清是我们坏了还是环境坏了（与 PTY e2e 选 `bash` 同理）。
+- **一处踩坑，值得记**：假 CLI 第一版配成 `command: claude` + `args: [node, 脚本]`，
+  会话根本建不起来——**我把「命令」和「家族」混了**：`familyOf` 判的是**命令名**，
+  于是真去 spawn 一个叫 claude 的程序。改成**一个名叫 `claude`、带 shebang 的可执行文件**，
+  这也更接近真实（用户 PATH 上的 claude 就是这样）。
+- **同一条规矩，一天内被我自己违反了第二次**：C1 刚立下
+  「想让用户看见就得在抛出的一侧显式声明」，**C4 的 `CliRuntime.start()`
+  又抛了普通 `Error`**——界面上再次变成 `操作 "createSession" 执行失败`。
+  而 `SessionSetupError` 住在 `session/manager.ts`，`runtime/` 不能反向依赖它。
+  于是把它提到中立的 `src/errors.ts`，改名 `UserFacingError`。
+  > **一条要靠记性遵守的规矩，一天里就会被违反两次。**
+  > 现在它随手可取，`session/manager.ts` 留一个别名不动老调用点。
+- **顺带改写一条测试的主体**：`cli-agent-kind.spec.ts` 原来断言的是 C1 的占位失败
+  （「CLI 运行时尚未实现」），而 C4 把它实现掉了。**主体没了，意图还在**——
+  改成守同一条纪律在新形态下的样子：**认不出的 CLI 响亮失败，且不悄悄起终端**。
+- **Verification**: 817 单元测试（+9）；typecheck 干净；`npm run build` 通过；
+  **63 条 e2e（+5）全绿**。
+- **一处仍缺、且知情**：**CLI 会话没有逐次溯源**。工具在 CLI 自己的进程里跑，
+  我们的 `ProvenanceProbe` 挂不上去，所以那些 `tool_call` Run 上没有 `files_written`。
+  按不变式 5，**缺省读作「不知道」，这正是实情**——与子 agent 那处同源，
+  都要等阶段 ③ 的 worktree 隔离。
+- **下一片**：C5 默认配置换血（claude/codex 改 `kind: cli`、新增 `shell`）+ 界面分支。
+
+---
+
+### 2026-08-09 — ①-C · C3：codex driver（一轮一进程 + thread_id 续接）
+
+- **Type**: feat
+- **Commit**: `c08ae77`
 - **Motivation**: ①-C 的第三片。Spike G 已验 codex 的多轮语义与 claude **完全不同**。
 - **动手前又补了一次实测**（与 C2 同一条规矩）：Spike G 只见过 codex 最简单的一轮，
   **它调工具时的 item 形状我没见过**。实测拿到：

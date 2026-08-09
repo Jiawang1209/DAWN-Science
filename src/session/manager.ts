@@ -14,6 +14,7 @@ import { join } from "node:path"
 import type { AgentDef, ProviderRegistry } from "../config/schema.js"
 import type { SessionRecord, SessionStore } from "../store/sessions.js"
 import type { AgentRuntime, EventSink, SessionId, SessionSpec } from "../runtime/types.js"
+import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
 
 export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
@@ -21,29 +22,10 @@ export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
 /**
  * **打算给用户看的失败。**
  *
- * 协议服务端对异常的策略是刻意的（`workbench/server.ts`）：
- * 只有 `fault()` 抛出的业务性失败会把消息原样交给界面，
- * 其余一律归一成 `internal_error`，原始信息**只进日志**——
- * 因为它可能含路径、连接串、密钥片段（学自 Rho）。
- *
- * 那条策略是对的，**问题在抛错的一侧**：这一层此前抛的是普通 `Error`，
- * 于是「provider 未配置凭证——请在设置里填写它的 API key」这种
- * **写得很清楚、也很该给用户看**的话，在界面上变成了
- * `操作 "createSession" 执行失败`。
- *
- * 2026-08-09 由 ①-C 的第一条 e2e 撞出来。
- * **想让用户看见，就得显式声明「这句话是给他看的」**——
- * 而不是指望下游去猜哪条消息安全。
- *
- * 本层不引 `fault()`：那是 workbench 的东西，会把依赖方向倒过来。
+ * 定义搬到了 `src/errors.ts`——`runtime/` 也要用它，而 `runtime/` 不能
+ * 反向依赖 `session/`。这里留一个别名，老调用点不必全改。
  */
-export class SessionSetupError extends Error {
-  readonly userFacing = true as const
-  constructor(message: string) {
-    super(message)
-    this.name = "SessionSetupError"
-  }
-}
+export { UserFacingError as SessionSetupError }
 
 /**
  * 让 `<workspace>/.dawn/` 对 git 隐形。
@@ -85,7 +67,7 @@ function ensureDawnDirIgnored(workspace: string): void {
 export interface SessionManagerOptions {
   store: SessionStore
   registry: ProviderRegistry
-  runtimes: { native: AgentRuntime; pty: AgentRuntime }
+  runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime }
   /**
    * 按 agent 定义构造 pty runtime。给出时优先于 `runtimes.pty`。
    *
@@ -110,7 +92,7 @@ export class SessionManager {
   readonly leases: LeaseManager
   private readonly store: SessionStore
   private readonly registry: ProviderRegistry
-  private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime }
+  private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime }
   private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
@@ -136,7 +118,7 @@ export class SessionManager {
   ): Promise<SessionRecord> {
     const def = this.registry.agents[agentId]
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
-    if (!def) throw new SessionSetupError(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
+    if (!def) throw new UserFacingError(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
 
     const id = randomUUID()
     const sessionDir = join(workspace, ".dawn", "sessions", id)
@@ -159,7 +141,7 @@ export class SessionManager {
       if (this.hasCredential && !this.hasCredential(def.provider)) {
         // 已落库的记录要收尾，不能留在 starting
         this.store.updateState(id, "exited", { exitCode: -1 })
-        throw new SessionSetupError(
+        throw new UserFacingError(
           `provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`,
         )
       }
@@ -175,21 +157,29 @@ export class SessionManager {
      * 用户看到一个终端，而他配的是一个对话式 agent。
      * **那正是本项目反复栽的静默回退**（规格 7.5）。
      *
-     * `cli` 的运行时是 C2/C3 的事；在它到位之前，这里**响亮地失败**。
      */
-    if (def.kind === "cli") {
-      this.store.updateState(id, "exited", { exitCode: 1 })
-      throw new SessionSetupError(
-        `agent "${agentId}" 的 kind 是 cli（外部 CLI 的对话模式），` +
-          `但 CLI 运行时尚未实现（①-C 的 C2/C3）。` +
-          `暂时可把它改成 kind: pty 在终端里用，或改用内置 agent。`,
-      )
+    let runtime: AgentRuntime
+    if (def.kind === "native") {
+      runtime = this.runtimes.native
+    } else if (def.kind === "cli") {
+      const cli = this.runtimes.cli
+      // 没装配 CLI 运行时的场景（部分单测）**明确失败**，不退回 pty
+      if (!cli) {
+        this.store.updateState(id, "exited", { exitCode: 1 })
+        throw new UserFacingError(
+          `agent "${agentId}" 的 kind 是 cli，但本次运行没有装配 CLI 运行时`,
+        )
+      }
+      runtime = cli
+      /**
+       * **续接凭据从库里来**：codex 一轮一个进程，重开应用后靠 `thread_id`
+       * 接上上一次的对话。claude 用不上它（长驻进程），那时库里恒为空。
+       */
+      const prior = this.store.get(id)?.cliThreadId
+      if (prior) spec.cli = { threadId: prior }
+    } else {
+      runtime = this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
     }
-
-    const runtime =
-      def.kind === "native"
-        ? this.runtimes.native
-        : (this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty)
     try {
       const handle = await runtime.start(spec)
       this.bound.set(id, runtime)

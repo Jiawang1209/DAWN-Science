@@ -19,6 +19,13 @@ export interface SessionRecord {
   createdAt: string
   /** v2 起：会话归属的项目。v1 遗留记录为空——它们产生时还没有项目概念 */
   projectId?: string
+  /**
+   * v5 起：codex 的会话续接凭据（①-C）。
+   *
+   * **缺省的含义是「这个会话没有可续接的线程」**——claude 会话恒为空
+   * （它是长驻进程，不需要），老记录也为空。
+   */
+  cliThreadId?: string
 }
 
 interface Row {
@@ -31,6 +38,7 @@ interface Row {
   exit_code: number | null
   created_at: string
   project_id: string | null
+  cli_thread_id: string | null
 }
 
 function toRecord(r: Row): SessionRecord {
@@ -46,6 +54,7 @@ function toRecord(r: Row): SessionRecord {
     ...(r.pid === null ? {} : { pid: r.pid }),
     ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
     ...(r.project_id === null || r.project_id === undefined ? {} : { projectId: r.project_id }),
+    ...(r.cli_thread_id === null || r.cli_thread_id === undefined ? {} : { cliThreadId: r.cli_thread_id }),
   }
 }
 
@@ -87,6 +96,14 @@ export class SessionStore {
    * 只更新本次提供的字段。COALESCE 保证「这次没传 pid」不会把已记录的 pid 抹成 null——
    * 状态推进往往分多次发生（先拿到 pid，后拿到 exitCode），覆盖式写入会丢信息。
    */
+  /**
+   * 记下 codex 的 `thread_id`。**一拿到就落库**——它丢了会话就断了，
+   * 而进程随时可能退出（codex 一轮一个进程）。
+   */
+  setCliThreadId(id: string, threadId: string): void {
+    this.db.prepare(`UPDATE sessions SET cli_thread_id = ? WHERE id = ?`).run(threadId, id)
+  }
+
   updateState(id: string, state: SessionState, extra: { pid?: number; exitCode?: number } = {}): void {
     this.db
       .prepare(`

@@ -45,11 +45,12 @@ const baseRun = {
 }
 
 describe("migrate v2", () => {
-  it("版本号升到 4 —— v4 给 runs 加了文件事实三列", () => {
+  it("版本号升到 5 —— v5 给 sessions 加了 cli_thread_id（①-C）", () => {
     const db = makeDb()
     const row = db.prepare(`SELECT value FROM schema_meta WHERE key='version'`).get() as { value: string }
+    // 库里写的与常量一致：**迁移跑了没有，靠这一条**
     expect(row.value).toBe(String(SCHEMA_VERSION))
-    expect(SCHEMA_VERSION).toBe(4)
+    expect(SCHEMA_VERSION).toBe(5)
   })
 
   it("可重复执行（幂等）", () => {

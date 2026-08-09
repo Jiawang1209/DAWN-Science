@@ -23,6 +23,60 @@
 | 记忆投影（不变式 4） | AgentDeck（自有）+ Buzz | 自有 / Apache-2.0 | 设计萃取 | `«OWN»multi-agent-explore/` · `«REF»buzz-main/buzz-agent/src/handoff.rs` |
 | AI agent 怎么跑 | **pi** | MIT | **运行依赖** | `@earendil-works/pi-coding-agent` → `pi-agent-core`(=`packages/agent`) → `pi-ai` |
 
+### 第七个：Codex 桌面版（闭源，**只读构建产物，不读源码**）
+
+`«REF»ccb_hive_code_learn/app_learn/` —— `openai-codex-electron` 的 asar 解包。
+**它不进上面那张表，因为它不开源。** 读它的边界必须写死：
+
+> **读**：`webview/assets/*.css`（构建产物）的**聚合事实**——令牌名、选择器计数、
+> 数值刻度、文件名清单；`package.json` 的依赖表。
+> **不读**：任何 JS bundle、任何组件实现。
+
+理由是规格 §3.3：*不接触外部非开源代码 → 项目许可由自己决定、代码库完整归属自己*。
+色值与刻度是事实，不是可被占有的表达；组件代码是表达。这条线在哪儿要说清楚，
+否则「学习」会不知不觉滑成「移植」。
+
+**技术栈四项与我们相同**：`better-sqlite3` · `node-pty` · `zod ^4` · `yaml`。
+这是对我们几个核心选择的独立佐证。
+
+**已经吃进来的**（2026-08-09，见 DEVELOPMENT_HISTORY 同日条目）：
+
+| 学到什么 | 落在哪 |
+|---|---|
+| 13 档手工灰阶，暗端八档 / 亮端五档 | `tokens.css` 的 `--theme-gray-*` |
+| 描边由前景兑透明，5/8/12% 三档 | `--mix-stroke-*`，一套数管两个主题 |
+| 文字层级用不透明度，不另配颜色 | `--dawn-text-1…4` |
+| 暗色的高度 = 一圈亮描边 + 深投影 | 暗色 `--dawn-shadow-float` |
+| 圆角乘一个全局缩放系数 | `--radius-scalar`（我们原本就有，得到印证） |
+| 主题是**契约**，不是一堆私有变量 | 见下方待办 |
+
+**待办清单**（尚未落地，各自标注影响哪一步）：
+
+- **`worktree` 应当是一等 UI 概念，不是后端细节。** 他们有
+  `worktree-environment-dropdown` 与 `worktree-init-tool-activities` 两个独立组件。
+  我们的 S28 把它当后端能力——但三个 agent 同时跑时，「这个 agent 在哪个工作树里」
+  正是最需要看见的东西。→ **影响 S28**
+- **子 agent 用 chip 组呈现**（`subagent-activity-chip-group`），不是树、不是日志。
+  这是「N 个并发子 agent 怎么显示才不淹掉对话」的现成答案。→ **影响 ①-B″ · S1**
+- **`shlex`**：shell 安全分词。我们现在拼 PTY 命令行没有它，是个隐患。→ **影响 ①-A 的 PTY 会话**
+- **`@parcel/watcher`**：文件监听。→ **影响 ①-B″ · U4 变更 pane**
+- **`capnweb`**：能力式 RPC，与「能力由宿主授予、不由模型声明」同构。→ **影响阶段 ④ 授权门**
+- **认识 28 个外部编辑器与终端并把活交出去**（`webview/apps/` 的图标清单：
+  vscode / cursor / zed / rustrover / pycharm / xcode / ghostty / kitty / warp …）。
+  **不试图取代用户的编辑器。** 科研的人手里有 RStudio、Jupyter、VS Code。→ **影响 ②-A 之后**
+- **VS Code 主题令牌词表**（公开文档，约 600 键，与 asar 无关）值得借它的**命名切分**：
+  `list.hoverBackground` / `focusBorder` / `descriptionForeground` /
+  `editor.selectionBackground` / `badge.*` / `diffEditor.insertedTextBackground` / `charts.*`。
+  向它靠拢之后，「支持 VS Code 主题」就是一张映射表的事，而不是重做设计系统。
+
+其余功能地图（存档备查）：`thread-user-message-navigation-rail`（长对话里在自己的消息间跳转）·
+`thinking-shimmer` · `chart-stores` · `pdf-preview-panel` · `terminal-panel` ·
+`quick-chat-window` + `hotkey-window-home-page`（全局热键小窗）· `global-dictation-orb`（语音输入）·
+`remote-text-edit-session`（配 `yjs`）· `chronicle-settings-page`。
+另有 **64 个原生菜单语言包**，说明原生菜单栏与 webview 是分开本地化的。
+
+---
+
 **两处曾经的误判，已修正**：
 
 1. ~~「Rho 是科学场景的呈现层参考」~~ → **Rho 与 DAWN 是同物种**。`rho-store` 10,835 行里 audit+evidence+compare 占 4,680 行（43%）

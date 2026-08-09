@@ -551,6 +551,12 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
   - 合并被拒/冲突 → **主检出保持不变，被拒补丁存为 Artifact**
   - 子声明的产物**在清理 worktree 之前**复制到持久存储；留不住就让任务失败且不合并
   - **非 Git 或脏检出不宣告隔离能力**；显式隔离请求在那里 **fail closed**，不悄悄削弱保证
+- **2026-08-09 修正 —— worktree 必须是一等 UI 概念，不只是后端能力**：
+  Codex 桌面版为它做了两个独立组件（`worktree-environment-dropdown` /
+  `worktree-init-tool-activities`）。理由站得住：**三个 agent 同时跑的时候，
+  「这个 agent 在哪个工作树里」正是最需要看见的东西**——藏在后端，隔离就白做了。
+  本步骤的成果清单因此追加：**工作树选择器 + 每个工作树的活动列表**，
+  并在 Run 摘要上显示它属于哪个工作树。见 `docs/REFERENCES.md` 第七条参考。
 
 #### S29 · 验证隔离与交叉核对 ⬜
 

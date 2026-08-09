@@ -32,6 +32,7 @@
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import type { SubagentDefinition } from "./definitions.js"
+import type { SubagentChildSpec } from "./protocol.js"
 
 export interface SubagentTask {
   agent: string
@@ -97,8 +98,30 @@ export type ChildFactory = (spec: {
   task: string
 }) => ChildCommand
 
+/**
+ * 子进程规格里**与具体任务无关**的那一半。
+ *
+ * **做成必填，不留「省略只用于测试」的口子。** 少了它，子进程收到的是半个规格，
+ * 而失败方式是「每个子 agent 都说模型不存在」——要跨进程才查得出来。
+ */
+export interface SubagentContext {
+  provider: string
+  /** 默认模型。**定义里写了 `model` 的以定义为准** */
+  model: string
+  /** 子 agent 的工作目录，与父会话同一个工作区 */
+  cwd: string
+  modelsPath?: string
+  credentials?: Record<string, string>
+  /**
+   * 每个任务一个 agentDir。**不能共用**——Spike E 实测 pi 会把模型选择
+   * 写成 agentDir 级的默认值，共用就会互相串。
+   */
+  agentDirOf: (index: number) => string
+}
+
 export interface SubagentExecutorOptions {
   childOf: ChildFactory
+  context: SubagentContext
   limits?: Partial<SubagentLimits>
   /** 每个任务开始 / 结束时回调。界面的 chip 组靠它显示 ⏳ 与 ✓ */
   onProgress?: (p: SubagentProgress) => void
@@ -109,11 +132,13 @@ const PREVIOUS = "{previous}"
 
 export class SubagentExecutor {
   private readonly childOf: ChildFactory
+  private readonly context: SubagentContext
   private readonly limits: SubagentLimits
   private readonly onProgress: (p: SubagentProgress) => void
 
   constructor(opts: SubagentExecutorOptions) {
     this.childOf = opts.childOf
+    this.context = opts.context
     this.limits = { ...SUBAGENT_LIMITS, ...opts.limits }
     this.onProgress = opts.onProgress ?? (() => {})
   }
@@ -205,7 +230,7 @@ export class SubagentExecutor {
     }
 
     this.onProgress({ type: "started", index, agent: task.agent, task: task.task })
-    const result = await this.spawnOne(definition, task, signal)
+    const result = await this.spawnOne(definition, task, index, signal)
     this.onProgress({ type: "settled", index, ok: result.ok })
     return result
   }
@@ -213,6 +238,7 @@ export class SubagentExecutor {
   private spawnOne(
     definition: SubagentDefinition,
     task: SubagentTask,
+    index: number,
     signal?: AbortSignal,
   ): Promise<SubagentResult> {
     const cmd = this.childOf({ definition, agent: task.agent, task: task.task })
@@ -307,15 +333,21 @@ export class SubagentExecutor {
 
       // 规格从 stdin 递进去，**不走命令行参数**：任务文本可以很长，
       // 而且里面什么字符都可能有
-      child.stdin.end(
-        JSON.stringify({
-          agent: task.agent,
-          task: task.task,
-          systemPrompt: definition.systemPrompt,
-          ...(definition.tools ? { tools: definition.tools } : {}),
-          ...(definition.model ? { model: definition.model } : {}),
-        }),
-      )
+      const ctx = this.context
+      const spec: SubagentChildSpec = {
+        agent: task.agent,
+        task: task.task,
+        systemPrompt: definition.systemPrompt,
+        provider: ctx.provider,
+        // **定义里写了 model 就以定义为准**——子 agent 挑一个便宜模型是常见用法
+        model: definition.model ?? ctx.model,
+        cwd: ctx.cwd,
+        agentDir: ctx.agentDirOf(index),
+        ...(definition.tools ? { tools: definition.tools } : {}),
+        ...(ctx.modelsPath ? { modelsPath: ctx.modelsPath } : {}),
+        ...(ctx.credentials ? { credentials: ctx.credentials } : {}),
+      }
+      child.stdin.end(JSON.stringify(spec))
     })
   }
 }

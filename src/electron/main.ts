@@ -10,6 +10,7 @@ import { join } from "node:path"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } from "./ipc.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
+import { CHILD_ENTRY } from "../subagent/protocol.js"
 
 /**
  * 配置落在 `userData`，**不是 `process.cwd()`**。
@@ -97,6 +98,14 @@ app.whenReady().then(() => {
         safeStorage,
       }),
       defaultWorkspace: DEFAULT_WORKSPACE,
+      /**
+       * 子 agent 入口就打在主进程 bundle 旁边（`dist/electron/`）。
+       *
+       * **路径在这里算，不在 wiring 里算**——`import.meta.dirname` 只有这里
+       * 指向构建产物目录；wiring 是纯逻辑，不该知道构建布局。
+       * 文件名从协议模块取，与 `build-electron.mjs` 的 outfile 是同一个常量。
+       */
+      subagentChildEntry: join(import.meta.dirname, CHILD_ENTRY),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })

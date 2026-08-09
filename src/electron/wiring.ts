@@ -57,6 +57,13 @@ export interface CreateWorkbenchOptions {
    */
   modelsPath?: string
   /**
+   * 子 agent 入口的绝对路径。**给了才注册 `subagent` 工具**（①-B″ · S1）。
+   *
+   * 由 `main.ts` 按 `import.meta.dirname` 算出来——那是 `dist/electron/`，
+   * 子侧入口就打在它旁边。**不在这里算**：本模块不该知道构建产物的布局。
+   */
+  subagentChildEntry?: string
+  /**
    * 跳过「建会话前检查凭证」这道自有守卫。
    *
    * **只在 mock 模式下为真**：那时凭证由 models.json 提供，我们的守卫
@@ -95,6 +102,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
     ...(opts.modelsPath ? { modelsPath: opts.modelsPath } : {}),
+    ...(opts.subagentChildEntry ? { subagentChildEntry: opts.subagentChildEntry } : {}),
   })
 
   const sessions = new SessionManager({

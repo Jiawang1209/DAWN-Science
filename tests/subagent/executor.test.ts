@@ -41,8 +41,22 @@ const echoChild = () => ({
  * 「按 task 决定子进程行为」的那两条挡在门外——而那正是最要紧的两条：
  * chain 的失败传播、parallel 的完成顺序。
  */
+/**
+ * 测试用的上下文桩。
+ *
+ * 它是**必填**的，这是刻意的：少了它子进程收到的是半个规格，
+ * 而失败方式是「每个子 agent 都说模型不存在」——要跨进程才查得出来。
+ * 这里的假子进程不看这些字段，但类型逼着每个调用点想一遍。
+ */
+const CTX = {
+  provider: "deepseek",
+  model: "deepseek-v4-flash",
+  cwd: "/tmp/w",
+  agentDirOf: (i: number) => `/tmp/w/.dawn/sub-${i}`,
+}
+
 function exec(childOf: ChildFactory = echoChild, limits?: Partial<typeof SUBAGENT_LIMITS>) {
-  return new SubagentExecutor({ childOf, ...(limits ? { limits } : {}) })
+  return new SubagentExecutor({ childOf, context: CTX, ...(limits ? { limits } : {}) })
 }
 
 describe("single —— 一个 agent 一个任务", () => {
@@ -107,6 +121,7 @@ describe("parallel —— 并发跑，上界钉死", () => {
     })
     const ex = new SubagentExecutor({
       childOf: slow,
+      context: CTX,
       onProgress: (p) => {
         if (p.type === "started") peak = Math.max(peak, ++live)
         else live--
@@ -123,6 +138,7 @@ describe("parallel —— 并发跑，上界钉死", () => {
     const seen: string[] = []
     const ex = new SubagentExecutor({
       childOf: echoChild,
+      context: CTX,
       onProgress: (p) => seen.push(`${p.type}:${p.index}`),
     })
     await ex.run(

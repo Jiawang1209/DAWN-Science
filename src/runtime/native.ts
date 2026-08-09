@@ -29,6 +29,8 @@ import {
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
 import { ProvenanceProbe } from "./provenance.js"
+import { createSubagentTool } from "../subagent/tool.js"
+import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
@@ -72,6 +74,14 @@ export interface NativeRuntimeOptions {
    * 只在明确不需要时置 false（例如纯对话的性能测试）。
    */
   provenance?: boolean
+  /**
+   * 子 agent 入口的可执行文件路径（`dist/electron/subagent-child.js`）。
+   *
+   * **给了才注册 `subagent` 工具。** 省略时模型看不到这个工具——
+   * CLI 与单元测试走这一支。这不是开关，是**能力的前提**：
+   * 没有那个文件就没有子进程可起，注册一个必然失败的工具比不注册更坏。
+   */
+  subagentChildEntry?: string
 }
 
 interface NativeSession {
@@ -234,6 +244,51 @@ export class NativeRuntime implements AgentRuntime {
     ]
   }
 
+  /**
+   * 内置工具 + `subagent`（①-B″ · S1）。
+   *
+   * **`subagent` 刻意不套授权门的包装器。** 那个包装器做两件事：过门、拍 git 快照。
+   * 两件在这里都不对——
+   *   - 门是**按工具名**判的，而子 agent 真正要管的是「它自己能用哪些工具」，
+   *     那一层在子进程里（`tools` 白名单）。在父侧对 `subagent` 这个名字放行或拦下，
+   *     管不到子进程里发生的事，**给的是一种虚假的安全感**。
+   *   - 快照更明确地错：`subagent` 期间会有多个子进程并发改文件，
+   *     父侧拍一个 before/after 只能得到「这一批一共改了什么」，
+   *     而账本要的是**逐个子 agent**的事实。那属于阶段 ④ 的 worktree 隔离。
+   *
+   * 所以子 agent 的溯源**现在是缺的，而且是知情地缺的**——账本上有它的 Run，
+   * 但那条 Run 没有 `files_written`。按不变式 5 的规矩，
+   * **缺省读作「不知道」，这正是此刻的实情。**
+   */
+  private toolsFor(spec: SessionSpec, native: { provider: string; model: string }): unknown[] | undefined {
+    const base = this.gatedTools(spec.workspace, spec.sessionId)
+    const entry = this.opts.subagentChildEntry
+    if (!entry) return base
+
+    const tool = createSubagentTool({
+      sessionId: spec.sessionId,
+      projectRoot: spec.workspace,
+      emit: (e) => this.emit(e),
+      childOf: () => ({
+        // Spike F：**不能写死 `"node"`**——打包之后用户机器上不一定有它
+        command: process.execPath,
+        args: [entry],
+        env: { [RUN_AS_NODE]: "1" },
+      }),
+      context: {
+        provider: native.provider,
+        model: native.model,
+        cwd: spec.workspace,
+        ...(this.opts.modelsPath ? { modelsPath: this.opts.modelsPath } : {}),
+        // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）
+        agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
+      },
+    })
+
+    // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上
+    return [...(base ?? []), tool]
+  }
+
   async start(spec: SessionSpec): Promise<SessionHandle> {
     const native = spec.native
     if (!native) {
@@ -258,7 +313,7 @@ export class NativeRuntime implements AgentRuntime {
     mkdirSync(agentDir, { recursive: true })
 
     const modelRuntime = await this.runtime()
-    const customTools = this.gatedTools(spec.workspace, spec.sessionId)
+    const customTools = this.toolsFor(spec, native)
     const { session } = await createAgentSession({
       cwd: spec.workspace,
       agentDir,

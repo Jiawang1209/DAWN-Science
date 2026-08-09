@@ -48,6 +48,7 @@
     "simple-git": "^3.36.0",
     "spawnteract": "^5.0.1",
     "streamdown": "^2.5.0",
+    "typebox": "^1.3.11",
     "use-stick-to-bottom": "^1.1.6",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"

@@ -206,32 +206,70 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
 
-  // 上下文用量随会话走。**没有会话时清掉**——留着上一个会话的数字是最坏的一种，
-  // 它看起来是真的
+  /**
+   * 重取账本：列表 + 最新那条的详情 + 上下文用量。
+   *
+   * **只在项目概览开着时做**——这三样只长在那一屏，没人看的时候不该打 IPC。
+   *
+   * ## 为什么必须一路取到 `getRun`
+   *
+   * 产出栏的数字**不是存下来的，是 `getRun` 每次调用现算的**
+   * （中枢里的 `diffSince(workspace, baseline)`）。只重取 `listRuns` 不够：
+   * 最新那条 Run 的 id 通常**没变**，而 `latestRunId` 没变就不会触发下面那个
+   * effect，**屏幕上那份 diff 仍然是旧的**——而且它长得和新的一模一样，
+   * 没有任何东西会说它过期了。
+   *
+   * ## 一律直读 atom
+   *
+   * 它同时被 effect 和 `window` 的 focus 监听器调用，而后者活得比任何一次渲染都长，
+   * 闭包捕获的值会永远停在挂监听那一刻。这正是文件头那条
+   * 「非渲染路径一律用 `$atom.get()` 直读」说的场景。
+   */
+  const refreshLedger = useCallback(async () => {
+    if ($view.get() !== "panel") return
+    void loadContextUsage(client, $activeSessionId.get())
+    const pid = $activeProjectId.get()
+    if (!pid) return
+    await loadRuns(client, pid)
+    loadRunDetail(client, $runs.get()[0]?.runId)
+  }, [client])
+
   useEffect(() => {
-    // **依赖里绝不能放 `items`。** 它每来一个 token 就变一次，
-    // 于是每个 token 打一次 IPC——第一版就是这么写的，
-    // 表现为整个 e2e 套件开始随机超时（每次挂的还不是同一条）。
-    // 面板只在项目概览里显示，所以在打开它的时候取一次就够了
-    if (view !== "panel") return
-    void loadContextUsage(client, sessionId)
     /**
-     * **账本也要在这里重取一次。**
+     * **依赖里绝不能放 `items`。** 它每来一个 token 就变一次，
+     * 于是每个 token 打一次 IPC——第一版就是这么写的，
+     * 表现为整个 e2e 套件开始随机超时（每次挂的还不是同一条）。
      *
      * 2026-08-09（U4 补验的 e2e 撞出来的生产缺陷）：`loadRuns` 此前**只挂在
      * `projectId` 变化上**，而项目在启动时就定下来了——于是这份列表永远停在
      * 「打开项目那一刻」，之后账本记了什么，界面一概不知道。
-     *
-     * 后果不止变更 pane：`runs[0]` 还喂着**产出**与**成本**两个面板。
-     * 三个面板一起在真实产物上是死的，而它们各自的单元测试全绿。
-     * **这和第 225 行那条注释记的是同一种死法**，隔了几个 Task 又来一次。
+     * 受害的不止变更 pane，`runs[0]` 还喂着产出与成本两个面板，
+     * **三个一起在真实产物上是死的，而它们各自的单元测试全绿**。
+     * 与下面「产出与成本从这里来」那段注释记的是同一种死法，隔了几个 Task 又来一次。
      *
      * `busy` 进依赖是为了**回合结束时再取一次**：人可以开着概览等结果，
      * 只在打开时取一次的话，那一屏会一直停在回合开始前的样子。
-     * 代价是每轮多两次 IPC——`busy` 一轮只翻两次，不是每个 token 一次。
      */
-    if (projectId) void loadRuns(client, projectId)
-  }, [client, sessionId, view, projectId, busy])
+    void refreshLedger()
+  }, [refreshLedger, sessionId, view, projectId, busy])
+
+  /**
+   * **窗口重新拿到焦点也要重取。**（①-B″ · U4 追加项的一半）
+   *
+   * 计划原写的是用 `@parcel/watcher` 监听工作区。查下来那句话**指错了面板**：
+   * 变更 pane 显示的是逐次工具调用**当时**拍下的历史事实，外部编辑不该改写它；
+   * 真正会过期的是产出栏，因为它现算。
+   *
+   * 而「切到编辑器改文件、再切回 DAWN」这个主场景，focus 就够了，
+   * **代价是零依赖、零协议改动**。原生模块 + 项目级推送通道换来的增量只是
+   * 「并排放着不切窗口也刷新」，留到阶段 ③ 与 worktree 隔离一起做——
+   * 那时工作区归 agent 独占，「谁改的」才分得清，监听的语义也才干净。
+   */
+  useEffect(() => {
+    const onFocus = () => void refreshLedger()
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [refreshLedger])
 
   /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {

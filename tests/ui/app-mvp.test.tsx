@@ -292,6 +292,46 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     await openAndStart(h)
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
   })
+
+  /**
+   * **窗口重新拿到焦点时，账本要重取。**
+   *
+   * 产出栏的数字不是存下来的，是 `getRun` **每次调用现算**的
+   * （`backend.ts` 里的 `diffSince(workspace, baseline)`）。
+   * 所以「作者切到编辑器改了几个文件，再切回 DAWN」这个场景里，
+   * **屏幕上那份 diff 已经是旧的了**，而它长得和新的一模一样——
+   * 没有任何东西会说它过期了。
+   *
+   * 这是 ①-B″ · U4 追加项（文件监听）的那一半收益，用零依赖的方式拿到。
+   * 剩下的一半（并排放着、不切窗口也刷新）连同 worktree 隔离留到阶段 ③——
+   * 理由记在 DEVELOPMENT_HISTORY。
+   */
+  it("**窗口重新获得焦点时重取账本** —— 产出栏是现算的，切出去再回来它已经旧了", async () => {
+    const h = harness({ runs: [RUN] })
+    await openAndStart(h)
+    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
+    await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
+
+    const before = h.calls.filter((c) => c.op === "listRuns").length
+    act(() => {
+      window.dispatchEvent(new Event("focus"))
+    })
+    await waitFor(() =>
+      expect(h.calls.filter((c) => c.op === "listRuns").length).toBeGreaterThan(before),
+    )
+  })
+
+  it("**没开着项目概览就不重取** —— 没人在看的时候不该打 IPC", async () => {
+    const h = harness({ runs: [RUN] })
+    await openAndStart(h)
+    // 停在对话页，不打开概览
+    const before = h.calls.filter((c) => c.op === "listRuns").length
+    act(() => {
+      window.dispatchEvent(new Event("focus"))
+    })
+    await new Promise((r) => setTimeout(r, 20))
+    expect(h.calls.filter((c) => c.op === "listRuns").length).toBe(before)
+  })
 })
 
 describe("MVP 主路径 · 异常要出声", () => {

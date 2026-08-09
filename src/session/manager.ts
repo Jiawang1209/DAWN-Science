@@ -9,6 +9,7 @@
  * 「怎么跟进程说话」全部委托给 AgentRuntime。
  */
 import { randomUUID } from "node:crypto"
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import type { AgentDef, ProviderRegistry } from "../config/schema.js"
 import type { SessionRecord, SessionStore } from "../store/sessions.js"
@@ -16,6 +17,43 @@ import type { AgentRuntime, EventSink, SessionId, SessionSpec } from "../runtime
 import { LeaseManager, type Holder } from "./lease.js"
 
 export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
+
+/**
+ * 让 `<workspace>/.dawn/` 对 git 隐形。
+ *
+ * **2026-08-09 由 e2e「外部改文件切回来」撞出来的缺陷。** 会话目录写在用户的
+ * 仓库里（`<workspace>/.dawn/sessions/<id>`），装的是 pi 的 session jsonl、
+ * 工具输出转储、mcp.json 这些**内部记录**。它们对 git 是可见的未跟踪文件，后果三层：
+ *
+ *   1. 产出栏把 DAWN 自己的账本当成 agent 的产出报出来
+ *   2. **用户自己的 `git status` 也脏了** —— 应用在别人的仓库里留下东西
+ *   3. 逐次溯源的每一条差集都带着这些噪声
+ *
+ * 修在这里而不是「`git-facts` 里过滤掉 `.dawn/`」：后者只修第 1 层，
+ * 第 2 层照旧；也不是把目录挪出工作区，那会改掉「会话数据跟着项目走」的语义，
+ * 而且 `sessionDir` 已经落了库。
+ *
+ * **两条边界**：
+ * - `.gitignore` 写在 `.dawn/` **里面**，不碰用户根目录的那一份
+ * - **已存在就不动** —— 用户可能改过它，覆盖等于替他做决定
+ */
+function ensureDawnDirIgnored(workspace: string): void {
+  const dir = join(workspace, ".dawn")
+  const file = join(dir, ".gitignore")
+  if (existsSync(file)) return
+  try {
+    mkdirSync(dir, { recursive: true })
+    // `*` 连 .gitignore 自己一并忽略——它是 DAWN 的东西，不是用户仓库的内容
+    writeFileSync(file, "*\n")
+  } catch {
+    /**
+     * **写不出来不该拦住建会话。** 只读工作区、权限不足都可能走到这里，
+     * 而那时唯一的后果是产出栏多几行噪声——比「打不开会话」轻得多。
+     * 这不是静默回退掩盖失败：真正的失败（工作区不可写）会在
+     * agent 第一次写文件时以更准确的方式报出来。
+     */
+  }
+}
 
 export interface SessionManagerOptions {
   store: SessionStore
@@ -75,6 +113,7 @@ export class SessionManager {
 
     const id = randomUUID()
     const sessionDir = join(workspace, ".dawn", "sessions", id)
+    ensureDawnDirIgnored(workspace)
     const rec: SessionRecord = {
       id,
       agentId,

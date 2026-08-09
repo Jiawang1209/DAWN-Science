@@ -1,4 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest"
+import { execFileSync } from "node:child_process"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import Database from "better-sqlite3"
 import { migrate } from "../../src/store/schema.js"
 import { SessionStore } from "../../src/store/sessions.js"
@@ -351,5 +355,81 @@ describe("SessionManager · 凭证在建会话时解析", () => {
   it("pty agent 不需要凭证，缺了也能起 —— 它用的是自己的登录态", async () => {
     const s = await mgrWith().create("claude-code", "/tmp/w")
     expect(s.agentId).toBe("claude-code")
+  })
+})
+
+describe("DAWN 不该在用户的仓库里留下痕迹", () => {
+  /**
+   * **2026-08-09 由 e2e「外部改文件切回来」撞出来的缺陷。**
+   *
+   * 会话目录是 `<workspace>/.dawn/sessions/<id>`——**写在用户的仓库里**。
+   * 里面是 pi 的 session jsonl、工具输出转储、mcp.json 之类的内部记录。
+   * 它们对 git 是可见的未跟踪文件，于是有三层后果，第二层最严重：
+   *
+   *   1. 产出栏把 DAWN 自己的账本当成 agent 的产出报出来
+   *   2. **用户自己的 `git status` 也脏了**——应用在别人的仓库里拉屎
+   *   3. 逐次溯源的每一条差集都带着这些噪声
+   *
+   * 修法是让这个目录**自我忽略**（`.dawn/.gitignore` 内容 `*`）。
+   * 选它而不是「在 git-facts 里过滤 `.dawn/`」，因为后者只修第 1 层，
+   * 用户的 `git status` 照样脏；也不是把目录挪出工作区，
+   * 那会改掉「会话数据跟着项目走」的语义，且 `sessionDir` 已经落了库。
+   *
+   * 它写在 `.dawn/` **里面**，所以**不碰用户根目录的 `.gitignore`**。
+   */
+  it("建会话时写出自忽略的 .dawn/.gitignore", async () => {
+    const ws = mkdtempSync(join(tmpdir(), "dawn-mgr-"))
+    await makeManager().mgr.create("ds-agent", ws)
+    expect(readFileSync(join(ws, ".dawn", ".gitignore"), "utf8").trim()).toBe("*")
+    rmSync(ws, { recursive: true, force: true })
+  })
+
+  it("**git 因此看不见它** —— 这才是这条规则真正要的结果", async () => {
+    const ws = mkdtempSync(join(tmpdir(), "dawn-mgr-git-"))
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: ws, stdio: "pipe" })
+    git("init", "-q")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    writeFileSync(join(ws, "seed.txt"), "seed\n")
+    git("add", "-A")
+    git("commit", "-qm", "seed")
+
+    const s = await makeManager().mgr.create("ds-agent", ws)
+    /**
+     * **往会话目录里真写一个文件。** 少了这一步这条测试是空的——
+     * `FakeRuntime` 什么都不写，`.dawn/` 于是只有 `.gitignore`，
+     * 那时它会因为「本来就没东西」而绿，而不是因为忽略生效。
+     * 真实运行时往这里写的是 pi 的 session jsonl、工具输出转储之类。
+     */
+    mkdirSync(s.sessionDir, { recursive: true })
+    writeFileSync(join(s.sessionDir, "会话记录.jsonl"), "{}\n")
+
+    // 未跟踪文件全都要，**唯独不该有 .dawn**
+    const status = execFileSync("git", ["status", "--porcelain", "--untracked-files=all"], {
+      cwd: ws,
+      encoding: "utf8",
+    })
+    expect(status).not.toContain(".dawn")
+    // 而作者自己的新文件照样看得见——**别把忽略做成一把过宽的刀**
+    writeFileSync(join(ws, "作者的.py"), "x\n")
+    expect(
+      execFileSync(
+        "git",
+        // **和产品用同一个标志。** 不带它的话 git 会把中文名写成八进制转义，
+        // 断言会因为一个与本条规则无关的原因红——那正是 `git-facts.ts` 修过的坑
+        ["-c", "core.quotePath=false", "status", "--porcelain", "--untracked-files=all"],
+        { cwd: ws, encoding: "utf8" },
+      ),
+    ).toContain("作者的.py")
+    rmSync(ws, { recursive: true, force: true })
+  })
+
+  it("已经存在的 .gitignore 不被重写 —— 不覆盖用户可能改过的东西", async () => {
+    const ws = mkdtempSync(join(tmpdir(), "dawn-mgr-keep-"))
+    mkdirSync(join(ws, ".dawn"), { recursive: true })
+    writeFileSync(join(ws, ".dawn", ".gitignore"), "# 我自己改的\n*\n")
+    await makeManager().mgr.create("ds-agent", ws)
+    expect(readFileSync(join(ws, ".dawn", ".gitignore"), "utf8")).toContain("我自己改的")
+    rmSync(ws, { recursive: true, force: true })
   })
 })

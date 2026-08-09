@@ -587,3 +587,53 @@ Electron 43.3.0 · Node 24.18.1 · V8 ABI 148
 - `interrupt_mode: "message"`（control 通道的 `interrupt_request`）——代码路径已写但本机 ipykernel 走的是 signal，**该分支未被执行过**。
 - 内核崩溃、内核重启、多内核并发。
 - Windows / Linux。
+
+---
+
+## Spike E —— pi 能不能会话中途换模型？（2026-08-09，①-B″ · U2 前置）
+
+跑法：`npx tsx spikes/e-model-switch.ts`（用假后端，不烧真 key）
+
+### 结论：**能，而且是干净的就地切换**
+
+| 问题 | 实测 |
+|---|---|
+| Q1 换了之后请求真的换吗 | ✅ `deepseek-v4-flash → deepseek-v4-deep`，**从假后端的请求体证明**，不是"调用没抛异常" |
+| Q2 写到哪儿 | 会话 `.jsonl` **+ agentDir 级的 `settings.json`**（`{defaultProvider, defaultModel}`） |
+| Q3 没配凭证 | 抛 `No API key for <provider>/<model>`，**先验证后切换** |
+| Q4 流式中途切 | **不拒绝**；且 `isStreaming` 在 prompt 真正开始前是 `false` |
+
+### 三条直接影响实现的事实
+
+**1. `settings.json` 的泄漏风险在我们这里不存在。**
+`setModel` 会把选择写成 agentDir 级默认值——两个会话共用 agentDir 时，
+A 里换模型就会改掉 B 的默认。但 `src/runtime/native.ts` 是
+`const agentDir = join(spec.sessionDir, "pi")`——**每会话一个 agentDir**。
+Spike B 留下的隔离纪律在这里白捡了一份保护。**这条要写进注释，
+否则将来有人为了省 inode 把 agentDir 提到项目级，这个洞会悄悄回来。**
+
+**2. `session.isStreaming` 不能用来判断"正在说话"。**
+发起 `prompt()` 后立刻读到的是 `false`——pi 在 prompt 真正开始之前
+就认为自己不忙。**这与本项目早先在 `waitForIdle` 上栽的是同一件事**
+（当时的表现是 `echo ... | dawn run` 在模型答完前就收摊）。
+「正在说话时不许换模型」必须用我们自己的 busy 判定
+（transcript 里最后一个 agent turn 未 `final`），不能问 pi。
+
+**3. pi 把换模型记成会话记录里的一等条目。**
+```jsonl
+{"type":"model_change","provider":"deepseek","modelId":"deepseek-v4-flash",...}
+{"type":"message","message":{"role":"assistant",...}}
+{"type":"model_change","provider":"deepseek","modelId":"deepseek-v4-deep",...}
+```
+`parentId` 串成链，因此**"哪条消息是哪个模型产出的"在 pi 那边是可查的**。
+**我们的账本没有记这个**——Run 上记了文件事实（不变式 5），却没记模型。
+"用哪个模型产出的"显然属于溯源。列为待办。
+
+### 两次「探针坏了，不是被测对象坏了」
+
+1. 传了 `authPath` 指向空文件，pi 就不用 `models.json` 里内联的 key 了
+   （生产代码 `native.ts` 本来就不传）。表现为**一次请求都没发出去，且一片安静**。
+2. 假后端存的 `body` 已经是解析过的对象，我又 `JSON.parse` 了一遍 →
+   每条都抛、全被 `filter` 掉 → 结论"零请求"。**而请求一直在正常发送。**
+
+两次都是先怀疑被测对象。**下次先验证探针本身。**

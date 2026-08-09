@@ -43,10 +43,43 @@
 
 ## 变更日志
 
+### 2026-08-09 — Spike E：pi 能会话中途换模型，并查清它把选择写到了哪儿
+
+- **Type**: chore
+- **Commit**: 待回填
+- **Motivation**: ①-B″ · U2 计划里标着「需要一个小 spike：pi 能不能会话中途换模型」。
+  读类型声明已经能看到 `AgentSession.setModel()`，但**读到签名不等于验过行为**。
+- **What**: `spikes/e-model-switch.ts`（`npm run spike:e`，用假后端不烧真 key）；
+  `scripts/mock-inference-server.mjs` 的 `mockModelsJson` 改为**默认提供两个模型**
+  ——一个模型的假后端能让选择器渲染出来，却证明不了切换真的发生了。
+  （准入规则 ① 的另一面：新增「有多种取值」的能力，假后端就得能提供多种取值。）
+- **结论：能，是干净的就地切换。** `flash → deep`，**从假后端记下的请求体证明**。
+- **三条直接影响实现的事实**：
+  1. **`setModel` 会写 agentDir 级的 `settings.json`**（`defaultProvider`/`defaultModel`）。
+     两个会话共用 agentDir 时，A 里换模型会改掉 B 的默认值。
+     但 `native.ts` 是 `join(spec.sessionDir, "pi")`——**每会话一个 agentDir**，
+     Spike B 留下的隔离纪律白捡了一份保护。**已把这条理由写进那行代码的注释**，
+     否则将来有人把 agentDir 提到项目级，这个洞会悄悄回来。
+  2. **`session.isStreaming` 不能用来判断「正在说话」**——发起 `prompt()` 后
+     立刻读到 `false`。**与早先 `waitForIdle` 那次是同一件事**。
+     「正在说话时不许换模型」必须用我们自己的 busy 判定。
+  3. **pi 把换模型记成会话记录里的一等条目**（`{"type":"model_change",...}`，
+     `parentId` 串链），因此"哪条消息是哪个模型产出的"在它那边可查。
+     **我们的账本没有记这个**——Run 记了文件事实（不变式 5），却没记模型。
+     "用哪个模型产出的"显然属于溯源。**列为待办。**
+- **Verification**: spike 在真 pi + 假后端上跑通；650 单元测试与 46 条 e2e 未受影响。
+- **两次「探针坏了，不是被测对象坏了」，如实记录**：
+  ① 传了 `authPath` 指向空文件，pi 就不用 models.json 里内联的 key
+  （生产代码本来就不传）——表现为**一次请求都没发出去且一片安静**；
+  ② 假后端存的 `body` 已是解析过的对象，我又 `JSON.parse` 一遍，全被 filter 掉，
+  于是得出"零请求"的假结论。**两次都是先怀疑被测对象。下次先验证探针本身。**
+
+---
+
 ### 2026-08-09 — 命令面板（⌘K）；实质是把动作收拢成一处
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `e82bc65`
 - **Motivation**: ①-B″ · U1。它排在 U2–U4 前面，因为后面每一样功能都要往里放入口。
   但真正要紧的不是面板——是 Hermes 那条
   *"One action, one home … **Do not fork behavior per entry point**"*

@@ -227,7 +227,17 @@ export class NativeRuntime implements AgentRuntime {
     }
 
     // per-session agentDir：会话的设置、记录、扩展全部隔离在自己的目录里，
-    // **绝不落到用户的 ~/.pi**（不变式 #11，Spike B 的教训）
+    /**
+     * **绝不落到用户的 ~/.pi**（不变式 #11，Spike B 的教训）。
+     *
+     * **每会话一个 agentDir，这一点后来又多了一条理由**（Spike E，2026-08-09）：
+     * pi 的 `session.setModel()` 会把选择写成 agentDir 级的默认值
+     * （`agentDir/settings.json` 里的 `defaultProvider` / `defaultModel`）。
+     * 两个会话共用一个 agentDir 的话，**在 A 里换模型就会改掉 B 的默认值**——
+     * 正是「一个会话的东西渗进另一个」。
+     *
+     * 现在它被关在会话里。**要把 agentDir 提到项目级或全局之前，先想清楚这一条。**
+     */
     const agentDir = join(spec.sessionDir, "pi")
     mkdirSync(agentDir, { recursive: true })
 

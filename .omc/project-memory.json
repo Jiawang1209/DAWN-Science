@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -f e2e/_probe-key.spec.ts\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/palette.spec.ts --reporter=list 2>&1 | grep -B3 -A12 'Error:' | head -30",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -rf test-results\nnpm test 2>&1 | grep -E 'Tests |Test Files|×' | head -5\nnpm run typecheck 2>&1 | grep -E 'error' | head -3\necho \"=== e2e 全量 ===\"\nnpx playwright test --reporter=list 2>&1 | tail -4",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | tail -5",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnode -e \"\nconst fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));\np.scripts['spike:e']='tsx spikes/e-model-switch.ts';\nfs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n');\n\"\nnpm test 2>&1 | grep -E 'Tests |Test Files|×' | head -5\nnpm run typecheck 2>&1 | grep error | head -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -56,8 +56,8 @@
     },
     {
       "path": "src/runtime/native.ts",
-      "accessCount": 12,
-      "lastAccessed": 1786232685726,
+      "accessCount": 13,
+      "lastAccessed": 1786244497378,
       "type": "file"
     },
     {

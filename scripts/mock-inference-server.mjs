@@ -171,14 +171,30 @@ function splitIntoParts(text) {
  * `api: "openai-completions"` 是显式写死的：pi 的 deepseek provider 本来就是
  * 这个形态，但**依赖别人的默认值会让这个假服务器在 provider 换了之后悄悄失效**。
  */
-export function mockModelsJson(baseUrl, providerId = "deepseek", modelId = "deepseek-v4-flash") {
+/**
+ * **两个模型，不是一个。**
+ *
+ * 2026-08-09（①-B″ · U2）：模型选择器需要「有得选」才谈得上验证。
+ * 一个模型的假后端能让选择器渲染出来，却证明不了**切换真的发生了**——
+ * 而假后端记下的请求体里带着 `model` 字段，那正是唯一能从外部证明它的东西。
+ *
+ * 准入规则 ①：新增协议操作要在同一次改动里补 mock 分支。
+ * 这里是同一条规则的另一面——**新增一个「有多种取值」的能力，
+ * 假后端就得能提供多种取值**，否则 `dev:mock` 与 e2e 看到的永远是退化情形。
+ */
+export function mockModelsJson(
+  baseUrl,
+  providerId = "deepseek",
+  modelIds = ["deepseek-v4-flash", "deepseek-v4-deep"],
+) {
+  const ids = Array.isArray(modelIds) ? modelIds : [modelIds]
   return {
     providers: {
       [providerId]: {
         baseUrl,
         apiKey: "mock-key-not-a-real-secret",
         api: "openai-completions",
-        models: [{ id: modelId, name: "Mock model", api: "openai-completions" }],
+        models: ids.map((id) => ({ id, name: `Mock ${id}`, api: "openai-completions" })),
       },
     },
   }

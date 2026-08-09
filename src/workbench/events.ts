@@ -180,6 +180,52 @@ export class SessionTranscripts {
         return
       }
 
+      /**
+       * 子 agent 的 chip 组（①-B″ · S1）。
+       *
+       * **一次工具调用一条记录**，里面装一组 chip——形态学自 Codex 桌面版的
+       * `subagent-activity-chip-group`：*「chip 组，不是树、也不是日志」*。
+       * 每个子 agent 各占一条就是日志，N 个并发时会把对话淹掉。
+       *
+       * 两个事件走同一条路：**先取出那条记录，改一格，再放回去**。
+       * `putItem` 按 id 覆盖，所以这里必须自己合并，不能只放新来的那一格。
+       */
+      case "subagent_start":
+      case "subagent_end": {
+        const id = `sub:${event.toolCallId}`
+        const prior = e.items.find((i) => i.id === id)
+        const agents = [
+          ...(prior?.type === "subagents" ? prior.agents : []),
+        ]
+        const at = agents.findIndex((a) => a.index === event.index)
+
+        const next =
+          event.kind === "subagent_start"
+            ? {
+                index: event.index,
+                agent: event.agent,
+                task: event.task,
+                status: "running" as const,
+              }
+            : {
+                // **没见过 start 的 end 也照记**——宁可多一条，不可丢一条。
+                // 那时名字与任务都不知道，如实留空而不是编一个
+                index: event.index,
+                agent: at >= 0 ? agents[at]!.agent : "(未知)",
+                task: at >= 0 ? agents[at]!.task : "",
+                status: event.ok ? ("ok" as const) : ("error" as const),
+                ...(event.ok ? {} : { error: event.error ?? "子 agent 失败，但没有给出原因" }),
+              }
+
+        if (at >= 0) agents[at] = next
+        else agents.push(next)
+        // **按 index 排，不按完成先后**——chip 在界面上不该跳来跳去
+        agents.sort((a, b) => a.index - b.index)
+
+        this.putItem(sessionId, e, { type: "subagents", id, agents })
+        return
+      }
+
       case "tool_start":
         this.putItem(sessionId, e, {
           type: "tool",

@@ -307,12 +307,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     (agentId: string) => {
       const pid = $activeProjectId.get()
       if (!pid) return
+      /**
+       * **记下按下时人在哪一屏。**
+       *
+       * 2026-08-09：这个回调此前无条件 `setView("conversation")`，
+       * 于是「按下新建会话 → 会话还没建好 → 用户切到项目概览 → 回调到了」
+       * 这条路径会把人**从他刚打开的那一屏上拽走**，而且之后没有任何东西
+       * 会把他送回去，屏幕就那么停在错的地方。
+       *
+       * 它在 e2e 全量跑（56 条串行 Electron）里出现过两次，单独跑必绿——
+       * 轻负载下 `createSession` 总是快于用户的下一次点击。
+       * **「只在忙的时候错」不是偶发，是窗口小。**
+       */
+      const from = $view.get()
       client
         .get<SessionSummary>("createSession", { projectId: pid, agentId })
         .then((s) => {
           void loadSessions(client, pid)
           setActiveSessionId(s.sessionId)
-          setView("conversation")
+          // 人还在原地才进对话。**他自己切走了就尊重他的选择**
+          if ($view.get() === from) setView("conversation")
           // 取写权，否则第一句就会被租约挡下
           return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
         })

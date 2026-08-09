@@ -16,8 +16,15 @@
  *   `snapshot + revision`（借自 pi-protocol）。`subscribeSession` 的响应形状变了，
  *   事件信封整体替换，故 major 递增。同批新增 `abortSession` / `steerSession`。
  *   **换来的不只是简单**：旧设计跳号只能出声，新设计跳号可以重新取快照——能自愈。
+ * 2.1（2026-08-09）：新增 `setSessionModel`，会话级模型覆盖（①-B″ · U2）。**这一行是补记的**——
+ *   当时升了版号却没在这里留下说明，于是这个清单和实际版本对不上了。
+ *   版本清单漏一条，它作为「唯一凭据」的作用就打了折。
+ * 2.2（2026-08-09）：transcript 新增 `subagents` 条目（①-B″ · S1）。
+ *   **一条记录装一组子 agent**，界面据此画 chip 组。
+ *   minor 递增 = 向后兼容的新增：老界面遇到不认识的条目类型会被 zod 挡下，
+ *   而握手时版本不匹配已经会响亮报错，所以不会静默画错。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.1"
+export const WORKBENCH_PROTOCOL_VERSION = "2.2"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

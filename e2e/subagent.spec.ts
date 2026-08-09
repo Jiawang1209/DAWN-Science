@@ -71,6 +71,24 @@ test.describe("子 agent 真的在独立进程里跑了一次", () => {
     await expect(page.locator(".tool-result")).toContainText("假模型已应答")
 
     /**
+     * **chip 组要在对话里出现**（①-B″ · S1 界面）。
+     *
+     * 它不是工具结果的一部分——工具结果是一段文本，chip 是**执行中的状态**。
+     * 这条守的是数据通路：运行时发 `subagent_start/end` → 事件中枢并成
+     * `subagents` 条目 → 界面画 chip。**三段里断哪一段，表现都是「什么都没有」。**
+     */
+    const chips = page.locator(".chip-group .chip")
+    await expect(chips).toHaveCount(1)
+    await expect(chips.first()).toContainText("scout")
+    await expect(chips.first()).toHaveAttribute("data-status", "ok")
+    await expect(page.locator(".subagents-summary")).toContainText("1/1")
+
+    // 点开才有任务全文——默认铺开就成了日志
+    await expect(page.locator(".chip-task")).toHaveCount(0)
+    await chips.first().click()
+    await expect(page.locator(".chip-task")).toContainText("看看这个仓库")
+
+    /**
      * 账本上必须是完整三层：
      * `agent_turn` → `tool_call:subagent` → `subagent:scout`
      *
@@ -116,6 +134,9 @@ test.describe("定义写错时不会静静地消失", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 失败也会回到对话里——**失败要如实说**，这一句就是那条纪律的可见面
     await expect(page.locator(".tool-result")).toContainText("并不存在", { timeout: 60_000 })
+    // 而 chip 上的失败原因**不用点开就看得见**（规格 7.5）
+    await expect(page.locator(".chip")).toHaveAttribute("data-status", "error")
+    await expect(page.locator(".chip-error")).toContainText("并不存在")
 
     const { default: Database } = await import("better-sqlite3")
     const db = new Database(dbPath, { readonly: true })

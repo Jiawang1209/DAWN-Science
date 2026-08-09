@@ -70,8 +70,24 @@ const proj = (workspace: string) => ({
   unresolvedProblemCount: 0,
 })
 
-function harness(over: { projects?: unknown[]; runs?: unknown[]; pick?: string | null } = {}) {
+function harness(
+  over: {
+    projects?: unknown[]
+    runs?: unknown[]
+    pick?: string | null
+    /**
+     * 让 `createSession` 挂起，由用例决定何时 resolve。
+     *
+     * **它复现的是一个只在负载下才露头的真实缺陷**：慢的会话创建回调
+     * 会把用户刚切过去的视图拽回对话。e2e 里它两次出现在全量跑（56 条串行
+     * Electron）中，单独跑必绿——因为轻负载下 `createSession`
+     * 总是快于用户的下一次点击。**时序改成可控的，缺陷就是确定的。**
+     */
+    deferCreateSession?: boolean
+  } = {},
+) {
   const calls: { op: string; req: unknown }[] = []
+  let releaseCreate: (() => void) | undefined
   let emit: ((raw: unknown) => void) | undefined
 
   const projects = [...(over.projects ?? [])]
@@ -134,6 +150,9 @@ function harness(over: { projects?: unknown[]; runs?: unknown[]; pick?: string |
 
   const invoke = async (op: string, req: unknown): Promise<RawResponse> => {
     calls.push({ op, req })
+    if (op === "createSession" && over.deferCreateSession) {
+      await new Promise<void>((r) => (releaseCreate = r))
+    }
     const raw = data(op, req)
     // 夹具必须合协议。写错形状当场炸，而不是留到界面上以一种更难懂的方式失败
     const def = (OPERATIONS as Record<string, { response: { parse(v: unknown): unknown } }>)[op]
@@ -162,6 +181,8 @@ function harness(over: { projects?: unknown[]; runs?: unknown[]; pick?: string |
     calls,
     pickDirectory,
     push: (e: unknown) => act(() => emit?.(e)),
+    /** 放行挂起的 createSession */
+    releaseCreateSession: () => act(() => releaseCreate?.()),
   }
 }
 
@@ -368,5 +389,46 @@ describe("MVP 主路径 · 异常要出声", () => {
     await openAndStart(h)
     h.push({ garbage: true })
     expect(await screen.findByText(/不合协议/)).toBeDefined()
+  })
+})
+
+describe("慢的会话创建不该把人从当前视图上拽走", () => {
+  /**
+   * **2026-08-09 由 e2e 在负载下抓到的真实缺陷。**
+   *
+   * `startSession` 的 `.then` 里无条件 `setView("conversation")`。
+   * 用户在会话建好之前点了「项目概览」，那个迟到的回调就会把他拽回对话——
+   * 而且**不会再有任何东西把他送回去**，屏幕就那么停在错的地方。
+   *
+   * 它在 e2e 全量跑（56 条串行 Electron）里出现过两次，单独跑必绿：
+   * 轻负载下 `createSession` 总快于用户的下一次点击。
+   * **「只在忙的时候错」不是偶发，是窗口小。**
+   */
+  it("会话建好之前切到项目概览 —— 回调到达后**仍然停在项目概览**", async () => {
+    const h = harness({ projects: [proj("/w/proj")], deferCreateSession: true })
+    const { container } = render(<App client={h.client} />)
+    const panels = () => container.querySelectorAll(".panel").length
+
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    await waitFor(() => expect(h.calls.some((c) => c.op === "createSession")).toBe(true))
+
+    // 会话还没建好，用户已经切走了
+    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
+    await waitFor(() => expect(panels()).toBeGreaterThan(0))
+
+    // 迟到的回调到了
+    h.releaseCreateSession()
+
+    // **仍然在项目概览上。** 修复前这里会被拽回对话，composer 冒出来
+    await waitFor(() => expect(h.calls.some((c) => c.op === "subscribeSession")).toBe(true))
+    expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
+    expect(panels()).toBeGreaterThan(0)
+  })
+
+  it("**没切走的话照常进对话** —— 修复不能把正常路径也一起改掉", async () => {
+    const h = harness({ projects: [proj("/w/proj")] })
+    render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
   })
 })

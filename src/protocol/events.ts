@@ -82,7 +82,43 @@ const NoticeItem = z
   })
   .strict()
 
-export const TranscriptItemSchema = z.discriminatedUnion("type", [TurnItem, ToolItem, NoticeItem])
+/**
+ * 一次 `subagent` 工具调用里的**一组**子 agent（①-B″ · S1）。
+ *
+ * **一条记录装一组，不是一个子 agent 一条。**
+ *
+ * 计划 §6 记下的形态来自 Codex 桌面版的 `subagent-activity-chip-group`：
+ * *"**chip 组，不是树、也不是日志。**"* 它回答的是「N 个并发子 agent
+ * 怎么显示才不淹掉对话」——一行紧凑的状态芯片，点开才展开细节。
+ * 每个子 agent 各占一条就是日志，正是要避开的那种。
+ */
+const SubagentsItem = z
+  .object({
+    type: z.literal("subagents"),
+    /** `sub:<toolCallId>`。**与 ToolItem 的 id 刻意不同**——两者同时存在，撞了会互相覆盖 */
+    id: z.string().min(1),
+    agents: z.array(
+      z
+        .object({
+          /** 这一批里的第几个。**顺序按它排**，不按完成先后——chip 不该跳来跳去 */
+          index: z.int().min(0),
+          agent: z.string().min(1),
+          task: z.string(),
+          status: z.enum(["running", "ok", "error"]),
+          /** 失败原因。**`error` 状态下必须有**——不带原因的失败等于没报 */
+          error: z.string().optional(),
+        })
+        .strict(),
+    ),
+  })
+  .strict()
+
+export const TranscriptItemSchema = z.discriminatedUnion("type", [
+  TurnItem,
+  ToolItem,
+  NoticeItem,
+  SubagentsItem,
+])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 
 export const SessionSnapshotSchema = z

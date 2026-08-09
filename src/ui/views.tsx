@@ -465,6 +465,9 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
   if (item.type === "tool") {
     return <ToolRow item={item} />
   }
+  if (item.type === "subagents") {
+    return <SubagentChips item={item} />
+  }
   return (
     <div className={`turn ${item.who}`}>
       <span className="who">{item.who === "user" ? "你" : agentId}</span>
@@ -696,6 +699,84 @@ export function TerminalDock({
           <TerminalPane chunks={chunks} {...(onInput ? { onInput } : {})} />
         </div>
       ) : null}
+    </div>
+  )
+}
+
+/* ── 子 agent 的 chip 组（①-B″ · S1）────────────────────────────────── */
+
+const CHIP_STATUS = {
+  running: { mark: "⏳", label: "运行中" },
+  ok: { mark: "✓", label: "完成" },
+  error: { mark: "✗", label: "失败" },
+} as const
+
+/**
+ * 一次 `subagent` 工具调用里那一组子 agent。
+ *
+ * ## 形态是抄来的，而且抄的是它的**克制**
+ *
+ * 计划 §6 记下 Codex 桌面版的组件名叫 `subagent-activity-chip-group`，
+ * 并附了一句判断：
+ *
+ * > **chip 组，不是树、也不是日志。** 一行紧凑的状态芯片，点开才展开细节。
+ *
+ * 它回答的是「N 个并发子 agent 怎么显示才不淹掉对话」。**默认铺开任务全文
+ * 就等于把对话变成日志**——8 个并发时那一屏就没法看了。所以默认只有名字、
+ * 状态标记和一句概览，细节点开才有。
+ *
+ * ## 一处不跟着克制：失败原因
+ *
+ * 失败的那个**不用点开就看得见原因**。规格 7.5：失败必须出声。
+ * 把它折进「点开才有」里，等于让一次失败在界面上和成功长得几乎一样——
+ * 而那正是本项目反复栽过的那个坑。
+ */
+export function SubagentChips({
+  item,
+}: {
+  item: Extract<TranscriptItem, { type: "subagents" }>
+}) {
+  const [open, setOpen] = useState<number | undefined>(undefined)
+  // **空表什么都不画**，不留一个空壳占着位置
+  if (item.agents.length === 0) return null
+
+  const done = item.agents.filter((a) => a.status !== "running").length
+
+  return (
+    <div className="subagents">
+      <span className="subagents-summary">
+        子 agent {done}/{item.agents.length}
+      </span>
+      <div className="chip-group">
+        {item.agents.map((a) => {
+          const { mark, label } = CHIP_STATUS[a.status]
+          const expanded = open === a.index
+          return (
+            <div key={a.index} className="chip-slot">
+              <Button
+                variant="text"
+                size="inline"
+                className={`chip ${a.status}`}
+                data-status={a.status}
+                aria-expanded={expanded}
+                onClick={() => setOpen(expanded ? undefined : a.index)}
+              >
+                {mark} {a.agent}
+                <span className="chip-status">{label}</span>
+              </Button>
+              {/**
+               * **失败原因不折叠。** 与上面那句「点开才展开细节」看似矛盾，
+               * 但两者管的不是一件事：细节是「它干了什么」，
+               * 原因是「它为什么没干成」。后者藏起来就等于没报。
+               */}
+              {a.status === "error" ? (
+                <p className="caveat chip-error">{a.error ?? "失败了，但没有给出原因"}</p>
+              ) : null}
+              {expanded ? <pre className="chip-task">{a.task}</pre> : null}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

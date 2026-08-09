@@ -168,14 +168,16 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 2.1", () => {
+describe("协议版本 · 2.2", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
    * 所以是 minor**——老界面连新服务端照常工作，只是不知道有这个操作。
+   * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
+   * 既有条目的形状一个字没动，所以仍是 minor。
    */
-  it("新增操作只升 minor", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.1")
+  it("新增操作与新增条目都只升 minor", () => {
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.2")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

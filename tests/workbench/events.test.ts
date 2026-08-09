@@ -296,3 +296,94 @@ describe("截断的三件套一起走", () => {
     expect(h.subscribe("a").items[0]).toMatchObject({ resultTruncated: false, resultBytes: 3 })
   })
 })
+
+describe("子 agent 的 chip 组（①-B″ · S1 界面）", () => {
+  /**
+   * 计划 §6 记的形态：Codex 桌面版的 `subagent-activity-chip-group`——
+   * **chip 组，不是树、也不是日志**。它回答的是「N 个并发子 agent 怎么显示
+   * 才不淹掉对话」：一行紧凑的状态芯片，点开才展开细节。
+   *
+   * 所以记录里**一次工具调用一条**，里面装一组 chip，
+   * 而不是每个子 agent 各占一条——后者就是日志，正是要避开的那种。
+   */
+  const start = (h: ReturnType<typeof hub>, index: number, agent: string) =>
+    h.ingest("s", {
+      kind: "subagent_start", sessionId: "s", toolCallId: "c1",
+      index, agent, task: `任务${index}`,
+    })
+
+  const end = (h: ReturnType<typeof hub>, index: number, ok: boolean, error?: string) =>
+    h.ingest("s", {
+      kind: "subagent_end", sessionId: "s", toolCallId: "c1",
+      index, ok, ...(error ? { error } : {}),
+    })
+
+  const chips = (h: ReturnType<typeof hub>) => {
+    const item = h.subscribe("s").items.find((i) => i.type === "subagents")
+    return item?.type === "subagents" ? item.agents : undefined
+  }
+
+  it("开始时是一条 running 的 chip", () => {
+    const h = hub()
+    h.track("s", "native")
+    start(h, 0, "scout")
+    expect(chips(h)).toEqual([
+      { index: 0, agent: "scout", task: "任务0", status: "running" },
+    ])
+  })
+
+  it("**并发的几个装在同一条记录里** —— 不是各占一行", () => {
+    const h = hub()
+    h.track("s", "native")
+    start(h, 0, "scout")
+    start(h, 1, "planner")
+    start(h, 2, "worker")
+    expect(h.subscribe("s").items.filter((i) => i.type === "subagents")).toHaveLength(1)
+    expect(chips(h)).toHaveLength(3)
+  })
+
+  it("结束时就地改状态，**位置不变**", () => {
+    const h = hub()
+    h.track("s", "native")
+    start(h, 0, "scout")
+    start(h, 1, "planner")
+    end(h, 1, true)
+    end(h, 0, false, "退出码 3")
+    const c = chips(h)!
+    // 先结束的是 1，但顺序仍按 index —— 界面上 chip 不该跳来跳去
+    expect(c.map((x) => x.index)).toEqual([0, 1])
+    expect(c[0]!.status).toBe("error")
+    expect(c[0]!.error).toContain("退出码 3")
+    expect(c[1]!.status).toBe("ok")
+  })
+
+  it("**没见过 start 的 end 也照记** —— 宁可多一条，不可丢一条", () => {
+    const h = hub()
+    h.track("s", "native")
+    end(h, 0, true)
+    expect(chips(h)).toHaveLength(1)
+    expect(chips(h)![0]!.status).toBe("ok")
+  })
+
+  it("**两次不同的工具调用各是一条记录** —— 不能混进同一组", () => {
+    const h = hub()
+    h.track("s", "native")
+    start(h, 0, "scout")
+    h.ingest("s", {
+      kind: "subagent_start", sessionId: "s", toolCallId: "c2",
+      index: 0, agent: "planner", task: "另一批",
+    })
+    expect(h.subscribe("s").items.filter((i) => i.type === "subagents")).toHaveLength(2)
+  })
+
+  it("每次变化都推一条更新 —— 界面靠它实时改 chip", () => {
+    const h = hub()
+    h.track("s", "native")
+    const seen: unknown[] = []
+    h.subscribe("s")
+    h.onUpdate((u) => seen.push(u))
+    start(h, 0, "scout")
+    end(h, 0, true)
+    expect(seen).toHaveLength(2)
+  })
+})

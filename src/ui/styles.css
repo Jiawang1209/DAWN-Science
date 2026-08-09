@@ -543,3 +543,37 @@ pre {
 .palette-item .why { color: var(--dawn-text-4); font-size: 11px; }
 .palette-item[aria-disabled="true"] { opacity: 0.55; cursor: default; }
 .palette-item .keys { color: var(--dawn-text-4); font-size: 11px; }
+
+/* ── 子 agent 的 chip 组（①-B″ · S1）───────────────────────────────
+   形态学自 Codex 桌面版的 subagent-activity-chip-group：
+   **chip 组，不是树、也不是日志**。默认一行，点开才展开细节——
+   8 个并发时铺开任务全文那一屏就没法看了。 */
+.subagents {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-left: 2px solid var(--dawn-stroke-3);
+  font-size: 12px;
+}
+.subagents-summary { color: var(--dawn-text-3); }
+/* 横向排布并允许换行：并发上界是 8，一行放不下时换行而不是横向滚动 */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.chip-slot { display: flex; flex-direction: column; gap: 2px; }
+.chip {
+  padding: 2px 8px;
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: 999px;
+  color: var(--dawn-text-2);
+}
+.chip.error { border-color: var(--dawn-danger); }
+.chip.ok { border-color: var(--dawn-stroke-2); }
+/* 状态的文字标签。**符号不够**——只靠 ⏳/✓/✗ 等于「只用颜色和图形表达含义」 */
+.chip-status { margin-left: 6px; color: var(--dawn-text-3); }
+.chip.error .chip-status { color: var(--dawn-danger); }
+/* 失败原因不折叠：规格 7.5，藏起来就等于没报 */
+.chip-error { margin: 0; font-size: 12px; }
+.chip-task { margin: 2px 0 0; color: var(--dawn-text-3); white-space: pre-wrap; }

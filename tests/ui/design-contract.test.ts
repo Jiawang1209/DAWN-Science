@@ -312,3 +312,26 @@ describe("设计契约 · 几何只从令牌来", () => {
     expect(missing).toEqual([])
   })
 })
+
+describe("设计契约 · 只用形状表达含义是不够的", () => {
+  /**
+   * 2026-08-09：用户发言变成了一颗有底色的气泡，agent 的是通栏正文。
+   * **那是给眼睛的**——读屏用户拿到的是一串没有说话人的段落。
+   * 所以「谁说的」必须同时留在文字里，用 `.sr-only` 藏起来而不是删掉。
+   *
+   * 而 `.sr-only` 有一种经典的写坏方式：**用 `display: none` 实现它**。
+   * 那样确实看不见了，代价是**读屏也读不到**——等于把标签删了，
+   * 只是删得不明显。
+   */
+  it("**`.sr-only` 不许用 display:none / visibility:hidden** —— 那样读屏也读不到", () => {
+    const css = read("styles.css")
+    const rule = /\.sr-only\s*\{([^}]*)\}/.exec(css)
+    expect(rule, "styles.css 里应当有 .sr-only").not.toBeNull()
+    expect(rule![1]).not.toMatch(/display:\s*none|visibility:\s*hidden/)
+  })
+
+  it("用户发言仍然带着文字身份标签 —— 气泡是给眼睛的，标签是给读屏的", () => {
+    // 气泡的底色由 `.turn.user .bubble` 给；标签若被删掉，这里就该红
+    expect(read("views.tsx")).toMatch(/who.*sr-only|sr-only.*who/)
+  })
+})

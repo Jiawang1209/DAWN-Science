@@ -76,6 +76,17 @@ pre {
 /* 嵌在句子或标题里的按钮：零盒子，不要再写 padding:0 */
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
+/* 一整张可点的卡（空态的开场建议）。**几何在这里，不在调用点** */
+.btn-card {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 6.5rem;
+  padding: var(--dawn-space-3);
+  border-radius: var(--dawn-radius-lg);
+  text-align: left;
+}
 
 /* 实心底用 -solid 而不是 -accent：品牌绿配白字只有 3.1:1，不达 AA。
    两者不是同一个颜色的两种写法，是两种用途——见 tokens.css */
@@ -392,15 +403,59 @@ pre {
    **抄到了长相，漏掉了行为**——`:focus-visible` 的聚焦环只挂在 `.control` 上，
    于是全应用最主要的那个输入框用的是 Chromium 默认聚焦环（取 macOS 系统强调色，
    与主题无关，在琥珀色系统上看着像警告态）。现在它走 `.control`，这里只留自己的几何 */
-.composer textarea {
-  /* 规范 §3.5：文本区 712×44，14px/20px。44 = 一行文字 + 上下各 12 的呼吸 */
-  min-height: 44px;
-  resize: vertical;
-  padding: var(--dawn-space-3);
+/**
+ * 输入区是**一张卡**，不是一个表单控件加一排散落的按钮。
+ * 规范 §3.5 量到的形态：一个抬起的面，22px 圆角，模型选择器长在它内部。
+ *
+ * **聚焦环挂在卡上**（`:focus-within`）：画在 textarea 上的话，
+ * 卡的边缘与聚焦环会成为两条相距 8px 的平行线。
+ */
+.composer-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-2);
+  border: 1px solid var(--dawn-stroke-3);
   border-radius: var(--dawn-radius-composer);
+  background: var(--dawn-surface-input);
+  box-shadow: var(--dawn-shadow-sm);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+/**
+ * 聚焦环**与 `.control` 用同一种写法**（2px 强调色，offset -1）。
+ *
+ * 第一版这里用的是 `box-shadow` 描一圈——好看，但它让这个输入框
+ * 成了全应用唯一一个「聚焦长得不一样」的控件，
+ * 而且 `e2e/theme.spec.ts` 查的是 `outline`（它守着一个真实事故：
+ * 主输入框曾经退回 Chromium 默认环、取操作系统强调色）。
+ * **测试查得对，所以改的是实现。**
+ */
+.composer-box:focus-within {
+  outline: 2px solid var(--dawn-accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+/**
+ * 卡里的文本区：**只负责文字**，盒子归卡。
+ *
+ * 类名刻意不叫 `.composer-input`——`design-contract` 里那条
+ * 「带 textarea/select/input 字样的选择器不许重定义 `.control` 的盒子」
+ * 是按 `\binput\b` 匹配的，`-input` 会被它命中。
+ * 规则说的是「加 class，不要抄属性」，这里正是在加 class。
+ *
+ * `resize: vertical` 留着：圆角卡里那个拖拽角不算好看，
+ * **但为了好看去掉一个能用的东西是亏的**。
+ */
+.composer-field {
+  min-height: 44px; /* 规范 §3.5：文本区 712×44 */
+  padding: var(--dawn-space-2);
+  border: 0;
+  background: transparent;
+  resize: vertical;
   font-size: var(--dawn-chat-size);
   line-height: var(--dawn-chat-leading);
 }
+.composer-field:focus-visible { outline: none; }
 .abort { margin-left: auto; }
 .empty-conv { align-items: center; justify-content: center; }
 .empty-conv .empty { margin: auto; }
@@ -677,3 +732,82 @@ pre {
   padding: 8px 10px;
 }
 .term-view .term-host { flex: 1; min-height: 0; }
+
+/* ── 发言的身份区分（2026-08-09）────────────────────────────────────
+   在这之前，你说的话和模型说的话**长得一模一样**，只有上面一个小灰字。
+   聊天界面第一眼看的就是这个。
+
+   形态照主流对话应用：**用户是一颗有底色的气泡（靠右），
+   agent 是通栏正文**。不给 agent 也套气泡，是因为它的回复常常很长，
+   长文套气泡会把行长压到读不下去。 */
+
+/** 视觉上藏起来，读屏仍然读得到。**不是 `display:none`**——那样读屏也读不到 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.turn.user { display: flex; flex-direction: column; align-items: flex-end; }
+.turn.user .bubble {
+  max-width: 82%;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-fill-3);
+}
+/* 用户发言用无衬线：`<pre>` 是为了保住换行与空格，**不是为了等宽** */
+.turn.user .text { font-family: var(--dawn-font-sans); }
+.turn.agent .bubble { min-width: 0; }
+
+/* ── 空态：欢迎区与开场建议 ──────────────────────────────────────── */
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dawn-space-3);
+  width: 100%;
+  max-width: var(--dawn-thread-max-w);
+  margin: auto;
+  /**
+   * 左右只留一档内距，**不再叠 `--dawn-page-inset-x`**。
+   *
+   * 第一版两个都加了：`max-width: 768` 已经把宽度约束住，再叠 64px 页边距
+   * 就是双重约束——可用宽度掉到 640，四张建议卡片放不下，
+   * **挤成了 3 + 1**（第二行孤零零一张）。约束一层就够。
+   */
+  padding: var(--dawn-space-6) var(--dawn-space-4);
+  text-align: center;
+}
+/* 标记，不是 logo：56×56（规范 §3.4），**不引入任何图片资源** */
+.welcome-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-accent-soft);
+  color: var(--dawn-accent);
+  font-size: 28px;
+  font-weight: var(--dawn-weight-semibold);
+}
+.welcome-title { margin: 0; font-size: 20px; font-weight: var(--dawn-weight-semibold); }
+.welcome-sub { margin: 0; color: var(--dawn-text-3); }
+
+/* 四列自适应（规范 §3.4：`minmax(10rem, 1fr)`，gap 12） */
+.openers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--dawn-space-3);
+  width: 100%;
+  margin: var(--dawn-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.opener-title { font-weight: var(--dawn-weight-medium); }
+.opener-sub { color: var(--dawn-text-3); font-size: 12px; }

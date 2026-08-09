@@ -436,41 +436,53 @@ export function ConversationView({
           clearDraft(session.sessionId)
         }}
       >
-        <textarea
-          className="control"
-          value={draft}
-          onChange={(e) => setDraft(session.sessionId, e.target.value)}
-          placeholder={disabled ? "会话已结束" : "输入内容，回车发送"}
-          disabled={disabled ?? false}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault()
-              e.currentTarget.form?.requestSubmit()
-            }
-          }}
-        />
         {/**
-         * 右对齐的控件行。学自 Hermes composer `controls.tsx` 的
-         * `<div className="ml-auto flex …">`——**控件靠右，输入区靠左**。
+         * **输入框与它的控件是一个东西，所以它们在同一张卡里。**
          *
-         * pill **不跟着 `disabled` 走**：会话结束时输入框该禁，
-         * 但"用另一个 agent 开一个新的"恰恰是那时最该给的出路。
+         * 上一版是「一个光秃秃的 textarea + 下面散着一排控件」——那是一张表单，
+         * 不是一个输入区。规范 §3.5 量到的形态是：一个抬起的面，
+         * 22px 圆角，**模型选择器长在它内部**。
+         *
+         * 聚焦环因此挂在**卡**上（`:focus-within`）而不是 textarea 上：
+         * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
-        <div className="composer-controls">
-          {models && onPickModel ? (
-            <ModelPill models={models} current={model} busy={busy} onPick={onPickModel} />
-          ) : null}
-          {agents && onNewSession ? (
-            <AgentPill
-              agents={agents}
-              current={session.agentId}
-              kind={session.kind}
-              onPick={onNewSession}
-            />
-          ) : null}
-          <Button type="submit" variant="primary" disabled={disabled ?? false}>
-            发送
-          </Button>
+        <div className="composer-box">
+          <textarea
+            className="control composer-field"
+            value={draft}
+            onChange={(e) => setDraft(session.sessionId, e.target.value)}
+            placeholder={disabled ? "会话已结束" : "输入内容，回车发送"}
+            disabled={disabled ?? false}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                e.currentTarget.form?.requestSubmit()
+              }
+            }}
+          />
+          {/**
+           * 右对齐的控件行。学自 Hermes composer `controls.tsx` 的
+           * `<div className="ml-auto flex …">`——**控件靠右，输入区靠左**。
+           *
+           * pill **不跟着 `disabled` 走**：会话结束时输入框该禁，
+           * 但"用另一个 agent 开一个新的"恰恰是那时最该给的出路。
+           */}
+          <div className="composer-controls">
+            {models && onPickModel ? (
+              <ModelPill models={models} current={model} busy={busy} onPick={onPickModel} />
+            ) : null}
+            {agents && onNewSession ? (
+              <AgentPill
+                agents={agents}
+                current={session.agentId}
+                kind={session.kind}
+                onPick={onNewSession}
+              />
+            ) : null}
+            <Button type="submit" variant="primary" disabled={disabled ?? false}>
+              发送
+            </Button>
+          </div>
         </div>
       </form>
     </div>
@@ -493,21 +505,34 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
   if (item.type === "subagents") {
     return <SubagentChips item={item} />
   }
+  const mine = item.who === "user"
   return (
     <div className={`turn ${item.who}`}>
-      <span className="who">{item.who === "user" ? "你" : agentId}</span>
       {/**
-       * **只有 agent 的发言走 markdown。**
+       * **身份不能只靠底色。**
        *
-       * 把用户输入也当 markdown 渲染，等于替他改写他说的话——
-       * 他写的 `**这里**` 就是想让人看见那四个星号（多半正是在问它为什么报错）。
+       * 用户的发言是一颗有底色的气泡、agent 的是通栏正文——这是给眼睛的。
+       * 但「谁说的」必须同时留在**文字**里，否则读屏用户拿到的是一串
+       * 没有说话人的段落。所以标签一直在，只是用户那一侧视觉上藏起来
+       * （`.sr-only`，**不是 `display:none`**——那样读屏也读不到）。
+       *
+       * 与本项目其他几处同一条：*「符号不够——只靠 ✓/✗ 等于只用颜色表达含义」*。
        */}
-      {item.who === "user" ? (
-        <pre className="text">{item.text}</pre>
-      ) : (
-        <AgentMarkdown text={item.text} streaming={!item.final} />
-      )}
-      {item.final ? null : <span className="hint">…</span>}
+      <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : agentId}</span>
+      <div className="bubble">
+        {/**
+         * **只有 agent 的发言走 markdown。**
+         *
+         * 把用户输入也当 markdown 渲染，等于替他改写他说的话——
+         * 他写的 `**这里**` 就是想让人看见那四个星号（多半正是在问它为什么报错）。
+         */}
+        {mine ? (
+          <pre className="text">{item.text}</pre>
+        ) : (
+          <AgentMarkdown text={item.text} streaming={!item.final} />
+        )}
+        {item.final ? null : <span className="hint">…</span>}
+      </div>
     </div>
   )
 }
@@ -631,6 +656,20 @@ function clip(s: string): { text: string; truncated: boolean } {
     : { text: s, truncated: false }
 }
 
+/**
+ * 开场建议。
+ *
+ * **每一条都必须是这个工作台真能做的事**——照抄通用聊天应用那种
+ * 「写一首诗」「解释量子力学」，第一次点下去就会暴露它不是给那个用的。
+ * 这四条对应四种起手：看清现状 → 读数据 → 做分析 → 落成文字。
+ */
+const OPENERS: readonly { 标题: string; 说明: string; 发出去的话: string }[] = [
+  { 标题: "看看这里有什么", 说明: "先摸清工作区", 发出去的话: "看一下当前工作区里有哪些文件和数据，说说它的结构。" },
+  { 标题: "读一份数据", 说明: "字段、规模、缺失", 发出去的话: "找到工作区里的数据文件，读进来，告诉我它有多少行、哪些字段、缺失情况如何。" },
+  { 标题: "做一次探索性分析", 说明: "分布与异常", 发出去的话: "对工作区里的数据做一次探索性分析：分布、相关性、明显的异常值。" },
+  { 标题: "把结果写成说明", 说明: "给人看的那一版", 发出去的话: "把目前得到的结果整理成一段能给别人看的说明，写清楚做了什么、发现了什么。" },
+]
+
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */
 export function EmptyConversation({
   agents,
@@ -638,30 +677,53 @@ export function EmptyConversation({
   onOpenSettings,
 }: {
   agents: readonly string[]
-  onStart: (agentId: string) => void
+  /** 第二个参数给了的话，**建会话之后把这句话真的发出去**——见 `App.tsx` 的 `startSession` */
+  onStart: (agentId: string, firstMessage?: string) => void
   onOpenSettings: () => void
 }) {
   const first = agents[0]
   return (
     <div className="conversation empty-conv">
       {first ? (
-        <EmptyState
-          title="开始一段对话"
-          description="当前工作区已就绪。"
-          action={
-            /* 空态没有 composer，pill 就落在主动作旁边。
-               **不能只给默认那一个**——否则想用 codex 开第一个会话的人，
-               得先开一个 ds-chat 再换，那是为了迁就界面而多走一步 */
-            <div className="empty-actions">
-              <Button variant="primary" onClick={() => onStart(first)}>
-                ＋ 用 {first} 开始
-              </Button>
-              {agents.length > 1 ? (
-                <AgentPill agents={agents} onPick={onStart} triggerLabel="换一个 agent" />
-              ) : null}
-            </div>
-          }
-        />
+        <div className="welcome">
+          {/* 标记，不是 logo：一个 56×56 的方块（规范 §3.4 的尺寸），
+              用品牌色，**不引入任何图片资源** */}
+          <div className="welcome-mark" aria-hidden="true">
+            D
+          </div>
+          <h2 className="welcome-title">开始一段对话</h2>
+          <p className="welcome-sub">当前工作区已就绪。挑一个起手，或者直接说你要做什么。</p>
+
+          {/**
+           * 建议卡片。**点了要真的发生事情**——建会话，并把这句话发出去。
+           * 只把文字填进输入框是做不到的：空态根本没有输入框。
+           */}
+          <ul className="openers">
+            {OPENERS.map((o) => (
+              <li key={o.标题}>
+                <Button
+                  variant="outline"
+                  size="card"
+                  onClick={() => onStart(first, o.发出去的话)}
+                >
+                  <span className="opener-title">{o.标题}</span>
+                  <span className="opener-sub">{o.说明}</span>
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          {/* **不能只给默认那一个**——否则想用 codex 开第一个会话的人，
+              得先开一个 ds-chat 再换，那是为了迁就界面而多走一步 */}
+          <div className="empty-actions">
+            <Button variant="primary" onClick={() => onStart(first)}>
+              ＋ 用 {first} 开始
+            </Button>
+            {agents.length > 1 ? (
+              <AgentPill agents={agents} onPick={onStart} triggerLabel="换一个 agent" />
+            ) : null}
+          </div>
+        </div>
       ) : (
         <EmptyState
           title="还没有可用的 agent"

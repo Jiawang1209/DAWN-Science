@@ -35,7 +35,14 @@ export type ButtonVariant =
   /** 破坏性动作 */
   | "destructive"
 
-export type ButtonSize = "default" | "sm" | "xs" | "inline" | "icon"
+/**
+ * `card` 是 2026-08-09 加的一档：**一整张可点的卡**（空态的开场建议）。
+ *
+ * 它本可以写成调用点的一个 `className="opener"` 再在 CSS 里改内距与圆角——
+ * **而那正是本文件第 16 行明令禁止的事**。扫描抓不到语义类名，
+ * 但规则不是给扫描看的。多一档尺寸，几何就仍然只有一个家。
+ */
+export type ButtonSize = "default" | "sm" | "xs" | "inline" | "icon" | "card"
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
   variant?: ButtonVariant

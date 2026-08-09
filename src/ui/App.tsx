@@ -301,7 +301,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * and state. Do not fork behavior per entry point."*
    */
   const startSession = useCallback(
-    (agentId: string) => {
+    /**
+     * @param firstMessage 给了的话，**建完会话立刻把它发出去**。
+     *   空态的建议卡片靠它——那一屏没有输入框，
+     *   所以「把文字填进输入框」这条路在那里不存在，只能真的发。
+     */
+    (agentId: string, firstMessage?: string) => {
       const pid = $activeProjectId.get()
       if (!pid) return
       /**
@@ -325,7 +330,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           // 人还在原地才进对话。**他自己切走了就尊重他的选择**
           if ($view.get() === from) setView("conversation")
           // 取写权，否则第一句就会被租约挡下
-          return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+          return client
+            .get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+            .then(() => {
+              if (!firstMessage) return
+              // **不做本地乐观追加**：与手动发送同一条路径，自己发的话经事件回灌进来
+              return client.get("writeToSession", {
+                sessionId: s.sessionId,
+                data: firstMessage,
+                as: "user",
+              })
+            })
         })
         .catch(fail)
     },

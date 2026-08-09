@@ -19,12 +19,19 @@ test("pill 在 composer 里，且**几何上确实靠右靠下**", async ({ dawn
   await expect(pill).toBeVisible()
 
   const p = (await pill.boundingBox())!
-  const area = (await page.locator(".composer").boundingBox())!
+  /**
+   * **参照系是那张卡，不是外面那条带子。**
+   *
+   * 2026-08-09 输入区变成了一张有宽度上限（768px）的卡，`.composer` 退化成
+   * 一条通栏的容器——拿它当参照，量到的是「卡到窗口边缘还有多远」，
+   * 与「控件贴不贴右」无关。**断言的意图没变，参照系跟着搬。**
+   */
+  const area = (await page.locator(".composer-box").boundingBox())!
   const text = (await page.locator(".composer textarea").boundingBox())!
   const row = (await page.locator(".composer .composer-controls").boundingBox())!
   const send = (await page.locator(".composer button[type=submit]").boundingBox())!
 
-  // 靠右：**控件行**贴着 composer 的右缘。
+  // 靠右：**控件行**贴着输入卡的右缘。
   // 最右的是发送按钮而不是 pill —— Hermes 的 controls.tsx 就是这个顺序
   // （`ml-auto` 的那一行里，pill 在前、发送在后），照搬
   expect(area.x + area.width - (row.x + row.width)).toBeLessThan(24)

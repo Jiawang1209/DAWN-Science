@@ -63,20 +63,39 @@ export function loadRegistry(file: string): ProviderRegistry {
  * **它是一份模板，不是一坨机器产物**——所以带注释。用户打开它时应当立刻
  * 明白能改什么；一个只有键值对的文件只会让人去翻文档。
  *
- * 选这三个 agent 的理由：
+ * 选这几个 agent 的理由：
  *   - `ds-chat` 便宜、够用，是"先跑起来"的默认
- *   - `claude` / `codex` 走 PTY 托管本地 CLI，**不需要在这里配 key**
- *     （它们用各自 CLI 已有的登录），所以在没填任何 key 时也能直接用
+ *   - `claude` / `codex` 用各自 CLI 已有的登录，**不需要在这里配 key**，
+ *     所以在没填任何 key 时也能直接用
+ *   - `shell` 是一个**通用终端**——跑任意命令，也可以在里面手动起
+ *     claude / codex 的 TUI
+ *
+ * ## 2026-08-09（①-C · C5）：claude / codex 从 `pty` 改成 `cli`
+ *
+ * 作者试用后的原话：*「应该是和 deepseek 这种样式，我从对话框里面输入内容」*。
+ * 走 `pty` 时它们是一个终端；走 `cli` 时它们是对话——而且**它们干的活
+ * 第一次落进账本**（走 PTY 时一个 claude 会话只有一条 `pty_session` Run，
+ * 因为 ANSI 字节流里没有「工具调用」这个概念）。
+ *
+ * **终端没有被取代，是被摆正了**：它作为 `shell` 保留，定位是作者说的
+ * *「类似 codex app 的感觉，里面有一个终端，也可以开启 codex cli 和 claude cli」*。
+ *
+ * **已存在的配置不改**（`loadRegistryOrDefault` 的既有纪律：用户的配置比
+ * 我们的默认值重要）。所以升级前装过 DAWN 的人，他的 claude/codex 仍是终端形态——
+ * **那不是坏的，是他配置里写的那样**。想换成对话形态，把 `kind: pty` 改成
+ * `kind: cli` 即可。
  */
 export const DEFAULT_CONFIG_YAML = `# DAWN Science —— agent 配置
 #
 # 这份文件是第一次启动时自动生成的，可以随意修改；DAWN 不会覆盖它。
 # 改完重启应用生效。
 #
-# 两种 agent：
+# 三种 agent：
 #   kind: native  —— 由 DAWN 内置的 agent 直接调模型 API，需要在「设置」里填 key
-#   kind: pty     —— 托管一个本地命令行 agent（claude / codex），
-#                    用它自己的登录，**不需要在 DAWN 里配 key**
+#   kind: cli     —— 托管一个本地命令行 agent（claude / codex）并**以对话形态呈现**，
+#                    用它自己的登录，不需要在 DAWN 里配 key。
+#                    它的工具调用会落在账本上（项目概览里看得到）
+#   kind: pty     —— 一个**终端**：跑任意命令，也可以在里面手动起 claude / codex 的 TUI
 
 agents:
   # 内置 agent。用前先到「设置」里填 deepseek 的 API key
@@ -86,19 +105,26 @@ agents:
     model: deepseek-v4-flash
     capabilities: [chat, exec]
 
-  # 托管本地的 claude CLI。装了 claude 且已登录就能直接用
+  # 托管本地的 claude CLI，以对话形态呈现。装了 claude 且已登录就能直接用
   claude:
-    kind: pty
+    kind: cli
     command: claude
     args: []
     capabilities: [chat, exec]
 
-  # 托管本地的 codex CLI
+  # 托管本地的 codex CLI，以对话形态呈现
   codex:
-    kind: pty
+    kind: cli
     command: codex
     args: []
     capabilities: [chat, exec]
+
+  # 一个通用终端。想用 claude / codex 的 TUI，在这里手动起即可
+  shell:
+    kind: pty
+    command: bash
+    args: ["-i"]
+    capabilities: [exec]
 `
 
 /**

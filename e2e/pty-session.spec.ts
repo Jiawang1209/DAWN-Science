@@ -19,34 +19,31 @@
  */
 import { test, expect } from "./fixtures.js"
 
-/** 托管一个 bash 当 PTY agent。native 的那个仍在，别的用例要用 */
-const PROVIDERS = `agents:
-  ds-chat:
-    kind: native
-    provider: deepseek
-    model: deepseek-v4-flash
-    capabilities: [chat, exec]
-  shell:
-    kind: pty
-    command: bash
-    args: ["--norc", "--noprofile", "-i"]
-    capabilities: [chat, exec]
-`
-
+/**
+ * **不再自带 providers.yaml —— 用发布出去的那份默认配置。**
+ *
+ * ①-C · C5 之后，默认配置里就有一个 `shell`（`kind: pty`，跑 bash）。
+ * 让这条 e2e 走默认配置，验的就从「我在测试里临时编的 shell 能用」
+ * 变成 **「新用户装好之后真的能开一个终端」**——那才是判据 ③。
+ */
 /**
  * 经命令面板新建 `shell` 会话。
  *
- * **不走 composer 的 agent pill**：第一版试过，`/ds-chat/` 同时匹配到侧栏的
- * 会话按钮和 pill 本身——**一个能匹配到三个元素的定位器，点中哪个是运气**。
- * 命令面板里每个 agent 各有一条命令，标题唯一。
+ * **不走 composer 的 agent pill**：试过，`/ds-chat/` 同时匹配到侧栏的会话按钮
+ * 和 pill 本身——**一个能匹配到三个元素的定位器，点中哪个是运气**。
+ *
+ * **必须等「新建会话」按钮可用再按 ⌘K**：只等 `.app-shell` 可见是不够的，
+ * 那时项目还没加载完，命令面板里没有这条命令（C4 的 e2e 上撞过，
+ * 三条里飘红一条，每次不是同一条）。
  */
 async function startShell(page: import("@playwright/test").Page): Promise<void> {
+  await expect(page.locator(".app-shell")).toBeVisible()
+  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
   await page.keyboard.press("Meta+k")
   await page.getByRole("option", { name: "新建会话：shell" }).click()
 }
 
 test.describe("PTY 会话：终端就是主体", () => {
-  test.use({ dawnOptions: { providersYaml: PROVIDERS } })
 
   test("**建完就能看见终端**，不用点任何东西", async ({ dawn }) => {
     const { page } = dawn

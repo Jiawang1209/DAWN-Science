@@ -123,3 +123,34 @@ describe("门槛二 · 不打开文件夹也要有项目", () => {
     rmSync(dir, { recursive: true, force: true })
   })
 })
+
+describe("默认配置的形状（①-C · C5）", () => {
+  /**
+   * **这份 YAML 是发给每个新用户的东西**，所以它的形状该被钉住——
+   * 改坏了不会有任何现有用户发现（他们的配置不会被覆盖），
+   * **只有新装的人会撞上**。
+   */
+  const parsed = () => loadRegistryOrDefault(join(tmp(), "providers.yaml"))
+
+  it("claude / codex 是 **cli**（对话形态），不是 pty", () => {
+    const reg = parsed()
+    expect(reg.agents["claude"]).toMatchObject({ kind: "cli", command: "claude" })
+    expect(reg.agents["codex"]).toMatchObject({ kind: "cli", command: "codex" })
+  })
+
+  it("**有一个通用终端** —— 判据 ③：能跑任意命令，也能手动起那两个 CLI 的 TUI", () => {
+    expect(parsed().agents["shell"]).toMatchObject({ kind: "pty", command: "bash" })
+  })
+
+  it("内置 agent 仍在 —— 它是「先跑起来」的默认", () => {
+    expect(parsed().agents["ds-chat"]).toMatchObject({ kind: "native", provider: "deepseek" })
+  })
+
+  it("**注释里说清三种 kind 的区别** —— 一份只有键值对的模板只会让人去翻文档", () => {
+    expect(DEFAULT_CONFIG_YAML).toContain("kind: cli")
+    expect(DEFAULT_CONFIG_YAML).toContain("kind: pty")
+    // 对话形态与终端的区别必须写出来，否则用户不知道该选哪个
+    expect(DEFAULT_CONFIG_YAML).toMatch(/对话形态/)
+    expect(DEFAULT_CONFIG_YAML).toMatch(/终端/)
+  })
+})

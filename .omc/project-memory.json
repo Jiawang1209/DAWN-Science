@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run typecheck 2>&1 | grep \"error TS\" | head -3; npm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2 && npm run build 2>&1 | tail -1 && npx playwright test e2e/cli-agent-kind.spec.ts e2e/cli-agent.spec.ts --reporter=list 2>&1 | grep -E \"✓|✘|passed|failed\" | head -8",
-    "testCommand": "npm run typecheck 2>&1 | grep \"error TS\" | head -3; npm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2 && npm run build 2>&1 | tail -1 && npx playwright test e2e/cli-agent-kind.spec.ts e2e/cli-agent.spec.ts --reporter=list 2>&1 | grep -E \"✓|✘|passed|failed\" | head -8",
+    "buildCommand": "python3 - <<'PY'\nimport pathlib, re\np = pathlib.Path(\"e2e/pty-session.spec.ts\"); s = p.read_text(encoding=\"utf8\")\nstart = s.index(\"/** 托管一个 bash 当 PTY agent\")\nend = s.index(\"test.describe(\")\ns = s[:start] + '''/**\n * **不再自带 providers.yaml —— 用发布出去的那份默认配置。**\n *\n * ①-C · C5 之后，默认配置里就有一个 `shell`（`kind: pty`，跑 bash）。\n * 让这条 e2e 走默认配置，验的就从「我在测试里临时编的 shell 能用」\n * 变成 **「新用户装好之后真的能开一个终端」**——那才是判据 ③。\n */\n''' + s[end:]\ns = s.replace('  test.use({ dawnOptions: { providersYaml: PROVIDERS } })\\n', '')\ns = s.replace('await page.getByRole(\"option\", { name: \"新建会话：shell\" }).click()',\n              'await page.getByRole(\"option\", { name: \"新建会话：shell\" }).click()')\np.write_text(s, encoding=\"utf8\")\nprint(\"ok\")\nPY\ngrep -n \"PROVIDERS\\|test.use\" e2e/pty-session.spec.ts | head -4; npm run build 2>&1 | tail -1 && npx playwright test e2e/pty-session.spec.ts --reporter=list 2>&1 | grep -E \"✓|✘|passed|failed\" | head -5",
+    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2; npm run typecheck 2>&1 | grep -c \"error TS\"; npx playwright test 2>&1 | tail -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

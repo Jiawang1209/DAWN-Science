@@ -43,10 +43,39 @@
 
 ## 变更日志
 
-### 2026-08-09 — S1 第三片：子进程真的跑起来了（Spike F + 子侧入口）
+### 2026-08-09 — S1 第四片（上）：子 agent 的回合落账本
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 计划 §6 把这条列为「**现在就做，不等阶段 ④**」：
+  *每个子 agent 的回合落 Run，`parent_run_id` 指向发起它的那次工具调用。*
+  理由与记账员当初前移到 ①-B′ 是同一条：Run 要求**每条执行路径在诞生时就记账**，
+  子 agent 是一条全新的执行路径，等阶段 ④ 再补就要回头改已有的调用点。
+- **What**: 协议加 `subagent_start` / `subagent_end` 两个事件；记账员据 `toolCallId`
+  把子 agent 挂到发起它的那次工具调用下面。于是链是完整的三层：
+  `agent_turn` → `tool_call:subagent` → `subagent:<名字>`。
+- **agent 名字进 `requestType`**，理由与 U4 时把工具名写进 `tool_call:<工具名>` 完全一样：
+  只给一个序号，账本就回答不了「是谁干的」。
+- **键必须带 `toolCallId`**：同一轮里可能有两次 subagent 调用，各自的 `index`
+  都从 0 开始。只按 index 索引会互相覆盖，表现是
+  **「第二次调用的第一个子 agent 永远 running」**——而一条永久 running 的 Run
+  比没有这条记录更坏（记账员文件头原话）。专门写了一条用例钉住它。
+- **`closeAll` 也要收子 agent**：它在另一个进程里，活得比父会话久是可能的，
+  但账本这边必须收口，理由同上。
+- **Impact**: `AgentEvent` 加两个成员。**目前没有任何生产代码发这两个事件**——
+  发它们的是下一片（工具定义 + 接进 `native.ts`）。
+  这与 R3/U4 的先后关系相同：先让账本记得住，再让它被产生、被显示。
+- **Verification**: 723 单元测试（+7）；typecheck 干净。**尚无真机验证**，
+  因为还没有人发这两个事件。
+- **下一片**：`subagent` 工具定义（pi 的 `customTools`）+ 接进 `native.ts`，
+  那时这两个事件才会真的产生。
+
+---
+
+### 2026-08-09 — S1 第三片：子进程真的跑起来了（Spike F + 子侧入口）
+
+- **Type**: feat
+- **Commit**: `edc26dd`
 - **Motivation**: 前两片都没有可运行路径。这一片让子 agent 真的在一个独立进程里
   跑一次 pi 会话——**S1 第一次有真机验证。**
 - **先做了 Spike F**（照 U2 换模型前先做 Spike E 的规矩）：打包成 Electron 之后

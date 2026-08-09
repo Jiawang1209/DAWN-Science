@@ -283,3 +283,111 @@ describe("Run 记账 · 记下是哪个工具", () => {
     expect(tool.requestType).toBe("tool_call")
   })
 })
+
+describe("子 agent 的账（①-B″ · S1，不变式 3）", () => {
+  /**
+   * 计划 §6 把这条列为「**现在就做，不等阶段 ④**」：
+   *
+   * > 每个子 agent 的回合**落 Run**，`parent_run_id` 指向发起它的那次工具调用。
+   * > 子 agent 干的活也是账本上的条目。
+   *
+   * 理由与整个记账员前移到 ①-B′ 是同一条：Run 要求**每条执行路径在诞生时就记账**。
+   * 子 agent 是一条全新的执行路径，等到阶段 ④ 再补，就要回头改已有的调用点。
+   */
+  const startSubagent = (i: number, agent: string) =>
+    rec.ingest({
+      kind: "subagent_start", sessionId: SESSION, toolCallId: "c1",
+      index: i, agent, task: `任务${i}`,
+    })
+
+  const endSubagent = (i: number, ok: boolean, error?: string) =>
+    rec.ingest({
+      kind: "subagent_end", sessionId: SESSION, toolCallId: "c1",
+      index: i, ok, ...(error ? { error } : {}),
+    })
+
+  /** 走到「subagent 工具正在执行」这一刻 */
+  const untilToolRunning = () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({
+      kind: "tool_start", sessionId: SESSION, toolCallId: "c1",
+      toolName: "subagent", input: {},
+    })
+  }
+
+  it("**parent_run_id 指向发起它的那次工具调用**", () => {
+    untilToolRunning()
+    startSubagent(0, "scout")
+    endSubagent(0, true)
+
+    const tool = list().find((r) => r.requestType === "tool_call:subagent")!
+    const sub = list().find((r) => r.requestType.startsWith("subagent:"))!
+    expect(sub.parentRunId).toBe(tool.runId)
+    // 而那次工具调用自己挂在回合上——**三层链是完整的**
+    expect(tool.parentRunId).toBe(list().find((r) => r.requestType === "agent_turn")!.runId)
+  })
+
+  it("**agent 名字进 requestType** —— 只给序号等于没记是谁干的", () => {
+    untilToolRunning()
+    startSubagent(0, "scout")
+    endSubagent(0, true)
+    expect(list().some((r) => r.requestType === "subagent:scout")).toBe(true)
+  })
+
+  it("并发的几个各是一条，互不覆盖", () => {
+    untilToolRunning()
+    startSubagent(0, "scout")
+    startSubagent(1, "planner")
+    startSubagent(2, "scout")
+    endSubagent(1, true)
+    endSubagent(0, true)
+    endSubagent(2, true)
+    const subs = list().filter((r) => r.requestType.startsWith("subagent:"))
+    expect(subs).toHaveLength(3)
+    expect(subs.every((r) => r.status === "completed")).toBe(true)
+  })
+
+  it("失败的那个记 failed，**并带上原因**", () => {
+    untilToolRunning()
+    startSubagent(0, "scout")
+    endSubagent(0, false, "子进程以退出码 3 结束")
+    const sub = list().find((r) => r.requestType.startsWith("subagent:"))!
+    expect(sub.status).toBe("failed")
+    expect(sub.hasError).toBe(true)
+    expect(sub.terminalReason).toContain("退出码 3")
+  })
+
+  it("**没有开着的工具调用也要记** —— 只是没有 parent，不是丢掉它", () => {
+    // 与 tool_start 那条同源：丢掉等于让一次真实发生的执行不留痕迹
+    rec.beginTurn(SESSION)
+    startSubagent(0, "scout")
+    endSubagent(0, true)
+    const sub = list().find((r) => r.requestType.startsWith("subagent:"))!
+    expect(sub).toBeDefined()
+    expect(sub.parentRunId).toBeUndefined()
+  })
+
+  it("**会话结束时还开着的要收成 cancelled** —— 不留永久 running 的孤儿", () => {
+    untilToolRunning()
+    startSubagent(0, "scout")
+    rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 0 })
+    const sub = list().find((r) => r.requestType.startsWith("subagent:"))!
+    expect(sub.status).toBe("cancelled")
+    expect(sub.terminalReason).toBeTruthy()
+  })
+
+  it("同一个 index 在两次不同的工具调用里不打架", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "subagent", input: {} })
+    rec.ingest({ kind: "subagent_start", sessionId: SESSION, toolCallId: "c1", index: 0, agent: "scout", task: "a" })
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c2", toolName: "subagent", input: {} })
+    rec.ingest({ kind: "subagent_start", sessionId: SESSION, toolCallId: "c2", index: 0, agent: "planner", task: "b" })
+    rec.ingest({ kind: "subagent_end", sessionId: SESSION, toolCallId: "c1", index: 0, ok: true })
+
+    const subs = list().filter((r) => r.requestType.startsWith("subagent:"))
+    expect(subs).toHaveLength(2)
+    expect(subs.find((r) => r.requestType === "subagent:scout")!.status).toBe("completed")
+    // c2 的那个还开着，没有被 c1 的 end 误关
+    expect(subs.find((r) => r.requestType === "subagent:planner")!.status).toBe("running")
+  })
+})

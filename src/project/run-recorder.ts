@@ -44,6 +44,14 @@ interface Open {
   turnRunId?: string | undefined
   /** 正在执行的工具，按 pi 的 toolCallId 索引 */
   tools: Map<string, string>
+  /**
+   * 正在跑的子 agent，按 `<toolCallId>#<index>` 索引。
+   *
+   * **键必须带 toolCallId**：同一轮里可能有两次 subagent 调用，
+   * 各自的 index 都从 0 开始，只按 index 索引会互相覆盖——
+   * 表现是「第二次调用的第一个子 agent 永远 running」。
+   */
+  subagents: Map<string, string>
   /** PTY 会话本身的那条 Run */
   sessionRunId?: string | undefined
 }
@@ -63,7 +71,7 @@ export class RunRecorder {
   private slot(sessionId: SessionId): Open {
     let s = this.open.get(sessionId)
     if (!s) {
-      s = { tools: new Map() }
+      s = { tools: new Map(), subagents: new Map() }
       this.open.set(sessionId, s)
     }
     return s
@@ -162,6 +170,36 @@ export class RunRecorder {
       return
     }
 
+    if (event.kind === "subagent_start") {
+      /**
+       * **挂到发起它的那次工具调用下面。**
+       *
+       * 拿不到父（没有开着的 subagent 工具调用）**照样记，只是没有 parent**——
+       * 与上面 `tool_start` 那条同源：丢掉等于让一次真实发生的执行不留痕迹。
+       *
+       * agent 名字进 `requestType`，理由与 `tool_call:<工具名>` 完全一样：
+       * 只给一个序号，账本就回答不了「是谁干的」。
+       */
+      const parent = s?.tools.get(event.toolCallId)
+      const runId = this.begin(event.sessionId, `subagent:${event.agent}`, "agent", parent)
+      if (runId) this.slot(event.sessionId).subagents.set(subKey(event), runId)
+      return
+    }
+
+    if (event.kind === "subagent_end") {
+      const runId = s?.subagents.get(subKey(event))
+      if (!runId) return
+      s!.subagents.delete(subKey(event))
+      this.runs.finish(runId, {
+        status: event.ok ? "completed" : "failed",
+        finishedAt: this.now(),
+        hasError: !event.ok,
+        // 失败必须带原因（规格 7.5）。没给原因时也要留一句，不留空
+        ...(event.ok ? {} : { terminalReason: event.error ?? "子 agent 失败，但没有给出原因" }),
+      })
+      return
+    }
+
     if (event.kind === "tool_end") {
       const runId = s?.tools.get(event.toolCallId)
       if (!runId) return
@@ -220,6 +258,18 @@ export class RunRecorder {
     }
     s.tools.clear()
 
+    // 子 agent 在另一个进程里，**它比父会话活得久也是可能的**——
+    // 但账本这边必须收口，理由与上面同一条：永久 running 比没有记录更坏
+    for (const runId of s.subagents.values()) {
+      this.runs.finish(runId, {
+        status: "cancelled",
+        finishedAt,
+        hasError: true,
+        terminalReason: "会话结束时该子 agent 仍在执行",
+      })
+    }
+    s.subagents.clear()
+
     if (s.turnRunId) {
       this.runs.finish(s.turnRunId, {
         status: "cancelled",
@@ -248,4 +298,16 @@ export class RunRecorder {
   forget(sessionId: SessionId): void {
     this.open.delete(sessionId)
   }
+}
+
+/**
+ * 子 agent 账目的键。
+ *
+ * **必须带 `toolCallId`。** 同一轮里可能有两次 subagent 调用，各自的 `index`
+ * 都从 0 开始；只按 index 索引会互相覆盖，表现是
+ * 「第二次调用的第一个子 agent 永远 running」——一条永久 running 的 Run
+ * 比没有这条记录更坏（见 `closeAll` 的注释）。
+ */
+function subKey(e: { toolCallId: string; index: number }): string {
+  return `${e.toolCallId}#${e.index}`
 }

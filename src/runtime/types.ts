@@ -77,6 +77,34 @@ export type AgentEvent =
       mayIncludeUserEdits: boolean
     }
   /**
+   * 一个子 agent 开始 / 结束（①-B″ · S1）。
+   *
+   * **不变式 3「没有不可见的行动」。** 子 agent 在另一个进程里干活，
+   * 它干的活同样是账本上的条目——账本据 `toolCallId` 把它挂到
+   * **发起它的那次工具调用**下面，于是链是完整的：
+   * `agent_turn` → `tool_call:subagent` → `subagent:<名字>`。
+   *
+   * `index` 是这一批里的第几个。**它与 `toolCallId` 合起来才唯一**——
+   * 同一轮里可能有两次 subagent 调用，各自的 index 都从 0 开始。
+   */
+  | {
+      kind: "subagent_start"
+      sessionId: SessionId
+      toolCallId: string
+      index: number
+      agent: string
+      task: string
+    }
+  | {
+      kind: "subagent_end"
+      sessionId: SessionId
+      toolCallId: string
+      index: number
+      ok: boolean
+      /** 失败原因。**`ok` 为 false 时必须有**——不带原因的失败等于没报 */
+      error?: string
+    }
+  /**
    * **一整轮真正结束**（用户发话 → 若干次模型响应与工具执行 → 收工）。
    *
    * 与 `turn_end` 不是一回事，这是 2026-08-09 真机实测才看清的：

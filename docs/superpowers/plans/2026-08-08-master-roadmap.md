@@ -768,7 +768,8 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 之后进 **阶段 ②-A 科学内核**（S8–S14：Jupyter 协议客户端 → Ark/ipykernel → 中断 → 结构化 Console → 富输出 → 内核版本追踪 → 变量面板）。
 
 **进 ②-A 之前值得先花的两小笔**（都很小，且都在补已知欠账）：
-1. 补一条 `parallel` 模式的 e2e——目前只有 `single` 在真实产物里走过
+1. ~~补一条 `parallel` 模式的 e2e~~ **已补**（2026-08-10）：`parallel` 与 `chain` 各一条，
+   跑真实构建产物。见 `e2e/subagent.spec.ts`
 2. `providers.yaml` 与 `.dawn/agents/` 各给一份**可直接用的样例**——
    现在子 agent 能力已经具备，但一个新用户不知道该往哪写什么
 

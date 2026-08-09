@@ -151,3 +151,134 @@ test.describe("定义写错时不会静静地消失", () => {
     expect(sub!.terminal_reason).toContain("scout")
   })
 })
+
+/**
+ * ── parallel 与 chain（2026-08-10 补）─────────────────────────────
+ *
+ * ①-B″ 收口时明写过一笔欠账：**三种模式只有 `single` 在真实产物上验过**，
+ * `parallel` 与 `chain` 只有单元测试。
+ *
+ * 而这两种模式最可能坏的地方恰好都在单元测试够不着的地方：
+ *   - parallel：**两个独立进程**是不是都挂到了同一次工具调用下面
+ *   - chain：`{previous}` 是不是真的把上一步的**真实输出**传给了下一步
+ *
+ * 单元测试里 `childOf` 是替身，进程根本没起；
+ * 「两个真进程 + 账本父子关系」与「一段真输出跨进程流到下一步」都只能在这里验。
+ */
+
+/** 从库里读出这一次的全部 run */
+async function readRuns(dbPath: string) {
+  const { default: Database } = await import("better-sqlite3")
+  const db = new Database(dbPath, { readonly: true })
+  const rows = db
+    .prepare("SELECT id, parent_run_id, request_type, status FROM runs")
+    .all() as { id: string; parent_run_id: string | null; request_type: string; status: string }[]
+  db.close()
+  return rows
+}
+
+/** 建会话、发一句话，等子 agent 跑完 */
+async function runSubagentTurn(page: import("@playwright/test").Page, workspace: string) {
+  mkdirSync(join(workspace, ".dawn", "agents"), { recursive: true })
+  writeFileSync(join(workspace, ".dawn", "agents", "scout.md"), SCOUT)
+  await expect(page.locator(".app-shell")).toBeVisible()
+  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await page.getByRole("button", { name: /新建会话/ }).click()
+  await page.getByPlaceholder(/回车发送/).fill("派两个子 agent")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+}
+
+test.describe("parallel：两个独立进程，都挂在同一次工具调用下面", () => {
+  test.use({
+    dawnOptions: {
+      gitInit: true,
+      toolCall: {
+        toolName: "subagent",
+        args: {
+          tasks: [
+            { agent: "scout", task: "第一件事：看看目录" },
+            { agent: "scout", task: "第二件事：看看依赖" },
+          ],
+        },
+      },
+    },
+  })
+
+  test("两个都跑完、都出 chip、账本上都挂到那次工具调用下", async ({ dawn }) => {
+    const { page, workspace, dbPath } = dawn
+    await runSubagentTurn(page, workspace)
+
+    // 两个结果都要回到对话里。**编号是按输入顺序放回的**，不是完成顺序
+    await expect(page.locator(".tool-result")).toContainText("[1] scout：完成", { timeout: 60_000 })
+    await expect(page.locator(".tool-result")).toContainText("[2] scout：完成")
+
+    const chips = page.locator(".chip-group .chip")
+    await expect(chips).toHaveCount(2)
+    await expect(page.locator(".subagents-summary")).toContainText("2/2")
+    for (let i = 0; i < 2; i++) {
+      await expect(chips.nth(i)).toHaveAttribute("data-status", "ok")
+    }
+
+    /**
+     * **账本：两条 `subagent:scout`，父亲是同一条 `tool_call:subagent`。**
+     *
+     * 这正是单元测试碰不到的那一段——替身 `childOf` 不起进程，
+     * 也就没有「两个进程各自记账」这回事。
+     */
+    const rows = await readRuns(dbPath)
+    const tool = rows.find((r) => r.request_type === "tool_call:subagent")
+    const subs = rows.filter((r) => r.request_type === "subagent:scout")
+    expect(tool, `没有 tool_call:subagent。全部：${JSON.stringify(rows)}`).toBeDefined()
+    expect(subs, `subagent 记了 ${subs.length} 条。全部：${JSON.stringify(rows)}`).toHaveLength(2)
+    for (const s of subs) {
+      expect(s.parent_run_id).toBe(tool!.id)
+      // **跑完了要收口**，停在 running 比没有记录更坏
+      expect(s.status).toBe("completed")
+    }
+  })
+})
+
+test.describe("chain：上一步的真实输出流进了下一步", () => {
+  test.use({
+    dawnOptions: {
+      gitInit: true,
+      toolCall: {
+        toolName: "subagent",
+        args: {
+          chain: [
+            { agent: "scout", task: "先踏勘一遍" },
+            { agent: "scout", task: "根据这段结论继续：{previous}" },
+          ],
+        },
+      },
+    },
+  })
+
+  test("**`{previous}` 换成的是第一步的真输出**，不是占位符本身", async ({ dawn }) => {
+    const { page, workspace, dbPath } = dawn
+    await runSubagentTurn(page, workspace)
+
+    await expect(page.locator(".tool-result")).toContainText("[2] scout：完成", { timeout: 60_000 })
+
+    const chips = page.locator(".chip-group .chip")
+    await expect(chips).toHaveCount(2)
+
+    /**
+     * chip 上的任务文本是**替换之后**的（`executor.runChain` 先替换再 `one()`）。
+     *
+     * 所以点开第二个 chip，应该看得见第一步的真实输出——
+     * 假模型的暗号「假模型已应答」。**这是整条 chain 唯一无法伪造的证据**：
+     * 那段文字只可能来自第一个子进程里真的跑过一次模型。
+     */
+    await chips.nth(1).click()
+    await expect(page.locator(".chip-task")).toContainText("假模型已应答")
+    // **占位符本身不该留在任务里**——留着它就是把 `{previous}` 四个字发给了模型
+    await expect(page.locator(".chip-task")).not.toContainText("{previous}")
+
+    const rows = await readRuns(dbPath)
+    const tool = rows.find((r) => r.request_type === "tool_call:subagent")
+    const subs = rows.filter((r) => r.request_type === "subagent:scout")
+    expect(subs).toHaveLength(2)
+    for (const s of subs) expect(s.parent_run_id).toBe(tool!.id)
+  })
+})

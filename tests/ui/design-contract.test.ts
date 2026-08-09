@@ -67,6 +67,68 @@ describe("设计契约 · 颜色只从令牌来", () => {
   })
 })
 
+describe("设计契约 · 主题体系不许退化成两套颜色表", () => {
+  /**
+   * 这一组是 ①-B″ · V2 的验收。
+   *
+   * `tokens.css` 的文件头写着*「只覆盖种子与混合比例，不覆盖派生令牌——
+   * 逐个改 `--dawn-*` 会立刻退化成两套各自维护的颜色表」*。
+   * **那句话此前没有任何东西强制它。** 现在有了。
+   */
+  const tokens = () => read("tokens.css")
+
+  /** 取出 `:root.dawn-dark { … }` 里声明的全部令牌名 */
+  function darkBlockTokens(): string[] {
+    const text = tokens()
+    const start = text.indexOf(":root.dawn-dark")
+    if (start < 0) return []
+    const open = text.indexOf("{", start)
+    const end = text.indexOf("\n}", open)
+    const body = text.slice(open, end)
+    return [...body.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map((m) => m[1]!)
+  }
+
+  it("暗色块存在 —— 强制切换全靠它", () => {
+    expect(darkBlockTokens().length).toBeGreaterThan(0)
+  })
+
+  it("**暗色块只覆盖种子**，不重新定义任何派生令牌", () => {
+    // 派生令牌一旦在暗色里被单独指定，它与亮色那一支就再也不会一起变了。
+    // 例外只有两类，且都无法从种子算出来：
+    //   语义色 —— warning 在亮色下是橙的、暗色下是黄的，不是同一个色相
+    //   阴影   —— 暗色靠内嵌白发丝线，亮色靠投影，形状根本不同
+    const ALLOWED = /^--(theme-|mix-|dawn-(danger|success|warning|on-accent|shadow-|stroke-float))/
+    const bad = darkBlockTokens().filter((t) => !ALLOWED.test(t))
+    expect(
+      bad,
+      "暗色块里出现了派生令牌。改种子，不要改派生结果 —— 见 tokens.css 头注",
+    ).toEqual([])
+  })
+
+  it("**暗色不靠 prefers-color-scheme** —— 那样人就没法强制切换了", () => {
+    // 媒体查询版与强制类版没法共用一个声明块，两份种子一定会漂移。
+    // 「跟随系统」在 state/theme.ts 里解析成明确的类，这里只留一个入口
+    const hits = findLines(tokens(), (l) => /@media[^{]*prefers-color-scheme/.test(l))
+    expect(hits, "改用 :root.dawn-dark，由 state/theme.ts 解析「跟随系统」").toEqual([])
+  })
+
+  it("语义令牌不用色名命名 —— 名字要说用途", () => {
+    // `--dawn-yellow` 没有地方安放「亮色下它其实是橙的」这个事实。
+    // 灰阶 --theme-gray-* 不在此列：它是刻度本身，不是语义
+    const bad = findLines(tokens(), (l) =>
+      /^\s*--dawn-(red|green|yellow|blue|orange|purple|gray|grey)\b/.test(l),
+    )
+    expect(bad, "用 --dawn-danger / -success / -warning 这类说用途的名字").toEqual([])
+  })
+
+  it("组件与样式表里不残留旧色名", () => {
+    const stale = /--dawn-(red|green|yellow)\b/
+    for (const f of [...tsxFiles(), "styles.css"]) {
+      expect(findLines(read(f), (l) => stale.test(l)), `${f}：旧语义色名`).toEqual([])
+    }
+  })
+})
+
 describe("设计契约 · primitive 不被调用点覆写", () => {
   const OVERRIDE = /className=["'`][^"'`]*\b(p[xytblr]?-|h-|w-\d|rounded|border-|shadow-)/
 

@@ -44,7 +44,20 @@ export const test = base.extend<{ dawn: DawnFixture }>({
     const dbPath = join(dir, "dawn.db")
 
     const app = await _electron.launch({
-      args: [join(ROOT, "dist", "electron", "main.js")],
+      args: [
+        join(ROOT, "dist", "electron", "main.js"),
+        /**
+         * **userData 也要隔离。**
+         *
+         * 2026-08-09 做主题时发现的洞：夹具的注释写着「每个用例一套全新的配置目录、
+         * 数据库、工作区」，但 `localStorage` 不住在这三样里的任何一个，它住在
+         * `app.getPath("userData")`——而那个路径此前一直是**开发机上真实的那一份**。
+         *
+         * 后果有两层：用例之间有暗管道；跑一次 e2e 会改掉作者自己应用里的设置。
+         * 前者是这份文件开头就明令禁止的，后者更糟——测试不该有副作用溢出到测试之外。
+         */
+        `--user-data-dir=${join(dir, "electron-user-data")}`,
+      ],
       env: {
         ...process.env,
         // **不写 DAWN_CONFIG 指向已有文件**：第一次启动应当自己写出默认配置。

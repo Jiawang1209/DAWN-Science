@@ -25,7 +25,7 @@ import {
   SessionSidebar,
   TerminalDock,
 } from "./views.js"
-import { SettingsPanel } from "./Settings.js"
+import { AppearancePanel, SettingsPanel } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { ConnectionSurface } from "./connection.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -306,6 +306,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         <main className="main">
           {view === "settings" ? (
             <div className="panels">
+              <AppearancePanel />
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}
                 credentials={creds}

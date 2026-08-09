@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "R=/Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport json\np='package.json'\nj=json.load(open(p))\nj['scripts']['dev:mock']=\"node scripts/dev-mock.mjs\"\njson.dump(j,open(p,'w'),indent=2,ensure_ascii=False)\nopen(p,'a').write(\"\\n\")\nPY\nnpm run build 2>&1 | tail -2\nS=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/79d5f737-5df0-4060-a42f-38c273ddbff0/scratchpad\ncat > $S/mockprobe.mjs <<'EOF'\n// 用 mock 模式驱动真实 app 走完主路径，断言假回复出现在 transcript 里\nimport { spawn } from \"node:child_process\"\nimport { mkdtempSync, writeFileSync, mkdirSync } from \"node:fs\"\nimport { tmpdir } from \"node:os\"\nimport { join } from \"node:path\"\nimport { startMockInferenceServer, mockModelsJson } from \"/Users/liuyue/Desktop/Github_repos/dawn-science/scripts/mock-inference-server.mjs\"\n\nconst ROOT = \"/Users/liuyue/Desktop/Github_repos/dawn-science\"\nconst server = await startMockInferenceServer()\nconst dir = mkdtempSync(join(tmpdir(), \"dawn-mockprobe-\"))\nconst ws = join(dir, \"ws\"); mkdirSync(ws, { recursive: true })\nwriteFileSync(join(ws, \"note.txt\"), \"暗号：DAWN-MOCK-1f7c\\n\")\nwriteFileSync(join(dir, \"providers.yaml\"), `agents:\\n  ds-chat:\\n    kind: native\\n    provider: deepseek\\n    model: deepseek-v4-flash\\n    capabilities: [exec, chat]\\n`)\nwriteFileSync(join(dir, \"models.json\"), JSON.stringify(mockModelsJson(server.url), null, 2))\n\nconst child = spawn(\"npx\", [\"electron\", join(ROOT, \"dist/electron/main.js\")], {\n  cwd: ROOT, stdio: \"inherit\",\n  env: { ...process.env, DAWN_CONFIG: join(dir,\"providers.yaml\"), DAWN_DB: join(dir,\"dawn.db\"),\n         DAWN_MODELS_JSON: join(dir,\"models.json\"), DAWN_PROBE: \"1\", DAWN_PROBE_WS: ws },\n})\nsetTimeout(async () => { child.kill(); await server.close();\n  console.log(\"MOCK 服务器收到请求数:\", server.requests.length); process.exit(0) }, 40000)\nEOF\nnode $S/mockprobe.mjs 2>&1 | grep -vE \"Security Warning|Policy set|unnecessary|For more|electronjs.org|once the app|^$|IMKCFRunLoop\" | head -40",
-    "testCommand": "R=/Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\np='src/ui/main.tsx'\ns=open(p).read()\ns=s.replace('''import { App } from \"./App.js\"\nimport \"./styles.css\"''','''import { App } from \"./App.js\"\nimport { ErrorBoundary } from \"./ErrorBoundary.js\"\nimport \"./styles.css\"''')\ns=s.replace('''  <StrictMode>\n    <App />\n  </StrictMode>,''','''  <StrictMode>\n    <ErrorBoundary>\n      <App />\n    </ErrorBoundary>\n  </StrictMode>,''')\nopen(p,'w').write(s)\nPY\nnpm run typecheck 2>&1 | grep -E \"^(src|tests)/\" | head -3; echo \"(空=好)\"; npx vitest run 2>&1 | grep -E \"Tests |×\" | head -5",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nsed -i '' 's/background: var(--dawn-accent-solid); color: var(--dawn-on-accent)/background: var(--dawn-accent); color: var(--dawn-on-accent)/' src/ui/styles.css\nnpm run build >/dev/null 2>&1\necho \"=== 改回 --dawn-accent 之后 ===\"\nnpx playwright test e2e/theme.spec.ts --reporter=list -g \"WCAG\" 2>&1 | grep -E '✓|✘|只有|passed|failed'\nsed -i '' 's/background: var(--dawn-accent); color: var(--dawn-on-accent)/background: var(--dawn-accent-solid); color: var(--dawn-on-accent)/' src/ui/styles.css\nnpm run build >/dev/null 2>&1\necho \"=== 还原后 ===\"\nnpx playwright test e2e/theme.spec.ts --reporter=list -g \"WCAG\" 2>&1 | grep -E '✓|✘|passed|failed'",
+    "testCommand": "rm -rf test-results; npm test 2>&1 | tail -6; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | tail -4; echo \"=== e2e 全量 ===\"; npx playwright test --reporter=list 2>&1 | tail -8",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,14 +44,20 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 45,
-      "lastAccessed": 1786194663061,
+      "accessCount": 60,
+      "lastAccessed": 1786236752775,
       "type": "file"
     },
     {
       "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
-      "accessCount": 13,
-      "lastAccessed": 1786194203803,
+      "accessCount": 14,
+      "lastAccessed": 1786203858192,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/native.ts",
+      "accessCount": 12,
+      "lastAccessed": 1786232685726,
       "type": "file"
     },
     {
@@ -70,6 +76,12 @@
       "path": "spikes/FINDINGS.md",
       "accessCount": 7,
       "lastAccessed": 1786195008865,
+      "type": "file"
+    },
+    {
+      "path": "src/config/loader.ts",
+      "accessCount": 7,
+      "lastAccessed": 1786212109023,
       "type": "file"
     },
     {
@@ -97,15 +109,15 @@
       "type": "file"
     },
     {
-      "path": "src/runtime/native.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786195270236,
-      "type": "file"
-    },
-    {
       "path": "src/protocol/operations.ts",
       "accessCount": 5,
       "lastAccessed": 1786195366881,
+      "type": "file"
+    },
+    {
+      "path": "src/store/schema.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786212663510,
       "type": "file"
     },
     {
@@ -121,9 +133,9 @@
       "type": "file"
     },
     {
-      "path": "src/config/loader.ts",
+      "path": "docs/superpowers/ENTITY-REGISTRY.md",
       "accessCount": 4,
-      "lastAccessed": 1786195127371,
+      "lastAccessed": 1786203904718,
       "type": "file"
     },
     {
@@ -157,12 +169,6 @@
       "type": "file"
     },
     {
-      "path": "docs/superpowers/ENTITY-REGISTRY.md",
-      "accessCount": 3,
-      "lastAccessed": 1786194190545,
-      "type": "file"
-    },
-    {
       "path": "src/config/schema.ts",
       "accessCount": 3,
       "lastAccessed": 1786195107898,
@@ -187,12 +193,6 @@
       "type": "file"
     },
     {
-      "path": "src/store/schema.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786166818779,
-      "type": "file"
-    },
-    {
       "path": "src/session/stream.ts",
       "accessCount": 2,
       "lastAccessed": 1786182048647,
@@ -208,6 +208,12 @@
       "path": "tests/runtime/native.test.ts",
       "accessCount": 2,
       "lastAccessed": 1786195583549,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/entities.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786212672645,
       "type": "file"
     },
     {
@@ -334,12 +340,6 @@
       "path": "tests/integration/concurrent-sessions.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786164085298,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/entities.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786165815577,
       "type": "file"
     }
   ],

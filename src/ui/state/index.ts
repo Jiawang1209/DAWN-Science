@@ -78,6 +78,16 @@ export {
   type View,
 } from "./view.js"
 
+export {
+  $theme,
+  THEME_STORAGE_KEY,
+  applyTheme,
+  loadTheme,
+  resolveTheme,
+  setTheme,
+  type ThemeChoice,
+} from "./theme.js"
+
 export { guard, currentGeneration, invalidate } from "./guard.js"
 export { sameList, setList, setValue } from "./identity.js"
 

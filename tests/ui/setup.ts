@@ -35,5 +35,35 @@ if (typeof globalThis.ResizeObserver === "undefined") {
   } as unknown as typeof ResizeObserver
 }
 
+/**
+ * jsdom 也没有 `matchMedia`，而主题的「跟随系统」就架在它上面。
+ *
+ * 替身是**可控的**：`setSystemPrefersDark()` 让测试能演「系统是暗的」，
+ * 否则「人选亮色时系统说暗也不算数」这条根本没法验——
+ * 而那恰恰是这个 Task 存在的全部理由。
+ *
+ * **代价同样要说清楚**：真实的系统主题切换（在系统设置里一按，
+ * 界面立刻跟着变）在 jsdom 里验不了，只能靠 Playwright 的
+ * `colorScheme` 模拟。这里的替身只保证解析逻辑与类名开关是对的。
+ */
+let systemPrefersDark = false
+
+export function setSystemPrefersDark(v: boolean): void {
+  systemPrefersDark = v
+}
+
+if (typeof globalThis.matchMedia === "undefined") {
+  globalThis.matchMedia = ((query: string) => ({
+    media: query,
+    matches: /prefers-color-scheme:\s*dark/.test(query) ? systemPrefersDark : false,
+    onchange: null,
+    addEventListener(): void {},
+    removeEventListener(): void {},
+    addListener(): void {},
+    removeListener(): void {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof matchMedia
+}
+
 beforeEach(resetAllState)
 afterEach(cleanup)

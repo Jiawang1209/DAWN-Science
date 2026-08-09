@@ -64,7 +64,9 @@ pre {
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
 
-.btn-primary { background: var(--dawn-accent); color: var(--dawn-on-accent); }
+/* 实心底用 -solid 而不是 -accent：品牌绿配白字只有 3.1:1，不达 AA。
+   两者不是同一个颜色的两种写法，是两种用途——见 tokens.css */
+.btn-primary { background: var(--dawn-accent-solid); color: var(--dawn-on-accent); }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 
 .btn-secondary { background: var(--dawn-fill-4); }
@@ -79,7 +81,7 @@ pre {
 .btn-text { padding: 0; color: var(--dawn-accent); }
 .btn-text:hover:not(:disabled) { text-decoration: underline; }
 
-.btn-destructive { background: var(--dawn-red); color: var(--dawn-on-accent); }
+.btn-destructive { background: var(--dawn-danger); color: var(--dawn-on-accent); }
 
 /* ── primitive：Loader ──────────────────────────────────────────── */
 
@@ -106,7 +108,7 @@ pre {
 
 .state-block { padding: 16px 0; }
 .state-title { margin: 0; color: var(--dawn-text-2); }
-.state-error .state-title { color: var(--dawn-red); }
+.state-error .state-title { color: var(--dawn-danger); }
 .state-icon { margin-right: 6px; }
 .state-desc { margin: 4px 0 0; color: var(--dawn-text-3); font-size: 12px; }
 .state-action { margin-top: 10px; }
@@ -132,7 +134,7 @@ pre {
 .field { margin-bottom: 10px; }
 .field-label { display: block; margin-bottom: 4px; color: var(--dawn-text-2); font-size: 12px; }
 .field-hint { margin: 4px 0 0; color: var(--dawn-text-3); font-size: 11px; }
-.field-error { margin: 4px 0 0; color: var(--dawn-red); font-size: 11px; }
+.field-error { margin: 4px 0 0; color: var(--dawn-danger); font-size: 11px; }
 
 /* 文本输入的共享形状。新的文本控件组合它，不要各写一套 */
 .control {
@@ -145,7 +147,7 @@ pre {
   font: inherit;
 }
 .control:focus-visible { outline: 2px solid var(--dawn-accent); outline-offset: -1px; border-color: transparent; }
-.field-invalid .control { border-color: var(--dawn-red); }
+.field-invalid .control { border-color: var(--dawn-danger); }
 
 /* ── 骨架 ───────────────────────────────────────────────────────── */
 
@@ -225,9 +227,9 @@ pre {
 .row:hover { background: var(--dawn-row-hover); }
 .row.active { background: var(--dawn-row-active); box-shadow: inset 2px 0 0 var(--dawn-accent); }
 .row .sub, .row .state { color: var(--dawn-text-3); font-size: 11px; }
-.state.alive { color: var(--dawn-green); }
+.state.alive { color: var(--dawn-success); }
 .state.exited { color: var(--dawn-text-3); }
-.state.starting { color: var(--dawn-yellow); }
+.state.starting { color: var(--dawn-warning); }
 
 .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .panels {
@@ -251,8 +253,10 @@ pre {
   text-transform: uppercase;
 }
 .panel-body { padding: 0; }
+/* 主题三选一。radiogroup 的几何由这里拥有，按钮只负责自己那一格 */
+.theme-choices { display: flex; gap: 6px; margin-bottom: 6px; }
 .empty { margin: 0; color: var(--dawn-text-3); }
-.caveat { margin: 0 0 8px; color: var(--dawn-yellow); }
+.caveat { margin: 0 0 8px; color: var(--dawn-warning); }
 .unknown { margin: 0 0 4px; font-size: 16px; }
 .amount { margin: 0 0 4px; font-size: 18px; }
 .tokens, .hint { color: var(--dawn-text-3); font-size: 11px; }
@@ -266,9 +270,9 @@ pre {
   margin-right: 8px;
   font-size: 11px;
 }
-.run.err .status { color: var(--dawn-red); }
-.prov.ok { color: var(--dawn-green); }
-.prov.partial { color: var(--dawn-yellow); }
+.run.err .status { color: var(--dawn-danger); }
+.prov.ok { color: var(--dawn-success); }
+.prov.partial { color: var(--dawn-warning); }
 
 /* ── 对话 ───────────────────────────────────────────────────────── */
 
@@ -316,11 +320,11 @@ pre {
   border-left: 2px solid var(--dawn-stroke-3);
   font-size: 12px;
 }
-.tool.error { border-left-color: var(--dawn-red); }
+.tool.error { border-left-color: var(--dawn-danger); }
 .tool-name { color: var(--dawn-text-2); }
 /* 状态的文字标签。符号不够——只靠 ✓/✗ 等于「只用颜色表达含义」 */
 .tool-status { margin-left: 6px; color: var(--dawn-text-3); }
-.tool.error .tool-status { color: var(--dawn-red); }
+.tool.error .tool-status { color: var(--dawn-danger); }
 .tool-input, .tool-result { margin: 2px 0 0; color: var(--dawn-text-3); white-space: pre-wrap; }
 /* 结果折叠后的展开入口。文案自带「还有 N 行」，不是一个光秃秃的箭头 */
 .tool-expand {
@@ -358,9 +362,11 @@ pre {
   padding: 4px;
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-elevated);
-  /* 浮起来的面：阴影 + 发丝线，不是粗边框 */
+  /* 浮起来的面：阴影 + 发丝线，不是粗边框。
+     0.5px 在 2x 屏上正好是一个物理像素——面与面因此是"分开"，不是"框住"。
+     这里敢用是因为还有阴影兜底；输入框、按钮那种需要明确边界的仍是 1px */
   box-shadow: var(--dawn-shadow-float);
-  border: 1px solid var(--dawn-stroke-float);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
 }
 .panel-entry { margin-top: auto; border-top: 1px solid var(--dawn-stroke-4); }
 

@@ -163,10 +163,11 @@ export function SessionSidebar({
  * 此前只有两种，写法是 `kind === "pty" ? "外部 CLI" : "内置"`——
  * 加第三种之后那个三元会把 `cli` 说成「内置」，**而它恰恰是最外部的那个**。
  */
-const KIND_LABEL: Record<"native" | "pty" | "cli", string> = {
+const KIND_LABEL: Record<"native" | "pty" | "cli" | "kernel", string> = {
   native: "内置",
   cli: "外部 CLI",
   pty: "终端",
+  kernel: "内核",
 }
 
 export function AgentPill({
@@ -179,7 +180,7 @@ export function AgentPill({
   agents: readonly string[]
   /** 当前会话用的 agent。空态没有会话，因此可缺省 */
   current?: string | undefined
-  kind?: "native" | "pty" | "cli" | undefined
+  kind?: "native" | "pty" | "cli" | "kernel" | undefined
   onPick: (agentId: string) => void
   /** 空态用「换一个 agent」，有会话时用 agent 名本身 */
   triggerLabel?: string | undefined
@@ -505,6 +506,9 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
   if (item.type === "subagents") {
     return <SubagentChips item={item} />
   }
+  if (item.type === "kernelOutput") {
+    return <KernelOutputRow item={item} />
+  }
   const mine = item.who === "user"
   return (
     <div className={`turn ${item.who}`}>
@@ -534,6 +538,105 @@ function TranscriptRow({ item, agentId }: { item: TranscriptItem; agentId: strin
         {item.final ? null : <span className="hint">…</span>}
       </div>
     </div>
+  )
+}
+
+/**
+ * 内核的一条输出（②-A · K4 · S11）。
+ *
+ * **一张图、一段报错、一行 stdout 是三种不同的东西**，所以这里是三个分支，
+ * 而不是一段带样式的文本。这正是「结构化 Console 而不是终端模拟器」
+ * 在渲染层的样子——Rho 明令禁止后者，理由是
+ * **ANSI 字节流里的输出不可查询、不可溯源、不可审计**。
+ */
+function KernelOutputRow({ item }: { item: Extract<TranscriptItem, { type: "kernelOutput" }> }) {
+  const o = item.output
+
+  if (o.kind === "stream") {
+    return (
+      <div className={`kout kout-${o.stream}`}>
+        <pre className="kout-text">{o.text}</pre>
+        {/* **截断要说清省了多少**（规格 7.5），不是「已截断」三个字 */}
+        {o.truncated ? (
+          <p className="kout-note">
+            输出过长，只显示了前 {formatBytes(o.truncated.keptBytes)}（共{" "}
+            {formatBytes(o.truncated.originalBytes)}）
+          </p>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (o.kind === "error") {
+    return (
+      <div className="kout kout-error">
+        <p className="kout-ename">
+          {o.ename}
+          {o.evalue ? `: ${o.evalue}` : ""}
+        </p>
+        {/* traceback 原样给出。**ANSI 转义留着**——去掉等于丢信息 */}
+        {o.traceback.length > 0 ? <pre className="kout-trace">{o.traceback.join("\n")}</pre> : null}
+      </div>
+    )
+  }
+
+  // result / display：按 mime 画
+  return (
+    <div className="kout kout-rich">
+      {o.tooLarge ? (
+        /* **不渲染，但要说清它有多大**——界面卡死比「这张图没显示」难查得多 */
+        <p className="kout-note">
+          这份 {o.mediaType} 输出有 {formatBytes(o.bytes)}，超过上限没有显示。
+        </p>
+      ) : (
+        <RichOutput mediaType={o.mediaType} data={o.data} />
+      )}
+      {o.truncated ? (
+        <p className="kout-note">
+          内容过长，只显示了前 {formatBytes(o.truncated.keptBytes)}（共{" "}
+          {formatBytes(o.truncated.originalBytes)}）
+        </p>
+      ) : null}
+      {/* 还有别的形态可选时说一声。**不摆出来人就不知道有** */}
+      {o.alsoAvailable.length > 0 ? (
+        <p className="kout-note">另有 {o.alsoAvailable.join(" / ")} 形态</p>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * 按 mime 画一份富输出。
+ *
+ * **认不出的 mime 原样当文本显示，并说清它是什么**——
+ * 不猜一个渲染方式，猜错了画出来是乱码。
+ */
+function RichOutput({ mediaType, data }: { mediaType: string; data: string }) {
+  if (mediaType.startsWith("image/")) {
+    // Jupyter 给的是 base64。**不写 alt=""**——读屏用户要知道这里有一张图
+    return <img className="kout-img" src={`data:${mediaType};base64,${data}`} alt="内核输出的图" />
+  }
+  if (mediaType === "text/markdown") return <AgentMarkdown text={data} streaming={false} />
+  if (mediaType === "text/html") {
+    /**
+     * **HTML 不注入，按纯文本显示。**
+     *
+     * `dangerouslySetInnerHTML` 会让内核输出直接进 DOM——而内核跑的是
+     * 用户与 agent 的代码，那等于给它一条改写整个界面的通路。
+     * 富输出的价值不值这个风险；真要渲染 HTML 得先有沙箱（阶段 ④ 的授权门）。
+     */
+    return (
+      <>
+        <p className="kout-note">HTML 输出按纯文本显示（渲染它需要沙箱，见阶段 ④）</p>
+        <pre className="kout-text">{data}</pre>
+      </>
+    )
+  }
+  return (
+    <>
+      {mediaType === "text/plain" ? null : <p className="kout-note">{mediaType}</p>}
+      <pre className="kout-text">{data}</pre>
+    </>
   )
 }
 

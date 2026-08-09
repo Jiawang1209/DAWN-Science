@@ -174,6 +174,15 @@ export const SessionSummarySchema = z
        * 决定画对话还是画终端。
        */
       "cli",
+      /**
+       * Jupyter 内核（②-A · K4）。**与前三种都不同**：
+       * 它的输出是**结构化条目**（图/表/报错各是一种东西），
+       * 不是文本流也不是字节流——界面据此画结构化 Console 而不是终端。
+       *
+       * Rho 明令禁止用 xterm.js 做 REPL，理由不是审美：
+       * **ANSI 字节流里的输出不可查询、不可溯源、不可审计。**
+       */
+      "kernel",
     ]),
     state: z.enum(["starting", "alive", "exited"]),
     pid: z.int().optional(),

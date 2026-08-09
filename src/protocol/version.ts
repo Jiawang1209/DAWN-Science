@@ -36,8 +36,14 @@
  *   光看名字分不出哪个是哪个，而挑错的后果是**跑在了另一个环境里而不自知**。
  *   响应里同时给 `problems`（坏掉的注册项）与 `shadowed`（被同名挡住的），
  *   两者都是「不静默」的直接要求。纯新增，故 minor。
+ * 2.6（2026-08-10）：会话 `kind` 新增 `kernel`（②-A · K4），
+ *   transcript 新增 `kernelOutput` 条目——内核的输出是**结构化条目**
+ *   （图/表/报错各是一种东西），不是文本流。
+ *   **判别式的三处一起加**（SessionSummary / getProviders / SessionSnapshot）——
+ *   这条是 2.3 留下的教训：漏一处的症状是「某条路径上这个会话凭空消失」。
+ *   仍是 minor：既有取值一个没动。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.5"
+export const WORKBENCH_PROTOCOL_VERSION = "2.6"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

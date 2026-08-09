@@ -174,6 +174,31 @@ export class SessionTranscripts {
         }
         return
 
+      /**
+       * 内核的一条结构化输出（②-A · K4 · S11）。
+       *
+       * **一条一个条目，不合并。** 合并省下的那点条目数，
+       * 代价是**丢掉「什么时候到的」**——而流式输出里，
+       * 「先出了图还是先报的错」正是人要看的东西。
+       *
+       * `status` 不进 transcript：它是**执行状态**，不是输出。
+       * 塞进去会让 Console 里每执行一次多两条 busy/idle 噪声。
+       */
+      case "kernel_output": {
+        if (event.entry.kind === "status") return
+        const p = event.entry.provenance
+        this.putItem(sessionId, e, {
+          type: "kernelOutput",
+          id: `kout-${++e.turnSeq}`,
+          kernelInstanceId: p.kernelInstanceId,
+          kernelRevision: p.kernelRevision,
+          // **拿不到就不给这个字段**，不是空串
+          ...(p.runId ? { runId: p.runId } : {}),
+          output: toProtocolOutput(event.entry),
+        })
+        return
+      }
+
       case "notice":
         // 系统提示独立成条。**不并进 agent 的发言**——那会让用户以为是模型说的
         this.putItem(sessionId, e, {
@@ -325,5 +350,37 @@ export class SessionTranscripts {
       state: e.state,
       ...(e.exitCode === undefined ? {} : { exitCode: e.exitCode }),
     }
+  }
+}
+
+/**
+ * `ConsoleEntry` → 协议里的 `kernelOutput.output`。
+ *
+ * **两者刻意不是同一个类型**：运行时那边带着 `provenance`（每条都有），
+ * 而协议里溯源提到条目顶层——**同一份事实在一条记录里只存一次**。
+ * 存两份的后果不是浪费，是**它们会不一致**，而那时没人知道该信哪个。
+ */
+function toProtocolOutput(
+  entry: Exclude<import("../kernel/outputs.js").ConsoleEntry, { kind: "status" }>,
+): Extract<TranscriptItem, { type: "kernelOutput" }>["output"] {
+  if (entry.kind === "stream") {
+    return {
+      kind: "stream",
+      stream: entry.stream,
+      text: entry.text,
+      ...(entry.truncated ? { truncated: entry.truncated } : {}),
+    }
+  }
+  if (entry.kind === "error") {
+    return { kind: "error", ename: entry.ename, evalue: entry.evalue, traceback: entry.traceback }
+  }
+  return {
+    kind: entry.kind,
+    mediaType: entry.mediaType,
+    data: entry.data,
+    bytes: entry.bytes,
+    ...(entry.tooLarge ? { tooLarge: true } : {}),
+    ...(entry.truncated ? { truncated: entry.truncated } : {}),
+    alsoAvailable: entry.alsoAvailable,
   }
 }

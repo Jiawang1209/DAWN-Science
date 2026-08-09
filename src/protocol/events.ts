@@ -113,11 +113,77 @@ const SubagentsItem = z
   })
   .strict()
 
+/**
+ * 内核的一条输出（②-A · K4 · S11）。
+ *
+ * ## 为什么不复用 `TurnItem`
+ *
+ * `TurnItem` 装的是一段**文本**。内核的输出**不是文本**：
+ * 一张图、一段带 traceback 的报错、一行 stdout 在这里是**三种不同的东西**。
+ * 压进一个文本字段就等于回到 Rho **明令禁止**的那条路——
+ * *「禁止用 xterm.js 做 R Console」*，理由不是审美：
+ * **ANSI 字节流里的输出不可查询、不可溯源、不可审计。**
+ *
+ * ## 每一条都带溯源，且是出适配器那一刻绑上的
+ *
+ * S12 的原话：*「输出从诞生那一刻起就绑定溯源状态，不是事后补」*。
+ * 三个量各管一件事，**不共用一个计数器**——合并任意两个，
+ * 都会在某个「重启 + 重跑」的组合下给出错误的陈旧判断。
+ */
+const KernelOutputItem = z
+  .object({
+    type: z.literal("kernelOutput"),
+    id: z.string().min(1),
+    /** 内核实例。**重启即变**——陈旧标记（S13）靠它 */
+    kernelInstanceId: z.string().min(1),
+    /** 产生这条输出时的版本号 */
+    kernelRevision: z.int().min(0),
+    /** 账本上那条 run。**拿不到就没有这个字段**，不是空串 */
+    runId: z.string().optional(),
+    output: z.discriminatedUnion("kind", [
+      z
+        .object({
+          kind: z.literal("stream"),
+          /** **两者要分开**——把报错混进正常输出会让人漏看 */
+          stream: z.enum(["stdout", "stderr"]),
+          text: z.string(),
+          /** 截断要说清**省了多少**（规格 7.5），不是「已截断」三个字 */
+          truncated: z.object({ originalBytes: z.int(), keptBytes: z.int() }).strict().optional(),
+        })
+        .strict(),
+      z
+        .object({
+          /** `result` 是表达式的值，`display` 是代码主动要求显示的。**语义不同** */
+          kind: z.enum(["result", "display"]),
+          mediaType: z.string().min(1),
+          /** **超上界时为空串**，靠 `tooLarge` + `bytes` 说清为什么 */
+          data: z.string(),
+          bytes: z.int().min(0),
+          tooLarge: z.boolean().optional(),
+          truncated: z.object({ originalBytes: z.int(), keptBytes: z.int() }).strict().optional(),
+          /** 这份输出还带了哪些别的 mime。**摆出来**，人才知道有别的形态可选 */
+          alsoAvailable: z.array(z.string()),
+        })
+        .strict(),
+      z
+        .object({
+          kind: z.literal("error"),
+          ename: z.string(),
+          evalue: z.string(),
+          /** 原始 traceback，**带 ANSI 转义**。渲染层再处理，不在协议里丢信息 */
+          traceback: z.array(z.string()),
+        })
+        .strict(),
+    ]),
+  })
+  .strict()
+
 export const TranscriptItemSchema = z.discriminatedUnion("type", [
   TurnItem,
   ToolItem,
   NoticeItem,
   SubagentsItem,
+  KernelOutputItem,
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 
@@ -133,6 +199,15 @@ export const SessionSnapshotSchema = z
        * 决定画对话还是画终端。
        */
       "cli",
+      /**
+       * Jupyter 内核（②-A · K4）。**与前三种都不同**：
+       * 它的输出是**结构化条目**（图/表/报错各是一种东西），
+       * 不是文本流也不是字节流——界面据此画结构化 Console 而不是终端。
+       *
+       * Rho 明令禁止用 xterm.js 做 REPL，理由不是审美：
+       * **ANSI 字节流里的输出不可查询、不可溯源、不可审计。**
+       */
+      "kernel",
     ]),
     /** 单调递增。**0 表示还什么都没发生**，增量的 revision 从 1 起 */
     revision: z.int().min(0),

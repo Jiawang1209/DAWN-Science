@@ -886,3 +886,43 @@ pre {
   word-break: break-all;
   user-select: text;
 }
+
+/* ── 内核输出（②-A · K4 · S11）──────────────────────────────────────
+   **一张图、一段报错、一行 stdout 是三种不同的东西**，所以样式也分三种，
+   而不是给同一段文本换颜色。这正是「结构化 Console 而不是终端模拟器」
+   在样式层的样子。 */
+.kout { margin: var(--dawn-space-1) 0; }
+.kout-text {
+  margin: 0;
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+  /* 长行自己横向滚，**不要把对话区撑出横向滚动条** */
+  overflow-x: auto;
+}
+/* stderr 与 stdout 分开：**把报错混进正常输出会让人漏看** */
+.kout-stderr .kout-text { color: var(--dawn-warning); }
+
+.kout-error {
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-left: 2px solid var(--dawn-danger);
+  border-radius: var(--dawn-radius-xs);
+  background: color-mix(in srgb, var(--dawn-danger) 6%, transparent);
+}
+.kout-ename { margin: 0; color: var(--dawn-danger); font-weight: var(--dawn-weight-medium); }
+.kout-trace {
+  margin: var(--dawn-space-1) 0 0;
+  color: var(--dawn-text-2);
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+  overflow-x: auto;
+}
+
+/* 图：**不撑破对话宽度**，也不放大到超过原始尺寸 */
+.kout-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--dawn-radius-sm);
+}
+
+/* 「截断了多少」「有别的形态」这类说明。**它们是出声本身，不是装饰** */
+.kout-note { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: 11px; }

@@ -512,7 +512,7 @@ env = { DAWN_PROBE_LOG = "<abs>/probe.jsonl" }
 | Q1 起内核并从 iopub 拿到输出 | ✅ `stream: {"name":"stdout","text":"DAWN_MARKER_OK\n"}` |
 | **Q2 能中断执行中的 cell** | ✅ **SIGINT → KeyboardInterrupt → `execute_reply status=error`** |
 | Step 6 Electron 下 zeromq 可用 | ✅ **无需 `electron-rebuild`** |
-| Step 7 R 内核（可选） | ❌ 环境问题，非协议问题，详见下文 |
+| Step 7 R 内核（可选） | ✅ **2026-08-10 通过**（IRkernel 1.3.2 / R 4.6.1），详见下文 |
 
 > Q2 是本 spike 的分量所在——规格 10.4 的硬要求，**wisp-science 的自研 JSON-lines worker 方案正是败在这一条**。现已证实 Jupyter 协议路线能做到。
 
@@ -575,6 +575,28 @@ Electron 43.3.0 · Node 24.18.1 · V8 ABI 148
 `DAWN_KERNEL=ir` 运行，内核进程起得来（`pid`、`interrupt_mode=signal` 都拿到了），但 **25 秒内未响应 `kernel_info_request`**。
 
 根因：**`IRkernel` 包没装**。**与协议栈无关**，故不影响 Spike D 判定。
+
+### ✅ 2026-08-10：R 已通过，且暴露出一个**判据缺陷**
+
+作者装上 `IRkernel 1.3.2` 之后重跑 `DAWN_KERNEL=ir npm run spike:d`：
+
+| | Python（`dawn-spike`） | R（`ir`） |
+|---|---|---|
+| 起内核 + iopub | ✅ | ✅ R 4.6.1 |
+| `interrupt_mode` | signal | signal（kernelspec 未声明，取默认） |
+| 中断后的 `execute_reply` | `status=error` · `ename=KeyboardInterrupt` | **`status=abort` · 无 ename** |
+| 中断后内核仍可用 | ✅ | ✅ |
+
+**两种回复都是 Jupyter 协议里合法的。** 而这份脚本原来的判据写的是
+`status === "error" && ename ~ KeyboardInterrupt`——**那是 Python 的形状**，
+于是它把一个**工作正常**的 R 内核判成了失败，FINDINGS 也据此记了一条「R 未通过」。
+
+> **判据不能长成某一种实现的形状。** 已改成与语言无关的那条：
+> **中断之后再算一道题，能算对就通过**——内核是串行执行的，
+> 后一条能跑完，本身就同时证明了「死循环真的停了」与「内核没被打死」。
+> reply 的 status 保留为诊断信息，不再作为判据。
+
+**这条直接决定 ②-A 的 K3 判据**：不许写成「reply 是某个 status」。
 
 > **2026-08-10 更正**：上一版这里写着「kernelspec 指向旧安装，而当前 R 是 `/usr/local/bin/R`」。
 > **那是错的**——`/usr/local/bin/R` 是一条**软链接**，指向的正是

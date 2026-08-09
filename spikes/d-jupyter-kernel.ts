@@ -27,6 +27,8 @@ const IS_R = /^(ark|ir)$/i.test(KERNEL)
 // 死循环代码按内核语言切换——「一套协议通吃」验证的就是除这行外全部同构
 const LOOP_CODE = IS_R ? "while (TRUE) Sys.sleep(0.1)" : "import time\nwhile True:\n    time.sleep(0.1)"
 const PRINT_CODE = IS_R ? 'cat("DAWN_MARKER_OK\\n")' : 'print("DAWN_MARKER_OK")'
+/** 中断之后再算一道题。**内核串行执行**——它能跑完，本身就证明死循环停了 */
+const ALIVE_CODE = IS_R ? 'cat("DAWN_ALIVE:", 40 + 2, "\\n")' : 'print("DAWN_ALIVE:", 40 + 2)'
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -103,9 +105,20 @@ async function main() {
   console.log("[5] 执行死循环，2 秒后中断")
   const loopMsg = executeRequest(LOOP_CODE)
 
-  // 判据：execute_reply 的 status 必须是 "error" 且 ename 为 KeyboardInterrupt。
-  // 只看「有没有 execute_reply」不够——正常结束也会有 reply，那会把「内核根本
-  // 没在跑死循环」误判成「中断成功」。这类失误在 Spike C 已经栽过一次。
+  /**
+   * **判据是「打断之后内核还能算对一道题」，不是 reply 长成某个形状。**
+   *
+   * 2026-08-10 修正。上一版写的是 `status === "error" && ename ~ KeyboardInterrupt`
+   * ——**那是 Python 的形状**。R 的 IRkernel 回的是 `status = "abort"`、没有 ename，
+   * 于是这份脚本把一个**工作正常**的 R 内核判成了失败，
+   * 而 FINDINGS 里据此记了一条「R 未通过」。两个都是 Jupyter 协议里合法的回复。
+   *
+   * 与语言无关的判据只有一个：**内核串行执行**，所以中断后再发一条能跑完，
+   * 就同时证明了两件事——死循环真的停了，且内核没被打死。
+   *
+   * 只看「有没有 execute_reply」仍然不够（正常结束也有 reply），
+   * 所以 reply 的 status 保留为诊断信息打印出来，但不作为判据。
+   */
   const replyWait = waitFor(ch.pipe(childOf(loopMsg), ofMessageType("execute_reply")), () => true, 25_000)
   const c2 = collect(ch.pipe(childOf(loopMsg), ofMessageType("error", "status")))
 
@@ -130,8 +143,18 @@ async function main() {
   const status = replyMsg?.content?.status
   const ename = replyMsg?.content?.ename
   console.log(`    execute_reply: status=${status ?? "（无·超时）"} ename=${ename ?? "（无）"}`)
-  R.q2 = status === "error" && /KeyboardInterrupt|interrupt/i.test(String(ename ?? "") + c2.out.join(""))
-  console.log(`    ${R.q2 ? "✅" : "❌"} 中断生效: ${R.q2}`)
+  // **真正的判据**：再算一道题，能算对就说明死循环停了、内核还活着
+  const aliveMsg = executeRequest(ALIVE_CODE)
+  const aliveOut = collect(ch.pipe(childOf(aliveMsg), ofMessageType("stream")))
+  const aliveReply = waitFor(ch.pipe(childOf(aliveMsg), ofMessageType("execute_reply")), () => true, 20_000)
+  ch.next(aliveMsg)
+  const aliveMsgReply = await aliveReply
+  aliveOut.stop()
+  const alive = aliveOut.out.join("") + JSON.stringify(aliveMsgReply?.content ?? {})
+  const stillWorks = /DAWN_ALIVE:\s*42/.test(alive) && aliveMsgReply?.content?.status === "ok"
+  console.log(`    中断后再执行: ${stillWorks ? "算对了，内核活着" : "没答对 → " + alive.slice(0, 120)}`)
+  R.q2 = stillWorks
+  console.log(`    ${R.q2 ? "✅" : "❌"} 中断生效（且内核仍可用）: ${R.q2}`)
 
   // ── 收尾 ────────────────────────────────────────────────────────────
   try { kernel.spawn.kill() } catch { /* 已退出 */ }

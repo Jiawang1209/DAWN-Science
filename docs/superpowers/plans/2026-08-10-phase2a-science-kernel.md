@@ -108,10 +108,22 @@ interface KernelChannel {
    内核就绪前发出的 `execute_request` 会被**静默丢弃**——不报错、不重试、什么都没有。
    必须先 `kernel_info_request`，等到 `kernel_info_reply` 才能发执行请求。
 
-2. **中断走信号，不走 control 通道。**
-   ipykernel 的 `interrupt_mode` 实测为 `signal` → 向内核进程发 **SIGINT**。
+2. **中断走信号，不走 control 通道；而「中断成功」不能按回复的形状判。**
+   Python 与 R 的 `interrupt_mode` 实测都是 `signal` → 向内核进程发 **SIGINT**。
    `interrupt_request` 那条路要留着（别的内核可能声明 `message` 模式），
    但**默认路径是信号**。
+
+   **两种语言中断后的回复不一样，且都合法**（2026-08-10 实测）：
+
+   | | `execute_reply` |
+   |---|---|
+   | Python | `status=error` · `ename=KeyboardInterrupt` |
+   | **R** | **`status=abort` · 无 ename** |
+
+   > Spike D 原来的判据按 Python 的形状写死，**把一个工作正常的 R 内核判成了失败**。
+   > 唯一与语言无关的判据是：**中断之后再算一道题，能算对就成功**——
+   > 内核串行执行，后一条能跑完就同时证明了死循环停了、内核没被打死。
+   > **适配器也不许把 `abort` 当成内核故障**，那是一次成功的中断。
 
 3. **关停顺序是正式代码，不是收尾。**
    `先停内核进程 → channels.complete() 关 socket → 留约 300ms → 才退出`。
@@ -154,7 +166,7 @@ interface KernelChannel {
 |---|---|---|
 | **K1** | 传输适配器（S8）：`KernelChannel` + 握手 + 关停顺序 + `Tagged` 三件套 | 一次 `execute_request` 从发出到 iopub 输出全程可测；退出码为 0 |
 | **K2** | 内核生命周期（S9）：kernelspec 发现/选择、`kernelInstanceId`、起不来时的响亮失败 | 能列出本机内核、能选、选错能说清原因 |
-| **K3** | 中断（S10）：signal 与 message 两条路 | 打断长任务后**内核仍可用**（再执行一次成功） |
+| **K3** | 中断（S10）：signal 与 message 两条路；`abort` 与 `error` 都算中断成功 | 打断长任务后**内核仍可用**（再执行一次成功）。**判据不许写成「reply 是某个 status」** |
 | **K4** | 结构化 Console（S11）+ 富输出（S12） | 输出带 `runId`/`kernelInstanceId`；图能显示 |
 | **K5** | 陈旧标记（S13）+ 变量面板（S14） | 重启后旧 output 显式标记为陈旧 |
 

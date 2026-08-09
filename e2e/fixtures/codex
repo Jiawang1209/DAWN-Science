@@ -1,0 +1,35 @@
+#!/usr/bin/env node
+/**
+ * 假的 codex CLI，供 e2e 用。**文件名必须叫 `codex`**——
+ * `familyOf(command)` 按命令名判该用哪个 driver。
+ *
+ * 形状取自 Spike G 的实测：一轮一个进程，`thread.started` 给 thread_id，
+ * 之后靠 `exec resume <id>` 续接。
+ *
+ * **回复里标出「首轮」还是「续接」**，让 e2e 能断言多轮真的接上了——
+ * 不这么做的话，每轮都是全新对话也会显得一切正常（每轮都答得出话）。
+ */
+const argv = process.argv.slice(2)
+const isResume = argv.includes("resume")
+const prompt = argv[argv.length - 1]
+const say = (o) => process.stdout.write(JSON.stringify(o) + "\n")
+
+// 实测：codex 每轮都往 stderr 打与我们无关的噪声，而退出码是 0。
+// 这里照着来——**e2e 要证明我们没把 stderr 非空当成失败**
+process.stderr.write("ERROR codex_models_manager::cache: failed to load models cache\n")
+
+say({ type: "thread.started", thread_id: isResume ? argv[argv.indexOf("resume") + 1] : "线程-e2e" })
+say({ type: "turn.started" })
+say({
+  type: "item.started",
+  item: { id: "item_0", type: "command_execution", command: "ls", status: "in_progress" },
+})
+say({
+  type: "item.completed",
+  item: { id: "item_0", type: "command_execution", command: "ls", aggregated_output: "README.md", exit_code: 0, status: "completed" },
+})
+say({
+  type: "item.completed",
+  item: { id: "item_1", type: "agent_message", text: (isResume ? "假 codex 续接：" : "假 codex 首轮：") + prompt },
+})
+say({ type: "turn.completed", usage: { input_tokens: 1, output_tokens: 2 } })

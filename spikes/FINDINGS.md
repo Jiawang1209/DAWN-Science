@@ -637,3 +637,44 @@ Spike B 留下的隔离纪律在这里白捡了一份保护。**这条要写进�
    每条都抛、全被 `filter` 掉 → 结论"零请求"。**而请求一直在正常发送。**
 
 两次都是先怀疑被测对象。**下次先验证探针本身。**
+
+---
+
+## Spike F —— 子 agent 的进程怎么起？（2026-08-09，①-B″ · S1 前置）
+
+**问题**：S1 的进程隔离要 spawn 一个能跑 pi 会话的子进程。**打包成 Electron 之后
+`node` 不一定在**——用户机器上可能根本没装 Node。子进程从哪来？
+
+### 结论：**`process.execPath` + `ELECTRON_RUN_AS_NODE=1`，三条全通**
+
+| 要回答的 | 结果 |
+|---|---|
+| Electron 二进制能不能当普通 node 用 | ✅ 能，报 `node v24.18.1` |
+| 那个子进程能不能加载 **ESM** bundle | ✅ 能（`build-electron.mjs` 产出的就是 ESM） |
+| 能不能在里面 `import` pi | ✅ 能，`createAgentSession` 拿到的是 `function` |
+
+实测输出：
+
+```
+electron 二进制: node_modules/electron/dist/Electron.app/Contents/MacOS/Electron
+退出码: 0
+stdout: {"type":"done","ok":true,"output":"agent=scout node=v24.18.1
+         isElectronNode=1 createAgentSession=function"}
+```
+
+### 对实现的三条约束
+
+1. **子进程的命令是 `process.execPath`，不是 `"node"`。** 写死 `node`
+   在开发机上能过、在用户机器上未必——这正是那种「本地是好的」的失效方式。
+2. **必须带 `ELECTRON_RUN_AS_NODE=1`**。不带的话起来的是一个 Electron 应用实例
+   （会开窗口、走 app 生命周期），不是脚本解释器。
+3. **子侧入口要单独打一个 bundle**（`dist/electron/subagent-child.js`），
+   external 清单与 banner 与 main 一致——pi 全家必须 external，
+   否则会撞上 R4 记过的那个 `createRequire` 重名（打进 bundle 后主进程根本起不来）。
+
+### 未验证
+
+- **打包后的 .app 里**是否同样成立。本次探针用的是开发树里的 Electron 二进制；
+  打包后 `process.execPath` 指向 app 自己的可执行文件，机制相同但**没有实测**。
+  阶段 ③ 做分发时要复验这一条。
+- 子进程里跑**完整的 pi 会话**（本次只验了模块能加载，没有真发请求）。

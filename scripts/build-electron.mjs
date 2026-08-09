@@ -48,6 +48,30 @@ await build({
   },
 })
 
+/**
+ * 子 agent 的进程入口（①-B″ · S1）。
+ *
+ * **必须与 main 用同一份 external 与同一个 banner。** 它同样 import pi，
+ * 于是同样会撞上 R4 记下的那个 `createRequire` 重名——区别只在失败的地方：
+ * main 撞上是「应用起不来」，这里撞上是「每个子 agent 都起不来，
+ * 而父侧只看到一句退出码非 0」。
+ *
+ * 输出文件名由 `src/subagent/protocol.ts` 的 `CHILD_ENTRY` 引用，
+ * 两边不各写一遍字符串。
+ */
+await build({
+  entryPoints: ["src/subagent/child.ts"],
+  bundle: true,
+  platform: "node",
+  format: "esm",
+  target: "node22",
+  outfile: "dist/electron/subagent-child.js",
+  external,
+  banner: {
+    js: `import{createRequire}from'node:module';const require=createRequire(import.meta.url);`,
+  },
+})
+
 await build({
   entryPoints: ["src/electron/preload.ts"],
   bundle: true,
@@ -73,4 +97,4 @@ for (const platform of ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64"
 }
 if (fixed > 0) console.log(`build-electron: 已为 ${fixed} 个 spawn-helper 补上执行位`)
 
-console.log("build-electron: dist/electron/main.js + preload.cjs 已生成")
+console.log("build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成")

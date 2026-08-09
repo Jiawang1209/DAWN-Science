@@ -43,10 +43,58 @@
 
 ## 变更日志
 
-### 2026-08-09 — S1 第二片：三种模式的执行器，进程隔离与上界
+### 2026-08-09 — S1 第三片：子进程真的跑起来了（Spike F + 子侧入口）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 前两片都没有可运行路径。这一片让子 agent 真的在一个独立进程里
+  跑一次 pi 会话——**S1 第一次有真机验证。**
+- **先做了 Spike F**（照 U2 换模型前先做 Spike E 的规矩）：打包成 Electron 之后
+  **用户机器上不一定有 `node`**，子进程从哪来？结论是
+  `process.execPath` + `ELECTRON_RUN_AS_NODE=1`，三条全通：
+  Electron 二进制能当 node 用（报 v24.18.1）、能加载 ESM bundle、
+  能 `import` pi（`createAgentSession` 拿到的是 `function`）。
+  结论记进 `spikes/FINDINGS.md`，探针已删。
+  **未验证的一条也写在案**：打包成 .app 之后是否同样成立（机制相同，但没实测）。
+- **What**
+  - `protocol.ts` —— 父子共用的唯一契约。**规格走 stdin 不走环境变量**：
+    里面有 apiKey，而环境变量在 `/proc/<pid>/environ` 与 `ps e` 里可读。
+    这与 `git-facts.ts` 里「只读命令也要净化环境」是同一条纪律的另一面。
+  - `child-task.ts` —— 逻辑层，不认识进程。可以用假会话验边界行为。
+  - `child.ts` —— 可执行入口，只做接线。单独打成 `dist/electron/subagent-child.js`。
+- **三个定下来的语义**
+  1. **退出码永远是 0**，成败由 `done` 行的 `ok` 表达。退出码只回答
+     「进程有没有正常收摊」。混在一起就会出现「非 0 退出但其实有结果」这种要靠猜的情形。
+  2. **空输出算失败**，不算「成功且无内容」。理由与执行器那边同源：
+     chain 会把上一步输出当 `{previous}` 传下去，空串传下去会让下一步
+     **基于一段并不存在的结论**做计划，而它看不出这段是空的。
+  3. **模型不存在时报错并列出可选**，不退化到「随便挑一个能用的」。
+     后者是最难查的一类：结果看起来是对的，只是贵了十倍或笨了十倍。
+- **子 agent 的人格是真的 system prompt**：`DefaultResourceLoader` 有公开的
+  `systemPrompt` 选项，用它，而不是把提示词拼进用户消息。
+- **`noExtensions: true` 是嵌套委派的唯一真实堵点**：开着的话子 agent 会加载
+  用户的扩展，其中可能就有「再起一个子 agent」。计划 §6 把嵌套委派明确留给阶段 ④，
+  而这里**不是靠约定堵的，是靠子进程根本没加载那套东西**。
+  skills / prompts 一并关掉是为了上下文干净——子 agent 存在的理由就是一个小而专注的
+  上下文窗口，把父会话那一堆再灌一遍就没意义了。
+- **构建**：`build-electron.mjs` 加第三个入口，**external 与 banner 必须与 main 一致**。
+  它同样 import pi，于是同样会撞上 R4 记下的 `createRequire` 重名——
+  区别只在失败的样子：main 撞上是「应用起不来」，这里撞上是
+  「每个子 agent 都起不来，而父侧只看到一句退出码非 0」。
+- **Verification**: 716 单元测试（+11）；typecheck 干净。
+  **真机验证到手**：`tests/integration/subagent-child.test.ts` 跑的是**构建产物**——
+  `process.execPath` + `ELECTRON_RUN_AS_NODE=1` 起真子进程，模型换成假推理服务器。
+  第一条断言假模型的暗号出现在子进程输出里，**也就是说子进程里那个真的 pi 会话
+  确实把请求发出去过**，不是本地编的。
+- **下一片**：把执行器注册成父会话的工具（pi 的 `customTools`），
+  并让每个子 agent 的回合落 Run（`parent_run_id` 指向发起它的那次工具调用）。
+
+---
+
+### 2026-08-09 — S1 第二片：三种模式的执行器，进程隔离与上界
+
+- **Type**: feat
+- **Commit**: `17f3543`
 - **Motivation**: S1 的编排核心。`single` / `parallel` / `chain` 三种模式，
   每个任务一个独立进程。
 - **这份测试不把进程 mock 掉**：注入的只有「起哪个命令」，跑起来的是真的

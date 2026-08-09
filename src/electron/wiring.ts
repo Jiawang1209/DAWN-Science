@@ -65,6 +65,11 @@ export interface CreateWorkbenchOptions {
    */
   subagentChildEntry?: string
   /**
+   * 去哪找外部 CLI 自己的配置（codex 的 `models_cache.json`）。
+   * **不给时读真实家目录**；e2e 指向隔离目录，理由见 `backend.ts` 的同名字段。
+   */
+  cliHome?: string
+  /**
    * 跳过「建会话前检查凭证」这道自有守卫。
    *
    * **只在 mock 模式下为真**：那时凭证由 models.json 提供，我们的守卫
@@ -187,6 +192,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),
     // 模型选择器要问「这个 provider 能用哪些模型」——那份目录只有运行时知道
     models: { available: (providerId) => nativeRuntime.availableModels(providerId) },
+    ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
   })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),

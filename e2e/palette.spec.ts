@@ -24,6 +24,17 @@ const K = "ControlOrMeta+k"
  */
 async function palette(page: import("@playwright/test").Page) {
   await expect(page.locator(".app-shell")).toBeVisible()
+  /**
+   * **只等 `.app-shell` 不够。**
+   *
+   * 那一刻壳画出来了，但项目还没加载完，装 `⌘K` 监听器的那个 effect
+   * 也未必跑过。机器一忙就会撞上——症状是「快捷键不管用」，
+   * 而页面看起来完全正常（2026-08-09 在 load≈8 时稳定复现）。
+   *
+   * 「新建会话」可用意味着项目已经到位，那时应用才真的可交互。
+   * 与 `cli-agent.spec.ts` 学到的是同一条。
+   */
+  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
   await page.keyboard.press(K)
   return page.getByRole("dialog", { name: "命令面板" })
 }

@@ -153,6 +153,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
         DAWN_MODELS_JSON: modelsPath,
+        // **外部 CLI 的配置也要隔离**：不指的话会去读开发机真实的 ~/.codex，
+        // 那正是这份文件开头明令禁止的暗管道（2026-08-09 加模型自动发现时捅的洞）
+        DAWN_CLI_HOME: join(dir, "cli-home"),
       },
     })
     const page = await app.firstWindow()

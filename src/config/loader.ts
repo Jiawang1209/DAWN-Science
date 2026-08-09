@@ -107,9 +107,9 @@ agents:
 
   # 托管本地的 claude CLI，以对话形态呈现。装了 claude 且已登录就能直接用
   #
-  # models = 模型选择器里能选哪些。两个外部 CLI 都没有「列出可选项」的接口，
-  # 所以只能在这里声明；不写就不显示选择器。
-  # claude 认别名（opus / sonnet / haiku），也认完整模型名。
+  # models = 模型选择器里能选哪些。
+  # claude 没有可供查询的模型清单，所以在这里写；别名取自 claude --help 的说明
+  # （fable / opus / sonnet），也可以写完整名如 claude-fable-5。
   #
   # **刻意不写 model。** 写了它就等于给 CLI 传 --model，
   # 会盖掉你自己 ~/.claude/settings.json 里的选择。不写时选择器照常显示，
@@ -118,15 +118,14 @@ agents:
     kind: cli
     command: claude
     args: []
-    models: [opus, sonnet, haiku]
+    models: [opus, sonnet, fable]
     capabilities: [chat, exec]
 
   # 托管本地的 codex CLI，以对话形态呈现。
   #
-  # **这里不给 models**：codex 能用哪些模型**因账号而异**，我们无从得知，
-  # 写死一组只会让你撞上「该模型不受支持」的 400。
-  # 想要选择器就自己加一行 models: [...]；你有哪些可以看
-  # ~/.codex/config.toml 的 [tui.model_availability_nux] 一节。
+  # **不写 models**：codex 的清单 DAWN 会自己去
+  # ~/.codex/models_cache.json 里读（只取 visibility 为 list 的，按它的 priority 排）。
+  # 想覆盖就自己写一行 models: [...]，配置声明优先于自动发现。
   codex:
     kind: cli
     command: codex

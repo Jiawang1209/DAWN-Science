@@ -35,6 +35,13 @@ const DEV_URL = process.env.DAWN_DEV_SERVER
  * 由 `scripts/dev-mock.mjs` 设置。**整条真链路照跑，只有模型是假的。**
  */
 const MODELS_JSON = process.env.DAWN_MODELS_JSON
+/**
+ * 去哪找外部 CLI 自己的配置（①-C）。**只为测试隔离而存在**——
+ * 与 `DAWN_CONFIG` / `DAWN_DB` 是同一套惯例：e2e 指向隔离目录，
+ * 否则它会去读开发机真实的 `~/.codex`，而夹具的第一条原则是
+ * 「每个用例一套全新的目录」。
+ */
+const CLI_HOME = process.env.DAWN_CLI_HOME
 
 let workbench: Workbench | undefined
 
@@ -106,6 +113,7 @@ app.whenReady().then(() => {
        * 文件名从协议模块取，与 `build-electron.mjs` 的 outfile 是同一个常量。
        */
       subagentChildEntry: join(import.meta.dirname, CHILD_ENTRY),
+      ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })

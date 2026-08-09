@@ -43,10 +43,54 @@
 
 ## 变更日志
 
+### 2026-08-09 — codex 的模型清单不该手写：它一直在，只是没写在 --help 里
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 作者一句*「很明显 codex 的模型，不只是 gpt-5.6-sol, gpt-5.5」*。
+  他说得对——**我上一条又猜了一次**：那两个名字是我从
+  `~/.codex/config.toml` 的 `[tui.model_availability_nux]` 里抓的，
+  而那是个**新功能提示计数器**，不是模型清单。
+- **我说过的一句错话**：Spike H 的结论里写着「两个 CLI 都没有『列出可选项』的接口，
+  所以只能由配置声明」。**线索其实一直在眼前**——codex **每一轮都往 stderr 打**
+  `codex_models_manager::cache: failed to load models cache`。
+  > **「没有接口」与「我没找到接口」是两回事。**
+- **真正的来源**：`~/.codex/models_cache.json`，9 个模型，带
+  `visibility`（`list` 给用户 / `hide` 内部）与 `priority`（顺序）。
+  作者环境里实测发现 **7 个**：
+  `gpt-5.6-sol · terra · luna · gpt-5.5 · gpt-5.4 · 5.4-mini · 5.3-codex-spark`。
+- **What**: `runtime/cli/models.ts` —— 能发现就发现，发现不了才问配置。
+  - **只取 `visibility: list`**：`hide` 是内部模型（`codex-auto-review` 之类），
+    给用户选会直接报错
+  - **按 CLI 自己的 `priority` 排**，不按我们的偏好
+  - **配置声明优先于自动发现**（显式压过推断）
+  - **claude 没有这样的文件**，仍靠配置；别名改用 `--help` 里明确写出的
+    `opus / sonnet / fable`（此前我写的 `haiku` 也是真的，但**不在它给的例子里**）
+- **这是个没有文档的内部文件**，所以解析一律防御：读不到、解析不了、形状不认得——
+  **统统返回 `undefined`**，让调用方退回配置声明。
+  **不返回空数组**：缺省是「不知道」，空数组会被读成「一个模型都没有」。
+- **当场补上自己捅的一个洞**：自动发现会读**开发机真实的家目录**，
+  而 e2e 夹具的第一条原则是「每个用例一套全新的目录」。
+  加了 `DAWN_CLI_HOME`（与 `DAWN_CONFIG` / `DAWN_DB` 同一套惯例），夹具指向隔离目录。
+- **顺带治好一条老抖动**：`palette` 的 helper 只等 `.app-shell` 可见就按 ⌘K。
+  那一刻壳画出来了，**但装监听器的 effect 未必跑过**——机器一忙就撞上，
+  症状是「快捷键不管用」而页面看起来完全正常（load≈8 时稳定复现）。
+  改为等「新建会话」可用。**那条 spec 从 1.2 分钟降到 11 秒，且连跑两遍全绿**——
+  此前它是在靠重试撞运气。
+- **Verification**: 859 单元测试（+9）；typecheck 干净；**71 条 e2e 全绿**。
+  作者环境实测：claude 声明 `[opus, sonnet, fable]`、不钉死；
+  codex 不写清单，自动发现出 7 个。
+- **一处自己造的低级错误**：把 `` `claude --help` `` 写进了 `loader.ts` 的
+  YAML 模板字符串里——**反引号当场截断了那个模板**。typecheck 抓住了，
+  但我在那之前先看到的是 vitest 的 `Tests no tests`，
+  **一个把「文件根本没编译过」显示成「没有测试」的报告**。
+
+---
+
 ### 2026-08-09 — 我们替用户钉死了模型，把他自己 CLI 的配置盖掉了
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `e12d5b9`
 - **Motivation**: 作者试用后报两件事——*「claude 的 sonnet 模型，切换的不对」*、
   codex 直接 400：*「The 'gpt-5.1-codex' model is not supported when using Codex
   with a ChatGPT account.」*

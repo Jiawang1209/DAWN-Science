@@ -15,6 +15,8 @@ import type { RunStore } from "../store/runs.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { discoverCliModels } from "../runtime/cli/models.js"
+import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
@@ -50,6 +52,14 @@ export interface WorkbenchBackendOptions {
    * 界面因此不会把「后端没接这个端口」显示成「这个 provider 一个模型都没有」。
    */
   models?: { available(providerId: string): Promise<string[]> }
+  /**
+   * 去哪找外部 CLI 自己的配置（codex 的 `models_cache.json`）。
+   *
+   * **可注入的理由是测试隔离**：不注入时读开发机真实的家目录，
+   * 而 e2e 的第一条原则是「每个用例一套全新的目录」——
+   * 2026-08-09 加自动发现时捅了这个洞，当场补上。
+   */
+  cliHome?: string
   /** 凭证变更后让 pi 侧缓存失效。不给则不失效（测试场景） */
   invalidateCredentials?: (providerId: string) => void
   /**
@@ -60,7 +70,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -96,10 +106,26 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             ? { provider: def.provider, model: def.model }
             : {
                 command: def.command,
-                // cli 的模型清单由配置声明（Spike H）。**没声明就不给字段**——
-                // 缺省是「没得选」，空数组会被读成「确认一个都没有」
+                /**
+                 * cli 的模型清单：**配置声明优先，其次自动发现**。
+                 *
+                 * - 配置里写了 `models` → 用它（**显式压过推断**，这是通则）
+                 * - 没写 → 问 CLI 自己（codex 有 `models_cache.json`；claude 没有）
+                 * - 都没有 → **不给这个字段**：缺省是「不知道」，
+                 *   空数组会被读成「确认一个都没有」
+                 *
+                 * `model`（钉死当前用哪个）**几乎总该不写**：写了就等于给 CLI 传
+                 * `--model`，会盖掉用户自己 CLI 的配置（2026-08-09 作者两个 CLI 都撞上了）。
+                 */
                 ...(def.kind === "cli" && def.model ? { model: def.model } : {}),
-                ...(def.kind === "cli" && def.models ? { models: def.models } : {}),
+                ...(def.kind === "cli"
+                  ? (() => {
+                      const list =
+                        def.models ??
+                        discoverCliModels(familyOf(def.command) ?? "", cliHome)
+                      return list ? { models: list } : {}
+                    })()
+                  : {}),
               }),
         })),
         providers: await Promise.all(

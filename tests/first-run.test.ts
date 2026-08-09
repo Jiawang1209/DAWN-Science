@@ -165,11 +165,20 @@ describe("默认配置的形状（①-C · C5）", () => {
     expect(a.models).toEqual(expect.arrayContaining(["opus", "sonnet"]))
   })
 
-  it("**codex 不给清单** —— 它能用哪些因账号而异，写死一组只会撞 400", () => {
+  /**
+   * **2026-08-09 又反转了一次**，理由是找到了真正的来源。
+   *
+   * 上一版的理由是「codex 能用哪些因账号而异，我们无从得知」——**那句话是错的**：
+   * codex 有 `~/.codex/models_cache.json`，只是没写在 `--help` 里。
+   * 线索一直在眼前：它每轮都往 stderr 打 `failed to load models cache`。
+   *
+   * 现在默认配置仍然不写 models，但理由变了：**不是「不知道」，是「会自己去读」。**
+   */
+  it("**codex 不写清单** —— 它由 DAWN 自动发现，不该手写", () => {
     const a = parsed().agents["codex"] as { models?: string[] }
     expect(a.models).toBeUndefined()
-    // 但要告诉用户去哪查自己的
-    expect(DEFAULT_CONFIG_YAML).toContain("model_availability_nux")
+    // 注释里要说清「不写 models 不是漏了，是它会自己读」
+    expect(DEFAULT_CONFIG_YAML).toContain("models_cache.json")
   })
 
   it("内置 agent 仍在 —— 它是「先跑起来」的默认", () => {

@@ -43,6 +43,30 @@
 
 ## 变更日志
 
+### 2026-08-10 — 把子 agent 样例真的送到用户手上
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 进 ②-A 之前的第二小笔欠账。子 agent 能力早就具备，
+  仓库里也有四份样例（`examples/agents/`，还有测试守着），
+  **但它们从没被送到用户的工作区**——新用户打开 DAWN，`.dawn/agents/` 是空的，
+  格式也没有任何地方提示。
+- **What**: 建会话时（与 `.dawn/.gitignore` 同一处）放两份文件，**已存在就不动**：
+  - `.dawn/agents/scout.md.example` —— 与 `examples/agents/scout.md` **逐字一致**
+  - `.dawn/README.txt` —— 说明目录是什么、怎么把样例改名启用
+- **Impact**:
+  - **后缀刻意是 `.md.example`**：加载器把 `.dawn/agents/` 下每个 `.md` 都当定义
+    （`definitions.ts` 的 `endsWith(".md")`）。叫 `scout.md` 就是**我们替用户
+    装上了一个 agent**；叫 `README.md` 更糟——它会变成一个 frontmatter 缺失的坏定义，
+    每次建会话报一次问题。说明文件因此放在 `agents/` **外面**。
+  - 两份文件都在自我忽略的 `.dawn/` 里，不进用户的 git，也不污染产出栏。
+  - 写不出来不拦住建会话（与 `.gitignore` 同一条理由）。
+- **Verification**: 888 单元 + 77 e2e 全绿。新增 `tests/subagent/seed.test.ts` 六条，
+  逐条对着一种坏法：样例不能变成 agent、不能报成坏定义、改名后必须真的能用、
+  **必须与仓库里那份逐字一致**、已存在不覆盖、不可写时不抛异常。
+  第一版我在 `manager.ts` 里自己另写了一个 scout——**那就是同一份东西两个家**，
+  改了仓库那份用户拿到的还是旧的。改成用仓库那份，并由测试守着不漂移。
+
 ### 2026-08-10 — 还清 subagent 的 e2e 欠账：parallel 与 chain 各补一条
 
 - **Type**: test

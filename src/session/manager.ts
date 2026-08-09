@@ -64,6 +64,84 @@ function ensureDawnDirIgnored(workspace: string): void {
   }
 }
 
+/**
+ * 在 `.dawn/` 里放一份**子 agent 的样例**（2026-08-10）。
+ *
+ * ## 为什么需要它
+ *
+ * 子 agent 的能力早就具备了，但一个新用户打开 DAWN**不知道该往哪写什么**——
+ * `.dawn/agents/` 是空的，格式也没有任何地方提示。
+ *
+ * ## 为什么后缀是 `.md.example` 而不是 `.md`
+ *
+ * **加载器把 `.dawn/agents/` 下的每一个 `.md` 都当成一个子 agent**
+ * （`definitions.ts` 里 `names.filter((n) => n.endsWith(".md"))`）。
+ * 所以样例若叫 `scout.md`，它就不是样例，是一个**我们替用户装上的 agent**——
+ * 那是替他做决定；叫 `README.md` 更糟：它会变成一个 frontmatter 缺失的坏定义，
+ * 每次建会话都报一次问题。
+ *
+ * `.md.example` 加载器不认，于是它只是一份可读的样板，**改个名才生效**。
+ * 怎么改名写在 `.dawn/README.txt` 里——那个文件在 `agents/` 外面，
+ * 同样不会被当成定义。
+ *
+ * **已存在就不动**：与 `.gitignore` 同一条规矩，覆盖等于替用户做决定。
+ */
+export function seedSubagentExample(workspace: string): void {
+  const dir = join(workspace, ".dawn", "agents")
+  const example = join(dir, "scout.md.example")
+  const readme = join(workspace, ".dawn", "README.txt")
+  try {
+    if (!existsSync(example)) {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(example, SCOUT_EXAMPLE, "utf8")
+    }
+    if (!existsSync(readme)) writeFileSync(readme, DAWN_README, "utf8")
+  } catch {
+    // 与 `.gitignore` 同一条理由：写不出来不该拦住建会话
+  }
+}
+
+/**
+ * 送出去的那份样例。
+ *
+ * **内容与 `examples/agents/scout.md` 逐字一致，由测试守着**——
+ * 我第一版在这里自己另写了一个 scout，那就是同一份东西两个家：
+ * 改了仓库里那份，用户拿到的还是旧的，而且没有任何东西会说不一致。
+ * 这个项目今天已经在别处栽过一次（`layout-constants.ts`）。
+ */
+const SCOUT_EXAMPLE = `---
+name: scout
+description: 快速踏勘代码库或数据目录，返回压缩后的要点，不做修改
+tools: read, bash
+---
+你是踏勘员。
+
+你的任务是**快速摸清情况并压缩成要点**，不是把全文搬回去。
+调用你的人只有很小的上下文预算，所以：
+
+- 先用 bash（\`ls\` / \`grep\` / \`head\`）定位，再用 read 精读少数关键文件
+- 回答控制在 20 行以内，列出**文件路径 + 一句话说明**
+- 拿不准的地方明说「没查到」，**不要猜**
+
+**只读不写。** 你没有被授予写文件的工具。
+`
+
+const DAWN_README = `这个目录是 DAWN Science 建的，放这个项目的会话数据与子 agent 定义。
+整个目录已经自我忽略（.dawn/.gitignore 里是一个 *），不会进你的 git。
+
+agents/
+    子 agent 定义。**这里每一个 .md 文件都会成为一个子 agent**，
+    格式是 YAML frontmatter（name / description）+ 正文提示词。
+
+    目录里有一份 scout.md.example —— 去掉 .example 后缀就能用：
+
+        mv .dawn/agents/scout.md.example .dawn/agents/scout.md
+
+    带 .example 的文件加载器不认，所以它现在只是样例，不是一个 agent。
+
+改完不用重启：子 agent 定义是**每次建会话时**读的。
+`
+
 export interface SessionManagerOptions {
   store: SessionStore
   registry: ProviderRegistry
@@ -123,6 +201,7 @@ export class SessionManager {
     const id = randomUUID()
     const sessionDir = join(workspace, ".dawn", "sessions", id)
     ensureDawnDirIgnored(workspace)
+    seedSubagentExample(workspace)
     const rec: SessionRecord = {
       id,
       agentId,

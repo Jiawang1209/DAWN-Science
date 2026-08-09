@@ -770,8 +770,12 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 **进 ②-A 之前值得先花的两小笔**（都很小，且都在补已知欠账）：
 1. ~~补一条 `parallel` 模式的 e2e~~ **已补**（2026-08-10）：`parallel` 与 `chain` 各一条，
    跑真实构建产物。见 `e2e/subagent.spec.ts`
-2. `providers.yaml` 与 `.dawn/agents/` 各给一份**可直接用的样例**——
-   现在子 agent 能力已经具备，但一个新用户不知道该往哪写什么
+2. ~~`providers.yaml` 与 `.dawn/agents/` 各给一份**可直接用的样例**~~ **已补**（2026-08-10）：
+   `providers.yaml` 本来就是带注释的完整样例；缺的是 `.dawn/agents/`——
+   仓库里那四份样例（`examples/agents/`）**从没被送到用户的工作区**。
+   现在建会话时放一份 `scout.md.example` + 一份 `README.txt` 说明怎么启用。
+   **后缀不能是 `.md`**：加载器把 `.dawn/agents/` 下每个 `.md` 都当定义，
+   叫 `scout.md` 就是替用户装上了一个 agent，叫 `README.md` 会变成一个坏定义
 
 ### 9.4 需要作者定的
 

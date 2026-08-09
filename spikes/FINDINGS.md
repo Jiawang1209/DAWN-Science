@@ -678,3 +678,53 @@ stdout: {"type":"done","ok":true,"output":"agent=scout node=v24.18.1
   打包后 `process.execPath` 指向 app 自己的可执行文件，机制相同但**没有实测**。
   阶段 ③ 做分发时要复验这一条。
 - 子进程里跑**完整的 pi 会话**（本次只验了模块能加载，没有真发请求）。
+
+---
+
+## Spike G —— 外部 CLI 能不能当「对话式 agent」驱动？（2026-08-09，①-C 前置）
+
+**触发**：作者试用后指出 —— *「怎么一下子把 cli 都挪入到 app 里面了呢？应该是和
+deepseek 这种样式，我从对话框里面输入内容」*。此前 claude / codex 走 PTY 托管，
+界面上是一个终端；作者要的是**对话形态**。
+
+**同时明确了终端的定位**（作者原话）：*「终端肯定留着啊，终端就类似 codex app
+的感觉，里面有一个终端，然后也可以执行任意的 Linux 的命令，也可以开启
+codex cli 和 claude cli」* —— 终端是**通用 shell**，不是 claude/codex 的正脸。
+两件事互不冲突。
+
+### 结论：**两个 CLI 都能，但多轮语义不同**
+
+| 问题 | claude | codex |
+|---|---|---|
+| 非交互 + 结构化输出 | `--print --output-format stream-json` ✅ | `exec --json`（JSONL）✅ |
+| 逐 token 增量 | `--include-partial-messages` ✅ | 未验 |
+| **多轮** | **一个进程连喂多轮** ✅<br>`--input-format stream-json` | **一轮一个进程**，靠 `exec resume <thread_id>` ✅ |
+| 事件类型（实测） | `system` `assistant` `rate_limit_event` `result` | `thread.started` `turn.started` `item.completed` `turn.completed` |
+
+**实测证据**（两边用同一个问法：先让它记 `4127`，再问）：
+
+```
+claude  一个进程连喂两轮 → 助手回复 ["OK","4127"]        记得 ✅
+codex   exec 一轮 → thread_id；resume <id> 再问 → ["4127"]  记得 ✅
+```
+
+### 对实现的四条约束
+
+1. **两种多轮语义必须在运行时里显式分开。** claude 是长驻进程 + stdin 流；
+   codex 是每轮起一个进程 + `thread_id` 续接。**把它们塞进同一个抽象之前，
+   先承认它们不一样**——否则会写出一个「对一边天然、对另一边别扭」的接口。
+2. **`thread_id` 必须持久化**。codex 的多轮全靠它，丢了就等于会话断了。
+   它属于会话记录，不是内存状态。
+3. **stderr 有大量与我们无关的噪声**：codex 每次都往 stderr 打
+   `failed to load models cache` 与 `rmcp::transport::worker … HTTP 502`，
+   **而退出码是 0**。**不要把 stderr 非空当成失败**——那会让每一轮都被误报成出错。
+4. **这一层的真正收获不是界面**：外部 CLI 吐的是结构化事件，于是它的工具调用、
+   消息、用量**第一次能落进我们已有的账本**。走 PTY 时 claude 会话对账本是个黑盒，
+   只有一条 `pty_session` Run。**不变式 3 与 5 第一次能覆盖外部 CLI。**
+
+### 未验证
+
+- claude 的 `--include-partial-messages` 实际增量粒度
+- 两个 CLI 在**权限/审批**上的行为（headless 下工具调用怎么放行）——
+  这条与阶段 ④ 的授权门直接相关，做之前必须单独验
+- codex `exec` 的并发：同一个 thread 能不能同时跑两轮（应当不行，但没验）

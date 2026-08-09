@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | grep -E '✘|passed|failed' | tail -6",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -rf test-results\nnpm run test:e2e:visual:update >/dev/null 2>&1\nnpx playwright test --reporter=list 2>&1 | grep -E '^\\s+[0-9]+ (passed|failed)' | head -3\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -2",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1\nfor i in 1 2; do npx playwright test --reporter=list 2>&1 | grep -E '^\\s+[0-9]+ (passed|failed)' | tr '\\n' ' '; echo \"← $i\"; done\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1\nfor i in 1 2; do npx playwright test --reporter=list 2>&1 | grep -E '^\\s+[0-9]+ (passed|failed)' | tr '\\n' ' '; echo \"← $i\"; done\nnpm test 2>&1 | grep -E 'Tests |Test Files' | head -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}

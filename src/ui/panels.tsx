@@ -103,6 +103,8 @@ export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) 
 export interface ContextUsage {
   model?: string
   contextWindow?: number
+  /** provider 报的真数。**缺省 = 尚未采集，不是 0** */
+  usedTokens?: number
   bytes: { system: number; tools: number; history: number }
 }
 
@@ -143,16 +145,18 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   ]
   return (
     <Panel title="上下文">
-      {usage.contextWindow ? (
-        <p className="tokens">
-          模型上限 {usage.contextWindow.toLocaleString()} tokens
-          {usage.model ? ` · ${usage.model}` : ""}
-        </p>
-      ) : (
-        <p className="tokens">模型上限：拿不到</p>
-      )}
-      {/* **这一行是整个面板的要害。** 不写清楚，人就会把它当成 token 分解 */}
-      <p className="hint">已用 token 尚未采集；下表是**按字节**，不是 token</p>
+      <p className="tokens">
+        {usage.usedTokens !== undefined && usage.contextWindow
+          ? `${usage.usedTokens.toLocaleString()} / ${usage.contextWindow.toLocaleString()} tokens`
+          : usage.usedTokens !== undefined
+            ? `已用 ${usage.usedTokens.toLocaleString()} tokens（上限拿不到）`
+            : usage.contextWindow
+              ? `模型上限 ${usage.contextWindow.toLocaleString()} tokens · 已用尚未采集`
+              : "尚未采集"}
+        {usage.model ? ` · ${usage.model}` : ""}
+      </p>
+      {/* **这一行是整个面板的要害。** 不写清楚，人就会把下表当成 token 分解 */}
+      <p className="hint">下表按字节，不是 token</p>
       <ul className="stat-row ctx-rows">
         {rows.map((r) => (
           <li key={r.label} className="ctx-row">

@@ -95,6 +95,13 @@ interface NativeSession {
    * 于是**任何时候都换不了模型**，而界面只表现为"点了没反应"。
    */
   inFlight: number
+  /**
+   * 最近一条助手消息报的 token 用量。**provider 给的真数。**
+   *
+   * 取自助手消息而不是工具结果——后者的 `usage` 是工具自身的，
+   * pi 的文档明说它 *"Not used for main LLM context accounting"*。
+   */
+  lastUsage: { input?: number; output?: number; cacheRead?: number } | undefined
   /** 该会话的隔离目录。工具输出的全文写在它下面 */
   sessionDir: string
   /**
@@ -113,6 +120,14 @@ interface PiEvent {
   input?: unknown
   result?: { isError?: boolean; content?: { type?: string; text?: string }[] }
   assistantMessageEvent?: { type?: string; delta?: string }
+  /**
+   * 完整的一条消息。**助手消息上带 `usage`，那是模型真实的 token 用量**。
+   *
+   * **不要用 `AgentToolResult.usage`**——pi 的文档明写着
+   * *"Usage from the final tool execution itself… **Not used for main LLM
+   * context accounting**."* 计划里原本指的就是那一个，是错的。
+   */
+  message?: { role?: string; usage?: { input?: number; output?: number; cacheRead?: number } }
   errorMessage?: string
 }
 
@@ -259,6 +274,7 @@ export class NativeRuntime implements AgentRuntime {
       pid,
       pending: undefined,
       inFlight: 0,
+      lastUsage: undefined,
       sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
     })
@@ -268,6 +284,12 @@ export class NativeRuntime implements AgentRuntime {
 
   /** pi 的会话事件 → 本项目的 AgentEvent。**只翻译，不解释。** */
   private translate(sessionId: SessionId, e: PiEvent): void {
+    // **助手消息带着真实用量。** 记下最近一条——上下文面板要的就是它，
+    // 而在此之前「已用多少 token」一处都没采集
+    if (e.type === "message" && e.message?.role === "assistant" && e.message.usage) {
+      const s = this.sessions.get(sessionId)
+      if (s) s.lastUsage = e.message.usage
+    }
     switch (e.type) {
       case "message_update":
         if (e.assistantMessageEvent?.type === "text_delta") {
@@ -449,6 +471,11 @@ export class NativeRuntime implements AgentRuntime {
       // 所以拿不到就不给这个字段，而不是给一个 undefined
       ...(st.model?.id ? { model: st.model.id } : {}),
       ...(st.model?.contextWindow ? { contextWindow: st.model.contextWindow } : {}),
+      // **真 token，来自 provider。** 缺就不给这个字段——
+      // 界面据此显示「尚未采集」，而不是显示 0
+      ...(s.lastUsage?.input !== undefined
+        ? { usedTokens: s.lastUsage.input + (s.lastUsage.cacheRead ?? 0) }
+        : {}),
       bytes: {
         system: size(st.systemPrompt),
         tools: size(st.tools),

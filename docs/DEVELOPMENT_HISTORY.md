@@ -43,10 +43,28 @@
 
 ## 变更日志
 
-### 2026-08-09 — 上下文用量第一片：只报能精确量的，不拿字节冒充 token
+### 2026-08-09 — 接上真实 token 用量；并更正计划里指错的那个 usage
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 补上上一条明确留的那一半——「已用多少 token」此前一处都没采集。
+- **更正计划的一处错误**：计划写「用 pi 的 `ToolResultEventResult.usage`」，
+  **指错了对象**。pi 的类型文档明写着那是
+  *"Usage from the final tool execution itself… **Not used for main LLM context
+  accounting**."*——它是**工具自身**的用量。真正的模型用量在
+  **助手消息**上（`AssistantMessage.usage`，必填字段）。
+- **What**: `translate()` 里捕获 `type === "message" && role === "assistant"` 的
+  `usage`，存进会话；`ContextUsage.usedTokens` 一路透到面板。
+  **缺省 = 尚未采集，不是 0**——三层都按这个含义写。
+- **修掉一个自己刚种下的性能缺陷**：取用量的 effect 第一版依赖里放了 `items`，
+  而**它每来一个 token 就变一次** → 每个 token 打一次 IPC。
+  表现为整个 e2e 套件开始随机超时，**而且每次挂的还不是同一条**，
+  耗时从 1.0m 飘到 1.8m。改为只在打开项目概览时取一次；
+  改后连跑四遍 51 条全绿，耗时稳定回 1.0m。
+- **Verification**: 653 单元测试；typecheck 干净；**51 条 e2e，连跑四遍全绿**。
+  新增两条 e2e 守着这一片：假后端报 `prompt_tokens: 12`，
+  **面板上必须出现这个数**，而不是停在「尚未采集」；
+  以及下表必须明写「按字节，不是 token」。
 - **Motivation**: ①-B″ · U3。长对话烧了多少、烧在哪，此前完全看不见。
 - **一处比计划更严的纪律**：计划说「分不出来的标『其他』，不要凑数」。
   实测把它收得更紧了——**`pi-ai` 里没有 tokenizer**：

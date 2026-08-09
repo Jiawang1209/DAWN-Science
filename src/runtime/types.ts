@@ -132,6 +132,11 @@ export interface ContextUsage {
   model?: string
   /** 模型自带的上下文上限（token）。**真数** */
   contextWindow?: number
+  /**
+   * 最近一次请求的输入 token（含缓存命中）。**provider 报的真数。**
+   * 缺省 = 尚未采集，**不是 0**。
+   */
+  usedTokens?: number
   /** 三档内容的字节数。**不是 token** */
   bytes: { system: number; tools: number; history: number }
 }

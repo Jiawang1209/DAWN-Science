@@ -194,8 +194,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   // 上下文用量随会话走。**没有会话时清掉**——留着上一个会话的数字是最坏的一种，
   // 它看起来是真的
   useEffect(() => {
+    // **依赖里绝不能放 `items`。** 它每来一个 token 就变一次，
+    // 于是每个 token 打一次 IPC——第一版就是这么写的，
+    // 表现为整个 e2e 套件开始随机超时（每次挂的还不是同一条）。
+    // 面板只在项目概览里显示，所以在打开它的时候取一次就够了
+    if (view !== "panel") return
     void loadContextUsage(client, sessionId)
-  }, [client, sessionId, items])
+  }, [client, sessionId, view])
 
   /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {

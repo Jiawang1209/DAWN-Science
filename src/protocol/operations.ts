@@ -325,6 +325,11 @@ export const OPERATIONS = {
       model: z.string().optional(),
       /** 模型自带的上下文上限（token）。**真数**；缺省 = 不知道 */
       contextWindow: z.int().min(0).optional(),
+      /**
+       * 最近一次请求的输入 token（含缓存命中）。**provider 报的真数。**
+       * 缺省 = **尚未采集，不是 0**。
+       */
+      usedTokens: z.int().min(0).optional(),
       /** 三档内容的**字节数，不是 token** */
       bytes: z.object({
         system: z.int().min(0),

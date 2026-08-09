@@ -43,6 +43,37 @@
 
 ## 变更日志
 
+### 2026-08-10 — ②-A · K1：内核通道适配器，Python 与 R 同一条路径
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: ②-A 的第一片。**先做传输不是排期偏好**：S12/S13 要求
+  「输出从诞生那一刻起就绑定溯源状态，不是事后补」，
+  而「诞生那一刻」就是消息出适配器那一刻——这个钩子只能挂在第一片上。
+- **What**:
+  - `src/kernel/types.ts`：`KernelChannel` / `TaggedMessage` / `Provenance`。**没有 rxjs**。
+  - `src/kernel/channel.ts`：**整个 `src/` 里唯一碰 rxjs 的文件**。
+    握手前入队、按 `parent_header` 配对、关停顺序、出口打三件套
+    （`kernelInstanceId` / `kernelRevision` / `runId`）。
+  - 单元测试 19 条（假通道）+ 集成测试跑**真内核**，Python 与 R 各一遍。
+  - `source-hygiene` 加两条扫描：`src/` 下只有适配器可以 import
+    rxjs/nteract/enchannel；适配器的对外类型里不许出现 Observable。
+- **Impact**:
+  - **「一次实现，通吃多语言」现在被测试盯着**，而不是一句设计意图。
+  - 集成测试在**子进程**里跑，为的是能断言**退出码**——关停顺序写错的症状是
+    「输出全对、进程 SIGABRT」，而 Spike D 记着「结论先打印、崩溃在后」。
+  - 依赖新增：`zeromq` / `spawnteract` / `enchannel-zmq-backend` / `@nteract/messaging`。
+    Electron 全量 e2e（77 条）在加了原生模块之后仍然全绿。
+- **Verification**: 911 单元 + 77 e2e 全绿；rxjs 扫描喂过违规样本确认会红。
+  途中修掉一处自己写的不确定性：集成测试第一版是「reply 到了之后睡 300ms」，
+  **Python 过、R 红**——iopub 与 shell 是两条独立通道，
+  **stream 完全可以晚于 execute_reply 到达**，固定睡眠把它变成了掷骰子。
+  改成等到真的收到为止。
+  **另有一次红复现不出来**（30s 等不到 stream；直接跑、连跑、换 stdio、换顺序
+  全部一次通过，也没有孤儿内核进程）。**没有当成修好了**——
+  超时改成自报家门：打印收到过哪些消息类型及计数，
+  「一条都没收到」与「收到了 status 但没有 stream」是完全不同的病。
+
 ### 2026-08-10 — 把子 agent 样例真的送到用户手上
 
 - **Type**: feat

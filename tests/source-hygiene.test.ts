@@ -85,3 +85,50 @@ describe("源文件里不得有裸控制字符", () => {
     expect(FORBIDDEN.test("中文注释与 emoji 🎯 都不是控制字符")).toBe(false)
   })
 })
+
+/**
+ * rxjs 只准出现在内核适配器里（②-A 计划 §7 的第一条防线）。
+ *
+ * ## 为什么这条要有扫描
+ *
+ * `@nteract/messaging` 要 rxjs **^6.6.0**，`enchannel-zmq-backend@10` 要 **^7.8.2**，
+ * 两份都会装上，且两者的 `Observable` 类型结构互不兼容
+ * （Spike D 实测 4 处 TS2345）。**这是消不掉的成本，只能隔离。**
+ *
+ * 隔离靠的是「只有适配器碰它」这条约定——而**靠记性维护的约定会腐烂，
+ * 且腐烂时没有声音**：某天有人图省事在别处 `import { firstValueFrom } from "rxjs"`，
+ * 一切照常工作，直到某次升级把两份 rxjs 撞在一起。
+ */
+describe("rxjs 不许渗出内核适配器", () => {
+  /** 唯一允许碰 rxjs 的文件。**加白名单要有理由**，不是随手加 */
+  const ALLOWED = new Set(["src/kernel/channel.ts"])
+
+  it("`src/` 下只有适配器可以 import rxjs / nteract / enchannel", () => {
+    const 违规: string[] = []
+    for (const file of sourceFiles(join(import.meta.dirname, "../src"))) {
+      const rel = file.slice(file.indexOf("src/"))
+      if (ALLOWED.has(rel)) continue
+      const text = readFileSync(file, "utf8")
+      for (const [i, line] of text.split("\n").entries()) {
+        if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue // 注释里可以提它
+        if (/from\s+["'](rxjs|@nteract\/|enchannel-zmq-backend)/.test(line)) {
+          违规.push(`${rel}:${i + 1}: ${line.trim()}`)
+        }
+      }
+    }
+    expect(违规, "只有 src/kernel/channel.ts 可以碰这三个包").toEqual([])
+  })
+
+  it("**适配器自己也不许把 Observable 漏出去** —— 它的对外类型里不该出现 rxjs", () => {
+    /**
+     * **注释不算违规。** 这不是放水：`types.ts` 的文件头正是在解释
+     * 「这里为什么没有 rxjs」，规则的解释者必须能提到规则本身。
+     * 本仓库为同一件事已经加过一次 `isComment`（见 design-contract.test.ts）。
+     */
+    const 代码行 = readFileSync(join(import.meta.dirname, "../src/kernel/types.ts"), "utf8")
+      .split("\n")
+      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+      .join("\n")
+    expect(代码行).not.toMatch(/Observable|Subject|rxjs/)
+  })
+})

@@ -43,10 +43,62 @@
 
 ## 变更日志
 
+### 2026-08-09 — S1 第一片：子 agent 定义的加载；并禁掉源码里的裸控制字符
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: ①-B″ 批次 4 · S1 的第一片。定义是后面三种模式的输入，先把它钉死。
+- **What**: `src/subagent/definitions.ts` 读 `<project>/.dawn/agents/*.md`
+  （markdown + YAML frontmatter）。**坐在 pi 的 `parseFrontmatter` 上**——
+  依赖决策三件事：①符号 `parseFrontmatter`（`@earendil-works/pi-coding-agent`
+  的公开导出，已验证）；②放弃了自己写一份 frontmatter 解析；
+  ③不变式挂点是「同一份解析规则，不与 pi 漂移」——定义文件是用户手写的，
+  边角情形很多，两套规则必然悄悄分家。
+- **形态学自 pi，两处刻意不同**（计划 §6：形态一样、代码是我们的）：
+  1. **不静默跳过**。pi 的示例在 frontmatter 缺字段时直接 `continue`，
+     文件就这么消失了。规格 7.5 要求失败必须出声，所以读不进来的文件
+     连同原因一起返回。静默跳过的表现是「我明明建了这个 agent，它却不在列表里」，
+     而无处可查。
+  2. **重名保留先读到的并出声**。pi 用 `Map.set` 后写覆盖先写。
+     覆盖不危险，不出声才危险——人会改错文件。
+     为此文件名要排序，否则同一个项目在两台机器上会得到不同的 agent。
+- **⚠ 一条知情地开着的缝，需要你定**：pi 的 README 对**项目级** agent 定义
+  写了明确警告——*"Project-local agents are **repo-controlled prompts** that can
+  instruct the model to read files, run bash commands… **Default behavior:**
+  Only loads user-level agents."* 而计划 §6 规定的正是项目级
+  `<project>/.dawn/agents/*.md`。**这意味着 clone 下来的仓库可以自带 agent 定义，
+  其 system prompt 就是可执行指令。** 本阶段没有授权门（§4.3 的反向约束
+  已被作者显式豁免），所以照计划实现，但只做了两条不足以替代授权门的收窄：
+  只认一层不向上查找（pi 会一路往上找）、名字必须是安全标识符。
+  **阶段 ④ 的授权门第一个要接的就是这里。**
+- **两个自己种下又自己抓到的缺陷**
+  1. `SAFE_NAME` 第一版把 `-` 排掉了，而 `code-reviewer` 是最常见的命名。
+     上面那些用例的名字全是单词，一个都没红——**「拦得住」和「放得过」是两条规则，
+     只测前者会漏掉一半。**
+  2. 查第 1 条时发现更糟的：那个正则里我以为敲的是「空格 + 连字符」，
+     **实际写进文件的是 `\x00` 与 `\x1f` 两个裸控制字节**。行为碰巧是对的
+     （`\0-\x1f` 恰好是个合理范围），但**`grep` 把整个文件当二进制，
+     连 `grep -c ""` 都静默**——那正是它被发现的方式：一个搜不到的源文件。
+     碰巧正确的代码，下一次改动就会破。
+- **因此加了一条扫描**（准入规则 ②）：`tests/source-hygiene.test.ts`——
+  `src/` 与 `tests/` 下的 .ts/.tsx 都不得含裸控制字符（`\t` `\n` 除外）。
+  **不放进 `design-contract.test.ts`**：那个文件只扫 `src/ui` 且只对应 `DESIGN.md`，
+  塞进去会让它的名字开始说谎。
+  扫描范围包含 `tests/` 的理由很直接：**写这条规则的测试文件自己先违反了它**
+  （同一个失误当场又犯一次），另外扫出 PTY 测试里三处真 ESC 字节，一并改成 `\x1b`。
+  配了一条元测试守「扫描器还活着」——控制字符用 `String.fromCharCode` 构造，
+  不敲进文件。
+- **Impact**: 新增 `src/subagent/` 模块目录。尚未接入运行时，没有用户可见面。
+- **Verification**: 689 单元测试（+16）；typecheck 干净。**尚未真机验证**——
+  这一片还没有可运行的路径，验证要等它接上 pi 的 customTools 之后。
+- **下一片**：进程隔离的子 agent 执行器（spawn + 上界 8 任务 / 4 并发）。
+
+---
+
 ### 2026-08-09 — 切回窗口就重取；并停止在用户的仓库里留下 DAWN 自己的东西
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `2a3bc40`
 - **Motivation**: U4 追加项（文件监听）。**动手前先查，发现计划那句话指错了面板**——
   和上一轮「指错了那个 usage」是同一种情况。
 - **更正**：计划写*「没有监听的话，作者在外部编辑器里改了文件，**这个 pane** 不会知道」*，

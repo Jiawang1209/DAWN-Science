@@ -112,7 +112,7 @@ describe("增量更新", () => {
 
   it("bytes 更新用于 PTY", () => {
     expect(
-      SessionUpdateSchema.safeParse({ ...base, type: "bytes", revision: 1, data: "[31m" }).success,
+      SessionUpdateSchema.safeParse({ ...base, type: "bytes", revision: 1, data: "\x1b[31m" }).success,
     ).toBe(true)
   })
 

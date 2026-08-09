@@ -154,9 +154,9 @@ describe("记录中枢 · 终端 scrollback", () => {
   it("PTY 字节进 terminal，不进 items", () => {
     const h = hub()
     h.track("p", "pty")
-    h.ingest("p", { kind: "output", sessionId: "p", data: "[31mred" })
+    h.ingest("p", { kind: "output", sessionId: "p", data: "\x1b[31mred" })
     const s = h.subscribe("p")
-    expect(s.terminal).toBe("[31mred")
+    expect(s.terminal).toBe("\x1b[31mred")
     expect(s.items).toEqual([])
   })
 

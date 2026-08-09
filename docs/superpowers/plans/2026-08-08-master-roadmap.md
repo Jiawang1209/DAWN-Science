@@ -237,19 +237,19 @@ graph TB
 
 已完成（Workbench Protocol、Electron 外壳、对话视图、终端下钻）。G2 暂缓理由见 §9。
 
-### 返工 R 坐 pi 第三层 🔄（R1–R4 ✅ / R5 ⬜）
+### 返工 R 坐 pi 第三层 ✅
 
-R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 协议升 2.0（snapshot+revision）✅ · **R5 UI 显示工具调用 ⬜**
+R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 协议升 2.0（snapshot+revision）✅ · R5 UI 显示工具调用 ✅（作为 ①-B′ 的 Task 3.1 交付）
 
 ---
 
-### 阶段 ①-B′ 桌面成型
+### 阶段 ①-B′ 桌面成型 ✅（10 个 Task，2026-08-09）
 
 > **本阶段的判据不是「功能齐了」，是「作者自己打开，不用问我，就知道下一步该点哪里」。**
 >
 > **详细计划**：[`2026-08-08-phase1b-prime-desktop.md`](./2026-08-08-phase1b-prime-desktop.md) —— 含 Hermes 信息架构的照做清单、依赖分层声明、10 个 Task 与执行顺序。
 
-#### S1 · 状态按权威归位 ⬜
+#### S1 · 状态按权威归位 ✅
 
 - **技术栈**：`nanostores` + `@nanostores/react`；请求型数据留在协议 client
 - **成果**：`src/ui/store/` 下按关注点拆分的小 store（会话列表 / 当前会话 / 连接态 / 面板可见性 / 审批），`App.tsx` 从状态容器降为路由与布局
@@ -257,7 +257,7 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **来源**：Hermes `src/store/` **140 个文件、一个关注点一个 store、每个 store 旁边一个 `.test.ts`**
 - **对标**：Hermes `AGENTS.md`「Decide state by authority」——*"The first question for any piece of state is who is allowed to be right about it, not where it is convenient to store it."* 持久化状态必须在 key 里声明作用域（全局 / 连接 / profile / 会话 / 项目 / 窗口）
 
-#### S2 · 删掉「必须先打开项目」的门槛 ⬜
+#### S2 · 删掉「必须先打开项目」的门槛 ✅
 
 - **技术栈**：默认工作区（`~/DAWN/scratch`）+ 首次使用引导
 - **成果**：启动即可对话；项目在侧栏可选可换，但不是准入条件
@@ -265,7 +265,7 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **来源**：Hermes `onboarding.spec.ts` 有专门的首次使用流程；`DESIGN.md`：*"Reserve the full-screen boot/connecting experience for a genuinely unusable backend."*
 - **对标**：Hermes 也有项目、也让项目持有 cwd、也放侧栏（*"Projects own workspace cwd. Use Sidebar → Projects"*）——**项目模型没错，把它做成门槛才是错**。门槛的正解是 onboarding，不是禁用一切
 
-#### S3 · 五种加载态 ⬜
+#### S3 · 五种加载态 ✅
 
 - **技术栈**：`Loader` / `ErrorState` / `EmptyState` 三个 primitive，不散落
 - **成果**：`empty` / `loading` / `reconnecting` / `degraded-stale` / `exhausted-recovery` 各有诚实文案与各自的出路
@@ -273,7 +273,7 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **来源**：Hermes `AGENTS.md`：*"The states around loading are distinct experiences — empty, loading, reconnecting, degraded/stale, and exhausted-recovery each deserve their own honest copy and their own way out."*
 - **对标**：Hermes 明确禁止两件事——**永不出现字面文案 "Loading…"**；重试必须有界且以真实的恢复动作收尾，**不是无限 spinner，不是热循环**
 
-#### S4 · 终端常驻（visibility ≠ lifecycle） ⬜
+#### S4 · 终端常驻（visibility ≠ lifecycle） ✅
 
 - **技术栈**：`@xterm/xterm` + `addon-fit` + **`addon-serialize`** + `addon-unicode11` + `addon-web-links`
 - **成果**：终端收起时保持挂载；`addon-serialize` 提供会话恢复所需的终端状态序列化
@@ -281,7 +281,7 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **来源**：Hermes 用满五个 addon；我们只用了 `fit`
 - **对标**：Hermes `DESIGN.md`：*"Expensive stateful surfaces stay mounted when hidden. **Visibility is not lifecycle.**"* 以及 Rho 的反向约束：**xterm.js 只用于真 shell，绝不用于 REPL**（→ S11）
 
-#### S5 · 切会话改为 re-home ⬜
+#### S5 · 切会话改为 re-home ✅
 
 - **技术栈**：世代计数器 + 请求令牌
 - **成果**：切会话时 shell 与用户正在做的事保持不动，只清空并重填绑定当前会话的 store
@@ -289,7 +289,7 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **来源**：Hermes `AGENTS.md`「Switching context is a re-home, not a reboot」，三种切换形状：软重置 / 硬重置 / 活动 profile 切换
 - **对标**：*"Treating a soft switch as hard flickers the app; treating a hard one as soft strands stale rows."* 且**查询失效无法驱逐活会话 store，必须显式擦除**
 
-#### S6 · 流式 markdown 与代码高亮 ⬜
+#### S6 · 流式 markdown 与代码高亮 ✅
 
 - **技术栈**：`streamdown`（流式 markdown）+ `shiki`（高亮）+ `use-stick-to-bottom`（贴底滚动）。**不引入 `@assistant-ui/react`**
 - **成果**：对话区渲染真 markdown、代码带高亮、流式输出时自动贴底且用户上滚后不被拽回
@@ -297,7 +297,7 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 - **来源**：Hermes 用了 `streamdown` + `shiki` + `katex` + `mermaid` + `use-stick-to-bottom`
 - **对标**：Hermes 的 transcript 建在 `@assistant-ui/react` 上。**我们只取下层三件，不取它** —— 按 §4 分层纪律：`@assistant-ui/react` 会决定整个对话区的形态，是又一个「坐在哪一层」的决策，而 `streamdown`/`shiki` 是可替换的叶子依赖。放弃项：要自己维护消息/工具调用/审批三类渲染器
 
-#### S16′ · Run 最小骨架 ⬜ 〔从 ②-B 前移〕
+#### S16′ · Run 最小骨架 ✅ 〔从 ②-B 前移〕
 
 > **本阶段唯一一件「不做会很贵」的事。** 其余功能都是新增路径，随时可加；Run 不是——它要求**每条执行路径在诞生时就记账**。
 
@@ -310,13 +310,41 @@ R1 Spike A-2 ✅ · R2 native+配置重写 ✅ · R3 凭证 backend ✅ · R4 �
 
   Run 行少一个字段，整个「运行对比」被阻塞，必须先做 BH1–BH3 三个基线加固包才能继续。**三个包的代价，换一个字段。** 因此 `project_id` 与 `exit_code`（结构化，非日志文本）现在就钉死——这两项正是冻结点八项里的两项
 
-#### S7 · mock 链路 + Playwright e2e + DESIGN.md ⬜（mock 部分 ✅）
+#### S7 · mock 链路 + Playwright e2e + DESIGN.md ✅
 
 - **技术栈**：`scripts/mock-inference-server.mjs`（✅ 已建）+ `@playwright/test`
 - **成果**：四条基线 spec —— `boot`（起得来）· `chat`（说一句看见回复）· `sidebar-states`（各状态）· `session-switch`（切会话不丢历史）；外加 `docs/DESIGN.md`
 - **效果**：**我能自己验证界面**，不再是「我猜、你看、你否」的循环
 - **来源**：Hermes `apps/desktop/e2e/` 19 个 spec，含 `launch-packaged-app.spec.ts`（**连打包产物本身都测**）；其 `dev-mock.mjs` 文件头明确写明**与 e2e 共用同一个 mock server**
 - **对标**：Rho 把同一条纪律写成硬性要求——*"Every new Tauri command and visible state requires a deterministic mock handler in `desktop/dist/app.js` **in the same implementation package**."* **DAWN 采纳为准入规则**：新增协议操作必须在同一次改动里补 mock 分支
+
+---
+
+### 阶段 ①-B″ runtime 补强 · 桌面加厚 · subagent ✅（2026-08-09）
+
+> **本阶段此前只在 §9 的文件索引里出现过，阶段清单里没有它。**
+> 收口时补上——**一个不在清单里的阶段，等于它的状态没有人负责**。
+>
+> **详细计划与逐条对账**：[`2026-08-09-phase1b-double-prime.md`](./2026-08-09-phase1b-double-prime.md) §9
+
+判据两条，均已达成（对账见详细计划 §9，每条指向具体验证手段）：
+
+> **① 长对话不再悄悄丢内容，工具改了哪些文件看得见，模型能在界面里换。** ✅
+> **② 能把一件事拆给几个子 agent 并行做，且每个子 agent 的账都记在账本上。** ✅
+
+| 批次 | 内容 | 状态 |
+|---|---|---|
+| 1 · runtime 补强 | R1 卡死守卫 · R2 工具输出双份处理 · R3 逐次溯源 | ✅ |
+| 2 · 外观 | V2 暗色优先主题与强制切换 · V1 八张视觉基线（逐像素阈值 0） | ✅ |
+| 3 · 桌面加厚 | U1 命令面板 · U2 模型选择器 · U3 上下文用量 · U4 变更 pane | ✅ |
+| 4 · 编排入口 | S1 subagent（定义 → 执行器 → 子进程 → 账本 → chip 组） | ✅ |
+
+**三笔知情的欠账**（不影响判据，详见详细计划 §9）：
+e2e 只走了子 agent 的 `single` 模式 · 子 agent 的逐个溯源缺失（等阶段 ③ worktree 隔离）·
+`@parcel/watcher` 文件监听推到阶段 ③。
+
+**新增的一个 spike**：Spike F —— 打包后 `node` 不一定在，子进程用
+`process.execPath` + `ELECTRON_RUN_AS_NODE=1`（结论与未验证项见 `spikes/FINDINGS.md`）。
 
 ---
 
@@ -609,7 +637,7 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 | **G0** | Phase 0 后 | 四个 spike 全过 | ✅ 2026-08-08 |
 | **G1** | ①-A 后 | 四会话并存 · CLI 真接管 · 全局配置未污染 | ✅ 2026-08-08（**但只判了 PTY 线**，见 §9） |
 | **GR** | R1 后 | pi 第三层可用：工具能干活 · `tool_call` 可拦 · 凭证后端可换 | ✅ |
-| **G2′** | ①-B′ 后 | **作者自己打开，不问我就知道下一步点哪里**；四条 e2e 全绿；两周内是否真的开始用它替代裸终端 | ⬜ |
+| **G2′** | ①-B′ 后 | **作者自己打开，不问我就知道下一步点哪里**；四条 e2e 全绿；两周内是否真的开始用它替代裸终端 | 🔵 机器判据已过（56 条 e2e），**第二问待作者本人用**——它不由任何 Task 交付 |
 | **G3** | ②-A 后 | 持久 Python + R 会话可用、能中断、图能显示 | ⬜ |
 | **G4** | ②-B 后 | 同一代码在本地与 SSH 各跑一次，两条 Run 记录都可查且带环境快照 | ⬜ |
 | **🔒 G5** | ③ 后 | **契约冻结八项逐条确认** | ⬜ |
@@ -679,7 +707,8 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 | 阶段 ①-B′ 详细计划 | ✅ `plans/2026-08-08-phase1b-prime-desktop.md`（10 个 Task） |
 | **阶段 ①-B′ 代码** | ✅ **10 个 Task 全部完成，2026-08-09**。524 单元/集成 + **15 条 Playwright e2e** |
 | **G2′** | ✅ **通过，2026-08-09**。作者试用后确认「完全可以作为一个 agent 去工作了」，已接入 deepseek |
-| **阶段 ①-B″** | ⬜ `plans/2026-08-09-phase1b-double-prime.md`（runtime 补强 · 桌面加厚 · subagent） |
+| **阶段 ①-B″ 计划** | ✅ `plans/2026-08-09-phase1b-double-prime.md`（runtime 补强 · 桌面加厚 · subagent） |
+| **阶段 ①-B″ 代码** | ✅ **四个批次全部完成，2026-08-09**。判据两条均达成，逐条对账见该计划 §9 |
 
 **代码规模**（2026-08-09）：**524 个单元/集成测试**（42 文件）+ **15 条 e2e**；commit `81dd7ce`。
 
@@ -692,18 +721,27 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 
 ### 9.3 下一步
 
-**①-B′ 已完成。下一步是 G2′ 的第二问——它不由任何 Task 交付，只能靠行为观察：**
+**①-B′ 与 ①-B″ 均已完成**（后者判据两条均达成，逐条对账见其计划 §9）。
+
+**下一步仍是 G2′ 的第二问——它不由任何 Task 交付，只能靠行为观察：**
 
 > **你是否真的开始用它替代裸终端？**
 
-机器能验的部分已经全绿（15 条 e2e 跑真实构建产物）。剩下的那一问要作者本人用。
+机器能验的部分已经全绿（**56 条 e2e 跑真实构建产物**，含 8 张视觉基线）。
+剩下的那一问要作者本人用。
 
 之后进 **阶段 ②-A 科学内核**（S8–S14：Jupyter 协议客户端 → Ark/ipykernel → 中断 → 结构化 Console → 富输出 → 内核版本追踪 → 变量面板）。
 
+**进 ②-A 之前值得先花的两小笔**（都很小，且都在补已知欠账）：
+1. 补一条 `parallel` 模式的 e2e——目前只有 `single` 在真实产物里走过
+2. `providers.yaml` 与 `.dawn/agents/` 各给一份**可直接用的样例**——
+   现在子 agent 能力已经具备，但一个新用户不知道该往哪写什么
+
 ### 9.4 需要作者定的
 
-1. **`streamdown` + `shiki` + `use-stick-to-bottom` 三个依赖可以进吗？**（S6）我的建议是进，且**不引入 `@assistant-ui/react`** ——理由见 S6 的「对标」栏
-2. **Playwright 进 devDependencies 可以吗？**（S7）它会拉一个浏览器二进制
+1. ~~**`streamdown` + `shiki` + `use-stick-to-bottom` 三个依赖可以进吗？**~~ **已进**（S6 落地时作者同意），未引入 `@assistant-ui/react`
+2. ~~**Playwright 进 devDependencies 可以吗？**~~ **已进**，56 条 e2e 现在是主要的验收手段
+2b. **①-B″ 新增的一个依赖**：`typebox` 提为直接依赖（此前只是 pi 的传递依赖）。理由与三件事见该阶段历史条目
 3. **S24 证据胶囊放 ③ 还是后置到 ⑥？** 它是 wisp 最亮的设计之一，但不在 MVP 那条路上
 4. **R11 的「设计萃取」要产出什么形态？** 我倾向一份 `specs/agentdeck-memory-projection.md`，只写机制与取舍，不搬代码
 

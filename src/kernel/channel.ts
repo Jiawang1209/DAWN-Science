@@ -28,6 +28,11 @@
  *    适配器不解释 status，原样往上传——判断「中断成没成」是 K3 的事，
  *    而且判据是「内核还能不能算对一道题」，不是回复长什么样。
  */
+import { launchSpec } from "spawnteract"
+import { createMainChannel } from "enchannel-zmq-backend"
+import { kernelInfoRequest } from "@nteract/messaging"
+import { UserFacingError } from "../errors.js"
+import { diagnoseLaunch, discoverKernelSpecs } from "./specs.js"
 import type {
   JupyterMessage,
   KernelChannel,
@@ -238,3 +243,119 @@ function defaultReplyType(requestType: string): string {
   if (requestType.endsWith("_request")) return `${requestType.slice(0, -"_request".length)}_reply`
   throw new Error(`认不出 "${requestType}" 的回复类型，请显式给 replyType`)
 }
+
+/* ── 起一个真内核（②-A · K2）──────────────────────────────────────── */
+
+export interface LaunchOptions {
+  kernelName: string
+  runIdOf?: () => string | undefined
+  handshakeTimeoutMs?: number
+  /** 工作目录。内核里的相对路径以它为准 */
+  cwd?: string
+}
+
+/** 每次启动一个新身份。**重启即变**——S13 的陈旧判断全靠它 */
+let instanceSeq = 0
+function newInstanceId(kernelName: string): string {
+  instanceSeq += 1
+  return `k-${kernelName}-${Date.now().toString(36)}-${instanceSeq}`
+}
+
+/** stderr 只留末尾这么多字节。**留尾不留头**：报错信息在最后 */
+const STDERR_TAIL = 4000
+
+/**
+ * 起内核 + 建通道 + 握手，**一步到位或响亮失败**。
+ *
+ * ## 为什么它长在这个文件里
+ *
+ * `spawnteract` / `enchannel` / `@nteract/messaging` 三个包只准这一个文件碰
+ * （`tests/source-hygiene.test.ts` 强制）。**把启动拆到另一个文件，
+ * 边界就有两处了**——而这条边界的全部价值就在于「只有一处」。
+ *
+ * ## 失败时说的是三种实情里的哪一种
+ *
+ * 起不来的原因有三种，**它们要人做的事完全不同**（见 `specs.ts`）。
+ * 所以这里把内核自己吐的 stderr 收下来交给 `diagnoseLaunch`，
+ * 而不是笼统地说一句「内核起不来」——那会让人去修一个没坏的东西。
+ *
+ * **握手失败也走同一条诊断**：内核进程起来了但立刻死掉（比如包缺失）时，
+ * 症状恰恰是「等 kernel_info_reply 等到超时」，
+ * 而真正的原因在 stderr 里躺着。只报「超时」等于把线索扔了。
+ */
+export async function launchKernelChannel(
+  opts: LaunchOptions,
+): Promise<KernelChannel & { ready(): Promise<void> }> {
+  const discovery = discoverKernelSpecs()
+
+  // **先查有没有这条注册项**：没有的话根本不必起进程，而且报错能更准
+  const 没有 = diagnoseLaunch(opts.kernelName, discovery)
+  if (没有?.kind === "no-spec") throw new UserFacingError(没有.message)
+  const spec = discovery.specs.find((x) => x.name === opts.kernelName)!
+
+  let kernel: { spawn: KernelProcess & { stderr?: NodeJS.ReadableStream }; config: unknown }
+  try {
+    /**
+     * **用 `launchSpec` 而不是 `launch(名字)`。**
+     *
+     * `launch(名字)` 会走 spawnteract **自己那套发现**，与我们的
+     * `discoverKernelSpecs` 是两条独立路径——于是「DAWN 看得见的内核」
+     * 与「DAWN 起得来的内核」可能不是同一批。**两个事实来源，
+     * 迟早会在某台机器上分叉**，而症状是「列表里有，点了起不来」。
+     *
+     * 2026-08-10 实测撞上：我们的发现认 `DAWN_JUPYTER_ROOTS`，
+     * spawnteract 不认，于是它报 `No spec available for broken`。
+     * 改用 `launchSpec` 之后**我们的发现是唯一的事实来源**。
+     */
+    kernel = (await launchSpec(
+      /**
+       * 只传 `argv`。**spawnteract 只替换 `{connection_file}` 一个占位符**
+       * （实测读它的源码，`launchSpecFromConnectionInfo` 里只有那一处 `replace`）——
+       * 真正的 Jupyter 还会替换 `{resource_dir}`。本机五个 kernelspec 都没用它，
+       * 所以现在不受影响；**将来撞上时的症状是 argv 里留着一个没被替换的占位符**，
+       * 那时要在这里补，而不是去改发现那一层。
+       */
+      { argv: spec.argv, display_name: spec.displayName, language: spec.language ?? "" },
+      {
+        // **接住 stderr**：诊断全靠它。不接的话内核死于什么原因就永远不知道
+        stdio: ["ignore", "pipe", "pipe"],
+        ...(opts.cwd ? { cwd: opts.cwd } : {}),
+      },
+    )) as typeof kernel
+  } catch (err) {
+    const d = diagnoseLaunch(opts.kernelName, discovery, message(err))
+    throw new UserFacingError(d ? `${d.message}` : `内核「${opts.kernelName}」起不来：${message(err)}`)
+  }
+
+  /** 攒着，**只在真失败时才拿它做判据**——很多内核平时就往 stderr 打噪声 */
+  let stderrTail = ""
+  kernel.spawn.stderr?.setEncoding?.("utf8")
+  kernel.spawn.stderr?.on("data", (d: string) => {
+    stderrTail = (stderrTail + d).slice(-STDERR_TAIL)
+  })
+
+  const channel = createKernelChannel({
+    channel: (await createMainChannel(kernel.config as never)) as unknown as RawChannel,
+    process: kernel.spawn,
+    kernelInstanceId: newInstanceId(opts.kernelName),
+    ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
+    handshake: kernelInfoRequest() as unknown as JupyterMessage,
+    ...(opts.handshakeTimeoutMs ? { handshakeTimeoutMs: opts.handshakeTimeoutMs } : {}),
+  })
+
+  try {
+    await channel.ready()
+  } catch (err) {
+    // **握手超时的真正原因往往在 stderr 里**，只报「超时」等于把线索扔了
+    await channel.close()
+    const d = diagnoseLaunch(opts.kernelName, discovery, stderrTail)
+    throw new UserFacingError(
+      d
+        ? `${d.message}${"evidence" in d && d.evidence ? `\n${d.evidence}` : ""}`
+        : `内核「${opts.kernelName}」起来了，但握手没有回音：${message(err)}`,
+    )
+  }
+  return channel
+}
+
+const message = (err: unknown): string => (err instanceof Error ? err.message : String(err))

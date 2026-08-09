@@ -43,6 +43,39 @@
 
 ## 变更日志
 
+### 2026-08-10 — ②-A · K2 收尾：真起内核、三种诊断接上真实失败
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: K2 的最后一块。「能起来」spike 验过很多次了，
+  **没被验过的是起不来那条路**——而它恰恰最容易做坏：笼统一句「内核起不来」，
+  人就会去修一个没坏的东西。
+- **What**:
+  - `launchKernelChannel`：起内核 + 建通道 + 握手，**一步到位或响亮失败**。
+    每次一个新的 `kernelInstanceId`（**重启即变**，S13 的陈旧判断靠它）。
+  - 失败走 `diagnoseLaunch` 的三种实情；**握手超时也走同一条**——
+    内核起来了但立刻死掉时，症状是「等 reply 超时」而原因躺在 stderr 里，
+    只报「超时」等于把线索扔了。
+  - `tests/kernel/launch.integration.test.ts`：**造一个真的会失败的内核**
+    （指向本机 `python3.13`，解释器是真的、ipykernel 是真的没装），
+    不是手写 stderr——手写样本已经骗过我一次。
+- **Impact**:
+  - **修掉一个「两个事实来源」的架构问题**：原本用 `spawnteract.launch(名字)`，
+    它走的是 spawnteract **自己那套发现**，与我们的 `discoverKernelSpecs` 是两条路。
+    于是「DAWN 看得见的内核」与「DAWN 起得来的内核」可能不是同一批，
+    **症状是「列表里有，点了起不来」**。改用 `launchSpec(spec)` 之后，
+    我们的发现是唯一的事实来源。（实测撞上：我们的发现认 `DAWN_JUPYTER_ROOTS`，
+    spawnteract 不认，它报 `No spec available`。）
+  - **那个复现不出来的间歇红有解释了**（K1 时记为「没当成修好了」）：
+    vitest **按文件并行**，`channel.integration` 与 `launch.integration`
+    同时起真内核，`spawnteract` 分配 ZMQ 端口时抢——抢输的那个连到错的端点，
+    一条消息都收不到。**症状与「内核坏了」一模一样，所以查不出原因。**
+    内核集成测试单独分组并关掉文件级并行。
+    **间歇红的测试比没有测试更坏：它教人忽略红色。**
+- **Verification**: 931 单元全绿，**连跑两次**确认不再飘。
+  四条 launch 集成测试全部真跑（未跳过），其中「解释器在但包没装」那条
+  用了 8.3 秒——它真的起了一个坏内核、等到握手超时、从真实 stderr 里认出原因。
+
 ### 2026-08-10 — ②-A · K2（下）：`listKernels` 与设置里的内核列表（协议 2.5）
 
 - **Type**: feat

@@ -748,6 +748,32 @@ Spike G 主体只验了纯文本回复。做 C2 前补验了一轮**会调工具
    必须与「不认得」区分开，否则「认不出就出声」这条规则会在每轮开头
    刷出 9 条通知。**认得但不关心 ≠ 不认得。**
 
+### 追加实测（2026-08-09，C3 前）：**codex 带工具调用的一轮**
+
+```
+thread.started(thread_id) → turn.started
+  → item.started(command_execution)   {id, type, command, aggregated_output:"", exit_code:null, status:"in_progress"}
+  → item.completed(command_execution) {…, aggregated_output, exit_code, status:"completed"|"failed"}
+  → （可重复若干次）
+  → item.completed(agent_message)     {id, type, text}
+→ turn.completed                       {usage:{input_tokens, cached_input_tokens, cache_write_input_tokens, output_tokens, reasoning_output_tokens}}
+```
+
+**与 claude 的三处差异，都影响实现**：
+
+| | claude | codex |
+|---|---|---|
+| 工具名 | 真名（`Read` / `Bash`） | **只有 item 类型**（`command_execution`） |
+| 配对 | `tool_use_id` | `item.id`（started 与 completed 同一个 id） |
+| 成本 | `total_cost_usd` **有** | **没有**，只有 token 分项 |
+
+1. **工具名用 item 类型原样记，不归一成 `bash`。** 归一等于声称两者等价，
+   而那件事没有验过——账本上写 `tool_call:command_execution` 是**如实**的。
+2. **`agent_message` 只在 `item.completed` 出现**（这一轮没有对应的 `item.started`）。
+   所以文本不能只在 `item.started` 那一支处理。
+3. **codex 给不出金额**。成本栏对 codex 会话只能报 token——
+   **缺就是缺，不拿一个估算值冒充**（不变式 5 的同一条纪律）。
+
 ### 未验证
 
 - claude 的 `--include-partial-messages` 实际增量粒度

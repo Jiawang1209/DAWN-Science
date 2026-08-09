@@ -43,10 +43,54 @@
 
 ## 变更日志
 
-### 2026-08-09 — ①-C · C2：claude driver（长驻进程 + stream-json）
+### 2026-08-09 — ①-C · C3：codex driver（一轮一进程 + thread_id 续接）
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: ①-C 的第三片。Spike G 已验 codex 的多轮语义与 claude **完全不同**。
+- **动手前又补了一次实测**（与 C2 同一条规矩）：Spike G 只见过 codex 最简单的一轮，
+  **它调工具时的 item 形状我没见过**。实测拿到：
+  ```
+  thread.started(thread_id) → turn.started
+    → item.started(command_execution)   {id, command, exit_code:null, status:"in_progress"}
+    → item.completed(command_execution) {…, aggregated_output, exit_code, status}
+    → item.completed(agent_message)     {text}
+  → turn.completed                       {usage:{…}}
+  ```
+- **与 claude 的三处差异，都不是表面的**（记进 `spikes/FINDINGS.md`）
+  | | claude | codex |
+  |---|---|---|
+  | 工具名 | 真名（`Read` / `Bash`） | **只有 item 类型**（`command_execution`） |
+  | 配对 | `tool_use_id` | `item.id` |
+  | 成本 | `total_cost_usd` 有 | **没有**，只有 token |
+  所以**不复用 claude 那份翻译**——照抄会得到一个「看着对、实际配不上对」的东西。
+- **工具名用 item 类型原样记，不归一成 `bash`**。归一等于声称两者等价，
+  而那件事没验过。账本上写 `tool_call:command_execution` 是**如实**的。
+- **`status` 才是成败的判据，不是 `exit_code`**：后者在 `in_progress` 时是 `null`，
+  而 codex 自己用 `status` 表达成败。
+- **两种形状差异的实际后果，测试直接钉住了**：
+  - codex 的 **`close()` 之后仍然可以再说话**（它本来就没有长驻进程），
+    而 claude driver 那边 `close()` 之后再说话要报错。**同一个接口，两种真实行为。**
+  - 第二轮**必须带 `resume <thread_id>`**。不带的话每轮都是全新对话，
+    **而它看起来是好的**（每轮都答得出话），只是不记得上文——**那种坏法最难被发现**。
+    假 CLI 因此设计成「resume 时回『续接:』，否则回『首轮:』」，让这件事可断言。
+- **`--skip-git-repo-check` 是刻意加的**：codex 默认要求工作区是 git 仓库，
+  而 DAWN 的默认工作区不是。那个检查是 codex 为**它自己的**沙箱假设设的门；
+  不加它，默认工作区里每一轮都会失败。
+- **一处对计划的偏离，如实记录**：计划 §5 的 C3 写着「`sessions` 表加 `cli_thread_id` 列」。
+  **没做**——运行时还没接进会话管理器（C4/C5 的事），**现在加一列没有任何写入方，
+  那是死代码**。driver 经 `onThreadId` 把它报给上层，落库跟着写入方一起做。
+- **Verification**: 808 单元测试（+23）；typecheck 干净。
+  driver 的 7 条**用假 CLI 起真进程**。
+  **尚未真机验证**：CLI 运行时仍未接进会话管理器。
+- **下一片**：C4，把两个 driver 接成 `CliRuntime` 并接进账本——**那时才有可运行路径**。
+
+---
+
+### 2026-08-09 — ①-C · C2：claude driver（长驻进程 + stream-json）
+
+- **Type**: feat
+- **Commit**: `9fda99d`
 - **Motivation**: ①-C 的第二片。Spike G 已验「一个进程连喂多轮，第二轮记得第一轮」，
   这一片把它变成代码。
 - **动手前补了一次实测**：Spike G 主体只验了**纯文本**回复，

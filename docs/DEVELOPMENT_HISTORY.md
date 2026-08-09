@@ -43,6 +43,36 @@
 
 ## 变更日志
 
+### 2026-08-10 — ②-A · K4（中）：内核成为第四种会话，判据「同一个活会话」验穿
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 内核要接进产品，就得回答「它在现有架构里是什么」。
+  `AgentRuntime` 已有三种实现，而会话、租约、transcript、账本、界面
+  全挂在这个接口上——**内核做成第四种，这些一次都不用重写**。
+- **What**:
+  - `src/runtime/kernel.ts`：`KernelRuntime implements AgentRuntime`。
+    `write` = 执行、`abort` = **中断（不杀内核）**、`stop` = 关停。
+    `setModel` / `contextUsage` / `steer` **不实现**——内核没有这些概念，
+    硬塞空实现等于对上层撒谎。
+  - `AgentEvent` 新增 `kernel_output`，载荷是**结构化条目**而不是字符串。
+  - `SessionSpec.kernel.kernelName`：**kernelspec 的名字**，不是解释器路径
+    ——路径由 spec 决定，我们的发现是唯一事实来源。
+- **Impact**:
+  - **判据在代码里有了落点**：②-A 要求「人和 agent 共用同一个活会话」，
+    这句话直接推出**内核的粒度是会话**。做成「一次执行一个内核」时
+    所有单元测试仍会绿，而判据当场不成立——所以它由一条真跑的测试盯着
+    （前一次 `dawn_x = 42`，后一次读得到）。
+  - **`turn_end` / `idle` 以 `status: idle` 为界**，不拿 `execute_reply`——
+    iopub 与 shell 是两条独立通道，reply 到了不代表输出到齐
+    （K1 那个「Python 过、R 红」正是这么来的）。
+- **Verification**: 968 单元全绿；7 条会话集成测试跑真内核，
+  含「报错是 error 条目而不是 stderr 文本」（那正是 Rho 禁止的那条路）。
+  **rxjs 扫描抓到一次真实的边界侵蚀**：我在 `runtime/kernel.ts` 里
+  直接 import 了 `@nteract/messaging` 造消息，**边界从一处变成两处**。
+  修法不是加白名单，是**让适配器提供 `execute(code)`**——
+  消息构造归适配器，调用方只说「执行这段代码」。
+
 ### 2026-08-10 — ②-A · K4（上）：iopub → 结构化 Console 条目，富输出带上界
 
 - **Type**: feat

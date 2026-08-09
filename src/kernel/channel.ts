@@ -30,7 +30,7 @@
  */
 import { launchSpec } from "spawnteract"
 import { createMainChannel } from "enchannel-zmq-backend"
-import { kernelInfoRequest } from "@nteract/messaging"
+import { executeRequest, kernelInfoRequest } from "@nteract/messaging"
 import { UserFacingError } from "../errors.js"
 import { diagnoseLaunch, discoverKernelSpecs } from "./specs.js"
 import type {
@@ -199,6 +199,13 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     }
   })()
 
+  /** 执行一段代码。**消息在这里造**——见 `types.ts` 里那段说明 */
+  const execute = (code: string): string => {
+    const msg = executeRequest(code) as unknown as JupyterMessage
+    send(msg)
+    return msg.header.msg_id
+  }
+
   /**
    * 打断正在执行的那一段。**不杀内核。**
    *
@@ -283,6 +290,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     send,
     on,
     request,
+    execute,
     interrupt,
     close,
     ready,

@@ -11,6 +11,7 @@
  *   fake   —— 测试替身，不起任何进程
  */
 import type { Cost } from "../protocol/index.js"
+import type { ConsoleEntry } from "../kernel/outputs.js"
 export type SessionId = string
 
 export interface McpServerSpec {
@@ -41,6 +42,14 @@ export interface SessionSpec {
    * 所以它是会话记录（落库），不是内存状态。claude 用不上它（长驻进程）。
    */
   cli?: { threadId?: string }
+  /**
+   * 仅 kernel runtime 使用（②-A · K4）。
+   *
+   * `kernelName` 是 **kernelspec 的名字**（`discoverKernelSpecs` 给出的那个），
+   * 不是解释器路径——路径由 spec 决定，**我们的发现是唯一事实来源**
+   * （K2 收尾时修掉的那个「两个事实来源」问题）。
+   */
+  kernel?: { kernelName: string }
   /** 注入给该会话的 MCP server（阶段③ 才会非空） */
   mcpServers?: McpServerSpec[]
 }
@@ -149,6 +158,24 @@ export type AgentEvent =
    * 发在 `idle` 之前：账本要把它记到**这一轮**那条 run 上。
    */
   | { kind: "cost"; sessionId: SessionId; cost: Cost }
+  /**
+   * 内核的一条结构化输出（②-A · K4 · S11）。
+   *
+   * ## 为什么不是 `output`
+   *
+   * `output` 是一段**字符串**。把内核输出压成字符串，就等于回到
+   * Rho **明令禁止**的那条路——*"禁止用 xterm.js 做 R Console"*，
+   * 理由不是审美：**ANSI 字节流里的输出不可查询、不可溯源、不可审计**。
+   *
+   * 本项目已经有一条对称的边界：**xterm 只用于真 shell（托管外部 CLI），
+   * REPL 一律走结构化 Console**。这个事件就是那条边界在类型上的落点——
+   * 一张图、一段报错、一行 stdout 在这里是**三种不同的东西**，
+   * 而不是三段恰好长得不一样的文本。
+   *
+   * `entry` 里已经带着溯源三件套（出适配器那一刻绑上的），
+   * **这里不再补，也不许改**。
+   */
+  | { kind: "kernel_output"; sessionId: SessionId; entry: ConsoleEntry }
   /**
    * 会话换了模型（①-B″ · U2）。
    *

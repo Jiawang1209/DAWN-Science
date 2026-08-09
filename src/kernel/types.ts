@@ -73,6 +73,16 @@ export interface KernelChannel {
   /** 发一条并等它的回复（按 parent_header 配对） */
   request(message: JupyterMessage, opts?: { replyType?: string; timeoutMs?: number }): Promise<TaggedMessage>
   /**
+   * 执行一段代码，返回这一轮的 `msg_id`。
+   *
+   * **调用方不该自己构造 Jupyter 消息。** 2026-08-10：`runtime/kernel.ts`
+   * 第一版直接 import 了 `@nteract/messaging` 来造 `execute_request`，
+   * 被 rxjs 扫描当场抓住——**边界从一处变成了两处**，
+   * 而这条边界的全部价值就在于「只有一处」。
+   * 消息构造归适配器，调用方只说「执行这段代码」。
+   */
+  execute(code: string): string
+  /**
    * 打断正在执行的那一段。**不杀内核。**
    *
    * 两条路由 kernelspec 的 `interrupt_mode` 决定（signal / message），

@@ -130,6 +130,56 @@ describe("一轮的结束", () => {
   })
 })
 
+describe("错误事件（2026-08-09 作者试用时撞到）", () => {
+  /**
+   * **实测长这样**（作者换了个它不支持的模型时）：
+   * ```
+   * item.completed(item.type="error")
+   * error  {"type":"error","status":400,"error":{"type":"invalid_request_error",
+   *          "message":"The 'gpt-5.1-codex' model is not supported when using Codex with a ChatGPT account."}}
+   * ```
+   * 当时我们两种都不认得，于是刷了两条「不认识的事件」，
+   * 又把整坨 JSON 原样倒给用户。**出声了，但说的不是人话。**
+   *
+   * 「认不出要出声」这条设计**起了作用**——它让这个缺陷第一时间被看见。
+   * 现在形状知道了，就该把消息**提取出来**。
+   */
+  it("**顶层 error 事件：把 message 提出来**，不倒整坨 JSON", () => {
+    const { out } = run([
+      {
+        type: "error",
+        status: 400,
+        error: { type: "invalid_request_error", message: "The 'x' model is not supported" },
+      },
+    ])
+    const notice = out.find((e) => e.kind === "notice")
+    expect(notice).toBeDefined()
+    expect((notice as { text: string }).text).toContain("model is not supported")
+    // **不许把整坨 JSON 倒出来**
+    expect((notice as { text: string }).text).not.toContain("invalid_request_error")
+  })
+
+  it("**item 里的 error 同样处理**，不再报成「不认识的事件」", () => {
+    const { out } = run([
+      { type: "item.completed", item: { id: "i", type: "error", message: "上游拒绝了" } },
+    ])
+    const notice = out.find((e) => e.kind === "notice")
+    expect((notice as { text: string }).text).toContain("上游拒绝了")
+    expect((notice as { text: string }).text).not.toContain("不认识")
+  })
+
+  it("**错误也要收口** —— 不收口的话那条气泡永远挂着", () => {
+    const { out } = run([{ type: "error", error: { message: "炸了" } }])
+    expect(out.some((e) => e.kind === "turn_end")).toBe(true)
+    expect(out.some((e) => e.kind === "idle")).toBe(true)
+  })
+
+  it("形状不认得时，退回原样输出 —— 总比什么都不说好", () => {
+    const { out } = run([{ type: "error", 某个新字段: "只有这个" }])
+    expect(out.some((e) => e.kind === "notice")).toBe(true)
+  })
+})
+
 describe("认得但不关心 ≠ 不认得", () => {
   it("turn.started 认得，不产出", () => {
     expect(run([{ type: "turn.started" }]).out).toEqual([])

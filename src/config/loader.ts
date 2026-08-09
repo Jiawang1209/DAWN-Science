@@ -107,26 +107,30 @@ agents:
 
   # 托管本地的 claude CLI，以对话形态呈现。装了 claude 且已登录就能直接用
   #
-  # models 是**模型选择器里能选哪些**。两个外部 CLI 都没有「列出可选项」的接口，
-  # 所以只能在这里声明；不写就不显示选择器（不假装有得选）。
+  # models = 模型选择器里能选哪些。两个外部 CLI 都没有「列出可选项」的接口，
+  # 所以只能在这里声明；不写就不显示选择器。
   # claude 认别名（opus / sonnet / haiku），也认完整模型名。
+  #
+  # **刻意不写 model。** 写了它就等于给 CLI 传 --model，
+  # 会盖掉你自己 ~/.claude/settings.json 里的选择。不写时选择器照常显示，
+  # 当前那格标「CLI 默认」——那是实情。真想钉死某个模型时才写 model。
   claude:
     kind: cli
     command: claude
     args: []
-    # model = 当前用哪个；models = 选择器里能选哪些。**两个都要写**——
-    # 只写 models 的话选择器不会出现（它要知道「当前是哪个」才画得出来）
-    model: sonnet
-    models: [sonnet, opus, haiku]
+    models: [opus, sonnet, haiku]
     capabilities: [chat, exec]
 
-  # 托管本地的 codex CLI，以对话形态呈现。models 同上，按需增删
+  # 托管本地的 codex CLI，以对话形态呈现。
+  #
+  # **这里不给 models**：codex 能用哪些模型**因账号而异**，我们无从得知，
+  # 写死一组只会让你撞上「该模型不受支持」的 400。
+  # 想要选择器就自己加一行 models: [...]；你有哪些可以看
+  # ~/.codex/config.toml 的 [tui.model_availability_nux] 一节。
   codex:
     kind: cli
     command: codex
     args: []
-    model: gpt-5.1-codex
-    models: [gpt-5.1-codex, gpt-5.1-codex-mini]
     capabilities: [chat, exec]
 
   # 一个通用终端。想用 claude / codex 的 TUI，在这里手动起即可

@@ -284,7 +284,18 @@ export function ModelPill({
     return () => document.removeEventListener("pointerdown", away)
   }, [open])
 
-  if (models.length === 0 || !current) return null
+  /**
+   * **有清单就画得出来**，不要求知道「当前是哪个」。
+   *
+   * 2026-08-09 反转：原来是 `models.length === 0 || !current` 才画。
+   * 那条件逼着配置去钉一个 `model`，而钉模型会**覆盖用户自己 CLI 的配置**
+   * （作者的 claude 默认是 `opus[1m]`、codex 是 `gpt-5.6-sol`，
+   * 都被我们传的 `--model` 盖掉了，后者还直接 400）。
+   *
+   * 当前未知时如实标「CLI 默认」——**那是实情，不是缺陷**，
+   * 而且比「选择器整个不出现」诚实得多。
+   */
+  if (models.length === 0) return null
 
   return (
     <div className="pill model-pill" ref={box}>
@@ -295,7 +306,7 @@ export function ModelPill({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {current}
+        {current ?? "CLI 默认"}
         <span aria-hidden="true">▾</span>
       </Button>
 

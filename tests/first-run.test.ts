@@ -143,23 +143,33 @@ describe("默认配置的形状（①-C · C5）", () => {
   })
 
   /**
-   * **2026-08-09：这条测试原来是不够的。**
+   * **2026-08-09 反转过一次。**
    *
-   * 它只断言了 `models`（清单），而选择器的渲染条件是
-   * 「有清单 **且** 知道当前是哪个」。我发出去的默认配置只写了 `models`——
-   * **于是选择器在真机上根本不出现**，作者看到的是「好像没有任何变化」。
+   * 上一版断言的是「`model` 与 `models` 都要有」，理由是「少一个选择器就不出现」。
+   * **那个断言守着一条错的规则**：写 `model` 就等于给 CLI 传 `--model`，
+   * 会**盖掉用户自己 CLI 的配置**——作者的 claude 默认是 `opus[1m]`、
+   * codex 是 `gpt-5.6-sol`，都被我们盖掉，后者还直接 400。
    *
-   * **一条只验了一半条件的断言，会让另一半悄悄坏掉。**
+   * **默认配置绝不替用户钉模型。** 现在守的是这一条。
    */
-  it("**cli agent 的 model 与 models 都要有** —— 少一个选择器就不出现", () => {
+  it("**默认配置不钉死任何模型** —— 钉了就盖掉用户自己 CLI 的选择", () => {
     const reg = parsed()
     for (const id of ["claude", "codex"]) {
-      const a = reg.agents[id] as { model?: string; models?: string[] }
-      expect(a.model, `${id} 缺 model：选择器要知道「当前是哪个」才画得出来`).toBeTruthy()
-      expect((a.models ?? []).length, `${id} 的 models 至少要两项才谈得上「选」`).toBeGreaterThan(1)
-      // 当前那个必须在清单里，否则 pill 上显示的东西选不回来
-      expect(a.models).toContain(a.model)
+      const a = reg.agents[id] as { model?: string }
+      expect(a.model, `${id} 不该有 model：那会覆盖用户自己 CLI 的配置`).toBeUndefined()
     }
+  })
+
+  it("claude 给了模型清单 —— 别名取自 `claude --help`，不是编的", () => {
+    const a = parsed().agents["claude"] as { models?: string[] }
+    expect(a.models).toEqual(expect.arrayContaining(["opus", "sonnet"]))
+  })
+
+  it("**codex 不给清单** —— 它能用哪些因账号而异，写死一组只会撞 400", () => {
+    const a = parsed().agents["codex"] as { models?: string[] }
+    expect(a.models).toBeUndefined()
+    // 但要告诉用户去哪查自己的
+    expect(DEFAULT_CONFIG_YAML).toContain("model_availability_nux")
   })
 
   it("内置 agent 仍在 —— 它是「先跑起来」的默认", () => {

@@ -44,6 +44,9 @@ const KNOWN_ITEMS = new Set(["command_execution", "agent_message", "reasoning"])
 interface CodexItem {
   id?: string
   type?: string
+  /** item 形态的错误也带说明，与顶层 `error` 事件同源 */
+  message?: string
+  error?: { message?: string; type?: string }
   command?: string
   aggregated_output?: string
   exit_code?: number | null
@@ -55,7 +58,9 @@ interface CodexEvent {
   type?: string
   thread_id?: string
   item?: CodexItem
-  error?: { message?: string }
+  status?: number
+  error?: { message?: string; type?: string }
+  message?: string
 }
 
 export function translateCodexEvent(
@@ -74,6 +79,17 @@ export function translateCodexEvent(
     return []
   }
   if (IGNORED_TYPES.has(type)) return []
+
+  /**
+   * **错误事件**（2026-08-09 作者试用时撞到的形状）：
+   * ```
+   * item.completed(item.type="error")
+   * error {"type":"error","status":400,"error":{"message":"…model is not supported…"}}
+   * ```
+   * 当时两种都不认得，于是刷了两条「不认识的事件」，又把整坨 JSON 倒给用户。
+   * **出声了，但说的不是人话。**
+   */
+  if (type === "error") return failure(sessionId, reason(e), e.status)
 
   if (type === "item.started" || type === "item.completed") return fromItem(sessionId, type, e, st)
 
@@ -117,6 +133,9 @@ function fromItem(
   const item = e.item
   const itemType = item?.type
   if (!item || typeof itemType !== "string") return []
+
+  // item 里的错误与顶层 error 是同一件事，走同一条路
+  if (itemType === "error") return failure(sessionId, reason(item))
 
   if (!KNOWN_ITEMS.has(itemType)) return unknown(sessionId, `item:${itemType}`, st)
 
@@ -163,6 +182,30 @@ function fromItem(
       truncated: false,
       bytes: Buffer.byteLength(text, "utf8"),
     },
+  ]
+}
+
+/**
+ * 从错误事件里**把人话提出来**。
+ *
+ * 优先取 `error.message`，再取 `message`；**都拿不到才退回原样输出**——
+ * 那时倒 JSON 也比什么都不说好，但要标明「没能解析」，
+ * 而不是假装那串 JSON 就是给人看的。
+ */
+function reason(e: { error?: { message?: string }; message?: string }): string {
+  const msg = e.error?.message ?? e.message
+  if (typeof msg === "string" && msg.trim()) return msg
+  return `（本项目没能从这条错误里读出说明）${JSON.stringify(e).slice(0, 300)}`
+}
+
+/** 出声 + 收尾气泡 + 收口回合。**三件缺一不可** */
+function failure(sessionId: SessionId, why: string, status?: number): AgentEvent[] {
+  const head = status ? `外部 CLI 报错（HTTP ${status}）：` : "外部 CLI 报错："
+  return [
+    { kind: "notice", sessionId, text: head + why },
+    // 失败的一轮同样要收尾气泡：**半截话挂在那里比失败本身更让人困惑**
+    { kind: "turn_end", sessionId },
+    { kind: "idle", sessionId },
   ]
 }
 

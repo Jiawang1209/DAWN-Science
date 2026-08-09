@@ -31,8 +31,7 @@ const PROVIDERS = `agents:
     kind: cli
     command: "${FAKE}"
     args: []
-    model: sonnet
-    models: [sonnet, opus, haiku]
+    models: [opus, sonnet, haiku]
     capabilities: [chat, exec]
 `
 
@@ -76,7 +75,11 @@ test.describe("CLI agent 在对话框里", () => {
      * 而单元测试当时只断言了 `models`，于是那一半悄悄坏掉，
      * 作者试用时看到的是「好像没有任何变化」。
      */
-    await expect(page.getByRole("button", { name: /^sonnet/ })).toBeVisible()
+    /**
+     * **不钉 `model` 时也要出现**，当前那格标「CLI 默认」。
+     * 钉 `model` 会盖掉用户自己 CLI 的配置——作者两个 CLI 都撞上了。
+     */
+    await expect(page.getByRole("button", { name: /CLI 默认/ })).toBeVisible()
   })
 
   test("**你自己说的话也要在对话里** —— 作者试用时报的那个", async ({ dawn }) => {

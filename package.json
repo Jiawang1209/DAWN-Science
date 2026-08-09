@@ -28,8 +28,9 @@
     "dev:mock": "node scripts/dev-mock.mjs",
     "test:e2e": "npm run build && playwright test",
     "test:e2e:only": "playwright test",
-    "test:e2e:visual": "playwright test e2e/visual.spec.ts",
-    "test:e2e:visual:update": "playwright test e2e/visual.spec.ts --update-snapshots",
+    "test:e2e:visual": "npm run build && playwright test e2e/visual.spec.ts",
+    "test:e2e:visual:only": "playwright test e2e/visual.spec.ts",
+    "test:e2e:visual:update": "npm run build && playwright test e2e/visual.spec.ts --update-snapshots",
     "spike:e": "tsx spikes/e-model-switch.ts"
   },
   "dependencies": {

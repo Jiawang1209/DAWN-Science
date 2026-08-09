@@ -36,6 +36,11 @@
 | 出现字面文案「加载中」/「Loading…」 | ❌ |
 | 使用 `window.prompt` / `alert` / `confirm` | ❌ |
 | `styles.css` 里出现 `z-index` 字面量 | ❌ |
+| **`var()` 带回退值**（`var(--dawn-topbar-h, 46px)`） | ❌ |
+| `border-radius` 不走 `--dawn-radius-*`（`0` 除外） | ❌ |
+| `font-family` 不走 `--dawn-font-*` | ❌ |
+| `styles.css` 里出现 `--radius-scalar`（在调用点二次缩放） | ❌ |
+| 引用了未定义的几何令牌 | ❌ |
 
 **为什么要有强制**，两处独立写下了同一条：
 
@@ -113,13 +118,14 @@
 | `--dawn-hairline` | 发丝线**宽度**（0.5px）。只用于有阴影兜底的浮层外缘 |
 | `--dawn-fill-1…5` | 柔和填充，由强到弱。`4` 是次级按钮的底 |
 | `--dawn-surface-app / -sidebar / -panel / -elevated / -input` | 各种面的底色 |
-| `--dawn-row-hover / -row-active / -control-hover` | 交互态 |
+| `--dawn-row-hover / -row-active` | 行的交互态 |
+| `--dawn-control-rest / -hover / -active` | 控件三态（5 / 8 / 12%，规范 §6 的**相对量**）。**按下态是 2026-08-09 才有的**——在那之前点下去没有任何即时反馈 |
 | `--dawn-accent` | 品牌色本身：描边、图标、链接、选中态 |
 | `--dawn-accent-solid` | **实心底专用。** 品牌绿配白字只有 3.2:1，压暗后才达 AA |
 | `--dawn-accent-soft` | 强调色兑透明，用于选中行、徽标 |
 | `--dawn-on-accent` | 强调色底上的文字 |
 | `--dawn-danger / -success / -warning` | 语义色。**名字说用途，不说颜色**（见下） |
-| `--dawn-radius-sm / -md / -lg` | 圆角，由 `--radius-scalar` 统一缩放 |
+| `--dawn-radius-*` | 圆角，见下面「几何令牌」一节 |
 | `--dawn-shadow-float` + `--dawn-stroke-float` | **成对**用于所有浮层 |
 | `--dawn-shadow-sm` | 贴地的轻微抬起 |
 
@@ -155,14 +161,60 @@
 跨组件的层级竞争一律从这里取一档。组件**内部**的堆叠仍可用 `z-index: 1` 这种。
 **崩溃永远在最上面**——界面坏掉时用户必须看得见它坏了。
 
-### 布局常量（`src/ui/layout-constants.ts`）
+### 几何令牌（`src/ui/tokens.css`）
 
-| 常量 | 值 | 说明 |
+> **2026-08-09 之前这一层不存在。** 尺寸散在 `styles.css` 各处，值是凭手感定的。
+> 更糟的是有五个几何变量以 `var(--dawn-topbar-h, 46px)` 的形式被引用，
+> **而它们从来没有被定义过**——真正在渲染的一直是那个回退值；
+> 与此同时 `src/ui/layout-constants.ts` 里躺着同一个 `46px`，没有任何地方 import 它。
+> **一个值三个家，两个是死的，而界面看起来完全正常。**
+> 那个文件已删除，回退值已清空，唯一的家是 `tokens.css`。
+
+数字取自作者提供的 Codex 桌面版实测规范（`learn_UI/CODEX_DESIGN_SPEC.md` §3/§4/§6）。
+**只取几何，不取颜色**——理由见下面「为什么不抄它的配色」。
+
+| 令牌 | 值 | 说明 |
 |---|---|---|
-| `PAGE_INSET_X` | `clamp(1.25rem, 4vw, 4rem)` | 比例化但两端夹死：窄窗口不塌成 0，超宽屏不无限张开 |
-| `PAGE_MAX_W` | `75rem` | 一行太长，眼睛回行首会找错行 |
-| `SIDEBAR_COLLAPSE_BREAKPOINT_PX` | `768` | **唯一真值**：媒体查询与 `matchMedia` 都从它来 |
-| `SIDEBAR_WIDTH` / `TOPBAR_HEIGHT` / `STATUSBAR_HEIGHT` | `240px` / `46px` / `24px` | grid 骨架 |
+| `--dawn-unit` | `0.25rem` | 间距的基本单位。规范里每个间距都是它的整数倍，**那是一把尺子，不是一堆数** |
+| `--dawn-space-1…6` | 4 / 8 / 12 / 16 / 24 px | 行内距 · 行水平内距 · 面板内距 · 工具栏内距 · 大留白 |
+| `--dawn-topbar-h` / `--dawn-statusbar-h` | `46px` / `24px` | grid 骨架 |
+| `--dawn-sidebar-w` | `clamp(240px, 275px, min(520px, 100vw - 320px))` | **永远给内容留 320px**。上一版写死 240，窄窗口下照样占满 |
+| `--dawn-row-h` | `30px` | 列表行高。**由它定死，不由内容行高撑出来**——否则一个小字就能让这一行变高 |
+| `--dawn-thread-max-w` | `768px` | 对话与输入区的宽度上限。挂在 `.turn` 上而非滚动容器上，否则滚动条会被拽离窗口右缘 |
+| `--dawn-page-inset-x` | `clamp(1.25rem, 4vw, 4rem)` | 页边距。比例化但两端夹死 |
+| `--dawn-page-max-w` | `75rem` | 面板区宽度上限（网格，不受 768 限制） |
+| `--dawn-ui-size` / `--dawn-chat-size` / `--dawn-code-size` | 13 / 14 / 12 px | **外壳与对话是两件事**：规范的 14px 是聊天字号，不是界面字号 |
+| `--dawn-font-sans` / `--dawn-font-mono` | — | 字体族。写两遍就会有两套等宽字回退链 |
+| `--dawn-weight-medium / -semibold` | 500 / 600 | 字重 |
+| `--dawn-radius-xs…lg` | 5 / 7.5 / 10 / 15 px | 由 `--radius-scalar` 统一缩放 |
+| `--dawn-radius-composer` | `1.375rem` | 输入框。**不随标量缩放**——它是量出来的成品值 |
+| `--dawn-radius-full` | `9999px` | 胶囊。**不参与缩放**：它要的是「半圆」，不是某个半径 |
+| `--dawn-corner-shape` | `superellipse(1.5)` | 角的形状，比正圆更饱满。Chrome 139+；不支持的路径直接忽略，安全退化 |
+
+**`--radius-scalar` 从 1 改成 1.25**（规范 §3.6）。基准值没动——
+整套界面「软」了一档，只改了一个数。
+
+**侧栏折叠断点 768px 只能是字面量**：媒体查询读不了自定义属性。
+它与 `--dawn-thread-max-w: 768px` **数值相同纯属巧合，含义无关**，别合并。
+
+**行的内缩挂在 `.row` 自己身上**（`margin: 0 4px`），不挂在列表的 padding 上——
+第一版挂在列表上，于是「新建会话」和底部「项目概览」不在列表里，仍然满宽，
+**同一种东西两种对齐**。
+
+#### 为什么不抄它的配色
+
+那份规范 §2.1 的表面色是**从一台跑着 Dracula 主题的机器上量的**：
+它自己把 `--color-accent-blue` 注成「Dracula pink」，而那个「蓝」与它的「紫」
+是同一个值 `#ff79c6`——**一套主题把两个语义角色压到了同一个数上**，
+这不是设计出来的调色板。
+
+更根本的原因写在它的架构分析里：Codex 完整继承 VS Code 的主题变量体系
+（`--vscode-editor-*` 30 个、`--vscode-terminal-*` 27 个…），
+**它自己没有配色身份**。所以「照抄 Codex 的颜色」在概念上就不成立，
+抄到的是量它的那个人当时开着的主题。几何则与主题完全无关，可以直接拿。
+
+它的类名同理不可拿：真实产物里是 `_ComposerFooter_1i340_2` 这样的
+CSS Modules 哈希，**每次构建都会变**；规范 §5 里那套好看的 BEM 是原型作者自己起的。
 
 ### Primitive（`src/ui/primitives.tsx`）
 

@@ -261,3 +261,54 @@ describe("设计契约 · 已经踩过的坑", () => {
     expect(hits, "styles.css：用 var(--z-*)").toEqual([])
   })
 })
+
+/**
+ * 几何层是 2026-08-09 才建起来的（规范 §3/§4/§6，只取几何不取颜色）。
+ *
+ * **这一组规则的由来是一个真实的洞**：`styles.css` 里有五个几何变量以
+ * `var(--dawn-topbar-h, 46px)` 的形式被引用，而它们**从来没有被定义过**；
+ * 与此同时 `layout-constants.ts` 里躺着同一个 46px，没有任何地方 import 它。
+ * 一个值三个家，两个是死的，而**界面看起来完全正常**——
+ * 回退值就是这样把「令牌不存在」这件事藏住的。
+ */
+describe("设计契约 · 几何只从令牌来", () => {
+  it("**`var()` 不许带回退值** —— 回退值是同一个数的第二个家，而且是悄悄生效的那个", () => {
+    const offenders = ["styles.css", "tokens.css"].flatMap((f) =>
+      findLines(read(f), (l) => /var\(\s*--[a-z0-9-]+\s*,/.test(l)).map((x) => `${f} ${x}`),
+    )
+    expect(offenders).toEqual([])
+  })
+
+  it("border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量", () => {
+    const offenders = findLines(
+      read("styles.css"),
+      (l) => /border-radius:/.test(l) && !/--dawn-radius-/.test(l) && !/border-radius:\s*0\b/.test(l),
+    )
+    expect(offenders).toEqual([])
+  })
+
+  it("font-family 一律走 --dawn-font-* —— 字体族写两遍就会有两套等宽字回退链", () => {
+    const offenders = findLines(
+      read("styles.css"),
+      (l) => /font-family:/.test(l) && !/--dawn-font-/.test(l),
+    )
+    expect(offenders).toEqual([])
+  })
+
+  it("**圆角标量只在 tokens.css 里出现** —— 在调用点再缩放一次就没人知道最终值是多少", () => {
+    const offenders = findLines(read("styles.css"), (l) => /--radius-scalar/.test(l))
+    expect(offenders).toEqual([])
+  })
+
+  it("几何令牌都定义过 —— 引用了却没定义，正是上面那个洞的形状", () => {
+    const tokens = read("tokens.css")
+    const styles = read("styles.css")
+    const used = new Set(
+      [...styles.matchAll(/var\(\s*(--dawn-(?:space|radius|topbar|statusbar|sidebar|row|thread|page|ui|chat|code|font|weight|unit|corner)[a-z0-9-]*)\s*\)/g)].map(
+        (m) => m[1] as string,
+      ),
+    )
+    const missing = [...used].filter((t) => !new RegExp(`^\\s*${t}:`, "m").test(tokens))
+    expect(missing).toEqual([])
+  })
+})

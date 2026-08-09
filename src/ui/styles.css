@@ -15,22 +15,35 @@
   box-sizing: border-box;
 }
 
+/**
+ * 界面外壳的字号是 13px，而对话是 14px（`.turns`）。
+ * **这是两件事**：规范 §4 的 14px 是 `--codex-chat-font-size`，
+ * 它是聊天字号，不是整个界面的字号。外壳要让位给内容。
+ */
 body {
   margin: 0;
-  font:
-    13px/1.55 -apple-system,
-    "PingFang SC",
-    system-ui,
-    sans-serif;
+  font: var(--dawn-ui-size) / var(--dawn-ui-leading) var(--dawn-font-sans);
   background: var(--dawn-surface-app);
   color: var(--dawn-text-1);
 }
 
 pre {
   margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--dawn-font-mono);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/**
+ * 角的形状（规范 §3.6）。`superellipse(1.5)` 比正圆更饱满一点，
+ * 是那份界面视觉气质的一部分，**且与配色无关**。
+ *
+ * 挂在通配符上而不是逐个类挂：**圆角本身已经由令牌统管**，
+ * 角形状是圆角的属性，凡是有圆角的地方都该是同一种形状。
+ * 没有圆角的元素上它不产生任何效果。
+ */
+* {
+  corner-shape: var(--dawn-corner-shape);
 }
 
 /* ── primitive：Button ────────────────────────────────────────────
@@ -39,7 +52,7 @@ pre {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dawn-space-1);
   border: 1px solid transparent;
   border-radius: var(--dawn-radius-md);
   background: none;
@@ -69,13 +82,19 @@ pre {
 .btn-primary { background: var(--dawn-accent-solid); color: var(--dawn-on-accent); }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 
-.btn-secondary { background: var(--dawn-fill-4); }
-.btn-secondary:hover:not(:disabled) { background: var(--dawn-fill-3); }
+/* 三态照规范 §6 的相对量：5% 静止 → 8% 悬停 → 12% 按下。
+   **按下态是新加的**——上一版点下去没有任何即时反馈 */
+.btn-secondary { background: var(--dawn-control-rest); }
+.btn-secondary:hover:not(:disabled) { background: var(--dawn-control-hover); }
+.btn-secondary:active:not(:disabled) { background: var(--dawn-control-active); }
 
 .btn-outline { border-color: var(--dawn-stroke-2); }
 .btn-outline:hover:not(:disabled) { background: var(--dawn-control-hover); }
+.btn-outline:active:not(:disabled) { background: var(--dawn-control-active); }
 
 .btn-ghost:hover:not(:disabled) { background: var(--dawn-control-hover); }
+.btn-ghost:active:not(:disabled) { background: var(--dawn-control-active); }
+.btn-primary:active:not(:disabled) { filter: brightness(0.94); }
 
 /* 无盒子的行内文字按钮。hover 加下划线而不是加底——它不是一个"面" */
 .btn-text { padding: 0; color: var(--dawn-accent); }
@@ -87,7 +106,7 @@ pre {
 
 .loader { display: flex; align-items: center; gap: 8px; color: var(--dawn-text-3); }
 .loader-inline { display: inline-flex; }
-.loader-glyph { position: relative; width: 1em; height: 1.2em; font-family: ui-monospace, monospace; }
+.loader-glyph { position: relative; width: 1em; height: 1.2em; font-family: var(--dawn-font-mono); }
 .loader-glyph > span {
   position: absolute;
   inset: 0;
@@ -151,40 +170,59 @@ pre {
 
 /* ── 骨架 ───────────────────────────────────────────────────────── */
 
+/**
+ * 2026-08-09：这里原本写的是 `var(--dawn-topbar-h, 46px)`，
+ * **而 `--dawn-topbar-h` 从来没有被定义过**——真正在渲染的一直是那个回退值。
+ * 同时 `layout-constants.ts` 里也躺着一份 `TOPBAR_HEIGHT = "46px"`，
+ * 没有任何地方 import 它。**一个值三个家，两个是死的。**
+ * 现在唯一的家是 `tokens.css`，回退值一律删掉——
+ * 令牌没了就该塌得明显，而不是悄悄用备胎顶上。
+ */
 .app-shell {
   display: grid;
-  grid-template-rows: var(--dawn-topbar-h, 46px) minmax(0, 1fr) var(--dawn-statusbar-h, 24px);
+  grid-template-rows: var(--dawn-topbar-h) minmax(0, 1fr) var(--dawn-statusbar-h);
   height: 100vh;
 }
 .app-shell .body {
   display: grid;
-  grid-template-columns: var(--dawn-sidebar-w, 240px) minmax(420px, 1fr);
+  grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr);
   min-height: 0;
 }
 .app-shell.agent-first .body { grid-template-columns: minmax(0, 1fr); }
 .app-shell.agent-first .sidebar { display: none; }
 
-/* 窄窗口下侧栏没有留给内容的空间——断点见 layout-constants.ts */
+/**
+ * 窄窗口下侧栏没有留给内容的空间，折叠掉。
+ *
+ * **这个 768 是字面量，而且只能是字面量**——媒体查询读不了自定义属性
+ * （`@media (max-width: var(--x))` 不成立）。所以它没法住进 `tokens.css`。
+ *
+ * 它与 `--dawn-thread-max-w: 768px` **数值相同纯属巧合，含义无关**：
+ * 一个是「窗口窄到该折叠侧栏」，一个是「一行字最多多宽」。
+ * 别把它们合并成一个令牌——那样改其中一个就会动到另一个。
+ */
 @media (max-width: 768px) {
   .app-shell .body { grid-template-columns: minmax(0, 1fr); }
   .app-shell .sidebar { display: none; }
 }
 
+/* 工具栏内距 16px（规范 §3.2 `--padding-toolbar`）——比面板的 12px 宽一档，
+   顶栏因此不与下方内容"贴着同一条竖线"，视觉上先分出上下两个区域 */
 .topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px;
+  gap: var(--dawn-space-3);
+  padding: 0 var(--dawn-space-4);
   border-bottom: 1px solid var(--dawn-stroke-4);
   background: var(--dawn-surface-panel);
 }
-.topbar .brand { font-weight: 600; color: var(--dawn-accent); }
+.topbar .brand { font-weight: var(--dawn-weight-semibold); color: var(--dawn-accent); }
 .topbar .spacer { flex: 1; }
 .statusbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px;
+  gap: var(--dawn-space-3);
+  padding: 0 var(--dawn-space-4);
   border-top: 1px solid var(--dawn-stroke-4);
   color: var(--dawn-text-3);
   font-size: 11px;
@@ -198,11 +236,13 @@ pre {
   overflow: auto;
   padding-bottom: 12px;
 }
+/* 12px 水平内距 = 列表内缩 4 + 行内距 8。**标题与它统领的行必须齐左**，
+   差 4px 就会看出来是两个各自定的数 */
 .side-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
   color: var(--dawn-text-3);
   font-size: 11px;
   text-transform: uppercase;
@@ -210,13 +250,33 @@ pre {
 .project-list, .session-list { list-style: none; margin: 0; padding: 0; }
 .session-list { flex: 1; }
 
-/* 行：扁平、齐左，**行与行之间不加分隔线**，用间距分组 */
+/**
+ * 行：扁平、齐左，**行与行之间不加分隔线**，用间距分组。
+ *
+ * 高度由 `--dawn-row-h` 定死（规范 §3.1），**不由内容的行高决定**——
+ * 上一版是 `padding: 6px 12px` 撑出来的，于是一行里多一个 11px 的小字
+ * 就会把这一行撑高，列表的节奏跟着乱。内距照 §3.2 的 x8/y4。
+ */
 .row {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 12px;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  /**
+   * **内缩挂在行自己身上，不挂在列表的 padding 上。**
+   *
+   * 第一版把它写成了 `.session-list { padding: 0 4px }`——于是列表里的行
+   * 是内缩的，而「新建会话」和底部的「项目概览」不在列表里，仍然满宽，
+   * 圆角直接贴着侧栏边缘。**同一种东西有两种对齐，一眼就能看出来。**
+   *
+   * 内缩 4 + 行内距 8 = 文字仍在离边缘 12px 处（与 `.side-head` 对齐）：
+   * 变的只是高亮的形状，不是文字的位置。
+   */
+  width: calc(100% - var(--dawn-space-2));
+  margin: 0 var(--dawn-space-1);
+  min-height: var(--dawn-row-h);
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  border-radius: var(--dawn-radius-xs);
   text-align: left;
   border: 0;
   background: none;
@@ -236,8 +296,8 @@ pre {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
-  padding: 12px var(--dawn-page-inset-x, clamp(1.25rem, 4vw, 4rem));
-  max-width: var(--dawn-page-max-w, 75rem);
+  padding: var(--dawn-space-3) var(--dawn-page-inset-x);
+  max-width: var(--dawn-page-max-w);
   width: 100%;
   margin: 0 auto;
   overflow: auto;
@@ -285,36 +345,61 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
 .conv-head .kind { color: var(--dawn-text-3); font-size: 11px; }
+/**
+ * 对话区用**聊天字号 14px / 行高 20px**（规范 §4），比界面外壳的 13px 大一档。
+ * 外壳让位给内容，这是那一档的全部意思。
+ */
 .turns {
   flex: 1;
   overflow: auto;
-  padding: 12px var(--dawn-page-inset-x, clamp(1.25rem, 4vw, 4rem));
+  padding: var(--dawn-space-3) var(--dawn-page-inset-x);
+  font-size: var(--dawn-chat-size);
+  line-height: var(--dawn-chat-leading);
 }
-.turn { margin-bottom: 12px; }
+/**
+ * 每一段发言居中，宽度不超过 768px（规范 §3.5 的 `thread-content-max-width`）。
+ *
+ * **上限挂在 `.turn` 上而不是 `.turns` 上**：滚动条要贴窗口右缘，
+ * 挂在滚动容器上会把滚动条一起拽到 768px 那条线上。
+ */
+.turn {
+  max-width: var(--dawn-thread-max-w);
+  margin: 0 auto var(--dawn-space-3);
+}
 .turn .who { display: block; color: var(--dawn-text-3); font-size: 11px; margin-bottom: 2px; }
 /* 输入区在上、控件行在下且右对齐 —— 学自 Hermes composer 的
    `<div className="ml-auto flex …">`。**控件靠右，输入区独占一整行** */
 .composer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
+  /* 内容居中并与对话区同宽——**输入框比它上面的对话窄或宽都会显得没对齐** */
+  align-items: center;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-2) var(--dawn-page-inset-x) var(--dawn-space-4);
   border-top: 1px solid var(--dawn-stroke-4);
+}
+.composer > * {
+  width: 100%;
+  max-width: var(--dawn-thread-max-w);
 }
 .composer-controls {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: var(--dawn-space-1);
 }
 /* 2026-08-09：这里原本把 `.control` 的七条属性逐字抄了一遍，
    **抄到了长相，漏掉了行为**——`:focus-visible` 的聚焦环只挂在 `.control` 上，
    于是全应用最主要的那个输入框用的是 Chromium 默认聚焦环（取 macOS 系统强调色，
    与主题无关，在琥珀色系统上看着像警告态）。现在它走 `.control`，这里只留自己的几何 */
 .composer textarea {
-  min-height: 52px;
+  /* 规范 §3.5：文本区 712×44，14px/20px。44 = 一行文字 + 上下各 12 的呼吸 */
+  min-height: 44px;
   resize: vertical;
-  padding: 8px;
+  padding: var(--dawn-space-3);
+  border-radius: var(--dawn-radius-composer);
+  font-size: var(--dawn-chat-size);
+  line-height: var(--dawn-chat-leading);
 }
 .abort { margin-left: auto; }
 .empty-conv { align-items: center; justify-content: center; }
@@ -359,7 +444,12 @@ pre {
   width: auto;
   padding: 5px 6px;
 }
-.new-session { display: flex; width: calc(100% - 16px); margin: 8px; }
+/* 与 `.row` 同一个内缩，否则它和它下面的会话列表差 4px */
+.new-session {
+  display: flex;
+  width: calc(100% - var(--dawn-space-2));
+  margin: var(--dawn-space-2) var(--dawn-space-1);
+}
 /* pill 与它的菜单。**菜单向上弹**——pill 本身就贴在窗口底部。
    `.pill` 是共享的几何，`.agent-pill` / `.model-pill` 只是身份——
    **两者曾经共用同一个类名，于是 `.composer .agent-pill` 一下子匹配到两个元素**，
@@ -403,7 +493,7 @@ pre {
   padding: 8px 12px;
   background: var(--dawn-surface-sidebar);
 }
-.term { color: var(--dawn-text-2); font-size: 12px; }
+.term { color: var(--dawn-text-2); font-size: var(--dawn-code-size); }
 /* xterm 需要一个有确定高度的宿主，否则 fit() 算出 0 行 */
 .term-host { height: 260px; }
 
@@ -454,11 +544,11 @@ pre {
 .md > div > :first-child { margin-top: 0; }
 .md > div > :last-child { margin-bottom: 0; }
 .md p { margin: 0 0 8px; }
-.md h1, .md h2, .md h3, .md h4 { margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+.md h1, .md h2, .md h3, .md h4 { margin: 14px 0 6px; font-size: var(--dawn-chat-size); font-weight: var(--dawn-weight-semibold); }
 .md h1 { font-size: 16px; }
 .md ul, .md ol { margin: 0 0 8px; padding-left: 20px; }
 .md li { margin: 2px 0; }
-.md strong { font-weight: 600; }
+.md strong { font-weight: var(--dawn-weight-semibold); }
 .md a { color: var(--dawn-accent); }
 
 /* 行内代码：柔和填充，不加框——加框会让一行字里出现四条边 */
@@ -466,8 +556,8 @@ pre {
   padding: 1px 4px;
   border-radius: var(--dawn-radius-sm);
   background: var(--dawn-fill-4);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
 }
 
 /* 代码块。**长行自己横向滚**，不要把对话区撑出横向滚动条 */
@@ -479,7 +569,7 @@ pre {
   background: var(--dawn-surface-panel);
   overflow-x: auto;
   white-space: pre;
-  font-size: 12px;
+  font-size: var(--dawn-code-size);
 }
 
 /* transcript 里带边框的面统一用**最弱那档**描边。
@@ -566,7 +656,7 @@ pre {
 .chip {
   padding: 2px 8px;
   border: 1px solid var(--dawn-stroke-3);
-  border-radius: 999px;
+  border-radius: var(--dawn-radius-full);
   color: var(--dawn-text-2);
 }
 .chip.error { border-color: var(--dawn-danger); }

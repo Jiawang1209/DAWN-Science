@@ -91,7 +91,17 @@
   --mix-fill-5: 2%;
   --mix-row-hover: 4%;
   --mix-row-active: 7%;
-  --mix-control-hover: 6%;
+  /**
+   * 控件三态（规范 §6）。**那份规范给的是相对量，不是色值**——
+   * `color-mix(in oklab, base N%, transparent)` 里只有 N 是设计决定，
+   * base 是谁由主题决定。所以这三个数可以直接拿，配色一个字不动。
+   *
+   * 5% → 8% → 12%：静止、悬停、**按下**。上一版只有 6% 一档，
+   * **按下态根本不存在**——点下去没有任何反馈，只能靠事后的状态变化才知道点中了。
+   */
+  --mix-control-rest: 5%;
+  --mix-control-hover: 8%;
+  --mix-control-active: 12%;
   /* 强调色兑进底色，用于选中行、徽标这类"有颜色但不抢戏"的面 */
   --mix-accent-soft: 12%;
   /* 实心强调按钮在亮色下要压暗，否则白字对比度不达标（见下） */
@@ -138,7 +148,9 @@
   /* ── 交互态 ──────────────────────────────────────────────────── */
   --dawn-row-hover: color-mix(in srgb, var(--theme-base) var(--mix-row-hover), transparent);
   --dawn-row-active: color-mix(in srgb, var(--theme-base) var(--mix-row-active), transparent);
+  --dawn-control-rest: color-mix(in srgb, var(--theme-base) var(--mix-control-rest), transparent);
   --dawn-control-hover: color-mix(in srgb, var(--theme-base) var(--mix-control-hover), transparent);
+  --dawn-control-active: color-mix(in srgb, var(--theme-base) var(--mix-control-active), transparent);
 
   /**
    * 强调色三件套。
@@ -167,11 +179,97 @@
   /** 遮罩：模态背后那层压暗。恒以灰阶最深那一档为底，两个主题只差浓度 */
   --dawn-scrim: color-mix(in srgb, var(--theme-gray-1000) var(--mix-scrim), transparent);
 
-  /* ── 圆角：一个标量统管，方便整体调"软硬" ──────────────────── */
-  --radius-scalar: 1;
+  /**
+   * ── 几何：一把尺子，不是一堆孤立的数 ────────────────────────
+   *
+   * 2026-08-09 新增。**在这之前几何层根本不存在**——尺寸散在 `styles.css` 各处，
+   * 值是凭手感定的。更糟的是有五个几何变量以
+   * `var(--dawn-topbar-h, 46px)` 的形式被引用，**而它们从来没被定义过**，
+   * 于是真正在渲染的一直是那个回退值（见下面「回退值」一节）。
+   *
+   * 数字取自作者提供的 Codex 桌面版实测规范（`learn_UI/CODEX_DESIGN_SPEC.md`
+   * §3 / §4 / §6）。**只取几何，不取颜色**——那份规范的表面色是从一台跑着
+   * Dracula 主题的机器上量的（它自己把 `--color-accent-blue` 注成了
+   * “Dracula pink”，而且那个「蓝」与它的「紫」是同一个值 `#ff79c6`）。
+   * Codex 整套色相委托给 VS Code 的当前主题，**它自己没有配色身份**，
+   * 所以「照抄它的颜色」这件事在概念上就不成立。几何则与主题完全无关。
+   */
+
+  /**
+   * 间距的基本单位。规范 §3.2 里每一个间距都是 `calc(0.25rem * N)`——
+   * **那不是巧合，是一把 4px 的尺子**。我们照搬这把尺子，而不是照搬它的读数。
+   */
+  --dawn-unit: 0.25rem;
+  --dawn-space-1: calc(var(--dawn-unit) * 1); /* 4px  行内垂直、按钮间隙 */
+  --dawn-space-2: calc(var(--dawn-unit) * 2); /* 8px  行水平内距 */
+  --dawn-space-3: calc(var(--dawn-unit) * 3); /* 12px 面板内距 */
+  --dawn-space-4: calc(var(--dawn-unit) * 4); /* 16px 工具栏内距 */
+  --dawn-space-6: calc(var(--dawn-unit) * 6); /* 24px 大留白 */
+
+  /* ── 骨架尺寸（规范 §3.1 / §3.3 / §3.5）─────────────────────── */
+  --dawn-topbar-h: 46px;
+  --dawn-statusbar-h: 24px;
+  /**
+   * 侧栏宽度。**默认 275，不低于 240，且永远给内容留下 320px**——
+   * 上一版是写死的 240px，窄窗口下它照样占满，把内容挤没。
+   */
+  --dawn-sidebar-w: clamp(240px, 275px, min(520px, 100vw - 320px));
+  /** 列表行高。行与行的节奏由它决定，不由内容的行高决定 */
+  --dawn-row-h: 30px;
+  /**
+   * 对话与输入区的宽度上限（规范 §3.5 的 `thread-content-max-width`）。
+   *
+   * **超宽屏上一行铺到底是读不下去的**：眼睛回到下一行行首会找错行。
+   * 面板区不受此限——它是网格，用的是 `--dawn-page-max-w`。
+   */
+  --dawn-thread-max-w: 768px;
+  /** 页边距与面板区宽度上限。之前只以回退值的形式存在 */
+  --dawn-page-inset-x: clamp(1.25rem, 4vw, 4rem);
+  --dawn-page-max-w: 75rem;
+
+  /**
+   * ── 排版（规范 §4）──────────────────────────────────────────
+   *
+   * **界面文字与对话文字是两件事。** 规范给的 14px 是
+   * `--codex-chat-font-size`——它是**聊天**字号，不是整个界面的字号。
+   * 侧栏、面板、状态栏这些「外壳」保持 13px：外壳要让位给内容。
+   */
+  --dawn-font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", system-ui, sans-serif;
+  --dawn-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --dawn-ui-size: 13px;
+  --dawn-ui-leading: 1.55;
+  --dawn-chat-size: 14px;
+  --dawn-chat-leading: 20px;
+  --dawn-code-size: 12px;
+  --dawn-weight-medium: 500;
+  --dawn-weight-semibold: 600;
+
+  /**
+   * ── 圆角：一个标量统管，方便整体调"软硬" ────────────────────
+   *
+   * **标量从 1 改成 1.25**（规范 §3.6：`--codex-corner-radius-scale`）。
+   * 基准值不动，于是 sm/md/lg 由 6/8/12 变成 7.5/10/15——
+   * 这就是那份界面「软」的来源，改一个数就够了。
+   */
+  --radius-scalar: 1.25;
+  --dawn-radius-xs: calc(var(--radius-scalar) * 0.25rem);
   --dawn-radius-sm: calc(var(--radius-scalar) * 0.375rem);
   --dawn-radius-md: calc(var(--radius-scalar) * 0.5rem);
   --dawn-radius-lg: calc(var(--radius-scalar) * 0.75rem);
+  /** 输入框（规范 §3.5：`calc(0.25rem * 5.5)` ≈ 22px）。不随标量缩放——它已经是量出来的成品值 */
+  --dawn-radius-composer: 1.375rem;
+  /** 胶囊。**不参与缩放**：它要的是「半圆」，不是某个具体半径 */
+  --dawn-radius-full: 9999px;
+
+  /**
+   * 角的形状。`superellipse(1.5)` 让圆角比正圆更"饱满"一点——
+   * 这是那份界面视觉气质的一部分，**且与配色无关**，所以可以单独拿。
+   *
+   * Chrome 139 起支持（本项目 Electron 43 / Chromium 150）。
+   * **不支持的渲染路径会直接忽略它，退回普通圆角**——这是安全的退化，
+   * 不需要 `@supports` 包一层。
+   */
+  --dawn-corner-shape: superellipse(1.5);
 
   /**
    * 浮层阴影。

@@ -20,6 +20,7 @@ import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
+import { discoverKernelSpecs } from "../kernel/specs.js"
 
 /**
  * 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。
@@ -333,6 +334,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw fault("conflict", err instanceof Error ? err.message : String(err))
       }
       return {}
+    },
+
+    /**
+     * 列出本机内核（②-A · K2）。
+     *
+     * **每次现扫，不缓存。** 用户可能刚在别处 `installspec` 了一个——
+     * 缓存住的表现是「我装了但 DAWN 看不见」，而那看起来像 DAWN 坏了。
+     */
+    listKernels: async () => {
+      const d = discoverKernelSpecs()
+      return {
+        kernels: d.specs.map((k) => ({
+          name: k.name,
+          displayName: k.displayName,
+          ...(k.language ? { language: k.language } : {}),
+          ...(k.executable ? { executable: k.executable } : {}),
+          dir: k.dir,
+        })),
+        problems: d.problems,
+        shadowed: d.shadowed.map((k) => ({ name: k.name, dir: k.dir })),
+      }
     },
 
     acquireLease: async ({ sessionId, holder }) => {

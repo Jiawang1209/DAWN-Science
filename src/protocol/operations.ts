@@ -394,6 +394,39 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 列出本机能用的内核（②-A · K2）。
+   *
+   * **必须连解释器路径一起给。** 作者机器上五个 kernelspec 里有三个是 conda 环境，
+   * 光看名字（`d2l` / `datascience` / `python_learn`）完全分不出哪个是哪个——
+   * 挑错的后果不是报错，是**跑在了另一个环境里而不自知**。
+   *
+   * `problems` 与 `shadowed` 都要回：**坏掉的注册项要能被看见**，
+   * 被同名挡住的那份是「为什么我改了配置没生效」的唯一答案。
+   */
+  listKernels: {
+    request: Empty,
+    response: z.object({
+      kernels: z.array(
+        z.object({
+          name: z.string(),
+          displayName: z.string(),
+          /** kernel.json 没写就没有这个字段。**不猜** */
+          language: z.string().optional(),
+          /** argv[0]。**界面必须显示它**——见上面那段 */
+          executable: z.string().optional(),
+          dir: z.string(),
+        }),
+      ),
+      /** 读不出来的注册项。**不静默跳过** */
+      problems: z.array(z.object({ dir: z.string(), reason: z.string() })),
+      /** 被同名的前一份挡住的 */
+      shadowed: z.array(z.object({ name: z.string(), dir: z.string() })),
+    }),
+    /** 只读：扫目录不改任何东西 */
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

@@ -29,6 +29,89 @@ const THEME_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
   { value: "dark", label: "暗色" },
 ]
 
+/** `listKernels` 回来的一条 */
+export interface KernelRow {
+  name: string
+  displayName: string
+  language?: string
+  executable?: string
+  dir: string
+}
+
+/**
+ * 内核：**列表里必须带解释器路径**（②-A · K2，作者 2026-08-10 提）。
+ *
+ * > *「我觉得有必要在 app 的设置里面，让用户配置一下 R 和 Python 的路径，
+ * > 否则很盲目。」*
+ *
+ * 实测印证了这句话：作者机器上五个 kernelspec 里三个是 conda 环境
+ * （`d2l` / `datascience` / `python_learn`），**光看名字完全分不出哪个是哪个**。
+ * 挑错的后果不是报错，是**跑在了另一个环境里而不自知**——
+ * 那比报错坏，因为它不出声。
+ *
+ * 三样都要显示，且都不是装饰：
+ *   - **解释器路径**：回答「这个内核到底是哪个 Python」
+ *   - **坏掉的注册项**：一条读不出来的 kernel.json 要能被看见，不是悄悄少一个
+ *   - **被同名挡住的**：「我明明改了配置为什么没生效」的唯一答案
+ */
+export function KernelsPanel({
+  kernels,
+  problems,
+  shadowed,
+  onRefresh,
+}: {
+  kernels: readonly KernelRow[]
+  problems: readonly { dir: string; reason: string }[]
+  shadowed: readonly { name: string; dir: string }[]
+  onRefresh: () => void
+}) {
+  return (
+    <section className="panel">
+      <h3 className="panel-title">内核</h3>
+      <div className="panel-body">
+        {kernels.length === 0 ? (
+          <p className="empty">
+            本机没有注册任何 Jupyter 内核。Python 装 <code>ipykernel</code>、
+            R 装 <code>IRkernel</code> 之后会出现在这里。
+          </p>
+        ) : (
+          <ul className="kernel-list">
+            {kernels.map((k) => (
+              <li key={`${k.dir}`} className="kernel">
+                <span className="name">{k.displayName}</span>
+                <span className="sub">{k.language ?? "语言未声明"}</span>
+                {/* **这一行是这个面板存在的理由**——不显示它，选内核就是蒙 */}
+                <p className="kernel-exe">{k.executable ?? "（kernel.json 里没有 argv[0]）"}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {shadowed.length > 0 ? (
+          <p className="caveat">
+            ⚠ 有 {shadowed.length} 个同名内核被前面的挡住了，不会被用到：
+            {shadowed.map((s) => ` ${s.name}（${s.dir}）`).join("；")}
+          </p>
+        ) : null}
+
+        {problems.length > 0 ? (
+          <p className="caveat">
+            ⚠ 有 {problems.length} 条注册项读不出来：
+            {problems.map((p) => ` ${p.dir}——${p.reason}`).join("；")}
+          </p>
+        ) : null}
+
+        {/* 每次现扫，不缓存：人可能刚在别处装了一个 */}
+        <div className="state-action">
+          <Button variant="outline" size="sm" onClick={onRefresh}>
+            重新扫描
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function AppearancePanel() {
   const theme = useStore($theme)
 

@@ -15,7 +15,7 @@
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import {
@@ -35,7 +35,7 @@ import {
   SessionSidebar,
   TerminalView,
 } from "./views.js"
-import { AppearancePanel, SettingsPanel } from "./Settings.js"
+import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
@@ -308,6 +308,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [runs],
   )
 
+  /**
+   * 本机内核（②-A · K2）。**每次打开设置都重扫，不缓存**——
+   * 人可能刚在别处 `installspec` 了一个，缓存住的表现是「我装了但 DAWN 看不见」，
+   * 而那看起来像 DAWN 坏了。
+   */
+  const [kernels, setKernels] = useState<{
+    kernels: KernelRow[]
+    problems: { dir: string; reason: string }[]
+    shadowed: { name: string; dir: string }[]
+  }>({ kernels: [], problems: [], shadowed: [] })
+  const refreshKernels = useCallback(() => {
+    client.get<typeof kernels>("listKernels", {}).then(setKernels).catch(fail)
+  }, [client])
+  useEffect(() => {
+    if (view === "settings") refreshKernels()
+  }, [view, refreshKernels])
+
   const agentIds = useMemo(() => providers.agents.map((a) => a.agentId), [providers])
 
   /**
@@ -499,6 +516,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           {view === "settings" ? (
             <div className="panels">
               <AppearancePanel />
+              {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
+              <KernelsPanel
+                kernels={kernels.kernels}
+                problems={kernels.problems}
+                shadowed={kernels.shadowed}
+                onRefresh={refreshKernels}
+              />
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}
                 credentials={creds}

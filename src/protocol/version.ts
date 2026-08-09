@@ -31,8 +31,13 @@
  * 2.4（2026-08-09）：cli agent 能报模型清单（`getProviders` 的 `models`），
  *   且 `setSessionModel` 的 `provider` 放宽为可选——**外部 CLI 没有 provider 概念**。
  *   放宽必填字段是**兼容的方向**（老客户端照旧会传），故仍是 minor。
+ * 2.5（2026-08-10）：新增 `listKernels`（②-A · K2）——界面要能列出本机内核，
+ *   **且必须连解释器路径一起列**。作者机器上五个 kernelspec 里三个是 conda 环境，
+ *   光看名字分不出哪个是哪个，而挑错的后果是**跑在了另一个环境里而不自知**。
+ *   响应里同时给 `problems`（坏掉的注册项）与 `shadowed`（被同名挡住的），
+ *   两者都是「不静默」的直接要求。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.4"
+export const WORKBENCH_PROTOCOL_VERSION = "2.5"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

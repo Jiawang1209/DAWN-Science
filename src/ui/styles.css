@@ -867,3 +867,22 @@ pre {
 }
 .opener-title { font-weight: var(--dawn-weight-medium); }
 .opener-sub { color: var(--dawn-text-3); font-size: 12px; }
+
+/* ── 内核列表（②-A · K2）────────────────────────────────────────────
+   解释器路径是这个列表存在的理由，所以它**不是次要信息**：
+   给它等宽字体和可选中，人要能把它复制出去粘到终端里核对。 */
+.kernel-list { list-style: none; margin: 0; padding: 0; }
+.kernel {
+  padding: var(--dawn-space-2) 0;
+  border-bottom: 1px solid var(--dawn-stroke-4);
+}
+.kernel .name { margin-right: var(--dawn-space-2); }
+.kernel-exe {
+  margin: 2px 0 0;
+  color: var(--dawn-text-3);
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+  /* 长路径自己断，不要把设置页撑出横向滚动条 */
+  word-break: break-all;
+  user-select: text;
+}

@@ -63,6 +63,18 @@ export interface DiscoverOptions {
 export function kernelSpecRoots(o: DiscoverOptions = {}): string[] {
   if (o.roots) return o.roots
   const env = o.env ?? process.env
+  /**
+   * **完全替换搜索路径的入口。**
+   *
+   * 与 `DAWN_CLI_HOME` 同一条理由（那个是为了让 e2e 不去读开发者真实的
+   * `~/.codex`）：内核列表**随机器而变**，直接进视觉基线会有两个后果——
+   * 基线在别的机器上必然红，以及**把开发者的个人路径以图片形式提交进仓库**。
+   *
+   * 它不是「测试后门」：将来「让用户自己指定去哪找内核」也走这条路。
+   * 与 `JUPYTER_PATH` 的区别是**这个会替换掉默认目录，而不是追加**。
+   */
+  const override = env.DAWN_JUPYTER_ROOTS
+  if (override) return override.split(delimiter).filter(Boolean)
   const home = o.home ?? homedir()
   const plat = o.platform ?? platform()
 

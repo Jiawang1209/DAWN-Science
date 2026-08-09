@@ -14,13 +14,14 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("23 个操作齐全（原冻结 13 + 凭证 3 + getProviders 1 + 订阅 2 + 中止与引导 2 + 换模型 1 + 上下文用量 1）", () => {
+  it("24 个操作齐全（原冻结 13 + 凭证 3 + getProviders 1 + 订阅 2 + 中止与引导 2 + 换模型 1 + 上下文用量 1 + 列内核 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
         "createSession",
         "deleteCredential",
         "listCredentials",
+        "listKernels",
         "setCredential",
         "setSessionModel",
         "getCapabilities",

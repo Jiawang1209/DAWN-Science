@@ -98,6 +98,26 @@ function initRepo(workspace: string): void {
   run("commit", "-qm", "e2e 基线")
 }
 
+/**
+ * 一份**固定的** kernelspec，给视觉基线用。
+ *
+ * 路径刻意写成不存在的 `/usr/bin/e2e-python`：这份夹具从不真的起内核，
+ * 它只需要让「内核」面板有确定的内容可画。**假路径比真路径诚实**——
+ * 真路径会随机器变，而这里要的恰恰是不变。
+ */
+function seedKernelSpec(dir: string): void {
+  const d = join(dir, "jupyter", "kernels", "e2e-python")
+  mkdirSync(d, { recursive: true })
+  writeFileSync(
+    join(d, "kernel.json"),
+    JSON.stringify({
+      argv: ["/usr/bin/e2e-python", "-m", "ipykernel_launcher", "-f", "{connection_file}"],
+      display_name: "E2E Python",
+      language: "python",
+    }),
+  )
+}
+
 export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>({
   // 用例侧：`test.use({ dawnOptions: { … } })`。**不写就是现状**，
   // 这是现有 10 个 spec 一行都不用改的原因
@@ -108,6 +128,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     const dir = mkdtempSync(join(tmpdir(), "dawn-e2e-"))
     const workspace = join(dir, "workspace")
     mkdirSync(workspace, { recursive: true })
+    seedKernelSpec(dir)
     writeFileSync(join(workspace, "README.md"), "# e2e 工作区\n")
     if (dawnOptions.gitInit) initRepo(workspace)
     const configPath = join(dir, "providers.yaml")
@@ -156,6 +177,13 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         // **外部 CLI 的配置也要隔离**：不指的话会去读开发机真实的 ~/.codex，
         // 那正是这份文件开头明令禁止的暗管道（2026-08-09 加模型自动发现时捅的洞）
         DAWN_CLI_HOME: join(dir, "cli-home"),
+        /**
+         * **内核搜索路径也要隔离**，理由与上一条完全一样，只是后果更难看：
+         * 内核列表随机器而变，进了视觉基线就等于
+         * ① 基线在别的机器上必然红，② **把开发者的个人路径以图片形式提交进仓库**。
+         * 这里指向夹具里那一份固定的 kernelspec（见下面的 `seedKernelSpec`）。
+         */
+        DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels"),
       },
     })
     const page = await app.firstWindow()

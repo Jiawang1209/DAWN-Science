@@ -42,6 +42,7 @@ function backend(): WorkbenchBackend {
     }),
     writeToSession: async () => ({}),
     stopSession: async () => ({}),
+    listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
     acquireLease: async () => ({
       sessionId: "s1", holder: "user" as const,
       expiresAt: "2026-08-08T00:05:00Z", fingerprint: "abc",

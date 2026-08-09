@@ -54,6 +54,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     }),
     writeToSession: async () => ({}),
     stopSession: async () => ({}),
+    listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
     acquireLease: async () => ({
       sessionId: "s1",
       holder: "user" as const,

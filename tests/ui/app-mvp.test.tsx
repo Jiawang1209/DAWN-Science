@@ -84,6 +84,8 @@ function harness(
      * 总是快于用户的下一次点击。**时序改成可控的，缺陷就是确定的。**
      */
     deferCreateSession?: boolean
+    /** 建出来的会话是 pty（托管 claude / codex），不是内置 native */
+    pty?: boolean
   } = {},
 ) {
   const calls: { op: string; req: unknown }[] = []
@@ -128,13 +130,15 @@ function harness(
         projects.push(p)
         return p
       }
-      case "createSession":
-        sessions.push(SESSION)
-        return SESSION
+      case "createSession": {
+        const made = over.pty ? { ...SESSION, agentId: "claude", kind: "pty" as const } : SESSION
+        sessions.push(made)
+        return made
+      }
       case "subscribeSession":
         return {
-          sessionId: "s1", kind: "native", revision: 0, items: [],
-          terminal: "", terminalTrimmed: false, state: "alive",
+          sessionId: "s1", kind: over.pty ? "pty" : "native", revision: 0, items: [],
+          terminal: over.pty ? "$ claude\r\n" : "", terminalTrimmed: false, state: "alive",
         }
       case "acquireLease":
         return {
@@ -430,5 +434,58 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
     render(<App client={h.client} />)
     fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
     expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
+  })
+})
+
+describe("PTY 会话：终端就是这个会话本身", () => {
+  /**
+   * **2026-08-09 作者试用后推翻了此前的设计。**
+   *
+   * 原设计把终端做成一个默认折叠的抽屉（`views.test.tsx` 里那条
+   * 「默认收起 —— 终端是下钻视图，不是主界面」就是它）。
+   * 作者实测的结果是 **claude / codex 在 app 里「不好使」**，根因两条叠加：
+   *
+   *   1. 主区域给的是对话视图 + 输入框，而 **PTY 的输出根本不进对话记录**
+   *      （`workbench/events.ts` 的 `output` 分支：pty 只进 terminal）
+   *   2. 那个输入框把文本原样送进 PTY，**不带 `\r`**——
+   *      CLI 收到了字符却永远等不到提交
+   *
+   * 合起来是**一个看起来能用、实际把输入送进黑洞的输入框，
+   * 配一个默认折叠的、装着全部真相的终端**。比彻底起不来更糟：
+   * 起不来至少会报错。
+   *
+   * 新设计：**对 PTY 会话，终端就是主体。** 没有输入框，
+   * 按键由 xterm 直接交给 PTY（回车天然是 `\r`）。
+   */
+  it("**终端直接铺在主区域**，不用点任何东西", async () => {
+    const h = harness({ projects: [proj("/w/proj")], pty: true })
+    const { container } = render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    await waitFor(() => expect(container.querySelector(".term-host")).not.toBeNull())
+    /**
+     * **判可见，不只判存在。**
+     *
+     * 第一版只断言 `.term-host` 在 DOM 里——那条误绿了：
+     * 旧的折叠抽屉本来就把它挂着（S4「隐藏不卸载」）。
+     * **一个在折叠抽屉里的终端，和一个铺在主区域的终端，DOM 里都有它。**
+     */
+    expect(container.querySelector("[hidden] .term-host")).toBeNull()
+  })
+
+  it("**没有输入框** —— 那个框只会把字送进黑洞", async () => {
+    const h = harness({ projects: [proj("/w/proj")], pty: true })
+    render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    await waitFor(() => expect(screen.queryByRole("button", { name: "发送" })).toBeNull())
+    expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
+  })
+
+  it("native 会话仍然是对话 + 输入框，且**不再有那个永远禁用的终端按钮**", async () => {
+    const h = harness({ projects: [proj("/w/proj")] })
+    const { container } = render(<App client={h.client} />)
+    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
+    expect(container.querySelector(".term-host")).toBeNull()
+    expect(screen.queryByRole("button", { name: /终端/ })).toBeNull()
   })
 })

@@ -652,57 +652,49 @@ export function EmptyConversation({
   )
 }
 
-/* ── 终端 dock ────────────────────────────────────────────────────── */
+/* ── PTY 会话的终端视图 ──────────────────────────────────────────── */
 
 /**
- * 终端下钻。**默认收起**——终端是下钻视图而非主界面（规格阶段 ① 定位修正框）。
- * ①-B 只渲染原始字节流；xterm.js 的接入留到有真实 PTY 事件流之后。
+ * 托管 CLI（claude / codex）的会话视图。**终端就是这个会话本身。**
+ *
+ * ## 这是 2026-08-09 对上一版设计的推翻，作者试用后提的
+ *
+ * 上一版把终端做成默认折叠的抽屉，主区域给对话视图 + 输入框。
+ * 实测结果是 **claude / codex 在 app 里「不好使」**，根因两条叠加：
+ *
+ *   1. **PTY 的输出根本不进对话记录**——`workbench/events.ts` 的 `output`
+ *      分支里，pty 只进 `terminal`。所以主区域永远显示「还没有对话」。
+ *   2. 那个输入框把文本原样送进 PTY，**不带 `\r`**。CLI 收到了字符，
+ *      却永远等不到提交。
+ *
+ * 合起来是**一个看起来能用、实际把输入送进黑洞的输入框，
+ * 配一个默认折叠的、装着全部真相的终端**。
+ * **这比彻底起不来更糟——起不来至少会报错。**
+ *
+ * 现在按键由 xterm 直接交给 PTY：回车天然就是 `\r`，
+ * Ctrl-C、方向键、TUI 的一切也都天然可用。**不再有第二条输入通路，
+ * 也就不会再有两条通路语义不一致这种问题。**
+ *
+ * ## 抽屉整个删掉了
+ *
+ * 它对 native 会话永远是禁用的（"仅外部 CLI 会话有终端"），
+ * 对 pty 会话又不该折叠。**一个只在用不上时才出现的抽屉，删掉是净收益。**
+ * 连同命令面板里的「切换终端」一并去掉——那个动作现在没有对象。
  */
-export function TerminalDock({
-  open,
-  onToggle,
+export function TerminalView({
   chunks,
-  available,
   onInput,
 }: {
-  open: boolean
-  onToggle: () => void
-  /** 累积的字节片段。展开时交给 xterm */
+  /** 累积的字节片段，交给 xterm */
   chunks: readonly string[]
-  available: boolean
   onInput?: (data: string) => void
 }) {
   return (
-    <div className={open ? "dock open" : "dock"}>
-      <div className="dock-tabs">
-        <Button variant="ghost" size="sm" onClick={onToggle} disabled={!available}>
-          终端 {open ? "▾" : "▸"}
-        </Button>
-        {!available ? <span className="hint">仅外部 CLI 会话有终端</span> : null}
-        {available && chunks.length === 0 ? <span className="hint">暂无输出</span> : null}
-      </div>
-      {/**
-       * **可见性不是生命周期。**
-       *
-       * 此前这里是 `{open && available ? <TerminalPane/> : null}`——收起即卸载，
-       * xterm 实例 dispose、写入游标归零，**滚屏内容全没了**。
-       * 而那些字节是 agent 干活的唯一现场记录。
-       *
-       * 更麻烦的是它悄无声息：收起再展开看到一片空白，很容易被读成
-       * 「这个会话本来就没输出」。丢数据而不出声，是最坏的一种。
-       *
-       * 现在用 `hidden` 隐藏而不是卸载。`available === false` 才是真的不挂——
-       * 那不是"隐藏"，是这类会话本来就没有终端。
-       */}
-      {available ? (
-        <div className="dock-content" hidden={!open}>
-          <TerminalPane chunks={chunks} {...(onInput ? { onInput } : {})} />
-        </div>
-      ) : null}
+    <div className="term-view">
+      <TerminalPane chunks={chunks} {...(onInput ? { onInput } : {})} />
     </div>
   )
 }
-
 /* ── 子 agent 的 chip 组（①-B″ · S1）────────────────────────────────── */
 
 const CHIP_STATUS = {

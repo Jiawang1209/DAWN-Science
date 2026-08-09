@@ -54,8 +54,11 @@ test("Esc 关得掉", async ({ dawn }) => {
 test("打字能过滤", async ({ dawn }) => {
   const { page } = dawn
   await palette(page)
-  await box(page).fill("终端")
-  await expect(page.getByRole("option", { name: /切换终端/ })).toBeVisible()
+  // 原来搜的是「终端」。**那条命令 2026-08-09 删了**——它的对象
+  // （可折叠的终端 dock）不存在了，而没有对象的动作不该留在面板里。
+  // 换一条同样无条件存在的来验过滤，**验的是过滤本身，与是哪条命令无关**
+  await box(page).fill("概览")
+  await expect(page.getByRole("option", { name: /项目概览/ })).toBeVisible()
   await expect(page.getByRole("option", { name: /打开设置/ })).toBeHidden()
 })
 

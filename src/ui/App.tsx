@@ -31,7 +31,7 @@ import {
   ConversationView,
   EmptyConversation,
   SessionSidebar,
-  TerminalDock,
+  TerminalView,
 } from "./views.js"
 import { AppearancePanel, SettingsPanel } from "./Settings.js"
 import { Button } from "./primitives.js"
@@ -45,7 +45,6 @@ import {
   $credentials,
   $sessionModels,
   $contextUsage,
-  $dockOpen,
   $items,
   $notes,
   $projects,
@@ -78,7 +77,6 @@ import {
   resetTranscript,
   setActiveProjectId,
   setActiveSessionId,
-  setDockOpen,
   setSessionModel,
   setTheme,
   setView,
@@ -119,7 +117,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const projectId = useStore($activeProjectId)
   const sessionId = useStore($activeSessionId)
   const view = useStore($view)
-  const dockOpen = useStore($dockOpen)
   const items = useStore($items)
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
@@ -390,7 +387,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           })
           .catch(fail)
       },
-      toggleTerminal: () => setDockOpen(!$dockOpen.get()),
       setTheme,
     }),
     [client, startSession, session],
@@ -489,6 +485,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 </section>
               ) : null}
             </div>
+          ) : session && session.kind === "pty" ? (
+            /**
+             * **托管 CLI 的会话：终端就是主体。**（2026-08-09，作者试用后推翻旧设计）
+             *
+             * 不给对话视图，也不给输入框——PTY 的输出根本不进对话记录，
+             * 而那个输入框此前把文本原样送进 PTY **不带 `\r`**，
+             * CLI 收到字符却永远等不到提交。按键现在由 xterm 直接交给 PTY。
+             */
+            <TerminalView
+              chunks={termChunks}
+              onInput={(data) =>
+                client
+                  .get("writeToSession", { sessionId: session.sessionId, data, as: "user" })
+                  .catch(fail)
+              }
+            />
           ) : session ? (
             <>
               <ConversationView
@@ -523,17 +535,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     .get("writeToSession", { sessionId: session.sessionId, data: text, as: "user" })
                     .catch(fail)
                 }}
-              />
-              <TerminalDock
-                open={dockOpen}
-                onToggle={actions.toggleTerminal}
-                chunks={termChunks}
-                available={session.kind === "pty"}
-                onInput={(data) =>
-                  client
-                    .get("writeToSession", { sessionId: session.sessionId, data, as: "user" })
-                    .catch(fail)
-                }
               />
             </>
           ) : (

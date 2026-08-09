@@ -4,7 +4,7 @@ import {
   ConversationView,
   EmptyConversation,
   SessionSidebar,
-  TerminalDock,
+  TerminalView,
 } from "../../src/ui/views.js"
 import type { ProjectSummary, SessionSummary } from "../../src/protocol/index.js"
 
@@ -198,46 +198,28 @@ describe("对话视图", () => {
   })
 })
 
-describe("终端 dock", () => {
-  // xterm 的真实渲染不在 jsdom 里验（它要字体度量与 canvas）。
-  // 这里只验容器契约：什么时候挂载窗格、按钮什么时候可用。
+describe("PTY 会话的终端视图", () => {
+  /**
+   * **2026-08-09：这一组的前身是「终端 dock」，被作者的试用结论推翻了。**
+   *
+   * 原来这里有一条 `默认收起 —— 终端是下钻视图，不是主界面`。
+   * 那条断言本身没错，**错的是它守着的那个设计**：对托管 CLI 的会话，
+   * 终端不是下钻视图，它就是这个会话本身。把它折起来、在主区域放一个
+   * 送不出回车的输入框，结果就是作者报的「claude / codex 在 app 里不好使」。
+   *
+   * **删掉那条不是测试腐烂，是意图变了**——所以连同理由一起记在这里，
+   * 而不是让下一个人从 git log 里考古。
+   */
   const paneCount = () => document.querySelectorAll(".term-host").length
 
-  // **2026-08-09 改断言，不改意图。** 原来用「窗格数量为 0」证明"收起"，
-  // 但那测的是**挂载**。Task 3.7 之后挂载与可见是两件事：收起只是 hidden，
-  // 实例仍在（visibility is not lifecycle）。意图「默认不占主界面」不变。
-  it("默认收起 —— 终端是下钻视图，不是主界面", () => {
-    const { container } = render(
-      <TerminalDock open={false} onToggle={noop} chunks={["hi"]} available />,
-    )
-    expect(container.querySelector(".dock-content")?.hasAttribute("hidden")).toBe(true)
-  })
-
-  it("展开后挂载终端窗格", () => {
-    render(<TerminalDock open onToggle={noop} chunks={["hello from pty"]} available />)
+  it("挂载终端窗格，没有任何需要先点开的东西", () => {
+    render(<TerminalView chunks={["hello from pty"]} />)
     expect(paneCount()).toBe(1)
   })
 
-  it("native 会话没有终端，按钮禁用并说明原因", () => {
-    render(<TerminalDock open={false} onToggle={noop} chunks={[]} available={false} />)
-    expect((screen.getByRole("button", { name: /终端/ }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText(/仅外部 CLI 会话有终端/)).toBeDefined()
-  })
-
-  it("不可用时即便 open 也不挂窗格 —— 免得白白初始化一个 xterm", () => {
-    render(<TerminalDock open onToggle={noop} chunks={[]} available={false} />)
-    expect(paneCount()).toBe(0)
-  })
-
-  it("点击切换触发回调", () => {
-    const onToggle = vi.fn()
-    render(<TerminalDock open={false} onToggle={onToggle} chunks={[]} available />)
-    fireEvent.click(screen.getByRole("button", { name: /终端/ }))
-    expect(onToggle).toHaveBeenCalled()
-  })
-
-  it("无输出时如实说暂无，而不是留白", () => {
-    render(<TerminalDock open={false} onToggle={noop} chunks={[]} available />)
-    expect(screen.getByText(/暂无输出/)).toBeDefined()
+  it("**没有折叠开关** —— 终端就是主体，折叠它没有意义", () => {
+    render(<TerminalView chunks={["x"]} />)
+    expect(screen.queryByRole("button", { name: /终端/ })).toBeNull()
   })
 })
+

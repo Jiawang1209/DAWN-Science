@@ -47,6 +47,18 @@ export function TerminalPane({
       if (disposed) return
       instance = new Terminal({
         convertEol: true,
+        /**
+         * **Unicode11Addon 用的是 proposed API，不开这个开关它会抛。**
+         *
+         * 2026-08-09 由第一条 PTY e2e 撞出来。此前的表现是
+         * **一个尺寸正常、但永远空白的终端**——因为异常被上面那个没有 catch 的
+         * 异步 IIFE 吞掉了。作者报的「claude / codex 在 app 里不好使」，
+         * 最深的一层就是它：**终端从来没有渲染过任何东西。**
+         *
+         * 讽刺的是这行开关的缺失，恰恰是「补齐 CJK 宽度」那次改动引入的——
+         * 一个为中文而加的 addon，把整个终端弄哑了，而且没人听见。
+         */
+        allowProposedApi: true,
         // Spike C 的结论：scrollback 是内存的主控参数，不是显示偏好
         scrollback: 5000,
         fontSize: 12,
@@ -70,7 +82,24 @@ export function TerminalPane({
       fit.current = addon
       // 挂载前已经堆着的历史要补写，否则打开 dock 只能看到之后的输出
       flush()
-    })()
+    })().catch((err: unknown) => {
+      /**
+       * **失败必须出声**（规格 7.5）。
+       *
+       * 2026-08-09：这里此前是 `void (async () => {…})()`，**一个 catch 都没有**。
+       * 于是 xterm 的动态 import 或初始化只要失败一次，表现就是
+       * **一个尺寸正常、但永远空白的终端**——没有报错、没有提示、什么都没有。
+       * 而 PTY 会话的全部内容都在那块空白里。
+       *
+       * 这是本项目反复栽的那一类：**丢东西而不出声**。
+       */
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error("[终端] xterm 初始化失败：", msg)
+      if (el && !disposed) {
+        el.textContent = `终端加载失败：${msg}`
+        el.setAttribute("data-term-error", msg)
+      }
+    })
 
     const onResize = () => fit.current?.fit()
     window.addEventListener("resize", onResize)

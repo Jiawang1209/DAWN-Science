@@ -68,7 +68,6 @@ export {
 
 export {
   $view,
-  $dockOpen,
   $drafts,
   $paletteOpen,
   $paletteQuery,
@@ -81,7 +80,6 @@ export {
   setDraft,
   clearDraft,
   setView,
-  setDockOpen,
   setActiveProjectId,
   setActiveSessionId,
   type View,
@@ -128,7 +126,6 @@ import {
 import {
   $activeProjectId,
   $activeSessionId,
-  $dockOpen,
   $drafts,
   $paletteOpen,
   $paletteQuery,
@@ -167,7 +164,6 @@ export function resetAllState(): void {
   $activeProjectId.set(undefined)
   $activeSessionId.set(undefined)
   $view.set("conversation")
-  $dockOpen.set(false)
   $drafts.set({})
   $paletteOpen.set(false)
   $paletteQuery.set("")

@@ -13,7 +13,6 @@ import { setValue } from "./identity.js"
 export type View = "conversation" | "panel" | "settings"
 
 export const $view = atom<View>("conversation")
-export const $dockOpen = atom(false)
 
 /**
  * 当前选中的项目与会话。
@@ -90,6 +89,5 @@ export function togglePalette(): void {
 }
 
 export const setView = (v: View) => setValue($view, v)
-export const setDockOpen = (v: boolean) => setValue($dockOpen, v)
 export const setActiveProjectId = (v: string | undefined) => setValue($activeProjectId, v)
 export const setActiveSessionId = (v: string | undefined) => setValue($activeSessionId, v)

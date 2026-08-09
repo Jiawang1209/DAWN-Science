@@ -65,7 +65,6 @@ export interface Actions {
   newSession(agentId: string): void
   abort(): void
   openProject(): void
-  toggleTerminal(): void
   setTheme(choice: ThemeChoice): void
 }
 
@@ -155,14 +154,13 @@ export function buildCommands(ctx: CommandContext): Command[] {
       run: () => actions.showConversation(),
     })
   }
-  out.push({
-    id: "view.terminal",
-    title: "切换终端",
-    group: "视图",
-    keywords: "terminal dock 终端",
-    run: () => actions.toggleTerminal(),
-  })
-
+  /**
+   * **2026-08-09 删掉了「切换终端」。**
+   *
+   * 那个命令的对象（可折叠的终端 dock）已经不存在：对托管 CLI 的会话，
+   * 终端就是主体；对内置 agent，本来就没有终端。
+   * **一个没有对象的动作留在面板里，只会让人点了之后怀疑是不是坏了。**
+   */
   // ── 设置 ─────────────────────────────────────────────────────────
   out.push({
     id: "settings.open",

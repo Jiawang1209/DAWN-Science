@@ -35,7 +35,6 @@ function actions(): Actions {
     newSession: vi.fn(),
     abort: vi.fn(),
     openProject: vi.fn(),
-    toggleTerminal: vi.fn(),
     setTheme: vi.fn(),
   }
 }
@@ -65,11 +64,26 @@ describe("命令注册表 · 形状", () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it("覆盖到计划里的五个分组", () => {
+  it("覆盖到计划里的分组", () => {
     const groups = new Set(build().map((c) => c.group))
-    for (const g of ["会话", "视图", "设置"]) {
+    for (const g of ["会话", "项目", "设置"]) {
       expect(groups.has(g as never), `缺分组：${g}`).toBe(true)
     }
+  })
+
+  /**
+   * **「视图」这一组现在是上下文相关的**（2026-08-09）。
+   *
+   * 它此前有两条：「切换终端」（无条件）与「返回对话」（不在对话时才有）。
+   * 前者随终端 dock 一并删掉——**对象没了的动作不该留在面板里**。
+   * 于是这一组只在「人不在对话视图上」时才存在。
+   *
+   * 断言因此从「无条件有这一组」改成「在它该出现的场景里有」。
+   * **改的是场景，不是意图。**
+   */
+  it("不在对话视图时，「视图」组给得出回去的路", () => {
+    const groups = new Set(build({ view: "panel" }).map((c) => c.group))
+    expect(groups.has("视图" as never)).toBe(true)
   })
 })
 

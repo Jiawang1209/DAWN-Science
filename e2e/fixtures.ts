@@ -67,6 +67,14 @@ export interface DawnOptions {
    * 它走的是「无法确定」那一支。所以初始提交也不是可选的。
    */
   gitInit?: boolean
+  /**
+   * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
+   *
+   * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
+   * 不给时保持原样——第一次启动自己写出默认配置那条路径必须被真的走一遍，
+   * 那正是「装好了打不开」那个缺陷的所在。
+   */
+  providersYaml?: string
 }
 
 /** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
@@ -102,6 +110,8 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     mkdirSync(workspace, { recursive: true })
     writeFileSync(join(workspace, "README.md"), "# e2e 工作区\n")
     if (dawnOptions.gitInit) initRepo(workspace)
+    const configPath = join(dir, "providers.yaml")
+    if (dawnOptions.providersYaml) writeFileSync(configPath, dawnOptions.providersYaml)
 
     const modelsPath = join(dir, "models.json")
     writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))
@@ -139,7 +149,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         ...process.env,
         // **不写 DAWN_CONFIG 指向已有文件**：第一次启动应当自己写出默认配置。
         // 这条路径正是「装好了打不开」那个缺陷的所在，必须被真的走一遍
-        DAWN_CONFIG: join(dir, "providers.yaml"),
+        DAWN_CONFIG: configPath,
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
         DAWN_MODELS_JSON: modelsPath,

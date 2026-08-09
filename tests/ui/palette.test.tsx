@@ -22,7 +22,9 @@ const CMDS: Command[] = [
   cmd({ id: "settings.open", title: "打开设置", group: "设置", keywords: "偏好 凭证 主题" }),
   cmd({ id: "session.new", title: "新建会话", group: "会话" }),
   cmd({ id: "session.abort", title: "中止当前回合", group: "会话", unavailable: "当前没有正在进行的回合" }),
-  cmd({ id: "view.terminal", title: "切换终端", group: "视图" }),
+  // 「切换终端」已删（对象不存在了）。这里换一个同组的命令，
+  // **面板的过滤逻辑与具体是哪个命令无关**——那正是这些用例要证明的
+  cmd({ id: "view.conversation", title: "回到对话", group: "视图" }),
 ]
 
 const open = () => fireEvent.keyDown(document, { key: "k", metaKey: true })
@@ -74,8 +76,8 @@ describe("命令面板 · 过滤", () => {
   it("按标题过滤", () => {
     render(<CommandPalette commands={CMDS} />)
     open()
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "终端" } })
-    expect(screen.getByRole("option", { name: /切换终端/ })).toBeTruthy()
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "对话" } })
+    expect(screen.getByRole("option", { name: /回到对话/ })).toBeTruthy()
     expect(screen.queryByRole("option", { name: /打开设置/ })).toBeNull()
   })
 
@@ -190,7 +192,7 @@ describe("命令面板 · 状态不留残渣", () => {
   it("关掉再开，查询词是空的 —— 上次搜的东西不该跟过来", () => {
     render(<CommandPalette commands={CMDS} />)
     open()
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "终端" } })
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "对话" } })
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" })
     open()
     expect((screen.getByRole("combobox") as HTMLInputElement).value).toBe("")

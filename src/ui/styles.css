@@ -577,3 +577,13 @@ pre {
 /* 失败原因不折叠：规格 7.5，藏起来就等于没报 */
 .chip-error { margin: 0; font-size: 12px; }
 .chip-task { margin: 2px 0 0; color: var(--dawn-text-3); white-space: pre-wrap; }
+
+/* ── PTY 会话的终端视图（2026-08-09 取代原来的折叠 dock）──────────
+   终端就是这个会话本身，所以它占满主区域，没有折叠开关。 */
+.term-view {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 8px 10px;
+}
+.term-view .term-host { flex: 1; min-height: 0; }

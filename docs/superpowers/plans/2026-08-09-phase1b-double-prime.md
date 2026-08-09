@@ -215,6 +215,39 @@ pi 的 `truncated` / `fullOutputPath` **只在 `role: "bashExecution"` 上**（`
 
 规格 §4.3 的反向约束（②③ 不得提前引入编排概念）在此**被显式豁免**——这是作者的范围决定，不是疏漏。
 
+### 第二条决定（2026-08-09）：项目级 agent 定义照做，不加确认层
+
+**发现**：pi 的 README 对项目级 agent 定义写了明确警告——
+
+> *"Project-local agents (`.pi/agents/*.md`) are **repo-controlled prompts** that can
+> instruct the model to read files, run bash commands, etc. **Default behavior:**
+> Only loads user-level agents."*
+
+pi 默认只从 `~/.pi/agent/agents/`（家目录）加载；项目里的定义要显式开
+`agentScope`，交互时还要再确认一次。**而计划 §6 规定的正是项目级
+`<project>/.dawn/agents/*.md`。**
+
+**这条缝的形状**：定义文件的正文原样成为子 agent 的 system prompt，
+而子 agent 手里有 `read` / `bash` / `write`。文件在仓库里，所以控制权不在使用者手上，
+而在「谁能往这个仓库提交」手上——clone 来的仓库、团队里任何有写权限的人、
+一个 PR 里夹带的定义，都能给你机器上的 agent 下指令。**这不是漏洞利用，就是正常功能。**
+
+**给过的三条路**：①维持现状，交给阶段 ④ 的授权门；②照 pi 的
+`confirmProjectAgents` 加一道「首次见到新定义时确认」；③改成家目录 + 项目双来源。
+
+**作者选择 ①。** 我的建议也是 ①，理由是：**提示词注入拦不干净，能力边界拦得住**——
+真正的解法是限制 agent 能干什么，而不是限制谁能写提示词；②只是把风险挪到
+「用户会不会认真看确认框」上，③要新造一个本项目没有的「用户级」概念。
+
+**代价一并记录**：
+
+> **在阶段 ④ 的能力授权门落地之前，任何 clone 来的仓库都可能自带 agent 定义。
+> `src/subagent/definitions.ts` 是授权门第一个要接的调用点。**
+
+现有收窄只有两条，**都不解决上述问题**，只是不让它更糟：
+只认 `<project>/.dawn/agents/` 一层，不向上查找父目录（pi 会一路往上找，
+那样一个上级目录就能影响其下所有仓库）；name 必须是安全标识符。
+
 ### 执行方式：功能全搬，代码自己写
 
 `examples/extensions/subagent/` **不是 pi 的发布 API**，是示例源码。把它的文件复制进来，我们的仓库就混入外部 MIT 源码——法律上没问题（MIT 兼容 AGPL，需署名），但动摇规格 §3.3「代码库完整归属自己」。

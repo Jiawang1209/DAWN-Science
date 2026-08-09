@@ -105,6 +105,24 @@ describe("一轮的结束", () => {
     expect(out.some((e) => e.kind === "idle")).toBe(true)
   })
 
+  /**
+   * **也要发 `turn_end`，不只是 `idle`。**
+   *
+   * 两者不是一回事：`turn_end` 收尾**那条发言气泡**（把 `final` 置真），
+   * `idle` 收尾**账本上那条回合**。CLI 的一次 `result` / `turn.completed`
+   * 同时意味着这两件事。
+   *
+   * 2026-08-09：只发 `idle` 的话，agent 的气泡 `final` 永远是 false——
+   * 界面上它永远显示成「还在说」，而 `busy` 也永远为真。
+   */
+  it("**同时发 turn_end** —— 不发的话那条气泡永远收不了尾", () => {
+    const { out } = run([{ type: "turn.completed", usage: {} }])
+    expect(out.some((e) => e.kind === "turn_end")).toBe(true)
+    expect(out.findIndex((e) => e.kind === "turn_end")).toBeLessThan(
+      out.findIndex((e) => e.kind === "idle"),
+    )
+  })
+
   it("**turn.failed 要出声再收口** —— 不是静静地 idle", () => {
     const { out } = run([{ type: "turn.failed", error: { message: "上游 500" } }])
     expect(out.some((e) => e.kind === "notice")).toBe(true)

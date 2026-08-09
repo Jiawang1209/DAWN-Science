@@ -86,7 +86,24 @@ const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
 /** 中止为什么用不了。**分清是哪一种，笼统写「不可用」等于没说** */
 function abortUnavailable(ctx: CommandContext): string | undefined {
   if (!ctx.session) return "还没有会话"
-  if (ctx.session.kind !== "native") return "外部 CLI 的回合边界不可观测，无法中止"
+  /**
+   * **这句话此前是假的**（2026-08-09 · ①-C 修）。
+   *
+   * 原文写「外部 CLI 的回合边界不可观测」——那是 PTY 时代的实情。
+   * `cli` 会话的回合边界**恰恰是可观测的**（`result` / `turn.completed`）。
+   *
+   * 真正的原因是另一件事：**中止能力因 CLI 而异**——
+   * codex 一轮一个进程，杀掉它就是「只停这一轮」；
+   * claude 是长驻进程，杀掉等于**结束整个会话**。
+   * 界面只知道 `kind: "cli"`，分不清是哪一个，所以暂不开放。
+   *
+   * **不可用的理由必须是真的**：一句听起来合理但不成立的解释，
+   * 比「不可用」三个字更坏——它会让人据此做错判断。
+   */
+  if (ctx.session.kind === "pty") return "终端的中止是按 Ctrl-C，不走这个命令"
+  if (ctx.session.kind === "cli") {
+    return "外部 CLI 里只有部分能「只停这一轮」，界面还分不清是哪一种，暂未开放"
+  }
   if (!ctx.busy) return "当前没有正在进行的回合"
   return undefined
 }

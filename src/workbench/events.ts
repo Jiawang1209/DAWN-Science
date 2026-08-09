@@ -117,10 +117,20 @@ export class SessionTranscripts {
     this.listeners.clear()
   }
 
-  /** 用户自己发的话。**PTY 忽略**：终端本来就会回显，再补一条是重复。 */
+  /**
+   * 用户自己发的话。**只有 PTY 忽略**：终端本来就会回显，再补一条是重复。
+   *
+   * **门要正面点名那个例外，不要列举「谁是正常的」。**
+   * 2026-08-09（①-C）：这里原本写的是 `e.kind !== "native"`——
+   * 只有两种 kind 时它等价于「PTY 忽略」，加了 `cli` 之后**含义悄悄变了**，
+   * 把 cli 也挡了。而 cli 没有终端回显，**用户的话就此消失**：
+   * 作者试用时报的正是这个（「看不到我的输入的内容，只能看到反馈的内容」）。
+   *
+   * **类型系统抓不到这一类**——它不是穷尽性检查，是运行时的字符串比较。
+   */
   userTurn(sessionId: SessionId, text: string): void {
     const e = this.entries.get(sessionId)
-    if (!e || e.kind !== "native") return
+    if (!e || e.kind === "pty") return
     e.turnSeq += 1
     this.putItem(sessionId, e, {
       type: "turn",
@@ -174,7 +184,8 @@ export class SessionTranscripts {
         return
 
       case "turn_end": {
-        if (e.kind !== "native") return
+        // 同上：**只有 PTY 没有回合概念**（字节流），cli 与 native 都有
+        if (e.kind === "pty") return
         // 收尾当前发言。没有正在累积的发言时什么都不做——
         // 一个空的 turn 进了记录，界面上就是一个空气泡
         const open = e.openTurnId

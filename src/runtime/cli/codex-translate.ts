@@ -77,7 +77,19 @@ export function translateCodexEvent(
 
   if (type === "item.started" || type === "item.completed") return fromItem(sessionId, type, e, st)
 
-  if (type === "turn.completed") return [{ kind: "idle", sessionId }]
+  /**
+   * **`turn_end` 与 `idle` 是两件事，都要发。**
+   *
+   * `turn_end` 收尾**那条发言气泡**（把 `final` 置真），
+   * `idle` 收尾**账本上那条回合**。CLI 的一次结束事件同时意味着这两件事。
+   *
+   * 2026-08-09（作者试用后修）：只发 `idle` 的话，agent 的气泡 `final`
+   * 永远是 false——界面上它永远显示成「还在说」，`busy` 也永远为真。
+   * **顺序要紧**：先收尾气泡，再收尾回合。
+   */
+  if (type === "turn.completed") {
+    return [{ kind: "turn_end", sessionId }, { kind: "idle", sessionId }]
+  }
 
   if (type === "turn.failed") {
     // **出声再收口**（规格 7.5）。只 idle 的话，一次失败在界面上和成功没区别
@@ -87,6 +99,8 @@ export function translateCodexEvent(
         sessionId,
         text: `外部 CLI 报告这一轮失败：${e.error?.message ?? "（没有说明原因）"}`,
       },
+      // 失败的一轮同样要收尾气泡：**半截话挂在那里比失败本身更让人困惑**
+      { kind: "turn_end", sessionId },
       { kind: "idle", sessionId },
     ]
   }

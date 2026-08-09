@@ -140,6 +140,17 @@ function fromResult(sessionId: SessionId, e: ClaudeEvent): AgentEvent[] {
     const why = e.result ?? e.stop_reason ?? "（CLI 没有说明原因）"
     out.push({ kind: "notice", sessionId, text: `外部 CLI 报告这一轮失败：${why}` })
   }
+  /**
+   * **`turn_end` 与 `idle` 是两件事，都要发。**
+   *
+   * `turn_end` 收尾**那条发言气泡**（把 `final` 置真），
+   * `idle` 收尾**账本上那条回合**。CLI 的一次结束事件同时意味着这两件事。
+   *
+   * 2026-08-09（作者试用后修）：只发 `idle` 的话，agent 的气泡 `final`
+   * 永远是 false——界面上它永远显示成「还在说」，`busy` 也永远为真。
+   * **顺序要紧**：先收尾气泡，再收尾回合。
+   */
+  out.push({ kind: "turn_end", sessionId })
   // **无论成败都要 idle**：账本靠它给回合收口，不收口就是一条永久 running 的 Run
   out.push({ kind: "idle", sessionId })
   return out

@@ -387,3 +387,59 @@ describe("子 agent 的 chip 组（①-B″ · S1 界面）", () => {
     expect(seen).toHaveLength(2)
   })
 })
+
+describe("cli 会话与 native 一样是对话（①-C 修）", () => {
+  /**
+   * **2026-08-09 作者试用时报的**：
+   * *「选择 deepseek 模型的时候我们还可以互相进行对话交流，
+   * 但是在选择 codex cli 和 claude cli 的时候，我发现看不到我的输入的内容，
+   * 只能看到反馈的内容。」*
+   *
+   * 根因是**判别式加宽之后，一句字符串比较悄悄改了含义**：
+   * `userTurn` 的门写的是 `e.kind !== "native"`，本意是
+   * 「**PTY** 终端自己会回显，不必再补一条」。加了 `cli` 之后，
+   * 这个门把 cli 也挡了——而 cli 没有终端回显，用户的话就此消失。
+   *
+   * **类型系统抓不到这一类**：它不是穷尽性检查，是运行时的字符串比较。
+   * 所以门要改成正面点名那个例外（`=== "pty"`），而不是列举「谁是正常的」。
+   */
+  const cli = () => {
+    const h = hub()
+    h.track("s", "cli")
+    return h
+  }
+
+  it("**用户自己的发言要进记录** —— 这是作者撞到的那个", () => {
+    const h = cli()
+    h.userTurn("s", "你好")
+    const items = h.subscribe("s").items
+    expect(items.filter((i) => i.type === "turn" && i.who === "user")).toHaveLength(1)
+  })
+
+  it("pty 仍然不进 —— 终端本来就会回显，再补一条是重复", () => {
+    const h = hub()
+    h.track("s", "pty")
+    h.userTurn("s", "你好")
+    expect(h.subscribe("s").items).toEqual([])
+  })
+
+  it("**agent 的回复要能收尾** —— 不收尾的话它永远显示成还在说", () => {
+    const h = cli()
+    h.ingest("s", { kind: "output", sessionId: "s", data: "回复" })
+    h.ingest("s", { kind: "turn_end", sessionId: "s" })
+    const turn = h.subscribe("s").items.find((i) => i.type === "turn" && i.who === "agent")
+    expect(turn).toMatchObject({ final: true })
+  })
+
+  it("一问一答之后，记录里是两条：你的和它的", () => {
+    const h = cli()
+    h.userTurn("s", "问")
+    h.ingest("s", { kind: "output", sessionId: "s", data: "答" })
+    h.ingest("s", { kind: "turn_end", sessionId: "s" })
+    const turns = h.subscribe("s").items.filter((i) => i.type === "turn")
+    expect(turns.map((t) => (t.type === "turn" ? `${t.who}:${t.text}` : ""))).toEqual([
+      "user:问",
+      "agent:答",
+    ])
+  })
+})

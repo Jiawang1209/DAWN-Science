@@ -65,6 +65,32 @@ test.describe("CLI agent 在对话框里", () => {
     await expect(page.getByText(/假 CLI 已应答：你好/)).toBeVisible({ timeout: 30_000 })
   })
 
+  test("**你自己说的话也要在对话里** —— 作者试用时报的那个", async ({ dawn }) => {
+    const { page } = dawn
+    await startFakeClaude(page)
+    await page.getByPlaceholder(/回车发送/).fill("我说的这句话")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假 CLI 已应答/)).toBeVisible({ timeout: 30_000 })
+
+    /**
+     * 走 native 时你看得见自己说的话，走 cli 时看不见——
+     * 根因是 `userTurn` 的门写的是 `kind !== "native"`，
+     * 本意是「PTY 终端自己会回显」，加了 `cli` 之后**含义悄悄变了**。
+     */
+    await expect(page.locator(".turn.user")).toContainText("我说的这句话")
+  })
+
+  test("**agent 的气泡要收尾** —— 不收尾它永远显示成还在说", async ({ dawn }) => {
+    const { page } = dawn
+    await startFakeClaude(page)
+    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假 CLI 已应答/)).toBeVisible({ timeout: 30_000 })
+    // 「中止」在没有进行中的回合时应当不可用——它反映的正是 busy 已经落回 false
+    await page.keyboard.press("Meta+k")
+    await expect(page.getByRole("option", { name: /中止/ })).toContainText(/没有正在进行|暂未开放/)
+  })
+
   test("**工具调用落在账本上** —— 判据 ②，走 PTY 时这里只有一团字节", async ({ dawn }) => {
     const { page, dbPath } = dawn
     await startFakeClaude(page)

@@ -122,14 +122,21 @@ describe("shell 不被重启", () => {
     expect(container.querySelector(".conversation")).toBe(first)
   })
 
-  it("会话头部跟着切换的会话走", () => {
+  /**
+   * **2026-08-09：agent 名从会话头部搬到了 composer 的 pill。**
+   * 意图不变——切会话时这个显示必须跟着走。
+   *
+   * Hermes 对这颗 pill 的原话正是这条断言的理由：
+   * *"Display follows **THIS** surface's SessionView — never the primary-only globals."*
+   * 显示的是「这个会话」的 agent，不是某个全局当前值。
+   */
+  it("当前 agent 跟着切换的会话走，不是某个全局值", () => {
+    const props = { items: [], agents: ["claude", "codex"], onSend: () => {}, onNewSession: () => {} }
     const { rerender } = render(
-      <ConversationView session={session("A", { agentId: "claude" })} items={[]} onSend={() => {}} />,
+      <ConversationView session={session("A", { agentId: "claude" })} {...props} />,
     )
     expect(screen.getByText("claude")).toBeDefined()
-    rerender(
-      <ConversationView session={session("B", { agentId: "codex" })} items={[]} onSend={() => {}} />,
-    )
+    rerender(<ConversationView session={session("B", { agentId: "codex" })} {...props} />)
     expect(screen.getByText("codex")).toBeDefined()
   })
 })

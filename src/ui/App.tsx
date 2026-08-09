@@ -339,6 +339,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 session={session}
                 items={items}
+                agents={agentIds}
+                onNewSession={startSession}
                 terminalTrimmed={termTrimmed}
                 disabled={session.state === "exited"}
                 onAbort={

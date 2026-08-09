@@ -13,7 +13,6 @@ type Page = import("@playwright/test").Page
 
 async function newSession(page: Page) {
   await page.getByRole("button", { name: /新建会话/ }).click()
-  await page.getByRole("button", { name: "ds-chat", exact: true }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 

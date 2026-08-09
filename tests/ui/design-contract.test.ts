@@ -169,6 +169,48 @@ describe("设计契约 · 可访问性与文案", () => {
   })
 })
 
+describe("设计契约 · 表单控件一律走 .control", () => {
+  /**
+   * **2026-08-09 由一张截图撞出来的生产缺陷。**
+   *
+   * 全应用最主要的那个输入框——composer 的 textarea——`className` 是空的。
+   * 它的样式来自 `.composer textarea`，而那条规则是 `.control` **七条属性的逐字复制**。
+   *
+   * 抄到了长相，**漏掉了行为**：`:focus-visible` 的聚焦环只挂在 `.control` 上。
+   * 于是它退回 Chromium 默认聚焦环，那个环取的是**操作系统强调色**——
+   * 与主题无关，在琥珀色系统上看着像警告态。
+   *
+   * 侧栏的 `<select>` 是同一个毛病。三个控件里两个中招，
+   * 说明这不是一次疏忽，是缺一条规则。
+   */
+  it("组件里的 textarea / input / select 都带 control 类", () => {
+    const OPEN = /<(textarea|input|select)(\s|$)/
+    for (const f of tsxFiles()) {
+      const lines = read(f).split("\n")
+      const bad: string[] = []
+      lines.forEach((line, i) => {
+        if (isComment(line) || !OPEN.test(line)) return
+        // 开标签可能跨行，往下看到 `>` 为止
+        const tag = lines.slice(i, i + 12).join(" ")
+        const head = tag.slice(0, tag.indexOf(">") + 1)
+        if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`${i + 1}: ${line.trim()}`)
+      })
+      expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqual([])
+    }
+  })
+
+  it("**.control 的盒子属性只在一处定义** —— 复制它就会漏掉它的行为", () => {
+    // `.composer textarea` 与 `.proj-switch select` 都曾把这七条抄了一遍。
+    // 抄的人拿不到 `:focus-visible`，因为那一条挂在类上而不是元素上
+    const css = read("styles.css")
+    const owners = [...css.matchAll(/^([^{\n]*\b(textarea|select|input)\b[^{\n]*)\{([^}]*)\}/gm)]
+    const bad = owners
+      .filter(([, sel, , body]) => !/^\.control/.test(sel!.trim()) && /\bbackground:|\bborder:/.test(body!))
+      .map(([, sel]) => sel!.trim())
+    expect(bad, "这些选择器在重新定义 .control 的盒子。加 class，不要抄属性").toEqual([])
+  })
+})
+
 describe("设计契约 · 已经踩过的坑", () => {
   it("不使用 window.prompt / alert / confirm —— Electron 里它们直接抛错", () => {
     // 2026-08-08：`window.prompt` 抛 "prompt() is not supported."，

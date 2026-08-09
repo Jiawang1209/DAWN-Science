@@ -29,7 +29,7 @@ test("项目概览是侧栏底部入口，不是首页", async ({ dawn }) => {
   await expect(page.locator(".panels")).toBeVisible()
   // 能回得来——单向门不是出路
   await page.getByRole("button", { name: /新建会话/ }).click()
-  await expect(page.locator(".agent-pick")).toBeVisible()
+  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 })
 
 test("设置可达且可返回", async ({ dawn }) => {
@@ -43,7 +43,6 @@ test("设置可达且可返回", async ({ dawn }) => {
 test("会话建好后出现在侧栏列表里", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: /新建会话/ }).click()
-  await page.getByRole("button", { name: "ds-chat", exact: true }).click()
   // 列表里应当出现这个会话，且带状态
   await expect(page.locator(".session-list .row")).toHaveCount(1)
   await expect(page.locator(".session-list .state")).toBeVisible()

@@ -292,22 +292,29 @@ pre {
 }
 .turn { margin-bottom: 12px; }
 .turn .who { display: block; color: var(--dawn-text-3); font-size: 11px; margin-bottom: 2px; }
+/* 输入区在上、控件行在下且右对齐 —— 学自 Hermes composer 的
+   `<div className="ml-auto flex …">`。**控件靠右，输入区独占一整行** */
 .composer {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--dawn-stroke-4);
 }
+.composer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+/* 2026-08-09：这里原本把 `.control` 的七条属性逐字抄了一遍，
+   **抄到了长相，漏掉了行为**——`:focus-visible` 的聚焦环只挂在 `.control` 上，
+   于是全应用最主要的那个输入框用的是 Chromium 默认聚焦环（取 macOS 系统强调色，
+   与主题无关，在琥珀色系统上看着像警告态）。现在它走 `.control`，这里只留自己的几何 */
 .composer textarea {
-  flex: 1;
   min-height: 52px;
   resize: vertical;
   padding: 8px;
-  border: 1px solid var(--dawn-stroke-3);
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-input);
-  color: var(--dawn-text-1);
-  font: inherit;
 }
 .abort { margin-left: auto; }
 .empty-conv { align-items: center; justify-content: center; }
@@ -346,19 +353,32 @@ pre {
   padding: 8px;
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
+/* 同上：原本也是 `.control` 的逐字复制，同样丢了聚焦环。只留自己的几何 */
 .proj-switch select {
   flex: 1;
+  width: auto;
   padding: 5px 6px;
-  border: 1px solid var(--dawn-stroke-3);
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-input);
-  color: var(--dawn-text-1);
-  font: inherit;
 }
 .new-session { display: flex; width: calc(100% - 16px); margin: 8px; }
-.agent-pick {
-  list-style: none;
-  margin: 0 8px 8px;
+/* agent pill 与它的菜单。**菜单向上弹**——pill 本身就贴在窗口底部 */
+.agent-pill { position: relative; display: inline-flex; }
+.agent-pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: 11px; }
+.agent-menu ul { list-style: none; margin: 0; padding: 0; }
+.agent-menu .name { flex: 1; }
+.agent-menu-head {
+  margin: 0;
+  padding: 6px 8px 4px;
+  color: var(--dawn-text-3);
+  font-size: 11px;
+}
+.empty-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.agent-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-modal-popover);
+  min-width: 200px;
   padding: 4px;
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-elevated);

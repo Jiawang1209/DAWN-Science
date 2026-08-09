@@ -111,3 +111,37 @@ for (const theme of ["亮色", "暗色"]) {
     ).toBeGreaterThanOrEqual(4.5)
   })
 }
+
+/**
+ * **2026-08-09 由一张截图撞出来的生产缺陷。**
+ *
+ * composer 的 textarea 此前 `className` 是空的，样式来自 `.composer textarea`
+ * ——那条规则是 `.control` 七条属性的逐字复制。抄到了长相，漏掉了行为：
+ * `:focus-visible` 的聚焦环只挂在 `.control` 上。
+ *
+ * 于是全应用最主要的输入框用的是 **Chromium 默认聚焦环，取操作系统强调色**，
+ * 与主题无关。在琥珀色系统上它看着像警告态。
+ *
+ * jsdom 验不了这个——它没有真实的 `:focus-visible` 与 outline 计算。
+ */
+test("主输入框的聚焦环用的是主题强调色，不是系统色", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: /新建会话/ }).click()
+  const ta = page.locator(".composer textarea")
+  await ta.click()
+
+  const s = await ta.evaluate((el) => {
+    const c = getComputedStyle(el)
+    // **让浏览器自己把令牌解析成 rgb**。令牌原文可能是 `#10a37f`、`color-mix(...)`、
+    // 或将来别的写法——自己解析等于把 CSS 的颜色语法在测试里重实现一遍
+    const probe = document.createElement("span")
+    probe.style.color = "var(--dawn-accent)"
+    document.body.appendChild(probe)
+    const accent = getComputedStyle(probe).color
+    probe.remove()
+    return { outline: c.outlineColor, style: c.outlineStyle, accent }
+  })
+  // `auto` 是 Chromium 的默认环 —— 它取**操作系统**强调色，不受我们控制
+  expect(s.style, "聚焦环必须由我们指定，不能是 Chromium 默认的 auto").not.toBe("auto")
+  expect(s.outline, `聚焦环应当等于强调色 ${s.accent}`).toBe(s.accent)
+})

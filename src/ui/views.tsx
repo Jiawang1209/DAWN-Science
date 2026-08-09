@@ -49,14 +49,22 @@ export function SessionSidebar({
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
 }) {
-  const [picking, setPicking] = useState(false)
   const active = projects.find((p) => p.projectId === activeProjectId)
+  /**
+   * **选 agent 这件事已经搬到 composer 的 pill 里了**（作者 2026-08-09 的要求，
+   * 对标 Hermes 的 model pill）。这里不再多一层选择——按下就用默认 agent 建。
+   *
+   * Hermes 的说法是「一个动作只有一个家」：同一个动作有两个入口，
+   * 迟早会有一个悄悄落后于另一个。
+   */
+  const fallbackAgent = agents[0]
 
   return (
     <aside className="sidebar">
       {/* 项目切换器放最上面，一行——它是上下文，不是主角 */}
       <div className="proj-switch">
         <select
+          className="control"
           value={activeProjectId ?? ""}
           onChange={(e) => onPickProject(e.target.value)}
           aria-label="当前项目"
@@ -78,8 +86,8 @@ export function SessionSidebar({
       <Button
         variant="outline"
         className="new-session"
-        disabled={!active || agents.length === 0}
-        onClick={() => setPicking((v) => !v)}
+        disabled={!active || !fallbackAgent}
+        onClick={() => fallbackAgent && onNewSession(fallbackAgent)}
       >
         ＋ 新建会话
       </Button>
@@ -94,23 +102,6 @@ export function SessionSidebar({
             </Button>
           ) : null}
         </div>
-      ) : null}
-
-      {picking && active ? (
-        <ul className="agent-pick">
-          {agents.map((a) => (
-            <li key={a}>
-              <Row
-                onClick={() => {
-                  setPicking(false)
-                  onNewSession(a)
-                }}
-              >
-                {a}
-              </Row>
-            </li>
-          ))}
-        </ul>
       ) : null}
 
       <ul className="session-list">
@@ -143,17 +134,122 @@ export function SessionSidebar({
   )
 }
 
+/* ── agent 选择器 ─────────────────────────────────────────────────── */
+
+/**
+ * agent pill。**长在 composer 右下角，不在侧栏。**
+ *
+ * 学自 Hermes `app/chat/composer/model-pill.tsx`，它自己的注释就是这次搬家的理由：
+ * > *"Composer model selector — **the relocated status-bar pill**."*
+ * > *"Display follows THIS surface's SessionView — **never the primary-only globals**
+ * >  — so side-by-side panes each show their own model."*
+ *
+ * 后半句是作用域纪律：**显示的是「这个会话」的 agent，不是某个全局的当前值。**
+ * 将来做分屏时，两个面各自显示各自的——这一点现在就定下来，比以后改便宜。
+ *
+ * ## 一处与 Hermes 的硬差别
+ *
+ * Hermes 的模型能会话中途换。**我们的 `agentId` 在 `createSession` 时就绑死了**，
+ * 所以点菜单里的一项只能是「用它**新建**一个会话」。
+ *
+ * 让人以为是就地切换、实际悄悄开了个新会话，属于静默偏离（规格 7.5）。
+ * 所以菜单标题写死「新建会话，用：」——**歧义在文案里消掉，不留给用户猜**。
+ */
+export function AgentPill({
+  agents,
+  current,
+  kind,
+  onPick,
+  triggerLabel,
+}: {
+  agents: readonly string[]
+  /** 当前会话用的 agent。空态没有会话，因此可缺省 */
+  current?: string | undefined
+  kind?: "native" | "pty" | undefined
+  onPick: (agentId: string) => void
+  /** 空态用「换一个 agent」，有会话时用 agent 名本身 */
+  triggerLabel?: string | undefined
+}) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+
+  // 点到别处就收起。**打开了就必须关得掉**——菜单赖着不走比没有菜单更烦
+  useEffect(() => {
+    if (!open) return
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("pointerdown", away)
+    return () => document.removeEventListener("pointerdown", away)
+  }, [open])
+
+  if (agents.length === 0) return null
+
+  return (
+    <div className="agent-pill" ref={box}>
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {triggerLabel ?? current ?? "选择 agent"}
+        {kind ? <span className="kind">{kind === "pty" ? "外部 CLI" : "内置"}</span> : null}
+        <span aria-hidden="true">▾</span>
+      </Button>
+
+      {open ? (
+        <div
+          className="agent-menu"
+          role="menu"
+          aria-label="新建会话"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false)
+          }}
+        >
+          {/* **这句是整个组件的要害。** agentId 建会话时绑死，换 agent 只能新建 */}
+          <p className="agent-menu-head">新建会话，用：</p>
+          <ul>
+            {agents.map((a) => (
+              <li key={a}>
+                <Row
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false)
+                    onPick(a)
+                  }}
+                >
+                  <span className="name">{a}</span>
+                  {a === current ? <span className="hint">当前</span> : null}
+                </Row>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
   session,
   items,
+  agents,
   onSend,
+  onNewSession,
   onAbort,
   disabled,
   terminalTrimmed,
 }: {
   session: SessionSummary
+  /** 可选的 agent 清单，给 composer 右下角那颗 pill 用 */
+  agents?: readonly string[] | undefined
+  /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
+  onNewSession?: ((agentId: string) => void) | undefined
   /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
   items: readonly TranscriptItem[]
   onSend: (text: string) => void
@@ -177,10 +273,10 @@ export function ConversationView({
 
   return (
     <div className="conversation">
+      {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
+          这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
-        <span className="agent">{session.agentId}</span>
         <span className={`state ${session.state}`}>{session.state}</span>
-        <span className="kind">{session.kind === "pty" ? "外部 CLI" : "内置"}</span>
         {busy && onAbort ? (
           <Button variant="outline" size="sm" className="abort" onClick={onAbort}>
             停止
@@ -219,6 +315,7 @@ export function ConversationView({
         }}
       >
         <textarea
+          className="control"
           value={draft}
           onChange={(e) => setDraft(session.sessionId, e.target.value)}
           placeholder={disabled ? "会话已结束" : "输入内容，回车发送"}
@@ -230,9 +327,26 @@ export function ConversationView({
             }
           }}
         />
-        <Button type="submit" variant="primary" disabled={disabled ?? false}>
-          发送
-        </Button>
+        {/**
+         * 右对齐的控件行。学自 Hermes composer `controls.tsx` 的
+         * `<div className="ml-auto flex …">`——**控件靠右，输入区靠左**。
+         *
+         * pill **不跟着 `disabled` 走**：会话结束时输入框该禁，
+         * 但"用另一个 agent 开一个新的"恰恰是那时最该给的出路。
+         */}
+        <div className="composer-controls">
+          {agents && onNewSession ? (
+            <AgentPill
+              agents={agents}
+              current={session.agentId}
+              kind={session.kind}
+              onPick={onNewSession}
+            />
+          ) : null}
+          <Button type="submit" variant="primary" disabled={disabled ?? false}>
+            发送
+          </Button>
+        </div>
       </form>
     </div>
   )
@@ -405,11 +519,19 @@ export function EmptyConversation({
       {first ? (
         <EmptyState
           title="开始一段对话"
-          description={`当前工作区已就绪。用 ${first} 开始，或在左栏挑一个别的 agent。`}
+          description="当前工作区已就绪。"
           action={
-            <Button variant="primary" onClick={() => onStart(first)}>
-              ＋ 用 {first} 开始
-            </Button>
+            /* 空态没有 composer，pill 就落在主动作旁边。
+               **不能只给默认那一个**——否则想用 codex 开第一个会话的人，
+               得先开一个 ds-chat 再换，那是为了迁就界面而多走一步 */
+            <div className="empty-actions">
+              <Button variant="primary" onClick={() => onStart(first)}>
+                ＋ 用 {first} 开始
+              </Button>
+              {agents.length > 1 ? (
+                <AgentPill agents={agents} onPick={onStart} triggerLabel="换一个 agent" />
+              ) : null}
+            </div>
           }
         />
       ) : (

@@ -12,8 +12,6 @@ import { test, expect, CANNED_REPLY, readRuns } from "./fixtures.js"
 /** 开一个会话，并等到能打字 */
 async function startSession(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /新建会话/ }).click()
-  // 弹出的 agent 列表里挑内置那个（PTY 的 claude/codex 未必装了）
-  await page.getByRole("button", { name: "ds-chat", exact: true }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 

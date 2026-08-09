@@ -9,8 +9,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nsed -i '' 's/background: var(--dawn-accent-solid); color: var(--dawn-on-accent)/background: var(--dawn-accent); color: var(--dawn-on-accent)/' src/ui/styles.css\nnpm run build >/dev/null 2>&1\necho \"=== 改回 --dawn-accent 之后 ===\"\nnpx playwright test e2e/theme.spec.ts --reporter=list -g \"WCAG\" 2>&1 | grep -E '✓|✘|只有|passed|failed'\nsed -i '' 's/background: var(--dawn-accent); color: var(--dawn-on-accent)/background: var(--dawn-accent-solid); color: var(--dawn-on-accent)/' src/ui/styles.css\nnpm run build >/dev/null 2>&1\necho \"=== 还原后 ===\"\nnpx playwright test e2e/theme.spec.ts --reporter=list -g \"WCAG\" 2>&1 | grep -E '✓|✘|passed|failed'",
-    "testCommand": "rm -rf test-results; npm test 2>&1 | tail -6; echo \"=== typecheck ===\"; npm run typecheck 2>&1 | tail -4; echo \"=== e2e 全量 ===\"; npx playwright test --reporter=list 2>&1 | tail -8",
+    "buildCommand": "rm -f e2e/_probe-look.spec.ts && cat >> e2e/theme.spec.ts <<'EOF'\n\n/**\n * **2026-08-09 由一张截图撞出来的生产缺陷。**\n *\n * composer 的 textarea 此前 `className` 是空的，样式来自 `.composer textarea`\n * ——那条规则是 `.control` 七条属性的逐字复制。抄到了长相，漏掉了行为：\n * `:focus-visible` 的聚焦环只挂在 `.control` 上。\n *\n * 于是全应用最主要的输入框用的是 **Chromium 默认聚焦环，取操作系统强调色**，\n * 与主题无关。在琥珀色系统上它看着像警告态。\n *\n * jsdom 验不了这个——它没有真实的 `:focus-visible` 与 outline 计算。\n */\ntest(\"主输入框的聚焦环用的是主题强调色，不是系统色\", async ({ dawn }) => {\n  const { page } = dawn\n  await page.getByRole(\"button\", { name: /新建会话/ }).click()\n  const ta = page.locator(\".composer textarea\")\n  await ta.click()\n\n  const s = await ta.evaluate((el) => {\n    const c = getComputedStyle(el)\n    return { outline: c.outlineColor, style: c.outlineStyle, accent: getComputedStyle(document.documentElement).getPropertyValue(\"--dawn-accent\").trim() }\n  })\n  // `auto` 是 Chromium 的默认环 —— 它取系统强调色，不受我们控制\n  expect(s.style, \"聚焦环必须由我们指定，不能是 Chromium 默认的 auto\").not.toBe(\"auto\")\n  const rgb = (v: string) => (v.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number).join()\n  expect(rgb(s.outline), `聚焦环 ${s.outline} 应当等于强调色 ${s.accent}`).toBe(rgb(s.accent))\n})\nEOF\nnpm run build >/dev/null 2>&1 && npx playwright test --reporter=list 2>&1 | tail -8",
+    "testCommand": "rm -rf test-results && npx playwright test --reporter=list 2>&1 | tail -4 && npm test 2>&1 | grep -E 'Tests |Test Files' && npm run typecheck 2>&1 | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -44,8 +44,8 @@
   "hotPaths": [
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 61,
-      "lastAccessed": 1786236890332,
+      "accessCount": 62,
+      "lastAccessed": 1786240278407,
       "type": "file"
     },
     {

@@ -183,6 +183,36 @@
 
 **`Field`** —— 标签 + 控件 + 说明/错误，并统一处理 `htmlFor` / `aria-describedby`。漏掉就是一个无障碍缺陷，而这类缺陷不会有人在界面上看出来。文本控件组合 `.control` 这个共享形状。
 
+**`.control` —— 每一个 `<textarea>` / `<input>` / `<select>` 都必须挂它，不许抄它的属性。**
+
+> **2026-08-09 由一张截图撞出来的缺陷。** composer 的 textarea 与侧栏的 select
+> 都没有这个类；它们的样式来自各自的选择器，而那些选择器是 `.control`
+> **七条属性的逐字复制**。抄到了长相，**漏掉了行为**——
+> `:focus-visible` 的聚焦环只挂在类上。
+>
+> 后果：全应用最主要的输入框用的是 **Chromium 默认聚焦环，取操作系统强调色**，
+> 与主题无关。在琥珀色系统上它看着像警告态。
+>
+> 三个控件里两个中招，所以这不是一次疏忽，是缺一条规则。现在有两条扫描守着：
+> 控件必须带 `control` 类；样式表里不许有别的选择器重新定义 `.control` 的盒子。
+
+### agent 选择器长在 composer 右下角
+
+对标 Hermes `app/chat/composer/model-pill.tsx`，它自己的注释就是这次搬家的理由：
+
+> *"Composer model selector — **the relocated status-bar pill**."*
+> *"Display follows **THIS** surface's SessionView — never the primary-only globals
+> — so side-by-side panes each show their own model."*
+
+后半句是**作用域纪律**：显示的是「这个会话」的 agent，不是某个全局当前值。
+
+**「选 agent」只有一个家**——就在你要说话的那个输入框旁边。侧栏的「新建会话」按下
+直接用默认 agent 建，不再多一层选择。同一个动作两个入口，迟早有一个悄悄落后于另一个。
+
+**一处与 Hermes 的硬差别必须写在界面上**：Hermes 的模型能会话中途换，
+我们的 `agentId` 在 `createSession` 时绑死。所以菜单标题是「新建会话，用：」——
+让人以为是就地切换、实际悄悄开了个新会话，属于静默偏离（规格 7.5）。
+
 ---
 
 ## 加载与失败：五种状态，各有出路

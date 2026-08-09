@@ -43,10 +43,52 @@
 
 ## 变更日志
 
+### 2026-08-09 — agent 选择器搬到 composer 右下角；并修掉主输入框的聚焦环
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 作者：*「不同的 API 以及 claude cli 和 codex cli 现在在左上角，
+  其实应该放到右下角，类似 hermes」*。
+- **What**:
+  - **新增 `AgentPill`**，长在 composer 的右对齐控件行里（`.composer-controls`），
+    与发送按钮同一行、在它左边——**Hermes `composer/controls.tsx` 的 `ml-auto` 那行就是这个顺序**。
+    composer 因此从「左右」改为「上下」：输入区独占一行，控件行在下且靠右。
+  - **侧栏那一层收掉**：`.agent-pick` 删除，「新建会话」按下直接用清单里第一个 agent 建。
+    Hermes 的说法是「一个动作只有一个家」——两个入口迟早有一个悄悄落后于另一个。
+  - **会话头部不再显示 agent 名与 kind**，它们搬进了 pill。同一个事实显示两次会各自漂移。
+  - **一处与 Hermes 的硬差别写在了界面上**：Hermes 的模型能会话中途换，
+    我们的 `agentId` 在 `createSession` 时绑死。所以菜单标题是「**新建会话，用：**」。
+    让人以为是就地切换、实际悄悄开了个新会话，属于静默偏离（规格 7.5）。
+  - 空态也放了一颗 pill（「换一个 agent」），否则想用 codex 开**第一个**会话的人
+    得先开一个 ds-chat 再换。
+- **顺带修掉一个更早、更严重的缺陷**：**composer 的 textarea `className` 是空的。**
+  它的样式来自 `.composer textarea`，而那条规则是 `.control` **七条属性的逐字复制**。
+  抄到了长相，**漏掉了行为**——`:focus-visible` 的聚焦环只挂在 `.control` 上。
+  于是全应用最主要的输入框用的是 **Chromium 默认聚焦环，取操作系统强调色**
+  （实测 `rgb(229,151,0)`，与主题无关，看着像警告态）。侧栏的 `<select>` 同病。
+  **三个控件里两个中招，说明这不是疏忽，是缺一条规则。**
+- **Impact**: 交互位置变化。协议、账本、runtime 未触及。
+  `ConversationView` 新增两个可选 prop（`agents` / `onNewSession`），不传则不显示 pill。
+- **Verification**:
+  - 615 单元测试 / 48 文件全绿；typecheck 干净；**e2e 从 22 条增至 28 条**。
+  - **两条新扫描规则各故意破坏一次，确认都会响**（拿掉控件的 `control` 类、
+    在样式表里重抄 `.control` 的盒子），还原后 16/16 绿。
+  - **13 条旧断言按新流程改写，意图未变**，每处都标注了为什么改。
+  - 真机 e2e **量的是几何不是结构**：控件行右缘贴 composer 右缘、发送在 pill 右侧、
+    整行在输入框下方、菜单向上弹（pill 贴着窗口底部，向下会被切掉）。
+  - 聚焦环修复配了常驻断言：`outlineStyle` 不得为 `auto`（那是 Chromium 取系统色的默认环），
+    且 `outlineColor` 必须等于 `--dawn-accent` 的解析值。**修复前后各跑一次确认它会响。**
+- **两次把截图看岔了，如实记录**：①「选中态高亮错了」实为 `transition: background-color
+  100ms` 的动画中间帧；②「composer 左下角多了一个发送按钮」——DOM 与区域穷举都证明
+  那里空无一物。**两次都是量出来的数据推翻了我看图的判断**，而第二次的追查
+  顺手撞出了聚焦环那个真缺陷。
+
+---
+
 ### 2026-08-09 — 记录 Codex 桌面版的可学之处，并据此修正三处规划
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `0217993`
 - **Motivation**: 我先前判断 `app_learn`（`openai-codex-electron` 的 asar 解包）
   「除了灰阶没别的可学」。**这个判断是错的**，作者指出后复查确认：
   我只读了 CSS 的**内容**，没读 CSS 的**文件名**，也没读依赖表——而那两样

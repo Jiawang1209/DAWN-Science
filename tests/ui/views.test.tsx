@@ -52,12 +52,19 @@ describe("侧栏 · 新建会话是主动作", () => {
     expect(screen.getByRole("button", { name: /新建会话/ })).toBeDefined()
   })
 
-  it("点开后列出可选 agent，选中即触发创建", () => {
+  /**
+   * **2026-08-09 改写。** 原来这条是「点开 → 列出 agent → 选一个」。
+   * agent 的选择已搬到 composer 右下角的 pill（作者要求，对标 Hermes 的 model pill），
+   * 侧栏这一层因此收掉——**一个动作只有一个家**。
+   *
+   * 意图没变：这条仍然守着「侧栏能把会话建出来」，
+   * 它是 2026-08-08 那次修正的核心（初版 UI 里 createSession 一次都没被调用）。
+   */
+  it("**按下就建，不再多一层选择** —— 用清单里的第一个 agent", () => {
     const onNewSession = vi.fn()
     render(<SessionSidebar {...base} onNewSession={onNewSession} />)
     fireEvent.click(screen.getByRole("button", { name: /新建会话/ }))
-    fireEvent.click(screen.getByRole("button", { name: "claude-code" }))
-    expect(onNewSession).toHaveBeenCalledWith("claude-code")
+    expect(onNewSession).toHaveBeenCalledWith("ds-chat")
   })
 
   // **2026-08-09 改写。** 原来这条断言「没有项目 ⇒ 禁用 + 提示先打开文件夹」。
@@ -174,8 +181,19 @@ describe("对话视图", () => {
     expect((screen.getByPlaceholderText(/会话已结束/) as HTMLTextAreaElement).disabled).toBe(true)
   })
 
+  // **2026-08-09：这个事实搬了家，但必须还在。**
+  // 它原来在会话头部，现在在 composer 右下角那颗 pill 里——
+  // 同一个事实显示两次会各自漂移，所以头部那份撤掉了
   it("标出会话是外部 CLI 还是内置", () => {
-    render(<ConversationView session={session({ kind: "pty" })} items={[]} onSend={noop} />)
+    render(
+      <ConversationView
+        session={session({ kind: "pty" })}
+        items={[]}
+        agents={["ds-chat"]}
+        onNewSession={noop}
+        onSend={noop}
+      />,
+    )
     expect(screen.getByText("外部 CLI")).toBeDefined()
   })
 })

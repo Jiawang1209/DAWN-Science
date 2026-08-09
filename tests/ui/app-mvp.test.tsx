@@ -183,8 +183,9 @@ async function openAndStart(h: Harness) {
   fireEvent.click(await screen.findByRole("button", { name: "打开文件夹为新项目" }))
   await waitFor(() => expect(h.calls.some((c) => c.op === "openProject")).toBe(true))
 
+  // 2026-08-09：不再有「点开 → 挑 agent」那一步。侧栏按下就用默认 agent 建，
+  // 换 agent 的入口搬到了 composer 右下角的 pill
   fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
-  fireEvent.click(await screen.findByRole("button", { name: "ds-chat" }))
   await waitFor(() => expect(h.calls.some((c) => c.op === "createSession")).toBe(true))
   // **等到会话真的挂上再返回**。只等 createSession 落在 calls 里是不够的——
   // 那一刻 setSessionId 还没被 React 处理完，事件会因为「不是当前会话」被滤掉

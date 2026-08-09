@@ -574,7 +574,16 @@ Electron 43.3.0 · Node 24.18.1 · V8 ABI 148
 
 `DAWN_KERNEL=ir` 运行，内核进程起得来（`pid`、`interrupt_mode=signal` 都拿到了），但 **25 秒内未响应 `kernel_info_request`**。
 
-根因：本机 `ir` kernelspec 指向 `/Library/Frameworks/R.framework/Resources/bin/R`（旧安装），而当前 R 是 `/usr/local/bin/R` 4.6.1，且 **`IRkernel` 包根本没装**——是一条过期的注册项。**与协议栈无关**，故不影响 Spike D 判定。
+根因：**`IRkernel` 包没装**。**与协议栈无关**，故不影响 Spike D 判定。
+
+> **2026-08-10 更正**：上一版这里写着「kernelspec 指向旧安装，而当前 R 是 `/usr/local/bin/R`」。
+> **那是错的**——`/usr/local/bin/R` 是一条**软链接**，指向的正是
+> `/Library/Frameworks/R.framework/Resources/bin/R`（R 4.6.1），两者是同一个二进制。
+> kernelspec 一直是对的，唯一的原因就是包没装。
+>
+> 这条更正改变了 S9 该防的失败形状：**不是「过期的注册项」，而是「注册项没问题、语言侧的包缺失」**。
+> 两者要给出完全不同的提示——前者该让人重装 kernelspec，后者该让人装包。
+> 把它们混成一句「内核起不来」，人就会去修一个没坏的东西。
 
 按计划 Step 7 的规定，R 支持后移到阶段 ②-A。届时两条路可选：装 `IRkernel`，或用 Rho 采用的 **Ark**（Posit 出品，Rust 实现）。
 

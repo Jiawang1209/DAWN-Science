@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npm run test:e2e:kernel 2>&1 | tail -5",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2\nnpm run test:e2e:only 2>&1 | tail -3",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"scripts/build-electron.mjs\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('''  \"@earendil-works/pi-coding-agent\",\n]''','''  \"@earendil-works/pi-coding-agent\",\n  /**\n   * **Jupyter 那一串（②-A · 2026-08-10 加入）。**\n   *\n   * `zeromq` 是原生的，本来就在上面。但 `spawnteract` / `enchannel` /\n   * `@nteract/messaging` 是纯 JS，打进 bundle 之后会把\n   * **rxjs 6 整个内联进主进程包**（实测 863 处）——\n   * **每次启动都付这份解析代价，哪怕用户根本不开内核**。\n   *\n   * `channel.ts` 里已经改成了 `await import()`，但 esbuild 在\n   * `bundle: true` 下会把动态 import 内联回同一个 chunk，\n   * **所以光靠动态 import 不够，必须同时 external**。\n   */\n  \"spawnteract\",\n  \"enchannel-zmq-backend\",\n  \"@nteract/messaging\",\n]''', 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1\necho \"主进程包: $(du -h dist/electron/main.js | cut -f1)\"\nfor m in rxjs nteract enchannel spawnteract; do echo \"  $m: $(grep -c \"$m\" dist/electron/main.js) 处\"; done",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2\nnpx playwright test --grep-invert \"内核会话\" 2>&1 | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

@@ -43,6 +43,31 @@
 
 ## 变更日志
 
+### 2026-08-10 — 还欠账（其二、其五）：rxjs 出主进程包，两个超时调回
+
+- **Type**: perf
+- **Commit**: 待回填
+- **Motivation**: 作者定的两条——超时调回、rxjs 别进主进程包。
+- **What**:
+  - **消息工厂改为注入**：`createKernelChannel` 不再 import `@nteract/messaging`，
+    由 `launchKernelChannel`（async）`await import()` 之后传进去。
+    **副产品：单元测试也不必再碰 nteract。**
+  - **但光靠动态 import 不够**——esbuild 在 `bundle: true` 下会把动态 import
+    内联回同一个 chunk。**必须同时 external**：
+    `spawnteract` / `enchannel-zmq-backend` / `@nteract/messaging` 加进清单
+    （`zeromq` 早就在，因为它是原生的）。
+  - `playwright.config.ts` 单条预算 150s → **60s**；
+    `firstWindow` 90s → **30s**（原值）。
+- **Impact**:
+  - **主进程包 2.2M → 1.2M，rxjs 863 处 → 0 处。**
+    此前每次启动都要解析这一大块，**哪怕用户根本不开内核**。
+  - 超时调回的理由：隔离真内核 e2e 之后全量已回到 2.1 分钟，
+    **留着放宽的阈值等于留着一层没人再需要的容错**——
+    它只会让下一次真的变慢时没人发现。
+- **Verification**: 986 单元 + 78 e2e + 隔离的真内核 e2e 全绿。
+  **特意真起了一次到内核那一步**：`build-electron.mjs` 自己的注释警告过，
+  external 这类改动「只有真启动一次才会撞上」（pi 的 `createRequire` 冲突就是先例）。
+
 ### 2026-08-10 — ②-A 收口：S14 变量面板接上界面，G3 通过
 
 - **Type**: feat

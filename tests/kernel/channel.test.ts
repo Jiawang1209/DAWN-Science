@@ -14,6 +14,14 @@ import { createKernelChannel, type RawChannel, type KernelProcess } from "../../
 import type { JupyterMessage } from "../../src/kernel/types.js"
 
 let seq = 0
+/** 假的 `execute_request` 工厂。**测试不必碰 nteract** —— 这正是注入的收益 */
+const makeExecute = (code: string, opts?: Record<string, unknown>): JupyterMessage => ({
+  header: { msg_id: `x${++seq}`, msg_type: "execute_request" },
+  parent_header: {},
+  metadata: {},
+  content: { code, ...(opts ?? {}) },
+})
+
 const msg = (msg_type: string, parent?: string): JupyterMessage => ({
   header: { msg_id: `m${++seq}`, msg_type },
   parent_header: parent ? { msg_id: parent } : {},
@@ -55,6 +63,7 @@ function make(over: Partial<Parameters<typeof createKernelChannel>[0]> = {}) {
     process: f.process,
     kernelInstanceId: "k-1",
     handshake,
+    makeExecute,
     sleep: async () => {},
     ...over,
   })
@@ -207,6 +216,7 @@ describe("关停：顺序是正式代码", () => {
       process: { pid: 1, kill: () => order.push("kill") },
       kernelInstanceId: "k",
       handshake: msg("kernel_info_request"),
+      makeExecute,
       sleep: async () => {
         order.push("drain")
       },
@@ -236,6 +246,7 @@ describe("关停：顺序是正式代码", () => {
       process: { pid: 1, kill: () => { throw new Error("ESRCH") } },
       kernelInstanceId: "k",
       handshake: msg("kernel_info_request"),
+      makeExecute,
       sleep: async () => {},
     })
     await expect(ch.close()).resolves.toBeUndefined()
@@ -323,6 +334,7 @@ describe("中断：两条路，走错的症状是「点了停止什么也没发�
       process: { pid: 1, kill: () => { throw new Error("ESRCH") } },
       kernelInstanceId: "k",
       handshake: msg("kernel_info_request"),
+      makeExecute,
       sleep: async () => {},
     })
     expect(() => ch.interrupt()).toThrow(/发不出中断信号/)

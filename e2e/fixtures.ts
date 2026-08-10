@@ -197,25 +197,14 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       },
     })
     /**
-     * **等窗口的超时放宽到 90 秒**（2026-08-10）。
+     * 等第一个窗口。**30 秒是原值，2026-08-10 调回。**
      *
-     * 今晚全量 e2e 里红过三次，每次是**不同**的用例（palette / model-switch /
-     * kernels），单独跑与复跑都全过——查到最后是同一个根因：
-     *
-     * ```
-     * TimeoutError: electronApplication.firstWindow:
-     *   Timeout 30000ms exceeded while waiting for event "window"
-     * ```
-     *
-     * **不是测试逻辑坏了，是机器忙的时候 Electron 30 秒内没开出窗口。**
-     * ②-A 加进来的真内核用例让全量从 2.1 分钟涨到 3.6 分钟，
-     * 正好把这个阈值顶过了线。
-     *
-     * **放宽它不掩盖任何 bug**：启动要是真坏了，等再久也开不出窗口，
-     * 测试照样红。它掩盖的只是「这台机器此刻很忙」——
-     * 而**因为机器忙而红的测试会教人忽略红色**，那比慢几秒坏得多。
+     * 中途一度提到 90 秒，为的是绕开三次间歇红——后来查清根因是
+     * 真内核那条 e2e 会拖垮同一个 worker 里的下一条（已隔离，见
+     * `e2e/kernel-session.spec.ts`）。实测单独连启 5 次，每次稳定 1.0 秒；
+     * **30 秒仍有 30 倍余量**。
      */
-    const page = await app.firstWindow({ timeout: 90_000 })
+    const page = await app.firstWindow()
     // 渲染进程的报错要能被看见——这条通路本身就是 2026-08-08 补的
     page.on("console", (m) => {
       if (m.type() === "error") console.error("[渲染进程]", m.text())

@@ -32,6 +32,21 @@ const external = [
   "@earendil-works/pi-ai",
   "@earendil-works/pi-agent-core",
   "@earendil-works/pi-coding-agent",
+  /**
+   * **Jupyter 那一串（②-A · 2026-08-10 加入）。**
+   *
+   * `zeromq` 是原生的，本来就在上面。但 `spawnteract` / `enchannel` /
+   * `@nteract/messaging` 是纯 JS，打进 bundle 之后会把
+   * **rxjs 6 整个内联进主进程包**（实测 863 处）——
+   * **每次启动都付这份解析代价，哪怕用户根本不开内核**。
+   *
+   * `channel.ts` 里已经改成了 `await import()`，但 esbuild 在
+   * `bundle: true` 下会把动态 import 内联回同一个 chunk，
+   * **所以光靠动态 import 不够，必须同时 external**。
+   */
+  "spawnteract",
+  "enchannel-zmq-backend",
+  "@nteract/messaging",
 ]
 
 await build({

@@ -35,6 +35,8 @@ const ch = createKernelChannel({
    */
   handshake: kernelInfoRequest() as unknown as JupyterMessage,
   runIdOf: () => "run-integration",
+  makeExecute: (code, o) =>
+    (o ? executeRequest(code, o as never) : executeRequest(code)) as unknown as JupyterMessage,
 })
 
 /**

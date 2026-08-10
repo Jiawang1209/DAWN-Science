@@ -28,9 +28,6 @@
  *    适配器不解释 status，原样往上传——判断「中断成没成」是 K3 的事，
  *    而且判据是「内核还能不能算对一道题」，不是回复长什么样。
  */
-import { launchSpec } from "spawnteract"
-import { createMainChannel } from "enchannel-zmq-backend"
-import { executeRequest, kernelInfoRequest } from "@nteract/messaging"
 import { UserFacingError } from "../errors.js"
 import { diagnoseLaunch, discoverKernelSpecs } from "./specs.js"
 import type {
@@ -64,8 +61,21 @@ export interface KernelChannelOptions {
   kernelInstanceId: string
   /** 当前该记到哪条 run 上。**每次取，不缓存**：一个内核会跨很多轮 */
   runIdOf?: () => string | undefined
-  /** 握手消息。由调用方用 `@nteract/messaging` 的 `kernelInfoRequest()` 造 */
+  /** 握手消息。**由调用方造**——见下面 `makeExecute` 那段说明 */
   handshake: JupyterMessage
+  /**
+   * 造一条 `execute_request`。
+   *
+   * **为什么是注入而不是在这里 import。**
+   *
+   * `@nteract/messaging` 会把 **rxjs 6 整个拖进来**，而 `wiring.ts` 里
+   * `new KernelRuntime()` 是静态的——于是 rxjs 被打进了 **Electron 主进程包**
+   * （实测 863 处），**每次启动都付这份解析代价，哪怕用户根本不开内核**。
+   *
+   * 注入之后：`createKernelChannel` 不碰任何重依赖（单元测试也不必再碰），
+   * 而 `launchKernelChannel` 是 async 的，可以在真要起内核时才 `await import()`。
+   */
+  makeExecute: (code: string, opts?: Record<string, unknown>) => JupyterMessage
   /** 握手超时。超时要响亮失败，不能悄悄当成就绪 */
   handshakeTimeoutMs?: number
   /**
@@ -210,12 +220,12 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
    */
   const probe = async (expression: string, timeoutMs = 10_000): Promise<string | undefined> => {
     try {
-      const msg = executeRequest("", {
+      const msg = opts.makeExecute("", {
         silent: true,
         // **协议里就是 snake_case**，不改写成驼峰——改写等于给自己造一层要记的映射
         store_history: false,
         user_expressions: { v: expression },
-      }) as unknown as JupyterMessage
+      })
       const reply = await request(msg, { replyType: "execute_reply", timeoutMs })
       const ue = (reply.message.content as { user_expressions?: Record<string, unknown> }).user_expressions
       const v = ue?.v as { status?: string; data?: Record<string, unknown> } | undefined
@@ -230,7 +240,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
 
   /** 执行一段代码。**消息在这里造**——见 `types.ts` 里那段说明 */
   const execute = (code: string): string => {
-    const msg = executeRequest(code) as unknown as JupyterMessage
+    const msg = opts.makeExecute(code)
     send(msg)
     return msg.header.msg_id
   }
@@ -380,6 +390,18 @@ const STDERR_TAIL = 4000
 export async function launchKernelChannel(
   opts: LaunchOptions,
 ): Promise<KernelChannel & { ready(): Promise<void> }> {
+  /**
+   * **重依赖只在真要起内核时才加载。**
+   * 见 `KernelChannelOptions.makeExecute` 那段——静态 import 会把 rxjs
+   * 打进 Electron 主进程包，让每次启动都为一个多数会话用不到的功能买单。
+   */
+  const [{ launchSpec }, { createMainChannel }, { executeRequest, kernelInfoRequest }] =
+    await Promise.all([
+      import("spawnteract"),
+      import("enchannel-zmq-backend"),
+      import("@nteract/messaging"),
+    ])
+
   const discovery = discoverKernelSpecs()
 
   // **先查有没有这条注册项**：没有的话根本不必起进程，而且报错能更准
@@ -436,6 +458,8 @@ export async function launchKernelChannel(
     interruptMode: spec.interruptMode,
     ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
     handshake: kernelInfoRequest() as unknown as JupyterMessage,
+    makeExecute: (code, o) =>
+      (o ? executeRequest(code, o as never) : executeRequest(code)) as unknown as JupyterMessage,
     ...(opts.handshakeTimeoutMs ? { handshakeTimeoutMs: opts.handshakeTimeoutMs } : {}),
   })
 

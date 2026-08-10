@@ -43,6 +43,36 @@
 
 ## 变更日志
 
+### 2026-08-10 — ②-A · K5（下）· S14：变量内省，且不弄脏 Console
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: *「人能看见 agent 在这个会话里造出了什么。」*
+  一个持久会话跑久了，命名空间里有什么只有内核知道——
+  而人和 agent 共用同一个会话，**看不见就等于要靠猜**。
+- **What**:
+  - `KernelChannel.probe(expr)`：走 Jupyter 的 `silent: true` + `user_expressions`，
+    **结果从 reply 回来，不经 iopub 广播**。
+  - `src/kernel/variables.ts`：Python 的内省表达式 + 解析。
+    字段照 Rho 的 `ObjectSummary`（name / type / dimensions / preview /
+    **previewTruncated**）。
+- **Impact**:
+  - **不弄脏 Console 是硬要求**：直接执行内省代码的话，用户会看见一堆
+    自己没写过的代码在刷屏——**而面板每刷新一次就刷一次**。
+  - **中间套一层 base64**：`user_expressions` 回来的是 `repr()`，
+    直接返回 JSON 会带外层引号且内部全是转义，在 JS 侧反解析很脆。
+    **用一层编码换掉一整类解析 bug。**
+  - **R 暂不支持，且如实说不支持**：base R 里手搓 JSON 的风险大于收益，
+    而 `jsonlite` 不是标配——**假定它装了就是在猜用户的环境**。
+    回 `undefined` 而不是空列表：后者会被读成「这个会话里没有变量」。
+- **Verification**: 979 单元全绿；6 条内省测试跑**真内核**
+  （认得出变量与类型、函数/模块/下划线不列、预览截断显式标注）。
+  一处断言我写强了并当场更正：`silent` 抑制的是**输出**，
+  而 `status` 的 busy/idle **协议规定始终广播**——
+  要守的那件事仍然成立（`status` 本来就不进 transcript）。
+- **未完**：S14 的**面板界面与协议操作**还没做。内省这一层已验穿，
+  剩下的是把它接到界面上。
+
 ### 2026-08-10 — 把真内核 e2e 隔离出来：全量套件回到 2.1 分钟且全绿
 
 - **Type**: chore

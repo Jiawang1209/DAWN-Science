@@ -83,6 +83,19 @@ export interface KernelChannel {
    */
   execute(code: string): string
   /**
+   * 悄悄问内核一个表达式的值，**不弄脏 Console**（②-A · K5 · S14）。
+   *
+   * 走 Jupyter 的 `silent: true` + `user_expressions`：
+   * **结果从 `execute_reply` 回来，不经 iopub 广播**，
+   * 于是它不会在对话里冒出来、也不会推高执行计数。
+   *
+   * 直接 `execute` 一段内省代码是做不到这一点的——那会让用户看见
+   * 一堆他没写过的代码在自己刷屏，**而变量面板刷新一次就刷一次**。
+   *
+   * @returns `text/plain` 形式的结果；拿不到就是 `undefined`（**缺就是缺**）
+   */
+  probe(expression: string, timeoutMs?: number): Promise<string | undefined>
+  /**
    * 打断正在执行的那一段。**不杀内核。**
    *
    * 两条路由 kernelspec 的 `interrupt_mode` 决定（signal / message），

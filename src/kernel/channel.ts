@@ -199,6 +199,35 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     }
   })()
 
+  /**
+   * 悄悄问一个表达式（S14）。**不弄脏 Console。**
+   *
+   * `executeRequest` 的第二个参数是选项：`silent` 让内核不广播 iopub、
+   * 不计入历史；`user_expressions` 的结果随 `execute_reply` 一起回来。
+   *
+   * **失败不抛**：变量面板取不到值时该显示「取不到」，
+   * 而不是让整个界面炸掉——它只是一个观察窗，不是主路径。
+   */
+  const probe = async (expression: string, timeoutMs = 10_000): Promise<string | undefined> => {
+    try {
+      const msg = executeRequest("", {
+        silent: true,
+        // **协议里就是 snake_case**，不改写成驼峰——改写等于给自己造一层要记的映射
+        store_history: false,
+        user_expressions: { v: expression },
+      }) as unknown as JupyterMessage
+      const reply = await request(msg, { replyType: "execute_reply", timeoutMs })
+      const ue = (reply.message.content as { user_expressions?: Record<string, unknown> }).user_expressions
+      const v = ue?.v as { status?: string; data?: Record<string, unknown> } | undefined
+      // **内核说失败就是失败**，不把错误信息当成值返回
+      if (!v || v.status !== "ok") return undefined
+      const text = v.data?.["text/plain"]
+      return typeof text === "string" ? text : undefined
+    } catch {
+      return undefined
+    }
+  }
+
   /** 执行一段代码。**消息在这里造**——见 `types.ts` 里那段说明 */
   const execute = (code: string): string => {
     const msg = executeRequest(code) as unknown as JupyterMessage
@@ -291,6 +320,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     on,
     request,
     execute,
+    probe,
     interrupt,
     close,
     ready,

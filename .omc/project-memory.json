@@ -53,7 +53,7 @@
   },
   "build": {
     "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"package.json\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('\"test:e2e:only\": \"playwright test --ignore=e2e/kernel-session.spec.ts\",',\n              '\"test:e2e:only\": \"playwright test --grep-invert \\\\\"内核会话\\\\\"\",', 1)\ns = s.replace('\"test:e2e\": \"npm run build && playwright test --ignore=e2e/kernel-session.spec.ts && playwright test e2e/kernel-session.spec.ts\",',\n              '\"test:e2e\": \"npm run build && playwright test --grep-invert \\\\\"内核会话\\\\\" && playwright test e2e/kernel-session.spec.ts\",', 1)\np.write_text(s, encoding=\"utf8\")\nPY\ngrep -n '\"test:e2e' package.json\nnpx playwright test --grep-invert \"内核会话\" 2>&1 | tail -3",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run typecheck 2>&1 | grep error | head -3 || echo \"类型干净\"\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

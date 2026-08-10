@@ -10,12 +10,22 @@ describe("凭证设置 · 绝不回显已存的凭证", () => {
       <SettingsPanel
         providers={["deepseek"]}
         known={[]}
+      usedBy={{}}
+      modelsOf={() => []}
         credentials={{ configured: ["deepseek"], encrypted: true }}
         onSet={noop}
         onDelete={noop}
       />,
     )
-    expect(screen.getByText("已配置")).toBeDefined()
+    /**
+     * 2026-08-10：这句话**有意说长了**。
+     *
+     * 原来只写「已配置」——而作者填完 kimi 的 key 回到对话里找不到它，
+     * 因为**填 key 只是「连得上」**。「已配置」太容易被读成「可以用了」。
+     * 断言的意图（状态说出来了）没变，对象换成新的那句。
+     */
+    expect(screen.getByText(/已配置/)).toBeDefined()
+    expect(screen.getByText(/还没有 agent 在用它/)).toBeDefined()
     const input = screen.getByLabelText(/deepseek 的 API key/) as HTMLInputElement
     expect(input.value).toBe("")
     // 界面根本拿不到凭证，所以整个 DOM 里也不该出现任何像 key 的东西
@@ -27,6 +37,8 @@ describe("凭证设置 · 绝不回显已存的凭证", () => {
       <SettingsPanel
         providers={["deepseek"]}
         known={[]}
+      usedBy={{}}
+      modelsOf={() => []}
         credentials={{ configured: [], encrypted: true }}
         onSet={noop}
         onDelete={noop}
@@ -39,14 +51,18 @@ describe("凭证设置 · 绝不回显已存的凭证", () => {
 describe("凭证设置 · 加密状态如实告知", () => {
   it("有安全存储时说明由系统加密", () => {
     render(
-      <SettingsPanel known={[]} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={noop} onDelete={noop} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={noop} onDelete={noop} />,
     )
     expect(screen.getByText(/系统安全存储加密/)).toBeDefined()
   })
 
   it("没有安全存储时明说是明文 —— 不能让人以为加了密", () => {
     render(
-      <SettingsPanel known={[]} providers={["ds"]} credentials={{ configured: [], encrypted: false }} onSet={noop} onDelete={noop} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={["ds"]} credentials={{ configured: [], encrypted: false }} onSet={noop} onDelete={noop} />,
     )
     expect(screen.getByText(/明文/)).toBeDefined()
   })
@@ -56,7 +72,9 @@ describe("凭证设置 · 交互", () => {
   it("保存触发回调并清空输入框", () => {
     const onSet = vi.fn()
     render(
-      <SettingsPanel known={[]} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={onSet} onDelete={noop} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={onSet} onDelete={noop} />,
     )
     const input = screen.getByLabelText(/API key/) as HTMLInputElement
     fireEvent.change(input, { target: { value: "sk-new" } })
@@ -68,7 +86,9 @@ describe("凭证设置 · 交互", () => {
   it("空白内容不触发保存", () => {
     const onSet = vi.fn()
     render(
-      <SettingsPanel known={[]} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={onSet} onDelete={noop} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={onSet} onDelete={noop} />,
     )
     const input = screen.getByLabelText(/API key/) as HTMLInputElement
     fireEvent.change(input, { target: { value: "   " } })
@@ -78,7 +98,9 @@ describe("凭证设置 · 交互", () => {
 
   it("未配置时没有删除按钮 —— 删一个不存在的东西没有意义", () => {
     render(
-      <SettingsPanel known={[]} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={noop} onDelete={noop} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={["ds"]} credentials={{ configured: [], encrypted: true }} onSet={noop} onDelete={noop} />,
     )
     expect(screen.queryByRole("button", { name: "删除" })).toBeNull()
   })
@@ -86,7 +108,9 @@ describe("凭证设置 · 交互", () => {
   it("已配置时可以删除", () => {
     const onDelete = vi.fn()
     render(
-      <SettingsPanel known={[]} providers={["ds"]} credentials={{ configured: ["ds"], encrypted: true }} onSet={noop} onDelete={onDelete} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={["ds"]} credentials={{ configured: ["ds"], encrypted: true }} onSet={noop} onDelete={onDelete} />,
     )
     fireEvent.click(screen.getByRole("button", { name: "删除" }))
     expect(onDelete).toHaveBeenCalledWith("ds")
@@ -94,7 +118,9 @@ describe("凭证设置 · 交互", () => {
 
   it("配置里没有 native agent 时如实说明，而不是空白", () => {
     render(
-      <SettingsPanel known={[]} providers={[]} credentials={{ configured: [], encrypted: true }} onSet={noop} onDelete={noop} />,
+      <SettingsPanel known={[]}
+      usedBy={{}}
+      modelsOf={() => []} providers={[]} credentials={{ configured: [], encrypted: true }} onSet={noop} onDelete={noop} />,
     )
     expect(screen.getByText(/还没有声明任何 native agent/)).toBeDefined()
   })

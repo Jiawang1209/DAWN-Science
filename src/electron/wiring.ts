@@ -218,6 +218,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const backend = createWorkbenchBackend({
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
+    configPath: opts.configPath,
     environments,
     runRecorder,
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到

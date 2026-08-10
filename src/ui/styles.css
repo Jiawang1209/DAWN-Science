@@ -1808,3 +1808,20 @@ pre {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── 凭证行：把话说全 + 就地建 agent（2026-08-10） ───────────────── */
+
+/**
+ * **填了 key 但没有 agent 在用它。** 这一句要显眼——它正是作者卡住的地方：
+ * 填完 key 回到对话，选择器里什么都没多。
+ */
+.cred-idle { color: var(--dawn-warning); }
+
+.new-agent {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  margin-top: var(--dawn-space-1);
+}
+
+.new-agent .control { width: 10rem; }

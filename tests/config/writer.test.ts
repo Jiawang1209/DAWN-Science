@@ -1,0 +1,120 @@
+/**
+ * 往 providers.yaml 里加 agent（2026-08-10）。
+ *
+ * 作者填了 kimi 的 key 却在对话里选不到——因为**填 key 只是「连得上」，
+ * 能不能建会话看的是配置里有没有声明 agent**。让人打开一个 yaml 手写一段，
+ * 本身就是这个应用没做完。
+ *
+ * 这份测试的重心不是「能加进去」，而是**加的过程不许弄坏别人的东西**。
+ */
+import { afterEach, describe, expect, it } from "vitest"
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { addNativeAgent } from "../../src/config/writer.js"
+
+const dirs: string[] = []
+afterEach(() => {
+  for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
+})
+
+const 原始 = `# DAWN Science —— agent 配置
+#
+# 这份文件是第一次启动时自动生成的，可以随意修改。
+
+agents:
+  # 内置 agent。用前先到「设置」里填 deepseek 的 API key
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat, exec]
+
+  # 托管本地的 claude CLI
+  claude:
+    kind: cli
+    command: claude
+    # 能选哪些。**刻意不写 model**
+    models: [opus, sonnet]
+    args: []
+    capabilities: [chat, exec]
+`
+
+function 配置(): string {
+  const d = mkdtempSync(join(tmpdir(), "dawn-cfg-"))
+  dirs.push(d)
+  const f = join(d, "providers.yaml")
+  writeFileSync(f, 原始)
+  return f
+}
+
+describe("加一个 native agent", () => {
+  it("加进去了，而且读得回来", () => {
+    const f = 配置()
+    const reg = addNativeAgent(f, { agentId: "kimi", provider: "kimi-coding", model: "kimi-for-coding" })
+    expect(reg.agents["kimi"]).toMatchObject({
+      kind: "native",
+      provider: "kimi-coding",
+      model: "kimi-for-coding",
+    })
+  })
+
+  it("**注释一个字都不能少** —— 那份文件里全是写给人看的说明", () => {
+    const f = 配置()
+    addNativeAgent(f, { agentId: "kimi", provider: "kimi-coding", model: "k3" })
+    const 新 = readFileSync(f, "utf8")
+    expect(新).toContain("DAWN Science —— agent 配置")
+    expect(新).toContain("用前先到「设置」里填 deepseek 的 API key")
+    expect(新).toContain("**刻意不写 model**")
+  })
+
+  it("**原有的 agent 原样还在**，包括手写的 cli 那条", () => {
+    const f = 配置()
+    const reg = addNativeAgent(f, { agentId: "kimi", provider: "kimi-coding", model: "k3" })
+    expect(reg.agents["ds-chat"]).toMatchObject({ provider: "deepseek" })
+    expect(reg.agents["claude"]).toMatchObject({ kind: "cli", command: "claude" })
+    expect(readFileSync(f, "utf8")).toContain("models: [opus, sonnet]")
+  })
+
+  it("**同名一律拒绝，不覆盖** —— 覆盖掉的是用户手写的东西", () => {
+    const f = 配置()
+    expect(() => addNativeAgent(f, { agentId: "ds-chat", provider: "x", model: "y" })).toThrow(
+      /已经有一个叫/,
+    )
+    // 而且文件没被动过
+    expect(readFileSync(f, "utf8")).toBe(原始)
+  })
+
+  it("名字不合法要说清楚合法的是什么样", () => {
+    const f = 配置()
+    for (const bad of ["有中文", "带 空格", "UPPER", "", "a".repeat(40)]) {
+      expect(() => addNativeAgent(f, { agentId: bad, provider: "p", model: "m" })).toThrow(
+        /只能用小写字母/,
+      )
+    }
+    expect(readFileSync(f, "utf8")).toBe(原始)
+  })
+
+  it("**写坏了要还原** —— 一个写坏的配置会让应用下次起不来", () => {
+    const f = 配置()
+    // 空的 model 过不了 schema（`min(1)`）
+    expect(() => addNativeAgent(f, { agentId: "坏", provider: "p", model: "" })).toThrow()
+    expect(readFileSync(f, "utf8")).toBe(原始)
+  })
+
+  it("没有 `agents:` 段时明说不知道往哪加", () => {
+    const d = mkdtempSync(join(tmpdir(), "dawn-cfg-"))
+    dirs.push(d)
+    const f = join(d, "providers.yaml")
+    writeFileSync(f, "# 空的\n")
+    expect(() => addNativeAgent(f, { agentId: "kimi", provider: "p", model: "m" })).toThrow(
+      /没有 `agents:`/,
+    )
+  })
+
+  it("文件不存在时明说", () => {
+    expect(() => addNativeAgent("/绝对没有/providers.yaml", { agentId: "a", provider: "p", model: "m" })).toThrow(
+      /找不到配置文件/,
+    )
+  })
+})

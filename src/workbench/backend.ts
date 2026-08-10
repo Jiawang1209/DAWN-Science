@@ -9,6 +9,7 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
+import { addNativeAgent } from "../config/writer.js"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { deriveSessionTitle } from "../session/title.js"
@@ -50,6 +51,11 @@ export interface WorkbenchBackendOptions {
   projects: ProjectManager
   projectStore: ProjectStore
   runs: RunStore
+  /**
+   * `providers.yaml` 的路径。**给了才能在界面里加 agent**——
+   * 没给就如实说「本次运行没有装配」，不偷偷退回某个猜出来的路径。
+   */
+  configPath?: string
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
   /** 环境快照的落库处（S17）。**没装配也能用**，只是快照不持久 */
@@ -97,7 +103,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -497,7 +503,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     listKnownProviders: async () => {
       if (!models?.known) return { providers: [], problem: "本次运行没有装配模型目录" }
       try {
-        return { providers: await models.known() }
+        const ids = await models.known()
+        /**
+         * 顺带把每个 provider 的模型带上。**建 agent 时要在这里面挑**，
+         * 而 `getProviders` 的 `available` 只覆盖配置里用到的那几个。
+         */
+        const table: Record<string, string[]> = {}
+        for (const id of ids) table[id] = await models.available(id)
+        return { providers: ids, models: table }
       } catch (err) {
         /**
          * **取不到就说取不到。** 返回一个空清单会被读成「pi 一个都不支持」，
@@ -510,6 +523,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     reorderSessions: async ({ projectId, orderedIds }) => {
       requireProject(projectId)
       return { reordered: sessions.reorder(projectId, orderedIds) }
+    },
+
+    createAgent: async ({ agentId, provider, model }) => {
+      if (!configPath) throw fault("internal_error", "本次运行没有装配配置文件路径")
+      let 新的
+      try {
+        新的 = addNativeAgent(configPath, { agentId, provider, model })
+      } catch (err) {
+        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+        throw err
+      }
+      /**
+       * **原地更新同一个对象，不换引用。**
+       *
+       * `registry` 被 wiring 里好几处按引用持有（runtime 的 `commandOf` 现查、
+       * 会话中枢的 kind 判定…）。换引用只会更新我们手里这一个，
+       * 别人还指着旧的——那时新 agent 在选择器里有、建会话时却说不认识。
+       */
+      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
+      Object.assign(registry.agents, 新的.agents)
+      return { agentId }
     },
 
     renameSession: async ({ sessionId, title }) => {

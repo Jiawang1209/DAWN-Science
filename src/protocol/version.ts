@@ -87,8 +87,11 @@
  * 3.1（2026-08-10）：新增 `reorderSessions`（拖拽排序）。纯新增，故 minor。
  * 3.2（2026-08-10）：transcript 的 `turn` 条目新增可选 `usage`。纯新增。
  *   **缺席 = 不知道**，不是 0——界面据此说的话完全不同。
+ * 3.3（2026-08-10）：新增 `createAgent`。纯新增。
+ *   **只支持 `kind: native`**——cli 与 pty 要填命令行，在这里顺手支持
+ *   等于让一个「加个模型」的按钮悄悄能起任意进程。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "3.2"
+export const WORKBENCH_PROTOCOL_VERSION = "3.3"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

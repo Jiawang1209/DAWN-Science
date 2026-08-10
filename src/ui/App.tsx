@@ -463,13 +463,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * pi 认识的全部 provider（2026-08-10）。**「我能配谁」，不是「我配过谁」**。
    * 只在打开设置时取一次——它不会变，而进设置之前没人看得见它。
    */
-  const [knownProviders, setKnownProviders] = useState<{ providers: string[]; problem?: string }>({
-    providers: [],
-  })
+  const [knownProviders, setKnownProviders] = useState<{
+    providers: string[]
+    models?: Record<string, string[]>
+    problem?: string
+  }>({ providers: [] })
   useEffect(() => {
     if (view !== "settings") return
     client
-      .get<{ providers: string[]; problem?: string }>("listKnownProviders", {})
+      .get<{ providers: string[]; models?: Record<string, string[]>; problem?: string }>(
+        "listKnownProviders",
+        {},
+      )
       .then(setKnownProviders)
       .catch(fail)
   }, [view, client])
@@ -845,6 +850,32 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}
                 known={knownProviders.providers}
+                /**
+                 * **哪个 provider 被哪些 agent 用着。** 从 `providers.agents`
+                 * 现算——它本来就带着每个 native agent 的 `provider`。
+                 */
+                usedBy={providers.agents.reduce<Record<string, string[]>>((acc, a) => {
+                  if (a.provider) (acc[a.provider] ??= []).push(a.agentId)
+                  return acc
+                }, {})}
+                /** 该 provider 在模型目录里有哪些。**没有就是空**，界面据此说建不了 */
+                modelsOf={(pid) =>
+                  /**
+                   * **先问 pi 的目录，再退回配置里那份。**
+                   * 前者覆盖全部 39 个 provider，后者只覆盖配置用到的——
+                   * 而「给一个还没被用到的 provider 建 agent」正是这里的主场景。
+                   */
+                  knownProviders.models?.[pid] ??
+                  providers.providers.find((p) => p.providerId === pid)?.available ??
+                  []
+                }
+                onCreateAgent={(providerId, agentId, model) => {
+                  client
+                    .get("createAgent", { agentId, provider: providerId, model })
+                    // **加完立刻重取**：新 agent 不用重启就该出现在选择器里
+                    .then(() => loadProviders(client))
+                    .catch(fail)
+                }}
                 {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
                 credentials={creds}
                 onSet={(id, secret) =>

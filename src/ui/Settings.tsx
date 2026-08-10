@@ -301,6 +301,9 @@ export function SettingsPanel({
   providers,
   known,
   knownProblem,
+  usedBy,
+  modelsOf,
+  onCreateAgent,
   credentials,
   onSet,
   onDelete,
@@ -316,12 +319,25 @@ export function SettingsPanel({
   known: string[]
   /** 目录取不到时的原因。**不返回一个短清单**——缺失不等于不支持 */
   knownProblem?: string | undefined
+  /**
+   * 每个 provider 被哪些 agent 用着（2026-08-10）。
+   *
+   * 作者填完 kimi 的 key 却在对话里选不到——**因为填 key 只是「连得上」**。
+   * 而界面当时只说「已配置」，那句话太容易被读成「可以用了」。
+   */
+  usedBy: Record<string, string[]>
+  /** 该 provider 在模型目录里有哪些模型。建 agent 时要选一个 */
+  modelsOf: (providerId: string) => string[]
+  /** 建一个 native agent。**不给就不显示那个入口**——不是显示一个点了没反应的 */
+  onCreateAgent?: ((providerId: string, agentId: string, model: string) => void) | undefined
   credentials: CredentialState
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
 }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [filter, setFilter] = useState("")
+  /** 正在给哪个 provider 建 agent。`undefined` = 没在建 */
+  const [建 , set建] = useState<string | undefined>(undefined)
 
   /**
    * **配置在用的与已经填过 key 的置顶**，其余收进折叠。
@@ -357,7 +373,7 @@ export function SettingsPanel({
               key={id}
               name={id}
               htmlFor={`cred-${id}`}
-              desc={isSet ? "已配置" : "未配置"}
+              desc={<凭证说明 providerId={id} isSet={isSet} usedBy={usedBy[id] ?? []} />}
             >
               <ProviderKeyForm
                 id={id}
@@ -372,6 +388,27 @@ export function SettingsPanel({
                 }}
                 onDelete={() => onDelete(id)}
               />
+              {/**
+                * **填了 key 但没人用它**——这正是作者卡住的地方，
+                * 给一条出路，而不是让他去手写 yaml。
+                */}
+              {onCreateAgent && isSet && (usedBy[id] ?? []).length === 0 ? (
+                建 === id ? (
+                  <建Agent
+                    providerId={id}
+                    models={modelsOf(id)}
+                    onCreate={(name, model) => {
+                      onCreateAgent(id, name, model)
+                      set建(undefined)
+                    }}
+                    onCancel={() => set建(undefined)}
+                  />
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => set建(id)}>
+                    建一个 agent
+                  </Button>
+                )
+              ) : null}
             </Row>
           )
         })
@@ -402,7 +439,18 @@ export function SettingsPanel({
           ) : (
             <div className="set-rows">
               {命中.map((id) => (
-                <Row key={id} name={id} htmlFor={`cred-${id}`} desc={credentials.configured.includes(id) ? "已配置" : undefined}>
+                <Row
+                  key={id}
+                  name={id}
+                  htmlFor={`cred-${id}`}
+                  desc={
+                    <凭证说明
+                      providerId={id}
+                      isSet={credentials.configured.includes(id)}
+                      usedBy={usedBy[id] ?? []}
+                    />
+                  }
+                >
                   <ProviderKeyForm
                     id={id}
                     isSet={credentials.configured.includes(id)}
@@ -416,6 +464,23 @@ export function SettingsPanel({
                     }}
                     onDelete={() => onDelete(id)}
                   />
+                  {onCreateAgent && credentials.configured.includes(id) && (usedBy[id] ?? []).length === 0 ? (
+                    建 === id ? (
+                      <建Agent
+                        providerId={id}
+                        models={modelsOf(id)}
+                        onCreate={(name, model) => {
+                          onCreateAgent(id, name, model)
+                          set建(undefined)
+                        }}
+                        onCancel={() => set建(undefined)}
+                      />
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => set建(id)}>
+                        建一个 agent
+                      </Button>
+                    )
+                  ) : null}
                 </Row>
               ))}
             </div>
@@ -423,6 +488,100 @@ export function SettingsPanel({
         </details>
       ) : null}
     </Section>
+  )
+}
+
+/**
+ * 凭证那一行的说明（2026-08-10）。
+ *
+ * ## 它修的是一句会误导人的话
+ *
+ * 此前这里只写「已配置」。作者填完 kimi 的 key、回到对话、找不到 kimi——
+ * 因为**填 key 只是「连得上」，能不能建会话看的是配置里有没有声明 agent**。
+ * 「已配置」太容易被读成「可以用了」。
+ *
+ * 所以现在分三种，各说各的话：
+ *   - 没填 key → 「未配置」
+ *   - 填了、也有 agent 在用 → 「已配置 · ds-chat 在用」
+ *   - **填了、但没有任何 agent 在用** → 那一句要显眼：它正是作者卡住的地方
+ */
+function 凭证说明({
+  isSet,
+  usedBy,
+}: {
+  providerId: string
+  isSet: boolean
+  usedBy: readonly string[]
+}) {
+  if (!isSet) return <>未配置</>
+  if (usedBy.length > 0) return <>已配置 · {usedBy.join(" / ")} 在用</>
+  return (
+    <span className="cred-idle">
+      已配置，<em className="set-emph">但还没有 agent 在用它</em>——加一个才能在对话里选到
+    </span>
+  )
+}
+
+/**
+ * 就地建一个 native agent（2026-08-10）。
+ *
+ * **让人打开一个 yaml 手写一段，本身就是这个应用没做完。**
+ *
+ * 只建 `kind: native`：cli 与 pty 要填的是命令行与参数，那是另一件事——
+ * 在这里顺手支持等于让一个「加个模型」的按钮悄悄能起任意进程。
+ */
+function 建Agent({
+  providerId,
+  models,
+  onCreate,
+  onCancel,
+}: {
+  providerId: string
+  models: readonly string[]
+  onCreate: (agentId: string, model: string) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(providerId.split("-")[0] ?? providerId)
+  const [model, setModel] = useState(models[0] ?? "")
+
+  if (models.length === 0) {
+    // **没有模型就别给一个建不出来的表单**（规格 7.5：说清为什么）
+    return <p className="caveat">模型目录里没有 {providerId} 的模型，无法建 agent</p>
+  }
+  return (
+    <form
+      className="new-agent"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (name.trim() && model) onCreate(name.trim(), model)
+      }}
+    >
+      <input
+        className="control"
+        value={name}
+        aria-label="agent 名字"
+        placeholder="agent 名字"
+        onChange={(e) => setName(e.target.value)}
+      />
+      <select
+        className="control"
+        value={model}
+        aria-label="模型"
+        onChange={(e) => setModel(e.target.value)}
+      >
+        {models.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+      <Button type="submit" variant="primary" size="sm">
+        建好
+      </Button>
+      <Button variant="text" size="sm" onClick={onCancel}>
+        取消
+      </Button>
+    </form>
   )
 }
 

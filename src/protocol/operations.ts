@@ -675,7 +675,18 @@ export const OPERATIONS = {
   listKnownProviders: {
     request: z.object({}).strict(),
     response: z
-      .object({ providers: z.array(z.string().min(1)), problem: z.string().optional() })
+      .object({
+        providers: z.array(z.string().min(1)),
+        /**
+         * 每个 provider 有哪些模型（2026-08-10）。
+         *
+         * **必须在这里给**：`getProviders` 的 `available` 只覆盖**配置里用到的**
+         * 那几个，而「想加一个新 agent」恰恰是在给一个**还没被用到**的 provider
+         * 挑模型——那时前者是空的。
+         */
+        models: z.record(z.string(), z.array(z.string())).optional(),
+        problem: z.string().optional(),
+      })
       .strict(),
     mutating: false,
   },
@@ -767,6 +778,31 @@ export const OPERATIONS = {
       .object({ projectId: z.string().min(1), orderedIds: z.array(z.string().min(1)).max(1000) })
       .strict(),
     response: z.object({ reordered: z.int().min(0) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 在配置里加一个 native agent（2026-08-10）。
+   *
+   * 作者：*「我配置了 kimi-coding 的 API，但是配置完，在对话里面无法选择 kimi 呢？」*
+   *
+   * **填 key 只是「连得上」**——能不能建会话看的是配置里有没有声明 agent。
+   * 此前那句解释躺在设置界面一个默认折叠的说明里，等于不存在；
+   * 而**让人打开一个 yaml 手写一段，本身就是这个应用没做完**。
+   *
+   * 只支持 `kind: native`：cli 与 pty 要填的是命令行与参数，那是另一件事，
+   * **在这里顺手支持等于让一个「加个模型」的按钮悄悄能起任意进程**。
+   */
+  createAgent: {
+    request: z
+      .object({
+        agentId: z.string().min(1).max(32),
+        provider: z.string().min(1),
+        model: z.string().min(1),
+      })
+      .strict(),
+    /** 加完之后**立刻可用**（内存里那份 registry 原地更新，不用重启） */
+    response: z.object({ agentId: z.string() }).strict(),
     mutating: true,
   },
 

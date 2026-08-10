@@ -28,6 +28,12 @@ const rows = (page: Page) => page.locator(".session-list .row")
 const newest = (page: Page) => rows(page).nth(0)
 const oldest = (page: Page) => rows(page).nth(1)
 
+/**
+ * 对话区。**断言要限定在这里**——2026-08-10 会话有了标题之后，
+ * 第一句话同时出现在侧栏上，全页 `getByText` 会同时命中两处：
+ * 「A 的话不在 B 的对话里」这条断言的意图从来是**对话区**，
+ * 不是「这几个字在整个窗口里都不出现」。
+ */
 test("切会话不丢历史", async ({ dawn }) => {
   const { page } = dawn
 
@@ -41,11 +47,11 @@ test("切会话不丢历史", async ({ dawn }) => {
   await newSession(page)
   await expect(rows(page)).toHaveCount(2)
   // B 是新的，不该有 A 的内容
-  await expect(page.getByText("我是 A 的问题")).toHaveCount(0)
+  await expect(page.locator(".turns").getByText("我是 A 的问题")).toHaveCount(0)
 
   // 切回 A（先建的那个 = 列表里靠后的）：历史必须完整
   await oldest(page).click()
-  await expect(page.getByText("我是 A 的问题")).toBeVisible()
+  await expect(page.locator(".turns").getByText("我是 A 的问题")).toBeVisible()
   await expect(page.getByText(CANNED_REPLY, { exact: false })).toBeVisible()
 })
 

@@ -19,6 +19,19 @@ import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
+/**
+ * 会话行上的时间。**只到分钟**——秒在这里没有信息量，
+ * 而且会让两个相邻会话看起来像在比谁更精确。
+ */
+function clockOf(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return "时间不明"
+  const 今天 = new Date().toDateString() === d.toDateString()
+  const hhmm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+  // 今天的只给时刻，别的带月日——**「昨天 14:30」和「今天 14:30」不该长得一样**
+  return 今天 ? hhmm : `${d.getMonth() + 1}/${d.getDate()} ${hhmm}`
+}
+
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
 export function SessionSidebar({
@@ -129,7 +142,20 @@ export function SessionSidebar({
                 active={s.sessionId === activeSessionId && view === "conversation"}
                 onClick={() => onPickSession(s.sessionId)}
               >
-                <span className="name">{s.agentId}</span>
+                {/**
+                  * **标题在上、来路在下**。此前这里只有 `agentId`——
+                  * 同一个 agent 建出来的会话在侧栏上一模一样
+                  * （作者 2026-08-10：*「会话的 ID 怎么都是一个呢？」*）。
+                  *
+                  * **没有标题就说「新会话」**，不显示一行空白：
+                  * 空白看起来像加载失败，而实情是「还没说过话」。
+                  */}
+                <span className="sess">
+                  <span className="name">{s.title ?? "新会话"}</span>
+                  <span className="sub">
+                    {s.agentId} · {clockOf(s.createdAt)}
+                  </span>
+                </span>
                 <span className={`state ${s.state}`}>{s.state}</span>
               </Row>
             </li>

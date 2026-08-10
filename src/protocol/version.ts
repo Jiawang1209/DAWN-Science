@@ -64,8 +64,11 @@
  * 2.11（2026-08-10）：新增 `openExternally`（②-B · F3）。
  *   **它收的是工作区内的相对路径**，由后端解析并校验之后才交给系统——
  *   直接给绝对路径调 `shell.openPath` 等于把路径守卫绕过去。纯新增，故 minor。
+ * 2.12（2026-08-10）：`SessionSummary` 新增可选 `title`。
+ *   纯新增字段，老界面照常工作（只是仍然分不清会话）。
+ *   **缺省 = 还没说过话**，不是空标题。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.11"
+export const WORKBENCH_PROTOCOL_VERSION = "2.12"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -9,6 +9,7 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
+import { deriveSessionTitle } from "../session/title.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
@@ -295,6 +296,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。
         if (as === "user") {
+          /**
+           * **第一句话定名字**（2026-08-10）。写在这里而不是运行时里：
+           * 这是「会话」这个记录的属性，与哪种运行时无关——
+           * 内核会话第一段代码同样能当名字。
+           *
+           * `setTitleIfAbsent` 在 SQL 里判空，不在这里先读后写：
+           * 先读后写有窗口，而「第二句话把标题改掉了」的症状是
+           * 侧栏上的名字会自己变，人会以为点错了会话。
+           */
+          const title = deriveSessionTitle(data)
+          if (title) projects.setSessionTitle(sessionId, title)
           events.userTurn(sessionId, data)
           // 运行时没有 turn_start 事件——回合的起点只有这里知道。
           // PTY 会话由记账员自己忽略（那是按键，不是发话），见 run-recorder.ts

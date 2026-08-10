@@ -16,6 +16,7 @@
  * | 光标闪烁 | `caret: "hide"` |
  * | 会话状态 starting → alive | 截图前等到 `.state.alive` |
  * | **耗时 `.dur`（跟墙上时钟走）** | `mask` 遮掉，见下 |
+ * | **会话行的 `agent · HH:MM`（同上）** | 同样 `mask` 遮掉 |
  * | 窗口尺寸 | `BrowserWindow` 固定 1280×840 |
  * | 模型回复 | 假模型的固定暗号 |
  * | 状态栏那句「未配置任何 API key」要等 providers 加载 | 截图前等它出现 |
@@ -175,7 +176,13 @@ for (const theme of ["亮色", "暗色"] as const) {
         animations: "disabled",
         caret: "hide",
         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内
-        mask: [page.locator(".dur")],
+        /**
+         * **会话行的副行也跟墙上时钟走**（2026-08-10 起它显示 `agent · HH:MM`）。
+         * 不遮的话这张基线每过一分钟就自己红一次——**逐像素阈值是 0**，
+         * 而一个每分钟红一次的基线，一周之内就会被人条件反射地 update 掉，
+         * 那时它什么都不再证明。与 `.dur` 是同一条理由。
+         */
+        mask: [page.locator(".dur"), page.locator(".session-list .sess .sub")],
         /**
          * **逐像素必须完全一致**（默认是 0.2 的色距容差）。
          *

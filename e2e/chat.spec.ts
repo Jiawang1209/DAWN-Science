@@ -15,6 +15,12 @@ async function startSession(page: import("@playwright/test").Page) {
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 
+/**
+ * 对话区。**断言要限定在这里**——2026-08-10 会话有了标题之后，
+ * 第一句话同时出现在侧栏上，全页 `getByText` 会同时命中两处：
+ * 「A 的话不在 B 的对话里」这条断言的意图从来是**对话区**，
+ * 不是「这几个字在整个窗口里都不出现」。
+ */
 test("说一句话 → 界面上出现回复 → 账本上留下记录", async ({ dawn }) => {
   const { page, dbPath, requests } = dawn
   await startSession(page)
@@ -23,7 +29,7 @@ test("说一句话 → 界面上出现回复 → 账本上留下记录", async (
   await page.keyboard.press("Enter")
 
   // ① 自己说的话要出现——**它来自事件流，不是本地乐观追加**
-  await expect(page.getByText("你好")).toBeVisible()
+  await expect(page.locator(".turns").getByText("你好")).toBeVisible()
 
   // ② agent 的回复要出现在界面上。暗号由 mock server 写死，
   //    出现即证明整条链路通到了 DOM

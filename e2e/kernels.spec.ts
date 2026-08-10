@@ -21,6 +21,15 @@ test("设置里列出本机内核，**且每一条都带解释器路径**", asyn
   const panel = page.locator(".panel", { has: page.getByText("内核", { exact: true }) })
   await expect(panel).toBeVisible()
 
+  /**
+   * **先把折叠展开。** 2026-08-10 解释器路径成为主角之后，
+   * 「本机注册过的内核」降级成了一段参考资料，收进了 `<details>`——
+   * 行还在，只是隐藏的。这条用例要验的是「每一条都带路径」，
+   * 而不是「它默认展开着」，所以展开它，不是放宽断言。
+   */
+  const 折叠 = panel.locator("details")
+  if (await 折叠.count()) await 折叠.first().locator("summary").click()
+
   const rows = panel.locator(".kernel")
   const n = await rows.count()
   if (n === 0) {

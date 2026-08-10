@@ -1058,3 +1058,27 @@ pre {
 .file-link:hover {
   text-decoration: underline;
 }
+
+/* 会话行：标题在上、来路在下（2026-08-10） */
+.session-list .sess {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.session-list .sess .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 副行**比标题弱一档**：它是来路，不是名字 */
+.session-list .sess .sub {
+  color: var(--dawn-text-3);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

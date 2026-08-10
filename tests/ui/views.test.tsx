@@ -107,8 +107,30 @@ describe("侧栏 · 项目与会话", () => {
   it("列出会话，点击触发回调", () => {
     const onPickSession = vi.fn()
     render(<SessionSidebar {...base} sessions={[session()]} onPickSession={onPickSession} />)
-    fireEvent.click(screen.getByText("ds-chat"))
+    // 行的主标签现在是**标题**；agent 退到副行里（2026-08-10）
+    fireEvent.click(screen.getByText("新会话"))
     expect(onPickSession).toHaveBeenCalledWith("s1")
+  })
+
+  it("**没说过话的会话显示「新会话」**，不是一行空白 —— 空白看起来像加载失败", () => {
+    render(<SessionSidebar {...base} sessions={[session()]} />)
+    expect(screen.getByText("新会话")).toBeDefined()
+    // agent 与时刻退到副行：**它是来路，不是名字**
+    expect(screen.getByText(/ds-chat · /)).toBeDefined()
+  })
+
+  it("**有标题就用标题** —— 同一个 agent 的两个会话得分得开", () => {
+    render(
+      <SessionSidebar
+        {...base}
+        sessions={[
+          { ...session(), sessionId: "s1", title: "看看 sales.csv" },
+          { ...session(), sessionId: "s2", title: "跑一次回归" },
+        ]}
+      />,
+    )
+    expect(screen.getByText("看看 sales.csv")).toBeDefined()
+    expect(screen.getByText("跑一次回归")).toBeDefined()
   })
 
   it("没有会话时如实说明", () => {

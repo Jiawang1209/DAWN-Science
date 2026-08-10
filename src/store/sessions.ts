@@ -26,6 +26,13 @@ export interface SessionRecord {
    * （它是长驻进程，不需要），老记录也为空。
    */
   cliThreadId?: string
+  /**
+   * 会话标题。由第一句用户发言推出来。
+   *
+   * **缺省 = 还没说过话（或是这个概念之前的老会话）**，不是空标题。
+   * 界面据此显示「新会话」，而不是显示一行空白。
+   */
+  title?: string
 }
 
 interface Row {
@@ -39,6 +46,7 @@ interface Row {
   created_at: string
   project_id: string | null
   cli_thread_id: string | null
+  title: string | null
 }
 
 function toRecord(r: Row): SessionRecord {
@@ -55,6 +63,7 @@ function toRecord(r: Row): SessionRecord {
     ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
     ...(r.project_id === null || r.project_id === undefined ? {} : { projectId: r.project_id }),
     ...(r.cli_thread_id === null || r.cli_thread_id === undefined ? {} : { cliThreadId: r.cli_thread_id }),
+    ...(r.title === null || r.title === undefined ? {} : { title: r.title }),
   }
 }
 
@@ -100,6 +109,22 @@ export class SessionStore {
    * 记下 codex 的 `thread_id`。**一拿到就落库**——它丢了会话就断了，
    * 而进程随时可能退出（codex 一轮一个进程）。
    */
+  /**
+   * 只在还没有标题时写入。
+   *
+   * **`WHERE title IS NULL` 在 SQL 里判，不在调用方判**——
+   * 调用方先读后写会有窗口，而「第二句话把标题改掉了」的症状是
+   * 侧栏上的名字会自己变，人会以为点错了会话。
+   *
+   * @returns 是否真的写进去了。调用方据此决定要不要通知界面刷新
+   */
+  setTitleIfAbsent(id: string, title: string): boolean {
+    const r = this.db
+      .prepare(`UPDATE sessions SET title = ? WHERE id = ? AND title IS NULL`)
+      .run(title, id)
+    return r.changes > 0
+  }
+
   setCliThreadId(id: string, threadId: string): void {
     this.db.prepare(`UPDATE sessions SET cli_thread_id = ? WHERE id = ?`).run(threadId, id)
   }

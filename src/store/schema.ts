@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -171,6 +171,19 @@ export function migrate(db: Database.Database): void {
    */
   if (!hasColumn(db, "sessions", "cli_thread_id")) {
     db.exec(`ALTER TABLE sessions ADD COLUMN cli_thread_id TEXT`)
+  }
+
+  /**
+   * 会话标题（2026-08-10）。
+   *
+   * 作者当天的话：*「我的会话，会话的 ID 怎么都是一个呢？我很难辨别具体是哪个会话了。」*
+   * 侧栏此前只画 `agentId`——**同一个 agent 建出来的会话长得一模一样**。
+   *
+   * **老记录留 NULL，界面显示「新会话」**。编一个标题等于伪造事实：
+   * 那些会话产生时没有这个概念，我们不知道它们讲的是什么。
+   */
+  if (!hasColumn(db, "sessions", "title")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN title TEXT`)
   }
 
   /**

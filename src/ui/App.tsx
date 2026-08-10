@@ -724,6 +724,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
                   client
                     .get("writeToSession", { sessionId: session.sessionId, data: text, as: "user" })
+                    .then(() => {
+                      /**
+                       * 标题是第一句话定的，而**它落在后端**——不重取一次，
+                       * 侧栏会一直显示「新会话」直到下次因为别的原因刷新。
+                       *
+                       * **只在还没有标题时取**：之后每句话都取一遍纯属白打 IPC，
+                       * 而标题一旦定了就不会再变（`setTitleIfAbsent`）。
+                       */
+                      if (!session.title) {
+                        const pid = $activeProjectId.get()
+                        if (pid) void loadSessions(client, pid)
+                      }
+                    })
                     .catch(fail)
                 }}
               />

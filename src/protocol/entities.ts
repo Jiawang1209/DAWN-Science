@@ -185,6 +185,14 @@ export const SessionSummarySchema = z
       "kernel",
     ]),
     state: z.enum(["starting", "alive", "exited"]),
+    /**
+     * 会话标题，由第一句用户发言推出（2026-08-10）。
+     *
+     * **缺省 = 还没说过话**，不是空标题——界面据此显示「新会话」。
+     * 少了它，同一个 agent 建出来的会话在侧栏上完全无法区分
+     * （作者：*「会话的 ID 怎么都是一个呢？」*）。
+     */
+    title: z.string().min(1).optional(),
     pid: z.int().optional(),
     exitCode: z.int().optional(),
     createdAt: Iso,

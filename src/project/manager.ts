@@ -107,9 +107,19 @@ export class ProjectManager {
       kind: this.kindOf(s.agentId),
       state: s.state,
       createdAt: s.createdAt,
+      // **没有标题就不给这个字段**，不给空串——界面据此显示「新会话」
+      ...(s.title === undefined ? {} : { title: s.title }),
       ...(s.pid === undefined ? {} : { pid: s.pid }),
       ...(s.exitCode === undefined ? {} : { exitCode: s.exitCode }),
     }))
+  }
+
+  /**
+   * 第一句话定名字。**只在还没有标题时写**——判空在 SQL 里，不在调用方，
+   * 先读后写的窗口会让「第二句话把标题改掉」，症状是侧栏上的名字自己变了。
+   */
+  setSessionTitle(sessionId: string, title: string): void {
+    this.sessionStore.setTitleIfAbsent(sessionId, title)
   }
 
   /** 列出项目下的 Run，最近的在前——项目面板的历史栏要的就是这个顺序 */

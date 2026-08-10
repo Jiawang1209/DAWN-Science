@@ -133,30 +133,58 @@ export function addNativeAgent(file: string, agent: NewNativeAgent): ProviderReg
 }
 
 /**
+ * 一个 provider 的连接设置。**密钥不在里面**——它在钥匙串里。
+ *
+ * 三样都可空：**空 = 不覆盖**，交给 pi 自己的默认。
+ */
+export interface ProviderConnectionInput {
+  baseUrl?: string | undefined
+  api?: string | undefined
+  models?: readonly string[] | undefined
+}
+
+/**
  * 写一个 provider 的连接设置（2026-08-10）。
  *
  * 作者：*「设置里把那 8 个的输入框也补上」*——那 8 个不自带 `baseUrl` 的
  * provider（Bedrock / Azure / Vertex / Cloudflare×2 / opencode×2 / radius），
  * 地址跟账号、区域、项目走，只能由人填。
  *
+ * **2026-08-10 扩了口径**：原来只写 `baseUrl`。作者：*「我觉得可以在设置里面，
+ * 通过 baseUrl、api、models 分别留出可以填写的地方，然后自行填写。」*
+ * 三样一起给，才配得上「自定义端点」这四个字——只给地址的话，
+ * 一个自建的 vLLM 仍然是「连得上但模型选择器是空的」，而没有一句话解释为什么。
+ *
  * 与 `addNativeAgent` 同一套纪律：**纯文本，既有字节一个不动**；
  * 写完读回来，读不回来就还原。
  *
- * **空串等于取消覆盖**——把那一段删掉，回到 pi 的默认。
- * 存一个空 `baseUrl` 会让请求打到一个空地址上，而报错与「你填空了」毫无关系。
+ * ## 这是**全量替换**那一条，不是打补丁
+ *
+ * 界面上那个编辑器一次交出三样的当前值，所以这里照单全收。
+ * 打补丁（「没给的保持原样」）会让「把 api 清空」变得表达不出来——
+ * 而清空正是「我填错了，回到 pi 的默认」唯一的说法。
+ *
+ * **三样全空等于取消覆盖**——把那一段删掉。存一个空 `baseUrl`
+ * 会让请求打到一个空地址上，而报错与「你填空了」毫无关系。
  */
 export function setProviderConnection(
   file: string,
   providerId: string,
-  baseUrl: string,
+  conn: ProviderConnectionInput,
 ): ProviderRegistry {
   if (!ID.test(providerId)) {
     throw new UserFacingError(`provider 名字不合法：「${providerId}」`)
   }
   if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
 
+  const 整理: ProviderConnectionInput = {
+    baseUrl: conn.baseUrl?.trim() || undefined,
+    api: conn.api?.trim() || undefined,
+    models: conn.models?.map((m) => m.trim()).filter(Boolean),
+  }
+
   const 原文 = readFileSync(file, "utf8")
-  const 新文 = 写连接(原文, providerId, baseUrl.trim())
+  const 新文 = 写连接(原文, providerId, 整理)
   writeFileSync(file, 新文, "utf8")
   try {
     return loadRegistry(file)
@@ -185,7 +213,15 @@ function 段范围(lines: string[], key: string): [number, number] | undefined {
   return [起, 末]
 }
 
-function 写连接(原文: string, id: string, baseUrl: string): string {
+/**
+ * YAML 的双引号字符串。
+ *
+ * **只转义反斜杠与双引号**：地址与模型 id 里不会有控制字符，
+ * 而一个自作聪明的转义表迟早会把某个合法字符写坏。
+ */
+const 引 = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
+
+function 写连接(原文: string, id: string, conn: ProviderConnectionInput): string {
   const lines = 原文.split("\n")
   const 段 = 段范围(lines, "providers")
 
@@ -198,11 +234,20 @@ function 写连接(原文: string, id: string, baseUrl: string): string {
     return [i, j]
   }
 
-  const 块 = [`  ${id}:`, `    baseUrl: "${baseUrl}"`]
+  /** 有内容才写这一条；三样全空 = 取消覆盖 */
+  const 有内容 = Boolean(conn.baseUrl || conn.api || (conn.models && conn.models.length > 0))
+  const 块 = [
+    `  ${id}:`,
+    ...(conn.baseUrl ? [`    baseUrl: ${引(conn.baseUrl)}`] : []),
+    ...(conn.api ? [`    api: ${引(conn.api)}`] : []),
+    ...(conn.models && conn.models.length > 0
+      ? [`    models: [${conn.models.map(引).join(", ")}]`]
+      : []),
+  ]
 
   if (!段) {
     // **还没有这一段**：加在文件最前面，紧挨着已有注释之后
-    if (!baseUrl) return 原文
+    if (!有内容) return 原文
     return ["providers:", ...块, "", ...lines].join("\n")
   }
 
@@ -210,7 +255,7 @@ function 写连接(原文: string, id: string, baseUrl: string): string {
   const 旧 = 找条目(起, 末)
   if (旧) {
     const [a, b] = 旧
-    if (baseUrl) return [...lines.slice(0, a), ...块, ...lines.slice(b)].join("\n")
+    if (有内容) return [...lines.slice(0, a), ...块, ...lines.slice(b)].join("\n")
     /**
      * **删掉这一条；如果它是最后一条，连 `providers:` 这一行一起删。**
      *
@@ -222,6 +267,6 @@ function 写连接(原文: string, id: string, baseUrl: string): string {
     const 到 = 剩下 <= 0 ? 末 : b
     return [...lines.slice(0, 从), ...lines.slice(到)].join("\n")
   }
-  if (!baseUrl) return 原文
+  if (!有内容) return 原文
   return [...lines.slice(0, 末), ...块, ...lines.slice(末)].join("\n")
 }

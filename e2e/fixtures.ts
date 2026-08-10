@@ -31,6 +31,14 @@ export interface DawnFixture {
   workspace: string
   /** 假服务器收到的请求。用来证明测试**不是空转通过** */
   requests: unknown[]
+  /**
+   * 假推理服务器的地址。
+   *
+   * **给「在界面上手填一个自定义端点」那类用例用**——它要往输入框里
+   * 敲一个真能连上的地址，而那个地址在夹具起来之前不存在。
+   * （配置文件里用 `{{MOCK_URL}}` 占位，界面里没有占位符这条路。）
+   */
+  mockUrl: string
 }
 
 /**
@@ -257,7 +265,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       if (m.type() === "error") console.error("[渲染进程]", m.text())
     })
 
-    await use({ app, page, dir, dbPath, workspace, requests: server.requests })
+    await use({ app, page, dir, dbPath, workspace, requests: server.requests, mockUrl: server.url })
 
     /**
      * **关不掉要出声。** 上一版是 `.catch(() => {})`——静默吞掉。

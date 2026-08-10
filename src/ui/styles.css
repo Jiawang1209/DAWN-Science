@@ -1557,23 +1557,6 @@ pre {
   color: var(--dawn-danger);
 }
 
-/* 其余 pi 认识的 provider：折叠 + 筛选（2026-08-10） */
-.more-providers {
-  margin-top: var(--dawn-space-3);
-  padding-top: var(--dawn-space-3);
-  border-top: 1px solid var(--dawn-stroke-4);
-}
-
-.more-providers > summary {
-  cursor: pointer;
-  color: var(--dawn-text-2);
-  font-size: var(--dawn-ui-size);
-}
-
-.more-providers > .control {
-  width: 100%;
-  margin: var(--dawn-space-2) 0;
-}
 
 /* PDF 交给 Chromium 自带的阅读器。**给足高度**——一个矮框里的 PDF 什么都看不出来 */
 .preview-pdf {
@@ -1809,36 +1792,100 @@ pre {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── 凭证行：把话说全 + 就地建 agent（2026-08-10） ───────────────── */
+/* ── 模型服务（2026-08-10 重做） ─────────────────────────────────
+ *
+ * 上一版是一张 39 行的表，每行一个 key 框加一个「改地址」折叠——
+ * 作者：*「感觉格式有点儿乱乱的」*。现在是**一条一行摘要 + 点开编辑**，
+ * 加一个「添加」入口。
+ */
+
+.svc {
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-md);
+  margin-bottom: var(--dawn-space-2);
+  background: var(--dawn-surface-panel);
+}
+
+.svc.open { border-color: var(--dawn-stroke-2); }
 
 /**
- * **填了 key 但没有 agent 在用它。** 这一句要显眼——它正是作者卡住的地方：
- * 填完 key 回到对话，选择器里什么都没多。
+ * 整行是一个按钮。**写着「设置」两个字**——
+ * 一个光秃秃的三角不算入口（今天为此栽过三次）。
  */
-.cred-idle { color: var(--dawn-warning); }
+.svc-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dawn-space-2);
+  width: 100%;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  text-align: left;
+}
 
-.new-agent {
+.svc-head:hover { background: var(--dawn-surface-elevated); }
+
+.svc-name {
+  font-weight: 600;
+  font-size: var(--dawn-ui-size);
+  flex: 0 0 auto;
+}
+
+/* 摘要是**扫**的，不是读的：一行放不下就省略，不换行把行高撑起来 */
+.svc-sum {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--dawn-text-3);
+  font-size: 12px;
+  font-family: var(--dawn-font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.svc-toggle {
+  flex: 0 0 auto;
+  color: var(--dawn-accent);
+  font-size: 12px;
+}
+
+.svc-body {
+  padding: 0 var(--dawn-space-3) var(--dawn-space-3);
+  border-top: 1px solid var(--dawn-stroke-4);
+  padding-top: var(--dawn-space-3);
+}
+
+.svc-field { margin-bottom: var(--dawn-space-3); }
+.svc-field-name {
+  display: block;
+  font-size: var(--dawn-ui-size);
+  font-weight: 500;
+}
+.svc-field .hint { margin: 2px 0 var(--dawn-space-1); }
+.svc-field .control { width: 100%; }
+.svc-field .control.mono { font-family: var(--dawn-font-mono); font-size: 12px; }
+
+/* key 那一行：输入框 + 「删掉 key」 */
+.svc-line { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.svc-line .btn { flex: 0 0 auto; white-space: nowrap; }
+.svc-line select.control { flex: 0 0 14rem; }
+
+.svc-actions { display: flex; align-items: center; gap: var(--dawn-space-2); }
+
+/* 添加入口：**一个按钮**，二选一在点开之后 */
+.svc-add-entry { margin-top: var(--dawn-space-2); }
+
+.svc-add {
+  margin-top: var(--dawn-space-2);
+  padding: var(--dawn-space-3);
+  border: 1px dashed var(--dawn-stroke-2);
+  border-radius: var(--dawn-radius-md);
+}
+
+.svc-tabs {
   display: flex;
   align-items: center;
   gap: var(--dawn-space-2);
-  margin-top: var(--dawn-space-1);
+  margin-bottom: var(--dawn-space-3);
+  flex-wrap: wrap;
 }
 
-.new-agent .control { width: 10rem; }
-
-/* 端点地址：只给那 8 个不自带地址的 provider 看（2026-08-10） */
-.base-url { margin-top: var(--dawn-space-1); }
-.base-url .hint { margin: 0 0 var(--dawn-space-1); }
-.base-url .control { width: 18rem; font-family: var(--dawn-font-mono); font-size: 12px; }
-
-/* 地址那一行的表单。**不复用 `.cred-form`**——复用会让「哪个保存按钮」分不清 */
-.base-url-form { display: flex; align-items: center; gap: var(--dawn-space-2); }
-.base-url-form .btn { flex: 0 0 auto; white-space: nowrap; }
-
-/* 「改地址」折叠：**一直在那儿，只是不占视线**（2026-08-10） */
-.base-url-fold { margin-top: var(--dawn-space-1); }
-.base-url-fold > summary {
-  cursor: pointer;
-  color: var(--dawn-text-3);
-  font-size: 11px;
-}
+.svc-add-form .svc-field:last-of-type { margin-bottom: var(--dawn-space-2); }

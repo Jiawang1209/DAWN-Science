@@ -691,8 +691,28 @@ export const OPERATIONS = {
          * 界面据此给它们一个输入框——不给的话，填了 key 也连不上而没人知道为什么。
          */
         needsBaseUrl: z.array(z.string()).optional(),
-        /** 已经填过的地址。**只回填过的**，没填的不给键 */
-        baseUrls: z.record(z.string(), z.string()).optional(),
+        /**
+         * 已经写下的连接设置（2026-08-10 由 `baseUrls` 扩成这个）。
+         *
+         * **只回写过的**，没写过的不给键——空对象会被读成「写过，但都是空的」，
+         * 而那与「没写过」在界面上要说两句不同的话。
+         *
+         * 三样一起回：设置里那个编辑器要能改任何一项，
+         * 只回地址的话「协议」与「模型清单」每次打开都是空的，
+         * 看起来像被清掉了。
+         */
+        connections: z
+          .record(
+            z.string(),
+            z
+              .object({
+                baseUrl: z.string().optional(),
+                api: z.string().optional(),
+                models: z.array(z.string()).optional(),
+              })
+              .strict(),
+          )
+          .optional(),
         problem: z.string().optional(),
       })
       .strict(),
@@ -815,16 +835,33 @@ export const OPERATIONS = {
   },
 
   /**
-   * 写一个 provider 的连接地址（2026-08-10）。
+   * 写一个 provider 的连接设置（2026-08-10）。
    *
    * pi 自带 40 个 provider 的地址，**有 8 个不自带**——它们跟账号、区域、
    * 项目走（Azure 的 deployment、Vertex 的 project、Cloudflare 的 account id）。
+   * 而**自带地址的那 32 个也得能改**：作者在 platform.kimi.com 买的按量 API
+   * 与 pi 自带的 Kimi For Coding 订阅线不是一条路，填对了 key 照样 401。
    *
-   * **空串 = 取消覆盖**，回到 pi 的默认。存一个空地址会让请求打到空处，
+   * **三样一起给，是全量替换那一条**，不是打补丁。
+   * 打补丁的话「把 api 清空」表达不出来——而清空正是「我填错了，
+   * 回到 pi 的默认」唯一的说法。
+   *
+   * **三样全空 = 取消覆盖。** 存一个空地址会让请求打到空处，
    * 而报错与「你填空了」毫无关系。
+   *
+   * `apiKey` **不在这里**：它走 `setCredential` 进 OS 的加密存储。
+   * 这个操作写的是 `providers.yaml`，一份用户随时会打开来读的明文文件。
    */
-  setProviderBaseUrl: {
-    request: z.object({ providerId: z.string().min(1), baseUrl: z.string().max(500) }).strict(),
+  setProviderConnection: {
+    request: z
+      .object({
+        providerId: z.string().min(1),
+        baseUrl: z.string().max(500).optional(),
+        api: z.string().max(100).optional(),
+        /** 这个端点有哪些模型。**自建端点必须给**——pi 猜不出你的 vLLM 上跑着什么 */
+        models: z.array(z.string().min(1)).max(200).optional(),
+      })
+      .strict(),
     response: z.object({}).strict(),
     mutating: true,
   },

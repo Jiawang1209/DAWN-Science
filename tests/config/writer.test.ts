@@ -122,7 +122,7 @@ describe("加一个 native agent", () => {
 describe("provider 的连接设置", () => {
   it("**没有 `providers:` 段时把它建出来**", () => {
     const f = 配置()
-    const reg = setProviderConnection(f, "azure", "https://x.openai.azure.com")
+    const reg = setProviderConnection(f, "azure", { baseUrl: "https://x.openai.azure.com" })
     expect(reg.providers?.["azure"]?.baseUrl).toBe("https://x.openai.azure.com")
     // 原有的东西一个不少
     expect(reg.agents["ds-chat"]).toBeDefined()
@@ -131,31 +131,69 @@ describe("provider 的连接设置", () => {
 
   it("再写一次是改，不是加两条", () => {
     const f = 配置()
-    setProviderConnection(f, "azure", "https://a")
-    const reg = setProviderConnection(f, "azure", "https://b")
+    setProviderConnection(f, "azure", { baseUrl: "https://a" })
+    const reg = setProviderConnection(f, "azure", { baseUrl: "https://b" })
     expect(reg.providers?.["azure"]?.baseUrl).toBe("https://b")
     expect(readFileSync(f, "utf8").match(/azure:/g)).toHaveLength(1)
   })
 
   it("**空串等于取消覆盖** —— 存一个空地址会让请求打到空处，而报错与「你填空了」毫无关系", () => {
     const f = 配置()
-    setProviderConnection(f, "azure", "https://a")
-    const reg = setProviderConnection(f, "azure", "  ")
+    setProviderConnection(f, "azure", { baseUrl: "https://a" })
+    const reg = setProviderConnection(f, "azure", { baseUrl: "  " })
     expect(reg.providers?.["azure"]).toBeUndefined()
   })
 
   it("两个 provider 各写各的，互不影响", () => {
     const f = 配置()
-    setProviderConnection(f, "azure", "https://a")
-    const reg = setProviderConnection(f, "vertex", "https://b")
+    setProviderConnection(f, "azure", { baseUrl: "https://a" })
+    const reg = setProviderConnection(f, "vertex", { baseUrl: "https://b" })
     expect(reg.providers?.["azure"]?.baseUrl).toBe("https://a")
     expect(reg.providers?.["vertex"]?.baseUrl).toBe("https://b")
+  })
+
+  it("**三样一起写**：地址、协议、模型清单（自建端点要的正是这三样）", () => {
+    const f = 配置()
+    const reg = setProviderConnection(f, "my-vllm", {
+      baseUrl: "http://localhost:8000/v1",
+      api: "openai-completions",
+      models: ["local-7b", "local-70b"],
+    })
+    expect(reg.providers?.["my-vllm"]).toEqual({
+      baseUrl: "http://localhost:8000/v1",
+      api: "openai-completions",
+      models: ["local-7b", "local-70b"],
+    })
+    // **行内列表**：用户手写的风格是什么样，我们写出来的也该是什么样
+    expect(readFileSync(f, "utf8")).toContain('models: ["local-7b", "local-70b"]')
+  })
+
+  it("**是全量替换，不是打补丁** —— 否则「把 api 清空」表达不出来", () => {
+    const f = 配置()
+    setProviderConnection(f, "x", { baseUrl: "https://a", api: "anthropic-messages" })
+    const reg = setProviderConnection(f, "x", { baseUrl: "https://a" })
+    expect(reg.providers?.["x"]).toEqual({ baseUrl: "https://a" })
+  })
+
+  it("**三样全空 = 取消覆盖**，连 `providers:` 这一行一起收干净", () => {
+    const f = 配置()
+    setProviderConnection(f, "x", { baseUrl: "https://a", models: ["m"] })
+    const reg = setProviderConnection(f, "x", {})
+    expect(reg.providers).toBeUndefined()
+    expect(readFileSync(f, "utf8")).not.toContain("providers:")
+  })
+
+  it("模型 id 里的引号不会把 YAML 写坏", () => {
+    const f = 配置()
+    const reg = setProviderConnection(f, "x", { baseUrl: 'https://a/"b"', models: ['m"1'] })
+    expect(reg.providers?.["x"]?.baseUrl).toBe('https://a/"b"')
+    expect(reg.providers?.["x"]?.models).toEqual(['m"1'])
   })
 
   it("**agents 段一个字都不能动**", () => {
     const f = 配置()
     const 前 = readFileSync(f, "utf8").split("agents:")[1]
-    setProviderConnection(f, "azure", "https://a")
+    setProviderConnection(f, "azure", { baseUrl: "https://a" })
     expect(readFileSync(f, "utf8").split("agents:")[1]).toBe(前)
   })
 })

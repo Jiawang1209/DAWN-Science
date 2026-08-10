@@ -48,13 +48,13 @@ test.describe("自己填地址的 provider", () => {
      * 因为那份列表来自模型目录，而它现在包含我们声明的这一个。
      */
     await page.getByRole("button", { name: "设置", exact: true }).click()
-    const 行 = page
-      .locator(".set-section > .set-rows > .set-row")
-      .filter({ hasText: "selfhost" })
+    const 行 = page.locator(".svc").filter({ hasText: "selfhost" })
     await expect(行).toHaveCount(1)
+    // 一行摘要上就能看出它打到哪、有几个模型——不用点开
+    await expect(行.locator(".svc-sum")).toContainText("1 个模型")
+    await 行.locator(".svc-head").click()
     await 行.getByLabel("selfhost 的 API key").fill("sk-local-any")
-    // 这一行现在有两个「保存」（key 一个、地址一个）——**限定在凭证表单里**
-    await 行.locator(".cred-form").getByRole("button", { name: "保存" }).click()
+    await 行.getByRole("button", { name: "保存" }).click()
     await page.getByRole("button", { name: "返回" }).click()
 
     await page.getByRole("button", { name: /新建会话/ }).click()

@@ -467,22 +467,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     providers: string[]
     models?: Record<string, string[]>
     needsBaseUrl?: string[]
-    baseUrls?: Record<string, string>
+    connections?: Record<string, { baseUrl?: string; api?: string; models?: string[] }>
     problem?: string
   }>({ providers: [] })
   useEffect(() => {
     if (view !== "settings") return
     client
-      .get<{
-        providers: string[]
-        models?: Record<string, string[]>
-        needsBaseUrl?: string[]
-        baseUrls?: Record<string, string>
-        problem?: string
-      }>(
-        "listKnownProviders",
-        {},
-      )
+      .get<typeof knownProviders>("listKnownProviders", {})
       .then(setKnownProviders)
       .catch(fail)
   }, [view, client])
@@ -858,20 +849,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}
                 known={knownProviders.providers}
-                /**
-                 * **哪个 provider 被哪些 agent 用着。** 从 `providers.agents`
-                 * 现算——它本来就带着每个 native agent 的 `provider`。
-                 */
-                usedBy={providers.agents.reduce<Record<string, string[]>>((acc, a) => {
-                  if (a.provider) (acc[a.provider] ??= []).push(a.agentId)
-                  return acc
-                }, {})}
-                /** 该 provider 在模型目录里有哪些。**没有就是空**，界面据此说建不了 */
+                /** 该 provider 在模型目录里有哪些。**没有就是空**，摘要据此说「没有模型」 */
                 modelsOf={(pid) =>
                   /**
                    * **先问 pi 的目录，再退回配置里那份。**
                    * 前者覆盖全部 39 个 provider，后者只覆盖配置用到的——
-                   * 而「给一个还没被用到的 provider 建 agent」正是这里的主场景。
+                   * 而「刚加进来的那个」恰恰还没被配置用到。
                    */
                   knownProviders.models?.[pid] ??
                   providers.providers.find((p) => p.providerId === pid)?.available ??
@@ -880,15 +863,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 {...(knownProviders.needsBaseUrl
                   ? { needsBaseUrl: knownProviders.needsBaseUrl }
                   : {})}
-                {...(knownProviders.baseUrls ? { baseUrls: knownProviders.baseUrls } : {})}
-                onSetBaseUrl={(providerId, baseUrl) => {
+                {...(knownProviders.connections
+                  ? { connections: knownProviders.connections }
+                  : {})}
+                onSaveConnection={(providerId, conn) => {
                   client
-                    .get("setProviderBaseUrl", { providerId, baseUrl })
-                    // 重取：那一行要显示刚存进去的地址
+                    .get("setProviderConnection", { providerId, ...conn })
+                    /**
+                     * **三份都要重取。** 连接一变，可选 provider（自定义端点会
+                     * 出现在目录里）、agent 列表（配了就自动有一个）、
+                     * 以及这一行自己要显示的值，全都变了。
+                     */
                     .then(() =>
-                      client
-                        .get<typeof knownProviders>("listKnownProviders", {})
-                        .then(setKnownProviders),
+                      Promise.all([
+                        client
+                          .get<typeof knownProviders>("listKnownProviders", {})
+                          .then(setKnownProviders),
+                        loadProviders(client),
+                      ]),
                     )
                     .catch(fail)
                 }}
@@ -1060,7 +1052,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <div className="statusbar">
         <span>{ready ? "已连接" : "未连接"}</span>
         {creds.configured.length === 0 && providers.providers.length > 0 ? (
-          <span className="caveat">未配置任何 API key——native agent 无法建会话，点「设置」填写</span>
+          /**
+           * **不说「native agent」。** 那是我们内部的词，作者已经为它抱怨过一次
+           * （*「为什么还会多一个新建 agent 这种奇怪的东西呢？」*）。
+           * 这一行要说的是他关心的事实：还没有钥匙，所以还不能对话。
+           */
+          <span className="caveat">还没有填任何 API key，暂时不能对话——去「设置 → 模型服务」加一个</span>
         ) : null}
         {notes.map((n, i) => (
           <span key={i} className="hint">

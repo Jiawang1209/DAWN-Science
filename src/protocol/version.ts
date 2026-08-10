@@ -92,8 +92,18 @@
  *   等于让一个「加个模型」的按钮悄悄能起任意进程。
  * 3.4（2026-08-10）：新增 `setProviderBaseUrl`；`listKnownProviders` 带上
  *   `needsBaseUrl` / `baseUrls`。纯新增。
+ * **4.0（2026-08-10，破坏性）**：`setProviderBaseUrl` → `setProviderConnection`
+ *   （多收 `api` / `models`）；`listKnownProviders` 的 `baseUrls` → `connections`
+ *   （一个 provider 的三样一起回）。
+ *
+ *   **两处都是替换，不是新增**，所以 major 递增。本可以两边并存躲开这次 major——
+ *   没有那么做：设置里那个编辑器要能改任何一项，而两个写口子（一个只写地址、
+ *   一个写三样）迟早会各写各的，那时「我到底改没改上」没有人答得出来。
+ *
+ *   起因是作者：*「我觉得可以在设置里面，通过 baseUrl、api、models
+ *   分别留出可以填写的地方，然后自行填写。」*
  */
-export const WORKBENCH_PROTOCOL_VERSION = "3.4"
+export const WORKBENCH_PROTOCOL_VERSION = "4.0"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

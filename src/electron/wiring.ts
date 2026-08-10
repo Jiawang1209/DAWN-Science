@@ -128,8 +128,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * 那个路径同时是 pi 缓存远端目录的地方，可能被它覆盖——
    * 不重新生成的话，用户的覆盖会某天悄悄消失而没有任何迹象。
    */
+  /**
+   * **写到一个跟基底不同名的文件里**（`models.generated.json`）。
+   *
+   * 同名会让「基底」和「产物」变成同一个文件，于是删掉一条连接设置之后，
+   * 下一次生成又会从上一次的产物里把它读回来——**删不掉，且没有任何迹象**。
+   * 开发/测试时基底是假服务器那份目录，正好会撞上这个。
+   */
   const 生成的模型目录 = writeModelsJson(
-    join(dirname(opts.dbPath), "models.json"),
+    join(dirname(opts.dbPath), "models.generated.json"),
     registry.providers,
     opts.modelsPath,
   )
@@ -242,7 +249,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * 不做的话地址写进了配置却要重启才生效，而界面会说「已保存」——半真的话。
      */
     onProvidersChanged: (providers) => {
-      writeModelsJson(join(dirname(opts.dbPath), "models.json"), providers, opts.modelsPath)
+      writeModelsJson(
+        join(dirname(opts.dbPath), "models.generated.json"),
+        providers,
+        opts.modelsPath,
+      )
       nativeRuntime.resetModelCatalog()
     },
     environments,

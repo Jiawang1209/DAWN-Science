@@ -101,9 +101,9 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
       // 只等前者会在数据到达之前截图 —— 这条正是第一次跑出来的假报警
       // 2026-08-10 设置改成 Section > Row > Control：凭证不再是一条 `.cred`，
       // 而是一行里的一个表单。**等的还是同一件事**——凭证数据到了没有
-      // 折叠里还有几十个（pi 认识的其余 provider），所以不数总数——
-      // **等的还是同一件事**：凭证数据到了没有
-      await expect(page.locator(".set-control .cred-form").first()).toBeVisible()
+      // 2026-08-10 重做成「一行摘要 + 添加入口」：等的还是同一件事——
+      // **数据到了没有**（摘要那一行要等模型目录回来才画得出来）
+      await expect(page.locator(".svc .svc-sum").first()).toBeVisible()
     },
   },
   {
@@ -190,10 +190,10 @@ for (const theme of ["亮色", "暗色"] as const) {
           page.locator(".dur"),
           page.locator(".session-list .sess .sub"),
           /**
-           * **那个数字来自 pi 的模型目录**（「其余 pi 认识的 provider（39）」），
-           * 目录一更新它就变。和时钟是同一类：**外面世界的东西不进逐像素基线**。
+           * **摘要那一行里的「几个模型」来自 pi 的模型目录**，目录一更新它就变。
+           * 和时钟是同一类：**外面世界的东西不进逐像素基线**。
            */
-          page.locator(".more-providers > summary"),
+          page.locator(".svc-sum"),
         ],
         /**
          * **逐像素必须完全一致**（默认是 0.2 的色距容差）。

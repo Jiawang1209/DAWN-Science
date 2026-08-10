@@ -15,13 +15,13 @@ const 陌生 = "kimi-coding"
 test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "设置", exact: true }).click()
-  await // **限定直接子元素**：每一行现在也有一个「改地址」折叠
-  page.locator(".more-providers > summary").click()
+  // 2026-08-10 重做：不再是一张 39 行的表，而是「添加 → 从列表里挑 → 只问 key」
+  await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByLabel("筛选 provider").fill(陌生)
-
-  const 行 = page.locator(".more-providers .set-row").filter({ hasText: 陌生 })
-  await 行.getByLabel(`${陌生} 的 API key`).fill("sk-fake")
-  await 行.locator(".cred-form").getByRole("button", { name: "保存" }).click()
+  await page.getByLabel("pi 认识的 provider").selectOption(陌生)
+  await page.getByLabel("新服务的 API key").fill("sk-fake")
+  await page.getByRole("button", { name: "添加" }).click()
+  await expect(page.locator(".svc").filter({ hasText: 陌生 })).toHaveCount(1)
 
   await page.getByRole("button", { name: "返回" }).click()
   await page.getByRole("button", { name: "新建会话" }).click()

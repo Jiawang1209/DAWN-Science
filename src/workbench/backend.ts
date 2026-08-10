@@ -143,7 +143,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         .filter((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
         .map((d) => d.provider),
     )
-    for (const providerId of credentials.configured()) {
+    /**
+     * **写下了连接设置的也算。**
+     *
+     * 一个自建的 vLLM / Ollama 往往**根本不需要 key**——只按「填过 key」来算，
+     * 它会在设置里配得好好的，却在对话里选不到，
+     * 而那正是作者反复撞上的那件事的另一个版本。
+     */
+    const 该有的 = [
+      ...new Set([...credentials.configured(), ...Object.keys(registry.providers ?? {})]),
+    ]
+    for (const providerId of 该有的) {
       if (已被用.has(providerId) || registry.agents[providerId]) continue
       /**
        * **挑不出模型就不造这个 agent。** 一个模型是空串的 agent
@@ -549,12 +559,24 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     listKnownProviders: async () => {
-      /** 已经填过的地址。**只回填过的**，没填的不给键 */
-      const baseUrls: Record<string, string> = {}
+      /** 已经写下的连接设置。**只回写过的**，没写过的不给键 */
+      const connections: Record<string, { baseUrl?: string; api?: string; models?: string[] }> = {}
       for (const [id, c] of Object.entries(registry.providers ?? {})) {
-        if (c.baseUrl) baseUrls[id] = c.baseUrl
+        connections[id] = {
+          ...(c.baseUrl ? { baseUrl: c.baseUrl } : {}),
+          ...(c.api ? { api: c.api } : {}),
+          ...(c.models ? { models: c.models } : {}),
+        }
       }
-      if (!models?.known) return { providers: [], problem: "本次运行没有装配模型目录" }
+      /**
+       * **目录取不到时也要把连接设置回出去。** 那是用户自己写下的东西，
+       * 与「pi 认识谁」无关——不回的话，设置页会把已经填好的地址显示成空的，
+       * 看起来像被清掉了。
+       */
+      const 写过的 = Object.keys(connections).length > 0 ? { connections } : {}
+      if (!models?.known) {
+        return { providers: [], ...写过的, problem: "本次运行没有装配模型目录" }
+      }
       try {
         const ids = await models.known()
         /**
@@ -568,14 +590,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           models: table,
           // **地址 pi 不自带的那几个**：界面据此给输入框
           ...(models.needsBaseUrl ? { needsBaseUrl: await models.needsBaseUrl() } : {}),
-          ...(Object.keys(baseUrls).length > 0 ? { baseUrls } : {}),
+          ...写过的,
         }
       } catch (err) {
         /**
          * **取不到就说取不到。** 返回一个空清单会被读成「pi 一个都不支持」，
          * 而实情是「我们没问到」（规格 7.5：失败必须出声）。
          */
-        return { providers: [], problem: err instanceof Error ? err.message : String(err) }
+        return {
+          providers: [],
+          ...写过的,
+          problem: err instanceof Error ? err.message : String(err),
+        }
       }
     },
 
@@ -584,11 +610,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { reordered: sessions.reorder(projectId, orderedIds) }
     },
 
-    setProviderBaseUrl: async ({ providerId, baseUrl }) => {
+    setProviderConnection: async ({ providerId, baseUrl, api, models: 模型 }) => {
       if (!configPath) throw fault("internal_error", "本次运行没有装配配置文件路径")
       let 新的
       try {
-        新的 = setProviderConnection(configPath, providerId, baseUrl)
+        新的 = setProviderConnection(configPath, providerId, {
+          ...(baseUrl === undefined ? {} : { baseUrl }),
+          ...(api === undefined ? {} : { api }),
+          ...(模型 === undefined ? {} : { models: 模型 }),
+        })
       } catch (err) {
         if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
         throw err

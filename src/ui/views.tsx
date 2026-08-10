@@ -393,6 +393,7 @@ export function SessionSidebar({
       {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
       {active ? (
         <>
+          {/* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */}
           <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
             项目概览
           </Row>
@@ -673,6 +674,17 @@ export function ConversationView({
   /** agent 还在说话（最后一条 turn 未收尾）时才给停止按钮 */
   const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
 
+  /**
+   * **「发出去还没回来」那段本来也想给一个记号，去掉了**（2026-08-10）。
+   *
+   * 它靠「最后一条是自己说的」来判断，而实测里这个条件在回复到达之后
+   * 仍然成立过一会儿——症状是**回来了那三个点还在转**。
+   * 而「一个永远在转的记号比没有更糟」是本项目自己写下的话。
+   *
+   * 现在只在**这一段确实还没收尾时**显示（`item.final === false`），
+   * 那个条件由 `turn_end` 严格关掉，不会挂住。
+   */
+
   return (
     <div className="conversation">
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
@@ -827,10 +839,76 @@ function TranscriptRow({
         ) : (
           <AgentMarkdown text={item.text} streaming={!item.final} />
         )}
-        {item.final ? null : <span className="hint">…</span>}
+        {/**
+         * **还在说的时候给一个会动的记号**（2026-08-10）。
+         *
+         * 作者：*「回复的时候应该增加一个类似 hermes 的思考的动图。」*
+         * 此前这里是一个静止的 `…`——它与「卡住了」长得一模一样，
+         * 而这两件事人最想分清。
+         */}
+        {/**
+         * **还在说的时候给一个会动的记号**（2026-08-10）。
+         *
+         * 作者：*「回复的时候应该增加一个类似 hermes 的思考的动图。」*
+         * 此前这里是一个静止的 `…`——它与「卡住了」长得一模一样，
+         * 而这两件事人最想分清。
+         *
+         * 它一度被撤下过：真链路上「回复到了它还在转」。
+         * **根因不在这里**——是协议 `usage` 的 `.strict()` 校验抛出，
+         * 掐掉了事件流，于是这一段的 `final` 永远关不掉。修掉那个之后它就正常了。
+         */}
+        {item.final ? null : <Thinking />}
+        {/**
+         * **这一句花了多少 token。**
+         *
+         * 作者：*「我们现在每次消耗的 token，其实也应该展示出来。」*
+         * 项目概览的成本栏回答「这个项目一共花了多少」，
+         * 而人在对话里想知道的是**这一句花了多少**——两个问题。
+         *
+         * **没有 `usage` 就什么都不显示**：缺席表示「不知道」
+         * （自有订阅额度的 agent、或这一段本来就没有新的模型调用），
+         * 显示成 0 是把「不知道」说成了「没花」。
+         */}
+        {item.final && item.usage ? <TurnUsage usage={item.usage} /> : null}
       </div>
     </div>
   )
+}
+
+/**
+ * 思考中的动记号。**三个点依次起伏**——Hermes 那个的形态，不抄它的实现。
+ *
+ * 用 CSS 动画而不是逐帧的 gif／svg：一张动图在暗色主题下要么发白边、
+ * 要么得再准备一张，而这三个点跟着 `currentColor` 走。
+ *
+ * **文字也要有**（`.sr-only`）：一个只靠动画表达的状态，读屏用户拿不到。
+ */
+function Thinking() {
+  return (
+    <span className="thinking" role="status">
+      <span className="sr-only">正在思考</span>
+      <span className="dot" aria-hidden="true" />
+      <span className="dot" aria-hidden="true" />
+      <span className="dot" aria-hidden="true" />
+    </span>
+  )
+}
+
+/** 数字加千位分隔。**不缩写成 1.2k**——token 数是要拿来对账的 */
+const 千位 = (n: number) => n.toLocaleString("en-US")
+
+function TurnUsage({
+  usage,
+}: {
+  usage: { input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined }
+}) {
+  const 段: string[] = []
+  if (usage.input !== undefined) 段.push(`输入 ${千位(usage.input)}`)
+  if (usage.output !== undefined) 段.push(`输出 ${千位(usage.output)}`)
+  // **缓存命中单独说**：它与输入 token 计费不同，混进去会让账对不上
+  if (usage.cacheRead !== undefined) 段.push(`缓存 ${千位(usage.cacheRead)}`)
+  if (段.length === 0) return null
+  return <p className="turn-usage">{段.join(" · ")} token</p>
 }
 
 /**

@@ -78,6 +78,21 @@ export type AgentEvent =
    */
   | { kind: "turn_end"; sessionId: SessionId }
   /**
+   * 这一段模型输出花了多少 token（2026-08-10）。
+   *
+   * **单独一条事件，不搭在 `turn_end` 上。** 起初是搭着发的，结果
+   * `.turn-usage` 一次都没出现——**pi 先发 `turn_end`，带 usage 的
+   * `message` 后到**，于是取到的永远是空。
+   *
+   * 单独发之后两种顺序都对：先到就落在还开着的那一段上，
+   * 后到就落在刚收尾的那一段上。
+   */
+  | {
+      kind: "turn_usage"
+      sessionId: SessionId
+      usage: { input?: number; output?: number; cacheRead?: number }
+    }
+  /**
    * 系统提示。**既不是对话也不是工具**——混进 turn 会污染对话记录。
    *
    * 协议里 `NoticeItem` 一直存在，但在此之前**没有任何东西能产出它**。

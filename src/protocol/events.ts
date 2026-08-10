@@ -35,6 +35,20 @@ const TurnItem = z
     text: z.string(),
     /** 这一轮说完了没有。未完时界面可显示还在输入 */
     final: z.boolean(),
+    /**
+     * 这一段模型输出花了多少 token（3.2，2026-08-10）。
+     *
+     * **缺席 = 不知道**，不是 0——例如用自有订阅额度的 agent、
+     * 或者这一段本来就没有新的模型调用。界面据此说的话完全不同。
+     */
+    usage: z
+      .object({
+        input: z.int().min(0).optional(),
+        output: z.int().min(0).optional(),
+        cacheRead: z.int().min(0).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
 

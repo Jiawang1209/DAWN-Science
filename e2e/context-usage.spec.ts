@@ -25,9 +25,18 @@ test("说过一句话之后，上下文面板给出真实的 token 数", async (
    * **定位器松，就迟早会被别处的一句话撞上。**
    */
   const panel = page.locator(".panel", { has: page.getByText("上下文", { exact: true }) })
-  // 假后端报的是 prompt_tokens: 12
-  await expect(panel).toContainText("12")
-  await expect(panel).toContainText("tokens")
+  /**
+   * **2026-08-10：这两行此前是一条假绿。**
+   *
+   * 原来写的是 `toContainText("12")` + `toContainText("tokens")`——
+   * 而面板上本来就有「模型上限 **128,000** tokens」，那个 `12` 和 `tokens`
+   * 都被它满足了。真实情况是「已用**尚未采集**」，
+   * 也就是这条用例标题里那件事**一天都没成立过**。
+   *
+   * 现在断言的是完整的那一段，并且**显式地要求它不再说「尚未采集」**。
+   */
+  await expect(panel).toContainText("12 / 128,000 tokens")
+  await expect(panel).not.toContainText("尚未采集")
 })
 
 test("**下表明写「按字节」** —— 不写清楚，人会把它当成 token 分解", async ({ dawn }) => {

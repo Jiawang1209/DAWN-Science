@@ -224,6 +224,25 @@ export class SessionTranscripts {
         })
         return
 
+      /**
+       * 这一段花了多少 token（2026-08-10）。
+       *
+       * **落在「还开着的那一段」上，没有就落在最后一条 agent 发言上**——
+       * `turn_usage` 与 `turn_end` 的先后顺序不固定（pi 实测是 `turn_end` 先到）。
+       *
+       * **一条都找不到就丢掉**，不新建一个空发言：一个只有数字没有内容的
+       * 气泡在对话里毫无意义。
+       */
+      case "turn_usage": {
+        if (e.kind === "pty") return
+        const target =
+          (e.openTurnId ? e.items.find((i) => i.type === "turn" && i.id === e.openTurnId) : undefined) ??
+          [...e.items].reverse().find((i) => i.type === "turn" && i.who === "agent")
+        if (!target || target.type !== "turn") return
+        this.putItem(sessionId, e, { ...target, usage: event.usage })
+        return
+      }
+
       case "turn_end": {
         // 同上：**只有 PTY 没有回合概念**（字节流），cli 与 native 都有
         if (e.kind === "pty") return
@@ -233,7 +252,19 @@ export class SessionTranscripts {
         e.openTurnId = undefined
         if (!open) return
         const item = e.items.find((i) => i.type === "turn" && i.id === open)
-        if (item && item.type === "turn") this.putItem(sessionId, e, { ...item, final: true })
+        if (item && item.type === "turn") {
+          /**
+           * **把这一段的 token 用量钉在这条发言上**（2026-08-10）。
+           *
+           * 作者：*「我们现在每次消耗的 token，其实也应该展示出来。」*
+           * 项目概览里的成本栏回答的是「这个项目一共花了多少」，
+           * 而人在对话里想知道的是**这一句花了多少**——两个问题。
+           *
+           * **没有就不给这个字段**：`usage` 缺席表示「不知道」，
+           * 与「花了 0 个 token」在界面上说的话完全不同。
+           */
+          this.putItem(sessionId, e, { ...item, final: true })
+        }
         return
       }
 
@@ -344,12 +375,33 @@ export class SessionTranscripts {
     body: UpdateBody,
   ): void {
     e.revision += 1
-    const update = SessionUpdateSchema.parse({
-      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
-      sessionId,
-      revision: e.revision,
-      ...body,
-    })
+    /**
+     * **校验不合格就丢掉这一条，但绝不把异常抛回调用方。**
+     *
+     * 2026-08-10 踩过：这里原本直接 `parse`，一条字段多了的更新让它抛出，
+     * 而这个方法是被 runtime 的事件回调同步调到的——**那一抛顺着
+     * `emit` 窜回 pi 的事件循环，把后面的文本增量全掐掉了**。
+     * 症状是「回复再也不出现」，与真正的错处（多了几个字段）看起来毫无关系。
+     *
+     * 「畸形更新不该流到界面」仍然成立，所以它被丢掉；
+     * **但它必须出声**（规格 7.5），而且 revision 已经加过——
+     * 界面会看到跳号并自行重新同步，那正是为跳号准备的那条路。
+     */
+    let update: ReturnType<typeof SessionUpdateSchema.parse>
+    try {
+      update = SessionUpdateSchema.parse({
+        workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+        sessionId,
+        revision: e.revision,
+        ...body,
+      })
+    } catch (err) {
+      console.error(
+        `[中枢] 会话 ${sessionId} 的一条更新不合协议，已丢弃（revision ${e.revision} 因此跳号）：`,
+        err instanceof Error ? err.message : String(err),
+      )
+      return
+    }
     if (!this.subscribed.has(sessionId)) return
     // 复制一份再遍历：监听者可能在回调里退订
     for (const cb of [...this.listeners]) cb(update)

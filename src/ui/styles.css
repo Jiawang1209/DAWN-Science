@@ -1542,3 +1542,55 @@ pre {
 .sess-item.dragging .row {
   cursor: grabbing;
 }
+
+/* ── 思考中的动记号（2026-08-10） ───────────────────────────────── */
+
+/**
+ * 三个点依次起伏。**用 CSS 动画而不是一张动图**——
+ * 动图在暗色主题下要么发白边要么得再准备一张，而这三个点跟着 `currentColor` 走。
+ */
+.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 1em;
+  color: var(--dawn-text-3);
+}
+
+.thinking .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--dawn-radius-full);
+  background: currentColor;
+  animation: dawn-thinking 1.1s ease-in-out infinite;
+}
+
+.thinking .dot:nth-child(3) { animation-delay: 0.15s; }
+.thinking .dot:nth-child(4) { animation-delay: 0.3s; }
+
+@keyframes dawn-thinking {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+/**
+ * **尊重系统的「减弱动态效果」。** 一个一直在跳的东西对前庭敏感的人
+ * 是真的难受，而这个记号的意义（还在忙）用透明度呼吸同样表达得了。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .thinking .dot {
+    animation: dawn-thinking-calm 1.6s ease-in-out infinite;
+  }
+  @keyframes dawn-thinking-calm {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.9; }
+  }
+}
+
+/* 这一句花了多少 token。**比正文弱两档**——它是脚注，不是内容 */
+.turn-usage {
+  margin: var(--dawn-space-1) 0 0;
+  color: var(--dawn-text-4);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}

@@ -774,6 +774,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <div className="topbar">
         <span className="brand">DAWN Science</span>
         <span className="spacer" />
+        {/**
+          * **「返回」对所有非对话屏都给**（2026-08-10）。
+          *
+          * 作者：*「当我们点开项目概览和文件的时候，我们没有关闭窗口。」*
+          * 此前只有设置屏有返回，项目概览与文件**进得去出不来**——
+          * 只能靠去侧栏点一个会话，而那是「切会话」，不是「关掉这一屏」。
+          */}
+        {view !== "conversation" && view !== "settings" ? (
+          <Button variant="ghost" size="sm" onClick={() => setView("conversation")}>
+            返回
+          </Button>
+        ) : null}
         <Button
           variant="ghost"
           size="sm"
@@ -803,8 +815,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setActiveSessionId(id)
             setView("conversation")
           }}
-          onShowPanel={actions.showProjectPanel}
-          onShowFiles={() => setView("files")}
+          onShowPanel={() => setView(view === "panel" ? "conversation" : "panel")}
+          onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
           onDeleteSession={askDeleteSession}
           onRenameSession={renameSession}
           onPinSession={pinSession}

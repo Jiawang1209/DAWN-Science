@@ -112,6 +112,8 @@ interface NativeSession {
    * pi 的文档明说它 *"Not used for main LLM context accounting"*。
    */
   lastUsage: { input?: number; output?: number; cacheRead?: number } | undefined
+  /** 已经报过的那条用量在 `messages` 里的下标。**按下标判重，不按数值** */
+  usageIndexReported: number | undefined
   /** 该会话的隔离目录。工具输出的全文写在它下面 */
   sessionDir: string
   /**
@@ -333,6 +335,7 @@ export class NativeRuntime implements AgentRuntime {
       pending: undefined,
       inFlight: 0,
       lastUsage: undefined,
+      usageIndexReported: undefined,
       sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
     })
@@ -340,14 +343,98 @@ export class NativeRuntime implements AgentRuntime {
     return { sessionId: spec.sessionId, pid }
   }
 
+  /**
+   * 从 pi 的**会话状态**里取最近一条带用量的条目（2026-08-10）。
+   *
+   * ## 为什么不是从事件里拿
+   *
+   * 这段代码此前写的是「助手消息事件上带 `usage`」——**那个形状不存在**。
+   * 于是 `lastUsage` 一直是空的，上下文面板一直显示「已用尚未采集」，
+   * 而覆盖它的那条 e2e 断言的是 `toContainText("12")`，
+   * **匹配到的其实是上下文窗口 `128,000` 里的 `12`**，绿了将近一天。
+   *
+   * 真正的来源是 `session.state.messages[*].usage`（真链路探出来的，形如
+   * `{input, output, cacheRead, cacheWrite, reasoning, totalTokens, cost}`）。
+   *
+   * @returns 最后一条带用量的条目的下标与值。**一条都没有就 undefined**
+   */
+  private latestUsage(
+    sessionId: SessionId,
+  ): { index: number; usage: { input?: number; output?: number; cacheRead?: number } } | undefined {
+    const s = this.sessions.get(sessionId)
+    /**
+     * **一路都要防空。** 这里在每条事件上都会被调到，而事件可能早于
+     * `session` 就位——`s?.session.state` 在 `session` 还没有时会直接抛，
+     * 而这一抛会**打断整条事件流**，症状是回复再也不出现。
+     * （2026-08-10 就是这么把「切会话不丢历史」弄红的。）
+     */
+    const state = s?.session?.state as { messages?: unknown[] } | undefined
+    const msgs = (state?.messages ?? []) as Record<string, unknown>[]
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const u = msgs[i]?.["usage"] as
+        | { input?: number; output?: number; cacheRead?: number }
+        | undefined
+      if (!u || typeof u !== "object") continue
+      /**
+       * **跳过全零的那些。** pi 的条目里有一部分是记账用的空壳
+       * （`{input:0,output:0,…}`），取到它就会把「这一轮花了多少」
+       * 报成 0——而 0 与「不知道」在界面上说的话完全不同，
+       * 更何况这里真实答案并不是 0。
+       */
+      if ((u.input ?? 0) + (u.output ?? 0) === 0) continue
+      return { index: i, usage: u }
+    }
+    return undefined
+  }
+
+  /**
+   * 这一段用了多少 token，发一条事件。
+   *
+   * **按条目下标判重**：同一条用量不该在两次 `turn_end` 上各报一次
+   * （pi 每次模型响应都发 `turn_end`，而没有新模型调用的那些不该重复计数）。
+   * 数值判重不行——两次调用花一样多是完全可能的。
+   */
+  private emitUsageIfNew(sessionId: SessionId): void {
+    const latest = this.latestUsage(sessionId)
+    if (!latest) return
+    const s = this.sessions.get(sessionId)
+    if (!s || s.usageIndexReported === latest.index) return
+    s.usageIndexReported = latest.index
+    s.lastUsage = latest.usage
+    /**
+     * **只发我们声明过的那三个字段。**
+     *
+     * pi 给的对象还带着 `cacheWrite` / `reasoning` / `totalTokens` / `cost`，
+     * 而协议里 `usage` 是 `.strict()` 的——原样转发会让中枢那边
+     * `SessionUpdateSchema.parse` 抛出，**而那一抛会顺着 emit 窜回 pi 的
+     * 事件循环，把后面的文本增量全掐掉**（2026-08-10 的回归就是这么来的：
+     * 症状是「回复再也不出现」，看起来与用量毫无关系）。
+     *
+     * 挑字段而不是放宽 schema：**我们只声明我们真的理解的东西。**
+     */
+    const u = latest.usage
+    this.emit({
+      kind: "turn_usage",
+      sessionId,
+      usage: {
+        ...(u.input !== undefined ? { input: u.input } : {}),
+        ...(u.output !== undefined ? { output: u.output } : {}),
+        ...(u.cacheRead !== undefined ? { cacheRead: u.cacheRead } : {}),
+      },
+    })
+  }
+
   /** pi 的会话事件 → 本项目的 AgentEvent。**只翻译，不解释。** */
   private translate(sessionId: SessionId, e: PiEvent): void {
-    // **助手消息带着真实用量。** 记下最近一条——上下文面板要的就是它，
-    // 而在此之前「已用多少 token」一处都没采集
-    if (e.type === "message" && e.message?.role === "assistant" && e.message.usage) {
-      const s = this.sessions.get(sessionId)
-      if (s) s.lastUsage = e.message.usage
-    }
+    /**
+     * **每条事件都试着冲一次用量。**
+     *
+     * 用量落进 `session.state.messages` 的时机与 `turn_end` 的先后不固定
+     * （实测：`turn_end` 先到，用量条目后落）。只在 `turn_end` 冲就会永远差一步。
+     * 判重靠条目下标，所以重复调用的代价近似为零。
+     */
+    this.emitUsageIfNew(sessionId)
+
     switch (e.type) {
       case "message_update":
         if (e.assistantMessageEvent?.type === "text_delta") {
@@ -396,6 +483,7 @@ export class NativeRuntime implements AgentRuntime {
         // **不在这里重置守卫。** pi 每次模型响应后都发一次 turn_end，
         // 在这里重置等于每次工具调用后清零——守卫永远数不到阈值。
         // 实测：877 次工具调用 = 877 次 turn_end，守卫一次都没触发
+        this.emitUsageIfNew(sessionId)
         this.emit({ kind: "turn_end", sessionId })
         return
       case "error":
@@ -549,9 +637,11 @@ export class NativeRuntime implements AgentRuntime {
       ...(st.model?.contextWindow ? { contextWindow: st.model.contextWindow } : {}),
       // **真 token，来自 provider。** 缺就不给这个字段——
       // 界面据此显示「尚未采集」，而不是显示 0
-      ...(s.lastUsage?.input !== undefined
-        ? { usedTokens: s.lastUsage.input + (s.lastUsage.cacheRead ?? 0) }
-        : {}),
+      // **从会话状态取**，不读那个从来没被填上的 `lastUsage` 缓存
+      ...(( ) => {
+        const u = this.latestUsage(sessionId)?.usage
+        return u?.input !== undefined ? { usedTokens: u.input + (u.cacheRead ?? 0) } : {}
+      })(),
       bytes: {
         system: size(st.systemPrompt),
         tools: size(st.tools),

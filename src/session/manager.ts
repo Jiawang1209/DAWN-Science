@@ -407,6 +407,37 @@ export class SessionManager {
     this.leases.release(sessionId)
   }
 
+  /**
+   * 删掉一个会话：**先停进程，再删记录**。
+   *
+   * 顺序不能反——先删记录的话，进程还活着而我们已经忘了它是谁的，
+   * 那就成了一个**没人认领的孤儿进程**，只有重启才收得回来。
+   *
+   * @returns 是否真的删掉了
+   */
+  async remove(sessionId: SessionId): Promise<boolean> {
+    await this.stop(sessionId)
+    return this.store.delete(sessionId)
+  }
+
+  /** 取一条会话记录。**没有就是 undefined**，不抛 */
+  get(sessionId: SessionId): SessionRecord | undefined {
+    return this.store.get(sessionId)
+  }
+
+  listByProject(projectId: string): SessionRecord[] {
+    return this.store.listByProject(projectId)
+  }
+
+  countByProject(projectId: string): number {
+    return this.store.countByProject(projectId)
+  }
+
+  /** 删掉一个项目名下的全部会话记录。**调用方负责先把进程停掉** */
+  deleteByProject(projectId: string): number {
+    return this.store.deleteByProject(projectId)
+  }
+
   list(): SessionRecord[] {
     return this.store.list()
   }

@@ -125,6 +125,29 @@ export class SessionStore {
     return r.changes > 0
   }
 
+  /**
+   * 删掉一条会话记录。**不碰账本**——账本记的是「对你的文件发生过什么」，
+   * 那件事不因为你删掉一个会话就没发生（不变式 5）。
+   *
+   * @returns 是否真的删掉了。**没有这条记录要能分辨**，不是静静地成功
+   */
+  delete(id: string): boolean {
+    return this.db.prepare(`DELETE FROM sessions WHERE id = ?`).run(id).changes > 0
+  }
+
+  /** 一个项目下有多少会话。删项目前要**把数字说给用户听** */
+  countByProject(projectId: string): number {
+    const r = this.db
+      .prepare(`SELECT COUNT(*) AS n FROM sessions WHERE project_id = ?`)
+      .get(projectId) as { n: number }
+    return r.n
+  }
+
+  /** 删掉一个项目名下的全部会话。移除项目时连带 */
+  deleteByProject(projectId: string): number {
+    return this.db.prepare(`DELETE FROM sessions WHERE project_id = ?`).run(projectId).changes
+  }
+
   setCliThreadId(id: string, threadId: string): void {
     this.db.prepare(`UPDATE sessions SET cli_thread_id = ? WHERE id = ?`).run(threadId, id)
   }

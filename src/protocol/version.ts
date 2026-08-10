@@ -67,8 +67,10 @@
  * 2.12（2026-08-10）：`SessionSummary` 新增可选 `title`。
  *   纯新增字段，老界面照常工作（只是仍然分不清会话）。
  *   **缺省 = 还没说过话**，不是空标题。
+ * 2.13（2026-08-10）：新增 `deleteSession` / `deleteProject` / `deletionImpact`。
+ *   纯新增。**`deleteProject` 不碰磁盘上的文件夹**——它移除的是工作台里的记录。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.12"
+export const WORKBENCH_PROTOCOL_VERSION = "2.13"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

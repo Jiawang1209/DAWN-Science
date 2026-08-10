@@ -610,6 +610,49 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 删掉一个会话（2026-08-10）。
+   *
+   * **账本不动。** 账本记的是「对你的文件发生过什么」，那件事不因为
+   * 你删掉一个会话就没发生（不变式 5）。响应里如实回还剩多少条——
+   * 让人看得见「我删的是会话，不是历史」。
+   */
+  deleteSession: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z.object({ ledgerKept: z.int().min(0) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 从工作台移除一个项目（2026-08-10）。
+   *
+   * **绝不删除磁盘上的文件夹。** 移除的是工作台里的一条记录，
+   * 连同它名下的会话与账本（账本本来就是按项目组织的，项目没了它没有归属）。
+   *
+   * 响应回**真的删了多少**，不是一句「已删除」——
+   * 不可逆的操作要能事后对账。
+   */
+  deleteProject: {
+    request: z.object({ projectId: z.string().min(1) }).strict(),
+    response: z
+      .object({ sessionsDeleted: z.int().min(0), runsDeleted: z.int().min(0), workspace: z.string() })
+      .strict(),
+    mutating: true,
+  },
+
+  /**
+   * 删除前的影响面（2026-08-10）。
+   *
+   * **确认框上要摆真数字**，不是「确定要删除吗？」。
+   * 界面手里没有这些数（会话列表只装当前项目的，账本更是分页的），
+   * 所以问后端要——**猜一个数字比不给数字更坏**。
+   */
+  deletionImpact: {
+    request: z.object({ projectId: z.string().min(1) }).strict(),
+    response: z.object({ sessions: z.int().min(0), runs: z.int().min(0), workspace: z.string() }).strict(),
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

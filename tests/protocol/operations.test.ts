@@ -14,12 +14,15 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("30 个操作齐全（… + 列内核 1 + 列变量 1 + 解释器路径 2 + 文件 2 + 外部打开 1）", () => {
+  it("33 个操作齐全（… + 文件 2 + 外部打开 1 + 删除 3）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
         "createSession",
         "deleteCredential",
+        "deleteProject",
+        "deleteSession",
+        "deletionImpact",
         "listCredentials",
         "listDirectory",
         "listKernels",

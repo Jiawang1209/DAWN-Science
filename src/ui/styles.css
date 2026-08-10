@@ -1213,3 +1213,112 @@ pre {
     width: 100%;
   }
 }
+
+/* 摧毁性按钮。**一眼认得出来**，但不做默认焦点 */
+.btn-danger { background: var(--dawn-danger); color: var(--dawn-on-accent); }
+.btn-danger:hover:not(:disabled) { filter: brightness(1.08); }
+
+/* ── 不可逆操作的确认（2026-08-10） ─────────────────────────────── */
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  /* **梯子上取一档，不写字面量**——散落的 z-index 是两个调用点各自漂移的入口 */
+  z-index: var(--z-modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dawn-scrim);
+}
+
+.confirm {
+  width: min(30rem, calc(100vw - var(--dawn-space-6) * 2));
+  padding: var(--dawn-space-4);
+  border-radius: var(--dawn-radius-lg);
+  corner-shape: var(--dawn-corner-shape);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+}
+
+.confirm-title {
+  margin: 0 0 var(--dawn-space-2);
+  font-size: 15px;
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-1);
+}
+
+.confirm-detail {
+  margin: 0 0 var(--dawn-space-2);
+  color: var(--dawn-text-2);
+  font-size: var(--dawn-ui-size);
+  line-height: 1.6;
+}
+
+/* **「不会发生什么」要看得见。** 它是这个框里最容易被误读的一句 */
+.confirm-safety {
+  margin: 0 0 var(--dawn-space-3);
+  padding: var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+  background: var(--dawn-fill-2);
+  color: var(--dawn-text-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--dawn-space-2);
+}
+
+/* ── 侧栏顶部动作区（2026-08-10） ───────────────────────────────── */
+
+/**
+ * **两个动作同级。** 此前新建会话是一整个带字的按钮、新建项目是下拉框旁边
+ * 一个光秃秃的 `＋`——同一级别的两件事长得差了两档。
+ */
+.side-actions {
+  padding: var(--dawn-space-2) var(--dawn-space-2) var(--dawn-space-1);
+}
+
+/**
+ * **图标与文字挨着。** `.row` 默认是 `space-between`（会话行要把状态推到右边），
+ * 而动作行只有「图标 + 名字」两段——两端对齐会把它们扯到屏幕的两侧。
+ */
+.side-action {
+  justify-content: flex-start;
+}
+
+.side-action .glyph {
+  width: 1em;
+  color: var(--dawn-text-3);
+}
+
+/* 会话行上的删除：**悬停才出现** */
+.sess-item {
+  position: relative;
+}
+
+.row-kill {
+  position: absolute;
+  right: var(--dawn-space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  color: var(--dawn-text-3);
+}
+
+.sess-item:hover .row-kill,
+.row-kill:focus-visible {
+  opacity: 1;
+}
+
+.row-kill:hover {
+  color: var(--dawn-danger);
+}
+
+/* 摧毁性动作单独一节，别混在读数里 */
+.danger-zone .panel-title {
+  color: var(--dawn-danger);
+}

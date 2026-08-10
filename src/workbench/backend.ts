@@ -461,6 +461,57 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return err ? { problem: err } : {}
     },
 
+    deleteSession: async ({ sessionId }) => {
+      const rec = sessions.get(sessionId)
+      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      const removed = await sessions.remove(sessionId)
+      if (!removed) throw fault("not_found", `没有这个会话：${sessionId}`)
+      // 转录只活在内存里，跟着走
+      events.forget(sessionId)
+      baselines.delete(sessionId)
+      /**
+       * **账本留着，并且把还剩多少说出来。**
+       * 一句「已删除」会让人以为历史也一起没了——而它没有，
+       * 这正是这个产品与一个聊天窗口的区别（不变式 5）。
+       */
+      const kept = rec.projectId ? runs.countByProject(rec.projectId) : 0
+      return { ledgerKept: kept }
+    },
+
+    deletionImpact: async ({ projectId }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      // **摆真数字**：界面手里的会话列表与账本都是分页/局部的，猜不出来
+      return {
+        sessions: sessions.countByProject(projectId),
+        runs: runs.countByProject(projectId),
+        workspace: p.workspace,
+      }
+    },
+
+    deleteProject: async ({ projectId }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+
+      /**
+       * **先把活着的会话停掉**，再删记录。反过来的话进程还活着
+       * 而我们已经忘了它是谁的——一个没人认领的孤儿进程。
+       */
+      for (const rec of sessions.listByProject(projectId)) {
+        if (rec.state !== "exited") await sessions.stop(rec.id).catch(() => {})
+        events.forget(rec.id)
+        baselines.delete(rec.id)
+      }
+      const sessionsDeleted = sessions.deleteByProject(projectId)
+      const runsDeleted = runs.deleteByProject(projectId)
+      projectStore.delete(projectId)
+      /**
+       * **磁盘上的文件夹一个字节都没动。** 回它的路径，让人一眼确认
+       * ——「移除的是工作台里的记录，不是我的数据」。
+       */
+      return { sessionsDeleted, runsDeleted, workspace: p.workspace }
+    },
+
     acquireLease: async ({ sessionId, holder }) => {
       try {
         return sessions.leases.acquire(sessionId, holder)

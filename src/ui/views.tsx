@@ -47,6 +47,7 @@ export function SessionSidebar({
   onNewSession,
   onShowPanel,
   onShowFiles,
+  onDeleteSession,
   onOpenSettings,
 }: {
   projects: readonly ProjectSummary[]
@@ -67,6 +68,8 @@ export function SessionSidebar({
   onNewSession: (agentId: string) => void
   onShowPanel: () => void
   onShowFiles: () => void
+  /** 删除一个会话。**不给就不显示那个按钮**——不是显示一个点了没反应的 */
+  onDeleteSession?: ((session: SessionSummary) => void) | undefined
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
 }) {
@@ -82,7 +85,27 @@ export function SessionSidebar({
 
   return (
     <aside className="sidebar">
-      {/* 项目切换器放最上面，一行——它是上下文，不是主角 */}
+      {/**
+        * **两个动作同级。**（作者 2026-08-10：*「新建对话和新建项目应该是
+        * 同一级别的吧？我觉得应该模仿 Codex 去做。」*）
+        *
+        * Codex 的侧栏顶部是一个动作区，New Chat 与旁边的动作**是同一种行**
+        * （`c-sidebar-row`），不是「一个大按钮 + 一个小图标」。
+        * 此前这里正是后者：新建会话是一整个带字的按钮，新建项目是下拉框旁边
+        * 一个光秃秃的 `＋`——**同一级别的两件事，长得差了两档**。
+        */}
+      <div className="side-actions">
+        <Row className="side-action" disabled={!active || !fallbackAgent} onClick={() => fallbackAgent && onNewSession(fallbackAgent)}>
+          <span className="glyph" aria-hidden="true">＋</span>
+          <span className="name">新建会话</span>
+        </Row>
+        <Row className="side-action" onClick={onOpenProject}>
+          <span className="glyph" aria-hidden="true">＋</span>
+          <span className="name">新建项目</span>
+        </Row>
+      </div>
+
+      {/* 项目切换器：它是**上下文**，不是动作——所以放在动作区下面 */}
       <div className="proj-switch">
         <select
           className="control"
@@ -98,25 +121,8 @@ export function SessionSidebar({
           ))}
         </select>
         {/* 原生 title= 无样式、约 500ms 系统延迟、与主题不符——用 aria-label */}
-        {/**
-          * **带字**。此前这里是一个光秃秃的 `＋`，只有 aria-label——
-          * 作者 2026-08-10：*「我现在有新建会话，但是目前没有新建项目」*。
-          * 它一直在，只是**一个无标签的图标等于不存在**。
-          */}
-        <Button variant="ghost" size="sm" className="new-project" onClick={onOpenProject}>
-          ＋ 新建项目
-        </Button>
       </div>
 
-      {/* 新建会话是主动作，放显眼位置——Claude app 的「新建对话」 */}
-      <Button
-        variant="outline"
-        className="new-session"
-        disabled={!active || !fallbackAgent}
-        onClick={() => fallbackAgent && onNewSession(fallbackAgent)}
-      >
-        ＋ 新建会话
-      </Button>
       {/* 此前这里有一句「先打开一个项目文件夹」。**那是一句描述，不是一条出路**——
           而且它已经不成立了：启动时保证至少有一个默认项目（ProjectManager.ensureDefault） */}
       {agents.length === 0 ? (
@@ -137,7 +143,7 @@ export function SessionSidebar({
           </li>
         ) : (
           sessions.map((s) => (
-            <li key={s.sessionId}>
+            <li key={s.sessionId} className="sess-item">
               <Row
                 active={s.sessionId === activeSessionId && view === "conversation"}
                 onClick={() => onPickSession(s.sessionId)}
@@ -158,6 +164,21 @@ export function SessionSidebar({
                 </span>
                 <span className={`state ${s.state}`}>{s.state}</span>
               </Row>
+              {/**
+                * 删除**悬停才出现**——它常驻的话，一列红叉会把列表变成一片
+                * 「小心别点错」，而这一列的主动作是**切换**，不是删除。
+                */}
+              {onDeleteSession ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="row-kill"
+                  aria-label={`删除会话：${s.title ?? "新会话"}`}
+                  onClick={() => onDeleteSession(s)}
+                >
+                  ×
+                </Button>
+              ) : null}
             </li>
           ))
         )}

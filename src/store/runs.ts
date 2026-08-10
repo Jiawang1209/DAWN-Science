@@ -320,4 +320,22 @@ export class RunStore {
       | undefined
     return row ? toProvenance(row) : undefined
   }
+
+  /** 一个项目下有多少条账本记录。移除项目前要**把数字说给用户听** */
+  countByProject(projectId: string): number {
+    const r = this.db
+      .prepare(`SELECT COUNT(*) AS n FROM runs WHERE project_id = ?`)
+      .get(projectId) as { n: number }
+    return r.n
+  }
+
+  /**
+   * 删掉一个项目名下的全部账本记录。
+   *
+   * **只在移除项目时用。** 删单个会话不走这里——账本是按项目组织的，
+   * 项目没了它就没有归属；而一个会话没了，它做过的事仍然发生过。
+   */
+  deleteByProject(projectId: string): number {
+    return this.db.prepare(`DELETE FROM runs WHERE project_id = ?`).run(projectId).changes
+  }
 }

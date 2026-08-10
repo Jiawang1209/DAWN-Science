@@ -86,4 +86,14 @@ export class ProjectStore {
       ),
     }
   }
+
+  /**
+   * 从工作台移除一个项目。
+   *
+   * **绝不碰磁盘上的文件夹。** 这个方法删的是一条记录，
+   * 不是用户的数据——把这两件事混起来，一次误点就没了一个项目的全部工作。
+   */
+  delete(projectId: string): boolean {
+    return this.db.prepare(`DELETE FROM projects WHERE id = ?`).run(projectId).changes > 0
+  }
 }

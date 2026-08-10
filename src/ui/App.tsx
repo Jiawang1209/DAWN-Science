@@ -40,6 +40,7 @@ import {
 import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
+import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { buildCommands, type Actions } from "./commands.js"
@@ -431,6 +432,84 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, projectId],
   )
 
+  /* ── 删除（2026-08-10） ──────────────────────────────────────── */
+
+  const [confirming, setConfirming] = useState<ConfirmRequest | undefined>(undefined)
+
+  /**
+   * 删会话。**账本不动**——那句话要在按下之前就在屏幕上，
+   * 否则「删除」会被读成「历史也没了」。
+   */
+  const askDeleteSession = useCallback(
+    (s: SessionSummary) => {
+      const 名 = s.title ?? "新会话"
+      setConfirming({
+        title: `删除会话「${名}」？`,
+        detail: <>会停掉它的进程，并删掉这个会话与它的对话记录。</>,
+        safety: <>账本不动：这个会话对文件做过什么，记录仍然留在「项目概览」里。</>,
+        confirmLabel: "删除会话",
+        onConfirm: () => {
+          client
+            .get<{ ledgerKept: number }>("deleteSession", { sessionId: s.sessionId })
+            .then(() => {
+              // 删的正好是当前这个，就把选中清掉——**不要留一个指向空的选中**
+              if ($activeSessionId.get() === s.sessionId) {
+                setActiveSessionId(undefined)
+                setView("conversation")
+              }
+              const pid = $activeProjectId.get()
+              if (pid) void loadSessions(client, pid)
+            })
+            .catch(fail)
+        },
+      })
+    },
+    [client],
+  )
+
+  /**
+   * 移除项目。**先问后端要真数字**——界面手里的会话列表与账本都是局部的，
+   * 摆一个猜出来的数字比不摆更坏。
+   */
+  const askDeleteProject = useCallback(() => {
+    const pid = $activeProjectId.get()
+    if (!pid) return
+    const 名 = projects.find((p) => p.projectId === pid)?.name ?? pid
+    client
+      .get<{ sessions: number; runs: number; workspace: string }>("deletionImpact", { projectId: pid })
+      .then((impact) => {
+        setConfirming({
+          title: `从工作台移除项目「${名}」？`,
+          detail: (
+            <>
+              会一并移除它名下的 <b>{impact.sessions}</b> 个会话与{" "}
+              <b>{impact.runs}</b> 条账本记录。账本是按项目组织的，项目没了它就没有归属。
+            </>
+          ),
+          safety: (
+            <>
+              <b>磁盘上的文件夹不会被删除。</b>
+              <br />
+              {impact.workspace}
+            </>
+          ),
+          confirmLabel: "移除项目",
+          onConfirm: () => {
+            client
+              .get("deleteProject", { projectId: pid })
+              .then(() => {
+                setActiveProjectId(undefined)
+                setActiveSessionId(undefined)
+                setView("conversation")
+                return loadProjects(client)
+              })
+              .catch(fail)
+          },
+        })
+      })
+      .catch(fail)
+  }, [client, projects])
+
   const startSession = useCallback(
     /**
      * @param firstMessage 给了的话，**建完会话立刻把它发出去**。
@@ -586,6 +665,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         </Button>
       </div>
 
+      {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
+      <ConfirmDialog request={confirming} onCancel={() => setConfirming(undefined)} />
+
       <div className="body">
         <SessionSidebar
           projects={projects}
@@ -605,6 +687,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }}
           onShowPanel={actions.showProjectPanel}
           onShowFiles={() => setView("files")}
+          onDeleteSession={askDeleteSession}
           onOpenProject={actions.openProject}
           onNewSession={actions.newSession}
           onOpenSettings={actions.openSettings}
@@ -661,6 +744,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
               <VariablesPanel state={variables} />
               <RunsPanel runs={runs} />
+              {/**
+                * 移除项目放在**项目概览**里：它是项目作用域的动作，
+                * 而侧栏的下拉框是「切到哪个项目」——**切换的地方不该同时是删除的地方**。
+                */}
+              <section className="panel danger-zone">
+                <h3 className="panel-title">移除项目</h3>
+                <div className="panel-body">
+                  <p className="hint">
+                    从工作台移除这个项目，连同它的会话与账本。
+                    <em className="set-emph">磁盘上的文件夹不会被删除。</em>
+                  </p>
+                  <div className="state-action">
+                    <Button variant="danger" size="sm" onClick={askDeleteProject}>
+                      移除项目
+                    </Button>
+                  </div>
+                </div>
+              </section>
               {provenance ? (
                 <section className="panel">
                   <h3 className="panel-title">溯源</h3>

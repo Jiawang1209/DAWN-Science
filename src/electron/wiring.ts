@@ -6,9 +6,10 @@
  * `main.ts` 只剩窗口与 IPC 注册两件事。
  */
 import Database from "better-sqlite3"
+import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
 import { mkdirSync } from "node:fs"
-import { dirname } from "node:path"
+import { dirname, join } from "node:path"
 import { loadRegistryOrDefault } from "../config/loader.js"
 import { migrate } from "../store/schema.js"
 import { ProjectStore } from "../store/projects.js"
@@ -116,10 +117,27 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
   const piCredentials = createPiCredentialStore(opts.credentials)
 
+  /**
+   * provider 的连接设置 → pi 认的 `models.json`（2026-08-10）。
+   *
+   * pi 自带 40 个 provider 的地址，**有 8 个不自带**（Bedrock / Azure / Vertex /
+   * Cloudflare 两个 / opencode 两个 / radius）——它们的地址跟账号、区域、项目走。
+   * pi 读这些的入口只有 `modelsPath` 指的那份 json，而生产环境**从来没传过**。
+   *
+   * **每次启动重新生成**：以 `providers.yaml` 为唯一事实来源。
+   * 那个路径同时是 pi 缓存远端目录的地方，可能被它覆盖——
+   * 不重新生成的话，用户的覆盖会某天悄悄消失而没有任何迹象。
+   */
+  const 生成的模型目录 = writeModelsJson(
+    join(dirname(opts.dbPath), "models.json"),
+    registry.providers,
+    opts.modelsPath,
+  )
+
   /** **提出来复用**：模型目录端口要问的就是这一个实例（它持有 ModelRuntime 缓存） */
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
-    ...(opts.modelsPath ? { modelsPath: opts.modelsPath } : {}),
+    ...(生成的模型目录 ? { modelsPath: 生成的模型目录 } : {}),
     ...(opts.subagentChildEntry ? { subagentChildEntry: opts.subagentChildEntry } : {}),
   })
 

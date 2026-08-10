@@ -182,6 +182,51 @@ export const AgentDefSchema = z.discriminatedUnion("kind", [
 export type AgentDef = z.infer<typeof AgentDefSchema>
 
 /**
+ * 一个 provider 的**连接设置**（2026-08-10）。
+ *
+ * ## 为什么需要它
+ *
+ * pi 自带 40 个 provider 的地址，但**有 8 个不自带**——
+ * `amazon-bedrock` / `azure-openai-responses` / `cloudflare-ai-gateway` /
+ * `cloudflare-workers-ai` / `google-vertex` / `opencode` / `opencode-go` / `radius`。
+ * 它们的地址跟账号、区域、项目走（Azure 的 deployment、Vertex 的 project、
+ * Cloudflare 的 account id…），**pi 没法替你填**。
+ *
+ * 此前这 8 个即使填了 key 也连不上，而界面不会告诉你为什么。
+ * 同一个口子还顺带解决另一类：**自建的 vLLM / Ollama / 任何 OpenAI 兼容端点**——
+ * 它们根本不在那 40 个里，要的正是同一样东西。
+ *
+ * ## `apiKey` 不在这里
+ *
+ * **密钥永远在 OS 的加密存储里**，不进这个文件。这里只放「连到哪、说哪种话」——
+ * 那些不是秘密，而且用户应当能直接读、直接改。
+ */
+const ProviderConnectionSchema = z
+  .object({
+    /** 端点地址。**这 8 个和自建端点的要害就是它** */
+    baseUrl: z.string().min(1).optional(),
+    /**
+     * 协议形态，如 `openai-completions` / `anthropic-messages`。
+     *
+     * **不给默认值**：猜错的后果是请求发出去、对面用另一种格式回，
+     * 而错误信息与「猜错了协议」毫无关系。缺省时由 pi 自己决定。
+     */
+    api: z.string().min(1).optional(),
+    /** 额外请求头。网关类（Cloudflare AI Gateway 等）常要它 */
+    headers: z.record(z.string(), z.string()).optional(),
+    /**
+     * 这个端点有哪些模型。
+     *
+     * **那 8 个内置 provider 不用写**——pi 认识它们的模型，只是不知道地址。
+     * **自建端点必须写**：pi 没法凭空知道你的 vLLM 上跑着什么，
+     * 而不写的话模型选择器会是空的，且没有任何一句话解释为什么。
+     */
+    models: z.array(z.string().min(1)).optional(),
+  })
+  .strict()
+export type ProviderConnection = z.infer<typeof ProviderConnectionSchema>
+
+/**
  * `.strict()`：**多余的顶层段一律拒绝**。
  * 这条不是洁癖——旧配置里的 `endpoints` 若被静默忽略，用户会以为它还生效，
  * 而实际上凭证与 baseUrl 全都没被读。**失败必须出声（规格 7.5）。**
@@ -189,6 +234,11 @@ export type AgentDef = z.infer<typeof AgentDefSchema>
 export const ProviderRegistrySchema = z
   .object({
     agents: z.record(z.string(), AgentDefSchema),
+    /**
+     * provider 的连接设置。**可选**——绝大多数 provider 的地址 pi 自带，
+     * 这一段只为那 8 个不自带的、以及自建端点存在。
+     */
+    providers: z.record(z.string(), ProviderConnectionSchema).optional(),
   })
   .strict()
 export type ProviderRegistry = z.infer<typeof ProviderRegistrySchema>

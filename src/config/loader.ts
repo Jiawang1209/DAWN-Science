@@ -38,13 +38,22 @@ export function knownProviders(): string[] {
  * （桌面应用不该因为还没填 key 就起不来）。
  */
 function assertProviders(reg: ProviderRegistry): void {
-  const known = new Set(knownProviders())
+  /**
+   * **认得的 = pi 内置的 + 你自己声明的**（2026-08-10）。
+   *
+   * 此前只认 pi 内置那 40 个。加了 `providers:` 这一段之后，
+   * 一个自建端点（vLLM / Ollama / 任何 OpenAI 兼容网关）注定不在内置清单里——
+   * 只认内置的话，**用户刚写完连接设置，应用就起不来了**，
+   * 而错误信息会说「pi 不认识」，把人往「是不是拼错了」的方向带。
+   */
+  const known = new Set([...knownProviders(), ...Object.keys(reg.providers ?? {})])
   for (const [agentId, def] of Object.entries(reg.agents)) {
     if (def.kind !== "native") continue // pty agent 自带 command，不引用 provider
     if (!known.has(def.provider)) {
       throw new Error(
-        `agent "${agentId}" 引用了 pi 不认识的 provider "${def.provider}"。` +
-          `可选：${knownProviders().sort().join(", ")}`,
+        `agent "${agentId}" 引用了不存在的 provider "${def.provider}"。` +
+          `**自建的端点要先在 \`providers:\` 段里声明地址**（baseUrl / api / models）。` +
+          `pi 内置的可选：${knownProviders().sort().join(", ")}`,
       )
     }
   }

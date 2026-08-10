@@ -140,7 +140,15 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     writeFileSync(join(workspace, "README.md"), "# e2e 工作区\n")
     if (dawnOptions.gitInit) initRepo(workspace)
     const configPath = join(dir, "providers.yaml")
-    if (dawnOptions.providersYaml) writeFileSync(configPath, dawnOptions.providersYaml)
+    /**
+     * **`{{MOCK_URL}}` 会被换成假服务器的地址。**
+     *
+     * 用例想验「自己填 baseUrl 的 provider 能不能真的连上」，
+     * 而那个地址在夹具起来之前不存在——留一个占位符是唯一诚实的接法。
+     */
+    if (dawnOptions.providersYaml) {
+      writeFileSync(configPath, dawnOptions.providersYaml.replaceAll("{{MOCK_URL}}", server.url))
+    }
 
     const modelsPath = join(dir, "models.json")
     writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))

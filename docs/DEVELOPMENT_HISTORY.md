@@ -43,6 +43,52 @@
 
 ## 变更日志
 
+### 2026-08-10 — 给那 8 个不自带地址的 provider 留出空隙
+
+- **Type**: feat
+- **Motivation**: 作者：*「这 8 个不自带的，你看着处理，需要添加
+  baseUrl / apiKey / api / headers 那就添加」*、*「不配置的话那就算了，
+  或者给单独的那 8 个单独配置，让使用者自己输入，都给留下空隙」*。
+
+  实测：pi 认识 40 个 provider，**其中 8 个不自带 `baseUrl`**——
+  `amazon-bedrock` / `azure-openai-responses` / `cloudflare-ai-gateway` /
+  `cloudflare-workers-ai` / `google-vertex` / `opencode` / `opencode-go` / `radius`。
+  它们的地址跟账号、区域、项目走（Azure 的 deployment、Vertex 的 project、
+  Cloudflare 的 account id），pi 没法替你填。**此前这 8 个即使填了 key 也连不上，
+  而界面不会说为什么。**
+
+  **其余 32 个本来就能用**（上一条记录做的：填 key → 建 agent → 对话里选），
+  这一批只补那 8 个的空隙。
+- **What**:
+  - `providers.yaml` 新增可选的 `providers:` 段：每个 provider 可写
+    `baseUrl` / `api` / `headers` / `models`。**不写就照旧**，不影响任何现有 provider。
+  - **`apiKey` 不在这一段里。** `models.json` 支持它，但我们不写——
+    它落盘就是明文。密钥仍然只在 OS 的加密存储里。
+  - 新增 `src/config/models-json.ts`：把这一段变成 pi 认的 `models.json`
+    （`ModelRuntime.create({ modelsPath })` 是 pi 读这些的**唯一入口**）。
+    **这条路早就在被用着**——e2e 的假推理服务器正是这么接的；生产环境
+    从来没传过这个路径，所以用户没法覆盖。
+  - **每次启动重新生成**，以 `providers.yaml` 为唯一事实来源：那个路径同时是
+    pi 缓存远端目录的地方，可能被覆盖——不重新生成的话，用户的覆盖会某天
+    悄悄消失而没有任何迹象。
+  - 同一个口子顺带解决**自建端点**（vLLM / Ollama / 任何 OpenAI 兼容网关）：
+    它们根本不在那 40 个里，要的正是同一样东西。自建端点**必须自己报 `models`**——
+    pi 没法凭空知道你的服务器上跑着什么。
+  - 加载器的校验从「pi 认识的」放宽成「**pi 认识的 + 你自己声明的**」。
+    **这一条是 e2e 当场逼出来的**：不改的话，用户刚写完连接设置，
+    应用就起不来，而错误信息会说「pi 不认识」，把人往「是不是拼错了」带。
+- **Verification**:
+  - `e2e/custom-provider.spec.ts` 两条**跑真实构建产物**，用一个 **pi 根本不认识
+    的 id**：它能连上就说明 baseUrl / api / models 三样都真的送到了 pi 手里。
+    这比挑其中一个去连真实的 Azure 更能证明问题，也不需要任何真凭证。
+    含**反空转**：请求真的打到我们填的地址、用的是我们声明的模型 id。
+  - 夹具新增 `{{MOCK_URL}}` 占位符——那个地址在夹具起来之前不存在。
+  - 单元 1083 全绿；`npm run test:e2e` 114 通过。
+- **记一笔债**：验证途中撞见——**API key 里有非 ASCII 字符时，请求静静地失败**
+  （没有回复、也没有任何报错）。多半是 HTTP 头不接受非 ASCII 而异常被吞了。
+  **那违反「失败必须出声」**，但它与本批改动无关，单独记着。
+
+
 ### 2026-08-10 — 填了 key 却选不到：把话说全，并让 agent 能就地建
 
 - **Type**: fix / feat

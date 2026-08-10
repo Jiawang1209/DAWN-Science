@@ -680,6 +680,42 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 这个会话准入时的环境快照（②-B · S17）。
+   *
+   * **三态**，与 `listVariables` 同一条纪律：
+   *   - 不支持（内核语言不是 Python/R）→ 说清为什么
+   *   - 还没拿到（探测失败、会话刚起）→ 说清为什么，**不给一份空快照**
+   *   - 拿到了 → 完整快照 + 它的内容指纹
+   *
+   * **一份空快照会被读成「这个环境什么都没有」**，而实情是「我们没问到」。
+   *
+   * 返回的是**准入时刻**冻结的那一份，不是现在重新探的
+   * （Rho 的禁令：不得回头探测当前库）。
+   */
+  getEnvironment: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z.discriminatedUnion("captured", [
+      z.object({ captured: z.literal(false), reason: z.string().min(1) }).strict(),
+      z
+        .object({
+          captured: z.literal(true),
+          /** 内容指纹。**同一个环境的两个会话给同一个 id** */
+          id: z.string().min(1),
+          language: z.enum(["python", "R"]),
+          version: z.string(),
+          executable: z.string(),
+          platform: z.string(),
+          libraryPaths: z.array(z.string()),
+          packages: z.array(z.object({ name: z.string(), version: z.string() }).strict()),
+          /** 实际装了多少。**与 `packages.length` 不同即为被截断**（规格 7.5） */
+          packagesTotal: z.int().min(0),
+        })
+        .strict(),
+    ]),
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

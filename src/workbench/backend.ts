@@ -9,6 +9,8 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
+import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
+import type { EnvironmentStore } from "../store/environments.js"
 import { deriveSessionTitle } from "../session/title.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
@@ -50,6 +52,8 @@ export interface WorkbenchBackendOptions {
   runs: RunStore
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
+  /** 环境快照的落库处（S17）。**没装配也能用**，只是快照不持久 */
+  environments?: EnvironmentStore
   /**
    * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
@@ -93,7 +97,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -407,6 +411,31 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         return { supported: false as const, reason: "这个会话没有内核，看不到变量" }
       }
       return v as never
+    },
+
+    /**
+     * 准入时刻的环境快照（②-B · S17）。
+     *
+     * **返回冻结的那一份，不重新探。** 「现在装的是什么」与「当时装的是什么」
+     * 是两个问题——拿前者回答后者就是用今天的环境伪造昨天的证据。
+     */
+    getEnvironment: async ({ sessionId }) => {
+      const rec = sessions.get(sessionId)
+      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      const snap = sessions.environment(sessionId) as EnvironmentSnapshot | undefined
+      if (!snap) {
+        /**
+         * **三种「没有」说的话不同**，混成一句就等于什么都没说：
+         * 不是内核会话 / 语言不支持 / 探测没成功。
+         */
+        return {
+          captured: false as const,
+          reason: "这个会话还没有环境快照（不是内核会话、内核语言不是 Python/R、或准入时探测失败）",
+        }
+      }
+      // **入库即冻结**，并且同一个环境只存一行（内容寻址）
+      const id = environments?.put(snap, rec.createdAt) ?? fingerprintOf(snap)
+      return { captured: true as const, id, ...snap }
     },
 
     /**

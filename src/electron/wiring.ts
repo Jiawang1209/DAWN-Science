@@ -6,6 +6,7 @@
  * `main.ts` 只剩窗口与 IPC 注册两件事。
  */
 import Database from "better-sqlite3"
+import { EnvironmentStore } from "../store/environments.js"
 import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
 import { loadRegistryOrDefault } from "../config/loader.js"
@@ -211,9 +212,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     terminalMaxChars: opts.terminalScrollbackChars ?? DEFAULT_TERMINAL_SCROLLBACK_CHARS,
   })
 
+  // 环境快照落库（S17）。**内容寻址**：同一个环境反复开会话只存一行
+  const environments = new EnvironmentStore(db)
+
   const backend = createWorkbenchBackend({
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
+    environments,
     runRecorder,
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
     invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),

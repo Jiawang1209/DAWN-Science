@@ -29,6 +29,8 @@ import {
   StatusPanel,
   ToolChangesPanel,
   VariablesPanel,
+  EnvironmentPanel,
+  type EnvironmentState,
   type VariablesState,
 } from "./panels.js"
 import {
@@ -373,6 +375,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     client
       .get<Exclude<VariablesState, undefined>>("listVariables", { sessionId })
       .then(setVariables)
+      .catch(fail)
+  }, [client, view, sessionId])
+
+  /**
+   * 环境快照（S17）。与变量同一个手势：**开着面板时取一次**。
+   *
+   * 但它与变量有一处根本不同：**变量会变，环境不会**——
+   * 这一份是准入时刻冻结的，重取只是为了切会话时换成新会话的那一份。
+   */
+  const [environment, setEnvironment] = useState<EnvironmentState>(undefined)
+  useEffect(() => {
+    if (view !== "panel" || !sessionId) {
+      setEnvironment(undefined)
+      return
+    }
+    client
+      .get<Exclude<EnvironmentState, undefined>>("getEnvironment", { sessionId })
+      .then(setEnvironment)
       .catch(fail)
   }, [client, view, sessionId])
 
@@ -760,6 +780,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ContextPanel usage={contextUsage} />
               {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
               <VariablesPanel state={variables} />
+              {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
+              <EnvironmentPanel state={environment} />
               <RunsPanel runs={runs} />
               {/**
                 * 移除项目放在**项目概览**里：它是项目作用域的动作，

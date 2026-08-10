@@ -26,6 +26,11 @@ import { launchKernelChannel } from "../kernel/channel.js"
 import { translateOutput } from "../kernel/outputs.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { parseVariablesFor, probeExpressionFor, type VariableSummary } from "../kernel/variables.js"
+import {
+  environmentProbeFor,
+  parseEnvironmentFor,
+  type EnvironmentSnapshot,
+} from "../kernel/environment.js"
 import type { KernelChannel } from "../kernel/types.js"
 import { UserFacingError } from "../errors.js"
 import type { AgentEvent, AgentRuntime, EventSink, SessionHandle, SessionId, SessionSpec } from "./types.js"
@@ -36,11 +41,23 @@ interface Live {
   language: string | undefined
   /** 这一轮的 `execute_request` msg_id。**用来把输出认回它的父** */
   current?: string | undefined
+  /**
+   * 准入时刻冻结的环境快照（S17）。**只在 `start` 里写一次**——
+   * 会话中途 `pip install` 了什么，这一份不跟着变：
+   * 它记的是「这个会话是在什么环境里起来的」。
+   */
+  environment?: EnvironmentSnapshot | undefined
 }
 
 export interface KernelRuntimeOptions {
   /** 当前该记到哪条 run 上。**每次取，不缓存**——一个内核跨很多轮 */
   runIdOf?: (sessionId: SessionId) => string | undefined
+  /**
+   * 收下一份准入时刻的环境快照（S17）。
+   *
+   * **端口注入**：这一层不认识数据库。谁存、存哪，由装配它的人决定。
+   */
+  onEnvironment?: (sessionId: SessionId, snapshot: EnvironmentSnapshot) => void
 }
 
 export class KernelRuntime implements AgentRuntime {
@@ -74,6 +91,17 @@ export class KernelRuntime implements AgentRuntime {
       ? k.language
       : discoverKernelSpecs().specs.find((x) => x.name === k.kernelName)?.language
     this.sessions.set(spec.sessionId, { channel, language })
+
+    /**
+     * **准入时刻冻结环境**（S17）。
+     *
+     * 位置就是这里，不是第一次执行的时候：一旦人跑了一句 `pip install`，
+     * 「这个会话起来时是什么环境」这个问题就再也答不上来了。
+     *
+     * 失败不阻断会话——**探测不到只是少一份证据，不是不能干活**。
+     * 但它要出声（规格 7.5），所以走 `console.error` 而不是静静吞掉。
+     */
+    void this.captureEnvironment(spec.sessionId)
 
     /**
      * **一条 iopub 消息进来就翻成结构化条目发出去。**
@@ -159,6 +187,39 @@ export class KernelRuntime implements AgentRuntime {
    *
    * **不能把后两者混成一个空列表**：那会把「我们没去问」说成「这里什么都没有」。
    */
+  /**
+   * 问一次环境，存进 `Live` 并交给端口。
+   *
+   * 走的是 `probe`（`silent: true`）**这一点很要紧**：
+   * 直接执行一段探测代码的话，用户一打开会话就会看见一堆自己没写过的代码。
+   */
+  private async captureEnvironment(sessionId: SessionId): Promise<void> {
+    const live = this.sessions.get(sessionId)
+    if (!live) return
+    const expr = environmentProbeFor(live.language)
+    // **不支持的语言就不假装有快照。** 空快照会被读成「这个环境什么都没有」
+    if (!expr) return
+    try {
+      const snap = parseEnvironmentFor(live.language, await live.channel.probe(expr))
+      if (!snap) {
+        console.error(`[环境快照] ${sessionId}：解析不出内核的回答，这个会话没有环境证据`)
+        return
+      }
+      // 会话可能在探测期间就没了——**别把快照挂到一个已经死掉的会话上**
+      const still = this.sessions.get(sessionId)
+      if (!still) return
+      still.environment = snap
+      this.opts.onEnvironment?.(sessionId, snap)
+    } catch (err) {
+      console.error(`[环境快照] ${sessionId}：探测失败——${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  /** 这个会话准入时的环境。**没有就是没有**，不回头再探一次（Rho 的禁令一） */
+  environmentOf(sessionId: SessionId): EnvironmentSnapshot | undefined {
+    return this.sessions.get(sessionId)?.environment
+  }
+
   async variables(sessionId: SessionId): Promise<
     { supported: false; reason: string } | { supported: true; variables: VariableSummary[] } | undefined
   > {

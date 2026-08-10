@@ -83,6 +83,22 @@ test.describe("内核会话", () => {
     await expect(panel.locator(".var .name", { hasText: "e2e_v" })).toBeVisible({ timeout: 60_000 })
     await expect(panel.locator(".var", { hasText: "e2e_v" })).toContainText("int")
 
+    /**
+     * ⑤ **环境快照看得见**（②-B · S17）。
+     *
+     * 判据是那句*「这个结果是在什么环境跑出来的」*。**光有版本号不算答案**——
+     * 本机五个 kernelspec 里三个是 conda 环境，只说「Python 3.11」
+     * 完全分不出是哪一个。所以这里同时验解释器**路径**。
+     */
+    const env = page.locator(".panel", { has: page.getByText("环境", { exact: true }) })
+    await expect(env).toBeVisible()
+    await expect(env.locator(".env-facts")).toContainText(/3\.\d+/, { timeout: 60_000 })
+    // **路径**：它才回答「哪个环境」
+    await expect(env.locator(".env-path").first()).toContainText("/")
+    // 包清单不是空的——一个能跑 ipykernel 的环境不可能一个包都没有
+    await env.locator(".env-packages summary").click()
+    await expect(env.locator(".env-pkg-list .name", { hasText: "ipykernel" })).toBeVisible()
+
   })
 })
 

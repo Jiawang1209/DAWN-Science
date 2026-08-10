@@ -74,8 +74,11 @@
  * 2.15（2026-08-10）：`readFile` 新增 `pdf` 一档（②-A′ · F5）。
  *   **与 `image` 分开**：它在界面上走 blob + `<embed>`，交给 Chromium 自带的阅读器；
  *   混进 `image` 会让界面拿 `<img>` 去画 PDF——那是一个空框。
+ * 2.16（2026-08-10）：新增 `getEnvironment`（②-B · S17）。纯新增。
+ *   **三态**：不支持 / 还没拿到 / 拿到了——一份空快照会被读成
+ *   「这个环境什么都没有」，而实情是「我们没问到」。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.15"
+export const WORKBENCH_PROTOCOL_VERSION = "2.16"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

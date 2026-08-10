@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 7
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -185,6 +185,34 @@ export function migrate(db: Database.Database): void {
   if (!hasColumn(db, "sessions", "title")) {
     db.exec(`ALTER TABLE sessions ADD COLUMN title TEXT`)
   }
+
+  /**
+   * 环境快照（②-B · S17，2026-08-10）。
+   *
+   * `provenance.environment_snapshot_id` **早就有这一列，却没有它指向的表**——
+   * 一个悬空的外键比没有更糟：它看起来是有出处的。
+   *
+   * ## 为什么主键是内容指纹
+   *
+   * 同一个环境反复开会话应当**指向同一行**。用自增 id 的话，一天下来
+   * 躺着几十份逐字节相同的 JSON，而「这两次运行的环境一样吗」
+   * 还得靠比对内容来回答——**而那正是主键该替我们回答的**。
+   *
+   * ## `payload` 入库即冻结
+   *
+   * 学自 Rho 的 admission snapshot：**不得回头探测当前库**。
+   * 比对只解析这一列里那份不可变 JSON，永不重新去问解释器。
+   * `captured_at` 只是「第一次见到这个环境是什么时候」，
+   * **不参与指纹**（§3.6：摘要必须确定性且排除时间戳）。
+   */
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS environment_snapshots (
+      id          TEXT PRIMARY KEY,
+      language    TEXT NOT NULL,
+      captured_at TEXT NOT NULL,
+      payload     TEXT NOT NULL
+    );
+  `)
 
   /**
    * 应用级设置（②-A 后续，2026-08-10）。

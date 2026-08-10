@@ -1349,3 +1349,75 @@ pre {
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-elevated);
 }
+
+/* ── 环境快照（②-B · S17） ─────────────────────────────────────── */
+
+.env-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--dawn-space-1) var(--dawn-space-3);
+  margin: 0;
+}
+
+.env-facts dt {
+  color: var(--dawn-text-3);
+  font-size: 11px;
+}
+
+.env-facts dd {
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+}
+
+/* 路径独占一行且**允许折行**——一条被截断的路径回答不了「哪个环境」 */
+.env-path {
+  display: block;
+  color: var(--dawn-text-3);
+  font-family: var(--dawn-font-mono);
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.env-mono {
+  font-family: var(--dawn-font-mono);
+}
+
+.env-packages {
+  margin-top: var(--dawn-space-2);
+}
+
+.env-packages > summary {
+  cursor: pointer;
+  color: var(--dawn-text-2);
+  font-size: 12px;
+}
+
+/* 上千个包要能滚，而不是把面板撑到天上去 */
+.env-pkg-list {
+  list-style: none;
+  margin: var(--dawn-space-1) 0 0;
+  padding: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.env-pkg-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--dawn-space-2);
+  padding: 1px 0;
+  font-size: 11px;
+}
+
+.env-pkg-list .name {
+  font-family: var(--dawn-font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-pkg-list .sub {
+  color: var(--dawn-text-3);
+  white-space: nowrap;
+}

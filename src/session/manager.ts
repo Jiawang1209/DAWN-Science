@@ -361,6 +361,19 @@ export class SessionManager {
    * 与 `contextUsage` 同一个形状：能力是运行时可选的，
    * **拿不到就是 `undefined`**，由调用方决定怎么说。
    */
+  /**
+   * 这个会话准入时的环境快照（S17）。
+   *
+   * **同一条透传写法**：运行时有这个能力就问，没有就 `undefined`——
+   * 「这个运行时不认识环境」与「这个环境是空的」是两回事。
+   */
+  environment(sessionId: SessionId): unknown {
+    const rt = this.bound.get(sessionId) as
+      | { environmentOf?: (id: SessionId) => unknown }
+      | undefined
+    return rt?.environmentOf ? rt.environmentOf(sessionId) : undefined
+  }
+
   async variables(sessionId: SessionId) {
     const rt = this.bound.get(sessionId) as { variables?: (id: SessionId) => Promise<unknown> } | undefined
     return rt?.variables ? await rt.variables(sessionId) : undefined

@@ -351,6 +351,100 @@ export interface VariableRow {
  *
  * 把后两者都画成空列表，用户会以为自己的变量丢了。
  */
+/**
+ * 环境快照（②-B · S17）。
+ *
+ * 它回答的是**「这个结果是在什么环境跑出来的」**——
+ * 这是「科研工具」与「AI 编辑器」的分界线之一。
+ *
+ * **三态分得开**（与变量面板同一条纪律）：没拿到要说原因，
+ * 一片空白会被读成「这个环境什么都没有」。
+ */
+export type EnvironmentState =
+  | undefined
+  | { captured: false; reason: string }
+  | {
+      captured: true
+      id: string
+      language: "python" | "R"
+      version: string
+      executable: string
+      platform: string
+      libraryPaths: string[]
+      packages: { name: string; version: string }[]
+      packagesTotal: number
+    }
+
+export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
+  if (!state) {
+    return (
+      <Panel title="环境">
+        <Empty>尚未记录</Empty>
+      </Panel>
+    )
+  }
+  if (!state.captured) {
+    return (
+      <Panel title="环境">
+        <p className="unknown">没有快照</p>
+        <p className="caveat">{state.reason}</p>
+      </Panel>
+    )
+  }
+
+  const 截断了 = state.packagesTotal > state.packages.length
+  return (
+    <Panel title="环境">
+      <dl className="env-facts">
+        <dt>解释器</dt>
+        {/* **版本 + 路径一起给**：光有版本回答不了「哪个 conda 环境」 */}
+        <dd>
+          {state.version}
+          <span className="env-path">{state.executable}</span>
+        </dd>
+        <dt>平台</dt>
+        <dd>{state.platform}</dd>
+        <dt>库路径</dt>
+        <dd>
+          {state.libraryPaths.length === 0 ? (
+            <span className="hint">内核没说</span>
+          ) : (
+            state.libraryPaths.map((p) => (
+              <span key={p} className="env-path">
+                {p}
+              </span>
+            ))
+          )}
+        </dd>
+        <dt>指纹</dt>
+        {/* **前 12 位够认**，而且它是内容指纹：同一个环境的两个会话给同一个 id */}
+        <dd className="env-mono">{state.id.slice(0, 12)}</dd>
+      </dl>
+
+      <details className="env-packages">
+        <summary>
+          已装的包（{state.packages.length}
+          {截断了 ? ` / 共 ${state.packagesTotal}` : ""}）
+        </summary>
+        {/* **截断要出声**（规格 7.5）：一份被砍过的清单和完整的看起来一样 */}
+        {截断了 ? (
+          <p className="caveat">
+            只记下了前 {state.packages.length} 个，另有 {state.packagesTotal - state.packages.length} 个未记录
+          </p>
+        ) : null}
+        <ul className="env-pkg-list">
+          {state.packages.map((p) => (
+            <li key={p.name}>
+              <span className="name">{p.name}</span>
+              <span className="sub">{p.version}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </Panel>
+  )
+}
+
 export function VariablesPanel({ state }: { state: VariablesState }) {
   if (!state) {
     return (

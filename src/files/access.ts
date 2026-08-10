@@ -1,5 +1,5 @@
 /**
- * 工作区文件访问（②-B · F1）。**只读。**
+ * 工作区文件访问（②-A′ · F1）。**只读。**
  *
  * ## 这个文件的全部重量在路径守卫上
  *
@@ -62,7 +62,7 @@ export type FileContent =
   | { kind: "text"; mediaType: string; text: string; bytes: number; truncated?: { originalBytes: number; keptBytes: number } }
   | { kind: "image"; mediaType: string; base64: string; bytes: number }
   /**
-   * PDF（②-B · F5）。**与图片分开一档**：它在界面上走的是完全不同的一条路
+   * PDF（②-A′ · F5）。**与图片分开一档**：它在界面上走的是完全不同的一条路
    * （blob + `<embed>`，交给 Chromium 自带的阅读器），
    * 混进 `image` 会让界面拿 `<img>` 去画一个 PDF——那是一个空框。
    */

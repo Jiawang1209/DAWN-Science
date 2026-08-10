@@ -44,7 +44,7 @@ export interface CreateWorkbenchOptions {
   /** 凭证库。**app 自己管凭证**，不要求用户手写进配置文件 */
   credentials: CredentialsPort
   /**
-   * 交给系统打开一个绝对路径（②-B · F3）。
+   * 交给系统打开一个绝对路径（②-A′ · F3）。
    *
    * **参数传进来，不在这里 import electron**——wiring 是纯逻辑，
    * 要能在没有 Electron 的测试里跑起来。主进程传 `shell.openPath`。

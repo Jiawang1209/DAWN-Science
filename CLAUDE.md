@@ -10,7 +10,8 @@
 |---|---|
 | 目标、五条不变式 | `docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md` |
 | 阶段、决策门、风险 | `docs/superpowers/plans/2026-08-08-master-roadmap.md` |
-| 当前阶段的执行计划 | `docs/superpowers/plans/2026-08-08-phase1b-prime-desktop.md` |
+| 当前阶段的执行计划 | 见路线图 §5 —— 已完成到 **②-A′**，下一个是 ②-B（执行环境与 Run） |
+| 各阶段的详细计划 | `docs/superpowers/plans/` —— 文件名里的阶段号即为准 |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

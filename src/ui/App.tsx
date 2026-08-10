@@ -385,7 +385,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * keyboard, palette, and visible affordances, but they invoke the same action
    * and state. Do not fork behavior per entry point."*
    */
-  /* ── 文件浏览（②-B · F3/F4） ─────────────────────────────────── */
+  /* ── 文件浏览（②-A′ · F3/F4） ─────────────────────────────────── */
 
   const [filePath, setFilePath] = useState<string | undefined>(undefined)
   const [fileContent, setFileContent] = useState<FileContent | undefined>(undefined)

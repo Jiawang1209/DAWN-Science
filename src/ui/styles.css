@@ -961,7 +961,7 @@ pre {
 .kernel-ref { margin-top: var(--dawn-space-3); }
 .kernel-ref summary { color: var(--dawn-text-3); font-size: 12px; cursor: pointer; }
 
-/* ── 文件浏览与预览（②-B · F3/F4） ─────────────────────────────── */
+/* ── 文件浏览与预览（②-A′ · F3/F4） ─────────────────────────────── */
 
 /**
  * 左树右预览。**树的宽度固定、预览吃剩下的**——

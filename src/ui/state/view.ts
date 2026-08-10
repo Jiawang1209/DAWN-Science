@@ -10,7 +10,7 @@
 import { atom } from "nanostores"
 import { setValue } from "./identity.js"
 
-/** `files` 是 ②-B 加的：工作区目录树 + 预览 */
+/** `files` 是 ②-A′ 加的：工作区目录树 + 预览 */
 export type View = "conversation" | "panel" | "settings" | "files"
 
 export const $view = atom<View>("conversation")

@@ -1,5 +1,5 @@
 /**
- * 文件浏览与预览（②-B · F3/F4）。**跑真实构建产物。**
+ * 文件浏览与预览（②-A′ · F3/F4）。**跑真实构建产物。**
  *
  * 单元测试能证明 `readFileForPreview` 会回一个 base64。它证明不了
  * **那张图真的画在屏幕上**——中间还隔着协议、IPC、`data:` URI 与 CSP。
@@ -50,7 +50,7 @@ test("markdown 走渲染，其它文本按原文", async ({ dawn }) => {
   await expect(page.locator(".preview-text")).toContainText("print('hi')")
 })
 
-test("**PDF 在应用里就能看**（②-B · F5），而且没有被 CSP 拦下", async ({ dawn }) => {
+test("**PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP 拦下", async ({ dawn }) => {
   const { page, workspace } = dawn
   /**
    * 一个最小的合法 PDF。**真文件，不是占位字节**——

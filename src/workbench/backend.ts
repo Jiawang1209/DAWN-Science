@@ -51,7 +51,7 @@ export interface WorkbenchBackendOptions {
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
   /**
-   * 交给系统打开一个**绝对路径**（②-B · F3）。
+   * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
    * **端口注入，不在后端里 import Electron**——后端要能在没有 Electron 的
    * 测试里跑。路径的合法性由后端自己保证（走 `resolveInWorkspace`），
@@ -434,7 +434,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /**
-     * 列一层工作区目录（②-B · F2）。
+     * 列一层工作区目录（②-A′ · F2）。
      *
      * **工作区从项目取，不从请求取**——让调用方传工作区，
      * 等于把路径守卫的起点也交给它，那守卫就形同虚设。

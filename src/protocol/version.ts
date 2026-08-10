@@ -46,8 +46,12 @@
  *   界面据它与每条输出自带的那个一比，判断输出是不是**上一个内核**算出来的。
  *   **缺省 = 还没有内核**，不是「不陈旧」——拿不到就不判断，不猜。
  *   纯新增可选字段，故 minor。
+ * 2.8（2026-08-10）：新增 `listVariables`（②-A · K5 · S14）。
+ *   响应是**三态**而不是一个列表：「不支持 + 原因」与「支持但为空」
+ *   必须分得开——混成空列表就是把「我们没去问」说成「这里什么都没有」。
+ *   纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.7"
+export const WORKBENCH_PROTOCOL_VERSION = "2.8"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

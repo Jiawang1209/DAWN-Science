@@ -43,10 +43,15 @@ export const PREVIEW_MAX = 200
 /**
  * Python 的内省表达式。**必须是单个表达式**——`user_expressions` 只吃表达式。
  *
- * 过滤掉的三类，各有理由：
+ * 过滤掉的四类，各有理由：
  *   - `_` 开头：IPython 自己的历史变量（`_`, `__`, `_i1` …），不是用户造的
  *   - 可调用：函数与类不是「数据」，混进来会把真正的变量淹掉
  *   - 模块：`import numpy as np` 之后 `np` 不该出现在变量面板里
+ *   - **IPython 的记账名**：`In` / `Out` / `exit` / `quit` / `get_ipython`。
+ *     2026-08-10 由一条真 e2e 撞出来——面板上冒出一个预览是
+ *     `['', "print(...)", "raise ..."]` 的东西，**那是 `In`，
+ *     装着用户执行过的每一行代码**。它不是变量，是历史，
+ *     而且长得足以把真正的变量挤出视野。
  */
 const PYTHON_PROBE = `__import__('base64').b64encode(__import__('json').dumps([
   {
@@ -59,6 +64,7 @@ const PYTHON_PROBE = `__import__('base64').b64encode(__import__('json').dumps([
   }
   for _k, _v in list(globals().items())
   if not _k.startswith('_')
+  and _k not in ('In', 'Out', 'exit', 'quit', 'get_ipython')
   and not callable(_v)
   and type(_v).__name__ != 'module'
 ], default=str).encode('utf-8')).decode('ascii')`.replace(/\n\s*/g, " ")

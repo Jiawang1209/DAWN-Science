@@ -335,6 +335,17 @@ export class SessionManager {
   }
 
   /**
+   * 这个会话现在有哪些变量（②-A · K5 · S14）。**只有内核会话有。**
+   *
+   * 与 `contextUsage` 同一个形状：能力是运行时可选的，
+   * **拿不到就是 `undefined`**，由调用方决定怎么说。
+   */
+  async variables(sessionId: SessionId) {
+    const rt = this.bound.get(sessionId) as { variables?: (id: SessionId) => Promise<unknown> } | undefined
+    return rt?.variables ? await rt.variables(sessionId) : undefined
+  }
+
+  /**
    * 换模型。只有 native 有。
    *
    * **不查写权租约**：换模型不是往会话里写内容，它改的是「下一轮用谁」。

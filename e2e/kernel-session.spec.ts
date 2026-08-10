@@ -69,5 +69,19 @@ test.describe("内核会话", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-text").last()).toContainText("V = 7", { timeout: 60_000 })
 
+    /**
+     * ④ **变量面板看得见它**（S14）。
+     *
+     * 这是 ②-A 判据的最后一句：*「人能看见 agent 在这个会话里造出了什么。」*
+     * 前面那个 `e2e_v = 7` 是在 Console 里定义的——**它必须出现在面板上**，
+     * 否则「人和 agent 共用同一个活会话」就只剩半句。
+     */
+    await page.getByRole("button", { name: "项目概览" }).click()
+    const panel = page.locator(".panel", { has: page.getByText("变量", { exact: true }) })
+    await expect(panel).toBeVisible()
+    // 定位到**名字**那一格：变量名也可能出现在别人的预览里
+    await expect(panel.locator(".var .name", { hasText: "e2e_v" })).toBeVisible({ timeout: 60_000 })
+    await expect(panel.locator(".var", { hasText: "e2e_v" })).toContainText("int")
+
   })
 })

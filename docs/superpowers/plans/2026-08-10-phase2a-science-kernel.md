@@ -198,7 +198,7 @@ python_learn   python   ~/miniconda3/envs/python_learn/bin/python
 | ~~**K2**~~ ✅ | 内核生命周期（S9）：kernelspec 发现/选择、**设置里看得见并配得了解释器路径**、`kernelInstanceId`、起不来时的响亮失败 | 能列出本机内核（**带解释器路径**）、能选、能手动指定一个解释器、选错能说清原因 |
 | ~~**K3**~~ ✅ | 中断（S10）：signal 与 message 两条路；`abort` 与 `error` 都算中断成功 | 打断长任务后**内核仍可用**（再执行一次成功）。**判据不许写成「reply 是某个 status」** |
 | ~~**K4**~~ ✅ | 结构化 Console（S11）+ 富输出（S12） | 输出带 `runId`/`kernelInstanceId`；图能显示 |
-| **K5** | 陈旧标记（S13）+ 变量面板（S14） | 重启后旧 output 显式标记为陈旧 |
+| ~~**K5**~~ ✅ | 陈旧标记（S13）+ 变量面板（S14） | 重启后旧 output 显式标记为陈旧 |
 
 **K1 与 K2 之间有一道门**：K1 用 `dawn-spike` 这个已知 kernelspec 硬编码跑通即可，
 内核选择是 K2 的事。**不要在 K1 里顺手做内核发现**——那会让第一片同时背两个未知。
@@ -230,3 +230,33 @@ python_learn   python   ~/miniconda3/envs/python_learn/bin/python
 与前几阶段相同：新增协议操作**必须在同一次改动里补 mock 分支**；
 能判定的设计规则**必须配扫描测试**；改了主路径**必须自己验证一次**
 （`npm run test:e2e` / `npm run dev:mock` / 一次性探针，用完删掉）。
+
+---
+
+## 9. 收口对账（2026-08-10）
+
+### §0 两条判据
+
+| 判据 | 结论 | 凭据 |
+|---|---|---|
+| **同一个活会话**：人定义的变量 agent 读得到 | ✅ | `runtime.integration` 里 `dawn_x = 42` 跨执行读得到；e2e 里 `e2e_v` 在 Console 定义、在**变量面板**看得见 |
+| **能中断，且内核不死** | ✅ | K3 的集成测试跑真内核，Python 与 R 各一遍；**做过变异验证**（掏空 `interrupt()` 后两条都红） |
+
+### 五批
+
+K1 传输 ✅ · K2 生命周期 ✅ · K3 中断 ✅ · K4 Console + 富输出 ✅ · K5 陈旧 + 变量 ✅
+
+### 明确的欠账（不影响判据，但写在明面上）
+
+1. **R 只验到通道层，没走完整条会话链。** `interrupt` / iopub / `execute_reply`
+   都用真 `ir` 内核验过，但 `KernelRuntime` → 界面这条 e2e 只跑了 Python。
+   风险在接缝不在协议——补一条把 e2e 的 `command` 换成 `ir` 即可。
+2. **变量面板只支持 Python。** R 侧如实回「不支持 + 原因」，不返回空列表。
+   base R 手搓 JSON 的风险大于收益，`jsonlite` 不是标配。
+3. **真内核 e2e 被隔离成单独命令**（`test:e2e:kernel`）。
+   它跑完之后同一个 Playwright worker 里的下一条 spec 会在 `firstWindow` 挂 90 秒以上，
+   **根因未定**（排查记录见变更历史）。隔离不降级：它照样必须绿。
+4. **`rxjs` 被打进 Electron 主进程包**（`KernelRuntime` 是静态 import）。
+   实测加载只要 145ms，不是性能问题，但值得改成惰性加载。
+5. **`playwright.config.ts` 的两个超时被放宽过**（60→150s、30→90s）。
+   隔离之后全量已回到 2.2 分钟，**这两个数字现在可能可以调回去**。

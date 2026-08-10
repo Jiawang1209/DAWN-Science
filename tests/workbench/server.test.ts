@@ -55,6 +55,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     writeToSession: async () => ({}),
     stopSession: async () => ({}),
     listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
+    listVariables: async () => ({ supported: false as const, reason: "测试替身不提供变量" }),
     acquireLease: async () => ({
       sessionId: "s1",
       holder: "user" as const,

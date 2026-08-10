@@ -293,6 +293,82 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   )
 }
 
+/** `listVariables` 的三态。**空列表与「不支持」是两回事** */
+export type VariablesState =
+  | { supported: false; reason: string }
+  | { supported: true; variables: readonly VariableRow[] }
+  | undefined
+
+export interface VariableRow {
+  name: string
+  type: string
+  dimensions?: string
+  preview: string
+  previewTruncated: boolean
+}
+
+/**
+ * 变量面板（②-A · K5 · S14）。
+ *
+ * *「人能看见 agent 在这个会话里造出了什么。」*
+ * 人和 agent 共用同一个活会话，**看不见就等于要靠猜**。
+ *
+ * ## 三态在界面上必须分得开
+ *
+ * | 实情 | 界面说什么 |
+ * |---|---|
+ * | 还没取到 | 「尚未记录」 |
+ * | 不支持（例如 R 内核） | **说清为什么**，而不是一片空白 |
+ * | 支持且为空 | 「这个会话里还没有变量」——**那是真的没有** |
+ *
+ * 把后两者都画成空列表，用户会以为自己的变量丢了。
+ */
+export function VariablesPanel({ state }: { state: VariablesState }) {
+  if (!state) {
+    return (
+      <Panel title="变量">
+        <Empty>尚未记录</Empty>
+      </Panel>
+    )
+  }
+  if (!state.supported) {
+    // **不支持要说原因**（规格 7.5）：一片空白会被读成「没有变量」
+    return (
+      <Panel title="变量">
+        <p className="unknown">看不到</p>
+        <p className="caveat">{state.reason}</p>
+      </Panel>
+    )
+  }
+  if (state.variables.length === 0) {
+    return (
+      <Panel title="变量">
+        <Empty>这个会话里还没有变量</Empty>
+      </Panel>
+    )
+  }
+  return (
+    <Panel title="变量">
+      <ul className="var-list">
+        {state.variables.map((v) => (
+          <li key={v.name} className="var">
+            <span className="name">{v.name}</span>
+            <span className="sub">
+              {v.type}
+              {v.dimensions ? ` · ${v.dimensions}` : ""}
+            </span>
+            <p className="var-preview">
+              {v.preview}
+              {/* **截断要显式标注**——砍过的预览和完整的看起来一模一样 */}
+              {v.previewTruncated ? <span className="hint">（预览已截断）</span> : null}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
 export function CostPanel({ cost }: { cost: Cost | undefined }) {
   if (!cost) {
     return (

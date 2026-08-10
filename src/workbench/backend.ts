@@ -357,6 +357,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
     },
 
+    /**
+     * 变量面板（②-A · K5 · S14）。
+     *
+     * **不支持与「真没有」必须分开**：前者是「我们没去问」，
+     * 后者是「问了，确实一个都没有」。混成一个空列表，
+     * 用户会以为自己的变量丢了。
+     */
+    listVariables: async ({ sessionId }) => {
+      const v = (await sessions.variables(sessionId)) as
+        | { supported: false; reason: string }
+        | { supported: true; variables: unknown[] }
+        | undefined
+      if (!v) {
+        // 不是内核会话，或会话不在。**如实说，不返回空列表**
+        return { supported: false as const, reason: "这个会话没有内核，看不到变量" }
+      }
+      return v as never
+    },
+
     acquireLease: async ({ sessionId, holder }) => {
       try {
         return sessions.leases.acquire(sessionId, holder)

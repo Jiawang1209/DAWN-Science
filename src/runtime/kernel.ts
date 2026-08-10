@@ -24,12 +24,16 @@
  */
 import { launchKernelChannel } from "../kernel/channel.js"
 import { translateOutput } from "../kernel/outputs.js"
+import { discoverKernelSpecs } from "../kernel/specs.js"
+import { parseVariables, probeExpressionFor, type VariableSummary } from "../kernel/variables.js"
 import type { KernelChannel } from "../kernel/types.js"
 import { UserFacingError } from "../errors.js"
 import type { AgentEvent, AgentRuntime, EventSink, SessionHandle, SessionId, SessionSpec } from "./types.js"
 
 interface Live {
   channel: KernelChannel
+  /** kernelspec 声明的语言。**内省表达式按它挑**，拿不到就不猜 */
+  language: string | undefined
   /** 这一轮的 `execute_request` msg_id。**用来把输出认回它的父** */
   current?: string | undefined
 }
@@ -58,7 +62,9 @@ export class KernelRuntime implements AgentRuntime {
       ...(this.opts.runIdOf ? { runIdOf: () => this.opts.runIdOf!(spec.sessionId) } : {}),
     })
 
-    this.sessions.set(spec.sessionId, { channel })
+    // 语言来自 kernelspec。**拿不到就是 undefined**，变量面板据此说「不支持」
+    const language = discoverKernelSpecs().specs.find((k) => k.name === name)?.language
+    this.sessions.set(spec.sessionId, { channel, language })
 
     /**
      * **一条 iopub 消息进来就翻成结构化条目发出去。**
@@ -132,6 +138,36 @@ export class KernelRuntime implements AgentRuntime {
     await live.channel.close()
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
     this.sinks.delete(sessionId)
+  }
+
+  /**
+   * 这个会话现在有哪些变量（②-A · K5 · S14）。
+   *
+   * **三种结果要分清**，它们对用户意味着完全不同的事：
+   *   - `undefined` —— 没有这个会话
+   *   - `{ supported: false, reason }` —— 这个语言我们还不会问（例如 R）
+   *   - `{ supported: true, variables }` —— 问到了（可能是空的，那才是「真没有变量」）
+   *
+   * **不能把后两者混成一个空列表**：那会把「我们没去问」说成「这里什么都没有」。
+   */
+  async variables(sessionId: SessionId): Promise<
+    { supported: false; reason: string } | { supported: true; variables: VariableSummary[] } | undefined
+  > {
+    const live = this.sessions.get(sessionId)
+    if (!live) return undefined
+    const expr = probeExpressionFor(live.language)
+    if (!expr) {
+      return {
+        supported: false,
+        reason: `变量面板暂时只支持 Python 内核（这个内核的语言是 ${live.language ?? "未声明"}）`,
+      }
+    }
+    const parsed = parseVariables(await live.channel.probe(expr))
+    if (!parsed) {
+      // **问了但没问出来**，与「不支持」和「真没有」都不同
+      return { supported: false, reason: "问了内核，但没拿到能解析的回答" }
+    }
+    return { supported: true, variables: parsed }
   }
 
   /** 内核实例身份。重启即变——上层落库时要用同一个值 */

@@ -436,6 +436,42 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 这个会话现在有哪些变量（②-A · K5 · S14）。
+   *
+   * **三态，不是两态**——它们对用户意味着完全不同的事：
+   *   `supported: false` + `reason`  —— 这个内核我们还不会问（例如 R）
+   *   `supported: true` + 空数组      —— 问到了，**真的一个变量都没有**
+   *   操作本身失败                    —— 会话不存在等
+   *
+   * 把前两者混成一个空列表，就是把「我们没去问」说成「这里什么都没有」。
+   */
+  listVariables: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z.discriminatedUnion("supported", [
+      z.object({ supported: z.literal(false), reason: z.string().min(1) }).strict(),
+      z
+        .object({
+          supported: z.literal(true),
+          variables: z.array(
+            z
+              .object({
+                name: z.string(),
+                type: z.string(),
+                /** 维度／长度。**拿不到就没有这个字段** */
+                dimensions: z.string().optional(),
+                preview: z.string(),
+                /** **预览被砍过。** 砍过的和完整的看起来一模一样，所以必须显式标注 */
+                previewTruncated: z.boolean(),
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ]),
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

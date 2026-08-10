@@ -387,7 +387,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 
 > **判据**：一个持久的 Python 会话和一个持久的 R 会话，人和 agent 共用同一个活会话，能中断，图能显示。
 
-#### S8 · Jupyter wire protocol 客户端 ⬜
+#### S8 · Jupyter wire protocol 客户端 ✅
 
 - **技术栈**：`zeromq` + `@nteract/messaging` + `enchannel-zmq-backend`；用薄适配器隔离 `rxjs`
 - **成果**：五通道（shell / iopub / stdin / control / heartbeat）规范化为内部事件；HMAC 消息签名
@@ -395,7 +395,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **来源**：Rho `crates/rho-kernel`（493 行）用 `jupyter-protocol` + `jupyter-zmq-client`，并 vendor 了 `wurli/jet` 的内核生命周期设计
 - **对标**：Rho ADR-002「kernel transport」。选 Jupyter 协议而非各语言各写一套，**理由就是这一条**
 
-#### S9 · Ark(R) 与 ipykernel(Python) 集成 ⬜
+#### S9 · Ark(R) 与 ipykernel(Python) 集成 ✅（Ark 未做，走本机 kernelspec）
 
 - **技术栈**：`posit-dev/ark`（**固定版本 + sha256 校验**）；`ipykernel`
 - **成果**：下载/校验/启动内核；内核实例有 `kernel_instance_id`，重启即变
@@ -403,7 +403,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **来源**：Rho `runtime/ark.json` 的固定版本 + 校验和做法
 - **对标**：Rho 的 `WorkspaceStatus` 同时暴露 `kernel_instance_id` / `execution_seq` / `state_revision` / `project_revision` —— **四个不同的单调量，各管一件事**，不共用一个计数器
 
-#### S10 · 中断 ⬜
+#### S10 · 中断 ✅
 
 - **技术栈**：进程组信号（control 通道 + 平台信号）
 - **成果**：能打断正在执行的 cell，且**不杀掉内核**
@@ -411,7 +411,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **来源**：Buzz 的终止序列实现
 - **对标**：Rho 把它列为**前置门**而非普通功能——*"Interrupt is a kernel-manager responsibility rather than ordinary R code."* 中断做不通就明确记为已知限制，**不静默降级成「能跑但停不下来」**
 
-#### S11 · 结构化 Console（不是终端模拟器） ⬜
+#### S11 · 结构化 Console（不是终端模拟器） ✅
 
 - **技术栈**：React，消费协议事件渲染
 - **成果**：Console 由结构化事件构成，每条输出带 run_id 与 kernel_instance_id
@@ -419,7 +419,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **来源**：Rho **明确禁止用 xterm.js 做 R Console**
 - **对标**：与 S4 构成一对边界——**xterm 只用于真 shell（托管外部 CLI），REPL 一律走结构化 Console**。混用会让 REPL 输出永久失去可查询性
 
-#### S12 · 富输出渲染 ⬜
+#### S12 · 富输出渲染 ✅
 
 - **技术栈**：Jupyter `display_data` + comm 通道；React；图表用 `mermaid`/`katex` 按需
 - **成果**：图 / HTML / 表 / 公式的渲染，带尺寸与字节上界
@@ -427,7 +427,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **来源**：Jupyter 协议原生 + Rho 的输出边界策略
 - **对标**：Rho `OutputSummary` 带 `media_type` 与 `provenance_complete`——**输出从诞生那一刻起就绑定溯源状态**，不是事后补
 
-#### S13 · 内核状态版本追踪与陈旧标记 ⬜
+#### S13 · 内核状态版本追踪与陈旧标记 ✅
 
 - **技术栈**：TS；`kernelRevision` 单调递增
 - **成果**：每次执行 `kernelRevision + 1`；每份 output 记录产生时的版本；界面对陈旧 output 显式标记
@@ -435,7 +435,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **来源**：自研（规格 8.5）；`revision` 标签思路源自 Rho
 - **对标**：Rho `ObjectSummary.state_revision` —— **每个对象快照都带它被捕获时的版本号**，陈旧检测靠比对版本而非猜测
 
-#### S14 · 变量面板 ⬜
+#### S14 · 变量面板 ✅（Python；R 如实说不支持）
 
 - **技术栈**：React；Project 级、跨 chat 的命名空间视图
 - **成果**：当前 workspace 的对象列表，带类型、维度、有界预览、`preview_truncated` 标记
@@ -673,7 +673,7 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 | **G1** | ①-A 后 | 四会话并存 · CLI 真接管 · 全局配置未污染 | ✅ 2026-08-08（**但只判了 PTY 线**，见 §9） |
 | **GR** | R1 后 | pi 第三层可用：工具能干活 · `tool_call` 可拦 · 凭证后端可换 | ✅ |
 | **G2′** | ①-B′ 后 | **作者自己打开，不问我就知道下一步点哪里**；四条 e2e 全绿；两周内是否真的开始用它替代裸终端 | 🔵 机器判据已过（56 条 e2e），**第二问待作者本人用**——它不由任何 Task 交付 |
-| **G3** | ②-A 后 | 持久 Python + R 会话可用、能中断、图能显示 | ⬜ |
+| **G3** | ②-A 后 | 持久 Python + R 会话可用、能中断、图能显示 | ✅ 2026-08-10（**R 只验到通道层**，见 ②-A 计划 §9 欠账 1） |
 | **G4** | ②-B 后 | 同一代码在本地与 SSH 各跑一次，两条 Run 记录都可查且带环境快照 | ⬜ |
 | **🔒 G5** | ③ 后 | **契约冻结八项逐条确认** | ⬜ |
 | **G6** | ④ 后 | 谎报测试：agent 声称完成但测试未过 → 系统拒绝推进 | ⬜ |

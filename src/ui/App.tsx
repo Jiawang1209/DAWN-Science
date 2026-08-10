@@ -28,6 +28,8 @@ import {
   mayIncludeUserEdits,
   StatusPanel,
   ToolChangesPanel,
+  VariablesPanel,
+  type VariablesState,
 } from "./panels.js"
 import {
   ConversationView,
@@ -329,6 +331,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (view === "settings") refreshKernels()
   }, [view, refreshKernels])
 
+  /**
+   * 这个会话现在有哪些变量（②-A · K5 · S14）。
+   *
+   * **进概览时问一次，换会话时重问**——不做轮询：
+   * 每次问都是一次内核往返，轮询会让一个空着的面板持续骚扰内核。
+   * 想看最新的，切走再切回来（与产出栏同一个手势）。
+   */
+  const [variables, setVariables] = useState<VariablesState>(undefined)
+  useEffect(() => {
+    if (view !== "panel" || !sessionId) {
+      setVariables(undefined)
+      return
+    }
+    client
+      .get<Exclude<VariablesState, undefined>>("listVariables", { sessionId })
+      .then(setVariables)
+      .catch(fail)
+  }, [client, view, sessionId])
+
   const agentIds = useMemo(() => providers.agents.map((a) => a.agentId), [providers])
 
   /**
@@ -552,6 +573,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <CostPanel cost={latestCost} />
               {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
               <ContextPanel usage={contextUsage} />
+              {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
+              <VariablesPanel state={variables} />
               <RunsPanel runs={runs} />
               {provenance ? (
                 <section className="panel">

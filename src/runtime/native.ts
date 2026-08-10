@@ -172,7 +172,15 @@ export class NativeRuntime implements AgentRuntime {
    */
   private modelRuntime: Promise<ModelRuntime> | undefined
 
-  constructor(private readonly opts: NativeRuntimeOptions = {}) {}
+  constructor(private readonly opts: NativeRuntimeOptions = {}) {
+    /**
+     * **在构造体里赋值，不写成字段初值。** 字段初值与参数属性的赋值顺序
+     * 取决于 `useDefineForClassFields`——写成 `= this.opts.modelsPath`
+     * 有可能读到还没赋上的 `opts`。这种错只在某些编译设置下出现，
+     * 是最难查的一类。
+     */
+    this.modelsPath = opts.modelsPath
+  }
 
   /**
    * 丢掉缓存的 `ModelRuntime`，下次用时重新读 `models.json`（2026-08-10）。
@@ -187,11 +195,39 @@ export class NativeRuntime implements AgentRuntime {
     this.modelRuntime = undefined
   }
 
+  /**
+   * 运行时**这份目录文件在哪**。**可以中途才有**（2026-08-11 修）。
+   *
+   * ## 这个方法是一个真实缺陷的形状
+   *
+   * 作者在设置里加了一个自定义端点 `kimi-k3`（moonshot 的地址 + 正确的 key），
+   * 磁盘上三样全对——`providers.yaml`、`models.generated.json`、钥匙串——
+   * **可对话里的模型选择器就是没有它。**
+   *
+   * 因为 `modelsPath` 此前是构造时钉死的：启动那一刻配置里还没有任何
+   * `providers:` 覆盖，`writeModelsJson` 于是返回 undefined，
+   * 运行时拿到的是 `modelsPath: null`。**后来生成的那份文件，pi 永远不会去读**，
+   * 重置多少次目录都一样——它每次都从 `null` 重新读。
+   * 症状因此是「配好了，重启才有」，而没有任何一句话提示要重启。
+   *
+   * **e2e 没抓住它，因为假服务器总会给一份基底 `models.json`**——
+   * 于是那条路上 `modelsPath` 从来都不是空的。测试环境比生产环境「多一样东西」，
+   * 那一样东西正好盖住了缺陷。
+   */
+  useModelsPath(path: string | undefined): void {
+    this.modelsPath = path
+    // 路径变了，缓存的目录就是按旧路径读出来的——必须一起丢
+    this.resetModelCatalog()
+  }
+
+  /** 当前生效的目录文件路径。构造时取初值，之后由 `useModelsPath` 改 */
+  private modelsPath: string | undefined
+
   private runtime(): Promise<ModelRuntime> {
     this.modelRuntime ??= ModelRuntime.create({
       ...(this.opts.credentials ? { credentials: this.opts.credentials } : {}),
       // 显式给 null 表示不落盘；给路径则由 pi 缓存远端模型目录
-      modelsPath: this.opts.modelsPath ?? null,
+      modelsPath: this.modelsPath ?? null,
     })
     return this.modelRuntime
   }
@@ -306,7 +342,8 @@ export class NativeRuntime implements AgentRuntime {
         provider: native.provider,
         model: native.model,
         cwd: spec.workspace,
-        ...(this.opts.modelsPath ? { modelsPath: this.opts.modelsPath } : {}),
+        // **当前生效的那一份**，不是构造时的——见 `useModelsPath`
+        ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
         // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）
         agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
       },

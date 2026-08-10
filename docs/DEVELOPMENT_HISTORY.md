@@ -43,10 +43,40 @@
 
 ## 变更日志
 
+### 2026-08-11 — 中途加的模型端点不用重启就能用（`modelsPath` 是构造时钉死的）
+
+- **Type**: fix
+- **Commit**: 待回填
+- **Motivation**: 作者：*「我重新设置了 kimi-k3，地址写的是 https://api.moonshot.cn/v1，
+  填写了正确的 API，设置成功后，我点击对话，发现模型选择的地方没有 kimi-k3。」*
+  查他机器上的三样东西**全是对的**——`providers.yaml` 有那一段、
+  `models.generated.json` 生成正确、钥匙串里有 key。断的是再下一环。
+- **What**:
+  - 根因：`NativeRuntime` 的 `modelsPath` **在构造时钉死**。启动那一刻配置里还没有
+    任何 `providers:` 覆盖，`writeModelsJson` 于是返回 undefined，运行时拿到的是
+    `modelsPath: null`。**后来生成的那份文件，pi 永远不会去读**——
+    `resetModelCatalog()` 重置多少次都一样，它每次都从 `null` 重新读。
+  - 修法：新增 `NativeRuntime.useModelsPath()`（顺带丢掉缓存目录），
+    `wiring.ts` 的 `onProvidersChanged` 改为把新生成的路径交给它。
+    子 agent 那条路径也一起改成读当前值，不再读构造时的 `opts`。
+  - `modelsPath` 的初值改在**构造体里**赋，不写成字段初值——
+    字段初值与参数属性的赋值顺序取决于 `useDefineForClassFields`。
+- **Impact**: 在设置里加一个自定义端点（或给那 8 个不自带地址的填地址）之后
+  **当场可用**，不再是「配好了，重启才有」——而此前没有任何一句话提示要重启。
+- **Verification**:
+  - 新增 `e2e/late-endpoint.spec.ts` 与夹具选项 `noModelsBase`。
+    **这条用例的要害不在断言，在那个选项**：假服务器此前总会给一份基底
+    `models.json`，于是 e2e 那条路上 `modelsPath` 从来都不是空的——
+    **测试环境比生产环境多一样东西，而那一样东西正好盖住了这个缺陷**。
+  - **变异验证**：把 `useModelsPath` 退回成原来的 `resetModelCatalog`，
+    这条用例当场红；改回来即绿。它确实抓的是这个缺陷。
+  - 单元 + 集成 **1105 passed**；`npx playwright test` **130 passed**
+    （1 例仍是已记的 `firstWindow` 间歇挂起，单独重跑即过）。
+
 ### 2026-08-10 — 设置里的模型服务重做：一行摘要 + 一个「添加」入口
 
 - **Type**: feat
-- **Commit**: 待回填
+- **Commit**: `b00d5bf`
 - **Motivation**: 作者：*「pi 里面自己识别的一大堆，我感觉格式有点儿乱乱的。我觉得可以在
   设置里面，通过 baseUrl、api、models 分别留出可以填写的地方，然后自行填写。」*
   上一版是**一张 39 行的表**——每行一个 key 框加一个「改地址」折叠，而其中 38 行是

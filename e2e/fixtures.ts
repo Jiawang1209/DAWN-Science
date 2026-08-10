@@ -63,6 +63,18 @@ export interface MockToolCallSpec {
 export interface DawnOptions {
   toolCall?: MockToolCallSpec
   /**
+   * **不给基底 `models.json`**（2026-08-11）。
+   *
+   * 默认每个用例都写一份假服务器的目录，`DAWN_MODELS_JSON` 指向它。
+   * **那让测试环境比生产环境多一样东西**，而那一样东西正好盖住过一个真实缺陷：
+   * 启动时没有任何 provider 覆盖时，运行时拿到的是「不落盘」，
+   * 于是后来生成的目录文件永远不会被读——作者加完 `kimi-k3`
+   * 在模型选择器里找不到它，就是这个。
+   *
+   * 打开这一项的用例因此跑在**和真实安装一样的起点上**。
+   */
+  noModelsBase?: boolean
+  /**
    * 把工作区变成 git 仓库并做一次初始提交。**默认 false。**
    *
    * 默认值是 false 而不是 true，有两条理由：
@@ -198,7 +210,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     }
 
     const modelsPath = join(dir, "models.json")
-    writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))
+    if (!dawnOptions.noModelsBase) {
+      writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))
+    }
     const dbPath = join(dir, "dawn.db")
 
     const app = await _electron.launch({
@@ -236,7 +250,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         DAWN_CONFIG: configPath,
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
-        DAWN_MODELS_JSON: modelsPath,
+        ...(dawnOptions.noModelsBase ? {} : { DAWN_MODELS_JSON: modelsPath }),
         // **外部 CLI 的配置也要隔离**：不指的话会去读开发机真实的 ~/.codex，
         // 那正是这份文件开头明令禁止的暗管道（2026-08-09 加模型自动发现时捅的洞）
         DAWN_CLI_HOME: join(dir, "cli-home"),

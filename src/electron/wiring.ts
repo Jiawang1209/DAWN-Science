@@ -249,12 +249,20 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * 不做的话地址写进了配置却要重启才生效，而界面会说「已保存」——半真的话。
      */
     onProvidersChanged: (providers) => {
-      writeModelsJson(
+      const 新路径 = writeModelsJson(
         join(dirname(opts.dbPath), "models.generated.json"),
         providers,
         opts.modelsPath,
       )
-      nativeRuntime.resetModelCatalog()
+      /**
+       * **把新路径交给运行时，不只是重置目录**（2026-08-11 修）。
+       *
+       * 只重置的话，启动时没有任何 `providers:` 覆盖的那种情况就永远好不了：
+       * 那时 `writeModelsJson` 返回 undefined，运行时拿到的是「不落盘」，
+       * **后来生成的这份文件它永远不会去读**。作者加完 `kimi-k3`
+       * 在模型选择器里找不到它，就是这个。
+       */
+      nativeRuntime.useModelsPath(新路径)
     },
     environments,
     runRecorder,

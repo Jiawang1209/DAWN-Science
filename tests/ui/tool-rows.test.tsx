@@ -39,8 +39,24 @@ const tool = (over: Partial<Extract<TranscriptItem, { type: "tool" }>> = {}) =>
     ...over,
   }) as TranscriptItem
 
-const show = (items: TranscriptItem[]) =>
-  render(<ConversationView session={session} items={items} onSend={() => {}} />)
+/**
+ * 渲染，**并把工具行展开**。
+ *
+ * 2026-08-10 工具调用改成默认折叠（作者要「像 codex / claude 那样可折叠」）。
+ * 这份文件里的断言绝大多数验的是**正文里的措辞**——截断有没有出声、
+ * 全文去处在不在、字节怎么写——那些与折不折叠无关。
+ *
+ * 所以在这里统一展开，**七条断言的意图一个字都不用改**。
+ * 折叠规则本身（默认折叠、报错默认展开）在 `tool-collapse.test.tsx` 里单独盯。
+ */
+const show = (items: TranscriptItem[]) => {
+  const r = render(<ConversationView session={session} items={items} onSend={() => {}} />)
+  // **只展开还没展开的**：报错那些默认就是展开的，再点一下会把它们收起来
+  for (const head of r.container.querySelectorAll('.tool-head[aria-expanded="false"]')) {
+    fireEvent.click(head)
+  }
+  return r
+}
 
 describe("工具调用行 · 名称与状态", () => {
   it("显示工具名", () => {

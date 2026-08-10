@@ -792,7 +792,7 @@ export function ConversationView({
  * **工具调用要显示出来**——①-B 的界面「看不见 agent 在干什么」，
  * 根因之一就是工具调用在 runtime 层就被丢掉了，界面连数据都拿不到。
  */
-function TranscriptRow({
+export function TranscriptRow({
   item,
   agentId,
   currentKernel,
@@ -1073,49 +1073,95 @@ const TOOL_STATUS = {
  *    什么都不显示，等于一次失败被吞掉。宁可说「没有给出原因」，
  *    也不能让它看起来什么都没发生。
  */
+/**
+ * 一次工具调用。**整块可折叠**（2026-08-10）。
+ *
+ * 作者：*「dawn-science 回复的时候我会看到很多 Linux 的命令，
+ * 这个在 codex 和 claude 里面，都是可以折叠的。」*
+ *
+ * ## 默认折叠，**但报错的默认展开**
+ *
+ * 折叠是为了让对话读得下去——一次分析可能有几十次工具调用，全摊开就没法看了。
+ * 但**失败必须出声**（规格 7.5）：一个折叠起来的错误等于没报错，
+ * 人要一条条点开才知道哪里出了问题，那正是把「出声」变成「藏着」。
+ *
+ * 所以判据不是「好不好看」，是**这一条要不要被看见**：
+ *   - `error` → 默认展开
+ *   - 其余（running / ok）→ 默认折叠，收成一行摘要
+ *
+ * 折叠状态是**每一条自己的**，不做全局「全部展开」——那会让人一按之后
+ * 对话瞬间变成几千行，而他想看的只是其中一条。
+ */
 function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) {
-  const [expanded, setExpanded] = useState(false)
   const { mark, label } = TOOL_STATUS[item.status]
   const input = summarize(item.input)
+  /**
+   * **报错的默认展开。** 用 `item.status` 做初值而不是在 effect 里改——
+   * 后者会让错误先折叠一帧再弹开，那一帧的闪动比不折叠更难受。
+   */
+  const [open, setOpen] = useState(item.status === "error")
+  const [expanded, setExpanded] = useState(false)
   const result = foldResult(item.result, expanded)
 
   return (
-    <div className={`tool ${item.status}`} data-status={item.status}>
-      <span className="tool-name">
-        {mark} {item.name}
-      </span>
-      <span className="tool-status">{label}</span>
+    <div className={`tool ${item.status}${open ? " open" : ""}`} data-status={item.status}>
+      {/**
+       * 折叠开关就是这一行本身。**整行可点**——只让那个小三角可点，
+       * 等于给了一个 8×8 的靶子。
+       */}
+      <Button
+        variant="ghost"
+        size="inline"
+        className="tool-head"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="caret" aria-hidden="true">
+          {open ? "▾" : "▸"}
+        </span>
+        <span className="tool-name">
+          {mark} {item.name}
+        </span>
+        {/* **折叠时也要看得见做了什么**：命令本身就是最有信息量的那一行。
+            展开之后它在下面完整出现，这里就不重复了 */}
+        {!open && input.text ? <span className="tool-peek">{input.text}</span> : null}
+        <span className="tool-status">{label}</span>
+      </Button>
 
-      {input.text ? <pre className="tool-input">{input.text}</pre> : null}
-      {input.truncated ? <span className="hint">入参已截断</span> : null}
+      {open ? (
+        <div className="tool-body">
+          {input.text ? <pre className="tool-input">{input.text}</pre> : null}
+          {input.truncated ? <span className="hint">入参已截断</span> : null}
 
-      {item.resultTruncated ? (
-        <p className="hint tool-spill">
-          {/* **这一行是修复的证据。** 修复前 runtime 层砍掉 2000 字符之后的内容且
-              不留痕迹，界面却在说「还有 N 行」——那个数是对残缺品数出来的 */}
-          输出共 {formatBytes(item.resultBytes ?? 0)}，已截断
-          {item.fullOutputPath ? `；完整内容：${item.fullOutputPath}` : "，且未能保存全文"}
-        </p>
-      ) : null}
-
-      {result ? (
-        <>
-          <pre className="tool-result">{result.text}</pre>
-          {result.hidden > 0 ? (
-            <Button
-              variant="text"
-              size="inline"
-              className="tool-expand"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-            >
-              {expanded ? "收起" : `展开全部（还有 ${result.hidden} 行）`}
-            </Button>
+          {item.resultTruncated ? (
+            <p className="hint tool-spill">
+              {/* **这一行是修复的证据。** 修复前 runtime 层砍掉 2000 字符之后的内容且
+                  不留痕迹，界面却在说「还有 N 行」——那个数是对残缺品数出来的 */}
+              输出共 {formatBytes(item.resultBytes ?? 0)}，已截断
+              {item.fullOutputPath ? `；完整内容：${item.fullOutputPath}` : "，且未能保存全文"}
+            </p>
           ) : null}
-        </>
-      ) : item.status === "error" ? (
-        // 失败且无正文。**这一支是本次修复的重点**：此前它渲染成空白
-        <p className="caveat">这次调用失败了，但没有给出原因</p>
+
+          {result ? (
+            <>
+              <pre className="tool-result">{result.text}</pre>
+              {result.hidden > 0 ? (
+                <Button
+                  variant="text"
+                  size="inline"
+                  className="tool-expand"
+                  onClick={() => setExpanded((v) => !v)}
+                  aria-expanded={expanded}
+                >
+                  {expanded ? "收起" : `展开全部（还有 ${result.hidden} 行）`}
+                </Button>
+              ) : null}
+            </>
+          ) : item.status === "error" ? (
+            // 失败且无正文。**这一支是本次修复的重点**：此前它渲染成空白
+            <p className="caveat">这次调用失败了，但没有给出原因</p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   )

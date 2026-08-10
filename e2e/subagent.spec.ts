@@ -29,6 +29,22 @@ description: 踏勘员，只读不写
 你是踏勘员。用一句话回答。
 `
 
+/**
+ * 展开工具行再断言（2026-08-10）。
+ *
+ * 工具调用改成**默认折叠**（作者要「像 codex / claude 那样可折叠」），
+ * 于是 `.tool-result` 默认不在 DOM 里。这几条用例验的是**子 agent 的输出
+ * 有没有真的流回来**，与折不折叠无关——所以先展开，断言一个字不改。
+ *
+ * 只点还没展开的：报错那些默认就是展开的，再点一下会把它们收起来。
+ */
+async function 展开工具(page: import("@playwright/test").Page) {
+  // **先等工具行出现**：子 agent 要跑一会儿，急着去点会点在空处
+  await page.locator(".tool-head").first().waitFor({ timeout: 60_000 })
+  const 收着的 = page.locator('.tool-head[aria-expanded="false"]')
+  for (let i = (await 收着的.count()) - 1; i >= 0; i--) await 收着的.nth(i).click()
+}
+
 test.describe("子 agent 真的在独立进程里跑了一次", () => {
   test.use({
     dawnOptions: {
@@ -64,6 +80,7 @@ test.describe("子 agent 真的在独立进程里跑了一次", () => {
      * `## [1] scout：完成` 才是要的：它由父侧的 `render()` 生成，
      * **只有子进程真的跑完并给出结果才会出现**。
      */
+    await 展开工具(page)
     await expect(page.locator(".tool-result")).toContainText("[1] scout：完成", {
       timeout: 60_000,
     })
@@ -133,6 +150,7 @@ test.describe("定义写错时不会静静地消失", () => {
     await page.getByPlaceholder(/回车发送/).fill("随便找一个")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 失败也会回到对话里——**失败要如实说**，这一句就是那条纪律的可见面
+    await 展开工具(page)
     await expect(page.locator(".tool-result")).toContainText("并不存在", { timeout: 60_000 })
     // 而 chip 上的失败原因**不用点开就看得见**（规格 7.5）
     await expect(page.locator(".chip")).toHaveAttribute("data-status", "error")
@@ -209,6 +227,7 @@ test.describe("parallel：两个独立进程，都挂在同一次工具调用下
     await runSubagentTurn(page, workspace)
 
     // 两个结果都要回到对话里。**编号是按输入顺序放回的**，不是完成顺序
+    await 展开工具(page)
     await expect(page.locator(".tool-result")).toContainText("[1] scout：完成", { timeout: 60_000 })
     await expect(page.locator(".tool-result")).toContainText("[2] scout：完成")
 
@@ -257,6 +276,8 @@ test.describe("chain：上一步的真实输出流进了下一步", () => {
   test("**`{previous}` 换成的是第一步的真输出**，不是占位符本身", async ({ dawn }) => {
     const { page, workspace, dbPath } = dawn
     await runSubagentTurn(page, workspace)
+
+    await 展开工具(page)
 
     await expect(page.locator(".tool-result")).toContainText("[2] scout：完成", { timeout: 60_000 })
 

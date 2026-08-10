@@ -892,20 +892,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     )
                     .catch(fail)
                 }}
-                onCreateAgent={(providerId, agentId, model) => {
-                  client
-                    .get("createAgent", { agentId, provider: providerId, model })
-                    // **加完立刻重取**：新 agent 不用重启就该出现在选择器里
-                    .then(() => loadProviders(client))
-                    .catch(fail)
-                }}
                 {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
                 credentials={creds}
                 onSet={(id, secret) =>
-                  client.get("setCredential", { providerId: id, secret }).then(() => loadCredentials(client)).catch(fail)
+                  client
+                    .get("setCredential", { providerId: id, secret })
+                    /**
+                     * **也要重取 agent 列表。**
+                     * 填了 key 之后那个 provider 自动就有 agent 了
+                     * （见 backend 的「填了 key 就够了」），
+                     * 不重取的话选择器还是旧的——而那正是作者说的
+                     * 「设置完还是看不到 kimi」。
+                     */
+                    .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+                    .catch(fail)
                 }
                 onDelete={(id) =>
-                  client.get("deleteCredential", { providerId: id }).then(() => loadCredentials(client)).catch(fail)
+                  client
+                    .get("deleteCredential", { providerId: id })
+                    .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+                    .catch(fail)
                 }
               />
             </div>

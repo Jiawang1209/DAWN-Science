@@ -24,8 +24,14 @@ describe("凭证设置 · 绝不回显已存的凭证", () => {
      * 因为**填 key 只是「连得上」**。「已配置」太容易被读成「可以用了」。
      * 断言的意图（状态说出来了）没变，对象换成新的那句。
      */
+    /**
+     * 2026-08-10 二次返工：这句话一度是「已配置，但还没有 agent 在用它」，
+     * 旁边还有个「建一个 agent」的按钮。作者当场问*「我明明设置 key 就好了，
+     * 为什么还会多一个新建 agent 这种奇怪的东西？」*——**他是对的**。
+     * 现在填了 key 就能在对话里选到，这一行只报事实。
+     */
     expect(screen.getByText(/已配置/)).toBeDefined()
-    expect(screen.getByText(/还没有 agent 在用它/)).toBeDefined()
+    expect(screen.getByText(/可在对话里选它的模型/)).toBeDefined()
     const input = screen.getByLabelText(/deepseek 的 API key/) as HTMLInputElement
     expect(input.value).toBe("")
     // 界面根本拿不到凭证，所以整个 DOM 里也不该出现任何像 key 的东西

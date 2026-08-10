@@ -540,12 +540,16 @@ function 凭证说明({
   usedBy: readonly string[]
 }) {
   if (!isSet) return <>未配置</>
-  if (usedBy.length > 0) return <>已配置 · {usedBy.join(" / ")} 在用</>
-  return (
-    <span className="cred-idle">
-      已配置，<em className="set-emph">但还没有 agent 在用它</em>——加一个才能在对话里选到
-    </span>
-  )
+  /**
+   * **填了 key 就能用了。**
+   *
+   * 2026-08-10 返工：这里一度写着「已配置，但还没有 agent 在用它——
+   * 加一个才能在对话里选到」，旁边还有个「建一个 agent」的按钮。
+   * 作者当场问：*「我明明设置 key 就好了，为什么还会多一个新建 agent
+   * 这种奇怪的东西呢？」*——**他是对的，那是我们内部的概念漏了出来。**
+   * 现在配了 key 的 provider 自动就能在对话里选到，这一行只报事实。
+   */
+  return <>已配置 · 可在对话里选它的模型</>
 }
 
 /**

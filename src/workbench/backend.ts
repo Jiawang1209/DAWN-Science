@@ -118,6 +118,49 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     return s
   }
 
+  /**
+   * **填了 key 就够了**（2026-08-10）。
+   *
+   * 作者：*「我明明设置 kimi 的 key 就好了，为什么还会多一个新建 agent
+   * 这种奇怪的东西呢？其实配置 kimi 的方法，不应该和新建 deepseek 是一回事儿吗？」*
+   *
+   * 他是对的。deepseek 之所以「填个 key 就能用」，**唯一的原因是它碰巧写在
+   * 默认配置里**——而 kimi 没有。同一件事被做成了两种，
+   * 差别还落在一个用户根本不该知道的概念（agent）上。
+   *
+   * 所以：**配了凭证的 provider，自动就有一个同名 agent。**
+   *
+   * 两条边界：
+   *   - **只在内存里**，不写进 `providers.yaml`——那是用户的文件，
+   *     我们不该因为他填了个 key 就去改它。
+   *   - **绝不覆盖已声明的**：某个 provider 已经有 agent 在用就不再自动加，
+   *     否则用户精心写的 model 会被我们挑的那个顶掉。
+   */
+  async function 确保配过key的都能用(): Promise<void> {
+    if (!models?.available) return
+    const 已被用 = new Set(
+      Object.values(registry.agents)
+        .filter((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
+        .map((d) => d.provider),
+    )
+    for (const providerId of credentials.configured()) {
+      if (已被用.has(providerId) || registry.agents[providerId]) continue
+      /**
+       * **挑不出模型就不造这个 agent。** 一个模型是空串的 agent
+       * 会在建会话时才炸，而那时错误与「你填了个 key」毫无关系。
+       */
+      const list = await models.available(providerId).catch(() => [] as string[])
+      const model = list[0]
+      if (!model) continue
+      registry.agents[providerId] = {
+        kind: "native",
+        provider: providerId,
+        model,
+        capabilities: ["chat", "exec"],
+      }
+    }
+  }
+
   return {
     listProjects: async () => projects.list(),
 
@@ -131,6 +174,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **不回传任何凭证**。
      */
     getProviders: async () => {
+      await 确保配过key的都能用()
       const nativeAgents = Object.values(registry.agents).filter(
         (d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native",
       )

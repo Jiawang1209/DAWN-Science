@@ -651,55 +651,231 @@ pre {
    streamdown 发的是 Tailwind 类名，而本项目没有 Tailwind——
    所以样式全部由这一段用 --dawn-* 令牌自己给。见 markdown.tsx 的说明。 */
 
+/* ── agent 回复的 markdown 排版（2026-08-10 重做） ───────────────
+ *
+ * 作者：*「回复的时候 markdown 格式并不美观，要效仿 claude app、codex app、hermes。」*
+ *
+ * ## 看清楚之后才发现主因不是间距
+ *
+ * 截图看到的是：**代码块的换行全塌成一行**，而下载／复制／全屏三个按钮
+ * 裸露地堆在左边。根因是我们用 `streamdown` 却**从来没有它的样式**——
+ * 它那套 Tailwind 类在这个项目里一个都不存在，于是 `flex` / `sticky` /
+ * `display:block`（行）全部失效。
+ *
+ * ## 挂点用 `data-streamdown`，不用它的 class
+ *
+ * 那些 `data-streamdown="code-block-*"` 属性是它对外的稳定契约；
+ * class 是 Tailwind 的产物，跟着它的构建走。**挂在属性上，不挂在类名上。**
+ */
+
 .md { color: var(--dawn-text-1); }
 .md > div > :first-child { margin-top: 0; }
 .md > div > :last-child { margin-bottom: 0; }
-.md p { margin: 0 0 8px; }
-.md h1, .md h2, .md h3, .md h4 { margin: 14px 0 6px; font-size: var(--dawn-chat-size); font-weight: var(--dawn-weight-semibold); }
-.md h1 { font-size: 16px; }
-.md ul, .md ol { margin: 0 0 8px; padding-left: 20px; }
-.md li { margin: 2px 0; }
+
+/* 段落之间给足呼吸。8px 太挤——整段回复会糊成一片 */
+.md p { margin: 0 0 12px; }
+
+/**
+ * **标题要有层级。** 此前 h1~h4 除 h1 外全是同一个字号，
+ * 「二级标题」和「三级标题」在屏幕上一模一样，那等于没有层级。
+ */
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 20px 0 8px;
+  font-weight: var(--dawn-weight-semibold);
+  line-height: 1.35;
+}
+.md h1 { font-size: 18px; }
+.md h2 { font-size: 16px; }
+.md h3 { font-size: 15px; }
+.md h4 { font-size: var(--dawn-chat-size); color: var(--dawn-text-2); }
+
+.md ul,
+.md ol { margin: 0 0 12px; padding-left: 22px; }
+.md li { margin: 4px 0; }
+/* 嵌套列表贴紧父项——**它是同一件事的下一层**，不是新的一段 */
+.md li > ul,
+.md li > ol { margin: 4px 0 0; }
+/* 项目符号比正文弱一档：它是结构，不是内容 */
+.md li::marker { color: var(--dawn-text-3); }
+
 .md strong { font-weight: var(--dawn-weight-semibold); }
 .md a { color: var(--dawn-accent); }
+.md a:hover { text-decoration: underline; }
+
+.md hr {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid var(--dawn-stroke-4);
+}
 
 /* 行内代码：柔和填充，不加框——加框会让一行字里出现四条边 */
 .md :not(pre) > code {
-  padding: 1px 4px;
+  padding: 1px 5px;
   border-radius: var(--dawn-radius-sm);
   background: var(--dawn-fill-4);
   font-family: var(--dawn-font-mono);
   font-size: var(--dawn-code-size);
 }
 
-/* 代码块。**长行自己横向滚**，不要把对话区撑出横向滚动条 */
-.md pre {
-  margin: 0 0 8px;
-  padding: 8px 10px;
+/* ── 代码块 ─────────────────────────────────────────────────────── */
+
+/** 外层容器。streamdown 的 Tailwind 类在这里全都不生效，所以自己画 */
+.md [data-streamdown="code-block"] {
+  margin: 0 0 12px;
   border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-md);
+  corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-panel);
+  overflow: hidden;
+}
+
+/**
+ * 头部一条：**语言名在左，动作在右**。
+ *
+ * 此前语言名裸着飘在块外面，三个按钮竖着堆在左边——
+ * Claude / Codex 都是「一条淡色头部 + 右侧动作」，这里照它的形态。
+ */
+.md [data-streamdown="code-block-header"] {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--dawn-space-2);
+  border-bottom: 1px solid var(--dawn-stroke-4);
+  color: var(--dawn-text-3);
+  font-family: var(--dawn-font-mono);
+  font-size: 11px;
+}
+
+/** 动作组浮到头部那一行的右端 */
+.md [data-streamdown="code-block"] > div:has([data-streamdown="code-block-actions"]) {
+  display: flex;
+  justify-content: flex-end;
+  height: 0;
+}
+
+.md [data-streamdown="code-block-actions"] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: -26px var(--dawn-space-1) 0 0;
+}
+
+/**
+ * **表格的那组动作没有自己的属性**（复制／下载／全屏三个按钮上什么标记都没有），
+ * 所以按容器 `table-wrapper` 定位。不收拾它们就是 2026-08-10 截图里那样：
+ * 三个裸按钮竖着堆在表格上面。
+ */
+.md [data-streamdown="table-wrapper"] > div:has(button) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-bottom: var(--dawn-space-1);
+}
+
+.md [data-streamdown="table-wrapper"] button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--dawn-radius-sm);
+  background: transparent;
+  color: var(--dawn-text-3);
+  cursor: pointer;
+}
+
+.md [data-streamdown="table-wrapper"] button:hover {
+  background: var(--dawn-control-hover);
+  color: var(--dawn-text-1);
+}
+
+/**
+ * 同一套属性挂点，同一套样式——
+ * 不然它们会像 2026-08-10 截图里那样，三个裸按钮竖着堆在表格上面。
+ */
+.md [data-streamdown*="actions"] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.md [data-streamdown*="actions"] button,
+.md [data-streamdown="code-block-actions"] button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--dawn-radius-sm);
+  background: transparent;
+  color: var(--dawn-text-3);
+  cursor: pointer;
+}
+
+.md [data-streamdown="code-block-actions"] button:hover {
+  background: var(--dawn-control-hover);
+  color: var(--dawn-text-1);
+}
+
+/* 代码块。**长行自己横向滚**，不要把对话区撑出横向滚动条 */
+.md pre {
+  margin: 0;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  background: transparent;
   overflow-x: auto;
   white-space: pre;
   font-size: var(--dawn-code-size);
+  line-height: 1.55;
 }
+
+/**
+ * **每一行是一行。**
+ *
+ * shiki 把每行包成一个 `<span>`，靠 Tailwind 的 `display:block` 才换行——
+ * 没有那套类的时候它们全是 inline，于是整段代码塌成一行
+ * （截图里 `import pandas as pddf = pd.read_csv(...)print(...)` 就是这么来的）。
+ */
+.md pre code { display: block; font-family: var(--dawn-font-mono); }
+.md pre code > span { display: block; min-height: 1.55em; }
+
+/* ── 表格 ───────────────────────────────────────────────────────── */
 
 /* transcript 里带边框的面统一用**最弱那档**描边。
    Hermes：用应用级默认边框会 "reads too hot against the thread" */
 .md table {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   border-collapse: collapse;
   display: block;
+  width: max-content;
+  max-width: 100%;
   overflow-x: auto;
+  font-size: var(--dawn-code-size);
 }
-.md th, .md td {
-  padding: 4px 8px;
+.md th,
+.md td {
+  padding: var(--dawn-space-1) var(--dawn-space-2);
   border: 1px solid var(--dawn-stroke-4);
   text-align: left;
 }
+/* 表头给一层极淡的底：**它是标签，不是数据** */
+.md th {
+  background: var(--dawn-fill-4);
+  font-weight: var(--dawn-weight-semibold);
+}
+
 .md blockquote {
-  margin: 0 0 8px;
-  padding-left: 10px;
-  border-left: 2px solid var(--dawn-stroke-4);
+  margin: 0 0 12px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--dawn-stroke-4);
   color: var(--dawn-text-2);
 }
 

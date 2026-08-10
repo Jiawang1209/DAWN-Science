@@ -26,6 +26,49 @@ import http from "node:http"
 export const CANNED_REPLY = "假模型已应答：DAWN 的整条链路是通的。"
 
 /**
+ * 一段**富 markdown** 回复。用户说的话里带「markdown」时给它。
+ *
+ * 它存在的理由是排版：作者 2026-08-10 说*「回复的 markdown 格式并不美观」*，
+ * 而**看不见就没法改**——默认那句暗号里一个标题一个列表都没有。
+ * 这里把标题层级、有序/无序/嵌套列表、行内与块代码、表格、引用、分隔线
+ * 一次摆齐，改样式时对着它看，e2e 也拿它当靶子。
+ */
+export const MARKDOWN_REPLY = [
+  "# 一级标题",
+  "",
+  "这是一段正文，里面有 `行内代码`、**加粗**、*斜体* 和[一个链接](https://example.com)。",
+  "",
+  "## 二级标题",
+  "",
+  "1. 有序的第一项",
+  "2. 有序的第二项",
+  "   - 嵌套的无序项",
+  "   - 又一项",
+  "",
+  "### 三级标题",
+  "",
+  "- 无序的一项",
+  "- 另一项",
+  "",
+  "```python",
+  "import pandas as pd",
+  "df = pd.read_csv('sales.csv')",
+  "print(df.describe())",
+  "```",
+  "",
+  "| 字段 | 类型 | 缺失 |",
+  "| --- | --- | --- |",
+  "| id | int | 0 |",
+  "| name | str | 3 |",
+  "",
+  "> 引用：这一段是补充说明。",
+  "",
+  "---",
+  "",
+  "最后一段。",
+].join("\n")
+
+/**
  * 起一个假推理服务器。
  *
  * @param {object} [opts]
@@ -35,7 +78,7 @@ export const CANNED_REPLY = "假模型已应答：DAWN 的整条链路是通的�
  * @returns {Promise<{url: string, port: number, requests: any[], close: () => Promise<void>}>}
  */
 export function startMockInferenceServer(opts = {}) {
-  const reply = opts.reply ?? CANNED_REPLY
+  const 默认回复 = opts.reply ?? CANNED_REPLY
   /** 收到的请求原样留存，供测试断言「我们到底发了什么给模型」 */
   const requests = []
 
@@ -62,6 +105,13 @@ export function startMockInferenceServer(opts = {}) {
         return
       }
       requests.push({ url: req.url, body })
+
+      /**
+       * **说了「markdown」就给那一大段。** 排版这件事看不见就没法改，
+       * 而一句暗号里没有标题也没有表格。
+       */
+      const 用户说的 = JSON.stringify(body.messages ?? "")
+      const reply = 用户说的.includes("markdown") ? MARKDOWN_REPLY : 默认回复
 
       const tool = opts.toolCall?.(body)
       const stream = body.stream !== false

@@ -381,3 +381,31 @@ describe("设计契约 · 令牌不能用错位置", () => {
     expect(bad, `这些令牌是长度，却用在了颜色位上：${[...new Set(bad)].join("、")}`).toEqual([])
   })
 })
+
+describe("设计契约 · 第三方渲染器的挂点", () => {
+  /**
+   * **给 streamdown 写样式只许挂 `data-streamdown` 属性，不许挂它的 class。**
+   *
+   * 2026-08-10 的教训：我们用 `streamdown` 却从来没引它的样式，
+   * 它那套 Tailwind 类（`my-4` / `flex` / `sticky` / `text-muted-foreground` …）
+   * 在这个项目里一个都不存在——于是**代码块的换行整段塌成一行**，
+   * 下载／复制／全屏三个按钮裸露地堆在左边。
+   *
+   * 修的时候如果顺手挂到它的 class 上，会换来一个更坏的东西：
+   * **看起来好了，而它下一次构建就能悄悄换掉类名**。
+   * `data-streamdown` 是它对外的稳定契约，挂那里。
+   */
+  it("styles.css 不引用 streamdown 的 Tailwind 类名", () => {
+    const styles = read("styles.css")
+    // 只看 `.md` 作用域内的选择器行
+    const mdLines = styles.split("\n").filter((l) => l.trimStart().startsWith(".md "))
+    /** Tailwind 的形态：`.md .flex`、`.md .text-xs`、`.md .my-4` 这类 */
+    const 可疑 = mdLines.filter((l) =>
+      /\.md\s+\.[a-z]+(-[a-z0-9/[\]]+)*[\s,{]/.test(l),
+    )
+    expect(
+      可疑,
+      `这些行挂在了第三方的 class 上，改用 [data-streamdown="…"]：\n${可疑.join("\n")}`,
+    ).toEqual([])
+  })
+})

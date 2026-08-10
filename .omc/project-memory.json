@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test 2>&1 | grep -E \"✘|passed|failed\" | tail -6",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"FAIL|×|Tests |Test Files\" | head -6",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/styles.css /tmp/s4.bak\nprintf '\\n.md .text-muted-foreground { color: red; }\\n' >> src/ui/styles.css\nnpx vitest run --project ui tests/ui/design-contract.test.ts 2>&1 | grep -E \"第三方|Tests \" | head -3\ncp /tmp/s4.bak src/ui/styles.css && rm -f /tmp/s4.bak\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

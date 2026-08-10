@@ -652,14 +652,48 @@ pre {
 
 /* ── 终端 dock ──────────────────────────────────────────────────── */
 
-.dock { border-top: 1px solid var(--dawn-stroke-4); z-index: var(--z-dock); }
-.dock-tabs { display: flex; gap: 10px; align-items: center; padding: 4px 12px; }
+/**
+ * 底部终端（2026-08-11 重做成 dock）。
+ *
+ * 作者：*「要点击之后，界面下方单独出现一个地方，可以专门用于开启一个新的终端。」*
+ * 所以它**横跨整个宽度**、贴在状态栏之上，而不是主区里的一格——
+ * 对话在上、终端在下，**同时看得见**。
+ */
+.dock {
+  border-top: 1px solid var(--dawn-stroke-4);
+  z-index: var(--z-dock);
+  background: var(--dawn-surface-panel);
+}
+.dock-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
+}
+.dock-title { font-size: var(--dawn-ui-size); font-weight: 600; }
+.dock-tab { display: inline-flex; align-items: center; }
+.dock-tab.current { border-bottom: 2px solid var(--dawn-accent); }
+/* **路径摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */
+.dock-cwd {
+  color: var(--dawn-text-3);
+  font-family: var(--dawn-font-mono);
+  font-size: 11px;
+  max-width: 40ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .dock-content {
   max-height: 280px;
   overflow: auto;
   padding: 8px 12px;
   background: var(--dawn-surface-sidebar);
 }
+.dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
+/* 项目切换器旁边那个删除键 */
+.proj-switch { display: flex; align-items: center; gap: 4px; }
+.proj-del { flex: 0 0 auto; }
 .term { color: var(--dawn-text-2); font-size: var(--dawn-code-size); }
 /* xterm 需要一个有确定高度的宿主，否则 fit() 算出 0 行 */
 .term-host { height: 260px; }

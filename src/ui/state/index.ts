@@ -30,6 +30,18 @@ export {
 } from "./transcript.js"
 
 export {
+  $dockOpen,
+  $dockSessionId,
+  $dockChunks,
+  setDockOpen,
+  toggleDock,
+  setDockSessionId,
+  setDockChunks,
+  appendDockBytes,
+  resetDockTerminal,
+} from "./dock.js"
+
+export {
   $connection,
   $ready,
   $notes,

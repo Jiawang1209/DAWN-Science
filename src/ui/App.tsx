@@ -44,6 +44,7 @@ import {
 import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
+import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
@@ -92,6 +93,15 @@ import {
   setActiveProjectId,
   setActiveSessionId,
   setSessionModel,
+  setSessions,
+  $dockOpen,
+  $dockSessionId,
+  toggleDock,
+  setDockOpen,
+  setDockSessionId,
+  setDockChunks,
+  appendDockBytes,
+  resetDockTerminal,
   setTheme,
   setView,
   upsertItem,
@@ -135,6 +145,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
   const kernelInstanceId = useStore($kernelInstanceId)
+  const dockOpen = useStore($dockOpen)
+  const dockSessionId = useStore($dockSessionId)
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -184,6 +196,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       onUpdate: (u: SessionUpdate) => {
         // **直读 atom，不用闭包捕获的值。** 这个订阅只建立一次，
         // 闭包里的 sessionId 会永远停在建立那一刻
+        /**
+         * **底部终端是第二条线**（2026-08-11）。
+         *
+         * dock 里那个终端与当前对话**同时活着**——你一边让模型干活，
+         * 一边在下面 `ls` 看它到底写出了什么。所以这里按 sessionId 分流，
+         * 各写各的 atom；混在一起的话，终端的字节会流进对话的终端视图。
+         */
+        if (u.sessionId === $dockSessionId.get()) {
+          if (u.type === "bytes") appendDockBytes(u.data)
+          // 快照里的终端是**一整段字符串**（不是片段数组）
+          if (u.type === "snapshot") setDockChunks(u.snapshot.terminal ? [u.snapshot.terminal] : [])
+          if (u.type === "state" && u.state === "exited") {
+            const pid = $activeProjectId.get()
+            if (pid) void loadSessions(client, pid)
+          }
+          return
+        }
         if (u.sessionId !== $activeSessionId.get()) return
         if (u.type === "item") upsertItem(u.item)
         if (u.type === "bytes") appendBytes(u.data)
@@ -284,6 +313,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     window.addEventListener("focus", onFocus)
     return () => window.removeEventListener("focus", onFocus)
   }, [refreshLedger])
+
+  /**
+   * 切换 dock 里看的终端：**先清空再取快照**，否则上一个终端的输出
+   * 会倒灌进这一个。与主区那条是同一套纪律，只是写的是另一份 atom。
+   */
+  useEffect(() => {
+    resetDockTerminal()
+    if (!dockSessionId) return
+    client
+      .get<{ terminal?: string; revision: number; sessionId: string }>("subscribeSession", {
+        sessionId: dockSessionId,
+      })
+      .then((snap) => {
+        // 取回来时人可能已经切走了——**过去的结果不许覆盖现在的**
+        if (snap.sessionId !== $dockSessionId.get()) return
+        setDockChunks(snap.terminal ? [snap.terminal] : [])
+        client.expectRevision(dockSessionId, snap.revision)
+      })
+      .catch(fail)
+    return () => {
+      client.forgetRevision(dockSessionId)
+      client.get("unsubscribeSession", { sessionId: dockSessionId }).catch(fail)
+    }
+  }, [client, dockSessionId])
 
   /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {
@@ -606,6 +659,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 setActiveProjectId(undefined)
                 setActiveSessionId(undefined)
                 setView("conversation")
+                /**
+                 * **把会话列表也清掉**（2026-08-11 补）。
+                 *
+                 * 此前只重取了项目：项目从下拉框里消失了，
+                 * **它的会话却还留在侧栏上**——点进去是一段属于已删项目的对话。
+                 * 会话列表只在「有当前项目」时重取，而这一刻恰恰没有了，
+                 * 于是没有任何东西会去清它。
+                 */
+                setSessions([])
+                // 终端也归项目所有：项目没了，dock 里那个也不该继续指着它
+                setDockSessionId(undefined)
+                setDockOpen(false)
                 return loadProjects(client)
               })
               .catch(fail)
@@ -614,6 +679,60 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       })
       .catch(fail)
   }, [client, projects])
+
+  /* ── 底部终端（2026-08-11） ──────────────────────────────────── */
+
+  /** 这个项目里的终端会话。**它们不在会话列表里**，只在 dock 里 */
+  const 终端们 = useMemo(() => sessions.filter((x) => x.kind === "pty"), [sessions])
+  /** 起终端用哪个 agent。**配置里没有 pty agent 就开不了**，如实说 */
+  const ptyAgentId = providers.agents.find((a) => a.kind === "pty")?.agentId
+  const currentWorkspace = projects.find((p) => p.projectId === projectId)?.workspace
+
+  /**
+   * 开一个新终端。
+   *
+   * **路径不在这里挑**：会话属于项目，pty 运行时的 cwd 取项目的工作区
+   * （`spec.workspace`）。所以「终端开在项目文件夹里」不是这里另做的一件事，
+   * 是同一个事实的自然结果——也因此没有第二处可能和它不一致。
+   */
+  const 开一个终端 = useCallback(() => {
+    const pid = $activeProjectId.get()
+    if (!pid || !ptyAgentId) return
+    client
+      .get<{ sessionId: string }>("createSession", { projectId: pid, agentId: ptyAgentId })
+      .then((r) => {
+        setDockSessionId(r.sessionId)
+        void loadSessions(client, pid)
+        /**
+         * **取写权，否则每一次按键都会被租约挡下。**
+         *
+         * 与 `startSession` 那条路上的同一句话（*「取写权，否则第一句就会被
+         * 租约挡下」*）。第一版漏了它，症状是**终端能打字、屏幕上也有回显
+         * （那是 xterm 自己画的），但进程一个字节都没收到**——
+         * 敲 `pwd` 什么都不发生。
+         */
+        return client.get("acquireLease", { sessionId: r.sessionId, holder: "user" })
+      })
+      .catch(fail)
+  }, [client, ptyAgentId])
+
+  /**
+   * 掀开 dock 时**如果还没有终端，就开一个**。
+   *
+   * 点「终端」却看见一个空盒子、还要再点一次「＋ 新终端」——
+   * 那是把一次意图拆成两次点击。已经有终端时不多开：那会在你每次
+   * 掀开面板时悄悄多起一个进程。
+   */
+  useEffect(() => {
+    if (!dockOpen) return
+    if (dockSessionId) return
+    const 活着的 = 终端们.find((t) => t.state !== "exited")
+    if (活着的) {
+      setDockSessionId(活着的.sessionId)
+      return
+    }
+    if (projectId && ptyAgentId) 开一个终端()
+  }, [dockOpen, dockSessionId, 终端们, projectId, ptyAgentId, 开一个终端])
 
   const startSession = useCallback(
     /**
@@ -652,6 +771,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 旧会话 = $activeSessionId.get()
       const 按下时的草稿 = draftOf(旧会话)
 
+      /**
+       * **终端只有一个家：下面那条 dock**（2026-08-11）。
+       *
+       * 命令面板里也能「新建会话：shell」。此前那条路把终端铺满主区，
+       * 于是同一样东西有了两个家——而终端已经不在会话列表里了，
+       * 那条路建出来的东西会**既不在列表里、也不在 dock 里**。
+       * Hermes：*"One action, one home."*
+       */
+      const 是终端 = providers.agents.find((a) => a.agentId === agentId)?.kind === "pty"
+      if (是终端) {
+        setDockOpen(true)
+        开一个终端()
+        return
+      }
       client
         .get<SessionSummary>("createSession", { projectId: pid, agentId })
         .then((s) => {
@@ -680,7 +813,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         })
         .catch(fail)
     },
-    [client],
+    [client, providers, 开一个终端],
   )
 
   const session = sessions.find((s) => s.sessionId === sessionId)
@@ -886,9 +1019,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <div className="body">
         <SessionSidebar
           projects={projects}
-          sessions={sessions}
+          /**
+           * **终端不进会话列表**（2026-08-11）：它们在下面那条 dock 里。
+           * 一个终端混在对话中间，点开会把整屏换成一片黑——
+           * 而作者要的正好相反：对话在上，终端在下，同时看得见。
+           */
+          sessions={sessions.filter((x) => x.kind !== "pty")}
           agents={agentIds}
           agentLabel={agentLabel}
+          onDeleteProject={askDeleteProject}
+          onToggleDock={toggleDock}
+          dockOpen={dockOpen}
           activeProjectId={projectId}
           activeSessionId={sessionId}
           view={view}
@@ -1174,6 +1315,39 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           )}
         </main>
       </div>
+
+      {/**
+        * **底部终端**（2026-08-11）。在 `.body` 之外、状态栏之上——
+        * 它横跨整个宽度，而不是塞进主区里的一格：
+        * 作者要的是「界面下方单独出现一个地方」。
+        */}
+      {dockOpen ? (
+        <TerminalDock
+          terminals={终端们}
+          currentId={dockSessionId}
+          workspace={currentWorkspace}
+          canOpen={Boolean(projectId && ptyAgentId)}
+          onPick={setDockSessionId}
+          onNew={开一个终端}
+          onClose={(id) => {
+            client
+              .get("stopSession", { sessionId: id })
+              .then(() => {
+                if ($dockSessionId.get() === id) setDockSessionId(undefined)
+                const pid = $activeProjectId.get()
+                if (pid) void loadSessions(client, pid)
+              })
+              .catch(fail)
+          }}
+          onCloseDock={() => setDockOpen(false)}
+          onInput={(data) => {
+            const id = $dockSessionId.get()
+            if (!id) return
+            client.get("writeToSession", { sessionId: id, data, as: "user" }).catch(fail)
+          }}
+          onOpenProject={actions.openProject}
+        />
+      ) : null}
 
       <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />
 

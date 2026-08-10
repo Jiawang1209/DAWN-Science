@@ -43,7 +43,18 @@ async function startShell(page: import("@playwright/test").Page): Promise<void> 
   await page.getByRole("option", { name: "新建会话：shell" }).click()
 }
 
-test.describe("PTY 会话：终端就是主体", () => {
+/**
+ * **2026-08-11：终端搬进了底部 dock。**
+ *
+ * 作者：*「终端，我们要学习 Claude app、Codex app，要点击之后，界面下方
+ * 单独出现一个地方。」* 于是命令面板里那条「新建会话：shell」
+ * 也走同一个家——**一个动作只有一个家**，否则它建出来的东西
+ * 既不在会话列表里（终端已被过滤掉），也不在 dock 里。
+ *
+ * 这个文件验的**通路没变**（PtyRuntime → 事件中枢 → xterm），
+ * 只是终端现在长在 `.dock` 里。
+ */
+test.describe("PTY 会话：终端在底部 dock 里", () => {
 
   test("**建完就能看见终端**，不用点任何东西", async ({ dawn }) => {
     const { page } = dawn
@@ -51,10 +62,9 @@ test.describe("PTY 会话：终端就是主体", () => {
 
     await startShell(page)
 
-    // **终端直接在主区域**，没有折叠开关
-    await expect(page.locator(".term-view .term-host")).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByRole("button", { name: /终端/ })).toHaveCount(0)
-    // 也不该有输入框——那个框此前把字送进黑洞
+    // 终端在 dock 里，**而且 dock 自己掀开了**——不用再点一次
+    await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 30_000 })
+    // 也不该有对话输入框冒出来——那个框此前把字送进黑洞
     await expect(page.getByPlaceholder(/回车发送/)).toHaveCount(0)
   })
 
@@ -62,18 +72,18 @@ test.describe("PTY 会话：终端就是主体", () => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await startShell(page)
-    await expect(page.locator(".term-view .term-host")).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 30_000 })
 
     /**
      * 点进终端再打字。**回车由 xterm 变成 `\r` 送下去**——
      * 这正是修好的那一半：旧的输入框送的是 `draft.trim()`，一个 `\r` 都没有。
      */
-    await page.locator(".term-view .term-host").click()
+    await page.locator(".dock .term-host").click()
     await page.keyboard.type("echo 我是从终端跑出来的")
     await page.keyboard.press("Enter")
 
     // bash 把结果吐回来 → PtyRuntime → 事件中枢 → xterm。**整条通路**
-    await expect(page.locator(".term-view")).toContainText("我是从终端跑出来的", {
+    await expect(page.locator(".dock")).toContainText("我是从终端跑出来的", {
       timeout: 30_000,
     })
   })

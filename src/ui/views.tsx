@@ -238,6 +238,9 @@ export function SessionSidebar({
   onMoveSession,
   onReorderSessions,
   onOpenSettings,
+  onDeleteProject,
+  onToggleDock,
+  dockOpen,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -259,6 +262,11 @@ export function SessionSidebar({
   onNewSession: (agentId: string) => void
   onShowPanel: () => void
   onShowFiles: () => void
+  /** 删除当前项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
+  onDeleteProject?: (() => void) | undefined
+  /** 掀开／收起底部终端。不给就不显示那一行——不摆一个点了没反应的入口 */
+  onToggleDock?: (() => void) | undefined
+  dockOpen?: boolean | undefined
   /** 删除一个会话。**不给就不显示那个按钮**——不是显示一个点了没反应的 */
   onDeleteSession?: ((session: SessionSummary) => void) | undefined
   onRenameSession?: ((session: SessionSummary, title: string) => void) | undefined
@@ -343,6 +351,27 @@ export function SessionSidebar({
             </option>
           ))}
         </select>
+        {/**
+          * **删除项目就摆在项目旁边**（2026-08-11）。
+          *
+          * 作者：*「我不是新建项目了吗，新建项目之后，我其实可以设置，删除项目。」*
+          * 这个动作**一直都在**，只是它住在「项目概览」最下面那一节里——
+          * 又一次「看不见的能力等于不存在」。
+          *
+          * **同一个动作，不是第二份实现**：它调的就是概览里那一个
+          * （连确认框、连真实数字一起）。Hermes：*"One action, one home."*
+          */}
+        {active && onDeleteProject ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="proj-del"
+            aria-label="删除当前项目"
+            onClick={onDeleteProject}
+          >
+            🗑
+          </Button>
+        ) : null}
         {/* 原生 title= 无样式、约 500ms 系统延迟、与主题不符——用 aria-label */}
       </div>
 
@@ -409,6 +438,15 @@ export function SessionSidebar({
           <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
             文件
           </Row>
+          {/**
+            * 终端：**它不换屏，它把下面那一条掀开**（2026-08-11）。
+            * 所以这一行不参与 `view` 的高亮，而是跟着 dock 开没开走。
+            */}
+          {onToggleDock ? (
+            <Row active={dockOpen ?? false} className="panel-entry" onClick={onToggleDock}>
+              终端
+            </Row>
+          ) : null}
         </>
       ) : null}
     </aside>

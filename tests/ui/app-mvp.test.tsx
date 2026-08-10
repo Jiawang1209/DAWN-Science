@@ -516,13 +516,27 @@ describe("PTY 会话：终端就是这个会话本身", () => {
     expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
   })
 
-  it("native 会话仍然是对话 + 输入框，且**不再有那个永远禁用的终端按钮**", async () => {
+  it("native 会话仍然是对话 + 输入框，主区里没有终端", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     const { container } = render(<App client={h.client} />)
     fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
     expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
     expect(container.querySelector(".term-host")).toBeNull()
-    expect(screen.queryByRole("button", { name: /终端/ })).toBeNull()
+  })
+
+  /**
+   * **2026-08-11：侧栏那一行「终端」是新的，而且它是活的。**
+   *
+   * 这条断言原来是「不该有任何名字带终端的按钮」——那时它指的是一个
+   * 永远禁用的残留。现在终端有了自己的家（底部 dock），
+   * 侧栏那一行是它的入口：**必须点得动**，否则又是一次
+   * 「看不见/点不动的能力等于不存在」。
+   */
+  it("**侧栏有「终端」入口，且是能点的**", async () => {
+    const h = harness({ projects: [proj("/w/proj")] })
+    render(<App client={h.client} />)
+    const 入口 = await screen.findByRole("button", { name: "终端" })
+    expect((入口 as HTMLButtonElement).disabled).toBe(false)
   })
 })
 

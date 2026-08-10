@@ -39,6 +39,7 @@ import {
 } from "./views.js"
 import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
+import { FilesView, type FileContent, type Listing } from "./files.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { buildCommands, type Actions } from "./commands.js"
@@ -383,6 +384,53 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * keyboard, palette, and visible affordances, but they invoke the same action
    * and state. Do not fork behavior per entry point."*
    */
+  /* ── 文件浏览（②-B · F3/F4） ─────────────────────────────────── */
+
+  const [filePath, setFilePath] = useState<string | undefined>(undefined)
+  const [fileContent, setFileContent] = useState<FileContent | undefined>(undefined)
+
+  /**
+   * 列一层目录。**失败要抛出去**——`DirNode` 接住之后显示原因，
+   * 静静地给一个空目录会被读成「这个文件夹是空的」。
+   */
+  const loadDir = useCallback(
+    async (path: string): Promise<Listing> => {
+      if (!projectId) throw new Error("还没有选中项目")
+      return await client.get("listDirectory", { projectId, path })
+    },
+    [client, projectId],
+  )
+
+  /**
+   * 打开一个文件。**先清空内容再取**——不清的话，上一个文件的内容会顶着
+   * 新文件的名字显示一瞬间，那一瞬间是在说谎。
+   */
+  const openFile = useCallback(
+    (path: string) => {
+      setView("files")
+      setFilePath(path)
+      setFileContent(undefined)
+      if (!projectId) return
+      client
+        .get<FileContent>("readFile", { projectId, path })
+        .then(setFileContent)
+        .catch(fail)
+    },
+    [client, projectId],
+  )
+
+  const openExternally = useCallback(
+    (path: string) => {
+      if (!projectId) return
+      client
+        .get<{ problem?: string }>("openExternally", { projectId, path })
+        // **系统拒绝要出声**，不是什么都没发生
+        .then((r) => { if (r.problem) fail(new Error(r.problem)) })
+        .catch(fail)
+    },
+    [client, projectId],
+  )
+
   const startSession = useCallback(
     /**
      * @param firstMessage 给了的话，**建完会话立刻把它发出去**。
@@ -545,7 +593,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           agents={agentIds}
           activeProjectId={projectId}
           activeSessionId={sessionId}
-          showingPanel={view === "panel"}
+          view={view}
           onPickProject={(id) => {
             setActiveProjectId(id)
             setActiveSessionId(undefined)
@@ -556,6 +604,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setView("conversation")
           }}
           onShowPanel={actions.showProjectPanel}
+          onShowFiles={() => setView("files")}
           onOpenProject={actions.openProject}
           onNewSession={actions.newSession}
           onOpenSettings={actions.openSettings}
@@ -585,15 +634,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }
               />
             </div>
+          ) : view === "files" ? (
+            <FilesView
+              selected={filePath}
+              content={fileContent}
+              loadDir={loadDir}
+              onSelect={openFile}
+              onOpenExternally={openExternally}
+            />
           ) : view === "panel" ? (
             <div className="panels">
               {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
                   另一个有而这一个没有时警告会整个消失（规格 7.5 禁止静默吞掉） */}
               <AttributionCaveat show={mayIncludeUserEdits(runDetail?.fileChanges, runs)} />
               <StatusPanel sessions={sessions} />
-              <ChangesPanel facts={runDetail?.fileChanges} />
+              <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />
               {/* 逐次工具调用那一层。**不变式 5 第一次有用户可见面** */}
-              <ToolChangesPanel runs={runs} />
+              <ToolChangesPanel runs={runs} onOpenFile={openFile} />
               {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
                   见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
               <CostPanel cost={latestCost} />

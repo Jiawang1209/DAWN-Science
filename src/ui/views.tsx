@@ -9,6 +9,7 @@
  * 打开 app 时要做的事是跟 agent 说话。
  */
 import { useEffect, useRef, useState } from "react"
+import type { View } from "./state/view.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
 import type { TranscriptItem } from "../protocol/index.js"
@@ -26,12 +27,13 @@ export function SessionSidebar({
   agents,
   activeProjectId,
   activeSessionId,
-  showingPanel,
+  view,
   onPickProject,
   onPickSession,
   onOpenProject,
   onNewSession,
   onShowPanel,
+  onShowFiles,
   onOpenSettings,
 }: {
   projects: readonly ProjectSummary[]
@@ -40,12 +42,18 @@ export function SessionSidebar({
   agents: string[]
   activeProjectId: string | undefined
   activeSessionId: string | undefined
-  showingPanel: boolean
+  /**
+   * 当前在哪个屏。**一个枚举，不是几个布尔**——
+   * 布尔各自为政的话，加第三个屏时总有一处忘了改，
+   * 而那一处的症状是「会话行仍然高亮着，人却已经不在会话里了」。
+   */
+  view: View
   onPickProject: (id: string) => void
   onPickSession: (id: string) => void
   onOpenProject: () => void
   onNewSession: (agentId: string) => void
   onShowPanel: () => void
+  onShowFiles: () => void
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
 }) {
@@ -77,8 +85,13 @@ export function SessionSidebar({
           ))}
         </select>
         {/* 原生 title= 无样式、约 500ms 系统延迟、与主题不符——用 aria-label */}
-        <Button variant="ghost" size="icon" onClick={onOpenProject} aria-label="打开文件夹为新项目">
-          ＋
+        {/**
+          * **带字**。此前这里是一个光秃秃的 `＋`，只有 aria-label——
+          * 作者 2026-08-10：*「我现在有新建会话，但是目前没有新建项目」*。
+          * 它一直在，只是**一个无标签的图标等于不存在**。
+          */}
+        <Button variant="ghost" size="sm" className="new-project" onClick={onOpenProject}>
+          ＋ 新建项目
         </Button>
       </div>
 
@@ -113,7 +126,7 @@ export function SessionSidebar({
           sessions.map((s) => (
             <li key={s.sessionId}>
               <Row
-                active={s.sessionId === activeSessionId && !showingPanel}
+                active={s.sessionId === activeSessionId && view === "conversation"}
                 onClick={() => onPickSession(s.sessionId)}
               >
                 <span className="name">{s.agentId}</span>
@@ -124,11 +137,17 @@ export function SessionSidebar({
         )}
       </ul>
 
-      {/* 项目面板降为侧栏底部的一个入口，不再是首页 */}
+      {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
       {active ? (
-        <Row active={showingPanel} className="panel-entry" onClick={onShowPanel}>
-          项目概览
-        </Row>
+        <>
+          <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
+            项目概览
+          </Row>
+          {/* 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路 */}
+          <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
+            文件
+          </Row>
+        </>
       ) : null}
     </aside>
   )

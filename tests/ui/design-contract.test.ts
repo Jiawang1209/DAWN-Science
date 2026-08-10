@@ -335,3 +335,25 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     expect(read("views.tsx")).toMatch(/who.*sr-only|sr-only.*who/)
   })
 })
+
+describe("设计契约 · 引用的令牌必须真的存在", () => {
+  /**
+   * **2026-08-10 当场踩的**：写文件浏览的样式时顺手写了
+   * `var(--dawn-border)` / `var(--dawn-text-sm)` / `var(--dawn-bg-raised)`——
+   * 五个名字全是我编的，仓库里一个都没有。
+   *
+   * CSS 的失败方式是**沉默**：未定义的自定义属性让整条声明作废，
+   * 边框不见、字色继承，看起来只是「样式差一点」，不会有任何报错。
+   *
+   * 这与已经写过的「不许写 `var(--x, 回退值)`」是同一件事的两半：
+   * 那条防的是「回退值掩盖了没定义」，这条防的是「压根没定义」。
+   */
+  it("styles.css 里每个 --dawn-* 都在 tokens.css 里定义过", () => {
+    const tokens = read("tokens.css")
+    const defined = new Set(tokens.match(/--dawn-[a-z0-9-]+(?=\s*:)/g) ?? [])
+    const styles = read("styles.css")
+    const used = new Set(styles.match(/var\(\s*(--dawn-[a-z0-9-]+)/g)?.map((m) => m.replace(/var\(\s*/, "")) ?? [])
+    const missing = [...used].filter((t) => !defined.has(t))
+    expect(missing, `styles.css 引用了 tokens.css 里没有的令牌：${missing.join("、")}`).toEqual([])
+  })
+})

@@ -43,6 +43,13 @@ export interface CreateWorkbenchOptions {
   onInternalError?: (operation: string, err: unknown) => void
   /** 凭证库。**app 自己管凭证**，不要求用户手写进配置文件 */
   credentials: CredentialsPort
+  /**
+   * 交给系统打开一个绝对路径（②-B · F3）。
+   *
+   * **参数传进来，不在这里 import electron**——wiring 是纯逻辑，
+   * 要能在没有 Electron 的测试里跑起来。主进程传 `shell.openPath`。
+   */
+  openPath?: (absolutePath: string) => Promise<string>
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
   /**
@@ -213,6 +220,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // 模型选择器要问「这个 provider 能用哪些模型」——那份目录只有运行时知道
     models: { available: (providerId) => nativeRuntime.availableModels(providerId) },
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
+    ...(opts.openPath ? { openPath: opts.openPath } : {}),
   })
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),

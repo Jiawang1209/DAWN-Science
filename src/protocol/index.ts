@@ -53,5 +53,6 @@ export type {
   OperationDef,
   OperationName,
   PageInfo,
+  ResponseOf,
   WorkbenchError,
 } from "./operations.js"

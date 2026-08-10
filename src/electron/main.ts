@@ -5,7 +5,7 @@
  * 装配在 `wiring.ts`、派发在 `workbench/server.ts`、桥接逻辑在 `ipc.ts`——
  * 三者都不认识 Electron，因此都能单独测。这里剩下的部分正是「测不了、也不值得测」的那些。
  */
-import { app, BrowserWindow, dialog, ipcMain, safeStorage } from "electron"
+import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
 import { join } from "node:path"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } from "./ipc.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
@@ -105,6 +105,8 @@ app.whenReady().then(() => {
         safeStorage,
       }),
       defaultWorkspace: DEFAULT_WORKSPACE,
+      // **只有主进程碰得到 shell**。路径的合法性在后端已经校验过了
+      openPath: (p: string) => shell.openPath(p),
       /**
        * 子 agent 入口就打在主进程 bundle 旁边（`dist/electron/`）。
        *

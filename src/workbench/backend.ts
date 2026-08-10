@@ -17,6 +17,7 @@ import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
   readFileForPreview as readWorkspaceFile,
+  resolveInWorkspace,
 } from "../files/access.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
@@ -48,6 +49,14 @@ export interface WorkbenchBackendOptions {
   runs: RunStore
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
+  /**
+   * 交给系统打开一个**绝对路径**（②-B · F3）。
+   *
+   * **端口注入，不在后端里 import Electron**——后端要能在没有 Electron 的
+   * 测试里跑。路径的合法性由后端自己保证（走 `resolveInWorkspace`），
+   * 这个端口只负责「交给系统」。
+   */
+  openPath?: (absolutePath: string) => Promise<string>
   sessions: SessionManager
   credentials: CredentialsPort
   /** 配置里的 provider 注册表，供界面列出可选 agent */
@@ -79,7 +88,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -427,6 +436,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const p = projectStore.get(projectId)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
       return readWorkspaceFile(p.workspace, path)
+    },
+
+    openExternally: async ({ projectId, path }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      // **守卫在这里，不在调用方**：解析失败会抛，越界也会抛
+      const abs = resolveInWorkspace(p.workspace, path)
+      if (!openPath) return { problem: "本次运行没有装配「用系统程序打开」的能力" }
+      const err = await openPath(abs)
+      // Electron 的 `shell.openPath` 成功时返回空串，失败时返回原因
+      return err ? { problem: err } : {}
     },
 
     acquireLease: async ({ sessionId, holder }) => {

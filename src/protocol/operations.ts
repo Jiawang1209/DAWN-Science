@@ -596,6 +596,20 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 用系统程序打开工作区里的一个文件（②-B · F3）。
+   *
+   * **它仍然走同一个路径守卫**——直接给绝对路径调 `shell.openPath`
+   * 等于把刚建好的守卫绕过去。这里收的是**工作区内的相对路径**，
+   * 由后端解析并校验之后才交给系统。
+   */
+  openExternally: {
+    request: z.object({ projectId: z.string().min(1), path: z.string().min(1) }).strict(),
+    /** 系统拒绝时的说明。**打不开要出声**，不是静静地什么都不发生 */
+    response: z.object({ problem: z.string().optional() }).strict(),
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({
@@ -609,6 +623,14 @@ export const OPERATIONS = {
 } as const satisfies Record<string, OperationDef>
 
 export type OperationName = keyof typeof OPERATIONS
+
+/**
+ * 某个操作的响应类型。
+ *
+ * **给界面用的**：手抄一份响应的形状迟早会和这里漂开，
+ * 而漂开的那一刻编译器什么都不会说——它比对的是两份都「自洽」的类型。
+ */
+export type ResponseOf<N extends OperationName> = z.infer<(typeof OPERATIONS)[N]["response"]>
 
 export function operationNames(): string[] {
   return Object.keys(OPERATIONS)

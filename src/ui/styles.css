@@ -960,3 +960,101 @@ pre {
 /* 参考区默认收起：它只是帮人填上面那两个框，不该占主视野 */
 .kernel-ref { margin-top: var(--dawn-space-3); }
 .kernel-ref summary { color: var(--dawn-text-3); font-size: 12px; cursor: pointer; }
+
+/* ── 文件浏览与预览（②-B · F3/F4） ─────────────────────────────── */
+
+/**
+ * 左树右预览。**树的宽度固定、预览吃剩下的**——
+ * 反过来的话，展开一个深目录会把预览挤没。
+ */
+.files-view {
+  display: grid;
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.file-tree {
+  overflow: auto;
+  border-right: 1px solid var(--dawn-hairline);
+  padding: var(--dawn-space-2) 0;
+}
+
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-row .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-note {
+  padding: 0 var(--dawn-space-3);
+  margin: 0 0 var(--dawn-space-1);
+}
+
+.file-preview {
+  overflow: auto;
+  padding: var(--dawn-space-4);
+  min-width: 0;
+}
+
+.preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dawn-space-3);
+  margin-bottom: var(--dawn-space-3);
+  padding-bottom: var(--dawn-space-2);
+  border-bottom: 1px solid var(--dawn-hairline);
+}
+
+.preview-head .name {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.preview-head .sub {
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-ui-size);
+  white-space: nowrap;
+}
+
+/* 图按原始像素显示，但**不许撑破容器** */
+.preview-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+}
+
+/* 预览文本**保留换行、允许长行换行**——横向滚动条会让人读不下去 */
+.preview-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+  line-height: var(--dawn-chat-leading);
+}
+
+.preview-other .unknown {
+  margin: 0 0 var(--dawn-space-1);
+  font-weight: 600;
+}
+
+/* 产出栏里的文件名。**看起来能点，就真的能点** */
+.file-link {
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+  text-align: left;
+  word-break: break-all;
+}
+
+.file-link:hover {
+  text-decoration: underline;
+}

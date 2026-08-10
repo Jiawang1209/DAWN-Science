@@ -15,6 +15,7 @@ import type {
   RunSummary,
   SessionSummary,
 } from "../protocol/index.js"
+import { Button } from "./primitives.js"
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -79,7 +80,36 @@ export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] 
  * **② `mayIncludeUserEdits` 必须显示。** 本阶段没有 worktree 隔离，
  * 分不清是 agent 改的还是作者自己改的。**不能指望人记得加脚注。**
  */
-export function ToolChangesPanel({ runs }: { runs: readonly RunSummary[] }) {
+/**
+ * 一串文件名。**给了 `onOpen` 就是按钮，没给就是纯文本**——
+ * 长得像能点却点不动，比不能点更糟。
+ */
+function FileList({ files, onOpen }: { files: readonly string[]; onOpen?: (path: string) => void }) {
+  return (
+    <ul className="file-list">
+      {files.map((f) => (
+        <li key={f}>
+          {onOpen ? (
+            <Button variant="ghost" size="inline" className="file-link" onClick={() => onOpen(f)}>
+              {f}
+            </Button>
+          ) : (
+            f
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export function ToolChangesPanel({
+  runs,
+  onOpenFile,
+}: {
+  runs: readonly RunSummary[]
+  /** 点开预览。**不变式 5 已经知道 agent 写了哪些文件**——那是最短的入口 */
+  onOpenFile?: (path: string) => void
+}) {
   const tools = runs.filter((r) => r.requestType.startsWith("tool_call"))
   if (tools.length === 0) {
     return (
@@ -116,11 +146,7 @@ export function ToolChangesPanel({ runs }: { runs: readonly RunSummary[] }) {
                 ) : r.filesWritten.length === 0 ? (
                   <span className="hint">没有改动文件</span>
                 ) : (
-                  <ul className="file-list">
-                    {r.filesWritten.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
+                  <FileList files={r.filesWritten} {...(onOpenFile ? { onOpen: onOpenFile } : {})} />
                 )}
               </div>
             )
@@ -167,7 +193,13 @@ export function mayIncludeUserEdits(
   )
 }
 
-export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) {
+export function ChangesPanel({
+  facts,
+  onOpenFile,
+}: {
+  facts: FileChangeFacts | undefined
+  onOpenFile?: (path: string) => void
+}) {
   if (!facts) {
     return (
       <Panel title="产出">
@@ -180,11 +212,7 @@ export function ChangesPanel({ facts }: { facts: FileChangeFacts | undefined }) 
       {facts.files.length === 0 ? (
         <Empty>未改动任何文件</Empty>
       ) : (
-        <ul className="file-list">
-          {facts.files.map((f) => (
-            <li key={f}>{f}</li>
-          ))}
-        </ul>
+        <FileList files={facts.files} {...(onOpenFile ? { onOpen: onOpenFile } : {})} />
       )}
     </Panel>
   )

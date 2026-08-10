@@ -33,7 +33,8 @@ const sidebar = (over: Partial<Parameters<typeof SessionSidebar>[0]> = {}) =>
       agents={["ds-chat", "claude"]}
       activeProjectId="p1"
       activeSessionId={undefined}
-      showingPanel={false}
+      view="conversation"
+      onShowFiles={() => {}}
       onPickProject={noop}
       onPickSession={noop}
       onOpenProject={noop}

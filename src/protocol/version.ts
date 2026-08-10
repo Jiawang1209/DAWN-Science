@@ -61,8 +61,11 @@
  *   **只读**：写、删、改名不在这一阶段（它们要走授权门，阶段 ④）。
  *   图片回 base64 而**不回 `file://` 路径**——后者等于把路径守卫的判断权
  *   交给渲染进程。纯新增，故 minor。
+ * 2.11（2026-08-10）：新增 `openExternally`（②-B · F3）。
+ *   **它收的是工作区内的相对路径**，由后端解析并校验之后才交给系统——
+ *   直接给绝对路径调 `shell.openPath` 等于把路径守卫绕过去。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.10"
+export const WORKBENCH_PROTOCOL_VERSION = "2.11"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

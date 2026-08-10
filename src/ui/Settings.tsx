@@ -400,9 +400,11 @@ export function SettingsPanel({
                 }}
                 onDelete={() => onDelete(id)}
               />
-              {onSetBaseUrl && 要地址(id, needsBaseUrl, baseUrls) ? (
-                <地址
+              {onSetBaseUrl ? (
+                <地址容器
                   providerId={id}
+                  摆出来={地址要摆出来(id, needsBaseUrl, baseUrls)}
+                  必须填={Boolean(needsBaseUrl?.includes(id))}
                   value={baseUrls?.[id] ?? ""}
                   onSave={(v) => onSetBaseUrl(id, v)}
                 />
@@ -483,9 +485,11 @@ export function SettingsPanel({
                     }}
                     onDelete={() => onDelete(id)}
                   />
-                  {onSetBaseUrl && 要地址(id, needsBaseUrl, baseUrls) ? (
-                    <地址
+                  {onSetBaseUrl ? (
+                    <地址容器
                       providerId={id}
+                      摆出来={地址要摆出来(id, needsBaseUrl, baseUrls)}
+                      必须填={Boolean(needsBaseUrl?.includes(id))}
                       value={baseUrls?.[id] ?? ""}
                       onSave={(v) => onSetBaseUrl(id, v)}
                     />
@@ -564,14 +568,23 @@ function 凭证说明({
  * 而报错与「你填空了」毫无关系。
  */
 /**
- * 这一行要不要给地址输入框。
+ * 这一行的地址该**摆出来**还是**收进折叠**。
  *
- * **「需要填」或「已经填过」**——只看前者的话会出一个很怪的现象：
- * 存完地址之后 pi 就认得它了，于是它从「需要填」的名单里消失，
- * **输入框跟着不见，人再也看不见也改不了自己刚填的东西**。
- * （2026-08-10 这条正是 e2e 撞出来的。）
+ * ## 为什么每一个都要能改
+ *
+ * 2026-08-10 作者在 platform.kimi.com 买了按量 API，填进 `kimi-coding` 之后 401。
+ * 原因是 **pi 自带的那个地址是 Kimi For Coding 订阅线**（`api.kimi.com/coding`），
+ * 与他买的按量端点不是一条路。
+ *
+ * 而当时的界面只给「pi 不自带地址」的那 8 个开输入框——`kimi-coding` 自带地址，
+ * 于是**他在界面上根本改不了它**。
+ *
+ * 那条线划错了：**「pi 自带地址」不等于「这个地址对你也对」。**
+ * 所以现在每一个都能改，只是分两档：
+ *   - **必须填**（pi 不自带）或**已经改过** → 摆出来
+ *   - 其余 → 收进「改地址」折叠，不占视线，但**随时够得着**
  */
-function 要地址(
+function 地址要摆出来(
   id: string,
   needs: readonly string[] | undefined,
   saved: Record<string, string> | undefined,
@@ -579,12 +592,44 @@ function 要地址(
   return Boolean(needs?.includes(id)) || Boolean(saved?.[id])
 }
 
-function 地址({
+/**
+ * 地址那一块的外壳：**摆出来**还是**收进折叠**。
+ *
+ * 折叠不是把它藏起来——它一直在那儿，只是不占视线。
+ * （今天已经为「看不见的能力等于不存在」栽过三次，所以折叠标题直接写「改地址」，
+ * 不是一个光秃秃的三角。）
+ */
+function 地址容器({
   providerId,
+  摆出来,
+  必须填,
   value,
   onSave,
 }: {
   providerId: string
+  摆出来: boolean
+  必须填: boolean
+  value: string
+  onSave: (v: string) => void
+}) {
+  const 内容 = <地址 providerId={providerId} 必须填={必须填} value={value} onSave={onSave} />
+  if (摆出来) return 内容
+  return (
+    <details className="base-url-fold">
+      <summary>改地址</summary>
+      {内容}
+    </details>
+  )
+}
+
+function 地址({
+  providerId,
+  必须填,
+  value,
+  onSave,
+}: {
+  providerId: string
+  必须填: boolean
   value: string
   onSave: (v: string) => void
 }) {
@@ -592,9 +637,25 @@ function 地址({
   const shown = draft ?? value
   return (
     <div className="base-url">
+      {/**
+        * **两种情况说两种话。**
+        *
+        * 「必须填」是 pi 压根不带地址；而「可以改」是**它带的那个未必对你**——
+        * 2026-08-10 作者就撞上后者：`kimi-coding` 自带的是 Kimi For Coding
+        * 订阅线，而他在 platform.kimi.com 买的是按量 API，两条路，结果 401。
+        */}
       <p className="hint">
-        <em className="set-emph">这个 provider 的地址要你自己填</em>
-        ——它跟你的账号／区域／项目走，pi 没法替你填。不填就连不上。
+        {必须填 ? (
+          <>
+            <em className="set-emph">这个 provider 的地址要你自己填</em>
+            ——它跟你的账号／区域／项目走，pi 没法替你填。不填就连不上。
+          </>
+        ) : (
+          <>
+            默认用 pi 自带的地址。<em className="set-emph">如果你买的是另一条线</em>
+            （比如订阅版与按量版是两个端点），在这里改成你平台文档里的 base_url。
+          </>
+        )}
       </p>
       {/* **自己的类名**，不复用 `.cred-form`——复用会让「哪个保存按钮」分不清 */}
       <div className="base-url-form">

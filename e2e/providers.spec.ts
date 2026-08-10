@@ -24,11 +24,11 @@ test("**「我能配谁」远多于「我配过谁」**", async ({ dawn }) => {
    * 这里不写死 39——目录会更新，写死等于给自己埋一个每次同步都红的用例。
    * **但它必须远大于 1**，那正是作者指出的问题。
    */
-  const 摘要 = await 折叠.locator("summary").textContent()
+  const 摘要 = await 折叠.locator("> summary").textContent()
   const n = Number(/（(\d+)）/.exec(摘要 ?? "")?.[1] ?? "0")
   expect(n).toBeGreaterThan(10)
 
-  await 折叠.locator("summary").click()
+  await 折叠.locator("> summary").click()
   // 展开之后每一个都能填 key
   await expect(折叠.locator(".cred-form").first()).toBeVisible()
 })
@@ -36,7 +36,8 @@ test("**「我能配谁」远多于「我配过谁」**", async ({ dawn }) => {
 test("筛选能把要找的那个捞出来", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "设置", exact: true }).click()
-  await page.locator(".more-providers summary").click()
+  await // **限定直接子元素**：每一行现在也有一个「改地址」折叠
+  page.locator(".more-providers > summary").click()
 
   await page.getByLabel("筛选 provider").fill("anthropic")
   const 行 = page.locator(".more-providers .set-row")

@@ -15,7 +15,8 @@ const 陌生 = "kimi-coding"
 test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "设置", exact: true }).click()
-  await page.locator(".more-providers summary").click()
+  await // **限定直接子元素**：每一行现在也有一个「改地址」折叠
+  page.locator(".more-providers > summary").click()
   await page.getByLabel("筛选 provider").fill(陌生)
 
   const 行 = page.locator(".more-providers .set-row").filter({ hasText: 陌生 })

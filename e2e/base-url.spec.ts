@@ -18,7 +18,8 @@ const 不用填的 = "groq"
 
 async function 找到(page: import("@playwright/test").Page, id: string) {
   await page.getByRole("button", { name: "设置", exact: true }).click()
-  await page.locator(".more-providers summary").click()
+  await // **限定直接子元素**：每一行现在也有一个「改地址」折叠
+  page.locator(".more-providers > summary").click()
   await page.getByLabel("筛选 provider").fill(id)
   return page.locator(".more-providers .set-row").filter({ hasText: id }).first()
 }
@@ -31,11 +32,27 @@ test("**要填地址的那几个才有输入框**", async ({ dawn }) => {
   await expect(行.locator(".base-url")).toContainText("跟你的账号")
 })
 
-test("**不用填的那些不给空框** —— 多一个空输入框只会让人以为还得填点什么", async ({ dawn }) => {
+test("**自带地址的也能改** —— 「pi 自带地址」不等于「地址对你也对」", async ({ dawn }) => {
   const { page } = dawn
   const 行 = await 找到(page, 不用填的)
   await expect(行).toHaveCount(1)
-  await expect(行.locator(".base-url")).toHaveCount(0)
+
+  /**
+   * 2026-08-10 返工：这条原本断言「不用填的那些不给空框」。
+   *
+   * **那条线划错了。** 作者在 platform.kimi.com 买了按量 API，填进
+   * `kimi-coding` 之后 401——因为 pi 自带的那个地址是 Kimi For Coding
+   * **订阅线**，与他买的不是一条路。而当时的界面只给「pi 不自带地址」的
+   * 那 8 个开输入框，于是他**在界面上根本改不了它**。
+   *
+   * 现在每一个都能改：不占视线（收在「改地址」里），但**随时够得着**。
+   */
+  // **折叠时它仍在 DOM 里，只是不可见**——所以断言可见性，不是数量
+  await expect(行.locator(".base-url")).not.toBeVisible()
+  await 行.locator(".base-url-fold > summary").click()
+  await expect(行.locator(".base-url")).toBeVisible()
+  // 说的话也不同：这一档是「可以改」，不是「必须填」
+  await expect(行.locator(".base-url")).toContainText("默认用 pi 自带的地址")
 })
 
 test("填进去**真的落到配置文件里**，而且原有内容没被动", async ({ dawn }) => {

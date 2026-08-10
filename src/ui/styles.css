@@ -1834,3 +1834,11 @@ pre {
 /* 地址那一行的表单。**不复用 `.cred-form`**——复用会让「哪个保存按钮」分不清 */
 .base-url-form { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .base-url-form .btn { flex: 0 0 auto; white-space: nowrap; }
+
+/* 「改地址」折叠：**一直在那儿，只是不占视线**（2026-08-10） */
+.base-url-fold { margin-top: var(--dawn-space-1); }
+.base-url-fold > summary {
+  cursor: pointer;
+  color: var(--dawn-text-3);
+  font-size: 11px;
+}

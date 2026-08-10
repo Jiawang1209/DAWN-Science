@@ -273,3 +273,77 @@ function matchMissingPackage(stderr: string): { pkg: string; how: string; line: 
 }
 
 const message = (err: unknown): string => (err instanceof Error ? err.message : String(err))
+
+/* ── 直接由解释器路径起内核（2026-08-10，作者定的机制）────────────── */
+
+export type KernelLanguage = "python" | "R"
+
+/**
+ * 由解释器路径拼出 argv。**不经 kernelspec。**
+ *
+ * ## 为什么这是主路径
+ *
+ * 作者 2026-08-10：*「我不是要求你扫描整个电脑，而是直接提供一个 R 解释器
+ * 和 Python 解释器的路径即可。只有配置了，我们才能调用。」*
+ *
+ * 这比 kernelspec 更可控：**你指哪个解释器，就一定跑在哪个解释器上**。
+ * 走 kernelspec 时会出现「名字叫 `datascience`，实际是另一个 conda 环境」
+ * 这种事——挑错的后果不是报错，是**跑在了另一个环境里而不自知**。
+ *
+ * `{connection_file}` 是 Jupyter 的占位符，由 `spawnteract` 替换。
+ */
+export function argvForInterpreter(language: KernelLanguage, path: string): string[] {
+  return language === "python"
+    ? [path, "-m", "ipykernel_launcher", "-f", "{connection_file}"]
+    : // `--slave` 让 R 不打招呼横幅；`--args` 之后的东西留给 IRkernel 自己解析
+      [path, "--slave", "-e", "IRkernel::main()", "--args", "{connection_file}"]
+}
+
+/** 这个语言的内核包叫什么、怎么装。**报错要能直接照着做** */
+export const KERNEL_PACKAGE: Record<KernelLanguage, { pkg: string; how: string }> = {
+  python: { pkg: "ipykernel", how: "<你的 python> -m pip install ipykernel" },
+  R: { pkg: "IRkernel", how: 'R 里跑 install.packages("IRkernel")' },
+}
+
+/**
+ * 由路径起不来时说人话。**三种实情仍然要分清**，只是第二种换了形状：
+ * 没有 kernelspec 这回事了，取而代之的是「这个路径上没有程序」。
+ */
+export function diagnoseInterpreter(
+  language: KernelLanguage,
+  path: string,
+  stderr = "",
+  exists: (p: string) => boolean = existsSync,
+): LaunchDiagnosis | undefined {
+  if (!path.trim()) {
+    return {
+      kind: "no-spec",
+      available: [],
+      message: `还没有配置 ${language === "python" ? "Python" : "R"} 解释器路径——到「设置 → 内核」填一个。`,
+    }
+  }
+  if (path.startsWith("/") && !exists(path)) {
+    return {
+      kind: "missing-executable",
+      executable: path,
+      message: `${path} 不存在。**这条路径是你自己填的**，到「设置 → 内核」改一下。`,
+    }
+  }
+  const 缺包 = matchMissingPackage(stderr)
+  if (缺包) {
+    return {
+      kind: "missing-kernel-package",
+      executable: path,
+      evidence: 缺包.line,
+      message: `${path} 在，但它的内核包「${缺包.pkg}」没装——**路径没问题，要装的是包**（${缺包.how}）。`,
+    }
+  }
+  if (stderr.trim()) {
+    return {
+      kind: "unknown",
+      evidence: stderr.trim().split("\n").slice(-5).join("\n"),
+      message: `${language === "python" ? "Python" : "R"} 内核没能起来，原因认不出。它自己说的是（末尾几行）：`,
+    }
+  }
+  return undefined
+}

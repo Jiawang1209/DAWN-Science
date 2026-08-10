@@ -50,20 +50,29 @@ export class KernelRuntime implements AgentRuntime {
   constructor(private readonly opts: KernelRuntimeOptions = {}) {}
 
   async start(spec: SessionSpec): Promise<SessionHandle> {
-    const name = spec.kernel?.kernelName
-    if (!name) {
-      // **响亮失败**：没有内核名就没有内核，猜一个默认值是在替用户做决定
-      throw new UserFacingError("这个会话没有指定内核（配置里的 `command` 应当写 kernelspec 的名字）")
+    const k = spec.kernel
+    if (!k) {
+      // **响亮失败**：没有内核就没有内核，猜一个默认值是在替用户做决定
+      throw new UserFacingError("这个会话没有指定内核（配置里给 `language` 或 `command`）")
     }
+    const byPath = "interpreterPath" in k
 
     const channel = await launchKernelChannel({
-      kernelName: name,
+      ...(byPath
+        ? { interpreter: { language: k.language, path: k.interpreterPath } }
+        : { kernelName: k.kernelName }),
       cwd: spec.workspace,
       ...(this.opts.runIdOf ? { runIdOf: () => this.opts.runIdOf!(spec.sessionId) } : {}),
     })
 
-    // 语言来自 kernelspec。**拿不到就是 undefined**，变量面板据此说「不支持」
-    const language = discoverKernelSpecs().specs.find((k) => k.name === name)?.language
+    /**
+     * 语言。**按路径起时它是明确的**（用户自己选的）；
+     * 走 kernelspec 时才需要去问 spec，拿不到就是 undefined，
+     * 变量面板据此说「不支持」——**不猜**。
+     */
+    const language = byPath
+      ? k.language
+      : discoverKernelSpecs().specs.find((x) => x.name === k.kernelName)?.language
     this.sessions.set(spec.sessionId, { channel, language })
 
     /**

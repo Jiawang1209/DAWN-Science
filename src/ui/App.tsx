@@ -327,9 +327,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const refreshKernels = useCallback(() => {
     client.get<typeof kernels>("listKernels", {}).then(setKernels).catch(fail)
   }, [client])
+
+  /**
+   * 两个解释器路径（2026-08-10，作者定的机制）。
+   * **没配的那个是 undefined**，界面据此显示「还没配置」而不是一个空串。
+   */
+  const [interpreters, setInterpreters] = useState<{ python?: string; r?: string }>({})
+  const refreshInterpreters = useCallback(() => {
+    client.get<{ python?: string; r?: string }>("getInterpreters", {}).then(setInterpreters).catch(fail)
+  }, [client])
+  const saveInterpreter = useCallback(
+    (language: "python" | "R", path: string) => {
+      client
+        .get<{ python?: string; r?: string; problem?: string }>("setInterpreter", { language, path })
+        .then((r) => {
+          setInterpreters({ ...(r.python ? { python: r.python } : {}), ...(r.r ? { r: r.r } : {}) })
+          // **当场把问题说出来**：保存成功却用不了，比直接说不行更糟
+          if (r.problem) fail(new Error(r.problem))
+        })
+        .catch(fail)
+    },
+    [client],
+  )
   useEffect(() => {
-    if (view === "settings") refreshKernels()
-  }, [view, refreshKernels])
+    if (view !== "settings") return
+    refreshKernels()
+    refreshInterpreters()
+  }, [view, refreshKernels, refreshInterpreters])
 
   /**
    * 这个会话现在有哪些变量（②-A · K5 · S14）。
@@ -546,7 +570,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 kernels={kernels.kernels}
                 problems={kernels.problems}
                 shadowed={kernels.shadowed}
+                interpreters={interpreters}
                 onRefresh={refreshKernels}
+                onSetInterpreter={saveInterpreter}
               />
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}

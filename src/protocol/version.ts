@@ -50,8 +50,14 @@
  *   响应是**三态**而不是一个列表：「不支持 + 原因」与「支持但为空」
  *   必须分得开——混成空列表就是把「我们没去问」说成「这里什么都没有」。
  *   纯新增，故 minor。
+ * 2.9（2026-08-10）：新增 `getInterpreters` / `setInterpreter`。
+ *   **两个解释器路径是调用 Python / R 的机制**（作者定）：没配就不能用，
+ *   而不是退回某个扫描出来的默认——猜一个的后果不是跑不起来，
+ *   是**跑在了另一个环境里而不自知**。
+ *   **没配的那个不给字段**，不是空串：「还没配」与「配了一个空路径」
+ *   在界面上要说不同的话。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.8"
+export const WORKBENCH_PROTOCOL_VERSION = "2.9"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

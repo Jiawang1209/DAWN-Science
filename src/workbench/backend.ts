@@ -12,6 +12,8 @@ import type { ProviderRegistry } from "../config/schema.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
+import type { SettingsStore } from "../store/settings.js"
+import { diagnoseInterpreter } from "../kernel/specs.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
@@ -40,6 +42,8 @@ export interface WorkbenchBackendOptions {
   projects: ProjectManager
   projectStore: ProjectStore
   runs: RunStore
+  /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
+  settings?: SettingsStore
   sessions: SessionManager
   credentials: CredentialsPort
   /** 配置里的 provider 注册表，供界面列出可选 agent */
@@ -71,7 +75,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -374,6 +378,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         return { supported: false as const, reason: "这个会话没有内核，看不到变量" }
       }
       return v as never
+    },
+
+    /**
+     * 两个解释器路径（2026-08-10，作者定的机制）。
+     * **没配的那个不给字段**——「还没配」与「配了一个空路径」在界面上要说不同的话。
+     */
+    getInterpreters: async () => settings?.interpreters() ?? {},
+
+    setInterpreter: async ({ language, path }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置存储")
+      settings.set(language === "python" ? "interpreter.python" : "interpreter.r", path, new Date().toISOString())
+      /**
+       * **当场验，不等到建会话才炸。**
+       *
+       * 填完路径就该知道它行不行——「保存成功」然后建会话时才报错，
+       * 中间隔着的那段时间会让人以为是别的东西坏了。
+       *
+       * 这里只做**静态**判断（路径存不存在）：包缺没缺要真起一次才知道，
+       * 那是建会话时的事，届时同一套诊断会说清楚。
+       */
+      const now = settings.interpreters()
+      const configured = language === "python" ? now.python : now.r
+      const d = configured ? diagnoseInterpreter(language, configured) : undefined
+      return { ...now, ...(d ? { problem: d.message } : {}) }
     },
 
     acquireLease: async ({ sessionId, holder }) => {

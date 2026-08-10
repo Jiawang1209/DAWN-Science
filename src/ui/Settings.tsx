@@ -58,57 +58,129 @@ export function KernelsPanel({
   kernels,
   problems,
   shadowed,
+  interpreters,
   onRefresh,
+  onSetInterpreter,
 }: {
   kernels: readonly KernelRow[]
   problems: readonly { dir: string; reason: string }[]
   shadowed: readonly { name: string; dir: string }[]
+  /** 当前配置。**没配的那个是 undefined**，不是空串 */
+  interpreters: { python?: string; r?: string }
   onRefresh: () => void
+  onSetInterpreter: (language: "python" | "R", path: string) => void
 }) {
   return (
     <section className="panel">
       <h3 className="panel-title">内核</h3>
       <div className="panel-body">
-        {kernels.length === 0 ? (
-          <p className="empty">
-            本机没有注册任何 Jupyter 内核。Python 装 <code>ipykernel</code>、
-            R 装 <code>IRkernel</code> 之后会出现在这里。
-          </p>
-        ) : (
-          <ul className="kernel-list">
-            {kernels.map((k) => (
-              <li key={`${k.dir}`} className="kernel">
-                <span className="name">{k.displayName}</span>
-                <span className="sub">{k.language ?? "语言未声明"}</span>
-                {/* **这一行是这个面板存在的理由**——不显示它，选内核就是蒙 */}
-                <p className="kernel-exe">{k.executable ?? "（kernel.json 里没有 argv[0]）"}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+        {/**
+         * **两个路径就是机制**（作者 2026-08-10）：
+         * *「直接提供一个 R 解释器和 Python 解释器的路径即可。
+         * 只有配置了，我们才能调用。」*
+         *
+         * 所以这里不是「扫描结果的一个补充」——**没配就是不能用**，
+         * 而下面那句提示要明说这一点，不能让人以为它是可选的。
+         */}
+        <InterpreterField
+          label="Python 解释器"
+          hint="例如 /usr/local/bin/python3 或某个 conda 环境里的 bin/python。需要它装了 ipykernel。"
+          value={interpreters.python}
+          onSave={(v) => onSetInterpreter("python", v)}
+        />
+        <InterpreterField
+          label="R 解释器"
+          hint="例如 /usr/local/bin/R。需要它装了 IRkernel。"
+          value={interpreters.r}
+          onSave={(v) => onSetInterpreter("R", v)}
+        />
+        {/* **JSX 纯文本不渲染 markdown**——写 `**` 只会原样显示成星号。
+            今天第二次栽在这上面（第一次在陈旧标记那句），所以强调放进 CSS */}
+        <p className="hint kernel-note">
+          没有配置就不能用：配置里 kind: kernel 的 agent 靠这两个路径起内核。
+        </p>
 
-        {shadowed.length > 0 ? (
-          <p className="caveat">
-            ⚠ 有 {shadowed.length} 个同名内核被前面的挡住了，不会被用到：
-            {shadowed.map((s) => ` ${s.name}（${s.dir}）`).join("；")}
-          </p>
+        {/* 参考：本机注册过的 kernelspec。**它只是帮你填上面那两个框**，不是机制 */}
+        {kernels.length > 0 ? (
+          <details className="kernel-ref">
+            <summary>参考：本机注册过的 Jupyter 内核（{kernels.length}）</summary>
+            <ul className="kernel-list">
+              {kernels.map((k) => (
+                <li key={k.dir} className="kernel">
+                  <span className="name">{k.displayName}</span>
+                  <span className="sub">{k.language ?? "语言未声明"}</span>
+                  <p className="kernel-exe">{k.executable ?? "（kernel.json 里没有 argv[0]）"}</p>
+                </li>
+              ))}
+            </ul>
+            {shadowed.length > 0 ? (
+              <p className="caveat">
+                ⚠ 有 {shadowed.length} 个同名内核被前面的挡住了：
+                {shadowed.map((x) => ` ${x.name}（${x.dir}）`).join("；")}
+              </p>
+            ) : null}
+            {problems.length > 0 ? (
+              <p className="caveat">
+                ⚠ 有 {problems.length} 条注册项读不出来：
+                {problems.map((x) => ` ${x.dir}——${x.reason}`).join("；")}
+              </p>
+            ) : null}
+            <div className="state-action">
+              <Button variant="outline" size="sm" onClick={onRefresh}>
+                重新扫描
+              </Button>
+            </div>
+          </details>
         ) : null}
-
-        {problems.length > 0 ? (
-          <p className="caveat">
-            ⚠ 有 {problems.length} 条注册项读不出来：
-            {problems.map((p) => ` ${p.dir}——${p.reason}`).join("；")}
-          </p>
-        ) : null}
-
-        {/* 每次现扫，不缓存：人可能刚在别处装了一个 */}
-        <div className="state-action">
-          <Button variant="outline" size="sm" onClick={onRefresh}>
-            重新扫描
-          </Button>
-        </div>
       </div>
     </section>
+  )
+}
+
+/**
+ * 一个解释器路径输入框。
+ *
+ * **路径必须回显**——与凭证那条恰恰相反：看不见自己配了什么，等于没配。
+ * 保存后由后端当场做静态校验（路径存不存在），**不等到建会话才炸**。
+ */
+function InterpreterField({
+  label,
+  hint,
+  value,
+  onSave,
+}: {
+  label: string
+  hint: string
+  value: string | undefined
+  onSave: (path: string) => void
+}) {
+  const [draft, setDraft] = useState<string | undefined>(undefined)
+  const shown = draft ?? value ?? ""
+  return (
+    <div className="field">
+      <label className="field-label">{label}</label>
+      <div className="cred-form">
+        <input
+          className="control"
+          value={shown}
+          placeholder="还没配置"
+          onChange={(e) => setDraft(e.target.value)}
+          aria-label={label}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={draft === undefined}
+          onClick={() => {
+            onSave(shown)
+            setDraft(undefined)
+          }}
+        >
+          保存
+        </Button>
+      </div>
+      <p className="field-hint">{hint}</p>
+    </div>
   )
 }
 

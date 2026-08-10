@@ -173,6 +173,29 @@ export function migrate(db: Database.Database): void {
     db.exec(`ALTER TABLE sessions ADD COLUMN cli_thread_id TEXT`)
   }
 
+  /**
+   * 应用级设置（②-A 后续，2026-08-10）。
+   *
+   * 目前只装两样：**Python 与 R 的解释器路径**。
+   *
+   * ## 为什么不放 `providers.yaml`
+   *
+   * 那个文件是**用户手写的**，而且第一行就承诺「DAWN 不会覆盖它」。
+   * 界面里改的东西写进一个我们承诺不碰的文件，是自相矛盾。
+   *
+   * ## 为什么不走凭证那条（safeStorage）
+   *
+   * **路径不是密钥。** 凭证那条有两条显示纪律（绝不回显、如实告知加密状态），
+   * 而路径恰恰**必须回显**——看不见自己配了什么，等于没配。
+   */
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key        TEXT PRIMARY KEY,
+      value      TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `)
+
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),
   )

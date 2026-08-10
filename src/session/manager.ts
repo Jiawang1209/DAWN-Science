@@ -146,6 +146,8 @@ export interface SessionManagerOptions {
   store: SessionStore
   registry: ProviderRegistry
   runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime }
+  /** 配置好的解释器路径。**没配就返回 undefined**——不猜一个 */
+  interpreterOf?: (language: "python" | "R") => string | undefined
   /**
    * 按 agent 定义构造 pty runtime。给出时优先于 `runtimes.pty`。
    *
@@ -171,6 +173,7 @@ export class SessionManager {
   private readonly store: SessionStore
   private readonly registry: ProviderRegistry
   private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime }
+  private readonly interpreterOf: ((language: "python" | "R") => string | undefined) | undefined
   private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
@@ -181,6 +184,7 @@ export class SessionManager {
     this.registry = opts.registry
     this.runtimes = opts.runtimes
     this.ptyRuntimeFor = opts.ptyRuntimeFor
+    this.interpreterOf = opts.interpreterOf
     this.hasCredential = opts.hasCredential
     this.leases = new LeaseManager({ ttlSeconds: opts.leaseTtlSeconds ?? 300 })
   }
@@ -270,8 +274,25 @@ export class SessionManager {
         )
       }
       runtime = kernel
-      // kernelspec 的名字写在 `command` 里——路径由 spec 决定，见 config/schema.ts
-      spec.kernel = { kernelName: def.command }
+      /**
+       * **优先按语言取配置好的解释器路径。**
+       *
+       * 作者 2026-08-10 定的机制：*「只有配置了，我们才能调用。」*
+       * 没配就响亮失败并指向设置——**不退回扫描出来的某个 kernelspec**，
+       * 那正是「跑在了另一个环境里而不自知」的来源。
+       */
+      if (def.language) {
+        const path = this.interpreterOf?.(def.language)
+        if (!path) {
+          this.store.updateState(id, "exited", { exitCode: 1 })
+          throw new UserFacingError(
+            `还没有配置 ${def.language === "python" ? "Python" : "R"} 解释器路径——到「设置 → 内核」填一个。`,
+          )
+        }
+        spec.kernel = { language: def.language, interpreterPath: path }
+      } else {
+        spec.kernel = { kernelName: def.command! }
+      }
     } else {
       runtime = this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
     }

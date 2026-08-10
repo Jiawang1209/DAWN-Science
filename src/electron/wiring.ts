@@ -22,6 +22,7 @@ import { PtyRuntime } from "../runtime/pty.js"
 import { KernelRuntime } from "../runtime/kernel.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
+import { SettingsStore } from "../store/settings.js"
 import { createPiCredentialStore } from "../workbench/credential-store.js"
 import { SessionTranscripts } from "../workbench/events.js"
 import { WorkbenchServer } from "../workbench/server.js"
@@ -101,6 +102,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const projectStore = new ProjectStore(db)
   const sessionStore = new SessionStore(db)
   const runStore = new RunStore(db)
+  // 应用级设置：两个解释器路径住在这里（②-A 后续）
+  const settingsStore = new SettingsStore(db)
 
   // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
   const piCredentials = createPiCredentialStore(opts.credentials)
@@ -149,6 +152,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       }),
     },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime
+    /**
+     * 解释器路径**每次现取**。
+     *
+     * 缓存住的表现是「我在设置里改了，建会话还是用旧的」——
+     * 而那看起来像改动没保存。
+     */
+    interpreterOf: (language) =>
+      settingsStore.get(language === "python" ? "interpreter.python" : "interpreter.r"),
     ptyRuntimeFor: (_id: string, def: PtyAgentDef) => {
       const family = familyOf(def.command)
       return new PtyRuntime({
@@ -195,6 +206,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const backend = createWorkbenchBackend({
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
+    settings: settingsStore,
     runRecorder,
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
     invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),

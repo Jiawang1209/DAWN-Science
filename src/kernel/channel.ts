@@ -29,7 +29,14 @@
  *    而且判据是「内核还能不能算对一道题」，不是回复长什么样。
  */
 import { UserFacingError } from "../errors.js"
-import { diagnoseLaunch, discoverKernelSpecs } from "./specs.js"
+import {
+  argvForInterpreter,
+  diagnoseInterpreter,
+  diagnoseLaunch,
+  discoverKernelSpecs,
+  type KernelLanguage,
+  type LaunchDiagnosis,
+} from "./specs.js"
 import type {
   JupyterMessage,
   KernelChannel,
@@ -119,6 +126,14 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
    * 用户在 Console 里看见一堆自己没写过的代码在刷屏。
    */
   const internal = new Set<string>()
+  /**
+   * 这个内核支不支持 `user_expressions`。**试过一次就记住。**
+   *
+   * 2026-08-10 实测：IRkernel 不支持它（连 `1+1` 都回不出东西），
+   * 而且**连 `silent` 也不完全遵守**——第一次尝试仍会广播 `execute_input`。
+   * 不记住的话，**每刷新一次变量面板就白跑一次执行**。
+   */
+  let userExprWorks: boolean | undefined
 
   const provenance = (): Provenance => {
     const runId = opts.runIdOf?.()
@@ -243,6 +258,9 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
        * （见 `internal`）。**这不是静默回退**——两条路都是「问一个值」，
        * 换的只是取回结果的通道，而「不弄脏 Console」这条保证一样成立。
        */
+      // 已知不支持就直接走退路，不再白跑一次
+      if (userExprWorks === false) return await probeViaExecute(expression, timeoutMs)
+
       const viaUserExpr = opts.makeExecute("", {
         silent: true,
         store_history: false,
@@ -253,8 +271,12 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
       const v = ue?.v as { status?: string; data?: Record<string, unknown> } | undefined
       if (v?.status === "ok") {
         const text = v.data?.["text/plain"]
-        if (typeof text === "string") return text
+        if (typeof text === "string") {
+          userExprWorks = true
+          return text
+        }
       }
+      userExprWorks = false
       return await probeViaExecute(expression, timeoutMs)
     } catch {
       return undefined
@@ -410,7 +432,15 @@ function defaultReplyType(requestType: string): string {
 /* ── 起一个真内核（②-A · K2）──────────────────────────────────────── */
 
 export interface LaunchOptions {
-  kernelName: string
+  /**
+   * **直接给解释器路径**（2026-08-10 起的主路径）。
+   *
+   * 给了它就不查 kernelspec——**你指哪个解释器，就一定跑在哪个解释器上**。
+   * 这是作者定的机制：*「只有配置了，我们才能调用。」*
+   */
+  interpreter?: { language: KernelLanguage; path: string }
+  /** kernelspec 的名字。**只在没给 `interpreter` 时用**（旧路径、测试用） */
+  kernelName?: string
   runIdOf?: () => string | undefined
   handshakeTimeoutMs?: number
   /** 工作目录。内核里的相对路径以它为准 */
@@ -461,12 +491,34 @@ export async function launchKernelChannel(
       import("@nteract/messaging"),
     ])
 
-  const discovery = discoverKernelSpecs()
+  /**
+   * 两条起法。**给了解释器路径就走那条**，不再查 kernelspec。
+   *
+   * 保留 kernelspec 那条是因为测试与既有 e2e 在用它；
+   * **产品里的主路径是解释器路径**——它不依赖用户装没装 kernelspec，
+   * 也不会出现「名字叫 A、实际是环境 B」。
+   */
+  const byPath = opts.interpreter
+  const label = byPath ? byPath.path : (opts.kernelName ?? "")
+  let argv: string[]
+  let language: KernelLanguage | undefined
+  let diagnose: (stderr: string) => LaunchDiagnosis | undefined
 
-  // **先查有没有这条注册项**：没有的话根本不必起进程，而且报错能更准
-  const 没有 = diagnoseLaunch(opts.kernelName, discovery)
-  if (没有?.kind === "no-spec") throw new UserFacingError(没有.message)
-  const spec = discovery.specs.find((x) => x.name === opts.kernelName)!
+  if (byPath) {
+    language = byPath.language
+    argv = argvForInterpreter(byPath.language, byPath.path)
+    diagnose = (e) => diagnoseInterpreter(byPath.language, byPath.path, e)
+    const 先查 = diagnose("")
+    if (先查) throw new UserFacingError(先查.message)
+  } else {
+    const discovery = discoverKernelSpecs()
+    const 没有 = diagnoseLaunch(opts.kernelName ?? "", discovery)
+    if (没有?.kind === "no-spec") throw new UserFacingError(没有.message)
+    const spec = discovery.specs.find((x) => x.name === opts.kernelName)!
+    argv = spec.argv
+    language = spec.language === "R" ? "R" : spec.language === "python" ? "python" : undefined
+    diagnose = (e) => diagnoseLaunch(opts.kernelName ?? "", discovery, e)
+  }
 
   let kernel: { spawn: KernelProcess & { stderr?: NodeJS.ReadableStream }; config: unknown }
   try {
@@ -490,7 +542,7 @@ export async function launchKernelChannel(
        * 所以现在不受影响；**将来撞上时的症状是 argv 里留着一个没被替换的占位符**，
        * 那时要在这里补，而不是去改发现那一层。
        */
-      { argv: spec.argv, display_name: spec.displayName, language: spec.language ?? "" },
+      { argv, display_name: label, language: language ?? "" },
       {
         // **接住 stderr**：诊断全靠它。不接的话内核死于什么原因就永远不知道
         stdio: ["ignore", "pipe", "pipe"],
@@ -498,8 +550,8 @@ export async function launchKernelChannel(
       },
     )) as typeof kernel
   } catch (err) {
-    const d = diagnoseLaunch(opts.kernelName, discovery, message(err))
-    throw new UserFacingError(d ? `${d.message}` : `内核「${opts.kernelName}」起不来：${message(err)}`)
+    const d = diagnose(message(err))
+    throw new UserFacingError(d ? d.message : `内核「${label}」起不来：${message(err)}`)
   }
 
   /** 攒着，**只在真失败时才拿它做判据**——很多内核平时就往 stderr 打噪声 */
@@ -512,9 +564,14 @@ export async function launchKernelChannel(
   const channel = createKernelChannel({
     channel: (await createMainChannel(kernel.config as never)) as unknown as RawChannel,
     process: kernel.spawn,
-    kernelInstanceId: newInstanceId(opts.kernelName),
+    kernelInstanceId: newInstanceId(byPath ? byPath.language : (opts.kernelName ?? "kernel")),
     // **由 kernelspec 说了算**，不猜——走错路的症状是「点了停止什么也没发生」
-    interruptMode: spec.interruptMode,
+    /**
+     * **默认 signal**：ipykernel 与 IRkernel 实测都是它，
+     * 而由路径起时根本没有 kernelspec 可问。走错的症状是「点了停止什么也没发生」，
+     * 所以这里取的是**实测过的那个默认**，不是猜。
+     */
+    interruptMode: "signal",
     ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
     handshake: kernelInfoRequest() as unknown as JupyterMessage,
     makeExecute: (code, o) =>
@@ -527,11 +584,11 @@ export async function launchKernelChannel(
   } catch (err) {
     // **握手超时的真正原因往往在 stderr 里**，只报「超时」等于把线索扔了
     await channel.close()
-    const d = diagnoseLaunch(opts.kernelName, discovery, stderrTail)
+    const d = diagnose(stderrTail)
     throw new UserFacingError(
       d
         ? `${d.message}${"evidence" in d && d.evidence ? `\n${d.evidence}` : ""}`
-        : `内核「${opts.kernelName}」起来了，但握手没有回音：${message(err)}`,
+        : `内核「${label}」起来了，但握手没有回音：${message(err)}`,
     )
   }
   return channel

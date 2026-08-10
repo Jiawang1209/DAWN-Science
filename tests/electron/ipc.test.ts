@@ -44,6 +44,8 @@ function backend(): WorkbenchBackend {
     stopSession: async () => ({}),
     listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
     listVariables: async () => ({ supported: false as const, reason: "测试替身不提供变量" }),
+    getInterpreters: async () => ({}),
+    setInterpreter: async () => ({}),
     acquireLease: async () => ({
       sessionId: "s1", holder: "user" as const,
       expiresAt: "2026-08-08T00:05:00Z", fingerprint: "abc",

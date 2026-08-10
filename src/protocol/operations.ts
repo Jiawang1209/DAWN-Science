@@ -472,6 +472,50 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 两个解释器路径（2026-08-10，作者定的机制）。
+   *
+   * *「我不是要求你扫描整个电脑，而是直接提供一个 R 解释器和 Python 解释器的
+   * 路径即可。**只有配置了，我们才能调用**。」*
+   *
+   * 所以**没配的那个不给字段**——不是空串。空串会被读成「配了一个空路径」，
+   * 而实情是「还没配」，界面据此说的话完全不同。
+   */
+  getInterpreters: {
+    request: Empty,
+    response: z
+      .object({
+        python: z.string().optional(),
+        r: z.string().optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 设一个解释器路径。**传空串等于清除**——那是「我不想配了」 */
+  setInterpreter: {
+    request: z
+      .object({
+        language: z.enum(["python", "R"]),
+        /** 绝对路径。空串 = 清除 */
+        path: z.string(),
+      })
+      .strict(),
+    response: z
+      .object({
+        /** 存下来之后的现状。**回显是必须的**——看不见自己配了什么等于没配 */
+        python: z.string().optional(),
+        r: z.string().optional(),
+        /**
+         * 这条路径能不能用。**当场验，不等到建会话才炸**。
+         * 三种实情各说各的话，见 `diagnoseInterpreter`。
+         */
+        problem: z.string().optional(),
+      })
+      .strict(),
+    mutating: true,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

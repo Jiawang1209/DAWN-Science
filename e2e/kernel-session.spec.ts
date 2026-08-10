@@ -140,3 +140,56 @@ test.describe("R 内核会话", () => {
     await expect(panel.locator(".var", { hasText: "e2e_r" })).toContainText("numeric")
   })
 })
+
+/**
+ * ── 由「设置里填的解释器路径」起内核（2026-08-10，作者定的机制）──────
+ *
+ * *「我不是要求你扫描整个电脑，而是直接提供一个 R 解释器和 Python 解释器的
+ * 路径即可。**只有配置了，我们才能调用**。」*
+ *
+ * 所以这条测试的顺序就是用户的顺序：
+ *   **一开始不能用 → 去设置里填 → 就能用了。**
+ * 少了第一步，「只有配置了才能调用」就没被验证过——
+ * 而那正是这条机制与「扫描出一个默认」的全部区别。
+ */
+const PY_PATH = join(process.cwd(), ".venv-kernel", "bin", "python")
+const 有PY = existsSync(PY_PATH)
+
+test.describe("由配置的解释器路径起内核", () => {
+  test.use({
+    dawnOptions: {
+      providersYaml: "agents:\n  py:\n    kind: kernel\n    language: python\n    capabilities: [exec]\n",
+      realKernels: true,
+    },
+  })
+
+  test.skip(!有PY, "本机没有 .venv-kernel")
+
+  test("**没配就明说没配，配完就能跑**", async ({ dawn }) => {
+    const { page } = dawn
+    await expect(page.locator(".app-shell")).toBeVisible()
+    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+
+    // ① **还没配** —— 建会话要响亮失败并指向设置，不是悄悄用一个猜出来的解释器
+    await page.getByRole("button", { name: /新建会话/ }).click()
+    await expect(page.getByText(/还没有配置 Python 解释器路径/)).toBeVisible({ timeout: 30_000 })
+
+    // ② 去设置里填
+    await page.getByRole("button", { name: "设置", exact: true }).click()
+    const box = page.getByRole("textbox", { name: "Python 解释器" })
+    await expect(box).toBeVisible()
+    await expect(box).toHaveAttribute("placeholder", "还没配置")
+    await box.fill(PY_PATH)
+    await page.getByRole("button", { name: "保存" }).first().click()
+
+    // **回显是必须的**：看不见自己配了什么等于没配
+    await expect(box).toHaveValue(PY_PATH)
+
+    // ③ 配完就能跑，而且跑的就是那个解释器
+    await page.getByRole("button", { name: /新建会话/ }).click()
+    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+    await page.getByPlaceholder(/回车发送/).fill("import sys; print('EXE', sys.executable)")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".kout-text").last()).toContainText(PY_PATH, { timeout: 60_000 })
+  })
+})

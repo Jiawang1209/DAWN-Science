@@ -49,7 +49,14 @@ export interface SessionSpec {
    * 不是解释器路径——路径由 spec 决定，**我们的发现是唯一事实来源**
    * （K2 收尾时修掉的那个「两个事实来源」问题）。
    */
-  kernel?: { kernelName: string }
+  kernel?:
+    | { kernelName: string }
+    /**
+     * **直接给解释器路径**（2026-08-10 起的主路径）。
+     * 作者定的机制：*「只有配置了，我们才能调用」*——
+     * 路径来自「设置 → 内核」，不来自扫描。
+     */
+    | { language: "python" | "R"; interpreterPath: string }
   /** 注入给该会话的 MCP server（阶段③ 才会非空） */
   mcpServers?: McpServerSpec[]
 }

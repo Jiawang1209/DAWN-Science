@@ -951,3 +951,12 @@ pre {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── 解释器路径（2026-08-10）───────────────────────────────────────── */
+/* 「没有配置就不能用」是机制本身，不是补充说明——所以它要比普通提示醒目 */
+.kernel-note { color: var(--dawn-text-2); }
+/* 保存按钮不许被输入框挤成两行 */
+.cred-form .btn { flex: 0 0 auto; white-space: nowrap; }
+/* 参考区默认收起：它只是帮人填上面那两个框，不该占主视野 */
+.kernel-ref { margin-top: var(--dawn-space-3); }
+.kernel-ref summary { color: var(--dawn-text-3); font-size: 12px; cursor: pointer; }

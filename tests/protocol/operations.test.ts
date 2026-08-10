@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("25 个操作齐全（原冻结 13 + 凭证 3 + getProviders 1 + 订阅 2 + 中止与引导 2 + 换模型 1 + 上下文用量 1 + 列内核 1 + 列变量 1）", () => {
+  it("27 个操作齐全（… + 列内核 1 + 列变量 1 + 解释器路径 2）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
@@ -24,10 +24,12 @@ describe("操作注册表", () => {
         "listKernels",
         "listVariables",
         "setCredential",
+        "setInterpreter",
         "setSessionModel",
         "getCapabilities",
         "getContextUsage",
         "getProject",
+        "getInterpreters",
         "getProvenance",
         "getProviders",
         "getRun",

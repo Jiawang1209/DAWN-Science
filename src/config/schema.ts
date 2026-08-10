@@ -148,11 +148,30 @@ const CliAgentSchema = z
 const KernelAgentSchema = z
   .object({
     kind: z.literal("kernel"),
-    /** **kernelspec 的名字**（`ir` / `python3` / …），不是解释器路径 */
-    command: z.string().min(1),
+    /**
+     * **要哪个语言。** 路径不写在这里——它在「设置 → 内核」里，
+     * 由 `getInterpreters` 提供（作者 2026-08-10 定的机制：
+     * *「只有配置了，我们才能调用」*）。
+     *
+     * 为什么不写在配置里：`providers.yaml` 是**你手写的**、且我们承诺不覆盖它，
+     * 而路径是**这台机器上的事实**，换台机器就变。两者混在一起，
+     * 配置文件就没法在机器之间搬。
+     */
+    language: z.enum(["python", "R"]).optional(),
+    /**
+     * kernelspec 的名字。**旧路径**，给已经在用 kernelspec 的人留着。
+     *
+     * 与 `language` 二选一：都给时 `language` 优先（它更可控——
+     * 你指哪个解释器就跑在哪个上，而 kernelspec 的名字可能指向别的环境）。
+     */
+    command: z.string().min(1).optional(),
     capabilities: z.array(CapabilitySchema),
   })
   .strict()
+  .refine((v) => v.language !== undefined || v.command !== undefined, {
+    // **两个都不给就没法起**：与其建会话时才报，不如加载配置时就拦下
+    message: "kernel agent 要么给 language（python / R），要么给 command（kernelspec 名字）",
+  })
 
 export const AgentDefSchema = z.discriminatedUnion("kind", [
   NativeAgentSchema,

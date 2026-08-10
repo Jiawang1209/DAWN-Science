@@ -39,6 +39,7 @@ import {
   SessionSidebar,
   TerminalView,
   type ModelChoice,
+  type ServiceChoice,
 } from "./views.js"
 import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
@@ -461,6 +462,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [confirming, setConfirming] = useState<ConfirmRequest | undefined>(undefined)
 
   /**
+   * 上一次换模型／换服务为什么没成（2026-08-11）。
+   * **摆在 composer 上**，不是只丢进状态栏那一行小字——
+   * 作者报的「点了没反应」，实情多半是「点了，失败了，但那句话在屏幕另一头」。
+   */
+  const [switchProblem, setSwitchProblem] = useState<string | undefined>(undefined)
+
+  /**
    * pi 认识的全部 provider（2026-08-10）。**「我能配谁」，不是「我配过谁」**。
    * 只在打开设置时取一次——它不会变，而进设置之前没人看得见它。
    */
@@ -731,16 +739,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    *
    * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
    */
-  const modelChoices: ModelChoice[] =
-    agentCfg?.kind === "cli"
-      ? (agentCfg.models ?? []).map((m) => ({ model: m }))
-      : providers.providers.flatMap((p) =>
-          (p.available ?? []).map((m) => ({
-            provider: p.providerId,
-            model: m,
-            group: p.name ?? p.providerId,
-          })),
-        )
   const currentModel: { provider?: string; model: string } | undefined = sessionId
     ? (sessionModels[sessionId] ??
       (agentCfg?.model
@@ -750,6 +748,43 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }
         : undefined))
     : undefined
+
+  /**
+   * **当前这段对话正在用哪家**。
+   *
+   * 注意它**不是** `agentCfg.provider`——中途换过服务之后，会话用的是新那家，
+   * 而配置里那个 agent 一个字都没变。作者：*「我选择 kimi-k3 的时候，
+   * 后面的模型厂家能否帮我自动设置为 kimi？」*——就是这一行在管。
+   */
+  const currentProvider = currentModel?.provider ?? agentCfg?.provider
+
+  /** 能就地换过去的服务。**只有 native 会话有** */
+  const services: ServiceChoice[] | undefined =
+    agentCfg?.kind === "native"
+      ? providers.providers.map((p) => ({
+          providerId: p.providerId,
+          name: p.name ?? p.providerId,
+        }))
+      : undefined
+  const currentServiceLabel = currentProvider
+    ? (providers.providers.find((p) => p.providerId === currentProvider)?.name ?? currentProvider)
+    : undefined
+
+  /**
+   * 能选哪些模型。**只列当前这一家的**（2026-08-11 收窄）。
+   *
+   * 作者：*「选择 kimi-k3 的时候，前面其实不用出现 Kimi，因为后面就选择了
+   * 是哪一个模型厂家的了。」*——厂家由旁边那颗 pill 选，这颗只回答
+   * 「这一家里用哪个模型」。两颗各管一件事，也就不会互相打架。
+   *
+   * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
+   */
+  const modelChoices: ModelChoice[] =
+    agentCfg?.kind === "cli"
+      ? (agentCfg.models ?? []).map((m) => ({ model: m }))
+      : (providers.providers.find((p) => p.providerId === currentProvider)?.available ?? []).map(
+          (m) => ({ provider: currentProvider, model: m }),
+        )
 
   /**
    * **界面上所有动作的唯一定义处**（①-B″ · U1）。
@@ -1034,6 +1069,40 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 models={modelChoices}
                 model={currentModel}
                 agentLabel={agentLabel}
+                {...(services ? { services } : {})}
+                {...(currentServiceLabel ? { currentServiceLabel } : {})}
+                {...(switchProblem ? { switchProblem } : {})}
+                /**
+                 * **换服务 = 换到那家的第一个模型**。
+                 *
+                 * 不问「换到它的哪个模型」再点一次：换家的人多半只想换家，
+                 * 具体哪个模型旁边那颗 pill 随时能改。
+                 * **挑不出模型就不发请求**——那家目录是空的，
+                 * 发出去只会换来一句与「我想换家」无关的报错。
+                 */
+                onSwitchService={(providerId) => {
+                  if (!session) return
+                  const 第一个 = providers.providers.find((p) => p.providerId === providerId)
+                    ?.available?.[0]
+                  if (!第一个) {
+                    note(`「${providerId}」在模型目录里一个模型都没有，没法换过去`)
+                    return
+                  }
+                  client
+                    .get("setSessionModel", {
+                      sessionId: session.sessionId,
+                      provider: providerId,
+                      model: 第一个,
+                    })
+                    .then(() => {
+                      setSwitchProblem(undefined)
+                      setSessionModel(session.sessionId, 第一个, providerId)
+                    })
+                    .catch((e: unknown) => {
+                      setSwitchProblem(e instanceof Error ? e.message : String(e))
+                      fail(e)
+                    })
+                }}
                 onPickModel={(c) => {
                   if (!session) return
                   /**
@@ -1056,10 +1125,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       ...(c.provider ? { provider: c.provider } : {}),
                       model: c.model,
                     })
-                    // **成功之后才更新缓存。** 失败时 fail() 会把后端给的理由
-                    // （没配 key / 这一轮还没说完）原样显示出来
-                    .then(() => setSessionModel(session.sessionId, c.model, c.provider))
-                    .catch(fail)
+                    // **成功之后才更新缓存。** 失败时把后端给的理由
+                    // （没配 key / 这一轮还没说完）**摆到 composer 上**
+                    .then(() => {
+                      setSwitchProblem(undefined)
+                      setSessionModel(session.sessionId, c.model, c.provider)
+                    })
+                    .catch((e: unknown) => {
+                      setSwitchProblem(e instanceof Error ? e.message : String(e))
+                      fail(e)
+                    })
                 }}
                 terminalTrimmed={termTrimmed}
                 kernelInstanceId={kernelInstanceId}

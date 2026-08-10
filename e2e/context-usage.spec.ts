@@ -35,7 +35,7 @@ test("说过一句话之后，上下文面板给出真实的 token 数", async (
    *
    * 现在断言的是完整的那一段，并且**显式地要求它不再说「尚未采集」**。
    */
-  await expect(panel).toContainText("12 / 128,000 tokens")
+  await expect(panel).toContainText("12 / 128k tokens")
   await expect(panel).not.toContainText("尚未采集")
 })
 

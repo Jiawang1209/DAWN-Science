@@ -99,9 +99,19 @@ describe("agent pill · 位置", () => {
    * 外部 CLI 的对话模式是新的 `cli`。
    * **那个二元三元表达式会把 `cli` 说成「内置」，而它恰恰是最外部的那个。**
    */
-  it("顺带说清它是内置、外部 CLI 还是终端", () => {
+  /**
+   * **2026-08-11：口径从「内置 / 外部 CLI」改成「API / CLI」。**
+   *
+   * 作者：*「不能在模型厂家的地方写内置，要协商是 cli 还是 API，
+   * 这个区分还是很关键的。」*——「内置」说的是我们的实现（跑在本进程里），
+   * 而人要判断的是**钱和上下文走哪条路**：API 用你的 key 直接调、模型在这里选；
+   * CLI 是外部命令行自己去调，**模型也归它自己管**。
+   */
+  it("顺带说清它是 API、CLI 还是终端", () => {
     const { container } = conv({ session: { ...session, kind: "cli" } })
-    expect(container.querySelector(".agent-pill")!.textContent).toMatch(/外部 CLI/)
+    const t = container.querySelector(".agent-pill")!.textContent
+    expect(t).toMatch(/CLI/)
+    expect(t).not.toMatch(/内置/)
   })
 })
 

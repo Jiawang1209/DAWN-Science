@@ -61,7 +61,8 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
   await page.locator(".agent-pill").click()
-  await page.getByRole("menuitem", { name: "mine" }).click()
+  // **限定在「新建会话，用：」那一组**：同一个名字在「就地换服务」组里也有一条
+  await page.locator(".agent-menu .new-group").getByRole("menuitem", { name: "mine" }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   // 模型格上是我们声明的那个 id——不是某个内置 provider 顶了包
   await expect(page.locator(".composer")).toContainText("my-7b")

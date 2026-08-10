@@ -340,7 +340,12 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     const h = harness({ runs: [{ ...RUN, cost: COST }] })
     await openAndStart(h)
     fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
-    expect(await screen.findByText(/1200/)).toBeDefined()
+    /**
+     * 2026-08-11：1200 现在写作 `1.2k`（作者：*「token 的消耗，
+     * 变换一下单位 k tokens」*）。**断言的意图没变**——
+     * 摆的是真数字，不是「尚未记录」那种占位。
+     */
+    expect(await screen.findByText(/1\.2k/)).toBeDefined()
   })
 
   it("取了 getRun —— 产出与成本只有它带得来，listRuns 只给摘要", async () => {

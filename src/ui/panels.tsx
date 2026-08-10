@@ -8,6 +8,7 @@
  * **本文件只 import `src/protocol`**，不碰 runtime / session / store——
  * 该约束由 Task 2.13 的扫描测试强制。
  */
+import { formatTokens } from "./format.js"
 import type {
   Cost,
   FileChangeFacts,
@@ -275,11 +276,11 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
     <Panel title="上下文">
       <p className="tokens">
         {usage.usedTokens !== undefined && usage.contextWindow
-          ? `${usage.usedTokens.toLocaleString()} / ${usage.contextWindow.toLocaleString()} tokens`
+          ? `${formatTokens(usage.usedTokens)} / ${formatTokens(usage.contextWindow)} tokens`
           : usage.usedTokens !== undefined
-            ? `已用 ${usage.usedTokens.toLocaleString()} tokens（上限拿不到）`
+            ? `已用 ${formatTokens(usage.usedTokens)} tokens（上限拿不到）`
             : usage.contextWindow
-              ? `模型上限 ${usage.contextWindow.toLocaleString()} tokens · 已用尚未采集`
+              ? `模型上限 ${formatTokens(usage.contextWindow)} tokens · 已用尚未采集`
               : "尚未采集"}
         {usage.model ? ` · ${usage.model}` : ""}
       </p>
@@ -511,8 +512,10 @@ export function CostPanel({ cost }: { cost: Cost | undefined }) {
     <Panel title="成本">
       <p className="amount">${cost.totalUSD.toFixed(6)}</p>
       <p className="tokens">
-        输入 {cost.inputTokens} · 输出 {cost.outputTokens}
-        {cost.cacheReadTokens === undefined ? null : ` · 缓存读 ${cost.cacheReadTokens}`}
+        输入 {formatTokens(cost.inputTokens)} · 输出 {formatTokens(cost.outputTokens)}
+        {cost.cacheReadTokens === undefined
+          ? null
+          : ` · 缓存读 ${formatTokens(cost.cacheReadTokens)}`}
       </p>
     </Panel>
   )

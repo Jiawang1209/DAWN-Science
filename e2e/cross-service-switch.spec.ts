@@ -50,12 +50,20 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
 
   const 会话数 = await page.locator(".session-list > li").count()
 
-  // **在同一段里换到另一家**
-  const pill = page.locator(".composer .model-pill")
-  await pill.getByRole("button").click()
-  await expect(page.getByRole("menu", { name: "切换模型" })).toContainText("不会新建对话")
-  await page.getByRole("menuitem", { name: new RegExp(另一家的) }).click()
-  await expect(pill).toContainText(另一家的)
+  /**
+   * **在同一段里换到另一家。**
+   *
+   * 2026-08-11 起换家走**厂家那颗 pill**（作者：*「可以先放模型厂家，
+   * 后选择模型是什么」*）——模型那颗只列当前这一家的模型。
+   */
+  await page.locator(".composer .agent-pill").getByRole("button").click()
+  const 服务菜单 = page.getByRole("menu", { name: "切换服务或新建会话" })
+  await expect(服务菜单).toContainText("就地换服务（对话不断）")
+  await 服务菜单.locator(".svc-group").getByRole("menuitem", { name: "other" }).click()
+
+  // 换完，两颗 pill 自己就对上了：厂家是 other，模型是它的
+  await expect(page.locator(".composer .agent-pill")).toContainText("other")
+  await expect(page.locator(".composer .model-pill")).toContainText(另一家的)
 
   // ① 还是同一段：会话没多，前面说过的话还在
   expect(await page.locator(".session-list > li").count()).toBe(会话数)
@@ -73,7 +81,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   expect(modelsUsed(requests as never)).toEqual([本来的, 另一家的])
 })
 
-test("菜单里按服务分组，列得出别家", async ({ dawn }) => {
+test("**厂家菜单里列得出别家**，模型菜单只管这一家", async ({ dawn }) => {
   const { page, mockUrl } = dawn
 
   await page.getByRole("button", { name: "设置", exact: true }).click()
@@ -88,11 +96,26 @@ test("菜单里按服务分组，列得出别家", async ({ dawn }) => {
 
   await page.getByRole("button", { name: "新建会话" }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
-  await page.locator(".composer .model-pill").getByRole("button").click()
+  // 厂家那颗：两家都在
+  await page.locator(".composer .agent-pill").getByRole("button").click()
+  const 服务菜单 = page.getByRole("menu", { name: "切换服务或新建会话" })
+  /**
+   * **限定在「就地换服务」那一组里。**
+   * 同一个名字在下面那组（「新建会话，用：」）也会出现一次——
+   * 两组同名不同义，靠组标题分辨，所以断言也要按组来。
+   */
+  const 可换的 = 服务菜单.locator(".svc-group")
+  await expect(可换的.getByRole("menuitem", { name: /DeepSeek/ })).toBeVisible()
+  await expect(可换的.getByRole("menuitem", { name: "other" })).toBeVisible()
+  await page.keyboard.press("Escape")
 
-  const 菜单 = page.getByRole("menu", { name: "切换模型" })
-  // 两家都在，各自成一组
-  await expect(菜单.locator(".model-group")).toHaveCount(2)
-  await expect(菜单).toContainText(本来的)
-  await expect(菜单).toContainText(另一家的)
+  /**
+   * 模型那颗：**只有当前这一家的**。
+   * 作者：*「选择 kimi-k3 的时候，前面其实不用出现 Kimi，
+   * 因为后面就选择了是哪一个模型厂家的了。」*
+   */
+  await page.locator(".composer .model-pill").getByRole("button").click()
+  const 模型菜单 = page.getByRole("menu", { name: "切换模型" })
+  await expect(模型菜单).toContainText(本来的)
+  await expect(模型菜单).not.toContainText(另一家的)
 })

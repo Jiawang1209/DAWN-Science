@@ -17,6 +17,7 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
+import { formatTokens } from "./format.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -443,27 +444,64 @@ export function SessionSidebar({
  * 此前只有两种，写法是 `kind === "pty" ? "外部 CLI" : "内置"`——
  * 加第三种之后那个三元会把 `cli` 说成「内置」，**而它恰恰是最外部的那个**。
  */
+/**
+ * 这个会话**是怎么接上模型的**（2026-08-11 改口径）。
+ *
+ * 作者：*「不能在模型厂家的地方写内置，要协商是 cli 还是 API，
+ * 这个区分还是很关键的。」*
+ *
+ * 他是对的。「内置」说的是**我们的实现**（跑在本进程里），
+ * 而人要判断的是**钱和上下文走哪条路**：
+ *   - `API`：我们拿你的 key 直接调服务商，token 算在你的账上，模型由这里选
+ *   - `CLI`：外部命令行自己去调（claude / codex 有自己的订阅与配置），
+ *     **模型也由它自己管**——这正是两者最容易搞混、后果又最实的差别
+ */
 const KIND_LABEL: Record<"native" | "pty" | "cli" | "kernel", string> = {
-  native: "内置",
-  cli: "外部 CLI",
+  native: "API",
+  cli: "CLI",
   pty: "终端",
   kernel: "内核",
+}
+
+/** 一家能就地换过去的服务 */
+export interface ServiceChoice {
+  providerId: string
+  /** 显示名（pi 给的），如 `DeepSeek` */
+  name: string
 }
 
 export function AgentPill({
   agents,
   current,
+  currentLabel,
   kind,
   label,
+  services,
+  onSwitchService,
   onPick,
   triggerLabel,
 }: {
   agents: readonly string[]
   /** 当前会话用的 agent。空态没有会话，因此可缺省 */
   current?: string | undefined
+  /**
+   * 触发器上显示的名字。**给了就压过 `current`**——
+   * native 会话中途换过服务之后，这颗 pill 要跟着现在真正在答话的那家走
+   * （作者：*「我选择 kimi-k3 的时候，后面的模型厂家能否帮我自动设置为 kimi」*）。
+   */
+  currentLabel?: string | undefined
   kind?: "native" | "pty" | "cli" | "kernel" | undefined
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   label?: ((agentId: string) => string) | undefined
+  /**
+   * 能**就地换过去**的服务（2026-08-11）。只有 native 会话有——
+   * 一个 shell 或 claude 会话没法半路变成 API 会话。
+   *
+   * **给了才有那一组**；不给时这颗 pill 还是原来那颗「新建会话，用：」。
+   */
+  services?: readonly ServiceChoice[] | undefined
+  /** 就地换到这家。**同一段对话，上下文不变** */
+  onSwitchService?: ((providerId: string) => void) | undefined
   onPick: (agentId: string) => void
   /** 空态用「换一个 agent」，会话里用「新会话」——**都是动作，不是身份** */
   triggerLabel?: string | undefined
@@ -497,7 +535,7 @@ export function AgentPill({
           * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
           * `label` 缺省时退回 id——那至少是实话。
           */}
-        {triggerLabel ?? (current ? (label ? label(current) : current) : "选择 agent")}
+        {triggerLabel ?? currentLabel ?? (current ? (label ? label(current) : current) : "选择 agent")}
         {kind ? <span className="kind">{KIND_LABEL[kind]}</span> : null}
         <span aria-hidden="true">▾</span>
       </Button>
@@ -506,13 +544,45 @@ export function AgentPill({
         <div
           className="agent-menu"
           role="menu"
-          aria-label="新建会话"
+          aria-label={services && services.length > 0 ? "切换服务或新建会话" : "新建会话"}
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false)
           }}
         >
+          {/**
+            * **两组，各说各的语义**（2026-08-11）。
+            *
+            * 上一版这颗只有「新建会话，用：」一组，于是「换一家」这件事
+            * 在界面上唯一的入口就是它——作者点了，然后对话被开成了新的。
+            *
+            * 现在换服务在上面一组，就地生效；新建会话在下面一组，照旧。
+            * **两组之间必须有一条线和两句不同的话**——
+            * 同样的形状配不同的语义，是最容易让人按错的一种设计。
+            */}
+          {services && services.length > 0 ? (
+            <div className="svc-group">
+              <p className="agent-menu-head">就地换服务（对话不断）</p>
+              <ul>
+                {services.map((sv) => (
+                  <li key={sv.providerId}>
+                    <Row
+                      role="menuitem"
+                      onClick={() => {
+                        setOpen(false)
+                        onSwitchService?.(sv.providerId)
+                      }}
+                    >
+                      <span className="name">{sv.name}</span>
+                      {sv.name === currentLabel ? <span className="hint">当前</span> : null}
+                    </Row>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {/* **这句是整个组件的要害。** agentId 建会话时绑死，换 agent 只能新建 */}
+          <div className="new-group">
           <p className="agent-menu-head">新建会话，用：</p>
           <ul>
             {agents.map((a) => (
@@ -530,19 +600,18 @@ export function AgentPill({
               </li>
             ))}
           </ul>
+          </div>
         </div>
       ) : null}
     </div>
   )
 }
 
-/** 模型选择器里的一条。**跨服务之后，光有 model 已经不足以指认一个选项** */
+/** 模型选择器里的一条。**provider 仍要带着**——换模型的请求按它路由 */
 export interface ModelChoice {
   /** native 才有；cli 会话没有 provider 这个概念 */
   provider?: string | undefined
   model: string
-  /** 这一条属于哪家服务（显示名）。同一家的排在一组 */
-  group?: string | undefined
 }
 
 /**
@@ -607,16 +676,6 @@ export function ModelPill({
   if (choices.length === 0) return null
 
   const 同一条 = (c: ModelChoice) => c.model === current?.model && c.provider === current?.provider
-  /** 当前那一条属于哪家。**认不出来就不写**，不猜一个 */
-  const 当前的家 = choices.find(同一条)?.group
-
-  /** 按服务分组，**保持传进来的顺序**——排序是调用方的事 */
-  const 分组: { name: string | undefined; items: ModelChoice[] }[] = []
-  for (const c of choices) {
-    const g = 分组.find((x) => x.name === c.group)
-    if (g) g.items.push(c)
-    else 分组.push({ name: c.group, items: [c] })
-  }
 
   return (
     <div className="pill model-pill" ref={box}>
@@ -627,8 +686,13 @@ export function ModelPill({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {/* **先说是哪家，再说是哪个模型**——跨服务之后，前者才是人要找的 */}
-        {当前的家 ? <span className="svc">{当前的家}</span> : null}
+        {/**
+          * **只写模型名。**
+          *
+          * 作者：*「我在选择 kimi-k3 这个具体的模型的时候，前面其实不用出现 Kimi，
+          * 因为后面就选择了是哪一个模型厂家的了。」*——是哪家由旁边那颗 pill 说，
+          * 两处都写一遍只是噪声，而且它们一旦不同步就成了互相打架的两句话。
+          */}
         {current?.model ?? "CLI 默认"}
         <span aria-hidden="true">▾</span>
       </Button>
@@ -651,34 +715,29 @@ export function ModelPill({
             */}
           {/* **JSX 纯文本不渲染 markdown**：强调一律走 CSS，写 `**` 只会显示成星号 */}
           <p className="hint pad">
-            就地换，<em className="set-emph">不会新建对话</em>——上下文照旧留在这一段里
+            就地换，<em className="set-emph">不会新建对话</em>。
+            换到别家去旁边那颗
           </p>
           {/* **理由提前说，不等人点了才报错。** 门在运行时，这里只是把它显示出来 */}
           {busy ? <p className="hint pad">这一轮还没说完，先等它结束或中止</p> : null}
-          {分组.map((g) => (
-            <div key={g.name ?? "—"} className="model-group">
-              {/* 只有一家时不画组标题——那时它只是重复 pill 上已经写着的东西 */}
-              {g.name && 分组.length > 1 ? <p className="group-head">{g.name}</p> : null}
-              <ul>
-                {g.items.map((c) => (
-                  <li key={`${c.provider ?? ""}/${c.model}`}>
-                    <Row
-                      role="menuitem"
-                      aria-disabled={Boolean(busy)}
-                      onClick={() => {
-                        if (busy) return
-                        setOpen(false)
-                        onPick(c)
-                      }}
-                    >
-                      <span className="name">{c.model}</span>
-                      {同一条(c) ? <span className="hint">当前</span> : null}
-                    </Row>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <ul>
+            {choices.map((c) => (
+              <li key={`${c.provider ?? ""}/${c.model}`}>
+                <Row
+                  role="menuitem"
+                  aria-disabled={Boolean(busy)}
+                  onClick={() => {
+                    if (busy) return
+                    setOpen(false)
+                    onPick(c)
+                  }}
+                >
+                  <span className="name">{c.model}</span>
+                  {同一条(c) ? <span className="hint">当前</span> : null}
+                </Row>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
     </div>
@@ -692,6 +751,10 @@ export function ConversationView({
   items,
   agents,
   agentLabel,
+  services,
+  currentServiceLabel,
+  onSwitchService,
+  switchProblem,
   models,
   model,
   onSend,
@@ -715,6 +778,21 @@ export function ConversationView({
   /** 当前用的是谁。与 agent 不同，**它可以就地换**，而且可以换到另一家 */
   model?: { provider?: string | undefined; model: string } | undefined
   onPickModel?: ((choice: ModelChoice) => void) | undefined
+  /**
+   * 能就地换过去的服务，以及当前是哪家（2026-08-11）。
+   * **只有 native 会话有**——shell 或 claude 会话没法半路变成 API 会话。
+   */
+  services?: readonly ServiceChoice[] | undefined
+  currentServiceLabel?: string | undefined
+  onSwitchService?: ((providerId: string) => void) | undefined
+  /**
+   * 上一次换模型／换服务**为什么没成**（2026-08-11）。
+   *
+   * 此前这类失败只进状态栏那一行 `hint`——人在 composer 上点了一下，
+   * 屏幕最下面多了一行小字，**看上去就是「点了没反应」**。
+   * 而作者报的正是这句话。失败要出现在**动作发生的地方**（规格 7.5）。
+   */
+  switchProblem?: string | undefined
   /**
    * 这个会话的 agent 该怎么称呼（`ds-chat` → `DeepSeek`）。
    *
@@ -840,30 +918,27 @@ export function ConversationView({
            * pill **不跟着 `disabled` 走**：会话结束时输入框该禁，
            * 但"用另一个 agent 开一个新的"恰恰是那时最该给的出路。
            */}
+          {/* 换模型／换服务没成的原因，就摆在按下去的那个地方 */}
+          {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}
           <div className="composer-controls">
-            {models && onPickModel ? (
-              <ModelPill choices={models} current={model} busy={busy} onPick={onPickModel} />
-            ) : null}
+            {/**
+              * **先厂家，后模型**（2026-08-11，作者：*「可以先放模型厂家，
+              * 后选择模型是什么」*）。读的顺序就是选的顺序。
+              */}
             {agents && onNewSession ? (
-              /**
-               * **触发器仍然显示这个会话的 agent**（`ds-chat` → `DeepSeek`）。
-               *
-               * 2026-08-11 一度改成写死「新会话」，理由是作者把它读成了
-               * 「当前是谁」的显示器、点它换 Kimi 结果开了个新对话。
-               * **改回来了**：Hermes 那条 *"Display follows THIS surface's
-               * SessionView"* 是真的有用（并排两个会话各显示各的）。
-               *
-               * 歧义改在别处消：**旁边的模型 pill 现在列出所有配好的服务**，
-               * 并写着「就地换，不会新建对话」——
-               * 那条路存在之后，这颗 pill 的「新建会话，用：」就不再是唯一出路。
-               */
               <AgentPill
                 agents={agents}
                 current={session.agentId}
+                {...(currentServiceLabel ? { currentLabel: currentServiceLabel } : {})}
                 kind={session.kind}
                 label={agentLabel}
+                {...(services ? { services } : {})}
+                {...(onSwitchService ? { onSwitchService } : {})}
                 onPick={onNewSession}
               />
+            ) : null}
+            {models && onPickModel ? (
+              <ModelPill choices={models} current={model} busy={busy} onPick={onPickModel} />
             ) : null}
             <Button type="submit" variant="primary" disabled={disabled ?? false}>
               发送
@@ -983,19 +1058,18 @@ function Thinking() {
   )
 }
 
-/** 数字加千位分隔。**不缩写成 1.2k**——token 数是要拿来对账的 */
-const 千位 = (n: number) => n.toLocaleString("en-US")
-
 function TurnUsage({
   usage,
 }: {
   usage: { input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined }
 }) {
   const 段: string[] = []
-  if (usage.input !== undefined) 段.push(`输入 ${千位(usage.input)}`)
-  if (usage.output !== undefined) 段.push(`输出 ${千位(usage.output)}`)
+  // **k tokens**（作者 2026-08-11）：一屏里挤着三个宽度不一的数最难扫。
+  // 规则见 `formatTokens`——1000 以下仍然原样，不把已知的精度扔掉
+  if (usage.input !== undefined) 段.push(`输入 ${formatTokens(usage.input)}`)
+  if (usage.output !== undefined) 段.push(`输出 ${formatTokens(usage.output)}`)
   // **缓存命中单独说**：它与输入 token 计费不同，混进去会让账对不上
-  if (usage.cacheRead !== undefined) 段.push(`缓存 ${千位(usage.cacheRead)}`)
+  if (usage.cacheRead !== undefined) 段.push(`缓存 ${formatTokens(usage.cacheRead)}`)
   if (段.length === 0) return null
   return <p className="turn-usage">{段.join(" · ")} token</p>
 }

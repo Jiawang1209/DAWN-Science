@@ -615,6 +615,22 @@ export class NativeRuntime implements AgentRuntime {
       .finally(() => {
         s.inFlight -= 1
         /**
+         * **这一轮到此为止——不管是好是坏**（2026-08-11 修）。
+         *
+         * pi 正常跑完时会自己发 `turn_end`；**但 `prompt()` 直接 reject 的那条路
+         * 上一个都没有**（例如 `No API key found for <provider>`——它在发请求之前
+         * 就抛了）。于是那一轮**永远开着**，症状有三层，一层比一层难猜：
+         *   1. 「正在思考」的动图一直转
+         *   2. 界面据「有没有开着的 agent 轮次」算 `busy`，于是它永远为真
+         *   3. **`busy` 为真时模型菜单整个是禁用的**——
+         *      作者报的「对话过程中，依旧不能切换模型」就是这一层。
+         *      而它表现为「点了没反应」，与真正的原因（上一轮没收尾）毫无关系。
+         *
+         * 重复发一次是安全的：`turn_end` 在中枢那边是幂等的（关一个已经关上的轮次
+         * 什么都不做），而漏发一次的代价是上面那三层。
+         */
+        this.emit({ kind: "turn_end", sessionId })
+        /**
          * **成本：我们知道 token，不知道钱。**
          *
          * provider 报的是 token（`s.lastUsage`，上下文栏用的就是它），

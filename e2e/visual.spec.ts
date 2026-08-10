@@ -101,7 +101,9 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
       // 只等前者会在数据到达之前截图 —— 这条正是第一次跑出来的假报警
       // 2026-08-10 设置改成 Section > Row > Control：凭证不再是一条 `.cred`，
       // 而是一行里的一个表单。**等的还是同一件事**——凭证数据到了没有
-      await expect(page.locator(".set-control .cred-form")).toHaveCount(1)
+      // 折叠里还有几十个（pi 认识的其余 provider），所以不数总数——
+      // **等的还是同一件事**：凭证数据到了没有
+      await expect(page.locator(".set-control .cred-form").first()).toBeVisible()
     },
   },
   {
@@ -184,7 +186,15 @@ for (const theme of ["亮色", "暗色"] as const) {
          * 而一个每分钟红一次的基线，一周之内就会被人条件反射地 update 掉，
          * 那时它什么都不再证明。与 `.dur` 是同一条理由。
          */
-        mask: [page.locator(".dur"), page.locator(".session-list .sess .sub")],
+        mask: [
+          page.locator(".dur"),
+          page.locator(".session-list .sess .sub"),
+          /**
+           * **那个数字来自 pi 的模型目录**（「其余 pi 认识的 provider（39）」），
+           * 目录一更新它就变。和时钟是同一类：**外面世界的东西不进逐像素基线**。
+           */
+          page.locator(".more-providers > summary"),
+        ],
         /**
          * **逐像素必须完全一致**（默认是 0.2 的色距容差）。
          *

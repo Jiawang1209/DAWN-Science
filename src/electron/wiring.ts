@@ -218,7 +218,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
     invalidateCredentials: (providerId) => piCredentials.invalidate(providerId),
     // 模型选择器要问「这个 provider 能用哪些模型」——那份目录只有运行时知道
-    models: { available: (providerId) => nativeRuntime.availableModels(providerId) },
+    models: {
+      available: (providerId) => nativeRuntime.availableModels(providerId),
+      // **「我能配谁」的来源是 pi 的模型目录**，不是一份手打的清单
+      known: () => nativeRuntime.knownProviders(),
+    },
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
     ...(opts.openPath ? { openPath: opts.openPath } : {}),
   })

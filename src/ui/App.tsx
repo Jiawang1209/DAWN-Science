@@ -437,6 +437,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [confirming, setConfirming] = useState<ConfirmRequest | undefined>(undefined)
 
   /**
+   * pi 认识的全部 provider（2026-08-10）。**「我能配谁」，不是「我配过谁」**。
+   * 只在打开设置时取一次——它不会变，而进设置之前没人看得见它。
+   */
+  const [knownProviders, setKnownProviders] = useState<{ providers: string[]; problem?: string }>({
+    providers: [],
+  })
+  useEffect(() => {
+    if (view !== "settings") return
+    client
+      .get<{ providers: string[]; problem?: string }>("listKnownProviders", {})
+      .then(setKnownProviders)
+      .catch(fail)
+  }, [view, client])
+
+  /**
    * 删会话。**账本不动**——那句话要在按下之前就在屏幕上，
    * 否则「删除」会被读成「历史也没了」。
    */
@@ -710,6 +725,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               />
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}
+                known={knownProviders.providers}
+                {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
                 credentials={creds}
                 onSet={(id, secret) =>
                   client.get("setCredential", { providerId: id, secret }).then(() => loadCredentials(client)).catch(fail)

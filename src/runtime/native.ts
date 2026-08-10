@@ -579,6 +579,22 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /**
+   * pi 认识的全部 provider（2026-08-10）。
+   *
+   * 作者：*「配置里面目前只有一个 deepseek，pi-ai 里面不是可以兼容很多吗？
+   * 应该都加进去。」* 此前凭证界面只列 `providers.yaml` 里声明过的那几个——
+   * **那是「我配过谁」，不是「我能配谁」**，两者差着 38 个。
+   *
+   * **来源是 pi 的模型目录，不是一份我手打的清单。**
+   * 手打的清单会在 pi 更新目录的第二天就开始撒谎，而且没有人会发现——
+   * 界面上少一个 provider 不报错，它只是**不存在**。
+   */
+  async knownProviders(): Promise<string[]> {
+    const rt = await this.runtime()
+    return [...new Set(rt.getModels().map((m) => m.provider))].sort()
+  }
+
+  /**
    * 会话中途换模型（①-B″ · U2）。
    *
    * **能力由 Spike E 在真链路上验过**：`flash → deep`，且下一次请求确实打到新模型

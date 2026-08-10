@@ -299,17 +299,41 @@ export interface CredentialState {
 
 export function SettingsPanel({
   providers,
+  known,
+  knownProblem,
   credentials,
   onSet,
   onDelete,
 }: {
   /** 本配置实际用到的 provider id（pi 的 provider，如 deepseek / anthropic） */
   providers: string[]
+  /**
+   * pi 认识的全部 provider（2026-08-10）。
+   *
+   * 作者：*「配置里面目前只有一个 deepseek，pi-ai 里面不是可以兼容很多吗？
+   * 应该都加进去。」* **`providers` 是「我配过谁」，这个是「我能配谁」**。
+   */
+  known: string[]
+  /** 目录取不到时的原因。**不返回一个短清单**——缺失不等于不支持 */
+  knownProblem?: string | undefined
   credentials: CredentialState
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
 }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [filter, setFilter] = useState("")
+
+  /**
+   * **配置在用的与已经填过 key 的置顶**，其余收进折叠。
+   *
+   * 39 个 provider 平铺开来，人要找的那一个会淹在里面；
+   * 而只列 1 个又等于告诉他「只能用这一个」。**分两层，两个问题都躲开。**
+   */
+  const 置顶 = [...new Set([...providers, ...credentials.configured])].sort()
+  const 其余 = known.filter((id) => !置顶.includes(id))
+  const 命中 = filter.trim()
+    ? 其余.filter((id) => id.toLowerCase().includes(filter.trim().toLowerCase()))
+    : 其余
 
   return (
     <Section
@@ -323,10 +347,10 @@ export function SettingsPanel({
         )
       }
     >
-      {providers.length === 0 ? (
+      {置顶.length === 0 ? (
         <p className="empty">providers.yaml 里还没有声明任何 native agent</p>
       ) : (
-        providers.map((id) => {
+        置顶.map((id) => {
           const isSet = credentials.configured.includes(id)
           return (
             <Row
@@ -335,39 +359,118 @@ export function SettingsPanel({
               htmlFor={`cred-${id}`}
               desc={isSet ? "已配置" : "未配置"}
             >
-              <form
-                className="cred-form"
-                onSubmit={(e) => {
-                  e.preventDefault()
+              <ProviderKeyForm
+                id={id}
+                isSet={isSet}
+                value={drafts[id] ?? ""}
+                onChange={(v) => setDrafts((d) => ({ ...d, [id]: v }))}
+                onSubmit={() => {
                   const v = (drafts[id] ?? "").trim()
                   if (!v) return
                   onSet(id, v)
                   setDrafts((d) => ({ ...d, [id]: "" }))
                 }}
-              >
-                <input
-                  id={`cred-${id}`}
-                  className="control"
-                  type="password"
-                  aria-label={`${id} 的 API key`}
-                  value={drafts[id] ?? ""}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [id]: e.target.value }))}
-                  // 已配置时也不回显原值——界面拿不到它，也不该拿到
-                  placeholder={isSet ? "已配置（输入新值可替换）" : "粘贴 API key"}
-                />
-                <Button type="submit" variant="primary" size="sm">
-                  保存
-                </Button>
-                {isSet ? (
-                  <Button variant="text" size="sm" onClick={() => onDelete(id)}>
-                    删除
-                  </Button>
-                ) : null}
-              </form>
+                onDelete={() => onDelete(id)}
+              />
             </Row>
           )
         })
       )}
+
+      {/**
+        * 其余的 provider。**pi 认识它们，所以这里能填 key**——
+        * 而它们不在 providers.yaml 里，所以还不能直接建会话。
+        * 这句差别要说出来，否则填完 key 发现建不了会话会以为是坏了。
+        */}
+      {knownProblem ? (
+        <p className="caveat">⚠ 取不到 pi 的模型目录，所以列不出其余的 provider：{knownProblem}</p>
+      ) : 其余.length > 0 ? (
+        <details className="more-providers">
+          <summary>其余 pi 认识的 provider（{其余.length}）</summary>
+          <p className="hint">
+            这些可以先把 key 填好；要用它们建会话，还需要在 providers.yaml 里声明一个 agent。
+          </p>
+          <input
+            className="control"
+            value={filter}
+            placeholder="筛选，例如 anthropic"
+            aria-label="筛选 provider"
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          {命中.length === 0 ? (
+            <p className="hint">没有匹配「{filter}」的 provider</p>
+          ) : (
+            <div className="set-rows">
+              {命中.map((id) => (
+                <Row key={id} name={id} htmlFor={`cred-${id}`} desc={credentials.configured.includes(id) ? "已配置" : undefined}>
+                  <ProviderKeyForm
+                    id={id}
+                    isSet={credentials.configured.includes(id)}
+                    value={drafts[id] ?? ""}
+                    onChange={(v) => setDrafts((d) => ({ ...d, [id]: v }))}
+                    onSubmit={() => {
+                      const v = (drafts[id] ?? "").trim()
+                      if (!v) return
+                      onSet(id, v)
+                      setDrafts((d) => ({ ...d, [id]: "" }))
+                    }}
+                    onDelete={() => onDelete(id)}
+                  />
+                </Row>
+              ))}
+            </div>
+          )}
+        </details>
+      ) : null}
     </Section>
+  )
+}
+
+/**
+ * 一个 provider 的 key 输入。**抽出来是因为它现在有两个调用点**
+ * （置顶的与折叠里的），而两份复制粘贴的表单迟早会有一份忘了改。
+ */
+function ProviderKeyForm({
+  id,
+  isSet,
+  value,
+  onChange,
+  onSubmit,
+  onDelete,
+}: {
+  id: string
+  isSet: boolean
+  value: string
+  onChange: (v: string) => void
+  onSubmit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <form
+      className="cred-form"
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSubmit()
+      }}
+    >
+      <input
+        id={`cred-${id}`}
+        className="control"
+        type="password"
+        aria-label={`${id} 的 API key`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        // 已配置时也不回显原值——界面拿不到它，也不该拿到
+        placeholder={isSet ? "已配置（输入新值可替换）" : "粘贴 API key"}
+      />
+      <Button type="submit" variant="primary" size="sm">
+        保存
+      </Button>
+      {isSet ? (
+        <Button variant="text" size="sm" onClick={onDelete}>
+          删除
+        </Button>
+      ) : null}
+    </form>
   )
 }

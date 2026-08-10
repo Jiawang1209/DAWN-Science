@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("33 个操作齐全（… + 文件 2 + 外部打开 1 + 删除 3）", () => {
+  it("34 个操作齐全（… + 文件 2 + 外部打开 1 + 删除 3 + provider 目录 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
@@ -26,6 +26,7 @@ describe("操作注册表", () => {
         "listCredentials",
         "listDirectory",
         "listKernels",
+        "listKnownProviders",
         "listVariables",
         "setCredential",
         "setInterpreter",

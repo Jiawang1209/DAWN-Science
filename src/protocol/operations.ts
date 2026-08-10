@@ -653,6 +653,24 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * pi 认识的全部 provider（2026-08-10）。
+   *
+   * **与 `getProviders` 不是一回事**：那一份是「providers.yaml 里声明过的 agent
+   * 各自用了哪个 provider」——**「我配过谁」**；这一份是 pi 的模型目录里出现过的
+   * 全部 provider——**「我能配谁」**。作者机器上前者是 1，后者是 39。
+   *
+   * 目录取不到时**如实说取不到**（`problem`），不返回一个短清单——
+   * **缺失不等于不支持**，而一个悄悄变短的清单没有任何人会发现。
+   */
+  listKnownProviders: {
+    request: z.object({}).strict(),
+    response: z
+      .object({ providers: z.array(z.string().min(1)), problem: z.string().optional() })
+      .strict(),
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

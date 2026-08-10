@@ -69,8 +69,10 @@
  *   **缺省 = 还没说过话**，不是空标题。
  * 2.13（2026-08-10）：新增 `deleteSession` / `deleteProject` / `deletionImpact`。
  *   纯新增。**`deleteProject` 不碰磁盘上的文件夹**——它移除的是工作台里的记录。
+ * 2.14（2026-08-10）：新增 `listKnownProviders`。纯新增。
+ *   **与 `getProviders` 不是一回事**：那是「我配过谁」，这是「我能配谁」。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.13"
+export const WORKBENCH_PROTOCOL_VERSION = "2.14"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -70,7 +70,11 @@ export interface WorkbenchBackendOptions {
    * **不给则 `available` 缺省**——缺省的含义是「不知道」，不是「没有」。
    * 界面因此不会把「后端没接这个端口」显示成「这个 provider 一个模型都没有」。
    */
-  models?: { available(providerId: string): Promise<string[]> }
+  models?: {
+    available(providerId: string): Promise<string[]>
+    /** pi 认识的全部 provider。**「我能配谁」**，与 `getProviders` 的「我配过谁」不同 */
+    known?(): Promise<string[]>
+  }
   /**
    * 去哪找外部 CLI 自己的配置（codex 的 `models_cache.json`）。
    *
@@ -459,6 +463,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const err = await openPath(abs)
       // Electron 的 `shell.openPath` 成功时返回空串，失败时返回原因
       return err ? { problem: err } : {}
+    },
+
+    listKnownProviders: async () => {
+      if (!models?.known) return { providers: [], problem: "本次运行没有装配模型目录" }
+      try {
+        return { providers: await models.known() }
+      } catch (err) {
+        /**
+         * **取不到就说取不到。** 返回一个空清单会被读成「pi 一个都不支持」，
+         * 而实情是「我们没问到」（规格 7.5：失败必须出声）。
+         */
+        return { providers: [], problem: err instanceof Error ? err.message : String(err) }
+      }
     },
 
     deleteSession: async ({ sessionId }) => {

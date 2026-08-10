@@ -1322,3 +1322,21 @@ pre {
 .danger-zone .panel-title {
   color: var(--dawn-danger);
 }
+
+/* 其余 pi 认识的 provider：折叠 + 筛选（2026-08-10） */
+.more-providers {
+  margin-top: var(--dawn-space-3);
+  padding-top: var(--dawn-space-3);
+  border-top: 1px solid var(--dawn-stroke-4);
+}
+
+.more-providers > summary {
+  cursor: pointer;
+  color: var(--dawn-text-2);
+  font-size: var(--dawn-ui-size);
+}
+
+.more-providers > .control {
+  width: 100%;
+  margin: var(--dawn-space-2) 0;
+}

@@ -10,7 +10,7 @@ import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 import { launchKernelChannel } from "../../src/kernel/channel.js"
-import { PREVIEW_MAX, parseVariables, probeExpressionFor } from "../../src/kernel/variables.js"
+import { PREVIEW_MAX, parseVariables, parseVariablesFor, probeExpressionFor } from "../../src/kernel/variables.js"
 
 const KERNEL = "dawn-spike"
 const 有 = existsSync(join(homedir(), "Library", "Jupyter", "kernels", KERNEL))
@@ -89,8 +89,64 @@ describe.skipIf(!有)("变量内省", () => {
     expect(seen.filter((t) => 产出型.includes(t))).toEqual([])
   }, 60_000)
 
-  it("**R 暂不支持时如实回 undefined** —— 空数组会被读成「没有变量」", () => {
-    expect(probeExpressionFor("R")).toBeUndefined()
+  it("**认不出的语言如实回 undefined** —— 空数组会被读成「没有变量」", () => {
+    // R 从 2026-08-10 起支持了（走十六进制那条），所以这里换成别的语言
+    expect(probeExpressionFor("julia")).toBeUndefined()
     expect(probeExpressionFor(undefined)).toBeUndefined()
   })
+})
+
+/**
+ * R 那一半（欠账 2，2026-08-10 补）。
+ *
+ * **编码方式与 Python 不同，所以必须单独验**：`jsonlite` 不是 base R 的一部分，
+ * 假定它装了就是在猜用户的环境；而 base R 里手搓 JSON 的转义风险大于收益。
+ * 走的是 `charToRaw` 的**十六进制**——之后任何字节都安全。
+ */
+describe.skipIf(!existsSync(join(homedir(), "Library", "Jupyter", "kernels", "ir")))("R 的变量内省", () => {
+  let rch: Awaited<ReturnType<typeof launchKernelChannel>>
+  beforeAll(async () => {
+    rch = await launchKernelChannel({ kernelName: "ir", handshakeTimeoutMs: 30_000 })
+  }, 60_000)
+  afterAll(async () => {
+    await rch?.close()
+  })
+
+  async function rvars(setup: string) {
+    rch.execute(setup)
+    await new Promise<void>((res) => {
+      const off = rch.on("status", (m) => {
+        if (m.message.content.execution_state === "idle") {
+          off()
+          res()
+        }
+      })
+    })
+    return parseVariablesFor("R", await rch.probe(probeExpressionFor("R")!))
+  }
+
+  it("**认得出变量、类型与长度**", async () => {
+    const v = await rvars("s14_x <- 42L; s14_v <- c(1,2,3)")
+    expect(v).toBeDefined()
+    const by = Object.fromEntries(v!.map((x) => [x.name, x]))
+    expect(by.s14_x).toMatchObject({ type: "integer", dimensions: "1" })
+    expect(by.s14_v).toMatchObject({ type: "numeric", dimensions: "3" })
+  }, 90_000)
+
+  it("**引号、反斜杠、换行都不破坏解析** —— 这正是选十六进制的理由", async () => {
+    const v = await rvars('s14_s <- "he said \\"hi\\"\\nand \\\\ too"')
+    const s = v!.find((x) => x.name === "s14_s")!
+    expect(s.type).toBe("character")
+    expect(s.preview).toContain("he said")
+  }, 90_000)
+
+  it("**函数不列** —— 它不是数据", async () => {
+    const v = await rvars("s14_fn <- function() 1")
+    expect(v!.map((x) => x.name)).not.toContain("s14_fn")
+  }, 90_000)
+
+  it("矩阵给的是维度，不是长度", async () => {
+    const v = await rvars("s14_m <- matrix(1:6, nrow = 2)")
+    expect(v!.find((x) => x.name === "s14_m")!.dimensions).toBe("2x3")
+  }, 90_000)
 })

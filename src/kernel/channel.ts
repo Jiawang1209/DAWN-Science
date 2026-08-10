@@ -111,6 +111,14 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
   /** 握手完成前攒着的消息。**不是丢掉，是攒着** */
   const queued: JupyterMessage[] = []
   const listeners = new Map<string, Set<(m: TaggedMessage) => void>>()
+  /**
+   * 内省请求的 msg_id。**这些的输出永远不发给订阅者。**
+   *
+   * 这条保证放在适配器里，不放在调用方——放在调用方就意味着
+   * **每加一个订阅者都要记得过滤一次**，而漏一次的表现是
+   * 用户在 Console 里看见一堆自己没写过的代码在刷屏。
+   */
+  const internal = new Set<string>()
 
   const provenance = (): Provenance => {
     const runId = opts.runIdOf?.()
@@ -125,6 +133,9 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
   const emit = (raw: unknown): void => {
     const message = raw as JupyterMessage
     if (!message?.header?.msg_type) return // 不是协议消息，忽略
+    // **内省的产物一律不外发**——见 `internal` 的说明
+    const parentId = message.parent_header?.msg_id
+    if (parentId && internal.has(parentId)) return
     const tagged: TaggedMessage = { message, provenance: provenance() }
     for (const key of [message.header.msg_type, "*"]) {
       const set = listeners.get(key)
@@ -220,23 +231,71 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
    */
   const probe = async (expression: string, timeoutMs = 10_000): Promise<string | undefined> => {
     try {
-      const msg = opts.makeExecute("", {
+      /**
+       * **两条路，因为内核的能力不一样。**
+       *
+       * 首选 `user_expressions`：结果随 `execute_reply` 回来，**根本不上 iopub**。
+       * 但 2026-08-10 实测：**IRkernel 不支持它**——连 `1+1` 都回不出东西，
+       * 而 ipykernel 回 `"2"`。协议里 `user_expressions` 本来就是可选的。
+       *
+       * 所以退到第二条：发一条正常的 `execute_request`（`store_history: false`，
+       * 不进历史、不推高执行计数），**再由适配器保证它的输出不外发**
+       * （见 `internal`）。**这不是静默回退**——两条路都是「问一个值」，
+       * 换的只是取回结果的通道，而「不弄脏 Console」这条保证一样成立。
+       */
+      const viaUserExpr = opts.makeExecute("", {
         silent: true,
-        // **协议里就是 snake_case**，不改写成驼峰——改写等于给自己造一层要记的映射
         store_history: false,
         user_expressions: { v: expression },
       })
-      const reply = await request(msg, { replyType: "execute_reply", timeoutMs })
+      const reply = await request(viaUserExpr, { replyType: "execute_reply", timeoutMs })
       const ue = (reply.message.content as { user_expressions?: Record<string, unknown> }).user_expressions
       const v = ue?.v as { status?: string; data?: Record<string, unknown> } | undefined
-      // **内核说失败就是失败**，不把错误信息当成值返回
-      if (!v || v.status !== "ok") return undefined
-      const text = v.data?.["text/plain"]
-      return typeof text === "string" ? text : undefined
+      if (v?.status === "ok") {
+        const text = v.data?.["text/plain"]
+        if (typeof text === "string") return text
+      }
+      return await probeViaExecute(expression, timeoutMs)
     } catch {
       return undefined
     }
   }
+
+  /** 退路：普通执行 + 收 iopub，输出由 `internal` 挡住不外发 */
+  const probeViaExecute = (expression: string, timeoutMs: number): Promise<string | undefined> =>
+    new Promise((resolve) => {
+      const msg = opts.makeExecute(expression, { store_history: false })
+      const id = msg.header.msg_id
+      internal.add(id)
+      let text = ""
+      const collect = (raw: unknown): void => {
+        const m = raw as JupyterMessage
+        if (m?.parent_header?.msg_id !== id) return
+        const t = m.header.msg_type
+        const c = m.content as Record<string, unknown>
+        if (t === "execute_result" || t === "display_data") {
+          const d = (c.data ?? {}) as Record<string, unknown>
+          if (typeof d["text/plain"] === "string") text += d["text/plain"]
+        } else if (t === "stream" && typeof c.text === "string") {
+          text += c.text
+        } else if (t === "status" && c.execution_state === "idle") {
+          done(text.trim() || undefined)
+        }
+      }
+      /** **只收一次**：收完要退订并把 id 从 internal 里移走，否则集合会无限长 */
+      const sub2 = opts.channel.subscribe(collect)
+      const timer = setTimeout(() => done(undefined), timeoutMs)
+      let settled = false
+      function done(v: string | undefined): void {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        sub2.unsubscribe()
+        internal.delete(id)
+        resolve(v)
+      }
+      send(msg)
+    })
 
   /** 执行一段代码。**消息在这里造**——见 `types.ts` 里那段说明 */
   const execute = (code: string): string => {

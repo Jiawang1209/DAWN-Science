@@ -85,3 +85,58 @@ test.describe("内核会话", () => {
 
   })
 })
+
+/**
+ * ── R 走完同一条链（欠账 1，2026-08-10 补）─────────────────────────
+ *
+ * ②-A 收口时明写在案：**R 只验到通道层**——`interrupt` / iopub /
+ * `execute_reply` 都用真 `ir` 内核验过，但 `KernelRuntime` → 界面
+ * 这条 e2e 只跑了 Python。
+ *
+ * **风险在接缝不在协议**：路线图押的是「一次实现，通吃多语言」，
+ * 那句话要么被测试盯着，要么迟早变成「只有 Python 能用」。
+ */
+const R_KERNEL = "ir"
+const 有R = existsSync(join(homedir(), "Library", "Jupyter", "kernels", R_KERNEL))
+
+test.describe("R 内核会话", () => {
+  test.use({
+    dawnOptions: {
+      providersYaml: `agents:\n  r:\n    kind: kernel\n    command: ${R_KERNEL}\n    capabilities: [exec]\n`,
+      realKernels: true,
+    },
+  })
+
+  test.skip(!有R, `本机没有 ${R_KERNEL} kernelspec`)
+
+  test("**同一条代码路径**：执行、报错、活会话、变量面板", async ({ dawn }) => {
+    const { page } = dawn
+    await expect(page.locator(".app-shell")).toBeVisible()
+    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await page.getByRole("button", { name: /新建会话/ }).click()
+    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+
+    const 发 = async (code: string) => {
+      await page.getByPlaceholder(/回车发送/).fill(code)
+      await page.getByRole("button", { name: "发送", exact: true }).click()
+    }
+
+    await 发('cat("E2E_R_OK", 40 + 2, "\\n")')
+    await expect(page.locator(".kout-text").last()).toContainText("E2E_R_OK 42", { timeout: 60_000 })
+
+    // **报错是 error 条目**，不是一段红字文本
+    await 发('stop("r e2e boom")')
+    await expect(page.locator(".kout-error .kout-ename")).toBeVisible({ timeout: 60_000 })
+
+    // **判据：同一个活会话** —— 前面定义的变量后面读得到
+    await 发("e2e_r <- 7")
+    await 发('cat("V =", e2e_r, "\\n")')
+    await expect(page.locator(".kout-text").last()).toContainText("V = 7", { timeout: 60_000 })
+
+    // **变量面板对 R 也有** —— 它走的是与 Python 不同的编码，所以必须单独验
+    await page.getByRole("button", { name: "项目概览" }).click()
+    const panel = page.locator(".panel", { has: page.getByText("变量", { exact: true }) })
+    await expect(panel.locator(".var .name", { hasText: "e2e_r" })).toBeVisible({ timeout: 60_000 })
+    await expect(panel.locator(".var", { hasText: "e2e_r" })).toContainText("numeric")
+  })
+})

@@ -25,7 +25,7 @@
 import { launchKernelChannel } from "../kernel/channel.js"
 import { translateOutput } from "../kernel/outputs.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
-import { parseVariables, probeExpressionFor, type VariableSummary } from "../kernel/variables.js"
+import { parseVariablesFor, probeExpressionFor, type VariableSummary } from "../kernel/variables.js"
 import type { KernelChannel } from "../kernel/types.js"
 import { UserFacingError } from "../errors.js"
 import type { AgentEvent, AgentRuntime, EventSink, SessionHandle, SessionId, SessionSpec } from "./types.js"
@@ -159,10 +159,11 @@ export class KernelRuntime implements AgentRuntime {
     if (!expr) {
       return {
         supported: false,
-        reason: `变量面板暂时只支持 Python 内核（这个内核的语言是 ${live.language ?? "未声明"}）`,
+        reason: `变量面板暂时只支持 Python 与 R 内核（这个内核的语言是 ${live.language ?? "未声明"}）`,
       }
     }
-    const parsed = parseVariables(await live.channel.probe(expr))
+    // **按语言挑解析器**：Python 走 base64+JSON，R 走十六进制+分隔符
+    const parsed = parseVariablesFor(live.language, await live.channel.probe(expr))
     if (!parsed) {
       // **问了但没问出来**，与「不支持」和「真没有」都不同
       return { supported: false, reason: "问了内核，但没拿到能解析的回答" }

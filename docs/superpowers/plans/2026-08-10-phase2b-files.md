@@ -75,19 +75,39 @@ png 是 matplotlib 写出来的，不在任何一条消息里。
 | **F2** | 协议 `listDirectory` / `readFile` + mock 分支 | 界面能拿到目录与内容 |
 | **F3** | 预览面：图 / 文本 / CSV 表格 / 其它（说清是什么、多大） | png 看得见；文本超上界时说清省了多少 |
 | **F4** | 目录树 + 新视图；**产出栏文件名可点** | 能翻整个项目；从产出直接点进预览 |
-| **F5** | PDF | 见 §5——**它单独一批，因为它要动 CSP** |
+| **F5** | PDF ✅ | 见 §5。**建 CSP + blob `<embed>`**；`frame-src` 是踩出来的 |
 
-## 5. PDF 单独一批的理由
+## 5. PDF 单独一批的理由 —— 以及这一节此前写错的地方
+
+> **更正（2026-08-10，做 F5 时发现）**：这一节原本写着*「本项目的 CSP 是严格的
+> （这正是它安全的原因之一）」*。**那句话是错的——一条 CSP 都没有。**
+> `nodeIntegration: false` / `contextIsolation: true` / `sandbox: true` 都在，
+> 唯独少了这一层。所以 F5 的「要动 CSP」，实际含义是**先把 CSP 建起来**。
 
 Chromium 自带 PDF viewer，但要用它得让渲染进程加载一个 `file://` 或 `blob:` 的
-`<embed>`／`<iframe>`——**而本项目的 CSP 是严格的**（这正是它安全的原因之一）。
+`<embed>`／`<iframe>`。
 
 三条路，代价差很远：
 1. **系统程序打开**（`shell.openPath`）：零风险，但人离开了应用
-2. **blob: + `<embed>`**：要放宽 `object-src`
-3. **自定义协议**（`dawn-file://`）：最干净，但要在主进程注册 scheme 并做同样的路径守卫
+2. **blob: + `<embed>`**：要在 CSP 里放行 `object-src` 与 `frame-src`
+3. **自定义协议**（`dawn-file://`）：要在主进程注册 scheme 并**再写一遍路径守卫**
 
-**F1–F4 先不碰 PDF**，先给「用系统程序打开」。等前四批稳了再单独决定。
+### 定案：走第 2 条
+
+第 3 条听起来「最干净」，但它会让**路径守卫有两个家**——而 F1 的全部重量
+就在那一份守卫上（§3）。两份守卫迟早有一份落后，那时先落后的那一份就是洞。
+
+blob 用的是**渲染进程已经拿到的字节**（经 `readFile` 走同一个守卫取回），
+不新增任何读取能力。CSP 里因此只多两条 `blob:`。
+
+### `frame-src` 是踩出来的
+
+只写 `object-src blob:` 时，Chromium 报
+*「Framing 'blob:…' violates … "default-src 'none'"」*——
+**它把 PDF 的 `<embed>` 当作 framing**，自带阅读器是在子框架里打开文档的。
+少了 `frame-src` 的现象是：`<embed>` 在、`src` 是 `blob:`、**里面一片白**，
+一个断言都不会红。`e2e/csp.spec.ts` 与 `files.spec.ts` 里那两条盯 console 的
+断言就是为这种失败写的。
 
 ---
 

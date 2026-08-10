@@ -24,6 +24,11 @@ import { UserFacingError } from "../errors.js"
 export const TEXT_MAX_BYTES = 512 * 1024
 /** 图片上界。10 MB 放得下相当大的 png；再大就该问「这张图是不是出错了」 */
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024
+/**
+ * PDF 上界。**比图片宽**——R 的 `pdf()` 出的图往往一个文件装好几页，
+ * 而 25 MB 之外基本就不是「看一眼结果」了。
+ */
+export const PDF_MAX_BYTES = 25 * 1024 * 1024
 /** 一层目录最多列这么多。**超了要说省了多少**，不是悄悄截断 */
 export const DIR_MAX_ENTRIES = 1000
 
@@ -56,6 +61,12 @@ export interface DirListing {
 export type FileContent =
   | { kind: "text"; mediaType: string; text: string; bytes: number; truncated?: { originalBytes: number; keptBytes: number } }
   | { kind: "image"; mediaType: string; base64: string; bytes: number }
+  /**
+   * PDF（②-B · F5）。**与图片分开一档**：它在界面上走的是完全不同的一条路
+   * （blob + `<embed>`，交给 Chromium 自带的阅读器），
+   * 混进 `image` 会让界面拿 `<img>` 去画一个 PDF——那是一个空框。
+   */
+  | { kind: "pdf"; mediaType: string; base64: string; bytes: number }
   /** 认不出或太大。**说清是什么、多大**，而不是给一片空白 */
   | { kind: "other"; mediaType: string; bytes: number; reason: string }
 
@@ -189,16 +200,26 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
     return { kind: "image", mediaType, base64: readFileSync(file).toString("base64"), bytes }
   }
 
+  if (mediaType === "application/pdf") {
+    if (bytes > PDF_MAX_BYTES) {
+      return {
+        kind: "other",
+        mediaType,
+        bytes,
+        // **说清多大**：人据此判断是自己写错了还是它确实该这么大
+        reason: `PDF 有 ${Math.round(bytes / 1024 / 1024)} MB，超过 ${PDF_MAX_BYTES / 1024 / 1024} MB 没有显示，用系统程序打开`,
+      }
+    }
+    return { kind: "pdf", mediaType, base64: readFileSync(file).toString("base64"), bytes }
+  }
+
   const 是文本 = mediaType.startsWith("text/") || mediaType === "application/json"
   if (!是文本) {
     return {
       kind: "other",
       mediaType,
       bytes,
-      reason:
-        mediaType === "application/pdf"
-          ? "PDF 暂时不在应用内渲染，用系统程序打开"
-          : `这是 ${mediaType}，暂时不能在应用里预览`,
+      reason: `这是 ${mediaType}，暂时不能在应用里预览`,
     }
   }
 

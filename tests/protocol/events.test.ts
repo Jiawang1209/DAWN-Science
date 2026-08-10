@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 2.14", () => {
+describe("协议版本 · 2.15", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,6 +176,10 @@ describe("协议版本 · 2.14", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
+   * **2.15（2026-08-10）：`readFile` 新增 `pdf` 一档（②-B · F5）。**
+   *   **与 `image` 分开**：它在界面上走 blob + `<embed>`，交给 Chromium 自带的阅读器；
+   *   混进 `image` 会让界面拿 `<img>` 去画 PDF——那是一个空框。
+   *
    * **2.14（2026-08-10）：新增 `listKnownProviders`。**
    *   **与 `getProviders` 不是一回事**：那是「我配过谁」（providers.yaml 里声明过的），
    *   这是「我能配谁」（pi 的模型目录里出现过的）。作者机器上前者 1、后者 39。
@@ -222,7 +226,7 @@ describe("协议版本 · 2.14", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("新增操作、新增条目、新增 kind 都只升 minor", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.14")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.15")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

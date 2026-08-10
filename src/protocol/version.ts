@@ -71,8 +71,11 @@
  *   纯新增。**`deleteProject` 不碰磁盘上的文件夹**——它移除的是工作台里的记录。
  * 2.14（2026-08-10）：新增 `listKnownProviders`。纯新增。
  *   **与 `getProviders` 不是一回事**：那是「我配过谁」，这是「我能配谁」。
+ * 2.15（2026-08-10）：`readFile` 新增 `pdf` 一档（②-B · F5）。
+ *   **与 `image` 分开**：它在界面上走 blob + `<embed>`，交给 Chromium 自带的阅读器；
+ *   混进 `image` 会让界面拿 `<img>` 去画 PDF——那是一个空框。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.14"
+export const WORKBENCH_PROTOCOL_VERSION = "2.15"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

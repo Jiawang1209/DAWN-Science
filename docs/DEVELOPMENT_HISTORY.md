@@ -43,6 +43,44 @@
 
 ## 变更日志
 
+### 2026-08-10 — 建立 CSP，并让 PDF 在应用里就能看（②-B · F5）
+
+- **Type**: feat
+- **Motivation**: 按计划推 F5。②-B 的计划里写着*「本项目的 CSP 是严格的
+  （这正是它安全的原因之一）」*——**去改它的时候才发现那句话是错的：一条 CSP 都没有。**
+  `nodeIntegration: false` / `contextIsolation: true` / `sandbox: true` 都在，唯独少这一层。
+  所以 F5 的「要动 CSP」，实际含义变成**先把 CSP 建起来**。计划文档已更正。
+- **What**:
+  - **CSP 由 Vite 在构建时注入 `<meta>`，只进产物**。dev 下 Vite 要塞 inline script
+    （HMR 前导），给它开 `'unsafe-inline'` 等于把这条策略最值钱的一半送掉；
+    而 **e2e 跑的正是产物**——于是「被测的」与「发出去的」是同一份严格策略。
+  - `style-src` 留 `'unsafe-inline'`：界面里的 `style={{…}}` 承载的是**数据**
+    （树的缩进层级、占比条宽度），只有运行时才知道，写不进样式表。**脚本那一档不开。**
+  - **不写 `frame-ancestors`**：它在 `<meta>` 里会被直接忽略。写一条不生效的指令
+    等于在策略里画一堵不存在的墙。
+  - PDF 走 **blob + `<embed>`**，交给 Chromium 自带的阅读器。
+    **不走自定义协议**（`dawn-file://`）：那会让路径守卫有两个家，而 F1 的全部重量
+    就在那一份守卫上——两份迟早有一份落后，先落后的那份就是洞。
+    blob 用的是渲染进程**已经拿到的字节**（经同一个 `readFile` 守卫取回），不新增读取能力。
+  - `readFile` 新增 `pdf` 一档（协议 2.14 → 2.15）：**与 `image` 分开**，
+    混在一起界面会拿 `<img>` 去画 PDF——那是个空框。上界 25 MB，超了说清多大。
+  - blob URL 用完 `revokeObjectURL`：翻十个 PDF 就是十份字节躺在内存里，
+    而原件还在磁盘上好好的。
+- **Impact**: 这个应用第一次有了内容安全策略。R 的 `pdf()` 产出可以直接在应用里看。
+- **Verification**:
+  - **`frame-src` 是踩出来的**：只写 `object-src blob:` 时 Chromium 报
+    *「Framing 'blob:…' violates … "default-src 'none'"」*——**它把 PDF 的 `<embed>`
+    当作 framing**。少了它的现象是：`<embed>` 在、`src` 是 `blob:`、**里面一片白**。
+    抓到它的正是新写的那条盯 console 的断言；没有它，所有断言照样全绿。
+  - 新增 `e2e/csp.spec.ts` 两条：四个屏走一遍**一条违规都没有**；
+    以及**直接检查策略文本**——CSP 是构建里的一行字符串，
+    哪天有人为了让某个东西能用而加一条 `'unsafe-inline'`，前一条不会红。
+  - `e2e/files.spec.ts` 的 PDF 用例换成真渲染，并同样盯 console。
+    人眼也看了一次：Chromium 阅读器的缩略图、缩放、打印都在。
+  - 单元 1028（F1 那条「PDF 说清为什么没渲染」已过时，换成 `pdf` 档与超上界两条）；
+    `npm run test:e2e` **主套 94 + 内核套 3 全绿**。
+
+
 ### 2026-08-10 — 凭证界面列出 pi 认识的全部 provider（1 → 39）
 
 - **Type**: feat

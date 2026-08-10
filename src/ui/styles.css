@@ -1340,3 +1340,12 @@ pre {
   width: 100%;
   margin: var(--dawn-space-2) 0;
 }
+
+/* PDF 交给 Chromium 自带的阅读器。**给足高度**——一个矮框里的 PDF 什么都看不出来 */
+.preview-pdf {
+  width: 100%;
+  height: min(72vh, 900px);
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+}

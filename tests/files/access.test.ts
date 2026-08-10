@@ -16,6 +16,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import {
   DIR_MAX_ENTRIES,
+  PDF_MAX_BYTES,
   TEXT_MAX_BYTES,
   listDirectory,
   mediaTypeOf,
@@ -199,12 +200,25 @@ describe("读文件", () => {
     expect(Buffer.from(c.base64, "base64").byteLength).toBe(png.byteLength)
   })
 
-  it("**PDF 说清为什么没渲染**，而不是给一片空白", () => {
+  it("**PDF 自成一档**（F5）—— 混进 image 的话界面会拿 <img> 去画它，那是个空框", () => {
     const { root } = ws()
-    writeFileSync(join(root, "d.pdf"), "%PDF-1.4")
+    const bytes = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\n")
+    writeFileSync(join(root, "d.pdf"), bytes)
     const c = readFileForPreview(root, "d.pdf")
-    expect(c).toMatchObject({ kind: "other", mediaType: "application/pdf" })
-    expect(c.kind === "other" ? c.reason : "").toMatch(/系统程序打开/)
+    if (c.kind !== "pdf") throw new Error("应当是 pdf")
+    expect(c.mediaType).toBe("application/pdf")
+    expect(c.bytes).toBe(bytes.byteLength)
+    expect(Buffer.from(c.base64, "base64").byteLength).toBe(bytes.byteLength)
+  })
+
+  it("**超上界的 PDF 说清多大**，不硬塞进内存", () => {
+    const { root } = ws()
+    writeFileSync(join(root, "big.pdf"), Buffer.alloc(PDF_MAX_BYTES + 1))
+    const c = readFileForPreview(root, "big.pdf")
+    if (c.kind !== "other") throw new Error("应当退回 other")
+    // **给真数字**，不是一句「太大了」
+    expect(c.reason).toMatch(/MB/)
+    expect(c.reason).toMatch(/系统程序打开/)
   })
 
   it("认不出的类型也要说清是什么、多大", () => {

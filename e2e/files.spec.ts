@@ -50,17 +50,50 @@ test("markdown 走渲染，其它文本按原文", async ({ dawn }) => {
   await expect(page.locator(".preview-text")).toContainText("print('hi')")
 })
 
-test("**认不出的类型说清是什么、多大**，而不是给一片空白", async ({ dawn }) => {
+test("**PDF 在应用里就能看**（②-B · F5），而且没有被 CSP 拦下", async ({ dawn }) => {
   const { page, workspace } = dawn
-  writeFileSync(join(workspace, "报告.pdf"), Buffer.alloc(2048, 1))
+  /**
+   * 一个最小的合法 PDF。**真文件，不是占位字节**——
+   * Chromium 的阅读器拿到坏文件会给一片白，而那正是我们要区分的失败样子。
+   */
+  const PDF = [
+    "%PDF-1.1",
+    "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
+    "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
+    "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj",
+    "trailer<</Root 1 0 R>>",
+  ].join("\n")
+  writeFileSync(join(workspace, "报告.pdf"), PDF)
+
+  const 违规: string[] = []
+  page.on("console", (m) => {
+    if (/Content Security Policy|Refused to/i.test(m.text())) 违规.push(m.text())
+  })
 
   await page.getByRole("button", { name: "文件" }).click()
   await page.getByRole("button", { name: /报告\.pdf/ }).click()
 
-  await expect(page.locator(".preview-other")).toBeVisible()
+  const embed = page.locator(".preview-pdf")
+  await expect(embed).toBeVisible()
+  // **走的是 blob**：既不给渲染进程 file://，也不用会被 frame 拦掉的 data:
+  expect(await embed.getAttribute("src")).toMatch(/^blob:/)
   await expect(page.locator(".preview-head .sub")).toContainText("application/pdf")
-  await expect(page.locator(".preview-head .sub")).toContainText("KB")
-  await expect(page.getByRole("button", { name: "用系统程序打开" })).toBeVisible()
+
+  /**
+   * **这一条是这批改动的要害。** `object-src` 少写一个 `blob:`，
+   * 上面的断言全部照样通过——`<embed>` 元素在、src 是 blob:、只是里面一片白。
+   */
+  expect(违规, `PDF 被 CSP 拦下了：\n${违规.join("\n")}`).toEqual([])
+})
+
+test("**超上界的 PDF 说清多大**，而不是硬塞进内存", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  // **先造文件再打开文件视图**：目录树是打开那一刻读的一层，
+  // 反过来写的话它根本不在树里（上一版就是这么超时的）
+  writeFileSync(join(workspace, "小.bin"), Buffer.alloc(16))
+  await page.getByRole("button", { name: "文件" }).click()
+  await page.getByRole("button", { name: /小\.bin/ }).click()
+  await expect(page.locator(".preview-other .caveat")).toContainText("不能在应用里预览")
 })
 
 test("**忽略掉的目录要出声**——不然人会以为它们不存在", async ({ dawn }) => {

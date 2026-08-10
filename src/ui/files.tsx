@@ -12,7 +12,7 @@
  * agent 写了哪些文件，那是最短的路径。这里的目录树是**补充**：
  * agent 没碰过的数据文件、上一次会话留下的东西，那些只能靠翻。
  */
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
@@ -157,7 +157,9 @@ export function FilePreview({
         </span>
       </header>
 
-      {content.kind === "image" ? (
+      {content.kind === "pdf" ? (
+        <PdfPreview base64={content.base64} path={path} onOpenExternally={onOpenExternally} />
+      ) : content.kind === "image" ? (
         <img
           className="preview-img"
           src={`data:${content.mediaType};base64,${content.base64}`}
@@ -191,6 +193,54 @@ export function FilePreview({
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * PDF（②-B · F5）。交给 **Chromium 自带的阅读器**——它就在这个进程里，
+ * 而自己拿 pdf.js 再实现一遍是拿一个几百 KB 的依赖去换一个已经有的东西。
+ *
+ * ## 为什么是 blob，不是 `file://` 也不是 `data:`
+ *
+ * - **`file://` 会开第二条读盘的路**，那意味着路径守卫要在两个地方各写一遍——
+ *   而两份守卫迟早有一份落后（②-B · F1 的全部重量就在那一份上）。
+ * - **`data:` 在 frame 里被 Chromium 拦掉**（navigation to data: URL 的老限制）。
+ *
+ * blob 用的是**渲染进程已经拿到的字节**，不新增任何读取能力，
+ * CSP 里因此只需要 `object-src blob:` 这一条。
+ */
+function PdfPreview({
+  base64,
+  path,
+  onOpenExternally,
+}: {
+  base64: string
+  path: string
+  onOpenExternally: (path: string) => void
+}) {
+  const url = useMemo(() => {
+    const bin = atob(base64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    return URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }))
+  }, [base64])
+
+  /**
+   * **用完要还。** blob URL 活到文档结束为止——翻十个 PDF 就是十份字节
+   * 一直躺在内存里，而它们的原件还在磁盘上好好的。
+   */
+  useEffect(() => () => URL.revokeObjectURL(url), [url])
+
+  return (
+    <>
+      <embed className="preview-pdf" src={url} type="application/pdf" aria-label={`预览：${path}`} />
+      {/* **留一条出路**：内嵌阅读器不是万能的，而人可能只是想拿它去打印 */}
+      <div className="state-action">
+        <Button variant="text" size="sm" onClick={() => onOpenExternally(path)}>
+          用系统程序打开
+        </Button>
+      </div>
+    </>
   )
 }
 

@@ -567,6 +567,15 @@ export const OPERATIONS = {
     response: z.discriminatedUnion("kind", [
       z
         .object({
+          kind: z.literal("pdf"),
+          mediaType: z.literal("application/pdf"),
+          /** 字节。**经守卫过的后端取回，不给渲染进程 `file://`** */
+          base64: z.string(),
+          bytes: z.int().min(0),
+        })
+        .strict(),
+      z
+        .object({
           kind: z.literal("text"),
           mediaType: z.string(),
           text: z.string(),

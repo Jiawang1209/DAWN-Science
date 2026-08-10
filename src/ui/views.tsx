@@ -262,8 +262,8 @@ export function SessionSidebar({
   onNewSession: (agentId: string) => void
   onShowPanel: () => void
   onShowFiles: () => void
-  /** 删除当前项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
-  onDeleteProject?: (() => void) | undefined
+  /** 删掉某个项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
+  onDeleteProject?: ((projectId: string) => void) | undefined
   /** 掀开／收起底部终端。不给就不显示那一行——不摆一个点了没反应的入口 */
   onToggleDock?: (() => void) | undefined
   dockOpen?: boolean | undefined
@@ -317,62 +317,24 @@ export function SessionSidebar({
   return (
     <aside className="sidebar">
       {/**
-        * **两个动作同级。**（作者 2026-08-10：*「新建对话和新建项目应该是
-        * 同一级别的吧？我觉得应该模仿 Codex 去做。」*）
+        * **两段，各自「一个动作 + 它管的那一列」**（2026-08-11 重排）。
         *
-        * Codex 的侧栏顶部是一个动作区，New Chat 与旁边的动作**是同一种行**
-        * （`c-sidebar-row`），不是「一个大按钮 + 一个小图标」。
-        * 此前这里正是后者：新建会话是一整个带字的按钮，新建项目是下拉框旁边
-        * 一个光秃秃的 `＋`——**同一级别的两件事，长得差了两档**。
+        * 作者：*「新建的项目，就在左侧的新建项目的下面；新建的会话，
+        * 就在左侧的新建会话下面。然后新建完的项目，里面可以有多个会话。
+        * 这一个完全仿制 claude code app 和 codex app。」*
+        *
+        * 此前项目是一个**下拉框**——那是「一个值」的形状，
+        * 而项目是一列东西，每个里面还装着若干会话。下拉框把这层包含关系压没了：
+        * 你看不见有几个项目，更看不见哪个项目里有多少会话。
+        *
+        * 两个动作仍然**同级**（同一种 `.side-action` 行，2026-08-10 定的），
+        * 只是各自领着自己那一列。
         */}
       <div className="side-actions">
         <Row className="side-action" disabled={!active || !fallbackAgent} onClick={() => fallbackAgent && onNewSession(fallbackAgent)}>
           <span className="glyph" aria-hidden="true">＋</span>
           <span className="name">新建会话</span>
         </Row>
-        <Row className="side-action" onClick={onOpenProject}>
-          <span className="glyph" aria-hidden="true">＋</span>
-          <span className="name">新建项目</span>
-        </Row>
-      </div>
-
-      {/* 项目切换器：它是**上下文**，不是动作——所以放在动作区下面 */}
-      <div className="proj-switch">
-        <select
-          className="control"
-          value={activeProjectId ?? ""}
-          onChange={(e) => onPickProject(e.target.value)}
-          aria-label="当前项目"
-        >
-          {projects.length === 0 ? <option value="">（还没有项目）</option> : null}
-          {projects.map((p) => (
-            <option key={p.projectId} value={p.projectId}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        {/**
-          * **删除项目就摆在项目旁边**（2026-08-11）。
-          *
-          * 作者：*「我不是新建项目了吗，新建项目之后，我其实可以设置，删除项目。」*
-          * 这个动作**一直都在**，只是它住在「项目概览」最下面那一节里——
-          * 又一次「看不见的能力等于不存在」。
-          *
-          * **同一个动作，不是第二份实现**：它调的就是概览里那一个
-          * （连确认框、连真实数字一起）。Hermes：*"One action, one home."*
-          */}
-        {active && onDeleteProject ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="proj-del"
-            aria-label="删除当前项目"
-            onClick={onDeleteProject}
-          >
-            🗑
-          </Button>
-        ) : null}
-        {/* 原生 title= 无样式、约 500ms 系统延迟、与主题不符——用 aria-label */}
       </div>
 
       {/* 此前这里有一句「先打开一个项目文件夹」。**那是一句描述，不是一条出路**——
@@ -427,6 +389,35 @@ export function SessionSidebar({
         )}
       </ul>
 
+      {/**
+        * **项目那一段。** 在会话列表下面——作者要的顺序就是这个：
+        * 「新建会话」领着会话，「新建项目」领着项目。
+        */}
+      <div className="side-actions proj-actions">
+        <Row className="side-action" onClick={onOpenProject}>
+          <span className="glyph" aria-hidden="true">＋</span>
+          <span className="name">新建项目</span>
+        </Row>
+      </div>
+
+      <ul className="proj-list">
+        {projects.length === 0 ? (
+          <li>
+            <p className="hint pad">还没有项目</p>
+          </li>
+        ) : (
+          projects.map((p) => (
+            <ProjectRow
+              key={p.projectId}
+              project={p}
+              current={p.projectId === activeProjectId}
+              onPick={() => onPickProject(p.projectId)}
+              {...(onDeleteProject ? { onDelete: () => onDeleteProject(p.projectId) } : {})}
+            />
+          ))
+        )}
+      </ul>
+
       {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
       {active ? (
         <>
@@ -450,6 +441,53 @@ export function SessionSidebar({
         </>
       ) : null}
     </aside>
+  )
+}
+
+/**
+ * 侧栏里的一行项目（2026-08-11）。
+ *
+ * **它必须说出「里面有几个会话」**——作者：*「新建完的项目，里面可以有多个会话。」*
+ * 一行只有名字的话，「项目装着会话」这层关系在界面上根本不存在，
+ * 而那正是这次重排要表达的东西。
+ *
+ * 删除键的可见性沿用会话行那一套：**当前这一行常驻，其余悬停才出现**。
+ * （`opacity: 0` 的删除键已经被作者报过一次「没有这个功能」。）
+ */
+function ProjectRow({
+  project,
+  current,
+  onPick,
+  onDelete,
+}: {
+  project: ProjectSummary
+  current: boolean
+  onPick: () => void
+  onDelete?: (() => void) | undefined
+}) {
+  return (
+    <li className={`proj-item${current ? " current" : ""}`}>
+      <Row active={current} onClick={onPick}>
+        <span className="sess">
+          <span className="name">{project.name}</span>
+          {/* **会话数就是那层包含关系**：没有它，项目只是一个名字 */}
+          <span className="sub">{project.totalSessionCount} 个会话</span>
+        </span>
+      </Row>
+      {onDelete ? (
+        <div className="row-actions">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="row-more"
+            aria-label={`删除项目：${project.name}`}
+            onClick={onDelete}
+          >
+            🗑
+          </Button>
+        </div>
+      ) : null}
+    </li>
   )
 }
 

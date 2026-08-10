@@ -87,13 +87,28 @@ describe("侧栏 · 新建会话是主动作", () => {
 })
 
 describe("侧栏 · 项目与会话", () => {
-  it("项目切换器列出全部项目", () => {
-    render(<SessionSidebar {...base} projects={[project(), project({ projectId: "p2", name: "other" })]} />)
-    const select = screen.getByLabelText("当前项目") as HTMLSelectElement
-    expect([...select.options].map((o) => o.textContent)).toEqual(["dawn-science", "other"])
+  /**
+   * **2026-08-11：项目从下拉框改成一列。**
+   *
+   * 作者：*「新建的项目，就在左侧的新建项目的下面……新建完的项目，
+   * 里面可以有多个会话。」* 下拉框是「一个值」的形状——
+   * 你看不见有几个项目，更看不见哪个项目里有多少会话。
+   */
+  it("**项目是一列，不是一个下拉框**", () => {
+    const { container } = render(
+      <SessionSidebar {...base} projects={[project(), project({ projectId: "p2", name: "other" })]} />,
+    )
+    expect(container.querySelectorAll(".proj-item")).toHaveLength(2)
+    expect(screen.getByText("dawn-science")).toBeDefined()
+    expect(screen.getByText("other")).toBeDefined()
   })
 
-  it("切换项目触发回调", () => {
+  it("**每一行说出它装着几个会话** —— 那层包含关系要看得见", () => {
+    render(<SessionSidebar {...base} projects={[project({ totalSessionCount: 3 })]} />)
+    expect(screen.getByText("3 个会话")).toBeDefined()
+  })
+
+  it("点一行就切过去", () => {
     const onPickProject = vi.fn()
     render(
       <SessionSidebar
@@ -102,8 +117,21 @@ describe("侧栏 · 项目与会话", () => {
         onPickProject={onPickProject}
       />,
     )
-    fireEvent.change(screen.getByLabelText("当前项目"), { target: { value: "p2" } })
+    fireEvent.click(screen.getByText("other"))
     expect(onPickProject).toHaveBeenCalledWith("p2")
+  })
+
+  it("**每一行都能删它自己**，不是只能删当前那个", () => {
+    const onDeleteProject = vi.fn()
+    render(
+      <SessionSidebar
+        {...base}
+        projects={[project(), project({ projectId: "p2", name: "other" })]}
+        onDeleteProject={onDeleteProject}
+      />,
+    )
+    fireEvent.click(screen.getByRole("button", { name: "删除项目：other" }))
+    expect(onDeleteProject).toHaveBeenCalledWith("p2")
   })
 
   it("列出会话，点击触发回调", () => {

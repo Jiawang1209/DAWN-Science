@@ -13,9 +13,9 @@
 import { test, expect } from "./fixtures.js"
 import { existsSync } from "node:fs"
 
-test("**项目旁边就有删除**，不用先翻到项目概览", async ({ dawn }) => {
+test("**每一行项目上就有删除**，不用先翻到项目概览", async ({ dawn }) => {
   const { page } = dawn
-  const 删 = page.getByRole("button", { name: "删除当前项目" })
+  const 删 = page.getByRole("button", { name: /删除项目：/ })
   await expect(删).toBeVisible()
   // `toBeVisible` 对 `opacity: 0` 仍然算可见——**必须直接量**（2026-08-10 的教训）
   expect(await 删.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
@@ -30,7 +30,7 @@ test("**确认框摆真数字**，并说清哪些东西不会动", async ({ dawn
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("留个记录")
 
-  await page.getByRole("button", { name: "删除当前项目" }).click()
+  await page.getByRole("button", { name: /删除项目：/ }).click()
   const 确认 = page.locator(".confirm")
   await expect(确认).toBeVisible()
   // 会话数是**问后端要的真数字**，不是界面猜的
@@ -47,12 +47,12 @@ test("删掉之后，它的会话**一条都不剩**；工作区的文件一个�
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".session-list .sess")).toHaveCount(1)
 
-  await page.getByRole("button", { name: "删除当前项目" }).click()
+  await page.getByRole("button", { name: /删除项目：/ }).click()
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
 
   // 项目没了，它的会话也没了
   await expect(page.locator(".session-list .sess")).toHaveCount(0)
-  await expect(page.locator(".proj-switch")).not.toContainText("workspace")
+  await expect(page.locator(".proj-list")).not.toContainText("workspace")
 
   // **磁盘上的文件夹一个字节都没动**——那句承诺要真的成立
   expect(existsSync(workspace)).toBe(true)

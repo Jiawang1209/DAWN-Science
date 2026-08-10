@@ -563,6 +563,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }
               const pid = $activeProjectId.get()
               if (pid) void loadSessions(client, pid)
+              void loadProjects(client)
             })
             .catch(fail)
         },
@@ -584,6 +585,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 重取会话 = useCallback(() => {
     const pid = $activeProjectId.get()
     if (pid) void loadSessions(client, pid)
+    /**
+     * **项目列表上那个「N 个会话」也要跟着变**（2026-08-11）。
+     *
+     * 它来自 `listProjects` 的 `totalSessionCount`，而那份只在启动时取过一次——
+     * 于是新建一个会话之后，项目行上的数字**一直停在旧值**。
+     * 一个不会变的计数比没有计数更坏：它看起来像事实。
+     */
+    void loadProjects(client)
   }, [client])
 
   const renameSession = useCallback(
@@ -629,8 +638,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, 重取会话],
   )
 
-  const askDeleteProject = useCallback(() => {
-    const pid = $activeProjectId.get()
+  /**
+   * 移除项目。**收哪个项目由调用方给**（2026-08-11）——
+   * 侧栏现在是一列项目，删的不一定是当前那个。
+   * 不给就删当前那个（项目概览里那个入口就是这么调的）。
+   */
+  const askDeleteProject = useCallback((projectId?: string) => {
+    const pid = projectId ?? $activeProjectId.get()
     if (!pid) return
     const 名 = projects.find((p) => p.projectId === pid)?.name ?? pid
     client
@@ -656,9 +670,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             client
               .get("deleteProject", { projectId: pid })
               .then(() => {
-                setActiveProjectId(undefined)
-                setActiveSessionId(undefined)
-                setView("conversation")
+                /**
+                 * **删的是当前那个才清空选中**（2026-08-11）。
+                 * 侧栏现在能删任意一个——把别的项目删掉却把人从他正看着的
+                 * 会话里踢出去，那是另一种「界面自己动了」。
+                 */
+                const 删的是当前 = $activeProjectId.get() === pid
+                if (删的是当前) {
+                  setActiveProjectId(undefined)
+                  setActiveSessionId(undefined)
+                  setView("conversation")
+                }
                 /**
                  * **把会话列表也清掉**（2026-08-11 补）。
                  *
@@ -667,10 +689,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 会话列表只在「有当前项目」时重取，而这一刻恰恰没有了，
                  * 于是没有任何东西会去清它。
                  */
-                setSessions([])
-                // 终端也归项目所有：项目没了，dock 里那个也不该继续指着它
-                setDockSessionId(undefined)
-                setDockOpen(false)
+                if (删的是当前) {
+                  setSessions([])
+                  // 终端也归项目所有：项目没了，dock 里那个也不该继续指着它
+                  setDockSessionId(undefined)
+                  setDockOpen(false)
+                }
                 return loadProjects(client)
               })
               .catch(fail)
@@ -703,6 +727,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .then((r) => {
         setDockSessionId(r.sessionId)
         void loadSessions(client, pid)
+        void loadProjects(client)
         /**
          * **取写权，否则每一次按键都会被租约挡下。**
          *
@@ -789,6 +814,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         .get<SessionSummary>("createSession", { projectId: pid, agentId })
         .then((s) => {
           void loadSessions(client, pid)
+          // 项目行上的「N 个会话」跟着涨——它来自 listProjects，不重取就停在旧值
+          void loadProjects(client)
           // 规则本身在 `state/view.ts` 里，是纯的、可以确定性地验
           const 搬 = carryDraft(旧会话, 按下时的草稿, draftOf(旧会话), s.sessionId)
           if (搬) {
@@ -1169,7 +1196,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     <em className="set-emph">磁盘上的文件夹不会被删除。</em>
                   </p>
                   <div className="state-action">
-                    <Button variant="danger" size="sm" onClick={askDeleteProject}>
+                    <Button variant="danger" size="sm" onClick={() => askDeleteProject()}>
                       移除项目
                     </Button>
                   </div>

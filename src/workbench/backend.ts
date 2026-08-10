@@ -14,6 +14,10 @@ import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
 import type { SettingsStore } from "../store/settings.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
+import {
+  listDirectory as listWorkspaceDirectory,
+  readFileForPreview as readWorkspaceFile,
+} from "../files/access.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
@@ -402,6 +406,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const configured = language === "python" ? now.python : now.r
       const d = configured ? diagnoseInterpreter(language, configured) : undefined
       return { ...now, ...(d ? { problem: d.message } : {}) }
+    },
+
+    /**
+     * 列一层工作区目录（②-B · F2）。
+     *
+     * **工作区从项目取，不从请求取**——让调用方传工作区，
+     * 等于把路径守卫的起点也交给它，那守卫就形同虚设。
+     */
+    listDirectory: async ({ projectId, path, includeIgnored }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      return listWorkspaceDirectory(p.workspace, path, {
+        ...(includeIgnored === undefined ? {} : { includeIgnored }),
+      })
+    },
+
+    /** 读一个文件供预览。**只读**，且路径守卫在 `files/access.ts` 里 */
+    readFile: async ({ projectId, path }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      return readWorkspaceFile(p.workspace, path)
     },
 
     acquireLease: async ({ sessionId, holder }) => {

@@ -54,7 +54,17 @@ describe("客户端 · 握手", () => {
   })
 
   it("服务端 minor 更高时兼容（多出的字段界面用不到，无害）", async () => {
-    const c = createClient(async () => caps("2.9"))
+    /**
+     * **写一个「一定比当前更高」的 minor**，而不是钉死某个数字。
+     *
+     * 2026-08-10 栽过：这里原来写死 `2.9`，而界面升到 `2.10` 之后
+     * 服务端反倒更低了，这条测试于是在验一件与它标题相反的事。
+     *
+     * 顺带一提：**它红得对**。如果版本比较用的是字符串，
+     * `"2.10" < "2.9"` 会让这条**意外通过**——那才是真正危险的绿。
+     */
+    const [maj, min] = WORKBENCH_PROTOCOL_VERSION.split(".").map(Number)
+    const c = createClient(async () => caps(`${maj}.${min! + 1}`))
     await expect(c.handshake()).resolves.toBeDefined()
   })
 

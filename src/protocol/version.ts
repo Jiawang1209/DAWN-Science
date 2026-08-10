@@ -56,8 +56,13 @@
  *   是**跑在了另一个环境里而不自知**。
  *   **没配的那个不给字段**，不是空串：「还没配」与「配了一个空路径」
  *   在界面上要说不同的话。纯新增，故 minor。
+ * 2.10（2026-08-10）：新增 `listDirectory` / `readFile`（②-B · F2）。
+ *   数据科学平台的分水岭之一——**agent 跑完分析，人要能看见产出**。
+ *   **只读**：写、删、改名不在这一阶段（它们要走授权门，阶段 ④）。
+ *   图片回 base64 而**不回 `file://` 路径**——后者等于把路径守卫的判断权
+ *   交给渲染进程。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.9"
+export const WORKBENCH_PROTOCOL_VERSION = "2.10"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

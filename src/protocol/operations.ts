@@ -516,6 +516,86 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 列一层工作区目录（②-B · F2）。**不递归。**
+   *
+   * 递归会让「一次调用」的代价不可预期——一个 `node_modules` 就能让它跑几十秒。
+   * 界面按需一层层要，代价始终有界。
+   *
+   * `ignored` 与 `omitted` **都要回**：忽略掉的与省略掉的如果不出声，
+   * 人会以为那些文件不存在。
+   */
+  listDirectory: {
+    request: z
+      .object({
+        projectId: z.string().min(1),
+        /** 相对工作区的路径。**空串 = 根目录**；绝对路径会被拒 */
+        path: z.string().default(""),
+        includeIgnored: z.boolean().optional(),
+      })
+      .strict(),
+    response: z
+      .object({
+        path: z.string(),
+        entries: z.array(
+          z
+            .object({
+              name: z.string(),
+              kind: z.enum(["file", "dir"]),
+              /** 目录没有这个字段——**目录的「大小」是个误导** */
+              size: z.int().min(0).optional(),
+              // ISO 时间串。此处不复用 entities 的 `Iso`（它没导出）
+              modifiedAt: z.string().min(1),
+            })
+            .strict(),
+        ),
+        ignored: z.int().min(0),
+        omitted: z.int().min(0),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
+   * 读一个文件供预览（②-B · F2）。**只读。**
+   *
+   * 三态：文本 / 图片 / 其它。**「其它」必须说清是什么、多大**——
+   * 一片空白会被读成「这个文件是空的」。
+   */
+  readFile: {
+    request: z.object({ projectId: z.string().min(1), path: z.string().min(1) }).strict(),
+    response: z.discriminatedUnion("kind", [
+      z
+        .object({
+          kind: z.literal("text"),
+          mediaType: z.string(),
+          text: z.string(),
+          bytes: z.int().min(0),
+          /** 截断要说清**省了多少**（规格 7.5） */
+          truncated: z.object({ originalBytes: z.int(), keptBytes: z.int() }).strict().optional(),
+        })
+        .strict(),
+      z
+        .object({
+          kind: z.literal("image"),
+          mediaType: z.string(),
+          /** base64。**不给 file:// 路径**——那等于把守卫的判断权交给渲染进程 */
+          base64: z.string(),
+          bytes: z.int().min(0),
+        })
+        .strict(),
+      z
+        .object({
+          kind: z.literal("other"),
+          mediaType: z.string(),
+          bytes: z.int().min(0),
+          reason: z.string().min(1),
+        })
+        .strict(),
+    ]),
+    mutating: false,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 2.9", () => {
+describe("协议版本 · 2.10", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,7 +176,11 @@ describe("协议版本 · 2.9", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
-   * **2.9（2026-08-10）：新增 `getInterpreters` / `setInterpreter`。**
+   * **2.10（2026-08-10）：新增 `listDirectory` / `readFile`（②-B）。**
+   *   **只读**；图片回 base64 而不回 `file://` 路径——后者等于把路径守卫的
+   *   判断权交给渲染进程。
+   *
+   * 2.9（2026-08-10）：新增 `getInterpreters` / `setInterpreter`。
    *   两个解释器路径是**调用 Python / R 的机制**（作者定）：没配就不能用，
    *   而不是退回某个扫描出来的默认。**没配的那个不给字段**，不是空串。
    *
@@ -200,7 +204,7 @@ describe("协议版本 · 2.9", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("新增操作、新增条目、新增 kind 都只升 minor", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.9")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.10")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

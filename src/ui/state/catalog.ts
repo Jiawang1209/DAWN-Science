@@ -104,12 +104,28 @@ export function setCredentials(v: CredentialState): void {
  * 不是窗口级也不是全局的。pi 那边 `setModel` 会写 agentDir 的全局默认，
  * 但我们每会话一个 agentDir，所以那份全局默认也被关在会话里（Spike E）。
  */
-export const $sessionModels = atom<Readonly<Record<string, string>>>({})
+/**
+ * **2026-08-11 起连 provider 一起记。**
+ *
+ * 换模型现在可以**跨服务**（作者：*「同一个对话，我切换到 Kimi 的时候，
+ * 直接就重新新建对话了。这不是我所期待的。」*），
+ * 于是「当前是哪个」光有 model 已经答不上来——
+ * 两家可以有同名模型，而界面要说出「现在答话的是谁」。
+ */
+export interface CurrentModel {
+  /** native 才有；cli 会话没有 provider 这个概念 */
+  provider?: string
+  model: string
+}
 
-export function setSessionModel(sessionId: string, model: string): void {
+export const $sessionModels = atom<Readonly<Record<string, CurrentModel>>>({})
+
+export function setSessionModel(sessionId: string, model: string, provider?: string): void {
   const prev = $sessionModels.get()
-  if (prev[sessionId] === model) return
-  $sessionModels.set({ ...prev, [sessionId]: model })
+  const now: CurrentModel = { ...(provider ? { provider } : {}), model }
+  const was = prev[sessionId]
+  if (was && was.model === now.model && was.provider === now.provider) return
+  $sessionModels.set({ ...prev, [sessionId]: now })
 }
 
 /** 当前会话的上下文用量（①-B″ · U3）。后端权威，这里只是缓存 */

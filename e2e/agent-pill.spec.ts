@@ -40,10 +40,19 @@ test("pill 在 composer 里，且**几何上确实靠右靠下**", async ({ dawn
   expect(p.y).toBeGreaterThanOrEqual(text.y + text.height)
 })
 
-test("显示的是**这个会话**的 agent", async ({ dawn }) => {
+test("显示的是**这个会话**的 agent，且用它的**服务名**称呼它", async ({ dawn }) => {
   const { page } = dawn
   await startSession(page)
-  await expect(page.locator(".composer .agent-pill")).toContainText("ds-chat")
+  /**
+   * 2026-08-11：原来断言的是 `ds-chat`——那是 `providers.yaml` 里的一个键。
+   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+   *
+   * **这条只有跑真链路才算数**：`DeepSeek` 这个写法来自 pi 的 provider 表，
+   * 不是我们手打的对照表——单元测试里我可以喂任何字符串然后断言它渲染了。
+   */
+  const pill = page.locator(".composer .agent-pill")
+  await expect(pill).toContainText("DeepSeek")
+  await expect(pill).not.toContainText("ds-chat")
 })
 
 test("**点开明说是新建会话** —— 不能让人以为是就地换模型", async ({ dawn }) => {

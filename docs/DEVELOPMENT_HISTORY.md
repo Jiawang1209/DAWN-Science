@@ -43,10 +43,55 @@
 
 ## 变更日志
 
+### 2026-08-11 — 服务按它自己的名字叫；同一段对话里能换另一家
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 作者两条：
+  ①*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+  ②*「同一个对话，比如 DeepSeek 的对话，我切换到 Kimi 的时候，直接就重新新建对话了。
+  这不是我所期待的。一个对话之间，可以切换不同的 API。」*
+- **What**:
+  - **显示名**：`NativeRuntime.providerNames()` 从 **pi 自己的 provider 表**取
+    （`deepseek → DeepSeek`、`kimi-coding → Kimi For Coding`），经 `getProviders`
+    的 `providers[].name` 到界面；agent pill、会话行、transcript 说话人都改用它。
+    **不手打对照表**——那种表从写下那天起就开始撒谎，且没有任何迹象。
+    **pi 没给名字就退回 id**，那至少是实话。cli / pty 仍用 id：
+    `claude` / `codex` / `shell` 本来就是人叫它们的名字。
+  - **跨服务换模型**：模型选择器从「当前 provider 的模型」扩成
+    **「所有配好的服务 × 各自的模型」，按服务分组**，点哪个都是就地换。
+    **运行时其实一直支持**（`setSessionModel` 收 provider + model，
+    pi 的 `session.setModel()` 换的是下一轮用谁，上下文原样留在会话里）——
+    **缺的只是把别家摆进这个菜单**：不在菜单里，人只能去点旁边那颗
+    「新建会话，用：」的 agent pill，那正是作者踩的。
+  - 菜单里写明「就地换，不会新建对话」；`$sessionModels` 连 provider 一起记
+    （两家可以有同名模型）；`onPickModel` 的 provider **跟着选中那一条走**，
+    不再永远传会话原来那家（不改的话就是「换了个寂寞」：界面变了，请求没变）。
+  - **换完在记录里留一条**：`model` 事件此前运行时发了、中枢没有任何分支接，
+    被静默丢掉。现在落成一条 notice——往回翻的人才知道从哪句开始换的家。
+  - agent pill 的触发器**保持显示这个会话的 agent**。中途改成写死「新会话」，
+    又改了回来：Hermes 那条 *"Display follows THIS surface's SessionView"*
+    是真有用的（并排两个会话各显示各的）。歧义改在别处消——旁边那颗现在有别家可选了。
+- **Impact**: 协议 4.0 → **4.1**（纯新增 `providers[].name`）。
+  已有配置不用改：`ds-chat` 照旧工作，只是界面上叫 DeepSeek。
+- **Verification**:
+  - 新增 `e2e/cross-service-switch.spec.ts`：在界面上加第二家（指向同一个假服务器、
+    **模型 id 独有**），在一段 DeepSeek 对话里换过去——验三件事：菜单里列得出别家、
+    **会话数不变且前面说过的话还在**、**下一次请求真的打到另一家的模型**。
+    界面说换了不算，后端收到的模型名说了算。
+  - 新增 `tests/ui/model-pill.test.tsx`（分组、provider 跟着选项走、
+    「当前」按 provider+model 一起判）。
+  - 显示名那几条**刻意放在 e2e**：`DeepSeek` 这个写法来自 pi 的表，
+    单元测试里我可以喂任何字符串然后断言它渲染了——那证明的是渲染，不是来源。
+  - 单元 + 集成 **1114 passed**；`npx playwright test` **132 passed**
+    （1 例仍是已记的 `firstWindow` 间歇挂起，单独重跑即过）。
+  - 视觉基线六张（空态/对话/命令面板 × 明暗）重存：**先看 diff 图**确认只有
+    pill 文案与随之而来的两三像素位移，重存后**再验一遍**。
+
 ### 2026-08-11 — 中途加的模型端点不用重启就能用（`modelsPath` 是构造时钉死的）
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `a71bcae`
 - **Motivation**: 作者：*「我重新设置了 kimi-k3，地址写的是 https://api.moonshot.cn/v1，
   填写了正确的 API，设置成功后，我点击对话，发现模型选择的地方没有 kimi-k3。」*
   查他机器上的三样东西**全是对的**——`providers.yaml` 有那一段、

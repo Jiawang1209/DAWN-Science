@@ -28,8 +28,13 @@ test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) =
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 
   await page.locator(".agent-pill").click()
-  // **没有点过任何「建 agent」**——填 key 是唯一做过的事
-  await expect(page.locator("body")).toContainText(陌生, { timeout: 10_000 })
+  /**
+   * **没有点过任何「建 agent」**——填 key 是唯一做过的事。
+   *
+   * 2026-08-11：这里找的从 id（`kimi-coding`）改成了显示名
+   * （`Kimi For Coding`，pi 自己给的）——作者：*「不如直接叫 DeepSeek。」*
+   */
+  await expect(page.locator("body")).toContainText("Kimi For Coding", { timeout: 10_000 })
 })
 
 test("**不再有「建一个 agent」这种东西** —— 那是我们内部的概念漏了出来", async ({ dawn }) => {

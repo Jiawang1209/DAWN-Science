@@ -102,8 +102,11 @@
  *
  *   起因是作者：*「我觉得可以在设置里面，通过 baseUrl、api、models
  *   分别留出可以填写的地方，然后自行填写。」*
+ * 4.1（2026-08-11）：`getProviders` 的 `providers[]` 带上 `name`（pi 给的显示名）。
+ *   纯新增。作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*——agent id 是配置里的键，
+ *   **是我们的内部标识，不是这家服务的名字**。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.0"
+export const WORKBENCH_PROTOCOL_VERSION = "4.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

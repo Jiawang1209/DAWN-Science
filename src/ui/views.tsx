@@ -49,6 +49,7 @@ function SessionRow({
   session,
   active,
   current,
+  label,
   onPick,
   onDelete,
   onRename,
@@ -60,6 +61,8 @@ function SessionRow({
   active: boolean
   /** 是不是选中的那一个。**动作按它决定常驻还是悬停** */
   current: boolean
+  /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
+  label?: ((agentId: string) => string) | undefined
   onPick: () => void
   onDelete?: (() => void) | undefined
   onRename?: ((title: string) => void) | undefined
@@ -155,7 +158,7 @@ function SessionRow({
             {名字}
           </span>
           <span className="sub">
-            {session.agentId} · {clockOf(session.createdAt)}
+            {label ? label(session.agentId) : session.agentId} · {clockOf(session.createdAt)}
           </span>
         </span>
         <span className={`state ${session.state}`}>{session.state}</span>
@@ -218,6 +221,7 @@ export function SessionSidebar({
   projects,
   sessions,
   agents,
+  agentLabel,
   activeProjectId,
   activeSessionId,
   view,
@@ -238,6 +242,8 @@ export function SessionSidebar({
   sessions: readonly SessionSummary[]
   /** 可选的 agent（来自 providers.yaml）。空数组时新建按钮禁用并说明原因 */
   agents: string[]
+  /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
+  agentLabel?: ((agentId: string) => string) | undefined
   activeProjectId: string | undefined
   activeSessionId: string | undefined
   /**
@@ -364,6 +370,7 @@ export function SessionSidebar({
               session={s}
               active={s.sessionId === activeSessionId && view === "conversation"}
               current={s.sessionId === activeSessionId}
+              {...(agentLabel ? { label: agentLabel } : {})}
               onPick={() => onPickSession(s.sessionId)}
               {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
               {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
@@ -447,6 +454,7 @@ export function AgentPill({
   agents,
   current,
   kind,
+  label,
   onPick,
   triggerLabel,
 }: {
@@ -454,8 +462,10 @@ export function AgentPill({
   /** 当前会话用的 agent。空态没有会话，因此可缺省 */
   current?: string | undefined
   kind?: "native" | "pty" | "cli" | "kernel" | undefined
+  /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
+  label?: ((agentId: string) => string) | undefined
   onPick: (agentId: string) => void
-  /** 空态用「换一个 agent」，有会话时用 agent 名本身 */
+  /** 空态用「换一个 agent」，会话里用「新会话」——**都是动作，不是身份** */
   triggerLabel?: string | undefined
 }) {
   const [open, setOpen] = useState(false)
@@ -482,7 +492,12 @@ export function AgentPill({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {triggerLabel ?? current ?? "选择 agent"}
+        {/**
+          * **显示这家服务的名字，不是配置里那个键**（2026-08-11）。
+          * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+          * `label` 缺省时退回 id——那至少是实话。
+          */}
+        {triggerLabel ?? (current ? (label ? label(current) : current) : "选择 agent")}
         {kind ? <span className="kind">{KIND_LABEL[kind]}</span> : null}
         <span aria-hidden="true">▾</span>
       </Button>
@@ -509,7 +524,7 @@ export function AgentPill({
                     onPick(a)
                   }}
                 >
-                  <span className="name">{a}</span>
+                  <span className="name">{label ? label(a) : a}</span>
                   {a === current ? <span className="hint">当前</span> : null}
                 </Row>
               </li>
@@ -521,30 +536,50 @@ export function AgentPill({
   )
 }
 
+/** 模型选择器里的一条。**跨服务之后，光有 model 已经不足以指认一个选项** */
+export interface ModelChoice {
+  /** native 才有；cli 会话没有 provider 这个概念 */
+  provider?: string | undefined
+  model: string
+  /** 这一条属于哪家服务（显示名）。同一家的排在一组 */
+  group?: string | undefined
+}
+
 /**
- * 模型 pill（①-B″ · U2）。**与 agent pill 并排，但语义完全不同。**
+ * 模型 pill（①-B″ · U2；2026-08-11 扩成跨服务）。
  *
- * agent 是建会话时绑死的，换 agent 只能新建；**模型可以真正就地切换**——
- * 这一点由 Spike E 在真链路上验过（`flash → deep`，从假后端记下的请求体证明）。
- * 所以两个菜单的标题必须不一样：一个说「新建会话，用：」，一个说「切换模型」。
- * **同样的形状配不同的语义，是最容易让人按错的一种设计。**
+ * ## 它和 agent pill 的区别，就是作者踩的那一脚
+ *
+ * *「同一个对话，比如 DeepSeek 的对话，我切换到 Kimi 的时候，直接就重新新建对话了。
+ * 这不是我所期待的。一个对话之间，可以切换不同的 API。」*
+ *
+ * 他点的是 **agent pill**——那个菜单的语义确实是「新建会话，用：」。
+ * 而**在同一段对话里换一家**这件事，运行时早就支持
+ * （`setSessionModel` 收 provider + model，pi 的 `session.setModel()` 换的是
+ * 下一轮用谁，上下文原样留在会话里）——**只是选择器没把别家摆出来**：
+ * 它只列当前 provider 的模型，于是「换到 Kimi」在这里根本无从点起，
+ * 人只能去点旁边那个会新建会话的。
+ *
+ * 所以现在这个菜单**按服务分组，列出全部配好的家**，点哪个都是就地换。
+ * 那句「不会新建对话」也写在菜单里——**能力看不见等于不存在**。
  *
  * 「这一轮还没说完不许换」由运行时把门（它跟踪着 pending；
- * pi 自己的 `isStreaming` 在 prompt 开始前是 false，不可信——同样是 Spike E 查出来的）。
+ * pi 自己的 `isStreaming` 在 prompt 开始前是 false，不可信——Spike E 查出来的）。
  * 这里把理由**提前显示出来**，而不是等人点了才报错。
  */
 export function ModelPill({
-  models,
+  choices,
   current,
   busy,
   onPick,
 }: {
-  /** 该 provider 可选的模型。来自 `getProviders` 已有的 `providers[].models` */
-  models: readonly string[]
-  current: string | undefined
+  /** 能换到哪些。native 会话是「所有配好的服务 × 各自的模型」 */
+  choices: readonly ModelChoice[]
+  /** 当前这一轮用的是谁。**provider 也要**——两家可以有同名模型 */
+  current: { provider?: string | undefined; model: string } | undefined
   /** agent 还在说话。**用我们自己的判定，不问 pi** */
   busy?: boolean | undefined
-  onPick: (model: string) => void
+  onPick: (choice: ModelChoice) => void
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -569,7 +604,19 @@ export function ModelPill({
    * 当前未知时如实标「CLI 默认」——**那是实情，不是缺陷**，
    * 而且比「选择器整个不出现」诚实得多。
    */
-  if (models.length === 0) return null
+  if (choices.length === 0) return null
+
+  const 同一条 = (c: ModelChoice) => c.model === current?.model && c.provider === current?.provider
+  /** 当前那一条属于哪家。**认不出来就不写**，不猜一个 */
+  const 当前的家 = choices.find(同一条)?.group
+
+  /** 按服务分组，**保持传进来的顺序**——排序是调用方的事 */
+  const 分组: { name: string | undefined; items: ModelChoice[] }[] = []
+  for (const c of choices) {
+    const g = 分组.find((x) => x.name === c.group)
+    if (g) g.items.push(c)
+    else 分组.push({ name: c.group, items: [c] })
+  }
 
   return (
     <div className="pill model-pill" ref={box}>
@@ -580,7 +627,9 @@ export function ModelPill({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {current ?? "CLI 默认"}
+        {/* **先说是哪家，再说是哪个模型**——跨服务之后，前者才是人要找的 */}
+        {当前的家 ? <span className="svc">{当前的家}</span> : null}
+        {current?.model ?? "CLI 默认"}
         <span aria-hidden="true">▾</span>
       </Button>
 
@@ -595,26 +644,41 @@ export function ModelPill({
           }}
         >
           <p className="agent-menu-head">切换模型</p>
+          {/**
+            * **这句话是这次改动的一半。**
+            * 作者原本以为换一家就得新建对话——因为唯一摆在眼前的入口
+            * （agent pill）确实是那个意思。
+            */}
+          {/* **JSX 纯文本不渲染 markdown**：强调一律走 CSS，写 `**` 只会显示成星号 */}
+          <p className="hint pad">
+            就地换，<em className="set-emph">不会新建对话</em>——上下文照旧留在这一段里
+          </p>
           {/* **理由提前说，不等人点了才报错。** 门在运行时，这里只是把它显示出来 */}
           {busy ? <p className="hint pad">这一轮还没说完，先等它结束或中止</p> : null}
-          <ul>
-            {models.map((m) => (
-              <li key={m}>
-                <Row
-                  role="menuitem"
-                  aria-disabled={Boolean(busy)}
-                  onClick={() => {
-                    if (busy) return
-                    setOpen(false)
-                    onPick(m)
-                  }}
-                >
-                  <span className="name">{m}</span>
-                  {m === current ? <span className="hint">当前</span> : null}
-                </Row>
-              </li>
-            ))}
-          </ul>
+          {分组.map((g) => (
+            <div key={g.name ?? "—"} className="model-group">
+              {/* 只有一家时不画组标题——那时它只是重复 pill 上已经写着的东西 */}
+              {g.name && 分组.length > 1 ? <p className="group-head">{g.name}</p> : null}
+              <ul>
+                {g.items.map((c) => (
+                  <li key={`${c.provider ?? ""}/${c.model}`}>
+                    <Row
+                      role="menuitem"
+                      aria-disabled={Boolean(busy)}
+                      onClick={() => {
+                        if (busy) return
+                        setOpen(false)
+                        onPick(c)
+                      }}
+                    >
+                      <span className="name">{c.model}</span>
+                      {同一条(c) ? <span className="hint">当前</span> : null}
+                    </Row>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       ) : null}
     </div>
@@ -627,6 +691,7 @@ export function ConversationView({
   session,
   items,
   agents,
+  agentLabel,
   models,
   model,
   onSend,
@@ -642,11 +707,22 @@ export function ConversationView({
   agents?: readonly string[] | undefined
   /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
   onNewSession?: ((agentId: string) => void) | undefined
-  /** 该会话 provider 下可选的模型 */
-  models?: readonly string[] | undefined
-  /** 当前模型。与 agent 不同，**它可以就地换** */
-  model?: string | undefined
-  onPickModel?: ((model: string) => void) | undefined
+  /**
+   * 能换到哪些模型。**2026-08-11 起跨服务**：native 会话拿到的是
+   * 「所有配好的服务 × 各自的模型」，按服务分组。
+   */
+  models?: readonly ModelChoice[] | undefined
+  /** 当前用的是谁。与 agent 不同，**它可以就地换**，而且可以换到另一家 */
+  model?: { provider?: string | undefined; model: string } | undefined
+  onPickModel?: ((choice: ModelChoice) => void) | undefined
+  /**
+   * 这个会话的 agent 该怎么称呼（`ds-chat` → `DeepSeek`）。
+   *
+   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+   * **agent id 是配置里的键**，是我们的内部标识；名字该由服务自己给。
+   * 缺省时退回 id——那至少是实话。
+   */
+  agentLabel?: ((agentId: string) => string) | undefined
   /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
   items: readonly TranscriptItem[]
   onSend: (text: string) => void
@@ -715,7 +791,7 @@ export function ConversationView({
               <TranscriptRow
                 key={item.id}
                 item={item}
-                agentId={session.agentId}
+                agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
               />
             ))
@@ -766,13 +842,26 @@ export function ConversationView({
            */}
           <div className="composer-controls">
             {models && onPickModel ? (
-              <ModelPill models={models} current={model} busy={busy} onPick={onPickModel} />
+              <ModelPill choices={models} current={model} busy={busy} onPick={onPickModel} />
             ) : null}
             {agents && onNewSession ? (
+              /**
+               * **触发器仍然显示这个会话的 agent**（`ds-chat` → `DeepSeek`）。
+               *
+               * 2026-08-11 一度改成写死「新会话」，理由是作者把它读成了
+               * 「当前是谁」的显示器、点它换 Kimi 结果开了个新对话。
+               * **改回来了**：Hermes 那条 *"Display follows THIS surface's
+               * SessionView"* 是真的有用（并排两个会话各显示各的）。
+               *
+               * 歧义改在别处消：**旁边的模型 pill 现在列出所有配好的服务**，
+               * 并写着「就地换，不会新建对话」——
+               * 那条路存在之后，这颗 pill 的「新建会话，用：」就不再是唯一出路。
+               */
               <AgentPill
                 agents={agents}
                 current={session.agentId}
                 kind={session.kind}
+                label={agentLabel}
                 onPick={onNewSession}
               />
             ) : null}
@@ -1217,10 +1306,13 @@ const OPENERS: readonly { 标题: string; 说明: string; 发出去的话: strin
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */
 export function EmptyConversation({
   agents,
+  agentLabel,
   onStart,
   onOpenSettings,
 }: {
   agents: readonly string[]
+  /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
+  agentLabel?: ((agentId: string) => string) | undefined
   /** 第二个参数给了的话，**建会话之后把这句话真的发出去**——见 `App.tsx` 的 `startSession` */
   onStart: (agentId: string, firstMessage?: string) => void
   onOpenSettings: () => void
@@ -1261,10 +1353,15 @@ export function EmptyConversation({
               得先开一个 ds-chat 再换，那是为了迁就界面而多走一步 */}
           <div className="empty-actions">
             <Button variant="primary" onClick={() => onStart(first)}>
-              ＋ 用 {first} 开始
+              ＋ 用 {agentLabel ? agentLabel(first) : first} 开始
             </Button>
             {agents.length > 1 ? (
-              <AgentPill agents={agents} onPick={onStart} triggerLabel="换一个 agent" />
+              <AgentPill
+                agents={agents}
+                {...(agentLabel ? { label: agentLabel } : {})}
+                onPick={onStart}
+                triggerLabel="换一个 agent"
+              />
             ) : null}
           </div>
         </div>

@@ -613,6 +613,24 @@ pre {
   color: var(--dawn-text-3);
   font-size: 11px;
 }
+/* 跨服务之后的模型菜单（2026-08-11）：**按服务分组** */
+.model-group + .model-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: var(--dawn-hairline) solid var(--dawn-stroke-4);
+}
+.model-group .group-head {
+  margin: 0;
+  padding: 4px 8px 2px;
+  color: var(--dawn-text-3);
+  font-size: 11px;
+  font-weight: 600;
+}
+/* pill 上「是哪一家」。**排在模型名前面**——跨服务之后，前者才是人要找的 */
+.model-pill .svc { margin-right: 5px; color: var(--dawn-text-3); font-size: 11px; }
+/* 菜单里那几句说明（「不会新建对话」「这一轮还没说完」） */
+.agent-menu .hint.pad { margin: 0; padding: 2px 8px 6px; max-width: 22rem; }
+
 .empty-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 .agent-menu {

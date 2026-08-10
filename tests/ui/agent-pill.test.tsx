@@ -71,6 +71,27 @@ describe("agent pill · 位置", () => {
   })
 
   /**
+   * **2026-08-11：显示的是「这家服务叫什么」，不是配置里那个键。**
+   *
+   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+   * `ds-chat` 是 `providers.yaml` 里的一个键——**我们的内部标识**。
+   * 名字来自 pi 的 provider 表，界面只负责把它用上；**没给就退回 id**。
+   */
+  it("**用服务的名字，不用配置里那个键** —— `ds-chat` → `DeepSeek`", () => {
+    const { container } = conv({
+      agentLabel: (id: string) => (id === "ds-chat" ? "DeepSeek" : id),
+    })
+    const pill = container.querySelector(".agent-pill")!
+    expect(pill.textContent).toContain("DeepSeek")
+    expect(pill.textContent).not.toContain("ds-chat")
+  })
+
+  it("**没给名字就退回 id** —— 那至少是实话，不在界面上编一个", () => {
+    const { container } = conv()
+    expect(container.querySelector(".agent-pill")!.textContent).toContain("ds-chat")
+  })
+
+  /**
    * **2026-08-09（①-C · C1）：分类从两种变成三种。**
    *
    * 原来是 `pty ? "外部 CLI" : "内置"`——那时 claude/codex 确实是 pty 托管的。

@@ -774,20 +774,53 @@ export class NativeRuntime implements AgentRuntime {
    * **界面据此给输入框**；不给的话，填了 key 也连不上而没人知道为什么。
    */
   async providersNeedingBaseUrl(): Promise<string[]> {
+    return (await this.providerList())
+      .filter((p) => !p["baseUrl"])
+      .map((p) => String(p["id"] ?? ""))
+      .filter(Boolean)
+      .sort()
+  }
+
+  /**
+   * provider 的**显示名**：`deepseek` → `DeepSeek`（2026-08-11）。
+   *
+   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」* 他是对的——
+   * `ds-chat` 是配置里的一个键，是我们的内部标识，不是这家服务的名字。
+   *
+   * **名字来自 pi 的 provider 表，不是一份我手打的对照表。**
+   * 手打的那天起就开始撒谎：pi 新增一家、或改了写法，我们这边不会有任何迹象。
+   * 实测 pi 自己带着 `name`：`deepseek → DeepSeek`、
+   * `kimi-coding → Kimi For Coding`、`moonshotai-cn → Moonshot AI CN`。
+   *
+   * **认不出的不给键**——缺省由界面决定怎么表达（它会退回用 id），
+   * 而不是在这里编一个。
+   */
+  async providerNames(): Promise<Record<string, string>> {
+    const out: Record<string, string> = {}
+    for (const p of await this.providerList()) {
+      const id = String(p["id"] ?? "")
+      const name = p["name"]
+      if (id && typeof name === "string" && name) out[id] = name
+    }
+    return out
+  }
+
+  /**
+   * pi 的 provider 表，**统一成数组**。
+   *
+   * pi 在不同版本里给的是数组还是以 id 为键的对象并不确定，
+   * 两处调用各写一遍归一化，迟早只改对一处。
+   */
+  private async providerList(): Promise<Record<string, unknown>[]> {
     const rt = await this.runtime()
     const provs = (rt as unknown as { getProviders?: () => unknown }).getProviders?.()
     if (!provs) return []
-    const list: Record<string, unknown>[] = Array.isArray(provs)
+    return Array.isArray(provs)
       ? (provs as Record<string, unknown>[])
       : Object.entries(provs as Record<string, Record<string, unknown>>).map(([id, v]) => ({
           id,
           ...v,
         }))
-    return list
-      .filter((p) => !p["baseUrl"])
-      .map((p) => String(p["id"] ?? p["name"] ?? ""))
-      .filter(Boolean)
-      .sort()
   }
 
   /**

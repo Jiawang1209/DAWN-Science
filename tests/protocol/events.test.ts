@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 4.0", () => {
+describe("协议版本 · 4.1", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,6 +176,11 @@ describe("协议版本 · 4.0", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
+   * **4.1（2026-08-11）：`getProviders` 的 `providers[]` 带上 `name`。**
+   *   纯新增。作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*——
+   *   agent id 是配置里的键，**是我们的内部标识，不是这家服务的名字**。
+   *   名字来自 pi 的 provider 表（`deepseek → DeepSeek`），不是手打的对照表。
+   *
    * **4.0（2026-08-10，破坏性）：`setProviderBaseUrl` → `setProviderConnection`
    *   （多收 `api` / `models`）；`listKnownProviders` 的 `baseUrls` → `connections`。**
    *   两处都是**替换**，不是新增，所以 major 递增。本可以两边并存躲开这次 major——
@@ -261,7 +266,7 @@ describe("协议版本 · 4.0", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.0")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.1")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

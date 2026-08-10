@@ -38,6 +38,7 @@ import {
   EmptyConversation,
   SessionSidebar,
   TerminalView,
+  type ModelChoice,
 } from "./views.js"
 import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
@@ -699,11 +700,56 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 2026-08-09（作者试用后补）：此前只有 native 那一支，于是 cli 会话里
    * 根本没有模型选择器——**用户只看得见 agent pill，而它点了必然新建会话**。
    */
-  const modelChoices =
+  /**
+   * **一家服务该怎么称呼**（2026-08-11）。
+   *
+   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+   * agent id 是 `providers.yaml` 里的一个键——**我们的内部标识**。
+   * 名字问 pi 要（`providers[].name`），**没有就退回 id**：那至少是实话，
+   * 而手打一份对照表从写下那天起就开始撒谎。
+   *
+   * cli / pty / kernel 保持用 id：`claude` / `codex` / `shell`
+   * 本来就是人叫它们的名字。
+   */
+  const agentLabel = useCallback(
+    (agentId: string): string => {
+      const a = providers.agents.find((x) => x.agentId === agentId)
+      if (a?.kind !== "native" || !a.provider) return agentId
+      return providers.providers.find((p) => p.providerId === a.provider)?.name ?? a.provider
+    },
+    [providers],
+  )
+
+  /**
+   * 能换到哪些模型。
+   *
+   * **native：所有配好的服务 × 各自的模型**（2026-08-11 起跨服务）。
+   * 作者：*「同一个对话，我切换到 Kimi 的时候，直接就重新新建对话了。」*——
+   * 换一家原本只能靠 agent pill，而那颗必然新建会话；
+   * 运行时其实一直支持就地换（`setSessionModel` 收 provider + model），
+   * **缺的只是把别家摆进这个菜单**。
+   *
+   * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
+   */
+  const modelChoices: ModelChoice[] =
     agentCfg?.kind === "cli"
-      ? (agentCfg.models ?? [])
-      : (providers.providers.find((p) => p.providerId === agentCfg?.provider)?.available ?? [])
-  const currentModel = sessionId ? (sessionModels[sessionId] ?? agentCfg?.model) : undefined
+      ? (agentCfg.models ?? []).map((m) => ({ model: m }))
+      : providers.providers.flatMap((p) =>
+          (p.available ?? []).map((m) => ({
+            provider: p.providerId,
+            model: m,
+            group: p.name ?? p.providerId,
+          })),
+        )
+  const currentModel: { provider?: string; model: string } | undefined = sessionId
+    ? (sessionModels[sessionId] ??
+      (agentCfg?.model
+        ? {
+            ...(agentCfg.provider ? { provider: agentCfg.provider } : {}),
+            model: agentCfg.model,
+          }
+        : undefined))
+    : undefined
 
   /**
    * **界面上所有动作的唯一定义处**（①-B″ · U1）。
@@ -807,6 +853,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           projects={projects}
           sessions={sessions}
           agents={agentIds}
+          agentLabel={agentLabel}
           activeProjectId={projectId}
           activeSessionId={sessionId}
           view={view}
@@ -986,7 +1033,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onNewSession={actions.newSession}
                 models={modelChoices}
                 model={currentModel}
-                onPickModel={(m) => {
+                agentLabel={agentLabel}
+                onPickModel={(c) => {
                   if (!session) return
                   /**
                    * **`provider` 只有 native 有。**
@@ -995,15 +1043,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                    * 加了 cli 之后，那个卫语句会让**换模型静静地什么都不做**：
                    * 点了没反应，而用户无从知道为什么。协议已把它放宽为可选（2.4）。
                    */
+                  /**
+                   * **provider 跟着这一条选项走，不跟着 agent 配置走**
+                   * （2026-08-11）。此前这里永远传 `agentCfg.provider`——
+                   * 那时菜单里也只有那一家，所以看不出问题；
+                   * 现在菜单跨服务，传旧的那个就等于**换了个寂寞**：
+                   * 界面显示换了，请求还打在原来那家。
+                   */
                   client
                     .get("setSessionModel", {
                       sessionId: session.sessionId,
-                      ...(agentCfg?.provider ? { provider: agentCfg.provider } : {}),
-                      model: m,
+                      ...(c.provider ? { provider: c.provider } : {}),
+                      model: c.model,
                     })
                     // **成功之后才更新缓存。** 失败时 fail() 会把后端给的理由
                     // （没配 key / 这一轮还没说完）原样显示出来
-                    .then(() => setSessionModel(session.sessionId, m))
+                    .then(() => setSessionModel(session.sessionId, c.model, c.provider))
                     .catch(fail)
                 }}
                 terminalTrimmed={termTrimmed}
@@ -1037,6 +1092,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ) : (
             <EmptyConversation
               agents={agentIds}
+              agentLabel={agentLabel}
               onStart={actions.newSession}
               onOpenSettings={actions.openSettings}
             />

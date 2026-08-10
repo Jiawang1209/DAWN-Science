@@ -229,6 +229,16 @@ export const OPERATIONS = {
            * （确认该 provider 一个模型都没有）是两回事。
            */
           available: z.array(z.string()).optional(),
+          /**
+           * 这家服务的**显示名**：`deepseek` → `DeepSeek`（2026-08-11）。
+           *
+           * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+           * `ds-chat` 是配置里的一个键——**我们的内部标识，不是这家服务的名字**。
+           *
+           * **来自 pi 的 provider 表，不是一份手打的对照表**；
+           * **缺省 = pi 没给**，界面退回用 id，不在这里编一个。
+           */
+          name: z.string().optional(),
         }),
       ),
     }),

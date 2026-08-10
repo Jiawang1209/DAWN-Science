@@ -65,8 +65,15 @@ test("**第二句话不改名字** —— 侧栏上的名字自己变，人会�
   await expect(page.locator(侧栏会话).first()).toHaveText("第一句定名字")
 })
 
-test("会话行还带来路 —— agent 与时刻", async ({ dawn }) => {
+test("会话行还带来路 —— 是哪家服务、什么时候开的", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: /新建会话/ }).click()
-  await expect(page.locator(".session-list .sess .sub").first()).toHaveText(/ds-chat · \d{2}:\d{2}/)
+  /**
+   * 2026-08-11：原来这里是 `ds-chat`——`providers.yaml` 里的一个键。
+   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
+   * 名字来自 pi 的 provider 表，**所以这条只有真链路才验得了**。
+   */
+  await expect(page.locator(".session-list .sess .sub").first()).toHaveText(
+    /DeepSeek · \d{2}:\d{2}/,
+  )
 })

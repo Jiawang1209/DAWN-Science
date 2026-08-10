@@ -86,6 +86,12 @@ export interface WorkbenchBackendOptions {
     known?(): Promise<string[]>
     /** 地址 pi 不自带的那几个。**界面据此给输入框** */
     needsBaseUrl?(): Promise<string[]>
+    /**
+     * provider 的显示名（`deepseek` → `DeepSeek`）。
+     *
+     * **不给则界面退回用 id**——缺省是「不知道」，那时用 id 至少是实话。
+     */
+    names?(): Promise<Record<string, string>>
   }
   /** provider 连接设置变了。装配层据此重新生成 `models.json` 并让下次用上 */
   onProvidersChanged?: (providers: ProviderRegistry["providers"]) => void
@@ -185,6 +191,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      */
     getProviders: async () => {
       await 确保配过key的都能用()
+      /**
+       * 显示名一次问全，不在循环里一家一家问。
+       * **拿不到就整份缺省**，界面退回用 id——见 `models.names` 的注释。
+       */
+      const 显示名: Record<string, string> = models?.names
+        ? await models.names().catch(() => ({}))
+        : {}
       const nativeAgents = Object.values(registry.agents).filter(
         (d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native",
       )
@@ -227,6 +240,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             // 目录里真正有的（模型选择器看这一份）。**取不到就不给字段**——
             // 缺省是「不知道」，空数组是「确认没有」，两者不能混
             ...(models ? { available: await models.available(providerId) } : {}),
+            // pi 给的显示名。**没有就不给字段**，界面退回用 id
+            ...(显示名[providerId] ? { name: 显示名[providerId]! } : {}),
           })),
         ),
       }

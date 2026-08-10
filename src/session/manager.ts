@@ -12,7 +12,7 @@ import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import type { AgentDef, ProviderRegistry } from "../config/schema.js"
-import type { SessionRecord, SessionStore } from "../store/sessions.js"
+import type { NewSessionRecord, SessionRecord, SessionStore } from "../store/sessions.js"
 import type { AgentRuntime, EventSink, SessionId, SessionSpec } from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
@@ -206,7 +206,7 @@ export class SessionManager {
     const sessionDir = join(workspace, ".dawn", "sessions", id)
     ensureDawnDirIgnored(workspace)
     seedSubagentExample(workspace)
-    const rec: SessionRecord = {
+    const rec: NewSessionRecord = {
       id,
       agentId,
       workspace,
@@ -304,7 +304,14 @@ export class SessionManager {
       runtime.attach(id, (e) => {
         if (e.kind === "exited") this.store.updateState(id, "exited", { exitCode: e.exitCode })
       })
-      return { ...rec, state: "alive", pid: handle.pid }
+      /**
+       * **从库里读回来**，不拿内存里那份拼一个。
+       * `sortOrder` 是入库那一刻由数据库定的（`MAX + 1`），
+       * 在这里补一个值等于猜——而它正是列表顺序的依据。
+       */
+      const saved = this.store.get(id)
+      if (!saved) throw new Error(`会话 ${id} 刚入库就读不到了`)
+      return saved
     } catch (err) {
       // 启动失败也要落库，绝不把会话留在 starting
       this.store.updateState(id, "exited", { exitCode: -1 })
@@ -431,6 +438,18 @@ export class SessionManager {
   async remove(sessionId: SessionId): Promise<boolean> {
     await this.stop(sessionId)
     return this.store.delete(sessionId)
+  }
+
+  rename(sessionId: SessionId, title: string): boolean {
+    return this.store.rename(sessionId, title)
+  }
+
+  setPinned(sessionId: SessionId, pinned: boolean): boolean {
+    return this.store.setPinned(sessionId, pinned)
+  }
+
+  move(sessionId: SessionId, direction: "up" | "down"): boolean {
+    return this.store.move(sessionId, direction)
   }
 
   /** 取一条会话记录。**没有就是 undefined**，不抛 */

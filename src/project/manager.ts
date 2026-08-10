@@ -109,6 +109,8 @@ export class ProjectManager {
       createdAt: s.createdAt,
       // **没有标题就不给这个字段**，不给空串——界面据此显示「新会话」
       ...(s.title === undefined ? {} : { title: s.title }),
+      pinned: s.pinned,
+      sortOrder: s.sortOrder,
       ...(s.pid === undefined ? {} : { pid: s.pid }),
       ...(s.exitCode === undefined ? {} : { exitCode: s.exitCode }),
     }))

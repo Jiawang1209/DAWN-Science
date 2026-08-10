@@ -716,6 +716,42 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 会话改名（2026-08-10）。
+   *
+   * 作者：*「可以置顶，可以挪动对话的顺序，可以重命名，可以删除。」*
+   *
+   * **空串等于清掉**，回到自动标题「新会话」——而不是存一个空标题，
+   * 那在界面上是一行空白，看起来像加载失败。
+   */
+  renameSession: {
+    request: z.object({ sessionId: z.string().min(1), title: z.string().max(200) }).strict(),
+    response: z.object({}).strict(),
+    mutating: true,
+  },
+
+  /** 置顶／取消置顶。**只是分组，不是另一种序**——两组各自按位置排 */
+  setSessionPinned: {
+    request: z.object({ sessionId: z.string().min(1), pinned: z.boolean() }).strict(),
+    response: z.object({}).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 上移／下移一格。
+   *
+   * **只在同一组里换**（置顶的和没置顶的各排各的）——跨组换等于偷偷改了置顶状态。
+   * **已经在头/尾时如实回 `moved: false`**，不假装成功也不报错：
+   * 「没得动了」是一个正常结果。
+   */
+  moveSession: {
+    request: z
+      .object({ sessionId: z.string().min(1), direction: z.enum(["up", "down"]) })
+      .strict(),
+    response: z.object({ moved: z.boolean() }).strict(),
+    mutating: true,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

@@ -77,8 +77,15 @@
  * 2.16（2026-08-10）：新增 `getEnvironment`（②-B · S17）。纯新增。
  *   **三态**：不支持 / 还没拿到 / 拿到了——一份空快照会被读成
  *   「这个环境什么都没有」，而实情是「我们没问到」。
+ * 3.0（2026-08-10）：`SessionSummary` 新增**必填**的 `pinned` / `sortOrder`。
+ *   **必填即破坏性**——老服务端不会发这两个字段，新界面的 zod 校验会直接拒。
+ *   同批新增 `renameSession` / `setSessionPinned` / `moveSession`。
+ *
+ *   本可以把它们做成可选来躲开 major。**没有那么做**：
+ *   `sortOrder` 缺省时列表该按什么排没有诚实的答案，而「可选 + 各处兜底」
+ *   正是 schema v8 那笔烂账的翻版（见 `store/schema.ts` 的说明）。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "2.16"
+export const WORKBENCH_PROTOCOL_VERSION = "3.0"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

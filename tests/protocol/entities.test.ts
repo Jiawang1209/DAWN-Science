@@ -233,6 +233,9 @@ describe("SessionSummary —— 与 ①-A 的 SessionRecord 对齐", () => {
     kind: "native" as const,
     state: "alive" as const,
     createdAt: "2026-08-08T00:00:00Z",
+    // 3.0 起是**必填**：缺省时列表该按什么排没有诚实的答案
+    pinned: false,
+    sortOrder: 1,
   }
 
   it("state 沿用 ①-A 的三态", () => {
@@ -294,6 +297,8 @@ describe("会话 kind 新增 cli（①-C · C1）", () => {
       kind: "cli",
       state: "alive",
       createdAt: "2026-08-09T00:00:00.000Z",
+      pinned: false,
+      sortOrder: 1,
     })
     expect(r.success, JSON.stringify(r.error?.issues)).toBe(true)
   })

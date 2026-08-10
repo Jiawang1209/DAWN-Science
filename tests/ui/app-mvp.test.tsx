@@ -58,6 +58,9 @@ const SESSION = {
   kind: "native" as const,
   state: "alive" as const,
   createdAt: "2026-08-08T00:00:00Z",
+  // 3.0 起必填：缺省时列表该按什么排没有诚实的答案
+  pinned: false,
+  sortOrder: 1,
 }
 
 const proj = (workspace: string) => ({

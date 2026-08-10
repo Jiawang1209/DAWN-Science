@@ -193,6 +193,10 @@ export const SessionSummarySchema = z
      * （作者：*「会话的 ID 怎么都是一个呢？」*）。
      */
     title: z.string().min(1).optional(),
+    /** 置顶。**只是分组**——置顶的与没置顶的各自按 `sortOrder` 排 */
+    pinned: z.boolean(),
+    /** 列表里的位置。**每条都有**，见 schema v8：混用手动序与创建序是一笔烂账 */
+    sortOrder: z.int(),
     pid: z.int().optional(),
     exitCode: z.int().optional(),
     createdAt: Iso,

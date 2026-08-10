@@ -509,6 +509,47 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 移除项目。**先问后端要真数字**——界面手里的会话列表与账本都是局部的，
    * 摆一个猜出来的数字比不摆更坏。
    */
+  /**
+   * 改名 / 置顶 / 挪位置。
+   *
+   * **三个都要重取会话列表**：顺序与置顶都是后端定的
+   * （`sort_order` 在库里，界面自己排等于第二份实现）。
+   */
+  const 重取会话 = useCallback(() => {
+    const pid = $activeProjectId.get()
+    if (pid) void loadSessions(client, pid)
+  }, [client])
+
+  const renameSession = useCallback(
+    (s: SessionSummary, title: string) => {
+      // **没变就不打 IPC**：点进改名又原样退出是常事
+      if ((s.title ?? "") === title.trim()) return
+      client.get("renameSession", { sessionId: s.sessionId, title }).then(重取会话).catch(fail)
+    },
+    [client, 重取会话],
+  )
+
+  const pinSession = useCallback(
+    (s: SessionSummary, pinned: boolean) => {
+      client.get("setSessionPinned", { sessionId: s.sessionId, pinned }).then(重取会话).catch(fail)
+    },
+    [client, 重取会话],
+  )
+
+  const moveSession = useCallback(
+    (s: SessionSummary, direction: "up" | "down") => {
+      /**
+       * **已经在头/尾时什么都不做**，不出声也不撒谎——
+       * 后端如实回 `moved: false`，那是一个正常结果。
+       */
+      client
+        .get<{ moved: boolean }>("moveSession", { sessionId: s.sessionId, direction })
+        .then((r) => { if (r.moved) 重取会话() })
+        .catch(fail)
+    },
+    [client, 重取会话],
+  )
+
   const askDeleteProject = useCallback(() => {
     const pid = $activeProjectId.get()
     if (!pid) return
@@ -752,6 +793,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowPanel={actions.showProjectPanel}
           onShowFiles={() => setView("files")}
           onDeleteSession={askDeleteSession}
+          onRenameSession={renameSession}
+          onPinSession={pinSession}
+          onMoveSession={moveSession}
           onOpenProject={actions.openProject}
           onNewSession={actions.newSession}
           onOpenSettings={actions.openSettings}

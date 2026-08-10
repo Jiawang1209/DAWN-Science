@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 2.16", () => {
+describe("协议版本 · 3.0", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,6 +176,15 @@ describe("协议版本 · 2.16", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
+   * **3.0（2026-08-10）：`SessionSummary` 新增必填的 `pinned` / `sortOrder`。**
+   *   **必填即破坏性**——老服务端不会发这两个字段，新界面的 zod 校验会直接拒，
+   *   所以是 major。同批新增 `renameSession` / `setSessionPinned` / `moveSession`。
+   *
+   *   本可以做成可选来躲开这次 major。**没有那么做**：`sortOrder` 缺省时
+   *   列表该按什么排没有诚实的答案，而「可选 + 各处兜底」正是
+   *   schema v8 里那笔烂账的翻版（见 `store/schema.ts`）。
+   *   契约冻结点在阶段 ③，**现在破一次比冻结之后便宜得多**。
+   *
    * **2.16（2026-08-10）：新增 `getEnvironment`（②-B · S17）。**
    *   三态：不支持 / 还没拿到 / 拿到了。**一份空快照会被读成
    *   「这个环境什么都没有」**，而实情是「我们没问到」。
@@ -230,8 +239,8 @@ describe("协议版本 · 2.16", () => {
    * 2.4（2026-08-09）：cli 的模型清单 + `provider` 放宽为可选。
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
-  it("新增操作、新增条目、新增 kind 都只升 minor", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("2.16")
+  it("版本号与这份说明一致", () => {
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("3.0")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

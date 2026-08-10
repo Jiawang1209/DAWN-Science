@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -184,6 +184,39 @@ export function migrate(db: Database.Database): void {
    */
   if (!hasColumn(db, "sessions", "title")) {
     db.exec(`ALTER TABLE sessions ADD COLUMN title TEXT`)
+  }
+
+  /**
+   * 会话的置顶与排序（2026-08-10）。
+   *
+   * 作者：*「要模仿一下 codex app 或者 claude app，就是可以置顶，
+   * 可以挪动对话的顺序，可以重命名，可以删除。」*
+   *
+   * ## 为什么每一条都有显式的 `sort_order`
+   *
+   * 「手动排过的按手动来，没排过的按创建时间来」听着自然，实现起来是笔烂账：
+   * 两种序混在一个列表里，**插入一条新的该放哪**没有确定答案，
+   * 而人一旦挪过一次，剩下那些「还没排过的」会开始漂。
+   *
+   * 所以**建的时候就给一个位置**（比当前最大的再大一档，新的在最上面），
+   * 之后只有人挪它才会变。列表永远是一种序，没有例外分支。
+   *
+   * `pinned` 只是分组，不是另一种序：置顶的和没置顶的**各自按 `sort_order` 排**。
+   */
+  if (!hasColumn(db, "sessions", "pinned")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`)
+  }
+  if (!hasColumn(db, "sessions", "sort_order")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN sort_order INTEGER`)
+    /**
+     * **老数据按创建时间回填**，而不是留 NULL。
+     * 留 NULL 就等于把上面那笔烂账原样搬进来。
+     */
+    db.exec(`
+      UPDATE sessions SET sort_order = (
+        SELECT COUNT(*) FROM sessions AS s2 WHERE s2.created_at <= sessions.created_at
+      ) WHERE sort_order IS NULL
+    `)
   }
 
   /**

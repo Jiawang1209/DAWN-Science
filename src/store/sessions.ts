@@ -33,7 +33,20 @@ export interface SessionRecord {
    * 界面据此显示「新会话」，而不是显示一行空白。
    */
   title?: string
+  /** 置顶。**只是分组，不是另一种序**——置顶的和没置顶的各自按 `sortOrder` 排 */
+  pinned: boolean
+  /** 列表里的位置。**每条都有**，见 schema v8 的说明 */
+  sortOrder: number
 }
+
+/**
+ * 建会话时调用方要提供的字段。
+ *
+ * **`pinned` 与 `sortOrder` 不在里面**：位置是入库那一刻由数据库定的
+ * （`MAX(sort_order) + 1`），让调用方去算等于把「新的排在哪」这件事
+ * 复制到每一个调用点。
+ */
+export type NewSessionRecord = Omit<SessionRecord, "pinned" | "sortOrder">
 
 interface Row {
   id: string
@@ -47,6 +60,8 @@ interface Row {
   project_id: string | null
   cli_thread_id: string | null
   title: string | null
+  pinned: number
+  sort_order: number | null
 }
 
 function toRecord(r: Row): SessionRecord {
@@ -64,17 +79,21 @@ function toRecord(r: Row): SessionRecord {
     ...(r.project_id === null || r.project_id === undefined ? {} : { projectId: r.project_id }),
     ...(r.cli_thread_id === null || r.cli_thread_id === undefined ? {} : { cliThreadId: r.cli_thread_id }),
     ...(r.title === null || r.title === undefined ? {} : { title: r.title }),
+    pinned: r.pinned === 1,
+    // 理论上回填之后不会有 NULL；真有就当它排在最后，**不抛**
+    sortOrder: r.sort_order ?? 0,
   }
 }
 
 export class SessionStore {
   constructor(private readonly db: Database.Database) {}
 
-  insert(rec: SessionRecord): void {
+  insert(rec: NewSessionRecord): void {
     this.db
       .prepare(`
-        INSERT INTO sessions (id, agent_id, workspace, session_dir, state, pid, exit_code, created_at, project_id)
-        VALUES (@id, @agentId, @workspace, @sessionDir, @state, @pid, @exitCode, @createdAt, @projectId)
+        INSERT INTO sessions (id, agent_id, workspace, session_dir, state, pid, exit_code, created_at, project_id, sort_order)
+        VALUES (@id, @agentId, @workspace, @sessionDir, @state, @pid, @exitCode, @createdAt, @projectId,
+                COALESCE((SELECT MAX(sort_order) FROM sessions) + 1, 1))
       `)
       .run({
         ...rec,
@@ -96,7 +115,14 @@ export class SessionStore {
 
   listByProject(projectId: string): SessionRecord[] {
     const rows = this.db
-      .prepare(`SELECT * FROM sessions WHERE project_id = ? ORDER BY created_at DESC`)
+      /**
+       * **置顶的在前，各组内按位置倒序**（新的/挪到上面的在上）。
+       * `id` 兜底只是为了**顺序绝对稳定**——两条位置相同时不该每次刷新都换个样。
+       */
+      .prepare(
+        `SELECT * FROM sessions WHERE project_id = ?
+          ORDER BY pinned DESC, sort_order DESC, id DESC`,
+      )
       .all(projectId) as Row[]
     return rows.map(toRecord)
   }
@@ -146,6 +172,58 @@ export class SessionStore {
   /** 删掉一个项目名下的全部会话。移除项目时连带 */
   deleteByProject(projectId: string): number {
     return this.db.prepare(`DELETE FROM sessions WHERE project_id = ?`).run(projectId).changes
+  }
+
+  /**
+   * 改名。**空串等于清掉**，回到「新会话」——
+   * 而不是存一个空标题（那在界面上是一行空白，看起来像加载失败）。
+   */
+  rename(id: string, title: string): boolean {
+    const v = title.trim()
+    return (
+      this.db.prepare(`UPDATE sessions SET title = ? WHERE id = ?`).run(v || null, id).changes > 0
+    )
+  }
+
+  setPinned(id: string, pinned: boolean): boolean {
+    return (
+      this.db.prepare(`UPDATE sessions SET pinned = ? WHERE id = ?`).run(pinned ? 1 : 0, id)
+        .changes > 0
+    )
+  }
+
+  /**
+   * 上移／下移一格。
+   *
+   * **与相邻那条换位置**，不是重排整张表：换位置是 O(1) 且不会碰到
+   * 任何别的行，而重排会把「人从没动过的那些」也搅一遍。
+   *
+   * **只在同一组里换**（置顶的和没置顶的各排各的）——跨组换等于偷偷
+   * 改了置顶状态，那是另一个动作。
+   *
+   * @returns 换成了没有。**已经在头/尾就是 false**，调用方据此不出声也不撒谎
+   */
+  move(id: string, direction: "up" | "down"): boolean {
+    const me = this.get(id)
+    if (!me) return false
+    // 上移 = 去更大的 sort_order（列表是倒序的）
+    const 更大 = direction === "up"
+    const row = this.db
+      .prepare(
+        `SELECT id, sort_order FROM sessions
+          WHERE project_id IS ? AND pinned = ? AND sort_order ${更大 ? ">" : "<"} ?
+          ORDER BY sort_order ${更大 ? "ASC" : "DESC"} LIMIT 1`,
+      )
+      .get(me.projectId ?? null, me.pinned ? 1 : 0, me.sortOrder) as
+      | { id: string; sort_order: number }
+      | undefined
+    if (!row) return false
+    const swap = this.db.transaction((a: string, av: number, b: string, bv: number) => {
+      this.db.prepare(`UPDATE sessions SET sort_order = ? WHERE id = ?`).run(bv, a)
+      this.db.prepare(`UPDATE sessions SET sort_order = ? WHERE id = ?`).run(av, b)
+    })
+    swap(id, me.sortOrder, row.id, row.sort_order)
+    return true
   }
 
   setCliThreadId(id: string, threadId: string): void {

@@ -69,7 +69,13 @@ describe("客户端 · 握手", () => {
   })
 
   it("major 不同时立即失败 —— 不静默降级", async () => {
-    const c = createClient(async () => caps("3.0"))
+    /**
+     * **同样从常量推**。2026-08-10 第二次栽在这里：这里原本写死 `"3.0"`，
+     * 而界面升到 3.0 之后它就变成了「与自己相同的版本」，
+     * 这条用例于是在验「相同 major 会失败」——一件与它标题相反的事。
+     */
+    const 大版本 = Number(WORKBENCH_PROTOCOL_VERSION.split(".")[0])
+    const c = createClient(async () => caps(`${大版本 + 1}.0`))
     await expect(c.handshake()).rejects.toMatchObject({ code: "version_mismatch" })
   })
 

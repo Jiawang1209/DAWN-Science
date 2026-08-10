@@ -32,6 +32,139 @@ function clockOf(iso: string): string {
   return 今天 ? hhmm : `${d.getMonth() + 1}/${d.getDate()} ${hhmm}`
 }
 
+/**
+ * 侧栏里的一行会话（2026-08-10）。
+ *
+ * 作者：*「要模仿一下 codex app 或者 claude app，就是可以置顶，
+ * 可以挪动对话的顺序，可以重命名，可以删除。」*
+ *
+ * ## 两个可见性规则，都是踩出来的
+ *
+ * 1. **当前那一行的动作常驻显示。** 上一版删除键是 `opacity: 0`，
+ *    作者的反馈是「会话还是不能删除」——**看不见的能力等于不存在**。
+ * 2. **改名就地进行。** `window.prompt` 在 Electron 里直接抛错，
+ *    而且本项目已经为它栽过一次（写下规则的人是我，违反它的也是我）。
+ */
+function SessionRow({
+  session,
+  active,
+  current,
+  onPick,
+  onDelete,
+  onRename,
+  onPin,
+  onMove,
+}: {
+  session: SessionSummary
+  active: boolean
+  /** 是不是选中的那一个。**动作按它决定常驻还是悬停** */
+  current: boolean
+  onPick: () => void
+  onDelete?: (() => void) | undefined
+  onRename?: ((title: string) => void) | undefined
+  onPin?: (() => void) | undefined
+  onMove?: ((direction: "up" | "down") => void) | undefined
+}) {
+  const [menu, setMenu] = useState(false)
+  const [editing, setEditing] = useState<string | undefined>(undefined)
+  const 名字 = session.title ?? "新会话"
+
+  if (editing !== undefined) {
+    const 提交 = () => {
+      onRename?.(editing)
+      setEditing(undefined)
+    }
+    return (
+      <li className="sess-item editing">
+        <input
+          className="control sess-rename"
+          autoFocus
+          value={editing}
+          aria-label={`重命名会话：${名字}`}
+          onChange={(e) => setEditing(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") 提交()
+            // **Esc 是取消，不是提交** —— 改到一半按 Esc 却被存下来最气人
+            else if (e.key === "Escape") setEditing(undefined)
+          }}
+          // 点到别处即提交：与 Finder / Claude 一致
+          onBlur={提交}
+        />
+      </li>
+    )
+  }
+
+  return (
+    <li className={`sess-item${current ? " current" : ""}${menu ? " menu-open" : ""}`}>
+      <Row active={active} onClick={onPick}>
+        <span className="sess">
+          <span className="name">
+            {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
+            {session.pinned ? (
+              <span className="pin-mark" aria-label="已置顶">
+                ▲
+              </span>
+            ) : null}
+            {名字}
+          </span>
+          <span className="sub">
+            {session.agentId} · {clockOf(session.createdAt)}
+          </span>
+        </span>
+        <span className={`state ${session.state}`}>{session.state}</span>
+      </Row>
+
+      {onDelete || onRename || onPin || onMove ? (
+        <div className="row-actions">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="row-more"
+            aria-label={`会话操作：${名字}`}
+            aria-expanded={menu}
+            onClick={() => setMenu((v) => !v)}
+          >
+            ⋯
+          </Button>
+          {menu ? (
+            <>
+              {/* 点别处关掉。**一层透明背板**，比在 document 上挂监听可控 */}
+              <div className="menu-scrim" onClick={() => setMenu(false)} />
+              <div className="row-menu" role="menu" aria-label={`会话操作：${名字}`}>
+                {onPin ? (
+                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onPin(); setMenu(false) }}>
+                    {session.pinned ? "取消置顶" : "置顶"}
+                  </Button>
+                ) : null}
+                {onRename ? (
+                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { setEditing(session.title ?? ""); setMenu(false) }}>
+                    重命名
+                  </Button>
+                ) : null}
+                {onMove ? (
+                  <>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMove("up"); setMenu(false) }}>
+                      上移
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMove("down"); setMenu(false) }}>
+                      下移
+                    </Button>
+                  </>
+                ) : null}
+                {onDelete ? (
+                  <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onDelete(); setMenu(false) }}>
+                    删除
+                  </Button>
+                ) : null}
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
+  )
+}
+
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
 export function SessionSidebar({
@@ -48,6 +181,9 @@ export function SessionSidebar({
   onShowPanel,
   onShowFiles,
   onDeleteSession,
+  onRenameSession,
+  onPinSession,
+  onMoveSession,
   onOpenSettings,
 }: {
   projects: readonly ProjectSummary[]
@@ -70,6 +206,9 @@ export function SessionSidebar({
   onShowFiles: () => void
   /** 删除一个会话。**不给就不显示那个按钮**——不是显示一个点了没反应的 */
   onDeleteSession?: ((session: SessionSummary) => void) | undefined
+  onRenameSession?: ((session: SessionSummary, title: string) => void) | undefined
+  onPinSession?: ((session: SessionSummary, pinned: boolean) => void) | undefined
+  onMoveSession?: ((session: SessionSummary, direction: "up" | "down") => void) | undefined
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
 }) {
@@ -143,56 +282,17 @@ export function SessionSidebar({
           </li>
         ) : (
           sessions.map((s) => (
-            <li
+            <SessionRow
               key={s.sessionId}
-              className={`sess-item${s.sessionId === activeSessionId ? " current" : ""}`}
-            >
-              <Row
-                active={s.sessionId === activeSessionId && view === "conversation"}
-                onClick={() => onPickSession(s.sessionId)}
-              >
-                {/**
-                  * **标题在上、来路在下**。此前这里只有 `agentId`——
-                  * 同一个 agent 建出来的会话在侧栏上一模一样
-                  * （作者 2026-08-10：*「会话的 ID 怎么都是一个呢？」*）。
-                  *
-                  * **没有标题就说「新会话」**，不显示一行空白：
-                  * 空白看起来像加载失败，而实情是「还没说过话」。
-                  */}
-                <span className="sess">
-                  <span className="name">{s.title ?? "新会话"}</span>
-                  <span className="sub">
-                    {s.agentId} · {clockOf(s.createdAt)}
-                  </span>
-                </span>
-                <span className={`state ${s.state}`}>{s.state}</span>
-              </Row>
-              {/**
-                * 删除。
-                *
-                * **2026-08-10 返工**：上一版是 `opacity: 0` + 绝对定位的一个裸 `×`,
-                * 只有鼠标悬到那一行才显形。作者的反馈是*「会话还是不能删除」*——
-                * 探针查过：**按钮是好的，点了就弹确认框**，问题是它看不见。
-                *
-                * 这与「新建项目此前是一个没有标签的 `＋`」是**同一类错误**，
-                * 而那条教训是我自己写下的：**看不见的能力等于不存在**。
-                *
-                * 现在：**当前这一行常驻显示**（你正看着的那个会话，总能删），
-                * 其余行悬停或聚焦时出现。列表不会变成一片红叉，
-                * 但也不再需要「先猜到有这个东西」。
-                */}
-              {onDeleteSession ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="row-kill"
-                  aria-label={`删除会话：${s.title ?? "新会话"}`}
-                  onClick={() => onDeleteSession(s)}
-                >
-                  ×
-                </Button>
-              ) : null}
-            </li>
+              session={s}
+              active={s.sessionId === activeSessionId && view === "conversation"}
+              current={s.sessionId === activeSessionId}
+              onPick={() => onPickSession(s.sessionId)}
+              {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
+              {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
+              {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
+              {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
+            />
           ))
         )}
       </ul>

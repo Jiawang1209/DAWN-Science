@@ -507,6 +507,28 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
     },
 
+    renameSession: async ({ sessionId, title }) => {
+      // **空串等于清掉**，回到自动标题——不是存一个空标题
+      if (!sessions.rename(sessionId, title)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      return {}
+    },
+
+    setSessionPinned: async ({ sessionId, pinned }) => {
+      if (!sessions.setPinned(sessionId, pinned)) {
+        throw fault("not_found", `没有这个会话：${sessionId}`)
+      }
+      return {}
+    },
+
+    moveSession: async ({ sessionId, direction }) => {
+      if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      /**
+       * **已经在头/尾就如实回 `false`**，不抛也不假装成功。
+       * 「没得动了」是一个正常结果，界面据此什么都不做即可。
+       */
+      return { moved: sessions.move(sessionId, direction) }
+    },
+
     deleteSession: async ({ sessionId }) => {
       const rec = sessions.get(sessionId)
       if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)

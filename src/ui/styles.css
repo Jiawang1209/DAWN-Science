@@ -1441,3 +1441,77 @@ pre {
   color: var(--dawn-text-3);
   white-space: nowrap;
 }
+
+/* ── 会话行的操作菜单（2026-08-10） ─────────────────────────────── */
+
+.row-actions {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+/**
+ * **与删除键同一条可见性规则**：当前那一行常驻，其余悬停或菜单开着时出现。
+ * 位置一直占着（`opacity` 而非 `display`），显形时整行不跳。
+ */
+.row-more {
+  opacity: 0;
+  color: var(--dawn-text-3);
+}
+
+.sess-item.current .row-more,
+.sess-item.menu-open .row-more,
+.sess-item:hover .row-more,
+.row-more:focus-visible {
+  opacity: 1;
+}
+
+/* 点别处关掉菜单。**一层透明背板**，比在 document 上挂监听可控 */
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+}
+
+.row-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: var(--z-modal);
+  min-width: 8rem;
+  display: flex;
+  flex-direction: column;
+  padding: var(--dawn-space-1);
+  border-radius: var(--dawn-radius-md);
+  corner-shape: var(--dawn-corner-shape);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+}
+
+.row-menu .btn {
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.menu-danger {
+  color: var(--dawn-danger);
+}
+
+/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */
+.pin-mark {
+  margin-right: 4px;
+  color: var(--dawn-text-3);
+  font-size: 9px;
+  vertical-align: 1px;
+}
+
+/* 就地改名。**不用 window.prompt**——Electron 里它直接抛错 */
+.sess-item.editing {
+  padding: 2px var(--dawn-space-2);
+}
+
+.sess-rename {
+  width: 100%;
+}

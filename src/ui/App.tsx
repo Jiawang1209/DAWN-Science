@@ -612,7 +612,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
         <main className="main">
           {view === "settings" ? (
-            <div className="panels">
+            /* **设置不复用项目概览的三栏网格**：仪表盘要一眼看全，
+               设置要一件一件读。单栏 + 最大宽度，见 Settings.tsx 的文件头 */
+            <div className="settings-page">
               <AppearancePanel />
               {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
               <KernelsPanel

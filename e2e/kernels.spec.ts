@@ -18,7 +18,8 @@ test("设置里列出本机内核，**且每一条都带解释器路径**", asyn
   // 精确匹配：页面上还有两个「去设置」，模糊匹配会撞上 strict 冲突
   await page.getByRole("button", { name: "设置", exact: true }).click()
 
-  const panel = page.locator(".panel", { has: page.getByText("内核", { exact: true }) })
+  // 2026-08-10 设置改成 Section > Row > Control，节的类名从 `.panel` 换成 `.set-section`
+  const panel = page.locator(".set-section", { has: page.getByText("内核", { exact: true }) })
   await expect(panel).toBeVisible()
 
   /**

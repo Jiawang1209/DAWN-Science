@@ -99,7 +99,9 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
       await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
       // **等数据本身，不是等骨架。** radiogroup 是同步渲染的，凭证列表不是；
       // 只等前者会在数据到达之前截图 —— 这条正是第一次跑出来的假报警
-      await expect(page.locator(".cred")).toHaveCount(1)
+      // 2026-08-10 设置改成 Section > Row > Control：凭证不再是一条 `.cred`，
+      // 而是一行里的一个表单。**等的还是同一件事**——凭证数据到了没有
+      await expect(page.locator(".set-control .cred-form")).toHaveCount(1)
     },
   },
   {

@@ -976,7 +976,7 @@ pre {
 
 .file-tree {
   overflow: auto;
-  border-right: 1px solid var(--dawn-hairline);
+  border-right: 1px solid var(--dawn-stroke-4);
   padding: var(--dawn-space-2) 0;
 }
 
@@ -1010,7 +1010,7 @@ pre {
   gap: var(--dawn-space-3);
   margin-bottom: var(--dawn-space-3);
   padding-bottom: var(--dawn-space-2);
-  border-bottom: 1px solid var(--dawn-hairline);
+  border-bottom: 1px solid var(--dawn-stroke-4);
 }
 
 .preview-head .name {
@@ -1081,4 +1081,135 @@ pre {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── 设置：Section > Row > Control（2026-08-10） ─────────────────── */
+
+/**
+ * **单栏、有最大宽度、居中。**
+ *
+ * 此前设置复用了项目概览的三栏仪表盘网格——三节并排铺满整个宽度，
+ * 控件宽度随列宽变，同一个「保存」按钮在三列里落在三个位置。
+ * **仪表盘要一眼看全，设置要一件一件读**，两者不是同一种排版。
+ */
+.settings-page {
+  overflow: auto;
+  padding: var(--dawn-space-6) var(--dawn-space-6) calc(var(--dawn-space-6) * 2);
+  min-height: 0;
+}
+
+.set-section {
+  max-width: 40rem;
+  margin: 0 auto var(--dawn-space-6);
+}
+
+.set-section-title {
+  margin: 0 0 var(--dawn-space-1);
+  font-size: 15px;
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-1);
+}
+
+.set-section-desc {
+  margin: 0 0 var(--dawn-space-3);
+  color: var(--dawn-text-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* **强调走 CSS**：JSX 纯文本不渲染 markdown，写 `**` 只会显示成星号 */
+.set-emph {
+  font-style: normal;
+  font-weight: var(--dawn-weight-medium);
+  color: var(--dawn-text-2);
+}
+
+.set-section-desc code {
+  font-family: var(--dawn-font-mono);
+  font-size: 11px;
+}
+
+/**
+ * 一行设置：**左边名字与说明，右边控件**，行间一条 hairline。
+ * 最后一行不带线——那条线是「下面还有」的意思。
+ */
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dawn-space-4);
+  padding: var(--dawn-space-3) 0;
+  border-bottom: 1px solid var(--dawn-stroke-4);
+}
+
+.set-rows > .set-row:last-child {
+  border-bottom: none;
+}
+
+.set-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.set-name {
+  font-size: var(--dawn-ui-size);
+  font-weight: var(--dawn-weight-medium);
+  color: var(--dawn-text-1);
+}
+
+.set-desc {
+  margin: 0;
+  color: var(--dawn-text-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/**
+ * 控件靠右，**不许被压缩**。
+ * 被压缩的输入框会先于说明文字消失，而它才是这一行的目的。
+ */
+.set-control {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  flex: 0 0 auto;
+}
+
+.set-control .control {
+  width: 15rem;
+}
+
+/* 路径比 key 长得多，给它更宽的一档 */
+.set-control .control.path {
+  width: 18rem;
+  font-family: var(--dawn-font-mono);
+  font-size: 12px;
+}
+
+.set-control .cred-form {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+}
+
+/* 折叠的参考清单挂在一节的末尾，与行区分开 */
+.set-section .kernel-ref {
+  margin-top: var(--dawn-space-3);
+  padding-top: var(--dawn-space-3);
+  border-top: 1px solid var(--dawn-stroke-4);
+}
+
+@media (max-width: 900px) {
+  /* 窄了就上下排——**控件宁可换行也不该被挤扁** */
+  .set-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--dawn-space-2);
+  }
+  .set-control .control,
+  .set-control .control.path {
+    width: 100%;
+  }
 }

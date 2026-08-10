@@ -52,7 +52,7 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test 2>&1 | tail -12",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/styles.css /tmp/s2.bak\nprintf '\\n.mutant2 { border-bottom: 1px solid var(--dawn-hairline); }\\n' >> src/ui/styles.css\nnpx vitest run --project ui tests/ui/design-contract.test.ts 2>&1 | grep -E \"长度|Tests \" | head -3\ncp /tmp/s2.bak src/ui/styles.css && rm /tmp/s2.bak\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/visual.spec.ts --grep \"设置 · 亮色\" --update-snapshots 2>&1 | tail -3",
     "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -6",
     "lintCommand": null,
     "devCommand": null,

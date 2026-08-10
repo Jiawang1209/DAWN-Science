@@ -357,3 +357,27 @@ describe("设计契约 · 引用的令牌必须真的存在", () => {
     expect(missing, `styles.css 引用了 tokens.css 里没有的令牌：${missing.join("、")}`).toEqual([])
   })
 })
+
+describe("设计契约 · 令牌不能用错位置", () => {
+  /**
+   * **同一天踩的第二次**：`--dawn-hairline` 是**宽度**（`0.5px`），不是颜色。
+   * 写成 `border-bottom: 1px solid var(--dawn-hairline)` 会展开成
+   * `1px solid 0.5px`——**整条声明作废，一条线都不画**，而且不报错。
+   *
+   * 上一条扫描防的是「令牌根本不存在」，这条防的是「令牌存在但类型不对」。
+   * 两者的症状完全一样：**看起来只是样式差一点。**
+   */
+  it("颜色位上不许出现长度令牌", () => {
+    const tokens = read("tokens.css")
+    /** 值是一个纯长度的令牌——它们只能用在尺寸位上 */
+    const lengths = new Set(
+      [...tokens.matchAll(/(--dawn-[a-z0-9-]+)\s*:\s*(-?[\d.]+(?:px|rem|em))\s*;/g)].map((m) => m[1]),
+    )
+    const styles = read("styles.css")
+    // `border[-x]: <宽度> solid var(--t)` 里的 `--t` 处在颜色位上
+    const bad = [...styles.matchAll(/border[a-z-]*:\s*[^;]*?\bsolid\s+var\(\s*(--dawn-[a-z0-9-]+)/g)]
+      .map((m) => m[1]!)
+      .filter((t) => lengths.has(t))
+    expect(bad, `这些令牌是长度，却用在了颜色位上：${[...new Set(bad)].join("、")}`).toEqual([])
+  })
+})

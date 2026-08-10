@@ -121,3 +121,35 @@ test("从菜单里删除，走的是同一个确认框", async ({ dawn }) => {
   await page.locator(".confirm").getByRole("button", { name: "删除会话" }).click()
   await expect(page.locator(名字)).toHaveCount(0)
 })
+
+test("**拖拽排序**：拖到哪就排到哪", async ({ dawn }) => {
+  const { page } = dawn
+  await 建(page, "老的", 1)
+  await 建(page, "新的", 2)
+  await expect(page.locator(名字).first()).toHaveText("新的")
+
+  // 把第 2 行拖到第 1 行的位置
+  await page.locator(".sess-item").nth(1).dragTo(page.locator(".sess-item").nth(0))
+
+  await expect(page.locator(名字).first()).toHaveText("老的")
+  await expect(page.locator(名字).nth(1)).toHaveText("新的")
+})
+
+test("**不许跨越置顶分界** —— 拖过去等于偷偷改了置顶状态", async ({ dawn }) => {
+  const { page } = dawn
+  await 建(page, "普通的", 1)
+  await 建(page, "要置顶的", 2)
+
+  // 置顶第 1 行
+  await 开菜单(page, 0)
+  await page.getByRole("menuitem", { name: "置顶" }).click()
+  await expect(page.locator(".sess-item").first().locator(".pin-mark")).toBeVisible()
+
+  // 把没置顶的那条拖到置顶那条上——**应当什么都不发生**
+  await page.locator(".sess-item").nth(1).dragTo(page.locator(".sess-item").nth(0))
+
+  await expect(page.locator(名字).first()).toContainText("要置顶的")
+  await expect(page.locator(名字).nth(1)).toHaveText("普通的")
+  // 而且它没有被顺手置顶
+  await expect(page.locator(".sess-item").nth(1).locator(".pin-mark")).toHaveCount(0)
+})

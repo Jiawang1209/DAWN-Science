@@ -550,6 +550,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, 重取会话],
   )
 
+  /**
+   * 拖拽排序。**发完整顺序，服务端一次写完**——
+   * 在界面里算「插在 A 与 B 之间」的位置需要间隙分配，间隙用光还得重排。
+   */
+  const reorderSessions = useCallback(
+    (orderedIds: string[]) => {
+      const pid = $activeProjectId.get()
+      if (!pid) return
+      client.get("reorderSessions", { projectId: pid, orderedIds }).then(重取会话).catch(fail)
+    },
+    [client, 重取会话],
+  )
+
   const askDeleteProject = useCallback(() => {
     const pid = $activeProjectId.get()
     if (!pid) return
@@ -796,6 +809,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onRenameSession={renameSession}
           onPinSession={pinSession}
           onMoveSession={moveSession}
+          onReorderSessions={reorderSessions}
           onOpenProject={actions.openProject}
           onNewSession={actions.newSession}
           onOpenSettings={actions.openSettings}

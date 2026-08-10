@@ -507,6 +507,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
     },
 
+    reorderSessions: async ({ projectId, orderedIds }) => {
+      requireProject(projectId)
+      return { reordered: sessions.reorder(projectId, orderedIds) }
+    },
+
     renameSession: async ({ sessionId, title }) => {
       // **空串等于清掉**，回到自动标题——不是存一个空标题
       if (!sessions.rename(sessionId, title)) throw fault("not_found", `没有这个会话：${sessionId}`)

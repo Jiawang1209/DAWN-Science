@@ -24,6 +24,8 @@ const session = (over: Partial<SessionSummary> = {}): SessionSummary => ({
   projectId: "p1",
   agentId: "ds-chat",
   kind: "native",
+  pinned: false,
+  sortOrder: 1,
   state: "alive",
   createdAt: "2026-08-08T00:00:00Z",
   ...over,

@@ -1515,3 +1515,30 @@ pre {
 .sess-rename {
   width: 100%;
 }
+
+/* ── 拖拽排序（2026-08-10） ─────────────────────────────────────── */
+
+/**
+ * 被拖的那一行**变淡但不消失**：整行抽走会让列表在拖动中间跳一下，
+ * 而人正在用它当参照物。
+ */
+.sess-item.dragging {
+  opacity: 0.45;
+}
+
+/**
+ * 落点线画在**上边缘**，与「松手后它会排到这一行的位置」一致。
+ * 用 `box-shadow` 而不是 `border`：border 会改变行高，一整列跟着抖。
+ */
+.sess-item.drop-target {
+  box-shadow: inset 0 2px 0 var(--dawn-accent);
+}
+
+/* 整行可拖时给个手势提示 */
+.sess-item[draggable="true"] .row {
+  cursor: grab;
+}
+
+.sess-item.dragging .row {
+  cursor: grabbing;
+}

@@ -31,6 +31,8 @@ const session: SessionSummary = {
   projectId: "p1",
   agentId: "ds-chat",
   kind: "native",
+  pinned: false,
+  sortOrder: 1,
   state: "alive",
   createdAt: "2026-08-09T00:00:00Z",
 }

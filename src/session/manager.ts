@@ -440,6 +440,10 @@ export class SessionManager {
     return this.store.delete(sessionId)
   }
 
+  reorder(projectId: string, orderedIds: readonly string[]): number {
+    return this.store.reorder(projectId, orderedIds)
+  }
+
   rename(sessionId: SessionId, title: string): boolean {
     return this.store.rename(sessionId, title)
   }

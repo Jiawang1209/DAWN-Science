@@ -54,6 +54,7 @@ function SessionRow({
   onRename,
   onPin,
   onMove,
+  drag,
 }: {
   session: SessionSummary
   active: boolean
@@ -64,6 +65,22 @@ function SessionRow({
   onRename?: ((title: string) => void) | undefined
   onPin?: (() => void) | undefined
   onMove?: ((direction: "up" | "down") => void) | undefined
+  /**
+   * 拖拽排序的接线。**不给就整行不可拖**——
+   * 一个拖得动却什么都不会发生的列表比不能拖更糟。
+   */
+  drag?:
+    | {
+        onStart: () => void
+        onOver: () => void
+        onDrop: () => void
+        onEnd: () => void
+        /** 拖到这一行上方了。用来画那条落点线 */
+        over: boolean
+        /** 正在被拖的就是这一行 */
+        self: boolean
+      }
+    | undefined
 }) {
   const [menu, setMenu] = useState(false)
   const [editing, setEditing] = useState<string | undefined>(undefined)
@@ -95,7 +112,37 @@ function SessionRow({
   }
 
   return (
-    <li className={`sess-item${current ? " current" : ""}${menu ? " menu-open" : ""}`}>
+    <li
+      className={[
+        "sess-item",
+        current ? "current" : "",
+        menu ? "menu-open" : "",
+        drag?.over ? "drop-target" : "",
+        drag?.self ? "dragging" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      draggable={drag !== undefined}
+      onDragStart={drag?.onStart}
+      onDragEnd={drag?.onEnd}
+      onDragOver={
+        drag
+          ? (e) => {
+              // **必须 preventDefault**，否则这一格根本不算合法落点
+              e.preventDefault()
+              drag.onOver()
+            }
+          : undefined
+      }
+      onDrop={
+        drag
+          ? (e) => {
+              e.preventDefault()
+              drag.onDrop()
+            }
+          : undefined
+      }
+    >
       <Row active={active} onClick={onPick}>
         <span className="sess">
           <span className="name">
@@ -184,6 +231,7 @@ export function SessionSidebar({
   onRenameSession,
   onPinSession,
   onMoveSession,
+  onReorderSessions,
   onOpenSettings,
 }: {
   projects: readonly ProjectSummary[]
@@ -209,6 +257,8 @@ export function SessionSidebar({
   onRenameSession?: ((session: SessionSummary, title: string) => void) | undefined
   onPinSession?: ((session: SessionSummary, pinned: boolean) => void) | undefined
   onMoveSession?: ((session: SessionSummary, direction: "up" | "down") => void) | undefined
+  /** 拖拽排序。**菜单里的上移／下移仍然留着**——那是键盘可达的那条路 */
+  onReorderSessions?: ((orderedIds: string[]) => void) | undefined
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
 }) {
@@ -221,6 +271,33 @@ export function SessionSidebar({
    * 迟早会有一个悄悄落后于另一个。
    */
   const fallbackAgent = agents[0]
+
+  /**
+   * 拖拽排序的状态住在这里，不在行里——**它是「两行之间的关系」**，
+   * 单独一行不知道自己该排到谁前面。
+   */
+  const [dragging, setDragging] = useState<string | undefined>(undefined)
+  const [over, setOver] = useState<string | undefined>(undefined)
+
+  /**
+   * 把 `dragging` 挪到 `target` 的位置，算出新的完整顺序。
+   *
+   * **不许跨越置顶分界**：置顶只是分组，拖过去等于偷偷改了它——
+   * 那是「置顶」这个动作的事，不是拖拽的事。跨了就当没拖。
+   */
+  const drop = (targetId: string) => {
+    setOver(undefined)
+    const from = sessions.find((x) => x.sessionId === dragging)
+    const to = sessions.find((x) => x.sessionId === targetId)
+    setDragging(undefined)
+    if (!from || !to || from.sessionId === to.sessionId) return
+    if (from.pinned !== to.pinned) return
+
+    const ids = sessions.map((x) => x.sessionId)
+    const next = ids.filter((id) => id !== from.sessionId)
+    next.splice(next.indexOf(to.sessionId), 0, from.sessionId)
+    onReorderSessions?.(next)
+  }
 
   return (
     <aside className="sidebar">
@@ -292,6 +369,22 @@ export function SessionSidebar({
               {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
               {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
               {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
+              {...(onReorderSessions
+                ? {
+                    drag: {
+                      onStart: () => setDragging(s.sessionId),
+                      onOver: () => setOver(s.sessionId),
+                      onDrop: () => drop(s.sessionId),
+                      // **拖到别处松手也要收摊**，否则那条落点线会一直挂着
+                      onEnd: () => {
+                        setDragging(undefined)
+                        setOver(undefined)
+                      },
+                      over: over === s.sessionId && dragging !== undefined && dragging !== s.sessionId,
+                      self: dragging === s.sessionId,
+                    },
+                  }
+                : {})}
             />
           ))
         )}

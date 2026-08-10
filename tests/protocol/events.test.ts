@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 3.0", () => {
+describe("协议版本 · 3.1", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,6 +176,10 @@ describe("协议版本 · 3.0", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
+   * **3.1（2026-08-10）：新增 `reorderSessions`（拖拽排序）。**
+   *   纯新增，故 minor。**客户端发完整顺序、服务端一次写完**——
+   *   在客户端算「插在 A 与 B 之间」的位置需要间隙分配，间隙用光还得重排。
+   *
    * **3.0（2026-08-10）：`SessionSummary` 新增必填的 `pinned` / `sortOrder`。**
    *   **必填即破坏性**——老服务端不会发这两个字段，新界面的 zod 校验会直接拒，
    *   所以是 major。同批新增 `renameSession` / `setSessionPinned` / `moveSession`。
@@ -240,7 +244,7 @@ describe("协议版本 · 3.0", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("3.0")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("3.1")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

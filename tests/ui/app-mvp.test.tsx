@@ -56,11 +56,10 @@ const SESSION = {
   projectId: "p1",
   agentId: "ds-chat",
   kind: "native" as const,
-  state: "alive" as const,
-  createdAt: "2026-08-08T00:00:00Z",
-  // 3.0 起必填：缺省时列表该按什么排没有诚实的答案
   pinned: false,
   sortOrder: 1,
+  state: "alive" as const,
+  createdAt: "2026-08-08T00:00:00Z",
 }
 
 const proj = (workspace: string) => ({
@@ -124,6 +123,8 @@ function harness(
                 {
                   agentId: "claude",
                   kind: "cli",
+                  pinned: false,
+                  sortOrder: 1,
                   command: "claude",
                   model: "sonnet",
                   ...(over.cliAgent.models ? { models: over.cliAgent.models } : {}),

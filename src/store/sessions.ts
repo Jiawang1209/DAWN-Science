@@ -226,6 +226,45 @@ export class SessionStore {
     return true
   }
 
+  /**
+   * 按给定顺序重排一个项目下的会话（拖拽排序，2026-08-10）。
+   *
+   * ## 为什么是「客户端发完整顺序」
+   *
+   * 拖拽的落点可以是任意位置，而在客户端算一个「插在 A 与 B 之间」的
+   * `sort_order` 需要间隙分配，间隙用光了还得重排——**那是把服务端的活
+   * 搬到客户端，再把重排的时机变成一个偶发事件**。
+   * 直接发一份完整顺序，服务端一次写完，没有间隙、没有偶发。
+   *
+   * ## 两条纪律
+   *
+   * - **不属于这个项目的 id 一律忽略**，不是报错也不是照写：
+   *   照写会让一条会话被挪进别人的项目里。
+   * - **没被提到的会话保持相对顺序，排在给定顺序之后**——
+   *   界面只发它看得见的那一组时，剩下的不该被打乱。
+   *
+   * @returns 真正被重排的条数
+   */
+  reorder(projectId: string, orderedIds: readonly string[]): number {
+    const mine = new Set(this.listByProject(projectId).map((r) => r.id))
+    const 有效 = orderedIds.filter((id) => mine.has(id))
+    if (有效.length === 0) return 0
+
+    // 其余的排在后面，保持它们原有的相对顺序
+    const 其余 = this.listByProject(projectId)
+      .map((r) => r.id)
+      .filter((id) => !有效.includes(id))
+    const 全序 = [...有效, ...其余]
+
+    const 写 = this.db.transaction((ids: string[]) => {
+      const st = this.db.prepare(`UPDATE sessions SET sort_order = ? WHERE id = ?`)
+      // 列表是 `sort_order DESC`，所以第一个拿最大的
+      ids.forEach((id, i) => st.run(ids.length - i, id))
+    })
+    写(全序)
+    return 有效.length
+  }
+
   setCliThreadId(id: string, threadId: string): void {
     this.db.prepare(`UPDATE sessions SET cli_thread_id = ? WHERE id = ?`).run(threadId, id)
   }

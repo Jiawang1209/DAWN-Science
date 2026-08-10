@@ -17,6 +17,8 @@ const SESSION: SessionSummary = {
   projectId: "p1",
   agentId: "py",
   kind: "kernel",
+  pinned: false,
+  sortOrder: 1,
   state: "alive",
   createdAt: "2026-08-10T00:00:00Z",
 }

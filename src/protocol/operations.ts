@@ -752,6 +752,24 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 按给定顺序重排会话（拖拽排序，2026-08-10）。
+   *
+   * **客户端发完整顺序，服务端一次写完。** 在客户端算「插在 A 与 B 之间」的
+   * 位置需要间隙分配，间隙用光还得重排——那是把服务端的活搬到客户端，
+   * 再把重排变成一个偶发事件。
+   *
+   * **不属于这个项目的 id 会被忽略**（不是报错、也不是照写）——
+   * 照写会让一条会话被挪进别人的项目里。响应回**真正重排了几条**。
+   */
+  reorderSessions: {
+    request: z
+      .object({ projectId: z.string().min(1), orderedIds: z.array(z.string().min(1)).max(1000) })
+      .strict(),
+    response: z.object({ reordered: z.int().min(0) }).strict(),
+    mutating: true,
+  },
+
   acquireLease: {
     request: z.object({ sessionId: z.string().min(1), holder: HolderSchema }),
     response: z.object({

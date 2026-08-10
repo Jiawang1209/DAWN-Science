@@ -84,8 +84,9 @@
  *   本可以把它们做成可选来躲开 major。**没有那么做**：
  *   `sortOrder` 缺省时列表该按什么排没有诚实的答案，而「可选 + 各处兜底」
  *   正是 schema v8 那笔烂账的翻版（见 `store/schema.ts` 的说明）。
+ * 3.1（2026-08-10）：新增 `reorderSessions`（拖拽排序）。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "3.0"
+export const WORKBENCH_PROTOCOL_VERSION = "3.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

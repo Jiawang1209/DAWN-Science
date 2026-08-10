@@ -57,5 +57,6 @@ test.describe("内核会话", () => {
     await page.getByPlaceholder(/回车发送/).fill("print('V =', e2e_v)")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-text").last()).toContainText("V = 7", { timeout: 60_000 })
+
   })
 })

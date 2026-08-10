@@ -223,7 +223,15 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
 
     await use({ app, page, dir, dbPath, workspace, requests: server.requests })
 
-    await app.close().catch(() => {})
+    /**
+     * **关不掉要出声。** 上一版是 `.catch(() => {})`——静默吞掉。
+     * 2026-08-10 追一个「下一条用例启动挂住」的 bug 时才发现：
+     * 真出问题时这里一个字都不说，线索直接没了。
+     * 吞掉异常仍然是对的（一条用例的收尾失败不该让它变红），**但不能不吭声**。
+     */
+    await app.close().catch((err: unknown) => {
+      console.error("[e2e] Electron 关不掉：", err instanceof Error ? err.message : String(err))
+    })
     await server.close()
     rmSync(dir, { recursive: true, force: true })
   },

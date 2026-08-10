@@ -35,6 +35,7 @@ function actions(): Actions {
     newSession: vi.fn(),
     abort: vi.fn(),
     openProject: vi.fn(),
+  deleteSession: vi.fn(),
     setTheme: vi.fn(),
   }
 }

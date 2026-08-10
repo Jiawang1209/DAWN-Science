@@ -77,6 +77,7 @@ export {
   togglePalette,
   $activeProjectId,
   $activeSessionId,
+  carryDraft,
   draftOf,
   setDraft,
   clearDraft,

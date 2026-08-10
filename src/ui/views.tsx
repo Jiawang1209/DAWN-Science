@@ -143,7 +143,10 @@ export function SessionSidebar({
           </li>
         ) : (
           sessions.map((s) => (
-            <li key={s.sessionId} className="sess-item">
+            <li
+              key={s.sessionId}
+              className={`sess-item${s.sessionId === activeSessionId ? " current" : ""}`}
+            >
               <Row
                 active={s.sessionId === activeSessionId && view === "conversation"}
                 onClick={() => onPickSession(s.sessionId)}
@@ -165,8 +168,18 @@ export function SessionSidebar({
                 <span className={`state ${s.state}`}>{s.state}</span>
               </Row>
               {/**
-                * 删除**悬停才出现**——它常驻的话，一列红叉会把列表变成一片
-                * 「小心别点错」，而这一列的主动作是**切换**，不是删除。
+                * 删除。
+                *
+                * **2026-08-10 返工**：上一版是 `opacity: 0` + 绝对定位的一个裸 `×`,
+                * 只有鼠标悬到那一行才显形。作者的反馈是*「会话还是不能删除」*——
+                * 探针查过：**按钮是好的，点了就弹确认框**，问题是它看不见。
+                *
+                * 这与「新建项目此前是一个没有标签的 `＋`」是**同一类错误**，
+                * 而那条教训是我自己写下的：**看不见的能力等于不存在**。
+                *
+                * 现在：**当前这一行常驻显示**（你正看着的那个会话，总能删），
+                * 其余行悬停或聚焦时出现。列表不会变成一片红叉，
+                * 但也不再需要「先猜到有这个东西」。
                 */}
               {onDeleteSession ? (
                 <Button

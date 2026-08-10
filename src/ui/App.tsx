@@ -80,7 +80,10 @@ import {
   loadContextUsage,
   loadRunDetail,
   loadRuns,
+  carryDraft,
+  draftOf,
   loadSessions,
+  setDraft,
   note,
   resyncSession,
   resetTranscript,
@@ -567,10 +570,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * **「只在忙的时候错」不是偶发，是窗口小。**
        */
       const from = $view.get()
+
+      /**
+       * **建会话期间打的字要跟着走**（2026-08-10）。
+       *
+       * 草稿按 sessionId 存，而这一刻输入框还挂在**上一个**会话上——
+       * 人按下「新建会话」就开始打字，那段话会落进他已经不看的那个会话里，
+       * 屏幕上则像是凭空消失了。（不是假想：截侧栏时当场撞见。）
+       *
+       * **只带「按下之后新打的那部分」**：按下之前写了一半的仍归旧会话，
+       * 那正是 `$drafts` 按会话分家要保的东西（见 `state/view.ts` 的说明）。
+       * 判据就是「与按下那一刻的快照是否不同」。
+       */
+      const 旧会话 = $activeSessionId.get()
+      const 按下时的草稿 = draftOf(旧会话)
+
       client
         .get<SessionSummary>("createSession", { projectId: pid, agentId })
         .then((s) => {
           void loadSessions(client, pid)
+          // 规则本身在 `state/view.ts` 里，是纯的、可以确定性地验
+          const 搬 = carryDraft(旧会话, 按下时的草稿, draftOf(旧会话), s.sessionId)
+          if (搬) {
+            setDraft(搬.moveTo, 搬.text)
+            setDraft(搬.restoreTo, 搬.restored)
+          }
           setActiveSessionId(s.sessionId)
           // 人还在原地才进对话。**他自己切走了就尊重他的选择**
           if ($view.get() === from) setView("conversation")
@@ -643,6 +667,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       abort: () => {
         if (!session) return
         client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
+      },
+      /** **与侧栏那个 × 同一个动作。** 面板里选中的那个会话 */
+      deleteSession: () => {
+        const s = sessions.find((x) => x.sessionId === $activeSessionId.get())
+        if (s) askDeleteSession(s)
       },
       openProject: () => {
         // 原生目录选择器。初版让人往 prompt 里粘绝对路径——**那是命令行思路的残留**

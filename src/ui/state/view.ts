@@ -55,6 +55,44 @@ export function setDraft(sessionId: string, text: string): void {
   $drafts.set({ ...prev, [sessionId]: text })
 }
 
+/**
+ * 建会话期间打的字，该不该跟着新会话走（2026-08-10）。
+ *
+ * ## 问题
+ *
+ * 按下「新建会话」到真的切过去之间有一段时间，**输入框还挂在上一个会话上**。
+ * 人在这个窗口里打的字会落进他已经不看的那个会话，屏幕上像是凭空消失了。
+ * （不是假想：2026-08-10 截侧栏时当场撞见。）
+ *
+ * ## 规则
+ *
+ * **只带「按下之后新打的那部分」。** 按下之前写了一半的仍归旧会话——
+ * 那正是 `$drafts` 按会话分家要保的东西。判据就是「与按下那一刻的快照是否不同」。
+ *
+ * 抽成纯函数是因为**这是一个竞态**：用 e2e 去撞那个窗口只会得到一条不稳的用例，
+ * 而规则本身是确定的，可以直接验。
+ *
+ * @returns `undefined` 表示什么都不用做
+ */
+export function carryDraft(
+  oldSessionId: string | undefined,
+  snapshotAtClick: string,
+  currentDraft: string,
+  newSessionId: string,
+): { moveTo: string; text: string; restoreTo: string; restored: string } | undefined {
+  if (!oldSessionId) return undefined
+  // 没变说明人在这段时间里什么都没打——不动任何东西
+  if (currentDraft === snapshotAtClick) return undefined
+  // **同一个会话不搬**：旧的就是新的时，搬运没有意义，还会把快照倒灌回去
+  if (oldSessionId === newSessionId) return undefined
+  return {
+    moveTo: newSessionId,
+    text: currentDraft,
+    restoreTo: oldSessionId,
+    restored: snapshotAtClick,
+  }
+}
+
 /** 发出去之后清掉。**只清这一个会话的** */
 export function clearDraft(sessionId: string): void {
   const prev = $drafts.get()

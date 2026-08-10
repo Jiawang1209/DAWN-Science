@@ -65,6 +65,8 @@ export interface Actions {
   newSession(agentId: string): void
   abort(): void
   openProject(): void
+  /** 删除当前会话。**与侧栏那个 × 是同一个动作**——一个动作一个家 */
+  deleteSession(): void
   setTheme(choice: ThemeChoice): void
 }
 
@@ -143,6 +145,25 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "stop abort 停止",
     run: () => actions.abort(),
     ...(abortWhy ? { unavailable: abortWhy } : {}),
+  })
+
+  /**
+   * 删除当前会话。
+   *
+   * **它在侧栏上已经有一个入口了**，为什么还要一条命令：
+   * 那个 × 只在当前行与悬停时显形——作者 2026-08-10 反馈「会话还是不能删除」，
+   * 查下来按钮一直是好的，**只是看不见**。多一个入口不是重复，
+   * 是让「能不能发现它」不再取决于鼠标在哪。
+   *
+   * `run` 走的是同一个 `actions.deleteSession`，不是第二份实现。
+   */
+  out.push({
+    id: "session.delete",
+    title: "删除当前会话",
+    group: "会话",
+    keywords: "delete remove 删除 移除",
+    run: () => actions.deleteSession(),
+    ...(ctx.session ? {} : { unavailable: "还没有选中会话" }),
   })
 
   // ── 项目 ─────────────────────────────────────────────────────────

@@ -1295,20 +1295,40 @@ pre {
   color: var(--dawn-text-3);
 }
 
-/* 会话行上的删除：**悬停才出现** */
+/**
+ * 会话行上的删除。
+ *
+ * **不用绝对定位。** 上一版把它浮在行上面，于是它压住了右边的状态标记
+ * （`alive`）；而且 `opacity: 0` 让它只在悬停时显形——
+ * 作者当天的反馈就是「会话还是不能删除」，其实它一直是好的，只是看不见。
+ *
+ * 现在两个按钮都在正常流里（`li` 是 flex），**位置永远留着**，
+ * 所以显形的时候没有任何东西跳动。
+ */
 .sess-item {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: var(--dawn-space-2);
+}
+
+.sess-item > .row {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .row-kill {
-  position: absolute;
-  right: var(--dawn-space-2);
-  top: 50%;
-  transform: translateY(-50%);
+  flex: 0 0 auto;
+  /* **不是 `display:none`**：位置要一直占着，否则出现的那一刻整行会跳 */
   opacity: 0;
   color: var(--dawn-text-3);
 }
 
+/**
+ * **当前这一行常驻**。你正看着的那个会话总能删掉，不用先猜到有这个东西；
+ * 其余行仍然安静——一整列红叉会把「切换会话」这个主动作淹掉。
+ */
+.sess-item.current .row-kill,
 .sess-item:hover .row-kill,
 .row-kill:focus-visible {
   opacity: 1;

@@ -24,6 +24,38 @@ async function 建会话并说一句(page: import("@playwright/test").Page, 话:
   await expect(page.locator(".session-list .sess .name").filter({ hasText: 话 })).toBeVisible()
 }
 
+/**
+ * **不 hover 就得看得见。**
+ *
+ * 2026-08-10 作者：*「我们之前的会话，还是不能删除。」* 查下来按钮一直是好的
+ * ——点了就弹确认框——**问题是它 `opacity: 0`，只有鼠标悬到那一行才显形**。
+ * 这与「新建项目此前是个没有标签的 `＋`」是同一类错误：**看不见的能力等于不存在**。
+ *
+ * 所以这条断言不验「能点」，验的是**不动鼠标时它是否可见**。
+ */
+test("**当前会话的删除按钮常驻可见** —— 不该先猜到有这个东西", async ({ dawn }) => {
+  const { page } = dawn
+  await 建会话并说一句(page, "当前会话")
+  // 鼠标挪开，确保测的不是悬停态
+  await page.mouse.move(0, 0)
+
+  const kill = page.locator(".sess-item.current .row-kill")
+  await expect(kill).toBeVisible()
+  // `toBeVisible` 对 `opacity: 0` 仍然算可见——**所以必须直接量它**
+  expect(await kill.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+})
+
+test("**它不压住状态标记** —— 上一版是绝对定位，浮在 `alive` 上面", async ({ dawn }) => {
+  const { page } = dawn
+  await 建会话并说一句(page, "当前会话")
+  await page.mouse.move(0, 0)
+
+  const state = await page.locator(".sess-item.current .state").boundingBox()
+  const kill = await page.locator(".sess-item.current .row-kill").boundingBox()
+  // 两块矩形横向不重叠：删除键完整地在状态标记右边
+  expect(kill!.x).toBeGreaterThanOrEqual(state!.x + state!.width - 1)
+})
+
 test("删除会话：确认框说清账本不动，删完列表里就没有了", async ({ dawn }) => {
   const { page } = dawn
   await 建会话并说一句(page, "这个会话要被删掉")

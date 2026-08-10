@@ -131,3 +131,97 @@ export function addNativeAgent(file: string, agent: NewNativeAgent): ProviderReg
     )
   }
 }
+
+/**
+ * 写一个 provider 的连接设置（2026-08-10）。
+ *
+ * 作者：*「设置里把那 8 个的输入框也补上」*——那 8 个不自带 `baseUrl` 的
+ * provider（Bedrock / Azure / Vertex / Cloudflare×2 / opencode×2 / radius），
+ * 地址跟账号、区域、项目走，只能由人填。
+ *
+ * 与 `addNativeAgent` 同一套纪律：**纯文本，既有字节一个不动**；
+ * 写完读回来，读不回来就还原。
+ *
+ * **空串等于取消覆盖**——把那一段删掉，回到 pi 的默认。
+ * 存一个空 `baseUrl` 会让请求打到一个空地址上，而报错与「你填空了」毫无关系。
+ */
+export function setProviderConnection(
+  file: string,
+  providerId: string,
+  baseUrl: string,
+): ProviderRegistry {
+  if (!ID.test(providerId)) {
+    throw new UserFacingError(`provider 名字不合法：「${providerId}」`)
+  }
+  if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
+
+  const 原文 = readFileSync(file, "utf8")
+  const 新文 = 写连接(原文, providerId, baseUrl.trim())
+  writeFileSync(file, 新文, "utf8")
+  try {
+    return loadRegistry(file)
+  } catch (err) {
+    writeFileSync(file, 原文, "utf8")
+    throw new UserFacingError(
+      `写进去的配置读不回来，已还原：${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+}
+
+/** 找一段顶层键的行范围 `[起, 末)`；没有这一段返回 undefined */
+function 段范围(lines: string[], key: string): [number, number] | undefined {
+  const 起 = lines.findIndex((l) => new RegExp(`^${key}:\\s*$`).test(l))
+  if (起 < 0) return undefined
+  let 末 = lines.length
+  for (let i = 起 + 1; i < lines.length; i++) {
+    const l = lines[i]!
+    if (l.trim() === "") continue
+    if (!/^\s/.test(l)) {
+      末 = i
+      break
+    }
+  }
+  while (末 > 起 + 1 && lines[末 - 1]!.trim() === "") 末 -= 1
+  return [起, 末]
+}
+
+function 写连接(原文: string, id: string, baseUrl: string): string {
+  const lines = 原文.split("\n")
+  const 段 = 段范围(lines, "providers")
+
+  /** 这个 provider 已有的那几行 */
+  const 找条目 = (起: number, 末: number): [number, number] | undefined => {
+    const i = lines.findIndex((l, k) => k > 起 && k < 末 && new RegExp(`^  ${id}:\\s*$`).test(l))
+    if (i < 0) return undefined
+    let j = i + 1
+    while (j < 末 && (lines[j]!.trim() === "" || /^ {4}/.test(lines[j]!))) j++
+    return [i, j]
+  }
+
+  const 块 = [`  ${id}:`, `    baseUrl: "${baseUrl}"`]
+
+  if (!段) {
+    // **还没有这一段**：加在文件最前面，紧挨着已有注释之后
+    if (!baseUrl) return 原文
+    return ["providers:", ...块, "", ...lines].join("\n")
+  }
+
+  const [起, 末] = 段
+  const 旧 = 找条目(起, 末)
+  if (旧) {
+    const [a, b] = 旧
+    if (baseUrl) return [...lines.slice(0, a), ...块, ...lines.slice(b)].join("\n")
+    /**
+     * **删掉这一条；如果它是最后一条，连 `providers:` 这一行一起删。**
+     *
+     * 留一个空的 `providers:` 会被 YAML 读成 `null`，配置当场校验不过——
+     * 那时应用起不来，而原因是「你把最后一个覆盖删掉了」，没人猜得到。
+     */
+    const 剩下 = 末 - (b - a) - 起 - 1
+    const 从 = 剩下 <= 0 ? 起 : a
+    const 到 = 剩下 <= 0 ? 末 : b
+    return [...lines.slice(0, 从), ...lines.slice(到)].join("\n")
+  }
+  if (!baseUrl) return 原文
+  return [...lines.slice(0, 末), ...块, ...lines.slice(末)].join("\n")
+}

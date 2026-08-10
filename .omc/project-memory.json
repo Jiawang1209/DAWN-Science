@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/custom-provider.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed|Error:\" | head -6",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/Settings.tsx\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('''      <div className=\"cred-form\">\n        <input\n          className=\"control\"\n          value={shown}\n          placeholder=\"例如 https://你的资源.openai.azure.com\"''','''      {/* **自己的类名**，不复用 `.cred-form`——复用会让「哪个保存按钮」分不清 */}\n      <div className=\"base-url-form\">\n        <input\n          className=\"control\"\n          value={shown}\n          placeholder=\"例如 https://你的资源.openai.azure.com\"''', 1)\np.write_text(s, encoding=\"utf8\")\nPY\ncat >> src/ui/styles.css <<'CSS'\n\n/* 地址那一行的表单。**不复用 `.cred-form`**——复用会让「哪个保存按钮」分不清 */\n.base-url-form { display: flex; align-items: center; gap: var(--dawn-space-2); }\n.base-url-form .btn { flex: 0 0 auto; white-space: nowrap; }\nCSS\npython3 -c \"\nimport pathlib\np=pathlib.Path('e2e/base-url.spec.ts'); s=p.read_text(encoding='utf8')\ns=s.replace('await 行.locator(\\\".base-url\\\").getByRole','await 行.locator(\\\".base-url-form\\\").getByRole',1)\np.write_text(s,encoding='utf8')\n\"\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/custom-provider.spec.ts e2e/base-url.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -3\nnpm run test:e2e 2>&1 | grep -E \"✘|passed|failed\" | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

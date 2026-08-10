@@ -237,6 +237,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,
+    /**
+     * 连接设置改了：**重新生成 `models.json`，并丢掉缓存的目录**。
+     * 不做的话地址写进了配置却要重启才生效，而界面会说「已保存」——半真的话。
+     */
+    onProvidersChanged: (providers) => {
+      writeModelsJson(join(dirname(opts.dbPath), "models.json"), providers, opts.modelsPath)
+      nativeRuntime.resetModelCatalog()
+    },
     environments,
     runRecorder,
     // 界面里改完 key 要立刻生效——缓存不失效的话，刚填的 key 读不到
@@ -246,6 +254,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       available: (providerId) => nativeRuntime.availableModels(providerId),
       // **「我能配谁」的来源是 pi 的模型目录**，不是一份手打的清单
       known: () => nativeRuntime.knownProviders(),
+      needsBaseUrl: () => nativeRuntime.providersNeedingBaseUrl(),
     },
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
     ...(opts.openPath ? { openPath: opts.openPath } : {}),

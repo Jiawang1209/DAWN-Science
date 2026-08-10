@@ -90,8 +90,10 @@
  * 3.3（2026-08-10）：新增 `createAgent`。纯新增。
  *   **只支持 `kind: native`**——cli 与 pty 要填命令行，在这里顺手支持
  *   等于让一个「加个模型」的按钮悄悄能起任意进程。
+ * 3.4（2026-08-10）：新增 `setProviderBaseUrl`；`listKnownProviders` 带上
+ *   `needsBaseUrl` / `baseUrls`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "3.3"
+export const WORKBENCH_PROTOCOL_VERSION = "3.4"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 3.3", () => {
+describe("协议版本 · 3.4", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -176,6 +176,10 @@ describe("协议版本 · 3.3", () => {
    * **2.2（2026-08-09）：transcript 新增 `subagents` 条目。** 同样是纯新增：
    * 既有条目的形状一个字没动，所以仍是 minor。
    * **2.3（2026-08-09）：会话 `kind` 新增 `cli`。** 同上，既有取值一个没动。
+   * **3.4（2026-08-10）：新增 `setProviderBaseUrl`；`listKnownProviders` 带上
+   *   `needsBaseUrl` / `baseUrls`。** pi 自带 40 个 provider 的地址，
+   *   **有 8 个不自带**——它们跟账号、区域、项目走，只能由人填。
+   *
    * **3.3（2026-08-10）：新增 `createAgent`；`listKnownProviders` 带上 `models`。**
    *   纯新增。只支持 `kind: native`——cli 与 pty 要填命令行，
    *   在这里顺手支持等于让一个「加个模型」的按钮悄悄能起任意进程。
@@ -252,7 +256,7 @@ describe("协议版本 · 3.3", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("3.3")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("3.4")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

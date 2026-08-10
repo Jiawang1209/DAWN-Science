@@ -466,12 +466,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [knownProviders, setKnownProviders] = useState<{
     providers: string[]
     models?: Record<string, string[]>
+    needsBaseUrl?: string[]
+    baseUrls?: Record<string, string>
     problem?: string
   }>({ providers: [] })
   useEffect(() => {
     if (view !== "settings") return
     client
-      .get<{ providers: string[]; models?: Record<string, string[]>; problem?: string }>(
+      .get<{
+        providers: string[]
+        models?: Record<string, string[]>
+        needsBaseUrl?: string[]
+        baseUrls?: Record<string, string>
+        problem?: string
+      }>(
         "listKnownProviders",
         {},
       )
@@ -869,6 +877,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   providers.providers.find((p) => p.providerId === pid)?.available ??
                   []
                 }
+                {...(knownProviders.needsBaseUrl
+                  ? { needsBaseUrl: knownProviders.needsBaseUrl }
+                  : {})}
+                {...(knownProviders.baseUrls ? { baseUrls: knownProviders.baseUrls } : {})}
+                onSetBaseUrl={(providerId, baseUrl) => {
+                  client
+                    .get("setProviderBaseUrl", { providerId, baseUrl })
+                    // 重取：那一行要显示刚存进去的地址
+                    .then(() =>
+                      client
+                        .get<typeof knownProviders>("listKnownProviders", {})
+                        .then(setKnownProviders),
+                    )
+                    .catch(fail)
+                }}
                 onCreateAgent={(providerId, agentId, model) => {
                   client
                     .get("createAgent", { agentId, provider: providerId, model })

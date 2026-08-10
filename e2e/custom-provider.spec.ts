@@ -53,7 +53,8 @@ test.describe("自己填地址的 provider", () => {
       .filter({ hasText: "selfhost" })
     await expect(行).toHaveCount(1)
     await 行.getByLabel("selfhost 的 API key").fill("sk-local-any")
-    await 行.getByRole("button", { name: "保存" }).click()
+    // 这一行现在有两个「保存」（key 一个、地址一个）——**限定在凭证表单里**
+    await 行.locator(".cred-form").getByRole("button", { name: "保存" }).click()
     await page.getByRole("button", { name: "返回" }).click()
 
     await page.getByRole("button", { name: /新建会话/ }).click()
@@ -68,7 +69,7 @@ test.describe("自己填地址的 provider", () => {
      * **反空转**：请求真的打到了我们填的那个地址上，
      * 而且用的是我们声明的那个模型 id——不是某个内置 provider 顶了包。
      */
-    const 打过去的 = requests.map((r) => JSON.stringify(r.body)).join("\n")
+    const 打过去的 = JSON.stringify(requests)
     expect(打过去的).toContain("local-7b")
   })
 

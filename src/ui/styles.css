@@ -1825,3 +1825,12 @@ pre {
 }
 
 .new-agent .control { width: 10rem; }
+
+/* 端点地址：只给那 8 个不自带地址的 provider 看（2026-08-10） */
+.base-url { margin-top: var(--dawn-space-1); }
+.base-url .hint { margin: 0 0 var(--dawn-space-1); }
+.base-url .control { width: 18rem; font-family: var(--dawn-font-mono); font-size: 12px; }
+
+/* 地址那一行的表单。**不复用 `.cred-form`**——复用会让「哪个保存按钮」分不清 */
+.base-url-form { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.base-url-form .btn { flex: 0 0 auto; white-space: nowrap; }

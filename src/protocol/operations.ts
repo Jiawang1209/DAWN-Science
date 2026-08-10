@@ -685,6 +685,14 @@ export const OPERATIONS = {
          * 挑模型——那时前者是空的。
          */
         models: z.record(z.string(), z.array(z.string())).optional(),
+        /**
+         * **这些 provider 的地址 pi 不自带**，得人自己填
+         * （Bedrock / Azure / Vertex / Cloudflare×2 / opencode×2 / radius）。
+         * 界面据此给它们一个输入框——不给的话，填了 key 也连不上而没人知道为什么。
+         */
+        needsBaseUrl: z.array(z.string()).optional(),
+        /** 已经填过的地址。**只回填过的**，没填的不给键 */
+        baseUrls: z.record(z.string(), z.string()).optional(),
         problem: z.string().optional(),
       })
       .strict(),
@@ -803,6 +811,21 @@ export const OPERATIONS = {
       .strict(),
     /** 加完之后**立刻可用**（内存里那份 registry 原地更新，不用重启） */
     response: z.object({ agentId: z.string() }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 写一个 provider 的连接地址（2026-08-10）。
+   *
+   * pi 自带 40 个 provider 的地址，**有 8 个不自带**——它们跟账号、区域、
+   * 项目走（Azure 的 deployment、Vertex 的 project、Cloudflare 的 account id）。
+   *
+   * **空串 = 取消覆盖**，回到 pi 的默认。存一个空地址会让请求打到空处，
+   * 而报错与「你填空了」毫无关系。
+   */
+  setProviderBaseUrl: {
+    request: z.object({ providerId: z.string().min(1), baseUrl: z.string().max(500) }).strict(),
+    response: z.object({}).strict(),
     mutating: true,
   },
 

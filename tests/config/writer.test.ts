@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { addNativeAgent } from "../../src/config/writer.js"
+import { addNativeAgent, setProviderConnection } from "../../src/config/writer.js"
 
 const dirs: string[] = []
 afterEach(() => {
@@ -116,5 +116,46 @@ describe("加一个 native agent", () => {
     expect(() => addNativeAgent("/绝对没有/providers.yaml", { agentId: "a", provider: "p", model: "m" })).toThrow(
       /找不到配置文件/,
     )
+  })
+})
+
+describe("provider 的连接设置", () => {
+  it("**没有 `providers:` 段时把它建出来**", () => {
+    const f = 配置()
+    const reg = setProviderConnection(f, "azure", "https://x.openai.azure.com")
+    expect(reg.providers?.["azure"]?.baseUrl).toBe("https://x.openai.azure.com")
+    // 原有的东西一个不少
+    expect(reg.agents["ds-chat"]).toBeDefined()
+    expect(readFileSync(f, "utf8")).toContain("**刻意不写 model**")
+  })
+
+  it("再写一次是改，不是加两条", () => {
+    const f = 配置()
+    setProviderConnection(f, "azure", "https://a")
+    const reg = setProviderConnection(f, "azure", "https://b")
+    expect(reg.providers?.["azure"]?.baseUrl).toBe("https://b")
+    expect(readFileSync(f, "utf8").match(/azure:/g)).toHaveLength(1)
+  })
+
+  it("**空串等于取消覆盖** —— 存一个空地址会让请求打到空处，而报错与「你填空了」毫无关系", () => {
+    const f = 配置()
+    setProviderConnection(f, "azure", "https://a")
+    const reg = setProviderConnection(f, "azure", "  ")
+    expect(reg.providers?.["azure"]).toBeUndefined()
+  })
+
+  it("两个 provider 各写各的，互不影响", () => {
+    const f = 配置()
+    setProviderConnection(f, "azure", "https://a")
+    const reg = setProviderConnection(f, "vertex", "https://b")
+    expect(reg.providers?.["azure"]?.baseUrl).toBe("https://a")
+    expect(reg.providers?.["vertex"]?.baseUrl).toBe("https://b")
+  })
+
+  it("**agents 段一个字都不能动**", () => {
+    const f = 配置()
+    const 前 = readFileSync(f, "utf8").split("agents:")[1]
+    setProviderConnection(f, "azure", "https://a")
+    expect(readFileSync(f, "utf8").split("agents:")[1]).toBe(前)
   })
 })

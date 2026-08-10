@@ -162,6 +162,19 @@ export class NativeRuntime implements AgentRuntime {
 
   constructor(private readonly opts: NativeRuntimeOptions = {}) {}
 
+  /**
+   * 丢掉缓存的 `ModelRuntime`，下次用时重新读 `models.json`（2026-08-10）。
+   *
+   * 用户在设置里改了某个 provider 的地址之后要用上新地址，
+   * 而 `ModelRuntime` 在 create 那一刻就把目录读进去了。
+   *
+   * **已经在跑的会话不受影响**——它们手里是旧的那一份。
+   * 这是诚实的：改地址不该把正在说话的会话半路改道。
+   */
+  resetModelCatalog(): void {
+    this.modelRuntime = undefined
+  }
+
   private runtime(): Promise<ModelRuntime> {
     this.modelRuntime ??= ModelRuntime.create({
       ...(this.opts.credentials ? { credentials: this.opts.credentials } : {}),
@@ -682,6 +695,30 @@ export class NativeRuntime implements AgentRuntime {
   async knownProviders(): Promise<string[]> {
     const rt = await this.runtime()
     return [...new Set(rt.getModels().map((m) => m.provider))].sort()
+  }
+
+  /**
+   * 地址 pi 不自带的那几个 provider（2026-08-10）。
+   *
+   * 实测 40 个里有 8 个：Bedrock / Azure / Vertex / Cloudflare×2 /
+   * opencode×2 / radius——它们跟账号、区域、项目走，pi 没法替你填。
+   * **界面据此给输入框**；不给的话，填了 key 也连不上而没人知道为什么。
+   */
+  async providersNeedingBaseUrl(): Promise<string[]> {
+    const rt = await this.runtime()
+    const provs = (rt as unknown as { getProviders?: () => unknown }).getProviders?.()
+    if (!provs) return []
+    const list: Record<string, unknown>[] = Array.isArray(provs)
+      ? (provs as Record<string, unknown>[])
+      : Object.entries(provs as Record<string, Record<string, unknown>>).map(([id, v]) => ({
+          id,
+          ...v,
+        }))
+    return list
+      .filter((p) => !p["baseUrl"])
+      .map((p) => String(p["id"] ?? p["name"] ?? ""))
+      .filter(Boolean)
+      .sort()
   }
 
   /**

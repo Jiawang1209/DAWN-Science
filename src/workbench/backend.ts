@@ -9,7 +9,7 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
-import { addNativeAgent } from "../config/writer.js"
+import { addNativeAgent, setProviderConnection } from "../config/writer.js"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { deriveSessionTitle } from "../session/title.js"
@@ -84,7 +84,11 @@ export interface WorkbenchBackendOptions {
     available(providerId: string): Promise<string[]>
     /** pi 认识的全部 provider。**「我能配谁」**，与 `getProviders` 的「我配过谁」不同 */
     known?(): Promise<string[]>
+    /** 地址 pi 不自带的那几个。**界面据此给输入框** */
+    needsBaseUrl?(): Promise<string[]>
   }
+  /** provider 连接设置变了。装配层据此重新生成 `models.json` 并让下次用上 */
+  onProvidersChanged?: (providers: ProviderRegistry["providers"]) => void
   /**
    * 去哪找外部 CLI 自己的配置（codex 的 `models_cache.json`）。
    *
@@ -103,7 +107,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -501,6 +505,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     listKnownProviders: async () => {
+      /** 已经填过的地址。**只回填过的**，没填的不给键 */
+      const baseUrls: Record<string, string> = {}
+      for (const [id, c] of Object.entries(registry.providers ?? {})) {
+        if (c.baseUrl) baseUrls[id] = c.baseUrl
+      }
       if (!models?.known) return { providers: [], problem: "本次运行没有装配模型目录" }
       try {
         const ids = await models.known()
@@ -510,7 +519,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          */
         const table: Record<string, string[]> = {}
         for (const id of ids) table[id] = await models.available(id)
-        return { providers: ids, models: table }
+        return {
+          providers: ids,
+          models: table,
+          // **地址 pi 不自带的那几个**：界面据此给输入框
+          ...(models.needsBaseUrl ? { needsBaseUrl: await models.needsBaseUrl() } : {}),
+          ...(Object.keys(baseUrls).length > 0 ? { baseUrls } : {}),
+        }
       } catch (err) {
         /**
          * **取不到就说取不到。** 返回一个空清单会被读成「pi 一个都不支持」，
@@ -523,6 +538,28 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     reorderSessions: async ({ projectId, orderedIds }) => {
       requireProject(projectId)
       return { reordered: sessions.reorder(projectId, orderedIds) }
+    },
+
+    setProviderBaseUrl: async ({ providerId, baseUrl }) => {
+      if (!configPath) throw fault("internal_error", "本次运行没有装配配置文件路径")
+      let 新的
+      try {
+        新的 = setProviderConnection(configPath, providerId, baseUrl)
+      } catch (err) {
+        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+        throw err
+      }
+      // 原地更新那一个被多处持有的对象（同 createAgent 的理由）
+      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
+      Object.assign(registry.agents, 新的.agents)
+      registry.providers = 新的.providers
+      /**
+       * **重新生成 `models.json` 并让下一次用上它。**
+       * 不做这一步的话，地址写进了配置却要重启才生效——
+       * 而界面会说「已保存」，那是一句半真的话。
+       */
+      onProvidersChanged?.(新的.providers)
+      return {}
     },
 
     createAgent: async ({ agentId, provider, model }) => {

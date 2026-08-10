@@ -304,6 +304,9 @@ export function SettingsPanel({
   usedBy,
   modelsOf,
   onCreateAgent,
+  needsBaseUrl,
+  baseUrls,
+  onSetBaseUrl,
   credentials,
   onSet,
   onDelete,
@@ -330,6 +333,15 @@ export function SettingsPanel({
   modelsOf: (providerId: string) => string[]
   /** 建一个 native agent。**不给就不显示那个入口**——不是显示一个点了没反应的 */
   onCreateAgent?: ((providerId: string, agentId: string, model: string) => void) | undefined
+  /**
+   * **地址 pi 不自带的那几个**（Bedrock / Azure / Vertex / Cloudflare×2 /
+   * opencode×2 / radius）。它们跟账号、区域、项目走，只能由人填——
+   * 不给输入框的话，填了 key 也连不上，而没人知道为什么。
+   */
+  needsBaseUrl?: readonly string[] | undefined
+  /** 已经填过的地址。**只装填过的**，没填的没有键 */
+  baseUrls?: Record<string, string> | undefined
+  onSetBaseUrl?: ((providerId: string, baseUrl: string) => void) | undefined
   credentials: CredentialState
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
@@ -388,6 +400,13 @@ export function SettingsPanel({
                 }}
                 onDelete={() => onDelete(id)}
               />
+              {onSetBaseUrl && 要地址(id, needsBaseUrl, baseUrls) ? (
+                <地址
+                  providerId={id}
+                  value={baseUrls?.[id] ?? ""}
+                  onSave={(v) => onSetBaseUrl(id, v)}
+                />
+              ) : null}
               {/**
                 * **填了 key 但没人用它**——这正是作者卡住的地方，
                 * 给一条出路，而不是让他去手写 yaml。
@@ -464,6 +483,13 @@ export function SettingsPanel({
                     }}
                     onDelete={() => onDelete(id)}
                   />
+                  {onSetBaseUrl && 要地址(id, needsBaseUrl, baseUrls) ? (
+                    <地址
+                      providerId={id}
+                      value={baseUrls?.[id] ?? ""}
+                      onSave={(v) => onSetBaseUrl(id, v)}
+                    />
+                  ) : null}
                   {onCreateAgent && credentials.configured.includes(id) && (usedBy[id] ?? []).length === 0 ? (
                     建 === id ? (
                       <建Agent
@@ -519,6 +545,75 @@ function 凭证说明({
     <span className="cred-idle">
       已配置，<em className="set-emph">但还没有 agent 在用它</em>——加一个才能在对话里选到
     </span>
+  )
+}
+
+/**
+ * 端点地址输入框（2026-08-10）。
+ *
+ * 作者：*「设置里把那 8 个的输入框也补上」*。
+ *
+ * **只给需要的那几个看**：其余 32 个的地址 pi 自带，多一个空输入框
+ * 只会让人以为「是不是还得填点什么」。
+ *
+ * **空串等于取消覆盖**，回到 pi 的默认——存一个空地址会让请求打到空处，
+ * 而报错与「你填空了」毫无关系。
+ */
+/**
+ * 这一行要不要给地址输入框。
+ *
+ * **「需要填」或「已经填过」**——只看前者的话会出一个很怪的现象：
+ * 存完地址之后 pi 就认得它了，于是它从「需要填」的名单里消失，
+ * **输入框跟着不见，人再也看不见也改不了自己刚填的东西**。
+ * （2026-08-10 这条正是 e2e 撞出来的。）
+ */
+function 要地址(
+  id: string,
+  needs: readonly string[] | undefined,
+  saved: Record<string, string> | undefined,
+): boolean {
+  return Boolean(needs?.includes(id)) || Boolean(saved?.[id])
+}
+
+function 地址({
+  providerId,
+  value,
+  onSave,
+}: {
+  providerId: string
+  value: string
+  onSave: (v: string) => void
+}) {
+  const [draft, setDraft] = useState<string | undefined>(undefined)
+  const shown = draft ?? value
+  return (
+    <div className="base-url">
+      <p className="hint">
+        <em className="set-emph">这个 provider 的地址要你自己填</em>
+        ——它跟你的账号／区域／项目走，pi 没法替你填。不填就连不上。
+      </p>
+      {/* **自己的类名**，不复用 `.cred-form`——复用会让「哪个保存按钮」分不清 */}
+      <div className="base-url-form">
+        <input
+          className="control"
+          value={shown}
+          placeholder="例如 https://你的资源.openai.azure.com"
+          aria-label={`${providerId} 的端点地址`}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={draft === undefined}
+          onClick={() => {
+            onSave(shown)
+            setDraft(undefined)
+          }}
+        >
+          保存
+        </Button>
+      </div>
+    </div>
   )
 }
 

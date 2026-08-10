@@ -139,7 +139,19 @@ interface PiEvent {
    * *"Usage from the final tool execution itself… **Not used for main LLM
    * context accounting**."* 计划里原本指的就是那一个，是错的。
    */
-  message?: { role?: string; usage?: { input?: number; output?: number; cacheRead?: number } }
+  message?: {
+    role?: string
+    usage?: { input?: number; output?: number; cacheRead?: number }
+    /**
+     * **模型调用失败时是 `"error"`**（2026-08-10 真链路探出来的）。
+     *
+     * pi 的事件流里**没有 error 这一类**——一次 401 走完的是
+     * `message_start / message_end / turn_end / agent_end`，
+     * 全都是「正常」事件，错误只藏在这两个字段里。
+     */
+    stopReason?: string
+    errorMessage?: string
+  }
   errorMessage?: string
 }
 
@@ -447,6 +459,26 @@ export class NativeRuntime implements AgentRuntime {
      * 判重靠条目下标，所以重复调用的代价近似为零。
      */
     this.emitUsageIfNew(sessionId)
+
+    /**
+     * **模型调用失败要出声**（规格 7.5，2026-08-10）。
+     *
+     * 此前一次 401（key 写错、过期、额度用完）在界面上**什么都不显示**：
+     * 你自己那句话孤零零挂着，没有回复也没有报错。
+     * 而 `prompt()` 的 `catch` 从来没被触发过——**pi 不 reject**，
+     * 它把失败写进 `message_end` 的 `stopReason` / `errorMessage` 就走了。
+     *
+     * 走 `notice` 而不是 `output`：**它不是模型说的话**，
+     * 混进回复里会让人以为模型在讲这段错误。
+     */
+    if (e.type === "message_end" && e.message?.stopReason === "error") {
+      const 原因 = e.message.errorMessage?.trim()
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: 原因 ? `模型调用失败：${原因}` : "模型调用失败，但对方没有给出原因",
+      })
+    }
 
     switch (e.type) {
       case "message_update":

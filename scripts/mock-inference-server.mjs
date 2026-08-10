@@ -72,6 +72,8 @@ export const MARKDOWN_REPLY = [
  * 起一个假推理服务器。
  *
  * @param {object} [opts]
+ * @param {number} [opts.failStatus] 让所有请求以这个 HTTP 状态失败（验「失败要出声」）
+ * @param {string} [opts.failMessage] 失败时的 message
  * @param {string} [opts.reply] 固定回复正文
  * @param {(body: any) => {toolName: string, args: object} | undefined} [opts.toolCall]
  *   返回值非空时，改为让模型「调用一个工具」——用来在 e2e 里确定性地触发工具路径
@@ -110,6 +112,23 @@ export function startMockInferenceServer(opts = {}) {
        * **说了「markdown」就给那一大段。** 排版这件事看不见就没法改，
        * 而一句暗号里没有标题也没有表格。
        */
+      /**
+       * **让它失败**（2026-08-10）。
+       *
+       * 加这一档是为了验一件本来验不了的事：**请求被拒时界面说不说话**。
+       * 真实场景里这非常常见——key 写错了、过期了、额度用完了。
+       * 而「失败必须出声」是本项目的硬规矩（规格 7.5）。
+       */
+      if (opts.failStatus) {
+        res.writeHead(opts.failStatus, { "content-type": "application/json" })
+        res.end(
+          JSON.stringify({
+            error: { message: opts.failMessage ?? "mock：这个 key 不对", type: "invalid_request_error" },
+          }),
+        )
+        return
+      }
+
       const 用户说的 = JSON.stringify(body.messages ?? "")
       const reply = 用户说的.includes("markdown") ? MARKDOWN_REPLY : 默认回复
 

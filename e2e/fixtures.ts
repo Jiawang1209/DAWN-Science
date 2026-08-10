@@ -83,6 +83,13 @@ export interface DawnOptions {
    * 那正是「装好了打不开」那个缺陷的所在。
    */
   providersYaml?: string
+  /**
+   * 让假模型以这个 HTTP 状态失败（2026-08-10）。
+   *
+   * 用来验**请求被拒时界面说不说话**——key 写错、过期、额度用完在真实使用里
+   * 非常常见，而「失败必须出声」是本项目的硬规矩。
+   */
+  failStatus?: number
 }
 
 /** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
@@ -132,7 +139,10 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawnOptions: [{}, { option: true }],
 
   dawn: async ({ dawnOptions }, use) => {
-    const server = await startMockInferenceServer({ toolCall: toolCallHook(dawnOptions.toolCall) })
+    const server = await startMockInferenceServer({
+      toolCall: toolCallHook(dawnOptions.toolCall),
+      ...(dawnOptions.failStatus ? { failStatus: dawnOptions.failStatus } : {}),
+    })
     const dir = mkdtempSync(join(tmpdir(), "dawn-e2e-"))
     const workspace = join(dir, "workspace")
     mkdirSync(workspace, { recursive: true })

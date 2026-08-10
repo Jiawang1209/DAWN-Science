@@ -181,8 +181,26 @@ describe("默认配置的形状（①-C · C5）", () => {
     expect(DEFAULT_CONFIG_YAML).toContain("models_cache.json")
   })
 
-  it("内置 agent 仍在 —— 它是「先跑起来」的默认", () => {
-    expect(parsed().agents["ds-chat"]).toMatchObject({ kind: "native", provider: "deepseek" })
+  /**
+   * **2026-08-10 推翻了这条决定。**
+   *
+   * 这里原本断言「内置 agent 仍在——它是『先跑起来』的默认」，摆的是 deepseek。
+   * 作者：*「我们如果之前没有配置任何 API key 的时候，其实不一定要默认就设置
+   * deepseek，因为给人一种我们只能配置 deepseek 的错觉感。」*
+   *
+   * **默认摆哪一家，就是在替用户选。** 而「填了 key 就自动有 agent」之后
+   * 它也不再必要——到设置里给任意一个 provider 填 key，它就出现在选择器里。
+   */
+  it("**默认不摆任何 native agent** —— 摆哪一家就是在替用户选", () => {
+    const agents = parsed().agents
+    const natives = Object.entries(agents).filter(([, d]) => d.kind === "native")
+    expect(natives).toEqual([])
+  })
+
+  it("**不需要 key 的那几个仍在** —— 装了 claude/codex 的人开箱即用", () => {
+    const agents = parsed().agents
+    expect(agents["claude"]).toMatchObject({ kind: "cli" })
+    expect(agents["shell"]).toMatchObject({ kind: "pty" })
   })
 
   it("**注释里说清三种 kind 的区别** —— 一份只有键值对的模板只会让人去翻文档", () => {

@@ -12,6 +12,7 @@
 import { test as base, _electron, type ElectronApplication, type Page } from "@playwright/test"
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
+import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 // @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 npm run dev:mock
@@ -156,6 +157,34 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
      * 用例想验「自己填 baseUrl 的 provider 能不能真的连上」，
      * 而那个地址在夹具起来之前不存在——留一个占位符是唯一诚实的接法。
      */
+    /**
+     * **测试自己提供 native agent，不再靠产品默认**（2026-08-10）。
+     *
+     * 发布出去的默认配置从此**不摆任何 native agent**——摆哪一家就是在替
+     * 用户选（作者：*「给人一种我们只能配置 deepseek 的错觉感」*）。
+     *
+     * 但大部分 e2e 需要一个能对话的 native agent。**让产品默认迁就测试是本末倒置**，
+     * 所以这里补一份：`shell` / `claude` / `codex` 仍来自发布的那份默认配置
+     * （它们不需要 key），`ds-chat` 由测试自己加。
+     */
+    /**
+     * **插在 `agents:` 之后，不是追加在末尾。**
+     * 「新建会话」用的是列表里的第一个——追加在末尾会让默认 agent
+     * 从 `ds-chat` 变成 `claude`，一堆用例的前提就悄悄变了。
+     */
+    const 测试用默认 = DEFAULT_CONFIG_YAML.replace(
+      "agents:\n",
+      `agents:
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat, exec]
+
+`,
+    )
+    if (!dawnOptions.providersYaml) writeFileSync(configPath, 测试用默认)
+
     if (dawnOptions.providersYaml) {
       writeFileSync(configPath, dawnOptions.providersYaml.replaceAll("{{MOCK_URL}}", server.url))
     }

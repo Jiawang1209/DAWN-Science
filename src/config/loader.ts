@@ -73,7 +73,8 @@ export function loadRegistry(file: string): ProviderRegistry {
  * 明白能改什么；一个只有键值对的文件只会让人去翻文档。
  *
  * 选这几个 agent 的理由：
- *   - `ds-chat` 便宜、够用，是"先跑起来"的默认
+ *   - **不摆任何 native agent**（2026-08-10）：摆哪一家就是在替用户选，
+ *     而「填了 key 就自动有 agent」之后它也不再必要
  *   - `claude` / `codex` 用各自 CLI 已有的登录，**不需要在这里配 key**，
  *     所以在没填任何 key 时也能直接用
  *   - `shell` 是一个**通用终端**——跑任意命令，也可以在里面手动起
@@ -124,12 +125,15 @@ export const DEFAULT_CONFIG_YAML = `# DAWN Science —— agent 配置
 #     capabilities: [exec]
 
 agents:
-  # 内置 agent。用前先到「设置」里填 deepseek 的 API key
-  ds-chat:
-    kind: native
-    provider: deepseek
-    model: deepseek-v4-flash
-    capabilities: [chat, exec]
+  # 这里**故意没有内置 agent**（2026-08-10）。
+  #
+  # 从前这儿摆着一个 ds-chat（deepseek）。作者的话：*「我们如果之前没有配置
+  # 任何 API key 的时候，其实不一定要默认就设置 deepseek，因为给人一种我们
+  # 只能配置 deepseek 的错觉感。」* 他是对的——**默认摆哪一家，就是在替用户选**。
+  #
+  # 现在不用摆了：**到「设置 → 凭证」里给任意一个 provider 填 key，
+  # 它就会自动出现在对话的选择器里**（pi 认识 40 个）。
+  # 想钉死某个模型、或者用自建端点，再手写到这里也行。
 
   # 托管本地的 claude CLI，以对话形态呈现。装了 claude 且已登录就能直接用
   #

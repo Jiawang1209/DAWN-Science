@@ -7,7 +7,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 import { SessionUpdateSchema } from "../../src/protocol/events.js"
-import type { SessionUpdate } from "../../src/protocol/events.js"
+import type { SessionUpdate, TranscriptItem } from "../../src/protocol/events.js"
 
 const hub = (terminalMaxChars = 1000) => new SessionTranscripts({ terminalMaxChars })
 
@@ -441,5 +441,48 @@ describe("cli 会话与 native 一样是对话（①-C 修）", () => {
       "user:问",
       "agent:答",
     ])
+  })
+})
+
+/**
+ * 「已经跑了多久」的**数据来源**（②-B · R2）。
+ *
+ * 作者定下 bash 不设默认超时，代价是**「还在跑」与「卡死了」在界面上长得一样**。
+ * 时刻必须由后端在事件发生的那一刻打上——界面自己掐表的话，
+ * 重新订阅一个已运行十分钟的会话时会从零数起，**很确定地说错**。
+ */
+describe("工具调用的时刻", () => {
+  const 定时 = (t: number[]) => {
+    let i = 0
+    return new SessionTranscripts({ terminalMaxChars: 1000, now: () => t[Math.min(i++, t.length - 1)]! })
+  }
+  const 取工具 = (h: SessionTranscripts, id = "a") =>
+    h.subscribe(id).items.find((x) => x.type === "tool") as Extract<TranscriptItem, { type: "tool" }>
+
+  it("tool_start 打上 startedAt", () => {
+    const h = 定时([1000])
+    h.track("a", "native")
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
+    expect(取工具(h).startedAt).toBe(1000)
+    expect(取工具(h).endedAt).toBeUndefined()
+  })
+
+  it("**结束时把开始时刻接过来** —— 否则一条跑了二十分钟的命令会显示成 0 秒", () => {
+    const h = 定时([1000, 121_000])
+    h.track("a", "native")
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
+    h.ingest("a", { kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "bash", text: "ok" })
+    const t = 取工具(h)
+    expect(t.startedAt).toBe(1000)
+    expect(t.endedAt).toBe(121_000)
+  })
+
+  it("**没见过 start 的 end 不编一个开始时刻** —— 拿「现在」冒充等于说它耗时 0", () => {
+    const h = 定时([5000])
+    h.track("a", "native")
+    h.ingest("a", { kind: "tool_end", sessionId: "a", toolCallId: "t9", toolName: "bash", text: "ok" })
+    const t = 取工具(h)
+    expect(t.startedAt).toBeUndefined()
+    expect(t.endedAt).toBe(5000)
   })
 })

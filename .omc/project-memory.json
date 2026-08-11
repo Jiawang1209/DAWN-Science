@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1786252306946,
+  "lastScanned": 1786373013569,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"e2e/fixtures.ts\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('''    const 测试用默认 = `${DEFAULT_CONFIG_YAML}\n  ds-chat:\n    kind: native\n    provider: deepseek\n    model: deepseek-v4-flash\n    capabilities: [chat, exec]\n`''','''    /**\n     * **插在 `agents:` 之后，不是追加在末尾。**\n     * 「新建会话」用的是列表里的第一个——追加在末尾会让默认 agent\n     * 从 `ds-chat` 变成 `claude`，一堆用例的前提就悄悄变了。\n     */\n    const 测试用默认 = DEFAULT_CONFIG_YAML.replace(\n      \"agents:\\\\n\",\n      `agents:\n  ds-chat:\n    kind: native\n    provider: deepseek\n    model: deepseek-v4-flash\n    capabilities: [chat, exec]\n\n`,\n    )''', 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/agent-pill.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"tests/first-run.test.ts\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('''  it(\"内置 agent 仍在 —— 它是「先跑起来」的默认\", () => {\n    expect(parsed().agents[\"ds-chat\"]).toMatchObject({ kind: \"native\", provider: \"deepseek\" })\n  })''','''  /**\n   * **2026-08-10 推翻了这条决定。**\n   *\n   * 这里原本断言「内置 agent 仍在——它是『先跑起来』的默认」，摆的是 deepseek。\n   * 作者：*「我们如果之前没有配置任何 API key 的时候，其实不一定要默认就设置\n   * deepseek，因为给人一种我们只能配置 deepseek 的错觉感。」*\n   *\n   * **默认摆哪一家，就是在替用户选。** 而「填了 key 就自动有 agent」之后\n   * 它也不再必要——到设置里给任意一个 provider 填 key，它就出现在选择器里。\n   */\n  it(\"**默认不摆任何 native agent** —— 摆哪一家就是在替用户选\", () => {\n    const agents = parsed().agents\n    const natives = Object.entries(agents).filter(([, d]) => d.kind === \"native\")\n    expect(natives).toEqual([])\n  })\n\n  it(\"**不需要 key 的那几个仍在** —— 装了 claude/codex 的人开箱即用\", () => {\n    const agents = parsed().agents\n    expect(agents[\"claude\"]).toMatchObject({ kind: \"cli\" })\n    expect(agents[\"shell\"]).toMatchObject({ kind: \"pty\" })\n  })''', 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -3",
+    "buildCommand": "python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/views.tsx\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('import { formatTokens } from \"./format.js\"',\n              'import { formatDuration, formatTokens } from \"./format.js\"', 1)\n\nold = \"\"\"function ToolRow({ item }: { item: Extract<TranscriptItem, { type: \"tool\" }> }) {\n  const { mark, label } = TOOL_STATUS[item.status]\"\"\"\nnew = \"\"\"function ToolRow({ item }: { item: Extract<TranscriptItem, { type: \"tool\" }> }) {\n  const { mark, label } = TOOL_STATUS[item.status]\n  const 用时 = 跑了多久(item)\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\n\nold = \"\"\"        <span className=\"tool-status\">{label}</span>\n      </Button>\"\"\"\nnew = \"\"\"        {用时 ? (\n          /**\n           * **「已经跑了多久」**（②-B · R2）。\n           *\n           * 作者：*「可以，不设默认超时，但把『已经跑了多久』显示出来，\n           * 中止交给你按。」* 这一句是**成对的**——没有这个数，\n           * 「还在跑」与「卡死了」在界面上长得一模一样，\n           * 而人要按的那个「停止」就成了一次没有依据的赌。\n           */\n          <span className=\"tool-elapsed\" title={item.status === \"running\" ? \"已经跑了\" : \"耗时\"}>\n            {item.status === \"running\" ? `已跑 ${用时}` : 用时}\n          </span>\n        ) : null}\n        <span className=\"tool-status\">{label}</span>\n      </Button>\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\n\n# helper + hook before ToolRow\nold = \"\"\"/**\n * 一次工具调用的呈现。\"\"\"\nnew = \"\"\"/**\n * **每秒一跳的当前时刻**——只在有东西真的在跑时才跳。\n *\n * 没有运行中的工具时**不装定时器**：一个永远在跳的 setInterval 会让\n * 整个对话区每秒重渲染一次，而屏幕上没有任何东西在变。\n */\nfunction useTick(active: boolean): number {\n  const [now, setNow] = useState(() => Date.now())\n  useEffect(() => {\n    if (!active) return\n    setNow(Date.now())\n    const t = setInterval(() => setNow(Date.now()), 1000)\n    return () => clearInterval(t)\n  }, [active])\n  return now\n}\n\n/**\n * 一次工具调用的呈现。\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\n\n# 跑了多久 implementation placed after TOOL_STATUS\nold = \"\"\"} as const\n\n/**\n * **每秒一跳的当前时刻**\"\"\"\nnew = \"\"\"} as const\n\n/**\n * 这一条跑了多久。**没有开始时刻就什么都不说**——\n * 拿「现在」当开始时刻会让一条跑了二十分钟的命令显示成「0 秒」，\n * 而看起来很确定的错比明说不知道坏得多。\n *\n * 一秒以内不显示：那个数每次都不一样，除了闪之外不提供任何判断依据。\n */\nfunction useElapsed(item: Extract<TranscriptItem, { type: \"tool\" }>): string | undefined {\n  const 在跑 = item.status === \"running\" && item.startedAt !== undefined\n  const now = useTick(在跑)\n  if (item.startedAt === undefined) return undefined\n  const 止 = item.status === \"running\" ? now : (item.endedAt ?? now)\n  const ms = 止 - item.startedAt\n  if (ms < 1000) return undefined\n  return formatDuration(ms)\n}\n\n/**\n * **每秒一跳的当前时刻**\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\ns = s.replace(\"  const 用时 = 跑了多久(item)\", \"  const 用时 = useElapsed(item)\", 1)\np.write_text(s, encoding=\"utf8\")\nPY\ngrep -n \"useEffect\\|useState\" src/ui/views.tsx | head -3; npx tsc --noEmit -p tsconfig.json 2>&1 | grep -v \"npm notice\" | head -5",
+    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL|×\" | head -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -74,15 +74,17 @@
       "ui:dev": "vite",
       "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts",
       "dev:mock": "node scripts/dev-mock.mjs",
-      "test:e2e": "npm run build && playwright test",
-      "test:e2e:only": "playwright test",
-      "test:e2e:visual": "playwright test e2e/visual.spec.ts",
-      "test:e2e:visual:update": "playwright test e2e/visual.spec.ts --update-snapshots",
+      "test:e2e": "npm run build && playwright test --grep-invert \"内核会话|解释器路径\" && playwright test e2e/kernel-session.spec.ts",
+      "test:e2e:only": "playwright test --grep-invert \"内核会话|解释器路径\"",
+      "test:e2e:kernel": "playwright test e2e/kernel-session.spec.ts",
+      "test:e2e:visual": "npm run build && playwright test e2e/visual.spec.ts",
+      "test:e2e:visual:only": "playwright test e2e/visual.spec.ts",
+      "test:e2e:visual:update": "npm run build && playwright test e2e/visual.spec.ts --update-snapshots",
       "spike:e": "tsx spikes/e-model-switch.ts"
     }
   },
   "conventions": {
-    "namingStyle": "camelCase",
+    "namingStyle": "camelCase/PascalCase",
     "importStyle": null,
     "testPattern": "*.test.ts",
     "fileOrganization": null
@@ -92,6 +94,7 @@
     "workspaces": [],
     "mainDirectories": [
       "docs",
+      "examples",
       "scripts",
       "src",
       "tests"
@@ -104,14 +107,14 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 0,
-      "lastAccessed": 1786252306879,
+      "lastAccessed": 1786373013550,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 4,
-      "lastAccessed": 1786252306880,
+      "lastAccessed": 1786373013551,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -121,21 +124,28 @@
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 11,
-      "lastAccessed": 1786252306901,
+      "fileCount": 36,
+      "lastAccessed": 1786373013554,
       "keyFiles": [
         "agent-pill.spec.ts",
+        "base-url.spec.ts",
         "boot.spec.ts",
         "chat.spec.ts",
-        "context-usage.spec.ts",
-        "fixtures.ts"
+        "cli-agent-kind.spec.ts"
       ]
+    },
+    "examples": {
+      "path": "examples",
+      "purpose": "Example code",
+      "fileCount": 0,
+      "lastAccessed": 1786373013554,
+      "keyFiles": []
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 5,
-      "lastAccessed": 1786252306902,
+      "lastAccessed": 1786373013554,
       "keyFiles": [
         "build-electron.mjs",
         "dev-mock.mjs",
@@ -148,7 +158,7 @@
       "path": "spikes",
       "purpose": null,
       "fileCount": 8,
-      "lastAccessed": 1786252306902,
+      "lastAccessed": 1786373013554,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -160,49 +170,59 @@
     "src": {
       "path": "src",
       "purpose": "Source code",
-      "fileCount": 1,
-      "lastAccessed": 1786252306903,
+      "fileCount": 2,
+      "lastAccessed": 1786373013554,
       "keyFiles": [
-        "cli.ts"
+        "cli.ts",
+        "errors.ts"
       ]
+    },
+    "test-results": {
+      "path": "test-results",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1786373013554,
+      "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
-      "fileCount": 5,
-      "lastAccessed": 1786252306906,
+      "fileCount": 7,
+      "lastAccessed": 1786373013555,
       "keyFiles": [
+        "cost-wiring.test.ts",
         "first-run.test.ts",
         "provenance-probe.test.ts",
         "run-recorder.test.ts",
-        "stuck-guard.test.ts",
-        "tool-output.test.ts"
+        "source-hygiene.test.ts"
       ]
     },
     "src/config": {
       "path": "src/config",
       "purpose": "Configuration files",
-      "fileCount": 2,
-      "lastAccessed": 1786252306911,
+      "fileCount": 4,
+      "lastAccessed": 1786373013555,
       "keyFiles": [
         "loader.ts",
+        "models-json.ts",
         "schema.ts"
       ]
     },
     "tests/config": {
       "path": "tests/config",
       "purpose": "Configuration files",
-      "fileCount": 1,
-      "lastAccessed": 1786252306912,
+      "fileCount": 2,
+      "lastAccessed": 1786373013556,
       "keyFiles": [
-        "registry.test.ts"
+        "registry.test.ts",
+        "writer.test.ts"
       ]
     },
     "tests/helpers": {
       "path": "tests/helpers",
       "purpose": "Helper functions",
       "fileCount": 1,
-      "lastAccessed": 1786252306913,
+      "lastAccessed": 1786373013556,
       "keyFiles": [
         "credentials.ts"
       ]
@@ -210,303 +230,279 @@
   },
   "hotPaths": [
     {
-      "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 74,
-      "lastAccessed": 1786259584640,
+      "path": "src/workbench/backend.ts",
+      "accessCount": 8,
+      "lastAccessed": 1786373336330,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/App.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1786374912403,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/Settings.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1786374348983,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-actual.png",
+      "accessCount": 4,
+      "lastAccessed": 1786417899179,
       "type": "file"
     },
     {
       "path": "src/runtime/native.ts",
-      "accessCount": 22,
-      "lastAccessed": 1786290481852,
+      "accessCount": 4,
+      "lastAccessed": 1786435610553,
       "type": "file"
     },
     {
-      "path": "src/session/manager.ts",
-      "accessCount": 20,
-      "lastAccessed": 1786271929030,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-08-07-master-roadmap.md",
-      "accessCount": 14,
-      "lastAccessed": 1786203858192,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md",
-      "accessCount": 9,
-      "lastAccessed": 1786194147408,
-      "type": "file"
-    },
-    {
-      "path": "spikes/FINDINGS.md",
-      "accessCount": 7,
-      "lastAccessed": 1786195008865,
-      "type": "file"
-    },
-    {
-      "path": "src/config/loader.ts",
-      "accessCount": 7,
-      "lastAccessed": 1786212109023,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/types.ts",
-      "accessCount": 6,
-      "lastAccessed": 1786256769240,
-      "type": "file"
-    },
-    {
-      "path": "spikes/a-pi-embed.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786156778022,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/pty.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786162866184,
-      "type": "file"
-    },
-    {
-      "path": "src/cli.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786163589653,
+      "path": "src/config/writer.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786373237771,
       "type": "file"
     },
     {
       "path": "src/protocol/operations.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786195366881,
-      "type": "file"
-    },
-    {
-      "path": "src/store/schema.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786212663510,
-      "type": "file"
-    },
-    {
-      "path": "tests/session/manager.test.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786254297078,
-      "type": "file"
-    },
-    {
-      "path": "package.json",
-      "accessCount": 5,
-      "lastAccessed": 1786286370147,
-      "type": "file"
-    },
-    {
-      "path": "tests/protocol/operations.test.ts",
-      "accessCount": 4,
-      "lastAccessed": 1786182225227,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/ENTITY-REGISTRY.md",
-      "accessCount": 4,
-      "lastAccessed": 1786203904718,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/version.ts",
-      "accessCount": 4,
-      "lastAccessed": 1786258138640,
-      "type": "file"
-    },
-    {
-      "path": "tests/protocol/entities.test.ts",
       "accessCount": 3,
-      "lastAccessed": 1786165861865,
+      "lastAccessed": 1786373271218,
       "type": "file"
     },
     {
-      "path": "vitest.config.ts",
+      "path": "src/workbench/events.ts",
       "accessCount": 3,
-      "lastAccessed": 1786168356492,
+      "lastAccessed": 1786435592918,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/plans/2026-08-08-phase1b-workbench.md",
-      "accessCount": 3,
-      "lastAccessed": 1786193861268,
+      "path": "tests/ui/settings.test.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1786373667367,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/BACKLOG.md",
-      "accessCount": 3,
-      "lastAccessed": 1786193921265,
+      "path": "tests/config/writer.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786373694829,
+      "type": "file"
+    },
+    {
+      "path": "e2e/fixtures.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786373992232,
+      "type": "file"
+    },
+    {
+      "path": "e2e/base-url.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786374093798,
+      "type": "file"
+    },
+    {
+      "path": "e2e/add-service.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786374244033,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
+      "accessCount": 2,
+      "lastAccessed": 1786381036702,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "accessCount": 2,
+      "lastAccessed": 1786412593442,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/views.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1786435500998,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/format.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786435664421,
       "type": "file"
     },
     {
       "path": "src/config/schema.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786195107898,
-      "type": "file"
-    },
-    {
-      "path": "spikes/d-jupyter-kernel.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786159067103,
-      "type": "file"
-    },
-    {
-      "path": "tests/config/loader.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786160162940,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-08-06-phase0-and-session-core.md",
-      "accessCount": 2,
-      "lastAccessed": 1786163715401,
-      "type": "file"
-    },
-    {
-      "path": "src/session/stream.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786182048647,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/index.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786182153511,
-      "type": "file"
-    },
-    {
-      "path": "tests/runtime/native.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786195583549,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/entities.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786212672645,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/session-dir.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786254147093,
-      "type": "file"
-    },
-    {
-      "path": ".env.example",
       "accessCount": 1,
-      "lastAccessed": 1786155524001,
+      "lastAccessed": 1786373021333,
       "type": "file"
     },
     {
-      "path": "spikes/mcp-probe-server.ts",
+      "path": "e2e/custom-provider.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786157187352,
+      "lastAccessed": 1786373127605,
       "type": "file"
     },
     {
-      "path": "spikes/hook-probe.sh",
+      "path": "e2e/key-is-enough.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786157192305,
+      "lastAccessed": 1786373133026,
       "type": "file"
     },
     {
-      "path": "spikes/b-pty-mcp-hook.ts",
+      "path": "tests/protocol/events.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1786157371064,
+      "lastAccessed": 1786373185697,
       "type": "file"
     },
     {
-      "path": "scripts/fix-node-pty.mjs",
+      "path": "src/protocol/version.ts",
       "accessCount": 1,
-      "lastAccessed": 1786157911053,
+      "lastAccessed": 1786373283566,
       "type": "file"
     },
     {
-      "path": "spikes/types/spawnteract.d.ts",
+      "path": "src/ui/styles.css",
       "accessCount": 1,
-      "lastAccessed": 1786158889177,
+      "lastAccessed": 1786373872682,
       "type": "file"
     },
     {
-      "path": "spikes/d-electron-zmq/main.js",
+      "path": "e2e/providers.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786159135325,
+      "lastAccessed": 1786374071051,
       "type": "file"
     },
     {
-      "path": "tests/store/sessions.test.ts",
+      "path": "test-results/visual-设置-·-亮色/设置-亮色-actual.png",
       "accessCount": 1,
-      "lastAccessed": 1786160774305,
+      "lastAccessed": 1786374843000,
       "type": "file"
     },
     {
-      "path": "src/store/sessions.ts",
+      "path": "e2e/late-endpoint.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786160820279,
+      "lastAccessed": 1786378520851,
       "type": "file"
     },
     {
-      "path": "tests/runtime/fake.test.ts",
+      "path": "e2e/model-switch.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786160894668,
+      "lastAccessed": 1786380390528,
       "type": "file"
     },
     {
-      "path": "src/runtime/fake.ts",
+      "path": "e2e/cross-service-switch.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786160926423,
+      "lastAccessed": 1786380428922,
       "type": "file"
     },
     {
-      "path": "tests/session/lease.test.ts",
+      "path": "tests/ui/model-pill.test.tsx",
       "accessCount": 1,
-      "lastAccessed": 1786161189905,
+      "lastAccessed": 1786380453859,
       "type": "file"
     },
     {
-      "path": "src/session/lease.ts",
+      "path": "e2e/turn-closes-on-failure.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786161244075,
+      "lastAccessed": 1786382905901,
       "type": "file"
     },
     {
-      "path": "providers.example.yaml",
+      "path": "src/ui/state/dock.ts",
       "accessCount": 1,
-      "lastAccessed": 1786161514860,
+      "lastAccessed": 1786384301079,
       "type": "file"
     },
     {
-      "path": "tests/runtime/session-dir.test.ts",
+      "path": "src/ui/dock.tsx",
       "accessCount": 1,
-      "lastAccessed": 1786161752833,
+      "lastAccessed": 1786384362883,
       "type": "file"
     },
     {
-      "path": "tests/session/stream.test.ts",
+      "path": "e2e/terminal-dock.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786162497301,
+      "lastAccessed": 1786384660414,
       "type": "file"
     },
     {
-      "path": "tests/integration/pty.test.ts",
+      "path": "e2e/delete-project.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1786162738741,
+      "lastAccessed": 1786385192945,
       "type": "file"
     },
     {
-      "path": "scripts/smoke-native.ts",
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
       "accessCount": 1,
-      "lastAccessed": 1786163257663,
+      "lastAccessed": 1786385721934,
       "type": "file"
     },
     {
-      "path": "tests/integration/concurrent-sessions.test.ts",
+      "path": "test-results/terminal-dock--没有项目时，终端开在家目录-/test-failed-1.png",
       "accessCount": 1,
-      "lastAccessed": 1786164085298,
+      "lastAccessed": 1786423566378,
+      "type": "file"
+    },
+    {
+      "path": "spikes/f-ssh-remote-kernel.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786430263402,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-11-phase2b-remote-workspace.md",
+      "accessCount": 1,
+      "lastAccessed": 1786432614484,
+      "type": "file"
+    },
+    {
+      "path": "src/remote/ssh.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786433146413,
+      "type": "file"
+    },
+    {
+      "path": "tests/remote/ssh.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786434480012,
+      "type": "file"
+    },
+    {
+      "path": "spikes/g-remote-executor.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786434576682,
+      "type": "file"
+    },
+    {
+      "path": "src/remote/tools.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786435002282,
+      "type": "file"
+    },
+    {
+      "path": "tests/remote/tools.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786435071049,
+      "type": "file"
+    },
+    {
+      "path": "src/protocol/events.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786435526308,
+      "type": "file"
+    },
+    {
+      "path": "e2e/visual.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786435921939,
+      "type": "file"
+    },
+    {
+      "path": "e2e/tool-elapsed.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786435989068,
       "type": "file"
     }
   ],

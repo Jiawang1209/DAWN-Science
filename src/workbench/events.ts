@@ -37,6 +37,11 @@ export interface SessionTranscriptsOptions {
    * 而那本来就是有界的；终端字节流没有天然边界，才需要一个上限。
    */
   terminalMaxChars: number
+  /**
+   * 现在几点（epoch 毫秒）。**可注入只为可测**——
+   * 工具调用的「跑了多久」要一个稳定的时钟才能断言。
+   */
+  now?: () => number
 }
 
 interface Entry {
@@ -70,6 +75,10 @@ export class SessionTranscripts {
   private readonly listeners = new Set<(u: SessionUpdate) => void>()
 
   constructor(private readonly opts: SessionTranscriptsOptions) {}
+
+  private now(): number {
+    return (this.opts.now ?? Date.now)()
+  }
 
   /** 会话创建时登记。`kind` 决定字节进终端还是进对话，之后不会变。 */
   track(sessionId: SessionId, kind: "native" | "pty" | "cli" | "kernel"): void {
@@ -340,19 +349,21 @@ export class SessionTranscripts {
           name: event.toolName,
           input: event.input,
           status: "running",
+          // **时刻在这里打，不在界面上掐表**：重新订阅一个已在运行的会话时，
+          // 界面会从零数起，于是它很确定地说「刚开始」——理由见协议里的注释
+          startedAt: this.now(),
         })
         return
 
       case "tool_end": {
         const id = event.toolCallId || `tool${e.revision + 1}`
+        const 先前 = e.items.find((i) => i.id === id)
         // 没见过 start 的 end 也照记——**宁可多一条，不可丢一条**
         this.putItem(sessionId, e, {
           type: "tool",
           id,
           name: event.toolName,
-          input: e.items.find((i) => i.type === "tool" && i.id === id)?.type === "tool"
-            ? (e.items.find((i) => i.id === id) as Extract<TranscriptItem, { type: "tool" }>).input
-            : undefined,
+          input: 先前?.type === "tool" ? 先前.input : undefined,
           status: event.isError ? "error" : "ok",
           result: event.text,
           // **截断的三件套一起走。** 只传正文等于把「这是残缺品」这个事实丢掉，
@@ -360,6 +371,16 @@ export class SessionTranscripts {
           resultTruncated: event.truncated,
           resultBytes: event.bytes,
           ...(event.fullOutputPath ? { fullOutputPath: event.fullOutputPath } : {}),
+          /**
+           * **开始时刻从那条 running 上接过来**，接不到就不写。
+           *
+           * 没接到时如实缺省，而不是拿「现在」冒充开始时刻——
+           * 那会让一条跑了二十分钟的命令显示成「耗时 0 秒」。
+           */
+          ...(先前?.type === "tool" && 先前.startedAt !== undefined
+            ? { startedAt: 先前.startedAt }
+            : {}),
+          endedAt: this.now(),
         })
         return
       }

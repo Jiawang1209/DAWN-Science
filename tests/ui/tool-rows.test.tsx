@@ -170,3 +170,51 @@ describe("工具调用行 · 截断的证据要显示出来", () => {
     expect(container.textContent).toMatch(/512 字节/)
   })
 })
+
+/**
+ * 「已经跑了多久」（②-B · R2）。
+ *
+ * 作者：*「可以，不设默认超时，但把『已经跑了多久』显示出来，中止交给你按。」*
+ * 这两句是**成对的**：不设超时意味着「还在跑」与「卡死了」在界面上长得一样，
+ * 而人要按的那个「停止」不该是一次没有依据的赌。
+ */
+describe("工具调用行 · 跑了多久", () => {
+  const 秒 = 1000
+
+  it("running 时报「已跑 …」", () => {
+    const t0 = Date.now() - 75 * 秒
+    const { container } = show([tool({ status: "running", result: undefined, startedAt: t0 })])
+    const el = container.querySelector(".tool-elapsed")
+    expect(el?.textContent).toMatch(/^已跑 1 分 1[45] 秒$/)
+  })
+
+  it("跑完之后**停表**，用 endedAt 而不是现在", () => {
+    const t0 = Date.now() - 3600 * 秒
+    const { container } = show([tool({ status: "ok", startedAt: t0, endedAt: t0 + 12 * 秒 })])
+    expect(container.querySelector(".tool-elapsed")?.textContent).toBe("12 秒")
+  })
+
+  it("**没有开始时刻就什么都不说** —— 拿「现在」冒充会说出「0 秒」", () => {
+    const { container } = show([tool({ status: "running", result: undefined })])
+    expect(container.querySelector(".tool-elapsed")).toBeNull()
+  })
+
+  it("一秒以内不显示 —— 那个数除了闪之外不提供判断依据", () => {
+    const t0 = Date.now()
+    const { container } = show([tool({ status: "ok", startedAt: t0, endedAt: t0 + 200 })])
+    expect(container.querySelector(".tool-elapsed")).toBeNull()
+  })
+
+  it("**折叠着也看得见** —— 一条在跑的命令正是不该点开才知道的那种", () => {
+    const t0 = Date.now() - 30 * 秒
+    const r = render(
+      <ConversationView
+        session={session}
+        items={[tool({ status: "running", result: undefined, startedAt: t0 })]}
+        onSend={() => {}}
+      />,
+    )
+    expect(r.container.querySelector('.tool-head[aria-expanded="false"]')).toBeTruthy()
+    expect(r.container.querySelector(".tool-elapsed")?.textContent).toContain("已跑")
+  })
+})

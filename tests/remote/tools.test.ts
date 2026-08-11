@@ -207,6 +207,22 @@ describe("跑命令", () => {
     expect(跑过[1]!.timeoutSec).toBe(30)
   })
 
+  it("**中止信号原样递给执行器** —— 「中止交给你按」的另一半在这里", async () => {
+    const 收到: (AbortSignal | undefined)[] = []
+    const { ex } = 假执行器({
+      exec: vi.fn(async (_c: string, o: { signal?: AbortSignal } = {}) => {
+        收到.push(o.signal)
+        return { code: 0, stdout: "", stderr: "" }
+      }),
+    })
+    const 出 = 改造成远端工具(原定义(), { executor: ex, workspace: WS })
+    const ac = new AbortController()
+    await 取(出, "bash").execute("t", { command: "sleep 999" }, ac.signal)
+    // 界面上那个「停止」按下去之后，最终要落到远端那个进程上。
+    // 这条只钉住这一段：**信号没有在工具层被吃掉**
+    expect(收到[0]).toBe(ac.signal)
+  })
+
   it("被信号结束时说的是信号，不是退出码", async () => {
     const { ex } = 假执行器({
       exec: vi.fn(async () => ({ code: undefined, signal: "KILL", stdout: "", stderr: "" })),

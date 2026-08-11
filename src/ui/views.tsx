@@ -17,7 +17,7 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
-import { formatTokens } from "./format.js"
+import { formatDuration, formatTokens } from "./format.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -1475,6 +1475,40 @@ const TOOL_STATUS = {
 } as const
 
 /**
+ * 这一条跑了多久。**没有开始时刻就什么都不说**——
+ * 拿「现在」当开始时刻会让一条跑了二十分钟的命令显示成「0 秒」，
+ * 而看起来很确定的错比明说不知道坏得多。
+ *
+ * 一秒以内不显示：那个数每次都不一样，除了闪之外不提供任何判断依据。
+ */
+function useElapsed(item: Extract<TranscriptItem, { type: "tool" }>): string | undefined {
+  const 在跑 = item.status === "running" && item.startedAt !== undefined
+  const now = useTick(在跑)
+  if (item.startedAt === undefined) return undefined
+  const 止 = item.status === "running" ? now : (item.endedAt ?? now)
+  const ms = 止 - item.startedAt
+  if (ms < 1000) return undefined
+  return formatDuration(ms)
+}
+
+/**
+ * **每秒一跳的当前时刻**——只在有东西真的在跑时才跳。
+ *
+ * 没有运行中的工具时**不装定时器**：一个永远在跳的 setInterval 会让
+ * 整个对话区每秒重渲染一次，而屏幕上没有任何东西在变。
+ */
+function useTick(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!active) return
+    setNow(Date.now())
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [active])
+  return now
+}
+
+/**
  * 一次工具调用的呈现。
  *
  * 三条纪律，都是踩过或读到的：
@@ -1508,6 +1542,7 @@ const TOOL_STATUS = {
  */
 function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) {
   const { mark, label } = TOOL_STATUS[item.status]
+  const 用时 = useElapsed(item)
   const input = summarize(item.input)
   /**
    * **报错的默认展开。** 用 `item.status` 做初值而不是在 effect 里改——
@@ -1539,6 +1574,19 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
         {/* **折叠时也要看得见做了什么**：命令本身就是最有信息量的那一行。
             展开之后它在下面完整出现，这里就不重复了 */}
         {!open && input.text ? <span className="tool-peek">{input.text}</span> : null}
+        {用时 ? (
+          /**
+           * **「已经跑了多久」**（②-B · R2）。
+           *
+           * 作者：*「可以，不设默认超时，但把『已经跑了多久』显示出来，
+           * 中止交给你按。」* 这一句是**成对的**——没有这个数，
+           * 「还在跑」与「卡死了」在界面上长得一模一样，
+           * 而人要按的那个「停止」就成了一次没有依据的赌。
+           */
+          <span className="tool-elapsed" title={item.status === "running" ? "已经跑了" : "耗时"}>
+            {item.status === "running" ? `已跑 ${用时}` : 用时}
+          </span>
+        ) : null}
         <span className="tool-status">{label}</span>
       </Button>
 

@@ -1,7 +1,7 @@
 /**
  * 界面上的数字怎么写（2026-08-11）。
  *
- * 眼下只有一件事：**token 数用 k**。
+ * 两件事：**token 数用 k**，**时长按量级换写法**。
  */
 
 /**
@@ -37,4 +37,28 @@ export function formatTokens(n: number): string {
 function 去尾(x: number): string {
   const s = x.toFixed(1)
   return s.endsWith(".0") ? s.slice(0, -2) : s
+}
+
+/**
+ * 一段时长（毫秒）读出来是多久。
+ *
+ * ## 它存在的理由是「不设默认超时」
+ *
+ * 作者定下 bash 不设默认超时——远端一条 `bwa index` 跑二十分钟是正常的。
+ * 代价是：**「还在跑」与「卡死了」在界面上长得一模一样**，
+ * 而唯一能把两者分开的信息就是这个数。所以它必须好读到一眼能判断。
+ *
+ * 按量级换写法，理由与 `formatTokens` 同一条：**人要的是量级**。
+ *   - 一分钟以内：`8 秒`、`0.4 秒`（十秒以内留一位小数，两次运行的差别看得见）
+ *   - 一小时以内：`3 分 05 秒`（**秒补零**，否则 `3 分 5 秒` 与 `3 分 50 秒` 一扫而过很像）
+ *   - 一小时以上：`1 小时 12 分`
+ */
+export function formatDuration(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "—"
+  const 秒 = ms / 1000
+  if (秒 < 10) return `${去尾(秒)} 秒`
+  if (秒 < 60) return `${Math.floor(秒)} 秒`
+  const 分 = Math.floor(秒 / 60)
+  if (分 < 60) return `${分} 分 ${String(Math.floor(秒 % 60)).padStart(2, "0")} 秒`
+  return `${Math.floor(分 / 60)} 小时 ${String(分 % 60).padStart(2, "0")} 分`
 }

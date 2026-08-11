@@ -13,9 +13,59 @@
  */
 import { test, expect } from "./fixtures.js"
 
+/**
+ * **两颗「新建」各走各的**（2026-08-11）。
+ *
+ * 作者：*「如果没有在项目下，新建对话的话，就出现 App 首页；
+ * 如果在项目下，新建对话的话，就在项目下面新建对话。」*
+ *
+ * 顶上那颗**不建任何东西**——它把你送回首页，让你先挑 LLM
+ * （*「新会话的话，我应该是直接可以重新选择 LLM」*）。
+ * 项目行上那颗直接建，因为你已经用「在哪个项目」回答过一半了。
+ */
+test("**顶上那颗回首页，不直接建**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "新建会话" }).click()
+
+  // 首页：起手卡片 + 「用 X 开始」都在
+  await expect(page.locator(".welcome")).toBeVisible()
+  await expect(page.getByRole("button", { name: /开始/ })).toBeVisible()
+  // **一条都没建**——它只是把你送到挑 LLM 的地方
+  await expect(page.locator(".session-list .sess")).toHaveCount(0)
+  await expect(page.getByPlaceholder(/回车发送/)).toHaveCount(0)
+
+  // 在首页上挑完才真的建
+  await page.getByRole("button", { name: /开始/ }).click()
+  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator(".session-list .sess")).toHaveCount(1)
+})
+
+test("**项目行上那颗直接建**，不绕首页", async ({ dawn }) => {
+  const { page } = dawn
+  await page.locator(".proj-item").first().getByRole("button", { name: /里开一段新对话/ }).click()
+  // 直接进对话，没有中间那一屏
+  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator(".welcome")).toHaveCount(0)
+  await expect(page.locator(".proj-session-list .sess")).toHaveCount(1)
+})
+
+test("**首页那颗按钮说的是 LLM，不是 agent**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "新建会话" }).click()
+  await expect(page.locator(".welcome")).toBeVisible()
+  /**
+   * 作者：*「我做的这个就属于是一个 agent，因此首页不应该是更换一个 agent，
+   * 而应该是更换一个 LLM。」*——**DAWN 自己才是那个 agent**。
+   */
+  await expect(page.locator(".welcome")).not.toContainText("换一个 agent")
+  const pill = page.locator(".welcome .agent-pill")
+  if ((await pill.count()) > 0) await expect(pill).toContainText("LLM")
+})
+
 test("**上面那一列是临时会话** —— 不属于任何项目", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "新建会话", exact: true }).click()
+  await page.getByRole("button", { name: "新建会话" }).click()
+  await page.getByRole("button", { name: /开始/ }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
   // 它在上面那一列里
@@ -82,6 +132,7 @@ test("**空着的时候两颗按钮是连着的**，加一条会话就正好多�
   expect(空的时候).toBeLessThan(8)
 
   await 会话按钮.click()
+  await page.getByRole("button", { name: /开始/ }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   await expect(page.locator(".session-list .sess")).toHaveCount(1)
 

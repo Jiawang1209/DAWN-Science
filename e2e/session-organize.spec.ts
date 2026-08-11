@@ -12,12 +12,12 @@
  * 2. **顺序是后端定的。** 界面自己排等于第二份实现，两份迟早不一致。
  *    所以每个动作之后都验**重取回来的列表**长什么样。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 const 名字 = ".session-list .sess .name"
 
 async function 建(page: import("@playwright/test").Page, 话: string, 第几个: number) {
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   await expect(page.locator(".session-list > li")).toHaveCount(第几个)
   const box = page.getByPlaceholder(/回车发送/)
   await expect(box).toHaveValue("")

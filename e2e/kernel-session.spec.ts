@@ -20,7 +20,7 @@
  * 「先跑其余的，再跑它」。这么做的理由只有一个——
  * **红着的全量套件会教人忽略红色**，而那比一个待查的 bug 更贵。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -44,7 +44,7 @@ test.describe("内核会话", () => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
     // ① 普通输出
@@ -129,7 +129,7 @@ test.describe("R 内核会话", () => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
     const 发 = async (code: string) => {
@@ -187,7 +187,7 @@ test.describe("由配置的解释器路径起内核", () => {
     await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
 
     // ① **还没配** —— 建会话要响亮失败并指向设置，不是悄悄用一个猜出来的解释器
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByText(/还没有配置 Python 解释器路径/)).toBeVisible({ timeout: 30_000 })
 
     // ② 去设置里填
@@ -202,7 +202,7 @@ test.describe("由配置的解释器路径起内核", () => {
     await expect(box).toHaveValue(PY_PATH)
 
     // ③ 配完就能跑，而且跑的就是那个解释器
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
     await page.getByPlaceholder(/回车发送/).fill("import sys; print('EXE', sys.executable)")
     await page.getByRole("button", { name: "发送", exact: true }).click()

@@ -56,7 +56,8 @@ test.describe("启动时一个 provider 覆盖都没有", () => {
      * 而这个用例刻意没有基底目录、也没给 deepseek 填过 key——
      * 拿它开会话本来就该失败。**要验的是 `late` 这一条路。**
      */
-    await page.getByRole("button", { name: "换一个 agent" }).click()
+    // 2026-08-11：这颗从「换一个 agent」改叫「换一个 LLM」——DAWN 自己才是那个 agent
+    await page.getByRole("button", { name: "换一个 LLM" }).click()
     await page.getByRole("menuitem", { name: "late" }).click()
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
     // **模型选择的地方有它**——作者说的正是这一句

@@ -461,7 +461,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .catch(fail)
   }, [client, view, sessionId])
 
-  const agentIds = useMemo(() => providers.agents.map((a) => a.agentId), [providers])
+  /**
+   * 能用来**开一段对话**的那些。
+   *
+   * **终端不在里面**（2026-08-11）：`shell` 那种 `kind: pty` 的 agent
+   * 开出来的是一个终端，而终端已经有自己的家（对话区底下那条 dock）。
+   * 留在这个清单里，人就会在「新建会话，用哪个 LLM」的菜单里看见 `shell`——
+   * 而它既不是 LLM，点了也不会开出一段对话。
+   */
+  const agentIds = useMemo(
+    () => providers.agents.filter((a) => a.kind !== "pty").map((a) => a.agentId),
+    [providers],
+  )
 
   /**
    * 新建会话并直接进对话。
@@ -787,8 +798,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 目录由服务端定（每个一个独立目录）——**让界面去拼路径，
    * 等于把「往哪写」的决定权交给渲染进程**。
    */
+  /**
+   * **点「新建会话」= 回到首页**（2026-08-11）。
+   *
+   * 作者：*「如果我点击新会话的时候，其实应该出现的是 App 的首页，
+   * 因为新会话和新项目肯定是不一样的，新会话的话，我应该是直接可以重新选择 LLM。」*
+   *
+   * 此前它**立刻用第一个 agent 建了一段**——于是「用哪个模型」这件事
+   * 只能建完再改，而那一屏（首页）明明就是为选模型准备的：
+   * 四张起手卡片 + 「用 X 开始」+ 换一个 LLM。
+   *
+   * **不建任何东西**：真正的会话在首页上挑完之后才建
+   * （首页的每个入口最终都调 `startTemporarySession`）。
+   */
+  const goHome = useCallback(() => {
+    setActiveSessionId(undefined)
+    setView("conversation")
+  }, [])
+
   const startTemporarySession = useCallback(
-    (agentId: string) => {
+    /**
+     * @param firstMessage 给了的话，**建完立刻发出去**——
+     *   首页那四张起手卡片靠它（那一屏没有输入框）。
+     */
+    (agentId: string, firstMessage?: string) => {
       /**
        * **记下按下时人在哪一屏**（与 `startSession` 同一条纪律，2026-08-09 立的）。
        *
@@ -806,7 +839,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           // 人还在原地才进对话。**他自己切走了就尊重他的选择**
           if ($view.get() === from) setView("conversation")
           // 取写权，否则第一句就会被租约挡下（与 startSession 同一条）
-          return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+          return client
+            .get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+            .then(() => {
+              if (!firstMessage) return
+              return client.get("writeToSession", {
+                sessionId: s.sessionId,
+                data: firstMessage,
+                as: "user",
+              })
+            })
         })
         .catch(fail)
     },
@@ -1025,7 +1067,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
       showProjectPanel: () => setView("panel"),
-      newSession: startSession,
+      newSession: startTemporarySession,
       abort: () => {
         if (!session) return
         client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
@@ -1094,13 +1136,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             返回
           </Button>
         ) : null}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setView(view === "settings" ? "conversation" : "settings")}
-        >
-          {view === "settings" ? "返回" : "设置"}
-        </Button>
+        {/**
+          * **设置搬去了左下角**（2026-08-11，作者：*「设置可以放到 App 的左下角」*）。
+          * 顶栏只留「返回」——它是**这一屏的动作**，而设置是**去另一屏**，
+          * 后者跟「项目概览 / 文件」是同一类，所以它们排在一起。
+          */}
+        {view === "settings" ? (
+          <Button variant="ghost" size="sm" onClick={() => setView("conversation")}>
+            返回
+          </Button>
+        ) : null}
       </div>
 
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
@@ -1148,9 +1193,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onMoveSession={moveSession}
           onReorderSessions={reorderSessions}
           onOpenProject={actions.openProject}
-          // **顶上那颗开的是临时会话**；想在某个项目里开，走那一行上的 ＋
-          onNewSession={startTemporarySession}
-          onOpenSettings={actions.openSettings}
+          /**
+           * **顶上那颗回首页，不直接建**（2026-08-11）——
+           * 在首页上挑完 LLM 才建，而且建出来的是临时会话。
+           * 想在某个项目里开，走那个项目行上的 ＋。
+           */
+          onNewSession={goHome}
+          /**
+           * **再点一次就回去**（2026-08-11，作者：*「设置的地方，
+           * 点击第二次也可以返回到界面」*）。
+           *
+           * 与旁边的「项目概览 / 文件」是同一条：**一个亮着的入口点下去
+           * 毫无反应，人会以为它坏了**。设置搬进侧栏时漏了这一条——
+           * 它原来在顶栏，那颗按钮本来就是「设置 ⇄ 返回」两态的。
+           */
+          onOpenSettings={() => setView(view === "settings" ? "conversation" : "settings")}
+          settingsActive={view === "settings"}
         />
 
         <main className="main">
@@ -1285,20 +1343,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </div>
           ) : session && session.kind === "pty" ? (
             /**
-             * **托管 CLI 的会话：终端就是主体。**（2026-08-09，作者试用后推翻旧设计）
+             * **终端只在 dock 里**（2026-08-11）。
              *
-             * 不给对话视图，也不给输入框——PTY 的输出根本不进对话记录，
-             * 而那个输入框此前把文本原样送进 PTY **不带 `\r`**，
-             * CLI 收到字符却永远等不到提交。按键现在由 xterm 直接交给 PTY。
+             * 这一支曾经是「PTY 会话铺满主区」（2026-08-09 作者试用后定的），
+             * 现在终端有了自己的家：对话区底下那条 dock。
+             * 留着这一支的唯一理由是**旧会话**——数据库里还躺着当初那种
+             * 占满主区的 pty 会话，选中它时得给一句话，而不是一片空白。
              */
-            <TerminalView
-              chunks={termChunks}
-              onInput={(data) =>
-                client
-                  .get("writeToSession", { sessionId: session.sessionId, data, as: "user" })
-                  .catch(fail)
-              }
-            />
+            <div className="conversation empty-conv">
+              <p className="empty">
+                这是一段终端会话。终端现在在对话区下面那一条里——
+                <Button variant="text" size="inline" onClick={toggleDock}>
+                  打开终端
+                </Button>
+              </p>
+            </div>
           ) : session ? (
             <>
               <ConversationView
@@ -1420,7 +1479,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               agents={agentIds}
               agentLabel={agentLabel}
               onToggleDock={toggleDock}
-              onStart={actions.newSession}
+              /**
+               * **首页开出来的是临时会话**（2026-08-11）。
+               *
+               * 作者：*「如果没有在项目下，新建对话的话，就出现 App 首页；
+               * 如果在项目下，新建对话的话，就在项目下面新建对话。」*
+               * 首页正是「没有在项目下」那一支——所以它不该建到当前项目里去。
+               */
+              onStart={startTemporarySession}
               onOpenSettings={actions.openSettings}
             />
           )}

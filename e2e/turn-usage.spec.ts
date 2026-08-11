@@ -15,11 +15,11 @@
  * 异常顺着 emit 窜回 pi 的事件循环，把后面的文本增量全掐掉——
  * 症状是「回复再也不出现」，与用量看起来毫无关系。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 test("**这一句花了多少 token 显示在回合下面**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   const box = page.getByPlaceholder(/回车发送/)
   await expect(box).toBeVisible()
   await box.fill("请说一句话")
@@ -34,7 +34,7 @@ test("**这一句花了多少 token 显示在回合下面**", async ({ dawn }) =
 
 test("**回复到了，思考记号不能还在转**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   const box = page.getByPlaceholder(/回车发送/)
   await expect(box).toBeVisible()
   await box.fill("请说一句话")

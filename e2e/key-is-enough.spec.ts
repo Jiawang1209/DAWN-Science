@@ -8,7 +8,7 @@
  * 默认配置里；kimi 没有，所以填完什么都没多。同一件事被做成了两种，
  * 差别还落在一个用户根本不该知道的概念（agent）上。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 const 陌生 = "kimi-coding"
 
@@ -24,7 +24,7 @@ test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) =
   await expect(page.locator(".svc").filter({ hasText: 陌生 })).toHaveCount(1)
 
   await page.getByRole("button", { name: "返回" }).click()
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 
   await page.locator(".agent-pill").click()

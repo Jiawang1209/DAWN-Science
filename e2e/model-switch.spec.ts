@@ -7,7 +7,7 @@
  * 假后端从 2026-08-09 起默认提供两个模型（`mockModelsJson`）：
  * 一个模型的假后端能让选择器渲染出来，却证明不了切换真的发生了。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 import type { Page } from "@playwright/test"
 
 /**
@@ -37,7 +37,7 @@ const B = "deepseek-v4-deep"
 
 async function start(page: Page) {
   await expect(page.locator(".app-shell")).toBeVisible()
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 

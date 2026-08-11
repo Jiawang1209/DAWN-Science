@@ -11,7 +11,7 @@
  * 那正是把「出声」变成「藏着」。所以这里验的不是「能折叠」，
  * 而是**该折的折了、不该折的没折**。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 test.describe("成功的工具调用", () => {
   test.use({
@@ -22,7 +22,7 @@ test.describe("成功的工具调用", () => {
 
   test("**默认折叠，且折叠时看得见它做了什么**", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
@@ -41,7 +41,7 @@ test.describe("成功的工具调用", () => {
 
   test("点一下就展开，再点收起 —— **整行都可点**，不是那个小三角", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })

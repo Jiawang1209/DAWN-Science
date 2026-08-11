@@ -7,11 +7,11 @@
  * 整条链路都是真的——Electron、IPC、协议、pi 的 agent loop、SQLite、渲染，
  * **只有模型回复是确定的**（由本地假推理服务器给出）。
  */
-import { test, expect, CANNED_REPLY, readRuns } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, readRuns, 开一段临时会话 } from "./fixtures.js"
 
 /** 开一个会话，并等到能打字 */
 async function startSession(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 

@@ -23,6 +23,17 @@ const ROOT = resolve(import.meta.dirname, "..")
 export { CANNED_REPLY }
 
 /**
+ * 开一段**临时会话**：回首页 → 在首页上挑一个开始（2026-08-11 起是两步）。
+ *
+ * 作者：*「如果我点击新会话的时候，其实应该出现的是 App 的首页……
+ * 我应该是直接可以重新选择 LLM。」* 所以侧栏顶上那颗**不再直接建**。
+ */
+export async function 开一段临时会话(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "新建会话" }).click()
+  await page.getByRole("button", { name: /开始/ }).click()
+}
+
+/**
  * **在当前项目里**开一段会话（2026-08-11）。
  *
  * 侧栏顶上那颗「新建会话」建的是**临时会话**——它有自己的独立目录，

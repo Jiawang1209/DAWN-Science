@@ -12,7 +12,7 @@
  *   3. **路径是项目文件夹**——这条只有真跑一次才知道，
  *      因为 cwd 是 pty 运行时从会话的工作区取的，界面上看不出来
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 
@@ -20,7 +20,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   const { page } = dawn
 
   // 先开一段对话，待会儿要验它没被顶掉
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
   await page.getByRole("button", { name: "终端", exact: true }).click()

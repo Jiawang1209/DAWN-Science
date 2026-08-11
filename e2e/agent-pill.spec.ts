@@ -4,10 +4,10 @@
  * 单元测试能证明「pill 在 `.composer` 的 DOM 里」。它证明不了**它真的在右下角**——
  * 那是几何，不是结构。这里量坐标。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 async function startSession(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 

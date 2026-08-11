@@ -13,7 +13,7 @@
  *
  * 同一条路顺带解决selfhost的 vLLM / Ollama / 任何 OpenAI 兼容端点。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 /** `{{MOCK_URL}}` 由夹具换成假服务器地址——它在夹具起来之前不存在 */
 const PROVIDERS = `
@@ -57,7 +57,7 @@ test.describe("自己填地址的 provider", () => {
     await 行.getByRole("button", { name: "保存" }).click()
     await page.getByRole("button", { name: "返回" }).click()
 
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
     await page.getByPlaceholder(/回车发送/).fill("你好")
@@ -75,7 +75,7 @@ test.describe("自己填地址的 provider", () => {
 
   test("模型选择器里是我们声明的那个", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
     await expect(page.locator(".composer")).toContainText("local-7b")
   })

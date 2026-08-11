@@ -39,8 +39,14 @@ import { test, expect } from "./fixtures.js"
 async function startShell(page: import("@playwright/test").Page): Promise<void> {
   await expect(page.locator(".app-shell")).toBeVisible()
   await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  /**
+   * **2026-08-11：命令面板里不再有「新建会话：shell」。**
+   *
+   * `shell` 那种 `kind: pty` 的 agent 已经从「用哪个 LLM 开一段对话」的清单里
+   * 拿掉了——它既不是 LLM，开出来的也不是对话。终端有自己的命令：**打开终端**。
+   */
   await page.keyboard.press("Meta+k")
-  await page.getByRole("option", { name: "新建会话：shell" }).click()
+  await page.getByRole("option", { name: /打开终端/ }).click()
 }
 
 /**

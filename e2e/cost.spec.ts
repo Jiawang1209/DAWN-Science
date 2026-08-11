@@ -55,8 +55,14 @@ test.describe("claude 会话：金额是真数", () => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
-    await page.keyboard.press("Meta+k")
-    await page.getByRole("option", { name: "新建会话：claude" }).click()
+    /**
+     * **在项目里开，不走命令面板**（2026-08-11）。
+     *
+     * 命令面板里的「新建会话：X」现在建的是**临时会话**（与侧栏顶上那颗同义），
+     * 而这条用例要看的成本栏是**按项目**算的——账本挂在临时项目上，
+     * 当前项目那一栏自然是空的。
+     */
+    await 在项目里开会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
 
     await page.getByPlaceholder(/回车发送/).fill("你好")

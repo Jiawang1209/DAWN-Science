@@ -34,6 +34,46 @@ function clockOf(iso: string): string {
 }
 
 /**
+ * 侧栏里那两个图标（2026-08-11）。
+ *
+ * 作者：*「对话的话，前面有一个交流的图标；项目的话，前面有一个文件夹的图标。
+ * 模仿一下 codex 的页面。」*
+ *
+ * **内联 SVG，不引入任何图片资源**（与欢迎屏那个「D」同一条：规范 §3.4）。
+ * `currentColor` 让它跟着行的文字色走——选中、悬停、暗色主题都不用另外配一份。
+ * 16×16、`stroke-width: 1.5`：与 12px 的行文字放在一起不抢戏。
+ */
+function 会话图标() {
+  return (
+    <svg className="row-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      {/* 一个对话气泡：交流 */}
+      <path
+        d="M13.5 8.2c0 2.5-2.5 4.5-5.5 4.5-.7 0-1.4-.1-2-.3L2.5 13.5l1-2.4C2.6 10.3 2 9.3 2 8.2 2 5.7 4.5 3.7 7.5 3.7s6 2 6 4.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function 项目图标() {
+  return (
+    <svg className="row-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      {/* 一个文件夹 */}
+      <path
+        d="M2 4.5c0-.6.4-1 1-1h3.2c.3 0 .6.1.8.4l.8 1.1H13c.6 0 1 .4 1 1v5.5c0 .6-.4 1-1 1H3c-.6 0-1-.4-1-1v-7Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/**
  * 侧栏里的一行会话（2026-08-10）。
  *
  * 作者：*「要模仿一下 codex app 或者 claude app，就是可以置顶，
@@ -150,6 +190,8 @@ function SessionRow({
       <Row active={active} onClick={onPick}>
         <span className="sess">
           <span className="name">
+            {/* 图标在最前面：**一眼分出「这是对话」还是「这是项目」**（仿 Codex） */}
+            <会话图标 />
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
               <span className="pin-mark" aria-label="已置顶">
@@ -241,6 +283,7 @@ export function SessionSidebar({
   onReorderSessions,
   onOpenSettings,
   onDeleteProject,
+  settingsActive,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -273,6 +316,8 @@ export function SessionSidebar({
   onShowFiles: () => void
   /** 删掉某个项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
   onDeleteProject?: ((projectId: string) => void) | undefined
+  /** 正开着设置屏。左下角那一行据此高亮 */
+  settingsActive?: boolean | undefined
   /**
    * **终端不在侧栏**（2026-08-11 挪走）。
    *
@@ -486,6 +531,19 @@ export function SessionSidebar({
           <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
             文件
           </Row>
+          {/**
+            * **设置在左下角**（2026-08-11，作者提）。
+            * 它与「项目概览 / 文件」是同一类——都是「去另一屏」，所以排在一起。
+            */}
+          {onOpenSettings ? (
+            <Row
+              active={settingsActive ?? false}
+              className="panel-entry"
+              onClick={onOpenSettings}
+            >
+              设置
+            </Row>
+          ) : null}
         </>
       ) : null}
     </aside>
@@ -530,6 +588,7 @@ function ProjectRow({
               <span className="twisty" aria-hidden="true">
                 {current ? "▾" : "▸"}
               </span>
+              <项目图标 />
               {project.name}
             </span>
             {/* **会话数就是那层包含关系**：没有它，项目只是一个名字 */}
@@ -743,9 +802,15 @@ export function AgentPill({
               </ul>
             </div>
           ) : null}
-          {/* **这句是整个组件的要害。** agentId 建会话时绑死，换 agent 只能新建 */}
+          {/**
+            * **这句是整个组件的要害。** 会话一旦建好就绑死了它的 agent，
+            * 换只能新建。
+            *
+            * 措辞 2026-08-11 从「用哪个 agent」改成「用哪个 LLM」：
+            * **DAWN 自己才是那个 agent**，人挑的是让哪个模型来跑它。
+            */}
           <div className="new-group">
-          <p className="agent-menu-head">新建会话，用：</p>
+          <p className="agent-menu-head">新建会话，用哪个 LLM：</p>
           <ul>
             {agents.map((a) => (
               <li key={a}>
@@ -1618,12 +1683,22 @@ export function EmptyConversation({
             <Button variant="primary" onClick={() => onStart(first)}>
               ＋ 用 {agentLabel ? agentLabel(first) : first} 开始
             </Button>
+            {/**
+              * **不叫「agent」，叫「LLM」**（2026-08-11）。
+              *
+              * 作者：*「我做的这个就属于是一个 agent，因此首页不应该是
+              * 更换一个 agent，而应该是更换一个 LLM。」*
+              *
+              * 他是对的：**DAWN 自己就是那个 agent**——它有工具、有账本、
+              * 有授权门。人在这一屏挑的是**让哪个模型来跑它**。
+              * 「换一个 agent」把我们内部的那个词又漏了出来一次。
+              */}
             {agents.length > 1 ? (
               <AgentPill
                 agents={agents}
                 {...(agentLabel ? { label: agentLabel } : {})}
                 onPick={onStart}
-                triggerLabel="换一个 agent"
+                triggerLabel="换一个 LLM"
               />
             ) : null}
             {/**

@@ -8,14 +8,14 @@
  * 「界面知不知道要重取一次」。**最后那一环最容易漏**：标题在后端定，
  * 界面不重取的话会一直显示「新会话」，而所有单元测试照样全绿。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 const 侧栏会话 = ".session-list .sess .name"
 
 test("**两个会话按各自的第一句话区分开**，而不是两行一样的 agent 名", async ({ dawn }) => {
   const { page } = dawn
 
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   const box = page.getByPlaceholder(/回车发送/)
   await expect(box).toBeVisible()
   // 还没说话——**显示「新会话」，不是一行空白**
@@ -26,7 +26,7 @@ test("**两个会话按各自的第一句话区分开**，而不是两行一样�
   await expect(page.locator(侧栏会话).first()).toHaveText("看看 sales.csv 的分布")
 
   // 第二个会话：同一个 agent，第一句话不同
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   /**
    * **先等新会话真的到位再打字。**
    *
@@ -54,7 +54,7 @@ test("**两个会话按各自的第一句话区分开**，而不是两行一样�
 test("**第二句话不改名字** —— 侧栏上的名字自己变，人会以为点错了会话", async ({ dawn }) => {
   const { page } = dawn
 
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   const box = page.getByPlaceholder(/回车发送/)
   await box.fill("第一句定名字")
   await box.press("Enter")
@@ -67,7 +67,7 @@ test("**第二句话不改名字** —— 侧栏上的名字自己变，人会�
 
 test("会话行还带来路 —— 是哪家服务、什么时候开的", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   /**
    * 2026-08-11：原来这里是 `ds-chat`——`providers.yaml` 里的一个键。
    * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*

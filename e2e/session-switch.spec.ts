@@ -7,12 +7,12 @@
  * 这条 spec 验的正是 Task 3.8 那个缺陷的真实形态：草稿曾经会跟着切过去。
  * 单元测试能抓到它，但**只有这里能证明真实点击流下也是对的**。
  */
-import { test, expect, CANNED_REPLY } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js"
 
 type Page = import("@playwright/test").Page
 
 async function newSession(page: Page) {
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 }
 

@@ -13,14 +13,14 @@
  * 它把失败写进 `message_end` 的 `stopReason: "error"` / `errorMessage` 就走了。
  * 我们从来没读过那两个字段。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 test.describe("key 不对的时候", () => {
   test.use({ dawnOptions: { failStatus: 401 } })
 
   test("**说出来，并且把对方的原话带上**", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
     await page.getByPlaceholder(/回车发送/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
@@ -34,7 +34,7 @@ test.describe("key 不对的时候", () => {
 
   test("**它不混进回复里** —— 那不是模型说的话", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
     await page.getByPlaceholder(/回车发送/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()

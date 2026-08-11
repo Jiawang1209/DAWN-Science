@@ -726,6 +726,19 @@ pre {
 /* 展开标记：**它同时是「这里面还有东西」的唯一提示** */
 .twisty { display: inline-block; width: 1em; color: var(--dawn-text-3); }
 /**
+ * 行首那个图标（2026-08-11，仿 Codex）：**跟着文字色走**——
+ * 选中、悬停、暗色主题都不用另外配一份。
+ */
+.row-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin-right: 6px;
+  vertical-align: -2px;
+  color: var(--dawn-text-3);
+}
+.row .name { display: inline-flex; align-items: center; min-width: 0; }
+/**
  * **删除键一律常驻，不做「悬停才出现」。**
  *
  * 会话行那一套（当前行常驻、其余悬停）是因为会话可能有几十条。

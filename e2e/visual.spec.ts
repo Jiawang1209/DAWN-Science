@@ -46,7 +46,7 @@
  *    那不是回归，是没有那个平台的基线。将来上 CI 必须在 macOS 上跑，或者补一套。
  * 2. 基线**只覆盖这四个屏 × 两个主题**。别的屏改坏了它不会说话。
  */
-import { test, expect, CANNED_REPLY } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js"
 import type { Page } from "@playwright/test"
 
 /**
@@ -65,7 +65,7 @@ async function setTheme(page: Page, label: "亮色" | "暗色") {
 }
 
 async function startSession(page: Page) {
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
   // **等到状态落定**。starting → alive 是一次真实的状态迁移，
   // 在它中间截图会得到一张随时机变化的图

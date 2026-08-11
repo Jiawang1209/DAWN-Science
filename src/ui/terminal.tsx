@@ -9,9 +9,32 @@
  * **不解析、不过滤字节**——那是 xterm 的职责，中间再加一层只会引入第二套解释。
  */
 import { useEffect, useRef } from "react"
+import { useStore } from "@nanostores/react"
+import { $theme, resolveTheme } from "./state/theme.js"
 // xterm 的样式必须随组件一起进包。**静态 import 而非动态**——
 // 样式晚于实例到达会让首帧的行高算错，进而 fit() 出错误的列数
 import "@xterm/xterm/css/xterm.css"
+
+/**
+ * 从 CSS 令牌里读出终端要用的几个颜色。
+ *
+ * **`getComputedStyle` 读的是当前生效的那一份**——明暗主题、以后换配色，
+ * 都自动跟上，因为它们改的就是这些令牌。
+ *
+ * 读不到时不编一个：xterm 会用它自己的默认，那至少不会假装是我们的配色。
+ */
+function 读主题配色(el: HTMLElement): Record<string, string> {
+  const cs = getComputedStyle(el)
+  const 取 = (name: string) => cs.getPropertyValue(name).trim()
+  const bg = 取("--dawn-surface-sidebar")
+  const fg = 取("--dawn-text-1")
+  const 选中 = 取("--dawn-accent")
+  return {
+    ...(bg ? { background: bg } : {}),
+    ...(fg ? { foreground: fg, cursor: fg } : {}),
+    ...(选中 ? { selectionBackground: 选中 + "40" } : {}),
+  }
+}
 
 export function TerminalPane({
   chunks,
@@ -27,6 +50,13 @@ export function TerminalPane({
   /** 已经写进 xterm 的片段数。**不是字符数**——片段是原子的 */
   const written = useRef(0)
   const inputRef = useRef(onInput)
+  /**
+   * **换主题时终端要跟着换**（2026-08-11）。
+   *
+   * 只在创建时读一次的话，开着终端切明暗会留下一块**上一套配色的砖**——
+   * 而它就贴在对话下面，两者挨着，差一点都看得出来。
+   */
+  const theme = useStore($theme)
   inputRef.current = onInput
 
   useEffect(() => {
@@ -62,6 +92,18 @@ export function TerminalPane({
         // Spike C 的结论：scrollback 是内存的主控参数，不是显示偏好
         scrollback: 5000,
         fontSize: 12,
+        /**
+         * **配色跟着 App 走**（2026-08-11，作者：*「终端的背景颜色，
+         * 随着 App 的配色变化」*）。
+         *
+         * xterm 自带的是一块死黑，暗色主题下还好，**亮色主题下就是
+         * 一块与四周毫无关系的黑砖**——而它现在贴在对话下面，两者挨着。
+         *
+         * 值从**令牌里读**，不在这里再写一份十六进制：
+         * 令牌是配色的唯一事实来源（作者打算换配色，见 `tokens.css`），
+         * 手抄一份的那天起，换配色就会漏掉终端。
+         */
+        theme: 读主题配色(el),
       })
       const addon = new FitAddon()
       instance.loadAddon(addon)
@@ -125,6 +167,14 @@ export function TerminalPane({
 
   // 只写新增的部分。整份重写会让光标位置与滚动全部错乱
   useEffect(flush, [chunks])
+
+  // 主题变了：把新的几个颜色交给 xterm（它自己会重画）
+  useEffect(() => {
+    const el = host.current
+    if (!el || !term.current) return
+    term.current.options.theme = 读主题配色(el)
+    // `resolveTheme` 把「跟随系统」解析成明或暗——依赖它才会在系统切换时也重跑
+  }, [theme, resolveTheme(theme)])
 
   /**
    * 从隐藏变回可见时重新 `fit()`。

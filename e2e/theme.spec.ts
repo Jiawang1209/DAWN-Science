@@ -11,7 +11,7 @@
  * 然后 `.btn-primary` 仍然在用 `--dawn-accent`——**令牌建好了，调用点没接**。
  * 那正是本项目栽过七次的形态，所以它现在有一条常驻断言。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 import type { Page } from "@playwright/test"
 
 /**
@@ -126,7 +126,7 @@ for (const theme of ["亮色", "暗色"]) {
  */
 test("主输入框的聚焦环用的是主题强调色，不是系统色", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 开一段临时会话(page)
   await page.locator(".composer textarea").click()
 
   /**

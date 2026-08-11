@@ -16,7 +16,7 @@
  *   2. 换完**还是同一段对话**（会话数不变、之前说过的话还在）
  *   3. **下一次请求真的打到新模型**——界面说换了不算
  */
-import { test, expect, CANNED_REPLY } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js"
 
 const 本来的 = "deepseek-v4-flash"
 const 另一家的 = "other-9b"
@@ -41,7 +41,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   await page.getByRole("button", { name: "返回" }).click()
 
   // 开一段 DeepSeek 的对话，先说一句
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   await page.getByPlaceholder(/回车发送/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
@@ -94,7 +94,7 @@ test("**厂家菜单里列得出别家**，模型菜单只管这一家", async (
   await page.getByRole("button", { name: "添加" }).click()
   await page.getByRole("button", { name: "返回" }).click()
 
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   // 厂家那颗：两家都在
   await page.locator(".composer .agent-pill").getByRole("button").click()

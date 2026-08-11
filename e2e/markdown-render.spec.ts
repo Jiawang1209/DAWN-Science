@@ -12,10 +12,10 @@
  * 所以这份用例盯的第一件事是**换行还在不在**：那是一眼看不出、
  * 却让代码块彻底没法读的东西。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 async function 富回复(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   const b = page.getByPlaceholder(/回车发送/)
   await expect(b).toBeVisible()
   await b.fill("给我一段 markdown")

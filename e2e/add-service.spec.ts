@@ -15,7 +15,7 @@
  *
  * 顺带证明：**自建的 vLLM / Ollama / 任何 OpenAI 兼容端点**走的是同一条路。
  */
-import { test, expect, CANNED_REPLY } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -57,7 +57,7 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
    * 我们从来没点过任何「建 agent」，填完表它自己就在了。
    */
   await page.getByRole("button", { name: "返回" }).click()
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
   await page.locator(".agent-pill").click()

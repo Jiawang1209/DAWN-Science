@@ -34,7 +34,7 @@ describe("厂家 pill", () => {
     开()
     const t = screen.getByRole("menu").textContent ?? ""
     expect(t).toMatch(/就地换服务（对话不断）/)
-    expect(t).toMatch(/新建会话，用：/)
+    expect(t).toMatch(/新建会话，用哪个 LLM/)
   })
 
   it("点一家 → **就地换**，不是新建", () => {

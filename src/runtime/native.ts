@@ -30,11 +30,13 @@ import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
 import { ProvenanceProbe } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
+import { 挑工具后端 } from "../remote/tools.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
   AgentRuntime,
+  RemoteLike,
   ContextUsage,
   EventSink,
   SessionHandle,
@@ -254,7 +256,7 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /** 把 pi 的工具定义套上授权门。不给 gate 时返回 undefined，走 pi 的内置工具。 */
-  private gatedTools(cwd: string, sessionId: SessionId): unknown[] | undefined {
+  private gatedTools(cwd: string, sessionId: SessionId, remote?: RemoteLike): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
     // 两样都不要就别包——包装本身也有成本
@@ -299,12 +301,27 @@ export class NativeRuntime implements AgentRuntime {
         },
       }
     }
-    return [
-      wrap(createReadToolDefinition(cwd) as unknown as Record<string, unknown>),
-      wrap(createBashToolDefinition(cwd) as unknown as Record<string, unknown>),
-      wrap(createEditToolDefinition(cwd) as unknown as Record<string, unknown>),
-      wrap(createWriteToolDefinition(cwd) as unknown as Record<string, unknown>),
-    ]
+    const 原始 = [
+      createReadToolDefinition(cwd),
+      createBashToolDefinition(cwd),
+      createEditToolDefinition(cwd),
+      createWriteToolDefinition(cwd),
+    ] as unknown as (Record<string, unknown> & {
+      name: string
+      execute: (...a: unknown[]) => Promise<unknown>
+    })[]
+
+    /**
+     * **远端会话换掉执行那一句，其余一字不动**（②-B · R2）。
+     *
+     * 名字、说明、参数 schema 全是 pi 的——模型因此**不知道自己的手
+     * 伸到了另一台机器上**，也就不需要为远端另学一套（学到的多半还是错的）。
+     *
+     * 授权门与溯源探针仍然套在最外面：**远端更需要那道门**，
+     * 本地跑错一条命令代价是你自己的工作区，在共享集群上跑错是别人的。
+     */
+    const 定义 = 挑工具后端(原始, cwd, remote as never)
+    return 定义.map((d) => wrap(d))
   }
 
   /**
@@ -324,7 +341,7 @@ export class NativeRuntime implements AgentRuntime {
    * **缺省读作「不知道」，这正是此刻的实情。**
    */
   private toolsFor(spec: SessionSpec, native: { provider: string; model: string }): unknown[] | undefined {
-    const base = this.gatedTools(spec.workspace, spec.sessionId)
+    const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
     const entry = this.opts.subagentChildEntry
     if (!entry) return base
 

@@ -71,6 +71,14 @@ export interface ExecOptions {
   cwd?: string
   /** 上层给的取消信号 */
   signal?: AbortSignal
+  /**
+   * 秒。**不给就没有超时**（作者定的）。
+   *
+   * 远端跑一条 `bwa index` 可能要二十分钟，**它和「卡死了」在协议上长得一模一样**。
+   * 与其猜一个上限把正常的长任务砍掉，不如把「已经跑了多久」显示出来、
+   * 中止交给人按。
+   */
+  timeoutSec?: number
 }
 
 /**
@@ -219,8 +227,54 @@ export class RemoteExecutor {
       .map(([k, v]) => `export ${k}=${单引号(v)}`)
       .join("; ")
     const cd = options.cwd ? `cd ${单引号(options.cwd)} || exit 127; ` : ""
-    const 整条 = `bash -c ${单引号(`${前缀 ? `${前缀}; ` : ""}${cd}${command}`)}`
-    return this.原始执行(整条, options.signal)
+
+    /**
+     * **把 PID 写到一个临时文件里，中止时才真的杀得掉。**
+     *
+     * SSH 的 channel 关掉**不保证**远端进程会死——它可能继续跑到底，
+     * 而我们已经不看了：那正是「中止了但机器还在烧 CPU」。
+     * OpenSSH 又不实现 `signal` 请求，所以只能自己记 PID。
+     *
+     * **不写进 stdout**：这个模块的全部要害就是输出必须干净
+     * （见文件头）。所以它落在 `/tmp` 的一个文件里，只有中止时才去读。
+     */
+    const pid文件 = `/tmp/dawn-run-${Math.random().toString(36).slice(2, 10)}.pid`
+    const 脚本 = `echo $$ > ${pid文件}; ${前缀 ? `${前缀}; ` : ""}${cd}${command}`
+    const 整条 = `bash -c ${单引号(脚本)}`
+
+    const 超时 =
+      options.timeoutSec === undefined
+        ? undefined
+        : setTimeout(() => void this.杀掉(pid文件), options.timeoutSec * 1000)
+    const 中止 = () => void this.杀掉(pid文件)
+    options.signal?.addEventListener("abort", 中止, { once: true })
+    try {
+      return await this.原始执行(整条, options.signal)
+    } finally {
+      if (超时) clearTimeout(超时)
+      options.signal?.removeEventListener("abort", 中止)
+      // 清掉那个 pid 文件。**失败不出声**：它只是块草稿纸
+      void this.原始执行(`rm -f ${pid文件}`).catch(() => {})
+    }
+  }
+
+  /**
+   * 按 PID 文件杀掉远端那条命令。
+   *
+   * **先 TERM 后 KILL**：给它一个收尾的机会（写完的文件不该半截）。
+   * `kill -- -PID` 打的是**进程组**——一条 `bwa | sort` 是好几个进程，
+   * 只杀那个 shell 会留下一堆孤儿继续烧 CPU。
+   * 进程组不存在时退回杀单个 PID。
+   */
+  private async 杀掉(pid文件: string): Promise<void> {
+    if (this.state.kind !== "ready") return
+    const 脚本 =
+      `p=$(cat ${pid文件} 2>/dev/null) || exit 0; [ -n "$p" ] || exit 0; ` +
+      `kill -TERM -"$p" 2>/dev/null || kill -TERM "$p" 2>/dev/null; ` +
+      `sleep 2; kill -KILL -"$p" 2>/dev/null || kill -KILL "$p" 2>/dev/null; true`
+    await this.原始执行(`bash -c ${单引号(脚本)}`).catch(() => {
+      // 杀不掉也不抛：**中止本身不该因为清理失败而看起来像失败了**
+    })
   }
 
   private 说明(): string {

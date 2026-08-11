@@ -21,6 +21,21 @@ export interface McpServerSpec {
   env: Record<string, string>
 }
 
+/**
+ * 远端执行器在这一层需要的那点能力。
+ *
+ * **刻意只收窄成接口**：`runtime/types.ts` 是契约文件，
+ * 让它 import 一个具体实现（连带 ssh2 的类型）会把传输层拖进契约里。
+ */
+export interface RemoteLike {
+  exec(
+    command: string,
+    options?: { cwd?: string; signal?: AbortSignal; timeoutSec?: number },
+  ): Promise<{ code: number | undefined; signal?: string | undefined; stdout: string; stderr: string }>
+  readFile(path: string): Promise<Buffer>
+  writeFile(path: string, data: string | Buffer): Promise<void>
+}
+
 export interface SessionSpec {
   sessionId: SessionId
   workspace: string
@@ -34,6 +49,17 @@ export interface SessionSpec {
    * 现在只说「哪个 provider 的哪个模型」，连接与凭证解析都交给 pi。
    */
   native?: { provider: string; model: string }
+  /**
+   * **这个会话的活干在哪台机器上**（②-B · R2）。
+   *
+   * 作者：*「使用 agent 在远程服务器里面帮我编程，处理数据，写代码，分析数据。」*
+   *
+   * 给了它，agent 的四个工具（读/写/改/跑命令）就打到远端；
+   * **`workspace` 那时指的是那台机器上的路径**，不是本地的。
+   *
+   * **缺省 = 本地**，与此前完全一致。
+   */
+  remote?: RemoteLike
   /**
    * 仅 cli runtime 使用（①-C）。
    *

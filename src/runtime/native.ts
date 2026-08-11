@@ -1097,7 +1097,49 @@ export class NativeRuntime implements AgentRuntime {
         "——模型可能仍会报上一个名字",
       )
     }
-    this.emit({ kind: "model", sessionId, provider, model: modelId })
+    /**
+     * **先按我们请求的记下**（2026-08-12）。
+     *
+     * 不记的话，下一条回执必然与「不知道」不一致，于是同一件事会被说两遍——
+     * 作者截图里那两行一模一样的「已换到 kimi-k3 · kimi-k3」就是它。
+     *
+     * 记下之后，回执只在**真的对不上**时才出声。而它真出过声：
+     * 作者请求 `kimi-k3`，服务端实际给的是 `kimi-k2.7-code-highspeed`——
+     * **那是那个端点自己在路由**，不是我们的问题，但以前它是隐形的。
+     */
+    s.实际模型 = `${provider}/${modelId}`
+    /**
+     * **写完读回来，以读到的为准**（2026-08-12，作者提）。
+     *
+     * 作者：*「每一次点击切换模型的时候，你就真实地去识别一下当前模型是什么，
+     * 不就好了？」* 他是对的，而我先前偏偏没做——一直在**报告自己的意图**
+     * （「我请求换到 X」），而不是**报告事实**（「现在真的是 X」）。
+     * 这两者一旦不一致，界面就会很自信地说错话，
+     * 而人只能靠反复问模型来发现——他确实问了三次。
+     *
+     * `session.model` 是 pi 自己认的那一个。读不到时退回我们请求的那个，
+     * **并且照实说不出「已核对」**：那时它仍然只是一个意图。
+     */
+    const 读回 = s.session.model
+    const 真provider = 读回?.provider ?? provider
+    const 真model = 读回?.id ?? modelId
+    s.实际模型 = `${真provider}/${真model}`
+
+    if (读回 && (真provider !== provider || 真model !== modelId)) {
+      /**
+       * **请求的与实到的不一样，要说。**
+       *
+       * 作者那台机器上真的出现过：请求 `kimi-k3`，回执里是
+       * `kimi-k2.7-code-highspeed`——**那是端点自己在路由**，不是我们的错，
+       * 但它以前是隐形的，而隐形的替换正是「我以为我在用 A」的来源。
+       */
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: `请求的是 ${provider} · ${modelId}，实际生效的是 ${真provider} · ${真model}`,
+      })
+    }
+    this.emit({ kind: "model", sessionId, provider: 真provider, model: 真model })
   }
 
   async abort(sessionId: SessionId): Promise<void> {

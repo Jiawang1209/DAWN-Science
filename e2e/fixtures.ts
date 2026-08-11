@@ -302,6 +302,19 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
      * `e2e/kernel-session.spec.ts`）。实测单独连启 5 次，每次稳定 1.0 秒；
      * **30 秒仍有 30 倍余量**。
      */
+    /**
+     * **主进程说的话要能被看见**（2026-08-11）。
+     *
+     * 此前只转发了渲染进程的 console。于是主进程里的
+     * 「[启动失败] …」「[workbench] … 失败」这类消息**一个字都到不了终端**——
+     * 而 `firstWindow` 挂起那笔账查了十几次，每次卡住的正是这里：
+     * 一个 30 秒的超时，没有任何线索说它到底在等什么。
+     */
+    app.process().stderr?.on("data", (b: Buffer) => {
+      const 文本 = b.toString().trimEnd()
+      if (文本) console.error("[主进程]", 文本)
+    })
+
     const page = await app.firstWindow()
     // 渲染进程的报错要能被看见——这条通路本身就是 2026-08-08 补的
     page.on("console", (m) => {

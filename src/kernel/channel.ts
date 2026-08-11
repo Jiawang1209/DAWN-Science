@@ -59,6 +59,18 @@ export interface RawChannel {
 export interface KernelProcess {
   pid?: number | undefined
   kill(signal?: NodeJS.Signals): void
+  /**
+   * 退出状态与退出事件（2026-08-11 加）。
+   *
+   * **关通道时要等它真的死掉**——`kill()` 只是送出信号，
+   * 回来时进程往往还活着，而那时去关 socket 会撞上 zeromq 的 native 层
+   * 正在收消息：`Napi::Error` 从 C++ 回调里抛出来，**整个进程 SIGABRT**。
+   *
+   * 可选：**测试里的假进程不必实现它**（那时按「已经退出」处理）。
+   */
+  exitCode?: number | null
+  signalCode?: NodeJS.Signals | null
+  once?(event: "exit", cb: () => void): unknown
 }
 
 export interface KernelChannelOptions {
@@ -104,6 +116,28 @@ const DEFAULT_NATIVE_DRAIN = 300
 
 /** 哪些消息类型算「发出去会让版本号 +1」——即一次真正的执行 */
 const BUMPS_REVISION = new Set(["execute_request"])
+
+/**
+ * 等一个已经收到 SIGKILL 的进程真的退出。
+ *
+ * **等不到也要往下走**：一个僵住的内核不该让关闭动作永远挂着——
+ * 那会把「关一个内核」变成「整个应用关不掉」。等不到时如实返回，
+ * 后面那一步照旧尽力而为。
+ */
+function 等它真的退出(
+  proc: KernelProcess,
+  上限ms: number,
+  sleep: (ms: number) => Promise<void>,
+): Promise<void> {
+  // 假进程（测试用）没有这些字段：**当它已经退出**，不去等一个永远不来的事件
+  if (typeof proc.once !== "function") return Promise.resolve()
+  // 已经死了就不用等（`exitCode` 与 `signalCode` 任一非空即已退出）
+  if ((proc.exitCode ?? null) !== null || (proc.signalCode ?? null) !== null) return Promise.resolve()
+  return Promise.race([
+    new Promise<void>((r) => proc.once!("exit", () => r())),
+    sleep(上限ms),
+  ])
+}
 
 export function createKernelChannel(opts: KernelChannelOptions): KernelChannel & {
   /** 等握手完成。**必须 await 它之后再依赖 `send` 立刻发出** */
@@ -382,14 +416,32 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     /**
      * **顺序在这里，别动。**
      *   ① 先停内核进程——它还活着的话，socket 关掉会让它对着断口写
-     *   ② 再退订并关 socket
-     *   ③ 留时间给 native 层收尾，否则 `Napi::Error` + SIGABRT
+     *   ② **等它真的死掉**，而不是发完信号就往下走（2026-08-11 补）
+     *   ③ 再退订并关 socket
+     *   ④ 留时间给 native 层收尾，否则 `Napi::Error` + SIGABRT
+     *
+     * ## 第 ② 步是补上的，它修的是一个会打死整个进程的竞态
+     *
+     * `kill()` 只是**送出信号**，回来时进程往往还活着。于是紧接着的
+     * `unsubscribe()` 常常撞上「socket 上还有一条正在收的消息」——
+     * zeromq 的 native 层这时抛 `Napi::Error`，而那是**从 C++ 回调里抛的**，
+     * JS 这边一个 try/catch 都接不住：**整个进程 SIGABRT**。
+     *
+     * 症状极难认：e2e 全量跑时随机有一条用例报
+     * `electronApplication.firstWindow: Timeout 30000ms`——
+     * 因为那个进程根本没活到开窗口。今天这条挂起出现了十几次，
+     * 直到把主进程的 stderr 接进测试输出，才看见那一行
+     * `libc++abi: terminating due to uncaught exception of type Napi::Error`。
+     *
+     * **等进程退出之后，socket 上不可能再有新数据**——竞态从根上没了。
+     * 仍然保留后面那个固定 drain：zeromq 自己也要一点时间收摊。
      */
     try {
       opts.process.kill("SIGKILL")
     } catch {
       // 已经退出了就没什么可停的。**这不是静默回退**：进程本来就该死
     }
+    await 等它真的退出(opts.process, drainMs * 10, sleep)
     try {
       sub.unsubscribe()
       opts.channel.complete()

@@ -83,18 +83,33 @@ test("**关键词也能搜到** —— 人记得的往往不是我们起的名�
 test("**面板与按钮到达同一个状态** —— 一个动作一个家", async ({ dawn }) => {
   const { page } = dawn
 
+  /**
+   * **等到那一屏真的画完再取快照。**
+   *
+   * 2026-08-11 修的一个真 flake：设置页里的内核列表是**异步到达**的
+   * （`listKernels` 要扫盘）。只等 radiogroup 出现的话，两次取到的 DOM
+   * 可能一次带着内核列表、一次还没有——于是这条用例随机红，
+   * 而它红的时候看起来像「两条路真的分叉了」，**指向一个根本不存在的缺陷**。
+   */
+  const 画完了 = async () => {
+    await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
+    await expect(page.locator(".set-section").filter({ hasText: "内核" })).toBeVisible()
+    // 内核列表那一块要么有、要么确定没有——等它落定
+    await expect(page.locator(".settings-page")).toContainText("解释器")
+  }
+
   // ① 从命令面板走
   await palette(page)
   await box(page).fill("打开设置")
   await page.keyboard.press("Enter")
-  await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
+  await 画完了()
   const viaPalette = await page.locator(".main").innerHTML()
 
   await page.getByRole("button", { name: "返回" }).click()
 
   // ② 从按钮走
   await page.getByRole("button", { name: "设置", exact: true }).click()
-  await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
+  await 画完了()
   const viaButton = await page.locator(".main").innerHTML()
 
   // 两条路必须落在同一处。不同 = 行为按入口分叉了

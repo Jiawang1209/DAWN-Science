@@ -13,7 +13,8 @@
  *      因为 cwd 是 pty 运行时从会话的工作区取的，界面上看不出来
  */
 import { test, expect, 开一段临时会话 } from "./fixtures.js"
-import { existsSync } from "node:fs"
+import { existsSync, rmSync } from "node:fs"
+import { homedir } from "node:os"
 import { join } from "node:path"
 
 test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
@@ -97,6 +98,43 @@ test("**终端不在侧栏，在对话这一侧**", async ({ dawn }) => {
   const dock = (await page.locator(".dock").boundingBox())!
   const main = (await page.locator(".main").boundingBox())!
   expect(Math.abs(dock.x - main.x)).toBeLessThan(2)
+})
+
+/**
+ * **没有打开项目时，终端开在家目录**（2026-08-11）。
+ *
+ * 作者最早提终端时就说了两种情况：*「这个终端的路径，应该是项目文件夹的路径
+ * （如果选择开启新项目的话），如果没有选择的话，那么终端就在家目录下。」*
+ * 前一半早就成立，后一半今天才补上。
+ *
+ * **路径由服务端定**——所以这条验的是「进程真的在那儿」，
+ * 不是界面上写了什么字。
+ */
+test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
+  const { page } = dawn
+
+  // 把唯一那个项目删掉：此后没有任何项目
+  await page.getByRole("button", { name: /删除项目：/ }).click()
+  await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
+  await expect(page.locator(".proj-item")).toHaveCount(0)
+
+  await page.getByRole("button", { name: "终端" }).click()
+  const dock = page.locator(".dock")
+  await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
+
+  /**
+   * **进程说了算**：让它在自己的 cwd 里留一个文件，再看它落在家目录下。
+   * （读屏幕不行——xterm 画在 canvas 上。）
+   */
+  await dock.locator(".term-host").click()
+  await page.keyboard.type("printf hi > dawn-e2e-home-proof.txt\n")
+  const 证据 = join(homedir(), "dawn-e2e-home-proof.txt")
+  try {
+    await expect.poll(() => existsSync(证据), { timeout: 30_000 }).toBe(true)
+  } finally {
+    // **测试不该在人家目录里留垃圾**
+    rmSync(证据, { force: true })
+  }
 })
 
 test("收起之后 dock 就没了", async ({ dawn }) => {

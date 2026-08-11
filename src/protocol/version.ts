@@ -110,8 +110,13 @@
  *   作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
  *   **临时会话仍然有工作区**（每个一个独立目录）——agent 要有地方读写、
  *   账本要有归属；`temporary` 只是告诉界面它归上面那一列。
+ * 4.3（2026-08-11）：新增 `createTerminalSession`。纯新增。
+ *   **终端的 cwd 由服务端定**：给了项目就用项目的工作区，没给就用家目录
+ *   （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
+ *   不做成 `createSession` 的一个 `cwd` 参数——那等于把「shell 从哪儿开」
+ *   的决定权交给渲染进程，而那条边界决定了 `rm -rf .` 会删掉谁。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.2"
+export const WORKBENCH_PROTOCOL_VERSION = "4.3"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

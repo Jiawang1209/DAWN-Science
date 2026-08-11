@@ -95,8 +95,14 @@ export function TerminalDock({
 
       <div className="dock-content">
         {!canOpen ? (
+          /**
+           * **只有「配置里没有终端 agent」这一种情况开不了**（2026-08-11）。
+           *
+           * 「没有打开项目」不再是拦路的理由——那时终端开在家目录
+           * （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
+           */
           <p className="empty">
-            还没有打开项目文件夹。终端开在项目的工作区里，所以先打开一个。
+            配置里没有 <code>kind: pty</code> 的 agent，开不了终端。
             <Button variant="outline" size="sm" onClick={onOpenProject}>
               打开项目文件夹
             </Button>

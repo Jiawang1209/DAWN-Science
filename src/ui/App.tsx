@@ -752,13 +752,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 是同一个事实的自然结果——也因此没有第二处可能和它不一致。
    */
   const 开一个终端 = useCallback(() => {
+    if (!ptyAgentId) return
+    /**
+     * **只在那个项目确实还在时才提它**（2026-08-11）。
+     *
+     * `$activeProjectId` 可能指着一个**刚被删掉**的项目——删除是异步的，
+     * 而「掀开 dock 就自动开一个终端」那条 effect 跑得比清理快。
+     * 拿一个不存在的 id 去建，后端如实回「项目不存在」，
+     * 而屏幕上的表现是**dock 开着、里面永远空着**：一个失败被读成了「没反应」。
+     */
     const pid = $activeProjectId.get()
-    if (!pid || !ptyAgentId) return
+    const 项目还在 = Boolean(pid && $projects.get().some((x) => x.projectId === pid))
     client
-      .get<{ sessionId: string }>("createSession", { projectId: pid, agentId: ptyAgentId })
+      .get<{ sessionId: string }>("createTerminalSession", {
+        agentId: ptyAgentId,
+        /**
+         * **没有项目就不给**——那时服务端把终端开在家目录
+         * （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
+         * 路径由服务端定：让界面拼路径等于把「shell 从哪儿开」交给渲染进程。
+         */
+        ...(项目还在 ? { projectId: pid! } : {}),
+      })
       .then((r) => {
         setDockSessionId(r.sessionId)
-        void loadSessions(client, pid)
+        if (项目还在) void loadSessions(client, pid!)
+        void loadTempSessions(client)
         void loadProjects(client)
         /**
          * **取写权，否则每一次按键都会被租约挡下。**
@@ -788,7 +806,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setDockSessionId(活着的.sessionId)
       return
     }
-    if (projectId && ptyAgentId) 开一个终端()
+    // **没有项目也能开**——那时终端开在家目录（2026-08-11）
+    if (ptyAgentId) 开一个终端()
   }, [dockOpen, dockSessionId, 终端们, projectId, ptyAgentId, 开一个终端])
 
   /**
@@ -1504,8 +1523,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <TerminalDock
               terminals={终端们}
               currentId={dockSessionId}
-              workspace={currentWorkspace}
-              canOpen={Boolean(projectId && ptyAgentId)}
+              workspace={currentWorkspace ?? "家目录"}
+              canOpen={Boolean(ptyAgentId)}
               onPick={setDockSessionId}
               onNew={开一个终端}
               onClose={(id) => {

@@ -65,13 +65,15 @@ function createWindow(): void {
     },
   })
 
-  // 事件中枢 → 这个窗口。**销毁后要停手**：往已销毁的 webContents 发送会抛，
-  // 而这条路径在关窗时必然发生（PTY 还在吐字节）
-  const off = workbench?.events.onUpdate((event) => {
-    if (win.isDestroyed()) return
-    win.webContents.send(IPC_EVENT_CHANNEL, event)
-  })
-  win.on("closed", () => off?.())
+  /**
+   * 事件中枢 → 这个窗口。
+   *
+   * **2026-08-11：窗口now先于后端创建**（见 `后端建好了` 那段注释），
+   * 所以这里可能还没有 workbench。那时先记下这个窗口，
+   * 等后端建好再接——**漏接的表现是「界面永远收不到 agent 的回复」**，
+   * 而且不报错，正是最难查的那一类。
+   */
+  接上事件流(win)
 
   // **渲染进程的报错必须能被看见。**
   // 此前它们只进 devtools，而 devtools 默认不开——于是「界面死了但主进程一切正常」
@@ -100,7 +102,81 @@ function createWindow(): void {
   else void win.loadFile(join(import.meta.dirname, "../ui/index.html"))
 }
 
+/**
+ * 后端建好了没有（2026-08-11）。
+ *
+ * ## 它修的是一个只在负载高时露头的缺陷
+ *
+ * 此前顺序是：`createWorkbench()`（同步：迁移、加载配置、启动对账）
+ * → 注册 IPC → `createWindow()`。也就是说**后端没建完就一个窗口都没有**。
+ *
+ * 于是有两种情况会变成「什么都不发生」：
+ *   1. 后端建得慢（e2e 全量跑时，旁边有真 Python/R 内核在抢 CPU）——
+ *      Playwright 的 `firstWindow` 等 30 秒等不到窗口
+ *   2. 后端**抛错**——那时会弹一个 `showErrorBox` 模态框，
+ *      而模态框是阻塞的，**窗口永远不会出现，终端上也一个字都没有**
+ *
+ * 今天这条挂起出现了十几次，每次都只能靠「单独重跑就好」糊过去。
+ *
+ * **现在窗口先开。** IPC 的处理器立刻注册，但它先 `await` 这个 promise——
+ * 渲染进程于是只是**等**，而不是撞上「没有这个处理器」然后进重试状态机。
+ */
+let 后端就绪: () => void
+const 后端建好了 = new Promise<void>((r) => {
+  后端就绪 = r
+})
+/** 后端没建起来的原因。**握手时原样交给界面**，而不是让人对着一个空窗口猜 */
+let 启动失败: string | undefined
+/** 协议分发器。**建好后端才有**，所以上面那个 handler 要先等 */
+let ipcDispatch: ReturnType<typeof createIpcHandler> | undefined
+
+/** 还没接上事件流的窗口。**后端建好之后补接** */
+const 待接的窗口 = new Set<BrowserWindow>()
+
+/**
+ * 把事件中枢接到一个窗口上。**后端还没建好就先记下**。
+ *
+ * **销毁后要停手**：往已销毁的 webContents 发送会抛，
+ * 而这条路径在关窗时必然发生（PTY 还在吐字节）。
+ */
+function 接上事件流(win: BrowserWindow): void {
+  if (!workbench) {
+    待接的窗口.add(win)
+    win.on("closed", () => 待接的窗口.delete(win))
+    return
+  }
+  const off = workbench.events.onUpdate((event) => {
+    if (win.isDestroyed()) return
+    win.webContents.send(IPC_EVENT_CHANNEL, event)
+  })
+  win.on("closed", () => off())
+}
+
 app.whenReady().then(() => {
+  /**
+   * **先开窗口，再建后端。**
+   *
+   * 顺序反过来的代价见上面那段注释：后端慢或炸的时候，
+   * 用户（和测试）看到的是**没有窗口**——最难查的一种失败。
+   */
+  createWindow()
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+
+  /**
+   * IPC 立刻注册，但**每一次调用先等后端**。
+   *
+   * 这样渲染进程的第一次握手只是慢一点，而不是失败——
+   * 失败会让它进「重试三次然后放弃」的状态机，
+   * 而那个状态机是为「后端真的挂了」准备的，不是为「后端还在启动」。
+   */
+  ipcMain.handle(IPC_CHANNEL, async (_e, operation: unknown, request: unknown, requestId?: string) => {
+    await 后端建好了
+    if (启动失败) throw new Error(启动失败)
+    return ipcDispatch!(operation, request, requestId ? { requestId } : {})
+  })
+
   try {
     workbench = createWorkbench({
       configPath: CONFIG,
@@ -130,17 +206,26 @@ app.whenReady().then(() => {
       console.error(`[启动对账] 修正了 ${workbench.reconciled} 条残留会话记录`)
     }
   } catch (err) {
-    // 配置错误必须让人看见，而不是开一个空窗口让人猜（规格 7.5 无静默回退）
+    /**
+     * 配置错误必须让人看见（规格 7.5 无静默回退）。**三条路一起走**：
+     *   1. stderr——e2e 与 `npm run app` 的终端上看得见（此前一个字都没有）
+     *   2. 握手时把这句话交给界面——窗口已经开着，它能显示原因
+     *   3. 模态框——给真人看的
+     *
+     * **顺序要紧**：模态框是阻塞的，它必须排在最后，
+     * 而且必须在窗口已经存在之后。此前它排在窗口之前，
+     * 于是一次启动失败的表现是「窗口永远不出现」。
+     */
     const message = err instanceof Error ? err.message : String(err)
+    启动失败 = message
+    console.error(`[启动失败] ${message}（配置文件：${CONFIG}）`)
+    后端就绪()
     dialog.showErrorBox("DAWN 启动失败", `${message}\n\n配置文件：${CONFIG}`)
     app.exit(1)
     return
   }
 
-  const handle = createIpcHandler(workbench.server)
-  ipcMain.handle(IPC_CHANNEL, (_e, operation: unknown, request: unknown, requestId?: string) =>
-    handle(operation, request, requestId ? { requestId } : {}),
-  )
+  ipcDispatch = createIpcHandler(workbench.server)
 
   // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
   ipcMain.handle(IPC_PICK_DIRECTORY, async (e) => {
@@ -152,17 +237,62 @@ app.whenReady().then(() => {
     return r.canceled ? null : (r.filePaths[0] ?? null)
   })
 
-  createWindow()
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  /**
+   * 后端就位：**先补接事件流，再放行 IPC**。
+   *
+   * 顺序反过来的话，界面可能在事件流接上之前就发出第一句话——
+   * 那一轮的回复会全部丢掉，而屏幕上只是「没有回复」。
+   */
+  for (const win of 待接的窗口) 接上事件流(win)
+  待接的窗口.clear()
+  后端就绪()
 })
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit()
 })
 
-// 关停顺序是正式代码（Phase 0 通则 ②）：先放数据库句柄，再让运行时退出
-app.on("will-quit", () => {
-  workbench?.close()
+/**
+ * 关停顺序是正式代码（Phase 0 通则 ②）。
+ *
+ * **2026-08-11：退出前要等会话真的停掉。**
+ *
+ * 内核会话背后是 zeromq 的 socket，**带着未关闭的 socket 退出，
+ * native 析构会抛 `Napi::Error`——JS 接不住，整个进程 SIGABRT**。
+ * 崩溃的代价不在本次退出（反正要退），而在**下一次启动**：
+ * macOS 的崩溃上报会把它拖慢好几秒，e2e 那边的表现就是
+ * `firstWindow: Timeout 30000ms`——一笔挂了两天、每次都只能「重跑一遍」的账。
+ *
+ * 所以拦下这次退出、异步收摊、再真的退。**收摊有上限**（见 `closeAsync`）：
+ * 一个停不下来的内核不该让「关掉应用」变成「关不掉」。
+ */
+let 正在收摊 = false
+app.on("will-quit", (e) => {
+  if (正在收摊 || !workbench) return
+  /**
+   * **只有内核会话才值得等。**
+   *
+   * 第一版无条件走异步收摊，结果每一次退出都多花上一秒——
+   * e2e 那边 155 条用例一下子从 5 分钟变成 22 分钟，
+   * 还有几条直接报 `Tearing down "dawn" exceeded the test timeout`。
+   * **为一个只在内核会话上出现的问题，让所有退出都变慢，是不划算的。**
+   */
+  if (!workbench.needsGracefulShutdown()) {
+    workbench.close()
+    return
+  }
+  正在收摊 = true
+  e.preventDefault()
+  /**
+   * **硬兜底**：收摊本身也可能卡住（一个不肯死的内核）。
+   * 那时也要退——「关不掉的应用」比「退出时少关一个 socket」严重得多。
+   */
+  const 兜底 = setTimeout(() => app.exit(0), 4000)
+  void workbench
+    .closeAsync()
+    .catch((err: unknown) => console.error("[退出] 收摊时出错：", err))
+    .finally(() => {
+      clearTimeout(兜底)
+      app.exit(0)
+    })
 })

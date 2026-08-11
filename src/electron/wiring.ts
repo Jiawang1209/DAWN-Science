@@ -103,6 +103,10 @@ export interface Workbench {
   /** 启动对账修正的残留会话条数 */
   reconciled: number
   close(): void
+  /** 退出前的收摊：**先停会话再关库**（否则 zeromq 的析构会让进程 SIGABRT） */
+  closeAsync(timeoutMs?: number): Promise<void>
+  /** 退出时要不要等收摊。**只有内核会话需要**——其余的等一秒是白等 */
+  needsGracefulShutdown(): boolean
 }
 
 export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
@@ -310,6 +314,30 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       closed = true
       events.dispose()
       db.close()
+    },
+
+    /**
+     * 退出前的收摊（2026-08-11）。**先停会话，再关库。**
+     *
+     * 顺序不能反：内核会话背后是 zeromq 的 socket，
+     * **带着未关闭的 socket 退出会让 native 析构抛 `Napi::Error` 并 SIGABRT**。
+     * 那个崩溃的代价不在本次退出（反正要退），而在**下一次启动**——
+     * macOS 的崩溃上报会把它拖慢好几秒。
+     *
+     * **有上限**：一个停不下来的内核不该让「关掉应用」变成「关不掉」。
+     */
+    /** 退出时**要不要等**：只有内核会话需要（见 `hasLiveKernelSessions`） */
+    needsGracefulShutdown() {
+      return sessions.hasLiveKernelSessions()
+    },
+
+    async closeAsync(timeoutMs = 1500) {
+      if (closed) return
+      await Promise.race([
+        sessions.stopAll(),
+        new Promise<void>((r) => setTimeout(r, timeoutMs)),
+      ])
+      this.close()
     },
   }
 }

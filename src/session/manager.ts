@@ -338,6 +338,46 @@ export class SessionManager {
     rt.write(sessionId, data)
   }
 
+  /**
+   * 停掉本进程里所有活着的会话（2026-08-11，退出时用）。
+   *
+   * ## 为什么退出时非停不可
+   *
+   * 内核会话背后是 zeromq 的 socket。**进程带着未关闭的 socket 退出，
+   * 它的 native 析构会抛 `Napi::Error`——那是从 C++ 里抛的，
+   * JS 一个 try/catch 都接不住，整个进程 SIGABRT。**
+   *
+   * 症状离原因非常远：e2e 全量跑时随机一条报
+   * `electronApplication.firstWindow: Timeout 30000ms`——
+   * 上一个进程崩了，macOS 的崩溃上报把下一次启动拖过了 30 秒。
+   * 这笔账挂了两天，直到把主进程的 stderr 接进测试输出才看见那一行。
+   *
+   * **每个都单独兜底**：一个停不下来不该拖住其余的（退出路径上尤其如此）。
+   */
+  /**
+   * 本进程里有没有**内核**会话（2026-08-11）。
+   *
+   * 退出时只有它需要「等一等」——**zeromq 的 socket 不关就会让进程 SIGABRT**。
+   * native / cli / pty 没有这个问题，它们不该为此每次退出都多等一会儿：
+   * e2e 那边一次退出多等 1 秒，155 条用例就是两分半。
+   */
+  hasLiveKernelSessions(): boolean {
+    const kernel = this.runtimes.kernel
+    if (!kernel) return false
+    for (const rt of this.bound.values()) if (rt === kernel) return true
+    return false
+  }
+
+  async stopAll(): Promise<void> {
+    await Promise.all(
+      [...this.bound.keys()].map((id) =>
+        this.stop(id).catch(() => {
+          // 退出路上，停不掉的那个交给 OS。**但不能因此不停别的**
+        }),
+      ),
+    )
+  }
+
   /** 本进程内该会话绑定的 runtime。调用方需要区分 runtime 类型时用它。 */
   runtimeOf(sessionId: SessionId): AgentRuntime | undefined {
     return this.bound.get(sessionId)

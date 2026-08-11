@@ -14,12 +14,13 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("43 个操作齐全（… + 临时会话 2）", () => {
+  it("44 个操作齐全（… + 临时会话 2 + 终端 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
         "createSession",
         "createTemporarySession",
+        "createTerminalSession",
         "listTemporarySessions",
         "createAgent",
         "deleteCredential",
@@ -75,7 +76,8 @@ describe("操作注册表", () => {
     for (const name of ["getCapabilities", "listProjects", "getProject", "listSessions", "listRuns", "getRun", "getProvenance", "previewTakeover", "listCredentials", "getProviders", "listTemporarySessions"]) {
       expect(isMutating(name), `${name} 应为只读`).toBe(false)
     }
-    for (const name of ["openProject", "createSession", "createTemporarySession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential"]) {
+    for (const name of ["openProject", "createSession", "createTemporarySession",
+        "createTerminalSession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential"]) {
       expect(isMutating(name), `${name} 应为可写`).toBe(true)
     }
   })

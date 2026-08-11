@@ -10,6 +10,7 @@
  */
 import type { ProviderRegistry } from "../config/schema.js"
 import { addNativeAgent, setProviderConnection } from "../config/writer.js"
+import { homedir } from "node:os"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { deriveSessionTitle } from "../session/title.js"
@@ -404,6 +405,23 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // **每条会话一个自己的目录**，但它们同属那一个临时项目
       const dir = projects.temporaryWorkspace(scratchRoot)
       return 起一个会话(临时项目.projectId, agentId, dir)
+    },
+
+    /**
+     * 开一个终端（2026-08-11）。**cwd 由这里定，不收渲染进程给的路径。**
+     *
+     * 作者：*「终端的路径应该是项目文件夹的路径，如果没有选择的话，
+     * 那么终端就在家目录下。」*
+     *
+     * 没有项目时它仍然要有个归属（会话表要 project_id），
+     * 挂在那个「临时会话」项目下——**但 cwd 是家目录，不是临时目录**：
+     * 你要的是「在自己的地盘上敲两条命令」，不是一个空文件夹。
+     */
+    createTerminalSession: async ({ agentId, projectId }) => {
+      if (projectId) return 起一个会话(projectId, agentId)
+      if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
+      const 归属 = projects.ensureTemporary(scratchRoot)
+      return 起一个会话(归属.projectId, agentId, homedir())
     },
 
     /**

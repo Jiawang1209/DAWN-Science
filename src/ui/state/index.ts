@@ -56,6 +56,12 @@ export {
 } from "./connection.js"
 
 export {
+  $connections,
+  setConnections,
+  setConnectionState,
+  $remoteOpen,
+  toggleRemoteOpen,
+  setRemoteOpen,
   $projects,
   $sessions,
   $tempSessions,
@@ -116,6 +122,7 @@ export { sameList, setList, setValue } from "./identity.js"
 
 export {
   fail,
+  loadConnections,
   loadProjects,
   loadCredentials,
   loadProviders,

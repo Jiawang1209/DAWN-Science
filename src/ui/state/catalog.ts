@@ -13,6 +13,7 @@ import type {
   FileChangeFacts,
   ProjectSummary,
   ProvenanceLink,
+  RemoteConnection,
   RunSummary,
   SessionSummary,
 } from "../../protocol/index.js"
@@ -144,3 +145,37 @@ export function setSessionModel(sessionId: string, model: string, provider?: str
 /** 当前会话的上下文用量（①-B″ · U3）。后端权威，这里只是缓存 */
 export const $contextUsage = atom<ContextUsage | undefined>(undefined)
 export const setContextUsage = (v: ContextUsage | undefined) => $contextUsage.set(v)
+
+/**
+ * 远端连接名单（②-B · R3）。**服务端说了算**——
+ * 界面自己维护一份状态会猜成「以为连着」。
+ */
+export const $connections = atom<readonly RemoteConnection[]>([])
+export const setConnections = (v: readonly RemoteConnection[]) => setList($connections, v)
+
+/**
+ * 只把**一台**的状态换掉（推送来时用）。
+ *
+ * 不整份重取的原因：状态每变一次就重问一次列表，会在断线抖动时
+ * 打出一串请求；而且列表回来之前那一小段时间里，界面显示的是旧状态。
+ */
+export function setConnectionState(connectionId: string, state: RemoteConnection["state"]): void {
+  const 现在 = $connections.get()
+  const i = 现在.findIndex((c) => c.id === connectionId)
+  // **不认识的 id 就丢掉**：凭一条推送凭空造一台服务器，
+  // 那台机器的其余字段全是编的
+  if (i < 0) return
+  const 下一份 = [...现在]
+  下一份[i] = { ...现在[i]!, state }
+  $connections.set(下一份)
+}
+
+/**
+ * 「远端连接」那一区展开着没有。
+ *
+ * **默认收起**：没有远端的人不该为此多占一行。
+ * 不持久化——它是这个窗口此刻的样子，与 dock 同一条理由。
+ */
+export const $remoteOpen = atom(false)
+export const toggleRemoteOpen = () => $remoteOpen.set(!$remoteOpen.get())
+export const setRemoteOpen = (v: boolean) => $remoteOpen.set(v)

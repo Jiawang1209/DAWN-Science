@@ -1,0 +1,355 @@
+/**
+ * 侧栏的「远端连接」区（②-B · R3/R4）。
+ *
+ * 作者：*「左边搞一个固定的『远端连接』，可以增加分组，分组里面是 ssh 的服务器，
+ * 类似 XTerminal 的那种登陆效果。」*
+ *
+ * ## 三条纪律，两条是踩出来的
+ *
+ * 1. **入口一律常驻、带文字。** 本项目已经因为「悬停才出现的 `＋`」和
+ *    「`opacity: 0` 的删除键」被作者报过两次「没有这个功能」，
+ *    而两次代码都是好的。这里不玩悬停。
+ * 2. **状态不能只靠颜色**（DESIGN.md：no meaning conveyed by color alone）——
+ *    点是给一眼扫的，文字是给读的，无障碍树里读到的必须是文字。
+ * 3. **断了要说清为什么。** 一个只写「未连接」的状态会让人以为是自己还没点，
+ *    而实情可能是口令错了、主机不通、或者对端把连接掐了——
+ *    三种要人去改的东西完全不同。
+ */
+import { useState } from "react"
+import type { RemoteConnection, RemoteState } from "../protocol/index.js"
+import { Button, Field, Row } from "./primitives.js"
+
+/**
+ * 状态怎么读。**点 + 文字成对**，不单给一个。
+ *
+ * `disconnected` 的文字里不含原因——原因太长，放在副行上，
+ * 但**它一定要出现在屏幕上**，不是只在 title 里（悬停才有的等于没有）。
+ */
+const 状态文字 = (s: RemoteState): string =>
+  s.kind === "ready" ? "连着" : s.kind === "connecting" ? "连接中" : s.kind === "idle" ? "未连" : "断了"
+
+export interface ConnectionDraft {
+  id?: string | undefined
+  label: string
+  group?: string | undefined
+  host: string
+  port?: number | undefined
+  username: string
+  privateKeyPath?: string | undefined
+  secret?: string | undefined
+}
+
+export function RemoteSection({
+  connections,
+  open,
+  onToggle,
+  onAdd,
+  onEdit,
+  onConnect,
+  onDisconnect,
+  busyId,
+  problem,
+}: {
+  connections: readonly RemoteConnection[]
+  open: boolean
+  onToggle: () => void
+  onAdd: () => void
+  onEdit: (c: RemoteConnection) => void
+  onConnect: (c: RemoteConnection) => void
+  onDisconnect: (c: RemoteConnection) => void
+  /** 正在连的那台。**只有它显示进行态**，不是整块变灰 */
+  busyId?: string | undefined
+  /** 上一次操作失败了。**要在这一区里说**，不是丢进状态栏 */
+  problem?: string | undefined
+}) {
+  /**
+   * 按分组归拢。**没分组的排在前面，且不造一个叫「未分组」的假分组**——
+   * 那个假分组会让「我明明没分组」变成「我在一个叫未分组的组里」。
+   */
+  const 分组: { name: string | undefined; list: RemoteConnection[] }[] = []
+  for (const c of connections) {
+    const g = 分组.find((x) => x.name === c.group)
+    if (g) g.list.push(c)
+    else 分组.push({ name: c.group, list: [c] })
+  }
+
+  return (
+    <section className="remote-section">
+      {/**
+        * **它不是 `.side-action`。**
+        *
+        * 那个类的意思是「新建一个 X」——侧栏顶上两颗就是它。
+        * 这一行是**一个区的开关**，长得像但不是同一种东西。
+        * 借用那个类的代价是：`sidebar-layout.spec.ts` 数的是
+        * 「顶层有哪几块」，混进来一个开关会让那条断言失去意思。
+        */}
+      <Row className="remote-head" aria-expanded={open} onClick={onToggle}>
+        <span className="caret" aria-hidden="true">
+          {open ? "▾" : "▸"}
+        </span>
+        <span className="name">远端连接</span>
+        {/* **收起时也要说有几台**：否则收起等于把它们藏没了 */}
+        {connections.length > 0 ? (
+          <span className="remote-count">{connections.length}</span>
+        ) : null}
+      </Row>
+
+      {open ? (
+        <div className="remote-body">
+          {problem ? (
+            // **失败必须出声**（规格 7.5），且就在动作发生的地方
+            <p className="remote-problem" role="alert">
+              {problem}
+            </p>
+          ) : null}
+
+          {connections.length === 0 ? (
+            <p className="hint pad">还没有服务器</p>
+          ) : (
+            分组.map((g) => (
+              <div className="remote-group" key={g.name ?? "＿无分组"}>
+                {g.name ? <p className="remote-group-name">{g.name}</p> : null}
+                <ul className="remote-list">
+                  {g.list.map((c) => (
+                    <ConnectionRow
+                      key={c.id}
+                      conn={c}
+                      busy={busyId === c.id}
+                      onEdit={() => onEdit(c)}
+                      onConnect={() => onConnect(c)}
+                      onDisconnect={() => onDisconnect(c)}
+                    />
+                  ))}
+                </ul>
+              </div>
+            ))
+          )}
+
+          {/**
+           * **加服务器这颗常驻、带文字。**
+           *
+           * 它曾经在别处是一个没有标签的 `＋`，作者的反馈是「没有这个功能」。
+           */}
+          <Button variant="text" size="sm" className="remote-add" onClick={onAdd}>
+            ＋ 添加服务器
+          </Button>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+function ConnectionRow({
+  conn,
+  busy,
+  onEdit,
+  onConnect,
+  onDisconnect,
+}: {
+  conn: RemoteConnection
+  busy: boolean
+  onEdit: () => void
+  onConnect: () => void
+  onDisconnect: () => void
+}) {
+  const 连着 = conn.state.kind === "ready"
+  const 状态 = busy ? "连接中" : 状态文字(conn.state)
+  return (
+    <li className={`remote-row ${连着 ? "on" : ""}`} data-state={busy ? "connecting" : conn.state.kind}>
+      <div className="remote-main">
+        {/* 点是给一眼扫的；**文字才是那个意思本身** */}
+        <span className="remote-dot" aria-hidden="true" />
+        <span className="remote-label">{conn.label}</span>
+        <span className="remote-status">{状态}</span>
+      </div>
+      <p className="remote-sub">
+        {conn.username}@{conn.host}
+        {conn.port === 22 ? "" : `:${conn.port}`}
+      </p>
+      {/**
+       * **断了要说清为什么，写在屏幕上。**
+       *
+       * 口令错、主机不通、对端掐断——三种在界面上都长成「连不上」，
+       * 但要人去改的东西完全不同。
+       */}
+      {conn.state.kind === "disconnected" ? (
+        <p className="remote-reason">{conn.state.reason}</p>
+      ) : null}
+      <div className="remote-actions">
+        {连着 ? (
+          <Button variant="text" size="inline" onClick={onDisconnect}>
+            断开
+          </Button>
+        ) : (
+          <Button variant="text" size="inline" disabled={busy} onClick={onConnect}>
+            {busy ? "连接中…" : "连接"}
+          </Button>
+        )}
+        <Button variant="text" size="inline" onClick={onEdit}>
+          编辑
+        </Button>
+      </div>
+    </li>
+  )
+}
+
+/**
+ * 添加 / 编辑一台服务器。
+ *
+ * ## 口令那个框**永远是空的**
+ *
+ * 它不回显——回显一次，它就落进了截图、日志和录屏（与模型 key 同一条纪律）。
+ * 但空框有个坏处：人会以为「我没配」。所以配过的时候，
+ * 占位符要明说**「已配置 · 留空则不改」**——
+ * 否则「改一次分组顺手把口令清了」这条路就通了。
+ */
+export function ConnectionDialog({
+  draft,
+  onCancel,
+  onSave,
+  onRemove,
+  saving,
+  problem,
+}: {
+  draft: ConnectionDraft & { hasSecret?: boolean }
+  onCancel: () => void
+  onSave: (d: ConnectionDraft) => void
+  /** 删掉这一台。**新建时不给**——没有的东西不该有删除键 */
+  onRemove?: (() => void) | undefined
+  saving?: boolean | undefined
+  problem?: string | undefined
+}) {
+  const [d, setD] = useState<ConnectionDraft>(draft)
+  const 改 = (k: keyof ConnectionDraft, v: string) =>
+    setD((x) => ({ ...x, [k]: v === "" ? undefined : v }))
+
+  const 能存 = Boolean(d.host?.trim() && d.username?.trim())
+
+  return (
+    <div
+      className="confirm-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label={draft.id ? "编辑服务器" : "添加服务器"}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onCancel()
+      }}
+    >
+      <div className="confirm conn-dialog">
+        <h2 className="confirm-title">{draft.id ? "编辑服务器" : "添加服务器"}</h2>
+
+        {problem ? (
+          <p className="remote-problem" role="alert">
+            {problem}
+          </p>
+        ) : null}
+
+        <Field id="conn-host" label="主机" hint="域名或 IP。不读 ~/.ssh/config —— 这里写什么就连什么">
+          <input
+            id="conn-host"
+            className="control"
+            autoFocus
+            value={d.host}
+            onChange={(e) => setD((x) => ({ ...x, host: e.target.value }))}
+            placeholder="gs191.example.com"
+          />
+        </Field>
+
+        <Field id="conn-user" label="用户名">
+          <input
+            id="conn-user"
+            className="control"
+            value={d.username}
+            onChange={(e) => setD((x) => ({ ...x, username: e.target.value }))}
+          />
+        </Field>
+
+        <Field id="conn-port" label="端口" hint="留空就是 22">
+          <input
+            id="conn-port"
+            className="control"
+            inputMode="numeric"
+            value={d.port === undefined ? "" : String(d.port)}
+            onChange={(e) =>
+              setD((x) => ({
+                ...x,
+                port: e.target.value.trim() === "" ? undefined : Number(e.target.value),
+              }))
+            }
+          />
+        </Field>
+
+        <Field id="conn-label" label="名字" hint="留空就用 用户名@主机">
+          <input
+            id="conn-label"
+            className="control"
+            value={d.label}
+            onChange={(e) => setD((x) => ({ ...x, label: e.target.value }))}
+          />
+        </Field>
+
+        <Field id="conn-group" label="分组" hint="比如「实验室」。留空就不分组">
+          <input id="conn-group" className="control" value={d.group ?? ""} onChange={(e) => 改("group", e.target.value)} />
+        </Field>
+
+        <Field
+          id="conn-key"
+          label="私钥路径"
+          hint="留空就用口令登录。路径不是秘密，所以它会显示出来"
+        >
+          <input
+            id="conn-key"
+            className="control"
+            value={d.privateKeyPath ?? ""}
+            onChange={(e) => 改("privateKeyPath", e.target.value)}
+            placeholder="~/.ssh/id_ed25519"
+          />
+        </Field>
+
+        <Field
+          id="conn-secret"
+          label={d.privateKeyPath ? "私钥口令" : "登录口令"}
+          hint={
+            draft.hasSecret
+              ? "已配置。留空则不改 —— 这个框永远不回显已存的口令"
+              : "存进系统钥匙串，不写进数据库"
+          }
+        >
+          <input
+            id="conn-secret"
+            className="control"
+            type="password"
+            value={d.secret ?? ""}
+            onChange={(e) => setD((x) => ({ ...x, secret: e.target.value }))}
+            placeholder={draft.hasSecret ? "已配置 · 留空则不改" : ""}
+          />
+        </Field>
+
+        <div className="confirm-actions">
+          {onRemove ? (
+            <Button variant="danger" size="sm" className="conn-remove" onClick={onRemove}>
+              删除
+            </Button>
+          ) : null}
+          <Button variant="secondary" size="sm" onClick={onCancel}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!能存 || saving === true}
+            onClick={() =>
+              onSave({
+                ...d,
+                // 名字留空就用 `用户名@主机`——**不留一个空标签**，那在列表里是一行空白
+                label: d.label.trim() || `${d.username}@${d.host}`,
+              })
+            }
+          >
+            {saving ? "保存中…" : "保存"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -284,6 +284,7 @@ export function SessionSidebar({
   onOpenSettings,
   onDeleteProject,
   settingsActive,
+  remote,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -335,6 +336,13 @@ export function SessionSidebar({
   onReorderSessions?: ((orderedIds: string[]) => void) | undefined
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
+  /**
+   * 「远端连接」那一区（②-B · R3）。**整块由外面传进来**——
+   * 侧栏只负责它坐在哪里，不负责它怎么取数。
+   *
+   * **不给就整区不出现**：一个点了没反应的区比没有更坏。
+   */
+  remote?: React.ReactNode | undefined
 }) {
   const active = projects.find((p) => p.projectId === activeProjectId)
   /**
@@ -519,6 +527,18 @@ export function SessionSidebar({
           ))
         )}
       </ul>
+
+      {/**
+        * **「远端连接」在项目下面、设置上面**（②-B · R3）。
+        *
+        * 作者：*「左边搞一个固定的『远端连接』，可以增加分组，
+        * 分组里面是 ssh 的服务器。」*
+        *
+        * 放在这里而不是最上面：它是**另一台机器上的东西**，
+        * 而上面两段是「我手头在做什么」。默认收起，
+        * 于是没有远端的人一行都不多占。
+        */}
+      {remote ?? null}
 
       {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
       {active ? (

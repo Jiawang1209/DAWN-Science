@@ -120,6 +120,13 @@ export interface DawnOptions {
    */
   realKernels?: boolean
   /**
+   * 用那台**假服务器**代替真 SSH（②-B · R3）。
+   *
+   * e2e 没有真机可连，而「添加服务器 → 连接 → 连上了」是这一批的主路径。
+   * 假的只有「另一端是谁」——认证仍是真判的，口令不对照样拒。
+   */
+  fakeSsh?: boolean
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -292,6 +299,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         ...(dawnOptions.realKernels
           ? {}
           : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
+        ...(dawnOptions.fakeSsh ? { DAWN_FAKE_SSH: "1" } : {}),
       },
     })
     /**

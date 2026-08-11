@@ -140,6 +140,14 @@ export class RemoteExecutor {
   private sftpHandle: SFTPWrapper | undefined
   private 环境: Record<string, string> = {}
   private state: RemoteState = { kind: "idle" }
+  /**
+   * 这次断开是**我们自己按的**。
+   *
+   * 「人主动断开」与「被对端掐掉」在 socket 层长得一模一样，
+   * 但在界面上必须分开说：前者是「未连」，后者是「断了 + 原因」。
+   * 混成一个，人点了断开会看到一条故障提示。
+   */
+  private 自己关的 = false
 
   constructor(private readonly opts: RemoteExecutorOptions) {}
 
@@ -159,6 +167,8 @@ export class RemoteExecutor {
 
   async connect(): Promise<void> {
     if (this.state.kind === "ready") return
+    // 重连时把旗放下，否则上一次主动断开会让这一次的真断线被咽掉
+    this.自己关的 = false
     this.设状态({ kind: "connecting" })
     const c = this.opts.createClient()
     const { config } = this.opts
@@ -174,6 +184,17 @@ export class RemoteExecutor {
        * 而屏幕上什么都不说——那正是「点了没反应」的另一种形状。
        */
       c.on("close", (() => {
+        /**
+         * **我们自己关的那次不算断线。**
+         *
+         * `end()` 之后 socket 的 `close` 也会来一趟，而它长得跟对端把我们
+         * 掐掉一模一样。不分开的话，人点了「断开」，界面显示的是
+         * **「断了 · 连接被对端关闭」**——一次主动操作被报成一次故障。
+         *
+         * 这个缺陷单元测试没抓到（那里的断言是同步的，赶在 close 回调之前），
+         * **是 e2e 在真实产物上撞出来的**。又一次「测试绿了 ≠ 能用了」。
+         */
+        if (this.自己关的) return
         if (this.state.kind !== "disconnected") {
           this.设状态({ kind: "disconnected", reason: "连接被对端关闭" })
         }
@@ -360,6 +381,8 @@ export class RemoteExecutor {
 
   close(): void {
     this.sftpHandle = undefined
+    // **先立起这面旗再关**：`end()` 可能同步就把 `close` 事件发出来
+    this.自己关的 = true
     try {
       this.client?.end()
     } catch {

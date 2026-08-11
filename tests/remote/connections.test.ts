@@ -144,6 +144,31 @@ describe("连接管理器", () => {
     await m.connect(记录())
     m.disconnect("c1")
     expect(m.stateOf("c1").kind).toBe("idle")
+
+    /**
+     * **等 socket 的 `close` 真的来过一趟再看一次。**
+     *
+     * 这一句是补上的：原来的断言是同步的，赶在 `close` 回调之前，
+     * 于是「自己关的那次被报成断线」这个缺陷从这里溜了过去，
+     * 直到 e2e 在真实产物上撞见——人点了「断开」，界面显示
+     * **「断了 · 连接被对端关闭」**，一次主动操作被报成一次故障。
+     */
+    await new Promise((r) => setTimeout(r, 20))
+    expect(m.stateOf("c1").kind).toBe("idle")
+  })
+
+  it("主动断开之后再连上，**这一次的真断线仍然报得出来**（旗要放下）", async () => {
+    const { c } = 假客户端()
+    const m = new RemoteConnections({ createClient: () => c, secretFor: () => "pw" })
+    await m.connect(记录())
+    m.disconnect("c1")
+    await new Promise((r) => setTimeout(r, 20))
+
+    await m.connect(记录())
+    expect(m.stateOf("c1").kind).toBe("ready")
+    c.emit("close")
+    await new Promise((r) => setTimeout(r, 5))
+    expect(m.stateOf("c1").kind).toBe("disconnected")
   })
 
   it("已经连着时重复按不重来 —— 掐掉重连会连带丢掉它上面所有会话的当前目录", async () => {

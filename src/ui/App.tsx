@@ -46,6 +46,7 @@ import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
 import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
+import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { buildCommands, type Actions } from "./commands.js"
@@ -88,6 +89,11 @@ import {
   draftOf,
   loadSessions,
   loadTempSessions,
+  loadConnections,
+  setConnectionState,
+  $connections,
+  $remoteOpen,
+  toggleRemoteOpen,
   setDraft,
   note,
   resyncSession,
@@ -172,6 +178,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     void loadProviders(client)
     // 临时会话不属于任何项目，所以它不跟着「当前项目」走，开机就取一次
     void loadTempSessions(client)
+    // 远端连接名单同理——它不属于任何项目（②-B · R3）
+    void loadConnections(client)
   }, [ready, client])
 
   /**
@@ -243,6 +251,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 旧设计（seq + 环形缓冲）少的那一段补不回来，只能告诉用户「丢了」。
        */
       onResync: (sessionId) => void resyncSession(client, sessionId),
+      /**
+       * 连接状态是**推来的**（②-B · R3）。
+       *
+       * 轮询的话，从断开到被发现之间那段时间里界面显示的是「连着」——
+       * **那是一个看起来很确定的谎**。这里只换那一台的状态，
+       * 不整份重取：断线抖动时重取会打出一串请求，
+       * 而列表回来之前界面显示的仍是旧的。
+       */
+      onRemote: (u) => setConnectionState(u.connectionId, u.state),
       onProblem: note,
     })
     // **依赖里刻意不放 projectId**：它变化时不该退订重订，
@@ -531,6 +548,71 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /* ── 删除（2026-08-10） ──────────────────────────────────────── */
 
   const [confirming, setConfirming] = useState<ConfirmRequest | undefined>(undefined)
+
+  /**
+   * ── 远端连接（②-B · R3/R4）───────────────────────────────────────
+   *
+   * 名单与状态在 store 里（服务端说了算）；**这里只有三样此刻的东西**：
+   * 正在编辑哪一台、哪一台正在连、上一次操作出了什么错。
+   */
+  const connections = useStore($connections)
+  const remoteOpen = useStore($remoteOpen)
+  const [connDraft, setConnDraft] = useState<
+    (ConnectionDraft & { hasSecret?: boolean }) | undefined
+  >(undefined)
+  const [connBusy, setConnBusy] = useState<string | undefined>(undefined)
+  const [connProblem, setConnProblem] = useState<string | undefined>(undefined)
+  const [connSaving, setConnSaving] = useState(false)
+
+  const saveConnection = async (d: ConnectionDraft) => {
+    setConnSaving(true)
+    setConnProblem(undefined)
+    try {
+      await client.get("saveConnection", {
+        ...(d.id ? { id: d.id } : {}),
+        label: d.label,
+        ...(d.group ? { group: d.group } : {}),
+        host: d.host.trim(),
+        ...(d.port ? { port: d.port } : {}),
+        username: d.username.trim(),
+        ...(d.privateKeyPath ? { privateKeyPath: d.privateKeyPath } : {}),
+        /**
+         * **没动过那个框就不传**（不是传空串）。
+         *
+         * 传空串是「清除」；不传是「别动」。分不清这两者的话，
+         * 改一次分组就会把口令弄丢——而那个框永远是空的，因为它从不回显。
+         */
+        ...(d.secret === undefined ? {} : { secret: d.secret }),
+      })
+      await loadConnections(client)
+      setConnDraft(undefined)
+    } catch (e) {
+      // **失败就留在对话框里**：关掉它等于把人填的东西一起丢了
+      setConnProblem(e instanceof Error ? e.message : String(e))
+    } finally {
+      setConnSaving(false)
+    }
+  }
+
+  const connectRemote = async (id: string) => {
+    setConnBusy(id)
+    setConnProblem(undefined)
+    try {
+      await client.get("connectRemote", { id })
+      await loadConnections(client)
+    } catch (e) {
+      /**
+       * **连不上要说清是为什么。**
+       *
+       * 口令错、主机不通、私钥读不到——在界面上都长成「连不上」，
+       * 但要人去改的东西完全不同。所以把底层那句话原样带上来。
+       */
+      setConnProblem(e instanceof Error ? e.message : String(e))
+      await loadConnections(client)
+    } finally {
+      setConnBusy(undefined)
+    }
+  }
 
   /**
    * 上一次换模型／换服务为什么没成（2026-08-11）。
@@ -1170,6 +1252,52 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
       <ConfirmDialog request={confirming} onCancel={() => setConfirming(undefined)} />
 
+      {/**
+        * 添加 / 编辑一台服务器（②-B · R3）。
+        *
+        * **删除走已有的那个确认框**，不另造一份：不可逆的动作只有一种问法，
+        * 两份实现迟早有一份忘了说「会连带删掉什么」。
+        */}
+      {connDraft ? (
+        <ConnectionDialog
+          draft={connDraft}
+          saving={connSaving}
+          {...(connProblem ? { problem: connProblem } : {})}
+          onCancel={() => {
+            setConnDraft(undefined)
+            setConnProblem(undefined)
+          }}
+          onSave={(d) => void saveConnection(d)}
+          {...(connDraft.id
+            ? {
+                onRemove: () => {
+                  const id = connDraft.id!
+                  const 名字 = connDraft.label
+                  setConnDraft(undefined)
+                  setConfirming({
+                    title: `删除服务器「${名字}」？`,
+                    detail: (
+                      <p>
+                        会断开这台机器的连接，并把它的登录口令从系统钥匙串里删掉。
+                      </p>
+                    ),
+                    safety: "那台服务器上的文件不会有任何变化。",
+                    confirmLabel: "删除",
+                    onConfirm: () => {
+                      void client
+                        .get("removeConnection", { id })
+                        .then(() => loadConnections(client))
+                        .catch((e: unknown) =>
+                          setConnProblem(e instanceof Error ? e.message : String(e)),
+                        )
+                    },
+                  })
+                },
+              }
+            : {})}
+        />
+      ) : null}
+
       <div className="body">
         <SessionSidebar
           /** **临时项目不进项目列表**：它们的会话在上面那一列 */
@@ -1211,6 +1339,45 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onPinSession={pinSession}
           onMoveSession={moveSession}
           onReorderSessions={reorderSessions}
+          /**
+           * 「远端连接」那一区（②-B · R3）。**整块在这里组装**——
+           * 侧栏只负责它坐在哪里，不负责它怎么取数。
+           */
+          remote={
+            <RemoteSection
+              connections={connections}
+              open={remoteOpen}
+              onToggle={toggleRemoteOpen}
+              {...(connBusy ? { busyId: connBusy } : {})}
+              {...(connProblem ? { problem: connProblem } : {})}
+              onAdd={() =>
+                setConnDraft({ label: "", host: "", username: "", hasSecret: false })
+              }
+              onEdit={(c) =>
+                setConnDraft({
+                  id: c.id,
+                  label: c.label,
+                  ...(c.group ? { group: c.group } : {}),
+                  host: c.host,
+                  port: c.port,
+                  username: c.username,
+                  ...(c.privateKeyPath ? { privateKeyPath: c.privateKeyPath } : {}),
+                  // **口令不带进来**：它从不回显。`hasSecret` 只说配过没有
+                  hasSecret: c.hasSecret,
+                })
+              }
+              onConnect={(c) => void connectRemote(c.id)}
+              onDisconnect={(c) => {
+                setConnProblem(undefined)
+                void client
+                  .get("disconnectRemote", { id: c.id })
+                  .then(() => loadConnections(client))
+                  .catch((e: unknown) =>
+                    setConnProblem(e instanceof Error ? e.message : String(e)),
+                  )
+              }}
+            />
+          }
           onOpenProject={actions.openProject}
           /**
            * **顶上那颗回首页，不直接建**（2026-08-11）——

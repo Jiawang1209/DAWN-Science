@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"scripts/build-electron.mjs\"); s = p.read_text(encoding=\"utf8\")\nold = \"\"\"  \"spawnteract\",\n  \"enchannel-zmq-backend\",\n  \"@nteract/messaging\",\n]\"\"\"\nnew = \"\"\"  \"spawnteract\",\n  \"enchannel-zmq-backend\",\n  \"@nteract/messaging\",\n  /**\n   * **`ssh2`（②-B · R3 加入）。**\n   *\n   * 它自己是纯 JS，但可选依赖 `cpu-features` 是原生的，\n   * 而 esbuild 会顺着 `require(\"../build/Release/cpufeatures.node\")` 一路解析下去，\n   * 于是**构建当场失败**（`Could not resolve`）。\n   *\n   * `cpu-features` 只是拿来挑更快的加密实现，没有它 ssh2 会退回纯 JS 实现——\n   * 也就是说这条 external 不会让功能少一块。\n   *\n   * 这处是 `ssh2` 从 devDependency 变成 dependency 那一刻才出现的：\n   * 在此之前它只活在 spike 与测试里，从不经过这条打包路径。\n   * **单测与 typecheck 都发现不了它，只有真构建一次才会撞上。**\n   */\n  \"ssh2\",\n  \"cpu-features\",\n]\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build 2>&1 | tail -5",
-    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3 && npm run test:e2e 2>&1 | tail -12",
+    "buildCommand": "python3 - <<'PY'\nimport pathlib\n# remote-head 不再是 side-action：它是「一个区的开关」，不是「新建一个 X」\np = pathlib.Path(\"src/ui/remote.tsx\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('<Row className=\"side-action remote-head\" aria-expanded={open} onClick={onToggle}>',\n              '''{/**\n        * **它不是 `.side-action`。**\n        *\n        * 那个类的意思是「新建一个 X」——侧栏顶上两颗就是它。\n        * 这一行是**一个区的开关**，长得像但不是同一种东西。\n        * 借用那个类的代价是：`sidebar-layout.spec.ts` 数的是\n        * 「顶层有哪几块」，混进来一个开关会让那条断言失去意思。\n        */}\n      <Row className=\"remote-head\" aria-expanded={open} onClick={onToggle}>''', 1)\np.write_text(s, encoding=\"utf8\")\n\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\".remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); }\",\n\"\"\"/* 与 `.side-action` 同样的排布（图标 + 名字挨着），但**不共用那个类**——\n   那个类的意思是「新建一个 X」，这一行是一个区的开关 */\n.remote-head { justify-content: flex-start; margin: 0 var(--dawn-space-2); }\n.remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; }\"\"\")\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/sidebar-layout.spec.ts e2e/remote-connections.spec.ts 2>&1 | tail -4",
+    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3; npm run test:e2e:only 2>&1 | tail -6",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -350,6 +350,12 @@
       "type": "file"
     },
     {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
+      "accessCount": 2,
+      "lastAccessed": 1786441542041,
+      "type": "file"
+    },
+    {
       "path": "src/config/schema.ts",
       "accessCount": 1,
       "lastAccessed": 1786373021333,
@@ -449,12 +455,6 @@
       "path": "e2e/delete-project.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1786385192945,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
-      "accessCount": 1,
-      "lastAccessed": 1786385721934,
       "type": "file"
     },
     {

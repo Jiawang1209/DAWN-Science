@@ -14,6 +14,7 @@
 import type {
   ProjectSummary,
   ProvenanceLink,
+  RemoteConnection,
   RunSummary,
   SessionSnapshot,
   SessionSummary,
@@ -23,6 +24,7 @@ import { note } from "./connection.js"
 import { guard } from "./guard.js"
 import { applySnapshot } from "./transcript.js"
 import {
+  setConnections,
   setCredentials,
   setProjects,
   setProvenance,
@@ -54,6 +56,20 @@ export const loadTempSessions = (c: WorkbenchClient): Promise<void> =>
     .get<SessionSummary[]>("listTemporarySessions")
     .then((v) => {
       setTempSessions(v)
+    })
+    .catch(fail)
+
+/**
+ * 远端连接名单（②-B · R3）。
+ *
+ * **失败要出声**：一份取不回来的名单与一份空名单在界面上长得一样，
+ * 而后者会被读成「你还没加过服务器」。
+ */
+export const loadConnections = (c: WorkbenchClient): Promise<void> =>
+  c
+    .get<RemoteConnection[]>("listConnections")
+    .then((v) => {
+      setConnections(v)
     })
     .catch(fail)
 

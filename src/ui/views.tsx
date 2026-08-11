@@ -8,7 +8,7 @@
  * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
  * 打开 app 时要做的事是跟 agent 说话。
  */
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
@@ -1000,6 +1000,46 @@ export function ModelPill({
   )
 }
 
+/**
+ * 复制一段文本，**并且让人看见它复制成功了**（2026-08-11）。
+ *
+ * 作者：*「我的对话能否在对话里面一键复制？类似于 codex。」*
+ *
+ * 两条讲究：
+ *   1. **要有反馈。** 点了之后什么都不变，人会怀疑自己没点上、然后再点几次。
+ *      两秒的「已复制」是最小的那份诚实。
+ *   2. **失败要出声。** 剪贴板可能被拒（没有焦点、被策略挡下）。
+ *      那时说「复制不了」，而不是留一个假的「已复制」——
+ *      后者会让人以为东西在手上，粘出来才发现是上一次的内容。
+ */
+export function CopyButton({ text, label }: { text: string; label: string }) {
+  const [态, 设态] = useState<"闲" | "好了" | "不行">("闲")
+  useEffect(() => {
+    if (态 === "闲") return
+    const t = setTimeout(() => 设态("闲"), 2000)
+    return () => clearTimeout(t)
+  }, [态])
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="copy-btn"
+      aria-label={label}
+      title={label}
+      onClick={() => {
+        void navigator.clipboard
+          .writeText(text)
+          .then(() => 设态("好了"))
+          .catch(() => 设态("不行"))
+      }}
+    >
+      <span aria-hidden="true">{态 === "好了" ? "✓" : 态 === "不行" ? "✗" : "⧉"}</span>
+      {/* 读屏要听得到结果，不能只有一个变了的图形 */}
+      <span className="sr-only">{态 === "好了" ? "已复制" : 态 === "不行" ? "复制不了" : label}</span>
+    </Button>
+  )
+}
+
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
@@ -1086,6 +1126,27 @@ export function ConversationView({
   const drafts = useStore($drafts)
   const draft = drafts[session.sessionId] ?? ""
 
+  /**
+   * **自己说过的话**，给 ↑ / ↓ 翻（2026-08-11，作者提）。
+   *
+   * 直接从对话里数出来，**不另存一份**：另存的那份迟早会与对话对不上
+   * （删了一条、换了会话、重启之后恢复出来的历史）。
+   * 恢复出来的历史因此天然也能翻——它们本来就在这份 `items` 里。
+   */
+  const history = useMemo(
+    () =>
+      items
+        .filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user")
+        .map((x) => x.text)
+        .filter((t) => t.trim()),
+    [items],
+  )
+  /** 翻到第几条。**-1 = 没在翻**（手上是自己写的那半句） */
+  const [位置, 设位置] = useState(-1)
+  const 存草稿 = useRef("")
+  // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
+  useEffect(() => 设位置(-1), [session.sessionId])
+
   /** agent 还在说话（最后一条 turn 未收尾）时才给停止按钮 */
   const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
 
@@ -1159,6 +1220,8 @@ export function ConversationView({
           if (!text) return
           onSend(text)
           clearDraft(session.sessionId)
+          // 发完就不算在翻历史了——下一次 ↑ 从最新那条开始
+          设位置(-1)
         }}
       >
         {/**
@@ -1182,6 +1245,50 @@ export function ConversationView({
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
                 e.currentTarget.form?.requestSubmit()
+                return
+              }
+              /**
+               * **↑ / ↓ 翻自己说过的话**（2026-08-11，作者提）。
+               *
+               * 与 shell 同一套手感，但有一条**不能照抄**：shell 的输入是一行，
+               * 我们这里是多行。所以只在**光标在最前 / 最后**时才翻——
+               * 否则在一段三行的草稿里按 ↑ 想上移一行，会把整段换掉。
+               *
+               * 翻之前先把**没发出去的那半句存着**（`草稿位` 为 -1 时），
+               * 翻到底再按 ↓ 就回到它。不存的话，翻一下历史就把手上写的弄丢了。
+               */
+              const el = e.currentTarget
+              /**
+               * **判据是「光标在第一行 / 最后一行」，不是「在最前 / 最后」。**
+               *
+               * 第一版写的是后者，于是**一句话的草稿永远翻不了历史**——
+               * 人打完字光标就在末尾，`fill` 之后也一样。
+               * 而多行草稿里的上下移动仍然要留给光标：
+               * 在三行里按 ↑ 想上移一行，不该把整段换掉。
+               */
+              const 前面 = el.value.slice(0, el.selectionStart)
+              const 后面 = el.value.slice(el.selectionEnd)
+              const 在最前 = !前面.includes("\n")
+              const 在最后 = !后面.includes("\n")
+              if (e.key === "ArrowUp" && 在最前 && history.length > 0) {
+                e.preventDefault()
+                if (位置 < 0) 存草稿.current = el.value
+                const 新位 = 位置 < 0 ? history.length - 1 : Math.max(0, 位置 - 1)
+                设位置(新位)
+                setDraft(session.sessionId, history[新位] ?? "")
+                return
+              }
+              if (e.key === "ArrowDown" && 在最后 && 位置 >= 0) {
+                e.preventDefault()
+                const 新位 = 位置 + 1
+                if (新位 >= history.length) {
+                  设位置(-1)
+                  // 回到刚才没发出去的那半句
+                  setDraft(session.sessionId, 存草稿.current)
+                  return
+                }
+                设位置(新位)
+                setDraft(session.sessionId, history[新位] ?? "")
               }
             }}
           />
@@ -1284,6 +1391,17 @@ export function TranscriptRow({
        * 与本项目其他几处同一条：*「符号不够——只靠 ✓/✗ 等于只用颜色表达含义」*。
        */}
       <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : agentId}</span>
+      {/**
+       * **一键复制**（2026-08-11，作者提，仿 Codex）。
+       *
+       * 复制的是**原文**，不是渲染之后的样子：agent 的回答走 markdown，
+       * 而人要贴进编辑器的是那段带 ``` 的源码，不是排版好的结果。
+       * 选中再复制拿到的恰恰是后者——这也正是这颗按钮存在的理由。
+       *
+       * **常驻，不做悬停才出现**：本项目已经因为这个被报过两次
+       * 「没有这个功能」，而两次代码都是好的。
+       */}
+      <CopyButton text={item.text} label={mine ? "复制我说的这段" : "复制这段回答"} />
       <div className="bubble">
         {/**
          * **只有 agent 的发言走 markdown。**
@@ -1648,6 +1766,8 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
 
           {result ? (
             <>
+              {/* 命令输出与报错是最常被复制走的东西——贴进搜索框或另一段对话 */}
+              <CopyButton text={item.result ?? result.text} label="复制这段输出" />
               <pre className="tool-result">{result.text}</pre>
               {result.hidden > 0 ? (
                 <Button

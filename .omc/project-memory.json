@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cat > src/ui/agents.ts <<'EOF'\n/**\n * 「换一个 LLM」这颗 pill 的菜单里该放谁（2026-08-11）。\n *\n * ## 它存在是因为一次真实的误按\n *\n * 作者：*「同一个对话，我切换模型，依旧会弹出新的对话，而不是继续对话。」*\n *\n * 那颗 pill 的菜单有两组：上面「就地换服务（对话不断）」，\n * 下面「新建会话，用哪个 LLM」。**同一家 DeepSeek 在两组里各出现一次**，\n * 而人是照着「换 LLM」这几个字点的——于是点中了会新开对话的那个。\n *\n * **同样的形状配不同的语义，是最容易让人按错的一种设计**，\n * 而这次的代价不是按错一下：一段对话的上下文就此断在那里。\n *\n * 规则因此改成：**能就地换过去的，就不在「新建会话」那一组里再出现一次**。\n * 想另起一段仍然有路——侧栏那颗「新建会话」。\n */\n\n/**\n * @param agentIds 配置里全部可选的 agent\n * @param kindOf 每个 agent 是怎么接上模型的（`native` 才可能就地换）\n * @param 能就地换 当前这个会话有没有「就地换服务」那一组\n */\nexport function 新建会话可选的(\n  agentIds: readonly string[],\n  kindOf: (id: string) => string | undefined,\n  能就地换: boolean,\n): string[] {\n  /**\n   * **没有上组时，下组必须是全量。**\n   *\n   * 一个 CLI 会话（claude / codex）换不了服务，那时下组是唯一的出路；\n   * 这时候再过滤，人就一个选项都看不到了——\n   * **「看不见的能力等于不存在」的又一种形状**。\n   */\n  if (!能就地换) return [...agentIds]\n  // 一个 API 会话没法半路变成 claude 会话，所以那些仍要留在「新建」这一组\n  return agentIds.filter((id) => kindOf(id) !== \"native\")\n}\nEOF\npython3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/App.tsx\"); s = p.read_text(encoding=\"utf8\")\nold = \"\"\"                agents={\n                  services && services.length > 0\n                    ? agentIds.filter(\n                        (id) =>\n                          providers.agents.find((a) => a.agentId === id)?.kind !== \"native\",\n                      )\n                    : agentIds\n                }\"\"\"\nnew = \"\"\"                agents={新建会话可选的(\n                  agentIds,\n                  (id) => providers.agents.find((a) => a.agentId === id)?.kind,\n                  Boolean(services && services.length > 0),\n                )}\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\ns = s.replace('import { ConnectionDialog, RemoteSection, type ConnectionDraft } from \"./remote.js\"',\n              'import { ConnectionDialog, RemoteSection, type ConnectionDraft } from \"./remote.js\"\\nimport { 新建会话可选的 } from \"./agents.js\"', 1)\np.write_text(s, encoding=\"utf8\")\nPY\ncat > tests/ui/agent-menu-choices.test.ts <<'EOF'\n/**\n * 「换一个 LLM」菜单里该放谁（2026-08-11）。\n *\n * 作者：*「同一个对话，我切换模型，依旧会弹出新的对话，而不是继续对话。」*\n *\n * 同一家在「就地换」和「新建会话」两组里各出现一次，而人是照着\n * 「换 LLM」这几个字点的——**同样的形状配不同的语义，最容易让人按错**。\n */\nimport { describe, expect, it } from \"vitest\"\nimport { 新建会话可选的 } from \"../../src/ui/agents.js\"\n\nconst kind = (id: string) => (id.endsWith(\"-cli\") ? \"cli\" : \"native\")\n\ndescribe(\"新建会话那一组\", () => {\n  it(\"**能就地换的就不再出现一次** —— 那正是被按错的那一个\", () => {\n    expect(新建会话可选的([\"ds-chat\", \"kimi\", \"claude-cli\"], kind, true)).toEqual([\"claude-cli\"])\n  })\n\n  it(\"**换不过去的仍然留着** —— 一个 API 会话没法半路变成 claude 会话\", () => {\n    expect(新建会话可选的([\"ds-chat\", \"codex-cli\"], kind, true)).toContain(\"codex-cli\")\n  })\n\n  it(\"**没有「就地换」那一组时给全量** —— 否则 CLI 会话里一个选项都看不到\", () => {\n    expect(新建会话可选的([\"ds-chat\", \"claude-cli\"], kind, false)).toEqual([\"ds-chat\", \"claude-cli\"])\n  })\n})\nEOF\nnpx tsc --noEmit -p tsconfig.json 2>&1 | grep -v notice | head -3; npx vitest run tests/ui/agent-menu-choices.test.ts 2>&1 | grep -E \"Tests |×\" | head -3",
-    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3; npm run test:e2e 2>&1 | tail -6",
+    "buildCommand": "python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"\"\"/* 一键复制（2026-08-11）。**常驻**——悬停才出现的入口等于没有 */\n.copy-btn { float: right; opacity: 0.55; }\n.copy-btn:hover, .copy-btn:focus-visible { opacity: 1; }\n.turn > .copy-btn { margin-left: var(--dawn-space-2); }\"\"\",\n\"\"\"/* 一键复制（2026-08-11）。**常驻**——悬停才出现的入口等于没有。\n   **不占位**：第一版用 float，那一行把整段对话往下顶了 30px；\n   一个新按钮不该改变原来所有东西的位置。 */\n.turn { position: relative; }\n.copy-btn { opacity: 0.55; }\n.copy-btn:hover, .copy-btn:focus-visible { opacity: 1; }\n.turn > .copy-btn { position: absolute; top: 0; right: 0; }\n.tool-body > .copy-btn { float: right; }\"\"\")\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/visual.spec.ts e2e/composer-history-copy.spec.ts 2>&1 | tail -5",
+    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3; npm run test:e2e:only 2>&1 | tail -14",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -260,6 +260,12 @@
       "type": "file"
     },
     {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
+      "accessCount": 4,
+      "lastAccessed": 1786461638792,
+      "type": "file"
+    },
+    {
       "path": "src/config/writer.ts",
       "accessCount": 3,
       "lastAccessed": 1786373237771,
@@ -275,6 +281,12 @@
       "path": "src/workbench/events.ts",
       "accessCount": 3,
       "lastAccessed": 1786435592918,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "accessCount": 3,
+      "lastAccessed": 1786461589304,
       "type": "file"
     },
     {
@@ -305,18 +317,6 @@
       "path": "e2e/add-service.spec.ts",
       "accessCount": 2,
       "lastAccessed": 1786374244033,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
-      "accessCount": 2,
-      "lastAccessed": 1786381036702,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
-      "accessCount": 2,
-      "lastAccessed": 1786412593442,
       "type": "file"
     },
     {

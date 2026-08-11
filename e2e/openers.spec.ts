@@ -23,7 +23,9 @@ test("点一张开场建议 → 建会话 → 那句话真的发了出去 → �
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 
   // ② **卡片上那句话真的作为用户发言出现了**——不是卡片的标题，是它承诺要说的那句
-  await expect(page.getByText(/看一下当前工作区里有哪些文件和数据/)).toBeVisible({
+  // **在对话区里找**：同一句话也是侧栏那一行的标题（第一句话定名字），
+  // 不限定范围就会撞上——2026-08-11 会话列表刷得更早之后暴露出来的
+  await expect(page.locator(".turns").getByText(/看一下当前工作区里有哪些文件和数据/)).toBeVisible({
     timeout: 30_000,
   })
 

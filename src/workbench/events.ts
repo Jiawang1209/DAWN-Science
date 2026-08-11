@@ -388,6 +388,26 @@ export class SessionTranscripts {
   }
 
   /**
+   * 把恢复出来的历史铺回去（会话续接，2026-08-11）。
+   *
+   * **整份替换，然后推一帧快照**——不是一条条 `putItem`：
+   * 那样界面会看到几十次 revision 跳动，而它们描述的是同一件事
+   * 「这段对话原来长这样」。
+   *
+   * **不经过记账员。** 这些轮次上一次运行时已经记过账了，
+   * 再记一遍就是把同一件事写两回（不变式 5：账本是事实层）。
+   */
+  restore(sessionId: SessionId, items: TranscriptItem[]): void {
+    const e = this.entries.get(sessionId)
+    if (!e) return
+    // **已经有内容就不动**：这段对话本次运行里已经在说话了，
+    // 拿一份历史盖上去会把刚说的那几句抹掉
+    if (e.items.length > 0) return
+    e.items = items
+    this.bump(sessionId, e, { type: "snapshot", snapshot: this.snapshot(sessionId, e) })
+  }
+
+  /**
    * 远端会话换目录了（②-B · R4′）。
    *
    * **必须推**：模型 `cd` 之后头上那一条要立刻跟上，否则人看到的是上一个目录，

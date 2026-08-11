@@ -376,7 +376,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     resetTranscript()
     if (!sessionId) return
-    void resyncSession(client, sessionId)
+    /**
+     * **取完快照要把会话列表也重取一遍**（会话续接，2026-08-11）。
+     *
+     * 订阅这一步会把一段已退出的对话**续起来**（后端做的），于是它的状态
+     * 从 `exited` 变回 `alive`。而列表是另一次请求取回来的——不重取的话，
+     * 界面上那条仍写着「已退出」，输入框也仍然是禁用的：
+     * **对话恢复出来了，人却打不了字**。
+     */
+    void resyncSession(client, sessionId).then(() => {
+      // 直接调用而不是依赖上面的 `重取会话`：它定义在后面，
+      // 而这个 effect 要早于它——**这三行就是它做的事**
+      const pid = $activeProjectId.get()
+      if (pid) void loadSessions(client, pid)
+      void loadTempSessions(client)
+    })
     return () => {
       client.forgetRevision(sessionId)
       client.get("unsubscribeSession", { sessionId }).catch(fail)

@@ -55,6 +55,13 @@ export interface DawnFixture {
   /** 假服务器收到的请求。用来证明测试**不是空转通过** */
   requests: unknown[]
   /**
+   * 关掉应用再打开（同一套目录）。返回新窗口。
+   *
+   * **会话续接只有这样才验得了**：在同一个进程里点来点去，
+   * 永远碰不到「agent 没了、对话只在内存里」那一刻。
+   */
+  重开: () => Promise<Page>
+  /**
    * 假推理服务器的地址。
    *
    * **给「在界面上手填一个自定义端点」那类用例用**——它要往输入框里
@@ -252,7 +259,14 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     }
     const dbPath = join(dir, "dawn.db")
 
-    const app = await _electron.launch({
+    /**
+     * **同一套目录，再开一次**（会话续接的 e2e 要用，2026-08-11）。
+     *
+     * 抽成一个函数只为一件事：*「关掉应用，再打开，之前那段对话还在吗」*
+     * ——那句话只有真重启一次才验得了。参数一个字都不能变，
+     * 否则重开的就是另一个应用（另一个库、另一份配置）。
+     */
+    const 起一次 = () => _electron.launch({
       args: [
         join(ROOT, "dist", "electron", "main.js"),
         /**
@@ -312,6 +326,8 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           : {}),
       },
     })
+
+    let app = await 起一次()
     /**
      * 等第一个窗口。**30 秒是原值，2026-08-10 调回。**
      *
@@ -333,13 +349,42 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       if (文本) console.error("[主进程]", 文本)
     })
 
-    const page = await app.firstWindow()
-    // 渲染进程的报错要能被看见——这条通路本身就是 2026-08-08 补的
-    page.on("console", (m) => {
-      if (m.type() === "error") console.error("[渲染进程]", m.text())
-    })
+    const 接线 = (p: Page) => {
+      // 渲染进程的报错要能被看见——这条通路本身就是 2026-08-08 补的
+      p.on("console", (m) => {
+        if (m.type() === "error") console.error("[渲染进程]", m.text())
+      })
+      return p
+    }
+    let page = 接线(await app.firstWindow())
 
-    await use({ app, page, dir, dbPath, workspace, requests: server.requests, mockUrl: server.url })
+    /**
+     * **关掉再打开**（会话续接的 e2e 要用，2026-08-11）。
+     *
+     * *「之前聊过的，也无法连续上」*这句话，只有真重启一次才验得了：
+     * 在同一个进程里点来点去，永远碰不到「agent 没了、对话只在内存里」那一刻。
+     */
+    const 重开 = async (): Promise<Page> => {
+      await app.close().catch(() => {})
+      app = await 起一次()
+      app.process().stderr?.on("data", (b: Buffer) => {
+        const 文本 = b.toString().trimEnd()
+        if (文本) console.error("[主进程]", 文本)
+      })
+      page = 接线(await app.firstWindow())
+      return page
+    }
+
+    await use({
+      app,
+      page,
+      dir,
+      dbPath,
+      workspace,
+      requests: server.requests,
+      mockUrl: server.url,
+      重开,
+    })
 
     /**
      * **关不掉要出声。** 上一版是 `.catch(() => {})`——静默吞掉。

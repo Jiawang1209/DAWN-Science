@@ -345,6 +345,70 @@ export class SessionManager {
     return rt.attach(sessionId, sink)
   }
 
+  /**
+   * **接着上一次聊**（会话续接，2026-08-11）。
+   *
+   * 作者：*「之前聊过的，也无法连续上。」*
+   *
+   * 关掉应用之后，agent 进程没了，而对话内容只活在内存里——重开之后那段
+   * 会话是「已退出」，点进去既没有历史也不能说话。
+   *
+   * ## 它与 `create` 的区别只有两点
+   *
+   * 1. **不新建记录**：会话 id、工作目录、归属项目、标题全都沿用原来那条。
+   *    新建一条的话，侧栏上会多出一个双胞胎，而账本还挂在老的那条上。
+   * 2. **带 `resume`**：pi 从这个会话自己的记录目录里把上一段读回来。
+   *
+   * **已经活着的直接返回**——重复点开一段对话不该把它掐掉重来。
+   */
+  async resume(
+    sessionId: SessionId,
+    remote?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
+  ): Promise<SessionRecord> {
+    const rec = this.store.get(sessionId)
+    if (!rec) throw new UserFacingError(`没有这个会话：${sessionId}`)
+    if (this.bound.has(sessionId)) return rec
+
+    const def = this.registry.agents[rec.agentId]
+    if (!def) throw new UserFacingError(`未知的 agent "${rec.agentId}"，请检查 providers.yaml 的 agents 段`)
+    /**
+     * **只有 native 续得上。**
+     *
+     * CLI 那条各有各的续接凭据（codex 的 `thread_id`），PTY 是一个 shell、
+     * 内核是一个进程——它们的「上一次」在语义上根本不是一回事。
+     * 说清楚，不假装续上了。
+     */
+    if (def.kind !== "native") {
+      throw new UserFacingError(`「${rec.agentId}」这类会话还不支持接着上一次聊`)
+    }
+    if (this.hasCredential && !this.hasCredential(def.provider)) {
+      throw new UserFacingError(`provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`)
+    }
+
+    const spec: SessionSpec = {
+      sessionId,
+      workspace: rec.workspace,
+      sessionDir: rec.sessionDir,
+      native: { provider: def.provider, model: def.model },
+      resume: true,
+      ...(remote ? { remote: { executor: remote.executor, cwd: remote.cwd } } : {}),
+    }
+    const handle = await this.runtimes.native.start(spec)
+    this.bound.set(sessionId, this.runtimes.native)
+    this.store.updateState(sessionId, "alive", { pid: handle.pid })
+    return this.store.get(sessionId)!
+  }
+
+  /** 这个会话此刻在本进程里活着吗。**重启之后一律 false**——那是实话 */
+  isLive(sessionId: SessionId): boolean {
+    return this.bound.has(sessionId)
+  }
+
+  /** 上一次聊到哪儿了。**运行时不支持就给空** */
+  async history(sessionId: SessionId) {
+    return (await this.bound.get(sessionId)?.history?.(sessionId)) ?? []
+  }
+
   /** 写入前必须持有租约。这是规格 7.1 的守卫点——写权可追责的唯一入口。 */
   write(sessionId: SessionId, data: string, as: Holder): void {
     const lease = this.leases.current(sessionId)

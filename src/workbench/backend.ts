@@ -33,9 +33,31 @@ import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
+import type { RestoredItem } from "../runtime/types.js"
+import type { TranscriptItem } from "../protocol/events.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
+
+/**
+ * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
+ *
+ * **工具调用一律记成「已完成」**：结果就在记录里，
+ * 而一条永远转圈的「执行中」会让人以为它还在跑。
+ */
+function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
+  if (x.kind === "text") {
+    return { type: "turn", id: `r${i}`, who: x.who, text: x.text, final: true }
+  }
+  return {
+    type: "tool",
+    id: x.id || `rt${i}`,
+    name: x.name,
+    input: x.input,
+    status: x.isError ? "error" : "ok",
+    ...(x.result === undefined ? {} : { result: x.result }),
+  }
+}
 
 /**
  * 凭证库的最小接口。后端只需要这四个动作，不关心它存在哪、怎么加密。
@@ -440,6 +462,35 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     subscribeSession: async ({ sessionId }) => {
+      /**
+       * **点进一段旧对话，就把它续起来**（会话续接，2026-08-11）。
+       *
+       * 作者：*「之前聊过的，也无法连续上。」*
+       *
+       * 关掉应用之后 agent 进程没了，对话内容也只活在内存里，
+       * 于是重开之后点进去是一片空白、且不能说话。
+       *
+       * 续接放在**订阅**这一步，而不是另开一个操作让界面去调：
+       * 「我要看这段对话」与「我要接着聊」在人那里是同一个动作。
+       *
+       * **续不上不算错**——CLI / 终端 / 内核那些本来就续不了，
+       * 旧记录也可能已经没了。那时照旧回一份空的记录，
+       * 界面显示「已退出」，与从前完全一致。**不假装续上了。**
+       */
+      if (!sessions.isLive(sessionId) && sessions.get(sessionId)) {
+        try {
+          await sessions.resume(sessionId)
+          events.track(sessionId, "native")
+          sessions.attach(sessionId, (e) => {
+            events.ingest(sessionId, e)
+            runRecorder?.ingest(e)
+          })
+          const 历史 = await sessions.history(sessionId)
+          if (历史.length > 0) events.restore(sessionId, 历史.map(还原成条目))
+        } catch {
+          // 续不上就照旧：下面那句会如实抛「不在本进程中活动」
+        }
+      }
       try {
         return events.subscribe(sessionId)
       } catch (err) {

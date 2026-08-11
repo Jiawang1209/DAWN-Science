@@ -25,9 +25,27 @@ import {
   createReadToolDefinition,
   createWriteToolDefinition,
   ModelRuntime,
+  SessionManager,
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
+
+/** pi 记下的一条消息。**只声明我们真的读的那几个字段** */
+type 历史消息 =
+  | { role: "user"; content: string | { type: string; text?: string }[] }
+  | {
+      role: "assistant"
+      content: ({ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; arguments: unknown } | { type: "thinking" })[]
+    }
+  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[] }
+
+/** 内容可能是一段字符串，也可能是一串块。**图片不还原成文字**，如实标一下 */
+function 取文本(content: string | { type: string; text?: string }[]): string {
+  if (typeof content === "string") return content
+  return content
+    .map((c) => (c.type === "text" ? (c.text ?? "") : c.type === "image" ? "（图片）" : ""))
+    .join("")
+}
 import { ProvenanceProbe } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
@@ -42,6 +60,7 @@ import type {
   SessionHandle,
   SessionId,
   SessionSpec,
+  RestoredItem,
 } from "./types.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
@@ -88,6 +107,8 @@ export interface NativeRuntimeOptions {
 
 interface NativeSession {
   session: Awaited<ReturnType<typeof createAgentSession>>["session"]
+  /** pi 替我们记着的那份对话。**续接与「上次聊到哪儿」都从它来** */
+  sessionManager: SessionManager
   unsubscribe: () => void
   pid: number
   /**
@@ -251,6 +272,75 @@ export class NativeRuntime implements AgentRuntime {
     await s.session.waitForIdle()
   }
 
+  /**
+   * 上一次聊到哪儿了（会话续接，2026-08-11）。
+   *
+   * 作者：*「之前聊过的，也无法连续上。」*
+   *
+   * ## 为什么它从 pi 的记录来，而不是从我们的账本来
+   *
+   * 账本记的是**发生过什么**（哪一轮、花了多少、动了哪些文件），
+   * 它**刻意不存每句话的原文**——那是对话，不是事实层。
+   * 而 pi 为了自己能续接，本来就把消息完整存着。**各取所长，不互相冒充。**
+   *
+   * ## 三条取舍
+   *
+   * 1. **thinking 不还原**：它是模型的草稿，上一次也没显示给人看。
+   * 2. **工具调用还原成「已完成」的样子**：结果就在记录里，
+   *    而一条永远转圈的「执行中」会让人以为它还在跑。
+   * 3. **系统注入的那些不还原**：它们不是人说的话，摆出来只会让对话变长。
+   */
+  async history(sessionId: SessionId): Promise<RestoredItem[]> {
+    const s = this.sessions.get(sessionId)
+    if (!s) return []
+    const 消息 = s.sessionManager.buildSessionContext().messages as 历史消息[]
+    const 出: RestoredItem[] = []
+    const 待补结果 = new Map<string, RestoredItem & { kind: "tool" }>()
+
+    for (const m of 消息) {
+      if (m.role === "user") {
+        const text = 取文本(m.content)
+        if (text.trim()) 出.push({ kind: "text", who: "user", text })
+        continue
+      }
+      if (m.role === "assistant") {
+        const text = (m.content ?? [])
+          .filter((c): c is { type: "text"; text: string } => c.type === "text")
+          .map((c) => c.text)
+          .join("")
+        if (text.trim()) 出.push({ kind: "text", who: "agent", text })
+        for (const c of m.content ?? []) {
+          if (c.type !== "toolCall") continue
+          const 条: RestoredItem & { kind: "tool" } = {
+            kind: "tool",
+            id: c.id,
+            name: c.name,
+            input: c.arguments,
+          }
+          出.push(条)
+          待补结果.set(c.id, 条)
+        }
+        continue
+      }
+      if (m.role === "toolResult") {
+        const 条 = 待补结果.get(m.toolCallId)
+        // **没见过对应调用的结果也照记**——宁可多一条，不可丢一条
+        if (!条) {
+          出.push({
+            kind: "tool",
+            id: m.toolCallId,
+            name: m.toolName,
+            input: undefined,
+            result: 取文本(m.content),
+          })
+          continue
+        }
+        条.result = 取文本(m.content)
+      }
+    }
+    return 出
+  }
+
   private emit(event: AgentEvent): void {
     for (const sink of [...(this.sinks.get(event.sessionId) ?? [])]) sink(event)
   }
@@ -403,11 +493,29 @@ export class NativeRuntime implements AgentRuntime {
 
     const modelRuntime = await this.runtime()
     const customTools = this.toolsFor(spec, native)
+
+    /**
+     * **这段对话的记录住在它自己的目录里**（会话续接，2026-08-11）。
+     *
+     * 不用 pi 的默认位置（那是按 cwd 编码出来的、多个会话共用一个目录），
+     * 而是每个会话一个——于是「接着上一次聊」就是
+     * **「把这个目录里最近那段读回来」**，不必在一堆会话里猜是哪一段。
+     *
+     * `continueRecent` 在目录为空时会新建一段，所以它对
+     * 「记录丢了」这种情况是安全的：**退化成一段新对话，而不是报错**。
+     * 代价是那时上下文真的没了——这一点由界面说清楚，不在这里假装。
+     */
+    const 记录目录 = join(agentDir, "sessions")
+    const sessionManager = spec.resume
+      ? SessionManager.continueRecent(spec.workspace, 记录目录)
+      : SessionManager.create(spec.workspace, 记录目录)
+
     const { session } = await createAgentSession({
       cwd: spec.workspace,
       agentDir,
       model,
       modelRuntime,
+      sessionManager,
       // 有门时必须关掉内置工具，**否则模型会绕过门去用原始的 bash**（Spike A-2 实测）
       ...(customTools ? { noTools: "builtin" as const, customTools: customTools as never } : {}),
     })
@@ -417,6 +525,7 @@ export class NativeRuntime implements AgentRuntime {
     const pid = this.nextPid++
     this.sessions.set(spec.sessionId, {
       session,
+      sessionManager,
       unsubscribe,
       pid,
       pending: undefined,

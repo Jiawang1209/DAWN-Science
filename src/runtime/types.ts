@@ -67,6 +67,16 @@ export interface SessionSpec {
    *
    * **缺省 = 本地**，与此前完全一致。
    */
+  /**
+   * **接着上一次聊**（会话续接，2026-08-11）。
+   *
+   * 作者：*「之前聊过的，也无法连续上。」*
+   *
+   * 给了它，pi 会从这个会话自己的记录目录里把上一段对话读回来
+   * （`SessionManager.continueRecent`），于是模型带着原来的上下文继续。
+   * **缺省 = 全新一段**，与此前完全一致。
+   */
+  resume?: boolean
   remote?: {
     executor: RemoteLike
     /**
@@ -299,8 +309,27 @@ export interface ContextUsage {
   bytes: { system: number; tools: number; history: number }
 }
 
+/**
+ * 一段被恢复出来的对话（会话续接，2026-08-11）。
+ *
+ * **它不进账本。** 账本记的是「发生过什么」，而这些是**上一次运行时
+ * 已经记过的那些**——再记一遍就是把同一件事写两回（不变式 5：账本是事实层）。
+ * 所以它只回到界面上，不经过记账员。
+ */
+export type RestoredItem =
+  | { kind: "text"; who: "user" | "agent"; text: string }
+  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean }
+
 export interface AgentRuntime {
   start(spec: SessionSpec): Promise<SessionHandle>
+  /**
+   * 上一次聊到哪儿了（会话续接，2026-08-11）。
+   *
+   * **只有 native 有**：那些消息存在 pi 的会话文件里，是它替我们记的。
+   * 拿不到就不给——**空数组与「没有历史」是同一个意思，而 undefined 是
+   * 「这条运行时不支持」**，两者不该混。
+   */
+  history?(sessionId: SessionId): Promise<RestoredItem[]>
   /** 注册观察者。可多个，互不影响。返回退订函数。 */
   attach(sessionId: SessionId, sink: EventSink): () => void
   write(sessionId: SessionId, data: string): void

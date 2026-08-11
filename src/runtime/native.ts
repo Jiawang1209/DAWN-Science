@@ -1030,7 +1030,21 @@ export class NativeRuntime implements AgentRuntime {
     try {
       s.sessionManager.appendCustomMessageEntry(
         "dawn-model-change",
-        `[system] From this point on, this conversation is answered by model "${modelId}" (provider "${provider}"). Earlier turns were answered by a different model; if asked which model you are, answer with the current one.`,
+        /**
+         * **必须直说「前面那些是旧的」。**
+         *
+         * 第一版只写了「从此由 X 回答」，压不住实际发生的事：
+         * 模型在更早一轮跑过 `env | grep PI_`，那份输出**留在对话里**，
+         * 于是它照着念「模型：deepseek-v4-flash」——而那两轮它根本没再跑 env。
+         * **一份长得像证据的旧快照，比一句一般性的通知有力得多**，
+         * 所以这句话要点名它。
+         */
+        `[system] The active model for this conversation has changed. ` +
+          `You are now "${modelId}" (provider "${provider}"). ` +
+          `IMPORTANT: earlier turns in this conversation — including any output of ` +
+          `\`env\`, PI_MODEL / PI_PROVIDER values, and any statement you made about ` +
+          `which model you are — describe the PREVIOUS model and are now out of date. ` +
+          `Do not quote them. If asked which model you are, answer "${modelId}".`,
         false,
       )
     } catch (e) {

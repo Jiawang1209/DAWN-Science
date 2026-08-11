@@ -60,6 +60,13 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
    */
   className?: string
   children?: ReactNode
+  /**
+   * 拿到那个真实的 `<button>`。
+   *
+   * **只为量它的位置**：会话行的 `⋯` 菜单要开在这颗按钮的右边，
+   * 而位置只能问 DOM。React 19 起 `ref` 是普通 prop，不必 forwardRef。
+   */
+  ref?: React.Ref<HTMLButtonElement>
 }
 
 export function Button({

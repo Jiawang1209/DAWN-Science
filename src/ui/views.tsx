@@ -129,6 +129,36 @@ export function SessionRow({
   const [menu, setMenu] = useState(false)
   const [editing, setEditing] = useState<string | undefined>(undefined)
   const 名字 = session.title ?? "新会话"
+  /**
+   * 菜单开在哪（2026-08-11 改）。
+   *
+   * ## 它为什么必须脱离那个滚动容器
+   *
+   * 作者：*「即便是有多少对话，我只要是弹出 `⋯` 的时候，应该在对话的右侧
+   * 弹出，而不是在对话的地方弹出来滚动条。」*
+   *
+   * 会话列表是 `max-height: 45vh; overflow-y: auto`，而菜单原来是
+   * `position: absolute` —— **它被这个滚动容器裁掉**，浏览器于是给出一条
+   * 滚动条让你去够它。只有一条对话时更难受：列表本身没得滚，
+   * 那个菜单就永远只露半截。
+   *
+   * 改成 `fixed` 并按按钮的位置算：**它不再属于任何一个会滚的盒子**。
+   */
+  const 按钮 = useRef<HTMLButtonElement>(null)
+  const [位置, 设位置] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const 打开菜单 = () => {
+    const r = 按钮.current?.getBoundingClientRect()
+    if (r) {
+      /**
+       * **开在行的右侧**（作者的原话）。贴着按钮右边一点，垂直居中对齐它。
+       * 下面放不下就往上翻——**宁可翻上去，也不要露半截**。
+       */
+      const 高 = 200
+      const top = Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8)
+      设位置({ top, left: r.right + 6 })
+    }
+    setMenu(true)
+  }
 
   if (editing !== undefined) {
     const 提交 = () => {
@@ -222,9 +252,10 @@ export function SessionRow({
             variant="ghost"
             size="icon"
             className="row-more"
+            ref={按钮}
             aria-label={`会话操作：${名字}`}
             aria-expanded={menu}
-            onClick={() => setMenu((v) => !v)}
+            onClick={() => (menu ? setMenu(false) : 打开菜单())}
           >
             ⋯
           </Button>
@@ -232,7 +263,12 @@ export function SessionRow({
             <>
               {/* 点别处关掉。**一层透明背板**，比在 document 上挂监听可控 */}
               <div className="menu-scrim" onClick={() => setMenu(false)} />
-              <div className="row-menu" role="menu" aria-label={`会话操作：${名字}`}>
+              <div
+                className="row-menu"
+                role="menu"
+                aria-label={`会话操作：${名字}`}
+                style={{ top: 位置.top, left: 位置.left }}
+              >
                 {onPin ? (
                   <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onPin(); setMenu(false) }}>
                     {session.pinned ? "取消置顶" : "置顶"}

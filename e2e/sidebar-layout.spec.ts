@@ -11,7 +11,7 @@
  *   - 上面「会话」= **临时会话**，没有项目、自带一个独立目录
  *   - 下面「项目」= 你打开的文件夹，**展开就看见它自己的会话**
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 /**
  * **两颗「新建」各走各的**（2026-08-11）。
@@ -146,4 +146,45 @@ test("**空着的时候两颗按钮是连着的**，加一条会话就正好多�
 test("**下拉框没了** —— 它装不下「一列项目，每个里面还有会话」", async ({ dawn }) => {
   const { page } = dawn
   await expect(page.getByLabel("当前项目")).toHaveCount(0)
+})
+
+/**
+ * `⋯` 菜单不该被会话列表裁掉（2026-08-11，作者提）。
+ *
+ * 作者：*「即便是有多少对话，我只要是弹出 `⋯` 的时候，应该在对话的右侧
+ * 弹出一个滚动条，而不是在对话的地方弹出来滚动条。」*
+ *
+ * 根因：会话列表是 `max-height: 45vh; overflow-y: auto`，而菜单原来是
+ * `position: absolute`——**它被这个滚动容器裁掉**，浏览器于是给出一条
+ * 滚动条让人去够它。**只有一条对话时更难受**：列表本身没得滚，
+ * 那个菜单就永远只露半截。
+ */
+test("**菜单开在行的右侧，且没被列表裁掉**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  const 行 = page.locator(".session-list .sess-item").first()
+  await expect(行).toBeVisible({ timeout: 30_000 })
+
+  const 按钮 = 行.getByRole("button", { name: /会话操作/ })
+  await 按钮.click()
+  const 菜单 = page.locator(".row-menu")
+  await expect(菜单).toBeVisible()
+
+  const b = (await 按钮.boundingBox())!
+  const m = (await 菜单.boundingBox())!
+  // **在行的右侧**：作者的原话
+  expect(m.x).toBeGreaterThanOrEqual(b.x + b.width - 1)
+
+  /**
+   * **整个菜单都在窗口里**——不是只露半截。
+   * 这一条才是「够不着」的直接判据：裁切的症状就是它有一部分在视口之外。
+   */
+  // **量真实窗口**：Electron 里没有 Playwright 意义上的 viewport，`viewportSize()` 是 null
+  const 窗高 = await page.evaluate(() => window.innerHeight)
+  expect(m.y).toBeGreaterThanOrEqual(0)
+  expect(m.y + m.height).toBeLessThanOrEqual(窗高)
+
+  /** **列表没有因此变得可滚**：那条滚动条正是作者报的东西 */
+  const 溢出 = await page.locator(".session-list").evaluate((el) => el.scrollHeight - el.clientHeight)
+  expect(溢出).toBeLessThanOrEqual(1)
 })

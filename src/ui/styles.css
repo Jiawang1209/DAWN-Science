@@ -1808,10 +1808,12 @@ pre {
   z-index: var(--z-modal-backdrop);
 }
 
+/* **脱离那个会滚的盒子**（2026-08-11）。
+   原来是 `absolute`，被 `.session-list` 的 `overflow-y: auto` 裁掉——
+   浏览器于是给出一条滚动条让人去够它；只有一条对话时列表根本没得滚，
+   那个菜单就永远只露半截。位置由 `SessionRow` 按按钮的矩形算，开在行的右侧。 */
 .row-menu {
-  position: absolute;
-  right: 0;
-  top: 100%;
+  position: fixed;
   z-index: var(--z-modal);
   min-width: 8rem;
   display: flex;

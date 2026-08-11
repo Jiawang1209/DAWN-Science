@@ -47,6 +47,22 @@ const external = [
   "spawnteract",
   "enchannel-zmq-backend",
   "@nteract/messaging",
+  /**
+   * **`ssh2`（②-B · R3 加入）。**
+   *
+   * 它自己是纯 JS，但可选依赖 `cpu-features` 是原生的，
+   * 而 esbuild 会顺着 `require("../build/Release/cpufeatures.node")` 一路解析下去，
+   * 于是**构建当场失败**（`Could not resolve`）。
+   *
+   * `cpu-features` 只是拿来挑更快的加密实现，没有它 ssh2 会退回纯 JS 实现——
+   * 也就是说这条 external 不会让功能少一块。
+   *
+   * 这处是 `ssh2` 从 devDependency 变成 dependency 那一刻才出现的：
+   * 在此之前它只活在 spike 与测试里，从不经过这条打包路径。
+   * **单测与 typecheck 都发现不了它，只有真构建一次才会撞上。**
+   */
+  "ssh2",
+  "cpu-features",
 ]
 
 await build({

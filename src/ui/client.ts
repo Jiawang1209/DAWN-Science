@@ -9,11 +9,13 @@
  * 本文件只 import `src/protocol`，不碰 runtime / session / store。
  */
 import {
+  RemoteUpdateSchema,
   SessionUpdateSchema,
   WORKBENCH_PROTOCOL_VERSION,
   isCompatible,
   type ErrorCode,
   type OperationName,
+  type RemoteUpdate,
   type SessionUpdate,
 } from "../protocol/index.js"
 
@@ -75,6 +77,13 @@ export interface UpdateSubscription {
    * （规格 7.5）。省略它意味着调用方明确选择不听，而不是忘了。
    */
   onProblem?: (message: string) => void
+  /**
+   * 一台服务器的连接状态变了（②-B · R3）。
+   *
+   * **它必须是推来的，不能靠界面轮询**：从断开到被发现之间那段时间里，
+   * 轮询的界面显示的是「连着」——**那是一个看起来很确定的谎**。
+   */
+  onRemote?: (u: RemoteUpdate) => void
 }
 
 /**
@@ -149,7 +158,7 @@ export function createClient(
      *   - 畸形 / 版本不符 ⇒ 丢弃并出声
      *   - 处理者抛错 ⇒ 出声并继续（一个渲染错误不该让整条流断掉）
      */
-    subscribeUpdates({ onUpdate, onResync, onProblem }: UpdateSubscription): () => void {
+    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote }: UpdateSubscription): () => void {
       const problem = (m: string) => onProblem?.(m)
       const src = eventSource ?? window.dawn?.onEvent
       if (!src) {
@@ -158,6 +167,17 @@ export function createClient(
       }
 
       return src((raw) => {
+        /**
+         * **先认远端更新。** 它与会话更新共用一条 IPC 通道但不是同一种东西
+         * （没有 `sessionId`，也没有 revision）。
+         * 不先分派的话，每一条远端状态都会被下面那句判成「不合协议」并出声——
+         * 一条正常的推送变成一次报警，报警多了就没人看了。
+         */
+        const remote = RemoteUpdateSchema.safeParse(raw)
+        if (remote.success) {
+          onRemote?.(remote.data)
+          return
+        }
         const parsed = SessionUpdateSchema.safeParse(raw)
         if (!parsed.success) {
           problem(`收到不合协议的会话更新，已丢弃：${parsed.error.issues[0]?.message ?? "结构不符"}`)

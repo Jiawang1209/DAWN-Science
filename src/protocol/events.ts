@@ -25,6 +25,7 @@
  * **不发事件、不要求界面道歉**：把正常契约当成故障来播报，是把噪音当成诚实。
  */
 import { z } from "zod"
+import { RemoteStateSchema } from "./entities.js"
 
 /** 一条对话发言。native 会话由 pi 的文本增量累积而成 */
 const TurnItem = z
@@ -296,3 +297,23 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
   z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])
 export type SessionUpdate = z.infer<typeof SessionUpdateSchema>
+
+/**
+ * 连接状态的推送（②-B · R3）。**独立于会话那条通道。**
+ *
+ * 一台服务器不属于任何会话——它可能一个会话都还没有，
+ * 也可能同时托着好几个。塞进 `SessionUpdate` 就得给它编一个假的 `sessionId`，
+ * 而**编出来的 id 迟早会被人当真**。
+ *
+ * 这条通道存在的理由只有一个：**断线必须自己出声**。
+ * 靠界面轮询的话，从断开到被发现之间那段时间里，
+ * 界面显示的是「连着」——**那是一个看起来很确定的谎**。
+ */
+export const RemoteUpdateSchema = z
+  .object({
+    workbenchProtocolVersion: z.string().regex(/^\d+\.\d+$/),
+    connectionId: z.string().min(1),
+    state: RemoteStateSchema,
+  })
+  .strict()
+export type RemoteUpdate = z.infer<typeof RemoteUpdateSchema>

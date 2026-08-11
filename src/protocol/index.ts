@@ -14,6 +14,8 @@ export {
   FileChangeFactsSchema,
   ProjectSummarySchema,
   ProvenanceLinkSchema,
+  RemoteConnectionSchema,
+  RemoteStateSchema,
   RunOriginSchema,
   RunStatusSchema,
   RunSummarySchema,
@@ -26,6 +28,8 @@ export type {
   FileChangeFacts,
   ProjectSummary,
   ProvenanceLink,
+  RemoteConnection,
+  RemoteState,
   RunOrigin,
   RunStatus,
   RunSummary,
@@ -33,8 +37,13 @@ export type {
   WorkbenchCapabilities,
 } from "./entities.js"
 
-export { SessionSnapshotSchema, SessionUpdateSchema, TranscriptItemSchema } from "./events.js"
-export type { SessionSnapshot, SessionUpdate, TranscriptItem } from "./events.js"
+export {
+  RemoteUpdateSchema,
+  SessionSnapshotSchema,
+  SessionUpdateSchema,
+  TranscriptItemSchema,
+} from "./events.js"
+export type { RemoteUpdate, SessionSnapshot, SessionUpdate, TranscriptItem } from "./events.js"
 
 export {
   DEFAULT_PAGE_SIZE,

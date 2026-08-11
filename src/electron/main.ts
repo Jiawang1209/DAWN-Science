@@ -8,6 +8,7 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
 import { join } from "node:path"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } from "./ipc.js"
+import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
@@ -48,6 +49,15 @@ const SCRATCH_ROOT = process.env.DAWN_SCRATCH_ROOT
  * 「每个用例一套全新的目录」。
  */
 const CLI_HOME = process.env.DAWN_CLI_HOME
+
+/**
+ * 用假服务器代替真 SSH（②-B · R3）。**mock 模式与 e2e 用。**
+ *
+ * 与 `DAWN_CONFIG` / `DAWN_DB` 是同一套惯例：**默认是真的**，
+ * 要假的必须显式说。反过来（默认假、真的要显式开）会让某次忘了设的运行
+ * 悄悄连到一台不存在的机器上，而界面会说「连上了」。
+ */
+const FAKE_SSH = process.env.DAWN_FAKE_SSH === "1"
 
 let workbench: Workbench | undefined
 
@@ -149,7 +159,24 @@ function 接上事件流(win: BrowserWindow): void {
     if (win.isDestroyed()) return
     win.webContents.send(IPC_EVENT_CHANNEL, event)
   })
-  win.on("closed", () => off())
+  /**
+   * 远端连接状态（②-B · R3）。**同一条 IPC 通道，另一种载荷。**
+   *
+   * schema 是分开的（`RemoteUpdate` 没有 `sessionId`），传输共用一条——
+   * 再开一条通道就要在 preload 上再挖一个口，而那条通道是单向的、
+   * 挖一个就多一处要守的边界。渲染进程按形状分派。
+   */
+  const offRemote = workbench.onRemoteState((u) => {
+    if (win.isDestroyed()) return
+    win.webContents.send(IPC_EVENT_CHANNEL, {
+      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+      ...u,
+    })
+  })
+  win.on("closed", () => {
+    off()
+    offRemote()
+  })
 }
 
 app.whenReady().then(() => {
@@ -200,6 +227,7 @@ app.whenReady().then(() => {
       ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
+      ...(FAKE_SSH ? { fakeSsh: true } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })
     if (workbench.reconciled > 0) {

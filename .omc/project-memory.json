@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/views.tsx\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('import { formatTokens } from \"./format.js\"',\n              'import { formatDuration, formatTokens } from \"./format.js\"', 1)\n\nold = \"\"\"function ToolRow({ item }: { item: Extract<TranscriptItem, { type: \"tool\" }> }) {\n  const { mark, label } = TOOL_STATUS[item.status]\"\"\"\nnew = \"\"\"function ToolRow({ item }: { item: Extract<TranscriptItem, { type: \"tool\" }> }) {\n  const { mark, label } = TOOL_STATUS[item.status]\n  const 用时 = 跑了多久(item)\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\n\nold = \"\"\"        <span className=\"tool-status\">{label}</span>\n      </Button>\"\"\"\nnew = \"\"\"        {用时 ? (\n          /**\n           * **「已经跑了多久」**（②-B · R2）。\n           *\n           * 作者：*「可以，不设默认超时，但把『已经跑了多久』显示出来，\n           * 中止交给你按。」* 这一句是**成对的**——没有这个数，\n           * 「还在跑」与「卡死了」在界面上长得一模一样，\n           * 而人要按的那个「停止」就成了一次没有依据的赌。\n           */\n          <span className=\"tool-elapsed\" title={item.status === \"running\" ? \"已经跑了\" : \"耗时\"}>\n            {item.status === \"running\" ? `已跑 ${用时}` : 用时}\n          </span>\n        ) : null}\n        <span className=\"tool-status\">{label}</span>\n      </Button>\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\n\n# helper + hook before ToolRow\nold = \"\"\"/**\n * 一次工具调用的呈现。\"\"\"\nnew = \"\"\"/**\n * **每秒一跳的当前时刻**——只在有东西真的在跑时才跳。\n *\n * 没有运行中的工具时**不装定时器**：一个永远在跳的 setInterval 会让\n * 整个对话区每秒重渲染一次，而屏幕上没有任何东西在变。\n */\nfunction useTick(active: boolean): number {\n  const [now, setNow] = useState(() => Date.now())\n  useEffect(() => {\n    if (!active) return\n    setNow(Date.now())\n    const t = setInterval(() => setNow(Date.now()), 1000)\n    return () => clearInterval(t)\n  }, [active])\n  return now\n}\n\n/**\n * 一次工具调用的呈现。\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\n\n# 跑了多久 implementation placed after TOOL_STATUS\nold = \"\"\"} as const\n\n/**\n * **每秒一跳的当前时刻**\"\"\"\nnew = \"\"\"} as const\n\n/**\n * 这一条跑了多久。**没有开始时刻就什么都不说**——\n * 拿「现在」当开始时刻会让一条跑了二十分钟的命令显示成「0 秒」，\n * 而看起来很确定的错比明说不知道坏得多。\n *\n * 一秒以内不显示：那个数每次都不一样，除了闪之外不提供任何判断依据。\n */\nfunction useElapsed(item: Extract<TranscriptItem, { type: \"tool\" }>): string | undefined {\n  const 在跑 = item.status === \"running\" && item.startedAt !== undefined\n  const now = useTick(在跑)\n  if (item.startedAt === undefined) return undefined\n  const 止 = item.status === \"running\" ? now : (item.endedAt ?? now)\n  const ms = 止 - item.startedAt\n  if (ms < 1000) return undefined\n  return formatDuration(ms)\n}\n\n/**\n * **每秒一跳的当前时刻**\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\ns = s.replace(\"  const 用时 = 跑了多久(item)\", \"  const 用时 = useElapsed(item)\", 1)\np.write_text(s, encoding=\"utf8\")\nPY\ngrep -n \"useEffect\\|useState\" src/ui/views.tsx | head -3; npx tsc --noEmit -p tsconfig.json 2>&1 | grep -v \"npm notice\" | head -5",
-    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL|×\" | head -12",
+    "buildCommand": "python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"scripts/build-electron.mjs\"); s = p.read_text(encoding=\"utf8\")\nold = \"\"\"  \"spawnteract\",\n  \"enchannel-zmq-backend\",\n  \"@nteract/messaging\",\n]\"\"\"\nnew = \"\"\"  \"spawnteract\",\n  \"enchannel-zmq-backend\",\n  \"@nteract/messaging\",\n  /**\n   * **`ssh2`（②-B · R3 加入）。**\n   *\n   * 它自己是纯 JS，但可选依赖 `cpu-features` 是原生的，\n   * 而 esbuild 会顺着 `require(\"../build/Release/cpufeatures.node\")` 一路解析下去，\n   * 于是**构建当场失败**（`Could not resolve`）。\n   *\n   * `cpu-features` 只是拿来挑更快的加密实现，没有它 ssh2 会退回纯 JS 实现——\n   * 也就是说这条 external 不会让功能少一块。\n   *\n   * 这处是 `ssh2` 从 devDependency 变成 dependency 那一刻才出现的：\n   * 在此之前它只活在 spike 与测试里，从不经过这条打包路径。\n   * **单测与 typecheck 都发现不了它，只有真构建一次才会撞上。**\n   */\n  \"ssh2\",\n  \"cpu-features\",\n]\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build 2>&1 | tail -5",
+    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3 && npm run test:e2e 2>&1 | tail -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -338,6 +338,18 @@
       "type": "file"
     },
     {
+      "path": "src/protocol/events.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786438815965,
+      "type": "file"
+    },
+    {
+      "path": "src/remote/ssh.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786438975598,
+      "type": "file"
+    },
+    {
       "path": "src/config/schema.ts",
       "accessCount": 1,
       "lastAccessed": 1786373021333,
@@ -458,12 +470,6 @@
       "type": "file"
     },
     {
-      "path": "src/remote/ssh.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786433146413,
-      "type": "file"
-    },
-    {
       "path": "tests/remote/ssh.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786434480012,
@@ -488,12 +494,6 @@
       "type": "file"
     },
     {
-      "path": "src/protocol/events.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786435526308,
-      "type": "file"
-    },
-    {
       "path": "e2e/visual.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1786435921939,
@@ -503,6 +503,30 @@
       "path": "e2e/tool-elapsed.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1786435989068,
+      "type": "file"
+    },
+    {
+      "path": "src/store/schema.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786438760721,
+      "type": "file"
+    },
+    {
+      "path": "src/store/connections.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786438958267,
+      "type": "file"
+    },
+    {
+      "path": "src/remote/connections.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786439012304,
+      "type": "file"
+    },
+    {
+      "path": "src/remote/fake-ssh.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786439184697,
       "type": "file"
     }
   ],

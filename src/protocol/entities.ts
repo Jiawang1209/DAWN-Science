@@ -225,3 +225,55 @@ export const WorkbenchCapabilitiesSchema = z
   })
   .strict()
 export type WorkbenchCapabilities = z.infer<typeof WorkbenchCapabilitiesSchema>
+
+/**
+ * 一台远端服务器的连接状态（②-B · R3）。
+ *
+ * **断了要说清为什么，且不静默重连**（计划 §3.3）。
+ * 一个只写「未连接」的状态会让人以为是自己还没点，
+ * 而实情可能是密码错了、跳板机拒了、或者对端把连接掐了。
+ */
+export const RemoteStateSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("idle") }).strict(),
+  z.object({ kind: z.literal("connecting") }).strict(),
+  z.object({ kind: z.literal("ready") }).strict(),
+  /** **原因必填**——不带原因的「断了」等于没报 */
+  z.object({ kind: z.literal("disconnected"), reason: z.string().min(1) }).strict(),
+])
+export type RemoteState = z.infer<typeof RemoteStateSchema>
+
+/**
+ * 一台远端服务器（②-B · R3）。
+ *
+ * ## 这份记录里**没有口令**
+ *
+ * 只有主机、端口、用户名、私钥路径、分组——**那些不是秘密**。
+ * 口令与私钥 passphrase 进系统钥匙串，与模型 key 同一套。
+ * 这是 `models.json` 那次的直接延伸：**明文落盘的密钥等于没有密钥**。
+ *
+ * `hasSecret` 只说「配过没有」，**绝不回显**——凭证那条的显示纪律。
+ */
+export const RemoteConnectionSchema = z
+  .object({
+    id: z.string().min(1),
+    /** 显示名。默认就是 `user@host`，但人常给它起「实验室」这种名字 */
+    label: z.string().min(1),
+    /**
+     * 分组。**只是一个字符串标签，不是树**。
+     * 缺省 = 没分组，界面把它们放在最上面，**不造一个叫「未分组」的假分组**
+     */
+    group: z.string().min(1).optional(),
+    host: z.string().min(1),
+    port: z.int().min(1).max(65535),
+    username: z.string().min(1),
+    /** 私钥路径。**路径不是秘密**，所以它回显；口令才进钥匙串 */
+    privateKeyPath: z.string().min(1).optional(),
+    /** 钥匙串里有没有它的口令。**只说有没有，不说是什么** */
+    hasSecret: z.boolean(),
+    sortOrder: z.int(),
+    createdAt: Iso,
+    /** 此刻的连接状态。**服务端说了算**——界面自己猜会猜成「以为连着」 */
+    state: RemoteStateSchema,
+  })
+  .strict()
+export type RemoteConnection = z.infer<typeof RemoteConnectionSchema>

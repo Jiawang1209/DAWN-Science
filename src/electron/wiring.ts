@@ -28,6 +28,11 @@ import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backe
 import { SettingsStore } from "../store/settings.js"
 import { createPiCredentialStore } from "../workbench/credential-store.js"
 import { SessionTranscripts } from "../workbench/events.js"
+import { Client as SshClient } from "ssh2"
+import { ConnectionStore } from "../store/connections.js"
+import { RemoteConnections } from "../remote/connections.js"
+import { 造一台假服务器 } from "../remote/fake-ssh.js"
+import type { RemoteState, SshClientLike } from "../remote/ssh.js"
 import { WorkbenchServer } from "../workbench/server.js"
 
 /**
@@ -59,6 +64,14 @@ export interface CreateWorkbenchOptions {
   openPath?: (absolutePath: string) => Promise<string>
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
+  /**
+   * 用假服务器代替真 SSH（②-B · R3）。**mock 模式与 e2e 用**。
+   *
+   * 准入规则 1：新增的协议操作要在同一次改动里有 mock 分支，
+   * 否则「添加服务器 → 连接」这条路径在 mock 模式下走不通，
+   * 于是它只能靠人拿真机试——那意味着**它几乎不会被试**。
+   */
+  fakeSsh?: boolean
   /**
    * 一个项目都没有时使用的默认工作区。
    *
@@ -100,6 +113,14 @@ export interface Workbench {
   sessions: SessionManager
   /** 事件中枢。`main.ts` 把它的推送接到 webContents */
   events: SessionTranscripts
+  /**
+   * 远端连接状态的推送口（②-B · R3）。**只有一个听众**——`main.ts`。
+   *
+   * 它与会话那条通道分开的理由：**一台服务器不属于任何会话**。
+   * 塞进 `SessionUpdate` 就得给它编一个假的 `sessionId`，
+   * 而编出来的 id 迟早会被人当真。
+   */
+  onRemoteState(cb: (u: { connectionId: string; state: RemoteState }) => void): () => void
   /** 启动对账修正的残留会话条数 */
   reconciled: number
   close(): void
@@ -249,7 +270,33 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   // 环境快照落库（S17）。**内容寻址**：同一个环境反复开会话只存一行
   const environments = new EnvironmentStore(db)
 
+  /**
+   * 远端连接（②-B · R3/R4）。**名单在库里，谁连着在管理器里。**
+   *
+   * ## `fakeSsh` 是准入规则 1 要求的那个 mock
+   *
+   * `dev:mock` 与 e2e **没有一台真服务器可连**。没有假的那份，
+   * 「添加服务器 → 连接 → 它连上了」这条主路径在 mock 模式下根本走不通，
+   * 于是它只能靠人拿真机试——而那意味着**它几乎不会被试**。
+   *
+   * 换掉的只有**「另一端是谁」**：`RemoteExecutor` 里真正要紧的那些
+   * （环境捕获、单引号转义、退出码、断线不重连）走的仍是真代码。
+   */
+  const connectionStore = new ConnectionStore(db)
+  const remoteConnections = new RemoteConnections({
+    createClient: opts.fakeSsh
+      ? 造一台假服务器
+      : () => new SshClient() as unknown as SshClientLike,
+    // **口令从钥匙串取，与模型 key 同一个库**，键上带 `ssh:` 前缀免得撞名
+    secretFor: (id) => opts.credentials.get(`ssh:${id}`),
+    ...(process.env["SSH_AUTH_SOCK"] ? { agentSock: process.env["SSH_AUTH_SOCK"] } : {}),
+    onState: (connectionId, state) => 远端状态变了?.({ connectionId, state }),
+  })
+  /** 状态推给界面的出口。**装配层接上之后才有值**——接不上就只是没人听 */
+  let 远端状态变了: ((u: { connectionId: string; state: RemoteState }) => void) | undefined
+
   const backend = createWorkbenchBackend({
+    remote: { store: connectionStore, manager: remoteConnections },
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,
@@ -308,11 +355,19 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     sessions,
     events,
     reconciled,
+    onRemoteState(cb) {
+      远端状态变了 = cb
+      return () => {
+        远端状态变了 = undefined
+      }
+    },
     close() {
       // 幂等：Electron 的 will-quit 与显式关闭可能都会走到这里
       if (closed) return
       closed = true
       events.dispose()
+      // **退出时把连接断干净**：留着的 SSH socket 会让进程不肯退
+      remoteConnections.closeAll()
       db.close()
     },
 

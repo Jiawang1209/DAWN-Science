@@ -471,7 +471,7 @@ describe("工具调用的时刻", () => {
     const h = 定时([1000, 121_000])
     h.track("a", "native")
     h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
-    h.ingest("a", { kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "bash", text: "ok" })
+    h.ingest("a", { kind: "tool_end", sessionId: "a", toolCallId: "t1", toolName: "bash", text: "ok", isError: false, truncated: false, bytes: 2 })
     const t = 取工具(h)
     expect(t.startedAt).toBe(1000)
     expect(t.endedAt).toBe(121_000)
@@ -480,7 +480,7 @@ describe("工具调用的时刻", () => {
   it("**没见过 start 的 end 不编一个开始时刻** —— 拿「现在」冒充等于说它耗时 0", () => {
     const h = 定时([5000])
     h.track("a", "native")
-    h.ingest("a", { kind: "tool_end", sessionId: "a", toolCallId: "t9", toolName: "bash", text: "ok" })
+    h.ingest("a", { kind: "tool_end", sessionId: "a", toolCallId: "t9", toolName: "bash", text: "ok", isError: false, truncated: false, bytes: 2 })
     const t = 取工具(h)
     expect(t.startedAt).toBeUndefined()
     expect(t.endedAt).toBe(5000)

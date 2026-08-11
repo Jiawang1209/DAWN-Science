@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 9
+export const SCHEMA_VERSION = 10
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -284,6 +284,39 @@ export function migrate(db: Database.Database): void {
       key        TEXT PRIMARY KEY,
       value      TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );
+  `)
+
+  /**
+   * **v10（2026-08-11）：远端连接名单**（②-B · R3）。
+   *
+   * 作者要的形状：*「左边搞一个固定的『远端连接』，可以增加分组，
+   * 分组里面是 ssh 的服务器，类似 XTerminal 的那种登陆效果。」*
+   *
+   * ## 这张表里**没有口令**，而且不能有
+   *
+   * 只有主机、端口、用户名、私钥路径、分组——那些不是秘密。
+   * 口令与私钥 passphrase 进系统钥匙串（`ssh:<id>`），与模型 key 同一套。
+   * **这是 `models.json` 那次的直接延伸**：明文落盘的密钥等于没有密钥。
+   * `tests/store/no-secret-columns.test.ts` 盯着这一条——
+   * 可判定的规则配扫描测试，不靠记性（准入规则 2）。
+   *
+   * ## 分组是一列字符串，不是一张表
+   *
+   * 它只是个标签。做成表就要处理「空分组」——而空分组不该存在：
+   * 最后一台移走了，那个分组也就没有了，留着只是一排空壳。
+   */
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS remote_connections (
+      id               TEXT PRIMARY KEY,
+      label            TEXT NOT NULL,
+      group_name       TEXT,
+      host             TEXT NOT NULL,
+      port             INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),
+      username         TEXT NOT NULL,
+      private_key_path TEXT,
+      sort_order       INTEGER NOT NULL,
+      created_at       TEXT NOT NULL
     );
   `)
 

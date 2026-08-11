@@ -2,6 +2,19 @@ import { describe, expect, it } from "vitest"
 import { WorkbenchServer, type WorkbenchBackend } from "../../src/workbench/server.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 
+/** 一台够用的假服务器。**没有 secret 字段**——响应里本来就不该有 */
+const 假连接 = {
+  id: "c1",
+  label: "实验室",
+  host: "h",
+  port: 22,
+  username: "u",
+  hasSecret: false,
+  sortOrder: 1,
+  createdAt: "2026-08-08T00:00:00Z",
+  state: { kind: "idle" as const },
+}
+
 const project = {
   projectId: "p1",
   name: "x",
@@ -78,6 +91,11 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     deleteProject: async () => ({ sessionsDeleted: 0, runsDeleted: 0, workspace: "/tmp/ws" }),
     deletionImpact: async () => ({ sessions: 0, runs: 0, workspace: "/tmp/ws" }),
     openExternally: async () => ({}),
+    listConnections: async () => [],
+    saveConnection: async () => 假连接,
+    removeConnection: async () => ({}),
+    connectRemote: async () => 假连接,
+    disconnectRemote: async () => 假连接,
     acquireLease: async () => ({
       sessionId: "s1",
       holder: "user" as const,

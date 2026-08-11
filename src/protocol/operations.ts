@@ -18,6 +18,7 @@ import {
   FileChangeFactsSchema,
   ProjectSummarySchema,
   ProvenanceLinkSchema,
+  RemoteConnectionSchema,
   RunSummarySchema,
   SessionSummarySchema,
   WorkbenchCapabilitiesSchema,
@@ -356,6 +357,73 @@ export const OPERATIONS = {
     request: Empty,
     response: z.array(SessionSummarySchema),
     mutating: false,
+  },
+
+  /**
+   * ── 远端连接（②-B · R3/R4）─────────────────────────────────────────
+   *
+   * 作者要的形状：*「左边搞一个固定的『远端连接』，可以增加分组，
+   * 分组里面是 ssh 的服务器，类似 XTerminal 的那种登陆效果。」*
+   */
+
+  /** 全部连接，**带此刻的状态**。状态由服务端说了算，界面自己猜会猜成「以为连着」 */
+  listConnections: {
+    request: Empty,
+    response: z.array(RemoteConnectionSchema),
+    mutating: false,
+  },
+
+  /**
+   * 新增或修改一台。**不给 `id` 就是新增。**
+   *
+   * ## `secret` 只进不出
+   *
+   * 它在请求里，**永远不在响应里**——响应只用 `hasSecret` 说「配过没有」。
+   * 这条与模型 key 是同一套纪律：**回显一次，它就落进了截图、日志和录屏。**
+   * 不传 `secret` = 不动原来那个（不是「清空」）；传空串才是清除。
+   */
+  saveConnection: {
+    request: z
+      .object({
+        id: z.string().min(1).optional(),
+        label: z.string().min(1),
+        group: z.string().min(1).optional(),
+        host: z.string().min(1),
+        port: z.int().min(1).max(65535).optional(),
+        username: z.string().min(1),
+        privateKeyPath: z.string().min(1).optional(),
+        /** 口令或私钥 passphrase。**进钥匙串，不进库** */
+        secret: z.string().optional(),
+      })
+      .strict(),
+    response: RemoteConnectionSchema,
+    mutating: true,
+  },
+
+  /** 删掉一台。**连着的先断开**，钥匙串里那份也一并删掉——留着就是一份没人认领的秘密 */
+  removeConnection: {
+    request: z.object({ id: z.string().min(1) }).strict(),
+    response: Empty,
+    mutating: true,
+  },
+
+  /**
+   * 连上。**等到真的连上（或失败）才返回**。
+   *
+   * 立刻返回「连接中」会让界面把「正在连」与「连上了」混为一谈，
+   * 而这两者之间可能隔着一次超时。失败时如实抛错，**不退回某个乐观状态**。
+   */
+  connectRemote: {
+    request: z.object({ id: z.string().min(1) }).strict(),
+    response: RemoteConnectionSchema,
+    mutating: true,
+  },
+
+  /** 主动断开。**这与「断线」不是一回事**——前者是人按的，后者要报原因 */
+  disconnectRemote: {
+    request: z.object({ id: z.string().min(1) }).strict(),
+    response: RemoteConnectionSchema,
+    mutating: true,
   },
 
   writeToSession: {

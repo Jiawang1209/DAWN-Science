@@ -11,6 +11,7 @@
 import type { ProviderRegistry } from "../config/schema.js"
 import { addNativeAgent, setProviderConnection } from "../config/writer.js"
 import { homedir } from "node:os"
+import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { deriveSessionTitle } from "../session/title.js"
@@ -32,6 +33,8 @@ import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
 import { fault, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
+import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
+import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 
 /**
@@ -64,6 +67,16 @@ export interface WorkbenchBackendOptions {
   configPath?: string
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
+  /**
+   * 远端连接（②-B · R3）。**名单在库里，谁连着在管理器里。**
+   *
+   * **不给则那五个操作如实说「本次运行没有装配」**，不假装一个空名单——
+   * 空名单会被读成「你还没加过服务器」，那和「这个功能没接上」是两回事。
+   */
+  remote?: {
+    store: ConnectionStore
+    manager: RemoteConnections
+  }
   /** 环境快照的落库处（S17）。**没装配也能用**，只是快照不持久 */
   environments?: EnvironmentStore
   /**
@@ -119,7 +132,31 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote } = opts
+
+  /**
+   * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
+   * 空名单会被读成「你还没加过服务器」，那和「这个功能没接上」是两回事。
+   */
+  const 远端 = () => {
+    if (!remote) throw fault("internal_error", "本次运行没有装配远端连接")
+    return remote
+  }
+
+  /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
+  const 密钥名 = (id: string) => `ssh:${id}`
+
+  /**
+   * 库里那条记录 + 此刻的状态 → 协议实体。
+   *
+   * **口令不在这里出现**，只有 `hasSecret`。状态也不从库里读——
+   * 库里存状态的话，应用崩一次，下次打开会看到一台「连着」的服务器。
+   */
+  const 装配 = (rec: ConnectionRecord) => ({
+    ...rec,
+    hasSecret: credentials.get(密钥名(rec.id)) !== undefined,
+    state: remote ? remote.manager.stateOf(rec.id) : ({ kind: "idle" } as const),
+  })
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -448,6 +485,86 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         .list()
         .filter((p) => p.temporary)
         .flatMap((p) => projects.sessions(p.projectId)),
+
+    /**
+     * ── 远端连接（②-B · R3/R4）─────────────────────────────────────────
+     *
+     * **口令一律不出这一层。** 请求里的 `secret` 转手进钥匙串，
+     * 响应里只有 `hasSecret`。回显一次，它就落进了截图、日志和录屏。
+     */
+
+    listConnections: async () => 远端().store.list().map(装配),
+
+    saveConnection: async (req) => {
+      const { store } = 远端()
+      const 端口 = req.port ?? 22
+      const 旧的 = req.id ? store.get(req.id) : undefined
+      if (req.id && !旧的) throw fault("not_found", `没有这台服务器：${req.id}`)
+
+      const rec: ConnectionRecord = {
+        id: 旧的?.id ?? `conn-${randomUUID()}`,
+        label: req.label,
+        ...(req.group ? { group: req.group } : {}),
+        host: req.host,
+        port: 端口,
+        username: req.username,
+        ...(req.privateKeyPath ? { privateKeyPath: req.privateKeyPath } : {}),
+        sortOrder: 旧的?.sortOrder ?? store.nextSortOrder(req.group),
+        createdAt: 旧的?.createdAt ?? new Date().toISOString(),
+      }
+      if (旧的) store.update(rec)
+      else store.insert(rec)
+
+      /**
+       * **不传 `secret` = 不动原来那个**（不是「清空」）。
+       *
+       * 改一次分组就把口令弄丢，是这类表单最经典的坏法：
+       * 界面上那个框永远是空的（因为绝不回显），于是每次保存都会"顺手"清掉。
+       * 传空串才是清除——那是明确的「我不要它了」。
+       */
+      if (req.secret !== undefined) {
+        if (req.secret) credentials.set(密钥名(rec.id), req.secret)
+        else credentials.delete(密钥名(rec.id))
+      }
+      return 装配(rec)
+    },
+
+    removeConnection: async ({ id }) => {
+      const { store, manager } = 远端()
+      if (!store.get(id)) throw fault("not_found", `没有这台服务器：${id}`)
+      // 先断开：留着一条连着的连接，它的状态推送会指向一台已经不存在的机器
+      manager.disconnect(id)
+      store.remove(id)
+      // **钥匙串里那份也删掉**——留着就是一份没人认领的秘密
+      credentials.delete(密钥名(id))
+      return {}
+    },
+
+    connectRemote: async ({ id }) => {
+      const { store, manager } = 远端()
+      const rec = store.get(id)
+      if (!rec) throw fault("not_found", `没有这台服务器：${id}`)
+      try {
+        await manager.connect(rec)
+      } catch (e) {
+        /**
+         * **连不上要说清楚是为什么。**
+         *
+         * 认证失败、主机不通、私钥读不到——在界面上都长成「连不上」，
+         * 但要人去改的东西完全不同。原样把底层的话带上去。
+         */
+        throw fault("internal_error", e instanceof Error ? e.message : String(e))
+      }
+      return 装配(rec)
+    },
+
+    disconnectRemote: async ({ id }) => {
+      const { store, manager } = 远端()
+      const rec = store.get(id)
+      if (!rec) throw fault("not_found", `没有这台服务器：${id}`)
+      manager.disconnect(id)
+      return 装配(rec)
+    },
 
     writeToSession: async ({ sessionId, data, as }) => {
       try {

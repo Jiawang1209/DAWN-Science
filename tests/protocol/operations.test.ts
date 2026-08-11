@@ -14,19 +14,24 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("44 个操作齐全（… + 临时会话 2 + 终端 1）", () => {
+  it("49 个操作齐全（… + 临时会话 2 + 终端 1 + 远端连接 5）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
+        "connectRemote",
         "createSession",
         "createTemporarySession",
         "createTerminalSession",
+        "disconnectRemote",
         "listTemporarySessions",
         "createAgent",
         "deleteCredential",
         "deleteProject",
         "deleteSession",
         "deletionImpact",
+        "listConnections",
+        "saveConnection",
+        "removeConnection",
         "listCredentials",
         "listDirectory",
         "listKernels",

@@ -20,7 +20,7 @@
  * 「先跑其余的，再跑它」。这么做的理由只有一个——
  * **红着的全量套件会教人忽略红色**，而那比一个待查的 bug 更贵。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -114,6 +114,81 @@ test.describe("内核会话", () => {
  */
 const R_KERNEL = "ir"
 const 有R = existsSync(join(homedir(), "Library", "Jupyter", "kernels", R_KERNEL))
+
+/**
+ * **账本要如实**（②-B 前置 · 2026-08-11）。**跑真实构建产物。**
+ *
+ * 内核会话与 native 一样走 `beginTurn`，所以每段代码都有 Run——
+ * 但收口时 `idle` 分支无条件写 `completed / hasError: false`，
+ * 于是**一段跑挂了的代码，账本上是「完成、无错」**。
+ * 那不是漏记，是**记了一件没发生的事**：账本本该是事实层（不变式 5）。
+ *
+ * 单元测试已经钉过这条（含变异验证），这里验的是**整条线**：
+ * 界面上敲一段会炸的代码 → 内核 iopub 上那条 `error` → 记账员 → 库里那一行。
+ */
+test.describe("内核执行的账本", () => {
+  test.use({ dawnOptions: { providersYaml: PROVIDERS, realKernels: true } })
+  test.skip(!有, `本机没有 ${KERNEL} kernelspec`)
+
+  test("**跑挂的代码在账本上是 failed，且带着原因**", async ({ dawn }) => {
+    const { page, dbPath } = dawn
+    await 开一段临时会话(page)
+    const box = page.getByPlaceholder(/回车发送/)
+    await expect(box).toBeVisible({ timeout: 60_000 })
+
+    await box.fill("这行故意写错()")
+    await box.press("Enter")
+    // 界面上先看见报错，说明这一轮真的跑完了
+    await expect(page.locator(".turns")).toContainText(/Error|错误/, { timeout: 60_000 })
+
+    await expect
+      .poll(
+        async () => {
+          const rows = await readRuns(dbPath)
+          /**
+           * **`kernel_execute` 也算。** 这个 spec 的内核是按 kernelspec 名字配的
+           * （`command: dawn-spike`），配置里没有 `language`——那时我们**不猜**语言，
+           * 记的是中性的 `kernel_execute`。写死 `execute_python` 的话，
+           * 一个 R 会话的账本会指着一门它没用过的语言。
+           */
+          const 执行 = rows.filter((r) => /^(execute_|kernel_execute)/.test(String(r["request_type"])))
+          return 执行.map((r) => `${String(r["status"])}|${String(r["has_error"])}`)
+        },
+        { timeout: 30_000 },
+      )
+      .toContain("failed|1")
+
+    const rows = await readRuns(dbPath)
+    const 那条 = rows.find((r) => r["status"] === "failed")!
+    // **失败必须带原因**（规格 7.5）——「失败了但不说为什么」等于没记
+    expect(String(那条["terminal_reason"] ?? "")).not.toBe("")
+    // **账本上分得出「跑了一段代码」和「说了一句话」**
+    expect(String(那条["request_type"])).toMatch(/^(execute_|kernel_execute)/)
+  })
+
+  test("**跑得通的代码是 completed** —— 不能一律记成失败", async ({ dawn }) => {
+    const { page, dbPath } = dawn
+    await 开一段临时会话(page)
+    const box = page.getByPlaceholder(/回车发送/)
+    await expect(box).toBeVisible({ timeout: 60_000 })
+
+    await box.fill("print(40 + 2)")
+    await box.press("Enter")
+    await expect(page.locator(".turns")).toContainText("42", { timeout: 60_000 })
+
+    await expect
+      .poll(
+        async () => {
+          const rows = await readRuns(dbPath)
+          return rows
+            .filter((r) => /^(execute_|kernel_execute)/.test(String(r["request_type"])))
+            .map((r) => String(r["status"]))
+        },
+        { timeout: 30_000 },
+      )
+      .toContain("completed")
+  })
+})
 
 test.describe("R 内核会话", () => {
   test.use({

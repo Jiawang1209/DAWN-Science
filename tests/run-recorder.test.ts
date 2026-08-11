@@ -391,3 +391,100 @@ describe("子 agent 的账（①-B″ · S1，不变式 3）", () => {
     expect(subs.find((r) => r.requestType === "subagent:planner")!.status).toBe("running")
   })
 })
+
+
+/**
+ * 内核执行的记账（②-B 前置 · 2026-08-11）。
+ *
+ * ## 这里修的是账本在撒谎
+ *
+ * 内核会话与 native 一样走 `beginTurn`，所以**每段代码都有 Run**——
+ * 我一度以为「内核执行完全不进账本」，核代码时发现不是。真实的缺口更具体，
+ * 也更难看：
+ *
+ *   1. **跑挂了的代码，账本上记的是「完成、无错」**。`idle` 分支无条件写
+ *      `completed / hasError: false`，而内核报错的方式是 iopub 上一条 `error` 条目，
+ *      没有退出码。**那不是漏记，是记了一件没发生的事**——
+ *      账本本该是事实层（不变式 5）。
+ *   2. **`requestType` 一律 `agent_turn`**：账本上一段 R 代码和一次模型对话
+ *      长得一模一样，「这是执行代码」这个事实就此消失。
+ *      路线图 S16 早写了 `execute_r` / `execute_py` 两个名字。
+ */
+describe("内核执行", () => {
+  const 报错 = (ename: string, evalue: string) =>
+    ({
+      kind: "kernel_output" as const,
+      sessionId: SESSION,
+      entry: {
+        kind: "error" as const,
+        ename,
+        evalue,
+        traceback: [],
+        provenance: { kernelInstanceId: "k1", kernelRevision: 1, at: "2026-08-11T00:00:00.000Z" },
+      },
+    }) as never
+
+  it("**跑挂了就记 failed，并带上原因** —— 不能因为「这一轮结束了」就叫完成", () => {
+    rec.beginTurn(SESSION, "execute_python")
+    rec.ingest(报错("NameError", "name 'foo' is not defined"))
+    rec.ingest({ kind: "idle", sessionId: SESSION })
+
+    const r = list()[0]!
+    expect(r.status).toBe("failed")
+    expect(r.hasError).toBe(true)
+    expect(r.terminalReason).toContain("NameError")
+    expect(r.terminalReason).toContain("foo")
+  })
+
+  it("没报错照旧是 completed", () => {
+    rec.beginTurn(SESSION, "execute_python")
+    rec.ingest({ kind: "idle", sessionId: SESSION })
+    const r = list()[0]!
+    expect(r.status).toBe("completed")
+    expect(r.hasError).toBe(false)
+  })
+
+  it("**下一轮不背上一轮的错** —— 错误状态要随收口清掉", () => {
+    rec.beginTurn(SESSION, "execute_python")
+    rec.ingest(报错("ValueError", "bad"))
+    rec.ingest({ kind: "idle", sessionId: SESSION })
+
+    rec.beginTurn(SESSION, "execute_python")
+    rec.ingest({ kind: "idle", sessionId: SESSION })
+
+    const all = list()
+    expect(all.filter((r) => r.status === "failed")).toHaveLength(1)
+    expect(all.filter((r) => r.status === "completed")).toHaveLength(1)
+  })
+
+  it("**只认结构化的 error 条目，不按文本猜** —— stream 里出现 error 字样的多了去了", () => {
+    rec.beginTurn(SESSION, "execute_python")
+    rec.ingest({
+      kind: "kernel_output",
+      sessionId: SESSION,
+      entry: {
+        kind: "stream",
+        name: "stderr",
+        text: "WARNING: error rate is 0.3",
+        provenance: { kernelInstanceId: "k1", kernelRevision: 1, at: "2026-08-11T00:00:00.000Z" },
+      },
+    } as never)
+    rec.ingest({ kind: "idle", sessionId: SESSION })
+    // 一句提到 error 的日志**不是**一次失败。按文本猜就是在编造事实
+    expect(list()[0]!.status).toBe("completed")
+  })
+
+  it("**账本上分得出「跑了一段代码」和「说了一句话」**", () => {
+    rec.beginTurn(SESSION, "execute_r")
+    expect(list()[0]!.requestType).toBe("execute_r")
+  })
+
+  it("没报错但会话崩了，仍按会话收尾那条路走（不被错误状态干扰）", () => {
+    rec.beginTurn(SESSION, "execute_python")
+    rec.ingest(报错("KeyboardInterrupt", ""))
+    rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1 })
+    const r = list()[0]!
+    // 会话崩了的收尾自有其 terminalReason，这条只验它没被当成 completed
+    expect(r.status).not.toBe("completed")
+  })
+})

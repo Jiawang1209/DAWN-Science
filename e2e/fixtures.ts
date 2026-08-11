@@ -344,10 +344,18 @@ export async function readRuns(dbPath: string): Promise<Record<string, unknown>[
   const { default: Database } = await import("better-sqlite3")
   const db = new Database(dbPath, { readonly: true })
   try {
-    return db.prepare("SELECT request_type, origin, status FROM runs ORDER BY started_at").all() as Record<
-      string,
-      unknown
-    >[]
+    /**
+     * **把 `has_error` 与 `terminal_reason` 也取出来**（2026-08-11）。
+     *
+     * 「跑挂的代码有没有被如实记成失败」正要看这两列——
+     * 少取一列，用例就只能验到 `status`，而 `status=failed` 却
+     * `has_error=0` 这种**自相矛盾的行**照样会溜过去。
+     */
+    return db
+      .prepare(
+        "SELECT request_type, origin, status, has_error, terminal_reason FROM runs ORDER BY started_at",
+      )
+      .all() as Record<string, unknown>[]
   } finally {
     db.close()
   }

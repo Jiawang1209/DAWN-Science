@@ -51,6 +51,14 @@ interface Open {
    * 与「不可见」是两回事（数据库那层用 `cost_visible IS NULL` 表达）。
    */
   pendingCost?: Cost | undefined
+  /**
+   * 这一轮里内核报过的错（2026-08-11）。
+   *
+   * **在 `idle` 收口时决定这条 Run 是 completed 还是 failed。**
+   * 内核不像子进程有退出码——它报错的方式是 iopub 上一条 `error` 条目，
+   * 而那条来得比 `idle` 早。
+   */
+  turnError?: string | undefined
   /** 正在执行的工具，按 pi 的 toolCallId 索引 */
   tools: Map<string, string>
   /**
@@ -115,12 +123,20 @@ export class RunRecorder {
    * `origin: "user"`——**是人发起的**，哪怕干活的是 agent。
    * 这个区分是不变式 5 的一部分：将来要能回答「这次改动是谁要求的」。
    */
-  beginTurn(sessionId: SessionId): void {
+  beginTurn(sessionId: SessionId, requestType = "agent_turn"): void {
     // **PTY 会话按会话记账，不按回合。** 往 PTY 里写的是按键，不是"发一句话"——
     // 把每次按键记成一个回合会把账本变成噪音。这个判断放在这里而不是调用方，
     // 是为了让「PTY 记什么粒度」只有一处定义
     if (this.open.get(sessionId)?.sessionRunId) return
-    const runId = this.begin(sessionId, "agent_turn", "user")
+    /**
+     * **`requestType` 由调用方给**（2026-08-11）。
+     *
+     * 内核会话往这里送的是**一段代码**，不是一句话，所以它记
+     * `execute_python` / `execute_r`——路线图 S16 早就写了这两个名字。
+     * 此前一律记成 `agent_turn`：账本上一段 R 代码和一次模型对话长得一模一样，
+     * **而「这是执行代码」这个事实就此消失**。
+     */
+    const runId = this.begin(sessionId, requestType, "user")
     if (runId) this.slot(sessionId).turnRunId = runId
   }
 
@@ -152,6 +168,25 @@ export class RunRecorder {
        * 硬记到上一轮上就是把 A 的账算到 B 头上。
        */
       if (s?.turnRunId) s.pendingCost = event.cost
+      return
+    }
+
+    if (event.kind === "kernel_output") {
+      /**
+       * **内核报错要落到账本上**（2026-08-11 补）。
+       *
+       * 此前 `idle` 分支无条件写 `status: "completed", hasError: false`——
+       * 于是**一段跑挂了的代码，账本上是「完成、无错」**。
+       * 那不是漏记，是**记了一件没发生的事**：不变式 5 说的「声明层与事实层分离」
+       * 在这里被反了过来——账本本该是事实层。
+       *
+       * 只认 `kind: "error"`：`stream` 里出现 "error" 字样的多了去了
+       * （编译器警告、日志级别），**按文本猜错误就是在编造事实**。
+       */
+      if (event.entry.kind === "error" && s?.turnRunId) {
+        const { ename, evalue } = event.entry
+        s.turnError = evalue ? `${ename}: ${evalue}` : ename
+      }
       return
     }
 
@@ -249,12 +284,17 @@ export class RunRecorder {
       const runId = s?.turnRunId
       if (!runId) return
       const cost = s!.pendingCost
+      const 出错 = s!.turnError
       s!.turnRunId = undefined
       s!.pendingCost = undefined
+      s!.turnError = undefined
       this.runs.finish(runId, {
-        status: "completed",
+        // **跑挂了就记 failed**，不能因为「这一轮结束了」就叫完成
+        status: 出错 ? "failed" : "completed",
         finishedAt: this.now(),
-        hasError: false,
+        hasError: Boolean(出错),
+        // 失败必须带原因（规格 7.5）
+        ...(出错 ? { terminalReason: 出错 } : {}),
         // **没收到就整个不给这个字段**：`finish` 用 COALESCE，
         // 给 undefined 与不给是一回事，但显式写出来是为了说清楚
         // 「没记到成本」不该被写成 0（那会被读成「免费」）

@@ -232,6 +232,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     return projects.sessions(projectId).find((s) => s.sessionId === rec.id)!
   }
 
+  /**
+   * 这一次写入在账本上该叫什么。
+   *
+   * **只有内核会话与众不同**：它送进去的是代码，不是话。
+   * 拿不到语言时退回 `kernel_execute`——**不猜**（写死 python 的话，
+   * 一个 R 会话的账本会指着一门它没用过的语言）。
+   */
+  function 这一轮叫什么(sessionId: string): string | undefined {
+    const rec = sessions.get(sessionId)
+    const agentId = rec?.agentId
+    const def = agentId ? registry.agents[agentId] : undefined
+    if (def?.kind !== "kernel") return undefined
+    return def.language === "R" ? "execute_r" : def.language === "python" ? "execute_python" : "kernel_execute"
+  }
+
   return {
     listProjects: async () => projects.list(),
 
@@ -453,9 +468,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           const title = deriveSessionTitle(data)
           if (title) projects.setSessionTitle(sessionId, title)
           events.userTurn(sessionId, data)
-          // 运行时没有 turn_start 事件——回合的起点只有这里知道。
-          // PTY 会话由记账员自己忽略（那是按键，不是发话），见 run-recorder.ts
-          runRecorder?.beginTurn(sessionId)
+          /**
+           * 运行时没有 turn_start 事件——回合的起点只有这里知道。
+           * PTY 会话由记账员自己忽略（那是按键，不是发话），见 run-recorder.ts
+           *
+           * **内核会话记的是「执行了一段代码」**（2026-08-11）：
+           * 账本上一段 R 代码不该和一次模型对话长得一模一样。
+           * 名字用路线图 S16 早就写下的 `execute_python` / `execute_r`。
+           */
+          runRecorder?.beginTurn(sessionId, 这一轮叫什么(sessionId))
         }
       } catch (err) {
         // 写权被拒是业务性失败，不是内部错误——UI 要能分辨并提示用户去抢租约

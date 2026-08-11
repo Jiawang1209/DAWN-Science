@@ -1521,6 +1521,7 @@ export function TranscriptRow({
        * **不拿「当前那家」去盖所有历史**——前面那些确实是 DeepSeek 答的。
        */}
       <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}</span>
+      <div className="turn-body">
       <div className="bubble">
         {/**
          * **只有 agent 的发言走 markdown。**
@@ -1575,6 +1576,14 @@ export function TranscriptRow({
        * **常驻，不做悬停才出现**：本项目已经因为这个被报过两次
        * 「没有这个功能」，而两次代码都是好的。
        */}
+      {/**
+       * **气泡与它的操作在同一个盒子里**（2026-08-12）。
+       *
+       * 作者要「图标和对话的左边对齐」，选的是**跟着自己那颗气泡的左缘**。
+       * 而自己说的话是靠右的：不套这一层，操作行会各自缩到内容宽度、
+       * 贴在右端——图标就落在气泡的右半边，对不上任何一条边。
+       * 套上之后，这个盒子的宽度等于气泡，图标从它的左缘排起。
+       */}
       {item.final ? (
         <div className="turn-actions">
           <CopyButton text={item.text} label={mine ? "复制我说的这段" : "复制这段回答"} />
@@ -1598,6 +1607,7 @@ export function TranscriptRow({
           ) : null}
         </div>
       ) : null}
+      </div>
     </div>
   )
 }

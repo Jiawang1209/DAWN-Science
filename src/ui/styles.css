@@ -2150,6 +2150,15 @@ pre {
  * 对齐到同一条竖线上，扫一眼就知道每段下面有什么。
  */
 .turn .turn-actions { justify-content: flex-start; }
+/**
+ * **自己那句的操作，对齐到那颗气泡的左缘**（2026-08-12，作者选的）。
+ *
+ * 不是「靠到对话区最左」——那样图标会离自己那句话很远，
+ * 眼睛得跨过一整行空白才找得到它属于谁。
+ */
+.turn-body { display: flex; flex-direction: column; min-width: 0; }
+/* 自己说的话靠右：**盒子缩到气泡那么宽**，于是操作行从气泡左缘排起 */
+.turn.user .turn-body { width: fit-content; max-width: 100%; margin-left: auto; }
 /* 两颗图标同样大小：一个 ⧉ 一个 ✎，大小不一样会像是两种东西 */
 .turn-actions .btn-icon { width: 1.75rem; height: 1.75rem; font-size: 0.95rem; }
 .turn-edit { width: 100%; min-height: 4.5em; resize: vertical; }

@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/runtime/native.ts\"); s = p.read_text(encoding=\"utf8\")\nold = \"\"\"    this.sessions.set(spec.sessionId, {\n      session,\n      sessionManager,\"\"\"\nnew = \"\"\"    this.sessions.set(spec.sessionId, {\n      session,\n      sessionManager,\n      /**\n       * **起会话时就记下当前是谁**（2026-08-12 修）。\n       *\n       * 不记的话，第一条回复的回执必然与「不知道」对不上，\n       * 于是**每个会话的第一句都会平白多一条「已换到 …」**——\n       * 那条通知的意思是「有变化」，而这里根本没有变化。\n       * `model-error` 那条 e2e 当场抓到：`.caveat` 从一条变成两条。\n       */\n      实际模型: `${native.provider}/${native.model}`,\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpx tsc --noEmit -p tsconfig.json 2>&1 | grep -v notice | head -2; npm run build >/dev/null 2>&1 && npx playwright test e2e/model-error.spec.ts e2e/markdown-render.spec.ts 2>&1 | tail -4",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run test:e2e:only 2>&1 | tail -6",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/views.tsx\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"\"\"      <div className=\"bubble\">\n        {/**\n         * **只有 agent 的发言走 markdown。**\"\"\",\n\"\"\"      <div className=\"turn-body\">\n      <div className=\"bubble\">\n        {/**\n         * **只有 agent 的发言走 markdown。**\"\"\", 1)\ns = s.replace(\"\"\"      {item.final ? (\n        <div className=\"turn-actions\">\"\"\",\n\"\"\"      {/**\n       * **气泡与它的操作在同一个盒子里**（2026-08-12）。\n       *\n       * 作者要「图标和对话的左边对齐」，选的是**跟着自己那颗气泡的左缘**。\n       * 而自己说的话是靠右的：不套这一层，操作行会各自缩到内容宽度、\n       * 贴在右端——图标就落在气泡的右半边，对不上任何一条边。\n       * 套上之后，这个盒子的宽度等于气泡，图标从它的左缘排起。\n       */}\n      {item.final ? (\n        <div className=\"turn-actions\">\"\"\", 1)\ns = s.replace(\"\"\"          ) : null}\n        </div>\n      ) : null}\n    </div>\n  )\n}\"\"\",\n\"\"\"          ) : null}\n        </div>\n      ) : null}\n      </div>\n    </div>\n  )\n}\"\"\", 1)\np.write_text(s, encoding=\"utf8\")\n\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"\"\".turn.user .turn-actions { align-self: flex-end; }\"\"\",\n\"\"\".turn-body { display: flex; flex-direction: column; min-width: 0; }\n/* 自己说的话靠右：**盒子缩到气泡那么宽**，于是操作行从气泡左缘排起 */\n.turn.user .turn-body { width: fit-content; max-width: 100%; margin-left: auto; }\"\"\")\np.write_text(s, encoding=\"utf8\")\nPY\nnpx tsc --noEmit -p tsconfig.json 2>&1 | grep -v notice | head -2; npm run build >/dev/null 2>&1 && npx playwright test e2e/composer-history-copy.spec.ts 2>&1 | tail -3",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npx playwright test e2e/visual.spec.ts 2>&1 | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -242,15 +242,15 @@
       "type": "file"
     },
     {
-      "path": "src/ui/Settings.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1786374348983,
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "accessCount": 6,
+      "lastAccessed": 1786491896745,
       "type": "file"
     },
     {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "path": "src/ui/Settings.tsx",
       "accessCount": 5,
-      "lastAccessed": 1786468763553,
+      "lastAccessed": 1786374348983,
       "type": "file"
     },
     {

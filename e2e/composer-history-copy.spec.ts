@@ -130,3 +130,31 @@ test("**操作在这一段下面**，不是浮在右上角", async ({ dawn }) =>
   // 断言的是**位置本身**：一句「在下面」的注释证明不了它真的在下面
   expect(操作!.y).toBeGreaterThanOrEqual(气泡!.y + 气泡!.height - 2)
 })
+
+/**
+ * 操作图标**对齐自己那颗气泡的左缘**（2026-08-12，作者选的）。
+ *
+ * 不是「靠到对话区最左」——那样图标会离自己那句话很远，
+ * 眼睛要跨过一整行空白才找得到它属于谁。
+ */
+test("**图标对齐气泡左缘**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await page.getByPlaceholder(/回车发送/).fill("量一下对齐")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.locator(".turns")).toContainText("量一下对齐", { timeout: 30_000 })
+
+  const 气泡 = (await page.locator(".turn.user .bubble").first().boundingBox())!
+  const 第一颗 = (await page.locator(".turn.user .turn-actions .btn").first().boundingBox())!
+
+  // **左缘对齐**：容差 2px 给边框与图标内边距
+  expect(Math.abs(第一颗.x - 气泡.x)).toBeLessThanOrEqual(2)
+
+  // 顺带钉住「两颗一样大」：一个 ⧉ 一个 ✎，大小不一样会像是两种东西
+  const 两颗 = page.locator(".turn.user .turn-actions .btn")
+  await expect(两颗).toHaveCount(2)
+  const a = (await 两颗.nth(0).boundingBox())!
+  const b = (await 两颗.nth(1).boundingBox())!
+  expect(Math.abs(a.width - b.width)).toBeLessThanOrEqual(1)
+  expect(Math.abs(a.height - b.height)).toBeLessThanOrEqual(1)
+})

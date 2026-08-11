@@ -407,7 +407,23 @@ export class NativeRuntime implements AgentRuntime {
     }
     const 原始 = [
       createReadToolDefinition(cwd),
-      createBashToolDefinition(cwd),
+      /**
+       * **不要把 `PI_*` 塞进命令的环境**（2026-08-12）。
+       *
+       * 作者连着换了三次模型，每次问「你是什么模型」都答 deepseek。
+       * 根因不是没换过去（Kimi 自报过「我是 Kimi，由月之暗面开发」），
+       * 而是**它第一轮跑过 `env`，那份输出留在对话里**——里面写着
+       * `PI_MODEL=deepseek-v4-flash`。之后每次它都照着那份快照念，
+       * 而**快照是不会自己更新的**。
+       *
+       * 劝它「那份已经过期」试过了，压不住一份长得像证据的输出。
+       * **所以让这份证据不存在**：`exposeSessionEnvironment: false`。
+       * 变量没有了，模型就只能按自己的身份回答——而那正是问题的正确答案。
+       *
+       * 代价：脚本拿不到 `PI_SESSION_ID` / `PI_SESSION_FILE`。
+       * **我们没有任何地方用它们**（全仓搜过），而这几个名字本来也是 pi 的。
+       */
+      createBashToolDefinition(cwd, { exposeSessionEnvironment: false }),
       createEditToolDefinition(cwd),
       createWriteToolDefinition(cwd),
     ] as unknown as (Record<string, unknown> & {

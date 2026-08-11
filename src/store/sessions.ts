@@ -236,11 +236,20 @@ export class SessionStore {
     const 更大 = direction === "up"
     const row = this.db
       .prepare(
+        /**
+         * **邻居要在人看得见的那一列里找。**
+         *
+         * 加上 `connection_id` 之前，远端会话与临时会话同挂在一个容器项目下，
+         * 于是「上移」换到的是一条**根本没显示在那台服务器下面**的会话——
+         * 界面上什么都不动。作者报的正是这句：*「连接服务器的对话，不能挪动。」*
+         *
+         * 本地那些的 `connection_id` 是 NULL，`IS ?` 同样成立——**一条规则管两边**。
+         */
         `SELECT id, sort_order FROM sessions
-          WHERE project_id IS ? AND pinned = ? AND sort_order ${更大 ? ">" : "<"} ?
+          WHERE project_id IS ? AND connection_id IS ? AND pinned = ? AND sort_order ${更大 ? ">" : "<"} ?
           ORDER BY sort_order ${更大 ? "ASC" : "DESC"} LIMIT 1`,
       )
-      .get(me.projectId ?? null, me.pinned ? 1 : 0, me.sortOrder) as
+      .get(me.projectId ?? null, me.connectionId ?? null, me.pinned ? 1 : 0, me.sortOrder) as
       | { id: string; sort_order: number }
       | undefined
     if (!row) return false

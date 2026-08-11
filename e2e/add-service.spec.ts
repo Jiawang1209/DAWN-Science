@@ -61,8 +61,18 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
   await page.locator(".agent-pill").click()
-  // **限定在「新建会话，用：」那一组**：同一个名字在「就地换服务」组里也有一条
-  await page.locator(".agent-menu .new-group").getByRole("menuitem", { name: "mine" }).click()
+  /**
+   * **走「就地换服务」那一组**（2026-08-11 改）。
+   *
+   * 此前这里点的是「新建会话，用哪个 LLM」那一组里的同名项。
+   * 那一组现在不再重复列出**能就地换过去**的服务——作者报过
+   * *「同一个对话，我切换模型，依旧会弹出新的对话」*：
+   * 同一家在两组里各出现一次，而人是照着「换 LLM」几个字点的。
+   *
+   * 换成上组之后，这条用例验的东西反而更强了：
+   * 新加的服务不仅**能用**，而且是**在同一段对话里**用上的。
+   */
+  await page.locator(".agent-menu .svc-group").getByRole("menuitem", { name: "mine" }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   // 模型格上是我们声明的那个 id——不是某个内置 provider 顶了包
   await expect(page.locator(".composer")).toContainText("my-7b")

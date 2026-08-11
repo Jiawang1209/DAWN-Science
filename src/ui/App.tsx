@@ -47,6 +47,7 @@ import { FilesView, type FileContent, type Listing } from "./files.js"
 import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
+import { 新建会话可选的 } from "./agents.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { buildCommands, type Actions } from "./commands.js"
@@ -1676,7 +1677,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 session={session}
                 items={items}
-                agents={agentIds}
+                /**
+                 * **能就地换的，就不要在「新建会话」那一组里再出现一次**
+                 * （2026-08-11 修）。
+                 *
+                 * 作者：*「同一个对话，我切换模型，依旧会弹出新的对话，
+                 * 而不是继续对话。」* 那颗 pill 的菜单里有两组，
+                 * 上组「就地换服务（对话不断）」、下组「新建会话，用哪个 LLM」——
+                 * **同一家 DeepSeek 在两组里各出现一次**，
+                 * 而人是照着「换 LLM」这几个字点的，于是点中了会新开对话的那个。
+                 *
+                 * 现在下组只留**换不过去的那些**（CLI / 终端 / 内核那类：
+                 * 一个 API 会话没法半路变成 claude 会话）。
+                 * 想另起一段仍然有路——侧栏那颗「新建会话」。
+                 */
+                agents={新建会话可选的(
+                  agentIds,
+                  (id) => providers.agents.find((a) => a.agentId === id)?.kind,
+                  Boolean(services && services.length > 0),
+                )}
                 onNewSession={actions.newSession}
                 models={modelChoices}
                 model={currentModel}

@@ -120,3 +120,59 @@ describe("改名", () => {
     expect(store.move("不存在", "up")).toBe(false)
   })
 })
+
+/**
+ * **挪动只在人看得见的那一列里发生**（②-B · R4′ 之后）。
+ *
+ * 作者：*「连接服务器的对话，不能挪动。」*
+ *
+ * 根因：远端会话与临时会话**同挂在一个容器项目下**，而「上移」是在项目内
+ * 找邻居——换到的那条根本没显示在那台服务器下面，于是界面上什么都不动。
+ * 那是「点了没反应」的又一种形状：动作成功了，看得见的东西没变。
+ */
+describe("挪动的范围", () => {
+  const 造两台 = () => {
+    const db = new Database(":memory:")
+    dbs.push(db)
+    migrate(db)
+    db.prepare(`INSERT INTO projects (id, name, workspace, created_at) VALUES ('p','p','/w','t')`).run()
+    const store = new SessionStore(db)
+    // 交错插入：甲、乙、甲、乙 —— 邻居如果不按服务器分，换到的就是另一台的
+    for (const [id, conn] of [["a1", "甲"], ["b1", "乙"], ["a2", "甲"], ["b2", "乙"]] as const) {
+      store.insert({
+        id,
+        agentId: "a",
+        workspace: "/w",
+        sessionDir: `/w/${id}`,
+        state: "alive",
+        createdAt: "2026-08-11T00:00:00Z",
+        projectId: "p",
+        connectionId: conn,
+      })
+    }
+    return store
+  }
+
+  const 某台的顺序 = (store: SessionStore, conn: string) =>
+    store.listByProject("p").filter((s) => s.connectionId === conn).map((s) => s.id)
+
+  it("**上移换的是同一台机器上的那一条**", () => {
+    const store = 造两台()
+    // 列表是倒序的（新的在上）：甲那一列此刻是 a2, a1
+    expect(某台的顺序(store, "甲")).toEqual(["a2", "a1"])
+    expect(store.move("a1", "up")).toBe(true)
+    expect(某台的顺序(store, "甲")).toEqual(["a1", "a2"])
+  })
+
+  it("**不碰另一台的顺序** —— 换到别人家去，界面上就是「点了没反应」", () => {
+    const store = 造两台()
+    const 乙原来 = 某台的顺序(store, "乙")
+    store.move("a1", "up")
+    expect(某台的顺序(store, "乙")).toEqual(乙原来)
+  })
+
+  it("到头了就如实回 false，不假装挪过", () => {
+    const store = 造两台()
+    expect(store.move("a2", "up")).toBe(false)
+  })
+})

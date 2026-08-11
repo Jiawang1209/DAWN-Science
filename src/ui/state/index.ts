@@ -59,6 +59,7 @@ export {
   $connections,
   setConnections,
   setConnectionState,
+  setSessionCwd,
   $remoteOpen,
   toggleRemoteOpen,
   setRemoteOpen,

@@ -147,39 +147,102 @@ function 跑(整条: string): { out: string; err: string; code: number } {
 
   // 环境捕获那一条：`echo "DAWNENV_PATH=${PATH}"; …`
   if (里面.includes("DAWNENV_")) {
-    const 环境: Record<string, string> = { PATH: "/usr/local/bin:/usr/bin:/bin", HOME: 家, LANG: "en_US.UTF-8" }
+    const 环境: Record<string, string> = {
+      PATH: "/usr/local/bin:/usr/bin:/bin",
+      HOME: 家,
+      LANG: "en_US.UTF-8",
+    }
     const 行 = [...里面.matchAll(/DAWNENV_([A-Z_]+)=/g)].map(
       (x) => `DAWNENV_${x[1]}=${环境[x[1]!] ?? ""}`,
     )
     return { out: `${行.join("\n")}\n`, err: "", code: 0 }
   }
 
-  // 真正的命令前面会有一串 `export X='…'; ` 前缀和可能的 `cd '…' || exit 127; `
-  const 去掉前缀 = 里面.replace(/^(echo \$\$ > \S+; )?(export [^;]+; )*(cd '[^']*' \|\| exit 127; )?/, "")
+  // 真正的命令前面会有 `echo $$ > …; export …; cd '…' || exit 127; `
   const cd = /cd '([^']*)'/.exec(里面)
-  const 当前 = cd?.[1] ?? 家
+  let 当前 = cd?.[1] ?? 家
+  const 去掉前缀 = 里面.replace(
+    /^(echo \$\$ > \S+; )?(export [^;]+; )*(cd '[^']*' \|\| exit 127; )?/,
+    "",
+  )
 
-  if (/^pwd\b/.test(去掉前缀)) return { out: `${当前}\n`, err: "", code: 0 }
-  if (/^echo\s+/.test(去掉前缀)) {
-    return { out: `${去掉前缀.replace(/^echo\s+/, "").replace(/^["']|["']$/g, "")}\n`, err: "", code: 0 }
+  /**
+   * **认得那层「记住当前目录」的包装**（②-B · R4′）。
+   *
+   * 远端 bash 工具发出来的是
+   * `{ <命令>\n}; rc=$?; printf '\n__DAWN_CWD__%s\n' "$(pwd)"; exit $rc`。
+   * 真 bash 当然认得它；这台假机器不认的话，**mock 模式下每条命令都会
+   * 报 `command not found`**——而那与「工具没接上远端」在界面上长得一样。
+   */
+  const 包装 = /^\{ ([\s\S]*)\n\}; rc=\$\?; printf '[^']*' "\$\(pwd\)"; exit \$rc$/.exec(去掉前缀)
+  const 命令 = 包装 ? 包装[1]! : 去掉前缀
+
+  const 段 = 命令.split(/\s*&&\s*|\s*;\s*/).filter(Boolean)
+  let out = ""
+  let err = ""
+  let code = 0
+  for (const 一段 of 段) {
+    // `cd` 由这台假机器自己记着——真 shell 也是这么干的
+    const c = /^cd\s+(.+)$/.exec(一段)
+    if (c) {
+      const 目标 = c[1]!.replace(/^["']|["']$/g, "")
+      const 新的 = 目标.startsWith("/") ? 目标 : `${当前.replace(/\/+$/, "")}/${目标}`
+      // **不存在的目录要失败**，否则 `cd 打错的名字` 会静默成功
+      if (!存在(新的)) {
+        err += `bash: cd: ${目标}: No such file or directory\n`
+        code = 1
+        break
+      }
+      当前 = 新的
+      continue
+    }
+    const r = 一条(一段, 当前)
+    out += r.out
+    err += r.err
+    code = r.code
+    // `&&` 的语义：前一条失败就不往下走
+    if (code !== 0) break
   }
-  if (/^ls\b/.test(去掉前缀)) {
+
+  // 包装要求的那行标记由**这台机器**打出来（真 bash 就是这么打的）
+  if (包装) out += `\n${标记}${当前}\n`
+  return { out, err, code }
+}
+
+const 标记 = "__DAWN_CWD__"
+
+/** 那个路径在这台假机器上存在吗（目录算存在，只要它下面有文件） */
+function 存在(路径: string): boolean {
+  const p = 路径.replace(/\/+$/, "")
+  return Object.keys(文件).some((k) => k === p || k.startsWith(`${p}/`))
+}
+
+function 一条(命令: string, 当前: string): { out: string; err: string; code: number } {
+  if (/^pwd\b/.test(命令)) return { out: `${当前}\n`, err: "", code: 0 }
+  if (/^echo\s+/.test(命令)) {
+    return {
+      out: `${命令.replace(/^echo\s+/, "").replace(/^["']|["']$/g, "")}\n`,
+      err: "",
+      code: 0,
+    }
+  }
+  if (/^ls\b/.test(命令)) {
     const 前缀 = `${当前.replace(/\/+$/, "")}/`
     const 名字 = new Set<string>()
     for (const k of Object.keys(文件)) {
       if (k.startsWith(前缀)) 名字.add(k.slice(前缀.length).split("/")[0]!)
     }
-    return { out: `${[...名字].join("\n")}\n`, err: "", code: 名字.size ? 0 : 0 }
+    return { out: `${[...名字].join("\n")}\n`, err: "", code: 0 }
   }
-  if (/^cat\s+/.test(去掉前缀)) {
-    const 路径 = 去掉前缀.replace(/^cat\s+/, "").replace(/^["']|["']$/g, "")
+  if (/^cat\s+/.test(命令)) {
+    const 路径 = 命令.replace(/^cat\s+/, "").replace(/^["']|["']$/g, "")
     const 全 = 路径.startsWith("/") ? 路径 : `${当前}/${路径}`
     const v = 文件[全]
     if (v === undefined) return { out: "", err: `cat: ${路径}: No such file or directory\n`, code: 1 }
     return { out: v, err: "", code: 0 }
   }
-  if (/^(hostname|uname)\b/.test(去掉前缀)) return { out: "dawn-fake\n", err: "", code: 0 }
-  if (/^mkdir\b/.test(去掉前缀)) return { out: "", err: "", code: 0 }
+  if (/^(hostname|uname)\b/.test(命令)) return { out: "dawn-fake\n", err: "", code: 0 }
+  if (/^mkdir\b/.test(命令)) return { out: "", err: "", code: 0 }
 
   /**
    * **认不得就说认不得。**
@@ -187,5 +250,9 @@ function 跑(整条: string): { out: string; err: string; code: number } {
    * 一律回 0 的话，mock 模式下每条命令都"成功"了，
    * 于是界面上的失败路径永远走不到——而那正是最需要被看见的一条。
    */
-  return { out: "", err: `${去掉前缀.split(/\s+/)[0]}: command not found（这是一台假服务器）\n`, code: 127 }
+  return {
+    out: "",
+    err: `${命令.split(/\s+/)[0]}: command not found（这是一台假服务器）\n`,
+    code: 127,
+  }
 }

@@ -10,7 +10,7 @@ import { basename, join, resolve } from "node:path"
 import type { ProviderRegistry } from "../config/schema.js"
 import type { ProjectRecord, ProjectStore } from "../store/projects.js"
 import type { RunStore } from "../store/runs.js"
-import type { SessionStore } from "../store/sessions.js"
+import type { SessionStore, SessionRecord } from "../store/sessions.js"
 import type { ProjectSummary, RunSummary, SessionSummary } from "../protocol/index.js"
 
 export interface ProjectManagerOptions {
@@ -148,8 +148,18 @@ export class ProjectManager {
   }
 
   /** 列出项目下的会话（协议实体形态） */
-  sessions(projectId: string): SessionSummary[] {
-    return this.sessionStore.listByProject(projectId).map((s) => ({
+  sessions(projectId: string, remoteLabel?: (id: string) => string | undefined): SessionSummary[] {
+    return this.sessionStore.listByProject(projectId).map((s) => this.toSummary(projectId, s, remoteLabel))
+  }
+
+  /**
+   * 一条会话记录 → 协议摘要。
+   *
+   * **`remoteLabel` 不给就退回连接 id**：那不好看，但**是实话**；
+   * 编一个「未知服务器」出来会让人以为真有这么一台。
+   */
+  toSummary(projectId: string, s: SessionRecord, remoteLabel?: (id: string) => string | undefined): SessionSummary {
+    return {
       sessionId: s.id,
       projectId,
       agentId: s.agentId,
@@ -162,7 +172,22 @@ export class ProjectManager {
       sortOrder: s.sortOrder,
       ...(s.pid === undefined ? {} : { pid: s.pid }),
       ...(s.exitCode === undefined ? {} : { exitCode: s.exitCode }),
-    }))
+      // **这段对话长在哪台机器的哪个目录**（②-B · R4′）。缺省 = 本地
+      ...(s.connectionId
+        ? {
+            remote: {
+              connectionId: s.connectionId,
+              label: remoteLabel?.(s.connectionId) ?? s.connectionId,
+              cwd: s.remoteCwd ?? "/",
+            },
+          }
+        : {}),
+    }
+  }
+
+  /** 会话此刻在远端的哪个目录（②-B · R4′）。**列表要显示它** */
+  setRemoteCwd(sessionId: string, cwd: string): void {
+    this.sessionStore.setRemoteCwd(sessionId, cwd)
   }
 
   /**

@@ -67,6 +67,7 @@ function backend(): WorkbenchBackend {
     deletionImpact: async () => ({ sessions: 0, runs: 0, workspace: "/tmp/ws" }),
     openExternally: async () => ({}),
     listConnections: async () => [],
+    createRemoteSession: async () => 假会话,
     saveConnection: async () => 假连接,
     removeConnection: async () => ({}),
     connectRemote: async () => 假连接,
@@ -76,6 +77,18 @@ function backend(): WorkbenchBackend {
       expiresAt: "2026-08-08T00:05:00Z", fingerprint: "abc",
     }),
   }
+}
+
+/** 一段够用的假会话 */
+const 假会话 = {
+  sessionId: "s1",
+  projectId: "p1",
+  agentId: "a",
+  kind: "native" as const,
+  state: "alive" as const,
+  pinned: false,
+  sortOrder: 1,
+  createdAt: "2026-08-08T00:00:00Z",
 }
 
 /** 一台够用的假服务器。**没有 secret 字段**——响应里本来就不该有 */

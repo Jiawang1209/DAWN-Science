@@ -179,3 +179,26 @@ export function setConnectionState(connectionId: string, state: RemoteConnection
 export const $remoteOpen = atom(false)
 export const toggleRemoteOpen = () => $remoteOpen.set(!$remoteOpen.get())
 export const setRemoteOpen = (v: boolean) => $remoteOpen.set(v)
+
+/**
+ * 某个远端会话换目录了（②-B · R4′）。
+ *
+ * **只改那一条**，不整份重取：模型可能连着 `cd` 好几次，
+ * 每次重取一遍列表既慢又会让侧栏抖。
+ */
+export function setSessionCwd(sessionId: string, cwd: string): void {
+  for (const [store, set] of [
+    [$tempSessions, setTempSessions],
+    [$sessions, setSessions],
+  ] as const) {
+    const 现在 = store.get()
+    const i = 现在.findIndex((s) => s.sessionId === sessionId)
+    // **不认识的会话就跳过**：凭一条推送造一个会话出来，其余字段全是编的
+    if (i < 0) continue
+    const s = 现在[i]!
+    if (!s.remote) continue
+    const 下一份 = [...现在]
+    下一份[i] = { ...s, remote: { ...s.remote, cwd } }
+    set(下一份)
+  }
+}

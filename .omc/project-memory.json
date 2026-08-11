@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 - <<'PY'\nimport pathlib\n# remote-head 不再是 side-action：它是「一个区的开关」，不是「新建一个 X」\np = pathlib.Path(\"src/ui/remote.tsx\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('<Row className=\"side-action remote-head\" aria-expanded={open} onClick={onToggle}>',\n              '''{/**\n        * **它不是 `.side-action`。**\n        *\n        * 那个类的意思是「新建一个 X」——侧栏顶上两颗就是它。\n        * 这一行是**一个区的开关**，长得像但不是同一种东西。\n        * 借用那个类的代价是：`sidebar-layout.spec.ts` 数的是\n        * 「顶层有哪几块」，混进来一个开关会让那条断言失去意思。\n        */}\n      <Row className=\"remote-head\" aria-expanded={open} onClick={onToggle}>''', 1)\np.write_text(s, encoding=\"utf8\")\n\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\".remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); }\",\n\"\"\"/* 与 `.side-action` 同样的排布（图标 + 名字挨着），但**不共用那个类**——\n   那个类的意思是「新建一个 X」，这一行是一个区的开关 */\n.remote-head { justify-content: flex-start; margin: 0 var(--dawn-space-2); }\n.remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; }\"\"\")\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/sidebar-layout.spec.ts e2e/remote-connections.spec.ts 2>&1 | tail -4",
-    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3; npm run test:e2e:only 2>&1 | tail -6",
+    "buildCommand": "npm run build >/dev/null 2>&1 && npx playwright test e2e/remote-connections.spec.ts 2>&1 | tail -8",
+    "testCommand": "npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3; npm run test:e2e:only 2>&1 | tail -10",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

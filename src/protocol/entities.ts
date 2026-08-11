@@ -211,6 +211,18 @@ export const SessionSummarySchema = z
     pid: z.int().optional(),
     exitCode: z.int().optional(),
     createdAt: Iso,
+    /**
+     * 这段对话的活干在哪台机器上（②-B · R4′）。**缺省 = 本地。**
+     *
+     * `cwd` 是**此刻**的当前目录，会随模型 `cd` 变。它必须一直显示在
+     * 对话头上：*你以为在 A 目录、实际在 B 目录，然后说一句
+     * 「把这里的文件都删了」*——这种事故只有一个防法，
+     * 就是那个路径一直在眼皮底下。
+     */
+    remote: z
+      .object({ connectionId: z.string().min(1), label: z.string().min(1), cwd: z.string().min(1) })
+      .strict()
+      .optional(),
   })
   .strict()
 export type SessionSummary = z.infer<typeof SessionSummarySchema>

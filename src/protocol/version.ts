@@ -111,6 +111,9 @@
  *   **临时会话仍然有工作区**（每个一个独立目录）——agent 要有地方读写、
  *   账本要有归属；`temporary` 只是告诉界面它归上面那一列。
  * 4.3（2026-08-11）：新增 `createTerminalSession`。纯新增。
+ * 4.6（2026-08-11）：`createRemoteSession`；`SessionSummary.remote`；
+ *   会话更新多一种 `cwd`。纯新增。
+ *   **起点是那台机器的家目录，由服务端定**——「从哪个目录开始」是一条边界。
  * 4.5（2026-08-11）：远端连接名单——`listConnections` / `saveConnection` /
  *   `removeConnection` / `connectRemote` / `disconnectRemote`，
  *   以及连接状态的推送通道。纯新增。
@@ -124,7 +127,7 @@
  *   不做成 `createSession` 的一个 `cwd` 参数——那等于把「shell 从哪儿开」
  *   的决定权交给渲染进程，而那条边界决定了 `rm -rf .` 会删掉谁。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.5"
+export const WORKBENCH_PROTOCOL_VERSION = "4.6"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

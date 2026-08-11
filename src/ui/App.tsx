@@ -91,6 +91,7 @@ import {
   loadTempSessions,
   loadConnections,
   setConnectionState,
+  setSessionCwd,
   $connections,
   $remoteOpen,
   toggleRemoteOpen,
@@ -218,6 +219,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 一边在下面 `ls` 看它到底写出了什么。所以这里按 sessionId 分流，
          * 各写各的 atom；混在一起的话，终端的字节会流进对话的终端视图。
          */
+        /**
+         * **当前目录变了**（②-B · R4′）。模型 `cd` 之后头上那一条要立刻跟上——
+         * 慢一步，人看到的就是上一个目录。
+         */
+        if (u.type === "cwd") {
+          setSessionCwd(u.sessionId, u.cwd)
+          return
+        }
         if (u.sessionId === $dockSessionId.get()) {
           if (u.type === "bytes") appendDockBytes(u.data)
           // 快照里的终端是**一整段字符串**（不是片段数组）
@@ -591,6 +600,44 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setConnProblem(e instanceof Error ? e.message : String(e))
     } finally {
       setConnSaving(false)
+    }
+  }
+
+  /**
+   * 在一台服务器上开一段对话（②-B · R4′）。
+   *
+   * **没连上就先连**（服务端负责），起点是那台机器的家目录。
+   * 人点的是「在这台机器上干活」，不该让他先按一次连接再按一次新建。
+   */
+  const startRemoteSession = async (c: { id: string; label: string }) => {
+    const agentId = agentIds[0]
+    if (!agentId) {
+      setConnProblem("配置里还没有可用的 agent——先去设置里加一个")
+      return
+    }
+    setConnBusy(c.id)
+    setConnProblem(undefined)
+    try {
+      const s = await client.get<SessionSummary>("createRemoteSession", {
+        connectionId: c.id,
+        agentId,
+      })
+      await Promise.all([loadConnections(client), loadTempSessions(client)])
+      setActiveSessionId(s.sessionId)
+      setView("conversation")
+      /**
+       * **取写权，否则第一句就会被租约挡下。**
+       *
+       * 这一句此前在三个建会话的地方各写了一遍，而我加这第四条路时**漏了它**——
+       * 症状是能打字、能按发送，然后什么都不发生（状态栏最下面一行小字说
+       * 「写入被拒」）。**这正是本项目反复栽的那类接线漏**，e2e 抓到的。
+       */
+      await client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+    } catch (e) {
+      // **开不起来要说清为什么**，就在那一区里
+      setConnProblem(e instanceof Error ? e.message : String(e))
+    } finally {
+      setConnBusy(undefined)
     }
   }
 
@@ -1309,7 +1356,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 一个终端混在对话中间，点开会把整屏换成一片黑——
            * 而作者要的正好相反：对话在上，终端在下，同时看得见。
            */
-          sessions={tempSessions.filter((x) => x.kind !== "pty")}
+          /**
+           * **远端会话不在这一列**：它们挂在「远端连接」下面各自的服务器上。
+           * 两处都列的话，同一段对话会出现两次，而它在哪台机器上就没人说得清了。
+           */
+          sessions={tempSessions.filter((x) => x.kind !== "pty" && !x.remote)}
           /** 展开那个项目里的会话，嵌在它自己那一行下面 */
           projectSessions={sessions.filter((x) => x.kind !== "pty")}
           onNewSessionIn={(pid, agentId) => {
@@ -1367,6 +1418,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 })
               }
               onConnect={(c) => void connectRemote(c.id)}
+              /**
+               * **这台机器上的对话**。它们与临时会话同一批数据
+               * （都不属于用户打开的项目），按 `remote` 分开：
+               * 有 `remote` 的挂在服务器下，没有的留在上面那一列。
+               */
+              sessionsOf={(c) => tempSessions.filter((x) => x.remote?.connectionId === c.id)}
+              onNewSession={(c) => void startRemoteSession(c)}
+              onPickSession={(x) => {
+                setActiveSessionId(x.sessionId)
+                setView("conversation")
+              }}
+              {...(sessionId ? { activeSessionId: sessionId } : {})}
               onDisconnect={(c) => {
                 setConnProblem(undefined)
                 void client

@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 10
+export const SCHEMA_VERSION = 11
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -319,6 +319,17 @@ export function migrate(db: Database.Database): void {
       created_at       TEXT NOT NULL
     );
   `)
+
+  /**
+   * **v11（2026-08-11）：会话可以长在一台远端服务器上**（②-B · R4′）。
+   *
+   * `remote_cwd` 是**此刻**的当前目录，随模型 `cd` 变。落库的理由不是持久化
+   * （会话本来就活不过重启），而是**列表要显示它**：侧栏那一行的副行写的就是它。
+   */
+  if (!hasColumn(db, "sessions", "connection_id")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN connection_id TEXT`)
+    db.exec(`ALTER TABLE sessions ADD COLUMN remote_cwd TEXT`)
+  }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

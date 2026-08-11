@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 4.5", () => {
+describe("协议版本 · 4.6", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -179,6 +179,8 @@ describe("协议版本 · 4.5", () => {
    * **4.3（2026-08-11）：新增 `createTerminalSession`。** 纯新增。
    * **4.4（2026-08-11）：工具调用带上 `startedAt` / `endedAt`。** 纯新增。
    * **4.5（2026-08-11）：远端连接名单那五个操作 + 状态推送通道。** 纯新增。
+   * **4.6（2026-08-11）：`createRemoteSession`；会话摘要带 `remote`；
+   *   会话更新多一种 `cwd`。** 纯新增。
    *   **终端的 cwd 由服务端定**：给了项目就用项目的工作区，没给就用家目录。
    *   不做成 `createSession` 的一个 `cwd` 参数——那等于把「shell 从哪儿开」
    *   的决定权交给渲染进程，而那条边界决定了 `rm -rf .` 会删掉谁。
@@ -278,7 +280,7 @@ describe("协议版本 · 4.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.5")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.6")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

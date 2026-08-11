@@ -256,7 +256,7 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /** 把 pi 的工具定义套上授权门。不给 gate 时返回 undefined，走 pi 的内置工具。 */
-  private gatedTools(cwd: string, sessionId: SessionId, remote?: RemoteLike): unknown[] | undefined {
+  private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"]): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
     // 两样都不要就别包——包装本身也有成本
@@ -320,7 +320,15 @@ export class NativeRuntime implements AgentRuntime {
      * 授权门与溯源探针仍然套在最外面：**远端更需要那道门**，
      * 本地跑错一条命令代价是你自己的工作区，在共享集群上跑错是别人的。
      */
-    const 定义 = 挑工具后端(原始, cwd, remote as never)
+    /**
+     * 远端会话用**它自己的当前目录**；本地会话给一个钉死在工作区的假壳，
+     * 那时 `挑工具后端` 根本不会用到它（`remote` 为空就原样返回本地那份）。
+     */
+    const 定义 = 挑工具后端(
+      原始,
+      remote?.cwd ?? { get: () => cwd, set: () => {} },
+      remote?.executor as never,
+    )
     return 定义.map((d) => wrap(d))
   }
 

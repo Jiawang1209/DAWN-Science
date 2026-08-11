@@ -143,6 +143,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     return remote
   }
 
+  /**
+   * 那台服务器叫什么。**查不到就返回 undefined**——
+   * 上层会退回连接 id，那不好看但是实话；编一个「未知服务器」出来
+   * 会让人以为真有这么一台。
+   */
+  const 服务器名 = (id: string) => remote?.store.get(id)?.label
+
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
   const 密钥名 = (id: string) => `ssh:${id}`
 
@@ -227,7 +234,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * `createTemporarySession`）——两份复制粘贴的接线代码，
    * 迟早有一份忘了挂记账员或忘了记 git 基线，而那种漏是不出声的。
    */
-  async function 起一个会话(projectId: string, agentId: string, workspaceOverride?: string) {
+  async function 起一个会话(
+    projectId: string,
+    agentId: string,
+    workspaceOverride?: string,
+    remoteSpec?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
+  ) {
     const project = requireProject(projectId)
     /**
      * **会话的工作目录可以与项目的不同**（2026-08-11）。
@@ -242,7 +254,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * （消息里可能有路径、连接串、密钥片段）。所以要让一句话到达用户，
      * **必须在抛出的一侧显式声明它是给用户看的**，而不是让下游去猜哪条安全。
      */
-    const rec = await sessions.create(agentId, workspace, { projectId }).catch((err: unknown) => {
+    const rec = await sessions
+      .create(agentId, workspace, { projectId, ...(remoteSpec ? { remote: remoteSpec } : {}) })
+      .catch((err: unknown) => {
       if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
       throw err
     })
@@ -266,7 +280,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!(err instanceof NotAGitRepoError)) throw err
     }
 
-    return projects.sessions(projectId).find((s) => s.sessionId === rec.id)!
+    return projects.sessions(projectId, 服务器名).find((s) => s.sessionId === rec.id)!
   }
 
   /**
@@ -378,7 +392,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     listSessions: async ({ projectId }) => {
       requireProject(projectId)
-      return projects.sessions(projectId)
+      return projects.sessions(projectId, 服务器名)
     },
 
     listRuns: async ({ projectId, sessionId, pageSize }) => {
@@ -484,7 +498,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       projects
         .list()
         .filter((p) => p.temporary)
-        .flatMap((p) => projects.sessions(p.projectId)),
+        .flatMap((p) => projects.sessions(p.projectId, 服务器名)),
 
     /**
      * ── 远端连接（②-B · R3/R4）─────────────────────────────────────────
@@ -556,6 +570,70 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw fault("internal_error", e instanceof Error ? e.message : String(e))
       }
       return 装配(rec)
+    },
+
+    /**
+     * **在一台远端服务器上开一段对话**（②-B · R4′）。
+     *
+     * 作者：*「连上就默认用家目录，先聊起来，需要换地方再换。」*
+     *
+     * 三件事按顺序：没连就先连 → 起点取那台机器的家目录 → 起会话。
+     * **没连就先连**是有意的：人点的是「在这台机器上干活」，
+     * 让他先按一次「连接」再按一次「新对话」，是把我们的实现顺序摊给他看。
+     */
+    createRemoteSession: async ({ connectionId, agentId }) => {
+      const { store, manager } = 远端()
+      const rec = store.get(connectionId)
+      if (!rec) throw fault("not_found", `没有这台服务器：${connectionId}`)
+      if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
+
+      try {
+        await manager.connect(rec)
+      } catch (e) {
+        throw fault("internal_error", e instanceof Error ? e.message : String(e))
+      }
+      const ex = manager.executorOf(connectionId)
+      if (!ex) throw fault("internal_error", `刚连上就没了：${rec.label}`)
+
+      /**
+       * **起点是那台机器的家目录。**
+       *
+       * 从登录环境里拿（`connect()` 时已经捕获过一次），不再多问一次。
+       * **拿不到就明说**，不退回 `/`——那是根目录，
+       * `rm -rf *` 在那儿的后果与在家目录完全是两件事。
+       */
+      const 家 = ex.loginEnv()["HOME"]
+      if (!家) throw fault("internal_error", `问不出 ${rec.label} 上的家目录，没法决定从哪儿开始`)
+
+      /**
+       * 会话得有个归属（会话表要 project_id）。挂在那个隐藏的容器项目下——
+       * **用户不需要知道它存在**：他要的是「在 gs191 上聊一段」，不是一个项目。
+       */
+      const 归属 = projects.ensureTemporary(scratchRoot)
+
+      let 现在在 = 家
+      let 会话id: string | undefined
+      const 建好的 = await 起一个会话(归属.projectId, agentId, undefined, {
+        connectionId,
+        executor: ex as never,
+        cwd: {
+          get: () => 现在在,
+          set: (v: string) => {
+            现在在 = v
+            /**
+             * **落库 + 推给界面。**
+             *
+             * 头上那一条要立刻跟上，否则人看到的是上一个目录——
+             * 「以为在 A 目录、其实在 B 目录」就是这么来的。
+             */
+            if (!会话id) return
+            projects.setRemoteCwd(会话id, v)
+            events.setCwd(会话id, v)
+          },
+        },
+      })
+      会话id = 建好的.sessionId
+      return 建好的
     },
 
     disconnectRemote: async ({ id }) => {

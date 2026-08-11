@@ -36,6 +36,14 @@ export interface RemoteLike {
   writeFile(path: string, data: string | Buffer): Promise<void>
 }
 
+/** 会话此刻在远端的哪个目录。**可变**——模型 `cd` 之后它跟着变 */
+export interface RemoteCwd {
+  get(): string
+  set(v: string): void
+  /** 可选的界：**默认没有**，见 `remote/tools.ts` 的 `解析远端路径` */
+  界?: string | undefined
+}
+
 export interface SessionSpec {
   sessionId: SessionId
   workspace: string
@@ -59,7 +67,20 @@ export interface SessionSpec {
    *
    * **缺省 = 本地**，与此前完全一致。
    */
-  remote?: RemoteLike
+  remote?: {
+    executor: RemoteLike
+    /**
+     * 会话此刻在哪个目录（②-B · R4′）。
+     *
+     * 作者：*「连上就默认用家目录，先聊起来，需要换地方再换。」*
+     * 起点是远端的家目录，模型 `cd` 之后它会跟着变——
+     * **`cd` 不会自己粘住**（每条命令一个干净 shell），所以由我们记着。
+     *
+     * **与 `executor` 合成一个对象**，不做两个可选字段：
+     * 「有执行器但没有目录」是一个说不通的状态，而两个可选字段允许它存在。
+     */
+    cwd: RemoteCwd
+  }
   /**
    * 仅 cli runtime 使用（①-C）。
    *

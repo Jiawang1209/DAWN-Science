@@ -387,6 +387,19 @@ export class SessionTranscripts {
     }
   }
 
+  /**
+   * 远端会话换目录了（②-B · R4′）。
+   *
+   * **必须推**：模型 `cd` 之后头上那一条要立刻跟上，否则人看到的是上一个目录，
+   * 而那正是「以为在 A 目录、其实在 B 目录」的来源。
+   */
+  setCwd(sessionId: SessionId, cwd: string): void {
+    const e = this.entries.get(sessionId)
+    // **没追踪的会话就不推**：凭空推一条会让界面以为有这么个会话
+    if (!e) return
+    this.bump(sessionId, e, { type: "cwd", cwd })
+  }
+
   /** agent 的文本增量：累积进当前发言，推送**累积后的整条**。 */
   private appendAgentText(sessionId: SessionId, e: Entry, delta: string): void {
     if (!e.openTurnId) {

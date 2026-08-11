@@ -37,6 +37,14 @@ export interface SessionRecord {
   pinned: boolean
   /** 列表里的位置。**每条都有**，见 schema v8 的说明 */
   sortOrder: number
+  /**
+   * v11 起：这段对话长在哪台远端服务器上（②-B · R4′）。
+   *
+   * **缺省 = 本地**。`remoteCwd` 是**此刻**的当前目录，随模型 `cd` 变——
+   * 落库不是为了持久化（会话本来活不过重启），是为了**列表要显示它**。
+   */
+  connectionId?: string
+  remoteCwd?: string
 }
 
 /**
@@ -62,6 +70,8 @@ interface Row {
   title: string | null
   pinned: number
   sort_order: number | null
+  connection_id: string | null
+  remote_cwd: string | null
 }
 
 function toRecord(r: Row): SessionRecord {
@@ -79,6 +89,8 @@ function toRecord(r: Row): SessionRecord {
     ...(r.project_id === null || r.project_id === undefined ? {} : { projectId: r.project_id }),
     ...(r.cli_thread_id === null || r.cli_thread_id === undefined ? {} : { cliThreadId: r.cli_thread_id }),
     ...(r.title === null || r.title === undefined ? {} : { title: r.title }),
+    ...(r.connection_id ? { connectionId: r.connection_id } : {}),
+    ...(r.remote_cwd ? { remoteCwd: r.remote_cwd } : {}),
     pinned: r.pinned === 1,
     // 理论上回填之后不会有 NULL；真有就当它排在最后，**不抛**
     sortOrder: r.sort_order ?? 0,
@@ -91,8 +103,10 @@ export class SessionStore {
   insert(rec: NewSessionRecord): void {
     this.db
       .prepare(`
-        INSERT INTO sessions (id, agent_id, workspace, session_dir, state, pid, exit_code, created_at, project_id, sort_order)
+        INSERT INTO sessions (id, agent_id, workspace, session_dir, state, pid, exit_code, created_at, project_id,
+                              connection_id, remote_cwd, sort_order)
         VALUES (@id, @agentId, @workspace, @sessionDir, @state, @pid, @exitCode, @createdAt, @projectId,
+                @connectionId, @remoteCwd,
                 COALESCE((SELECT MAX(sort_order) FROM sessions) + 1, 1))
       `)
       .run({
@@ -100,6 +114,8 @@ export class SessionStore {
         pid: rec.pid ?? null,
         exitCode: rec.exitCode ?? null,
         projectId: rec.projectId ?? null,
+        connectionId: rec.connectionId ?? null,
+        remoteCwd: rec.remoteCwd ?? null,
       })
   }
 
@@ -144,6 +160,16 @@ export class SessionStore {
    *
    * @returns 是否真的写进去了。调用方据此决定要不要通知界面刷新
    */
+  /**
+   * 记下这个会话此刻在远端的哪个目录（②-B · R4′）。
+   *
+   * **每次 `cd` 之后都会来一趟**。写库是为了列表能显示它——
+   * 侧栏那一行的副行写的就是它。
+   */
+  setRemoteCwd(id: string, cwd: string): void {
+    this.db.prepare(`UPDATE sessions SET remote_cwd = ? WHERE id = ?`).run(cwd, id)
+  }
+
   setTitleIfAbsent(id: string, title: string): boolean {
     const r = this.db
       .prepare(`UPDATE sessions SET title = ? WHERE id = ? AND title IS NULL`)

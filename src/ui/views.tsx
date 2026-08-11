@@ -18,6 +18,7 @@ import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens } from "./format.js"
+import { 短路径 } from "./remote.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -1096,6 +1097,19 @@ export function ConversationView({
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
+        {/**
+         * **这段对话的手在哪台机器的哪个目录**（②-B · R4′）。
+         *
+         * 它不是装饰，是这条线上唯一的防线：
+         * *你以为在 A 目录、实际在 B 目录，然后说一句「把这里的文件都删了」。*
+         * 所以它常驻在头上，而不是藏在某个面板里。
+         */}
+        {session.remote ? (
+          <span className="conv-remote" title={`${session.remote.label}:${session.remote.cwd}`}>
+            <span className="conv-remote-host">{session.remote.label}</span>
+            <span className="conv-remote-cwd">{短路径(session.remote.cwd)}</span>
+          </span>
+        ) : null}
         <span className={`state ${session.state}`}>{session.state}</span>
         {busy && onAbort ? (
           <Button variant="outline" size="sm" className="abort" onClick={onAbort}>

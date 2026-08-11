@@ -196,7 +196,17 @@ export class SessionManager {
   async create(
     agentId: string,
     workspace: string,
-    opts: { projectId?: string } = {},
+    opts: {
+      projectId?: string
+      /**
+       * 这段对话长在一台远端服务器上（②-B · R4′）。
+       *
+       * **`connectionId` 只给库用，不进 `SessionSpec`**：运行时不需要知道
+       * 「这是名单上的哪一条」，它只要一个执行器和一个当前目录。
+       * 把它塞进 spec 等于让运行时认识名单——那是另一层的事。
+       */
+      remote?: { connectionId: string } & NonNullable<SessionSpec["remote"]>
+    } = {},
   ): Promise<SessionRecord> {
     const def = this.registry.agents[agentId]
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
@@ -214,10 +224,20 @@ export class SessionManager {
       state: "starting",
       createdAt: new Date().toISOString(),
       ...(opts.projectId ? { projectId: opts.projectId } : {}),
+      /**
+       * **远端会话把「在哪台机器、在哪个目录」也落库**（②-B · R4′）。
+       * 不是为了持久化（会话活不过重启），是为了列表能显示它。
+       */
+      ...(opts.remote ? { connectionId: opts.remote.connectionId, remoteCwd: opts.remote.cwd.get() } : {}),
     }
     this.store.insert(rec) // 先落库
 
-    const spec: SessionSpec = { sessionId: id, workspace, sessionDir }
+    const spec: SessionSpec = {
+      sessionId: id,
+      workspace,
+      sessionDir,
+      ...(opts.remote ? { remote: { executor: opts.remote.executor, cwd: opts.remote.cwd } } : {}),
+    }
     if (def.kind === "native") {
       // 凭证的有无在这里检查，而不是加载配置时：**桌面应用不该因为还没填 key 就起不来**，
       // 但也不该带着空 key 去发请求。这里是真正要用它的时刻，报错也才有可操作性。

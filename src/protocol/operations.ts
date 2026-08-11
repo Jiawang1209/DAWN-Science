@@ -419,6 +419,32 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 在一台远端服务器上开一段对话（②-B · R4′）。
+   *
+   * 作者：*「我只需要 ssh 连接到服务器，然后自然语言告诉我跳到哪个文件夹
+   * 之类的不就好了？」「连上就默认用家目录，先聊起来，需要换地方再换。」*
+   *
+   * ## 没有「先选个目录」这道手续
+   *
+   * **起点由服务端定 = 那台机器上的家目录**，不收渲染进程给的路径——
+   * 与 `createTerminalSession` 同一条理由：从哪个目录开始是一条边界，
+   * 它决定了 `rm -rf .` 会删掉谁。之后换地方靠说话。
+   *
+   * **没连上就先连**：人点的是「在这台机器上干活」，
+   * 让他先按一次「连接」再按一次「新对话」是把我们的实现顺序摊给他看。
+   */
+  createRemoteSession: {
+    request: z
+      .object({
+        connectionId: z.string().min(1),
+        agentId: z.string().min(1),
+      })
+      .strict(),
+    response: SessionSummarySchema,
+    mutating: true,
+  },
+
   /** 主动断开。**这与「断线」不是一回事**——前者是人按的，后者要报原因 */
   disconnectRemote: {
     request: z.object({ id: z.string().min(1) }).strict(),

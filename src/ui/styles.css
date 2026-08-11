@@ -2102,3 +2102,37 @@ pre {
 .conn-dialog { max-height: 80vh; overflow-y: auto; text-align: left; }
 .conn-dialog .confirm-actions { position: sticky; bottom: 0; background: inherit; }
 .conn-remove { margin-right: auto; }
+
+/* 这台机器上的对话（②-B · R4′）。副行是它此刻在哪个目录——**不是装饰** */
+.remote-sessions { list-style: none; margin: 2px 0 0; padding: 0 0 0 calc(8px + var(--dawn-space-2)); }
+.remote-session { justify-content: flex-start; gap: var(--dawn-space-2); }
+.remote-session .glyph { flex: 0 0 auto; font-size: 0.85em; }
+.remote-session .name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.remote-cwd {
+  flex: 0 1 auto;
+  margin-left: auto;
+  font-family: var(--dawn-font-mono);
+  font-size: 0.78em;
+  color: var(--dawn-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 对话头上那一条：**这段对话的手在哪台机器的哪个目录**。
+   它是这条线上唯一的防线，所以常驻，不藏进面板 */
+.conv-remote {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--dawn-space-2);
+  margin-right: var(--dawn-space-3);
+  min-width: 0;
+}
+.conv-remote-host { color: var(--dawn-text-2); font-size: 0.85em; }
+.conv-remote-cwd {
+  font-family: var(--dawn-font-mono);
+  font-size: 0.85em;
+  color: var(--dawn-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

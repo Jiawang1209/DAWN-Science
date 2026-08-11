@@ -293,6 +293,14 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
       exitCode: z.int().optional(),
     })
     .strict(),
+  /**
+   * 远端会话的**当前目录变了**（②-B · R4′）。
+   *
+   * 它走会话这条通道（有 `sessionId`，是这段对话自己的事）。
+   * 必须推：模型 `cd` 之后头上那一条要立刻跟上，否则人看到的是上一个目录——
+   * **而那正是「以为在 A 目录、其实在 B 目录」的来源**。
+   */
+  z.object({ ...envelope, type: z.literal("cwd"), cwd: z.string().min(1) }).strict(),
   /** 全量重放。客户端发现 revision 跳号后由服务端补发，或订阅时的首帧 */
   z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])

@@ -16,7 +16,7 @@
  *    三种要人去改的东西完全不同。
  */
 import { useState } from "react"
-import type { RemoteConnection, RemoteState } from "../protocol/index.js"
+import type { RemoteConnection, RemoteState, SessionSummary } from "../protocol/index.js"
 import { Button, Field, Row } from "./primitives.js"
 
 /**
@@ -27,6 +27,18 @@ import { Button, Field, Row } from "./primitives.js"
  */
 const 状态文字 = (s: RemoteState): string =>
   s.kind === "ready" ? "连着" : s.kind === "connecting" ? "连接中" : s.kind === "idle" ? "未连" : "断了"
+
+/**
+ * 路径写短一点：家目录写成 `~`。
+ *
+ * **只在开头那一段替换**，不做别的省略——中间打点的路径
+ * （`/home/…/data`）会让人认不出自己在哪，而认出自己在哪正是它的全部用处。
+ */
+export function 短路径(p: string, home?: string): string {
+  const h = home ?? p.match(/^\/(?:home|Users)\/[^/]+/)?.[0]
+  if (h && (p === h || p.startsWith(`${h}/`))) return `~${p.slice(h.length)}`
+  return p
+}
 
 export interface ConnectionDraft {
   id?: string | undefined
@@ -47,6 +59,10 @@ export function RemoteSection({
   onEdit,
   onConnect,
   onDisconnect,
+  sessionsOf,
+  onNewSession,
+  onPickSession,
+  activeSessionId,
   busyId,
   problem,
 }: {
@@ -57,6 +73,12 @@ export function RemoteSection({
   onEdit: (c: RemoteConnection) => void
   onConnect: (c: RemoteConnection) => void
   onDisconnect: (c: RemoteConnection) => void
+  /** 这台机器上已经开着的对话。**副行显示它此刻在哪个目录** */
+  sessionsOf: (c: RemoteConnection) => readonly SessionSummary[]
+  /** 在这台机器上开一段新对话。起点是它的家目录——**服务端定** */
+  onNewSession: (c: RemoteConnection) => void
+  onPickSession: (s: SessionSummary) => void
+  activeSessionId?: string | undefined
   /** 正在连的那台。**只有它显示进行态**，不是整块变灰 */
   busyId?: string | undefined
   /** 上一次操作失败了。**要在这一区里说**，不是丢进状态栏 */
@@ -118,6 +140,10 @@ export function RemoteSection({
                       onEdit={() => onEdit(c)}
                       onConnect={() => onConnect(c)}
                       onDisconnect={() => onDisconnect(c)}
+                      sessions={sessionsOf(c)}
+                      onNewSession={() => onNewSession(c)}
+                      onPickSession={onPickSession}
+                      {...(activeSessionId ? { activeSessionId } : {})}
                     />
                   ))}
                 </ul>
@@ -145,12 +171,20 @@ function ConnectionRow({
   onEdit,
   onConnect,
   onDisconnect,
+  sessions,
+  onNewSession,
+  onPickSession,
+  activeSessionId,
 }: {
   conn: RemoteConnection
   busy: boolean
   onEdit: () => void
   onConnect: () => void
   onDisconnect: () => void
+  sessions: readonly SessionSummary[]
+  onNewSession: () => void
+  onPickSession: (s: SessionSummary) => void
+  activeSessionId?: string | undefined
 }) {
   const 连着 = conn.state.kind === "ready"
   const 状态 = busy ? "连接中" : 状态文字(conn.state)
@@ -175,7 +209,40 @@ function ConnectionRow({
       {conn.state.kind === "disconnected" ? (
         <p className="remote-reason">{conn.state.reason}</p>
       ) : null}
+      {/**
+       * **这台机器上的对话，就在它下面。**
+       *
+       * 每条的副行是**它此刻在哪个目录**——那不是装饰：
+       * *你以为在 A 目录、实际在 B 目录，然后说一句「把这里的文件都删了」*。
+       */}
+      {sessions.length > 0 ? (
+        <ul className="remote-sessions">
+          {sessions.map((s) => (
+            <li key={s.sessionId}>
+              <Row
+                active={s.sessionId === activeSessionId}
+                className="remote-session"
+                onClick={() => onPickSession(s)}
+              >
+                <span className="glyph" aria-hidden="true">
+                  💬
+                </span>
+                <span className="name">{s.title ?? "新对话"}</span>
+                <span className="remote-cwd">{短路径(s.remote?.cwd ?? "")}</span>
+              </Row>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       <div className="remote-actions">
+        {/**
+         * **「新对话」常驻**，而且连不连得上都能点：没连上就先连
+         * （人点的是「在这台机器上干活」，不该让他先按连接再按新建）。
+         */}
+        <Button variant="text" size="inline" onClick={onNewSession}>
+          ＋ 新对话
+        </Button>
         {连着 ? (
           <Button variant="text" size="inline" onClick={onDisconnect}>
             断开

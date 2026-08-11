@@ -16,7 +16,14 @@
  */
 import { test, expect } from "./fixtures.js"
 
-test.use({ dawnOptions: { fakeSsh: true } })
+test.use({
+  dawnOptions: {
+    fakeSsh: true,
+    // 假模型被安排去跑一条**会换目录**的命令：`cd` 粘不住的话，
+    // 头上那一条不会变，而那正是要验的东西
+    toolCall: { toolName: "bash", args: { command: "cd 数据 && pwd" } },
+  },
+})
 
 /** 打开那一区。**默认收起**——没有远端的人不该为此多占一行 */
 async function 展开远端(page: import("@playwright/test").Page) {
@@ -139,4 +146,60 @@ test("删掉一台：**先说会连带发生什么**，再删", async ({ dawn })
 
   await page.getByRole("button", { name: "删除", exact: true }).click()
   await expect(page.getByText("还没有服务器")).toBeVisible()
+})
+
+/**
+ * **这条是整批的落点：agent 的手真的落在那台机器上了吗。**
+ *
+ * 前面几条验的都是「连得上」。连得上而工具还打在本地，是这条线最坏的一种坏法——
+ * **它一点异常都不会表现出来**：命令照跑、输出照回，只是跑在了错的机器上。
+ */
+test("**在服务器上开一段对话**：起点是家目录，命令打到那台机器", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+
+  const row = page.locator(".remote-row").first()
+  await row.getByRole("button", { name: /新对话/ }).click()
+
+  /**
+   * **头上那一条必须显示「在哪台机器的哪个目录」。**
+   *
+   * 它是这条线上唯一的防线：*你以为在 A 目录、实际在 B 目录，
+   * 然后说一句「把这里的文件都删了」。*
+   */
+  const 头 = page.locator(".conv-remote")
+  await expect(头).toBeVisible({ timeout: 30_000 })
+  await expect(头.locator(".conv-remote-host")).toHaveText("假机器")
+  // 假服务器的家目录是 /home/dawn，显示成 `~`
+  await expect(头.locator(".conv-remote-cwd")).toHaveText("~")
+
+  // 侧栏那一行也挂上了这段对话
+  await expect(row.locator(".remote-session")).toHaveCount(1)
+})
+
+test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+
+  await page.getByPlaceholder(/回车发送/).fill("看看这儿有什么")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+
+  /**
+   * 假模型被安排去跑 `cd 数据 && pwd`。三件事要同时成立：
+   *   1. 命令**打到了那台假服务器**（本地根本没有 `/home/dawn`）
+   *   2. `cd` **粘住了**——头上那一条跟着变
+   *   3. 内部标记**不出现在输出里**
+   */
+  const tool = page.locator(".tool").first()
+  await expect(tool).toBeVisible()
+  await tool.locator(".tool-head").click()
+  await expect(tool.locator(".tool-result")).toContainText("/home/dawn/数据")
+  await expect(tool.locator(".tool-result")).not.toContainText("__DAWN_CWD__")
+
+  await expect(page.locator(".conv-remote-cwd")).toHaveText("~/数据", { timeout: 15_000 })
 })

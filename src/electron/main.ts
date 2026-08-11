@@ -60,6 +60,14 @@ const CLI_HOME = process.env.DAWN_CLI_HOME
 const FAKE_SSH = process.env.DAWN_FAKE_SSH === "1"
 
 /**
+ * **不要把窗口显示出来**（e2e 用，2026-08-11）。
+ *
+ * 默认当然是显示——**要藏必须显式说**，与 `DAWN_FAKE_SSH` 同一套惯例：
+ * 反过来会让某次忘了设的正常启动变成一个看不见的应用。
+ */
+const 隐藏窗口 = process.env.DAWN_HIDE_WINDOW === "1"
+
+/**
  * 写权租约的 TTL（秒）。**默认 300**，e2e 调小它来验过期那条路——
  * 按默认值验一次要等五分钟，那种测试没人会跑。
  */
@@ -71,6 +79,21 @@ function createWindow(): void {
   const win = new BrowserWindow({
     width: 1280,
     height: 840,
+    /**
+     * **测试时不要弹出来**（2026-08-11，作者提）。
+     *
+     * 作者：*「我们每次测试的时候，能不能不弹出 Electron，因为每次测试都要
+     * 弹出来，导致我什么都干不了。测试是应该做的，但是也要不影响我做其他的事情。」*
+     *
+     * 他是对的：一套要跑四分钟、期间抢走十几次焦点的测试，**代价会转嫁成
+     * 「那就少跑几次」**——而那正是这三条准入规则最怕的结局。
+     *
+     * `show: false` 的窗口**仍然在渲染**（Chromium 照常合成），
+     * 所以 Playwright 驱动得动、截图也照样出得来。
+     * 但要显式关掉后台节流：不关的话，隐藏窗口里的 `requestAnimationFrame`
+     * 会被降频，**视觉基线那十张会拍到一半的动画**。
+     */
+    show: !隐藏窗口,
     // 窗口标题栏留给 Rho 那种自绘顶栏（46px），但 ①-B 先用系统标题栏，不做无谓的自绘
     webPreferences: {
       preload: join(import.meta.dirname, "preload.cjs"),
@@ -78,6 +101,8 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // 隐藏窗口不该被降频——见上面 `show` 那段
+      backgroundThrottling: false,
     },
   })
 
@@ -186,6 +211,14 @@ function 接上事件流(win: BrowserWindow): void {
 }
 
 app.whenReady().then(() => {
+  /**
+   * **连 Dock 图标也不要跳**（e2e 用，2026-08-11）。
+   *
+   * 窗口藏起来了，但 macOS 的 Dock 上仍然会蹦出一个图标并抢一次注意力——
+   * 一套测试跑下来蹦十几次。作者要的是「测试不影响我做别的事」，
+   * 那就得连这一下也没有。
+   */
+  if (隐藏窗口) app.dock?.hide()
   /**
    * **先开窗口，再建后端。**
    *

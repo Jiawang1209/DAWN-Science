@@ -321,6 +321,16 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           ? {}
           : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
         ...(dawnOptions.fakeSsh ? { DAWN_FAKE_SSH: "1" } : {}),
+        /**
+         * **测试不把窗口弹出来**（2026-08-11，作者提）。
+         *
+         * 作者：*「每次测试都要弹出来，导致我什么都干不了。」*
+         * 一套要跑四分钟、期间抢走十几次焦点的测试，
+         * **代价会转嫁成「那就少跑几次」**——而那正是三条准入规则最怕的结局。
+         *
+         * `DAWN_SHOW_WINDOW=1` 可以要回来：真要盯着看它点什么的时候有用。
+         */
+        ...(process.env["DAWN_SHOW_WINDOW"] === "1" ? {} : { DAWN_HIDE_WINDOW: "1" }),
         ...(dawnOptions.leaseTtlSeconds
           ? { DAWN_LEASE_TTL: String(dawnOptions.leaseTtlSeconds) }
           : {}),

@@ -1206,6 +1206,20 @@ export function ConversationView({
                 item={item}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
+                {...(disabled
+                  ? {}
+                  : {
+                      /**
+                       * 「修改 → 发送」走的是**与手打完全同一条路**（2026-08-11）。
+                       *
+                       * 不另开一条：两条路各写一半，迟早有一条忘了清草稿、
+                       * 忘了取写权、或者忘了把话回灌进事件流。
+                       */
+                      onResend: (text: string) => {
+                        onSend(text)
+                        设位置(-1)
+                      },
+                    })}
               />
             ))
           )}
@@ -1360,10 +1374,17 @@ export function TranscriptRow({
   item,
   agentId,
   currentKernel,
+  onResend,
 }: {
   item: TranscriptItem
   agentId: string
   currentKernel?: string | undefined
+  /**
+   * 改一句自己说过的话，再发出去（2026-08-11，作者提，仿 Codex）。
+   *
+   * **不给就没有「修改」这颗**——一个点了没反应的按钮比没有更坏。
+   */
+  onResend?: ((text: string) => void) | undefined
 }) {
   if (item.type === "notice") {
     return <p className="caveat">{item.text}</p>
@@ -1378,6 +1399,62 @@ export function TranscriptRow({
     return <KernelOutputRow item={item} currentKernel={currentKernel} />
   }
   const mine = item.who === "user"
+  /** 正在改的那份文字。**undefined = 没在改** */
+  const [编辑, 设编辑] = useState<string | undefined>(undefined)
+
+  /**
+   * **改一句自己说过的话，再发出去**（2026-08-11，作者提，仿 Codex）。
+   *
+   * 语义要说准：**它是「照这个再说一遍」，不是「把历史改掉」**。
+   * 历史是事实层的一部分（不变式 5）——你上一次确实那么说了，
+   * 模型也确实照那句答了。把它就地改掉，等于让记录说一件没发生的事。
+   *
+   * 所以「发送」= 在对话末尾发一句新的；原来那句留在原处。
+   */
+  if (编辑 !== undefined) {
+    return (
+      <div className={`turn ${item.who} editing`}>
+        <span className="sr-only">正在修改你说过的一段话</span>
+        <div className="bubble">
+          <textarea
+            className="control turn-edit"
+            autoFocus
+            value={编辑}
+            aria-label="修改这段话"
+            onChange={(e) => 设编辑(e.target.value)}
+            onKeyDown={(e) => {
+              // Esc 是取消——**改到一半按 Esc 却被发出去**是最气人的那种
+              if (e.key === "Escape") 设编辑(undefined)
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                if (编辑.trim()) onResend?.(编辑)
+                设编辑(undefined)
+              }
+            }}
+          />
+          <div className="turn-actions">
+            <Button variant="secondary" size="inline" onClick={() => 设编辑(undefined)}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              size="inline"
+              disabled={!编辑.trim()}
+              onClick={() => {
+                onResend?.(编辑)
+                设编辑(undefined)
+              }}
+            >
+              发送
+            </Button>
+          </div>
+          {/* **说清楚它会做什么**：不是改掉上面那句，是照这个再说一遍 */}
+          <p className="hint">发送会在对话末尾新说一句，上面那句留在原处</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`turn ${item.who}`}>
       {/**
@@ -1391,17 +1468,6 @@ export function TranscriptRow({
        * 与本项目其他几处同一条：*「符号不够——只靠 ✓/✗ 等于只用颜色表达含义」*。
        */}
       <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : agentId}</span>
-      {/**
-       * **一键复制**（2026-08-11，作者提，仿 Codex）。
-       *
-       * 复制的是**原文**，不是渲染之后的样子：agent 的回答走 markdown，
-       * 而人要贴进编辑器的是那段带 ``` 的源码，不是排版好的结果。
-       * 选中再复制拿到的恰恰是后者——这也正是这颗按钮存在的理由。
-       *
-       * **常驻，不做悬停才出现**：本项目已经因为这个被报过两次
-       * 「没有这个功能」，而两次代码都是好的。
-       */}
-      <CopyButton text={item.text} label={mine ? "复制我说的这段" : "复制这段回答"} />
       <div className="bubble">
         {/**
          * **只有 agent 的发言走 markdown。**
@@ -1446,6 +1512,32 @@ export function TranscriptRow({
          */}
         {item.final && item.usage ? <TurnUsage usage={item.usage} /> : null}
       </div>
+
+      {/**
+       * **操作在这一段的下面**（2026-08-11 挪下来，作者提，仿 Codex）。
+       *
+       * 上一版浮在右上角——那是「这一段的装饰」的位置。
+       * 放在下面读起来才是「对这一段能做什么」：先读完，再决定。
+       *
+       * **常驻，不做悬停才出现**：本项目已经因为这个被报过两次
+       * 「没有这个功能」，而两次代码都是好的。
+       */}
+      {item.final ? (
+        <div className="turn-actions">
+          <CopyButton text={item.text} label={mine ? "复制我说的这段" : "复制这段回答"} />
+          {/**
+           * **只有自己说的话能改。**
+           *
+           * 改 agent 的回答再「发送」在语义上说不通——那不是你说的话。
+           * 想让它换个说法，是再说一句，不是替它改口。
+           */}
+          {mine && onResend ? (
+            <Button variant="text" size="inline" onClick={() => 设编辑(item.text)}>
+              修改
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

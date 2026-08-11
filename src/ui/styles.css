@@ -2132,5 +2132,16 @@ pre {
 .turn { position: relative; }
 .copy-btn { opacity: 0.55; }
 .copy-btn:hover, .copy-btn:focus-visible { opacity: 1; }
-.turn > .copy-btn { position: absolute; top: 0; right: 0; }
+/* 操作在这一段**下面**（2026-08-11 挪下来，仿 Codex）：
+   先读完，再决定对它做什么 */
+.turn-actions {
+  display: flex;
+  gap: var(--dawn-space-3);
+  align-items: center;
+  margin-top: 2px;
+}
+/* 自己说的话靠右，所以它的操作也靠右——**跟着那颗气泡走** */
+.turn.user .turn-actions { justify-content: flex-end; }
+.turn-edit { width: 100%; min-height: 4.5em; resize: vertical; }
+.turn.editing .bubble { width: 100%; }
 .tool-body > .copy-btn { float: right; }

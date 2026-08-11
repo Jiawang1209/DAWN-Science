@@ -17,8 +17,7 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
-import { formatDuration, formatTokens } from "./format.js"
-import { 短路径 } from "./remote.js"
+import { formatDuration, formatTokens, 短路径 } from "./format.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -87,7 +86,7 @@ function 项目图标() {
  * 2. **改名就地进行。** `window.prompt` 在 Electron 里直接抛错，
  *    而且本项目已经为它栽过一次（写下规则的人是我，违反它的也是我）。
  */
-function SessionRow({
+export function SessionRow({
   session,
   active,
   current,
@@ -202,7 +201,16 @@ function SessionRow({
             {名字}
           </span>
           <span className="sub">
-            {label ? label(session.agentId) : session.agentId} · {clockOf(session.createdAt)}
+            {/**
+             * **远端会话的副行写「它此刻在哪个目录」**（②-B · R4′）。
+             *
+             * 那一行本来写的是 agent 与建立时间。对远端会话来说，
+             * **在哪个目录比什么时候建的要紧得多**——那是一次
+             * 「把这里的文件都删了」会落到哪儿。
+             */}
+            {session.remote
+              ? 短路径(session.remote.cwd)
+              : `${label ? label(session.agentId) : session.agentId} · ${clockOf(session.createdAt)}`}
           </span>
         </span>
         <span className={`state ${session.state}`}>{session.state}</span>

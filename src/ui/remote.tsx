@@ -18,6 +18,8 @@
 import { useState } from "react"
 import type { RemoteConnection, RemoteState, SessionSummary } from "../protocol/index.js"
 import { Button, Field, Row } from "./primitives.js"
+import { SessionRow } from "./views.js"
+import { 短路径 } from "./format.js"
 
 /**
  * 状态怎么读。**点 + 文字成对**，不单给一个。
@@ -27,18 +29,6 @@ import { Button, Field, Row } from "./primitives.js"
  */
 const 状态文字 = (s: RemoteState): string =>
   s.kind === "ready" ? "连着" : s.kind === "connecting" ? "连接中" : s.kind === "idle" ? "未连" : "断了"
-
-/**
- * 路径写短一点：家目录写成 `~`。
- *
- * **只在开头那一段替换**，不做别的省略——中间打点的路径
- * （`/home/…/data`）会让人认不出自己在哪，而认出自己在哪正是它的全部用处。
- */
-export function 短路径(p: string, home?: string): string {
-  const h = home ?? p.match(/^\/(?:home|Users)\/[^/]+/)?.[0]
-  if (h && (p === h || p.startsWith(`${h}/`))) return `~${p.slice(h.length)}`
-  return p
-}
 
 export interface ConnectionDraft {
   id?: string | undefined
@@ -63,6 +53,10 @@ export function RemoteSection({
   onNewSession,
   onPickSession,
   activeSessionId,
+  onDeleteSession,
+  onRenameSession,
+  onPinSession,
+  onMoveSession,
   busyId,
   problem,
 }: {
@@ -79,6 +73,18 @@ export function RemoteSection({
   onNewSession: (c: RemoteConnection) => void
   onPickSession: (s: SessionSummary) => void
   activeSessionId?: string | undefined
+  /**
+   * 删除 / 改名 / 置顶 / 挪位置。
+   *
+   * **与上面那两列共用 `SessionRow`**，不做第二份实现：作者报过
+   * *「在服务器的对话，不能删除，也不能挪动顺序」*——
+   * 那正是因为这里当初图省事画了一个只能点的行。
+   * 一个动作有两个家，迟早有一个落后于另一个。
+   */
+  onDeleteSession?: ((s: SessionSummary) => void) | undefined
+  onRenameSession?: ((s: SessionSummary, title: string) => void) | undefined
+  onPinSession?: ((s: SessionSummary, pinned: boolean) => void) | undefined
+  onMoveSession?: ((s: SessionSummary, d: "up" | "down") => void) | undefined
   /** 正在连的那台。**只有它显示进行态**，不是整块变灰 */
   busyId?: string | undefined
   /** 上一次操作失败了。**要在这一区里说**，不是丢进状态栏 */
@@ -144,6 +150,10 @@ export function RemoteSection({
                       onNewSession={() => onNewSession(c)}
                       onPickSession={onPickSession}
                       {...(activeSessionId ? { activeSessionId } : {})}
+                      {...(onDeleteSession ? { onDeleteSession } : {})}
+                      {...(onRenameSession ? { onRenameSession } : {})}
+                      {...(onPinSession ? { onPinSession } : {})}
+                      {...(onMoveSession ? { onMoveSession } : {})}
                     />
                   ))}
                 </ul>
@@ -175,6 +185,10 @@ function ConnectionRow({
   onNewSession,
   onPickSession,
   activeSessionId,
+  onDeleteSession,
+  onRenameSession,
+  onPinSession,
+  onMoveSession,
 }: {
   conn: RemoteConnection
   busy: boolean
@@ -185,6 +199,10 @@ function ConnectionRow({
   onNewSession: () => void
   onPickSession: (s: SessionSummary) => void
   activeSessionId?: string | undefined
+  onDeleteSession?: ((s: SessionSummary) => void) | undefined
+  onRenameSession?: ((s: SessionSummary, title: string) => void) | undefined
+  onPinSession?: ((s: SessionSummary, pinned: boolean) => void) | undefined
+  onMoveSession?: ((s: SessionSummary, d: "up" | "down") => void) | undefined
 }) {
   const 连着 = conn.state.kind === "ready"
   const 状态 = busy ? "连接中" : 状态文字(conn.state)
@@ -218,19 +236,17 @@ function ConnectionRow({
       {sessions.length > 0 ? (
         <ul className="remote-sessions">
           {sessions.map((s) => (
-            <li key={s.sessionId}>
-              <Row
-                active={s.sessionId === activeSessionId}
-                className="remote-session"
-                onClick={() => onPickSession(s)}
-              >
-                <span className="glyph" aria-hidden="true">
-                  💬
-                </span>
-                <span className="name">{s.title ?? "新对话"}</span>
-                <span className="remote-cwd">{短路径(s.remote?.cwd ?? "")}</span>
-              </Row>
-            </li>
+            <SessionRow
+              key={s.sessionId}
+              session={s}
+              active={s.sessionId === activeSessionId}
+              current={s.sessionId === activeSessionId}
+              onPick={() => onPickSession(s)}
+              {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
+              {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
+              {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
+              {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
+            />
           ))}
         </ul>
       ) : null}

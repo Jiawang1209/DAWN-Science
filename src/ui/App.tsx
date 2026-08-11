@@ -625,14 +625,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       await Promise.all([loadConnections(client), loadTempSessions(client)])
       setActiveSessionId(s.sessionId)
       setView("conversation")
-      /**
-       * **取写权，否则第一句就会被租约挡下。**
-       *
-       * 这一句此前在三个建会话的地方各写了一遍，而我加这第四条路时**漏了它**——
-       * 症状是能打字、能按发送，然后什么都不发生（状态栏最下面一行小字说
-       * 「写入被拒」）。**这正是本项目反复栽的那类接线漏**，e2e 抓到的。
-       */
-      await client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+      // 写权由上面那个 effect 统一持有（选中即取、到点即续）——**这里不再抄一遍**
+      await 取写权(s.sessionId)
     } catch (e) {
       // **开不起来要说清为什么**，就在那一区里
       setConnProblem(e instanceof Error ? e.message : String(e))
@@ -691,6 +685,73 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 删会话。**账本不动**——那句话要在按下之前就在屏幕上，
    * 否则「删除」会被读成「历史也没了」。
    */
+  /**
+   * **取当前这段对话的写权**（规格 7.1 的租约）。
+   *
+   * ## 作者报的那个「不能输入了」就是这里
+   *
+   * *「我一旦点击了新对话，原来的对话就不能再输入任何信息了：
+   * 写入被拒——user 未持有会话的租约（当前持有者：无）。」*
+   *
+   * 租约有 **5 分钟 TTL**（`LeaseManager`），而界面此前**只在建会话那一刻取一次**：
+   *   - 切回一段旧对话 → 那时它的租约早过期了，没人再去取
+   *   - 在同一段对话里待过五分钟再开口 → 同样写不进去
+   *
+   * 所以写权不该是「建的时候顺手取一下」，而是**「当前这段对话，界面一直持有它」**：
+   * 选中就取，选中期间按 TTL 的一半续。
+   *
+   * **它只有这一份实现。** 此前这句话在三个建会话的地方各抄了一遍，
+   * 我加远端那条路时漏了第四遍——症状是能打字、能按发送，然后什么都不发生。
+   */
+  const 写进去 = useCallback(
+    async (id: string, data: string) => {
+      try {
+        await client.get("writeToSession", { sessionId: id, data, as: "user" })
+      } catch (e) {
+        /**
+         * **被租约挡下时，重取一次再发。**
+         *
+         * 上面那个 effect 在会话选中期间按 TTL 的一半续租，但它是个定时器——
+         * **机器睡一觉、系统把定时器冻住，回来时租约就已经过期了**。
+         * 那一刻人按下发送，看到的会是一行「写入被拒」，而他什么也没做错。
+         *
+         * 重取是安全的：租约的抢占是不对称的（规格 7.1），**user 本来就可以抢**，
+         * 而按下发送正是「我现在要写」这个意思本身。
+         * 只重试一次——两次还不行就是别的原因，那时要如实报出来。
+         */
+        const 像租约 = e instanceof Error && /租约/.test(e.message)
+        if (!像租约) throw e
+        await client.get("acquireLease", { sessionId: id, holder: "user" })
+        await client.get("writeToSession", { sessionId: id, data, as: "user" })
+      }
+    },
+    [client],
+  )
+
+  const 取写权 = useCallback(
+    (id: string) =>
+      client
+        .get("acquireLease", { sessionId: id, holder: "user" })
+        .catch((e: unknown) => {
+          // **拿不到要出声**：静默的话，人要等到按下发送才发现自己写不进去
+          note(e instanceof Error ? e.message : String(e))
+        }),
+    [client],
+  )
+
+  /**
+   * 选中哪一段，就持有哪一段的写权，**并且续着**。
+   *
+   * 续期间隔取 TTL 的一半（TTL 300 秒）：一半是通用做法——
+   * 慢到不至于让服务端被请求淹没，快到足以在过期之前一定续上一次。
+   */
+  useEffect(() => {
+    if (!ready || !sessionId) return
+    void 取写权(sessionId)
+    const t = setInterval(() => void 取写权(sessionId), 150_000)
+    return () => clearInterval(t)
+  }, [ready, sessionId, 取写权])
+
   const askDeleteSession = useCallback(
     (s: SessionSummary) => {
       const 名 = s.title ?? "新会话"
@@ -915,7 +976,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * （那是 xterm 自己画的），但进程一个字节都没收到**——
          * 敲 `pwd` 什么都不发生。
          */
-        return client.get("acquireLease", { sessionId: r.sessionId, holder: "user" })
+        // 终端要立刻能打字，**不等那个 effect 的下一拍**——见 `取写权` 的注释
+        return 取写权(r.sessionId)
       })
       .catch(fail)
   }, [client, ptyAgentId])
@@ -986,9 +1048,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           setActiveSessionId(s.sessionId)
           // 人还在原地才进对话。**他自己切走了就尊重他的选择**
           if ($view.get() === from) setView("conversation")
-          // 取写权，否则第一句就会被租约挡下（与 startSession 同一条）
-          return client
-            .get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+          // 第一句要立刻发得出去，**不等那个 effect 的下一拍**
+          return 取写权(s.sessionId)
             .then(() => {
               if (!firstMessage) return
               return client.get("writeToSession", {
@@ -1069,9 +1130,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           setActiveSessionId(s.sessionId)
           // 人还在原地才进对话。**他自己切走了就尊重他的选择**
           if ($view.get() === from) setView("conversation")
-          // 取写权，否则第一句就会被租约挡下
-          return client
-            .get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+          // 第一句要立刻发得出去，**不等那个 effect 的下一拍**
+          return 取写权(s.sessionId)
             .then(() => {
               if (!firstMessage) return
               // **不做本地乐观追加**：与手动发送同一条路径，自己发的话经事件回灌进来
@@ -1429,6 +1489,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 setActiveSessionId(x.sessionId)
                 setView("conversation")
               }}
+              onDeleteSession={askDeleteSession}
+              onRenameSession={renameSession}
+              onPinSession={pinSession}
+              onMoveSession={moveSession}
               {...(sessionId ? { activeSessionId: sessionId } : {})}
               onDisconnect={(c) => {
                 setConnProblem(undefined)
@@ -1695,8 +1759,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onSend={(text) => {
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。
                   // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
-                  client
-                    .get("writeToSession", { sessionId: session.sessionId, data: text, as: "user" })
+                  写进去(session.sessionId, text)
                     .then(() => {
                       /**
                        * 标题是第一句话定的，而**它落在后端**——不重取一次，
@@ -1771,7 +1834,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onInput={(data) => {
                 const id = $dockSessionId.get()
                 if (!id) return
-                client.get("writeToSession", { sessionId: id, data, as: "user" }).catch(fail)
+                写进去(id, data).catch(fail)
               }}
               onOpenProject={actions.openProject}
             />

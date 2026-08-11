@@ -127,6 +127,13 @@ export interface DawnOptions {
    */
   fakeSsh?: boolean
   /**
+   * 写权租约的 TTL（秒）。**默认 300**。
+   *
+   * 调小它才验得了作者报的那条：*「点了新对话，原来的对话就不能再输入了」*——
+   * 那是租约过期，按默认值要等五分钟。
+   */
+  leaseTtlSeconds?: number
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -300,6 +307,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           ? {}
           : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
         ...(dawnOptions.fakeSsh ? { DAWN_FAKE_SSH: "1" } : {}),
+        ...(dawnOptions.leaseTtlSeconds
+          ? { DAWN_LEASE_TTL: String(dawnOptions.leaseTtlSeconds) }
+          : {}),
       },
     })
     /**

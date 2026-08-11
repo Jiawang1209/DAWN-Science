@@ -62,3 +62,16 @@ export function formatDuration(ms: number): string {
   if (分 < 60) return `${分} 分 ${String(Math.floor(秒 % 60)).padStart(2, "0")} 秒`
   return `${Math.floor(分 / 60)} 小时 ${String(分 % 60).padStart(2, "0")} 分`
 }
+
+/**
+ * 路径写短一点：家目录写成 `~`。
+ *
+ * **只在开头那一段替换**，不做别的省略——中间打点的路径
+ * （`/home/…/data`）会让人认不出自己在哪，而认出自己在哪正是它的全部用处。
+ */
+export function 短路径(p: string, home?: string): string {
+  const h = home ?? p.match(/^\/(?:home|Users)\/[^/]+/)?.[0]
+  if (h && (p === h || p.startsWith(`${h}/`))) return `~${p.slice(h.length)}`
+  return p
+}
+

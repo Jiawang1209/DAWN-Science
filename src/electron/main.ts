@@ -59,6 +59,12 @@ const CLI_HOME = process.env.DAWN_CLI_HOME
  */
 const FAKE_SSH = process.env.DAWN_FAKE_SSH === "1"
 
+/**
+ * 写权租约的 TTL（秒）。**默认 300**，e2e 调小它来验过期那条路——
+ * 按默认值验一次要等五分钟，那种测试没人会跑。
+ */
+const LEASE_TTL = Number(process.env.DAWN_LEASE_TTL ?? "") || undefined
+
 let workbench: Workbench | undefined
 
 function createWindow(): void {
@@ -228,6 +234,7 @@ app.whenReady().then(() => {
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       ...(FAKE_SSH ? { fakeSsh: true } : {}),
+      ...(LEASE_TTL ? { leaseTtlSeconds: LEASE_TTL } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })
     if (workbench.reconciled > 0) {

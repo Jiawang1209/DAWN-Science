@@ -174,8 +174,14 @@ test("**在服务器上开一段对话**：起点是家目录，命令打到那�
   // 假服务器的家目录是 /home/dawn，显示成 `~`
   await expect(头.locator(".conv-remote-cwd")).toHaveText("~")
 
-  // 侧栏那一行也挂上了这段对话
-  await expect(row.locator(".remote-session")).toHaveCount(1)
+  /**
+   * 侧栏那一行也挂上了这段对话，**而且用的是与别处同一种行**
+   * （`.sess-item` —— 带删除/改名/置顶/挪位置）。
+   * 作者报过：*「在服务器的对话，不能删除，也不能挪动顺序」*——
+   * 那是因为这里当初图省事画了一个只能点的行。
+   */
+  await expect(row.locator(".sess-item")).toHaveCount(1)
+  await expect(row.locator(".sess-item .sub")).toHaveText("~")
 })
 
 test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {

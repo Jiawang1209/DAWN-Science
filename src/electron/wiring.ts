@@ -64,6 +64,8 @@ export interface CreateWorkbenchOptions {
   openPath?: (absolutePath: string) => Promise<string>
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
+  /** 写权租约的 TTL（秒）。**默认 300**；e2e 调小它来验过期那条路 */
+  leaseTtlSeconds?: number
   /**
    * 用假服务器代替真 SSH（②-B · R3）。**mock 模式与 e2e 用**。
    *
@@ -180,6 +182,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const sessions = new SessionManager({
     store: sessionStore,
+    /**
+     * 写权租约的 TTL（秒）。**默认 300**（`SessionManager` 里）。
+     *
+     * **可注入的唯一理由是可测**：作者报的那个「切回旧对话就写不进去了」
+     * 只在租约过期之后才出现，而按默认值验一次要等五分钟——
+     * 那种测试没人会跑，于是这条路等于没人看。
+     */
+    ...(opts.leaseTtlSeconds ? { leaseTtlSeconds: opts.leaseTtlSeconds } : {}),
     registry,
     runtimes: {
       native: nativeRuntime,

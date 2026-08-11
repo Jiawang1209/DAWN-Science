@@ -33,7 +33,8 @@
     "test:e2e:visual:only": "playwright test e2e/visual.spec.ts",
     "test:e2e:visual:update": "npm run build && playwright test e2e/visual.spec.ts --update-snapshots",
     "spike:e": "tsx spikes/e-model-switch.ts",
-    "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts"
+    "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts",
+    "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",

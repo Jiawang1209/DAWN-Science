@@ -241,8 +241,6 @@ export function SessionSidebar({
   onReorderSessions,
   onOpenSettings,
   onDeleteProject,
-  onToggleDock,
-  dockOpen,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -275,9 +273,14 @@ export function SessionSidebar({
   onShowFiles: () => void
   /** 删掉某个项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
   onDeleteProject?: ((projectId: string) => void) | undefined
-  /** 掀开／收起底部终端。不给就不显示那一行——不摆一个点了没反应的入口 */
-  onToggleDock?: (() => void) | undefined
-  dockOpen?: boolean | undefined
+  /**
+   * **终端不在侧栏**（2026-08-11 挪走）。
+   *
+   * 作者：*「这个终端的感觉差点意思，应该在对话框的这边，
+   * 侧边栏这边不能有终端。」* 侧栏是**导航**——它回答「我在哪、有什么」；
+   * 终端是**在这段对话里干活**，所以它的入口跟着对话走
+   * （composer 上那颗，以及命令面板）。
+   */
   /** 删除一个会话。**不给就不显示那个按钮**——不是显示一个点了没反应的 */
   onDeleteSession?: ((session: SessionSummary) => void) | undefined
   onRenameSession?: ((session: SessionSummary, title: string) => void) | undefined
@@ -483,15 +486,6 @@ export function SessionSidebar({
           <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
             文件
           </Row>
-          {/**
-            * 终端：**它不换屏，它把下面那一条掀开**（2026-08-11）。
-            * 所以这一行不参与 `view` 的高亮，而是跟着 dock 开没开走。
-            */}
-          {onToggleDock ? (
-            <Row active={dockOpen ?? false} className="panel-entry" onClick={onToggleDock}>
-              终端
-            </Row>
-          ) : null}
         </>
       ) : null}
     </aside>
@@ -923,6 +917,8 @@ export function ConversationView({
   currentServiceLabel,
   onSwitchService,
   switchProblem,
+  onToggleDock,
+  dockOpen,
   models,
   model,
   onSend,
@@ -961,6 +957,9 @@ export function ConversationView({
    * 而作者报的正是这句话。失败要出现在**动作发生的地方**（规格 7.5）。
    */
   switchProblem?: string | undefined
+  /** 掀开／收起底部终端。**与命令面板里那条是同一个动作** */
+  onToggleDock?: (() => void) | undefined
+  dockOpen?: boolean | undefined
   /**
    * 这个会话的 agent 该怎么称呼（`ds-chat` → `DeepSeek`）。
    *
@@ -1107,6 +1106,25 @@ export function ConversationView({
             ) : null}
             {models && onPickModel ? (
               <ModelPill choices={models} current={model} busy={busy} onPick={onPickModel} />
+            ) : null}
+            {/**
+              * **终端的入口在对话这一侧**（2026-08-11）。
+              *
+               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
+              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
+              *
+              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
+              */}
+            {onToggleDock ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="dock-toggle"
+                aria-pressed={dockOpen ?? false}
+                onClick={onToggleDock}
+              >
+                终端
+              </Button>
             ) : null}
             <Button type="submit" variant="primary" disabled={disabled ?? false}>
               发送
@@ -1550,11 +1568,14 @@ export function EmptyConversation({
   agents,
   agentLabel,
   onStart,
+  onToggleDock,
   onOpenSettings,
 }: {
   agents: readonly string[]
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   agentLabel?: ((agentId: string) => string) | undefined
+  /** 掀开／收起底部终端。**与 composer 上那颗、命令面板那条是同一个动作** */
+  onToggleDock?: (() => void) | undefined
   /** 第二个参数给了的话，**建会话之后把这句话真的发出去**——见 `App.tsx` 的 `startSession` */
   onStart: (agentId: string, firstMessage?: string) => void
   onOpenSettings: () => void
@@ -1604,6 +1625,19 @@ export function EmptyConversation({
                 onPick={onStart}
                 triggerLabel="换一个 agent"
               />
+            ) : null}
+            {/**
+              * **空态也要够得着终端**（2026-08-11）。
+              *
+              * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*），
+              * 而这一屏没有 composer——不在这里补一个，
+              * 「还没开始对话时想先看一眼目录」就只剩命令面板一条路，
+              * 那等于**看不见**。
+              */}
+            {onToggleDock ? (
+              <Button variant="text" size="sm" onClick={onToggleDock}>
+                终端
+              </Button>
             ) : null}
           </div>
         </div>

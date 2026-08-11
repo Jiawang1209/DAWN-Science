@@ -67,6 +67,8 @@ export interface Actions {
   openProject(): void
   /** 删除当前会话。**与侧栏那个 × 是同一个动作**——一个动作一个家 */
   deleteSession(): void
+  /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
+  toggleDock(): void
   setTheme(choice: ThemeChoice): void
 }
 
@@ -77,6 +79,8 @@ export interface CommandContext {
   /** agent 还在说话。**只有这时「中止」才有意义** */
   busy: boolean
   view: View
+  /** 底部终端开着没有。**决定那条命令说「打开」还是「收起」** */
+  dockOpen?: boolean
 }
 
 const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
@@ -193,12 +197,22 @@ export function buildCommands(ctx: CommandContext): Command[] {
     })
   }
   /**
-   * **2026-08-09 删掉了「切换终端」。**
+   * **2026-08-11 又加回来了「终端」。**
    *
-   * 那个命令的对象（可折叠的终端 dock）已经不存在：对托管 CLI 的会话，
-   * 终端就是主体；对内置 agent，本来就没有终端。
-   * **一个没有对象的动作留在面板里，只会让人点了之后怀疑是不是坏了。**
+   * 2026-08-09 删它的理由是「这个命令没有对象」——那时终端要么占满主区、
+   * 要么根本不存在。**现在它有对象了**：对话区底下那条 dock。
+   *
+   * 留在命令面板里的理由：composer 上那颗按钮只在有会话时才有，
+   * 而人在「文件」或「项目概览」那一屏也可能想开个终端。
    */
+  out.push({
+    id: "view.terminal",
+    title: ctx.dockOpen ? "收起终端" : "打开终端",
+    group: "视图",
+    keywords: "terminal shell 终端 命令行",
+    run: () => actions.toggleDock(),
+  })
+
   // ── 设置 ─────────────────────────────────────────────────────────
   out.push({
     id: "settings.open",

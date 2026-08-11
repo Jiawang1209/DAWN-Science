@@ -38,6 +38,7 @@ function actions(): Actions {
     abort: vi.fn(),
     openProject: vi.fn(),
   deleteSession: vi.fn(),
+    toggleDock: vi.fn(),
     setTheme: vi.fn(),
   }
 }

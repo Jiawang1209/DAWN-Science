@@ -78,6 +78,27 @@ test("**终端不混进会话列表** —— 它有自己的地方了", async ({
   await expect(page.locator(".proj-session-list .sess")).toHaveCount(0)
 })
 
+test("**终端不在侧栏，在对话这一侧**", async ({ dawn }) => {
+  const { page } = dawn
+  /**
+   * 作者：*「这个终端的感觉差点意思，应该在对话框的这边，
+   * 侧边栏这边不能有终端。」*
+   *
+   * 所以这条量两件事：侧栏里没有终端入口、也没有终端本身；
+   * 而 dock 挂在主区里（`.main` 之内），不再横跨整个窗口压着侧栏。
+   */
+  await expect(page.locator(".sidebar").getByRole("button", { name: "终端" })).toHaveCount(0)
+
+  await page.getByRole("button", { name: "终端" }).click()
+  await expect(page.locator(".main .dock")).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator(".sidebar .dock")).toHaveCount(0)
+
+  // 它的左边缘对齐主区，而不是窗口
+  const dock = (await page.locator(".dock").boundingBox())!
+  const main = (await page.locator(".main").boundingBox())!
+  expect(Math.abs(dock.x - main.x)).toBeLessThan(2)
+})
+
 test("收起之后 dock 就没了", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "终端", exact: true }).click()

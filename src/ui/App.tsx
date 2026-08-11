@@ -1021,6 +1021,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => setView("settings"),
+      /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
+      toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
       showProjectPanel: () => setView("panel"),
       newSession: startSession,
@@ -1055,8 +1057,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
 
   const commands = useMemo(
-    () => buildCommands({ actions, agents: agentIds, session, busy, view }),
-    [actions, agentIds, session, busy, view],
+    () => buildCommands({ actions, agents: agentIds, session, busy, view, dockOpen }),
+    [actions, agentIds, session, busy, view, dockOpen],
   )
 
   // **只有 exhausted 才配得上占满全屏。** connecting/reconnecting/degraded
@@ -1126,8 +1128,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           agents={agentIds}
           agentLabel={agentLabel}
           onDeleteProject={askDeleteProject}
-          onToggleDock={toggleDock}
-          dockOpen={dockOpen}
           activeProjectId={projectId}
           activeSessionId={sessionId}
           view={view}
@@ -1312,6 +1312,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 {...(services ? { services } : {})}
                 {...(currentServiceLabel ? { currentServiceLabel } : {})}
                 {...(switchProblem ? { switchProblem } : {})}
+                onToggleDock={toggleDock}
+                dockOpen={dockOpen}
                 /**
                  * **换服务 = 换到那家的第一个模型**。
                  *
@@ -1417,45 +1419,51 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <EmptyConversation
               agents={agentIds}
               agentLabel={agentLabel}
+              onToggleDock={toggleDock}
               onStart={actions.newSession}
               onOpenSettings={actions.openSettings}
             />
           )}
+              {/**
+                * **底部终端在对话这一侧**（2026-08-11 挪进 `.main`）。
+                *
+                * 作者：*「这个终端的感觉差点意思，应该在对话框的这边，
+                * 侧边栏这边不能有终端。」*
+                *
+                * 上一版它挂在 `.body` 外面、横跨整个窗口，于是**侧栏底下也压着一条黑**——
+                * 而侧栏是导航，它跟「在这段对话里敲命令」没有关系。
+                * 现在它只占主区的下半条：对话在上、终端在下，**都在同一侧**。
+                */}
+          {dockOpen ? (
+            <TerminalDock
+              terminals={终端们}
+              currentId={dockSessionId}
+              workspace={currentWorkspace}
+              canOpen={Boolean(projectId && ptyAgentId)}
+              onPick={setDockSessionId}
+              onNew={开一个终端}
+              onClose={(id) => {
+                client
+                  .get("stopSession", { sessionId: id })
+                  .then(() => {
+                    if ($dockSessionId.get() === id) setDockSessionId(undefined)
+                    const pid = $activeProjectId.get()
+                    if (pid) void loadSessions(client, pid)
+                  })
+                  .catch(fail)
+              }}
+              onCloseDock={() => setDockOpen(false)}
+              onInput={(data) => {
+                const id = $dockSessionId.get()
+                if (!id) return
+                client.get("writeToSession", { sessionId: id, data, as: "user" }).catch(fail)
+              }}
+              onOpenProject={actions.openProject}
+            />
+          ) : null}
+
         </main>
       </div>
-
-      {/**
-        * **底部终端**（2026-08-11）。在 `.body` 之外、状态栏之上——
-        * 它横跨整个宽度，而不是塞进主区里的一格：
-        * 作者要的是「界面下方单独出现一个地方」。
-        */}
-      {dockOpen ? (
-        <TerminalDock
-          terminals={终端们}
-          currentId={dockSessionId}
-          workspace={currentWorkspace}
-          canOpen={Boolean(projectId && ptyAgentId)}
-          onPick={setDockSessionId}
-          onNew={开一个终端}
-          onClose={(id) => {
-            client
-              .get("stopSession", { sessionId: id })
-              .then(() => {
-                if ($dockSessionId.get() === id) setDockSessionId(undefined)
-                const pid = $activeProjectId.get()
-                if (pid) void loadSessions(client, pid)
-              })
-              .catch(fail)
-          }}
-          onCloseDock={() => setDockOpen(false)}
-          onInput={(data) => {
-            const id = $dockSessionId.get()
-            if (!id) return
-            client.get("writeToSession", { sessionId: id, data, as: "user" }).catch(fail)
-          }}
-          onOpenProject={actions.openProject}
-        />
-      ) : null}
 
       <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />
 

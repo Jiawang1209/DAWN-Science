@@ -676,7 +676,11 @@ pre {
   border-top: 1px solid var(--dawn-stroke-4);
   z-index: var(--z-dock);
   background: var(--dawn-surface-panel);
+  /* **它是主区的下半条**，不是横跨窗口的一条：侧栏那边不该压着一条黑 */
+  flex: 0 0 auto;
 }
+/* composer 上那颗终端按钮：开着时看得出来 */
+.dock-toggle[aria-pressed="true"] { color: var(--dawn-accent); }
 .dock-tabs {
   display: flex;
   gap: 8px;

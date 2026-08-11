@@ -107,6 +107,11 @@ export interface NativeRuntimeOptions {
 
 interface NativeSession {
   session: Awaited<ReturnType<typeof createAgentSession>>["session"]
+  /**
+   * **上一条回复实际是谁答的**（`provider/model`，取自 pi 的回执）。
+   * 与我们设的不一致时会出声——见 `translate` 里那段。
+   */
+  实际模型?: string
   /** pi 替我们记着的那份对话。**续接与「上次聊到哪儿」都从它来** */
   sessionManager: SessionManager
   unsubscribe: () => void
@@ -174,6 +179,15 @@ interface PiEvent {
      */
     stopReason?: string
     errorMessage?: string
+    /**
+     * **真正答这一条的是谁**（2026-08-12）。
+     *
+     * pi 的助手消息自带这两个字段。我们此前没读——于是「换没换过去」
+     * 只能靠问模型，而**模型只会照着上下文念**（作者连问三次都答旧的）。
+     * 读它，这件事就从「猜」变成「事实」。
+     */
+    provider?: string
+    model?: string
   }
   errorMessage?: string
 }
@@ -649,6 +663,31 @@ export class NativeRuntime implements AgentRuntime {
         sessionId,
         text: 原因 ? `模型调用失败：${原因}` : "模型调用失败，但对方没有给出原因",
       })
+    }
+
+    /**
+     * **谁答的这一条，以 pi 的回执为准**（2026-08-12）。
+     *
+     * 作者换到 kimi 之后连问三次，答的都是 deepseek。我先前判断
+     * 「路由换了，只是模型在念旧话」——**那是读代码得出的，不是验出来的**，
+     * 而他手上的证据比我硬。
+     *
+     * 所以改成不再自证：每条助手消息回执里写着真正答话的那家，
+     * **与我们以为的不一致时就出声**。一致时一个字都不多说。
+     * 这样「换没换」变成一个可查的事实，不必再靠问模型。
+     */
+    if (e.type === "message_end" && e.message?.provider && e.message.model) {
+      const 实际 = `${e.message.provider}/${e.message.model}`
+      const s2 = this.sessions.get(sessionId)
+      if (s2 && s2.实际模型 !== 实际) {
+        s2.实际模型 = 实际
+        this.emit({
+          kind: "model",
+          sessionId,
+          provider: e.message.provider,
+          model: e.message.model,
+        })
+      }
     }
 
     switch (e.type) {

@@ -52,6 +52,11 @@ export interface WorkbenchBackendOptions {
   projectStore: ProjectStore
   runs: RunStore
   /**
+   * 临时会话的目录根（2026-08-11）。**不给就开不了临时会话**，如实说，
+   * 不偷偷退回某个猜出来的路径——那个路径上会真的落文件。
+   */
+  scratchRoot?: string
+  /**
    * `providers.yaml` 的路径。**给了才能在界面里加 agent**——
    * 没给就如实说「本次运行没有装配」，不偷偷退回某个猜出来的路径。
    */
@@ -113,7 +118,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot } = opts
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
@@ -175,6 +180,55 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         capabilities: ["chat", "exec"],
       }
     }
+  }
+
+  /**
+   * 起一个会话（登记 + 接线 + 记基线）。
+   *
+   * **抽出来是因为它现在有两个调用点**（`createSession` 与
+   * `createTemporarySession`）——两份复制粘贴的接线代码，
+   * 迟早有一份忘了挂记账员或忘了记 git 基线，而那种漏是不出声的。
+   */
+  async function 起一个会话(projectId: string, agentId: string, workspaceOverride?: string) {
+    const project = requireProject(projectId)
+    /**
+     * **会话的工作目录可以与项目的不同**（2026-08-11）。
+     * 临时会话就是这样：它们同属一个「临时会话」项目（那样置顶与排序才成立），
+     * 但**每条各有一个自己的目录**——那是作者选的形态。
+     */
+    const workspace = workspaceOverride ?? project.workspace
+    /**
+     * **把「打算给用户看的失败」翻成 fault，其余照旧归一成 internal_error。**
+     *
+     * 服务端只把 `fault()` 的消息原样交给界面，其余只进日志——那条策略是对的
+     * （消息里可能有路径、连接串、密钥片段）。所以要让一句话到达用户，
+     * **必须在抛出的一侧显式声明它是给用户看的**，而不是让下游去猜哪条安全。
+     */
+    const rec = await sessions.create(agentId, workspace, { projectId }).catch((err: unknown) => {
+      if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+      throw err
+    })
+
+    // 先登记再接线：attach 的回调可能同步就来一条事件
+    const kind = registry.agents[agentId]?.kind ?? "native"
+    events.track(rec.id, kind)
+    sessions.attach(rec.id, (e) => {
+      events.ingest(rec.id, e)
+      // **记账与呈现是两件事，各走各的。**
+      runRecorder?.ingest(e)
+    })
+    // PTY 的「命令」不可观测（只有字节流），可观测的是会话本身
+    if (kind === "pty") runRecorder?.beginPtySession(rec.id)
+
+    // 记下 git 基线。拿不到（非 git 仓库）就不记——后续 getRun 因此不返回
+    // fileChanges，这比返回一个空数组诚实
+    try {
+      baselines.set(rec.id, await snapshot(workspace))
+    } catch (err) {
+      if (!(err instanceof NotAGitRepoError)) throw err
+    }
+
+    return projects.sessions(projectId).find((s) => s.sessionId === rec.id)!
   }
 
   return {
@@ -333,48 +387,34 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
-    createSession: async ({ projectId, agentId }) => {
-      const project = requireProject(projectId)
-      /**
-       * **把「打算给用户看的失败」翻成 fault，其余照旧归一成 internal_error。**
-       *
-       * 服务端只把 `fault()` 的消息原样交给界面，其余只进日志——那条策略是对的
-       * （消息里可能有路径、连接串、密钥片段）。所以要让一句话到达用户，
-       * **必须在抛出的一侧显式声明它是给用户看的**，而不是让下游去猜哪条安全。
-       *
-       * 2026-08-09 由 ①-C 的第一条 e2e 撞出来：会话层写得很清楚的
-       * 「provider 未配置凭证——请在设置里填写它的 API key」，
-       * 在界面上是 `操作 "createSession" 执行失败`。
-       */
-      const rec = await sessions.create(agentId, project.workspace, { projectId }).catch((err: unknown) => {
-        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
-        throw err
-      })
+    createSession: async ({ projectId, agentId }) => 起一个会话(projectId, agentId),
 
-      // 先登记再接线：attach 的回调可能同步就来一条事件
-      const kind = registry.agents[agentId]?.kind ?? "native"
-      events.track(rec.id, kind)
-      sessions.attach(rec.id, (e) => {
-        events.ingest(rec.id, e)
-        // **记账与呈现是两件事，各走各的。** 中枢管「界面看得见什么」，
-        // 记账员管「账本上留下什么」——把它们合成一条会让任何一方的改动
-        // 都可能悄悄影响另一方
-        runRecorder?.ingest(e)
-      })
-      // PTY 的「命令」不可观测（只有字节流），可观测的是会话本身。见 run-recorder.ts
-      if (kind === "pty") runRecorder?.beginPtySession(rec.id)
-
-      // 记下 git 基线，供之后算「这次会话改了什么」。
-      // 拿不到（非 git 仓库）就不记——后续 getRun 会因此不返回 fileChanges，
-      // 这比返回一个空数组诚实。
-      try {
-        baselines.set(rec.id, await snapshot(project.workspace))
-      } catch (err) {
-        if (!(err instanceof NotAGitRepoError)) throw err
-      }
-
-      return projects.sessions(projectId).find((s) => s.sessionId === rec.id)!
+    /**
+     * 临时会话：**服务端自己开目录、写项目记录、起会话**（2026-08-11）。
+     *
+     * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话」*，
+     * 并且选了**每个临时会话一个独立目录**。
+     *
+     * 三件事必须一起成立——目录建了、记录写了、会话却没起来，
+     * 就在磁盘和库里各留一份垃圾，而界面上什么都看不到。
+     */
+    createTemporarySession: async ({ agentId }) => {
+      if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
+      const 临时项目 = projects.ensureTemporary(scratchRoot)
+      // **每条会话一个自己的目录**，但它们同属那一个临时项目
+      const dir = projects.temporaryWorkspace(scratchRoot)
+      return 起一个会话(临时项目.projectId, agentId, dir)
     },
+
+    /**
+     * 全部临时会话。**跨项目**——每个临时会话自带一个项目，
+     * 按项目一个个问会变成 N 次调用。
+     */
+    listTemporarySessions: async () =>
+      projects
+        .list()
+        .filter((p) => p.temporary)
+        .flatMap((p) => projects.sessions(p.projectId)),
 
     writeToSession: async ({ sessionId, data, as }) => {
       try {

@@ -304,6 +304,36 @@ export const OPERATIONS = {
     response: SessionSummarySchema,
     mutating: true,
   },
+  /**
+   * 开一段**临时会话**：没有指定项目的那种（2026-08-11）。
+   *
+   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+   *
+   * ## 为什么是一个操作，而不是「先建项目再建会话」
+   *
+   * 它俩必须一起成立：目录建了、项目记录写了，会话却没起来，
+   * 那就在磁盘上和库里各留一份垃圾，而界面上什么都看不到。
+   * **一次调用，一个结果**——服务端自己保证这两件事同生共死。
+   *
+   * 每个临时会话**一个独立目录**（作者选的），路径由服务端定：
+   * 让界面去拼路径等于把「往哪写」的决定权交给渲染进程。
+   */
+  createTemporarySession: {
+    request: z.object({ agentId: z.string().min(1) }).strict(),
+    response: SessionSummarySchema,
+    mutating: true,
+  },
+
+  /**
+   * 全部临时会话（2026-08-11）。**跨项目**——每个临时会话自带一个项目，
+   * 所以按项目一个个问会变成 N 次调用。
+   */
+  listTemporarySessions: {
+    request: Empty,
+    response: z.array(SessionSummarySchema),
+    mutating: false,
+  },
+
   writeToSession: {
     request: z.object({
       sessionId: z.string().min(1),

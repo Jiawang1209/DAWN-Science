@@ -10,18 +10,25 @@
  *   - **磁盘上的文件夹一个字节都没动**——移除项目最容易被误读成删文件夹
  *   - 删会话**不动账本**：那件事发生过，不因为你删掉会话就没发生
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 在项目里开会话 } from "./fixtures.js"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+/**
+ * 建一段会话并说一句话。
+ *
+ * **2026-08-11：改成在项目里开。** 侧栏顶上那颗建的是临时会话
+ * （有自己的独立目录、不属于任何项目），而这份用例要验的
+ * 「移除项目会带走它的会话」只有项目里的会话才说得通。
+ */
 async function 建会话并说一句(page: import("@playwright/test").Page, 话: string) {
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await 在项目里开会话(page)
   const box = page.getByPlaceholder(/回车发送/)
   await expect(box).toBeVisible()
   await expect(box).toHaveValue("")
   await box.fill(话)
   await box.press("Enter")
-  await expect(page.locator(".session-list .sess .name").filter({ hasText: 话 })).toBeVisible()
+  await expect(page.locator(".proj-session-list .sess .name").filter({ hasText: 话 })).toBeVisible()
 }
 
 /**
@@ -48,8 +55,8 @@ test("删除会话：确认框说清账本不动，删完列表里就没有了",
   // 而 Playwright 的 name 默认是子串匹配
   await page.locator(".confirm").getByRole("button", { name: "删除会话" }).click()
 
-  await expect(page.locator(".session-list .sess .name")).toHaveCount(0)
-  await expect(page.getByText(/还没有会话/)).toBeVisible()
+  await expect(page.locator(".proj-session-list .sess .name")).toHaveCount(0)
+  await expect(page.getByText(/这个项目里还没有会话/)).toBeVisible()
 })
 
 test("**取消就是什么都不做**", async ({ dawn }) => {
@@ -60,7 +67,7 @@ test("**取消就是什么都不做**", async ({ dawn }) => {
   await page.getByRole("button", { name: "取消" }).click()
 
   await expect(page.locator(".confirm")).toHaveCount(0)
-  await expect(page.locator(".session-list .sess .name").filter({ hasText: "不该被删掉" })).toBeVisible()
+  await expect(page.locator(".proj-session-list .sess .name").filter({ hasText: "不该被删掉" })).toBeVisible()
 })
 
 test("移除项目：确认框摆真数字，**且磁盘上的文件夹还在**", async ({ dawn }) => {

@@ -6,7 +6,7 @@
  */
 import { randomUUID } from "node:crypto"
 import { mkdirSync } from "node:fs"
-import { basename, resolve } from "node:path"
+import { basename, join, resolve } from "node:path"
 import type { ProviderRegistry } from "../config/schema.js"
 import type { ProjectRecord, ProjectStore } from "../store/projects.js"
 import type { RunStore } from "../store/runs.js"
@@ -73,10 +73,59 @@ export class ProjectManager {
    *   - 一个都没有 ⇒ 建目录 + 建项目，幂等（`open()` 命中已有路径会复用）。
    */
   ensureDefault(workspace: string): ProjectRecord {
-    const existing = this.projectStore.list()
+    // **临时项目不算数**：它是一次没指定项目的对话，不该被当成「默认项目」
+    const existing = this.projectStore.list().filter((p) => !p.temporary)
     if (existing.length > 0) return existing[0]!
     mkdirSync(workspace, { recursive: true })
     return this.open(workspace)
+  }
+
+  /**
+   * **那一个临时项目**（2026-08-11）。
+   *
+   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+   *
+   * ## 为什么是**一个**项目，而不是每个临时会话一个
+   *
+   * 第一版是后者，理由是作者选了「每个临时会话一个独立目录」。
+   * **但目录和项目不是一回事**——会话的工作目录是**按会话**给的
+   * （`sessions.create(agentId, workspace, …)`），项目只是它的归属。
+   *
+   * 一个会话一个项目会让**置顶、上移、拖拽排序全部失效而且不出声**：
+   * 那三样都是项目内的排序，而每个项目里只有一条会话。
+   * e2e 当场抓到了这一点（「置顶：排到最前面」红了，列表纹丝不动）。
+   *
+   * 所以：**一个临时项目装所有临时会话，而每条会话仍然有自己的目录。**
+   */
+  ensureTemporary(root: string): ProjectRecord {
+    const 已有 = this.projectStore.list().find((p) => p.temporary)
+    if (已有) return 已有
+    mkdirSync(root, { recursive: true })
+    const rec: ProjectRecord = {
+      projectId: randomUUID(),
+      name: "临时会话",
+      workspace: resolve(root),
+      createdAt: new Date().toISOString(),
+      temporary: true,
+    }
+    this.projectStore.insert(rec)
+    return rec
+  }
+
+  /**
+   * 给一段临时会话开一个**自己的目录**（作者选的形态）。
+   *
+   * ## 路径为什么是 ASCII 且不带空格
+   *
+   * agent 会**自己写 shell 命令**去操作这个目录。一个带空格或中文的路径，
+   * 只要它有一次忘了加引号就会散架，而那时的报错跟「路径里有空格」
+   * 毫无关系。所以是 `<root>/<时间戳>-<四位随机>`。
+   */
+  temporaryWorkspace(root: string, now: Date = new Date()): string {
+    const 时刻 = now.toISOString().replace(/[:.]/g, "-").slice(0, 19)
+    const dir = resolve(root, `${时刻}-${randomUUID().slice(0, 4)}`)
+    mkdirSync(dir, { recursive: true })
+    return dir
   }
 
   summary(projectId: string): ProjectSummary | undefined {

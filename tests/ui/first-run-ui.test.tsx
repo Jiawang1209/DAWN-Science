@@ -49,7 +49,7 @@ describe("第一次打开 · 不再有「先打开一个项目文件夹」这条
   it("有默认项目时，新建会话是可点的", () => {
     sidebar()
     // 本项目没装 jest-dom，直接查属性
-    expect(screen.getByRole("button", { name: /新建会话/ }).hasAttribute("disabled")).toBe(false)
+    expect(screen.getByRole("button", { name: "新建会话" }).hasAttribute("disabled")).toBe(false)
   })
 
   it("界面上不出现「先打开一个项目文件夹」 —— 那是一句描述，不是一条出路", () => {

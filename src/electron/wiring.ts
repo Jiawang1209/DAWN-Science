@@ -5,6 +5,7 @@
  * 应当能脱离 Electron 单独验证——与 Task 2.3 让服务端不认识 Electron 是同一手法。
  * `main.ts` 只剩窗口与 IPC 注册两件事。
  */
+import { homedir } from "node:os"
 import Database from "better-sqlite3"
 import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
@@ -39,6 +40,10 @@ import { WorkbenchServer } from "../workbench/server.js"
 export const DEFAULT_TERMINAL_SCROLLBACK_CHARS = 200_000
 
 export interface CreateWorkbenchOptions {
+  /**
+   * 临时会话的目录根。**测试必须给**——不给就落到开发机的 `~/DAWN/scratch`。
+   */
+  scratchRoot?: string
   configPath: string
   dbPath: string
   readOnly?: boolean
@@ -244,6 +249,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,
+    /**
+     * 临时会话的目录根。**默认 `~/DAWN/scratch`**——
+     * ASCII、不带空格：agent 会自己写 shell 命令去操作这个目录，
+     * 一个带空格或中文的路径只要它有一次忘了加引号就散架。
+     * e2e 必须覆盖它（`DAWN_SCRATCH_ROOT`），否则会往开发机的家目录里写。
+     */
+    scratchRoot: opts.scratchRoot ?? join(homedir(), "DAWN", "scratch"),
     /**
      * 连接设置改了：**重新生成 `models.json`，并丢掉缓存的目录**。
      * 不做的话地址写进了配置却要重启才生效，而界面会说「已保存」——半真的话。

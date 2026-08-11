@@ -36,6 +36,12 @@ const DEV_URL = process.env.DAWN_DEV_SERVER
  */
 const MODELS_JSON = process.env.DAWN_MODELS_JSON
 /**
+ * 临时会话的目录根（2026-08-11）。**e2e 必须覆盖它**——
+ * 不覆盖的话，跑一次测试就会往开发机的 `~/DAWN/scratch` 里建目录。
+ * 与 `DAWN_CONFIG` / `DAWN_DB` 是同一套惯例。
+ */
+const SCRATCH_ROOT = process.env.DAWN_SCRATCH_ROOT
+/**
  * 去哪找外部 CLI 自己的配置（①-C）。**只为测试隔离而存在**——
  * 与 `DAWN_CONFIG` / `DAWN_DB` 是同一套惯例：e2e 指向隔离目录，
  * 否则它会去读开发机真实的 `~/.codex`，而夹具的第一条原则是
@@ -117,6 +123,7 @@ app.whenReady().then(() => {
       subagentChildEntry: join(import.meta.dirname, CHILD_ENTRY),
       ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
+      ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
     })
     if (workbench.reconciled > 0) {

@@ -66,6 +66,7 @@ import {
   $runDetail,
   $runs,
   $sessions,
+  $tempSessions,
   $terminal,
   $terminalTrimmed,
   $kernelInstanceId,
@@ -86,6 +87,7 @@ import {
   carryDraft,
   draftOf,
   loadSessions,
+  loadTempSessions,
   setDraft,
   note,
   resyncSession,
@@ -131,6 +133,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const notes = useStore($notes)
   const projects = useStore($projects)
   const sessions = useStore($sessions)
+  const tempSessions = useStore($tempSessions)
   const runs = useStore($runs)
   const runDetail = useStore($runDetail)
   const provenance = useStore($provenance)
@@ -167,6 +170,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     void loadProjects(client)
     void loadCredentials(client)
     void loadProviders(client)
+    // 临时会话不属于任何项目，所以它不跟着「当前项目」走，开机就取一次
+    void loadTempSessions(client)
   }, [ready, client])
 
   /**
@@ -177,7 +182,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 这个缺陷是 Task 2.23 的 App 级测试撞出来的，叶子组件测试碰不到它。
    */
   useEffect(() => {
-    if (projectId === undefined && projects.length > 0) setActiveProjectId(projects[0]!.projectId)
+    // **临时项目不算数**：它是一次没指定项目的对话，不该被当成「当前项目」
+    const 正式的 = projects.filter((p) => !p.temporary)
+    if (projectId === undefined && 正式的.length > 0) setActiveProjectId(正式的[0]!.projectId)
   }, [projects, projectId])
 
   useEffect(() => {
@@ -563,6 +570,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }
               const pid = $activeProjectId.get()
               if (pid) void loadSessions(client, pid)
+              // **临时会话不跟着当前项目走**，删完得单独重取，否则那一行还挂着
+              void loadTempSessions(client)
               void loadProjects(client)
             })
             .catch(fail)
@@ -585,6 +594,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 重取会话 = useCallback(() => {
     const pid = $activeProjectId.get()
     if (pid) void loadSessions(client, pid)
+    // 临时会话不跟着当前项目走，得单独重取
+    void loadTempSessions(client)
     /**
      * **项目列表上那个「N 个会话」也要跟着变**（2026-08-11）。
      *
@@ -631,9 +642,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const reorderSessions = useCallback(
     (orderedIds: string[]) => {
-      const pid = $activeProjectId.get()
-      if (!pid) return
-      client.get("reorderSessions", { projectId: pid, orderedIds }).then(重取会话).catch(fail)
+      /**
+       * **项目取自会话自己，不是「当前项目」**（2026-08-11）。
+       *
+       * 临时会话属于那个「临时会话」项目，而当前项目多半是别的——
+       * 用当前项目去发，服务端会因为「这些 id 不属于这个项目」而全部忽略，
+       * **一条都不报错，列表纹丝不动**。e2e 的拖拽用例当场抓到了它。
+       */
+      const 头 = orderedIds[0]
+      const 属于 =
+        $sessions.get().find((x) => x.sessionId === 头)?.projectId ??
+        $tempSessions.get().find((x) => x.sessionId === 头)?.projectId
+      if (!属于) return
+      client.get("reorderSessions", { projectId: 属于, orderedIds }).then(重取会话).catch(fail)
     },
     [client, 重取会话],
   )
@@ -759,6 +780,39 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (projectId && ptyAgentId) 开一个终端()
   }, [dockOpen, dockSessionId, 终端们, projectId, ptyAgentId, 开一个终端])
 
+  /**
+   * 开一段**临时会话**（2026-08-11）：没有指定项目的那种。
+   *
+   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+   * 目录由服务端定（每个一个独立目录）——**让界面去拼路径，
+   * 等于把「往哪写」的决定权交给渲染进程**。
+   */
+  const startTemporarySession = useCallback(
+    (agentId: string) => {
+      /**
+       * **记下按下时人在哪一屏**（与 `startSession` 同一条纪律，2026-08-09 立的）。
+       *
+       * 无条件 `setView("conversation")` 会把人**从他刚打开的那一屏上拽走**：
+       * 按下新建 → 会话还没建好 → 用户切到项目概览 → 回调到了 → 屏幕被拽回对话。
+       * 第一版这个新函数就漏了它，被那条老用例当场抓住。
+       */
+      const from = $view.get()
+      client
+        .get<SessionSummary>("createTemporarySession", { agentId })
+        .then((s) => {
+          void loadTempSessions(client)
+          void loadProjects(client)
+          setActiveSessionId(s.sessionId)
+          // 人还在原地才进对话。**他自己切走了就尊重他的选择**
+          if ($view.get() === from) setView("conversation")
+          // 取写权，否则第一句就会被租约挡下（与 startSession 同一条）
+          return client.get("acquireLease", { sessionId: s.sessionId, holder: "user" })
+        })
+        .catch(fail)
+    },
+    [client],
+  )
+
   const startSession = useCallback(
     /**
      * @param firstMessage 给了的话，**建完会话立刻把它发出去**。
@@ -843,7 +897,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, providers, 开一个终端],
   )
 
-  const session = sessions.find((s) => s.sessionId === sessionId)
+  /**
+   * 当前这一段。**两拨里都要找**（2026-08-11）：
+   * `sessions` 是当前项目的，`tempSessions` 是不属于任何项目的临时会话。
+   * 只找前者的话，点开一段临时会话会得到「没有这个会话」的空屏。
+   */
+  const session =
+    sessions.find((s) => s.sessionId === sessionId) ??
+    tempSessions.find((s) => s.sessionId === sessionId)
 
   /**
    * 当前会话可选的模型与正在用的那个（①-B″ · U2）。
@@ -1045,13 +1106,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
       <div className="body">
         <SessionSidebar
-          projects={projects}
+          /** **临时项目不进项目列表**：它们的会话在上面那一列 */
+          projects={projects.filter((p) => !p.temporary)}
           /**
-           * **终端不进会话列表**（2026-08-11）：它们在下面那条 dock 里。
+           * 上面那一列是**临时会话**（没有指定项目的那些，2026-08-11）。
+           *
+           * **终端不进任何一列**：它们在下面那条 dock 里。
            * 一个终端混在对话中间，点开会把整屏换成一片黑——
            * 而作者要的正好相反：对话在上，终端在下，同时看得见。
            */
-          sessions={sessions.filter((x) => x.kind !== "pty")}
+          sessions={tempSessions.filter((x) => x.kind !== "pty")}
+          /** 展开那个项目里的会话，嵌在它自己那一行下面 */
+          projectSessions={sessions.filter((x) => x.kind !== "pty")}
+          onNewSessionIn={(pid, agentId) => {
+            // **先切过去再建**：新会话属于那个项目，人也该跟着到那儿
+            setActiveProjectId(pid)
+            startSession(agentId)
+          }}
           agents={agentIds}
           agentLabel={agentLabel}
           onDeleteProject={askDeleteProject}
@@ -1077,7 +1148,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onMoveSession={moveSession}
           onReorderSessions={reorderSessions}
           onOpenProject={actions.openProject}
-          onNewSession={actions.newSession}
+          // **顶上那颗开的是临时会话**；想在某个项目里开，走那一行上的 ＋
+          onNewSession={startTemporarySession}
           onOpenSettings={actions.openSettings}
         />
 
@@ -1326,6 +1398,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       if (!session.title) {
                         const pid = $activeProjectId.get()
                         if (pid) void loadSessions(client, pid)
+                        /**
+                         * **临时会话也要重取**（2026-08-11）。
+                         *
+                         * 它不属于当前项目，所以上面那一句取不到它——
+                         * 症状是侧栏上那一行永远停在「新会话」，
+                         * 而这正是标题这个功能存在的理由（作者：*「会话的 ID
+                         * 怎么都是一个呢？我很难辨别具体是哪个会话」*）。
+                         */
+                        void loadTempSessions(client)
                       }
                     })
                     .catch(fail)

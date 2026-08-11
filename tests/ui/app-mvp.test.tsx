@@ -149,7 +149,15 @@ function harness(
         projects.push(p)
         return p
       }
-      case "createSession": {
+      case "createSession":
+      /**
+       * **2026-08-11：侧栏顶上那颗「新建会话」建的是临时会话。**
+       *
+       * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+       * 夹具让两条路走同一份假数据——这些用例问的是「说一句话看不看得见回复」，
+       * 与它属不属于项目无关。
+       */
+      case "createTemporarySession": {
         const made = over.cliAgent
           ? { ...SESSION, agentId: "claude", kind: "cli" as const }
           : over.pty
@@ -158,6 +166,8 @@ function harness(
         sessions.push(made)
         return made
       }
+      case "listTemporarySessions":
+        return sessions
       case "subscribeSession":
         return {
           sessionId: "s1", kind: over.cliAgent ? "cli" : over.pty ? "pty" : "native", revision: 0, items: [],
@@ -177,7 +187,7 @@ function harness(
 
   const invoke = async (op: string, req: unknown): Promise<RawResponse> => {
     calls.push({ op, req })
-    if (op === "createSession" && over.deferCreateSession) {
+    if ((op === "createSession" || op === "createTemporarySession") && over.deferCreateSession) {
       await new Promise<void>((r) => (releaseCreate = r))
     }
     const raw = data(op, req)
@@ -233,8 +243,10 @@ async function openAndStart(h: Harness) {
 
   // 2026-08-09：不再有「点开 → 挑 agent」那一步。侧栏按下就用默认 agent 建，
   // 换 agent 的入口搬到了 composer 右下角的 pill
-  fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
-  await waitFor(() => expect(h.calls.some((c) => c.op === "createSession")).toBe(true))
+  fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
+  await waitFor(() =>
+    expect(h.calls.some((c) => c.op === "createSession" || c.op === "createTemporarySession")).toBe(true),
+  )
   // **等到会话真的挂上再返回**。只等 createSession 落在 calls 里是不够的——
   // 那一刻 setSessionId 还没被 React 处理完，事件会因为「不是当前会话」被滤掉
   await screen.findByPlaceholderText(/回车发送/)
@@ -261,7 +273,7 @@ describe("MVP 主路径 · 打开项目", () => {
   it("重开 app 时自动选中已有项目 —— 有项目却还要求你再打开一次文件夹是荒谬的", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
-    const btn = (await screen.findByRole("button", { name: /新建会话/ })) as HTMLButtonElement
+    const btn = (await screen.findByRole("button", { name: "新建会话" })) as HTMLButtonElement
     await waitFor(() => expect(btn.disabled).toBe(false))
   })
 })
@@ -449,8 +461,10 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
     const { container } = render(<App client={h.client} />)
     const panels = () => container.querySelectorAll(".panel").length
 
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
-    await waitFor(() => expect(h.calls.some((c) => c.op === "createSession")).toBe(true))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
+    await waitFor(() =>
+    expect(h.calls.some((c) => c.op === "createSession" || c.op === "createTemporarySession")).toBe(true),
+  )
 
     // 会话还没建好，用户已经切走了
     fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
@@ -461,6 +475,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
 
     // **仍然在项目概览上。** 修复前这里会被拽回对话，composer 冒出来
     await waitFor(() => expect(h.calls.some((c) => c.op === "subscribeSession")).toBe(true))
+    
     expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
     expect(panels()).toBeGreaterThan(0)
   })
@@ -468,7 +483,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
   it("**没切走的话照常进对话** —— 修复不能把正常路径也一起改掉", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
   })
 })
@@ -496,7 +511,7 @@ describe("PTY 会话：终端就是这个会话本身", () => {
   it("**终端直接铺在主区域**，不用点任何东西", async () => {
     const h = harness({ projects: [proj("/w/proj")], pty: true })
     const { container } = render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     await waitFor(() => expect(container.querySelector(".term-host")).not.toBeNull())
     /**
      * **判可见，不只判存在。**
@@ -511,7 +526,7 @@ describe("PTY 会话：终端就是这个会话本身", () => {
   it("**没有输入框** —— 那个框只会把字送进黑洞", async () => {
     const h = harness({ projects: [proj("/w/proj")], pty: true })
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     await waitFor(() => expect(screen.queryByRole("button", { name: "发送" })).toBeNull())
     expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
   })
@@ -519,7 +534,7 @@ describe("PTY 会话：终端就是这个会话本身", () => {
   it("native 会话仍然是对话 + 输入框，主区里没有终端", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     const { container } = render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
     expect(container.querySelector(".term-host")).toBeNull()
   })
@@ -561,14 +576,14 @@ describe("cli 会话也能换模型（①-C 后续）", () => {
   it("**声明了 models 就显示模型选择器**", async () => {
     const h = cliHarness(["opus", "sonnet"])
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     expect(await screen.findByRole("button", { name: /sonnet/ })).toBeDefined()
   })
 
   it("**没声明就不显示** —— 取不到就不假装有得选", async () => {
     const h = cliHarness(undefined)
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     await screen.findByPlaceholderText(/回车发送/)
     expect(screen.queryByRole("button", { name: /sonnet|opus/ })).toBeNull()
   })
@@ -576,11 +591,13 @@ describe("cli 会话也能换模型（①-C 后续）", () => {
   it("**选一个之后走 setSessionModel，不是新建会话**", async () => {
     const h = cliHarness(["opus", "sonnet"])
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /新建会话/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
     fireEvent.click(await screen.findByRole("button", { name: /sonnet/ }))
     fireEvent.click(await screen.findByRole("menuitem", { name: /opus/ }))
     await waitFor(() => expect(h.calls.some((c) => c.op === "setSessionModel")).toBe(true))
-    // **不是新建**：会话数没变
-    expect(h.calls.filter((c) => c.op === "createSession")).toHaveLength(1)
+    // **不是新建**：会话数没变（顶上那颗 2026-08-11 起建的是临时会话）
+    expect(
+      h.calls.filter((c) => c.op === "createSession" || c.op === "createTemporarySession"),
+    ).toHaveLength(1)
   })
 })

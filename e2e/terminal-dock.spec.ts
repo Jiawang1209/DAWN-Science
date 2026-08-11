@@ -73,8 +73,9 @@ test("**终端不混进会话列表** —— 它有自己的地方了", async ({
   await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 60_000 })
   // 会话列表里一条都不该多出来。**数 `.sess` 不数 `li`**——
   // 空列表里那一条 `li` 装的是「还没有会话」那句话
+  // 上面那一列一条都不该多出来（**它空着的时候连占位那一行都没有**，2026-08-11）
   await expect(page.locator(".session-list .sess")).toHaveCount(0)
-  await expect(page.locator(".session-list")).toContainText("还没有会话")
+  await expect(page.locator(".proj-session-list .sess")).toHaveCount(0)
 })
 
 test("收起之后 dock 就没了", async ({ dawn }) => {

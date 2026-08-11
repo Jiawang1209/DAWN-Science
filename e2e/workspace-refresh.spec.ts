@@ -19,14 +19,14 @@
  */
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { test, expect } from "./fixtures.js"
+import { test, expect, 在项目里开会话 } from "./fixtures.js"
 
 test.use({ dawnOptions: { gitInit: true } })
 
 test("从应用外面改了文件，切回来就看得见", async ({ dawn }) => {
   const { page, workspace } = dawn
   await expect(page.locator(".app-shell")).toBeVisible()
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 在项目里开会话(page)
   await page.getByPlaceholder(/回车发送/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/)).toBeVisible()

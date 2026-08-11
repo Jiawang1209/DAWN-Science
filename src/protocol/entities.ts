@@ -155,6 +155,17 @@ export const ProjectSummarySchema = z
     totalRunCount: NonNegInt,
     totalSessionCount: NonNegInt,
     unresolvedProblemCount: NonNegInt,
+    /**
+     * **临时的**（2026-08-11）：没有指定项目的那种对话，自带一个独立目录。
+     *
+     * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+     *
+     * 它仍然是一条项目记录——agent 得有地方读写、账本得有归属——
+     * 界面据这个标记把它放在上面那一列（「会话」），不混进项目列表。
+     *
+     * **缺省 = 不是临时的**。老服务端不发这个字段，读成「正式项目」正好对。
+     */
+    temporary: z.literal(true).optional(),
   })
   .strict()
 export type ProjectSummary = z.infer<typeof ProjectSummarySchema>

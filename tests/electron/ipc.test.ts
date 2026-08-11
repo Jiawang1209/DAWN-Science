@@ -51,6 +51,9 @@ function backend(): WorkbenchBackend {
     listDirectory: async () => ({ path: "", entries: [], ignored: 0, omitted: 0 }),
     readFile: async () => ({ kind: "other" as const, mediaType: "application/octet-stream", bytes: 0, reason: "测试替身不读文件" }),
     setProviderConnection: async () => ({}),
+    createTemporarySession: async () => ({}) as never,
+    listTemporarySessions: async () => [],
+
     createAgent: async ({ agentId }) => ({ agentId }),
     reorderSessions: async () => ({ reordered: 0 }),
     renameSession: async () => ({}),

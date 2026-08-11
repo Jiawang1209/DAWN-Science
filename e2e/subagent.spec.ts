@@ -19,7 +19,7 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { test, expect } from "./fixtures.js"
+import { test, expect, 在项目里开会话 } from "./fixtures.js"
 
 /** 子 agent 的定义。假模型会被要求调用名叫 scout 的这个 */
 const SCOUT = `---
@@ -65,7 +65,7 @@ test.describe("子 agent 真的在独立进程里跑了一次", () => {
     writeFileSync(join(workspace, ".dawn", "agents", "scout.md"), SCOUT)
 
     await expect(page.locator(".app-shell")).toBeVisible()
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 在项目里开会话(page)
     await page.getByPlaceholder(/回车发送/).fill("找个子 agent 看看这个仓库")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
@@ -146,7 +146,7 @@ test.describe("定义写错时不会静静地消失", () => {
     writeFileSync(join(workspace, ".dawn", "agents", "scout.md"), SCOUT)
 
     await expect(page.locator(".app-shell")).toBeVisible()
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 在项目里开会话(page)
     await page.getByPlaceholder(/回车发送/).fill("随便找一个")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 失败也会回到对话里——**失败要如实说**，这一句就是那条纪律的可见面
@@ -201,7 +201,7 @@ async function runSubagentTurn(page: import("@playwright/test").Page, workspace:
   writeFileSync(join(workspace, ".dawn", "agents", "scout.md"), SCOUT)
   await expect(page.locator(".app-shell")).toBeVisible()
   await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 在项目里开会话(page)
   await page.getByPlaceholder(/回车发送/).fill("派两个子 agent")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 }

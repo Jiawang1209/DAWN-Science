@@ -12,6 +12,13 @@ export interface ProjectRecord {
   name: string
   workspace: string
   createdAt: string
+  /**
+   * **临时的**（2026-08-11）：一次没有指定项目的对话，自带一个独立目录。
+   *
+   * 它仍然是一条项目记录——agent 得有地方读写、账本得有归属——
+   * 只是界面把它放在上面那一列（「会话」），不混进项目列表。
+   */
+  temporary?: boolean
 }
 
 interface Row {
@@ -19,6 +26,7 @@ interface Row {
   name: string
   workspace: string
   created_at: string
+  temporary?: number
 }
 
 const toRecord = (r: Row): ProjectRecord => ({
@@ -26,6 +34,8 @@ const toRecord = (r: Row): ProjectRecord => ({
   name: r.name,
   workspace: r.workspace,
   createdAt: r.created_at,
+  // **只在为真时给这个字段**：缺省就是「不是临时的」，与 false 同义但少一处噪声
+  ...(r.temporary ? { temporary: true } : {}),
 })
 
 export class ProjectStore {
@@ -33,8 +43,11 @@ export class ProjectStore {
 
   insert(rec: ProjectRecord): void {
     this.db
-      .prepare(`INSERT INTO projects (id, name, workspace, created_at) VALUES (@projectId, @name, @workspace, @createdAt)`)
-      .run(rec)
+      .prepare(
+        `INSERT INTO projects (id, name, workspace, created_at, temporary)
+         VALUES (@projectId, @name, @workspace, @createdAt, @temporary)`,
+      )
+      .run({ ...rec, temporary: rec.temporary ? 1 : 0 })
   }
 
   get(projectId: string): ProjectRecord | undefined {
@@ -78,6 +91,8 @@ export class ProjectStore {
       name: project.name,
       workspace: project.workspace,
       createdAt: project.createdAt,
+      // **临时的要能被界面认出来**：它归上面那一列，不进项目列表
+      ...(project.temporary ? { temporary: true as const } : {}),
       totalRunCount: one(`SELECT COUNT(*) AS n FROM runs WHERE project_id = ?`),
       totalSessionCount: one(`SELECT COUNT(*) AS n FROM sessions WHERE project_id = ?`),
       // 「未解决问题」= 已结束且出错的 run。进行中的不算——它还没失败

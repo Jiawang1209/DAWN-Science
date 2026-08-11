@@ -223,7 +223,7 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
         onShowPanel={() => {}}
       />,
     )
-    fireEvent.click(screen.getByRole("button", { name: /新建会话/ }))
+    fireEvent.click(screen.getByRole("button", { name: "新建会话" }))
     expect(onNewSession).toHaveBeenCalledWith("ds-chat")
     expect(container.querySelector(".agent-pick")).toBeNull()
   })

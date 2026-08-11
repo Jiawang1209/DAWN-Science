@@ -64,6 +64,19 @@ export const $credentials = atom<CredentialState>({ configured: [], encrypted: f
 
 export const setProjects = (v: readonly ProjectSummary[]) => setList($projects, v)
 export const setSessions = (v: readonly SessionSummary[]) => setList($sessions, v)
+
+/**
+ * **临时会话**（2026-08-11）：没有指定项目的那些。
+ *
+ * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+ *
+ * **与 `$sessions` 分开存**，因为它们回答两个问题：
+ * 那一份是「当前这个项目里有哪些会话」，这一份是「不属于任何项目的有哪些」。
+ * 合成一份就得在每个使用点重新过滤，而漏掉一处的表现是
+ * 临时会话跑进项目里，或者反过来。
+ */
+export const $tempSessions = atom<readonly SessionSummary[]>([])
+export const setTempSessions = (v: readonly SessionSummary[]) => setList($tempSessions, v)
 export const setRuns = (v: readonly RunSummary[]) => setList($runs, v)
 export const setRunDetail = (v: RunDetail | undefined) => setValue($runDetail, v)
 export const setProvenance = (v: ProvenanceLink | undefined) => setValue($provenance, v)

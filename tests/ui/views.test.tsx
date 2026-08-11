@@ -52,7 +52,7 @@ describe("侧栏 · 新建会话是主动作", () => {
   // 也就是说这个 app 做不了它最该做的那件事。
   it("有「新建会话」入口", () => {
     render(<SessionSidebar {...base} />)
-    expect(screen.getByRole("button", { name: /新建会话/ })).toBeDefined()
+    expect(screen.getByRole("button", { name: "新建会话" })).toBeDefined()
   })
 
   /**
@@ -66,22 +66,28 @@ describe("侧栏 · 新建会话是主动作", () => {
   it("**按下就建，不再多一层选择** —— 用清单里的第一个 agent", () => {
     const onNewSession = vi.fn()
     render(<SessionSidebar {...base} onNewSession={onNewSession} />)
-    fireEvent.click(screen.getByRole("button", { name: /新建会话/ }))
+    fireEvent.click(screen.getByRole("button", { name: "新建会话" }))
     expect(onNewSession).toHaveBeenCalledWith("ds-chat")
   })
 
-  // **2026-08-09 改写。** 原来这条断言「没有项目 ⇒ 禁用 + 提示先打开文件夹」。
-  // Task 3.4 之后那个状态在正常路径上不再出现（启动即保证有默认项目），
-  // 而那句提示是描述不是出路，已删。这里只保留防御性行为：真出现无项目时不崩、且仍禁用。
-  it("万一一个项目都没有，按钮禁用但不崩", () => {
+  /**
+   * **2026-08-11 又改一次：没有项目也能新建会话。**
+   *
+   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+   * 顶上那颗从此开的是**临时会话**——它自己会得到一个独立目录，
+   * 所以「先有项目」这个前提没有了。
+   *
+   * （2026-08-09 的上一版断言是「没有项目 ⇒ 禁用」；再上一版还带一句
+   * 「先打开一个项目文件夹」，那是描述不是出路，早已删掉。）
+   */
+  it("**一个项目都没有也能新建会话** —— 它是临时的，不需要项目", () => {
     render(<SessionSidebar {...base} projects={[]} activeProjectId={undefined} />)
-    expect((screen.getByRole("button", { name: /新建会话/ }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.queryByText(/先打开一个项目文件夹/)).toBeNull()
+    expect((screen.getByRole("button", { name: "新建会话" }) as HTMLButtonElement).disabled).toBe(false)
   })
 
   it("配置里没有 agent 时禁用，并说明原因", () => {
     render(<SessionSidebar {...base} agents={[]} />)
-    expect((screen.getByRole("button", { name: /新建会话/ }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole("button", { name: "新建会话" }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText(/还没有可用的 agent/)).toBeDefined()
   })
 })

@@ -29,6 +29,7 @@ import {
   setRunDetail,
   setRuns,
   setSessions,
+  setTempSessions,
   setProviders,
   setContextUsage,
   type CredentialState,
@@ -46,6 +47,15 @@ import { $activeSessionId } from "./view.js"
 export function fail(e: unknown): void {
   note(e instanceof WorkbenchClientError ? e.message : String(e))
 }
+
+/** 临时会话：**跨项目的一问**，见 `listTemporarySessions` 的说明 */
+export const loadTempSessions = (c: WorkbenchClient): Promise<void> =>
+  c
+    .get<SessionSummary[]>("listTemporarySessions")
+    .then((v) => {
+      setTempSessions(v)
+    })
+    .catch(fail)
 
 export const loadProjects = (c: WorkbenchClient): Promise<void> =>
   c.get<ProjectSummary[]>("listProjects").then((v) => {

@@ -259,12 +259,20 @@ pre {
   text-transform: uppercase;
 }
 .project-list, .session-list { list-style: none; margin: 0; padding: 0; }
-.session-list { flex: 1; min-height: 0; overflow-y: auto; }
+/**
+ * **上面这一列按内容高，不撑满**（2026-08-11）。
+ *
+ * 作者：*「没有项目没有会话的时候，新建会话和新建项目是连着的。」*
+ * 撑满的话，两颗按钮之间永远隔着一整块空白——那块空白不表达任何东西。
+ * 现在它们之间的距离**就等于中间有几条临时会话**。
+ */
+.session-list { flex: 0 0 auto; max-height: 45vh; overflow-y: auto; }
 /**
  * 项目那一列**不抢会话的空间**：会话是主体（打开 app 就是要说话），
  * 项目是上下文。多到装不下时它自己滚，而不是把会话挤没。
  */
-.proj-list { max-height: 30vh; overflow-y: auto; flex: 0 0 auto; }
+/** 项目那一列吃掉剩下的空间：会话都嵌在里面，它才是要能滚的那个 */
+.proj-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
 /**
  * 行：扁平、齐左，**行与行之间不加分隔线**，用间距分组。
@@ -704,8 +712,15 @@ pre {
  * 装不下「一列项目，每个里面还有若干会话」。
  */
 .proj-list { list-style: none; margin: 0; padding: 0; }
-.proj-item { position: relative; display: flex; align-items: center; }
-.proj-item > .row { flex: 1; min-width: 0; }
+.proj-item { position: relative; display: block; }
+.proj-head { display: flex; align-items: center; }
+.proj-head > .row { flex: 1; min-width: 0; }
+/* 展开的项目：**它的会话嵌在下面**，缩进一档表示归属 */
+.proj-sessions { padding-left: var(--dawn-space-3); }
+.proj-session-list .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+.proj-session-list { list-style: none; margin: 0; padding: 0; }
+/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */
+.twisty { display: inline-block; width: 1em; color: var(--dawn-text-3); }
 /**
  * **删除键一律常驻，不做「悬停才出现」。**
  *
@@ -714,8 +729,17 @@ pre {
  * 省下的那点视觉噪声不值得再赌一次。
  */
 .proj-item .row-more { opacity: 1; }
-/* 两段之间要有一条界：上面是会话，下面是项目 */
-.proj-actions { border-top: 1px solid var(--dawn-stroke-4); margin-top: var(--dawn-space-2); }
+/**
+ * **两段之间不加任何额外间距**（2026-08-11）。
+ *
+ * 作者：*「没有项目没有会话的时候，新建会话和新建项目是连着的，
+ * 并且二者之间的间隙要基于个数来控制。」*
+ *
+ * 所以这里既没有 `margin-top` 也没有分隔线——加了的话，
+ * 空态下那两行之间会凭空多出一段谁也解释不了的距离。
+ * **它们之间的距离只由中间有几条会话决定。**
+ */
+.proj-actions { margin: 0; }
 .term { color: var(--dawn-text-2); font-size: var(--dawn-code-size); }
 /* xterm 需要一个有确定高度的宿主，否则 fit() 算出 0 行 */
 .term-host { height: 260px; }
@@ -1358,6 +1382,7 @@ pre {
 }
 
 .session-list .sess .name,
+.proj-session-list .sess .name,
 .proj-list .sess .name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1366,6 +1391,7 @@ pre {
 
 /* 副行**比标题弱一档**：它是来路，不是名字 */
 .session-list .sess .sub,
+.proj-session-list .sess .sub,
 .proj-list .sess .sub {
   color: var(--dawn-text-3);
   font-size: 11px;
@@ -1569,9 +1595,16 @@ pre {
  * **两个动作同级。** 此前新建会话是一整个带字的按钮、新建项目是下拉框旁边
  * 一个光秃秃的 `＋`——同一级别的两件事长得差了两档。
  */
+/**
+ * **竖向不留内距**（2026-08-11）：两个动作区现在是上下两段，
+ * 各自留一点竖向内距的话，空态下它们之间会凭空隔开十几像素——
+ * 而作者要的是「没有会话时两颗按钮是连着的」。
+ * 顶部的呼吸感由第一段自己补。
+ */
 .side-actions {
-  padding: var(--dawn-space-2) var(--dawn-space-2) var(--dawn-space-1);
+  padding: 0 var(--dawn-space-2);
 }
+.sidebar > .side-actions:first-child { padding-top: var(--dawn-space-2); }
 
 /**
  * **图标与文字挨着。** `.row` 默认是 `space-between`（会话行要把状态推到右边），

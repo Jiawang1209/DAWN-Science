@@ -223,6 +223,8 @@ export function SessionSidebar({
   sessions,
   agents,
   agentLabel,
+  projectSessions = [],
+  onNewSessionIn,
   activeProjectId,
   activeSessionId,
   view,
@@ -246,6 +248,15 @@ export function SessionSidebar({
   sessions: readonly SessionSummary[]
   /** 可选的 agent（来自 providers.yaml）。空数组时新建按钮禁用并说明原因 */
   agents: string[]
+  /**
+   * **当前展开那个项目里的会话**（2026-08-11）。
+   *
+   * 与上面那个 `sessions` 是两拨人：那一拨是**临时会话**
+   * （没有指定项目的），这一拨属于某个项目。
+   */
+  projectSessions?: readonly SessionSummary[] | undefined
+  /** 在某个项目里开一段新会话 */
+  onNewSessionIn?: ((projectId: string, agentId: string) => void) | undefined
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   agentLabel?: ((agentId: string) => string) | undefined
   activeProjectId: string | undefined
@@ -331,7 +342,15 @@ export function SessionSidebar({
         * 只是各自领着自己那一列。
         */}
       <div className="side-actions">
-        <Row className="side-action" disabled={!active || !fallbackAgent} onClick={() => fallbackAgent && onNewSession(fallbackAgent)}>
+        {/**
+          * **这一颗开的是临时会话**（2026-08-11）。
+          *
+          * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的
+          * 临时会话。」* 所以它不再依赖「当前有没有项目」——
+          * 它自己就会得到一个独立目录。
+          * 想在某个项目里开，走那个项目行上的 `＋`。
+          */}
+        <Row className="side-action" disabled={!fallbackAgent} onClick={() => fallbackAgent && onNewSession(fallbackAgent)}>
           <span className="glyph" aria-hidden="true">＋</span>
           <span className="name">新建会话</span>
         </Row>
@@ -350,12 +369,17 @@ export function SessionSidebar({
         </div>
       ) : null}
 
+      {/**
+        * **上面这一列是临时会话，而且它空着的时候一行都不占**（2026-08-11）。
+        *
+        * 作者：*「没有项目没有会话的时候，新建会话和新建项目是连着的。
+        * 如果有一个临时的会话，那么新建会话和新建项目中间会有一个临时会话。」*
+        *
+        * 所以这里**没有空态占位**，列表也**不撑满剩余高度**——
+        * 两颗按钮之间的距离就等于中间有几条会话，一条不多。
+        */}
       <ul className="session-list">
-        {sessions.length === 0 ? (
-          <li>
-            <p className="hint pad">还没有会话</p>
-          </li>
-        ) : (
+        {sessions.length === 0 ? null : (
           sessions.map((s) => (
             <SessionRow
               key={s.sessionId}
@@ -413,7 +437,37 @@ export function SessionSidebar({
               current={p.projectId === activeProjectId}
               onPick={() => onPickProject(p.projectId)}
               {...(onDeleteProject ? { onDelete: () => onDeleteProject(p.projectId) } : {})}
-            />
+              {...(fallbackAgent
+                ? { onNewSession: () => onNewSessionIn?.(p.projectId, fallbackAgent) }
+                : {})}
+            >
+              {/**
+                * **展开的项目，它的会话就在这里**。
+                * 只有当前那个项目的会话在手上（`listSessions` 是按项目问的），
+                * 所以嵌套只画展开的那一个——**不假装知道别的项目里有什么**。
+                */}
+              <ul className="proj-session-list">
+                {projectSessions.length === 0 ? (
+                  <li>
+                    <p className="hint pad">这个项目里还没有会话</p>
+                  </li>
+                ) : (
+                  projectSessions.map((x) => (
+                    <SessionRow
+                      key={x.sessionId}
+                      session={x}
+                      active={x.sessionId === activeSessionId && view === "conversation"}
+                      current={x.sessionId === activeSessionId}
+                      {...(agentLabel ? { label: agentLabel } : {})}
+                      onPick={() => onPickSession(x.sessionId)}
+                      {...(onDeleteSession ? { onDelete: () => onDeleteSession(x) } : {})}
+                      {...(onRenameSession ? { onRename: (t: string) => onRenameSession(x, t) } : {})}
+                      {...(onPinSession ? { onPin: () => onPinSession(x, !x.pinned) } : {})}
+                    />
+                  ))
+                )}
+              </ul>
+            </ProjectRow>
           ))
         )}
       </ul>
@@ -459,34 +513,72 @@ function ProjectRow({
   current,
   onPick,
   onDelete,
+  onNewSession,
+  children,
 }: {
   project: ProjectSummary
+  /** 是不是**展开的那一个**。展开 = 选中：一个项目被选中就该看见它装着什么 */
   current: boolean
   onPick: () => void
   onDelete?: (() => void) | undefined
+  /** 在这个项目里开一段新会话。**入口就在它自己那一行上** */
+  onNewSession?: (() => void) | undefined
+  /** 展开时嵌在下面的会话列表 */
+  children?: React.ReactNode
 }) {
   return (
     <li className={`proj-item${current ? " current" : ""}`}>
-      <Row active={current} onClick={onPick}>
-        <span className="sess">
-          <span className="name">{project.name}</span>
-          {/* **会话数就是那层包含关系**：没有它，项目只是一个名字 */}
-          <span className="sub">{project.totalSessionCount} 个会话</span>
-        </span>
-      </Row>
-      {onDelete ? (
+      <div className="proj-head">
+        <Row active={current} onClick={onPick}>
+          <span className="sess">
+            <span className="name">
+              {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
+              <span className="twisty" aria-hidden="true">
+                {current ? "▾" : "▸"}
+              </span>
+              {project.name}
+            </span>
+            {/* **会话数就是那层包含关系**：没有它，项目只是一个名字 */}
+            <span className="sub">{project.totalSessionCount} 个会话</span>
+          </span>
+        </Row>
         <div className="row-actions">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="row-more"
-            aria-label={`删除项目：${project.name}`}
-            onClick={onDelete}
-          >
-            🗑
-          </Button>
+          {onNewSession ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="row-more"
+              /**
+               * **措辞刻意避开「新建会话」四个字。**
+               *
+               * 侧栏顶上那颗按钮就叫「新建会话」，两处同名会让
+               * 「按名字找按钮」变成一件靠运气的事——屏幕阅读器与测试都一样。
+               * 2026-08-11 第一版没避开，一下子撞红了大半套 e2e。
+               */
+              aria-label={`在「${project.name}」里开一段新对话`}
+              onClick={onNewSession}
+            >
+              ＋
+            </Button>
+          ) : null}
+          {onDelete ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="row-more"
+              aria-label={`删除项目：${project.name}`}
+              onClick={onDelete}
+            >
+              🗑
+            </Button>
+          ) : null}
         </div>
-      ) : null}
+      </div>
+      {/**
+        * **展开的那个项目，会话就嵌在它下面**（2026-08-11）。
+        * 作者：*「项目下也需要嵌套会话，因为一个项目下面可能会有多个会话。」*
+        */}
+      {current ? <div className="proj-sessions">{children}</div> : null}
     </li>
   )
 }

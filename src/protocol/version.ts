@@ -105,8 +105,13 @@
  * 4.1（2026-08-11）：`getProviders` 的 `providers[]` 带上 `name`（pi 给的显示名）。
  *   纯新增。作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*——agent id 是配置里的键，
  *   **是我们的内部标识，不是这家服务的名字**。
+ * 4.2（2026-08-11）：新增 `createTemporarySession` / `listTemporarySessions`；
+ *   `ProjectSummary` 带上可选的 `temporary`。纯新增。
+ *   作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+ *   **临时会话仍然有工作区**（每个一个独立目录）——agent 要有地方读写、
+ *   账本要有归属；`temporary` 只是告诉界面它归上面那一列。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.1"
+export const WORKBENCH_PROTOCOL_VERSION = "4.2"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

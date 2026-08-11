@@ -22,7 +22,7 @@
  * 那是不变式 5 明令禁止的编造。这条区别此前只有单元测试守着，
  * **单元测试证明不了它在真实产物上也成立**。
  */
-import { test, expect, readRuns } from "./fixtures.js"
+import { test, expect, readRuns, 在项目里开会话 } from "./fixtures.js"
 
 /** 中文文件名是刻意的：R3 撞出过 git 把非 ASCII 路径写成八进制转义的缺陷 */
 const 产出文件 = "分析结果.md"
@@ -38,7 +38,7 @@ test.describe("拿得到 git 事实时", () => {
   test("工具改的文件，名字真的出现在变更 pane 上", async ({ dawn }) => {
     const { page, dbPath } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 在项目里开会话(page)
     await page.getByPlaceholder(/回车发送/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 工具跑完之后模型才回这句 —— 它到了就说明整轮收工了
@@ -67,7 +67,7 @@ test.describe("拿不到 git 事实时", () => {
   test("**说「无法确定」，不说「没有改动文件」** —— 不知道不等于没改", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await page.getByRole("button", { name: /新建会话/ }).click()
+    await 在项目里开会话(page)
     await page.getByPlaceholder(/回车发送/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/)).toBeVisible()

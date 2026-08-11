@@ -24,7 +24,7 @@ test("**每一行项目上就有删除**，不用先翻到项目概览", async (
 test("**确认框摆真数字**，并说清哪些东西不会动", async ({ dawn }) => {
   const { page } = dawn
   // 先说一句话，好让这个项目里有一段对话可数
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await page.locator(".proj-item").first().getByRole("button", { name: /里开一段新对话/ }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   await page.getByPlaceholder(/回车发送/).fill("留个记录")
   await page.getByRole("button", { name: "发送", exact: true }).click()
@@ -41,17 +41,17 @@ test("**确认框摆真数字**，并说清哪些东西不会动", async ({ dawn
 
 test("删掉之后，它的会话**一条都不剩**；工作区的文件一个都没少", async ({ dawn }) => {
   const { page, workspace } = dawn
-  await page.getByRole("button", { name: "新建会话" }).click()
+  await page.locator(".proj-item").first().getByRole("button", { name: /里开一段新对话/ }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
   await page.getByPlaceholder(/回车发送/).fill("要一起被删掉的")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.locator(".session-list .sess")).toHaveCount(1)
+  await expect(page.locator(".proj-session-list .sess")).toHaveCount(1)
 
   await page.getByRole("button", { name: /删除项目：/ }).click()
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
 
   // 项目没了，它的会话也没了
-  await expect(page.locator(".session-list .sess")).toHaveCount(0)
+  await expect(page.locator(".proj-session-list .sess")).toHaveCount(0)
   await expect(page.locator(".proj-list")).not.toContainText("workspace")
 
   // **磁盘上的文件夹一个字节都没动**——那句承诺要真的成立

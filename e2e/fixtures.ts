@@ -22,6 +22,18 @@ const ROOT = resolve(import.meta.dirname, "..")
 
 export { CANNED_REPLY }
 
+/**
+ * **在当前项目里**开一段会话（2026-08-11）。
+ *
+ * 侧栏顶上那颗「新建会话」建的是**临时会话**——它有自己的独立目录，
+ * 不属于任何项目（作者：*「会话其实更倾向于……没有设置项目的临时会话」*）。
+ * 所以凡是要验「账本 / 产出 / git 事实」的用例都得走这条路：
+ * 那些东西都是**按项目**组织的。
+ */
+export async function 在项目里开会话(page: Page): Promise<void> {
+  await page.locator(".proj-item").first().getByRole("button", { name: /里开一段新对话/ }).click()
+}
+
 export interface DawnFixture {
   app: ElectronApplication
   page: Page
@@ -254,6 +266,12 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         // **外部 CLI 的配置也要隔离**：不指的话会去读开发机真实的 ~/.codex，
         // 那正是这份文件开头明令禁止的暗管道（2026-08-09 加模型自动发现时捅的洞）
         DAWN_CLI_HOME: join(dir, "cli-home"),
+        /**
+         * **临时会话的目录根也要隔离**（2026-08-11）——
+         * 不隔离的话，跑一次 e2e 就往开发机的 `~/DAWN/scratch` 里建一串目录。
+         * 与上面几条是同一条理由：测试不该有副作用溢出到测试之外。
+         */
+        DAWN_SCRATCH_ROOT: join(dir, "scratch"),
         /**
          * **内核搜索路径也要隔离**，理由与上一条完全一样，只是后果更难看：
          * 内核列表随机器而变，进了视觉基线就等于

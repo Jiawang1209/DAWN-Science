@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 8
+export const SCHEMA_VERSION = 9
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -206,6 +206,23 @@ export function migrate(db: Database.Database): void {
   if (!hasColumn(db, "sessions", "pinned")) {
     db.exec(`ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`)
   }
+  /**
+   * **v9（2026-08-11）：项目分「你打开的」与「临时的」。**
+   *
+   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
+   *
+   * 一个临时会话仍然要有工作区——agent 得在某处读写、跑命令，而且
+   * **作者选的是「每个临时会话一个独立目录」**。所以它照旧是一条项目记录，
+   * 只是打上标记：界面据此把它放在上面那一列（「会话」），
+   * 而不是下面那一列（「项目」）。
+   *
+   * **不靠工作区路径前缀去猜**：那是推断，改一次目录名就全错了，
+   * 而且没有任何迹象。显式一列，贵不了什么。
+   */
+  if (!hasColumn(db, "projects", "temporary")) {
+    db.exec(`ALTER TABLE projects ADD COLUMN temporary INTEGER NOT NULL DEFAULT 0`)
+  }
+
   if (!hasColumn(db, "sessions", "sort_order")) {
     db.exec(`ALTER TABLE sessions ADD COLUMN sort_order INTEGER`)
     /**

@@ -11,12 +11,12 @@
  * 所以这里跑真实构建产物，从说一句话一直看到面板上的字。
  */
 import { resolve } from "node:path"
-import { test, expect } from "./fixtures.js"
+import { test, expect, 在项目里开会话 } from "./fixtures.js"
 
 test("native 会话：如实说「不可见」并给出原因，而不是停在「尚未记录」", async ({ dawn }) => {
   const { page } = dawn
   await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
-  await page.getByRole("button", { name: /新建会话/ }).click()
+  await 在项目里开会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
   await page.getByPlaceholder(/回车发送/).fill("你好")
   await page.keyboard.press("Enter")

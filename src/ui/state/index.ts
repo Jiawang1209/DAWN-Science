@@ -58,6 +58,8 @@ export {
 export {
   $projects,
   $sessions,
+  $tempSessions,
+  setTempSessions,
   $runs,
   $runDetail,
   $provenance,
@@ -119,6 +121,7 @@ export {
   loadProviders,
   loadContextUsage,
   loadSessions,
+  loadTempSessions,
   loadRuns,
   loadRunDetail,
   resyncSession,

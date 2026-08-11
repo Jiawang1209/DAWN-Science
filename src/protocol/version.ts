@@ -111,6 +111,9 @@
  *   **临时会话仍然有工作区**（每个一个独立目录）——agent 要有地方读写、
  *   账本要有归属；`temporary` 只是告诉界面它归上面那一列。
  * 4.3（2026-08-11）：新增 `createTerminalSession`。纯新增。
+ * 4.7（2026-08-12）：`TurnItem.by`——这一轮是谁答的。纯新增。
+ *   就地换服务之后，答话的那一行仍标着建会话时那个 agent 名——**界面在说谎**。
+ *   **不能一律显示当前那家**：那会把历史也改写。所以每一轮各自记下。
  * 4.6（2026-08-11）：`createRemoteSession`；`SessionSummary.remote`；
  *   会话更新多一种 `cwd`。纯新增。
  *   **起点是那台机器的家目录，由服务端定**——「从哪个目录开始」是一条边界。
@@ -127,7 +130,7 @@
  *   不做成 `createSession` 的一个 `cwd` 参数——那等于把「shell 从哪儿开」
  *   的决定权交给渲染进程，而那条边界决定了 `rm -rf .` 会删掉谁。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.6"
+export const WORKBENCH_PROTOCOL_VERSION = "4.7"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

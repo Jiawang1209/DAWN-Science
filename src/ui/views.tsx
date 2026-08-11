@@ -1242,6 +1242,7 @@ export function ConversationView({
                 item={item}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
+                nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
                 {...(disabled
                   ? {}
                   : {
@@ -1409,11 +1410,17 @@ export function ConversationView({
 export function TranscriptRow({
   item,
   agentId,
+  nameOf,
   currentKernel,
   onResend,
 }: {
   item: TranscriptItem
   agentId: string
+  /**
+   * provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。
+   * **缺省时用 id**——那不好看，但**是实话**。
+   */
+  nameOf?: ((providerId: string) => string | undefined) | undefined
   currentKernel?: string | undefined
   /**
    * 改一句自己说过的话，再发出去（2026-08-11，作者提，仿 Codex）。
@@ -1503,7 +1510,17 @@ export function TranscriptRow({
        *
        * 与本项目其他几处同一条：*「符号不够——只靠 ✓/✗ 等于只用颜色表达含义」*。
        */}
-      <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : agentId}</span>
+      {/**
+       * **谁答的这一轮，按这一轮记下的来**（2026-08-12）。
+       *
+       * 作者截图里 kimi 答的话被标成了「DeepSeek」——那是
+       * `session.agentId`（建会话时绑死的），换服务之后不跟着变。
+       * **界面在说谎，而作者正是拿它当「没换过去」的证据。**
+       *
+       * `item.by` 缺省时退回 agent 名：那表示还没换过，那时它本来就是对的。
+       * **不拿「当前那家」去盖所有历史**——前面那些确实是 DeepSeek 答的。
+       */}
+      <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}</span>
       <div className="bubble">
         {/**
          * **只有 agent 的发言走 markdown。**

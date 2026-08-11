@@ -67,6 +67,11 @@ interface Entry {
    */
   kernelInstanceId: string | undefined
   turnSeq: number
+  /**
+   * 此刻由谁在答（2026-08-12）。**换过服务才有值**——
+   * 没换过时 agent 名本来就是对的。
+   */
+  当前模型: string | undefined
 }
 
 export class SessionTranscripts {
@@ -94,6 +99,7 @@ export class SessionTranscripts {
       exitCode: undefined,
       openTurnId: undefined,
       turnSeq: 0,
+      当前模型: undefined,
     })
   }
 
@@ -245,6 +251,8 @@ export class SessionTranscripts {
        * 最容易变得说不清的地方。
        */
       case "model":
+        // **从这一刻起的每一轮都记在它头上**（历史那些不动）
+        e.当前模型 = event.provider
         this.putItem(sessionId, e, {
           type: "notice",
           id: `model-${++e.turnSeq}`,
@@ -430,7 +438,14 @@ export class SessionTranscripts {
     const existing = e.items.find((i) => i.id === id)
     const text = existing?.type === "turn" ? existing.text + delta : delta
     // 推整条而不是增量：界面按 id 覆盖即可，**少一层客户端拼接状态**
-    this.putItem(sessionId, e, { type: "turn", id, who: "agent", text, final: false })
+    this.putItem(sessionId, e, {
+      type: "turn",
+      id,
+      who: "agent",
+      text,
+      final: false,
+      ...(e.当前模型 ? { by: e.当前模型 } : {}),
+    })
   }
 
   /** 写入或覆盖一条 item（按 id），并推送。 */

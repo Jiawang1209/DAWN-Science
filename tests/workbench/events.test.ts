@@ -486,3 +486,46 @@ describe("工具调用的时刻", () => {
     expect(t.endedAt).toBe(5000)
   })
 })
+
+/**
+ * 换模型之后，**这一轮是谁答的**（2026-08-12）。
+ *
+ * 作者换到 kimi 之后，回答上仍写着「DeepSeek」，于是他合理地推断「没换过去」。
+ * **界面在说谎，而且是最容易被当真的那种**。
+ */
+describe("这一轮是谁答的", () => {
+  const 起 = () => {
+    const h = new SessionTranscripts({ terminalMaxChars: 1000 })
+    h.track("a", "native")
+    return h
+  }
+  const 发言 = (h: SessionTranscripts) =>
+    h.subscribe("a").items.filter((x) => x.type === "turn" && x.who === "agent") as Extract<
+      TranscriptItem,
+      { type: "turn" }
+    >[]
+
+  it("没换过时不盖章 —— 那时 agent 名本来就是对的", () => {
+    const h = 起()
+    h.ingest("a", { kind: "output", sessionId: "a", data: "第一句" })
+    expect(发言(h)[0]!.by).toBeUndefined()
+  })
+
+  it("换过之后的新发言盖上新的那家", () => {
+    const h = 起()
+    h.ingest("a", { kind: "output", sessionId: "a", data: "旧的" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "model", sessionId: "a", provider: "kimi-k3", model: "kimi-k3" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "新的" })
+    expect(发言(h).at(-1)!.by).toBe("kimi-k3")
+  })
+
+  it("**历史不被回填** —— 前面那轮确实是上一家答的，改掉它是在篡改记录", () => {
+    const h = 起()
+    h.ingest("a", { kind: "output", sessionId: "a", data: "旧的" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "model", sessionId: "a", provider: "kimi-k3", model: "kimi-k3" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "新的" })
+    expect(发言(h)[0]!.by).toBeUndefined()
+  })
+})

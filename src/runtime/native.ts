@@ -1010,6 +1010,40 @@ export class NativeRuntime implements AgentRuntime {
       }
       throw e
     }
+    /**
+     * **把「换人了」这件事写进模型的上下文**（2026-08-12）。
+     *
+     * 作者：换到 kimi 之后再问「你是什么模型」，它仍然答 deepseek-v4-flash。
+     *
+     * 那不是没换过去——路由换了。**是模型根本不知道自己是谁**：
+     * 它只能读上下文，而上下文里有两处旧身份——会话开头那份系统提示词，
+     * 以及**它自己上一轮说过的话**（作者那次输入 2.6k token，
+     * 「我是 deepseek-v4-flash」就在里面）。于是它照着念。
+     *
+     * 最能说明问题的是它第一次的动作：先跑 `env | grep -i "^PI_"`
+     * **去环境变量里找自己是谁**——手上没有可靠答案，只好翻。
+     *
+     * 所以补一句事实进去。**`display: false`**：它是给模型读的，
+     * 不是给人看的——人那一侧界面上已经有「已换到 …」那条了，
+     * 摆两遍等于同一件事说两回。
+     */
+    try {
+      s.sessionManager.appendCustomMessageEntry(
+        "dawn-model-change",
+        `[system] From this point on, this conversation is answered by model "${modelId}" (provider "${provider}"). Earlier turns were answered by a different model; if asked which model you are, answer with the current one.`,
+        false,
+      )
+    } catch (e) {
+      /**
+       * **写不进去不该让换模型失败**：路由已经换成功了，这一句只是让它
+       * 说得对。但**不能静默**——不说的话，「它还报旧名字」就永远查不出原因。
+       */
+      console.error(
+        `[runtime] 换模型的那条上下文没写进去（${sessionId}）：`,
+        e instanceof Error ? e.message : String(e),
+        "——模型可能仍会报上一个名字",
+      )
+    }
     this.emit({ kind: "model", sessionId, provider, model: modelId })
   }
 

@@ -2142,8 +2142,19 @@ pre {
   align-items: center;
   margin-top: 2px;
 }
-/* 自己说的话靠右，所以它的操作也靠右——**跟着那颗气泡走** */
-.turn.user .turn-actions { justify-content: flex-end; }
+/**
+ * **操作一律左对齐**（2026-08-12，作者提）。
+ *
+ * 上一版让自己那句的操作跟着气泡靠右——读起来是「跟着气泡走」，
+ * 但实际后果是**两段对话的操作行左右横跳**，眼睛要来回找。
+ * 对齐到同一条竖线上，扫一眼就知道每段下面有什么。
+ */
+.turn .turn-actions { justify-content: flex-start; }
+/* 两颗图标同样大小：一个 ⧉ 一个 ✎，大小不一样会像是两种东西 */
+.turn-actions .btn-icon { width: 1.75rem; height: 1.75rem; font-size: 0.95rem; }
 .turn-edit { width: 100%; min-height: 4.5em; resize: vertical; }
 .turn.editing .bubble { width: 100%; }
 .tool-body > .copy-btn { float: right; }
+
+/* 执行中那个会动的记号，跟状态字挨着 */
+.tool-head .thinking { margin-left: var(--dawn-space-2); }

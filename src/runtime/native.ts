@@ -540,6 +540,15 @@ export class NativeRuntime implements AgentRuntime {
     this.sessions.set(spec.sessionId, {
       session,
       sessionManager,
+      /**
+       * **起会话时就记下当前是谁**（2026-08-12 修）。
+       *
+       * 不记的话，第一条回复的回执必然与「不知道」对不上，
+       * 于是**每个会话的第一句都会平白多一条「已换到 …」**——
+       * 那条通知的意思是「有变化」，而这里根本没有变化。
+       * `model-error` 那条 e2e 当场抓到：`.caveat` 从一条变成两条。
+       */
+      实际模型: `${native.provider}/${native.model}`,
       unsubscribe,
       pid,
       pending: undefined,

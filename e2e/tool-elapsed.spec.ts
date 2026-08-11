@@ -58,3 +58,43 @@ test.describe("工具调用的秒表", () => {
     expect(await 秒表.textContent()).toBe(定住的)
   })
 })
+
+/**
+ * **跑着的时候要有东西在动**（2026-08-12，作者提）。
+ *
+ * 作者：*「有些会话会思考以及执行很多时间……否则我以为会话可能死掉了。」*
+ *
+ * 秒表已经在走，但**数字变化太安静**——扫一眼看不出它在动。
+ * 所以这里断言的不是「有个元素」，而是**它真的在做动画**。
+ */
+test.describe("执行中的记号", () => {
+  // **这一圈不能少**：`toolCall` 是按 describe 配的，放在外面就没有工具行可看
+  test.use({ dawnOptions: { toolCall: { toolName: "bash", args: { command: "sleep 4" } } } })
+
+  test("**执行中有会动的记号，跑完就没了**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await page.getByPlaceholder(/回车发送/).fill("跑一条慢命令")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+
+  const tool = page.locator(".tool").first()
+  await expect(tool).toBeVisible({ timeout: 30_000 })
+  const 记号 = tool.locator(".thinking")
+  await expect(记号).toBeVisible({ timeout: 15_000 })
+
+  /**
+   * **它得真的在动。** 一个静止的记号与「卡住了」长得一模一样——
+   * 而这正是作者要分清的那件事。所以量 CSS 动画本身，不是量它存不存在。
+   */
+  const 动了吗 = await 记号.evaluate((el) => {
+    // **量那三个点**：第一个 span 是给读屏的文字，它本来就不动
+    const 点 = [...el.querySelectorAll(".dot")]
+    return 点.length > 0 && 点.some((d) => getComputedStyle(d).animationName !== "none")
+  })
+  expect(动了吗).toBe(true)
+
+  // 跑完就该收起来：还在转的记号会让人以为它没结束
+  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(记号).toHaveCount(0)
+})
+})

@@ -1585,8 +1585,15 @@ export function TranscriptRow({
            * 想让它换个说法，是再说一句，不是替它改口。
            */}
           {mine && onResend ? (
-            <Button variant="text" size="inline" onClick={() => 设编辑(item.text)}>
-              修改
+            <Button
+              variant="ghost"
+              size="icon"
+              className="edit-btn"
+              aria-label="修改"
+              title="修改"
+              onClick={() => 设编辑(item.text)}
+            >
+              <span aria-hidden="true">✎</span>
             </Button>
           ) : null}
         </div>
@@ -1893,6 +1900,16 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
           </span>
         ) : null}
         <span className="tool-status">{label}</span>
+        {/**
+         * **还在跑的时候要有东西在动**（2026-08-12，作者提）。
+         *
+         * 作者：*「有些会话会思考以及执行很多时间……否则我以为会话可能死掉了。」*
+         *
+         * 旁边那个秒表已经在走，但**数字变化太安静**——人扫一眼看不出它在动。
+         * 一个会动的记号才是「它还活着」这句话的形状。
+         * 复用发言那三个点：同一件事在界面上只有一种长相。
+         */}
+        {item.status === "running" ? <Thinking /> : null}
       </Button>
 
       {open ? (

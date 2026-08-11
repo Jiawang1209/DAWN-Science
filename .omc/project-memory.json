@@ -332,6 +332,12 @@
       "type": "file"
     },
     {
+      "path": "docs/superpowers/plans/2026-08-11-phase2b-remote-workspace.md",
+      "accessCount": 2,
+      "lastAccessed": 1786438645191,
+      "type": "file"
+    },
+    {
       "path": "src/config/schema.ts",
       "accessCount": 1,
       "lastAccessed": 1786373021333,
@@ -449,12 +455,6 @@
       "path": "spikes/f-ssh-remote-kernel.ts",
       "accessCount": 1,
       "lastAccessed": 1786430263402,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-08-11-phase2b-remote-workspace.md",
-      "accessCount": 1,
-      "lastAccessed": 1786432614484,
       "type": "file"
     },
     {

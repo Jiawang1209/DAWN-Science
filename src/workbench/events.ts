@@ -316,6 +316,8 @@ export class SessionTranscripts {
       case "turn_end": {
         // 同上：**只有 PTY 没有回合概念**（字节流），cli 与 native 都有
         if (e.kind === "pty") return
+        // **收尾之前先停表**：清掉 openTurnId 之后就找不到那一条了
+        this.思考停表(sessionId, e)
         // 收尾当前发言。没有正在累积的发言时什么都不做——
         // 一个空的 turn 进了记录，界面上就是一个空气泡
         const open = e.openTurnId
@@ -385,6 +387,8 @@ export class SessionTranscripts {
       }
 
       case "tool_start":
+        // **要调工具了，说明它想完了**（见 `思考停表`）
+        this.思考停表(sessionId, e)
         this.putItem(sessionId, e, {
           type: "tool",
           id: event.toolCallId || `tool${e.revision + 1}`,
@@ -498,6 +502,28 @@ export class SessionTranscripts {
       ...(想了 === undefined ? {} : { thinkingMs: 想了 }),
       ...(e.当前模型 ? { by: e.当前模型 } : {}),
     })
+  }
+
+  /**
+   * **思考到此为止**（2026-08-12 修）。
+   *
+   * 停表的时机原先只有「正文的第一个字」。作者那次是
+   * *思考 → 调工具 → 再回答*——**正文落在了另一条 turn 上**，
+   * 于是先前那条的思考永远没停：他看到的是「86s 正在思考」，而答案早就出来了。
+   *
+   * 所以凡是「这一轮的思考不可能再继续」的时刻都要停：
+   * 开始调工具、这一轮收尾、或者正文开始。**三个都得算**。
+   */
+  private 思考停表(sessionId: SessionId, e: Entry): void {
+    if (e.思考起于 === undefined) return
+    const ms = this.now() - e.思考起于
+    e.思考起于 = undefined
+    const id = e.openTurnId
+    if (!id) return
+    const item = e.items.find((x) => x.id === id)
+    // 已经停过就不动：那个数字是说完就定住的事实，不该越看越大
+    if (item?.type !== "turn" || item.thinkingMs !== undefined || !item.thinking) return
+    this.putItem(sessionId, e, { ...item, thinkingMs: ms })
   }
 
   /** 写入或覆盖一条 item（按 id），并推送。 */

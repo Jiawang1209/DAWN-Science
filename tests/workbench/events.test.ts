@@ -529,3 +529,60 @@ describe("这一轮是谁答的", () => {
     expect(发言(h)[0]!.by).toBeUndefined()
   })
 })
+
+/**
+ * 思考的秒表**必须停**（2026-08-12）。
+ *
+ * 作者：*「deepseek 只思考了 2s 并且给出了答案，但答案前面还有一个
+ * 『86s 正在思考』。」*
+ *
+ * 根因：停表原先只发生在「正文的第一个字」。而他那一轮是
+ * **思考 → 调工具 → 再回答**——正文落在了另一条 turn 上，
+ * 于是先前那条的思考永远没停。
+ */
+describe("思考的秒表", () => {
+  const 定时 = (t: number[]) => {
+    let i = 0
+    const h = new SessionTranscripts({
+      terminalMaxChars: 1000,
+      now: () => t[Math.min(i++, t.length - 1)]!,
+    })
+    h.track("a", "native")
+    return h
+  }
+  const 那一条 = (h: SessionTranscripts) =>
+    h.subscribe("a").items.find((x) => x.type === "turn") as Extract<
+      TranscriptItem,
+      { type: "turn" }
+    >
+
+  it("正文一开始就停", () => {
+    const h = 定时([1000, 3000])
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想想" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "答案" })
+    expect(那一条(h).thinkingMs).toBe(2000)
+  })
+
+  it("**调工具时也要停** —— 作者那一轮就是思考→调工具→再答", () => {
+    const h = 定时([1000, 3000])
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想想" })
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
+    expect(那一条(h).thinkingMs).toBe(2000)
+  })
+
+  it("**这一轮收尾也要停** —— 否则它会一直显示「正在思考」", () => {
+    const h = 定时([1000, 5000])
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想想" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    expect(那一条(h).thinkingMs).toBe(4000)
+  })
+
+  it("**只停一次** —— 那个数字是说完就定住的事实，不该越看越大", () => {
+    const h = 定时([1000, 3000, 9000, 20000])
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想想" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "答" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "案" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    expect(那一条(h).thinkingMs).toBe(2000)
+  })
+})

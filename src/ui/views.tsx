@@ -1107,7 +1107,14 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
         </span>
         {/* **秒数放在方块里**：它是这一行里唯一会动的东西，要好认 */}
         <span className="thought-secs">{秒}s</span>
-        <span className="thought-label">{在想 ? "正在思考" : "想了一下"}</span>
+        {/**
+         * **「正在思考」只说一遍**（2026-08-12 修）。
+         *
+         * 上一版这里写了「正在思考」，而下面那个动画自带一句给读屏的
+         * 「正在思考」——作者截图里因此出现了两行一模一样的字。
+         * 动画那句留着（读屏要听得到状态），文字这句换个说法。
+         */}
+        <span className="thought-label">{在想 ? "思考中" : "想了一下"}</span>
         {在想 ? <Thinking /> : null}
       </Button>
       {open ? <div className="thought-body">{text}</div> : null}

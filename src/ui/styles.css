@@ -2274,3 +2274,15 @@ pre {
 }
 /* 用量退到动作行尾巴上：它是脚注，不该把正文和动作隔开 */
 .turn-actions .turn-usage { margin: 0 0 0 auto; font-size: 0.78em; }
+
+/* 正文与容器边缘的距离（2026-08-12）。
+   量来的：WorkBuddy `padding: 32px 48px`。我们取上下 24 / 左右 32——
+   **窗口比它窄时 48 会吃掉太多行宽**，而我们这一列还要放工具调用 */
+.turns { padding: var(--dawn-space-6) var(--dawn-space-8); }
+
+/* 代码：比正文小两号、行距更紧（量来的 13px / 1.6）。
+   **它与正文是两种东西**——同一个字号会让整段看起来没有层次 */
+.bubble code, .bubble pre {
+  font-size: var(--dawn-code-size);
+  line-height: var(--dawn-code-leading);
+}

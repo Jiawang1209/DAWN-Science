@@ -48,6 +48,79 @@ function 会话图标() {
   return <对话图标 className="row-icon" />
 }
 
+/**
+ * 对话头上的**工作目录**（T3-b，2026-08-12）。
+ *
+ * 两态，各说各的事：
+ *   - **没设**：「未设工作目录 · 这是一段普通对话」。
+ *     **不设不是「缺了什么」**，它是一个有含义的状态，所以这句话说的是
+ *     *不设意味着什么*，而不是催人去设。作者的定义就是这一句。
+ *   - **设了**：写出路径，点一下能改。
+ *
+ * **常驻，不做悬停才出现**：本项目已经为「悬停才出现的入口」被报过两次
+ * 「没有这个功能」，而两次代码都是好的。
+ */
+function WorkspaceEntry({
+  workspace,
+  onPick,
+  onClear,
+}: {
+  workspace?: string | undefined
+  /** 去弹原生目录选择器（设一个 / 换一个）。**不给就只显示，不画按钮** */
+  onPick?: (() => void) | undefined
+  /** 退回普通对话。**只在设过的时候出现** */
+  onClear?: (() => void) | undefined
+}) {
+  if (!workspace) {
+    return (
+      <span className="conv-ws">
+        <span className="conv-ws-unset">未设工作目录 · 这是一段普通对话</span>
+        {onPick ? (
+          <Button variant="text" size="inline" onClick={onPick}>
+            选一个文件夹
+          </Button>
+        ) : null}
+      </span>
+    )
+  }
+  return (
+    <span className="conv-ws">
+      <文件夹图标 className="row-icon" />
+      {onPick ? (
+        <Button
+          variant="text"
+          size="inline"
+          className="conv-ws-path"
+          title={`工作目录：${workspace}`}
+          onClick={onPick}
+        >
+          {短路径(workspace)}
+        </Button>
+      ) : (
+        <span className="conv-ws-path" title={workspace}>
+          {短路径(workspace)}
+        </span>
+      )}
+      {onClear ? (
+        <Button variant="text" size="inline" className="conv-ws-clear" onClick={onClear}>
+          {/**
+            * **措辞刻意避开「取消」两个字**（2026-08-12）。
+            *
+            * 确认框上那颗就叫「取消」，两处同名会让「按名字找按钮」
+            * 变成一件靠运气的事——**屏幕阅读器与测试都一样**，
+            * 而 e2e 当场撞上了（一个 `取消` 匹配到两个元素）。
+            * 本项目 2026-08-11 已经为同一件事栽过一次。
+            *
+            * 换成结果本身：它说的是**按下去会变成什么**，
+            * 与设完之后对话里留的那句话是同一个说法。
+            */}
+          改回普通对话
+        </Button>
+      ) : null}
+    </span>
+  )
+}
+
 function 项目图标() {
   return <文件夹图标 className="row-icon" />
 }
@@ -1335,8 +1408,22 @@ export function ConversationView({
   disabled,
   terminalTrimmed,
   kernelInstanceId,
+  workspace,
+  onPickWorkspace,
+  onClearWorkspace,
 }: {
   session: SessionSummary
+  /**
+   * 这段对话的工作目录（T3-b）。**缺省 = 没设 = 这是一段普通对话**。
+   *
+   * 它来自**任务**，不是会话——会话总有一个目录（服务端给的 scratch），
+   * 而那个目录是实现细节。摆出来只会让人看见一个自己从没选过的路径。
+   */
+  workspace?: string | undefined
+  /** 去弹原生目录选择器（设一个 / 换一个）。**不给就不画那颗按钮** */
+  onPickWorkspace?: (() => void) | undefined
+  /** 退回普通对话 */
+  onClearWorkspace?: (() => void) | undefined
   /** 可选的 agent 清单，给 composer 右下角那颗 pill 用 */
   agents?: readonly string[] | undefined
   /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
@@ -1464,7 +1551,26 @@ export function ConversationView({
             <span className="conv-remote-host">{session.remote.label}</span>
             <span className="conv-remote-cwd">{短路径(session.remote.cwd)}</span>
           </span>
-        ) : null}
+        ) : (
+          /**
+           * **工作目录就在对话头上**（T3-b，2026-08-12）。
+           *
+           * 作者：*「我们可以在任务的对话框里面，设置工作路径。然后，如果在
+           * 任务里面不设置任何工作目录的话，那么其实就是我们的普通对话。」*
+           *
+           * **没设时明说「未设工作目录」**，不是留一片空白：
+           * 空白只说明「这里什么都没有」，说不出**不设意味着什么**。
+           * 而那句「这是一段普通对话」正好是作者给这个状态的定义。
+           *
+           * 位置与远端那一条同一处，理由也同一条：*你以为在 A 目录、
+           * 实际在 B 目录，然后说一句「把这里的文件都删了」。*
+           */
+          <WorkspaceEntry
+            {...(workspace ? { workspace } : {})}
+            {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
+            {...(workspace && onClearWorkspace ? { onClear: onClearWorkspace } : {})}
+          />
+        )}
         {/**
          * **顶栏左边是这段对话的名字**（2026-08-12，学自 WorkBuddy）。
          *
@@ -1780,8 +1886,10 @@ export function TranscriptRow({
             }}
           />
           <div className="turn-actions">
+            {/* **不叫「取消」**：编辑不是模态——确认框会开在它上面，
+                那时屏幕上就有两颗同名的。照着「按下去会变成什么」说 */}
             <Button variant="secondary" size="inline" onClick={() => 设编辑(undefined)}>
-              取消
+              不改了
             </Button>
             <Button
               variant="primary"

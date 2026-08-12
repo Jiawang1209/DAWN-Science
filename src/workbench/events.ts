@@ -459,6 +459,24 @@ export class SessionTranscripts {
   }
 
   /**
+   * 往对话里留一条**系统提示**（T3-b，2026-08-12）。
+   *
+   * 第一个用处是「已归入项目 ~/xxx」。**这一行不能省**：设完工作目录之后，
+   * 这段对话会自己从侧栏的「会话」栏跳到「项目」栏——
+   * **看得见的东西自己动了，就必须出声**，否则人会以为它丢了。
+   * （这是「看不见的能力等于不存在」的反面，同一条纪律。）
+   *
+   * 走 `notice` 而不是 `turn`：它既不是谁说的话，也不是一次工具调用，
+   * 混进对话记录会污染「谁说了什么」。
+   */
+  notice(sessionId: SessionId, text: string): void {
+    const e = this.entries.get(sessionId)
+    // **没追踪的会话就不推**：凭空推一条会让界面以为有这么个会话
+    if (!e) return
+    this.putItem(sessionId, e, { type: "notice", id: `notice-${++e.turnSeq}`, text })
+  }
+
+  /**
    * 远端会话换目录了（②-B · R4′）。
    *
    * **必须推**：模型 `cd` 之后头上那一条要立刻跟上，否则人看到的是上一个目录，

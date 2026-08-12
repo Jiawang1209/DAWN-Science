@@ -2193,6 +2193,32 @@ pre {
   margin-right: var(--dawn-space-3);
   min-width: 0;
 }
+/**
+ * 对话头上的工作目录（T3-b，2026-08-12）。
+ *
+ * 与远端那一条**同一处、同一副长相**：它们回答的是同一个问题
+ * ——「这段对话的手在哪」。两处长得不一样只会让人以为是两种东西。
+ */
+.conv-ws {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  margin-right: var(--dawn-space-3);
+  min-width: 0;
+  font-size: 0.85em;
+}
+.conv-ws .row-icon { margin-right: 0; }
+.conv-ws-path {
+  font-family: var(--dawn-font-mono);
+  color: var(--dawn-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* **没设不是「缺了什么」**，所以它比路径更淡，但仍然读得出来 */
+.conv-ws-unset { color: var(--dawn-text-3); }
+.conv-ws-clear { color: var(--dawn-text-3); }
+
 .conv-remote-host { color: var(--dawn-text-2); font-size: 0.85em; }
 .conv-remote-cwd {
   font-family: var(--dawn-font-mono);

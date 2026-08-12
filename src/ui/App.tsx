@@ -630,6 +630,53 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       fail(e)
     }
   }
+  /**
+   * 当前这段对话属于哪个任务（T3-b）。
+   *
+   * **工作目录长在任务上，不在会话上**——会话总有一个目录（服务端给的
+   * scratch），而那个目录是实现细节。摆出来只会让人看见一个自己从没选过的路径。
+   */
+  const 当前任务 = tasks.find((t) => t.sessionId === sessionId)
+
+  /**
+   * 设/改/取消这段对话的工作目录（T3-b）。
+   *
+   * **后端会把运行时真的搬过去**（连 pi 的历史一起），所以这里只需要
+   * 把三份列表重取一遍：任务（决定侧栏归到哪一栏）、项目（新长出来的那条）、
+   * 会话（它换了项目，两拨的归属都变了）。
+   */
+  const 设工作目录 = async (taskId: string, workspace: string | undefined) => {
+    try {
+      await client.get("setTaskWorkspace", { taskId, ...(workspace ? { workspace } : {}) })
+      await loadTasks(client)
+      await loadProjects(client)
+      await loadTempSessions(client)
+      /**
+       * **跟着切到它的新家**（2026-08-12）。
+       *
+       * 这段会话刚从「临时会话」项目搬进了那个路径的项目——
+       * 不切的话它**两拨列表里都找不到**（`tempSessions` 不再有它，
+       * `sessions` 装的还是上一个项目的），主区当场退回空态：
+       * **人刚点完「选一个文件夹」，对话就没了。** e2e 截图抓到的就是这一幕。
+       */
+      const 新家 = workspace
+        ? $projects.get().find((p) => p.workspace === workspace)?.projectId
+        : undefined
+      if (新家) setActiveProjectId(新家)
+      const pid = 新家 ?? $activeProjectId.get()
+      if (pid) await loadSessions(client, pid)
+    } catch (e) {
+      fail(e)
+    }
+  }
+
+  /** 弹原生目录选择器再设。**取消就什么都不做**——改主意不是错误 */
+  const 选工作目录 = async (taskId: string) => {
+    const ws = await client.pickDirectory()
+    if (!ws) return
+    await 设工作目录(taskId, ws)
+  }
+
   const remoteOpen = useStore($remoteOpen)
   const [connDraft, setConnDraft] = useState<
     (ConnectionDraft & { hasSecret?: boolean }) | undefined
@@ -1812,6 +1859,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 session={session}
                 items={items}
+                {...(当前任务?.workspace ? { workspace: 当前任务.workspace } : {})}
+                {...(当前任务 && !session.remote
+                  ? {
+                      onPickWorkspace: () => void 选工作目录(当前任务.taskId),
+                      onClearWorkspace: () => void 设工作目录(当前任务.taskId, undefined),
+                    }
+                  : {})}
                 /**
                  * **能就地换的，就不要在「新建会话」那一组里再出现一次**
                  * （2026-08-11 修）。

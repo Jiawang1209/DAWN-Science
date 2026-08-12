@@ -170,6 +170,26 @@ export class SessionStore {
     this.db.prepare(`UPDATE sessions SET remote_cwd = ? WHERE id = ?`).run(cwd, id)
   }
 
+  /**
+   * 这段对话换了个地方干活（T3-b，2026-08-12）。
+   *
+   * 作者：*「在对话窗口选择文件夹之后，就属于是一个项目管理。」*
+   *
+   * **三样一起改，缺一样就是一份互相矛盾的记录**：
+   *   - `workspace`：agent 的手往哪伸
+   *   - `session_dir`：pi 的历史 jsonl 在哪（它就住在 workspace 里面）
+   *   - `project_id`：账本、产出、git 事实按它归集
+   *
+   * 落库之后 `SessionManager.resume` 会照着新值把运行时重新拉起来——
+   * **它读的正是这三个字段**，所以「换地方」不需要另造一条启动路径。
+   */
+  rehome(id: string, to: { workspace: string; sessionDir: string; projectId?: string }): boolean {
+    const r = this.db
+      .prepare(`UPDATE sessions SET workspace = ?, session_dir = ?, project_id = ? WHERE id = ?`)
+      .run(to.workspace, to.sessionDir, to.projectId ?? null, id)
+    return r.changes > 0
+  }
+
   setTitleIfAbsent(id: string, title: string): boolean {
     const r = this.db
       .prepare(`UPDATE sessions SET title = ? WHERE id = ? AND title IS NULL`)

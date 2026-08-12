@@ -187,6 +187,15 @@ export interface DawnOptions {
    */
   leaseTtlSeconds?: number
   /**
+   * 原生目录选择器返回什么（T3-b，2026-08-12）。
+   *
+   * **它是系统模态框，Playwright 驱动不了**。给了这个值，用例就能走
+   * 「点『选一个文件夹』→ 拿到路径」那条**用户真正走的路**；
+   * 不给这个口子，凡是从选目录开头的路径就只能绕过界面直接打 IPC，
+   * 而那样验的是后端，不是接线——**接线正是本项目翻过车的地方**。
+   */
+  pickDirectory?: string
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -381,6 +390,12 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         ...(dawnOptions.leaseTtlSeconds
           ? { DAWN_LEASE_TTL: String(dawnOptions.leaseTtlSeconds) }
           : {}),
+        /**
+         * 原生目录选择器返回什么（T3-b）。**它是系统模态框，Playwright 驱动不了**。
+         * 给了这个值，用例就能走「点按钮 → 选文件夹」那条**真正的路**，
+         * 而不是绕过界面直接打 IPC——后者验的是后端，不是接线。
+         */
+        ...(dawnOptions.pickDirectory ? { DAWN_PICK_DIRECTORY: dawnOptions.pickDirectory } : {}),
       },
     })
 

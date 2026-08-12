@@ -187,6 +187,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     return tasks
   }
 
+  /**
+   * 临时会话的目录根。**没装配就如实说**，不偷偷退回一个猜出来的路径——
+   * 那个路径上会真的落文件。
+   */
+  const 要有临时根 = () => {
+    if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
+    return scratchRoot
+  }
+
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
   const 密钥名 = (id: string) => `ssh:${id}`
 
@@ -626,10 +635,47 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return rec
     },
 
+    /**
+     * 给这段对话设一个工作目录（T3-b，2026-08-12）。
+     *
+     * 作者：*「点击完新建任务后，在对话窗口选择文件夹之后，就属于是一个
+     * 项目管理，那么就会归类到左边侧边栏的项目里面。」*
+     *
+     * **它不只是记一个字段**——记完而 agent 的手还在原地，那是最坏的一种：
+     * 界面说在 A，实际在 B。所以这里做三件事：
+     *
+     *   1. `projects.open()`：**文件夹即项目身份**，同一路径复用同一条
+     *   2. `sessions.rehome()`：把运行时**真的搬过去**（连 pi 的历史一起）
+     *   3. 往对话里留一条 notice：**它会自己从「会话」栏跳到「项目」栏，
+     *      看得见的东西自己动了就必须出声**
+     */
     setTaskWorkspace: async ({ taskId, workspace }) => {
       const store = 任务库()
+      const t = store.get(taskId)
+      if (!t) throw fault("not_found", `没有这个任务：${taskId}`)
+
+      if (t.sessionId) {
+        /**
+         * **不给 = 退回普通对话**。那是一个明确的动作，不是「忘了填」——
+         * 但同样要**真的搬回去**：只清字段的话，界面说「这是一段普通对话」
+         * 而 agent 还在用户那个目录里写文件。
+         */
+        const 去处 = workspace ?? projects.temporaryWorkspace(要有临时根())
+        const 归属 = workspace ? projects.open(workspace) : projects.ensureTemporary(要有临时根())
+        try {
+          await sessions.rehome(t.sessionId, 去处, 归属.projectId)
+        } catch (e) {
+          throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+        }
+        events.notice(
+          t.sessionId,
+          workspace
+            ? `已归入项目「${workspace}」——接下来它在这个目录里干活`
+            : "已退回普通对话——工作目录换回了这段对话自己的临时目录",
+        )
+      }
+
       try {
-        // **不给 = 取消设置**：那是一个明确的动作（退回普通对话），不是「忘了填」
         store.setWorkspace(taskId, workspace)
       } catch (e) {
         throw fault("not_found", e instanceof Error ? e.message : String(e))

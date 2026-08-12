@@ -297,6 +297,17 @@ app.whenReady().then(() => {
 
   // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
   ipcMain.handle(IPC_PICK_DIRECTORY, async (e) => {
+    /**
+     * **e2e 的注入点**（2026-08-12，与 `DAWN_LEASE_TTL` 同一个路子）。
+     *
+     * 原生目录选择器是系统模态框——**Playwright 驱动不了它**。
+     * 没有这个口子，凡是「选个文件夹」开头的路径就只能绕过界面直接打 IPC，
+     * 而那样验的是后端，不是**用户真正点的那条路**。
+     *
+     * 只在环境变量给了值时生效，真实运行里这一行永远不成立。
+     */
+    const 注入的 = process.env.DAWN_PICK_DIRECTORY
+    if (注入的) return 注入的
     const owner = BrowserWindow.fromWebContents(e.sender)
     const r = owner
       ? await dialog.showOpenDialog(owner, { properties: ["openDirectory"] })

@@ -9,7 +9,7 @@
  * 「怎么跟进程说话」全部委托给 AgentRuntime。
  */
 import { randomUUID } from "node:crypto"
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
+import { cpSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import type { AgentDef, ProviderRegistry } from "../config/schema.js"
 import type { NewSessionRecord, SessionRecord, SessionStore } from "../store/sessions.js"
@@ -541,6 +541,73 @@ export class SessionManager {
   /** 转发终端尺寸变化。只有 pty runtime 实现了 resize，其余是空操作。 */
   resize(sessionId: SessionId, cols: number, rows: number): void {
     this.bound.get(sessionId)?.resize?.(sessionId, cols, rows)
+  }
+
+  /**
+   * **把这段对话搬到另一个工作目录**（T3-b，2026-08-12）。
+   *
+   * 作者：*「在对话窗口选择文件夹之后，就属于是一个项目管理。」*
+   * 以及更早那句定调的：*「先聊起来，需要换地方再换。」*
+   *
+   * ## 为什么必须重开运行时
+   *
+   * 本地工具的 cwd 是**建会话那一刻焊死的**——
+   * `createBashToolDefinition(cwd, …)` 收的是一个字符串，不是一个 getter
+   * （远端那条才有活接口 `{get,set}`，因为那几个工具是我们自己包的）。
+   * 所以「改一个字段」不可能让 agent 的手挪过去。**只有重开。**
+   *
+   * ## 为什么历史不会丢
+   *
+   * pi 的记录 jsonl 住在 `<workspace>/.dawn/sessions/<id>`——**它在工作目录里面**。
+   * 所以搬家要把那个目录一起搬走，`resume` 才找得到（它走 `continueRecent`）。
+   * 只改库不搬目录的话，症状是**它忘了刚才聊过什么，但界面上还显示着**——
+   * 一种最难查的失忆。
+   *
+   * 顺序是：**停 → 搬目录 → 改库 → 重新拉起**。
+   * 先搬后停的话，进程还开着那个目录，搬到一半会是什么样没人说得准。
+   */
+  async rehome(sessionId: SessionId, workspace: string, projectId?: string): Promise<SessionRecord> {
+    const rec = this.store.get(sessionId)
+    if (!rec) throw new UserFacingError(`没有这个会话：${sessionId}`)
+    if (rec.connectionId) {
+      /**
+       * **远端那条不走这里。** 它的当前目录是活的（`{get,set}`），
+       * 而且换法是直接跟它说——那是作者定的：
+       * *「自然语言告诉我跳到哪个文件夹之类的不就好了？」*
+       */
+      throw new UserFacingError("这段对话长在远端服务器上——换目录直接跟它说就行，不必在这里设")
+    }
+    if (rec.workspace === workspace) return rec
+
+    await this.stop(sessionId)
+
+    const 新目录 = join(workspace, ".dawn", "sessions", sessionId)
+    ensureDawnDirIgnored(workspace)
+    seedSubagentExample(workspace)
+    /**
+     * **搬得动就搬，搬不动就说**。
+     *
+     * 跨盘 `rename` 会抛 `EXDEV`；旧目录不存在（还没说过话）则无事可做。
+     * **不静默吞掉别的错**——搬失败却继续往下走，等于把历史丢了还不出声。
+     */
+    if (existsSync(rec.sessionDir)) {
+      mkdirSync(join(workspace, ".dawn", "sessions"), { recursive: true })
+      try {
+        renameSync(rec.sessionDir, 新目录)
+      } catch (e) {
+        const code = (e as NodeJS.ErrnoException).code
+        if (code !== "EXDEV") throw e
+        cpSync(rec.sessionDir, 新目录, { recursive: true })
+        rmSync(rec.sessionDir, { recursive: true, force: true })
+      }
+    }
+
+    this.store.rehome(sessionId, {
+      workspace,
+      sessionDir: 新目录,
+      ...(projectId ? { projectId } : {}),
+    })
+    return await this.resume(sessionId)
   }
 
   async stop(sessionId: SessionId): Promise<void> {

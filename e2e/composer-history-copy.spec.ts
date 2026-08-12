@@ -111,7 +111,7 @@ test("**取消就是取消**：一个字都不发出去", async ({ dawn }) => {
 
   await page.locator(".turn.user").first().getByRole("button", { name: "修改" }).click()
   await page.getByLabel("修改这段话").fill("这句不该出现")
-  await page.locator(".turn.editing").getByRole("button", { name: "取消" }).click()
+  await page.locator(".turn.editing").getByRole("button", { name: "不改了" }).click()
 
   await expect(page.locator(".turn.editing")).toHaveCount(0)
   await expect(page.locator(".turns")).not.toContainText("这句不该出现")

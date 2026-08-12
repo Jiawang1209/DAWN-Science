@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1|tail -1 && npx playwright test e2e/session-switch.spec.ts e2e/session-resume.spec.ts e2e/lease-keepalive.spec.ts e2e/delete-project.spec.ts e2e/cost.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\"",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -8; echo \"=== e2e ===\"; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2e2.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2e2.log | tail -20",
+    "buildCommand": "npm run typecheck 2>&1|tail -3 && npm run build 2>&1|tail -1 && npm run test:e2e:visual:update 2>&1|tail -2 && npm run test:e2e:visual 2>&1|tail -2",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -6; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2e5.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2e5.log | tail -15",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -233,20 +233,20 @@
   "hotPaths": [
     {
       "path": "src/ui/views.tsx",
-      "accessCount": 25,
-      "lastAccessed": 1786530666285,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/styles.css",
-      "accessCount": 9,
-      "lastAccessed": 1786530678587,
+      "accessCount": 29,
+      "lastAccessed": 1786534603357,
       "type": "file"
     },
     {
       "path": "src/ui/App.tsx",
-      "accessCount": 9,
-      "lastAccessed": 1786531166940,
+      "accessCount": 12,
+      "lastAccessed": 1786535051561,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/styles.css",
+      "accessCount": 10,
+      "lastAccessed": 1786534697184,
       "type": "file"
     },
     {
@@ -256,15 +256,27 @@
       "type": "file"
     },
     {
+      "path": "e2e/__screenshots__/对话-亮色-darwin.png",
+      "accessCount": 4,
+      "lastAccessed": 1786535739616,
+      "type": "file"
+    },
+    {
       "path": "docs/superpowers/plans/2026-08-12-task-model.md",
       "accessCount": 3,
       "lastAccessed": 1786525196724,
       "type": "file"
     },
     {
-      "path": "e2e/__screenshots__/对话-亮色-darwin.png",
+      "path": "docs/DEVELOPMENT_HISTORY.md",
       "accessCount": 3,
-      "lastAccessed": 1786530729080,
+      "lastAccessed": 1786535222239,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/design-contract.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1786535569909,
       "type": "file"
     },
     {
@@ -304,9 +316,15 @@
       "type": "file"
     },
     {
-      "path": "docs/DEVELOPMENT_HISTORY.md",
+      "path": "src/workbench/backend.ts",
       "accessCount": 2,
-      "lastAccessed": 1786530776136,
+      "lastAccessed": 1786534504091,
+      "type": "file"
+    },
+    {
+      "path": "e2e/task-workspace.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786534824362,
       "type": "file"
     },
     {
@@ -352,12 +370,6 @@
       "type": "file"
     },
     {
-      "path": "tests/ui/design-contract.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786526559021,
-      "type": "file"
-    },
-    {
       "path": "e2e/task.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1786526665729,
@@ -370,9 +382,33 @@
       "type": "file"
     },
     {
-      "path": "src/workbench/backend.ts",
+      "path": "src/workbench/events.ts",
       "accessCount": 1,
-      "lastAccessed": 1786529365895,
+      "lastAccessed": 1786534418043,
+      "type": "file"
+    },
+    {
+      "path": "src/store/sessions.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786534438708,
+      "type": "file"
+    },
+    {
+      "path": "src/session/manager.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786534470766,
+      "type": "file"
+    },
+    {
+      "path": "tests/session/rehome.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786534749086,
+      "type": "file"
+    },
+    {
+      "path": "test-results/task-workspace-设完之后-归到项目栏，而且-agent-的手真的挪过去了-/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786535029384,
       "type": "file"
     }
   ],

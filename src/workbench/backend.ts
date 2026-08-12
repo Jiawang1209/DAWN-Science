@@ -36,6 +36,7 @@ import type { SessionTranscripts } from "./events.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
+import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 
@@ -89,6 +90,11 @@ export interface WorkbenchBackendOptions {
   configPath?: string
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
+  /**
+   * 任务（T1）。**不给则那三个操作如实说「本次运行没有装配」**——
+   * 不返回空名单假装「你还没建过任务」。
+   */
+  tasks?: TaskStore
   /**
    * 远端连接（②-B · R3）。**名单在库里，谁连着在管理器里。**
    *
@@ -154,7 +160,7 @@ export interface WorkbenchBackendOptions {
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -171,6 +177,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 会让人以为真有这么一台。
    */
   const 服务器名 = (id: string) => remote?.store.get(id)?.label
+
+  /**
+   * 任务那一套装配好了没有。**没装配就如实说**——
+   * 不返回空名单假装「你还没建过任务」。
+   */
+  const 任务库 = () => {
+    if (!tasks) throw fault("internal_error", "本次运行没有装配任务")
+    return tasks
+  }
 
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
   const 密钥名 = (id: string) => `ssh:${id}`
@@ -557,6 +572,40 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **口令一律不出这一层。** 请求里的 `secret` 转手进钥匙串，
      * 响应里只有 `hasSecret`。回显一次，它就落进了截图、日志和录屏。
      */
+
+    /**
+     * ── 任务（T1）────────────────────────────────────────────────
+     *
+     * **这一批只做「记下来」。** 任务与会话的绑定（点进去能聊）是 T3——
+     * 分开做是为了让每一批都能自己验证：这里验的是
+     * 「路径设了没有、取消得掉吗、列表对不对」，不牵扯会话生命周期。
+     */
+    listTasks: async () => 任务库().list(),
+
+    createTask: async ({ workspace, connectionId }) => {
+      const store = 任务库()
+      const rec = {
+        taskId: `task-${randomUUID()}`,
+        ...(workspace ? { workspace } : {}),
+        ...(connectionId ? { connectionId } : {}),
+        pinned: false,
+        sortOrder: store.nextSortOrder(),
+        createdAt: new Date().toISOString(),
+      }
+      store.insert(rec)
+      return rec
+    },
+
+    setTaskWorkspace: async ({ taskId, workspace }) => {
+      const store = 任务库()
+      try {
+        // **不给 = 取消设置**：那是一个明确的动作（退回普通对话），不是「忘了填」
+        store.setWorkspace(taskId, workspace)
+      } catch (e) {
+        throw fault("not_found", e instanceof Error ? e.message : String(e))
+      }
+      return store.get(taskId)!
+    },
 
     listConnections: async () => 远端().store.list().map(装配),
 

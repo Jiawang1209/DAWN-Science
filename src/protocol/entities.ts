@@ -289,3 +289,33 @@ export const RemoteConnectionSchema = z
   })
   .strict()
 export type RemoteConnection = z.infer<typeof RemoteConnectionSchema>
+
+/**
+ * 一个任务（T1，2026-08-12）。
+ *
+ * 作者：*「任务的对话框里面设置工作路径。如果在任务里面不设置任何工作目录的话，
+ * 那么其实就是我们的普通对话。」*
+ *
+ * **它取代此前的三样**（项目 / 项目下的会话 / 临时会话）——
+ * 那三样的区别只有一个：**工作路径是谁给的**。
+ */
+export const TaskSummarySchema = z
+  .object({
+    taskId: z.string().min(1),
+    /** **缺省 = 还没说过话**，界面显示「新任务」，不是一行空白 */
+    title: z.string().min(1).optional(),
+    /**
+     * 工作路径。**缺省 = 这是一段普通对话。**
+     *
+     * 服务端仍会给它一个目录让 agent 有地方读写，但那是实现细节，
+     * **不进这里**——摆出来只会让人看见一个自己从没选过的路径。
+     */
+    workspace: z.string().min(1).optional(),
+    /** 活儿在哪台远端机器上（②-B · R3）。**缺省 = 本地** */
+    connectionId: z.string().min(1).optional(),
+    pinned: z.boolean(),
+    sortOrder: z.int(),
+    createdAt: Iso,
+  })
+  .strict()
+export type TaskSummary = z.infer<typeof TaskSummarySchema>

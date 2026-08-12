@@ -19,6 +19,7 @@ import {
   ProjectSummarySchema,
   ProvenanceLinkSchema,
   RemoteConnectionSchema,
+  TaskSummarySchema,
   RunSummarySchema,
   SessionSummarySchema,
   WorkbenchCapabilitiesSchema,
@@ -365,6 +366,52 @@ export const OPERATIONS = {
    * 作者要的形状：*「左边搞一个固定的『远端连接』，可以增加分组，
    * 分组里面是 ssh 的服务器，类似 XTerminal 的那种登陆效果。」*
    */
+
+  /**
+   * ── 任务（T1，2026-08-12）────────────────────────────────────────
+   *
+   * **旧的 project / session 操作原样保留。** 界面与后端不该在同一次升级里
+   * 同时换——那样一旦哪一边出错，就分不清是谁的问题。
+   * 摘掉旧操作是 T4 的事。
+   */
+
+  listTasks: {
+    request: Empty,
+    response: z.array(TaskSummarySchema),
+    mutating: false,
+  },
+
+  /**
+   * 新建一个任务。**路径可以不给**——不给就是一段普通对话。
+   *
+   * 这正是作者要的那个动作：*「新建任务」*，而工作路径**事后也能设**
+   * （见 `setTaskWorkspace`）——先聊起来，需要落到某个目录再落。
+   */
+  createTask: {
+    request: z
+      .object({
+        agentId: z.string().min(1),
+        workspace: z.string().min(1).optional(),
+        connectionId: z.string().min(1).optional(),
+      })
+      .strict(),
+    response: TaskSummarySchema,
+    mutating: true,
+  },
+
+  /**
+   * 给任务设工作路径，或**取消设置**。
+   *
+   * `workspace` 不给 = 取消 = 退回普通对话。**那是一个明确的动作**，
+   * 不是「忘了填」——所以它写得进去。
+   */
+  setTaskWorkspace: {
+    request: z
+      .object({ taskId: z.string().min(1), workspace: z.string().min(1).optional() })
+      .strict(),
+    response: TaskSummarySchema,
+    mutating: true,
+  },
 
   /** 全部连接，**带此刻的状态**。状态由服务端说了算，界面自己猜会猜成「以为连着」 */
   listConnections: {

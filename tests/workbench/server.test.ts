@@ -14,6 +14,14 @@ const 假会话 = {
   createdAt: "2026-08-08T00:00:00Z",
 }
 
+/** 一个够用的假任务。**没有 workspace**——那正是「普通对话」 */
+const 假任务 = {
+  taskId: "t1",
+  pinned: false,
+  sortOrder: 1,
+  createdAt: "2026-08-12T00:00:00Z",
+}
+
 /** 一台够用的假服务器。**没有 secret 字段**——响应里本来就不该有 */
 const 假连接 = {
   id: "c1",
@@ -103,6 +111,9 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     deleteProject: async () => ({ sessionsDeleted: 0, runsDeleted: 0, workspace: "/tmp/ws" }),
     deletionImpact: async () => ({ sessions: 0, runs: 0, workspace: "/tmp/ws" }),
     openExternally: async () => ({}),
+    listTasks: async () => [],
+    createTask: async () => 假任务,
+    setTaskWorkspace: async () => 假任务,
     listConnections: async () => [],
     createRemoteSession: async () => 假会话,
     saveConnection: async () => 假连接,

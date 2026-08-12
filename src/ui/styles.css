@@ -2289,13 +2289,22 @@ pre {
 /* 段落与列表的呼吸（2026-08-12，学自 WorkBuddy）。
    **改的是「块与块之间」，不是行内**：行距已经由 --dawn-chat-leading 管，
    这里管的是「读完一段，眼睛有没有地方歇一下」 */
-.bubble p { margin: 0 0 var(--dawn-space-3); }
-.bubble p:last-child { margin-bottom: 0; }
-.bubble ul, .bubble ol { margin: 0 0 var(--dawn-space-3); padding-left: 1.4em; }
+/**
+ * **只管正文的直接子元素**（2026-08-12 收窄）。
+ *
+ * 起初写的是 `.bubble p` / `.bubble li`——它**渗进了 streamdown 自己的
+ * 表格与代码块**：那些块有自己的排布，多一层外边距就把它们的动作按钮挤散了
+ * （`markdown-render` 那条 e2e 当场抓到：按钮从横排变成了斜着散开）。
+ *
+ * 节奏是给**读的段落**的，不是给别人的组件内部的。
+ */
+.bubble > p { margin: 0 0 var(--dawn-space-3); }
+.bubble > p:last-child { margin-bottom: 0; }
+.bubble > ul, .bubble > ol { margin: 0 0 var(--dawn-space-3); padding-left: 1.4em; }
 /* 列表项之间也要留：一排贴着的条目读起来像表格，而它是话 */
-.bubble li + li { margin-top: var(--dawn-space-2); }
+.bubble > ul > li + li, .bubble > ol > li + li { margin-top: var(--dawn-space-2); }
 /* 标题与它下面那段的关系要紧、与上一段的关系要松——**靠间距说这件事** */
-.bubble h1, .bubble h2, .bubble h3, .bubble h4 {
+.bubble > h1, .bubble > h2, .bubble > h3, .bubble > h4 {
   margin: var(--dawn-space-4) 0 var(--dawn-space-2);
   line-height: 1.35;
 }
@@ -2319,7 +2328,7 @@ pre {
 
 /* 代码：比正文小两号、行距更紧（量来的 13px / 1.6）。
    **它与正文是两种东西**——同一个字号会让整段看起来没有层次 */
-.bubble code, .bubble pre {
+.bubble > p code, .bubble > ul code, .bubble > ol code, .bubble > pre {
   font-size: var(--dawn-code-size);
   line-height: var(--dawn-code-leading);
 }

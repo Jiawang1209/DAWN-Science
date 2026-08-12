@@ -30,6 +30,7 @@ import { createPiCredentialStore } from "../workbench/credential-store.js"
 import { SessionTranscripts } from "../workbench/events.js"
 import { Client as SshClient } from "ssh2"
 import { ConnectionStore } from "../store/connections.js"
+import { TaskStore } from "../store/tasks.js"
 import { RemoteConnections } from "../remote/connections.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
 import type { RemoteState, SshClientLike } from "../remote/ssh.js"
@@ -307,6 +308,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const backend = createWorkbenchBackend({
     remote: { store: connectionStore, manager: remoteConnections },
+    tasks: new TaskStore(db),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,

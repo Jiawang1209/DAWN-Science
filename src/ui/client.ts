@@ -37,7 +37,7 @@ declare global {
       invoke(operation: string, request: unknown, requestId?: string): Promise<RawResponse>
       onEvent?: EventSource
       /** 原生目录选择器。取消时 null */
-      pickDirectory?: () => Promise<string | null>
+      pickDirectory?: (defaultPath?: string) => Promise<string | null>
     }
   }
 }
@@ -95,7 +95,7 @@ export interface UpdateSubscription {
 export function createClient(
   invoke?: Invoker,
   eventSource?: EventSource,
-  pickDirectory?: () => Promise<string | null>,
+  pickDirectory?: (defaultPath?: string) => Promise<string | null>,
 ) {
   const call: Invoker = invoke ?? ((op, req, id) => {
     if (!window.dawn) {
@@ -218,10 +218,11 @@ export function createClient(
      * 而协议服务端必须能在 node 下测。放这里是因为客户端本来就是
      * 「包住 window.dawn」的那一层，多开一个注入点只会多一处要接。
      */
-    async pickDirectory(): Promise<string | null> {
+    /** @param defaultPath 从哪儿起步（设置里那个默认工作目录）。不给就交给系统 */
+    async pickDirectory(defaultPath?: string): Promise<string | null> {
       const pick = pickDirectory ?? window.dawn?.pickDirectory
       if (!pick) return null
-      return pick()
+      return pick(defaultPath)
     },
 
     /** 取数据，丢弃 warnings。多数调用点用这个。 */

@@ -19,7 +19,7 @@ test("**关掉再打开，那段对话还在，而且还能说**", async ({ dawn
   await 开一段临时会话(dawn.page)
   await dawn.page.getByPlaceholder(/回车发送/).fill("重启之前说的话")
   await dawn.page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(dawn.page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(dawn.page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   // 真的关掉，再打开
   const page = await dawn.重开()

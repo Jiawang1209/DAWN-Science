@@ -45,7 +45,7 @@ test.describe("工具调用的秒表", () => {
     }).toPass({ timeout: 5_000 })
 
     // 跑完之后停表：不再是「已跑」，而是一个定住的耗时
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     await expect(秒表).not.toContainText("已跑")
     await expect(秒表).toContainText("秒")
 
@@ -94,7 +94,7 @@ test.describe("执行中的记号", () => {
   expect(动了吗).toBe(true)
 
   // 跑完就该收起来：还在转的记号会让人以为它没结束
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await expect(记号).toHaveCount(0)
 })
 })

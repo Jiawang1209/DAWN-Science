@@ -25,14 +25,20 @@ test("一条都没有时不画空列表，且新建入口可点", async ({ dawn 
   await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
 })
 
-test("空对话区给的是**按钮**，不是一句提示", async ({ dawn }) => {
+/**
+ * **空对话区给的是一个能用的东西，不是一句提示**（2026-08-12 换主语）。
+ *
+ * 上一版这里等一颗「开始」按钮。作者：*「不要上来就是用 Deepseek 开始，
+ * 而是要直接是对话窗口。」* —— 那颗按钮换成了输入卡本身，
+ * 而这条守的意图（**别只摆一句话，摆一个能动手的东西**）一个字没变。
+ */
+test("空对话区给的是**能直接打字的输入卡**，不是一句提示", async ({ dawn }) => {
   const { page } = dawn
-  // 主区必须有一个真的能点的开始动作
-  const start = page.getByRole("button", { name: /开始/ })
-  await expect(start).toBeVisible()
-  await start.click()
-  // 点了要真的进对话
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  const box = page.getByPlaceholder(/回车发送/)
+  await expect(box).toBeVisible()
+  await box.fill("直接说")
+  await box.press("Enter")
+  await expect(page.locator(".turns").getByText("直接说")).toBeVisible({ timeout: 30_000 })
 })
 
 test("项目概览是侧栏底部入口，不是首页", async ({ dawn }) => {

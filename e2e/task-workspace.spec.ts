@@ -31,7 +31,15 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
  * （原生目录选择器是系统模态框，Playwright 驱动不了）。
  * 所以不能用 `mkdtempSync` 现造一个——那时进程已经起来了。
  */
-const 目标 = join(tmpdir(), "dawn-ws-e2e-target")
+/**
+ * **两条路各用各的目录**（2026-08-12）。
+ *
+ * 第一版两个 describe 共用一个常量，于是它们通过磁盘互相影响——
+ * 单独跑必绿、一起跑红一条。**测试之间不许有暗管道**是这套夹具的第一条纪律
+ * （见 `fixtures.ts` 头注），而共用一个可写目录正是一条。
+ */
+const 目标 = join(tmpdir(), "dawn-ws-e2e-设完再改")
+const 目标2 = join(tmpdir(), "dawn-ws-e2e-一开始就选")
 
 test("**没设的时候，入口就在输入卡下面那一行**", async ({ dawn }) => {
   const { page } = dawn
@@ -74,6 +82,15 @@ test.describe("设完之后", () => {
   test("**归到项目栏，而且 agent 的手真的挪过去了**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
+    /**
+     * **先等对话真的起来再点**（2026-08-12）。
+     *
+     * 空态与对话里各有一颗一模一样的 chip，而建任务那一刻界面会从前者切到后者。
+     * 不等的话，点中的是**空态那颗**——它只改这一屏的本地状态，
+     * 界面一切换就没了。症状是「点了，什么都没变」，
+     * 而单独跑必绿：时序窗口小。
+     */
+    await expect(page.locator(".conv-title")).toBeVisible({ timeout: 30_000 })
     await expect(page.locator(".composer-footer")).toBeVisible()
 
     /**
@@ -115,10 +132,59 @@ test.describe("设完之后", () => {
      */
     await page.getByPlaceholder(/回车发送/).fill("跑一条命令")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     await expect
       .poll(() => existsSync(join(目标, "dawn-cwd-proof.txt")), { timeout: 30_000 })
       .toBe(true)
+  })
+})
+
+/**
+ * **在开口之前就把归类定下来**（2026-08-12）。
+ *
+ * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
+ * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
+ *
+ * 这条与上面那条是**两条不同的路**：那条是「先聊起来，需要换地方再换」
+ * （建完再设，要搬运行时）；这条是**一开始就选对，什么都不用搬**。
+ * 两条都得通——作者两次都明确要过。
+ */
+test.describe("空态就选好目录", () => {
+  test.use({ dawnOptions: { pickDirectory: 目标2 } })
+
+  test.beforeAll(() => {
+    rmSync(目标2, { recursive: true, force: true })
+    mkdirSync(目标2, { recursive: true })
+  })
+  test.afterAll(() => {
+    rmSync(目标2, { recursive: true, force: true })
+  })
+
+  test("**选了目录再开口 → 直接进「项目」栏**", async ({ dawn }) => {
+    const { page } = dawn
+    // 空态自己就是一张输入卡，下面挂着同一颗 chip
+    const chip = page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ })
+    await expect(chip).toBeVisible()
+    await chip.click()
+    // 选完之后 chip 上写的是路径，不再是「选择工作目录」
+    await expect(page.locator(".composer-footer .ws-chip-label").first()).not.toHaveText(
+      /选择工作目录/,
+    )
+
+    await page.getByPlaceholder(/回车发送/).fill("从空态直接开始")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // 那句话真的发了出去
+    await expect(page.locator(".turns").getByText("从空态直接开始")).toBeVisible({ timeout: 30_000 })
+
+    /**
+     * **归到「项目」栏，而不是「会话」栏。**
+     * 这一条是作者那句话的全部内容：选了目录 = 项目，没选 = 会话。
+     */
+    await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+    const 分区 = await page.locator(".sidebar .side-section").allTextContents()
+    expect(分区.some((t) => t.startsWith("项目"))).toBe(true)
+    expect(分区.some((t) => t.startsWith("会话"))).toBe(false)
   })
 })

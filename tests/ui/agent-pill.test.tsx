@@ -236,9 +236,17 @@ describe("agent pill · 一个会话都没有的时候", () => {
   it("空态也能挑 agent —— 否则第一个会话只能用默认那个", () => {
     const onStart = vi.fn()
     render(<EmptyConversation agents={AGENTS} onStart={onStart} onOpenSettings={() => {}} />)
-    fireEvent.click(screen.getByRole("button", { name: /换一个|其它|其他/ }))
+    /**
+     * **pill 现在长在输入卡里**（2026-08-12）。触发器上写的是当前那家的名字，
+     * 不再是「换一个 LLM」——作者：*「不要上来就是用 Deepseek 开始，
+     * 而是要直接是对话窗口。」* 空态成了一个真的输入卡，
+     * 而 pill 在卡里的位置与对话中那张一致。
+     *
+     * 意图没变：**第一个会话不必只能用默认那个**。
+     */
+    fireEvent.click(screen.getByRole("button", { name: /切换服务|ds-chat|选择 agent/ }))
     fireEvent.click(screen.getByRole("menuitem", { name: /codex-cli/ }))
-    expect(onStart).toHaveBeenCalledWith("codex-cli")
+    expect(onStart).toHaveBeenCalledWith("codex-cli", undefined, undefined)
   })
 
   it("**不再让人去左栏找** —— 那里已经没有了", () => {

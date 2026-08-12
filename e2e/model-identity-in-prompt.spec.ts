@@ -18,7 +18,7 @@ test("**提示词里写着当前模型**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await page.getByPlaceholder(/回车发送/).fill("你的模型是什么？")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   // **反空转**：先确认真有请求发出去了
   expect(requests.length).toBeGreaterThan(0)

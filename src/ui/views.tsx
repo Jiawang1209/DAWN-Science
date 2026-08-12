@@ -19,7 +19,7 @@ import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -410,6 +410,8 @@ export function SessionSidebar({
   onNewSession,
   onShowPanel,
   onShowFiles,
+  onShowSkills,
+  onShowMcp,
   onDeleteSession,
   onRenameSession,
   onPinSession,
@@ -458,6 +460,10 @@ export function SessionSidebar({
   onNewSession: (agentId: string) => void
   onShowPanel: () => void
   onShowFiles: () => void
+  /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
+  onShowSkills?: (() => void) | undefined
+  /** MCP 那一屏。同上 */
+  onShowMcp?: (() => void) | undefined
   /** 删掉某个项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
   onDeleteProject?: ((projectId: string) => void) | undefined
   /** 正开着设置屏。左下角那一行据此高亮 */
@@ -789,7 +795,53 @@ export function SessionSidebar({
           <加号图标 className="row-icon" />
           <span className="name">新建任务</span>
         </Row>
+        {/**
+          * **「远端连接」挪到顶部固定区**（2026-08-12，作者定的顺序）。
+          *
+          * 作者：*「左边的侧边栏，从上到下设置一下固定的：第一个新建任务……
+          * 然后画一个横线，下面是项目 然后是会话。」*
+          *
+          * 它此前在项目下面，理由是「它是另一台机器上的东西」。
+          * 但作者的分法更清楚：**上面那一块是「我能用什么」（固定的能力入口），
+          * 下面那一块是「我做过什么」（项目与会话）**——
+          * 远端连接属于前者。
+          *
+          * **技能与 MCP 那两条还没上**（作者定的）：它们现在几乎是空的，
+          * 而本项目已经为「看得见却点不动」被报过两次。
+          * 能用了再放上来，位置留在这儿。
+          */}
+        {/**
+          * **技能与 MCP**（2026-08-12，作者要的四项里的两条）。
+          *
+          * 我提过它们现在几乎是空的、建议等能用了再上；作者要求先做出来。
+          * 那就做出来，但**两屏都只说真话**：
+          * 技能列的是真实存在的子 agent（`.dawn/agents/*.md`，本来就能跑），
+          * MCP 那屏如实说清它目前只对托管的 claude / codex 生效、还没有配置界面。
+          *
+          * **不存在的能力不该看起来存在**——这是「看不见的能力等于不存在」的反面。
+          */}
+        {onShowSkills ? (
+          <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
+            <技能图标 className="row-icon" />
+            <span className="name">技能</span>
+          </Row>
+        ) : null}
+        {onShowMcp ? (
+          <Row active={view === "mcp"} className="side-action" onClick={onShowMcp}>
+            <设置图标 className="row-icon" />
+            <span className="name">MCP 服务器</span>
+          </Row>
+        ) : null}
+        {remote ?? null}
       </div>
+      {/**
+        * **一条横线**（作者明确要的）。
+        *
+        * 它把「我能用什么」与「我做过什么」分开。
+        * 注：WorkBuddy 那边是靠留白分、一条线都没有——
+        * **但那是它的选择，不是作者的**。这里照作者说的做。
+        */}
+      <hr className="side-divider" />
 
       {agents.length === 0 ? (
         <div className="pad">
@@ -826,7 +878,7 @@ export function SessionSidebar({
                       <span className="sess">
                         <span className="name">
                           {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
-                          <span className="twisty" aria-hidden="true">{展开 ? "▾" : "▸"}</span>
+                          <三角图标 className={`twisty${展开 ? " open" : ""}`} />
                           <项目图标 />
                           {基名(路径)}
                         </span>
@@ -962,17 +1014,6 @@ export function SessionSidebar({
         </>
       ) : null}
 
-      {/**
-        * **「远端连接」在项目下面、设置上面**（②-B · R3）。
-        *
-        * 作者：*「左边搞一个固定的『远端连接』，可以增加分组，
-        * 分组里面是 ssh 的服务器。」*
-        *
-        * 放在这里而不是最上面：它是**另一台机器上的东西**，
-        * 而上面两段是「我手头在做什么」。默认收起，
-        * 于是没有远端的人一行都不多占。
-        */}
-      {remote ?? null}
 
       {/**
         * 底部那一组入口（**2026-08-12 收进一个盒子**）。
@@ -1054,9 +1095,7 @@ function ProjectRow({
           <span className="sess">
             <span className="name">
               {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
-              <span className="twisty" aria-hidden="true">
-                {current ? "▾" : "▸"}
-              </span>
+              <三角图标 className={`twisty${current ? " open" : ""}`} />
               <项目图标 />
               {project.name}
             </span>
@@ -1473,7 +1512,14 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
           .catch(() => 设态("不行"))
       }}
     >
-      <span aria-hidden="true">{态 === "好了" ? "✓" : 态 === "不行" ? "✗" : "⧉"}</span>
+      {/**
+        * **成败用字说，静止态用图标。**
+        * 「只用形状表达含义是不够的」——一个变了的图形说不清成没成，
+        * 而下面那个 `.sr-only` 是给读屏的，眼睛也需要同样的信息。
+        */}
+      <span aria-hidden="true">
+        {态 === "好了" ? "已复制" : 态 === "不行" ? "没成" : <复制图标 />}
+      </span>
       {/* 读屏要听得到结果，不能只有一个变了的图形 */}
       <span className="sr-only">{态 === "好了" ? "已复制" : 态 === "不行" ? "复制不了" : label}</span>
     </Button>
@@ -1506,9 +1552,7 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="caret" aria-hidden="true">
-          {open ? "▾" : "▸"}
-        </span>
+        <三角图标 className={`caret${open ? " open" : ""}`} />
         {/* **秒数放在方块里**：它是这一行里唯一会动的东西，要好认 */}
         <span className="thought-secs">{秒}s</span>
         {/**
@@ -2519,9 +2563,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="caret" aria-hidden="true">
-          {open ? "▾" : "▸"}
-        </span>
+        <三角图标 className={`caret${open ? " open" : ""}`} />
         <span className="tool-name">
           {mark} {item.name}
         </span>
@@ -2649,17 +2691,36 @@ export function EmptyConversation({
   onStart,
   onToggleDock,
   onOpenSettings,
+  onPickDirectory,
 }: {
   agents: readonly string[]
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   agentLabel?: ((agentId: string) => string) | undefined
   /** 掀开／收起底部终端。**与 composer 上那颗、命令面板那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
-  /** 第二个参数给了的话，**建会话之后把这句话真的发出去**——见 `App.tsx` 的 `startSession` */
-  onStart: (agentId: string, firstMessage?: string) => void
+  /**
+   * 第二个参数给了的话，**建完之后把这句话真的发出去**。
+   * 第三个是工作目录（2026-08-12）——**给了就归「项目」，不给就归「会话」**。
+   */
+  onStart: (agentId: string, firstMessage?: string, workspace?: string) => void
+  /**
+   * 弹原生目录选择器（2026-08-12）。**不给就不画那颗 chip**。
+   *
+   * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
+   * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
+   * ——**归类的那个决定应该在开口之前就能做**。
+   */
+  onPickDirectory?: (() => Promise<string | null>) | undefined
   onOpenSettings: () => void
 }) {
   const first = agents[0]
+  /** 这一屏的草稿。**不进 `$drafts`**：那份是按会话分的，而这里还没有会话 */
+  const [草稿, 设草稿] = useState("")
+  /**
+   * 还没建任务，所以工作目录先记在这一屏上（2026-08-12）。
+   * 发出去的那一刻它跟着 `onStart` 一起走——**归到哪一栏由它决定**。
+   */
+  const [工作目录, 设工作目录] = useState<string | undefined>(undefined)
   return (
     <div className="conversation empty-conv">
       {first ? (
@@ -2691,45 +2752,105 @@ export function EmptyConversation({
             ))}
           </ul>
 
-          {/* **不能只给默认那一个**——否则想用 codex 开第一个会话的人，
-              得先开一个 ds-chat 再换，那是为了迁就界面而多走一步 */}
-          <div className="empty-actions">
-            <Button variant="primary" onClick={() => onStart(first)}>
-              ＋ 用 {agentLabel ? agentLabel(first) : first} 开始
-            </Button>
-            {/**
-              * **不叫「agent」，叫「LLM」**（2026-08-11）。
-              *
-              * 作者：*「我做的这个就属于是一个 agent，因此首页不应该是
-              * 更换一个 agent，而应该是更换一个 LLM。」*
-              *
-              * 他是对的：**DAWN 自己就是那个 agent**——它有工具、有账本、
-              * 有授权门。人在这一屏挑的是**让哪个模型来跑它**。
-              * 「换一个 agent」把我们内部的那个词又漏了出来一次。
-              */}
-            {agents.length > 1 ? (
-              <AgentPill
-                agents={agents}
-                {...(agentLabel ? { label: agentLabel } : {})}
-                onPick={onStart}
-                triggerLabel="换一个 LLM"
+          {/**
+            * **空态也是一个对话窗口**（2026-08-12，作者提）。
+            *
+            * 作者：*「不要上来就是用 Deepseek 开始，而是要直接是对话窗口。」*
+            *
+            * 上一版这里是一颗 `＋ 用 DeepSeek 开始`——**它多要了一步**：
+            * 人已经知道自己要说什么了，却得先回答「用谁」。
+            * 而「用谁」在 composer 的 pill 上一直都能改，**且大多数时候不需要改**。
+            * WorkBuddy 的新建任务页就是这样：标题 + 一排起手 +
+            * **一个能直接打字的输入卡**。
+            *
+            * **卡的几何只有一个家**：这里复用的是同一套类名
+            * （`.composer` / `.composer-box` / `.composer-field`），
+            * 不同的只是行为——这一屏没有历史可翻，也没有按会话分的草稿。
+            */}
+          <form
+            className="composer"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const t = 草稿.trim()
+              if (!t) return
+              onStart(first, t, 工作目录)
+            }}
+          >
+            <div className="composer-box">
+              <textarea
+                className="control composer-field"
+                value={草稿}
+                autoFocus
+                onChange={(e) => 设草稿(e.target.value)}
+                placeholder="输入内容，回车发送"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    e.currentTarget.form?.requestSubmit()
+                  }
+                }}
               />
-            ) : null}
-            {/**
-              * **空态也要够得着终端**（2026-08-11）。
-              *
-              * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*），
-              * 而这一屏没有 composer——不在这里补一个，
-              * 「还没开始对话时想先看一眼目录」就只剩命令面板一条路，
-              * 那等于**看不见**。
-              */}
-            {onToggleDock ? (
-              <Button variant="text" size="sm" onClick={onToggleDock}>
-                {/* 与 composer 上那颗同名同事：它们掀开的是同一条 dock */}
-                终端面板
-              </Button>
-            ) : null}
-          </div>
+              <div className="composer-controls">
+                {/**
+                  * **不叫「agent」，叫「LLM」**（2026-08-11）。
+                  *
+                  * 作者：*「我做的这个就属于是一个 agent，因此首页不应该是
+                  * 更换一个 agent，而应该是更换一个 LLM。」*
+                  *
+                  * 他是对的：**DAWN 自己就是那个 agent**——它有工具、有账本、
+                  * 有授权门。人在这一屏挑的是**让哪个模型来跑它**。
+                  *
+                  * **挑完把手上那句话一起带走**：人可能先打了字才想起来换模型，
+                  * 不带走的话那句话就凭空消失了。
+                  */}
+                {agents.length > 1 ? (
+                  <AgentPill
+                    agents={agents}
+                    {...(agentLabel ? { label: agentLabel } : {})}
+                    onPick={(a) => onStart(a, 草稿.trim() || undefined, 工作目录)}
+                    triggerLabel={agentLabel ? agentLabel(first) : first}
+                  />
+                ) : null}
+                {/**
+                  * **空态也要够得着终端**（2026-08-11）。
+                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
+                  */}
+                {onToggleDock ? (
+                  <Button variant="text" size="sm" onClick={onToggleDock}>
+                    终端面板
+                  </Button>
+                ) : null}
+                <Button type="submit" variant="primary" className="send-btn" aria-label="发送">
+                  <上箭头图标 />
+                </Button>
+              </div>
+              {/**
+                * **与对话里那张同一颗 chip、同一处位置**（2026-08-12）。
+                *
+                * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个
+                * 选择工作目录，因为只有选择了，才归类为项目，如果不选择目录，
+                * 那么就是会话。」*
+                *
+                * 放在这儿而不是建完之后再设：**归类的那个决定应该在开口之前
+                * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
+                * 而一开始就选对，什么都不用搬。
+                */}
+              {onPickDirectory ? (
+                <div className="composer-footer">
+                  <WorkspaceEntry
+                    {...(工作目录 ? { workspace: 工作目录 } : {})}
+                    onPick={() => {
+                      void onPickDirectory().then((d) => {
+                        // **取消就什么都不做**：改主意不是错误
+                        if (d) 设工作目录(d)
+                      })
+                    }}
+                    {...(工作目录 ? { onClear: () => 设工作目录(undefined) } : {})}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </form>
         </div>
       ) : (
         <EmptyState

@@ -27,7 +27,7 @@ test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn })
 
   await page.getByPlaceholder(/回车发送/).fill("量一下这一栏")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   const 边 = async (sel: string) =>
     await page.locator(sel).first().evaluate((el) => {

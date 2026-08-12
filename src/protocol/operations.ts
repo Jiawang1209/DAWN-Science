@@ -434,6 +434,40 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 这个工作区里有哪些**技能**（4.10，2026-08-12）。
+   *
+   * 技能 = `.dawn/agents/*.md` 里的子 agent 定义——**它本来就能跑**
+   * （`src/subagent/` 有加载器与执行器），此前只是界面上看不见。
+   *
+   * **读不进来的文件也要端出来**（`problems`）：一个格式写错的定义
+   * 静静地不出现，人只会以为「我写的技能没生效」而找不到原因（规格 7.5）。
+   */
+  listSkills: {
+    request: ByProject,
+    response: z
+      .object({
+        agents: z.array(
+          z
+            .object({
+              name: z.string().min(1),
+              description: z.string(),
+              /** 缺省 = **继承默认工具集**，不是「一个工具都不给」 */
+              tools: z.array(z.string()).optional(),
+              model: z.string().min(1).optional(),
+              filePath: z.string().min(1),
+            })
+            .strict(),
+        ),
+        /** 读不进来的那些。**不静默跳过** */
+        problems: z.array(z.object({ filePath: z.string(), reason: z.string() }).strict()),
+        /** 定义目录在哪。**界面要能把这个路径说出来**，否则「去哪写」没人知道 */
+        dir: z.string().min(1),
+      })
+      .strict(),
+    mutating: false,
+  },
+
   /** 全部连接，**带此刻的状态**。状态由服务端说了算，界面自己猜会猜成「以为连着」 */
   listConnections: {
     request: Empty,
@@ -707,6 +741,33 @@ export const OPERATIONS = {
    * 所以**没配的那个不给字段**——不是空串。空串会被读成「配了一个空路径」，
    * 而实情是「还没配」，界面据此说的话完全不同。
    */
+  /**
+   * **App 的默认工作目录**（4.11，2026-08-12，作者要的）。
+   *
+   * 作者：*「设置里面要增加一个 App 默认设置的工作目录，也就是初始化的目录，
+   * windows 就默认设置在桌面，mac 默认家目录下设置一个 `DAWN` 的目录。」*
+   *
+   * **两处用它**：没给工作目录的那些对话落在这儿（此前落在应用数据目录里——
+   * 一个用户永远找不到的地方），以及**选文件夹时从这儿起步**。
+   *
+   * 返回里带 `isDefault`：**「我没配过、这是系统给的默认值」与「我配的就是它」
+   * 是两回事**——界面据此决定要不要说「默认」。
+   */
+  getDefaultWorkspace: {
+    request: Empty,
+    response: z
+      .object({ path: z.string().min(1), isDefault: z.boolean() })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 改默认工作目录。**传空串等于恢复系统默认** */
+  setDefaultWorkspace: {
+    request: z.object({ path: z.string() }).strict(),
+    response: z.object({ path: z.string().min(1), isDefault: z.boolean() }).strict(),
+    mutating: true,
+  },
+
   getInterpreters: {
     request: Empty,
     response: z

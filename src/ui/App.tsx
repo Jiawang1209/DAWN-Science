@@ -41,9 +41,10 @@ import {
   type ModelChoice,
   type ServiceChoice,
 } from "./views.js"
-import { AppearancePanel, KernelsPanel, SettingsPanel, type KernelRow } from "./Settings.js"
+import { AppearancePanel, KernelsPanel, SettingsPanel, WorkspacePanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
+import { SkillsView, McpView, type SkillLoad } from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -593,8 +594,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 先聊起来，需要落到某个目录再设（`setTaskWorkspace`）。
    * 那正是他定的形状：*「不设置任何工作目录的话，就是我们的普通对话。」*
    */
-  const 新建任务 = async (workspace?: string) => {
-    const agentId = agentIds[0]
+  /**
+   * **回到初始画面**（2026-08-12，作者定案）。
+   *
+   * 作者：*「我一旦直接开始对话，其实就算是一个普通的会话了……
+   * 当然，我点击新建任务之后，依旧也是这个画面，然后我可以选择文件夹，
+   * 一旦选择文件夹了，那么就是一个项目。」*
+   *
+   * **所以「新建任务」不建任何东西**——它只是把人送回那个画面。
+   * 真正建出来的那一刻是**第一次开口**，那时才知道要不要带工作目录，
+   * 也才知道该归到哪一栏。
+   *
+   * 副作用是个好的：**点一下不再冒出一行「新任务」**。
+   * 一段还没说过话的对话本来就不该占据侧栏的一行。
+   */
+  const 回到初始画面 = useCallback(() => {
+    setActiveSessionId(undefined)
+    setView("conversation")
+  }, [])
+
+  const 新建任务 = async (
+    opts: { workspace?: string | undefined; firstMessage?: string | undefined; agentId?: string | undefined } = {},
+  ) => {
+    const { workspace, firstMessage } = opts
+    const agentId = opts.agentId ?? agentIds[0]
     if (!agentId) {
       note("配置里还没有可用的 agent——先去设置里加一个")
       return
@@ -619,12 +642,47 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ...(workspace ? { workspace } : {}),
       })
       await loadTasks(client)
+      /**
+       * **给了路径就跟着切到它的项目**（2026-08-12）。
+       *
+       * 会话落在 `projects.open(workspace)` 那个项目里，而当前项目还是上一个——
+       * 于是它**两拨列表里都找不到**（`tempSessions` 不含它，`sessions` 装的是别的
+       * 项目的），主区当场停在空态：**人打完字按了发送，屏幕纹丝不动。**
+       *
+       * 这个洞我在 `设工作目录` 里补过一次，**这条路上漏了**——
+       * 同一种病的第二个入口。e2e 截图当场抓到。
+       */
+      if (workspace) {
+        await loadProjects(client)
+        const 新家 = $projects.get().find((p) => p.workspace === workspace)?.projectId
+        if (新家) {
+          setActiveProjectId(新家)
+          await loadSessions(client, 新家)
+        }
+      } else {
+        await loadTempSessions(client)
+      }
       if (t.sessionId) {
         setActiveSessionId(t.sessionId)
         // 人还在原地才进对话。**他自己切走了就尊重他的选择**
         if ($view.get() === from) setView("conversation")
         // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
         await 取写权(t.sessionId)
+        /**
+         * **建完立刻把第一句发出去**（2026-08-12）。
+         *
+         * 空态那张输入卡与起手卡片都走这条：人已经打好字了，
+         * 让他建完再打一遍是**为了迁就界面而多走一步**。
+         *
+         * **不做本地乐观追加**：与手动发送同一条路径，自己说的话经事件回灌进来。
+         */
+        if (firstMessage) {
+          await client.get("writeToSession", {
+            sessionId: t.sessionId,
+            data: firstMessage,
+            as: "user",
+          })
+        }
       }
     } catch (e) {
       fail(e)
@@ -672,9 +730,35 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   /** 弹原生目录选择器再设。**取消就什么都不做**——改主意不是错误 */
   const 选工作目录 = async (taskId: string) => {
-    const ws = await client.pickDirectory()
+    const ws = await client.pickDirectory(默认工作区?.path)
     if (!ws) return
     await 设工作目录(taskId, ws)
+  }
+
+  /**
+   * App 的默认工作目录（2026-08-12）。**没配过时用系统默认**
+   * （mac `~/DAWN`、Windows 桌面），`isDefault` 说的就是这件事。
+   */
+  const [默认工作区, 设默认工作区状态] = useState<{ path: string; isDefault: boolean } | undefined>(
+    undefined,
+  )
+  useEffect(() => {
+    if (!ready) return
+    client
+      .get<{ path: string; isDefault: boolean }>("getDefaultWorkspace", {})
+      .then(设默认工作区状态)
+      .catch(() => {
+        /** **读不到就不显示那一格**，不摆一个猜出来的路径——那会指错地方 */
+      })
+  }, [client, ready])
+  const 设默认工作区 = async (path: string) => {
+    try {
+      设默认工作区状态(
+        await client.get<{ path: string; isDefault: boolean }>("setDefaultWorkspace", { path }),
+      )
+    } catch (e) {
+      fail(e)
+    }
   }
 
   const remoteOpen = useStore($remoteOpen)
@@ -1512,7 +1596,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   return (
     <div className="app-shell">
       <div className="topbar">
-        <span className="brand">DAWN Science</span>
+        {/**
+          * **点它回初始画面**（2026-08-12，作者提）。
+          *
+          * 与侧栏那颗「新建任务」是**同一个动作**——
+          * 「一个动作可以有多个入口，但它们调用同一份实现、同一份状态」
+          * （Hermes：*"One action, one home."*）。
+          */}
+        <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
+          DAWN Science
+        </Button>
         <span className="spacer" />
         {/**
           * **「返回」对所有非对话屏都给**（2026-08-10）。
@@ -1626,6 +1719,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setView("conversation")
           }}
           onShowPanel={() => setView(view === "panel" ? "conversation" : "panel")}
+          /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
+          onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
+          onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
           onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
@@ -1697,8 +1793,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             />
           }
           tasks={tasks}
-          onNewTask={() => void 新建任务()}
-          onNewTaskIn={(workspace) => void 新建任务(workspace)}
+          onNewTask={回到初始画面}
+          onNewTaskIn={(workspace) => void 新建任务({ workspace })}
           onPickTask={(t) => {
             if (!t.sessionId) {
               // **没有会话就说清楚**：那是「还没拉起来」，不是点了没反应
@@ -1774,11 +1870,36 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         />
 
         <main className="main">
-          {view === "settings" ? (
+          {view === "skills" ? (
+            <SkillsView
+              {...(projectId
+                ? { load: () => client.get<SkillLoad>("listSkills", { projectId }) }
+                : {})}
+            />
+          ) : view === "mcp" ? (
+            <McpView />
+          ) : view === "settings" ? (
             /* **设置不复用项目概览的三栏网格**：仪表盘要一眼看全，
                设置要一件一件读。单栏 + 最大宽度，见 Settings.tsx 的文件头 */
             <div className="settings-page">
               <AppearancePanel />
+              {/**
+                * **默认工作目录**（2026-08-12，作者要的）。
+                * 没给工作目录的对话落在这儿，选文件夹也从这儿起步。
+                */}
+              {默认工作区 ? (
+                <WorkspacePanel
+                  path={默认工作区.path}
+                  isDefault={默认工作区.isDefault}
+                  onPick={() => {
+                    void client.pickDirectory(默认工作区?.path).then((d) => {
+                      // **取消就什么都不做**：改主意不是错误
+                      if (d) void 设默认工作区(d)
+                    })
+                  }}
+                  onReset={() => void 设默认工作区("")}
+                />
+              ) : null}
               {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
               <KernelsPanel
                 kernels={kernels.kernels}
@@ -2072,7 +2193,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                * 如果在项目下，新建对话的话，就在项目下面新建对话。」*
                * 首页正是「没有在项目下」那一支——所以它不该建到当前项目里去。
                */
-              onStart={startTemporarySession}
+              /**
+               * **空态开出来的也是任务**（2026-08-12）。
+               *
+               * 上一版走 `startTemporarySession`——那是任务模型之前的路，
+               * 建出来的东西不进侧栏的任何一栏。
+               *
+               * 而作者要的正是**在开口之前就能决定归到哪一栏**：
+               * *「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
+               * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
+               */
+              onStart={(agentId, firstMessage, workspace) =>
+                void 新建任务({ agentId, firstMessage, workspace })
+              }
+              onPickDirectory={() => client.pickDirectory(默认工作区?.path)}
               onOpenSettings={actions.openSettings}
             />
           )}

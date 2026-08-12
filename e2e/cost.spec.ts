@@ -11,7 +11,7 @@
  * 所以这里跑真实构建产物，从说一句话一直看到面板上的字。
  */
 import { resolve } from "node:path"
-import { test, expect, 在项目里开会话 } from "./fixtures.js"
+import { test, expect, 在项目里开会话, 等进了对话 } from "./fixtures.js"
 
 test("native 会话：如实说「不可见」并给出原因，而不是停在「尚未记录」", async ({ dawn }) => {
   const { page } = dawn
@@ -63,7 +63,7 @@ test.describe("claude 会话：金额是真数", () => {
      * 当前项目那一栏自然是空的。
      */
     await 在项目里开会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
+    await 等进了对话(page)
 
     await page.getByPlaceholder(/回车发送/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()

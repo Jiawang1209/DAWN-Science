@@ -11,7 +11,14 @@ import { atom } from "nanostores"
 import { setValue } from "./identity.js"
 
 /** `files` 是 ②-A′ 加的：工作区目录树 + 预览 */
-export type View = "conversation" | "panel" | "settings" | "files"
+/**
+ * 当前在哪一屏。**一个枚举，不是几个布尔**——布尔各自为政的话，
+ * 加第三个屏时总有一处忘了改，而那一处的症状是「会话行仍然高亮着，
+ * 人却已经不在会话里了」。
+ *
+ * 2026-08-12 加了 `skills` / `mcp`（作者要的四个固定入口里的两个）。
+ */
+export type View = "conversation" | "panel" | "settings" | "files" | "skills" | "mcp"
 
 export const $view = atom<View>("conversation")
 

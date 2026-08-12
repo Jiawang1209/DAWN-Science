@@ -60,7 +60,7 @@ test("**换完之后，下一次请求真的打到新模型**", async ({ dawn })
 
   await page.getByPlaceholder(/回车发送/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
   expect(modelsUsed(requests as never)).toEqual([A])
 
   await page.locator(".composer .model-pill").getByRole("button").click()

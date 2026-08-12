@@ -292,6 +292,55 @@ export function AppearancePanel() {
   )
 }
 
+/**
+ * **App 的默认工作目录**（2026-08-12，作者要的）。
+ *
+ * 作者：*「设置里面，其实要增加一个就是 App 默认设置的工作目录，
+ * 也就是初始化的目录，windows 的话就默认设置在桌面吧，
+ * mac 默认家目录下设置一个 `DAWN` 的目录就行。」*
+ *
+ * **两处用它**：没给工作目录的那些对话落在这儿（此前落在应用数据目录里——
+ * 一个用户永远找不到的地方），以及选文件夹时从这儿起步。
+ */
+export function WorkspacePanel({
+  path,
+  isDefault,
+  onPick,
+  onReset,
+}: {
+  path: string
+  /** 是不是系统给的默认值。**「我没配过」与「我配的就是它」是两回事** */
+  isDefault: boolean
+  onPick: () => void
+  onReset: () => void
+}) {
+  return (
+    <Section title="工作目录">
+      <Row
+        name="默认工作目录"
+        desc={
+          isDefault
+            ? "没设过，用的是系统默认。没给工作目录的对话会落在这儿，选文件夹也从这儿起步。"
+            : "没给工作目录的对话会落在这儿，选文件夹也从这儿起步。"
+        }
+      >
+        <div className="ws-setting">
+          <code className="ws-setting-path">{path}</code>
+          <Button variant="secondary" size="sm" onClick={onPick}>
+            换一个
+          </Button>
+          {/* **配过才给「恢复默认」**：没配过时它点了什么都不会变 */}
+          {isDefault ? null : (
+            <Button variant="text" size="sm" onClick={onReset}>
+              恢复默认
+            </Button>
+          )}
+        </div>
+      </Row>
+    </Section>
+  )
+}
+
 export interface CredentialState {
   configured: string[]
   encrypted: boolean

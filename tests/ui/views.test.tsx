@@ -244,11 +244,19 @@ describe("空对话态", () => {
   // 没项目就说「先打开一个项目文件夹」。后者已随 Task 3.4 删除——
   // 启动时保证至少有一个默认项目，而且**「先打开文件夹」是一句描述、不是一条出路**。
   // 完整覆盖见 tests/ui/first-run-ui.test.tsx。
-  it("给出一个真的能点的开始动作，而不只是一句提示", () => {
+  /**
+   * **给的是一个能动手的东西，不只是一句提示**（2026-08-12 换主语）。
+   *
+   * 那颗「＋ 用 X 开始」没有了——空态本身就是输入卡。
+   * 作者：*「不要上来就是用 Deepseek 开始，而是要直接是对话窗口。」*
+   */
+  it("给出一个能直接打字的输入卡，而不只是一句提示", () => {
     const onStart = vi.fn()
     render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={noop} />)
-    fireEvent.click(screen.getByRole("button", { name: /开始|新建/ }))
-    expect(onStart).toHaveBeenCalledWith("ds-chat")
+    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: "直接说" } })
+    fireEvent.submit(box.form!)
+    expect(onStart).toHaveBeenCalledWith("ds-chat", "直接说", undefined)
   })
 })
 

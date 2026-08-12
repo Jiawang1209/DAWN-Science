@@ -33,7 +33,7 @@ test("说一句话 → 界面上出现回复 → 账本上留下记录", async (
 
   // ② agent 的回复要出现在界面上。暗号由 mock server 写死，
   //    出现即证明整条链路通到了 DOM
-  await expect(page.getByText(CANNED_REPLY, { exact: false })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
 
   // ③ **反空转**：假服务器必须真的被调用过
   expect(requests.length).toBeGreaterThan(0)
@@ -48,7 +48,7 @@ test("回复是 markdown 而不是一坨纯文本", async ({ dawn }) => {
   await startSession(page)
   await page.getByPlaceholder(/回车发送/).fill("讲讲")
   await page.keyboard.press("Enter")
-  await expect(page.getByText(CANNED_REPLY, { exact: false })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
   // agent 那条走 .md 容器；用户那条走 <pre>（人打的字原样显示）
   await expect(page.locator(".turn.agent .md")).toHaveCount(1)
   await expect(page.locator(".turn.user pre")).toHaveCount(1)

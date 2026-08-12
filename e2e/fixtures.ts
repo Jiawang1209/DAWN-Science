@@ -23,17 +23,70 @@ const ROOT = resolve(import.meta.dirname, "..")
 export { CANNED_REPLY }
 
 /**
- * 开一段**没有工作路径的对话**（T3-a 起就是「新建任务」这一颗）。
+ * 开一段**没有工作路径的对话**。
  *
- * 2026-08-12 之前这里是两步：「新建会话」→ 首页上挑一个 LLM →「开始」。
- * 现在只有一颗「新建任务」，**点完直接进对话**——作者量的 WorkBuddy
- * 就是这样：*「新建任务之后，直接就是干净的对话窗口。」*
+ * **2026-08-12 又改了一次主语**（作者定案）：
  *
- * 名字**没改**：几十条用例引它，而它做的事没变——
- * 开一段不设工作路径的对话。改名只会制造一次无意义的大规模改动。
+ * > *「我一旦直接开始对话，其实就算是一个普通的会话了……
+ * > 我点击新建任务之后，依旧也是这个画面。」*
+ *
+ * 于是「新建任务」**不再建任何东西**，它只是把人送回初始画面；
+ * **真正建出来的那一刻是第一次开口**。所以这里改成「回初始画面 → 说一句」。
+ *
+ * 名字**仍然没改**：几十条用例引它，而它做的事没变——
+ * 开一段不设工作路径的对话。
+ *
+ * **首句可以指定**：这段对话的标题就取自它，而好几条用例正是盯着标题的
+ * （侧栏那一行叫什么、置顶之后谁排在最前）。不给参数时用「开始」——
+ * 那些用例不关心标题。
  */
-export async function 开一段临时会话(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "新建任务" }).click()
+export async function 开一段临时会话(page: Page, 首句?: string): Promise<void> {
+  /**
+   * **建出一段会话，但不产生任何对话。**
+   *
+   * ## 为什么不走界面那条路
+   *
+   * 新模型下「新建任务」不建任何东西——**开口那一刻才建**（作者定的）。
+   * 于是夹具想「有一段会话」就只能替用例说一句话，而那一句会：
+   *   - 在屏幕上多一轮问答；假模型的回复是**写死的同一句**，
+   *     用例再说一句就有两条一模一样的，`getByText(CANNED_REPLY)` 撞 strict mode；
+   *   - 占掉标题（侧栏那一行的名字取自第一句）；
+   *   - 让所有数 `.turn` / `.thought` 的用例多算一轮。
+   *
+   * 我试过「默认发」和「默认不发」，各挂三十来条——**问题不在默认值，
+   * 在于让夹具去说话本身**。
+   *
+   * ## 所以它直接调应用自己的 `createTask`
+   *
+   * 这不是后门：**那就是界面按下发送时调的同一个操作**。
+   * 而「点新建任务 → 打字 → 发送 → 建出来并归类」那条真实路径，
+   * 由 `task.spec.ts` 与 `sidebar-layout.spec.ts` 专门盯着——
+   * **夹具是搭台子的，不是验路的**。
+   *
+   * @param 首句 给了就再说一句，让这段对话有个名字（侧栏那一行的标题取自它）。
+   */
+  const 建好了 = await page.evaluate(async () => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }
+    }
+    const p = (await w.dawn.invoke("getProviders", {})) as { data?: { agents?: { agentId: string }[] } }
+    const agentId = p.data?.agents?.[0]?.agentId
+    if (!agentId) return false
+    await w.dawn.invoke("createTask", { agentId })
+    return true
+  })
+  if (!建好了) throw new Error("夹具里一个 agent 都没有——`开一段临时会话` 建不出会话")
+
+  // 界面还不知道有这条——重载走的是真实的启动装配
+  await page.reload()
+  await page.locator(".session-list .sess-item .row").first().click()
+  await page.getByPlaceholder(/回车发送/).waitFor({ timeout: 30_000 })
+
+  if (首句 === undefined) return
+  const box = page.getByPlaceholder(/回车发送/)
+  await box.fill(首句)
+  await box.press("Enter")
+  await page.locator(".turns").getByText(首句, { exact: true }).waitFor({ timeout: 30_000 })
 }
 
 /**
@@ -82,6 +135,21 @@ export async function 在项目里开会话(page: Page): Promise<void> {
   const 项目 = page.locator(".proj-list .proj-item").first()
   await 项目.locator(".row").first().click()
   await 项目.locator(".proj-session-list .sess-item .row").first().click()
+}
+
+/**
+ * **等到「真的进对话了」**（2026-08-12）。
+ *
+ * 不能只等 `回车发送` 那个输入框：**空态现在也是一张输入卡**
+ * （作者：*「不要上来就是用 Deepseek 开始，而是要直接是对话窗口」*），
+ * 两处占位符一模一样。只等它的话，用例会把字打进空态那一张，
+ * 随后界面切进对话，**那句话凭空消失**——症状是「发了没反应」。
+ *
+ * `.conv-title` 只有对话那一屏有，所以它是可判定的分界。
+ */
+export async function 等进了对话(page: Page): Promise<void> {
+  await page.locator(".conv-title").waitFor({ timeout: 60_000 })
+  await page.getByPlaceholder(/回车发送/).waitFor({ timeout: 60_000 })
 }
 
 export interface DawnFixture {

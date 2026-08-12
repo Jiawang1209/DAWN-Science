@@ -272,8 +272,17 @@ const agentSays = (text: string, revision: number, final = false): SessionUpdate
  * *「新建任务之后，直接就是干净的对话窗口。」*
  * 挑 LLM 那一步搬到了 composer 的 pill 上（也是作者定的位置）。
  */
-async function 从首页开始(): Promise<void> {
+async function 从首页开始(话 = "开始"): Promise<void> {
+  /**
+   * **「新建任务」不建任何东西**（2026-08-12 作者定案）——它只把人送回初始画面，
+   * **开口那一刻才建出来**：*「我一旦直接开始对话，其实就算是一个普通的会话了。」*
+   *
+   * 所以这里从「点一下」变成「点一下 + 说一句」。
+   */
   fireEvent.click(await screen.findByRole("button", { name: "新建任务" }))
+  const box = (await screen.findByPlaceholderText(/回车发送/)) as HTMLTextAreaElement
+  fireEvent.change(box, { target: { value: 话 } })
+  fireEvent.submit(box.form!)
 }
 
 /** 走到「对话已经挂上、能说话了」。 */

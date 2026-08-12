@@ -1,83 +1,66 @@
 /**
- * 新建任务（T2/T3）。**跑真实构建产物。**
+ * 新建任务（T2/T3，**2026-08-12 重定义**）。**跑真实构建产物。**
  *
- * 作者：*「我也要 workbuddy 的新建任务……如果在任务里面不设置任何工作目录的话，
- * 那么其实就是我们的普通对话。」*
+ * 作者定的最终形态：
  *
- * 所以这条盯的是**那句话本身**：点一下，不问路径，直接能聊。
+ * > *「现在打开 DAWN Science 的时候，这个页面需要加上文件夹的选择，以及 LLM 的选择。
+ * > 然后我一旦直接开始对话，其实就算是一个普通的会话了，这时候要收录到会话里面去。
+ * > 当然，我点击新建任务之后，依旧也是这个画面，然后我可以选择文件夹，
+ * > 一旦选择文件夹了，那么就是一个项目。」*
+ *
+ * 两句话合起来是一件事：**「打开应用」与「新建任务」是同一个画面**，
+ * 而**真正建出来的那一刻是第一次开口**——那时才知道要不要带工作目录。
+ *
+ * 副作用是个好的：**点一下不再冒出一行「新任务」**。
+ * 一段还没说过话的对话本来就不该占据侧栏的一行。
  */
 import { test, expect } from "./fixtures.js"
 
-test("**点「新建任务」就能聊** —— 不问工作路径", async ({ dawn }) => {
+test("**点「新建任务」回到初始画面，不建任何东西**", async ({ dawn }) => {
   const { page } = dawn
+
+  // 先聊一段，好让侧栏上有东西、主区在对话里
+  await page.getByPlaceholder(/回车发送/).fill("第一段")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.locator(".turns").getByText("第一段")).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
 
   await page.getByRole("button", { name: "新建任务" }).click()
 
-  // 建完就进对话——**不该让人再点一次才进得去**
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
+  // 回到那个画面：起手卡片 + 能直接打字的输入卡
+  await expect(page.locator(".welcome")).toBeVisible()
+  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  // **一条都没多**：还没开口，就还没有这段对话
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
+})
 
+test("**直接开口 → 归「会话」栏**", async ({ dawn }) => {
+  const { page } = dawn
   await page.getByPlaceholder(/回车发送/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.locator(".turns")).toContainText("假模型已应答", { timeout: 30_000 })
+  await expect(page.locator(".turns").getByText("你好")).toBeVisible({ timeout: 30_000 })
+
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
+  const 分区 = await page.locator(".sidebar .side-section").allTextContents()
+  expect(分区.some((t) => t.startsWith("会话"))).toBe(true)
+  expect(分区.some((t) => t.startsWith("项目"))).toBe(false)
   // 写权那条路也要通——它此前在四个地方各写了一遍，漏一个就是「点了没反应」
   await expect(page.getByText(/写入被拒/)).toHaveCount(0)
 })
 
 /**
- * **一次点击，侧栏只多一行**（T3-a，2026-08-12）。
+ * **应用名点一下也回初始画面**（作者提）。
  *
- * 作者打开分支之后报的：*「我看 workbuddy 新建任务之后，直接就是干净的
- * 对话窗口，也没有做任何的归类。我感觉我们目前还没有实现这个功能。」*
- *
- * 截图量出来的实情比那句话更糟：点**一次**「新建任务」，侧栏冒出**两行**——
- * 任务表列一次，旧的「对话」列又把同一段会话列了一遍。
- * 上一批为了不一次改红几十条选择器，把新旧两套并排放着，代价就是这个。
- *
- * 所以这条盯的是**计数**，不是「有没有那一行」：
- * 「多了一行」与「多了两行」在截图上很容易看成同一件事，在断言里不会。
+ * 与侧栏那颗「新建任务」是**同一个动作**——
+ * 一个动作可以有多个入口，但它们调用同一份实现、同一份状态。
  */
-test("**点一次「新建任务」，侧栏只多一行**", async ({ dawn }) => {
+test("**点应用名回初始画面**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "新建任务" }).click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
+  await page.getByPlaceholder(/回车发送/).fill("先说一句")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.locator(".turns").getByText("先说一句")).toBeVisible({ timeout: 30_000 })
 
-  // 侧栏里所有的对话行，加起来只有一条
+  await page.getByRole("button", { name: "DAWN Science" }).click()
+  await expect(page.locator(".welcome")).toBeVisible()
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
-
-  /**
-   * **它归在「会话」那一栏。**
-   *
-   * 作者定的：*「如果……不选择文件夹，直接对话，那么就属于是一个会话，
-   * 那么就会归类到左边侧边栏的会话里面。」*
-   */
-  await expect(page.locator(".side-section").filter({ hasText: "会话" })).toBeVisible()
-
-  /**
-   * **「项目」那一栏此刻整块不出现。**
-   * 一个写着 `(0)` 的标题占一行、什么都没说——而且它会让人以为自己漏建了什么。
-   */
-  await expect(page.locator(".side-section").filter({ hasText: "项目" })).toHaveCount(0)
-
-  /**
-   * **没设路径 = 普通对话，那一格什么都不写。**
-   *
-   * 服务端确实给了它一个目录（agent 要能读写），但那是实现细节——
-   * 摆出来只会让人看见一个自己从没选过的路径，
-   * 而那正是此前「临时会话」让人困惑的地方。
-   */
-  await expect(page.locator(".task-ws")).toHaveCount(0)
-})
-
-/**
- * **入口只有一个**（T3-a）。
- *
- * 「新建会话」「新建项目」两颗一起下线了——它们与「新建任务」是同一件事的
- * 三种说法，而三个入口意味着**三条各自演化的路**：
- * 本项目已经因为「同一个动作两个入口」出过一次事（agent pill 那次）。
- */
-test("**侧栏上只剩一个新建入口**", async ({ dawn }) => {
-  const { page } = dawn
-  await expect(page.getByRole("button", { name: "新建任务" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "新建会话" })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "新建项目" })).toHaveCount(0)
 })

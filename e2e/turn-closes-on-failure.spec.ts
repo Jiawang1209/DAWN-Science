@@ -16,7 +16,7 @@
  *
  * 这条用例走的正是那条 reject 路径：配置里声明一个 provider 但**不给它 key**。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
 /** `{{MOCK_URL}}` 由夹具换成假服务器地址 */
 const PROVIDERS = `
@@ -40,7 +40,7 @@ test.describe("一轮失败之后", () => {
   test("**「正在思考」会停，模型也还能换** —— 失败不该把这一段锁死", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+    await 等进了对话(page)
 
     await page.getByPlaceholder(/回车发送/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()

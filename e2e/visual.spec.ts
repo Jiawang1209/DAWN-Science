@@ -64,8 +64,8 @@ async function setTheme(page: Page, label: "亮色" | "暗色") {
   await page.getByRole("button", { name: "返回" }).click()
 }
 
-async function startSession(page: Page) {
-  await 开一段临时会话(page)
+async function startSession(page: Page, 首句 = "开始") {
+  await 开一段临时会话(page, 首句)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
   // **等到状态落定**。starting → alive 是一次真实的状态迁移，
   // 在它中间截图会得到一张随时机变化的图
@@ -76,19 +76,31 @@ async function startSession(page: Page) {
 const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
   {
     name: "空态",
-    // 一个会话都没有时的首页。主动作 + agent pill + 侧栏空态
+    /**
+     * 一个会话都没有时的首页。**它现在就是一个对话窗口**（2026-08-12）。
+     *
+     * 作者：*「不要上来就是用 Deepseek 开始，而是要直接是对话窗口。」*
+     * 上一版这里等的是那颗「＋ 用 X 开始」——那颗按钮没有了，
+     * 它的位置换成了一个能直接打字的输入卡。
+     */
     go: async (page) => {
-      await expect(page.getByRole("button", { name: /用 .* 开始/ })).toBeVisible()
+      await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
     },
   },
   {
     name: "对话",
     // transcript + markdown + composer + pill。**界面的主战场**
+    /**
+     * **一轮就够，而且只能有一轮**（2026-08-12）。
+     *
+     * 「新建任务」现在不建任何东西，**开口那一刻才建出来**，
+     * 所以夹具本身就要发一句。这里再发一句的话，屏幕上会有**两条一模一样的回复**，
+     * `getByText(CANNED_REPLY)` 当场撞上 strict mode。
+     * 把那句话交给夹具，这一屏就正好是一问一答。
+     */
     go: async (page) => {
-      await startSession(page)
-      await page.getByPlaceholder(/回车发送/).fill("请说一句话")
-      await page.getByRole("button", { name: "发送", exact: true }).click()
-      await expect(page.getByText(CANNED_REPLY)).toBeVisible()
+      await startSession(page, "请说一句话")
+      await expect(page.getByText(CANNED_REPLY).last()).toBeVisible()
     },
   },
   {
@@ -110,7 +122,7 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
     name: "命令面板",
     // 浮层 + 遮罩 + 分组列表 + **不可用那一条的样子**
     go: async (page) => {
-      await expect(page.getByRole("button", { name: /用 .* 开始/ })).toBeVisible()
+      await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
       await page.keyboard.press("ControlOrMeta+k")
       await expect(page.getByRole("dialog", { name: "命令面板" })).toBeVisible()
       // 等到列表画完再截，否则会截到只有输入框的那一帧

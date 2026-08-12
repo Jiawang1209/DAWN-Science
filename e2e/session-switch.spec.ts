@@ -41,7 +41,7 @@ test("切会话不丢历史", async ({ dawn }) => {
   await newSession(page)
   await page.getByPlaceholder(/回车发送/).fill("我是 A 的问题")
   await page.keyboard.press("Enter")
-  await expect(page.getByText(CANNED_REPLY, { exact: false })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
 
   // 会话 B
   await newSession(page)
@@ -52,7 +52,7 @@ test("切会话不丢历史", async ({ dawn }) => {
   // 切回 A（先建的那个 = 列表里靠后的）：历史必须完整
   await oldest(page).click()
   await expect(page.locator(".turns").getByText("我是 A 的问题")).toBeVisible()
-  await expect(page.getByText(CANNED_REPLY, { exact: false })).toBeVisible()
+  await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible()
 })
 
 test("**草稿不跟着切过去**，切回来又还在", async ({ dawn }) => {

@@ -29,7 +29,7 @@ test("从应用外面改了文件，切回来就看得见", async ({ dawn }) => 
   await 在项目里开会话(page)
   await page.getByPlaceholder(/回车发送/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 
   await page.getByRole("button", { name: "项目概览" }).click()
   const 产出 = page.locator(".panel", { hasText: "产出" })

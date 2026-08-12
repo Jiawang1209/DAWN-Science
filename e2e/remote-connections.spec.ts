@@ -193,7 +193,7 @@ test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
 
   await page.getByPlaceholder(/回车发送/).fill("看看这儿有什么")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   /**
    * 假模型被安排去跑 `cd 数据 && pwd`。三件事要同时成立：

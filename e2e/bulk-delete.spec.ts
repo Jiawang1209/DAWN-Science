@@ -17,12 +17,9 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 /** 开一段并说一句，好让它在侧栏上有个认得出的名字 */
 async function 开一段(page: import("@playwright/test").Page, 话: string, 第几个: number) {
-  await 开一段临时会话(page)
+  // **首句就是标题**：「新建任务」只回初始画面，开口那一刻才建出来
+  await 开一段临时会话(page, 话)
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(第几个)
-  const box = page.getByPlaceholder(/回车发送/)
-  await expect(box).toHaveValue("")
-  await box.fill(话)
-  await box.press("Enter")
   await expect(page.locator(".session-list .sess .name").filter({ hasText: 话 })).toBeVisible()
 }
 

@@ -30,7 +30,7 @@ test("点一张开场建议 → 建会话 → 那句话真的发了出去 → �
   })
 
   // ③ 模型真的被问了。**反空转**：没有这一条，前两条都可能只是本地回显
-  await expect(page.getByText(CANNED_REPLY, { exact: false })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
   expect(requests.length).toBeGreaterThan(0)
 
   // ④ 账本上留下了这一轮
@@ -38,11 +38,19 @@ test("点一张开场建议 → 建会话 → 那句话真的发了出去 → �
   expect(runs.some((r) => r.request_type === "agent_turn")).toBe(true)
 })
 
-test("主动作仍然可以不带任何建议直接开始", async ({ dawn }) => {
+/**
+ * **建议是可选项，不是必经之路**——有人就是想自己打字。
+ *
+ * 2026-08-12 换了主语：那颗「＋ 用 X 开始」没有了。作者：
+ * *「不要上来就是用 Deepseek 开始，而是要直接是对话窗口。」*
+ * 现在空态本身就是输入卡，所以「不点建议直接开始」= **直接打字发出去**。
+ * 意图没变，而且比原来更接近它描述的那件事。
+ */
+test("不点任何建议，直接打字也能开始", async ({ dawn }) => {
   const { page } = dawn
-  // **建议是可选项，不是必经之路**——有人就是想自己打字
-  await page.getByRole("button", { name: /用 .* 开始/ }).click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
-  // 没点建议，就不该有任何用户发言
-  await expect(page.locator(".turn.user")).toHaveCount(0)
+  const box = page.getByPlaceholder(/回车发送/)
+  await expect(box).toBeVisible()
+  await box.fill("我自己打的第一句")
+  await box.press("Enter")
+  await expect(page.locator(".turns").getByText("我自己打的第一句")).toBeVisible({ timeout: 30_000 })
 })

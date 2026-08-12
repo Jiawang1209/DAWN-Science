@@ -39,6 +39,9 @@ import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
+import { AGENTS_DIR, loadSubagentDefinitions } from "../subagent/definitions.js"
+import { join } from "node:path"
+import { mkdirSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -192,9 +195,31 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 那个路径上会真的落文件。
    */
   const 要有临时根 = () => {
+    /**
+     * **设置里那个说了算**（2026-08-12）。
+     *
+     * 作者要的「App 默认工作目录」不只是选文件夹的起点——
+     * **没给工作目录的那些对话就落在它下面**。装配时定死的那个
+     * （`wiring.ts` 的 `~/DAWN/scratch`）只是没配过时的兜底：
+     * 每次现读，改完设置**下一段对话立刻生效**，不用重启。
+     */
+    const 配的 = settings?.get("workspace.default")
+    if (配的) return join(配的, "scratch")
     if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
     return scratchRoot
   }
+
+  /**
+   * 系统给的默认工作目录（2026-08-12，作者定的两个平台各一个）。
+   *
+   * 作者：*「windows 的话就默认设置在桌面吧，mac 默认家目录下设置一个
+   * `DAWN` 的目录就行。」*
+   *
+   * **不是 app data 目录**：那儿是给应用自己放数据的，用户永远找不到，
+   * 而这个目录里会真的落下他的文件。
+   */
+  const 系统默认工作目录 = () =>
+    process.platform === "win32" ? join(homedir(), "Desktop") : join(homedir(), "DAWN")
 
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
   const 密钥名 = (id: string) => `ssh:${id}`
@@ -683,6 +708,32 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return store.get(taskId)!
     },
 
+    /**
+     * 这个工作区里有哪些技能（4.10，2026-08-12）。
+     *
+     * 技能 = `.dawn/agents/*.md` 的子 agent 定义。**加载器只有一份**
+     * （`loadSubagentDefinitions`），与建会话时读的是同一条——
+     * 两份解析规则会在边角情形上悄悄分家，而这些文件是用户手写的。
+     *
+     * **读不进来的也端出来**：一个格式写错的定义静静地不出现，
+     * 人只会以为「我写的技能没生效」而找不到原因（规格 7.5）。
+     */
+    listSkills: async ({ projectId }) => {
+      const p = requireProject(projectId)
+      const 读到的 = loadSubagentDefinitions(p.workspace)
+      return {
+        agents: 读到的.agents.map((a) => ({
+          name: a.name,
+          description: a.description,
+          ...(a.tools ? { tools: a.tools } : {}),
+          ...(a.model ? { model: a.model } : {}),
+          filePath: a.filePath,
+        })),
+        problems: 读到的.problems,
+        dir: join(p.workspace, AGENTS_DIR),
+      }
+    },
+
     listConnections: async () => 远端().store.list().map(装配),
 
     saveConnection: async (req) => {
@@ -971,6 +1022,28 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 两个解释器路径（2026-08-10，作者定的机制）。
      * **没配的那个不给字段**——「还没配」与「配了一个空路径」在界面上要说不同的话。
      */
+    getDefaultWorkspace: async () => {
+      const 配的 = settings?.get("workspace.default")
+      return { path: 配的 ?? 系统默认工作目录(), isDefault: !配的 }
+    },
+
+    setDefaultWorkspace: async ({ path }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+      const p = path.trim()
+      /**
+       * **空串 = 恢复系统默认**，不是「设了一个空路径」。
+       * 与解释器那两条同一条规矩。
+       */
+      if (p && !p.startsWith("/") && !/^[A-Za-z]:[\\/]/.test(p)) {
+        throw fault("invalid_request", `工作目录要写绝对路径，收到「${p}」`)
+      }
+      settings.set("workspace.default", p, new Date().toISOString())
+      /** **建出来**：设了一个不存在的目录，第一段对话才炸就太晚了 */
+      if (p) mkdirSync(p, { recursive: true })
+      const 现在 = settings.get("workspace.default")
+      return { path: 现在 ?? 系统默认工作目录(), isDefault: !现在 }
+    },
+
     getInterpreters: async () => settings?.interpreters() ?? {},
 
     setInterpreter: async ({ language, path }) => {

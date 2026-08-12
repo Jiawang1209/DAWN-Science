@@ -27,7 +27,7 @@ test.describe("命令环境", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("看看环境")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     const tool = page.locator(".tool").first()
     await tool.locator(".tool-head").click()

@@ -367,14 +367,24 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
    * 那是内容，不是图标。
    */
   it("**装饰位不许出现 emoji** —— 它吃不到 currentColor，永远脱离那四档层次", () => {
-    // 常见的「拿字符当图标」：装饰 span 里、或 glyph 类里
-    const 装饰位 = /aria-hidden="true"\s*>\s*([^<{]+)</
+    /**
+     * **跨行匹配**（2026-08-12 修）。
+     *
+     * 第一版逐行扫，而 JSX 里装饰内容常常换行：
+     *
+     *     <span className="caret" aria-hidden="true">
+     *       {open ? "▾" : "▸"}
+     *     </span>
+     *
+     * 那一版**漏掉了远端连接那一行的 `▸`**，直到作者说「没有图标」才发现。
+     * 与「按钮撞名」那条犯的是同一个错——**一条抓不住的扫描比没有更坏**。
+     */
+    const 装饰位 = /aria-hidden="true"\s*>([\s\S]{0,80}?)</g
     const emoji = /[\u{1F300}-\u{1FAFF}\u{2190}-\u{2BFF}\u{FE0F}\u{FF0B}]/u
     for (const f of tsxFiles()) {
-      const hits = findLines(read(f), (l) => {
-        const m = 装饰位.exec(l)
-        return m !== null && emoji.test(m[1]!)
-      })
+      const hits = [...read(f).matchAll(装饰位)]
+        .map((m) => m[1]!.trim())
+        .filter((t) => emoji.test(t))
       expect(hits, `${f} 的装饰位用了 emoji 当图标。图标一律走 src/ui/icons.tsx`).toEqual([])
     }
   })

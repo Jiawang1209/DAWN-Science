@@ -808,8 +808,16 @@ pre {
 .proj-sessions { padding-left: var(--dawn-space-3); }
 .proj-session-list .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
 .proj-session-list { list-style: none; margin: 0; padding: 0; }
-/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */
-.twisty { display: inline-block; width: 1em; color: var(--dawn-text-3); }
+/**
+ * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
+ * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。
+ */
+.twisty, .caret {
+  flex: 0 0 auto;
+  color: var(--dawn-text-3);
+  transition: transform 120ms ease;
+}
+.twisty.open, .caret.open { transform: rotate(90deg); }
 /**
  * 行首那个图标（2026-08-11，仿 Codex）：**跟着文字色走**——
  * 选中、悬停、暗色主题都不用另外配一份。
@@ -1287,6 +1295,20 @@ pre {
   text-align: center;
 }
 /* 标记，不是 logo：56×56（规范 §3.4），**不引入任何图片资源** */
+/**
+ * 空态里那张输入卡（2026-08-12）。
+ *
+ * **它要占满这一栏**，与对话里那张同宽——两处宽度不一样的话，
+ * 从空态打第一句话进到对话，卡会当场跳一下。
+ * `.welcome` 是 `align-items: center`，flex 子项默认收缩到内容宽，
+ * 所以这里明确要回 100%；左右内距归零，因为 `.welcome` 自己已经给了。
+ */
+.welcome > .composer {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .welcome-mark {
   display: grid;
   place-items: center;
@@ -2160,10 +2182,29 @@ pre {
 /* ── 远端连接（②-B · R3）─────────────────────────────────────────────
    状态**不只靠颜色**：点是给一眼扫的，旁边那行文字才是意思本身
    （DESIGN.md：no meaning conveyed by color alone）。 */
-.remote-section { border-top: 1px solid var(--dawn-stroke-4); margin-top: var(--dawn-space-2); }
-/* 与 `.side-action` 同样的排布（图标 + 名字挨着），但**不共用那个类**——
-   那个类的意思是「新建一个 X」，这一行是一个区的开关 */
-.remote-head { justify-content: flex-start; margin: 0 var(--dawn-space-2); }
+/**
+ * 「远端连接」那一区（2026-08-12 挪进顶部固定区）。
+ *
+ * **上面那条 `border-top` 去掉了**：它原来是「项目与远端之间」的分界，
+ * 而现在分界由 `.side-divider` 那一条统一画（作者要的那条横线）。
+ * 留着就是**两条线**。
+ */
+.remote-section { margin-top: 0; }
+/**
+ * 与 `.side-action` 同样的排布（图标 + 名字挨着），但**不共用那个类**——
+ * 那个类的意思是「新建一个 X」，这一行是一个区的开关。
+ *
+ * **左右内缩不再自己写**（2026-08-12）。作者：*「新建任务与远端连接
+ * 没有对齐，文字没有对齐，图标也没有对齐。」* 量出来差 4px：
+ * 这里写的是 `margin: 0 8px`，而 `.row` 统一的是 `0 12px`——
+ * **一个覆写把一整行挪了 4 像素**，图标与文字跟着一起歪。
+ * 现在交回给 `.row`：**同一种行只该有一处定义它的内缩**。
+ */
+.remote-head { justify-content: flex-start; }
+/** 文件树的展开标记：与远端那一行同一副做法——**一个三角，靠旋转** */
+.tree-caret { color: var(--dawn-text-3); transition: transform 120ms ease; }
+.tree-caret.open { transform: rotate(90deg); }
+
 .remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; }
 .remote-count {
   margin-left: auto;
@@ -2518,7 +2559,21 @@ pre {
    聚焦环保留强调色——那不是装饰，是键盘用户唯一的定位手段（DESIGN.md）。 */
 
 /* 品牌名：它是身份，不是动作 */
-.topbar .brand { color: var(--dawn-text-1); }
+/**
+ * 应用名（2026-08-12 改成可点）。
+ *
+ * 作者：*「上面的 DAWN Science 设置为可以点击的样式，
+ * 点击之后回到 App 的初始界面。」*
+ *
+ * **它要看起来能点**：`.btn-text` 已经给了 hover 与聚焦环，
+ * 这里只把它恢复成标题的字重与颜色——**可点不等于要变成一个按钮的样子**。
+ */
+.topbar .brand {
+  color: var(--dawn-text-1);
+  font-weight: var(--dawn-weight-semibold);
+  padding: 0;
+}
+.topbar .brand:hover { color: var(--dawn-accent); }
 /* 文字按钮：它们是次要动作，绿字会跟发送键抢 */
 .btn-text { color: var(--dawn-text-2); }
 .btn-text:hover, .btn-text:focus-visible { color: var(--dawn-text-1); }
@@ -2576,6 +2631,35 @@ pre {
  * 批量选择（2026-08-12）。**入口在分区标题上**——它管的是这一整列。
  * `margin-left: auto` 把它推到标题行的右端，与计数分开。
  */
+/**
+ * 「远端连接」那一行的展开标记（2026-08-12）。
+ *
+ * **它退到行尾**，行首让给图标——这样这一行与上面那些
+ * （新建任务 / 项目 / 会话）**共用同一条文字左缘**。
+ * 一个三角靠旋转表达两态：两个不同的字形会让展开这件事看起来像换了个东西。
+ */
+/** 文件树的展开标记：与远端那一行同一副做法——**一个三角，靠旋转** */
+.tree-caret { color: var(--dawn-text-3); transition: transform 120ms ease; }
+.tree-caret.open { transform: rotate(90deg); }
+
+.remote-head .caret {
+  margin-left: var(--dawn-space-2);
+  color: var(--dawn-text-3);
+  transition: transform 120ms ease;
+}
+.remote-head .caret.open { transform: rotate(90deg); }
+.remote-head .remote-count { margin-left: auto; }
+
+/**
+ * 顶部固定区与下面两列之间那条线（2026-08-12，作者要的）。
+ * **只有这一条**：别处仍然靠留白分。
+ */
+.side-divider {
+  margin: var(--dawn-space-2) var(--dawn-space-3);
+  border: 0;
+  border-top: 1px solid var(--dawn-stroke-4);
+}
+
 .side-bulk { margin-left: auto; }
 .side-section { display: flex; align-items: center; }
 /**

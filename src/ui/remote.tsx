@@ -20,6 +20,7 @@ import type { RemoteConnection, RemoteState, SessionSummary } from "../protocol/
 import { Button, Field, Row } from "./primitives.js"
 import { SessionRow } from "./views.js"
 import { 短路径 } from "./format.js"
+import { 服务器图标, 三角图标 } from "./icons.js"
 
 /**
  * 状态怎么读。**点 + 文字成对**，不单给一个。
@@ -111,15 +112,22 @@ export function RemoteSection({
         * 借用那个类的代价是：`sidebar-layout.spec.ts` 数的是
         * 「顶层有哪几块」，混进来一个开关会让那条断言失去意思。
         */}
+      {/**
+        * **与上面那些行同一副长相**（2026-08-12，作者提：
+        * *「现在的远端连接，和上面的新建任务其实没有对齐，并且也没有图标。」*）。
+        *
+        * 上一版行首是一个 `▸` 字符：**它比一个 16px 图标窄**，
+        * 于是名字比「新建任务」往左挪了一截——一列扫下来那条竖线是歪的。
+        * 现在与别的行一样：**图标在前，展开标记退到行尾**。
+        */}
       <Row className="remote-head" aria-expanded={open} onClick={onToggle}>
-        <span className="caret" aria-hidden="true">
-          {open ? "▾" : "▸"}
-        </span>
+        <服务器图标 className="row-icon" />
         <span className="name">远端连接</span>
         {/* **收起时也要说有几台**：否则收起等于把它们藏没了 */}
         {connections.length > 0 ? (
           <span className="remote-count">{connections.length}</span>
         ) : null}
+        <三角图标 className={`caret${open ? " open" : ""}`} />
       </Row>
 
       {open ? (

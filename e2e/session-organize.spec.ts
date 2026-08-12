@@ -17,12 +17,15 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 const 名字 = ".session-list .sess .name"
 
 async function 建(page: import("@playwright/test").Page, 话: string, 第几个: number) {
-  await 开一段临时会话(page)
+  /**
+   * **首句就是标题**（2026-08-12）。
+   *
+   * 「新建任务」现在不建任何东西，它只回初始画面；**开口那一刻才建出来**。
+   * 所以这里把要当标题的那句话交给夹具，而不是「先建再说一句」——
+   * 后者会让标题被夹具自己的默认首句占掉。
+   */
+  await 开一段临时会话(page, 话)
   await expect(page.locator(".session-list > li")).toHaveCount(第几个)
-  const box = page.getByPlaceholder(/回车发送/)
-  await expect(box).toHaveValue("")
-  await box.fill(话)
-  await box.press("Enter")
   await expect(page.locator(名字).filter({ hasText: 话 })).toBeVisible()
 }
 

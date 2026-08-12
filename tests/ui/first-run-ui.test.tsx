@@ -10,7 +10,7 @@
  * their own honest copy and **their own way out**."*
  */
 import { describe, expect, it, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { EmptyConversation, SessionSidebar } from "../../src/ui/views.js"
 import type { ProjectSummary } from "../../src/protocol/index.js"
 
@@ -74,12 +74,22 @@ describe("第一次打开 · 不再有「先打开一个项目文件夹」这条
 })
 
 describe("空对话区 · 必须给出下一步动作", () => {
-  it("有 agent 时，主区提供一个真的能点的开始按钮", () => {
+  /**
+   * **主区给的是一个能直接打字的输入卡**（2026-08-12 换主语）。
+   *
+   * 上一版等的是一颗「＋ 用 X 开始」。作者：*「不要上来就是用 Deepseek 开始，
+   * 而是要直接是对话窗口。」* —— 那颗按钮多要了一步：
+   * 人已经知道自己要说什么了，却得先回答「用谁」。
+   *
+   * 这条守的意图一个字没变：**别只摆一句提示，摆一个能动手的东西**。
+   */
+  it("有 agent 时，主区提供一个能直接打字的输入卡", () => {
     const onStart = vi.fn()
     render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={noop} />)
-    const btn = screen.getByRole("button", { name: /开始|新建/ })
-    btn.click()
-    expect(onStart).toHaveBeenCalledWith("ds-chat")
+    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: "直接说" } })
+    fireEvent.submit(box.form!)
+    expect(onStart).toHaveBeenCalledWith("ds-chat", "直接说", undefined)
   })
 
   it("没有 agent 时，指向设置而不是留一片空白", () => {

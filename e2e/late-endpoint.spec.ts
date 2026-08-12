@@ -21,7 +21,7 @@
  * 所以这条用例的要害不在断言，在 `noModelsBase: true`——
  * 它把起点调回和真实安装一样。
  */
-import { test, expect, CANNED_REPLY } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 等进了对话 } from "./fixtures.js"
 
 test.describe("启动时一个 provider 覆盖都没有", () => {
   test.use({ dawnOptions: { noModelsBase: true } })
@@ -57,9 +57,9 @@ test.describe("启动时一个 provider 覆盖都没有", () => {
      * 拿它开会话本来就该失败。**要验的是 `late` 这一条路。**
      */
     // 2026-08-11：这颗从「换一个 agent」改叫「换一个 LLM」——DAWN 自己才是那个 agent
-    await page.getByRole("button", { name: "换一个 LLM" }).click()
+    await page.getByRole("button", { name: /切换服务|选择 agent|ds-chat|DeepSeek/ }).click()
     await page.getByRole("menuitem", { name: "late" }).click()
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+    await 等进了对话(page)
     // **模型选择的地方有它**——作者说的正是这一句
     await expect(page.locator(".composer")).toContainText("late-7b", { timeout: 20_000 })
 

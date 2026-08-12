@@ -15,7 +15,20 @@
 import type Database from "better-sqlite3"
 
 /** 认得的设置键。**闭集**——写进一个拼错的键等于静默丢配置 */
-export type SettingKey = "interpreter.python" | "interpreter.r"
+export type SettingKey =
+  | "interpreter.python"
+  | "interpreter.r"
+  /**
+   * **App 的默认工作目录**（2026-08-12，作者要的）。
+   *
+   * 作者：*「设置里面，其实要增加一个就是 App 默认设置的工作目录，
+   * 也就是初始化的目录，windows 的话就默认设置在桌面，
+   * mac 默认家目录下设置一个 `DAWN` 的目录就行。」*
+   *
+   * 两处用它：**没给工作目录的那些对话落在这儿**（此前落在应用数据目录里，
+   * 那是个用户永远找不到的地方），以及**选文件夹时从这儿起步**。
+   */
+  | "workspace.default"
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

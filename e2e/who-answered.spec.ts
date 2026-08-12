@@ -16,7 +16,7 @@ test("**换服务之后，新答的那一行改名，旧的不动**", async ({ d
 
   await page.getByPlaceholder(/回车发送/).fill("第一问")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   // 换服务（菜单上组「就地换服务（对话不断）」）
   await page.locator(".agent-pill").click()

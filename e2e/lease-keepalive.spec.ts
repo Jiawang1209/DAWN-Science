@@ -31,7 +31,7 @@ test("**租约过期之后，人照样能接着说**", async ({ dawn }) => {
 
   await page.getByPlaceholder(/回车发送/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   // 等它过期（TTL = 1 秒）
   await page.waitForTimeout(2_500)
@@ -52,7 +52,7 @@ test("**开了新对话，回到旧的照样能说**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await page.getByPlaceholder(/回车发送/).fill("旧对话的第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   // 开第二段（作者的原话就是「一旦点击了新对话」）
   await 开一段临时会话(page)

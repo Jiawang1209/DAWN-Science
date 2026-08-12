@@ -70,8 +70,19 @@ test.describe("PTY 会话：终端在底部 dock 里", () => {
 
     // 终端在 dock 里，**而且 dock 自己掀开了**——不用再点一次
     await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 30_000 })
-    // 也不该有对话输入框冒出来——那个框此前把字送进黑洞
-    await expect(page.getByPlaceholder(/回车发送/)).toHaveCount(0)
+    /**
+     * **shell 没有把对话区占掉**（2026-08-12 换的判据）。
+     *
+     * 上一版断言「一个 `回车发送` 都没有」——那时空态没有输入框，
+     * 所以「有输入框」只可能意味着「这个 shell 会话被当成对话渲染了」，
+     * 而那个框此前把字送进黑洞。
+     *
+     * 现在**空态本身就是一张输入卡**（作者要的），那句断言于是恒假。
+     * 它守的意图没变，换成直接说：**主区仍然是初始画面**，
+     * 终端在下面那条 dock 里——两者各在各的地方。
+     */
+    await expect(page.locator(".welcome")).toBeVisible()
+    await expect(page.locator(".turns")).toHaveCount(0)
   })
 
   test("**打字加回车，命令真的被执行了**", async ({ dawn }) => {

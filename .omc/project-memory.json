@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cp src/ui/views.tsx /tmp/v2.bak && perl -0pi -e 's/\\{onDeleteTask \\? \\(/{false \\&\\& onDeleteTask ? (/' src/ui/views.tsx && npm run build 2>&1|tail -1 && npx playwright test e2e/bulk-delete.spec.ts -g \"不存在会话\" 2>&1 | grep -E \"✓|✘|passed|failed\" | head -4; cp /tmp/v2.bak src/ui/views.tsx && npm run build 2>&1|tail -1 && echo 已还原",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5",
+    "buildCommand": "npx tsc --noEmit -p tsconfig.json 2>&1 | head -10; npx playwright test e2e/cli-agent.spec.ts e2e/codex-agent.spec.ts e2e/pty-session.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -20",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eH.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eH.log | tail -14",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -328,6 +328,24 @@
       "type": "file"
     },
     {
+      "path": "e2e/__screenshots__/空态-亮色-darwin.png",
+      "accessCount": 2,
+      "lastAccessed": 1786540226289,
+      "type": "file"
+    },
+    {
+      "path": "test-results/task-workspace-设完之后-归到项目栏，而且-agent-的手真的挪过去了-/test-failed-1.png",
+      "accessCount": 2,
+      "lastAccessed": 1786541938393,
+      "type": "file"
+    },
+    {
+      "path": "e2e/zz-sweep.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786544245155,
+      "type": "file"
+    },
+    {
       "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
       "accessCount": 1,
       "lastAccessed": 1786524176416,
@@ -406,21 +424,27 @@
       "type": "file"
     },
     {
-      "path": "test-results/task-workspace-设完之后-归到项目栏，而且-agent-的手真的挪过去了-/test-failed-1.png",
-      "accessCount": 1,
-      "lastAccessed": 1786535029384,
-      "type": "file"
-    },
-    {
-      "path": "e2e/zz-sweep.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786536525544,
-      "type": "file"
-    },
-    {
       "path": "e2e/bulk-delete.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1786538000692,
+      "type": "file"
+    },
+    {
+      "path": "test-results/task-workspace-空态就选好目录-选了目录再开口-→-直接进「项目」栏-/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786541843544,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/skills.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1786544493755,
+      "type": "file"
+    },
+    {
+      "path": "test-results/cli-agent-CLI-agent-在对话框里-打一句，它答一句-——-判据-①/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786550264414,
       "type": "file"
     }
   ],

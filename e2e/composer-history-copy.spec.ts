@@ -69,7 +69,7 @@ test("**一键复制**：复制的是原文，且看得见它复制成功了", a
   await 那颗.click()
 
   // 点了要有反馈——否则人会怀疑自己没点上，然后再点几次
-  await expect(page.locator(".copy-btn").first()).toContainText("✓")
+  await expect(page.locator(".copy-btn").first()).toContainText("已复制")
 
   const 剪贴板 = await page.evaluate(() => navigator.clipboard.readText())
   expect(剪贴板).toBe("要被复制走的这句")

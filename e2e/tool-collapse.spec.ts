@@ -25,7 +25,7 @@ test.describe("成功的工具调用", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     const tool = page.locator(".tool").first()
     await expect(tool).toBeVisible()
@@ -44,7 +44,7 @@ test.describe("成功的工具调用", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     const tool = page.locator(".tool").first()
     const head = tool.locator(".tool-head")

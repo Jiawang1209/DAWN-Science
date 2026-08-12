@@ -18,6 +18,7 @@
  * 这条由 `tests/ui/design-contract.test.ts` 强制。
  */
 import type { ButtonHTMLAttributes, ReactNode } from "react"
+import { 出错图标 } from "./icons.js"
 
 /* ── Button ───────────────────────────────────────────────────────── */
 
@@ -184,9 +185,7 @@ export function ErrorState({
   return (
     <div className="state-block state-error" role="alert">
       <p className="state-title">
-        <span className="state-icon" aria-hidden="true">
-          ⊘
-        </span>
+        <出错图标 className="state-icon" />
         {title}
       </p>
       {detail ? <p className="state-desc">{detail}</p> : null}

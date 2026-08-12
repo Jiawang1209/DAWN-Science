@@ -15,7 +15,7 @@
  *
  * 顺带证明：**自建的 vLLM / Ollama / 任何 OpenAI 兼容端点**走的是同一条路。
  */
-import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -58,7 +58,7 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
    */
   await page.getByRole("button", { name: "返回" }).click()
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+  await 等进了对话(page)
 
   await page.locator(".agent-pill").click()
   /**
@@ -73,7 +73,7 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
    * 新加的服务不仅**能用**，而且是**在同一段对话里**用上的。
    */
   await page.locator(".agent-menu .svc-group").getByRole("menuitem", { name: "mine" }).click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+  await 等进了对话(page)
   // 模型格上是我们声明的那个 id——不是某个内置 provider 顶了包
   await expect(page.locator(".composer")).toContainText("my-7b")
 

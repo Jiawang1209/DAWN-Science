@@ -10,7 +10,7 @@
  * 所以假 CLI 在回复里标出「首轮」还是「续接」，让它可断言。
  */
 import { resolve } from "node:path"
-import { test, expect } from "./fixtures.js"
+import { test, expect, 等进了对话 } from "./fixtures.js"
 
 const FAKE = resolve(import.meta.dirname, "fixtures/codex")
 
@@ -29,7 +29,7 @@ async function startCodex(page: import("@playwright/test").Page): Promise<void> 
   await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await page.keyboard.press("Meta+k")
   await page.getByRole("option", { name: "新建会话：codex" }).click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
+  await 等进了对话(page)
 }
 
 const say = async (page: import("@playwright/test").Page, text: string) => {

@@ -40,7 +40,7 @@ test("**回复到了，思考记号不能还在转**", async ({ dawn }) => {
   await box.fill("请说一句话")
   await box.press("Enter")
 
-  await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   // **一个永远在转的记号比没有更糟**
   await expect(page.locator(".thinking")).toHaveCount(0)
 })

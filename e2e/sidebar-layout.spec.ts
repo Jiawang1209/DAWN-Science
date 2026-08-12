@@ -21,7 +21,7 @@
  * 入口与它统领的那一列必须挨着、空着的时候不许白占空隙、
  * `⋯` 不许被列表裁掉。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
 /**
  * **一个入口。**
@@ -38,17 +38,26 @@ test("**只有「新建任务」一个入口**", async ({ dawn }) => {
 })
 
 /**
- * **点完直接进对话，中间没有一屏。**
+ * **点完回到那个画面，什么都不建**（2026-08-12 换主语）。
  *
- * 作者量的 WorkBuddy 就是这样：*「新建任务之后，直接就是干净的对话窗口。」*
- * 上一版这里要先落到首页挑一次 LLM——**那一步现在长在 composer 的 pill 上**，
- * 是作者自己定的位置（对标 Hermes 的 model pill）。
+ * 作者定案：*「我点击新建任务之后，依旧也是这个画面，然后我可以选择文件夹，
+ * 一旦选择文件夹了，那么就是一个项目，如果直接开启一个对话，
+ * 那么就算是一个普通的会话。」*
+ *
+ * 所以「新建任务」**不再直接进一段新对话**——它把人送回初始画面，
+ * 而那个画面本身就是一个能打字的输入卡。**真正建出来的那一刻是第一次开口。**
  */
-test("**点完直接进对话**，不绕中间那一屏", async ({ dawn }) => {
+test("**点完回到初始画面，不建任何东西**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "新建任务" }).click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
-  await expect(page.locator(".welcome")).toHaveCount(0)
+  /**
+   * **这里不能用 `等进了对话`**：这条测的恰恰是「**停在初始画面**」，
+   * 而那个 helper 等的是 `.conv-title`——只有对话那一屏才有。
+   * （一次全局替换把它也换了，于是它稳定超时。**判据要跟着断言的意图走**。）
+   */
+  await expect(page.locator(".welcome")).toBeVisible()
+  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
 })
 
 /**
@@ -61,7 +70,7 @@ test("**点完直接进对话**，不绕中间那一屏", async ({ dawn }) => {
 test("**没给路径 → 会话那一栏，且只多一行**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+  await 等进了对话(page)
 
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
   await expect(page.locator(".side-section").filter({ hasText: "会话" })).toBeVisible()
@@ -135,9 +144,13 @@ test("**空着的时候不留白地**，加一条会话就正好多一行", asyn
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
   await expect(page.locator(".side-section")).toHaveCount(0)
 
+  // **开口那一刻才建出来**（2026-08-12）：「新建任务」只回初始画面
   await 入口.click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
-  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
+  const box = page.getByPlaceholder(/回车发送/)
+  await expect(box).toBeVisible({ timeout: 60_000 })
+  await box.fill("说一句")
+  await box.press("Enter")
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1, { timeout: 30_000 })
 
   // 多出来的是**一行会话 + 一行分区标题**，都是内容，不是白地
   const 行 = (await page.locator(".sidebar .sess-item").first().boundingBox())!
@@ -189,4 +202,98 @@ test("**菜单开在行的右侧，且没被列表裁掉**", async ({ dawn }) =>
   /** **列表没有因此变得可滚**：那条滚动条正是作者报的东西 */
   const 溢出 = await page.locator(".session-list").evaluate((el) => el.scrollHeight - el.clientHeight)
   expect(溢出).toBeLessThanOrEqual(1)
+})
+
+/**
+ * **顶部那几行的图标与文字落在同一条竖线上**（2026-08-12）。
+ *
+ * 作者报了两次：*「远端连接和上面的新建任务其实没有对齐，并且也没有图标」*、
+ * *「文字没有对齐，图标也没有对齐」*。
+ *
+ * 量出来差 4px，根因是 `.remote-head` 自己写了 `margin: 0 8px`，
+ * 而 `.row` 统一的是 `0 12px`——**一个覆写把一整行挪了 4 像素**。
+ *
+ * ## 为什么这条判得了
+ *
+ * 「对齐」在别处常常是主观的，但**同一种行的左缘**不是：它要么相等，
+ * 要么不相等。所以它该有一条扫描，而不是靠下一次有人看出来。
+ * （本项目的第二条准入规则：能判定的设计规则，配一个扫描测试。）
+ */
+test("**固定区那几行，图标与文字同一条左缘**", async ({ dawn }) => {
+  const { page } = dawn
+  const 左缘 = async (sel: string) =>
+    await page.locator(sel).first().evaluate((el) => {
+      const icon = el.querySelector("svg")
+      const name = el.querySelector(".name")
+      return {
+        行: Math.round(el.getBoundingClientRect().x),
+        图标: icon ? Math.round(icon.getBoundingClientRect().x) : -1,
+        文字: name ? Math.round(name.getBoundingClientRect().x) : -1,
+      }
+    })
+
+  const 新建 = await 左缘(".side-action")
+  const 远端 = await 左缘(".remote-head")
+
+  expect(新建.图标).toBeGreaterThan(0)
+  expect(远端.图标).toBeGreaterThan(0)
+  // **逐项相等**：只比行的左缘不够——图标或文字任一处歪了，人一眼就看得见
+  expect(远端.行).toBe(新建.行)
+  expect(远端.图标).toBe(新建.图标)
+  expect(远端.文字).toBe(新建.文字)
+})
+
+/**
+ * **顶部四项 + 一条横线**（2026-08-12，作者定的顺序）。
+ *
+ * 作者：*「左边侧边栏，从上到下设置一下固定的：第一个新建任务……
+ * 然后画一个横线，下面是项目 然后是会话。」*
+ *
+ * 这条盯的是**顺序与分界**：四项在线上面，项目/会话在线下面。
+ * 「上面是我能用什么、下面是我做过什么」——那条线是这句话的可见形式。
+ */
+test("**固定四项在横线上面，项目与会话在下面**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+
+  const y = async (sel: string) =>
+    (await page.locator(sel).first().boundingBox())!.y
+
+  const 横线 = await y(".side-divider")
+  for (const 名 of ["新建任务", "技能", "MCP 服务器"]) {
+    expect(await y(`.sidebar >> role=button[name="${名}"]`), `${名} 应在横线上面`).toBeLessThan(横线)
+  }
+  expect(await y(".remote-head"), "远端连接应在横线上面").toBeLessThan(横线)
+  // 分区标题（项目 / 会话）在线下面
+  expect(await y(".side-section")).toBeGreaterThan(横线)
+})
+
+/**
+ * **技能那一屏列的是真东西**（2026-08-12）。
+ *
+ * 我提过技能与 MCP 现在几乎是空的、建议等能用了再上；作者要求先做出来。
+ * 那就做出来，但**这一屏不是占位**：`.dawn/agents/*.md` 的子 agent
+ * 本来就能跑（`src/subagent/` 有加载器与执行器），此前只是界面上看不见。
+ *
+ * 夹具的工作区里有一份 `scout.md.example`——**带 `.example` 的加载器不认**，
+ * 所以这一屏应当如实说「还没有技能」，并把该往哪写说清楚。
+ */
+test("**技能那一屏说得出「去哪写」**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await page.getByRole("button", { name: "技能" }).click()
+  await expect(page.locator(".skills-page")).toBeVisible()
+  // 目录要说出来：不说清楚放哪儿，「怎么加一个」就无从下手
+  await expect(page.locator(".skills-page")).toContainText(".dawn/agents")
+})
+
+/**
+ * **MCP 那一屏如实说清做到了哪儿**。
+ *
+ * 不画一个填了不生效的表单——那比没有更坏。
+ */
+test("**MCP 那一屏不假装能配**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await expect(page.locator(".skills-page")).toContainText(/还不能在这里配 MCP/)
 })

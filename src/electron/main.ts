@@ -296,7 +296,7 @@ app.whenReady().then(() => {
   ipcDispatch = createIpcHandler(workbench.server)
 
   // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
-  ipcMain.handle(IPC_PICK_DIRECTORY, async (e) => {
+  ipcMain.handle(IPC_PICK_DIRECTORY, async (e, defaultPath?: string) => {
     /**
      * **e2e 的注入点**（2026-08-12，与 `DAWN_LEASE_TTL` 同一个路子）。
      *
@@ -309,9 +309,17 @@ app.whenReady().then(() => {
     const 注入的 = process.env.DAWN_PICK_DIRECTORY
     if (注入的) return 注入的
     const owner = BrowserWindow.fromWebContents(e.sender)
+    /**
+     * **从默认工作目录起步**（2026-08-12，作者要的那个设置的第二个用处）。
+     * 不给就交给系统决定——**不猜一个**。
+     */
+    const opts = {
+      properties: ["openDirectory" as const],
+      ...(defaultPath ? { defaultPath } : {}),
+    }
     const r = owner
-      ? await dialog.showOpenDialog(owner, { properties: ["openDirectory"] })
-      : await dialog.showOpenDialog({ properties: ["openDirectory"] })
+      ? await dialog.showOpenDialog(owner, opts)
+      : await dialog.showOpenDialog(opts)
     // 取消返回 null，不报错——用户改主意不是错误
     return r.canceled ? null : (r.filePaths[0] ?? null)
   })

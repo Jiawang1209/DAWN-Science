@@ -21,8 +21,12 @@ contextBridge.exposeInMainWorld("dawn", {
   invoke: (operation: string, request: unknown, requestId?: string) =>
     ipcRenderer.invoke(CHANNEL, operation, request, requestId),
 
-  /** 原生目录选择器。取消时得到 null——用户改主意不是错误 */
-  pickDirectory: (): Promise<string | null> => ipcRenderer.invoke(PICK_DIRECTORY),
+  /**
+   * 原生目录选择器。取消时得到 null——用户改主意不是错误。
+   * `defaultPath` 是**起步的地方**（设置里那个默认工作目录）。
+   */
+  pickDirectory: (defaultPath?: string): Promise<string | null> =>
+    ipcRenderer.invoke(PICK_DIRECTORY, defaultPath),
 
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)

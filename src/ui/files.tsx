@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
+import { 三角图标 } from "./icons.js"
 
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
@@ -73,7 +74,8 @@ function DirNode({
         onClick={() => setOpen((v) => !v)}
       >
         <span className="name">
-          <span aria-hidden="true">{open ? "▾" : "▸"}</span> {name || "／"}
+          {/* 一个三角靠旋转表达两态：两个不同的字形会让展开看起来像换了个东西 */}
+          <三角图标 className={`tree-caret${open ? " open" : ""}`} /> {name || "／"}
         </span>
       </Row>
       {open ? (

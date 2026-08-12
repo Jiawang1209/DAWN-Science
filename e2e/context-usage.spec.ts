@@ -13,7 +13,7 @@ test("说过一句话之后，上下文面板给出真实的 token 数", async (
   await 开一段临时会话(page)
   await page.getByPlaceholder(/回车发送/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.getByText(/假模型已应答/)).toBeVisible()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 
   await page.getByRole("button", { name: "项目概览" }).click()
   /**

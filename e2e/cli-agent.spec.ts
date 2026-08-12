@@ -11,7 +11,7 @@
  * 与 ①-B″ 的 PTY e2e 选 `bash` 是同一条理由。
  */
 import { resolve } from "node:path"
-import { test, expect } from "./fixtures.js"
+import { test, expect, 等进了对话 } from "./fixtures.js"
 
 /**
  * **假 CLI 的文件名必须是 `claude`**：`familyOf(command)` 按命令名判
@@ -47,7 +47,7 @@ async function startFakeClaude(page: import("@playwright/test").Page): Promise<v
   await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await page.keyboard.press("Meta+k")
   await page.getByRole("option", { name: "新建会话：claude" }).click()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
+  await 等进了对话(page)
 }
 
 test.describe("CLI agent 在对话框里", () => {
@@ -58,7 +58,7 @@ test.describe("CLI agent 在对话框里", () => {
     await startFakeClaude(page)
 
     // **是对话视图，不是终端** —— cli 与 pty 是两件事
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })
+    await 等进了对话(page)
     await expect(page.locator(".term-host")).toHaveCount(0)
 
     await page.getByPlaceholder(/回车发送/).fill("你好")

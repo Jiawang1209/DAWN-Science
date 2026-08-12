@@ -112,6 +112,10 @@
  *   账本要有归属；`temporary` 只是告诉界面它归上面那一列。
  * 4.3（2026-08-11）：新增 `createTerminalSession`。纯新增。
  * 4.8（2026-08-12）：任务——`listTasks` / `createTask` / `setTaskWorkspace`。
+ * 4.11（2026-08-12）：`getDefaultWorkspace` / `setDefaultWorkspace`——
+ *   App 的默认工作目录（mac 是 `~/DAWN`，Windows 是桌面）。
+ * 4.10（2026-08-12）：`listSkills`——把 `.dawn/agents/*.md` 里的子 agent 端出来。
+ *   它本来就能跑，只是界面上看不见。**读不进来的文件也一并端出来**。
  * 4.9（2026-08-12）：`deleteTask`——**按 taskId 删**。
  *   界面手上只有「当前项目 + 临时」两拨会话摘要，迁移过来的任务指向别处，
  *   于是那些行既没有删除键也进不了批量。**删除不该需要先认识那段会话。**
@@ -136,7 +140,7 @@
  *   不做成 `createSession` 的一个 `cwd` 参数——那等于把「shell 从哪儿开」
  *   的决定权交给渲染进程，而那条边界决定了 `rm -rf .` 会删掉谁。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.9"
+export const WORKBENCH_PROTOCOL_VERSION = "4.11"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -20,7 +20,7 @@
  * 「先跑其余的，再跑它」。这么做的理由只有一个——
  * **红着的全量套件会教人忽略红色**，而那比一个待查的 bug 更贵。
  */
-import { test, expect, readRuns, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -45,7 +45,7 @@ test.describe("内核会话", () => {
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
     await 开一段临时会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+    await 等进了对话(page)
 
     // ① 普通输出
     await page.getByPlaceholder(/回车发送/).fill("print('E2E_KERNEL_OK', 40 + 2)")
@@ -205,7 +205,7 @@ test.describe("R 内核会话", () => {
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
     await 开一段临时会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+    await 等进了对话(page)
 
     const 发 = async (code: string) => {
       await page.getByPlaceholder(/回车发送/).fill(code)
@@ -261,8 +261,17 @@ test.describe("由配置的解释器路径起内核", () => {
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
 
-    // ① **还没配** —— 建会话要响亮失败并指向设置，不是悄悄用一个猜出来的解释器
-    await 开一段临时会话(page)
+    /**
+     * ① **还没配** —— 建会话要响亮失败并指向设置，不是悄悄用一个猜出来的解释器。
+     *
+     * **这里不能用 `开一段临时会话`**（2026-08-12）：那个夹具的前提是
+     * 「建得出来」，而这一条要验的**恰恰是建不出来**。
+     * 用它的话，失败会以「夹具超时」的形式出现，而不是界面上那句话。
+     */
+    await page.getByRole("button", { name: "新建任务" }).click()
+    const 输入 = page.getByPlaceholder(/回车发送/)
+    await 输入.fill("跑一下")
+    await 输入.press("Enter")
     await expect(page.getByText(/还没有配置 Python 解释器路径/)).toBeVisible({ timeout: 30_000 })
 
     // ② 去设置里填
@@ -278,7 +287,7 @@ test.describe("由配置的解释器路径起内核", () => {
 
     // ③ 配完就能跑，而且跑的就是那个解释器
     await 开一段临时会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
+    await 等进了对话(page)
     await page.getByPlaceholder(/回车发送/).fill("import sys; print('EXE', sys.executable)")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-text").last()).toContainText(PY_PATH, { timeout: 60_000 })

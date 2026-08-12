@@ -19,7 +19,7 @@ test.describe("思考", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     const 块 = page.locator(".thought")
     await expect(块).toBeVisible()
@@ -48,7 +48,7 @@ test.describe("思考", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     /**
      * 每一条画出来的 agent 发言**都得有字**。
@@ -77,7 +77,7 @@ test.describe("思考", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     // 思考块在，而且带着秒数
     const 块 = page.locator(".thought").first()
@@ -102,7 +102,7 @@ test.describe("思考", () => {
 
     await page.getByPlaceholder(/回车发送/).fill("第一问")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     await expect(头).toContainText("本次")
     const 第一次 = (await 头.textContent())!
 
@@ -122,7 +122,7 @@ test.describe("思考", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     const 用量 = page.locator(".turn-usage").first()
     await expect(用量).toContainText("输入")
@@ -143,7 +143,7 @@ test.describe("思考", () => {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     /**
      * 气泡里是回答，思考在气泡**外面**。

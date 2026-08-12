@@ -152,6 +152,18 @@ export async function 等进了对话(page: Page): Promise<void> {
   await page.getByPlaceholder(/回车发送/).waitFor({ timeout: 60_000 })
 }
 
+/**
+ * 进设置的某一块（2026-08-12）。
+ *
+ * 设置改成了「左分类 / 右内容」（作者：*「看不出太大的层次」*），
+ * 默认停在「外观」。**进来就找某个控件的用例都要先点到它那一块**——
+ * 不点的话找不到，而那与「这个控件坏了」在报错上长得一模一样。
+ */
+export async function 进设置(page: Page, 分类: string): Promise<void> {
+  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await page.getByRole("button", { name: 分类, exact: true }).click()
+}
+
 export interface DawnFixture {
   app: ElectronApplication
   page: Page

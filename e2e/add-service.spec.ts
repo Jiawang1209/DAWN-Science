@@ -15,14 +15,14 @@
  *
  * 顺带证明：**自建的 vLLM / Ollama / 任何 OpenAI 兼容端点**走的是同一条路。
  */
-import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话 , 进设置 } from "./fixtures.js"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
 test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上了", async ({ dawn }) => {
   const { page, dir, mockUrl, requests } = dawn
 
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByRole("radio", { name: "自定义端点" }).click()
 
@@ -86,7 +86,7 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
 
 test("**名字不合法当场就说** —— 而不是写进 yaml 之后炸", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByRole("radio", { name: "自定义端点" }).click()
 
@@ -97,7 +97,7 @@ test("**名字不合法当场就说** —— 而不是写进 yaml 之后炸", as
 
 test("**移除一个服务：配置里那一段真的没了**", async ({ dawn }) => {
   const { page, dir } = dawn
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByRole("radio", { name: "自定义端点" }).click()
   await page.getByLabel("新服务的名字").fill("tmp")

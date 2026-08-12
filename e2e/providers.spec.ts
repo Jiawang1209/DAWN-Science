@@ -15,10 +15,10 @@
  * 单元测试里我可以喂它任何数组然后断言它渲染了——那证明的是渲染，
  * 不是「pi 真的告诉了我们这些名字」。**只有真链路才能证明后者。**
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect , 进设置 } from "./fixtures.js"
 
 async function 开添加(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
 }
 
@@ -52,7 +52,7 @@ test("筛选能把要找的那个捞出来", async ({ dawn }) => {
 
 test("**配过的在上面一行摘要**，不混在那一大堆里", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
 
   // deepseek 来自 providers.yaml（夹具补的 ds-chat），所以它是一条已配置的服务
   const 摘要 = page.locator(".svc").filter({ hasText: "deepseek" })
@@ -69,7 +69,7 @@ test("**配过的在上面一行摘要**，不混在那一大堆里", async ({ d
 
 test("**点开能改任何一项**，包括 pi 自带地址的那些的地址", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.locator(".svc").filter({ hasText: "deepseek" }).locator(".svc-head").click()
 
   for (const 标签 of [/deepseek 的 API key/, /deepseek 的端点地址/, /deepseek 的协议/, /deepseek 的模型清单/]) {

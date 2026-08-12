@@ -13,7 +13,7 @@
  *
  * 同一条路顺带解决selfhost的 vLLM / Ollama / 任何 OpenAI 兼容端点。
  */
-import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话 , 进设置 } from "./fixtures.js"
 
 /** `{{MOCK_URL}}` 由夹具换成假服务器地址——它在夹具起来之前不存在 */
 const PROVIDERS = `
@@ -47,7 +47,7 @@ test.describe("自己填地址的 provider", () => {
      * 顺带证明了一件事：**selfhost的 provider 也会出现在凭证列表里**，
      * 因为那份列表来自模型目录，而它现在包含我们声明的这一个。
      */
-    await page.getByRole("button", { name: "设置", exact: true }).click()
+    await 进设置(page, "模型服务")
     const 行 = page.locator(".svc").filter({ hasText: "selfhost" })
     await expect(行).toHaveCount(1)
     // 一行摘要上就能看出它打到哪、有几个模型——不用点开

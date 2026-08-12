@@ -2772,3 +2772,80 @@ pre {
   padding-top: var(--dawn-space-2);
   border-top: 1px solid var(--dawn-stroke-4);
 }
+
+/**
+ * 设置：**左边分类，右边内容**（2026-08-12，作者要的）。
+ *
+ * 作者：*「我们自己的设置比较枯燥乏味……看不出太大的层次。」*
+ * 他指的是层次——上一版是一长条平铺的 section，**没有任何东西告诉你
+ * 这里一共有几块、你现在在哪一块**。
+ */
+.settings-shell {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: var(--dawn-space-6);
+  align-items: start;
+  width: 100%;
+  max-width: var(--dawn-page-max-w);
+  margin: 0 auto;
+}
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 0;
+}
+/** 与侧栏那些行同一副长相：**同一种东西不该有两种样子** */
+.settings-nav-item { justify-content: flex-start; width: 100%; margin: 0; }
+/**
+ * 选中态：**实底**（实测 WorkBuddy 的选中项就是一块浅灰底 + 加粗），
+ * 而不是一条竖线——竖线是「这一条被标记了」，实底才是「你在这里」。
+ */
+.settings-nav-item.current {
+  background: var(--dawn-fill-3);
+  font-weight: var(--dawn-weight-semibold);
+}
+.settings-nav-item.current .row-icon { color: var(--dawn-text-1); }
+.settings-body { min-width: 0; display: flex; flex-direction: column; gap: var(--dawn-space-4); }
+/** 右边那一块的标题：它回答「我现在在哪一块」，所以比里面的小标题大一档 */
+.settings-body-title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-1);
+}
+/** 默认工作目录那一行：路径可能很长，别把按钮挤出去 */
+.ws-setting { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.ws-setting-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dawn-text-2);
+}
+
+/**
+ * 添加模型服务：**一个弹窗**（2026-08-12，作者给了截图）。
+ *
+ * 壳复用确认框那一套（`.confirm-backdrop` + `.confirm`）——
+ * **同一种东西不该有两套外壳**。这里只放它自己的几何：比确认框宽，
+ * 因为里面是一张表单而不是一句话；给它自己的滚动，别把按钮顶出屏幕。
+ */
+.svc-add {
+  width: min(34rem, calc(100vw - 4rem));
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+}
+/** 标题旁那句：**说清这里能加什么**，不说的话地址格式只能靠试 */
+.svc-add-note {
+  margin-left: var(--dawn-space-2);
+  padding: 2px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-row);
+  background: var(--dawn-fill-4);
+  color: var(--dawn-text-3);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}

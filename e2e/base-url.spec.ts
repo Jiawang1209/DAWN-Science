@@ -11,7 +11,7 @@
  *   pi 自带的 `kimi-coding` 地址是 Kimi For Coding **订阅线**，两条路。
  *   **「pi 自带地址」不等于「这个地址对你也对」。**
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect , 进设置 } from "./fixtures.js"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -21,7 +21,7 @@ const 不用填的 = "groq"
 
 /** 从「添加」里挑一个加进来（这条路只问 key），然后点开它的编辑器 */
 async function 加并点开(page: import("@playwright/test").Page, id: string) {
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByLabel("筛选 provider").fill(id)
   await page.getByLabel("pi 认识的 provider").selectOption(id)

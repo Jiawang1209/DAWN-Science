@@ -41,7 +41,15 @@ import {
   type ModelChoice,
   type ServiceChoice,
 } from "./views.js"
-import { AppearancePanel, KernelsPanel, SettingsPanel, WorkspacePanel, type KernelRow } from "./Settings.js"
+import {
+  AppearancePanel,
+  KernelsPanel,
+  SettingsPanel,
+  SettingsShell,
+  WorkspacePanel,
+  type KernelRow,
+} from "./Settings.js"
+import { 外观图标, 文件夹图标, 模型图标, 终端图标 } from "./icons.js"
 import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
 import { SkillsView, McpView, PluginsView, type SkillLoad } from "./skills.js"
@@ -1899,33 +1907,56 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             /* **设置不复用项目概览的三栏网格**：仪表盘要一眼看全，
                设置要一件一件读。单栏 + 最大宽度，见 Settings.tsx 的文件头 */
             <div className="settings-page">
-              <AppearancePanel />
-              {/**
-                * **默认工作目录**（2026-08-12，作者要的）。
-                * 没给工作目录的对话落在这儿，选文件夹也从这儿起步。
-                */}
-              {默认工作区 ? (
-                <WorkspacePanel
-                  path={默认工作区.path}
-                  isDefault={默认工作区.isDefault}
-                  onPick={() => {
-                    void client.pickDirectory(默认工作区?.path).then((d) => {
-                      // **取消就什么都不做**：改主意不是错误
-                      if (d) void 设默认工作区(d)
-                    })
-                  }}
-                  onReset={() => void 设默认工作区("")}
-                />
-              ) : null}
-              {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
-              <KernelsPanel
-                kernels={kernels.kernels}
-                problems={kernels.problems}
-                shadowed={kernels.shadowed}
-                interpreters={interpreters}
-                onRefresh={refreshKernels}
-                onSetInterpreter={saveInterpreter}
-              />
+            {/**
+              * **左边分类、右边内容**（2026-08-12，作者要的）。
+              *
+              * 作者：*「我们自己的设置，比较枯燥乏味，每一项的设置，
+              * 以及设置的内容，都比较乏味，看不出太大的层次。」*
+              *
+              * 他指的是**层次**：上一版是一长条平铺的 section，从「外观」
+              * 一路滚到「模型服务」——**没有任何东西告诉你这里一共有几块、
+              * 你现在在哪一块**。左边那一列分类就是那个东西。
+              *
+              * 分类只列**真的能配的那几块**：截图里那份有十一项
+              * （账户管理 / 记忆 / 安全中心 …），我们没有那些，
+              * 照抄一个点进去是空的入口比没有更坏。
+              */}
+            <SettingsShell
+              sections={[
+                {
+                  id: "appearance",
+                  title: "外观",
+                  icon: <外观图标 className="row-icon" />,
+                  body: <AppearancePanel />,
+                },
+                ...(默认工作区
+                  ? [
+                      {
+                        id: "workspace",
+                        title: "工作目录",
+                        icon: <文件夹图标 className="row-icon" />,
+                        body: (
+                          <WorkspacePanel
+                            path={默认工作区.path}
+                            isDefault={默认工作区.isDefault}
+                            onPick={() => {
+                              void client.pickDirectory(默认工作区?.path).then((d) => {
+                                // **取消就什么都不做**：改主意不是错误
+                                if (d) void 设默认工作区(d)
+                              })
+                            }}
+                            onReset={() => void 设默认工作区("")}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                {
+                  id: "models",
+                  title: "模型服务",
+                  icon: <模型图标 className="row-icon" />,
+                  body: (
+                    <>
               <SettingsPanel
                 providers={providers.providers.map((p) => p.providerId)}
                 known={knownProviders.providers}
@@ -1986,6 +2017,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     .catch(fail)
                 }
               />
+                    </>
+                  ),
+                },
+                {
+                  id: "kernels",
+                  title: "内核",
+                  icon: <终端图标 className="row-icon" />,
+                  body: (
+                    <>
+              {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
+              <KernelsPanel
+                kernels={kernels.kernels}
+                problems={kernels.problems}
+                shadowed={kernels.shadowed}
+                interpreters={interpreters}
+                onRefresh={refreshKernels}
+                onSetInterpreter={saveInterpreter}
+              />
+
+                    </>
+                  ),
+                },
+              ]}
+            />
             </div>
           ) : view === "files" ? (
             <FilesView

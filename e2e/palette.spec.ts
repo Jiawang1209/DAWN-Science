@@ -92,10 +92,17 @@ test("**面板与按钮到达同一个状态** —— 一个动作一个家", as
    * 而它红的时候看起来像「两条路真的分叉了」，**指向一个根本不存在的缺陷**。
    */
   const 画完了 = async () => {
+    /**
+     * **2026-08-12：等的东西少了，而且是好事。**
+     *
+     * 设置改成「左分类 / 右内容」之后，默认只画「外观」那一块——
+     * 内核列表**根本不在这一屏上**，那个异步到达的 flake 源随之消失了。
+     *
+     * 现在等两样：分类列表（外壳画出来了）+ 主题那一组（内容画出来了）。
+     * 两样都是同步渲染的，没有「等它落定」这回事。
+     */
+    await expect(page.locator(".settings-nav")).toBeVisible()
     await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
-    await expect(page.locator(".set-section").filter({ hasText: "内核" })).toBeVisible()
-    // 内核列表那一块要么有、要么确定没有——等它落定
-    await expect(page.locator(".settings-page")).toContainText("解释器")
   }
 
   // ① 从命令面板走

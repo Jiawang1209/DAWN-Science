@@ -21,7 +21,7 @@
  * 所以这条用例的要害不在断言，在 `noModelsBase: true`——
  * 它把起点调回和真实安装一样。
  */
-import { test, expect, CANNED_REPLY, 等进了对话 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 等进了对话 , 进设置 } from "./fixtures.js"
 
 test.describe("启动时一个 provider 覆盖都没有", () => {
   test.use({ dawnOptions: { noModelsBase: true } })
@@ -29,7 +29,7 @@ test.describe("启动时一个 provider 覆盖都没有", () => {
   test("**中途加一个自定义端点，当场就能选到、能对话** —— 不用重启", async ({ dawn }) => {
     const { page, mockUrl, requests } = dawn
 
-    await page.getByRole("button", { name: "设置", exact: true }).click()
+    await 进设置(page, "模型服务")
     await page.getByRole("button", { name: /添加模型服务/ }).click()
     await page.getByRole("radio", { name: "自定义端点" }).click()
     await page.getByLabel("新服务的名字").fill("late")

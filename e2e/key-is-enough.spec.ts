@@ -8,13 +8,13 @@
  * 默认配置里；kimi 没有，所以填完什么都没多。同一件事被做成了两种，
  * 差别还落在一个用户根本不该知道的概念（agent）上。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话 , 进设置 } from "./fixtures.js"
 
 const 陌生 = "kimi-coding"
 
 test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   // 2026-08-10 重做：不再是一张 39 行的表，而是「添加 → 从列表里挑 → 只问 key」
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByLabel("筛选 provider").fill(陌生)
@@ -44,6 +44,6 @@ test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) =
 
 test("**不再有「建一个 agent」这种东西** —— 那是我们内部的概念漏了出来", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await expect(page.getByRole("button", { name: "建一个 agent" })).toHaveCount(0)
 })

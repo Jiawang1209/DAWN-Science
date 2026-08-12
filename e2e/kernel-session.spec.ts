@@ -20,7 +20,7 @@
  * 「先跑其余的，再跑它」。这么做的理由只有一个——
  * **红着的全量套件会教人忽略红色**，而那比一个待查的 bug 更贵。
  */
-import { test, expect, readRuns, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话, 等进了对话 , 进设置 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -275,7 +275,7 @@ test.describe("由配置的解释器路径起内核", () => {
     await expect(page.getByText(/还没有配置 Python 解释器路径/)).toBeVisible({ timeout: 30_000 })
 
     // ② 去设置里填
-    await page.getByRole("button", { name: "设置", exact: true }).click()
+    await 进设置(page, "内核")
     const box = page.getByRole("textbox", { name: "Python 解释器" })
     await expect(box).toBeVisible()
     await expect(box).toHaveAttribute("placeholder", "还没配置")

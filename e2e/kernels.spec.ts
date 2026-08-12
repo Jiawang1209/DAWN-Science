@@ -10,16 +10,22 @@
  *
  * 所以这条测试盯的不是「有没有列表」，而是**列表里有没有那一行路径**。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect , 进设置 } from "./fixtures.js"
 
 test("设置里列出本机内核，**且每一条都带解释器路径**", async ({ dawn }) => {
   const { page } = dawn
   await expect(page.locator(".app-shell")).toBeVisible()
   // 精确匹配：页面上还有两个「去设置」，模糊匹配会撞上 strict 冲突
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "内核")
 
-  // 2026-08-10 设置改成 Section > Row > Control，节的类名从 `.panel` 换成 `.set-section`
-  const panel = page.locator(".set-section", { has: page.getByText("内核", { exact: true }) })
+  /**
+   * 2026-08-10 设置改成 Section > Row > Control，节的类名从 `.panel` 换成 `.set-section`。
+   * **2026-08-12 又改一次**：设置成了「左分类 / 右内容」，
+   * 「内核」这个词现在是右边那一块的标题（`.settings-body-title`），
+   * 里面那层 Section 不再重复写一遍——**同一句话说两遍不是层次，是噪声**。
+   * 所以这里按「右边那一块」定位。
+   */
+  const panel = page.locator(".settings-body")
   await expect(panel).toBeVisible()
 
   /**

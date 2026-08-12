@@ -56,13 +56,19 @@ function Section({
   desc,
   children,
 }: {
-  title: string
+  /**
+   * **不给就不画标题**（2026-08-12）。
+   *
+   * 设置改成「左分类 / 右内容」之后，外壳已经在右边顶上写了这一块叫什么——
+   * 里面再写一遍就是同一个词上下各一个。**同一句话说两遍不是层次，是噪声。**
+   */
+  title?: string | undefined
   desc?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <section className="set-section">
-      <h3 className="set-section-title">{title}</h3>
+      {title ? <h3 className="set-section-title">{title}</h3> : null}
       {desc ? <div className="set-section-desc">{desc}</div> : null}
       <div className="set-rows">{children}</div>
     </section>
@@ -145,7 +151,6 @@ export function KernelsPanel({
 }) {
   return (
     <Section
-      title="内核"
       desc={
         /**
          * **两个路径就是机制**（作者 2026-08-10）：
@@ -263,7 +268,7 @@ export function AppearancePanel() {
   const theme = useStore($theme)
 
   return (
-    <Section title="外观">
+    <Section>
       <Row
         name="主题"
         desc={
@@ -315,7 +320,7 @@ export function WorkspacePanel({
   onReset: () => void
 }) {
   return (
-    <Section title="工作目录">
+    <Section>
       <Row
         name="默认工作目录"
         desc={
@@ -338,6 +343,59 @@ export function WorkspacePanel({
         </div>
       </Row>
     </Section>
+  )
+}
+
+/**
+ * 设置的两栏外壳（2026-08-12，作者要的）。
+ *
+ * 作者：*「我们自己的设置，比较枯燥乏味，每一项的设置，以及设置的内容，
+ * 都比较乏味，看不出太大的层次。」*
+ *
+ * 他指的是**层次**，而不是配色——上一版是一长条平铺的 section，
+ * 从「外观」一路滚到「模型服务」，**没有任何东西告诉你这里一共有几块、
+ * 你现在在哪一块**。左边一列分类就是那个东西。
+ *
+ * ## 只放我们真有的
+ *
+ * 截图里那份有十一项（账户管理 / 记忆 / 安全中心 …）。
+ * **我们没有那些**，照抄一个点进去是空的列表比没有更坏——
+ * 这里只列真的能配的四块。
+ */
+export function SettingsShell({
+  sections,
+}: {
+  sections: { id: string; title: string; icon: React.ReactNode; body: React.ReactNode }[]
+}) {
+  const [选中, 设选中] = useState(sections[0]?.id)
+  const 当前 = sections.find((s) => s.id === 选中) ?? sections[0]
+  if (!当前) return null
+  return (
+    <div className="settings-shell">
+      <nav className="settings-nav" aria-label="设置分类">
+        {sections.map((s) => (
+          <Button
+            key={s.id}
+            variant="ghost"
+            size="sm"
+            className={`row settings-nav-item${s.id === 当前.id ? " current" : ""}`}
+            aria-current={s.id === 当前.id ? "page" : undefined}
+            onClick={() => 设选中(s.id)}
+          >
+            {s.icon}
+            <span className="name">{s.title}</span>
+          </Button>
+        ))}
+      </nav>
+      {/**
+        * **右边只画选中那一块**，不是全都画出来再滚动到位——
+        * 后者会让「我在哪一块」这件事重新变得说不清。
+        */}
+      <div className="settings-body">
+        <h1 className="settings-body-title">{当前.title}</h1>
+        {当前.body}
+      </div>
+    </div>
   )
 }
 
@@ -428,7 +486,6 @@ export function SettingsPanel({
 
   return (
     <Section
-      title="模型服务"
       desc={
         credentials.encrypted ? (
           "填了 key 就能在对话里选它的模型。密钥存在系统的安全存储里（macOS Keychain），已存的值不会回显——界面只知道配没配。"
@@ -832,8 +889,36 @@ function 添加模型服务({
     )
   }
 
+  /**
+   * **弹窗，不是就地展开**（2026-08-12，作者给了截图）。
+   *
+   * 上一版是在列表下面撑开一块。摆在弹窗里有两个实际好处，
+   * 不只是长得像：
+   *   - **它是一件要做完的事**：填到一半被下面的列表挤动会很难受；
+   *   - **Esc 退得掉**，而就地展开那块没有「退出」这个概念。
+   *
+   * 壳复用远端连接那个对话框的（`.confirm-backdrop` + `.confirm`）——
+   * **同一种东西不该有两套外壳**。
+   */
   return (
-    <div className="svc-add">
+    <div
+      className="confirm-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="添加模型服务"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") set开(false)
+      }}
+    >
+      <div className="confirm svc-add">
+        <h2 className="confirm-title">
+          添加模型服务
+          {/**
+            * **说清这里能加什么**（学自截图上那个 chip）。
+            * 不说的话，「自定义端点」到底要什么样的地址只能靠试。
+            */}
+          <span className="svc-add-note">只支持 OpenAI 兼容协议的端点</span>
+        </h2>
       <div className="svc-tabs" role="radiogroup" aria-label="添加方式">
         <Button
           variant={路 === "pi" ? "primary" : "secondary"}
@@ -860,23 +945,24 @@ function 添加模型服务({
           先不加
         </Button>
       </div>
-      {路 === "pi" ? (
-        <从列表里挑
-          可挑={可挑}
-          needsBaseUrl={needsBaseUrl}
-          onAdd={(id, secret) => {
-            onAddKnown(id, secret)
-            set开(false)
-          }}
-        />
-      ) : (
-        <自定义端点
-          onAdd={(id, conn, secret) => {
-            onAddCustom(id, conn, secret)
-            set开(false)
-          }}
-        />
-      )}
+        {路 === "pi" ? (
+          <从列表里挑
+            可挑={可挑}
+            needsBaseUrl={needsBaseUrl}
+            onAdd={(id, secret) => {
+              onAddKnown(id, secret)
+              set开(false)
+            }}
+          />
+        ) : (
+          <自定义端点
+            onAdd={(id, conn, secret) => {
+              onAddCustom(id, conn, secret)
+              set开(false)
+            }}
+          />
+        )}
+      </div>
     </div>
   )
 }

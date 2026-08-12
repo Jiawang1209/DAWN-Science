@@ -16,7 +16,7 @@
  *   2. 换完**还是同一段对话**（会话数不变、之前说过的话还在）
  *   3. **下一次请求真的打到新模型**——界面说换了不算
  */
-import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话 , 进设置 } from "./fixtures.js"
 
 const 本来的 = "deepseek-v4-flash"
 const 另一家的 = "other-9b"
@@ -29,7 +29,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
 
   // 先加一家：地址指向同一个假服务器，但**模型 id 是它独有的**——
   // 这样「请求用了哪个模型」就能唯一指认是哪一家在答
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByRole("radio", { name: "自定义端点" }).click()
   await page.getByLabel("新服务的名字").fill("other")
@@ -88,7 +88,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
 test("**一颗 pill 里两家都在**，厂家写在组头上", async ({ dawn }) => {
   const { page, mockUrl } = dawn
 
-  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await 进设置(page, "模型服务")
   await page.getByRole("button", { name: /添加模型服务/ }).click()
   await page.getByRole("radio", { name: "自定义端点" }).click()
   await page.getByLabel("新服务的名字").fill("other")

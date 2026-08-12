@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 11
+export const SCHEMA_VERSION = 12
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -329,6 +329,108 @@ export function migrate(db: Database.Database): void {
   if (!hasColumn(db, "sessions", "connection_id")) {
     db.exec(`ALTER TABLE sessions ADD COLUMN connection_id TEXT`)
     db.exec(`ALTER TABLE sessions ADD COLUMN remote_cwd TEXT`)
+  }
+
+  /**
+   * **v12（2026-08-12）：任务**——把项目 / 项目下的会话 / 临时会话收成一样东西。
+   *
+   * 作者：*「改成 workbuddy 的新建任务……可以在任务的对话框里面设置工作路径。
+   * 如果在任务里面不设置任何工作目录的话，那么其实就是我们的普通对话。」*
+   *
+   * ## 现在有三样东西表达同一件事
+   *
+   * 项目、项目下的会话、临时会话——**它们的区别只有一个：工作路径是谁给的**。
+   * 收成一条之后：**任务 = 一段对话 + 一个可选的工作路径**。
+   *
+   * ## `workspace` 可空，而且空得有意义
+   *
+   * **空 = 这是一段普通对话**（服务端仍会给一个 scratch 目录，
+   * 但那是实现细节，不进界面）。
+   * **不要拿空串表示「没设」**——空串会被读成「设了一个空路径」，
+   * 那是本项目反复强调的那条：**缺失不等于相同，缺失也不等于支持**。
+   *
+   * ## 老数据一条都不动
+   *
+   * `projects` / `sessions` 原样留着——**账本挂在上面**（`runs.project_id`）。
+   * 迁移只是**照着它们生成任务**：每段会话变成一个任务，
+   * 把它所在项目的 workspace 抄过来。删老表是 T4 的事，而且大概率不删。
+   */
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id            TEXT PRIMARY KEY,
+      title         TEXT,
+      -- NULL = 没设工作目录 = 普通对话。**不用空串**
+      workspace     TEXT,
+      -- 远端任务：活儿在哪台机器上（②-B · R3）。NULL = 本地
+      connection_id TEXT,
+      -- 这个任务是从哪段老会话迁过来的。**只为迁移可追溯**，新任务为 NULL
+      from_session  TEXT,
+      pinned        INTEGER NOT NULL DEFAULT 0,
+      sort_order    INTEGER NOT NULL,
+      created_at    TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tasks_order ON tasks(pinned DESC, sort_order DESC);
+  `)
+
+  /**
+   * **把已有的会话迁成任务**（幂等：`from_session` 撞了就不再插）。
+   *
+   * 判据（写进计划的那条）：**升级一个装着老数据的库，
+   * 老会话仍然打得开、账本一条不少**。所以这里只**新增**，一个字都不改。
+   *
+   * `workspace` 取会话自己的那个——它已经是「这段对话在哪儿干活」的准确答案
+   * （临时会话是自己的 scratch 目录，项目会话是项目目录），
+   * **比再去查一次项目更直接，也不会因为项目被改名而错**。
+   */
+  const 待迁 = db
+    .prepare(
+      `SELECT s.id, s.title, s.workspace, s.connection_id, s.pinned, s.sort_order, s.created_at,
+              p.temporary AS tmp
+         FROM sessions s
+         LEFT JOIN projects p ON p.id = s.project_id
+        WHERE NOT EXISTS (SELECT 1 FROM tasks t WHERE t.from_session = s.id)`,
+    )
+    .all() as {
+    id: string
+    title: string | null
+    workspace: string
+    connection_id: string | null
+    pinned: number
+    sort_order: number | null
+    created_at: string
+    tmp: number | null
+  }[]
+
+  if (待迁.length > 0) {
+    const 插 = db.prepare(
+      `INSERT INTO tasks (id, title, workspace, connection_id, from_session, pinned, sort_order, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    const 批 = db.transaction((行: typeof 待迁) => {
+      for (const r of 行) {
+        /**
+         * **临时会话迁过来时不带工作路径。**
+         *
+         * 它的目录是我们分配的 scratch，**不是用户选的**——
+         * 按新模型那正是「普通对话」。带上它会让界面显示一个
+         * 用户从没见过、也不关心的路径。
+         */
+        const ws = r.tmp ? null : r.workspace
+        插.run(
+          `task-${r.id}`,
+          r.title,
+          ws,
+          r.connection_id,
+          r.id,
+          r.pinned,
+          r.sort_order ?? 0,
+          r.created_at,
+        )
+      }
+    })
+    批(待迁)
+    // 迁移是事实，应当可见——静默升级会让「这些任务哪来的」无从追溯
+    console.error(`[store] 已把 ${待迁.length} 段会话迁成任务（老记录一条都没动）`)
   }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(

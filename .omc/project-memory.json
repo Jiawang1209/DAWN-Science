@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1786373013569,
+  "lastScanned": 1786514408639,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm run build >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts --update-snapshots >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -1; npm run test:e2e:only 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"\"\".turn {\n  max-width: var(--dawn-thread-max-w);\n  margin: 0 auto var(--dawn-space-3);\n}\"\"\",\n\"\"\".turn {\n  max-width: var(--dawn-thread-max-w);\n  /**\n   * **消息之间隔得很开**（2026-08-12，CDP 实测 WorkBuddy 是 `64px`）。\n   *\n   * 我们此前是 12px——**这是「挤」的最大来源**，比字号行距都要紧：\n   * 一屏里几段话贴在一起，眼睛分不出哪句是谁说的、哪段结束了。\n   *\n   * 取 40px 而不是 64：**我们一轮里还有工具调用、思考块、当前目录**，\n   * 每条之间都留 64 会把一次回答拉得很长。\n   * 作者定的原则：*「基于我们现在有的内容去贴近。」*\n   */\n  margin: 0 auto var(--dawn-space-10);\n}\"\"\", 1)\ns += \"\"\"\n/* 用户气泡：**全圆角**（CDP 实测 WorkBuddy 是 100px，即完全的胶囊）。\n   中等圆角看着像卡片，胶囊看着像「一句话」——它本来就是一句话 */\n.turn.user .bubble { border-radius: var(--dawn-radius-full); }\n\"\"\"\np.write_text(s, encoding=\"utf8\")\n\np = pathlib.Path(\"src/ui/tokens.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"  --dawn-space-8: calc(var(--dawn-unit) * 8);\",\n\"\"\"  --dawn-space-8: calc(var(--dawn-unit) * 8);\n  /* 40px 消息之间。实测 WorkBuddy 是 64px；我们一轮里还有工具调用与思考块，\n     每条都留 64 会把一次回答拉得过长 */\n  --dawn-space-10: calc(var(--dawn-unit) * 10);\"\"\", 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"Tests |×\" | head -2; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2",
+    "buildCommand": "npm run build",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"tests/store/runs.test.ts\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('it(\"版本号升到 11 —— v11 让会话能长在一台远端服务器上（②-B · R4′）\", () => {',\n              'it(\"版本号升到 12 —— v12 把项目/会话/临时会话收成一个「任务」\", () => {', 1)\ns = s.replace(\"expect(SCHEMA_VERSION).toBe(11)\", \"expect(SCHEMA_VERSION).toBe(12)\")\np.write_text(s, encoding=\"utf8\")\nPY\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | head -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -80,7 +80,9 @@
       "test:e2e:visual": "npm run build && playwright test e2e/visual.spec.ts",
       "test:e2e:visual:only": "playwright test e2e/visual.spec.ts",
       "test:e2e:visual:update": "npm run build && playwright test e2e/visual.spec.ts --update-snapshots",
-      "spike:e": "tsx spikes/e-model-switch.ts"
+      "spike:e": "tsx spikes/e-model-switch.ts",
+      "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts",
+      "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts"
     }
   },
   "conventions": {
@@ -107,14 +109,14 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 0,
-      "lastAccessed": 1786373013550,
+      "lastAccessed": 1786514408531,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 4,
-      "lastAccessed": 1786373013551,
+      "lastAccessed": 1786514408535,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -124,28 +126,28 @@
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 36,
-      "lastAccessed": 1786373013554,
+      "fileCount": 52,
+      "lastAccessed": 1786514408557,
       "keyFiles": [
+        "add-service.spec.ts",
         "agent-pill.spec.ts",
         "base-url.spec.ts",
         "boot.spec.ts",
-        "chat.spec.ts",
-        "cli-agent-kind.spec.ts"
+        "chat.spec.ts"
       ]
     },
     "examples": {
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1786373013554,
+      "lastAccessed": 1786514408558,
       "keyFiles": []
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 5,
-      "lastAccessed": 1786373013554,
+      "lastAccessed": 1786514408560,
       "keyFiles": [
         "build-electron.mjs",
         "dev-mock.mjs",
@@ -157,8 +159,8 @@
     "spikes": {
       "path": "spikes",
       "purpose": null,
-      "fileCount": 8,
-      "lastAccessed": 1786373013554,
+      "fileCount": 10,
+      "lastAccessed": 1786514408561,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -171,7 +173,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1786373013554,
+      "lastAccessed": 1786514408564,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -181,14 +183,14 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1786373013554,
+      "lastAccessed": 1786514408566,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 7,
-      "lastAccessed": 1786373013555,
+      "lastAccessed": 1786514408567,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
@@ -201,7 +203,7 @@
       "path": "src/config",
       "purpose": "Configuration files",
       "fileCount": 4,
-      "lastAccessed": 1786373013555,
+      "lastAccessed": 1786514408581,
       "keyFiles": [
         "loader.ts",
         "models-json.ts",
@@ -212,7 +214,7 @@
       "path": "tests/config",
       "purpose": "Configuration files",
       "fileCount": 2,
-      "lastAccessed": 1786373013556,
+      "lastAccessed": 1786514408595,
       "keyFiles": [
         "registry.test.ts",
         "writer.test.ts"
@@ -222,313 +224,12 @@
       "path": "tests/helpers",
       "purpose": "Helper functions",
       "fileCount": 1,
-      "lastAccessed": 1786373013556,
+      "lastAccessed": 1786514408600,
       "keyFiles": [
         "credentials.ts"
       ]
     }
   },
-  "hotPaths": [
-    {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
-      "accessCount": 9,
-      "lastAccessed": 1786511320216,
-      "type": "file"
-    },
-    {
-      "path": "src/workbench/backend.ts",
-      "accessCount": 8,
-      "lastAccessed": 1786373336330,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/App.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1786374912403,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/Settings.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1786374348983,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-actual.png",
-      "accessCount": 4,
-      "lastAccessed": 1786417899179,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/native.ts",
-      "accessCount": 4,
-      "lastAccessed": 1786435610553,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
-      "accessCount": 4,
-      "lastAccessed": 1786461638792,
-      "type": "file"
-    },
-    {
-      "path": "src/config/writer.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786373237771,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/operations.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786373271218,
-      "type": "file"
-    },
-    {
-      "path": "src/workbench/events.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786435592918,
-      "type": "file"
-    },
-    {
-      "path": "tests/ui/settings.test.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1786373667367,
-      "type": "file"
-    },
-    {
-      "path": "tests/config/writer.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786373694829,
-      "type": "file"
-    },
-    {
-      "path": "e2e/fixtures.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786373992232,
-      "type": "file"
-    },
-    {
-      "path": "e2e/base-url.spec.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786374093798,
-      "type": "file"
-    },
-    {
-      "path": "e2e/add-service.spec.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786374244033,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/views.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1786435500998,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/format.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786435664421,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-08-11-phase2b-remote-workspace.md",
-      "accessCount": 2,
-      "lastAccessed": 1786438645191,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/events.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786438815965,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/ssh.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786438975598,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
-      "accessCount": 2,
-      "lastAccessed": 1786441542041,
-      "type": "file"
-    },
-    {
-      "path": "src/config/schema.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786373021333,
-      "type": "file"
-    },
-    {
-      "path": "e2e/custom-provider.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786373127605,
-      "type": "file"
-    },
-    {
-      "path": "e2e/key-is-enough.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786373133026,
-      "type": "file"
-    },
-    {
-      "path": "tests/protocol/events.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786373185697,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/version.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786373283566,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/styles.css",
-      "accessCount": 1,
-      "lastAccessed": 1786373872682,
-      "type": "file"
-    },
-    {
-      "path": "e2e/providers.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786374071051,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-设置-·-亮色/设置-亮色-actual.png",
-      "accessCount": 1,
-      "lastAccessed": 1786374843000,
-      "type": "file"
-    },
-    {
-      "path": "e2e/late-endpoint.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786378520851,
-      "type": "file"
-    },
-    {
-      "path": "e2e/model-switch.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786380390528,
-      "type": "file"
-    },
-    {
-      "path": "e2e/cross-service-switch.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786380428922,
-      "type": "file"
-    },
-    {
-      "path": "tests/ui/model-pill.test.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1786380453859,
-      "type": "file"
-    },
-    {
-      "path": "e2e/turn-closes-on-failure.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786382905901,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/state/dock.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786384301079,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/dock.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1786384362883,
-      "type": "file"
-    },
-    {
-      "path": "e2e/terminal-dock.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786384660414,
-      "type": "file"
-    },
-    {
-      "path": "e2e/delete-project.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786385192945,
-      "type": "file"
-    },
-    {
-      "path": "test-results/terminal-dock--没有项目时，终端开在家目录-/test-failed-1.png",
-      "accessCount": 1,
-      "lastAccessed": 1786423566378,
-      "type": "file"
-    },
-    {
-      "path": "spikes/f-ssh-remote-kernel.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786430263402,
-      "type": "file"
-    },
-    {
-      "path": "tests/remote/ssh.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786434480012,
-      "type": "file"
-    },
-    {
-      "path": "spikes/g-remote-executor.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786434576682,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/tools.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786435002282,
-      "type": "file"
-    },
-    {
-      "path": "tests/remote/tools.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786435071049,
-      "type": "file"
-    },
-    {
-      "path": "e2e/visual.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786435921939,
-      "type": "file"
-    },
-    {
-      "path": "e2e/tool-elapsed.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786435989068,
-      "type": "file"
-    },
-    {
-      "path": "src/store/schema.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786438760721,
-      "type": "file"
-    },
-    {
-      "path": "src/store/connections.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786438958267,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/connections.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786439012304,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/fake-ssh.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786439184697,
-      "type": "file"
-    }
-  ],
+  "hotPaths": [],
   "userDirectives": []
 }

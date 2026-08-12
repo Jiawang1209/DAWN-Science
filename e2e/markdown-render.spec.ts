@@ -53,16 +53,24 @@ test("表格的动作也收拾过 —— **不是三个裸按钮竖着堆在表�
   const 按钮 = page.locator('.md [data-streamdown="table-wrapper"] button')
   const n = await 按钮.count()
   if (n < 2) return // 这个版本的 streamdown 没给表格配动作
-  const 首 = (await 按钮.first().boundingBox())!
-  const 末 = (await 按钮.last().boundingBox())!
   /**
    * **「横着排」的准确说法是：横向跨度远大于纵向跨度。**
    *
    * 起初写的是「纵坐标一致（差 < 2px）」——量出来差 9px，
    * 因为几个图标的盒高本来就不同。那条断言在验一件比意图更严的事，
    * 而它红了并不说明按钮堆成了一列。
+   *
+   * **`toPass` 是 2026-08-12 补的，治的是一次真实的偶发红。**
+   * streamdown 给这几个按钮挂了 `transition-all`——表格一出现它们还在动，
+   * 那一帧量到的纵向跨度是 34px（稳定之后是 2px）。
+   * 症状是「跑一次红、再跑十六次全绿」，而**那种红最会训练人去无视它**。
+   * 等它停下来再量，不是放宽标准：错的排布再等也不会自己横过来。
    */
-  expect(Math.abs(末.x - 首.x)).toBeGreaterThan(Math.abs(末.y - 首.y) * 2)
+  await expect(async () => {
+    const 首 = (await 按钮.first().boundingBox())!
+    const 末 = (await 按钮.last().boundingBox())!
+    expect(Math.abs(末.x - 首.x)).toBeGreaterThan(Math.abs(末.y - 首.y) * 2)
+  }).toPass({ timeout: 5_000 })
 })
 
 test("标题有层级 —— 二级和三级不该长得一样", async ({ dawn }) => {

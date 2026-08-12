@@ -1186,11 +1186,28 @@ pre {
 }
 
 .turn.user { display: flex; flex-direction: column; align-items: flex-end; }
+/**
+ * 用户气泡（2026-08-12 重量一次，**上一版量错了**）。
+ *
+ * 上一版把它写成「全圆角胶囊」，注释里挂着「CDP 实测是 100px」——
+ * **那个 100px 不是气泡的**，当时抓到的是页面上另一个元素。
+ * 这次按住文字本身往上爬到 `_userMessageBubble_`，读到的是：
+ *
+ *     background: rgb(242,242,242)   ← 与它侧栏同色
+ *     padding: 8px 12px
+ *     border-radius: 16px 16px 0px   ← **右下角是 0**
+ *
+ * 右下那个缺口是有方向的，像一条退化掉的尾巴，指着说话的人。
+ * 胶囊没有方向，谁说的全靠位置。
+ *
+ * 底色取 `surface-sidebar`：它那儿气泡与侧栏是同一个 `#f2f2f2`，
+ * **不像是巧合**——自己说的话属于「外壳」，答案才属于「内容」。
+ */
 .turn.user .bubble {
   max-width: 82%;
   padding: var(--dawn-space-2) var(--dawn-space-3);
-  border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-fill-3);
+  border-radius: var(--dawn-radius-bubble) var(--dawn-radius-bubble) 0;
+  background: var(--dawn-surface-sidebar);
 }
 /* 用户发言用无衬线：`<pre>` 是为了保住换行与空格，**不是为了等宽** */
 .turn.user .text { font-family: var(--dawn-font-sans); }
@@ -2277,8 +2294,11 @@ pre {
    **常态不占位**：活着的时候不写「alive」，那是给开发者看的 */
 .conv-title {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
+  /* 实测 WorkBuddy 的 `workbuddy-topbar-title`：**16px / 24px / 600**。
+     它比正文还大半档——顶栏那一行是「你在哪段对话里」，值得占这半档 */
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-1);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2318,8 +2338,17 @@ pre {
   color: var(--dawn-text-1);
   margin-bottom: var(--dawn-space-2);
 }
-/* 用量退到动作行尾巴上：它是脚注，不该把正文和动作隔开 */
-.turn-actions .turn-usage { margin: 0 0 0 auto; font-size: 0.78em; }
+/**
+ * 用量**紧跟在图标后面**（2026-08-12 改，CDP 实测 WorkBuddy）。
+ *
+ * 上一版用 `margin-left: auto` 把它甩到行尾——那是「靠边站的脚注」的位置，
+ * 而实际后果是**一行里两头各一堆东西、中间一片空**，眼睛要横跨整列才读得到。
+ *
+ * 它那儿是一排连着排：图标们 → `共消耗 ◇4.43` → `Auto (GLM-5.2)`，
+ * 统一 `gap: 12px`、统一 `rgba(0,0,0,.7)`、**统一 15px（不缩小）**。
+ * 「这一句花了多少、谁答的」与「对这一句能做什么」是同一件事的两半。
+ */
+.turn-actions .turn-usage { margin: 0; color: var(--dawn-text-2); font-size: 1em; }
 
 /* 正文与容器边缘的距离（2026-08-12）。
    量来的：WorkBuddy `padding: 32px 48px`。我们取上下 24 / 左右 32——
@@ -2402,7 +2431,11 @@ pre {
 .side-section {
   margin: var(--dawn-space-4) 0 var(--dawn-space-1);
   padding: 0 var(--dawn-space-3);
-  font-size: 0.75rem;
+  /* 实测 `conversation-section-label-text`：**12px / 20px / 600 / rgba(0,0,0,.5)**。
+     **加粗但更淡**——粗让它成为一个标题，淡让它不跟下面那些可点的行抢 */
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-3);
   letter-spacing: 0.03em;
 }
@@ -2415,9 +2448,8 @@ pre {
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
 .composer-field { font-size: 15px; line-height: 1.75; }
 
-/* 用户气泡：**全圆角**（CDP 实测 WorkBuddy 是 100px，即完全的胶囊）。
-   中等圆角看着像卡片，胶囊看着像「一句话」——它本来就是一句话 */
-.turn.user .bubble { border-radius: var(--dawn-radius-full); }
+/* 气泡的形状与底色**只在一处定义**（往上找 `_userMessageBubble_` 那段注释）。
+   这里曾经再写一遍圆角，于是「气泡长什么样」有了两个家 */
 
 /* 任务行（T2）。工作路径靠右、更淡——**它是这行的补充，不是标题** */
 .task-row { justify-content: flex-start; gap: var(--dawn-space-2); }

@@ -53,7 +53,7 @@
   },
   "build": {
     "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; cat > e2e/task.spec.ts <<'EOF'\n/**\n * 新建任务（T2/T3）。**跑真实构建产物。**\n *\n * 作者：*「我也要 workbuddy 的新建任务……如果在任务里面不设置任何工作目录的话，\n * 那么其实就是我们的普通对话。」*\n *\n * 所以这条盯的是**那句话本身**：点一下，不问路径，直接能聊。\n */\nimport { test, expect } from \"./fixtures.js\"\n\ntest(\"**点「新建任务」就能聊** —— 不问工作路径\", async ({ dawn }) => {\n  const { page } = dawn\n\n  await page.getByRole(\"button\", { name: \"新建任务\" }).click()\n\n  // 建完就进对话——**不该让人再点一次才进得去**\n  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })\n\n  await page.getByPlaceholder(/回车发送/).fill(\"你好\")\n  await page.getByRole(\"button\", { name: \"发送\", exact: true }).click()\n  await expect(page.locator(\".turns\")).toContainText(\"假模型已应答\", { timeout: 30_000 })\n  // 写权那条路也要通——它此前在四个地方各写了一遍，漏一个就是「点了没反应」\n  await expect(page.getByText(/写入被拒/)).toHaveCount(0)\n})\n\ntest(\"**任务出现在侧栏，且不显示那个用户没选过的目录**\", async ({ dawn }) => {\n  const { page } = dawn\n  await page.getByRole(\"button\", { name: \"新建任务\" }).click()\n  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })\n\n  const 行 = page.locator(\".task-row\")\n  await expect(行).toHaveCount(1)\n  await expect(page.getByText(/^任务/)).toBeVisible()\n\n  /**\n   * **没设路径 = 普通对话，那一格什么都不写。**\n   *\n   * 服务端确实给了它一个目录（agent 要能读写），但那是实现细节——\n   * 摆出来只会让人看见一个自己从没选过的路径，\n   * 而那正是此前「临时会话」让人困惑的地方。\n   */\n  await expect(行.locator(\".task-ws\")).toHaveCount(0)\n})\nEOF\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1 && npx playwright test e2e/task.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; cat > e2e/task.spec.ts <<'EOF'\n/**\n * 新建任务（T2/T3）。**跑真实构建产物。**\n *\n * 作者：*「我也要 workbuddy 的新建任务……如果在任务里面不设置任何工作目录的话，\n * 那么其实就是我们的普通对话。」*\n *\n * 所以这条盯的是**那句话本身**：点一下，不问路径，直接能聊。\n */\nimport { test, expect } from \"./fixtures.js\"\n\ntest(\"**点「新建任务」就能聊** —— 不问工作路径\", async ({ dawn }) => {\n  const { page } = dawn\n\n  await page.getByRole(\"button\", { name: \"新建任务\" }).click()\n\n  // 建完就进对话——**不该让人再点一次才进得去**\n  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })\n\n  await page.getByPlaceholder(/回车发送/).fill(\"你好\")\n  await page.getByRole(\"button\", { name: \"发送\", exact: true }).click()\n  await expect(page.locator(\".turns\")).toContainText(\"假模型已应答\", { timeout: 30_000 })\n  // 写权那条路也要通——它此前在四个地方各写了一遍，漏一个就是「点了没反应」\n  await expect(page.getByText(/写入被拒/)).toHaveCount(0)\n})\n\ntest(\"**任务出现在侧栏，且不显示那个用户没选过的目录**\", async ({ dawn }) => {\n  const { page } = dawn\n  await page.getByRole(\"button\", { name: \"新建任务\" }).click()\n  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })\n\n  const 行 = page.locator(\".task-row\")\n  await expect(行).toHaveCount(1)\n  await expect(page.getByText(/^任务/)).toBeVisible()\n\n  /**\n   * **没设路径 = 普通对话，那一格什么都不写。**\n   *\n   * 服务端确实给了它一个目录（agent 要能读写），但那是实现细节——\n   * 摆出来只会让人看见一个自己从没选过的路径，\n   * 而那正是此前「临时会话」让人困惑的地方。\n   */\n  await expect(行.locator(\".task-ws\")).toHaveCount(0)\n})\nEOF\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1 && npx playwright test e2e/task.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
+    "testCommand": "npm test 2>&1 | tail -8",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -230,6 +230,73 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "src/ui/styles.css",
+      "accessCount": 7,
+      "lastAccessed": 1786524130125,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/tokens.css",
+      "accessCount": 6,
+      "lastAccessed": 1786523957934,
+      "type": "file"
+    },
+    {
+      "path": "e2e/__screenshots__/对话-亮色-darwin.png",
+      "accessCount": 1,
+      "lastAccessed": 1786523742687,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/views.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1786523826905,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "accessCount": 1,
+      "lastAccessed": 1786524176416,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-对话-·-暗色/对话-暗色-actual.png",
+      "accessCount": 1,
+      "lastAccessed": 1786524201046,
+      "type": "file"
+    },
+    {
+      "path": "e2e/chat-column.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786524269135,
+      "type": "file"
+    },
+    {
+      "path": "e2e/zz-probe.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786524821895,
+      "type": "file"
+    },
+    {
+      "path": "e2e/markdown-render.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786524897784,
+      "type": "file"
+    },
+    {
+      "path": "docs/DEVELOPMENT_HISTORY.md",
+      "accessCount": 1,
+      "lastAccessed": 1786524970034,
+      "type": "file"
+    },
+    {
+      "path": "docs/REFERENCES.md",
+      "accessCount": 1,
+      "lastAccessed": 1786524993218,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

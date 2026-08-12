@@ -85,7 +85,39 @@ test.describe("思考", () => {
     await expect(块.locator(".thought-secs")).toHaveText(/^\d+s$/)
   })
 
-  test("**用量给出合计** —— 作者问「有没有消耗的 token」", async ({ dawn }) => {
+  /**
+   * **这一整段对话花了多少**（2026-08-12）。
+   *
+   * 作者：*「其实我想展示的是某次对话，我们消耗了多少 token。」*
+   * 每一轮那个「共 N」已经撤掉了——它的口径我还没验清（`输入` 是否含 `缓存`），
+   * **一个口径不明的合计比没有合计更容易让人算错账**。
+   */
+  test("**对话头上是这一整段的累计**，不是某一轮的抄写", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+
+    const 头 = page.locator(".session-usage")
+    // **一轮都没说过话时不显示**：一排 0 会被读成「不花钱」
+    await expect(头).toHaveCount(0)
+
+    await page.getByPlaceholder(/回车发送/).fill("第一问")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(头).toContainText("本次")
+    const 第一次 = (await 头.textContent())!
+
+    await page.getByPlaceholder(/回车发送/).fill("第二问")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".turns")).toContainText("第二问", { timeout: 30_000 })
+
+    /**
+     * **第二轮之后这个数必须变**——不变就说明它只是某一轮的抄写，
+     * 而那正是「累计」这个词唯一要保证的事。
+     */
+    await expect.poll(async () => (await 头.textContent()) !== 第一次, { timeout: 30_000 }).toBe(true)
+  })
+
+  test("**每一轮只列三项，不给口径不明的合计**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
     await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
@@ -99,7 +131,11 @@ test.describe("思考", () => {
      * **合计 = 输入 + 输出，缓存不进去**：缓存按另一个价钱计、各家口径还不同，
      * 并进来会让这个数看起来更贵，而人拿它对账时会发现对不上。
      */
-    await expect(用量.locator(".turn-usage-total")).toContainText("共")
+    /**
+     * **每一轮不再给「共 N」**（2026-08-12 撤）：它的口径我还没验清，
+     * 而作者要的本来就是「这一整段花了多少」，不是每一句。
+     */
+    await expect(用量.locator(".turn-usage-total")).toHaveCount(0)
   })
 
   test("**思考不混进回答里** —— 那是它对自己说的话，不是对我说的", async ({ dawn }) => {

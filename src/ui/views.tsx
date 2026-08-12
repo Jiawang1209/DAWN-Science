@@ -1123,6 +1123,38 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
   )
 }
 
+/**
+ * 这一整段对话的用量（2026-08-12）。
+ *
+ * 数据就在手上——每一轮的 `usage` 都在 transcript 里，**不必另外去问后端**。
+ * 少一次请求，也少一处会与对话对不上的数。
+ */
+function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
+  const 合 = useMemo(() => {
+    let input = 0
+    let output = 0
+    let cache = 0
+    let 有过 = false
+    for (const it of items) {
+      if (it.type !== "turn" || !it.usage) continue
+      有过 = true
+      input += it.usage.input ?? 0
+      output += it.usage.output ?? 0
+      cache += it.usage.cacheRead ?? 0
+    }
+    return 有过 ? { input, output, cache } : undefined
+  }, [items])
+
+  // **一轮都还没说过话时什么都不显示**：一排 0 会被读成「不花钱」
+  if (!合) return null
+  return (
+    <span className="session-usage" title="这一整段对话累计">
+      本次 输入 {formatTokens(合.input)} · 输出 {formatTokens(合.output)} · 缓存{" "}
+      {formatTokens(合.cache)}
+    </span>
+  )
+}
+
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
@@ -1249,6 +1281,17 @@ export function ConversationView({
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
+        {/**
+         * **这一整段对话花了多少**（2026-08-12，作者要的）。
+         *
+         * 他先问每一轮那个「共 N」是什么意思，然后说：*「其实我想展示的是
+         * 某次对话，我们消耗了多少 token。」* ——那才是要对的账。
+         *
+         * **三项分开列，不合成一个数**：合成需要先确定「`输入` 里是否已经
+         * 含了 `缓存`」——各家口径不同，我还没验过。
+         * **一个口径不明的合计，比没有合计更容易让人算错账。**
+         */}
+        <SessionUsage items={items} />
         {/**
          * **这段对话的手在哪台机器的哪个目录**（②-B · R4′）。
          *
@@ -1731,28 +1774,7 @@ function TurnUsage({
   if (usage.cacheRead !== undefined) 段.push(`缓存 ${formatTokens(usage.cacheRead)}`)
   if (段.length === 0) return null
 
-  /**
-   * **这一句一共花了多少**（2026-08-12，作者问：*「有没有消耗的 token 哇？」*）。
-   *
-   * 定义要说准，否则这个数会骗人：**合计 = 输入 + 输出**。
-   *
-   * **缓存不加进去**——它是输入里被命中的那部分，服务商按另一个（更低的）
-   * 价钱计，而且各家口径不同。把它并进来会让这个数**看起来更大、算起来更贵**，
-   * 而人拿它去对账时会发现对不上。所以它仍然单列，只是不进合计。
-   *
-   * 两样缺一就不给合计：**「不知道」不能当 0 用**。
-   */
-  const 合计 =
-    usage.input !== undefined && usage.output !== undefined ? usage.input + usage.output : undefined
-
-  return (
-    <p className="turn-usage">
-      {段.join(" · ")} token
-      {合计 === undefined ? null : (
-        <span className="turn-usage-total">共 {formatTokens(合计)}</span>
-      )}
-    </p>
-  )
+  return <p className="turn-usage">{段.join(" · ")} token</p>
 }
 
 /**

@@ -2228,5 +2228,10 @@ pre {
 
 /* 只有思考、没有正文的那一条：**不画气泡与用量**，只留思考本身 */
 .turn.thought-only { display: block; }
-/* 「共 N」与前面三个数之间要分得开——它是结论，不是第四个并列项 */
-.turn-usage-total { margin-left: var(--dawn-space-3); font-weight: 500; }
+/* 这一整段对话的累计，摆在对话头上——它回答的是「这次聊下来花了多少」 */
+.session-usage {
+  margin-right: auto;
+  font-size: 0.8em;
+  color: var(--dawn-text-3);
+  font-variant-numeric: tabular-nums;
+}

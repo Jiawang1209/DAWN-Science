@@ -2322,3 +2322,58 @@ pre {
   font-size: 0.95rem;
   line-height: 1;
 }
+
+/* ── 强调色收敛（2026-08-12，学自 WorkBuddy）────────────────────────
+   它整屏只有发送键一处强调色。我们的绿色出现在品牌名、文字按钮、聚焦环、
+   选中条、终端开关……**一多就谁也不强调了**。
+
+   收敛的判据是「它是不是一个主动作」：**发送是，其余都不是**。
+   聚焦环保留强调色——那不是装饰，是键盘用户唯一的定位手段（DESIGN.md）。 */
+
+/* 品牌名：它是身份，不是动作 */
+.topbar .brand { color: var(--dawn-text-1); }
+/* 文字按钮：它们是次要动作，绿字会跟发送键抢 */
+.btn-text { color: var(--dawn-text-2); }
+.btn-text:hover, .btn-text:focus-visible { color: var(--dawn-text-1); }
+/* 选中态已经改成 pill，那道绿色竖条是旧形态的残留 */
+.row.active { box-shadow: none; }
+/**
+ * **聚焦环保持强调色，不收敛。**
+ *
+ * 我一度想把它也改成灰的（WorkBuddy 看着是灰的），写完才想起来：
+ * **它不是装饰，是键盘用户唯一的定位手段**（DESIGN.md），而且这里有测试盯着。
+ * 作者截图里那圈绿，是因为输入框正好有焦点——**那是对的行为**。
+ *
+ * 「强调色只留一处」这条纪律管的是**装饰性用色**，不管无障碍设施。
+ */
+
+/* 说话人：头像 + 名字并排 */
+.turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.who-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-surface-elevated);
+  color: var(--dawn-text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+/* 侧栏的分区标题（2026-08-12，学自 WorkBuddy 的 `任务 (5)`）。
+   **它不是一行可点的东西**，所以更小更淡、且上面留白比下面大——
+   「它统领下面这些」这句话是靠间距说的 */
+.side-section {
+  margin: var(--dawn-space-4) 0 var(--dawn-space-1);
+  padding: 0 var(--dawn-space-3);
+  font-size: 0.75rem;
+  color: var(--dawn-text-3);
+  letter-spacing: 0.03em;
+}
+.side-count {
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}

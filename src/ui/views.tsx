@@ -480,6 +480,21 @@ export function SessionSidebar({
         * 所以这里**没有空态占位**，列表也**不撑满剩余高度**——
         * 两颗按钮之间的距离就等于中间有几条会话，一条不多。
         */}
+      {/**
+        * **分区标题 + 计数**（2026-08-12，学自 WorkBuddy 的 `任务 (5) ⌄`）。
+        *
+        * 我们此前是一列平铺的行，**没有节奏**——扫一眼分不出哪几行是一类。
+        * 计数不是装饰：它回答「我这儿攒了多少东西」，
+        * 而那正是人决定要不要清理的依据。
+        *
+        * **一条都没有时整块不出现**（与列表同一条纪律）：
+        * 一个写着 `(0)` 的标题占一行、什么都没说。
+        */}
+      {sessions.length > 0 ? (
+        <p className="side-section">
+          对话 <span className="side-count">{sessions.length}</span>
+        </p>
+      ) : null}
       <ul className="session-list">
         {sessions.length === 0 ? null : (
           sessions.map((s) => (
@@ -526,6 +541,11 @@ export function SessionSidebar({
         </Row>
       </div>
 
+      {projects.length > 0 ? (
+        <p className="side-section">
+          项目 <span className="side-count">{projects.length}</span>
+        </p>
+      ) : null}
       <ul className="proj-list">
         {projects.length === 0 ? (
           <li>
@@ -1666,7 +1686,27 @@ export function TranscriptRow({
        * `item.by` 缺省时退回 agent 名：那表示还没换过，那时它本来就是对的。
        * **不拿「当前那家」去盖所有历史**——前面那些确实是 DeepSeek 答的。
        */}
-      <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}</span>
+      {/**
+       * **头像 + 名字**（2026-08-12，学自 WorkBuddy）。
+       *
+       * 它那儿是一个圆形标记加粗体名字——**一眼就分出「这是谁在说话」**。
+       * 我们此前只有一行字，几段之后就分不清了。
+       *
+       * 头像取名字首字：**没有素材就不要画一个假的头像**，
+       * 一个字母比一个占位图形诚实。
+       */}
+      <span className={`who${mine ? " sr-only" : ""}`}>
+        {mine ? null : (
+          <span className="who-avatar" aria-hidden="true">
+            {(item.by ? (nameOf?.(item.by) ?? item.by) : agentId).slice(0, 1).toUpperCase()}
+          </span>
+        )}
+        {/* **名字单独一个元素**：与头像混在同一个 span 里，
+            读到的文本会变成「DDeepSeek」——`who-answered` 那条 e2e 当场抓到 */}
+        <span className="who-name">
+          {mine ? "你" : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}
+        </span>
+      </span>
       <div className="turn-body">
       {/**
         * **思考**（2026-08-12，作者要的形态学自 Hermes）。

@@ -31,7 +31,8 @@ test("**换服务之后，新答的那一行改名，旧的不动**", async ({ d
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("第二问", { timeout: 30_000 })
 
-  const 说话人 = page.locator(".turn.agent .who")
+  // 指名字那一段：`.who` 里现在还有头像（2026-08-12 加的）
+  const 说话人 = page.locator(".turn.agent .who-name")
   await expect(说话人).toHaveCount(2, { timeout: 30_000 })
   // **新的那一行标的是换过去的那家**
   await expect(说话人.last()).toHaveText(名字)

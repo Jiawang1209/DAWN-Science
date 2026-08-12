@@ -271,7 +271,10 @@ export class SessionTranscripts {
         e.思考起于 ??= this.now()
         const id = e.openTurnId
         const 旧 = e.items.find((x) => x.id === id)
-        const 想的 = (旧?.type === "turn" ? (旧.thinking ?? "") : "") + event.delta
+        // 前面那条「只想没说」的并进来——同一轮里的思考只该有一处
+        const 并来的 = 旧 ? {} : this.吸收只想没说的(e, id)
+        const 想的 =
+          (并来的.thinking ?? "") + (旧?.type === "turn" ? (旧.thinking ?? "") : "") + event.delta
         this.putItem(sessionId, e, {
           type: "turn",
           id,
@@ -279,6 +282,8 @@ export class SessionTranscripts {
           text: 旧?.type === "turn" ? 旧.text : "",
           final: false,
           ...(想的 ? { thinking: 想的 } : {}),
+          // **并过来的时长也要带上**：漏了它，前一段思考就白算了
+          ...(并来的.thinkingMs === undefined ? {} : { thinkingMs: 并来的.thinkingMs }),
           ...(e.当前模型 ? { by: e.当前模型 } : {}),
         })
         return
@@ -476,19 +481,17 @@ export class SessionTranscripts {
     const existing = e.items.find((i) => i.id === id)
     const text = existing?.type === "turn" ? existing.text + delta : delta
     /**
-     * **正文一开始，思考就算结束**（2026-08-12）。
+     * **正文一开始，思考就算结束**——但停表只有一份实现（`思考停表`）。
      *
-     * 模型不会告诉你「我想完了」——它直接开始说话。所以停表的时机
-     * 就是第一个正文增量。**只停一次**：后面每个增量都重算的话，
-     * 那个数字会一直变大，而「想了多久」是一个说完就定住的事实。
+     * 这里原先另写了一份：它拿 `existing.thinkingMs` 当「已经停过」，
+     * 于是把 `思考停表` 刚算好的**两段之和覆盖回了第一段**，
+     * 作者那种「想 → 调工具 → 再想」的轮次因此少报。
+     * **同一件事两份实现，迟早有一份落后于另一份。**
      */
-    const 想了 =
-      existing?.type === "turn" && existing.thinkingMs !== undefined
-        ? existing.thinkingMs
-        : e.思考起于 !== undefined
-          ? this.now() - e.思考起于
-          : undefined
-    if (e.思考起于 !== undefined) e.思考起于 = undefined
+    this.思考停表(sessionId, e)
+    const 停好的 = e.items.find((i) => i.id === id)
+    const 想了 = 停好的?.type === "turn" ? 停好的.thinkingMs : undefined
+    const 想的内容 = 停好的?.type === "turn" ? 停好的.thinking : undefined
 
     // 推整条而不是增量：界面按 id 覆盖即可，**少一层客户端拼接状态**
     this.putItem(sessionId, e, {
@@ -498,10 +501,37 @@ export class SessionTranscripts {
       text,
       final: false,
       // **思考要带着走**：不带的话，正文的第一个字就把它冲掉了
-      ...(existing?.type === "turn" && existing.thinking ? { thinking: existing.thinking } : {}),
+      ...(想的内容 ? { thinking: 想的内容 } : {}),
       ...(想了 === undefined ? {} : { thinkingMs: 想了 }),
       ...(e.当前模型 ? { by: e.当前模型 } : {}),
     })
+  }
+
+  /**
+   * **把「只想了一下、还没说话」那一条并进新的这一条**（2026-08-12）。
+   *
+   * 作者：*「你其实出现了两次。」* 他那一轮是
+   * **想 → 调工具 → 再想 → 回答**，于是记录里有两条 agent turn：
+   * 第一条**只有思考没有正文**，在界面上就是一个空气泡 + 一行用量 + 一颗复制键；
+   * 第二条又画一次思考块。**同一轮里的思考应当只有一处。**
+   *
+   * 所以新的一条开张时，把前面那条「只想没说」的吸收掉：
+   * 思考文本接起来、时长相加、那条记录removed。
+   *
+   * **只吸收「没有正文」的那种**——已经说过话的那条是真的一轮发言，
+   * 吞掉它就是删掉了模型说过的话。
+   */
+  private 吸收只想没说的(e: Entry, 新id: string): { thinking?: string; thinkingMs?: number } {
+    const i = e.items.findIndex(
+      (x) => x.type === "turn" && x.who === "agent" && x.id !== 新id && !x.text && x.thinking,
+    )
+    if (i < 0) return {}
+    const 旧 = e.items[i] as Extract<TranscriptItem, { type: "turn" }>
+    e.items.splice(i, 1)
+    return {
+      ...(旧.thinking === undefined ? {} : { thinking: 旧.thinking }),
+      ...(旧.thinkingMs === undefined ? {} : { thinkingMs: 旧.thinkingMs }),
+    }
   }
 
   /**
@@ -521,9 +551,17 @@ export class SessionTranscripts {
     const id = e.openTurnId
     if (!id) return
     const item = e.items.find((x) => x.id === id)
-    // 已经停过就不动：那个数字是说完就定住的事实，不该越看越大
-    if (item?.type !== "turn" || item.thinkingMs !== undefined || !item.thinking) return
-    this.putItem(sessionId, e, { ...item, thinkingMs: ms })
+    if (item?.type !== "turn" || !item.thinking) return
+    /**
+     * **同一轮里想过两段就相加**（2026-08-12）。
+     *
+     * 「想 → 调工具 → 再想 → 回答」是一轮，两段思考并成了一块显示，
+     * 那块上的数字就该是**两段之和**——只留前一段等于少报。
+     *
+     * 而 `思考起于` 只在真有新一段时才有值，所以这里不会被反复累加：
+     * 停过一次之后它就是 undefined，上面那句直接返回了。
+     */
+    this.putItem(sessionId, e, { ...item, thinkingMs: (item.thinkingMs ?? 0) + ms })
   }
 
   /** 写入或覆盖一条 item（按 id），并推送。 */

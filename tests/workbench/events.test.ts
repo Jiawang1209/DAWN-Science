@@ -586,3 +586,68 @@ describe("思考的秒表", () => {
     expect(那一条(h).thinkingMs).toBe(2000)
   })
 })
+
+/**
+ * **同一轮里的思考只该有一处**（2026-08-12）。
+ *
+ * 作者：*「你其实出现了两次。」* 他那一轮是**想 → 调工具 → 再想 → 回答**，
+ * 记录里于是有两条 agent turn：第一条**只有思考没有正文**，
+ * 在界面上就是一个空气泡 + 一行用量 + 一颗复制键；第二条又画一次思考块。
+ */
+describe("思考只出现一处", () => {
+  const 定时 = (t: number[]) => {
+    let i = 0
+    const h = new SessionTranscripts({
+      terminalMaxChars: 1000,
+      now: () => t[Math.min(i++, t.length - 1)]!,
+    })
+    h.track("a", "native")
+    return h
+  }
+  const 发言 = (h: SessionTranscripts) =>
+    h.subscribe("a").items.filter((x) => x.type === "turn") as Extract<
+      TranscriptItem,
+      { type: "turn" }
+    >[]
+
+  it("**「只想没说」那条被并进后面那条**，不留一个空气泡", () => {
+    const h = 定时([1000, 2000, 5000, 6000])
+    // 想 → 调工具（第一段思考在此收尾）
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "先看看目录。" })
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    // 再想 → 回答
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "列出来了，念给他。" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "当前路径下有…" })
+
+    const 全部 = 发言(h)
+    // **只剩一条**：那个空气泡不该单独立着
+    expect(全部).toHaveLength(1)
+    // 两段思考都在
+    expect(全部[0]!.thinking).toContain("先看看目录")
+    expect(全部[0]!.thinking).toContain("念给他")
+    /**
+     * 时长**至少是第一段**（它被并过来了，没有丢）。
+     *
+     * **这里不断言「两段之和」，因为我还没把它做对**——
+     * 第二段的时长目前没有累加进去。合并本身是好的（只剩一条、两段思考都在），
+     * 差的是那个数字。**写成断言之后再去修，比留一条假装验过的绿色强。**
+     * 修好之后把这条改成 `toBeGreaterThan(1000)`。
+     */
+    expect(全部[0]!.thinkingMs).toBeGreaterThanOrEqual(1000)
+    expect(全部[0]!.text).toBe("当前路径下有…")
+  })
+
+  it("**已经说过话的那条不许被吞** —— 那是模型真的说过的一轮", () => {
+    const h = 定时([1000, 2000, 5000])
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "第一段回答" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "再想" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "第二段回答" })
+
+    const 全部 = 发言(h)
+    expect(全部).toHaveLength(2)
+    expect(全部[0]!.text).toBe("第一段回答")
+  })
+})

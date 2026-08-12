@@ -2157,8 +2157,38 @@ pre {
  * 眼睛得跨过一整行空白才找得到它属于谁。
  */
 .turn-body { display: flex; flex-direction: column; min-width: 0; }
-/* 自己说的话靠右：**盒子缩到气泡那么宽**，于是操作行从气泡左缘排起 */
-.turn.user .turn-body { width: fit-content; max-width: 100%; margin-left: auto; }
+/**
+ * 自己说的话靠右：盒子缩到气泡那么宽，于是操作行从气泡左缘排起。
+ *
+ * **`max-content` 不是 `fit-content`**（2026-08-12 修）。
+ * 上一版用 `fit-content`，它在这个 flex 列里会按**可用宽度**收缩——
+ * 于是「你是什么模型？」七个字被折成了两行：*「你是什么模 / 型？」*。
+ * 作者的原话就是这一屏：*「现在就是这个状态。」*
+ *
+ * `max-content` 先按**不折行时该有的宽度**算，再由 `max-width` 封顶。
+ * 短问句因此保持一行，长的照旧折。
+ */
+.turn.user .turn-body {
+  width: max-content;
+  /**
+   * **上限挪到这一层，`.bubble` 那条百分比因此要放开**（2026-08-12）。
+   *
+   * 量出来的根因：`.bubble` 的 `max-width: 82%` 原先相对 `.turn`（768px）
+   * → 630px，够宽；我加了这层包裹之后，**82% 变成相对包裹层（122px）→ 100px**，
+   * 于是「你是什么模型？」七个字放不下，被折成两行。
+   * **参照系换了，而百分比不会告诉你这件事。**
+   */
+  max-width: 82%;
+  margin-left: auto;
+  /**
+   * **还要禁止它被压缩。**
+   *
+   * `max-content` 只说「我想要多宽」，而 flex 子项默认 `flex-shrink: 1`——
+   * 想要归想要，照样被压回去。加上这行之前，
+   * 「你是什么模型？」仍然是两行（e2e 量出来 `行数 = 2`）。
+   */
+  flex: 0 0 auto;
+}
 /* 两颗图标同样大小：一个 ⧉ 一个 ✎，大小不一样会像是两种东西 */
 .turn-actions .btn-icon { width: 1.75rem; height: 1.75rem; font-size: 0.95rem; }
 .turn-edit { width: 100%; min-height: 4.5em; resize: vertical; }
@@ -2167,3 +2197,6 @@ pre {
 
 /* 执行中那个会动的记号，跟状态字挨着 */
 .tool-head .thinking { margin-left: var(--dawn-space-2); }
+
+/* 上限已经在 `.turn-body` 上（见那段注释），这里放开，否则会再收一次 82% */
+.turn.user .bubble { max-width: 100%; }

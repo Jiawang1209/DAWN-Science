@@ -158,3 +158,31 @@ test("**图标对齐气泡左缘**", async ({ dawn }) => {
   expect(Math.abs(a.width - b.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(a.height - b.height)).toBeLessThanOrEqual(1)
 })
+
+/**
+ * **短问句不该被折行**（2026-08-12，作者报的那一屏）。
+ *
+ * 作者截图里「你是什么模型？」被折成了两行：*「你是什么模 / 型？」*。
+ * 中文没有词边界，一旦容器窄一点就会从任意一个字中间断开——**很难看，
+ * 而且读起来要停顿一下**。
+ *
+ * 根因是我上一版给气泡套的那层包裹用了 `fit-content`：
+ * 它在 flex 列里按可用宽度收缩。这条钉住的就是「它不许再收缩回去」。
+ */
+test("**七个字的问题占一行**，不被从中间折断", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.locator(".turns")).toContainText("你是什么模型？", { timeout: 30_000 })
+
+  /**
+   * 量**行数**，不是量宽度：宽度多少算够跟字号绑在一起，会随主题漂移；
+   * 而「它占了几行」是这条要求本身。
+   */
+  const 行数 = await page.locator(".turn.user .text").first().evaluate((el) => {
+    const 行高 = parseFloat(getComputedStyle(el).lineHeight)
+    return Math.round(el.scrollHeight / 行高)
+  })
+  expect(行数).toBe(1)
+})

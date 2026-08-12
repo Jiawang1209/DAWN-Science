@@ -24,8 +24,10 @@ import {
   createEditToolDefinition,
   createReadToolDefinition,
   createWriteToolDefinition,
+  DefaultResourceLoader,
   ModelRuntime,
   SessionManager,
+  SettingsManager,
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
@@ -114,6 +116,8 @@ interface NativeSession {
   实际模型?: string
   /** pi 替我们记着的那份对话。**续接与「上次聊到哪儿」都从它来** */
   sessionManager: SessionManager
+  /** 改「你现在跑在哪个模型上」那句话。**换模型时必须调**，否则它照旧答上一个 */
+  设当前模型: (v: string) => void
   unsubscribe: () => void
   pid: number
   /**
@@ -540,12 +544,44 @@ export class NativeRuntime implements AgentRuntime {
       ? SessionManager.continueRecent(spec.workspace, 记录目录)
       : SessionManager.create(spec.workspace, 记录目录)
 
+    /**
+     * **直接告诉它它现在跑在哪个模型上，并且这句话跟着换模型更新**（2026-08-12）。
+     *
+     * 前两次我做的都是绕：先劝它「旧快照过期了」（压不住一份长得像证据的
+     * 命令输出），再把 `PI_*` 环境变量关掉——**它于是失去唯一的事实依据，
+     * 开始编**：作者收到「我是 pi，基于 Anthropic 的 Claude 模型」，
+     * 一个字都不真。**拿掉一份事实，就必须补上一份。**
+     *
+     * 这句补的是真的，而且是活的：闭包读 `当前模型`，`setModel` 每次都会改它，
+     * 于是每一轮重建提示词时它都是当下的答案。
+     *
+     * 用 `appendSystemPromptOverride`（**只补一句**）而不是覆盖整份——
+     * pi 那些踩出来的操作指导原样留着，扔掉它们 agent 会当场变笨。
+     */
+    let 当前模型 = `${native.model}（provider：${native.provider}）`
+    const settingsManager = SettingsManager.create(spec.workspace, agentDir)
+    const resourceLoader = new DefaultResourceLoader({
+      cwd: spec.workspace,
+      agentDir,
+      settingsManager,
+      appendSystemPromptOverride: (base) => [
+        ...base,
+        `You are currently running on the model "${当前模型}". ` +
+          `If the user asks which model you are, answer with exactly this. ` +
+          `Do not guess from environment variables or from earlier turns — ` +
+          `the model can be switched mid-conversation and this line is always current.`,
+      ],
+    })
+    await resourceLoader.reload()
+
     const { session } = await createAgentSession({
       cwd: spec.workspace,
       agentDir,
       model,
       modelRuntime,
       sessionManager,
+      settingsManager,
+      resourceLoader,
       // 有门时必须关掉内置工具，**否则模型会绕过门去用原始的 bash**（Spike A-2 实测）
       ...(customTools ? { noTools: "builtin" as const, customTools: customTools as never } : {}),
     })
@@ -556,6 +592,10 @@ export class NativeRuntime implements AgentRuntime {
     this.sessions.set(spec.sessionId, {
       session,
       sessionManager,
+      // 换模型时改它，系统提示词里那句「你现在是谁」就跟着变（见上面那段）
+      设当前模型: (v: string) => {
+        当前模型 = v
+      },
       /**
        * **起会话时就记下当前是谁**（2026-08-12 修）。
        *
@@ -1149,6 +1189,8 @@ export class NativeRuntime implements AgentRuntime {
     const 真provider = 读回?.provider ?? provider
     const 真model = 读回?.id ?? modelId
     s.实际模型 = `${真provider}/${真model}`
+    // **提示词里那句「你现在是谁」也要跟着改**——不改的话它照旧答上一个
+    s.设当前模型(`${真model}（provider：${真provider}）`)
 
     if (读回 && (真provider !== provider || 真model !== modelId)) {
       /**

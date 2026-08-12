@@ -1496,8 +1496,26 @@ export function ConversationView({
                 终端
               </Button>
             ) : null}
-            <Button type="submit" variant="primary" disabled={disabled ?? false}>
-              发送
+            {/**
+             * **圆形填充的发送键**（2026-08-12，学自 WorkBuddy）。
+             *
+             * 作者：*「对话框也完全不像啊。」* 最显眼的就是这颗——
+             * 它那儿是一个深色圆形，**整屏只有这一处强调色**；
+             * 我们是一个绿色方按钮，旁边还有一排绿字，
+             * **强调色一多就谁也不强调了**。
+             *
+             * 文字留在无障碍标签里：**图形按钮不能只有图形**
+             * （DESIGN.md：no meaning conveyed by shape alone）。
+             */}
+            <Button
+              type="submit"
+              variant="primary"
+              className="send-btn"
+              aria-label="发送"
+              title="发送"
+              disabled={disabled ?? false}
+            >
+              <span aria-hidden="true">↑</span>
             </Button>
           </div>
         </div>

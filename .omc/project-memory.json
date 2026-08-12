@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm run build >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts --update-snapshots >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -1; npm run test:e2e:only 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/tokens.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"  --dawn-space-6: calc(var(--dawn-unit) * 6); /* 24px 大留白 */\",\n\"\"\"  --dawn-space-6: calc(var(--dawn-unit) * 6); /* 24px 大留白 */\n  /* 32px 页面级内边距。量来的：WorkBuddy 正文左右是 48px，\n     我们窗口更窄，48 会吃掉太多行宽，取 32 */\n  --dawn-space-8: calc(var(--dawn-unit) * 8);\"\"\", 1)\np.write_text(s, encoding=\"utf8\")\n\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\".turns { padding: var(--dawn-space-6, 24px) var(--dawn-space-8, 32px); }\",\n              \".turns { padding: var(--dawn-space-6) var(--dawn-space-8); }\", 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"Tests |×\" | head -3; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -1",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -1",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -237,8 +237,8 @@
     },
     {
       "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
-      "accessCount": 7,
-      "lastAccessed": 1786508194590,
+      "accessCount": 8,
+      "lastAccessed": 1786510570283,
       "type": "file"
     },
     {

@@ -242,7 +242,17 @@ pre {
 .sidebar {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--dawn-stroke-4);
+  /**
+   * **不用分割线，用底色分**（2026-08-12，学自 WorkBuddy）。
+   *
+   * 作者：*「这也没有任何与 workbuddy 相似的东西呢？」* —— 他是对的：
+   * 我先前改的是字号行距，**那些一眼看不出来**；
+   * 让一个界面「像」另一个的是**外壳**。
+   *
+   * WorkBuddy 的侧栏与主区之间**一条线都没有**，全靠浅灰底与白底的落差。
+   * 线是「这里有个边界」的最重的说法，而侧栏与正文本来就不需要那么重——
+   * 一屏里线越多越碎。
+   */
   background: var(--dawn-surface-sidebar);
   overflow: auto;
   padding-bottom: 12px;
@@ -421,8 +431,8 @@ pre {
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--dawn-stroke-4);
+  /* 顶栏也不划线：与侧栏同一条理由——**留白已经把它分开了** */
+  padding: var(--dawn-space-3) var(--dawn-space-8);
 }
 .conv-head .kind { color: var(--dawn-text-3); font-size: 11px; }
 /**
@@ -455,8 +465,8 @@ pre {
   /* 内容居中并与对话区同宽——**输入框比它上面的对话窄或宽都会显得没对齐** */
   align-items: center;
   gap: var(--dawn-space-2);
-  padding: var(--dawn-space-2) var(--dawn-page-inset-x) var(--dawn-space-4);
-  border-top: 1px solid var(--dawn-stroke-4);
+  padding: var(--dawn-space-2) var(--dawn-space-8) var(--dawn-space-4);
+  /* 与侧栏、顶栏同一条：**不划线，靠留白分** */
 }
 .composer > * {
   width: 100%;
@@ -483,9 +493,12 @@ pre {
   display: flex;
   flex-direction: column;
   gap: var(--dawn-space-2);
-  padding: var(--dawn-space-2);
-  border: 1px solid var(--dawn-stroke-3);
-  border-radius: var(--dawn-radius-composer);
+  /* 更舒展：WorkBuddy 的输入区留白明显大，且**输入框本身就高**——
+     一个矮框会让人觉得「只能写一句」 */
+  padding: var(--dawn-space-3);
+  min-height: 6.5rem;
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
   background: var(--dawn-surface-input);
   box-shadow: var(--dawn-shadow-sm);
   transition: border-color 120ms ease, box-shadow 120ms ease;
@@ -2285,4 +2298,27 @@ pre {
 .bubble code, .bubble pre {
   font-size: var(--dawn-code-size);
   line-height: var(--dawn-code-leading);
+}
+
+/* 选中态：**圆角浅底 pill**，不是左侧竖条（2026-08-12，学自 WorkBuddy）。
+   竖条是「这一条被标记了」，pill 是「你在这里」——后者才是选中该说的话 */
+.sess-item.current > .row,
+.proj-item.current > .row {
+  background: var(--dawn-surface-elevated);
+  border-radius: var(--dawn-radius-md);
+  border-left-color: transparent;
+}
+
+/* 发送键：圆形填充（2026-08-12，学自 WorkBuddy）。
+   **整屏只有这一处强调色**——绿色一多就谁也不强调了 */
+.send-btn {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: var(--dawn-radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  line-height: 1;
 }

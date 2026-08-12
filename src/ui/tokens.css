@@ -208,6 +208,9 @@
   /* 32px 页面级内边距。量来的：WorkBuddy 正文左右是 48px，
      我们窗口更窄，48 会吃掉太多行宽，取 32 */
   --dawn-space-8: calc(var(--dawn-unit) * 8);
+  /* 40px 消息之间。实测 WorkBuddy 是 64px；我们一轮里还有工具调用与思考块，
+     每条都留 64 会把一次回答拉得过长 */
+  --dawn-space-10: calc(var(--dawn-unit) * 10);
   /* 输入卡那层很轻的浮起。实测：`0 12px 24px -8px rgba(0,0,0,.02)`。
      **它替代了描边**——描边看起来是表单控件，浮起看起来是可以写字的地方 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, var(--theme-base) 6%, transparent);

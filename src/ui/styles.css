@@ -454,7 +454,17 @@ pre {
  */
 .turn {
   max-width: var(--dawn-thread-max-w);
-  margin: 0 auto var(--dawn-space-3);
+  /**
+   * **消息之间隔得很开**（2026-08-12，CDP 实测 WorkBuddy 是 `64px`）。
+   *
+   * 我们此前是 12px——**这是「挤」的最大来源**，比字号行距都要紧：
+   * 一屏里几段话贴在一起，眼睛分不出哪句是谁说的、哪段结束了。
+   *
+   * 取 40px 而不是 64：**我们一轮里还有工具调用、思考块、当前目录**，
+   * 每条之间都留 64 会把一次回答拉得很长。
+   * 作者定的原则：*「基于我们现在有的内容去贴近。」*
+   */
+  margin: 0 auto var(--dawn-space-10);
 }
 .turn .who { display: block; color: var(--dawn-text-3); font-size: 11px; margin-bottom: 2px; }
 /* 输入区在上、控件行在下且右对齐 —— 学自 Hermes composer 的
@@ -2395,3 +2405,7 @@ pre {
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
 .composer-field { font-size: 15px; line-height: 1.75; }
+
+/* 用户气泡：**全圆角**（CDP 实测 WorkBuddy 是 100px，即完全的胶囊）。
+   中等圆角看着像卡片，胶囊看着像「一句话」——它本来就是一句话 */
+.turn.user .bubble { border-radius: var(--dawn-radius-full); }

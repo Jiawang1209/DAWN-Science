@@ -30,7 +30,7 @@ test("默认工作区自动就绪，不要求先选文件夹", async ({ dawn }) 
   // 「＋ 新建会话」可点 = 已经有项目了。
   // 此前没有项目时它是禁用的，旁边写「先打开一个项目文件夹」——
   // 那是一句描述，不是一条出路
-  const newSession = page.getByRole("button", { name: /新建会话/ })
+  const newSession = page.getByRole("button", { name: "新建任务" })
   await expect(newSession).toBeEnabled()
   await expect(page.getByText("先打开一个项目文件夹")).toHaveCount(0)
 })

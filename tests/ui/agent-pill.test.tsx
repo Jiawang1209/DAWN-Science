@@ -195,8 +195,8 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
     expect(container.querySelector(".agent-pick")).toBeNull()
   })
 
-  it("**「新建会话」直接建，不再多一层选择** —— 用默认 agent", () => {
-    const onNewSession = vi.fn()
+  it("**侧栏那颗直接建，不再多一层选择**（T3-a 起叫「新建任务」）", () => {
+    const onNewTask = vi.fn()
     const { container } = render(
       <SessionSidebar
         projects={[
@@ -219,12 +219,15 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
         onPickProject={() => {}}
         onPickSession={() => {}}
         onOpenProject={() => {}}
-        onNewSession={onNewSession}
+        onNewSession={() => {}}
+        onNewTask={onNewTask}
         onShowPanel={() => {}}
       />,
     )
-    fireEvent.click(screen.getByRole("button", { name: "新建会话" }))
-    expect(onNewSession).toHaveBeenCalledWith("ds-chat")
+    // T3-a：侧栏上那颗改叫「新建任务」，**这条守的东西没变**——
+    // 侧栏按下就建，不再在侧栏上多一层挑 agent（那一层在 composer 的 pill 上）
+    fireEvent.click(screen.getByRole("button", { name: "新建任务" }))
+    expect(onNewTask).toHaveBeenCalled()
     expect(container.querySelector(".agent-pick")).toBeNull()
   })
 })

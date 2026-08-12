@@ -23,14 +23,17 @@ const ROOT = resolve(import.meta.dirname, "..")
 export { CANNED_REPLY }
 
 /**
- * 开一段**临时会话**：回首页 → 在首页上挑一个开始（2026-08-11 起是两步）。
+ * 开一段**没有工作路径的对话**（T3-a 起就是「新建任务」这一颗）。
  *
- * 作者：*「如果我点击新会话的时候，其实应该出现的是 App 的首页……
- * 我应该是直接可以重新选择 LLM。」* 所以侧栏顶上那颗**不再直接建**。
+ * 2026-08-12 之前这里是两步：「新建会话」→ 首页上挑一个 LLM →「开始」。
+ * 现在只有一颗「新建任务」，**点完直接进对话**——作者量的 WorkBuddy
+ * 就是这样：*「新建任务之后，直接就是干净的对话窗口。」*
+ *
+ * 名字**没改**：几十条用例引它，而它做的事没变——
+ * 开一段不设工作路径的对话。改名只会制造一次无意义的大规模改动。
  */
 export async function 开一段临时会话(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "新建会话" }).click()
-  await page.getByRole("button", { name: /开始/ }).click()
+  await page.getByRole("button", { name: "新建任务" }).click()
 }
 
 /**
@@ -42,7 +45,43 @@ export async function 开一段临时会话(page: Page): Promise<void> {
  * 那些东西都是**按项目**组织的。
  */
 export async function 在项目里开会话(page: Page): Promise<void> {
-  await page.locator(".proj-item").first().getByRole("button", { name: /里开一段新对话/ }).click()
+  /**
+   * **T3-a 起，「有工作路径」就是「在项目里」**（2026-08-12）。
+   *
+   * 侧栏不再有「新建项目」那颗按钮，项目那一栏是**从任务的路径长出来的**。
+   * 所以这里造一个带路径的任务——路径取夹具自己的 workspace，
+   * 于是账本、产出、git 事实都落在同一个地方，与改之前一模一样。
+   *
+   * 走的是应用自己那条 IPC（`window.dawn.invoke`），**不是另造一条后门**：
+   * 后门验过的东西不等于真实那条路验过。
+   */
+  const ws = await page.evaluate(async () => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { workspace?: string } }> }
+    }
+    const r = (await w.dawn.invoke("listProjects", {})) as unknown as {
+      data?: { workspace: string }[]
+    }
+    return r.data?.[0]?.workspace
+  })
+  if (!ws) throw new Error("夹具里一个项目都没有——`在项目里开会话` 没有路径可用")
+
+  await page.evaluate(async (workspace) => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<unknown> }
+    }
+    const p = (await w.dawn.invoke("getProviders", {})) as unknown as {
+      data?: { agents?: { agentId: string }[] }
+    }
+    const agentId = p.data?.agents?.[0]?.agentId
+    await w.dawn.invoke("createTask", { agentId, workspace })
+  }, ws)
+
+  // 界面还没刷新到这条新任务上——重载最省事，且走的是真实的启动装配
+  await page.reload()
+  const 项目 = page.locator(".proj-list .proj-item").first()
+  await 项目.locator(".row").first().click()
+  await 项目.locator(".proj-session-list .sess-item .row").first().click()
 }
 
 export interface DawnFixture {

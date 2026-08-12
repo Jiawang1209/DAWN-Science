@@ -6,7 +6,7 @@ import {
   SessionSidebar,
   TerminalView,
 } from "../../src/ui/views.js"
-import type { ProjectSummary, SessionSummary } from "../../src/protocol/index.js"
+import type { ProjectSummary, SessionSummary, TaskSummary } from "../../src/protocol/index.js"
 
 const project = (over: Partial<ProjectSummary> = {}): ProjectSummary => ({
   projectId: "p1",
@@ -47,131 +47,177 @@ const base = {
   onShowPanel: noop,
 }
 
-describe("侧栏 · 新建会话是主动作", () => {
-  // 这一组是 2026-08-08 修正的核心：初版 UI 里 createSession 一次都没被调用，
-  // 也就是说这个 app 做不了它最该做的那件事。
-  it("有「新建会话」入口", () => {
+const task = (over: Partial<TaskSummary> = {}): TaskSummary => ({
+  taskId: "t1",
+  sessionId: "s1",
+  pinned: false,
+  sortOrder: 1,
+  createdAt: "2026-08-08T00:00:00Z",
+  ...over,
+})
+
+/**
+ * 侧栏（**2026-08-12 按 T3-a 换了主语**）。
+ *
+ * 作者：*「点击完新建任务后，在对话窗口选择文件夹之后，就属于是一个项目管理，
+ * 那么就会归类到左边侧边栏的项目里面。然后如果……不选择文件夹，直接对话，
+ * 那么就属于是一个会话，那么就会归类到左边侧边栏的会话里面。」*
+ *
+ * 上一版这里测的是三个入口（新建任务 / 新建会话 / 新建项目）与两列。
+ * **删掉的每一条，删的理由都是它的主语没了**——而它守着的意图
+ * （「侧栏能把对话建出来」是 2026-08-08 那次修正的核心）都在下面。
+ */
+describe("侧栏 · 新建任务是唯一的主动作", () => {
+  it("有「新建任务」入口，且只有它一个", () => {
     render(<SessionSidebar {...base} />)
-    expect(screen.getByRole("button", { name: "新建会话" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "新建任务" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: "新建会话" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "新建项目" })).toBeNull()
   })
 
   /**
-   * **2026-08-09 改写。** 原来这条是「点开 → 列出 agent → 选一个」。
-   * agent 的选择已搬到 composer 右下角的 pill（作者要求，对标 Hermes 的 model pill），
-   * 侧栏这一层因此收掉——**一个动作只有一个家**。
+   * **按下就建，不问工作路径。**
    *
-   * 意图没变：这条仍然守着「侧栏能把会话建出来」，
-   * 它是 2026-08-08 那次修正的核心（初版 UI 里 createSession 一次都没被调用）。
+   * 这条守的是 2026-08-08 那次修正的核心：初版 UI 里 `createSession`
+   * 一次都没被调用过——**这个 app 做不了它最该做的那件事**，
+   * 而 363 个测试一条都没拦住，因为它们全是「叶子组件 + 手喂 props」。
    */
-  it("**按下就建，不再多一层选择** —— 用清单里的第一个 agent", () => {
-    const onNewSession = vi.fn()
-    render(<SessionSidebar {...base} onNewSession={onNewSession} />)
-    fireEvent.click(screen.getByRole("button", { name: "新建会话" }))
-    expect(onNewSession).toHaveBeenCalledWith("ds-chat")
+  it("**按下就建，不问工作路径**", () => {
+    const onNewTask = vi.fn()
+    render(<SessionSidebar {...base} onNewTask={onNewTask} />)
+    fireEvent.click(screen.getByRole("button", { name: "新建任务" }))
+    expect(onNewTask).toHaveBeenCalled()
   })
 
-  /**
-   * **2026-08-11 又改一次：没有项目也能新建会话。**
-   *
-   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
-   * 顶上那颗从此开的是**临时会话**——它自己会得到一个独立目录，
-   * 所以「先有项目」这个前提没有了。
-   *
-   * （2026-08-09 的上一版断言是「没有项目 ⇒ 禁用」；再上一版还带一句
-   * 「先打开一个项目文件夹」，那是描述不是出路，早已删掉。）
-   */
-  it("**一个项目都没有也能新建会话** —— 它是临时的，不需要项目", () => {
+  it("**一个项目都没有也能建** —— 不设路径就是普通对话，不需要项目", () => {
     render(<SessionSidebar {...base} projects={[]} activeProjectId={undefined} />)
-    expect((screen.getByRole("button", { name: "新建会话" }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole("button", { name: "新建任务" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    )
   })
 
   it("配置里没有 agent 时禁用，并说明原因", () => {
     render(<SessionSidebar {...base} agents={[]} />)
-    expect((screen.getByRole("button", { name: "新建会话" }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole("button", { name: "新建任务" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
     expect(screen.getByText(/还没有可用的 agent/)).toBeDefined()
   })
 })
 
-describe("侧栏 · 项目与会话", () => {
+describe("侧栏 · 归类：有路径进项目，没路径进会话", () => {
+  /** 任务行要拿到会话摘要才有删除/改名/置顶——夹具把两者对上 */
+  const 带会话 = (tasks: TaskSummary[], sessions: SessionSummary[]) => ({
+    tasks,
+    sessionOf: (id: string) => sessions.find((s) => s.sessionId === id),
+    sessionRank: (id: string) => sessions.findIndex((s) => s.sessionId === id),
+  })
+
+  it("**没给路径 → 会话那一栏**", () => {
+    const { container } = render(<SessionSidebar {...base} {...带会话([task()], [session()])} />)
+    // **查分区标题本身**，不是「页面上有没有这两个字」——
+    // 底部那个「项目概览」入口也含「项目」，用 /^项目/ 会撞上它
+    const 分区 = [...container.querySelectorAll(".side-section")].map((x) => x.textContent ?? "")
+    expect(分区.some((t) => t.startsWith("会话"))).toBe(true)
+    // **一条项目都没有时那一整块不出现**：写着 (0) 的标题占一行、什么都没说
+    expect(分区.some((t) => t.startsWith("项目"))).toBe(false)
+  })
+
   /**
-   * **2026-08-11：项目从下拉框改成一列。**
+   * **文件夹即项目身份**（作者定的第一条）。
    *
-   * 作者：*「新建的项目，就在左侧的新建项目的下面……新建完的项目，
-   * 里面可以有多个会话。」* 下拉框是「一个值」的形状——
-   * 你看不见有几个项目，更看不见哪个项目里有多少会话。
+   * 两段对话选同一个路径 → 一个项目底下挂两段，不是两条同名并列项。
+   * 它要回答的是「我上次在这个目录聊过什么」，重名条目回答不了。
    */
-  it("**项目是一列，不是一个下拉框**", () => {
-    const { container } = render(
-      <SessionSidebar {...base} projects={[project(), project({ projectId: "p2", name: "other" })]} />,
-    )
-    expect(container.querySelectorAll(".proj-item")).toHaveLength(2)
-    expect(screen.getByText("dawn-science")).toBeDefined()
-    expect(screen.getByText("other")).toBeDefined()
+  it("**同一个路径合并成一个项目**，底下挂两段", () => {
+    const ts = [
+      task({ taskId: "t1", sessionId: "s1", workspace: "/w/rna" }),
+      task({ taskId: "t2", sessionId: "s2", workspace: "/w/rna" }),
+    ]
+    const ss = [session({ sessionId: "s1" }), session({ sessionId: "s2", title: "第二段" })]
+    const { container } = render(<SessionSidebar {...base} {...带会话(ts, ss)} />)
+
+    expect(container.querySelectorAll(".proj-list .proj-item")).toHaveLength(1)
+    // 名字是路径的最后一段；全路径也常驻——**同名文件夹到处都是**
+    expect(screen.getByText("rna")).toBeDefined()
   })
 
-  it("**每一行说出它装着几个会话** —— 那层包含关系要看得见", () => {
-    render(<SessionSidebar {...base} projects={[project({ totalSessionCount: 3 })]} />)
-    expect(screen.getByText("3 个会话")).toBeDefined()
+  it("**不同路径就是不同项目**", () => {
+    const ts = [
+      task({ taskId: "t1", sessionId: "s1", workspace: "/w/rna" }),
+      task({ taskId: "t2", sessionId: "s2", workspace: "/w/atac" }),
+    ]
+    const ss = [session({ sessionId: "s1" }), session({ sessionId: "s2" })]
+    const { container } = render(<SessionSidebar {...base} {...带会话(ts, ss)} />)
+    expect(container.querySelectorAll(".proj-list .proj-item")).toHaveLength(2)
   })
 
-  it("点一行就切过去", () => {
-    const onPickProject = vi.fn()
+  it("**在这个项目里再开一段**：入口就在它自己那一行上", () => {
+    const onNewTaskIn = vi.fn()
+    const ts = [task({ workspace: "/w/rna" })]
     render(
-      <SessionSidebar
-        {...base}
-        projects={[project(), project({ projectId: "p2", name: "other" })]}
-        onPickProject={onPickProject}
-      />,
+      <SessionSidebar {...base} {...带会话(ts, [session()])} onNewTaskIn={onNewTaskIn} />,
     )
-    fireEvent.click(screen.getByText("other"))
-    expect(onPickProject).toHaveBeenCalledWith("p2")
+    fireEvent.click(screen.getByRole("button", { name: /里开一段新对话/ }))
+    expect(onNewTaskIn).toHaveBeenCalledWith("/w/rna")
   })
 
-  it("**每一行都能删它自己**，不是只能删当前那个", () => {
-    const onDeleteProject = vi.fn()
-    render(
-      <SessionSidebar
-        {...base}
-        projects={[project(), project({ projectId: "p2", name: "other" })]}
-        onDeleteProject={onDeleteProject}
-      />,
-    )
-    fireEvent.click(screen.getByRole("button", { name: "删除项目：other" }))
-    expect(onDeleteProject).toHaveBeenCalledWith("p2")
-  })
-
-  it("列出会话，点击触发回调", () => {
-    const onPickSession = vi.fn()
-    render(<SessionSidebar {...base} sessions={[session()]} onPickSession={onPickSession} />)
-    // 行的主标签现在是**标题**；agent 退到副行里（2026-08-10）
-    fireEvent.click(screen.getByText("新会话"))
-    expect(onPickSession).toHaveBeenCalledWith("s1")
-  })
-
-  it("**没说过话的会话显示「新会话」**，不是一行空白 —— 空白看起来像加载失败", () => {
-    render(<SessionSidebar {...base} sessions={[session()]} />)
+  it("**没说过话的显示「新会话」**，不是一行空白 —— 空白看起来像加载失败", () => {
+    render(<SessionSidebar {...base} {...带会话([task()], [session()])} />)
     expect(screen.getByText("新会话")).toBeDefined()
     // agent 与时刻退到副行：**它是来路，不是名字**
     expect(screen.getByText(/ds-chat · /)).toBeDefined()
   })
 
-  it("**有标题就用标题** —— 同一个 agent 的两个会话得分得开", () => {
-    render(
-      <SessionSidebar
-        {...base}
-        sessions={[
-          { ...session(), sessionId: "s1", title: "看看 sales.csv" },
-          { ...session(), sessionId: "s2", title: "跑一次回归" },
-        ]}
-      />,
-    )
+  it("**有标题就用标题** —— 同一个 agent 的两段得分得开", () => {
+    const ts = [
+      task({ taskId: "t1", sessionId: "s1" }),
+      task({ taskId: "t2", sessionId: "s2" }),
+    ]
+    const ss = [
+      session({ sessionId: "s1", title: "看看 sales.csv" }),
+      session({ sessionId: "s2", title: "跑一次回归" }),
+    ]
+    render(<SessionSidebar {...base} {...带会话(ts, ss)} />)
     expect(screen.getByText("看看 sales.csv")).toBeDefined()
     expect(screen.getByText("跑一次回归")).toBeDefined()
   })
 
-  it("没有会话时如实说明", () => {
-    render(<SessionSidebar {...base} />)
-    expect(screen.getByText(/还没有会话/)).toBeDefined()
+  it("点一行就切过去", () => {
+    const onPickTask = vi.fn()
+    render(
+      <SessionSidebar
+        {...base}
+        {...带会话([task({ taskId: "t9" })], [session({ title: "看看 sales.csv" })])}
+        onPickTask={onPickTask}
+      />,
+    )
+    fireEvent.click(screen.getByText("看看 sales.csv"))
+    expect(onPickTask).toHaveBeenCalledWith(expect.objectContaining({ taskId: "t9" }))
+  })
+
+  /**
+   * **顺序由会话那一套说了算。**
+   *
+   * 两张表各有一套 `pinned`/`sortOrder`，而置顶、上下挪、拖拽改的是会话那一套。
+   * 照任务那一套排的话，症状是**点了置顶什么都不动**——
+   * 又一次「能点、没报错、然后什么都没发生」。
+   */
+  it("**按会话的顺序排，不按任务的**", () => {
+    const ts = [
+      task({ taskId: "t1", sessionId: "s1", sortOrder: 1 }),
+      task({ taskId: "t2", sessionId: "s2", sortOrder: 2 }),
+    ]
+    // 会话那一套把 s2 排在前面（比如它刚被置顶）
+    const ss = [session({ sessionId: "s2", title: "被置顶的" }), session({ sessionId: "s1", title: "另一段" })]
+    const { container } = render(<SessionSidebar {...base} {...带会话(ts, ss)} />)
+    const 名字 = [...container.querySelectorAll(".session-list .sess .name")].map((x) => x.textContent)
+    expect(名字[0]).toContain("被置顶的")
+  })
+
+  it("一条都没有时不画空列表", () => {
+    const { container } = render(<SessionSidebar {...base} />)
+    expect(container.querySelectorAll(".sess-item")).toHaveLength(0)
   })
 
   it("项目概览是侧栏底部入口，不是首页", () => {

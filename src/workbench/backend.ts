@@ -597,7 +597,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 摆出来只会让人看见一个自己从没选过的路径，
        * 而那正是此前「临时会话」让人困惑的地方。
        */
-      const 归属 = projects.ensureTemporary(scratchRoot)
+      /**
+       * **给了路径，就归到那个路径的项目下**（T3-a，2026-08-12）。
+       *
+       * 作者定的：*「在对话窗口选择文件夹之后，就属于是一个项目管理，
+       * 那么就会归类到左边侧边栏的项目里面。」*
+       * 以及第一条硬规则：**文件夹即项目身份**——`open()` 本来就是
+       * 「同一路径复用同一条」，两段对话选同一个目录就落在同一个项目里。
+       *
+       * **这不只是侧栏分组的事**：账本、产出、git 事实全都按项目归集。
+       * 上一版这里无条件走 `ensureTemporary`，于是「选了文件夹」之后
+       * **那个文件夹的项目概览永远是空的**——三条 e2e 当场抓到
+       * （成本栏停在「尚未记录」、变更 pane 里没有文件名）。
+       */
+      const 归属 = workspace ? projects.open(workspace) : projects.ensureTemporary(scratchRoot)
       const 会话 = await 起一个会话(归属.projectId, agentId, workspace)
 
       const rec = {
@@ -1094,6 +1107,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       events.forget(sessionId)
       baselines.delete(sessionId)
       /**
+       * **任务跟着走**（T3-a，2026-08-12）。
+       *
+       * 任务是「一段对话 + 一个可选的路径」——会话没了，那段对话就没了。
+       * 不删的话侧栏上会挂着一行指向死会话的「新任务」，
+       * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
+       */
+      任务库().removeBySessions([sessionId])
+      /**
        * **账本留着，并且把还剩多少说出来。**
        * 一句「已删除」会让人以为历史也一起没了——而它没有，
        * 这正是这个产品与一个聊天窗口的区别（不变式 5）。
@@ -1126,6 +1147,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         events.forget(rec.id)
         baselines.delete(rec.id)
       }
+      /**
+       * **先记下有哪些会话，再删**：删完就查不到了，
+       * 而任务是按 sessionId 挂着的（T3-a）。
+       */
+      const 它的会话 = sessions.listByProject(projectId).map((r) => r.id)
+      任务库().removeBySessions(它的会话)
       const sessionsDeleted = sessions.deleteByProject(projectId)
       const runsDeleted = runs.deleteByProject(projectId)
       projectStore.delete(projectId)

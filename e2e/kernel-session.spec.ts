@@ -43,7 +43,7 @@ test.describe("内核会话", () => {
   test("执行一段代码 → **结构化输出**出现在对话里", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
     await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
@@ -203,7 +203,7 @@ test.describe("R 内核会话", () => {
   test("**同一条代码路径**：执行、报错、活会话、变量面板", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
     await 开一段临时会话(page)
     await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
@@ -259,7 +259,7 @@ test.describe("由配置的解释器路径起内核", () => {
   test("**没配就明说没配，配完就能跑**", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
 
     // ① **还没配** —— 建会话要响亮失败并指向设置，不是悄悄用一个猜出来的解释器
     await 开一段临时会话(page)

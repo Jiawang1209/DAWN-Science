@@ -6,11 +6,23 @@
  */
 import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
-test("没有会话时如实说明，且新建入口就在旁边", async ({ dawn }) => {
+/**
+ * **一条都没有时，侧栏只剩那个入口**（2026-08-12 改，T3-a）。
+ *
+ * 上一版这里等侧栏里一句「还没有会话」。现在不写了，理由是
+ * **说话的地方换了**：一个空列表旁边挂一句「还没有会话」是同义反复，
+ * 而右边那一整屏（下一条测的空对话区）本来就是给这件事准备的，
+ * 且它给的是**一颗能点的按钮，不是一句提示**。
+ *
+ * 所以这条改成守两件仍然要紧的：**空的时候不画白占的东西**，
+ * 以及**出路始终可点**。
+ */
+test("一条都没有时不画空列表，且新建入口可点", async ({ dawn }) => {
   const { page } = dawn
-  await expect(page.getByText("还没有会话")).toBeVisible()
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
+  await expect(page.locator(".sidebar .side-section")).toHaveCount(0)
   // 出路：新建按钮可点
-  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
 })
 
 test("空对话区给的是**按钮**，不是一句提示", async ({ dawn }) => {

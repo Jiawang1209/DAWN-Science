@@ -200,7 +200,7 @@ async function runSubagentTurn(page: import("@playwright/test").Page, workspace:
   mkdirSync(join(workspace, ".dawn", "agents"), { recursive: true })
   writeFileSync(join(workspace, ".dawn", "agents", "scout.md"), SCOUT)
   await expect(page.locator(".app-shell")).toBeVisible()
-  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await 在项目里开会话(page)
   await page.getByPlaceholder(/回车发送/).fill("派两个子 agent")
   await page.getByRole("button", { name: "发送", exact: true }).click()

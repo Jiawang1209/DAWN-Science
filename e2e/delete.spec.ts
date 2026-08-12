@@ -55,8 +55,15 @@ test("删除会话：确认框说清账本不动，删完列表里就没有了",
   // 而 Playwright 的 name 默认是子串匹配
   await page.locator(".confirm").getByRole("button", { name: "删除会话" }).click()
 
+  /**
+   * **删掉最后一段之后，那个项目整条消失**（T3-a）。
+   *
+   * 项目是**从任务的路径长出来的**：没有任务，就没有那个路径，
+   * 也就没有那一行。上一版这里等的是「这个项目里还没有会话」那句空态，
+   * 而空态的前提是项目独立存在——现在不成立了。
+   */
   await expect(page.locator(".proj-session-list .sess .name")).toHaveCount(0)
-  await expect(page.getByText(/这个项目里还没有会话/)).toBeVisible()
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(0)
 })
 
 test("**取消就是什么都不做**", async ({ dawn }) => {
@@ -94,15 +101,10 @@ test("移除项目：确认框摆真数字，**且磁盘上的文件夹还在**"
   expect(readFileSync(join(workspace, "我的数据.csv"), "utf8")).toBe("a,b\n1,2\n")
 })
 
-test("新建会话与新建项目**是同一级别的两行**", async ({ dawn }) => {
-  const { page } = dawn
-  const 会话 = page.getByRole("button", { name: "新建会话" })
-  const 项目 = page.getByRole("button", { name: "新建项目" })
-
-  const a = (await 会话.boundingBox())!
-  const b = (await 项目.boundingBox())!
-  // 同宽、同高、左缘对齐——**「同一级别」是几何上的事，不是措辞上的**
-  expect(Math.abs(a.width - b.width)).toBeLessThan(2)
-  expect(Math.abs(a.height - b.height)).toBeLessThan(2)
-  expect(Math.abs(a.x - b.x)).toBeLessThan(2)
-})
+/**
+ * **「新建会话与新建项目是同一级别的两行」这条删了**（2026-08-12，T3-a）。
+ *
+ * 不是因为它红了，是**它的主语没了**：侧栏上现在只有「新建任务」一个入口。
+ * 它原本守的意图（「同一级别」是几何上的事，不是措辞上的）
+ * 在只剩一颗按钮之后无处可守——两个东西才谈得上同级。
+ */

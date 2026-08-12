@@ -15,7 +15,7 @@ import { test, expect, 在项目里开会话 } from "./fixtures.js"
 
 test("native 会话：如实说「不可见」并给出原因，而不是停在「尚未记录」", async ({ dawn }) => {
   const { page } = dawn
-  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await 在项目里开会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
   await page.getByPlaceholder(/回车发送/).fill("你好")
@@ -54,7 +54,7 @@ test.describe("claude 会话：金额是真数", () => {
   test("成本栏显示 CLI 自己报的金额，不是我们乘出来的估算", async ({ page: _p, dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
     /**
      * **在项目里开，不走命令面板**（2026-08-11）。
      *

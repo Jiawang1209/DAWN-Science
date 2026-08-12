@@ -75,3 +75,16 @@ export function 短路径(p: string, home?: string): string {
   return p
 }
 
+/**
+ * 路径的最后一段，用作项目名（T3-a）。
+ *
+ * **末尾的斜杠不算一段**：`~/work/rna-seq/` 与 `~/work/rna-seq` 是同一个地方，
+ * 而 `split("/").pop()` 对前者给的是空串——那会画出一条没有名字的项目行。
+ *
+ * 整条路径本身（`/`）退回写成 `/`：**没有名字也好过空白**。
+ */
+export function 基名(p: string): string {
+  const 段 = p.split("/").filter(Boolean)
+  return 段.length > 0 ? 段[段.length - 1]! : "/"
+}
+

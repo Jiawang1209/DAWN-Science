@@ -708,7 +708,13 @@ pre {
   box-shadow: var(--dawn-shadow-float);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
 }
-.panel-entry { margin-top: auto; border-top: 1px solid var(--dawn-stroke-4); }
+/**
+ * 底部那一组（2026-08-12）。**`auto` 只留一个**——
+ * 挂在每一行上的话，剩余空间会被它们各分一份，
+ * 三个入口就在侧栏上摊成三段（T3-a 之后列表空着不占位，当场露出来）。
+ */
+.side-bottom { margin-top: auto; }
+.panel-entry { border-top: 1px solid var(--dawn-stroke-4); }
 
 /* ── 终端 dock ──────────────────────────────────────────────────── */
 
@@ -776,13 +782,28 @@ pre {
  * 行首那个图标（2026-08-11，仿 Codex）：**跟着文字色走**——
  * 选中、悬停、暗色主题都不用另外配一份。
  */
-.row-icon {
-  width: 14px;
-  height: 14px;
+/**
+ * 图标的公共盒子（2026-08-12）。
+ *
+ * **16×16，不缩放**——CDP 实测 WorkBuddy 全站 60 个 svg 里 30 个是 16px，
+ * 而且是**在 16 的画布上画 16**，不是把 24 缩下来。缩下来的边缘落在半个像素上，
+ * 那正是「差点意思」的来源。
+ */
+.icon {
+  width: 16px;
+  height: 16px;
   flex: 0 0 auto;
-  margin-right: 6px;
-  vertical-align: -2px;
-  color: var(--dawn-text-3);
+  display: inline-block;
+  vertical-align: -3px;
+}
+.row-icon {
+  margin-right: var(--dawn-space-2);
+  /**
+   * **实测它的图标色是 `rgba(0,0,0,.7)`**，与元信息同一档；
+   * 高亮那颗是 `.9`。我们的 `text-2` 正是 70%——**同一档**。
+   * 图标与它旁边的字落在同一个层次上，这是「协调」的全部机制。
+   */
+  color: var(--dawn-text-2);
 }
 .row .name { display: inline-flex; align-items: center; min-width: 0; }
 /**

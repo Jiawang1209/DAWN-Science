@@ -32,7 +32,7 @@ test.describe("配了一个认不出的 cli agent", () => {
   test("**响亮失败并说清怎么办** —— 不是悄悄起一个终端", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
 
     await page.keyboard.press("Meta+k")
     await page.getByRole("option", { name: "新建会话：某个没听说过的" }).click()
@@ -48,7 +48,7 @@ test.describe("配了一个认不出的 cli agent", () => {
   test("它仍然出现在可选列表里 —— 缺失不等于不支持", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
     await page.keyboard.press("Meta+k")
     await expect(page.getByRole("option", { name: "新建会话：某个没听说过的" })).toBeVisible()
   })

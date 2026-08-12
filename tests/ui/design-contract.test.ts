@@ -334,6 +334,54 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     // 气泡的底色由 `.turn.user .bubble` 给；标签若被删掉，这里就该红
     expect(read("views.tsx")).toMatch(/who.*sr-only|sr-only.*who/)
   })
+
+  /**
+   * **图标不许用 emoji**（2026-08-12）。
+   *
+   * 作者：*「我们的图标也没有 workbuddy 好看……他们的图标质感非常的棒。」*
+   * 量出来的根因不是画得好不好，是**用错了材料**：
+   * 我们那几个 `💬` `📁` `＋` 是**彩色字形**——
+   *
+   *   1. 它吃不到 `currentColor`，于是永远脱离 `.7 / .5 / .3` 那四档层次；
+   *   2. 它跟着操作系统的字体走，**同一份代码在两台机器上长得不一样**；
+   *   3. 它的基线与粗细由字体决定，与旁边的字对不齐。
+   *
+   * 所以规则不是「画好看点」（那不可判定），是**材料只许用内联 SVG**
+   * ——`src/ui/icons.tsx`。这一条判得了，就该有扫描。
+   *
+   * **只扫装饰位**：`aria-label` / 文案里出现 emoji 是另一回事，
+   * 那是内容，不是图标。
+   */
+  it("**装饰位不许出现 emoji** —— 它吃不到 currentColor，永远脱离那四档层次", () => {
+    // 常见的「拿字符当图标」：装饰 span 里、或 glyph 类里
+    const 装饰位 = /aria-hidden="true"\s*>\s*([^<{]+)</
+    const emoji = /[\u{1F300}-\u{1FAFF}\u{2190}-\u{2BFF}\u{FE0F}\u{FF0B}]/u
+    for (const f of tsxFiles()) {
+      const hits = findLines(read(f), (l) => {
+        const m = 装饰位.exec(l)
+        return m !== null && emoji.test(m[1]!)
+      })
+      expect(hits, `${f} 的装饰位用了 emoji 当图标。图标一律走 src/ui/icons.tsx`).toEqual([])
+    }
+  })
+
+  /**
+   * **图标一律 16×16 的实心 SVG**（2026-08-12，CDP 实测 WorkBuddy）。
+   *
+   * 它全站 60 个 `<svg>`，主力是 `viewBox="0 0 16 16"` + `fill="currentColor"`
+   * + `stroke="none"`。**我原本猜它是线性描边，量出来正好相反。**
+   *
+   * 实心比描边强在一处、且只在这一处：**它跟着文字色走**。
+   * `stroke-width` 是绝对的，颜色一淡描边就先散掉；
+   * 实心图形淡下去仍然是同一个形状。
+   */
+  it("**icons.tsx 只画实心 16×16** —— 描边图标在淡色档上会先散掉", () => {
+    const src = read("icons.tsx")
+    expect(src, "画布必须是 16×16").toMatch(/viewBox="0 0 16 16"/)
+    expect(src).toMatch(/fill="currentColor"/)
+    const 描边 = findLines(src, (l) => /stroke=|strokeWidth=/.test(l))
+    expect(描边, "icons.tsx 出现了描边。实心才跟得住 .7/.5/.3 那四档").toEqual([])
+  })
 })
 
 describe("设计契约 · 引用的令牌必须真的存在", () => {

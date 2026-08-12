@@ -34,7 +34,7 @@ async function palette(page: import("@playwright/test").Page) {
    * 「新建会话」可用意味着项目已经到位，那时应用才真的可交互。
    * 与 `cli-agent.spec.ts` 学到的是同一条。
    */
-  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await page.keyboard.press(K)
   return page.getByRole("dialog", { name: "命令面板" })
 }

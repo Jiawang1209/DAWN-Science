@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; cat > e2e/task.spec.ts <<'EOF'\n/**\n * 新建任务（T2/T3）。**跑真实构建产物。**\n *\n * 作者：*「我也要 workbuddy 的新建任务……如果在任务里面不设置任何工作目录的话，\n * 那么其实就是我们的普通对话。」*\n *\n * 所以这条盯的是**那句话本身**：点一下，不问路径，直接能聊。\n */\nimport { test, expect } from \"./fixtures.js\"\n\ntest(\"**点「新建任务」就能聊** —— 不问工作路径\", async ({ dawn }) => {\n  const { page } = dawn\n\n  await page.getByRole(\"button\", { name: \"新建任务\" }).click()\n\n  // 建完就进对话——**不该让人再点一次才进得去**\n  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })\n\n  await page.getByPlaceholder(/回车发送/).fill(\"你好\")\n  await page.getByRole(\"button\", { name: \"发送\", exact: true }).click()\n  await expect(page.locator(\".turns\")).toContainText(\"假模型已应答\", { timeout: 30_000 })\n  // 写权那条路也要通——它此前在四个地方各写了一遍，漏一个就是「点了没反应」\n  await expect(page.getByText(/写入被拒/)).toHaveCount(0)\n})\n\ntest(\"**任务出现在侧栏，且不显示那个用户没选过的目录**\", async ({ dawn }) => {\n  const { page } = dawn\n  await page.getByRole(\"button\", { name: \"新建任务\" }).click()\n  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })\n\n  const 行 = page.locator(\".task-row\")\n  await expect(行).toHaveCount(1)\n  await expect(page.getByText(/^任务/)).toBeVisible()\n\n  /**\n   * **没设路径 = 普通对话，那一格什么都不写。**\n   *\n   * 服务端确实给了它一个目录（agent 要能读写），但那是实现细节——\n   * 摆出来只会让人看见一个自己从没选过的路径，\n   * 而那正是此前「临时会话」让人困惑的地方。\n   */\n  await expect(行.locator(\".task-ws\")).toHaveCount(0)\n})\nEOF\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1 && npx playwright test e2e/task.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "npm test 2>&1 | tail -8",
+    "buildCommand": "npm run build 2>&1|tail -1 && npx playwright test e2e/session-switch.spec.ts e2e/session-resume.spec.ts e2e/lease-keepalive.spec.ts e2e/delete-project.spec.ts e2e/cost.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\"",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -8; echo \"=== e2e ===\"; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2e2.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2e2.log | tail -20",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -232,9 +232,21 @@
   },
   "hotPaths": [
     {
+      "path": "src/ui/views.tsx",
+      "accessCount": 25,
+      "lastAccessed": 1786530666285,
+      "type": "file"
+    },
+    {
       "path": "src/ui/styles.css",
-      "accessCount": 7,
-      "lastAccessed": 1786524130125,
+      "accessCount": 9,
+      "lastAccessed": 1786530678587,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/App.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1786531166940,
       "type": "file"
     },
     {
@@ -244,15 +256,57 @@
       "type": "file"
     },
     {
-      "path": "e2e/__screenshots__/对话-亮色-darwin.png",
-      "accessCount": 1,
-      "lastAccessed": 1786523742687,
+      "path": "docs/superpowers/plans/2026-08-12-task-model.md",
+      "accessCount": 3,
+      "lastAccessed": 1786525196724,
       "type": "file"
     },
     {
-      "path": "src/ui/views.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1786523826905,
+      "path": "e2e/__screenshots__/对话-亮色-darwin.png",
+      "accessCount": 3,
+      "lastAccessed": 1786530729080,
+      "type": "file"
+    },
+    {
+      "path": "e2e/zz-probe.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786525276442,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/icons.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1786526595080,
+      "type": "file"
+    },
+    {
+      "path": "e2e/sidebar-layout.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786526949952,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/app-mvp.test.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1786527239362,
+      "type": "file"
+    },
+    {
+      "path": "e2e/fixtures.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786527929124,
+      "type": "file"
+    },
+    {
+      "path": "src/store/tasks.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786530216282,
+      "type": "file"
+    },
+    {
+      "path": "docs/DEVELOPMENT_HISTORY.md",
+      "accessCount": 2,
+      "lastAccessed": 1786530776136,
       "type": "file"
     },
     {
@@ -274,27 +328,51 @@
       "type": "file"
     },
     {
-      "path": "e2e/zz-probe.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786524821895,
-      "type": "file"
-    },
-    {
       "path": "e2e/markdown-render.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1786524897784,
       "type": "file"
     },
     {
-      "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 1,
-      "lastAccessed": 1786524970034,
-      "type": "file"
-    },
-    {
       "path": "docs/REFERENCES.md",
       "accessCount": 1,
       "lastAccessed": 1786524993218,
+      "type": "file"
+    },
+    {
+      "path": "test-results/probe-1-点完新建任务.png",
+      "accessCount": 1,
+      "lastAccessed": 1786525295940,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/format.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786525530064,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/design-contract.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786526559021,
+      "type": "file"
+    },
+    {
+      "path": "e2e/task.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786526665729,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/views.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1786527602286,
+      "type": "file"
+    },
+    {
+      "path": "src/workbench/backend.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786529365895,
       "type": "file"
     }
   ],

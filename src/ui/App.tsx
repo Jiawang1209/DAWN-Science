@@ -593,20 +593,36 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 先聊起来，需要落到某个目录再设（`setTaskWorkspace`）。
    * 那正是他定的形状：*「不设置任何工作目录的话，就是我们的普通对话。」*
    */
-  const 新建任务 = async () => {
+  const 新建任务 = async (workspace?: string) => {
     const agentId = agentIds[0]
     if (!agentId) {
       note("配置里还没有可用的 agent——先去设置里加一个")
       return
     }
+    /**
+     * **记下按下时人在哪一屏**（2026-08-12 补上，与 `startSession` 同一条）。
+     *
+     * 漏掉这一句的后果是：「按下新建任务 → 还没建好 → 人切到项目概览 →
+     * 回调到了」会把他**从刚打开的那一屏上拽走**，而且之后没有任何东西
+     * 把他送回去。这条路在 `startSession` 上 2026-08-09 就修过一次，
+     * 我新写这条时**把它落下了**——`app-mvp` 里那条用例当场抓住。
+     *
+     * 它在 e2e 全量跑里出现过两次，单独跑必绿：
+     * **「只在忙的时候错」不是偶发，是窗口小。**
+     */
+    const from = $view.get()
     try {
       const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
         agentId,
+        // **不给就是不给**：`workspace: undefined` 与「没设」是同一件事，
+        // 而空串会被记成「设了一个空路径」——那是第三种状态，没人想要
+        ...(workspace ? { workspace } : {}),
       })
       await loadTasks(client)
       if (t.sessionId) {
         setActiveSessionId(t.sessionId)
-        setView("conversation")
+        // 人还在原地才进对话。**他自己切走了就尊重他的选择**
+        if ($view.get() === from) setView("conversation")
         // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
         await 取写权(t.sessionId)
       }
@@ -823,6 +839,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               // **临时会话不跟着当前项目走**，删完得单独重取，否则那一行还挂着
               void loadTempSessions(client)
               void loadProjects(client)
+              // **任务列也要重取**（T3-a）：侧栏那两栏都是从它长出来的，
+              // 不重取的话删掉的那一行还在，点进去是一段不存在的会话
+              void loadTasks(client)
             })
             .catch(fail)
         },
@@ -966,6 +985,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   setDockSessionId(undefined)
                   setDockOpen(false)
                 }
+                /**
+                 * **任务与临时会话都要重取**（T3-a，2026-08-12）。
+                 *
+                 * 侧栏那两栏是从任务长出来的。只重取项目的话，
+                 * **被删掉那些对话的行还挂在侧栏上**，而且它们的路径还会
+                 * 把那个已经不存在的项目继续撑在那儿——
+                 * 与 2026-08-11 补的那条（「项目没了会话还留着」）是同一种病。
+                 */
+                void loadTempSessions(client)
+                void loadTasks(client)
                 return loadProjects(client)
               })
               .catch(fail)
@@ -1556,16 +1585,62 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }
           tasks={tasks}
           onNewTask={() => void 新建任务()}
+          onNewTaskIn={(workspace) => void 新建任务(workspace)}
           onPickTask={(t) => {
             if (!t.sessionId) {
               // **没有会话就说清楚**：那是「还没拉起来」，不是点了没反应
               note("这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）")
               return
             }
+            /**
+             * **跟着切项目**（T3-a，2026-08-12）。
+             *
+             * 账本、产出、git 事实全按项目归集，「项目概览 / 文件」两个入口
+             * 也只在有当前项目时才出现。不切的话，点进一段有工作路径的对话，
+             * 概览显示的是**上一个项目**的数字——
+             * **一份摆在错的地方的真数据，比「尚未记录」更坏。**
+             */
+            const s =
+              tempSessions.find((x) => x.sessionId === t.sessionId) ??
+              sessions.find((x) => x.sessionId === t.sessionId)
+            /**
+             * **只有带工作路径的才切**（2026-08-12 收窄）。
+             *
+             * 第一版对所有任务都切，于是点一段**普通对话**会把当前项目
+             * 换成那个「临时会话」项目——三条 e2e 当场红：切回旧对话之后
+             * 转录是空的（换项目会重取会话列表，把正在挂的那一段冲掉）。
+             *
+             * 而且语义上也不该切：普通对话**没有用户项目**，
+             * 把概览指到一个 scratch 目录，等于摆一份指着错地方的真数据。
+             */
+            if (t.workspace && s?.projectId) setActiveProjectId(s.projectId)
             setActiveSessionId(t.sessionId)
             setView("conversation")
           }}
           {...(sessionId ? { activeTaskId: tasks.find((t) => t.sessionId === sessionId)?.taskId } : {})}
+          /**
+           * 任务行要拿到会话摘要才能有删除/改名/置顶/挪动（T3-a）。
+           *
+           * **两拨都要查**：`tempSessions` 是不属于用户项目的那些（新建任务
+           * 走的就是这条），`sessions` 是当前展开项目里的——迁移过来的老任务在那儿。
+           * 只查一拨的话，另一拨那些行会安静地退化成一行纯文字，
+           * **而「有的行有 ⋯ 有的行没有」比全都没有更难发现**。
+           */
+          sessionOf={(id) =>
+            tempSessions.find((x) => x.sessionId === id) ??
+            sessions.find((x) => x.sessionId === id)
+          }
+          /**
+           * 顺序**由会话那一套说了算**（置顶／上下挪／拖拽改的都是它）。
+           * 两张表各有一套次序，照任务那一套排的话，症状是
+           * **点了置顶什么都不动**——本项目已经吃过三回这种「点了没反应」。
+           */
+          sessionRank={(id) => {
+            const i = tempSessions.findIndex((x) => x.sessionId === id)
+            if (i >= 0) return i
+            const j = sessions.findIndex((x) => x.sessionId === id)
+            return j >= 0 ? tempSessions.length + j : -1
+          }}
           onOpenProject={actions.openProject}
           /**
            * **顶上那颗回首页，不直接建**（2026-08-11）——

@@ -38,7 +38,7 @@ import { test, expect } from "./fixtures.js"
  */
 async function startShell(page: import("@playwright/test").Page): Promise<void> {
   await expect(page.locator(".app-shell")).toBeVisible()
-  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   /**
    * **2026-08-11：命令面板里不再有「新建会话：shell」。**
    *

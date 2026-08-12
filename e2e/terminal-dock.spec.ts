@@ -12,7 +12,7 @@
  *   3. **路径是项目文件夹**——这条只有真跑一次才知道，
  *      因为 cwd 是 pty 运行时从会话的工作区取的，界面上看不出来
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 在项目里开会话 } from "./fixtures.js"
 import { existsSync, rmSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -113,7 +113,18 @@ test("**终端不在侧栏，在对话这一侧**", async ({ dawn }) => {
 test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
   const { page } = dawn
 
-  // 把唯一那个项目删掉：此后没有任何项目
+  /**
+   * 把唯一那个项目删掉：此后**真的**没有任何项目。
+   *
+   * **多了一步「先把它显出来」**（2026-08-12，T3-a）：项目那一栏现在是
+   * 从任务的路径长出来的，而夹具启动时建的那个项目还没有任何任务指着它——
+   * 于是侧栏上看不见它，但**记录还在，终端仍然会开在那儿**。
+   * 「侧栏上没有」不等于「没有」，这条用例要的是后者。
+   *
+   * `在项目里开会话` 用的正是夹具那个项目的路径（`open()` 同路径复用同一条），
+   * 所以显出来的就是它本人，删掉之后一个都不剩。
+   */
+  await 在项目里开会话(page)
   await page.getByRole("button", { name: /删除项目：/ }).click()
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
   await expect(page.locator(".proj-item")).toHaveCount(0)

@@ -129,6 +129,25 @@ export class TaskStore {
     this.db.prepare(`DELETE FROM tasks WHERE id = ?`).run(id)
   }
 
+  /**
+   * 收掉这些会话对应的任务（T3-a，2026-08-12）。
+   *
+   * **删会话必须连着删任务**：任务是「一段对话 + 一个可选的路径」，
+   * 会话没了，那段对话就没了。不删的话侧栏上会挂着一行指向死会话的
+   * 「新任务」——点进去什么都没有，而且**那一行还会把整个项目撑在那儿**
+   * （项目是从任务的路径长出来的）。e2e 的两条删除用例当场抓到。
+   *
+   * 返回删掉几条：调用方要拿它决定「还剩多少」那句话怎么说。
+   */
+  removeBySessions(sessionIds: readonly string[]): number {
+    if (sessionIds.length === 0) return 0
+    const 占位 = sessionIds.map(() => "?").join(",")
+    const r = this.db
+      .prepare(`DELETE FROM tasks WHERE session_id IN (${占位})`)
+      .run(...sessionIds)
+    return r.changes
+  }
+
   /** 下一个排序号。**新的排在最上面**（列表是倒序的） */
   nextSortOrder(): number {
     const row = this.db.prepare(`SELECT MAX(sort_order) AS m FROM tasks`).get() as {

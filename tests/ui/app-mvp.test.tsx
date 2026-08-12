@@ -99,6 +99,8 @@ function harness(
   const projects = [...(over.projects ?? [])]
   const runs = over.runs ?? []
   const sessions: unknown[] = []
+  /** 任务（T3-a）。侧栏上唯一那颗入口造出来的东西 */
+  const tasks: { taskId: string; workspace?: string; sessionId?: string; pinned: boolean; sortOrder: number; createdAt: string }[] = []
 
   const pickDirectory = vi.fn(async () => (over.pick === undefined ? "/w/proj" : over.pick))
 
@@ -166,6 +168,33 @@ function harness(
         sessions.push(made)
         return made
       }
+      /**
+       * **任务这条路**（T3-a，2026-08-12）。侧栏上唯一那颗入口走它。
+       *
+       * 与上面两条共用同一份假会话：这些用例问的是
+       * 「说一句话看不看得见回复」，与它归在哪一栏无关。
+       */
+      case "createTask": {
+        const made = over.cliAgent
+          ? { ...SESSION, agentId: "claude", kind: "cli" as const }
+          : over.pty
+            ? { ...SESSION, agentId: "claude", kind: "pty" as const }
+            : SESSION
+        sessions.push(made)
+        const ws = (req as { workspace?: string }).workspace
+        const t = {
+          taskId: `t${tasks.length + 1}`,
+          ...(ws ? { workspace: ws } : {}),
+          sessionId: made.sessionId,
+          pinned: false,
+          sortOrder: tasks.length + 1,
+          createdAt: "2026-08-12T00:00:00Z",
+        }
+        tasks.push(t)
+        return t
+      }
+      case "listTasks":
+        return tasks
       case "listTemporarySessions":
         return sessions
       case "subscribeSession":
@@ -187,7 +216,7 @@ function harness(
 
   const invoke = async (op: string, req: unknown): Promise<RawResponse> => {
     calls.push({ op, req })
-    if ((op === "createSession" || op === "createTemporarySession") && over.deferCreateSession) {
+    if ((op === "createSession" || op === "createTemporarySession" || op === "createTask") && over.deferCreateSession) {
       await new Promise<void>((r) => (releaseCreate = r))
     }
     const raw = data(op, req)
@@ -236,41 +265,46 @@ const agentSays = (text: string, revision: number, final = false): SessionUpdate
   }) as SessionUpdate
 
 /**
- * 点「新建会话」→ 回首页 → 在首页上挑一个开始（2026-08-11 起是两步）。
+ * 开一段**没有工作路径**的对话（T3-a 起就是「新建任务」这一颗）。
+ *
+ * 2026-08-12 之前是两步：「新建会话」→ 首页上挑一个 LLM →「开始」。
+ * 现在一步——作者量的 WorkBuddy 就是这样：
+ * *「新建任务之后，直接就是干净的对话窗口。」*
+ * 挑 LLM 那一步搬到了 composer 的 pill 上（也是作者定的位置）。
  */
 async function 从首页开始(): Promise<void> {
-  fireEvent.click(await screen.findByRole("button", { name: "新建会话" }))
-  fireEvent.click(await screen.findByRole("button", { name: /开始/ }))
+  fireEvent.click(await screen.findByRole("button", { name: "新建任务" }))
 }
 
-/** 走完「打开项目 → 新建会话」。 */
+/** 走到「对话已经挂上、能说话了」。 */
 async function openAndStart(h: Harness) {
   render(<App client={h.client} />)
-  fireEvent.click(await screen.findByRole("button", { name: "新建项目" }))
-  await waitFor(() => expect(h.calls.some((c) => c.op === "openProject")).toBe(true))
-
-  /**
-   * **2026-08-11：侧栏那颗「新建会话」回首页，不直接建。**
-   *
-   * 作者：*「点击新会话的时候，其实应该出现的是 App 的首页……
-   * 我应该是直接可以重新选择 LLM。」*
-   * 所以要走完两步：回首页 → 在首页上挑一个开始。
-   */
   await 从首页开始()
-  await waitFor(() =>
-    expect(h.calls.some((c) => c.op === "createSession" || c.op === "createTemporarySession")).toBe(true),
-  )
-  // **等到会话真的挂上再返回**。只等 createSession 落在 calls 里是不够的——
+  await waitFor(() => expect(h.calls.some((c) => c.op === "createTask")).toBe(true))
+  // **等到会话真的挂上再返回**。只等 createTask 落在 calls 里是不够的——
   // 那一刻 setSessionId 还没被 React 处理完，事件会因为「不是当前会话」被滤掉
   await screen.findByPlaceholderText(/回车发送/)
   await waitFor(() => expect(h.calls.some((c) => c.op === "subscribeSession")).toBe(true))
+}
+
+/**
+ * 从命令面板里跑一条命令。
+ *
+ * **「打开文件夹为新项目」不在侧栏上了**（T3-a：入口只剩「新建任务」一个），
+ * 但**能力没丢**——它在命令面板里。本项目的纪律是
+ * 「悬停才出现的东西必须另有一个入口（当前行常驻、命令面板、或者带上文字）」，
+ * 命令面板正是那个「另一个入口」。它真正的家是对话里那个工作目录入口（T3-b）。
+ */
+async function 从命令面板(标题: RegExp): Promise<void> {
+  fireEvent.keyDown(document, { key: "k", metaKey: true })
+  fireEvent.click(await screen.findByText(标题))
 }
 
 describe("MVP 主路径 · 打开项目", () => {
   it("用原生目录选择器，不是让人往 prompt 里粘路径", async () => {
     const h = harness()
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: "新建项目" }))
+    await 从命令面板(/打开文件夹为新项目/)
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
     expect(h.calls.find((c) => c.op === "openProject")?.req).toEqual({ workspace: "/w/proj" })
   })
@@ -278,7 +312,7 @@ describe("MVP 主路径 · 打开项目", () => {
   it("用户取消选择 ⇒ 什么都不做，不报错", async () => {
     const h = harness({ pick: null })
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: "新建项目" }))
+    await 从命令面板(/打开文件夹为新项目/)
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
     expect(h.calls.some((c) => c.op === "openProject")).toBe(false)
   })
@@ -286,7 +320,7 @@ describe("MVP 主路径 · 打开项目", () => {
   it("重开 app 时自动选中已有项目 —— 有项目却还要求你再打开一次文件夹是荒谬的", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
-    const btn = (await screen.findByRole("button", { name: "新建会话" })) as HTMLButtonElement
+    const btn = (await screen.findByRole("button", { name: "新建任务" })) as HTMLButtonElement
     await waitFor(() => expect(btn.disabled).toBe(false))
   })
 })
@@ -345,7 +379,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
   it("产出栏显示的是 client 返回的数据，不是写死的字面量", async () => {
     // 上一版这里是 `facts={undefined}`，于是永远显示「无法确定」，
     // 三条硬要求里的第一条在真实界面上永远不会出现
-    const h = harness({ runs: [RUN] })
+    const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
     fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
 
@@ -362,7 +396,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
    * 不是成本。下面那条测试盯的正是产出，与这条不冲突。
    */
   it("成本栏显示真实数字", async () => {
-    const h = harness({ runs: [{ ...RUN, cost: COST }] })
+    const h = harness({ runs: [{ ...RUN, cost: COST }], projects: [proj("/w/proj")] })
     await openAndStart(h)
     fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
     /**
@@ -374,7 +408,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
   })
 
   it("取了 getRun —— 产出与成本只有它带得来，listRuns 只给摘要", async () => {
-    const h = harness({ runs: [RUN] })
+    const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
   })
@@ -393,7 +427,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
    * 理由记在 DEVELOPMENT_HISTORY。
    */
   it("**窗口重新获得焦点时重取账本** —— 产出栏是现算的，切出去再回来它已经旧了", async () => {
-    const h = harness({ runs: [RUN] })
+    const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
     fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
@@ -408,7 +442,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
   })
 
   it("**没开着项目概览就不重取** —— 没人在看的时候不该打 IPC", async () => {
-    const h = harness({ runs: [RUN] })
+    const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
     // 停在对话页，不打开概览
     const before = h.calls.filter((c) => c.op === "listRuns").length
@@ -476,7 +510,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
 
     await 从首页开始()
     await waitFor(() =>
-    expect(h.calls.some((c) => c.op === "createSession" || c.op === "createTemporarySession")).toBe(true),
+    expect(h.calls.some((c) => c.op === "createTask")).toBe(true),
   )
 
     // 会话还没建好，用户已经切走了
@@ -613,7 +647,7 @@ describe("cli 会话也能换模型（①-C 后续）", () => {
     await waitFor(() => expect(h.calls.some((c) => c.op === "setSessionModel")).toBe(true))
     // **不是新建**：会话数没变（顶上那颗 2026-08-11 起建的是临时会话）
     expect(
-      h.calls.filter((c) => c.op === "createSession" || c.op === "createTemporarySession"),
+      h.calls.filter((c) => c.op === "createTask"),
     ).toHaveLength(1)
   })
 })

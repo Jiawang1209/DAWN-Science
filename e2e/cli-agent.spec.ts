@@ -44,7 +44,7 @@ const PROVIDERS = `agents:
  */
 async function startFakeClaude(page: import("@playwright/test").Page): Promise<void> {
   await expect(page.locator(".app-shell")).toBeVisible()
-  await expect(page.getByRole("button", { name: /新建会话/ })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await page.keyboard.press("Meta+k")
   await page.getByRole("option", { name: "新建会话：claude" }).click()
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 30_000 })

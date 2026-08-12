@@ -18,7 +18,8 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
-import { formatDuration, formatTokens, 短路径 } from "./format.js"
+import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
+import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -35,43 +36,20 @@ function clockOf(iso: string): string {
 }
 
 /**
- * 侧栏里那两个图标（2026-08-11）。
+ * 侧栏里那两个图标（2026-08-11 起有，2026-08-12 改成实心）。
  *
- * 作者：*「对话的话，前面有一个交流的图标；项目的话，前面有一个文件夹的图标。
- * 模仿一下 codex 的页面。」*
+ * 作者：*「对话的话，前面有一个交流的图标；项目的话，前面有一个文件夹的图标。」*
+ * 后来又提：*「我们的图标也没有 workbuddy 好看……他们的图标质感非常的棒。」*
  *
- * **内联 SVG，不引入任何图片资源**（与欢迎屏那个「D」同一条：规范 §3.4）。
- * `currentColor` 让它跟着行的文字色走——选中、悬停、暗色主题都不用另外配一份。
- * 16×16、`stroke-width: 1.5`：与 12px 的行文字放在一起不抢戏。
+ * 于是这两个改成走 `icons.tsx`——**实心、`fill: currentColor`**，
+ * 那份文件的文件头写了为什么描边做不到同一件事。
  */
 function 会话图标() {
-  return (
-    <svg className="row-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      {/* 一个对话气泡：交流 */}
-      <path
-        d="M13.5 8.2c0 2.5-2.5 4.5-5.5 4.5-.7 0-1.4-.1-2-.3L2.5 13.5l1-2.4C2.6 10.3 2 9.3 2 8.2 2 5.7 4.5 3.7 7.5 3.7s6 2 6 4.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+  return <对话图标 className="row-icon" />
 }
 
 function 项目图标() {
-  return (
-    <svg className="row-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      {/* 一个文件夹 */}
-      <path
-        d="M2 4.5c0-.6.4-1 1-1h3.2c.3 0 .6.1.8.4l.8 1.1H13c.6 0 1 .4 1 1v5.5c0 .6-.4 1-1 1H3c-.6 0-1-.4-1-1v-7Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+  return <文件夹图标 className="row-icon" />
 }
 
 /**
@@ -335,6 +313,9 @@ export function SessionSidebar({
   onNewTask,
   onPickTask,
   activeTaskId,
+  sessionOf,
+  sessionRank,
+  onNewTaskIn,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -403,6 +384,21 @@ export function SessionSidebar({
   onNewTask?: (() => void) | undefined
   onPickTask?: ((t: TaskSummary) => void) | undefined
   activeTaskId?: string | undefined
+  /**
+   * 任务的会话摘要从哪来（T3-a）。
+   *
+   * **侧栏不自己取数**：它只知道「这个 sessionId 对应哪一条摘要」。
+   * 查不到就退回一行纯文字——**不假装那一行有删除和改名**。
+   */
+  sessionOf?: ((sessionId: string) => SessionSummary | undefined) | undefined
+  /**
+   * 这段会话在会话列表里排第几（T3-a）。**列表的顺序由它决定**，
+   * 因为置顶／上下挪／拖拽改的都是会话那一套次序。
+   * 排不上号返回 `-1` 或 `undefined`。
+   */
+  sessionRank?: ((sessionId: string) => number) | undefined
+  /** 在某个已有的工作路径下再开一段任务。**不给就不画那颗 `＋`** */
+  onNewTaskIn?: ((workspace: string) => void) | undefined
 }) {
   const active = projects.find((p) => p.projectId === activeProjectId)
   /**
@@ -420,6 +416,124 @@ export function SessionSidebar({
    */
   const [dragging, setDragging] = useState<string | undefined>(undefined)
   const [over, setOver] = useState<string | undefined>(undefined)
+
+  /**
+   * **哪个项目展开着**（T3-a）。默认收起，但**当前那段对话所在的项目自动展开**——
+   * 否则点进一段对话之后，侧栏上找不到它在哪，人会以为它没了。
+   */
+  const [展开的项目, 设展开] = useState<string | undefined>(undefined)
+
+  /**
+   * 归类：**有路径 → 项目，没路径 → 会话**（作者 2026-08-12 定案）。
+   *
+   * 分组在这里算，不在后端算——**它是一个显示上的归类，不是一张新表**。
+   * 后端只记「这个任务的路径是什么」，多了一张表就多了一处会与事实脱节的地方。
+   */
+  /**
+   * **按会话的顺序排，不按任务的**（T3-a，2026-08-12）。
+   *
+   * 两张表各有一套 `pinned` / `sortOrder`，而**置顶、上下挪、拖拽改的是会话那一套**。
+   * 照任务那一套排的话，症状是**点了置顶什么都不动**——
+   * 又一次「能点、没报错、然后什么都没发生」，本项目已经吃过三回。
+   *
+   * 排不上号的（拿不到会话摘要）沉到最后，且彼此保持原有次序。
+   */
+  const 名次 = (t: TaskSummary) => {
+    const r = t.sessionId ? sessionRank?.(t.sessionId) : undefined
+    return r === undefined || r < 0 ? Number.MAX_SAFE_INTEGER : r
+  }
+  const 全部任务 = [...(tasks ?? [])].sort((a, b) => 名次(a) - 名次(b))
+  const 散的 = 全部任务.filter((t) => !t.workspace)
+  const 项目组: [string, TaskSummary[]][] = []
+  for (const t of 全部任务) {
+    if (!t.workspace) continue
+    // **同一路径合并成一条**：作者选的是「一个项目底下挂两段」，不是两条同名并列
+    const 已有 = 项目组.find(([p]) => p === t.workspace)
+    if (已有) 已有[1].push(t)
+    else 项目组.push([t.workspace, [t]])
+  }
+
+  /**
+   * **任务行就是会话行**（T3-a）。
+   *
+   * 不另写一种行：删除、改名、置顶、上下挪都长在 `SessionRow` 上，
+   * 自绘一行就会把它们**一次性全丢掉**——而作者已经为这件事报过一次错
+   * （*「我们现在在服务器的对话，我发现不能删除，也不能挪动顺序」*，
+   * 那时远端那一列正是自绘的）。
+   *
+   * 拿不到会话摘要时退回一行纯文字：**不画一个点了没反应的 `⋯`**。
+   */
+  /**
+   * **它是一个函数，不是一个组件——这一点是必须的。**
+   *
+   * 写成 `const 任务行 = (...) => <li>…` 再当 `<任务行 />` 用的话，
+   * 它在**每次渲染都是一个新的组件类型**，React 于是把整列行卸载重挂。
+   * 症状不是「慢」，是**拖拽永远落不下去**：`dragstart` 之后第一次重渲染
+   * 就把那个元素换掉了。e2e 的两条拖拽用例当场超时，
+   * 而单元测试全绿——它们不拖。
+   *
+   * 直接调用（`任务行(t)`）返回的是元素，参与的是父组件自己的那次渲染，
+   * 不产生新类型，也就不重挂。
+   */
+  /**
+   * 这一组任务落在哪个项目上。**从会话摘要取，不在任务上再记一份**——
+   * 同一件事记两处，迟早有一处是旧的。
+   */
+  const 项目id = (组: TaskSummary[]): string | undefined => {
+    for (const t of 组) {
+      const s = t.sessionId ? sessionOf?.(t.sessionId) : undefined
+      if (s?.projectId) return s.projectId
+    }
+    return undefined
+  }
+
+  const 任务行 = (task: TaskSummary) => {
+    const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
+    if (!s) {
+      return (
+        <li key={task.taskId}>
+          <Row
+            active={task.taskId === activeTaskId}
+            className="task-row"
+            onClick={() => onPickTask?.(task)}
+          >
+            <对话图标 className="row-icon" />
+            <span className="name">{task.title ?? "新任务"}</span>
+          </Row>
+        </li>
+      )
+    }
+    return (
+      <SessionRow
+        key={task.taskId}
+        session={s}
+        active={s.sessionId === activeSessionId && view === "conversation"}
+        current={s.sessionId === activeSessionId}
+        {...(agentLabel ? { label: agentLabel } : {})}
+        onPick={() => onPickTask?.(task)}
+        {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
+        {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
+        {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
+        {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
+        {...(onReorderSessions
+          ? {
+              drag: {
+                onStart: () => setDragging(s.sessionId),
+                onOver: () => setOver(s.sessionId),
+                onDrop: () => drop(s.sessionId),
+                // **拖到别处松手也要收摊**，否则那条落点线会一直挂着
+                onEnd: () => {
+                  setDragging(undefined)
+                  setOver(undefined)
+                },
+                over: over === s.sessionId && dragging !== undefined && dragging !== s.sessionId,
+                self: dragging === s.sessionId,
+              },
+            }
+          : {})}
+      />
+    )
+  }
 
   /**
    * 把 `dragging` 挪到 `target` 的位置，算出新的完整顺序。
@@ -464,63 +578,26 @@ export function SessionSidebar({
         * 那正是此前「临时会话」在做的事，只是它把「有没有路径」这件事
         * 藏在了一个用户看不见的概念里。
         */}
-      {onNewTask ? (
-        <div className="side-actions">
-          <Row className="side-action" onClick={onNewTask}>
-            <span className="glyph" aria-hidden="true">＋</span>
-            <span className="name">新建任务</span>
-          </Row>
-        </div>
-      ) : null}
-      {tasks && tasks.length > 0 ? (
-        <>
-          <p className="side-section">
-            任务 <span className="side-count">{tasks.length}</span>
-          </p>
-          <ul className="session-list">
-            {tasks.map((t) => (
-              <li key={t.taskId}>
-                <Row
-                  active={t.taskId === activeTaskId}
-                  className="task-row"
-                  onClick={() => onPickTask?.(t)}
-                >
-                  <span className="glyph" aria-hidden="true">💬</span>
-                  <span className="name">{t.title ?? "新任务"}</span>
-                  {/**
-                   * **有没有工作路径，一眼要看得出来。**
-                   * 没有不是「缺了什么」，是「这是一段普通对话」——
-                   * 所以不显示占位符，什么都不写。
-                   */}
-                  {t.workspace ? (
-                    <span className="task-ws" title={t.workspace}>
-                      {短路径(t.workspace)}
-                    </span>
-                  ) : null}
-                </Row>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
+      {/**
+        * **只有一个入口**（T3-a，作者 2026-08-12 定案）。
+        *
+        * 作者：*「点击完新建任务后，在对话窗口选择文件夹之后，就属于是一个
+        * 项目管理，那么就会归类到左边侧边栏的项目里面。然后如果……不选择文件夹，
+        * 直接对话，那么就属于是一个会话，那么就会归类到左边侧边栏的会话里面。」*
+        *
+        * **动作一个，去处两个——分栏是结果，不是选择。**
+        * 此前这里有三颗按钮（新建任务 / 新建会话 / 新建项目），
+        * 而作者点一次「新建任务」，侧栏冒出**两行**：任务表列一次、
+        * 旧的「对话」列又列一次。**同一段会话被两套列表各画了一遍**，
+        * 他的原话是「我感觉我们目前还没有实现这个功能」。
+        */}
       <div className="side-actions">
-        {/**
-          * **这一颗开的是临时会话**（2026-08-11）。
-          *
-          * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的
-          * 临时会话。」* 所以它不再依赖「当前有没有项目」——
-          * 它自己就会得到一个独立目录。
-          * 想在某个项目里开，走那个项目行上的 `＋`。
-          */}
-        <Row className="side-action" disabled={!fallbackAgent} onClick={() => fallbackAgent && onNewSession(fallbackAgent)}>
-          <span className="glyph" aria-hidden="true">＋</span>
-          <span className="name">新建会话</span>
+        <Row className="side-action" disabled={!fallbackAgent} onClick={onNewTask}>
+          <加号图标 className="row-icon" />
+          <span className="name">新建任务</span>
         </Row>
       </div>
 
-      {/* 此前这里有一句「先打开一个项目文件夹」。**那是一句描述，不是一条出路**——
-          而且它已经不成立了：启动时保证至少有一个默认项目（ProjectManager.ensureDefault） */}
       {agents.length === 0 ? (
         <div className="pad">
           <p className="hint">配置里还没有可用的 agent</p>
@@ -533,127 +610,112 @@ export function SessionSidebar({
       ) : null}
 
       {/**
-        * **上面这一列是临时会话，而且它空着的时候一行都不占**（2026-08-11）。
+        * **项目 = 一个工作路径**（不是一个要新建、要选中的对象）。
         *
-        * 作者：*「没有项目没有会话的时候，新建会话和新建项目是连着的。
-        * 如果有一个临时的会话，那么新建会话和新建项目中间会有一个临时会话。」*
+        * 作者定的第一条：**文件夹即项目身份**——两段对话选了同一个路径，
+        * 是「一个项目底下挂两段」，不是两条同名并列项。它要回答的是
+        * 「我上次在这个目录聊过什么」，而并列的重名条目回答不了。
         *
-        * 所以这里**没有空态占位**，列表也**不撑满剩余高度**——
-        * 两颗按钮之间的距离就等于中间有几条会话，一条不多。
+        * **一条都没有时整块不出现**：一个写着 `(0)` 的标题占一行、什么都没说。
         */}
-      {/**
-        * **分区标题 + 计数**（2026-08-12，学自 WorkBuddy 的 `任务 (5) ⌄`）。
-        *
-        * 我们此前是一列平铺的行，**没有节奏**——扫一眼分不出哪几行是一类。
-        * 计数不是装饰：它回答「我这儿攒了多少东西」，
-        * 而那正是人决定要不要清理的依据。
-        *
-        * **一条都没有时整块不出现**（与列表同一条纪律）：
-        * 一个写着 `(0)` 的标题占一行、什么都没说。
-        */}
-      {sessions.length > 0 ? (
-        <p className="side-section">
-          对话 <span className="side-count">{sessions.length}</span>
-        </p>
+      {项目组.length > 0 ? (
+        <>
+          <p className="side-section">
+            项目 <span className="side-count">{项目组.length}</span>
+          </p>
+          <ul className="proj-list">
+            {项目组.map(([路径, 里面的]) => {
+              const 展开 = 展开的项目 === 路径 || 里面的.some((t) => t.taskId === activeTaskId)
+              return (
+                <li key={路径} className={`proj-item${展开 ? " current" : ""}`}>
+                  <div className="proj-head">
+                    <Row active={展开} onClick={() => 设展开(展开 ? undefined : 路径)}>
+                      <span className="sess">
+                        <span className="name">
+                          {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
+                          <span className="twisty" aria-hidden="true">{展开 ? "▾" : "▸"}</span>
+                          <项目图标 />
+                          {基名(路径)}
+                        </span>
+                        {/* 全路径常驻一行：**同名文件夹到处都是**，只写 basename 分不出哪个是哪个 */}
+                        <span className="sub" title={路径}>{短路径(路径)}</span>
+                      </span>
+                    </Row>
+                    {/**
+                      * **在这个项目里再开一段**（T3-a 保留下来的）。
+                      *
+                      * 没有它，往同一个文件夹加第二段对话就得
+                      * 「新建任务 → 再把同一个路径选一遍」——**它已经知道路径了**。
+                      *
+                      * 措辞刻意避开「新建任务」四个字：侧栏顶上那颗就叫这个，
+                      * 两处同名会让「按名字找按钮」变成靠运气的事，
+                      * 读屏与测试都一样。2026-08-11 撞过一次。
+                      */}
+                    <div className="row-actions">
+                      {onNewTaskIn ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="row-more"
+                          aria-label={`在「${基名(路径)}」里开一段新对话`}
+                          onClick={() => onNewTaskIn(路径)}
+                        >
+                          <加号图标 />
+                        </Button>
+                      ) : null}
+                      {/**
+                        * **删除项目留在这一行上**（作者 2026-08-11 要的）。
+                        *
+                        * *「删除项目的话，项目里面包含的之前的所有对话，则都删除掉了。」*
+                        * 项目在新模型里是**从路径长出来的**，但这个动作不是——
+                        * 它要收掉的是那些对话，而**磁盘上的文件一个都不动**
+                        * （路径是用户自己选的目录，绝对不能删）。
+                        *
+                        * projectId 从它下面第一段会话上取：任务只记路径，
+                        * **不重复记一份项目 id**——两处记同一件事迟早不一致。
+                        */}
+                      {onDeleteProject && 项目id(里面的) ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="row-more"
+                          aria-label={`删除项目：${基名(路径)}`}
+                          onClick={() => onDeleteProject(项目id(里面的)!)}
+                        >
+                          <删除图标 />
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {展开 ? (
+                    <ul className="proj-session-list">
+                      {里面的.map(任务行)}
+                    </ul>
+                  ) : null}
+                </li>
+              )
+            })}
+          </ul>
+        </>
       ) : null}
-      <ul className="session-list">
-        {sessions.length === 0 ? null : (
-          sessions.map((s) => (
-            <SessionRow
-              key={s.sessionId}
-              session={s}
-              active={s.sessionId === activeSessionId && view === "conversation"}
-              current={s.sessionId === activeSessionId}
-              {...(agentLabel ? { label: agentLabel } : {})}
-              onPick={() => onPickSession(s.sessionId)}
-              {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
-              {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
-              {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
-              {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
-              {...(onReorderSessions
-                ? {
-                    drag: {
-                      onStart: () => setDragging(s.sessionId),
-                      onOver: () => setOver(s.sessionId),
-                      onDrop: () => drop(s.sessionId),
-                      // **拖到别处松手也要收摊**，否则那条落点线会一直挂着
-                      onEnd: () => {
-                        setDragging(undefined)
-                        setOver(undefined)
-                      },
-                      over: over === s.sessionId && dragging !== undefined && dragging !== s.sessionId,
-                      self: dragging === s.sessionId,
-                    },
-                  }
-                : {})}
-            />
-          ))
-        )}
-      </ul>
 
       {/**
-        * **项目那一段。** 在会话列表下面——作者要的顺序就是这个：
-        * 「新建会话」领着会话，「新建项目」领着项目。
+        * **会话 = 没给路径的那些。**
+        *
+        * 缺席不是「缺了什么」，是「这是一段普通对话」——所以这一列里
+        * **一个路径占位符都不写**。作者的原话：*「如果在任务里面不设置任何
+        * 工作目录的话，那么其实就是我们的普通对话。」*
         */}
-      <div className="side-actions proj-actions">
-        <Row className="side-action" onClick={onOpenProject}>
-          <span className="glyph" aria-hidden="true">＋</span>
-          <span className="name">新建项目</span>
-        </Row>
-      </div>
-
-      {projects.length > 0 ? (
-        <p className="side-section">
-          项目 <span className="side-count">{projects.length}</span>
-        </p>
+      {散的.length > 0 ? (
+        <>
+          <p className="side-section">
+            会话 <span className="side-count">{散的.length}</span>
+          </p>
+          <ul className="session-list">
+            {散的.map(任务行)}
+          </ul>
+        </>
       ) : null}
-      <ul className="proj-list">
-        {projects.length === 0 ? (
-          <li>
-            <p className="hint pad">还没有项目</p>
-          </li>
-        ) : (
-          projects.map((p) => (
-            <ProjectRow
-              key={p.projectId}
-              project={p}
-              current={p.projectId === activeProjectId}
-              onPick={() => onPickProject(p.projectId)}
-              {...(onDeleteProject ? { onDelete: () => onDeleteProject(p.projectId) } : {})}
-              {...(fallbackAgent
-                ? { onNewSession: () => onNewSessionIn?.(p.projectId, fallbackAgent) }
-                : {})}
-            >
-              {/**
-                * **展开的项目，它的会话就在这里**。
-                * 只有当前那个项目的会话在手上（`listSessions` 是按项目问的），
-                * 所以嵌套只画展开的那一个——**不假装知道别的项目里有什么**。
-                */}
-              <ul className="proj-session-list">
-                {projectSessions.length === 0 ? (
-                  <li>
-                    <p className="hint pad">这个项目里还没有会话</p>
-                  </li>
-                ) : (
-                  projectSessions.map((x) => (
-                    <SessionRow
-                      key={x.sessionId}
-                      session={x}
-                      active={x.sessionId === activeSessionId && view === "conversation"}
-                      current={x.sessionId === activeSessionId}
-                      {...(agentLabel ? { label: agentLabel } : {})}
-                      onPick={() => onPickSession(x.sessionId)}
-                      {...(onDeleteSession ? { onDelete: () => onDeleteSession(x) } : {})}
-                      {...(onRenameSession ? { onRename: (t: string) => onRenameSession(x, t) } : {})}
-                      {...(onPinSession ? { onPin: () => onPinSession(x, !x.pinned) } : {})}
-                    />
-                  ))
-                )}
-              </ul>
-            </ProjectRow>
-          ))
-        )}
-      </ul>
 
       {/**
         * **「远端连接」在项目下面、设置上面**（②-B · R3）。
@@ -667,32 +729,47 @@ export function SessionSidebar({
         */}
       {remote ?? null}
 
-      {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
-      {active ? (
-        <>
-          {/* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */}
-          <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
-            项目概览
-          </Row>
-          {/* 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路 */}
-          <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
-            文件
-          </Row>
-          {/**
-            * **设置在左下角**（2026-08-11，作者提）。
-            * 它与「项目概览 / 文件」是同一类——都是「去另一屏」，所以排在一起。
-            */}
-          {onOpenSettings ? (
-            <Row
-              active={settingsActive ?? false}
-              className="panel-entry"
-              onClick={onOpenSettings}
-            >
-              设置
+      {/**
+        * 底部那一组入口（**2026-08-12 收进一个盒子**）。
+        *
+        * 它们原先是三个各自带 `margin-top: auto` 的兄弟。
+        * 会话列表撑满剩余高度时看不出问题；T3-a 之后列表**空着就一行不占**，
+        * 于是那点剩余空间被三个 `auto` **各分了一份**——
+        * 「项目概览 / 文件 / 设置」在侧栏上摊成了三段，中间空出两大块。
+        *
+        * 收进一个盒子，`auto` 只留一个：它们仍然贴着底，彼此挨着。
+        */}
+      <div className="side-bottom">
+        {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
+        {active ? (
+          <>
+            {/* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */}
+            <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
+              项目概览
             </Row>
-          ) : null}
-        </>
-      ) : null}
+            {/* 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路 */}
+            <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
+              文件
+            </Row>
+          </>
+        ) : null}
+      {/**
+        * **设置常驻，不跟着项目走**（2026-08-12 挪出那个条件，T3-a 顺手修的）。
+        *
+        * 它原本与「项目概览 / 文件」一起挂在 `active ?` 里面——
+        * 那在旧模型下勉强成立（启动就保证有一个默认项目）。
+        * 新模型下一段普通对话**没有用户项目**，于是设置整个消失，
+        * 而状态栏那句提示还写着「去『设置 → 模型服务』加一个」——
+        * **一句指路的话，指向一个不存在的入口**。
+        *
+        * 「项目概览 / 文件」留在条件里是对的：没有工作路径时它们确实无处可看。
+        */}
+        {onOpenSettings ? (
+          <Row active={settingsActive ?? false} className="panel-entry" onClick={onOpenSettings}>
+            设置
+          </Row>
+        ) : null}
+      </div>
     </aside>
   )
 }
@@ -905,7 +982,7 @@ export function AgentPill({
           */}
         {triggerLabel ?? currentLabel ?? (current ? (label ? label(current) : current) : "选择 agent")}
         {kind ? <span className="kind">{KIND_LABEL[kind]}</span> : null}
-        <span aria-hidden="true">▾</span>
+        <下拉图标 />
       </Button>
 
       {open ? (
@@ -1068,7 +1145,7 @@ export function ModelPill({
           * 两处都写一遍只是噪声，而且它们一旦不同步就成了互相打架的两句话。
           */}
         {current?.model ?? "CLI 默认"}
-        <span aria-hidden="true">▾</span>
+        <下拉图标 />
       </Button>
 
       {open ? (
@@ -1596,7 +1673,7 @@ export function ConversationView({
               title="发送"
               disabled={disabled ?? false}
             >
-              <span aria-hidden="true">↑</span>
+              <上箭头图标 />
             </Button>
           </div>
         </div>
@@ -1864,7 +1941,7 @@ export function TranscriptRow({
               title="修改"
               onClick={() => 设编辑(item.text)}
             >
-              <span aria-hidden="true">✎</span>
+              <铅笔图标 />
             </Button>
           ) : null}
           {/**

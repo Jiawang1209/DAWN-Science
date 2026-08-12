@@ -980,6 +980,63 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 侧栏现在是一列项目，删的不一定是当前那个。
    * 不给就删当前那个（项目概览里那个入口就是这么调的）。
    */
+  /**
+   * **批量删除**（2026-08-12，作者：*「会话越来越多了，能否给我来一个
+   * 批量处理的选项，我可以批量删除」*）。
+   *
+   * 走的是**同一个 `deleteSession`**，不是新造一个批量端点：
+   * 「删一段对话」这件事已经有一个家（会停进程、删任务、留账本），
+   * 再写一个批量版就是第二份实现，两份迟早不一致。
+   *
+   * **确认框摆真数字**，并把「不会发生什么」说在前面——
+   * 与单条删除同一条：账本不动。
+   */
+  const askDeleteMany = useCallback(
+    (targets: readonly import("../protocol/index.js").TaskSummary[], done: () => void) => {
+      if (targets.length === 0) return
+      setConfirming({
+        title: `删除这 ${targets.length} 段对话？`,
+        detail: <>会停掉它们的进程，并删掉这些会话与它们的对话记录。</>,
+        safety: <>账本不动：它们对文件做过什么，记录仍然留在「项目概览」里。</>,
+        confirmLabel: `删除 ${targets.length} 段`,
+        onConfirm: () => {
+          /**
+           * **一条条删，不并发**。后端每次删都要停进程、动库、算账本，
+           * 十几条同时发过去只会让失败更难归因——而这里最要紧的是
+           * **哪一条没删掉要说得出来**。
+           */
+          void (async () => {
+            const 没删掉: string[] = []
+            for (const t of targets) {
+              try {
+                /**
+                 * **按 taskId 删**（协议 4.9）。按 sessionId 的话，
+                 * 迁移过来的那些一条都删不掉——界面手上没有它们的会话摘要。
+                 */
+                await client.get("deleteTask", { taskId: t.taskId })
+              } catch {
+                没删掉.push(t.title ?? t.taskId)
+              }
+            }
+            if ($activeSessionId.get() && targets.some((t) => t.sessionId === $activeSessionId.get())) {
+              setActiveSessionId(undefined)
+              setView("conversation")
+            }
+            const pid = $activeProjectId.get()
+            if (pid) await loadSessions(client, pid)
+            await loadTempSessions(client)
+            await loadTasks(client)
+            await loadProjects(client)
+            // **失败必须出声**，而且要说清是哪几条（规格 7.5）
+            if (没删掉.length > 0) note(`有 ${没删掉.length} 段没删掉：${没删掉.join("、")}`)
+            done()
+          })()
+        },
+      })
+    },
+    [client],
+  )
+
   const askDeleteProject = useCallback((projectId?: string) => {
     const pid = projectId ?? $activeProjectId.get()
     if (!pid) return
@@ -1571,6 +1628,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowPanel={() => setView(view === "panel" ? "conversation" : "panel")}
           onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
           onDeleteSession={askDeleteSession}
+          onDeleteMany={askDeleteMany}
+          /**
+           * 单条删除也走 `deleteTask`（2026-08-12）。
+           *
+           * **拿不到会话摘要的那些行只有这一条路**——而那正是
+           * 「历史遗留的对话删不掉」的形状：它们的会话在别的项目里，
+           * 界面手上没有，于是上一版连删除键都画不出来。
+           */
+          onDeleteTask={(t) => askDeleteMany([t], () => {})}
           onRenameSession={renameSession}
           onPinSession={pinSession}
           onMoveSession={moveSession}

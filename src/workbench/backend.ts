@@ -1144,6 +1144,42 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { moved: sessions.move(sessionId, direction) }
     },
 
+    /**
+     * 删掉一个任务（4.9，2026-08-12）。
+     *
+     * 作者：*「历史遗留的对话……我现在无法删除。」*
+     * 根因在界面：它手上只有「当前项目 + 临时」两拨会话摘要，
+     * 迁移过来的任务指向别的项目，于是那些行连删除键都没有。
+     *
+     * **所以删除只收 taskId**——服务端本来就知道它挂在哪段会话上。
+     *
+     * **会话没了也要能删**（`sessionId` 缺省，或那条记录已经不在）：
+     * 那正是「历史遗留」的形状，删不掉就永远卡在列表里。
+     */
+    deleteTask: async ({ taskId }) => {
+      const store = 任务库()
+      const t = store.get(taskId)
+      if (!t) throw fault("not_found", `没有这个任务：${taskId}`)
+
+      let kept = 0
+      if (t.sessionId) {
+        const rec = sessions.get(t.sessionId)
+        if (rec) {
+          await sessions.remove(t.sessionId)
+          events.forget(t.sessionId)
+          baselines.delete(t.sessionId)
+          kept = rec.projectId ? runs.countByProject(rec.projectId) : 0
+        }
+      }
+      store.remove(taskId)
+      /**
+       * **账本留着，并且把还剩多少说出来**（与 `deleteSession` 同一条）。
+       * 一句「已删除」会让人以为历史也一起没了——而它没有，
+       * 这正是这个产品与一个聊天窗口的区别（不变式 5）。
+       */
+      return { ledgerKept: kept }
+    },
+
     deleteSession: async ({ sessionId }) => {
       const rec = sessions.get(sessionId)
       if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)

@@ -172,13 +172,13 @@ describe("模型服务 · 添加", () => {
     const onSet = vi.fn()
     render(面板({ known: ["deepseek", "anthropic"], onSet }))
     fireEvent.click(screen.getByRole("button", { name: /添加模型服务/ }))
-    fireEvent.click(screen.getByRole("button", { name: "添加" }))
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     // 空 key 点下去什么都不会存，所以当场拦下并说明
     expect(screen.getByText(/要填 key/)).toBeDefined()
     expect(onSet).not.toHaveBeenCalled()
 
     fireEvent.change(screen.getByLabelText(/新服务的 API key/), { target: { value: "sk-x" } })
-    fireEvent.click(screen.getByRole("button", { name: "添加" }))
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     expect(onSet).toHaveBeenCalledWith("anthropic", "sk-x")
   })
 
@@ -200,14 +200,14 @@ describe("模型服务 · 添加", () => {
     fireEvent.change(screen.getByLabelText("新服务的端点地址"), {
       target: { value: "http://localhost:8000/v1" },
     })
-    fireEvent.click(screen.getByRole("button", { name: "添加" }))
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     expect(screen.getByText(/至少一个模型 id/)).toBeDefined()
     expect(onSaveConnection).not.toHaveBeenCalled()
 
     fireEvent.change(screen.getByLabelText("新服务的模型清单"), { target: { value: "local-7b" } })
     // key 同样是必填的（见下一条用例）——这里只是把它填上，好走到保存那一步
     fireEvent.change(screen.getByLabelText("新服务的 API key"), { target: { value: "local" } })
-    fireEvent.click(screen.getByRole("button", { name: "添加" }))
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     expect(onSaveConnection).toHaveBeenCalledWith("my-vllm", {
       baseUrl: "http://localhost:8000/v1",
       api: "openai-completions",
@@ -225,7 +225,7 @@ describe("模型服务 · 添加", () => {
       target: { value: "http://127.0.0.1:11434/v1" },
     })
     fireEvent.change(screen.getByLabelText("新服务的模型清单"), { target: { value: "qwen3" } })
-    fireEvent.click(screen.getByRole("button", { name: "添加" }))
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
 
     /**
      * 2026-08-10：这里原本断言「key 可以留空」，界面上也是那么写的。
@@ -245,7 +245,7 @@ describe("模型服务 · 添加", () => {
     fireEvent.click(screen.getByRole("button", { name: /添加模型服务/ }))
     fireEvent.click(screen.getByRole("radio", { name: "自定义端点" }))
     fireEvent.change(screen.getByLabelText("新服务的名字"), { target: { value: "我的 端点" } })
-    fireEvent.click(screen.getByRole("button", { name: "添加" }))
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     expect(screen.getByText(/只能用小写字母、数字和连字符/)).toBeDefined()
   })
 })

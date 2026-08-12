@@ -36,7 +36,7 @@ test.describe("启动时一个 provider 覆盖都没有", () => {
     await page.getByLabel("新服务的端点地址").fill(mockUrl)
     await page.getByLabel("新服务的模型清单").fill("late-7b")
     await page.getByLabel("新服务的 API key").fill("local")
-    await page.getByRole("button", { name: "添加" }).click()
+    await page.getByRole("button", { name: "加进来" }).click()
 
     /**
      * **摘要上那个「1 个模型」就是本用例的第一现场。**

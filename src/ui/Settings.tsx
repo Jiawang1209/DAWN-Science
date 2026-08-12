@@ -912,8 +912,10 @@ function 从列表里挑({
       </字段>
       {问题 ? <p className="caveat">⚠ {问题}</p> : null}
       <div className="svc-actions">
+        {/* **不叫「添加」**：那两个字是「＋ 添加模型服务」「＋ 添加服务器」的
+            一部分，按名字找按钮时会同时指向三个东西——屏幕阅读器与测试都一样 */}
         <Button type="submit" variant="primary" size="sm">
-          添加
+          加进来
         </Button>
       </div>
     </form>
@@ -1043,8 +1045,10 @@ function 自定义端点({
       </字段>
       {问题 ? <p className="caveat">⚠ {问题}</p> : null}
       <div className="svc-actions">
+        {/* **不叫「添加」**：那两个字是「＋ 添加模型服务」「＋ 添加服务器」的
+            一部分，按名字找按钮时会同时指向三个东西——屏幕阅读器与测试都一样 */}
         <Button type="submit" variant="primary" size="sm">
-          添加
+          加进来
         </Button>
       </div>
     </form>

@@ -24,7 +24,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible({ timeout: 60_000 })
 
-  await page.getByRole("button", { name: "终端", exact: true }).click()
+  await page.getByRole("button", { name: "终端面板", exact: true }).click()
 
   const dock = page.locator(".dock")
   await expect(dock).toBeVisible()
@@ -36,7 +36,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
 
 test("**路径是项目文件夹** —— 摆在上面，也真的在那里", async ({ dawn }) => {
   const { page, workspace } = dawn
-  await page.getByRole("button", { name: "终端", exact: true }).click()
+  await page.getByRole("button", { name: "终端面板", exact: true }).click()
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
@@ -60,7 +60,7 @@ test("**路径是项目文件夹** —— 摆在上面，也真的在那里", as
 
 test("再开一个，两个都在标签里", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端", exact: true }).click()
+  await page.getByRole("button", { name: "终端面板", exact: true }).click()
   const dock = page.locator(".dock")
   await expect(dock.locator(".dock-tab")).toHaveCount(1, { timeout: 60_000 })
 
@@ -70,7 +70,7 @@ test("再开一个，两个都在标签里", async ({ dawn }) => {
 
 test("**终端不混进会话列表** —— 它有自己的地方了", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端", exact: true }).click()
+  await page.getByRole("button", { name: "终端面板", exact: true }).click()
   await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 60_000 })
   // 会话列表里一条都不该多出来。**数 `.sess` 不数 `li`**——
   // 空列表里那一条 `li` 装的是「还没有会话」那句话
@@ -88,9 +88,9 @@ test("**终端不在侧栏，在对话这一侧**", async ({ dawn }) => {
    * 所以这条量两件事：侧栏里没有终端入口、也没有终端本身；
    * 而 dock 挂在主区里（`.main` 之内），不再横跨整个窗口压着侧栏。
    */
-  await expect(page.locator(".sidebar").getByRole("button", { name: "终端" })).toHaveCount(0)
+  await expect(page.locator(".sidebar").getByRole("button", { name: "终端面板" })).toHaveCount(0)
 
-  await page.getByRole("button", { name: "终端" }).click()
+  await page.getByRole("button", { name: "终端面板" }).click()
   await expect(page.locator(".main .dock")).toBeVisible({ timeout: 60_000 })
   await expect(page.locator(".sidebar .dock")).toHaveCount(0)
 
@@ -129,7 +129,7 @@ test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
   await expect(page.locator(".proj-item")).toHaveCount(0)
 
-  await page.getByRole("button", { name: "终端" }).click()
+  await page.getByRole("button", { name: "终端面板" }).click()
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
@@ -150,7 +150,7 @@ test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
 
 test("收起之后 dock 就没了", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端", exact: true }).click()
+  await page.getByRole("button", { name: "终端面板", exact: true }).click()
   await expect(page.locator(".dock")).toBeVisible()
   await page.locator(".dock").getByRole("button", { name: "收起终端" }).click()
   await expect(page.locator(".dock")).toHaveCount(0)

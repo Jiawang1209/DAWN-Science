@@ -37,7 +37,7 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
    * 是我想当然写的——现在它写的是实情，并告诉人随便填一个值即可。
    */
   await page.getByLabel("新服务的 API key").fill("local")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
 
   // 一行摘要立刻报出三件事
   const 行 = page.locator(".svc").filter({ hasText: "mine" })
@@ -92,7 +92,7 @@ test("**名字不合法当场就说** —— 而不是写进 yaml 之后炸", as
   await page.getByRole("radio", { name: "自定义端点" }).click()
 
   await page.getByLabel("新服务的名字").fill("我的 端点")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
   await expect(page.locator(".svc-add")).toContainText("只能用小写字母")
 })
 
@@ -105,7 +105,7 @@ test("**移除一个服务：配置里那一段真的没了**", async ({ dawn })
   await page.getByLabel("新服务的端点地址").fill("http://127.0.0.1:9/v1")
   await page.getByLabel("新服务的模型清单").fill("x")
   await page.getByLabel("新服务的 API key").fill("local")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
 
   const 行 = page.locator(".svc").filter({ hasText: "tmp" })
   await expect(行).toHaveCount(1)

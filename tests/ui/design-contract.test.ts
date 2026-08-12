@@ -219,6 +219,19 @@ describe("设计契约 · 表单控件一律走 .control", () => {
    */
   it("组件里的 textarea / input / select 都带 control 类", () => {
     const OPEN = /<(textarea|input|select)(\s|$)/
+    /**
+     * **勾选框与单选框不在此列**（2026-08-12 加的例外）。
+     *
+     * 这条规则守的是**文本录入控件**：`.control` 给的是盒子
+     * （高度、内距、背景、描边）与那个跟着主题走的聚焦环。
+     * 把它套在 `type="checkbox"` 上，得到的是一个**被撑成文本框大小的方块**——
+     * 那不是「遵守规则」，是把规则用在它不适用的地方。
+     *
+     * 勾选框的外观由 UA 画、由 `accent-color` 上色，**聚焦环也是 UA 自带的**，
+     * 所以这条规则要防的那个洞（退回 Chromium 默认环、取操作系统强调色）
+     * 在这里不存在——它本来就该用系统那一套。
+     */
+    const 非文本录入 = /type=["'](checkbox|radio)["']/
     for (const f of tsxFiles()) {
       const lines = read(f).split("\n")
       const bad: string[] = []
@@ -227,6 +240,7 @@ describe("设计契约 · 表单控件一律走 .control", () => {
         // 开标签可能跨行，往下看到 `>` 为止
         const tag = lines.slice(i, i + 12).join(" ")
         const head = tag.slice(0, tag.indexOf(">") + 1)
+        if (非文本录入.test(head)) return
         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`${i + 1}: ${line.trim()}`)
       })
       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqual([])
@@ -425,6 +439,40 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
         .filter((t) => 保留.some((w) => t.includes(w)))
       expect(hits, `${f} 的按钮文案与确认框撞名。换成「按下去会变成什么」`).toEqual([])
     }
+  })
+
+  /**
+   * **没有一个按钮的文案是另一个的子串**（2026-08-12）。
+   *
+   * 上面那条「取消/确认是保留字」只是这条的一个特例，而它挡不住别的撞法。
+   * 同一天里我又撞了两次：
+   *   - 工作目录那颗「取消」 vs 确认框的「取消」
+   *   - 批量那颗「选择」 vs 输入卡上的「选择工作目录」
+   *
+   * **根因是一个机制**：按名字找按钮时，匹配是**子串**匹配——
+   * 屏幕阅读器的「按标签跳转」、Playwright 的 `getByRole(name)`、
+   * 甚至用户脑子里的「点那个写着 X 的」都是这样工作的。
+   * 一个标签只要是另一个的一部分，**指向就不唯一**。
+   *
+   * 这条比「保留字」强，因为它不需要事先知道哪些词是危险的。
+   */
+  it("**没有一个按钮文案是另一个的子串** —— 按名字找就找不准了", () => {
+    const 按钮文案 = />\s*([^<>{}]+?)\s*<\/Button>/g
+    const 全部 = new Set<string>()
+    for (const f of tsxFiles()) {
+      for (const m of read(f).matchAll(按钮文案)) {
+        const t = m[1]!.trim()
+        // 只看纯文案的按钮：带表达式的（`{…}`）文案是动态的，静态判不了
+        if (t && !t.includes("{") && t.length >= 2) 全部.add(t)
+      }
+    }
+    const 撞的: string[] = []
+    for (const a of 全部) {
+      for (const b of 全部) {
+        if (a !== b && b.includes(a)) 撞的.push(`「${a}」是「${b}」的一部分`)
+      }
+    }
+    expect(撞的, "改掉其中一个：按名字找按钮时子串会指向两个东西").toEqual([])
   })
 
   it("**icons.tsx 只画实心 16×16** —— 描边图标在淡色档上会先散掉", () => {

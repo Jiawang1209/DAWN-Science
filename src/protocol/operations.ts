@@ -413,6 +413,27 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 删掉一个任务（4.9，2026-08-12）。
+   *
+   * **按 taskId 删，不按 sessionId。** 作者报的：*「我看现在还有一些历史遗留的
+   * 对话……因为我现在无法删除。」*
+   *
+   * 根因是界面手上只有「当前项目 + 临时」两拨会话摘要，而迁移过来的任务
+   * 指向的会话在别的项目里——**查不到摘要，那一行就没有删除键**。
+   * 让删除只需要 taskId，界面就不必先认识那段会话：
+   * **服务端本来就知道它挂在哪。**
+   *
+   * 与 `deleteSession` 同一套后果（停进程、删记录、**账本不动**），
+   * 不是第二份实现——它内部走的就是那一条。
+   */
+  deleteTask: {
+    request: z.object({ taskId: z.string().min(1) }).strict(),
+    /** 还剩多少条账本。**一句「已删除」会让人以为历史也没了**，而它没有 */
+    response: z.object({ ledgerKept: z.int().nonnegative() }).strict(),
+    mutating: true,
+  },
+
   /** 全部连接，**带此刻的状态**。状态由服务端说了算，界面自己猜会猜成「以为连着」 */
   listConnections: {
     request: Empty,

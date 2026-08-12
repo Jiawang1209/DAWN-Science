@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("53 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 3）", () => {
+  it("54 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
@@ -22,6 +22,7 @@ describe("操作注册表", () => {
         "createSession",
         "createRemoteSession",
         "createTask",
+        "deleteTask",
         "listTasks",
         "setTaskWorkspace",
         "createTemporarySession",

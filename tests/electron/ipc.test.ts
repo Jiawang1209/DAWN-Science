@@ -69,6 +69,7 @@ function backend(): WorkbenchBackend {
     listTasks: async () => [],
     createTask: async () => 假任务,
     setTaskWorkspace: async () => 假任务,
+    deleteTask: async () => ({ ledgerKept: 0 }),
     listConnections: async () => [],
     createRemoteSession: async () => 假会话,
     saveConnection: async () => 假连接,

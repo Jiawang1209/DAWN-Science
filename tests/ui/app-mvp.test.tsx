@@ -600,7 +600,7 @@ describe("PTY 会话：终端就是这个会话本身", () => {
   it("**侧栏有「终端」入口，且是能点的**", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
-    const 入口 = await screen.findByRole("button", { name: "终端" })
+    const 入口 = await screen.findByRole("button", { name: "终端面板" })
     expect((入口 as HTMLButtonElement).disabled).toBe(false)
   })
 })

@@ -36,7 +36,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   await page.getByLabel("新服务的端点地址").fill(mockUrl)
   await page.getByLabel("新服务的模型清单").fill(另一家的)
   await page.getByLabel("新服务的 API key").fill("local")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
   await expect(page.locator(".svc").filter({ hasText: "other" })).toHaveCount(1)
   await page.getByRole("button", { name: "返回" }).click()
 
@@ -91,7 +91,7 @@ test("**厂家菜单里列得出别家**，模型菜单只管这一家", async (
   await page.getByLabel("新服务的端点地址").fill(mockUrl)
   await page.getByLabel("新服务的模型清单").fill(另一家的)
   await page.getByLabel("新服务的 API key").fill("local")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
   await page.getByRole("button", { name: "返回" }).click()
 
   await 开一段临时会话(page)

@@ -112,6 +112,9 @@
  *   账本要有归属；`temporary` 只是告诉界面它归上面那一列。
  * 4.3（2026-08-11）：新增 `createTerminalSession`。纯新增。
  * 4.8（2026-08-12）：任务——`listTasks` / `createTask` / `setTaskWorkspace`。
+ * 4.9（2026-08-12）：`deleteTask`——**按 taskId 删**。
+ *   界面手上只有「当前项目 + 临时」两拨会话摘要，迁移过来的任务指向别处，
+ *   于是那些行既没有删除键也进不了批量。**删除不该需要先认识那段会话。**
  *   纯新增，**旧的 project / session 操作原样保留**：界面与后端不该在同一次
  *   升级里同时换，那样一旦出错就分不清是谁的问题。
  * 4.7（2026-08-12）：`TurnItem.by`——这一轮是谁答的。纯新增。
@@ -133,7 +136,7 @@
  *   不做成 `createSession` 的一个 `cwd` 参数——那等于把「shell 从哪儿开」
  *   的决定权交给渲染进程，而那条边界决定了 `rm -rf .` 会删掉谁。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.8"
+export const WORKBENCH_PROTOCOL_VERSION = "4.9"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

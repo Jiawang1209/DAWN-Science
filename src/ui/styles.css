@@ -2572,6 +2572,31 @@ pre {
   color: var(--dawn-text-3);
   letter-spacing: 0.03em;
 }
+/**
+ * 批量选择（2026-08-12）。**入口在分区标题上**——它管的是这一整列。
+ * `margin-left: auto` 把它推到标题行的右端，与计数分开。
+ */
+.side-bulk { margin-left: auto; }
+.side-section { display: flex; align-items: center; }
+/**
+ * 选择模式那一条。**数字常驻**：「删掉 3 段对话」比「删掉选中的」
+ * 可判断得多——按下之前就该知道自己要删掉几个。
+ */
+.side-bulkbar {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  padding: 0 calc(var(--dawn-space-3) * 2);
+  min-height: var(--dawn-row-h);
+  font-size: 12px;
+}
+.side-bulk-count { color: var(--dawn-text-3); margin-right: auto; }
+/** 勾选框：原生的，尺寸压到与 12px 文字同一档 */
+.sess-check {
+  flex: 0 0 auto;
+  margin-left: var(--dawn-space-3);
+  accent-color: var(--dawn-accent);
+}
 .side-count {
   margin-left: 4px;
   font-variant-numeric: tabular-nums;

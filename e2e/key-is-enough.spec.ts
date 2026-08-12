@@ -20,7 +20,7 @@ test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) =
   await page.getByLabel("筛选 provider").fill(陌生)
   await page.getByLabel("pi 认识的 provider").selectOption(陌生)
   await page.getByLabel("新服务的 API key").fill("sk-fake")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
   await expect(page.locator(".svc").filter({ hasText: 陌生 })).toHaveCount(1)
 
   await page.getByRole("button", { name: "返回" }).click()

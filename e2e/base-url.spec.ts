@@ -26,7 +26,7 @@ async function 加并点开(page: import("@playwright/test").Page, id: string) {
   await page.getByLabel("筛选 provider").fill(id)
   await page.getByLabel("pi 认识的 provider").selectOption(id)
   await page.getByLabel("新服务的 API key").fill("sk-fake")
-  await page.getByRole("button", { name: "添加" }).click()
+  await page.getByRole("button", { name: "加进来" }).click()
 
   const 行 = page.locator(".svc").filter({ hasText: id })
   await expect(行).toHaveCount(1)

@@ -156,6 +156,7 @@ export function SessionRow({
   onPin,
   onMove,
   drag,
+  select,
 }: {
   session: SessionSummary
   active: boolean
@@ -184,6 +185,14 @@ export function SessionRow({
         self: boolean
       }
     | undefined
+  /**
+   * 批量选择（2026-08-12，作者：*「会话越来越多了，能否给我来一个批量处理的
+   * 选项，我可以批量删除」*）。
+   *
+   * **不给就整套不出现**——平时那个勾选框只是噪声，
+   * 而「选择模式」这件事本身要由外面统一管：一次只能有一种模式。
+   */
+  select?: { checked: boolean; onToggle: () => void } | undefined
 }) {
   const [menu, setMenu] = useState(false)
   const [editing, setEditing] = useState<string | undefined>(undefined)
@@ -276,7 +285,23 @@ export function SessionRow({
           : undefined
       }
     >
-      <Row active={active} onClick={onPick}>
+      {select ? (
+        /**
+         * **勾选框在行首**（2026-08-12）。
+         *
+         * 用原生 `<input type=checkbox>`：**键盘、读屏、空格键全都自带**，
+         * 自绘一个方块要把这些一样样补回来，而本项目已经在
+         * 「自绘一行丢掉所有动作」上栽过一次。
+         */
+        <input
+          type="checkbox"
+          className="sess-check"
+          checked={select.checked}
+          onChange={select.onToggle}
+          aria-label={`选择会话：${名字}`}
+        />
+      ) : null}
+      <Row active={active} onClick={select ? select.onToggle : onPick}>
         <span className="sess">
           <span className="name">
             {/* 图标在最前面：**一眼分出「这是对话」还是「这是项目」**（仿 Codex） */}
@@ -400,6 +425,8 @@ export function SessionSidebar({
   activeTaskId,
   sessionOf,
   sessionRank,
+  onDeleteMany,
+  onDeleteTask,
   onNewTaskIn,
 }: {
   projects: readonly ProjectSummary[]
@@ -482,6 +509,19 @@ export function SessionSidebar({
    * 排不上号返回 `-1` 或 `undefined`。
    */
   sessionRank?: ((sessionId: string) => number) | undefined
+  /**
+   * 批量删除（2026-08-12，作者要的）。**不给就不出现「选择」入口**——
+   * 一个进得去、却删不掉的选择模式比没有更坏。
+   *
+   * 第二个参数是「删完之后收摊」：**由外面在真的删完之后调**，
+   * 而不是按下就退出选择模式——那样人会以为删完了，而确认框还开着。
+   */
+  onDeleteMany?: ((tasks: readonly TaskSummary[], done: () => void) => void) | undefined
+  /**
+   * 删掉一个任务。**给了它，拿不到会话摘要的那些行也删得掉**——
+   * 而那正是「历史遗留的对话删不掉」的形状。
+   */
+  onDeleteTask?: ((task: TaskSummary) => void) | undefined
   /** 在某个已有的工作路径下再开一段任务。**不给就不画那颗 `＋`** */
   onNewTaskIn?: ((workspace: string) => void) | undefined
 }) {
@@ -507,6 +547,24 @@ export function SessionSidebar({
    * 否则点进一段对话之后，侧栏上找不到它在哪，人会以为它没了。
    */
   const [展开的项目, 设展开] = useState<string | undefined>(undefined)
+
+  /**
+   * **批量选择**（2026-08-12，作者：*「会话越来越多了，能否给我来一个
+   * 批量处理的选项，我可以批量删除」*）。
+   *
+   * `undefined` = 不在选择模式。**用「有没有这个集合」表示模式**，
+   * 而不是再加一个布尔——两个状态可以互相矛盾（模式开着但集合没清），
+   * 一个不会。
+   */
+  const [已选, 设已选] = useState<Set<string> | undefined>(undefined)
+  const 选择中 = 已选 !== undefined
+  const 切一个 = (id: string) =>
+    设已选((前) => {
+      const n = new Set(前 ?? [])
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
 
   /**
    * 归类：**有路径 → 项目，没路径 → 会话**（作者 2026-08-12 定案）。
@@ -572,19 +630,68 @@ export function SessionSidebar({
     return undefined
   }
 
+  /**
+   * 能批量删的那些：**「会话」栏里、且拿得到会话摘要的**。
+   *
+   * 拿不到摘要的（刚迁过来、还没拉起来）不进这个集合——
+   * 删一个我们手上没有的东西，报错会出现在一个人看不懂的地方。
+   */
+  /**
+   * 能批量删的：**「会话」栏里的全部**。
+   *
+   * 上一版这里先把任务换成会话摘要，拿不到的就丢掉——于是
+   * **迁移过来的那些一条都进不来**（它们的会话在别的项目里，界面手上没有）。
+   * 作者报的正是这个：*「历史遗留的对话……我现在无法删除。」*
+   *
+   * 现在按 `taskId` 删（协议 4.9 的 `deleteTask`），**界面不必先认识那段会话**。
+   */
+  const 可批量的 = 散的
+
   const 任务行 = (task: TaskSummary) => {
     const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
     if (!s) {
+      /**
+       * **界面不认识这段会话，但这一行照样要能删**（2026-08-12）。
+       *
+       * 上一版这里是一行纯文字：没有勾选框、没有 `⋯`。
+       * 而「界面认不认识它」取决于它挂在哪个项目——
+       * 迁移过来的那些**永远认不识**，于是永远删不掉。
+       * 作者：*「历史遗留的对话……我现在无法删除。」*
+       *
+       * 删除只需要 `taskId`（协议 4.9），所以这里给得起。
+       */
       return (
-        <li key={task.taskId}>
+        <li key={task.taskId} className="sess-item">
+          {选择中 ? (
+            <input
+              type="checkbox"
+              className="sess-check"
+              checked={已选!.has(task.taskId)}
+              onChange={() => 切一个(task.taskId)}
+              aria-label={`选择会话：${task.title ?? "新任务"}`}
+            />
+          ) : null}
           <Row
             active={task.taskId === activeTaskId}
             className="task-row"
-            onClick={() => onPickTask?.(task)}
+            onClick={() => (选择中 ? 切一个(task.taskId) : onPickTask?.(task))}
           >
             <对话图标 className="row-icon" />
             <span className="name">{task.title ?? "新任务"}</span>
           </Row>
+          {onDeleteTask ? (
+            <div className="row-actions">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="row-more"
+                aria-label={`删除会话：${task.title ?? "新任务"}`}
+                onClick={() => onDeleteTask(task)}
+              >
+                <删除图标 />
+              </Button>
+            </div>
+          ) : null}
         </li>
       )
     }
@@ -592,6 +699,7 @@ export function SessionSidebar({
       <SessionRow
         key={task.taskId}
         session={s}
+        {...(选择中 ? { select: { checked: 已选!.has(task.taskId), onToggle: () => 切一个(task.taskId) } } : {})}
         active={s.sessionId === activeSessionId && view === "conversation"}
         current={s.sessionId === activeSessionId}
         {...(agentLabel ? { label: agentLabel } : {})}
@@ -795,7 +903,59 @@ export function SessionSidebar({
         <>
           <p className="side-section">
             会话 <span className="side-count">{散的.length}</span>
+            {/**
+              * **「选择」在分区标题上**（2026-08-12）。
+              *
+              * 它管的是这一整列，所以它的家在这一列的标题上，不在某一行里。
+              * **常驻，不做悬停才出现**——本项目为此被报过两次「没有这个功能」。
+              */}
+            {onDeleteMany ? (
+              <Button
+                variant="text"
+                size="inline"
+                className="side-bulk"
+                onClick={() => 设已选(选择中 ? undefined : new Set())}
+              >
+                {选择中 ? "完成" : "多选"}
+              </Button>
+            ) : null}
           </p>
+          {/**
+            * 选择模式下的那一条：**已选几段、全选、删除**。
+            *
+            * 数字常驻：*「删掉 3 段对话」*比*「删掉选中的」*可判断得多——
+            * 按下之前就该知道自己要删掉几个。
+            */}
+          {选择中 ? (
+            <div className="side-bulkbar">
+              <span className="side-bulk-count">已选 {已选!.size}</span>
+              <Button
+                variant="text"
+                size="inline"
+                onClick={() =>
+                  设已选(
+                    已选!.size === 可批量的.length
+                      ? new Set()
+                      : new Set(可批量的.map((x) => x.taskId)),
+                  )
+                }
+              >
+                {已选!.size === 可批量的.length ? "全不选" : "全选"}
+              </Button>
+              <Button
+                variant="text"
+                size="inline"
+                className="menu-danger"
+                disabled={已选!.size === 0}
+                onClick={() => {
+                  const 要删的 = 可批量的.filter((x) => 已选!.has(x.taskId))
+                  onDeleteMany?.(要删的, () => 设已选(undefined))
+                }}
+              >
+                删除
+              </Button>
+            </div>
+          ) : null}
           <ul className="session-list">
             {散的.map(任务行)}
           </ul>
@@ -1750,7 +1910,9 @@ export function ConversationView({
                 aria-pressed={dockOpen ?? false}
                 onClick={onToggleDock}
               >
-                终端
+                {/* **不叫「终端」**：那两个字是「打开终端」「＋ 新终端」的一部分。
+                    这颗掀开的是下面那条 dock，所以就照着说 */}
+                终端面板
               </Button>
             ) : null}
             {/**
@@ -2563,7 +2725,8 @@ export function EmptyConversation({
               */}
             {onToggleDock ? (
               <Button variant="text" size="sm" onClick={onToggleDock}>
-                终端
+                {/* 与 composer 上那颗同名同事：它们掀开的是同一条 dock */}
+                终端面板
               </Button>
             ) : null}
           </div>

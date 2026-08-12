@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { useStore } from "@nanostores/react"
-import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
+import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
@@ -331,6 +331,10 @@ export function SessionSidebar({
   onDeleteProject,
   settingsActive,
   remote,
+  tasks,
+  onNewTask,
+  onPickTask,
+  activeTaskId,
 }: {
   projects: readonly ProjectSummary[]
   sessions: readonly SessionSummary[]
@@ -389,6 +393,16 @@ export function SessionSidebar({
    * **不给就整区不出现**：一个点了没反应的区比没有更坏。
    */
   remote?: React.ReactNode | undefined
+  /**
+   * 任务（T2）。**它将取代上面那两列**（会话 / 项目）——
+   * 但这一批先并排放着：那两个名字被几十条 e2e 当作选择器用，
+   * **一次换掉会红一大片，而红成一片就没人看得出哪条是真问题**。
+   * 删旧列连同测试一起改，放在下一批。
+   */
+  tasks?: readonly TaskSummary[] | undefined
+  onNewTask?: (() => void) | undefined
+  onPickTask?: ((t: TaskSummary) => void) | undefined
+  activeTaskId?: string | undefined
 }) {
   const active = projects.find((p) => p.projectId === activeProjectId)
   /**
@@ -443,6 +457,53 @@ export function SessionSidebar({
         * 两个动作仍然**同级**（同一种 `.side-action` 行，2026-08-10 定的），
         * 只是各自领着自己那一列。
         */}
+      {/**
+        * **新建任务**（T2，作者要的，学自 WorkBuddy 的「新建任务」）。
+        *
+        * 任务 = 一段对话 + 一个可选的工作路径。**不设路径就是普通对话**——
+        * 那正是此前「临时会话」在做的事，只是它把「有没有路径」这件事
+        * 藏在了一个用户看不见的概念里。
+        */}
+      {onNewTask ? (
+        <div className="side-actions">
+          <Row className="side-action" onClick={onNewTask}>
+            <span className="glyph" aria-hidden="true">＋</span>
+            <span className="name">新建任务</span>
+          </Row>
+        </div>
+      ) : null}
+      {tasks && tasks.length > 0 ? (
+        <>
+          <p className="side-section">
+            任务 <span className="side-count">{tasks.length}</span>
+          </p>
+          <ul className="session-list">
+            {tasks.map((t) => (
+              <li key={t.taskId}>
+                <Row
+                  active={t.taskId === activeTaskId}
+                  className="task-row"
+                  onClick={() => onPickTask?.(t)}
+                >
+                  <span className="glyph" aria-hidden="true">💬</span>
+                  <span className="name">{t.title ?? "新任务"}</span>
+                  {/**
+                   * **有没有工作路径，一眼要看得出来。**
+                   * 没有不是「缺了什么」，是「这是一段普通对话」——
+                   * 所以不显示占位符，什么都不写。
+                   */}
+                  {t.workspace ? (
+                    <span className="task-ws" title={t.workspace}>
+                      {短路径(t.workspace)}
+                    </span>
+                  ) : null}
+                </Row>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
       <div className="side-actions">
         {/**
           * **这一颗开的是临时会话**（2026-08-11）。

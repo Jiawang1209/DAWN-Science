@@ -2418,3 +2418,18 @@ pre {
 /* 用户气泡：**全圆角**（CDP 实测 WorkBuddy 是 100px，即完全的胶囊）。
    中等圆角看着像卡片，胶囊看着像「一句话」——它本来就是一句话 */
 .turn.user .bubble { border-radius: var(--dawn-radius-full); }
+
+/* 任务行（T2）。工作路径靠右、更淡——**它是这行的补充，不是标题** */
+.task-row { justify-content: flex-start; gap: var(--dawn-space-2); }
+.task-row .glyph { flex: 0 0 auto; font-size: 0.85em; }
+.task-row .name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-ws {
+  flex: 0 1 auto;
+  margin-left: auto;
+  font-family: var(--dawn-font-mono);
+  font-size: 0.75em;
+  color: var(--dawn-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

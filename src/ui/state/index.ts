@@ -56,6 +56,8 @@ export {
 } from "./connection.js"
 
 export {
+  $tasks,
+  setTasks,
   $connections,
   setConnections,
   setConnectionState,
@@ -124,6 +126,7 @@ export { sameList, setList, setValue } from "./identity.js"
 export {
   fail,
   loadConnections,
+  loadTasks,
   loadProjects,
   loadCredentials,
   loadProviders,

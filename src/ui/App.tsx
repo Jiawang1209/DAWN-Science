@@ -91,6 +91,8 @@ import {
   loadSessions,
   loadTempSessions,
   loadConnections,
+  loadTasks,
+  $tasks,
   setConnectionState,
   setSessionCwd,
   $connections,
@@ -182,6 +184,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     void loadTempSessions(client)
     // 远端连接名单同理——它不属于任何项目（②-B · R3）
     void loadConnections(client)
+    // 任务（T2）：它也不属于任何项目——它就是那个「属于」本身
+    void loadTasks(client)
   }, [ready, client])
 
   /**
@@ -580,6 +584,36 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 正在编辑哪一台、哪一台正在连、上一次操作出了什么错。
    */
   const connections = useStore($connections)
+  const tasks = useStore($tasks)
+
+  /**
+   * **新建任务**（T2/T3）：建出来 + 进去聊。
+   *
+   * 作者要的「新建任务」就是这一颗。**不问工作路径**——
+   * 先聊起来，需要落到某个目录再设（`setTaskWorkspace`）。
+   * 那正是他定的形状：*「不设置任何工作目录的话，就是我们的普通对话。」*
+   */
+  const 新建任务 = async () => {
+    const agentId = agentIds[0]
+    if (!agentId) {
+      note("配置里还没有可用的 agent——先去设置里加一个")
+      return
+    }
+    try {
+      const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
+        agentId,
+      })
+      await loadTasks(client)
+      if (t.sessionId) {
+        setActiveSessionId(t.sessionId)
+        setView("conversation")
+        // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
+        await 取写权(t.sessionId)
+      }
+    } catch (e) {
+      fail(e)
+    }
+  }
   const remoteOpen = useStore($remoteOpen)
   const [connDraft, setConnDraft] = useState<
     (ConnectionDraft & { hasSecret?: boolean }) | undefined
@@ -1520,6 +1554,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }}
             />
           }
+          tasks={tasks}
+          onNewTask={() => void 新建任务()}
+          onPickTask={(t) => {
+            if (!t.sessionId) {
+              // **没有会话就说清楚**：那是「还没拉起来」，不是点了没反应
+              note("这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）")
+              return
+            }
+            setActiveSessionId(t.sessionId)
+            setView("conversation")
+          }}
+          {...(sessionId ? { activeTaskId: tasks.find((t) => t.sessionId === sessionId)?.taskId } : {})}
           onOpenProject={actions.openProject}
           /**
            * **顶上那颗回首页，不直接建**（2026-08-11）——

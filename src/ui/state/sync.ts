@@ -15,6 +15,7 @@ import type {
   ProjectSummary,
   ProvenanceLink,
   RemoteConnection,
+  TaskSummary,
   RunSummary,
   SessionSnapshot,
   SessionSummary,
@@ -25,6 +26,7 @@ import { guard } from "./guard.js"
 import { applySnapshot } from "./transcript.js"
 import {
   setConnections,
+  setTasks,
   setCredentials,
   setProjects,
   setProvenance,
@@ -70,6 +72,18 @@ export const loadConnections = (c: WorkbenchClient): Promise<void> =>
     .get<RemoteConnection[]>("listConnections")
     .then((v) => {
       setConnections(v)
+    })
+    .catch(fail)
+
+/**
+ * 任务列表（T2）。**失败要出声**：取不回来的列表与空列表在界面上长得一样，
+ * 而后者会被读成「你还没建过任务」。
+ */
+export const loadTasks = (c: WorkbenchClient): Promise<void> =>
+  c
+    .get<TaskSummary[]>("listTasks")
+    .then((v) => {
+      setTasks(v)
     })
     .catch(fail)
 

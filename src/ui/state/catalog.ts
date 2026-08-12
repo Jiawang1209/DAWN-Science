@@ -14,6 +14,7 @@ import type {
   ProjectSummary,
   ProvenanceLink,
   RemoteConnection,
+  TaskSummary,
   RunSummary,
   SessionSummary,
 } from "../../protocol/index.js"
@@ -202,3 +203,11 @@ export function setSessionCwd(sessionId: string, cwd: string): void {
     set(下一份)
   }
 }
+
+/**
+ * 任务（T2/T3）。**它取代此前的三样**：项目、项目下的会话、临时会话。
+ *
+ * 作者：*「任务 = 一段对话 + 一个可选的工作路径；不设路径就是普通对话。」*
+ */
+export const $tasks = atom<readonly TaskSummary[]>([])
+export const setTasks = (v: readonly TaskSummary[]) => setList($tasks, v)

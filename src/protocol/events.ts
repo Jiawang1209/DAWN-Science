@@ -351,3 +351,19 @@ export const RemoteUpdateSchema = z
   })
   .strict()
 export type RemoteUpdate = z.infer<typeof RemoteUpdateSchema>
+
+/**
+ * **这条发言等于没说话**（2026-08-12）。
+ *
+ * 模型「想一下就去调工具」会留下一条没有正文的发言。判断它的规则
+ * 此前在两处各写了一份，而且**判据不一样**：
+ * 事件中枢用 `!text`（空串才算），界面用 `!text.trim()`（空白也算）。
+ *
+ * 于是模型吐出一个换行时，两边打架：**中枢不合并、界面又把它画成一块孤零零
+ * 的思考**——作者因此在一次回答里看到两个「0s 想了一下」。
+ *
+ * **藏在两个文件里的同一个判断，迟早有一个落后于另一个。** 所以它只有一份。
+ */
+export function 没说话(item: { type: string; text?: string }): boolean {
+  return item.type === "turn" && !(item.text ?? "").trim()
+}

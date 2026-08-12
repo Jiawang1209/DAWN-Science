@@ -12,7 +12,7 @@
  *
  * **本文件不认识 Electron**，只提供 `onUpdate(cb)`，由 `electron/main.ts` 接到 webContents。
  */
-import { SessionUpdateSchema, type SessionSnapshot, type SessionUpdate, type TranscriptItem } from "../protocol/events.js"
+import { 没说话, SessionUpdateSchema, type SessionSnapshot, type SessionUpdate, type TranscriptItem } from "../protocol/events.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/version.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
 
@@ -523,7 +523,7 @@ export class SessionTranscripts {
    */
   private 吸收只想没说的(e: Entry, 新id: string): { thinking?: string; thinkingMs?: number } {
     const i = e.items.findIndex(
-      (x) => x.type === "turn" && x.who === "agent" && x.id !== 新id && !x.text && x.thinking,
+      (x) => x.type === "turn" && x.who === "agent" && x.id !== 新id && 没说话(x) && x.thinking,
     )
     if (i < 0) return {}
     const 旧 = e.items[i] as Extract<TranscriptItem, { type: "turn" }>

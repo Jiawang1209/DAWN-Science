@@ -651,3 +651,41 @@ describe("思考只出现一处", () => {
     expect(全部[0]!.text).toBe("第一段回答")
   })
 })
+
+/**
+ * **模型吐一个换行也算「没说话」**（2026-08-12，作者截图里的那两个思考块）。
+ *
+ * 判据此前在两处各写了一份：中枢用 `!text`（空串才算），
+ * 界面用 `!text.trim()`（空白也算）。于是模型在调工具前吐出一个换行时，
+ * **中枢不合并、界面又把它单独画成一块思考**——一次回答里出现两个「0s 想了一下」。
+ *
+ * 现有的用例全用空字符串，**所以它们全绿而问题还在**。这一条用换行。
+ */
+describe("只说了个换行，也该并走", () => {
+  it("**`\n` 当正文时仍然合并** —— 判据两处共用一份", () => {
+    let i = 0
+    const t = [1000, 2000, 5000, 6000]
+    const h = new SessionTranscripts({
+      terminalMaxChars: 1000,
+      now: () => t[Math.min(i++, t.length - 1)]!,
+    })
+    h.track("a", "native")
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "先看看目录。" })
+    // **就是这一下**：模型在调工具前吐了个换行
+    h.ingest("a", { kind: "output", sessionId: "a", data: "\n" })
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "念给他。" })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "目录下有…" })
+
+    const 发言 = h.subscribe("a").items.filter((x) => x.type === "turn") as Extract<
+      TranscriptItem,
+      { type: "turn" }
+    >[]
+    // **只剩一条**，两段思考都在它身上
+    expect(发言).toHaveLength(1)
+    expect(发言[0]!.thinking).toContain("先看看目录")
+    expect(发言[0]!.thinking).toContain("念给他")
+    expect(发言[0]!.text).toBe("目录下有…")
+  })
+})

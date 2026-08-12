@@ -13,6 +13,7 @@ import type { View } from "./state/view.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary } from "../protocol/index.js"
 import type { TranscriptItem } from "../protocol/index.js"
+import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
@@ -1500,20 +1501,16 @@ export function TranscriptRow({
    * 这里是**兜底**——万一没并上，宁可少显示一个 0s 的思考，
    * 也不要在答案前面杵一个空壳。
    *
-   * **但思考要留下**（2026-08-12 修）。上一版这里直接 `return null`，
-   * 把那一段思考连同它的时长一起藏掉了——作者当场发现：
-   * *「思考的时间怎么没有了呢？」* **要去掉的是空壳，不是内容。**
+   * **只留一个思考块**（2026-08-12，作者定的）：*「我只想保留 DeepSeek
+   * 回复我真实问题请求时候的时间。」*
    *
-   * **代价说清楚**：这条发言的 token 用量因此不在对话里显示了。
+   * 中间那条（想一下就去调工具）不单独露面——它的思考已经并进了后面那条
+   * （`events.ts` 的 `吸收只想没说的`，两边现在共用 `没说话()` 这一个判据）。
+   *
+   * **代价说清楚**：这条发言的 token 用量因此不在对话里显示。
    * 它没有丢——账本（项目概览）记着，而那本来就是查用量的地方。
    */
-  if (!mine && !item.text.trim()) {
-    return item.thinking ? (
-      <div className="turn agent thought-only">
-        <ThinkingBlock text={item.thinking} ms={item.thinkingMs} />
-      </div>
-    ) : null
-  }
+  if (没说话(item)) return null
 
   /** 正在改的那份文字。**undefined = 没在改** */
   const [编辑, 设编辑] = useState<string | undefined>(undefined)

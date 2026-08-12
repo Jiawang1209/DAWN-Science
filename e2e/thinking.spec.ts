@@ -56,9 +56,50 @@ test.describe("思考", () => {
      * 而这条要求跟条数无关。
      */
     const 空的 = await page.locator(".turn.agent").evaluateAll((els) =>
-      els.filter((el) => !(el.querySelector(".bubble")?.textContent ?? "").trim()).length,
+      els.filter(
+        (el) =>
+          // **只想没说的那条不算空壳**：它没有气泡，但有思考——那是内容
+          !el.classList.contains("thought-only") &&
+          !(el.querySelector(".bubble")?.textContent ?? "").trim(),
+      ).length,
     )
     expect(空的).toBe(0)
+  })
+
+  /**
+   * **去掉的是空壳，不是内容**（2026-08-12）。
+   *
+   * 上一版我把「没有正文的发言」整条不画，**连那段思考和它的时长一起藏掉了**——
+   * 作者当场发现：*「思考的时间怎么没有了呢？」*
+   */
+  test("**只有思考、没有正文时，思考仍然看得见**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+
+    // 思考块在，而且带着秒数
+    const 块 = page.locator(".thought").first()
+    await expect(块).toBeVisible()
+    await expect(块.locator(".thought-secs")).toHaveText(/^\d+s$/)
+  })
+
+  test("**用量给出合计** —— 作者问「有没有消耗的 token」", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+
+    const 用量 = page.locator(".turn-usage").first()
+    await expect(用量).toContainText("输入")
+    await expect(用量).toContainText("输出")
+    /**
+     * **合计 = 输入 + 输出，缓存不进去**：缓存按另一个价钱计、各家口径还不同，
+     * 并进来会让这个数看起来更贵，而人拿它对账时会发现对不上。
+     */
+    await expect(用量.locator(".turn-usage-total")).toContainText("共")
   })
 
   test("**思考不混进回答里** —— 那是它对自己说的话，不是对我说的", async ({ dawn }) => {

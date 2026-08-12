@@ -2225,3 +2225,8 @@ pre {
   font-size: 0.9em;
   white-space: pre-wrap;
 }
+
+/* 只有思考、没有正文的那一条：**不画气泡与用量**，只留思考本身 */
+.turn.thought-only { display: block; }
+/* 「共 N」与前面三个数之间要分得开——它是结论，不是第四个并列项 */
+.turn-usage-total { margin-left: var(--dawn-space-3); font-weight: 500; }

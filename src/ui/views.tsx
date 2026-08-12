@@ -1500,10 +1500,20 @@ export function TranscriptRow({
    * 这里是**兜底**——万一没并上，宁可少显示一个 0s 的思考，
    * 也不要在答案前面杵一个空壳。
    *
+   * **但思考要留下**（2026-08-12 修）。上一版这里直接 `return null`，
+   * 把那一段思考连同它的时长一起藏掉了——作者当场发现：
+   * *「思考的时间怎么没有了呢？」* **要去掉的是空壳，不是内容。**
+   *
    * **代价说清楚**：这条发言的 token 用量因此不在对话里显示了。
    * 它没有丢——账本（项目概览）记着，而那本来就是查用量的地方。
    */
-  if (!mine && !item.text.trim()) return null
+  if (!mine && !item.text.trim()) {
+    return item.thinking ? (
+      <div className="turn agent thought-only">
+        <ThinkingBlock text={item.thinking} ms={item.thinkingMs} />
+      </div>
+    ) : null
+  }
 
   /** 正在改的那份文字。**undefined = 没在改** */
   const [编辑, 设编辑] = useState<string | undefined>(undefined)
@@ -1723,7 +1733,29 @@ function TurnUsage({
   // **缓存命中单独说**：它与输入 token 计费不同，混进去会让账对不上
   if (usage.cacheRead !== undefined) 段.push(`缓存 ${formatTokens(usage.cacheRead)}`)
   if (段.length === 0) return null
-  return <p className="turn-usage">{段.join(" · ")} token</p>
+
+  /**
+   * **这一句一共花了多少**（2026-08-12，作者问：*「有没有消耗的 token 哇？」*）。
+   *
+   * 定义要说准，否则这个数会骗人：**合计 = 输入 + 输出**。
+   *
+   * **缓存不加进去**——它是输入里被命中的那部分，服务商按另一个（更低的）
+   * 价钱计，而且各家口径不同。把它并进来会让这个数**看起来更大、算起来更贵**，
+   * 而人拿它去对账时会发现对不上。所以它仍然单列，只是不进合计。
+   *
+   * 两样缺一就不给合计：**「不知道」不能当 0 用**。
+   */
+  const 合计 =
+    usage.input !== undefined && usage.output !== undefined ? usage.input + usage.output : undefined
+
+  return (
+    <p className="turn-usage">
+      {段.join(" · ")} token
+      {合计 === undefined ? null : (
+        <span className="turn-usage-total">共 {formatTokens(合计)}</span>
+      )}
+    </p>
+  )
 }
 
 /**

@@ -2200,3 +2200,28 @@ pre {
 
 /* 上限已经在 `.turn-body` 上（见那段注释），这里放开，否则会再收一次 82% */
 .turn.user .bubble { max-width: 100%; }
+
+/* 思考（2026-08-12，形态学自 Hermes）。
+   **它不是回答**：不进气泡、字更小、色更淡——一眼分出「对自己说的」与「对我说的」 */
+.thought { margin-bottom: var(--dawn-space-2); }
+.thought-head { gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: 0.85em; }
+.thought-head .caret { flex: 0 0 auto; }
+/* 秒数放在方块里：这一行里唯一会动的东西，要好认 */
+.thought-secs {
+  flex: 0 0 auto;
+  min-width: 2.4em;
+  padding: 1px 5px;
+  text-align: center;
+  border-radius: var(--dawn-radius-xs);
+  background: var(--dawn-surface-elevated);
+  font-family: var(--dawn-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.thought-body {
+  margin-top: 2px;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-left: 2px solid var(--dawn-stroke-4);
+  color: var(--dawn-text-3);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+}

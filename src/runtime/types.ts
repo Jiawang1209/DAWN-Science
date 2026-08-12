@@ -127,6 +127,16 @@ export type AgentEvent =
   | { kind: "started"; sessionId: SessionId; pid: number }
   | { kind: "output"; sessionId: SessionId; data: string }
   /**
+   * 模型在**想**（2026-08-12）。
+   *
+   * 作者看 Hermes：*「回复的时候还会有思考……Thought briefly，
+   * 然后可以点击展开。」*
+   *
+   * **它与 `output` 是两种东西**，不能混：`output` 是它对你说的话，
+   * 这个是它对自己说的话。混进去等于把草稿当成答案念出来。
+   */
+  | { kind: "thinking"; sessionId: SessionId; delta: string }
+  /**
    * agent 说完了一轮。**只有 native 会发**——PTY 是字节流，没有轮次概念。
    *
    * 2026-08-08 新增。此前 native 在 `turn_end` 时发一条 `data: "\n"` 的 output

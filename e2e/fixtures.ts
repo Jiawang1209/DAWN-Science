@@ -134,6 +134,13 @@ export interface DawnOptions {
    */
   fakeSsh?: boolean
   /**
+   * 假模型「想」的内容（2026-08-12）。**给了才发。**
+   *
+   * 界面上那一块「想了 N 秒 / 点开看它在想什么」只有它能验——
+   * 不补的话，那一整块在 mock 与 e2e 里永远不出现。
+   */
+  thinking?: string
+  /**
    * 写权租约的 TTL（秒）。**默认 300**。
    *
    * 调小它才验得了作者报的那条：*「点了新对话，原来的对话就不能再输入了」*——
@@ -206,6 +213,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawn: async ({ dawnOptions }, use) => {
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
+      ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
       ...(dawnOptions.failStatus ? { failStatus: dawnOptions.failStatus } : {}),
     })
     const dir = mkdtempSync(join(tmpdir(), "dawn-e2e-"))

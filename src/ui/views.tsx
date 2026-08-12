@@ -1076,6 +1076,45 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
   )
 }
 
+/**
+ * 「它在想什么」那一块（2026-08-12，形态学自 Hermes）。
+ *
+ * **秒数只在还在想的时候自己走**：想完了就定住——
+ * 一个停不下来的计时器会让人以为它还没结束。
+ */
+function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) {
+  const [open, setOpen] = useState(false)
+  /**
+   * **还在想的时候才装定时器**（与工具那个秒表同一条纪律）：
+   * 想完之后每秒重渲染一次，而屏幕上没有任何东西在变。
+   */
+  const 在想 = ms === undefined
+  const [起点] = useState(() => Date.now())
+  const now = useTick(在想)
+  const 秒 = Math.max(0, Math.round((在想 ? now - 起点 : ms) / 1000))
+
+  return (
+    <div className={`thought ${open ? "open" : ""}`}>
+      <Button
+        variant="ghost"
+        size="inline"
+        className="thought-head"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="caret" aria-hidden="true">
+          {open ? "▾" : "▸"}
+        </span>
+        {/* **秒数放在方块里**：它是这一行里唯一会动的东西，要好认 */}
+        <span className="thought-secs">{秒}s</span>
+        <span className="thought-label">{在想 ? "正在思考" : "想了一下"}</span>
+        {在想 ? <Thinking /> : null}
+      </Button>
+      {open ? <div className="thought-body">{text}</div> : null}
+    </div>
+  )
+}
+
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
@@ -1522,6 +1561,22 @@ export function TranscriptRow({
        */}
       <span className={`who${mine ? " sr-only" : ""}`}>{mine ? "你" : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}</span>
       <div className="turn-body">
+      {/**
+        * **思考**（2026-08-12，作者要的形态学自 Hermes）。
+        *
+        * 作者：*「回复的时候还会有思考，还会有一个方块写 0 1 2 3 s……
+        * 然后是 Thought briefly，可以点击展开。」*
+        *
+        * 两个状态，各说各的事：
+        *   - **还在想**：秒数在走。它回答的是「它没死，只是在想」——
+        *     而那正是作者说的「否则我以为会话可能死掉了」。
+        *   - **想完了**：收成一行「想了 N 秒」，点开才是内容。
+        *     **默认收起**：思考往往比答案长得多，摊开会把答案挤到屏幕外。
+        *
+        * **它不是回答**，所以不进气泡、字号更小、颜色更淡——
+        * 一眼要能分出「这是它对自己说的」和「这是它对我说的」。
+        */}
+      {!mine && item.thinking ? <ThinkingBlock text={item.thinking} ms={item.thinkingMs} /> : null}
       <div className="bubble">
         {/**
          * **只有 agent 的发言走 markdown。**

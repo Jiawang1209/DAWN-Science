@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace(\"\"\"  width: max-content;\n  max-width: 100%;\n  margin-left: auto;\"\"\",\n\"\"\"  width: max-content;\n  /**\n   * **上限挪到这一层，`.bubble` 那条百分比因此要放开**（2026-08-12）。\n   *\n   * 量出来的根因：`.bubble` 的 `max-width: 82%` 原先相对 `.turn`（768px）\n   * → 630px，够宽；我加了这层包裹之后，**82% 变成相对包裹层（122px）→ 100px**，\n   * 于是「你是什么模型？」七个字放不下，被折成两行。\n   * **参照系换了，而百分比不会告诉你这件事。**\n   */\n  max-width: 82%;\n  margin-left: auto;\"\"\", 1)\ns += \"\"\"\n/* 上限已经在 `.turn-body` 上（见那段注释），这里放开，否则会再收一次 82% */\n.turn.user .bubble { max-width: 100%; }\n\"\"\"\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/composer-history-copy.spec.ts 2>&1 | tail -3",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npx playwright test e2e/visual.spec.ts --update-snapshots >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | tail -2; npm run test:e2e:only 2>&1 | tail -4",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts --update-snapshots >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2; npm run build >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts --update-snapshots >/dev/null 2>&1; npx playwright test e2e/visual.spec.ts 2>&1 | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

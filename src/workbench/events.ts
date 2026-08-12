@@ -68,6 +68,11 @@ interface Entry {
   kernelInstanceId: string | undefined
   turnSeq: number
   /**
+   * 这一轮开始想的时刻（epoch 毫秒）。**想完就清空**。
+   * 只用来算「想了多久」——那个数字要写在「思考」那一栏上。
+   */
+  思考起于: number | undefined
+  /**
    * 此刻由谁在答（2026-08-12）。**换过服务才有值**——
    * 没换过时 agent 名本来就是对的。
    */
@@ -99,6 +104,7 @@ export class SessionTranscripts {
       exitCode: undefined,
       openTurnId: undefined,
       turnSeq: 0,
+      思考起于: undefined,
       当前模型: undefined,
     })
   }
@@ -250,6 +256,34 @@ export class SessionTranscripts {
        * 而这正是作者要的那个功能（*「一个对话之间，可以切换不同的 API」*）
        * 最容易变得说不清的地方。
        */
+      case "thinking": {
+        /**
+         * **思考累进当前这一轮，与正文分开**（2026-08-12）。
+         *
+         * 作者看 Hermes：*「有一个 Thought briefly，可以点击展开。」*
+         * 它是模型对自己说的话——混进 `text` 就等于把草稿当答案念出来。
+         */
+        if (!e.openTurnId) {
+          e.turnSeq += 1
+          e.openTurnId = `a${e.turnSeq}`
+        }
+        // **第一个增量就是起点**：想了多久要从这里算
+        e.思考起于 ??= this.now()
+        const id = e.openTurnId
+        const 旧 = e.items.find((x) => x.id === id)
+        const 想的 = (旧?.type === "turn" ? (旧.thinking ?? "") : "") + event.delta
+        this.putItem(sessionId, e, {
+          type: "turn",
+          id,
+          who: "agent",
+          text: 旧?.type === "turn" ? 旧.text : "",
+          final: false,
+          ...(想的 ? { thinking: 想的 } : {}),
+          ...(e.当前模型 ? { by: e.当前模型 } : {}),
+        })
+        return
+      }
+
       case "model":
         // **从这一刻起的每一轮都记在它头上**（历史那些不动）
         e.当前模型 = event.provider
@@ -437,6 +471,21 @@ export class SessionTranscripts {
     const id = e.openTurnId
     const existing = e.items.find((i) => i.id === id)
     const text = existing?.type === "turn" ? existing.text + delta : delta
+    /**
+     * **正文一开始，思考就算结束**（2026-08-12）。
+     *
+     * 模型不会告诉你「我想完了」——它直接开始说话。所以停表的时机
+     * 就是第一个正文增量。**只停一次**：后面每个增量都重算的话，
+     * 那个数字会一直变大，而「想了多久」是一个说完就定住的事实。
+     */
+    const 想了 =
+      existing?.type === "turn" && existing.thinkingMs !== undefined
+        ? existing.thinkingMs
+        : e.思考起于 !== undefined
+          ? this.now() - e.思考起于
+          : undefined
+    if (e.思考起于 !== undefined) e.思考起于 = undefined
+
     // 推整条而不是增量：界面按 id 覆盖即可，**少一层客户端拼接状态**
     this.putItem(sessionId, e, {
       type: "turn",
@@ -444,6 +493,9 @@ export class SessionTranscripts {
       who: "agent",
       text,
       final: false,
+      // **思考要带着走**：不带的话，正文的第一个字就把它冲掉了
+      ...(existing?.type === "turn" && existing.thinking ? { thinking: existing.thinking } : {}),
+      ...(想了 === undefined ? {} : { thinkingMs: 想了 }),
       ...(e.当前模型 ? { by: e.当前模型 } : {}),
     })
   }

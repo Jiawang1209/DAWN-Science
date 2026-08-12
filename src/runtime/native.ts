@@ -760,6 +760,16 @@ export class NativeRuntime implements AgentRuntime {
         if (e.assistantMessageEvent?.type === "text_delta") {
           this.emit({ kind: "output", sessionId, data: e.assistantMessageEvent.delta ?? "" })
         }
+        /**
+         * **思考是另一路，不能混进 `output`**（2026-08-12）。
+         *
+         * 此前我们只接了 `text_delta`，`thinking_delta` 整个丢掉——
+         * 于是「它在想什么」「想了多久」在界面上完全不存在，
+         * 一段长思考看起来就是**卡住了**。
+         */
+        if (e.assistantMessageEvent?.type === "thinking_delta") {
+          this.emit({ kind: "thinking", sessionId, delta: e.assistantMessageEvent.delta ?? "" })
+        }
         return
       case "tool_execution_start": {
         const toolName = String(e.toolName ?? "?")

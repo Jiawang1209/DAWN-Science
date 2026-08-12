@@ -76,6 +76,8 @@ export const MARKDOWN_REPLY = [
  * @param {string} [opts.failMessage] 失败时的 message
  * @param {string} [opts.reply] 固定回复正文
  * @param {(body: any) => {toolName: string, args: object} | undefined} [opts.toolCall]
+ * @param {string} [opts.thinking] 假模型「想」的内容。**给了才发**——
+ *   大多数用例不需要它，平白多一段思考会把别的断言的上下文搅乱
  *   返回值非空时，改为让模型「调用一个工具」——用来在 e2e 里确定性地触发工具路径
  * @returns {Promise<{url: string, port: number, requests: any[], close: () => Promise<void>}>}
  */
@@ -146,7 +148,7 @@ export function startMockInferenceServer(opts = {}) {
         "cache-control": "no-cache",
         connection: "keep-alive",
       })
-      for (const chunk of streamChunks(reply, tool)) {
+      for (const chunk of streamChunks(reply, tool, opts.thinking)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
       }
       res.write("data: [DONE]\n\n")
@@ -172,7 +174,7 @@ export function startMockInferenceServer(opts = {}) {
 const MODEL_ID = "mock-model"
 
 /** 把回复切成几段发，**让流式路径真的被走到**——一次性发完等于没测流式 */
-function streamChunks(reply, tool) {
+function streamChunks(reply, tool, thinking) {
   const id = "chatcmpl-mock"
   const head = { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] }
 
@@ -197,8 +199,28 @@ function streamChunks(reply, tool) {
   }
 
   const parts = splitIntoParts(reply)
+  /**
+   * **假模型也要会「思考」**（2026-08-12，准入规则 1）。
+   *
+   * 界面新增了「想了 N 秒 / 点开看它在想什么」那一块（形态学自 Hermes）。
+   * 假模型不吐 `reasoning_content` 的话，**那一整块在 mock 模式与 e2e 里
+   * 永远不出现**，于是它只能靠人拿真模型试——而那意味着它几乎不会被试。
+   *
+   * OpenAI 兼容协议里推理内容走 `delta.reasoning_content`，pi 认这个字段。
+   * `opts.thinking` 给了才发：**大多数用例不需要它**，
+   * 平白多一段思考会把别的断言的上下文搅乱。
+   */
+  const 思考块 = thinking
+    ? [
+        {
+          id, object: "chat.completion.chunk", model: MODEL_ID,
+          choices: [{ index: 0, delta: { reasoning_content: thinking }, finish_reason: null }],
+        },
+      ]
+    : []
   return [
     head,
+    ...思考块,
     ...parts.map((text) => ({
       id, object: "chat.completion.chunk", model: MODEL_ID,
       choices: [{ index: 0, delta: { content: text }, finish_reason: null }],

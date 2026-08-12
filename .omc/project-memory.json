@@ -53,7 +53,7 @@
   },
   "build": {
     "buildCommand": "npm run build",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"tests/store/runs.test.ts\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('it(\"版本号升到 11 —— v11 让会话能长在一台远端服务器上（②-B · R4′）\", () => {',\n              'it(\"版本号升到 12 —— v12 把项目/会话/临时会话收成一个「任务」\", () => {', 1)\ns = s.replace(\"expect(SCHEMA_VERSION).toBe(11)\", \"expect(SCHEMA_VERSION).toBe(12)\")\np.write_text(s, encoding=\"utf8\")\nPY\nnpm test 2>&1 | grep -E \"Tests |FAIL\" | head -3",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

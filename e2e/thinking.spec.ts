@@ -36,6 +36,31 @@ test.describe("思考", () => {
     await expect(块.locator(".thought-body")).toContainText("用户问我是什么模型")
   })
 
+  /**
+   * **一个字都没说的发言不该占地方**（2026-08-12，作者截图标红的那一块）。
+   *
+   * 模型「想了想就去调工具」会留下一条空发言：说话人名 + 0s 思考 +
+   * 一行用量 + 一颗复制键，**正文一个字都没有**。
+   * 它在屏幕上占四行，却什么都没告诉人。
+   */
+  test("**没有正文的发言不画** —— 不在答案前面杵一个空壳", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+
+    /**
+     * 每一条画出来的 agent 发言**都得有字**。
+     * 断言「没有空的」而不是「一共几条」——后者会随假模型的话术变，
+     * 而这条要求跟条数无关。
+     */
+    const 空的 = await page.locator(".turn.agent").evaluateAll((els) =>
+      els.filter((el) => !(el.querySelector(".bubble")?.textContent ?? "").trim()).length,
+    )
+    expect(空的).toBe(0)
+  })
+
   test("**思考不混进回答里** —— 那是它对自己说的话，不是对我说的", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)

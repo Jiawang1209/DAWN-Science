@@ -1488,6 +1488,23 @@ export function TranscriptRow({
     return <KernelOutputRow item={item} currentKernel={currentKernel} />
   }
   const mine = item.who === "user"
+
+  /**
+   * **一个字都没说的发言，不画**（2026-08-12，作者截图标红的那一块）。
+   *
+   * 模型「想了想就去调工具」会留下一条空发言：说话人名、一个 0s 的思考、
+   * 一行用量、一颗复制键——**正文一个字都没有**。它在屏幕上占四行，
+   * 却什么都没告诉人。
+   *
+   * 那一段思考已经并进了后面那条（见 `events.ts` 的 `吸收只想没说的`）；
+   * 这里是**兜底**——万一没并上，宁可少显示一个 0s 的思考，
+   * 也不要在答案前面杵一个空壳。
+   *
+   * **代价说清楚**：这条发言的 token 用量因此不在对话里显示了。
+   * 它没有丢——账本（项目概览）记着，而那本来就是查用量的地方。
+   */
+  if (!mine && !item.text.trim()) return null
+
   /** 正在改的那份文字。**undefined = 没在改** */
   const [编辑, 设编辑] = useState<string | undefined>(undefined)
 

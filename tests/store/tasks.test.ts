@@ -92,3 +92,32 @@ describe("任务", () => {
     expect(s.get("t1")!.title).toBeUndefined()
   })
 })
+
+/**
+ * 任务记住它跑的是哪段会话（T3 的前置，schema v13）。
+ *
+ * **与「从哪迁过来的」分开记**：那一列只为迁移可追溯，
+ * 而这一列会随重启改变——两件事，将来会分岔。
+ */
+describe("任务与会话的绑定", () => {
+  it("刚建时可以还没有会话 —— **那不是错误**，界面据此知道要先拉起来", () => {
+    const s = 起()
+    s.insert(造())
+    expect(s.get("t1")!.sessionId).toBeUndefined()
+  })
+
+  it("绑上之后读得出来，**而且能改**（重启之后会换一段）", () => {
+    const s = 起()
+    s.insert(造())
+    s.setSession("t1", "sess-1")
+    expect(s.get("t1")!.sessionId).toBe("sess-1")
+    s.setSession("t1", "sess-2")
+    expect(s.get("t1")!.sessionId).toBe("sess-2")
+  })
+
+  it("建的时候就带着会话也行", () => {
+    const s = 起()
+    s.insert(造({ sessionId: "sess-9" }))
+    expect(s.get("t1")!.sessionId).toBe("sess-9")
+  })
+})

@@ -313,6 +313,13 @@ export const TaskSummarySchema = z
     workspace: z.string().min(1).optional(),
     /** 活儿在哪台远端机器上（②-B · R3）。**缺省 = 本地** */
     connectionId: z.string().min(1).optional(),
+    /**
+     * 这个任务现在跑的是哪段会话。
+     *
+     * **缺省 = 还没起来**（刚迁过来、或者进程重启之后）。
+     * 那不是错误——界面据此知道「点开时要先把它拉起来」。
+     */
+    sessionId: z.string().min(1).optional(),
     pinned: z.boolean(),
     sortOrder: z.int(),
     createdAt: Iso,

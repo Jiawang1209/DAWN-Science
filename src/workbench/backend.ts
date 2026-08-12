@@ -582,12 +582,29 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      */
     listTasks: async () => 任务库().list(),
 
-    createTask: async ({ workspace, connectionId }) => {
+    createTask: async ({ agentId, workspace, connectionId }) => {
       const store = 任务库()
+      if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
+
+      /**
+       * **不设路径时给它一个自己的目录**（T3）。
+       *
+       * 作者：*「如果在任务里面不设置任何工作目录的话，
+       * 那么其实就是我们的普通对话。」*
+       *
+       * 「普通对话」不等于「无处落脚」——agent 仍然要能读写文件。
+       * 所以服务端给一个独立目录，**但它不进 `TaskSummary`**：
+       * 摆出来只会让人看见一个自己从没选过的路径，
+       * 而那正是此前「临时会话」让人困惑的地方。
+       */
+      const 归属 = projects.ensureTemporary(scratchRoot)
+      const 会话 = await 起一个会话(归属.projectId, agentId, workspace)
+
       const rec = {
         taskId: `task-${randomUUID()}`,
         ...(workspace ? { workspace } : {}),
         ...(connectionId ? { connectionId } : {}),
+        sessionId: 会话.sessionId,
         pinned: false,
         sortOrder: store.nextSortOrder(),
         createdAt: new Date().toISOString(),

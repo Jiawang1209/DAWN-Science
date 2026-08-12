@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 12
+export const SCHEMA_VERSION = 13
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -431,6 +431,21 @@ export function migrate(db: Database.Database): void {
     批(待迁)
     // 迁移是事实，应当可见——静默升级会让「这些任务哪来的」无从追溯
     console.error(`[store] 已把 ${待迁.length} 段会话迁成任务（老记录一条都没动）`)
+  }
+
+  /**
+   * **v13（2026-08-12）：任务记住它是哪段会话**（T3 的前置）。
+   *
+   * 任务要能点开，就得知道点开的是什么。**与 `from_session` 分开**：
+   * 那一列记的是「这个任务是从哪段老会话迁过来的」（只为迁移可追溯），
+   * 而这一列记的是「它现在跑的是哪段」——**两件事，将来会分岔**
+   * （比如清掉会话重开一段，`from_session` 不该跟着变）。
+   *
+   * 迁移过来的任务：两者一开始是同一个值，所以直接回填。
+   */
+  if (!hasColumn(db, "tasks", "session_id")) {
+    db.exec(`ALTER TABLE tasks ADD COLUMN session_id TEXT`)
+    db.exec(`UPDATE tasks SET session_id = from_session WHERE session_id IS NULL`)
   }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(

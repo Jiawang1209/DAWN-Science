@@ -26,6 +26,13 @@ export interface TaskRecord {
   workspace?: string
   /** 活儿在哪台远端机器上（②-B · R3）。**缺席 = 本地** */
   connectionId?: string
+  /**
+   * 这个任务现在跑的是哪段会话。
+   *
+   * **缺席 = 还没起来**（比如刚迁过来、进程重启之后）——
+   * 那不是错误，界面据此知道「点开时要先把它拉起来」。
+   */
+  sessionId?: string
   pinned: boolean
   sortOrder: number
   createdAt: string
@@ -36,6 +43,7 @@ interface Row {
   title: string | null
   workspace: string | null
   connection_id: string | null
+  session_id: string | null
   pinned: number
   sort_order: number
   created_at: string
@@ -47,6 +55,7 @@ const toRecord = (r: Row): TaskRecord => ({
   ...(r.title ? { title: r.title } : {}),
   ...(r.workspace ? { workspace: r.workspace } : {}),
   ...(r.connection_id ? { connectionId: r.connection_id } : {}),
+  ...(r.session_id ? { sessionId: r.session_id } : {}),
   pinned: r.pinned === 1,
   sortOrder: r.sort_order,
   createdAt: r.created_at,
@@ -71,14 +80,15 @@ export class TaskStore {
   insert(rec: TaskRecord): void {
     this.db
       .prepare(
-        `INSERT INTO tasks (id, title, workspace, connection_id, pinned, sort_order, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO tasks (id, title, workspace, connection_id, session_id, pinned, sort_order, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         rec.taskId,
         rec.title ?? null,
         rec.workspace ?? null,
         rec.connectionId ?? null,
+        rec.sessionId ?? null,
         rec.pinned ? 1 : 0,
         rec.sortOrder,
         rec.createdAt,
@@ -97,6 +107,11 @@ export class TaskStore {
       .run(workspace ?? null, id)
     // **改不到就出声**：静默的 0 行更新会让界面显示「已设置」，而库里没变
     if (r.changes === 0) throw new Error(`没有这个任务：${id}`)
+  }
+
+  /** 这个任务现在跑哪段会话。**重启之后会换**，所以它是可写的 */
+  setSession(id: string, sessionId: string): void {
+    this.db.prepare(`UPDATE tasks SET session_id = ? WHERE id = ?`).run(sessionId, id)
   }
 
   /** 第一句话定名字。**只在还没有标题时写**——判空在 SQL 里，不在调用方 */

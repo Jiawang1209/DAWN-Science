@@ -2235,3 +2235,42 @@ pre {
   color: var(--dawn-text-3);
   font-variant-numeric: tabular-nums;
 }
+
+/* 顶栏（2026-08-12，学自 WorkBuddy）：左边是这段对话的名字，右边是状态与动作。
+   **常态不占位**：活着的时候不写「alive」，那是给开发者看的 */
+.conv-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--dawn-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40%;
+}
+
+/* 段落与列表的呼吸（2026-08-12，学自 WorkBuddy）。
+   **改的是「块与块之间」，不是行内**：行距已经由 --dawn-chat-leading 管，
+   这里管的是「读完一段，眼睛有没有地方歇一下」 */
+.bubble p { margin: 0 0 var(--dawn-space-3); }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble ul, .bubble ol { margin: 0 0 var(--dawn-space-3); padding-left: 1.4em; }
+/* 列表项之间也要留：一排贴着的条目读起来像表格，而它是话 */
+.bubble li + li { margin-top: var(--dawn-space-2); }
+/* 标题与它下面那段的关系要紧、与上一段的关系要松——**靠间距说这件事** */
+.bubble h1, .bubble h2, .bubble h3, .bubble h4 {
+  margin: var(--dawn-space-4) 0 var(--dawn-space-2);
+  line-height: 1.35;
+}
+.bubble > :first-child { margin-top: 0; }
+
+/* 说话人名（2026-08-12，学自 WorkBuddy）：**它是这段话的归属，不是一个标签**。
+   原先 11px 浅灰，轻到像装饰；加重之后「谁说的」一眼可辨 */
+.turn .who {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--dawn-text-1);
+  margin-bottom: var(--dawn-space-2);
+}
+/* 用量退到动作行尾巴上：它是脚注，不该把正文和动作隔开 */
+.turn-actions .turn-usage { margin: 0 0 0 auto; font-size: 0.78em; }

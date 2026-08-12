@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"e2e/thinking.spec.ts\"); s = p.read_text(encoding=\"utf8\")\ns = s.replace('''  test(\"**用量给出合计** —— 作者问「有没有消耗的 token」\", async ({ dawn }) => {''',\n'''  /**\n   * **这一整段对话花了多少**（2026-08-12）。\n   *\n   * 作者：*「其实我想展示的是某次对话，我们消耗了多少 token。」*\n   * 每一轮那个「共 N」已经撤掉了——它的口径我还没验清（`输入` 是否含 `缓存`），\n   * **一个口径不明的合计比没有合计更容易让人算错账**。\n   */\n  test(\"**对话头上是这一整段的累计**，不是某一轮的抄写\", async ({ dawn }) => {\n    const { page } = dawn\n    await 开一段临时会话(page)\n\n    const 头 = page.locator(\".session-usage\")\n    // **一轮都没说过话时不显示**：一排 0 会被读成「不花钱」\n    await expect(头).toHaveCount(0)\n\n    await page.getByPlaceholder(/回车发送/).fill(\"第一问\")\n    await page.getByRole(\"button\", { name: \"发送\", exact: true }).click()\n    await expect(page.getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })\n    await expect(头).toContainText(\"本次\")\n    const 第一次 = (await 头.textContent())!\n\n    await page.getByPlaceholder(/回车发送/).fill(\"第二问\")\n    await page.getByRole(\"button\", { name: \"发送\", exact: true }).click()\n    await expect(page.locator(\".turns\")).toContainText(\"第二问\", { timeout: 30_000 })\n\n    /**\n     * **第二轮之后这个数必须变**——不变就说明它只是某一轮的抄写，\n     * 而那正是「累计」这个词唯一要保证的事。\n     */\n    await expect.poll(async () => (await 头.textContent()) !== 第一次, { timeout: 30_000 }).toBe(true)\n  })\n\n  test(\"**用量给出合计** —— 作者问「有没有消耗的 token」\", async ({ dawn }) => {''', 1)\n# 撤掉的那条断言也要改\ns = s.replace('''    await expect(用量.locator(\".turn-usage-total\")).toContainText(\"共\")''',\n'''    /**\n     * **每一轮不再给「共 N」**（2026-08-12 撤）：它的口径我还没验清，\n     * 而作者要的本来就是「这一整段花了多少」，不是每一句。\n     */\n    await expect(用量.locator(\".turn-usage-total\")).toHaveCount(0)''', 1)\ns = s.replace('  test(\"**用量给出合计** —— 作者问「有没有消耗的 token」\"',\n              '  test(\"**每一轮只列三项，不给口径不明的合计**\"', 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/thinking.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/views.tsx\"); s = p.read_text(encoding=\"utf8\")\n块 = s[s.index(\"        {/**\\n         * **这一整段对话花了多少**\"):s.index(\"        <SessionUsage items={items} />\")+len(\"        <SessionUsage items={items} />\\n\")]\ns = s.replace(块, \"\", 1)\n# 放进 conv-head\nold = \"\"\"      <header className=\"conv-head\">\"\"\"\nnew = \"\"\"      <header className=\"conv-head\">\n        {/**\n         * **这一整段对话花了多少**（2026-08-12，作者要的）。\n         *\n         * 他先问每一轮那个「共 N」是什么意思，然后说：*「其实我想展示的是\n         * 某次对话，我们消耗了多少 token。」* ——那才是要对的账。\n         *\n         * **三项分开列，不合成一个数**：合成需要先确定「`输入` 里是否已经\n         * 含了 `缓存`」——各家口径不同，我还没验过。\n         * **一个口径不明的合计，比没有合计更容易让人算错账。**\n         */}\n        <SessionUsage items={items} />\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\np.write_text(s, encoding=\"utf8\")\nPY\nnpx tsc --noEmit -p tsconfig.json 2>&1 | grep -v notice | head -3; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -2",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm run build >/dev/null 2>&1 && npx playwright test e2e/thinking.spec.ts e2e/composer-history-copy.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; python3 - <<'PY'\nimport pathlib\np = pathlib.Path(\"src/ui/views.tsx\"); s = p.read_text(encoding=\"utf8\")\n# 用量从正文下面挪到动作行右端\ns = s.replace(\"\"\"        {item.final && item.usage ? <TurnUsage usage={item.usage} /> : null}\n      </div>\"\"\", \"\"\"      </div>\"\"\", 1)\ns = s.replace(\"\"\"        <div className=\"turn-actions\">\n          <CopyButton text={item.text} label={mine ? \"复制我说的这段\" : \"复制这段回答\"} />\"\"\",\n\"\"\"        <div className=\"turn-actions\">\n          <CopyButton text={item.text} label={mine ? \"复制我说的这段\" : \"复制这段回答\"} />\"\"\", 1)\ns = s.replace(\"\"\"          ) : null}\n        </div>\n      ) : null}\n      </div>\n    </div>\n  )\n}\"\"\",\n\"\"\"          ) : null}\n          {/**\n           * **用量摆在动作行的右端**（2026-08-12，学自 WorkBuddy）。\n           *\n           * 此前它单独占一行，夹在正文和动作之间——**把一段话和「对它做什么」\n           * 隔开了**，而它自己只是个脚注。挪到这一行的尾巴上，\n           * 正文与动作就贴在一起了。\n           */}\n          {item.final && item.usage ? <TurnUsage usage={item.usage} /> : null}\n        </div>\n      ) : null}\n      </div>\n    </div>\n  )\n}\"\"\", 1)\np.write_text(s, encoding=\"utf8\")\n\np = pathlib.Path(\"src/ui/styles.css\"); s = p.read_text(encoding=\"utf8\")\ns += \"\"\"\n/* 说话人名（2026-08-12，学自 WorkBuddy）：**它是这段话的归属，不是一个标签**。\n   原先 11px 浅灰，轻到像装饰；加重之后「谁说的」一眼可辨 */\n.turn .who {\n  font-size: 0.85rem;\n  font-weight: 600;\n  color: var(--dawn-text-1);\n  margin-bottom: var(--dawn-space-2);\n}\n/* 用量退到动作行尾巴上：它是脚注，不该把正文和动作隔开 */\n.turn-actions .turn-usage { margin: 0 0 0 auto; font-size: 0.78em; }\n\"\"\"\np.write_text(s, encoding=\"utf8\")\nPY\nnpx tsc --noEmit -p tsconfig.json 2>&1 | grep -v notice | head -2; npm test 2>&1 | grep -E \"Tests |FAIL\" | head -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -236,15 +236,15 @@
       "type": "file"
     },
     {
-      "path": "src/ui/App.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1786374912403,
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "accessCount": 7,
+      "lastAccessed": 1786508194590,
       "type": "file"
     },
     {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
+      "path": "src/ui/App.tsx",
       "accessCount": 6,
-      "lastAccessed": 1786491896745,
+      "lastAccessed": 1786374912403,
       "type": "file"
     },
     {

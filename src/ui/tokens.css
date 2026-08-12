@@ -238,8 +238,19 @@
   --dawn-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --dawn-ui-size: 13px;
   --dawn-ui-leading: 1.55;
-  --dawn-chat-size: 14px;
-  --dawn-chat-leading: 20px;
+  /**
+   * 对话正文（2026-08-12 放松）。
+   *
+   * **量过才改的**：原先是 `14px / 20px`，行高比 1.43——字挤在一起，
+   * 作者三次说「太死板」，症结在这里而不在宽度
+   * （宽度上限 768px 一直生效，我先前判断错了，量了才知道）。
+   *
+   * WorkBuddy 那张截图上是约 15px / 1.7。这里取 `15px / 25px`（1.67）：
+   * **中日文没有词间空隙，行距不够时整段会糊成一块**，
+   * 比西文更吃这个数。
+   */
+  --dawn-chat-size: 15px;
+  --dawn-chat-leading: 25px;
   --dawn-code-size: 12px;
   --dawn-weight-medium: 500;
   --dawn-weight-semibold: 600;

@@ -1281,6 +1281,8 @@ export function ConversationView({
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
+        {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
+        <h1 className="conv-title">{session.title ?? "新对话"}</h1>
         {/**
          * **这一整段对话花了多少**（2026-08-12，作者要的）。
          *
@@ -1305,7 +1307,20 @@ export function ConversationView({
             <span className="conv-remote-cwd">{短路径(session.remote.cwd)}</span>
           </span>
         ) : null}
-        <span className={`state ${session.state}`}>{session.state}</span>
+        {/**
+         * **顶栏左边是这段对话的名字**（2026-08-12，学自 WorkBuddy）。
+         *
+         * 此前这里挂的是一个 `alive` —— **那是给开发者看的状态字**，
+         * 不该出现在成品里；而人一进来最想知道的是「我在哪段对话里」。
+         *
+         * **只在不正常时才说状态**：活着是常态，把常态写在屏幕上等于噪声；
+         * 而「已结束」是必须说的（规格 7.5：失败与终止不许静默）。
+         */}
+        {session.state === "alive" ? null : (
+          <span className={`state ${session.state}`}>
+            {session.state === "exited" ? "已结束" : session.state}
+          </span>
+        )}
         {busy && onAbort ? (
           <Button variant="outline" size="sm" className="abort" onClick={onAbort}>
             停止
@@ -1693,7 +1708,6 @@ export function TranscriptRow({
          * （自有订阅额度的 agent、或这一段本来就没有新的模型调用），
          * 显示成 0 是把「不知道」说成了「没花」。
          */}
-        {item.final && item.usage ? <TurnUsage usage={item.usage} /> : null}
       </div>
 
       {/**
@@ -1734,6 +1748,14 @@ export function TranscriptRow({
               <span aria-hidden="true">✎</span>
             </Button>
           ) : null}
+          {/**
+           * **用量摆在动作行的右端**（2026-08-12，学自 WorkBuddy）。
+           *
+           * 此前它单独占一行，夹在正文和动作之间——**把一段话和「对它做什么」
+           * 隔开了**，而它自己只是个脚注。挪到这一行的尾巴上，
+           * 正文与动作就贴在一起了。
+           */}
+          {item.final && item.usage ? <TurnUsage usage={item.usage} /> : null}
         </div>
       ) : null}
       </div>

@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npx tsc --noEmit -p tsconfig.json 2>&1 | head -10; npx playwright test e2e/cli-agent.spec.ts e2e/codex-agent.spec.ts e2e/pty-session.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -20",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eH.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eH.log | tail -14",
+    "buildCommand": "python3 - <<'PY'\np=\"src/ui/App.tsx\"\ns=open(p).read()\ns=s.replace(\"\"\"  /**\n   * 能选哪些模型。**只列当前这一家的**（2026-08-11 收窄）。\n   *\n   * 作者：*「选择 kimi-k3 的时候，前面其实不用出现 Kimi，因为后面就选择了\n   * 是哪一个模型厂家的了。」*——厂家由旁边那颗 pill 选，这颗只回答\n   * 「这一家里用哪个模型」。两颗各管一件事，也就不会互相打架。\n   *\n   * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。\n   */\n  const modelChoices: ModelChoice[] =\n    agentCfg?.kind === \"cli\"\n      ? (agentCfg.models ?? []).map((m) => ({ model: m }))\n      : (providers.providers.find((p) => p.providerId === currentProvider)?.available ?? []).map(\n          (m) => ({ provider: currentProvider, model: m }),\n        )\"\"\",\"\"\"  /**\n   * 能选哪些模型。**所有配好的服务 × 各自的模型**（2026-08-12 放开）。\n   *\n   * ## 为什么放开\n   *\n   * 2026-08-11 这里收窄成「只列当前这一家」，理由是**厂家由旁边那颗 pill 选**\n   * （作者：*「选择 kimi-k3 的时候，前面不用出现 Kimi」*），两颗各管一件事。\n   *\n   * 现在两颗并成了一颗（作者要的，实测 WorkBuddy 就是一颗）——\n   * **那条理由随之失效**：旁边没有那颗了，收窄就等于\n   * **换服务这件事从 composer 上消失**。它是真能力（2026-08-11 做的\n   * 「换到另一家，对话不断」），丢掉它是静默的功能倒退。\n   *\n   * 换过去不需要另一条路：`onPickModel` 本来就把这一条的 `provider`\n   * 一起发出去（同上那次改动定的），服务端的 `setSessionModel` 收两个字段。\n   * **列表里选另一家的模型 = 就地换服务 + 换模型**，对话不断。\n   *\n   * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。\n   */\n  const modelChoices: ModelChoice[] =\n    agentCfg?.kind === \"cli\"\n      ? (agentCfg.models ?? []).map((m) => ({ model: m }))\n      : providers.providers.flatMap((p) =>\n          (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),\n        )\"\"\")\nopen(p,\"w\").write(s)\nprint(\"ok\")\nPY\nnpm run typecheck 2>&1|tail -3 && npm run build 2>&1|tail -1 && npx playwright test e2e/cross-service-switch.spec.ts e2e/key-is-enough.spec.ts e2e/model-switch.spec.ts e2e/who-answered.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -14",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npm run test:e2e:visual 2>&1|tail -2; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eK.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eK.log | tail -10",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -257,8 +257,8 @@
     },
     {
       "path": "e2e/__screenshots__/对话-亮色-darwin.png",
-      "accessCount": 5,
-      "lastAccessed": 1786536939195,
+      "accessCount": 6,
+      "lastAccessed": 1786558256546,
       "type": "file"
     },
     {
@@ -445,6 +445,12 @@
       "path": "test-results/cli-agent-CLI-agent-在对话框里-打一句，它答一句-——-判据-①/test-failed-1.png",
       "accessCount": 1,
       "lastAccessed": 1786550264414,
+      "type": "file"
+    },
+    {
+      "path": "e2e/model-pill.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786558367716,
       "type": "file"
     }
   ],

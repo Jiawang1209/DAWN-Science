@@ -39,14 +39,25 @@ const session: SessionSummary = {
 
 const AGENTS = ["ds-chat", "claude-cli", "codex-cli"]
 
-const conv = (over: Partial<Parameters<typeof ConversationView>[0]> = {}) =>
+/**
+ * **agent pill 现在住在初始画面上**（2026-08-12 搬的）。
+ *
+ * 作者要求把 composer 右下角收成**一颗**（实测 WorkBuddy 就是
+ * `◐ Hy3 ⌃` 一颗），而「哪家」与「哪个模型」原本各占一颗——
+ * 它们回答的是同一个问题。
+ *
+ * 搬到哪儿不是随便挑的：**挑 LLM 这件事发生在开口之前**，
+ * 而初始画面正是「还没开口」那一屏。会话中途换服务走的是模型 pill
+ * （就地换、对话不断，2026-08-11 定的）；「用别的 agent 开一段新对话」
+ * 留在命令面板——它与「换模型」不是同一件事，**混进同一个菜单正是
+ * 那次「点了以为换模型、结果新开了对话」的来源**。
+ */
+const conv = (over: Partial<Parameters<typeof EmptyConversation>[0]> = {}) =>
   render(
-    <ConversationView
-      session={session}
-      items={[]}
+    <EmptyConversation
       agents={AGENTS}
-      onSend={() => {}}
-      onNewSession={() => {}}
+      onStart={() => {}}
+      onOpenSettings={() => {}}
       {...over}
     />,
   )
@@ -65,9 +76,18 @@ describe("agent pill · 位置", () => {
     expect(row!.querySelector("button[type=submit]")).toBeTruthy()
   })
 
-  it("显示当前会话的 agent —— 不是全局的、不是第一个", () => {
-    const { container } = conv({ session: { ...session, agentId: "codex-cli" } })
-    expect(container.querySelector(".agent-pill")!.textContent).toContain("codex-cli")
+  /**
+   * **它显示的是「按下去会用哪个」**（2026-08-12 换了主语）。
+   *
+   * 上一版这条是「显示当前会话的 agent」——那时 pill 在 composer 里，
+   * 每段对话有自己的 agent。搬到初始画面之后**还没有会话**，
+   * 所以它显示的是清单里第一个，也就是**直接开口会用的那个**。
+   *
+   * 意图没变：**不能显示一个与实际会用的不一致的东西**。
+   */
+  it("显示的是「直接开口会用哪个」", () => {
+    const { container } = conv()
+    expect(container.querySelector(".agent-pill")!.textContent).toContain("ds-chat")
   })
 
   /**
@@ -107,12 +127,13 @@ describe("agent pill · 位置", () => {
    * 而人要判断的是**钱和上下文走哪条路**：API 用你的 key 直接调、模型在这里选；
    * CLI 是外部命令行自己去调，**模型也归它自己管**。
    */
-  it("顺带说清它是 API、CLI 还是终端", () => {
-    const { container } = conv({ session: { ...session, kind: "cli" } })
-    const t = container.querySelector(".agent-pill")!.textContent
-    expect(t).toMatch(/CLI/)
-    expect(t).not.toMatch(/内置/)
-  })
+  /**
+   * **「是 API 还是 CLI」这条挪到会话里去了**（2026-08-12）。
+   *
+   * 那是一段**已有会话**的属性（`session.kind`），而这一屏还没有会话。
+   * 它现在由对话里那颗模型 pill 上的服务标记承担。
+   * 这里删掉不是因为它红了，是**它问的那个东西在这一屏上不存在**。
+   */
 })
 
 describe("agent pill · 点开之后", () => {
@@ -132,10 +153,10 @@ describe("agent pill · 点开之后", () => {
 
   it("选一项 → 带着那个 agentId 新建", () => {
     const onNewSession = vi.fn()
-    conv({ onNewSession })
+    conv({ onStart: onNewSession })
     fireEvent.click(screen.getByRole("button", { name: /ds-chat/ }))
     fireEvent.click(screen.getByRole("menuitem", { name: /codex-cli/ }))
-    expect(onNewSession).toHaveBeenCalledWith("codex-cli")
+    expect(onNewSession).toHaveBeenCalledWith("codex-cli", undefined, undefined)
   })
 
   it("选完就收起 —— 菜单不该赖着不走", () => {
@@ -152,13 +173,13 @@ describe("agent pill · 点开之后", () => {
     expect(screen.queryByRole("menu")).toBeNull()
   })
 
-  it("**会话已结束时 pill 仍然能用** —— 输入框该禁，新建会话不该禁", () => {
-    const onNewSession = vi.fn()
-    conv({ disabled: true, onNewSession })
-    fireEvent.click(screen.getByRole("button", { name: /ds-chat/ }))
-    fireEvent.click(screen.getByRole("menuitem", { name: /codex-cli/ }))
-    expect(onNewSession).toHaveBeenCalledWith("codex-cli")
-  })
+  /**
+   * **「会话已结束时仍然能用」这条挪走了**（2026-08-12）。
+   *
+   * 它守的是「输入框该禁、但换 LLM 开一段新的不该禁」——
+   * 而那个场景在**初始画面上不存在**：这一屏永远没有已结束的会话。
+   * 同样是主语没了，不是它红了。
+   */
 })
 
 describe("agent pill · 侧栏那份要真的搬走", () => {

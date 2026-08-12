@@ -19,7 +19,7 @@ import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 /**
@@ -411,6 +411,7 @@ export function SessionSidebar({
   onShowPanel,
   onShowFiles,
   onShowSkills,
+  onShowPlugins,
   onShowMcp,
   onDeleteSession,
   onRenameSession,
@@ -462,6 +463,8 @@ export function SessionSidebar({
   onShowFiles: () => void
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
+  /** 插件那一屏。同上 */
+  onShowPlugins?: (() => void) | undefined
   /** MCP 那一屏。同上 */
   onShowMcp?: (() => void) | undefined
   /** 删掉某个项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
@@ -824,6 +827,20 @@ export function SessionSidebar({
           <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
             <技能图标 className="row-icon" />
             <span className="name">技能</span>
+          </Row>
+        ) : null}
+        {/**
+          * **插件**（2026-08-12，作者要的，放在技能下面）。
+          *
+          * 与技能、MCP 同一条边界：**这一屏只说真话**。
+          * 插件在我们这儿还没有承载体——不像技能（`.dawn/agents/*.md` 本来就能跑）、
+          * 也不像 MCP（管道通了、只差界面）。所以它如实说清「还没有」，
+          * 并指出**现在能装的能力是哪两样**，而不是摆一个空列表。
+          */}
+        {onShowPlugins ? (
+          <Row active={view === "plugins"} className="side-action" onClick={onShowPlugins}>
+            <插件图标 className="row-icon" />
+            <span className="name">插件</span>
           </Row>
         ) : null}
         {onShowMcp ? (
@@ -1376,6 +1393,9 @@ export function ModelPill({
   current,
   busy,
   onPick,
+  serviceLabel,
+  onConfigure,
+  kind,
 }: {
   /** 能换到哪些。native 会话是「所有配好的服务 × 各自的模型」 */
   choices: readonly ModelChoice[]
@@ -1384,6 +1404,15 @@ export function ModelPill({
   /** agent 还在说话。**用我们自己的判定，不问 pi** */
   busy?: boolean | undefined
   onPick: (choice: ModelChoice) => void
+  /** provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。缺省时用 id */
+  serviceLabel?: ((providerId: string) => string) | undefined
+  /** 「配置自定义模型」通向哪。**不给就不画那一条**——不摆点了没反应的入口 */
+  onConfigure?: (() => void) | undefined
+  /**
+   * 这段会话是哪一类。**只在不是内置时标出来**——
+   * 它决定了能不能就地换服务、模型清单从哪来、「CLI 默认」是什么意思。
+   */
+  kind?: SessionSummary["kind"] | undefined
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -1401,40 +1430,61 @@ export function ModelPill({
    * **有清单就画得出来**，不要求知道「当前是哪个」。
    *
    * 2026-08-09 反转：原来是 `models.length === 0 || !current` 才画。
-   * 那条件逼着配置去钉一个 `model`，而钉模型会**覆盖用户自己 CLI 的配置**
-   * （作者的 claude 默认是 `opus[1m]`、codex 是 `gpt-5.6-sol`，
-   * 都被我们传的 `--model` 盖掉了，后者还直接 400）。
-   *
-   * 当前未知时如实标「CLI 默认」——**那是实情，不是缺陷**，
-   * 而且比「选择器整个不出现」诚实得多。
+   * 那条件逼着配置去钉一个 `model`，而钉模型会**覆盖用户自己 CLI 的配置**。
+   * 当前未知时如实标「CLI 默认」——**那是实情，不是缺陷**。
    */
   if (choices.length === 0) return null
 
   const 同一条 = (c: ModelChoice) => c.model === current?.model && c.provider === current?.provider
+  const 叫什么 = (p: string | undefined) => (p ? (serviceLabel?.(p) ?? p) : "CLI")
+
+  /**
+   * **按服务分组**（2026-08-12）。
+   *
+   * 合并成一颗 pill 之后，「哪家」不再由旁边那颗说了——它得在这个列表里说。
+   * 分组标题是唯一说得出这件事的地方：`kimi-k3` 与 `deepseek-v4` 并排列着，
+   * 不分组的话没人知道换过去意味着换了一家。
+   *
+   * **保持 `choices` 的原始顺序**，只是把同一家的收拢到一起：
+   * 那个顺序是后端给的（配置里的顺序），重排等于替用户做决定。
+   */
+  const 分组: { provider: string | undefined; items: ModelChoice[] }[] = []
+  for (const c of choices) {
+    const 已有 = 分组.find((g) => g.provider === c.provider)
+    if (已有) 已有.items.push(c)
+    else 分组.push({ provider: c.provider, items: [c] })
+  }
 
   return (
     <div className="pill model-pill" ref={box}>
+      {/**
+        * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
+        *
+        * 实测 WorkBuddy 的输入卡右下角只有一颗 `◐ Hy3 ⌃`；我们此前摊着
+        * 「哪家」与「哪个模型」两颗，而**它们回答的是同一个问题**。
+        *
+        * 触发器上写模型名、前面一个服务标记：**哪家由那个标记说**，
+        * 不再写两遍——两处一旦不同步就是互相打架的两句话。
+        */}
       <Button
         variant="ghost"
         size="sm"
+        className="model-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={`当前模型：${current?.model ?? "CLI 默认"}。点击切换`}
         onClick={() => setOpen((v) => !v)}
       >
-        {/**
-          * **只写模型名。**
-          *
-          * 作者：*「我在选择 kimi-k3 这个具体的模型的时候，前面其实不用出现 Kimi，
-          * 因为后面就选择了是哪一个模型厂家的了。」*——是哪家由旁边那颗 pill 说，
-          * 两处都写一遍只是噪声，而且它们一旦不同步就成了互相打架的两句话。
-          */}
-        {current?.model ?? "CLI 默认"}
-        <下拉图标 />
+        <span className="svc-mark" aria-hidden="true">
+          {叫什么(current?.provider).slice(0, 1).toUpperCase()}
+        </span>
+        <span className="model-name">{current?.model ?? "CLI 默认"}</span>
+        <三角图标 className={`model-caret${open ? " open" : ""}`} />
       </Button>
 
       {open ? (
         <div
-          className="agent-menu"
+          className="model-menu"
           role="menu"
           aria-label="切换模型"
           tabIndex={-1}
@@ -1442,37 +1492,66 @@ export function ModelPill({
             if (e.key === "Escape") setOpen(false)
           }}
         >
-          <p className="agent-menu-head">切换模型</p>
           {/**
-            * **这句话是这次改动的一半。**
-            * 作者原本以为换一家就得新建对话——因为唯一摆在眼前的入口
-            * （agent pill）确实是那个意思。
+            * **就地换，不新建对话**——这句话是 2026-08-11 那次改动的一半：
+            * 作者原本以为换一家就得新建对话，因为唯一摆在眼前的入口是那个意思。
             */}
-          {/* **JSX 纯文本不渲染 markdown**：强调一律走 CSS，写 `**` 只会显示成星号 */}
-          <p className="hint pad">
-            就地换，<em className="set-emph">不会新建对话</em>。
-            换到别家去旁边那颗
-          </p>
-          {/* **理由提前说，不等人点了才报错。** 门在运行时，这里只是把它显示出来 */}
           {busy ? <p className="hint pad">这一轮还没说完，先等它结束或中止</p> : null}
-          <ul>
-            {choices.map((c) => (
-              <li key={`${c.provider ?? ""}/${c.model}`}>
-                <Row
-                  role="menuitem"
-                  aria-disabled={Boolean(busy)}
-                  onClick={() => {
-                    if (busy) return
-                    setOpen(false)
-                    onPick(c)
-                  }}
-                >
-                  <span className="name">{c.model}</span>
-                  {同一条(c) ? <span className="hint">当前</span> : null}
-                </Row>
+          <ul className="model-list">
+            {分组.map((g) => (
+              <li key={g.provider ?? "cli"} className="model-group">
+                {/* **组头说的是「哪家」**：合并成一颗之后，这是唯一说得出它的地方 */}
+                <p className="model-group-head">{叫什么(g.provider)}</p>
+                <ul>
+                  {g.items.map((c) => (
+                    <li key={`${c.provider ?? ""}/${c.model}`}>
+                      <Row
+                        role="menuitem"
+                        active={同一条(c)}
+                        aria-disabled={Boolean(busy)}
+                        onClick={() => {
+                          if (busy) return
+                          setOpen(false)
+                          onPick(c)
+                        }}
+                      >
+                        <span className="svc-mark" aria-hidden="true">
+                          {叫什么(c.provider).slice(0, 1).toUpperCase()}
+                        </span>
+                        <span className="name">{c.model}</span>
+                        {/**
+                          * **当前那条打勾，且同时留一个字**——
+                          * 「只用形状表达含义是不够的」，读屏拿不到一个 ✓ 的意思。
+                          */}
+                        {同一条(c) ? <span className="sr-only">当前</span> : null}
+                        {同一条(c) ? <勾图标 className="model-check" /> : null}
+                      </Row>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
+          {/**
+            * **配置自定义模型**（2026-08-12，学自 WorkBuddy 那个浮层的底一条）。
+            *
+            * 它把「这里没有我要的那个」接到「去哪加一个」——
+            * 没有这一条，人只能自己想到去设置里翻。
+            */}
+          {onConfigure ? (
+            <div className="model-menu-foot">
+              <Row
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false)
+                  onConfigure()
+                }}
+              >
+                <铅笔图标 className="row-icon" />
+                <span className="name">配置自定义模型</span>
+              </Row>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -1627,6 +1706,8 @@ export function ConversationView({
   workspace,
   onPickWorkspace,
   onClearWorkspace,
+  serviceLabel,
+  onOpenSettings,
 }: {
   session: SessionSummary
   /**
@@ -1640,6 +1721,10 @@ export function ConversationView({
   onPickWorkspace?: (() => void) | undefined
   /** 退回普通对话 */
   onClearWorkspace?: (() => void) | undefined
+  /** provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。模型 pill 的分组标题用它 */
+  serviceLabel?: ((providerId: string) => string) | undefined
+  /** 「配置自定义模型」通向哪。**不给就不画那一条** */
+  onOpenSettings?: (() => void) | undefined
   /** 可选的 agent 清单，给 composer 右下角那颗 pill 用 */
   agents?: readonly string[] | undefined
   /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
@@ -1744,6 +1829,37 @@ export function ConversationView({
       <header className="conv-head">
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
         <h1 className="conv-title">{session.title ?? "新对话"}</h1>
+        {/**
+          * **不是内置那条时说一声**（2026-08-12）。
+          *
+          * 「这段会话是外部 CLI / 终端 / 内核，还是内置 API」——
+          * 它决定了能不能就地换服务、模型清单从哪来、「CLI 默认」是什么意思。
+          *
+          * 摆在**对话头上**而不是模型 pill 上：它是**这段会话的属性**，
+          * 与「现在用哪个模型」不是一回事；而且模型清单为空时那颗 pill
+          * 整个不画，挂在它上面等于「有时说有时不说」。
+          *
+          * **只在非内置时出现**：内置是常态，常态不占位。
+          */}
+        {session.kind !== "native" ? (
+          <>
+            {/**
+              * **是哪个 agent 也要说**（2026-08-12）。
+              *
+              * 对外部 CLI / 终端 / 内核这几类，「claude」还是「codex」
+              * 决定了对话里发生什么——而它们**没有 provider**，
+              * 模型 pill 上那个服务标记说不出来。
+              *
+              * 而且这一条守着一个更要紧的不变式：**显示的东西跟着
+              * 当前这段会话走，不是某个全局值**——并排开两段对话时，
+              * 各自显示各自的（`session-rehome` 那条用例盯的就是它）。
+              */}
+            <span className="conv-agent">
+              {agentLabel ? agentLabel(session.agentId) : session.agentId}
+            </span>
+            <span className="kind">{KIND_LABEL[session.kind]}</span>
+          </>
+        ) : null}
         {/**
          * **这一整段对话花了多少**（2026-08-12，作者要的）。
          *
@@ -1920,23 +2036,28 @@ export function ConversationView({
           {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}
           <div className="composer-controls">
             {/**
-              * **先厂家，后模型**（2026-08-11，作者：*「可以先放模型厂家，
-              * 后选择模型是什么」*）。读的顺序就是选的顺序。
+              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
+              *
+              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
+              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
+              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
+              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
+              *
+              * 「用别的 agent 开一段新对话」（claude / codex 这类）
+              * **留在命令面板**（`⌘K` →「新建会话：…」）：
+              * 它与「换模型」不是同一件事，混进同一个菜单正是
+              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
               */}
-            {agents && onNewSession ? (
-              <AgentPill
-                agents={agents}
-                current={session.agentId}
-                {...(currentServiceLabel ? { currentLabel: currentServiceLabel } : {})}
-                kind={session.kind}
-                label={agentLabel}
-                {...(services ? { services } : {})}
-                {...(onSwitchService ? { onSwitchService } : {})}
-                onPick={onNewSession}
-              />
-            ) : null}
             {models && onPickModel ? (
-              <ModelPill choices={models} current={model} busy={busy} onPick={onPickModel} />
+              <ModelPill
+                choices={models}
+                current={model}
+                busy={busy}
+                kind={session.kind}
+                onPick={onPickModel}
+                {...(serviceLabel ? { serviceLabel } : {})}
+                {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
+              />
             ) : null}
             {/**
               * **终端的入口在对话这一侧**（2026-08-11）。

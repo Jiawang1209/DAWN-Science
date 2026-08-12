@@ -106,8 +106,14 @@ test.describe("在一个对话里换模型（作者试用后补）", () => {
     await say(page, "第一句")
     await expect(page.getByText(/假 codex 首轮/)).toBeVisible({ timeout: 30_000 })
 
-    // 模型选择器在 composer 右下角——**它存在本身就是这次修的东西**
-    await page.getByRole("button", { name: /gpt-5\.1-codex$/ }).click()
+    /**
+     * 模型选择器在 composer 右下角——**它存在本身就是这次修的东西**。
+     *
+     * 2026-08-12：两颗 pill 并成了一颗，触发器的**可访问名**改成了
+     * 「当前模型：X。点击切换」（那句话是给读屏的），所以不能再按
+     * `/gpt-5\.1-codex$/` 这种「以模型名结尾」去找它。按类名点。
+     */
+    await page.locator(".model-pill .model-trigger").click()
     await page.getByRole("menuitem", { name: /gpt-5\.1-codex-mini/ }).click()
 
     await say(page, "第二句")

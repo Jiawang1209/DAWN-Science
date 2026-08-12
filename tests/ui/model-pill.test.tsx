@@ -42,11 +42,23 @@ describe("模型选择器", () => {
     expect(触发.textContent).not.toContain("DeepSeek ·")
   })
 
-  it("**明说不会新建对话**，并指出换别家去哪儿", () => {
+  /**
+   * **「换别家」现在就在这个列表里**（2026-08-12 换的主语）。
+   *
+   * 上一版这里等两句提示：「不会新建对话」「换到别家去旁边那颗」。
+   * 那时 composer 上有两颗 pill，而**旁边那颗已经没有了**——
+   * 作者要求收成一颗（实测 WorkBuddy 就是一颗）。
+   *
+   * 收成一颗之后，「哪家」由**分组标题**说：`Kimi` 与 `DeepSeek`
+   * 各领一组，换过去就是点另一组里的一条。
+   * 这条守的意图没变——**换服务这件事必须看得见**，只是它现在
+   * 由列表的结构表达，而不是由一句话。
+   */
+  it("**按服务分组** —— 换别家就在这个列表里，不必去别处", () => {
     开()
-    const t = screen.getByRole("menu", { name: "切换模型" }).textContent ?? ""
-    expect(t).toMatch(/不会新建对话/)
-    expect(t).toMatch(/别家/)
+    const 菜单 = screen.getByRole("menu", { name: "切换模型" })
+    const 组头 = [...菜单.querySelectorAll(".model-group-head")].map((x) => x.textContent)
+    expect(组头.length).toBeGreaterThan(0)
   })
 
   it("选一条 → **provider 跟着这一条走**", () => {

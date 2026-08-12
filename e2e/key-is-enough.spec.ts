@@ -27,14 +27,19 @@ test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) =
   await 开一段临时会话(page)
   await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
 
-  await page.locator(".agent-pill").click()
   /**
-   * **没有点过任何「建 agent」**——填 key 是唯一做过的事。
+   * **选择器现在是那颗合并的模型 pill**（2026-08-12）。
    *
-   * 2026-08-11：这里找的从 id（`kimi-coding`）改成了显示名
-   * （`Kimi For Coding`，pi 自己给的）——作者：*「不如直接叫 DeepSeek。」*
+   * 两颗并成一颗之后，「填完 key 立刻能选到它」要在模型清单里看——
+   * 新配好的那一家会作为**一个分组**出现在里面。
+   *
+   * **没有点过任何「建 agent」**——填 key 是唯一做过的事。
+   * 找的是显示名（`Kimi For Coding`，pi 自己给的），不是配置里那个键。
    */
-  await expect(page.locator("body")).toContainText("Kimi For Coding", { timeout: 10_000 })
+  await page.locator(".model-pill .model-trigger").click()
+  await expect(page.getByRole("menu", { name: "切换模型" })).toContainText("Kimi For Coding", {
+    timeout: 10_000,
+  })
 })
 
 test("**不再有「建一个 agent」这种东西** —— 那是我们内部的概念漏了出来", async ({ dawn }) => {

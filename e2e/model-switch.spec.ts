@@ -75,13 +75,22 @@ test("**换完之后，下一次请求真的打到新模型**", async ({ dawn })
   expect(modelsUsed(requests as never)).toEqual([A, B])
 })
 
-test("菜单标题是「切换模型」，与 agent pill 的「新建会话」区分开", async ({ dawn }) => {
+/**
+ * **两个语义不同的菜单不再并排放着**（2026-08-12 换的主语）。
+ *
+ * 上一版这条比的是 composer 上两颗 pill 的菜单标题：一个「切换模型」、
+ * 一个「新建会话」——**同样的形状配不同的语义，最容易让人按错**，
+ * 而作者确实按错过（以为在换模型，结果新开了对话）。
+ *
+ * 现在 composer 上**只剩一颗**，那种误按从形状上就不可能了。
+ * 这条于是改成守住这件事本身：**这一行里没有第二个长得像它的东西**。
+ */
+test("**composer 上只有一个菜单，不会按错**", async ({ dawn }) => {
   const { page } = dawn
   await start(page)
-  // 同样的形状配不同的语义，是最容易让人按错的一种设计
+  await expect(page.locator(".composer-controls .pill")).toHaveCount(1)
   await page.locator(".composer .model-pill").getByRole("button").click()
   await expect(page.getByRole("menu", { name: "切换模型" })).toBeVisible()
-  await page.keyboard.press("Escape")
-  await page.locator(".composer .agent-pill").getByRole("button").click()
-  await expect(page.getByRole("menu", { name: "新建会话" })).toBeVisible()
+  // 「新建会话」那个菜单不在这一屏上——它搬去了初始画面
+  await expect(page.getByRole("menu", { name: "新建会话" })).toHaveCount(0)
 })

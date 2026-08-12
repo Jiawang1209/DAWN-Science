@@ -18,13 +18,19 @@ test("**换服务之后，新答的那一行改名，旧的不动**", async ({ d
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
-  // 换服务（菜单上组「就地换服务（对话不断）」）
-  await page.locator(".agent-pill").click()
-  const 上组 = page.locator(".agent-menu .svc-group")
-  await expect(上组).toBeVisible()
-  const 另一家 = 上组.getByRole("menuitem").last()
-  const 名字 = ((await 另一家.textContent()) ?? "").replace("当前", "").trim()
-  await 另一家.click()
+  /**
+   * **换服务的入口现在是那颗合并的模型 pill**（2026-08-12）。
+   *
+   * 清单里列的是「所有配好的服务 × 各自的模型」，按服务分组——
+   * 点另一组里的一条就是「换服务 + 换模型」，对话不断。
+   * 这条用例验的东西没变：**换完之后新答的那一行改名，旧的不动**。
+   */
+  await page.locator(".model-pill .model-trigger").click()
+  const 菜单 = page.getByRole("menu", { name: "切换模型" })
+  await expect(菜单).toBeVisible()
+  const 最后一组 = 菜单.locator(".model-group").last()
+  const 名字 = ((await 最后一组.locator(".model-group-head").textContent()) ?? "").trim()
+  await 最后一组.getByRole("menuitem").last().click()
   await expect(page.locator(".turns")).toContainText("已换到", { timeout: 15_000 })
 
   await page.getByPlaceholder(/回车发送/).fill("第二问")

@@ -121,6 +121,35 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
 }
 
 /**
+ * 插件那一屏（2026-08-12，作者要的，放在技能下面）。
+ *
+ * **它如实说清「还没有」**，并指出现在能装的能力是哪两样——
+ * 而不是摆一个空列表让人以为「我还没装而已」。
+ *
+ * 插件与技能、MCP 不同：技能是 `.dawn/agents/*.md`（本来就能跑），
+ * MCP 是管道通了只差界面，而**插件在我们这儿还没有承载体**——
+ * 装什么、怎么加载、边界在哪，一样都还没定。
+ */
+export function PluginsView() {
+  return (
+    <div className="skills-page">
+      <header className="skills-head">
+        <h1 className="panel-title">插件</h1>
+      </header>
+      <EmptyState
+        title="还没有插件这套东西"
+        description={
+          "现在能装进来的能力有两样，各自在旁边那两屏：" +
+          "「技能」是你自己写的子 agent（.dawn/agents/*.md，写完就能用）；" +
+          "「MCP 服务器」是外部工具，管道通了、还差配置界面。" +
+          "插件要装什么、怎么加载、边界在哪，都还没定——定下来之前这里不会有列表。"
+        }
+      />
+    </div>
+  )
+}
+
+/**
  * MCP 那一屏。
  *
  * **它如实说清做到了哪儿**：管道有了（每段托管会话写一份 `mcp.json`，

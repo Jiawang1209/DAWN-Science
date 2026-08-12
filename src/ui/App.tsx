@@ -44,7 +44,7 @@ import {
 import { AppearancePanel, KernelsPanel, SettingsPanel, WorkspacePanel, type KernelRow } from "./Settings.js"
 import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
-import { SkillsView, McpView, type SkillLoad } from "./skills.js"
+import { SkillsView, McpView, PluginsView, type SkillLoad } from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -1503,24 +1503,38 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           name: p.name ?? p.providerId,
         }))
       : undefined
-  const currentServiceLabel = currentProvider
-    ? (providers.providers.find((p) => p.providerId === currentProvider)?.name ?? currentProvider)
-    : undefined
+  /**
+   * provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。
+   * **查不到就用 id**：那不好看但是实话，编一个名字会让人以为真有这么一家。
+   */
+  const serviceLabel = (id: string) =>
+    providers.providers.find((p) => p.providerId === id)?.name ?? id
+  const currentServiceLabel = currentProvider ? serviceLabel(currentProvider) : undefined
 
   /**
-   * 能选哪些模型。**只列当前这一家的**（2026-08-11 收窄）。
+   * 能选哪些模型。**所有配好的服务 × 各自的模型**（2026-08-12 放开）。
    *
-   * 作者：*「选择 kimi-k3 的时候，前面其实不用出现 Kimi，因为后面就选择了
-   * 是哪一个模型厂家的了。」*——厂家由旁边那颗 pill 选，这颗只回答
-   * 「这一家里用哪个模型」。两颗各管一件事，也就不会互相打架。
+   * ## 为什么放开
+   *
+   * 2026-08-11 这里收窄成「只列当前这一家」，理由是**厂家由旁边那颗 pill 选**
+   * （作者：*「选择 kimi-k3 的时候，前面不用出现 Kimi」*），两颗各管一件事。
+   *
+   * 现在两颗并成了一颗（作者要的，实测 WorkBuddy 就是一颗）——
+   * **那条理由随之失效**：旁边没有那颗了，收窄就等于
+   * **换服务这件事从 composer 上消失**。它是真能力（2026-08-11 做的
+   * 「换到另一家，对话不断」），丢掉它是静默的功能倒退。
+   *
+   * 换过去不需要另一条路：`onPickModel` 本来就把这一条的 `provider`
+   * 一起发出去（同上那次改动定的），服务端的 `setSessionModel` 收两个字段。
+   * **列表里选另一家的模型 = 就地换服务 + 换模型**，对话不断。
    *
    * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
    */
   const modelChoices: ModelChoice[] =
     agentCfg?.kind === "cli"
       ? (agentCfg.models ?? []).map((m) => ({ model: m }))
-      : (providers.providers.find((p) => p.providerId === currentProvider)?.available ?? []).map(
-          (m) => ({ provider: currentProvider, model: m }),
+      : providers.providers.flatMap((p) =>
+          (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),
         )
 
   /**
@@ -1721,6 +1735,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowPanel={() => setView(view === "panel" ? "conversation" : "panel")}
           /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
           onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
+          onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
           onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
           onDeleteSession={askDeleteSession}
@@ -1876,6 +1891,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 ? { load: () => client.get<SkillLoad>("listSkills", { projectId }) }
                 : {})}
             />
+          ) : view === "plugins" ? (
+            <PluginsView />
           ) : view === "mcp" ? (
             <McpView />
           ) : view === "settings" ? (
@@ -2047,6 +2064,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 session={session}
                 items={items}
                 {...(当前任务?.workspace ? { workspace: 当前任务.workspace } : {})}
+                serviceLabel={serviceLabel}
+                onOpenSettings={actions.openSettings}
                 {...(当前任务 && !session.remote
                   ? {
                       onPickWorkspace: () => void 选工作目录(当前任务.taskId),

@@ -51,18 +51,22 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   const 会话数 = await page.locator(".session-list > li").count()
 
   /**
-   * **在同一段里换到另一家。**
+   * **在同一段里换到另一家**（2026-08-12 换了入口）。
    *
-   * 2026-08-11 起换家走**厂家那颗 pill**（作者：*「可以先放模型厂家，
-   * 后选择模型是什么」*）——模型那颗只列当前这一家的模型。
+   * 2026-08-11 起换家走「厂家那颗 pill」，模型那颗只列当前这一家。
+   * 现在两颗**并成了一颗**（作者要求，实测 WorkBuddy 就是一颗）——
+   * 清单里列的是「所有配好的服务 × 各自的模型」，**按服务分组**，
+   * 点另一组里的一条就是「换服务 + 换模型」。
+   *
+   * **这条用例的验收一个字没动**：下一次请求真的打到另一家的模型上。
+   * 换的只是「从哪儿点过去」。
    */
-  await page.locator(".composer .agent-pill").getByRole("button").click()
-  const 服务菜单 = page.getByRole("menu", { name: "切换服务或新建会话" })
-  await expect(服务菜单).toContainText("就地换服务（对话不断）")
-  await 服务菜单.locator(".svc-group").getByRole("menuitem", { name: "other" }).click()
+  await page.locator(".model-pill .model-trigger").click()
+  const 模型菜单 = page.getByRole("menu", { name: "切换模型" })
+  await expect(模型菜单.locator(".model-group-head").filter({ hasText: "other" })).toBeVisible()
+  await 模型菜单.getByRole("menuitem", { name: new RegExp(另一家的) }).click()
 
-  // 换完，两颗 pill 自己就对上了：厂家是 other，模型是它的
-  await expect(page.locator(".composer .agent-pill")).toContainText("other")
+  // 换完，那颗 pill 自己就对上了
   await expect(page.locator(".composer .model-pill")).toContainText(另一家的)
 
   // ① 还是同一段：会话没多，前面说过的话还在
@@ -81,7 +85,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   expect(modelsUsed(requests as never)).toEqual([本来的, 另一家的])
 })
 
-test("**厂家菜单里列得出别家**，模型菜单只管这一家", async ({ dawn }) => {
+test("**一颗 pill 里两家都在**，厂家写在组头上", async ({ dawn }) => {
   const { page, mockUrl } = dawn
 
   await page.getByRole("button", { name: "设置", exact: true }).click()
@@ -96,26 +100,34 @@ test("**厂家菜单里列得出别家**，模型菜单只管这一家", async (
 
   await 开一段临时会话(page)
   await 等进了对话(page)
-  // 厂家那颗：两家都在
-  await page.locator(".composer .agent-pill").getByRole("button").click()
-  const 服务菜单 = page.getByRole("menu", { name: "切换服务或新建会话" })
   /**
-   * **限定在「就地换服务」那一组里。**
-   * 同一个名字在下面那组（「新建会话，用：」）也会出现一次——
-   * 两组同名不同义，靠组标题分辨，所以断言也要按组来。
+   * **一颗 pill 里两家都在**（2026-08-12 换的主语）。
+   *
+   * 上一版这里查的是「厂家那颗菜单里两家都列得出，而模型那颗只管这一家」。
+   * 两颗并成一颗之后，**分组标题就是「哪家」**：两家各领一组。
    */
-  const 可换的 = 服务菜单.locator(".svc-group")
-  await expect(可换的.getByRole("menuitem", { name: /DeepSeek/ })).toBeVisible()
-  await expect(可换的.getByRole("menuitem", { name: "other" })).toBeVisible()
+  await page.locator(".model-pill .model-trigger").click()
+  const 模型菜单 = page.getByRole("menu", { name: "切换模型" })
+  const 组头 = 模型菜单.locator(".model-group-head")
+  await expect(组头.filter({ hasText: /DeepSeek/ })).toBeVisible()
+  await expect(组头.filter({ hasText: "other" })).toBeVisible()
   await page.keyboard.press("Escape")
 
   /**
-   * 模型那颗：**只有当前这一家的**。
-   * 作者：*「选择 kimi-k3 的时候，前面其实不用出现 Kimi，
-   * 因为后面就选择了是哪一个模型厂家的了。」*
+   * **两家的模型都在同一个列表里**（2026-08-12 反转）。
+   *
+   * 上一版这里断言「模型菜单里没有另一家的」——那时厂家由旁边那颗选，
+   * 这颗只回答「这一家里用哪个」。**旁边那颗已经没有了**，
+   * 再收窄就等于换服务从 composer 上消失。
+   *
+   * 现在按服务分组：`DeepSeek` 一组、`other` 一组，各自列各自的模型。
+   * 「不用重复写厂家」那条意图仍然守着——**厂家写在组头上，不写在每一行里**。
    */
-  await page.locator(".composer .model-pill").getByRole("button").click()
-  const 模型菜单 = page.getByRole("menu", { name: "切换模型" })
   await expect(模型菜单).toContainText(本来的)
-  await expect(模型菜单).not.toContainText(另一家的)
+  await expect(模型菜单).toContainText(另一家的)
+  // 行里只有模型名，厂家在组头上：`other-9b` 那一行不该再写一遍「other」
+  const 行文本 = await 模型菜单
+    .getByRole("menuitem", { name: new RegExp(另一家的) })
+    .textContent()
+  expect(行文本?.replace(另一家的, "")).not.toContain("other")
 })

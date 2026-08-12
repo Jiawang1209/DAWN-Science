@@ -132,14 +132,43 @@ describe("shell 不被重启", () => {
    * *"Display follows **THIS** surface's SessionView — never the primary-only globals."*
    * 显示的是「这个会话」的 agent，不是某个全局当前值。
    */
-  it("当前 agent 跟着切换的会话走，不是某个全局值", () => {
-    const props = { items: [], agents: ["claude", "codex"], onSend: () => {}, onNewSession: () => {} }
+  /**
+   * **显示的东西跟着当前这段会话走，不是某个全局值**（2026-08-12 换的载体）。
+   *
+   * 上一版盯的是 composer 上那颗 agent pill——它已经**并进模型 pill 了**
+   * （作者要求收成一颗，实测 WorkBuddy 就是一颗）。
+   *
+   * 不变式一个字没变，只是现在由模型 pill 承载：
+   * 并排开两段对话，各自显示各自那一个。
+   */
+  it("当前模型跟着切换的会话走，不是某个全局值", () => {
+    const props = {
+      items: [],
+      agents: ["claude", "codex"],
+      models: [
+        { provider: "deepseek", model: "deepseek-v4" },
+        { provider: "kimi", model: "kimi-k3" },
+      ],
+      onPickModel: () => {},
+      onSend: () => {},
+      onNewSession: () => {},
+    }
     const { rerender } = render(
-      <ConversationView session={session("A", { agentId: "claude" })} {...props} />,
+      <ConversationView
+        session={session("A")}
+        model={{ provider: "deepseek", model: "deepseek-v4" }}
+        {...props}
+      />,
     )
-    expect(screen.getByText("claude")).toBeDefined()
-    rerender(<ConversationView session={session("B", { agentId: "codex" })} {...props} />)
-    expect(screen.getByText("codex")).toBeDefined()
+    expect(screen.getByText("deepseek-v4")).toBeDefined()
+    rerender(
+      <ConversationView
+        session={session("B")}
+        model={{ provider: "kimi", model: "kimi-k3" }}
+        {...props}
+      />,
+    )
+    expect(screen.getByText("kimi-k3")).toBeDefined()
   })
 })
 

@@ -2707,3 +2707,68 @@ pre {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/**
+ * 模型 pill 与它的浮层（2026-08-12，学自 WorkBuddy 那颗 `◐ Hy3 ⌃`）。
+ *
+ * **一颗，不是两颗**：此前「哪家」与「哪个模型」各占一颗，
+ * 而它们回答的是同一个问题。
+ */
+.model-trigger { gap: var(--dawn-space-1); }
+/** 对话头上那个 agent 名：**它是来路，不是标题**，所以弱一档 */
+.conv-agent { color: var(--dawn-text-2); font-size: 0.85em; }
+/** 服务标记：一个小圆里放首字。**没有素材就不要画一个假的 logo** */
+.svc-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-fill-3);
+  color: var(--dawn-text-2);
+  font-size: 0.68rem;
+  font-weight: var(--dawn-weight-semibold);
+}
+.model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/** **朝上**：浮层从 pill 往上开，箭头就该指向它开的方向 */
+.model-caret { transform: rotate(-90deg); transition: transform 120ms ease; }
+.model-caret.open { transform: rotate(90deg); }
+
+/**
+ * 浮层。**往上开**——pill 贴着输入卡底边，往下开会掉出窗口。
+ */
+.model-menu {
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-2));
+  right: 0;
+  min-width: 15rem;
+  max-height: 60vh;
+  overflow: auto;
+  /* 与行菜单同一档：它们是同一类东西（贴着某个控件开的浮层） */
+  z-index: var(--z-modal);
+  padding: var(--dawn-space-2) 0;
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-surface-panel);
+  box-shadow: var(--dawn-shadow-float);
+}
+.model-list { list-style: none; margin: 0; padding: 0; }
+.model-group + .model-group { margin-top: var(--dawn-space-2); }
+.model-group > ul { list-style: none; margin: 0; padding: 0; }
+/** 组头说的是「哪家」：合并成一颗之后，这是唯一说得出它的地方 */
+.model-group-head {
+  margin: 0;
+  padding: 5px calc(var(--dawn-space-3) * 2);
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-3);
+}
+.model-check { margin-left: auto; color: var(--dawn-accent); }
+/** 底一条：把「这里没有我要的那个」接到「去哪加一个」 */
+.model-menu-foot {
+  margin-top: var(--dawn-space-2);
+  padding-top: var(--dawn-space-2);
+  border-top: 1px solid var(--dawn-stroke-4);
+}

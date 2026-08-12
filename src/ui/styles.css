@@ -495,12 +495,26 @@ pre {
   gap: var(--dawn-space-2);
   /* 更舒展：WorkBuddy 的输入区留白明显大，且**输入框本身就高**——
      一个矮框会让人觉得「只能写一句」 */
-  padding: var(--dawn-space-3);
-  min-height: 6.5rem;
-  border: 1px solid var(--dawn-stroke-4);
-  border-radius: var(--dawn-radius-lg);
+  /**
+   * **按 WorkBuddy 运行中的 DOM 实测改**（2026-08-12）。
+   *
+   * 作者：*「全都按照源码继续量，而不是按照截图去做。」*
+   * 它的样式表里没有语义类名（`composer`、`chat-input` 一个都没有），
+   * 所以量的是**运行中的计算样式**——比读源码还准，
+   * 因为不必推断哪条规则最终生效。
+   *
+   * 实测：`border-radius: 16px`、`padding: 12px 12px 0`、
+   * **无边框**、`box-shadow: 0 12px 24px -8px rgba(0,0,0,.02)`、高约 138px。
+   *
+   * **无边框那条是关键**：一个描边的框看起来是「表单控件」，
+   * 一个只靠阴影浮起来的面看起来是「可以往里写东西的地方」。
+   */
+  padding: var(--dawn-space-3) var(--dawn-space-3) 0;
+  min-height: 8.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--dawn-radius-composer);
+  box-shadow: var(--dawn-shadow-composer);
   background: var(--dawn-surface-input);
-  box-shadow: var(--dawn-shadow-sm);
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 /**
@@ -2377,3 +2391,7 @@ pre {
   margin-left: 4px;
   font-variant-numeric: tabular-nums;
 }
+
+/* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
+   **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
+.composer-field { font-size: 15px; line-height: 1.75; }

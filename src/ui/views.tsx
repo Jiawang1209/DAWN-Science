@@ -71,50 +71,57 @@ function WorkspaceEntry({
   /** 退回普通对话。**只在设过的时候出现** */
   onClear?: (() => void) | undefined
 }) {
-  if (!workspace) {
+  /**
+   * 形态是**一颗 chip**（2026-08-12，CDP 实测 WorkBuddy 的 `_chip_`）：
+   * `padding: 0 8px` · 圆角 8 · **无边框无底色** · `gap: 4`
+   * · 字 `14px/20px` · 色 `rgba(0,0,0,.5)` —— 比正文弱一档。
+   *
+   * **弱一档是有意的**：它是「这句话会在哪儿执行」的注脚，
+   * 不该跟正在写的那句话抢。
+   */
+  const 文字 = workspace ? 短路径(workspace) : "选择工作目录"
+  if (!onPick) {
     return (
-      <span className="conv-ws">
-        <span className="conv-ws-unset">未设工作目录 · 这是一段普通对话</span>
-        {onPick ? (
-          <Button variant="text" size="inline" onClick={onPick}>
-            选一个文件夹
-          </Button>
-        ) : null}
+      <span className="ws-chip" title={workspace ?? undefined}>
+        <文件夹图标 />
+        <span className="ws-chip-label">{文字}</span>
       </span>
     )
   }
   return (
-    <span className="conv-ws">
-      <文件夹图标 className="row-icon" />
-      {onPick ? (
-        <Button
-          variant="text"
-          size="inline"
-          className="conv-ws-path"
-          title={`工作目录：${workspace}`}
-          onClick={onPick}
-        >
-          {短路径(workspace)}
-        </Button>
-      ) : (
-        <span className="conv-ws-path" title={workspace}>
-          {短路径(workspace)}
-        </span>
-      )}
+    <span className="ws-chip-group">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="ws-chip"
+        title={workspace ? `工作目录：${workspace}` : "还没设工作目录——这是一段普通对话"}
+        onClick={onPick}
+      >
+        <文件夹图标 />
+        <span className="ws-chip-label">{文字}</span>
+        <下拉图标 />
+      </Button>
+      {/**
+        * **不在这里写「这是一段普通对话」**（2026-08-12 撤掉）。
+        *
+        * 我先前把它常驻在 chip 旁边，理由是「说清不设意味着什么」。
+        * 作者：*「显示『这是一段普通对话』感觉就很无聊，workbuddy 里面就不会有。」*
+        *
+        * 他是对的，而我把两件事搞混了：**「不设意味着什么」是一次性的知识，
+        * 不是一个需要每时每刻盯着的状态。** 一句永远在那儿、永远不变的话
+        * 不提供信息，只占地方——它和「未选择」那种占位符是同一类东西。
+        * chip 自己写着「选择工作目录」，那已经说明它还没设了。
+        */}
       {onClear ? (
-        <Button variant="text" size="inline" className="conv-ws-clear" onClick={onClear}>
+        <Button variant="ghost" size="sm" className="ws-chip" onClick={onClear}>
           {/**
             * **措辞刻意避开「取消」两个字**（2026-08-12）。
             *
             * 确认框上那颗就叫「取消」，两处同名会让「按名字找按钮」
             * 变成一件靠运气的事——**屏幕阅读器与测试都一样**，
             * 而 e2e 当场撞上了（一个 `取消` 匹配到两个元素）。
-            * 本项目 2026-08-11 已经为同一件事栽过一次。
-            *
-            * 换成结果本身：它说的是**按下去会变成什么**，
-            * 与设完之后对话里留的那句话是同一个说法。
             */}
-          改回普通对话
+          <span className="ws-chip-label">改回普通对话</span>
         </Button>
       ) : null}
     </span>
@@ -282,17 +289,22 @@ export function SessionRow({
             ) : null}
             {名字}
           </span>
+          {/**
+            * **副信息收到同一行的右端**（2026-08-12，实测 WorkBuddy）。
+            *
+            * 它那儿会话行是 `240×31` 单行：标题在左、时刻在右。
+            * 我们此前是标题在上、来路在下——**53px，高出七成**，
+            * 一屏少放三分之一的对话。
+            *
+            * **agent 名从这一行拿掉了**：它已经不是这一行才答得了的问题——
+            * 每条回答上都记着是谁答的（`item.by`，2026-08-12 加的），
+            * composer 上还有一颗 pill。留在这里只是把行撑高。
+            *
+            * **远端仍然写目录**：对那条线来说「在哪个目录」比「什么时候建的」
+            * 要紧得多——那是一次「把这里的文件都删了」会落到哪儿。
+            */}
           <span className="sub">
-            {/**
-             * **远端会话的副行写「它此刻在哪个目录」**（②-B · R4′）。
-             *
-             * 那一行本来写的是 agent 与建立时间。对远端会话来说，
-             * **在哪个目录比什么时候建的要紧得多**——那是一次
-             * 「把这里的文件都删了」会落到哪儿。
-             */}
-            {session.remote
-              ? 短路径(session.remote.cwd)
-              : `${label ? label(session.agentId) : session.agentId} · ${clockOf(session.createdAt)}`}
+            {session.remote ? 短路径(session.remote.cwd) : clockOf(session.createdAt)}
           </span>
         </span>
         <span className={`state ${session.state}`}>{session.state}</span>
@@ -1551,26 +1563,7 @@ export function ConversationView({
             <span className="conv-remote-host">{session.remote.label}</span>
             <span className="conv-remote-cwd">{短路径(session.remote.cwd)}</span>
           </span>
-        ) : (
-          /**
-           * **工作目录就在对话头上**（T3-b，2026-08-12）。
-           *
-           * 作者：*「我们可以在任务的对话框里面，设置工作路径。然后，如果在
-           * 任务里面不设置任何工作目录的话，那么其实就是我们的普通对话。」*
-           *
-           * **没设时明说「未设工作目录」**，不是留一片空白：
-           * 空白只说明「这里什么都没有」，说不出**不设意味着什么**。
-           * 而那句「这是一段普通对话」正好是作者给这个状态的定义。
-           *
-           * 位置与远端那一条同一处，理由也同一条：*你以为在 A 目录、
-           * 实际在 B 目录，然后说一句「把这里的文件都删了」。*
-           */
-          <WorkspaceEntry
-            {...(workspace ? { workspace } : {})}
-            {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
-            {...(workspace && onClearWorkspace ? { onClear: onClearWorkspace } : {})}
-          />
-        )}
+        ) : null}
         {/**
          * **顶栏左边是这段对话的名字**（2026-08-12，学自 WorkBuddy）。
          *
@@ -1782,6 +1775,27 @@ export function ConversationView({
               <上箭头图标 />
             </Button>
           </div>
+          {/**
+            * **输入卡自己的那一行**（2026-08-12，作者截图指的就是这里）。
+            *
+            * 实测 WorkBuddy 的 `wb-input-footer`：与输入卡同宽、高 32、
+            * `padding: 0 12px`、`gap: 4`，里面是一颗颗 chip
+            * （`选择工作空间 ⌄`、`默认权限 ⌄`）。
+            *
+            * **我上一版把它放在了对话标题栏的右上角**——那是我自己想的位置，
+            * 从没量过它在哪。作者：*「这不是我想要的效果。」*
+            * 摆在输入卡下面才对：它说的是**这一句话会在哪儿执行**，
+            * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
+            */}
+          {onPickWorkspace || workspace ? (
+            <div className="composer-footer">
+              <WorkspaceEntry
+                {...(workspace ? { workspace } : {})}
+                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
+                {...(workspace && onClearWorkspace ? { onClear: onClearWorkspace } : {})}
+              />
+            </div>
+          ) : null}
         </div>
       </form>
     </div>

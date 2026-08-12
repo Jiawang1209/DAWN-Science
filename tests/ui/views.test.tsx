@@ -163,10 +163,21 @@ describe("侧栏 · 归类：有路径进项目，没路径进会话", () => {
   })
 
   it("**没说过话的显示「新会话」**，不是一行空白 —— 空白看起来像加载失败", () => {
-    render(<SessionSidebar {...base} {...带会话([task()], [session()])} />)
+    const { container } = render(<SessionSidebar {...base} {...带会话([task()], [session()])} />)
     expect(screen.getByText("新会话")).toBeDefined()
-    // agent 与时刻退到副行：**它是来路，不是名字**
-    expect(screen.getByText(/ds-chat · /)).toBeDefined()
+    /**
+     * **副信息只剩时刻，且在同一行的右端**（2026-08-12 改）。
+     *
+     * 上一版这里断言副行写着 `ds-chat · …`。那一行现在没有 agent 了：
+     * 实测 WorkBuddy 的会话行是 `240×31` 单行，我们的双行是 53——**高出七成**。
+     * 而 agent 已经不是这一行才答得了的问题：每条回答上都记着是谁答的
+     * （`item.by`），composer 上还有一颗 pill。
+     *
+     * 意图没变——**这一行不许是空白**，只是「不空白」的内容换了。
+     */
+    const sub = container.querySelector(".session-list .sess > .sub")
+    expect(sub?.textContent?.trim()).toMatch(/\d/)
+    expect(container.querySelector(".session-list .sess")?.textContent).not.toContain("ds-chat")
   })
 
   it("**有标题就用标题** —— 同一个 agent 的两段得分得开", () => {

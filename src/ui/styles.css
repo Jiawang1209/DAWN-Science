@@ -306,11 +306,21 @@ pre {
    * 内缩 4 + 行内距 8 = 文字仍在离边缘 12px 处（与 `.side-head` 对齐）：
    * 变的只是高亮的形状，不是文字的位置。
    */
-  width: calc(100% - var(--dawn-space-2));
-  margin: 0 var(--dawn-space-1);
+  /**
+   * **内缩 12，与分区标题对齐**（2026-08-12，CDP 实测 WorkBuddy）。
+   *
+   * 它的行是 `240×31 @x=12`，侧栏 264——**左右各留 12**，
+   * 而行自己的内距也是 `5px 12px`，于是文字落在离侧栏边缘 24 处。
+   * 我们此前是「内缩 4 + 内距 8 = 文字离边缘 12」，
+   * 高亮那块比它窄一圈、也更贴边。
+   */
+  width: calc(100% - var(--dawn-space-3) * 2);
+  margin: 0 var(--dawn-space-3);
   min-height: var(--dawn-row-h);
-  padding: var(--dawn-space-1) var(--dawn-space-2);
-  border-radius: var(--dawn-radius-xs);
+  padding: 5px var(--dawn-space-3);
+  /* 实测圆角 8px。原先走 `--dawn-radius-xs`（5px），小一档；
+     而 `--dawn-radius-md` 被标量 1.25 算成 10，大一档。所以给它自己的令牌 */
+  border-radius: var(--dawn-radius-row);
   text-align: left;
   border: 0;
   background: none;
@@ -320,7 +330,21 @@ pre {
 }
 .row:hover { background: var(--dawn-row-hover); }
 .row.active { background: var(--dawn-row-active); box-shadow: inset 2px 0 0 var(--dawn-accent); }
-.row .sub, .row .state { color: var(--dawn-text-3); font-size: 11px; }
+/* 副信息 12px：实测 WorkBuddy 的时刻是 `12px`，与分区标题同一档 */
+.row .sub, .row .state { color: var(--dawn-text-3); font-size: 12px; }
+/**
+ * 侧栏行的字号（2026-08-12，实测 WorkBuddy 是 **14px / 21px**）。
+ *
+ * **它比界面外壳的 13px 大一档。** 我先前把「外壳让位给内容」理解成
+ * 侧栏一律 13——但它那儿侧栏行是 14，只有分区标题、副标签才降到 12/11。
+ * 差一个像素看着不起眼，一列十几行摞起来就是两种密度。
+ */
+.sidebar .row { font-size: 14px; line-height: 21px; }
+/**
+ * **图标比它旁边的字淡一档**（实测：文字 `.9`、图标 `.7`）。
+ * 图标是路标，字才是内容——同色会让一列行看起来全是图标。
+ */
+.sidebar .row .row-icon { color: var(--dawn-text-2); }
 .state.alive { color: var(--dawn-success); }
 .state.exited { color: var(--dawn-text-3); }
 .state.starting { color: var(--dawn-warning); }
@@ -714,7 +738,15 @@ pre {
  * 三个入口就在侧栏上摊成三段（T3-a 之后列表空着不占位，当场露出来）。
  */
 .side-bottom { margin-top: auto; }
-.panel-entry { border-top: 1px solid var(--dawn-stroke-4); }
+/**
+ * 底部那三个入口（2026-08-12 **去掉分割线**）。
+ *
+ * 实测：**WorkBuddy 的侧栏里一条线都没有**，全靠浅灰底与白底的落差分区。
+ * 而这条纪律我们自己的 `.sidebar` 头注里就写着——
+ * *「不用分割线，用底色分……线是『这里有个边界』的最重的说法」*。
+ * 这三条 `border-top` 是那次改动之前的残留，**规矩在、执行漏了**。
+ */
+.panel-entry { border-top: 0; }
 
 /* ── 终端 dock ──────────────────────────────────────────────────── */
 
@@ -1473,15 +1505,30 @@ pre {
   text-decoration: underline;
 }
 
-/* 会话行：标题在上、来路在下（2026-08-10） */
+/**
+ * 会话行：**标题在左、副信息在右，一行**（2026-08-12 由双行改单行）。
+ *
+ * 实测 WorkBuddy 是 `240×31` 单行。我们原先是「标题在上、来路在下」——
+ * 53px，**高出七成**，一屏少放三分之一的对话。
+ */
 .session-list .sess,
 .proj-list .sess {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  /**
+   * **`center` 而不是 `baseline`**：两段字号不同（14 与 12），
+   * 基线对齐会把行盒撑高几个像素——量出来 35 而不是 31。
+   * 这一行要的是「两样东西在同一条水平线上」，不是排版意义上的基线。
+   */
+  align-items: center;
+  gap: var(--dawn-space-2);
   min-width: 0;
   flex: 1 1 auto;
 }
+.session-list .sess > .name,
+.proj-list .sess > .name { flex: 1 1 auto; min-width: 0; }
+/* 右端那一小段**不许被压扁**：它是时刻或路径，截断了就没有意义 */
+.session-list .sess > .sub,
+.proj-list .sess > .sub { flex: 0 0 auto; }
 
 .session-list .sess .name,
 .proj-session-list .sess .name,
@@ -1703,8 +1750,14 @@ pre {
  * 而作者要的是「没有会话时两颗按钮是连着的」。
  * 顶部的呼吸感由第一段自己补。
  */
+/**
+ * 「新建任务」那一区（2026-08-12 去掉左右内距）。
+ *
+ * 行自己已经内缩 12 了，外面再包一层 8 会让它**比下面所有行都窄一圈、
+ * 且左缘对不上**（实测：它 `@x=20`，别的行 `@x=12`）。
+ */
 .side-actions {
-  padding: 0 var(--dawn-space-2);
+  padding: 0;
 }
 .sidebar > .side-actions:first-child { padding-top: var(--dawn-space-2); }
 
@@ -2194,30 +2247,55 @@ pre {
   min-width: 0;
 }
 /**
- * 对话头上的工作目录（T3-b，2026-08-12）。
+ * 输入卡自己的那一行（2026-08-12，实测 `wb-input-footer`）。
  *
- * 与远端那一条**同一处、同一副长相**：它们回答的是同一个问题
- * ——「这段对话的手在哪」。两处长得不一样只会让人以为是两种东西。
+ * **与输入卡同宽**、高 32、`padding: 0 12px`、`gap: 4`。
+ * 它坐在输入区下面，说的是**这一句话会在哪儿执行**——
+ * 属于「要发出去的这件事」，不属于「这段对话叫什么」
+ * （所以它不在对话标题栏上，那是我上一版放错的地方）。
  */
-.conv-ws {
+.composer-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  min-height: 32px;
+  /**
+   * **左右不另加内距**：它长在输入卡里面，而卡自己已经给了 12
+   * （`.composer-box` 的 `padding: 12px 12px 0`）。
+   * 再加一层就是 24，chip 会比上面那行控件缩进得多。
+   */
+  padding: 0;
+  min-width: 0;
+}
+/**
+ * 一颗 chip（实测 `_chip_`）：`padding: 0 8px` · 圆角 8 ·
+ * **无边框无底色** · `gap: 4` · 字 `14px/20px` · 色弱一档。
+ *
+ * **无底色那条是关键**：有底色的 chip 看起来是「一个已经选中的标签」，
+ * 没底色的看起来是「一个可以点开的说明」——后者才是它的意思。
+ */
+.ws-chip-group { display: flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; }
+.ws-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--dawn-space-1);
-  margin-right: var(--dawn-space-3);
   min-width: 0;
-  font-size: 0.85em;
+  padding: 0 var(--dawn-space-2);
+  /* 实测它的 chip 是 `138×32`：**高 32**，比文字行高多出来的那 12 是可点区域 */
+  min-height: 32px;
+  border-radius: var(--dawn-radius-row);
+  color: var(--dawn-text-3);
+  font-size: 14px;
+  line-height: 20px;
 }
-.conv-ws .row-icon { margin-right: 0; }
-.conv-ws-path {
-  font-family: var(--dawn-font-mono);
-  color: var(--dawn-text-2);
+.ws-chip .icon { color: inherit; }
+.ws-chip-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* **没设不是「缺了什么」**，所以它比路径更淡，但仍然读得出来 */
-.conv-ws-unset { color: var(--dawn-text-3); }
-.conv-ws-clear { color: var(--dawn-text-3); }
+/** 「这是一段普通对话」：它是那个状态的**含义**，比 chip 再弱一档 */
+.ws-chip-note { color: var(--dawn-text-4); font-size: 12px; white-space: nowrap; }
 
 .conv-remote-host { color: var(--dawn-text-2); font-size: 0.85em; }
 .conv-remote-cwd {
@@ -2476,8 +2554,16 @@ pre {
    **它不是一行可点的东西**，所以更小更淡、且上面留白比下面大——
    「它统领下面这些」这句话是靠间距说的 */
 .side-section {
-  margin: var(--dawn-space-4) 0 var(--dawn-space-1);
-  padding: 0 var(--dawn-space-3);
+  margin: var(--dawn-space-4) 0 0;
+  /**
+   * **与行同一条左缘**（2026-08-12 实测）。
+   *
+   * 它那儿分区标题是 `240×30 @x=12`，内距也是 `5px 12px`——
+   * **和下面那些行一模一样的盒子**，只是不可点。
+   * 我们此前是 `padding: 0 12px` 且没有行高：标题的字比行里的字更靠左，
+   * 一列扫下来那一层缩进是歪的。
+   */
+  padding: 5px calc(var(--dawn-space-3) * 2);
   /* 实测 `conversation-section-label-text`：**12px / 20px / 600 / rgba(0,0,0,.5)**。
      **加粗但更淡**——粗让它成为一个标题，淡让它不跟下面那些可点的行抢 */
   font-size: 12px;

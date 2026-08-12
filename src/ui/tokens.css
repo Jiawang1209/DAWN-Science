@@ -234,9 +234,11 @@
    * 侧栏宽度。**默认 275，不低于 240，且永远给内容留下 320px**——
    * 上一版是写死的 240px，窄窗口下它照样占满，把内容挤没。
    */
-  --dawn-sidebar-w: clamp(240px, 275px, min(520px, 100vw - 320px));
+  /** 实测 WorkBuddy 侧栏是 **264px**。上限仍留着，窄窗口下要能收 */
+  --dawn-sidebar-w: clamp(240px, 264px, min(520px, 100vw - 320px));
   /** 列表行高。行与行的节奏由它决定，不由内容的行高决定 */
-  --dawn-row-h: 30px;
+  /** 实测 WorkBuddy 的侧栏行是 **31px**（`padding: 5px 12px` + 21px 行高） */
+  --dawn-row-h: 31px;
   /**
    * 对话与输入区的宽度上限（规范 §3.5 的 `thread-content-max-width`）。
    *
@@ -327,6 +329,14 @@
    * 形状本身写在 `styles.css` 里——**右下角是 0**，那个缺口指向说话的人。
    */
   --dawn-radius-bubble: 1rem;
+  /**
+   * 侧栏行的圆角（2026-08-12，实测 WorkBuddy：**8px**）。
+   *
+   * **不参与缩放**，与输入卡、气泡同一条理由：它是量出来的成品值。
+   * 走 `--dawn-radius-md` 的话标量 1.25 会把它算成 10——差 2px，
+   * 一列十几行摞起来看得出来。
+   */
+  --dawn-radius-row: 0.5rem;
   /** 胶囊。**不参与缩放**：它要的是「半圆」，不是某个具体半径 */
   --dawn-radius-full: 9999px;
 

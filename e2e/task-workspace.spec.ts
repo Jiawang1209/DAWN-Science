@@ -33,17 +33,20 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
  */
 const 目标 = join(tmpdir(), "dawn-ws-e2e-target")
 
-test("**没设的时候明说不设意味着什么**", async ({ dawn }) => {
+test("**没设的时候，入口就在输入卡下面那一行**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
 
   /**
-   * **不是留一片空白。** 空白只说明「这里什么都没有」，
-   * 说不出**不设意味着什么**——而那句话正是作者给这个状态的定义。
+   * **入口在输入卡下面那一行**（2026-08-12 挪的，作者截图指的就是这里）。
+   *
+   * 实测 WorkBuddy 的 `wb-input-footer` 里是一颗 `选择工作空间 ⌄` chip。
+   * 我上一版把它放在对话标题栏右上角——那是我自己想的位置，从没量过。
+   *
+   * **常驻，不做悬停才出现**（本项目为此被报过两次「没有这个功能」）。
    */
-  await expect(page.locator(".conv-ws-unset")).toHaveText(/未设工作目录 · 这是一段普通对话/)
-  // 出路常驻：**悬停才出现的入口等于没有**（本项目为此被报过两次）
-  await expect(page.getByRole("button", { name: "选一个文件夹" })).toBeVisible()
+  const chip = page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ })
+  await expect(chip).toBeVisible()
 })
 
 test.describe("设完之后", () => {
@@ -71,7 +74,7 @@ test.describe("设完之后", () => {
   test("**归到项目栏，而且 agent 的手真的挪过去了**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await expect(page.locator(".conv-ws-unset")).toBeVisible()
+    await expect(page.locator(".composer-footer")).toBeVisible()
 
     /**
      * **点用户真正点的那颗按钮。**
@@ -81,7 +84,7 @@ test.describe("设完之后", () => {
      * 从按钮到后端到刷新的整条接线都是真走的。
      * 绕过界面直接打 IPC 验的是后端，而**接线才是本项目翻过车的地方**。
      */
-    await page.getByRole("button", { name: "选一个文件夹" }).click()
+    await page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ }).click()
 
     /**
      * ① **对话里留了一行。**
@@ -91,9 +94,10 @@ test.describe("设完之后", () => {
      */
     await expect(page.locator(".turns")).toContainText("已归入项目", { timeout: 30_000 })
 
-    // ② 头上写着它现在在哪
-    await expect(page.locator(".conv-ws-path")).toBeVisible()
-    await expect(page.locator(".conv-ws-unset")).toHaveCount(0)
+    // ② chip 上写着它现在在哪，不再是「选择工作目录」
+    await expect(page.locator(".composer-footer .ws-chip-label").first()).not.toHaveText(
+      /选择工作目录/,
+    )
 
     // ③ 侧栏：从「会话」栏挪到了「项目」栏
     await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })

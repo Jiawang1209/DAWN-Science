@@ -65,15 +65,19 @@ test("**第二句话不改名字** —— 侧栏上的名字自己变，人会�
   await expect(page.locator(侧栏会话).first()).toHaveText("第一句定名字")
 })
 
-test("会话行还带来路 —— 是哪家服务、什么时候开的", async ({ dawn }) => {
+/**
+ * **会话行右端写的是时刻**（2026-08-12 换了主语）。
+ *
+ * 上一版这一行是「标题在上、来路（DeepSeek · 时刻）在下」的双行。
+ * 实测 WorkBuddy 是 `240×31` **单行**：标题在左、时刻在右；
+ * 我们的双行 53px，**高出七成**，一屏少放三分之一的对话。
+ *
+ * **agent 名从这一行拿掉了**，不是丢了这条信息：每条回答上都记着是谁答的
+ * （`item.by`，2026-08-12 加的），composer 上还有一颗 pill。
+ * 那时它必须在这里，是因为当时**只有这里说得出**；现在不是了。
+ */
+test("会话行右端带时刻 —— 一眼看得出哪段是新的", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  /**
-   * 2026-08-11：原来这里是 `ds-chat`——`providers.yaml` 里的一个键。
-   * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
-   * 名字来自 pi 的 provider 表，**所以这条只有真链路才验得了**。
-   */
-  await expect(page.locator(".session-list .sess .sub").first()).toHaveText(
-    /DeepSeek · \d{2}:\d{2}/,
-  )
+  await expect(page.locator(".session-list .sess .sub").first()).toHaveText(/\d{2}:\d{2}/)
 })

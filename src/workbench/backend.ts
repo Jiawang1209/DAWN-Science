@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { 探测机器, 本地执行 } from "../env/probe.js"
+import { 科研目录, 约定正文, pi会读的指令文件, 我们写的指令文件 } from "../policy/science-layout.js"
 import type { ShellEnvironment } from "../env/snapshot.js"
 import { deriveSessionTitle } from "../session/title.js"
 import { readFile } from "node:fs/promises"
@@ -47,7 +48,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -1237,6 +1238,48 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **没配 = `allow-all`**，也就是今天的行为。默认改成拦截会让一个正在干活的人
      * 毫无预兆地开始撞墙，而这一版还没有「问一句、你点允许」那条路——撞了也没法放行。
      */
+    /**
+     * 按科研目录结构初始化这个项目（2026-08-14，作者定的约定）。
+     *
+     * 做两件事：**建目录骨架** + **把约定写进 `AGENTS.md`**。
+     * 后者不是我们自己发明的注入路——pi 的 `DefaultResourceLoader` 本来就读
+     * 工作区里的 `AGENTS.md` / `CLAUDE.md`，写成文件模型自然看得到，
+     * 而且**你能直接改它**。硬编码进系统提示词的话，它既看不见也改不动。
+     *
+     * **已经有指令文件的项目一个字都不动。** 那份文件里可能是这个仓库
+     * 攒了很久的约定（这个仓库自己就有一份 `CLAUDE.md`）——
+     * 覆盖掉是不可撤销的，而「我们帮你加了个约定」远不值这个代价。
+     * 那时如实说没写、说清为什么，并把该贴的内容给出去。
+     */
+    initScienceLayout: async ({ projectId }) => {
+      const p = requireProject(projectId)
+      const 建了: string[] = []
+      for (const d of 科研目录) {
+        const 全 = join(p.workspace, d)
+        if (!existsSync(全)) {
+          mkdirSync(全, { recursive: true })
+          建了.push(d)
+        }
+      }
+
+      const 已有 = pi会读的指令文件.find((f) => existsSync(join(p.workspace, f)))
+      if (已有) {
+        return {
+          created: 建了,
+          instructions: "skipped" as const,
+          existingFile: 已有,
+          reason: `这个项目已经有 ${已有}，没有动它。把下面这段贴进去即可。`,
+          snippet: 约定正文,
+        }
+      }
+      writeFileSync(join(p.workspace, 我们写的指令文件), `${约定正文}`, "utf8")
+      return {
+        created: 建了,
+        instructions: "written" as const,
+        file: 我们写的指令文件,
+      }
+    },
+
     getPermissionMode: async () => ({
       mode: settings?.get("permission.mode") === "deny-risky" ? ("deny-risky" as const) : ("allow-all" as const),
     }),

@@ -171,7 +171,7 @@ describe("协议操作 · 订阅与控制", () => {
    */
 })
 
-describe("协议版本 · 5.2", () => {
+describe("协议版本 · 5.3", () => {
   /**
    * **5.1（2026-08-13 · ②-B · R5）：`getEnvironment` 多一支「机器快照」，
    * `RunSummary` 多一个可选的 `environmentSnapshotId`。** 纯新增，故 minor。
@@ -304,7 +304,7 @@ describe("协议版本 · 5.2", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.2")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.3")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

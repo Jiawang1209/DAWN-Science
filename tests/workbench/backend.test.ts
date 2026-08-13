@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import Database from "better-sqlite3"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync } from "node:fs"
+import { mkdtempSync, writeFileSync, existsSync, readFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionTranscripts } from "../../src/workbench/events.js"
@@ -304,5 +304,74 @@ describe("真实后端 · R5：Run 记得住它跑在哪", () => {
   it("没装配环境库也能照常建会话 —— 探测是加分项，不是准入条件", async () => {
     const t = await ctx.server.handle("createTask", { agentId: "ds-chat", workspace: repo })
     expect(t.ok).toBe(true)
+  })
+})
+
+/**
+ * 按科研目录结构初始化（2026-08-14，作者定的约定）。
+ *
+ * 最要紧的一条是**不覆盖已有的指令文件**：那份文件里可能是这个仓库攒了很久的
+ * 约定（本仓库自己就有一份 `CLAUDE.md`），覆盖掉不可撤销，
+ * 而「我们帮你加了个约定」远不值这个代价。
+ */
+describe("真实后端 · 科研目录初始化", () => {
+  let ctx: ReturnType<typeof make>
+  let repo: string
+  beforeEach(() => {
+    ctx = make()
+    repo = newRepo()
+  })
+
+  async function 初始化() {
+    await ctx.server.handle("createTask", { agentId: "ds-chat", workspace: repo })
+    const list = await ctx.server.handle("listProjects", {})
+    const pid = (list as { data: { projectId: string; workspace: string }[] }).data
+      .find((x) => x.workspace === repo)!.projectId
+    return ctx.server.handle("initScienceLayout", { projectId: pid })
+  }
+
+  it("目录骨架真的建出来了", async () => {
+    const r = await 初始化()
+    expect(r.ok, JSON.stringify(r)).toBe(true)
+    for (const d of ["figures", "results/tables", "data/raw", "data/processed", "literature"]) {
+      expect(existsSync(join(repo, d)), `${d} 没建出来`).toBe(true)
+    }
+  })
+
+  it("约定写进了 AGENTS.md，且 pi 读得到那个文件名", async () => {
+    const r = await 初始化()
+    const d = (r as { data: { instructions: string; file?: string } }).data
+    expect(d.instructions).toBe("written")
+    expect(d.file).toBe("AGENTS.md")
+    const 正文 = readFileSync(join(repo, "AGENTS.md"), "utf8")
+    expect(正文).toContain("data/raw")
+    expect(正文, "落位表要写全，不然模型只知道一半").toContain("results/models")
+  })
+
+  /**
+   * **已有指令文件时一个字都不动。**
+   * 而且不能只是「没写」——要说清是**哪一份**挡住了、该贴什么，
+   * 否则人还得回头再问一遍。
+   */
+  it("**已经有 CLAUDE.md 时不覆盖它**，并说清该往哪儿贴什么", async () => {
+    writeFileSync(join(repo, "CLAUDE.md"), "这是我自己攒的约定，别动它\n")
+    const r = await 初始化()
+    const d = (r as { data: { instructions: string; existingFile?: string; snippet?: string } }).data
+
+    expect(d.instructions).toBe("skipped")
+    expect(d.existingFile, "要点名是哪一份挡住了").toBe("CLAUDE.md")
+    expect(d.snippet, "没写就得把该贴的给出来").toContain("data/processed")
+    expect(readFileSync(join(repo, "CLAUDE.md"), "utf8"), "把人家的文件改了").toBe(
+      "这是我自己攒的约定，别动它\n",
+    )
+    expect(existsSync(join(repo, "AGENTS.md")), "不该另写一份出来抢它的位置").toBe(false)
+  })
+
+  it("**跑第二遍不出事**，且不谎报建了什么", async () => {
+    await 初始化()
+    const r = await 初始化()
+    const d = (r as { data: { created: string[] } }).data
+    // 目录都在了，这一次一个都没建——**已经存在的不算这次的成果**
+    expect(d.created).toEqual([])
   })
 })

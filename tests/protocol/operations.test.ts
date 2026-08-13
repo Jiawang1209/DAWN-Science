@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("52 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2）", () => {
+  it("53 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
@@ -47,6 +47,7 @@ describe("操作注册表", () => {
         "setProviderConnection",
         "setSessionModel",
         "setSessionPinned",
+        "initScienceLayout",
         "getPermissionMode",
         "setPermissionMode",
         "getCapabilities",
@@ -84,7 +85,7 @@ describe("操作注册表", () => {
     for (const name of ["getCapabilities", "listProjects", "listSessions", "listRuns", "getRun", "getProvenance", "deletionImpact", "listDirectory", "listCredentials", "getProviders", "listTemporarySessions", "getPermissionMode"]) {
       expect(isMutating(name), `${name} 应为只读`).toBe(false)
     }
-    for (const name of ["createTask", "setTaskWorkspace", "deleteTask", "setPermissionMode",
+    for (const name of ["createTask", "setTaskWorkspace", "deleteTask", "setPermissionMode", "initScienceLayout",
         "createTerminalSession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential"]) {
       expect(isMutating(name), `${name} 应为可写`).toBe(true)
     }

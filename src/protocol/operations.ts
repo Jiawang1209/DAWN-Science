@@ -754,6 +754,39 @@ export const OPERATIONS = {
    * **这不是沙箱**：沙箱是操作系统层的强制隔离，这里是我们代码里的一道门——
    * 模型走我们包装过的工具时拦得住，绕过去拦不住。名字不许比能力大。
    */
+  /**
+   * 按科研目录结构初始化一个项目（2026-08-14）。
+   *
+   * **响应要说清它到底做了什么**：建了哪几个目录、约定写没写进去。
+   * 「写了」与「没写因为你已经有一份」在界面上要说完全不同的话——
+   * 混成一句「已初始化」，人就会以为约定生效了，而实际上没有。
+   */
+  initScienceLayout: {
+    request: z.object({ projectId: z.string().min(1) }).strict(),
+    response: z.union([
+      z
+        .object({
+          /** 这次真正建出来的目录。**已经存在的不列**——它们不是这次的成果 */
+          created: z.array(z.string()),
+          instructions: z.literal("written"),
+          file: z.string().min(1),
+        })
+        .strict(),
+      z
+        .object({
+          created: z.array(z.string()),
+          instructions: z.literal("skipped"),
+          /** 挡住我们的是哪一份。**点名它**，否则人不知道去哪儿贴 */
+          existingFile: z.string().min(1),
+          reason: z.string().min(1),
+          /** 该贴进去的那段。**给出来，别让人回头再问一遍** */
+          snippet: z.string().min(1),
+        })
+        .strict(),
+    ]),
+    mutating: true,
+  },
+
   getPermissionMode: {
     request: Empty,
     response: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),

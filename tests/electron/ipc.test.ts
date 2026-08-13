@@ -56,6 +56,7 @@ function backend(): WorkbenchBackend {
     setTaskWorkspace: async () => 假任务,
     deleteTask: async () => ({ ledgerKept: 0 }),
     listSkills: async () => ({ agents: [], problems: [], dir: "/w/.dawn/agents" }),
+    initScienceLayout: async () => ({ created: [], instructions: "written" as const, file: "AGENTS.md" }),
     getPermissionMode: async () => ({ mode: "allow-all" as const }),
     setPermissionMode: async () => ({ mode: "deny-risky" as const }),
     getDefaultWorkspace: async () => ({ path: "/w", isDefault: true }),

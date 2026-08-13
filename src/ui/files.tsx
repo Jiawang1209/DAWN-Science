@@ -255,16 +255,36 @@ export function FilesView({
   loadDir,
   onSelect,
   onOpenExternally,
+  onInitLayout,
+  layoutNote,
 }: {
   selected: string | undefined
   content: FileContent | undefined
   loadDir: (path: string) => Promise<Listing>
   onSelect: (path: string) => void
   onOpenExternally: (path: string) => void
+  /**
+   * 按科研目录结构初始化（2026-08-14）。
+   *
+   * **入口放在文件这一屏**，因为它做的事就是在这棵树上建目录——
+   * 放进设置里的话，人得先想到「这是个设置」才找得到它。
+   */
+  onInitLayout?: () => void
+  /** 上一次初始化做了什么。**做完要出声**，否则按下去像什么都没发生 */
+  layoutNote?: string | undefined
 }) {
   return (
     <div className="files-view">
       <nav className="file-tree" aria-label={t("工作区文件")}>
+        {onInitLayout ? (
+          <div className="tree-actions">
+            <Button variant="ghost" size="sm" onClick={onInitLayout}>
+              {t("按科研目录结构初始化")}
+            </Button>
+            {/* **做完要出声**：建了几个目录、约定写没写进去，各说各的话 */}
+            {layoutNote ? <p className="caveat">{layoutNote}</p> : null}
+          </div>
+        ) : null}
         <ul className="tree-list">
           <DirNode path="" name="" depth={0} selected={selected} onSelect={onSelect} load={loadDir} />
         </ul>

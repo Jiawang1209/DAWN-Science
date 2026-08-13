@@ -99,6 +99,12 @@ export const EN: Readonly<Record<string, string>> = {
   "上下文": "Context",
   // 工具权限（2026-08-13）。**刻意不叫 sandbox**——那是 OS 层的强制隔离，
   // 我们这里是自己代码里的一道工具门。名字不许比能力大
+  // 科研目录初始化（2026-08-14）
+  // **不能叫 "Set up …"**：已经有一个按钮就叫 "Set up"，而 `getByRole(name)`
+  // 是子串匹配——两个按钮会同时命中（i18n 扫描当场拦下）
+  "按科研目录结构初始化": "Create the standard research layout",
+  "建了 {0} 个目录，约定已写入 {1}": "Created {0} folders; the convention was written to {1}",
+  "建了 {0} 个目录。{1}": "Created {0} folders. {1}",
   "工具权限": "Tool permissions",
   "全放行": "Allow everything",
   "内置 agent 可以任意读写、执行命令。这是目前的默认。":

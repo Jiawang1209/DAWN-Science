@@ -208,8 +208,17 @@
  *   **它不是沙箱**：沙箱是操作系统层的强制隔离（Codex 走 seatbelt / landlock），
  *   这里是我们代码里的一道门——模型走我们包装过的工具时拦得住，绕过去拦不住。
  *   名字不许比能力大，所以界面上也不叫它沙箱。
+ * 5.3（2026-08-14）：`initScienceLayout`——按科研目录结构初始化一个项目。纯新增。
+ *
+ *   建目录骨架 + 把作者定的产物落位约定写进工作区的 `AGENTS.md`。
+ *   **不是我们自己发明的注入路**：pi 的 `DefaultResourceLoader` 本来就读
+ *   `AGENTS.md` / `CLAUDE.md`，写成文件模型自然看得到，而且**人能直接改**。
+ *   硬编码进系统提示词的话它既看不见也改不动。
+ *
+ *   **已经有指令文件的项目一个字都不动**，并如实回「没写、为什么、该贴什么」。
+ *   那份文件里可能是这个仓库攒了很久的约定，覆盖掉不可撤销。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.2"
+export const WORKBENCH_PROTOCOL_VERSION = "5.3"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

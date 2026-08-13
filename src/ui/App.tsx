@@ -545,6 +545,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /**
    * 工具权限档位（2026-08-13）。**进设置时取一次**——它不会自己变。
    */
+  /** 上一次「按科研目录结构初始化」做了什么。**做完要出声** */
+  const [目录说明, 设目录说明] = useState<string | undefined>(undefined)
+
   const [权限档, 设权限档] = useState<"allow-all" | "deny-risky">("allow-all")
   useEffect(() => {
     if (view !== "settings") return
@@ -2212,6 +2215,40 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               loadDir={loadDir}
               onSelect={openFile}
               onOpenExternally={openExternally}
+              {...(projectId
+                ? {
+                    onInitLayout: () => {
+                      client
+                        .get<
+                          | { created: string[]; instructions: "written"; file: string }
+                          | {
+                              created: string[]
+                              instructions: "skipped"
+                              existingFile: string
+                              reason: string
+                            }
+                        >("initScienceLayout", { projectId })
+                        .then((r) => {
+                          /**
+                           * **两种结果说的话完全不同。**
+                           * 「写了」与「没写、因为你已经有一份」混成一句「已初始化」，
+                           * 人就会以为约定生效了，而实际上没有。
+                           */
+                          设目录说明(
+                            r.instructions === "written"
+                              ? tf("建了 {0} 个目录，约定已写入 {1}", String(r.created.length), r.file)
+                              : tf(
+                                  "建了 {0} 个目录。{1}",
+                                  String(r.created.length),
+                                  r.reason,
+                                ),
+                          )
+                        })
+                        .catch(fail)
+                    },
+                    ...(目录说明 ? { layoutNote: 目录说明 } : {}),
+                  }
+                : {})}
             />
           ) : view === "panel" ? (
             <div className="panels">

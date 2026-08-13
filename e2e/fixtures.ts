@@ -288,6 +288,8 @@ export interface DawnOptions {
    * 不补的话，那一整块在 mock 与 e2e 里永远不出现。
    */
   thinking?: string
+  /** 想完之后停多久再开口。**演的是真实模型「想完了还不说话」那段真空** */
+  thinkingHoldMs?: number
   /**
    * 写权租约的 TTL（秒）。**默认 300**。
    *
@@ -393,6 +395,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
+      ...(dawnOptions.thinkingHoldMs ? { thinkingHoldMs: dawnOptions.thinkingHoldMs } : {}),
       ...(dawnOptions.failStatus ? { failStatus: dawnOptions.failStatus } : {}),
       ...(dawnOptions.firstChunkDelayMs
         ? { firstChunkDelayMs: dawnOptions.firstChunkDelayMs }

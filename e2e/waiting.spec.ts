@@ -156,3 +156,81 @@ test.describe("中止", () => {
     await expect(记号).toHaveCount(0, { timeout: 3_000 })
   })
 })
+
+/**
+ * **等待要等到「有东西可读」，不是「有新条目」**（2026-08-14 作者报的）。
+ *
+ * 作者的原话：*「等待模型响应的动作结束之后，结果还没有映射完，
+ * 我其实是在等待 DAWN 的回复，然后直接弹出来就是 53s 想了一下。」*
+ *
+ * 老判据是「冒出任何新条目就撤销记号」。而带思考的模型第一个到达的是
+ * **思考块**，且它整块完成后才落地——于是等待动画消失、屏幕上弹出一行
+ * 「53s 想了一下」，而真正的回答还没开始。**那一刻人面前什么都没有。**
+ */
+test.describe("会思考的模型", () => {
+  test.use({
+    dawnOptions: {
+      thinking: "让我想想这个问题该怎么答",
+      firstChunkDelayMs: 800,
+      // **想完之后停 2.5 秒再开口**：那段真空正是作者报的现象发生的地方
+      thinkingHoldMs: 2500,
+    },
+  })
+
+  /**
+   * **记号要扛住整段思考，直到真的出字。**
+   *
+   * 老判据是「冒出任何新条目就撤销」。而带思考的模型在「想完」与「开口」之间
+   * 有一段真空——作者的原话：*「等待模型响应的动作结束之后，结果还没有映射完，
+   * 我其实是在等待 DAWN 的回复，然后直接弹出来就是 53s 想了一下。」*
+   * 那一刻人面前既没有等待动画、也还没有回答。
+   *
+   * 这条用**真时间**验：假模型停 2.5 秒，而记号必须一直在。
+   */
+  test("**想完到开口那段真空里，记号不撤**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("在吗")
+    await 框.press("Enter")
+
+    const 记号 = page.locator(".waiting")
+    await expect(记号).toBeVisible()
+
+    // **停在真空中间再看一眼**：这一刻屏幕上还没有任何回答
+    await page.waitForTimeout(2000)
+    await expect(page.getByText(/假模型已应答/)).toHaveCount(0)
+    await expect(记号, "回答还没出来，记号却先撤了——那正是作者报的那个空窗").toBeVisible()
+
+    // 真的说出字了，才撤
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    await expect(记号).toHaveCount(0)
+  })
+
+  /**
+   * **秒数要自己走。** 作者：*「我也可以看到 模型思考 1s 2s --- 53s 的这种感觉。」*
+   * 一个不动的转圈回答不了「它是慢，还是卡住了」——而那正是人盯着屏幕时
+   * 唯一想知道的事。
+   */
+  test("**记号自己会走秒**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("在吗")
+    await 框.press("Enter")
+
+    const 秒 = page.locator(".waiting .thought-secs")
+    await expect(秒).toBeVisible()
+    await expect(秒).toHaveText(/^\d+s$/)
+
+    // **它真的在走**，不是画了个 0s 在那儿
+    const 头 = Number((await 秒.textContent())!.replace("s", ""))
+    await page.waitForTimeout(2200)
+    const 后 = Number((await 秒.textContent())!.replace("s", ""))
+    expect(后, `秒数没有在走：${头}s → ${后}s`).toBeGreaterThan(头)
+  })
+})

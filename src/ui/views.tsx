@@ -2255,6 +2255,29 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
 }
 
 /**
+ * 「还在等」这条记号（2026-08-14 重做）。
+ *
+ * **它会走秒。** 作者：*「我也可以看到 模型思考 1s 2s --- 53s 的这种感觉。」*
+ * 一个不动的转圈无法回答「它是慢，还是卡住了」——而那正是人盯着屏幕时
+ * 唯一想知道的事。秒数从**按下发送**那一刻数起，不是从某个内部事件。
+ *
+ * 模型开始思考之后这条记号**不撤**，只是换句话说：
+ * 思考块是过程不是结果，撤掉它等于宣布「好了」，而屏幕上还什么都没有。
+ */
+function 等着({ 从, 在想 }: { 从: number; 在想: boolean }) {
+  const now = useTick(true)
+  const 秒 = Math.max(0, Math.round((now - 从) / 1000))
+  return (
+    <div className="waiting">
+      {/* `Loader` 的 label 是必填的：**说不出在等什么的加载指示等于没说** */}
+      <Loader label={在想 ? t("模型正在思考") : t("正在等模型回话")} />
+      {/* **秒数与思考块里那个同一个样式**：它们是同一件事的两段 */}
+      <span className="thought-secs">{秒}s</span>
+    </div>
+  )
+}
+
+/**
  * 这一整段对话的用量（2026-08-12）。
  *
  * 数据就在手上——每一轮的 `usage` 都在 transcript 里，**不必另外去问后端**。
@@ -2455,11 +2478,29 @@ export function ConversationView({
    * 而且**换会话时无条件清掉**——别人的历史里不该留着我的等待。
    */
   const [等回话, 设等回话] = useState<number | undefined>(undefined)
+  /** 按下发送的那一刻。**秒数从这里数起**——人等的是从他按下开始的那段 */
+  const [等回话时刻, 设等回话时刻] = useState(() => Date.now())
   useEffect(() => 设等回话(undefined), [session.sessionId])
   useEffect(() => {
     // **新东西冒出来了就收**：`发出去时的条数 + 我自己那一条` 之后再多，就是对面动了
-    if (等回话 !== undefined && items.length > 等回话 + 1) 设等回话(undefined)
-  }, [items.length, 等回话])
+    if (等回话 === undefined) return
+    /**
+     * **等到「有东西可读」，不是「有新条目」**（2026-08-14 作者报的）。
+     *
+     * 上一版的判据是 `items.length > 等回话 + 1`——只要冒出**任何**新条目就撤销。
+     * 而带思考的模型，第一个到达的往往是**思考块**，且它整块完成后才落地。
+     * 于是屏幕上是这样：等待动画消失 → 弹出一行「53s 想了一下」→
+     * 而真正的回答还没开始。作者的原话：
+     * *「等待模型响应的动作结束之后，结果还没有映射完，我其实是在等待 DAWN 的回复。」*
+     *
+     * 现在只认**agent 说出了字**：思考块、工具调用都不算数——
+     * 它们是过程，不是结果。
+     */
+    const 说出字了 = items
+      .slice(等回话)
+      .some((i) => i.type === "turn" && i.who === "agent" && (i.text ?? "").length > 0)
+    if (说出字了) 设等回话(undefined)
+  }, [items, 等回话])
 
   /**
    * agent 还在说话（最后一条 turn 未收尾），**或者刚发出去还没回音**。
@@ -2468,6 +2509,21 @@ export function ConversationView({
    * 而**等回音的那段恰恰是最想按停止的时候**。
    */
   const 说着 = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+  /**
+   * 等待期间模型已经在思考了没有。
+   *
+   * **两件事合成一条指示**（2026-08-14 作者要的）：
+   * *「等待模型响应 以及 模型思考过程，其实可以一起展示给我。」*
+   * 分成两个记号的话，思考块一落地等待记号就该消失，而那正是
+   * 「等待结束了、结果却还没出来」的来源。
+   */
+  const 正在想 =
+    等回话 !== undefined &&
+    items
+      .slice(等回话)
+      // **思考不是独立条目，它挂在 turn 上**（协议 `thinking` / `thinkingMs`）
+      .some((i) => i.type === "turn" && i.who === "agent" && (i.thinking ?? "").length > 0)
+
   const busy = 说着 || 等回话 !== undefined
 
   return (
@@ -2619,11 +2675,7 @@ export function ConversationView({
             * `Loader` 的 label 是必填的（primitives 那条纪律：
             * **说不出在等什么的加载指示等于没说**）。
             */}
-          {等回话 !== undefined ? (
-            <div className="waiting">
-              <Loader label={t("正在等模型回话")} />
-            </div>
-          ) : null}
+          {等回话 !== undefined ? <等着 从={等回话时刻} 在想={正在想} /> : null}
         </StickToBottom.Content>
       </StickToBottom>
 
@@ -2688,6 +2740,7 @@ export function ConversationView({
           设发送出错(undefined)
           // **从这一刻起显示「在等它」**，直到有新东西冒出来（见 `等回话` 的注）
           设等回话(items.length)
+          设等回话时刻(Date.now())
           void Promise.resolve(
             这次的图.length > 0 ? onSend(text, 这次的图.map(报给协议)) : onSend(text),
           ).catch((e: unknown) => {

@@ -76,6 +76,7 @@ export const MARKDOWN_REPLY = [
  * @param {string} [opts.failMessage] 失败时的 message
  * @param {string} [opts.reply] 固定回复正文
  * @param {(body: any) => {toolName: string, args: object} | undefined} [opts.toolCall]
+ * @param {number} [opts.thinkingHoldMs] 想完之后停多久再开口。**演的是 kimi 那段真空**
  * @param {string} [opts.thinking] 假模型「想」的内容。**给了才发**——
  *   大多数用例不需要它，平白多一段思考会把别的断言的上下文搅乱
  *   返回值非空时，改为让模型「调用一个工具」——用来在 e2e 里确定性地触发工具路径
@@ -179,6 +180,17 @@ export function startMockInferenceServer(opts = {}) {
       if (opts.firstChunkDelayMs) await new Promise((r) => setTimeout(r, opts.firstChunkDelayMs))
       for (const chunk of streamChunks(reply, tool, opts.thinking)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
+        /**
+         * **想完之后停一会儿再说话**（2026-08-14，准入规则 1）。
+         *
+         * 作者报的那个现象是：*「等待模型响应的动作结束之后，结果还没有映射完，
+         * 然后直接弹出来就是 53s 想了一下。」*——kimi 在「想完」与「开口」之间
+         * 有一段真空。假模型此前把思考和正文**背靠背**吐出来，
+         * **那段真空在 mock 与 e2e 里根本不存在**，于是那个 bug 只能靠人拿真模型撞见。
+         */
+        if (opts.thinkingHoldMs && chunk.choices?.[0]?.delta?.reasoning_content) {
+          await new Promise((r) => setTimeout(r, opts.thinkingHoldMs))
+        }
       }
       res.write("data: [DONE]\n\n")
       res.end()

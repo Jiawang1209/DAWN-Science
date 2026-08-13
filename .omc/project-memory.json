@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -1 && npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4 && npx playwright test --grep-invert \"视觉\" 2>&1 | tail -18",
-    "testCommand": "npm run build 2>&1 | tail -1 && npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4 && npx playwright test --grep-invert \"视觉\" 2>&1 | tail -18",
+    "buildCommand": "npx vitest run tests/ui/i18n.test.ts tests/ui/design-contract.test.ts 2>&1 | grep -E '^\\+   \"|Tests |×' | head -10 && npm run build 2>&1 | tail -1 && npx playwright test e2e/bulk-delete.spec.ts e2e/project-bulk.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -15",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

@@ -30,7 +30,7 @@ test("**选两条，删两条，第三条还在**", async ({ dawn }) => {
   await 开一段(page, "要删的乙", 3)
 
   // ① 入口常驻在分区标题上
-  const 选择 = page.getByRole("button", { name: "多选" })
+  const 选择 = page.getByRole("button", { name: "多选会话", exact: true })
   await expect(选择).toBeVisible()
   await 选择.click()
 
@@ -58,7 +58,7 @@ test("**全选是全选，再点一次是全不选**", async ({ dawn }) => {
   await 开一段(page, "甲", 1)
   await 开一段(page, "乙", 2)
 
-  await page.getByRole("button", { name: "多选" }).click()
+  await page.getByRole("button", { name: "多选会话", exact: true }).click()
   await page.getByRole("button", { name: "全选" }).click()
   await expect(page.locator(".side-bulk-count")).toHaveText("已选 2")
   await page.getByRole("button", { name: "全不选" }).click()
@@ -76,9 +76,9 @@ test("**「完成」退出选择模式，什么都不删**", async ({ dawn }) =>
   const { page } = dawn
   await 开一段(page, "不该被删的", 1)
 
-  await page.getByRole("button", { name: "多选" }).click()
+  await page.getByRole("button", { name: "多选会话", exact: true }).click()
   await page.getByRole("checkbox", { name: /不该被删的/ }).check()
-  await page.getByRole("button", { name: "完成" }).click()
+  await page.getByRole("button", { name: "结束多选会话", exact: true }).click()
 
   await expect(page.locator(".sess-check")).toHaveCount(0)
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)

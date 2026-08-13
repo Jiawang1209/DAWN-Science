@@ -16,6 +16,10 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "多选项目": "Select projects",
+  "多选会话": "Select chats",
+  "结束多选项目": "Finish selecting projects",
+  "结束多选会话": "Finish selecting chats",
   "还没有打开的工作目录": "No workspace folder is open",
   "技能是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。": "Skills live per workspace folder (.dawn/agents/) — pick a folder for this chat first.",
   "读不到技能": "Could not read the skills",
@@ -125,7 +129,6 @@ export const EN: Readonly<Record<string, string>> = {
   "置顶": "Pin to top",
   "取消置顶": "Unpin",
   "多选": "Select several",
-  "批量": "Bulk",
   "完成": "Done",
   "全选": "Select all",
   "全不选": "Clear",

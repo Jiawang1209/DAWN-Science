@@ -69,8 +69,18 @@ test("**选一个，删一个，另一个还在**", async ({ dawn }) => {
   const { page } = dawn
   await 造项目(page, [甲, 乙])
 
-  // ① 入口常驻在「项目」那条分区标题上，且**不叫「多选」**
-  const 入口 = page.getByRole("button", { name: "批量", exact: true })
+  /**
+   * ① 入口常驻在「项目」那条分区标题上。
+   *
+   * **屏幕上写的是「多选」，与会话那颗一模一样**（作者定的：
+   * *「项目里面应该不是批量，应该和会话一样，应该是多选」*）——
+   * 两处是同一件事，就该同一个名字。
+   *
+   * 所以这里按 `aria-label` 找：那才是「机器与读屏用的名字」，
+   * 拿人看的字去区分两个元素，是把代价付错了地方。
+   */
+  const 入口 = page.getByRole("button", { name: "多选项目", exact: true })
+  await expect(入口).toHaveText("多选")
   await expect(入口).toBeVisible()
   await 入口.click()
 
@@ -103,13 +113,13 @@ test("**进项目多选，会话那边就退出去**", async ({ dawn }) => {
   await 造项目(page, [甲])
   await 造散会话(page)
 
-  await page.getByRole("button", { name: "多选", exact: true }).click()
+  await page.getByRole("button", { name: "多选会话", exact: true }).click()
   await expect(page.locator(".side-bulkbar")).toHaveCount(1)
 
-  await page.getByRole("button", { name: "批量", exact: true }).click()
+  await page.getByRole("button", { name: "多选项目", exact: true }).click()
   // **仍然只有一条**：项目那边开了，会话那边关了
   await expect(page.locator(".side-bulkbar")).toHaveCount(1)
-  await expect(page.getByRole("button", { name: "多选", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "多选会话", exact: true })).toBeVisible()
   // 而且勾选框只长在项目行上
   await expect(page.getByRole("checkbox", { name: /选择项目/ })).toHaveCount(1)
   await expect(page.getByRole("checkbox", { name: /选择会话/ })).toHaveCount(0)
@@ -136,7 +146,7 @@ test("**项目底下的会话行不参与「会话」多选**", async ({ dawn })
   await page.locator(".proj-list .proj-item .row").first().click()
   await expect(page.locator(".proj-session-list .sess-item")).toHaveCount(1)
 
-  await page.getByRole("button", { name: "多选", exact: true }).click()
+  await page.getByRole("button", { name: "多选会话", exact: true }).click()
   // 会话那一栏的行确实长出了勾选框——**说明这一轮多选真的开着**
   await expect(page.locator(".session-list .sess-check")).toHaveCount(1)
   await expect(page.locator(".proj-session-list .sess-check")).toHaveCount(0)

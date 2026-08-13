@@ -37,6 +37,7 @@ import {
   ConversationView,
   EmptyConversation,
   SessionSidebar,
+  SideSash,
   TerminalView,
   type ModelChoice,
   type ServiceChoice,
@@ -49,7 +50,7 @@ import {
   WorkspacePanel,
   type KernelRow,
 } from "./Settings.js"
-import { 外观图标, 文件夹图标, 模型图标, 终端图标 } from "./icons.js"
+import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标 } from "./icons.js"
 import { Button } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
 import { SkillsView, McpView, PluginsView, type SkillLoad } from "./skills.js"
@@ -126,6 +127,12 @@ import {
   setTheme,
   setView,
   upsertItem,
+  $sidebarWidth,
+  $sidebarCollapsed,
+  setSidebarWidth,
+  toggleSidebar,
+  SIDEBAR_MIN,
+  SIDEBAR_MAX,
 } from "./state/index.js"
 
 /**
@@ -169,6 +176,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const kernelInstanceId = useStore($kernelInstanceId)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
+  const sidebarWidth = useStore($sidebarWidth)
+  const sidebarCollapsed = useStore($sidebarCollapsed)
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -1129,6 +1138,78 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client],
   )
 
+  /**
+   * **批量移除项目**（2026-08-13，作者：*「项目里面没有批量删除项目的选项，
+   * 可以模仿一下会话的批量管理」*）。
+   *
+   * 与批量删会话同一副骨架：**复用已有的单条端点，一条条来**，
+   * 不新造一个批量端点——「移除一个项目」这件事已经有一个家
+   * （会删它名下的会话与账本，磁盘上的文件夹一个都不动）。
+   *
+   * **两条路，因为项目未必有 id**：拿得到就走 `deleteProject`（连账本一起收）；
+   * 拿不到（迁移过来、界面还没认识它的会话）就删它底下那些任务。
+   * 后者正是作者上一轮报过的「历史遗留的删不掉」，这里从一开始就避开。
+   */
+  const askDeleteProjects = useCallback(
+    (
+      groups: readonly {
+        workspace: string
+        projectId?: string
+        tasks: readonly import("../protocol/index.js").TaskSummary[]
+      }[],
+      done: () => void,
+    ) => {
+      if (groups.length === 0) return
+      const 会话数 = groups.reduce((n, g) => n + g.tasks.length, 0)
+      setConfirming({
+        title: `从工作台移除这 ${groups.length} 个项目？`,
+        detail: (
+          <>
+            会一并移除它们名下的 <b>{会话数}</b> 段对话与相应的账本记录。
+          </>
+        ),
+        safety: (
+          <>
+            <b>磁盘上的文件夹一个都不会被删除。</b>
+            <br />
+            {groups.map((g) => g.workspace).join("\n")}
+          </>
+        ),
+        confirmLabel: `移除 ${groups.length} 个`,
+        onConfirm: () => {
+          void (async () => {
+            const 没删掉: string[] = []
+            for (const g of groups) {
+              try {
+                if (g.projectId) {
+                  await client.get("deleteProject", { projectId: g.projectId })
+                } else {
+                  // **没有 projectId 也要删得掉**：按 taskId 走（协议 4.9）
+                  for (const t of g.tasks) await client.get("deleteTask", { taskId: t.taskId })
+                }
+              } catch {
+                没删掉.push(g.workspace)
+              }
+            }
+            const pid = $activeProjectId.get()
+            if (pid && groups.some((g) => g.projectId === pid)) {
+              setActiveProjectId(undefined)
+              setActiveSessionId(undefined)
+              setView("conversation")
+            }
+            await loadTempSessions(client)
+            await loadTasks(client)
+            await loadProjects(client)
+            // **失败必须出声**，而且说得出是哪几个（规格 7.5）
+            if (没删掉.length > 0) note(`有 ${没删掉.length} 个没移除：${没删掉.join("、")}`)
+            done()
+          })()
+        },
+      })
+    },
+    [client],
+  )
+
   const askDeleteProject = useCallback((projectId?: string) => {
     const pid = projectId ?? $activeProjectId.get()
     if (!pid) return
@@ -1619,6 +1700,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     <div className="app-shell">
       <div className="topbar">
         {/**
+          * **折叠侧栏**（2026-08-13，作者要的）。
+          *
+          * 实测 WorkBuddy 那颗在**侧栏自己的顶栏里**（32×32 的 ghost 图标按钮，
+          * 右对齐，标签「收起侧边栏」）。**我们没有放在那儿，理由要写清楚**：
+          * 侧栏收起之后它自己也没了，于是这个能力**只剩一条藏在别处的出路**。
+          *
+          * 这正是本项目已经报过两次的那个形状（*「看不见的能力等于不存在」*：
+          * 没标签的 `＋`、`opacity: 0` 的删除键，两次作者的话都是「没有这个功能」）。
+          * 放在顶栏——它横跨整个窗口，**两个状态下都在同一个位置**，
+          * 收起之后还能原地点回来。
+          *
+          * 一颗按钮管两态，标签跟着换：不是两颗，那样就是「一个动作两个家」。
+          */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="side-toggle"
+          aria-label={sidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
+          aria-expanded={!sidebarCollapsed}
+          onClick={toggleSidebar}
+        >
+          <侧栏图标 />
+        </Button>
+        {/**
           * **点它回初始画面**（2026-08-12，作者提）。
           *
           * 与侧栏那颗「新建任务」是**同一个动作**——
@@ -1702,7 +1807,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         />
       ) : null}
 
-      <div className="body">
+      {/**
+        * **宽度由内联变量给，不由 CSS 里那个常数给**（2026-08-13）。
+        *
+        * `--dawn-sidebar-w` 的默认值仍然住在 `tokens.css`（唯一的家），
+        * 这里只在人拖过之后**覆盖它**——覆盖是显式的、看得见的，
+        * 而在样式表里再写一个 264 就成了同一个数的第二个家。
+        *
+        * 折叠 = 宽度 0 + `.side-collapsed`。**不用 `display: none`**：
+        * 那样 0.25s 的收合动画没有中间态，一下就没了。
+        */}
+      <div
+        className={`body${sidebarCollapsed ? " side-collapsed" : ""}`}
+        style={
+          { "--dawn-sidebar-w": sidebarCollapsed ? "0px" : `${sidebarWidth}px` } as React.CSSProperties
+        }
+      >
         <SessionSidebar
           /** **临时项目不进项目列表**：它们的会话在上面那一列 */
           projects={projects.filter((p) => !p.temporary)}
@@ -1748,6 +1868,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
+          onDeleteProjects={askDeleteProjects}
           /**
            * 单条删除也走 `deleteTask`（2026-08-12）。
            *
@@ -1891,6 +2012,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onOpenSettings={() => setView(view === "settings" ? "conversation" : "settings")}
           settingsActive={view === "settings"}
         />
+
+        {/**
+          * 那条能拖的缝。**折叠时不画**——它的位置跟着宽度走，
+          * 宽度是 0 时它会贴在窗口最左边，看起来像是可以把侧栏
+          * 「从零拖回来」，而拖不动（`clampWidth` 的下界是 200）。
+          * 一个看得见、拖不动的把手比没有更坏。
+          */}
+        {!sidebarCollapsed ? (
+          <SideSash
+            width={sidebarWidth}
+            min={SIDEBAR_MIN}
+            max={SIDEBAR_MAX}
+            onResize={setSidebarWidth}
+          />
+        ) : null}
 
         <main className="main">
           {view === "skills" ? (

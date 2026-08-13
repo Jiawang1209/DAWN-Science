@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 - <<'PY'\nimport glob, re\nfor f in glob.glob(\"e2e/*.spec.ts\"):\n    t=open(f).read()\n    if \"进设置(\" in t and \"进设置 }\" not in t and \"进设置,\" not in t:\n        t=re.sub(r'\\} from \"\\./fixtures\\.js\"', ', 进设置 } from \"./fixtures.js\"', t, count=1)\n        open(f,\"w\").write(t); print(\"补 import:\", f)\nPY\nnpx tsc --noEmit -p tsconfig.json 2>&1 | head -4; npx playwright test e2e/key-is-enough.spec.ts e2e/kernels.spec.ts e2e/custom-provider.spec.ts e2e/providers.spec.ts 2>&1 | grep -E \"passed|failed\" | head -3",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -6; npm run test:e2e:visual:update 2>&1|tail -2; npm run test:e2e:visual 2>&1|tail -2; npx playwright test e2e/ --reporter=line > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eL.log 2>&1; grep -E \"^\\s+[0-9]+\\) |passed|failed\" /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/27ec929d-edb4-4280-bf42-58e01bcb26a9/scratchpad/e2eL.log | tail -14",
+    "buildCommand": "npm run build 2>&1 | tail -1 && npx playwright test e2e/visual.spec.ts --update-snapshots 2>&1 | tail -8",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npm run test:e2e 2>&1 | tail -40",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -233,32 +233,44 @@
   "hotPaths": [
     {
       "path": "src/ui/views.tsx",
-      "accessCount": 29,
-      "lastAccessed": 1786534603357,
+      "accessCount": 46,
+      "lastAccessed": 1786578388210,
       "type": "file"
     },
     {
       "path": "src/ui/App.tsx",
-      "accessCount": 12,
-      "lastAccessed": 1786535051561,
+      "accessCount": 25,
+      "lastAccessed": 1786578362994,
       "type": "file"
     },
     {
       "path": "src/ui/styles.css",
-      "accessCount": 10,
-      "lastAccessed": 1786534697184,
+      "accessCount": 16,
+      "lastAccessed": 1786579735562,
       "type": "file"
     },
     {
       "path": "src/ui/tokens.css",
-      "accessCount": 6,
-      "lastAccessed": 1786523957934,
+      "accessCount": 10,
+      "lastAccessed": 1786578156698,
+      "type": "file"
+    },
+    {
+      "path": "e2e/sidebar-size.spec.ts",
+      "accessCount": 7,
+      "lastAccessed": 1786578815282,
       "type": "file"
     },
     {
       "path": "e2e/__screenshots__/对话-亮色-darwin.png",
       "accessCount": 6,
       "lastAccessed": 1786558256546,
+      "type": "file"
+    },
+    {
+      "path": "e2e/project-bulk.spec.ts",
+      "accessCount": 5,
+      "lastAccessed": 1786578844597,
       "type": "file"
     },
     {
@@ -343,6 +355,18 @@
       "path": "e2e/zz-sweep.spec.ts",
       "accessCount": 2,
       "lastAccessed": 1786544245155,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/state/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786577891506,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/main.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1786577951077,
       "type": "file"
     },
     {
@@ -457,6 +481,36 @@
       "path": "e2e/__screenshots__/设置-亮色-darwin.png",
       "accessCount": 1,
       "lastAccessed": 1786561364387,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/state/theme.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786577648865,
+      "type": "file"
+    },
+    {
+      "path": "wb-side2.tmp.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1786577738765,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/state/sidebar.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786577870851,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
+      "accessCount": 1,
+      "lastAccessed": 1786579691932,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-actual.png",
+      "accessCount": 1,
+      "lastAccessed": 1786579700617,
       "type": "file"
     }
   ],

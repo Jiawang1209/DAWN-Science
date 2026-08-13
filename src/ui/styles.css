@@ -198,6 +198,70 @@ pre {
   display: grid;
   grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr);
   min-height: 0;
+  /**
+   * **那条缝按 `.body` 定位**（2026-08-13）。它不能挂在 `.sidebar` 里面——
+   * 侧栏是 `overflow: auto` 的，绝对定位的子元素会**跟着列表一起滚走**，
+   * 症状是「滚到一半把手不见了」。
+   */
+  position: relative;
+  /* 实测 WorkBuddy 的收合是 `width .25s ease-out`；这里动的是列宽，同一个时长曲线 */
+  transition: grid-template-columns 0.25s ease-out;
+}
+/**
+ * 折叠（2026-08-13，作者要的）。**宽度收到 0，不是 `display: none`**——
+ * 后者没有中间态，一下就没了，人看不出「它去哪了」。
+ *
+ * `overflow: hidden` 是必需的：侧栏本身 `overflow: auto`，
+ * 列宽为 0 时里面的内容会**探出来一条**，收合过程中看得见。
+ */
+.app-shell .body.side-collapsed .sidebar {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+/**
+ * 侧栏与正文之间那条能拖的缝（2026-08-13）。
+ *
+ * 实测 WorkBuddy 的 `_sash_`：**4px 宽、透明底、`z-index: 10`**，
+ * 中间一条 1px 的线平时也是透明的，hover / 拖动时才亮。
+ * **命中区 4px、可见 1px** 是刻意的——只画 1px 又只让 1px 可点，
+ * 拖它就成了一件靠手稳的事。
+ *
+ * `left` 由内联样式给（跟着宽度走），这里不写死。
+ */
+.side-sash {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  z-index: var(--z-sash);
+  cursor: col-resize;
+  background: transparent;
+  /* 触摸板/触屏上拖它时别把整页也跟着滚了 */
+  touch-action: none;
+}
+.side-sash::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: transparent;
+  transition: background-color 0.1s ease-out;
+}
+.side-sash:hover::before,
+.side-sash:focus-visible::before,
+.side-sash.dragging::before {
+  background: var(--dawn-accent);
+}
+/* 拖动中整条都亮：**拖到一半手滑出这 4px 时，它得还说得出「我在被拖」** */
+.side-sash.dragging {
+  background: color-mix(in srgb, var(--dawn-accent) 25%, transparent);
+}
+.side-sash:focus-visible {
+  outline: none;
 }
 .app-shell.agent-first .body { grid-template-columns: minmax(0, 1fr); }
 .app-shell.agent-first .sidebar { display: none; }
@@ -226,6 +290,31 @@ pre {
   padding: 0 var(--dawn-space-4);
   border-bottom: 1px solid var(--dawn-stroke-4);
   background: var(--dawn-surface-panel);
+}
+/**
+ * 折叠侧栏那颗（2026-08-13）。**它坐在顶栏最左**，与侧栏的左缘对齐——
+ * 一颗管着左边那一栏的按钮，站在别处会让人找不到它管的是谁。
+ *
+ * 颜色比品牌名弱一档：它是一个动作，不是这一屏的标题。
+ */
+/**
+ * **32×32，于是它的图标正好落在侧栏那一列图标的竖线上。**
+ *
+ * 顶栏左内距是 16（`--dawn-space-4`），32 宽的按钮把 16px 的图标推到 x=32——
+ * 而侧栏里「新建任务 / 技能 / 插件…」那一列图标的中心也在 32。
+ * 默认的 `.btn-icon` 是 `min-width: 26px`，图标中心落在 29，**差 3px**。
+ *
+ * 三个像素听起来不值一提，但作者已经为同一类事报过一次
+ * （*「文字没有对齐，图标也没有对齐」*）——一列图标里有一个歪的，
+ * 扫一眼就看得见，说不出哪里不对而已。
+ *
+ * 32×32 同时也是实测 WorkBuddy 那颗的尺寸。
+ */
+.side-toggle {
+  color: var(--dawn-text-2);
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
 }
 .topbar .brand { font-weight: var(--dawn-weight-semibold); color: var(--dawn-accent); }
 .topbar .spacer { flex: 1; }
@@ -1533,8 +1622,7 @@ pre {
  * 实测 WorkBuddy 是 `240×31` 单行。我们原先是「标题在上、来路在下」——
  * 53px，**高出七成**，一屏少放三分之一的对话。
  */
-.session-list .sess,
-.proj-list .sess {
+.session-list .sess {
   display: flex;
   /**
    * **`center` 而不是 `baseline`**：两段字号不同（14 与 12），
@@ -1546,11 +1634,31 @@ pre {
   min-width: 0;
   flex: 1 1 auto;
 }
-.session-list .sess > .name,
-.proj-list .sess > .name { flex: 1 1 auto; min-width: 0; }
+.session-list .sess > .name { flex: 1 1 auto; min-width: 0; }
 /* 右端那一小段**不许被压扁**：它是时刻或路径，截断了就没有意义 */
-.session-list .sess > .sub,
-.proj-list .sess > .sub { flex: 0 0 auto; }
+.session-list .sess > .sub { flex: 0 0 auto; }
+
+/**
+ * **项目行是两行：名字在上，路径在下**（2026-08-13，作者：*「项目里面，
+ * 路径可以在项目名称换行展示，现在展示的不好看」*）。
+ *
+ * 它此前跟会话行共用那条单行规则——而两者要说的东西不一样：
+ * 会话行右端那一小段是**时刻**（几个字，挤得下）；项目行右端是**路径**
+ * （`~/Desktop/Github_repos/dawn-science` 这种）。同一个 `flex: 0 0 auto`
+ * 落在路径上，就是**名字被压成两三个字、路径也还是塞不下**——
+ * 一行里两样都读不成。
+ *
+ * 与 `.proj-session-list .sess`（项目底下那些会话）同一副做法，
+ * 那儿本来就是竖排的。
+ */
+.proj-list .sess {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
 
 .session-list .sess .name,
 .proj-session-list .sess .name,

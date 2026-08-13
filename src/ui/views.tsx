@@ -394,6 +394,87 @@ export function SessionRow({
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
+/**
+ * 侧栏与正文之间那条可以拖的缝（2026-08-13，作者：*「侧边栏其实可以挪动，
+ * 往左挪动，可以看到更少的信息，往右挪动，可以看到更多的信息」*）。
+ *
+ * ## 量出来的（CDP 连运行中的 WorkBuddy，`_sash_`）
+ *
+ * ```
+ * width: 4px   cursor: col-resize   position: absolute   z-index: 10
+ * 背景透明；::before 是居中的 1px 细线，平时也透明
+ * hover / 拖动中 细线才亮起来
+ * ```
+ *
+ * **4px 宽、1px 可见**这件事是刻意的：命中区要比看得见的那条粗，
+ * 否则拖它成了一件靠手稳的事。（Fitts 定律的老结论，它那儿是照做的。）
+ *
+ * ## 它是 `separator`，不是 `button`
+ *
+ * ARIA 的窗格分隔条模式：`role="separator"` + `aria-valuenow/min/max`，
+ * 并且**可聚焦、方向键能调**。
+ * 「拖」是鼠标独占的动作——只给拖的话，这个能力对键盘用户等于不存在，
+ * 而那正是本项目已经踩过两次的那条（*「看不见的能力等于不存在」*）。
+ */
+export function SideSash({
+  width,
+  min,
+  max,
+  onResize,
+}: {
+  width: number
+  min: number
+  max: number
+  onResize: (px: number) => void
+}) {
+  const [dragging, setDragging] = useState(false)
+  /**
+   * **记下按下那一刻的锚点，不用每次事件的增量累加。**
+   * 累加会在夹到上下界时丢步：手往左推过了头再推回来，
+   * 侧栏不跟手——因为越界的那几十像素被吃掉了，没人记得它们。
+   */
+  const 锚 = useRef({ x: 0, w: width })
+
+  return (
+    <div
+      className={`side-sash${dragging ? " dragging" : ""}`}
+      style={{ left: `${width - 2}px` }}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="调整侧栏宽度"
+      aria-valuenow={width}
+      aria-valuemin={min}
+      aria-valuemax={max}
+      tabIndex={0}
+      onPointerDown={(e) => {
+        锚.current = { x: e.clientX, w: width }
+        setDragging(true)
+        // **抓住指针**：不抓的话手一滑出这 4px，拖动就断在半路
+        e.currentTarget.setPointerCapture(e.pointerId)
+      }}
+      onPointerMove={(e) => {
+        if (!dragging) return
+        onResize(锚.current.w + (e.clientX - 锚.current.x))
+      }}
+      onPointerUp={(e) => {
+        setDragging(false)
+        e.currentTarget.releasePointerCapture(e.pointerId)
+      }}
+      onPointerCancel={() => setDragging(false)}
+      onKeyDown={(e) => {
+        // 一步 16px：够看得出来，又不至于两下就撞到界
+        if (e.key === "ArrowLeft") {
+          onResize(width - 16)
+          e.preventDefault()
+        } else if (e.key === "ArrowRight") {
+          onResize(width + 16)
+          e.preventDefault()
+        }
+      }}
+    />
+  )
+}
+
 export function SessionSidebar({
   projects,
   sessions,
@@ -429,6 +510,7 @@ export function SessionSidebar({
   sessionOf,
   sessionRank,
   onDeleteMany,
+  onDeleteProjects,
   onDeleteTask,
   onNewTaskIn,
 }: {
@@ -527,6 +609,23 @@ export function SessionSidebar({
    */
   onDeleteMany?: ((tasks: readonly TaskSummary[], done: () => void) => void) | undefined
   /**
+   * **批量删项目**（2026-08-13，作者：*「项目里面没有批量删除项目的选项，
+   * 可以模仿一下会话的批量管理」*）。**不给就不出现「批量」入口**——
+   * 与会话那颗同一条：一个进得去、却删不掉的选择模式比没有更坏。
+   *
+   * 每一项都带着 `tasks`，**因为 `projectId` 可能没有**：
+   * 项目在新模型里是从**路径**长出来的，而 projectId 要从它底下某段会话的
+   * 摘要里取——迁移过来、界面还没认识的那些取不到。
+   * 取不到时删的就是它底下那些任务（`deleteTask` 只要 taskId）。
+   * **「拿不到 id 所以这一条删不掉」正是作者报过的那个 bug 的形状。**
+   */
+  onDeleteProjects?:
+    | ((
+        groups: readonly { workspace: string; projectId?: string; tasks: readonly TaskSummary[] }[],
+        done: () => void,
+      ) => void)
+    | undefined
+  /**
    * 删掉一个任务。**给了它，拿不到会话摘要的那些行也删得掉**——
    * 而那正是「历史遗留的对话删不掉」的形状。
    */
@@ -565,15 +664,32 @@ export function SessionSidebar({
    * 而不是再加一个布尔——两个状态可以互相矛盾（模式开着但集合没清），
    * 一个不会。
    */
-  const [已选, 设已选] = useState<Set<string> | undefined>(undefined)
-  const 选择中 = 已选 !== undefined
+  /**
+   * **两列共用一个选择模式**（2026-08-13 扩到项目，作者：*「项目里面没有
+   * 批量删除项目的选项，可以模仿一下会话的批量管理」*）。
+   *
+   * 用「哪一列 + 一个集合」表示，而不是两个各自的集合：
+   * 两个集合可以**同时非空**，那时屏幕上会有两条批量条、两颗「全选」、
+   * 两颗「删除」——而按名字找东西是子串匹配，读屏、Playwright、人脑都一样
+   * （CLAUDE.md：*「两处长得一样的东西，等于没有判据」*）。
+   * 一个状态表达不出那种情形。
+   */
+  const [多选中, 设多选] = useState<{ 列: "会话" | "项目"; 集合: ReadonlySet<string> } | undefined>(
+    undefined,
+  )
+  const 选会话中 = 多选中?.列 === "会话"
+  const 选项目中 = 多选中?.列 === "项目"
+  const 已选 = 多选中?.集合
   const 切一个 = (id: string) =>
-    设已选((前) => {
-      const n = new Set(前 ?? [])
+    设多选((前) => {
+      if (!前) return 前
+      const n = new Set(前.集合)
       if (n.has(id)) n.delete(id)
       else n.add(id)
-      return n
+      return { ...前, 集合: n }
     })
+  const 进选择 = (列: "会话" | "项目") =>
+    设多选((前) => (前?.列 === 列 ? undefined : { 列, 集合: new Set<string>() }))
 
   /**
    * 归类：**有路径 → 项目，没路径 → 会话**（作者 2026-08-12 定案）。
@@ -656,7 +772,16 @@ export function SessionSidebar({
    */
   const 可批量的 = 散的
 
-  const 任务行 = (task: TaskSummary) => {
+  /**
+   * @param 可勾 这一行**这一轮选择模式管不管得着它**（2026-08-13 加）。
+   *
+   * 项目底下那些会话行也走这个函数。此前它们在「会话多选」时
+   * **照样长出勾选框**，勾上了却删不掉——`可批量的` 只有 `散的`，
+   * 删除那一步 `filter` 一过就把它们悄悄丢了。
+   * 能勾、勾得上、按下删除、然后它还在：**这就是静默截断**（规格 7.5）。
+   */
+  const 任务行 = (task: TaskSummary, 可勾: boolean) => {
+    const 选中它 = 可勾 && 选会话中
     const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
     if (!s) {
       /**
@@ -671,7 +796,7 @@ export function SessionSidebar({
        */
       return (
         <li key={task.taskId} className="sess-item">
-          {选择中 ? (
+          {选中它 ? (
             <input
               type="checkbox"
               className="sess-check"
@@ -683,7 +808,7 @@ export function SessionSidebar({
           <Row
             active={task.taskId === activeTaskId}
             className="task-row"
-            onClick={() => (选择中 ? 切一个(task.taskId) : onPickTask?.(task))}
+            onClick={() => (选中它 ? 切一个(task.taskId) : onPickTask?.(task))}
           >
             <对话图标 className="row-icon" />
             <span className="name">{task.title ?? "新任务"}</span>
@@ -708,7 +833,7 @@ export function SessionSidebar({
       <SessionRow
         key={task.taskId}
         session={s}
-        {...(选择中 ? { select: { checked: 已选!.has(task.taskId), onToggle: () => 切一个(task.taskId) } } : {})}
+        {...(选中它 ? { select: { checked: 已选!.has(task.taskId), onToggle: () => 切一个(task.taskId) } } : {})}
         active={s.sessionId === activeSessionId && view === "conversation"}
         current={s.sessionId === activeSessionId}
         {...(agentLabel ? { label: agentLabel } : {})}
@@ -884,14 +1009,83 @@ export function SessionSidebar({
         <>
           <p className="side-section">
             项目 <span className="side-count">{项目组.length}</span>
+            {/**
+              * **入口叫「批量」，不叫「多选」**（2026-08-13）。
+              *
+              * 会话那一列那颗已经叫「多选」了。两颗同名的话，
+              * `getByRole(name)` 会同时指向两个元素——本项目 2026-08-12
+              * 一天之内被这件事咬了三次，设计契约里那条
+              * 「没有一个按钮文案是另一个的子串」就是它的自动化形式。
+              * 「多选项目」也不行：它把「多选」整个包在里面。
+              */}
+            {onDeleteProjects ? (
+              <Button
+                variant="text"
+                size="inline"
+                className="side-bulk"
+                onClick={() => 进选择("项目")}
+              >
+                {选项目中 ? "完成" : "批量"}
+              </Button>
+            ) : null}
           </p>
+          {选项目中 ? (
+            <div className="side-bulkbar">
+              <span className="side-bulk-count">已选 {已选!.size}</span>
+              <Button
+                variant="text"
+                size="inline"
+                onClick={() =>
+                  设多选({
+                    列: "项目",
+                    集合:
+                      已选!.size === 项目组.length
+                        ? new Set()
+                        : new Set(项目组.map(([路径]) => 路径)),
+                  })
+                }
+              >
+                {已选!.size === 项目组.length ? "全不选" : "全选"}
+              </Button>
+              <Button
+                variant="text"
+                size="inline"
+                className="menu-danger"
+                disabled={已选!.size === 0}
+                onClick={() => {
+                  const 要删的 = 项目组
+                    .filter(([路径]) => 已选!.has(路径))
+                    .map(([路径, 里面的]) => ({
+                      workspace: 路径,
+                      ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
+                      tasks: 里面的,
+                    }))
+                  onDeleteProjects?.(要删的, () => 设多选(undefined))
+                }}
+              >
+                删除
+              </Button>
+            </div>
+          ) : null}
           <ul className="proj-list">
             {项目组.map(([路径, 里面的]) => {
               const 展开 = 展开的项目 === 路径 || 里面的.some((t) => t.taskId === activeTaskId)
               return (
                 <li key={路径} className={`proj-item${展开 ? " current" : ""}`}>
                   <div className="proj-head">
-                    <Row active={展开} onClick={() => 设展开(展开 ? undefined : 路径)}>
+                    {选项目中 ? (
+                      <input
+                        type="checkbox"
+                        className="sess-check"
+                        checked={已选!.has(路径)}
+                        onChange={() => 切一个(路径)}
+                        aria-label={`选择项目：${基名(路径)}`}
+                      />
+                    ) : null}
+                    <Row
+                      active={展开}
+                      onClick={() => (选项目中 ? 切一个(路径) : 设展开(展开 ? undefined : 路径))}
+                    >
                       <span className="sess">
                         <span className="name">
                           {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
@@ -951,7 +1145,8 @@ export function SessionSidebar({
                   </div>
                   {展开 ? (
                     <ul className="proj-session-list">
-                      {里面的.map(任务行)}
+                      {/* **不可勾**：会话那一轮多选管不着项目底下的行，见 `任务行` 的注 */}
+                      {里面的.map((t) => 任务行(t, false))}
                     </ul>
                   ) : null}
                 </li>
@@ -983,9 +1178,9 @@ export function SessionSidebar({
                 variant="text"
                 size="inline"
                 className="side-bulk"
-                onClick={() => 设已选(选择中 ? undefined : new Set())}
+                onClick={() => 进选择("会话")}
               >
-                {选择中 ? "完成" : "多选"}
+                {选会话中 ? "完成" : "多选"}
               </Button>
             ) : null}
           </p>
@@ -995,18 +1190,20 @@ export function SessionSidebar({
             * 数字常驻：*「删掉 3 段对话」*比*「删掉选中的」*可判断得多——
             * 按下之前就该知道自己要删掉几个。
             */}
-          {选择中 ? (
+          {选会话中 ? (
             <div className="side-bulkbar">
               <span className="side-bulk-count">已选 {已选!.size}</span>
               <Button
                 variant="text"
                 size="inline"
                 onClick={() =>
-                  设已选(
-                    已选!.size === 可批量的.length
-                      ? new Set()
-                      : new Set(可批量的.map((x) => x.taskId)),
-                  )
+                  设多选({
+                    列: "会话",
+                    集合:
+                      已选!.size === 可批量的.length
+                        ? new Set()
+                        : new Set(可批量的.map((x) => x.taskId)),
+                  })
                 }
               >
                 {已选!.size === 可批量的.length ? "全不选" : "全选"}
@@ -1018,7 +1215,7 @@ export function SessionSidebar({
                 disabled={已选!.size === 0}
                 onClick={() => {
                   const 要删的 = 可批量的.filter((x) => 已选!.has(x.taskId))
-                  onDeleteMany?.(要删的, () => 设已选(undefined))
+                  onDeleteMany?.(要删的, () => 设多选(undefined))
                 }}
               >
                 删除
@@ -1026,7 +1223,7 @@ export function SessionSidebar({
             </div>
           ) : null}
           <ul className="session-list">
-            {散的.map(任务行)}
+            {散的.map((t) => 任务行(t, true))}
           </ul>
         </>
       ) : null}
@@ -2857,6 +3054,16 @@ export function EmptyConversation({
           {/**
            * 建议卡片。**点了要真的发生事情**——建会话，并把这句话发出去。
            * 只把文字填进输入框是做不到的：空态根本没有输入框。
+           *
+           * **工作目录必须跟着走**（2026-08-13 修，作者报的）：
+           * *「这四个，无论你是否选择文件夹，都会进入到会话里面。」*
+           *
+           * 这一行此前只传两个参数，第三个（`工作目录`）漏了。
+           * 于是「选了文件夹 → 归项目」这条规则**只对手打的那句话成立**，
+           * 对这四张卡不成立——而它们恰恰是这一屏最显眼的四个入口。
+           *
+           * 归类的判据一共只有一处（`onStart` 的第三个参数给没给），
+           * **调用点漏传就等于悄悄改了规则**，而且不报错。
            */}
           <ul className="openers">
             {OPENERS.map((o) => (
@@ -2864,7 +3071,7 @@ export function EmptyConversation({
                 <Button
                   variant="outline"
                   size="card"
-                  onClick={() => onStart(first, o.发出去的话)}
+                  onClick={() => onStart(first, o.发出去的话, 工作目录)}
                 >
                   <span className="opener-title">{o.标题}</span>
                   <span className="opener-sub">{o.说明}</span>

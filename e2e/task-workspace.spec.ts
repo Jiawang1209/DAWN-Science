@@ -188,3 +188,54 @@ test.describe("空态就选好目录", () => {
     expect(分区.some((t) => t.startsWith("会话"))).toBe(false)
   })
 })
+
+/**
+ * **开场那四张卡也要带着工作目录走**（2026-08-13，作者报的 bug）。
+ *
+ * 作者：*「看看这里有什么、读一份数据、做一次探索性分析、把结果写成说明，
+ * 这四个，无论你是否选择文件夹，都会进入到会话里面。这个是一个 bug。」*
+ *
+ * 他是对的：那四张卡调 `onStart` 时**只传了两个参数**，第三个（工作目录）漏了。
+ * 于是「选了文件夹 → 归项目」这条规则只对手打的那句话成立——
+ * 而这四张卡恰恰是这一屏最显眼的四个入口。
+ *
+ * **归类的判据只有一处，调用点漏传就等于悄悄改了规则，而且不报错。**
+ * 上面那条用例走的是「打字 + 发送」，它绿着，这条却是红的——
+ * 两条路各验一遍，是因为它们真的是两条路。
+ */
+const 目标3 = join(tmpdir(), "dawn-ws-e2e-开场卡")
+
+test.describe("开场卡", () => {
+  test.use({ dawnOptions: { pickDirectory: 目标3 } })
+
+  test.beforeAll(() => {
+    rmSync(目标3, { recursive: true, force: true })
+    mkdirSync(目标3, { recursive: true })
+  })
+  test.afterAll(() => {
+    rmSync(目标3, { recursive: true, force: true })
+  })
+
+  test("**选了目录再点开场卡 → 进「项目」栏，不是「会话」栏**", async ({ dawn }) => {
+    const { page } = dawn
+
+    const chip = page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ })
+    await chip.click()
+    await expect(page.locator(".composer-footer .ws-chip-label").first()).not.toHaveText(
+      /选择工作目录/,
+    )
+
+    await page.getByRole("button", { name: /看看这里有什么/ }).click()
+
+    // 卡上那句话真的发了出去
+    await expect(page.locator(".turns").getByText(/有哪些文件和数据/)).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // **归到「项目」栏**——这一条就是那个 bug 的全部内容
+    await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+    const 分区 = await page.locator(".sidebar .side-section").allTextContents()
+    expect(分区.some((t) => t.startsWith("项目"))).toBe(true)
+    expect(分区.some((t) => t.startsWith("会话"))).toBe(false)
+  })
+})

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 import { App } from "./App.js"
 import { ErrorBoundary } from "./ErrorBoundary.js"
 import { loadTheme } from "./state/theme.js"
+import { loadSidebar } from "./state/sidebar.js"
 import "./styles.css"
 
 /**
@@ -13,6 +14,14 @@ import "./styles.css"
  * 换来的是 `tokens.css` 里只有一份暗色种子。
  */
 loadTheme()
+
+/**
+ * 侧栏的宽度与折叠**也在第一帧之前读回**（2026-08-13）。
+ *
+ * 同一条理由：晚一步就会先按 264 画一帧、再跳成人上次拖到的宽度。
+ * 折叠状态更明显——**先闪一下侧栏再收掉**，那一下比不记住还难受。
+ */
+loadSidebar()
 
 const root = document.getElementById("root")
 if (!root) throw new Error("找不到 #root —— index.html 与入口不匹配")

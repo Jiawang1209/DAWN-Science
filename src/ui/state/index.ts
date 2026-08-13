@@ -120,6 +120,21 @@ export {
   type ThemeChoice,
 } from "./theme.js"
 
+export {
+  $sidebarWidth,
+  $sidebarCollapsed,
+  SIDEBAR_WIDTH_KEY,
+  SIDEBAR_COLLAPSED_KEY,
+  SIDEBAR_DEFAULT,
+  SIDEBAR_MIN,
+  SIDEBAR_MAX,
+  clampWidth,
+  loadSidebar,
+  setSidebarWidth,
+  setSidebarCollapsed,
+  toggleSidebar,
+} from "./sidebar.js"
+
 export { guard, currentGeneration, invalidate } from "./guard.js"
 export { sameList, setList, setValue } from "./identity.js"
 

@@ -289,6 +289,15 @@ export interface DawnOptions {
    */
   modelsWithoutImages?: boolean
   /**
+   * 假模型在吐第一个字之前先停多久（2026-08-13）。
+   *
+   * 真实的模型在这里有几秒空窗，而界面正是在那段空窗里看起来像卡死了
+   * （作者：*「kimi 的回复略微有点儿慢，导致我以为是端口卡住了」*）。
+   * **没有这个旋钮，「正在等模型回话」那个记号根本没有窗口出现**，
+   * 用例就只能软断言——那等于没验。
+   */
+  firstChunkDelayMs?: number
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -356,6 +365,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       toolCall: toolCallHook(dawnOptions.toolCall),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
       ...(dawnOptions.failStatus ? { failStatus: dawnOptions.failStatus } : {}),
+      ...(dawnOptions.firstChunkDelayMs
+        ? { firstChunkDelayMs: dawnOptions.firstChunkDelayMs }
+        : {}),
     })
     const dir = mkdtempSync(join(tmpdir(), "dawn-e2e-"))
     const workspace = join(dir, "workspace")

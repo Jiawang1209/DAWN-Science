@@ -15,7 +15,7 @@ import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/in
 import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
-import { Button, EmptyState, Row } from "./primitives.js"
+import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
@@ -2410,19 +2410,41 @@ export function ConversationView({
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
 
-  /** agent 还在说话（最后一条 turn 未收尾）时才给停止按钮 */
-  const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+  /**
+   * **「发出去了，还没回来」那段的记号**（2026-08-13 重做，作者要的：
+   * *「kimi 的回复其实略微有点儿慢，导致我以为是端口卡住了，
+   * 你其实可以给我一个动态响应的图，让我知道这个对话是在的。」*）。
+   *
+   * ## 2026-08-10 做过一次，被撤掉了
+   *
+   * 那一版靠「最后一条是自己说的」判断——**而这个条件在回复到达之后
+   * 仍然成立过一会儿**，症状是回来了那三个点还在转。
+   * 「一个永远在转的记号比没有更糟」是本项目自己写下的话。
+   *
+   * ## 这一版换了判据：**有确定的起点，也有确定的终点**
+   *
+   * 起点是「我刚把一句话发出去」（那一刻只有这里知道）；
+   * 终点是**「我发出去之后，又有新东西冒出来了」**——
+   * 不管那是回复、是工具调用、还是一条 notice。
+   *
+   * 它不靠「最后一条是谁的」去推断，所以不会因为顺序或时序而挂住；
+   * 而且**换会话时无条件清掉**——别人的历史里不该留着我的等待。
+   */
+  const [等回话, 设等回话] = useState<number | undefined>(undefined)
+  useEffect(() => 设等回话(undefined), [session.sessionId])
+  useEffect(() => {
+    // **新东西冒出来了就收**：`发出去时的条数 + 我自己那一条` 之后再多，就是对面动了
+    if (等回话 !== undefined && items.length > 等回话 + 1) 设等回话(undefined)
+  }, [items.length, 等回话])
 
   /**
-   * **「发出去还没回来」那段本来也想给一个记号，去掉了**（2026-08-10）。
+   * agent 还在说话（最后一条 turn 未收尾），**或者刚发出去还没回音**。
    *
-   * 它靠「最后一条是自己说的」来判断，而实测里这个条件在回复到达之后
-   * 仍然成立过一会儿——症状是**回来了那三个点还在转**。
-   * 而「一个永远在转的记号比没有更糟」是本项目自己写下的话。
-   *
-   * 现在只在**这一段确实还没收尾时**显示（`item.final === false`），
-   * 那个条件由 `turn_end` 严格关掉，不会挂住。
+   * 两种都算「这一轮在跑」：停止按钮、模型菜单的禁用都据它——
+   * 而**等回音的那段恰恰是最想按停止的时候**。
    */
+  const 说着 = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+  const busy = 说着 || 等回话 !== undefined
 
   return (
     <div className="conversation">
@@ -2556,6 +2578,24 @@ export function ConversationView({
               />
             ))
           )}
+          {/**
+            * **发出去了、还没回音时的那个动记号**（2026-08-13，作者要的）。
+            *
+            * 他的原话：*「kimi 的回复其实略微有点儿慢，导致我以为是端口卡住了，
+            * 你其实可以给我一个动态响应的图，让我知道这个对话是在的。」*
+            *
+            * 摆在**转录的末尾**，紧跟着刚发出去那句话——它说的是
+            * 「这一句我收到了，正在等对面」，所以它属于那句话的后面，
+            * 不属于输入框旁边。
+            *
+            * `Loader` 的 label 是必填的（primitives 那条纪律：
+            * **说不出在等什么的加载指示等于没说**）。
+            */}
+          {等回话 !== undefined ? (
+            <div className="waiting">
+              <Loader label={t("正在等模型回话")} />
+            </div>
+          ) : null}
         </StickToBottom.Content>
       </StickToBottom>
 
@@ -2618,6 +2658,8 @@ export function ConversationView({
           clearDraft(session.sessionId)
           设位置(-1)
           设发送出错(undefined)
+          // **从这一刻起显示「在等它」**，直到有新东西冒出来（见 `等回话` 的注）
+          设等回话(items.length)
           void Promise.resolve(
             这次的图.length > 0 ? onSend(text, 这次的图.map(报给协议)) : onSend(text),
           ).catch((e: unknown) => {

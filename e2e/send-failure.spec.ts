@@ -1,38 +1,31 @@
 /**
- * 发送失败时，**别把人的话和图一起吃掉**（2026-08-13）。**跑真实构建产物。**
+ * 模型没声明收图时**照样把这一轮发出去**（2026-08-13）。**跑真实构建产物。**
  *
- * 作者：*「我使用 kimi 模型，然后我复制粘贴一个图片到对话框，让它解读这个图，
- * 但是没有任何反应呢。」*
+ * 作者定的：*「其实也可以传入……你不能解析就回复不能解析图片就好了，
+ * **但是对话是要有的**。」*
  *
- * ## 「没有任何反应」是两件事叠在一起
+ * ## 我上一版把方向搞反了
  *
- * 1. 那一轮真的失败了（他自己加的 `kimi-k3` 是自定义 provider，
- *    而我们生成的模型条目**一个 `input` 都没写**——pi-ai 拼请求时看
- *    `model.input.includes("image")`，不声明就把图丢掉）。
- * 2. **而失败在屏幕上不留痕**：输入框已经清空、附件已经丢掉，
- *    原因只经 `note()` 走到了别处。
+ * 我在运行时那一层加了一道防线：模型的目录里没声明 `input: ["image"]` 就抛错。
+ * 理由是「不能让图被静默丢掉」——**但代价是整轮对话都没了**，
+ * 人看见的是一个空会话写着「还没有对话」。作者报了两次。
  *
- * 第 2 件才是这份用例盯的东西——**它比第 1 件更值钱**：
- * 第 1 件是一个具体的 bug，第 2 件是「以后任何一次发送失败都会变成
- * 『什么都没发生』」的那个形状。
+ * **丢一张图，人还能接着聊；拦住整轮，人连对话都没有。** 后者坏得多。
+ * 现在改成：**照发，并在对话里留一句说明**。
  */
 import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
-test.describe("发送失败", () => {
-  /**
-   * **演的是作者那台机器上的配置**：模型没声明收图。
-   * 那时附了图按下发送会**当场失败**——而这正是他看见「没有任何反应」的那条路。
-   */
+test.describe("模型没声明收图", () => {
+  /** 演作者那台机器上的配置：模型目录里没有 `input` */
   test.use({ dawnOptions: { modelsWithoutImages: true } })
 
-  test("**失败时字还在、图还在，而且说得出为什么**", async ({ dawn }) => {
+  test("**对话照样发生，而且说清了图可能没送到**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
     await 等进了对话(page)
 
     const 框 = page.getByPlaceholder(/今天帮你做些什么/)
     await 框.click()
-    // 粘一张图进去
     await page.evaluate(() => {
       const b64 =
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
@@ -47,27 +40,27 @@ test.describe("发送失败", () => {
     await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
 
     await 框.fill("解读一下这张图")
-    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await 框.press("Enter")
 
     /**
-     * ① **原因摆在输入卡旁边**，不是丢进某个角落。
-     * 一条看不见的报错，与「什么都没发生」在屏幕上是同一个样子。
+     * ① **对话是有的。** 这一条就是作者要的全部——
+     * 他此前看到的是一个空会话写着「还没有对话」。
      */
-    await expect(page.locator(".composer-problem")).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator(".turns").getByText("解读一下这张图")).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(page.locator(".turns").getByText("还没有对话")).toHaveCount(0)
 
     /**
-     * ② **那句话还在框里。** 人不该为一次失败重打一遍——
-     * 而且「我打的字凭空消失」比失败本身更让人不信任这个界面。
+     * ② **而且如实说了一句**：这个模型的目录里没声明支持图片。
+     * 不说的话，图被丢掉这件事**只有模型的回答才透露得出来**，
+     * 而人会去怪模型笨。
      */
-    await expect(框).toHaveValue("解读一下这张图")
+    await expect(page.locator(".turns").getByText(/没有声明支持图片/)).toBeVisible({
+      timeout: 30_000,
+    })
 
-    /**
-     * ③ **图也还在。** 重挑一遍比重打一遍更烦——
-     * 而人根本不知道是自己哪里做错了。
-     */
-    await expect(page.locator(".attached-one")).toHaveCount(1)
-
-    /** ④ 报错要**说得出是哪个模型**，否则人只能去猜 */
-    await expect(page.locator(".composer-problem")).toContainText(/不接收图片/)
+    // ③ 发完就清空——留着的话下一句会把同一张图再送一遍
+    await expect(page.locator(".attached-one")).toHaveCount(0)
   })
 })

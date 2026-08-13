@@ -469,3 +469,44 @@ test("**拖在卡上时，卡自己会说「我接得住」**", async ({ dawn })
   })
   await expect(卡).not.toHaveClass(/dropping/)
 })
+
+/**
+ * **只粘一张图、一个字都不打，直接回车**（2026-08-13，作者报的第二次）。
+ *
+ * 他的原话：*「把图复制粘贴给对话框，然后回车，结果给我的反馈是：
+ * 『还没有对话』。」*——**会话建出来了，那一轮却没落下任何东西。**
+ *
+ * 这条路我此前一条用例都没有：所有粘贴的用例都先 `fill` 了一句话。
+ * **「只有图、没有字」是我自己在代码里特意放行的分支，却从没验过它。**
+ */
+for (const [屏, 进去] of [
+  ["首页", async () => {}],
+  [
+    "对话",
+    async (page: import("@playwright/test").Page) => {
+      await 开一段临时会话(page)
+      await 等进了对话(page)
+    },
+  ],
+] as const) {
+  test(`**${屏}：只粘图不打字，回车也发得出去**`, async ({ dawn }) => {
+    const { page } = dawn
+    await 进去(page)
+    await page.locator(".composer").waitFor({ timeout: 30_000 })
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.click()
+    await 粘一张图(page)
+    await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
+
+    // **一个字都不打，直接回车**
+    await 框.press("Enter")
+
+    // ① 那一轮真的到了对面
+    await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
+      timeout: 30_000,
+    })
+    // ② 而且屏幕上不是「还没有对话」
+    await expect(page.locator(".turns").getByText("还没有对话")).toHaveCount(0)
+  })
+}

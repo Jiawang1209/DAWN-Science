@@ -873,10 +873,27 @@ export class NativeRuntime implements AgentRuntime {
      */
     const s = this.sessions.get(sessionId)
     const model = s?.session.model
-    if (model && !model.input.includes("image")) {
-      throw new Error(
-        `模型 ${model.id} 不接收图片（${images.length} 张一张都没有送出去）。换一个带视觉的模型再试。`,
-      )
+    /**
+     * **不因为「模型可能不收图」就拦住这一轮**（2026-08-13 撤掉那道防线，
+     * 作者定的）。
+     *
+     * 他的原话：*「你不能解析就回复不能解析图片就好了，**但是对话是要有的**。」*
+     *
+     * 我上一版在这里抛错，理由是「不能让图被静默丢掉」。**方向搞反了**：
+     * 静默丢掉一张图，人还能接着聊；而拦住整轮，人连对话都没有——
+     * 他看见的是一个空会话写着「还没有对话」，那比丢一张图坏得多。
+     *
+     * **判断能不能看图是模型的事**（作者早先就说过这句）。我们要做的只是
+     * **如实说出发生了什么**：pi-ai 在 `model.input` 不含 `image` 时会把图丢掉，
+     * 那就在对话里留一句话，然后**照常把这一轮发出去**。
+     */
+    const 明确不收 = Array.isArray(model?.input) && !model.input.includes("image")
+    if (明确不收) {
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: `模型 ${model.id} 的目录里没有声明支持图片，这 ${images.length} 张可能不会被它看到。`,
+      })
     }
     this.送一轮(sessionId, data, images)
   }

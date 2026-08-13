@@ -89,7 +89,7 @@ export function startMockInferenceServer(opts = {}) {
   const server = http.createServer((req, res) => {
     let raw = ""
     req.on("data", (c) => (raw += c))
-    req.on("end", () => {
+    req.on("end", async () => {
       // 模型目录探测：pi 会问 /v1/models。给一个空表即可，
       // 真正用哪个模型由 models.json 决定
       if (req.url?.endsWith("/models") && req.method === "GET") {
@@ -169,6 +169,14 @@ export function startMockInferenceServer(opts = {}) {
         "cache-control": "no-cache",
         connection: "keep-alive",
       })
+      /**
+       * **第一个字之前先停一会儿**（2026-08-13）。
+       *
+       * 真实的模型（作者的 kimi）在这里有几秒的空窗，而界面正是在那段空窗里
+       * 看起来像卡死了。**没有这个旋钮，「等回话」那个记号根本没有窗口出现**——
+       * 用例只能软断言，等于没验。
+       */
+      if (opts.firstChunkDelayMs) await new Promise((r) => setTimeout(r, opts.firstChunkDelayMs))
       for (const chunk of streamChunks(reply, tool, opts.thinking)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
       }

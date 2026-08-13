@@ -3206,3 +3206,14 @@ pre {
   outline: 2px dashed var(--dawn-accent);
   outline-offset: -2px;
 }
+
+/**
+ * 「正在等模型回话」（2026-08-13）。
+ *
+ * 与发言同一条左缘——**它是那句话的后续，不是一个浮在别处的状态**。
+ */
+.waiting {
+  padding: var(--dawn-space-2) 0;
+  color: var(--dawn-text-3);
+  font-size: 13px;
+}

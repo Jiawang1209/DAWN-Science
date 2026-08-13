@@ -35,6 +35,14 @@ async function 屏上的汉字(page: import("@playwright/test").Page): Promise<s
       if (!el) continue
       const r = el.getBoundingClientRect()
       if (r.width === 0 || r.height === 0) continue
+      /**
+       * **语言选择器上那两个字永远不翻**——它自己在 DOM 上说了
+       * （`data-native-name`）。一个看不懂当前语言的人正是最需要那颗按钮的人。
+       *
+       * 例外写在被例外的那个东西上，不写在这里的白名单里：
+       * 白名单会随着文案改动悄悄失效，而标记不会。
+       */
+      if (el.closest("[data-native-name]")) continue
       出.push(文.trim())
     }
     return 出
@@ -59,7 +67,7 @@ async function 回到默认语言(page: import("@playwright/test").Page): Promis
   })
 }
 
-test("**默认就是英文，且主路径上没有汉字**", async ({ dawn }) => {
+test("**默认就是英文，且每一屏上都没有汉字**", async ({ dawn }) => {
   const { page } = dawn
 
   // 夹具钉的是中文，这里要看的是「谁都没选过」那一档
@@ -76,13 +84,31 @@ test("**默认就是英文，且主路径上没有汉字**", async ({ dawn }) =>
   await expect(page.getByText("Start a chat")).toBeVisible()
 
   /**
-   * **一个汉字都不该有。**
+   * **走一遍每一屏，不是只看首页。**
    *
-   * 报错里把漏网的那几句原样列出来——「有 3 处没翻」远不如
-   * 「这三句没翻」有用，后者按下去就能改。
+   * 漏翻恰恰漏在想不起来的地方——只看首页的话，这条用例在
+   * 「设置里还有六十句中文」的那一版上照样是绿的（它真的绿过）。
+   *
+   * 每一屏都单独断言，报错才说得出**是哪一屏**没翻完。
    */
-  const 漏的 = await 屏上的汉字(page)
-  expect(漏的, "这几句在英文界面上还是中文——补进 src/ui/i18n/en.ts").toEqual([])
+  const 屏 = async (名: string, 走: () => Promise<void>) => {
+    await 走()
+    const 漏的 = await 屏上的汉字(page)
+    expect(漏的, `「${名}」这一屏上还有中文——补进 src/ui/i18n/en.ts`).toEqual([])
+  }
+
+  await 屏("首页", async () => {})
+  await 屏("技能", () => page.getByRole("button", { name: "Skills" }).click())
+  await 屏("插件", () => page.getByRole("button", { name: "Plugins" }).click())
+  await 屏("MCP", () => page.getByRole("button", { name: "MCP servers" }).click())
+
+  // 设置的四块各看一遍——它们是同一屏的四种内容
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  for (const 块 of ["Appearance", "Working folder", "Model providers", "Kernel"]) {
+    const 入口 = page.getByRole("button", { name: 块, exact: true })
+    if ((await 入口.count()) === 0) continue // 那一块没上就跳过，不假装它在
+    await 屏(`设置 · ${块}`, () => 入口.click())
+  }
 })
 
 test("**那颗按钮真的能切，而且记得住**", async ({ dawn }) => {

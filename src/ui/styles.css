@@ -2994,3 +2994,14 @@ pre {
   line-height: 18px;
 }
 .side-search-toggle { color: var(--dawn-text-2); min-width: 32px; width: 32px; height: 32px; }
+
+/**
+ * 排版塌掉时印出来的原文（2026-08-13）。
+ * **保住换行与空格**——退回纯文本的全部意义就是内容一个字不少。
+ */
+.md-raw {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+}

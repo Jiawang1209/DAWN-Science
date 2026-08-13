@@ -136,7 +136,7 @@ import {
   SIDEBAR_MAX,
 } from "./state/index.js"
 
-import { t, $lang } from "./i18n/index.js"
+import { t, tf, $lang } from "./i18n/index.js"
 /**
  * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
  *   默认参数每次渲染都求值，于是每次渲染都得到一个新的 client 身份，
@@ -584,7 +584,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const loadDir = useCallback(
     async (path: string): Promise<Listing> => {
-      if (!projectId) throw new Error("还没有选中项目")
+      if (!projectId) throw new Error(t("还没有选中项目"))
       return await client.get("listDirectory", { projectId, path })
     },
     [client, projectId],
@@ -665,7 +665,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const { workspace, firstMessage } = opts
     const agentId = opts.agentId ?? agentIds[0]
     if (!agentId) {
-      note("配置里还没有可用的 agent——先去设置里加一个")
+      note(t("配置里还没有可用的 agent——先去设置里加一个"))
       return
     }
     /**
@@ -854,7 +854,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const startRemoteSession = async (c: { id: string; label: string }) => {
     const agentId = agentIds[0]
     if (!agentId) {
-      setConnProblem("配置里还没有可用的 agent——先去设置里加一个")
+      setConnProblem(t("配置里还没有可用的 agent——先去设置里加一个"))
       return
     }
     setConnBusy(c.id)
@@ -998,7 +998,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     (s: SessionSummary) => {
       const 名 = s.title ?? "新会话"
       setConfirming({
-        title: `删除会话「${名}」？`,
+        title: tf("删除会话「{0}」？", 名),
         detail: <>{t("会停掉它的进程，并删掉这个会话与它的对话记录。")}</>,
         safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在「项目概览」里。")}</>,
         confirmLabel: "删除会话",
@@ -1125,10 +1125,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     (targets: readonly import("../protocol/index.js").TaskSummary[], done: () => void) => {
       if (targets.length === 0) return
       setConfirming({
-        title: `删除这 ${targets.length} 段对话？`,
+        title: tf("删除这 {0} 段对话？", targets.length),
         detail: <>{t("会停掉它们的进程，并删掉这些会话与它们的对话记录。")}</>,
         safety: <>{t("账本不动：它们对文件做过什么，记录仍然留在「项目概览」里。")}</>,
-        confirmLabel: `删除 ${targets.length} 段`,
+        confirmLabel: tf("删除 {0} 段", targets.length),
         onConfirm: () => {
           /**
            * **一条条删，不并发**。后端每次删都要停进程、动库、算账本，
@@ -1158,7 +1158,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             await loadTasks(client)
             await loadProjects(client)
             // **失败必须出声**，而且要说清是哪几条（规格 7.5）
-            if (没删掉.length > 0) note(`有 ${没删掉.length} 段没删掉：${没删掉.join("、")}`)
+            if (没删掉.length > 0) note(tf("有 {0} 段没删掉：{1}", 没删掉.length, 没删掉.join("、")))
             done()
           })()
         },
@@ -1191,10 +1191,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       if (groups.length === 0) return
       const 会话数 = groups.reduce((n, g) => n + g.tasks.length, 0)
       setConfirming({
-        title: `从工作台移除这 ${groups.length} 个项目？`,
+        title: tf("从工作台移除这 {0} 个项目？", groups.length),
         detail: (
           <>
-            会一并移除它们名下的 <b>{会话数}</b> 段对话与相应的账本记录。
+            {/* **整句走 `tf`，不拿 `<b>` 把它劈成两半**——英文语序不同，拼出来是半句话 */}
+            {tf("会一并移除它们名下的 {0} 段对话与相应的账本记录。", 会话数)}
           </>
         ),
         safety: (
@@ -1204,7 +1205,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             {groups.map((g) => g.workspace).join("\n")}
           </>
         ),
-        confirmLabel: `移除 ${groups.length} 个`,
+        confirmLabel: tf("移除 {0} 个", groups.length),
         onConfirm: () => {
           void (async () => {
             const 没删掉: string[] = []
@@ -1230,7 +1231,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             await loadTasks(client)
             await loadProjects(client)
             // **失败必须出声**，而且说得出是哪几个（规格 7.5）
-            if (没删掉.length > 0) note(`有 ${没删掉.length} 个没移除：${没删掉.join("、")}`)
+            if (没删掉.length > 0) note(tf("有 {0} 个没移除：{1}", 没删掉.length, 没删掉.join("、")))
             done()
           })()
         },
@@ -1247,11 +1248,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .get<{ sessions: number; runs: number; workspace: string }>("deletionImpact", { projectId: pid })
       .then((impact) => {
         setConfirming({
-          title: `从工作台移除项目「${名}」？`,
+          title: tf("从工作台移除项目「{0}」？", 名),
           detail: (
             <>
-              会一并移除它名下的 <b>{impact.sessions}</b> 个会话与{" "}
-              <b>{impact.runs}</b> 条账本记录。账本是按项目组织的，项目没了它就没有归属。
+              {tf(
+                "会一并移除它名下的 {0} 个会话与 {1} 条账本记录。账本是按项目组织的，项目没了它就没有归属。",
+                impact.sessions,
+                impact.runs,
+              )}
             </>
           ),
           safety: (
@@ -1261,7 +1265,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               {impact.workspace}
             </>
           ),
-          confirmLabel: "移除项目",
+          confirmLabel: t("移除项目"),
           onConfirm: () => {
             client
               .get("deleteProject", { projectId: pid })
@@ -1842,14 +1846,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   const 名字 = connDraft.label
                   setConnDraft(undefined)
                   setConfirming({
-                    title: `删除服务器「${名字}」？`,
+                    title: tf("删除服务器「{0}」？", 名字),
                     detail: (
                       <p>
                         {t("会断开这台机器的连接，并把它的登录口令从系统钥匙串里删掉。")}
                       </p>
                     ),
-                    safety: "那台服务器上的文件不会有任何变化。",
-                    confirmLabel: "删除",
+                    safety: t("那台服务器上的文件不会有任何变化。"),
+                    confirmLabel: t("删除"),
                     onConfirm: () => {
                       void client
                         .get("removeConnection", { id })
@@ -2409,7 +2413,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   const 第一个 = providers.providers.find((p) => p.providerId === providerId)
                     ?.available?.[0]
                   if (!第一个) {
-                    note(`「${providerId}」在模型目录里一个模型都没有，没法换过去`)
+                    note(tf("「{0}」在模型目录里一个模型都没有，没法换过去", providerId))
                     return
                   }
                   client
@@ -2539,7 +2543,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <TerminalDock
               terminals={终端们}
               currentId={dockSessionId}
-              workspace={currentWorkspace ?? "家目录"}
+              workspace={currentWorkspace ?? t("家目录")}
               canOpen={Boolean(ptyAgentId)}
               onPick={setDockSessionId}
               onNew={开一个终端}

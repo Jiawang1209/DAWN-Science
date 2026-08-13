@@ -28,7 +28,7 @@ import { TerminalPane } from "./terminal.js"
 import { $dockChunks } from "./state/index.js"
 import type { SessionSummary } from "../protocol/index.js"
 
-import { t } from "./i18n/index.js"
+import { t, tf } from "./i18n/index.js"
 export function TerminalDock({
   terminals,
   currentId,
@@ -70,13 +70,13 @@ export function TerminalDock({
               onClick={() => onPick(台.sessionId)}
             >
               {/* 终端没有标题可言，**给它一个稳定的序号**比显示一串 id 强 */}
-              {`终端 ${i + 1}`}
+              {tf("终端 {0}", i + 1)}
               {台.state === "exited" ? <span className="hint"> {t("已结束")}</span> : null}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              aria-label={`关闭终端 ${i + 1}`}
+              aria-label={tf("关闭终端 {0}", i + 1)}
               onClick={() => onClose(台.sessionId)}
             >
               ×
@@ -103,7 +103,7 @@ export function TerminalDock({
            * （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
            */
           <p className="empty">
-            配置里没有 <code>kind: pty</code> 的 agent，开不了终端。
+            {t("配置里没有 kind: pty 的 agent，开不了终端。")}
             <Button variant="outline" size="sm" onClick={onOpenProject}>
               {t("打开项目文件夹")}
             </Button>

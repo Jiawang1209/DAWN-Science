@@ -240,7 +240,7 @@ export function SessionRow({
           className="control sess-rename"
           autoFocus
           value={editing}
-          aria-label={`重命名会话：${名字}`}
+          aria-label={tf("重命名会话：{0}", 名字)}
           onChange={(e) => setEditing(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") 提交()
@@ -299,7 +299,7 @@ export function SessionRow({
           className="sess-check"
           checked={select.checked}
           onChange={select.onToggle}
-          aria-label={`选择会话：${名字}`}
+          aria-label={tf("选择会话：{0}", 名字)}
         />
       ) : null}
       <Row active={active} onClick={select ? select.onToggle : onPick}>
@@ -343,7 +343,7 @@ export function SessionRow({
             size="icon"
             className="row-more"
             ref={按钮}
-            aria-label={`会话操作：${名字}`}
+            aria-label={tf("会话操作：{0}", 名字)}
             aria-expanded={menu}
             onClick={() => (menu ? setMenu(false) : 打开菜单())}
           >
@@ -356,7 +356,7 @@ export function SessionRow({
               <div
                 className="row-menu"
                 role="menu"
-                aria-label={`会话操作：${名字}`}
+                aria-label={tf("会话操作：{0}", 名字)}
                 style={{ top: 位置.top, left: 位置.left }}
               >
                 {onPin ? (
@@ -838,7 +838,7 @@ export function SessionSidebar({
               className="sess-check"
               checked={已选!.has(task.taskId)}
               onChange={() => 切一个(task.taskId)}
-              aria-label={`选择会话：${task.title ?? "新任务"}`}
+              aria-label={tf("选择会话：{0}", task.title ?? t("新任务"))}
             />
           ) : null}
           <Row
@@ -855,7 +855,7 @@ export function SessionSidebar({
                 variant="ghost"
                 size="icon"
                 className="row-more"
-                aria-label={`删除会话：${task.title ?? "新任务"}`}
+                aria-label={tf("删除会话：{0}", task.title ?? t("新任务"))}
                 onClick={() => onDeleteTask(task)}
               >
                 <删除图标 />
@@ -1152,7 +1152,7 @@ export function SessionSidebar({
                         className="sess-check"
                         checked={已选!.has(路径)}
                         onChange={() => 切一个(路径)}
-                        aria-label={`选择项目：${基名(路径)}`}
+                        aria-label={tf("选择项目：{0}", 基名(路径))}
                       />
                     ) : null}
                     <Row
@@ -1186,7 +1186,7 @@ export function SessionSidebar({
                           variant="ghost"
                           size="icon"
                           className="row-more"
-                          aria-label={`在「${基名(路径)}」里开一段新对话`}
+                          aria-label={tf("在「{0}」里开一段新对话", 基名(路径))}
                           onClick={() => onNewTaskIn(路径)}
                         >
                           <加号图标 />
@@ -1208,7 +1208,7 @@ export function SessionSidebar({
                           variant="ghost"
                           size="icon"
                           className="row-more"
-                          aria-label={`删除项目：${基名(路径)}`}
+                          aria-label={tf("删除项目：{0}", 基名(路径))}
                           onClick={() => onDeleteProject(项目id(里面的)!)}
                         >
                           <删除图标 />
@@ -1416,7 +1416,7 @@ function ProjectRow({
                * 「按名字找按钮」变成一件靠运气的事——屏幕阅读器与测试都一样。
                * 2026-08-11 第一版没避开，一下子撞红了大半套 e2e。
                */
-              aria-label={`在「${project.name}」里开一段新对话`}
+              aria-label={tf("在「{0}」里开一段新对话", project.name)}
               onClick={onNewSession}
             >
               ＋
@@ -1427,7 +1427,7 @@ function ProjectRow({
               variant="ghost"
               size="icon"
               className="row-more"
-              aria-label={`删除项目：${project.name}`}
+              aria-label={tf("删除项目：{0}", project.name)}
               onClick={onDelete}
             >
               🗑
@@ -1755,7 +1755,7 @@ export function ModelPill({
         className="model-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`当前模型：${current?.model ?? "CLI 默认"}。点击切换`}
+        aria-label={tf("当前模型：{0}。点击切换", current?.model ?? t("CLI 默认"))}
         onClick={() => setOpen((v) => !v)}
       >
         <span className="svc-mark" aria-hidden="true">
@@ -2730,10 +2730,10 @@ function TurnUsage({
   const 段: string[] = []
   // **k tokens**（作者 2026-08-11）：一屏里挤着三个宽度不一的数最难扫。
   // 规则见 `formatTokens`——1000 以下仍然原样，不把已知的精度扔掉
-  if (usage.input !== undefined) 段.push(`输入 ${formatTokens(usage.input)}`)
-  if (usage.output !== undefined) 段.push(`输出 ${formatTokens(usage.output)}`)
+  if (usage.input !== undefined) 段.push(tf("输入 {0}", formatTokens(usage.input)))
+  if (usage.output !== undefined) 段.push(tf("输出 {0}", formatTokens(usage.output)))
   // **缓存命中单独说**：它与输入 token 计费不同，混进去会让账对不上
-  if (usage.cacheRead !== undefined) 段.push(`缓存 ${formatTokens(usage.cacheRead)}`)
+  if (usage.cacheRead !== undefined) 段.push(tf("缓存 {0}", formatTokens(usage.cacheRead)))
   if (段.length === 0) return null
 
   return <p className="turn-usage">{段.join(" · ")} token</p>
@@ -2865,7 +2865,7 @@ function RichOutput({ mediaType, data }: { mediaType: string; data: string }) {
 
 /** 字节数的人类可读形式。**不四舍五入到 0**——「0 KB」会让人以为什么都没有 */
 function formatBytes(n: number): string {
-  if (n < 1024) return `${n} 字节`
+  if (n < 1024) return tf("{0} 字节", n)
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
@@ -2998,7 +2998,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
            * 而人要按的那个「停止」就成了一次没有依据的赌。
            */
           <span className="tool-elapsed" title={item.status === "running" ? t("已经跑了") : t("耗时")}>
-            {item.status === "running" ? `已跑 ${用时}` : 用时}
+            {item.status === "running" ? tf("已跑 {0}", 用时) : 用时}
           </span>
         ) : null}
         <span className="tool-status">{label}</span>
@@ -3041,7 +3041,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
                   onClick={() => setExpanded((v) => !v)}
                   aria-expanded={expanded}
                 >
-                  {expanded ? "收起" : `展开全部（还有 ${result.hidden} 行）`}
+                  {expanded ? "收起" : tf("展开全部（还有 {0} 行）", result.hidden)}
                 </Button>
               ) : null}
             </>

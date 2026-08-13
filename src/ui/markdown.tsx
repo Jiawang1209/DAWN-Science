@@ -34,7 +34,9 @@
  * （`streamdown` / `shiki` / `use-stick-to-bottom`），
  * 放弃项是自己维护消息、工具调用、审批三类渲染器——**那正是我们本来就要自己定的东西**。
  */
+import { Component, type ErrorInfo, type ReactNode } from "react"
 import { Streamdown, type Components } from "streamdown"
+import { t } from "./i18n/index.js"
 
 /**
  * 把语义标签换回真的 HTML 标签。
@@ -54,9 +56,60 @@ const components: Components = {
   ),
 }
 
+/**
+ * 渲染塌了就退回纯文本（2026-08-13，作者撞到的）。
+ *
+ * ## 它塌的是什么
+ *
+ * 作者的窗口整屏变成「界面崩溃了」，报错是
+ * `Failed to fetch dynamically imported module: …/highlighted-body-…js`。
+ *
+ * `streamdown` 把**代码块的语法高亮做成懒加载分片**。那次的直接原因是
+ * 开发时反复重建：每次 `npm run build` 都把 `dist/ui/assets/` 换成新哈希，
+ * 而**开着的那个窗口引的还是旧文件名**——取不到，`lazy()` 抛，
+ * 一路冒到顶层 `ErrorBoundary`，整屏没了。
+ *
+ * ## 但根子不是「开发时重建」
+ *
+ * **应用更新之后窗口没关，在真实世界里一样会撞上。** 而那时的代价是：
+ * 一个代码块高亮不了 → **整个界面塌掉**。
+ * 这两件事的严重程度差着好几个量级，不该被同一个边界接住。
+ *
+ * 所以这里放一道**局部**的边界：塌了就把原文照直印出来。
+ * **内容一个字都不会少**——丢的只是配色。
+ *
+ * `getDerivedStateFromError` 之外还留 `componentDidCatch`：
+ * **失败必须出声**（规格 7.5），控制台要留得下那条真正的报错。
+ */
+class 渲染兜底 extends Component<
+  { text: string; children: ReactNode },
+  { 塌了: boolean }
+> {
+  override state = { 塌了: false }
+
+  static getDerivedStateFromError(): { 塌了: boolean } {
+    return { 塌了: true }
+  }
+
+  override componentDidCatch(err: Error, info: ErrorInfo): void {
+    console.error("[markdown] 渲染失败，已退回纯文本：", err, info.componentStack)
+  }
+
+  override render(): ReactNode {
+    if (!this.state.塌了) return this.props.children
+    return (
+      <>
+        <p className="caveat">{t("这段内容没能排版，下面是原文")}</p>
+        <pre className="md-raw">{this.props.text}</pre>
+      </>
+    )
+  }
+}
+
 export function AgentMarkdown({ text, streaming }: { text: string; streaming: boolean }) {
   return (
     <div className="md">
+      <渲染兜底 text={text}>
       <Streamdown
         mode={streaming ? "streaming" : "static"}
         // **半截围栏不吞掉后文。** 没有它，流式过程中界面会一跳一跳
@@ -67,6 +120,7 @@ export function AgentMarkdown({ text, streaming }: { text: string; streaming: bo
       >
         {text}
       </Streamdown>
+      </渲染兜底>
     </div>
   )
 }

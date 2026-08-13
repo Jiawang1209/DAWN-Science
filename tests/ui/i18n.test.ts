@@ -101,7 +101,23 @@ describe("双语 · 英文那一面也要守中文那边的规矩", () => {
   it("按钮文案之间没有子串关系", () => {
     const 按钮 = new Set<string>()
     for (const f of 界面文件()) for (const id of 按钮里的msgid(readFileSync(f, "utf8"))) 按钮.add(id)
-    const 英文 = [...按钮].map((k) => EN[k]).filter((v): v is string => v !== undefined)
+    /**
+     * **带占位符的不参与比对**，理由要写清楚。
+     *
+     * `删除项目：{0}` 这种标签**永远带着一个对象的名字**
+     * （「删除项目：论文数据」）。按名字找它的用例写的是那个完整值，
+     * 而一个只写「删除」的用例本来就该带 `exact: true`——
+     * **精确匹配不做子串**，那才是这条危险真正的边界。
+     *
+     * 把它们算进来的话，任何一个叫「删除」的菜单项都会与
+     * 「删除项目：…」互撞，而这在中文那边一直是成立且无害的写法。
+     * 一条会持续报假警的扫描最后一定被人无脑跳过——今天已经栽过一次
+     * （`"ok" ⊂ "took"`），不再栽第二次。
+     */
+    const 英文 = [...按钮]
+      .filter((k) => !k.includes("{"))
+      .map((k) => EN[k])
+      .filter((v): v is string => v !== undefined)
     const 撞上的: string[] = []
     for (const a of 英文) {
       for (const b of 英文) {

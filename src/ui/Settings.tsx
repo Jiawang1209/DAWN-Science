@@ -163,7 +163,7 @@ export function KernelsPanel({
          * 今天栽过两次，所以强调一律走 CSS。）
          */
         <>
-          配置里 <code>kind: kernel</code> 的 agent 靠这两个路径起内核。
+          {t("配置里 kind: kernel 的 agent 靠这两个路径起内核。")}
           <em className="set-emph">{t("没有配置就不能用。")}</em>
         </>
       }
@@ -186,7 +186,7 @@ export function KernelsPanel({
       {/* 参考：本机注册过的 kernelspec。**它只是帮你填上面那两个框**，不是机制 */}
       {kernels.length > 0 ? (
         <details className="kernel-ref">
-          <summary>参考：本机注册过的 Jupyter 内核（{kernels.length}）</summary>
+          <summary>{tf("参考：本机注册过的 Jupyter 内核（{0}）", kernels.length)}</summary>
           <ul className="kernel-list">
             {kernels.map((k) => (
               <li key={k.dir} className="kernel">
@@ -198,14 +198,20 @@ export function KernelsPanel({
           </ul>
           {shadowed.length > 0 ? (
             <p className="caveat">
-              ⚠ 有 {shadowed.length} 个同名内核被前面的挡住了：
-              {shadowed.map((x) => ` ${x.name}（${x.dir}）`).join("；")}
+              {tf(
+                "⚠ 有 {0} 个同名内核被前面的挡住了：{1}",
+                shadowed.length,
+                shadowed.map((x) => ` ${x.name}（${x.dir}）`).join("；"),
+              )}
             </p>
           ) : null}
           {problems.length > 0 ? (
             <p className="caveat">
-              ⚠ 有 {problems.length} 条注册项读不出来：
-              {problems.map((x) => ` ${x.dir}——${x.reason}`).join("；")}
+              {tf(
+                "⚠ 有 {0} 条注册项读不出来：{1}",
+                problems.length,
+                problems.map((x) => ` ${x.dir}——${x.reason}`).join("；"),
+              )}
             </p>
           ) : null}
           <div className="state-action">
@@ -295,6 +301,18 @@ export function AppearancePanel() {
               role="radio"
               aria-checked={lang === v}
               onClick={() => setLang(v)}
+              /**
+               * **这两个字永远不翻**，所以在 DOM 上说清楚。
+               *
+               * 语言选择器写自己的母语是本地化最老的一条：一个看不懂当前语言的人，
+               * 正是最需要这颗按钮的人。写成「Chinese」，中文用户在英文界面上
+               * 就找不着回去的路。
+               *
+               * 标记出来是为了让「英文界面上不许有汉字」那条扫描
+               * **有一个说得出理由的例外**，而不是在测试里硬编一个「中文」白名单——
+               * 例外写在被例外的那个东西上，才不会随着文案改动而失效。
+               */
+              data-native-name
             >
               {v === "zh" ? "中文" : "English"}
             </Button>
@@ -361,7 +379,7 @@ export function WorkspacePanel({
         desc={
           isDefault
             ? t("没设过，用的是系统默认。没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
-            : "没给工作目录的对话会落在这儿，选文件夹也从这儿起步。"
+            : t("没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
         }
       >
         <div className="ws-setting">
@@ -638,7 +656,7 @@ function 服务({
       >
         <span className="svc-name">{id}</span>
         <span className="svc-sum">{摘要({ conn, models, isSet, 必须填地址 })}</span>
-        <span className="svc-toggle">{展开 ? "收起" : "设置"}</span>
+        <span className="svc-toggle">{展开 ? t("收起") : t("配置它")}</span>
       </Button>
       {展开 ? (
         <服务编辑器
@@ -769,7 +787,7 @@ function 服务编辑器({
             id={`cred-${id}`}
             className="control"
             type="password"
-            aria-label={`${id} 的 API key`}
+            aria-label={tf("{0} 的 API key", id)}
             value={key}
             placeholder={isSet ? t("已配置（输入新值可替换）") : t("粘贴 API key")}
             onChange={(e) => setKey(e.target.value)}
@@ -800,7 +818,7 @@ function 服务编辑器({
             </>
           ) : (
             <>
-              留空就用 pi 自带的地址。<em className="set-emph">{t("如果你买的是另一条线")}</em>
+              {t("留空就用 pi 自带的地址。")}<em className="set-emph">{t("如果你买的是另一条线")}</em>
               {t("（订阅版与按量版常常是两个端点），在这里改成你平台文档里的 base_url。")}
             </>
           )
@@ -809,7 +827,7 @@ function 服务编辑器({
         <input
           id={`base-${id}`}
           className="control mono"
-          aria-label={`${id} 的端点地址`}
+          aria-label={tf("{0} 的端点地址", id)}
           value={baseUrl}
           placeholder={t("例如 https://api.example.com/v1")}
           onChange={(e) => setBaseUrl(e.target.value)}
@@ -824,7 +842,7 @@ function 服务编辑器({
         <input
           id={`api-${id}`}
           className="control mono"
-          aria-label={`${id} 的协议`}
+          aria-label={tf("{0} 的协议", id)}
           value={api}
           placeholder="openai-completions"
           onChange={(e) => setApi(e.target.value)}
@@ -839,7 +857,7 @@ function 服务编辑器({
             <>{t("用逗号隔开。留空就用 pi 自带的目录——它认识这个 provider 的模型。")}</>
           ) : (
             <>
-              用逗号隔开。<em className="set-emph">{t("自建端点必须写")}</em>
+              {t("用逗号隔开。")}<em className="set-emph">{t("自建端点必须写")}</em>
               {t("——pi 猜不出你的端点上跑着什么，不写的话模型选择器会是空的。")}
             </>
           )
@@ -848,7 +866,7 @@ function 服务编辑器({
         <input
           id={`models-${id}`}
           className="control mono"
-          aria-label={`${id} 的模型清单`}
+          aria-label={tf("{0} 的模型清单", id)}
           value={models}
           placeholder="local-7b, local-70b"
           onChange={(e) => setModels(e.target.value)}
@@ -1173,7 +1191,7 @@ function 自定义端点({
       <字段
         label={t("协议")}
         htmlFor="new-api"
-        hint="大多数自建端点是 OpenAI 兼容的，保持默认即可。"
+        hint={t("大多数自建端点是 OpenAI 兼容的，保持默认即可。")}
       >
         <input
           id="new-api"
@@ -1187,7 +1205,7 @@ function 自定义端点({
       <字段
         label={t("模型清单")}
         htmlFor="new-models"
-        hint="用逗号隔开。pi 猜不出你的端点上跑着什么，所以这一项必须写。"
+        hint={t("用逗号隔开。pi 猜不出你的端点上跑着什么，所以这一项必须写。")}
       >
         <input
           id="new-models"
@@ -1201,7 +1219,7 @@ function 自定义端点({
       <字段
         label="API key"
         htmlFor="new-key"
-        hint="pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）用不上它，随便填一个值即可，比如 local。"
+        hint={t("pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）用不上它，随便填一个值即可，比如 local。")}
       >
         <input
           id="new-key"

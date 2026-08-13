@@ -18,7 +18,7 @@ import type {
 } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 
-import { t } from "./i18n/index.js"
+import { t, tf, msgid } from "./i18n/index.js"
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="panel">
@@ -37,7 +37,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] }) {
   if (sessions.length === 0) {
     return (
-      <Panel title="状态">
+      <Panel title={t("状态")}>
         <Empty>{t("还没有会话")}</Empty>
       </Panel>
     )
@@ -46,7 +46,7 @@ export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] 
   const starting = sessions.filter((s) => s.state === "starting").length
   const exited = sessions.filter((s) => s.state === "exited").length
   return (
-    <Panel title="状态">
+    <Panel title={t("状态")}>
       <ul className="stat-row">
         <li>存活 {alive}</li>
         {starting > 0 ? <li>启动中 {starting}</li> : null}
@@ -115,7 +115,7 @@ export function ToolChangesPanel({
   const tools = runs.filter((r) => r.requestType.startsWith("tool_call"))
   if (tools.length === 0) {
     return (
-      <Panel title="变更">
+      <Panel title={t("变更")}>
         <Empty>{t("还没有工具调用")}</Empty>
       </Panel>
     )
@@ -125,14 +125,14 @@ export function ToolChangesPanel({
   // 没有开着的回合也要记，丢掉等于让一次真实发生的执行不留痕迹
   const groups: { key: string; items: RunSummary[] }[] = []
   for (const r of tools) {
-    const key = r.parentRunId ?? `孤立:${r.runId}`
+    const key = r.parentRunId ?? tf("孤立：{0}", r.runId)
     const slot = groups.find((g) => g.key === key)
     if (slot) slot.items.push(r)
     else groups.push({ key, items: [r] })
   }
 
   return (
-    <Panel title="变更">
+    <Panel title={t("变更")}>
       {/* 归属告知**不在这里**——它是项目级的事实，由 `AttributionCaveat` 在概览顶上说一次 */}
       {groups.map((g) => (
         <div key={g.key} className="turn-group">
@@ -141,7 +141,7 @@ export function ToolChangesPanel({
             const name = r.requestType.slice("tool_call".length).replace(/^:/, "")
             return (
               <div key={r.runId} className="tool-change">
-                <span className="name">{name || "未记录工具名"}</span>
+                <span className="name">{name || t("未记录工具名")}</span>
                 {r.filesWritten === undefined ? (
                   /* **缺省 = 不知道。** 与下面那一支的措辞必须不同 */
                   <span className="hint">{t("无法确定改了什么")}</span>
@@ -204,13 +204,13 @@ export function ChangesPanel({
 }) {
   if (!facts) {
     return (
-      <Panel title="产出">
+      <Panel title={t("产出")}>
         <Empty>{t("无法确定——没有取到 git 基线（会话早于本次启动，或工作区不是 git 仓库）")}</Empty>
       </Panel>
     )
   }
   return (
-    <Panel title="产出">
+    <Panel title={t("产出")}>
       {facts.files.length === 0 ? (
         <Empty>{t("未改动任何文件")}</Empty>
       ) : (
@@ -261,7 +261,7 @@ const KB = (n: number): string =>
 export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   if (!usage) {
     return (
-      <Panel title="上下文">
+      <Panel title={t("上下文")}>
         <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
@@ -269,20 +269,20 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   const { system, tools, history } = usage.bytes
   const total = system + tools + history
   const rows: { label: string; n: number }[] = [
-    { label: "系统提示词", n: system },
-    { label: "工具 schema", n: tools },
-    { label: "对话历史", n: history },
+    { label: t("系统提示词"), n: system },
+    { label: t("工具 schema"), n: tools },
+    { label: t("对话历史"), n: history },
   ]
   return (
-    <Panel title="上下文">
+    <Panel title={t("上下文")}>
       <p className="tokens">
         {usage.usedTokens !== undefined && usage.contextWindow
           ? `${formatTokens(usage.usedTokens)} / ${formatTokens(usage.contextWindow)} tokens`
           : usage.usedTokens !== undefined
-            ? `已用 ${formatTokens(usage.usedTokens)} tokens（上限拿不到）`
+            ? tf("已用 {0} tokens（上限拿不到）", formatTokens(usage.usedTokens))
             : usage.contextWindow
-              ? `模型上限 ${formatTokens(usage.contextWindow)} tokens · 已用尚未采集`
-              : "尚未采集"}
+              ? tf("模型上限 {0} tokens · 已用尚未采集", formatTokens(usage.contextWindow))
+              : t("尚未采集")}
         {usage.model ? ` · ${usage.model}` : ""}
       </p>
       {/* **这一行是整个面板的要害。** 不写清楚，人就会把下表当成 token 分解 */}
@@ -380,14 +380,14 @@ export type EnvironmentState =
 export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
   if (!state) {
     return (
-      <Panel title="环境">
+      <Panel title={t("环境")}>
         <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
   }
   if (!state.captured) {
     return (
-      <Panel title="环境">
+      <Panel title={t("环境")}>
         <p className="unknown">{t("没有快照")}</p>
         <p className="caveat">{state.reason}</p>
       </Panel>
@@ -396,7 +396,7 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
 
   const 截断了 = state.packagesTotal > state.packages.length
   return (
-    <Panel title="环境">
+    <Panel title={t("环境")}>
       <dl className="env-facts">
         <dt>{t("解释器")}</dt>
         {/* **版本 + 路径一起给**：光有版本回答不了「哪个 conda 环境」 */}
@@ -450,7 +450,7 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
 export function VariablesPanel({ state }: { state: VariablesState }) {
   if (!state) {
     return (
-      <Panel title="变量">
+      <Panel title={t("变量")}>
         <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
@@ -458,7 +458,7 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
   if (!state.supported) {
     // **不支持要说原因**（规格 7.5）：一片空白会被读成「没有变量」
     return (
-      <Panel title="变量">
+      <Panel title={t("变量")}>
         <p className="unknown">{t("看不到")}</p>
         <p className="caveat">{state.reason}</p>
       </Panel>
@@ -466,13 +466,13 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
   }
   if (state.variables.length === 0) {
     return (
-      <Panel title="变量">
+      <Panel title={t("变量")}>
         <Empty>{t("这个会话里还没有变量")}</Empty>
       </Panel>
     )
   }
   return (
-    <Panel title="变量">
+    <Panel title={t("变量")}>
       <ul className="var-list">
         {state.variables.map((v) => (
           <li key={v.name} className="var">
@@ -496,21 +496,21 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
 export function CostPanel({ cost }: { cost: Cost | undefined }) {
   if (!cost) {
     return (
-      <Panel title="成本">
+      <Panel title={t("成本")}>
         <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
   }
   if (!cost.visible) {
     return (
-      <Panel title="成本">
+      <Panel title={t("成本")}>
         <p className="unknown">{t("不可见")}</p>
         <p className="caveat">{cost.reason}</p>
       </Panel>
     )
   }
   return (
-    <Panel title="成本">
+    <Panel title={t("成本")}>
       <p className="amount">${cost.totalUSD.toFixed(6)}</p>
       <p className="tokens">
         输入 {formatTokens(cost.inputTokens)} · 输出 {formatTokens(cost.outputTokens)}
@@ -543,12 +543,12 @@ export function ProvenanceBadge({ link }: { link: ProvenanceLink }) {
  * 看着像乱码。改成「你」，与 transcript 里用户发言的标签**同一个词**：
  * 同一个概念在两处叫两个名字，读的人得先想一下它们是不是一回事。
  */
-const ORIGIN_LABEL = { user: "你", agent: "agent", system: "系统" } as const
+const ORIGIN_LABEL = { user: msgid("你"), agent: "agent", system: msgid("系统") } as const
 const STATUS_LABEL = {
-  running: "进行中",
-  completed: "完成",
-  failed: "失败",
-  cancelled: "已取消",
+  running: msgid("进行中"),
+  completed: msgid("完成"),
+  failed: msgid("失败"),
+  cancelled: msgid("已取消"),
 } as const
 
 function duration(run: RunSummary): string | undefined {
@@ -561,21 +561,21 @@ function duration(run: RunSummary): string | undefined {
 export function RunsPanel({ runs }: { runs: readonly RunSummary[] }) {
   if (runs.length === 0) {
     return (
-      <Panel title="历史">
+      <Panel title={t("历史")}>
         <Empty>{t("还没有记录")}</Empty>
       </Panel>
     )
   }
   return (
-    <Panel title="历史">
+    <Panel title={t("历史")}>
       <ul className="run-list">
         {runs.map((r) => {
           const d = duration(r)
           return (
             <li key={r.runId} className={r.hasError ? "run err" : "run"}>
-              <span className="origin">{ORIGIN_LABEL[r.origin]}</span>
+              <span className="origin">{t(ORIGIN_LABEL[r.origin])}</span>
               <span className="req">{r.requestType}</span>
-              <span className="status">{STATUS_LABEL[r.status]}</span>
+              <span className="status">{t(STATUS_LABEL[r.status])}</span>
               {d ? <span className="dur">耗时 {d}</span> : null}
             </li>
           )

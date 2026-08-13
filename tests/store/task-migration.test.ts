@@ -107,3 +107,79 @@ describe("会话 → 任务的迁移", () => {
     db.close()
   })
 })
+
+/**
+ * **迁移过来的任务必须点得开**（2026-08-13，作者报的）。
+ *
+ * *「我看会话里面有几个标记红框的，感觉这些不是真实的会话，因为我点不进去。」*
+ *
+ * ## 两个洞叠在一起
+ *
+ * 1. 上面那条迁移**只写 `from_session`，不写 `session_id`**；
+ * 2. 回填 `session_id = from_session` 那一句写在 `if (!hasColumn(…))` 里面，
+ *    **只在列刚加出来那一次跑**。
+ *
+ * 而迁移本身**每次启动都跑**。于是：列加过之后再迁进来的任务，
+ * `session_id` 永远是 NULL——侧栏上它长得和别的一模一样，
+ * 点下去却只弹一句提示。作者数出来五条，而它们的会话**全都还在**。
+ *
+ * 更坏的是第三点，它不只是「点不开」：幂等判据只看 `from_session`，
+ * 所以 `createTask` 新建的每一段对话，**下一次启动都会被再插一条**。
+ * 作者库里那些相隔三十毫秒的成对行就是这么来的。
+ */
+describe("迁移过来的任务点得开", () => {
+  it("**`session_id` 与 `from_session` 一起写**", () => {
+    const db = 老库()
+    // **`老库()` 里的 `migrate` 跑在插会话之前**，那时还没有任务可迁——
+    // 迁移发生在这一次调用里。（现有用例都是这个节奏。）
+    migrate(db)
+    for (const t of 任务(db)) {
+      expect(t["session_id"], `任务「${String(t["title"])}」没有 session_id，点不开`).toBe(
+        t["from_session"],
+      )
+    }
+  })
+
+  it("**已经是 NULL 的那些，下次启动就被补上**", () => {
+    const db = 老库()
+    migrate(db)
+    // 演一遍旧版本留下的坏数据
+    db.exec(`UPDATE tasks SET session_id = NULL`)
+    expect(
+      db.prepare(`SELECT COUNT(*) c FROM tasks WHERE session_id IS NULL`).get(),
+    ).toEqual({ c: 3 })
+
+    migrate(db) // 再启动一次
+
+    expect(
+      db.prepare(`SELECT COUNT(*) c FROM tasks WHERE session_id IS NULL`).get(),
+    ).toEqual({ c: 0 })
+    // 补的是**对的那个**，不是随便找一段
+    for (const t of 任务(db)) expect(t["session_id"]).toBe(t["from_session"])
+  })
+
+  /**
+   * **`createTask` 建的那些不许被迁移再插一遍。**
+   *
+   * 它们有 `session_id` 而没有 `from_session`。上一版的幂等判据只看后者，
+   * 于是每次启动都认不出它们——**每开一段新对话，侧栏第二天就多一条影子**。
+   */
+  it("**`createTask` 建的任务，重启不会被复制一份**", () => {
+    const db = 老库()
+    migrate(db)
+    // 演一次 createTask：新会话 + 只带 session_id 的任务
+    db.prepare(
+      `INSERT INTO sessions (id,agent_id,workspace,session_dir,state,created_at,project_id,title,sort_order,pinned)
+       VALUES ('s9','a','/scratch/y','/scratch/y/.dawn/s9','alive','t9','p2','刚聊的',9,0)`,
+    ).run()
+    db.prepare(
+      `INSERT INTO tasks (id,title,workspace,session_id,pinned,sort_order,created_at)
+       VALUES ('task-new','刚聊的',NULL,'s9',0,9,'t9')`,
+    ).run()
+
+    const 之前 = 任务(db).length
+    migrate(db) // 再启动一次
+    expect(任务(db).length, "重启之后任务变多了 —— 迁移把已有的那条又插了一遍").toBe(之前)
+    expect(任务(db).filter((t) => t["session_id"] === "s9").length).toBe(1)
+  })
+})

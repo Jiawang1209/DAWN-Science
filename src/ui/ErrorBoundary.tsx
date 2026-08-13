@@ -13,6 +13,7 @@
  */
 import { Component, type ErrorInfo, type ReactNode } from "react"
 
+import { t } from "./i18n/index.js"
 interface State {
   error: Error | undefined
   stack: string | undefined
@@ -42,13 +43,13 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
         </div>
         <div className="panels">
           <section className="panel">
-            <h3 className="panel-title">界面崩溃了</h3>
+            <h3 className="panel-title">{t("界面崩溃了")}</h3>
             <div className="panel-body">
               <p className="caveat">{error.message}</p>
               {/* 完整堆栈也给出来：这是给你转贴给我的东西，不是装饰 */}
-              <pre className="tool-result">{stack ?? error.stack ?? "（没有堆栈）"}</pre>
+              <pre className="tool-result">{stack ?? error.stack ?? t("（没有堆栈）")}</pre>
               <p className="hint">
-                同样的内容已经打到你跑 <code>npm run app</code> 的终端里。
+                {t("同样的内容已经打到你跑")} <code>npm run app</code> {t("的终端里。")}
               </p>
             </div>
           </section>

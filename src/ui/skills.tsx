@@ -70,7 +70,7 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
           * 不说清楚放哪儿，「怎么加一个」就无从下手。
           */}
         <p className="hint">
-          每个 <code>.md</code> {t("文件是一个技能，放在")} <code>{数据.dir}</code>
+          {t("每个")} <code>.md</code> {t("文件是一个技能，放在")} <code>{数据.dir}</code>
         </p>
       </header>
 
@@ -139,12 +139,10 @@ export function PluginsView() {
       </header>
       <EmptyState
         title={t("还没有插件这套东西")}
-        description={
-          "现在能装进来的能力有两样，各自在旁边那两屏：" +
-          "「技能」是你自己写的子 agent（.dawn/agents/*.md，写完就能用）；" +
-          "「MCP 服务器」是外部工具，管道通了、还差配置界面。" +
-          "插件要装什么、怎么加载、边界在哪，都还没定——定下来之前这里不会有列表。"
-        }
+        /* **整段一句话，不用 `+` 拼**——拼接在英文里是另一套语序（见 en.ts 的头注） */
+        description={t(
+          "现在能装进来的能力有两样，各自在旁边那两屏：「技能」是你自己写的子 agent（.dawn/agents/*.md，写完就能用）；「MCP 服务器」是外部工具，管道通了、还差配置界面。插件要装什么、怎么加载、边界在哪，都还没定——定下来之前这里不会有列表。",
+        )}
       />
     </div>
   )
@@ -167,11 +165,9 @@ export function McpView() {
       </header>
       <EmptyState
         title={t("还不能在这里配 MCP")}
-        description={
-          "管道已经通了：每开一段托管会话（claude / codex），我们会按会话写一份 mcp.json，" +
-          "并用 --mcp-config 指过去。但**目前还没有配置界面**，" +
-          "而且它只对托管的那两类生效——内置对话走 pi，那条还没接上。"
-        }
+        description={t(
+          "管道已经通了：每开一段托管会话（claude / codex），我们会按会话写一份 mcp.json，并用 --mcp-config 指过去。但目前还没有配置界面，而且它只对托管的那两类生效——内置对话走 pi，那条还没接上。",
+        )}
       />
     </div>
   )

@@ -16,7 +16,7 @@ import { useStore } from "@nanostores/react"
 import { $connection, MAX_CONNECT_ATTEMPTS } from "./state/index.js"
 import { Button, ErrorState, Loader } from "./primitives.js"
 
-import { t } from "./i18n/index.js"
+import { t, tf } from "./i18n/index.js"
 export function ConnectionSurface({
   onRetry,
   onOpenSettings,
@@ -32,7 +32,7 @@ export function ConnectionSurface({
     return (
       <div className="boot-overlay">
         {/* label 是必填的：一个只会说「加载中」的界面说不出「在等什么」 */}
-        <Loader label="正在连接本地后端…" />
+        <Loader label={t("正在连接本地后端…")} />
       </div>
     )
   }
@@ -41,7 +41,7 @@ export function ConnectionSurface({
     return (
       <div className="boot-overlay">
         <ErrorState
-          title={`连接失败，已重试 ${c.attempts} 次`}
+          title={tf("连接失败，已重试 {0} 次", c.attempts)}
           detail={c.reason}
           action={
             <div className="state-actions">
@@ -63,7 +63,7 @@ export function ConnectionSurface({
       <div className="banner banner-warn" role="status">
         <Loader
           inline
-          label={`连接断开，正在重试（第 ${c.attempt} / ${MAX_CONNECT_ATTEMPTS} 次）：${c.reason}`}
+          label={tf("连接断开，正在重试（第 {0} / {1} 次）：{2}", c.attempt, MAX_CONNECT_ATTEMPTS, c.reason)}
         />
       </div>
     )

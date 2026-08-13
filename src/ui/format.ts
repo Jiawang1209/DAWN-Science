@@ -1,3 +1,4 @@
+import { tf } from "./i18n/index.js"
 /**
  * 界面上的数字怎么写（2026-08-11）。
  *
@@ -56,11 +57,11 @@ function 去尾(x: number): string {
 export function formatDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "—"
   const 秒 = ms / 1000
-  if (秒 < 10) return `${去尾(秒)} 秒`
-  if (秒 < 60) return `${Math.floor(秒)} 秒`
+  if (秒 < 10) return tf("{0} 秒", 去尾(秒))
+  if (秒 < 60) return tf("{0} 秒", Math.floor(秒))
   const 分 = Math.floor(秒 / 60)
-  if (分 < 60) return `${分} 分 ${String(Math.floor(秒 % 60)).padStart(2, "0")} 秒`
-  return `${Math.floor(分 / 60)} 小时 ${String(分 % 60).padStart(2, "0")} 分`
+  if (分 < 60) return tf("{0} 分 {1} 秒", 分, String(Math.floor(秒 % 60)).padStart(2, "0"))
+  return tf("{0} 小时 {1} 分", Math.floor(分 / 60), String(分 % 60).padStart(2, "0"))
 }
 
 /**

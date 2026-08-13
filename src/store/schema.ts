@@ -373,6 +373,19 @@ export function migrate(db: Database.Database): void {
   `)
 
   /**
+   * **加列要排在迁移前面**（2026-08-13 调的顺序）。
+   *
+   * 它原本排在下面那条迁移之后——而迁移的幂等判据现在要读 `session_id`
+   * （否则 `createTask` 建的任务每次启动都会被再插一条）。
+   * 排在后面的话，第一次升级会当场 `no such column`。
+   *
+   * **列的存在是迁移的前提，不是迁移的结果。**
+   */
+  if (!hasColumn(db, "tasks", "session_id")) {
+    db.exec(`ALTER TABLE tasks ADD COLUMN session_id TEXT`)
+  }
+
+  /**
    * **把已有的会话迁成任务**（幂等：`from_session` 撞了就不再插）。
    *
    * 判据（写进计划的那条）：**升级一个装着老数据的库，
@@ -388,7 +401,9 @@ export function migrate(db: Database.Database): void {
               p.temporary AS tmp
          FROM sessions s
          LEFT JOIN projects p ON p.id = s.project_id
-        WHERE NOT EXISTS (SELECT 1 FROM tasks t WHERE t.from_session = s.id)`,
+        WHERE NOT EXISTS (
+                SELECT 1 FROM tasks t
+                 WHERE t.from_session = s.id OR t.session_id = s.id)`,
     )
     .all() as {
     id: string
@@ -403,8 +418,8 @@ export function migrate(db: Database.Database): void {
 
   if (待迁.length > 0) {
     const 插 = db.prepare(
-      `INSERT INTO tasks (id, title, workspace, connection_id, from_session, pinned, sort_order, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, workspace, connection_id, from_session, session_id, pinned, sort_order, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     const 批 = db.transaction((行: typeof 待迁) => {
       for (const r of 行) {
@@ -421,6 +436,8 @@ export function migrate(db: Database.Database): void {
           r.title,
           ws,
           r.connection_id,
+          r.id,
+          // **`session_id` 与 `from_session` 同时写**（2026-08-13 修）
           r.id,
           r.pinned,
           r.sort_order ?? 0,
@@ -443,10 +460,26 @@ export function migrate(db: Database.Database): void {
    *
    * 迁移过来的任务：两者一开始是同一个值，所以直接回填。
    */
-  if (!hasColumn(db, "tasks", "session_id")) {
-    db.exec(`ALTER TABLE tasks ADD COLUMN session_id TEXT`)
-    db.exec(`UPDATE tasks SET session_id = from_session WHERE session_id IS NULL`)
-  }
+  /**
+   * **每次启动都补一遍，不只在加列那一次**（2026-08-13 修，作者报的：
+   * *「会话里面有几个……我点不进去。」*）。
+   *
+   * 上一版这句话写在 `if (!hasColumn(...))` 里面——**只在列刚加出来那一次跑**。
+   * 而上面那条「会话迁成任务」的迁移**每次启动都会跑**，且它只写
+   * `from_session` 不写 `session_id`。两者一凑：
+   * **列加过之后再迁进来的任务，`session_id` 永远是 NULL。**
+   *
+   * 那种任务在侧栏上长得和别的一样，点下去却只弹一句提示——
+   * 作者数出来是五条。它们的 `from_session` 指的会话**全都还在**，
+   * 也就是说这些对话一直是好的，只是任务这一侧断了那根线。
+   *
+   * 放在 `if` 外面、且用 `from_session IS NOT NULL` 兜住：
+   * **它是一句修复，不是一次升级**——每次启动都该有效。
+   */
+  db.exec(
+    `UPDATE tasks SET session_id = from_session
+      WHERE session_id IS NULL AND from_session IS NOT NULL`,
+  )
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

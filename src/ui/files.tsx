@@ -18,7 +18,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 三角图标 } from "./icons.js"
 
-import { t } from "./i18n/index.js"
+import { t, tf } from "./i18n/index.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
  * 抄一份的代价：协议改了之后两边各自自洽，编译器一句话都不会说。
@@ -29,7 +29,7 @@ export type DirEntry = Listing["entries"][number]
 
 /** 字节数的人类可读形式。**不四舍五入到 0**——「0 KB」会让人以为文件是空的 */
 function bytes(n: number): string {
-  if (n < 1024) return `${n} 字节`
+  if (n < 1024) return tf("{0} 字节", n)
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
@@ -84,7 +84,7 @@ function DirNode({
           // **读不了要说出来**，不是显示成一个空目录
           <p className="caveat tree-note">{error}</p>
         ) : !listing ? (
-          <Loader label="正在读目录" inline />
+          <Loader label={t("正在读目录")} inline />
         ) : (
           <ul className="tree-list">
             {listing.entries.map((e) =>
@@ -116,9 +116,9 @@ function DirNode({
             {listing.ignored > 0 || listing.omitted > 0 ? (
               <li>
                 <p className="hint tree-note">
-                  {listing.ignored > 0 ? `已忽略 ${listing.ignored} 项（.git / node_modules 等）` : ""}
+                  {listing.ignored > 0 ? tf("已忽略 {0} 项（.git / node_modules 等）", listing.ignored) : ""}
                   {listing.ignored > 0 && listing.omitted > 0 ? "；" : ""}
-                  {listing.omitted > 0 ? `另有 ${listing.omitted} 项未列出（一层最多 1000）` : ""}
+                  {listing.omitted > 0 ? tf("另有 {0} 项未列出（一层最多 1000）", listing.omitted) : ""}
                 </p>
               </li>
             ) : null}
@@ -147,9 +147,9 @@ export function FilePreview({
   onOpenExternally: (path: string) => void
 }) {
   if (!path) {
-    return <EmptyState title="选一个文件" description="左边是这个项目的工作区。" />
+    return <EmptyState title={t("选一个文件")} description={t("左边是这个项目的工作区。")} />
   }
-  if (!content) return <Loader label="正在读文件" />
+  if (!content) return <Loader label={t("正在读文件")} />
 
   return (
     <div className="preview">
@@ -166,7 +166,7 @@ export function FilePreview({
         <img
           className="preview-img"
           src={`data:${content.mediaType};base64,${content.base64}`}
-          alt={`预览：${path}`}
+          alt={tf("预览：{0}", path)}
         />
       ) : content.kind === "text" ? (
         <>
@@ -236,7 +236,7 @@ function PdfPreview({
 
   return (
     <>
-      <embed className="preview-pdf" src={url} type="application/pdf" aria-label={`预览：${path}`} />
+      <embed className="preview-pdf" src={url} type="application/pdf" aria-label={tf("预览：{0}", path)} />
       {/* **留一条出路**：内嵌阅读器不是万能的，而人可能只是想拿它去打印 */}
       <div className="state-action">
         <Button variant="text" size="sm" onClick={() => onOpenExternally(path)}>

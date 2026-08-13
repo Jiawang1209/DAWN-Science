@@ -144,7 +144,7 @@ export function RemoteSection({
             <p className="hint pad">{t("还没有服务器")}</p>
           ) : (
             分组.map((g) => (
-              <div className="remote-group" key={g.name ?? "＿无分组"}>
+              <div className="remote-group" key={g.name ?? t("＿无分组")}>
                 {g.name ? <p className="remote-group-name">{g.name}</p> : null}
                 <ul className="remote-list">
                   {g.list.map((c) => (
@@ -322,13 +322,13 @@ export function ConnectionDialog({
       className="confirm-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label={draft.id ? "编辑服务器" : "添加服务器"}
+      aria-label={draft.id ? t("编辑服务器") : t("添加服务器")}
       onKeyDown={(e) => {
         if (e.key === "Escape") onCancel()
       }}
     >
       <div className="confirm conn-dialog">
-        <h2 className="confirm-title">{draft.id ? "编辑服务器" : "添加服务器"}</h2>
+        <h2 className="confirm-title">{draft.id ? t("编辑服务器") : t("添加服务器")}</h2>
 
         {problem ? (
           <p className="remote-problem" role="alert">
@@ -336,7 +336,7 @@ export function ConnectionDialog({
           </p>
         ) : null}
 
-        <Field id="conn-host" label="主机" hint="域名或 IP。不读 ~/.ssh/config —— 这里写什么就连什么">
+        <Field id="conn-host" label={t("主机")} hint={t("域名或 IP。不读 ~/.ssh/config —— 这里写什么就连什么")}>
           <input
             id="conn-host"
             className="control"
@@ -347,7 +347,7 @@ export function ConnectionDialog({
           />
         </Field>
 
-        <Field id="conn-user" label="用户名">
+        <Field id="conn-user" label={t("用户名")}>
           <input
             id="conn-user"
             className="control"
@@ -356,7 +356,7 @@ export function ConnectionDialog({
           />
         </Field>
 
-        <Field id="conn-port" label="端口" hint="留空就是 22">
+        <Field id="conn-port" label={t("端口")} hint={t("留空就是 22")}>
           <input
             id="conn-port"
             className="control"
@@ -371,7 +371,7 @@ export function ConnectionDialog({
           />
         </Field>
 
-        <Field id="conn-label" label="名字" hint="留空就用 用户名@主机">
+        <Field id="conn-label" label={t("名字")} hint={t("留空就用 用户名@主机")}>
           <input
             id="conn-label"
             className="control"
@@ -380,14 +380,14 @@ export function ConnectionDialog({
           />
         </Field>
 
-        <Field id="conn-group" label="分组" hint="比如「实验室」。留空就不分组">
+        <Field id="conn-group" label={t("分组")} hint={t("比如「实验室」。留空就不分组")}>
           <input id="conn-group" className="control" value={d.group ?? ""} onChange={(e) => 改("group", e.target.value)} />
         </Field>
 
         <Field
           id="conn-key"
-          label="私钥路径"
-          hint="留空就用口令登录。路径不是秘密，所以它会显示出来"
+          label={t("私钥路径")}
+          hint={t("留空就用口令登录。路径不是秘密，所以它会显示出来")}
         >
           <input
             id="conn-key"
@@ -400,11 +400,11 @@ export function ConnectionDialog({
 
         <Field
           id="conn-secret"
-          label={d.privateKeyPath ? "私钥口令" : "登录口令"}
+          label={d.privateKeyPath ? t("私钥口令") : t("登录口令")}
           hint={
             draft.hasSecret
-              ? "已配置。留空则不改 —— 这个框永远不回显已存的口令"
-              : "存进系统钥匙串，不写进数据库"
+              ? t("已配置。留空则不改 —— 这个框永远不回显已存的口令")
+              : t("存进系统钥匙串，不写进数据库")
           }
         >
           <input
@@ -413,7 +413,7 @@ export function ConnectionDialog({
             type="password"
             value={d.secret ?? ""}
             onChange={(e) => setD((x) => ({ ...x, secret: e.target.value }))}
-            placeholder={draft.hasSecret ? "已配置 · 留空则不改" : ""}
+            placeholder={draft.hasSecret ? t("已配置 · 留空则不改") : ""}
           />
         </Field>
 
@@ -438,7 +438,7 @@ export function ConnectionDialog({
               })
             }
           >
-            {saving ? "保存中…" : "保存"}
+            {saving ? t("保存中…") : "保存"}
           </Button>
         </div>
       </div>

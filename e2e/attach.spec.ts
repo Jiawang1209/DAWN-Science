@@ -264,15 +264,19 @@ test.describe("提示不说谎", () => {
  * 这里用 `DataTransfer` 造一次真的 paste 事件——**走的是浏览器真实的那条路**，
  * 不是直接调组件的回调。
  */
-test("**粘一张图进输入框，模型那边收到了**", async ({ dawn }) => {
-  const { page } = dawn
-  await 开一段临时会话(page)
-  await 等进了对话(page)
-
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
-  await 框.click()
-
-  // 造一次真的粘贴：1×1 的 PNG
+/**
+ * **两屏都能粘**（2026-08-13 补，作者报的：*「我现在复制一个图片，
+ * 然后粘贴到窗口，为什么不显示图片呢？」*）。
+ *
+ * 上一版只给了**对话**那个输入框——**而应用打开就落在初始画面上**，
+ * 所以最常见的那一次粘贴恰恰是不工作的那一次。
+ *
+ * 我写占位符时明明说过「每个对话框都要有」，**却没把同一条规则套到粘贴上**，
+ * 而当时那条用例也只走了对话那一屏——**它绿着，问题却在**。
+ * 所以这一条改成两屏都走：同一份代码里有两个 composer，
+ * 就得每次都问一句「另一个呢」。
+ */
+async function 粘一张图(page: import("@playwright/test").Page) {
   await page.evaluate(() => {
     const b64 =
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
@@ -285,24 +289,42 @@ test("**粘一张图进输入框，模型那边收到了**", async ({ dawn }) =>
     const el = document.querySelector(".composer-field") as HTMLTextAreaElement
     el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true }))
   })
+}
 
-  /**
-   * ① 粘完看得见，**而且立刻就是图本身**。
-   *
-   * 粘贴这一支的预览**不用问主进程**——字节已经在手上了。
-   * 所以它与「从磁盘挑」那条不同：这里不该有等待窗口。
-   */
-  await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
-  await expect(page.locator(".attached-thumb")).toHaveAttribute("src", /^data:image\//)
+for (const [屏, 进去] of [
+  ["首页", async () => {}],
+  [
+    "对话",
+    async (page: import("@playwright/test").Page) => {
+      await 开一段临时会话(page)
+      await 等进了对话(page)
+    },
+  ],
+] as const) {
+  test(`**${屏}：粘一张图进去，模型那边收到了**`, async ({ dawn }) => {
+    const { page } = dawn
+    await 进去(page)
 
-  await 框.fill("看看这张粘的")
-  await page.getByRole("button", { name: "发送", exact: true }).click()
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.click()
+    await 粘一张图(page)
 
-  // ② **字节真的到了对面**
-  await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
-    timeout: 30_000,
+    /**
+     * ① 粘完看得见，**而且立刻就是图本身**。
+     * 粘贴这一支的预览不用问主进程——字节已经在手上了，所以不该有等待窗口。
+     */
+    await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
+    await expect(page.locator(".attached-thumb")).toHaveAttribute("src", /^data:image\//)
+
+    await 框.fill("看看这张粘的")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // ② **字节真的到了对面**
+    await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
+      timeout: 30_000,
+    })
   })
-})
+}
 
 /**
  * **粘文字仍然是粘文字。**

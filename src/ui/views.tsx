@@ -529,6 +529,15 @@ function 报给协议(x: 待发的图) {
     : ({ from: "bytes", data: x.data, mimeType: x.mimeType } as const)
 }
 
+/** 这一次粘贴里有没有图片。**两处 composer 共用同一个判据** */
+function 粘的是图(e: React.ClipboardEvent): boolean {
+  return (
+    Array.from(e.clipboardData?.items ?? []).some(
+      (it) => it.kind === "file" && it.type.startsWith("image/"),
+    ) || Array.from(e.clipboardData?.files ?? []).some((f) => f.type.startsWith("image/"))
+  )
+}
+
 /**
  * 从一次粘贴里捡出图片（2026-08-13，作者：*「能否……直接复制粘贴图片」*）。
  *
@@ -542,11 +551,27 @@ function 报给协议(x: 待发的图) {
  */
 async function 从粘贴里捡图(e: React.ClipboardEvent): Promise<待发的图[]> {
   const 出: 待发的图[] = []
-  const items = Array.from(e.clipboardData?.items ?? [])
-  for (const it of items) {
-    if (it.kind !== "file" || !it.type.startsWith("image/")) continue
-    const blob = it.getAsFile()
+  /**
+   * **`items` 与 `files` 都要看。**
+   *
+   * 同一次粘贴在不同来源下形状不一样：从截图工具来的通常在 `items` 里
+   * （`kind: "file"`），而从访达复制一个文件过来有时只出现在 `files` 里。
+   * 只认一种的表现是**「有的图能粘、有的不能」**——
+   * 那种时灵时不灵最难查，因为人复现不出规律。
+   */
+  const 候选 = [
+    ...Array.from(e.clipboardData?.items ?? [])
+      .filter((it) => it.kind === "file" && it.type.startsWith("image/"))
+      .map((it) => it.getAsFile()),
+    ...Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith("image/")),
+  ]
+  const 见过 = new Set<string>()
+  for (const blob of 候选) {
     if (!blob) continue
+    // 两个来源可能指向同一张：**按「名字+大小」去重**，否则粘一次进来两张
+    const 记号 = `${blob.name}|${blob.size}|${blob.type}`
+    if (见过.has(记号)) continue
+    见过.add(记号)
     const dataUrl = await new Promise<string>((res, rej) => {
       const r = new FileReader()
       r.onload = () => res(String(r.result))
@@ -2586,9 +2611,7 @@ export function ConversationView({
                 if (图们.length === 0) return
                 设待发图((前) => [...前, ...图们])
               })
-              if (Array.from(e.clipboardData?.items ?? []).some((it) => it.type.startsWith("image/"))) {
-                e.preventDefault()
-              }
+              if (粘的是图(e)) e.preventDefault()
             }}
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
@@ -3509,7 +3532,12 @@ export function EmptyConversation({
    * 第二个参数给了的话，**建完之后把这句话真的发出去**。
    * 第三个是工作目录（2026-08-12）——**给了就归「项目」，不给就归「会话」**。
    */
-  onStart: (agentId: string, firstMessage?: string, workspace?: string) => void
+  onStart: (
+    agentId: string,
+    firstMessage?: string,
+    workspace?: string,
+    images?: readonly 图片来源[],
+  ) => void
   /**
    * 弹原生目录选择器（2026-08-12）。**不给就不画那颗 chip**。
    *
@@ -3528,6 +3556,13 @@ export function EmptyConversation({
    * 发出去的那一刻它跟着 `onStart` 一起走——**归到哪一栏由它决定**。
    */
   const [工作目录, 设工作目录] = useState<string | undefined>(undefined)
+  /**
+   * 这一屏粘/挑进来、还没发出去的图（2026-08-13）。
+   *
+   * 与对话里那份是两个 state，**因为它们的生命周期不同**：
+   * 这一份在「第一句话发出去、会话建出来」的那一刻整个消失。
+   */
+  const [空态图, 设空态图] = useState<待发的图[]>([])
   return (
     <div className="conversation empty-conv">
       {first ? (
@@ -3589,16 +3624,68 @@ export function EmptyConversation({
             onSubmit={(e) => {
               e.preventDefault()
               const t = 草稿.trim()
-              if (!t) return
-              onStart(first, t, 工作目录)
+              // **只有图、没有字也算一句话**（与对话里那一份同一条）
+              if (!t && 空态图.length === 0) return
+              /**
+               * **没有图就只传三个参数。**「空数组」与「不给」在协议上是同一个意思，
+               * 而在调用点上不是：多传一个 `undefined` 会让所有
+               * 「这一屏是怎么开出会话的」的断言都要跟着改，而它们关心的不是图片。
+               */
+              if (空态图.length > 0) onStart(first, t || undefined, 工作目录, 空态图.map(报给协议))
+              else onStart(first, t || undefined, 工作目录)
+              设空态图([])
             }}
           >
+            {/**
+              * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
+              * 它们是同一个东西，长得不一样只会让人以为是两回事。
+              */}
+            {空态图.length > 0 ? (
+              <ul className="attached">
+                {空态图.map((图, i) => (
+                  <li key={`${图.名}-${i}`} className="attached-one">
+                    {图.预览 ? (
+                      <img className="attached-thumb" src={图.预览} alt={图.名} />
+                    ) : (
+                      <span className="attached-name">{图.名}</span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="attached-x"
+                      aria-label={tf("不发这张：{0}", 图.名)}
+                      onClick={() => 设空态图((前) => 前.filter((_, j) => j !== i))}
+                    >
+                      <删除图标 />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <div className="composer-box">
               <textarea
                 className="control composer-field"
                 value={草稿}
                 autoFocus
                 onChange={(e) => 设草稿(e.target.value)}
+                /**
+                 * **这一屏也能粘图**（2026-08-13 补，作者报的：
+                 * *「我现在复制一个图片，然后粘贴到窗口，为什么不显示图片呢？」*）。
+                 *
+                 * 上一版只给了对话那个输入框——**而应用打开就落在这一屏上**，
+                 * 所以最常见的那一次粘贴恰恰是不工作的那一次。
+                 *
+                 * 我写占位符时明明说过「每个对话框都要有」，
+                 * **却没把同一条规则套到粘贴上**。同一份代码里有两个 composer，
+                 * 就得每次都问一句「另一个呢」。
+                 */
+                onPaste={(e) => {
+                  void 从粘贴里捡图(e).then((图们) => {
+                    if (图们.length === 0) return
+                    设空态图((前) => [...前, ...图们])
+                  })
+                  if (粘的是图(e)) e.preventDefault()
+                }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -3634,6 +3721,23 @@ export function EmptyConversation({
                 <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
                   onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
+                  onAttachImages={(paths) => {
+                    设空态图((前) => [
+                      ...前,
+                      ...paths
+                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                    ])
+                    // 预览后到，chip 先出现——与对话里那一份同一条
+                    for (const p of paths) {
+                      void 要缩略图(p).then((预览) => {
+                        if (!预览) return
+                        设空态图((前) =>
+                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                        )
+                      })
+                    }
+                  }}
                 />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。

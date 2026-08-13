@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"×|Tests |是「\" | head -6; npm run build 2>&1 | tail -1",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
+    "buildCommand": "npm run build 2>&1 | tail -1 && npx playwright test 2>&1 | tail -8",
+    "testCommand": "python3 - << 'PY'\np=\"src/ui/views.tsx\"; s=open(p).read()\ns=s.replace('''              onStart(\n                first,\n                t || undefined,\n                工作目录,\n                空态图.length > 0 ? 空态图.map(报给协议) : undefined,\n              )\n              设空态图([])''',\n'''              /**\n               * **没有图就只传三个参数。**「空数组」与「不给」在协议上是同一个意思，\n               * 而在调用点上不是：多传一个 `undefined` 会让所有\n               * 「这一屏是怎么开出会话的」的断言都要跟着改，而它们关心的不是图片。\n               */\n              if (空态图.length > 0) onStart(first, t || undefined, 工作目录, 空态图.map(报给协议))\n              else onStart(first, t || undefined, 工作目录)\n              设空态图([])''',1)\nopen(p,\"w\").write(s)\nPY\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

@@ -660,9 +660,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [])
 
   const 新建任务 = async (
-    opts: { workspace?: string | undefined; firstMessage?: string | undefined; agentId?: string | undefined } = {},
+    opts: {
+      workspace?: string | undefined
+      firstMessage?: string | undefined
+      agentId?: string | undefined
+      /** 第一句话带的图（协议 4.13）。**空态那一屏也能粘图** */
+      images?: readonly import("./views.js").图片来源[] | undefined
+    } = {},
   ) => {
-    const { workspace, firstMessage } = opts
+    const { workspace, firstMessage, images } = opts
     const agentId = opts.agentId ?? agentIds[0]
     if (!agentId) {
       note(t("配置里还没有可用的 agent——先去设置里加一个"))
@@ -722,11 +728,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          *
          * **不做本地乐观追加**：与手动发送同一条路径，自己说的话经事件回灌进来。
          */
-        if (firstMessage) {
+        /**
+         * **只有图、没有字也算一句话**（2026-08-13）。
+         * 「看看这张」这种意图，人常常懒得打字——
+         * 拦下来的表现是「粘了图、按了发送，什么都没发生」。
+         */
+        if (firstMessage || (images && images.length > 0)) {
           await client.get("writeToSession", {
             sessionId: t.sessionId,
-            data: firstMessage,
+            data: firstMessage ?? "",
             as: "user",
+            ...(images && images.length > 0 ? { images: [...images] } : {}),
           })
         }
       }
@@ -2542,8 +2554,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                * *「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
                * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
                */
-              onStart={(agentId, firstMessage, workspace) =>
-                void 新建任务({ agentId, firstMessage, workspace })
+              onStart={(agentId, firstMessage, workspace, images) =>
+                void 新建任务({ agentId, firstMessage, workspace, images })
               }
               onPickDirectory={() => client.pickDirectory(默认工作区?.path)}
               onOpenSettings={actions.openSettings}

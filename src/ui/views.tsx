@@ -2346,7 +2346,16 @@ export function ConversationView({
    *   两个来源：从磁盘挑的给 `path`，粘贴板里的给 `bytes`。
    *   **不给或空数组是同一个意思。**
    */
-  onSend: (text: string, images?: readonly 图片来源[]) => void
+  /**
+   * **返回一个 Promise 就能被等**（2026-08-13）。
+   *
+   * 之前它是 `void`：发失败时输入框已经清空、附件已经丢掉，
+   * 而失败只在别处留下一条容易错过的提示——**人看见的是「什么都没发生」**。
+   * 作者报的正是这个（*「粘贴一个图片……但是没有任何反应呢」*）。
+   *
+   * 能等，就能在失败时**把字和图原样还回去**，并且把原因摆在输入卡旁边。
+   */
+  onSend: (text: string, images?: readonly 图片来源[]) => void | Promise<void>
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
   disabled?: boolean | undefined
@@ -2395,6 +2404,8 @@ export function ConversationView({
   const [待发图, 设待发图] = useState<待发的图[]>([])
   /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */
   const [拖着, 设拖着] = useState(false)
+  /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
+  const [发送出错, 设发送出错] = useState<string | undefined>(undefined)
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -2594,12 +2605,27 @@ export function ConversationView({
            * 「这一句是怎么发出去的」的断言都要跟着改一遍，
            * 而它们关心的根本不是图片。
            */
-          if (待发图.length > 0) onSend(text, 待发图.map(报给协议))
-          else onSend(text)
+          /**
+           * **乐观清空，失败还回去。**
+           *
+           * 清空要在前面：不清的话，从按下到回执之间那句话还留在框里，
+           * 人会以为没发出去而再按一次。
+           * 但**清了就必须接得住失败**——否则字和图一起消失，
+           * 而屏幕上什么都没有，那正是作者看见的「没有任何反应」。
+           */
+          const 这次的图 = 待发图
           设待发图([])
           clearDraft(session.sessionId)
-          // 发完就不算在翻历史了——下一次 ↑ 从最新那条开始
           设位置(-1)
+          设发送出错(undefined)
+          void Promise.resolve(
+            这次的图.length > 0 ? onSend(text, 这次的图.map(报给协议)) : onSend(text),
+          ).catch((e: unknown) => {
+            设发送出错(e instanceof Error ? e.message : String(e))
+            // **原样还回去**：人不该为一次失败重打一遍、重挑一遍
+            setDraft(session.sessionId, text)
+            设待发图(这次的图)
+          })
         }}
       >
         {/**
@@ -2768,6 +2794,13 @@ export function ConversationView({
            */}
           {/* 换模型／换服务没成的原因，就摆在按下去的那个地方 */}
           {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}
+          {/**
+            * **发送失败就摆在这儿**（2026-08-13）。
+            *
+            * 它此前只经 `note()` 走到别处——而那条路人看不见，
+            * 于是「发失败」在屏幕上与「什么都没发生」长得一模一样。
+            */}
+          {发送出错 ? <p className="caveat composer-problem">⚠ {发送出错}</p> : null}
           <div className="composer-controls">
             {/**
               * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
@@ -3852,7 +3885,21 @@ export function EmptyConversation({
                   * **挑完把手上那句话一起带走**：人可能先打了字才想起来换模型，
                   * 不带走的话那句话就凭空消失了。
                   */}
-                {agents.length > 1 ? (
+                {/**
+                  * **只配了一家也画这颗 pill**（2026-08-13 去掉 `> 1` 的门槛）。
+                  *
+                  * 门槛的原意是「只有一家时没什么可挑的」。但这颗 pill 现在
+                  * 还挂着「配置自定义模型」——**而只配了一家的人，
+                  * 恰恰是最需要那条入口的人**。
+                  *
+                  * 它同时也是「我这一句会用哪个模型」的唯一答案，
+                  * 一家时那句话照样值得说。
+                  *
+                  * 这个洞是被一条**被跳过的用例**暴露的：那条用例写着
+                  * 「没有 pill 就 skip」，于是它在汇总里只是「1 skipped」——
+                  * **看起来全绿，而那个功能从来没被验过**。
+                  */}
+                {first ? (
                   <AgentPill
                     agents={agents}
                     {...(agentLabel ? { label: agentLabel } : {})}

@@ -281,6 +281,14 @@ export interface DawnOptions {
    */
   pickFiles?: string[]
   /**
+   * 模型**不声明**收图（2026-08-13）。
+   *
+   * 演的是一种真实存在的配置：用户自己加的 provider，
+   * 如果生成的条目里没写 `input`，图就送不出去——作者的 `kimi-k3` 正是这样。
+   * 只有这么造，「附了图、按下发送、当场失败」那条路才复现得出来。
+   */
+  modelsWithoutImages?: boolean
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -396,7 +404,14 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
 
     const modelsPath = join(dir, "models.json")
     if (!dawnOptions.noModelsBase) {
-      writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))
+      writeFileSync(
+        modelsPath,
+        JSON.stringify(
+          mockModelsJson(server.url, "deepseek", undefined, !dawnOptions.modelsWithoutImages),
+          null,
+          2,
+        ),
+      )
     }
     const dbPath = join(dir, "dawn.db")
 

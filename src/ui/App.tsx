@@ -2502,7 +2502,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onAbort={
                   session.kind === "native" ? actions.abort : undefined
                 }
-                onSend={(text, images) => {
+                onSend={(text, images) =>
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。
                   // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
                   写进去(session.sessionId, text, images)
@@ -2528,8 +2528,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                         void loadTempSessions(client)
                       }
                     })
-                    .catch(fail)
-                }}
+                }
               />
             </>
           ) : (

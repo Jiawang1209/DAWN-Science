@@ -294,10 +294,19 @@ function splitIntoParts(text) {
  * 这里是同一条规则的另一面——**新增一个「有多种取值」的能力，
  * 假后端就得能提供多种取值**，否则 `dev:mock` 与 e2e 看到的永远是退化情形。
  */
+/**
+ * @param 收图 这些模型声明不声明 `input: ["text","image"]`（2026-08-13）。
+ *
+ * **默认声明**。给 `false` 是为了演一种真实存在的配置：
+ * 用户自己加的 provider，如果我们生成的条目里没写 `input`，
+ * 图就送不出去——作者的 `kimi-k3` 正是这样。
+ * 那条路上「发送当场失败」的表现，只有这么造才复现得出来。
+ */
 export function mockModelsJson(
   baseUrl,
   providerId = "deepseek",
   modelIds = ["deepseek-v4-flash", "deepseek-v4-deep"],
+  收图 = true,
 ) {
   const ids = Array.isArray(modelIds) ? modelIds : [modelIds]
   return {
@@ -318,7 +327,7 @@ export function mockModelsJson(
           id,
           name: `Mock ${id}`,
           api: "openai-completions",
-          input: ["text", "image"],
+          ...(收图 ? { input: ["text", "image"] } : {}),
         })),
       },
     },

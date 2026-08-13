@@ -259,6 +259,52 @@ describe("设计契约 · 表单控件一律走 .control", () => {
   })
 })
 
+describe("设计契约 · 用例不许自己把自己跳过", () => {
+  /**
+   * **`test.skip` 的条件不许是「界面上找不到某个元素」**（2026-08-13 补，
+   * 被咬了一次才补的）。
+   *
+   * 那天有一条用例写着「没有这颗 pill 就 skip」——于是它在汇总里
+   * 只是一行「1 skipped」，**看起来全绿，而那个功能从来没被验过**。
+   * 它掩盖的是一个真 bug：那颗 pill 有个 `agents.length > 1` 的门槛，
+   * 而只配了一家的人恰恰最需要它上面那条入口。
+   *
+   * **一条会自己跳过的用例，和没有这条用例的区别只是它占了一行。**
+   *
+   * ## 什么样的 skip 是可以的
+   *
+   * **条件是环境，不是界面。** `本机没有装 Jupyter 内核` 这种跳过是诚实的：
+   * 那台机器上确实验不了，硬跑只会得到一条与我们的代码无关的红。
+   * 而「界面上没有这个元素」恰恰是这条用例要回答的问题本身——
+   * 拿它当跳过的理由，等于问题一出现就把问题藏起来。
+   */
+  it("**没有用例靠「界面上找不到」把自己跳过**", () => {
+    const e2e = join(import.meta.dirname, "..", "..", "e2e")
+    const 犯规: string[] = []
+    for (const f of readdirSync(e2e).filter((x) => x.endsWith(".spec.ts"))) {
+      const src = readFileSync(join(e2e, f), "utf8")
+      /**
+       * **看整行，不只看括号里那一段。**
+       *
+       * 第一版只取 `test.skip(` 之后的实参——而真实写法是
+       * `if ((await pill.count()) === 0) test.skip(true, "…")`：
+       * 判据在**外面那个 `if`** 里，括号内只有一个 `true`。
+       * 于是它抓不住自己那个案例（当场验过，全绿）。
+       */
+      for (const 行 of src.split("\n")) {
+        if (!行.includes("test.skip(")) continue
+        if (/count\(\)|locator\(|getBy|isVisible|toHaveCount|querySelector/.test(行)) {
+          犯规.push(`${f}：${行.trim().slice(0, 80)}`)
+        }
+      }
+    }
+    expect(
+      犯规,
+      "跳过的条件是界面状态——那正是这条用例要回答的问题，跳过等于把问题藏起来",
+    ).toEqual([])
+  })
+})
+
 describe("设计契约 · 已经踩过的坑", () => {
   it("不使用 window.prompt / alert / confirm —— Electron 里它们直接抛错", () => {
     // 2026-08-08：`window.prompt` 抛 "prompt() is not supported."，

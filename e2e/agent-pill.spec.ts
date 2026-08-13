@@ -116,9 +116,18 @@ test("侧栏那份真的没了", async ({ dawn }) => {
 test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => {
   const { page } = dawn
 
-  // 空态那颗 pill：只有配了不止一家时才画（一家时没什么可挑的）
+  /**
+   * **不许 skip。**
+   *
+   * 上一版这里写着「没有 pill 就 skip」——于是它在汇总里只是「1 skipped」，
+   * **看起来全绿，而这个功能从来没被验过**（2026-08-13 才发现）。
+   * 一条会自己跳过的用例，和没有这条用例的区别只是它占了一行。
+   *
+   * 那个 skip 掩盖的是一个真 bug：首页那颗 pill 当时有 `agents.length > 1`
+   * 的门槛，而**只配了一家的人恰恰最需要「配置自定义模型」**。
+   */
   const pill = page.locator(".composer-controls .agent-pill")
-  if ((await pill.count()) === 0) test.skip(true, "这套夹具只配了一家 agent，没有这颗 pill")
+  await expect(pill).toHaveCount(1)
 
   await pill.locator("button").first().click()
   const 去配 = page.getByRole("menuitem", { name: /配置自定义模型/ })

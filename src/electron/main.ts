@@ -6,7 +6,9 @@
  * 三者都不认识 Electron，因此都能单独测。这里剩下的部分正是「测不了、也不值得测」的那些。
  */
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
-import { join } from "node:path"
+import { extname, join } from "node:path"
+import { readFile } from "node:fs/promises"
+import { resizeImage } from "@earendil-works/pi-coding-agent"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } from "./ipc.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
@@ -367,6 +369,56 @@ app.whenReady().then(() => {
       ? await dialog.showOpenDialog(owner, opts)
       : await dialog.showOpenDialog(opts)
     return r.canceled ? [] : r.filePaths
+  })
+
+  /**
+   * 一张图的缩略图（2026-08-13，作者给了一张 Codex 的截图：
+   * 它把附件画成**图本身的缩略图**，不是一行文件名）。
+   *
+   * **缩到 320px 再回**：界面只是要让人确认「我挑的是这张」。
+   * 真正送进模型的那份字节由 `writeToSession` 那条路在这一侧读，
+   * **不经过渲染进程**——两条路各取所需，谁都不多搬一次。
+   *
+   * **失败返回 null，不抛**：缩略图出不来只是看不见预览，
+   * 图本身还是好的，不该因此拦住发送。
+   */
+  /**
+   * 扩展名 → MIME。**与 `workbench/backend.ts` 里那张表是同一件事**，
+   * 但这两层不共享模块（一个是 Electron 壳，一个是后端内核），
+   * 而**为了一张八行的表去建一条跨层依赖，代价比重复它更大**。
+   *
+   * 真正的判据在后端那一份：这里认不出来只是不给预览，
+   * 而那边认不出来会**拒绝发送**——两处不一致时，坏的方向是「预览没有、
+   * 但发得出去」，那是可以接受的一侧。
+   */
+  const 猜图片类型 = (p: string): string | undefined =>
+    ({
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".bmp": "image/bmp",
+      ".tif": "image/tiff",
+      ".tiff": "image/tiff",
+    })[extname(p).toLowerCase()]
+
+  ipcMain.handle("dawn:shell:image-thumb", async (_e, path: string) => {
+    try {
+      const bytes = await readFile(path)
+      const mime = 猜图片类型(path)
+      if (!mime) return null
+      const r = await resizeImage(bytes, mime, { maxWidth: 320, maxHeight: 320 })
+      if (r) return `data:${r.mimeType};base64,${r.data}`
+      /**
+       * **缩不动就原样给**（Photon/WASM 起不来时 `resizeImage` 返回 null）。
+       * 小图这条路完全够用，而大图在这儿最多是多占一点内存——
+       * 比「预览整个不见了」强。
+       */
+      return `data:${mime};base64,${bytes.toString("base64")}`
+    } catch {
+      return null
+    }
   })
 
   /**

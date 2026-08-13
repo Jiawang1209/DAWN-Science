@@ -512,9 +512,10 @@ function AttachButton({
  * 从磁盘挑的有路径（主进程去读），粘贴板里的只有字节（它压根不是磁盘上的文件）。
  * `名` 只用来在 chip 上显示。
  */
-type 待发的图 =
-  | { from: "path"; path: string; 名: string }
-  | { from: "bytes"; data: string; mimeType: string; 名: string }
+type 待发的图 = { 名: string; 预览?: string } & (
+  | { from: "path"; path: string }
+  | { from: "bytes"; data: string; mimeType: string }
+)
 
 /** 协议 4.13 里 `images` 那一项的形状。**渲染侧只认这两种来源** */
 export type 图片来源 =
@@ -559,9 +560,24 @@ async function 从粘贴里捡图(e: React.ClipboardEvent): Promise<待发的图
       mimeType: blob.type,
       // 剪贴板里的截图没有名字，**给一个说得清来路的**，而不是「未命名」
       名: blob.name || "粘贴的图片",
+      /**
+       * **粘贴这一支的预览不用问主进程**：字节已经在手上了。
+       * 屏幕截图通常就是屏幕尺寸，交给 `<img>` 自己缩——
+       * 为了省这一点内存再往返一次 IPC 不划算。
+       */
+      预览: dataUrl,
     })
   }
   return 出
+}
+
+/**
+ * 问主进程要一张缩略图（`data:` URL）。**拿不到就返回 undefined**——
+ * 预览出不来只是看不见，不该拦住发送。
+ */
+async function 要缩略图(path: string): Promise<string | undefined> {
+  const w = window as unknown as { dawn?: { imageThumb?: (p: string) => Promise<string | null> } }
+  return (await w.dawn?.imageThumb?.(path)) ?? undefined
 }
 
 /**
@@ -2515,10 +2531,25 @@ export function ConversationView({
           <ul className="attached">
             {待发图.map((图, i) => (
               <li key={`${图.名}-${i}`} className="attached-one">
-                <span className="attached-name">{图.名}</span>
+                {/**
+                  * **画图本身，不画文件名**（2026-08-13，作者给了一张 Codex 的截图）。
+                  *
+                  * 一行文件名回答不了「我挑对了吗」——同一个目录里
+                  * `截图 2026-08-13 上午11.02.31.png` 有七张，名字长得一模一样。
+                  * **缩略图是唯一能一眼确认的东西。**
+                  *
+                  * 拿不到预览时退回名字：**缩略图出不来只是看不见，
+                  * 图本身还是好的**，不该因此把这一项整个藏起来。
+                  */}
+                {图.预览 ? (
+                  <img className="attached-thumb" src={图.预览} alt={图.名} />
+                ) : (
+                  <span className="attached-name">{图.名}</span>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="attached-x"
                   aria-label={tf("不发这张：{0}", 图.名)}
                   onClick={() => 设待发图((前) => 前.filter((_, j) => j !== i))}
                 >
@@ -2667,14 +2698,27 @@ export function ConversationView({
                * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
                * 分不出「我挑重了」还是「界面画重了」。
                */
-              onAttachImages={(paths) =>
+              onAttachImages={(paths) => {
                 设待发图((前) => [
                   ...前,
                   ...paths
                     .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
                     .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
                 ])
-              }
+                /**
+                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
+                 * 人按完「上传图片」会有一段什么都不发生的空窗，
+                 * 而那正是「点了没反应」的样子。
+                 */
+                for (const p of paths) {
+                  void 要缩略图(p).then((预览) => {
+                    if (!预览) return
+                    设待发图((前) =>
+                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                    )
+                  })
+                }
+              }}
             />
             {/**
               * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。

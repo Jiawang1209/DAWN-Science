@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -1 && npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -12",
-    "testCommand": "python3 -c \"\np='src/ui/i18n/en.ts'; s=open(p).read()\ns=s.replace('  \\\"输入内容，回车发送\\\": \\\"Type a message, Enter to send\\\",\\n','')\nopen(p,'w').write(s)\"\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -6",
+    "buildCommand": "npx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"×|Tests |是「\" | head -6; npm run build 2>&1 | tail -1",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

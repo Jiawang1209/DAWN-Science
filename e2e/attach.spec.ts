@@ -168,10 +168,21 @@ test.describe("图片真的送进模型", () => {
     await page.locator(".composer-controls .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
 
-    // ① 发出去之前看得见——否则人不知道自己到底附上没有
+    /**
+     * ① **发出去之前看得见，而且看见的是图本身**（2026-08-13，作者给了
+     * 一张 Codex 的截图）。
+     *
+     * 一行文件名回答不了「我挑对了吗」——同一个目录里七张
+     * `截图 …11.02.31.png` 长得一模一样。**缩略图是唯一能一眼确认的东西。**
+     *
+     * 缩略图由主进程给（缩到 320px 再回），所以它是**后到的**：
+     * 用例等它，而不是假设它同步就位。
+     */
     const chip = page.locator(".attached-one")
     await expect(chip).toHaveCount(1)
-    await expect(chip).toContainText("一张图.png")
+    const 图 = chip.locator(".attached-thumb")
+    await expect(图).toBeVisible({ timeout: 10_000 })
+    await expect(图).toHaveAttribute("src", /^data:image\//)
 
     await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这张")
     await page.getByRole("button", { name: "发送", exact: true }).click()
@@ -275,8 +286,14 @@ test("**粘一张图进输入框，模型那边收到了**", async ({ dawn }) =>
     el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true }))
   })
 
-  // ① 粘完看得见
+  /**
+   * ① 粘完看得见，**而且立刻就是图本身**。
+   *
+   * 粘贴这一支的预览**不用问主进程**——字节已经在手上了。
+   * 所以它与「从磁盘挑」那条不同：这里不该有等待窗口。
+   */
   await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
+  await expect(page.locator(".attached-thumb")).toHaveAttribute("src", /^data:image\//)
 
   await 框.fill("看看这张粘的")
   await page.getByRole("button", { name: "发送", exact: true }).click()

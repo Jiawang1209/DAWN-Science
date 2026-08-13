@@ -3101,7 +3101,11 @@ pre {
 .attach-menu .btn:hover { background: var(--dawn-row-hover); }
 
 /**
- * 待发的图片（协议 4.12，2026-08-13）。
+ * 待发的图片（协议 4.12/4.13，2026-08-13）。
+ *
+ * **画图本身，不画文件名**——作者给了一张 Codex 的截图：一个圆角缩略图，
+ * `×` 压在右上角。一行文件名回答不了「我挑对了吗」：同一个目录里
+ * 七张 `截图 2026-08-13 上午11.02.31.png` 长得一模一样。
  *
  * **挑完到发出去之间必须看得见**——否则人不知道自己到底附上没有，
  * 而「附了图它却说没看见」正是这条路上最难查的那种错。
@@ -3109,7 +3113,7 @@ pre {
 .attached {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--dawn-space-2);
+  gap: var(--dawn-space-3);
   width: 100%;
   max-width: var(--dawn-thread-max-w);
   margin: 0;
@@ -3117,14 +3121,51 @@ pre {
   list-style: none;
 }
 .attached-one {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--dawn-space-1);
-  padding: 2px 2px 2px var(--dawn-space-2);
-  border-radius: var(--dawn-radius-row);
+  justify-content: center;
+  /* 正方形：一排图片挑高不一时，那一行会跟着起伏 */
+  width: 76px;
+  height: 76px;
+  border-radius: var(--dawn-radius-md);
+  corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-sidebar);
-  font-size: 12px;
+  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  overflow: hidden;
+}
+/**
+ * `cover` 而不是 `contain`：**方块里不留白边**。
+ * 缩略图只回答「是不是这张」，为此裁掉边缘是划算的。
+ */
+.attached-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 拿不到预览时退回名字：**看不见预览 ≠ 这一项不存在** */
+.attached-name {
+  max-width: 100%;
+  padding: 0 var(--dawn-space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--dawn-text-3);
+}
+/**
+ * 那颗 `×`。**常驻，不做悬停才出现**——本项目为「悬停才出现的入口」
+ * 被报过两次「没有这个功能」。压在右上角，底下垫一层实底，
+ * 否则落在浅色照片上它自己就没了。
+ */
+.attached-x {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 20px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-sm);
   color: var(--dawn-text-2);
 }
-/* 名字**不许被挤没**：它是「我附的是哪一张」的唯一答案 */
-.attached-name { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attached-x .icon { width: 12px; height: 12px; }

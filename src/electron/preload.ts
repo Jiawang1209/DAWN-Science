@@ -17,6 +17,7 @@ const CHANNEL = "dawn:workbench:invoke"
 const EVENT_CHANNEL = "dawn:workbench:event"
 const PICK_DIRECTORY = "dawn:shell:pick-directory"
 const PICK_FILES = "dawn:shell:pick-files"
+const IMAGE_THUMB = "dawn:shell:image-thumb"
 
 contextBridge.exposeInMainWorld("dawn", {
   invoke: (operation: string, request: unknown, requestId?: string) =>
@@ -40,6 +41,19 @@ contextBridge.exposeInMainWorld("dawn", {
    */
   pickFiles: (kind: "any" | "image" | "data", defaultPath?: string): Promise<string[]> =>
     ipcRenderer.invoke(PICK_FILES, kind, defaultPath),
+
+  /**
+   * 一张图的**缩略图**，`data:` URL（2026-08-13）。
+   *
+   * **只给缩小过的那一份。** 界面要的是「让人看一眼确认没挑错」，
+   * 而真正要送进模型的字节留在主进程——为了看一眼就把 20MB 搬过 IPC，
+   * 是拿内存换一个本来不需要的拷贝。
+   *
+   * 读不出来返回 null：**缩略图出不来不该拦住发送**（那只是看不见预览，
+   * 图本身还是好的）。
+   */
+  imageThumb: (path: string): Promise<string | null> =>
+    ipcRenderer.invoke(IMAGE_THUMB, path),
 
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)

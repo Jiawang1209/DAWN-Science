@@ -51,6 +51,28 @@ test.describe("挑文件", () => {
     const 菜单 = page.getByRole("menu", { name: "添加内容" })
     await expect(菜单).toBeVisible()
     await expect(菜单.getByRole("menuitem")).toHaveCount(3)
+
+    /**
+     * **三项是竖着排的一列，不是挤成一行**（作者：*「＋ 的这个样式，
+     * 很难看，应该是一列的」*）。
+     *
+     * 第一版我只给了定位——而 `.menu` 这个类**根本没有定义**，
+     * 于是它既没有底色也没有阴影，三项还并排挤在一起。
+     * 判据挑「后一项的顶边在前一项的底边之下」：那是「一列」的定义本身，
+     * 而不是某个具体的像素数（那种数改一次样式就要跟着改一次）。
+     */
+    const 项 = await 菜单.getByRole("menuitem").all()
+    const 盒们 = await Promise.all(项.map((x) => x.boundingBox()))
+    for (let i = 1; i < 盒们.length; i++) {
+      expect(盒们[i]!.y, "三项没有竖着排").toBeGreaterThanOrEqual(
+        盒们[i - 1]!.y + 盒们[i - 1]!.height - 1,
+      )
+      // 左缘齐平——一列里错开一两像素一眼就看得出来
+      expect(Math.round(盒们[i]!.x)).toBe(Math.round(盒们[0]!.x))
+    }
+    // 它是个浮层：得有底色，不然会和下面的输入卡糊在一起
+    const 底 = await 菜单.evaluate((el) => getComputedStyle(el).backgroundColor)
+    expect(底).not.toBe("rgba(0, 0, 0, 0)")
     await 菜单.getByRole("menuitem", { name: "上传文件", exact: true }).click()
     await expect(框).toHaveValue(/甲\.csv/)
     await expect(框).toHaveValue(/乙\.csv/)

@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
-    "testCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
+    "buildCommand": "python3 -c \"\np='src/ui/styles.css'; s=open(p).read()\ns=s.replace('.row-menu,\\n.attach-menu {\\n  position: fixed;','.row-menu {\\n  position: fixed;',1)\ns=s.replace('.row-menu .btn,\\n.attach-menu .btn {','.row-menu .btn {',1)\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/attach.spec.ts -g \"三个选项\" 2>&1 | grep -E \"✓|✘|passed|failed|竖着排|背景\" | head -6\ncp /tmp/styles.good.css src/ui/styles.css && npm run build 2>&1 | tail -1 && echo \"已还原并重建\"",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

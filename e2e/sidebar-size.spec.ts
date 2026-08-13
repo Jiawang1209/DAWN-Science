@@ -227,3 +227,48 @@ test("**收着的时候点搜索，侧栏会自己打开**", async ({ dawn }) =>
   await 等宽(page).toBeGreaterThan(100)
   await expect(page.getByPlaceholder(/搜索项目与会话/)).toBeVisible()
 })
+
+/**
+ * **两列都按自己的条数占位**（2026-08-13，作者：*「项目和对话的收纳，
+ * 这个要基于各自的收纳的个数，而不应该有那么多的 gap」*）。
+ *
+ * `.proj-list` 此前是 `flex: 1 1 auto`——**项目那一列吃掉所有剩余空间**，
+ * 于是只有两个项目时，「会话」那一栏被顶到侧栏很下面，
+ * 中间隔着一大块什么都不表达的空白。
+ *
+ * 判据是「项目列的高度 ≈ 它里面那几行的高度之和」，
+ * 而不是某个具体像素——后者改一次行高就要跟着改一次。
+ */
+test("**项目那一列的高度由条数决定，不吃掉剩余空间**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.evaluate(async () => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }
+    }
+    const p = (await w.dawn.invoke("getProviders", {})) as {
+      data?: { agents?: { agentId: string }[] }
+    }
+    const agentId = p.data?.agents?.[0]?.agentId
+    await w.dawn.invoke("createTask", { agentId, workspace: "/tmp/dawn-gap-甲" })
+    await w.dawn.invoke("createTask", { agentId }) // 一段没路径的，好让「会话」栏也在
+  })
+  await page.reload()
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+
+  const 列 = (await page.locator(".proj-list").boundingBox())!
+  const 行 = await page.locator(".proj-list > .proj-item").all()
+  const 行高 = (await Promise.all(行.map((x) => x.boundingBox()))).reduce(
+    (n, b) => n + (b?.height ?? 0),
+    0,
+  )
+  // 留 8px 余量给内距；**撑满时这个差值会是几百**
+  expect(列.height - 行高).toBeLessThan(8)
+
+  /**
+   * 而且「会话」那条标题**紧跟在项目列后面**，不是被顶到屏幕底部。
+   * 这一条才是作者真正看见的那件事。
+   */
+  const 分区 = await page.locator(".sidebar .side-section").all()
+  const 会话头 = (await 分区[分区.length - 1]!.boundingBox())!
+  expect(会话头.y - (列.y + 列.height)).toBeLessThan(40)
+})

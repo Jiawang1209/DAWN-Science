@@ -365,13 +365,26 @@ pre {
  * 撑满的话，两颗按钮之间永远隔着一整块空白——那块空白不表达任何东西。
  * 现在它们之间的距离**就等于中间有几条临时会话**。
  */
-.session-list { flex: 0 0 auto; max-height: 45vh; overflow-y: auto; }
 /**
- * 项目那一列**不抢会话的空间**：会话是主体（打开 app 就是要说话），
- * 项目是上下文。多到装不下时它自己滚，而不是把会话挤没。
+ * **两列都按自己的条数占位**（2026-08-13 改，作者：*「项目和对话的收纳，
+ * 这个要基于各自的收纳的个数，而不应该有那么多的 gap」*）。
+ *
+ * 上一版 `.proj-list` 是 `flex: 1 1 auto`——**项目那一列会吃掉所有剩余空间**，
+ * 于是只有两个项目时，「会话」那一栏被顶到侧栏很下面，
+ * 中间隔着一大块什么都不表达的空白。
+ *
+ * 而这条纪律上面那段注释里就写着（*「撑满的话，两颗按钮之间永远隔着
+ * 一整块空白——那块空白不表达任何东西」*）——**规矩在，执行漏了一半**：
+ * 会话那一列守住了，项目那一列没有。
+ *
+ * 装不下的时候由**侧栏整体滚**（`.sidebar` 本来就是 `overflow: auto`），
+ * 不给每一列各自开一个滚动条：两个内层滚动条会让「我到底在滚哪个」
+ * 变成一件要试出来的事。
  */
-/** 项目那一列吃掉剩下的空间：会话都嵌在里面，它才是要能滚的那个 */
-.proj-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.session-list,
+.proj-list {
+  flex: 0 0 auto;
+}
 
 /**
  * 行：扁平、齐左，**行与行之间不加分隔线**，用间距分组。
@@ -2084,7 +2097,8 @@ pre {
    原来是 `absolute`，被 `.session-list` 的 `overflow-y: auto` 裁掉——
    浏览器于是给出一条滚动条让人去够它；只有一条对话时列表根本没得滚，
    那个菜单就永远只露半截。位置由 `SessionRow` 按按钮的矩形算，开在行的右侧。 */
-.row-menu {
+.row-menu,
+.attach-menu {
   position: fixed;
   z-index: var(--z-modal);
   min-width: 8rem;
@@ -2098,7 +2112,8 @@ pre {
   box-shadow: var(--dawn-shadow-float);
 }
 
-.row-menu .btn {
+.row-menu .btn,
+.attach-menu .btn {
   justify-content: flex-start;
   width: 100%;
 }
@@ -3017,7 +3032,17 @@ pre {
  */
 .attach-trigger { color: var(--dawn-text-3); }
 
-/* 那颗 `＋` 的菜单：**向上弹**——输入卡贴着窗口底部，向下会被切掉 */
+/**
+ * 那颗 `＋` 的菜单（2026-08-13）。
+ *
+ * **外壳与行菜单共用一份**（见 `.row-menu, .attach-menu` 那一条）：
+ * 它们是同一类东西——贴着某个控件开的一列可点项。
+ * 第一版我只给了定位，`.menu` 这个类**根本没有定义**，
+ * 于是它没有底色、没有阴影，三项还挤成了一行。
+ * 作者的原话：*「＋ 的这个样式，很难看，应该是一列的。」*
+ *
+ * **向上弹**：输入卡贴着窗口底部，向下会被切掉。
+ */
 .attach { position: relative; margin-right: auto; }
 .attach-menu {
   position: absolute;

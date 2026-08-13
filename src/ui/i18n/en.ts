@@ -97,6 +97,17 @@ export const EN: Readonly<Record<string, string>> = {
   "变更": "Changes",
   "产出": "Outputs",
   "上下文": "Context",
+  // 工具权限（2026-08-13）。**刻意不叫 sandbox**——那是 OS 层的强制隔离，
+  // 我们这里是自己代码里的一道工具门。名字不许比能力大
+  "工具权限": "Tool permissions",
+  "全放行": "Allow everything",
+  "内置 agent 可以任意读写、执行命令。这是目前的默认。":
+    "The built-in agent may read, write and run anything. This is the current default.",
+  "拦下危险操作": "Block risky operations",
+  "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。**拦下就是拦下**——这一版还不能「问你一句然后放行」。":
+    "Writing to data/raw/, writing outside the workspace, deleting, installing packages, network access and git push are refused, and the reason is handed to the model so it can take another route. **Blocked means blocked** — this version cannot yet ask you and then let it through.",
+  "这是一道工具门，不是沙箱：它只管内置的 read / write / edit / bash 四个工具，管不到子 agent 与 MCP 带进来的工具，也拦不住绕过工具的路子。":
+    "This is a tool gate, not a sandbox: it covers only the four built-in tools (read / write / edit / bash). It does not cover tools brought in by sub-agents or MCP, and it cannot stop anything that bypasses tools altogether.",
   "环境": "Environment",
   // 机器快照那一支（②-B · R5）。**「系统」不能复用**——那个 msgid 归账本的
   // `origin: system`，同一个中文串两种含义、一份译文，必有一处是错的

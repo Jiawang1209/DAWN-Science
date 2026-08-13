@@ -18,6 +18,7 @@ import { RunStore } from "../store/runs.js"
 import { SessionStore } from "../store/sessions.js"
 import { ProjectManager } from "../project/manager.js"
 import { RunRecorder } from "../project/run-recorder.js"
+import { 造门 } from "../policy/permissions.js"
 import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
@@ -114,6 +115,14 @@ export interface Workbench {
   server: WorkbenchServer
   db: Database.Database
   sessions: SessionManager
+  /**
+   * 装配好的内置运行时。**只为让「权限门接上了没有」可被验证**（2026-08-13）。
+   *
+   * 不导出它，那句 `gate: 权限门` 就没有任何测试盯得住：
+   * 直接 `new NativeRuntime({gate})` 的用例验的是运行时那一层，
+   * **摘掉接线它们照样绿**（变异验证当场发现）。
+   */
+  nativeRuntime: NativeRuntime
   /** 事件中枢。`main.ts` 把它的推送接到 webContents */
   events: SessionTranscripts
   /**
@@ -175,8 +184,22 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   )
 
   /** **提出来复用**：模型目录端口要问的就是这一个实例（它持有 ModelRuntime 缓存） */
+  /**
+   * **工具权限门**（2026-08-13）。
+   *
+   * 此前 `NativeRuntime` 一直没收到 gate——`native.ts` 里那道门写得很认真、
+   * 注释还写着*「授权门静默失效比没有还危险」*，而它**从来没被接上过**。
+   * `providers.yaml` 里那行 `capabilities: [chat, exec]` 至今没有任何东西在执行。
+   *
+   * **档位是每次调用现取的**（`settings.get`），不是建会话时读一次：
+   * 读一次的话，在设置里改完档要等下次建会话才生效，
+   * 那是「设置里改了、界面上没反应」的经典形状。
+   */
+  const 权限门 = 造门(() => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"))
+
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
+    gate: 权限门,
     ...(生成的模型目录 ? { modelsPath: 生成的模型目录 } : {}),
     ...(opts.subagentChildEntry ? { subagentChildEntry: opts.subagentChildEntry } : {}),
   })
@@ -378,6 +401,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     sessions,
     events,
     reconciled,
+    /**
+     * 装配好的内置运行时。**只为让「门接上了没有」可被验证**（2026-08-13）。
+     *
+     * 不导出它的话，那句 `gate: 权限门` 没有任何测试盯得住——
+     * 直接 `new NativeRuntime({gate})` 的用例验的是运行时那一层，
+     * 摘掉这里的接线它们照样绿（变异验证当场发现）。
+     * 这个项目栽在「零件都对、装没装上没人知道」上不止一次。
+     */
+    nativeRuntime,
     onRemoteState(cb) {
       远端状态变了 = cb
       return () => {

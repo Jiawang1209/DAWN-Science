@@ -76,7 +76,25 @@ import type {
  * **打包进 Electron 后是否还通无法先验断言，而授权门静默失效比没有还危险**。
  * 包装工具定义则不碰文件系统与转译器。
  */
-export type ToolGate = (toolName: string, params: Record<string, unknown>) => string | undefined
+export interface ToolGateContext {
+  /** 这段会话的工作区绝对路径 */
+  workspace: string
+  /** 这是不是一台远端机器。**远端跑错的代价可能是别人的**（②-B 计划 §3.2） */
+  remote?: boolean
+}
+
+/**
+ * 门收语境（2026-08-13）。
+ *
+ * 此前签名只有 `(名字, 参数)`——而判据要判「写到工作区外面了没有」，
+ * 就必须知道工作区在哪。**包装器本身是按会话造的**（`gatedTools(cwd, …)`），
+ * 语境就在手边，往下传一层即可；让门自己去查会话，等于给它一条它不该有的依赖。
+ */
+export type ToolGate = (
+  toolName: string,
+  params: Record<string, unknown>,
+  ctx: ToolGateContext,
+) => string | undefined
 
 export interface NativeRuntimeOptions {
   /**
@@ -385,7 +403,7 @@ export class NativeRuntime implements AgentRuntime {
           ctx: unknown,
         ) {
           if (gate) {
-            const reason = gate(name, params)
+            const reason = gate(name, params, { workspace: cwd, ...(remote ? { remote: true } : {}) })
             if (reason !== undefined) {
               // **回一条 isError 结果，不要抛异常**——抛异常会中断整轮，
               // 模型学不到「这条被拒了」。Spike A-2 实测确认。

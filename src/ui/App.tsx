@@ -47,10 +47,11 @@ import {
   KernelsPanel,
   SettingsPanel,
   SettingsShell,
+  PermissionPanel,
   WorkspacePanel,
   type KernelRow,
 } from "./Settings.js"
-import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标 } from "./icons.js"
+import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
 import { SkillsView, McpView, PluginsView, type SkillLoad } from "./skills.js"
@@ -541,6 +542,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 但它与变量有一处根本不同：**变量会变，环境不会**——
    * 这一份是准入时刻冻结的，重取只是为了切会话时换成新会话的那一份。
    */
+  /**
+   * 工具权限档位（2026-08-13）。**进设置时取一次**——它不会自己变。
+   */
+  const [权限档, 设权限档] = useState<"allow-all" | "deny-risky">("allow-all")
+  useEffect(() => {
+    if (view !== "settings") return
+    client
+      .get<{ mode: "allow-all" | "deny-risky" }>("getPermissionMode", {})
+      .then((r) => 设权限档(r.mode))
+      .catch(fail)
+  }, [client, view])
+
   const [environment, setEnvironment] = useState<EnvironmentState>(undefined)
   useEffect(() => {
     if (view !== "panel" || !sessionId) {
@@ -2055,6 +2068,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   title: t("外观"),
                   icon: <外观图标 className="row-icon" />,
                   body: <AppearancePanel />,
+                },
+                {
+                  id: "permission",
+                  title: t("工具权限"),
+                  icon: <设置图标 className="row-icon" />,
+                  body: (
+                    <PermissionPanel
+                      mode={权限档}
+                      onChange={(m) => {
+                        // **乐观先动**：单选按钮点了不动是最难受的一种失灵；
+                        // 失败时如实退回去并出声
+                        const 旧的 = 权限档
+                        设权限档(m)
+                        client
+                          .get<{ mode: "allow-all" | "deny-risky" }>("setPermissionMode", { mode: m })
+                          .then((r) => 设权限档(r.mode))
+                          .catch((e: unknown) => {
+                            设权限档(旧的)
+                            fail(e)
+                          })
+                      }}
+                    />
+                  ),
                 },
                 ...(默认工作区
                   ? [

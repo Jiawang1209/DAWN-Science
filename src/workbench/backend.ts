@@ -1231,6 +1231,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 两个解释器路径（2026-08-10，作者定的机制）。
      * **没配的那个不给字段**——「还没配」与「配了一个空路径」在界面上要说不同的话。
      */
+    /**
+     * 工具权限档位（2026-08-13）。
+     *
+     * **没配 = `allow-all`**，也就是今天的行为。默认改成拦截会让一个正在干活的人
+     * 毫无预兆地开始撞墙，而这一版还没有「问一句、你点允许」那条路——撞了也没法放行。
+     */
+    getPermissionMode: async () => ({
+      mode: settings?.get("permission.mode") === "deny-risky" ? ("deny-risky" as const) : ("allow-all" as const),
+    }),
+
+    setPermissionMode: async ({ mode }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+      settings.set("permission.mode", mode, new Date().toISOString())
+      return { mode }
+    },
+
     getDefaultWorkspace: async () => {
       const 配的 = settings?.get("workspace.default")
       return { path: 配的 ?? 系统默认工作目录(), isDefault: !配的 }

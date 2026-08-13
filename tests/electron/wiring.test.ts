@@ -5,11 +5,14 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, rmSync, existsSync } from "node:fs"
+import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createWorkbench } from "../../src/electron/wiring.js"
 import { memoryCredentials } from "../helpers/credentials.js"
+import { NativeRuntime } from "../../src/runtime/native.js"
+import { SettingsStore } from "../../src/store/settings.js"
+import { 造门 } from "../../src/policy/permissions.js"
 
 const cleanups: (() => void)[] = []
 afterEach(() => {
@@ -182,5 +185,101 @@ describe("createWorkbench", () => {
     const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
     expect(() => wb.close()).not.toThrow()
     expect(() => wb.close()).not.toThrow()
+  })
+})
+
+/**
+ * **工具权限门真的接上了吗**（2026-08-13）。
+ *
+ * 这条盯的是接线，不是判据。判据在 `tests/policy/permissions.test.ts` 里有 30 条，
+ * 而**它们全绿的同时，门可以一次都没被装上**——`native.ts` 里那道门写好之后
+ * 就是这么闲置了很久的，它自己的注释还写着「授权门静默失效比没有还危险」。
+ *
+ * 走的是 `NativeRuntime` 真实的工具包装路径：拿到包装过的工具定义，
+ * 直接调它的 `execute`，看门有没有把它拦下。
+ */
+describe("工具权限门 · 接线", () => {
+  function 造运行时(档: "allow-all" | "deny-risky") {
+    return new NativeRuntime({ gate: 造门(() => 档) })
+  }
+
+  /** 从运行时手上拿到那批**包装过的**工具定义 */
+  function 工具们(rt: NativeRuntime, workspace: string): Record<string, unknown>[] {
+    const 拿 = (rt as unknown as {
+      gatedTools(cwd: string, sessionId: string): Record<string, unknown>[] | undefined
+    }).gatedTools.bind(rt)
+    const out = 拿(workspace, "s1")
+    expect(out, "运行时没有给出包装过的工具——门根本没机会生效").toBeDefined()
+    return out!
+  }
+
+  async function 跑(工具: Record<string, unknown>, params: Record<string, unknown>) {
+    const exec = 工具.execute as (
+      id: string, p: Record<string, unknown>, s: undefined, u: undefined, c: undefined,
+    ) => Promise<{ isError?: boolean; content?: { text?: string }[] }>
+    return exec("call-1", params, undefined, undefined, undefined)
+  }
+
+  it("**deny-risky 档下，写 data/raw 被门拦下**，且理由到了模型手里", async () => {
+    const 全部 = 工具们(造运行时("deny-risky"), "/w/proj")
+    const write = 全部.find((t) => t.name === "write")
+    expect(write, "pi 的 write 工具没在包装名单里——判据键的名字可能对不上").toBeDefined()
+
+    const r = await 跑(write!, { path: "data/raw/a.csv", content: "x" })
+    expect(r.isError, "门没拦住").toBe(true)
+    expect(r.content?.[0]?.text, "拒绝理由要能让模型改道").toMatch(/data\/processed/)
+  })
+
+  /**
+   * **放行就该真的写进去。**
+   *
+   * 用一个真目录，而不是靠「报了别的错」来证明没被拦——
+   * 后者是拿一个失败去证明另一个失败，读的人分不清哪个是判据。
+   */
+  it("**allow-all 档下不拦** —— 默认档不改变现有手感", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-gate-"))
+    cleanups.push(() => rmSync(dir, { recursive: true, force: true }))
+    const 全部 = 工具们(造运行时("allow-all"), dir)
+    const write = 全部.find((t) => t.name === "write")
+
+    await 跑(write!, { path: "data/raw/a.csv", content: "让它写" })
+    expect(
+      readFileSync(join(dir, "data/raw/a.csv"), "utf8"),
+      "全放行这一档竟然没写进去",
+    ).toBe("让它写")
+  })
+
+  /**
+   * **这一条盯的是 `wiring.ts` 里那句 `gate: 权限门`。**
+   *
+   * 上面三条直接 `new NativeRuntime({gate})`——它们验的是运行时那一层，
+   * **把接线摘掉照样全绿**（变异验证当场发现，与 R5 那次同一个形状）。
+   * 所以这里走 `createWorkbench` 真正装配出来的那个运行时。
+   */
+  it("**createWorkbench 装配出来的运行时带着门** —— 盯的是接线那一句", async () => {
+    const dbPath = newDbPath()
+    const wb = createWorkbench({
+      configPath: configFile(), dbPath, credentials: memoryCredentials(),
+    })
+    cleanups.push(() => wb.close())
+    // 档位存进设置：门是每次调用现取的，所以这里改完立刻生效
+    new SettingsStore(wb.db).set("permission.mode", "deny-risky", "2026-08-13T00:00:00.000Z")
+
+    const 拿 = (wb.nativeRuntime as unknown as {
+      gatedTools(cwd: string, sessionId: string): Record<string, unknown>[] | undefined
+    }).gatedTools.bind(wb.nativeRuntime)
+    const write = 拿("/w/proj", "s1")?.find((t) => t.name === "write")
+    expect(write, "装配出来的运行时没有包装过的 write").toBeDefined()
+
+    const r = await 跑(write!, { path: "data/raw/a.csv", content: "x" })
+    expect(r.isError, "wiring 里那句 gate 没接上——门在运行时那层是好的，但没装上去").toBe(true)
+  })
+
+  it("语境真的传下去了：工作区之外的写入拦得住", async () => {
+    const 全部 = 工具们(造运行时("deny-risky"), "/w/proj")
+    const write = 全部.find((t) => t.name === "write")
+    const r = await 跑(write!, { path: "/etc/hosts", content: "x" })
+    expect(r.isError).toBe(true)
+    expect(r.content?.[0]?.text).toMatch(/工作区/)
   })
 })

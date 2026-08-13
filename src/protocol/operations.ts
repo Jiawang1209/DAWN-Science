@@ -744,6 +744,29 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 工具权限档位（2026-08-13）。
+   *
+   * **只有两档，因为只做得到两档。** 「问一句人」需要主进程↔界面的一次往返，
+   * 那条路还没有；现在就把「请求批准」的名字占上、行为却是直接拒绝，
+   * 正是规格 7.5 禁止的静默偏离。名字如实叫「拦下」，等询问通了再加。
+   *
+   * **这不是沙箱**：沙箱是操作系统层的强制隔离，这里是我们代码里的一道门——
+   * 模型走我们包装过的工具时拦得住，绕过去拦不住。名字不许比能力大。
+   */
+  getPermissionMode: {
+    request: Empty,
+    response: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),
+    mutating: false,
+  },
+
+  setPermissionMode: {
+    request: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),
+    /** **回显现状**：看不见自己改成了什么，等于没改 */
+    response: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),
+    mutating: true,
+  },
+
   getInterpreters: {
     request: Empty,
     response: z

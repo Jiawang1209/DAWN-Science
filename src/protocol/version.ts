@@ -195,8 +195,21 @@
  *   **溯源链**上（资源 → 产出它的 run → 环境），**Run 自己指不到自己的环境**——
  *   于是 ②-B 那条判据「两次运行都留下可查的 Run 记录，**且记录里有环境快照**」
  *   连内核会话都不成立。**缺省 = 不知道**，不是「没有环境」。
+ * 5.2（2026-08-13）：`getPermissionMode` / `setPermissionMode`——**工具权限门**。纯新增。
+ *
+ *   补的是一个「看起来有、其实没接」的洞：`native.ts` 里那道 `ToolGate` 写好之后
+ *   **从来没被传给运行时**，于是 `providers.yaml` 里那行 `capabilities: [chat, exec]`
+ *   至今没有任何东西在执行。
+ *
+ *   **只有两档**（`allow-all` / `deny-risky`），因为只做得到两档：「问一句人」
+ *   需要主进程↔界面的一次往返，那条还没有。现在就把「请求批准」的名字占上、
+ *   行为却是直接拒绝，正是规格 7.5 禁止的静默偏离。
+ *
+ *   **它不是沙箱**：沙箱是操作系统层的强制隔离（Codex 走 seatbelt / landlock），
+ *   这里是我们代码里的一道门——模型走我们包装过的工具时拦得住，绕过去拦不住。
+ *   名字不许比能力大，所以界面上也不叫它沙箱。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.1"
+export const WORKBENCH_PROTOCOL_VERSION = "5.2"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

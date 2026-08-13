@@ -64,13 +64,10 @@ function 会话图标() {
 function WorkspaceEntry({
   workspace,
   onPick,
-  onClear,
 }: {
   workspace?: string | undefined
   /** 去弹原生目录选择器（设一个 / 换一个）。**不给就只显示，不画按钮** */
   onPick?: (() => void) | undefined
-  /** 退回普通对话。**只在设过的时候出现** */
-  onClear?: (() => void) | undefined
 }) {
   /**
    * 形态是**一颗 chip**（2026-08-12，CDP 实测 WorkBuddy 的 `_chip_`）：
@@ -113,18 +110,6 @@ function WorkspaceEntry({
         * 不提供信息，只占地方——它和「未选择」那种占位符是同一类东西。
         * chip 自己写着「选择工作目录」，那已经说明它还没设了。
         */}
-      {onClear ? (
-        <Button variant="ghost" size="sm" className="ws-chip" onClick={onClear}>
-          {/**
-            * **措辞刻意避开「取消」两个字**（2026-08-12）。
-            *
-            * 确认框上那颗就叫「取消」，两处同名会让「按名字找按钮」
-            * 变成一件靠运气的事——**屏幕阅读器与测试都一样**，
-            * 而 e2e 当场撞上了（一个 `取消` 匹配到两个元素）。
-            */}
-          <span className="ws-chip-label">{t("改回普通对话")}</span>
-        </Button>
-      ) : null}
     </span>
   )
 }
@@ -394,36 +379,39 @@ export function SessionRow({
 }
 
 /**
- * 输入卡左下角那颗 `＋`（2026-08-13，作者给了一张 WorkBuddy 的截图：
- * *「对话窗口里面要搞一个加号，就按照这个搞。」*）。
+ * 输入卡左下角那颗 `＋`（2026-08-13）。
  *
- * ## 明确没抄的四样，以及为什么
+ * 作者：*「其实是一个按钮，点击进去有几个选项，上传文件，上传图片，
+ * 上传数据，之类的，可以供我们进行选择。」*
  *
- * 截图里是六项：`Files… / Folder… / Images… / Paste image / URL… /
- * Prompt snippets…`。我们只做**前两项**，因为**只有前两项是真的**：
+ * ## 三项之间真正的区别，是文件浏览器里的类型过滤
  *
- * - **图片 / 粘贴图片**：要模型收多模态的消息片段，协议与 provider 两侧都没有。
- * - **URL**：agent 手上只有 `bash / edit / write`（`runtime/native.ts` 里那一列），
- *   **没有取网页的工具**。塞一个 URL 进去，它只能回一句「我打不开」。
- * - **提示词片段**：我们根本没有片段这套东西。
+ * **不是三种能力**——我们对图片没有任何特别的处理（模型看不见图）。
+ * 三项唯一的差别是**打开的浏览器预先筛掉了什么**：
+ * 挑数据时不必在一堆截图里翻，挑图片时也一样。
+ * 每一档都留着「所有文件」那条退路：过滤器猜错扩展名时，人得能自己绕过去。
  *
- * 摆一个点了没用的入口比没有更坏（不变式 5：不伪造事实）——
- * 这条与模型 pill 上没抄那些倍率、徽标是同一个判断。
+ * **图片仍然值得单列一项**：这是一个数据科学工作台，agent 有 bash 和 Python，
+ * **它能对着一个图片文件真的干活**（读尺寸、转格式、跑处理、把结果画出来）。
+ * 它做不到的只是「用眼睛看」——而那件事这个菜单也没有声称。
  *
  * ## 它做的事：把路径插进输入框
  *
- * 不是「上传」——**东西本来就在这台机器上**，而 agent 的手也在这台机器上
- * （bash 的 cwd 就是这段对话的工作目录）。所以「附上一个文件」的真实含义是
- * **告诉它去看哪儿**，那就是一个路径。
- *
- * 在工作目录里面的写相对路径，外面的写绝对路径：前者更短、也更像人会打的字，
- * 而后者**必须是绝对的**，否则 agent 按 cwd 一拼就指到别处去了。
+ * 不是真的「上传」——**东西本来就在这台机器上**，而 agent 的手也在
+ * （bash 的 cwd 就是这段对话的工作目录）。所以「把这个文件给它」的真实含义
+ * 是**告诉它去看哪儿**，那就是一个路径。
  */
-function AttachMenu({
+const 上传项 = [
+  { kind: "any", 名: msgid("上传文件") },
+  { kind: "image", 名: msgid("上传图片") },
+  { kind: "data", 名: msgid("上传数据") },
+] as const
+
+function AttachButton({
   workspace,
   onInsert,
 }: {
-  /** 这段对话的工作目录。**用来把路径缩成相对的**，没有就一律绝对路径 */
+  /** 这段对话的工作目录。**用来把路径缩成相对的**，也用作浏览器的起点 */
   workspace?: string | undefined
   onInsert: (文本: string) => void
 }) {
@@ -440,17 +428,12 @@ function AttachMenu({
     return () => document.removeEventListener("mousedown", 关)
   }, [开着])
 
-  const 挑 = async (要目录: boolean) => {
+  const 挑 = async (kind: "any" | "image" | "data") => {
     设开着(false)
     const w = window as unknown as {
-      dawn?: {
-        pickDirectory?: (d?: string) => Promise<string | null>
-        pickFiles?: (d?: string) => Promise<string[]>
-      }
+      dawn?: { pickFiles?: (k: string, d?: string) => Promise<string[]> }
     }
-    const 选中 = 要目录
-      ? [await w.dawn?.pickDirectory?.(workspace)].filter((x): x is string => !!x)
-      : ((await w.dawn?.pickFiles?.(workspace)) ?? [])
+    const 选中 = (await w.dawn?.pickFiles?.(kind, workspace)) ?? []
     if (选中.length === 0) return // 取消了：什么都不做，也不吭声
     onInsert(选中.map((p) => 相对于(p, workspace)).join(" "))
   }
@@ -461,7 +444,12 @@ function AttachMenu({
         variant="ghost"
         size="icon"
         className="attach-trigger"
-        aria-label={t("添加附件")}
+        /**
+         * **不叫「上传」**：那三项都以「上传」开头，一个裸的「上传」
+         * 会同时指向四个东西——`getByRole(name)` 是子串匹配，
+         * 读屏与 Playwright 都一样。设计契约里那条扫描盯着这件事。
+         */
+        aria-label={t("添加内容")}
         aria-haspopup="menu"
         aria-expanded={开着}
         onClick={() => 设开着((v) => !v)}
@@ -469,17 +457,18 @@ function AttachMenu({
         <加号图标 />
       </Button>
       {开着 ? (
-        <div className="menu attach-menu" role="menu" aria-label={t("添加附件")}>
-          {/* 组头：截图里那个 `ATTACH`。**它说清这一列是干什么的** */}
-          <p className="model-group-head">{t("附上")}</p>
-          <Button variant="ghost" size="inline" role="menuitem" onClick={() => void 挑(false)}>
-            <文件图标 />
-            {t("从磁盘挑…")}
-          </Button>
-          <Button variant="ghost" size="inline" role="menuitem" onClick={() => void 挑(true)}>
-            <文件夹图标 />
-            {t("整个目录…")}
-          </Button>
+        <div className="menu attach-menu" role="menu" aria-label={t("添加内容")}>
+          {上传项.map((项) => (
+            <Button
+              key={项.kind}
+              variant="ghost"
+              size="inline"
+              role="menuitem"
+              onClick={() => void 挑(项.kind)}
+            >
+              {t(项.名)}
+            </Button>
+          ))}
         </div>
       ) : null}
     </div>
@@ -1614,6 +1603,7 @@ export function AgentPill({
   services,
   onSwitchService,
   onPick,
+  onConfigure,
   triggerLabel,
 }: {
   agents: readonly string[]
@@ -1628,6 +1618,17 @@ export function AgentPill({
   kind?: "native" | "pty" | "cli" | "kernel" | undefined
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   label?: ((agentId: string) => string) | undefined
+  /**
+   * 「这里没有我要的」的去处（2026-08-13，作者提：*「新建任务页面对话框里面
+   * 选择 LLM 的地方，也要加一个配置自定义模型」*）。
+   *
+   * 对话里那颗 `ModelPill` 早就有这一条了，**而空态这颗没有**——
+   * 于是「我想加一家」这件事在首页上唯一的出路是自己想到去翻设置。
+   * 同一个需求在两个屏上应该有同一个出口。
+   *
+   * **不给就不画那一条**：不摆一个点了没反应的入口。
+   */
+  onConfigure?: (() => void) | undefined
   /**
    * 能**就地换过去**的服务（2026-08-11）。只有 native 会话有——
    * 一个 shell 或 claude 会话没法半路变成 API 会话。
@@ -1742,6 +1743,26 @@ export function AgentPill({
             ))}
           </ul>
           </div>
+          {/**
+            * **底一条把「这里没有我要的」接到「去哪加一个」**（2026-08-13）。
+            * 与对话里那颗 `ModelPill` 底下那条是同一句话、同一个去处——
+            * 一个需求在两个屏上不该有两种答案。
+            */}
+          {onConfigure ? (
+            <div className="model-menu-foot">
+              <Button
+                variant="text"
+                size="inline"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false)
+                  onConfigure()
+                }}
+              >
+                {t("配置自定义模型")}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -2094,7 +2115,6 @@ export function ConversationView({
   kernelInstanceId,
   workspace,
   onPickWorkspace,
-  onClearWorkspace,
   serviceLabel,
   onOpenSettings,
 }: {
@@ -2108,8 +2128,6 @@ export function ConversationView({
   workspace?: string | undefined
   /** 去弹原生目录选择器（设一个 / 换一个）。**不给就不画那颗按钮** */
   onPickWorkspace?: (() => void) | undefined
-  /** 退回普通对话 */
-  onClearWorkspace?: (() => void) | undefined
   /** provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。模型 pill 的分组标题用它 */
   serviceLabel?: ((providerId: string) => string) | undefined
   /** 「配置自定义模型」通向哪。**不给就不画那一条** */
@@ -2441,7 +2459,7 @@ export function ConversationView({
               * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
               * 所以分居两端——中间那段空白就是它们的分界。
               */}
-            <AttachMenu
+            <AttachButton
               {...(workspace ? { workspace } : {})}
               /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
               onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
@@ -2530,7 +2548,6 @@ export function ConversationView({
               <WorkspaceEntry
                 {...(workspace ? { workspace } : {})}
                 {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
-                {...(workspace && onClearWorkspace ? { onClear: onClearWorkspace } : {})}
               />
             </div>
           ) : null}
@@ -3336,7 +3353,7 @@ export function EmptyConversation({
               />
               <div className="composer-controls">
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
-                <AttachMenu
+                <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
                   onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
                 />
@@ -3357,6 +3374,7 @@ export function EmptyConversation({
                     agents={agents}
                     {...(agentLabel ? { label: agentLabel } : {})}
                     onPick={(a) => onStart(a, 草稿.trim() || undefined, 工作目录)}
+                    {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
                     triggerLabel={agentLabel ? agentLabel(first) : first}
                   />
                 ) : null}
@@ -3386,6 +3404,17 @@ export function EmptyConversation({
                 */}
               {onPickDirectory ? (
                 <div className="composer-footer">
+                  {/**
+                    * **「改回普通对话」这里也没有了**（2026-08-13，作者截图圈的）。
+                    *
+                    * 我上一轮只摘了对话里那颗，空态这颗留着，理由是
+                    * 「这里还什么都没发生」。作者又圈了一次——他是对的，
+                    * 而我把「这个动作无害」当成了「这个动作有用」：
+                    * **选错了文件夹，再点一次 chip 换成对的那个就行**，
+                    * 「清空」多出来的只是一条通向同一个地方的岔路。
+                    *
+                    * **一个入口存在的理由不能是「它不会造成伤害」。**
+                    */}
                   <WorkspaceEntry
                     {...(工作目录 ? { workspace: 工作目录 } : {})}
                     onPick={() => {
@@ -3394,7 +3423,6 @@ export function EmptyConversation({
                         if (d) 设工作目录(d)
                       })
                     }}
-                    {...(工作目录 ? { onClear: () => 设工作目录(undefined) } : {})}
                   />
                 </div>
               ) : null}

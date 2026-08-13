@@ -103,3 +103,30 @@ test("菜单向上弹 —— pill 贴着窗口底部，向下会被切掉", asyn
 test("侧栏那份真的没了", async ({ dawn }) => {
   await expect(dawn.page.locator(".agent-pick")).toHaveCount(0)
 })
+
+/**
+ * **首页那颗挑 LLM 的 pill 底下也要有「配置自定义模型」**（2026-08-13，
+ * 作者：*「新建任务页面对话框里面选择 LLM 的地方，也要加一个配置自定义模型，
+ * 然后点击进去一下子也可以跳转到自定义模型配置的地方去。」*）。
+ *
+ * 对话里那颗 `ModelPill` 早就有这一条了，**而空态这颗没有**——
+ * 于是「我想加一家」这件事在首页上唯一的出路是自己想到去翻设置。
+ * **同一个需求在两个屏上不该有两种答案。**
+ */
+test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => {
+  const { page } = dawn
+
+  // 空态那颗 pill：只有配了不止一家时才画（一家时没什么可挑的）
+  const pill = page.locator(".composer-controls .agent-pill")
+  if ((await pill.count()) === 0) test.skip(true, "这套夹具只配了一家 agent，没有这颗 pill")
+
+  await pill.locator("button").first().click()
+  const 去配 = page.getByRole("menuitem", { name: /配置自定义模型/ })
+  await expect(去配).toBeVisible()
+  await 去配.click()
+
+  // 真的到了设置的模型服务那一块
+  await expect(page.getByText(/模型服务/).first()).toBeVisible({ timeout: 30_000 })
+  // 点完就收起——菜单不该赖着不走
+  await expect(page.getByRole("menuitem", { name: /配置自定义模型/ })).toHaveCount(0)
+})

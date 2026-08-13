@@ -32,37 +32,28 @@ test.afterAll(() => rmSync(目录, { recursive: true, force: true }))
 test.describe("挑文件", () => {
   test.use({ dawnOptions: { pickFiles: [甲, 乙] } })
 
-  test("**只有「从磁盘挑…」与「整个目录…」两项**", async ({ dawn }) => {
-    const { page } = dawn
-    await 开一段临时会话(page)
-    await 等进了对话(page)
-
-    await page.locator(".composer-controls .attach-trigger").click()
-    const 菜单 = page.getByRole("menu", { name: "添加附件" })
-    await expect(菜单).toBeVisible()
-
-    await expect(菜单.getByRole("menuitem", { name: /从磁盘挑…/ })).toBeVisible()
-    await expect(菜单.getByRole("menuitem", { name: /整个目录…/ })).toBeVisible()
-
-    /**
-     * **没抄的那四样一个都不许冒出来。**
-     * 它们看起来能点，点下去只能得到一句「我做不到」——
-     * 那比这个入口不存在更坏。
-     */
-    const 文本 = (await 菜单.textContent()) ?? ""
-    expect(文本).not.toMatch(/图片|粘贴|URL|片段/)
-  })
-
-  test("**挑完之后，路径真的进了输入框**", async ({ dawn }) => {
+  /**
+   * **一颗按钮，点开是三个选项**（作者第三次说清的：*「其实是一个按钮，
+   * 点击进去有几个选项，上传文件，上传图片，上传数据」*）。
+   *
+   * 我在这件事上来回改了两次——**每次都是照着自己的推断改的**，
+   * 而不是照着他的话。留个记号在这儿。
+   */
+  test("**一颗按钮，点开是三个选项**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
     await 等进了对话(page)
 
     const 框 = page.getByPlaceholder(/回车发送/)
     await 框.fill("看看这两个")
-
     await page.locator(".composer-controls .attach-trigger").click()
-    await page.getByRole("menuitem", { name: /从磁盘挑…/ }).click()
+
+    const 菜单 = page.getByRole("menu", { name: "添加内容" })
+    await expect(菜单).toBeVisible()
+    await expect(菜单.getByRole("menuitem")).toHaveCount(3)
+    await 菜单.getByRole("menuitem", { name: "上传文件", exact: true }).click()
+    await expect(框).toHaveValue(/甲\.csv/)
+    await expect(框).toHaveValue(/乙\.csv/)
 
     /**
      * **接在已经打的字后面，不覆盖它。**
@@ -70,10 +61,40 @@ test.describe("挑文件", () => {
      * 已经报过好几次。
      */
     await expect(框).toHaveValue(/看看这两个/)
-    await expect(框).toHaveValue(/甲\.csv/)
-    await expect(框).toHaveValue(/乙\.csv/)
-
-    // 点完就收起来——菜单不该赖着不走
-    await expect(page.getByRole("menu", { name: "添加附件" })).toHaveCount(0)
   })
+
+  /** **空态那一屏也有它**：一个动作可以有两个入口，但走的是同一份实现 */
+  test("**空态那一屏也给这颗按钮**", async ({ dawn }) => {
+    const { page } = dawn
+    const 框 = page.getByPlaceholder(/回车发送/)
+    await 框.fill("先挑个文件")
+    await page.locator(".composer-controls .attach-trigger").click()
+    await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
+    await expect(框).toHaveValue(/甲\.csv/)
+  })
+})
+
+/**
+ * **三项各自筛掉不同的东西**（2026-08-13，作者：*「点击进去有几个选项，
+ * 上传文件，上传图片，上传数据，之类的」*）。
+ *
+ * 这条盯的是「菜单在、三项都在、点了真的走通」。
+ * **类型过滤本身验不了**——那是系统对话框里的事，Playwright 够不着；
+ * 夹具那个注入点绕过的正是这个对话框。所以这里不假装验它，
+ * 只钉住「三个入口都真的通到插入路径上」。
+ */
+test.describe("三项都通", () => {
+  test.use({ dawnOptions: { pickFiles: [甲] } })
+
+  for (const 名 of ["上传文件", "上传图片", "上传数据"]) {
+    test(`**「${名}」点下去，路径进了输入框**`, async ({ dawn }) => {
+      const { page } = dawn
+      const 框 = page.getByPlaceholder(/回车发送/)
+      await page.locator(".composer-controls .attach-trigger").click()
+      await page.getByRole("menuitem", { name: 名, exact: true }).click()
+      await expect(框).toHaveValue(/甲\.csv/)
+      // 点完就收起——菜单不该赖着不走
+      await expect(page.getByRole("menu", { name: "添加内容" })).toHaveCount(0)
+    })
+  }
 })

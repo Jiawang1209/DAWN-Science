@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npx playwright test 2>&1 | tail -12",
-    "testCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npx playwright test 2>&1 | tail -12",
+    "buildCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
+    "testCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

@@ -334,12 +334,33 @@ app.whenReady().then(() => {
    * 多选：`multiSelections`。取消返回空数组，**不是 null**——
    * 调用点拿到的永远是一个数组，少一处判空就少一处漏判。
    */
-  ipcMain.handle("dawn:shell:pick-files", async (e, defaultPath?: string) => {
+  ipcMain.handle("dawn:shell:pick-files", async (e, kind: string, defaultPath?: string) => {
     const 注入的 = process.env.DAWN_PICK_FILES
     if (注入的) return 注入的.split(",").filter(Boolean)
     const owner = BrowserWindow.fromWebContents(e.sender)
+    /**
+     * 类型过滤。**它是「上传图片 / 上传数据」唯一真实的区别**——
+     * 我们对图片没有任何特别能力（模型看不见图），这里只是替人把
+     * 文件浏览器里的噪声挡掉。**每一档都留一条「所有文件」的退路**：
+     * 过滤器猜错了扩展名时，人得能自己绕过去。
+     */
+    const 过滤: Record<string, { name: string; extensions: string[] }[]> = {
+      image: [
+        { name: "图片", extensions: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff", "svg"] },
+        { name: "所有文件", extensions: ["*"] },
+      ],
+      data: [
+        {
+          name: "数据",
+          extensions: ["csv", "tsv", "xlsx", "xls", "json", "jsonl", "parquet", "feather",
+                       "dta", "sav", "h5", "hdf5", "nc", "rds", "rdata", "txt"],
+        },
+        { name: "所有文件", extensions: ["*"] },
+      ],
+    }
     const opts = {
       properties: ["openFile" as const, "multiSelections" as const],
+      ...(过滤[kind] ? { filters: 过滤[kind] } : {}),
       ...(defaultPath ? { defaultPath } : {}),
     }
     const r = owner

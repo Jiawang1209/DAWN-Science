@@ -31,10 +31,15 @@ contextBridge.exposeInMainWorld("dawn", {
 
   /**
    * 原生文件选择器（2026-08-13，作者要的那颗 `＋`）。**可以多选。**
-   * 取消时同样返回空数组——用户改主意不是错误。
+   *
+   * `kind` 决定对话框里的类型过滤——**那就是「上传图片 / 上传数据」
+   * 与「上传文件」之间真正的区别**：它不声称我们对图片有什么特别能力，
+   * 只是替你把浏览器里的噪声挡掉。
+   *
+   * 取消时返回空数组——用户改主意不是错误。
    */
-  pickFiles: (defaultPath?: string): Promise<string[]> =>
-    ipcRenderer.invoke(PICK_FILES, defaultPath),
+  pickFiles: (kind: "any" | "image" | "data", defaultPath?: string): Promise<string[]> =>
+    ipcRenderer.invoke(PICK_FILES, kind, defaultPath),
 
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)

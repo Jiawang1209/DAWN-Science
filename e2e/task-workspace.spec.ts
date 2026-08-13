@@ -257,12 +257,18 @@ test.describe("选好目录之后", () => {
   test("**对话里只剩「换一个目录」，没有「改回普通对话」**", async ({ dawn }) => {
     const { page } = dawn
 
-    // 空态那一屏仍然给它 —— 那里还什么都没发生
+    /**
+     * **空态这一屏也没有它了**（2026-08-13 第二次，作者截图圈的）。
+     *
+     * 我上一轮只摘了对话里那颗，留着空态这颗，理由是「这里还什么都没发生」——
+     * 而那是把「这个动作无害」当成了「这个动作有用」。
+     * **选错文件夹的答案是再点一次 chip 换成对的那个**，不是清空。
+     */
     const 空态chip = page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ })
     await 空态chip.click()
     await expect(
       page.locator(".composer-footer").getByRole("button", { name: "改回普通对话" }),
-    ).toBeVisible()
+    ).toHaveCount(0)
 
     // 开口 —— 从这一刻起它就是一个项目了
     await page.getByPlaceholder(/回车发送/).fill("开始干活")

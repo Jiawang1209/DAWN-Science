@@ -16,14 +16,14 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
-  "添加附件": "Add an attachment",
-  "附上": "ATTACH",
-  "从磁盘挑…": "Files…",
-  "整个目录…": "Folder…",
+  "添加内容": "Add content",
+  "上传文件": "Upload a file",
+  "上传图片": "Upload an image",
+  "上传数据": "Upload data",
   "参考：本机注册过的 Jupyter 内核（{0}）": "For reference: Jupyter kernels registered on this machine ({0})",
   "⚠ 有 {0} 个同名内核被前面的挡住了：{1}": "⚠ {0} kernels are shadowed by earlier ones with the same name: {1}",
   "⚠ 有 {0} 条注册项读不出来：{1}": "⚠ {0} registrations could not be read: {1}",
-  "配置它": "Configure",
+  "配置它": "Set up",
   "现在能装进来的能力有两样，各自在旁边那两屏：「技能」是你自己写的子 agent（.dawn/agents/*.md，写完就能用）；「MCP 服务器」是外部工具，管道通了、还差配置界面。插件要装什么、怎么加载、边界在哪，都还没定——定下来之前这里不会有列表。": "Two kinds of capability can be added today, each on its own screen nearby. Skills are sub-agents you write yourself (.dawn/agents/*.md — they work as soon as you save one). MCP servers are external tools: the plumbing works, only the configuration screen is missing. What a plugin would install, how it would load, and where its limits lie are all still undecided — until they are, there will be no list here.",
   "管道已经通了：每开一段托管会话（claude / codex），我们会按会话写一份 mcp.json，并用 --mcp-config 指过去。但目前还没有配置界面，而且它只对托管的那两类生效——内置对话走 pi，那条还没接上。": "The plumbing works: for every managed session (claude / codex) we write a per-session mcp.json and point --mcp-config at it. But there is no configuration screen yet, and it only applies to those two managed kinds — the built-in chat goes through pi, which is not wired up.",
   "会一并移除它们名下的 {0} 段对话与相应的账本记录。": "This also removes the {0} chats under them, along with their ledger entries.",
@@ -243,7 +243,6 @@ export const EN: Readonly<Record<string, string>> = {
   "完成": "Done",
   "全选": "Select all",
   "全不选": "Clear",
-  "改回普通对话": "Make it a plain chat",
   "选择工作目录": "Choose folder",
   "新任务": "Untitled task",
   "新会话": "Untitled chat",

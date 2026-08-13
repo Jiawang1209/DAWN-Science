@@ -123,3 +123,36 @@ test.describe("发失败", () => {
     await expect(page.locator(".waiting")).toHaveCount(0)
   })
 })
+
+/**
+ * **按下停止之后，那个记号必须停**（2026-08-13）。
+ *
+ * 这是这个功能唯一可能变成负资产的方式，而它比「回音到了」那条更难：
+ * 回音会往转录里添一条，记号自然收；**而中止不一定产生任何新条目**——
+ * 如果它不产生，`等回话` 就永远等下去。
+ *
+ * 2026-08-10 那一版正是死在这里（判据挂不住 → 记号永远在转），
+ * 所以这条必须单独钉。
+ */
+test.describe("中止", () => {
+  test.use({ dawnOptions: { firstChunkDelayMs: 4000 } })
+
+  test("**按下停止，记号跟着停**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("说点什么")
+    await 框.press("Enter")
+
+    const 记号 = page.locator(".waiting")
+    await expect(记号).toBeVisible({ timeout: 5_000 })
+
+    // 同一个位置上那颗现在是「停止」
+    await page.getByRole("button", { name: "停止", exact: true }).click()
+
+    /** **记号必须消失**，而且不能等到 4 秒后那个回音把它带走 */
+    await expect(记号).toHaveCount(0, { timeout: 3_000 })
+  })
+})

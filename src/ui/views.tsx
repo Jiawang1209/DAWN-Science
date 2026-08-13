@@ -2894,7 +2894,21 @@ export function ConversationView({
                * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
                * 分不出「我挑重了」还是「界面画重了」。
                */
-              onAttachImages={(paths) => {
+              /**
+               * **只有内置对话收得下图片**（2026-08-13）。
+               *
+               * cli（claude / codex 的 headless）与 kernel 会话的运行时
+               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
+               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
+               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
+               * 比没有更坏。
+               *
+               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
+               */
+              {...(session.kind !== "native"
+                ? {}
+                : {
+              onAttachImages: (paths: readonly string[]) => {
                 设待发图((前) => [
                   ...前,
                   ...paths
@@ -2914,7 +2928,8 @@ export function ConversationView({
                     )
                   })
                 }
-              }}
+              },
+                  })}
             />
             {/**
               * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
@@ -2992,7 +3007,22 @@ export function ConversationView({
                 variant="primary"
                 className="send-btn stopping"
                 aria-label={t("停止")}
-                onClick={onAbort}
+                onClick={() => {
+                  /**
+                   * **按下停止，记号也要跟着停**（2026-08-13）。
+                   *
+                   * `等回话` 的终点是「有新东西冒出来」——**而中止不一定
+                   * 产生任何新条目**。不在这里显式收掉的话，人按了停止，
+                   * 那三个点还在转：他会以为没停住，而实际上已经停了。
+                   *
+                   * 这正是 2026-08-10 那一版被撤掉的形态
+                   * （**一个永远在转的记号比没有更糟**），只是换了一条触发路径。
+                   * 那次的教训是「判据要有确定的终点」——
+                   * **而「人主动喊停」本身就是一个终点，只是我上一版漏了它。**
+                   */
+                  设等回话(undefined)
+                  onAbort()
+                }}
               >
                 <停止图标 />
               </Button>

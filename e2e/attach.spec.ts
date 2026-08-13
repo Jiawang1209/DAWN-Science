@@ -527,3 +527,46 @@ test("**Esc 收掉「＋」的菜单**", async ({ dawn }) => {
   await page.keyboard.press("Escape")
   await expect(page.getByRole("menu", { name: "添加内容" })).toHaveCount(0)
 })
+
+/**
+ * **收不下图片的会话，不摆「上传图片」那一项**（2026-08-13）。
+ *
+ * cli（claude / codex 的 headless）与 kernel 会话的运行时没有把图片喂进去的入口
+ * ——`SessionManager.write` 会当场报错。**报错是对的**（不静默丢掉），
+ * 但更该做的是**不摆这个入口**：一个点下去只会得到「这类会话不能附图片」的
+ * 菜单项，比没有更坏。
+ *
+ * 内置对话仍然有它——**这一条同时钉住两侧**，否则「都不画」也能让用例变绿。
+ */
+test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn }) => {
+  const { page } = dawn
+
+  // ① 内置对话：三项俱全
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.locator(".composer-controls .attach-trigger").click()
+  await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toBeVisible()
+  await page.keyboard.press("Escape")
+
+  // ② 换成内核会话：那一项不该在
+  const 有内核 = await page.evaluate(async () => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }
+    }
+    const p = (await w.dawn.invoke("getProviders", {})) as {
+      data?: { agents?: { agentId: string; kind?: string }[] }
+    }
+    const k = p.data?.agents?.find((a) => a.kind === "kernel")
+    if (!k) return false
+    await w.dawn.invoke("createTask", { agentId: k.agentId })
+    return true
+  })
+  if (!有内核) return // 这套夹具没配内核 agent —— 上面那一半已经验过了
+
+  await page.reload()
+  await page.locator(".session-list .sess-item .row").first().click()
+  await 等进了对话(page)
+  await page.locator(".composer-controls .attach-trigger").click()
+  await expect(page.getByRole("menuitem", { name: "上传文件", exact: true })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toHaveCount(0)
+})

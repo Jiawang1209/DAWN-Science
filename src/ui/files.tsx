@@ -18,7 +18,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 三角图标 } from "./icons.js"
 
-import { t, tf } from "./i18n/index.js"
+import { t, tf, msgid } from "./i18n/index.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
  * 抄一份的代价：协议改了之后两边各自自洽，编译器一句话都不会说。
@@ -160,7 +160,9 @@ export function FilePreview({
         </span>
       </header>
 
-      {content.kind === "pdf" ? (
+      {content.kind === "table" ? (
+        <数据表 t={content.table} />
+      ) : content.kind === "pdf" ? (
         <PdfPreview base64={content.base64} path={path} onOpenExternally={onOpenExternally} />
       ) : content.kind === "image" ? (
         <img
@@ -248,6 +250,82 @@ function PdfPreview({
 }
 
 /* ── 整个视图 ────────────────────────────────────────────────────── */
+
+/**
+ * 一张表（2026-08-14）。
+ *
+ * **摘要在上、数据在下**：人打开一个数据文件，第一个问题是「多大、有哪些列」，
+ * 第二个才是「长什么样」。反过来排的话，得先滚过一屏数据才知道它有多少行。
+ *
+ * **推断出来的类型要写着「推断」**：CSV 没有 schema，
+ * 把猜出来的摆成事实，下一步就会有人拿它当依据。
+ *
+ * 类型**从协议推导**（`FileContent`），不从 `files/table.ts` 引——
+ * 那是后端模块，而这一屏与后端之间只该有协议这一层
+ * （本文件头注的原话：*「目录与文件内容的类型从协议推导，不在这里再抄一份」*）。
+ */
+/**
+ * 推断出来的那几个类型名。**它们既是值又是标签**——
+ * 与命令分组（`commands.ts` 的 `COMMAND_GROUPS`）同一个形状：
+ * 协议上传过来的是中文原文，那就是 msgid；翻译发生在渲染处。
+ *
+ * `msgid()` 只是让扫描看得见这几句，运行时什么都不做。
+ * 不写的话，英文表里那六条会被判成「谁也不用的孤儿」——
+ * 而它们其实天天在用，只是调用点是个变量。
+ */
+const 类型名 = [
+  msgid("数值"),
+  msgid("整数"),
+  msgid("布尔"),
+  msgid("日期"),
+  msgid("文本"),
+  msgid("空"),
+] as const
+
+function 数据表({ t: 表 }: { t: Extract<FileContent, { kind: "table" }>["table"] }) {
+  return (
+    <div className="table-preview">
+      <p className="table-summary">
+        {表.totalRows === undefined
+          ? tf("{0} 列 · 行数未知（文件没读完）", String(表.columns.length))
+          : tf("{0} 行 × {1} 列", String(表.totalRows), String(表.columns.length))}
+      </p>
+      {/* **截断要出声**（规格 7.5）：一份被砍过的表和完整的长得一模一样 */}
+      {表.truncated ? <p className="caveat">{表.truncated}</p> : null}
+      {表.columns.length === 0 ? (
+        <EmptyState title={t("这个文件里没有列")} description={t("它可能是空的，或者不是分隔文本。")} />
+      ) : (
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                {表.columns.map((c, i) => (
+                  <th key={`${c.name}-${i}`}>
+                    <span className="col-name">{c.name}</span>
+                    {/* 类型与缺失各占一行：**它们是两个问题**，挤在一起谁都看不清 */}
+                    <span className="col-type">{tf("推断：{0}", t(c.inferred))}</span>
+                    {c.missing > 0 ? (
+                      <span className="col-missing">{tf("缺 {0}", String(c.missing))}</span>
+                    ) : null}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {表.rows.map((r, i) => (
+                <tr key={i}>
+                  {表.columns.map((_c, j) => (
+                    <td key={j}>{r[j] ?? ""}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function FilesView({
   selected,

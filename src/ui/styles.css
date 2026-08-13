@@ -1616,6 +1616,71 @@ pre {
   background: var(--dawn-surface-elevated);
 }
 
+/* ── 数据表预览（2026-08-14）───────────────────────────────────────── */
+
+.table-summary {
+  margin: 0 0 var(--dawn-space-2);
+  font-weight: 600;
+}
+
+/* **横向滚动关在自己这一层**：一张宽表不该把整个界面推得左右晃 */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-md);
+}
+
+.data-table {
+  border-collapse: collapse;
+  font-size: var(--dawn-ui-size);
+  font-variant-numeric: tabular-nums; /* 数字对齐才看得出数量级 */
+}
+
+/* 表头**吸顶**：滚到第 200 行时还知道自己在看哪一列 */
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-head);
+  background: var(--dawn-surface-elevated);
+  border-bottom: 1px solid var(--dawn-stroke-3);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* 列名、推断类型、缺失数各占一行——**它们是三个问题**，挤一行谁都看不清 */
+.data-table .col-name {
+  display: block;
+  font-weight: 600;
+}
+
+.data-table .col-type,
+.data-table .col-missing {
+  display: block;
+  font-weight: 400;
+  font-size: var(--dawn-ui-size);
+  color: var(--dawn-text-3);
+}
+
+/* 缺失用警示色：**它是这张表里最该被一眼看见的事实** */
+.data-table .col-missing {
+  color: var(--dawn-warning);
+}
+
+.data-table td {
+  padding: var(--dawn-space-1) var(--dawn-space-3);
+  border-bottom: 1px solid var(--dawn-stroke-4);
+  /* 单元格**不换行**：一格里塞一段长文本时，换行会把整行撑得很高 */
+  white-space: nowrap;
+  max-width: 32ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-table tbody tr:hover td {
+  background: var(--dawn-surface-elevated);
+}
+
 /* 预览文本**保留换行、允许长行换行**——横向滚动条会让人读不下去 */
 .preview-text {
   margin: 0;

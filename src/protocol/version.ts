@@ -217,8 +217,18 @@
  *
  *   **已经有指令文件的项目一个字都不动**，并如实回「没写、为什么、该贴什么」。
  *   那份文件里可能是这个仓库攒了很久的约定，覆盖掉不可撤销。
+ * 5.4（2026-08-14）：`readFile` 多一支 `table`——**打开 csv 看见一张表**。纯新增。
+ *
+ *   此前 `.csv` 落在 `text` 那一支上（`text/csv` 也是 `text/`），
+ *   界面上是一坨逗号原文——一个叫 DAWN **Science** 的应用打开数据文件
+ *   却看不见数据。首页那张起手卡写着「读一份数据」，点下去底下没有东西接着。
+ *
+ *   **不起内核**：打开就见，不用先选 R 还是 Python。
+ *   **类型是推断的**，所以字段叫 `inferred`——CSV 没有 schema，
+ *   把猜出来的摆成事实，下一步就会有人拿它当依据。
+ *   **`totalRows` 只有完整读完才给**：没读完却报一个总数，那个数是假的。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.3"
+export const WORKBENCH_PROTOCOL_VERSION = "5.4"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

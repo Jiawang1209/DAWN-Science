@@ -19,6 +19,7 @@
 import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs"
 import { extname, join, resolve, sep } from "node:path"
 import { UserFacingError } from "../errors.js"
+import { 读成表, 表格字节上界 } from "./table.js"
 
 /** 文本预览上界。512 KB 够看清一个数据文件的形状，又不至于把界面撑死 */
 export const TEXT_MAX_BYTES = 512 * 1024
@@ -68,6 +69,13 @@ export type FileContent =
    */
   | { kind: "pdf"; mediaType: string; base64: string; bytes: number }
   /** 认不出或太大。**说清是什么、多大**，而不是给一片空白 */
+  | {
+      kind: "table"
+      mediaType: string
+      bytes: number
+      /** 表本身。形状见 `files/table.ts` */
+      table: import("./table.js").表格
+    }
   | { kind: "other"; mediaType: string; bytes: number; reason: string }
 
 /**
@@ -198,6 +206,22 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
       }
     }
     return { kind: "image", mediaType, base64: readFileSync(file).toString("base64"), bytes }
+  }
+
+  /**
+   * **分隔文本读成表**（2026-08-14）。
+   *
+   * 此前 `.csv` 走 `text` 那一支，屏幕上是一坨逗号原文——
+   * 一个叫 DAWN **Science** 的应用打开数据文件却看不见数据。
+   *
+   * 放在 `text` 之前：`text/csv` 也是 `text/`，顺序反了就永远走不到这儿。
+   */
+  if (mediaType === "text/csv" || mediaType === "text/tab-separated-values") {
+    const 完整 = bytes <= 表格字节上界
+    // **超了只读前面那段**，而不是拒绝打开：看一眼形状比什么都看不到有用得多
+    const buf = readFileSync(file)
+    const 正文 = (完整 ? buf : buf.subarray(0, 表格字节上界)).toString("utf8")
+    return { kind: "table", mediaType, bytes, table: 读成表(正文, 完整) }
   }
 
   if (mediaType === "application/pdf") {

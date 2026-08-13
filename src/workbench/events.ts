@@ -157,7 +157,12 @@ export class SessionTranscripts {
    *
    * **类型系统抓不到这一类**——它不是穷尽性检查，是运行时的字符串比较。
    */
-  userTurn(sessionId: SessionId, text: string): void {
+  /**
+   * @param images 这一轮附的图，**缩略图的 `data:` URL**（协议 4.14）。
+   *   不是原图：转录会被反复读、会随快照整个发过来，
+   *   塞原图进去等于每次切会话都搬一遍几 MB。
+   */
+  userTurn(sessionId: SessionId, text: string, images?: readonly string[]): void {
     const e = this.entries.get(sessionId)
     if (!e || e.kind === "pty") return
     e.turnSeq += 1
@@ -167,6 +172,7 @@ export class SessionTranscripts {
       who: "user",
       text,
       final: true,
+      ...(images && images.length > 0 ? { images: [...images] } : {}),
     })
   }
 

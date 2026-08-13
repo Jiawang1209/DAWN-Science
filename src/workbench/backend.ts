@@ -209,6 +209,27 @@ const 免缩上限 = 3.5 * 1024 * 1024
  *    所以**小图根本不进缩放**（直接 base64），只有真的超上限才交给它；
  *    那时 null 是一个诚实的失败，点名是哪一张（规格 7.5）。
  */
+/**
+ * 把要送进模型的那几张缩成**转录里存的预览**（协议 4.14）。
+ *
+ * **失败就跳过这一张，不抛**：预览只是给人看的，
+ * 而这一刻那句话已经发出去了——为了一张缩略图把整轮对话弄失败是本末倒置。
+ */
+async function 缩成预览(附图: readonly ImageAttachment[]): Promise<string[]> {
+  const 出: string[] = []
+  for (const one of 附图) {
+    try {
+      const bytes = Buffer.from(one.data, "base64")
+      const r = await resizeImage(bytes, one.mimeType, { maxWidth: 320, maxHeight: 320 })
+      出.push(r ? `data:${r.mimeType};base64,${r.data}` : `data:${one.mimeType};base64,${one.data}`)
+    } catch {
+      // 缩不动就原样给：**看得见比省内存重要，而这里只有几张**
+      出.push(`data:${one.mimeType};base64,${one.data}`)
+    }
+  }
+  return 出
+}
+
 async function 读成附件(
   来源: readonly ({ from: "path"; path: string } | { from: "bytes"; data: string; mimeType: string })[],
 ): Promise<ImageAttachment[]> {
@@ -1006,7 +1027,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
            */
           const title = deriveSessionTitle(data)
           if (title) projects.setSessionTitle(sessionId, title)
-          events.userTurn(sessionId, data)
+          /**
+           * **转录里存缩略图，不存原图**（协议 4.14，2026-08-13）。
+           *
+           * 附图这时已经在 `附图` 里（base64 的原始尺寸）。直接塞进转录的话，
+           * **每次切回这个会话、每次拉快照，都要把那几 MB 再搬一遍**。
+           * 这里要回答的只是「附的是哪几张」，一张 320px 的缩略图就够。
+           */
+          events.userTurn(sessionId, data, await 缩成预览(附图))
           /**
            * 运行时没有 turn_start 事件——回合的起点只有这里知道。
            * PTY 会话由记账员自己忽略（那是按键，不是发话），见 run-recorder.ts

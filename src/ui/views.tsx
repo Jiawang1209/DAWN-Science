@@ -2546,45 +2546,6 @@ export function ConversationView({
         }}
       >
         {/**
-          * 待发的图片（协议 4.12，2026-08-13）。
-          *
-          * **挑完到发出去之间必须看得见**——否则人不知道自己到底附上没有，
-          * 而「附了图它却说没看见」正是这条路上最难查的那种错。
-          * 每一张都能单独摘掉：挑错一张不该逼人把三张全清了重来。
-          */}
-        {待发图.length > 0 ? (
-          <ul className="attached">
-            {待发图.map((图, i) => (
-              <li key={`${图.名}-${i}`} className="attached-one">
-                {/**
-                  * **画图本身，不画文件名**（2026-08-13，作者给了一张 Codex 的截图）。
-                  *
-                  * 一行文件名回答不了「我挑对了吗」——同一个目录里
-                  * `截图 2026-08-13 上午11.02.31.png` 有七张，名字长得一模一样。
-                  * **缩略图是唯一能一眼确认的东西。**
-                  *
-                  * 拿不到预览时退回名字：**缩略图出不来只是看不见，
-                  * 图本身还是好的**，不该因此把这一项整个藏起来。
-                  */}
-                {图.预览 ? (
-                  <img className="attached-thumb" src={图.预览} alt={图.名} />
-                ) : (
-                  <span className="attached-name">{图.名}</span>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="attached-x"
-                  aria-label={tf("不发这张：{0}", 图.名)}
-                  onClick={() => 设待发图((前) => 前.filter((_, j) => j !== i))}
-                >
-                  <删除图标 />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {/**
          * **输入框与它的控件是一个东西，所以它们在同一张卡里。**
          *
          * 上一版是「一个光秃秃的 textarea + 下面散着一排控件」——那是一张表单，
@@ -2595,6 +2556,50 @@ export function ConversationView({
          * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
         <div className="composer-box">
+          {/**
+            * 待发的图片（协议 4.12，2026-08-13）。
+            *
+            * **在输入卡里面，不在它上面**（2026-08-13 挪的，作者要的，
+            * 也是他那张 Codex 截图的样子）。浮在卡外面时它是**另一个盒子**——
+            * 而「这几张图属于我正在写的这句话」这层关系，
+            * 只能靠「它们在同一张卡里」来表达。
+            *
+            * **挑完到发出去之间必须看得见**——否则人不知道自己到底附上没有，
+            * 而「附了图它却说没看见」正是这条路上最难查的那种错。
+            * 每一张都能单独摘掉：挑错一张不该逼人把三张全清了重来。
+            */}
+          {待发图.length > 0 ? (
+            <ul className="attached">
+              {待发图.map((图, i) => (
+                <li key={`${图.名}-${i}`} className="attached-one">
+                  {/**
+                    * **画图本身，不画文件名**（2026-08-13，作者给了一张 Codex 的截图）。
+                    *
+                    * 一行文件名回答不了「我挑对了吗」——同一个目录里
+                    * `截图 2026-08-13 上午11.02.31.png` 有七张，名字长得一模一样。
+                    * **缩略图是唯一能一眼确认的东西。**
+                    *
+                    * 拿不到预览时退回名字：**缩略图出不来只是看不见，
+                    * 图本身还是好的**，不该因此把这一项整个藏起来。
+                    */}
+                  {图.预览 ? (
+                    <img className="attached-thumb" src={图.预览} alt={图.名} />
+                  ) : (
+                    <span className="attached-name">{图.名}</span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="attached-x"
+                    aria-label={tf("不发这张：{0}", 图.名)}
+                    onClick={() => 设待发图((前) => 前.filter((_, j) => j !== i))}
+                  >
+                    <删除图标 />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <textarea
             className="control composer-field"
             value={draft}
@@ -3019,6 +3024,25 @@ export function TranscriptRow({
         */}
       {!mine && item.thinking ? <ThinkingBlock text={item.thinking} ms={item.thinkingMs} /> : null}
       <div className="bubble">
+        {/**
+          * **发完之后，附的图仍然看得见**（协议 4.14，2026-08-13，
+          * 作者：*「能否放入到对话窗口里面？」*）。
+          *
+          * 只有一句文字的话，**「我到底附上没有」这个问题在发出去之后
+          * 就再也答不了了**——而它恰恰是这条路上最容易出错的一环。
+          *
+          * 画在文字**上面**：先看见附了什么，再读那句话，
+          * 与人打字时的顺序一致（图先粘进来，字后打）。
+          */}
+        {item.images && item.images.length > 0 ? (
+          <ul className="turn-images">
+            {item.images.map((src, i) => (
+              <li key={i}>
+                <img className="turn-image" src={src} alt={tf("这一轮附的第 {0} 张图", i + 1)} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {/**
          * **只有 agent 的发言走 markdown。**
          *
@@ -3636,33 +3660,33 @@ export function EmptyConversation({
               设空态图([])
             }}
           >
-            {/**
-              * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
-              * 它们是同一个东西，长得不一样只会让人以为是两回事。
-              */}
-            {空态图.length > 0 ? (
-              <ul className="attached">
-                {空态图.map((图, i) => (
-                  <li key={`${图.名}-${i}`} className="attached-one">
-                    {图.预览 ? (
-                      <img className="attached-thumb" src={图.预览} alt={图.名} />
-                    ) : (
-                      <span className="attached-name">{图.名}</span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="attached-x"
-                      aria-label={tf("不发这张：{0}", 图.名)}
-                      onClick={() => 设空态图((前) => 前.filter((_, j) => j !== i))}
-                    >
-                      <删除图标 />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
             <div className="composer-box">
+              {/**
+                * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
+                * 它们是同一个东西，长得不一样只会让人以为是两回事。
+                */}
+              {空态图.length > 0 ? (
+                <ul className="attached">
+                  {空态图.map((图, i) => (
+                    <li key={`${图.名}-${i}`} className="attached-one">
+                      {图.预览 ? (
+                        <img className="attached-thumb" src={图.预览} alt={图.名} />
+                      ) : (
+                        <span className="attached-name">{图.名}</span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="attached-x"
+                        aria-label={tf("不发这张：{0}", 图.名)}
+                        onClick={() => 设空态图((前) => 前.filter((_, j) => j !== i))}
+                      >
+                        <删除图标 />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <textarea
                 className="control composer-field"
                 value={草稿}

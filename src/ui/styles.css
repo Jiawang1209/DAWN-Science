@@ -3113,9 +3113,8 @@ pre {
 .attached {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--dawn-space-3);
-  width: 100%;
-  max-width: var(--dawn-thread-max-w);
+  gap: var(--dawn-space-2);
+  /* **在卡里面**：宽度由卡给，不再自己顶一个 max-width */
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3169,3 +3168,26 @@ pre {
   color: var(--dawn-text-2);
 }
 .attached-x .icon { width: 12px; height: 12px; }
+
+/**
+ * 发出去之后，那一轮附的图（协议 4.14，2026-08-13）。
+ *
+ * **比输入卡里那些大一档**：那边是「确认我挑对了」，这边是「这就是我发的」——
+ * 后者要能真的看清内容。上限 200px，超了自己缩。
+ */
+.turn-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dawn-space-2);
+  margin: 0 0 var(--dawn-space-2);
+  padding: 0;
+  list-style: none;
+}
+.turn-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: var(--dawn-radius-md);
+  corner-shape: var(--dawn-corner-shape);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  display: block;
+}

@@ -316,13 +316,41 @@ for (const [屏, 进去] of [
     await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
     await expect(page.locator(".attached-thumb")).toHaveAttribute("src", /^data:image\//)
 
+    /**
+     * ② **缩略图在输入卡里面，不在它上面**（2026-08-13，作者要的）。
+     *
+     * 浮在卡外面时它是**另一个盒子**——而「这几张图属于我正在写的这句话」
+     * 这层关系，只能靠「它们在同一张卡里」来表达。
+     *
+     * 判据是 DOM 的包含关系，不是坐标：坐标看起来「挨着」也可能是两个盒子，
+     * 而那正是改之前的样子。
+     */
+    const 在卡里 = await page.locator(".composer-box .attached-one").count()
+    expect(在卡里, "缩略图跑到输入卡外面去了").toBe(1)
+
     await 框.fill("看看这张粘的")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
-    // ② **字节真的到了对面**
+    // ③ **字节真的到了对面**
     await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
       timeout: 30_000,
     })
+
+    /**
+     * ④ **发完之后，对话里仍然看得见那张图**（协议 4.14，作者要的）。
+     *
+     * 只有一句文字的话，**「我到底附上没有」这个问题在发出去之后
+     * 就再也答不了了**——而它恰恰是这条路上最容易出错的一环。
+     *
+     * 断的是 `src` 真的是一张图，不是「有个 `<img>` 在」：
+     * 后者在缩略图没生成时照样绿。
+     */
+    const 轮里的图 = page.locator(".turn.user .turn-image")
+    await expect(轮里的图).toHaveCount(1, { timeout: 30_000 })
+    await expect(轮里的图).toHaveAttribute("src", /^data:image\//)
+
+    // ⑤ 发完输入卡就清空——留着的话下一句会把同一张图再送一遍
+    await expect(page.locator(".attached-one")).toHaveCount(0)
   })
 }
 

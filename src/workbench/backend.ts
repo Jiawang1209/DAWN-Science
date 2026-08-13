@@ -14,6 +14,8 @@ import { homedir } from "node:os"
 import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
+import { 探测机器, 本地执行 } from "../env/probe.js"
+import type { ShellEnvironment } from "../env/snapshot.js"
 import { deriveSessionTitle } from "../session/title.js"
 import { readFile } from "node:fs/promises"
 import { extname } from "node:path"
@@ -114,6 +116,13 @@ export interface WorkbenchBackendOptions {
   }
   /** 环境快照的落库处（S17）。**没装配也能用**，只是快照不持久 */
   environments?: EnvironmentStore
+  /**
+   * 一个会话的环境在准入时冻结好了（②-B · R5）。
+   *
+   * **接线是单向的**：记账员比后端先造出来，所以由后端把 id **推**过去，
+   * 而不是让记账员反过来问后端。
+   */
+  onEnvironmentFrozen?: (sessionId: string, snapshotId: string) => void
   /**
    * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
@@ -288,7 +297,7 @@ async function 读成附件(
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks } = opts
+  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -454,12 +463,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * （消息里可能有路径、连接串、密钥片段）。所以要让一句话到达用户，
      * **必须在抛出的一侧显式声明它是给用户看的**，而不是让下游去猜哪条安全。
      */
+    /**
+     * **先探机器，再建会话**（②-B · R5）。见 `探一台机器` 的说明：
+     * 顺序反过来的话，PTY 那条在会话起来那一刻就产生的 Run 会缺环境。
+     * 内核会话不探——它报的是内核那份，探了也没有地方能诚实地摆。
+     */
+    const 机器的 =
+      environments && registry.agents[agentId]?.kind !== "kernel"
+        ? await 探一台机器(workspace, remoteSpec?.connectionId)
+        : undefined
+
     const rec = await sessions
       .create(agentId, workspace, { projectId, ...(remoteSpec ? { remote: remoteSpec } : {}) })
       .catch((err: unknown) => {
       if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
       throw err
     })
+
+    // **环境要在接线之前记好**：attach 之后随时可能来事件，而事件会造 Run
+    记下环境(rec.id, 机器的)
 
     // 先登记再接线：attach 的回调可能同步就来一条事件
     const kind = registry.agents[agentId]?.kind ?? "native"
@@ -480,8 +502,87 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!(err instanceof NotAGitRepoError)) throw err
     }
 
+    /**
+     * **在准入时刻冻结一份机器快照**（②-B · R5，2026-08-13）。
+     *
+     * 「这个结果是在什么环境跑出来的」此前只有内核会话答得上来。
+     * 而 pty、cli、native 三种会话同样在一台真实的机器上读写文件、跑命令——
+     * 它们的 Run 此前在账本上**没有环境这一格**。
+     *
+     * 为什么在这里而不是第一次执行时：S17 的第一条禁令是**不得回头探测**。
+     * 会话跑到一半有人装了个包，事后再探到的就不是它起来时那套。
+     * 会话起来的这一刻就是它的准入时刻。
+     *
+     * **探不到不让建会话失败**：`探测机器` 自己吞掉异常返回 undefined，
+     * 那时这个会话的 Run 就没有环境这一格——**读作「不知道」，不是「没有环境」**。
+     */
+
     return projects.sessions(projectId, 服务器名).find((s) => s.sessionId === rec.id)!
   }
+
+  /**
+   * 会话 → 它准入时那份环境快照的 id（R5）。
+   *
+   * **`getEnvironment` 与账本读的是同一份**——两处各自判断「该报哪一个」
+   * 的话，界面上说的和账本里记的迟早会是两件事。
+   */
+  const 机器环境 = new Map<string, string>()
+
+  /**
+   * 探一份机器快照并入库，记在 `机器环境` 里。
+   *
+   * **远端没连上就不探**：那时探到的不是那台机器，而是一次失败——
+   * 记一个本地快照冒充远端，是这条路上最坏的一种错。
+   */
+  /**
+   * 探一台机器。**在建会话之前跑**——机器是什么与这段会话是谁无关。
+   *
+   * 为什么非要提前：探测是异步的，而会话一接上线就可能有事件涌进来
+   * （PTY 会话在起来的那一刻就有一条 Run）。**先探完再接线**，
+   * 就不存在「事件已经开始来、环境还没冻好」那个窗口——
+   * 那个窗口里的 Run 会缺环境，而它看起来与「这台机器探不到」一模一样。
+   * （2026-08-13 接线用例当场红出来的。）
+   */
+  async function 探一台机器(
+    workspace: string,
+    connectionId?: string,
+  ): Promise<ShellEnvironment | undefined> {
+    let 执行 = 本地执行
+    let 谁: ShellEnvironment["where"] = "local"
+    if (connectionId) {
+      const ex = remote?.manager.executorOf(connectionId)
+      // **没连上就不探**：那时探到的不是那台机器，而是本机——
+      // 拿一份本地快照冒充远端，是这条路上最坏的一种错
+      if (!ex) return undefined
+      执行 = (cmd) => ex.exec(cmd)
+      谁 = { connectionId }
+    }
+    return 探测机器(执行, 谁, workspace)
+  }
+
+  /**
+   * 把这段会话的环境冻下来，并把 id 推给记账员。
+   *
+   * **内核会话报内核那份**：它是更具体的事实——「哪个解释器、装了哪些包」
+   * 比「哪台机器」更接近「这个结果是怎么来的」。
+   *
+   * **一个 Run 只指一份环境**：两份不可比，同时摆出来等于把
+   * 「该看哪一个」推给了看的人。
+   */
+  function 记下环境(sessionId: string, 机器的: ShellEnvironment | undefined): void {
+    if (!environments) return
+    const 内核的 = sessions.environment(sessionId) as EnvironmentSnapshot | undefined
+    const rec = sessions.get(sessionId)
+    const id = 内核的
+      ? environments.put(内核的, rec?.createdAt ?? new Date().toISOString())
+      : 机器的
+        ? environments.putShell(机器的, new Date().toISOString())
+        : undefined
+    if (!id) return
+    机器环境.set(sessionId, id)
+    onEnvironmentFrozen?.(sessionId, id)
+  }
+
 
   /**
    * 这一次写入在账本上该叫什么。
@@ -1099,17 +1200,31 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const snap = sessions.environment(sessionId) as EnvironmentSnapshot | undefined
       if (!snap) {
         /**
-         * **三种「没有」说的话不同**，混成一句就等于什么都没说：
-         * 不是内核会话 / 语言不支持 / 探测没成功。
+         * **不是内核会话，不等于没有环境**（R5 补上的）。
+         *
+         * pty / cli / native 三种会话同样跑在一台真实的机器上，
+         * 它们的环境是**那台机器**（本地或那条连接）。此前这里一律回
+         * 「没有快照」，于是「这个结果是在什么环境跑出来的」只有内核会话答得上来。
+         */
+        const 机器id = 机器环境.get(sessionId)
+        const 机器的 = 机器id ? environments?.get(机器id) : undefined
+        if (机器的?.kind === "shell") {
+          const { id, capturedAt: _时间, kind: _种, ...其余 } = 机器的
+          return { captured: true as const, kind: "shell" as const, id, ...其余 }
+        }
+        /**
+         * **几种「没有」说的话不同**，混成一句就等于什么都没说：
+         * 不是内核会话 / 语言不支持 / 探测没成功 / 远端还没连上。
          */
         return {
           captured: false as const,
-          reason: "这个会话还没有环境快照（不是内核会话、内核语言不是 Python/R、或准入时探测失败）",
+          reason:
+            "这个会话还没有环境快照（不是内核会话、内核语言不是 Python/R、准入时探测失败、或远端还没连上）",
         }
       }
       // **入库即冻结**，并且同一个环境只存一行（内容寻址）
       const id = environments?.put(snap, rec.createdAt) ?? fingerprintOf(snap)
-      return { captured: true as const, id, ...snap }
+      return { captured: true as const, kind: "kernel" as const, id, ...snap }
     },
 
     /**

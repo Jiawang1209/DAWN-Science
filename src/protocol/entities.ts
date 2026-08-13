@@ -80,6 +80,20 @@ export const RunSummarySchema = z
     /** 可能混入作者自己的改动。共用工作目录时无法区分谁改的，**如实标注** */
     mayIncludeUserEdits: z.boolean().optional(),
     artifactCount: NonNegInt.optional(),
+    /**
+     * **这次运行是在什么环境里跑的**（②-B · R5，2026-08-13）。
+     *
+     * 此前环境只挂在溯源链上（资源 → 产出它的 run → 环境），
+     * **Run 自己指不到自己的环境**——而 ②-B 的判据要的正是
+     * 「Run 记录里有环境快照」。
+     *
+     * **缺省 = 不知道**（老库里的 run、探测失败、这类会话没有环境概念），
+     * 与 `filesWritten` 同一条口径：不读作「没有环境」。
+     *
+     * 指向的可能是内核快照，也可能是机器快照——**两者不可比**，
+     * 判据在 `env/snapshot.ts` 的 `compareEnvironments`，界面不许自己比。
+     */
+    environmentSnapshotId: z.string().min(1).optional(),
     cost: CostSchema.optional(),
   })
   .superRefine((v, ctx) => {

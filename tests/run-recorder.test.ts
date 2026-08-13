@@ -25,6 +25,7 @@ import Database from "better-sqlite3"
 import { migrate } from "../src/store/schema.js"
 import { RunStore } from "../src/store/runs.js"
 import { RunRecorder } from "../src/project/run-recorder.js"
+import { EnvironmentStore } from "../src/store/environments.js"
 
 let db: Database.Database
 let runs: RunStore
@@ -486,5 +487,92 @@ describe("内核执行", () => {
     const r = list()[0]!
     // 会话崩了的收尾自有其 terminalReason，这条只验它没被当成 completed
     expect(r.status).not.toBe("completed")
+  })
+})
+
+/**
+ * **每条 Run 都记得住它跑在哪个环境**（②-B · R5，2026-08-13）。
+ *
+ * ②-B 的判据原文：「两次运行都留下可查的 Run 记录，**且记录里有环境快照**」。
+ * 此前 `runs` 表没有这一列——环境只挂在溯源链上，Run 自己指不到自己的环境。
+ *
+ * **记账的不需要知道那是解释器还是机器**：它只记一个 id。
+ * 「该报哪一份」的判断在后端，「两份可不可比」的判断在 `env/snapshot.ts`。
+ */
+describe("Run 记得住它跑在哪个环境（R5）", () => {
+  /**
+   * 先把快照真的存进去，再让 run 指过来。
+   *
+   * **`runs.environment_snapshot_id` 上有外键**，编一个 id 会被库直接拒——
+   * 这条约束是特意留的：**一个指向不存在快照的 id 比没有 id 更坏**，
+   * 它在界面上看起来「有环境」，点进去却什么都没有。
+   */
+  function 存一份(): string {
+    return new EnvironmentStore(db).putShell(
+      { kind: "shell", where: "local", os: "Linux", arch: "x86_64" },
+      "2026-08-13T00:00:00.000Z",
+    )
+  }
+
+  function 带环境(环境: (s: string) => string | undefined): RunRecorder {
+    return new RunRecorder({
+      runs,
+      projectOf: (s) => (s === SESSION ? PROJECT : undefined),
+      environmentOf: 环境,
+      now: () => new Date(1_800_000_000_000 + clock++ * 1000).toISOString(),
+    })
+  }
+
+  it("建 run 时把当前会话的环境记上", () => {
+    const id = 存一份()
+    带环境(() => id).beginTurn(SESSION)
+    expect(list()[0]!.environmentSnapshotId).toBe(id)
+  })
+
+  /**
+   * **指向一份不存在的快照，库会拒**（外键）。
+   *
+   * 证据不许悬空：id 在、快照不在的话，「这次跑在什么环境里」
+   * 会变成一个答不上来却看起来答得上来的问题。
+   */
+  it("**环境 id 必须真的对应一份快照** —— 悬空的引用当场被拒", () => {
+    expect(() => 带环境(() => "并不存在的快照").beginTurn(SESSION)).toThrow(/FOREIGN KEY/)
+  })
+
+  /**
+   * **取不到就不记**，与 `projectOf` 同一条纪律。
+   * 缺这一格读作「不知道这次跑在什么环境里」——随手补一个当前环境上去，
+   * 就是拿今天的环境冒充当时的（不变式 5）。
+   */
+  it("**取不到就不记这一格** —— 缺席读作「不知道」，不是「没有环境」", () => {
+    带环境(() => undefined).beginTurn(SESSION)
+    const r = list()[0]!
+    expect("environmentSnapshotId" in r, "不知道就不该有这个字段").toBe(false)
+  })
+
+  it("不给 environmentOf 也照常记账 —— 它是加分项，不是准入条件", () => {
+    rec.beginTurn(SESSION)
+    expect(list()).toHaveLength(1)
+  })
+
+  /**
+   * **子 run 也要有。** 一个 agent 回合里的每次工具调用各是一条 run，
+   * 它们跑在同一个环境里；漏掉的话账本上会出现「父的知道、子的不知道」，
+   * 而那看起来像是中途换了环境。
+   */
+  it("回合里的工具调用也带着环境", () => {
+    const id = 存一份()
+    const r = 带环境(() => id)
+    r.beginTurn(SESSION)
+    r.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "bash", input: {} })
+    r.ingest({
+      kind: "tool_end", sessionId: SESSION, toolCallId: "t1", toolName: "bash",
+      isError: false, text: "", truncated: false, bytes: 0,
+    })
+    const 全部 = list()
+    expect(全部.length, "工具调用没有落成一条 run").toBeGreaterThan(1)
+    for (const one of 全部) {
+      expect(one.environmentSnapshotId, `${one.requestType} 少了环境`).toBe(id)
+    }
   })
 })

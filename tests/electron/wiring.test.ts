@@ -42,6 +42,11 @@ function configFile(): string {
     provider: deepseek
     model: deepseek-v4-flash
     capabilities: [chat]
+  shell:
+    kind: pty
+    command: bash
+    args: ["--norc"]
+    capabilities: [exec]
 `,
   )
   cleanups.push(() => rmSync(dir, { recursive: true, force: true }))
@@ -95,6 +100,50 @@ describe("createWorkbench", () => {
 
     const list = await wb.server.handle("listSessions", { projectId: pid })
     expect((list as { data: unknown[] }).data).toHaveLength(1)
+  })
+
+  /**
+   * **接线本身要有人盯着**（②-B · R5，2026-08-13）。
+   *
+   * 后端在准入时冻结环境、把 id 推给记账员，记账员写进 run——这条链上
+   * 三段各自都有单元测试，**而把 `wiring.ts` 里那一句接线删掉，它们全都还是绿的**
+   * （变异验证当场发现）。那正是本项目栽过好几次的形状：
+   * 零件都对，装没装上没人知道。
+   *
+   * 终端会话在起来的那一刻就有一条 Run（PTY 的命令不可观测，可观测的是会话本身），
+   * 所以它是这条链最短的一条真路径——不需要真的去问一个模型。
+   */
+  it("**终端会话起来后，账本上那条 Run 带着环境** —— 这条盯的是接线", async () => {
+    const wb = createWorkbench({
+      configPath: configFile(),
+      dbPath: newDbPath(),
+      credentials: memoryCredentials({ deepseek: "sk-test" }),
+    })
+    cleanups.push(() => wb.close())
+
+    const repo = newRepo()
+    // 先建一个带路径的任务，项目才长出来（终端挂在它下面）
+    const 任务 = await wb.server.handle("createTask", { agentId: "ds-chat", workspace: repo })
+    expect(任务.ok, `建任务失败了：${JSON.stringify(任务)}`).toBe(true)
+    const ps0 = await wb.server.handle("listProjects", {})
+    const pid0 = (ps0 as { data: { projectId: string; workspace: string }[] }).data
+      .find((x) => x.workspace === repo)!.projectId
+
+    const t = await wb.server.handle("createTerminalSession", { agentId: "shell", projectId: pid0 })
+    expect(t.ok, `建终端会话失败了：${JSON.stringify(t)}`).toBe(true)
+    const sid = (t as { data: { sessionId: string } }).data.sessionId
+
+    const ps = await wb.server.handle("listProjects", {})
+    const pid = (ps as { data: { projectId: string; workspace: string }[] }).data
+      .find((x) => x.workspace === repo)!.projectId
+    const runs = await wb.server.handle("listRuns", { projectId: pid })
+    const 这段的 = (runs as { data: { sessionId: string; environmentSnapshotId?: string }[] }).data
+      .filter((r) => r.sessionId === sid)
+    expect(这段的.length, "终端会话没有留下任何 Run").toBeGreaterThan(0)
+    expect(
+      这段的[0]!.environmentSnapshotId,
+      "Run 上没有环境——冻结、推送、记账三段里有一段没接上",
+    ).toBeTruthy()
   })
 
   it("缺凭证时仍然起得来 —— 桌面应用不该因为配置里少个变量就打不开", () => {

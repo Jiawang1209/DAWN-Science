@@ -35,6 +35,18 @@ export interface RunRecorderOptions {
    * 猜一个归属等于伪造事实（不变式 5）——宁可没有这条记录。
    */
   projectOf: (sessionId: SessionId) => string | undefined
+  /**
+   * 会话 → 它准入时那份环境快照的 id（②-B · R5，2026-08-13）。
+   *
+   * **记账的不需要知道那是解释器还是机器**——它只记一个 id。
+   * 内核会话给的是内核快照，其余会话给的是机器快照，
+   * 两者**不可比**，而判据在 `env/snapshot.ts`，不在这里。
+   *
+   * **取不到就不记**，与 `projectOf` 同一条纪律：
+   * 缺这个字段读作「不知道这次跑在什么环境里」，
+   * 而随手补一个当前环境上去，就是拿今天的环境冒充当时的。
+   */
+  environmentOf?: (sessionId: SessionId) => string | undefined
   /** 可注入的时钟，测试用。生产走 `Date` */
   now?: () => string
 }
@@ -76,12 +88,14 @@ interface Open {
 export class RunRecorder {
   private readonly runs: RunStore
   private readonly projectOf: (sessionId: SessionId) => string | undefined
+  private readonly environmentOf: (sessionId: SessionId) => string | undefined
   private readonly now: () => string
   private readonly open = new Map<SessionId, Open>()
 
   constructor(opts: RunRecorderOptions) {
     this.runs = opts.runs
     this.projectOf = opts.projectOf
+    this.environmentOf = opts.environmentOf ?? (() => undefined)
     this.now = opts.now ?? (() => new Date().toISOString())
   }
 
@@ -103,6 +117,8 @@ export class RunRecorder {
     const projectId = this.projectOf(sessionId)
     if (!projectId) return undefined
     const runId = randomUUID()
+    // **只在建 run 的这一刻取一次**：run 结束时再去问，问到的是那时的环境
+    const env = this.environmentOf(sessionId)
     this.runs.insert({
       runId,
       projectId,
@@ -113,6 +129,7 @@ export class RunRecorder {
       startedAt: this.now(),
       hasError: false,
       ...(parentRunId ? { parentRunId } : {}),
+      ...(env ? { environmentSnapshotId: env } : {}),
     })
     return runId
   }

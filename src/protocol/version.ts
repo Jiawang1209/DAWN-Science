@@ -181,8 +181,22 @@
  *   `deleteSession` / `renameSession` / `setSessionPinned` / `moveSession` /
  *   `reorderSessions` 仍然在用——项目与会话作为**记录**还在（账本挂在上面），
  *   不再作为**入口**存在。摘掉的是入口，不是记录。
+ * 5.1（2026-08-13，②-B · R5）：**环境快照从一种变成两种**。
+ *   `getEnvironment` 的「拿到了」那一支分成 `kind: "kernel"` 与 `kind: "shell"`；
+ *   `RunSummary` 多一个可选的 `environmentSnapshotId`。纯新增，故 minor。
+ *
+ *   内核快照答的是「这个解释器里有什么」，机器快照答的是「这台机器是什么」——
+ *   计划 §3.4：*「两种环境快照，不共用一个名字。」* **它们不可比**：
+ *   一台机器上装着三个 conda 环境，机器还是那台机器。塞进一个对象、
+ *   靠可空字段区分的话，界面就能写出「版本是 undefined」这种句子，
+ *   而真相是它问错了问题。
+ *
+ *   `RunSummary.environmentSnapshotId` 补的是一个更难看的洞：此前环境只挂在
+ *   **溯源链**上（资源 → 产出它的 run → 环境），**Run 自己指不到自己的环境**——
+ *   于是 ②-B 那条判据「两次运行都留下可查的 Run 记录，**且记录里有环境快照**」
+ *   连内核会话都不成立。**缺省 = 不知道**，不是「没有环境」。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.0"
+export const WORKBENCH_PROTOCOL_VERSION = "5.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

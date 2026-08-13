@@ -171,8 +171,16 @@ describe("协议操作 · 订阅与控制", () => {
    */
 })
 
-describe("协议版本 · 5.0", () => {
+describe("协议版本 · 5.1", () => {
   /**
+   * **5.1（2026-08-13 · ②-B · R5）：`getEnvironment` 多一支「机器快照」，
+   * `RunSummary` 多一个可选的 `environmentSnapshotId`。** 纯新增，故 minor。
+   *
+   * 两种快照**不共用一个名字**（计划 §3.4）：内核那支答「这个解释器里有什么」，
+   * 机器那支答「这台机器是什么」，`kind` 是判别子。塞进一个对象靠可空字段区分的话，
+   * 界面就能写出「版本是 undefined」这种句子，而真相是它问错了问题。
+   *
+
    * **5.0（2026-08-13 · T4）：摘掉七个操作** —— `createSession`、
    * `createTemporarySession`、`openProject`、`getProject`、`previewTakeover`、
    * `steerSession`、`createAgent`。**删操作是破坏性的，所以 major 递增**，
@@ -296,7 +304,7 @@ describe("协议版本 · 5.0", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.0")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.1")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

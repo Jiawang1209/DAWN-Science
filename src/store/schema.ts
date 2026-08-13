@@ -153,6 +153,24 @@ export function migrate(db: Database.Database): void {
 
   // 从 v3 升级：runs 补文件事实三列。
   // **老数据留 NULL** —— 它们产生时没记，补一个空数组等于宣称"确认没改文件"
+  /**
+   * 从 R5 之前升级：runs 补**这次运行是在什么环境里跑的**（②-B · R5，2026-08-13）。
+   *
+   * 此前环境快照只挂在溯源链上（资源 → 产出它的 run → 环境），
+   * **Run 自己指不到自己的环境**——于是 ②-B 那条判据
+   * 「两次运行都留下可查的 Run 记录，**且记录里有环境快照**」
+   * 连内核运行都不成立，不只是远端。
+   *
+   * **老数据留 NULL**，与 `files_written` 同一条口径：
+   * 它们产生时没记，补一个上去就是拿今天的环境冒充当时的（不变式 5）。
+   * NULL 读作**不知道**，不读作「没有环境」。
+   */
+  if (!hasColumn(db, "runs", "environment_snapshot_id")) {
+    db.exec(
+      `ALTER TABLE runs ADD COLUMN environment_snapshot_id TEXT REFERENCES environment_snapshots(id)`,
+    )
+  }
+
   if (!hasColumn(db, "runs", "files_written")) {
     db.exec(`ALTER TABLE runs ADD COLUMN files_written TEXT`)
     db.exec(`ALTER TABLE runs ADD COLUMN files_read TEXT`)
@@ -258,11 +276,46 @@ export function migrate(db: Database.Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS environment_snapshots (
       id          TEXT PRIMARY KEY,
-      language    TEXT NOT NULL,
+      kind        TEXT NOT NULL CHECK (kind IN ('kernel','shell')),
+      language    TEXT,
       captured_at TEXT NOT NULL,
       payload     TEXT NOT NULL
     );
   `)
+
+  /**
+   * 从 R5 之前升级：这张表原来是 `language TEXT NOT NULL`，没有 `kind`（2026-08-13）。
+   *
+   * **shell 快照没有语言**——一台机器不是 Python 也不是 R。所以那条 NOT NULL
+   * 必须放宽，而 SQLite 放宽约束只能重建表（`ALTER TABLE` 改不了）。
+   *
+   * 老行一律补成 `kernel`：**这个默认值是可证的，不是猜的**——
+   * R5 之前这张表里只可能有内核快照。`compareEnvironments` 读老行时
+   * 用的是同一条理由，两处必须一致，否则同一行会被两处读成两种东西。
+   *
+   * **id 一个字节都不动**：它是内容指纹，也是 Run 指过来的那个引用。
+   * 重建表是为了放宽一条约束，不是重新计算证据。
+   */
+  if (!hasColumn(db, "environment_snapshots", "kind")) {
+    const n = (
+      db.prepare(`SELECT COUNT(*) AS n FROM environment_snapshots`).get() as { n: number }
+    ).n
+    db.exec(`
+      CREATE TABLE environment_snapshots_new (
+        id          TEXT PRIMARY KEY,
+        kind        TEXT NOT NULL CHECK (kind IN ('kernel','shell')),
+        language    TEXT,
+        captured_at TEXT NOT NULL,
+        payload     TEXT NOT NULL
+      );
+      INSERT INTO environment_snapshots_new (id, kind, language, captured_at, payload)
+        SELECT id, 'kernel', language, captured_at, payload FROM environment_snapshots;
+      DROP TABLE environment_snapshots;
+      ALTER TABLE environment_snapshots_new RENAME TO environment_snapshots;
+    `)
+    // 迁移是事实，应当可见——静默升级会让「这些 kind 哪来的」无从追溯
+    if (n > 0) console.log(`[store] 环境快照表升级：${n} 份老快照标记为 kernel`)
+  }
 
   /**
    * 应用级设置（②-A 后续，2026-08-10）。

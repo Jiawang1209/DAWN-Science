@@ -997,11 +997,23 @@ export const OPERATIONS = {
    */
   getEnvironment: {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
-    response: z.discriminatedUnion("captured", [
+    /**
+     * **两种快照，各自一支**（②-B · R5，2026-08-13）。
+     *
+     * 内核快照答的是「这个解释器里有什么」，机器快照答的是「这台机器是什么」——
+     * 计划 §3.4：*「两种环境快照，不共用一个名字。」* 塞进一个对象、
+     * 靠可空字段区分的话，界面就能写出「版本是 undefined」这种句子，
+     * 而真相是**它问错了问题**。
+     *
+     * `kind` 是判别子；`captured` 留着，因为界面上「有没有」与「是哪一种」
+     * 是先后两个问题。
+     */
+    response: z.union([
       z.object({ captured: z.literal(false), reason: z.string().min(1) }).strict(),
       z
         .object({
           captured: z.literal(true),
+          kind: z.literal("kernel"),
           /** 内容指纹。**同一个环境的两个会话给同一个 id** */
           id: z.string().min(1),
           language: z.enum(["python", "R"]),
@@ -1012,6 +1024,38 @@ export const OPERATIONS = {
           packages: z.array(z.object({ name: z.string(), version: z.string() }).strict()),
           /** 实际装了多少。**与 `packages.length` 不同即为被截断**（规格 7.5） */
           packagesTotal: z.int().min(0),
+        })
+        .strict(),
+      z
+        .object({
+          captured: z.literal(true),
+          kind: z.literal("shell"),
+          id: z.string().min(1),
+          /** 哪台机器。**本地就说本地**，远端给那条连接的 id */
+          where: z.union([
+            z.literal("local"),
+            z.object({ connectionId: z.string().min(1) }).strict(),
+          ]),
+          /**
+           * 底下这些**全是可选的**，而且缺席就是缺席：
+           * 精简容器里没有 `/etc/os-release`、没有 `nproc`、甚至没有 `git`。
+           * 那时少几个字段，比编几个值出来诚实（规格 7.5）。
+           */
+          os: z.string().optional(),
+          osRelease: z.string().optional(),
+          distro: z.string().optional(),
+          arch: z.string().optional(),
+          cpus: z.int().min(1).optional(),
+          memoryKib: z.int().min(1).optional(),
+          tools: z
+            .record(
+              z.string(),
+              z.object({ path: z.string(), version: z.string().optional() }).strict(),
+            )
+            .optional(),
+          workspace: z.string().optional(),
+          /** **不知道就没有这个字段**：它不等于「不是 git 仓库」 */
+          workspaceIsGitRepo: z.boolean().optional(),
         })
         .strict(),
     ]),

@@ -27,6 +27,14 @@ export interface RunInsert {
   filesRead?: string[]
   mayIncludeUserEdits?: boolean
   artifactCount?: number
+  /**
+   * 这次运行是在什么环境里跑的（R5）。
+   *
+   * **缺省 = 不知道**，与 `filesWritten` 同一条口径——不是「没有环境」。
+   * 内核会话给内核快照的 id，shell 型会话给机器快照的 id；
+   * 两者**不可比**，判据在 `env/snapshot.ts` 的 `compareEnvironments`。
+   */
+  environmentSnapshotId?: string
   cost?: Cost
 }
 
@@ -45,6 +53,8 @@ export interface RunFinish {
 
 interface RunRow {
   id: string
+  /** R5 起有这一列。**老库里读出来是 undefined**，与 NULL 一样读作「不知道」 */
+  environment_snapshot_id?: string | null
   project_id: string
   session_id: string
   parent_run_id: string | null
@@ -132,6 +142,13 @@ function toRun(r: RunRow): RunSummary {
     ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
     ...parseFiles(r),
     ...(r.artifact_count === null ? {} : { artifactCount: r.artifact_count }),
+    /**
+     * **这次运行是在什么环境里跑的**（R5）。
+     *
+     * `null` / 缺列都省略这个字段：**「不知道」不该在协议上长成一个值**。
+     * 老库里的 run 就是这一种——它们产生时我们还没记环境。
+     */
+    ...(r.environment_snapshot_id ? { environmentSnapshotId: r.environment_snapshot_id } : {}),
     ...(cost === undefined ? {} : { cost }),
   }
 }
@@ -189,12 +206,14 @@ export class RunStore {
           id, project_id, session_id, parent_run_id, origin, request_type, status,
           started_at, finished_at, terminal_reason, has_error, exit_code,
           files_written, files_read, may_include_user_edits, artifact_count,
+          environment_snapshot_id,
           cost_visible, cost_input_tokens, cost_output_tokens, cost_cache_read_tokens,
           cost_total_usd, cost_invisible_reason
         ) VALUES (
           @runId, @projectId, @sessionId, @parentRunId, @origin, @requestType, @status,
           @startedAt, @finishedAt, @terminalReason, @hasError, @exitCode,
           @filesWritten, @filesRead, @mayIncludeUserEdits, @artifactCount,
+          @environmentSnapshotId,
           @cost_visible, @cost_input_tokens, @cost_output_tokens, @cost_cache_read_tokens,
           @cost_total_usd, @cost_invisible_reason
         )`)
@@ -210,11 +229,20 @@ export class RunStore {
         mayIncludeUserEdits:
           rec.mayIncludeUserEdits === undefined ? null : rec.mayIncludeUserEdits ? 1 : 0,
         artifactCount: rec.artifactCount ?? null,
+        environmentSnapshotId: rec.environmentSnapshotId ?? null,
         ...costColumns(rec.cost),
       })
   }
 
-  /** 把 run 推进到终态。终态必须带 finishedAt——数据库的 CHECK 也会守这一条。 */
+  /**
+   * 把 run 推进到终态。终态必须带 finishedAt——数据库的 CHECK 也会守这一条。
+   *
+   * **这里写不了环境**（R5 特意没开这个口）。环境属于**准入时刻**：
+   * 一次运行跑到一半，有人 `pip install` 了一个包——结束时再去探一次，
+   * 记下来的就不是它实际跑在的那个环境。允许在 finish 补，
+   * 等于给「回头探测当前环境」开了门，而那正是 S17 的第一条禁令。
+   * 环境只在 `insert` 时写一次。
+   */
   finish(runId: string, fin: RunFinish): void {
     this.db
       .prepare(`

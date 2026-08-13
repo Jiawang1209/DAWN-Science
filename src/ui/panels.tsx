@@ -367,6 +367,7 @@ export type EnvironmentState =
   | { captured: false; reason: string }
   | {
       captured: true
+      kind: "kernel"
       id: string
       language: "python" | "R"
       version: string
@@ -375,6 +376,31 @@ export type EnvironmentState =
       libraryPaths: string[]
       packages: { name: string; version: string }[]
       packagesTotal: number
+    }
+  /**
+   * 机器快照（②-B · R5，2026-08-13）。
+   *
+   * **与内核那支不共用一个形状**（计划 §3.4）：内核答「这个解释器里有什么」，
+   * 机器答「这台机器是什么」，它们**不可比**。合成一个类型、靠可空字段区分的话，
+   * 这个面板就能画出「解释器版本：未知」——而真相是**它问错了问题**。
+   *
+   * 底下这些**全是可选的，而且缺席就是缺席**：精简容器里没有 `/etc/os-release`、
+   * 没有 `nproc`、甚至没有 `git`。那时这一行整个不画，而不是画成「未知」。
+   */
+  | {
+      captured: true
+      kind: "shell"
+      id: string
+      where: "local" | { connectionId: string }
+      os?: string
+      osRelease?: string
+      distro?: string
+      arch?: string
+      cpus?: number
+      memoryKib?: number
+      tools?: Record<string, { path: string; version?: string }>
+      workspace?: string
+      workspaceIsGitRepo?: boolean
     }
 
 export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
@@ -393,6 +419,8 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
       </Panel>
     )
   }
+
+  if (state.kind === "shell") return <机器环境 state={state} />
 
   const 截断了 = state.packagesTotal > state.packages.length
   return (
@@ -445,6 +473,99 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
       </details>
     </Panel>
   )
+}
+
+/**
+ * 机器快照那一支（R5）。
+ *
+ * **一行探不到就整行不画。** 显示「未知」会被读成一个确定的事实
+ * （「我们问过了，它没有」），而实情是我们没问到——两者在界面上必须长得不一样。
+ */
+function 机器环境({
+  state,
+}: {
+  state: Extract<Exclude<EnvironmentState, undefined>, { kind: "shell" }>
+}) {
+  const 工具 = Object.entries(state.tools ?? {})
+  return (
+    <Panel title={t("环境")}>
+      <dl className="env-facts">
+        <dt>{t("机器")}</dt>
+        {/* **本地就说本地**，远端说清是哪一台——两台机器可以同名，所以用连接 id */}
+        <dd>{state.where === "local" ? t("本机") : tf("远端：{0}", state.where.connectionId)}</dd>
+
+        {state.distro || state.os ? (
+          <>
+            {/**
+             * **不能写「系统」**：那个 msgid 已经被账本里的 `origin: system` 占了
+             * （2026-08-13 i18n 扫描发现）。同一个中文串两种含义、一份译文，
+             * 换到英文时必有一处是错的——而错的那处看起来完全正常。
+             */}
+            <dt>{t("操作系统")}</dt>
+            <dd>
+              {state.distro ?? state.os}
+              {state.osRelease ? <span className="env-path">{state.osRelease}</span> : null}
+            </dd>
+          </>
+        ) : null}
+
+        {state.arch || state.cpus !== undefined || state.memoryKib !== undefined ? (
+          <>
+            <dt>{t("硬件")}</dt>
+            <dd>
+              {[
+                state.arch,
+                state.cpus === undefined ? undefined : tf("{0} 核", String(state.cpus)),
+                state.memoryKib === undefined ? undefined : 说内存(state.memoryKib),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </dd>
+          </>
+        ) : null}
+
+        {工具.length > 0 ? (
+          <>
+            <dt>{t("PATH 上的工具")}</dt>
+            <dd>
+              {工具.map(([名, 它]) => (
+                <span key={名} className="env-path">
+                  {名}
+                  {它.version ? ` ${它.version}` : ""} — {它.path}
+                </span>
+              ))}
+            </dd>
+          </>
+        ) : null}
+
+        {state.workspace ? (
+          <>
+            <dt>{t("工作区")}</dt>
+            <dd>
+              <span className="env-path">{state.workspace}</span>
+              {/* **不知道就不说**：git 没装、目录不在、没权限都会探不到，
+                  而三种都不等于「这不是一个 git 仓库」 */}
+              {state.workspaceIsGitRepo === undefined ? null : (
+                <span className="hint">
+                  {state.workspaceIsGitRepo ? t("是 git 仓库") : t("不是 git 仓库")}
+                </span>
+              )}
+            </dd>
+          </>
+        ) : null}
+
+        <dt>{t("指纹")}</dt>
+        {/* **前 12 位够认**，而且它是内容指纹：同一台机器的两段会话给同一个 id */}
+        <dd className="env-mono">{state.id.slice(0, 12)}</dd>
+      </dl>
+    </Panel>
+  )
+}
+
+/** KiB → 人看的。**只在显示层换算**，存的一直是原始数字 */
+function 说内存(kib: number): string {
+  const gib = kib / 1024 / 1024
+  return gib >= 1 ? `${gib.toFixed(1)} GiB` : `${Math.round(kib / 1024)} MiB`
 }
 
 export function VariablesPanel({ state }: { state: VariablesState }) {

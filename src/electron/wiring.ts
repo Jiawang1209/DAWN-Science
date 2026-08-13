@@ -269,9 +269,19 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * `projectOf` 走会话表：**取不到就不记，绝不猜**。Rho 的教训是
    * 猜 project 归属会让整个运行对比功能失去依据（run-recorder.ts 有原文）。
    */
+  /**
+   * 会话 → 它准入时那份环境快照的 id（②-B · R5，2026-08-13）。
+   *
+   * **后端往里写，记账员往外读**——单向。记账员比后端先造出来，
+   * 反过来让它去问后端就得延迟绑定，而延迟绑定的接线出错时不出声。
+   */
+  const 会话环境 = new Map<string, string>()
+
   const runRecorder = new RunRecorder({
     runs: runStore,
     projectOf: (sessionId) => sessionStore.get(sessionId)?.projectId,
+    // **取不到就不记**：缺这一格读作「不知道这次跑在什么环境里」
+    environmentOf: (sessionId) => 会话环境.get(sessionId),
   })
 
   const events = new SessionTranscripts({
@@ -307,6 +317,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   let 远端状态变了: ((u: { connectionId: string; state: RemoteState }) => void) | undefined
 
   const backend = createWorkbenchBackend({
+    onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },
     tasks: new TaskStore(db),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,

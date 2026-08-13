@@ -98,6 +98,18 @@ export const EN: Readonly<Record<string, string>> = {
   "产出": "Outputs",
   "上下文": "Context",
   "环境": "Environment",
+  // 机器快照那一支（②-B · R5）。**「系统」不能复用**——那个 msgid 归账本的
+  // `origin: system`，同一个中文串两种含义、一份译文，必有一处是错的
+  "机器": "Machine",
+  "本机": "This computer",
+  "远端：{0}": "Remote: {0}",
+  "操作系统": "OS",
+  "硬件": "Hardware",
+  "{0} 核": "{0} cores",
+  "PATH 上的工具": "Tools on PATH",
+  "工作区": "Workspace",
+  "是 git 仓库": "a git repository",
+  "不是 git 仓库": "not a git repository",
   "变量": "Variables",
   "成本": "Cost",
   "历史": "History",

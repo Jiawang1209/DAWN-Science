@@ -10,6 +10,7 @@ import { ProjectStore } from "../../src/store/projects.js"
 import { RunStore } from "../../src/store/runs.js"
 import { SessionStore } from "../../src/store/sessions.js"
 import { TaskStore } from "../../src/store/tasks.js"
+import { EnvironmentStore } from "../../src/store/environments.js"
 import { ProjectManager } from "../../src/project/manager.js"
 import { SessionManager } from "../../src/session/manager.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
@@ -217,5 +218,91 @@ describe("真实后端 · 经服务端端到端", () => {
   it("没有溯源记录的资源 → not_found，而不是编一个空链", async () => {
     const r = await ctx.server.handle("getProvenance", { resourceId: "nope" })
     if (!r.ok) expect(r.error.code).toBe("not_found")
+  })
+})
+
+/**
+ * 一次运行落在账本上，**账本里有它跑在哪个环境**（②-B · R5，2026-08-13）。
+ *
+ * ②-B 的判据原文是「两次运行都留下可查的 Run 记录，**且记录里有环境快照**」。
+ * 此前 `runs` 表压根没有这一列——环境只挂在溯源链上，
+ * **Run 自己指不到自己的环境**，所以这条判据连内核会话都不成立。
+ *
+ * 这几条盯的是**接线**：类型对、指纹对、存得进去，都不等于它真的被接上了。
+ */
+describe("真实后端 · R5：Run 记得住它跑在哪", () => {
+  let ctx: ReturnType<typeof make>
+  let repo: string
+  beforeEach(() => {
+    ctx = make()
+    repo = newRepo()
+  })
+
+  it("**建一段会话就冻结一份机器快照** —— 准入时刻，不是第一次执行时", async () => {
+    const 冻结的: [string, string][] = []
+    const b = createWorkbenchBackend({
+      projects: ctx.projects, projectStore: ctx.projectStore, runs: ctx.runStore,
+      sessions: ctx.sessions, credentials: memoryCredentials(), registry, events: ctx.events,
+      tasks: new TaskStore(ctx.db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")),
+      environments: new EnvironmentStore(ctx.db),
+      onEnvironmentFrozen: (s, id) => 冻结的.push([s, id]),
+    })
+    const srv = new WorkbenchServer(b)
+    const t = await srv.handle("createTask", { agentId: "ds-chat", workspace: repo })
+    expect(t.ok, `建任务失败了：${JSON.stringify(t)}`).toBe(true)
+
+    expect(冻结的, "会话起来了，却没有冻结任何环境").toHaveLength(1)
+    expect(冻结的[0]![1]).toMatch(/^[0-9a-f]{64}$/)
+  })
+
+  it("**冻结的那份真的进了库，且说得出这是哪台机器**", async () => {
+    const envs = new EnvironmentStore(ctx.db)
+    let 冻结id: string | undefined
+    const b = createWorkbenchBackend({
+      projects: ctx.projects, projectStore: ctx.projectStore, runs: ctx.runStore,
+      sessions: ctx.sessions, credentials: memoryCredentials(), registry, events: ctx.events,
+      tasks: new TaskStore(ctx.db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")),
+      environments: envs,
+      onEnvironmentFrozen: (_s, id) => void (冻结id = id),
+    })
+    const srv = new WorkbenchServer(b)
+    await srv.handle("createTask", { agentId: "ds-chat", workspace: repo })
+
+    const 存的 = envs.get(冻结id!)
+    expect(存的?.kind).toBe("shell")
+    if (存的?.kind !== "shell") throw new Error("冻结的应当是一份机器快照")
+    // **本地会话就说本地**——不留一个含糊的空位
+    expect(存的.where).toBe("local")
+    expect(存的.workspace).toBe(repo)
+    expect(存的.os, "真机上一个字段都没探到").toBeTruthy()
+  })
+
+  it("**`getEnvironment` 对非内核会话也答得上来** —— 不是内核会话不等于没有环境", async () => {
+    const b = createWorkbenchBackend({
+      projects: ctx.projects, projectStore: ctx.projectStore, runs: ctx.runStore,
+      sessions: ctx.sessions, credentials: memoryCredentials(), registry, events: ctx.events,
+      tasks: new TaskStore(ctx.db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")),
+      environments: new EnvironmentStore(ctx.db),
+    })
+    const srv = new WorkbenchServer(b)
+    const t = await srv.handle("createTask", { agentId: "ds-chat", workspace: repo })
+    const sid = (t as { data: { sessionId: string } }).data.sessionId
+
+    const r = await srv.handle("getEnvironment", { sessionId: sid })
+    expect(r.ok).toBe(true)
+    const d = (r as { data: { captured: boolean; kind?: string } }).data
+    expect(d.captured, "非内核会话被当成了「没有环境」").toBe(true)
+    expect(d.kind).toBe("shell")
+  })
+
+  /**
+   * **没装配环境库时，一切照旧。**
+   *
+   * 探测是加分项，不是准入条件：它失败了、或者压根没装配，
+   * 会话仍然要起得来。否则一台探不到环境的机器上，这个应用直接不能用了。
+   */
+  it("没装配环境库也能照常建会话 —— 探测是加分项，不是准入条件", async () => {
+    const t = await ctx.server.handle("createTask", { agentId: "ds-chat", workspace: repo })
+    expect(t.ok).toBe(true)
   })
 })

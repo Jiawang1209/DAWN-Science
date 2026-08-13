@@ -80,6 +80,10 @@ describe("内容寻址", () => {
     const s = store()
     const id = s.put(样本(), "2026-08-10T00:00:00.000Z")
     const got = s.get(id)!
+    // **先说清是哪一种再读它的字段**（R5）：两种快照不可比，
+    // 类型上也就没有「随便哪种都有的 version」这回事
+    expect(got.kind).toBe("kernel")
+    if (got.kind !== "kernel") throw new Error("存的是内核快照，取回来却不是")
     expect(got.version).toBe("3.11.15")
     expect(got.packages).toHaveLength(2)
     expect(got.id).toBe(id)
@@ -95,7 +99,7 @@ describe("内容寻址", () => {
     dbs.push(db)
     migrate(db)
     db.prepare(
-      `INSERT INTO environment_snapshots (id, language, captured_at, payload) VALUES ('坏', 'python', 't', '{不是 json')`,
+      `INSERT INTO environment_snapshots (id, kind, language, captured_at, payload) VALUES ('坏', 'kernel', 'python', 't', '{不是 json')`,
     ).run()
     expect(new EnvironmentStore(db).get("坏")).toBeUndefined()
   })

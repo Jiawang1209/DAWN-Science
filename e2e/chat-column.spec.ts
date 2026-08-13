@@ -19,7 +19,7 @@
  * 断言的是「边缘对齐」而不是「宽度等于 784」：**数可以再调**
  * （作者随时可能改窗口宽度或那个上限），而三者对齐是这条设计意图本身。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
 test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn }) => {
   const { page } = dawn
@@ -78,4 +78,58 @@ test("**用户气泡右下角不是圆的**", async ({ dawn }) => {
   })
   expect(角.右下).toBe("0px")
   expect(角.左上).not.toBe("0px")
+})
+
+/**
+ * **命令行与回复内容同宽**（2026-08-13，作者提）。
+ *
+ * *「我看会话里面会有 Linux 的命令，其实我感觉 Linux 在会话里面太长了，
+ * 其长度应该和真实回复的内容的宽度保持一致。」*
+ *
+ * ## 根因不是「命令太长」，是它不在那个盒子里
+ *
+ * 宽度上限原先写在 `.turn` 上，而 `.tool`（工具调用那一行）**不是 `.turn`
+ * 的子节点**——它和 `.caveat`、子 agent 那几行一样，都是转录内容层的
+ * 直接子节点。于是**只有发言被管住了**，命令行一路铺到窗口右缘。
+ *
+ * 上限现在挂在内容层（`.turns-inner`），**每一种行都自动被管住，
+ * 包括还没写出来的那些**——写在 `.turn` 上是「每加一种行都要记得再写一遍」，
+ * 那种规则迟早会漏，这一次就是。
+ */
+test.describe("命令行的宽度", () => {
+  test.use({
+    dawnOptions: {
+      toolCall: {
+        toolName: "bash",
+        // 刻意给一条很长的命令：短的话铺不满，什么都验不出来
+        args: {
+          command:
+            "find . -type f -name '*.csv' -not -path './node_modules/*' -exec wc -l {} \; | sort -rn | head -20",
+        },
+      },
+    },
+  })
+
+  test("**工具调用那一行不比回复更宽**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page, "跑一条命令")
+    await 等进了对话(page)
+
+    const 工具行 = page.locator(".tool").first()
+    await 工具行.waitFor({ timeout: 60_000 })
+
+    const 内容层 = (await page.locator(".turns-inner").boundingBox())!
+    const 命令 = (await 工具行.boundingBox())!
+
+    /**
+     * **判据是「同一个盒子」，不是「差不多宽」。**
+     * 量右缘：铺到窗口右缘的那一版，命令行的右缘会远远超过内容层。
+     */
+    expect(命令.x + 命令.width).toBeLessThanOrEqual(内容层.x + 内容层.width + 1)
+    expect(命令.x).toBeGreaterThanOrEqual(内容层.x - 1)
+
+    // 而且它与发言**左缘齐平**——差几像素在一列里一眼就看得出来
+    const 发言 = (await page.locator(".turn").first().boundingBox())!
+    expect(Math.round(命令.x)).toBe(Math.round(发言.x))
+  })
 })

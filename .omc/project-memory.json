@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npx vitest run tests/ui/i18n.test.ts tests/ui/design-contract.test.ts 2>&1 | grep -E '^\\+   \"|Tests |×' | head -10 && npm run build 2>&1 | tail -1 && npx playwright test e2e/bulk-delete.spec.ts e2e/project-bulk.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -15",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -12",
+    "buildCommand": "python3 -c \"\np='src/ui/views.tsx'; s=open(p).read()\ns=s.replace('<StickToBottom.Content>','<StickToBottom.Content className=\\\"turns-inner\\\">',1)\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -3 && npx playwright test 2>&1 | tail -14",
+    "testCommand": "python3 -c \"\np='src/ui/views.tsx'; s=open(p).read()\ns=s.replace('<StickToBottom.Content>','<StickToBottom.Content className=\\\"turns-inner\\\">',1)\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -3 && npx playwright test 2>&1 | tail -14",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

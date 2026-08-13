@@ -2196,7 +2196,19 @@ export function ConversationView({
        * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
        */}
       <StickToBottom className="turns" resize="smooth" initial="smooth">
-        <StickToBottom.Content>
+        {/**
+          * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：
+          * *「会话里面会有 Linux 的命令……其长度应该和真实回复的内容的宽度保持一致」*）。
+          *
+          * 他说的是事实：`.tool` / `.caveat` / 子 agent 那几行**根本不在 `.turn` 里**，
+          * 它们是这一层的直接子节点。上限只写在 `.turn` 上，于是
+          * **只有发言被管住了**，命令行一路铺到窗口右缘。
+          *
+          * 挂在这里之后，**现在与将来的每一种行都自动被管住**——
+          * 而写在 `.turn` 上是「每加一种行就得记得再写一遍」，
+          * 那种规则迟早会漏，这一次就是。
+          */}
+        <StickToBottom.Content className="turns-inner">
           {terminalTrimmed ? <p className="hint">{t("终端只保留最近的输出，更早的已滚出缓冲")}</p> : null}
           {items.length === 0 ? (
             <p className="empty">{t("还没有对话")}</p>

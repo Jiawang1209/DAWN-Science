@@ -18,6 +18,7 @@ import type {
 } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 
+import { t } from "./i18n/index.js"
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="panel">
@@ -37,7 +38,7 @@ export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] 
   if (sessions.length === 0) {
     return (
       <Panel title="状态">
-        <Empty>还没有会话</Empty>
+        <Empty>{t("还没有会话")}</Empty>
       </Panel>
     )
   }
@@ -115,7 +116,7 @@ export function ToolChangesPanel({
   if (tools.length === 0) {
     return (
       <Panel title="变更">
-        <Empty>还没有工具调用</Empty>
+        <Empty>{t("还没有工具调用")}</Empty>
       </Panel>
     )
   }
@@ -143,9 +144,9 @@ export function ToolChangesPanel({
                 <span className="name">{name || "未记录工具名"}</span>
                 {r.filesWritten === undefined ? (
                   /* **缺省 = 不知道。** 与下面那一支的措辞必须不同 */
-                  <span className="hint">无法确定改了什么</span>
+                  <span className="hint">{t("无法确定改了什么")}</span>
                 ) : r.filesWritten.length === 0 ? (
-                  <span className="hint">没有改动文件</span>
+                  <span className="hint">{t("没有改动文件")}</span>
                 ) : (
                   <FileList files={r.filesWritten} {...(onOpenFile ? { onOpen: onOpenFile } : {})} />
                 )}
@@ -178,7 +179,7 @@ export function AttributionCaveat({ show }: { show: boolean }) {
   if (!show) return null
   return (
     <p className="caveat panel-wide">
-      ⚠ 可能包含你自己的修改——本阶段没有 worktree 隔离，分不清是谁改的
+      {t("⚠ 可能包含你自己的修改——本阶段没有 worktree 隔离，分不清是谁改的")}
     </p>
   )
 }
@@ -204,14 +205,14 @@ export function ChangesPanel({
   if (!facts) {
     return (
       <Panel title="产出">
-        <Empty>无法确定——没有取到 git 基线（会话早于本次启动，或工作区不是 git 仓库）</Empty>
+        <Empty>{t("无法确定——没有取到 git 基线（会话早于本次启动，或工作区不是 git 仓库）")}</Empty>
       </Panel>
     )
   }
   return (
     <Panel title="产出">
       {facts.files.length === 0 ? (
-        <Empty>未改动任何文件</Empty>
+        <Empty>{t("未改动任何文件")}</Empty>
       ) : (
         <FileList files={facts.files} {...(onOpenFile ? { onOpen: onOpenFile } : {})} />
       )}
@@ -261,7 +262,7 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   if (!usage) {
     return (
       <Panel title="上下文">
-        <Empty>尚未记录</Empty>
+        <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
   }
@@ -285,7 +286,7 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
         {usage.model ? ` · ${usage.model}` : ""}
       </p>
       {/* **这一行是整个面板的要害。** 不写清楚，人就会把下表当成 token 分解 */}
-      <p className="hint">下表按字节，不是 token</p>
+      <p className="hint">{t("下表按字节，不是 token")}</p>
       {/**
        * 三档占比的堆叠条。**它表达的是下面那张表，不是新事实**——
        * 宽度就是字节占比，与「下表按字节，不是 token」那句话说的是同一件事。
@@ -380,14 +381,14 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
   if (!state) {
     return (
       <Panel title="环境">
-        <Empty>尚未记录</Empty>
+        <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
   }
   if (!state.captured) {
     return (
       <Panel title="环境">
-        <p className="unknown">没有快照</p>
+        <p className="unknown">{t("没有快照")}</p>
         <p className="caveat">{state.reason}</p>
       </Panel>
     )
@@ -397,18 +398,18 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
   return (
     <Panel title="环境">
       <dl className="env-facts">
-        <dt>解释器</dt>
+        <dt>{t("解释器")}</dt>
         {/* **版本 + 路径一起给**：光有版本回答不了「哪个 conda 环境」 */}
         <dd>
           {state.version}
           <span className="env-path">{state.executable}</span>
         </dd>
-        <dt>平台</dt>
+        <dt>{t("平台")}</dt>
         <dd>{state.platform}</dd>
-        <dt>库路径</dt>
+        <dt>{t("库路径")}</dt>
         <dd>
           {state.libraryPaths.length === 0 ? (
-            <span className="hint">内核没说</span>
+            <span className="hint">{t("内核没说")}</span>
           ) : (
             state.libraryPaths.map((p) => (
               <span key={p} className="env-path">
@@ -417,7 +418,7 @@ export function EnvironmentPanel({ state }: { state: EnvironmentState }) {
             ))
           )}
         </dd>
-        <dt>指纹</dt>
+        <dt>{t("指纹")}</dt>
         {/* **前 12 位够认**，而且它是内容指纹：同一个环境的两个会话给同一个 id */}
         <dd className="env-mono">{state.id.slice(0, 12)}</dd>
       </dl>
@@ -450,7 +451,7 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
   if (!state) {
     return (
       <Panel title="变量">
-        <Empty>尚未记录</Empty>
+        <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
   }
@@ -458,7 +459,7 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
     // **不支持要说原因**（规格 7.5）：一片空白会被读成「没有变量」
     return (
       <Panel title="变量">
-        <p className="unknown">看不到</p>
+        <p className="unknown">{t("看不到")}</p>
         <p className="caveat">{state.reason}</p>
       </Panel>
     )
@@ -466,7 +467,7 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
   if (state.variables.length === 0) {
     return (
       <Panel title="变量">
-        <Empty>这个会话里还没有变量</Empty>
+        <Empty>{t("这个会话里还没有变量")}</Empty>
       </Panel>
     )
   }
@@ -483,7 +484,7 @@ export function VariablesPanel({ state }: { state: VariablesState }) {
             <p className="var-preview">
               {v.preview}
               {/* **截断要显式标注**——砍过的预览和完整的看起来一模一样 */}
-              {v.previewTruncated ? <span className="hint">（预览已截断）</span> : null}
+              {v.previewTruncated ? <span className="hint">{t("（预览已截断）")}</span> : null}
             </p>
           </li>
         ))}
@@ -496,14 +497,14 @@ export function CostPanel({ cost }: { cost: Cost | undefined }) {
   if (!cost) {
     return (
       <Panel title="成本">
-        <Empty>尚未记录</Empty>
+        <Empty>{t("尚未记录")}</Empty>
       </Panel>
     )
   }
   if (!cost.visible) {
     return (
       <Panel title="成本">
-        <p className="unknown">不可见</p>
+        <p className="unknown">{t("不可见")}</p>
         <p className="caveat">{cost.reason}</p>
       </Panel>
     )
@@ -525,7 +526,7 @@ export function CostPanel({ cost }: { cost: Cost | undefined }) {
 
 /** 不完整必须写明原因——不隐藏、不留白（规格 7.33）。 */
 export function ProvenanceBadge({ link }: { link: ProvenanceLink }) {
-  if (link.provenanceComplete) return <span className="prov ok">溯源完整</span>
+  if (link.provenanceComplete) return <span className="prov ok">{t("溯源完整")}</span>
   return (
     <span className="prov partial">
       溯源不完整：{link.incompleteReason}
@@ -561,7 +562,7 @@ export function RunsPanel({ runs }: { runs: readonly RunSummary[] }) {
   if (runs.length === 0) {
     return (
       <Panel title="历史">
-        <Empty>还没有记录</Empty>
+        <Empty>{t("还没有记录")}</Empty>
       </Panel>
     )
   }

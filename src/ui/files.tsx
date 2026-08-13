@@ -18,6 +18,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 三角图标 } from "./icons.js"
 
+import { t } from "./i18n/index.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
  * 抄一份的代价：协议改了之后两边各自自洽，编译器一句话都不会说。
@@ -185,11 +186,11 @@ export function FilePreview({
       ) : (
         <div className="preview-other">
           {/* **说清是什么、多大**，并给一条出路 */}
-          <p className="unknown">不能在应用里预览</p>
+          <p className="unknown">{t("不能在应用里预览")}</p>
           <p className="caveat">{content.reason}</p>
           <div className="state-action">
             <Button variant="outline" size="sm" onClick={() => onOpenExternally(path)}>
-              用系统程序打开
+              {t("用系统程序打开")}
             </Button>
           </div>
         </div>
@@ -239,7 +240,7 @@ function PdfPreview({
       {/* **留一条出路**：内嵌阅读器不是万能的，而人可能只是想拿它去打印 */}
       <div className="state-action">
         <Button variant="text" size="sm" onClick={() => onOpenExternally(path)}>
-          用系统程序打开
+          {t("用系统程序打开")}
         </Button>
       </div>
     </>
@@ -263,7 +264,7 @@ export function FilesView({
 }) {
   return (
     <div className="files-view">
-      <nav className="file-tree" aria-label="工作区文件">
+      <nav className="file-tree" aria-label={t("工作区文件")}>
         <ul className="tree-list">
           <DirNode path="" name="" depth={0} selected={selected} onSelect={onSelect} load={loadDir} />
         </ul>

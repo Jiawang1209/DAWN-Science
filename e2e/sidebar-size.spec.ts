@@ -20,7 +20,7 @@
  * `toBeVisible()` 对宽度为 0 的元素**判定不稳**，而对 `opacity: 0`
  * 干脆算可见——CLAUDE.md 里那条踩过的坑。这里直接量盒子。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 const 量宽 = (page: import("@playwright/test").Page) =>
   page.locator(".sidebar").evaluate((el) => Math.round(el.getBoundingClientRect().width))
@@ -161,4 +161,69 @@ test("**重开之后，宽度与折叠都还是上次那样**", async ({ dawn })
 
   const p3 = await 重开()
   await expect(p3.getByRole("button", { name: "展开侧边栏" })).toBeVisible({ timeout: 30_000 })
+})
+
+/**
+ * 顶栏三样的顺序与搜索（2026-08-13，作者要的）。
+ *
+ * *「左上角的 logo 和 折叠按钮，换一下位置，先是 logo，再是折叠按钮，
+ * 此外帮我增加一个搜索功能，放一个搜索按钮，搜索按钮放在折叠按钮旁边。」*
+ */
+test("**顺序是：标志 → 折叠 → 搜索**", async ({ dawn }) => {
+  const { page } = dawn
+  const 标志 = (await page.getByRole("button", { name: "DAWN Science" }).boundingBox())!
+  const 折叠 = (await page.getByRole("button", { name: "收起侧边栏" }).boundingBox())!
+  const 搜索 = (await page.getByRole("button", { name: "搜索", exact: true }).boundingBox())!
+
+  expect(标志.x).toBeLessThan(折叠.x)
+  expect(折叠.x).toBeLessThan(搜索.x)
+  // 搜索紧挨着折叠：中间不该再塞别的东西
+  expect(搜索.x - (折叠.x + 折叠.width)).toBeLessThan(16)
+})
+
+/**
+ * **搜索真的筛得动，而且搜不到时会出声。**
+ *
+ * 一片空白与「一条对话都还没有」长得一模一样——
+ * CLAUDE.md：*「两处长得一样的东西，等于没有判据。」*
+ */
+test("**搜索筛掉不匹配的，且搜不到时说出来**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page, "甲测试会话")
+  await 开一段临时会话(page, "乙另一段")
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(2)
+
+  await page.getByRole("button", { name: "搜索", exact: true }).click()
+  const 框 = page.getByPlaceholder(/搜索项目与会话/)
+  await expect(框).toBeVisible()
+
+  await 框.fill("甲测试")
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(1)
+  await expect(page.locator(".session-list .sess .name")).toContainText("甲测试会话")
+
+  // 搜不到：**说出来**，而不是一片空白
+  await 框.fill("这个词一定搜不到")
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(0)
+  await expect(page.locator(".side-empty")).toContainText("没有匹配")
+
+  // Esc 关掉它，列表原样回来
+  await 框.press("Escape")
+  await expect(框).toHaveCount(0)
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(2)
+})
+
+/**
+ * **侧栏收着的时候按搜索，要先把侧栏打开。**
+ *
+ * 输入框长在侧栏里；不打开的话按下去屏幕上什么都不会发生——
+ * 那就是本项目已经报过三次的「点了没反应」。
+ */
+test("**收着的时候点搜索，侧栏会自己打开**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "收起侧边栏" }).click()
+  await 等宽(page).toBe(0)
+
+  await page.getByRole("button", { name: "搜索", exact: true }).click()
+  await 等宽(page).toBeGreaterThan(100)
+  await expect(page.getByPlaceholder(/搜索项目与会话/)).toBeVisible()
 })

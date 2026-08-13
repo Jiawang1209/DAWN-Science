@@ -15,6 +15,7 @@
 import { cleanup } from "@testing-library/react"
 import { afterEach, beforeEach } from "vitest"
 import { resetAllState } from "../../src/ui/state/index.js"
+import { $lang } from "../../src/ui/i18n/index.js"
 
 /**
  * jsdom 没有实现 `ResizeObserver`，但真实 Chromium 有。
@@ -65,5 +66,20 @@ if (typeof globalThis.matchMedia === "undefined") {
   })) as unknown as typeof matchMedia
 }
 
-beforeEach(resetAllState)
+/**
+ * **界面语言钉在中文**（2026-08-13）。
+ *
+ * 产品的默认是**英文**（作者定的）。这一千多条用例里有大量
+ * 「按中文名找按钮」——不钉住的话它们会一次性全红，
+ * **而红成一片就没人看得出哪条是真问题**（第一次跑就当场红了 85 条）。
+ *
+ * 与 `e2e/fixtures.ts` 里那条 `钉住中文` 是同一个决定、同一个理由。
+ *
+ * **英文那一面不靠这里保**：`tests/ui/i18n.test.ts` 盯目录与调用点的一致，
+ * `e2e/i18n.spec.ts` 走一遍真实产物、断言屏上一个汉字都没有。
+ */
+beforeEach(() => {
+  resetAllState()
+  $lang.set("zh")
+})
 afterEach(cleanup)

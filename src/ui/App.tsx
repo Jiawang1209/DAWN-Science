@@ -50,8 +50,8 @@ import {
   WorkspacePanel,
   type KernelRow,
 } from "./Settings.js"
-import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标 } from "./icons.js"
-import { Button } from "./primitives.js"
+import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标 } from "./icons.js"
+import { Button, Loader } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
 import { SkillsView, McpView, PluginsView, type SkillLoad } from "./skills.js"
 import { TerminalDock } from "./dock.js"
@@ -130,11 +130,13 @@ import {
   $sidebarWidth,
   $sidebarCollapsed,
   setSidebarWidth,
+  setSidebarCollapsed,
   toggleSidebar,
   SIDEBAR_MIN,
   SIDEBAR_MAX,
 } from "./state/index.js"
 
+import { t, $lang } from "./i18n/index.js"
 /**
  * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
  *   默认参数每次渲染都求值，于是每次渲染都得到一个新的 client 身份，
@@ -178,6 +180,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const dockSessionId = useStore($dockSessionId)
   const sidebarWidth = useStore($sidebarWidth)
   const sidebarCollapsed = useStore($sidebarCollapsed)
+  /**
+   * **换语言 = 整棵树重挂**（2026-08-13）。
+   *
+   * `t()` 是普通函数调用，不是 hook——它读的是 `$lang.get()`，
+   * 组件不会因为它变了而重渲染。给外壳一个 `key={lang}` 是最省事、
+   * 也最诚实的做法：**换语言那一刻整屏重画一次**。
+   *
+   * 代价说清楚：组件里的局部 state（展开了哪个菜单、光标在哪）会丢。
+   * 换语言是罕见动作，而**让每个组件各自 `useStore($lang)`** 的代价是
+   * 十几个文件里都要多一行、且漏一处就是「那一块没跟着换」——
+   * 那种漏法在界面上表现为半中半英，比丢一次菜单状态难查得多。
+   *
+   * 草稿不会丢：它住在 `$drafts` 这个 store 里，不在组件里。
+   */
+  const lang = useStore($lang)
+  /**
+   * 侧栏的搜索（2026-08-13，作者要的）。
+   *
+   * **短命的交互细节留在组件里，不进全局 store**（`state/index.ts` 的头注：
+   * *「一个新的全局 store 是在主张『很多互不相邻的界面都需要它』」*）。
+   * 这里只有两处用它——顶栏那颗按钮与侧栏那个框，而它们都在这一层底下。
+   *
+   * **关掉就清空**：留着上次搜的词，下次打开会是「一进来就已经过滤掉大半」，
+   * 人会以为对话不见了。命令面板那条查询词也是这么处理的，同一个理由。
+   */
+  const [搜索开着, 设搜索开着] = useState(false)
+  const [搜索词, 设搜索词] = useState("")
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -970,8 +999,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 名 = s.title ?? "新会话"
       setConfirming({
         title: `删除会话「${名}」？`,
-        detail: <>会停掉它的进程，并删掉这个会话与它的对话记录。</>,
-        safety: <>账本不动：这个会话对文件做过什么，记录仍然留在「项目概览」里。</>,
+        detail: <>{t("会停掉它的进程，并删掉这个会话与它的对话记录。")}</>,
+        safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在「项目概览」里。")}</>,
         confirmLabel: "删除会话",
         onConfirm: () => {
           client
@@ -1097,8 +1126,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       if (targets.length === 0) return
       setConfirming({
         title: `删除这 ${targets.length} 段对话？`,
-        detail: <>会停掉它们的进程，并删掉这些会话与它们的对话记录。</>,
-        safety: <>账本不动：它们对文件做过什么，记录仍然留在「项目概览」里。</>,
+        detail: <>{t("会停掉它们的进程，并删掉这些会话与它们的对话记录。")}</>,
+        safety: <>{t("账本不动：它们对文件做过什么，记录仍然留在「项目概览」里。")}</>,
         confirmLabel: `删除 ${targets.length} 段`,
         onConfirm: () => {
           /**
@@ -1170,7 +1199,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ),
         safety: (
           <>
-            <b>磁盘上的文件夹一个都不会被删除。</b>
+            <b>{t("磁盘上的文件夹一个都不会被删除。")}</b>
             <br />
             {groups.map((g) => g.workspace).join("\n")}
           </>
@@ -1227,7 +1256,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ),
           safety: (
             <>
-              <b>磁盘上的文件夹不会被删除。</b>
+              <b>{t("磁盘上的文件夹不会被删除。")}</b>
               <br />
               {impact.workspace}
             </>
@@ -1697,8 +1726,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const latestRun = runs[0]
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" key={lang}>
       <div className="topbar">
+        {/**
+          * **顺序：标志 → 折叠 → 搜索**（2026-08-13，作者定的）。
+          *
+          * *「左上角的 logo 和 折叠按钮，换一下位置，先是 logo，再是折叠按钮，
+          * 此外帮我增加一个搜索功能，放一个搜索按钮，搜索按钮放在折叠按钮旁边。」*
+          *
+          * 标志在最左是**这一屏叫什么**；后面两颗是**对左边那一栏做什么**。
+          * 实测 WorkBuddy 的侧栏顶栏里，「收起侧边栏」与「搜索」也是紧挨着的
+          * （32×32，间距 36），我们照这个关系排。
+          */}
+        <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
+          DAWN Science
+        </Button>
         {/**
           * **折叠侧栏**（2026-08-13，作者要的）。
           *
@@ -1717,21 +1759,37 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           variant="ghost"
           size="icon"
           className="side-toggle"
-          aria-label={sidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
+          aria-label={sidebarCollapsed ? t("展开侧边栏") : t("收起侧边栏")}
           aria-expanded={!sidebarCollapsed}
           onClick={toggleSidebar}
         >
           <侧栏图标 />
         </Button>
         {/**
-          * **点它回初始画面**（2026-08-12，作者提）。
+          * **搜索**（2026-08-13，作者要的，紧挨着折叠那颗）。
           *
-          * 与侧栏那颗「新建任务」是**同一个动作**——
-          * 「一个动作可以有多个入口，但它们调用同一份实现、同一份状态」
-          * （Hermes：*"One action, one home."*）。
+          * **它搜的是名字与路径，不是对话内容**——后者要后端出一个全文检索，
+          * 现在没有。一颗看起来什么都能搜、其实只搜标题的按钮，
+          * 比一颗说清楚自己搜什么的更坏（不变式 5：不假装有我们没有的东西），
+          * 所以输入框的占位符直接把范围写出来。
+          *
+          * **侧栏收着的时候按它要先把侧栏打开**：输入框长在侧栏里，
+          * 收着的时候按下去屏幕上什么都不会发生——那就是「点了没反应」。
           */}
-        <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
-          DAWN Science
+        <Button
+          variant="ghost"
+          size="icon"
+          className="side-search-toggle"
+          aria-label={t("搜索")}
+          aria-expanded={搜索开着}
+          onClick={() => {
+            const 要开 = !搜索开着
+            设搜索开着(要开)
+            if (!要开) 设搜索词("")
+            if (要开 && sidebarCollapsed) setSidebarCollapsed(false)
+          }}
+        >
+          <搜索图标 />
         </Button>
         <span className="spacer" />
         {/**
@@ -1743,7 +1801,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           */}
         {view !== "conversation" && view !== "settings" ? (
           <Button variant="ghost" size="sm" onClick={() => setView("conversation")}>
-            返回
+            {t("返回")}
           </Button>
         ) : null}
         {/**
@@ -1753,7 +1811,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           */}
         {view === "settings" ? (
           <Button variant="ghost" size="sm" onClick={() => setView("conversation")}>
-            返回
+            {t("返回")}
           </Button>
         ) : null}
       </div>
@@ -1787,7 +1845,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     title: `删除服务器「${名字}」？`,
                     detail: (
                       <p>
-                        会断开这台机器的连接，并把它的登录口令从系统钥匙串里删掉。
+                        {t("会断开这台机器的连接，并把它的登录口令从系统钥匙串里删掉。")}
                       </p>
                     ),
                     safety: "那台服务器上的文件不会有任何变化。",
@@ -1869,6 +1927,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
           onDeleteProjects={askDeleteProjects}
+          {...(搜索开着
+            ? {
+                search: {
+                  value: 搜索词,
+                  onChange: 设搜索词,
+                  onClose: () => {
+                    设搜索开着(false)
+                    设搜索词("")
+                  },
+                },
+              }
+            : {})}
           /**
            * 单条删除也走 `deleteTask`（2026-08-12）。
            *
@@ -1939,10 +2009,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           tasks={tasks}
           onNewTask={回到初始画面}
           onNewTaskIn={(workspace) => void 新建任务({ workspace })}
-          onPickTask={(t) => {
-            if (!t.sessionId) {
+          onPickTask={(任务) => {
+            if (!任务.sessionId) {
               // **没有会话就说清楚**：那是「还没拉起来」，不是点了没反应
-              note("这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）")
+              note(t("这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）"))
               return
             }
             /**
@@ -1954,8 +2024,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * **一份摆在错的地方的真数据，比「尚未记录」更坏。**
              */
             const s =
-              tempSessions.find((x) => x.sessionId === t.sessionId) ??
-              sessions.find((x) => x.sessionId === t.sessionId)
+              tempSessions.find((x) => x.sessionId === 任务.sessionId) ??
+              sessions.find((x) => x.sessionId === 任务.sessionId)
             /**
              * **只有带工作路径的才切**（2026-08-12 收窄）。
              *
@@ -1966,8 +2036,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 而且语义上也不该切：普通对话**没有用户项目**，
              * 把概览指到一个 scratch 目录，等于摆一份指着错地方的真数据。
              */
-            if (t.workspace && s?.projectId) setActiveProjectId(s.projectId)
-            setActiveSessionId(t.sessionId)
+            /**
+             * **项目 id 要能从任务自己的路径推出来**（2026-08-13 修，作者报的：
+             * *「为什么有的会话，可以点击进去，有的会话不能点击进去呢？」*）。
+             *
+             * 上一版只从 `s?.projectId` 取——而 `s` 来自
+             * `sessions`（**只有当前打开那个项目的**）∪ `tempSessions`。
+             * 于是**凡是属于别的项目的那些会话，`s` 一律是 undefined**：
+             * 项目不切、会话 id 设了、然后 `session` 那一句查不到它，
+             * 主区回落成初始画面——**看起来就是「点了没反应」**。
+             *
+             * 不是随机的：**当前项目里的点得进去，别的项目里的一个都点不进去。**
+             *
+             * 任务身上一直带着 `workspace`，而项目就是从路径长出来的，
+             * 所以这里按路径回查一次。切过去之后 `loadSessions` 会把那一拨取回来，
+             * 下一帧 `session` 就有了。
+             */
+            const pid =
+              s?.projectId ??
+              (任务.workspace
+                ? projects.find((p) => p.workspace === 任务.workspace)?.projectId
+                : undefined)
+            if (任务.workspace && pid) setActiveProjectId(pid)
+            setActiveSessionId(任务.sessionId)
             setView("conversation")
           }}
           {...(sessionId ? { activeTaskId: tasks.find((t) => t.sessionId === sessionId)?.taskId } : {})}
@@ -2061,7 +2152,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               sections={[
                 {
                   id: "appearance",
-                  title: "外观",
+                  title: t("外观"),
                   icon: <外观图标 className="row-icon" />,
                   body: <AppearancePanel />,
                 },
@@ -2069,7 +2160,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   ? [
                       {
                         id: "workspace",
-                        title: "工作目录",
+                        title: t("工作目录"),
                         icon: <文件夹图标 className="row-icon" />,
                         body: (
                           <WorkspacePanel
@@ -2089,7 +2180,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   : []),
                 {
                   id: "models",
-                  title: "模型服务",
+                  title: t("模型服务"),
                   icon: <模型图标 className="row-icon" />,
                   body: (
                     <>
@@ -2158,7 +2249,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 },
                 {
                   id: "kernels",
-                  title: "内核",
+                  title: t("内核"),
                   icon: <终端图标 className="row-icon" />,
                   body: (
                     <>
@@ -2210,22 +2301,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 * 而侧栏的下拉框是「切到哪个项目」——**切换的地方不该同时是删除的地方**。
                 */}
               <section className="panel danger-zone">
-                <h3 className="panel-title">移除项目</h3>
+                <h3 className="panel-title">{t("移除项目")}</h3>
                 <div className="panel-body">
                   <p className="hint">
-                    从工作台移除这个项目，连同它的会话与账本。
-                    <em className="set-emph">磁盘上的文件夹不会被删除。</em>
+                    {t("从工作台移除这个项目，连同它的会话与账本。")}
+                    <em className="set-emph">{t("磁盘上的文件夹不会被删除。")}</em>
                   </p>
                   <div className="state-action">
                     <Button variant="danger" size="sm" onClick={() => askDeleteProject()}>
-                      移除项目
+                      {t("移除项目")}
                     </Button>
                   </div>
                 </div>
               </section>
               {provenance ? (
                 <section className="panel">
-                  <h3 className="panel-title">溯源</h3>
+                  <h3 className="panel-title">{t("溯源")}</h3>
                   <div className="panel-body">
                     <ProvenanceBadge link={provenance} />
                   </div>
@@ -2243,11 +2334,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              */
             <div className="conversation empty-conv">
               <p className="empty">
-                这是一段终端会话。终端现在在对话区下面那一条里——
+                {t("这是一段终端会话。终端现在在对话区下面那一条里——")}
                 <Button variant="text" size="inline" onClick={toggleDock}>
-                  打开终端
+                  {t("打开终端")}
                 </Button>
               </p>
+            </div>
+          ) : sessionId && !session ? (
+            /**
+             * **选中了一段、但它还没到手**（2026-08-13）。
+             *
+             * 这一支此前不存在，于是它落进了下面那个 `EmptyConversation`——
+             * 而那一屏正是「你还没选任何东西」的样子。**两种状态长得一样，
+             * 就等于没有判据**：人点了一行，看见初始画面，只能理解为「点了没反应」。
+             *
+             * 它出现在切项目那一下：`loadSessions` 是异步的，中间有一帧。
+             * 说出「在打开」比默认它不存在诚实。
+             */
+            <div className="conversation empty-conv">
+              <Loader label={t("正在打开这段对话")} />
             </div>
           ) : session ? (
             <>
@@ -2467,14 +2572,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <CommandPalette commands={commands} />
 
       <div className="statusbar">
-        <span>{ready ? "已连接" : "未连接"}</span>
+        <span>{ready ? t("已连接") : t("未连接")}</span>
         {creds.configured.length === 0 && providers.providers.length > 0 ? (
           /**
            * **不说「native agent」。** 那是我们内部的词，作者已经为它抱怨过一次
            * （*「为什么还会多一个新建 agent 这种奇怪的东西呢？」*）。
            * 这一行要说的是他关心的事实：还没有钥匙，所以还不能对话。
            */
-          <span className="caveat">还没有填任何 API key，暂时不能对话——去「设置 → 模型服务」加一个</span>
+          <span className="caveat">{t("还没有填任何 API key，暂时不能对话——去「设置 → 模型服务」加一个")}</span>
         ) : null}
         {notes.map((n, i) => (
           <span key={i} className="hint">

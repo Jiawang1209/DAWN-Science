@@ -2957,3 +2957,26 @@ pre {
   font-weight: 400;
   white-space: nowrap;
 }
+
+/**
+ * 侧栏的搜索框（2026-08-13，作者要的）。
+ *
+ * **它在侧栏最上面**，与下面那些行共用同一条左缘（12px）——
+ * 差几个像素在一列里一眼就看得出来，作者为此报过一次。
+ */
+.side-search {
+  padding: var(--dawn-space-2) var(--dawn-space-3) 0;
+}
+.side-search-field {
+  width: 100%;
+  font-size: 13px;
+}
+/* 搜不到时那一句：**比行更淡**，它是一句说明，不是一条可点的东西 */
+.side-empty {
+  margin: var(--dawn-space-3) 0 0;
+  padding: 0 calc(var(--dawn-space-3) * 2);
+  color: var(--dawn-text-3);
+  font-size: 12px;
+  line-height: 18px;
+}
+.side-search-toggle { color: var(--dawn-text-2); min-width: 32px; width: 32px; height: 32px; }

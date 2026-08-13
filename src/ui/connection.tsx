@@ -16,6 +16,7 @@ import { useStore } from "@nanostores/react"
 import { $connection, MAX_CONNECT_ATTEMPTS } from "./state/index.js"
 import { Button, ErrorState, Loader } from "./primitives.js"
 
+import { t } from "./i18n/index.js"
 export function ConnectionSurface({
   onRetry,
   onOpenSettings,
@@ -45,10 +46,10 @@ export function ConnectionSurface({
           action={
             <div className="state-actions">
               <Button variant="primary" onClick={onRetry}>
-                重试
+                {t("重试")}
               </Button>
               <Button variant="text" onClick={onOpenSettings}>
-                检查配置
+                {t("检查配置")}
               </Button>
             </div>
           }
@@ -74,7 +75,7 @@ export function ConnectionSurface({
     <div className="banner banner-stale" role="status">
       <span>{c.reason}</span>
       <Button variant="text" size="inline" onClick={onRetry}>
-        重新获取
+        {t("重新获取")}
       </Button>
     </div>
   )

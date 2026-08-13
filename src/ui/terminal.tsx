@@ -11,6 +11,7 @@
 import { useEffect, useRef } from "react"
 import { useStore } from "@nanostores/react"
 import { $theme, resolveTheme } from "./state/theme.js"
+import { t } from "./i18n/index.js"
 // xterm 的样式必须随组件一起进包。**静态 import 而非动态**——
 // 样式晚于实例到达会让首帧的行高算错，进而 fit() 出错误的列数
 import "@xterm/xterm/css/xterm.css"

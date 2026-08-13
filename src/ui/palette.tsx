@@ -13,6 +13,7 @@ import { Row } from "./primitives.js"
 import type { Command } from "./commands.js"
 import { $paletteOpen, $paletteQuery, closePalette, togglePalette } from "./state/view.js"
 
+import { t } from "./i18n/index.js"
 /**
  * 标题与关键词一起匹配。
  *
@@ -97,7 +98,7 @@ export function CommandPalette({ commands }: { commands: readonly Command[] }) {
       className="palette-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label="命令面板"
+      aria-label={t("命令面板")}
       onKeyDown={(e) => {
         if (e.key === "Escape") closePalette()
         else if (e.key === "ArrowDown") {
@@ -119,20 +120,20 @@ export function CommandPalette({ commands }: { commands: readonly Command[] }) {
           role="combobox"
           aria-expanded="true"
           aria-controls="palette-list"
-          aria-label="搜索命令"
-          placeholder="输入命令名或关键词"
+          aria-label={t("搜索命令")}
+          placeholder={t("输入命令名或关键词")}
           value={query}
           onChange={(e) => $paletteQuery.set(e.target.value)}
         />
 
         {flat.length === 0 ? (
           /* 留白说不出「是没有这个命令，还是搜错了」 */
-          <p className="empty">没有匹配的命令</p>
+          <p className="empty">{t("没有匹配的命令")}</p>
         ) : (
-          <div className="palette-list" id="palette-list" role="listbox" aria-label="命令">
+          <div className="palette-list" id="palette-list" role="listbox" aria-label={t("命令")}>
             {groups.map((g) => (
               <div key={g.group} className="palette-group">
-                <p className="palette-group-title">{g.group}</p>
+                <p className="palette-group-title">{t(g.group)}</p>
                 {g.items.map((c) => {
                   const i = flat.indexOf(c)
                   return (

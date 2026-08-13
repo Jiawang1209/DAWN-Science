@@ -4,6 +4,7 @@ import { App } from "./App.js"
 import { ErrorBoundary } from "./ErrorBoundary.js"
 import { loadTheme } from "./state/theme.js"
 import { loadSidebar } from "./state/sidebar.js"
+import { loadLang } from "./i18n/index.js"
 import "./styles.css"
 
 /**
@@ -22,6 +23,14 @@ loadTheme()
  * 折叠状态更明显——**先闪一下侧栏再收掉**，那一下比不记住还难受。
  */
 loadSidebar()
+
+/**
+ * **语言也在第一帧之前读回**（2026-08-13）。
+ *
+ * 与主题、侧栏同一条理由，只是后果更刺眼：晚一步就会先按英文画一整屏，
+ * 再整屏跳成中文。
+ */
+loadLang()
 
 const root = document.getElementById("root")
 if (!root) throw new Error("找不到 #root —— index.html 与入口不匹配")

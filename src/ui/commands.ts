@@ -32,7 +32,24 @@ import type { SessionSummary } from "../protocol/index.js"
 import type { ThemeChoice } from "./state/theme.js"
 import type { View } from "./state/view.js"
 
-export type CommandGroup = "会话" | "模型" | "项目" | "视图" | "设置"
+import { t, tf, msgid } from "./i18n/index.js"
+/**
+ * 命令的分组。**它既是键又是标签**（2026-08-13 双语时才看清这一点）。
+ *
+ * 所以它在这里保持中文原文——那是**键**；翻译发生在渲染处
+ * （`palette.tsx` 里的 `t(g.group)`）。在这儿翻的话，
+ * 同一个组在两种语言下会变成两个不同的键，分组当场散成两半。
+ *
+ * `msgid()` 只是让扫描看得见这几句；它在运行时什么都不做。
+ */
+export const COMMAND_GROUPS = [
+  msgid("会话"),
+  msgid("模型"),
+  msgid("项目"),
+  msgid("视图"),
+  msgid("设置"),
+] as const
+export type CommandGroup = (typeof COMMAND_GROUPS)[number]
 
 export interface Command {
   id: string
@@ -84,9 +101,9 @@ export interface CommandContext {
 }
 
 const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
-  { choice: "system", label: "跟随系统" },
-  { choice: "light", label: "亮色" },
-  { choice: "dark", label: "暗色" },
+  { choice: "system", label: msgid("跟随系统") },
+  { choice: "light", label: msgid("亮色") },
+  { choice: "dark", label: msgid("暗色") },
 ]
 
 /** 中止为什么用不了。**分清是哪一种，笼统写「不可用」等于没说** */
@@ -106,11 +123,11 @@ function abortUnavailable(ctx: CommandContext): string | undefined {
    * **不可用的理由必须是真的**：一句听起来合理但不成立的解释，
    * 比「不可用」三个字更坏——它会让人据此做错判断。
    */
-  if (ctx.session.kind === "pty") return "终端的中止是按 Ctrl-C，不走这个命令"
+  if (ctx.session.kind === "pty") return t("终端的中止是按 Ctrl-C，不走这个命令")
   if (ctx.session.kind === "cli") {
-    return "外部 CLI 里只有部分能「只停这一轮」，界面还分不清是哪一种，暂未开放"
+    return t("外部 CLI 里只有部分能「只停这一轮」，界面还分不清是哪一种，暂未开放")
   }
-  if (!ctx.busy) return "当前没有正在进行的回合"
+  if (!ctx.busy) return t("当前没有正在进行的回合")
   return undefined
 }
 
@@ -124,7 +141,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
     // 分不清是没这个功能还是配置有问题
     out.push({
       id: "session.new",
-      title: "新建会话",
+      title: t("新建会话"),
       group: "会话",
       run: () => {},
       unavailable: "配置里还没有可用的 agent",
@@ -133,7 +150,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
     for (const a of agents) {
       out.push({
         id: `session.new:${a}`,
-        title: `新建会话：${a}`,
+        title: tf("新建会话：{0}", a),
         group: "会话",
         keywords: `new session ${a}`,
         run: () => actions.newSession(a),
@@ -144,7 +161,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
   const abortWhy = abortUnavailable(ctx)
   out.push({
     id: "session.abort",
-    title: "中止当前回合",
+    title: t("中止当前回合"),
     group: "会话",
     keywords: "stop abort 停止",
     run: () => actions.abort(),
@@ -163,24 +180,24 @@ export function buildCommands(ctx: CommandContext): Command[] {
    */
   out.push({
     id: "session.delete",
-    title: "删除当前会话",
+    title: t("删除当前会话"),
     group: "会话",
     keywords: "delete remove 删除 移除",
     run: () => actions.deleteSession(),
-    ...(ctx.session ? {} : { unavailable: "还没有选中会话" }),
+    ...(ctx.session ? {} : { unavailable: t("还没有选中会话") }),
   })
 
   // ── 项目 ─────────────────────────────────────────────────────────
   out.push({
     id: "project.open",
-    title: "打开文件夹为新项目",
+    title: t("打开文件夹为新项目"),
     group: "项目",
     keywords: "open project folder 目录",
     run: () => actions.openProject(),
   })
   out.push({
     id: "project.panel",
-    title: "项目概览",
+    title: t("项目概览"),
     group: "项目",
     keywords: "overview runs 历史 产出",
     run: () => actions.showProjectPanel(),
@@ -190,7 +207,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
   if (ctx.view !== "conversation") {
     out.push({
       id: "view.conversation",
-      title: "返回对话",
+      title: t("返回对话"),
       group: "视图",
       keywords: "back conversation",
       run: () => actions.showConversation(),
@@ -216,18 +233,19 @@ export function buildCommands(ctx: CommandContext): Command[] {
   // ── 设置 ─────────────────────────────────────────────────────────
   out.push({
     id: "settings.open",
-    title: "打开设置",
+    title: t("打开设置"),
     group: "设置",
     keywords: "settings 偏好 凭证 主题 api key",
     run: () => actions.openSettings(),
   })
-  for (const t of THEMES) {
+  // **形参不能叫 `t`**：那会遮住 i18n 的 `t()`，而遮住之后是「调用一个对象」的编译错
+  for (const 主题 of THEMES) {
     out.push({
-      id: `theme.${t.choice}`,
-      title: `主题：${t.label}`,
+      id: `theme.${主题.choice}`,
+      title: tf("主题：{0}", t(主题.label)),
       group: "设置",
-      keywords: `theme 主题 明暗 ${t.label}`,
-      run: () => actions.setTheme(t.choice),
+      keywords: `theme 主题 明暗 ${主题.label}`,
+      run: () => actions.setTheme(主题.choice),
     })
   }
 

@@ -32,6 +32,7 @@ import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 
+import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
  * 外观：明暗主题。
  *
@@ -42,9 +43,9 @@ import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.
  * 它是一条会随系统变化的规则。少了它，选过一次之后就再也回不到自动了。
  */
 const THEME_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
-  { value: "system", label: "跟随系统" },
-  { value: "light", label: "亮色" },
-  { value: "dark", label: "暗色" },
+  { value: "system", label: msgid("跟随系统") },
+  { value: "light", label: msgid("亮色") },
+  { value: "dark", label: msgid("暗色") },
 ]
 
 /**
@@ -163,21 +164,21 @@ export function KernelsPanel({
          */
         <>
           配置里 <code>kind: kernel</code> 的 agent 靠这两个路径起内核。
-          <em className="set-emph">没有配置就不能用。</em>
+          <em className="set-emph">{t("没有配置就不能用。")}</em>
         </>
       }
     >
       <InterpreterField
         id="interp-python"
-        label="Python 解释器"
-        hint="例如 /usr/local/bin/python3 或某个 conda 环境里的 bin/python。需要它装了 ipykernel。"
+        label={t("Python 解释器")}
+        hint={t("例如 /usr/local/bin/python3 或某个 conda 环境里的 bin/python。需要它装了 ipykernel。")}
         value={interpreters.python}
         onSave={(v) => onSetInterpreter("python", v)}
       />
       <InterpreterField
         id="interp-r"
-        label="R 解释器"
-        hint="例如 /usr/local/bin/R。需要它装了 IRkernel。"
+        label={t("R 解释器")}
+        hint={t("例如 /usr/local/bin/R。需要它装了 IRkernel。")}
         value={interpreters.r}
         onSave={(v) => onSetInterpreter("R", v)}
       />
@@ -190,8 +191,8 @@ export function KernelsPanel({
             {kernels.map((k) => (
               <li key={k.dir} className="kernel">
                 <span className="name">{k.displayName}</span>
-                <span className="sub">{k.language ?? "语言未声明"}</span>
-                <p className="kernel-exe">{k.executable ?? "（kernel.json 里没有 argv[0]）"}</p>
+                <span className="sub">{k.language ?? t("语言未声明")}</span>
+                <p className="kernel-exe">{k.executable ?? t("（kernel.json 里没有 argv[0]）")}</p>
               </li>
             ))}
           </ul>
@@ -209,7 +210,7 @@ export function KernelsPanel({
           ) : null}
           <div className="state-action">
             <Button variant="outline" size="sm" onClick={onRefresh}>
-              重新扫描
+              {t("重新扫描")}
             </Button>
           </div>
         </details>
@@ -245,7 +246,7 @@ function InterpreterField({
         id={id}
         className="control path"
         value={shown}
-        placeholder="还没配置"
+        placeholder={t("还没配置")}
         onChange={(e) => setDraft(e.target.value)}
         aria-label={label}
       />
@@ -258,7 +259,7 @@ function InterpreterField({
           setDraft(undefined)
         }}
       >
-        保存
+        {t("保存")}
       </Button>
     </Row>
   )
@@ -266,19 +267,53 @@ function InterpreterField({
 
 export function AppearancePanel() {
   const theme = useStore($theme)
+  const lang = useStore($lang)
 
   return (
     <Section>
+      {/**
+        * **双语**（2026-08-13，作者：*「设置里面，其实可以增加一个双语模式，
+        * 我们其实可以默认是英语模式，然后有中英双语的一个按钮。」*）。
+        *
+        * 与主题同一副形状（`radiogroup` + 两颗），因为它们是同一类东西：
+        * **这一台机器上这个人怎么看这个应用**。
+        *
+        * **两个选项都写自己的母语**（`中文` / `English`），不写
+        * 「Chinese / English」——一个看不懂当前语言的人，正是最需要这颗按钮的人。
+        * 这是本地化里最老的一条：语言选择器**永远不跟着界面语言走**。
+        */}
       <Row
-        name="主题"
+        name={t("语言")}
+        desc={t("界面语言。默认英文；这个选择记在这台机器上。")}
+      >
+        <div className="theme-choices" role="radiogroup" aria-label={t("语言")}>
+          {(["zh", "en"] as const).map((v) => (
+            <Button
+              key={v}
+              variant={lang === v ? "primary" : "secondary"}
+              size="sm"
+              role="radio"
+              aria-checked={lang === v}
+              onClick={() => setLang(v)}
+            >
+              {v === "zh" ? "中文" : "English"}
+            </Button>
+          ))}
+        </div>
+      </Row>
+      <Row
+        name={t("主题")}
         desc={
           theme === "system"
             ? /* 「跟随系统」四个字不回答「所以现在到底是哪个」。**说出来，别让人猜。** */
-              `跟随系统——系统当前是${resolveTheme("system") === "dark" ? "暗色" : "亮色"}`
-            : "「跟随系统」不是亮色的同义词，它是一条会随系统变化的规则"
+              tf(
+                "跟随系统——系统当前是{0}",
+                resolveTheme("system") === "dark" ? t("暗色") : t("亮色"),
+              )
+            : t("「跟随系统」不是亮色的同义词，它是一条会随系统变化的规则")
         }
       >
-        <div className="theme-choices" role="radiogroup" aria-label="主题">
+        <div className="theme-choices" role="radiogroup" aria-label={t("主题")}>
           {THEME_OPTIONS.map((o) => (
             <Button
               key={o.value}
@@ -288,7 +323,7 @@ export function AppearancePanel() {
               aria-checked={theme === o.value}
               onClick={() => setTheme(o.value)}
             >
-              {o.label}
+              {t(o.label)}
             </Button>
           ))}
         </div>
@@ -322,22 +357,22 @@ export function WorkspacePanel({
   return (
     <Section>
       <Row
-        name="默认工作目录"
+        name={t("默认工作目录")}
         desc={
           isDefault
-            ? "没设过，用的是系统默认。没给工作目录的对话会落在这儿，选文件夹也从这儿起步。"
+            ? t("没设过，用的是系统默认。没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
             : "没给工作目录的对话会落在这儿，选文件夹也从这儿起步。"
         }
       >
         <div className="ws-setting">
           <code className="ws-setting-path">{path}</code>
           <Button variant="secondary" size="sm" onClick={onPick}>
-            换一个
+            {t("换一个")}
           </Button>
           {/* **配过才给「恢复默认」**：没配过时它点了什么都不会变 */}
           {isDefault ? null : (
             <Button variant="text" size="sm" onClick={onReset}>
-              恢复默认
+              {t("恢复默认")}
             </Button>
           )}
         </div>
@@ -372,7 +407,7 @@ export function SettingsShell({
   if (!当前) return null
   return (
     <div className="settings-shell">
-      <nav className="settings-nav" aria-label="设置分类">
+      <nav className="settings-nav" aria-label={t("设置分类")}>
         {sections.map((s) => (
           <Button
             key={s.id}
@@ -488,10 +523,10 @@ export function SettingsPanel({
     <Section
       desc={
         credentials.encrypted ? (
-          "填了 key 就能在对话里选它的模型。密钥存在系统的安全存储里（macOS Keychain），已存的值不会回显——界面只知道配没配。"
+          t("填了 key 就能在对话里选它的模型。密钥存在系统的安全存储里（macOS Keychain），已存的值不会回显——界面只知道配没配。")
         ) : (
           /* **加密状态如实告知。** 没有 keychain 时它是明文，这必须是警告而不是说明 */
-          <span className="caveat">⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录</span>
+          <span className="caveat">{t("⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录")}</span>
         )
       }
     >
@@ -642,14 +677,14 @@ function 摘要({
   const 地址 = conn.baseUrl
     ? conn.baseUrl.replace(/^https?:\/\//, "")
     : 必须填地址
-      ? "⚠ 还没填地址"
-      : "pi 自带地址"
+      ? t("⚠ 还没填地址")
+      : t("pi 自带地址")
   /**
    * **「0 个模型」要显眼。** 它意味着这个服务在对话里选不到任何东西，
    * 而那正是「我明明配了却用不上」的第一现场。
    */
-  const 模型 = models.length > 0 ? `${models.length} 个模型` : "⚠ 没有模型"
-  return [地址, 模型, isSet ? "已填 key" : "没填 key"].join(" · ")
+  const 模型 = models.length > 0 ? tf("{0} 个模型", models.length) : t("⚠ 没有模型")
+  return [地址, 模型, isSet ? t("已填 key") : t("没填 key")].join(" · ")
 }
 
 /** 编辑器里的一格：**名字 + 一句为什么 + 控件**，与 `Row` 同一个读法 */
@@ -727,7 +762,7 @@ function 服务编辑器({
       <字段
         label="API key"
         htmlFor={`cred-${id}`}
-        hint="存在系统的加密存储里，不写进配置文件。已存的值不会回显——界面拿不到它，也不该拿到。"
+        hint={t("存在系统的加密存储里，不写进配置文件。已存的值不会回显——界面拿不到它，也不该拿到。")}
       >
         <div className="svc-line">
           <input
@@ -736,19 +771,19 @@ function 服务编辑器({
             type="password"
             aria-label={`${id} 的 API key`}
             value={key}
-            placeholder={isSet ? "已配置（输入新值可替换）" : "粘贴 API key"}
+            placeholder={isSet ? t("已配置（输入新值可替换）") : t("粘贴 API key")}
             onChange={(e) => setKey(e.target.value)}
           />
           {isSet ? (
             <Button variant="text" size="sm" onClick={onDeleteKey}>
-              删掉 key
+              {t("删掉 key")}
             </Button>
           ) : null}
         </div>
       </字段>
 
       <字段
-        label="端点地址"
+        label={t("端点地址")}
         htmlFor={`base-${id}`}
         hint={
           /**
@@ -760,13 +795,13 @@ function 服务编辑器({
            */
           必须填地址 ? (
             <>
-              <em className="set-emph">这个 provider 的地址要你自己填</em>
-              ——它跟你的账号／区域／项目走，pi 没法替你填。不填就连不上。
+              <em className="set-emph">{t("这个 provider 的地址要你自己填")}</em>
+              {t("——它跟你的账号／区域／项目走，pi 没法替你填。不填就连不上。")}
             </>
           ) : (
             <>
-              留空就用 pi 自带的地址。<em className="set-emph">如果你买的是另一条线</em>
-              （订阅版与按量版常常是两个端点），在这里改成你平台文档里的 base_url。
+              留空就用 pi 自带的地址。<em className="set-emph">{t("如果你买的是另一条线")}</em>
+              {t("（订阅版与按量版常常是两个端点），在这里改成你平台文档里的 base_url。")}
             </>
           )
         }
@@ -776,15 +811,15 @@ function 服务编辑器({
           className="control mono"
           aria-label={`${id} 的端点地址`}
           value={baseUrl}
-          placeholder="例如 https://api.example.com/v1"
+          placeholder={t("例如 https://api.example.com/v1")}
           onChange={(e) => setBaseUrl(e.target.value)}
         />
       </字段>
 
       <字段
-        label="协议"
+        label={t("协议")}
         htmlFor={`api-${id}`}
-        hint="留空交给 pi 自己判断。自建的 OpenAI 兼容端点通常填 openai-completions；猜错的表现是请求发得出去、对面用另一种格式回，而报错与协议毫无关系。"
+        hint={t("留空交给 pi 自己判断。自建的 OpenAI 兼容端点通常填 openai-completions；猜错的表现是请求发得出去、对面用另一种格式回，而报错与协议毫无关系。")}
       >
         <input
           id={`api-${id}`}
@@ -797,15 +832,15 @@ function 服务编辑器({
       </字段>
 
       <字段
-        label="模型清单"
+        label={t("模型清单")}
         htmlFor={`models-${id}`}
         hint={
           pi认识 ? (
-            <>用逗号隔开。留空就用 pi 自带的目录——它认识这个 provider 的模型。</>
+            <>{t("用逗号隔开。留空就用 pi 自带的目录——它认识这个 provider 的模型。")}</>
           ) : (
             <>
-              用逗号隔开。<em className="set-emph">自建端点必须写</em>
-              ——pi 猜不出你的端点上跑着什么，不写的话模型选择器会是空的。
+              用逗号隔开。<em className="set-emph">{t("自建端点必须写")}</em>
+              {t("——pi 猜不出你的端点上跑着什么，不写的话模型选择器会是空的。")}
             </>
           )
         }
@@ -822,10 +857,10 @@ function 服务编辑器({
 
       <div className="svc-actions">
         <Button type="submit" variant="primary" size="sm">
-          保存
+          {t("保存")}
         </Button>
         <Button variant="text" size="sm" onClick={onRemove}>
-          移除这个服务
+          {t("移除这个服务")}
         </Button>
       </div>
     </form>
@@ -883,7 +918,7 @@ function 添加模型服务({
     return (
       <div className="svc-add-entry">
         <Button variant="outline" size="sm" onClick={() => set开(true)}>
-          ＋ 添加模型服务
+          {t("＋ 添加模型服务")}
         </Button>
       </div>
     )
@@ -905,7 +940,7 @@ function 添加模型服务({
       className="confirm-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label="添加模型服务"
+      aria-label={t("添加模型服务")}
       onKeyDown={(e) => {
         if (e.key === "Escape") set开(false)
       }}
@@ -917,9 +952,9 @@ function 添加模型服务({
             * **说清这里能加什么**（学自截图上那个 chip）。
             * 不说的话，「自定义端点」到底要什么样的地址只能靠试。
             */}
-          <span className="svc-add-note">只支持 OpenAI 兼容协议的端点</span>
+          <span className="svc-add-note">{t("只支持 OpenAI 兼容协议的端点")}</span>
         </h2>
-      <div className="svc-tabs" role="radiogroup" aria-label="添加方式">
+      <div className="svc-tabs" role="radiogroup" aria-label={t("添加方式")}>
         <Button
           variant={路 === "pi" ? "primary" : "secondary"}
           size="sm"
@@ -936,13 +971,13 @@ function 添加模型服务({
           aria-checked={路 === "自定义"}
           onClick={() => set路("自定义")}
         >
-          自定义端点
+          {t("自定义端点")}
         </Button>
         {/* **不叫「取消」**：确认框上那颗就叫这个，两处同名会让
             「按名字找按钮」变成靠运气的事——屏幕阅读器与测试都一样。
             这颗做的事是「不加了，把这一段收起来」，就照着说 */}
         <Button variant="text" size="sm" onClick={() => set开(false)}>
-          先不加
+          {t("先不加")}
         </Button>
       </div>
         {路 === "pi" ? (
@@ -989,7 +1024,7 @@ function 从列表里挑({
   const 当前 = 命中.includes(选中) ? 选中 : (命中[0] ?? "")
 
   if (可挑.length === 0) {
-    return <p className="hint">pi 认识的 provider 都已经配过了。要加别的就走「自定义端点」。</p>
+    return <p className="hint">{t("pi 认识的 provider 都已经配过了。要加别的就走「自定义端点」。")}</p>
   }
 
   return (
@@ -997,51 +1032,51 @@ function 从列表里挑({
       className="svc-add-form"
       onSubmit={(e) => {
         e.preventDefault()
-        if (!当前) return set问题("先挑一个 provider")
+        if (!当前) return set问题(t("先挑一个 provider"))
         /**
          * **不给一个存不下的「添加」。** key 是这条路唯一会落到磁盘上的东西，
          * 不填的话点完「添加」什么都不会发生，而界面会看起来像成功了。
          */
         if (!key.trim()) {
-          return set问题("要填 key——pi 要求每个服务都有一把钥匙才肯调用。")
+          return set问题(t("要填 key——pi 要求每个服务都有一把钥匙才肯调用。"))
         }
         set问题(undefined)
         onAdd(当前, key.trim())
       }}
     >
-      <字段 label="挑一个" htmlFor="pick-provider" hint="地址、协议、模型目录 pi 都有，只缺一把钥匙。">
+      <字段 label={t("挑一个")} htmlFor="pick-provider" hint={t("地址、协议、模型目录 pi 都有，只缺一把钥匙。")}>
         <div className="svc-line">
           <input
             className="control"
             value={filter}
-            placeholder="筛选，例如 anthropic"
-            aria-label="筛选 provider"
+            placeholder={t("筛选，例如 anthropic")}
+            aria-label={t("筛选 provider")}
             onChange={(e) => setFilter(e.target.value)}
           />
           <select
             id="pick-provider"
             className="control"
-            aria-label="pi 认识的 provider"
+            aria-label={t("pi 认识的 provider")}
             value={当前}
             onChange={(e) => set选中(e.target.value)}
           >
             {命中.map((id) => (
               <option key={id} value={id}>
                 {id}
-                {needsBaseUrl?.includes(id) ? "（还要填地址）" : ""}
+                {needsBaseUrl?.includes(id) ? t("（还要填地址）") : ""}
               </option>
             ))}
           </select>
         </div>
       </字段>
-      <字段 label="API key" htmlFor="pick-key" hint="存进系统的加密存储，不写进配置文件。">
+      <字段 label="API key" htmlFor="pick-key" hint={t("存进系统的加密存储，不写进配置文件。")}>
         <input
           id="pick-key"
           className="control"
           type="password"
-          aria-label="新服务的 API key"
+          aria-label={t("新服务的 API key")}
           value={key}
-          placeholder="粘贴 API key"
+          placeholder={t("粘贴 API key")}
           onChange={(e) => setKey(e.target.value)}
         />
       </字段>
@@ -1050,7 +1085,7 @@ function 从列表里挑({
         {/* **不叫「添加」**：那两个字是「＋ 添加模型服务」「＋ 添加服务器」的
             一部分，按名字找按钮时会同时指向三个东西——屏幕阅读器与测试都一样 */}
         <Button type="submit" variant="primary" size="sm">
-          加进来
+          {t("加进来")}
         </Button>
       </div>
     </form>
@@ -1087,12 +1122,12 @@ function 自定义端点({
          * 模型选择器会是空的而没有一句话解释为什么。
          */
         if (!名字规则.test(名)) {
-          return set问题("名字只能用小写字母、数字和连字符，且不超过 32 个字符")
+          return set问题(t("名字只能用小写字母、数字和连字符，且不超过 32 个字符"))
         }
-        if (!baseUrl.trim()) return set问题("要填端点地址——pi 不认识这个服务，猜不出它在哪")
+        if (!baseUrl.trim()) return set问题(t("要填端点地址——pi 不认识这个服务，猜不出它在哪"))
         const conn = 连接({ baseUrl, api, models })
         if (!conn.models) {
-          return set问题("要填至少一个模型 id——pi 猜不出你的端点上跑着什么")
+          return set问题(t("要填至少一个模型 id——pi 猜不出你的端点上跑着什么"))
         }
         /**
          * **key 也是必填的，哪怕你的端点不要。**
@@ -1104,7 +1139,7 @@ function 自定义端点({
          */
         if (!key.trim()) {
           return set问题(
-            "要填 key：pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）随便填一个值即可，比如 local。",
+            t("要填 key：pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）随便填一个值即可，比如 local。"),
           )
         }
         set问题(undefined)
@@ -1112,52 +1147,52 @@ function 自定义端点({
       }}
     >
       <字段
-        label="名字"
+        label={t("名字")}
         htmlFor="new-id"
-        hint="它会写进 providers.yaml 当键，也会显示在对话的模型选择器里。"
+        hint={t("它会写进 providers.yaml 当键，也会显示在对话的模型选择器里。")}
       >
         <input
           id="new-id"
           className="control"
-          aria-label="新服务的名字"
+          aria-label={t("新服务的名字")}
           value={id}
-          placeholder="例如 my-vllm"
+          placeholder={t("例如 my-vllm")}
           onChange={(e) => setId(e.target.value)}
         />
       </字段>
-      <字段 label="端点地址" htmlFor="new-base" hint="平台文档里那个 base_url。">
+      <字段 label={t("端点地址")} htmlFor="new-base" hint={t("平台文档里那个 base_url。")}>
         <input
           id="new-base"
           className="control mono"
-          aria-label="新服务的端点地址"
+          aria-label={t("新服务的端点地址")}
           value={baseUrl}
           placeholder="https://api.example.com/v1"
           onChange={(e) => setBaseUrl(e.target.value)}
         />
       </字段>
       <字段
-        label="协议"
+        label={t("协议")}
         htmlFor="new-api"
         hint="大多数自建端点是 OpenAI 兼容的，保持默认即可。"
       >
         <input
           id="new-api"
           className="control mono"
-          aria-label="新服务的协议"
+          aria-label={t("新服务的协议")}
           value={api}
           placeholder="openai-completions"
           onChange={(e) => setApi(e.target.value)}
         />
       </字段>
       <字段
-        label="模型清单"
+        label={t("模型清单")}
         htmlFor="new-models"
         hint="用逗号隔开。pi 猜不出你的端点上跑着什么，所以这一项必须写。"
       >
         <input
           id="new-models"
           className="control mono"
-          aria-label="新服务的模型清单"
+          aria-label={t("新服务的模型清单")}
           value={models}
           placeholder="local-7b, local-70b"
           onChange={(e) => setModels(e.target.value)}
@@ -1172,9 +1207,9 @@ function 自定义端点({
           id="new-key"
           className="control"
           type="password"
-          aria-label="新服务的 API key"
+          aria-label={t("新服务的 API key")}
           value={key}
-          placeholder="粘贴 API key；本地端点填任意值"
+          placeholder={t("粘贴 API key；本地端点填任意值")}
           onChange={(e) => setKey(e.target.value)}
         />
       </字段>
@@ -1183,7 +1218,7 @@ function 自定义端点({
         {/* **不叫「添加」**：那两个字是「＋ 添加模型服务」「＋ 添加服务器」的
             一部分，按名字找按钮时会同时指向三个东西——屏幕阅读器与测试都一样 */}
         <Button type="submit" variant="primary" size="sm">
-          加进来
+          {t("加进来")}
         </Button>
       </div>
     </form>

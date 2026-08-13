@@ -22,13 +22,14 @@ import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
+import { t, tf, msgid } from "./i18n/index.js"
 /**
  * 会话行上的时间。**只到分钟**——秒在这里没有信息量，
  * 而且会让两个相邻会话看起来像在比谁更精确。
  */
 function clockOf(iso: string): string {
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "时间不明"
+  if (Number.isNaN(d.getTime())) return t("时间不明")
   const 今天 = new Date().toDateString() === d.toDateString()
   const hhmm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
   // 今天的只给时刻，别的带月日——**「昨天 14:30」和「今天 14:30」不该长得一样**
@@ -79,7 +80,7 @@ function WorkspaceEntry({
    * **弱一档是有意的**：它是「这句话会在哪儿执行」的注脚，
    * 不该跟正在写的那句话抢。
    */
-  const 文字 = workspace ? 短路径(workspace) : "选择工作目录"
+  const 文字 = workspace ? 短路径(workspace) : t("选择工作目录")
   if (!onPick) {
     return (
       <span className="ws-chip" title={workspace ?? undefined}>
@@ -94,7 +95,7 @@ function WorkspaceEntry({
         variant="ghost"
         size="sm"
         className="ws-chip"
-        title={workspace ? `工作目录：${workspace}` : "还没设工作目录——这是一段普通对话"}
+        title={workspace ? tf("工作目录：{0}", workspace) : t("还没设工作目录——这是一段普通对话")}
         onClick={onPick}
       >
         <文件夹图标 />
@@ -121,7 +122,7 @@ function WorkspaceEntry({
             * 变成一件靠运气的事——**屏幕阅读器与测试都一样**，
             * 而 e2e 当场撞上了（一个 `取消` 匹配到两个元素）。
             */}
-          <span className="ws-chip-label">改回普通对话</span>
+          <span className="ws-chip-label">{t("改回普通对话")}</span>
         </Button>
       ) : null}
     </span>
@@ -196,7 +197,7 @@ export function SessionRow({
 }) {
   const [menu, setMenu] = useState(false)
   const [editing, setEditing] = useState<string | undefined>(undefined)
-  const 名字 = session.title ?? "新会话"
+  const 名字 = session.title ?? t("新会话")
   /**
    * 菜单开在哪（2026-08-11 改）。
    *
@@ -308,7 +309,7 @@ export function SessionRow({
             <会话图标 />
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
-              <span className="pin-mark" aria-label="已置顶">
+              <span className="pin-mark" aria-label={t("已置顶")}>
                 ▲
               </span>
             ) : null}
@@ -360,27 +361,27 @@ export function SessionRow({
               >
                 {onPin ? (
                   <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onPin(); setMenu(false) }}>
-                    {session.pinned ? "取消置顶" : "置顶"}
+                    {session.pinned ? t("取消置顶") : t("置顶")}
                   </Button>
                 ) : null}
                 {onRename ? (
                   <Button variant="ghost" size="inline" role="menuitem" onClick={() => { setEditing(session.title ?? ""); setMenu(false) }}>
-                    重命名
+                    {t("重命名")}
                   </Button>
                 ) : null}
                 {onMove ? (
                   <>
                     <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMove("up"); setMenu(false) }}>
-                      上移
+                      {t("上移")}
                     </Button>
                     <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMove("down"); setMenu(false) }}>
-                      下移
+                      {t("下移")}
                     </Button>
                   </>
                 ) : null}
                 {onDelete ? (
                   <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onDelete(); setMenu(false) }}>
-                    删除
+                    {t("删除")}
                   </Button>
                 ) : null}
               </div>
@@ -441,7 +442,7 @@ export function SideSash({
       style={{ left: `${width - 2}px` }}
       role="separator"
       aria-orientation="vertical"
-      aria-label="调整侧栏宽度"
+      aria-label={t("调整侧栏宽度")}
       aria-valuenow={width}
       aria-valuemin={min}
       aria-valuemax={max}
@@ -511,6 +512,7 @@ export function SessionSidebar({
   sessionRank,
   onDeleteMany,
   onDeleteProjects,
+  search,
   onDeleteTask,
   onNewTaskIn,
 }: {
@@ -619,6 +621,15 @@ export function SessionSidebar({
    * 取不到时删的就是它底下那些任务（`deleteTask` 只要 taskId）。
    * **「拿不到 id 所以这一条删不掉」正是作者报过的那个 bug 的形状。**
    */
+  /**
+   * 搜索（2026-08-13，作者要的）。**不给就不画那个框**——
+   * 与别处同一条：一个进得去、却什么都过滤不了的框比没有更坏。
+   *
+   * **它搜的是名字与路径，不是对话内容**。后者要后端出一个全文检索，
+   * 现在没有——而一个看起来什么都能搜、其实只搜标题的框，
+   * 比一个说清楚自己搜什么的更坏（不变式 5）。占位符把范围写出来。
+   */
+  search?: { value: string; onChange: (v: string) => void; onClose: () => void } | undefined
   onDeleteProjects?:
     | ((
         groups: readonly { workspace: string; projectId?: string; tasks: readonly TaskSummary[] }[],
@@ -710,7 +721,32 @@ export function SessionSidebar({
     const r = t.sessionId ? sessionRank?.(t.sessionId) : undefined
     return r === undefined || r < 0 ? Number.MAX_SAFE_INTEGER : r
   }
-  const 全部任务 = [...(tasks ?? [])].sort((a, b) => 名次(a) - 名次(b))
+  /**
+   * 搜索过滤（2026-08-13）。**在分组之前筛**——分完再筛的话，
+   * 一个项目底下的对话全被筛掉之后那个项目还挂在那儿，点开是空的。
+   *
+   * 匹配的是**标题与路径**，大小写不敏感。**空词等于不筛**，
+   * 而不是「什么都不匹配」——缺失不等于某个具体值。
+   */
+  const 词 = (search?.value ?? "").trim().toLowerCase()
+  /**
+   * **拿屏幕上显示的那个名字去比，不是任务表上那个**（2026-08-13 修）。
+   *
+   * 行上写的标题来自**会话摘要**（`sessionOf(...)`），任务表上那一份可能
+   * 还是空的——标题是第一句话定的，落在会话那一侧。
+   * 拿任务表那份去筛，症状是**打上正确的词却一条都搜不出来**：
+   * 人看得见「甲测试会话」，搜「甲测试」却是空的。
+   *
+   * 同一件事有两个来源，就一定要挑**人看见的那一个**去比。
+   */
+  const 名字of = (t: TaskSummary) =>
+    (t.sessionId ? sessionOf?.(t.sessionId)?.title : undefined) ?? t.title ?? ""
+  const 命中 = (t: TaskSummary) =>
+    词 === "" ||
+    名字of(t).toLowerCase().includes(词) ||
+    (t.workspace ?? "").toLowerCase().includes(词)
+
+  const 全部任务 = [...(tasks ?? [])].filter(命中).sort((a, b) => 名次(a) - 名次(b))
   const 散的 = 全部任务.filter((t) => !t.workspace)
   const 项目组: [string, TaskSummary[]][] = []
   for (const t of 全部任务) {
@@ -811,7 +847,7 @@ export function SessionSidebar({
             onClick={() => (选中它 ? 切一个(task.taskId) : onPickTask?.(task))}
           >
             <对话图标 className="row-icon" />
-            <span className="name">{task.title ?? "新任务"}</span>
+            <span className="name">{task.title ?? t("新任务")}</span>
           </Row>
           {onDeleteTask ? (
             <div className="row-actions">
@@ -918,10 +954,33 @@ export function SessionSidebar({
         * 旧的「对话」列又列一次。**同一段会话被两套列表各画了一遍**，
         * 他的原话是「我感觉我们目前还没有实现这个功能」。
         */}
+      {/**
+        * 搜索框（2026-08-13）。**在最上面，不在分区标题旁**——
+        * 它管的是下面所有列，不是某一列。
+        *
+        * `autoFocus`：这个框是**按钮按下去才出现的**，出现了却还要再点一下
+        * 才能打字，等于把一个动作拆成两下。
+        */}
+      {search ? (
+        <div className="side-search">
+          <input
+            className="control side-search-field"
+            value={search.value}
+            autoFocus
+            placeholder={t("搜索项目与会话的名字")}
+            aria-label={t("搜索项目与会话的名字")}
+            onChange={(e) => search.onChange(e.target.value)}
+            onKeyDown={(e) => {
+              // **Esc 关掉它**：这个框遮着一行列表，得有一条不用鼠标的退路
+              if (e.key === "Escape") search.onClose()
+            }}
+          />
+        </div>
+      ) : null}
       <div className="side-actions">
         <Row className="side-action" disabled={!fallbackAgent} onClick={onNewTask}>
           <加号图标 className="row-icon" />
-          <span className="name">新建任务</span>
+          <span className="name">{t("新建任务")}</span>
         </Row>
         {/**
           * **「远端连接」挪到顶部固定区**（2026-08-12，作者定的顺序）。
@@ -951,7 +1010,7 @@ export function SessionSidebar({
         {onShowSkills ? (
           <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
             <技能图标 className="row-icon" />
-            <span className="name">技能</span>
+            <span className="name">{t("技能")}</span>
           </Row>
         ) : null}
         {/**
@@ -965,13 +1024,13 @@ export function SessionSidebar({
         {onShowPlugins ? (
           <Row active={view === "plugins"} className="side-action" onClick={onShowPlugins}>
             <插件图标 className="row-icon" />
-            <span className="name">插件</span>
+            <span className="name">{t("插件")}</span>
           </Row>
         ) : null}
         {onShowMcp ? (
           <Row active={view === "mcp"} className="side-action" onClick={onShowMcp}>
             <设置图标 className="row-icon" />
-            <span className="name">MCP 服务器</span>
+            <span className="name">{t("MCP 服务器")}</span>
           </Row>
         ) : null}
         {remote ?? null}
@@ -987,10 +1046,10 @@ export function SessionSidebar({
 
       {agents.length === 0 ? (
         <div className="pad">
-          <p className="hint">配置里还没有可用的 agent</p>
+          <p className="hint">{t("配置里还没有可用的 agent")}</p>
           {onOpenSettings ? (
             <Button variant="text" size="inline" onClick={onOpenSettings}>
-              去设置
+              {t("去设置")}
             </Button>
           ) : null}
         </div>
@@ -1008,7 +1067,7 @@ export function SessionSidebar({
       {项目组.length > 0 ? (
         <>
           <p className="side-section">
-            项目 <span className="side-count">{项目组.length}</span>
+            {t("项目")} <span className="side-count">{项目组.length}</span>
             {/**
               * **入口叫「批量」，不叫「多选」**（2026-08-13）。
               *
@@ -1025,7 +1084,7 @@ export function SessionSidebar({
                 className="side-bulk"
                 onClick={() => 进选择("项目")}
               >
-                {选项目中 ? "完成" : "批量"}
+                {选项目中 ? t("完成") : t("批量")}
               </Button>
             ) : null}
           </p>
@@ -1045,7 +1104,7 @@ export function SessionSidebar({
                   })
                 }
               >
-                {已选!.size === 项目组.length ? "全不选" : "全选"}
+                {已选!.size === 项目组.length ? t("全不选") : t("全选")}
               </Button>
               <Button
                 variant="text"
@@ -1063,7 +1122,7 @@ export function SessionSidebar({
                   onDeleteProjects?.(要删的, () => 设多选(undefined))
                 }}
               >
-                删除
+                {t("删除")}
               </Button>
             </div>
           ) : null}
@@ -1166,7 +1225,7 @@ export function SessionSidebar({
       {散的.length > 0 ? (
         <>
           <p className="side-section">
-            会话 <span className="side-count">{散的.length}</span>
+            {t("会话")} <span className="side-count">{散的.length}</span>
             {/**
               * **「选择」在分区标题上**（2026-08-12）。
               *
@@ -1180,7 +1239,7 @@ export function SessionSidebar({
                 className="side-bulk"
                 onClick={() => 进选择("会话")}
               >
-                {选会话中 ? "完成" : "多选"}
+                {选会话中 ? t("完成") : t("多选")}
               </Button>
             ) : null}
           </p>
@@ -1206,7 +1265,7 @@ export function SessionSidebar({
                   })
                 }
               >
-                {已选!.size === 可批量的.length ? "全不选" : "全选"}
+                {已选!.size === 可批量的.length ? t("全不选") : t("全选")}
               </Button>
               <Button
                 variant="text"
@@ -1218,7 +1277,7 @@ export function SessionSidebar({
                   onDeleteMany?.(要删的, () => 设多选(undefined))
                 }}
               >
-                删除
+                {t("删除")}
               </Button>
             </div>
           ) : null}
@@ -1228,6 +1287,17 @@ export function SessionSidebar({
         </>
       ) : null}
 
+
+      {/**
+        * **搜了却什么都没有，要说出来**（2026-08-13）。
+        *
+        * 不说的话，屏幕上是「新建任务 / 技能 / …」加一条横线，底下空空——
+        * 与「一条对话都还没有」长得一模一样。
+        * **两处长得一样的东西，等于没有判据。**
+        */}
+      {词 !== "" && 项目组.length === 0 && 散的.length === 0 ? (
+        <p className="side-empty">{tf("没有匹配「{0}」的项目或会话", search!.value.trim())}</p>
+      ) : null}
 
       {/**
         * 底部那一组入口（**2026-08-12 收进一个盒子**）。
@@ -1245,11 +1315,11 @@ export function SessionSidebar({
           <>
             {/* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */}
             <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
-              项目概览
+              {t("项目概览")}
             </Row>
             {/* 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路 */}
             <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
-              文件
+              {t("文件")}
             </Row>
           </>
         ) : null}
@@ -1266,7 +1336,7 @@ export function SessionSidebar({
         */}
         {onOpenSettings ? (
           <Row active={settingsActive ?? false} className="panel-entry" onClick={onOpenSettings}>
-            设置
+            {t("设置")}
           </Row>
         ) : null}
       </div>
@@ -1478,7 +1548,7 @@ export function AgentPill({
           * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
           * `label` 缺省时退回 id——那至少是实话。
           */}
-        {triggerLabel ?? currentLabel ?? (current ? (label ? label(current) : current) : "选择 agent")}
+        {triggerLabel ?? currentLabel ?? (current ? (label ? label(current) : current) : t("选择 agent"))}
         {kind ? <span className="kind">{KIND_LABEL[kind]}</span> : null}
         <下拉图标 />
       </Button>
@@ -1487,7 +1557,7 @@ export function AgentPill({
         <div
           className="agent-menu"
           role="menu"
-          aria-label={services && services.length > 0 ? "切换服务或新建会话" : "新建会话"}
+          aria-label={services && services.length > 0 ? t("切换服务或新建会话") : t("新建会话")}
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false)
@@ -1505,7 +1575,7 @@ export function AgentPill({
             */}
           {services && services.length > 0 ? (
             <div className="svc-group">
-              <p className="agent-menu-head">就地换服务（对话不断）</p>
+              <p className="agent-menu-head">{t("就地换服务（对话不断）")}</p>
               <ul>
                 {services.map((sv) => (
                   <li key={sv.providerId}>
@@ -1517,7 +1587,7 @@ export function AgentPill({
                       }}
                     >
                       <span className="name">{sv.name}</span>
-                      {sv.name === currentLabel ? <span className="hint">当前</span> : null}
+                      {sv.name === currentLabel ? <span className="hint">{t("当前")}</span> : null}
                     </Row>
                   </li>
                 ))}
@@ -1532,7 +1602,7 @@ export function AgentPill({
             * **DAWN 自己才是那个 agent**，人挑的是让哪个模型来跑它。
             */}
           <div className="new-group">
-          <p className="agent-menu-head">新建会话，用哪个 LLM：</p>
+          <p className="agent-menu-head">{t("新建会话，用哪个 LLM：")}</p>
           <ul>
             {agents.map((a) => (
               <li key={a}>
@@ -1544,7 +1614,7 @@ export function AgentPill({
                   }}
                 >
                   <span className="name">{label ? label(a) : a}</span>
-                  {a === current ? <span className="hint">当前</span> : null}
+                  {a === current ? <span className="hint">{t("当前")}</span> : null}
                 </Row>
               </li>
             ))}
@@ -1675,7 +1745,7 @@ export function ModelPill({
         <span className="svc-mark" aria-hidden="true">
           {叫什么(current?.provider).slice(0, 1).toUpperCase()}
         </span>
-        <span className="model-name">{current?.model ?? "CLI 默认"}</span>
+        <span className="model-name">{current?.model ?? t("CLI 默认")}</span>
         <三角图标 className={`model-caret${open ? " open" : ""}`} />
       </Button>
 
@@ -1683,7 +1753,7 @@ export function ModelPill({
         <div
           className="model-menu"
           role="menu"
-          aria-label="切换模型"
+          aria-label={t("切换模型")}
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false)
@@ -1693,7 +1763,7 @@ export function ModelPill({
             * **就地换，不新建对话**——这句话是 2026-08-11 那次改动的一半：
             * 作者原本以为换一家就得新建对话，因为唯一摆在眼前的入口是那个意思。
             */}
-          {busy ? <p className="hint pad">这一轮还没说完，先等它结束或中止</p> : null}
+          {busy ? <p className="hint pad">{t("这一轮还没说完，先等它结束或中止")}</p> : null}
           <ul className="model-list">
             {分组.map((g) => (
               <li key={g.provider ?? "cli"} className="model-group">
@@ -1720,7 +1790,7 @@ export function ModelPill({
                           * **当前那条打勾，且同时留一个字**——
                           * 「只用形状表达含义是不够的」，读屏拿不到一个 ✓ 的意思。
                           */}
-                        {同一条(c) ? <span className="sr-only">当前</span> : null}
+                        {同一条(c) ? <span className="sr-only">{t("当前")}</span> : null}
                         {同一条(c) ? <勾图标 className="model-check" /> : null}
                       </Row>
                     </li>
@@ -1745,7 +1815,7 @@ export function ModelPill({
                 }}
               >
                 <铅笔图标 className="row-icon" />
-                <span className="name">配置自定义模型</span>
+                <span className="name">{t("配置自定义模型")}</span>
               </Row>
             </div>
           ) : null}
@@ -1771,8 +1841,8 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
   const [态, 设态] = useState<"闲" | "好了" | "不行">("闲")
   useEffect(() => {
     if (态 === "闲") return
-    const t = setTimeout(() => 设态("闲"), 2000)
-    return () => clearTimeout(t)
+    const 计时 = setTimeout(() => 设态("闲"), 2000)
+    return () => clearTimeout(计时)
   }, [态])
   return (
     <Button
@@ -1794,10 +1864,10 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
         * 而下面那个 `.sr-only` 是给读屏的，眼睛也需要同样的信息。
         */}
       <span aria-hidden="true">
-        {态 === "好了" ? "已复制" : 态 === "不行" ? "没成" : <复制图标 />}
+        {态 === "好了" ? t("已复制") : 态 === "不行" ? t("没成") : <复制图标 />}
       </span>
       {/* 读屏要听得到结果，不能只有一个变了的图形 */}
-      <span className="sr-only">{态 === "好了" ? "已复制" : 态 === "不行" ? "复制不了" : label}</span>
+      <span className="sr-only">{态 === "好了" ? t("已复制") : 态 === "不行" ? t("复制不了") : label}</span>
     </Button>
   )
 }
@@ -1838,7 +1908,7 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
          * 「正在思考」——作者截图里因此出现了两行一模一样的字。
          * 动画那句留着（读屏要听得到状态），文字这句换个说法。
          */}
-        <span className="thought-label">{在想 ? "思考中" : "想了一下"}</span>
+        <span className="thought-label">{在想 ? t("思考中") : t("想了一下")}</span>
         {在想 ? <Thinking /> : null}
       </Button>
       {open ? <div className="thought-body">{text}</div> : null}
@@ -1871,7 +1941,7 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
   // **一轮都还没说过话时什么都不显示**：一排 0 会被读成「不花钱」
   if (!合) return null
   return (
-    <span className="session-usage" title="这一整段对话累计">
+    <span className="session-usage" title={t("这一整段对话累计")}>
       本次 输入 {formatTokens(合.input)} · 输出 {formatTokens(合.output)} · 缓存{" "}
       {formatTokens(合.cache)}
     </span>
@@ -2025,7 +2095,7 @@ export function ConversationView({
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
-        <h1 className="conv-title">{session.title ?? "新对话"}</h1>
+        <h1 className="conv-title">{session.title ?? t("新对话")}</h1>
         {/**
           * **不是内置那条时说一声**（2026-08-12）。
           *
@@ -2097,7 +2167,7 @@ export function ConversationView({
         )}
         {busy && onAbort ? (
           <Button variant="outline" size="sm" className="abort" onClick={onAbort}>
-            停止
+            {t("停止")}
           </Button>
         ) : null}
       </header>
@@ -2111,9 +2181,9 @@ export function ConversationView({
        */}
       <StickToBottom className="turns" resize="smooth" initial="smooth">
         <StickToBottom.Content>
-          {terminalTrimmed ? <p className="hint">终端只保留最近的输出，更早的已滚出缓冲</p> : null}
+          {terminalTrimmed ? <p className="hint">{t("终端只保留最近的输出，更早的已滚出缓冲")}</p> : null}
           {items.length === 0 ? (
-            <p className="empty">还没有对话</p>
+            <p className="empty">{t("还没有对话")}</p>
           ) : (
             items.map((item) => (
               <TranscriptRow
@@ -2169,7 +2239,7 @@ export function ConversationView({
             className="control composer-field"
             value={draft}
             onChange={(e) => setDraft(session.sessionId, e.target.value)}
-            placeholder={disabled ? "会话已结束" : "输入内容，回车发送"}
+            placeholder={disabled ? t("会话已结束") : t("输入内容，回车发送")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -2292,7 +2362,7 @@ export function ConversationView({
               type="submit"
               variant="primary"
               className="send-btn"
-              aria-label="发送"
+              aria-label={t("发送")}
               title="发送"
               disabled={disabled ?? false}
             >
@@ -2405,13 +2475,13 @@ export function TranscriptRow({
   if (编辑 !== undefined) {
     return (
       <div className={`turn ${item.who} editing`}>
-        <span className="sr-only">正在修改你说过的一段话</span>
+        <span className="sr-only">{t("正在修改你说过的一段话")}</span>
         <div className="bubble">
           <textarea
             className="control turn-edit"
             autoFocus
             value={编辑}
-            aria-label="修改这段话"
+            aria-label={t("修改这段话")}
             onChange={(e) => 设编辑(e.target.value)}
             onKeyDown={(e) => {
               // Esc 是取消——**改到一半按 Esc 却被发出去**是最气人的那种
@@ -2427,7 +2497,7 @@ export function TranscriptRow({
             {/* **不叫「取消」**：编辑不是模态——确认框会开在它上面，
                 那时屏幕上就有两颗同名的。照着「按下去会变成什么」说 */}
             <Button variant="secondary" size="inline" onClick={() => 设编辑(undefined)}>
-              不改了
+              {t("不改了")}
             </Button>
             <Button
               variant="primary"
@@ -2438,11 +2508,11 @@ export function TranscriptRow({
                 设编辑(undefined)
               }}
             >
-              发送
+              {t("发送")}
             </Button>
           </div>
           {/* **说清楚它会做什么**：不是改掉上面那句，是照这个再说一遍 */}
-          <p className="hint">发送会在对话末尾新说一句，上面那句留在原处</p>
+          <p className="hint">{t("发送会在对话末尾新说一句，上面那句留在原处")}</p>
         </div>
       </div>
     )
@@ -2488,7 +2558,7 @@ export function TranscriptRow({
         {/* **名字单独一个元素**：与头像混在同一个 span 里，
             读到的文本会变成「DDeepSeek」——`who-answered` 那条 e2e 当场抓到 */}
         <span className="who-name">
-          {mine ? "你" : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}
+          {mine ? t("你") : item.by ? (nameOf?.(item.by) ?? item.by) : agentId}
         </span>
       </span>
       <div className="turn-body">
@@ -2571,7 +2641,7 @@ export function TranscriptRow({
        */}
       {item.final ? (
         <div className="turn-actions">
-          <CopyButton text={item.text} label={mine ? "复制我说的这段" : "复制这段回答"} />
+          <CopyButton text={item.text} label={mine ? t("复制我说的这段") : t("复制这段回答")} />
           {/**
            * **只有自己说的话能改。**
            *
@@ -2583,7 +2653,7 @@ export function TranscriptRow({
               variant="ghost"
               size="icon"
               className="edit-btn"
-              aria-label="修改"
+              aria-label={t("修改")}
               title="修改"
               onClick={() => 设编辑(item.text)}
             >
@@ -2616,7 +2686,7 @@ export function TranscriptRow({
 function Thinking() {
   return (
     <span className="thinking" role="status">
-      <span className="sr-only">正在思考</span>
+      <span className="sr-only">{t("正在思考")}</span>
       <span className="dot" aria-hidden="true" />
       <span className="dot" aria-hidden="true" />
       <span className="dot" aria-hidden="true" />
@@ -2739,7 +2809,7 @@ function KernelOutputRow({
 function RichOutput({ mediaType, data }: { mediaType: string; data: string }) {
   if (mediaType.startsWith("image/")) {
     // Jupyter 给的是 base64。**不写 alt=""**——读屏用户要知道这里有一张图
-    return <img className="kout-img" src={`data:${mediaType};base64,${data}`} alt="内核输出的图" />
+    return <img className="kout-img" src={`data:${mediaType};base64,${data}`} alt={t("内核输出的图")} />
   }
   if (mediaType === "text/markdown") return <AgentMarkdown text={data} streaming={false} />
   if (mediaType === "text/html") {
@@ -2752,7 +2822,7 @@ function RichOutput({ mediaType, data }: { mediaType: string; data: string }) {
      */
     return (
       <>
-        <p className="kout-note">HTML 输出按纯文本显示（渲染它需要沙箱，见阶段 ④）</p>
+        <p className="kout-note">{t("HTML 输出按纯文本显示（渲染它需要沙箱，见阶段 ④）")}</p>
         <pre className="kout-text">{data}</pre>
       </>
     )
@@ -2785,9 +2855,9 @@ const TOOL_INPUT_MAX = 200
  * 无障碍树里必须能读到「执行中 / 成功 / 失败」。
  */
 const TOOL_STATUS = {
-  running: { mark: "…", label: "执行中" },
-  ok: { mark: "✓", label: "成功" },
-  error: { mark: "✗", label: "失败" },
+  running: { mark: "…", label: msgid("执行中") },
+  ok: { mark: "✓", label: msgid("成功") },
+  error: { mark: "✗", label: msgid("失败") },
 } as const
 
 /**
@@ -2857,7 +2927,9 @@ function useTick(active: boolean): number {
  * 对话瞬间变成几千行，而他想看的只是其中一条。
  */
 function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) {
-  const { mark, label } = TOOL_STATUS[item.status]
+  const { mark, label: 状态msgid } = TOOL_STATUS[item.status]
+  // **表是模块级常量**：在那里 `t()` 会在 `loadLang()` 之前跑，取到的是默认语言
+  const label = t(状态msgid)
   const 用时 = useElapsed(item)
   const input = summarize(item.input)
   /**
@@ -2897,7 +2969,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
            * 「还在跑」与「卡死了」在界面上长得一模一样，
            * 而人要按的那个「停止」就成了一次没有依据的赌。
            */
-          <span className="tool-elapsed" title={item.status === "running" ? "已经跑了" : "耗时"}>
+          <span className="tool-elapsed" title={item.status === "running" ? t("已经跑了") : t("耗时")}>
             {item.status === "running" ? `已跑 ${用时}` : 用时}
           </span>
         ) : null}
@@ -2917,21 +2989,21 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
       {open ? (
         <div className="tool-body">
           {input.text ? <pre className="tool-input">{input.text}</pre> : null}
-          {input.truncated ? <span className="hint">入参已截断</span> : null}
+          {input.truncated ? <span className="hint">{t("入参已截断")}</span> : null}
 
           {item.resultTruncated ? (
             <p className="hint tool-spill">
               {/* **这一行是修复的证据。** 修复前 runtime 层砍掉 2000 字符之后的内容且
                   不留痕迹，界面却在说「还有 N 行」——那个数是对残缺品数出来的 */}
               输出共 {formatBytes(item.resultBytes ?? 0)}，已截断
-              {item.fullOutputPath ? `；完整内容：${item.fullOutputPath}` : "，且未能保存全文"}
+              {item.fullOutputPath ? tf("；完整内容：{0}", item.fullOutputPath) : t("，且未能保存全文")}
             </p>
           ) : null}
 
           {result ? (
             <>
               {/* 命令输出与报错是最常被复制走的东西——贴进搜索框或另一段对话 */}
-              <CopyButton text={item.result ?? result.text} label="复制这段输出" />
+              <CopyButton text={item.result ?? result.text} label={t("复制这段输出")} />
               <pre className="tool-result">{result.text}</pre>
               {result.hidden > 0 ? (
                 <Button
@@ -2947,7 +3019,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
             </>
           ) : item.status === "error" ? (
             // 失败且无正文。**这一支是本次修复的重点**：此前它渲染成空白
-            <p className="caveat">这次调用失败了，但没有给出原因</p>
+            <p className="caveat">{t("这次调用失败了，但没有给出原因")}</p>
           ) : null}
         </div>
       ) : null}
@@ -2996,10 +3068,10 @@ function clip(s: string): { text: string; truncated: boolean } {
  * 这四条对应四种起手：看清现状 → 读数据 → 做分析 → 落成文字。
  */
 const OPENERS: readonly { 标题: string; 说明: string; 发出去的话: string }[] = [
-  { 标题: "看看这里有什么", 说明: "先摸清工作区", 发出去的话: "看一下当前工作区里有哪些文件和数据，说说它的结构。" },
-  { 标题: "读一份数据", 说明: "字段、规模、缺失", 发出去的话: "找到工作区里的数据文件，读进来，告诉我它有多少行、哪些字段、缺失情况如何。" },
-  { 标题: "做一次探索性分析", 说明: "分布与异常", 发出去的话: "对工作区里的数据做一次探索性分析：分布、相关性、明显的异常值。" },
-  { 标题: "把结果写成说明", 说明: "给人看的那一版", 发出去的话: "把目前得到的结果整理成一段能给别人看的说明，写清楚做了什么、发现了什么。" },
+  { 标题: msgid("看看这里有什么"), 说明: msgid("先摸清工作区"), 发出去的话: msgid("看一下当前工作区里有哪些文件和数据，说说它的结构。") },
+  { 标题: msgid("读一份数据"), 说明: msgid("字段、规模、缺失"), 发出去的话: msgid("找到工作区里的数据文件，读进来，告诉我它有多少行、哪些字段、缺失情况如何。") },
+  { 标题: msgid("做一次探索性分析"), 说明: msgid("分布与异常"), 发出去的话: msgid("对工作区里的数据做一次探索性分析：分布、相关性、明显的异常值。") },
+  { 标题: msgid("把结果写成说明"), 说明: msgid("给人看的那一版"), 发出去的话: msgid("把目前得到的结果整理成一段能给别人看的说明，写清楚做了什么、发现了什么。") },
 ]
 
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */
@@ -3048,8 +3120,8 @@ export function EmptyConversation({
           <div className="welcome-mark" aria-hidden="true">
             D
           </div>
-          <h2 className="welcome-title">开始一段对话</h2>
-          <p className="welcome-sub">当前工作区已就绪。挑一个起手，或者直接说你要做什么。</p>
+          <h2 className="welcome-title">{t("开始一段对话")}</h2>
+          <p className="welcome-sub">{t("当前工作区已就绪。挑一个起手，或者直接说你要做什么。")}</p>
 
           {/**
            * 建议卡片。**点了要真的发生事情**——建会话，并把这句话发出去。
@@ -3071,10 +3143,10 @@ export function EmptyConversation({
                 <Button
                   variant="outline"
                   size="card"
-                  onClick={() => onStart(first, o.发出去的话, 工作目录)}
+                  onClick={() => onStart(first, t(o.发出去的话), 工作目录)}
                 >
-                  <span className="opener-title">{o.标题}</span>
-                  <span className="opener-sub">{o.说明}</span>
+                  <span className="opener-title">{t(o.标题)}</span>
+                  <span className="opener-sub">{t(o.说明)}</span>
                 </Button>
               </li>
             ))}
@@ -3110,7 +3182,7 @@ export function EmptyConversation({
                 value={草稿}
                 autoFocus
                 onChange={(e) => 设草稿(e.target.value)}
-                placeholder="输入内容，回车发送"
+                placeholder={t("输入内容，回车发送")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
@@ -3145,10 +3217,10 @@ export function EmptyConversation({
                   */}
                 {onToggleDock ? (
                   <Button variant="text" size="sm" onClick={onToggleDock}>
-                    终端面板
+                    {t("终端面板")}
                   </Button>
                 ) : null}
-                <Button type="submit" variant="primary" className="send-btn" aria-label="发送">
+                <Button type="submit" variant="primary" className="send-btn" aria-label={t("发送")}>
                   <上箭头图标 />
                 </Button>
               </div>
@@ -3182,11 +3254,11 @@ export function EmptyConversation({
         </div>
       ) : (
         <EmptyState
-          title="还没有可用的 agent"
-          description="配置文件里没有 agent，或它需要的 API key 还没填。"
+          title={t("还没有可用的 agent")}
+          description={t("配置文件里没有 agent，或它需要的 API key 还没填。")}
           action={
             <Button variant="primary" onClick={onOpenSettings}>
-              去设置
+              {t("去设置")}
             </Button>
           }
         />
@@ -3241,9 +3313,9 @@ export function TerminalView({
 /* ── 子 agent 的 chip 组（①-B″ · S1）────────────────────────────────── */
 
 const CHIP_STATUS = {
-  running: { mark: "⏳", label: "运行中" },
-  ok: { mark: "✓", label: "完成" },
-  error: { mark: "✗", label: "失败" },
+  running: { mark: "⏳", label: msgid("运行中") },
+  ok: { mark: "✓", label: msgid("完成") },
+  error: { mark: "✗", label: msgid("失败") },
 } as const
 
 /**
@@ -3284,7 +3356,8 @@ export function SubagentChips({
       </span>
       <div className="chip-group">
         {item.agents.map((a) => {
-          const { mark, label } = CHIP_STATUS[a.status]
+          const { mark, label: 状态msgid } = CHIP_STATUS[a.status]
+          const label = t(状态msgid)
           const expanded = open === a.index
           return (
             <div key={a.index} className="chip-slot">
@@ -3305,7 +3378,7 @@ export function SubagentChips({
                * 原因是「它为什么没干成」。后者藏起来就等于没报。
                */}
               {a.status === "error" ? (
-                <p className="caveat chip-error">{a.error ?? "失败了，但没有给出原因"}</p>
+                <p className="caveat chip-error">{a.error ?? t("失败了，但没有给出原因")}</p>
               ) : null}
               {expanded ? <pre className="chip-task">{a.task}</pre> : null}
             </div>

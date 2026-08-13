@@ -22,6 +22,7 @@ import { SessionRow } from "./views.js"
 import { 短路径 } from "./format.js"
 import { 服务器图标, 三角图标 } from "./icons.js"
 
+import { t } from "./i18n/index.js"
 /**
  * 状态怎么读。**点 + 文字成对**，不单给一个。
  *
@@ -29,7 +30,7 @@ import { 服务器图标, 三角图标 } from "./icons.js"
  * 但**它一定要出现在屏幕上**，不是只在 title 里（悬停才有的等于没有）。
  */
 const 状态文字 = (s: RemoteState): string =>
-  s.kind === "ready" ? "连着" : s.kind === "connecting" ? "连接中" : s.kind === "idle" ? "未连" : "断了"
+  s.kind === "ready" ? t("连着") : s.kind === "connecting" ? t("连接中") : s.kind === "idle" ? t("未连") : t("断了")
 
 export interface ConnectionDraft {
   id?: string | undefined
@@ -122,7 +123,7 @@ export function RemoteSection({
         */}
       <Row className="remote-head" aria-expanded={open} onClick={onToggle}>
         <服务器图标 className="row-icon" />
-        <span className="name">远端连接</span>
+        <span className="name">{t("远端连接")}</span>
         {/* **收起时也要说有几台**：否则收起等于把它们藏没了 */}
         {connections.length > 0 ? (
           <span className="remote-count">{connections.length}</span>
@@ -140,7 +141,7 @@ export function RemoteSection({
           ) : null}
 
           {connections.length === 0 ? (
-            <p className="hint pad">还没有服务器</p>
+            <p className="hint pad">{t("还没有服务器")}</p>
           ) : (
             分组.map((g) => (
               <div className="remote-group" key={g.name ?? "＿无分组"}>
@@ -175,7 +176,7 @@ export function RemoteSection({
            * 它曾经在别处是一个没有标签的 `＋`，作者的反馈是「没有这个功能」。
            */}
           <Button variant="text" size="sm" className="remote-add" onClick={onAdd}>
-            ＋ 添加服务器
+            {t("＋ 添加服务器")}
           </Button>
         </div>
       ) : null}
@@ -213,7 +214,7 @@ function ConnectionRow({
   onMoveSession?: ((s: SessionSummary, d: "up" | "down") => void) | undefined
 }) {
   const 连着 = conn.state.kind === "ready"
-  const 状态 = busy ? "连接中" : 状态文字(conn.state)
+  const 状态 = busy ? t("连接中") : 状态文字(conn.state)
   return (
     <li className={`remote-row ${连着 ? "on" : ""}`} data-state={busy ? "connecting" : conn.state.kind}>
       <div className="remote-main">
@@ -265,19 +266,19 @@ function ConnectionRow({
          * （人点的是「在这台机器上干活」，不该让他先按连接再按新建）。
          */}
         <Button variant="text" size="inline" onClick={onNewSession}>
-          ＋ 新对话
+          {t("＋ 新对话")}
         </Button>
         {连着 ? (
           <Button variant="text" size="inline" onClick={onDisconnect}>
-            断开
+            {t("断开")}
           </Button>
         ) : (
           <Button variant="text" size="inline" disabled={busy} onClick={onConnect}>
-            {busy ? "连接中…" : "连接"}
+            {busy ? t("连接中…") : t("连接")}
           </Button>
         )}
         <Button variant="text" size="inline" onClick={onEdit}>
-          编辑
+          {t("编辑")}
         </Button>
       </div>
     </li>
@@ -419,11 +420,11 @@ export function ConnectionDialog({
         <div className="confirm-actions">
           {onRemove ? (
             <Button variant="danger" size="sm" className="conn-remove" onClick={onRemove}>
-              删除
+              {t("删除")}
             </Button>
           ) : null}
           <Button variant="secondary" size="sm" onClick={onCancel}>
-            取消
+            {t("取消")}
           </Button>
           <Button
             variant="primary"

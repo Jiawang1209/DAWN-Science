@@ -18,6 +18,7 @@
  */
 import { Button } from "./primitives.js"
 
+import { t } from "./i18n/index.js"
 export interface ConfirmRequest {
   title: string
   /** 会发生什么。**带真数字**，不是「相关数据」 */
@@ -54,7 +55,7 @@ export function ConfirmDialog({
         <div className="confirm-actions">
           {/* **焦点落在「取消」上**：危险的那个要多按一下才够得到 */}
           <Button autoFocus variant="secondary" size="sm" onClick={onCancel}>
-            取消
+            {t("取消")}
           </Button>
           <Button
             variant="danger"

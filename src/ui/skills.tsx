@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react"
 import { EmptyState, Loader } from "./primitives.js"
 
+import { t, tf } from "./i18n/index.js"
 export interface Skill {
   name: string
   description: string
@@ -52,31 +53,31 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
   if (!load) {
     return (
       <EmptyState
-        title="还没有打开的工作目录"
-        description="技能是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。"
+        title={t("还没有打开的工作目录")}
+        description={t("技能是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。")}
       />
     )
   }
-  if (出错) return <EmptyState title="读不到技能" description={出错} />
-  if (!数据) return <Loader label="正在读这个工作目录里的技能" />
+  if (出错) return <EmptyState title={t("读不到技能")} description={出错} />
+  if (!数据) return <Loader label={t("正在读这个工作目录里的技能")} />
 
   return (
     <div className="skills-page">
       <header className="skills-head">
-        <h1 className="panel-title">技能</h1>
+        <h1 className="panel-title">{t("技能")}</h1>
         {/**
           * **把目录说出来**。技能是手写的 md 文件——
           * 不说清楚放哪儿，「怎么加一个」就无从下手。
           */}
         <p className="hint">
-          每个 <code>.md</code> 文件是一个技能，放在 <code>{数据.dir}</code>
+          每个 <code>.md</code> {t("文件是一个技能，放在")} <code>{数据.dir}</code>
         </p>
       </header>
 
       {数据.agents.length === 0 ? (
         <EmptyState
-          title="这个工作目录里还没有技能"
-          description={`在 ${数据.dir} 下建一个 .md 文件就行。那个目录里有一份 scout.md.example，去掉 .example 后缀即可启用。`}
+          title={t("这个工作目录里还没有技能")}
+          description={tf("在 {0} 下建一个 .md 文件就行。那个目录里有一份 scout.md.example，去掉 .example 后缀即可启用。", 数据.dir)}
         />
       ) : (
         <ul className="skill-list">
@@ -90,8 +91,8 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
                   * **缺省 = 继承默认工具集**，不是「一个工具都不给」。
                   * 缺失不等于相同，缺失也不等于支持——这里的默认值才是要害。
                   */}
-                <span>{a.tools ? `工具：${a.tools.join("、")}` : "工具：继承默认那一套"}</span>
-                <span>{a.model ? `模型：${a.model}` : "模型：跟当前会话"}</span>
+                <span>{a.tools ? tf("工具：{0}", a.tools.join("、")) : t("工具：继承默认那一套")}</span>
+                <span>{a.model ? tf("模型：{0}", a.model) : t("模型：跟当前会话")}</span>
                 <span className="skill-path">{a.filePath}</span>
               </p>
             </li>
@@ -105,7 +106,7 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
         */}
       {数据.problems.length > 0 ? (
         <section className="skill-problems">
-          <h2 className="panel-title">这几个读不进来</h2>
+          <h2 className="panel-title">{t("这几个读不进来")}</h2>
           <ul>
             {数据.problems.map((p) => (
               <li key={p.filePath}>
@@ -134,10 +135,10 @@ export function PluginsView() {
   return (
     <div className="skills-page">
       <header className="skills-head">
-        <h1 className="panel-title">插件</h1>
+        <h1 className="panel-title">{t("插件")}</h1>
       </header>
       <EmptyState
-        title="还没有插件这套东西"
+        title={t("还没有插件这套东西")}
         description={
           "现在能装进来的能力有两样，各自在旁边那两屏：" +
           "「技能」是你自己写的子 agent（.dawn/agents/*.md，写完就能用）；" +
@@ -162,10 +163,10 @@ export function McpView() {
   return (
     <div className="skills-page">
       <header className="skills-head">
-        <h1 className="panel-title">MCP 服务器</h1>
+        <h1 className="panel-title">{t("MCP 服务器")}</h1>
       </header>
       <EmptyState
-        title="还不能在这里配 MCP"
+        title={t("还不能在这里配 MCP")}
         description={
           "管道已经通了：每开一段托管会话（claude / codex），我们会按会话写一份 mcp.json，" +
           "并用 --mcp-config 指过去。但**目前还没有配置界面**，" +

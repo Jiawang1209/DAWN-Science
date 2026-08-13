@@ -508,7 +508,35 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       })
       return p
     }
+
+    /**
+     * **把界面语言钉在中文**（2026-08-13）。
+     *
+     * 产品的默认是**英文**（作者定的）。而这套用例里有五百多处
+     * 「按名字找按钮」，全是中文名——不钉住的话它们会一次性全红，
+     * **而红成一片就没人看得出哪条是真问题**。
+     *
+     * 这不是一条后门：它写的就是应用自己在人点「中文」时写的那一格
+     * （`localStorage["dawn.global.lang"]`），键名与值都取自 `i18n/index.ts`。
+     *
+     * **英文那一面另有专门的用例盯着**（`i18n.spec.ts`）：
+     * 走一遍主路径，断言该出现的英文都在、且屏幕上一个汉字都没有。
+     * 这里钉中文，是为了让「别的东西坏没坏」这个问题仍然答得出来。
+     */
+    const 钉住中文 = async (p: Page) => {
+      await p.addInitScript(() => {
+        try {
+          localStorage.setItem("dawn.global.lang", "zh")
+        } catch {
+          /* 存不进去就算了：那时整个应用都会退回默认，用例自然会红 */
+        }
+      })
+      // `addInitScript` 只对之后的导航生效，首帧已经画过了，所以要重来一次
+      await p.reload()
+    }
+
     let page = 接线(await app.firstWindow())
+    await 钉住中文(page)
 
     /**
      * **关掉再打开**（会话续接的 e2e 要用，2026-08-11）。
@@ -524,6 +552,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         if (文本) console.error("[主进程]", 文本)
       })
       page = 接线(await app.firstWindow())
+      await 钉住中文(page)
       return page
     }
 

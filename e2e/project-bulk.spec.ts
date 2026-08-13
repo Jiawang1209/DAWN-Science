@@ -163,3 +163,35 @@ test("**项目行两行：名字在上，路径在下**", async ({ dawn }) => {
   // 而且它们左缘齐平——错开一两像素在一列里一眼就看得出来
   expect(Math.round(b.x)).toBe(Math.round(a.x))
 })
+
+/**
+ * **别的项目里的会话，也点得进去**（2026-08-13，作者报的：
+ * *「为什么有的会话，可以点击进去，有的会话不能点击进去呢？」*）。
+ *
+ * 不是随机的：`sessions` 里**只有当前打开那个项目的会话**，
+ * 而 `onPickTask` 上一版只从会话摘要取 projectId——别的项目里的那些
+ * 摘要根本不在手上，于是项目不切、`session` 查不到、主区回落成初始画面。
+ * **看起来就是「点了没反应」。**
+ *
+ * 判据挑的是 `.conv-title`：它只有对话那一屏有。
+ * 挑输入框不行——初始画面也有一模一样的占位符（本项目 2026-08-12 栽过）。
+ */
+test("**点开另一个项目里的会话，真的进得去**", async ({ dawn }) => {
+  const { page } = dawn
+  await 造项目(page, [甲, 乙])
+
+  // 展开第一个项目，进它底下那一段——这一步把「当前项目」钉在甲上
+  const 甲行 = page.locator(".proj-list .proj-item").first()
+  await 甲行.locator(".row").first().click()
+  await 甲行.locator(".proj-session-list .sess-item .row").first().click()
+  await expect(page.locator(".conv-title")).toBeVisible({ timeout: 30_000 })
+
+  // 现在去点**另一个项目**里的那一段
+  const 乙行 = page.locator(".proj-list .proj-item").nth(1)
+  await 乙行.locator(".row").first().click()
+  await 乙行.locator(".proj-session-list .sess-item .row").first().click()
+
+  // **进得去**，而不是回落到初始画面
+  await expect(page.locator(".conv-title")).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator(".welcome-title")).toHaveCount(0)
+})

@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -1 && npx playwright test e2e/visual.spec.ts --update-snapshots 2>&1 | tail -8",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npm run test:e2e 2>&1 | tail -40",
+    "buildCommand": "npm run build 2>&1 | tail -1 && npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4 && npx playwright test --grep-invert \"视觉\" 2>&1 | tail -18",
+    "testCommand": "npm run build 2>&1 | tail -1 && npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4 && npx playwright test --grep-invert \"视觉\" 2>&1 | tail -18",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -370,6 +370,18 @@
       "type": "file"
     },
     {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
+      "accessCount": 2,
+      "lastAccessed": 1786582232148,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-actual.png",
+      "accessCount": 2,
+      "lastAccessed": 1786582240262,
+      "type": "file"
+    },
+    {
       "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
       "accessCount": 1,
       "lastAccessed": 1786524176416,
@@ -502,15 +514,21 @@
       "type": "file"
     },
     {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
+      "path": "src/ui/i18n/index.ts",
       "accessCount": 1,
-      "lastAccessed": 1786579691932,
+      "lastAccessed": 1786579967425,
       "type": "file"
     },
     {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-actual.png",
+      "path": "scripts/i18n-wrap.mjs",
       "accessCount": 1,
-      "lastAccessed": 1786579700617,
+      "lastAccessed": 1786580029328,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/i18n/en.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786580216447,
       "type": "file"
     }
   ],

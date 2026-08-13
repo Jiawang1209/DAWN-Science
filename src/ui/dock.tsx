@@ -28,6 +28,7 @@ import { TerminalPane } from "./terminal.js"
 import { $dockChunks } from "./state/index.js"
 import type { SessionSummary } from "../protocol/index.js"
 
+import { t } from "./i18n/index.js"
 export function TerminalDock({
   terminals,
   currentId,
@@ -57,39 +58,39 @@ export function TerminalDock({
   const chunks = useStore($dockChunks)
 
   return (
-    <section className="dock" aria-label="终端">
+    <section className="dock" aria-label={t("终端")}>
       <div className="dock-tabs">
-        <span className="dock-title">终端</span>
-        {terminals.map((t, i) => (
-          <span key={t.sessionId} className={`dock-tab${t.sessionId === currentId ? " current" : ""}`}>
+        <span className="dock-title">{t("终端")}</span>
+        {terminals.map((台, i) => (
+          <span key={台.sessionId} className={`dock-tab${台.sessionId === currentId ? " current" : ""}`}>
             <Button
               variant="ghost"
               size="inline"
-              aria-current={t.sessionId === currentId}
-              onClick={() => onPick(t.sessionId)}
+              aria-current={台.sessionId === currentId}
+              onClick={() => onPick(台.sessionId)}
             >
               {/* 终端没有标题可言，**给它一个稳定的序号**比显示一串 id 强 */}
               {`终端 ${i + 1}`}
-              {t.state === "exited" ? <span className="hint"> 已结束</span> : null}
+              {台.state === "exited" ? <span className="hint"> {t("已结束")}</span> : null}
             </Button>
             <Button
               variant="ghost"
               size="icon"
               aria-label={`关闭终端 ${i + 1}`}
-              onClick={() => onClose(t.sessionId)}
+              onClick={() => onClose(台.sessionId)}
             >
               ×
             </Button>
           </span>
         ))}
         <Button variant="outline" size="sm" disabled={!canOpen} onClick={onNew}>
-          ＋ 新终端
+          {t("＋ 新终端")}
         </Button>
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd">{workspace}</span> : null}
-        <Button variant="ghost" size="sm" aria-label="收起终端" onClick={onCloseDock}>
-          收起
+        <Button variant="ghost" size="sm" aria-label={t("收起终端")} onClick={onCloseDock}>
+          {t("收起")}
         </Button>
       </div>
 
@@ -104,13 +105,13 @@ export function TerminalDock({
           <p className="empty">
             配置里没有 <code>kind: pty</code> 的 agent，开不了终端。
             <Button variant="outline" size="sm" onClick={onOpenProject}>
-              打开项目文件夹
+              {t("打开项目文件夹")}
             </Button>
           </p>
         ) : currentId ? (
           <TerminalPane chunks={chunks} onInput={onInput} />
         ) : (
-          <p className="empty">还没有终端。点「＋ 新终端」开一个，它会开在上面那个目录里。</p>
+          <p className="empty">{t("还没有终端。点「＋ 新终端」开一个，它会开在上面那个目录里。")}</p>
         )}
       </div>
     </section>

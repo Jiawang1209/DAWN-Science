@@ -13,7 +13,6 @@ function backend(): WorkbenchBackend {
     listCredentials: async () => ({ configured: [], encrypted: false }),
     setCredential: async () => ({}),
     deleteCredential: async () => ({}),
-    getProject: async () => project,
     listSessions: async () => [],
     listRuns: async () => [],
     getRun: async () => ({
@@ -30,18 +29,6 @@ function backend(): WorkbenchBackend {
     abortSession: async () => ({}),
     setSessionModel: async () => ({}),
     getContextUsage: async () => ({ bytes: { system: 0, tools: 0, history: 0 } }),
-    steerSession: async () => ({}),
-    previewTakeover: async () => ({
-      sessionId: "s1", currentHolder: null, requester: "user" as const,
-      wouldPreempt: false, allowed: true,
-    }),
-    openProject: async () => project,
-    createSession: async () => ({
-      sessionId: "s1", projectId: "p1", agentId: "a", kind: "native" as const,
-      pinned: false,
-      sortOrder: 1,
-      state: "alive" as const, createdAt: "2026-08-08T00:00:00Z",
-    }),
     writeToSession: async () => ({}),
     stopSession: async () => ({}),
     listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
@@ -51,11 +38,9 @@ function backend(): WorkbenchBackend {
     listDirectory: async () => ({ path: "", entries: [], ignored: 0, omitted: 0 }),
     readFile: async () => ({ kind: "other" as const, mediaType: "application/octet-stream", bytes: 0, reason: "测试替身不读文件" }),
     setProviderConnection: async () => ({}),
-    createTemporarySession: async () => ({}) as never,
     createTerminalSession: async () => ({}) as never,
     listTemporarySessions: async () => [],
 
-    createAgent: async ({ agentId }) => ({ agentId }),
     reorderSessions: async () => ({ reordered: 0 }),
     renameSession: async () => ({}),
     setSessionPinned: async () => ({}),
@@ -152,7 +137,7 @@ describe("IPC 桥", () => {
 
   it("桥不含业务逻辑：只读模式的拒绝由服务端做出", async () => {
     const h = createIpcHandler(new WorkbenchServer(backend(), { readOnly: true }))
-    const r = await h("createSession", { projectId: "p1", agentId: "a" })
+    const r = await h("createTask", { agentId: "a" })
     expect(r.ok).toBe(false)
   })
 })

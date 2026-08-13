@@ -205,8 +205,6 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
         onShowFiles={() => {}}
         onPickProject={() => {}}
         onPickSession={() => {}}
-        onOpenProject={() => {}}
-        onNewSession={() => {}}
         onShowPanel={() => {}}
       />,
     )
@@ -239,8 +237,6 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
         onShowFiles={() => {}}
         onPickProject={() => {}}
         onPickSession={() => {}}
-        onOpenProject={() => {}}
-        onNewSession={() => {}}
         onNewTask={onNewTask}
         onShowPanel={() => {}}
       />,

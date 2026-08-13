@@ -39,7 +39,6 @@ export function TerminalDock({
   onClose,
   onCloseDock,
   onInput,
-  onOpenProject,
 }: {
   /** 这个项目里活着的终端会话 */
   terminals: readonly SessionSummary[]
@@ -53,7 +52,6 @@ export function TerminalDock({
   onClose: (sessionId: string) => void
   onCloseDock: () => void
   onInput: (data: string) => void
-  onOpenProject: () => void
 }) {
   const chunks = useStore($dockChunks)
 
@@ -110,12 +108,18 @@ export function TerminalDock({
            * 「没有打开项目」不再是拦路的理由——那时终端开在家目录
            * （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
            */
-          <p className="empty">
-            {t("配置里没有 kind: pty 的 agent，开不了终端。")}
-            <Button variant="outline" size="sm" onClick={onOpenProject}>
-              {t("在访达里打开")}
-            </Button>
-          </p>
+          /**
+            * **旁边那颗按钮摘掉了**（T4，2026-08-13）。
+            *
+            * 它接的是「选个目录建项目」——**而这条消息说的是配置里没有
+            * pty agent，选目录解决不了它**。上面那段注释自己都写着
+            * 「『没有打开项目』不再是拦路的理由」，按钮却留到了今天。
+            *
+            * 一个解决不了所述问题的入口，比没有更坏：人会按下去，
+            * 然后发现终端还是开不了，而且不知道为什么。
+            * **这里只说事实，不给假出路。**
+            */
+          <p className="empty">{t("配置里没有 kind: pty 的 agent，开不了终端。")}</p>
         ) : currentId ? (
           <TerminalPane chunks={chunks} onInput={onInput} />
         ) : (

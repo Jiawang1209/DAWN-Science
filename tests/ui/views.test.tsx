@@ -322,7 +322,6 @@ describe("对话视图", () => {
         session={session({ kind: "pty" })}
         items={[]}
         agents={["ds-chat"]}
-        onNewSession={noop}
         onSend={noop}
       />,
     )

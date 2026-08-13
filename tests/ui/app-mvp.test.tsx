@@ -309,21 +309,51 @@ async function 从命令面板(标题: RegExp): Promise<void> {
   fireEvent.click(await screen.findByText(标题))
 }
 
-describe("MVP 主路径 · 打开项目", () => {
+/**
+ * **入口换了，判据没换**（T4，2026-08-13）。
+ *
+ * 这两条原本走命令面板里的「打开文件夹为新项目」，而那条命令连同
+ * `openProject` 操作一起在协议 5.0 里摘掉了——项目不再是「先建、再往里放会话」
+ * 的东西，**它是从任务的工作目录长出来的**。
+ *
+ * 它们守的从来不是那条命令，是两件仍然成立的事：
+ * ①**选目录要用原生选择器**，不能让人往输入框里粘路径（`window.prompt` 那次的教训）；
+ * ②**取消就是什么都不做**，不报错、也不悄悄用一个别的目录。
+ * 所以主语换成输入卡上那颗 chip——**那是这个动作现在唯一的家**。
+ */
+describe("MVP 主路径 · 给任务选工作目录", () => {
   it("用原生目录选择器，不是让人往 prompt 里粘路径", async () => {
     const h = harness()
     render(<App client={h.client} />)
-    await 从命令面板(/打开文件夹为新项目/)
+    fireEvent.click(await screen.findByRole("button", { name: /选择工作目录/ }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
-    expect(h.calls.find((c) => c.op === "openProject")?.req).toEqual({ workspace: "/w/proj" })
+
+    // 选完之后开口，任务就带着这个目录建出来
+    const box = (await screen.findByPlaceholderText(/今天帮你做些什么/)) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: "开始" } })
+    fireEvent.submit(box.form!)
+    await waitFor(() =>
+      expect((h.calls.find((c) => c.op === "createTask")?.req as { workspace?: string })?.workspace)
+        .toBe("/w/proj"),
+    )
   })
 
   it("用户取消选择 ⇒ 什么都不做，不报错", async () => {
     const h = harness({ pick: null })
     render(<App client={h.client} />)
-    await 从命令面板(/打开文件夹为新项目/)
+    fireEvent.click(await screen.findByRole("button", { name: /选择工作目录/ }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
-    expect(h.calls.some((c) => c.op === "openProject")).toBe(false)
+
+    // chip 还写着「选择工作目录」——**没设就说没设**，不编一个出来
+    expect(await screen.findByRole("button", { name: /选择工作目录/ })).toBeDefined()
+
+    const box = (await screen.findByPlaceholderText(/今天帮你做些什么/)) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: "开始" } })
+    fireEvent.submit(box.form!)
+    // 取消之后照样能开口，只是**这一段没有工作目录**（普通对话）
+    await waitFor(() => expect(h.calls.some((c) => c.op === "createTask")).toBe(true))
+    expect((h.calls.find((c) => c.op === "createTask")?.req as { workspace?: string }).workspace)
+      .toBeUndefined()
   })
 
   it("重开 app 时自动选中已有项目 —— 有项目却还要求你再打开一次文件夹是荒谬的", async () => {

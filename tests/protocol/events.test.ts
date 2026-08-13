@@ -161,15 +161,31 @@ describe("协议操作 · 订阅与控制", () => {
     expect(OPERATIONS.abortSession.mutating).toBe(true)
   })
 
-  it("新增 steerSession —— 不打断整轮，只插一句引导", () => {
-    expect(operationNames()).toContain("steerSession")
-    expect(OPERATIONS.steerSession.request.safeParse({ sessionId: "s1", text: "换个思路" }).success).toBe(true)
-    expect(OPERATIONS.steerSession.request.safeParse({ sessionId: "s1", text: "" }).success).toBe(false)
-  })
+  /**
+   * **`steerSession` 在 T4（协议 5.0）里摘掉了。**
+   * 它从来没有过界面入口——「不打断整轮、只插一句引导」这件事
+   * 至今没有被设计出来，而**一个只存在于协议里的操作，
+   * 是在给后来的人一个不存在的承诺**。
+   *
+   * 判据挪到 `operations.test.ts` 那条「旧入口不在协议里了」上，一处说清就够。
+   */
 })
 
-describe("协议版本 · 4.14", () => {
+describe("协议版本 · 5.0", () => {
   /**
+   * **5.0（2026-08-13 · T4）：摘掉七个操作** —— `createSession`、
+   * `createTemporarySession`、`openProject`、`getProject`、`previewTakeover`、
+   * `steerSession`、`createAgent`。**删操作是破坏性的，所以 major 递增**，
+   * 这是 2.0 之后的第一次。
+   *
+   * 为什么是删而不是留着不用：任务模型下「开一段对话」只有一个动作
+   * （`createTask`），工作目录在开口之前选。那七个是它之前的形状，
+   * **界面上早就没有入口了**——留着的话，下一个人会以为它们还是活路。
+   *
+   * `listProjects` / `listSessions` / `deleteProject` 这些**留着**：
+   * 项目与会话不再是**入口**，但仍然是**记录**（账本那一列），
+   * 而账本要看得见、删得掉。
+   *
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
    * 所以是 minor**——老界面连新服务端照常工作，只是不知道有这个操作。
@@ -280,7 +296,7 @@ describe("协议版本 · 4.14", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.14")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.0")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

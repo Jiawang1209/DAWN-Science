@@ -10,7 +10,7 @@
  * 所以假 CLI 在回复里标出「首轮」还是「续接」，让它可断言。
  */
 import { resolve } from "node:path"
-import { test, expect, 等进了对话 } from "./fixtures.js"
+import { test, expect, 等进了对话, 用某个agent开一段 } from "./fixtures.js"
 
 const FAKE = resolve(import.meta.dirname, "fixtures/codex")
 
@@ -25,10 +25,8 @@ const PROVIDERS = `agents:
 `
 
 async function startCodex(page: import("@playwright/test").Page): Promise<void> {
-  await expect(page.locator(".app-shell")).toBeVisible()
-  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
-  await page.keyboard.press("Meta+k")
-  await page.getByRole("option", { name: "新建会话：codex" }).click()
+  // T4：挑 agent 的家只剩 composer 上那颗 pill（见 fixtures 里的注释）
+  await 用某个agent开一段(page, /codex/)
   await 等进了对话(page)
 }
 

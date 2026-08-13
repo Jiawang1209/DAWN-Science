@@ -12,7 +12,7 @@
  * 而 C4 已经把它实现掉了——**主体没了，意图还在**。
  * 现在守的是同一条纪律在新形态下的样子：**认不出的 CLI 响亮失败**。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 用某个agent开一段, 打开agent菜单 } from "./fixtures.js"
 
 const PROVIDERS = `agents:
   ds-chat:
@@ -31,11 +31,8 @@ test.describe("配了一个认不出的 cli agent", () => {
 
   test("**响亮失败并说清怎么办** —— 不是悄悄起一个终端", async ({ dawn }) => {
     const { page } = dawn
-    await expect(page.locator(".app-shell")).toBeVisible()
-    await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
-
-    await page.keyboard.press("Meta+k")
-    await page.getByRole("option", { name: "新建会话：某个没听说过的" }).click()
+    // T4：挑 agent 的家只剩 composer 上那颗 pill（见 fixtures 里的注释）
+    await 用某个agent开一段(page, /某个没听说过的/)
 
     // 出声，且给出可执行的替代
     await expect(page.getByText(/不支持的外部 CLI/)).toBeVisible({ timeout: 30_000 })
@@ -49,7 +46,9 @@ test.describe("配了一个认不出的 cli agent", () => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
-    await page.keyboard.press("Meta+k")
-    await expect(page.getByRole("option", { name: "新建会话：某个没听说过的" })).toBeVisible()
+    // **认不出的那个也要列在 pill 的菜单里**：缺失不等于不支持。
+    // 判据没变，只是这份名单现在住在 pill 上，不在命令面板里
+    await 打开agent菜单(page)
+    await expect(page.getByRole("menuitem", { name: /某个没听说过的/ })).toBeVisible()
   })
 })

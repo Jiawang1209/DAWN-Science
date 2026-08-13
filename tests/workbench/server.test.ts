@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { WorkbenchServer, type WorkbenchBackend } from "../../src/workbench/server.js"
+import { WorkbenchServer, fault, type WorkbenchBackend } from "../../src/workbench/server.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 
 /** 一段够用的假会话 */
@@ -53,7 +53,6 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     listCredentials: async () => ({ configured: [], encrypted: false }),
     setCredential: async () => ({}),
     deleteCredential: async () => ({}),
-    getProject: async () => project,
     listSessions: async () => [],
     listRuns: async () => [],
     getRun: async () => {
@@ -68,25 +67,6 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     abortSession: async () => ({}),
     setSessionModel: async () => ({}),
     getContextUsage: async () => ({ bytes: { system: 0, tools: 0, history: 0 } }),
-    steerSession: async () => ({}),
-    previewTakeover: async () => ({
-      sessionId: "s1",
-      currentHolder: null,
-      requester: "user" as const,
-      wouldPreempt: false,
-      allowed: true,
-    }),
-    openProject: async () => project,
-    createSession: async () => ({
-      sessionId: "s1",
-      projectId: "p1",
-      agentId: "a",
-      kind: "native" as const,
-      pinned: false,
-      sortOrder: 1,
-      state: "alive" as const,
-      createdAt: "2026-08-08T00:00:00Z",
-    }),
     writeToSession: async () => ({}),
     stopSession: async () => ({}),
     listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
@@ -96,11 +76,9 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     listDirectory: async () => ({ path: "", entries: [], ignored: 0, omitted: 0 }),
     readFile: async () => ({ kind: "other" as const, mediaType: "application/octet-stream", bytes: 0, reason: "测试替身不读文件" }),
     setProviderConnection: async () => ({}),
-    createTemporarySession: async () => ({}) as never,
     createTerminalSession: async () => ({}) as never,
     listTemporarySessions: async () => [],
 
-    createAgent: async ({ agentId }) => ({ agentId }),
     reorderSessions: async () => ({ reordered: 0 }),
     renameSession: async () => ({}),
     setSessionPinned: async () => ({}),
@@ -153,8 +131,8 @@ describe("WorkbenchServer · 派发", () => {
   })
 
   it("请求不合 schema 被拒，且带定位信息", async () => {
-    // openProject 要求绝对路径
-    const r = await new WorkbenchServer(backend()).handle("openProject", { workspace: "rel" })
+    // createTask 要求 agentId 非空
+    const r = await new WorkbenchServer(backend()).handle("createTask", { agentId: "" })
     expect(r.ok).toBe(false)
     if (!r.ok) {
       expect(r.error.code).toBe("invalid_request")
@@ -213,11 +191,11 @@ describe("WorkbenchServer · 后端异常", () => {
 
   it("后端抛出的 WorkbenchFault 保留其错误码 —— 业务性失败不该被压成 internal", async () => {
     const bad = backend({
-      getProject: async () => {
-        throw Object.assign(new Error("项目不存在"), { workbenchCode: "not_found" })
+      listDirectory: async () => {
+        throw fault("not_found", "项目不存在")
       },
     })
-    const r = await new WorkbenchServer(bad).handle("getProject", { projectId: "nope" })
+    const r = await new WorkbenchServer(bad).handle("listDirectory", { projectId: "nope", path: "." })
     if (!r.ok) {
       expect(r.error.code).toBe("not_found")
       expect(r.error.message).toContain("项目不存在")
@@ -228,7 +206,7 @@ describe("WorkbenchServer · 后端异常", () => {
 describe("WorkbenchServer · 只读模式", () => {
   it("只读模式下可写操作被拒", async () => {
     const s = new WorkbenchServer(backend(), { readOnly: true })
-    const r = await s.handle("createSession", { projectId: "p1", agentId: "a" })
+    const r = await s.handle("createTask", { agentId: "a" })
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.error.code).toBe("invalid_request")
   })
@@ -238,9 +216,17 @@ describe("WorkbenchServer · 只读模式", () => {
     expect((await s.handle("listProjects", {})).ok).toBe(true)
   })
 
-  it("只读模式下 previewTakeover 放行 —— 它是只读的", async () => {
+  /**
+   * **判据是「标没标 mutating」，不是名字听起来像不像**（T4 换的主语）。
+   *
+   * 原来这条挂在 `previewTakeover` 上，那个操作在协议 5.0 里摘掉了。
+   * 换成 `deletionImpact`——它守的是同一件事，而且更值钱：
+   * **名字里带「删除」，却只是算一算影响面**。真按名字猜的话它会被拦下，
+   * 那时「只读模式」就成了「凡是听着吓人的都不许」。
+   */
+  it("只读模式下 deletionImpact 放行 —— 名字吓人，它是只读的", async () => {
     const s = new WorkbenchServer(backend(), { readOnly: true })
-    const r = await s.handle("previewTakeover", { sessionId: "s1", requester: "user" })
+    const r = await s.handle("deletionImpact", { projectId: "p1" })
     expect(r.ok).toBe(true)
   })
 })

@@ -37,8 +37,6 @@ const sidebar = (over: Partial<Parameters<typeof SessionSidebar>[0]> = {}) =>
       onShowFiles={() => {}}
       onPickProject={noop}
       onPickSession={noop}
-      onOpenProject={noop}
-      onNewSession={noop}
       onShowPanel={noop}
       onOpenSettings={noop}
       {...over}

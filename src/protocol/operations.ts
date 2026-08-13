@@ -136,11 +136,6 @@ export const OPERATIONS = {
     response: z.array(ProjectSummarySchema),
     mutating: false,
   },
-  getProject: {
-    request: ByProject,
-    response: ProjectSummarySchema,
-    mutating: false,
-  },
   listSessions: {
     request: ByProject.merge(Paged),
     response: z.array(SessionSummarySchema),
@@ -282,49 +277,8 @@ export const OPERATIONS = {
     mutating: false,
   },
 
-  /** 预览不得改变状态——规格 7.1，①-A 已有对应测试 */
-  previewTakeover: {
-    request: z.object({ sessionId: z.string().min(1), requester: HolderSchema }),
-    response: z.object({
-      sessionId: z.string(),
-      currentHolder: HolderSchema.nullable(),
-      requester: HolderSchema,
-      wouldPreempt: z.boolean(),
-      allowed: z.boolean(),
-    }),
-    mutating: false,
-  },
 
   // ── 可写 ──
-  openProject: {
-    request: z.object({ workspace: z.string().startsWith("/") }),
-    response: ProjectSummarySchema,
-    mutating: true,
-  },
-  createSession: {
-    request: z.object({ projectId: z.string().min(1), agentId: z.string().min(1) }),
-    response: SessionSummarySchema,
-    mutating: true,
-  },
-  /**
-   * 开一段**临时会话**：没有指定项目的那种（2026-08-11）。
-   *
-   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
-   *
-   * ## 为什么是一个操作，而不是「先建项目再建会话」
-   *
-   * 它俩必须一起成立：目录建了、项目记录写了，会话却没起来，
-   * 那就在磁盘上和库里各留一份垃圾，而界面上什么都看不到。
-   * **一次调用，一个结果**——服务端自己保证这两件事同生共死。
-   *
-   * 每个临时会话**一个独立目录**（作者选的），路径由服务端定：
-   * 让界面去拼路径等于把「往哪写」的决定权交给渲染进程。
-   */
-  createTemporarySession: {
-    request: z.object({ agentId: z.string().min(1) }).strict(),
-    response: SessionSummarySchema,
-    mutating: true,
-  },
 
   /**
    * 开一个**终端**（2026-08-11）。
@@ -684,17 +638,6 @@ export const OPERATIONS = {
     mutating: true,
   },
 
-  /**
-   * 插一句引导，**不打断整轮**。
-   *
-   * 与 `writeToSession` 的区别：后者是「说完了，该你了」，
-   * 前者是「你继续，但注意这个」。pi 的 `steer` 直接支持。
-   */
-  steerSession: {
-    request: z.object({ sessionId: z.string().min(1), text: z.string().min(1) }).strict(),
-    response: Empty,
-    mutating: true,
-  },
 
   /**
    * 列出本机能用的内核（②-A · K2）。
@@ -1129,30 +1072,6 @@ export const OPERATIONS = {
     mutating: true,
   },
 
-  /**
-   * 在配置里加一个 native agent（2026-08-10）。
-   *
-   * 作者：*「我配置了 kimi-coding 的 API，但是配置完，在对话里面无法选择 kimi 呢？」*
-   *
-   * **填 key 只是「连得上」**——能不能建会话看的是配置里有没有声明 agent。
-   * 此前那句解释躺在设置界面一个默认折叠的说明里，等于不存在；
-   * 而**让人打开一个 yaml 手写一段，本身就是这个应用没做完**。
-   *
-   * 只支持 `kind: native`：cli 与 pty 要填的是命令行与参数，那是另一件事，
-   * **在这里顺手支持等于让一个「加个模型」的按钮悄悄能起任意进程**。
-   */
-  createAgent: {
-    request: z
-      .object({
-        agentId: z.string().min(1).max(32),
-        provider: z.string().min(1),
-        model: z.string().min(1),
-      })
-      .strict(),
-    /** 加完之后**立刻可用**（内存里那份 registry 原地更新，不用重启） */
-    response: z.object({ agentId: z.string() }).strict(),
-    mutating: true,
-  },
 
   /**
    * 写一个 provider 的连接设置（2026-08-10）。

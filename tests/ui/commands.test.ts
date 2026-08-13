@@ -34,9 +34,8 @@ function actions(): Actions {
     openSettings: vi.fn(),
     showConversation: vi.fn(),
     showProjectPanel: vi.fn(),
-    newSession: vi.fn(),
+    newTask: vi.fn(),
     abort: vi.fn(),
-    openProject: vi.fn(),
   deleteSession: vi.fn(),
     toggleDock: vi.fn(),
     setTheme: vi.fn(),
@@ -102,8 +101,13 @@ describe("命令注册表 · 一个动作一个家", () => {
       busy: false,
       view: "conversation",
     })
-    cmds.find((c) => c.id === "session.new:ds-chat")!.run()
-    expect(a.newSession).toHaveBeenCalledWith("ds-chat")
+    /**
+     * **T4：面板里那条是「新建任务」，不再是每个 agent 一条。**
+     * 它与侧栏那颗、与顶栏那个标志是同一个动作：回初始画面，
+     * 在那儿挑 LLM、挑工作目录。
+     */
+    cmds.find((c) => c.id === "task.new")!.run()
+    expect(a.newTask).toHaveBeenCalled()
   })
 
   it("「打开设置」调用的是传进来的 openSettings", () => {
@@ -113,10 +117,21 @@ describe("命令注册表 · 一个动作一个家", () => {
     expect(a.openSettings).toHaveBeenCalledTimes(1)
   })
 
-  it("每个 agent 各有一条「新建会话」 —— 面板里能直接挑", () => {
+  /**
+   * **一条，不是每个 agent 一条**（T4，2026-08-13）。
+   *
+   * 原来是 `session.new:ds-chat` / `session.new:codex-cli` …一串。它有两个毛病：
+   * 配三家就把面板刷掉三行；更要紧的是**它绕过了选工作目录那一步**，
+   * 建出来的永远是普通会话。
+   *
+   * 现在与侧栏那颗「新建任务」是同一个动作：回初始画面，在那儿挑 LLM、
+   * 挑目录，开口那一刻才建。**一个动作一个家**——挑 agent 的家是 composer 上那颗 pill。
+   */
+  it("「新建任务」只有一条，且不按 agent 分叉", () => {
     const ids = build().map((c) => c.id)
-    expect(ids).toContain("session.new:ds-chat")
-    expect(ids).toContain("session.new:codex-cli")
+    expect(ids).toContain("task.new")
+    expect(ids.filter((id) => id.startsWith("task.new"))).toHaveLength(1)
+    expect(ids.some((id) => id.startsWith("session.new"))).toBe(false)
   })
 })
 
@@ -144,10 +159,10 @@ describe("命令注册表 · 不可用要说原因，不许消失", () => {
     expect(c!.unavailable).toMatch(/会话/)
   })
 
-  it("**一个 agent 都没有时，「新建会话」也要说清为什么**", () => {
+  it("**一个 agent 都没有时，「新建任务」也要说清为什么**", () => {
     const cmds = build({ agents: [] })
-    const c = cmds.find((x) => x.id === "session.new")
-    expect(c, "没有 agent 时应当仍有一条占位的「新建会话」").toBeDefined()
+    const c = cmds.find((x) => x.id === "task.new")
+    expect(c, "没有 agent 时应当仍有一条占位的「新建任务」").toBeDefined()
     expect(c!.unavailable).toMatch(/agent/)
   })
 })

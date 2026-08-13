@@ -11,7 +11,7 @@
  * 与 ①-B″ 的 PTY e2e 选 `bash` 是同一条理由。
  */
 import { resolve } from "node:path"
-import { test, expect, 等进了对话 } from "./fixtures.js"
+import { test, expect, 等进了对话, 用某个agent开一段 } from "./fixtures.js"
 
 /**
  * **假 CLI 的文件名必须是 `claude`**：`familyOf(command)` 按命令名判
@@ -38,15 +38,16 @@ const PROVIDERS = `agents:
 /**
  * 建一个假 claude 会话。
  *
- * **必须等「新建会话」按钮可用再按 ⌘K**：只等 `.app-shell` 可见是不够的——
- * 那时项目还没加载完，命令面板里没有这条命令。第一版就是只等了 shell，
- * 三条里飘红一条（**每次不是同一条**），页面停在「还没有会话」。
+ * **T4（2026-08-13）：改走 composer 上那颗 pill。** 此前是 ⌘K →
+ * 「新建会话：claude」，而那一串命令收成了一条「新建任务」，
+ * `createSession` 也从协议 5.0 里摘掉了。挑 agent 的家只剩 pill 这一个。
+ *
+ * 「必须等按钮可用再动手」那条纪律留着（helper 里做的）：只等 `.app-shell`
+ * 可见是不够的——那时 agent 清单还没加载完。原来漏掉它的症状是
+ * **三条里飘红一条，每次不是同一条**。
  */
 async function startFakeClaude(page: import("@playwright/test").Page): Promise<void> {
-  await expect(page.locator(".app-shell")).toBeVisible()
-  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
-  await page.keyboard.press("Meta+k")
-  await page.getByRole("option", { name: "新建会话：claude" }).click()
+  await 用某个agent开一段(page, /claude/)
   await 等进了对话(page)
 }
 

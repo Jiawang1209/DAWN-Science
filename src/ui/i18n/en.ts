@@ -151,7 +151,6 @@ export const EN: Readonly<Record<string, string>> = {
   "打开设置": "Open settings",
   "模型": "Models",
   "视图": "View",
-  "新建会话：{0}": "New chat with {0}",
   "主题：{0}": "Theme: {0}",
   "还没有会话": "No chats yet",
   "终端的中止是按 Ctrl-C，不走这个命令": "Terminals are interrupted with Ctrl-C, not this command",
@@ -160,7 +159,6 @@ export const EN: Readonly<Record<string, string>> = {
   "中止当前回合": "Stop the current turn",
   "删除当前会话": "Delete the current chat",
   "还没有选中会话": "No chat is selected",
-  "打开文件夹为新项目": "Open a folder as a new project",
   "返回对话": "Back to the chat",
   "跟随系统": "Follow system",
   "亮色": "Light",
@@ -333,7 +331,6 @@ export const EN: Readonly<Record<string, string>> = {
   "＋ 新终端": "+ New terminal",
   "收起终端": "Hide terminal",
   "打开终端": "Open terminal",
-  "在访达里打开": "Reveal in Finder",
   "还没有终端。点「＋ 新终端」开一个，它会开在上面那个目录里。":
     "No terminal yet. Click “+ New terminal” to open one — it starts in the folder above.",
   "终端只保留最近的输出，更早的已滚出缓冲":

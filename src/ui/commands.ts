@@ -79,9 +79,17 @@ export interface Actions {
   openSettings(): void
   showConversation(): void
   showProjectPanel(): void
-  newSession(agentId: string): void
+  /**
+   * **新建任务**（T4，2026-08-13 由 `newSession(agentId)` 改成这个）。
+   *
+   * 任务模型下「开一段新对话」只有一个动作：回初始画面，
+   * **在那儿挑 LLM、挑工作目录，开口那一刻才真的建出来**。
+   * 此前面板里是「新建会话：DeepSeek / 新建会话：kimi …」一串——
+   * 那是任务模型之前的形状，而且它**绕过了工作目录那一步**，
+   * 建出来的永远是普通会话。
+   */
+  newTask(): void
   abort(): void
-  openProject(): void
   /** 删除当前会话。**与侧栏那个 × 是同一个动作**——一个动作一个家 */
   deleteSession(): void
   /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
@@ -136,27 +144,27 @@ export function buildCommands(ctx: CommandContext): Command[] {
   const out: Command[] = []
 
   // ── 会话 ─────────────────────────────────────────────────────────
-  if (agents.length === 0) {
-    // **不是把这条藏起来。** 藏起来的话，搜「新建会话」搜不到的人
-    // 分不清是没这个功能还是配置有问题
-    out.push({
-      id: "session.new",
-      title: t("新建会话"),
-      group: "会话",
-      run: () => {},
-      unavailable: "配置里还没有可用的 agent",
-    })
-  } else {
-    for (const a of agents) {
-      out.push({
-        id: `session.new:${a}`,
-        title: tf("新建会话：{0}", a),
-        group: "会话",
-        keywords: `new session ${a}`,
-        run: () => actions.newSession(a),
-      })
-    }
-  }
+  /**
+   * **一条，不是每个 agent 一条**（T4，2026-08-13）。
+   *
+   * 此前是「新建会话：DeepSeek / 新建会话：kimi …」一串。它有两个毛病：
+   * 配三家就把面板刷掉三行；而且**它绕过了工作目录那一步**——
+   * 建出来的永远是普通会话，人再想设目录得回头再找入口。
+   *
+   * 现在与侧栏那颗「新建任务」是同一个动作：**回初始画面**，
+   * 在那儿挑 LLM、挑目录，开口那一刻才建。
+   *
+   * **没有可用 agent 时不藏起来**：藏起来的话，搜不到的人分不清
+   * 是没这个功能还是配置有问题。
+   */
+  out.push({
+    id: "task.new",
+    title: t("新建任务"),
+    group: "会话",
+    keywords: "new task session 新建",
+    run: () => actions.newTask(),
+    ...(agents.length === 0 ? { unavailable: t("配置里还没有可用的 agent") } : {}),
+  })
 
   const abortWhy = abortUnavailable(ctx)
   out.push({
@@ -188,13 +196,15 @@ export function buildCommands(ctx: CommandContext): Command[] {
   })
 
   // ── 项目 ─────────────────────────────────────────────────────────
-  out.push({
-    id: "project.open",
-    title: t("打开文件夹为新项目"),
-    group: "项目",
-    keywords: "open project folder 目录",
-    run: () => actions.openProject(),
-  })
+  /**
+   * **「打开文件夹为新项目」没有了**（T4，2026-08-13）。
+   *
+   * 任务模型下项目**是从任务的工作目录长出来的**，不再是一个要先建、
+   * 再往里放会话的东西。这条命令走的是老路（`openProject` 操作），
+   * 它建出来的项目在侧栏上甚至不会出现——**侧栏那一列是按任务的路径合并的**。
+   *
+   * 想开一个新目录：新建任务 → 选工作目录。**一个动作一个家。**
+   */
   out.push({
     id: "project.panel",
     title: t("项目概览"),

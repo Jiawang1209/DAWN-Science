@@ -1443,151 +1443,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (ptyAgentId) 开一个终端()
   }, [dockOpen, dockSessionId, 终端们, projectId, ptyAgentId, 开一个终端])
 
-  /**
-   * 开一段**临时会话**（2026-08-11）：没有指定项目的那种。
-   *
-   * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话。」*
-   * 目录由服务端定（每个一个独立目录）——**让界面去拼路径，
-   * 等于把「往哪写」的决定权交给渲染进程**。
-   */
-  /**
-   * **点「新建会话」= 回到首页**（2026-08-11）。
-   *
-   * 作者：*「如果我点击新会话的时候，其实应该出现的是 App 的首页，
-   * 因为新会话和新项目肯定是不一样的，新会话的话，我应该是直接可以重新选择 LLM。」*
-   *
-   * 此前它**立刻用第一个 agent 建了一段**——于是「用哪个模型」这件事
-   * 只能建完再改，而那一屏（首页）明明就是为选模型准备的：
-   * 四张起手卡片 + 「用 X 开始」+ 换一个 LLM。
-   *
-   * **不建任何东西**：真正的会话在首页上挑完之后才建
-   * （首页的每个入口最终都调 `startTemporarySession`）。
-   */
-  const goHome = useCallback(() => {
-    setActiveSessionId(undefined)
-    setView("conversation")
-  }, [])
-
-  const startTemporarySession = useCallback(
-    /**
-     * @param firstMessage 给了的话，**建完立刻发出去**——
-     *   首页那四张起手卡片靠它（那一屏没有输入框）。
-     */
-    (agentId: string, firstMessage?: string) => {
-      /**
-       * **记下按下时人在哪一屏**（与 `startSession` 同一条纪律，2026-08-09 立的）。
-       *
-       * 无条件 `setView("conversation")` 会把人**从他刚打开的那一屏上拽走**：
-       * 按下新建 → 会话还没建好 → 用户切到项目概览 → 回调到了 → 屏幕被拽回对话。
-       * 第一版这个新函数就漏了它，被那条老用例当场抓住。
-       */
-      const from = $view.get()
-      client
-        .get<SessionSummary>("createTemporarySession", { agentId })
-        .then((s) => {
-          void loadTempSessions(client)
-          void loadProjects(client)
-          setActiveSessionId(s.sessionId)
-          // 人还在原地才进对话。**他自己切走了就尊重他的选择**
-          if ($view.get() === from) setView("conversation")
-          // 第一句要立刻发得出去，**不等那个 effect 的下一拍**
-          return 取写权(s.sessionId)
-            .then(() => {
-              if (!firstMessage) return
-              return client.get("writeToSession", {
-                sessionId: s.sessionId,
-                data: firstMessage,
-                as: "user",
-              })
-            })
-        })
-        .catch(fail)
-    },
-    [client],
-  )
-
-  const startSession = useCallback(
-    /**
-     * @param firstMessage 给了的话，**建完会话立刻把它发出去**。
-     *   空态的建议卡片靠它——那一屏没有输入框，
-     *   所以「把文字填进输入框」这条路在那里不存在，只能真的发。
-     */
-    (agentId: string, firstMessage?: string) => {
-      const pid = $activeProjectId.get()
-      if (!pid) return
-      /**
-       * **记下按下时人在哪一屏。**
-       *
-       * 2026-08-09：这个回调此前无条件 `setView("conversation")`，
-       * 于是「按下新建会话 → 会话还没建好 → 用户切到项目概览 → 回调到了」
-       * 这条路径会把人**从他刚打开的那一屏上拽走**，而且之后没有任何东西
-       * 会把他送回去，屏幕就那么停在错的地方。
-       *
-       * 它在 e2e 全量跑（56 条串行 Electron）里出现过两次，单独跑必绿——
-       * 轻负载下 `createSession` 总是快于用户的下一次点击。
-       * **「只在忙的时候错」不是偶发，是窗口小。**
-       */
-      const from = $view.get()
-
-      /**
-       * **建会话期间打的字要跟着走**（2026-08-10）。
-       *
-       * 草稿按 sessionId 存，而这一刻输入框还挂在**上一个**会话上——
-       * 人按下「新建会话」就开始打字，那段话会落进他已经不看的那个会话里，
-       * 屏幕上则像是凭空消失了。（不是假想：截侧栏时当场撞见。）
-       *
-       * **只带「按下之后新打的那部分」**：按下之前写了一半的仍归旧会话，
-       * 那正是 `$drafts` 按会话分家要保的东西（见 `state/view.ts` 的说明）。
-       * 判据就是「与按下那一刻的快照是否不同」。
-       */
-      const 旧会话 = $activeSessionId.get()
-      const 按下时的草稿 = draftOf(旧会话)
-
-      /**
-       * **终端只有一个家：下面那条 dock**（2026-08-11）。
-       *
-       * 命令面板里也能「新建会话：shell」。此前那条路把终端铺满主区，
-       * 于是同一样东西有了两个家——而终端已经不在会话列表里了，
-       * 那条路建出来的东西会**既不在列表里、也不在 dock 里**。
-       * Hermes：*"One action, one home."*
-       */
-      const 是终端 = providers.agents.find((a) => a.agentId === agentId)?.kind === "pty"
-      if (是终端) {
-        setDockOpen(true)
-        开一个终端()
-        return
-      }
-      client
-        .get<SessionSummary>("createSession", { projectId: pid, agentId })
-        .then((s) => {
-          void loadSessions(client, pid)
-          // 项目行上的「N 个会话」跟着涨——它来自 listProjects，不重取就停在旧值
-          void loadProjects(client)
-          // 规则本身在 `state/view.ts` 里，是纯的、可以确定性地验
-          const 搬 = carryDraft(旧会话, 按下时的草稿, draftOf(旧会话), s.sessionId)
-          if (搬) {
-            setDraft(搬.moveTo, 搬.text)
-            setDraft(搬.restoreTo, 搬.restored)
-          }
-          setActiveSessionId(s.sessionId)
-          // 人还在原地才进对话。**他自己切走了就尊重他的选择**
-          if ($view.get() === from) setView("conversation")
-          // 第一句要立刻发得出去，**不等那个 effect 的下一拍**
-          return 取写权(s.sessionId)
-            .then(() => {
-              if (!firstMessage) return
-              // **不做本地乐观追加**：与手动发送同一条路径，自己发的话经事件回灌进来
-              return client.get("writeToSession", {
-                sessionId: s.sessionId,
-                data: firstMessage,
-                as: "user",
-              })
-            })
-        })
-        .catch(fail)
-    },
-    [client, providers, 开一个终端],
-  )
 
   /**
    * 当前这一段。**两拨里都要找**（2026-08-11）：
@@ -1731,35 +1586,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
       showProjectPanel: () => setView("panel"),
-      newSession: startTemporarySession,
-      abort: () => {
-        if (!session) return
-        client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
-      },
+      /**
+       * **面板里那条也是「新建任务」**（T4，2026-08-13）。
+       *
+       * 此前它调 `startTemporarySession`——那是任务模型之前的路，
+       * **绕过了工作目录那一步**，建出来的永远是普通会话。
+       * 现在与侧栏那颗、与顶栏那个标志是同一个动作：回初始画面。
+       */
+      newTask: 回到初始画面,
       /** **与侧栏那个 × 同一个动作。** 面板里选中的那个会话 */
       deleteSession: () => {
         const s = sessions.find((x) => x.sessionId === $activeSessionId.get())
         if (s) askDeleteSession(s)
       },
-      openProject: () => {
-        // 原生目录选择器。初版让人往 prompt 里粘绝对路径——**那是命令行思路的残留**
-        client
-          .pickDirectory()
-          .then((ws) => {
-            // 取消：什么都不做，不报错
-            if (!ws) return
-            return client.get<ProjectSummary>("openProject", { workspace: ws }).then((p) => {
-              void loadProjects(client)
-              setActiveProjectId(p.projectId)
-              setActiveSessionId(undefined)
-              setView("conversation")
-            })
-          })
-          .catch(fail)
+      abort: () => {
+        if (!session) return
+        client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
       },
       setTheme,
     }),
-    [client, startSession, session],
+    [client, session, sessions, askDeleteSession, 回到初始画面],
   )
 
   const commands = useMemo(
@@ -1956,11 +1802,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           sessions={tempSessions.filter((x) => x.kind !== "pty" && !x.remote)}
           /** 展开那个项目里的会话，嵌在它自己那一行下面 */
           projectSessions={sessions.filter((x) => x.kind !== "pty")}
-          onNewSessionIn={(pid, agentId) => {
-            // **先切过去再建**：新会话属于那个项目，人也该跟着到那儿
-            setActiveProjectId(pid)
-            startSession(agentId)
-          }}
           agents={agentIds}
           agentLabel={agentLabel}
           onDeleteProject={askDeleteProject}
@@ -2146,13 +1987,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             const j = sessions.findIndex((x) => x.sessionId === id)
             return j >= 0 ? tempSessions.length + j : -1
           }}
-          onOpenProject={actions.openProject}
           /**
            * **顶上那颗回首页，不直接建**（2026-08-11）——
            * 在首页上挑完 LLM 才建，而且建出来的是临时会话。
            * 想在某个项目里开，走那个项目行上的 ＋。
            */
-          onNewSession={goHome}
           /**
            * **再点一次就回去**（2026-08-11，作者：*「设置的地方，
            * 点击第二次也可以返回到界面」*）。
@@ -2466,7 +2305,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   (id) => providers.agents.find((a) => a.agentId === id)?.kind,
                   Boolean(services && services.length > 0),
                 )}
-                onNewSession={actions.newSession}
                 models={modelChoices}
                 model={currentModel}
                 agentLabel={agentLabel}
@@ -2638,7 +2476,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 if (!id) return
                 写进去(id, data).catch(fail)
               }}
-              onOpenProject={actions.openProject}
             />
           ) : null}
 

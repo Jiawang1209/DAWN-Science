@@ -426,9 +426,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   /**
    * 起一个会话（登记 + 接线 + 记基线）。
    *
-   * **抽出来是因为它现在有两个调用点**（`createSession` 与
-   * `createTemporarySession`）——两份复制粘贴的接线代码，
-   * 迟早有一份忘了挂记账员或忘了记 git 基线，而那种漏是不出声的。
+   * **抽出来是因为它有好几个调用点**——终端会话、任务、远端会话都从这儿起。
+   * 每多一份复制粘贴的接线代码，就多一份「忘了挂记账员或忘了记 git 基线」的机会，
+   * 而那种漏是不出声的。
+   *
+   * （T4，2026-08-13：原注释点名的那两个调用点是 `createSession` 与
+   * `createTemporarySession`，它们在协议 5.0 里摘掉了。**抽出来的理由没变**，
+   * 只是名单换了人。）
    */
   async function 起一个会话(
     projectId: string,
@@ -584,8 +588,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
-    getProject: async ({ projectId }) => requireProject(projectId),
-
     listSessions: async ({ projectId }) => {
       requireProject(projectId)
       return projects.sessions(projectId, 服务器名)
@@ -625,14 +627,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const link = runs.getProvenance(resourceId)
       if (!link) throw fault("not_found", `资源 "${resourceId}" 没有溯源记录`)
       return link
-    },
-
-    previewTakeover: async ({ sessionId, requester }) =>
-      sessions.leases.previewTakeover(sessionId, requester),
-
-    openProject: async ({ workspace }) => {
-      const rec = projects.open(workspace)
-      return projects.summary(rec.projectId)!
     },
 
     subscribeSession: async ({ sessionId }) => {
@@ -679,35 +673,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
-    createSession: async ({ projectId, agentId }) => 起一个会话(projectId, agentId),
-
-    /**
-     * 临时会话：**服务端自己开目录、写项目记录、起会话**（2026-08-11）。
-     *
-     * 作者：*「会话其实更倾向于，没有设置工作路径的、或者没有设置项目的临时会话」*，
-     * 并且选了**每个临时会话一个独立目录**。
-     *
-     * 三件事必须一起成立——目录建了、记录写了、会话却没起来，
-     * 就在磁盘和库里各留一份垃圾，而界面上什么都看不到。
-     */
-    createTemporarySession: async ({ agentId }) => {
-      if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
-      const 临时项目 = projects.ensureTemporary(scratchRoot)
-      // **每条会话一个自己的目录**，但它们同属那一个临时项目
-      const dir = projects.temporaryWorkspace(scratchRoot)
-      return 起一个会话(临时项目.projectId, agentId, dir)
-    },
-
-    /**
-     * 开一个终端（2026-08-11）。**cwd 由这里定，不收渲染进程给的路径。**
-     *
-     * 作者：*「终端的路径应该是项目文件夹的路径，如果没有选择的话，
-     * 那么终端就在家目录下。」*
-     *
-     * 没有项目时它仍然要有个归属（会话表要 project_id），
-     * 挂在那个「临时会话」项目下——**但 cwd 是家目录，不是临时目录**：
-     * 你要的是「在自己的地盘上敲两条命令」，不是一个空文件夹。
-     */
     createTerminalSession: async ({ agentId, projectId }) => {
       if (projectId) return 起一个会话(projectId, agentId)
       if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
@@ -1088,22 +1053,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
-    steerSession: async ({ sessionId, text }) => {
-      try {
-        await sessions.steer(sessionId, text, "user")
-        events.userTurn(sessionId, text)
-      } catch (err) {
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
-      }
-      return {}
-    },
-
-    /**
-     * 列出本机内核（②-A · K2）。
-     *
-     * **每次现扫，不缓存。** 用户可能刚在别处 `installspec` 了一个——
-     * 缓存住的表现是「我装了但 DAWN 看不见」，而那看起来像 DAWN 坏了。
-     */
     listKernels: async () => {
       const d = discoverKernelSpecs()
       return {
@@ -1317,27 +1266,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        */
       onProvidersChanged?.(新的.providers)
       return {}
-    },
-
-    createAgent: async ({ agentId, provider, model }) => {
-      if (!configPath) throw fault("internal_error", "本次运行没有装配配置文件路径")
-      let 新的
-      try {
-        新的 = addNativeAgent(configPath, { agentId, provider, model })
-      } catch (err) {
-        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
-        throw err
-      }
-      /**
-       * **原地更新同一个对象，不换引用。**
-       *
-       * `registry` 被 wiring 里好几处按引用持有（runtime 的 `commandOf` 现查、
-       * 会话中枢的 kind 判定…）。换引用只会更新我们手里这一个，
-       * 别人还指着旧的——那时新 agent 在选择器里有、建会话时却说不认识。
-       */
-      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
-      Object.assign(registry.agents, 新的.agents)
-      return { agentId }
     },
 
     renameSession: async ({ sessionId, title }) => {

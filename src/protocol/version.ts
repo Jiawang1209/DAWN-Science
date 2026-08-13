@@ -164,8 +164,25 @@
  *   存的是**缩略图的 `data:` URL**，不是原图。转录会被反复读、
  *   会随快照整个发过来，**塞原图进去等于每次切会话都搬一遍几 MB**；
  *   而这里要回答的只是「附的是哪几张」。
+ * 5.0（2026-08-13）：**T4 迁移收尾——七个旧操作从协议上摘掉**。
+ *   `createSession` / `createTemporarySession` / `openProject` / `getProject` /
+ *   `previewTakeover` / `steerSession` / `createAgent`。
+ *
+ *   **major 递增，因为这是删除**：老界面调它们会得到「不认识这个操作」，
+ *   而握手时的版本比对会先一步把话说清楚。
+ *
+ *   任务模型（4.8 起）之后，「开一段对话」只有一个动作：`createTask`，
+ *   工作目录在开口之前选。那七个是它之前的形状——
+ *   **它们在界面上早就没有入口了**（这次是先确认渲染进程一个调用点都没有，
+ *   才动的协议）。
+ *
+ *   **留着的那些不是漏网**：`listProjects` / `listSessions` /
+ *   `listTemporarySessions` / `deleteProject` / `deletionImpact` /
+ *   `deleteSession` / `renameSession` / `setSessionPinned` / `moveSession` /
+ *   `reorderSessions` 仍然在用——项目与会话作为**记录**还在（账本挂在上面），
+ *   不再作为**入口**存在。摘掉的是入口，不是记录。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "4.14"
+export const WORKBENCH_PROTOCOL_VERSION = "5.0"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

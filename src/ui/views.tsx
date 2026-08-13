@@ -779,14 +779,11 @@ export function SessionSidebar({
   agents,
   agentLabel,
   projectSessions = [],
-  onNewSessionIn,
   activeProjectId,
   activeSessionId,
   view,
   onPickProject,
   onPickSession,
-  onOpenProject,
-  onNewSession,
   onShowPanel,
   onShowFiles,
   onShowSkills,
@@ -825,7 +822,6 @@ export function SessionSidebar({
    */
   projectSessions?: readonly SessionSummary[] | undefined
   /** 在某个项目里开一段新会话 */
-  onNewSessionIn?: ((projectId: string, agentId: string) => void) | undefined
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   agentLabel?: ((agentId: string) => string) | undefined
   activeProjectId: string | undefined
@@ -838,8 +834,6 @@ export function SessionSidebar({
   view: View
   onPickProject: (id: string) => void
   onPickSession: (id: string) => void
-  onOpenProject: () => void
-  onNewSession: (agentId: string) => void
   onShowPanel: () => void
   onShowFiles: () => void
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
@@ -2308,7 +2302,6 @@ export function ConversationView({
   models,
   model,
   onSend,
-  onNewSession,
   onPickModel,
   onAbort,
   disabled,
@@ -2336,7 +2329,6 @@ export function ConversationView({
   /** 可选的 agent 清单，给 composer 右下角那颗 pill 用 */
   agents?: readonly string[] | undefined
   /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
-  onNewSession?: ((agentId: string) => void) | undefined
   /**
    * 能换到哪些模型。**2026-08-11 起跨服务**：native 会话拿到的是
    * 「所有配好的服务 × 各自的模型」，按服务分组。
@@ -4066,7 +4058,27 @@ export function EmptyConversation({
                   <AgentPill
                     agents={agents}
                     {...(agentLabel ? { label: agentLabel } : {})}
-                    onPick={(a) => onStart(a, 草稿.trim() || undefined, 工作目录)}
+                    /**
+                     * **失败要在这一屏说出来**（T4，2026-08-13 修）。
+                     *
+                     * 上一版这里是 `onPick={(a) => onStart(...)}`——promise 直接丢掉了。
+                     * 于是「挑了一个起不来的 agent」的表现是**什么都不发生**：
+                     * pill 上还写着原来那个名字，人站在原地，屏幕上一个字都没有。
+                     * 规格 7.5 说的静默失败，就是这个样子。
+                     *
+                     * 这个洞一直在，只是此前守它的那条 e2e 走的是命令面板里的
+                     * 「新建会话：X」；T4 把那条命令收掉之后，**pill 成了唯一的门**，
+                     * 用例改走这扇门，当场就红了。
+                     *
+                     * 走的是与「打字发送」同一个出口（`设开场出错`）——
+                     * 一个失败一个家，不再多一处长得不一样的报错。
+                     */
+                    onPick={(a) => {
+                      设开场出错(undefined)
+                      void Promise.resolve(onStart(a, 草稿.trim() || undefined, 工作目录)).catch(
+                        (e: unknown) => 设开场出错(e instanceof Error ? e.message : String(e)),
+                      )
+                    }}
                     {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
                     triggerLabel={agentLabel ? agentLabel(first) : first}
                   />

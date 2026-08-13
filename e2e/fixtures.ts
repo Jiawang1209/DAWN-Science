@@ -9,7 +9,7 @@
  * Hermes 在 `dev-mock.mjs` 的文件头明确写下这条理由：
  * 两套 mock 会各自漂移，那时「本地是好的」就不再意味着什么。
  */
-import { test as base, _electron, type ElectronApplication, type Page } from "@playwright/test"
+import { test as base, expect, _electron, type ElectronApplication, type Page } from "@playwright/test"
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
@@ -150,6 +150,35 @@ export async function 在项目里开会话(page: Page): Promise<void> {
 export async function 等进了对话(page: Page): Promise<void> {
   await page.locator(".conv-title").waitFor({ timeout: 60_000 })
   await page.getByPlaceholder(/今天帮你做些什么/).waitFor({ timeout: 60_000 })
+}
+
+/**
+ * 用指定的 agent 开一段对话（T4，2026-08-13）。
+ *
+ * **走 composer 上那颗 pill，不走命令面板。** 此前这些用例按 ⌘K 点
+ * 「新建会话：claude」，而那一串命令（每个 agent 一条）在 T4 里收成了
+ * 一条「新建任务」——`createSession` 操作本身也从协议 5.0 里摘掉了。
+ *
+ * **挑 agent 的家只有一个：开口之前那颗 pill。** 这也正是人真的会走的那条路，
+ * 所以换过来之后这些用例的搭台比原来更实。
+ *
+ * @param agent pill 菜单里那一项的名字（agent 的显示名，认不出的 cli 也在列）
+ */
+export async function 用某个agent开一段(page: Page, agent: RegExp): Promise<void> {
+  await page.locator(".app-shell").waitFor({ timeout: 60_000 })
+  // **等它可用再点**：只等 shell 可见的话，那一刻 agent 清单还没加载完，
+  // 菜单里没有这一项——症状是「偶尔飘红一条，每次不是同一条」
+  await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled({ timeout: 60_000 })
+  await 打开agent菜单(page)
+  await page.getByRole("menuitem", { name: agent }).click()
+}
+
+/** 掀开 composer 右下那颗 pill 的菜单。**菜单本身是判据**，别用别的东西代 */
+export async function 打开agent菜单(page: Page): Promise<void> {
+  const pill = page.locator(".composer-controls .agent-pill")
+  await pill.waitFor({ timeout: 60_000 })
+  await pill.locator("button").first().click()
+  await page.getByRole("menu").waitFor({ timeout: 30_000 })
 }
 
 /**

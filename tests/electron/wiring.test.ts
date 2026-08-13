@@ -73,21 +73,28 @@ describe("createWorkbench", () => {
     expect(existsSync(dbPath)).toBe(true)
   })
 
-  it("端到端：打开项目 → 建会话 → 列出", async () => {
+  /** **T4：入口只剩「建任务」**——项目是从任务的工作目录长出来的，不再先开项目 */
+  it("端到端：建一个带路径的任务 → 项目出现 → 列会话", async () => {
     const wb = createWorkbench({
       configPath: configFile(),
       dbPath: newDbPath(),
-      credentials: memoryCredentials(),
+      // **建任务要真的开一段会话**，而开会话要过凭证这道闸——
+      // 此前这条走 `openProject`，压根没碰到闸门
+      credentials: memoryCredentials({ deepseek: "sk-test" }),
     })
     cleanups.push(() => wb.close())
 
     const repo = newRepo()
-    const p = await wb.server.handle("openProject", { workspace: repo })
-    expect(p.ok).toBe(true)
-    const pid = (p as { data: { projectId: string } }).data.projectId
+    const t = await wb.server.handle("createTask", { agentId: "ds-chat", workspace: repo })
+    expect(t.ok, `建任务失败了：${JSON.stringify(t)}`).toBe(true)
+
+    const ps = await wb.server.handle("listProjects", {})
+    const pid = (ps as { data: { projectId: string; workspace: string }[] }).data
+      .find((x) => x.workspace === repo)?.projectId
+    expect(pid, "任务带了工作路径，项目就该长出来").toBeDefined()
 
     const list = await wb.server.handle("listSessions", { projectId: pid })
-    expect((list as { data: unknown[] }).data).toEqual([])
+    expect((list as { data: unknown[] }).data).toHaveLength(1)
   })
 
   it("缺凭证时仍然起得来 —— 桌面应用不该因为配置里少个变量就打不开", () => {

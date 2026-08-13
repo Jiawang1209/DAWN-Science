@@ -14,12 +14,11 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("57 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2）", () => {
+  it("50 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
         "connectRemote",
-        "createSession",
         "createRemoteSession",
         "createTask",
         "deleteTask",
@@ -28,11 +27,9 @@ describe("操作注册表", () => {
         "setDefaultWorkspace",
         "listTasks",
         "setTaskWorkspace",
-        "createTemporarySession",
         "createTerminalSession",
         "disconnectRemote",
         "listTemporarySessions",
-        "createAgent",
         "deleteCredential",
         "deleteProject",
         "deleteSession",
@@ -53,7 +50,6 @@ describe("操作注册表", () => {
         "getCapabilities",
         "getContextUsage",
         "getEnvironment",
-        "getProject",
         "getInterpreters",
         "getProvenance",
         "getProviders",
@@ -63,16 +59,13 @@ describe("操作注册表", () => {
         "listSessions",
         "moveSession",
         "openExternally",
-        "openProject",
         "readFile",
         "renameSession",
         "reorderSessions",
-        "previewTakeover",
         "stopSession",
         "subscribeSession",
         "unsubscribeSession",
         "abortSession",
-        "steerSession",
         "writeToSession",
       ].sort(),
     )
@@ -86,17 +79,24 @@ describe("操作注册表", () => {
   })
 
   it("读写分明：只读操作不得标为 mutating", () => {
-    for (const name of ["getCapabilities", "listProjects", "getProject", "listSessions", "listRuns", "getRun", "getProvenance", "previewTakeover", "listCredentials", "getProviders", "listTemporarySessions"]) {
+    for (const name of ["getCapabilities", "listProjects", "listSessions", "listRuns", "getRun", "getProvenance", "deletionImpact", "listDirectory", "listCredentials", "getProviders", "listTemporarySessions"]) {
       expect(isMutating(name), `${name} 应为只读`).toBe(false)
     }
-    for (const name of ["openProject", "createSession", "createTemporarySession",
+    for (const name of ["createTask", "setTaskWorkspace", "deleteTask",
         "createTerminalSession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential"]) {
       expect(isMutating(name), `${name} 应为可写`).toBe(true)
     }
   })
 
-  it("previewTakeover 是只读 —— 预览不得改变状态（规格 7.1）", () => {
-    expect(isMutating("previewTakeover")).toBe(false)
+  /**
+   * **主语换了，规格 7.1 那条没换**（T4，2026-08-13）。
+   *
+   * 原来挂在 `previewTakeover` 上，那个操作已经不在协议里了。
+   * `deletionImpact` 接得住同一条：**名字里带「删除」，做的只是算一算影响面**。
+   * 它比原来那条更该被守住——按名字猜的人最容易把它标成可写。
+   */
+  it("deletionImpact 是只读 —— 预览不得改变状态（规格 7.1）", () => {
+    expect(isMutating("deletionImpact")).toBe(false)
   })
 
   it("未知操作名 isMutating 抛错，而不是默认当成只读", () => {
@@ -120,11 +120,27 @@ describe("请求校验", () => {
     ).toThrow()
   })
 
-  it("openProject 要求绝对路径", () => {
-    expect(() => OPERATIONS.openProject.request.parse({ workspace: "rel/path" })).toThrow()
-    expect(() =>
-      OPERATIONS.openProject.request.parse({ workspace: "/abs/path" }),
-    ).not.toThrow()
+  /**
+   * **T4（协议 5.0）：七个旧操作摘掉了。**
+   *
+   * 任务模型之后「开一段对话」只有一个动作（`createTask`），
+   * 工作目录在开口之前选。这几个是它之前的形状，**界面上早就没有入口了**。
+   *
+   * 这条从「它长什么样」改成「它不该还在」——**删除也要有判据**，
+   * 否则下一个人「顺手」把它加回来时没有任何东西会响。
+   */
+  it("**旧的会话/项目入口不在协议里了**（T4）", () => {
+    for (const 死的 of [
+      "createSession",
+      "createTemporarySession",
+      "openProject",
+      "getProject",
+      "previewTakeover",
+      "steerSession",
+      "createAgent",
+    ]) {
+      expect(operationNames(), `${死的} 又回来了`).not.toContain(死的)
+    }
   })
 
   it("writeToSession 要求写权持有者身份 —— 不能匿名写", () => {

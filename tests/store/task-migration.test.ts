@@ -183,3 +183,63 @@ describe("迁移过来的任务点得开", () => {
     expect(任务(db).filter((t) => t["session_id"] === "s9").length).toBe(1)
   })
 })
+
+/**
+ * **修完不许留下重复**（2026-08-13 补，第一版漏掉的那一半）。
+ *
+ * 幂等判据修好之前，迁移已经给一部分**由 `createTask` 建出来的会话**
+ * 额外插过一条任务：那条只有 `from_session`，真的那条只有 `session_id`。
+ *
+ * 光回填 `session_id = from_session` 的话，两条都会拿到同一个值——
+ * **「点不进去」于是变成「侧栏上同一段对话出现两行」**。
+ * 后者未必更好：删掉一条另一条还在，看起来像是删不掉。
+ *
+ * 这一条是拿作者真实的库 dry run 时量出来的（7 条任务里有两对影子），
+ * **不是想出来的**。
+ */
+describe("修完不许留下重复", () => {
+  it("**同一段对话只剩一条任务**", () => {
+    const db = 老库()
+    migrate(db)
+
+    // 演一次 createTask：新会话 + 只带 session_id 的任务
+    db.prepare(
+      `INSERT INTO sessions (id,agent_id,workspace,session_dir,state,created_at,project_id,title,sort_order,pinned)
+       VALUES ('s9','a','/scratch/y','/scratch/y/.dawn/s9','alive','t9','p2','刚聊的',9,0)`,
+    ).run()
+    db.prepare(
+      `INSERT INTO tasks (id,title,workspace,session_id,pinned,sort_order,created_at)
+       VALUES ('task-new','刚聊的',NULL,'s9',0,9,'t9')`,
+    ).run()
+    // 演一条旧版本迁移留下的影子：同一段会话，只带 from_session
+    db.prepare(
+      `INSERT INTO tasks (id,title,workspace,from_session,pinned,sort_order,created_at)
+       VALUES ('task-shadow','刚聊的',NULL,'s9',0,9,'t9')`,
+    ).run()
+
+    migrate(db) // 再启动一次
+
+    const 指着 = 任务(db).filter((t) => t["session_id"] === "s9")
+    expect(指着.length, "同一段对话在侧栏上会出现两行").toBe(1)
+    // **留下的是真的那条**，不是影子
+    expect(指着[0]!["id"]).toBe("task-new")
+    // 而且没有任何一条还是 NULL
+    expect(任务(db).filter((t) => t["session_id"] === null).length).toBe(0)
+  })
+
+  /**
+   * **只删影子，不碰真正迁移过来的那些。**
+   *
+   * 判据很窄：它有 `from_session`，**而那段会话已经被另一条任务
+   * 用 `session_id` 认领了**。没人认领的（真的老会话）一条都不能少——
+   * 那正是这份文件开头那条纪律：迁移不许弄丢东西。
+   */
+  it("**没有影子的老任务一条都不少**", () => {
+    const db = 老库()
+    migrate(db)
+    const 之前 = 任务(db).length
+    expect(之前).toBe(3)
+    migrate(db)
+    expect(任务(db).length, "把真正迁移过来的任务也删掉了").toBe(之前)
+  })
+})

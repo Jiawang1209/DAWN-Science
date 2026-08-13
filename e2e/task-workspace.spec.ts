@@ -24,7 +24,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
 /**
  * **路径要在夹具起来之前就定下来**：它得通过环境变量喂给主进程
@@ -237,5 +237,44 @@ test.describe("开场卡", () => {
     const 分区 = await page.locator(".sidebar .side-section").allTextContents()
     expect(分区.some((t) => t.startsWith("项目"))).toBe(true)
     expect(分区.some((t) => t.startsWith("会话"))).toBe(false)
+  })
+})
+
+/**
+ * **对话里没有「改回普通对话」**（2026-08-13，作者定的：*「这个也可以删除掉。」*）。
+ *
+ * 它是一扇**反向的门**：归类是开口之前的决定，而事后清掉工作目录会把
+ * agent 已经在用的目录抽走——界面说没有目录，历史里却全是那个目录的路径；
+ * 账本也按项目组织，挪出去就与那个项目的产出记录脱钩了。
+ *
+ * 「文件夹选错了」这个场景没有丢：**「选择工作目录」还在，可以再选一次**，
+ * 直接换成对的那个。这条用例把两件事一起钉住——
+ * **删掉一个能力时，必须同时说清替代路径还在**，否则下一个人会把它加回来。
+ */
+test.describe("选好目录之后", () => {
+  test.use({ dawnOptions: { pickDirectory: 目标2 } })
+
+  test("**对话里只剩「换一个目录」，没有「改回普通对话」**", async ({ dawn }) => {
+    const { page } = dawn
+
+    // 空态那一屏仍然给它 —— 那里还什么都没发生
+    const 空态chip = page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ })
+    await 空态chip.click()
+    await expect(
+      page.locator(".composer-footer").getByRole("button", { name: "改回普通对话" }),
+    ).toBeVisible()
+
+    // 开口 —— 从这一刻起它就是一个项目了
+    await page.getByPlaceholder(/回车发送/).fill("开始干活")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await 等进了对话(page)
+
+    const 底栏 = page.locator(".composer-footer")
+    // **反向的门没了**
+    await expect(底栏.getByRole("button", { name: "改回普通对话" })).toHaveCount(0)
+    // **而「再选一次」还在**——那才是「选错了」的答案
+    const chip = 底栏.locator(".ws-chip").first()
+    await expect(chip).toBeVisible()
+    await expect(chip).toBeEnabled()
   })
 })

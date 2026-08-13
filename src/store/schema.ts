@@ -461,6 +461,44 @@ export function migrate(db: Database.Database): void {
    * 迁移过来的任务：两者一开始是同一个值，所以直接回填。
    */
   /**
+   * **先收影子，再回填**（2026-08-13 补，顺序不能反）。
+   *
+   * 上面那条迁移在幂等判据修好之前，已经给一部分**由 `createTask` 建出来的
+   * 会话**额外插过一条任务：那条只有 `from_session`，而真的那条只有
+   * `session_id`，两者指着同一段对话。
+   *
+   * 光做下面那句回填的话，两条都会拿到同一个 `session_id`——
+   * **于是「点不进去」变成了「侧栏上同一段对话出现两行」**。
+   * 后者未必更好：作者删掉一条，另一条还在，看起来像是删不掉。
+   * （作者真实的库里正有两段是这样，dry run 当场量出来的。）
+   *
+   * 删的判据很窄：**它有 `from_session`，而那段会话已经被另一条任务
+   * 用 `session_id` 认领了**。也就是说它是一条影子记录，
+   * 不是任何一段对话的唯一入口。
+   *
+   * **会话本身一个字都不动**——删的只是任务表里那条多出来的行。
+   */
+  const 影子 = db
+    .prepare(
+      `SELECT COUNT(*) c FROM tasks a
+        WHERE a.from_session IS NOT NULL
+          AND EXISTS (SELECT 1 FROM tasks b
+                       WHERE b.id <> a.id AND b.session_id = a.from_session)`,
+    )
+    .get() as { c: number }
+  if (影子.c > 0) {
+    db.exec(
+      `DELETE FROM tasks WHERE id IN (
+         SELECT a.id FROM tasks a
+          WHERE a.from_session IS NOT NULL
+            AND EXISTS (SELECT 1 FROM tasks b
+                         WHERE b.id <> a.id AND b.session_id = a.from_session))`,
+    )
+    // **删了东西就要出声**（规格 7.5）：静默清理会让「我的任务怎么少了」无从追溯
+    console.error(`[store] 清掉了 ${影子.c} 条重复的任务记录（同一段对话被记了两次，会话本身没动）`)
+  }
+
+  /**
    * **每次启动都补一遍，不只在加列那一次**（2026-08-13 修，作者报的：
    * *「会话里面有几个……我点不进去。」*）。
    *

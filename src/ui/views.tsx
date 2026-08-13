@@ -529,71 +529,97 @@ function 报给协议(x: 待发的图) {
     : ({ from: "bytes", data: x.data, mimeType: x.mimeType } as const)
 }
 
-/** 这一次粘贴里有没有图片。**两处 composer 共用同一个判据** */
-function 粘的是图(e: React.ClipboardEvent): boolean {
-  return (
-    Array.from(e.clipboardData?.items ?? []).some(
-      (it) => it.kind === "file" && it.type.startsWith("image/"),
-    ) || Array.from(e.clipboardData?.files ?? []).some((f) => f.type.startsWith("image/"))
-  )
-}
-
 /**
- * 从一次粘贴里捡出图片（2026-08-13，作者：*「能否……直接复制粘贴图片」*）。
+ * 一批 `File` → 待发的图（2026-08-13，粘贴与拖拽共用）。
  *
- * **渲染进程这一侧不需要 fs**：剪贴板给的就是 `Blob`，
- * `FileReader` 读成 data URL 之后把前缀切掉就是 base64。
- * 所以这条路**不用给渲染进程开任何新的文件权限**——
- * 它拿到的东西本来就是用户主动放进剪贴板的那一份。
+ * **能拿到磁盘路径就走 `path`**——那样它与「＋ 挑文件」是完全同一条路，
+ * 主进程读盘、按上限缩放。拿不到（从浏览器里拖来的图、剪贴板里的截图）
+ * 才退回字节。
  *
- * 非图片的粘贴一律不碰：**粘一段文字仍然是粘一段文字**，
- * 拦下来会让最常用的那个动作坏掉。
+ * 不这么分的话会出现一种很难解释的不一致：**同一张大图，用 ＋ 挑进来没事，
+ * 拖进来却说太大**——因为字节那条路没有主进程那一步缩放。
  */
-async function 从粘贴里捡图(e: React.ClipboardEvent): Promise<待发的图[]> {
+async function 文件们成图(files: readonly File[]): Promise<待发的图[]> {
+  const w = window as unknown as { dawn?: { pathForFile?: (f: File) => string } }
   const 出: 待发的图[] = []
-  /**
-   * **`items` 与 `files` 都要看。**
-   *
-   * 同一次粘贴在不同来源下形状不一样：从截图工具来的通常在 `items` 里
-   * （`kind: "file"`），而从访达复制一个文件过来有时只出现在 `files` 里。
-   * 只认一种的表现是**「有的图能粘、有的不能」**——
-   * 那种时灵时不灵最难查，因为人复现不出规律。
-   */
-  const 候选 = [
-    ...Array.from(e.clipboardData?.items ?? [])
-      .filter((it) => it.kind === "file" && it.type.startsWith("image/"))
-      .map((it) => it.getAsFile()),
-    ...Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith("image/")),
-  ]
   const 见过 = new Set<string>()
-  for (const blob of 候选) {
-    if (!blob) continue
-    // 两个来源可能指向同一张：**按「名字+大小」去重**，否则粘一次进来两张
+  for (const blob of files) {
+    if (!blob.type.startsWith("image/")) continue
+    // 两个来源可能指向同一张：**按「名字+大小」去重**，否则一次进来两张
     const 记号 = `${blob.name}|${blob.size}|${blob.type}`
     if (见过.has(记号)) continue
     见过.add(记号)
+
+    const path = w.dawn?.pathForFile?.(blob) ?? ""
+    if (path) {
+      出.push({ from: "path", path, 名: blob.name || 基名(path) })
+      continue
+    }
     const dataUrl = await new Promise<string>((res, rej) => {
       const r = new FileReader()
       r.onload = () => res(String(r.result))
-      r.onerror = () => rej(r.error ?? new Error("读不出剪贴板里的图"))
+      r.onerror = () => rej(r.error ?? new Error("读不出这张图"))
       r.readAsDataURL(blob)
     })
-    const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1)
     出.push({
       from: "bytes",
-      data: base64,
+      data: dataUrl.slice(dataUrl.indexOf(",") + 1),
       mimeType: blob.type,
       // 剪贴板里的截图没有名字，**给一个说得清来路的**，而不是「未命名」
       名: blob.name || "粘贴的图片",
-      /**
-       * **粘贴这一支的预览不用问主进程**：字节已经在手上了。
-       * 屏幕截图通常就是屏幕尺寸，交给 `<img>` 自己缩——
-       * 为了省这一点内存再往返一次 IPC 不划算。
-       */
+      /** 字节这一支的预览不用问主进程：它已经在手上了 */
       预览: dataUrl,
     })
   }
   return 出
+}
+
+/** 一次拖拽/粘贴里所有的图片文件。**`items` 与 `files` 都要看**，见下 */
+function 捡出图片文件(dt: DataTransfer | null): File[] {
+  if (!dt) return []
+  return [
+    ...Array.from(dt.items)
+      .filter((it) => it.kind === "file" && it.type.startsWith("image/"))
+      .map((it) => it.getAsFile())
+      .filter((f): f is File => !!f),
+    ...Array.from(dt.files).filter((f) => f.type.startsWith("image/")),
+  ]
+}
+
+/**
+ * 给 `path` 那一支补上缩略图（异步，后到）。
+ *
+ * **chip 先出现、预览后到**：反过来（等缩略图回来再画）会让人
+ * 松手之后有一段什么都不发生的空窗，而那正是「点了没反应」的样子。
+ */
+function 补预览(批: readonly 待发的图[], 设: (f: (前: 待发的图[]) => 待发的图[]) => void): void {
+  for (const one of 批) {
+    if (one.from !== "path" || one.预览) continue
+    const path = one.path
+    void 要缩略图(path).then((预览) => {
+      if (!预览) return
+      设((前) => 前.map((x) => (x.from === "path" && x.path === path ? { ...x, 预览 } : x)))
+    })
+  }
+}
+
+/** 这一次粘贴里有没有图片。**两处 composer 共用同一个判据** */
+function 粘的是图(e: React.ClipboardEvent): boolean {
+  return 捡出图片文件(e.clipboardData).length > 0
+}
+
+/**
+ * 从一次粘贴里捡出图片（2026-08-13，作者提）。
+ *
+ * **渲染进程这一侧不需要 fs**：剪贴板给的就是 `File`，
+ * 而拖进来的那些能问出磁盘路径（`webUtils`）。
+ * 两条来路在 `文件们成图` 里合并，**所以粘贴与拖拽的结果完全一样**——
+ * 两份实现迟早有一份忘了处理其中一种。
+ *
+ * 非图片的粘贴一律不碰：**粘一段文字仍然是粘一段文字**。
+ */
+async function 从粘贴里捡图(e: React.ClipboardEvent): Promise<待发的图[]> {
+  return 文件们成图(捡出图片文件(e.clipboardData))
 }
 
 /**
@@ -2367,6 +2393,8 @@ export function ConversationView({
    * 图却已经发过了」这种事变得可能。
    */
   const [待发图, 设待发图] = useState<待发的图[]>([])
+  /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */
+  const [拖着, 设拖着] = useState(false)
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -2521,7 +2549,36 @@ export function ConversationView({
       </StickToBottom>
 
       <form
-        className="composer"
+        className={`composer${拖着 ? " dropping" : ""}`}
+        /**
+         * **拖一张图进来，和粘贴、和 `＋` 是同一件事**（2026-08-13，作者要的）。
+         *
+         * `onDragOver` 必须 `preventDefault`——**不拦，浏览器就不认这里能放东西**，
+         * 而且松手时它会把整个窗口导航到那张图上（那时对话就没了）。
+         *
+         * 挂在整张 `form` 上而不是 textarea 上：**人是往「输入卡」上拖的**，
+         * 而不是往那个精确的文字区域。命中区小一圈的表现是
+         * 「有时候能放、有时候放不进去」。
+         */
+        onDragOver={(e) => {
+          if (!e.dataTransfer.types.includes("Files")) return
+          e.preventDefault()
+          设拖着(true)
+        }}
+        onDragLeave={(e) => {
+          // **只有真的离开这张卡才收**：拖过内部的按钮也会冒出 dragleave
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) 设拖着(false)
+        }}
+        onDrop={(e) => {
+          const 图们 = 捡出图片文件(e.dataTransfer)
+          设拖着(false)
+          if (图们.length === 0) return // 拖的不是图：交给浏览器，我们不掺和
+          e.preventDefault()
+          void 文件们成图(图们).then((批) => {
+            设待发图((前) => [...前, ...批])
+            补预览(批, 设待发图)
+          })
+        }}
         onSubmit={(e) => {
           e.preventDefault()
           const text = draft.trim()
@@ -3587,6 +3644,7 @@ export function EmptyConversation({
    * 这一份在「第一句话发出去、会话建出来」的那一刻整个消失。
    */
   const [空态图, 设空态图] = useState<待发的图[]>([])
+  const [空态拖着, 设空态拖着] = useState(false)
   return (
     <div className="conversation empty-conv">
       {first ? (
@@ -3644,7 +3702,26 @@ export function EmptyConversation({
             * 不同的只是行为——这一屏没有历史可翻，也没有按会话分的草稿。
             */}
           <form
-            className="composer"
+            className={`composer${空态拖着 ? " dropping" : ""}`}
+            /* 与对话里那一份同一副做法——**同一件事不该有两种手感** */
+            onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes("Files")) return
+              e.preventDefault()
+              设空态拖着(true)
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) 设空态拖着(false)
+            }}
+            onDrop={(e) => {
+              const 图们 = 捡出图片文件(e.dataTransfer)
+              设空态拖着(false)
+              if (图们.length === 0) return
+              e.preventDefault()
+              void 文件们成图(图们).then((批) => {
+                设空态图((前) => [...前, ...批])
+                补预览(批, 设空态图)
+              })
+            }}
             onSubmit={(e) => {
               e.preventDefault()
               const t = 草稿.trim()

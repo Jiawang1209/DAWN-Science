@@ -3191,3 +3191,18 @@ pre {
   border: var(--dawn-hairline) solid var(--dawn-stroke-4);
   display: block;
 }
+
+/**
+ * 有东西正拖在输入卡上（2026-08-13，作者要的）。
+ *
+ * **看得见才知道松手会发生什么。** 没有这个反馈时，人只能靠试——
+ * 而「试一次」在这里意味着一张图不知道去哪了。
+ *
+ * 用主色的极低浓度铺底 + 一圈主色描边：**与 `:focus-within` 那圈同一种语言**，
+ * 都在说「这张卡现在会接住你的东西」。
+ */
+.composer.dropping .composer-box {
+  background: color-mix(in srgb, var(--dawn-accent) 6%, var(--dawn-surface-panel));
+  outline: 2px dashed var(--dawn-accent);
+  outline-offset: -2px;
+}

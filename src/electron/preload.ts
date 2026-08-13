@@ -11,7 +11,7 @@
  * `onEvent` 只挂 `on`，**不给渲染进程任何往事件通道发消息的能力**：
  * 这条通道是单向的，开一个反向口子等于把它变成第二个 invoke。
  */
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron"
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "electron"
 
 const CHANNEL = "dawn:workbench:invoke"
 const EVENT_CHANNEL = "dawn:workbench:event"
@@ -54,6 +54,26 @@ contextBridge.exposeInMainWorld("dawn", {
    */
   imageThumb: (path: string): Promise<string | null> =>
     ipcRenderer.invoke(IMAGE_THUMB, path),
+
+  /**
+   * 一个拖进来的 `File` 在磁盘上的路径（2026-08-13）。
+   *
+   * **拿得到路径，拖拽就能走和「＋ 挑文件」完全同一条路**——
+   * 主进程读盘、按上限缩放。拿不到（从浏览器里拖来的图没有路径）就退回字节。
+   *
+   * 不这么做的话会出现一种很难解释的不一致：**同一张大图，用 ＋ 挑进来没事，
+   * 拖进来却说太大**——因为字节那条路没有主进程那一步缩放。
+   *
+   * 只暴露这一个函数，**不暴露 `webUtils` 本身**：那上面还有别的东西，
+   * 而这条边界的意义就在于「开多大的口子」。
+   */
+  pathForFile: (file: File): string => {
+    try {
+      return webUtils.getPathForFile(file)
+    } catch {
+      return ""
+    }
+  },
 
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)

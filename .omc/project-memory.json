@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cp src/workbench/backend.ts /tmp/backend.good.ts\npython3 -c \"\np='src/workbench/backend.ts'; s=open(p).read()\ns=s.replace('events.userTurn(sessionId, data, await 缩成预览(附图))','events.userTurn(sessionId, data)')\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/attach.spec.ts -g \"对话：粘一张图\" 2>&1 | grep -E \"✓|✘|passed|failed\" | head -4\ncp /tmp/backend.good.ts src/workbench/backend.ts && npm run build 2>&1 | tail -1 && echo 已还原",
-    "testCommand": "python3 -c \"\np='tests/protocol/events.test.ts'; s=open(p).read()\ns=s.replace('expect(WORKBENCH_PROTOCOL_VERSION).toBe(\\\"4.13\\\")','expect(WORKBENCH_PROTOCOL_VERSION).toBe(\\\"4.14\\\")')\ns=s.replace('协议版本 · 4.13','协议版本 · 4.14')\nopen(p,'w').write(s)\"\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4",
+    "buildCommand": "cp src/ui/views.tsx /tmp/views.drop.tsx\npython3 -c \"\np='src/ui/views.tsx'; s=open(p).read()\ns=s.replace('          if (图们.length === 0) return // 拖的不是图：交给浏览器，我们不掺和\\n          e.preventDefault()\\n          void 文件们成图(图们).then((批) => {\\n            设待发图((前) => [...前, ...批])\\n            补预览(批, 设待发图)\\n          })','          if (图们.length === 0) return')\ns=s.replace('              if (图们.length === 0) return\\n              e.preventDefault()\\n              void 文件们成图(图们).then((批) => {\\n                设空态图((前) => [...前, ...批])\\n                补预览(批, 设空态图)\\n              })','              if (图们.length === 0) return')\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/attach.spec.ts -g \"拖一张图\" 2>&1 | grep -E \"✓|✘|passed|failed\" | head -4\ncp /tmp/views.drop.tsx src/ui/views.tsx && npm run build 2>&1 | tail -1 && echo 已还原",
+    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npx playwright test 2>&1 | tail -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

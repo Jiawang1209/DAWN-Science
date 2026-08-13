@@ -388,3 +388,84 @@ test("**粘一段文字，照常进输入框**", async ({ dawn }) => {
   expect(拦了, "文字粘贴被拦下了——最常用的那个动作会坏掉").toBe(false)
   await expect(page.locator(".attached-one")).toHaveCount(0)
 })
+
+
+/**
+ * **拖一张图进输入卡，和粘贴、和 `＋` 是同一件事**（2026-08-13，作者要的）。
+ *
+ * 两屏都验——同一份代码里有两个 composer，就得每次都问一句「另一个呢」。
+ * 上一轮粘贴那件事就是只做了一个、只测了一个，而作者当天就撞上了。
+ */
+async function 拖一张图进去(page: import("@playwright/test").Page) {
+  await page.evaluate(() => {
+    const b64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    const bin = atob(b64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    const file = new File([bytes], "拖进来的.png", { type: "image/png" })
+    const dt = new DataTransfer()
+    dt.items.add(file)
+    const form = document.querySelector(".composer") as HTMLFormElement
+    form.dispatchEvent(new DragEvent("dragover", { dataTransfer: dt, bubbles: true, cancelable: true }))
+    form.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }))
+  })
+}
+
+for (const [屏, 进去] of [
+  ["首页", async () => {}],
+  [
+    "对话",
+    async (page: import("@playwright/test").Page) => {
+      await 开一段临时会话(page)
+      await 等进了对话(page)
+    },
+  ],
+] as const) {
+  test(`**${屏}：拖一张图进去，模型那边收到了**`, async ({ dawn }) => {
+    const { page } = dawn
+    await 进去(page)
+    // **先等卡渲染出来**：首页那一支没有别的等待，evaluate 会跑在第一帧之前
+    await page.locator(".composer").waitFor({ timeout: 30_000 })
+
+    await 拖一张图进去(page)
+
+    // ① 松手之后看得见，而且是在输入卡里面
+    await expect(page.locator(".composer-box .attached-one")).toHaveCount(1, { timeout: 10_000 })
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这张拖的")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // ② **字节真的到了对面**
+    await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
+      timeout: 30_000,
+    })
+  })
+}
+
+/**
+ * **拖上来的时候要看得见**（2026-08-13）。
+ *
+ * 没有这个反馈时，人只能靠试——而「试一次」在这里意味着
+ * 一张图不知道去哪了。判据是那个类真的挂上了，不是某个具体的颜色。
+ */
+test("**拖在卡上时，卡自己会说「我接得住」**", async ({ dawn }) => {
+  const { page } = dawn
+  const 卡 = page.locator(".composer")
+  await 卡.waitFor({ timeout: 30_000 })
+
+  await page.evaluate(() => {
+    const dt = new DataTransfer()
+    dt.items.add(new File([new Uint8Array([1])], "x.png", { type: "image/png" }))
+    const form = document.querySelector(".composer") as HTMLFormElement
+    form.dispatchEvent(new DragEvent("dragover", { dataTransfer: dt, bubbles: true, cancelable: true }))
+  })
+  await expect(卡).toHaveClass(/dropping/)
+
+  // 拖走了就要收回去——**一个赖着不走的高亮会让人以为还在拖**
+  await page.evaluate(() => {
+    const form = document.querySelector(".composer") as HTMLFormElement
+    form.dispatchEvent(new DragEvent("dragleave", { bubbles: true }))
+  })
+  await expect(卡).not.toHaveClass(/dropping/)
+})

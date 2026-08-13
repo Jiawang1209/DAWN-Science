@@ -23,7 +23,7 @@ import { join } from "node:path"
  */
 async function 建会话并说一句(page: import("@playwright/test").Page, 话: string) {
   await 在项目里开会话(page)
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible()
   await expect(box).toHaveValue("")
   await box.fill(话)

@@ -38,7 +38,7 @@ const B = "deepseek-v4-deep"
 async function start(page: Page) {
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 }
 
 const modelsUsed = (requests: { body?: { model?: string } }[]) =>
@@ -58,7 +58,7 @@ test("**换完之后，下一次请求真的打到新模型**", async ({ dawn })
   const { page, requests } = dawn
   await start(page)
 
-  await page.getByPlaceholder(/回车发送/).fill("第一句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
   expect(modelsUsed(requests as never)).toEqual([A])
@@ -67,7 +67,7 @@ test("**换完之后，下一次请求真的打到新模型**", async ({ dawn })
   await page.getByRole("menuitem", { name: new RegExp(B) }).click()
   await expect(page.locator(".composer .model-pill")).toContainText(B)
 
-  await page.getByPlaceholder(/回车发送/).fill("第二句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第二句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).nth(1)).toBeVisible()
 

@@ -42,7 +42,7 @@ test.describe("一轮失败之后", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 失败要出声（这条 2026-08-10 就立了）

@@ -60,7 +60,7 @@ test.describe("自己填地址的 provider", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 断言限定在对话区：会话标题里也有「你好」，全页 getByText 会命中两处
     await expect(page.locator(".turns")).toContainText("假模型已应答", { timeout: 60_000 })

@@ -17,8 +17,8 @@ test("native 会话：如实说「不可见」并给出原因，而不是停在�
   const { page } = dawn
   await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await 在项目里开会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
-  await page.getByPlaceholder(/回车发送/).fill("你好")
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
   await page.keyboard.press("Enter")
   await expect(page.locator(".turn.agent")).toHaveCount(1, { timeout: 30_000 })
 
@@ -65,7 +65,7 @@ test.describe("claude 会话：金额是真数", () => {
     await 在项目里开会话(page)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".turn.agent")).not.toHaveCount(0, { timeout: 30_000 })
 

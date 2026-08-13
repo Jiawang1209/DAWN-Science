@@ -20,7 +20,7 @@ test("点一张开场建议 → 建会话 → 那句话真的发了出去 → �
   await card.click()
 
   // ① 进了对话，输入框在了
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 
   // ② **卡片上那句话真的作为用户发言出现了**——不是卡片的标题，是它承诺要说的那句
   // **在对话区里找**：同一句话也是侧栏那一行的标题（第一句话定名字），
@@ -48,7 +48,7 @@ test("点一张开场建议 → 建会话 → 那句话真的发了出去 → �
  */
 test("不点任何建议，直接打字也能开始", async ({ dawn }) => {
   const { page } = dawn
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible()
   await box.fill("我自己打的第一句")
   await box.press("Enter")

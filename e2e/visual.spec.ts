@@ -66,7 +66,7 @@ async function setTheme(page: Page, label: "亮色" | "暗色") {
 
 async function startSession(page: Page, 首句 = "开始") {
   await 开一段临时会话(page, 首句)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
   // **等到状态落定**。starting → alive 是一次真实的状态迁移，
   // 在它中间截图会得到一张随时机变化的图
   await expect(page.locator(".session-list .state.alive")).toBeVisible()
@@ -84,7 +84,7 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
      * 它的位置换成了一个能直接打字的输入卡。
      */
     go: async (page) => {
-      await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
     },
   },
   {
@@ -130,7 +130,7 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
     name: "命令面板",
     // 浮层 + 遮罩 + 分组列表 + **不可用那一条的样子**
     go: async (page) => {
-      await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
       await page.keyboard.press("ControlOrMeta+k")
       await expect(page.getByRole("dialog", { name: "命令面板" })).toBeVisible()
       // 等到列表画完再截，否则会截到只有输入框的那一帧

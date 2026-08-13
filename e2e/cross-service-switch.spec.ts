@@ -43,7 +43,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   // 开一段 DeepSeek 的对话，先说一句
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/回车发送/).fill("第一句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 60_000 })
   expect(modelsUsed(requests as never)).toEqual([本来的])
@@ -75,7 +75,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   // ② 记录里留了一条，往回翻的人知道是从哪里开始换的家
   await expect(page.locator(".turns")).toContainText("已换到")
 
-  await page.getByPlaceholder(/回车发送/).fill("第二句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第二句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns").getByText(CANNED_REPLY).nth(1)).toBeVisible({
     timeout: 60_000,

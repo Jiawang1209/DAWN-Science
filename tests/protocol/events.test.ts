@@ -168,7 +168,7 @@ describe("协议操作 · 订阅与控制", () => {
   })
 })
 
-describe("协议版本 · 4.11", () => {
+describe("协议版本 · 4.13", () => {
   /**
    * 2.0：订阅的响应形状变了，破坏性，major 递增。
    * **2.1（2026-08-09）：新增 `setSessionModel`。只加操作、不改既有形状，
@@ -280,7 +280,7 @@ describe("协议版本 · 4.11", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.11")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("4.13")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

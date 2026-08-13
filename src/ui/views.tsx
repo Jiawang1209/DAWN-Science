@@ -16,7 +16,7 @@ import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Row } from "./primitives.js"
-import { $drafts, clearDraft, setDraft } from "./state/view.js"
+import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 文件图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
@@ -418,10 +418,22 @@ const 上传项 = [
 function AttachButton({
   workspace,
   onInsert,
+  onAttachImages,
 }: {
   /** 这段对话的工作目录。**用来把路径缩成相对的**，也用作浏览器的起点 */
   workspace?: string | undefined
+  /** 文件与数据：**把路径写进输入框**——agent 用 bash 去读它 */
   onInsert: (文本: string) => void
+  /**
+   * 图片：**真的随这一轮送进模型**（协议 4.12，2026-08-13）。
+   *
+   * 与上面那条是两回事，而这个区别是实打实的：一个 CSV 的路径正是 agent 要的
+   * （它会去 `read` 那个文件）；而一张图的路径对带视觉的模型毫无用处——
+   * 它要的是字节。**同一个菜单里的两项，走两条不同的路，因为它们本来就是两件事。**
+   *
+   * **不给就不画「上传图片」那一项**：不摆一个按下去没有下文的入口。
+   */
+  onAttachImages?: ((paths: readonly string[]) => void) | undefined
 }) {
   const [开着, 设开着] = useState(false)
   const 盒 = useRef<HTMLDivElement>(null)
@@ -438,11 +450,19 @@ function AttachButton({
 
   const 挑 = async (kind: "any" | "image" | "data") => {
     设开着(false)
-    const w = window as unknown as {
-      dawn?: { pickFiles?: (k: string, d?: string) => Promise<string[]> }
-    }
-    const 选中 = (await w.dawn?.pickFiles?.(kind, workspace)) ?? []
+    const 选中 = await 挑文件(kind, workspace)
     if (选中.length === 0) return // 取消了：什么都不做，也不吭声
+    /**
+     * **图片走附件，别的走文本。**
+     *
+     * 图片给的是**绝对路径**：主进程要按它读盘，而相对路径的参照系
+     * 在那一侧不一定是同一个目录。别处（文件 / 数据）缩成相对路径是为了好读，
+     * 而它最终是给人和 agent 看的字，不是给 fs 用的。
+     */
+    if (kind === "image" && onAttachImages) {
+      onAttachImages(选中)
+      return
+    }
     onInsert(选中.map((p) => 相对于(p, workspace)).join(" "))
   }
 
@@ -466,7 +486,9 @@ function AttachButton({
       </Button>
       {开着 ? (
         <div className="menu attach-menu" role="menu" aria-label={t("添加内容")}>
-          {上传项.map((项) => (
+          {上传项
+            .filter((项) => 项.kind !== "image" || onAttachImages)
+            .map((项) => (
             <Button
               key={项.kind}
               variant="ghost"
@@ -481,6 +503,78 @@ function AttachButton({
       ) : null}
     </div>
   )
+}
+
+/**
+ * 一张待发的图（协议 4.13）。
+ *
+ * 两个来源的形状不同，**因为它们手上的东西本来就不同**：
+ * 从磁盘挑的有路径（主进程去读），粘贴板里的只有字节（它压根不是磁盘上的文件）。
+ * `名` 只用来在 chip 上显示。
+ */
+type 待发的图 =
+  | { from: "path"; path: string; 名: string }
+  | { from: "bytes"; data: string; mimeType: string; 名: string }
+
+/** 协议 4.13 里 `images` 那一项的形状。**渲染侧只认这两种来源** */
+export type 图片来源 =
+  | { from: "path"; path: string }
+  | { from: "bytes"; data: string; mimeType: string }
+
+/** 送给协议的形状——把只给人看的 `名` 摘掉 */
+function 报给协议(x: 待发的图) {
+  return x.from === "path"
+    ? ({ from: "path", path: x.path } as const)
+    : ({ from: "bytes", data: x.data, mimeType: x.mimeType } as const)
+}
+
+/**
+ * 从一次粘贴里捡出图片（2026-08-13，作者：*「能否……直接复制粘贴图片」*）。
+ *
+ * **渲染进程这一侧不需要 fs**：剪贴板给的就是 `Blob`，
+ * `FileReader` 读成 data URL 之后把前缀切掉就是 base64。
+ * 所以这条路**不用给渲染进程开任何新的文件权限**——
+ * 它拿到的东西本来就是用户主动放进剪贴板的那一份。
+ *
+ * 非图片的粘贴一律不碰：**粘一段文字仍然是粘一段文字**，
+ * 拦下来会让最常用的那个动作坏掉。
+ */
+async function 从粘贴里捡图(e: React.ClipboardEvent): Promise<待发的图[]> {
+  const 出: 待发的图[] = []
+  const items = Array.from(e.clipboardData?.items ?? [])
+  for (const it of items) {
+    if (it.kind !== "file" || !it.type.startsWith("image/")) continue
+    const blob = it.getAsFile()
+    if (!blob) continue
+    const dataUrl = await new Promise<string>((res, rej) => {
+      const r = new FileReader()
+      r.onload = () => res(String(r.result))
+      r.onerror = () => rej(r.error ?? new Error("读不出剪贴板里的图"))
+      r.readAsDataURL(blob)
+    })
+    const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1)
+    出.push({
+      from: "bytes",
+      data: base64,
+      mimeType: blob.type,
+      // 剪贴板里的截图没有名字，**给一个说得清来路的**，而不是「未命名」
+      名: blob.name || "粘贴的图片",
+    })
+  }
+  return 出
+}
+
+/**
+ * 开系统的文件浏览器，拿回选中的路径（协议 4.12 那条通道的渲染侧）。
+ *
+ * **抽出来是因为有两个入口**：`＋` 菜单，以及输入框行首那个 `@`。
+ * 抄两遍的话，其中一份迟早会忘了处理「取消」。
+ */
+async function 挑文件(kind: "any" | "image" | "data", workspace?: string): Promise<string[]> {
+  const w = window as unknown as {
+    dawn?: { pickFiles?: (k: string, d?: string) => Promise<string[]> }
+  }
+  return (await w.dawn?.pickFiles?.(kind, workspace)) ?? []
 }
 
 /**
@@ -2180,7 +2274,12 @@ export function ConversationView({
   agentLabel?: ((agentId: string) => string) | undefined
   /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
   items: readonly TranscriptItem[]
-  onSend: (text: string) => void
+  /**
+   * @param images 随这一轮送进模型的图片（协议 4.13）。
+   *   两个来源：从磁盘挑的给 `path`，粘贴板里的给 `bytes`。
+   *   **不给或空数组是同一个意思。**
+   */
+  onSend: (text: string, images?: readonly 图片来源[]) => void
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
   disabled?: boolean | undefined
@@ -2219,6 +2318,14 @@ export function ConversationView({
   )
   /** 翻到第几条。**-1 = 没在翻**（手上是自己写的那半句） */
   const [位置, 设位置] = useState(-1)
+  /**
+   * 挑好还没发出去的图（协议 4.12，2026-08-13）。
+   *
+   * **不进 `$drafts`**：那份按会话分家的是文字。图片是「这一次要发的东西」，
+   * 发出去就没了——它的生命周期比草稿短，混在一起只会让「切回来草稿还在、
+   * 图却已经发过了」这种事变得可能。
+   */
+  const [待发图, 设待发图] = useState<待发的图[]>([])
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -2377,13 +2484,50 @@ export function ConversationView({
         onSubmit={(e) => {
           e.preventDefault()
           const text = draft.trim()
-          if (!text) return
-          onSend(text)
+          /**
+           * **只有图、没有字也算一句话**（协议 4.12）。
+           * 「看看这张图」这种意图，人常常懒得打字——
+           * 拦下来的话表现是「按了发送什么都没发生」。
+           */
+          if (!text && 待发图.length === 0) return
+          /**
+           * **没有图就只传一个参数。**「空数组」与「不给」在协议上是同一个意思，
+           * 而在调用点上不是：多传一个 `undefined` 会让所有
+           * 「这一句是怎么发出去的」的断言都要跟着改一遍，
+           * 而它们关心的根本不是图片。
+           */
+          if (待发图.length > 0) onSend(text, 待发图.map(报给协议))
+          else onSend(text)
+          设待发图([])
           clearDraft(session.sessionId)
           // 发完就不算在翻历史了——下一次 ↑ 从最新那条开始
           设位置(-1)
         }}
       >
+        {/**
+          * 待发的图片（协议 4.12，2026-08-13）。
+          *
+          * **挑完到发出去之间必须看得见**——否则人不知道自己到底附上没有，
+          * 而「附了图它却说没看见」正是这条路上最难查的那种错。
+          * 每一张都能单独摘掉：挑错一张不该逼人把三张全清了重来。
+          */}
+        {待发图.length > 0 ? (
+          <ul className="attached">
+            {待发图.map((图, i) => (
+              <li key={`${图.名}-${i}`} className="attached-one">
+                <span className="attached-name">{图.名}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={tf("不发这张：{0}", 图.名)}
+                  onClick={() => 设待发图((前) => 前.filter((_, j) => j !== i))}
+                >
+                  <删除图标 />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {/**
          * **输入框与它的控件是一个东西，所以它们在同一张卡里。**
          *
@@ -2399,12 +2543,59 @@ export function ConversationView({
             className="control composer-field"
             value={draft}
             onChange={(e) => setDraft(session.sessionId, e.target.value)}
-            placeholder={disabled ? t("会话已结束") : t("输入内容，回车发送")}
+            /**
+             * **粘一张图进来就当附件**（协议 4.13，2026-08-13，作者提）。
+             *
+             * `preventDefault` **只在真的捡到图时才调**：
+             * 粘一段文字仍然要照常粘进去——把最常用的那个动作拦坏，
+             * 换来的功能再好也是赔的。
+             */
+            onPaste={(e) => {
+              void 从粘贴里捡图(e).then((图们) => {
+                if (图们.length === 0) return
+                设待发图((前) => [...前, ...图们])
+              })
+              if (Array.from(e.clipboardData?.items ?? []).some((it) => it.type.startsWith("image/"))) {
+                e.preventDefault()
+              }
+            }}
+            placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
                 e.currentTarget.form?.requestSubmit()
+                return
+              }
+              /**
+               * **占位符里承诺的两件事，必须真的会发生**（2026-08-13）。
+               *
+               * 那句提示写着「@引用工作区文件，/调用技能与指令」。
+               * **一句会撒谎的提示比没有提示坏得多**——人照着敲一个 `@`，
+               * 什么都不发生，此后他就再也不信这个输入框说的任何话了。
+               *
+               * 所以：
+               *   `@` 在**空输入框的行首**打开文件浏览器（挑完把路径写进来）；
+               *   `/` 在同样的位置打开命令面板（技能与指令都在那儿）。
+               *
+               * **只在行首、且输入框是空的时候拦**：一句话中间打 `@`
+               * 多半是在写邮箱或者 handle，那时候弹出个浏览器是在捣乱。
+               */
+              const 空且在头 = draft.length === 0
+              if (空且在头 && e.key === "/") {
+                e.preventDefault()
+                togglePalette()
+                return
+              }
+              if (空且在头 && e.key === "@") {
+                e.preventDefault()
+                void 挑文件("any", workspace).then((选中) => {
+                  if (选中.length === 0) return
+                  setDraft(
+                    session.sessionId,
+                    选中.map((p) => 相对于(p, workspace)).join(" "),
+                  )
+                })
                 return
               }
               /**
@@ -2471,6 +2662,19 @@ export function ConversationView({
               {...(workspace ? { workspace } : {})}
               /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
               onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
+              /**
+               * **去重**：同一张图挑两次只算一张。
+               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
+               * 分不出「我挑重了」还是「界面画重了」。
+               */
+              onAttachImages={(paths) =>
+                设待发图((前) => [
+                  ...前,
+                  ...paths
+                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                ])
+              }
             />
             {/**
               * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
@@ -3351,11 +3555,33 @@ export function EmptyConversation({
                 value={草稿}
                 autoFocus
                 onChange={(e) => 设草稿(e.target.value)}
-                placeholder={t("输入内容，回车发送")}
+                placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
                     e.currentTarget.form?.requestSubmit()
+                    return
+                  }
+                  /**
+                   * **与对话里那一份同样的 `@` 与 `/`**（2026-08-13）。
+                   *
+                   * 作者：*「每个对话框都要有这个提示的功能奥。」*
+                   * 提示一样，那么提示承诺的事就得一样——**只在一屏上兑现的承诺，
+                   * 换一屏就成了谎**。
+                   */
+                  const 空且在头 = 草稿.length === 0
+                  if (空且在头 && e.key === "/") {
+                    e.preventDefault()
+                    togglePalette()
+                    return
+                  }
+                  if (空且在头 && e.key === "@") {
+                    e.preventDefault()
+                    void 挑文件("any", 工作目录).then((选中) => {
+                      if (选中.length > 0) {
+                        设草稿(选中.map((p) => 相对于(p, 工作目录)).join(" "))
+                      }
+                    })
                   }
                 }}
               />

@@ -25,7 +25,7 @@ test("**填完 key，对话的选择器里立刻就有它**", async ({ dawn }) =
 
   await page.getByRole("button", { name: "返回" }).click()
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 
   /**
    * **选择器现在是那颗合并的模型 pill**（2026-08-12）。

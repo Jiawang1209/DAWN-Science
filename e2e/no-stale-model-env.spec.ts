@@ -25,7 +25,7 @@ test.describe("命令环境", () => {
   test("**`env` 里没有 PI_MODEL / PI_PROVIDER** —— 没有快照可念", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("看看环境")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("看看环境")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

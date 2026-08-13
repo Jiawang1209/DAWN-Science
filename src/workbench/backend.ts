@@ -15,6 +15,10 @@ import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { deriveSessionTitle } from "../session/title.js"
+import { readFile } from "node:fs/promises"
+import { extname } from "node:path"
+import { resizeImage } from "@earendil-works/pi-coding-agent"
+import type { ImageAttachment } from "../runtime/types.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
@@ -160,6 +164,106 @@ export interface WorkbenchBackendOptions {
    * 只有不关心历史的测试才该省略它（不变式 3）。
    */
   runRecorder?: RunRecorder
+}
+
+/**
+ * 扩展名 → MIME（协议 4.12）。
+ *
+ * **不去嗅探文件头**：那是另一件事，而且嗅错了的代价是把一个 PDF 当成图送出去。
+ * 认不出来就报错——**「我们不知道这是什么」比「猜一个」诚实**。
+ */
+const 图片类型: Readonly<Record<string, string>> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".bmp": "image/bmp",
+  ".tif": "image/tiff",
+  ".tiff": "image/tiff",
+}
+
+/**
+ * 一张图**不缩放也送得出去**的上限。
+ *
+ * 各家的内联图片上限普遍在 5MB（base64 之后），而 base64 会把体积撑大约 4/3。
+ * 3.5MiB 的原始字节 ≈ 4.7MB 的 base64，留了一点余量。
+ * **这个数是我们自己定的**，pi 没有把它的那份导出来。
+ */
+const 免缩上限 = 3.5 * 1024 * 1024
+
+/**
+ * 把路径读成能直接送进模型的附件（协议 4.12，2026-08-13）。
+ *
+ * ## 依赖决策：坐在 `resizeImage` 上，而不是 `processImage`
+ *
+ * ① **用到的导出符号**：`resizeImage(bytes, mimeType, opts)` →
+ *    `{ data /* 已经是 base64 *\/, mimeType, … } | null`。
+ * ② **放弃了什么**：pi 内部那个 `processImage` 更合身（它就返回
+ *    `{ok, data, mimeType, hints}`），但**它不在 pi 的公开出口里**，
+ *    而 package.json 的 exports 只放行 `.` / `./rpc-entry` / `./client`——
+ *    深引会在打包时炸，而且那是踩进别人内部结构。
+ *    代价是拿不到它的 `hints`（那几句给模型的尺寸说明）。
+ * ③ **我们的不变式挂在哪**：`resizeImage` 在 Photon(WASM) 起不来时
+ *    **返回 null**——照抄它的话，一台没有 WASM 的机器上每一张图都会失败。
+ *    所以**小图根本不进缩放**（直接 base64），只有真的超上限才交给它；
+ *    那时 null 是一个诚实的失败，点名是哪一张（规格 7.5）。
+ */
+async function 读成附件(
+  来源: readonly ({ from: "path"; path: string } | { from: "bytes"; data: string; mimeType: string })[],
+): Promise<ImageAttachment[]> {
+  const 出: ImageAttachment[] = []
+  for (const one of 来源) {
+    /**
+     * **粘贴进来的直接就位**：渲染进程手上已经是字节了，
+     * 这一层没有任何可做的——不读盘、不改形状。
+     *
+     * 缩放这里也不做：剪贴板里的截图是屏幕尺寸的，通常远在上限之内；
+     * 真的超了的话由下面那条路一样的判断接住——**但那要有字节长度，
+     * 而 base64 的长度换算成原始字节是 ×3/4**。
+     */
+    if (one.from === "bytes") {
+      const 原始字节 = Math.floor((one.data.length * 3) / 4)
+      if (原始字节 > 免缩上限) {
+        throw fault(
+          "invalid_request",
+          `粘贴的这张图太大了（约 ${Math.round(原始字节 / 1024 / 1024)}MB，上限 3.5MB）`,
+        )
+      }
+      出.push({ data: one.data, mimeType: one.mimeType })
+      continue
+    }
+    const p = one.path
+    const mime = 图片类型[extname(p).toLowerCase()]
+    if (!mime) {
+      throw fault(
+        "invalid_request",
+        `不认识这个图片格式：${p}（认得 png / jpg / gif / webp / bmp / tiff）`,
+      )
+    }
+    let bytes: Buffer
+    try {
+      bytes = await readFile(p)
+    } catch (e) {
+      throw fault(
+        "invalid_request",
+        `读不了这张图：${p}——${e instanceof Error ? e.message : String(e)}`,
+      )
+    }
+    if (bytes.byteLength <= 免缩上限) {
+      出.push({ data: bytes.toString("base64"), mimeType: mime })
+      continue
+    }
+    const r = await resizeImage(bytes, mime, { maxBytes: 免缩上限 })
+    if (!r) {
+      throw fault(
+        "invalid_request",
+        `这张图太大且缩不下来：${p}（${Math.round(bytes.byteLength / 1024 / 1024)}MB）`,
+      )
+    }
+    出.push({ data: r.data, mimeType: r.mimeType })
+  }
+  return 出
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
@@ -871,9 +975,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 装配(rec)
     },
 
-    writeToSession: async ({ sessionId, data, as }) => {
+    writeToSession: async ({ sessionId, data, as, images }) => {
+      /**
+       * **图片在这一层读盘、缩放、转 base64**（协议 4.12，2026-08-13）。
+       *
+       * 渲染进程只送路径。理由写在协议里：给渲染进程开一条读文件的通道，
+       * **那条通道就不只能用来读图片**。
+       *
+       * 缩放交给 pi 的 `processImage`——它知道各家 provider 的内联上限，
+       * 而那是个会变的数，我们不该自己抄一份。
+       *
+       * **读不出来要当场说清是哪一张**（规格 7.5）：一句笼统的「附件失败」
+       * 会让人对着三张图挨个试。
+       */
+      const 附图 = await 读成附件(images ?? [])
       try {
-        sessions.write(sessionId, data, as)
+        sessions.write(sessionId, data, as, 附图)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。

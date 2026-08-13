@@ -76,7 +76,7 @@ test("**填完就能用**：自定义端点 → 模型选择器 → 真的连上
   // 模型格上是我们声明的那个 id——不是某个内置 provider 顶了包
   await expect(page.locator(".composer")).toContainText("my-7b")
 
-  await page.getByPlaceholder(/回车发送/).fill("你好")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 60_000 })
 

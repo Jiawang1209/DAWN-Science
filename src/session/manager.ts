@@ -13,7 +13,13 @@ import { cpSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from
 import { join } from "node:path"
 import type { AgentDef, ProviderRegistry } from "../config/schema.js"
 import type { NewSessionRecord, SessionRecord, SessionStore } from "../store/sessions.js"
-import type { AgentRuntime, EventSink, SessionId, SessionSpec } from "../runtime/types.js"
+import type {
+  AgentRuntime,
+  EventSink,
+  ImageAttachment,
+  SessionId,
+  SessionSpec,
+} from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
 
@@ -410,7 +416,7 @@ export class SessionManager {
   }
 
   /** 写入前必须持有租约。这是规格 7.1 的守卫点——写权可追责的唯一入口。 */
-  write(sessionId: SessionId, data: string, as: Holder): void {
+  write(sessionId: SessionId, data: string, as: Holder, images?: readonly ImageAttachment[]): void {
     const lease = this.leases.current(sessionId)
     if (!lease || lease.holder !== as) {
       throw new Error(
@@ -419,7 +425,22 @@ export class SessionManager {
     }
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
-    rt.write(sessionId, data)
+    if (!images || images.length === 0) {
+      rt.write(sessionId, data)
+      return
+    }
+    /**
+     * **收不下图片就报错，绝不静默丢掉**（协议 4.12，2026-08-13）。
+     *
+     * 一段 pty 会话没有「消息」这个概念，外部 CLI 的 headless 模式也没有
+     * 把图片喂进去的入口。悄悄把图丢了的表现是
+     * **「我明明附了图，它却说没看见」**——而那种 bug 会被归咎到模型头上，
+     * 人会去换模型、去怀疑自己的 key，唯独不会怀疑这一行。
+     */
+    if (typeof rt.writeWithImages !== "function") {
+      throw new Error(`这类会话不能附图片（${images.length} 张已被拒绝，一张都没有送出去）`)
+    }
+    rt.writeWithImages(sessionId, data, images)
   }
 
   /**

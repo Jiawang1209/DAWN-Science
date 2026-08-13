@@ -330,6 +330,15 @@ export type RestoredItem =
   | { kind: "text"; who: "user" | "agent"; text: string }
   | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean }
 
+/**
+ * 一张随消息送进模型的图片（协议 4.12）。
+ * 形状与 pi-ai 的 `ImageContent` 对齐：`data` 是 base64，不带 data URL 前缀。
+ */
+export interface ImageAttachment {
+  data: string
+  mimeType: string
+}
+
 export interface AgentRuntime {
   start(spec: SessionSpec): Promise<SessionHandle>
   /**
@@ -343,6 +352,20 @@ export interface AgentRuntime {
   /** 注册观察者。可多个，互不影响。返回退订函数。 */
   attach(sessionId: SessionId, sink: EventSink): () => void
   write(sessionId: SessionId, data: string): void
+  /**
+   * 带图片的一轮（协议 4.12，2026-08-13）。
+   *
+   * **只有 native 有**，与 `history?` / `abort?` 是同一副做法：
+   * 一段 pty 会话没有「消息」这个概念，一个外部 CLI 的 headless 模式
+   * 也没有把图片喂进去的入口。**能力缺席要能被问出来**——
+   * 调用方据 `typeof rt.writeWithImages === "function"` 判断，
+   * 然后**报错，而不是把图悄悄丢掉**（后者的表现是
+   * 「我明明附了图，它却说没看见」，而那种 bug 会被归咎到模型头上）。
+   *
+   * 图片已经是**处理好的 base64**：读盘与缩放在调用方做，
+   * 运行时这一层不碰文件系统。
+   */
+  writeWithImages?(sessionId: SessionId, data: string, images: readonly ImageAttachment[]): void
   /**
    * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。

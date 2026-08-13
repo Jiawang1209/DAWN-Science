@@ -29,14 +29,14 @@ test("**租约过期之后，人照样能接着说**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
 
-  await page.getByPlaceholder(/回车发送/).fill("第一句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   // 等它过期（TTL = 1 秒）
   await page.waitForTimeout(2_500)
 
-  await page.getByPlaceholder(/回车发送/).fill("过期之后的第二句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("过期之后的第二句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 
   /**
@@ -50,7 +50,7 @@ test("**租约过期之后，人照样能接着说**", async ({ dawn }) => {
 test("**开了新对话，回到旧的照样能说**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/回车发送/).fill("旧对话的第一句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("旧对话的第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -63,7 +63,7 @@ test("**开了新对话，回到旧的照样能说**", async ({ dawn }) => {
   // **在对话区里找**：同一句话也是侧栏那一行的标题，不限定范围会撞上
   await expect(page.locator(".turns").getByText("旧对话的第一句")).toBeVisible()
 
-  await page.getByPlaceholder(/回车发送/).fill("回来之后还能说")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("回来之后还能说")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns").getByText("回来之后还能说")).toBeVisible({ timeout: 30_000 })
   await expect(page.getByText(/写入被拒/)).toHaveCount(0)

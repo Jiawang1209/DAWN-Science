@@ -560,6 +560,39 @@ export const OPERATIONS = {
       data: z.string(),
       /** 必填：不能匿名写。写权可追责的唯一入口（规格 7.1） */
       as: HolderSchema,
+      /**
+       * 随这一轮一起送进模型的图片（协议 4.12；4.13 加了粘贴那一支）。
+       *
+       * **两个来源，形状不同，因为它们手上的东西本来就不同**：
+       *
+       * - `path`：从磁盘挑的。**渲染进程只送路径**——读盘、缩放、转 base64
+       *   都在主进程做。给渲染进程开一条读文件的通道，**那条通道就不只能
+       *   用来读图片**，边界比省一次拷贝重要。
+       * - `bytes`：**粘贴板里的**。它压根没有路径——剪贴板里的截图不是
+       *   磁盘上的一个文件。硬要给它编一个临时路径写到盘上，
+       *   等于为了迁就形状去制造垃圾文件。
+       *
+       * 用判别式而不是「几个可选字段」：后者允许
+       * `{path, data}` 同时给、或者两个都不给这种说不通的组合，
+       * **而那种请求只会在更下游炸，那时报错离原因已经很远了**。
+       *
+       * 空数组与不给是同一个意思。**不支持图片的运行时会报错，不会静默丢掉。**
+       */
+      images: z
+        .array(
+          z.discriminatedUnion("from", [
+            z.object({ from: z.literal("path"), path: z.string().min(1) }).strict(),
+            z
+              .object({
+                from: z.literal("bytes"),
+                /** base64，**不带 `data:` 前缀** */
+                data: z.string().min(1),
+                mimeType: z.string().min(1),
+              })
+              .strict(),
+          ]),
+        )
+        .optional(),
     }),
     response: Empty,
     mutating: true,

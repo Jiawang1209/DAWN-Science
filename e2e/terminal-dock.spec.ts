@@ -29,7 +29,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   const dock = page.locator(".dock")
   await expect(dock).toBeVisible()
   // **对话没被顶掉**：这正是它与旧终端会话最根本的区别
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
   // 掀开就该有一个能用的终端，不该是个还要再点一次的空盒子
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 })

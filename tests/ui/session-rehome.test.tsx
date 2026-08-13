@@ -49,7 +49,7 @@ describe("草稿不许渗进另一个会话", () => {
     const { rerender } = render(
       <ConversationView session={session("A")} items={[]} onSend={() => {}} />,
     )
-    const box = () => screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = () => screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box(), { target: { value: "这句话是给 A 的" } })
     expect(box().value).toBe("这句话是给 A 的")
 
@@ -62,7 +62,7 @@ describe("草稿不许渗进另一个会话", () => {
     const { rerender } = render(
       <ConversationView session={session("A")} items={[]} onSend={() => {}} />,
     )
-    const box = () => screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = () => screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box(), { target: { value: "A 的半句话" } })
 
     rerender(<ConversationView session={session("B")} items={[]} onSend={() => {}} />)
@@ -75,7 +75,7 @@ describe("草稿不许渗进另一个会话", () => {
   it("发送后清空的是**当前会话**的草稿", () => {
     const onSend = vi.fn()
     render(<ConversationView session={session("A")} items={[]} onSend={onSend} />)
-    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "发出去" } })
     fireEvent.submit(box.form!)
     expect(onSend).toHaveBeenCalledWith("发出去")

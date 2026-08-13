@@ -56,7 +56,7 @@ test("**点完回到初始画面，不建任何东西**", async ({ dawn }) => {
    * （一次全局替换把它也换了，于是它稳定超时。**判据要跟着断言的意图走**。）
    */
   await expect(page.locator(".welcome")).toBeVisible()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
 })
 
@@ -146,7 +146,7 @@ test("**空着的时候不留白地**，加一条会话就正好多一行", asyn
 
   // **开口那一刻才建出来**（2026-08-12）：「新建任务」只回初始画面
   await 入口.click()
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible({ timeout: 60_000 })
   await box.fill("说一句")
   await box.press("Enter")

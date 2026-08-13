@@ -19,6 +19,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 
 const 目录 = join(tmpdir(), "dawn-attach-e2e")
 const 甲 = join(目录, "甲.csv")
+const 图片 = join(目录, "一张图.png")
 const 乙 = join(目录, "乙.csv")
 
 test.beforeAll(() => {
@@ -26,6 +27,18 @@ test.beforeAll(() => {
   mkdirSync(目录, { recursive: true })
   writeFileSync(甲, "a,b\n1,2\n")
   writeFileSync(乙, "c,d\n3,4\n")
+  /**
+   * **一张真的 PNG**（1×1，硬编的字节）。
+   * 造一个假的 `.png` 文本文件不行：主进程会读它、算 base64，
+   * 而 pi 那一侧对不是图的东西有话说——**用例要走的是成功那条路**。
+   */
+  writeFileSync(
+    图片,
+    Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  )
 })
 test.afterAll(() => rmSync(目录, { recursive: true, force: true }))
 
@@ -44,7 +57,7 @@ test.describe("挑文件", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/回车发送/)
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
     await 框.fill("看看这两个")
     await page.locator(".composer-controls .attach-trigger").click()
 
@@ -88,7 +101,7 @@ test.describe("挑文件", () => {
   /** **空态那一屏也有它**：一个动作可以有两个入口，但走的是同一份实现 */
   test("**空态那一屏也给这颗按钮**", async ({ dawn }) => {
     const { page } = dawn
-    const 框 = page.getByPlaceholder(/回车发送/)
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
     await 框.fill("先挑个文件")
     await page.locator(".composer-controls .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
@@ -108,10 +121,15 @@ test.describe("挑文件", () => {
 test.describe("三项都通", () => {
   test.use({ dawnOptions: { pickFiles: [甲] } })
 
-  for (const 名 of ["上传文件", "上传图片", "上传数据"]) {
+  /**
+   * **「上传图片」不在这一组里**（协议 4.12 之后）。
+   * 它走的是附件那条路——图片要把**字节**送进模型，而不是把路径写进输入框。
+   * 那条路由下面「图片真的送进模型」那一组盯着。
+   */
+  for (const 名 of ["上传文件", "上传数据"]) {
     test(`**「${名}」点下去，路径进了输入框**`, async ({ dawn }) => {
       const { page } = dawn
-      const 框 = page.getByPlaceholder(/回车发送/)
+      const 框 = page.getByPlaceholder(/今天帮你做些什么/)
       await page.locator(".composer-controls .attach-trigger").click()
       await page.getByRole("menuitem", { name: 名, exact: true }).click()
       await expect(框).toHaveValue(/甲\.csv/)
@@ -119,4 +137,187 @@ test.describe("三项都通", () => {
       await expect(page.getByRole("menu", { name: "添加内容" })).toHaveCount(0)
     })
   }
+})
+
+
+/**
+ * **图片是真的送进模型的**（协议 4.12，2026-08-13）。
+ *
+ * 作者：*「是否识别图片，那是 LLM 的事情，而不是我们工具的事情，
+ * 别忘了我还有 kimi-2.7，这是带有图像识别的。」*
+ *
+ * ## 这一条盯的是「字节真的到了对面」，不是「界面上有个 chip」
+ *
+ * 上传图片与上传文件走的是**两条不同的路**，而这个区别是实打实的：
+ * 一个 CSV 的路径正是 agent 要的（它会去读那个文件）；
+ * 而一张图的路径对带视觉的模型毫无用处——它要的是字节。
+ *
+ * 假模型收到图片时会回一句「我收到了 N 张图」（`mock-inference-server.mjs`），
+ * 那句话**只有请求里真的带了 `image_url` 片段才会出现**。
+ * 断言它，就等于断言这一整条链路是通的：
+ * 界面 → 协议 `images` → 主进程读盘 + base64 → pi 的 `prompt(text, {images})` → 请求体。
+ */
+test.describe("图片真的送进模型", () => {
+  test.use({ dawnOptions: { pickFiles: [图片] } })
+
+  test("**附一张图发出去，模型那边收到了**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    await page.locator(".composer-controls .attach-trigger").click()
+    await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
+
+    // ① 发出去之前看得见——否则人不知道自己到底附上没有
+    const chip = page.locator(".attached-one")
+    await expect(chip).toHaveCount(1)
+    await expect(chip).toContainText("一张图.png")
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这张")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // ② **字节真的到了对面。** 这句话只有请求里带了 image_url 才会出现
+    await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // ③ 发完就清空——留着的话下一句会把同一张图再送一遍
+    await expect(page.locator(".attached-one")).toHaveCount(0)
+  })
+
+  test("**挑错了能单独摘掉**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    await page.locator(".composer-controls .attach-trigger").click()
+    await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
+    await expect(page.locator(".attached-one")).toHaveCount(1)
+
+    await page.getByRole("button", { name: /不发这张/ }).click()
+    await expect(page.locator(".attached-one")).toHaveCount(0)
+  })
+})
+
+/**
+ * **占位符承诺的两件事，必须真的会发生**（2026-08-13，作者定的那句话）。
+ *
+ * 提示写着「@引用工作区文件，/调用技能与指令」。
+ * **一句会撒谎的提示比没有提示坏得多**——人照着敲一个 `@`，什么都不发生，
+ * 此后他就再也不信这个输入框说的任何话了。
+ *
+ * 作者还说了*「每个对话框都要有这个提示的功能奥」*，
+ * 所以两屏都验：只在一屏上兑现的承诺，换一屏就成了谎。
+ */
+test.describe("提示不说谎", () => {
+  test.use({ dawnOptions: { pickFiles: [甲] } })
+
+  for (const [屏, 进去] of [
+    ["首页", async () => {}],
+    ["对话", async (page: import("@playwright/test").Page) => {
+      await 开一段临时会话(page)
+      await 等进了对话(page)
+    }],
+  ] as const) {
+    test(`**${屏}：那句提示在，而且 @ 与 / 都真的有反应**`, async ({ dawn }) => {
+      const { page } = dawn
+      await 进去(page)
+
+      const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+      await expect(框).toBeVisible()
+
+      // `/` 打开命令面板 —— 技能与指令都在那儿
+      await 框.press("/")
+      await expect(page.getByRole("dialog", { name: /命令面板/ })).toBeVisible()
+      await page.keyboard.press("Escape")
+      // **别把那个 `/` 留在框里**：拦下来了就不该再落字
+      await expect(框).toHaveValue("")
+
+      // `@` 开文件浏览器，挑完把路径写进来
+      await 框.press("@")
+      await expect(框).toHaveValue(/甲\.csv/, { timeout: 10_000 })
+    })
+  }
+})
+
+/**
+ * **粘贴板里的图也送得进去**（协议 4.13，2026-08-13，作者：
+ * *「能否类似于 codex、hermes，或者 workbuddy 一样，可以直接复制粘贴图片」*）。
+ *
+ * ## 为什么它不能复用「路径」那条路
+ *
+ * **剪贴板里的截图不是磁盘上的一个文件**——它没有路径。
+ * 硬给它编一个临时路径写到盘上，等于为了迁就形状去制造垃圾文件。
+ * 所以协议里那一项是判别式联合：`path` 一支给挑出来的，`bytes` 一支给粘进来的。
+ *
+ * 这里用 `DataTransfer` 造一次真的 paste 事件——**走的是浏览器真实的那条路**，
+ * 不是直接调组件的回调。
+ */
+test("**粘一张图进输入框，模型那边收到了**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+
+  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  await 框.click()
+
+  // 造一次真的粘贴：1×1 的 PNG
+  await page.evaluate(() => {
+    const b64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    const bin = atob(b64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    const file = new File([bytes], "屏幕截图.png", { type: "image/png" })
+    const dt = new DataTransfer()
+    dt.items.add(file)
+    const el = document.querySelector(".composer-field") as HTMLTextAreaElement
+    el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true }))
+  })
+
+  // ① 粘完看得见
+  await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
+
+  await 框.fill("看看这张粘的")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+
+  // ② **字节真的到了对面**
+  await expect(page.locator(".turns").getByText(/我收到了 1 张图/)).toBeVisible({
+    timeout: 30_000,
+  })
+})
+
+/**
+ * **粘文字仍然是粘文字。**
+ *
+ * 这一条比上面那条更容易被写坏：为了接住图片而无脑 `preventDefault`，
+ * 会把最常用的那个动作整个弄坏，而且没人会想到去怪「图片附件」这个功能。
+ */
+test("**粘一段文字，照常进输入框**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+
+  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  await 框.click()
+
+  /**
+   * **判据是「我们没有拦」，不是「字出现在框里」。**
+   *
+   * 合成的 `ClipboardEvent` 不会触发浏览器真正的默认插入动作——
+   * 拿「框里有没有字」当判据，这条用例测的就成了 Playwright 的合成事件，
+   * 而不是我们的代码。（第一版就是这么写的，红了。）
+   *
+   * `defaultPrevented` 才是我们这一侧唯一的决定：拦了，文字粘贴就坏了。
+   */
+  const 拦了 = await page.evaluate(() => {
+    const dt = new DataTransfer()
+    dt.setData("text/plain", "粘进来的一段话")
+    const ev = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })
+    const el = document.querySelector(".composer-field") as HTMLTextAreaElement
+    el.dispatchEvent(ev)
+    return ev.defaultPrevented
+  })
+  expect(拦了, "文字粘贴被拦下了——最常用的那个动作会坏掉").toBe(false)
+  await expect(page.locator(".attached-one")).toHaveCount(0)
 })

@@ -130,7 +130,7 @@ test.describe("设完之后", () => {
      * 假模型会照着提示调 bash（夹具里配的那条路），
      * 而 bash 的 cwd 就是我们要验的东西。
      */
-    await page.getByPlaceholder(/回车发送/).fill("跑一条命令")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一条命令")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -172,7 +172,7 @@ test.describe("空态就选好目录", () => {
       /选择工作目录/,
     )
 
-    await page.getByPlaceholder(/回车发送/).fill("从空态直接开始")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("从空态直接开始")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 那句话真的发了出去
@@ -271,7 +271,7 @@ test.describe("选好目录之后", () => {
     ).toHaveCount(0)
 
     // 开口 —— 从这一刻起它就是一个项目了
-    await page.getByPlaceholder(/回车发送/).fill("开始干活")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("开始干活")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await 等进了对话(page)
 

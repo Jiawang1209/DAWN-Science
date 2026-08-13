@@ -14,7 +14,7 @@ test("**换服务之后，新答的那一行改名，旧的不动**", async ({ d
   const { page } = dawn
   await 开一段临时会话(page)
 
-  await page.getByPlaceholder(/回车发送/).fill("第一问")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第一问")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -33,7 +33,7 @@ test("**换服务之后，新答的那一行改名，旧的不动**", async ({ d
   await 最后一组.getByRole("menuitem").last().click()
   await expect(page.locator(".turns")).toContainText("已换到", { timeout: 15_000 })
 
-  await page.getByPlaceholder(/回车发送/).fill("第二问")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第二问")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("第二问", { timeout: 30_000 })
 

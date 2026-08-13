@@ -20,7 +20,7 @@ test("**点「新建任务」回到初始画面，不建任何东西**", async (
   const { page } = dawn
 
   // 先聊一段，好让侧栏上有东西、主区在对话里
-  await page.getByPlaceholder(/回车发送/).fill("第一段")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("第一段")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns").getByText("第一段")).toBeVisible({ timeout: 30_000 })
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
@@ -29,14 +29,14 @@ test("**点「新建任务」回到初始画面，不建任何东西**", async (
 
   // 回到那个画面：起手卡片 + 能直接打字的输入卡
   await expect(page.locator(".welcome")).toBeVisible()
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
   // **一条都没多**：还没开口，就还没有这段对话
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
 })
 
 test("**直接开口 → 归「会话」栏**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByPlaceholder(/回车发送/).fill("你好")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns").getByText("你好")).toBeVisible({ timeout: 30_000 })
 
@@ -56,7 +56,7 @@ test("**直接开口 → 归「会话」栏**", async ({ dawn }) => {
  */
 test("**点应用名回初始画面**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByPlaceholder(/回车发送/).fill("先说一句")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("先说一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns").getByText("先说一句")).toBeVisible({ timeout: 30_000 })
 

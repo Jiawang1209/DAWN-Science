@@ -39,7 +39,7 @@ test.describe("拿得到 git 事实时", () => {
     const { page, dbPath } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("写一个文件")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 工具跑完之后模型才回这句 —— 它到了就说明整轮收工了
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
@@ -68,7 +68,7 @@ test.describe("拿不到 git 事实时", () => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("写一个文件")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 

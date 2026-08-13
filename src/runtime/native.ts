@@ -63,6 +63,7 @@ import type {
   SessionId,
   SessionSpec,
   RestoredItem,
+  ImageAttachment,
 } from "./types.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
@@ -848,6 +849,39 @@ export class NativeRuntime implements AgentRuntime {
    * 失败经事件流出声，不静默吞。
    */
   write(sessionId: SessionId, data: string): void {
+    this.送一轮(sessionId, data)
+  }
+
+  /**
+   * 带图片的一轮（协议 4.12，2026-08-13）。
+   *
+   * pi 的 `prompt(text, { images })` 本来就收——`ImageContent` 是
+   * `{ type: "image", data, mimeType }`，而 `processImage` 吐的正是这个形状。
+   * **所以这一层几乎没有逻辑**：把已经处理好的字节转成 pi 要的样子，其余照旧。
+   */
+  writeWithImages(sessionId: SessionId, data: string, images: readonly ImageAttachment[]): void {
+    /**
+     * **模型收不了图就当场说，不许让 pi 把它悄悄丢掉**（协议 4.12，2026-08-13）。
+     *
+     * pi-ai 在拼请求时有一句 `if (hasImages && model.input.includes("image"))`
+     * ——**模型没声明收图，那几张图就原地消失**，请求照发、回复照回。
+     * 症状是「我明明附了图，它却说没看见」，而人会去换模型、去怀疑自己的 key，
+     * 唯独不会怀疑这一行。这是本项目见过最典型的一种「静默丢弃」。
+     *
+     * 拦在这里而不是更上层：**只有这一层知道这一刻真正在用哪个模型**
+     * （会话中途换过服务之后，配置里那个值已经不算数了）。
+     */
+    const s = this.sessions.get(sessionId)
+    const model = s?.session.model
+    if (model && !model.input.includes("image")) {
+      throw new Error(
+        `模型 ${model.id} 不接收图片（${images.length} 张一张都没有送出去）。换一个带视觉的模型再试。`,
+      )
+    }
+    this.送一轮(sessionId, data, images)
+  }
+
+  private 送一轮(sessionId: SessionId, data: string, images?: readonly ImageAttachment[]): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
@@ -855,7 +889,12 @@ export class NativeRuntime implements AgentRuntime {
     s.inFlight += 1
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
     const run = s.session
-      .prompt(data)
+      .prompt(
+        data,
+        images && images.length > 0
+          ? { images: images.map((i) => ({ type: "image" as const, data: i.data, mimeType: i.mimeType })) }
+          : undefined,
+      )
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
         this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })

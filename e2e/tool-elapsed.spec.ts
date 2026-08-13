@@ -27,7 +27,7 @@ test.describe("工具调用的秒表", () => {
   test("**跑的时候在走，跑完了停表**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("跑一条慢命令")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一条慢命令")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const tool = page.locator(".tool").first()
@@ -74,7 +74,7 @@ test.describe("执行中的记号", () => {
   test("**执行中有会动的记号，跑完就没了**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/回车发送/).fill("跑一条慢命令")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一条慢命令")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 
   const tool = page.locator(".tool").first()

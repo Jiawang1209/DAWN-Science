@@ -66,7 +66,7 @@ test.describe("子 agent 真的在独立进程里跑了一次", () => {
 
     await expect(page.locator(".app-shell")).toBeVisible()
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("找个子 agent 看看这个仓库")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("找个子 agent 看看这个仓库")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     /**
@@ -147,7 +147,7 @@ test.describe("定义写错时不会静静地消失", () => {
 
     await expect(page.locator(".app-shell")).toBeVisible()
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("随便找一个")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("随便找一个")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 失败也会回到对话里——**失败要如实说**，这一句就是那条纪律的可见面
     await 展开工具(page)
@@ -202,7 +202,7 @@ async function runSubagentTurn(page: import("@playwright/test").Page, workspace:
   await expect(page.locator(".app-shell")).toBeVisible()
   await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/回车发送/).fill("派两个子 agent")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("派两个子 agent")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 }
 

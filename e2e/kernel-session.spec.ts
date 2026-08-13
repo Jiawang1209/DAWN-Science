@@ -48,7 +48,7 @@ test.describe("内核会话", () => {
     await 等进了对话(page)
 
     // ① 普通输出
-    await page.getByPlaceholder(/回车发送/).fill("print('E2E_KERNEL_OK', 40 + 2)")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("print('E2E_KERNEL_OK', 40 + 2)")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 取最后一条：对话里会累积多条输出，`.kout-text` 会命中不止一个
     await expect(page.locator(".kout-text").last()).toContainText("E2E_KERNEL_OK 42", {
@@ -56,16 +56,16 @@ test.describe("内核会话", () => {
     })
 
     // ② **报错是 error 条目，不是一段红字文本**
-    await page.getByPlaceholder(/回车发送/).fill("raise ValueError('e2e boom')")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("raise ValueError('e2e boom')")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-error .kout-ename")).toContainText("ValueError", {
       timeout: 60_000,
     })
 
     // ③ **判据：同一个活会话** —— 前面定义的变量后面读得到
-    await page.getByPlaceholder(/回车发送/).fill("e2e_v = 7")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("e2e_v = 7")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await page.getByPlaceholder(/回车发送/).fill("print('V =', e2e_v)")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("print('V =', e2e_v)")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-text").last()).toContainText("V = 7", { timeout: 60_000 })
 
@@ -133,7 +133,7 @@ test.describe("内核执行的账本", () => {
   test("**跑挂的代码在账本上是 failed，且带着原因**", async ({ dawn }) => {
     const { page, dbPath } = dawn
     await 开一段临时会话(page)
-    const box = page.getByPlaceholder(/回车发送/)
+    const box = page.getByPlaceholder(/今天帮你做些什么/)
     await expect(box).toBeVisible({ timeout: 60_000 })
 
     await box.fill("这行故意写错()")
@@ -169,7 +169,7 @@ test.describe("内核执行的账本", () => {
   test("**跑得通的代码是 completed** —— 不能一律记成失败", async ({ dawn }) => {
     const { page, dbPath } = dawn
     await 开一段临时会话(page)
-    const box = page.getByPlaceholder(/回车发送/)
+    const box = page.getByPlaceholder(/今天帮你做些什么/)
     await expect(box).toBeVisible({ timeout: 60_000 })
 
     await box.fill("print(40 + 2)")
@@ -208,7 +208,7 @@ test.describe("R 内核会话", () => {
     await 等进了对话(page)
 
     const 发 = async (code: string) => {
-      await page.getByPlaceholder(/回车发送/).fill(code)
+      await page.getByPlaceholder(/今天帮你做些什么/).fill(code)
       await page.getByRole("button", { name: "发送", exact: true }).click()
     }
 
@@ -269,7 +269,7 @@ test.describe("由配置的解释器路径起内核", () => {
      * 用它的话，失败会以「夹具超时」的形式出现，而不是界面上那句话。
      */
     await page.getByRole("button", { name: "新建任务" }).click()
-    const 输入 = page.getByPlaceholder(/回车发送/)
+    const 输入 = page.getByPlaceholder(/今天帮你做些什么/)
     await 输入.fill("跑一下")
     await 输入.press("Enter")
     await expect(page.getByText(/还没有配置 Python 解释器路径/)).toBeVisible({ timeout: 30_000 })
@@ -288,7 +288,7 @@ test.describe("由配置的解释器路径起内核", () => {
     // ③ 配完就能跑，而且跑的就是那个解释器
     await 开一段临时会话(page)
     await 等进了对话(page)
-    await page.getByPlaceholder(/回车发送/).fill("import sys; print('EXE', sys.executable)")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("import sys; print('EXE', sys.executable)")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-text").last()).toContainText(PY_PATH, { timeout: 60_000 })
   })

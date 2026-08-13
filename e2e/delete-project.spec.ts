@@ -31,7 +31,7 @@ test("**确认框摆真数字**，并说清哪些东西不会动", async ({ dawn
   // 先说一句话，好让这个项目里有一段对话可数
   await 在项目里开会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/回车发送/).fill("留个记录")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("留个记录")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("留个记录")
 
@@ -48,7 +48,7 @@ test("删掉之后，它的会话**一条都不剩**；工作区的文件一个�
   const { page, workspace } = dawn
   await 在项目里开会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/回车发送/).fill("要一起被删掉的")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("要一起被删掉的")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".proj-session-list .sess")).toHaveCount(1)
 

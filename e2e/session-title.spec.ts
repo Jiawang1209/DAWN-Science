@@ -16,7 +16,7 @@ test("**两个会话按各自的第一句话区分开**，而不是两行一样�
   const { page } = dawn
 
   await 开一段临时会话(page)
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible()
   // 还没说话——**显示「新会话」，不是一行空白**
   await expect(page.locator(侧栏会话).first()).toHaveText("新会话")
@@ -35,7 +35,7 @@ test("**两个会话按各自的第一句话区分开**，而不是两行一样�
    * 而真正的原因与标题一点关系都没有。
    */
   await expect(page.locator(".session-list li")).toHaveCount(2)
-  const box2 = page.getByPlaceholder(/回车发送/)
+  const box2 = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box2).toHaveValue("")
   await box2.fill("跑一次线性回归")
   await box2.press("Enter")
@@ -55,7 +55,7 @@ test("**第二句话不改名字** —— 侧栏上的名字自己变，人会�
   const { page } = dawn
 
   await 开一段临时会话(page)
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await box.fill("第一句定名字")
   await box.press("Enter")
   await expect(page.locator(侧栏会话).first()).toHaveText("第一句定名字")

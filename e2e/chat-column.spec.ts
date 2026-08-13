@@ -25,7 +25,7 @@ test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn })
   const { page } = dawn
   await 开一段临时会话(page)
 
-  await page.getByPlaceholder(/回车发送/).fill("量一下这一栏")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下这一栏")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -69,7 +69,7 @@ test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn })
 test("**用户气泡右下角不是圆的**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/回车发送/).fill("看看形状")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("看看形状")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 
   const 角 = await page.locator(".turn.user .bubble").first().evaluate((el) => {

@@ -12,7 +12,7 @@ import { test, expect, CANNED_REPLY, readRuns, 开一段临时会话 } from "./f
 /** 开一个会话，并等到能打字 */
 async function startSession(page: import("@playwright/test").Page) {
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 }
 
 /**
@@ -25,7 +25,7 @@ test("说一句话 → 界面上出现回复 → 账本上留下记录", async (
   const { page, dbPath, requests } = dawn
   await startSession(page)
 
-  await page.getByPlaceholder(/回车发送/).fill("你好")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
   await page.keyboard.press("Enter")
 
   // ① 自己说的话要出现——**它来自事件流，不是本地乐观追加**
@@ -46,7 +46,7 @@ test("说一句话 → 界面上出现回复 → 账本上留下记录", async (
 test("回复是 markdown 而不是一坨纯文本", async ({ dawn }) => {
   const { page } = dawn
   await startSession(page)
-  await page.getByPlaceholder(/回车发送/).fill("讲讲")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("讲讲")
   await page.keyboard.press("Enter")
   await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
   // agent 那条走 .md 容器；用户那条走 <pre>（人打的字原样显示）
@@ -57,7 +57,7 @@ test("回复是 markdown 而不是一坨纯文本", async ({ dawn }) => {
 test("空白内容不发送 —— 不往账本上记一条什么都没有的回合", async ({ dawn }) => {
   const { page, dbPath } = dawn
   await startSession(page)
-  await page.getByPlaceholder(/回车发送/).fill("   ")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("   ")
   await page.keyboard.press("Enter")
   await page.waitForTimeout(800)
   const runs = await readRuns(dbPath)

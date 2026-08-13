@@ -63,7 +63,7 @@ test.describe("启动时一个 provider 覆盖都没有", () => {
     // **模型选择的地方有它**——作者说的正是这一句
     await expect(page.locator(".composer")).toContainText("late-7b", { timeout: 20_000 })
 
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 60_000 })
 

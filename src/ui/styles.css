@@ -3048,5 +3048,83 @@ pre {
   position: absolute;
   bottom: calc(100% + var(--dawn-space-2));
   left: 0;
-  min-width: 10rem;
+  min-width: 11rem;
+  padding: var(--dawn-space-1);
+  gap: 1px;
+  /**
+   * **弹出来那一下**（2026-08-13，作者：*「弹出来的效果也要好看，
+   * 现在太基础了」*）。
+   *
+   * 三样一起动，且**都很短**（120ms）：从下往上 4px、从 0.96 放到 1、
+   * 透明到不透明。`transform-origin` 钉在左下角——**它是从那颗 `＋` 长出来的**，
+   * 从中心放大会看起来像凭空出现在别处。
+   *
+   * 曲线用 `cubic-bezier(.16,1,.3,1)`：起步快、收尾软。
+   * 一个匀速的浮层看起来是「被贴上去的」，而这条让它看起来是「被推上来的」。
+   *
+   * **DESIGN.md 那条：动效跟随状态，永不延迟状态。** 120ms 之内菜单
+   * 已经完全可点了——动画只是让眼睛跟得上它从哪儿来，不拦任何一次点击。
+   */
+  transform-origin: bottom left;
+  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+@keyframes dawn-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/**
+ * **有人把动效关掉了，就只留淡入。**
+ *
+ * 不是整个取消：位移与缩放是「从哪儿来」的信息，而淡入不会引起前庭不适。
+ * 这与 `.loader-glyph` / `dawn-thinking` 那两处是同一条。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .attach-menu { animation: dawn-fade 120ms ease-out; }
+  @keyframes dawn-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+/* 菜单项：整行可点、齐左，图标与字在一条线上 */
+.attach-menu .btn {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 6px var(--dawn-space-3);
+  border-radius: var(--dawn-radius-row);
+}
+.attach-menu .btn:hover { background: var(--dawn-row-hover); }
+
+/**
+ * 待发的图片（协议 4.12，2026-08-13）。
+ *
+ * **挑完到发出去之间必须看得见**——否则人不知道自己到底附上没有，
+ * 而「附了图它却说没看见」正是这条路上最难查的那种错。
+ */
+.attached {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dawn-space-2);
+  width: 100%;
+  max-width: var(--dawn-thread-max-w);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.attached-one {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  padding: 2px 2px 2px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-row);
+  background: var(--dawn-surface-sidebar);
+  font-size: 12px;
+  color: var(--dawn-text-2);
+}
+/* 名字**不许被挤没**：它是「我附的是哪一张」的唯一答案 */
+.attached-name { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

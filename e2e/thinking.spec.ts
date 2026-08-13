@@ -17,7 +17,7 @@ test.describe("思考", () => {
   test("**收起时只有一行，点开才是内容**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -46,7 +46,7 @@ test.describe("思考", () => {
   test("**没有正文的发言不画** —— 不在答案前面杵一个空壳", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -75,7 +75,7 @@ test.describe("思考", () => {
   test("**只有思考、没有正文时，思考仍然看得见**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -100,13 +100,13 @@ test.describe("思考", () => {
     // **一轮都没说过话时不显示**：一排 0 会被读成「不花钱」
     await expect(头).toHaveCount(0)
 
-    await page.getByPlaceholder(/回车发送/).fill("第一问")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("第一问")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     await expect(头).toContainText("本次")
     const 第一次 = (await 头.textContent())!
 
-    await page.getByPlaceholder(/回车发送/).fill("第二问")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("第二问")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".turns")).toContainText("第二问", { timeout: 30_000 })
 
@@ -120,7 +120,7 @@ test.describe("思考", () => {
   test("**每一轮只列三项，不给口径不明的合计**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -141,7 +141,7 @@ test.describe("思考", () => {
   test("**思考不混进回答里** —— 那是它对自己说的话，不是对我说的", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/回车发送/).fill("你是什么模型？")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

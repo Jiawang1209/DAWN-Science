@@ -17,7 +17,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 test("**关掉再打开，那段对话还在，而且还能说**", async ({ dawn }) => {
   await 开一段临时会话(dawn.page)
-  await dawn.page.getByPlaceholder(/回车发送/).fill("重启之前说的话")
+  await dawn.page.getByPlaceholder(/今天帮你做些什么/).fill("重启之前说的话")
   await dawn.page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(dawn.page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -42,7 +42,7 @@ test("**关掉再打开，那段对话还在，而且还能说**", async ({ dawn
    * **还能接着说。** 这一句才是「续接」与「只是把历史画出来」的分界：
    * 后者看起来一模一样，直到你开口。
    */
-  await page.getByPlaceholder(/回车发送/).fill("重启之后的新话")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("重启之后的新话")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("重启之后的新话", { timeout: 30_000 })
   await expect(page.getByText(/写入被拒/)).toHaveCount(0)

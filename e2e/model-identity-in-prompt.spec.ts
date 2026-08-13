@@ -16,7 +16,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 test("**提示词里写着当前模型**", async ({ dawn }) => {
   const { page, requests } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/回车发送/).fill("你的模型是什么？")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("你的模型是什么？")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

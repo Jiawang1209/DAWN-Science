@@ -132,7 +132,28 @@ export function startMockInferenceServer(opts = {}) {
       }
 
       const 用户说的 = JSON.stringify(body.messages ?? "")
-      const reply = 用户说的.includes("markdown") ? MARKDOWN_REPLY : 默认回复
+
+      /**
+       * **收到图片就说出它看见了几张**（协议 4.12，2026-08-13）。
+       *
+       * 这是本项目第一条硬规则要的那一半：*「新增协议操作，必须在同一次改动里
+       * 补 mock 分支」*。不补的话，「图片真的送到了模型那儿」这件事
+       * **在 mock 模式与 e2e 里都无法证伪**——界面上看起来一切正常，
+       * 而那正是最坏的一种「本地是好的」。
+       *
+       * 数的是 OpenAI 兼容协议里的 `image_url` 片段（pi 就是这么发的）。
+       *
+       * **只数 `"type":"image_url"`**：那个形状是
+       * `{"type":"image_url","image_url":{"url":"…"}}`——
+       * 光数 `"image_url"` 每张图会数出两个（一次是 type 的值，一次是对象的键）。
+       * 第一版就是这么把一张图数成两张的。
+       */
+      const 图片数 = (用户说的.match(/"type":"image_url"/g) ?? []).length
+      const reply = 图片数 > 0
+        ? `假模型已应答：我收到了 ${图片数} 张图。`
+        : 用户说的.includes("markdown")
+          ? MARKDOWN_REPLY
+          : 默认回复
 
       const tool = opts.toolCall?.(body)
       const stream = body.stream !== false
@@ -285,7 +306,20 @@ export function mockModelsJson(
         baseUrl,
         apiKey: "mock-key-not-a-real-secret",
         api: "openai-completions",
-        models: ids.map((id) => ({ id, name: `Mock ${id}`, api: "openai-completions" })),
+        /**
+         * **声明收图**（协议 4.12，2026-08-13）。
+         *
+         * pi-ai 拼请求时看 `model.input.includes("image")`——**不声明，
+         * 图就在它那儿被丢掉**，请求照发、回复照回。
+         * 不加这一行的话，「图片真的送到了模型那儿」这条用例
+         * **永远是红的，而红的原因与我们的代码无关**。
+         */
+        models: ids.map((id) => ({
+          id,
+          name: `Mock ${id}`,
+          api: "openai-completions",
+          input: ["text", "image"],
+        })),
       },
     },
   }

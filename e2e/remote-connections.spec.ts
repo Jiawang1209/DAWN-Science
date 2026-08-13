@@ -191,7 +191,7 @@ test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
-  await page.getByPlaceholder(/回车发送/).fill("看看这儿有什么")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这儿有什么")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

@@ -280,7 +280,7 @@ async function 从首页开始(话 = "开始"): Promise<void> {
    * 所以这里从「点一下」变成「点一下 + 说一句」。
    */
   fireEvent.click(await screen.findByRole("button", { name: "新建任务" }))
-  const box = (await screen.findByPlaceholderText(/回车发送/)) as HTMLTextAreaElement
+  const box = (await screen.findByPlaceholderText(/今天帮你做些什么/)) as HTMLTextAreaElement
   fireEvent.change(box, { target: { value: 话 } })
   fireEvent.submit(box.form!)
 }
@@ -292,7 +292,7 @@ async function openAndStart(h: Harness) {
   await waitFor(() => expect(h.calls.some((c) => c.op === "createTask")).toBe(true))
   // **等到会话真的挂上再返回**。只等 createTask 落在 calls 里是不够的——
   // 那一刻 setSessionId 还没被 React 处理完，事件会因为「不是当前会话」被滤掉
-  await screen.findByPlaceholderText(/回车发送/)
+  await screen.findByPlaceholderText(/今天帮你做些什么/)
   await waitFor(() => expect(h.calls.some((c) => c.op === "subscribeSession")).toBe(true))
 }
 
@@ -339,7 +339,7 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
     const h = harness()
     await openAndStart(h)
 
-    const box = (await screen.findByPlaceholderText(/回车发送/)) as HTMLTextAreaElement
+    const box = (await screen.findByPlaceholderText(/今天帮你做些什么/)) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "你好" } })
     fireEvent.submit(box.form!)
     await waitFor(() => expect(h.calls.some((c) => c.op === "writeToSession")).toBe(true))
@@ -355,7 +355,7 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
     const h = harness()
     await openAndStart(h)
 
-    const box = (await screen.findByPlaceholderText(/回车发送/)) as HTMLTextAreaElement
+    const box = (await screen.findByPlaceholderText(/今天帮你做些什么/)) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "跑一下测试" } })
     fireEvent.submit(box.form!)
     await waitFor(() => expect(h.calls.some((c) => c.op === "writeToSession")).toBe(true))
@@ -532,7 +532,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
     // **仍然在项目概览上。** 修复前这里会被拽回对话，composer 冒出来
     await waitFor(() => expect(h.calls.some((c) => c.op === "subscribeSession")).toBe(true))
     
-    expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
+    expect(screen.queryByPlaceholderText(/今天帮你做些什么/)).toBeNull()
     expect(panels()).toBeGreaterThan(0)
   })
 
@@ -540,7 +540,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
     await 从首页开始()
-    expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
+    expect(await screen.findByPlaceholderText(/今天帮你做些什么/)).toBeDefined()
   })
 })
 
@@ -587,14 +587,14 @@ describe("PTY 会话：终端就是这个会话本身", () => {
     render(<App client={h.client} />)
     await 从首页开始()
     await waitFor(() => expect(screen.queryByRole("button", { name: "发送" })).toBeNull())
-    expect(screen.queryByPlaceholderText(/回车发送/)).toBeNull()
+    expect(screen.queryByPlaceholderText(/今天帮你做些什么/)).toBeNull()
   })
 
   it("native 会话仍然是对话 + 输入框，主区里没有终端", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     const { container } = render(<App client={h.client} />)
     await 从首页开始()
-    expect(await screen.findByPlaceholderText(/回车发送/)).toBeDefined()
+    expect(await screen.findByPlaceholderText(/今天帮你做些什么/)).toBeDefined()
     expect(container.querySelector(".term-host")).toBeNull()
   })
 
@@ -643,7 +643,7 @@ describe("cli 会话也能换模型（①-C 后续）", () => {
     const h = cliHarness(undefined)
     render(<App client={h.client} />)
     await 从首页开始()
-    await screen.findByPlaceholderText(/回车发送/)
+    await screen.findByPlaceholderText(/今天帮你做些什么/)
     expect(screen.queryByRole("button", { name: /sonnet|opus/ })).toBeNull()
   })
 

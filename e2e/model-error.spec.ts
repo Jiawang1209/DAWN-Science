@@ -21,8 +21,8 @@ test.describe("key 不对的时候", () => {
   test("**说出来，并且把对方的原话带上**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const 说明 = page.locator(".turns .caveat")
@@ -35,8 +35,8 @@ test.describe("key 不对的时候", () => {
   test("**它不混进回复里** —— 那不是模型说的话", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     await expect(page.locator(".turns .caveat")).toContainText("模型调用失败", { timeout: 30_000 })

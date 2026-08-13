@@ -86,7 +86,7 @@ describe("空对话区 · 必须给出下一步动作", () => {
   it("有 agent 时，主区提供一个能直接打字的输入卡", () => {
     const onStart = vi.fn()
     render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={noop} />)
-    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "直接说" } })
     fireEvent.submit(box.form!)
     expect(onStart).toHaveBeenCalledWith("ds-chat", "直接说", undefined)

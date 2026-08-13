@@ -253,7 +253,7 @@ describe("空对话态", () => {
   it("给出一个能直接打字的输入卡，而不只是一句提示", () => {
     const onStart = vi.fn()
     render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={noop} />)
-    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "直接说" } })
     fireEvent.submit(box.form!)
     expect(onStart).toHaveBeenCalledWith("ds-chat", "直接说", undefined)
@@ -284,7 +284,7 @@ describe("对话视图", () => {
   it("提交非空内容触发发送并清空输入框", () => {
     const onSend = vi.fn()
     render(<ConversationView session={session()} items={[]} onSend={onSend} />)
-    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "跑一下测试" } })
     fireEvent.submit(box.form!)
     expect(onSend).toHaveBeenCalledWith("跑一下测试")
@@ -294,7 +294,7 @@ describe("对话视图", () => {
   it("空白内容不触发发送", () => {
     const onSend = vi.fn()
     render(<ConversationView session={session()} items={[]} onSend={onSend} />)
-    const box = screen.getByPlaceholderText(/回车发送/) as HTMLTextAreaElement
+    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "   " } })
     fireEvent.submit(box.form!)
     expect(onSend).not.toHaveBeenCalled()

@@ -20,7 +20,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 test("**这一句花了多少 token 显示在回合下面**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible()
   await box.fill("请说一句话")
   await box.press("Enter")
@@ -35,7 +35,7 @@ test("**这一句花了多少 token 显示在回合下面**", async ({ dawn }) =
 test("**回复到了，思考记号不能还在转**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible()
   await box.fill("请说一句话")
   await box.press("Enter")

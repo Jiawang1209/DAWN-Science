@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 -c \"\np='src/ui/styles.css'; s=open(p).read()\ns=s.replace('.row-menu,\\n.attach-menu {\\n  position: fixed;','.row-menu {\\n  position: fixed;',1)\ns=s.replace('.row-menu .btn,\\n.attach-menu .btn {','.row-menu .btn {',1)\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/attach.spec.ts -g \"三个选项\" 2>&1 | grep -E \"✓|✘|passed|failed|竖着排|背景\" | head -6\ncp /tmp/styles.good.css src/ui/styles.css && npm run build 2>&1 | tail -1 && echo \"已还原并重建\"",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -12",
+    "buildCommand": "npm run build 2>&1 | tail -1 && npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -12",
+    "testCommand": "python3 -c \"\np='src/ui/i18n/en.ts'; s=open(p).read()\ns=s.replace('  \\\"输入内容，回车发送\\\": \\\"Type a message, Enter to send\\\",\\n','')\nopen(p,'w').write(s)\"\nnpm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -6",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -292,6 +292,12 @@
       "type": "file"
     },
     {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
+      "accessCount": 3,
+      "lastAccessed": 1786598429344,
+      "type": "file"
+    },
+    {
       "path": "e2e/zz-probe.spec.ts",
       "accessCount": 2,
       "lastAccessed": 1786525276442,
@@ -367,12 +373,6 @@
       "path": "src/ui/main.tsx",
       "accessCount": 2,
       "lastAccessed": 1786577951077,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
-      "accessCount": 2,
-      "lastAccessed": 1786582232148,
       "type": "file"
     },
     {

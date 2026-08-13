@@ -61,7 +61,7 @@ test.describe("CLI agent 在对话框里", () => {
     await 等进了对话(page)
     await expect(page.locator(".term-host")).toHaveCount(0)
 
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 CLI 已应答：你好/)).toBeVisible({ timeout: 30_000 })
   })
@@ -85,7 +85,7 @@ test.describe("CLI agent 在对话框里", () => {
   test("**你自己说的话也要在对话里** —— 作者试用时报的那个", async ({ dawn }) => {
     const { page } = dawn
     await startFakeClaude(page)
-    await page.getByPlaceholder(/回车发送/).fill("我说的这句话")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("我说的这句话")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 CLI 已应答/)).toBeVisible({ timeout: 30_000 })
 
@@ -100,7 +100,7 @@ test.describe("CLI agent 在对话框里", () => {
   test("**agent 的气泡要收尾** —— 不收尾它永远显示成还在说", async ({ dawn }) => {
     const { page } = dawn
     await startFakeClaude(page)
-    await page.getByPlaceholder(/回车发送/).fill("你好")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 CLI 已应答/)).toBeVisible({ timeout: 30_000 })
     // 「中止」在没有进行中的回合时应当不可用——它反映的正是 busy 已经落回 false
@@ -111,7 +111,7 @@ test.describe("CLI agent 在对话框里", () => {
   test("**工具调用落在账本上** —— 判据 ②，走 PTY 时这里只有一团字节", async ({ dawn }) => {
     const { page, dbPath } = dawn
     await startFakeClaude(page)
-    await page.getByPlaceholder(/回车发送/).fill("读个文件")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("读个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 CLI 已应答/)).toBeVisible({ timeout: 30_000 })
 
@@ -134,7 +134,7 @@ test.describe("CLI agent 在对话框里", () => {
   test("**工具调用在对话里看得见**", async ({ dawn }) => {
     const { page } = dawn
     await startFakeClaude(page)
-    await page.getByPlaceholder(/回车发送/).fill("读个文件")
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("读个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".tool")).toContainText("Read", { timeout: 30_000 })
   })

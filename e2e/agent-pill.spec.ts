@@ -19,7 +19,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 async function startSession(page: import("@playwright/test").Page) {
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 }
 
 test("模型 pill 在输入卡里，且**几何上确实靠右靠下**", async ({ dawn }) => {

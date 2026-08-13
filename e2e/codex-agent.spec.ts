@@ -33,7 +33,7 @@ async function startCodex(page: import("@playwright/test").Page): Promise<void> 
 }
 
 const say = async (page: import("@playwright/test").Page, text: string) => {
-  await page.getByPlaceholder(/回车发送/).fill(text)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill(text)
   await page.getByRole("button", { name: "发送", exact: true }).click()
 }
 

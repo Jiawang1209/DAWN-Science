@@ -16,6 +16,8 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "今天帮你做些什么？@引用工作区文件，/调用技能与指令": "What can I do for you today? @ to reference workspace files, / for skills and commands",
+  "不发这张：{0}": "Do not send this one: {0}",
   "添加内容": "Add content",
   "上传文件": "Upload a file",
   "上传图片": "Upload an image",
@@ -258,7 +260,6 @@ export const EN: Readonly<Record<string, string>> = {
   "开始一段对话": "Start a chat",
   "当前工作区已就绪。挑一个起手，或者直接说你要做什么。":
     "Your workspace is ready. Pick a starting point, or just say what you need.",
-  "输入内容，回车发送": "Type a message, Enter to send",
   "发送": "Send",
   "停止": "Stop",
   "修改": "Edit",

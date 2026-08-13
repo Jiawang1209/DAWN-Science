@@ -34,7 +34,7 @@ test("一条都没有时不画空列表，且新建入口可点", async ({ dawn 
  */
 test("空对话区给的是**能直接打字的输入卡**，不是一句提示", async ({ dawn }) => {
   const { page } = dawn
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(box).toBeVisible()
   await box.fill("直接说")
   await box.press("Enter")
@@ -47,7 +47,7 @@ test("项目概览是侧栏底部入口，不是首页", async ({ dawn }) => {
   await expect(page.locator(".panels")).toBeVisible()
   // 能回得来——单向门不是出路
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 })
 
 test("设置可达且可返回", async ({ dawn }) => {

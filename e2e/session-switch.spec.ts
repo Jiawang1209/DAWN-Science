@@ -13,7 +13,7 @@ type Page = import("@playwright/test").Page
 
 async function newSession(page: Page) {
   await 开一段临时会话(page)
-  await expect(page.getByPlaceholder(/回车发送/)).toBeVisible()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 }
 
 const rows = (page: Page) => page.locator(".session-list .row")
@@ -39,7 +39,7 @@ test("切会话不丢历史", async ({ dawn }) => {
 
   // 会话 A：说一句，等回复
   await newSession(page)
-  await page.getByPlaceholder(/回车发送/).fill("我是 A 的问题")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("我是 A 的问题")
   await page.keyboard.press("Enter")
   await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
 
@@ -61,7 +61,7 @@ test("**草稿不跟着切过去**，切回来又还在", async ({ dawn }) => {
   await newSession(page)
   await expect(rows(page)).toHaveCount(2)
 
-  const box = page.getByPlaceholder(/回车发送/)
+  const box = page.getByPlaceholder(/今天帮你做些什么/)
 
   // 在当前会话（第二个）里打一半
   await box.fill("这句话是给第二个会话的")

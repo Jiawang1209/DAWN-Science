@@ -715,9 +715,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         await loadTempSessions(client)
       }
       if (t.sessionId) {
-        setActiveSessionId(t.sessionId)
-        // 人还在原地才进对话。**他自己切走了就尊重他的选择**
-        if ($view.get() === from) setView("conversation")
         // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
         await 取写权(t.sessionId)
         /**
@@ -734,16 +731,59 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 拦下来的表现是「粘了图、按了发送，什么都没发生」。
          */
         if (firstMessage || (images && images.length > 0)) {
-          await client.get("writeToSession", {
-            sessionId: t.sessionId,
-            data: firstMessage ?? "",
-            as: "user",
-            ...(images && images.length > 0 ? { images: [...images] } : {}),
-          })
+          try {
+            await client.get("writeToSession", {
+              sessionId: t.sessionId,
+              data: firstMessage ?? "",
+              as: "user",
+              ...(images && images.length > 0 ? { images: [...images] } : {}),
+            })
+          } catch (e) {
+            /**
+             * **第一句没发出去，这段对话就不该存在**（2026-08-13，作者报的
+             * *「回车，结果给我的反馈是：还没有对话」*）。
+             *
+             * 人的意图是「用这句话开一段对话」。话没送出去，
+             * **留下的就只是一条空壳**——它会挂在侧栏上，点进去什么都没有，
+             * 而人根本不知道它是哪来的。
+             *
+             * 所以收掉它，然后把错误抛给调用点：空态那张卡会**把字和图还回去**，
+             * 并把原因摆在输入框旁边。**建会话 + 发第一句是一个意图，
+             * 要么都成，要么都不留下痕迹。**
+             */
+            await client.get("deleteTask", { taskId: t.taskId }).catch(() => {})
+            await loadTasks(client).catch(() => {})
+            throw e
+          }
         }
+        /**
+         * **发成功了才进对话**（2026-08-13 调的顺序）。
+         *
+         * 此前是先进去再发——于是第一句失败时人已经站在那个空对话里了，
+         * 屏幕上写着「还没有对话」，而他刚打的字和挑的图都没了。
+         *
+         * 写入本身很快（把 prompt 交给运行时就返回，不等模型），
+         * 所以这一下推迟在人那儿感觉不到；换来的是**失败时他还在原地**。
+         *
+         * 「人还在原地才进对话」那条守卫保留：**他自己切走了就尊重他的选择**。
+         */
+        setActiveSessionId(t.sessionId)
+        if ($view.get() === from) setView("conversation")
       }
     } catch (e) {
-      fail(e)
+      /**
+       * **这里不报，往上抛**（2026-08-13 修，一次自伤）。
+       *
+       * 上一版同时做了 `fail(e)`（走那条全局提示）**和** `throw e`
+       * （让空态那张卡显示）——于是同一句话在屏幕上出现两次，
+       * Playwright 的严格模式当场撞上。**而它撞的正是我们自己那条
+       * 「两处长得一样的东西，等于没有判据」。**
+       *
+       * 谁报由**调用点**决定，因为只有它知道人正在看哪儿：
+       *   - 空态那张输入卡 → 摆在输入框旁边（人正盯着它）
+       *   - 侧栏那颗 `＋`   → 没有输入卡可摆，走全局提示
+       */
+      throw e
     }
   }
   /**
@@ -2026,7 +2066,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }
           tasks={tasks}
           onNewTask={回到初始画面}
-          onNewTaskIn={(workspace) => void 新建任务({ workspace })}
+          onNewTaskIn={(workspace) =>
+            // 这条路没有输入卡可以摆错误，所以它走全局提示
+            void 新建任务({ workspace }).catch(fail)
+          }
           onPickTask={(任务) => {
             if (!任务.sessionId) {
               // **没有会话就说清楚**：那是「还没拉起来」，不是点了没反应
@@ -2554,7 +2597,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
                */
               onStart={(agentId, firstMessage, workspace, images) =>
-                void 新建任务({ agentId, firstMessage, workspace, images })
+                // **返回 promise**：空态那张卡要据此在失败时把字和图还回去
+                新建任务({ agentId, firstMessage, workspace, images })
               }
               onPickDirectory={() => client.pickDirectory(默认工作区?.path)}
               onOpenSettings={actions.openSettings}

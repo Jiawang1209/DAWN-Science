@@ -64,3 +64,59 @@ test.describe("模型没声明收图", () => {
     await expect(page.locator(".attached-one")).toHaveCount(0)
   })
 })
+
+
+/**
+ * **首页第一句话没发出去时，不许留下一条空壳对话**（2026-08-13，作者要修的）。
+ *
+ * 他撞过两次：*「回车，结果给我的反馈是：还没有对话。」*
+ *
+ * ## 根因是顺序
+ *
+ * 此前是**先进对话、再发第一句**——于是第一句失败时人已经站在那个空会话里，
+ * 屏幕上写着「还没有对话」，而他刚打的字和挑的图都没了。
+ *
+ * 现在：**发成功了才进去**；失败就把刚建的那条收掉，人留在原地。
+ * **建会话 + 发第一句是一个意图，要么都成，要么都不留下痕迹。**
+ *
+ * ## 怎么造一个「真的会失败的写入」
+ *
+ * 用 `pickFiles` 注入一个**不存在的 `.png` 路径**：主进程读盘时
+ * `readFile` 会抛，后端据此返回 `invalid_request`。
+ * 这是这条路上少有的、**确定性的**写入失败——
+ * 而模型侧的失败（`failStatus`）只让回答失败，写入本身照样成功，
+ * **拿它当判据的话这条用例是假绿的**（第一版就是）。
+ */
+test.describe("第一句就失败", () => {
+  const 不存在的图 = "/tmp/dawn-这张图不存在-e2e.png"
+  test.use({ dawnOptions: { pickFiles: [不存在的图] } })
+
+  test("**人留在原地，字还在，侧栏不多一条空壳**", async ({ dawn }) => {
+    const { page } = dawn
+    await page.locator(".composer").waitFor({ timeout: 30_000 })
+
+    const 起初 = await page.locator(".sidebar .sess-item").count()
+
+    // 挑一张「存在于选择器、不存在于磁盘」的图
+    await page.locator(".composer-controls .attach-trigger").click()
+    await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
+    await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("这一句会失败")
+    await 框.press("Enter")
+
+    // ① **原因摆在输入卡旁边**，不是丢进某个角落
+    await expect(page.locator(".composer-problem")).toBeVisible({ timeout: 30_000 })
+
+    // ② **人还在原地**：没有被拽进一个空对话
+    await expect(page.locator(".conv-title")).toHaveCount(0)
+
+    // ③ **字和图都还在**：不该为一次失败重打一遍、重挑一遍
+    await expect(框).toHaveValue("这一句会失败")
+    await expect(page.locator(".attached-one")).toHaveCount(1)
+
+    // ④ **侧栏不多一条空壳**：话没送出去，这段对话就不该存在
+    await expect(page.locator(".sidebar .sess-item")).toHaveCount(起初)
+  })
+})

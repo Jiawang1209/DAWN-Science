@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -1 && npx playwright test 2>&1 | tail -8",
-    "testCommand": "python3 - << 'PY'\np=\"src/ui/i18n/en.ts\"; s=open(p).read()\nfor 死的 in ['  \"工作目录：{0}\": \"Working folder: {0}\",\\n',\n             '  \"还没设工作目录——这是一段普通对话\": \"No folder set — this is a plain chat\",\\n']:\n    s=s.replace(死的,\"\")\nopen(p,\"w\").write(s)\nPY\nnpx vitest run tests/ui/i18n.test.ts 2>&1 | grep -E \"Tests \" | head -2; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4",
+    "buildCommand": "python3 - << 'PY'\np=\"src/ui/styles.css\"; s=open(p).read()\ns=s.replace('''.session-list .sess > .sub { flex: 0 0 auto; }''',\n'''.session-list .sess > .sub {\n  flex: 0 0 auto;\n  /**\n   * **等宽数字**（2026-08-13）。\n   *\n   * 这里是 `HH:MM`，已经补过零，但**字形不是等宽的**——\n   * `11:11` 比 `08:48` 窄好几个像素。两个后果：\n   *\n   *   1. 一列时刻在比例字体下**左右抖**（`.tool-elapsed` 与 `.side-count`\n   *      早就为同一个理由用了 tabular-nums）；\n   *   2. **视觉基线会偶发红**：这一格是 `mask` 掉的，而遮罩矩形是按元素盒子画的\n   *      ——盒子宽度随时刻变，遮罩边缘就变。\n   *      **一个偶尔自己红的基线，是把人训练成条件反射按 update 的最快方式**，\n   *      而那句话是我们自己写在 CLAUDE.md 里的。\n   */\n  font-variant-numeric: tabular-nums;\n}''',1)\nopen(p,\"w\").write(s)\nPY\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/visual.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | tail -4",
+    "testCommand": "for i in 1 2; do npm test 2>&1 | grep -E \"起 ir 内核超过|起 dawn-spike 内核超过|子进程以|Tests \" | head -6; echo \"--- 第 $i 轮 ---\"; done",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

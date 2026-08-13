@@ -3732,12 +3732,18 @@ export function EmptyConversation({
    * 第二个参数给了的话，**建完之后把这句话真的发出去**。
    * 第三个是工作目录（2026-08-12）——**给了就归「项目」，不给就归「会话」**。
    */
+  /**
+   * **返回 Promise 就能被等**（2026-08-13）。
+   *
+   * 建会话 + 发第一句是**一个意图**：话没送出去，这段对话就不该存在，
+   * 而人打的字和挑的图也不该跟着消失。能等，才能在失败时把它们还回去。
+   */
   onStart: (
     agentId: string,
     firstMessage?: string,
     workspace?: string,
     images?: readonly 图片来源[],
-  ) => void
+  ) => void | Promise<void>
   /**
    * 弹原生目录选择器（2026-08-12）。**不给就不画那颗 chip**。
    *
@@ -3764,6 +3770,8 @@ export function EmptyConversation({
    */
   const [空态图, 设空态图] = useState<待发的图[]>([])
   const [空态拖着, 设空态拖着] = useState(false)
+  /** 第一句话没发出去的原因。**摆在输入卡旁边**，不是丢进某个角落的提示 */
+  const [开场出错, 设开场出错] = useState<string | undefined>(undefined)
   return (
     <div className="conversation empty-conv">
       {first ? (
@@ -3851,9 +3859,26 @@ export function EmptyConversation({
                * 而在调用点上不是：多传一个 `undefined` 会让所有
                * 「这一屏是怎么开出会话的」的断言都要跟着改，而它们关心的不是图片。
                */
-              if (空态图.length > 0) onStart(first, t || undefined, 工作目录, 空态图.map(报给协议))
-              else onStart(first, t || undefined, 工作目录)
+              /**
+               * **乐观清空，失败还回去**——与对话里那条同一副做法。
+               *
+               * 不清的话，从按下到回执之间那句话还留在框里，人会以为没发出去
+               * 而再按一次；而清了不接失败，就是作者报过的那个
+               * 「字和图一起消失，屏幕上什么都没有」。
+               */
+              const 这次的图 = 空态图
               设空态图([])
+              设草稿("")
+              设开场出错(undefined)
+              void Promise.resolve(
+                这次的图.length > 0
+                  ? onStart(first, t || undefined, 工作目录, 这次的图.map(报给协议))
+                  : onStart(first, t || undefined, 工作目录),
+              ).catch((e: unknown) => {
+                设开场出错(e instanceof Error ? e.message : String(e))
+                设草稿(t)
+                设空态图(这次的图)
+              })
             }}
           >
             <div className="composer-box">
@@ -3936,6 +3961,12 @@ export function EmptyConversation({
                   }
                 }}
               />
+              {/**
+                * **第一句没发出去的原因，摆在这儿**（2026-08-13）。
+                * 它此前只经 `note()` 走到别处——而那条路人看不见，
+                * 于是「发失败」在屏幕上与「什么都没发生」长得一模一样。
+                */}
+              {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               <div className="composer-controls">
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton

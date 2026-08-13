@@ -1663,7 +1663,23 @@ pre {
 }
 .session-list .sess > .name { flex: 1 1 auto; min-width: 0; }
 /* 右端那一小段**不许被压扁**：它是时刻或路径，截断了就没有意义 */
-.session-list .sess > .sub { flex: 0 0 auto; }
+.session-list .sess > .sub {
+  flex: 0 0 auto;
+  /**
+   * **等宽数字**（2026-08-13）。
+   *
+   * 这里是 `HH:MM`，已经补过零，但**字形不是等宽的**——
+   * `11:11` 比 `08:48` 窄好几个像素。两个后果：
+   *
+   *   1. 一列时刻在比例字体下**左右抖**（`.tool-elapsed` 与 `.side-count`
+   *      早就为同一个理由用了 tabular-nums）；
+   *   2. **视觉基线会偶发红**：这一格是 `mask` 掉的，而遮罩矩形是按元素盒子画的
+   *      ——盒子宽度随时刻变，遮罩边缘就变。
+   *      **一个偶尔自己红的基线，是把人训练成条件反射按 update 的最快方式**，
+   *      而那句话是我们自己写在 CLAUDE.md 里的。
+   */
+  font-variant-numeric: tabular-nums;
+}
 
 /**
  * **项目行是两行：名字在上，路径在下**（2026-08-13，作者：*「项目里面，

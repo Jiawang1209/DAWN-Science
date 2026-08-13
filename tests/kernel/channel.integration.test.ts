@@ -53,10 +53,41 @@ for (const k of KERNELS) {
        * 在同进程里测的话，那次崩溃会把 vitest 自己带走，
        * 报出来的是一堆看不懂的东西，而不是「关停顺序错了」。
        */
-      const out = execFileSync(TSX, [RUNNER, k.name, k.code], {
-        encoding: "utf8",
-        timeout: 90_000,
-      })
+      /**
+       * **红的时候要说得出是哪一种红**（2026-08-13）。
+       *
+       * 这条在一次全量跑里红过一次，单独跑与后来的全量跑都绿——
+       * 而 `execFileSync` 抛出来的东西**分不出「超时」「非 0 退出」「输出不对」**，
+       * 于是它只留下一句看不懂的报错，下一个人只能当它「又抖了一下」。
+       *
+       * **一条说不清自己为什么红的用例，会慢慢把整套测试的可信度耗光。**
+       * 这里不改判据、不放宽超时——只把三种失败分开讲清楚：
+       * 超时多半是全量跑时的资源争抢（它起的是**真内核**：tsx 子进程 + Jupyter），
+       * 非 0 退出多半是关停顺序（Spike D 那个 SIGABRT），
+       * 而输出不对才是适配器真的坏了。
+       */
+      let out: string
+      try {
+        out = execFileSync(TSX, [RUNNER, k.name, k.code], {
+          encoding: "utf8",
+          timeout: 90_000,
+        })
+      } catch (e) {
+        const err = e as { code?: string; signal?: string; status?: number; stdout?: string; stderr?: string }
+        const 尾 = `\nstdout：${err.stdout ?? "(空)"}\nstderr：${err.stderr ?? "(空)"}`
+        if (err.signal === "SIGTERM" || err.code === "ETIMEDOUT") {
+          throw new Error(
+            `起 ${k.name} 内核超过 90 秒。**这多半不是适配器坏了**——` +
+              `它起的是真内核（tsx 子进程 + Jupyter），全量跑时容易被抢资源。` +
+              `先单独跑一遍这条确认。${尾}`,
+          )
+        }
+        throw new Error(
+          `子进程以 ${err.status ?? "?"} 退出（signal=${err.signal ?? "无"}）。` +
+            `**非 0 退出优先怀疑关停顺序**：socket 没关就退出会让 native 层 SIGABRT` +
+            `（Spike D 实测，而且结论先打印、崩溃在后）。${尾}`,
+        )
+      }
       expect(out, `子进程输出：${out}`).toContain("KCH_OK 42")
       // 溯源三件套必须在消息出适配器时就在
       expect(out).toMatch(/kernelInstanceId=k-[a-z0-9-]+/)

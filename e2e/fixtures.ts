@@ -276,6 +276,11 @@ export interface DawnOptions {
    */
   pickDirectory?: string
   /**
+   * 原生**文件**选择器要返回哪几个（2026-08-13，那颗 `＋` 用的）。
+   * 逗号分隔——环境变量只能是字符串，而它要能表达「多选」。
+   */
+  pickFiles?: string[]
+  /**
    * 预写一份 `providers.yaml`，而不是让 DAWN 写默认那份。
    *
    * **只给需要特殊 agent 的用例用**（例如托管一个 `bash` 当 PTY agent）。
@@ -476,6 +481,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
          * 而不是绕过界面直接打 IPC——后者验的是后端，不是接线。
          */
         ...(dawnOptions.pickDirectory ? { DAWN_PICK_DIRECTORY: dawnOptions.pickDirectory } : {}),
+        ...(dawnOptions.pickFiles ? { DAWN_PICK_FILES: dawnOptions.pickFiles.join(",") } : {}),
       },
     })
 

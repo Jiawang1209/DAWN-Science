@@ -325,6 +325,30 @@ app.whenReady().then(() => {
   })
 
   /**
+   * 原生文件选择器（2026-08-13，作者要的那颗 `＋`）。
+   *
+   * 与目录选择器同一副做法，包括那个 e2e 注入点——
+   * **系统模态框 Playwright 驱动不了**，没有它就只能绕过界面直接打 IPC，
+   * 而那样验的是后端，不是用户真正点的那条路。
+   *
+   * 多选：`multiSelections`。取消返回空数组，**不是 null**——
+   * 调用点拿到的永远是一个数组，少一处判空就少一处漏判。
+   */
+  ipcMain.handle("dawn:shell:pick-files", async (e, defaultPath?: string) => {
+    const 注入的 = process.env.DAWN_PICK_FILES
+    if (注入的) return 注入的.split(",").filter(Boolean)
+    const owner = BrowserWindow.fromWebContents(e.sender)
+    const opts = {
+      properties: ["openFile" as const, "multiSelections" as const],
+      ...(defaultPath ? { defaultPath } : {}),
+    }
+    const r = owner
+      ? await dialog.showOpenDialog(owner, opts)
+      : await dialog.showOpenDialog(opts)
+    return r.canceled ? [] : r.filePaths
+  })
+
+  /**
    * 后端就位：**先补接事件流，再放行 IPC**。
    *
    * 顺序反过来的话，界面可能在事件流接上之前就发出第一句话——

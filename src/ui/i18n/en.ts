@@ -16,6 +16,10 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "添加附件": "Add an attachment",
+  "附上": "ATTACH",
+  "从磁盘挑…": "Files…",
+  "整个目录…": "Folder…",
   "参考：本机注册过的 Jupyter 内核（{0}）": "For reference: Jupyter kernels registered on this machine ({0})",
   "⚠ 有 {0} 个同名内核被前面的挡住了：{1}": "⚠ {0} kernels are shadowed by earlier ones with the same name: {1}",
   "⚠ 有 {0} 条注册项读不出来：{1}": "⚠ {0} registrations could not be read: {1}",
@@ -328,7 +332,7 @@ export const EN: Readonly<Record<string, string>> = {
   "＋ 新终端": "+ New terminal",
   "收起终端": "Hide terminal",
   "打开终端": "Open terminal",
-  "打开项目文件夹": "Open project folder",
+  "在访达里打开": "Reveal in Finder",
   "还没有终端。点「＋ 新终端」开一个，它会开在上面那个目录里。":
     "No terminal yet. Click “+ New terminal” to open one — it starts in the folder above.",
   "终端只保留最近的输出，更早的已滚出缓冲":

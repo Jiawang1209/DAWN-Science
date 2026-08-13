@@ -3005,3 +3005,21 @@ pre {
   font-family: var(--dawn-font-mono);
   font-size: var(--dawn-code-size);
 }
+
+/**
+ * 输入卡左下角那颗 `＋` 与它的菜单（2026-08-13，作者要的）。
+ *
+ * **`＋` 靠左，模型 pill 那些靠右**：它属于「要发出去的这件事」，
+ * 与「用谁发」是两类。中间那段空白就是它们的分界。
+ */
+.attach { position: relative; margin-right: auto; }
+.attach-trigger { color: var(--dawn-text-3); }
+/* 菜单向上弹：输入卡贴着窗口底部，向下会被切掉（与模型 pill 同一条） */
+.attach-menu {
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-2));
+  left: 0;
+  min-width: 12rem;
+}
+.attach-menu .btn { display: flex; align-items: center; gap: var(--dawn-space-2); width: 100%; }
+.attach-menu .icon { color: var(--dawn-text-3); flex: 0 0 auto; }

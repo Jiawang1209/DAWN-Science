@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 -c \"\np='e2e/task-workspace.spec.ts'; s=open(p).read()\ns=s.replace('import { test, expect, 开一段临时会话 } from \\\"./fixtures.js\\\"','import { test, expect, 开一段临时会话, 等进了对话 } from \\\"./fixtures.js\\\"',1)\nopen(p,'w').write(s)\"\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/task-workspace.spec.ts 2>&1 | grep -E \"✓|✘|passed|failed\" | head -8",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npx playwright test 2>&1 | tail -12",
+    "buildCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npx playwright test 2>&1 | tail -12",
+    "testCommand": "npm run build 2>&1 | tail -1; npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -5; npx playwright test 2>&1 | tail -12",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

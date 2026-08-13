@@ -16,6 +16,7 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron"
 const CHANNEL = "dawn:workbench:invoke"
 const EVENT_CHANNEL = "dawn:workbench:event"
 const PICK_DIRECTORY = "dawn:shell:pick-directory"
+const PICK_FILES = "dawn:shell:pick-files"
 
 contextBridge.exposeInMainWorld("dawn", {
   invoke: (operation: string, request: unknown, requestId?: string) =>
@@ -27,6 +28,13 @@ contextBridge.exposeInMainWorld("dawn", {
    */
   pickDirectory: (defaultPath?: string): Promise<string | null> =>
     ipcRenderer.invoke(PICK_DIRECTORY, defaultPath),
+
+  /**
+   * 原生文件选择器（2026-08-13，作者要的那颗 `＋`）。**可以多选。**
+   * 取消时同样返回空数组——用户改主意不是错误。
+   */
+  pickFiles: (defaultPath?: string): Promise<string[]> =>
+    ipcRenderer.invoke(PICK_FILES, defaultPath),
 
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)

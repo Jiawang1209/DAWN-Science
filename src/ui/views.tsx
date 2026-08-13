@@ -19,7 +19,7 @@ import { Button, EmptyState, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -391,6 +391,112 @@ export function SessionRow({
       ) : null}
     </li>
   )
+}
+
+/**
+ * 输入卡左下角那颗 `＋`（2026-08-13，作者给了一张 WorkBuddy 的截图：
+ * *「对话窗口里面要搞一个加号，就按照这个搞。」*）。
+ *
+ * ## 明确没抄的四样，以及为什么
+ *
+ * 截图里是六项：`Files… / Folder… / Images… / Paste image / URL… /
+ * Prompt snippets…`。我们只做**前两项**，因为**只有前两项是真的**：
+ *
+ * - **图片 / 粘贴图片**：要模型收多模态的消息片段，协议与 provider 两侧都没有。
+ * - **URL**：agent 手上只有 `bash / edit / write`（`runtime/native.ts` 里那一列），
+ *   **没有取网页的工具**。塞一个 URL 进去，它只能回一句「我打不开」。
+ * - **提示词片段**：我们根本没有片段这套东西。
+ *
+ * 摆一个点了没用的入口比没有更坏（不变式 5：不伪造事实）——
+ * 这条与模型 pill 上没抄那些倍率、徽标是同一个判断。
+ *
+ * ## 它做的事：把路径插进输入框
+ *
+ * 不是「上传」——**东西本来就在这台机器上**，而 agent 的手也在这台机器上
+ * （bash 的 cwd 就是这段对话的工作目录）。所以「附上一个文件」的真实含义是
+ * **告诉它去看哪儿**，那就是一个路径。
+ *
+ * 在工作目录里面的写相对路径，外面的写绝对路径：前者更短、也更像人会打的字，
+ * 而后者**必须是绝对的**，否则 agent 按 cwd 一拼就指到别处去了。
+ */
+function AttachMenu({
+  workspace,
+  onInsert,
+}: {
+  /** 这段对话的工作目录。**用来把路径缩成相对的**，没有就一律绝对路径 */
+  workspace?: string | undefined
+  onInsert: (文本: string) => void
+}) {
+  const [开着, 设开着] = useState(false)
+  const 盒 = useRef<HTMLDivElement>(null)
+
+  // 点别处收起来。**菜单赖着不走**是本项目已经修过一次的毛病
+  useEffect(() => {
+    if (!开着) return
+    const 关 = (e: MouseEvent) => {
+      if (!盒.current?.contains(e.target as Node)) 设开着(false)
+    }
+    document.addEventListener("mousedown", 关)
+    return () => document.removeEventListener("mousedown", 关)
+  }, [开着])
+
+  const 挑 = async (要目录: boolean) => {
+    设开着(false)
+    const w = window as unknown as {
+      dawn?: {
+        pickDirectory?: (d?: string) => Promise<string | null>
+        pickFiles?: (d?: string) => Promise<string[]>
+      }
+    }
+    const 选中 = 要目录
+      ? [await w.dawn?.pickDirectory?.(workspace)].filter((x): x is string => !!x)
+      : ((await w.dawn?.pickFiles?.(workspace)) ?? [])
+    if (选中.length === 0) return // 取消了：什么都不做，也不吭声
+    onInsert(选中.map((p) => 相对于(p, workspace)).join(" "))
+  }
+
+  return (
+    <div className="attach" ref={盒}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="attach-trigger"
+        aria-label={t("添加附件")}
+        aria-haspopup="menu"
+        aria-expanded={开着}
+        onClick={() => 设开着((v) => !v)}
+      >
+        <加号图标 />
+      </Button>
+      {开着 ? (
+        <div className="menu attach-menu" role="menu" aria-label={t("添加附件")}>
+          {/* 组头：截图里那个 `ATTACH`。**它说清这一列是干什么的** */}
+          <p className="model-group-head">{t("附上")}</p>
+          <Button variant="ghost" size="inline" role="menuitem" onClick={() => void 挑(false)}>
+            <文件图标 />
+            {t("从磁盘挑…")}
+          </Button>
+          <Button variant="ghost" size="inline" role="menuitem" onClick={() => void 挑(true)}>
+            <文件夹图标 />
+            {t("整个目录…")}
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * 能缩成相对路径就缩，否则原样。
+ *
+ * **判据是「真的在里面」，不是「前缀对得上」**：`/w/paper2` 的前缀
+ * 也匹配 `/w/paper`，缩出来会得到 `2` 这种指向不明的东西。
+ * 所以要连分隔符一起比。
+ */
+function 相对于(路径: string, 根?: string): string {
+  if (!根) return 路径
+  const 前缀 = 根.endsWith("/") ? 根 : `${根}/`
+  return 路径.startsWith(前缀) ? 路径.slice(前缀.length) : 路径
 }
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
@@ -2331,6 +2437,16 @@ export function ConversationView({
           {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}
           <div className="composer-controls">
             {/**
+              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
+              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
+              * 所以分居两端——中间那段空白就是它们的分界。
+              */}
+            <AttachMenu
+              {...(workspace ? { workspace } : {})}
+              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
+              onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
+            />
+            {/**
               * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
               *
               * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
@@ -3041,7 +3157,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
                   onClick={() => setExpanded((v) => !v)}
                   aria-expanded={expanded}
                 >
-                  {expanded ? "收起" : tf("展开全部（还有 {0} 行）", result.hidden)}
+                  {expanded ? t("收起") : tf("展开全部（还有 {0} 行）", result.hidden)}
                 </Button>
               ) : null}
             </>
@@ -3219,6 +3335,11 @@ export function EmptyConversation({
                 }}
               />
               <div className="composer-controls">
+                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
+                <AttachMenu
+                  {...(工作目录 ? { workspace: 工作目录 } : {})}
+                  onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
+                />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
                   *

@@ -39,7 +39,7 @@ test("四个屏走一遍，**一条 CSP 违规都没有**", async ({ dawn }) => 
   await page.getByRole("button", { name: "项目概览" }).click()
   await expect(page.locator(".panels")).toBeVisible()
 
-  await page.getByRole("button", { name: "文件" }).click()
+  await page.getByRole("button", { name: "文件", exact: true }).click()
   await expect(page.locator(".files-view")).toBeVisible()
 
   expect(违规, `被 CSP 拦下的东西：\n${违规.join("\n")}`).toEqual([])

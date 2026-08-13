@@ -89,8 +89,16 @@ export function TerminalDock({
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd">{workspace}</span> : null}
-        <Button variant="ghost" size="sm" aria-label={t("收起终端")} onClick={onCloseDock}>
-          {t("收起")}
+        {/**
+          * **可见文案与可及名字一致**（2026-08-13）。
+          *
+          * 此前是「可见『收起』+ `aria-label` 说『收起终端』」——
+          * `aria-label` 会压过可见文案，于是**眼睛读到的与读屏念到的不是一句话**，
+          * 而按名字找元素时两个名字还互为子串。
+          * 一颗按钮只该有一个名字。
+          */}
+        <Button variant="ghost" size="sm" onClick={onCloseDock}>
+          {t("收起终端")}
         </Button>
       </div>
 
@@ -105,7 +113,7 @@ export function TerminalDock({
           <p className="empty">
             {t("配置里没有 kind: pty 的 agent，开不了终端。")}
             <Button variant="outline" size="sm" onClick={onOpenProject}>
-              {t("打开项目文件夹")}
+              {t("在访达里打开")}
             </Button>
           </p>
         ) : currentId ? (

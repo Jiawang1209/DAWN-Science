@@ -510,3 +510,20 @@ for (const [屏, 进去] of [
     await expect(page.locator(".turns").getByText("还没有对话")).toHaveCount(0)
   })
 }
+
+/**
+ * **Esc 也能把那个菜单收掉**（2026-08-13）。
+ *
+ * 别处每一个浮层都有这条退路（模型菜单、agent 菜单、侧栏搜索、改一句话的输入框），
+ * **只有这个菜单漏了**。一个只能用鼠标关掉的菜单，对键盘用户等于挡住了整张输入卡。
+ */
+test("**Esc 收掉「＋」的菜单**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.locator(".composer").waitFor({ timeout: 30_000 })
+
+  await page.locator(".composer-controls .attach-trigger").click()
+  await expect(page.getByRole("menu", { name: "添加内容" })).toBeVisible()
+
+  await page.keyboard.press("Escape")
+  await expect(page.getByRole("menu", { name: "添加内容" })).toHaveCount(0)
+})

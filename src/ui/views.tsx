@@ -484,7 +484,23 @@ function AttachButton({
   }
 
   return (
-    <div className="attach" ref={盒}>
+    <div
+      className="attach"
+      ref={盒}
+      /**
+       * **Esc 也能收**（2026-08-13 补）。
+       *
+       * 别处每一个浮层都有这条退路（模型菜单、agent 菜单、侧栏搜索、
+       * 改一句话的输入框），**只有这个菜单漏了**——
+       * 一个只能用鼠标关掉的菜单，对键盘用户等于挡住了整张输入卡。
+       */
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && 开着) {
+          e.stopPropagation()
+          设开着(false)
+        }
+      }}
+    >
       <Button
         variant="ghost"
         size="icon"

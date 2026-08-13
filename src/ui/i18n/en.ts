@@ -16,6 +16,7 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "重新加载": "Reload",
   "正在等模型回话": "Waiting for the model",
   "这一轮附的第 {0} 张图": "Attached image {0}",
   "今天帮你做些什么？@引用工作区文件，/调用技能与指令": "What can I do for you today? @ to reference workspace files, / for skills and commands",

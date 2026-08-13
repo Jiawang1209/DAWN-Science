@@ -215,7 +215,6 @@ export const EN: Readonly<Record<string, string>> = {
   "这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）": "This task has no live chat yet — it needs to be resumed after a restart (later half of T3)",
   "思考中": "Thinking",
   "界面语言。默认英文；这个选择记在这台机器上。": "Interface language. English by default; the choice is remembered on this machine.",
-  "工作目录：{0}": "Working folder: {0}",
   "；完整内容：{0}": "; full text at: {0}",
   /* ── 侧栏与导航 ─────────────────────────────────────────────── */
   "新建任务": "New task",
@@ -295,7 +294,6 @@ export const EN: Readonly<Record<string, string>> = {
   "，且未能保存全文": ", and the full text could not be saved",
   "HTML 输出按纯文本显示（渲染它需要沙箱，见阶段 ④）":
     "HTML output is shown as plain text (rendering it needs a sandbox — see phase ④)",
-  "还没设工作目录——这是一段普通对话": "No folder set — this is a plain chat",
   "时间不明": "time unknown",
 
   /* ── 起手建议 ───────────────────────────────────────────────── */

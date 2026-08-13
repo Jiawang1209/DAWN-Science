@@ -297,3 +297,12 @@ export function 搜索图标({ className }: 图标属性 = {}) {
     </壳>
   )
 }
+
+/** 停止。一个圆角实心方块——**与「播放/发送」那个三角是一对反义词** */
+export function 停止图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <rect x="4" y="4" width="8" height="8" rx="1.6" />
+    </壳>
+  )
+}

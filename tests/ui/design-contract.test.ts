@@ -155,10 +155,23 @@ describe("设计契约 · primitive 不被调用点覆写", () => {
 
 describe("设计契约 · 可访问性与文案", () => {
   it("按钮不用原生 title= —— 无样式、约 500ms 系统延迟、与主题不符", () => {
+    /**
+     * **跨行也要抓**（2026-08-13 补）。
+     *
+     * 上一版是逐行匹配 `<Button … title=`——而属性一多，JSX 就会被格式化成
+     * 每行一个属性，那时 `title=` 与 `<Button` 不在同一行，**这条扫描就瞎了**。
+     * 输入卡上那颗发送按钮带着 `title="发送"` 活了很久，一直没被抓出来。
+     *
+     * 本项目为「逐行扫描抓不住跨行 JSX」栽过两次（emoji 那条、按钮子串那条），
+     * **这是第三次**——所以这里也改成整块匹配。
+     */
+    const 违规: string[] = []
     for (const f of tsxFiles()) {
-      const hits = findLines(read(f), (l) => /<[Bb]utton[^>]*\stitle=/.test(l))
-      expect(hits, `${f}：改用 aria-label，或做成可见文案`).toEqual([])
+      for (const 块 of read(f).match(/<Button\b[^>]*>/gs) ?? []) {
+        if (/\stitle=/.test(块)) 违规.push(`${f}：${块.replace(/\s+/g, " ").slice(0, 70)}`)
+      }
     }
+    expect(违规, "改用 aria-label，或做成可见文案").toEqual([])
   })
 
   it("不出现字面「加载中」/「Loading…」 —— 必须走 Loader 并说明在等什么", () => {

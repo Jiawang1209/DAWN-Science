@@ -19,7 +19,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -92,11 +92,28 @@ function WorkspaceEntry({
         variant="ghost"
         size="sm"
         className="ws-chip"
-        title={workspace ? tf("工作目录：{0}", workspace) : t("还没设工作目录——这是一段普通对话")}
+        /**
+         * **那句话从这颗按钮上摘掉了**（2026-08-13）。
+         *
+         * 它此前挂在原生 `title` 上（设计契约明令禁止：无样式、约 500ms
+         * 系统延迟、读屏读不到）。我第一反应是改成 `aria-label`——**错的**：
+         * `aria-label` 会**盖掉可见文案**作为可及名字，于是这颗按钮
+         * 不再叫「选择工作目录」了，五条 e2e 当场红。
+         *
+         * 正确的答案是它压根不该在这儿：
+         *   - 没设路径时，那句「这是一段普通对话」**是作者早就让我删掉的**
+         *     （*「显示『这是一段普通对话』感觉就很无聊」*）——
+         *     chip 自己写着「选择工作目录」，那已经说明没设了；
+         *   - 设了路径时，**完整路径确实有用**，但它属于那段文字本身，
+         *     所以挂在里面那个 `<span>` 上（span 不是按钮，不受那条规则约束）。
+         */
         onClick={onPick}
       >
         <文件夹图标 />
-        <span className="ws-chip-label">{文字}</span>
+        {/* 全路径给眼睛：chip 上显示的是缩过的 `短路径` */}
+        <span className="ws-chip-label" title={workspace ?? undefined}>
+          {文字}
+        </span>
         <下拉图标 />
       </Button>
       {/**
@@ -2162,7 +2179,6 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
       size="icon"
       className="copy-btn"
       aria-label={label}
-      title={label}
       onClick={() => {
         void navigator.clipboard
           .writeText(text)
@@ -2522,11 +2538,15 @@ export function ConversationView({
             {session.state === "exited" ? "已结束" : session.state}
           </span>
         )}
-        {busy && onAbort ? (
-          <Button variant="outline" size="sm" className="abort" onClick={onAbort}>
-            {t("停止")}
-          </Button>
-        ) : null}
+        {/**
+          * **「停止」搬到了输入卡上那颗按钮里**（2026-08-13）。
+          *
+          * 它此前在这儿——而人正盯着输入框等回答，
+          * 中止的入口离他的手有半个屏幕。作者的原话是
+          * *「我没有看到哪里结束或者中止」*。
+          *
+          * 不两处都留：**一个动作一个家**。
+          */}
       </header>
 
       {/**
@@ -2936,16 +2956,41 @@ export function ConversationView({
              * 文字留在无障碍标签里：**图形按钮不能只有图形**
              * （DESIGN.md：no meaning conveyed by shape alone）。
              */}
-            <Button
-              type="submit"
-              variant="primary"
-              className="send-btn"
-              aria-label={t("发送")}
-              title="发送"
-              disabled={disabled ?? false}
-            >
-              <上箭头图标 />
-            </Button>
+            {/**
+              * **跑起来之后，这颗按钮就是「停止」**（2026-08-13，作者提：
+              * *「我没有看到哪里结束或者中止，我的发送按钮一直是好的。
+              * 是不是需要在模型响应的过程中，这个发送按钮要变化一下呢？」*）。
+              *
+              * 他说的是对的，而且这是这类应用的通行做法：**中止的入口，
+              * 应该在你手已经在的地方**。此前它在对话标题栏上——
+              * 那儿离输入框很远，而人正盯着输入框等回答。
+              *
+              * **一个动作一个家**：标题栏那颗同时摘掉了，不是两处都留。
+              *
+              * `type` 也要跟着换：留着 `submit` 的话，按下停止会顺手提交一次表单
+              * （空的，会被 `if (!text …) return` 挡下，但那是靠运气）。
+              */}
+            {busy && onAbort ? (
+              <Button
+                type="button"
+                variant="primary"
+                className="send-btn stopping"
+                aria-label={t("停止")}
+                onClick={onAbort}
+              >
+                <停止图标 />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                variant="primary"
+                className="send-btn"
+                aria-label={t("发送")}
+                disabled={disabled ?? false}
+              >
+                <上箭头图标 />
+              </Button>
+            )}
           </div>
           {/**
             * **输入卡自己的那一行**（2026-08-12，作者截图指的就是这里）。
@@ -3250,7 +3295,6 @@ export function TranscriptRow({
               size="icon"
               className="edit-btn"
               aria-label={t("修改")}
-              title="修改"
               onClick={() => 设编辑(item.text)}
             >
               <铅笔图标 />

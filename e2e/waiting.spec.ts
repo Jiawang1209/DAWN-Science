@@ -58,6 +58,49 @@ test.describe("慢一点的模型", () => {
   })
 
 /**
+ * **跑起来之后，发送按钮就是停止按钮**（2026-08-13，作者提）。
+ *
+ * 他的原话：*「我没有看到哪里结束或者中止，我的发送按钮一直是好的。
+ * 是不是需要在模型响应的过程中，这个发送按钮要变化一下呢？」*
+ *
+ * 「停止」此前在**对话标题栏**上——离输入框半个屏幕，而人正盯着输入框等回答。
+ * 中止的入口应该在手已经在的地方。**标题栏那颗同时摘掉了**：一个动作一个家。
+ */
+test.describe("跑起来的时候", () => {
+  test.use({ dawnOptions: { firstChunkDelayMs: 1500 } })
+
+  test("**发送按钮变成停止，回音一到再变回来**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    const 发送 = page.getByRole("button", { name: "发送", exact: true })
+    const 停止 = page.getByRole("button", { name: "停止", exact: true })
+    await expect(发送).toBeVisible()
+    await expect(停止).toHaveCount(0)
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("在吗")
+    await 框.press("Enter")
+
+    // ① 跑起来了：**同一个位置**上现在是「停止」
+    await expect(停止).toBeVisible({ timeout: 5_000 })
+    await expect(发送).toHaveCount(0)
+
+    /**
+     * ② 它在输入卡里面——**不是在别处又长出一颗**。
+     * 「中止的入口应该在手已经在的地方」，判据就是这个包含关系。
+     */
+    expect(await page.locator(".composer-box .send-btn").count()).toBe(1)
+
+    // ③ 回音到了就变回「发送」
+    await expect(page.locator(".turns").getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })
+    await expect(发送).toBeVisible()
+    await expect(停止).toHaveCount(0)
+  })
+})
+
+/**
  * **失败时也要停下来。**
  *
  * 一个转到天荒地老的记号，比没有记号更让人不知所措——

@@ -111,6 +111,60 @@ export class 对话内核 {
   }
 
   /**
+   * 把一段代码送进这门语言的内核，**等它这一轮吐完**再返回。
+   *
+   * ## 边界是 `status: idle`，不是 `execute_reply`
+   *
+   * 照抄 `KernelRuntime` 里那条踩出来的纪律：iopub 与 shell 是两条独立通道，
+   * **reply 到了不代表输出到齐**（K1 那个「Python 过、R 红」正是这么来的）。
+   *
+   * ## 不设默认超时
+   *
+   * 与 bash 那条同一个理由（作者定的）：一段真跑二十分钟的分析，
+   * 和「卡死了」在协议上长得一模一样。与其猜一个上限把正常的长任务砍掉，
+   * 不如把「已经跑了多久」显示出来、中止交给人按。
+   */
+  async 执行(
+    对话: SessionId,
+    语言: 内核语言,
+    代码: string,
+  ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
+    const 一 = await this.拿(对话, 语言)
+    const 输出: unknown[] = []
+
+    return new Promise((resolve, reject) => {
+      let 解开: (() => void) | undefined
+      const 收尾 = () => {
+        解开?.()
+        resolve({ 内核会话: 一.内核会话, 语言, 输出 })
+      }
+      try {
+        解开 = this.opts.runtime.attach(一.内核会话, (e) => {
+          const ev = e as { kind: string; entry?: { kind?: string; state?: string } }
+          if (ev.kind === "kernel_output" && ev.entry) {
+            输出.push(ev.entry)
+            // **这一轮的边界**（见上）
+            if (ev.entry.kind === "status" && ev.entry.state === "idle") 收尾()
+            return
+          }
+          /**
+           * **内核死了要出声，不能就这么挂着**（定案 4：不静默重起）。
+           * 挂着的表现是「发过去了，永远没有回音」——本项目最难查的那种。
+           */
+          if (ev.kind === "exited") {
+            解开?.()
+            reject(new Error(`${语言} 内核在这一轮里退出了`))
+          }
+        })
+        this.opts.runtime.write(一.内核会话, 代码)
+      } catch (e) {
+        解开?.()
+        reject(e instanceof Error ? e : new Error(String(e)))
+      }
+    })
+  }
+
+  /**
    * 收掉一个对话名下的所有内核。
    *
    * **一台起不来不该拦住其余的**：逐台收，收不掉的记下来交给调用方说出去，

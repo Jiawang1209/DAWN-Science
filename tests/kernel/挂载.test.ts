@@ -165,3 +165,86 @@ describe("收内核", () => {
     expect(挂.列("c2" as SessionId)).toEqual(["python"])
   })
 })
+
+/**
+ * 送代码进去，等这一轮吐完（2026-08-14）。
+ *
+ * **边界是 `status: idle`，不是 `execute_reply`**——照抄 `KernelRuntime` 里
+ * 那条踩出来的纪律：iopub 与 shell 是两条独立通道，reply 到了不代表输出到齐。
+ *
+ * 这里用一个**手写的假运行时**：`FakeRuntime` 不吐内核那套事件，
+ * 而这几条要验的正是「按什么边界收尾」。
+ */
+describe("执行", () => {
+  /** 一个只做三件事的假内核：记下收到的代码、按脚本吐事件、能退出 */
+  function 假内核(脚本: (发: (e: unknown) => void) => void) {
+    const 收到: string[] = []
+    const 听众 = new Map<string, (e: unknown) => void>()
+    const runtime = {
+      start: async (spec: { sessionId: string }) => ({ sessionId: spec.sessionId, pid: 0 }),
+      attach: (id: string, sink: (e: unknown) => void) => {
+        听众.set(id, sink)
+        return () => 听众.delete(id)
+      },
+      write: (id: string, code: string) => {
+        收到.push(code)
+        脚本((e) => 听众.get(id)?.(e))
+      },
+      stop: async () => {},
+    } as never
+    return { runtime, 收到, 听众 }
+  }
+
+  function 挂上(runtime: never) {
+    return new 对话内核({
+      runtime,
+      workspaceOf: () => "/w/proj",
+      sessionDirOf: () => "/dir",
+    })
+  }
+
+  it("**攒到 idle 才返回**，中途的输出一条不落", async () => {
+    const { runtime, 收到 } = 假内核((发) => {
+      发({ kind: "kernel_output", entry: { kind: "stream", text: "hello" } })
+      发({ kind: "kernel_output", entry: { kind: "display", mime: "image/png" } })
+      发({ kind: "kernel_output", entry: { kind: "status", state: "idle" } })
+    })
+    const r = await 挂上(runtime).执行(对话, "python", "print('hello')")
+
+    expect(收到).toEqual(["print('hello')"])
+    expect(r.输出).toHaveLength(3)
+    expect(r.语言).toBe("python")
+  })
+
+  /**
+   * **`idle` 之前不许返回。** 提前返回的表现是「图还没画完就说跑完了」——
+   * 而那正是 K1 里「Python 过、R 红」那个 bug 的形状。
+   */
+  it("只收到部分输出时**不返回**", async () => {
+    const { runtime } = 假内核((发) => {
+      发({ kind: "kernel_output", entry: { kind: "stream", text: "一半" } })
+    })
+    const 悬着 = 挂上(runtime).执行(对话, "python", "x")
+    const 赛跑 = await Promise.race([悬着, new Promise((r) => setTimeout(() => r("还没完"), 50))])
+    expect(赛跑, "没等到 idle 就返回了").toBe("还没完")
+  })
+
+  /**
+   * **内核死了要出声**（定案 4：不静默重起）。
+   * 挂着的表现是「发过去了，永远没有回音」——本项目最难查的那种。
+   */
+  it("这一轮里内核退出 → 抛，并说清是哪门语言", async () => {
+    const { runtime } = 假内核((发) => 发({ kind: "exited" }))
+    await expect(挂上(runtime).执行(对话, "R", "1+1")).rejects.toThrow(/R 内核/)
+  })
+
+  it("**执行会顺带把内核起起来** —— 懒起的落点就在这儿", async () => {
+    const { runtime } = 假内核((发) =>
+      发({ kind: "kernel_output", entry: { kind: "status", state: "idle" } }),
+    )
+    const 挂 = 挂上(runtime)
+    expect(挂.有(对话, "python")).toBe(false)
+    await 挂.执行(对话, "python", "1")
+    expect(挂.有(对话, "python")).toBe(true)
+  })
+})

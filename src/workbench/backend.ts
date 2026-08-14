@@ -586,6 +586,62 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
 
   /**
+   * 连上那台机器，并造出起会话要用的那份远端参数（2026-08-14 抽出来的）。
+   *
+   * **此前这段只长在 `createRemoteSession` 里**，于是走 `createTask`
+   * 那条路的远端任务拿不到它——`connectionId` 被收下却没往下传，
+   * 建出来的是一段**本地**会话：任务上标着「远端」，活跑在本机上。
+   * 作者报「新建的对话没收录到服务器收纳里」，根子就在这儿。
+   *
+   * 抽成一处而不是复制一份：两处长得一样的东西迟早各自漂移，
+   * 而这段里每一步都是踩出来的（登录环境取家目录、`cd` 要落库并推给界面）。
+   */
+  async function 造远端参数(connectionId: string) {
+    const { store, manager } = 远端()
+    const rec = store.get(connectionId)
+    if (!rec) throw fault("not_found", `没有这台服务器：${connectionId}`)
+    try {
+      await manager.connect(rec)
+    } catch (e) {
+      throw fault("internal_error", e instanceof Error ? e.message : String(e))
+    }
+    const ex = manager.executorOf(connectionId)
+    if (!ex) throw fault("internal_error", `刚连上就没了：${rec.label}`)
+
+    /**
+     * **起点是那台机器的家目录。**
+     *
+     * 从登录环境里拿（`connect()` 时已经捕获过一次），不再多问一次。
+     * **拿不到就明说**，不退回 `/`——那是根目录，
+     * `rm -rf *` 在那儿的后果与在家目录完全是两件事。
+     */
+    const 家 = ex.loginEnv()["HOME"]
+    if (!家) throw fault("internal_error", `问不出 ${rec.label} 上的家目录，没法决定从哪儿开始`)
+
+    let 现在在 = 家
+    let 会话id: string | undefined
+    const spec = {
+      connectionId,
+      executor: ex as never,
+      cwd: {
+        get: () => 现在在,
+        set: (v: string) => {
+          现在在 = v
+          /**
+           * **落库 + 推给界面。** 头上那一条要立刻跟上，否则人看到的是上一个目录——
+           * 「以为在 A 目录、其实在 B 目录」就是这么来的。
+           */
+          if (!会话id) return
+          projects.setRemoteCwd(会话id, v)
+          events.setCwd(会话id, v)
+        },
+      },
+    }
+    // **会话建出来之后要认领它**，否则上面那个 `set` 永远找不到 id
+    return { spec, 认领: (id: string) => void (会话id = id) }
+  }
+
+  /**
    * 这一次写入在账本上该叫什么。
    *
    * **只有内核会话与众不同**：它送进去的是代码，不是话。
@@ -837,7 +893,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * （成本栏停在「尚未记录」、变更 pane 里没有文件名）。
        */
       const 归属 = workspace ? projects.open(workspace) : projects.ensureTemporary(scratchRoot)
-      const 会话 = await 起一个会话(归属.projectId, agentId, workspace)
+      /**
+       * **给了服务器就真的连上去起**（2026-08-14 修）。
+       *
+       * 此前 `connectionId` 只被记进任务、没往下传，会话起在本机——
+       * 任务上标着「远端」而活跑在本地，是两件事对不上。
+       */
+      const 远端参数 = connectionId ? await 造远端参数(connectionId) : undefined
+      const 会话 = await 起一个会话(
+        归属.projectId,
+        agentId,
+        workspace,
+        远端参数?.spec as never,
+      )
+      远端参数?.认领(会话.sessionId)
 
       const rec = {
         taskId: `task-${randomUUID()}`,
@@ -1000,58 +1069,28 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **没连就先连**是有意的：人点的是「在这台机器上干活」，
      * 让他先按一次「连接」再按一次「新对话」，是把我们的实现顺序摊给他看。
      */
+    /**
+     * 在一台服务器上开一段对话。
+     *
+     * **它现在与 `createTask` 走同一条路**（2026-08-14）：连接、取家目录、
+     * 构造远端参数那段抽在 `造远端参数` 里，两处共用。
+     * 此前这段只长在这里，于是 `createTask({connectionId})` 建出来的是
+     * 一段本地会话——任务标着「远端」而活跑在本机上。
+     *
+     * **它不建任务**，这是与 `createTask` 仍然不同的地方：
+     * 保留它是为了不动既有调用点；界面那颗「新对话」应当改走 `createTask`，
+     * 那样这段会话才会出现在侧栏的「服务器」收纳里（作者报的那个现象）。
+     */
     createRemoteSession: async ({ connectionId, agentId }) => {
-      const { store, manager } = 远端()
-      const rec = store.get(connectionId)
-      if (!rec) throw fault("not_found", `没有这台服务器：${connectionId}`)
       if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
-
-      try {
-        await manager.connect(rec)
-      } catch (e) {
-        throw fault("internal_error", e instanceof Error ? e.message : String(e))
-      }
-      const ex = manager.executorOf(connectionId)
-      if (!ex) throw fault("internal_error", `刚连上就没了：${rec.label}`)
-
-      /**
-       * **起点是那台机器的家目录。**
-       *
-       * 从登录环境里拿（`connect()` 时已经捕获过一次），不再多问一次。
-       * **拿不到就明说**，不退回 `/`——那是根目录，
-       * `rm -rf *` 在那儿的后果与在家目录完全是两件事。
-       */
-      const 家 = ex.loginEnv()["HOME"]
-      if (!家) throw fault("internal_error", `问不出 ${rec.label} 上的家目录，没法决定从哪儿开始`)
-
+      const 远端参数 = await 造远端参数(connectionId)
       /**
        * 会话得有个归属（会话表要 project_id）。挂在那个隐藏的容器项目下——
        * **用户不需要知道它存在**：他要的是「在 gs191 上聊一段」，不是一个项目。
        */
       const 归属 = projects.ensureTemporary(scratchRoot)
-
-      let 现在在 = 家
-      let 会话id: string | undefined
-      const 建好的 = await 起一个会话(归属.projectId, agentId, undefined, {
-        connectionId,
-        executor: ex as never,
-        cwd: {
-          get: () => 现在在,
-          set: (v: string) => {
-            现在在 = v
-            /**
-             * **落库 + 推给界面。**
-             *
-             * 头上那一条要立刻跟上，否则人看到的是上一个目录——
-             * 「以为在 A 目录、其实在 B 目录」就是这么来的。
-             */
-            if (!会话id) return
-            projects.setRemoteCwd(会话id, v)
-            events.setCwd(会话id, v)
-          },
-        },
-      })
-      会话id = 建好的.sessionId
+      const 建好的 = await 起一个会话(归属.projectId, agentId, undefined, 远端参数.spec as never)
+      远端参数.认领(建好的.sessionId)
       return 建好的
     },
 

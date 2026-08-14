@@ -119,6 +119,7 @@ export const EN: Readonly<Record<string, string>> = {
   "日期": "date",
   "文本": "text",
   "空": "empty",
+  "服务器": "Servers",
   "工具权限": "Tool permissions",
   "全放行": "Allow everything",
   "内置 agent 可以任意读写、执行命令。这是目前的默认。":

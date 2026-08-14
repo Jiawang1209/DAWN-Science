@@ -928,15 +928,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setConnBusy(c.id)
     setConnProblem(undefined)
     try {
-      const s = await client.get<SessionSummary>("createRemoteSession", {
-        connectionId: c.id,
+      /**
+       * **走 `createTask`，不走 `createRemoteSession`**（2026-08-14 作者报的）。
+       *
+       * 作者：*「新建的对话要收录到下面的服务器的收纳里面。」*
+       * 而侧栏在任务模型之后**以任务为骨架**——`createRemoteSession` 只起会话、
+       * 不建任务，于是那段对话在收纳里根本不存在。
+       *
+       * 走任务这条路还顺带把另一件事补上了：那些远端对话**终于能像别的任务一样
+       * 改名、置顶、批量删**——它们此前不能，正因为它们不是任务。
+       */
+      const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
         agentId,
+        connectionId: c.id,
       })
-      await Promise.all([loadConnections(client), loadTempSessions(client)])
-      setActiveSessionId(s.sessionId)
+      await Promise.all([loadConnections(client), loadTasks(client), loadTempSessions(client)])
+      if (!t.sessionId) throw new Error("任务建好了却没有会话——这一步不该悄悄过去")
+      setActiveSessionId(t.sessionId)
       setView("conversation")
       // 写权由上面那个 effect 统一持有（选中即取、到点即续）——**这里不再抄一遍**
-      await 取写权(s.sessionId)
+      await 取写权(t.sessionId)
     } catch (e) {
       // **开不起来要说清为什么**，就在那一区里
       setConnProblem(e instanceof Error ? e.message : String(e))

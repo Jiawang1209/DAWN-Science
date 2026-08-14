@@ -416,6 +416,30 @@ describe("侧栏 · 服务器那一列", () => {
     expect(c.querySelector(".side-server"), "凭空多了一个服务器分区").toBeNull()
   })
 
+  /**
+   * **一个收纳，不是每台一个标题**（2026-08-14 作者指出我第一版做错了）。
+   *
+   * 作者：*「会话有一个收纳叫做会话，项目有一个收纳叫做项目，
+   * 其实服务器有一个收纳，那就叫服务器。」*
+   * 机器一多，「每台一个平级标题」会把侧栏摊开——而「项目」那一列
+   * 不管几个项目都只占一个标题。
+   */
+  it("**「服务器」这个标题只有一个** —— 不是每台机器各占一个", () => {
+    const c = 画(
+      [任务({ connectionId: "a" }), 任务({ connectionId: "b" })],
+      (id) => `服务器-${id}`,
+    )
+    const 标题 = [...c.querySelectorAll(".side-section")].filter((e) =>
+      (e.textContent ?? "").includes("服务器"),
+    )
+    expect(标题.length, "收纳标题应当只有一个").toBe(1)
+  })
+
+  it("收纳标题带图标 —— 与项目、会话并列的三个收纳，一眼看得出", () => {
+    const c = 画([任务({ connectionId: "a" })], () => "实验室")
+    expect(c.querySelector(".side-section .side-section-icon")).toBeTruthy()
+  })
+
   it("两台服务器各成一列，不混在一起", () => {
     const c = 画(
       [任务({ connectionId: "a" }), 任务({ connectionId: "b" }), 任务({ connectionId: "a" })],

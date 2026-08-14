@@ -19,7 +19,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 , 服务器图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -1564,15 +1564,38 @@ export function SessionSidebar({
         * **名字取不到就显示连接 id**：编一个「未命名服务器」出来，
         * 与「这台服务器就叫这个」在屏幕上分不开。
         */}
-      {服务器组.map(([connectionId, 些]) => (
-        <div key={connectionId} className="side-server">
+      {服务器组.length > 0 ? (
+        <>
           <p className="side-section">
-            {服务器名?.(connectionId) ?? connectionId}{" "}
-            <span className="side-count">{些.length}</span>
+            {/**
+              * **带图标**（2026-08-14 作者要的）。
+              * 它与「项目」「会话」是并列的三个收纳，图标让这一点一眼可见。
+              */}
+            <服务器图标 className="side-section-icon" />
+            {t("服务器")} <span className="side-count">{服务器组.length}</span>
           </p>
-          <ul className="side-list">{些.map((t) => 任务行(t, true))}</ul>
-        </div>
-      ))}
+          {/**
+            * **一个收纳，里面再列各台机器**（2026-08-14 改的形状）。
+            *
+            * 上一版做成了「每台服务器各自一个分区标题」——作者看过之后指出那是错的：
+            * *「会话有一个收纳叫做会话，项目有一个收纳叫做项目，
+            * 其实服务器有一个收纳，那就叫服务器。」*
+            *
+            * 差别在屏幕上很大：机器一多，那种做法会摊出好几个平级标题；
+            * 而「项目」那一列不管几个项目都只占一个标题。
+            */}
+          {服务器组.map(([connectionId, 些]) => (
+            <div key={connectionId} className="side-server">
+              <p className="side-subhead">
+                {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
+                {服务器名?.(connectionId) ?? connectionId}{" "}
+                <span className="side-count">{些.length}</span>
+              </p>
+              <ul className="side-list">{些.map((t) => 任务行(t, true))}</ul>
+            </div>
+          ))}
+        </>
+      ) : null}
 
       {/**
         * **会话 = 没给路径的那些。**

@@ -3396,3 +3396,22 @@ pre {
 .side-server {
   display: contents;
 }
+
+/**
+ * 一台机器的小标题。**比分区标题轻一级**——
+ * 它在「服务器」这个收纳**里面**，不是与它并列。
+ */
+.side-subhead {
+  margin: var(--dawn-space-2) 0 var(--dawn-space-1);
+  padding: 0 var(--dawn-space-3);
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-ui-size);
+}
+
+/** 收纳标题上那个图标，与文字同一行 */
+.side-section-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-right: var(--dawn-space-1);
+}

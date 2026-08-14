@@ -209,3 +209,60 @@ test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
 
   await expect(page.locator(".conv-remote-cwd")).toHaveText("~/数据", { timeout: 15_000 })
 })
+
+/**
+ * **在服务器上开的对话，要落进侧栏那个「服务器」收纳**（2026-08-14 作者报的）。
+ *
+ * 作者：*「我刚刚在同一个服务器里面加入了一个新的会话……
+ * 但是我发现会话，没有收录到服务器的收纳的对话里面。」*
+ *
+ * 根因：那颗「新对话」走的是 `createRemoteSession`——**它只起会话、不建任务**，
+ * 而侧栏在任务模型之后以任务为骨架，于是那段对话在收纳里根本不存在。
+ * 改走 `createTask({connectionId})` 之后才收得到。
+ *
+ * 收纳的三层：**服务器（收纳）→ 每台机器 → 那台机器上的会话**。
+ */
+test("**在服务器上开的对话，出现在侧栏的「服务器」收纳里**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  // 等它真的开起来（头上那一条是这条线的既有判据）
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+
+  // 第一层：收纳标题
+  const 收纳 = page.locator(".side-section", { hasText: "服务器" })
+  await expect(收纳, "侧栏没有「服务器」这个收纳").toBeVisible()
+
+  // 第二层：那台机器
+  const 机器 = page.locator(".side-server")
+  await expect(机器, "收纳里没有这台机器").toHaveCount(1)
+  await expect(机器.locator(".side-subhead")).toContainText("假机器")
+
+  // 第三层：那台机器底下真的有一条会话
+  await expect(
+    机器.locator("li").first(),
+    "机器底下一条会话都没有——那正是作者报的现象",
+  ).toBeVisible()
+})
+
+/**
+ * **同一台机器上开第二段，仍然归在同一台底下**（作者：*「一个 IP 其实可以包含多个会话」*）。
+ * 归错的表现是同一台机器出现两次——那时「这两段在不在同一台上」就说不清了。
+ */
+test("**同一台机器上的多段对话，收在同一台底下**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+
+  const 新对话 = page.locator(".remote-row").first().getByRole("button", { name: /新对话/ })
+  await 新对话.click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  await 展开远端(page)
+  await 新对话.click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+
+  await expect(page.locator(".side-server"), "同一台机器被拆成了两组").toHaveCount(1)
+  await expect(page.locator(".side-server li")).toHaveCount(2)
+})

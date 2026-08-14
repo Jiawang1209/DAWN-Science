@@ -51,6 +51,8 @@ function 取文本(content: string | { type: string; text?: string }[]): string 
 import { ProvenanceProbe } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
+import { createRunCodeTool } from "../tools/run-code.js"
+import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
@@ -109,6 +111,14 @@ export interface NativeRuntimeOptions {
   modelsPath?: string
   /** 可选的授权门。给出时内置工具被替换为包装过的版本 */
   gate?: ToolGate
+  /**
+   * 对话的内核（②，2026-08-14）。**给了才有 `run_code` 这个工具。**
+   *
+   * 不给就完全是原来的样子——这是作者定的纪律的直接形态：
+   * *「尽量在新增加功能的时候，尽可能不要更改旧功能。」*
+   * 装配里不传它的地方（CLI、测试替身）一个字都不受影响。
+   */
+  kernels?: 对话内核
   /**
    * 记录每次工具调用改了哪些文件（不变式 5）。
    *
@@ -495,8 +505,21 @@ export class NativeRuntime implements AgentRuntime {
     const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
 
 
+    /**
+     * `run_code`：让 agent 在这段对话自己的内核里跑代码（②，2026-08-14）。
+     *
+     * **与 `subagent` 无关，所以不能挂在它的分支里**——`toolsFor` 在没有
+     * `subagentChildEntry` 时会提前返回，挂过去的话那种装配里它整个消失。
+     * 这个坑本项目踩过一次（退役掉的那个数据工具就在这儿丢过）。
+     *
+     * **不给 `kernels` 就完全是原来的样子**：CLI 与测试替身一个字不受影响。
+     */
+    const 内核工具 = this.opts.kernels
+      ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
+      : []
+
     const entry = this.opts.subagentChildEntry
-    if (!entry) return base
+    if (!entry) return [...(base ?? []), ...内核工具]
 
     const tool = createSubagentTool({
       sessionId: spec.sessionId,
@@ -520,7 +543,7 @@ export class NativeRuntime implements AgentRuntime {
     })
 
     // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上
-    return [...(base ?? []), tool]
+    return [...(base ?? []), ...内核工具, tool]
   }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {

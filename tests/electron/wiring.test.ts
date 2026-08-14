@@ -11,6 +11,7 @@ import { join } from "node:path"
 import { createWorkbench } from "../../src/electron/wiring.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { NativeRuntime } from "../../src/runtime/native.js"
+import { 对话内核 } from "../../src/kernel/挂载.js"
 import { SettingsStore } from "../../src/store/settings.js"
 import { 造门 } from "../../src/policy/permissions.js"
 
@@ -281,5 +282,66 @@ describe("工具权限门 · 接线", () => {
     const r = await 跑(write!, { path: "/etc/hosts", content: "x" })
     expect(r.isError).toBe(true)
     expect(r.content?.[0]?.text).toMatch(/工作区/)
+  })
+})
+
+/**
+ * `run_code` 真的交到模型手上了吗（②第四批，2026-08-14）。
+ *
+ * `tests/tools/run-code.test.ts` 有 13 条，**验的是工具对象本身**——
+ * 而它们全绿的同时，这个工具可以根本没被装上。
+ * 这个项目栽在「零件都对、装没装上没人知道」上不止一次，
+ * **其中一次就在 `toolsFor` 这个函数里**（退役掉的那个数据工具在这儿丢过）。
+ */
+describe("run_code · 接线", () => {
+  const spec = () =>
+    ({
+      sessionId: "c1",
+      workspace: "/w/proj",
+      sessionDir: "/w/proj/.dawn/c1",
+      native: { provider: "deepseek", model: "m" },
+    }) as never
+
+  function 工具名(rt: NativeRuntime): string[] {
+    const 拿 = (rt as unknown as {
+      toolsFor(s: never, n: { provider: string; model: string }): { name: string }[] | undefined
+    }).toolsFor.bind(rt)
+    return (拿(spec(), { provider: "deepseek", model: "m" }) ?? []).map((t) => t.name)
+  }
+
+  const 假内核 = () =>
+    new 对话内核({
+      runtime: { start: async () => ({ sessionId: "k", pid: 0 }) } as never,
+      workspaceOf: () => "/w/proj",
+      sessionDirOf: () => "/dir",
+    })
+
+  it("**给了内核就有 run_code**", () => {
+    expect(工具名(new NativeRuntime({ kernels: 假内核() }))).toContain("run_code")
+  })
+
+  /**
+   * **不给就完全是原来的样子。**
+   * 这是作者定的纪律的可验证形式：加新功能不该改变没用到它的那些装配
+   * （CLI、测试替身都不传 `kernels`）。
+   */
+  it("**不给内核就没有这个工具** —— 老装配一个字不受影响", () => {
+    expect(工具名(new NativeRuntime({}))).not.toContain("run_code")
+  })
+
+  /**
+   * **它与 subagent 无关，不能挂在那个分支里。**
+   * `toolsFor` 在没有 `subagentChildEntry` 时提前返回——挂过去的话，
+   * 那种装配里 `run_code` 整个消失，而「少了一个工具」不报任何错。
+   */
+  it("**没配子 agent 入口时也在** —— 这是它最容易被弄丢的地方", () => {
+    expect(工具名(new NativeRuntime({ kernels: 假内核() }))).toContain("run_code")
+  })
+
+  it("内置四件套还在 —— 加自定义工具不该把它们挤掉", () => {
+    const 名 = 工具名(new NativeRuntime({ kernels: 假内核() }))
+    for (const t of ["read", "write", "edit", "bash"]) {
+      expect(名, `内置工具 ${t} 没了`).toContain(t)
+    }
   })
 })

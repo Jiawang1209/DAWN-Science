@@ -119,7 +119,12 @@ export const EN: Readonly<Record<string, string>> = {
   "日期": "date",
   "文本": "text",
   "空": "empty",
+  "已选 {0}": "{0} selected",
   "服务器": "Servers",
+  // **不能用 "Done …"**：已有一颗按钮就叫 "Done"，而 `getByRole(name)`
+  // 是子串匹配——两颗会同时命中（i18n 扫描当场拦下）
+  "结束多选服务器": "Finish selecting servers",
+  "多选服务器": "Select servers",
   "工具权限": "Tool permissions",
   "全放行": "Allow everything",
   "内置 agent 可以任意读写、执行命令。这是目前的默认。":

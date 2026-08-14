@@ -985,10 +985,12 @@ export function SessionSidebar({
    * （CLAUDE.md：*「两处长得一样的东西，等于没有判据」*）。
    * 一个状态表达不出那种情形。
    */
-  const [多选中, 设多选] = useState<{ 列: "会话" | "项目"; 集合: ReadonlySet<string> } | undefined>(
+  const [多选中, 设多选] = useState<{ 列: "会话" | "项目" | "服务器"; 集合: ReadonlySet<string> } | undefined>(
     undefined,
   )
   const 选会话中 = 多选中?.列 === "会话"
+  /** 正在多选服务器那一列（2026-08-14 作者要的，与另两列同一套状态） */
+  const 选服务器中 = 多选中?.列 === "服务器"
   const 选项目中 = 多选中?.列 === "项目"
   const 已选 = 多选中?.集合
   const 切一个 = (id: string) =>
@@ -999,7 +1001,7 @@ export function SessionSidebar({
       else n.add(id)
       return { ...前, 集合: n }
     })
-  const 进选择 = (列: "会话" | "项目") =>
+  const 进选择 = (列: "会话" | "项目" | "服务器") =>
     设多选((前) => (前?.列 === 列 ? undefined : { 列, 集合: new Set<string>() }))
 
   /**
@@ -1068,6 +1070,9 @@ export function SessionSidebar({
     if (已有) 已有[1].push(t)
     else 服务器组.push([t.connectionId, [t]])
   }
+
+  /** 服务器那一列能批量删的。**就是这一列里的全部**——它们都是任务 */
+  const 服务器可批量的 = 服务器组.flatMap(([, 些]) => 些)
 
   // **远端的不再落进这两列**：它们有自己的家了
   const 散的 = 全部任务.filter((t) => !t.workspace && !t.connectionId)
@@ -1140,7 +1145,15 @@ export function SessionSidebar({
    * 能勾、勾得上、按下删除、然后它还在：**这就是静默截断**（规格 7.5）。
    */
   const 任务行 = (task: TaskSummary, 可勾: boolean) => {
-    const 选中它 = 可勾 && 选会话中
+    /**
+     * **哪一列在多选，就只有那一列长勾选框**（2026-08-14 扩到三列）。
+     *
+     * 上一版写死 `选会话中`，于是服务器那一列的行**永远长不出勾选框**——
+     * 而按钮却在，点了像什么都没发生。这类「入口在、底下没接」
+     * 本项目栽过好几次，所以判据要按**这一行属于哪一列**来算。
+     */
+    const 属于服务器列 = task.connectionId !== undefined
+    const 选中它 = 可勾 && (属于服务器列 ? 选服务器中 : 选会话中)
     const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
     if (!s) {
       /**
@@ -1573,7 +1586,63 @@ export function SessionSidebar({
               */}
             <服务器图标 className="side-section-icon" />
             {t("服务器")} <span className="side-count">{服务器组.length}</span>
+            {/**
+              * **看得见的是「多选」，读屏听见的是「多选服务器」**——
+              * 与项目、会话那两颗同一副做法（2026-08-13 定的）：
+              * 三处是同一件事就该同一个名字，而
+              * `getByRole(name)` 是子串匹配，所以**可及名字必须互不为子串**
+              * （「多选项目」「多选会话」「多选服务器」谁也不是谁的子串）。
+              */}
+            {onDeleteMany ? (
+              <Button
+                variant="text"
+                size="inline"
+                className="side-bulk"
+                aria-label={选服务器中 ? t("结束多选服务器") : t("多选服务器")}
+                onClick={() => 进选择("服务器")}
+              >
+                {选服务器中 ? t("完成") : t("多选")}
+              </Button>
+            ) : null}
           </p>
+          {/**
+            * 选择模式下那一条：**已选几段、全选、删除**。
+            * 数字常驻——按下之前就该知道自己要删掉几个。
+            */}
+          {选服务器中 ? (
+            <div className="side-bulkbar">
+              <span className="side-bulk-count">{tf("已选 {0}", String(已选!.size))}</span>
+              <Button
+                variant="text"
+                size="inline"
+                onClick={() =>
+                  设多选({
+                    列: "服务器",
+                    集合:
+                      已选!.size === 服务器可批量的.length
+                        ? new Set()
+                        : new Set(服务器可批量的.map((x) => x.taskId)),
+                  })
+                }
+              >
+                {已选!.size === 服务器可批量的.length ? t("全不选") : t("全选")}
+              </Button>
+              <Button
+                variant="text"
+                size="inline"
+                className="danger"
+                disabled={已选!.size === 0}
+                onClick={() =>
+                  onDeleteMany?.(
+                    服务器可批量的.filter((x) => 已选!.has(x.taskId)),
+                    () => 设多选(undefined),
+                  )
+                }
+              >
+                {t("删除")}
+              </Button>
+            </div>
+          ) : null}
           {/**
             * **一个收纳，里面再列各台机器**（2026-08-14 改的形状）。
             *

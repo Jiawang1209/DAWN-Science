@@ -448,3 +448,81 @@ describe("侧栏 · 服务器那一列", () => {
     expect(c.querySelectorAll(".side-server").length).toBe(2)
   })
 })
+
+/**
+ * 服务器那一列的多选（2026-08-14 作者要的：*「服务器那里也可以多选」*）。
+ *
+ * 最要紧的一条是**按下之后行上真的长出勾选框**——
+ * 第一版 `任务行` 里写死的是「会话在多选吗」，于是服务器那一列
+ * **按钮在、勾选框永远不出现**，点了像什么都没发生。
+ * 「入口在、底下没接」是本项目栽过好几次的形状。
+ */
+describe("侧栏 · 服务器多选", () => {
+  const 任务 = (over: Record<string, unknown> = {}) => ({
+    taskId: `t${Math.random().toString(36).slice(2, 7)}`,
+    pinned: false,
+    sortOrder: 1,
+    createdAt: "2026-08-14T00:00:00Z",
+    connectionId: "c1",
+    ...over,
+  })
+
+  const 画 = () =>
+    render(
+      <SessionSidebar
+        {...base}
+        projects={[]}
+        activeProjectId={undefined}
+        tasks={[任务(), 任务()] as never}
+        服务器名={() => "实验室"}
+        onDeleteMany={() => {}}
+      />,
+    ).container
+
+  it("**看得见的是「多选」** —— 与项目、会话那两颗同一个字", () => {
+    const c = 画()
+    const 颗 = [...c.querySelectorAll(".side-bulk")].find((b) =>
+      (b.getAttribute("aria-label") ?? "").includes("服务器"),
+    )
+    expect(颗, "服务器那一列没有多选入口").toBeTruthy()
+    expect(颗!.textContent).toContain("多选")
+  })
+
+  /**
+   * **可及名字互不为子串**：`getByRole(name)` 是子串匹配，
+   * 三颗都叫「多选」时，靠它们各自的 `aria-label` 区分。
+   */
+  it("**读屏听见的是「多选服务器」** —— 与另两颗互不为子串", () => {
+    const 名 = [...画().querySelectorAll(".side-bulk")].map((b) => b.getAttribute("aria-label"))
+    expect(名).toContain("多选服务器")
+    for (const a of 名) {
+      for (const b of 名) {
+        if (a !== b) expect(b!.includes(a!), `「${a}」是「${b}」的子串`).toBe(false)
+      }
+    }
+  })
+
+  it("**按下之后行上真的长出勾选框** —— 第一版就是这里没接", () => {
+    const c = 画()
+    expect(c.querySelectorAll(".side-server input[type=checkbox]").length).toBe(0)
+    const 颗 = [...c.querySelectorAll(".side-bulk")].find((b) =>
+      (b.getAttribute("aria-label") ?? "").includes("服务器"),
+    ) as HTMLElement
+    fireEvent.click(颗)
+    expect(
+      c.querySelectorAll(".side-server input[type=checkbox]").length,
+      "按钮在、勾选框却没出现",
+    ).toBe(2)
+  })
+
+  it("选择模式下有「已选 N / 全选 / 删除」", () => {
+    const c = 画()
+    fireEvent.click(
+      [...c.querySelectorAll(".side-bulk")].find((b) =>
+        (b.getAttribute("aria-label") ?? "").includes("服务器"),
+      ) as HTMLElement,
+    )
+    expect(c.querySelector(".side-bulkbar")).toBeTruthy()
+    expect(c.querySelector(".side-bulk-count")!.textContent).toMatch(/已选\s*0/)
+  })
+})

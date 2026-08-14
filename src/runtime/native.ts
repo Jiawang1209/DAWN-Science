@@ -51,7 +51,6 @@ function 取文本(content: string | { type: string; text?: string }[]): string 
 import { ProvenanceProbe } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
-import { createDescribeDatasetTool } from "../tools/data.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
 import type {
@@ -495,15 +494,9 @@ export class NativeRuntime implements AgentRuntime {
   private toolsFor(spec: SessionSpec, native: { provider: string; model: string }): unknown[] | undefined {
     const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
 
-    /**
-     * 数据工具（2026-08-14）。**与 subagent 无关，所以不能挂在它的分支里**——
-     * 挂过去的话，没配子 agent 入口的装配里它会整个消失，
-     * 而那种「少了一个工具」不会报错，只会让模型改用 `read` 把 CSV 塞进上下文。
-     */
-    const 数据工具 = createDescribeDatasetTool({ workspace: spec.workspace })
 
     const entry = this.opts.subagentChildEntry
-    if (!entry) return [...(base ?? []), 数据工具]
+    if (!entry) return base
 
     const tool = createSubagentTool({
       sessionId: spec.sessionId,
@@ -527,7 +520,7 @@ export class NativeRuntime implements AgentRuntime {
     })
 
     // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上
-    return [...(base ?? []), 数据工具, tool]
+    return [...(base ?? []), tool]
   }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {

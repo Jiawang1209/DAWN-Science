@@ -61,6 +61,18 @@ export const 约定正文 = `## 产物落位（本项目采用标准科研目录
 
 **不要把生成的文件留在项目根目录。**
 
+## 看数据用你的解释器，不要用 read 把数据文件读进上下文
+
+要了解一份数据（多少行、有哪些列、缺多少、分布如何），**跑一段代码去问它**：
+
+- Python：\`pandas.read_csv(...).info()\` / \`.describe()\` / \`.isna().sum()\`；
+  excel 用 \`pandas.read_excel\`
+- R：\`readr::read_csv(...)\` + \`dplyr::glimpse()\` / \`summary()\`；
+  excel 用 \`readxl::read_excel\`
+
+**不要用 \`read\` 工具去读 csv / tsv / xlsx**：那会把几十行原始数据搬进上下文，
+而「一共多少行、哪列缺得多」你只能靠估——**跑一行代码就能得到准数**。
+
 > \`${原始数据目录}/\` 是只读的：DAWN 的工具权限门在「拦下危险操作」档下会直接拒绝对它的写入。
 > 需要产出衍生数据时写到 \`data/processed/\`。
 `

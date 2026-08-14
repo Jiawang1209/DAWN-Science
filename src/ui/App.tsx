@@ -1802,6 +1802,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
       >
         <SessionSidebar
+          /**
+           * 服务器那一列的名字（2026-08-14）。
+           * **取不到就让侧栏显示连接 id**——不在这里编一个占位名字。
+           */
+          服务器名={(id) => connections.find((c) => c.id === id)?.label}
           /** **临时项目不进项目列表**：它们的会话在上面那一列 */
           projects={projects.filter((p) => !p.temporary)}
           /**

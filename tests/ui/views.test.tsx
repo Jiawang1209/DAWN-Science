@@ -354,3 +354,73 @@ describe("PTY 会话的终端视图", () => {
   })
 })
 
+
+/**
+ * 服务器自成一列（2026-08-14，作者要的）。
+ *
+ * 作者：*「我们不是有会话和项目吗？我们可以再增加一个服务器的会话，
+ * 这样服务器的会话就可以进行归类了。」*
+ *
+ * 判据是任务身上的 `connectionId`，**不是「有没有工作目录」**——
+ * 一段远端任务同样可以设了远端路径，此前它会掉进「项目」那一列，
+ * 与本地项目混在一起，而那两者根本不是同一台机器上的东西。
+ */
+describe("侧栏 · 服务器那一列", () => {
+  const 任务 = (over: Record<string, unknown> = {}) => ({
+    taskId: `t${Math.random().toString(36).slice(2, 7)}`,
+    pinned: false,
+    sortOrder: 1,
+    createdAt: "2026-08-14T00:00:00Z",
+    ...over,
+  })
+
+  const 画 = (tasks: unknown[], 服务器名?: (id: string) => string | undefined) =>
+    render(
+      <SessionSidebar
+        {...base}
+        projects={[]}
+        activeProjectId={undefined}
+        tasks={tasks as never}
+        {...(服务器名 ? { 服务器名 } : {})}
+      />,
+    ).container
+
+  it("远端任务按服务器归成一列，标题是那台机器的名字", () => {
+    画([任务({ connectionId: "c1", title: "跑训练" })], (id) => (id === "c1" ? "实验室-3" : undefined))
+    expect(screen.getByText("实验室-3")).toBeDefined()
+  })
+
+  /**
+   * **取不到名字就显示连接 id。**
+   * 编一个「未命名服务器」出来，与「这台就叫这个名字」在屏幕上分不开。
+   */
+  it("**名字取不到就显示 id** —— 不编一个占位名", () => {
+    画([任务({ connectionId: "lab-7" })])
+    expect(screen.getByText("lab-7")).toBeDefined()
+  })
+
+  /**
+   * **远端任务不再掉进项目那一列。**
+   * 这是这次改动的全部内容：设了远端路径的任务此前会与本地项目并列，
+   * 而它们根本不在同一台机器上。
+   */
+  it("**设了路径的远端任务归服务器，不归项目**", () => {
+    const c = 画([任务({ connectionId: "c1", workspace: "/data/proj" })], () => "实验室")
+    expect(screen.getByText("实验室")).toBeDefined()
+    // 项目那一列不该因此多出一条
+    expect(c.querySelectorAll(".side-server").length).toBe(1)
+  })
+
+  it("**没有远端任务时不画这一列** —— 不留一个空标题", () => {
+    const c = 画([任务({ workspace: "/w/a" }), 任务({})])
+    expect(c.querySelector(".side-server"), "凭空多了一个服务器分区").toBeNull()
+  })
+
+  it("两台服务器各成一列，不混在一起", () => {
+    const c = 画(
+      [任务({ connectionId: "a" }), 任务({ connectionId: "b" }), 任务({ connectionId: "a" })],
+      (id) => `服务器-${id}`,
+    )
+    expect(c.querySelectorAll(".side-server").length).toBe(2)
+  })
+})

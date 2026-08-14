@@ -774,6 +774,7 @@ export function SideSash({
 }
 
 export function SessionSidebar({
+  服务器名,
   projects,
   sessions,
   agents,
@@ -934,6 +935,14 @@ export function SessionSidebar({
   onDeleteTask?: ((task: TaskSummary) => void) | undefined
   /** 在某个已有的工作路径下再开一段任务。**不给就不画那颗 `＋`** */
   onNewTaskIn?: ((workspace: string) => void) | undefined
+  /**
+   * 连接 id → 这台服务器叫什么（2026-08-14）。
+   *
+   * **取不到就显示 id**：编一个「未命名服务器」出来，与「这台就叫这个名字」
+   * 在屏幕上分不开。**可选**——不给的话服务器那一列显示的是 id，
+   * 仍然分得开是哪台，只是不好看；而这比让整列消失诚实。
+   */
+  服务器名?: ((connectionId: string) => string | undefined) | undefined
 }) {
   const active = projects.find((p) => p.projectId === activeProjectId)
   /**
@@ -1038,10 +1047,33 @@ export function SessionSidebar({
     (t.workspace ?? "").toLowerCase().includes(词)
 
   const 全部任务 = [...(tasks ?? [])].filter(命中).sort((a, b) => 名次(a) - 名次(b))
-  const 散的 = 全部任务.filter((t) => !t.workspace)
+
+  /**
+   * **服务器自成一列**（2026-08-14，作者要的）。
+   *
+   * 作者：*「我们不是有会话和项目吗？我们可以再增加一个服务器的会话，
+   * 这样服务器的会话就可以进行归类了。」*
+   *
+   * 判据是任务身上的 `connectionId`——**不是「有没有工作目录」**：
+   * 一段远端任务同样可以设了远端路径，此前它会掉进「项目」那一列，
+   * 与本地项目混在一起，而**那两者根本不是同一台机器上的东西**。
+   *
+   * 顺序：服务器优先于工作目录。远端任务即使设了路径也归服务器这一列，
+   * 否则同一段会话会同时满足两边，而**一段会话只该有一个家**。
+   */
+  const 服务器组: [string, TaskSummary[]][] = []
+  for (const t of 全部任务) {
+    if (!t.connectionId) continue
+    const 已有 = 服务器组.find(([c]) => c === t.connectionId)
+    if (已有) 已有[1].push(t)
+    else 服务器组.push([t.connectionId, [t]])
+  }
+
+  // **远端的不再落进这两列**：它们有自己的家了
+  const 散的 = 全部任务.filter((t) => !t.workspace && !t.connectionId)
   const 项目组: [string, TaskSummary[]][] = []
   for (const t of 全部任务) {
-    if (!t.workspace) continue
+    if (!t.workspace || t.connectionId) continue
     // **同一路径合并成一条**：作者选的是「一个项目底下挂两段」，不是两条同名并列
     const 已有 = 项目组.find(([p]) => p === t.workspace)
     if (已有) 已有[1].push(t)
@@ -1521,6 +1553,28 @@ export function SessionSidebar({
       ) : null}
 
       {/**
+        * **服务器自成一列**（2026-08-14，作者要的）。
+        *
+        * 作者：*「我们可以再增加一个服务器的会话，这样服务器的会话就可以进行归类了。」*
+        *
+        * 它排在项目与会话之间：**远端的东西不属于本地项目那一列**——
+        * 混在一起时，「这段活干在哪台机器上」要点进去才知道，
+        * 而那正是这一列存在的理由。
+        *
+        * **名字取不到就显示连接 id**：编一个「未命名服务器」出来，
+        * 与「这台服务器就叫这个」在屏幕上分不开。
+        */}
+      {服务器组.map(([connectionId, 些]) => (
+        <div key={connectionId} className="side-server">
+          <p className="side-section">
+            {服务器名?.(connectionId) ?? connectionId}{" "}
+            <span className="side-count">{些.length}</span>
+          </p>
+          <ul className="side-list">{些.map((t) => 任务行(t, true))}</ul>
+        </div>
+      ))}
+
+      {/**
         * **会话 = 没给路径的那些。**
         *
         * 缺席不是「缺了什么」，是「这是一段普通对话」——所以这一列里
@@ -1602,7 +1656,7 @@ export function SessionSidebar({
         * 与「一条对话都还没有」长得一模一样。
         * **两处长得一样的东西，等于没有判据。**
         */}
-      {词 !== "" && 项目组.length === 0 && 散的.length === 0 ? (
+      {词 !== "" && 项目组.length === 0 && 散的.length === 0 && 服务器组.length === 0 ? (
         <p className="side-empty">{tf("没有匹配「{0}」的项目或会话", search!.value.trim())}</p>
       ) : null}
 

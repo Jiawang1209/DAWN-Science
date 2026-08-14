@@ -321,7 +321,6 @@ export const EN: Readonly<Record<string, string>> = {
   "复制这段输出": "Copy this output",
   "已复制": "Copied",
   "复制不了": "Could not copy",
-  "没成": "error",
   "运行中": "running",
   "执行中": "running",
   "成功": "ok",

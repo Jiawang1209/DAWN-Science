@@ -286,20 +286,16 @@ test.describe("第一句话", () => {
  * 被挤成一列。西文不会暴露它（`Copied` 是一个不可断的词），
  * 所以这条**必须量形状**，不能只看文字在不在。
  */
-test("**「已复制」是横着的** —— 量形状，不是量文字在不在", async ({ dawn }) => {
-  /**
-   * **这条现在是红的，钉的是一个还没修好的 bug**（2026-08-14）。
-   *
-   * 已经排除的两条：`white-space: nowrap` 已生效（量到的就是 nowrap），
-   * `flex: none` 也加了。实测按钮 **28×28，而文字 span 要 45.6px**——
-   * 也就是说它的内容盒被限成了 20px，字溢到按钮外面去。
-   * 限它的那条规则还没找到（`.copy-btn` 自身只有三条样式，都不设宽）。
-   *
-   * **不删这条用例**：它量的是对的东西，红着正是它该有的样子。
-   * `test.fail()` 让套件如实报「这条预期失败」，而不是假装没有这回事——
-   * 修好之后这条会因为「预期失败却通过了」而报错，那正是提醒。
-   */
-  test.fail()
+/**
+ * 复制之后弹一个提示浮层（2026-08-14，作者定的形态）。
+ *
+ * 上一版是把按钮里的图标换成「已复制」三个字——按钮按图标尺寸排版，
+ * 内容盒只有 20px 而那三个字要 45.6px，于是字溢到按钮外面，看着像竖排了一列。
+ *
+ * **新形态从根上绕开它：按钮永远是图标，宽度不变；提示浮在旁边。**
+ * 所以这条同时量两件事：浮层是横着的、**按钮宽度没被撑变**。
+ */
+test("**复制之后旁边弹出提示，而按钮宽度不变**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
@@ -310,12 +306,34 @@ test("**「已复制」是横着的** —— 量形状，不是量文字在不�
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
   const 复制 = page.locator(".copy-btn").last()
-  await 复制.click()
-  await expect(复制).toContainText("已复制")
+  const 按前 = (await 复制.boundingBox())!.width
 
-  const 盒 = (await 复制.boundingBox())!
+  await 复制.click()
+  const 浮层 = 复制.locator(".copied-toast")
+  await expect(浮层).toBeVisible()
+  await expect(浮层).toHaveText("已复制")
+
+  // **横着的**：竖排时高会大于宽
+  const 盒 = (await 浮层.boundingBox())!
+  expect(盒.width, `提示竖着排了：宽 ${Math.round(盒.width)} × 高 ${Math.round(盒.height)}`)
+    .toBeGreaterThan(盒.height)
+
+  // **按钮没被撑变** —— 那正是上一版的病根
+  expect((await 复制.boundingBox())!.width, "按钮宽度被提示撑变了").toBe(按前)
+
+  /**
+   * **它得真的在屏幕里**（2026-08-14 截图抓到的）。
+   *
+   * 第一版让浮层往左浮，而用量那一行的复制按钮靠着容器左边——
+   * 浮层被推到容器外面，**屏幕上根本看不见**，
+   * 可 `boundingBox` 照样有值、`toBeVisible()` 也照样过。
+   * 所以这里量的是**位置**，而且**跟容器比**：第一版拿它和视口比（`x >= 0`），
+   * 那条永远成立——容器本身就不在视口最左边，于是浮层已经被容器裁掉了，
+   * 断言却还是绿的。**参照系挑错，判据就等于没有。**
+   */
+  const 容器 = (await page.locator(".turns-inner").last().boundingBox())!
   expect(
-    盒.width,
-    `「已复制」竖着排了：宽 ${Math.round(盒.width)} × 高 ${Math.round(盒.height)}`,
-  ).toBeGreaterThan(盒.height)
+    盒.x,
+    `提示被容器裁掉了：浮层左边 ${Math.round(盒.x)} < 容器左边 ${Math.round(容器.x)}`,
+  ).toBeGreaterThanOrEqual(容器.x)
 })

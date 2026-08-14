@@ -387,6 +387,8 @@
    * 压不过侧栏那条缝、更压不过 dock 与弹窗。
    */
   --z-table-head: 1;
+  /** 复制按钮旁边那个「已复制」浮层。**只需压过同一条气泡里的邻居** */
+  --z-inline-toast: 2;
   --z-sash: 10;
   --z-dock: 20;
   --z-modal-backdrop: 120;

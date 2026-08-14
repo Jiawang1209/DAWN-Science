@@ -2588,6 +2588,57 @@ pre {
    */
   white-space: nowrap;
   flex: none;
+  /* 浮层挂在它身上，所以它得是定位上下文 */
+  position: relative;
+}
+
+/**
+ * 「已复制」浮在按钮旁边（2026-08-14，作者定的形态）。
+ *
+ * **浮在按钮上方**（2026-08-14 截图改的）。
+ *
+ * 第一版让它往左浮，理由是「复制按钮总在气泡右上角」——**那个假设是错的**：
+ * 用量那一行左边还有一颗，浮层被推到容器外面，**屏幕上根本看不见**。
+ * 而 `boundingBox` 照样有值，所以用例当时是绿的。
+ * 往上浮跟按钮在左在右都无关。
+ *
+ * 停一会儿再淡出，时长与那个 2 秒的复位计时对齐——
+ * **淡完就正好消失**，不会出现「已经看不见了、DOM 里还留着」的尴尬。
+ */
+.copied-toast {
+  position: absolute;
+  bottom: 100%;
+  /**
+   * **左边缘对齐按钮，往右展开**（2026-08-14 第二次截图改的）。
+   *
+   * 居中（`left: 50%` + `translateX(-50%)`）时，靠着容器左边的那颗按钮
+   * 会让浮层的左半截**被裁掉**——截图里「已」只剩一半。
+   * 往右展开跟按钮在左在右都不冲突：转录本身够宽。
+   */
+  left: 0;
+  z-index: var(--z-inline-toast);
+  margin-bottom: var(--dawn-space-1);
+  padding: 2px var(--dawn-space-2);
+  border: 1px solid var(--dawn-success);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  color: var(--dawn-text-1);
+  font-size: var(--dawn-ui-size);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: copied-fade 2s ease-out forwards;
+}
+
+/* **失败也要出声**，只是换个颜色——不能只有成功那一半说话 */
+.copied-toast.bad {
+  border-color: var(--dawn-danger);
+}
+
+@keyframes copied-fade {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  60% { opacity: 1; }
+  100% { opacity: 0; }
 }
 .copy-btn:hover, .copy-btn:focus-visible { opacity: 1; }
 /* 操作在这一段**下面**（2026-08-11 挪下来，仿 Codex）：

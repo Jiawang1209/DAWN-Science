@@ -160,6 +160,37 @@ describe("列目录", () => {
   })
 })
 
+/**
+ * 表格那一支（2026-08-14）。**`.txt` 看内容，不看扩展名**——
+ * 科研数据里 `.txt` 常是制表符分隔的表，而日志、笔记也是 `.txt`。
+ */
+describe("读文件 · 表格", () => {
+  it("csv → 表", () => {
+    const { root } = ws()
+    writeFileSync(join(root, "a.csv"), "x,y\n1,2\n")
+    const c = readFileForPreview(root, "a.csv")
+    expect(c.kind).toBe("table")
+    if (c.kind !== "table") throw new Error("应当是表")
+    expect(c.table.columns.map((k) => k.name)).toEqual(["x", "y"])
+  })
+
+  it("**制表符分隔的 .txt → 表**", () => {
+    const { root } = ws()
+    writeFileSync(join(root, "d.txt"), "gene\texpr\nTP53\t1.2\nEGFR\t2.4\n")
+    expect(readFileForPreview(root, "d.txt").kind).toBe("table")
+  })
+
+  /**
+   * **日志还是文本。** 按扩展名一律当表的话，它会被读成一张乱表——
+   * 而那不报任何错，只在屏幕上摆出一堆看起来像数据的东西。
+   */
+  it("**日志样的 .txt 仍是文本**", () => {
+    const { root } = ws()
+    writeFileSync(root + "/log.txt", "[10:00] 启动完成\n[10:01] 磁盘快满了，剩 3%\n")
+    expect(readFileForPreview(root, "log.txt").kind).toBe("text")
+  })
+})
+
 describe("读文件", () => {
   it("文本原样给出", () => {
     const { root } = ws()

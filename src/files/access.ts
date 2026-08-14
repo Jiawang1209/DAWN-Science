@@ -16,10 +16,10 @@
  * **写、删、改名一概不做。** 这一阶段只读——写操作要走授权门（阶段 ④），
  * 混进来会让一个「看看结果」的功能变成一把刀。
  */
-import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs"
+import { readdirSync, readFileSync, realpathSync, statSync, openSync, readSync, closeSync } from "node:fs"
 import { extname, join, resolve, sep } from "node:path"
 import { UserFacingError } from "../errors.js"
-import { 读成表, 表格字节上界 } from "./table.js"
+import { 读成表, 表格字节上界, 像表格吗 } from "./table.js"
 
 /** 文本预览上界。512 KB 够看清一个数据文件的形状，又不至于把界面撑死 */
 export const TEXT_MAX_BYTES = 512 * 1024
@@ -186,6 +186,25 @@ export function mediaTypeOf(path: string): string {
   return MIME[extname(path).toLowerCase()] ?? "application/octet-stream"
 }
 
+/**
+ * 嗅一眼这个 `.txt` 是不是表。**只读前 64KB**——
+ * 判据只看前十行，为此把一个 2GB 的日志整个读进来是荒唐的。
+ */
+function 看着像表(file: string, bytes: number): boolean {
+  const 嗅 = 64 * 1024
+  const fd = openSync(file, "r")
+  try {
+    const buf = Buffer.alloc(Math.min(嗅, bytes))
+    readSync(fd, buf, 0, buf.length, 0)
+    return 像表格吗(buf.toString("utf8"))
+  } catch {
+    // 读不了就当它不是表：**后面那条 `text` 分支会照常处理并如实报错**
+    return false
+  } finally {
+    closeSync(fd)
+  }
+}
+
 /** 读一个文件供预览。**只读，且带上界** */
 export function readFileForPreview(workspace: string, relative: string): FileContent {
   const file = resolveInWorkspace(workspace, relative)
@@ -216,7 +235,19 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
    *
    * 放在 `text` 之前：`text/csv` 也是 `text/`，顺序反了就永远走不到这儿。
    */
-  if (mediaType === "text/csv" || mediaType === "text/tab-separated-values") {
+  /**
+   * **`.txt` 看内容决定**（2026-08-14，作者要的）。
+   *
+   * 科研数据里 `.txt` 常是制表符分隔的表，但日志与笔记也是 `.txt`——
+   * 按扩展名一律当表的话，一个日志会被读成一张乱表，**而且不报任何错**。
+   * 判据在 `像表格吗()`：前几行的列数一致且不止一列。
+   */
+  const 可能是表 =
+    mediaType === "text/csv" ||
+    mediaType === "text/tab-separated-values" ||
+    (mediaType === "text/plain" && 看着像表(file, bytes))
+
+  if (可能是表) {
     const 完整 = bytes <= 表格字节上界
     // **超了只读前面那段**，而不是拒绝打开：看一眼形状比什么都看不到有用得多
     const buf = readFileSync(file)

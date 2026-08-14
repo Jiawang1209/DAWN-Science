@@ -234,3 +234,88 @@ test.describe("会思考的模型", () => {
     expect(后, `秒数没有在走：${头}s → ${后}s`).toBeGreaterThan(头)
   })
 })
+
+/**
+ * **第一句话也要有等待记号**（2026-08-14 作者报的）。
+ *
+ * 作者：*「这一次没有等待模型响应了……一直在等待回复，但是界面没有任何的变化，
+ * 我甚至以为是对话死掉了。」*
+ *
+ * 根因：`设等回话` 此前只在对话里那个输入框的提交处理器里，而**第一句走的是
+ * 空态那条路**（`新建任务` → `writeToSession`），对话视图随后才挂载。
+ *
+ * 它还牵出第二个症状：`busy` 因此为假 → 发送按钮没变成停止 →
+ * **人可以再发一次** → pi 回 `Agent is already processing`。
+ * 这条把两个症状一起钉住。
+ */
+test.describe("第一句话", () => {
+  test.use({ dawnOptions: { firstChunkDelayMs: 2500 } })
+
+  test("**空态发出去的第一句也有记号，且发送按钮变成停止**", async ({ dawn }) => {
+    const { page } = dawn
+    await expect(page.locator(".app-shell")).toBeVisible()
+
+    // **走空态那条路**：不是先进对话再发，而是在起始屏直接开口
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("帮我查一下参考基因组怎么下载")
+    await 框.press("Enter")
+
+    await expect(
+      page.locator(".waiting"),
+      "第一句没有等待记号——人会以为对话死了",
+    ).toBeVisible({ timeout: 30_000 })
+
+    /**
+     * **同一个根的第二个症状**：记号不在 ⇒ `busy` 为假 ⇒ 还能再发一次，
+     * 而 pi 会回 `Agent is already processing`。
+     */
+    await expect(
+      page.getByRole("button", { name: "停止" }),
+      "发送按钮没变成停止——这一刻人可以再发一次，pi 会报 already processing",
+    ).toBeVisible()
+
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator(".waiting")).toHaveCount(0)
+  })
+})
+
+/**
+ * 复制按钮按下之后那句「已复制」**不许竖着排**（2026-08-14 作者报的）。
+ *
+ * 按钮是按图标尺寸排版的，而中文可以在任意两字之间断行——三个汉字于是
+ * 被挤成一列。西文不会暴露它（`Copied` 是一个不可断的词），
+ * 所以这条**必须量形状**，不能只看文字在不在。
+ */
+test("**「已复制」是横着的** —— 量形状，不是量文字在不在", async ({ dawn }) => {
+  /**
+   * **这条现在是红的，钉的是一个还没修好的 bug**（2026-08-14）。
+   *
+   * 已经排除的两条：`white-space: nowrap` 已生效（量到的就是 nowrap），
+   * `flex: none` 也加了。实测按钮 **28×28，而文字 span 要 45.6px**——
+   * 也就是说它的内容盒被限成了 20px，字溢到按钮外面去。
+   * 限它的那条规则还没找到（`.copy-btn` 自身只有三条样式，都不设宽）。
+   *
+   * **不删这条用例**：它量的是对的东西，红着正是它该有的样子。
+   * `test.fail()` 让套件如实报「这条预期失败」，而不是假装没有这回事——
+   * 修好之后这条会因为「预期失败却通过了」而报错，那正是提醒。
+   */
+  test.fail()
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+
+  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  await 框.fill("在吗")
+  await 框.press("Enter")
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+  const 复制 = page.locator(".copy-btn").last()
+  await 复制.click()
+  await expect(复制).toContainText("已复制")
+
+  const 盒 = (await 复制.boundingBox())!
+  expect(
+    盒.width,
+    `「已复制」竖着排了：宽 ${Math.round(盒.width)} × 高 ${Math.round(盒.height)}`,
+  ).toBeGreaterThan(盒.height)
+})

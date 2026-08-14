@@ -2480,10 +2480,42 @@ export function ConversationView({
   const [等回话, 设等回话] = useState<number | undefined>(undefined)
   /** 按下发送的那一刻。**秒数从这里数起**——人等的是从他按下开始的那段 */
   const [等回话时刻, 设等回话时刻] = useState(() => Date.now())
-  useEffect(() => 设等回话(undefined), [session.sessionId])
+  /**
+   * 人主动喊过停。**它挡住「从转录推导」那条**——
+   * 停下来之后转录里最后一条仍是用户那句，不挡就会被重新推成「在等」。
+   * 下一次发送时清掉。
+   */
+  const [喊停过, 设喊停过] = useState(false)
+  useEffect(() => {
+    设等回话(undefined)
+    设喊停过(false)
+  }, [session.sessionId])
   useEffect(() => {
     // **新东西冒出来了就收**：`发出去时的条数 + 我自己那一条` 之后再多，就是对面动了
-    if (等回话 === undefined) return
+    const 最后 = items[items.length - 1]
+    /**
+     * **从转录推导「在不在等」**（2026-08-14 作者报的）。
+     *
+     * 此前只有对话里那个输入框会 `设等回话`，而**第一句走的是空态那条路**
+     * （`App.tsx` 的 `新建任务` → `writeToSession`），对话视图是随后才挂载的。
+     * 于是第一句永远没有等待记号——作者：*「界面没有任何的变化，
+     * 我甚至以为是对话死掉了。」*
+     *
+     * 更坏的是它还牵出第二个 bug：`busy` 也因此为假，
+     * 发送按钮没变成停止，**人可以再发一次**，pi 当场回
+     * `Agent is already processing`。**两个症状，同一个根。**
+     *
+     * 记一笔这种做法，只要多一条发送路径就会漏一次；而「最后一条是用户发言」
+     * 是**转录自己说得出来的事实**，哪条路发的都算数。
+     */
+    const 转录在等 = 最后?.type === "turn" && 最后.who === "user"
+    if (等回话 === undefined) {
+      if (转录在等 && !喊停过) {
+        设等回话(items.length - 1)
+        设等回话时刻(Date.now())
+      }
+      return
+    }
     /**
      * **等到「有东西可读」，不是「有新条目」**（2026-08-14 作者报的）。
      *
@@ -2500,7 +2532,7 @@ export function ConversationView({
       .slice(等回话)
       .some((i) => i.type === "turn" && i.who === "agent" && (i.text ?? "").length > 0)
     if (说出字了) 设等回话(undefined)
-  }, [items, 等回话])
+  }, [items, 等回话, 喊停过])
 
   /**
    * agent 还在说话（最后一条 turn 未收尾），**或者刚发出去还没回音**。
@@ -2741,6 +2773,7 @@ export function ConversationView({
           // **从这一刻起显示「在等它」**，直到有新东西冒出来（见 `等回话` 的注）
           设等回话(items.length)
           设等回话时刻(Date.now())
+          设喊停过(false)
           void Promise.resolve(
             这次的图.length > 0 ? onSend(text, 这次的图.map(报给协议)) : onSend(text),
           ).catch((e: unknown) => {
@@ -3066,6 +3099,9 @@ export function ConversationView({
                    * **而「人主动喊停」本身就是一个终点，只是我上一版漏了它。**
                    */
                   设等回话(undefined)
+                  // **喊停也要挡住「从转录推导」那条**：转录里最后一条仍是用户那句，
+                  // 不挡的话下一个 tick 就把记号又推回来了
+                  设喊停过(true)
                   onAbort()
                 }}
               >

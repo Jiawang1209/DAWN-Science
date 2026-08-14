@@ -49,9 +49,20 @@ test("回复是 markdown 而不是一坨纯文本", async ({ dawn }) => {
   await page.getByPlaceholder(/今天帮你做些什么/).fill("讲讲")
   await page.keyboard.press("Enter")
   await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible({ timeout: 30_000 })
-  // agent 那条走 .md 容器；用户那条走 <pre>（人打的字原样显示）
+  /**
+   * **两边都走 markdown**（2026-08-14 作者定的：*「我输入的内容，
+   * 也要写成 markdown 的格式」*）。
+   *
+   * 这最后一行原来钉的是相反的行为（`.turn.user pre` —— 人打的字原样显示），
+   * 理由是「渲染成 markdown 等于替他改写他说的话」。**作者知道那个取舍，
+   * 并且要了另一边**：他日常粘的是带格式的提问。判据跟着翻面，理由留在这里。
+   *
+   * 用户那条上仍然带着 `.text`，且**类名落在 markdown 自己的容器上**——
+   * 「短问句不该被折行」那条判据量的是它的 `scrollHeight`。
+   */
   await expect(page.locator(".turn.agent .md")).toHaveCount(1)
-  await expect(page.locator(".turn.user pre")).toHaveCount(1)
+  await expect(page.locator(".turn.user .md.text")).toHaveCount(1)
+  await expect(page.locator(".turn.user pre"), "用户那条不该再是 pre").toHaveCount(0)
 })
 
 test("空白内容不发送 —— 不往账本上记一条什么都没有的回合", async ({ dawn }) => {

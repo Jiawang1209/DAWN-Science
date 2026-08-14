@@ -106,9 +106,24 @@ class 渲染兜底 extends Component<
   }
 }
 
-export function AgentMarkdown({ text, streaming }: { text: string; streaming: boolean }) {
+export function AgentMarkdown({
+  text,
+  streaming,
+  className,
+}: {
+  text: string
+  streaming: boolean
+  /**
+   * 额外的类名，落在**同一个元素**上（2026-08-14）。
+   *
+   * 用户那条气泡要带 `.text`——包一层 `<div class="text">` 的话，
+   * 量 `scrollHeight` 时会把里面段落的外边距算进去，
+   * 而 `composer-history-copy` 那条判据正是按「占几行」量的。
+   */
+  className?: string
+}) {
   return (
-    <div className="md">
+    <div className={className ? `md ${className}` : "md"}>
       <渲染兜底 text={text}>
       <Streamdown
         mode={streaming ? "streaming" : "static"}

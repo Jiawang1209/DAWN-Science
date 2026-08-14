@@ -3367,11 +3367,23 @@ export function TranscriptRow({
          * 把用户输入也当 markdown 渲染，等于替他改写他说的话——
          * 他写的 `**这里**` 就是想让人看见那四个星号（多半正是在问它为什么报错）。
          */}
-        {mine ? (
-          <pre className="text">{item.text}</pre>
-        ) : (
-          <AgentMarkdown text={item.text} streaming={!item.final} />
-        )}
+        {/**
+         * **两边都走 markdown**（2026-08-14，作者定的：*「我输入的内容，
+         * 也要写成 markdown 的格式」*）。
+         *
+         * 此前只有 agent 那侧走，理由是「把用户输入当 markdown 渲染等于替他改写
+         * 他说的话——他写的 `**这里**` 可能正是在问它为什么报错」。
+         * **那个取舍作者知道，并且选了另一边。**
+         *
+         * `.text` 必须落在 markdown 自己那个容器上，不能外面再包一层：
+         * 「短问句不该被折行」那条判据是量 `.turn.user .text` 的 `scrollHeight`，
+         * 包一层就会把里面段落的外边距一起算进去。
+         */}
+        <AgentMarkdown
+          text={item.text}
+          streaming={!mine && !item.final}
+          {...(mine ? { className: "text" } : {})}
+        />
         {/**
          * **还在说的时候给一个会动的记号**（2026-08-10）。
          *

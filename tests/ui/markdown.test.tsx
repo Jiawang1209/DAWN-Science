@@ -84,7 +84,12 @@ describe("流式中间态 · 未闭合的代码围栏", () => {
 })
 
 describe("用户发言不走 markdown", () => {
-  it("人打的字原样显示 —— 他写的星号就是星号", () => {
+  /**
+   * **作者选了另一边**（2026-08-14）：*「我输入的内容，也要写成 markdown 的格式。」*
+   * 原来这条钉的是「他写的星号就是星号」——理由是渲染成 markdown 等于替他改写
+   * 他说的话。那个取舍作者知道，并且要了另一边。判据翻面，理由留在这儿。
+   */
+  it("**人打的字也走 markdown** —— 作者 2026-08-14 定的", () => {
     const { container } = render(
       <ConversationView
         session={session}
@@ -92,9 +97,7 @@ describe("用户发言不走 markdown", () => {
         onSend={() => {}}
       />,
     )
-    // 把用户输入当 markdown 渲染，等于替他改写他说的话
-    expect(container.querySelector("strong")).toBeNull()
-    expect(container.textContent).toContain("**这里**")
+    expect(container.querySelector("strong")?.textContent).toBe("这里")
   })
 })
 

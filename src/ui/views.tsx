@@ -19,7 +19,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -3530,12 +3530,36 @@ function KernelOutputRow({
    * 不是「不陈旧」。拿不到就不说话，不猜。
    */
   const stale = currentKernel !== undefined && item.kernelInstanceId !== currentKernel
-  const mark = stale ? (
+  /**
+   * **这条输出是哪台内核吐的**（②，作者要的徽标）。
+   *
+   * 只有「普通对话挂内核」那条路会带 `language`——一段对话可以同时挂
+   * Python 与 R，不标的话两台的输出混在一起就没有判据。
+   * **`kind: kernel` 那条既有的路不填，于是这里什么都不画**，与从前一模一样。
+   */
+  const 来源 =
+    item.language === "python" ? (
+      <span className="kout-lang" title="Python 内核">
+        <Python图标 className="kout-lang-icon" />
+      </span>
+    ) : item.language === "R" ? (
+      <span className="kout-lang" title="R 内核">
+        <R图标 className="kout-lang-icon" />
+      </span>
+    ) : null
+
+  const 陈旧记号 = stale ? (
     <p className="kout-stale">
       {/* 纯文本里不写 markdown 记号——它不会被渲染，只会显示成星号 */}
       ⚠ 这条结果来自上一个内核实例，它描述的状态已经不存在了
     </p>
   ) : null
+  const mark = (
+    <>
+      {来源}
+      {陈旧记号}
+    </>
+  )
 
   if (o.kind === "stream") {
     return (

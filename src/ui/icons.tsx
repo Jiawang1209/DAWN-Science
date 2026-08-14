@@ -306,3 +306,54 @@ export function 停止图标({ className }: 图标属性 = {}) {
     </壳>
   )
 }
+
+/**
+ * 内核语言的小徽标（②，2026-08-14 作者要的）。
+ *
+ * 作者：*「如果是 R 语言的话，那么界面就标记一个 R 的 logo，
+ * 如果是 python 的话，那就 python 的 logo。」*
+ *
+ * **用的是字母 + 各自生态眼熟的配色，不是官方 logo。** 两个理由：
+ * 官方标识是商标图形（Python 那两条蛇在 16px 下也糊成一团），
+ * 而**字母在这个尺寸上反而更快认**——这一格只有一行高。
+ * 颜色照搬各自社区常用的那两支，一眼就分得开。
+ */
+export function R图标({ className }: 图标属性 = {}) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
+      <rect width="16" height="16" rx="3" fill="var(--dawn-lang-r)" />
+      <text
+        x="8"
+        y="12"
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="700"
+        fill="var(--dawn-lang-r-text)"
+        fontFamily="var(--dawn-font-sans)"
+      >
+        R
+      </text>
+    </svg>
+  )
+}
+
+export function Python图标({ className }: 图标属性 = {}) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
+      {/* 上蓝下黄——Python 那两支颜色，比画蛇更认得出来 */}
+      <rect width="16" height="16" rx="3" fill="var(--dawn-lang-py)" />
+      <path d="M0 8h16v5a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3z" fill="var(--dawn-lang-py-accent)" />
+      <text
+        x="8"
+        y="11.5"
+        textAnchor="middle"
+        fontSize="9"
+        fontWeight="700"
+        fill="var(--dawn-lang-py-text)"
+        fontFamily="var(--dawn-font-sans)"
+      >
+        Py
+      </text>
+    </svg>
+  )
+}

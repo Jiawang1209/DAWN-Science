@@ -3367,3 +3367,22 @@ pre {
   color: var(--dawn-text-3);
   font-size: 13px;
 }
+
+/* ── 内核输出的语言徽标（②，2026-08-14）──────────────────────────── */
+
+/**
+ * 一段对话可以同时挂 Python 与 R 两台内核，这个徽标说清「这条是谁吐的」。
+ * **`kind: kernel` 那条既有的路不填 language，于是根本不渲染这个元素**，
+ * 布局与从前逐像素一致。
+ */
+.kout-lang {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: var(--dawn-space-1);
+}
+
+.kout-lang-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}

@@ -68,3 +68,53 @@ describe("陈旧标记", () => {
     expect(screen.getByText(/旧结果内容/)).toBeDefined()
   })
 })
+
+/**
+ * 内核输出的语言徽标（②，2026-08-14 作者要的）。
+ *
+ * 作者：*「如果是 R 语言的话，那么界面就标记一个 R 的 logo，
+ * 如果是 python 的话，那就 python 的 logo。」*
+ *
+ * 最要紧的一条是**不填时什么都不画**——`kind: kernel` 那条既有的路
+ * 一段会话只有一台内核，不标；多画一个徽标就是改了旧功能。
+ */
+describe("内核输出 · 哪台内核吐的", () => {
+  /** 走 `ConversationView`——**不为了测试把内部组件导出来** */
+  const 画 = (over: Record<string, unknown> = {}) =>
+    render(
+      <ConversationView
+        session={SESSION}
+        items={[
+          {
+            type: "kernelOutput",
+            id: "k1",
+            kernelInstanceId: "inst-1",
+            kernelRevision: 1,
+            output: { kind: "stream", stream: "stdout", text: "hi" },
+            ...over,
+          } as TranscriptItem,
+        ]}
+        onSend={() => {}}
+      />,
+    ).container
+
+  it("R 的输出画 R 的徽标", () => {
+    const 徽 = 画({ language: "R" }).querySelector(".kout-lang")
+    expect(徽, "R 的输出没有徽标").toBeTruthy()
+    expect(徽!.getAttribute("title")).toMatch(/R/)
+  })
+
+  it("Python 的输出画 Python 的徽标", () => {
+    expect(画({ language: "python" }).querySelector(".kout-lang")!.getAttribute("title")).toMatch(
+      /Python/,
+    )
+  })
+
+  /**
+   * **不填就什么都不画。** 这是作者那条纪律（加新功能别改旧功能）的落点：
+   * `kind: kernel` 那条路不填 `language`，它的布局必须与从前逐像素一致。
+   */
+  it("**没标语言就不画徽标** —— 既有那条路一个像素不变", () => {
+    expect(画().querySelector(".kout-lang"), "不该凭空多出一个徽标").toBeNull()
+  })
+})

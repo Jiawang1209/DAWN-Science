@@ -38,6 +38,18 @@ export interface 挂载选项 {
   /** 每个内核一个隔离目录（与 per-session 隔离同一条纪律） */
   sessionDirOf: (对话: SessionId, 语言: 内核语言) => string
   /**
+   * 这门语言的解释器路径。**没配就是 undefined**（2026-08-14 补的）。
+   *
+   * 作者：*「有的人其实只用 R，有的人只用 Python，
+   * 我们在解释器路径里面，也可以自由配置。」*——**只配一门是常态**，
+   * 所以「另一门没配」不是异常，是一个要好好说话的正常状态。
+   *
+   * **第一版我漏了这个参数**，`start()` 里压根没传 `kernel`——
+   * 于是那套东西起不了真内核，而单元测试全绿（假内核不需要解释器）。
+   * 这正是「测试绿了不等于能用」的又一例。
+   */
+  interpreterOf: (语言: 内核语言) => string | undefined
+  /**
    * 把内核的事件转发进**对话的**转录（②，2026-08-14）。
    *
    * 内核事件带的是**内核自己的** sessionId（`c1::python`），
@@ -109,11 +121,28 @@ export class 对话内核 {
       throw new Error(`这段对话没有工作目录，起不了 ${语言} 内核——代码总得有个地方跑`)
     }
 
+    const interpreterPath = this.opts.interpreterOf(语言)
+    if (!interpreterPath) {
+      /**
+       * **没配就明说没配，并说清去哪儿配。**
+       *
+       * 只用 R 或只用 Python 的人很多（作者点出来的），所以这条会经常走到——
+       * 笼统回一句「起不来」会让模型换着法子重试同一条死路。
+       */
+      throw new Error(
+        `还没配 ${语言} 的解释器路径，起不了内核。去「设置 → 内核」里填一个${
+          语言 === "R" ? " R" : " Python"
+        } 可执行文件的路径。`,
+      )
+    }
+
     const 内核会话 = `${对话}::${语言}` as SessionId
     const handle = await this.opts.runtime.start({
       sessionId: 内核会话,
       workspace,
       sessionDir: this.opts.sessionDirOf(对话, 语言),
+      // **这一项是内核运行时用来起进程的**，漏了它就起不来（第一版就漏了）
+      kernel: { language: 语言, interpreterPath },
     })
     const 一 = { 内核会话, handle, 对话, 语言 }
     this.表.set(键, 一)

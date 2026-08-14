@@ -314,6 +314,7 @@ describe("run_code · 接线", () => {
       runtime: { start: async () => ({ sessionId: "k", pid: 0 }) } as never,
       workspaceOf: () => "/w/proj",
       sessionDirOf: () => "/dir",
+      interpreterOf: () => "/usr/bin/python3",
     })
 
   it("**给了内核就有 run_code**", () => {

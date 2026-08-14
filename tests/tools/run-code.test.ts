@@ -32,6 +32,7 @@ function 挂上(脚本: unknown[]) {
     runtime,
     workspaceOf: () => "/w/proj",
     sessionDirOf: () => "/dir",
+    interpreterOf: () => "/usr/bin/python3",
   })
   return createRunCodeTool({ 对话, 内核 })
 }
@@ -134,6 +135,7 @@ describe("run_code · 工具本身", () => {
       runtime: { start: async () => ({ sessionId: "x", pid: 0 }) } as never,
       workspaceOf: () => undefined,
       sessionDirOf: () => "/dir",
+      interpreterOf: () => "/usr/bin/python3",
     })
     const r = await 跑(createRunCodeTool({ 对话, 内核 }), { language: "python", code: "1" })
     expect(r.isError).toBe(true)

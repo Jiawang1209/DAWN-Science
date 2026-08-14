@@ -20,6 +20,7 @@ function 造(workspace = "/w/proj") {
     runtime,
     workspaceOf: () => workspace,
     sessionDirOf: (c, 语言) => `/w/proj/.dawn/${c}/kernels/${语言}`,
+    interpreterOf: () => "/usr/bin/python3",
   })
   return { runtime, 挂 }
 }
@@ -54,6 +55,7 @@ describe("定案 1 · 懒起", () => {
       runtime: new FakeRuntime(),
       workspaceOf: () => undefined,
       sessionDirOf: () => "/dir",
+      interpreterOf: () => "/usr/bin/python3",
     })
     await expect(挂.拿(对话, "python")).rejects.toThrow(/工作目录/)
   })
@@ -90,6 +92,7 @@ describe("定案 2 · 每种语言一个，可以共存", () => {
       runtime,
       workspaceOf: () => "/w/proj",
       sessionDirOf: (c, 语言) => `/dir/${c}/${语言}`,
+      interpreterOf: () => "/usr/bin/python3",
     })
     await 记.拿(对话, "python")
     await 记.拿(对话, "R")
@@ -200,6 +203,7 @@ describe("执行", () => {
       runtime,
       workspaceOf: () => "/w/proj",
       sessionDirOf: () => "/dir",
+      interpreterOf: () => "/usr/bin/python3",
     })
   }
 
@@ -273,6 +277,7 @@ describe("转发", () => {
       runtime,
       workspaceOf: () => "/w/proj",
       sessionDirOf: () => "/dir",
+      interpreterOf: () => "/usr/bin/python3",
       转发: (对话, 语言, e) => 收到.push({ 对话, 语言, e }),
     })
 
@@ -291,5 +296,68 @@ describe("转发", () => {
   it("**不给转发就一个都不发** —— 那正是接上它之前的样子", async () => {
     const { 挂 } = 造()
     await expect(挂.拿(对话, "python")).resolves.toBeDefined()
+  })
+})
+
+/**
+ * 只配一门语言是常态（2026-08-14 作者点出来的）。
+ *
+ * 作者：*「有的人其实只用 R，有的人只用 Python，
+ * 我们在解释器路径里面，也可以自由配置。」*
+ *
+ * 所以「另一门没配」不是异常，是一个**要好好说话**的正常状态。
+ */
+describe("只配了一门语言", () => {
+  const 只有python = () =>
+    new 对话内核({
+      runtime: {
+        start: async (spec: { sessionId: string }) => ({ sessionId: spec.sessionId, pid: 0 }),
+        attach: () => () => {},
+        write: () => {},
+        stop: async () => {},
+      } as never,
+      workspaceOf: () => "/w/proj",
+      sessionDirOf: () => "/dir",
+      interpreterOf: (语言) => (语言 === "python" ? "/usr/bin/python3" : undefined),
+    })
+
+  it("配了的那门照常起", async () => {
+    await expect(只有python().拿(对话, "python")).resolves.toBeDefined()
+  })
+
+  /**
+   * **笼统一句「起不来」会让模型换着法子重试同一条死路。**
+   * 这条要求错误里既说清是哪门语言，也说清去哪儿配。
+   */
+  it("**没配的那门：明说没配，并指出去哪儿配**", async () => {
+    await expect(只有python().拿(对话, "R")).rejects.toThrow(/R.*解释器|解释器.*R/)
+    await expect(只有python().拿(对话, "R")).rejects.toThrow(/设置/)
+  })
+
+  /**
+   * **解释器路径必须真的传给运行时。**
+   * 第一版我漏了 `kernel` 那一项——单元测试全绿（假内核不需要解释器），
+   * 而真内核根本起不来。这条钉住那个洞。
+   */
+  it("**起内核时把解释器路径传下去了** —— 漏了它真内核起不来", async () => {
+    const 收到: unknown[] = []
+    const 挂 = new 对话内核({
+      runtime: {
+        start: async (spec: unknown) => {
+          收到.push(spec)
+          return { sessionId: "k", pid: 0 }
+        },
+        attach: () => () => {},
+        write: () => {},
+        stop: async () => {},
+      } as never,
+      workspaceOf: () => "/w/proj",
+      sessionDirOf: () => "/dir",
+      interpreterOf: () => "/opt/R/bin/R",
+    })
+    await 挂.拿(对话, "R")
+    expect(收到[0]).toMatchObject({
+      kernel: { language: "R", interpreterPath: "/opt/R/bin/R" },
+    })
   })
 })

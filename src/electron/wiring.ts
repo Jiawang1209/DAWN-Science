@@ -217,6 +217,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // 挂在数据库同级（与 `models.generated.json` 同一条惯例），**每台一个目录**
     sessionDirOf: (对话, 语言) => join(dirname(opts.dbPath), "kernels", 对话, 语言),
     /**
+     * 解释器路径**每次现取**（与 `interpreterOf` 那条同一个理由）：
+     * 缓存住的表现是「我在设置里改了，起内核还是用旧的」。
+     *
+     * **只配一门是常态**（作者点出来的：有人只用 R，有人只用 Python），
+     * 所以另一门返回 undefined 不是异常——挂载层会如实说「还没配」。
+     */
+    interpreterOf: (语言) =>
+      settingsStore.get(语言 === "python" ? "interpreter.python" : "interpreter.r"),
+    /**
      * **把内核的输出送进对话的转录**（②，2026-08-14）。
      *
      * 内核事件带的是内核自己的 sessionId（`c1::python`），

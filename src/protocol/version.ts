@@ -227,8 +227,14 @@
  *   **类型是推断的**，所以字段叫 `inferred`——CSV 没有 schema，
  *   把猜出来的摆成事实，下一步就会有人拿它当依据。
  *   **`totalRows` 只有完整读完才给**：没读完却报一个总数，那个数是假的。
+ * 5.5（2026-08-14，②）：`kernelOutput` 多一个**可选**的 `language`。纯新增。
+ *
+ *   一段普通对话可以同时挂 Python 与 R 两台内核（作者定的），
+ *   而事件回来时只带内核自己的 sessionId——**不标的话两台的输出混在同一条
+ *   转录里就没有判据**。`kind: kernel` 那条既有的路一段会话只有一个内核，
+ *   不填即可，**缺席读作「这条转录只有一个内核」**，不是「不知道哪来的」。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.4"
+export const WORKBENCH_PROTOCOL_VERSION = "5.5"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

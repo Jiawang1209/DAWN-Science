@@ -171,7 +171,7 @@ describe("协议操作 · 订阅与控制", () => {
    */
 })
 
-describe("协议版本 · 5.4", () => {
+describe("协议版本 · 5.5", () => {
   /**
    * **5.1（2026-08-13 · ②-B · R5）：`getEnvironment` 多一支「机器快照」，
    * `RunSummary` 多一个可选的 `environmentSnapshotId`。** 纯新增，故 minor。
@@ -304,11 +304,54 @@ describe("协议版本 · 5.4", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.4")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("5.5")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
     expect(isCompatible("1.3", "2.0")).toBe(false)
     expect(isCompatible("2.0", "2.0")).toBe(true)
+  })
+})
+
+/**
+ * `kernelOutput.language`：这条输出是哪台内核吐的（②，2026-08-14）。
+ *
+ * 一段普通对话可以同时挂 Python 与 R 两台内核，而事件回来时只带内核自己的
+ * sessionId——**不标的话两台的输出混在同一条转录里就没有判据**。
+ *
+ * 作者的观察让这个字段更值钱而不是更啰嗦：日常交流里语言几乎总是明说的
+ * （*「使用 R 语言帮我 xxx」*），**所以真正需要它的正是模型自己挑的那少数几次**。
+ */
+describe("kernelOutput · 哪台内核吐的", () => {
+  const 一条 = (over: Record<string, unknown> = {}) => ({
+    type: "kernelOutput",
+    id: "k1",
+    kernelInstanceId: "inst-1",
+    kernelRevision: 0,
+    output: { kind: "stream", stream: "stdout", text: "hi" },
+    ...over,
+  })
+
+  it("标了语言就收下", () => {
+    const r = TranscriptItemSchema.safeParse(一条({ language: "R" }))
+    expect(r.success, JSON.stringify(r.error?.issues)).toBe(true)
+  })
+
+  /**
+   * **不填时与原来逐字节一样。**
+   *
+   * 这条是作者那条纪律（*「加新功能尽量不要更改旧功能」*）的自动化形式：
+   * `kind: kernel` 那条既有的路一段会话只有一个内核，不填即可，
+   * 而它必须**照旧通过**——加一个可选字段却让老条目校验不过，
+   * 是「加法」里最常见的那种假加法。
+   */
+  it("**不填也照旧通过** —— 既有那条路一个字都不用改", () => {
+    const r = TranscriptItemSchema.safeParse(一条())
+    expect(r.success, JSON.stringify(r.error?.issues)).toBe(true)
+    expect("language" in (r.success ? r.data : {}), "没填就不该有这个键").toBe(false)
+  })
+
+  it("**只认这两门** —— 不收一个编出来的语言名", () => {
+    expect(TranscriptItemSchema.safeParse(一条({ language: "julia" })).success).toBe(false)
   })
 })

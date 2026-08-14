@@ -338,6 +338,25 @@ describe("run_code · 接线", () => {
     expect(工具名(new NativeRuntime({ kernels: 假内核() }))).toContain("run_code")
   })
 
+  /**
+   * **这一条盯的是 `wiring.ts` 里那句 `kernels: 对话的内核`。**
+   *
+   * 上面几条直接 `new NativeRuntime({ kernels })`——它们验的是运行时那一层，
+   * **把装配里那句摘掉照样全绿**（本项目栽过三次的形状，两次就在这个函数附近）。
+   * 所以这里走 `createWorkbench` 真正装配出来的那个运行时。
+   */
+  it("**createWorkbench 装配出来的运行时带着 run_code** —— 盯的是接线那一句", () => {
+    const wb = createWorkbench({
+      configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials(),
+    })
+    cleanups.push(() => wb.close())
+    const 拿 = (wb.nativeRuntime as unknown as {
+      toolsFor(s: never, n: { provider: string; model: string }): { name: string }[] | undefined
+    }).toolsFor.bind(wb.nativeRuntime)
+    const 名 = (拿(spec(), { provider: "deepseek", model: "m" }) ?? []).map((t) => t.name)
+    expect(名, "装配里没把对话内核接上去").toContain("run_code")
+  })
+
   it("内置四件套还在 —— 加自定义工具不该把它们挤掉", () => {
     const 名 = 工具名(new NativeRuntime({ kernels: 假内核() }))
     for (const t of ["read", "write", "edit", "bash"]) {

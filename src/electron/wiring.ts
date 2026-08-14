@@ -24,6 +24,7 @@ import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { KernelRuntime } from "../runtime/kernel.js"
+import { 对话内核 } from "../kernel/挂载.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
 import { SettingsStore } from "../store/settings.js"
@@ -197,9 +198,31 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    */
   const 权限门 = 造门(() => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"))
 
+  /**
+   * Jupyter 内核的运行时。**提出来命名，因为现在有两个用处**（②，2026-08-14）：
+   * `kind: kernel` 那条既有的会话类型，以及**普通对话挂的内核**。
+   * 各造一个的话，两边会各起各的进程，而「这段对话的 df 在哪台里」就说不清了。
+   */
+  const 内核运行时 = new KernelRuntime()
+
+  /**
+   * 对话的内核（②）。**每种语言一台、各自懒起**——
+   * 没人跑代码时它一个进程都不占。
+   */
+  const 对话的内核 = new 对话内核({
+    runtime: 内核运行时,
+    // **工作区从会话表取**：代码总得有个地方跑，取不到就起不了（那时如实报错）
+    workspaceOf: (对话) => sessionStore.get(对话)?.workspace,
+    // 每台内核一个隔离目录，与 per-session 隔离同一条纪律
+    // 挂在数据库同级（与 `models.generated.json` 同一条惯例），**每台一个目录**
+    sessionDirOf: (对话, 语言) => join(dirname(opts.dbPath), "kernels", 对话, 语言),
+  })
+
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
     gate: 权限门,
+    // 给了才有 `run_code`；不给的装配（CLI、测试替身）一个字不受影响
+    kernels: 对话的内核,
     ...(生成的模型目录 ? { modelsPath: 生成的模型目录 } : {}),
     ...(opts.subagentChildEntry ? { subagentChildEntry: opts.subagentChildEntry } : {}),
   })
@@ -224,7 +247,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
        * **必须装配**——不装的话 `kind: kernel` 的 agent 会在建会话时
        * 响亮失败（`SessionManager` 里那条显式分支），而不是悄悄变成一个 PTY。
        */
-      kernel: new KernelRuntime(),
+      kernel: 内核运行时,
       /**
        * 外部 CLI 的对话模式（①-C）。
        *

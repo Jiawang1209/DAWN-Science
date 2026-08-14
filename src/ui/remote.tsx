@@ -51,14 +51,8 @@ export function RemoteSection({
   onEdit,
   onConnect,
   onDisconnect,
-  sessionsOf,
   onNewSession,
-  onPickSession,
   activeSessionId,
-  onDeleteSession,
-  onRenameSession,
-  onPinSession,
-  onMoveSession,
   busyId,
   problem,
 }: {
@@ -70,10 +64,8 @@ export function RemoteSection({
   onConnect: (c: RemoteConnection) => void
   onDisconnect: (c: RemoteConnection) => void
   /** 这台机器上已经开着的对话。**副行显示它此刻在哪个目录** */
-  sessionsOf: (c: RemoteConnection) => readonly SessionSummary[]
   /** 在这台机器上开一段新对话。起点是它的家目录——**服务端定** */
   onNewSession: (c: RemoteConnection) => void
-  onPickSession: (s: SessionSummary) => void
   activeSessionId?: string | undefined
   /**
    * 删除 / 改名 / 置顶 / 挪位置。
@@ -83,10 +75,6 @@ export function RemoteSection({
    * 那正是因为这里当初图省事画了一个只能点的行。
    * 一个动作有两个家，迟早有一个落后于另一个。
    */
-  onDeleteSession?: ((s: SessionSummary) => void) | undefined
-  onRenameSession?: ((s: SessionSummary, title: string) => void) | undefined
-  onPinSession?: ((s: SessionSummary, pinned: boolean) => void) | undefined
-  onMoveSession?: ((s: SessionSummary, d: "up" | "down") => void) | undefined
   /** 正在连的那台。**只有它显示进行态**，不是整块变灰 */
   busyId?: string | undefined
   /** 上一次操作失败了。**要在这一区里说**，不是丢进状态栏 */
@@ -123,7 +111,7 @@ export function RemoteSection({
         */}
       <Row className="remote-head" aria-expanded={open} onClick={onToggle}>
         <服务器图标 className="row-icon" />
-        <span className="name">{t("远端连接")}</span>
+        <span className="name">{t("远端服务器")}</span>
         {/* **收起时也要说有几台**：否则收起等于把它们藏没了 */}
         {connections.length > 0 ? (
           <span className="remote-count">{connections.length}</span>
@@ -155,14 +143,8 @@ export function RemoteSection({
                       onEdit={() => onEdit(c)}
                       onConnect={() => onConnect(c)}
                       onDisconnect={() => onDisconnect(c)}
-                      sessions={sessionsOf(c)}
                       onNewSession={() => onNewSession(c)}
-                      onPickSession={onPickSession}
                       {...(activeSessionId ? { activeSessionId } : {})}
-                      {...(onDeleteSession ? { onDeleteSession } : {})}
-                      {...(onRenameSession ? { onRenameSession } : {})}
-                      {...(onPinSession ? { onPinSession } : {})}
-                      {...(onMoveSession ? { onMoveSession } : {})}
                     />
                   ))}
                 </ul>
@@ -190,28 +172,16 @@ function ConnectionRow({
   onEdit,
   onConnect,
   onDisconnect,
-  sessions,
   onNewSession,
-  onPickSession,
   activeSessionId,
-  onDeleteSession,
-  onRenameSession,
-  onPinSession,
-  onMoveSession,
 }: {
   conn: RemoteConnection
   busy: boolean
   onEdit: () => void
   onConnect: () => void
   onDisconnect: () => void
-  sessions: readonly SessionSummary[]
   onNewSession: () => void
-  onPickSession: (s: SessionSummary) => void
   activeSessionId?: string | undefined
-  onDeleteSession?: ((s: SessionSummary) => void) | undefined
-  onRenameSession?: ((s: SessionSummary, title: string) => void) | undefined
-  onPinSession?: ((s: SessionSummary, pinned: boolean) => void) | undefined
-  onMoveSession?: ((s: SessionSummary, d: "up" | "down") => void) | undefined
 }) {
   const 连着 = conn.state.kind === "ready"
   const 状态 = busy ? t("连接中") : 状态文字(conn.state)
@@ -242,23 +212,19 @@ function ConnectionRow({
        * 每条的副行是**它此刻在哪个目录**——那不是装饰：
        * *你以为在 A 目录、实际在 B 目录，然后说一句「把这里的文件都删了」*。
        */}
-      {sessions.length > 0 ? (
-        <ul className="remote-sessions">
-          {sessions.map((s) => (
-            <SessionRow
-              key={s.sessionId}
-              session={s}
-              active={s.sessionId === activeSessionId}
-              current={s.sessionId === activeSessionId}
-              onPick={() => onPickSession(s)}
-              {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
-              {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
-              {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
-              {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
-            />
-          ))}
-        </ul>
-      ) : null}
+      {/**
+        * **这里不再列这台机器上的对话**（2026-08-14，作者定的）。
+        *
+        * 作者：*「固定的远程服务器里面，只有服务器的新对话、连接、编辑，
+        * 不再有会话记录了，因为和下面重复了。」*
+        *
+        * 它们现在落在侧栏的「服务器」收纳里（服务器 → 每台机器 → 会话）。
+        * **两处都列就是同一个东西有两个家**：改个名、删一条，得记得另一处也会变。
+        *
+        * **顺序不能反**：我上一轮先撤了这里、而收纳当时还收不到
+        * （远端会话不是任务），于是那些对话两处都不在，比改之前更坏。
+        * 现在收纳先收得全了（`b399f49`），撤这里才是安全的。
+        */}
 
       <div className="remote-actions">
         {/**

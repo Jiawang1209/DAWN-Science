@@ -27,7 +27,8 @@ test.use({
 
 /** 打开那一区。**默认收起**——没有远端的人不该为此多占一行 */
 async function 展开远端(page: import("@playwright/test").Page) {
-  const head = page.getByRole("button", { name: /远端连接/ })
+  // **2026-08-14 改名**：「远端连接」→「远端服务器」（作者定的）
+  const head = page.getByRole("button", { name: /远端服务器/ })
   await expect(head).toBeVisible()
   if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
 }
@@ -175,13 +176,19 @@ test("**在服务器上开一段对话**：起点是家目录，命令打到那�
   await expect(头.locator(".conv-remote-cwd")).toHaveText("~")
 
   /**
-   * 侧栏那一行也挂上了这段对话，**而且用的是与别处同一种行**
-   * （`.sess-item` —— 带删除/改名/置顶/挪位置）。
-   * 作者报过：*「在服务器的对话，不能删除，也不能挪动顺序」*——
-   * 那是因为这里当初图省事画了一个只能点的行。
+   * **这一区不再列对话了**（2026-08-14 作者定的，判据跟着翻面）。
+   *
+   * 原来这条钉的是「侧栏那一行也挂上了这段对话」，理由是作者报过
+   * *「在服务器的对话，不能删除，也不能挪动顺序」*——那时这里画的是一个
+   * 只能点的行，所以改成了与别处同一种 `.sess-item`。
+   *
+   * **那个诉求现在由另一条路满足**：远端对话成了一等任务
+   * （`b399f49`），落在侧栏「服务器」收纳里，天然能改名/置顶/批量删。
+   * 于是这里再列一份就是**同一个东西有两个家**，作者要求撤掉。
+   *
+   * 判据翻面而不是删除：**理由留在这儿**，下一个人看到的不是一条凭空消失的规则。
    */
-  await expect(row.locator(".sess-item")).toHaveCount(1)
-  await expect(row.locator(".sess-item .sub")).toHaveText("~")
+  await expect(row.locator(".sess-item"), "这一区不该再列对话了").toHaveCount(0)
 })
 
 test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {

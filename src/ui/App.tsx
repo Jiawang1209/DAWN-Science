@@ -1911,20 +1911,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }
               onConnect={(c) => void connectRemote(c.id)}
               /**
-               * **这台机器上的对话**。它们与临时会话同一批数据
-               * （都不属于用户打开的项目），按 `remote` 分开：
-               * 有 `remote` 的挂在服务器下，没有的留在上面那一列。
+               * **这一区不再列这台机器上的对话**（2026-08-14 作者定的）：
+               * 它们已经在侧栏那个「服务器」收纳里了（服务器 → 每台机器 → 会话）。
+               * 两处都列就是同一个东西有两个家。
                */
-              sessionsOf={(c) => tempSessions.filter((x) => x.remote?.connectionId === c.id)}
               onNewSession={(c) => void startRemoteSession(c)}
-              onPickSession={(x) => {
-                setActiveSessionId(x.sessionId)
-                setView("conversation")
-              }}
-              onDeleteSession={askDeleteSession}
-              onRenameSession={renameSession}
-              onPinSession={pinSession}
-              onMoveSession={moveSession}
               {...(sessionId ? { activeSessionId: sessionId } : {})}
               onDisconnect={(c) => {
                 setConnProblem(undefined)

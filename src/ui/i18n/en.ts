@@ -264,7 +264,7 @@ export const EN: Readonly<Record<string, string>> = {
   "技能": "Skills",
   "插件": "Plugins",
   "MCP 服务器": "MCP servers",
-  "远端连接": "Remote hosts",
+  "远端服务器": "Remote servers",
   "项目": "Projects",
   "会话": "Chats",
   "项目概览": "Project overview",

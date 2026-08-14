@@ -37,6 +37,17 @@ export interface 挂载选项 {
   workspaceOf: (对话: SessionId) => string | undefined
   /** 每个内核一个隔离目录（与 per-session 隔离同一条纪律） */
   sessionDirOf: (对话: SessionId, 语言: 内核语言) => string
+  /**
+   * 把内核的事件转发进**对话的**转录（②，2026-08-14）。
+   *
+   * 内核事件带的是**内核自己的** sessionId（`c1::python`），
+   * 直接 ingest 会落到一段根本不存在的会话上——所以要在这里换成对话的 id，
+   * **并带上是哪门语言**（协议 5.5 的 `language`）。
+   *
+   * **可选**：不给就只有工具那条路能拿到输出（文字回给模型），
+   * 屏幕上看不见——那正是接上它之前的状态。
+   */
+  转发?: (对话: SessionId, 语言: 内核语言, 事件: unknown) => void
 }
 
 interface 一台 {
@@ -107,6 +118,16 @@ export class 对话内核 {
     const 一 = { 内核会话, handle, 对话, 语言 }
     this.表.set(键, 一)
     this.反查.set(内核会话, 一)
+
+    /**
+     * **一起来就把输出接到对话上**，而不是等第一次执行。
+     *
+     * 内核在起来的过程中就会吐东西（`status: starting`、有的还会打横幅），
+     * 等执行时才接的话，那些**在屏幕上永远不会出现**——
+     * 而它们恰恰是「它到底起来没有」的证据。
+     */
+    const 转 = this.opts.转发
+    if (转) this.opts.runtime.attach(内核会话, (e) => 转(对话, 语言, e))
     return 一
   }
 

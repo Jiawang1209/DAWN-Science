@@ -264,7 +264,19 @@ export type AgentEvent =
    * `entry` 里已经带着溯源三件套（出适配器那一刻绑上的），
    * **这里不再补，也不许改**。
    */
-  | { kind: "kernel_output"; sessionId: SessionId; entry: ConsoleEntry }
+  | {
+      kind: "kernel_output"
+      sessionId: SessionId
+      entry: ConsoleEntry
+      /**
+       * 哪门语言的内核吐的（②，2026-08-14）。
+       *
+       * **只有「普通对话挂内核」那条路会填**：一段对话可以同时挂 Python 与 R，
+       * 不标的话两台的输出混在同一条转录里就没有判据。
+       * `kind: kernel` 那条既有的路一段会话只有一台，不填即原样。
+       */
+      language?: "python" | "R"
+    }
   /**
    * 会话换了模型（①-B″ · U2）。
    *

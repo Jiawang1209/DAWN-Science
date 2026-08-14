@@ -237,6 +237,14 @@ export class SessionTranscripts {
           kernelRevision: p.kernelRevision,
           // **拿不到就不给这个字段**，不是空串
           ...(p.runId ? { runId: p.runId } : {}),
+          /**
+           * 这条输出是哪台内核吐的（②，协议 5.5）。
+           *
+           * **只有普通对话挂内核那条路会填**：一段对话可以同时挂 Python 与 R，
+           * 不标的话两台的输出混在一起就没有判据了。
+           * `kind: kernel` 那条既有的路一段会话只有一个内核，**不填即原样**。
+           */
+          ...(event.language ? { language: event.language } : {}),
           output: toProtocolOutput(event.entry),
         })
         return

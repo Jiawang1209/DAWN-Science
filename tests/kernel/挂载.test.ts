@@ -248,3 +248,48 @@ describe("执行", () => {
     expect(挂.有(对话, "python")).toBe(true)
   })
 })
+
+/**
+ * 转发：内核的输出要送进**对话的**转录（②，2026-08-14）。
+ *
+ * 内核事件带的是内核自己的 sessionId（`c1::python`）——
+ * 不换成对话的 id，它会落到一段根本不存在的会话上。
+ */
+describe("转发", () => {
+  it("**一起来就接上**，不是等第一次执行", async () => {
+    const 收到: unknown[] = []
+    const 听众 = new Map<string, (e: unknown) => void>()
+    const runtime = {
+      start: async (spec: { sessionId: string }) => ({ sessionId: spec.sessionId, pid: 0 }),
+      attach: (id: string, sink: (e: unknown) => void) => {
+        听众.set(id, sink)
+        return () => 听众.delete(id)
+      },
+      write: () => {},
+      stop: async () => {},
+    } as never
+
+    const 挂 = new 对话内核({
+      runtime,
+      workspaceOf: () => "/w/proj",
+      sessionDirOf: () => "/dir",
+      转发: (对话, 语言, e) => 收到.push({ 对话, 语言, e }),
+    })
+
+    const 一 = await 挂.拿(对话, "R")
+    /**
+     * **内核起来的过程中就会吐东西**（`status: starting`、有的还打横幅）。
+     * 等执行时才接的话，那些在屏幕上永远不会出现——
+     * 而它们恰恰是「它到底起来没有」的证据。
+     */
+    听众.get(一.内核会话)!({ kind: "kernel_output", entry: { kind: "status", state: "starting" } })
+
+    expect(收到).toHaveLength(1)
+    expect(收到[0]).toMatchObject({ 对话, 语言: "R" })
+  })
+
+  it("**不给转发就一个都不发** —— 那正是接上它之前的样子", async () => {
+    const { 挂 } = 造()
+    await expect(挂.拿(对话, "python")).resolves.toBeDefined()
+  })
+})

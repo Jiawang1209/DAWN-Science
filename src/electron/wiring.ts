@@ -216,6 +216,21 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // 每台内核一个隔离目录，与 per-session 隔离同一条纪律
     // 挂在数据库同级（与 `models.generated.json` 同一条惯例），**每台一个目录**
     sessionDirOf: (对话, 语言) => join(dirname(opts.dbPath), "kernels", 对话, 语言),
+    /**
+     * **把内核的输出送进对话的转录**（②，2026-08-14）。
+     *
+     * 内核事件带的是内核自己的 sessionId（`c1::python`），
+     * 直接 ingest 会落到一段不存在的会话上——所以换成对话的 id，
+     * **并带上是哪门语言**（协议 5.5），否则两台内核的输出混在一起没有判据。
+     *
+     * **只转发内核输出这一种**：`started` / `idle` 那些是内核会话自己的
+     * 生命周期事件，混进对话的转录会让「这一轮说完了没有」凭空多出几个边界。
+     */
+    转发: (对话, 语言, 事件) => {
+      const e = 事件 as { kind?: string }
+      if (e.kind !== "kernel_output") return
+      events.ingest(对话, { ...(事件 as object), sessionId: 对话, language: 语言 } as never)
+    },
   })
 
   const nativeRuntime = new NativeRuntime({

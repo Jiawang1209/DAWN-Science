@@ -30,7 +30,24 @@ import { t } from "./i18n/index.js"
  * 但**它一定要出现在屏幕上**，不是只在 title 里（悬停才有的等于没有）。
  */
 const 状态文字 = (s: RemoteState): string =>
-  s.kind === "ready" ? t("连着") : s.kind === "connecting" ? t("连接中") : s.kind === "idle" ? t("未连") : t("断了")
+  /**
+   * **连上了写 `alive`，与侧栏的会话行一致**（2026-08-15 作者要的）。
+   *
+   * 侧栏那些会话行显示的就是绿色的 `alive`（`.state.alive`），
+   * 而这一区此前写「连着」——**同一件事两个说法**，扫一眼分不出它们是不是一回事。
+   *
+   * `alive` 两种语言下都是它，所以不走 `t()`：那会要求英文表里写一条
+   * 「alive → alive」的自我映射，而那只是给扫描看的噪声。
+   * 其余几个状态仍走 `t()`——它们本来就是中文。
+   */
+  s.kind === "ready"
+    ? "alive"
+    : s.kind === "connecting"
+      ? t("连接中")
+      : s.kind === "idle"
+        ? t("未连")
+        : // **断了写 `exited`**（2026-08-15 作者要的）：与侧栏会话行同一套词
+          "exited"
 
 export interface ConnectionDraft {
   id?: string | undefined

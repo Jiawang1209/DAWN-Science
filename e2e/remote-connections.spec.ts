@@ -66,11 +66,12 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   await expect(row.locator(".remote-status")).toHaveText("未连")
 
   await row.getByRole("button", { name: "连接" }).click()
-  await expect(row.locator(".remote-status")).toHaveText("连着", { timeout: 15_000 })
+  // **2026-08-15 改词**：连上写 `alive`、断了写 `exited`——与侧栏会话行同一套
+  await expect(row.locator(".remote-status")).toHaveText("alive", { timeout: 15_000 })
   await expect(row).toHaveAttribute("data-state", "ready")
 
   await row.getByRole("button", { name: "断开" }).click()
-  // **人按的断开是「未连」，不是「断了」**——后者要报原因，两者不能混
+  // **人按的断开是「未连」，不是 `exited`**——后者要报原因，两者不能混
   await expect(row.locator(".remote-status")).toHaveText("未连")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
 })
@@ -90,7 +91,7 @@ test("**连不上时说清是为什么**，就在那一行上", async ({ dawn })
   await expect(page.locator(".remote-problem")).toContainText(/authentication/i, {
     timeout: 15_000,
   })
-  await expect(row.locator(".remote-status")).toHaveText("断了")
+  await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toBeVisible()
 })
 
@@ -114,7 +115,7 @@ test("**口令不回显**，且改别的字段不会把它弄丢", async ({ dawn
 
   // 口令还在：连得上就是证据（假服务器认的口令是 `dawn`）
   await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
-  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("连着", {
+  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("alive", {
     timeout: 15_000,
   })
 })

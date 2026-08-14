@@ -922,8 +922,16 @@ pre {
 .proj-head > .row { flex: 1; min-width: 0; }
 /* 展开的项目：**它的会话嵌在下面**，缩进一档表示归属 */
 .proj-sessions { padding-left: var(--dawn-space-3); }
-.proj-session-list .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
-.proj-session-list { list-style: none; margin: 0; padding: 0; }
+/**
+ * 组里嵌的那层会话（项目底下的、服务器底下的）。**两处共用同一条**——
+ * 我 2026-08-14 给服务器那层写了个 `side-list`，而**样式表里根本没有这个类**，
+ * 于是那个 `<ul>` 吃的是浏览器默认缩进，整块比别处往右缩了一截
+ * （作者：*「感觉应该是有空格的这种格式」*）。
+ */
+.proj-session-list .sess,
+.server-session-list .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+.proj-session-list,
+.server-session-list { list-style: none; margin: 0; padding: 0; }
 /**
  * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
  * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。
@@ -2906,12 +2914,20 @@ pre {
    * 一列扫下来那一层缩进是歪的。
    */
   padding: 5px calc(var(--dawn-space-3) * 2);
-  /* 实测 `conversation-section-label-text`：**12px / 20px / 600 / rgba(0,0,0,.5)**。
-     **加粗但更淡**——粗让它成为一个标题，淡让它不跟下面那些可点的行抢 */
-  font-size: 12px;
+  /**
+   * **字号与上面那组固定入口一致**（2026-08-15 作者要的：
+   * *「项目收纳、服务器收纳、会话收纳的文字和大小应该和上面固定的项目一样，
+   * 现在太小家子气了」*）。
+   *
+   * 这里原本是 12px——**照 WorkBuddy 实测抄的**
+   * （`conversation-section-label-text`：12px / 20px / 600 / rgba(0,0,0,.5)）。
+   * 作者明确要推翻它：那三条是这个侧栏的骨架，不该比它上面那组入口还小。
+   * **仍然加粗且比正文淡**：粗让它是标题，淡让它不跟下面可点的行抢。
+   */
+  font-size: var(--dawn-ui-size);
   line-height: 20px;
   font-weight: var(--dawn-weight-semibold);
-  color: var(--dawn-text-3);
+  color: var(--dawn-text-2);
   letter-spacing: 0.03em;
 }
 /**
@@ -3424,4 +3440,20 @@ pre {
   height: 14px;
   vertical-align: -2px;
   margin-right: var(--dawn-space-1);
+}
+
+/**
+ * 连上了那个 `alive` 用绿色（2026-08-15 作者要的）。
+ *
+ * **与侧栏会话行的 `.state.alive` 同一个令牌**——同一个词、同一个颜色，
+ * 扫一眼就知道它们说的是同一件事。挂在既有的 `data-state` 上，不新加类。
+ */
+.remote-row[data-state="ready"] .remote-status {
+  color: var(--dawn-success);
+}
+
+/** 断了写 `exited`，用危险色——与「连着是绿的」成对，一眼分得开 */
+.remote-row[data-state="error"] .remote-status,
+.remote-row[data-state="disconnected"] .remote-status {
+  color: var(--dawn-danger);
 }

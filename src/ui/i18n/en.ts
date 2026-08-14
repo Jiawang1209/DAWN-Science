@@ -120,6 +120,7 @@ export const EN: Readonly<Record<string, string>> = {
   "文本": "text",
   "空": "empty",
   "已选 {0}": "{0} selected",
+  "选择这台服务器：{0}": "Select this server: {0}",
   "服务器": "Servers",
   // **不能用 "Done …"**：已有一颗按钮就叫 "Done"，而 `getByRole(name)`
   // 是子串匹配——两颗会同时命中（i18n 扫描当场拦下）
@@ -253,10 +254,8 @@ export const EN: Readonly<Record<string, string>> = {
   "没有匹配「{0}」的项目或会话": "Nothing matches “{0}”",
   "已连接": "Connected",
   "未连接": "Not connected",
-  "连着": "connected",
   "连接中": "connecting",
   "未连": "not connected",
-  "断了": "disconnected",
   "连接中…": "Working on it…",
   "连接": "Connect",
   "正在打开这段对话": "Opening this chat",

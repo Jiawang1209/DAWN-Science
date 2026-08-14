@@ -504,13 +504,17 @@ describe("侧栏 · 服务器多选", () => {
 
   it("**按下之后行上真的长出勾选框** —— 第一版就是这里没接", () => {
     const c = 画()
-    expect(c.querySelectorAll(".side-server input[type=checkbox]").length).toBe(0)
+    expect(c.querySelectorAll(".server-session-list input[type=checkbox]").length).toBe(0)
     const 颗 = [...c.querySelectorAll(".side-bulk")].find((b) =>
       (b.getAttribute("aria-label") ?? "").includes("服务器"),
     ) as HTMLElement
     fireEvent.click(颗)
+    /**
+     * **只数行上那些**（2026-08-15 收窄）：机器那一行现在也有一个勾选框
+     * （整台一起选），而这条钉的是「**行**上长出勾选框」——本意没变。
+     */
     expect(
-      c.querySelectorAll(".side-server input[type=checkbox]").length,
+      c.querySelectorAll(".server-session-list input[type=checkbox]").length,
       "按钮在、勾选框却没出现",
     ).toBe(2)
   })
@@ -524,5 +528,182 @@ describe("侧栏 · 服务器多选", () => {
     )
     expect(c.querySelector(".side-bulkbar")).toBeTruthy()
     expect(c.querySelector(".side-bulk-count")!.textContent).toMatch(/已选\s*0/)
+  })
+})
+
+/**
+ * **当前会话所在的项目，也要收得起来**（2026-08-15 作者报的）。
+ *
+ * 作者：*「`未命名文件夹` 下面有会话，但是我折叠不进去，而 `tmp_dir` 就可以。」*
+ * 差别正是前者装着**当前那段会话**——判据里那句
+ * 「里面有当前会话就展开」压过了人的点击。
+ * **自动展开是个默认值，不该压过人的选择。**
+ */
+describe("侧栏 · 项目折叠", () => {
+  const 任务 = (over: Record<string, unknown> = {}) => ({
+    taskId: "t1",
+    workspace: "/w/未命名文件夹",
+    pinned: false,
+    sortOrder: 1,
+    createdAt: "2026-08-15T00:00:00Z",
+    ...over,
+  })
+
+  it("**装着当前会话的项目，点一下也能收起来**", () => {
+    const c = render(
+      <SessionSidebar
+        {...base}
+        projects={[]}
+        activeProjectId={undefined}
+        tasks={[任务()] as never}
+        activeTaskId="t1"
+      />,
+    ).container
+
+    // 一开始是自动展开的（人还没选过）
+    expect(c.querySelectorAll(".proj-session-list li").length).toBe(1)
+
+    // 那一行是个 `Row`（渲染成可点的按钮），不是外面那个 `.proj-head` 容器
+    const 头 = c.querySelector(".proj-head .row") as HTMLElement
+    expect(头, "项目那一行没找到").toBeTruthy()
+    fireEvent.click(头)
+
+    expect(
+      c.querySelectorAll(".proj-session-list li").length,
+      "点了收不起来——自动展开压过了人的点击",
+    ).toBe(0)
+  })
+})
+
+/**
+ * 收纳可以收起来（2026-08-15 作者要的：项目 / 服务器 / 会话三个收纳，
+ * 以及服务器底下每一台机器）。
+ *
+ * **折叠这类交互最容易「按钮在、底下没接」**——所以每条都点一下再看内容没了没有。
+ */
+describe("侧栏 · 收起来", () => {
+  const 任务 = (over: Record<string, unknown> = {}) => ({
+    taskId: `t${Math.random().toString(36).slice(2, 7)}`,
+    pinned: false,
+    sortOrder: 1,
+    createdAt: "2026-08-15T00:00:00Z",
+    ...over,
+  })
+
+  const 画 = (tasks: unknown[]) =>
+    render(
+      <SessionSidebar
+        {...base}
+        projects={[]}
+        activeProjectId={undefined}
+        tasks={tasks as never}
+        服务器名={() => "实验室"}
+      />,
+    ).container
+
+  const 点收纳 = (c: HTMLElement, 名: string) => {
+    const 颗 = [...c.querySelectorAll(".side-section-toggle")].find((b) =>
+      (b.textContent ?? "").includes(名),
+    ) as HTMLElement
+    expect(颗, `没有「${名}」这个可折叠的收纳标题`).toBeTruthy()
+    fireEvent.click(颗)
+  }
+
+  it("**会话收纳收起来之后，底下的行就没了**", () => {
+    const c = 画([任务(), 任务()])
+    expect(c.querySelectorAll(".session-list li").length).toBe(2)
+    点收纳(c, "会话")
+    expect(c.querySelectorAll(".session-list li").length, "按了却还在").toBe(0)
+  })
+
+  it("**项目收纳也能收起来**", () => {
+    const c = 画([任务({ workspace: "/w/a" })])
+    expect(c.querySelectorAll(".proj-list li").length).toBe(1)
+    点收纳(c, "项目")
+    expect(c.querySelectorAll(".proj-list li").length).toBe(0)
+  })
+
+  it("**服务器收纳也能收起来**", () => {
+    const c = 画([任务({ connectionId: "c1" })])
+    expect(c.querySelectorAll(".side-server").length).toBe(1)
+    点收纳(c, "服务器")
+    expect(c.querySelectorAll(".side-server").length).toBe(0)
+  })
+
+  /** 一台机器单独收起，**不影响同一收纳里的另一台** */
+  it("**单台机器能收起，另一台不受影响**", () => {
+    const c = 画([任务({ connectionId: "a" }), 任务({ connectionId: "b" })])
+    expect(c.querySelectorAll(".server-session-list li").length).toBe(2)
+    fireEvent.click(c.querySelectorAll(".side-subhead")[0] as HTMLElement)
+    expect(c.querySelectorAll(".server-session-list li").length, "另一台也被收掉了").toBe(1)
+  })
+})
+
+/**
+ * 整台服务器一起选（2026-08-15 作者要的：
+ * *「服务器的多选，也可以删除不同的 IP，现在仅仅是一个 IP 下的不同会话」*）。
+ */
+describe("侧栏 · 整台服务器一起选", () => {
+  const 任务 = (id: string, c = "a") => ({
+    taskId: id,
+    connectionId: c,
+    pinned: false,
+    sortOrder: 1,
+    createdAt: "2026-08-15T00:00:00Z",
+  })
+
+  const 进多选 = () => {
+    const c = render(
+      <SessionSidebar
+        {...base}
+        projects={[]}
+        activeProjectId={undefined}
+        tasks={[任务("t1"), 任务("t2"), 任务("t3", "b")] as never}
+        服务器名={(id) => `机器-${id}`}
+        onDeleteMany={() => {}}
+      />,
+    ).container
+    fireEvent.click(
+      [...c.querySelectorAll(".side-bulk")].find((b) =>
+        (b.getAttribute("aria-label") ?? "").includes("服务器"),
+      ) as HTMLElement,
+    )
+    return c
+  }
+
+  /** 这一台的勾选框：`aria-label` 里带「选择这台服务器」 */
+  const 台勾 = (c: HTMLElement, 名: string) =>
+    [...c.querySelectorAll("input[type=checkbox]")].find((x) =>
+      (x.getAttribute("aria-label") ?? "").includes(`选择这台服务器：${名}`),
+    ) as HTMLInputElement
+
+  it("**勾一台，把它底下的全勾上**（另一台不受影响）", () => {
+    const c = 进多选()
+    fireEvent.click(台勾(c, "机器-a"))
+    expect(c.querySelector(".side-bulk-count")!.textContent, "勾了一台却没把它底下的全选上")
+      .toMatch(/已选\s*2/)
+  })
+
+  it("再勾一次就全取消", () => {
+    const c = 进多选()
+    fireEvent.click(台勾(c, "机器-a"))
+    fireEvent.click(台勾(c, "机器-a"))
+    expect(c.querySelector(".side-bulk-count")!.textContent).toMatch(/已选\s*0/)
+  })
+
+  /**
+   * **半选要如实画成 indeterminate。**
+   * 只勾了其中一段却显示成全勾，人会以为按删除会删掉整台——
+   * 而那是不可撤销的。
+   */
+  it("**只勾了其中一段时，这一台是半选，不是全勾**", () => {
+    const c = 进多选()
+    const 单条 = [...c.querySelectorAll(".side-server input[type=checkbox]")].find(
+      (x) => !(x.getAttribute("aria-label") ?? "").includes("选择这台服务器"),
+    ) as HTMLInputElement
+    fireEvent.click(单条)
+    const 台 = 台勾(c, "机器-a")
+    expect(台.checked, "半选却显示成全勾").toBe(false)
+    expect(台.indeterminate, "半选没有画成 indeterminate").toBe(true)
   })
 })

@@ -965,7 +965,20 @@ export function SessionSidebar({
    * **哪个项目展开着**（T3-a）。默认收起，但**当前那段对话所在的项目自动展开**——
    * 否则点进一段对话之后，侧栏上找不到它在哪，人会以为它没了。
    */
-  const [展开的项目, 设展开] = useState<string | undefined>(undefined)
+  /**
+   * 哪个项目是展开的。**三态**（2026-08-15 修作者报的「折叠不进去」）：
+   *
+   * - `undefined`：人还没选过 → 自动展开**当前那段会话所在的**那个
+   * - `null`：人明确把它收起来了 → 谁都不自动展开
+   * - 路径：人明确展开了这一个
+   *
+   * 上一版只有两态，判据是
+   * `展开的项目 === 路径 || 里面的.some(是当前会话)`——
+   * **第二个条件让点击失效了**：你正在用的那段会话所在的项目永远展开，
+   * 点了也收不起来（作者：*「`未命名文件夹` 折叠不进去，但 `tmp_dir` 可以」*，
+   * 差别正是前者装着当前会话）。**自动展开是个默认值，不该压过人的选择。**
+   */
+  const [展开的项目, 设展开] = useState<string | undefined | null>(undefined)
 
   /**
    * **批量选择**（2026-08-12，作者：*「会话越来越多了，能否给我来一个
@@ -991,6 +1004,19 @@ export function SessionSidebar({
   const 选会话中 = 多选中?.列 === "会话"
   /** 正在多选服务器那一列（2026-08-14 作者要的，与另两列同一套状态） */
   const 选服务器中 = 多选中?.列 === "服务器"
+  /**
+   * 收起来的那些（2026-08-15 作者要的）：机器按 `connectionId`，会话那一列用 `"会话"`。
+   * **默认全展开**——收起是人的动作，不是我们替他做的决定。
+   */
+  const [收起的, 设收起] = useState<ReadonlySet<string>>(new Set())
+  const 收起了 = (k: string) => 收起的.has(k)
+  const 切收起 = (k: string) =>
+    设收起((前) => {
+      const 新 = new Set(前)
+      if (新.has(k)) 新.delete(k)
+      else 新.add(k)
+      return 新
+    })
   const 选项目中 = 多选中?.列 === "项目"
   const 已选 = 多选中?.集合
   const 切一个 = (id: string) =>
@@ -1403,7 +1429,19 @@ export function SessionSidebar({
       {项目组.length > 0 ? (
         <>
           <p className="side-section">
-            {t("项目")} <span className="side-count">{项目组.length}</span>
+            {/* **整个收纳也能收起来**（2026-08-15 作者要的）：标题可点，三角靠旋转表达两态 */}
+            <Button
+              variant="text"
+              size="inline"
+              className="side-section-toggle"
+              aria-expanded={!收起了("项目")}
+              onClick={() => 切收起("项目")}
+            >
+              <三角图标 className={`twisty${收起了("项目") ? "" : " open"}`} />
+              {/* 三个收纳各有一个图标，**一眼看得出它们是同级的三样东西** */}
+              <文件夹图标 className="side-section-icon" />
+              {t("项目")} <span className="side-count">{项目组.length}</span>
+            </Button>
             {/**
               * **入口叫「批量」，不叫「多选」**（2026-08-13）。
               *
@@ -1476,9 +1514,13 @@ export function SessionSidebar({
               </Button>
             </div>
           ) : null}
+          {收起了("项目") ? null : (
           <ul className="proj-list">
             {项目组.map(([路径, 里面的]) => {
-              const 展开 = 展开的项目 === 路径 || 里面的.some((t) => t.taskId === activeTaskId)
+              const 展开 =
+                展开的项目 === 路径 ||
+                // **只在人没选过时才自动展开**（见 `展开的项目` 的三态说明）
+                (展开的项目 === undefined && 里面的.some((t) => t.taskId === activeTaskId))
               return (
                 <li key={路径} className={`proj-item${展开 ? " current" : ""}`}>
                   <div className="proj-head">
@@ -1493,7 +1535,7 @@ export function SessionSidebar({
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一个(路径) : 设展开(展开 ? undefined : 路径))}
+                      onClick={() => (选项目中 ? 切一个(路径) : 设展开(展开 ? null : 路径))}
                     >
                       <span className="sess">
                         <span className="name">
@@ -1562,6 +1604,7 @@ export function SessionSidebar({
               )
             })}
           </ul>
+          )}
         </>
       ) : null}
 
@@ -1584,8 +1627,17 @@ export function SessionSidebar({
               * **带图标**（2026-08-14 作者要的）。
               * 它与「项目」「会话」是并列的三个收纳，图标让这一点一眼可见。
               */}
-            <服务器图标 className="side-section-icon" />
-            {t("服务器")} <span className="side-count">{服务器组.length}</span>
+            <Button
+              variant="text"
+              size="inline"
+              className="side-section-toggle"
+              aria-expanded={!收起了("服务器")}
+              onClick={() => 切收起("服务器")}
+            >
+              <三角图标 className={`twisty${收起了("服务器") ? "" : " open"}`} />
+              <服务器图标 className="side-section-icon" />
+              {t("服务器")} <span className="side-count">{服务器组.length}</span>
+            </Button>
             {/**
               * **看得见的是「多选」，读屏听见的是「多选服务器」**——
               * 与项目、会话那两颗同一副做法（2026-08-13 定的）：
@@ -1653,14 +1705,60 @@ export function SessionSidebar({
             * 差别在屏幕上很大：机器一多，那种做法会摊出好几个平级标题；
             * 而「项目」那一列不管几个项目都只占一个标题。
             */}
-          {服务器组.map(([connectionId, 些]) => (
+          {收起了("服务器") ? null : 服务器组.map(([connectionId, 些]) => (
             <div key={connectionId} className="side-server">
-              <p className="side-subhead">
+              {/**
+                * **每台机器都能收起来**（2026-08-15 作者要的）。
+                * 照项目那一列的做法：整行可点，三角靠旋转表达两态——
+                * 两个不同的字形会让展开看起来像换了个东西。
+                */}
+              {/**
+                * **多选时整台也能选**（2026-08-15 作者要的：
+                * *「服务器的多选，也可以删除不同的 IP，现在仅仅是一个 IP 下的不同会话」*）。
+                *
+                * 勾这一台 = 勾上它底下的全部。**半选状态如实画成 indeterminate**——
+                * 只勾了其中两段却显示成全勾，人会以为按删除会删掉整台。
+                */}
+              {选服务器中 ? (
+                <input
+                  type="checkbox"
+                  className="sess-check"
+                  checked={些.every((x) => 已选!.has(x.taskId))}
+                  ref={(el) => {
+                    if (el) {
+                      const 勾了 = 些.filter((x) => 已选!.has(x.taskId)).length
+                      el.indeterminate = 勾了 > 0 && 勾了 < 些.length
+                    }
+                  }}
+                  onChange={() =>
+                    设多选((前) => {
+                      const 集合 = new Set(前?.集合 ?? [])
+                      const 全在 = 些.every((x) => 集合.has(x.taskId))
+                      for (const x of 些) {
+                        if (全在) 集合.delete(x.taskId)
+                        else 集合.add(x.taskId)
+                      }
+                      return { 列: "服务器", 集合 }
+                    })
+                  }
+                  aria-label={tf("选择这台服务器：{0}", 服务器名?.(connectionId) ?? connectionId)}
+                />
+              ) : null}
+              <Button
+                variant="text"
+                size="inline"
+                className="side-subhead"
+                aria-expanded={!收起了(connectionId)}
+                onClick={() => 切收起(connectionId)}
+              >
+                <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
                 {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
-                {服务器名?.(connectionId) ?? connectionId}{" "}
+                <span className="name">{服务器名?.(connectionId) ?? connectionId}</span>
                 <span className="side-count">{些.length}</span>
-              </p>
-              <ul className="side-list">{些.map((t) => 任务行(t, true))}</ul>
+              </Button>
+              {收起了(connectionId) ? null : (
+                <ul className="server-session-list">{些.map((t) => 任务行(t, true))}</ul>
+              )}
             </div>
           ))}
         </>
@@ -1676,7 +1774,17 @@ export function SessionSidebar({
       {散的.length > 0 ? (
         <>
           <p className="side-section">
-            {t("会话")} <span className="side-count">{散的.length}</span>
+            <Button
+              variant="text"
+              size="inline"
+              className="side-section-toggle"
+              aria-expanded={!收起了("会话")}
+              onClick={() => 切收起("会话")}
+            >
+              <三角图标 className={`twisty${收起了("会话") ? "" : " open"}`} />
+              <对话图标 className="side-section-icon" />
+              {t("会话")} <span className="side-count">{散的.length}</span>
+            </Button>
             {/**
               * **「选择」在分区标题上**（2026-08-12）。
               *
@@ -1734,9 +1842,9 @@ export function SessionSidebar({
               </Button>
             </div>
           ) : null}
-          <ul className="session-list">
-            {散的.map((t) => 任务行(t, true))}
-          </ul>
+          {收起了("会话") ? null : (
+            <ul className="session-list">{散的.map((t) => 任务行(t, true))}</ul>
+          )}
         </>
       ) : null}
 

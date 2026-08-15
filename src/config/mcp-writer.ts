@@ -32,15 +32,16 @@ import { parseDocument } from "yaml"
 import { UserFacingError } from "../errors.js"
 import { loadRegistry } from "./loader.js"
 import type { ProviderRegistry } from "./schema.js"
+import { 名字过得了API } from "../mcp/名单.js"
 
 /**
- * 服务器名的形状。
+ * 名字的长度上限。**形状由 `mcp/名单.ts` 的 `名字过得了API` 定**——
+ * 那条规则只有一个家：它是「送进模型 API 之后谁在收」决定的，不是我们的偏好。
  *
- * **不允许空格与点**：这个名字会成为工具名的前缀（`<名>__<工具>`），
- * 而带空格的工具名在各家模型那里的处理并不一致。
- * 也不允许双下划线——那是我们拆前缀用的分隔符。
+ * 我第一版把形状写在这里，还允许中文——**当天就炸了**：
+ * `官方参考__echo` 送进 DeepSeek 直接 400，而且整段对话都发不出去。
  */
-const 名字形状 = /^[A-Za-z0-9一-龥][A-Za-z0-9一-龥_-]{0,31}$/
+const 长度上限 = 32
 
 export interface 新MCP服务器 {
   名: string
@@ -107,11 +108,10 @@ function 插入(原文: string, 台: 新MCP服务器): string {
  * @throws {UserFacingError} 名字不合法、已存在、或写完读不回来
  */
 export function addMcpServer(file: string, 台: 新MCP服务器): ProviderRegistry {
-  if (!名字形状.test(台.名) || 台.名.includes("__")) {
-    throw new UserFacingError(
-      `服务器名只能用字母、数字、中文、下划线和连字符，不超过 32 个字符，` +
-        `且不能含双下划线（它是工具名前缀的分隔符）。收到「${台.名}」`,
-    )
+  const 名字不行 = 名字过得了API(台.名)
+  if (名字不行) throw new UserFacingError(名字不行)
+  if (台.名.length > 长度上限) {
+    throw new UserFacingError(`服务器名不要超过 ${长度上限} 个字符（收到 ${台.名.length} 个）`)
   }
   if (!台.command.trim()) throw new UserFacingError("`command` 不能是空的——不知道该怎么把它启动起来")
   if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)

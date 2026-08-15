@@ -68,10 +68,10 @@ export function 合名单(
     服务器.push({ 名, 服务器: s, 来自: "全局" })
   }
 
-  if (!工作区) return { 服务器, 问题 }
+  if (!工作区) return 收口(服务器, 问题)
 
   const 路径 = join(工作区, 项目名单文件)
-  if (!existsSync(路径)) return { 服务器, 问题 }
+  if (!existsSync(路径)) return 收口(服务器, 问题)
 
   let 项目段: Record<string, McpServer>
   try {
@@ -83,7 +83,7 @@ export function 合名单(
      * 一句「项目配置有问题」会让人对着整个目录找。
      */
     问题.push(`${项目名单文件} 读不出来：${e instanceof Error ? e.message : String(e)}`)
-    return { 服务器, 问题 }
+    return 收口(服务器, 问题)
   }
 
   for (const [名, s] of Object.entries(项目段)) {
@@ -107,7 +107,60 @@ export function 合名单(
   const 撞的 = new Set(
     问题.map((q) => /^「(.+?)」在全局和/.exec(q)?.[1]).filter((x): x is string => !!x),
   )
-  return { 服务器: 服务器.filter((x) => !撞的.has(x.名)), 问题 }
+  return 收口(
+    服务器.filter((x) => !撞的.has(x.名)),
+    问题,
+  )
+}
+
+/**
+ * 所有出口的收口处。
+ *
+ * **抽出来是因为它漏过一次**（2026-08-15）：名字过滤原本写在函数末尾，
+ * 而 `合名单` 有三条提前 return（没有工作区 / 没有项目名单 / 名单读不出来）——
+ * **临时会话走的正是第一条**，于是过滤形同虚设。
+ * 测试当场抓住了它。**有几条出口，就得有几次收口。**
+ */
+function 收口(服务器: 名单项[], 问题: string[]): 名单结果 {
+  const 过不了 = 服务器.map((x) => ({ 名: x.名, 话: 名字过得了API(x.名) })).filter((x) => x.话)
+  for (const x of 过不了) 问题.push(`${x.话}（这台没有启用）`)
+  const 坏名 = new Set(过不了.map((x) => x.名))
+  return { 服务器: 服务器.filter((x) => !坏名.has(x.名)), 问题 }
+}
+
+/**
+ * **工具名要出境**，所以形状由接收方定（2026-08-15 实测踩的）。
+ *
+ * 作者用 DeepSeek 时整段对话发不出去：
+ *
+ * > `400: Invalid 'tools[14].function.name': string does not match pattern.`
+ * > `Expected a string that matches the pattern '^[a-zA-Z0-9_-]+$'`
+ *
+ * 根因是我把服务器名的形状写成了「字母、数字、**中文**、下划线、连字符」——
+ * 按「我们自己觉得合理」定的，**没按送出去之后谁在收**。
+ * 于是 `官方参考__echo` 送进 DeepSeek 当场 400。
+ *
+ * **代价远超那一个工具**：工具清单是整轮请求的一部分，一个名字不合格，
+ * **这段对话的每一句都发不出去**——而报错里只字未提 MCP。
+ *
+ * 这一条同时管两头：加的时候拦下（`mcp-writer`），
+ * 以及**已经配着的那些**（手写的、老版本加的）在装配时被挑出来，
+ * 如实报出来而不是送一个必然失败的清单（规格 7.5）。
+ */
+export const 工具名形状 = /^[a-zA-Z0-9_-]+$/
+
+/**
+ * 这台的名字能不能拼出合格的工具名。**不能就说清为什么**——
+ * 一句「名字不合法」会让人猜是长度还是符号。
+ */
+export function 名字过得了API(名: string): string | undefined {
+  if (!工具名形状.test(名)) {
+    return `「${名}」里有模型 API 不接受的字符。工具名只能用字母、数字、下划线和连字符（^[a-zA-Z0-9_-]+$）——中文、空格、点都不行，因为这个名字会成为工具名的前缀送进模型。`
+  }
+  if (名.includes("__")) {
+    return `「${名}」里有双下划线，那是我们拆「服务器__工具」用的分隔符，会拆错。`
+  }
+  return undefined
 }
 
 /** 工具名 = `<服务器名>__<工具名>`。**分隔符用双下划线**：单个下划线在工具名里太常见 */

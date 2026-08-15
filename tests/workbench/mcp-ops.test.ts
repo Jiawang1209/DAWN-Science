@@ -101,9 +101,9 @@ function 起一个(mcp: string, 凭证 = 内存凭证()) {
 
 describe("listMcpServers", () => {
   it("列出配了哪几台，并说清它是全局还是项目带的", async () => {
-    const { wb } = 起一个(一台("测试台"))
+    const { wb } = 起一个(一台("testbox"))
     const r = await 列(wb)
-    expect(r.servers.map((s) => s.name)).toEqual(["测试台"])
+    expect(r.servers.map((s) => s.name)).toEqual(["testbox"])
     expect(r.servers[0]!.from).toBe("global")
   })
 
@@ -112,7 +112,7 @@ describe("listMcpServers", () => {
    * 混成一件事的话，一个刚配好、还没连过的服务器会显示成故障。
    */
   it("**没连过的是 `unknown`，而且不带 error**", async () => {
-    const { wb } = 起一个(一台("测试台"))
+    const { wb } = 起一个(一台("testbox"))
     const s = (await 列(wb)).servers[0]!
     expect(s.state).toBe("unknown")
     expect(s.error).toBeUndefined()
@@ -121,7 +121,7 @@ describe("listMcpServers", () => {
 
   /** **列名单不该起进程**：打开设置屏就悄悄拉起五个服务器是不能接受的 */
   it("**列名单不会去连它**", async () => {
-    const { wb } = 起一个(一台("测试台"))
+    const { wb } = 起一个(一台("testbox"))
     await 列(wb)
     const 池 = (wb.nativeRuntime as unknown as { opts?: { mcp?: { 池: { 连着的(): string[] } } } })
       .opts?.mcp?.池
@@ -130,7 +130,7 @@ describe("listMcpServers", () => {
 
   /** **缺哪个密钥要点名**：笼统一句「没配好」会让人对着三个变量挨个试 */
   it("点名说还差哪个密钥", async () => {
-    const { wb } = 起一个(一台("要密的", "    env: [PGURL]\n"))
+    const { wb } = 起一个(一台("needskey", "    env: [PGURL]\n"))
     const s = (await 列(wb)).servers[0]!
     expect(s.missingSecrets).toEqual(["PGURL"])
     expect(s.env).toEqual(["PGURL"])
@@ -139,8 +139,8 @@ describe("listMcpServers", () => {
 
 describe("testMcpServer", () => {
   it("**当场连一次并把工具列出来**", async () => {
-    const { wb } = 起一个(一台("测试台"))
-    const r = await 试(wb, { name: "测试台" })
+    const { wb } = 起一个(一台("testbox"))
+    const r = await 试(wb, { name: "testbox" })
     expect(r.ok, `没连上：${r.error}`).toBe(true)
     expect(r.tools.map((t) => t.name).sort()).toEqual(["boom", "echo", "写一行"])
     await wb.closeAsync(3000)
@@ -149,16 +149,16 @@ describe("testMcpServer", () => {
   /** 连不上时**必须带原因**——不带原因的失败等于没报 */
   it("连不上时带着原因", async () => {
     const { wb } = 起一个(
-      `mcp:\n  崩的:\n    command: ${JSON.stringify(process.execPath)}\n    args: ["-e", "process.exit(1)"]\n`,
+      `mcp:\n  crashy:\n    command: ${JSON.stringify(process.execPath)}\n    args: ["-e", "process.exit(1)"]\n`,
     )
-    const r = await 试(wb, { name: "崩的" })
+    const r = await 试(wb, { name: "crashy" })
     expect(r.ok).toBe(false)
     expect(r.error, "失败了却没有原因").toBeTruthy()
   })
 
   it("名单里没有这台时如实报错，不静静回一个空清单", async () => {
-    const { wb } = 起一个(一台("测试台"))
-    await expect(试(wb, { name: "不存在的" })).rejects.toThrow()
+    const { wb } = 起一个(一台("testbox"))
+    await expect(试(wb, { name: "nosuch" })).rejects.toThrow()
   })
 })
 
@@ -168,39 +168,39 @@ describe("setMcpSecret / setMcpFlag", () => {
    * 密钥一旦出现在某个响应里，它就会流进日志、流进界面状态、流进截图。
    */
   it("**填进去的密钥，任何响应里都读不到**", async () => {
-    const { wb, 凭证 } = 起一个(一台("要密的", "    env: [PGURL]\n"))
-    await 填(wb, { name: "要密的", varName: "PGURL", secret: "postgres://秘密" })
+    const { wb, 凭证 } = 起一个(一台("needskey", "    env: [PGURL]\n"))
+    await 填(wb, { name: "needskey", varName: "PGURL", secret: "postgres://秘密" })
 
     const r = await 列(wb)
     expect(JSON.stringify(r), "密钥出现在了响应里").not.toContain("秘密")
     // 但它确实存下来了——**「没回传」不等于「没存上」**
-    expect(凭证.get("mcp:要密的:PGURL")).toBe("postgres://秘密")
+    expect(凭证.get("mcp:needskey:PGURL")).toBe("postgres://秘密")
     expect(r.servers[0]!.missingSecrets, "填了之后不该还说缺").toEqual([])
   })
 
   /** 空串 = 清除。**「不想配了」与「配了个空值」是两回事** */
   it("传空串是清除", async () => {
-    const { wb, 凭证 } = 起一个(一台("要密的", "    env: [PGURL]\n"))
-    await 填(wb, { name: "要密的", varName: "PGURL", secret: "x" })
-    await 填(wb, { name: "要密的", varName: "PGURL", secret: "" })
-    expect(凭证.get("mcp:要密的:PGURL")).toBeUndefined()
+    const { wb, 凭证 } = 起一个(一台("needskey", "    env: [PGURL]\n"))
+    await 填(wb, { name: "needskey", varName: "PGURL", secret: "x" })
+    await 填(wb, { name: "needskey", varName: "PGURL", secret: "" })
+    expect(凭证.get("mcp:needskey:PGURL")).toBeUndefined()
   })
 
   it("信任开关拨得动，也读得回来", async () => {
-    const { wb } = 起一个(一台("测试台"))
+    const { wb } = 起一个(一台("testbox"))
     expect((await 列(wb)).servers[0]!.trusted).toBe(false)
-    await 拨(wb, { name: "测试台", flag: "trusted", value: true })
+    await 拨(wb, { name: "testbox", flag: "trusted", value: true })
     expect((await 列(wb)).servers[0]!.trusted).toBe(true)
-    await 拨(wb, { name: "测试台", flag: "trusted", value: false })
+    await 拨(wb, { name: "testbox", flag: "trusted", value: false })
     expect((await 列(wb)).servers[0]!.trusted).toBe(false)
   })
 
   /** 关掉的那台**仍然列出来**——不列的话人会以为配置丢了 */
   it("关掉之后仍然在名单上，只是标着关了", async () => {
-    const { wb } = 起一个(一台("测试台"))
-    await 拨(wb, { name: "测试台", flag: "off", value: true })
+    const { wb } = 起一个(一台("testbox"))
+    await 拨(wb, { name: "testbox", flag: "off", value: true })
     const s = (await 列(wb)).servers[0]!
-    expect(s.name).toBe("测试台")
+    expect(s.name).toBe("testbox")
     expect(s.off).toBe(true)
   })
 })

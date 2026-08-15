@@ -28,8 +28,8 @@ function 假池(回?: { 文字: string; 出错了: boolean }) {
 }
 
 const 一个工具 = {
-  全名: "测试台__echo",
-  服务器名: "测试台",
+  全名: "testbox__echo",
+  服务器名: "testbox",
   工具名: "echo",
   描述: "回声",
   入参: { type: "object", properties: { message: { type: "string" } } },
@@ -39,7 +39,7 @@ const 造 = (over: Partial<Parameters<typeof createMcpTools>[0]> = {}) => {
   const { 池, 调过 } = 假池()
   const 工具 = createMcpTools({
     池,
-    名单: [{ 名: "测试台", 服务器: 一台 }],
+    名单: [{ 名: "testbox", 服务器: 一台 }],
     工具: [一个工具],
     ...over,
   }) as { name: string; description: string; parameters: unknown; execute: Function }[]
@@ -48,12 +48,12 @@ const 造 = (over: Partial<Parameters<typeof createMcpTools>[0]> = {}) => {
 
 describe("MCP 工具 · 装配", () => {
   it("工具名带服务器前缀，模型看到的就是它", () => {
-    expect(造().工具[0]!.name).toBe("测试台__echo")
+    expect(造().工具[0]!.name).toBe("testbox__echo")
   })
 
   /** **描述里要点明来自哪台**：模型只看见 `pg__query`，猜不出 pg 是什么 */
   it("描述里点明来自哪台服务器", () => {
-    expect(造().工具[0]!.description).toContain("测试台")
+    expect(造().工具[0]!.description).toContain("testbox")
     expect(造().工具[0]!.description).toContain("回声")
   })
 
@@ -65,7 +65,7 @@ describe("MCP 工具 · 装配", () => {
   it("放行时真的把参数送到了那台服务器", async () => {
     const { 工具, 调过 } = 造()
     await 工具[0]!.execute("c1", { message: "在吗" })
-    expect(调过).toEqual([{ 名: "测试台", 工具: "echo", 参数: { message: "在吗" } }])
+    expect(调过).toEqual([{ 名: "testbox", 工具: "echo", 参数: { message: "在吗" } }])
   })
 })
 
@@ -94,7 +94,7 @@ describe("MCP 工具 · 门", () => {
   it("拒绝时说清开关在哪", async () => {
     const { 工具 } = 造({ 门: 拦着的门 })
     const r = (await 工具[0]!.execute("c1", {})) as { content: { text: string }[] }
-    expect(r.content[0]!.text).toContain("测试台")
+    expect(r.content[0]!.text).toContain("testbox")
     expect(r.content[0]!.text).toMatch(/信得过|全部允许/)
   })
 
@@ -103,11 +103,11 @@ describe("MCP 工具 · 门", () => {
     const { 池, 调过 } = 假池()
     const 工具 = createMcpTools({
       池,
-      名单: [{ 名: "测试台", 服务器: 一台 }],
+      名单: [{ 名: "testbox", 服务器: 一台 }],
       工具: [一个工具],
       门: 造MCP门(
         () => "deny-risky",
-        (名) => 名 === "测试台",
+        (名) => 名 === "testbox",
       ),
     }) as { execute: Function }[]
     await 工具[0]!.execute("c1", {})
@@ -131,12 +131,12 @@ describe("MCP 工具 · 说清是谁", () => {
     const { 池 } = 假池({ 文字: "连不上库", 出错了: true })
     const 工具 = createMcpTools({
       池,
-      名单: [{ 名: "测试台", 服务器: 一台 }],
+      名单: [{ 名: "testbox", 服务器: 一台 }],
       工具: [一个工具],
     }) as { execute: Function }[]
     const r = (await 工具[0]!.execute("c1", {})) as { isError?: boolean; content: { text: string }[] }
     expect(r.isError).toBeFalsy()
-    expect(r.content[0]!.text).toContain("[测试台]")
+    expect(r.content[0]!.text).toContain("[testbox]")
     expect(r.content[0]!.text).toContain("报错")
     expect(r.content[0]!.text).toContain("连不上库")
   })
@@ -147,7 +147,7 @@ describe("MCP 工具 · 说清是谁", () => {
     const 工具 = createMcpTools({ 池, 名单: [], 工具: [一个工具] }) as { execute: Function }[]
     const r = (await 工具[0]!.execute("c1", {})) as { isError?: boolean; content: { text: string }[] }
     expect(r.isError).toBe(true)
-    expect(r.content[0]!.text).toContain("测试台")
+    expect(r.content[0]!.text).toContain("testbox")
     expect(调过).toEqual([])
   })
 })

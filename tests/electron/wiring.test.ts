@@ -162,7 +162,7 @@ describe("createWorkbench", () => {
     expect(wb.server).toBeDefined()
   })
 
-  it("配置文件不存在时响亮报错", () => {
+  it("配置文件nosuch时响亮报错", () => {
     expect(() =>
       createWorkbench({ configPath: "/nonexistent/providers.yaml", dbPath: newDbPath(), credentials: memoryCredentials() }),
     ).toThrow()
@@ -378,7 +378,7 @@ describe("run_code · 接线", () => {
     const 脚本 = join(process.cwd(), "scripts", "mcp-test-server.mjs")
     const wb = createWorkbench({
       configPath: configFile(
-        `mcp:\n  测试台:\n    command: ${JSON.stringify(process.execPath)}\n    args: [${JSON.stringify(脚本)}]\n`,
+        `mcp:\n  testbox:\n    command: ${JSON.stringify(process.execPath)}\n    args: [${JSON.stringify(脚本)}]\n`,
       ),
       dbPath: newDbPath(),
       credentials: memoryCredentials(),
@@ -396,7 +396,7 @@ describe("run_code · 接线", () => {
 
     const r = await 装!.取工具(undefined)
     expect(r.问题, `有服务器没连上：${r.问题.join("；")}`).toEqual([])
-    expect(r.工具.map((t) => t.全名), "真服务器的工具没列出来").toContain("测试台__echo")
+    expect(r.工具.map((t) => t.全名), "真服务器的工具没列出来").toContain("testbox__echo")
     await wb.closeAsync(3000)
   })
 

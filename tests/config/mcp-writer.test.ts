@@ -62,64 +62,64 @@ describe("加一台", () => {
   })
 
   it("已经有一段 `mcp:` 时，加在那一段里", () => {
-    addMcpServer(文件, { 名: "第一台", command: "a" })
-    const r = addMcpServer(文件, { 名: "第二台", command: "b" })
-    expect(Object.keys(r.mcp ?? {}).sort()).toEqual(["第一台", "第二台"])
+    addMcpServer(文件, { 名: "first", command: "a" })
+    const r = addMcpServer(文件, { 名: "second", command: "b" })
+    expect(Object.keys(r.mcp ?? {}).sort()).toEqual(["first", "second"])
     expect(读().match(/^mcp:$/gm), "不该出现两段 mcp:").toHaveLength(1)
   })
 
   it("env 只写名字，cwd 给了才写", () => {
-    addMcpServer(文件, { 名: "台", command: "npx", env: ["A_KEY"], cwd: "/w" })
+    addMcpServer(文件, { 名: "srv", command: "npx", env: ["A_KEY"], cwd: "/w" })
     expect(读()).toContain(`env: ["A_KEY"]`)
     expect(读()).toContain(`cwd: "/w"`)
   })
 
   /** **不覆盖**：那可能是用户手写的，他没要求我们改它 */
   it("同名的一律拒绝，不覆盖", () => {
-    addMcpServer(文件, { 名: "台", command: "a" })
-    expect(() => addMcpServer(文件, { 名: "台", command: "b" })).toThrow(/已经有一台/)
+    addMcpServer(文件, { 名: "srv", command: "a" })
+    expect(() => addMcpServer(文件, { 名: "srv", command: "b" })).toThrow(/已经有一台/)
     expect(读()).toContain(`command: "a"`)
   })
 
   /** 名字会成为工具前缀，**双下划线是我们拆前缀的分隔符** */
   it("名字不合法时说清楚哪儿不合法", () => {
-    expect(() => addMcpServer(文件, { 名: "有 空格", command: "a" })).toThrow(/服务器名/)
-    expect(() => addMcpServer(文件, { 名: "带__下划线", command: "a" })).toThrow(/双下划线/)
+    expect(() => addMcpServer(文件, { 名: "有 空格", command: "a" })).toThrow(/a-zA-Z0-9_-/)
+    expect(() => addMcpServer(文件, { 名: "has__dunder", command: "a" })).toThrow(/双下划线/)
   })
 
   it("command 是空的就不写", () => {
-    expect(() => addMcpServer(文件, { 名: "台", command: "  " })).toThrow(/command/)
+    expect(() => addMcpServer(文件, { 名: "srv", command: "  " })).toThrow(/command/)
   })
 
   /** 值里有引号、空格的也要写得回来——**宁可多一对引号** */
   it("带空格和引号的命令照样读得回来", () => {
     const r = addMcpServer(文件, {
-      名: "怪的",
+      名: "weird",
       command: "/opt/my tools/run.sh",
       args: ['{"a":1}', "--x y"],
     })
-    expect(r.mcp?.["怪的"]?.command).toBe("/opt/my tools/run.sh")
-    expect(r.mcp?.["怪的"]?.args).toEqual(['{"a":1}', "--x y"])
+    expect(r.mcp?.["weird"]?.command).toBe("/opt/my tools/run.sh")
+    expect(r.mcp?.["weird"]?.args).toEqual(['{"a":1}', "--x y"])
   })
 })
 
 describe("删一台", () => {
   it("删得掉，其余的不动", () => {
-    addMcpServer(文件, { 名: "甲", command: "a" })
-    addMcpServer(文件, { 名: "乙", command: "b" })
-    const r = removeMcpServer(文件, "甲")
-    expect(Object.keys(r.mcp ?? {})).toEqual(["乙"])
+    addMcpServer(文件, { 名: "a1", command: "a" })
+    addMcpServer(文件, { 名: "b1", command: "b" })
+    const r = removeMcpServer(文件, "a1")
+    expect(Object.keys(r.mcp ?? {})).toEqual(["b1"])
     expect(读()).toContain("capabilities: [chat, exec]")
   })
 
   it("没有这一台时如实说，不静静成功", () => {
-    addMcpServer(文件, { 名: "甲", command: "a" })
+    addMcpServer(文件, { 名: "a1", command: "a" })
     expect(() => removeMcpServer(文件, "不存在")).toThrow(/没有叫/)
   })
 
   it("最后一台删掉之后，文件仍然读得回来", () => {
-    addMcpServer(文件, { 名: "甲", command: "a" })
-    const r = removeMcpServer(文件, "甲")
+    addMcpServer(文件, { 名: "a1", command: "a" })
+    const r = removeMcpServer(文件, "a1")
     expect(r.mcp ?? {}).toEqual({})
     expect(r.agents["ds-chat"]).toBeDefined()
   })
@@ -137,7 +137,7 @@ describe("粘贴 Claude Desktop 的 JSON", () => {
   })
 
   it("认只给了一台的那种", () => {
-    expect(从JSON解出(`{"台":{"command":"uvx","args":["s"]}}`).台.名).toBe("台")
+    expect(从JSON解出(`{"srv":{"command":"uvx","args":["s"]}}`).台.名).toBe("srv")
   })
 
   it("认连名字都没有的那种（由调用方另填名字）", () => {
@@ -171,6 +171,6 @@ describe("粘贴 Claude Desktop 的 JSON", () => {
   })
 
   it("没有 command 时如实说", () => {
-    expect(() => 从JSON解出(`{"台":{"args":["x"]}}`)).toThrow(/command/)
+    expect(() => 从JSON解出(`{"srv":{"args":["x"]}}`)).toThrow(/command/)
   })
 })

@@ -25,10 +25,10 @@ const 脚本 = join(process.cwd(), "scripts", "mcp-test-server.mjs")
 
 /** 两台：一台直接能连，一台要密钥。**同一份配置里**，好让「点名」有对照 */
 const 配置 = `mcp:
-  测试台:
+  testbox:
     command: ${JSON.stringify(process.execPath)}
     args: [${JSON.stringify(脚本)}]
-  要密的:
+  needskey:
     command: ${JSON.stringify(process.execPath)}
     args: [${JSON.stringify(脚本)}]
     env: [DAWN_MCP_TEST_SECRET]
@@ -49,11 +49,11 @@ test("**配了的两台都列出来，还没试过就说还没试过**", async (
   /**
    * **按 `.skill-name` 找，不按精确文本。**
    * 那一行里除了名字还有「全局 / 这个项目带的」那个注脚——
-   * 探针实测它的文本是 `"测试台全局"`，精确匹配对不上。
+   * 探针实测它的文本是 `"testbox全局"`，精确匹配对不上。
    */
   const 名字 = await page.locator(".skill-name").allTextContents()
-  expect(名字.join("|")).toContain("测试台")
-  expect(名字.join("|")).toContain("要密的")
+  expect(名字.join("|")).toContain("testbox")
+  expect(名字.join("|")).toContain("needskey")
 
   /**
    * **缺密钥要点名**（规格 7.5）。
@@ -111,7 +111,7 @@ test("**粘一段 JSON 就加进来了，而且立刻能用**", async ({ dawn })
 
   const 那段 = JSON.stringify({
     mcpServers: {
-      粘进来的: {
+      pasted: {
         command: process.execPath,
         args: [脚本],
         env: { DAWN_MCP_TEST_SECRET: "这个值不许进配置文件" },
@@ -125,26 +125,26 @@ test("**粘一段 JSON 就加进来了，而且立刻能用**", async ({ dawn })
 
   /** 加完要说清它还要什么——不说的话人不知道下一步该干嘛 */
   const 那句 = page.locator(".mcp-how .mcp-ok")
-  await expect(那句).toContainText(/「粘进来的」加好了/)
+  await expect(那句).toContainText(/「pasted」加好了/)
   // **要什么密钥，就在那句话里点名**——不说的话人不知道下一步该干嘛
   await expect(那句).toContainText("DAWN_MCP_TEST_SECRET")
 
   /** **立刻出现在名单里**，不用重启 */
   const 名字 = await page.locator(".skill-name").allTextContents()
-  expect(名字.join("|")).toContain("粘进来的")
+  expect(名字.join("|")).toContain("pasted")
 
   /** 加得进就该删得掉 */
-  await page.getByRole("button", { name: "删掉 粘进来的" }).click()
+  await page.getByRole("button", { name: "删掉 pasted" }).click()
   await expect
     .poll(async () => (await page.locator(".skill-name").allTextContents()).join("|"))
-    .not.toContain("粘进来的")
+    .not.toContain("pasted")
 })
 
 test("**按「试一次」，真的连上并列出它有哪些工具**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "MCP 服务器" }).click()
 
-  // 第一颗「试一次」属于「测试台」那一条
+  // 第一颗「试一次」属于「testbox」那一条
   await page.getByRole("button", { name: "试一次" }).first().click()
 
   await expect(page.getByText("连上了")).toBeVisible({ timeout: 30_000 })
@@ -191,7 +191,7 @@ test("信任开关拨完留得住", async ({ dawn }) => {
  * 那一屏能配。**但没有一条走完整条线**——而这个项目栽的三次
  * （门、内核、MCP 装配）全都是「每层都对，接线断了」。
  *
- * 判据挑**物证**而不是屏幕：假模型被指定去调 `测试台__写一行`，
+ * 判据挑**物证**而不是屏幕：假模型被指定去调 `testbox__写一行`，
  * 那个工具会往 `DAWN_MCP_TEST_LOG` 追加一行。文件里有那一行，
  * 就说明这一路真的走通了：
  *
@@ -208,7 +208,7 @@ test.describe("模型真的调得动", () => {
   test.use({
     dawnOptions: {
       providersYaml: `mcp:
-  测试台:
+  testbox:
     command: ${JSON.stringify(process.execPath)}
     args: [${JSON.stringify(脚本)}]
     env: [DAWN_MCP_TEST_LOG]
@@ -220,7 +220,7 @@ agents:
     capabilities: [chat]
 `,
       toolCall: {
-        toolName: "测试台__写一行",
+        toolName: "testbox__写一行",
         args: { message: "E2E_MCP_物证" },
         say: "我用那台服务器记一笔。",
       },

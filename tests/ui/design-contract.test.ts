@@ -760,3 +760,40 @@ describe("设计契约 · 第三方渲染器的挂点", () => {
     ).toEqual([])
   })
 })
+
+/**
+ * **送进模型的工具名，必须过各家 API 的形状**（2026-08-15 实测踩的）。
+ *
+ * 作者用 DeepSeek 时整段对话发不出去：
+ *
+ * > `400: Invalid 'tools[14].function.name': string does not match pattern.`
+ * > `Expected a string that matches the pattern '^[a-zA-Z0-9_-]+$'`
+ *
+ * 根因是我按「我们自己觉得合理」定了 MCP 服务器名的形状（还允许中文），
+ * **没按送出去之后谁在收**。而代价远超那一个工具：工具清单是整轮请求的
+ * 一部分，一个名字不合格，**这段对话的每一句都发不出去**——
+ * 而那条 400 里只字未提 MCP，人根本不会往这儿想。
+ *
+ * MCP 那条路已经在运行时拦住了（`名字过得了API`）。这里扫的是**另一半**：
+ * 我们代码里**写死**的那些工具名（`run_code`、`subagent` …）。
+ * 它们今天都是 ASCII，但这个仓库的工具名是可以随手加的——
+ * **规则可判定，就该有扫描**，而不是指望下一个人记得。
+ */
+describe("设计契约 · 工具名要过得了模型 API", () => {
+  it("**代码里写死的工具名都是 `^[a-zA-Z0-9_-]+$`**", () => {
+    const 形状 = /^[a-zA-Z0-9_-]+$/
+    const 坏的: string[] = []
+    for (const f of ["../../src/tools/run-code.ts", "../../src/tools/mcp-tool.ts", "../../src/tools/subagent.ts"]) {
+      let src: string
+      try {
+        src = readFileSync(new URL(f, import.meta.url), "utf8")
+      } catch {
+        continue // 这个文件可能不存在（工具增减过），不存在不算错
+      }
+      for (const m of src.matchAll(/^\s*name:\s*"([^"]+)"/gm)) {
+        if (!形状.test(m[1]!)) 坏的.push(`${f}：${m[1]}`)
+      }
+    }
+    expect(坏的, "这个名字送进模型会让整轮请求 400，而报错里不会提到它").toEqual([])
+  })
+})

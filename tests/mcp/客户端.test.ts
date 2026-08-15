@@ -43,21 +43,21 @@ const 一台 = (over: Partial<McpServer> = {}): McpServer => ({
 
 describe("MCP 客户端 · 对着真服务器", () => {
   it("连上并列出工具", async () => {
-    const r = await 池.备好("测试台", 一台())
+    const r = await 池.备好("testbox", 一台())
     expect(r.失败, `没连上：${r.失败}`).toBeUndefined()
     expect(r.工具.map((t) => t.工具名).sort()).toEqual(["boom", "echo", "写一行"])
   })
 
   /** **工具名带服务器前缀**：两台各有一个 `echo` 时，模型要分得清打给谁 */
   it("工具名带服务器前缀", async () => {
-    const r = await 池.备好("测试台", 一台())
-    expect(r.工具.find((t) => t.工具名 === "echo")!.全名).toBe("测试台__echo")
+    const r = await 池.备好("testbox", 一台())
+    expect(r.工具.find((t) => t.工具名 === "echo")!.全名).toBe("testbox__echo")
   })
 
   it("调得动，拿得到文本", async () => {
     const 配 = 一台()
-    await 池.备好("测试台", 配)
-    const r = await 池.调("测试台", 配, "echo", { message: "在吗" })
+    await 池.备好("testbox", 配)
+    const r = await 池.调("testbox", 配, "echo", { message: "在吗" })
     expect(r.出错了).toBe(false)
     expect(r.文字).toContain("echo: 在吗")
   })
@@ -68,8 +68,8 @@ describe("MCP 客户端 · 对着真服务器", () => {
    */
   it("工具报错时如实标 `出错了`，但内容照给", async () => {
     const 配 = 一台()
-    await 池.备好("测试台", 配)
-    const r = await 池.调("测试台", 配, "boom", {})
+    await 池.备好("testbox", 配)
+    const r = await 池.调("testbox", 配, "boom", {})
     expect(r.出错了).toBe(true)
     expect(r.文字).toContain("用来失败的")
   })
@@ -81,7 +81,7 @@ describe("MCP 客户端 · 对着真服务器", () => {
    * 人会去查工具、查网络、查模型，唯独不会想到是一个没配的环境变量。
    */
   it("**缺密钥时点名说缺哪个，并且不起进程**", async () => {
-    const r = await 池.备好("要密的", 一台({ env: ["DAWN_MCP_TEST_SECRET"] }))
+    const r = await 池.备好("needskey", 一台({ env: ["DAWN_MCP_TEST_SECRET"] }))
     expect(r.失败).toContain("DAWN_MCP_TEST_SECRET")
     expect(r.工具).toEqual([])
     expect(池.连着的(), "不该起任何进程").toEqual([])
@@ -98,14 +98,14 @@ describe("MCP 客户端 · 对着真服务器", () => {
   it("配好的密钥确实送进了服务器进程，而没说的那些进不去", async () => {
     const 日志 = join(临时, "log.jsonl")
     const p = 造池({
-      "要密的:DAWN_MCP_TEST_SECRET": "s3cr3t",
-      "要密的:DAWN_MCP_TEST_LOG": 日志,
+      "needskey:DAWN_MCP_TEST_SECRET": "s3cr3t",
+      "needskey:DAWN_MCP_TEST_LOG": 日志,
     })
     const 配 = 一台({ env: ["DAWN_MCP_TEST_SECRET", "DAWN_MCP_TEST_LOG"] })
     try {
-      const r = await p.备好("要密的", 配)
+      const r = await p.备好("needskey", 配)
       expect(r.失败, `没连上：${r.失败}`).toBeUndefined()
-      await p.调("要密的", 配, "写一行", { message: "hi" })
+      await p.调("needskey", 配, "写一行", { message: "hi" })
       expect(existsSync(日志), "工具没被真的调到").toBe(true)
       expect(JSON.parse(readFileSync(日志, "utf8").trim()).secret).toBe("s3cr3t")
     } finally {
@@ -121,12 +121,12 @@ describe("MCP 客户端 · 对着真服务器", () => {
    */
   it("**我们自己的环境变量不会漏给它**", async () => {
     const 日志 = join(临时, "leak.jsonl")
-    const p = 造池({ "偷看的:DAWN_MCP_TEST_LOG": 日志 })
+    const p = 造池({ "peeker:DAWN_MCP_TEST_LOG": 日志 })
     const 配 = 一台({ env: ["DAWN_MCP_TEST_LOG"] })
     try {
       process.env["DAWN_MCP_TEST_SECRET"] = "不该被看到"
-      await p.备好("偷看的", 配)
-      await p.调("偷看的", 配, "写一行", { message: "x" })
+      await p.备好("peeker", 配)
+      await p.调("peeker", 配, "写一行", { message: "x" })
       expect(JSON.parse(readFileSync(日志, "utf8").trim()).secret, "它读到了我们进程里的变量").toBeNull()
     } finally {
       delete process.env["DAWN_MCP_TEST_SECRET"]
@@ -142,7 +142,7 @@ describe("MCP 客户端 · 对着真服务器", () => {
     const p = 造池()
     try {
       const r = await p.备好(
-        "崩的",
+        "crashy",
         一台({ command: process.execPath, args: ["-e", "console.error('我崩了：缺配置'); process.exit(1)"] }),
       )
       expect(r.失败, "没有报出失败").toBeTruthy()
@@ -152,11 +152,11 @@ describe("MCP 客户端 · 对着真服务器", () => {
     }
   })
 
-  /** 命令根本不存在。**这与「缺 key」「它崩了」是三件不同的事** */
-  it("命令不存在时也如实说", async () => {
+  /** 命令根本nosuch。**这与「缺 key」「它崩了」是三件不同的事** */
+  it("命令nosuch时也如实说", async () => {
     const p = 造池()
     try {
-      const r = await p.备好("不存在", 一台({ command: "dawn-绝对没有这个命令", args: [] }))
+      const r = await p.备好("nosuch", 一台({ command: "dawn-绝对没有这个命令", args: [] }))
       expect(r.失败).toBeTruthy()
     } finally {
       await p.全关()
@@ -166,10 +166,10 @@ describe("MCP 客户端 · 对着真服务器", () => {
   /** **同一台被要两次只起一个进程**：开五段对话不该起五个客户端 */
   it("重复要同一台，进程只起一个", async () => {
     const 配 = 一台()
-    const [a, b] = await Promise.all([池.备好("测试台", 配), 池.备好("测试台", 配)])
+    const [a, b] = await Promise.all([池.备好("testbox", 配), 池.备好("testbox", 配)])
     expect(a.失败).toBeUndefined()
     expect(b.失败).toBeUndefined()
-    expect(池.连着的()).toEqual(["测试台"])
+    expect(池.连着的()).toEqual(["testbox"])
   })
 })
 
@@ -188,7 +188,7 @@ describe("起不来的话要说清是哪一种", () => {
     // 一个永远不说话的进程：连不上，且一定走到超时那条路
     const p = new MCP池({ 取密: () => undefined, 起动上限毫秒: 300 })
     try {
-      const r = await p.备好("装死的", {
+      const r = await p.备好("mute", {
         command: process.execPath,
         args: ["-e", "setTimeout(() => {}, 60000)"],
       })

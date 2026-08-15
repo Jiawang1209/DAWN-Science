@@ -198,17 +198,27 @@ export function McpView({
   onTest,
   onFlag,
   onSecret,
+  onAdd,
+  onRemove,
 }: {
   load?: (() => Promise<MCP装载>) | undefined
   onTest?: ((name: string) => Promise<{ ok: boolean; error?: string; tools: { name: string }[] }>) | undefined
   onFlag?: ((name: string, flag: "trusted" | "off", value: boolean) => Promise<void>) | undefined
   onSecret?: ((name: string, varName: string, secret: string) => Promise<void>) | undefined
+  /** 粘一段 JSON 加一台。**解析在服务端做**——密钥的值在那里就被丢掉了 */
+  onAdd?: ((json: string) => Promise<{ name: string; needsSecrets: string[] }>) | undefined
+  onRemove?: ((name: string) => Promise<void>) | undefined
 } = {}) {
   const [数据, 设数据] = useState<MCP装载 | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
   /** 刚试过的结果。**与列表里的 `state` 分开存**：列表是取回来的那一刻的事实 */
   const [试的结果, 设试的结果] = useState<Record<string, { ok: boolean; error?: string }>>({})
   const [填着的, 设填着的] = useState<{ 服务器: string; 变量: string } | undefined>(undefined)
+  /** 粘进来那段 JSON，以及加完之后要说的那句话 */
+  const [粘的, 设粘的] = useState("")
+  const [加的结果, 设加的结果] = useState<
+    { ok: true; 名: string; 要密钥: string[] } | { ok: false; 话: string } | undefined
+  >(undefined)
   const [密文, 设密文] = useState("")
 
   const 重取 = useCallback(() => {
@@ -257,44 +267,111 @@ export function McpView({
       </header>
 
       {/**
-        * **怎么加一台，写在这一屏上**（2026-08-15 作者问出来的）。
+        * **加一台：粘一段 JSON**（2026-08-15 作者要的接口）。
         *
-        * 在此之前这里只说了「去哪儿改」，没说「怎么写」——而最容易踩的那一条
-        * （`env` 只写变量名、值不写进文件）一个字都没有。作者的原话是
-        * *「我们在 DAWN Science 的 MCP 的接口里面会出现吗？」*
+        * 作者：*「就和我配置其他的大模型，或者 Skill 似的，
+        * 我是不是应该搞一个配置的接口啥的呢？」*——他是对的，而这个仓库
+        * 早就为同一件事下过结论（`config/writer.ts` 的文件头：
+        * *「让人打开一个 yaml 手写一段，本身就是这个应用没做完。」*）。
         *
-        * 写进 `docs/` 是给开发者看的；**要加服务器的人站在这一屏前面**。
-        * 这就是「看不见的能力等于不存在」的那个形状。
-        *
-        * 折叠起来（`<details>`）：已经配好几台的人不需要每次都看见它，
-        * 但**它必须一直在**——不能只在空态出现，因为「加第二台」比
-        * 「加第一台」更常见，而那时空态早就没了。
+        * **为什么是粘贴而不是填五个格子**：每台服务器的 README 给的都是
+        * Claude Desktop 的那段 JSON。照着填既慢又容易抄漏一个引号——
+        * 而那正是「填不全的表单」真正的危险。粘进来还顺手处理掉了那个
+        * 最要紧的差别：**JSON 里带着的密钥值，我们只取变量名**。
         */}
-      <details className="mcp-how">
-        <summary>{t("怎么加一台？")}</summary>
-        <p className="hint">
-          {t("四个字段，只有 command 是必填的：")}
+      <details className="mcp-how" open={数据.servers.length === 0}>
+        <summary>{t("加一台 MCP 服务器")}</summary>
+
+        <p className="hint">{t("从那台服务器的文档里，把这样一段 JSON 整段复制过来：")}</p>
+        <pre className="mcp-how-code">{`{"mcpServers": {
+  "pubmed": {
+    "command": "npx",
+    "args": ["-y", "@cyanheads/pubmed-mcp-server"],
+    "env": { "NCBI_API_KEY": "..." }
+  }
+}}`}</pre>
+
+        <textarea
+          className="control mcp-paste"
+          rows={4}
+          value={粘的}
+          placeholder={t("把那段 JSON 粘在这里")}
+          aria-label={t("MCP 服务器的 JSON 配置")}
+          onChange={(e) => {
+            设粘的(e.target.value)
+            设加的结果(undefined)
+          }}
+        />
+        <p className="skill-meta">
+          <Button
+            variant="text"
+            size="inline"
+            onClick={() => {
+              if (!onAdd || !粘的.trim()) return
+              void onAdd(粘的)
+                .then((r) => {
+                  设加的结果({ ok: true, 名: r.name, 要密钥: r.needsSecrets })
+                  设粘的("")
+                  重取()
+                })
+                .catch((e: unknown) =>
+                  设加的结果({ ok: false, 话: e instanceof Error ? e.message : String(e) }),
+                )
+            }}
+          >
+            {t("加进来")}
+          </Button>
         </p>
-        <pre className="mcp-how-code">{`mcp:
-  ${t("这台叫什么")}:            # ${t("名字会成为工具前缀")}
-    command: npx
-    args: ["-y", "${t("包名")}"]
-    env: [${t("某某_API_KEY")}]     # ${t("只写名字！")}
-    cwd: /${t("某个目录")}       # ${t("不给就用这段对话的工作目录")}`}</pre>
+        {加的结果?.ok === false ? <p className="caveat">{加的结果.话}</p> : null}
+        {加的结果?.ok === true ? (
+          <p className="mcp-ok">
+            {tf("「{0}」加好了。", 加的结果.名!)}
+            {加的结果.要密钥 && 加的结果.要密钥.length > 0
+              ? tf("它要 {0}——在下面那一条里填上，再按「试一次」。", 加的结果.要密钥.join("、"))
+              : t("在下面按「试一次」看看连不连得上。")}
+          </p>
+        ) : null}
+
         {/**
-          * **这一条是整块里最要紧的。** 几乎所有 MCP 服务器的 README 给的都是
-          * Claude Desktop 的 JSON，那种写法把密钥的**值**写在文件里。
-          * 照抄过来的人不会注意到这个差别，而那份文件会被分享、会进 git。
+          * **密钥那一条是整块里唯一不能少的。**
+          * 别人的 README 里 `env` 装的是密钥本身，照抄的人不会注意到差别，
+          * **而那份配置文件是会被分享、会进 git 的**。
           */}
         <p className="caveat">
           {t(
-            "别人的文档多半给的是 Claude Desktop 的 JSON（env 里写着密钥的值）。照抄过来时只有这一处要改：我们的 env 只写变量名，值在下面每台各自的输入框里填，存进系统钥匙串——因为这份配置文件是会被分享、会进 git 的。",
+            "密钥不会写进配置文件：我们只留变量名，值在下面每台各自的输入框里填，存进系统钥匙串。别人的文档里 env 带着值，那种写法迟早把 key 提交上去。",
           )}
         </p>
         <p className="hint">
-          {t("Python 写的服务器用 uvx 起（不是 npx）。改完配置要重启应用才生效。")}
-          <br />
-          {t("目前只支持本地进程（stdio），还连不了只提供 HTTP 地址的远程服务器。")}
+          {t("Python 写的服务器把 command 换成 uvx。目前只支持本地进程（stdio），还连不了只给 HTTP 地址的远程服务器。")}
+        </p>
+      </details>
+
+      {/**
+        * **配好之后怎么用**（2026-08-15 作者要的）。
+        *
+        * 作者：*「很有必要的是，告诉一下我 MCP 的用法如何。」*——
+        * 光有配置说明不够：**配完不知道怎么使唤它，等于没配**。
+        *
+        * 三句话说清三件事：怎么用（就说人话）、怎么确认它真用了（找工具行，
+        * 而不是看答案对不对）、被拦了怎么办。
+        * 中间那条最要紧：**模型自己编一个答案，与它真去查了，在屏幕上长得一样。**
+        */}
+      <details className="mcp-how">
+        <summary>{t("配好之后怎么用？")}</summary>
+        <p className="hint">{t("回到对话里说人话就行，不用记工具名。比如：")}</p>
+        <pre className="mcp-how-code">{t(
+          "查一下近五年「土地利用变化对土壤微生物多样性的影响」的综述，\n挑三篇最相关的给我摘要，再按 APA 列出参考文献",
+        )}</pre>
+        <p className="caveat">
+          {t(
+            "怎么确认它真的查了：看对话里有没有那条工具调用行（写着 pubmed__pubmed_search_articles 这样的名字）。只看答案是不行的——模型凭印象编一段和真去查了，在屏幕上长得一模一样。",
+          )}
+        </p>
+        <p className="hint">
+          {t(
+            "如果回来的是「还没有被过目」，那是权限门拦下了：把那一台的「这台我信得过」打开，或者到设置里把权限档改成全部允许。",
+          )}
         </p>
       </details>
 
@@ -382,6 +459,21 @@ export function McpView({
                     />
                     {t("先别连它")}
                   </label>
+
+                  {/**
+                    * **加得进就该删得掉。** 只对全局那些给这颗——
+                    * 项目级的住在那个仓库的 `.dawn/mcp.yaml` 里，属于那个仓库，
+                    * 不该由这一屏改。**不给按钮，比给一颗按了报错的强。**
+                    */}
+                  {s.from === "global" && onRemove ? (
+                    <Button
+                      variant="text"
+                      size="inline"
+                      onClick={() => void onRemove(s.name).then(重取)}
+                    >
+                      {tf("删掉 {0}", s.name)}
+                    </Button>
+                  ) : null}
                 </p>
 
                 {/* 它要的每个环境变量各有一个填的入口。**值只进不出**，所以框永远是空的 */}

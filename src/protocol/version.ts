@@ -261,8 +261,21 @@
  *   `setMcpSecret` **只进不出**：请求里有，任何响应里都没有（与凭证同一条）。
  *   `setMcpFlag` 拨的是本机的两个开关，**它们不写进任何会被分享的文件**——
  *   项目级名单会跟着仓库被 clone，让它声明自己可信等于没有门。
+ * 5.8（2026-08-15）：`saveMcpServer` / `removeMcpServer`。纯新增。
+ *
+ *   作者：*「我准备如何配置其他的 MCP 呢？就和配置大模型或 Skill 似的，
+ *   是不是应该搞一个配置的接口？」*——他是对的，而这个仓库早就为同一件事
+ *   下过结论（`config/writer.ts` 的文件头：*「让人打开一个 yaml 手写一段，
+ *   本身就是这个应用没做完。」*）。
+ *
+ *   **`saveMcpServer` 收的是 JSON 文本，不是拆好的字段**：每台服务器的
+ *   README 给的都是 Claude Desktop 的那一段，让人照着填格子既慢又容易抄漏。
+ *   解析在服务端做——**密钥的值在那里就被丢掉了**，永不进配置文件。
+ *
+ *   存完**原地更新**内存里的名单，不用重启（同加模型那条路）。
+ *   删完**顺手断开连接**：不断的话，删掉的那台还在池子里活着、工具还挂着。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.7"
+export const WORKBENCH_PROTOCOL_VERSION = "5.8"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

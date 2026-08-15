@@ -3576,3 +3576,10 @@ pre {
   /** 长行不许把整页撑宽——**横向滚动留在它自己身上** */
   overflow-x: auto;
 }
+
+/** 粘 JSON 的那个框。盒子的属性由 `.control` 管，这里只给尺寸 */
+.mcp-paste {
+  width: 100%;
+  font-family: var(--dawn-font-mono);
+  font-size: 12px;
+}

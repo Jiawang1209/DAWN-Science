@@ -2082,6 +2082,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onSecret={async (name, varName, secret) => {
                 await client.get("setMcpSecret", { name, varName, secret })
               }}
+              onAdd={(json) =>
+                client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
+              }
+              onRemove={async (name) => {
+                await client.get("removeMcpServer", { name })
+              }}
             />
           ) : view === "settings" ? (
             /* **设置不复用项目概览的三栏网格**：仪表盘要一眼看全，

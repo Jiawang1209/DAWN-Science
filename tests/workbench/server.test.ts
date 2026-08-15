@@ -95,6 +95,9 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     deleteTask: async () => ({ ledgerKept: 0 }),
     listSkills: async () => ({ agents: [], problems: [], dir: "/w/.dawn/agents" }),
     listMcpServers: async () => ({ servers: [], problems: [] }),
+    saveMcpServer: async () => ({ name: "x", needsSecrets: [] }),
+    removeMcpServer: async () => ({ ok: true as const }),
+
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),
     setMcpSecret: async () => ({ ok: true as const }),

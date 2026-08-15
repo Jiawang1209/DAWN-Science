@@ -27,6 +27,7 @@ import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
 import type { SettingsStore } from "../store/settings.js"
 import { 合名单 } from "../mcp/名单.js"
+import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
@@ -1044,6 +1045,54 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         ...(r.失败 ? { error: r.失败 } : {}),
         tools: r.工具.map((t) => ({ name: t.工具名, description: t.描述 })),
       }
+    },
+
+    /**
+     * 加一台（协议 5.8）。**存完立刻生效，不用重启**——
+     * 与加模型那条路同一副做法：写文件 → 重新解析 → **原地更新**内存里那一份
+     * （`registry` 被多处按引用持有，替换引用没用）。
+     *
+     * 不做这一步的话，界面会说「已保存」而那台其实要等下次启动才存在——
+     * **那是一句半真的话**。
+     */
+    saveMcpServer: async ({ json, name }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，加不了")
+      let 解出: ReturnType<typeof 从JSON解出>
+      try {
+        解出 = 从JSON解出(json)
+      } catch (e) {
+        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+      }
+      const 名 = name ?? 解出.台.名
+      if (!名) {
+        throw fault(
+          "invalid_request",
+          "这段 JSON 里没有服务器的名字（只有 command），请另外给它起一个",
+        )
+      }
+      let 新的: ProviderRegistry
+      try {
+        新的 = addMcpServer(configPath, { ...解出.台, 名 })
+      } catch (e) {
+        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        throw e
+      }
+      registry.mcp = 新的.mcp
+      return { name: 名, needsSecrets: 解出.密钥名 }
+    },
+
+    /** 删一台。**只动全局那份**——项目级的属于那个仓库 */
+    removeMcpServer: async ({ name }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，删不了")
+      try {
+        registry.mcp = removeMcpServer(configPath, name).mcp
+      } catch (e) {
+        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        throw e
+      }
+      // **连接也要断掉**：不断的话，删掉的那台还在池子里活着、工具还挂着
+      await mcp?.池.关(name)
+      return { ok: true as const }
     },
 
     /** 拨本机那两个开关。**它们不写进任何会被分享的文件**（见 schema 的说明） */

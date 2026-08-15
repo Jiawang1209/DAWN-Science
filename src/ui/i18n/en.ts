@@ -318,21 +318,31 @@ export const EN: Readonly<Record<string, string>> = {
   "存下来": "Store secret",
   "去填": "Fill in",
   // MCP「怎么加一台」那一块（2026-08-15）
-  "怎么加一台？": "How do I add one?",
-  "四个字段，只有 command 是必填的：": "Four fields; only `command` is required:",
-  "这台叫什么": "server-name",
-  "名字会成为工具前缀": "the name becomes the tool prefix",
-  "包名": "package-name",
-  "某某_API_KEY": "SOME_API_KEY",
-  "只写名字！": "names only!",
-  "某个目录": "some/dir",
-  "不给就用这段对话的工作目录": "defaults to this chat's working directory",
-  "别人的文档多半给的是 Claude Desktop 的 JSON（env 里写着密钥的值）。照抄过来时只有这一处要改：我们的 env 只写变量名，值在下面每台各自的输入框里填，存进系统钥匙串——因为这份配置文件是会被分享、会进 git 的。":
-    "Most servers document themselves as Claude Desktop JSON, where `env` holds the secret values. That is the one thing to change when copying it over: our `env` lists variable names only. Fill the values in per-server below; they go to the system keychain — this config file gets shared and committed.",
-  "Python 写的服务器用 uvx 起（不是 npx）。改完配置要重启应用才生效。":
-    "Python servers launch with `uvx`, not `npx`. Restart the app after editing the config.",
-  "目前只支持本地进程（stdio），还连不了只提供 HTTP 地址的远程服务器。":
-    "Only local processes (stdio) are supported so far — remote servers that offer just an HTTP endpoint cannot be connected yet.",
+  // MCP 加一台 / 怎么用（2026-08-15）
+  "加一台 MCP 服务器": "Add an MCP server",
+  "从那台服务器的文档里，把这样一段 JSON 整段复制过来：":
+    "Copy this whole JSON block from that server's own docs:",
+  "把那段 JSON 粘在这里": "Paste that JSON here",
+  "MCP 服务器的 JSON 配置": "MCP server JSON config",
+  "加进来": "Add it",
+  "「{0}」加好了。": "\u201c{0}\u201d is in.",
+  "它要 {0}——在下面那一条里填上，再按「试一次」。":
+    "It needs {0} — fill that in on its row below, then hit Try it now.",
+  "在下面按「试一次」看看连不连得上。": "Hit Try it now below to see whether it connects.",
+  "密钥不会写进配置文件：我们只留变量名，值在下面每台各自的输入框里填，存进系统钥匙串。别人的文档里 env 带着值，那种写法迟早把 key 提交上去。":
+    "Secrets never reach the config file: we keep only the variable names. Fill the values per server below; they go to the system keychain. Other docs put values in `env` — that habit commits your key sooner or later.",
+  "Python 写的服务器把 command 换成 uvx。目前只支持本地进程（stdio），还连不了只给 HTTP 地址的远程服务器。":
+    "For Python servers, use `uvx` as the command. Only local processes (stdio) are supported so far — remote HTTP-only servers cannot be connected yet.",
+  "配好之后怎么用？": "How do I use it once it is set up?",
+  "回到对话里说人话就行，不用记工具名。比如：":
+    "Just say it in plain words in the chat — you never type tool names. For example:",
+  "查一下近五年「土地利用变化对土壤微生物多样性的影响」的综述，\n挑三篇最相关的给我摘要，再按 APA 列出参考文献":
+    "Find reviews from the last five years on how land-use change affects soil microbial diversity;\ngive me abstracts for the three most relevant, then list them in APA style",
+  "怎么确认它真的查了：看对话里有没有那条工具调用行（写着 pubmed__pubmed_search_articles 这样的名字）。只看答案是不行的——模型凭印象编一段和真去查了，在屏幕上长得一模一样。":
+    "How to tell it really searched: look for the tool-call row in the chat (named like `pubmed__pubmed_search_articles`). The answer alone proves nothing — a model writing from memory and one that actually searched look identical on screen.",
+  "如果回来的是「还没有被过目」，那是权限门拦下了：把那一台的「这台我信得过」打开，或者到设置里把权限档改成全部允许。":
+    "If you get \u201cnot vetted yet\u201d, the permission gate stopped it: turn on \u201cI vetted this server\u201d for that one, or switch the permission mode to allow-all in Settings.",
+  "删掉 {0}": "Remove {0}",
   "会话已结束": "This chat has ended",
   "插队": "Interject",
   "回车插队 · Cmd/Ctrl+回车排到这一轮后面":
@@ -462,7 +472,6 @@ export const EN: Readonly<Record<string, string>> = {
   "添加方式": "How to add it",
   "自定义端点": "Custom endpoint",
   "先不加": "Not now",
-  "加进来": "Add it",
   "pi 认识的 provider": "Providers pi knows",
   "pi 认识的 provider 都已经配过了。要加别的就走「自定义端点」。":
     "Every provider pi knows is already configured. To add another, use “Custom endpoint”.",

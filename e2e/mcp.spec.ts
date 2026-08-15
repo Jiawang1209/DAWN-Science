@@ -66,29 +66,78 @@ test("**配了的两台都列出来，还没试过就说还没试过**", async (
 })
 
 /**
- * **「怎么加一台」写在屏上，不是写在文档里**（2026-08-15 作者问出来的）。
+ * **怎么配、怎么用，都写在屏上**（2026-08-15 作者要的）。
  *
- * 作者：*「我们在 DAWN Science 的 MCP 的接口里面会出现吗？」*——
- * 在此之前那一屏只说了「去哪儿改」，没说「怎么写」，
- * 而最容易踩的那条（`env` 只写变量名）一个字都没有。
+ * 作者两次问到这里：*「我们在 DAWN Science 的 MCP 的接口里面会出现吗？」*
+ * 和 *「很有必要的是，告诉一下我 MCP 的用法如何。」*
  *
- * 判据挑**那一条**而不是整块：别人的 README 给的都是 Claude Desktop 的 JSON，
- * 那种写法把密钥的值写在文件里。照抄过来的人不会注意到差别，
- * **而那份文件会被分享、会进 git**。这一句是整块里唯一不能少的。
+ * 判据挑**两句**，各是一块里唯一不能少的那句：
+ *   ① 配置块：**密钥的值不进配置文件**——别人的 README 给的都是
+ *      Claude Desktop 的 JSON，`env` 里装着密钥本身，而那份文件会进 git。
+ *   ② 用法块：**怎么确认它真查了**——只看答案是不行的，
+ *      模型凭印象编一段和真去查了，在屏幕上长得一模一样。
  */
-test("**屏上说清怎么加一台，尤其是密钥不写进文件**", async ({ dawn }) => {
+test("**屏上写清了怎么配（密钥不进文件）和怎么用（看工具行）**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "MCP 服务器" }).click()
 
-  // 折叠着的，先点开——**它一直在，不只在空态**
-  await page.getByText("怎么加一台？").click()
+  // 两块都是折叠的，先点开
+  await page.getByText("加一台 MCP 服务器").click()
+  /** 例子用的是真东西（PubMed），不是编的占位符 */
+  await expect(page.locator(".mcp-how-code").first()).toContainText("pubmed-mcp-server")
+  await expect(page.locator(".mcp-how").first()).toContainText(/只留变量名/)
 
-  await expect(page.locator(".mcp-how-code")).toContainText("command:")
-  await expect(page.locator(".mcp-how-code")).toContainText("env:")
-  /** **这一条是要害**：照抄 Claude Desktop 的 JSON 会把密钥写进文件 */
-  await expect(page.locator(".mcp-how")).toContainText(/只写变量名/)
-  /** 不支持的也要说 —— 不说的话人会对着一个 HTTP 地址试半天 */
-  await expect(page.locator(".mcp-how")).toContainText(/stdio/)
+  await page.getByText("配好之后怎么用？").click()
+  await expect(page.getByText(/pubmed__pubmed_search_articles/)).toBeVisible()
+  await expect(page.getByText(/长得一模一样/)).toBeVisible()
+})
+
+/**
+ * **粘一段 JSON 就把一台加进来**（2026-08-15 作者要的接口）。
+ *
+ * 作者：*「就和我配置其他的大模型，或者 Skill 似的，
+ * 我是不是应该搞一个配置的接口啥的呢？」*
+ *
+ * 这一条走完整条：粘 → 加进来 → 出现在列表里 → 立刻能连。
+ * **「立刻」是要害**：存完要原地更新内存里那份名单，不然界面说「加好了」
+ * 而那台其实要等下次启动才存在——**那是一句半真的话**。
+ *
+ * 用的 JSON 是 Claude Desktop 那种形状（`env` 里带着密钥的值），
+ * 因为**别人的 README 给的都是这一种**——顺带验住「值不许进配置文件」。
+ */
+test("**粘一段 JSON 就加进来了，而且立刻能用**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "MCP 服务器" }).click()
+
+  const 那段 = JSON.stringify({
+    mcpServers: {
+      粘进来的: {
+        command: process.execPath,
+        args: [脚本],
+        env: { DAWN_MCP_TEST_SECRET: "这个值不许进配置文件" },
+      },
+    },
+  })
+  // 有服务器时那一块是收起的——**先点开**
+  await page.getByText("加一台 MCP 服务器").click()
+  await page.getByRole("textbox", { name: "MCP 服务器的 JSON 配置" }).fill(那段)
+  await page.getByRole("button", { name: "加进来" }).click()
+
+  /** 加完要说清它还要什么——不说的话人不知道下一步该干嘛 */
+  const 那句 = page.locator(".mcp-how .mcp-ok")
+  await expect(那句).toContainText(/「粘进来的」加好了/)
+  // **要什么密钥，就在那句话里点名**——不说的话人不知道下一步该干嘛
+  await expect(那句).toContainText("DAWN_MCP_TEST_SECRET")
+
+  /** **立刻出现在名单里**，不用重启 */
+  const 名字 = await page.locator(".skill-name").allTextContents()
+  expect(名字.join("|")).toContain("粘进来的")
+
+  /** 加得进就该删得掉 */
+  await page.getByRole("button", { name: "删掉 粘进来的" }).click()
+  await expect
+    .poll(async () => (await page.locator(".skill-name").allTextContents()).join("|"))
+    .not.toContain("粘进来的")
 })
 
 test("**按「试一次」，真的连上并列出它有哪些工具**", async ({ dawn }) => {

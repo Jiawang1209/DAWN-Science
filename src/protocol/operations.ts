@@ -465,6 +465,44 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 加一台 MCP 服务器（协议 5.8，2026-08-15）。
+   *
+   * **收的是 JSON 文本，不是拆好的字段。** 每台服务器的 README 给的都是
+   * Claude Desktop 的那段 JSON；让人照着填五个格子既慢又容易抄漏一个引号。
+   * 解析在服务端做——**密钥的值在那里就被丢掉了**，永远不进配置文件。
+   *
+   * `name` 可选：JSON 里带名字就用它的，没有才要求另填。
+   */
+  saveMcpServer: {
+    request: z
+      .object({
+        /** 从文档里复制的那一段。**连着大括号一起** */
+        json: z.string().min(1),
+        /** 覆盖 JSON 里的名字，或者在 JSON 没有名字时补上 */
+        name: z.string().min(1).optional(),
+      })
+      .strict(),
+    response: z
+      .object({
+        name: z.string().min(1),
+        /** 它要哪些密钥。**界面据此立刻催人去填**——不填就连不上 */
+        needsSecrets: z.array(z.string()),
+      })
+      .strict(),
+    mutating: true,
+  },
+
+  /**
+   * 删一台（协议 5.8）。**只删全局那份配置里的**——
+   * 项目级 `.dawn/mcp.yaml` 属于那个仓库，不该由这里改。
+   */
+  removeMcpServer: {
+    request: z.object({ name: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   /** 拨本机那两个开关（协议 5.7）。**它们不写进任何会被分享的文件** */
   setMcpFlag: {
     request: z

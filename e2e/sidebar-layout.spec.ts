@@ -252,7 +252,7 @@ test("**固定区那几行，图标与文字同一条左缘**", async ({ dawn })
  * 这条盯的是**顺序与分界**：四项在线上面，项目/会话在线下面。
  * 「上面是我能用什么、下面是我做过什么」——那条线是这句话的可见形式。
  */
-test("**固定四项在横线上面，项目与会话在下面**", async ({ dawn }) => {
+test("**固定入口在横线上面，项目与会话在下面**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
 
@@ -260,7 +260,8 @@ test("**固定四项在横线上面，项目与会话在下面**", async ({ dawn
     (await page.locator(sel).first().boundingBox())!.y
 
   const 横线 = await y(".side-divider")
-  for (const 名 of ["新建任务", "技能", "MCP 服务器"]) {
+  // 2026-08-15：「技能」拆成了 Agent Skills 与子 Agent 两个入口
+  for (const 名 of ["新建任务", "Agent Skills", "子 Agent", "MCP 服务器"]) {
     expect(await y(`.sidebar >> role=button[name="${名}"]`), `${名} 应在横线上面`).toBeLessThan(横线)
   }
   expect(await y(".remote-head"), "远端连接应在横线上面").toBeLessThan(横线)
@@ -269,19 +270,23 @@ test("**固定四项在横线上面，项目与会话在下面**", async ({ dawn
 })
 
 /**
- * **技能那一屏列的是真东西**（2026-08-12）。
+ * **子 Agent 那一屏列的是真东西**（2026-08-12；2026-08-15 随改名调整）。
  *
  * 我提过技能与 MCP 现在几乎是空的、建议等能用了再上；作者要求先做出来。
  * 那就做出来，但**这一屏不是占位**：`.dawn/agents/*.md` 的子 agent
  * 本来就能跑（`src/subagent/` 有加载器与执行器），此前只是界面上看不见。
  *
  * 夹具的工作区里有一份 `scout.md.example`——**带 `.example` 的加载器不认**，
- * 所以这一屏应当如实说「还没有技能」，并把该往哪写说清楚。
+ * 所以这一屏应当如实说「还没有」，并把该往哪写说清楚。
+ *
+ * **这条只改了入口的名字，守的还是同一件事**：不说清放哪儿，
+ * 「怎么加一个」就无从下手。（那一屏 2026-08-15 从「技能」改叫「子 Agent」——
+ * 技能这个词让给了 Agent Skills，两者是两种东西。）
  */
-test("**技能那一屏说得出「去哪写」**", async ({ dawn }) => {
+test("**子 Agent 那一屏说得出「去哪写」**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByRole("button", { name: "技能" }).click()
+  await page.getByRole("button", { name: "子 Agent" }).click()
   await expect(page.locator(".skills-page")).toBeVisible()
   // 目录要说出来：不说清楚放哪儿，「怎么加一个」就无从下手
   await expect(page.locator(".skills-page")).toContainText(".dawn/agents")

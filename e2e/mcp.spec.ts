@@ -179,7 +179,7 @@ test("信任开关拨完留得住", async ({ dawn }) => {
   await expect(开关).toBeChecked()
 
   // 切走再切回来：**留不住的话，那一下只是界面上的假动作**
-  await page.getByRole("button", { name: "技能" }).click()
+  await page.getByRole("button", { name: "子 Agent" }).click()
   await page.getByRole("button", { name: "MCP 服务器" }).click()
   await expect(page.getByRole("checkbox", { name: "这台我信得过" }).first()).toBeChecked()
 })

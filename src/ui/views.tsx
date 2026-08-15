@@ -946,6 +946,7 @@ export function SessionSidebar({
   onShowPanel,
   onShowFiles,
   onShowSkills,
+  onShowSubagents,
   onShowPlugins,
   onShowMcp,
   onDeleteSession,
@@ -997,6 +998,8 @@ export function SessionSidebar({
   onShowFiles: () => void
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
+  /** 子 agent 那一屏（2026-08-15 从「技能」拆出来的，两者是两种东西） */
+  onShowSubagents?: (() => void) | undefined
   /** 插件那一屏。同上 */
   onShowPlugins?: (() => void) | undefined
   /** MCP 那一屏。同上 */
@@ -1590,10 +1593,27 @@ export function SessionSidebar({
           *
           * **不存在的能力不该看起来存在**——这是「看不见的能力等于不存在」的反面。
           */}
+        {/**
+          * **Agent Skills 与子 agent 是两个入口**（2026-08-15 作者定的）。
+          *
+          * 此前它们共用「技能」一个词，而**两个不同的东西共用一个名字**
+          * 正是这个仓库最忌讳的含混：
+          *   · Agent Skill = 写给模型读的说明书（何时用、怎么用）
+          *   · 子 agent   = 派一个分身去干活
+          *
+          * 名字跟生态走（Hermes / Codex / Claude 都叫 Skills），
+          * 于是你看到的任何一份 Agent Skills 文档都对得上。
+          */}
         {onShowSkills ? (
           <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
             <技能图标 className="row-icon" />
-            <span className="name">{t("技能")}</span>
+            <span className="name">{t("Agent Skills")}</span>
+          </Row>
+        ) : null}
+        {onShowSubagents ? (
+          <Row active={view === "subagents"} className="side-action" onClick={onShowSubagents}>
+            <对话图标 className="row-icon" />
+            <span className="name">{t("子 Agent")}</span>
           </Row>
         ) : null}
         {/**

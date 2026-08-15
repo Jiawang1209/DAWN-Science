@@ -469,6 +469,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // MCP 那一屏要能问「这台连上了没有、有哪些工具」——**问的是同一个池子**，
     // 另开一个的话，设置屏说「连着」而对话里用的是另一条连接
     mcp: { 池: mcp池 },
+    // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
+    skills: 技能位置,
     tasks: new TaskStore(db),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,

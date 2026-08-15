@@ -35,7 +35,7 @@ export interface SkillLoad {
   dir: string
 }
 
-export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undefined }) {
+export function SubagentsView({ load }: { load?: (() => Promise<SkillLoad>) | undefined }) {
   const [数据, 设数据] = useState<SkillLoad | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
 
@@ -54,29 +54,29 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
     return (
       <EmptyState
         title={t("还没有打开的工作目录")}
-        description={t("技能是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。")}
+        description={t("子 agent 是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。")}
       />
     )
   }
-  if (出错) return <EmptyState title={t("读不到技能")} description={出错} />
-  if (!数据) return <Loader label={t("正在读这个工作目录里的技能")} />
+  if (出错) return <EmptyState title={t("读不到子 agent")} description={出错} />
+  if (!数据) return <Loader label={t("正在读这个工作目录里的子 agent")} />
 
   return (
     <div className="skills-page">
       <header className="skills-head">
-        <h1 className="panel-title">{t("技能")}</h1>
+        <h1 className="panel-title">{t("子 Agent")}</h1>
         {/**
           * **把目录说出来**。技能是手写的 md 文件——
           * 不说清楚放哪儿，「怎么加一个」就无从下手。
           */}
         <p className="hint">
-          {t("每个")} <code>.md</code> {t("文件是一个技能，放在")} <code>{数据.dir}</code>
+          {t("每个")} <code>.md</code> {t("文件是一个子 agent，放在")} <code>{数据.dir}</code>
         </p>
       </header>
 
       {数据.agents.length === 0 ? (
         <EmptyState
-          title={t("这个工作目录里还没有技能")}
+          title={t("这个工作目录里还没有子 agent")}
           description={tf("在 {0} 下建一个 .md 文件就行。那个目录里有一份 scout.md.example，去掉 .example 后缀即可启用。", 数据.dir)}
         />
       ) : (
@@ -111,6 +111,147 @@ export function SkillsView({ load }: { load?: (() => Promise<SkillLoad>) | undef
             {数据.problems.map((p) => (
               <li key={p.filePath}>
                 <span className="skill-path">{p.filePath}</span>
+                <span className="caveat">{p.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </div>
+  )
+}
+
+/** 一个 Agent Skill 在界面上的样子（协议 6.0） */
+export interface AgentSkill {
+  name: string
+  description: string
+  filePath: string
+  from: "builtin" | "global" | "project"
+  manualOnly: boolean
+}
+
+export interface AgentSkill装载 {
+  skills: AgentSkill[]
+  problems: { path: string; reason: string }[]
+  dirs: { builtin?: string; global?: string; project?: string }
+}
+
+/**
+ * **Agent Skills** 那一屏（S20，2026-08-15）。
+ *
+ * 作者：*「我的目标就是要对标 hermes、codex app 这种搞 skills。」*
+ *
+ * ## 它与「子 agent」是两种东西
+ *
+ * | | 是什么 | 怎么用 |
+ * |---|---|---|
+ * | **Agent Skill** | 一份**写给模型读的说明书**：何时用、何时别用、速查 | 模型自己读，或 `/skill:名` |
+ * | **子 agent** | 派一个分身去干活，有自己的工具集与模型 | 父 agent 调 `subagent` 工具 |
+ *
+ * 此前两者共用「技能」一个词——**两个不同的东西共用一个名字**，
+ * 正是这个仓库最忌讳的含混。作者拍板：技能这个词让给 Agent Skills。
+ *
+ * ## 这一屏要说清三件事
+ *
+ * 1. **有哪些、各是干什么的**——`description` 是模型选它的依据，
+ *    人也该看得见（写得含糊的技能永远不会被用上）
+ * 2. **它从哪儿来**：自带 / 你写的 / 这个项目带的。**同名时项目 > 全局 > 自带**
+ * 3. **往哪儿放**——三个目录的路径都写出来，否则「怎么加一个」无从下手
+ */
+export function AgentSkillsView({ load }: { load?: (() => Promise<AgentSkill装载>) | undefined }) {
+  const [数据, 设数据] = useState<AgentSkill装载 | undefined>(undefined)
+  const [出错, 设出错] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!load) return
+    let 还在 = true
+    load()
+      .then((d) => 还在 && 设数据(d))
+      .catch((e: unknown) => 还在 && 设出错(e instanceof Error ? e.message : String(e)))
+    return () => {
+      还在 = false
+    }
+  }, [load])
+
+  if (!load) return <EmptyState title={t("本次运行没有装配技能")} description={t("这是启动时的装配问题，不是配置问题。")} />
+  if (出错) return <EmptyState title={t("读不到技能")} description={出错} />
+  if (!数据) return <Loader label={t("正在读技能")} />
+
+  const 来处 = (f: AgentSkill["from"]) =>
+    f === "builtin" ? t("自带") : f === "project" ? t("这个项目带的") : t("你写的")
+
+  return (
+    <div className="skills-page">
+      <header className="skills-head">
+        <h1 className="panel-title">{t("Agent Skills")}</h1>
+        <p className="hint">
+          {t("一个技能 = 一个文件夹 + 一个 SKILL.md，是写给模型读的说明书：什么时候用它、什么时候别用、怎么用。模型自己判断要不要读，你也可以用 /skill:名字 显式调。")}
+        </p>
+      </header>
+
+      {/**
+        * **三个目录都写出来。** 不说清放哪儿，「怎么加一个」就无从下手
+        * （与子 agent、MCP 那两屏同一条）。**同名时越具体的赢**，也要说。
+        */}
+      <details className="mcp-how" open={数据.skills.length === 0}>
+        <summary>{t("往哪儿放？")}</summary>
+        <p className="hint">{t("同名时，越靠上的那一份赢：")}</p>
+        <ul className="skill-list">
+          {(
+            [
+              ["project", t("这个项目带的")],
+              ["global", t("你写的")],
+              ["builtin", t("自带")],
+            ] as const
+          ).map(([k, 名]) =>
+            数据.dirs[k] ? (
+              <li key={k} className="skill">
+                <p className="skill-name">{名}</p>
+                <p className="skill-desc">
+                  <code>{数据.dirs[k]}</code>
+                </p>
+              </li>
+            ) : null,
+          )}
+        </ul>
+        <p className="caveat">
+          {t("名字只能用小写字母、数字和连字符——它要送进模型，中文和空格都不行。")}
+        </p>
+      </details>
+
+      {数据.skills.length === 0 ? (
+        <EmptyState
+          title={t("还没有技能")}
+          description={t("在上面那几个目录里建一个文件夹，放一个 SKILL.md 就行。")}
+        />
+      ) : (
+        <ul className="skill-list">
+          {数据.skills.map((s) => (
+            <li key={s.filePath} className="skill" data-authored="">
+              <p className="skill-name">
+                {s.name}
+                <span className="mcp-from">{来处(s.from)}</span>
+                {/* **只能显式调的要标出来**：不标的话，人会以为模型没在用它是坏了 */}
+                {s.manualOnly ? <span className="mcp-off">{t("只能手动调用")}</span> : null}
+              </p>
+              {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
+              <p className="skill-desc">{s.description}</p>
+              <p className="skill-meta">
+                <span className="skill-path">{s.filePath}</span>
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/** **写坏了要看得见**：静静不出现的话，人只会以为「我写的技能没生效」 */}
+      {数据.problems.length > 0 ? (
+        <section className="skill-problems">
+          <h2 className="panel-title">{t("这几个读不进来")}</h2>
+          <ul>
+            {数据.problems.map((p) => (
+              <li key={`${p.path}${p.reason}`}>
+                <span className="skill-path">{p.path}</span>
                 <span className="caveat">{p.reason}</span>
               </li>
             ))}

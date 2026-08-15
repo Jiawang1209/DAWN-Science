@@ -18,7 +18,7 @@ import { setValue } from "./identity.js"
  *
  * 2026-08-12 加了 `skills` / `mcp`（作者要的四个固定入口里的两个）。
  */
-export type View = "conversation" | "panel" | "settings" | "files" | "skills" | "plugins" | "mcp"
+export type View = "conversation" | "panel" | "settings" | "files" | "skills" | "subagents" | "plugins" | "mcp"
 
 export const $view = atom<View>("conversation")
 

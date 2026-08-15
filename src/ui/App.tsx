@@ -54,7 +54,15 @@ import {
 import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
-import { SkillsView, McpView, PluginsView, type SkillLoad, type MCP装载 } from "./skills.js"
+import {
+  AgentSkillsView,
+  SubagentsView,
+  McpView,
+  PluginsView,
+  type SkillLoad,
+  type AgentSkill装载,
+  type MCP装载,
+} from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -1873,6 +1881,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowPanel={() => setView(view === "panel" ? "conversation" : "panel")}
           /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
           onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
+          onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
           onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
           onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
@@ -2065,9 +2074,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
         <main className="main">
           {view === "skills" ? (
-            <SkillsView
+            /**
+             * **Agent Skills**（S20，2026-08-15）。
+             * 按项目问：项目级 `.dawn/skills/` 会追加几个；没有当前项目时
+             * 只有自带与全局那些——**那不是错误，是实情**。
+             */
+            <AgentSkillsView
+              load={() =>
+                client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
+              }
+            />
+          ) : view === "subagents" ? (
+            <SubagentsView
               {...(projectId
-                ? { load: () => client.get<SkillLoad>("listSkills", { projectId }) }
+                ? { load: () => client.get<SkillLoad>("listSubagents", { projectId }) }
                 : {})}
             />
           ) : view === "plugins" ? (

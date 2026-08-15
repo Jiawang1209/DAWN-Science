@@ -54,6 +54,17 @@ async function 屏上的汉字(page: import("@playwright/test").Page): Promise<s
        * 白名单会随着文案改动悄悄失效，而标记不会。
        */
       if (el.closest("[data-native-name]")) continue
+      /**
+       * **人写的内容不算「界面没翻」**（2026-08-15）。
+       *
+       * 技能的名字与说明是**作者写给模型看的**，不是界面文案——
+       * 你自己写一个中文技能，它在英文界面下照样显示中文，那是对的。
+       * 自带那两个也一样（它们是我们发的内容，不是 chrome）。
+       *
+       * 与上面那条同一副做法：**例外写在被例外的那个东西上**
+       * （`data-authored`），不写成一张会悄悄失效的白名单。
+       */
+      if (el.closest("[data-authored]")) continue
       出.push(文.trim())
     }
     return 出
@@ -109,7 +120,8 @@ test("**默认就是英文，且每一屏上都没有汉字**", async ({ dawn })
   }
 
   await 屏("首页", async () => {})
-  await 屏("技能", () => page.getByRole("button", { name: "Skills" }).click())
+  await 屏("Agent Skills", () => page.getByRole("button", { name: "Agent Skills" }).click())
+  await 屏("子 Agent", () => page.getByRole("button", { name: "Subagents" }).click())
   await 屏("插件", () => page.getByRole("button", { name: "Plugins" }).click())
   await 屏("MCP", () => page.getByRole("button", { name: "MCP servers" }).click())
 

@@ -274,8 +274,21 @@
  *
  *   存完**原地更新**内存里的名单，不用重启（同加模型那条路）。
  *   删完**顺手断开连接**：不断的话，删掉的那台还在池子里活着、工具还挂着。
+ * **6.0（2026-08-15，破坏性）**：`listSkills` → `listSubagents`，
+ *   同时新增 `listAgentSkills`。
+ *
+ *   **major 递增，因为这是改名**：老界面调 `listSkills` 会得到
+ *   「不认识这个操作」，而握手时的版本比对会先一步把话说清楚。
+ *
+ *   本可以让两个名字并存躲开这次 major。**没有那么做**：
+ *   「技能」这个词此前同时指两种东西——
+ *   **Agent Skill**（写给模型读的说明书，模型自己判断何时用）与
+ *   **子 agent**（派一个分身去干活）。作者拍板把「技能」让给前者
+ *   （名字跟 Hermes / Codex / Claude 的生态走）。
+ *   **两个不同的东西共用一个名字**，正是这个仓库最忌讳的含混——
+ *   留着旧名字并存，等于把它永久化。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.8"
+export const WORKBENCH_PROTOCOL_VERSION = "6.0"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

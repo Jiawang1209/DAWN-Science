@@ -27,6 +27,7 @@ import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
 import type { SettingsStore } from "../store/settings.js"
 import { 合名单 } from "../mcp/名单.js"
+import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
@@ -143,6 +144,11 @@ export interface WorkbenchBackendOptions {
   mcp?: {
     池: import("../mcp/客户端.js").MCP池
   }
+  /**
+   * 技能的三个位置（S20，2026-08-15）。**与运行时用的是同一份**——
+   * 两处各写各的话，屏上列的与实际跑的会分家。
+   */
+  skills?: { 全局目录?: string; 项目目录名?: string; 自带目录?: string }
   /** 配置里的 provider 注册表，供界面列出可选 agent */
   registry: ProviderRegistry
   /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
@@ -307,7 +313,7 @@ async function 读成附件(
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1111,7 +1117,56 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { ok: true as const }
     },
 
-    listSkills: async ({ projectId }) => {
+    /**
+     * **Agent Skills**（协议 6.0，2026-08-15）。
+     *
+     * 三个位置合起来问一次：自带（随应用发布）、全局（`~/DAWN/skills`）、
+     * 项目（`<工作区>/.dawn/skills`）。**顺序即优先级**——
+     * pi 按名字先到先得，所以项目 > 全局 > 自带（同名时你写的那份赢）。
+     *
+     * **发现这件事整个交给 pi**（`loadSkills`）：它就是那个标准的实现，
+     * 我们自己再解析一遍 frontmatter 只会在边角情形上与它分家。
+     */
+    listAgentSkills: async ({ projectId }) => {
+      const 工作区 = projectId ? projects.summary(projectId)?.workspace : undefined
+      const 位置 = skills ?? {}
+      const 项目目录 = 工作区 && 位置.项目目录名 ? join(工作区, 位置.项目目录名) : undefined
+      /** 顺序 = 优先级，与运行时那边必须一致（两处分家就会「屏上是这个、跑的是那个」） */
+      const 按序 = [
+        ...(项目目录 ? [{ path: 项目目录, from: "project" as const }] : []),
+        ...(位置.全局目录 ? [{ path: 位置.全局目录, from: "global" as const }] : []),
+        ...(位置.自带目录 ? [{ path: 位置.自带目录, from: "builtin" as const }] : []),
+      ]
+      const r = loadSkills({
+        cwd: 工作区 ?? homedir(),
+        agentDir: join(homedir(), ".pi"),
+        skillPaths: 按序.map((x) => x.path),
+        includeDefaults: false,
+      })
+      /** 一个技能来自哪儿：按它的文件落在哪个目录下判 */
+      const 判来处 = (filePath: string): "builtin" | "global" | "project" =>
+        按序.find((x) => filePath.startsWith(x.path))?.from ?? "global"
+      return {
+        skills: r.skills.map((s) => ({
+          name: s.name,
+          description: s.description,
+          filePath: s.filePath,
+          from: 判来处(s.filePath),
+          manualOnly: s.disableModelInvocation,
+        })),
+        problems: r.diagnostics.map((d) => ({
+          path: String((d as { path?: unknown }).path ?? ""),
+          reason: String((d as { message?: unknown }).message ?? ""),
+        })),
+        dirs: {
+          ...(位置.自带目录 ? { builtin: 位置.自带目录 } : {}),
+          ...(位置.全局目录 ? { global: 位置.全局目录 } : {}),
+          ...(项目目录 ? { project: 项目目录 } : {}),
+        },
+      }
+    },
+
+    listSubagents: async ({ projectId }) => {
       const p = requireProject(projectId)
       const 读到的 = loadSubagentDefinitions(p.workspace)
       return {

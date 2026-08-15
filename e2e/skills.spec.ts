@@ -42,3 +42,51 @@ test.describe("自带技能", () => {
     expect(全部, "只给了名字没给说明").toMatch(/没见过的数据集|拿到一份/)
   })
 })
+
+/**
+ * **两屏分开，名字按生态走**（2026-08-15 作者定的）。
+ *
+ * 此前「技能」一个词同时指两种东西：
+ *   · Agent Skill = 写给模型读的说明书（模型自己判断何时用）
+ *   · 子 agent   = 派一个分身去干活
+ *
+ * **两个不同的东西共用一个名字**，正是这个仓库最忌讳的含混。
+ *
+ * 判据挑「自带那两个真的列在屏上」——**空屏与「装配断了」长得一样**，
+ * 只断言标题在的话，这条永远不会红。
+ */
+test.describe("两屏", () => {
+  test("**Agent Skills 那屏列出了自带的两个，并说清它们从哪儿来**", async ({ dawn }) => {
+    const { page } = dawn
+    await page.getByRole("button", { name: "Agent Skills" }).click()
+
+    const 屏 = page.locator(".skills-page")
+    await expect(屏).toContainText("dataset-first-look")
+    await expect(屏).toContainText("reproducible-analysis")
+    /** **来处要标出来**：自带的与你写的不是一回事 */
+    await expect(屏).toContainText("自带")
+    /** 说明也要在——只有名字的话，人看不出这个技能是干什么的 */
+    await expect(屏).toContainText(/没见过的数据集|拿到一份/)
+  })
+
+  test("**「往哪儿放」说清三个目录与优先级**", async ({ dawn }) => {
+    const { page } = dawn
+    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByText("往哪儿放？").click()
+    await expect(page.locator(".mcp-how")).toContainText(/越靠上的那一份赢/)
+    // **名字的形状要说**——它与今天那个「中文名让整段对话 400」是同一类
+    await expect(page.locator(".mcp-how")).toContainText(/小写字母/)
+  })
+
+  test("**子 Agent 是另一屏**，两者不再共用一个词", async ({ dawn }) => {
+    const { page } = dawn
+    await page.getByRole("button", { name: "子 Agent" }).click()
+    const 屏 = page.locator(".skills-page")
+    await expect(屏).toContainText("子 Agent")
+    /** 它说的是 `.dawn/agents/`，不是 skills */
+    await expect(屏).toContainText(".dawn/agents")
+    /** **两个入口都在侧栏上**，而且名字互不为子串 */
+    await expect(page.getByRole("button", { name: "Agent Skills" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "子 Agent" })).toBeVisible()
+  })
+})

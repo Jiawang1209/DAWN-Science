@@ -533,7 +533,63 @@ export const OPERATIONS = {
     mutating: true,
   },
 
-  listSkills: {
+  /**
+   * **Agent Skills**（协议 6.0，2026-08-15）。
+   *
+   * 与下面的 `listSubagents` 是**两种东西**，作者定的名字按生态走：
+   *
+   * | | 是什么 | 怎么用 |
+   * |---|---|---|
+   * | **Agent Skill** | 一份**写给模型读的说明书**：何时用、何时别用、速查 | 模型自己读，或 `/skill:名` |
+   * | **子 agent** | 派一个分身去干活，有自己的工具集与模型 | 父 agent 调 `subagent` 工具 |
+   *
+   * 此前两者共用「技能」一个词，而**两个不同的东西共用一个名字**
+   * 正是这个仓库最忌讳的含混。
+   *
+   * 标准是 Anthropic 的 Agent Skills（`SKILL.md` + frontmatter），
+   * **pi 已经把它实现完了**，这里只是把它端到界面上。
+   */
+  listAgentSkills: {
+    /** 按项目问：项目级 `.dawn/skills/` 会追加几个 */
+    request: z.object({ projectId: z.string().min(1).optional() }).strict(),
+    response: z
+      .object({
+        skills: z.array(
+          z
+            .object({
+              name: z.string().min(1),
+              /** 给模型看的选择依据。**它决定模型什么时候想起用它** */
+              description: z.string(),
+              filePath: z.string().min(1),
+              /** 它从哪儿来。**界面要能说清楚**：自带的与你写的不是一回事 */
+              from: z.enum(["builtin", "global", "project"]),
+              /** 只能显式 `/skill:名` 调，模型不会自己用 */
+              manualOnly: z.boolean(),
+            })
+            .strict(),
+        ),
+        /** 读不进来的那些。**不静默跳过**——写坏了要看得见 */
+        problems: z.array(z.object({ path: z.string(), reason: z.string() }).strict()),
+        /** 三个目录分别在哪。**界面要能把路径说出来**，否则「往哪儿放」没人知道 */
+        dirs: z
+          .object({
+            builtin: z.string().optional(),
+            global: z.string().optional(),
+            project: z.string().optional(),
+          })
+          .strict(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
+   * **子 agent**（协议 6.0 由 `listSkills` 改名而来）。
+   *
+   * `.dawn/agents/*.md` 里那些定义——**它们本来就能跑**，
+   * 这个操作只是把它们端出来。改名的理由见上面 `listAgentSkills`。
+   */
+  listSubagents: {
     request: ByProject,
     response: z
       .object({

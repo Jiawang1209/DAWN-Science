@@ -185,10 +185,7 @@ export const EN: Readonly<Record<string, string>> = {
   "结束多选项目": "Finish selecting projects",
   "结束多选会话": "Finish selecting chats",
   "还没有打开的工作目录": "No workspace folder is open",
-  "技能是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。": "Skills live per workspace folder (.dawn/agents/) — pick a folder for this chat first.",
   "读不到技能": "Could not read the skills",
-  "正在读这个工作目录里的技能": "Reading the skills in this workspace",
-  "这个工作目录里还没有技能": "No skills in this workspace yet",
   "工具：继承默认那一套": "Tools: inherits the defaults",
   "模型：跟当前会话": "Model: follows the current chat",
   "还没有插件这套东西": "There is no plugin system yet",
@@ -262,7 +259,6 @@ export const EN: Readonly<Record<string, string>> = {
   "；完整内容：{0}": "; full text at: {0}",
   /* ── 侧栏与导航 ─────────────────────────────────────────────── */
   "新建任务": "New task",
-  "技能": "Skills",
   "插件": "Plugins",
   "MCP 服务器": "MCP servers",
   "远端服务器": "Remote servers",
@@ -343,6 +339,29 @@ export const EN: Readonly<Record<string, string>> = {
   "如果回来的是「还没有被过目」，那是权限门拦下了：把那一台的「这台我信得过」打开，或者到设置里把权限档改成全部允许。":
     "If you get \u201cnot vetted yet\u201d, the permission gate stopped it: turn on \u201cI vetted this server\u201d for that one, or switch the permission mode to allow-all in Settings.",
   "删掉 {0}": "Remove {0}",
+  // Agent Skills 与子 Agent 两屏（2026-08-15 拆开的，此前共用「技能」一个词）
+  "Agent Skills": "Agent Skills",
+  "子 Agent": "Subagents",
+  "本次运行没有装配技能": "Skills were not assembled for this run",
+  "正在读技能": "Reading skills",
+  "还没有技能": "No skills yet",
+  "在上面那几个目录里建一个文件夹，放一个 SKILL.md 就行。":
+    "Make a folder in one of the directories above and put a SKILL.md in it.",
+  "一个技能 = 一个文件夹 + 一个 SKILL.md，是写给模型读的说明书：什么时候用它、什么时候别用、怎么用。模型自己判断要不要读，你也可以用 /skill:名字 显式调。":
+    "A skill is a folder with a SKILL.md — a briefing written for the model: when to use it, when not to, and how. The model decides on its own whether to read it; you can also invoke one explicitly with /skill:name.",
+  "往哪儿放？": "Where do they go?",
+  "同名时，越靠上的那一份赢：": "On a name clash, the one higher in this list wins:",
+  "名字只能用小写字母、数字和连字符——它要送进模型，中文和空格都不行。":
+    "Names may only use lowercase letters, digits and hyphens — the name is sent to the model, so no spaces or non-ASCII.",
+  "自带": "built in",
+  "你写的": "yours",
+  "只能手动调用": "manual only",
+  "读不到子 agent": "Cannot read subagents",
+  "正在读这个工作目录里的子 agent": "Reading subagents in this working directory",
+  "子 agent 是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。":
+    "Subagents live per working directory (.dawn/agents/) — pick a folder for this chat first.",
+  "文件是一个子 agent，放在": "file is one subagent; they live in",
+  "这个工作目录里还没有子 agent": "No subagents in this working directory yet",
   "会话已结束": "This chat has ended",
   "插队": "Interject",
   "回车插队 · Cmd/Ctrl+回车排到这一轮后面":
@@ -503,7 +522,6 @@ export const EN: Readonly<Record<string, string>> = {
     "No API key yet, so chatting is not possible — add one under Settings → Model providers",
 
   /* ── 技能 / 文件 / 概览 ─────────────────────────────────────── */
-  "文件是一个技能，放在": "files are skills, kept in",
   "会一并移除它们名下的 {0} 段对话与相应的账本记录。": "This also removes the {0} chats under them, along with their ledger entries.",
   "这几处要处理": "A few things need attention",
   "这几个读不进来": "These could not be read",

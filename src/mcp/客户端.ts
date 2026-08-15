@@ -221,6 +221,18 @@ export class MCP池 {
     await Promise.all(全部.map((c) => c.client.close().catch(() => {})))
   }
 
+  /**
+   * 这一台现在连着吗、有哪些工具。
+   *
+   * **不连**：列名单时不该顺手把每台都起起来——那会在打开一个设置屏时
+   * 悄悄拉起五个进程。所以没连着就回 undefined，界面显示「还没试过」，
+   * **而「还没试过」与「试过、连不上」必须分得开**。
+   */
+  查(名: string, cwd?: string): { 工具: MCP工具[] } | undefined {
+    const 连 = this.连着.get(this.键(名, cwd))
+    return 连 ? { 工具: 连.工具 } : undefined
+  }
+
   /** 现在连着哪几台。界面要能说清楚 */
   连着的(): string[] {
     return [...this.连着.keys()].map((k) => k.split("\x00")[0]!)

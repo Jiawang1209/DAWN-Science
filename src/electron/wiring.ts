@@ -434,6 +434,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const backend = createWorkbenchBackend({
     onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },
+    // MCP 那一屏要能问「这台连上了没有、有哪些工具」——**问的是同一个池子**，
+    // 另开一个的话，设置屏说「连着」而对话里用的是另一条连接
+    mcp: { 池: mcp池 },
     tasks: new TaskStore(db),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,

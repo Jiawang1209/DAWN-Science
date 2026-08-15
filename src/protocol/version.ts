@@ -249,8 +249,20 @@
  *
  *   **不忙时无意义；忙时缺席读作 `followUp`**——排队不丢消息，
  *   而 pi 在流式中没有 behavior 会直接抛错，那时人打的那句话就没了。
+ * 5.7（2026-08-15）：MCP 的四个操作——`listMcpServers` / `testMcpServer` /
+ *   `setMcpFlag` / `setMcpSecret`。纯新增。
+ *
+ *   **一次回清楚三件事**：配了哪几台、此刻连没连上、连不上是为什么。
+ *   分三个操作去问的话，界面上会出现「配着但不知道状态」的中间态。
+ *   `state: unknown` 是**「还没试过」**，与「试过、连不上」是两回事——
+ *   后者一定带 `error`。列名单**不顺手去连**：打开一个设置屏就悄悄拉起
+ *   五个进程是不能接受的。
+ *
+ *   `setMcpSecret` **只进不出**：请求里有，任何响应里都没有（与凭证同一条）。
+ *   `setMcpFlag` 拨的是本机的两个开关，**它们不写进任何会被分享的文件**——
+ *   项目级名单会跟着仓库被 clone，让它声明自己可信等于没有门。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.6"
+export const WORKBENCH_PROTOCOL_VERSION = "5.7"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

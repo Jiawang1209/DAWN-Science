@@ -397,6 +397,104 @@ export const OPERATIONS = {
    * **读不进来的文件也要端出来**（`problems`）：一个格式写错的定义
    * 静静地不出现，人只会以为「我写的技能没生效」而找不到原因（规格 7.5）。
    */
+  /**
+   * MCP 名单与状态（协议 5.7，2026-08-15）。
+   *
+   * **一次回清楚三件事**：配了哪几台、每台此刻连没连上、连不上是为什么。
+   * 分三个操作去问的话，界面上会出现「配着但不知道状态」的中间态——
+   * 而那正是「看起来能用其实不能用」的来源。
+   */
+  listMcpServers: {
+    /** 按项目问：项目级 `.dawn/mcp.yaml` 会追加几台 */
+    request: z.object({ projectId: z.string().min(1).optional() }).strict(),
+    response: z
+      .object({
+        servers: z.array(
+          z
+            .object({
+              name: z.string().min(1),
+              command: z.string().min(1),
+              args: z.array(z.string()),
+              /** 它要哪些环境变量。**只有名字**——值在钥匙串里，永不回传 */
+              env: z.array(z.string()),
+              /** 哪几个还没填。**界面据此说「还差 PGURL」**，不是笼统一句没配好 */
+              missingSecrets: z.array(z.string()),
+              cwd: z.string().min(1).optional(),
+              /** 这台是全局配的还是某个项目带的。**界面要能说清楚** */
+              from: z.enum(["global", "project"]),
+              /** 本机的两个开关。**它们不在配置里**——见 `config/schema.ts` 的说明 */
+              trusted: z.boolean(),
+              off: z.boolean(),
+              /**
+               * 此刻的状态。**`unknown` 是「还没试过」**，
+               * 与「试过、连不上」是两回事——后者一定带 `error`。
+               */
+              state: z.enum(["unknown", "ready", "failed"]),
+              /** 连不上的原因。**`failed` 时必须有**——不带原因的失败等于没报 */
+              error: z.string().optional(),
+              /** 连上了才有：它提供哪些工具 */
+              tools: z.array(z.object({ name: z.string(), description: z.string() }).strict()),
+            })
+            .strict(),
+        ),
+        /** 名单本身的问题（重名、项目文件读不出来）。**不静默跳过** */
+        problems: z.array(z.string()),
+        /** 全局名单写在哪份文件里。**界面要能把这个路径说出来** */
+        configPath: z.string().optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
+   * 现在就连一次，把工具列出来（协议 5.7）。
+   *
+   * **配完必须能当场验一次**：不能验的话，人只能回到对话里试一句，
+   * 试不出来又分不清是「没配对」还是「模型没想用它」。
+   */
+  testMcpServer: {
+    request: z.object({ name: z.string().min(1), projectId: z.string().min(1).optional() }).strict(),
+    response: z
+      .object({
+        ok: z.boolean(),
+        /** 失败原因。**`ok: false` 时必须有** */
+        error: z.string().optional(),
+        tools: z.array(z.object({ name: z.string(), description: z.string() }).strict()),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 拨本机那两个开关（协议 5.7）。**它们不写进任何会被分享的文件** */
+  setMcpFlag: {
+    request: z
+      .object({
+        name: z.string().min(1),
+        flag: z.enum(["trusted", "off"]),
+        value: z.boolean(),
+      })
+      .strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 填一个密钥（协议 5.7）。**只进不出**：请求里有，任何响应里都没有。
+   * 与凭证那三个操作同一条纪律。
+   */
+  setMcpSecret: {
+    request: z
+      .object({
+        name: z.string().min(1),
+        varName: z.string().min(1),
+        /** 空串 = 清除。**「不想配了」与「配了个空值」是两回事** */
+        secret: z.string(),
+      })
+      .strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   listSkills: {
     request: ByProject,
     response: z

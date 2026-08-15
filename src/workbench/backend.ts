@@ -26,6 +26,7 @@ import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
 import type { SettingsStore } from "../store/settings.js"
+import { 合名单 } from "../mcp/名单.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
@@ -134,6 +135,13 @@ export interface WorkbenchBackendOptions {
   openPath?: (absolutePath: string) => Promise<string>
   sessions: SessionManager
   credentials: CredentialsPort
+  /**
+   * MCP（2026-08-15）。**不给就没有那四个操作能答的东西**——
+   * 那时它们如实说「本次运行没有装配 MCP」，不假装有一个空名单。
+   */
+  mcp?: {
+    池: import("../mcp/客户端.js").MCP池
+  }
   /** 配置里的 provider 注册表，供界面列出可选 agent */
   registry: ProviderRegistry
   /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
@@ -298,7 +306,7 @@ async function 读成附件(
 }
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
+  const { mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -979,6 +987,81 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **读不进来的也端出来**：一个格式写错的定义静静地不出现，
      * 人只会以为「我写的技能没生效」而找不到原因（规格 7.5）。
      */
+    /**
+     * MCP 名单与状态（协议 5.7，2026-08-15）。
+     *
+     * **一次回清楚三件事**：配了哪几台、此刻连没连上、连不上是为什么。
+     *
+     * **列名单不顺手去连**：打开一个设置屏就悄悄拉起五个进程是不能接受的。
+     * 所以没连过的一律 `unknown`——**「还没试过」与「试过、连不上」
+     * 必须分得开**，后者才带 `error`。要连就按那颗「试一次」。
+     */
+    listMcpServers: async ({ projectId }) => {
+      const 工作区 = projectId ? projects.summary(projectId)?.workspace : undefined
+      const 名单 = 合名单(registry.mcp, 工作区)
+      return {
+        servers: 名单.服务器.map((台) => {
+          const cwd = 台.服务器.cwd ?? 工作区
+          const 已连 = mcp?.池.查(台.名, cwd)
+          const 缺 = (台.服务器.env ?? []).filter(
+            (v) => credentials.get(`mcp:${台.名}:${v}`) === undefined,
+          )
+          return {
+            name: 台.名,
+            command: 台.服务器.command,
+            args: [...(台.服务器.args ?? [])],
+            env: [...(台.服务器.env ?? [])],
+            missingSecrets: 缺,
+            ...(台.服务器.cwd ? { cwd: 台.服务器.cwd } : {}),
+            from: 台.来自 === "全局" ? ("global" as const) : ("project" as const),
+            trusted: settings?.get(`mcp.trusted.${台.名}`) === "1",
+            off: settings?.get(`mcp.off.${台.名}`) === "1",
+            state: 已连 ? ("ready" as const) : ("unknown" as const),
+            tools: (已连?.工具 ?? []).map((t) => ({ name: t.工具名, description: t.描述 })),
+          }
+        }),
+        problems: 名单.问题,
+        ...(configPath ? { configPath } : {}),
+      }
+    },
+
+    /**
+     * 现在就连一次（协议 5.7）。**配完必须能当场验**——
+     * 不能验的话人只能回对话里试一句，而试不出来时分不清是
+     * 「没配对」还是「模型没想用它」。
+     */
+    testMcpServer: async ({ name, projectId }) => {
+      if (!mcp) throw fault("invalid_request", "本次运行没有装配 MCP")
+      const 工作区 = projectId ? projects.summary(projectId)?.workspace : undefined
+      const 名单 = 合名单(registry.mcp, 工作区)
+      const 台 = 名单.服务器.find((x) => x.名 === name)
+      if (!台) throw fault("not_found", `名单里没有这台：${name}`)
+      // **先断开再连**：改完配置按「试一次」，要试的是新配置而不是旧连接
+      await mcp.池.关(name, 台.服务器.cwd ?? 工作区)
+      const r = await mcp.池.备好(name, 台.服务器, 工作区)
+      return {
+        ok: !r.失败,
+        ...(r.失败 ? { error: r.失败 } : {}),
+        tools: r.工具.map((t) => ({ name: t.工具名, description: t.描述 })),
+      }
+    },
+
+    /** 拨本机那两个开关。**它们不写进任何会被分享的文件**（见 schema 的说明） */
+    setMcpFlag: async ({ name, flag, value }) => {
+      if (!settings) throw fault("invalid_request", "本次运行没有设置存储")
+      const key = flag === "trusted" ? (`mcp.trusted.${name}` as const) : (`mcp.off.${name}` as const)
+      settings.set(key, value ? "1" : "", new Date().toISOString())
+      return { ok: true as const }
+    },
+
+    /** 填一个密钥。**只进不出**：任何响应里都没有它 */
+    setMcpSecret: async ({ name, varName, secret }) => {
+      const 键 = `mcp:${name}:${varName}`
+      if (secret) credentials.set(键, secret)
+      else credentials.delete(键)
+      return { ok: true as const }
+    },
+
     listSkills: async ({ projectId }) => {
       const p = requireProject(projectId)
       const 读到的 = loadSubagentDefinitions(p.workspace)

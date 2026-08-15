@@ -56,6 +56,11 @@ function backend(): WorkbenchBackend {
     setTaskWorkspace: async () => 假任务,
     deleteTask: async () => ({ ledgerKept: 0 }),
     listSkills: async () => ({ agents: [], problems: [], dir: "/w/.dawn/agents" }),
+    listMcpServers: async () => ({ servers: [], problems: [] }),
+    testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
+    setMcpFlag: async () => ({ ok: true as const }),
+    setMcpSecret: async () => ({ ok: true as const }),
+
     initScienceLayout: async () => ({ created: [], instructions: "written" as const, file: "AGENTS.md" }),
     getPermissionMode: async () => ({ mode: "allow-all" as const }),
     setPermissionMode: async () => ({ mode: "deny-risky" as const }),

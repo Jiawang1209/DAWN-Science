@@ -35,12 +35,16 @@ function newRepo(): string {
   return dir
 }
 
-function configFile(): string {
+/**
+ * @param mcp 追加一段 `mcp:`（2026-08-15）。**默认不加**——
+ *   绝大多数用例与 MCP 无关，凭空多起一个进程只会让它们变慢变脆。
+ */
+function configFile(mcp?: string): string {
   const dir = mkdtempSync(join(tmpdir(), "dawn-cfg-"))
   const file = join(dir, "providers.yaml")
   writeFileSync(
     file,
-    `agents:
+    (mcp ?? "") + `agents:
   ds-chat:
     kind: native
     provider: deepseek
@@ -356,6 +360,44 @@ describe("run_code · 接线", () => {
     }).toolsFor.bind(wb.nativeRuntime)
     const 名 = (拿(spec(), { provider: "deepseek", model: "m" }) ?? []).map((t) => t.name)
     expect(名, "装配里没把对话内核接上去").toContain("run_code")
+  })
+
+  /**
+   * **这一条盯的是 `wiring.ts` 里那句 `mcp: { 取工具, 池, 门 }`。**
+   *
+   * 与上面两条同一个形状（门、内核各栽过一次）：直接 `new MCP池(...)`
+   * 验的是客户端那一层，**把装配里那句摘掉照样全绿**。
+   * 所以这里走 `createWorkbench` 真正装配出来的那个运行时，
+   * 并且对着**一台真 MCP 服务器**（`scripts/mcp-test-server.mjs`）跑一遍。
+   *
+   * MCP 的工具**不经过 `toolsFor` 那条同步路径**——列一台服务器的工具
+   * 要真的把它起起来、说一轮协议，所以它在 `start()` 里备好。
+   * 判据因此挑装配交给运行时的那个 `取工具`。
+   */
+  it("**createWorkbench 装配出来的运行时带着 MCP** —— 盯的是接线那一句", async () => {
+    const 脚本 = join(process.cwd(), "scripts", "mcp-test-server.mjs")
+    const wb = createWorkbench({
+      configPath: configFile(
+        `mcp:\n  测试台:\n    command: ${JSON.stringify(process.execPath)}\n    args: [${JSON.stringify(脚本)}]\n`,
+      ),
+      dbPath: newDbPath(),
+      credentials: memoryCredentials(),
+    })
+    cleanups.push(() => wb.close())
+
+    const 装 = (wb.nativeRuntime as unknown as {
+      opts?: {
+        mcp?: {
+          取工具(w: string | undefined): Promise<{ 工具: { 全名: string }[]; 问题: string[] }>
+        }
+      }
+    }).opts?.mcp
+    expect(装, "装配里没把 MCP 接上去").toBeDefined()
+
+    const r = await 装!.取工具(undefined)
+    expect(r.问题, `有服务器没连上：${r.问题.join("；")}`).toEqual([])
+    expect(r.工具.map((t) => t.全名), "真服务器的工具没列出来").toContain("测试台__echo")
+    await wb.closeAsync(3000)
   })
 
   it("内置四件套还在 —— 加自定义工具不该把它们挤掉", () => {

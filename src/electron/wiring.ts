@@ -18,7 +18,9 @@ import { RunStore } from "../store/runs.js"
 import { SessionStore } from "../store/sessions.js"
 import { ProjectManager } from "../project/manager.js"
 import { RunRecorder } from "../project/run-recorder.js"
-import { 造门 } from "../policy/permissions.js"
+import { 造门, 造MCP门 } from "../policy/permissions.js"
+import { MCP池 } from "../mcp/客户端.js"
+import { 合名单 } from "../mcp/名单.js"
 import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
@@ -242,9 +244,45 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     },
   })
 
+  /**
+   * MCP（2026-08-15）。**一池子连接跟着应用走**，不跟着会话走：
+   * 一段会话结束就关掉的话，下一段又要重起一遍（有些服务器起来要好几秒）。
+   *
+   * 密钥从钥匙串取，键是 `mcp:<服务器名>:<变量名>`——
+   * **`providers.yaml` 里只有变量名**，那份文件会被分享、会进 git。
+   */
+  const mcp池 = new MCP池({
+    取密: (服务器名, 变量名) => opts.credentials.get(`mcp:${服务器名}:${变量名}`),
+  })
+
+  const mcp门 = 造MCP门(() =>
+    settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all",
+  )
+
+  /**
+   * 这段会话能用哪几台、各有哪些工具。
+   *
+   * **一台起不来不拖垮其余的**：`备好` 从不抛异常，失败会变成一条 `问题`，
+   * 由运行时在对话里留一句话（规格 7.5：不静默）。
+   */
+  const 取MCP工具 = async (工作区: string | undefined) => {
+    const 名单 = 合名单(registry.mcp, 工作区)
+    const 能用的 = 名单.服务器.filter((x) => !x.服务器.disabled)
+    const 问题 = [...名单.问题]
+    const 工具: import("../mcp/客户端.js").MCP工具[] = []
+    for (const 台 of 能用的) {
+      const r = await mcp池.备好(台.名, 台.服务器, 工作区)
+      if (r.失败) 问题.push(`「${台.名}」没连上：${r.失败}`)
+      else 工具.push(...r.工具)
+    }
+    return { 工具, 名单: 能用的.map((x) => ({ 名: x.名, 服务器: x.服务器 })), 问题 }
+  }
+
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
     gate: 权限门,
+    // 给了才有那些外部工具；不给的装配一个字不受影响
+    mcp: { 取工具: 取MCP工具, 池: mcp池, 门: mcp门 },
     // 给了才有 `run_code`；不给的装配（CLI、测试替身）一个字不受影响
     kernels: 对话的内核,
     ...(生成的模型目录 ? { modelsPath: 生成的模型目录 } : {}),
@@ -491,7 +529,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     async closeAsync(timeoutMs = 1500) {
       if (closed) return
       await Promise.race([
-        sessions.stopAll(),
+        /**
+         * **MCP 的那些进程也要收**（2026-08-15）。
+         * 不收就是一堆孤儿进程——而它们多半连着数据库。
+         * 与会话一起进同一个超时竞赛：**收摊不能因为一台服务器不肯退而卡住**。
+         */
+        Promise.all([sessions.stopAll(), mcp池.全关()]),
         new Promise<void>((r) => setTimeout(r, timeoutMs)),
       ])
       this.close()

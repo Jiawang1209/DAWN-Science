@@ -52,6 +52,7 @@ import { ProvenanceProbe } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
+import { createMcpTools } from "../tools/mcp-tool.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore } from "@earendil-works/pi-ai"
@@ -112,6 +113,25 @@ export interface NativeRuntimeOptions {
   modelsPath?: string
   /** 可选的授权门。给出时内置工具被替换为包装过的版本 */
   gate?: ToolGate
+  /**
+   * MCP（2026-08-15）。**给了才有那些外部工具。**
+   *
+   * 与 `kernels` 同一副做法：不给就完全是原来的样子——
+   * CLI、测试替身、没配 MCP 的用户一个字节都不受影响。
+   *
+   * `取工具` 是 **async 的**：起一台服务器要跑一个进程、说一轮协议。
+   * 所以 `toolsFor` 那条同步路径拿不到它——工具在 `start()` 里备好，
+   * 见下面 `起会话` 里的注释。
+   */
+  mcp?: {
+    取工具: (工作区: string | undefined) => Promise<{
+      工具: readonly import("../mcp/客户端.js").MCP工具[]
+      名单: readonly { 名: string; 服务器: import("../config/schema.js").McpServer }[]
+      问题: readonly string[]
+    }>
+    池: import("../mcp/客户端.js").MCP池
+    门?: (服务器名: string, 信得过: boolean | undefined) => string | undefined
+  }
   /**
    * 对话的内核（②，2026-08-14）。**给了才有 `run_code` 这个工具。**
    *
@@ -502,7 +522,16 @@ export class NativeRuntime implements AgentRuntime {
    * 但那条 Run 没有 `files_written`。按不变式 5 的规矩，
    * **缺省读作「不知道」，这正是此刻的实情。**
    */
-  private toolsFor(spec: SessionSpec, native: { provider: string; model: string }): unknown[] | undefined {
+  private toolsFor(
+    spec: SessionSpec,
+    native: { provider: string; model: string },
+    /**
+     * MCP 那些工具（2026-08-15）。**从外面传进来而不是在这里取**：
+     * 起一台 MCP 服务器要跑进程、说一轮协议，是异步的，
+     * 而这个方法是同步的。备好的活儿在 `start()` 里干。
+     */
+    mcp工具: unknown[] = [],
+  ): unknown[] | undefined {
     const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
 
 
@@ -519,8 +548,13 @@ export class NativeRuntime implements AgentRuntime {
       ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
       : []
 
+    /**
+     * **MCP 工具与 `run_code` 一样，不能挂进 subagent 那个分支**——
+     * 没有 `subagentChildEntry` 时下面会提前返回，挂过去的话
+     * 在那种装配里它们整个消失。这个坑本仓库踩过一次（退役的那个数据工具）。
+     */
     const entry = this.opts.subagentChildEntry
-    if (!entry) return [...(base ?? []), ...内核工具]
+    if (!entry) return [...(base ?? []), ...内核工具, ...mcp工具]
 
     const tool = createSubagentTool({
       sessionId: spec.sessionId,
@@ -544,7 +578,7 @@ export class NativeRuntime implements AgentRuntime {
     })
 
     // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上
-    return [...(base ?? []), ...内核工具, tool]
+    return [...(base ?? []), ...内核工具, ...mcp工具, tool]
   }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {
@@ -571,7 +605,44 @@ export class NativeRuntime implements AgentRuntime {
     mkdirSync(agentDir, { recursive: true })
 
     const modelRuntime = await this.runtime()
-    const customTools = this.toolsFor(spec, native)
+
+    /**
+     * **MCP 工具在这里备好**（2026-08-15）。
+     *
+     * 必须在建会话之前：pi 的 `customTools` 是建会话时装上去的，
+     * 而列出一台服务器有哪些工具要真的把它起起来、说一轮协议——那是异步的。
+     *
+     * **一台起不来不该让整段会话开不了**（`备好` 从不抛异常），
+     * 但**必须出声**（规格 7.5）：起不来的那几台各自留一条 notice。
+     * 悄悄少几个工具的表现是「模型怎么不会查库了」，
+     * 而人会去怀疑模型、怀疑提示词，唯独不会想到是一台服务器没起来。
+     */
+    let mcp工具: unknown[] = []
+    if (this.opts.mcp) {
+      const { 取工具, 池, 门 } = this.opts.mcp
+      try {
+        const r = await 取工具(spec.workspace)
+        mcp工具 = createMcpTools({
+          池,
+          名单: r.名单,
+          工具: r.工具,
+          ...(spec.workspace ? { 工作区: spec.workspace } : {}),
+          ...(门 ? { 门 } : {}),
+        })
+        for (const 问题 of r.问题) {
+          this.emit({ kind: "notice", sessionId: spec.sessionId, text: `MCP：${问题}` })
+        }
+      } catch (e) {
+        // 整个装配塌了也要出声——**静默的结果是「工具凭空少了」**
+        this.emit({
+          kind: "notice",
+          sessionId: spec.sessionId,
+          text: `MCP：这一段没能装上任何外部工具（${e instanceof Error ? e.message : String(e)}）`,
+        })
+      }
+    }
+
+    const customTools = this.toolsFor(spec, native, mcp工具)
 
     /**
      * **这段对话的记录住在它自己的目录里**（会话续接，2026-08-11）。

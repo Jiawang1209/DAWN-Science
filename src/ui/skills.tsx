@@ -17,8 +17,8 @@
  *
  * 「看不见的能力等于不存在」有个反面：**不存在的能力不该看起来存在**。
  */
-import { useEffect, useState } from "react"
-import { EmptyState, Loader } from "./primitives.js"
+import { useCallback, useEffect, useState } from "react"
+import { Button, EmptyState, Loader } from "./primitives.js"
 
 import { t, tf } from "./i18n/index.js"
 export interface Skill {
@@ -148,27 +148,264 @@ export function PluginsView() {
   )
 }
 
+/** 一台 MCP 服务器在界面上的样子（协议 5.7） */
+export interface MCP一台 {
+  name: string
+  command: string
+  args: string[]
+  env: string[]
+  missingSecrets: string[]
+  cwd?: string
+  from: "global" | "project"
+  trusted: boolean
+  off: boolean
+  state: "unknown" | "ready" | "failed"
+  error?: string
+  tools: { name: string; description: string }[]
+}
+
+export interface MCP装载 {
+  servers: MCP一台[]
+  problems: string[]
+  configPath?: string
+}
+
 /**
- * MCP 那一屏。
+ * MCP 那一屏（2026-08-15）。
  *
- * **它如实说清做到了哪儿**：管道有了（每段托管会话写一份 `mcp.json`，
- * 由 `--mcp-config` 指过去），但**没有配置界面**，而且**只对托管的
- * claude / codex 生效**——内置那条走 pi，还没接。
+ * 在此之前它如实写着「还不能在这里配」——那是对的，因为当时真的不能。
+ * 现在能了：内置对话走 pi，MCP 客户端是我们自己那一层
+ * （pi 不带），工具经 `customTools` 注进去。
  *
- * 不画一个填了不生效的表单：那比没有更坏。
+ * ## 这一屏要回答的三个问题
+ *
+ * 1. **配了哪几台、是谁配的**（全局 / 某个项目带的）
+ * 2. **此刻连没连上**——`还没试过` 与 `连不上` 分开显示，
+ *    后者一定带原因。两者混成一个「未连接」的话，
+ *    一个刚配好的服务器会显示成故障。
+ * 3. **还差什么**——缺哪个密钥要点名，而不是笼统一句「没配好」。
+ *
+ * ## 加一台仍然要手写 YAML
+ *
+ * 这一版**不做「新增服务器」的表单**，而是把配置文件的路径显眼地说出来。
+ * 理由：命令、参数、工作目录、环境变量四样都要填，做一个能填对的表单
+ * 是另一件事；**而摆一个填不全的表单比让人去改文件更坏**——
+ * 他会以为填完就能用。**能在这里做的两件事（拨开关、填密钥）都做了**，
+ * 因为它们恰恰是不该写进那份文件的。
  */
-export function McpView() {
+export function McpView({
+  load,
+  onTest,
+  onFlag,
+  onSecret,
+}: {
+  load?: (() => Promise<MCP装载>) | undefined
+  onTest?: ((name: string) => Promise<{ ok: boolean; error?: string; tools: { name: string }[] }>) | undefined
+  onFlag?: ((name: string, flag: "trusted" | "off", value: boolean) => Promise<void>) | undefined
+  onSecret?: ((name: string, varName: string, secret: string) => Promise<void>) | undefined
+} = {}) {
+  const [数据, 设数据] = useState<MCP装载 | undefined>(undefined)
+  const [出错, 设出错] = useState<string | undefined>(undefined)
+  /** 刚试过的结果。**与列表里的 `state` 分开存**：列表是取回来的那一刻的事实 */
+  const [试的结果, 设试的结果] = useState<Record<string, { ok: boolean; error?: string }>>({})
+  const [填着的, 设填着的] = useState<{ 服务器: string; 变量: string } | undefined>(undefined)
+  const [密文, 设密文] = useState("")
+
+  const 重取 = useCallback(() => {
+    if (!load) return
+    load()
+      .then(设数据)
+      .catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
+  }, [load])
+
+  useEffect(() => {
+    重取()
+  }, [重取])
+
+  if (!load) {
+    return (
+      <div className="skills-page">
+        <header className="skills-head">
+          <h1 className="panel-title">{t("MCP 服务器")}</h1>
+        </header>
+        <EmptyState
+          title={t("本次运行没有装配 MCP")}
+          description={t("这是启动时的装配问题，不是配置问题。")}
+        />
+      </div>
+    )
+  }
+  if (出错) return <EmptyState title={t("读不到 MCP 名单")} description={出错} />
+  if (!数据) return <Loader label={t("正在读 MCP 名单")} />
+
   return (
     <div className="skills-page">
       <header className="skills-head">
         <h1 className="panel-title">{t("MCP 服务器")}</h1>
+        {/**
+          * **把配置文件的路径说出来**。加一台要手写 YAML——
+          * 不说清放哪儿，「怎么加一个」就无从下手（与技能那一屏同一条）。
+          */}
+        {数据.configPath ? (
+          <p className="hint">
+            {t("在这份文件的")} <code>mcp:</code> {t("段里加一台；项目独有的写在")}{" "}
+            <code>.dawn/mcp.yaml</code>
+            <br />
+            <code>{数据.configPath}</code>
+          </p>
+        ) : null}
       </header>
-      <EmptyState
-        title={t("还不能在这里配 MCP")}
-        description={t(
-          "管道已经通了：每开一段托管会话（claude / codex），我们会按会话写一份 mcp.json，并用 --mcp-config 指过去。但目前还没有配置界面，而且它只对托管的那两类生效——内置对话走 pi，那条还没接上。",
-        )}
-      />
+
+      {数据.servers.length === 0 ? (
+        <EmptyState
+          title={t("还没有配 MCP 服务器")}
+          description={t(
+            "MCP 服务器是外部工具：数据库、文献库、领域 API 都有现成的。在上面那份文件里加一段 mcp: 就行——我们不需要为每样工具各写一遍代码。",
+          )}
+        />
+      ) : (
+        <ul className="skill-list">
+          {数据.servers.map((s) => {
+            const 试 = 试的结果[s.name]
+            return (
+              <li key={s.name} className="skill" data-state={s.off ? "off" : s.state}>
+                <p className="skill-name">
+                  {s.name}
+                  {/* **它是谁配的**：项目带的那些会随仓库走 */}
+                  <span className="mcp-from">
+                    {s.from === "project" ? t("这个项目带的") : t("全局")}
+                  </span>
+                  {s.off ? <span className="mcp-off">{t("已关闭")}</span> : null}
+                </p>
+                <p className="skill-desc">
+                  <code>
+                    {s.command} {s.args.join(" ")}
+                  </code>
+                </p>
+
+                {/**
+                  * **缺哪个密钥要点名**（规格 7.5）：笼统一句「没配好」
+                  * 会让人对着三个变量挨个试。
+                  */}
+                {s.missingSecrets.length > 0 ? (
+                  <p className="caveat">
+                    {tf("还差 {0} 没填，填上才连得起来", s.missingSecrets.join("、"))}
+                  </p>
+                ) : null}
+
+                {试 ? (
+                  <p className={试.ok ? "mcp-ok" : "caveat"}>
+                    {试.ok ? t("连上了") : 试.error}
+                  </p>
+                ) : null}
+
+                {s.tools.length > 0 ? (
+                  <p className="skill-meta">
+                    <span>{tf("{0} 个工具：{1}", String(s.tools.length), s.tools.map((x) => x.name).join("、"))}</span>
+                  </p>
+                ) : null}
+
+                <p className="skill-meta">
+                  <Button
+                    variant="text"
+                    size="inline"
+                    onClick={() => {
+                      if (!onTest) return
+                      void onTest(s.name).then((r) => {
+                        设试的结果((前) => ({ ...前, [s.name]: { ok: r.ok, ...(r.error ? { error: r.error } : {}) } }))
+                        重取()
+                      })
+                    }}
+                  >
+                    {t("试一次")}
+                  </Button>
+
+                  {/**
+                    * **这两个开关不写进配置文件**——项目级名单会跟着仓库被
+                    * clone，让它声明自己可信等于没有门。所以它们住在本机的库里。
+                    */}
+                  <label className="mcp-switch">
+                    <input
+                      type="checkbox"
+                      checked={s.trusted}
+                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted).then(重取)}
+                    />
+                    {t("这台我信得过")}
+                  </label>
+                  <label className="mcp-switch">
+                    <input
+                      type="checkbox"
+                      checked={s.off}
+                      onChange={() => void onFlag?.(s.name, "off", !s.off).then(重取)}
+                    />
+                    {t("先别连它")}
+                  </label>
+                </p>
+
+                {/* 它要的每个环境变量各有一个填的入口。**值只进不出**，所以框永远是空的 */}
+                {s.env.map((v) => (
+                  <p key={v} className="skill-meta mcp-secret">
+                    <span>{v}</span>
+                    {填着的?.服务器 === s.name && 填着的.变量 === v ? (
+                      <>
+                        <input
+                          type="password"
+                          className="control mcp-secret-input"
+                          value={密文}
+                          autoFocus
+                          aria-label={tf("{0} 的值", v)}
+                          onChange={(e) => 设密文(e.target.value)}
+                        />
+                        <Button
+                          variant="text"
+                          size="inline"
+                          onClick={() => {
+                            void onSecret?.(s.name, v, 密文).then(() => {
+                              设密文("")
+                              设填着的(undefined)
+                              重取()
+                            })
+                          }}
+                        >
+                          {t("存下来")}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="text"
+                        size="inline"
+                        onClick={() => {
+                          设密文("")
+                          设填着的({ 服务器: s.name, 变量: v })
+                        }}
+                      >
+                        {s.missingSecrets.includes(v) ? t("去填") : t("换一个")}
+                      </Button>
+                    )}
+                  </p>
+                ))}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      {/**
+        * **名单本身的问题不静默跳过**（规格 7.5）：
+        * 重名、项目文件读不出来——不说的话人只会以为「我配的那台没生效」。
+        */}
+      {数据.problems.length > 0 ? (
+        <section className="skill-problems">
+          <h2 className="panel-title">{t("这几处要处理")}</h2>
+          <ul>
+            {数据.problems.map((p) => (
+              <li key={p}>
+                <span className="caveat">{p}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   )
 }

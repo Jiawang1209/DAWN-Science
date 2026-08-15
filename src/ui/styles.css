@@ -3498,3 +3498,53 @@ pre {
   margin: 0 0 var(--dawn-space-1);
   color: var(--dawn-text-3);
 }
+
+/**
+ * MCP 那一屏的几样（2026-08-15）。
+ *
+ * 复用技能屏的 `.skill-list` / `.skill` 骨架——**两屏说的是同一类事**
+ * （装进来的能力有哪些），长得不一样反而要人重新认一遍。
+ */
+.mcp-from,
+.mcp-off {
+  margin-left: var(--dawn-space-2);
+  font-size: 12px;
+  /** **不加粗**：它是名字旁边的注脚，不是标题 */
+  font-weight: normal;
+  color: var(--dawn-text-3);
+}
+
+/** 关掉的那台：**仍然列出来**，只是整条压暗——不列的话人会以为配置丢了 */
+.skill[data-state="off"] {
+  opacity: 0.55;
+}
+
+/** 连上了用与「alive」同一个令牌：**同一件事同一个颜色** */
+.mcp-ok {
+  margin: 0;
+  color: var(--dawn-success);
+}
+
+.mcp-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  cursor: pointer;
+}
+
+.mcp-secret {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+}
+
+/**
+ * 密钥框。**永远是空的**——值只进不出，我们根本读不回来。
+ *
+ * **盒子的属性一个都不重写**：它带着 `.control`（那一处定义了边框、
+ * 内边距、聚焦环）。抄一遍属性就会漏掉它的行为——设计契约盯的正是这个。
+ * 这里只给一个宽度。
+ */
+.mcp-secret-input {
+  min-width: 220px;
+}

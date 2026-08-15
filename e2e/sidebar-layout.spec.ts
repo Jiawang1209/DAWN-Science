@@ -288,12 +288,20 @@ test("**技能那一屏说得出「去哪写」**", async ({ dawn }) => {
 })
 
 /**
- * **MCP 那一屏如实说清做到了哪儿**。
+ * **MCP 那一屏如实说清做到了哪儿**（2026-08-15 改写）。
  *
- * 不画一个填了不生效的表单——那比没有更坏。
+ * 这条原来断言的是「不假装能配」——**它当时是对的**：那时管道只通到
+ * 托管的 claude / codex，内置对话那条没接，所以屏上明写着「还不能在这里配」。
+ *
+ * 现在真的能配了（我们自己做了 MCP 客户端，pi 不带）。**判据跟着事实走，
+ * 但守的是同一件事**：这一屏不许出现「看起来能用其实不能用」的东西。
+ * 于是改成——**一台都没配时，要说清去哪儿加**，而不是摆一个空列表
+ * 让人以为「我还没装而已」。
  */
-test("**MCP 那一屏不假装能配**", async ({ dawn }) => {
+test("**一台都没配时，说清去哪儿加**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "MCP 服务器" }).click()
-  await expect(page.locator(".skills-page")).toContainText(/还不能在这里配 MCP/)
+  await expect(page.locator(".skills-page")).toContainText(/还没有配 MCP 服务器/)
+  // **路径要说出来**：不说清放哪儿，「怎么加一个」就无从下手（与技能那一屏同一条）
+  await expect(page.locator(".skills-page")).toContainText("providers.yaml")
 })

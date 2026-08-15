@@ -54,7 +54,7 @@ import {
 import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
-import { SkillsView, McpView, PluginsView, type SkillLoad } from "./skills.js"
+import { SkillsView, McpView, PluginsView, type SkillLoad, type MCP装载 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -2060,7 +2060,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ) : view === "plugins" ? (
             <PluginsView />
           ) : view === "mcp" ? (
-            <McpView />
+            /**
+             * MCP 那一屏（2026-08-15）。
+             *
+             * **按项目问**：项目级 `.dawn/mcp.yaml` 会追加几台，
+             * 没有当前项目时就只有全局那些——那不是错误，是实情。
+             */
+            <McpView
+              load={() =>
+                client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {})
+              }
+              onTest={(name) =>
+                client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
+                  "testMcpServer",
+                  projectId ? { name, projectId } : { name },
+                )
+              }
+              onFlag={async (name, flag, value) => {
+                await client.get("setMcpFlag", { name, flag, value })
+              }}
+              onSecret={async (name, varName, secret) => {
+                await client.get("setMcpSecret", { name, varName, secret })
+              }}
+            />
           ) : view === "settings" ? (
             /* **设置不复用项目概览的三栏网格**：仪表盘要一眼看全，
                设置要一件一件读。单栏 + 最大宽度，见 Settings.tsx 的文件头 */

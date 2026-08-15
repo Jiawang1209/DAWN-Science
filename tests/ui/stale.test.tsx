@@ -118,3 +118,60 @@ describe("内核输出 · 哪台内核吐的", () => {
     expect(画().querySelector(".kout-lang"), "不该凭空多出一个徽标").toBeNull()
   })
 })
+
+/**
+ * **内核会话的等待记号要停**（2026-08-15 实测补的）。
+ *
+ * 内核吐的是 `kernelOutput`，一条 `turn` 都不会有。而「在不在等」原先只认
+ * 「agent 说出了字」，于是那个判据**永远为假**：结果早就显示在屏幕上了，
+ * 「正在等模型回话」还在转。真实产物上的探针读到的是 `等待记号还在: 1`。
+ *
+ * 这个文件自己写过那句话——**一个永远在转的记号比没有更糟**。
+ */
+describe("内核会话 · 等待记号", () => {
+  /** 转录最后一条是用户发言 = 在等（`等回话` 由转录推导，见 views.tsx） */
+  const 用户那句: TranscriptItem = {
+    type: "turn",
+    id: "u1",
+    who: "user",
+    text: "print('PROBE', 1 + 1)",
+    final: true,
+  }
+
+  const 内核输出: TranscriptItem = {
+    type: "kernelOutput",
+    id: "k1",
+    kernelInstanceId: "inst-1",
+    kernelRevision: 1,
+    output: { kind: "stream", stream: "stdout", text: "PROBE 2" },
+  }
+
+  /**
+   * **必须按真实顺序来：先只有用户那句，再来输出。**
+   *
+   * 我第一版一次性渲染两条——`等回话` 是由「转录最后一条是用户发言」推出来的，
+   * 那样它压根没被设上，于是**去掉修复用例照样绿**。
+   * 变异测试当场拆穿了它。一次渲染不等于一段过程。
+   */
+  const 跑一遍 = (之后?: TranscriptItem) => {
+    const r = render(<ConversationView session={SESSION} items={[用户那句]} onSend={() => {}} />)
+    expect(r.container.querySelector(".waiting"), "发出去了却没有等待记号").toBeTruthy()
+    if (之后) {
+      r.rerender(
+        <ConversationView session={SESSION} items={[用户那句, 之后]} onSend={() => {}} />,
+      )
+    }
+    return r.container
+  }
+
+  it("只有用户那句时，记号该转", () => {
+    expect(跑一遍().querySelector(".waiting")).toBeTruthy()
+  })
+
+  it("**内核输出一到，记号就停**", () => {
+    expect(
+      跑一遍(内核输出).querySelector(".waiting"),
+      "结果已经在屏幕上了，它还在转",
+    ).toBeNull()
+  })
+})

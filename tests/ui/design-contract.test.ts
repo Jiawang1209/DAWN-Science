@@ -659,6 +659,25 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
    * 而收纳标题的颜色必须是 `text-1` 或 `text-2`——
    * 哪天有人把标题调到 `text-3`，这里会先红。
    */
+  /**
+   * **两组图标靠虚实分开，不靠大小分开**（2026-08-15 作者报的）。
+   *
+   * 上一版给收纳标题的图标写了 `width: 14px`——比固定入口那组的 16px 小两档，
+   * 而描边本来就比实心轻，于是看着更小。作者：*「讲真话，图标感觉比那组实心图标小一些。」*
+   *
+   * 大小一旦也不一样，看着就是「次一等」，而它们其实是并列的两组。
+   * 所以这里盯的是：**收纳标题的图标不许覆盖尺寸**，跟着 `.icon` 那 16px 走。
+   */
+  it("收纳标题的图标不许自己改尺寸 —— 跟着 .icon 走", () => {
+    const css = read("styles.css")
+    const 段 = css.slice(css.indexOf(".side-section-icon {"))
+    const 体 = 段.slice(0, 段.indexOf("}"))
+    expect(
+      findLines(体, (l) => /\b(width|height|font-size)\s*:/.test(l)),
+      "收纳标题的图标覆盖了尺寸，会比固定入口那组小一号",
+    ).toEqual([])
+  })
+
   it("用描边的那一处，颜色不许掉到 text-3 以下", () => {
     const css = read("styles.css")
     const 分区 = css.slice(css.indexOf(".side-section {"), css.indexOf(".side-subhead {"))

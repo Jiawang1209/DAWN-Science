@@ -9,7 +9,7 @@
  * 打进 bundle 只会得到一个坏掉的文件。
  */
 import { build } from "esbuild"
-import { chmodSync, existsSync, statSync } from "node:fs"
+import { chmodSync, cpSync, existsSync, statSync } from "node:fs"
 import { join } from "node:path"
 
 /**
@@ -127,5 +127,20 @@ for (const platform of ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64"
   }
 }
 if (fixed > 0) console.log(`build-electron: 已为 ${fixed} 个 spawn-helper 补上执行位`)
+
+/**
+ * **自带技能拷进 dist**（S20，2026-08-15）。
+ *
+ * 它们是 `SKILL.md` 文本，不经过 esbuild——而这个脚本此前只打包 JS，
+ * 一个静态文件都不拷。不拷的话，路径就得从 dist 往上找回仓库根，
+ * **那在打包之后必断**（asar 里没有仓库）。
+ *
+ * 拷到 `dist/skills`，于是运行时那句是 `join(import.meta.dirname, "../skills")`
+ * ——与 `preload.cjs`、`../ui/index.html` 同一副做法。
+ */
+if (existsSync("skills")) {
+  cpSync("skills", join("dist", "skills"), { recursive: true })
+  console.log("build-electron: 自带技能已拷进 dist/skills")
+}
 
 console.log("build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成")

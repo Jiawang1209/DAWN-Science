@@ -54,6 +54,19 @@ export interface CreateWorkbenchOptions {
    * 临时会话的目录根。**测试必须给**——不给就落到开发机的 `~/DAWN/scratch`。
    */
   scratchRoot?: string
+  /**
+   * 全局技能目录。**测试必须给**——不给就落到开发机的 `~/DAWN/skills`，
+   * 与 `scratchRoot` 同一条理由（那条已经为此栽过：往家目录里写）。
+   */
+  skillsDir?: string
+  /**
+   * 自带技能的目录（随应用发布，**只读**）。
+   *
+   * **不往用户目录里偷偷写**：拷一份过去的话，应用升级时那份是旧的，
+   * 而人根本不知道自己手上是哪一版。放在这儿，它永远跟着应用走。
+   * 想改？把那个文件夹复制到 `~/DAWN/skills` 下再改——那是显式的。
+   */
+  builtinSkillsDir?: string
   configPath: string
   dbPath: string
   readOnly?: boolean
@@ -285,9 +298,28 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     return { 工具, 名单: 能用的.map((x) => ({ 名: x.名, 服务器: x.服务器 })), 问题 }
   }
 
+  /**
+   * 技能的两个位置（S20，2026-08-15）。
+   *
+   * **全局那个放在看得见的地方**（`~/DAWN/skills`，与 `~/DAWN/scratch` 同一个家）：
+   * 技能是**用文件夹装的**（一个 `SKILL.md` + 可能带的脚本），
+   * 人要能在访达里把它拖进去。藏进应用数据目录的话，
+   * 「怎么装一个技能」就只能靠文档——而那正是「看不见的能力等于不存在」。
+   *
+   * **项目级用 `.dawn/skills`**，与 `.dawn/agents/`、`.dawn/mcp.yaml` 同一个家；
+   * pi 默认那个是 `.pi/skills`，我们不跟——一个项目里两套隐藏目录更难解释。
+   */
+  const 技能位置 = {
+    全局目录: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
+    项目目录名: join(".dawn", "skills"),
+    ...(opts.builtinSkillsDir ? { 自带目录: opts.builtinSkillsDir } : {}),
+  }
+
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
     gate: 权限门,
+    // 给了才认这两个位置；不给就完全是 pi 的原样
+    skills: 技能位置,
     // 给了才有那些外部工具；不给的装配一个字不受影响
     mcp: { 取工具: 取MCP工具, 池: mcp池, 门: mcp门 },
     // 给了才有 `run_code`；不给的装配（CLI、测试替身）一个字不受影响

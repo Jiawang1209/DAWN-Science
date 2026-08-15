@@ -114,6 +114,21 @@ export interface NativeRuntimeOptions {
   /** 可选的授权门。给出时内置工具被替换为包装过的版本 */
   gate?: ToolGate
   /**
+   * 技能的两个位置（S20，2026-08-15）。**不给就完全是原来的样子。**
+   *
+   * pi 自带 Agent Skills 的全套（发现、注入系统提示、`/skill:名` 展开、诊断），
+   * **这一层我们不写**（路线图 S20 的原话）。我们只负责告诉它去哪儿找——
+   * 因为它默认的两个位置在我们这儿都不好使（见 `start` 里的说明）。
+   */
+  skills?: {
+    /** 全局技能目录。**一个固定位置**，不跟着会话走 */
+    全局目录?: string
+    /** 项目里那个目录名，例如 `.dawn/skills` */
+    项目目录名?: string
+    /** 自带技能（随应用发布，只读）。**空目录等于没有**，所以我们带几个 */
+    自带目录?: string
+  }
+  /**
    * MCP（2026-08-15）。**给了才有那些外部工具。**
    *
    * 与 `kernels` 同一副做法：不给就完全是原来的样子——
@@ -695,6 +710,82 @@ export class NativeRuntime implements AgentRuntime {
       ],
     })
     await resourceLoader.reload()
+
+    /**
+     * **技能的两个位置，显式指给 pi**（S20，2026-08-15）。
+     *
+     * pi 自己认 `<agentDir>/skills` 与 `<cwd>/.pi/skills`，而这两条在我们这儿
+     * 都不好使：
+     *
+     * - `agentDir` 是**每会话一个**（见上面那段注释：换模型会写进去，
+     *   共用会让一个会话的默认值渗进另一个）。所以「全局技能」放那儿
+     *   等于每段会话各要放一份——**等于不存在**。
+     * - 项目级那条指向 `.pi/`，而我们自己的约定是 `.dawn/`
+     *   （`.dawn/agents/`、`.dawn/mcp.yaml` 都在那儿）。
+     *
+     * 所以两处都由装配显式给（`skills` 选项）。**不给就完全是原来的样子**——
+     * CLI 与测试替身一个字节不受影响。
+     *
+     * ## 必须在 `reload()` **之后**扩展
+     *
+     * 第一版写在前面，结果**一个自带技能都没进来，反倒进来 14 个不相干的**
+     * （开发机上 `~/.claude` 里那套）。实测三种顺序：
+     *
+     * | 顺序 | 结果 |
+     * |---|---|
+     * | 先扩展 → `reload()` | ✗ 扩展被洗掉 |
+     * | `reload()` → 扩展 | ✓ |
+     * | 扩展 → `reload()` → 扩展 | ✓ |
+     *
+     * `reload()` 会按设置重算一遍资源路径，把之前扩展进去的丢掉。
+     * **这条只有真跑一次才看得见**——类型对、编译过、单元测试全绿。
+     */
+    if (this.opts.skills) {
+      const { 全局目录, 项目目录名, 自带目录 } = this.opts.skills
+      /**
+       * **顺序即优先级：越具体的越靠前。**
+       *
+       * pi 按名字去重，**先到先得**（2026-08-15 实测：把同名的两份分别放前放后，
+       * 赢的都是靠前那个）。所以顺序不是随手排的：
+       *
+       *   ① 项目级 —— 这个课题特有的做法，最具体
+       *   ② 全局   —— 你自己攒的那些
+       *   ③ 自带   —— 我们发的，**排最后**：同名时你写的那份赢，
+       *              否则「我改了却不生效」会变成一个查不出来的谜
+       */
+      const 加 = [
+        ...(spec.workspace && 项目目录名
+          ? [{ path: join(spec.workspace, 项目目录名), meta: "project" as const }]
+          : []),
+        ...(全局目录 ? [{ path: 全局目录, meta: "user" as const }] : []),
+        ...(自带目录 ? [{ path: 自带目录, meta: "user" as const }] : []),
+      ]
+      if (加.length > 0) {
+        resourceLoader.extendResources({
+          skillPaths: 加.map((x) => ({
+            path: x.path,
+            metadata: { source: "dawn", scope: x.meta, origin: "top-level" as const },
+          })),
+        })
+      }
+    }
+
+
+    /**
+     * **读不进来的技能要出声**（规格 7.5）。
+     *
+     * pi 的诊断里装着「frontmatter 少了 description」「名字含非法字符」这类。
+     * 静静跳过的话，人写完一个技能发现它没生效，**而屏幕上什么都没有**——
+     * 与「我写的技能怎么没用」是同一种困惑（`.dawn/agents/` 那一屏为此
+     * 专门端出过 `problems`）。
+     */
+    for (const d of resourceLoader.getSkills().diagnostics) {
+      this.emit({
+        kind: "notice",
+        sessionId: spec.sessionId,
+        text: `技能：${d.message}${d.path ? `（${d.path}）` : ""}`,
+      })
+    }
 
     const { session } = await createAgentSession({
       cwd: spec.workspace,

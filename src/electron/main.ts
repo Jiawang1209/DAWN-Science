@@ -265,6 +265,11 @@ app.whenReady().then(() => {
        * 文件名从协议模块取，与 `build-electron.mjs` 的 outfile 是同一个常量。
        */
       subagentChildEntry: join(import.meta.dirname, CHILD_ENTRY),
+      /**
+       * **自带技能的位置**（S20，2026-08-15）。与上面同一条理由：
+       * `import.meta.dirname` 只有这里算得准。构建时拷到了 `dist/skills`。
+       */
+      builtinSkillsDir: join(import.meta.dirname, "..", "skills"),
       ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),

@@ -400,6 +400,36 @@ describe("run_code · 接线", () => {
     await wb.closeAsync(3000)
   })
 
+  /**
+   * **这一条盯的是 `wiring.ts` 里那句 `skills: 技能位置`。**
+   *
+   * 与门、内核、MCP 那三条同一个形状：上面几条直接调 pi 的 `loadSkills`
+   * 验的是 pi 那一层，**把装配里那句摘掉照样全绿**。
+   *
+   * pi 默认的两个位置在我们这儿都不好使——`<agentDir>/skills` 是**每会话一个**
+   * （放那儿等于每段会话各放一份，也就是等于不存在），
+   * `<cwd>/.pi/skills` 与我们 `.dawn/` 的约定不一致。所以这句接线是必需的。
+   */
+  it("**createWorkbench 装配出来的运行时带着技能目录** —— 盯的是接线那一句", () => {
+    const 技能根 = mkdtempSync(join(tmpdir(), "dawn-skills-"))
+    cleanups.push(() => rmSync(技能根, { recursive: true, force: true }))
+    const wb = createWorkbench({
+      configPath: configFile(),
+      dbPath: newDbPath(),
+      credentials: memoryCredentials(),
+      skillsDir: 技能根,
+    })
+    cleanups.push(() => wb.close())
+
+    const 装 = (wb.nativeRuntime as unknown as {
+      opts?: { skills?: { 全局目录?: string; 项目目录名?: string } }
+    }).opts?.skills
+    expect(装, "装配里没把技能目录接上去").toBeDefined()
+    expect(装!.全局目录, "全局技能目录没接上").toBe(技能根)
+    /** **项目级跟着我们自己的约定**（`.dawn/`），不跟 pi 的 `.pi/` */
+    expect(装!.项目目录名, "项目级技能目录应当在 .dawn 下").toContain(".dawn")
+  })
+
   it("内置四件套还在 —— 加自定义工具不该把它们挤掉", () => {
     const 名 = 工具名(new NativeRuntime({ kernels: 假内核() }))
     for (const t of ["read", "write", "edit", "bash"]) {

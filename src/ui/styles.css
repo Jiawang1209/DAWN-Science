@@ -3673,9 +3673,16 @@ pre {
   overflow-wrap: anywhere;
 }
 
-/** 第二行：它属于哪个项目 / 哪台服务器 */
+/**
+ * 第二行：项目给**完整路径**，服务器给机器名（2026-08-15 作者逐条定的）。
+ *
+ * **路径要能断开换行**：`/Users/liuyue/Desktop/Github_repos/…` 里一个空格
+ * 都没有，不给 `overflow-wrap` 的话它会把这张卡撑出屏幕。
+ * 临时会话这一行**根本不给**——那个目录是服务端给的，人从没选过它。
+ */
 .sess-hover-sub {
   margin: var(--dawn-space-2) 0 0;
   color: var(--dawn-text-3);
   font-size: 12px;
+  overflow-wrap: anywhere;
 }

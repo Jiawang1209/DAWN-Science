@@ -14,6 +14,8 @@
  * 单元测试读得到这些 CSS，**读不出它们最后落在哪里**。
  */
 import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 /** 一句一定会溢出侧栏的话 */
 const 长标题 =
@@ -72,16 +74,6 @@ test("**悬停时跑起来**，而且只在真的溢出时跑", async ({ dawn })
 })
 
 /**
- * **短标题不跑，也不弹卡**（2026-08-15 变异测试逼出来的）。
- *
- * 上一版只测了长标题：把「只在溢出时才动」那道判断整个删掉，
- * **判据照样全绿**——因为长标题两种写法都会跑。
- * 「只在……才」这种话，**必须有一个「不该发生」的用例**，否则等于没写。
- *
- * 而这条守的是真东西：一条本来就看得全的标题在鼠标划过时抖一下，
- * 是最廉价的那种烦人；再弹一张卡挡住它自己，更糟。
- */
-/**
  * **跑起来的时候不许压住前面那个图标**（2026-08-15 作者报的）。
  *
  * 根因是我把动画加在了**带 `overflow: hidden` 的那个元素自己**身上：
@@ -129,6 +121,16 @@ test("**跑马灯只在自己的框里跑，不压住图标**", async ({ dawn })
   expect(跑着.左, "跑起来之后压住了图标").toBeGreaterThanOrEqual(图标右)
 })
 
+/**
+ * **短标题不跑，也不弹卡**（2026-08-15 变异测试逼出来的）。
+ *
+ * 上一版只测了长标题：把「只在溢出时才动」那道判断整个删掉，
+ * **判据照样全绿**——因为长标题两种写法都会跑。
+ * 「只在……才」这种话，**必须有一个「不该发生」的用例**，否则等于没写。
+ *
+ * 而这条守的是真东西：一条本来就看得全的标题在鼠标划过时抖一下，
+ * 是最廉价的那种烦人；再弹一张卡挡住它自己，更糟。
+ */
 test("**短标题：不跑马灯，也不弹卡**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
@@ -145,6 +147,65 @@ test("**短标题：不跑马灯，也不弹卡**", async ({ dawn }) => {
   await page.waitForTimeout(900) // 比浮层那 420ms 长，确保「没弹」不是还没到时候
   await expect(标题, "没溢出却跑起来了").not.toHaveAttribute("data-跑", "1")
   await expect(page.locator(".sess-hover-card"), "看得全的标题还弹了卡").toHaveCount(0)
+})
+
+/**
+ * **卡上第二行：项目给完整路径，临时会话不给**（2026-08-15 作者逐条定的）。
+ *
+ * 作者：*「不能仅仅带有文件夹的名字，还要有路径」*，
+ * 以及 *「临时会话收纳的话，不用文件夹位置了，因为没必要」*。
+ *
+ * 后一条印证了 `createTask` 里早就写下的那句——那个目录是服务端给的，
+ * **摆出来只会让人看见一个自己从没选过的路径**。
+ *
+ * 判据挑「有没有分隔符」而不是整串路径：**路径随机器而变**，
+ * 而「是名字还是路径」这个区别不随机器变。
+ */
+test.describe("项目里的那条", () => {
+  /**
+   * **自己一个目录**：共用一个可写目录是「测试之间的暗管道」，
+   * 而不许有暗管道是这套夹具的第一条纪律（见 `fixtures.ts` 头注）。
+   *
+   * 目录选择器是系统模态框，所以路径由夹具的 `pickDirectory` 注入——
+   * **被替掉的只有「路径从哪来」这一步**，从按钮到后端到刷新整条都真走。
+   */
+  const 目标 = join(tmpdir(), "dawn-e2e-标题浮层-项目")
+  test.use({ dawnOptions: { pickDirectory: 目标 } })
+
+  test("**项目里的会话：卡上给完整路径，不只是文件夹名**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill(长标题)
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+    // 给它一个工作目录：这一步之后它会从「会话」栏挪到「项目」栏
+    await page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ }).click()
+    await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+
+    await page.locator(".proj-session-list .sess-title").first().hover()
+    const 卡 = page.locator(".sess-hover-card")
+    await expect(卡).toBeVisible({ timeout: 5_000 })
+
+    const 第二行 = (await 卡.locator(".sess-hover-sub").textContent()) ?? ""
+    expect(第二行, "第二行是空的").not.toBe("")
+    expect(第二行, "只给了文件夹名，没给路径").toContain("/")
+    expect(第二行.split("/").length, "看起来只有一层，不像完整路径").toBeGreaterThan(2)
+    /** **就是那个目录**，不是碰巧带了个斜杠 */
+    expect(目标.endsWith(第二行.split("/").pop() ?? "")).toBe(true)
+  })
+})
+
+test("**临时会话：卡上不给文件夹位置**", async ({ dawn }) => {
+  const { page } = dawn
+  const 标题 = await 开一段长标题的(page)
+  await 标题.hover()
+  const 卡 = page.locator(".sess-hover-card")
+  await expect(卡).toBeVisible({ timeout: 5_000 })
+  await expect(
+    卡.locator(".sess-hover-sub"),
+    "临时会话摆出了一个人从没选过的路径",
+  ).toHaveCount(0)
 })
 
 test("**悬停一会儿，旁边浮出全文**", async ({ dawn }) => {

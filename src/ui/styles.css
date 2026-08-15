@@ -3583,3 +3583,83 @@ pre {
   font-family: var(--dawn-font-mono);
   font-size: 12px;
 }
+
+/**
+ * 会话标题：**一行截断，悬停时推出来读完**（2026-08-15 作者要的，形态取自 Codex）。
+ *
+ * 截断本来就是好的（实测 `nowrap` + `ellipsis`）；这里加的是那个「推出来」。
+ * **只在真的溢出时动**——距离与时长由 JS 量出来写进这两个变量，
+ * 不溢出就一个像素都不动（一条本来看得全的标题在鼠标划过时抖一下，
+ * 是最廉价的那种烦人）。
+ */
+.sess-title {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/**
+ * 跑起来的时候不要那三个点：**省略号与正在滚动的文字同时出现，
+ * 看起来像文字被吃掉了一截**。
+ */
+.sess-title[data-跑="1"] {
+  text-overflow: clip;
+  animation: 跑马灯 var(--跑多久, 3s) linear infinite alternate;
+}
+
+@keyframes 跑马灯 {
+  /* 两端各停一下：**不停的话，读到最后一个字的瞬间它就往回走了** */
+  0%, 12% { transform: translateX(0); }
+  88%, 100% { transform: translateX(var(--跑多远, 0)); }
+}
+
+/**
+ * 谁把动画关了就别动（`prefers-reduced-motion`）。
+ * **这不是装饰性动画的可选项，是无障碍的硬要求**——
+ * 前庭功能敏感的人看见持续滚动的文字会难受。悬停浮层照旧给全文。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .sess-title[data-跑="1"] { animation: none; }
+}
+
+/**
+ * 悬停时浮出的全文卡（2026-08-15 作者要的，形态取自 Codex 截图）。
+ *
+ * **`position: fixed` 是硬要求**：侧栏是 `overflow: auto` 的，
+ * 绝对定位的子元素会跟着列表一起滚走——本仓库栽过一次（那条缝的把手）。
+ *
+ * 位置由 JS 量出来（那一行的 top / right），所以这里不写 top/left。
+ */
+.sess-hover-card {
+  position: fixed;
+  z-index: var(--z-modal-popover);
+  max-width: 320px;
+  padding: var(--dawn-space-3);
+  border-radius: var(--dawn-radius-md);
+  /* 浮层无框：阴影 + 发丝线，不是粗边框（见本文件开头那条） */
+  background: var(--dawn-surface-elevated);
+  box-shadow: var(--dawn-shadow-float);
+  /* **不吃鼠标**：它就贴在行的旁边，吃了的话鼠标一碰它，行就算离开了 */
+  pointer-events: none;
+}
+
+/**
+ * 卡里的标题**要换行**——这正是它存在的理由。
+ * 行里那条不换行（一行截断 + 跑马灯），到这儿才把全文摊开。
+ */
+.sess-hover-title {
+  margin: 0;
+  color: var(--dawn-text-1);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/** 第二行：它属于哪个项目 / 哪台服务器 */
+.sess-hover-sub {
+  margin: var(--dawn-space-2) 0 0;
+  color: var(--dawn-text-3);
+  font-size: 12px;
+}

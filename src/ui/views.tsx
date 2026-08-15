@@ -148,6 +148,109 @@ function 项目图标() {
  * 2. **改名就地进行。** `window.prompt` 在 Electron 里直接抛错，
  *    而且本项目已经为它栽过一次（写下规则的人是我，违反它的也是我）。
  */
+/**
+ * 悬停时把标题推出来读完（2026-08-15 作者要的，形态取自 Codex）。
+ *
+ * ## 只在真的溢出时才动
+ *
+ * 量出溢出多少（`scrollWidth - clientWidth`），写进一个 CSS 变量，
+ * 动画按它走。**不溢出就一个像素都不动**——一条本来就看得全的标题
+ * 在鼠标划过时抖一下，是最廉价的那种烦人。
+ *
+ * ## 时长按距离算，不是固定值
+ *
+ * 固定时长的话，短标题嗖一下、长标题慢吞吞。这里按「每秒 40 像素」算，
+ * **所有标题的阅读速度一样**。
+ */
+/**
+ * 悬停时在侧栏旁边浮出全文（2026-08-15 作者要的，形态取自 Codex）。
+ *
+ * ## 为什么要有它，而跑马灯还不够
+ *
+ * 跑马灯一次只能看见一小段，读一句长标题要等它跑完；而浮层是**一眼全见**。
+ * 作者截图里那张卡还带着它属于哪个项目——**「哪一段对话」这个问题，
+ * 光有标题有时答不了**（两个课题下都可能有「梳理数据中心介绍思路」）。
+ *
+ * ## 三件事定死
+ *
+ * 1. **`position: fixed`**。侧栏是 `overflow: auto` 的，绝对定位的子元素
+ *    会跟着列表一起滚走——这个坑本仓库记过一次（那条缝的把手）。
+ * 2. **要等一下再出**（`延时毫秒`）。鼠标从上往下扫过十条会话时，
+ *    每条都弹一张卡是灾难。
+ * 3. **短标题不弹**。看得全的东西再弹一张卡，只是挡住了它自己。
+ */
+const 浮层延时毫秒 = 420
+
+export interface 悬停浮层 {
+  全文: string
+  副: string | undefined
+  上: number
+  左: number
+}
+
+/**
+ * 计时器放在模块上，不放在每一行里。
+ *
+ * **同时只会浮一张卡**——从上往下扫过十条时，后一条本来就该顶掉前一条的等待。
+ * 每行各存一个的话，还得挨个清，而漏清一个就是一张凭空冒出来的卡。
+ */
+let 浮层计时: ReturnType<typeof setTimeout> | undefined
+
+export function 浮层事件(
+  报: ((x: 悬停浮层 | undefined) => void) | undefined,
+  全文: string,
+  副?: string,
+) {
+  if (!报) return {}
+  return {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      const 行 = e.currentTarget
+      const 标题 = 行.querySelector(".sess-title") as HTMLElement | null
+      // **看得全就不弹**：再弹一张卡只是挡住它自己
+      if (!标题 || 标题.scrollWidth - 标题.clientWidth <= 1) return
+      clearTimeout(浮层计时)
+      浮层计时 = setTimeout(() => {
+        const r = 行.getBoundingClientRect()
+        /**
+         * **贴侧栏的右缘，不是这一行的右缘**（2026-08-15 判据当场抓到的）。
+         *
+         * 行比侧栏窄（左右都有内边距），按行的右缘放，卡就**落在侧栏里面**、
+         * 压住旁边那几条会话。第一版就是这么写的，e2e 那条
+         * 「卡压在侧栏上了」一次就红。
+         */
+        const 侧 = 行.closest(".sidebar")?.getBoundingClientRect()
+        报({ 全文, 副, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
+      }, 浮层延时毫秒)
+    },
+    onMouseLeave: () => {
+      clearTimeout(浮层计时)
+      报(undefined)
+    },
+  }
+}
+
+function 用跑马灯() {
+  return {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      const el = e.currentTarget.querySelector(".sess-title") as HTMLElement | null
+      if (!el) return
+      const 溢出 = el.scrollWidth - el.clientWidth
+      // **1px 以内不算溢出**：亚像素舍入随处可见，不挡的话几乎每条都会抖
+      if (溢出 <= 1) return
+      el.style.setProperty("--跑多远", `-${溢出}px`)
+      el.style.setProperty("--跑多久", `${Math.max(1.2, 溢出 / 40)}s`)
+      el.dataset["跑"] = "1"
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+      const el = e.currentTarget.querySelector(".sess-title") as HTMLElement | null
+      if (!el) return
+      delete el.dataset["跑"]
+      el.style.removeProperty("--跑多远")
+      el.style.removeProperty("--跑多久")
+    },
+  }
+}
+
 export function SessionRow({
   session,
   active,
@@ -160,6 +263,8 @@ export function SessionRow({
   onMove,
   drag,
   select,
+  onHover,
+  副标题,
 }: {
   session: SessionSummary
   active: boolean
@@ -167,6 +272,16 @@ export function SessionRow({
   current: boolean
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   label?: ((agentId: string) => string) | undefined
+  /**
+   * 悬停时报出全文，由侧栏统一画那张卡（2026-08-15）。
+   *
+   * **卡不由这一行自己画**：它要 `position: fixed` 才不会被侧栏的
+   * `overflow: auto` 裁掉，而每行各画一张的话，同时存在几十个隐藏节点。
+   * **不给这个回调就完全没有浮层**——旧的调用点一个字不受影响。
+   */
+  onHover?: ((x: 悬停浮层 | undefined) => void) | undefined
+  /** 卡上第二行：这段对话属于哪儿。**光有标题有时答不了「哪一段」** */
+  副标题?: string | undefined
   onPick: () => void
   onDelete?: (() => void) | undefined
   onRename?: ((title: string) => void) | undefined
@@ -256,6 +371,20 @@ export function SessionRow({
     )
   }
 
+  const 跑 = 用跑马灯()
+  const 浮 = 浮层事件(onHover, 名字, 副标题)
+  /** 两套事件合到一起：**都挂在同一行上**，各管各的 */
+  const 悬停 = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      跑.onMouseEnter(e)
+      浮.onMouseEnter?.(e)
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+      跑.onMouseLeave(e)
+      浮.onMouseLeave?.()
+    },
+  }
+
   return (
     <li
       className={[
@@ -304,7 +433,11 @@ export function SessionRow({
           aria-label={tf("选择会话：{0}", 名字)}
         />
       ) : null}
-      <Row active={active} onClick={select ? select.onToggle : onPick}>
+      <Row
+        active={active}
+        onClick={select ? select.onToggle : onPick}
+        {...(悬停 ?? {})}
+      >
         <span className="sess">
           <span className="name">
             {/* 图标在最前面：**一眼分出「这是对话」还是「这是项目」**（仿 Codex） */}
@@ -315,7 +448,20 @@ export function SessionRow({
                 ▲
               </span>
             ) : null}
-            {名字}
+            {/**
+              * **标题自己一个元素**（2026-08-15 作者要的跑马灯）。
+              *
+              * 在此之前它是 `.name` 里的一个裸文本节点，与图标并排——
+              * 那样没法单独平移它。**截断本来就是好的**（实测 `nowrap` +
+              * `ellipsis`，内容宽 455 而盒子宽 107），这里加的只是
+              * 「悬停时把它推出来读完」。
+              *
+              * `data-full` 让浮层与判据都拿得到全文：**屏幕上那一截是省略过的**，
+              * 从 DOM 文本里读不出原话。
+              */}
+            <span className="sess-title" data-full={名字}>
+              {名字}
+            </span>
           </span>
           {/**
             * **副信息收到同一行的右端**（2026-08-12，实测 WorkBuddy）。
@@ -1163,6 +1309,28 @@ export function SessionSidebar({
   const 可批量的 = 散的
 
   /**
+   * 悬停时那张全文卡（2026-08-15 作者要的，形态取自 Codex）。
+   *
+   * **由侧栏统一画一张**，不是每行各藏一张：它要 `position: fixed`
+   * 才不会被侧栏的 `overflow: auto` 裁掉，而每行一张的话，
+   * 同时存在几十个隐藏节点。
+   */
+  const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
+
+  /**
+   * 这一行属于哪儿——卡上的第二行。
+   *
+   * **光有标题有时答不了「哪一段对话」**：两个课题下都可能有
+   * 「梳理数据中心介绍思路」。项目底下的给项目名，服务器底下的给机器名。
+   */
+  const 属于哪儿 = (task: TaskSummary): string | undefined =>
+    task.connectionId
+      ? (服务器名?.(task.connectionId) ?? task.connectionId)
+      : task.workspace
+        ? 基名(task.workspace)
+        : undefined
+
+  /**
    * @param 可勾 这一行**这一轮选择模式管不管得着它**（2026-08-13 加）。
    *
    * 项目底下那些会话行也走这个函数。此前它们在「会话多选」时
@@ -1207,9 +1375,15 @@ export function SessionSidebar({
             active={task.taskId === activeTaskId}
             className="task-row"
             onClick={() => (选中它 ? 切一个(task.taskId) : onPickTask?.(task))}
+            {...浮层事件(设浮着的, task.title ?? t("新任务"), 属于哪儿(task))}
           >
             <对话图标 className="row-icon" />
-            <span className="name">{task.title ?? t("新任务")}</span>
+            {/* **与认得出的那条一样处理**：标题自己一个元素，才推得动 */}
+            <span className="name">
+              <span className="sess-title" data-full={task.title ?? t("新任务")}>
+                {task.title ?? t("新任务")}
+              </span>
+            </span>
           </Row>
           {onDeleteTask ? (
             <div className="row-actions">
@@ -1235,6 +1409,8 @@ export function SessionSidebar({
         active={s.sessionId === activeSessionId && view === "conversation"}
         current={s.sessionId === activeSessionId}
         {...(agentLabel ? { label: agentLabel } : {})}
+        onHover={设浮着的}
+        {...(属于哪儿(task) ? { 副标题: 属于哪儿(task) } : {})}
         onPick={() => onPickTask?.(task)}
         {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
@@ -1282,6 +1458,27 @@ export function SessionSidebar({
 
   return (
     <aside className="sidebar">
+      {/**
+        * **悬停时那张全文卡**（2026-08-15 作者要的，形态取自 Codex）。
+        *
+        * `position: fixed` 是硬要求：侧栏是 `overflow: auto` 的，
+        * 绝对定位的子元素会**跟着列表一起滚走**——本仓库为这件事栽过一次
+        * （那条缝的把手滚到一半就不见了）。
+        *
+        * `aria-hidden`：**它是那一行的重复，不是新信息**。
+        * 读屏的人已经从行本身读到了完整标题（DOM 里是全文，
+        * 省略号是 CSS 干的），再念一遍是噪声。
+        */}
+      {浮着的 ? (
+        <div
+          className="sess-hover-card"
+          style={{ top: `${浮着的.上}px`, left: `${浮着的.左}px` }}
+          aria-hidden="true"
+        >
+          <p className="sess-hover-title">{浮着的.全文}</p>
+          {浮着的.副 ? <p className="sess-hover-sub">{浮着的.副}</p> : null}
+        </div>
+      ) : null}
       {/**
         * **两段，各自「一个动作 + 它管的那一列」**（2026-08-11 重排）。
         *

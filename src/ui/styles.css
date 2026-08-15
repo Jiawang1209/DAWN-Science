@@ -193,6 +193,23 @@ pre {
   display: grid;
   grid-template-rows: var(--dawn-topbar-h) minmax(0, 1fr) var(--dawn-statusbar-h);
   height: 100vh;
+  /**
+   * **外壳恰好一屏，就必须裁**（2026-08-15 作者报的那块空白）。
+   *
+   * 他连着服务器跑分析时，鼠标放在非对话区往下拉，会拉出「App 页面之外
+   * 的大片空白」。DevTools 实况量到的形状是：
+   *
+   * ```
+   * div.body      高 752   内容高 7625   ← 从这里开始逃
+   * div.app-shell 高 822   内容高 7671   overflow: visible
+   * html                   可滚 7671     ← 于是整份文档能往下拉
+   * ```
+   *
+   * **这一条是兜底，不是根治**：里面有东西溢出仍然是 bug，要单独查。
+   * 但外壳本身是 `100vh`——**它撑破窗口这件事没有任何正当情形**，
+   * 而不裁的代价是「整个 App 上面浮着一片空白」，人完全不知道发生了什么。
+   */
+  overflow: hidden;
 }
 .app-shell .body {
   display: grid;

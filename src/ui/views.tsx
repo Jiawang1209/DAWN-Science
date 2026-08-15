@@ -237,6 +237,10 @@ function 用跑马灯() {
       const 溢出 = el.scrollWidth - el.clientWidth
       // **1px 以内不算溢出**：亚像素舍入随处可见，不挡的话几乎每条都会抖
       if (溢出 <= 1) return
+      /**
+       * 变量写在外层（`data-跑` 也在外层，判据与样式都挂在它上面），
+       * **而动画是里层在跑**——外层负责裁，里层负责动，两件事不能同一层。
+       */
       el.style.setProperty("--跑多远", `-${溢出}px`)
       el.style.setProperty("--跑多久", `${Math.max(1.2, 溢出 / 40)}s`)
       el.dataset["跑"] = "1"
@@ -460,7 +464,15 @@ export function SessionRow({
               * 从 DOM 文本里读不出原话。
               */}
             <span className="sess-title" data-full={名字}>
-              {名字}
+              {/**
+                * **裁剪的那层与移动的那层必须分开**（2026-08-15 作者报的）。
+                *
+                * 第一版把动画加在外面那个带 `overflow: hidden` 的元素自己身上——
+                * `transform` 移动的是**整个盒子**，于是它整体滑出自己的位置、
+                * 压到前面那个图标上。**它的 `overflow` 裁的是它的内容，
+                * 裁不住它自己。** 判据量到的是左缘从 48 跑到 −254。
+                */}
+              <span className="sess-title-run">{名字}</span>
             </span>
           </span>
           {/**
@@ -1381,7 +1393,7 @@ export function SessionSidebar({
             {/* **与认得出的那条一样处理**：标题自己一个元素，才推得动 */}
             <span className="name">
               <span className="sess-title" data-full={task.title ?? t("新任务")}>
-                {task.title ?? t("新任务")}
+                <span className="sess-title-run">{task.title ?? t("新任务")}</span>
               </span>
             </span>
           </Row>

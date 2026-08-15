@@ -3601,11 +3601,27 @@ pre {
 }
 
 /**
+ * 里层负责跑，外层负责裁（2026-08-15 修）。
+ *
+ * **第一版把动画加在了外层自己身上**：`transform` 移动的是整个盒子，
+ * 于是它整体滑出自己的位置、压到前面那个图标上——
+ * **`overflow: hidden` 裁的是它的内容，裁不住它自己**。
+ * 判据量到左缘从 48 跑到了 −254。
+ */
+.sess-title-run {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/**
  * 跑起来的时候不要那三个点：**省略号与正在滚动的文字同时出现，
  * 看起来像文字被吃掉了一截**。
  */
 .sess-title[data-跑="1"] {
   text-overflow: clip;
+}
+
+.sess-title[data-跑="1"] .sess-title-run {
   animation: 跑马灯 var(--跑多久, 3s) linear infinite alternate;
 }
 
@@ -3621,7 +3637,7 @@ pre {
  * 前庭功能敏感的人看见持续滚动的文字会难受。悬停浮层照旧给全文。
  */
 @media (prefers-reduced-motion: reduce) {
-  .sess-title[data-跑="1"] { animation: none; }
+  .sess-title[data-跑="1"] .sess-title-run { animation: none; }
 }
 
 /**

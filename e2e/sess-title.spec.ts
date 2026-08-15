@@ -81,6 +81,54 @@ test("**悬停时跑起来**，而且只在真的溢出时跑", async ({ dawn })
  * 而这条守的是真东西：一条本来就看得全的标题在鼠标划过时抖一下，
  * 是最廉价的那种烦人；再弹一张卡挡住它自己，更糟。
  */
+/**
+ * **跑起来的时候不许压住前面那个图标**（2026-08-15 作者报的）。
+ *
+ * 根因是我把动画加在了**带 `overflow: hidden` 的那个元素自己**身上：
+ * `transform` 移动的是整个盒子，于是它整体滑出自己的位置、压到图标上——
+ * **而它的 `overflow` 裁的是它自己的内容，裁不住它自己**。
+ *
+ * 裁剪的那一层与移动的那一层必须是两层。判据挑**外框一动不动**：
+ * 这是「里面在跑」与「整个在滑」唯一分得开的地方。
+ */
+test("**跑马灯只在自己的框里跑，不压住图标**", async ({ dawn }) => {
+  const { page } = dawn
+  const 标题 = await 开一段长标题的(page)
+
+  const 框 = async () =>
+    await 标题.evaluate((el) => {
+      const r = el.getBoundingClientRect()
+      return { 左: Math.round(r.left), 右: Math.round(r.right) }
+    })
+  const 图标右 = await page
+    .locator(".session-list li .name svg")
+    .first()
+    .evaluate((el) => Math.round(el.getBoundingClientRect().right))
+
+  const 之前 = await 框()
+  expect(之前.左, "还没跑就压着图标了").toBeGreaterThanOrEqual(图标右)
+
+  await 标题.hover()
+  await expect(标题).toHaveAttribute("data-跑", "1")
+
+  /**
+   * **等到它真的在跑的那一刻再量。**
+   *
+   * 第一版我等了 900ms 就量——**判据当场绿了，而 bug 还在**：
+   * 动画前 12% 是停在原点的，而这条标题的周期算下来约 8.7 秒，
+   * 900ms 还在那段停顿里。**时机不能猜，把时长读出来再等。**
+   */
+  const 周期毫秒 = await 标题.evaluate((el) => {
+    const v = getComputedStyle(el).animationDuration || el.style.getPropertyValue("--跑多久")
+    return Math.round(parseFloat(v) * 1000) || 3000
+  })
+  await page.waitForTimeout(Math.round(周期毫秒 * 0.5))
+  const 跑着 = await 框()
+  expect(跑着.左, "整个标题滑出去了，压在图标上").toBe(之前.左)
+  expect(跑着.右, "标题框跑起来之后换了位置").toBe(之前.右)
+  expect(跑着.左, "跑起来之后压住了图标").toBeGreaterThanOrEqual(图标右)
+})
+
 test("**短标题：不跑马灯，也不弹卡**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)

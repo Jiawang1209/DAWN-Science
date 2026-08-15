@@ -232,6 +232,14 @@ export interface MockToolCallSpec {
   toolName: string
   args: Record<string, unknown>
   /**
+   * 调工具**之前先说的那一句**（2026-08-15）。
+   *
+   * 真模型的一轮常是：说一段 → 调工具 → 再说一段。不给这一句的话，
+   * 「说完了、正在跑工具」那个中间态在 e2e 里根本不存在——
+   * 而那正是 `Agent is already processing` 发生的地方。
+   */
+  say?: string
+  /**
    * 只在第一次请求时触发。**默认 true，而且几乎总该是 true**——
    * 否则模型拿到工具结果后会再调一次，一路循环到撞上限，用例表现为超时。
    */
@@ -352,7 +360,8 @@ function toolCallHook(spec: MockToolCallSpec | undefined) {
   return () => {
     if (fired && (spec.once ?? true)) return undefined
     fired = true
-    return { toolName: spec.toolName, args: spec.args }
+    // ** 不给就不带**：旧用例一个字节不变
+    return { toolName: spec.toolName, args: spec.args, ...(spec.say ? { say: spec.say } : {}) }
   }
 }
 

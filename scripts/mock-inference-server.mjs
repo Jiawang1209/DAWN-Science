@@ -75,7 +75,7 @@ export const MARKDOWN_REPLY = [
  * @param {number} [opts.failStatus] 让所有请求以这个 HTTP 状态失败（验「失败要出声」）
  * @param {string} [opts.failMessage] 失败时的 message
  * @param {string} [opts.reply] 固定回复正文
- * @param {(body: any) => {toolName: string, args: object} | undefined} [opts.toolCall]
+ * @param {(body: any) => {toolName: string, args: object, say?: string} | undefined} [opts.toolCall]
  * @param {number} [opts.thinkingHoldMs] 想完之后停多久再开口。**演的是 kimi 那段真空**
  * @param {string} [opts.thinking] 假模型「想」的内容。**给了才发**——
  *   大多数用例不需要它，平白多一段思考会把别的断言的上下文搅乱
@@ -220,8 +220,25 @@ function streamChunks(reply, tool, thinking) {
   const head = { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] }
 
   if (tool) {
+    /**
+     * **调工具之前先说一句**（2026-08-15，准入规则 1）。
+     *
+     * 真模型的一轮常是：说一段 → 调工具 → 再说一段。而假模型此前
+     * **只会光秃秃地回一个工具调用**，于是「说完了、正在跑工具」那个中间态
+     * 在 mock 与 e2e 里根本不存在——那恰好是 `Agent is already processing`
+     * 发生的地方。不补这一句，那条 e2e 就是空转。
+     *
+     * `tool.say` 没给就不发，**旧用例一个字节不变**。
+     */
+    const 先说 = tool.say
+      ? [{
+          id, object: "chat.completion.chunk", model: MODEL_ID,
+          choices: [{ index: 0, delta: { content: tool.say }, finish_reason: null }],
+        }]
+      : []
     return [
       head,
+      ...先说,
       {
         id, object: "chat.completion.chunk", model: MODEL_ID,
         choices: [{
@@ -282,7 +299,7 @@ function nonStreamPayload(reply, tool) {
     choices: [{
       index: 0,
       message: tool
-        ? { role: "assistant", content: null, tool_calls: [{ id: "call_mock", type: "function", function: { name: tool.toolName, arguments: JSON.stringify(tool.args) } }] }
+        ? { role: "assistant", content: tool.say ?? null, tool_calls: [{ id: "call_mock", type: "function", function: { name: tool.toolName, arguments: JSON.stringify(tool.args) } }] }
         : { role: "assistant", content: reply },
       finish_reason: tool ? "tool_calls" : "stop",
     }],

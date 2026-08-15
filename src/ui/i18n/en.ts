@@ -299,6 +299,8 @@ export const EN: Readonly<Record<string, string>> = {
   "新对话": "Untitled chat",
   "已结束": "ended",
   "会话已结束": "This chat has ended",
+  "上一条还在回。等它说完，或者先按停止。":
+    "The previous message is still being answered. Wait for it, or press stop first.",
   "配置里还没有可用的 agent": "No usable agent in the config yet",
   "还没有可用的 agent": "No usable agent yet",
   "配置文件里没有 agent，或它需要的 API key 还没填。":

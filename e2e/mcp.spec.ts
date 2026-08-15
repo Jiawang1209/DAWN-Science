@@ -16,8 +16,10 @@
  * ② 按「试一次」→ 真的连上，**并把它有哪些工具列出来**
  * ③ 缺密钥 → **点名说缺哪个**，而不是笼统一句「没配好」
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 import { join } from "node:path"
+import { tmpdir } from "node:os"
+import { existsSync, readFileSync, rmSync } from "node:fs"
 
 const 脚本 = join(process.cwd(), "scripts", "mcp-test-server.mjs")
 
@@ -105,4 +107,73 @@ test("信任开关拨完留得住", async ({ dawn }) => {
   await page.getByRole("button", { name: "技能" }).click()
   await page.getByRole("button", { name: "MCP 服务器" }).click()
   await expect(page.getByRole("checkbox", { name: "这台我信得过" }).first()).toBeChecked()
+})
+
+/**
+ * **模型在真实对话里调得动 MCP 工具**（2026-08-15）。
+ *
+ * 这是整条链路的收口判据。前面几条各自验了一段：名单能合、服务器能连、
+ * 那一屏能配。**但没有一条走完整条线**——而这个项目栽的三次
+ * （门、内核、MCP 装配）全都是「每层都对，接线断了」。
+ *
+ * 判据挑**物证**而不是屏幕：假模型被指定去调 `测试台__写一行`，
+ * 那个工具会往 `DAWN_MCP_TEST_LOG` 追加一行。文件里有那一行，
+ * 就说明这一路真的走通了：
+ *
+ * ```
+ * 模型 → pi 的 customTools → 我们的门 → MCP 客户端 → 子进程 → 文件
+ * ```
+ *
+ * 屏幕上「看起来调了」证明不了这个——转录里那条工具行，
+ * 在工具其实失败时也照样出现。
+ */
+test.describe("模型真的调得动", () => {
+  const 日志 = join(tmpdir(), `dawn-mcp-e2e-${process.pid}.jsonl`)
+
+  test.use({
+    dawnOptions: {
+      providersYaml: `mcp:
+  测试台:
+    command: ${JSON.stringify(process.execPath)}
+    args: [${JSON.stringify(脚本)}]
+    env: [DAWN_MCP_TEST_LOG]
+agents:
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat]
+`,
+      toolCall: {
+        toolName: "测试台__写一行",
+        args: { message: "E2E_MCP_物证" },
+        say: "我用那台服务器记一笔。",
+      },
+    },
+  })
+
+  test("**一句话下去，MCP 工具真的被执行了**（有物证）", async ({ dawn }) => {
+    const { page } = dawn
+    rmSync(日志, { force: true })
+
+    // 密钥（这里是日志路径）走同一条路：**没在配置里声明的环境变量进不去**
+    await page.getByRole("button", { name: "MCP 服务器" }).click()
+    await page.getByRole("button", { name: "去填" }).first().click()
+    await page.getByRole("textbox", { name: "DAWN_MCP_TEST_LOG 的值" }).fill(日志)
+    await page.getByRole("button", { name: "Store secret" }).or(page.getByRole("button", { name: "存下来" })).click()
+    await expect(page.getByText(/还差 DAWN_MCP_TEST_LOG/)).toHaveCount(0)
+
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("帮我记一笔")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    await expect(page.getByText("我用那台服务器记一笔。")).toBeVisible({ timeout: 30_000 })
+
+    /** **物证**：那个工具真的在子进程里跑了，并写了这一行 */
+    await expect
+      .poll(() => (existsSync(日志) ? readFileSync(日志, "utf8") : ""), { timeout: 30_000 })
+      .toContain("E2E_MCP_物证")
+
+    rmSync(日志, { force: true })
+  })
 })

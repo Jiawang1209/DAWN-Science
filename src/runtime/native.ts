@@ -549,9 +549,15 @@ export class NativeRuntime implements AgentRuntime {
       : []
 
     /**
-     * **MCP 工具与 `run_code` 一样，不能挂进 subagent 那个分支**——
-     * 没有 `subagentChildEntry` 时下面会提前返回，挂过去的话
+     * **MCP 工具与 `run_code` 一样，两条 return 都要带上**——
+     * 没有 `subagentChildEntry` 时这里提前返回，只挂到下面那条的话，
      * 在那种装配里它们整个消失。这个坑本仓库踩过一次（退役的那个数据工具）。
+     *
+     * **2026-08-15 变异测试顺带查明了一件事**：桌面版的真实装配是**给**
+     * `subagentChildEntry` 的，所以**跑起来走的是下面那条**，
+     * 这一条只有 CLI 与测试替身会走到。改这里的时候要知道自己在改哪一条——
+     * 我第一次做变异测试就摘错了分支，结果「判据没红」，
+     * 差点得出「这条 e2e 是空转」的错误结论。
      */
     const entry = this.opts.subagentChildEntry
     if (!entry) return [...(base ?? []), ...内核工具, ...mcp工具]

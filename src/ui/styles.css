@@ -215,8 +215,27 @@ pre {
  * 列宽为 0 时里面的内容会**探出来一条**，收合过程中看得见。
  */
 .app-shell .body.side-collapsed .sidebar {
-  overflow: hidden;
   padding-bottom: 0;
+}
+
+/**
+ * **收合时内容被裁掉，不是被压扁**（2026-08-15 作者报的）。
+ *
+ * 折叠动的是网格列宽，而侧栏里的东西默认铺满列宽——于是那 0.25 秒里
+ * 每一行都在被压窄、重排。作者：*「很明显看到里面文字是挤压了。」*
+ * 判据量到中途从 204px 挤到 24px。
+ *
+ * 修法是让内容**认展开时那个宽度**（`--dawn-sidebar-content-w`，
+ * 收起时它不变），列宽收到 0 时它就整体滑出去、被裁掉。
+ *
+ * `overflow-x: hidden` 放在常态上而不是只放在收合态上：**展开的途中
+ * 同样需要裁**——那时 `.side-collapsed` 已经摘掉了，只在收合态裁的话，
+ * 展开的 0.25 秒里会冒出一条横向滚动条。
+ */
+.sidebar > * {
+  width: var(--dawn-sidebar-content-w);
+  /** **只定宽，不碰 flex**：这一列的竖向排布不该被这次改动牵动 */
+  min-width: var(--dawn-sidebar-content-w);
 }
 
 /**
@@ -343,7 +362,13 @@ pre {
    * 一屏里线越多越碎。
    */
   background: var(--dawn-surface-sidebar);
-  overflow: auto;
+  /**
+   * 竖向照旧可滚；**横向一律裁掉**——收合与展开的两段动画里，
+   * 内容都比容器宽（那正是「不被压扁」的做法），
+   * 不裁的话那 0.25 秒里会冒出一条横向滚动条。
+   */
+  overflow-x: hidden;
+  overflow-y: auto;
   padding-bottom: 12px;
 }
 /* 12px 水平内距 = 列表内缩 4 + 行内距 8。**标题与它统领的行必须齐左**，

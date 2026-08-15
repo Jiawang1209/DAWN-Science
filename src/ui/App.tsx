@@ -1817,7 +1817,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <div
         className={`body${sidebarCollapsed ? " side-collapsed" : ""}`}
         style={
-          { "--dawn-sidebar-w": sidebarCollapsed ? "0px" : `${sidebarWidth}px` } as React.CSSProperties
+          {
+            "--dawn-sidebar-w": sidebarCollapsed ? "0px" : `${sidebarWidth}px`,
+            /**
+             * **内容的宽度不跟着收**（2026-08-15 作者报的）。
+             *
+             * 折叠动的是列宽，而里面的东西默认跟着列宽走——于是那 0.25 秒里
+             * 每一行都在被压窄、重排，作者看到的就是这个
+             * （判据量到中途从 204px 挤到 24px）。
+             *
+             * 好的收合是**内容保持原宽、整体滑出去被裁掉**。所以这里再给一个
+             * 变量：它**永远是展开时的宽度**，收起时也不变。
+             */
+            "--dawn-sidebar-content-w": `${sidebarWidth}px`,
+          } as React.CSSProperties
         }
       >
         <SessionSidebar

@@ -1438,8 +1438,19 @@ export function SessionSidebar({
               onClick={() => 切收起("项目")}
             >
               <三角图标 className={`twisty${收起了("项目") ? "" : " open"}`} />
-              {/* 三个收纳各有一个图标，**一眼看得出它们是同级的三样东西** */}
-              <文件夹描边图标 className="side-section-icon" />
+              {/**
+                * 三个收纳各有一个图标，**一眼看得出它们是同级的三样东西**；
+                * 而**实心／描边表达的是收起／展开**（2026-08-15 作者要的）：
+                * *「点开之后是空心的，这样可以看到开启和压缩之后的差别。」*
+                *
+                * 这是三角之外的**第二个记号**。冗余在这里是划算的：
+                * 三角只有三度旋转的差别，扫一眼容易看漏；虚实是整块面积的差别。
+                */}
+              {收起了("项目") ? (
+                <文件夹图标 className="side-section-icon" />
+              ) : (
+                <文件夹描边图标 className="side-section-icon" />
+              )}
               {t("项目")} <span className="side-count">{项目组.length}</span>
             </Button>
             {/**
@@ -1635,7 +1646,12 @@ export function SessionSidebar({
               onClick={() => 切收起("服务器")}
             >
               <三角图标 className={`twisty${收起了("服务器") ? "" : " open"}`} />
-              <服务器描边图标 className="side-section-icon" />
+              {/* 实心＝收起、描边＝展开，与另外两个收纳同一套 */}
+              {收起了("服务器") ? (
+                <服务器图标 className="side-section-icon" />
+              ) : (
+                <服务器描边图标 className="side-section-icon" />
+              )}
               {t("服务器")} <span className="side-count">{服务器组.length}</span>
             </Button>
             {/**
@@ -1792,7 +1808,12 @@ export function SessionSidebar({
               onClick={() => 切收起("会话")}
             >
               <三角图标 className={`twisty${收起了("会话") ? "" : " open"}`} />
-              <对话描边图标 className="side-section-icon" />
+              {/* 实心＝收起、描边＝展开，与另外两个收纳同一套 */}
+              {收起了("会话") ? (
+                <对话图标 className="side-section-icon" />
+              ) : (
+                <对话描边图标 className="side-section-icon" />
+              )}
               {t("会话")} <span className="side-count">{散的.length}</span>
             </Button>
             {/**

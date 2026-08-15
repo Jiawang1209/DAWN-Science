@@ -630,6 +630,33 @@ describe("侧栏 · 收起来", () => {
     expect(c.querySelectorAll(".side-server").length).toBe(0)
   })
 
+  /**
+   * **实心／描边是收起／展开的第二个记号**（2026-08-15 作者要的）。
+   *
+   * 作者：*「点开之后是空心的，这样可以看到开启和压缩之后的差别。」*
+   *
+   * 三角已经在表达同一件事，这里是刻意的冗余——**三角只有旋转的差别，
+   * 扫一眼容易看漏；虚实是整块面积的差别**。判据挑 `fill`：
+   * 描边壳写 `fill="none"`，实心写 `fill="currentColor"`，DOM 里分得开。
+   */
+  const 收纳图标 = (c: HTMLElement, 名: string) => {
+    const 颗 = [...c.querySelectorAll(".side-section-toggle")].find((b) =>
+      (b.textContent ?? "").includes(名),
+    )
+    return 颗?.querySelector(".side-section-icon")?.getAttribute("fill")
+  }
+
+  it.each([
+    ["会话", () => 画([任务(), 任务()])],
+    ["项目", () => 画([任务({ workspace: "/w/a" })])],
+    ["服务器", () => 画([任务({ connectionId: "c1" })])],
+  ])("**「%s」展开时描边、收起时实心** —— 三角之外的第二个记号", (名, 起) => {
+    const c = 起()
+    expect(收纳图标(c, 名), "展开着却不是描边").toBe("none")
+    点收纳(c, 名)
+    expect(收纳图标(c, 名), "收起了却还是描边").toBe("currentColor")
+  })
+
   /** 一台机器单独收起，**不影响同一收纳里的另一台** */
   it("**单台机器能收起，另一台不受影响**", () => {
     const c = 画([任务({ connectionId: "a" }), 任务({ connectionId: "b" })])

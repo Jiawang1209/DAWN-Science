@@ -45,6 +45,28 @@ function 调用点的msgid(src: string): string[] {
   return out
 }
 
+/**
+ * **英文表里不许有重复的键**（2026-08-15 踩的）。
+ *
+ * 我加 MCP 那一屏的文案时重复定义了「换一个」——它早就存在。
+ * **JS 的对象字面量对重复键是静默的**：后一个覆盖前一个，不报错、不警告。
+ * 症状会是「另一处的翻译莫名其妙变了」，而那与你刚改的那一屏毫无关系。
+ *
+ * `tsc` 确实抓得住（TS1117），但它是在**别的原因**下才被跑到的——
+ * 这条规则可判定，就该有一条扫描盯着它。
+ */
+describe("英文表 · 不重复", () => {
+  it("**没有重复定义的 msgid**", () => {
+    const src = readFileSync(join(UI, "i18n", "en.ts"), "utf8")
+    const 见过 = new Map<string, number>()
+    for (const m of src.matchAll(/^\s{2}"((?:[^"\\]|\\.)+)":/gm)) {
+      见过.set(m[1]!, (见过.get(m[1]!) ?? 0) + 1)
+    }
+    const 重的 = [...见过].filter(([, n]) => n > 1).map(([k]) => k)
+    expect(重的, "后一个会静默覆盖前一个，症状出现在别处").toEqual([])
+  })
+})
+
 describe("双语 · 目录不许与调用点脱节", () => {
   it("**每一个 `t()` 的 msgid 在英文表里都有**", () => {
     const 缺的: string[] = []

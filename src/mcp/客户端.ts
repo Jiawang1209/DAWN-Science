@@ -26,8 +26,19 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import type { McpServer } from "../config/schema.js"
 import { 工具全名 } from "./名单.js"
 
-/** 起一台服务器最多等多久。**一台起不来不该让整段会话开不了** */
-const 起动上限毫秒 = 20_000
+/**
+ * 起一台服务器最多等多久。**一台起不来不该让整段会话开不了。**
+ *
+ * **60 秒不是拍脑袋**（2026-08-15 实测改的）：第一次接
+ * `@cyanheads/pubmed-mcp-server` 时 20 秒不够——`npx` 要先把包下下来，
+ * 而那句「连 pubmed 超过 20 秒」读起来像**「这台服务器是坏的」**，
+ * 于是人会去换一台、去查网络，唯独不会想到它只是在下载。
+ * 预热之后同一台 1 秒就连上了。
+ *
+ * 代价：一台真的起不来的服务器，要多等 40 秒才说出口。
+ * **这个代价是对的**——把「慢」误报成「坏」的成本高得多。
+ */
+const 默认起动上限毫秒 = 60_000
 
 /** 留几行 stderr 用于报错。**全留会把一个刷屏的服务器变成内存泄漏** */
 const 留几行 = 20
@@ -70,7 +81,15 @@ export class MCP池 {
   /** 正在起的那些。**同一台被两段会话同时要到时，只起一次** */
   private readonly 起着 = new Map<string, Promise<一台的结果>>()
 
-  constructor(private readonly opts: { 取密: 取密 }) {}
+  /**
+   * @param opts.起动上限毫秒 **可注入只为可测**——按默认值验一次超时要等一分钟，
+   *   那种测试没人会跑，于是这条路等于没人看（与 `leaseTtlSeconds` 同一副做法）。
+   */
+  constructor(private readonly opts: { 取密: 取密; 起动上限毫秒?: number }) {}
+
+  private get 上限(): number {
+    return this.opts.起动上限毫秒 ?? 默认起动上限毫秒
+  }
 
   /**
    * 池子的键。**分隔符用 NUL**：服务器名与路径里什么字符都可能有，
@@ -148,7 +167,17 @@ export class MCP池 {
     )
 
     try {
-      await 限时(client.connect(transport), 起动上限毫秒, `连 ${名} 超过 ${起动上限毫秒 / 1000} 秒`)
+      /**
+       * **超时那句话要把「可能只是在下载」说出来**（2026-08-15 实测）。
+       * 不说的话，一次首启下载会被读成「这台服务器是坏的」。
+       */
+      await 限时(
+        client.connect(transport),
+        this.上限,
+        `连 ${名} 超过 ${Math.round(this.上限 / 1000)} 秒。` +
+          `如果它是用 npx / uvx 起的，第一次要先把包下下来，多半就是慢在这儿——` +
+          `在终端里先跑一遍那条命令，下完再回来按「试一次」。`,
+      )
       transport.stderr?.on("data", (b: Buffer) => {
         for (const 行 of String(b).split("\n")) {
           if (!行.trim()) continue
@@ -157,7 +186,7 @@ export class MCP池 {
         }
       })
 
-      const 列 = await 限时(client.listTools(), 起动上限毫秒, `列 ${名} 的工具超时`)
+      const 列 = await 限时(client.listTools(), this.上限, `列 ${名} 的工具超时`)
       const 工具: MCP工具[] = 列.tools.map((t) => ({
         全名: 工具全名(名, t.name),
         服务器名: 名,

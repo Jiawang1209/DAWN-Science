@@ -317,7 +317,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 的值": "value for {0}",
   "存下来": "Store secret",
   "去填": "Fill in",
-  "换一个": "Replace",
   "会话已结束": "This chat has ended",
   "插队": "Interject",
   "回车插队 · Cmd/Ctrl+回车排到这一轮后面":

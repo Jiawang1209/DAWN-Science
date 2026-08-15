@@ -173,6 +173,39 @@ describe("MCP 客户端 · 对着真服务器", () => {
   })
 })
 
+/**
+ * **首启下载不能被报成「这台服务器是坏的」**（2026-08-15 实测踩的）。
+ *
+ * 第一次接 `@cyanheads/pubmed-mcp-server` 时超时了，那句话是
+ * 「连 pubmed 超过 20 秒」——读起来像它坏了。**其实是 `npx` 在下载包**，
+ * 预热之后同一台 1 秒就连上。人照着那句话会去换一台、去查网络，
+ * 唯独不会想到它只是在下载。
+ *
+ * 所以超时那句必须把这条可能性说出来。上限也从 20 秒提到 60 秒。
+ */
+describe("起不来的话要说清是哪一种", () => {
+  it("**超时那句要点出「可能只是在下载」**", async () => {
+    // 一个永远不说话的进程：连不上，且一定走到超时那条路
+    const p = new MCP池({ 取密: () => undefined, 起动上限毫秒: 300 })
+    try {
+      const r = await p.备好("装死的", {
+        command: process.execPath,
+        args: ["-e", "setTimeout(() => {}, 60000)"],
+      })
+      expect(r.失败, "没有报出失败").toBeTruthy()
+      expect(r.失败, "超时只说了「超过 N 秒」，人会以为这台服务器坏了").toMatch(/npx|下载/)
+    } finally {
+      await p.全关()
+    }
+  })
+
+  /** 上限**可注入只为可测**：按默认值验一次要等一分钟，那种测试没人会跑 */
+  it("默认上限是 60 秒 —— 首次 npx 下载要来得及", () => {
+    const 源 = readFileSync(join(process.cwd(), "src", "mcp", "客户端.ts"), "utf8")
+    expect(源).toMatch(/默认起动上限毫秒 = 60_000/)
+  })
+})
+
 describe("摘出文字", () => {
   it("文本块拼起来", () => {
     expect(摘出文字({ content: [{ type: "text", text: "一" }, { type: "text", text: "二" }] })).toBe(

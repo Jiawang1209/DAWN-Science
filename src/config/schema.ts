@@ -231,6 +231,60 @@ export type ProviderConnection = z.infer<typeof ProviderConnectionSchema>
  * 这条不是洁癖——旧配置里的 `endpoints` 若被静默忽略，用户会以为它还生效，
  * 而实际上凭证与 baseUrl 全都没被读。**失败必须出声（规格 7.5）。**
  */
+/**
+ * 一台 MCP 服务器（2026-08-15）。
+ *
+ * ## 为什么是「命令 + 参数」而不是一个 URL
+ *
+ * 第一批只做 **stdio** 传输：绝大多数 MCP 服务器是本地进程
+ * （`npx -y @modelcontextprotocol/server-postgres …`）。
+ * HTTP/SSE 那支要处理鉴权、重连、CORS，是另一件事——**先不假装支持**。
+ *
+ * ## 密钥不写在这里
+ *
+ * `env` 里只写**环境变量的名字**，值存在系统钥匙串里
+ * （`CredentialsPort`，键是 `mcp:<服务器名>:<变量名>`）。
+ * **这份 YAML 是会被分享、会被 git 追踪的**——把 key 写进去，
+ * 它迟早出现在某个仓库里。这条是作者的红线。
+ */
+export const McpServerSchema = z
+  .object({
+    command: z.string().min(1),
+    args: z.array(z.string()).optional(),
+    /**
+     * 要传给它的环境变量**名**（值在钥匙串里）。
+     *
+     * **只有名字**：`["PGURL"]` 的意思是「起它之前，
+     * 从钥匙串取 `mcp:<服务器名>:PGURL` 填进去」。
+     * 取不到就**不起它并说清缺哪个**——静默起一个连不上库的服务器，
+     * 症状会表现成「这个工具怎么老是失败」。
+     */
+    env: z.array(z.string().min(1)).optional(),
+    /**
+     * 起它的工作目录。**不给就用会话的工作区**——
+     * 不猜一个（比如家目录）：一个文件服务器起错目录，
+     * 它能读到的东西就完全不是你以为的那些。
+     */
+    cwd: z.string().min(1).optional(),
+    /**
+     * 暂时关掉它，但**保留配置**。缺省 = 开着。
+     *
+     * 有这一档，人才不必为了「今天先别连这台」去删配置——
+     * 删了就得重配，而重配的代价高到人干脆一直连着。
+     */
+    disabled: z.boolean().optional(),
+    /**
+     * 这台的工具**一律不再逐次问**（作者定的默认是「一律当可疑」）。
+     *
+     * 缺省 = 每次调用都过权限门。**这不是「信任这台服务器」的开关，
+     * 是「我已经看过它有哪些工具」的记号**——所以它按服务器给，
+     * 不按工具给：工具清单会随服务器版本变。
+     */
+    trusted: z.boolean().optional(),
+  })
+  .strict()
+export type McpServer = z.infer<typeof McpServerSchema>
+
 export const ProviderRegistrySchema = z
   .object({
     agents: z.record(z.string(), AgentDefSchema),
@@ -239,6 +293,13 @@ export const ProviderRegistrySchema = z
      * 这一段只为那 8 个不自带的、以及自建端点存在。
      */
     providers: z.record(z.string(), ProviderConnectionSchema).optional(),
+    /**
+     * MCP 服务器名单（2026-08-15）。**可选**——没配就一个都不起。
+     *
+     * 键是服务器名，**它会成为工具名的前缀**（`<服务器>__<工具>`）：
+     * 两台服务器各有一个 `query` 是常事，不加前缀模型就分不清打给谁。
+     */
+    mcp: z.record(z.string(), McpServerSchema).optional(),
   })
   .strict()
 export type ProviderRegistry = z.infer<typeof ProviderRegistrySchema>

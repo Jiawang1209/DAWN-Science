@@ -41,7 +41,18 @@ test("**收起的过程中，里面的内容不被压窄**", async ({ dawn }) =>
   expect(收起中, `内容在被压窄（${收起前} → ${收起中}），应当是被裁掉`).toBe(收起前)
 })
 
-test("**展开的过程中同样不被压**", async ({ dawn }) => {
+/**
+ * **展开的那一下允许挤**（2026-08-15 改的）。
+ *
+ * 原来这条要求两个方向都不挤，做法是把固定宽度钉在 `.sidebar > *` 的**常态**上。
+ * **那把日常用坏了**：侧栏一有竖向滚动条，内容盒比列窄十几像素，
+ * 子元素仍按整列宽度铺，右边被裁——作者当天就报了「内容被覆盖」。
+ *
+ * **动画是锦上添花，日常渲染是本分。** 所以宽度只在收合期间钉，
+ * 展开时那个类已经摘掉，会挤一下——这条用例因此改成**只守收起方向**。
+ * 留着它是为了记住这个取舍，不是为了少测一半。
+ */
+test.skip("**展开的过程中同样不被压**（已按取舍放弃：见上）", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下展开的动画")
@@ -67,4 +78,51 @@ test("收完之后侧栏一点都不占地方", async ({ dawn }) => {
   await page.waitForTimeout(400)
   const 宽 = (await page.locator(".sidebar").boundingBox())?.width ?? 0
   expect(Math.round(宽), "收完还剩一条").toBeLessThanOrEqual(1)
+})
+
+
+/**
+ * **侧栏有滚动条时，每一行都完整看得见**（2026-08-15 当天的回归）。
+ *
+ * 我为了让收合动画不挤压，把固定宽度钉在了 `.sidebar > *` 的**常态**上。
+ * 侧栏一有竖向滚动条，内容盒就比列窄十几个像素，而子元素仍按整列宽度铺——
+ * 右边那截被 `overflow-x: hidden` 裁掉。作者：*「侧边栏把里面的内容都给覆盖了。」*
+ *
+ * **判据挑「内容宽不许超过可视宽」**：这是「被裁」唯一稳定的表述，
+ * 而且它与「动画怎么做」无关——不管以后换成什么技法，这条都得成立。
+ */
+test("**侧栏有滚动条时，内容不许被横向裁掉**", async ({ dawn }) => {
+  const { page, app } = dawn
+
+  /**
+   * **把窗口调矮**，让侧栏一定有竖向滚动条。
+   * 堆会话也能逼出来，但那要十几段——**测试的代价该花在判据上，不是造数据上**。
+   */
+  await app.evaluate(async ({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setSize(1100, 420)
+  })
+
+  for (let i = 0; i < 3; i++) {
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill(`第 ${i} 段对话，标题要够长才看得出被裁没有`)
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+  }
+
+  const 量 = await page.evaluate(() => {
+    const s = document.querySelector(".sidebar") as HTMLElement
+    return {
+      有竖向滚动条: s.scrollHeight > s.clientHeight,
+      可视宽: s.clientWidth,
+      内容宽: s.scrollWidth,
+      最宽的孩子: Math.max(...[...s.children].map((c) => (c as HTMLElement).offsetWidth)),
+    }
+  })
+
+  /** 先确认这条用例**真的把滚动条逼出来了**，否则它什么都没测到 */
+  expect(量.有竖向滚动条, "没堆出滚动条，这条用例是空转的").toBe(true)
+  expect(量.内容宽, `内容比可视区宽（${量.内容宽} > ${量.可视宽}），右边会被裁掉`).toBeLessThanOrEqual(
+    量.可视宽,
+  )
+  expect(量.最宽的孩子, "有子元素比侧栏可视区还宽").toBeLessThanOrEqual(量.可视宽)
 })

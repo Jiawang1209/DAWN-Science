@@ -36,6 +36,14 @@ test.describe("自带技能", () => {
     expect(全部, "自带技能没进系统提示——四层接线断了一层").toContain("dataset-first-look")
     expect(全部).toContain("reproducible-analysis")
     /**
+     * **教它怎么写技能的那一个**（2026-08-15 作者提的）。
+     *
+     * 作者：*「新建技能这个事儿应该不用单独去做吧？cursor、codex、hermes
+     * 好像直接自然语言就可以新建一个技能。」*——他是对的：agent 本来就有
+     * `write`，缺的不是能力是知识。所以不做按钮，做成一个技能来教它。
+     */
+    expect(全部, "教它写技能的那一个没进去").toContain("writing-skills")
+    /**
      * **不只是名字，说明也要在**：只有名字的话，
      * 模型没法判断什么时候该用它——那等于没给。
      */
@@ -56,13 +64,14 @@ test.describe("自带技能", () => {
  * 只断言标题在的话，这条永远不会红。
  */
 test.describe("两屏", () => {
-  test("**Agent Skills 那屏列出了自带的两个，并说清它们从哪儿来**", async ({ dawn }) => {
+  test("**Agent Skills 那屏列出了自带的那几个，并说清它们从哪儿来**", async ({ dawn }) => {
     const { page } = dawn
     await page.getByRole("button", { name: "Agent Skills" }).click()
 
     const 屏 = page.locator(".skills-page")
     await expect(屏).toContainText("dataset-first-look")
     await expect(屏).toContainText("reproducible-analysis")
+    await expect(屏).toContainText("writing-skills")
     /** **来处要标出来**：自带的与你写的不是一回事 */
     await expect(屏).toContainText("自带")
     /** 说明也要在——只有名字的话，人看不出这个技能是干什么的 */

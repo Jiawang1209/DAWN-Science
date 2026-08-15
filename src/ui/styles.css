@@ -3487,3 +3487,14 @@ pre {
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/**
+ * 忙着时那一行提示：**回车插队 / Cmd+回车排队**（2026-08-15）。
+ *
+ * 与 `.composer-problem` 共用 `.caveat` 的字号字色，只是它不是错误——
+ * 所以不带那个 ⚠，也不用危险色。
+ */
+.composer-hint {
+  margin: 0 0 var(--dawn-space-1);
+  color: var(--dawn-text-3);
+}

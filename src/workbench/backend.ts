@@ -1102,7 +1102,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 装配(rec)
     },
 
-    writeToSession: async ({ sessionId, data, as, images }) => {
+    writeToSession: async ({ sessionId, data, as, images, behavior }) => {
       /**
        * **图片在这一层读盘、缩放、转 base64**（协议 4.12，2026-08-13）。
        *
@@ -1117,7 +1117,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        */
       const 附图 = await 读成附件(images ?? [])
       try {
-        sessions.write(sessionId, data, as, 附图)
+        sessions.write(sessionId, data, as, 附图, behavior)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。

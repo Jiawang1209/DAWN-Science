@@ -1025,11 +1025,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 我加远端那条路时漏了第四遍——症状是能打字、能按发送，然后什么都不发生。
    */
   const 写进去 = useCallback(
-    async (id: string, data: string, images?: readonly import("./views.js").图片来源[]) => {
+    async (
+      id: string,
+      data: string,
+      images?: readonly import("./views.js").图片来源[],
+      /** 上一轮还在跑时怎么进去（协议 5.6）：`steer` 插队、`followUp` 排队 */
+      behavior?: "steer" | "followUp",
+    ) => {
       /** 空数组与不给是同一个意思——**别把一个空 `images` 送下去** */
       const 带图 = images && images.length > 0 ? { images: [...images] } : {}
+      /** **不忙时不给**：缺席与「排队」在协议上不是一回事 */
+      const 带送法 = behavior ? { behavior } : {}
       try {
-        await client.get("writeToSession", { sessionId: id, data, as: "user", ...带图 })
+        await client.get("writeToSession", { sessionId: id, data, as: "user", ...带图, ...带送法 })
       } catch (e) {
         /**
          * **被租约挡下时，重取一次再发。**
@@ -1045,7 +1053,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         const 像租约 = e instanceof Error && /租约/.test(e.message)
         if (!像租约) throw e
         await client.get("acquireLease", { sessionId: id, holder: "user" })
-        await client.get("writeToSession", { sessionId: id, data, as: "user", ...带图 })
+        await client.get("writeToSession", { sessionId: id, data, as: "user", ...带图, ...带送法 })
       }
     },
     [client],
@@ -2463,10 +2471,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onAbort={
                   session.kind === "native" ? actions.abort : undefined
                 }
-                onSend={(text, images) =>
+                onSend={(text, images, behavior) =>
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。
                   // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
-                  写进去(session.sessionId, text, images)
+                  写进去(session.sessionId, text, images, behavior)
                     .then(() => {
                       /**
                        * 标题是第一句话定的，而**它落在后端**——不重取一次，

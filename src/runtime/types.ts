@@ -44,6 +44,14 @@ export interface RemoteCwd {
   界?: string | undefined
 }
 
+/**
+ * 上一轮还在跑时，这一条怎么进去（2026-08-15）。
+ *
+ * **两个词都是 pi 的**（`AgentSession.prompt` 的 `streamingBehavior`）：
+ * 我们不自己造队列——那是「学会了，自己写一个」。
+ */
+export type 送法 = "steer" | "followUp"
+
 export interface SessionSpec {
   sessionId: SessionId
   workspace: string
@@ -363,7 +371,14 @@ export interface AgentRuntime {
   history?(sessionId: SessionId): Promise<RestoredItem[]>
   /** 注册观察者。可多个，互不影响。返回退订函数。 */
   attach(sessionId: SessionId, sink: EventSink): () => void
-  write(sessionId: SessionId, data: string): void
+  /**
+   * @param behavior 上一轮**还在跑**时这一条怎么办（2026-08-15）。
+   *   `steer` 打断插入（pi：在当前轮跑完工具、下一次调模型之前送进去），
+   *   `followUp` 排队（pi：等这一轮再没有工具调用和插队消息了才送）。
+   *   **不忙时这个参数没有意义**，忙时缺席读作 `followUp`——
+   *   排队不会丢消息，而 pi 在流式中没有 behavior 会直接抛错。
+   */
+  write(sessionId: SessionId, data: string, behavior?: 送法): void
   /**
    * 带图片的一轮（协议 4.12，2026-08-13）。
    *
@@ -377,7 +392,12 @@ export interface AgentRuntime {
    * 图片已经是**处理好的 base64**：读盘与缩放在调用方做，
    * 运行时这一层不碰文件系统。
    */
-  writeWithImages?(sessionId: SessionId, data: string, images: readonly ImageAttachment[]): void
+  writeWithImages?(
+    sessionId: SessionId,
+    data: string,
+    images: readonly ImageAttachment[],
+    behavior?: 送法,
+  ): void
   /**
    * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。

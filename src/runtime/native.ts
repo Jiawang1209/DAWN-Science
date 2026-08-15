@@ -66,6 +66,7 @@ import type {
   SessionSpec,
   RestoredItem,
   ImageAttachment,
+  送法,
 } from "./types.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
@@ -891,8 +892,8 @@ export class NativeRuntime implements AgentRuntime {
    * 是同步的——调用方是租约守卫，它只负责「准不准写」，不该被一轮对话阻塞。
    * 失败经事件流出声，不静默吞。
    */
-  write(sessionId: SessionId, data: string): void {
-    this.送一轮(sessionId, data)
+  write(sessionId: SessionId, data: string, behavior?: 送法): void {
+    this.送一轮(sessionId, data, undefined, behavior)
   }
 
   /**
@@ -902,7 +903,12 @@ export class NativeRuntime implements AgentRuntime {
    * `{ type: "image", data, mimeType }`，而 `processImage` 吐的正是这个形状。
    * **所以这一层几乎没有逻辑**：把已经处理好的字节转成 pi 要的样子，其余照旧。
    */
-  writeWithImages(sessionId: SessionId, data: string, images: readonly ImageAttachment[]): void {
+  writeWithImages(
+    sessionId: SessionId,
+    data: string,
+    images: readonly ImageAttachment[],
+    behavior?: 送法,
+  ): void {
     /**
      * **模型收不了图就当场说，不许让 pi 把它悄悄丢掉**（协议 4.12，2026-08-13）。
      *
@@ -938,23 +944,54 @@ export class NativeRuntime implements AgentRuntime {
         text: `模型 ${model.id} 的目录里没有声明支持图片，这 ${images.length} 张可能不会被它看到。`,
       })
     }
-    this.送一轮(sessionId, data, images)
+    this.送一轮(sessionId, data, images, behavior)
   }
 
-  private 送一轮(sessionId: SessionId, data: string, images?: readonly ImageAttachment[]): void {
+  private 送一轮(
+    sessionId: SessionId,
+    data: string,
+    images?: readonly ImageAttachment[],
+    behavior?: 送法,
+  ): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    const 图 =
+      images && images.length > 0
+        ? images.map((i) => ({ type: "image" as const, data: i.data, mimeType: i.mimeType }))
+        : undefined
+
+    /**
+     * **上一轮还在跑：交给 pi 的插队 / 排队**（2026-08-15 作者要的）。
+     *
+     * pi 两条都是原生的（`AgentSession.prompt` 的 `streamingBehavior`）：
+     * `steer` 在当前轮跑完工具、下一次调模型之前送进去；
+     * `followUp` 等这一轮再没有工具调用和插队消息了才送。
+     * **所以我们不自己造队列**——那是「学会了，自己写一个」。
+     *
+     * **不能走下面那套收尾。** 排队时 `prompt()` 收下就返回，
+     * 而下面 `.finally` 里发的是 `turn_end` + `cost` + `idle`——
+     * 那会让界面以为这一轮已经完了：等待记号消失、停止按钮变回发送，
+     * 而模型其实还在跑。所以这里**不碰 `inFlight`、不挂 `pending`**，
+     * 只把失败说出来。
+     *
+     * 缺席读作 `followUp`：**排队不会丢消息**，而 pi 在流式中没有 behavior
+     * 会直接抛错——那时人打的那句话就没了。
+     */
+    if (s.inFlight > 0) {
+      void s.session
+        .prompt(data, { ...(图 ? { images: 图 } : {}), streamingBehavior: behavior ?? "followUp" })
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err)
+          this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
+        })
+      return
+    }
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
     s.stuck.reset()
     s.inFlight += 1
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
     const run = s.session
-      .prompt(
-        data,
-        images && images.length > 0
-          ? { images: images.map((i) => ({ type: "image" as const, data: i.data, mimeType: i.mimeType })) }
-          : undefined,
-      )
+      .prompt(data, 图 ? { images: 图 } : undefined)
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
         this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })

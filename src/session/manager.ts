@@ -19,6 +19,7 @@ import type {
   ImageAttachment,
   SessionId,
   SessionSpec,
+  送法,
 } from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
@@ -416,7 +417,18 @@ export class SessionManager {
   }
 
   /** 写入前必须持有租约。这是规格 7.1 的守卫点——写权可追责的唯一入口。 */
-  write(sessionId: SessionId, data: string, as: Holder, images?: readonly ImageAttachment[]): void {
+  /**
+   * @param behavior 上一轮**还在跑**时这一条怎么进去（2026-08-15）：
+   *   `steer` 插队、`followUp` 排队。不忙时无意义；忙时缺席读作 `followUp`。
+   *   **这一层只负责传，不判断忙不忙**——那件事只有运行时知道。
+   */
+  write(
+    sessionId: SessionId,
+    data: string,
+    as: Holder,
+    images?: readonly ImageAttachment[],
+    behavior?: 送法,
+  ): void {
     const lease = this.leases.current(sessionId)
     if (!lease || lease.holder !== as) {
       throw new Error(
@@ -426,7 +438,7 @@ export class SessionManager {
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     if (!images || images.length === 0) {
-      rt.write(sessionId, data)
+      rt.write(sessionId, data, behavior)
       return
     }
     /**
@@ -440,7 +452,7 @@ export class SessionManager {
     if (typeof rt.writeWithImages !== "function") {
       throw new Error(`这类会话不能附图片（${images.length} 张已被拒绝，一张都没有送出去）`)
     }
-    rt.writeWithImages(sessionId, data, images)
+    rt.writeWithImages(sessionId, data, images, behavior)
   }
 
   /**

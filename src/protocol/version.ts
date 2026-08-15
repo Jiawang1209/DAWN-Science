@@ -233,8 +233,24 @@
  *   而事件回来时只带内核自己的 sessionId——**不标的话两台的输出混在同一条
  *   转录里就没有判据**。`kind: kernel` 那条既有的路一段会话只有一个内核，
  *   不填即可，**缺席读作「这条转录只有一个内核」**，不是「不知道哪来的」。
+ * 5.6（2026-08-15）：`writeToSession` 多一个**可选**的 `behavior`
+ *   （`steer` 插队 / `followUp` 排队）。纯新增。
+ *
+ *   在此之前，上一轮还在跑时又发一条，pi 会拒收并回
+ *   `Agent is already processing`。我们先把那条路堵上了（守卫），
+ *   但**堵住不是答案**——作者要的是 Hermes / Codex 那种：
+ *   *「对话框依旧能传上去，但是却不执行新的内容，而是等上一条结束再执行。」*
+ *
+ *   **两个词都是 pi 的**（`AgentSession.prompt` 的 `streamingBehavior`）：
+ *   `steer` 在当前轮跑完工具、下一次调模型之前送进去；
+ *   `followUp` 等这一轮再没有工具调用与插队消息了才送。
+ *   Hermes 自己写了 358 行队列，是因为它后端不是 pi；**我们坐在 pi 上，
+ *   重写一份就是「学会了，自己写一个」**。放弃的是「排队中那条可以编辑/撤回」。
+ *
+ *   **不忙时无意义；忙时缺席读作 `followUp`**——排队不丢消息，
+ *   而 pi 在流式中没有 behavior 会直接抛错，那时人打的那句话就没了。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "5.5"
+export const WORKBENCH_PROTOCOL_VERSION = "5.6"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

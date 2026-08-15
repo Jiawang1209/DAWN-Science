@@ -2701,7 +2701,15 @@ export function ConversationView({
    *
    * 能等，就能在失败时**把字和图原样还回去**，并且把原因摆在输入卡旁边。
    */
-  onSend: (text: string, images?: readonly 图片来源[]) => void | Promise<void>
+  /**
+   * @param behavior 上一轮**还在跑**时这一条怎么进去（协议 5.6，2026-08-15）：
+   *   `steer` 插队、`followUp` 排队。不忙时不给。
+   */
+  onSend: (
+    text: string,
+    images?: readonly 图片来源[],
+    behavior?: "steer" | "followUp",
+  ) => void | Promise<void>
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
   disabled?: boolean | undefined
@@ -2752,6 +2760,14 @@ export function ConversationView({
   const [拖着, 设拖着] = useState(false)
   /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [发送出错, 设发送出错] = useState<string | undefined>(undefined)
+  /**
+   * 这一次提交要的是**排队**还是**插队**（2026-08-15）。
+   *
+   * **用 ref 不用 state**：`requestSubmit()` 是同步的，提交处理器紧接着就跑，
+   * 而 state 要等下一次渲染才更新——那时这一条早就发出去了。
+   * 每次提交后清回 false：默认是插队（回车），排队要按住 Cmd/Ctrl。
+   */
+  const 排队ref = useRef(false)
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -2856,6 +2872,11 @@ export function ConversationView({
       .some((i) => i.type === "turn" && i.who === "agent" && (i.thinking ?? "").length > 0)
 
   const busy = 说着 || 等回话 !== undefined
+  /**
+   * 框里有没有东西可发。**只有图也算**（协议 4.12）：
+   * 「看看这张图」这种意图人常常懒得打字。
+   */
+  const 有东西要发 = draft.trim().length > 0 || 待发图.length > 0
 
   return (
     <div className="conversation">
@@ -3068,27 +3089,26 @@ export function ConversationView({
            * 看不懂的英文报错。
            */
           /**
-           * **守卫的条件必须与屏幕上那颗按钮完全一致。**
+           * **上一轮还在跑：不拦，交给 pi 插队或排队**（2026-08-15 作者要的）。
            *
-           * 那颗按钮的条件是 `busy && onAbort`（见下面的渲染），
-           * 而这里第一版只写了 `busy`——**当场误伤内核会话**：
-           * 内核的输出不是「agent 发言」，`等回话` 因此永远撤销不掉，
-           * `busy` 一直为真；只是内核会话没有 `onAbort`，
-           * 所以按钮照旧显示「发送」。于是屏幕上写着「发送」、按下去却不发——
-           * **那是另一种谎**，两条内核 e2e 当场红。
+           * 上一版是拦下来说一句「上一条还在回」。**堵住不是答案**——
+           * 作者看过 Hermes 之后要的是：*「对话框依旧能传上去，
+           * 但是却不执行新的内容，而是等上一条结束，再执行新的内容。」*
            *
-           * 结论：判据挑「界面此刻是不是正告诉你它在忙」，而不是内部那个布尔值。
+           * 两条路都是 pi 原生的（`AgentSession.prompt` 的 `streamingBehavior`），
+           * 我们只负责说要哪一条：
+           *   回车         → `steer`，插队（当前轮跑完工具、下次调模型之前送进去）
+           *   Cmd/Ctrl+回车 → `followUp`，排队（这一轮彻底完了才送）
+           *
+           * **判据仍然挑「界面此刻是不是正告诉你它在忙」**（`busy && onAbort`），
+           * 而不是内部那个布尔值：内核会话的 `busy` 恒为真却从不显示「停止」，
+           * 上一版只写 `busy` 当场误伤了它，两条内核 e2e 全红。
            */
-          if (busy && onAbort) {
-            设发送出错(t("上一条还在回。等它说完，或者先按停止。"))
-            return
-          }
-          /**
-           * **没有图就只传一个参数。**「空数组」与「不给」在协议上是同一个意思，
-           * 而在调用点上不是：多传一个 `undefined` 会让所有
-           * 「这一句是怎么发出去的」的断言都要跟着改一遍，
-           * 而它们关心的根本不是图片。
-           */
+          const 要排队 = 排队ref.current
+          排队ref.current = false
+          const 忙着 = busy && !!onAbort
+          const 送法 = 忙着 ? (要排队 ? ("followUp" as const) : ("steer" as const)) : undefined
+
           /**
            * **乐观清空，失败还回去。**
            *
@@ -3107,7 +3127,16 @@ export function ConversationView({
           设等回话时刻(Date.now())
           设喊停过(false)
           void Promise.resolve(
-            这次的图.length > 0 ? onSend(text, 这次的图.map(报给协议)) : onSend(text),
+            /**
+             * **不忙时一个多余的参数都不传。**「空数组」「不给」在协议上同义，
+             * 在调用点上不是：多一个 `undefined` 会让所有
+             * 「这一句是怎么发出去的」的断言都要跟着改，而它们关心的不是这个。
+             */
+            这次的图.length > 0
+              ? onSend(text, 这次的图.map(报给协议), ...(送法 ? [送法] : []))
+              : 送法
+                ? onSend(text, undefined, 送法)
+                : onSend(text),
           ).catch((e: unknown) => {
             设发送出错(e instanceof Error ? e.message : String(e))
             // **原样还回去**：人不该为一次失败重打一遍、重挑一遍
@@ -3194,6 +3223,13 @@ export function ConversationView({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
+                /**
+                 * **Cmd/Ctrl+回车 = 排队，光回车 = 插队**（2026-08-15，学自 Hermes）。
+                 *
+                 * 记在 ref 上而不是靠事件传下去：这里走的是 `requestSubmit()`，
+                 * 提交处理器收到的是 `SubmitEvent`，**按了什么键在那儿已经问不出来了**。
+                 */
+                排队ref.current = e.metaKey || e.ctrlKey
                 e.currentTarget.form?.requestSubmit()
                 return
               }
@@ -3289,6 +3325,19 @@ export function ConversationView({
             * 于是「发失败」在屏幕上与「什么都没发生」长得一模一样。
             */}
           {发送出错 ? <p className="caveat composer-problem">⚠ {发送出错}</p> : null}
+          {/**
+            * **两条路都要看得见**（2026-08-15）。
+            *
+            * 原生 `title=` 被设计契约挡下（无样式、约 500ms 延迟、与主题不符），
+            * 而**只写在无障碍标签里等于没写**——这个项目栽过两次：
+            * 「新建项目」是个没标签的 `＋`、删除键是 `opacity: 0` 的裸 `×`，
+            * 两次作者的反馈都是「没有这个功能」，而两次代码都是好的。
+            *
+            * 所以忙着、且框里有东西时，就在这儿明写一行。
+            */}
+          {busy && onAbort && 有东西要发 ? (
+            <p className="caveat composer-hint">{t("回车插队 · Cmd/Ctrl+回车排到这一轮后面")}</p>
+          ) : null}
           <div className="composer-controls">
             {/**
               * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
@@ -3411,7 +3460,28 @@ export function ConversationView({
               * `type` 也要跟着换：留着 `submit` 的话，按下停止会顺手提交一次表单
               * （空的，会被 `if (!text …) return` 挡下，但那是靠运气）。
               */}
-            {busy && onAbort ? (
+            {/**
+              * **忙着而框里有字：这颗是「插队」，不是「停止」**（2026-08-15，学自 Hermes）。
+              *
+              * Hermes 的原则写在它 composer 的注释里：*「While busy: text redirects
+              * the live turn, attachments queue for the next turn, an empty composer stops.」*
+              * ——**按钮说的是「你现在按下去会发生什么」**，而那取决于框里有没有东西。
+              *
+              * 代价说清楚：框里有字时，停止的入口就没了（得先清空）。
+              * 换来的是**打了字的人按下去不会把自己的话丢掉**——
+              * 而那正是这一版要解决的事。
+              */}
+            {busy && onAbort && 有东西要发 ? (
+              <Button
+                type="submit"
+                variant="primary"
+                className="send-btn"
+                aria-label={t("插队")}
+                disabled={disabled ?? false}
+              >
+                <上箭头图标 />
+              </Button>
+            ) : busy && onAbort ? (
               <Button
                 type="button"
                 variant="primary"

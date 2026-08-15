@@ -43,10 +43,43 @@
 
 ## 变更日志
 
+### 2026-08-15 — 正在回的时候也能发：回车插队、Cmd+回车排队（协议 5.6）
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 上一条把「正在回时又发一条」**拦住**了，作者看过 Hermes 之后要的是
+  另一种：*「对话框依旧能传上去，但是却不执行新的内容，而是等上一条结束，再执行新的内容。」*
+- **What**:
+  - **依赖决策（规格 §4）**：坐在 `AgentSession.prompt(text, { streamingBehavior })` 上
+    （`pi-coding-agent/dist/core/agent-session.d.ts:154-165`）。`steer` 的语义是
+    *「delivered after the current assistant turn finishes executing its tool calls,
+    before the next LLM call」*，`followUp` 是*「delivered only when agent has no more
+    tool calls or steering messages」*——**两条正好就是作者要的那两种**。
+    **放弃的**：排队中那一条不能编辑、不能撤回（交给 pi 之后要不回来）。
+    **我们的不变式挂在 `writeToSession` 这个钩子上**：发送路径仍然只有一条，
+    忙不忙由运行时判定，界面只说要哪一条。
+  - **不自己造队列。** Hermes 为此写了 358 行（`store/composer-queue.ts` + 一个 hook），
+    因为它后端不是 pi。**我们坐在 pi 上，重写一份就是「学会了，自己写一个」**（项目规则）。
+  - 协议 5.6：`writeToSession` 多一个**可选**的 `behavior`。纯新增，
+    **不忙时无意义；忙时缺席读作 `followUp`**——排队不丢消息，
+    而 pi 在流式中没有 behavior 会直接抛错，那时人打的那句话就没了。
+  - 界面：回车 → `steer`，Cmd/Ctrl+回车 → `followUp`。按了什么键记在 ref 上——
+    走的是 `requestSubmit()`，提交处理器收到的是 `SubmitEvent`，**那儿问不出按了什么键**。
+  - **看得见**：忙着且框里有字时，那颗按钮变成「插队」（不是「停止」），
+    下面明写一行「回车插队 · Cmd/Ctrl+回车排到这一轮后面」。
+    原生 `title=` 被设计契约挡下（无样式、约 500ms 延迟），而**只写在无障碍标签里
+    等于没写**——这个项目为此栽过两次。
+- **Impact**: 「正在回时又发一条」不再被拦，也不再报错。
+  **代价**：框里有字时停止的入口没了（要先清空）——与 Hermes 同一个取舍。
+  内核会话不受影响（它没有 `onAbort`，界面从不显示「停止」）。
+- **Verification**: 单元 1480、e2e 267 全绿。三条新 e2e 跑真实产物，做了两次变异：
+  ①忙时不带 `streamingBehavior`（bug 的原样）→ 两条当场红；
+  ②让排队那条也走原来的收尾 → 同样红（`idle` 提前发出去，界面以为这一轮完了）。
+
 ### 2026-08-15 — `already processing`：回车绕过了「正在忙」那道守卫
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `e349437`
 - **Motivation**: 作者第三次报同一句：
   `[native runtime 错误] Agent is already processing.` ——
   *「一个任务发送过去了，还没回复完，我又发送了第二条和第三条。」*

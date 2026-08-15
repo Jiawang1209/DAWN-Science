@@ -19,7 +19,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 , 服务器图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -1439,7 +1439,7 @@ export function SessionSidebar({
             >
               <三角图标 className={`twisty${收起了("项目") ? "" : " open"}`} />
               {/* 三个收纳各有一个图标，**一眼看得出它们是同级的三样东西** */}
-              <文件夹图标 className="side-section-icon" />
+              <文件夹描边图标 className="side-section-icon" />
               {t("项目")} <span className="side-count">{项目组.length}</span>
             </Button>
             {/**
@@ -1635,7 +1635,7 @@ export function SessionSidebar({
               onClick={() => 切收起("服务器")}
             >
               <三角图标 className={`twisty${收起了("服务器") ? "" : " open"}`} />
-              <服务器图标 className="side-section-icon" />
+              <服务器描边图标 className="side-section-icon" />
               {t("服务器")} <span className="side-count">{服务器组.length}</span>
             </Button>
             {/**
@@ -1713,49 +1713,59 @@ export function SessionSidebar({
                 * 两个不同的字形会让展开看起来像换了个东西。
                 */}
               {/**
-                * **多选时整台也能选**（2026-08-15 作者要的：
-                * *「服务器的多选，也可以删除不同的 IP，现在仅仅是一个 IP 下的不同会话」*）。
+                * **一行两样：可点的标题 + 整台的勾选框**（2026-08-15 作者要的位置）。
                 *
-                * 勾这一台 = 勾上它底下的全部。**半选状态如实画成 indeterminate**——
-                * 只勾了其中两段却显示成全勾，人会以为按删除会删掉整台。
+                * 作者：*「IP 整体选中的时候，选择框应该在 IP 的后面，现在不在一个水平线上。」*
+                *
+                * 勾选框**不能塞进那颗按钮里**——`<input>` 嵌在 `<button>` 里是无效的，
+                * 而且点它会连带触发折叠。所以外面套一行，两者并排、同一条基线。
                 */}
-              {选服务器中 ? (
-                <input
-                  type="checkbox"
-                  className="sess-check"
-                  checked={些.every((x) => 已选!.has(x.taskId))}
-                  ref={(el) => {
-                    if (el) {
-                      const 勾了 = 些.filter((x) => 已选!.has(x.taskId)).length
-                      el.indeterminate = 勾了 > 0 && 勾了 < 些.length
-                    }
-                  }}
-                  onChange={() =>
-                    设多选((前) => {
-                      const 集合 = new Set(前?.集合 ?? [])
-                      const 全在 = 些.every((x) => 集合.has(x.taskId))
-                      for (const x of 些) {
-                        if (全在) 集合.delete(x.taskId)
-                        else 集合.add(x.taskId)
+              <div className="side-subhead-row">
+                <Button
+                  variant="text"
+                  size="inline"
+                  className="side-subhead"
+                  aria-expanded={!收起了(connectionId)}
+                  onClick={() => 切收起(connectionId)}
+                >
+                  <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
+                  {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
+                  <span className="name">{服务器名?.(connectionId) ?? connectionId}</span>
+                  <span className="side-count">{些.length}</span>
+                </Button>
+                {/**
+                  * **多选时整台也能选**（2026-08-15 作者要的：
+                  * *「服务器的多选，也可以删除不同的 IP，现在仅仅是一个 IP 下的不同会话」*）。
+                  *
+                  * 勾这一台 = 勾上它底下的全部。**半选状态如实画成 indeterminate**——
+                  * 只勾了其中两段却显示成全勾，人会以为按删除会删掉整台。
+                  */}
+                {选服务器中 ? (
+                  <input
+                    type="checkbox"
+                    className="sess-check"
+                    checked={些.every((x) => 已选!.has(x.taskId))}
+                    ref={(el) => {
+                      if (el) {
+                        const 勾了 = 些.filter((x) => 已选!.has(x.taskId)).length
+                        el.indeterminate = 勾了 > 0 && 勾了 < 些.length
                       }
-                      return { 列: "服务器", 集合 }
-                    })
-                  }
-                  aria-label={tf("选择这台服务器：{0}", 服务器名?.(connectionId) ?? connectionId)}
-                />
-              ) : null}
-              <Button
-                variant="text"
-                size="inline"
-                className="side-subhead"
-                aria-expanded={!收起了(connectionId)}
-                onClick={() => 切收起(connectionId)}
-              >
-                <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
-                {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
-                <span className="name">{服务器名?.(connectionId) ?? connectionId}</span>
-                <span className="side-count">{些.length}</span>
-              </Button>
+                    }}
+                    onChange={() =>
+                      设多选((前) => {
+                        const 集合 = new Set(前?.集合 ?? [])
+                        const 全在 = 些.every((x) => 集合.has(x.taskId))
+                        for (const x of 些) {
+                          if (全在) 集合.delete(x.taskId)
+                          else 集合.add(x.taskId)
+                        }
+                        return { 列: "服务器", 集合 }
+                      })
+                    }
+                    aria-label={tf("选择这台服务器：{0}", 服务器名?.(connectionId) ?? connectionId)}
+                  />
+                ) : null}
+              </div>
               {收起了(connectionId) ? null : (
                 <ul className="server-session-list">{些.map((t) => 任务行(t, true))}</ul>
               )}
@@ -1782,7 +1792,7 @@ export function SessionSidebar({
               onClick={() => 切收起("会话")}
             >
               <三角图标 className={`twisty${收起了("会话") ? "" : " open"}`} />
-              <对话图标 className="side-section-icon" />
+              <对话描边图标 className="side-section-icon" />
               {t("会话")} <span className="side-count">{散的.length}</span>
             </Button>
             {/**

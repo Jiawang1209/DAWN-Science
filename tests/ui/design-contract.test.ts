@@ -612,12 +612,59 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     expect(撞的, "按名字找元素时子串会指向两个东西——换一个说法").toEqual([])
   })
 
-  it("**icons.tsx 只画实心 16×16** —— 描边图标在淡色档上会先散掉", () => {
+  it("**画布一律 16×16，实心是默认** —— 描边是例外，例外要写明在哪", () => {
     const src = read("icons.tsx")
     expect(src, "画布必须是 16×16").toMatch(/viewBox="0 0 16 16"/)
     expect(src).toMatch(/fill="currentColor"/)
-    const 描边 = findLines(src, (l) => /stroke=|strokeWidth=/.test(l))
-    expect(描边, "icons.tsx 出现了描边。实心才跟得住 .7/.5/.3 那四档").toEqual([])
+  })
+
+  /**
+   * **描边只开一道口子**（2026-08-15 收窄）。
+   *
+   * 这里原来写的是「一个 `stroke=` 都不许有」，理由是*「描边在淡色档上会先散掉」*。
+   * 理由没错，但**它只对最淡的两档成立**：`--dawn-text-3/4` 是 50% / 30%，
+   * 一条一像素出头的线掺进那个透明度就糊成一片灰；而 `--dawn-text-2` 是 70%，
+   * 描边在那一档站得住。
+   *
+   * 作者 2026-08-15 要的是**两组图标一眼分得开**：上面固定入口实心，
+   * 下面收纳标题描边。于是规则从「一律禁止」改成三条边界——
+   * 口子**开在哪、开多宽、开给谁**。
+   */
+  it("描边只许走那一个共用壳 —— 散落各处的 stroke 挡不住漂移", () => {
+    const src = read("icons.tsx")
+    /**
+     * **按函数体切，不按注释切。** 第一版拿「到下一句注释为止」当边界，
+     * 变异测试当场拆穿：把一条野生 `stroke=` 插在那句注释前面，判据纹丝不动——
+     * 因为它落进了「壳」里面。边界要挑**结构**，不能挑碰巧在附近的字。
+     */
+    const 头 = src.indexOf("function 描边壳")
+    expect(头, "没找到共用的描边壳").toBeGreaterThan(-1)
+    const 壳 = src.slice(头, src.indexOf("\n}\n", 头) + 3)
+    expect(壳, "描边壳里没有 stroke").toContain("stroke=")
+    expect(
+      findLines(src.replace(壳, ""), (l) => /stroke=|strokeWidth=/.test(l)),
+      "描边壳之外出现了 stroke。要么进壳，要么画实心",
+    ).toEqual([])
+  })
+
+  it("描边不许比 1.5 细 —— 细线正是「散掉」的那个东西", () => {
+    const 粗 = read("icons.tsx").match(/strokeWidth="([\d.]+)"/)
+    expect(粗, "描边壳没写 strokeWidth").toBeTruthy()
+    expect(Number(粗![1])).toBeGreaterThanOrEqual(1.5)
+  })
+
+  /**
+   * **描边只用在不淡的档上。** 这条是上面那句理由的正身：
+   * 描边图标当前只出现在收纳标题（`.side-section-icon`），
+   * 而收纳标题的颜色必须是 `text-1` 或 `text-2`——
+   * 哪天有人把标题调到 `text-3`，这里会先红。
+   */
+  it("用描边的那一处，颜色不许掉到 text-3 以下", () => {
+    const css = read("styles.css")
+    const 分区 = css.slice(css.indexOf(".side-section {"), css.indexOf(".side-subhead {"))
+    const 色 = 分区.match(/color:\s*var\((--dawn-text-\d)\)/)
+    expect(色, ".side-section 没写颜色").toBeTruthy()
+    expect(["--dawn-text-1", "--dawn-text-2"], "描边图标在这一档会散掉").toContain(色![1])
   })
 })
 

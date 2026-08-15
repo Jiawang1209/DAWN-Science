@@ -357,3 +357,60 @@ export function Python图标({ className }: 图标属性 = {}) {
     </svg>
   )
 }
+
+/**
+ * 三个收纳标题用的**描边**图标（2026-08-15 作者要的）。
+ *
+ * 作者：*「图标不应该和收纳的一样，比如收纳的是实心的图标，
+ * 那么收纳就应该是白心图标。」*——上面那组固定入口是实心的，
+ * 收纳标题用描边，**两组一眼分得开**：一组是可点的去处，一组是分类的名字。
+ *
+ * 共用一个描边壳：`fill: none` + `stroke: currentColor`，粗细 1.5——再细就是设计契约里说的「在淡色档上散掉」的那个东西。
+ */
+function 描边壳({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <svg
+      className={className ? `icon ${className}` : "icon"}
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  )
+}
+
+/** 项目：描边的文件夹 */
+export function 文件夹描边图标({ className }: 图标属性 = {}) {
+  return (
+    <描边壳 {...(className ? { className } : {})}>
+      <path d="M2.4 5c0-.7.5-1.2 1.2-1.2h2.3c.3 0 .6.1.8.4l.9 1h4.8c.7 0 1.2.5 1.2 1.2v5c0 .7-.5 1.2-1.2 1.2H3.6c-.7 0-1.2-.5-1.2-1.2V5Z" />
+    </描边壳>
+  )
+}
+
+/** 会话：描边的对话气泡 */
+export function 对话描边图标({ className }: 图标属性 = {}) {
+  return (
+    <描边壳 {...(className ? { className } : {})}>
+      <path d="M2.6 4.2c0-.7.5-1.2 1.2-1.2h8.4c.7 0 1.2.5 1.2 1.2v5.2c0 .7-.5 1.2-1.2 1.2H6.6L3.4 13.2V10.6h-.8V4.2Z" />
+    </描边壳>
+  )
+}
+
+/** 服务器：描边的机箱（两层） */
+export function 服务器描边图标({ className }: 图标属性 = {}) {
+  return (
+    <描边壳 {...(className ? { className } : {})}>
+      <rect x="2.4" y="3.2" width="11.2" height="4" rx="1.1" />
+      <rect x="2.4" y="8.8" width="11.2" height="4" rx="1.1" />
+      <path d="M4.6 5.2h.01M4.6 10.8h.01" />
+    </描边壳>
+  )
+}

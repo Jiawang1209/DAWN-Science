@@ -2924,7 +2924,14 @@ pre {
    * 作者明确要推翻它：那三条是这个侧栏的骨架，不该比它上面那组入口还小。
    * **仍然加粗且比正文淡**：粗让它是标题，淡让它不跟下面可点的行抢。
    */
-  font-size: var(--dawn-ui-size);
+  /**
+   * **比收纳里的行大一档**（2026-08-15 再调）。
+   *
+   * 上一版设成了 `--dawn-ui-size`（13px）——**与行同样大**，
+   * 而它更淡、还带字距，于是看着反而更小（作者：*「明显没有收纳里面的字号大」*）。
+   * 标题就该是标题：大一档、加粗，淡一点也压得住。
+   */
+  font-size: 14px;
   line-height: 20px;
   font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-2);
@@ -3456,4 +3463,22 @@ pre {
 .remote-row[data-state="error"] .remote-status,
 .remote-row[data-state="disconnected"] .remote-status {
   color: var(--dawn-danger);
+}
+
+/**
+ * 机器那一行：**可点的标题 + 整台的勾选框，并排同一条基线**（2026-08-15）。
+ *
+ * 勾选框在名字之后（作者要的位置）；标题占满剩余宽度，
+ * 于是无论机器名多长，勾选框都贴在右边同一列上。
+ */
+.side-subhead-row {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  padding-right: calc(var(--dawn-space-3) * 2);
+}
+
+.side-subhead-row .side-subhead {
+  flex: 1 1 auto;
+  min-width: 0;
 }

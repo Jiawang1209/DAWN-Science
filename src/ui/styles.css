@@ -3548,3 +3548,31 @@ pre {
 .mcp-secret-input {
   min-width: 220px;
 }
+
+/**
+ * 「怎么加一台」那一块（2026-08-15）。
+ *
+ * **折叠但一直在**：配好几台的人不需要每次看见它，
+ * 但「加第二台」比「加第一台」更常见——而那时空态早就没了。
+ */
+.mcp-how {
+  margin: var(--dawn-space-3) 0;
+}
+
+.mcp-how > summary {
+  cursor: pointer;
+  color: var(--dawn-text-2);
+}
+
+.mcp-how-code {
+  margin: var(--dawn-space-2) 0;
+  padding: var(--dawn-space-3);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-panel);
+  color: var(--dawn-text-2);
+  font-family: var(--dawn-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  /** 长行不许把整页撑宽——**横向滚动留在它自己身上** */
+  overflow-x: auto;
+}

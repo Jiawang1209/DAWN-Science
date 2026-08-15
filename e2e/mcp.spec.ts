@@ -65,6 +65,32 @@ test("**配了的两台都列出来，还没试过就说还没试过**", async (
   await expect(page.getByText("连上了")).toHaveCount(0)
 })
 
+/**
+ * **「怎么加一台」写在屏上，不是写在文档里**（2026-08-15 作者问出来的）。
+ *
+ * 作者：*「我们在 DAWN Science 的 MCP 的接口里面会出现吗？」*——
+ * 在此之前那一屏只说了「去哪儿改」，没说「怎么写」，
+ * 而最容易踩的那条（`env` 只写变量名）一个字都没有。
+ *
+ * 判据挑**那一条**而不是整块：别人的 README 给的都是 Claude Desktop 的 JSON，
+ * 那种写法把密钥的值写在文件里。照抄过来的人不会注意到差别，
+ * **而那份文件会被分享、会进 git**。这一句是整块里唯一不能少的。
+ */
+test("**屏上说清怎么加一台，尤其是密钥不写进文件**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "MCP 服务器" }).click()
+
+  // 折叠着的，先点开——**它一直在，不只在空态**
+  await page.getByText("怎么加一台？").click()
+
+  await expect(page.locator(".mcp-how-code")).toContainText("command:")
+  await expect(page.locator(".mcp-how-code")).toContainText("env:")
+  /** **这一条是要害**：照抄 Claude Desktop 的 JSON 会把密钥写进文件 */
+  await expect(page.locator(".mcp-how")).toContainText(/只写变量名/)
+  /** 不支持的也要说 —— 不说的话人会对着一个 HTTP 地址试半天 */
+  await expect(page.locator(".mcp-how")).toContainText(/stdio/)
+})
+
 test("**按「试一次」，真的连上并列出它有哪些工具**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "MCP 服务器" }).click()

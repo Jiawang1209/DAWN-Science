@@ -317,6 +317,22 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 的值": "value for {0}",
   "存下来": "Store secret",
   "去填": "Fill in",
+  // MCP「怎么加一台」那一块（2026-08-15）
+  "怎么加一台？": "How do I add one?",
+  "四个字段，只有 command 是必填的：": "Four fields; only `command` is required:",
+  "这台叫什么": "server-name",
+  "名字会成为工具前缀": "the name becomes the tool prefix",
+  "包名": "package-name",
+  "某某_API_KEY": "SOME_API_KEY",
+  "只写名字！": "names only!",
+  "某个目录": "some/dir",
+  "不给就用这段对话的工作目录": "defaults to this chat's working directory",
+  "别人的文档多半给的是 Claude Desktop 的 JSON（env 里写着密钥的值）。照抄过来时只有这一处要改：我们的 env 只写变量名，值在下面每台各自的输入框里填，存进系统钥匙串——因为这份配置文件是会被分享、会进 git 的。":
+    "Most servers document themselves as Claude Desktop JSON, where `env` holds the secret values. That is the one thing to change when copying it over: our `env` lists variable names only. Fill the values in per-server below; they go to the system keychain — this config file gets shared and committed.",
+  "Python 写的服务器用 uvx 起（不是 npx）。改完配置要重启应用才生效。":
+    "Python servers launch with `uvx`, not `npx`. Restart the app after editing the config.",
+  "目前只支持本地进程（stdio），还连不了只提供 HTTP 地址的远程服务器。":
+    "Only local processes (stdio) are supported so far — remote servers that offer just an HTTP endpoint cannot be connected yet.",
   "会话已结束": "This chat has ended",
   "插队": "Interject",
   "回车插队 · Cmd/Ctrl+回车排到这一轮后面":

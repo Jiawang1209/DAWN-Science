@@ -227,10 +227,15 @@ export function 看MCP风险(服务器名: string, 信得过: boolean | undefine
   }
 }
 
-/** 造一个 MCP 的门。与 `造门` 同一副做法：**档位用取的**，因为它中途会变 */
-export function 造MCP门(取档: () => 权限档) {
-  return (服务器名: string, 信得过: boolean | undefined): string | undefined =>
-    照这一档(取档(), 看MCP风险(服务器名, 信得过))
+/**
+ * 造一个 MCP 的门。与 `造门` 同一副做法：**两样都用取的**，因为它们中途会变。
+ *
+ * `取信得过` 由装配注入（读本机的设置库）。**判据不读配置文件**——
+ * 项目级名单会跟着仓库被 clone，让它声明自己可信等于没有门。
+ */
+export function 造MCP门(取档: () => 权限档, 取信得过: (服务器名: string) => boolean) {
+  return (服务器名: string): string | undefined =>
+    照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名)))
 }
 
 export function 造门(取档: () => 权限档) {

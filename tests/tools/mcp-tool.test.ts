@@ -70,8 +70,14 @@ describe("MCP 工具 · 装配", () => {
 })
 
 describe("MCP 工具 · 门", () => {
-  const 拦着的门 = 造MCP门(() => "deny-risky")
-  const 放行的门 = 造MCP门(() => "allow-all")
+  const 拦着的门 = 造MCP门(
+    () => "deny-risky",
+    () => false,
+  )
+  const 放行的门 = 造MCP门(
+    () => "allow-all",
+    () => false,
+  )
 
   /**
    * **这一条是整层的要害。**
@@ -92,13 +98,17 @@ describe("MCP 工具 · 门", () => {
     expect(r.content[0]!.text).toMatch(/信得过|全部允许/)
   })
 
+  /** **信任由本机的人拨**，不是配置文件说了算——所以它从门那边进来 */
   it("过了目的那台照常放行", async () => {
     const { 池, 调过 } = 假池()
     const 工具 = createMcpTools({
       池,
-      名单: [{ 名: "测试台", 服务器: { ...一台, trusted: true } }],
+      名单: [{ 名: "测试台", 服务器: 一台 }],
       工具: [一个工具],
-      门: 拦着的门,
+      门: 造MCP门(
+        () => "deny-risky",
+        (名) => 名 === "测试台",
+      ),
     }) as { execute: Function }[]
     await 工具[0]!.execute("c1", {})
     expect(调过).toHaveLength(1)

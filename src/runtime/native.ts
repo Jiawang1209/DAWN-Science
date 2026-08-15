@@ -130,7 +130,7 @@ export interface NativeRuntimeOptions {
       问题: readonly string[]
     }>
     池: import("../mcp/客户端.js").MCP池
-    门?: (服务器名: string, 信得过: boolean | undefined) => string | undefined
+    门?: (服务器名: string) => string | undefined
   }
   /**
    * 对话的内核（②，2026-08-14）。**给了才有 `run_code` 这个工具。**

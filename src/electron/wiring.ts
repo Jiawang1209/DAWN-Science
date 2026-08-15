@@ -255,8 +255,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     取密: (服务器名, 变量名) => opts.credentials.get(`mcp:${服务器名}:${变量名}`),
   })
 
-  const mcp门 = 造MCP门(() =>
-    settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all",
+  const mcp门 = 造MCP门(
+    () => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"),
+    /**
+     * **信任读本机的设置库，不读配置文件。**
+     * 项目级名单住在 `.dawn/mcp.yaml`，会跟着仓库被 clone——
+     * 让它声明自己可信，门就等于不存在。
+     */
+    (服务器名) => settingsStore.get(`mcp.trusted.${服务器名}`) === "1",
   )
 
   /**
@@ -267,7 +273,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    */
   const 取MCP工具 = async (工作区: string | undefined) => {
     const 名单 = 合名单(registry.mcp, 工作区)
-    const 能用的 = 名单.服务器.filter((x) => !x.服务器.disabled)
+    // 关掉哪几台同样是本机的事（同一个理由）
+    const 能用的 = 名单.服务器.filter((x) => settingsStore.get(`mcp.off.${x.名}`) !== "1")
     const 问题 = [...名单.问题]
     const 工具: import("../mcp/客户端.js").MCP工具[] = []
     for (const 台 of 能用的) {

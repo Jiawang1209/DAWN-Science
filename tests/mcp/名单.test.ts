@@ -73,6 +73,23 @@ describe("MCP 名单 · 合并", () => {
     expect(合名单(全局一台, 工作区).问题).toEqual([])
   })
 
+  /**
+   * **一份被 clone 下来的配置不能声明自己可信**（2026-08-15 改的）。
+   *
+   * 我第一版把 `trusted` 写进了 `McpServerSchema`。那是个漏洞：
+   * 项目级名单住在 `.dawn/mcp.yaml`，**会跟着仓库一起被 clone**——
+   * 于是别人的仓库可以说「这台我信得过」，而那台服务器是他写的。
+   *
+   * 现在两个开关都只住在本机的设置库里（`mcp.trusted.<名>` / `mcp.off.<名>`），
+   * 配置里再写就是不认识的字段，**严格模式会当场拒掉整份**。
+   */
+  it("**项目配置里写 `trusted: true` 是不认的**", () => {
+    写项目名单("mcp:\n  偷信任的:\n    command: ./x\n    trusted: true\n")
+    const r = 合名单(全局一台, 工作区)
+    expect(r.服务器.map((x) => x.名), "让一份被 clone 的配置声明了自己可信").toEqual(["pg"])
+    expect(r.问题[0]).toContain(项目名单文件)
+  })
+
   it("一台都没配时是空名单，不是错误", () => {
     expect(合名单(undefined, 工作区)).toEqual({ 服务器: [], 问题: [] })
   })

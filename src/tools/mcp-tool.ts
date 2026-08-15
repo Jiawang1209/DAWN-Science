@@ -41,10 +41,12 @@ export interface MCP工具装配 {
   /** 这段会话的工作区。**服务器没写 `cwd` 时用它** */
   工作区?: string | undefined
   /**
-   * 门。返回一句话即为拒绝。
-   * **取的是「档位 + 这台信不信得过」**，见 `policy/permissions.ts`。
+   * 门。返回一句话即为拒绝。**只收服务器名**——
+   * 「这台信不信得过」由门自己去本机的设置库里取，
+   * 不从配置里读：项目级名单会跟着仓库被 clone，
+   * 让它声明自己可信等于没有门（见 `policy/permissions.ts`）。
    */
-  门?: ((服务器名: string, 信得过: boolean | undefined) => string | undefined) | undefined
+  门?: ((服务器名: string) => string | undefined) | undefined
 }
 
 /**
@@ -75,7 +77,7 @@ export function createMcpTools(装配: MCP工具装配): unknown[] {
           // **名单里没有它**：配置改过而工具清单还是旧的。如实说，不猜
           return text(`「${t.服务器名}」已经不在名单里了，这个工具不能用。`, true)
         }
-        const 拦 = 装配.门?.(t.服务器名, 配.trusted)
+        const 拦 = 装配.门?.(t.服务器名)
         if (拦 !== undefined) return text(拦, true)
 
         const r = await 装配.池.调(t.服务器名, 配, t.工具名, params ?? {}, 装配.工作区)

@@ -60,6 +60,13 @@ interface 一段 {
   stderr尾: string[]
   /** 这一轮累计报到多少 token（ACP 报的是**累计**，我们要差值） */
   上次累计?: { input: number; output: number }
+  /**
+   * 还没回答的权限询问：我们这边的 requestId → 对方的 JSON-RPC id。
+   *
+   * **必须记住**：它在等一个回复，不回它就一直卡着，
+   * 而那看起来像「它死了」。
+   */
+  待答: Map<string, number>
   停了: boolean
 }
 
@@ -80,6 +87,7 @@ export class AcpRuntime implements AgentRuntime {
       下一个id: 1,
       缓冲: "",
       stderr尾: [],
+      待答: new Map(),
       停了: false,
     }
     this.段们.set(spec.sessionId, 段)
@@ -178,6 +186,21 @@ export class AcpRuntime implements AgentRuntime {
     void this.一轮(sessionId, 段, data)
   }
 
+  /**
+   * 回答一次权限询问（A2）。
+   *
+   * `optionId` 缺省 = 取消。**答完就把它从待答里划掉**——
+   * 同一个 id 答两次，对方会收到两条回复，而 JSON-RPC 那边只认第一条，
+   * 第二条会被当成协议错误。
+   */
+  answerPermission(sessionId: SessionId, requestId: string, optionId?: string): void {
+    const 段 = this.段们.get(sessionId)
+    const id = 段?.待答.get(requestId)
+    if (!段 || id === undefined) return
+    段.待答.delete(requestId)
+    this.答(段, id, optionId)
+  }
+
   async abort(sessionId: SessionId): Promise<void> {
     const 段 = this.段们.get(sessionId)
     if (!段?.acpSessionId) return
@@ -188,6 +211,16 @@ export class AcpRuntime implements AgentRuntime {
   async stop(sessionId: SessionId): Promise<void> {
     const 段 = this.段们.get(sessionId)
     if (!段) return
+    /**
+     * **没答完的一律按取消回掉。**
+     *
+     * 直接杀进程也能了事，但那时对方的日志里是一次「客户端消失了」；
+     * 按协议取消是它认得的收场，而**收场清楚的失败才可能被诊断**。
+     */
+    for (const [rid, id] of 段.待答) {
+      this.答(段, id, undefined)
+      段.待答.delete(rid)
+    }
     段.停了 = true
     收进程(段.proc)
     this.段们.delete(sessionId)
@@ -293,14 +326,52 @@ export class AcpRuntime implements AgentRuntime {
       }
       return
     }
+    // ③ **它在问「能不能」**（A2）
+    if (typeof id === "number" && msg["method"] === "session/request_permission") {
+      const p = msg["params"] as
+        | { toolCall?: { title?: string; rawInput?: unknown; kind?: string }; options?: unknown[] }
+        | undefined
+      const 选项 = (p?.options ?? [])
+        .map((o) => o as { optionId?: string; name?: string; kind?: string })
+        .filter((o) => typeof o.optionId === "string" && typeof o.name === "string")
+        .map((o) => ({ optionId: o.optionId!, name: o.name!, kind: o.kind ?? "" }))
+
+      /**
+       * **一个选项都没有时，只能取消。**
+       *
+       * 摆一张没有按钮的卡等于让人对着它干瞪眼；
+       * 而静默不回它会一直卡着。两害相权，如实取消并出声。
+       */
+      if (选项.length === 0) {
+        this.答(段, id, undefined)
+        this.发(sessionId, {
+          kind: "notice",
+          sessionId,
+          text: "ACP agent 问了一次权限，但一个选项都没给——这一次按取消处理了",
+        })
+        return
+      }
+
+      const requestId = `p${id}`
+      段.待答.set(requestId, id)
+      this.发(sessionId, {
+        kind: "permission_request",
+        sessionId,
+        requestId,
+        // **标题用它给的**：它比我们更清楚这次要干什么
+        title: p?.toolCall?.title ?? "这次工具调用",
+        options: 选项,
+      })
+      return
+    }
+
     /**
-     * ③ 它向我们发请求（权限、读写文件、终端）。
+     * ④ 别的请求（读写文件、终端）**如实拒绝，并说清楚**。
      *
-     * **A1 一律如实拒绝，并说清楚**——静默不回会让它一直等，
-     * 而那个表现是「它卡住了」。权限那条在 A2 才真的接。
+     * 静默不回会让它一直等，而那个表现是「它卡住了」。
      */
     if (typeof id === "number" && typeof msg["method"] === "string") {
-      this.回错(段, id, `DAWN 这一版还不支持 ${String(msg["method"])}（A2 会接上权限那条）`)
+      this.回错(段, id, `DAWN 这一版还不支持 ${String(msg["method"])}`)
     }
   }
 
@@ -316,6 +387,12 @@ export class AcpRuntime implements AgentRuntime {
 
   private 通知(段: 一段, method: string, params: unknown): void {
     段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", method, params })}\n`)
+  }
+
+  /** 把一次权限询问的结果写回去。**`optionId` 缺省 = 取消** */
+  private 答(段: 一段, id: number, optionId?: string): void {
+    const outcome = optionId ? { outcome: "selected", optionId } : { outcome: "cancelled" }
+    段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, result: { outcome } })}\n`)
   }
 
   private 回错(段: 一段, id: number, message: string): void {

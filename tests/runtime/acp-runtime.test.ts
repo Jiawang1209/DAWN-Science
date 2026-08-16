@@ -27,7 +27,23 @@ let 关掉: (() => Promise<void>) | undefined
 afterEach(async () => {
   await 关掉?.()
   关掉 = undefined
-  for (const k of ["FAKE_ACP_FAIL_INIT", "FAKE_ACP_USAGE", "FAKE_ACP_REPLY"]) delete process.env[k]
+  /**
+   * **每一个都要清。**
+   *
+   * 第一版这张清单漏了 A2 新加的两个，于是
+   * `FAKE_ACP_ASK_NO_OPTIONS` 漏到了下一条用例里——症状是
+   * 「等不到权限询问，收到的是 notice」，看起来像功能坏了。
+   * **一条用例把状态漏给下一条，比它自己红更难查。**
+   */
+  for (const k of [
+    "FAKE_ACP_FAIL_INIT",
+    "FAKE_ACP_USAGE",
+    "FAKE_ACP_REPLY",
+    "FAKE_ACP_ASK",
+    "FAKE_ACP_ASK_NO_OPTIONS",
+  ]) {
+    delete process.env[k]
+  }
 })
 
 /** 收事件，直到某一条出现（或超时）。**超时要说清在等什么** */
@@ -149,5 +165,118 @@ describe("token：**累计要变差值**", () => {
     rt.write(s.sessionId, "在吗")
     await 等到(收, (e) => e.kind === "idle", "收口")
     expect(收.filter((e) => e.kind === "turn_usage")).toHaveLength(0)
+  })
+})
+
+/**
+ * 权限询问（A2，2026-08-16）。
+ *
+ * **这是 ACP 相对 `cli` 最实的那个差别**：`cli` 那条我们没有话语权，
+ * 只能事后从输出里读它干了什么；ACP 这边它会**停下来问**。
+ */
+describe("权限：它问，我们答", () => {
+  it("**选项原样带上来**——不是我们自己编的一套", async () => {
+    const rt = 起一个({ FAKE_ACP_ASK: "1" })
+    const s = spec("p1")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "读一下那个 csv")
+
+    const 问 = (await 等到(收, (e) => e.kind === "permission_request", "权限询问")) as Extract<
+      AgentEvent,
+      { kind: "permission_request" }
+    >
+    expect(问.title).toContain("观测.csv")
+    expect(问.options.map((o) => o.optionId)).toEqual(["yes", "always", "no"])
+    // **kind 也要带**：界面据它决定「允许」画成什么样
+    expect(问.options[0]?.kind).toBe("allow_once")
+
+    // 答一个，**对方要收到同一个 id**
+    rt.answerPermission?.(s.sessionId, 问.requestId, "always")
+    const 回声 = await 等到(
+      收,
+      (e) => e.kind === "output" && e.data.includes("【权限结果】"),
+      "它把答案说回来",
+    )
+    expect((回声 as { data: string }).data).toContain('"optionId":"always"')
+    expect((回声 as { data: string }).data).toContain('"outcome":"selected"')
+  })
+
+  /** 不给 optionId = 取消。**它与「拒绝」不是一回事**：拒绝是决定，取消是这一轮不做了 */
+  it("不给 optionId 就是取消", async () => {
+    const rt = 起一个({ FAKE_ACP_ASK: "1" })
+    const s = spec("p2")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "读一下")
+    const 问 = (await 等到(收, (e) => e.kind === "permission_request", "权限询问")) as Extract<
+      AgentEvent,
+      { kind: "permission_request" }
+    >
+    rt.answerPermission?.(s.sessionId, 问.requestId)
+    const 回声 = await 等到(收, (e) => e.kind === "output" && e.data.includes("【权限结果】"), "答案")
+    expect((回声 as { data: string }).data).toContain('"outcome":"cancelled"')
+  })
+
+  /**
+   * **一个选项都没有时，只能取消，而且要出声。**
+   *
+   * 摆一张没有按钮的卡等于让人对着它干瞪眼；静默不回它会一直卡着。
+   * 两害相权，如实取消并说一句。
+   */
+  it("它一个选项都不给时，按取消处理并出声", async () => {
+    const rt = 起一个({ FAKE_ACP_ASK_NO_OPTIONS: "1" })
+    const s = spec("p3")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "读一下")
+    await 等到(收, (e) => e.kind === "notice" && e.text.includes("一个选项都没给"), "那句说明")
+    // **不该冒出一张空卡**
+    expect(收.filter((e) => e.kind === "permission_request")).toHaveLength(0)
+    /**
+     * **而且这一轮要真的走完。**
+     *
+     * 第一版只断言那句说明——但静默不回它也会有那句说明，
+     * 而对面会一直等（表现是「它卡住了」）。**收口才是「我们真的答了」的证据。**
+     */
+    await 等到(收, (e) => e.kind === "idle", "这一轮收口（不答的话它会一直卡着）")
+  })
+
+  /** 同一个 id 答两次：第二次要被忽略，否则对方会收到两条回复 */
+  it("答两次只算一次", async () => {
+    const rt = 起一个({ FAKE_ACP_ASK: "1" })
+    const s = spec("p4")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "读一下")
+    const 问 = (await 等到(收, (e) => e.kind === "permission_request", "权限询问")) as Extract<
+      AgentEvent,
+      { kind: "permission_request" }
+    >
+    rt.answerPermission?.(s.sessionId, 问.requestId, "yes")
+    rt.answerPermission?.(s.sessionId, 问.requestId, "no")
+    const 回声 = await 等到(收, (e) => e.kind === "output" && e.data.includes("【权限结果】"), "答案")
+    expect((回声 as { data: string }).data).toContain('"optionId":"yes"')
+    /**
+     * **判据要盯「对面收到了什么」，不是「我们这边看起来正常」。**
+     *
+     * 第一版只断言「回声只有一条」——而假 agent 对一条 id 对不上的回复
+     * 本来就静静丢掉，于是把去重删掉之后用例照样绿（变异测试当场抓到）。
+     * 现在假 agent 会把「意外的回复」说出来，那才是协议违规的事实形式。
+     */
+    await new Promise((r) => setTimeout(r, 300))
+    expect(收.filter((e) => e.kind === "output" && e.data.includes("【权限结果】"))).toHaveLength(1)
+    expect(
+      收.filter((e) => e.kind === "output" && e.data.includes("【意外的回复】")),
+      "同一个询问被答了两次——对面收到了两条回复",
+    ).toHaveLength(0)
   })
 })

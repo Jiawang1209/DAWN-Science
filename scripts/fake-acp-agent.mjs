@@ -26,6 +26,8 @@
  * | `FAKE_ACP_CHUNK_DELAY_MS` | 每段之间停多久（验流式与「正在等」） |
  * | `FAKE_ACP_FAIL_INIT` | 置一即在 `initialize` 上报错（验失败要出声） |
  * | `FAKE_ACP_USAGE` | 置一即在回合结束时报 usage（**累计值**，验差值那条） |
+ * | `FAKE_ACP_ASK` | 置一即在回话之前**问一次权限**（A2） |
+ * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
  */
 
 /** **刻意包含一句可断言的暗号**，e2e 靠它判断整条链通了 */
@@ -39,6 +41,11 @@ const 报用量 = process.env["FAKE_ACP_USAGE"] === "1"
 let 累计输入 = 0
 let 累计输出 = 0
 let 取消了 = false
+/** 我们问出去的那些，等着客户端回。key 是 JSON-RPC id */
+const 问出去的 = new Map()
+let 下一个问id = 1000
+/** 最近一次 prompt 的会话 id。协议违规那条要拿它当收件人 */
+let 最近的会话 = ""
 
 function 发(msg) {
   process.stdout.write(`${JSON.stringify(msg)}\n`)
@@ -81,6 +88,46 @@ async function 处理(msg) {
 
   if (method === "session/prompt") {
     取消了 = false
+    最近的会话 = params.sessionId
+
+    /**
+     * **先问一次权限**（A2）。真 agent 就是这么干的：
+     * 它要动一个文件之前停下来问，等客户端回一个 optionId。
+     */
+    if (process.env["FAKE_ACP_ASK"] === "1" || process.env["FAKE_ACP_ASK_NO_OPTIONS"] === "1") {
+      const 问id = 下一个问id++
+      const 答案 = new Promise((成) => 问出去的.set(问id, 成))
+      发({
+        jsonrpc: "2.0",
+        id: 问id,
+        method: "session/request_permission",
+        params: {
+          sessionId: params.sessionId,
+          toolCall: { title: "读一下 data/raw/观测.csv", kind: "read" },
+          options:
+            process.env["FAKE_ACP_ASK_NO_OPTIONS"] === "1"
+              ? []
+              : [
+                  { optionId: "yes", name: "允许这一次", kind: "allow_once" },
+                  { optionId: "always", name: "以后都允许", kind: "allow_always" },
+                  { optionId: "no", name: "这次不行", kind: "reject_once" },
+                ],
+        },
+      })
+      const 结果 = await 答案
+      // **把答案原样说出来**：用例据此确认「点了哪个，它就收到哪个」
+      发({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: `【权限结果】${JSON.stringify(结果)}` },
+          },
+        },
+      })
+    }
     const 文字 = (params?.prompt ?? [])
       .filter((b) => b?.type === "text")
       .map((b) => b.text)
@@ -113,7 +160,35 @@ async function 处理(msg) {
     })
   }
 
-  if (id !== undefined) 回错(id, -32601, `假 agent 不认识这个方法：${method}`)
+  // 客户端回了我们问出去的那一条
+  if (method === undefined && id !== undefined && 问出去的.has(id)) {
+    const 成 = 问出去的.get(id)
+    问出去的.delete(id)
+    成(msg.result?.outcome ?? msg.error ?? null)
+    return
+  }
+
+  /**
+   * **一条回复对应一个还等着的 id。**对不上就是协议违规——
+   * 真 JSON-RPC 对端会当成错误，而我们的用例要看得见它
+   * （「同一个询问答两次」正是靠这条抓出来的）。
+   */
+  if (method === undefined && id !== undefined) {
+    发({
+      jsonrpc: "2.0",
+      method: "session/update",
+      params: {
+        sessionId: 最近的会话,
+        update: {
+          sessionUpdate: "agent_message_chunk",
+          content: { type: "text", text: `【意外的回复】id=${id}` },
+        },
+      },
+    })
+    return
+  }
+
+  if (id !== undefined && method !== undefined) 回错(id, -32601, `假 agent 不认识这个方法：${method}`)
 }
 
 let 缓冲 = ""

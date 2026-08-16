@@ -53,7 +53,7 @@
   },
   "build": {
     "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/runtime/acp/runtime.ts /tmp/r.bak\necho \"── 变异：错误退回普通 Error（原因又被扣下）\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('          new UserFacingError(\\n            \\`起不来 ACP 适配器','          new Error(\\n            \\`起不来 ACP 适配器',1)\nopen(p,'w').write(s)\"\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/acp-agent.spec.ts -g \"起不来\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2\ncp /tmp/r.bak src/runtime/acp/runtime.ts\nnpm run build >/dev/null 2>&1\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/runtime/acp/runtime.ts /tmp/r.bak\necho \"── 变异：错误退回普通 Error（原因又被扣下）\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('          new UserFacingError(\\n            \\`起不来 ACP 适配器','          new Error(\\n            \\`起不来 ACP 适配器',1)\nopen(p,'w').write(s)\"\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/acp-agent.spec.ts -g \"起不来\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2\ncp /tmp/r.bak src/runtime/acp/runtime.ts\nnpm run build >/dev/null 2>&1\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

@@ -183,6 +183,32 @@ export type AgentEvent =
    */
   | { kind: "notice"; sessionId: SessionId; text: string }
   /**
+   * **agent 在问「能不能」**（A2，2026-08-16，只有 acp 会发）。
+   *
+   * 这是 ACP 相对 `cli` 最实的那个差别：`cli` 那条我们没有话语权，
+   * 只能事后从输出里读它干了什么；ACP 这边它**会停下来问**。
+   *
+   * ## 选项由它给，我们原样摆出来
+   *
+   * `options` 是 agent 报的（`allow_once` / `reject_always` 之类），
+   * **不是我们编的一套**。自己编一套的后果是：屏幕上写着「允许一次」，
+   * 而它那边根本没有这个概念，于是我们回过去的 id 它不认。
+   *
+   * ## 必须有人回答
+   *
+   * 它在等一个回复。不回的表现是**它一直卡着**——
+   * 而那看起来像「它死了」。超时、取消、关会话都要走 `answerPermission`。
+   */
+  | {
+      kind: "permission_request"
+      sessionId: SessionId
+      /** 这一问的 id。回答时要原样带回来 */
+      requestId: string
+      /** 它想干什么（工具名 + 一句话），给人看的 */
+      title: string
+      options: readonly { optionId: string; name: string; kind: string }[]
+    }
+  /**
    * 一次工具调用的**文件事实**（不变式 5：从 git 事实算，不听 agent 声明）。
    *
    * 在 `tool_end` **之前**到达——它由工具包装器在真正执行完之后立刻算出，
@@ -418,6 +444,13 @@ export interface AgentRuntime {
    * 界面、命令面板、将来的 CLI 共用同一道，加入口时不必记得补一次。
    */
   setModel?(sessionId: SessionId, provider: string, model: string): Promise<void>
+  /**
+   * 回答一次权限询问（A2，**只有 acp 有**）。
+   *
+   * `optionId` 缺省 = 取消（协议里那个 `outcome: "cancelled"`）——
+   * **它与「拒绝」不是一回事**：拒绝是一个决定，取消是「这一轮不做了」。
+   */
+  answerPermission?(sessionId: SessionId, requestId: string, optionId?: string): void
   /** 上下文用量。只有 native 有；拿不到时返回 undefined（**缺就是缺**） */
   contextUsage?(sessionId: SessionId): ContextUsage | undefined
   /** 插一句引导，不打断整轮。只有 native 有 */

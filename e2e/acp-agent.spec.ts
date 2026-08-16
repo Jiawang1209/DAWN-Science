@@ -16,7 +16,7 @@
  * 那正是「打包成本地软件」最先会咬人的地方。
  */
 import { resolve } from "node:path"
-import { test, expect, 等进了对话, 用某个agent开一段 } from "./fixtures.js"
+import { test, expect, 等进了对话, 用某个agent开一段, readRuns } from "./fixtures.js"
 
 const 假ACP = resolve(import.meta.dirname, "..", "scripts", "fake-acp-agent.mjs")
 
@@ -311,5 +311,68 @@ test.describe("ACP 用量", () => {
      * 所以这里断言的是模型名——**它不是编的，是那台 agent 自己报的开关值**。
      */
     await expect(page.locator(".usage-legend-name").first()).toHaveText("sonnet")
+  })
+})
+
+/**
+ * **把我们自己的工具递给它**（B1 路线 B，2026-08-17）。
+ *
+ * ## 这条用例证明的是什么
+ *
+ * 不是「我们发过 `mcpServers`」——那只是一句声明。
+ * 假 agent 会**真的把那台服务器拉起来**、用手写的 MCP 三句话
+ * （initialize / tools/list / tools/call）问它，然后把结果说回来。
+ *
+ * 于是它证明的是整条路：
+ * ```
+ * ACP agent ──▶ dawn-mcp-server.mjs ──socket+令牌──▶ DAWN ──▶ 账本
+ * ```
+ *
+ * **假 agent 刻意不引 MCP SDK**：引了的话它就跟被测代码共用同一份实现，
+ * 那时它证明的是「SDK 自洽」，不是「我们那台服务器能用」。
+ */
+test.describe("ACP 用我们的工具", () => {
+  test.use({
+    dawnOptions: { providersYaml: PROVIDERS, gitInit: true, env: { FAKE_ACP_CALL_MCP: "1" } },
+  })
+
+  test("**它真的连上了 DAWN，拿到工具并调得动**", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("用一下 DAWN 的工具")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    const 结果 = page.getByText(/【MCP 结果】/).last()
+    await expect(结果).toBeVisible({ timeout: 30_000 })
+
+    // ① **工具清单是从 DAWN 现问现答的**，不是那台服务器自己编的
+    await expect(结果).toContainText("dawn_list_skills")
+    await expect(结果).toContainText("dawn_record_note")
+
+    // ② **调用真的走通了**：这句回执是 DAWN 那边生成的
+    await expect(结果).toContainText("记下了：经 MCP 记的一条")
+
+    /**
+     * ③ **落账，而且挂在那一轮上**——这才是路线 B 的立身之本。
+     *
+     * wisp 那套能力网关是围绕「能力范围」设计的；我们围绕的是不变式 5：
+     * **外部 agent 经这条路做的每一件事都留在账本上，并且指得出属于哪一轮。**
+     * 少了父账，那些调用就是一堆孤儿，「这一轮它到底干了什么」再也拼不起来。
+     */
+    await expect
+      .poll(async () => (await readRuns(dawn.dbPath)).filter((r) => String(r["request_type"]).startsWith("acp_tool:")).length, {
+        message: "经 MCP 的调用没有落账",
+        timeout: 15_000,
+      })
+      .toBeGreaterThan(0)
+
+    const 账 = await readRuns(dawn.dbPath)
+    const 那一轮 = 账.find((r) => r["request_type"] === "agent_turn")
+    const 工具账 = 账.filter((r) => String(r["request_type"]).startsWith("acp_tool:"))
+    expect(工具账.map((r) => r["request_type"])).toContain("acp_tool:dawn_record_note")
+    expect(工具账[0]?.["parent_run_id"], "父账没挂在那一轮上").toBe(那一轮?.["id"])
+    // **是 agent 干的，不是人**——账本上这两者不能混
+    expect(工具账[0]?.["origin"]).toBe("agent")
   })
 })

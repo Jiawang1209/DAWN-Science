@@ -174,6 +174,19 @@ export class AcpRuntime implements AgentRuntime {
        */
       agentIdOf?: (spec: SessionSpec) => string | undefined
       /**
+       * **把我们自己的工具递给它**（B1 路线 B，2026-08-17）。
+       *
+       * ACP 里 `mcpServers` 是**由 agent 去拉起**的——我们只声明
+       * 「有这么一台，这样起它」。所以这里给的是一条命令 + 环境变量，
+       * 而不是一个对象：那台服务器活在另一个进程里。
+       *
+       * **令牌走 `env`，绝不落盘**（见 `acp/gateway.ts` 的文件头）。
+       * 不给这个钩子时递空数组——**「客人模式」仍然成立**（路线 C）。
+       */
+      mcp?: (spec: SessionSpec) =>
+        | { name: string; command: string; args: string[]; env: Record<string, string> }
+        | undefined
+      /**
        * 上一次那段 ACP 会话的凭据（A3）。**指纹对不上就别给**——
        * 判断留在调用方，运行时只管「给了就试着 load」。
        */
@@ -301,6 +314,15 @@ export class AcpRuntime implements AgentRuntime {
      * `mcpServers` 这一版给空数组（把我们自己的工具递进去是 B1）。
      * 给空数组而不是省略：协议里它是必填的。
      */
+    /**
+     * 我们那台 MCP 服务器（B1）。**没有就给空数组**——协议里这一格是必填的，
+     * 而「不给工具」是一个合法的、明确的选择（路线 C 的客人模式）。
+     */
+    const 我 = this.opts.mcp?.(spec)
+    const 我们的MCP = 我
+      ? [{ name: 我.name, command: 我.command, args: 我.args, env: 我.env }]
+      : []
+
     const 指纹 = AcpRuntime.指纹(cmd, spec.workspace)
     const 旧 = this.opts.priorOf?.(spec)
     let 新: { sessionId?: string; configOptions?: unknown } | undefined
@@ -310,7 +332,7 @@ export class AcpRuntime implements AgentRuntime {
         const r = (await this.请求(spec.sessionId, "session/load", {
           sessionId: 旧.acpSessionId,
           cwd: spec.workspace,
-          mcpServers: [],
+          mcpServers: 我们的MCP,
         })) as { configOptions?: unknown }
         新 = { sessionId: 旧.acpSessionId, ...(r ?? {}) }
       } catch (e) {
@@ -339,7 +361,7 @@ export class AcpRuntime implements AgentRuntime {
     if (!新) {
       新 = (await this.请求(spec.sessionId, "session/new", {
         cwd: spec.workspace,
-        mcpServers: [],
+        mcpServers: 我们的MCP,
       })) as { sessionId?: string; configOptions?: unknown }
     }
     if (!新?.sessionId) throw new UserFacingError("ACP 适配器没有回 sessionId，这一段起不来")

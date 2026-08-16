@@ -138,6 +138,21 @@ if (fixed > 0) console.log(`build-electron: 已为 ${fixed} 个 spawn-helper 补
  * 拷到 `dist/skills`，于是运行时那句是 `join(import.meta.dirname, "../skills")`
  * ——与 `preload.cjs`、`../ui/index.html` 同一副做法。
  */
+/**
+ * 我们那台 MCP 服务器（B1 路线 B，2026-08-17）。
+ *
+ * **拷成源文件，不打包**：它 `import` 的是 `@modelcontextprotocol/sdk`，
+ * 而那份依赖在装好的应用里本来就在 `node_modules` 下——
+ * 打进 bundle 只是把同一份代码存两遍。
+ *
+ * 放在 `dist/electron/` 旁边，因为 `main.ts` 是按 `import.meta.dirname` 找它的。
+ */
+cpSync(
+  join("scripts", "dawn-mcp-server.mjs"),
+  join("dist", "electron", "dawn-mcp-server.mjs"),
+)
+console.log("build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/")
+
 if (existsSync("skills")) {
   cpSync("skills", join("dist", "skills"), { recursive: true })
   console.log("build-electron: 自带技能已拷进 dist/skills")

@@ -165,6 +165,20 @@ export class RunRecorder {
     this.now = opts.now ?? (() => new Date().toISOString())
   }
 
+  /**
+   * 这一段此刻开着的那一轮（B1 路线 B，2026-08-17）。
+   *
+   * **给网关用**：外部 agent 经 MCP 调我们的工具时，那条 Run 的父账
+   * 就是这一轮——没有它，那些调用会变成一堆**没有归属的孤儿**，
+   * 而「这一轮它到底干了什么」就再也拼不起来。
+   *
+   * 缺席 = 此刻没有开着的回合（它在两轮之间调的），**那时就没有父账**，
+   * 不硬挂到上一轮头上（那是把 A 的账算到 B 头上）。
+   */
+  当前回合(sessionId: SessionId): string | undefined {
+    return this.open.get(sessionId)?.turnRunId
+  }
+
   private slot(sessionId: SessionId): Open {
     let s = this.open.get(sessionId)
     if (!s) {

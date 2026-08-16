@@ -684,7 +684,14 @@ export async function readRuns(dbPath: string): Promise<Record<string, unknown>[
      */
     return db
       .prepare(
-        "SELECT request_type, origin, status, has_error, terminal_reason FROM runs ORDER BY started_at",
+        /**
+         * **`id` 与 `parent_run_id` 也要取**（B1，2026-08-17）。
+         *
+         * 外部 agent 经 MCP 调我们的工具时，那条 Run 挂在哪一轮上
+         * 是路线 B 的立身之本——不取这两列，用例只能验到「有这么一条」，
+         * 而**「它挂对了地方」照样验不出来**。
+         */
+        "SELECT id, parent_run_id, request_type, origin, status, has_error, terminal_reason FROM runs ORDER BY started_at",
       )
       .all() as Record<string, unknown>[]
   } finally {

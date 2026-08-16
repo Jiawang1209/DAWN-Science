@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1 && npm run test:e2e:only 2>&1 | grep -E \"^\\s+[0-9]+ (passed|failed|skipped)|✘\" | tail -5",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/project/run-recorder.ts /tmp/rr.bak; cp src/store/runs.ts /tmp/rs.bak\n跑() { npx vitest run tests/cost-wiring.test.ts 2>&1 | grep -E \"×|Tests \" | head -3; cp /tmp/rr.bak src/project/run-recorder.ts; cp /tmp/rs.bak src/store/runs.ts; }\necho \"── ①基线改到收口时才拍\"\npython3 -c \"\np='src/project/run-recorder.ts';s=open(p).read()\ns=s.replace('    // **基线要在回合开始时拍**——收口时再拍就什么都比不出来了\\n    this.外部文件事实?.拍基线(sessionId)\\n','',1);open(p,'w').write(s)\"\n跑\necho \"── ②收口时不比\"\npython3 -c \"\np='src/project/run-recorder.ts';s=open(p).read()\ns=s.replace('      const 比 = this.外部文件事实?.比一次','      const 比 = undefined as undefined | ((s: string) => Promise<undefined>)\\n      void this.外部文件事实',1);open(p,'w').write(s)\"\n跑\necho \"── ③读了什么写成空数组\"\npython3 -c \"\np='src/store/runs.ts';s=open(p).read()\ns=s.replace('        filesRead: files.filesRead === undefined ? null : JSON.stringify(files.filesRead),','        filesRead: JSON.stringify(files.filesRead ?? []),',1);open(p,'w').write(s)\"\n跑\necho \"── ④NULL 又映射成 []\"\npython3 -c \"\np='src/store/runs.ts';s=open(p).read()\ns=s.replace('      ...(read === undefined ? {} : { filesRead: read }),','      filesRead: read ?? [],',1);open(p,'w').write(s)\"\n跑\nnpm run typecheck 2>&1 | grep -v notice | head -2; echo 已还原",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/electron/wiring.ts /tmp/w.bak; cp src/runtime/acp/runtime.ts /tmp/r.bak; cp src/acp/tools.ts /tmp/t.bak\n跑() { npm run build >/dev/null 2>&1; npx playwright test e2e/acp-agent.spec.ts -g \"用我们的工具\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2; cp /tmp/w.bak src/electron/wiring.ts; cp /tmp/r.bak src/runtime/acp/runtime.ts; cp /tmp/t.bak src/acp/tools.ts; }\necho \"── ①不把 MCP 递过去（退回客人模式）\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('    const 我 = this.opts.mcp?.(spec)','    const 我 = undefined as undefined | { name: string; command: string; args: string[]; env: Record<string, string> }\\n    void this.opts.mcp',1)\nopen(p,'w').write(s)\"\n跑\necho \"── ②调用不落账\"\npython3 -c \"\np='src/acp/tools.ts';s=open(p).read()\ns=s.replace('      const r = await 干(装配, sessionId, 工具名, 参数)\\n      记(false)','      const r = await 干(装配, sessionId, 工具名, 参数)',1)\nopen(p,'w').write(s)\"\n跑\necho \"── ③父账不挂\"\npython3 -c \"\np='src/electron/wiring.ts';s=open(p).read()\ns=s.replace('        const 父 = runRecorder.当前回合(sessionId)','        const 父 = undefined as string | undefined',1)\nopen(p,'w').write(s)\"\n跑\necho \"── ④工具清单在那台服务器里写死（不问 DAWN）\"\npython3 -c \"\np='src/electron/wiring.ts';s=open(p).read()\ns=s.replace('    工具们: () => 工具清单(),','    工具们: () => [],',1)\nopen(p,'w').write(s)\"\n跑\nnpm run build >/dev/null 2>&1; echo 已还原",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -417,6 +417,30 @@
       "path": "test-results/acp-agent-ACP-会话开关-它给什么就画什么-，选一个真的送过去/test-failed-1.png",
       "accessCount": 1,
       "lastAccessed": 1786896183258,
+      "type": "file"
+    },
+    {
+      "path": "src/acp/gateway.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786913412984,
+      "type": "file"
+    },
+    {
+      "path": "scripts/dawn-mcp-server.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1786913445581,
+      "type": "file"
+    },
+    {
+      "path": "tests/acp/gateway.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786913518871,
+      "type": "file"
+    },
+    {
+      "path": "src/acp/tools.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786913680582,
       "type": "file"
     }
   ],

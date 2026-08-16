@@ -27,6 +27,7 @@
  * | `FAKE_ACP_FAIL_INIT` | 置一即在 `initialize` 上报错（验失败要出声） |
  * | `FAKE_ACP_USAGE` | 置一即在回合结束时报 usage（**累计值**，验差值那条） |
  * | `FAKE_ACP_ASK` | 置一即在回话之前**问一次权限**（A2） |
+ * | `FAKE_ACP_CALL_MCP` | 置一即**真的去连 DAWN 递过来的那台 MCP 服务器**并调一次（B1） |
  * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
  */
 
@@ -46,6 +47,8 @@ const 问出去的 = new Map()
 let 下一个问id = 1000
 /** 最近一次 prompt 的会话 id。协议违规那条要拿它当收件人 */
 let 最近的会话 = ""
+/** DAWN 在 `session/new` 里递过来的那些 MCP 服务器（B1） */
+let 收下的MCP = []
 
 /**
  * 这台假 agent 声称自己有哪些会话开关（A3）。
@@ -114,6 +117,11 @@ async function 处理(msg) {
   }
 
   if (method === "session/new") {
+    /**
+     * **DAWN 递过来的 MCP 服务器**（B1）。真 agent 会自己把它们拉起来；
+     * 这台假的只在被要求时拉一次，好让 e2e 能验「整条路通没通」。
+     */
+    收下的MCP = params?.mcpServers ?? []
     // **cwd 原样回给我们**：用例据此验「它真的开在项目目录里」
     return 回结果(id, {
       sessionId: `fake-acp-${Date.now()}`,
@@ -213,6 +221,27 @@ async function 处理(msg) {
         },
       })
     }
+    /**
+     * **真的把那台 MCP 服务器拉起来，调一次工具**（B1）。
+     *
+     * 这一段是整条路唯一的判据来源：它证明的不是「我们发过 mcpServers」，
+     * 而是**那台服务器真的起得来、真的连回了 DAWN、真的拿到了结果**。
+     */
+    if (process.env["FAKE_ACP_CALL_MCP"] === "1" && 收下的MCP.length > 0) {
+      const 结果 = await 调一次MCP(收下的MCP[0], params.sessionId)
+      发({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: `【MCP 结果】${结果}` },
+          },
+        },
+      })
+    }
+
     const 文字 = (params?.prompt ?? [])
       .filter((b) => b?.type === "text")
       .map((b) => b.text)
@@ -317,3 +346,64 @@ process.stdin.on("data", (块) => {
 })
 
 process.stdin.on("end", () => process.exit(0))
+
+
+/**
+ * 把 DAWN 递过来的那台 MCP 服务器拉起来，列一次工具、调一次（B1）。
+ *
+ * **刻意用最笨的方式手写 MCP 的三句话**（initialize / tools/list / tools/call）——
+ * 引 SDK 的话，这台假 agent 就跟被测代码共用同一份实现了，
+ * 而那时它证明的是「SDK 自洽」，不是「我们那台服务器能用」。
+ */
+async function 调一次MCP(台, sessionId) {
+  const { spawn } = await import("node:child_process")
+  const p = spawn(台.command === "node" ? process.execPath : 台.command, 台.args, {
+    stdio: ["pipe", "pipe", "pipe"],
+    env: { ...process.env, ...(台.env ?? {}) },
+  })
+  let 缓 = ""
+  const 等 = new Map()
+  let 序 = 1
+  p.stdout.setEncoding("utf8")
+  p.stdout.on("data", (块) => {
+    缓 += 块
+    let i
+    while ((i = 缓.indexOf("\n")) >= 0) {
+      const 行 = 缓.slice(0, i).trim()
+      缓 = 缓.slice(i + 1)
+      if (!行) continue
+      try {
+        const m = JSON.parse(行)
+        const f = 等.get(m.id)
+        if (f) {
+          等.delete(m.id)
+          f(m)
+        }
+      } catch { /* 不是 JSON：忽略 */ }
+    }
+  })
+  const 问 = (method, params) =>
+    new Promise((成) => {
+      const id = 序++
+      等.set(id, 成)
+      p.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`)
+    })
+  try {
+    await 问("initialize", {
+      protocolVersion: "2024-11-05",
+      capabilities: {},
+      clientInfo: { name: "假 ACP agent", version: "0" },
+    })
+    p.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`)
+    const 列 = await 问("tools/list", {})
+    const 名们 = (列.result?.tools ?? []).map((t) => t.name).join(",")
+    const 调 = await 问("tools/call", {
+      name: "dawn_record_note",
+      arguments: { text: "经 MCP 记的一条" },
+    })
+    const 文 = 调.result?.content?.[0]?.text ?? 调.error?.message ?? "（没有内容）"
+    return `工具=[${名们}] 调用=${文}`
+  } finally {
+    p.kill()
+  }
+}

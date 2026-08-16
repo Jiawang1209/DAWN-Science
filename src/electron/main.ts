@@ -266,6 +266,12 @@ app.whenReady().then(() => {
        */
       subagentChildEntry: join(import.meta.dirname, CHILD_ENTRY),
       /**
+       * 我们那台 MCP 服务器（B1 路线 B，2026-08-17）。
+       * 与上面同一条理由：`import.meta.dirname` 只有这里算得准
+       * （构建时拷到了 `dist/electron/` 旁边）。
+       */
+      dawnMcpEntry: join(import.meta.dirname, "dawn-mcp-server.mjs"),
+      /**
        * **自带技能的位置**（S20，2026-08-15）。与上面同一条理由：
        * `import.meta.dirname` 只有这里算得准。构建时拷到了 `dist/skills`。
        */

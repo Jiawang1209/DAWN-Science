@@ -6,6 +6,7 @@
  * `main.ts` 只剩窗口与 IPC 注册两件事。
  */
 import { homedir } from "node:os"
+import { randomUUID } from "node:crypto"
 import Database from "better-sqlite3"
 import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
@@ -19,6 +20,8 @@ import { SessionStore } from "../store/sessions.js"
 import { ProjectManager } from "../project/manager.js"
 import { RunRecorder } from "../project/run-recorder.js"
 import { diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
+import { 开网关 } from "../acp/gateway.js"
+import { 工具清单, 建调用 } from "../acp/tools.js"
 import { 造门, 造MCP门 } from "../policy/permissions.js"
 import { MCP池 } from "../mcp/客户端.js"
 import { 合名单 } from "../mcp/名单.js"
@@ -115,6 +118,14 @@ export interface CreateWorkbenchOptions {
    * 子侧入口就打在它旁边。**不在这里算**：本模块不该知道构建产物的布局。
    */
   subagentChildEntry?: string
+  /**
+   * 我们那台 MCP 服务器的入口（B1 路线 B）。
+   *
+   * **给了才把工具递给 ACP agent**；不给就退回「客人模式」（路线 C）。
+   * 与 `subagentChildEntry` 同一条规矩：**路径由 `main.ts` 算**，
+   * 本模块不该知道构建产物的布局。
+   */
+  dawnMcpEntry?: string
   /**
    * 去哪找外部 CLI 自己的配置（codex 的 `models_cache.json`）。
    * **不给时读真实家目录**；e2e 指向隔离目录，理由见 `backend.ts` 的同名字段。
@@ -395,6 +406,32 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          */
         // **现查，不缓存**：与 `commandOf` 同一条理由
         agentIdOf: (spec) => sessionStore.get(spec.sessionId)?.agentId,
+        /**
+         * **把我们自己的工具递给它**（B1 路线 B）。
+         *
+         * 那台服务器由 **agent** 拉起，所以给的是命令 + 环境变量。
+         * `node` 是记号（`launch.ts` 里那条）——它会被换成 Electron 自己
+         * 那个二进制，于是**用户不必装 Node**。
+         *
+         * **令牌只走 `env`**：路径在进程列表里就看得见，令牌不能落盘。
+         *
+         * 网关没起来时不给（返回 undefined）——那时退回「客人模式」（路线 C），
+         * **而不是给一台连不上的服务器**：后者对 agent 来说是
+         * 「工具都在、每次调用都失败」，比没有更坏。
+         */
+        mcp: (spec) =>
+          网关
+            ? {
+                name: "dawn",
+                command: "node",
+                args: [opts.dawnMcpEntry!],
+                env: {
+                  DAWN_GATEWAY_PATH: 网关.地址.path,
+                  DAWN_GATEWAY_TOKEN: 网关.地址.token,
+                  DAWN_SESSION_ID: spec.sessionId,
+                },
+              }
+            : undefined,
         priorOf: (spec) => {
           const rec = sessionStore.get(spec.sessionId)
           return rec?.acpSessionId && rec.acpFingerprint
@@ -555,6 +592,17 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   /** 状态推给界面的出口。**装配层接上之后才有值**——接不上就只是没人听 */
   let 远端状态变了: ((u: { connectionId: string; state: RemoteState }) => void) | undefined
 
+  /**
+   * DAWN 工具网关（B1 路线 B，2026-08-17）。**每次运行一台。**
+   *
+   * 它必须在 `backend` 之后建——`dawn_list_skills` 走的是
+   * **与「Agent Skills」那一屏同一条路**（`listAgentSkills`）。
+   * 两处分家就会「屏上是这个、agent 拿到的是那个」。
+   *
+   * 声明在这里、用在下面 `acp` 那台运行时的 `mcp` 钩子里。
+   */
+  let 网关: import("../acp/gateway.js").网关句柄 | undefined
+
   const backend = createWorkbenchBackend({
     onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },
@@ -610,6 +658,55 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
     ...(opts.openPath ? { openPath: opts.openPath } : {}),
   })
+  /**
+   * 开那台网关（B1 路线 B）。**每次运行一台**，会话身份由连接时报上来。
+   *
+   * 四件工具的实现都在 `acp/tools.ts`；这里只负责把它需要的能力接上——
+   * 那个文件不认识数据库，也不认识 Electron。
+   */
+  // **没给入口就不起网关**：起了也没人连得上（那台服务器脚本不在）
+  if (opts.dawnMcpEntry) 网关 = 开网关({
+    工具们: () => 工具清单(),
+    调用: 建调用({
+      项目of: (sessionId) => sessionStore.get(sessionId)?.projectId,
+      // **与「Agent Skills」那一屏同一条路**：两处分家就会各说各的
+      列技能: async (projectId) => {
+        const r = await backend.listAgentSkills(projectId ? { projectId } : {})
+        return (r as { skills?: { name: string; description: string; filePath: string }[] }).skills ?? []
+      },
+      查溯源: (resourceId) => runStore.getProvenance(resourceId),
+      /**
+       * **每一次调用都落一条 Run**，父账挂在那一轮 ACP 回合上。
+       *
+       * 这是路线 B 与「能力网关」的实质区别：我们不是在裁剪能力
+       * （裁不动——它有自己的 bash），而是在**延伸账本**。
+       *
+       * 取不到当前回合时**不硬挂**（它在两轮之间调的）——
+       * 那是把 A 的账算到 B 头上。
+       */
+      记一笔: (sessionId, requestType, 详情) => {
+        const rec = sessionStore.get(sessionId)
+        if (!rec?.projectId) return
+        const 父 = runRecorder.当前回合(sessionId)
+        const 此刻 = new Date().toISOString()
+        const runId = `run-${randomUUID()}`
+        runStore.insert({
+          runId,
+          projectId: rec.projectId,
+          sessionId,
+          ...(父 ? { parentRunId: 父 } : {}),
+          origin: "agent",
+          requestType,
+          status: 详情.出错 ? "failed" : "completed",
+          startedAt: 此刻,
+          finishedAt: 此刻,
+          hasError: 详情.出错,
+          ...(详情.说明 ? { terminalReason: 详情.说明 } : {}),
+        })
+      },
+    }),
+  })
+
   const server = new WorkbenchServer(backend, {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),
     ...(opts.onInternalError ? { onInternalError: opts.onInternalError } : {}),

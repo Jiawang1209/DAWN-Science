@@ -46,7 +46,7 @@
 ### 2026-08-17 — `dawn_run_in_kernel`：外部 agent 借我们的解释器跑代码（B1·B′，分支 `acp`）
 
 - **Type**: feat
-- **Commit**: `待回填`
+- **Commit**: `18b868f`
 - **Motivation**: 路线 B 给出去的四件工具只做了三件。缺的这件是**唯一一件
   claude / codex 自己做不到的**：它们有 bash，能 `python -c`，但那样跑出来的东西
   在 DAWN 这边什么都不剩——变量留不住、输出是一坨 stdout、账本上没有环境证据。

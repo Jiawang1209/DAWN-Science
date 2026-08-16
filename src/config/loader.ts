@@ -67,6 +67,28 @@ export function loadRegistry(file: string): ProviderRegistry {
 }
 
 /**
+ * 全新安装写出的那台终端**开的是哪个 shell**（2026-08-16）。
+ *
+ * 作者问：*「我是 Mac 所以直接有终端，那么如果是 windows 呢？」*
+ * 去看了一眼——**上一版把 `bash` 写死在模板里**，而 Windows 上没有这个东西
+ * （除非人自己装了 Git Bash 或 WSL）。那台终端会起不来，
+ * 而症状是「点新开什么也没发生」：一个平台被整个漏掉了。
+ *
+ * `node-pty` 在 Windows 上走 ConPTY，本身是通的——缺的只是一个存在的命令。
+ * 选 `powershell.exe` 而不是 `pwsh`：前者随系统装，后者要自己装。
+ *
+ * **写进模板一次，此后归用户**：配置文件生成之后我们绝不覆盖它
+ * （见下面那段），所以这里选错了就是选错了，改回来也不会追溯。
+ */
+export function 默认终端(平台: NodeJS.Platform = process.platform): {
+  command: string
+  args: readonly string[]
+} {
+  // `-i` 是交互式：没有它，`.bashrc` 不加载，PATH 与别名都跟人手敲的不一样
+  return 平台 === "win32" ? { command: "powershell.exe", args: [] } : { command: "bash", args: ["-i"] }
+}
+
+/**
  * 全新安装时写出的默认配置。
  *
  * **它是一份模板，不是一坨机器产物**——所以带注释。用户打开它时应当立刻
@@ -169,8 +191,8 @@ agents:
   # 一个通用终端。想用 claude / codex 的 TUI，在这里手动起即可
   shell:
     kind: pty
-    command: bash
-    args: ["-i"]
+    command: ${默认终端().command}
+    args: ${JSON.stringify(默认终端().args)}
     capabilities: [exec]
 `
 

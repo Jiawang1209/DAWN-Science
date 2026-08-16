@@ -3689,9 +3689,19 @@ export function ConversationView({
                 aria-pressed={dockOpen ?? false}
                 onClick={onToggleDock}
               >
-                {/* **不叫「终端」**：那两个字是「打开终端」「＋ 新终端」的一部分。
-                    这颗掀开的是下面那条 dock，所以就照着说 */}
-                终端面板
+                {/**
+                  * **就叫「终端」**（2026-08-16 作者定的）。
+                  *
+                  * 此前叫「终端面板」，理由是「终端」两个字是「打开终端」
+                  * 「＋ 新终端」的一部分——那是**拿人看的字去解决机器找元素的问题**，
+                  * 代价付错了地方（同一副错误 2026-08-13 在「批量／多选」上付过一次）。
+                  * 现在换成把那几处多余的「终端」去掉：面板自己就叫终端，
+                  * 里面的按钮再说一遍「终端」本来就是废话。
+                  *
+                  * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
+                  * 于是英文界面上它一直是「终端面板」四个字。
+                  */}
+                {t("终端")}
               </Button>
             ) : null}
             {/**
@@ -4875,7 +4885,7 @@ export function EmptyConversation({
                   */}
                 {onToggleDock ? (
                   <Button variant="text" size="sm" onClick={onToggleDock}>
-                    {t("终端面板")}
+                    {t("终端")}
                   </Button>
                 ) : null}
                 <Button type="submit" variant="primary" className="send-btn" aria-label={t("发送")}>

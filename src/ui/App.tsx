@@ -15,7 +15,7 @@
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import {
@@ -1413,8 +1413,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   /* ── 底部终端（2026-08-11） ──────────────────────────────────── */
 
+  /**
+   * **人自己按 × 关掉的那些**（2026-08-16）。
+   *
+   * 记在本地、立刻生效，不等列表回来——作者报的 bug 正是这个：
+   * *「点进去之后，终端点退出不好使」*。此前 `onClose` 只在**有项目**时
+   * 才重拉列表，于是临时会话里那条终端永远躺在列表里、状态还是活的，
+   * 而下面那条 effect 一看「有个活着的」，当场又把它接了回来。
+   *
+   * **为什么不干脆把 `exited` 都滤掉**：自己死掉的终端要留下 `已结束`
+   * 让人看见（规格 7.5，失败必须出声）。**人关的与自己死的不是一回事**，
+   * 所以按「谁关的」分，不按状态分。
+   */
+  const [关掉的终端, 设关掉的终端] = useState<ReadonlySet<string>>(() => new Set())
   /** 这个项目里的终端会话。**它们不在会话列表里**，只在 dock 里 */
-  const 终端们 = useMemo(() => sessions.filter((x) => x.kind === "pty"), [sessions])
+  const 终端们 = useMemo(
+    () => sessions.filter((x) => x.kind === "pty" && !关掉的终端.has(x.sessionId)),
+    [sessions, 关掉的终端],
+  )
   /** 起终端用哪个 agent。**配置里没有 pty agent 就开不了**，如实说 */
   const ptyAgentId = providers.agents.find((a) => a.kind === "pty")?.agentId
   const currentWorkspace = projects.find((p) => p.projectId === projectId)?.workspace
@@ -1474,8 +1490,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 那是把一次意图拆成两次点击。已经有终端时不多开：那会在你每次
    * 掀开面板时悄悄多起一个进程。
    */
+  /**
+   * **只在「掀开」那一下自动开，不是每次 `dockSessionId` 变空都开**（2026-08-16 改）。
+   *
+   * 上一版没有这道闸：人按 × 关掉当前那个 → `dockSessionId` 变空 →
+   * 这条 effect 立刻又开一个（或把还没来得及更新状态的那个接回来）。
+   * **两种表现都是「点了退出什么也没发生」**，而代码里两处各自都说得通。
+   *
+   * 关完最后一个之后该看见的是 dock 里那句「还没有终端。点『＋ 新开』开一个」——
+   * 那句话在上一版**根本到不了**。
+   */
+  const 掀开过了 = useRef(false)
   useEffect(() => {
-    if (!dockOpen) return
+    if (!dockOpen) {
+      掀开过了.current = false
+      return
+    }
+    if (掀开过了.current) return
+    掀开过了.current = true
     if (dockSessionId) return
     const 活着的 = 终端们.find((t) => t.state !== "exited")
     if (活着的) {
@@ -2385,7 +2417,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <p className="empty">
                 {t("这是一段终端会话。终端现在在对话区下面那一条里——")}
                 <Button variant="text" size="inline" onClick={toggleDock}>
-                  {t("打开终端")}
+                  {t("打开面板")}
                 </Button>
               </p>
             </div>
@@ -2610,12 +2642,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onPick={setDockSessionId}
               onNew={开一个终端}
               onClose={(id) => {
+                /**
+                 * **先从界面上摘掉，再去停**（2026-08-16）。
+                 *
+                 * 反过来写就是作者报的那个 bug：等服务端回来才动界面，
+                 * 而中间那一拍里 effect 已经把它接回去了。
+                 * 停失败会走 `fail` 出声——**但那时它已经不在 dock 里了**，
+                 * 这是有意的：人要的是「这个终端别再占着我的面板」。
+                 */
+                设关掉的终端((前) => new Set(前).add(id))
+                const 下一个 = 终端们.find((x) => x.sessionId !== id && x.state !== "exited")
+                if ($dockSessionId.get() === id) setDockSessionId(下一个?.sessionId)
                 client
                   .get("stopSession", { sessionId: id })
                   .then(() => {
-                    if ($dockSessionId.get() === id) setDockSessionId(undefined)
                     const pid = $activeProjectId.get()
                     if (pid) void loadSessions(client, pid)
+                    // **临时会话那一拨也要刷**——上一版漏了它，
+                    // 而没有项目时终端恰恰只在这一拨里
+                    void loadTempSessions(client)
                   })
                   .catch(fail)
               }}

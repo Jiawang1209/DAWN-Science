@@ -24,7 +24,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await 等进了对话(page)
 
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
 
   const dock = page.locator(".dock")
   await expect(dock).toBeVisible()
@@ -36,7 +36,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
 
 test("**路径是项目文件夹** —— 摆在上面，也真的在那里", async ({ dawn }) => {
   const { page, workspace } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
@@ -60,17 +60,17 @@ test("**路径是项目文件夹** —— 摆在上面，也真的在那里", as
 
 test("再开一个，两个都在标签里", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
   const dock = page.locator(".dock")
   await expect(dock.locator(".dock-tab")).toHaveCount(1, { timeout: 60_000 })
 
-  await dock.getByRole("button", { name: /新终端/ }).click()
+  await dock.getByRole("button", { name: /新开一个/ }).click()
   await expect(dock.locator(".dock-tab")).toHaveCount(2, { timeout: 60_000 })
 })
 
 test("**终端不混进会话列表** —— 它有自己的地方了", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
   await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 60_000 })
   // 会话列表里一条都不该多出来。**数 `.sess` 不数 `li`**——
   // 空列表里那一条 `li` 装的是「还没有会话」那句话
@@ -88,9 +88,9 @@ test("**终端不在侧栏，在对话这一侧**", async ({ dawn }) => {
    * 所以这条量两件事：侧栏里没有终端入口、也没有终端本身；
    * 而 dock 挂在主区里（`.main` 之内），不再横跨整个窗口压着侧栏。
    */
-  await expect(page.locator(".sidebar").getByRole("button", { name: "终端面板" })).toHaveCount(0)
+  await expect(page.locator(".sidebar").getByRole("button", { name: "终端", exact: true })).toHaveCount(0)
 
-  await page.getByRole("button", { name: "终端面板" }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
   await expect(page.locator(".main .dock")).toBeVisible({ timeout: 60_000 })
   await expect(page.locator(".sidebar .dock")).toHaveCount(0)
 
@@ -129,7 +129,7 @@ test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
   await expect(page.locator(".proj-item")).toHaveCount(0)
 
-  await page.getByRole("button", { name: "终端面板" }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
@@ -150,8 +150,77 @@ test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
 
 test("收起之后 dock 就没了", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await page.getByRole("button", { name: "终端", exact: true }).click()
   await expect(page.locator(".dock")).toBeVisible()
-  await page.locator(".dock").getByRole("button", { name: "收起终端" }).click()
+  await page.locator(".dock").getByRole("button", { name: "收起面板" }).click()
   await expect(page.locator(".dock")).toHaveCount(0)
+})
+
+/**
+ * **关掉一个终端，它就该走**（2026-08-16，作者报的：
+ * *「我发现点进去之后，终端点退出不好使，这是个 bug」*）。
+ *
+ * ## 这条以前不存在
+ *
+ * 这个文件里有七条用例：开、再开一个、路径、不混进会话列表、不在侧栏、
+ * 家目录、收起。**没有一条按过那颗 ×。** 于是它坏了很久也没人知道。
+ *
+ * ## 坏在哪
+ *
+ * 两处各自都说得通，凑在一起就成了「点了没反应」：
+ *   1. `onClose` 只在**有项目**时重拉列表——临时会话里那条终端于是永远
+ *      躺在列表里、状态还是「活着」；
+ *   2. 「掀开 dock 就自动开一个」那条 effect 盯的是 `dockSessionId` 变空，
+ *      于是关掉的下一拍它**当场把同一个接了回来**（或者新开一个）。
+ *
+ * 所以这条用例盯的是**结果**，不是那两处实现：标签没了、面板没了、
+ * 空态那句话出来了——**那句话在修好之前根本到不了**。
+ */
+test("**按 × 关掉终端：标签走、面板走、空态出来**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.getByRole("button", { name: "终端", exact: true }).click()
+
+  const dock = page.locator(".dock")
+  await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
+  await expect(dock.locator(".dock-tab")).toHaveCount(1)
+
+  await dock.getByRole("button", { name: /关闭终端 1/ }).click()
+
+  await expect(dock.locator(".dock-tab"), "标签还在——多半是被那条 effect 接回去了").toHaveCount(0)
+  await expect(dock.locator(".term-host")).toHaveCount(0)
+  // **这句话在修好之前根本到不了**：effect 会抢在前面再开一个
+  await expect(dock.locator(".empty")).toContainText("还没有终端")
+
+  /**
+   * **关完不会自己又冒一个出来。**
+   *
+   * 单看上面几条，「关掉之后 effect 立刻新开一个」也可能刚好来不及，
+   * 于是那几条侥幸绿。这里明确等一会儿再看——**看的是它没有回来**。
+   */
+  await page.waitForTimeout(1500)
+  await expect(dock.locator(".dock-tab"), "关完之后自己又开了一个").toHaveCount(0)
+})
+
+/**
+ * **自己 `exit` 掉的终端留下痕迹**——与上面那条是一对。
+ *
+ * 人按 × 是「别占着我的面板了」，而进程自己没了是**一件要说出来的事**
+ * （规格 7.5：失败必须出声）。两者都做成「消失」的话，
+ * 一个起不来就死的终端会表现成「点了新开什么也没发生」。
+ */
+test("**敲 exit：标签留着，标成已结束**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.getByRole("button", { name: "终端", exact: true }).click()
+
+  const dock = page.locator(".dock")
+  await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
+  await dock.locator(".term-host").click()
+  await page.keyboard.type("exit\n")
+
+  await expect(dock.getByText("已结束")).toBeVisible({ timeout: 30_000 })
+  await expect(dock.locator(".dock-tab"), "自己死掉的不该悄悄消失").toHaveCount(1)
 })

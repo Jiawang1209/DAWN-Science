@@ -18,7 +18,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import Database from "better-sqlite3"
-import { loadRegistryOrDefault, DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
+import { loadRegistryOrDefault, DEFAULT_CONFIG_YAML, 默认终端 } from "../src/config/loader.js"
 import { migrate } from "../src/store/schema.js"
 import { ProjectStore } from "../src/store/projects.js"
 import { RunStore } from "../src/store/runs.js"
@@ -209,5 +209,29 @@ describe("默认配置的形状（①-C · C5）", () => {
     // 对话形态与终端的区别必须写出来，否则用户不知道该选哪个
     expect(DEFAULT_CONFIG_YAML).toMatch(/对话形态/)
     expect(DEFAULT_CONFIG_YAML).toMatch(/终端/)
+  })
+})
+
+/**
+ * **默认那台终端在每个平台上都得是个真存在的命令**（2026-08-16）。
+ *
+ * 作者问「Windows 呢」，一查才发现模板里写死了 `bash`——
+ * 而 Windows 上没有它。`node-pty` 在那边走 ConPTY 是通的，
+ * **缺的只是一个能起来的命令**，症状却是「点新开什么也没发生」。
+ */
+describe("默认终端按平台给", () => {
+  it("类 Unix 上是交互式 bash", () => {
+    expect(默认终端("darwin")).toEqual({ command: "bash", args: ["-i"] })
+    expect(默认终端("linux")).toEqual({ command: "bash", args: ["-i"] })
+  })
+
+  /** **不是 `pwsh`**：那个要自己装；`powershell.exe` 随系统 */
+  it("Windows 上是 powershell.exe", () => {
+    expect(默认终端("win32")).toEqual({ command: "powershell.exe", args: [] })
+  })
+
+  it("写进模板里的就是这一份，不是另写一遍", () => {
+    const { command } = 默认终端()
+    expect(DEFAULT_CONFIG_YAML).toContain(`command: ${command}`)
   })
 })

@@ -82,7 +82,7 @@ export function TerminalDock({
           </span>
         ))}
         <Button variant="outline" size="sm" disabled={!canOpen} onClick={onNew}>
-          {t("＋ 新终端")}
+          {t("＋ 新开一个")}
         </Button>
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
@@ -96,7 +96,7 @@ export function TerminalDock({
           * 一颗按钮只该有一个名字。
           */}
         <Button variant="ghost" size="sm" onClick={onCloseDock}>
-          {t("收起终端")}
+          {t("收起面板")}
         </Button>
       </div>
 
@@ -123,7 +123,7 @@ export function TerminalDock({
         ) : currentId ? (
           <TerminalPane chunks={chunks} onInput={onInput} />
         ) : (
-          <p className="empty">{t("还没有终端。点「＋ 新终端」开一个，它会开在上面那个目录里。")}</p>
+          <p className="empty">{t("还没有终端。点「＋ 新开一个」，它会开在上面那个目录里。")}</p>
         )}
       </div>
     </section>

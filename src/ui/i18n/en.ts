@@ -439,11 +439,10 @@ export const EN: Readonly<Record<string, string>> = {
 
   /* ── 终端 ───────────────────────────────────────────────────── */
   "终端": "Terminal",
-  "终端面板": "Console",
-  "＋ 新终端": "+ New terminal",
-  "收起终端": "Hide terminal",
-  "打开终端": "Open terminal",
-  "还没有终端。点「＋ 新终端」开一个，它会开在上面那个目录里。":
+  "＋ 新开一个": "+ New one",
+  "收起面板": "Hide panel",
+  "打开面板": "Open panel",
+  "还没有终端。点「＋ 新开一个」，它会开在上面那个目录里。":
     "No terminal yet. Click “+ New terminal” to open one — it starts in the folder above.",
   "终端只保留最近的输出，更早的已滚出缓冲":
     "Only the most recent output is kept; earlier lines have scrolled out of the buffer",

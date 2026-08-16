@@ -248,10 +248,6 @@ export const EN: Readonly<Record<string, string>> = {
   "没有匹配「{0}」的项目或会话": "Nothing matches “{0}”",
   "已连接": "Connected",
   "未连接": "Not connected",
-  "连接中": "connecting",
-  // 服务器那一行的状态词。**「连接」带上下文**：同一行上那颗按钮也叫「连接」
-  "连接#服务器状态": "alive",
-  "断连": "exited",
   "连接中…": "Working on it…",
   "连接": "Connect",
   "正在打开这段对话": "Opening this chat",

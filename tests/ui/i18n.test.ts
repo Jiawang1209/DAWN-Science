@@ -9,11 +9,10 @@
  * 它会在控制台吼一声，但那要等到有人真的切到英文并走到那一屏。
  * 扫描把这件事提前到提交之前。
  */
-import { describe, it, expect, afterEach, vi } from "vitest"
+import { describe, it, expect } from "vitest"
 import { readFileSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 import { EN } from "../../src/ui/i18n/en.js"
-import { $lang, t, tc } from "../../src/ui/i18n/index.js"
 
 const UI = join(import.meta.dirname, "..", "..", "src", "ui")
 
@@ -42,14 +41,6 @@ function 调用点的msgid(src: string): string[] {
   const out: string[] = []
   for (const m of src.matchAll(/\b(?:tf?|msgid)\(\s*"((?:[^"\\]|\\.)*)"/g)) {
     out.push(JSON.parse(`"${m[1]}"`) as string)
-  }
-  /**
-   * **`tc()` 的键是两段拼起来的**（`tc("连接", "服务器状态")` → `连接#服务器状态`）。
-   * 不认它的话，「孤儿」那条会把 `en.ts` 里那条真在用的翻译判成没人用，
-   * 而「msgid 都有翻译」那条则会漏掉整整一类调用——**两条同时变瞎**。
-   */
-  for (const m of src.matchAll(/\btc\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"/g)) {
-    out.push(`${JSON.parse(`"${m[1]}"`) as string}#${JSON.parse(`"${m[2]}"`) as string}`)
   }
   return out
 }
@@ -195,33 +186,3 @@ describe("双语 · 英文那一面也要守中文那边的规矩", () => {
   })
 })
 
-/**
- * `tc()` 的行为（2026-08-16）。上面那些扫的是**静态一致性**，
- * 这里扫的是**它到底返回什么**——两件事，缺一件就等于没验。
- */
-describe("同形异义 · tc()", () => {
-  const 原来 = $lang.get()
-  afterEach(() => $lang.set(原来))
-
-  it("中文那侧只显示原文，**上下文不漏到屏幕上**", () => {
-    $lang.set("zh")
-    expect(tc("连接", "服务器状态")).toBe("连接")
-  })
-
-  /** 要害：同一句中文，两个地方两个英文 */
-  it("英文那侧按上下文分开：状态是 alive，按钮还是 Connect", () => {
-    $lang.set("en")
-    expect(tc("连接", "服务器状态")).toBe("alive")
-    expect(t("连接")).toBe("Connect")
-  })
-
-  /** 缺翻译要出声（规格 7.5），**且回落成中文而不是那个内部的键** */
-  it("查不到时吼一声，显示中文原文", () => {
-    $lang.set("en")
-    const 吼 = vi.spyOn(console, "error").mockImplementation(() => {})
-    expect(tc("连接", "根本没有这个上下文")).toBe("连接")
-    expect(吼).toHaveBeenCalledOnce()
-    expect(String(吼.mock.calls[0])).toContain("连接#根本没有这个上下文")
-    吼.mockRestore()
-  })
-})

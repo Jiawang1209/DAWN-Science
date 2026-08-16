@@ -52,7 +52,7 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/remote.tsx /tmp/r.bak\nfor 变异 in 'alive:? tc(\"连接\", \"服务器状态\")|? \"alive\"' 'Connect:? tc(\"连接\", \"服务器状态\")|? t(\"连接\")' '断连:t(\"断连\")|\"exited\"'; do\n  名=\"${变异%%:*}\"; 对=\"${变异#*:}\"; 前=\"${对%%|*}\"; 后=\"${对##*|}\"\n  echo \"── 变异：$名\"\n  python3 -c \"\nimport sys\np='src/ui/remote.tsx';s=open(p).read()\na=sys.argv[1]; b=sys.argv[2]\nassert s.count(a)==1, ('没匹配上', a)\nopen(p,'w').write(s.replace(a,b,1))\" \"$前\" \"$后\"\n  npm run build >/dev/null 2>&1\n  npx playwright test e2e/remote-connections.spec.ts -g \"状态词跟着语言切\" 2>&1 | grep -E \"✘|passed|failed\" | head -2\n  cp /tmp/r.bak src/ui/remote.tsx\ndone\nnpm run build >/dev/null 2>&1; echo 已还原",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/remote.tsx /tmp/r.bak; cp src/ui/i18n/en.ts /tmp/en.bak\necho \"── 变异：给三个词套上 t()（中文界面下就变回中文）\"\npython3 -c \"\np='src/ui/remote.tsx';s=open(p).read()\ns=s.replace('    ? \\\"alive\\\"','    ? t(\\\"连接\\\")',1)\nopen(p,'w').write(s)\"\npython3 -c \"\np='src/ui/i18n/en.ts';s=open(p).read()\ns=s.replace('  \\\"连接\\\": \\\"Connect\\\",','  \\\"连接\\\": \\\"alive\\\",',1); open(p,'w').write(s)\"\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/remote-connections.spec.ts -g \"切了语言\" 2>&1 | grep -E \"✘|passed|failed|套上\" | head -3\ncp /tmp/r.bak src/ui/remote.tsx; cp /tmp/en.bak src/ui/i18n/en.ts; npm run build >/dev/null 2>&1; echo 已还原",
     "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -4",
     "lintCommand": null,
     "devCommand": null,

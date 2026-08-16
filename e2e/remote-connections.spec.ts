@@ -62,20 +62,20 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   // **分组是一个标签，不是树**；没分组的不会被塞进一个叫「未分组」的假分组
   await expect(page.locator(".remote-group-name")).toHaveText("集群")
   await expect(row.locator(".remote-sub")).toContainText("dawn@fake.example")
-  // **刚加的写「断连」，且没有原因行**——我们还没试过，谈不上「连不上」。
+  // **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。
   // 「连不上」长什么样，由下面那条用例守（`exited` + 一行原因 + 红点）
-  await expect(row.locator(".remote-status")).toHaveText("断连")
+  await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
 
   await row.getByRole("button", { name: "连接" }).click()
-  // **2026-08-16 再改词**：中文「连接 / 连接中 / 断连」，英文 alive / connecting / exited。
-  // 夹具跑在中文（`fixtures.ts` 里写死 zh），所以这里断言的是中文那一套
-  await expect(row.locator(".remote-status")).toHaveText("连接", { timeout: 15_000 })
+  // **两种语言下都是 `alive` / `connecting` / `exited`**（2026-08-16 作者定的）
+  // ——夹具跑在中文，而这一列本来就不跟语言变
+  await expect(row.locator(".remote-status")).toHaveText("alive", { timeout: 15_000 })
   await expect(row).toHaveAttribute("data-state", "ready")
 
   await row.getByRole("button", { name: "断开" }).click()
   /**
-   * **人按的断开也写「断连」**（2026-08-16 作者定的：
+   * **人按的断开也写 `exited`**（2026-08-16 作者定的：
    * *「not connected 其实就是 exited，connected 就是 alive」*）。
    *
    * 这推翻了 2026-08-15 的分法（那时人按的断开写「未连」，掉线才写 `exited`）。
@@ -83,7 +83,7 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
    * 所以这里连着断言「没有原因行」——**没了它，这条用例与「连不上」那条
    * 就再没有任何区别**，而那正是我们分不清两种断开的那一刻。
    */
-  await expect(row.locator(".remote-status")).toHaveText("断连")
+  await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
   await expect(row).toHaveAttribute("data-state", "idle")
 })
@@ -103,7 +103,7 @@ test("**连不上时说清是为什么**，就在那一行上", async ({ dawn })
   await expect(page.locator(".remote-problem")).toContainText(/authentication/i, {
     timeout: 15_000,
   })
-  await expect(row.locator(".remote-status")).toHaveText("断连")
+  await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toBeVisible()
 })
 
@@ -127,7 +127,7 @@ test("**口令不回显**，且改别的字段不会把它弄丢", async ({ dawn
 
   // 口令还在：连得上就是证据（假服务器认的口令是 `dawn`）
   await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
-  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("连接", {
+  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("alive", {
     timeout: 15_000,
   })
 })
@@ -337,37 +337,27 @@ test("**服务器行与会话行同一条线**：左缘、名字、状态词都�
 })
 
 /**
- * **这一列中英文切得动**（2026-08-16 作者要的：*「到时候中英文可以切换」*）。
+ * **切了语言，这一列不变**（2026-08-16 作者定的：
+ * *「无论是中文模式，还是英文模式，我们都是 alive/connecting/exited」*）。
  *
- * ```
- * 中文   连接      连接中       断连
- * 英文   alive     connecting   exited
- * ```
+ * 今天这条用例改过两次方向，两次都对着当时的决定：
+ * 先是「切得动」（中文 `连接/断连` ↔ 英文 `alive/exited`），
+ * 现在是「切不动」。**留着它是因为两个方向都需要判据**——
+ * 「不变」同样是一句会被无意打破的承诺：任何人给这三个词套上 `t()`，
+ * 中文界面下它们就会变回中文，而那正是作者不要的。
  *
- * 上一版把 `alive` / `exited` 在两种语言下都写死——**写死的字面量是切不动的**，
- * 而那件事只有真的切一次才看得出来：单元测试里 `tc()` 返回什么都对，
- * 不代表这一行接了它。
- *
- * 「连接」还必须验英文是 `alive` **而不是 `Connect`**：
- * 同一行上那颗按钮就叫「连接」，两者共用一个 msgid 的话，
- * 状态词会在英文界面上变成一个动词。
+ * 顺带守住下面这件：**会话行那一列也是 `alive` / `exited`**，
+ * 两列在两种语言下读的是同一套词。
  */
-test("**状态词跟着语言切**：连接/断连 ↔ alive/exited", async ({ dawn }) => {
+test("**切了语言，服务器状态词不变**：始终 alive / exited", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
   const 状态 = page.locator(".remote-row").first().locator(".remote-status")
-  await expect(状态).toHaveText("断连")
+  await expect(状态).toHaveText("exited")
 
-  /**
-   * **先在中文里连一次**，再切英文。
-   *
-   * 这一步是变异测试逼出来的：第一版只在英文侧断言 `alive`，
-   * 而**「写死 `alive`」这个变异恰好也让英文侧是 `alive`**——用例全绿。
-   * 一个连着的服务器在中文里写什么，才是那个字面量藏不住的地方。
-   */
   await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
-  await expect(状态, "写死的 `alive` 就是在这儿露馅").toHaveText("连接", { timeout: 15_000 })
+  await expect(状态).toHaveText("alive", { timeout: 15_000 })
 
   await page.getByRole("button", { name: "设置", exact: true }).click()
   await page.getByRole("button", { name: "外观", exact: true }).click()
@@ -376,10 +366,8 @@ test("**状态词跟着语言切**：连接/断连 ↔ alive/exited", async ({ d
   await page.keyboard.press("Escape")
 
   await 展开远端英文(page)
-  // 同一台机器、同一个状态，**只是换了语言**。
-  // 而且这里必须**不是 `Connect`**：状态词与按钮共用 msgid 的话，
-  // 这个位置会冒出一个动词
-  await expect(状态, "写死的字面量切不动").toHaveText("alive")
+  // 同一台机器、同一个状态，**换了语言也还是这个词**
+  await expect(状态, "有人给这三个词套上了 t()").toHaveText("alive")
 
   await page.locator(".remote-row").first().getByRole("button", { name: "Disconnect" }).click()
   await expect(状态).toHaveText("exited")

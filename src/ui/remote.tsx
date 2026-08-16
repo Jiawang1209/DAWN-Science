@@ -22,7 +22,7 @@ import { SessionRow } from "./views.js"
 import { 短路径 } from "./format.js"
 import { 服务器图标, 三角图标 } from "./icons.js"
 
-import { t, tc } from "./i18n/index.js"
+import { t } from "./i18n/index.js"
 /**
  * 状态怎么读。**点 + 文字成对**，不单给一个。
  *
@@ -31,32 +31,47 @@ import { t, tc } from "./i18n/index.js"
  */
 const 状态文字 = (s: RemoteState): string =>
   /**
-   * **这一列只有三个词，中英各一套**（2026-08-16 作者定的）：
+   * **这一列只有三个词，两种语言下都是它们**（2026-08-16 作者定的）：
    *
    * ```
-   * 中文   连接      连接中       断连
-   * 英文   alive     connecting   exited
+   * alive     connecting     exited
    * ```
    *
-   * 上一版把 `alive` / `exited` 两种语言下都写死，理由是「省掉一条
-   * alive → alive 的自我映射」。**那条理由在作者要中文之后就不成立了**，
-   * 而写死的字面量是切不动的——所以它们现在都走 `t()`。
+   * 今天绕了一圈才回到这儿，绕的过程值得留下来：
    *
-   * 「连接」得走 `tc()`：**同一行上那颗按钮也叫「连接」**（英文 `Connect`），
-   * 一个 msgid 给不出两个英文。
+   * 1. 先是「连接 / 连接中 / 断连」对「alive / connecting / exited」，
+   *    为此给 i18n 补了 gettext 的 `msgctxt`（`tc()`）——因为**同一行上
+   *    那颗按钮本来就叫「连接」**，一个 msgid 给不出两个英文。
+   * 2. 然后作者定：*「无论中文模式还是英文模式，我们都是 alive/connecting/exited」*。
+   *
+   * 这么定解决了两件，都不是省事：
+   *
+   * - **下面的会话行本来就是 `alive` / `exited`，且不跟语言变**（那是会话的
+   *   状态枚举本身）。服务器跟着写，中文界面下两列才是同一套词；
+   *   否则「断连」对着 `exited`，又是「同一件事两个说法」。
+   * - **「连接中」那个撞车自己没了**：状态词 `connecting`、
+   *   而同一行上那颗按钮是「连接中…」——上一版两者只差一个省略号。
+   *
+   * 所以它们**不走 `t()`**：走了就要求英文表里写三条自我映射
+   * （`alive → alive`），那只是给扫描看的噪声。
+   * 代价说清楚：`alive` / `exited` 对不读英文的人是行话——
+   * 作者明确接受了这一点，会话那一列他已经这么用了很久。
+   *
+   * `tc()` 随之没有了调用点，一并撤掉（见 `docs/DEVELOPMENT_HISTORY.md`
+   * 2026-08-16 那条：真需要 msgctxt 时按那次的 commit 捡回来）。
    */
   s.kind === "ready"
-    ? tc("连接", "服务器状态")
+    ? "alive"
     : s.kind === "connecting"
-      ? t("连接中")
-      : // **没连着的一律写「断连」**（2026-08-16 作者定的：
+      ? "connecting"
+      : // **没连着的一律写 `exited`**（2026-08-16 作者定的：
         //   *「not connected 其实就是 exited，connected 就是 alive 就可以了」*）。
         //
         // 这**推翻了 2026-08-15 的一条分法**：那时「人按的断开」写「未连」、
         // 「掉线」写 `exited`，理由是后者要报原因。作者的意思是这一列只该有
         // 会话行那两个词。**三种「没连着」仍然分得出来**，只是不靠这个词：
         // 掉线的点是红的、且底下多一行原因；没连过的点是灰的、没有原因行。
-        t("断连")
+        "exited"
 
 export interface ConnectionDraft {
   id?: string | undefined
@@ -210,7 +225,7 @@ function ConnectionRow({
   activeSessionId?: string | undefined
 }) {
   const 连着 = conn.state.kind === "ready"
-  const 状态 = busy ? t("连接中") : 状态文字(conn.state)
+  const 状态 = busy ? "connecting" : 状态文字(conn.state)
   return (
     <li className={`remote-row ${连着 ? "on" : ""}`} data-state={busy ? "connecting" : conn.state.kind}>
       <div className="remote-main">

@@ -2563,10 +2563,58 @@ pre {
 /* **按钮常驻**：悬停才出现的入口，作者已经报过两次「没有这个功能」 */
 .remote-actions {
   display: flex;
-  gap: var(--dawn-space-3);
-  padding-left: calc(16px + var(--dawn-space-2));
-  margin-top: 2px;
+  /**
+   * **这三颗永远在一行里**（2026-08-16，作者两句：
+   * *「竟然出现了换行折叠，这是不行的，不好看」*、
+   * *「不是宽度的问题，是新对话、连接、编辑折叠换行的效果不好看」*）。
+   *
+   * 原来的症状是「连接」竖成了「连／接」——不是 flex 换行（它本来就是 `nowrap`），
+   * 而是**每颗按钮内部**把字断了：flex 项目能缩到 `min-content`，
+   * 而中文的 `min-content` 是**一个字**。
+   *
+   * 我第一版改成「整颗换到下一行」，作者仍然说不好看。**他是对的**：
+   * 一排动作换成两排，那一行的高度就跟着内容跳，一列服务器的节奏全乱了。
+   *
+   * 所以改成三条一起给：
+   *   `nowrap` 管住词内、`nowrap` 管住颗与颗之间、**字号降到 12px**。
+   * 12px 是本项目副信息那一档（`.row .sub`、`.state`、`.remote-sub` 都是它）——
+   * 它们本来就是次要动作，14px 是我今天给整行提字号时**顺带波及的**。
+   *
+   * 降到 12 之后，侧栏拖到最窄（`SIDEBAR_MIN` = 200）中英文都还在一行里，
+   * 判据在 `e2e/remote-connections.spec.ts`：**同一个 `top` + 不越界**。
+   */
+  flex-wrap: nowrap;
+  font-size: 12px;
+  gap: var(--dawn-space-2);
+  /**
+   * **这一条不缩进到名字底下，它是整行的动作条**。
+   *
+   * 副行（IP）缩进 24 是为了挂在名字那条起跑线下；这三颗不一样——
+   * 缩进 24 之后，英文在最窄的侧栏里会**越界 28px**（实测），
+   * 而被裁掉的按钮等于不存在。
+   *
+   * 右边则**不受 `--dawn-row-tail` 约束**：那一格是留给状态词与会话行
+   * 「⋯」那一列对齐的（判据在本文件上方那条「同一条线」），
+   * 与这一排动作无关。所以这里把它整格让回来。
+   */
+  padding-left: 0;
+  margin: 2px calc(-1 * var(--dawn-row-tail)) 0 0;
+  /**
+   * **放不下是裁掉，不是换行**——照会话标题那一副（作者：*「你就模仿下面
+   * 会话收纳里面，会话标题不换行，不折叠就好了」*）。
+   *
+   * 这里**不再自己写一遍 `overflow: hidden`**：`.sess-title` 需要它是因为
+   * 那一格要出省略号，而这一排的裁剪 `.sidebar` 已经做了（它是 `overflow-x: hidden`）。
+   * 加上去只是把裁剪线往里挪 12px，**而且没有任何判据能让它红**——
+   * 变异掉它，用例照样绿。本项目对「证伪不了的规则」的处理是不留（见准入规则 2）。
+   *
+   * 真正管住不换行的是三条：`flex-wrap: nowrap`、按钮的 `white-space: nowrap`
+   * 与 `flex: 0 0 auto`，还有把字号降到 12px 让它**根本挤不到那一步**。
+   * 前两条由「挤爆」那条用例盯着，后者由「英文 + 最窄侧栏」那条盯着。
+   */
 }
+/* 词内不许断——中文的 `min-content` 是一个字，flex 项目会一路缩到那儿 */
+.remote-actions .btn { white-space: nowrap; flex: 0 0 auto; }
 .remote-add { margin: var(--dawn-space-2) var(--dawn-space-3) 0; }
 .remote-problem {
   margin: var(--dawn-space-2) var(--dawn-space-3);

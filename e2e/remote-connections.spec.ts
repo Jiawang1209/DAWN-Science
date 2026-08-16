@@ -379,3 +379,134 @@ async function 展开远端英文(page: import("@playwright/test").Page) {
   await expect(head).toBeVisible()
   if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
 }
+
+/**
+ * **那三颗动作永远在一行里，且没被裁掉**（2026-08-16，作者三句）：
+ *
+ * > *「新对话、连接、编辑，竟然出现了换行折叠，这是不行的，不好看」*
+ * > *「不是宽度的问题，是折叠换行的效果不好看」*
+ * > *「你就模仿下面会话收纳里面，会话标题不换行，不折叠就好了」*
+ *
+ * 原来的症状是**词被拆开**：「连接」竖成「连／接」。`flex-wrap` 本来就是 `nowrap`——
+ * 断的是**每颗按钮内部**，因为 flex 项目能缩到 `min-content`，
+ * 而中文的 `min-content` 是一个字。
+ *
+ * 这条用例挑的是**最紧的那个组合**：英文（词更长）＋ 侧栏拖到最窄（`SIDEBAR_MIN` = 200）。
+ * 中文能过说明不了什么——出事的一定是英文那一侧。
+ */
+test("**服务器那三颗动作不换行、不被裁**：英文 + 最窄侧栏", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+
+  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await page.getByRole("button", { name: "外观", exact: true }).click()
+  await page.getByRole("radio", { name: "English" }).click()
+  await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 10_000 })
+  await page.keyboard.press("Escape")
+  await 展开远端英文(page)
+
+  /**
+   * 把侧栏收到最窄（下界 200 由 `clampWidth` 把住，多按也停在那儿）。
+   *
+   * **走键盘而不是合成指针拖动**：拖动这条路在这里量到过只走了 13px 就停
+   * （`dragging` 是 React 状态，前几个 `pointermove` 落在它变 true 之前），
+   * 于是用例是在一条 251 宽的侧栏上做的——**全绿，什么也没证明**。
+   * 键盘那条一步 16px，确定、且本身就是一条真实的无障碍路径。
+   *
+   * **宽度是异步落下来的**：按完立刻量，量到的还是旧值（这里踩过一次，
+   * 症状是「按了六下还是 260」，看着像键盘那条路坏了）。所以用轮询等它落定。
+   */
+  const sash = page.locator(".side-sash")
+  await sash.focus()
+  for (let i = 0; i < 6; i++) await sash.press("ArrowLeft")
+  await expect
+    .poll(() => page.evaluate(() => Math.round(document.querySelector(".sidebar")!.getBoundingClientRect().width)), {
+      message: "侧栏没收到最窄",
+      timeout: 5000,
+    })
+    .toBe(200)
+
+  const m = await page.evaluate(() => {
+    const box = document.querySelector(".remote-actions") as HTMLElement
+    const r = box.getBoundingClientRect()
+    return {
+      侧栏宽: Math.round(document.querySelector(".sidebar")!.getBoundingClientRect().width),
+      容器右: r.right,
+      行高: r.height,
+      颗: [...box.querySelectorAll("button")].map((b) => {
+        const q = b.getBoundingClientRect()
+        return { 字: b.textContent?.trim() ?? "", 顶: Math.round(q.top), 右: q.right, 高: Math.round(q.height) }
+      }),
+    }
+  })
+  /**
+   * **先验前提**：拖到底了吗。
+   *
+   * 拖不动的话，下面三条就是在一条 264 的宽侧栏上做的——全绿，什么也没证明。
+   * 这类「前提悄悄没成立」的假绿，本项目栽过不止一次。
+   */
+  expect(m.侧栏宽, "没拖到最窄，下面几条就白做了").toBe(200)
+  expect(m.颗.length, "这一行本来有三颗").toBe(3)
+
+  // ① 同一个 `top` = 在同一行上。**这是「不换行」的事实形式**
+  const 顶 = [...new Set(m.颗.map((c) => c.顶))]
+  expect(顶, `换行了：${JSON.stringify(m.颗)}`).toHaveLength(1)
+
+  // ② 每颗都只有一行高。整颗不换行、词内也不断
+  for (const c of m.颗) {
+    expect(c.高, `「${c.字}」被拆成了两行`).toBeLessThanOrEqual(m.行高)
+  }
+
+  // ③ 没被裁掉。`overflow: hidden` 是兜底，**不该在最窄处就用上**
+  const 末 = m.颗[m.颗.length - 1]!
+  expect(末.右, `「${末.字}」被裁掉了 ${Math.round(末.右 - m.容器右)}px`).toBeLessThanOrEqual(m.容器右)
+})
+
+/**
+ * **真放不下时是裁掉，不是换行**——照 `.sess-title` 那一副
+ * （作者：*「你就模仿下面会话收纳里面，会话标题不换行，不折叠就好了」*）。
+ *
+ * 上一条用例证明的是「当前这几个词在最窄的侧栏里放得下」。**它证明不了机制**：
+ * 眼下还剩 8px 余量，于是把 `white-space: nowrap` 和 `flex-wrap: nowrap`
+ * 一起撤掉，那条用例照样绿——变异测试当场量到了这件事。
+ *
+ * 所以这里**主动把一颗按钮的字撑长**，逼出那个条件。撑长之后只有两种结局：
+ * 裁掉（对）或者换行（错），而它们在几何上是分得开的——行高变不变。
+ */
+test("**动作条挤爆时裁掉而不换行**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await expect(page.locator(".remote-actions")).toBeVisible()
+
+  const m = await page.evaluate(() => {
+    const box = document.querySelector(".remote-actions") as HTMLElement
+    const 原高 = box.getBoundingClientRect().height
+    const 颗 = [...box.querySelectorAll("button")]
+    // **在同一个 evaluate 里改完就量**：React 没有机会重画回去
+    颗[0]!.textContent = "＋ 新对话 这是一个长得离谱的名字 用来把这一行挤爆 for good measure"
+    const r = box.getBoundingClientRect()
+    return {
+      原高,
+      现高: r.height,
+      容器右: r.right,
+      颗: 颗.map((b) => {
+        const q = b.getBoundingClientRect()
+        return { 字: (b.textContent ?? "").slice(0, 8), 顶: Math.round(q.top), 高: Math.round(q.height), 右: q.right }
+      }),
+    }
+  })
+
+  // ① 行没变高 = 谁都没换行（换行了这里会翻倍）
+  expect(m.现高, `挤爆之后这一行从 ${m.原高} 长到了 ${m.现高}`).toBeLessThanOrEqual(m.原高)
+
+  // ② 三颗仍在同一条基线上
+  expect([...new Set(m.颗.map((c) => c.顶))], `换行了：${JSON.stringify(m.颗)}`).toHaveLength(1)
+
+  // ③ 每颗都还是一行高——词内也没被拆（中文的 `min-content` 是一个字）
+  for (const c of m.颗) expect(c.高, `「${c.字}…」被拆成了两行`).toBeLessThanOrEqual(m.原高)
+
+  // ④ 容器没被撑宽：超出的那截落在框外，由 `.sidebar` 的 `overflow-x: hidden` 裁掉
+  expect(m.颗[m.颗.length - 1]!.右, "容器被撑开了，那就不是裁").toBeGreaterThan(m.容器右)
+})

@@ -90,6 +90,15 @@ export interface 用量汇总 {
   }
   /** 最常用的工具，从多到少，最多十个 */
   topTools: { name: string; runs: number }[]
+  /**
+   * 按项目（2026-08-16）。
+   *
+   * **口径与 `byModel` 一致**（只算记了模型的那些回合），
+   * 否则两张图加起来的总数会对不上，而人一定会去加。
+   *
+   * 临时会话同属一个「临时会话」项目，所以它们自成一块，不会散落。
+   */
+  byProject: { name: string; tokens: number; runs: number }[]
 }
 
 interface 行 {
@@ -164,6 +173,20 @@ export function 汇总用量(db: Database.Database, 今天: string): 用量汇�
         FROM runs`)
     .get() as { chats: number; turns: number | null; toolCalls: number | null; failedTurns: number | null }
 
+  const 项目 = db
+    .prepare(`
+      SELECT COALESCE(p.name, '?') AS name,
+             SUM(COALESCE(r.cost_input_tokens, 0) + COALESCE(r.cost_output_tokens, 0)) AS tokens,
+             COUNT(*) AS runs
+        FROM runs r
+        LEFT JOIN projects p ON p.id = r.project_id
+       WHERE r.model IS NOT NULL
+         AND (r.cost_input_tokens IS NOT NULL OR r.cost_output_tokens IS NOT NULL)
+       GROUP BY name
+       ORDER BY tokens DESC, name ASC
+       LIMIT 10`)
+    .all() as { name: string; tokens: number; runs: number }[]
+
   const 工具 = db
     .prepare(`
       SELECT substr(request_type, 11) AS name, COUNT(*) AS runs
@@ -183,6 +206,7 @@ export function 汇总用量(db: Database.Database, 今天: string): 用量汇�
       failedTurns: 活.failedTurns ?? 0,
     },
     topTools: 工具,
+    byProject: 项目,
     total: input + output,
     input,
     output,

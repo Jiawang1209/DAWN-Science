@@ -117,3 +117,100 @@ test("**活动洞察数的是真事**", async ({ dawn }) => {
   // **平均每回合不是 0，也不是「—」**——两者都表示「还没跑过」
   await expect(取("平均每回合")).toContainText("token")
 })
+
+/**
+ * 一半饼图、一半排行；图例在饼图**下面**且**列对齐**
+ * （2026-08-16 作者要的：*「饼图的位置应该占据页面的一半…
+ * 图例的位置应该在饼图的下面…模型名字应该对齐，消耗的 token 应该对齐」*）。
+ *
+ * 「对齐」的事实形式是**几何**：几行图例的同一列，左缘要在同一条竖线上。
+ * 只看「有没有那几个字」是验不出对齐的——上一版用 flex 时字也都在。
+ */
+test("**饼图占一半、图例在下面且列对齐**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+  await 进用量(page)
+
+  const m = await page.evaluate(() => {
+    const 半 = document.querySelector(".usage-half") as HTMLElement
+    const 饼块 = 半.children[0] as HTMLElement
+    const 排行块 = 半.children[1] as HTMLElement
+    const svg = document.querySelector(".usage-pie") as SVGElement
+    const 图例 = document.querySelector(".usage-legend-list") as HTMLElement
+    const 数们 = [...document.querySelectorAll(".usage-legend-num")].map(
+      (e) => e.getBoundingClientRect().left,
+    )
+    const 名们 = [...document.querySelectorAll(".usage-legend-name")].map(
+      (e) => e.getBoundingClientRect().left,
+    )
+    return {
+      整宽: 半.getBoundingClientRect().width,
+      饼块宽: 饼块.getBoundingClientRect().width,
+      排行块左: 排行块.getBoundingClientRect().left,
+      饼块右: 饼块.getBoundingClientRect().right,
+      饼底: svg.getBoundingClientRect().bottom,
+      图例顶: 图例.getBoundingClientRect().top,
+      数们,
+      名们,
+    }
+  })
+
+  // ① 两块各占一半（各自不少于四成，且左右分开）
+  expect(m.饼块宽 / m.整宽, "饼图那一块没占到一半").toBeGreaterThan(0.4)
+  expect(m.排行块左, "两块叠在一起了").toBeGreaterThanOrEqual(m.饼块右 - 1)
+
+  // ② 图例在饼图**下面**，不是右边
+  expect(m.图例顶, "图例还在饼图旁边").toBeGreaterThanOrEqual(m.饼底 - 1)
+
+  /**
+   * ③ 列对齐。**只有一行时这一条什么也证明不了**，所以显式跳过并说清楚——
+   * 假模型只有一个模型，多模型的场景由单元那侧的口径判据覆盖。
+   */
+  if (m.数们.length > 1) {
+    expect(Math.max(...m.数们) - Math.min(...m.数们), "token 那一列没对齐").toBeLessThanOrEqual(1)
+    expect(Math.max(...m.名们) - Math.min(...m.名们), "名字那一列没对齐").toBeLessThanOrEqual(1)
+  }
+
+  // ④ 另一半是「按项目」，且数得出东西
+  await expect(page.getByRole("heading", { name: "按项目" })).toBeVisible()
+  await expect(page.locator(".usage-rank li").first()).toBeVisible()
+})
+
+/**
+ * 日历的三个视角（2026-08-16 作者要的：*「每日，每周，累计」*）。
+ *
+ * 它们回答三个不同的问题，**不是同一张图的三种皮肤**：
+ * 哪天在干活 / 这一周花了多少 / 到这周为止一共花了多少。
+ * 所以判据盯的是**格子数与文案都真的变了**——只验按钮点得动是没用的。
+ */
+test("**日历三视角：每日 / 每周 / 累计**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+  await 进用量(page)
+
+  // 每日：一年铺开是几百格
+  const 每日格数 = await page.locator(".usage-cell").count()
+  expect(每日格数).toBeGreaterThan(300)
+
+  // 每周：一格一周，**格子数掉一个数量级**
+  await page.getByRole("button", { name: "每周", exact: true }).click()
+  await expect.poll(() => page.locator(".usage-cell").count()).toBeLessThan(每日格数 / 5)
+  await page.locator(".usage-cell").last().hover()
+  await expect(page.locator(".usage-tip")).toContainText("那一周")
+
+  // 累计：格子数一样，但说的是「到这为止一共」
+  await page.getByRole("button", { name: "累计", exact: true }).click()
+  await page.locator(".usage-cell").last().hover()
+  await expect(page.locator(".usage-tip")).toContainText("为止一共")
+
+  await page.getByRole("button", { name: "每日", exact: true }).click()
+  await expect.poll(() => page.locator(".usage-cell").count()).toBe(每日格数)
+})

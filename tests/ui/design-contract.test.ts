@@ -654,6 +654,97 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     expect(犯规, "放行的前提就是这些地方精确匹配——不然那对撞车是真的").toEqual([])
   })
 
+  /**
+   * **JSX 里写下的类名，CSS 里必须真的有**（2026-08-16）。
+   *
+   * 起因：`工具权限` 那一屏的 `.perm-choice` **一条样式都没有**——
+   * 类名在 JSX 里发明出来、CSS 里从没定义，于是两个选项挤成了一段连排的文字，
+   * 单选钮、名字、说明全糊在一起。作者的原话是*「实在是太难看了」*。
+   *
+   * **这是同一个 bug 的第二次**：2026-08-13 那次是 `＋` 的菜单
+   * （*「＋ 的这个样式，很难看，应该是一列的」*——`.menu` 那个类当时也没定义）。
+   * 犯到第二次就该配判据了，不该再靠「记得写样式」。
+   *
+   * 只看**静态字面量**里的类名：模板串拼出来的（`row ${x ? "current" : ""}`）
+   * 那一半是动态的，静态判不了——**判得了的先判住**，比一条都没有强得多。
+   */
+  it("**JSX 里的类名，styles.css 里都定义过**", () => {
+    const css = read("styles.css")
+    const 有定义 = new Set<string>()
+    for (const m of css.matchAll(/\.([a-zA-Z][\w-]*)/g)) 有定义.add(m[1]!)
+    const 缺的 = new Set<string>()
+    for (const f of tsxFiles()) {
+      /**
+       * **先把注释剥掉。** 这个文件里有一句注释引用了 Hermes 的源码
+       * （`<div className="ml-auto flex …">`），第一版把它当成了真的类名，
+       * 于是报出 `.flex` / `.ml-auto` / `.…` 三条假警——
+       * 而 `.…` 那条谁看了都会愣一下。**假警会把扫描训练成噪声。**
+       */
+      const src = read(f).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "")
+      /**
+       * 两种写法都要看：
+       *   `className="a b"`           静态
+       *   `` className={`a ${x}`} ``  模板串——**取它里面的静态片段**
+       *
+       * **第二种不能漏**：`.perm-choice` 正是这么写的，而第一版只认静态串，
+       * 于是它对那个 bug 视而不见（我是看截图发现的，不是它抓的）。
+       * 一条抓不住自己那个案例的扫描，比没有更坏——本项目为此栽过两次。
+       */
+      /**
+       * 紧挨着 `${…}` 的那一截**是前缀，不是完整类名**——
+       * `` `usage-cell l${档}` `` 渲染出来是 `l3`，而 CSS 里定义的是 `.l0….l4`。
+       * 所以这种片段只要求「是某个已定义类名的前缀」。
+       *
+       * 这条不是放水：`.perm-choice` 那个真 bug 恰好也是这个形状
+       * （`` `perm-choice${…}` ``），而**没有任何类名以它开头**时照样红。
+       */
+      const 插值 = "\u0000"
+      const 收 = (片: string, 允许前缀: boolean) => {
+        for (const 名 of 片.trim().split(/\s+/)) {
+          if (!名) continue
+          if (名.includes(插值)) {
+            if (!允许前缀) continue
+            // **削干净**：两个插值可以挨在一起（`kout-${a}${b ? …}`），
+            // 只削一个会留下一个看不见的字符，报出来是一条谁也看不懂的 `.kout- `
+            const 前缀 = 名.slice(0, 名.indexOf(插值))
+            if (前缀 && ![...有定义].some((d) => d.startsWith(前缀))) 缺的.add(`${f}：.${前缀}`)
+            continue
+          }
+          if (!有定义.has(名)) 缺的.add(`${f}：.${名}`)
+        }
+      }
+      for (const m of src.matchAll(/className="([^"{}$]+)"/g)) 收(m[1]!, false)
+      for (const m of src.matchAll(/className=\{`([^`]*)`\}/g)) {
+        收(m[1]!.replace(/\$\{[^}]*\}/g, 插值), true)
+      }
+    }
+    /**
+     * **既有欠账，2026-08-16 立此扫描时就有的 19 处。**
+     *
+     * 它们不是这次引入的，也不都坏（有些只是「没样式但也不需要」，
+     * 比如 `.flex` / `.ml-auto` 这种没人实现的工具类，该做的是从 JSX 里删掉）。
+     * 一次全修会把这条扫描的落地拖成一次大重构，而**扫描先立起来的价值更大**：
+     * 从今天起**新增一个就红一次**。
+     *
+     * 这份清单**只能减不能加**——加一条就要在这里写明为什么。
+     * 已经修掉的两处不在清单里：`.perm-choice`（工具权限那一屏挤成一段文字）
+     * 与 `.skills-*`（Agent Skills 整屏没有样式）——它们正是这条扫描抓出来的第一批。
+     */
+    const 欠账 = new Set([
+      "files.tsx：.preview", "files.tsx：.table-preview", "files.tsx：.tree-actions",
+      "files.tsx：.tree-node", "panels.tsx：.tool-change", "panels.tsx：.turn-group",
+      "primitives.tsx：.field-control", "primitives.tsx：.loader-label", "primitives.tsx：.opener",
+      "remote.tsx：.remote-group", "views.tsx：.danger", "views.tsx：.edit-btn",
+      "views.tsx：.side-section-toggle",
+      "views.tsx：.stopping", "views.tsx：.thought-label", "views.tsx：.who-name",
+      "views.tsx：.kout-rich",
+    ])
+    expect(
+      [...缺的].filter((x) => !欠账.has(x)).sort(),
+      "这些类名只存在于 JSX 里——写它的人以为自己配了样式",
+    ).toEqual([])
+  })
+
   it("**画布一律 16×16，实心是默认** —— 描边是例外，例外要写明在哪", () => {
     const src = read("icons.tsx")
     expect(src, "画布必须是 16×16").toMatch(/viewBox="0 0 16 16"/)

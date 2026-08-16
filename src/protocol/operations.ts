@@ -988,6 +988,10 @@ export const OPERATIONS = {
           .strict(),
         /** 最常用的工具，最多十个 */
         topTools: z.array(z.object({ name: z.string().min(1), runs: NonNegInt }).strict()),
+        /** 按项目，最多十个。**口径与 `byModel` 一致**，两者总数对得上 */
+        byProject: z.array(
+          z.object({ name: z.string().min(1), tokens: NonNegInt, runs: NonNegInt }).strict(),
+        ),
       })
       .strict(),
     mutating: false,

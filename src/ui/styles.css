@@ -1943,13 +1943,29 @@ pre {
  * 一行设置：**左边名字与说明，右边控件**，行间一条 hairline。
  * 最后一行不带线——那条线是「下面还有」的意思。
  */
+/**
+ * 一行设置。**网格，不是 `space-between` 的 flex**（2026-08-16 重排）。
+ *
+ * 作者：*「设置里面其他内容的排版，实在是太难看了。」*
+ *
+ * `space-between` 的毛病是**每一行各推各的**：控件的左缘取决于这一行
+ * 名字有多长，于是三行下来右边那一列参差不齐，中间还各留一道宽窄不一的鸿沟。
+ * 网格让**几行之间的列对齐**——与「用量」那一屏的图例是同一条道理。
+ *
+ * 控件列封在 `280px`：一个横跨半屏的输入框看不出它期待多长的内容，
+ * 而这里填的是路径与 key，长度是可预期的。
+ */
 .set-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
   align-items: center;
-  justify-content: space-between;
   gap: var(--dawn-space-4);
   padding: var(--dawn-space-3) 0;
   border-bottom: 1px solid var(--dawn-stroke-4);
+}
+/** 说明文字不许拉满一行：**一行超过 60 个字，眼睛回到行首会找错行** */
+.set-desc, .set-section-desc, .settings-section > .caveat, .settings-section > .hint {
+  max-width: 62ch;
 }
 
 .set-rows > .set-row:last-child {
@@ -3882,6 +3898,15 @@ pre {
 
 .usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .usage-block-title { margin: 0; font-size: 14px; font-weight: var(--dawn-weight-medium); }
+/** 标题行：标题在左，切换在右（形状学自作者给的截图） */
+.usage-block-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
+.usage-seg { display: flex; align-items: center; gap: var(--dawn-space-3); margin-left: auto; }
+/**
+ * 三选一。**当前那个用「不淡」来表示，不加底色**——
+ * 这一屏已经有一块强调色（饼图），再多一块就谁也不强调了。
+ */
+.usage-seg-btn { color: var(--dawn-text-3); }
+.usage-seg-btn.current { color: var(--dawn-text-1); font-weight: var(--dawn-weight-medium); }
 
 /**
  * 日历。**四档 + 空**，颜色全部从强调色派生——
@@ -3932,9 +3957,42 @@ pre {
 .usage-swatch.l4 { background: var(--dawn-accent); }
 
 /* 饼图 + 图例 */
-.usage-pie-row { display: flex; align-items: center; gap: var(--dawn-space-4); flex-wrap: wrap; }
-/** **大一点**（2026-08-16 作者要的）：140 → 208 */
-.usage-pie { width: 208px; height: 208px; flex: 0 0 auto; }
+/**
+ * **一半饼图、一半排行**（2026-08-16 作者要的）。
+ * 窄了自己叠成一列——不是靠断点，是靠内容放不下。
+ */
+.usage-half {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--dawn-space-4);
+  align-items: start;
+}
+/** 饼在上、图例在下 */
+.usage-pie-col { display: flex; flex-direction: column; align-items: center; gap: var(--dawn-space-3); }
+
+/**
+ * 按项目那一列。**底衬的长度就是占比**——
+ * 再让人去读一遍百分数，等于同一件事说两遍。
+ */
+.usage-rank { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.usage-rank li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  min-height: var(--dawn-row-h);
+  border-radius: var(--dawn-radius-row);
+}
+.usage-rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-rank-num { font-variant-numeric: tabular-nums; }
+.usage-rank-sub { color: var(--dawn-text-3); font-size: 12px; white-space: nowrap; }
+
+/**
+ * **撑满它那一半**（2026-08-16 作者要的：*「饼图的位置，其实应该占据页面的一半」*）。
+ * 封一个上限：再大就只是一块色，读不出更多东西。
+ */
+.usage-pie { width: 100%; max-width: 300px; height: auto; flex: 0 0 auto; }
 .usage-slice { cursor: default; }
 
 /** 两栏。窄了自己叠成一栏——**不是靠断点，是靠内容放不下** */
@@ -3953,10 +4011,32 @@ pre {
 }
 .usage-fact-name { color: var(--dawn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usage-fact-value { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.usage-legend-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.usage-legend-list li { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+/**
+ * 图例：**网格，不是 flex**。
+ *
+ * flex 是一行一行各自排的——名字一长，右边那几列就参差不齐。
+ * 只有网格能让**几行之间的列对齐**，而作者要的正是这个
+ * （*「模型名字应该对齐，消耗的 token 应该对齐」*）。
+ *
+ * 四列：点 / 名字 / token / 占比 …… 回合数跟在最后。
+ * 数字列一律 `tabular-nums`：等宽数字之外的字形宽度不同，
+ * 不钉住的话「1」和「7」占的位置都不一样。
+ */
+.usage-legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  gap: 4px var(--dawn-space-3);
+  align-items: center;
+  width: 100%;
+}
+.usage-legend-list li { display: contents; }
 .usage-legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.usage-legend-num { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.usage-legend-num { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.usage-legend-pct { font-variant-numeric: tabular-nums; color: var(--dawn-text-3); text-align: right; }
+.usage-legend-runs { color: var(--dawn-text-3); font-size: 12px; white-space: nowrap; text-align: right; }
 .usage-dot { width: 10px; height: 10px; border-radius: var(--dawn-radius-full); flex: 0 0 auto; }
 
 /**
@@ -3972,3 +4052,82 @@ pre {
 .usage-slice { stroke: var(--dawn-surface-panel); stroke-width: 1.5; }
 
 .usage-notes { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+
+/* ── 工具权限的三张卡（2026-08-16）───────────────────────────────
+ *
+ * **`.perm-choice` 此前一条样式都没有。** 类名在 JSX 里发明出来、
+ * CSS 里从没定义——于是两个选项挤成了一段连排的文字，
+ * 单选钮、名字、说明全糊在一起。
+ *
+ * 这与本项目历史上 `.menu` 那次是同一个 bug（*「＋ 的这个样式，很难看，
+ * 应该是一列的」*）。**判据见 `design-contract.test.ts` 那条新扫描**：
+ * JSX 里写下的类名，CSS 里必须真的有。
+ */
+.perm-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 2px var(--dawn-space-2);
+  padding: var(--dawn-space-3);
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
+  cursor: pointer;
+}
+.perm-choice + .perm-choice { margin-top: var(--dawn-space-2); }
+.perm-choice.current { border-color: var(--dawn-accent); background: var(--dawn-accent-soft); }
+.perm-choice input { margin: 3px 0 0; accent-color: var(--dawn-accent); }
+.perm-choice .name { grid-column: 2; font-weight: var(--dawn-weight-medium); }
+.perm-choice .sub { grid-column: 2; color: var(--dawn-text-2); font-size: 13px; line-height: 1.5; }
+
+/* ── Agent Skills / 子 Agent（2026-08-16 补样式）──────────────────
+ *
+ * **这一屏此前一条样式都没有**：`.skills-page` / `.skill-name` /
+ * `.skill-path` … 七个类名全是 JSX 里发明出来、CSS 里从没定义的，
+ * 于是它渲染成了一串裸的 `<ul>` 项目符号——路径和错误信息直接粘在一起
+ * （`…/.dawn/skills` + `skill path does not exist`，中间没有任何分隔）。
+ *
+ * 是那条新扫描（「JSX 里的类名，styles.css 里都定义过」）把它抓出来的。
+ * 排版照「用量」那一屏：**一块一块，块里成行，行内左名右值**。
+ */
+.skills-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-4);
+  padding: var(--dawn-space-4);
+  max-width: var(--dawn-page-max-w);
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  overflow-y: auto;
+}
+.skills-head { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.skills-head h2 { margin: 0; font-size: 1.25rem; font-weight: var(--dawn-weight-semibold); }
+/** 说明不许拉满一行——**一行超过 60 个字，眼睛回到行首会找错行** */
+.skills-head p { margin: 0; color: var(--dawn-text-2); max-width: 62ch; }
+
+.skill-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.skill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--dawn-space-3);
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
+}
+.skill-name { margin: 0; font-weight: var(--dawn-weight-medium); }
+.skill-desc { margin: 0; color: var(--dawn-text-2); max-width: 72ch; }
+/**
+ * 路径那一行。**等宽字 + 淡一档**：它是给人去 Finder 里找的坐标，
+ * 不是这一条技能的内容。`gap` 是要害——上一版没有它，
+ * 路径与后面那句「读不进来」直接粘成了一个词。
+ */
+.skill-meta { margin: 2px 0 0; display: flex; align-items: baseline; gap: var(--dawn-space-2); flex-wrap: wrap; }
+.skill-path {
+  font-family: var(--dawn-font-mono);
+  font-size: 12px;
+  color: var(--dawn-text-3);
+  overflow-wrap: anywhere;
+}
+.skill-problems { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.skill-problems ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.skill-problems li { display: flex; align-items: baseline; gap: var(--dawn-space-2); flex-wrap: wrap; }

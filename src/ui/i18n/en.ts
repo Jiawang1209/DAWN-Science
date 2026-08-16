@@ -129,7 +129,7 @@ export const EN: Readonly<Record<string, string>> = {
   "内置 agent 可以任意读写、执行命令。这是目前的默认。":
     "The built-in agent may read, write and run anything. This is the current default.",
   "拦下危险操作": "Block risky operations",
-  "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。**拦下就是拦下**——这一版还不能「问你一句然后放行」。":
+  "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。拦下就是拦下——这一版还不能「问你一句然后放行」。":
     "Writing to data/raw/, writing outside the workspace, deleting, installing packages, network access and git push are refused, and the reason is handed to the model so it can take another route. **Blocked means blocked** — this version cannot yet ask you and then let it through.",
   "这是一道工具门，不是沙箱：它只管内置的 read / write / edit / bash 四个工具，管不到子 agent 与 MCP 带进来的工具，也拦不住绕过工具的路子。":
     "This is a tool gate, not a sandbox: it covers only the four built-in tools (read / write / edit / bash). It does not cover tools brought in by sub-agents or MCP, and it cannot stop anything that bypasses tools altogether.",
@@ -579,12 +579,18 @@ export const EN: Readonly<Record<string, string>> = {
   "另有 {0} 个回合（约 {1} token）不知道是哪个模型花的——外部 CLI 的模型由它自己管，本版之前的历史回合也没记。它们不计入上面任何一处。":
     "Another {0} turns (about {1} tokens) have no model on record — external CLIs manage their own model, and turns from before this version were never tagged. They count towards nothing above.",
   "Token 活动": "Token activity",
+  "每日": "Daily",
+  "每周": "Weekly",
+  "累计": "Cumulative",
+  "{0} 那一周使用了 {1} 个 Token": "Week of {0}: {1} tokens",
+  "到 {0} 为止一共 {1} 个 Token": "{1} tokens in total through {0}",
   "Token 活动日历": "Token activity calendar",
   "{0} 没有用量": "{0}: nothing",
   "{0} 使用了 {1} 个 Token": "{0}: {1} tokens",
   "少": "Less",
   "多": "More",
   "按模型": "By model",
+  "按项目": "By project",
   "活动洞察": "Activity",
   "对话总数": "Chats",
   "回合总数": "Turns",

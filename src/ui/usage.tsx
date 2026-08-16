@@ -30,7 +30,7 @@
  */
 import { useEffect, useState } from "react"
 import { Button } from "./primitives.js"
-import { t, tf, $lang } from "./i18n/index.js"
+import { t, tf, msgid, $lang } from "./i18n/index.js"
 import { useStore } from "@nanostores/react"
 
 export interface 用量数据 {
@@ -46,31 +46,31 @@ export interface 用量数据 {
   unattributed: { runs: number; tokens: number }
   activity: { chats: number; turns: number; toolCalls: number; distinctTools: number; failedTurns: number }
   topTools: { name: string; runs: number }[]
+  byProject: { name: string; tokens: number; runs: number }[]
 }
 
 /**
- * 把一个大数写成人读得下去的样子。
+ * 把一个 token 数写成人读得下去的样子。
  *
- * 中文走**万 / 亿**，英文走 **K / M / B**——这不是同一套进位，
- * 「3144.7万」翻成「31.4M」才对，直译成「31447 thousand」没人读得下去。
+ * **两种语言都走 k / M / B**（2026-08-16 作者定的：
+ * *「token 的单位其实应该是 k」*）。
+ *
+ * 上一版中文走的是「万 / 亿」。那是中文数字的正确读法，**但不是 token 的读法**：
+ * 上下文窗口叫「128k」、价目表按「每百万 token」计——
+ * **这一行的量纲跟着这个生态走，不跟着自然语言走**。
+ * 写成「3144.7 万」，人还得在脑子里换算回 31M 才能跟模型的上下文上限比。
+ *
+ * 小数点后一位就够：**再多一位不会让人做出不同的决定**。
  */
-export function 读数(n: number, lang: "zh" | "en"): string {
+export function 读数(n: number, _lang?: "zh" | "en"): string {
   if (n < 1000) return String(n)
-  const 档 =
-    lang === "zh"
-      ? [
-          { 界: 1e8, 位: "亿" },
-          { 界: 1e4, 位: "万" },
-        ]
-      : [
-          { 界: 1e9, 位: "B" },
-          { 界: 1e6, 位: "M" },
-          { 界: 1e3, 位: "K" },
-        ]
-  for (const d of 档) {
+  for (const d of [
+    { 界: 1e9, 位: "B" },
+    { 界: 1e6, 位: "M" },
+    { 界: 1e3, 位: "k" },
+  ]) {
     if (n >= d.界) {
       const v = n / d.界
-      // 小数点后一位就够——**再多一位不会让人做出不同的决定**
       return `${v >= 100 ? Math.round(v) : Number(v.toFixed(1))}${d.位}`
     }
   }
@@ -152,8 +152,53 @@ export function UsagePanel({
       {/* ── 日历 ─────────────────────────────────────────────── */}
       <UsageHeatmap daily={data.daily} lang={lang} />
 
-      {/* ── 饼图 ─────────────────────────────────────────────── */}
-      <UsagePie byModel={data.byModel} lang={lang} />
+      {/**
+        * ── 一半饼图、一半排行（2026-08-16 作者要的）──────────────────
+        *
+        * 作者：*「饼图的位置，其实应该占据页面的一半……
+        * 现在另外一面应该放置什么内容呢？」*
+        *
+        * 另一半放**按项目**。三个候选里选它，理由是它回答的问题最实在：
+        * 「**哪个项目在烧 token**」——这是在项目里干活的人真会去做的判断，
+        * 而「按模型」回答的是「哪个模型贵」，那件事你换模型时才关心。
+        * （另两个候选：输入/输出构成、最近 14 天柱状图。前者的信息
+        * 其实已经在下面那两栏里，后者与上面的日历重复。）
+        *
+        * **口径与饼图一致**（只算记了模型的回合），所以两边总数对得上——
+        * 人一定会去加。
+        */}
+      <div className="usage-half">
+        <UsagePie byModel={data.byModel} lang={lang} />
+        <div className="usage-block">
+          <h3 className="usage-block-title">{t("按项目")}</h3>
+          {data.byProject.length === 0 ? (
+            <p className="hint">{t("还没有记到任何一次内置对话的用量。跑一轮对话之后再来看。")}</p>
+          ) : (
+            <ul className="usage-rank">
+              {data.byProject.map((p) => (
+                <li
+                  key={p.name}
+                  /**
+                   * 底衬用**背景渐变**画，不用另一个绝对定位的元素。
+                   *
+                   * 后者要靠 `z-index` 把文字压回上层，而**跨组件的层级
+                   * 一律从 `tokens.css` 那把梯子取**（设计契约里那条扫描当场抓了我）。
+                   * 一条底衬不值得在那把梯子上占一格——换成渐变，
+                   * 层级问题根本不存在。**长度就是占比**，不用再读一遍百分数。
+                   */
+                  style={{
+                    background: `linear-gradient(to right, var(--dawn-accent-soft) ${Math.max(2, (p.tokens / (data.byProject[0]?.tokens || 1)) * 100)}%, transparent 0)`,
+                  }}
+                >
+                  <span className="usage-rank-name">{p.name}</span>
+                  <span className="usage-rank-num">{数(p.tokens)}</span>
+                  <span className="usage-rank-sub">{tf("{0} 回合", p.runs)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
 
       {/**
         * ── 活动洞察 / 最常用的工具（2026-08-16，形状学自作者给的截图）───
@@ -260,9 +305,17 @@ export function UsageHeatmap({
   daily: { date: string; tokens: number }[]
   lang: "zh" | "en"
 }) {
-  const [停在, 设停在] = useState<{ x: number; y: number; date: string; tokens: number } | undefined>(
-    undefined,
-  )
+  const [停在, 设停在] = useState<{ x: number; y: number; 文: string } | undefined>(undefined)
+  /**
+   * 每日 / 每周 / 累计（2026-08-16 作者要的，形状学自他给的截图）。
+   *
+   * 三个视角回答的是三个问题，**不是同一张图的三种皮肤**：
+   *   - **每日**：哪天在干活（一格一天）
+   *   - **每周**：这一周总共花了多少（一格一周——日粒度在一年跨度上太碎）
+   *   - **累计**：到这一周为止一共花了多少（**它是单调不减的**，
+   *     看的是「涨得快不快」，而不是「哪天忙」）
+   */
+  const [视角, 设视角] = useState<"每日" | "每周" | "累计">("每日")
   const 周数 = 53
   const 今天 = 今天本地()
   const 表 = new Map(daily.map((d) => [d.date, d.tokens]))
@@ -284,9 +337,65 @@ export function UsageHeatmap({
   const 格 = 11
   const 隙 = 3
   const 步 = 格 + 隙
-  const 网格高 = 7 * 步
+  /** 每周 / 累计是一行；每日是七行 */
+  const 行数 = 视角 === "每日" ? 7 : 1
+  const 网格高 = 行数 * 步
   const 标高 = 16
   const 宽 = 周数 * 步
+
+  /**
+   * 三个视角各自算出「要画哪些格子」。
+   *
+   * **一处算完，渲染只管画**——上一版把「未来不画」「分档」「文案」
+   * 混在 JSX 的双重 map 里，加一个视角就得抄一遍。
+   */
+  const 格子们: { key: string; x: number; y: number; 档: number; 文: string }[] = []
+  if (视角 === "每日") {
+    const 最大 = Math.max(1, ...daily.map((d) => d.tokens))
+    for (const [i, 周] of 列.entries()) {
+      for (const [j, 格子] of 周.entries()) {
+        // **未来的日子不画**：这一周还没过完，剩下几格是空的，不是「没用」
+        if (格子.date > 今天) continue
+        格子们.push({
+          key: 格子.date,
+          x: i * 步,
+          y: j * 步,
+          档: 格子.tokens === 0 ? 0 : Math.min(4, Math.ceil((格子.tokens / 最大) * 4)),
+          文:
+            格子.tokens === 0
+              ? tf("{0} 没有用量", 读日期(格子.date, lang))
+              : tf("{0} 使用了 {1} 个 Token", 读日期(格子.date, lang), 读数(格子.tokens)),
+        })
+      }
+    }
+  } else {
+    const 周总 = 列.map((周) => ({
+      起: 周[0]!.date,
+      末: 周[6]!.date,
+      量: 周.filter((g) => g.date <= 今天).reduce((a, b) => a + b.tokens, 0),
+    }))
+    let 累 = 0
+    const 值们 = 周总.map((w) => {
+      累 += w.量
+      return 视角 === "累计" ? 累 : w.量
+    })
+    const 最大 = Math.max(1, ...值们)
+    for (const [i, w] of 周总.entries()) {
+      if (w.起 > 今天) continue
+      const v = 值们[i]!
+      格子们.push({
+        key: w.起,
+        x: i * 步,
+        y: 0,
+        // **累计那一档从 1 起跳**：它是单调不减的，画成空白会让人以为那几周没数据
+        档: v === 0 ? 0 : Math.max(视角 === "累计" ? 1 : 0, Math.min(4, Math.ceil((v / 最大) * 4))),
+        文:
+          视角 === "累计"
+            ? tf("到 {0} 为止一共 {1} 个 Token", 读日期(w.末, lang), 读数(v))
+            : tf("{0} 那一周使用了 {1} 个 Token", 读日期(w.起, lang), 读数(v)),
+      })
+    }
+  }
 
   /**
    * 月份标在**每个月第一次出现的那一列**上。
@@ -304,7 +413,25 @@ export function UsageHeatmap({
 
   return (
     <div className="usage-block">
-      <h3 className="usage-block-title">{t("Token 活动")}</h3>
+      <div className="usage-block-head">
+        <h3 className="usage-block-title">{t("Token 活动")}</h3>
+        <div className="usage-seg" role="group" aria-label={t("Token 活动")}>
+          {/* **`msgid()` 不能省**：`t(变量)` 那一支扫描看不见，
+              en.ts 里那三条会被判成孤儿（当场就被抓了） */}
+          {([msgid("每日"), msgid("每周"), msgid("累计")] as const).map((v) => (
+            <Button
+              key={v}
+              variant="text"
+              size="inline"
+              className={`usage-seg-btn${视角 === v ? " current" : ""}`}
+              aria-pressed={视角 === v}
+              onClick={() => 设视角(v)}
+            >
+              {t(v)}
+            </Button>
+          ))}
+        </div>
+      </div>
       <div className="usage-heat-wrap">
         <svg
           className="usage-heat"
@@ -313,34 +440,23 @@ export function UsageHeatmap({
           aria-label={t("Token 活动日历")}
           onMouseLeave={() => 设停在(undefined)}
         >
-          {列.map((周, i) =>
-            周.map((格子, j) => {
-              // **未来的日子不画**：这一周还没过完，剩下几格是空的，不是「没用」
-              if (格子.date > 今天) return null
-              const 档 = 格子.tokens === 0 ? 0 : Math.min(4, Math.ceil((格子.tokens / 最大) * 4))
-              return (
-                <rect
-                  key={格子.date}
-                  x={i * 步}
-                  y={j * 步}
-                  width={格}
-                  height={格}
-                  rx={2.5}
-                  className={`usage-cell l${档}`}
-                  role="img"
-                  aria-label={
-                    格子.tokens === 0
-                      ? tf("{0} 没有用量", 读日期(格子.date, lang))
-                      : tf("{0} 使用了 {1} 个 Token", 读日期(格子.date, lang), 读数(格子.tokens, lang))
-                  }
-                  onMouseEnter={(e) => {
-                    const r = (e.target as SVGRectElement).getBoundingClientRect()
-                    设停在({ x: r.left + r.width / 2, y: r.top, date: 格子.date, tokens: 格子.tokens })
-                  }}
-                />
-              )
-            }),
-          )}
+          {格子们.map((g) => (
+            <rect
+              key={g.key}
+              x={g.x}
+              y={g.y}
+              width={格}
+              height={格}
+              rx={2.5}
+              className={`usage-cell l${g.档}`}
+              role="img"
+              aria-label={g.文}
+              onMouseEnter={(e) => {
+                const r = (e.target as SVGRectElement).getBoundingClientRect()
+                设停在({ x: r.left + r.width / 2, y: r.top, 文: g.文 })
+              }}
+            />
+          ))}
           {月标.map((m) => (
             <text key={m.文 + m.x} x={m.x} y={网格高 + 11} className="usage-month">
               {m.文}
@@ -353,9 +469,7 @@ export function UsageHeatmap({
           */}
         {停在 ? (
           <div className="usage-tip" style={{ left: `${停在.x}px`, top: `${停在.y}px` }} role="presentation">
-            {停在.tokens === 0
-              ? tf("{0} 没有用量", 读日期(停在.date, lang))
-              : tf("{0} 使用了 {1} 个 Token", 读日期(停在.date, lang), 读数(停在.tokens, lang))}
+            {停在.文}
           </div>
         ) : null}
       </div>
@@ -416,7 +530,7 @@ export function UsagePie({
   return (
     <div className="usage-block">
       <h3 className="usage-block-title">{t("按模型")}</h3>
-      <div className="usage-pie-row" style={{ position: "relative" }}>
+      <div className="usage-pie-col" style={{ position: "relative" }}>
         <svg
           className="usage-pie"
           viewBox="-104 -104 208 208"
@@ -444,18 +558,23 @@ export function UsagePie({
             {停在.文}
           </div>
         ) : null}
+        {/**
+          * 图例在**饼图下面**，且**排成对齐的四列**（2026-08-16 作者要的：
+          * *「图例的位置应该在饼图的下面，模型名字应该对齐，
+          * 消耗的 token 应该对齐」*）。
+          *
+          * 用网格而不是 flex：**只有网格能让几行之间的列对齐**——
+          * flex 是一行一行各自排的，名字一长，右边那一列就参差不齐。
+          * 数字列一律 `tabular-nums`，否则同宽的数字也会因为字形宽度不同而错位。
+          */}
         <ul className="usage-legend-list">
           {byModel.map((m, i) => (
             <li key={m.model}>
               <span className={`usage-dot c${i % 6}`} aria-hidden="true" />
               <span className="usage-legend-name">{显示模型名(m.model, 全部名)}</span>
-              <span className="usage-legend-num">
-                {读数(m.tokens, lang)}
-                <span className="hint">
-                  {" "}
-                  · {Math.round((m.tokens / 总) * 100)}% · {tf("{0} 回合", m.runs)}
-                </span>
-              </span>
+              <span className="usage-legend-num">{读数(m.tokens, lang)}</span>
+              <span className="usage-legend-pct">{Math.round((m.tokens / 总) * 100)}%</span>
+              <span className="usage-legend-runs">{tf("{0} 回合", m.runs)}</span>
             </li>
           ))}
         </ul>

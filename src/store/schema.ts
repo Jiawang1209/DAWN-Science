@@ -209,6 +209,26 @@ export function migrate(db: Database.Database): void {
   }
 
   /**
+   * ACP 的会话续接（A3，2026-08-16）。**两列，缺一不可。**
+   *
+   * - `acp_session_id`：对面那边的会话 id。重开应用后靠它 `session/load`。
+   * - `acp_fingerprint`：**当时是用什么命令起的**（命令 + 参数 + 工作目录）。
+   *
+   * ## 为什么必须有指纹
+   *
+   * 人随时会改配置里的 `command`（换个适配器、换个版本）。
+   * 拿旧的 session id 去 load 一个**不同的 agent**，轻则报错，
+   * 重则接上一段风马牛不相及的历史——**而那种错没有任何提示**。
+   * 指纹对不上就重新开一段，并说清楚为什么。
+   *
+   * **老数据留 NULL**：它们产生时还没有这个概念（不变式 5：不编造）。
+   */
+  if (!hasColumn(db, "sessions", "acp_session_id")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN acp_session_id TEXT`)
+    db.exec(`ALTER TABLE sessions ADD COLUMN acp_fingerprint TEXT`)
+  }
+
+  /**
    * 会话标题（2026-08-10）。
    *
    * 作者当天的话：*「我的会话，会话的 ID 怎么都是一个呢？我很难辨别具体是哪个会话了。」*

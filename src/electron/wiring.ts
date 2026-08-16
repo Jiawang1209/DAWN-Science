@@ -388,6 +388,19 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           }
           return { command: def.command, args: def.args }
         },
+        /**
+         * 上一次那段 ACP 会话（A3）。**两样都取到才给**——
+         * 只有 id 没有指纹时不敢用它（见 schema 里那段）。
+         */
+        priorOf: (spec) => {
+          const rec = sessionStore.get(spec.sessionId)
+          return rec?.acpSessionId && rec.acpFingerprint
+            ? { acpSessionId: rec.acpSessionId, fingerprint: rec.acpFingerprint }
+            : undefined
+        },
+        // **一拿到就落库**：进程随时会退，留在内存里等于随时会丢
+        onSessionId: (sessionId, acpSessionId, fingerprint) =>
+          sessionStore.setAcpSession(sessionId, acpSessionId, fingerprint),
       }),
     },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime

@@ -30,6 +30,7 @@
  * 3. **缺席不等于零**：没收到 usage 就不发 `turn_usage`，不补 0。
  */
 import type { ChildProcess } from "node:child_process"
+import { existsSync } from "node:fs"
 import { 起适配器, 收进程 } from "./launch.js"
 import { UserFacingError } from "../../errors.js"
 import type {
@@ -139,10 +140,44 @@ const STDERR尾行数 = 40
 export class AcpRuntime implements AgentRuntime {
   private readonly 段们 = new Map<SessionId, 一段>()
 
-  constructor(private readonly opts: { commandOf: (spec: SessionSpec) => ACP命令 }) {}
+  constructor(
+    private readonly opts: {
+      commandOf: (spec: SessionSpec) => ACP命令
+      /**
+       * 上一次那段 ACP 会话的凭据（A3）。**指纹对不上就别给**——
+       * 判断留在调用方，运行时只管「给了就试着 load」。
+       */
+      priorOf?: (spec: SessionSpec) => { acpSessionId: string; fingerprint: string } | undefined
+      /** 拿到会话 id 就落库。**一拿到就落**：进程随时会退，留在内存里等于随时会丢 */
+      onSessionId?: (sessionId: SessionId, acpSessionId: string, fingerprint: string) => void
+    },
+  ) {}
+
+  /**
+   * 一台适配器的**身份指纹**：命令 + 参数 + 工作目录。
+   *
+   * 人随时会改配置里的 `command`（换适配器、换版本）。拿旧的会话 id 去
+   * `session/load` 一个**不同的 agent**，轻则报错，重则接上一段
+   * 风马牛不相及的历史——**而那种错没有任何提示**。
+   */
+  static 指纹(cmd: ACP命令, workspace: string): string {
+    return JSON.stringify([cmd.command, [...cmd.args], workspace])
+  }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {
     const cmd = this.opts.commandOf(spec)
+    /**
+     * **工作目录不在，要说的是这件事**（2026-08-16，写指纹那条用例时撞出来的）。
+     *
+     * `spawn` 对「cwd 不存在」报的也是 `ENOENT`，与「命令不存在」一模一样——
+     * 于是我们会指着一个好端端的命令说它起不来，而真正的原因是
+     * **那个项目文件夹被删了或被改名了**。人照着这句话去查命令，永远查不出来。
+     */
+    if (!existsSync(spec.workspace)) {
+      throw new UserFacingError(
+        `这段会话的工作目录不在了：${spec.workspace}。ACP 适配器要在这个目录里起，先把它建回来或换一个目录。`,
+      )
+    }
     const proc = 起适配器({ command: cmd.command, args: cmd.args, cwd: spec.workspace })
     const 段: 一段 = {
       proc,
@@ -211,26 +246,75 @@ export class AcpRuntime implements AgentRuntime {
      * 握手。**版本号写 1**——这是当前 ACP 的版本；
      * 对方回一个它支持的版本，不一致时它自己会拒。
      */
-    await this.请求(spec.sessionId, "initialize", {
+    const 初 = (await this.请求(spec.sessionId, "initialize", {
       protocolVersion: 1,
       clientCapabilities: { fs: { readTextFile: false, writeTextFile: false } },
       clientInfo: { name: "DAWN Science", version: "0.0.1" },
     }).catch((e: unknown) => {
       const 因 = e instanceof Error ? e.message : String(e)
       throw new UserFacingError(`ACP 握手失败：${因}${this.尾巴(段)}`)
-    })
+    })) as { agentCapabilities?: { loadSession?: boolean } }
 
     /**
-     * 开一段会话。`mcpServers` **这一版给空数组**——
-     * 把我们自己的工具递进去是 B1 那一片（设计文档里的路线 B）。
+     * **它自己说支持才试**（A3）。
+     *
+     * 不问就试的话，不支持的适配器会回一个「不认识这个方法」，
+     * 而那条错误会被我们说成「接不回上一段」——**把「不支持」说成「失败」
+     * 是一种误导**：前者是它本来就没有这个能力，后者是出了问题。
+     */
+    const 能load = 初?.agentCapabilities?.loadSession === true
+
+    /**
+     * 开一段会话——**能接上就接，接不上就重开并说清楚**（A3）。
+     *
+     * `mcpServers` 这一版给空数组（把我们自己的工具递进去是 B1）。
      * 给空数组而不是省略：协议里它是必填的。
      */
-    const 新 = (await this.请求(spec.sessionId, "session/new", {
-      cwd: spec.workspace,
-      mcpServers: [],
-    })) as { sessionId?: string }
+    const 指纹 = AcpRuntime.指纹(cmd, spec.workspace)
+    const 旧 = this.opts.priorOf?.(spec)
+    let 新: { sessionId?: string; configOptions?: unknown } | undefined
+
+    if (旧 && 旧.fingerprint === 指纹 && 能load) {
+      try {
+        const r = (await this.请求(spec.sessionId, "session/load", {
+          sessionId: 旧.acpSessionId,
+          cwd: spec.workspace,
+          mcpServers: [],
+        })) as { configOptions?: unknown }
+        新 = { sessionId: 旧.acpSessionId, ...(r ?? {}) }
+      } catch (e) {
+        /**
+         * **接不上要说出来，然后重开一段。**
+         *
+         * 静默重开的表现是「我上次聊的东西呢」——而那时人会以为
+         * 是我们把历史弄丢了。说清楚「接不上、已经新开一段」，
+         * 他至少知道发生了什么（规格 7.5）。
+         */
+        this.发(spec.sessionId, {
+          kind: "notice",
+          sessionId: spec.sessionId,
+          text: `接不回上一段 ACP 会话（${e instanceof Error ? e.message : String(e)}），已经新开了一段。`,
+        })
+      }
+    } else if (旧 && 旧.fingerprint !== 指纹) {
+      // **指纹变了**：多半是改了配置里的 command。如实说，别硬接
+      this.发(spec.sessionId, {
+        kind: "notice",
+        sessionId: spec.sessionId,
+        text: "这台 ACP agent 的启动命令与上次不同，没有接回上一段会话——已经新开了一段。",
+      })
+    }
+
+    if (!新) {
+      新 = (await this.请求(spec.sessionId, "session/new", {
+        cwd: spec.workspace,
+        mcpServers: [],
+      })) as { sessionId?: string; configOptions?: unknown }
+    }
     if (!新?.sessionId) throw new UserFacingError("ACP 适配器没有回 sessionId，这一段起不来")
     段.acpSessionId = 新.sessionId
+    // **一拿到就落库**：进程随时会退，留在内存里等于随时会丢
+    this.opts.onSessionId?.(spec.sessionId, 新.sessionId, 指纹)
 
     /**
      * 这一段会话可以调哪些开关。**它可以一个都没有**——

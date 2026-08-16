@@ -26,6 +26,10 @@ export interface SessionRecord {
    * （它是长驻进程，不需要），老记录也为空。
    */
   cliThreadId?: string
+  /** ACP 那边的会话 id（A3）。**要与 `acpFingerprint` 一起用** */
+  acpSessionId?: string
+  /** 当时是用什么命令起的。**对不上就不许 load**——见 schema 里那段 */
+  acpFingerprint?: string
   /**
    * 会话标题。由第一句用户发言推出来。
    *
@@ -67,6 +71,8 @@ interface Row {
   created_at: string
   project_id: string | null
   cli_thread_id: string | null
+  acp_session_id?: string | null
+  acp_fingerprint?: string | null
   title: string | null
   pinned: number
   sort_order: number | null
@@ -88,6 +94,8 @@ function toRecord(r: Row): SessionRecord {
     ...(r.exit_code === null ? {} : { exitCode: r.exit_code }),
     ...(r.project_id === null || r.project_id === undefined ? {} : { projectId: r.project_id }),
     ...(r.cli_thread_id === null || r.cli_thread_id === undefined ? {} : { cliThreadId: r.cli_thread_id }),
+    ...(r.acp_session_id ? { acpSessionId: r.acp_session_id } : {}),
+    ...(r.acp_fingerprint ? { acpFingerprint: r.acp_fingerprint } : {}),
     ...(r.title === null || r.title === undefined ? {} : { title: r.title }),
     ...(r.connection_id ? { connectionId: r.connection_id } : {}),
     ...(r.remote_cwd ? { remoteCwd: r.remote_cwd } : {}),
@@ -318,6 +326,16 @@ export class SessionStore {
     })
     写(全序)
     return 有效.length
+  }
+
+  /**
+   * 记下 ACP 那边的会话 id 与当时的指纹（A3）。
+   * **两个一起写**：只有 id 没有指纹时，下次不敢用它（见 schema 里那段）。
+   */
+  setAcpSession(id: string, acpSessionId: string, fingerprint: string): void {
+    this.db
+      .prepare(`UPDATE sessions SET acp_session_id = ?, acp_fingerprint = ? WHERE id = ?`)
+      .run(acpSessionId, fingerprint, id)
   }
 
   setCliThreadId(id: string, threadId: string): void {

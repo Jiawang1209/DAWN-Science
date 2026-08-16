@@ -9,6 +9,7 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import { join } from "node:path"
+import { tmpdir } from "node:os"
 import { AcpRuntime } from "../../src/runtime/acp/runtime.js"
 import type { AgentEvent, SessionSpec } from "../../src/runtime/types.js"
 
@@ -42,6 +43,8 @@ afterEach(async () => {
     "FAKE_ACP_ASK",
     "FAKE_ACP_ASK_NO_OPTIONS",
     "FAKE_ACP_NO_CONFIG",
+    "FAKE_ACP_CAN_LOAD",
+    "FAKE_ACP_LOAD_FAILS",
   ]) {
     delete process.env[k]
   }
@@ -107,6 +110,19 @@ describe("失败必须出声", () => {
     const s = spec("a3")
     await expect(rt.start(s)).rejects.toThrow(/握手失败/)
     关掉 = () => rt.stop(s.sessionId)
+  })
+
+  /**
+   * **工作目录不在时，说的要是这件事**（2026-08-16 写指纹那条用例时撞出来的）。
+   *
+   * `spawn` 对「cwd 不存在」报的也是 `ENOENT`，与「命令不存在」一模一样——
+   * 不单独判的话，我们会指着一个好端端的命令说它起不来，
+   * 而真正的原因是**那个项目文件夹被删了**。人照着那句话去查命令，永远查不出来。
+   */
+  it("工作目录不在时，说的是目录不在，不是命令起不来", async () => {
+    const rt = 起一个()
+    const s = { ...spec("a7"), workspace: "/tmp/这个目录肯定不存在-dawn-acp" } as SessionSpec
+    await expect(rt.start(s)).rejects.toThrow(/工作目录不在了/)
   })
 
   /** 命令根本不存在时，要说清是**哪一个命令**起不来 */
@@ -367,5 +383,167 @@ describe("会话开关", () => {
     rt.write(s.sessionId, "在吗")
     await 等到(收, (e) => e.kind === "idle", "收口")
     expect(收.filter((e) => e.kind === "config_options")).toHaveLength(0)
+  })
+})
+
+/**
+ * 会话恢复（A3 之三，2026-08-16）。
+ *
+ * **四种情形，各自要有各自的说法**——这一组的价值全在这句话上：
+ *   ① 支持 + 指纹对得上 → 接回去
+ *   ② **它不支持** → 直接新开，**不要说成「失败」**
+ *      （「不支持」是它本来就没这个能力，「失败」是出了问题）
+ *   ③ 指纹变了（人改了配置里的 command）→ 新开 **+ 说清楚为什么**
+ *   ④ load 真的失败 → 新开 **+ 把原因摆出来**
+ *
+ * 静默重开的表现是「我上次聊的东西呢」，而那时人会以为是我们把历史弄丢了。
+ */
+describe("会话恢复", () => {
+  const 起带凭据 = (
+    prior: { acpSessionId: string; fingerprint: string } | undefined,
+    env: Record<string, string> = {},
+  ) => {
+    for (const [k, v] of Object.entries(env)) process.env[k] = v
+    const 记下: { id: string; fp: string }[] = []
+    const rt = new AcpRuntime({
+      commandOf: () => ({ command: process.execPath, args: [假agent] }),
+      ...(prior ? { priorOf: () => prior } : {}),
+      onSessionId: (_s, id, fp) => 记下.push({ id, fp }),
+    })
+    return { rt, 记下 }
+  }
+
+  it("**指纹对得上、它也支持 → 真的接回去**", async () => {
+    const s = spec("r1")
+    const 指纹 = AcpRuntime.指纹({ command: process.execPath, args: [假agent] }, s.workspace)
+    const { rt } = 起带凭据({ acpSessionId: "上一段", fingerprint: 指纹 }, { FAKE_ACP_CAN_LOAD: "1" })
+    const 收: AgentEvent[] = []
+    /**
+     * **先发起 start，再立刻挂监听，最后才 await。**
+     *
+     * 接回/接不上那几句话都是在 `start()` **里面**发的，
+     * `await` 之后再挂就晚了——这几条第一版全是这么红的，
+     * 报的是「等不到那句话」，看起来像功能没实现。
+     * 段是在 `start()` 第一拍同步建好的，所以这样挂得上。
+     *
+     * 「不支持时不出声」那条也用同一副写法：**挂得早，才证明得了「一句都没说」**。
+     */
+    const 起 = rt.start(s)
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    await 起
+    关掉 = () => rt.stop(s.sessionId)
+    rt.write(s.sessionId, "在吗")
+    // 那句痕迹是假 agent 在 `session/load` 里留的
+    await 等到(收, (e) => e.kind === "output" && e.data.includes("【接回了上一段】"), "接回的痕迹")
+  })
+
+  /**
+   * **它不支持时，一句话都不该说。**
+   * 把「不支持」说成「接不回」是误导——前者是它本来就没这个能力。
+   */
+  it("它不支持 load 时，直接新开且不抱怨", async () => {
+    const s = spec("r2")
+    const 指纹 = AcpRuntime.指纹({ command: process.execPath, args: [假agent] }, s.workspace)
+    const { rt } = 起带凭据({ acpSessionId: "上一段", fingerprint: 指纹 })
+    const 收: AgentEvent[] = []
+    /**
+     * **先发起 start，再立刻挂监听，最后才 await。**
+     *
+     * 接回/接不上那几句话都是在 `start()` **里面**发的，
+     * `await` 之后再挂就晚了——这几条第一版全是这么红的，
+     * 报的是「等不到那句话」，看起来像功能没实现。
+     * 段是在 `start()` 第一拍同步建好的，所以这样挂得上。
+     *
+     * 「不支持时不出声」那条也用同一副写法：**挂得早，才证明得了「一句都没说」**。
+     */
+    const 起 = rt.start(s)
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    await 起
+    关掉 = () => rt.stop(s.sessionId)
+    rt.write(s.sessionId, "在吗")
+    await 等到(收, (e) => e.kind === "idle", "收口")
+    expect(收.filter((e) => e.kind === "notice"), "不支持不是失败，不该出声").toHaveLength(0)
+  })
+
+  /** 人改了配置里的 command：**不许硬接**，而且要说清楚为什么 */
+  it("指纹变了就不接，并说清楚", async () => {
+    const s = spec("r3")
+    const { rt } = 起带凭据(
+      { acpSessionId: "上一段", fingerprint: "另一台适配器的指纹" },
+      { FAKE_ACP_CAN_LOAD: "1" },
+    )
+    const 收: AgentEvent[] = []
+    /**
+     * **先发起 start，再立刻挂监听，最后才 await。**
+     *
+     * 接回/接不上那几句话都是在 `start()` **里面**发的，
+     * `await` 之后再挂就晚了——这几条第一版全是这么红的，
+     * 报的是「等不到那句话」，看起来像功能没实现。
+     * 段是在 `start()` 第一拍同步建好的，所以这样挂得上。
+     *
+     * 「不支持时不出声」那条也用同一副写法：**挂得早，才证明得了「一句都没说」**。
+     */
+    const 起 = rt.start(s)
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    await 起
+    关掉 = () => rt.stop(s.sessionId)
+    rt.write(s.sessionId, "在吗")
+    const 说 = (await 等到(
+      收,
+      (e) => e.kind === "notice" && e.text.includes("启动命令与上次不同"),
+      "那句说明",
+    )) as { text: string }
+    expect(说.text).toContain("新开了一段")
+  })
+
+  /** load 真的失败：**把原因摆出来**，不要静默重开 */
+  it("接不上时说清原因", async () => {
+    const s = spec("r4")
+    const 指纹 = AcpRuntime.指纹({ command: process.execPath, args: [假agent] }, s.workspace)
+    const { rt } = 起带凭据(
+      { acpSessionId: "上一段", fingerprint: 指纹 },
+      { FAKE_ACP_CAN_LOAD: "1", FAKE_ACP_LOAD_FAILS: "1" },
+    )
+    const 收: AgentEvent[] = []
+    /**
+     * **先发起 start，再立刻挂监听，最后才 await。**
+     *
+     * 接回/接不上那几句话都是在 `start()` **里面**发的，
+     * `await` 之后再挂就晚了——这几条第一版全是这么红的，
+     * 报的是「等不到那句话」，看起来像功能没实现。
+     * 段是在 `start()` 第一拍同步建好的，所以这样挂得上。
+     *
+     * 「不支持时不出声」那条也用同一副写法：**挂得早，才证明得了「一句都没说」**。
+     */
+    const 起 = rt.start(s)
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    await 起
+    关掉 = () => rt.stop(s.sessionId)
+    rt.write(s.sessionId, "在吗")
+    await 等到(
+      收,
+      (e) => e.kind === "notice" && e.text.includes("接不回上一段") && e.text.includes("被要求在 load 时失败"),
+      "接不上的原因",
+    )
+    // **仍然要能说话**：接不上不等于这一段废了
+    await 等到(收, (e) => e.kind === "output" && e.data.includes("假 ACP agent 已应答"), "新开的那段能用")
+  })
+
+  /** **一拿到就落库**：进程随时会退，留在内存里等于随时会丢 */
+  it("会话 id 与指纹一起交出去", async () => {
+    /**
+     * **工作目录要挑一个「不会碰巧出现在命令里」的。**
+     *
+     * 第一版用的是默认的 `process.cwd()`——而假 agent 的路径就在它下面，
+     * 于是「指纹里有没有工作目录」这条断言**永远成立**：
+     * 把 workspace 从指纹里删掉，用例照样绿（变异测试抓到的）。
+     */
+    const s = { ...spec("r5"), workspace: tmpdir() } as SessionSpec
+    const { rt, 记下 } = 起带凭据(undefined)
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    expect(记下).toHaveLength(1)
+    expect(记下[0]?.id).toMatch(/^fake-acp-/)
+    expect(记下[0]?.fp, "指纹要带上工作目录").toContain(s.workspace)
   })
 })

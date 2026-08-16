@@ -104,7 +104,11 @@ async function 处理(msg) {
     }
     return 回结果(id, {
       protocolVersion: params?.protocolVersion ?? 1,
-      agentCapabilities: { loadSession: false, promptCapabilities: { image: false } },
+      agentCapabilities: {
+        // **默认不支持**：多数适配器现在就是这样，而「不支持」与「失败」要分得开
+        loadSession: process.env["FAKE_ACP_CAN_LOAD"] === "1",
+        promptCapabilities: { image: false },
+      },
       authMethods: [],
     })
   }
@@ -117,6 +121,38 @@ async function 处理(msg) {
       // **开关随会话一起给**（A3）——真适配器就是这么报的
       ...(process.env["FAKE_ACP_NO_CONFIG"] === "1" ? {} : { configOptions: 开关们 }),
     })
+  }
+
+  if (method === "session/load") {
+    /**
+     * **没声明支持就不认这个方法**——真 agent 就是这样。
+     *
+     * 一律答应的话，「问过能力再试」与「不问就试」在用例里分不出来
+     * （变异测试当场证明了：把那个判断删掉，用例照样绿）。
+     */
+    if (process.env["FAKE_ACP_CAN_LOAD"] !== "1") {
+      return 回错(id, -32601, "假 agent 没有声明 loadSession，不认识这个方法")
+    }
+    最近的会话 = params?.sessionId
+    if (process.env["FAKE_ACP_LOAD_FAILS"] === "1") {
+      return 回错(id, -32603, "假 agent 被要求在 load 时失败")
+    }
+    /**
+     * **接上了要留个痕迹**：不留的话「接回来了」与「新开了一段」
+     * 在屏幕上一模一样，那时用例证明不了任何事。
+     */
+    发({
+      jsonrpc: "2.0",
+      method: "session/update",
+      params: {
+        sessionId: params.sessionId,
+        update: {
+          sessionUpdate: "agent_message_chunk",
+          content: { type: "text", text: `【接回了上一段】${params.sessionId}` },
+        },
+      },
+    })
+    return 回结果(id, { configOptions: 开关们 })
   }
 
   if (method === "session/set_config_option") {

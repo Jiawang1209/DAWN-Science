@@ -200,17 +200,36 @@ test("**日历三视角：每日 / 每周 / 累计**", async ({ dawn }) => {
   const 每日格数 = await page.locator(".usage-cell").count()
   expect(每日格数).toBeGreaterThan(300)
 
-  // 每周：一格一周，**格子数掉一个数量级**
+  /**
+   * **三个视角是同一张日历**（2026-08-16 作者二次定的）。
+   *
+   * 上一版这条断言的是「每周时格子数掉一个数量级」——那是我把每周画成
+   * 一行 53 格的设计，而作者说的是*「还是一个日历表，不过悬浮的时候
+   * 展示的是一周的」*。**格子数不变才是对的**，变的是每格代表什么。
+   */
   await page.getByRole("button", { name: "每周", exact: true }).click()
-  await expect.poll(() => page.locator(".usage-cell").count()).toBeLessThan(每日格数 / 5)
+  await expect.poll(() => page.locator(".usage-cell").count()).toBe(每日格数)
   await page.locator(".usage-cell").last().hover()
   await expect(page.locator(".usage-tip")).toContainText("那一周")
 
-  // 累计：格子数一样，但说的是「到这为止一共」
   await page.getByRole("button", { name: "累计", exact: true }).click()
+  await expect.poll(() => page.locator(".usage-cell").count()).toBe(每日格数)
   await page.locator(".usage-cell").last().hover()
   await expect(page.locator(".usage-tip")).toContainText("为止一共")
 
+  /**
+   * **「整列同色」这条在这里验不了，所以不装作验了。**
+   *
+   * 夹具里只有今天一天有数据，而今天（跑这条用例的那天可能是周日）
+   * 那一列只画得出一格——一格永远「同色」。我写过一版断言，
+   * 变异（改回逐日上色）之后它照样绿：**一条判不出来的断言比没有更坏**。
+   *
+   * 每周确实在按周聚合，由上面那两条悬停文案证明（「那一周」/「为止一共」
+   * 只可能来自周聚合那一支）。整列同色是它的视觉推论，
+   * 真要盯住得把算格子那段抽成纯函数、在单元那侧喂多天数据——**记在这儿，没做**。
+   */
   await page.getByRole("button", { name: "每日", exact: true }).click()
   await expect.poll(() => page.locator(".usage-cell").count()).toBe(每日格数)
+  await page.locator(".usage-cell").last().hover()
+  await expect(page.locator(".usage-tip")).not.toContainText("那一周")
 })

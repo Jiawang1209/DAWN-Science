@@ -337,9 +337,15 @@ export function UsageHeatmap({
   const 格 = 11
   const 隙 = 3
   const 步 = 格 + 隙
-  /** 每周 / 累计是一行；每日是七行 */
-  const 行数 = 视角 === "每日" ? 7 : 1
-  const 网格高 = 行数 * 步
+  /**
+   * **三个视角都是同一张日历**（2026-08-16 作者二次定的：
+   * *「每周的统计的时候，还是一个日历表，不过悬浮的时候展示的是一周的。」*）。
+   *
+   * 我上一版把每周/累计画成了一行 53 格——**那等于换了一张图**，
+   * 而人要的是同一张图换一种读法：格子还在原来的位置，
+   * 只是**整列同色**（这一周的量），悬停说的也是这一周。
+   */
+  const 网格高 = 7 * 步
   const 标高 = 16
   const 宽 = 周数 * 步
 
@@ -380,20 +386,20 @@ export function UsageHeatmap({
       return 视角 === "累计" ? 累 : w.量
     })
     const 最大 = Math.max(1, ...值们)
-    for (const [i, w] of 周总.entries()) {
-      if (w.起 > 今天) continue
+    for (const [i, 周] of 列.entries()) {
       const v = 值们[i]!
-      格子们.push({
-        key: w.起,
-        x: i * 步,
-        y: 0,
-        // **累计那一档从 1 起跳**：它是单调不减的，画成空白会让人以为那几周没数据
-        档: v === 0 ? 0 : Math.max(视角 === "累计" ? 1 : 0, Math.min(4, Math.ceil((v / 最大) * 4))),
-        文:
-          视角 === "累计"
-            ? tf("到 {0} 为止一共 {1} 个 Token", 读日期(w.末, lang), 读数(v))
-            : tf("{0} 那一周使用了 {1} 个 Token", 读日期(w.起, lang), 读数(v)),
-      })
+      const w = 周总[i]!
+      // **整列同色**：这一列的每一格说的都是同一件事——这一周
+      const 档 = v === 0 ? 0 : Math.max(视角 === "累计" ? 1 : 0, Math.min(4, Math.ceil((v / 最大) * 4)))
+      const 文 =
+        视角 === "累计"
+          ? tf("到 {0} 为止一共 {1} 个 Token", 读日期(w.末 > 今天 ? 今天 : w.末, lang), 读数(v))
+          : tf("{0} 那一周使用了 {1} 个 Token", 读日期(w.起, lang), 读数(v))
+      for (const [j, 格子] of 周.entries()) {
+        // **未来的日子仍然不画**：这一周还没过完，剩下几格是空的，不是「没用」
+        if (格子.date > 今天) continue
+        格子们.push({ key: 格子.date, x: i * 步, y: j * 步, 档, 文 })
+      }
     }
   }
 
@@ -538,7 +544,7 @@ export function UsagePie({
         */}
       <h3 className="usage-block-title">
         {t("按模型")}
-        <span className="usage-block-sum">{读数(总)}</span>
+        <span className="usage-block-sum">{tf("Total：{0} tokens", 读数(总))}</span>
       </h3>
       <div className="usage-pie-col" style={{ position: "relative" }}>
         <svg

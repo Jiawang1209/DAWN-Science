@@ -3994,7 +3994,8 @@ pre {
  * **撑满它那一半**（2026-08-16 作者要的：*「饼图的位置，其实应该占据页面的一半」*）。
  * 封一个上限：再大就只是一块色，读不出更多东西。
  */
-.usage-pie { width: 100%; max-width: 300px; height: auto; flex: 0 0 auto; }
+/** 作者 2026-08-16 二次调整：**再收掉四分之一**（300 → 225），留出呼吸 */
+.usage-pie { width: 100%; max-width: 225px; height: auto; flex: 0 0 auto; }
 .usage-slice { cursor: default; }
 
 /** 两栏。窄了自己叠成一栏——**不是靠断点，是靠内容放不下** */

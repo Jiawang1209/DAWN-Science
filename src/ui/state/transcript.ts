@@ -61,13 +61,32 @@ export function applySnapshot(snap: {
   trimmed: boolean
   /** **当前**内核实例（②-A · K5 · S13）。缺省 = 还没有内核 */
   kernelInstanceId?: string | undefined
+  /** 正等着人回答的那次权限询问（A2）。**缺省 = 没有人在问** */
+  pendingPermission?: 待答的权限 | undefined
 }): void {
   setItems(snap.items)
   const term = snap.terminal ? [snap.terminal] : []
   if (!sameList($terminal.get(), term)) $terminal.set(term)
   setValue($terminalTrimmed, snap.trimmed)
   setValue($kernelInstanceId, snap.kernelInstanceId)
+  $待答权限.set(snap.pendingPermission)
 }
+
+/** 一次还没结果的权限询问（A2）。**选项原样来自 agent** */
+export interface 待答的权限 {
+  requestId: string
+  title: string
+  options: readonly { optionId: string; name: string; kind: string }[]
+}
+
+/**
+ * agent 正在问「能不能」（A2，只有 acp 会有）。
+ *
+ * **它跟着当前会话走**，与转录同一条路：并排开两段对话时，
+ * 各自显示各自的那张卡（切走再切回来，它还在——因为它住在快照上，
+ * 而不是某个组件的局部状态里）。
+ */
+export const $待答权限 = atom<待答的权限 | undefined>(undefined)
 
 /**
  * **当前**内核实例的身份（②-A · K5 · S13）。
@@ -91,5 +110,13 @@ export function resetTranscript(): void {
   setItems([])
   if ($terminal.get().length > 0) $terminal.set([])
   setValue($terminalTrimmed, false)
+  /**
+   * **切会话时那张权限卡必须跟着走。**
+   *
+   * 留着的话，你切到另一段对话，屏幕上还挂着上一段的询问——
+   * 点下去答的是别人的问题。这与整个文件头那句
+   * 「作用域是当前正在看的那个会话」是同一条。
+   */
+  $待答权限.set(undefined)
   invalidate()
 }

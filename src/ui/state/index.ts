@@ -26,6 +26,7 @@ export {
   appendBytes,
   applySnapshot,
   $kernelInstanceId,
+  $待答权限,
   resetTranscript,
 } from "./transcript.js"
 

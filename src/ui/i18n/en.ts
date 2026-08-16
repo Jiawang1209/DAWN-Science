@@ -591,6 +591,8 @@ export const EN: Readonly<Record<string, string>> = {
   "多": "More",
   "按模型": "By model",
   "按项目": "By project",
+  "这次操作要你决定": "This action needs your decision",
+  "这一轮先不做": "Skip for now",
   "Total：{0} tokens": "Total: {0} tokens",
   "活动洞察": "Activity",
   "对话总数": "Chats",

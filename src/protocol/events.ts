@@ -322,6 +322,29 @@ export const SessionSnapshotSchema = z
      * 拿不到就不做陈旧判断，**不猜**。
      */
     kernelInstanceId: z.string().optional(),
+    /**
+     * **正等着人回答的那次权限询问**（A2，2026-08-16，只有 acp 会有）。
+     *
+     * 它不是转录条目：转录是「发生过什么」，这个是**一个还没结果的问题**——
+     * 有生命周期（答了就没了），而且屏幕上要能点。混进转录的话，
+     * 答完之后那张卡还留在历史里、按钮还能按，而那时按下去什么都不会发生。
+     *
+     * `options` **原样来自 agent**：`optionId` 是回答时要带回去的那个 id，
+     * `name` 是给人看的字，`kind` 是它的性质（`allow_once` 之类）。
+     * **我们不编自己的一套**——编了的话回过去的 id 它不认。
+     */
+    pendingPermission: z
+      .object({
+        requestId: z.string().min(1),
+        title: z.string().min(1),
+        options: z
+          .array(
+            z.object({ optionId: z.string().min(1), name: z.string().min(1), kind: z.string() }).strict(),
+          )
+          .min(1),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
 export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>

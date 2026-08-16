@@ -247,6 +247,11 @@ export interface MockToolCallSpec {
 }
 
 export interface DawnOptions {
+  /**
+   * 额外的环境变量（A2）。**盖不过隔离用的那几条**——见下面 `env` 的注释。
+   * 目前用来打开假 ACP agent 的几种行为（问权限、报用量）。
+   */
+  env?: Record<string, string>
   toolCall?: MockToolCallSpec
   /**
    * **不给基底 `models.json`**（2026-08-11）。
@@ -505,6 +510,14 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       ],
       env: {
         ...process.env,
+        /**
+         * 用例自己要加的环境变量（A2，2026-08-16）。
+         *
+         * **放在最前面**，好让下面那些隔离用的（`DAWN_CONFIG` 等）
+         * 覆盖它——**隔离不容协商**：一条用例不该有办法把自己指回
+         * 开发机真实的配置与数据库。
+         */
+        ...(dawnOptions.env ?? {}),
         // **不写 DAWN_CONFIG 指向已有文件**：第一次启动应当自己写出默认配置。
         // 这条路径正是「装好了打不开」那个缺陷的所在，必须被真的走一遍
         DAWN_CONFIG: configPath,

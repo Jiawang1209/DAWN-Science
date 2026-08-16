@@ -999,6 +999,25 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 回答一次权限询问（A2，2026-08-16）。
+   *
+   * `optionId` **缺省 = 取消**——协议里那个 `outcome: "cancelled"`。
+   * 它与「拒绝」不是一回事：拒绝是一个决定（agent 会据此改道），
+   * 取消是「这一轮别做了」。混成一个的话，agent 收到的信号是错的。
+   */
+  answerPermission: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        requestId: z.string().min(1),
+        optionId: z.string().min(1).optional(),
+      })
+      .strict(),
+    response: Empty,
+    mutating: true,
+  },
+
   setDefaultWorkspace: {
     request: z.object({ path: z.string() }).strict(),
     response: z.object({ path: z.string().min(1), isDefault: z.boolean() }).strict(),

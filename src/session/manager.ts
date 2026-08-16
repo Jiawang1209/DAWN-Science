@@ -521,6 +521,15 @@ export class SessionManager {
    * 中止当前回合。**只有 native runtime 实现**——PTY 的中止是送 Ctrl-C，走 `write`。
    * 不支持时明确抛错，不静默成功（规格 7.5）。
    */
+  /**
+   * 回答一次权限询问（A2）。**只有 acp 的运行时有这个能力**——
+   * 别的运行时压根不会问，所以这里静静地什么都不做是对的
+   * （与「能力缺席」那条一致：**没有这个能力不是错误**）。
+   */
+  answerPermission(sessionId: SessionId, requestId: string, optionId?: string): void {
+    this.bound.get(sessionId)?.answerPermission?.(sessionId, requestId, optionId)
+  }
+
   async abort(sessionId: SessionId): Promise<void> {
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)

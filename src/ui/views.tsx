@@ -2879,6 +2879,8 @@ export function ConversationView({
   currentServiceLabel,
   onSwitchService,
   switchProblem,
+  待答权限,
+  onAnswerPermission,
   onToggleDock,
   dockOpen,
   models,
@@ -2934,6 +2936,13 @@ export function ConversationView({
    * 而作者报的正是这句话。失败要出现在**动作发生的地方**（规格 7.5）。
    */
   switchProblem?: string | undefined
+  /**
+   * agent 正在问「能不能」（A2，只有 acp 会有）。**缺省 = 没有人在问**。
+   * 选项原样来自 agent——界面不编自己的一套。
+   */
+  待答权限?: { requestId: string; title: string; options: readonly { optionId: string; name: string; kind: string }[] } | undefined
+  /** 回答那次询问。`optionId` 缺省 = 取消（与「拒绝」不是一回事） */
+  onAnswerPermission?: ((requestId: string, optionId?: string) => void) | undefined
   /** 掀开／收起底部终端。**与命令面板里那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
   dockOpen?: boolean | undefined
@@ -3618,6 +3627,46 @@ export function ConversationView({
            * 但"用另一个 agent 开一个新的"恰恰是那时最该给的出路。
            */}
           {/* 换模型／换服务没成的原因，就摆在按下去的那个地方 */}
+          {/**
+            * **agent 在问「能不能」**（A2，2026-08-16）。
+            *
+            * 摆在输入框**上面**而不是转录里：它不是「发生过什么」，
+            * 是一个**挡在路上的问题**——它没答完，那一轮就走不下去。
+            * 摆进转录的话它会跟着滚上去，而人正低头打字。
+            *
+            * **按钮文案一律用它给的**（`option.name`）。自己编一套的后果是
+            * 屏幕上写着「允许一次」，而它那边根本没有这个概念——
+            * 我们回过去的 id 它不认，表现是「点了没反应」。
+            */}
+          {待答权限 && onAnswerPermission ? (
+            <div className="perm-card" role="group" aria-label={t("这次操作要你决定")}>
+              <p className="perm-card-title">{待答权限.title}</p>
+              <div className="perm-card-options">
+                {待答权限.options.map((o) => (
+                  <Button
+                    key={o.optionId}
+                    variant={o.kind.startsWith("allow") ? "primary" : "outline"}
+                    size="sm"
+                    onClick={() => onAnswerPermission(待答权限.requestId, o.optionId)}
+                  >
+                    {o.name}
+                  </Button>
+                ))}
+                {/**
+                  * **「取消」与「拒绝」不是一回事**，所以它单独在这儿：
+                  * 拒绝是一个决定（agent 会据此改道），取消是「这一轮别做了」。
+                  * agent 给的选项里可能只有拒绝，没有取消。
+                  */}
+                <Button
+                  variant="text"
+                  size="sm"
+                  onClick={() => onAnswerPermission(待答权限.requestId, undefined)}
+                >
+                  {t("这一轮先不做")}
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}
           {/**
             * **发送失败就摆在这儿**（2026-08-13）。

@@ -289,6 +289,15 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.2（A2，2026-08-16，分支 `acp`）：权限询问
+ *
+ * 纯新增，故 minor：快照上多一格 `pendingPermission`，
+ * 外加一个 `answerPermission` 操作。
+ *
+ * **它为什么不是一条转录条目**：转录说的是「发生过什么」，
+ * 而这个是**一个还没结果的问题**——有生命周期，屏幕上还要能点。
+ * 混进转录的话，答完之后那张卡还留在历史里、按钮还能按。
+ *
  * ## 7.1（A1，2026-08-16，分支 `acp`）：多一种会话种类 `acp`
  *
  * 纯新增，故 minor。**它必须是单独一种，不能混进 `cli`**：
@@ -323,7 +332,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.1"
+export const WORKBENCH_PROTOCOL_VERSION = "7.2"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

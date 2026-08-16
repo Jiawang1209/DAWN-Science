@@ -81,6 +81,7 @@ function backend(): WorkbenchBackend {
       expiresAt: "2026-08-08T00:05:00Z", fingerprint: "abc",
     }),
     // S21：新增操作必须同时补上假后端，否则这里与真契约会各走各的
+    answerPermission: async () => ({}),
     getUsage: async () => ({
       total: 0, input: 0, output: 0, cacheRead: 0,
       daily: [], byModel: [], activeDays: 0,

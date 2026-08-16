@@ -66,6 +66,19 @@ interface Entry {
    * **缺省 = 还没有内核**，不是「不陈旧」。
    */
   kernelInstanceId: string | undefined
+  /**
+   * **正等着人回答的那次权限询问**（A2，只有 acp 会有）。
+   *
+   * 它不是一条转录条目：转录是「发生过什么」，而这个是**一个还没结果的问题**，
+   * 有生命周期（答了就没了），而且屏幕上要能点。
+   * 混进转录的话，答完之后那张卡还留在历史里、按钮还能按——
+   * 而那时它按下去什么也不会发生。
+   *
+   * **缺省 = 没有人在问**，不是「问过了」。
+   */
+  pendingPermission:
+    | { requestId: string; title: string; options: { optionId: string; name: string; kind: string }[] }
+    | undefined
   turnSeq: number
   /**
    * 这一轮开始想的时刻（epoch 毫秒）。**想完就清空**。
@@ -103,6 +116,7 @@ export class SessionTranscripts {
       state: "alive",
       exitCode: undefined,
       openTurnId: undefined,
+      pendingPermission: undefined,
       turnSeq: 0,
       思考起于: undefined,
       当前模型: undefined,
@@ -249,6 +263,20 @@ export class SessionTranscripts {
         })
         return
       }
+
+      /**
+       * agent 在问「能不能」（A2）。**挂成待答的那一格，不进转录。**
+       *
+       * 理由见 `pendingPermission` 那条注释：它是一个还没结果的问题，
+       * 不是「发生过什么」。
+       */
+      case "permission_request":
+        this.收权限询问(sessionId, {
+          requestId: event.requestId,
+          title: event.title,
+          options: event.options.map((o) => ({ ...o })),
+        })
+        return
 
       case "notice":
         // 系统提示独立成条。**不并进 agent 的发言**——那会让用户以为是模型说的
@@ -643,6 +671,33 @@ export class SessionTranscripts {
     for (const cb of [...this.listeners]) cb(update)
   }
 
+  /**
+   * agent 在问「能不能」（A2）。**只留最新的那一次。**
+   *
+   * 同时挂两张卡的话，人分不清哪张对应哪次调用——而 ACP 那边一轮里
+   * 至多问一次（它要等你答了才继续）。真出现第二次时以新的为准，
+   * 旧的那次已经被运行时按取消回掉了。
+   */
+  收权限询问(
+    sessionId: SessionId,
+    p: { requestId: string; title: string; options: { optionId: string; name: string; kind: string }[] },
+  ): void {
+    const e = this.entries.get(sessionId)
+    if (!e) return
+    e.pendingPermission = p
+    // **走整份快照**：协议里的 `snapshot` 那一支就是为「整体状态变了」准备的，
+    // 而权限询问一轮至多一次，不值得为它新增一种更新
+    this.bump(sessionId, e, { type: "snapshot", snapshot: this.snapshot(sessionId, e) })
+  }
+
+  /** 答完了（或取消了）：**卡要消失**。留着的话按钮还能按，而按了什么都不会发生 */
+  清权限询问(sessionId: SessionId): void {
+    const e = this.entries.get(sessionId)
+    if (!e?.pendingPermission) return
+    e.pendingPermission = undefined
+    this.bump(sessionId, e, { type: "snapshot", snapshot: this.snapshot(sessionId, e) })
+  }
+
   private snapshot(sessionId: SessionId, e: Entry): SessionSnapshot {
     return {
       sessionId,
@@ -654,6 +709,7 @@ export class SessionTranscripts {
       state: e.state,
       ...(e.exitCode === undefined ? {} : { exitCode: e.exitCode }),
       ...(e.kernelInstanceId ? { kernelInstanceId: e.kernelInstanceId } : {}),
+      ...(e.pendingPermission ? { pendingPermission: e.pendingPermission } : {}),
     }
   }
 }

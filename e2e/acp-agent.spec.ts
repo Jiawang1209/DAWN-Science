@@ -31,6 +31,11 @@ const PROVIDERS = `agents:
     command: node
     args: ["${假ACP}"]
     capabilities: [chat, exec]
+  问权限的-acp:
+    kind: acp
+    command: node
+    args: ["${假ACP}"]
+    capabilities: [chat, exec]
   坏掉的-acp:
     kind: acp
     command: 这个命令肯定不存在-dawn
@@ -87,6 +92,74 @@ test.describe("ACP", () => {
      * （与「挑了一个起不来的 agent」共用同一个出口）。
      */
     await expect(page.locator(".composer-problem")).toContainText(/起不来 ACP 适配器/, {
+      timeout: 30_000,
+    })
+  })
+})
+
+
+/**
+ * 权限卡（A2 下半，2026-08-16）。
+ *
+ * **这是 ACP 相对 `cli` 最实的那个差别**：agent 停下来问，
+ * 而**按钮文案是它给的**。
+ *
+ * 假 agent 被要求在回话之前问一次（`FAKE_ACP_ASK`），
+ * 并把收到的答案**原样说回来**——用例据此确认「点了哪个，它就收到哪个」。
+ */
+test.describe("ACP 权限卡", () => {
+  test.use({
+    dawnOptions: {
+      providersYaml: PROVIDERS,
+      gitInit: true,
+      env: { FAKE_ACP_ASK: "1" },
+    },
+  })
+
+  test("**它问，卡出现；点一个，它就收到那一个**", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("读一下那个 csv")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // ① 卡出现，**标题是它给的**
+    const 卡 = page.locator(".perm-card")
+    await expect(卡).toBeVisible({ timeout: 30_000 })
+    await expect(卡).toContainText("观测.csv")
+
+    /**
+     * ② **按钮文案原样来自 agent。**
+     * 自己编一套的后果是：屏幕上写着「允许一次」，而它那边没有这个概念，
+     * 我们回过去的 id 它不认——表现是「点了没反应」。
+     */
+    for (const 名 of ["允许这一次", "以后都允许", "这次不行"]) {
+      await expect(卡.getByRole("button", { name: 名, exact: true })).toBeVisible()
+    }
+
+    // ③ 点一个，**它收到的就是那一个**
+    await 卡.getByRole("button", { name: "以后都允许", exact: true }).click()
+    await expect(page.getByText(/【权限结果】/).last()).toContainText('"optionId":"always"', {
+      timeout: 30_000,
+    })
+
+    // ④ **答完卡要消失**：留着的话按钮还能按，而按了什么都不会发生
+    await expect(卡).toHaveCount(0)
+  })
+
+  /** 「这一轮先不做」= 取消，**与「拒绝」不是一回事** */
+  test("**取消与拒绝不是一回事**", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /问权限的-acp/)
+    await 等进了对话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("读一下")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    const 卡 = page.locator(".perm-card")
+    await expect(卡).toBeVisible({ timeout: 30_000 })
+    await 卡.getByRole("button", { name: "这一轮先不做", exact: true }).click()
+    await expect(page.getByText(/【权限结果】/).last()).toContainText('"outcome":"cancelled"', {
       timeout: 30_000,
     })
   })

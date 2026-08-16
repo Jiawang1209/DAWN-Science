@@ -4134,3 +4134,26 @@ pre {
 .skill-problems { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .skill-problems ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .skill-problems li { display: flex; align-items: baseline; gap: var(--dawn-space-2); flex-wrap: wrap; }
+
+/* ── 权限卡（A2，2026-08-16）───────────────────────────────────────
+ *
+ * 摆在输入框**上面**，不在转录里：它是一个**挡在路上的问题**——
+ * 没答完那一轮就走不下去。摆进转录会跟着滚上去，而人正低头打字。
+ *
+ * 用强调色的边而不是整块底色：这一屏已经有一颗强调色的发送键，
+ * **强调色一多就谁也不强调了**。
+ */
+.perm-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  margin: 0 0 var(--dawn-space-2);
+  padding: var(--dawn-space-3);
+  border: 1px solid var(--dawn-accent);
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-accent-soft);
+}
+.perm-card-title { margin: 0; font-weight: var(--dawn-weight-medium); }
+/** **不换行**：与侧栏那条同一副纪律，放不下就裁，不折成两层 */
+.perm-card-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
+.perm-card-options .btn { white-space: nowrap; }

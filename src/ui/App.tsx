@@ -95,6 +95,7 @@ import {
   $view,
   appendBytes,
   applySnapshot,
+  $待答权限,
   connectFailed,
   connectStarted,
   connectSucceeded,
@@ -186,6 +187,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
   const kernelInstanceId = useStore($kernelInstanceId)
+  /** agent 正在问「能不能」（A2）。**跟着当前会话走** */
+  const 待答权限 = useStore($待答权限)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
   const sidebarWidth = useStore($sidebarWidth)
@@ -309,6 +312,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             trimmed: u.snapshot.terminalTrimmed,
             // **当前**内核实例。缺省 = 还没有内核，不是「不陈旧」
             kernelInstanceId: u.snapshot.kernelInstanceId,
+            // agent 在问「能不能」（A2）。**缺省 = 没有人在问**，那时卡要消失
+            pendingPermission: u.snapshot.pendingPermission,
           })
         }
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
@@ -2463,6 +2468,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 session={session}
                 items={items}
+                {...(待答权限 ? { 待答权限 } : {})}
+                onAnswerPermission={(requestId, optionId) => {
+                  /**
+                   * **乐观先摘卡**：点了之后卡立刻消失，人才知道自己点中了。
+                   * 服务端那边也会摘一次（快照推回来），两次是幂等的。
+                   * 失败时出声——**不出声的表现是「点了没反应」**。
+                   */
+                  $待答权限.set(undefined)
+                  client
+                    .get("answerPermission", {
+                      sessionId: session.sessionId,
+                      requestId,
+                      ...(optionId ? { optionId } : {}),
+                    })
+                    .catch(fail)
+                }}
                 {...(当前任务?.workspace ? { workspace: 当前任务.workspace } : {})}
                 serviceLabel={serviceLabel}
                 onOpenSettings={actions.openSettings}

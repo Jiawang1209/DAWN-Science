@@ -1362,6 +1362,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
+    /**
+     * 回答一次权限询问（A2，2026-08-16）。
+     *
+     * **两件事都要做，顺序也要对**：先把答案递给 agent（它在等），
+     * 再把那张卡从快照上摘掉。反过来的话，卡先没了而 agent 还等着，
+     * 中间那一拍屏幕上什么都没有——人会以为自己点漏了。
+     */
+    answerPermission: async ({ sessionId, requestId, optionId }) => {
+      sessions.answerPermission(sessionId, requestId, optionId)
+      events.清权限询问(sessionId)
+      return {}
+    },
+
     getContextUsage: async ({ sessionId }) => {
       const u = sessions.contextUsage(sessionId)
       // 拿不到时给一个**三档全零、且没有上限**的结果：

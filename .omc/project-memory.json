@@ -364,6 +364,12 @@
       "accessCount": 1,
       "lastAccessed": 1786867079889,
       "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-16-acp-runtime-design.md",
+      "accessCount": 1,
+      "lastAccessed": 1786884767102,
+      "type": "file"
     }
   ],
   "userDirectives": []

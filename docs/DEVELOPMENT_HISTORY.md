@@ -43,6 +43,42 @@
 
 ## 变更日志
 
+### 2026-08-17 — `dawn_run_in_kernel`：外部 agent 借我们的解释器跑代码（B1·B′，分支 `acp`）
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 路线 B 给出去的四件工具只做了三件。缺的这件是**唯一一件
+  claude / codex 自己做不到的**：它们有 bash，能 `python -c`，但那样跑出来的东西
+  在 DAWN 这边什么都不剩——变量留不住、输出是一坨 stdout、账本上没有环境证据。
+- **What**:
+  - 新增 `src/acp/kernel.ts`（`建跑内核`）：一段 ACP 会话配一段内核会话并**复用**
+    （不复用的话上一句 `import pandas` 就白做了），能力全部注入，这个文件不认识
+    SessionManager 也不认识 registry。
+  - `src/acp/tools.ts`：`工具清单(有内核)` —— **没配内核就不摆这件工具**。
+    摆一个「点了说没配」的工具比不摆更坏：模型会围着它规划，最后一步撞墙。
+  - `src/electron/wiring.ts`：内核 agent 从 registry 现查（`kind: kernel` 且
+    `language` 对得上）；**建会话走 backend 那条路径**，因为那条路上挂着环境快照、
+    事件接线、记账员、git 基线，自己 `create` 一下每样都要重接，而漏掉哪一样都不出声。
+  - 账本：这条路绕开 `writeToSession`，所以回合在 `发` 里自己开，记成
+    `execute_python` / `execute_r` —— **一段 R 代码不该和一次模型对话长得一模一样**。
+  - `scripts/fake-acp-agent.mjs`：新开关 `FAKE_ACP_RUN_KERNEL`（要真内核，
+    所以与 `FAKE_ACP_CALL_MCP` 分开——混在一起会让一批用例因「本机没配内核」而红，
+    红得毫无信息量）。
+- **Impact**: 外部 agent 在 DAWN 里跑的代码，现在与内置对话跑的代码在账本上**同等待遇**
+  （环境快照 + 结构化输出 + 溯源）。不变式 5 因此在 ACP 这条路上是完整的。
+  没有破坏性变更：协议未动，没配内核的机器上那件工具不出现，其余三件照旧。
+- **Verification**:
+  - `tests/acp/kernel.test.ts` 12 条，**逐条变异**（12/12 变红）：见 idle 就收、
+    没配就退回、图塞 base64、空输出返回空串、不复用、死了照写、报错不标错、
+    traceback 扔掉、stderr 不加前缀、超时一直等、没内核也摆工具、会话不属于项目。
+  - e2e `kernel-session.spec.ts` 新增一条（真内核 + 假 ACP agent 走真 MCP）：
+    工具出现在清单里、`ACP_KERNEL_OK 42` 是内核真算的、账本上有 `execute_python`、
+    调用本身落成 `acp_tool:dawn_run_in_kernel` 且 `origin=agent`。
+    变异两次确认承重（不开回合 → 红；输出改成编的 → 红）。
+  - 第一次跑时它**如实地红在**「还没有配置 Python 解释器路径」——那句话从内核层
+    原样穿过网关与 MCP 到了 agent 手里，正是规格 7.5 要的样子。
+  - `npm test` 1637 绿；`npm run typecheck` 干净。
+
 ### 2026-08-17 — B1 路线 B：把我们自己的工具递给外部 agent（分支 `acp`）
 
 - **Type**: feat

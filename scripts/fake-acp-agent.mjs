@@ -28,6 +28,7 @@
  * | `FAKE_ACP_USAGE` | 置一即在回合结束时报 usage（**累计值**，验差值那条） |
  * | `FAKE_ACP_ASK` | 置一即在回话之前**问一次权限**（A2） |
  * | `FAKE_ACP_CALL_MCP` | 置一即**真的去连 DAWN 递过来的那台 MCP 服务器**并调一次（B1） |
+ * | `FAKE_ACP_RUN_KERNEL` | 给一段代码即改调 `dawn_run_in_kernel` 跑它（B1·B′，要真内核） |
  * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
  */
 
@@ -397,6 +398,20 @@ async function 调一次MCP(台, sessionId) {
     p.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`)
     const 列 = await 问("tools/list", {})
     const 名们 = (列.result?.tools ?? []).map((t) => t.name).join(",")
+    /**
+     * **跑内核那条要单独一个开关**（B1·B′）：它要一台真内核，
+     * 而绝大多数用例跑在隔离的假 kernelspec 上。
+     * 混在一起的话，那些用例会因为「本机没配内核」而红——
+     * 红得毫无信息量，而那正是把人训练成忽略红色的最快方式。
+     */
+    if (process.env["FAKE_ACP_RUN_KERNEL"]) {
+      const 跑 = await 问("tools/call", {
+        name: "dawn_run_in_kernel",
+        arguments: { language: "python", code: process.env["FAKE_ACP_RUN_KERNEL"] },
+      })
+      const 出 = 跑.result?.content?.[0]?.text ?? 跑.error?.message ?? "（没有内容）"
+      return `工具=[${名们}] 内核=${出}`
+    }
     const 调 = await 问("tools/call", {
       name: "dawn_record_note",
       arguments: { text: "经 MCP 记的一条" },

@@ -22,6 +22,7 @@ import { RunRecorder } from "../project/run-recorder.js"
 import { diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 import { 开网关 } from "../acp/gateway.js"
 import { 工具清单, 建调用 } from "../acp/tools.js"
+import { 建跑内核 } from "../acp/kernel.js"
 import { 造门, 造MCP门 } from "../policy/permissions.js"
 import { MCP池 } from "../mcp/客户端.js"
 import { 合名单 } from "../mcp/名单.js"
@@ -665,9 +666,70 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * 那个文件不认识数据库，也不认识 Electron。
    */
   // **没给入口就不起网关**：起了也没人连得上（那台服务器脚本不在）
+  /**
+   * **有没有内核 agent，是现查的**（B1·B′）。
+   *
+   * 查不到就**不把 `dawn_run_in_kernel` 摆出来**——摆一个「点了说没配」
+   * 的工具，比不摆更坏：模型会围着它规划，然后在最后一步撞墙。
+   */
+  const 内核agent = (language: "python" | "R"): string | undefined =>
+    Object.entries(registry.agents).find(
+      ([, def]) => def.kind === "kernel" && def.language === language,
+    )?.[0]
+
+  const 跑内核 = 建跑内核({
+    找内核: 内核agent,
+    归属: (sessionId) => {
+      const rec = sessionStore.get(sessionId)
+      // **用这段 ACP 会话自己的工作目录**：agent 正在那里干活，内核也该在那里
+      return rec?.projectId ? { projectId: rec.projectId, workspace: rec.workspace } : undefined
+    },
+    /**
+     * **走 backend 那条创建路径，不直接 `sessions.create`。**
+     *
+     * 那条路上挂着一串东西：环境快照、事件接线、记账员、git 基线。
+     * 自己 `create` 一下的话每一样都要重接一遍，而**漏掉哪一样都不出声**
+     * ——正是 backend 里那段注释（「每多一份复制粘贴的接线代码……」）说的事。
+     * 于是这段内核会话与用户自己手建的那种**完全一样**，界面里也看得见它。
+     *
+     * `createTerminalSession` 这个名字说的是入口，不是 PTY：
+     * 它就是「在这个项目里用这个 agent 起一段会话」。
+     */
+    开一段: async (agentId, _workspace, projectId) => {
+      const r = (await backend.createTerminalSession({ agentId, projectId })) as {
+        sessionId: string
+      }
+      return r.sessionId
+    },
+    还活着: (id) => sessions.isLive(id),
+    订: (id, 收) =>
+      sessions.attach(id, (e) => {
+        if (e.kind === "kernel_output") 收(e.entry as never)
+      }),
+    发: (id, code) => {
+      /**
+       * **账本上这一条是「执行了一段代码」，不是「聊了一句」。**
+       *
+       * 与 `writeToSession` 里那条同一个理由（2026-08-11）：
+       * 一段 R 代码不该和一次模型对话长得一模一样。这条路绕开了
+       * 那个入口，所以回合要在这里自己开——不开的话，环境快照与
+       * 文件事实都没有地方可挂，而那正是这件工具存在的理由。
+       */
+      const def = registry.agents[sessionStore.get(id)?.agentId ?? ""]
+      const lang = def?.kind === "kernel" ? def.language : undefined
+      runRecorder.beginTurn(
+        id,
+        lang === "R" ? "execute_r" : lang === "python" ? "execute_python" : "kernel_execute",
+      )
+      sessions.leases.acquire(id, "engine")
+      sessions.write(id, code, "engine")
+    },
+  })
+
   if (opts.dawnMcpEntry) 网关 = 开网关({
-    工具们: () => 工具清单(),
+    工具们: () => 工具清单(Boolean(内核agent("python") ?? 内核agent("R"))),
     调用: 建调用({
+      跑内核,
       项目of: (sessionId) => sessionStore.get(sessionId)?.projectId,
       // **与「Agent Skills」那一屏同一条路**：两处分家就会各说各的
       列技能: async (projectId) => {

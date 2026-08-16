@@ -34,6 +34,21 @@ export interface 工具装配 {
    * 记一条 Run。**返回 runId**。
    * `parentRunId` 缺席时不硬挂——那是把 A 的账算到 B 头上。
    */
+  /**
+   * 在**我们起的解释器**里跑一段代码（B1·B′，2026-08-17）。
+   *
+   * **这是四件里最有分量的一件**：ACP agent 自己只有 bash，
+   * 它跑完 `python x.py` 之后，账本上没有环境证据、没有结构化输出、
+   * 没有图。走这条路的话三样都有。
+   *
+   * 不给这个钩子时，那件工具**根本不出现在清单里**——
+   * 摆一个「点了说没配」的工具，比不摆更坏。
+   */
+  跑内核?: (
+    sessionId: string,
+    language: "python" | "R",
+    code: string,
+  ) => Promise<{ 文本: string; 出错?: boolean }>
   记一笔: (
     sessionId: string,
     requestType: string,
@@ -43,8 +58,28 @@ export interface 工具装配 {
 
 const 空参数 = { type: "object", properties: {}, additionalProperties: false }
 
-export function 工具清单(): 网关工具[] {
+export function 工具清单(有内核: boolean): 网关工具[] {
   return [
+    ...(有内核
+      ? [
+          {
+            name: "dawn_run_in_kernel",
+            description:
+              "在 DAWN 起的 Jupyter 内核里跑一段代码（Python 或 R）。**同一段会话里变量留得住**——" +
+              "上一次定义的东西下一次还在。比自己起 python 进程强的地方：输出是结构化的（图、表、报错分开），" +
+              "而且这次运行会带着环境快照进 DAWN 的账本，之后查得到「这个结果是怎么来的」。",
+            schema: {
+              type: "object",
+              properties: {
+                language: { type: "string", enum: ["python", "R"], description: "哪门语言" },
+                code: { type: "string", description: "要跑的代码" },
+              },
+              required: ["language", "code"],
+              additionalProperties: false,
+            },
+          },
+        ]
+      : []),
     {
       name: "dawn_list_skills",
       description:
@@ -161,6 +196,15 @@ async function 干(
       return { 文本: `账本里没有「${id}」的溯源记录——它可能不是 DAWN 产生的。` }
     }
     return { 文本: `产生它的是 Run ${link.producingRunId}（记于 ${link.recordedAt ?? "未知时间"}）。` }
+  }
+
+  if (工具名 === "dawn_run_in_kernel") {
+    const lang = 参数["language"]
+    const code = 参数["code"]
+    if (lang !== "python" && lang !== "R") throw new Error("language 只能是 python 或 R")
+    if (typeof code !== "string" || !code.trim()) throw new Error("要给一段非空的 code")
+    if (!装配.跑内核) throw new Error("这次运行没有装配内核")
+    return 装配.跑内核(sessionId, lang, code)
   }
 
   if (工具名 === "dawn_record_note") {

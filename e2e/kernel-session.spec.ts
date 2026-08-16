@@ -20,7 +20,7 @@
  * 「先跑其余的，再跑它」。这么做的理由只有一个——
  * **红着的全量套件会教人忽略红色**，而那比一个待查的 bug 更贵。
  */
-import { test, expect, readRuns, 开一段临时会话, 等进了对话 , 进设置 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话, 等进了对话 , 进设置, 用某个agent开一段 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -304,5 +304,110 @@ test.describe("由配置的解释器路径起内核", () => {
     await page.getByPlaceholder(/今天帮你做些什么/).fill("import sys; print('EXE', sys.executable)")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".kout-text").last()).toContainText(PY_PATH, { timeout: 60_000 })
+  })
+})
+
+/**
+ * **外部 agent 借我们的内核跑一段代码**（B1·B′，2026-08-17）。
+ *
+ * ## 它证明的是别的用例证不了的那一件
+ *
+ * `acp-agent.spec.ts` 里那条已经验过「MCP 通了、落账了」。
+ * 这一条验的是**为什么值得给它这件工具**：
+ *
+ * 1. 代码真的跑在**我们起的解释器**里（`sys.executable` 是那台内核的）；
+ * 2. 账本上那条不是 `agent_turn`，是 **`execute_python`**——
+ *    一段 R 代码不该和一次模型对话长得一模一样；
+ * 3. 那段内核会话**带着环境快照**，而它自己的 bash 跑完什么都不剩。
+ *
+ * ## 为什么它坐在这个文件里
+ *
+ * 它要一台**真内核**（机器相关，拿不到就跳过并说清为什么）。
+ * 这个文件已经因为同一个理由单独跑了——放进 `acp-agent.spec.ts`
+ * 的话，那一整批用例都会被这台内核的启动代价与隔离规则拖下水。
+ */
+const 假ACP = join(import.meta.dirname, "..", "scripts", "fake-acp-agent.mjs")
+
+const ACP内核PROVIDERS = `agents:
+  py:
+    kind: kernel
+    language: python
+    capabilities: [exec]
+  claude-acp:
+    kind: acp
+    command: node
+    args: ["${假ACP}"]
+    capabilities: [chat, exec]
+`
+
+test.describe("内核会话 · ACP 借我们的内核", () => {
+  test.use({
+    dawnOptions: {
+      providersYaml: ACP内核PROVIDERS,
+      realKernels: true,
+      gitInit: true,
+      env: { FAKE_ACP_CALL_MCP: "1", FAKE_ACP_RUN_KERNEL: "print('ACP_KERNEL_OK', 6 * 7)" },
+    },
+  })
+
+  /**
+   * **按 `language` 配的内核 agent 要一个解释器路径**，
+   * 而那是这台机器上的东西——拿不到就跳过并说清为什么。
+   *
+   * 这件工具刻意**只认声明了 `language` 的内核 agent**：
+   * 一个只写了 kernelspec 名字的 agent，我们并不知道它是哪门语言。
+   * 从名字上猜，正是「跑在了另一个环境里而不自知」的来源。
+   */
+  test.skip(!有PY, `本机没有 ${PY_PATH}`)
+
+  test("**它跑的是我们的内核，账本上记的是「执行了一段代码」**", async ({ dawn }) => {
+    const { page } = dawn
+
+    // 先把解释器配上——**没配的时候那句话会原样传到 agent 手里**，
+    // 这条退路在上面那个用例里验过了，这里验的是配好之后的正路
+    await 进设置(page, "内核")
+    const box = page.getByRole("textbox", { name: "Python 解释器" })
+    await box.fill(PY_PATH)
+    await page.getByRole("button", { name: "保存" }).first().click()
+    await expect(box).toHaveValue(PY_PATH)
+
+    // **先离开设置**：composer 那颗 pill 只在对话那一屏上，
+    // 留在设置里点它，报错长得像「菜单坏了」
+    await page.getByRole("button", { name: "新建任务" }).click()
+    await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一下")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    const 结果 = page.getByText(/【MCP 结果】/).last()
+    await expect(结果).toBeVisible({ timeout: 90_000 })
+
+    // ① 这件工具**出现在清单里**——没配内核时它不该出现
+    await expect(结果).toContainText("dawn_run_in_kernel")
+
+    // ② 输出是**内核真的算出来的**，不是那台服务器编的
+    await expect(结果).toContainText("ACP_KERNEL_OK 42")
+
+    /**
+     * ③ **账本上记的是「执行了一段代码」，不是「聊了一句」。**
+     *
+     * 这条路绕开了 `writeToSession` 那个入口，回合是我们自己开的——
+     * 忘了开的话，环境快照与文件事实都没有地方可挂，
+     * 而那正是这件工具存在的理由。
+     */
+    await expect
+      .poll(
+        async () =>
+          (await readRuns(dawn.dbPath)).filter((r) => r["request_type"] === "execute_python").length,
+        { message: "内核那一次执行没有落成 execute_python", timeout: 20_000 },
+      )
+      .toBeGreaterThan(0)
+
+    const 账 = await readRuns(dawn.dbPath)
+    // ④ 那次工具调用本身也落了账，且**是 agent 干的**
+    const 工具账 = 账.filter((r) => r["request_type"] === "acp_tool:dawn_run_in_kernel")
+    expect(工具账.length, "调用本身没有落账").toBeGreaterThan(0)
+    expect(工具账[0]?.["origin"]).toBe("agent")
+    expect(工具账[0]?.["status"]).toBe("completed")
   })
 })

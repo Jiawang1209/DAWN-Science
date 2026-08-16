@@ -54,6 +54,12 @@ import type {
  *      统一成字符串（`"1"` / `""`）好让上层只处理一种，
  *      **线上形状的差别留在这一层**。
  */
+/** 这一段的 token 记在谁头上：**agent 一定有，模型有就带上** */
+function 算谁答的(agentId: string, 开关: readonly 会话开关[] | undefined): string {
+  const 模型 = 开关?.find((o) => o.category === "model")
+  return 模型?.current ? `${agentId}/${模型.current}` : agentId
+}
+
 function 收窄开关(原: unknown): 会话开关[] {
   if (!Array.isArray(原)) return []
   const 出: 会话开关[] = []
@@ -115,8 +121,24 @@ interface 一段 {
   等着: Map<number, { 成: (v: unknown) => void; 败: (e: Error) => void }>
   下一个id: number
   缓冲: string
+  /** 这一段是哪个 agent（A4）。**记账要用**，而事件里只有 sessionId */
+  agentId: string
   /** stderr 的尾巴。**认证提示常常只写在这儿** */
   stderr尾: string[]
+  /**
+   * 这一段的 token 记在谁头上（A4）。形如 `claude-acp/opus`。
+   *
+   * ## 为什么不是「模型」而是「agent/模型」
+   *
+   * ACP 那边**模型是一个可选的开关**——很多适配器压根不报。
+   * 只写模型名的话，不报的那些会全部挤进同一格「未记录」，
+   * 而它们其实是**不同的 agent**（claude-acp 与 codex-acp 花的钱不是一回事）。
+   *
+   * 所以：**agent 一定有，模型有就带上**。
+   * 「用量」那一屏显示时会去掉斜杠前那一段（`显示模型名`），
+   * 于是有模型时看到的是模型，没有时看到的是 agent 名——**都不是编的**。
+   */
+  谁答的?: string
   /**
    * 这一段当前的开关（A3）。
    * **只用来分辨 boolean 与 select 的线上形状**——前者要多带一个
@@ -143,6 +165,14 @@ export class AcpRuntime implements AgentRuntime {
   constructor(
     private readonly opts: {
       commandOf: (spec: SessionSpec) => ACP命令
+      /**
+       * 这一段是哪个 agent（A4，记账要用）。
+       *
+       * **`SessionSpec` 里没有它**——那份结构说的是「怎么起这个进程」，
+       * 而 agent 的身份住在库里。与 `commandOf` 同一条缝：**现查，不缓存**。
+       * 取不到时退回 `"acp"`，那是实情（我们只知道它是一台 ACP agent）。
+       */
+      agentIdOf?: (spec: SessionSpec) => string | undefined
       /**
        * 上一次那段 ACP 会话的凭据（A3）。**指纹对不上就别给**——
        * 判断留在调用方，运行时只管「给了就试着 load」。
@@ -185,6 +215,7 @@ export class AcpRuntime implements AgentRuntime {
       等着: new Map(),
       下一个id: 1,
       缓冲: "",
+      agentId: this.opts.agentIdOf?.(spec) ?? "acp",
       stderr尾: [],
       待答: new Map(),
       停了: false,
@@ -322,6 +353,7 @@ export class AcpRuntime implements AgentRuntime {
      */
     const 开关 = 收窄开关((新 as Record<string, unknown>)["configOptions"])
     段.开关们 = 开关
+    段.谁答的 = 算谁答的(段.agentId, 开关)
     if (开关.length > 0) {
       this.发(spec.sessionId, { kind: "config_options", sessionId: spec.sessionId, options: 开关 })
     }
@@ -394,6 +426,8 @@ export class AcpRuntime implements AgentRuntime {
     const 开关 = 收窄开关(r?.["configOptions"])
     if (开关.length > 0) {
       段.开关们 = 开关
+      // **换了模型，后面的 token 就记在新的那个头上**
+      段.谁答的 = 算谁答的(段.agentId, 开关)
       this.发(sessionId, { kind: "config_options", sessionId, options: 开关 })
     }
   }
@@ -455,6 +489,8 @@ export class AcpRuntime implements AgentRuntime {
             kind: "turn_usage",
             sessionId,
             usage: { input: 增.input, output: 增.output },
+            // **谁花的**（A4）：账本据此在「用量」那一屏上把它分出来
+            ...(段.谁答的 ? { model: 段.谁答的 } : {}),
           })
         }
       }
@@ -522,6 +558,7 @@ export class AcpRuntime implements AgentRuntime {
         const 开关 = 收窄开关((up as Record<string, unknown>)["configOptions"])
         if (开关.length > 0) {
           段.开关们 = 开关
+          段.谁答的 = 算谁答的(段.agentId, 开关)
           this.发(sessionId, { kind: "config_options", sessionId, options: 开关 })
         }
       } else if (类 === "agent_thought_chunk" && 内容?.type === "text" && 内容.text) {

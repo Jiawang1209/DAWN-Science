@@ -392,6 +392,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          * 上一次那段 ACP 会话（A3）。**两样都取到才给**——
          * 只有 id 没有指纹时不敢用它（见 schema 里那段）。
          */
+        // **现查，不缓存**：与 `commandOf` 同一条理由
+        agentIdOf: (spec) => sessionStore.get(spec.sessionId)?.agentId,
         priorOf: (spec) => {
           const rec = sessionStore.get(spec.sessionId)
           return rec?.acpSessionId && rec.acpFingerprint

@@ -275,3 +275,41 @@ test.describe("ACP 会话开关", () => {
     })
   })
 })
+
+/**
+ * ACP 的 token 进「用量」（A4，2026-08-16）。
+ *
+ * **整条线**：适配器报累计 → 运行时算差值并标上「谁花的」→ 账本 →
+ * 汇总 → 那一屏的饼图。中间任何一节断了，饼图上就没有它。
+ *
+ * 作者定的口径：**与内置对话合并统计**（*「毕竟它只是一个参考」*）。
+ */
+test.describe("ACP 用量", () => {
+  test.use({
+    dawnOptions: { providersYaml: PROVIDERS, gitInit: true, env: { FAKE_ACP_USAGE: "1" } },
+  })
+
+  test("**跑一轮之后，饼图上分得出这台 ACP agent**", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+    await page.getByRole("button", { name: "设置", exact: true }).click()
+    await page.getByRole("button", { name: "用量", exact: true }).click()
+    await expect(page.locator(".usage-heat")).toBeVisible({ timeout: 15_000 })
+
+    // ① 累计不是 0——**这一条就是「整条线通没通」**
+    await expect(page.locator(".usage-stat").first().locator(".usage-stat-value")).not.toHaveText("0")
+
+    /**
+     * ② 图例上是那台 agent 的模型。
+     *
+     * 显示时会去掉斜杠前那一段（`claude-acp/sonnet` → `sonnet`），
+     * 所以这里断言的是模型名——**它不是编的，是那台 agent 自己报的开关值**。
+     */
+    await expect(page.locator(".usage-legend-name").first()).toHaveText("sonnet")
+  })
+})

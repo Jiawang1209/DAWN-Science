@@ -547,3 +547,73 @@ describe("会话恢复", () => {
     expect(记下[0]?.fp, "指纹要带上工作目录").toContain(s.workspace)
   })
 })
+
+/**
+ * token 记在谁头上（A4，2026-08-16）。
+ *
+ * ## 为什么不是「模型」而是「agent/模型」
+ *
+ * ACP 那边**模型是一个可选的开关**——很多适配器压根不报。
+ * 只写模型名的话，不报的那些会全部挤进同一格「未记录」，
+ * 而它们其实是**不同的 agent**（claude-acp 与 codex-acp 花的不是一回事）。
+ */
+describe("用量记在谁头上", () => {
+  const 起带名 = (agentId: string | undefined, env: Record<string, string> = {}) => {
+    for (const [k, v] of Object.entries(env)) process.env[k] = v
+    return new AcpRuntime({
+      commandOf: () => ({ command: process.execPath, args: [假agent] }),
+      ...(agentId ? { agentIdOf: () => agentId } : {}),
+    })
+  }
+
+  it("**有模型开关时是 `agent/模型`**", async () => {
+    const rt = 起带名("claude-acp", { FAKE_ACP_USAGE: "1" })
+    const s = spec("u1")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "在吗")
+    const u = (await 等到(收, (e) => e.kind === "turn_usage", "用量")) as Extract<
+      AgentEvent,
+      { kind: "turn_usage" }
+    >
+    expect(u.model).toBe("claude-acp/sonnet")
+  })
+
+  /** **换了模型，后面的账就记在新的那个头上** */
+  it("换模型之后，记的是新的", async () => {
+    const rt = 起带名("claude-acp", { FAKE_ACP_USAGE: "1" })
+    const s = spec("u2")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    await rt.setConfigOption?.(s.sessionId, "model", "opus")
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "在吗")
+    const u = (await 等到(收, (e) => e.kind === "turn_usage", "用量")) as Extract<
+      AgentEvent,
+      { kind: "turn_usage" }
+    >
+    expect(u.model).toBe("claude-acp/opus")
+  })
+
+  /**
+   * **它不报模型时，仍然要有一个名字**。
+   * 退回 agent 名不是编造——我们确实只知道这么多。
+   */
+  it("没有模型开关时，退回 agent 名", async () => {
+    const rt = 起带名("codex-acp", { FAKE_ACP_USAGE: "1", FAKE_ACP_NO_CONFIG: "1" })
+    const s = spec("u3")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "在吗")
+    const u = (await 等到(收, (e) => e.kind === "turn_usage", "用量")) as Extract<
+      AgentEvent,
+      { kind: "turn_usage" }
+    >
+    expect(u.model).toBe("codex-acp")
+  })
+})

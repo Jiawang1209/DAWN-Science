@@ -199,10 +199,20 @@ function parseFiles(r: RunRow): Partial<RunSummary> {
   if (r.files_written === null) return {}
   try {
     const written = JSON.parse(r.files_written) as string[]
-    const read = r.files_read === null ? [] : (JSON.parse(r.files_read) as string[])
+    /**
+     * **`files_read` 为 NULL 时整个字段缺席，不写成 `[]`**（2026-08-16 修）。
+     *
+     * 上一版把 NULL 映射成空数组——那把「不知道读了什么」说成了
+     * 「确认一个文件都没读」。此前没人撞上是因为两列总是一起写；
+     * **从 git 反推的那条路（外部 agent）第一次让它们分了家**：
+     * git 只知道改了什么。
+     */
+    const read = r.files_read === null || r.files_read === undefined
+      ? undefined
+      : (JSON.parse(r.files_read) as string[])
     return {
       filesWritten: written,
-      filesRead: read,
+      ...(read === undefined ? {} : { filesRead: read }),
       ...(r.may_include_user_edits === null
         ? {}
         : { mayIncludeUserEdits: r.may_include_user_edits === 1 }),
@@ -317,19 +327,30 @@ export class RunStore {
    */
   patchFiles(
     runId: string,
-    files: { filesWritten: string[]; filesRead: string[]; mayIncludeUserEdits: boolean },
+    files: {
+      filesWritten: string[]
+      /**
+       * **缺省 = 不知道读了什么**，那一列原样不动（不是写成空数组）。
+       *
+       * 2026-08-16 加的这条缺省，是给「从 git 反推」用的：
+       * **git 只知道「改了什么」，读了什么它一无所知**。
+       * 写成 `[]` 等于宣称「确认一个文件都没读」——而那是编造（不变式 5）。
+       */
+      filesRead?: string[]
+      mayIncludeUserEdits: boolean
+    },
   ): void {
     this.db
       .prepare(`
         UPDATE runs SET
           files_written = @filesWritten,
-          files_read = @filesRead,
+          files_read = COALESCE(@filesRead, files_read),
           may_include_user_edits = @mayIncludeUserEdits
         WHERE id = @runId`)
       .run({
         runId,
         filesWritten: JSON.stringify(files.filesWritten),
-        filesRead: JSON.stringify(files.filesRead),
+        filesRead: files.filesRead === undefined ? null : JSON.stringify(files.filesRead),
         mayIncludeUserEdits: files.mayIncludeUserEdits ? 1 : 0,
       })
   }

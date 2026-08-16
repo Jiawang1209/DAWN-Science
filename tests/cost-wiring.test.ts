@@ -253,3 +253,96 @@ describe("账本", () => {
     expect(turns.filter((t) => t.cost !== undefined)).toHaveLength(1)
   })
 })
+
+/**
+ * 外部 agent 干的活，文件事实**从 git 反推**（B1 路线 C，2026-08-16）。
+ *
+ * ## 这条路此前不存在
+ *
+ * 内置对话的文件事实来自我们自己的工具包装器（`tool_files` 事件）。
+ * 而 **ACP / CLI agent 用的是它自己的读写工具**——那些调用根本不经过我们，
+ * 于是它在项目里干的活在账本上只有「跑了一轮」，**改了什么一概没有**。
+ *
+ * 不变式 5 说的是「从 git 事实算，不听 agent 声明」。
+ * 这一组把它用在外部 agent 身上。
+ */
+describe("外部 agent 的文件事实", () => {
+  let db2: Database.Database
+  let runs2: RunStore
+  let 拍了: string[]
+  let rec2: RunRecorder
+
+  beforeEach(() => {
+    db2 = new Database(":memory:")
+    migrate(db2)
+    db2.prepare(`INSERT INTO projects (id, name, workspace, created_at) VALUES (?,?,?,?)`)
+      .run(PROJECT, "demo", "/w", "2026-08-17T00:00:00.000Z")
+    runs2 = new RunStore(db2)
+    拍了 = []
+    let clock2 = 0
+    rec2 = new RunRecorder({
+      runs: runs2,
+      projectOf: (s) => (s === SESSION ? PROJECT : undefined),
+      now: () => new Date(1_800_000_000_000 + clock2++ * 1000).toISOString(),
+      外部文件事实: {
+        拍基线: (s) => 拍了.push(s),
+        比一次: async () => ({ filesWritten: ["a.csv", "报告.md"], mayIncludeUserEdits: true }),
+      },
+    })
+  })
+
+  const 那一轮 = () => runs2.listByProject(PROJECT, {}).find((r) => r.requestType === "agent_turn")!
+
+  /** **基线必须在回合开始时拍**——收口时再拍就什么都比不出来了 */
+  it("回合一开始就拍基线", () => {
+    rec2.beginTurn(SESSION)
+    expect(拍了).toEqual([SESSION])
+  })
+
+  it("**收口之后，改了哪些文件落在那一轮上**", async () => {
+    rec2.beginTurn(SESSION)
+    rec2.ingest({ kind: "idle", sessionId: SESSION })
+    // 补写是异步的（git 要跑几条命令），不阻塞收口
+    await new Promise((r) => setTimeout(r, 20))
+    expect(那一轮().filesWritten).toEqual(["a.csv", "报告.md"])
+    // **读了什么在这一层也要缺席**：NULL 映射成 [] 就是把「不知道」说成「没读」
+    expect(那一轮().filesRead, "不知道读了什么，不该冒出一个空数组").toBeUndefined()
+  })
+
+  /**
+   * **「读了什么」必须留空。**
+   *
+   * git 只知道「改了什么」——写成空数组等于宣称「确认一个文件都没读」，
+   * 而那是编造（不变式 5）。缺席读作「不知道」。
+   */
+  it("读了什么留 NULL，不写成空数组", async () => {
+    rec2.beginTurn(SESSION)
+    rec2.ingest({ kind: "idle", sessionId: SESSION })
+    await new Promise((r) => setTimeout(r, 20))
+    const row = db2
+      .prepare(`SELECT files_read, files_written FROM runs WHERE request_type = 'agent_turn'`)
+      .get() as { files_read: string | null; files_written: string | null }
+    expect(row.files_written, "改了什么该记上").toContain("a.csv")
+    expect(row.files_read, "读了什么我们不知道，不能写成 []").toBeNull()
+  })
+
+  /** 算不出来时（不是 git 仓库、git 出错）**什么都不补**，不编造 */
+  it("算不出来时不补，留「不知道」", async () => {
+    const 只报错 = new RunRecorder({
+      runs: runs2,
+      projectOf: (s) => (s === SESSION ? PROJECT : undefined),
+      now: () => new Date(1_900_000_000_000).toISOString(),
+      外部文件事实: {
+        拍基线: () => {},
+        比一次: async () => {
+          throw new Error("不是 git 仓库")
+        },
+      },
+    })
+    只报错.beginTurn(SESSION)
+    只报错.ingest({ kind: "idle", sessionId: SESSION })
+    await new Promise((r) => setTimeout(r, 20))
+    const 全部 = runs2.listByProject(PROJECT, {}).filter((r) => r.requestType === "agent_turn")
+    expect(全部[0]?.filesWritten).toBeUndefined()
+  })
+})

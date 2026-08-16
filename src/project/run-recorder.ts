@@ -47,6 +47,32 @@ export interface RunRecorderOptions {
    * 而随手补一个当前环境上去，就是拿今天的环境冒充当时的。
    */
   environmentOf?: (sessionId: SessionId) => string | undefined
+  /**
+   * **外部 agent 干的活，文件事实从 git 算**（B1 路线 C，2026-08-16）。
+   *
+   * ## 为什么需要这一条
+   *
+   * 内置对话的文件事实来自我们自己的工具包装器（`tool_files` 事件）。
+   * 而 **ACP agent 用的是它自己的读写工具**——那些调用根本不经过我们，
+   * 于是它在项目里干的活在账本上只有「跑了一轮」，**改了什么一概没有**。
+   *
+   * 不变式 5 说的是「从 git 事实算，不听 agent 声明」。
+   * 这条钩子把它用在外部 agent 身上：**回合开始时拍一张，收口时比一次**。
+   *
+   * ## 两个函数而不是一个
+   *
+   * 基线必须在**回合开始**拍——收口时再拍就什么都比不出来了。
+   * 这个先后关系写在类型里，比写在注释里可靠。
+   *
+   * 取不到（不是 git 仓库、没有工作区）时**什么都不补**：
+   * 「不知道」与「确认没改」是两回事。
+   */
+  外部文件事实?: {
+    拍基线: (sessionId: SessionId) => void
+    比一次: (sessionId: SessionId) => Promise<
+      { filesWritten: string[]; mayIncludeUserEdits: boolean } | undefined
+    >
+  }
   /** 可注入的时钟，测试用。生产走 `Date` */
   now?: () => string
 }
@@ -127,6 +153,7 @@ export class RunRecorder {
   private readonly runs: RunStore
   private readonly projectOf: (sessionId: SessionId) => string | undefined
   private readonly environmentOf: (sessionId: SessionId) => string | undefined
+  private readonly 外部文件事实: RunRecorderOptions["外部文件事实"]
   private readonly now: () => string
   private readonly open = new Map<SessionId, Open>()
 
@@ -134,6 +161,7 @@ export class RunRecorder {
     this.runs = opts.runs
     this.projectOf = opts.projectOf
     this.environmentOf = opts.environmentOf ?? (() => undefined)
+    this.外部文件事实 = opts.外部文件事实
     this.now = opts.now ?? (() => new Date().toISOString())
   }
 
@@ -191,6 +219,8 @@ export class RunRecorder {
      * 此前一律记成 `agent_turn`：账本上一段 R 代码和一次模型对话长得一模一样，
      * **而「这是执行代码」这个事实就此消失**。
      */
+    // **基线要在回合开始时拍**——收口时再拍就什么都比不出来了
+    this.外部文件事实?.拍基线(sessionId)
     const runId = this.begin(sessionId, requestType, "user")
     if (runId) this.slot(sessionId).turnRunId = runId
   }
@@ -388,6 +418,27 @@ export class RunRecorder {
         ...(合成成本(cost, tokens) ? { cost: 合成成本(cost, tokens)! } : {}),
         ...(模型 ? { model: 模型 } : {}),
       })
+
+      /**
+       * **外部 agent 的文件事实**（路线 C）。
+       *
+       * 放在 `finish` 之后、用 `patchFiles` 补：那个方法「只补文件事实，
+       * 不动状态」，正是为这种「事实比终态晚到」准备的。
+       *
+       * **异步且不阻塞收口**：git 要跑几条命令，而回合的终态不该等它。
+       * 失败一律吞掉并留 NULL——**「不知道」与「确认没改」是两回事**，
+       * 补一个空数组上去就是编造。
+       */
+      const 比 = this.外部文件事实?.比一次
+      if (比) {
+        void 比(event.sessionId)
+          .then((事实) => {
+            if (事实) this.runs.patchFiles(runId, 事实)
+          })
+          .catch(() => {
+            /* 不是 git 仓库、或 git 出错：留 NULL，不编造 */
+          })
+      }
       return
     }
 

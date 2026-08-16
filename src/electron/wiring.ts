@@ -18,6 +18,7 @@ import { RunStore } from "../store/runs.js"
 import { SessionStore } from "../store/sessions.js"
 import { ProjectManager } from "../project/manager.js"
 import { RunRecorder } from "../project/run-recorder.js"
+import { diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 import { 造门, 造MCP门 } from "../policy/permissions.js"
 import { MCP池 } from "../mcp/客户端.js"
 import { 合名单 } from "../mcp/名单.js"
@@ -462,7 +463,65 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     projectOf: (sessionId) => sessionStore.get(sessionId)?.projectId,
     // **取不到就不记**：缺这一格读作「不知道这次跑在什么环境里」
     environmentOf: (sessionId) => 会话环境.get(sessionId),
+    /**
+     * **外部 agent 干的活，文件事实从 git 算**（B1 路线 C，2026-08-16）。
+     *
+     * ## 只给外部 agent 用
+     *
+     * 内置对话的事实来自我们自己的工具包装器（`tool_files`），
+     * **两套一起上会打架**：包装器算的是「这次工具调用改了什么」，
+     * git 算的是「这一整轮改了什么」——后者会把前者覆盖成一个更粗的答案。
+     *
+     * 所以这里只认 `kind: acp` 与 `kind: cli`：它们用的是**自己的**读写工具，
+     * 那些调用根本不经过我们，账本上此前只有「跑了一轮」。
+     *
+     * ## 拿不到就什么都不补
+     *
+     * 不是 git 仓库、没有工作区、git 出错——一律留 NULL。
+     * **「不知道」与「确认没改」是两回事**（不变式 5）。
+     */
+    外部文件事实: {
+      拍基线: (sessionId) => {
+        if (!外部agent(sessionId)) return
+        const ws = 会话工作区(sessionId)
+        if (!ws) return
+        void snapshot(ws)
+          .then((b) => 回合基线.set(sessionId, b))
+          .catch(() => 回合基线.delete(sessionId))
+      },
+      比一次: async (sessionId) => {
+        const 基 = 回合基线.get(sessionId)
+        const ws = 会话工作区(sessionId)
+        if (!基 || !ws) return undefined
+        const f = await diffSince(ws, 基)
+        return {
+          filesWritten: [...f.files],
+          /**
+           * **`filesRead` 不给**——git 只知道「改了什么」，读了什么它一无所知。
+           * 给一个空数组等于宣称「确认一个文件都没读」，那是编造（不变式 5）。
+           * 缺省时那一列原样不动，读作「不知道」。
+           */
+          // **共用目录时分不清谁改的**，如实标注（与内置那条同一口径）
+          mayIncludeUserEdits: f.mayIncludeUserEdits,
+        }
+      },
+    },
   })
+
+  /** 每个外部会话上一轮开始时的工作区基线（B1 路线 C） */
+  const 回合基线 = new Map<string, GitBaseline>()
+  /** 这个会话是不是「用自己工具的外部 agent」——只有它们需要从 git 反推 */
+  const 外部agent = (sessionId: string): boolean => {
+    const rec = sessionStore.get(sessionId)
+    const kind = rec ? registry.agents[rec.agentId]?.kind : undefined
+    return kind === "acp" || kind === "cli"
+  }
+  const 会话工作区 = (sessionId: string): string | undefined => {
+    const rec = sessionStore.get(sessionId)
+    if (!rec) return undefined
+    const p = rec.projectId ? projectStore.get(rec.projectId) : undefined
+    return p?.workspace ?? rec.workspace
+  }
 
   const events = new SessionTranscripts({
     terminalMaxChars: opts.terminalScrollbackChars ?? DEFAULT_TERMINAL_SCROLLBACK_CHARS,

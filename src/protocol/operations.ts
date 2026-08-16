@@ -197,6 +197,8 @@ export const OPERATIONS = {
              * **ANSI 字节流里的输出不可查询、不可溯源、不可审计。**
              */
             "kernel",
+            /** ACP agent（2026-08-16）。**它会主动问权限**，界面据此多画权限卡 */
+            "acp",
           ]),
           /** native：pi 的 provider id */
           provider: z.string().optional(),

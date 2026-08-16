@@ -2312,9 +2312,18 @@ function ProjectRow({
  *   - `CLI`：外部命令行自己去调（claude / codex 有自己的订阅与配置），
  *     **模型也由它自己管**——这正是两者最容易搞混、后果又最实的差别
  */
-const KIND_LABEL: Record<"native" | "pty" | "cli" | "kernel", string> = {
+const KIND_LABEL: Record<"native" | "pty" | "cli" | "kernel" | "acp", string> = {
   native: "API",
   cli: "CLI",
+  /**
+   * **ACP**（2026-08-16 作者要的：*「acp 的话，我们也要在模型的旁边标记好是 acp」*）。
+   *
+   * 与 `CLI` 并列而不是合并，因为**它们在一件实事上不同**：
+   * ACP 那边 agent 会**主动问**你要不要允许某次工具调用，`cli` 不会。
+   * 一个人对着同一个输入框、却在两种规则下干活——不标出来，
+   * 「为什么这次它没问我就删了文件」永远说不清。
+   */
+  acp: "ACP",
   pty: "终端",
   kernel: "内核",
 }

@@ -152,7 +152,7 @@ agents/
 export interface SessionManagerOptions {
   store: SessionStore
   registry: ProviderRegistry
-  runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime }
+  runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime; acp?: AgentRuntime }
   /** 配置好的解释器路径。**没配就返回 undefined**——不猜一个 */
   interpreterOf?: (language: "python" | "R") => string | undefined
   /**
@@ -179,7 +179,7 @@ export class SessionManager {
   readonly leases: LeaseManager
   private readonly store: SessionStore
   private readonly registry: ProviderRegistry
-  private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime }
+  private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime; acp?: AgentRuntime }
   private readonly interpreterOf: ((language: "python" | "R") => string | undefined) | undefined
   private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
@@ -320,6 +320,23 @@ export class SessionManager {
       } else {
         spec.kernel = { kernelName: def.command! }
       }
+    } else if (def.kind === "acp") {
+      /**
+       * **ACP（A1，2026-08-16）。显式一支，绝不落进 pty。**
+       *
+       * 这段代码上面那条注释写着：加一种 kind 而不加分支的话，
+       * 它会**悄悄落进 PTY 运行时**——进程照样起得来，用户看到一个终端，
+       * 而他配的是一个会跟他商量权限的 agent。
+       * 编译器这次替我们指出了这一处（union 一变就报），**但下一次未必**。
+       */
+      const acp = this.runtimes.acp
+      if (!acp) {
+        this.store.updateState(id, "exited", { exitCode: 1 })
+        throw new UserFacingError(
+          `agent "${agentId}" 的 kind 是 acp，但本次运行没有装配 ACP 运行时`,
+        )
+      }
+      runtime = acp
     } else {
       runtime = this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
     }

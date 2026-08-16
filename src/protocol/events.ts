@@ -296,6 +296,9 @@ export const SessionSnapshotSchema = z
        * **ANSI 字节流里的输出不可查询、不可溯源、不可审计。**
        */
       "kernel",
+      /** ACP agent（2026-08-16）。与 `cli` 的区别是**它会主动问权限**——
+          界面据此多画一样东西（权限卡），所以不能混进 `cli` */
+      "acp",
     ]),
     /** 单调递增。**0 表示还什么都没发生**，增量的 revision 从 1 起 */
     revision: z.int().min(0),

@@ -228,6 +228,17 @@ export const SessionSummarySchema = z
        * **ANSI 字节流里的输出不可查询、不可溯源、不可审计。**
        */
       "kernel",
+      /**
+       * **ACP agent**（Agent Client Protocol，2026-08-16）。
+       *
+       * 与 `cli` 的区别不是形态，是**谁说了算**：`cli` 是我们驱动一个
+       * headless 进程、事后读它吐的 JSON；ACP 那边 agent **会主动问**
+       * （要不要允许这次工具调用），也接受取消。
+       *
+       * 界面据此多画一样东西：**权限卡**。所以它必须是一种单独的 kind——
+       * 混进 `cli` 会让「这段会话会不会问我」变成一个问不出来的问题。
+       */
+      "acp",
     ]),
     state: z.enum(["starting", "alive", "exited"]),
     /**

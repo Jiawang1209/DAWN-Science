@@ -173,11 +173,54 @@ const KernelAgentSchema = z
     message: "kernel agent 要么给 language（python / R），要么给 command（kernelspec 名字）",
   })
 
+/**
+ * 一台 **ACP agent**（Agent Client Protocol，A1，2026-08-16）。
+ *
+ * ## 与 `cli` 的区别不是形态，是**谁说了算**
+ *
+ * `cli` 是我们驱动一个 headless 进程、读它吐的 JSON：
+ * 它要动哪个文件、干了什么，**我们没有话语权**，只能事后从输出里读。
+ *
+ * ACP 反过来——agent **主动问**（`session/request_permission`）、
+ * 广播它支持哪些模型、接受 `session/cancel`。
+ * 所以它是第五种 kind，而不是 `cli` 的一个开关：
+ * 「这段会话里我们说不说得上话」是个语义差别，界面要据此决定画不画权限卡。
+ *
+ * ## `command` 填什么
+ *
+ * **不要填 `claude` / `codex`——那两个 CLI 不是 ACP agent。**
+ * 要填官方适配器，两种写法：
+ *
+ * ```yaml
+ * # ① 用户自己的 npx（要装 Node；Windows 上的 .cmd 由我们补）
+ * command: npx
+ * args: ["-y", "@agentclientprotocol/codex-acp"]
+ *
+ * # ② 我们自己带的 Node 跑一个装好的入口（**不要求用户装 Node**）
+ * command: node
+ * args: ["/…/@agentclientprotocol/codex-acp/dist/index.js"]
+ * ```
+ *
+ * 第二种里的 `node` 是**记号**：会被换成 Electron 自己那个二进制
+ * （`ELECTRON_RUN_AS_NODE`）。见 `runtime/acp/launch.ts` 的文件头——
+ * 那一整段都是「打包成本地软件」逼出来的。
+ */
+const AcpAgentSchema = z
+  .object({
+    kind: z.literal("acp"),
+    /** 适配器的可执行文件。**不是 `claude` / `codex` 本身** */
+    command: z.string().min(1),
+    args: z.array(z.string()).default([]),
+    capabilities: z.array(CapabilitySchema),
+  })
+  .strict()
+
 export const AgentDefSchema = z.discriminatedUnion("kind", [
   NativeAgentSchema,
   PtyAgentSchema,
   CliAgentSchema,
   KernelAgentSchema,
+  AcpAgentSchema,
 ])
 export type AgentDef = z.infer<typeof AgentDefSchema>
 

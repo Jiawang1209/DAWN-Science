@@ -245,8 +245,21 @@ describe("SessionSummary —— 与 ①-A 的 SessionRecord 对齐", () => {
     expect(() => SessionSummarySchema.parse({ ...base, state: "paused" })).toThrow()
   })
 
-  it("kind 只有 native 与 pty", () => {
-    expect(() => SessionSummarySchema.parse({ ...base, kind: "acp" })).toThrow()
+  /**
+   * **这条用例的名字比它的内容老了两年。**
+   *
+   * 它写的是「只有 native 与 pty」，而反例挑的恰好是 `acp`——
+   * 2026-08-16 那天 `acp` 真的成了一种会话种类，它当场变红。
+   * 这是好事：**一条会红的判据才在服役**。
+   *
+   * 现在改成断言**当前这一套**（加一种就要来这里改一次，那正是我们要的），
+   * 反例换成一个真的不存在的值。
+   */
+  it("kind 是那五种，别的一律拒", () => {
+    for (const k of ["native", "pty", "cli", "kernel", "acp"]) {
+      expect(SessionSummarySchema.parse({ ...base, kind: k }).kind).toBe(k)
+    }
+    expect(() => SessionSummarySchema.parse({ ...base, kind: "根本没有这种" })).toThrow()
   })
 
   it("pid 与 exitCode 可选", () => {

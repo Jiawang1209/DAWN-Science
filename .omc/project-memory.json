@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/usage.tsx /tmp/ux.bak\necho \"── 变异：每周退回逐日上色（列不再同色）\"\npython3 -c \"\np='src/ui/usage.tsx';s=open(p).read()\ns=s.replace('        格子们.push({ key: 格子.date, x: i * 步, y: j * 步, 档, 文 })','        格子们.push({ key: 格子.date, x: i * 步, y: j * 步, 档: 格子.tokens === 0 ? 0 : 4, 文 })',1)\nopen(p,'w').write(s)\"\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/usage.spec.ts -g \"三视角\" 2>&1 | grep -E \"✘  |passed|failed|同色\" | head -3\ncp /tmp/ux.bak src/ui/usage.tsx; npm run build >/dev/null 2>&1; echo 已还原",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/runtime/acp/launch.ts /tmp/l.bak\necho \"── ①不补 .cmd\"\npython3 -c \"\np='src/runtime/acp/launch.ts';s=open(p).read()\ns=s.replace('  if (platform === \\\"win32\\\" && 要补后缀.has(起.command)) {','  if (false && 要补后缀.has(起.command)) {',1);open(p,'w').write(s)\"\nnpx vitest run tests/runtime/acp-launch.test.ts 2>&1 | grep -E \"×|Tests \" | head -3\ncp /tmp/l.bak src/runtime/acp/launch.ts\necho \"── ②node 不换成我们带的\"\npython3 -c \"\np='src/runtime/acp/launch.ts';s=open(p).read()\ns=s.replace('  if (起.command === \\\"node\\\") {','  if (false) {',1);open(p,'w').write(s)\"\nnpx vitest run tests/runtime/acp-launch.test.ts 2>&1 | grep -E \"×|Tests \" | head -3\ncp /tmp/l.bak src/runtime/acp/launch.ts\nnpm run typecheck 2>&1 | grep -v \"^npm notice\" | head -3",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/runtime/acp/runtime.ts /tmp/r.bak\necho \"── 变异：错误退回普通 Error（原因又被扣下）\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('          new UserFacingError(\\n            \\`起不来 ACP 适配器','          new Error(\\n            \\`起不来 ACP 适配器',1)\nopen(p,'w').write(s)\"\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/acp-agent.spec.ts -g \"起不来\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2\ncp /tmp/r.bak src/runtime/acp/runtime.ts\nnpm run build >/dev/null 2>&1\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/runtime/acp/runtime.ts /tmp/r.bak\necho \"── 变异：错误退回普通 Error（原因又被扣下）\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('          new UserFacingError(\\n            \\`起不来 ACP 适配器','          new Error(\\n            \\`起不来 ACP 适配器',1)\nopen(p,'w').write(s)\"\nnpm run build >/dev/null 2>&1\nnpx playwright test e2e/acp-agent.spec.ts -g \"起不来\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2\ncp /tmp/r.bak src/runtime/acp/runtime.ts\nnpm run build >/dev/null 2>&1\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -381,6 +381,36 @@
       "path": "tests/runtime/acp-launch.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786885121474,
+      "type": "file"
+    },
+    {
+      "path": "scripts/fake-acp-agent.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1786885555512,
+      "type": "file"
+    },
+    {
+      "path": "src/runtime/acp/runtime.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786885650890,
+      "type": "file"
+    },
+    {
+      "path": "tests/runtime/acp-runtime.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786885724912,
+      "type": "file"
+    },
+    {
+      "path": "e2e/acp-agent.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786886172391,
+      "type": "file"
+    },
+    {
+      "path": "test-results/acp-agent-ACP-适配器起不来时，屏幕上有一句人话-/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786886493865,
       "type": "file"
     }
   ],

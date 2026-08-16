@@ -43,10 +43,45 @@
 
 ## 变更日志
 
+### 2026-08-16 — ACP 运行时 A1：claude / codex 作为一等 agent 接进来（分支 `acp`）
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 作者：*「有没有什么正规的办法，可以让 cli 当成 API 嵌入到
+  dawn-science 去使用呢？」* 有，叫 **ACP**（Agent Client Protocol）。
+  设计见 `docs/superpowers/specs/2026-08-16-acp-runtime-design.md`。
+- **What**（A1 = 起得来、说得上话）：
+  - 第五种 kind `acp`；协议 **7.0 → 7.1**（多一种会话种类，纯新增故 minor）。
+    **不能混进 `cli`**：区别不是形态是「谁说了算」——ACP 那边 agent 会**主动问权限**，
+    界面据此要多画权限卡（A2）。混进去会让「这段会话会不会问我」问不出来。
+  - `runtime/acp/launch.ts`：**整个文件是「打包成本地软件」逼出来的**——
+    ①Windows 上 `npx` 叫 `npx.cmd`（`spawn` 不走 shell，也就不查 PATHEXT）；
+    ②`node` 是**记号**，换成 Electron 自己那个二进制（`ELECTRON_RUN_AS_NODE`），
+    于是**用户不必装 Node**；③Windows 没有进程组，收进程要走 `taskkill /T`。
+  - `runtime/acp/runtime.ts`：NDJSON 上的 JSON-RPC，自己收发（不引 SDK 的连接层）。
+  - `scripts/fake-acp-agent.mjs`：**假 ACP agent**，与假模型服务器同一条纪律——
+    整条链路照跑，假的只是「另一端是谁」。
+  - 运行时标签：`KIND_LABEL` 加 `acp: "ACP"`（作者要的「标在模型旁边」）。
+- **Impact**: 配置里写 `kind: acp` 即可用。`cli` 那条**保留**（作者定的）。
+- **Verification**:
+  - 单元 8 条（跨平台起法，三个平台都在这一台机器上验）+ 6 条（**对着真进程**
+    跑整条协议，不是打桩）。
+  - e2e 2 条跑真实构建产物：一整段对话通、模型旁边标着 ACP；适配器起不来时
+    **屏幕上有一句人话**。
+  - 变异六次全红，其中一条尤其重要：**usage 直接报累计**（ACP 的 usage 是
+    「整个会话累计」，直接相加会把十轮算成十几倍）。
+  - **编译器替我们指出了三处必须处理的分发点**，其中一处正是这段代码自己
+    注释警告过的「新 kind 会悄悄落进 PTY」。
+  - **我第三次违反了 `errors.ts` 那条规矩**：`start()` 抛普通 `Error`，
+    于是原因被服务端正确地扣下，屏幕上只剩「操作 createTask 执行失败」。
+    那个文件的头注释里写着「同一条规矩在一天里被我自己违反了一次」——
+    这是第三次，**而这次是 e2e 抓住的，不是我想起来的**。
+  - 全量：单元 1600 全绿、e2e 305 全绿（1 条按设计跳过）、视觉 10 张全绿。
+
 ### 2026-08-16 — 饼图收小并标 Total；日历三视角回到同一张日历
 
 - **Type**: fix
-- **Commit**: 待回填
+- **Commit**: `7415cc8`
 - **Motivation**: 作者：*「饼图现在实在是太大了，我们减少 1/4……额外加一个
   Total: xxx k tokens」*、*「每周的统计的时候，还是一个日历表，
   不过悬浮的时候展示的是一周的。所以现在的形式要改，当然累计也是这样的。」*

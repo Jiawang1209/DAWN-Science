@@ -24,6 +24,7 @@ import { 合名单 } from "../mcp/名单.js"
 import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
+import { AcpRuntime } from "../runtime/acp/runtime.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { KernelRuntime } from "../runtime/kernel.js"
 import { 对话内核 } from "../kernel/挂载.js"
@@ -370,6 +371,23 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           return { command: def.command, args: def.args, ...(family ? { family } : {}) }
         },
         onThreadId: (sessionId, threadId) => sessionStore.setCliThreadId(sessionId, threadId),
+      }),
+      /**
+       * ACP 适配器（A1，2026-08-16）。
+       *
+       * 命令**由 registry 现查**——与 `cli` / `ptyRuntimeFor` 同一个理由：
+       * 写死一个命令的话，配置里的 codex 适配器会被起成 claude 的，
+       * **而进程照样起得来**。
+       */
+      acp: new AcpRuntime({
+        commandOf: (spec) => {
+          const rec = sessionStore.get(spec.sessionId)
+          const def = rec ? registry.agents[rec.agentId] : undefined
+          if (!def || def.kind !== "acp") {
+            throw new Error(`会话 "${spec.sessionId}" 不是 acp agent，无法起 ACP 适配器`)
+          }
+          return { command: def.command, args: def.args }
+        },
       }),
     },
     // pty agent 的命令逐个由 registry 定义，不能共用一个写死的 runtime

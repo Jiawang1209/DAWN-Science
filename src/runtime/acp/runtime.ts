@@ -33,6 +33,7 @@ import type { ChildProcess } from "node:child_process"
 import { 起适配器, 收进程 } from "./launch.js"
 import { UserFacingError } from "../../errors.js"
 import type {
+  会话开关,
   AgentEvent,
   AgentRuntime,
   EventSink,
@@ -40,6 +41,63 @@ import type {
   SessionId,
   SessionSpec,
 } from "../types.js"
+
+/**
+ * ACP 的 `configOptions` → 我们的 `会话开关`。
+ *
+ * 两件要小心：
+ *   1. **select 的可选项可以是「分组」**（`SessionConfigSelectOptions` 是
+ *      `Option[] | Group[]`）。我们**摊平**——分组只是排版，
+ *      而我们这一版的菜单是一列。摊平比「不认得就整条丢掉」诚实。
+ *   2. **boolean 的 `currentValue` 是真布尔**，而 select 的是字符串 id。
+ *      统一成字符串（`"1"` / `""`）好让上层只处理一种，
+ *      **线上形状的差别留在这一层**。
+ */
+function 收窄开关(原: unknown): 会话开关[] {
+  if (!Array.isArray(原)) return []
+  const 出: 会话开关[] = []
+  for (const 条 of 原) {
+    const o = 条 as Record<string, unknown>
+    const id = typeof o["id"] === "string" ? o["id"] : undefined
+    const name = typeof o["name"] === "string" ? o["name"] : undefined
+    if (!id || !name) continue
+    const 类 = o["type"] === "boolean" ? "boolean" : "select"
+    const 基 = {
+      id,
+      name,
+      ...(typeof o["description"] === "string" ? { description: o["description"] } : {}),
+      ...(typeof o["category"] === "string" ? { category: o["category"] } : {}),
+    }
+    if (类 === "boolean") {
+      出.push({ ...基, kind: "boolean", current: o["currentValue"] ? "1" : "", options: [] })
+      continue
+    }
+    const 生 = o["options"]
+    const 项: { value: string; name: string; description?: string }[] = []
+    for (const x of Array.isArray(生) ? 生 : []) {
+      const y = x as Record<string, unknown>
+      // 分组：把它里面的选项摊出来
+      const 里 = Array.isArray(y["options"]) ? (y["options"] as unknown[]) : [y]
+      for (const z of 里) {
+        const w = z as Record<string, unknown>
+        if (typeof w["value"] === "string" && typeof w["name"] === "string") {
+          项.push({
+            value: w["value"],
+            name: w["name"],
+            ...(typeof w["description"] === "string" ? { description: w["description"] } : {}),
+          })
+        }
+      }
+    }
+    出.push({
+      ...基,
+      kind: "select",
+      current: typeof o["currentValue"] === "string" ? o["currentValue"] : "",
+      options: 项,
+    })
+  }
+  return 出
+}
 
 /** 一台适配器要怎么起。**命令由配置给**，运行时不猜 */
 export interface ACP命令 {
@@ -58,6 +116,12 @@ interface 一段 {
   缓冲: string
   /** stderr 的尾巴。**认证提示常常只写在这儿** */
   stderr尾: string[]
+  /**
+   * 这一段当前的开关（A3）。
+   * **只用来分辨 boolean 与 select 的线上形状**——前者要多带一个
+   * `type: "boolean"` 且 `value` 是真布尔。
+   */
+  开关们?: readonly 会话开关[]
   /** 这一轮累计报到多少 token（ACP 报的是**累计**，我们要差值） */
   上次累计?: { input: number; output: number }
   /**
@@ -168,6 +232,16 @@ export class AcpRuntime implements AgentRuntime {
     if (!新?.sessionId) throw new UserFacingError("ACP 适配器没有回 sessionId，这一段起不来")
     段.acpSessionId = 新.sessionId
 
+    /**
+     * 这一段会话可以调哪些开关。**它可以一个都没有**——
+     * 那时菜单不画（**不摆一个空菜单**）。
+     */
+    const 开关 = 收窄开关((新 as Record<string, unknown>)["configOptions"])
+    段.开关们 = 开关
+    if (开关.length > 0) {
+      this.发(spec.sessionId, { kind: "config_options", sessionId: spec.sessionId, options: 开关 })
+    }
+
     const pid = proc.pid ?? 0
     this.发(spec.sessionId, { kind: "started", sessionId: spec.sessionId, pid })
     return { sessionId: spec.sessionId, pid }
@@ -177,6 +251,20 @@ export class AcpRuntime implements AgentRuntime {
     const 段 = this.段们.get(sessionId)
     if (!段) return () => {}
     段.sinks.add(sink)
+    /**
+     * **新来的订阅者要立刻收到当前状态**（A3，2026-08-16 补）。
+     *
+     * 会话开关是在 `start()` 里拿到的，而**订阅是在 `start()` 之后才挂上的**
+     * ——中枢那边的顺序就是「先建会话，再 attach」。
+     * 于是那一条广播谁也没收到，症状是**界面上那颗按钮根本不出现**，
+     * 而运行时这一侧的判据全绿（它确实发过）。
+     *
+     * 这不是时序上的巧合，是「订阅只给未来的事件」这个模型的固有缺口：
+     * **凡是「当前是什么」而不是「刚发生了什么」的东西，都要补发一次。**
+     */
+    if (段.开关们?.length) {
+      sink({ kind: "config_options", sessionId, options: 段.开关们 })
+    }
     return () => 段.sinks.delete(sink)
   }
 
@@ -199,6 +287,31 @@ export class AcpRuntime implements AgentRuntime {
     if (!段 || id === undefined) return
     段.待答.delete(requestId)
     this.答(段, id, optionId)
+  }
+
+  /**
+   * 改一个会话开关（A3）。
+   *
+   * **boolean 与 select 的线上形状不同**：前者要多带一个 `type: "boolean"`
+   * 且 `value` 是真布尔。差别留在这一层，上层只给一个字符串。
+   *
+   * 回复里带着**整份新的开关**，直接转发出去——
+   * 比我们自己去改那一条再合并可靠：合并只会多一种「合错了」的失效方式。
+   */
+  async setConfigOption(sessionId: SessionId, configId: string, value: string): Promise<void> {
+    const 段 = this.段们.get(sessionId)
+    if (!段?.acpSessionId) return
+    const 是布尔 = 段.开关们?.find((o) => o.id === configId)?.kind === "boolean"
+    const r = (await this.请求(sessionId, "session/set_config_option", {
+      sessionId: 段.acpSessionId,
+      configId,
+      ...(是布尔 ? { type: "boolean", value: value === "1" } : { value }),
+    })) as Record<string, unknown>
+    const 开关 = 收窄开关(r?.["configOptions"])
+    if (开关.length > 0) {
+      段.开关们 = 开关
+      this.发(sessionId, { kind: "config_options", sessionId, options: 开关 })
+    }
   }
 
   async abort(sessionId: SessionId): Promise<void> {
@@ -320,6 +433,13 @@ export class AcpRuntime implements AgentRuntime {
       const 内容 = up?.["content"] as { type?: string; text?: string } | undefined
       if (类 === "agent_message_chunk" && 内容?.type === "text" && 内容.text) {
         this.发(sessionId, { kind: "output", sessionId, data: 内容.text })
+      } else if (类 === "config_option_update") {
+        // **整份换掉**：它给的就是整份新的
+        const 开关 = 收窄开关((up as Record<string, unknown>)["configOptions"])
+        if (开关.length > 0) {
+          段.开关们 = 开关
+          this.发(sessionId, { kind: "config_options", sessionId, options: 开关 })
+        }
       } else if (类 === "agent_thought_chunk" && 内容?.type === "text" && 内容.text) {
         // **它对自己说的话，不是对你说的**——两者混起来等于把草稿当答案念
         this.发(sessionId, { kind: "thinking", sessionId, delta: 内容.text })

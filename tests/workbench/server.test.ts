@@ -56,6 +56,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     listSessions: async () => [],
     // S21：新增操作必须同时补上假后端
     answerPermission: async () => ({}),
+    setSessionConfigOption: async () => ({}),
     getUsage: async () => ({
       total: 0, input: 0, output: 0, cacheRead: 0,
       daily: [], byModel: [], activeDays: 0,

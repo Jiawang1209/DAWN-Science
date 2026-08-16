@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
+import type { 会话开关 } from "./state/transcript.js"
 import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
@@ -2274,6 +2275,118 @@ function ProjectRow({
 /* ── agent 选择器 ─────────────────────────────────────────────────── */
 
 /**
+ * 会话开关菜单（A3，2026-08-16，只有 acp 会话有）。
+ *
+ * ## 为什么不塞进那颗模型 pill
+ *
+ * **ACP 里没有「换模型」这个操作**——它有的是一串开关，
+ * 每一条是「选一个」或「开/关」，而模型只是 `category` 的一个取值
+ * （还有 `mode`、`thought_level`，而且规范允许出现我们没见过的）。
+ *
+ * 硬塞进 pill 的话，那颗 pill 的含义会在不同会话里不一样：
+ * 内置对话里它是「换模型」，ACP 会话里它是「改一串设置中的某一项」。
+ * **同一个控件两种含义**，正是这个项目反复在消除的那类含混。
+ *
+ * 所以：**agent 给什么就画什么**，一条都不挑。
+ */
+function SessionConfigMenu({
+  options,
+  onSet,
+}: {
+  options: readonly 会话开关[]
+  onSet: (configId: string, value: string) => void
+}) {
+  const [开着, 设开着] = useState(false)
+  const 盒 = useRef<HTMLDivElement>(null)
+
+  // 点别处收起来。**菜单赖着不走**是本项目修过一次的毛病
+  useEffect(() => {
+    if (!开着) return
+    const 关 = (e: MouseEvent) => {
+      if (!盒.current?.contains(e.target as Node)) 设开着(false)
+    }
+    document.addEventListener("mousedown", 关)
+    return () => document.removeEventListener("mousedown", 关)
+  }, [开着])
+
+  /**
+   * 按钮上写的是**当前那个模型**（如果有的话），不是「会话设置」四个字——
+   * 人最常看的就是它，而一个只写「设置」的按钮要点开才知道现在用的是谁。
+   * 没有 `model` 那一条时退回一个中性的名字。
+   */
+  const 模型 = options.find((o) => o.category === "model")
+  const 标 = 模型 ? (模型.options.find((x) => x.value === 模型.current)?.name ?? 模型.current) : undefined
+
+  return (
+    <div className="sess-config" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="sess-config-trigger"
+        aria-haspopup="menu"
+        aria-expanded={开着}
+        onClick={() => 设开着((v) => !v)}
+      >
+        {标 ?? t("会话设置")}
+        <下拉图标 />
+      </Button>
+      {开着 ? (
+        <div className="menu sess-config-menu" role="menu" aria-label={t("会话设置")}>
+          {options.map((o) => (
+            <div key={o.id} className="sess-config-group">
+              <p className="sess-config-name">{o.name}</p>
+              {o.description ? <p className="sess-config-desc">{o.description}</p> : null}
+              {o.kind === "boolean" ? (
+                <Button
+                  variant="ghost"
+                  size="inline"
+                  role="menuitemcheckbox"
+                  aria-checked={o.current === "1"}
+                  onClick={() => onSet(o.id, o.current === "1" ? "" : "1")}
+                >
+                  {/**
+                    * **勾是画给眼睛的，不进名字**，而且**用图标不用符号**。
+                    *
+                    * 写成文本的话，那颗按钮的可访问名字会变成「✓ 不再逐个确认」——
+                    * 读屏会把符号念出来，而按名字找它的用例得连符号一起写。
+                    * 状态归 `aria-checked`，那才是它的家。
+                    *
+                    * 符号（☑ / ✓）也不行：设计契约那条扫描当场抓住了——
+                    * **它吃不到 `currentColor`，永远脱离那四档层次**。
+                    */}
+                  <span className="sess-config-mark" aria-hidden="true">
+                    {o.current === "1" ? <勾图标 /> : null}
+                  </span>
+                  {o.name}
+                </Button>
+              ) : (
+                o.options.map((x) => (
+                  <Button
+                    key={x.value}
+                    variant="ghost"
+                    size="inline"
+                    role="menuitemradio"
+                    aria-checked={x.value === o.current}
+                    {...(x.value === o.current ? { className: "current" } : {})}
+                    onClick={() => onSet(o.id, x.value)}
+                  >
+                    {/* 同上：勾不进名字（状态在 `aria-checked` 上），且走图标不走符号 */}
+                    <span className="sess-config-mark" aria-hidden="true">
+                      {x.value === o.current ? <勾图标 /> : null}
+                    </span>
+                    {x.name}
+                  </Button>
+                ))
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
  * agent pill。**长在 composer 右下角，不在侧栏。**
  *
  * 学自 Hermes `app/chat/composer/model-pill.tsx`，它自己的注释就是这次搬家的理由：
@@ -2881,6 +2994,8 @@ export function ConversationView({
   switchProblem,
   待答权限,
   onAnswerPermission,
+  会话开关们,
+  onSetConfigOption,
   onToggleDock,
   dockOpen,
   models,
@@ -2943,6 +3058,12 @@ export function ConversationView({
   待答权限?: { requestId: string; title: string; options: readonly { optionId: string; name: string; kind: string }[] } | undefined
   /** 回答那次询问。`optionId` 缺省 = 取消（与「拒绝」不是一回事） */
   onAnswerPermission?: ((requestId: string, optionId?: string) => void) | undefined
+  /**
+   * 这一段会话可以调的开关（A3，只有 acp 有）。
+   * **agent 给什么就是什么**，我们不挑也不改名。
+   */
+  会话开关们?: readonly 会话开关[] | undefined
+  onSetConfigOption?: ((configId: string, value: string) => void) | undefined
   /** 掀开／收起底部终端。**与命令面板里那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
   dockOpen?: boolean | undefined
@@ -3803,6 +3924,13 @@ export function ConversationView({
             ) : null}
             {/* 左手边到此为止。**这一格把「带什么、在哪跑」与「用谁发」分开** */}
             <span className="composer-gap" aria-hidden="true" />
+            {/**
+              * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
+              * 不摆一个点开是空的菜单。
+              */}
+            {会话开关们 && 会话开关们.length > 0 && onSetConfigOption ? (
+              <SessionConfigMenu options={会话开关们} onSet={onSetConfigOption} />
+            ) : null}
             {models && onPickModel ? (
               <ModelPill
                 choices={models}

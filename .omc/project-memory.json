@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/App.tsx /tmp/a.bak; cp src/runtime/acp/runtime.ts /tmp/r.bak\n跑() { npm run build >/dev/null 2>&1; npx playwright test e2e/acp-agent.spec.ts -g \"跑起来能停\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2; }\necho \"── ①界面那道门退回 native-only（停止键根本不画）\"\npython3 -c \"\np='src/ui/App.tsx';s=open(p).read()\ns=s.replace('                  session.kind === \\\"native\\\" || session.kind === \\\"acp\\\" ? actions.abort : undefined','                  session.kind === \\\"native\\\" ? actions.abort : undefined',1)\nopen(p,'w').write(s)\"\n跑; cp /tmp/a.bak src/ui/App.tsx\necho \"── ②运行时不发 session/cancel\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('    this.通知(段, \\\"session/cancel\\\", { sessionId: 段.acpSessionId })','    void 段',1)\nopen(p,'w').write(s)\"\n跑; cp /tmp/r.bak src/runtime/acp/runtime.ts\nnpm run build >/dev/null 2>&1; echo 已还原",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Tests \" | tail -1\nnpm run test:e2e:only 2>&1 | grep -E \"^\\s+[0-9]+ (passed|failed|skipped)|✘\" | tail -4",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/acp-agent.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -1",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/acp-agent.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -1",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -411,6 +411,12 @@
       "path": "test-results/acp-agent-ACP-适配器起不来时，屏幕上有一句人话-/test-failed-1.png",
       "accessCount": 1,
       "lastAccessed": 1786886493865,
+      "type": "file"
+    },
+    {
+      "path": "test-results/acp-agent-ACP-会话开关-它给什么就画什么-，选一个真的送过去/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786896183258,
       "type": "file"
     }
   ],

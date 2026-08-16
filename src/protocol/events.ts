@@ -333,6 +333,45 @@ export const SessionSnapshotSchema = z
      * `name` 是给人看的字，`kind` 是它的性质（`allow_once` 之类）。
      * **我们不编自己的一套**——编了的话回过去的 id 它不认。
      */
+    /**
+     * 这一段会话**可以调的那些开关**（A3，2026-08-16，只有 acp 有）。
+     *
+     * ACP 里没有「换模型」这个操作——它有的是一串开关，
+     * 每一条是「选一个」或「开/关」，而**模型只是 `category` 的一个取值**
+     * （还有 `mode`、`thought_level`…，而且规范允许出现我们没见过的）。
+     *
+     * 所以这里**照单全收**，不挑出「模型」那一条特殊对待：
+     * 挑的话，agent 加了新开关我们就看不见了，
+     * 而那正是 ACP 比 `cli` 多出来的东西。
+     *
+     * **一个都没有时整个字段缺席**（不是空数组）——界面据此决定不画那个菜单。
+     */
+    configOptions: z
+      .array(
+        z
+          .object({
+            id: z.string().min(1),
+            name: z.string().min(1),
+            description: z.string().optional(),
+            /** `model` / `mode` / `thought_level` / 未知。**只影响排版** */
+            category: z.string().optional(),
+            kind: z.enum(["select", "boolean"]),
+            /** select：当前选中的 value id；boolean：`"1"` 或 `""` */
+            current: z.string(),
+            options: z.array(
+              z
+                .object({
+                  value: z.string().min(1),
+                  name: z.string().min(1),
+                  description: z.string().optional(),
+                })
+                .strict(),
+            ),
+          })
+          .strict(),
+      )
+      .min(1)
+      .optional(),
     pendingPermission: z
       .object({
         requestId: z.string().min(1),

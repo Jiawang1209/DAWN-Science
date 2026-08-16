@@ -1375,6 +1375,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
+    /** 改一个会话开关（A3）。**广播由运行时发**，这里只管转达 */
+    setSessionConfigOption: async ({ sessionId, configId, value }) => {
+      await sessions.setConfigOption(sessionId, configId, value)
+      return {}
+    },
+
     getContextUsage: async ({ sessionId }) => {
       const u = sessions.contextUsage(sessionId)
       // 拿不到时给一个**三档全零、且没有上限**的结果：

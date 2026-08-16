@@ -84,7 +84,15 @@ test("**日历铺满、带月份；饼图与日历都有悬停浮层**", async (
    * 原生 `title` 有半秒延迟、没有样式，设计契约为此禁掉了按钮上的 `title=`。
    */
   await expect(page.locator(".usage-tip")).toHaveCount(0)
-  await page.locator(".usage-cell").last().hover()
+  /**
+   * **悬停「真正有用量的那一格」，不是「最后一格」。**
+   *
+   * 第一版停在最后一格上，而那一格是不是今天要看跑用例的时刻——
+   * 2026-08-17 凌晨跨过午夜时它红了一次：最后一格是昨天，浮层里写的是
+   * 「没有用量」。**一条会随时钟变色的判据不该留着**。
+   * `l4` 是最深那一档，夹具里只有今天有数，所以它就是那一天。
+   */
+  await page.locator(".usage-cell.l4").last().hover()
   await expect(page.locator(".usage-tip")).toBeVisible()
   await expect(page.locator(".usage-tip")).toContainText("Token")
 
@@ -209,7 +217,8 @@ test("**日历三视角：每日 / 每周 / 累计**", async ({ dawn }) => {
    */
   await page.getByRole("button", { name: "每周", exact: true }).click()
   await expect.poll(() => page.locator(".usage-cell").count()).toBe(每日格数)
-  await page.locator(".usage-cell").last().hover()
+  // 同上：挑有数的那一格，别挑「最后一格」
+  await page.locator(".usage-cell.l4").last().hover()
   await expect(page.locator(".usage-tip")).toContainText("那一周")
 
   await page.getByRole("button", { name: "累计", exact: true }).click()

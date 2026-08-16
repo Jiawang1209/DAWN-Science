@@ -1018,6 +1018,25 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 改一个会话开关（A3，2026-08-16，只有 acp 会话有）。
+   *
+   * `value` 对 select 是 value id，对 boolean 是 `"1"` / `""`——
+   * **线上那两者的形状不同**（boolean 要多带一个 `type` 字段），
+   * 由运行时去分辨，协议这一层只有一个字符串。
+   */
+  setSessionConfigOption: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        configId: z.string().min(1),
+        value: z.string(),
+      })
+      .strict(),
+    response: Empty,
+    mutating: true,
+  },
+
   setDefaultWorkspace: {
     request: z.object({ path: z.string() }).strict(),
     response: z.object({ path: z.string().min(1), isDefault: z.boolean() }).strict(),

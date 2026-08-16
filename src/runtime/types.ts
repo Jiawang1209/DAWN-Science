@@ -131,6 +131,30 @@ export interface SessionHandle {
   pid: number
 }
 
+/**
+ * 这一段会话**可以调的那些开关**（A3，2026-08-16，只有 acp 有）。
+ *
+ * ACP 里**没有「换模型」这个操作**——它有的是一套更一般的东西：
+ * 一串 `configOptions`，每一条是「选一个」或「开/关」，
+ * 而「模型」只是 `category` 的一个取值（还有 `mode`、`thought_level`…）。
+ *
+ * 规范里专门写着：**category 是给 UX 用的，客户端必须优雅处理未知或缺失的**。
+ * 所以我们照单全收、照单渲染，**不挑出「模型」那一条特殊对待**——
+ * 挑的话，agent 加了新的开关我们就看不见了，而那正是 ACP 比 `cli` 多出来的东西。
+ */
+export interface 会话开关 {
+  id: string
+  name: string
+  description?: string
+  /** `model` / `mode` / `thought_level` / 未知。**只影响排版，不影响正确性** */
+  category?: string
+  kind: "select" | "boolean"
+  /** select：当前选中的 value id；boolean：`"1"` 或 `""` */
+  current: string
+  /** select 的可选项。boolean 时为空 */
+  options: readonly { value: string; name: string; description?: string }[]
+}
+
 export type AgentEvent =
   | { kind: "started"; sessionId: SessionId; pid: number }
   | { kind: "output"; sessionId: SessionId; data: string }
@@ -199,6 +223,14 @@ export type AgentEvent =
    * 它在等一个回复。不回的表现是**它一直卡着**——
    * 而那看起来像「它死了」。超时、取消、关会话都要走 `answerPermission`。
    */
+  /**
+   * 这一段会话可以调的开关变了（A3，只有 acp 会发）。
+   *
+   * **整份换掉，不发增量**：ACP 那边 `set_config_option` 的回复本来就是
+   * 整份新的，而一串开关的增量合并没有任何好处——
+   * 只会多一种「合错了」的失效方式。
+   */
+  | { kind: "config_options"; sessionId: SessionId; options: readonly 会话开关[] }
   | {
       kind: "permission_request"
       sessionId: SessionId
@@ -451,6 +483,14 @@ export interface AgentRuntime {
    * **它与「拒绝」不是一回事**：拒绝是一个决定，取消是「这一轮不做了」。
    */
   answerPermission?(sessionId: SessionId, requestId: string, optionId?: string): void
+  /**
+   * 改一个会话开关（A3，**只有 acp 有**）。
+   *
+   * `value` 对 select 是 value id，对 boolean 是 `"1"` / `""`——
+   * **协议那边两者的线上形状不同**（boolean 要多带一个 `type` 字段），
+   * 由实现去分辨，调用方只给一个字符串。
+   */
+  setConfigOption?(sessionId: SessionId, configId: string, value: string): Promise<void>
   /** 上下文用量。只有 native 有；拿不到时返回 undefined（**缺就是缺**） */
   contextUsage?(sessionId: SessionId): ContextUsage | undefined
   /** 插一句引导，不打断整轮。只有 native 有 */

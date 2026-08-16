@@ -41,6 +41,7 @@ afterEach(async () => {
     "FAKE_ACP_REPLY",
     "FAKE_ACP_ASK",
     "FAKE_ACP_ASK_NO_OPTIONS",
+    "FAKE_ACP_NO_CONFIG",
   ]) {
     delete process.env[k]
   }
@@ -278,5 +279,93 @@ describe("权限：它问，我们答", () => {
       收.filter((e) => e.kind === "output" && e.data.includes("【意外的回复】")),
       "同一个询问被答了两次——对面收到了两条回复",
     ).toHaveLength(0)
+  })
+})
+
+/**
+ * 会话开关（A3，2026-08-16）。
+ *
+ * **ACP 里没有「换模型」这个操作**——它有的是一串 `configOptions`，
+ * 每一条是「选一个」或「开/关」，而「模型」只是 `category` 的一个取值。
+ * 规范里专门写着：**category 是给 UX 用的，客户端必须优雅处理未知或缺失的**。
+ */
+describe("会话开关", () => {
+  it("**照单全收**：三条不同形状都要认得", async () => {
+    const rt = 起一个()
+    const s = spec("c1")
+    const 收: AgentEvent[] = []
+    // start 里就会发一条，所以要先挂上——**它比 `started` 还早**
+    const 原start = rt.start.bind(rt)
+    const p = 原start(s)
+    await p
+    关掉 = () => rt.stop(s.sessionId)
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    // 触发一次广播：改一个开关，回复里带整份新的
+    await rt.setConfigOption?.(s.sessionId, "yolo", "1")
+
+    /**
+     * **要最后一条，不是第一条。**
+     *
+     * `attach` 会**补发当前状态**（A3 修那个「新订阅者收不到当前状态」的洞时加的），
+     * 所以挂上监听的那一刻就有一条——那是**改之前**的。
+     * 只取第一条的话，这条用例验的是初始值，而不是「改成功了」。
+     */
+    await 等到(收, (e) => e.kind === "config_options", "开关")
+    const 全部 = 收.filter((e) => e.kind === "config_options")
+    const 事 = 全部[全部.length - 1] as Extract<AgentEvent, { kind: "config_options" }>
+    const 表 = new Map(事.options.map((o) => [o.id, o]))
+    expect([...表.keys()]).toEqual(["model", "thought", "yolo"])
+
+    // ① select：可选项与当前值
+    expect(表.get("model")?.kind).toBe("select")
+    expect(表.get("model")?.options.map((o) => o.value)).toEqual(["sonnet", "opus"])
+    expect(表.get("model")?.category).toBe("model")
+
+    /**
+     * ② **分组要摊平**。ACP 的 select 可选项可以是 `Option[]` 也可以是
+     * `Group[]`——不摊的话那一条会变成一个没有选项的空菜单，
+     * 而空菜单与「它没给选项」在屏幕上一模一样。
+     */
+    expect(表.get("thought")?.options.map((o) => o.value)).toEqual(["low", "high"])
+
+    // ③ boolean：`currentValue` 是真布尔，统一成字符串
+    expect(表.get("yolo")?.kind).toBe("boolean")
+    expect(表.get("yolo")?.current, "boolean 的线上形状没转对").toBe("1")
+  })
+
+  it("改一个 select，广播里是新值", async () => {
+    const rt = 起一个()
+    const s = spec("c2")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    await rt.setConfigOption?.(s.sessionId, "model", "opus")
+    // 同上：`attach` 补发的那一条是改之前的，要看最后一条
+    await 等到(收, (e) => e.kind === "config_options", "开关")
+    const 全部 = 收.filter((e) => e.kind === "config_options")
+    const 事 = 全部[全部.length - 1] as Extract<AgentEvent, { kind: "config_options" }>
+    expect(事.options.find((o) => o.id === "model")?.current).toBe("opus")
+  })
+
+  /**
+   * **一个开关都没有时不发**——上层据此决定「不画那个菜单」。
+   *
+   * **这条在单元这一层只覆盖「开会话之后」的广播。**
+   * 开会话那一次是在 `start()` 里面发的，而用例只能在 `start()`
+   * **之后**才挂得上监听——变异测试当场证明了这一点：
+   * 把「有才发」改成「一律发」，这条照样绿。
+   * 「开会话时不该冒出空菜单」由 e2e 那条（看界面上有没有那颗按钮）盯着。
+   */
+  it("开完会话之后，适配器不给开关就一条都不发", async () => {
+    const rt = 起一个({ FAKE_ACP_NO_CONFIG: "1" })
+    const s = spec("c3")
+    const 收: AgentEvent[] = []
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "在吗")
+    await 等到(收, (e) => e.kind === "idle", "收口")
+    expect(收.filter((e) => e.kind === "config_options")).toHaveLength(0)
   })
 })

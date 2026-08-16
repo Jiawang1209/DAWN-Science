@@ -4157,3 +4157,38 @@ pre {
 /** **不换行**：与侧栏那条同一副纪律，放不下就裁，不折成两层 */
 .perm-card-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
 .perm-card-options .btn { white-space: nowrap; }
+
+/* ── 会话开关菜单（A3，2026-08-16）─────────────────────────────────
+ *
+ * **它不是模型 pill 的替代**：ACP 里没有「换模型」这个操作，
+ * 它有的是一串开关，模型只是其中一条（`category: "model"`）。
+ * 按钮上写的是**当前那个模型**——人最常看的就是它，
+ * 而一个只写「设置」的按钮要点开才知道现在用的是谁。
+ */
+.sess-config { position: relative; flex: 0 0 auto; }
+.sess-config-trigger { color: var(--dawn-text-2); white-space: nowrap; }
+/** 向上弹：输入卡贴着窗口底部，向下会被切掉（与 `＋` 那个菜单同理） */
+.sess-config-menu {
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-2));
+  right: 0;
+  min-width: 13rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--dawn-space-2);
+  transform-origin: bottom right;
+  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sess-config-group + .sess-config-group {
+  margin-top: var(--dawn-space-2);
+  padding-top: var(--dawn-space-2);
+  border-top: 1px solid var(--dawn-stroke-4);
+}
+/** 组名比选项淡一档：**它是分类，不是可点的东西** */
+.sess-config-name { margin: 0 0 2px; font-size: 12px; color: var(--dawn-text-3); }
+.sess-config-desc { margin: 0 0 4px; font-size: 11px; color: var(--dawn-text-3); }
+.sess-config-menu .btn { display: block; width: 100%; text-align: left; padding: 3px var(--dawn-space-2); border-radius: var(--dawn-radius-sm); }
+.sess-config-menu .btn:hover { background: var(--dawn-row-hover); }
+.sess-config-menu .btn.current { color: var(--dawn-text-1); }
+/** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
+.sess-config-mark { display: inline-flex; width: 16px; justify-content: center; vertical-align: -3px; }

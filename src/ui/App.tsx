@@ -96,6 +96,7 @@ import {
   appendBytes,
   applySnapshot,
   $待答权限,
+  $会话开关,
   connectFailed,
   connectStarted,
   connectSucceeded,
@@ -189,6 +190,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const kernelInstanceId = useStore($kernelInstanceId)
   /** agent 正在问「能不能」（A2）。**跟着当前会话走** */
   const 待答权限 = useStore($待答权限)
+  /** 这一段可以调的开关（A3，只有 acp 有） */
+  const 会话开关们 = useStore($会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
   const sidebarWidth = useStore($sidebarWidth)
@@ -314,6 +317,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             kernelInstanceId: u.snapshot.kernelInstanceId,
             // agent 在问「能不能」（A2）。**缺省 = 没有人在问**，那时卡要消失
             pendingPermission: u.snapshot.pendingPermission,
+            // 这一段可以调的开关（A3）。**缺省 = 没有这回事**
+            configOptions: u.snapshot.configOptions,
           })
         }
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
@@ -2469,6 +2474,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 session={session}
                 items={items}
                 {...(待答权限 ? { 待答权限 } : {})}
+                {...(会话开关们 ? { 会话开关们 } : {})}
+                onSetConfigOption={(configId, value) => {
+                  client
+                    .get("setSessionConfigOption", { sessionId: session.sessionId, configId, value })
+                    .catch(fail)
+                }}
                 onAnswerPermission={(requestId, optionId) => {
                   /**
                    * **乐观先摘卡**：点了之后卡立刻消失，人才知道自己点中了。

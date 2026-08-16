@@ -216,3 +216,62 @@ test.describe("ACP 取消", () => {
     })
   })
 })
+
+/**
+ * 会话开关（A3，2026-08-16）。
+ *
+ * **ACP 里没有「换模型」这个操作**——它有的是一串开关，
+ * 每一条是「选一个」或「开/关」，而模型只是 `category` 的一个取值。
+ * 所以我们照单全收、照单渲染，**一条都不挑**：
+ * 挑的话，agent 加了新开关我们就看不见了。
+ *
+ * 假 agent 声称有三条**形状各不相同**的：一个 model 的 select、
+ * 一个带分组的 select、一个 boolean。
+ */
+test.describe("ACP 会话开关", () => {
+  test.use({ dawnOptions: { providersYaml: PROVIDERS, gitInit: true } })
+
+  test("**它给什么就画什么**，选一个真的送过去", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+
+    /**
+     * ① 按钮上写的是**当前那个模型**，不是「会话设置」四个字——
+     * 一个只写「设置」的按钮，要点开才知道现在用的是谁。
+     */
+    const 触发 = page.locator(".sess-config-trigger")
+    await expect(触发).toBeVisible({ timeout: 30_000 })
+    await expect(触发).toContainText("Sonnet")
+
+    await 触发.click()
+    const 菜单 = page.locator(".sess-config-menu")
+
+    // ② 三条都在，**名字是它给的**
+    for (const 名 of ["模型", "推理强度", "不再逐个确认"]) {
+      await expect(菜单).toContainText(名)
+    }
+    // ③ **带分组的那一条要被摊平**：不摊的话它是个没有选项的空组
+    for (const 名 of ["低", "高"]) {
+      await expect(菜单.getByRole("menuitemradio", { name: 名, exact: true })).toBeVisible()
+    }
+    // ④ boolean 画成可勾选的那种，不是两个单选
+    await expect(菜单.getByRole("menuitemcheckbox")).toHaveCount(1)
+
+    // ⑤ 选一个，**它真的换了**（按钮上的字跟着变）
+    await 菜单.getByRole("menuitemradio", { name: "Opus", exact: true }).click()
+    await expect(触发).toContainText("Opus", { timeout: 20_000 })
+  })
+
+  test.describe("不给开关时", () => {
+    test.use({ dawnOptions: { providersYaml: PROVIDERS, gitInit: true, env: { FAKE_ACP_NO_CONFIG: "1" } } })
+
+    /** **一个开关都没有时不画那颗按钮**——不摆一个点开是空的菜单 */
+      test("那颗按钮不出现", async ({ dawn }) => {
+      const { page } = dawn
+      await 用某个agent开一段(page, /claude-acp/)
+      await 等进了对话(page)
+      await expect(page.locator(".sess-config-trigger")).toHaveCount(0)
+    })
+  })
+})

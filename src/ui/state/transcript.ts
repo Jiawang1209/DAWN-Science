@@ -63,6 +63,8 @@ export function applySnapshot(snap: {
   kernelInstanceId?: string | undefined
   /** 正等着人回答的那次权限询问（A2）。**缺省 = 没有人在问** */
   pendingPermission?: 待答的权限 | undefined
+  /** 这一段可以调的开关（A3）。**缺省 = 这条运行时没有这回事** */
+  configOptions?: readonly 会话开关[] | undefined
 }): void {
   setItems(snap.items)
   const term = snap.terminal ? [snap.terminal] : []
@@ -70,6 +72,7 @@ export function applySnapshot(snap: {
   setValue($terminalTrimmed, snap.trimmed)
   setValue($kernelInstanceId, snap.kernelInstanceId)
   $待答权限.set(snap.pendingPermission)
+  $会话开关.set(snap.configOptions)
 }
 
 /** 一次还没结果的权限询问（A2）。**选项原样来自 agent** */
@@ -87,6 +90,24 @@ export interface 待答的权限 {
  * 而不是某个组件的局部状态里）。
  */
 export const $待答权限 = atom<待答的权限 | undefined>(undefined)
+
+/** 一个会话开关（A3）。**形状照抄 agent 给的**，我们不挑也不改名 */
+export interface 会话开关 {
+  id: string
+  name: string
+  /** `exactOptionalPropertyTypes` 下要显式带上 undefined——协议那边这两格是可缺的 */
+  description?: string | undefined
+  category?: string | undefined
+  kind: "select" | "boolean"
+  current: string
+  options: readonly { value: string; name: string; description?: string | undefined }[]
+}
+
+/**
+ * 这一段会话可以调的开关（A3，只有 acp 有）。
+ * **缺省 = 这条运行时没有这回事**，界面据此不画那个菜单。
+ */
+export const $会话开关 = atom<readonly 会话开关[] | undefined>(undefined)
 
 /**
  * **当前**内核实例的身份（②-A · K5 · S13）。
@@ -118,5 +139,7 @@ export function resetTranscript(): void {
    * 「作用域是当前正在看的那个会话」是同一条。
    */
   $待答权限.set(undefined)
+  // 开关也跟着走：切到另一段会话，那颗菜单里的选项本来就不是它的
+  $会话开关.set(undefined)
   invalidate()
 }

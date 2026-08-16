@@ -27,6 +27,7 @@ export {
   applySnapshot,
   $kernelInstanceId,
   $待答权限,
+  $会话开关,
   resetTranscript,
 } from "./transcript.js"
 

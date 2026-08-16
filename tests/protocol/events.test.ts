@@ -297,6 +297,10 @@ describe("协议版本 · 5.5", () => {
    *   这是 2.3 留下的教训：漏一处的症状是「某条路径上这个会话凭空消失」。
    *
    *
+   * 7.3（2026-08-16）：会话开关（`configOptions` + `setSessionConfigOption`）。
+   *   纯新增故 minor。**ACP 里没有「换模型」这个操作**——模型只是
+   *   一串开关里 `category` 的一个取值，所以我们照单全收而不特殊对待它。
+   *
    * 7.2（2026-08-16）：权限询问——快照多一格 `pendingPermission` + `answerPermission`。
    *   纯新增故 minor。**它不是转录条目**：转录是「发生过什么」，
    *   这个是一个还没结果的问题（有生命周期、屏幕上要能点）。
@@ -324,7 +328,7 @@ describe("协议版本 · 5.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.2")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.3")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

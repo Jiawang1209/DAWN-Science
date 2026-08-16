@@ -82,6 +82,7 @@ function backend(): WorkbenchBackend {
     }),
     // S21：新增操作必须同时补上假后端，否则这里与真契约会各走各的
     answerPermission: async () => ({}),
+    setSessionConfigOption: async () => ({}),
     getUsage: async () => ({
       total: 0, input: 0, output: 0, cacheRead: 0,
       daily: [], byModel: [], activeDays: 0,

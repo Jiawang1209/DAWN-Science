@@ -289,6 +289,18 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.3（A3，2026-08-16，分支 `acp`）：会话开关
+ *
+ * 纯新增，故 minor：快照上多一格 `configOptions`，
+ * 外加一个 `setSessionConfigOption` 操作。
+ *
+ * **ACP 里没有「换模型」这个操作**——它有的是一串开关，每一条是
+ * 「选一个」或「开/关」，而**模型只是 `category` 的一个取值**
+ * （还有 `mode`、`thought_level`，规范还允许出现我们没见过的）。
+ * 所以我们照单全收，**不挑出「模型」那一条塞进原来那颗 pill**：
+ * 挑的话，agent 加了新开关我们就看不见了，
+ * 而那正是 ACP 比 `cli` 多出来的东西。
+ *
  * ## 7.2（A2，2026-08-16，分支 `acp`）：权限询问
  *
  * 纯新增，故 minor：快照上多一格 `pendingPermission`，
@@ -332,7 +344,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.2"
+export const WORKBENCH_PROTOCOL_VERSION = "7.3"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

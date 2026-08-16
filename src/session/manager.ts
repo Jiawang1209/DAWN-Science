@@ -530,6 +530,14 @@ export class SessionManager {
     this.bound.get(sessionId)?.answerPermission?.(sessionId, requestId, optionId)
   }
 
+  /**
+   * 改一个会话开关（A3）。**只有 acp 的运行时有**——
+   * 别的运行时没有这回事，静静不做是对的（能力缺席不是错误）。
+   */
+  async setConfigOption(sessionId: SessionId, configId: string, value: string): Promise<void> {
+    await this.bound.get(sessionId)?.setConfigOption?.(sessionId, configId, value)
+  }
+
   async abort(sessionId: SessionId): Promise<void> {
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)

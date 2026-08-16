@@ -139,7 +139,24 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
     .get<SessionSnapshot>("subscribeSession", { sessionId })
     .then((snap) => {
       if (g.stale() || snap.sessionId !== $activeSessionId.get()) return
-      applySnapshot({ items: snap.items, terminal: snap.terminal, trimmed: snap.terminalTrimmed })
+      /**
+       * **初次订阅这一路也要带上「当前是什么」**（A3，2026-08-16 补）。
+       *
+       * 会话开关与待答的权限是在**开会话那一刻**就有的，
+       * 而实时更新那一路只送「后来发生了什么」。只改那一路的话，
+       * 症状是**界面上那颗按钮根本不出现**，而运行时与中枢的判据全绿。
+       *
+       * 同一个缺口今天在三处各犯了一次（运行时的 attach、中枢的推送、这里）——
+       * **凡是「当前是什么」的东西，每一条路都要补一次**。
+       */
+      applySnapshot({
+        items: snap.items,
+        terminal: snap.terminal,
+        trimmed: snap.terminalTrimmed,
+        kernelInstanceId: snap.kernelInstanceId,
+        configOptions: snap.configOptions,
+        pendingPermission: snap.pendingPermission,
+      })
       c.expectRevision(sessionId, snap.revision)
     })
     .catch(fail)

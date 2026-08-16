@@ -47,6 +47,39 @@ let 下一个问id = 1000
 /** 最近一次 prompt 的会话 id。协议违规那条要拿它当收件人 */
 let 最近的会话 = ""
 
+/**
+ * 这台假 agent 声称自己有哪些会话开关（A3）。
+ *
+ * **刻意三条不同形状**：一个 `model` 的 select、一个 `thought_level` 的
+ * select（**带分组**，验我们摊平那一段）、一个 boolean。
+ * 真适配器给什么我们不知道，而**能处理未知与分组**才是这一层的价值。
+ */
+const 开关们 = [
+  {
+    id: "model",
+    name: "模型",
+    category: "model",
+    type: "select",
+    currentValue: "sonnet",
+    options: [
+      { value: "sonnet", name: "Sonnet" },
+      { value: "opus", name: "Opus", description: "更贵更强" },
+    ],
+  },
+  {
+    id: "thought",
+    name: "推理强度",
+    category: "thought_level",
+    type: "select",
+    currentValue: "low",
+    // **分组形状**：里面套一层 options
+    options: [
+      { name: "常用", options: [{ value: "low", name: "低" }, { value: "high", name: "高" }] },
+    ],
+  },
+  { id: "yolo", name: "不再逐个确认", type: "boolean", currentValue: false },
+]
+
 function 发(msg) {
   process.stdout.write(`${JSON.stringify(msg)}\n`)
 }
@@ -78,7 +111,23 @@ async function 处理(msg) {
 
   if (method === "session/new") {
     // **cwd 原样回给我们**：用例据此验「它真的开在项目目录里」
-    return 回结果(id, { sessionId: `fake-acp-${Date.now()}`, _meta: { cwd: params?.cwd } })
+    return 回结果(id, {
+      sessionId: `fake-acp-${Date.now()}`,
+      _meta: { cwd: params?.cwd },
+      // **开关随会话一起给**（A3）——真适配器就是这么报的
+      ...(process.env["FAKE_ACP_NO_CONFIG"] === "1" ? {} : { configOptions: 开关们 }),
+    })
+  }
+
+  if (method === "session/set_config_option") {
+    const 条 = 开关们.find((o) => o.id === params?.configId)
+    if (!条) return 回错(id, -32602, `没有这个开关：${params?.configId}`)
+    条.currentValue = params.value
+    /**
+     * **回整份新的**，不是回改动的那一条——协议就是这么定的，
+     * 而它顺带免掉了客户端的合并逻辑（合并只会多一种「合错了」的失效方式）。
+     */
+    return 回结果(id, { configOptions: 开关们 })
   }
 
   if (method === "session/cancel") {

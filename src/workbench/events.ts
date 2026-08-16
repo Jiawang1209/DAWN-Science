@@ -76,6 +76,21 @@ interface Entry {
    *
    * **缺省 = 没有人在问**，不是「问过了」。
    */
+  /**
+   * 这一段可以调的开关（A3，只有 acp 有）。**缺省 = 这条运行时没有这回事**，
+   * 与「有但是空的」不是一回事——界面据此决定不画那个菜单。
+   */
+  configOptions:
+    | {
+        id: string
+        name: string
+        description?: string
+        category?: string
+        kind: "select" | "boolean"
+        current: string
+        options: { value: string; name: string; description?: string }[]
+      }[]
+    | undefined
   pendingPermission:
     | { requestId: string; title: string; options: { optionId: string; name: string; kind: string }[] }
     | undefined
@@ -116,6 +131,7 @@ export class SessionTranscripts {
       state: "alive",
       exitCode: undefined,
       openTurnId: undefined,
+      configOptions: undefined,
       pendingPermission: undefined,
       turnSeq: 0,
       思考起于: undefined,
@@ -261,6 +277,19 @@ export class SessionTranscripts {
           ...(event.language ? { language: event.language } : {}),
           output: toProtocolOutput(event.entry),
         })
+        return
+      }
+
+      /**
+       * 这一段可以调的开关变了（A3）。**整份换掉**——
+       * 它给的就是整份新的，合并只会多一种「合错了」的失效方式。
+       */
+      case "config_options": {
+        e.configOptions = event.options.map((o) => ({
+          ...o,
+          options: o.options.map((x) => ({ ...x })),
+        }))
+        this.bump(sessionId, e, { type: "snapshot", snapshot: this.snapshot(sessionId, e) })
         return
       }
 
@@ -709,6 +738,7 @@ export class SessionTranscripts {
       state: e.state,
       ...(e.exitCode === undefined ? {} : { exitCode: e.exitCode }),
       ...(e.kernelInstanceId ? { kernelInstanceId: e.kernelInstanceId } : {}),
+      ...(e.configOptions?.length ? { configOptions: e.configOptions } : {}),
       ...(e.pendingPermission ? { pendingPermission: e.pendingPermission } : {}),
     }
   }

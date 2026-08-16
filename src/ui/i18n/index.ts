@@ -78,10 +78,44 @@ export function t(zh: string): string {
   if ($lang.get() === "zh") return zh
   const en = EN[zh]
   if (en !== undefined) return en
-  if (!吼过的.has(zh)) {
-    吼过的.add(zh)
-    console.error(`[i18n] 英文里没有这一句，先按中文显示：${JSON.stringify(zh)}`)
-  }
+  吼一次(zh)
+  return zh
+}
+
+function 吼一次(键: string): void {
+  if (吼过的.has(键)) return
+  吼过的.add(键)
+  console.error(`[i18n] 英文里没有这一句，先按中文显示：${JSON.stringify(键)}`)
+}
+
+/**
+ * **同一句中文，在两个地方是两个意思**（gettext 的 `msgctxt`，2026-08-16）。
+ *
+ * 起因是服务器那一行：状态词要写「连接」（英文 `alive`），
+ * 而**同一行上那颗按钮本来就叫「连接」**（英文 `Connect`）。
+ * msgid 就是原文，于是一个键给不出两个英文——这不是本项目的怪癖，
+ * 是「拿原文当键」这套做法的固有代价，gettext 为它专门留了 `msgctxt`。
+ *
+ * ```ts
+ * tc("连接", "服务器状态")   // en.ts 里的键是 "连接#服务器状态"
+ * ```
+ *
+ * **中文那一侧永远只显示 `zh`**，上下文不会漏到屏幕上。
+ * 查不到时**回落到中文并出声**——与 `t()` 同一条规矩，
+ * 但回落的是「连接」而不是「连接#服务器状态」：**把内部的键摆到界面上，
+ * 比显示一句没翻的中文更难看懂**。
+ *
+ * 分隔符用 `#`：`·` 不行，它在真实 msgid 里出现过
+ * （`「{0} 列 · 行数未知」`），拿它当分隔符会把那些键劈开。
+ *
+ * @param zh 中文原文（屏幕上显示的就是它）
+ * @param 上下文 只给翻译看的限定词，**别写成一句话**
+ */
+export function tc(zh: string, 上下文: string): string {
+  if ($lang.get() === "zh") return zh
+  const en = EN[`${zh}#${上下文}`]
+  if (en !== undefined) return en
+  吼一次(`${zh}#${上下文}`)
   return zh
 }
 

@@ -22,7 +22,7 @@ import { SessionRow } from "./views.js"
 import { 短路径 } from "./format.js"
 import { 服务器图标, 三角图标 } from "./icons.js"
 
-import { t } from "./i18n/index.js"
+import { t, tc } from "./i18n/index.js"
 /**
  * 状态怎么读。**点 + 文字成对**，不单给一个。
  *
@@ -31,27 +31,32 @@ import { t } from "./i18n/index.js"
  */
 const 状态文字 = (s: RemoteState): string =>
   /**
-   * **连上了写 `alive`，与侧栏的会话行一致**（2026-08-15 作者要的）。
+   * **这一列只有三个词，中英各一套**（2026-08-16 作者定的）：
    *
-   * 侧栏那些会话行显示的就是绿色的 `alive`（`.state.alive`），
-   * 而这一区此前写「连着」——**同一件事两个说法**，扫一眼分不出它们是不是一回事。
+   * ```
+   * 中文   连接      连接中       断连
+   * 英文   alive     connecting   exited
+   * ```
    *
-   * `alive` 两种语言下都是它，所以不走 `t()`：那会要求英文表里写一条
-   * 「alive → alive」的自我映射，而那只是给扫描看的噪声。
-   * 其余几个状态仍走 `t()`——它们本来就是中文。
+   * 上一版把 `alive` / `exited` 两种语言下都写死，理由是「省掉一条
+   * alive → alive 的自我映射」。**那条理由在作者要中文之后就不成立了**，
+   * 而写死的字面量是切不动的——所以它们现在都走 `t()`。
+   *
+   * 「连接」得走 `tc()`：**同一行上那颗按钮也叫「连接」**（英文 `Connect`），
+   * 一个 msgid 给不出两个英文。
    */
   s.kind === "ready"
-    ? "alive"
+    ? tc("连接", "服务器状态")
     : s.kind === "connecting"
       ? t("连接中")
-      : // **没连着的一律写 `exited`**（2026-08-16 作者定的：
+      : // **没连着的一律写「断连」**（2026-08-16 作者定的：
         //   *「not connected 其实就是 exited，connected 就是 alive 就可以了」*）。
         //
         // 这**推翻了 2026-08-15 的一条分法**：那时「人按的断开」写「未连」、
         // 「掉线」写 `exited`，理由是后者要报原因。作者的意思是这一列只该有
         // 会话行那两个词。**三种「没连着」仍然分得出来**，只是不靠这个词：
         // 掉线的点是红的、且底下多一行原因；没连过的点是灰的、没有原因行。
-        "exited"
+        t("断连")
 
 export interface ConnectionDraft {
   id?: string | undefined

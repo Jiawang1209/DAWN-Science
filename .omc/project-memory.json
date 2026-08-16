@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - << 'PY'\np='e2e/remote-connections.spec.ts'; s=open(p).read()\na='''  // **刚加的是「未连」，不是「连不上」**——我们还没试过\n  await expect(row.locator(\".remote-status\")).toHaveText(\"未连\")'''\nb='''  // **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。\n  // 「连不上」长什么样，由下面那条用例守（`exited` + 一行原因 + 红点）\n  await expect(row.locator(\".remote-status\")).toHaveText(\"exited\")\n  await expect(row.locator(\".remote-reason\")).toHaveCount(0)'''\nassert s.count(a)==1; s=s.replace(a,b)\na2='''  // **人按的断开是「未连」，不是 `exited`**——后者要报原因，两者不能混\n  await expect(row.locator(\".remote-status\")).toHaveText(\"未连\")\n  await expect(row.locator(\".remote-reason\")).toHaveCount(0)'''\nb2='''  /**\n   * **人按的断开也写 `exited`**（2026-08-16 作者定的：\n   * *「not connected 其实就是 exited，connected 就是 alive」*）。\n   *\n   * 这推翻了 2026-08-15 的分法（那时人按的断开写「未连」，掉线才写 `exited`）。\n   * **两者仍分得出来，只是不靠这个词**：掉线多一行原因、点是红的。\n   * 所以这里连着断言「没有原因行」——**没了它，这条用例与「连不上」那条\n   * 就再没有任何区别**，而那正是我们分不清两种断开的那一刻。\n   */\n  await expect(row.locator(\".remote-status\")).toHaveText(\"exited\")\n  await expect(row.locator(\".remote-reason\")).toHaveCount(0)\n  await expect(row).toHaveAttribute(\"data-state\", \"idle\")'''\nassert s.count(a2)==1; s=s.replace(a2,b2)\nopen(p,'w').write(s); print(\"ok\")\nPY\nnpm run typecheck 2>&1 | tail -2 && npm run build >/dev/null 2>&1 && npx playwright test e2e/remote-connections.spec.ts 2>&1 | grep -E \"✘|passed|failed|Error:\" | head -6",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -5",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/remote.tsx /tmp/r.bak\nfor 变异 in 'alive:? tc(\"连接\", \"服务器状态\")|? \"alive\"' 'Connect:? tc(\"连接\", \"服务器状态\")|? t(\"连接\")' '断连:t(\"断连\")|\"exited\"'; do\n  名=\"${变异%%:*}\"; 对=\"${变异#*:}\"; 前=\"${对%%|*}\"; 后=\"${对##*|}\"\n  echo \"── 变异：$名\"\n  python3 -c \"\nimport sys\np='src/ui/remote.tsx';s=open(p).read()\na=sys.argv[1]; b=sys.argv[2]\nassert s.count(a)==1, ('没匹配上', a)\nopen(p,'w').write(s.replace(a,b,1))\" \"$前\" \"$后\"\n  npm run build >/dev/null 2>&1\n  npx playwright test e2e/remote-connections.spec.ts -g \"状态词跟着语言切\" 2>&1 | grep -E \"✘|passed|failed\" | head -2\n  cp /tmp/r.bak src/ui/remote.tsx\ndone\nnpm run build >/dev/null 2>&1; echo 已还原",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -4",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -255,6 +255,18 @@
       "path": "tests/ui/i18n.test.ts",
       "accessCount": 2,
       "lastAccessed": 1786839336933,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/i18n/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1786840432269,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
+      "accessCount": 1,
+      "lastAccessed": 1786841382786,
       "type": "file"
     }
   ],

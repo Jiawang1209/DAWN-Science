@@ -62,19 +62,20 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   // **分组是一个标签，不是树**；没分组的不会被塞进一个叫「未分组」的假分组
   await expect(page.locator(".remote-group-name")).toHaveText("集群")
   await expect(row.locator(".remote-sub")).toContainText("dawn@fake.example")
-  // **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。
+  // **刚加的写「断连」，且没有原因行**——我们还没试过，谈不上「连不上」。
   // 「连不上」长什么样，由下面那条用例守（`exited` + 一行原因 + 红点）
-  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await expect(row.locator(".remote-status")).toHaveText("断连")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
 
   await row.getByRole("button", { name: "连接" }).click()
-  // **2026-08-15 改词**：连上写 `alive`、断了写 `exited`——与侧栏会话行同一套
-  await expect(row.locator(".remote-status")).toHaveText("alive", { timeout: 15_000 })
+  // **2026-08-16 再改词**：中文「连接 / 连接中 / 断连」，英文 alive / connecting / exited。
+  // 夹具跑在中文（`fixtures.ts` 里写死 zh），所以这里断言的是中文那一套
+  await expect(row.locator(".remote-status")).toHaveText("连接", { timeout: 15_000 })
   await expect(row).toHaveAttribute("data-state", "ready")
 
   await row.getByRole("button", { name: "断开" }).click()
   /**
-   * **人按的断开也写 `exited`**（2026-08-16 作者定的：
+   * **人按的断开也写「断连」**（2026-08-16 作者定的：
    * *「not connected 其实就是 exited，connected 就是 alive」*）。
    *
    * 这推翻了 2026-08-15 的分法（那时人按的断开写「未连」，掉线才写 `exited`）。
@@ -82,7 +83,7 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
    * 所以这里连着断言「没有原因行」——**没了它，这条用例与「连不上」那条
    * 就再没有任何区别**，而那正是我们分不清两种断开的那一刻。
    */
-  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await expect(row.locator(".remote-status")).toHaveText("断连")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
   await expect(row).toHaveAttribute("data-state", "idle")
 })
@@ -102,7 +103,7 @@ test("**连不上时说清是为什么**，就在那一行上", async ({ dawn })
   await expect(page.locator(".remote-problem")).toContainText(/authentication/i, {
     timeout: 15_000,
   })
-  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await expect(row.locator(".remote-status")).toHaveText("断连")
   await expect(row.locator(".remote-reason")).toBeVisible()
 })
 
@@ -126,7 +127,7 @@ test("**口令不回显**，且改别的字段不会把它弄丢", async ({ dawn
 
   // 口令还在：连得上就是证据（假服务器认的口令是 `dawn`）
   await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
-  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("alive", {
+  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("连接", {
     timeout: 15_000,
   })
 })
@@ -334,3 +335,59 @@ test("**服务器行与会话行同一条线**：左缘、名字、状态词都�
   expect(差(m.服务器状态.右, m.会话状态.右), "状态词落不到同一条竖线上").toBeLessThanOrEqual(2)
   expect(m.服务器状态.字号, "状态词字号不同档").toBe(m.会话状态.字号)
 })
+
+/**
+ * **这一列中英文切得动**（2026-08-16 作者要的：*「到时候中英文可以切换」*）。
+ *
+ * ```
+ * 中文   连接      连接中       断连
+ * 英文   alive     connecting   exited
+ * ```
+ *
+ * 上一版把 `alive` / `exited` 在两种语言下都写死——**写死的字面量是切不动的**，
+ * 而那件事只有真的切一次才看得出来：单元测试里 `tc()` 返回什么都对，
+ * 不代表这一行接了它。
+ *
+ * 「连接」还必须验英文是 `alive` **而不是 `Connect`**：
+ * 同一行上那颗按钮就叫「连接」，两者共用一个 msgid 的话，
+ * 状态词会在英文界面上变成一个动词。
+ */
+test("**状态词跟着语言切**：连接/断连 ↔ alive/exited", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  const 状态 = page.locator(".remote-row").first().locator(".remote-status")
+  await expect(状态).toHaveText("断连")
+
+  /**
+   * **先在中文里连一次**，再切英文。
+   *
+   * 这一步是变异测试逼出来的：第一版只在英文侧断言 `alive`，
+   * 而**「写死 `alive`」这个变异恰好也让英文侧是 `alive`**——用例全绿。
+   * 一个连着的服务器在中文里写什么，才是那个字面量藏不住的地方。
+   */
+  await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
+  await expect(状态, "写死的 `alive` 就是在这儿露馅").toHaveText("连接", { timeout: 15_000 })
+
+  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await page.getByRole("button", { name: "外观", exact: true }).click()
+  await page.getByRole("radio", { name: "English" }).click()
+  await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 10_000 })
+  await page.keyboard.press("Escape")
+
+  await 展开远端英文(page)
+  // 同一台机器、同一个状态，**只是换了语言**。
+  // 而且这里必须**不是 `Connect`**：状态词与按钮共用 msgid 的话，
+  // 这个位置会冒出一个动词
+  await expect(状态, "写死的字面量切不动").toHaveText("alive")
+
+  await page.locator(".remote-row").first().getByRole("button", { name: "Disconnect" }).click()
+  await expect(状态).toHaveText("exited")
+})
+
+/** 英文界面下那一区的标题是 `Remote servers` */
+async function 展开远端英文(page: import("@playwright/test").Page) {
+  const head = page.getByRole("button", { name: /Remote servers/ })
+  await expect(head).toBeVisible()
+  if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
+}

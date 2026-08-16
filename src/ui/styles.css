@@ -3048,7 +3048,15 @@ pre {
   border-top: 1px solid var(--dawn-stroke-4);
 }
 
-.side-bulk { margin-left: auto; }
+/**
+ * **它不跟着标题加粗**（2026-08-16，作者：*「中文的选择和英文的 select
+ * 其实字体不用加粗」*）。
+ *
+ * `.btn` 是 `font: inherit`，而它就长在分区标题里——于是标题那个
+ * `600` 一路继承下来，一颗次要动作看起来和标题一样重。
+ * 标题该粗（它统领这一列），动作不该。
+ */
+.side-bulk { margin-left: auto; font-weight: 400; }
 .side-section { display: flex; align-items: center; }
 /**
  * 选择模式那一条。**数字常驻**：「删掉 3 段对话」比「删掉选中的」

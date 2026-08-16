@@ -133,3 +133,28 @@ test("**指向不存在会话的任务，照样删得掉**", async ({ dawn }) =>
 
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0, { timeout: 30_000 })
 })
+
+/**
+ * **「多选」不跟着分区标题加粗**（2026-08-16，作者：
+ * *「中文的选择和英文的 select 其实字体不用加粗」*）。
+ *
+ * 根因是继承：`.btn` 是 `font: inherit`，而这颗按钮就长在分区标题里，
+ * 于是标题那个 `600` 一路落到它身上。**标题该粗（它统领这一列），动作不该**——
+ * 一颗次要动作和标题一样重，那一行就有两个重音。
+ *
+ * 量的是 `getComputedStyle`：继承来的字重在 CSS 源码里**一个字都看不见**，
+ * 只有算出来才作数（同一副道理见 `sess-title.spec.ts` 那条量 `opacity` 的）。
+ */
+test("**「多选」比它头上的标题轻**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  const 量 = await page.evaluate(() => {
+    const 重 = (sel: string) => {
+      const e = document.querySelector(sel)
+      return e ? getComputedStyle(e).fontWeight : null
+    }
+    return { 标题: 重(".side-section"), 多选: 重(".side-bulk") }
+  })
+  expect(量.标题, "分区标题本来就该是粗的").toBe("600")
+  expect(量.多选, "它继承了标题的字重").toBe("400")
+})

@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ngrep -rn \"composer-footer\" e2e/ | head\npython3 -c \"\nimport glob\nn=0\nfor p in glob.glob('e2e/*.spec.ts'):\n    s=open(p).read()\n    if '.composer-footer' in s:\n        c=s.count('.composer-footer'); n+=c\n        open(p,'w').write(s.replace('.composer-footer','.composer-controls'))\n        print(p, c)\nprint('共',n)\"\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/sess-title.spec.ts 2>&1 | grep -E \"✘|passed|failed\" | head -3",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -6",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -4\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/usage.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -4\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/usage.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -291,6 +291,36 @@
       "path": "test-results/visual-命令面板-·-亮色/命令面板-亮色-diff.png",
       "accessCount": 1,
       "lastAccessed": 1786851912505,
+      "type": "file"
+    },
+    {
+      "path": "src/store/usage.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786859391237,
+      "type": "file"
+    },
+    {
+      "path": "tests/usage.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786859429550,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/usage.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1786859896848,
+      "type": "file"
+    },
+    {
+      "path": "test-results/用量屏.png",
+      "accessCount": 1,
+      "lastAccessed": 1786860361877,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-设置-·-亮色/设置-亮色-diff.png",
+      "accessCount": 1,
+      "lastAccessed": 1786860892192,
       "type": "file"
     }
   ],

@@ -288,7 +288,21 @@
  *   **两个不同的东西共用一个名字**，正是这个仓库最忌讳的含混——
  *   留着旧名字并存，等于把它永久化。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "6.0"
+/**
+ * ## 6.1（S21，2026-08-16）：token 用量
+ *
+ * 两件都是**加法**，老界面照旧能跑，所以是 minor：
+ *
+ * 1. **新操作 `getUsage` / `setUsageBudget`**——「设置 → 用量」那一屏。
+ * 2. **`Cost` 的 `visible: false` 那一支现在允许带 token 三档。**
+ *
+ *   第二条修的是一个长期的表达缺口：`visible` 说的一直是**金额**，
+ *   而 token 却只能挂在 `visible: true` 上——于是
+ *   **「钱看不见、token 看得见」没地方表达**，而那正是我们每一轮的实况
+ *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
+ *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
+ */
+export const WORKBENCH_PROTOCOL_VERSION = "6.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -7,6 +7,7 @@
  */
 import type Database from "better-sqlite3"
 import type { Cost, ProvenanceLink, RunOrigin, RunStatus, RunSummary } from "../protocol/index.js"
+import { 汇总用量, type 用量汇总 } from "./usage.js"
 
 export interface RunInsert {
   runId: string
@@ -258,6 +259,17 @@ export class RunStore {
    * 等于给「回头探测当前环境」开了门，而那正是 S17 的第一条禁令。
    * 环境只在 `insert` 时写一次。
    */
+  /**
+   * Token 用量汇总（S21，2026-08-16）。
+   *
+   * 挂在这里而不是让后端自己拿 `db`：**这张表归它管**，
+   * 而把裸的数据库句柄递进后端，等于给「随手写一句 SQL」开了门。
+   * 口径写在 `usage.ts` 的文件头。
+   */
+  usage(今天: string): 用量汇总 {
+    return 汇总用量(this.db, 今天)
+  }
+
   finish(runId: string, fin: RunFinish): void {
     this.db
       .prepare(`

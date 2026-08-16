@@ -124,6 +124,9 @@ export interface OperationDef {
  * 指出的真实缺陷：桌面应用的凭证应当在 app 里设置，而当时没有任何操作能做到
  * ——冻结是为了防范围蔓延，不是为了拒绝必要的补漏。协议版本随之 1.0 → 1.1。
  */
+/** 非负整数。与 entities.ts 里那个同一个意思——token 计数一律走它 */
+const NonNegInt = z.int().min(0)
+
 export const OPERATIONS = {
   // ── 只读 ──
   getCapabilities: {
@@ -946,6 +949,47 @@ export const OPERATIONS = {
   },
 
   /** 改默认工作目录。**传空串等于恢复系统默认** */
+  /**
+   * Token 用量（S21，2026-08-16）。
+   *
+   * **一次给全**：统计条、进度条、日历、饼图四块看的是同一份事实，
+   * 拆成四个操作会让它们在同一屏上互相矛盾（四次查询之间可能又跑了一轮）。
+   *
+   * 口径写在 `store/usage.ts` 的文件头——**缓存读不进总数**、
+   * **没记模型的不摊进任何模型**、**日期按本地时区切**。
+   */
+  getUsage: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        total: NonNegInt,
+        input: NonNegInt,
+        output: NonNegInt,
+        /** 缓存读。**不在 `total` 里**，各家含义不一，合并就是重复计 */
+        cacheRead: NonNegInt,
+        daily: z.array(z.object({ date: z.string(), tokens: NonNegInt }).strict()),
+        byModel: z.array(
+          z.object({ model: z.string().min(1), tokens: NonNegInt, runs: NonNegInt }).strict(),
+        ),
+        peak: z.object({ date: z.string(), tokens: NonNegInt }).strict().optional(),
+        activeDays: NonNegInt,
+        streak: z.object({ current: NonNegInt, longest: NonNegInt }).strict(),
+        /** 有 token 但不知道是谁花的（外部 CLI、本版之前的历史） */
+        unattributed: z.object({ runs: NonNegInt, tokens: NonNegInt }).strict(),
+        /** 人给自己定的每日预算。**没配就没有这一项**，那时不画进度条 */
+        dailyBudget: z.number().int().positive().optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 改每日预算。**0 = 取消**，与「设了 0」不是一回事（后者没有意义） */
+  setUsageBudget: {
+    request: z.object({ tokens: z.number().int().min(0) }).strict(),
+    response: z.object({ dailyBudget: z.number().int().positive().optional() }).strict(),
+    mutating: true,
+  },
+
   setDefaultWorkspace: {
     request: z.object({ path: z.string() }).strict(),
     response: z.object({ path: z.string().min(1), isDefault: z.boolean() }).strict(),

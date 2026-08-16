@@ -54,6 +54,14 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     setCredential: async () => ({}),
     deleteCredential: async () => ({}),
     listSessions: async () => [],
+    // S21：新增操作必须同时补上假后端
+    getUsage: async () => ({
+      total: 0, input: 0, output: 0, cacheRead: 0,
+      daily: [], byModel: [], activeDays: 0,
+      streak: { current: 0, longest: 0 },
+      unattributed: { runs: 0, tokens: 0 },
+    }),
+    setUsageBudget: async () => ({}),
     listRuns: async () => [],
     getRun: async () => {
       throw new Error("未实现")

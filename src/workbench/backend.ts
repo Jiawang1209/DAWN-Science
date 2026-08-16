@@ -26,6 +26,7 @@ import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
 import type { SettingsStore } from "../store/settings.js"
+import { 本地日期 } from "../store/usage.js"
 import { 合名单 } from "../mcp/名单.js"
 import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
@@ -1536,6 +1537,33 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (p) mkdirSync(p, { recursive: true })
       const 现在 = settings.get("workspace.default")
       return { path: 现在 ?? 系统默认工作目录(), isDefault: !现在 }
+    },
+
+    /**
+     * Token 用量（S21，2026-08-16）。
+     *
+     * **一次给全四块要的数**：统计条、进度条、日历、饼图看的是同一份事实，
+     * 拆成四次查询会让它们在同一屏上互相矛盾。
+     *
+     * 「今天」在这里算一次并传下去——**不让汇总函数自己去问时钟**，
+     * 那样「连续天数」这条判据就没法钉住日期了。
+     */
+    getUsage: async () => {
+      const 今天 = 本地日期(new Date())
+      const u = runs.usage(今天)
+      const 预算 = Number(settings?.get("usage.dailyBudget") ?? "")
+      return {
+        ...u,
+        // **没配、配了 0、配了脏数据 → 都是「没有预算」**，那时界面不画进度条
+        ...(Number.isInteger(预算) && 预算 > 0 ? { dailyBudget: 预算 } : {}),
+      }
+    },
+
+    setUsageBudget: async ({ tokens }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置存储")
+      // **0 = 取消**：删掉这一格，而不是存一个 0（后者会画出一条分母为 0 的进度条）
+      settings.set("usage.dailyBudget", tokens > 0 ? String(tokens) : "", new Date().toISOString())
+      return tokens > 0 ? { dailyBudget: tokens } : {}
     },
 
     getInterpreters: async () => settings?.interpreters() ?? {},

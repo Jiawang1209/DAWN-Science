@@ -3852,3 +3852,93 @@ pre {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
+
+/* ── 用量（S21，2026-08-16）─────────────────────────────────────── */
+
+/**
+ * 四块之间用间距分组，**不画分隔线**——与侧栏那条同一副做法。
+ */
+.usage { display: flex; flex-direction: column; gap: var(--dawn-space-4); }
+
+/* 统计条：一行五格，格与格之间一条细线（这里的线是**对齐用的**，不是装饰） */
+.usage-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
+  overflow: hidden;
+}
+.usage-stat {
+  padding: var(--dawn-space-3) var(--dawn-space-2);
+  text-align: center;
+  border-left: 1px solid var(--dawn-stroke-4);
+}
+.usage-stat:first-child { border-left: 0; }
+.usage-stat-value { font-size: 20px; line-height: 28px; font-variant-numeric: tabular-nums; }
+.usage-stat-label { font-size: 12px; color: var(--dawn-text-3); }
+
+/* 今日进度条 */
+.usage-budget { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.usage-budget-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
+.usage-budget-title { font-weight: var(--dawn-weight-medium); }
+.usage-budget-num { color: var(--dawn-text-3); font-variant-numeric: tabular-nums; }
+.usage-budget-edit { margin-left: auto; }
+.usage-bar {
+  height: 10px;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-surface-elevated);
+  overflow: hidden;
+}
+.usage-bar-fill {
+  height: 100%;
+  background: var(--dawn-accent);
+  border-radius: var(--dawn-radius-full);
+  transition: width 200ms ease;
+}
+/** 超了要看得出来，**但不报警**：这是自己定的上限，超了什么也不会发生 */
+.usage-bar-fill.over { background: var(--dawn-warning); }
+.usage-budget-form { display: flex; align-items: flex-end; gap: var(--dawn-space-2); flex-wrap: wrap; }
+
+.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.usage-block-title { margin: 0; font-size: 14px; font-weight: var(--dawn-weight-medium); }
+
+/**
+ * 日历。**四档 + 空**，颜色全部从强调色派生——
+ * 换配色时它跟着走，不用另配一套（作者打算换配色，见 palette 那条）。
+ */
+.usage-heat { width: 100%; max-width: 420px; height: auto; }
+.usage-cell.l0 { fill: var(--dawn-surface-elevated); }
+.usage-cell.l1 { fill: color-mix(in srgb, var(--dawn-accent) 25%, transparent); }
+.usage-cell.l2 { fill: color-mix(in srgb, var(--dawn-accent) 45%, transparent); }
+.usage-cell.l3 { fill: color-mix(in srgb, var(--dawn-accent) 70%, transparent); }
+.usage-cell.l4 { fill: var(--dawn-accent); }
+.usage-legend { display: flex; align-items: center; gap: var(--dawn-space-1); }
+.usage-swatch { width: 11px; height: 11px; border-radius: var(--dawn-radius-xs); display: inline-block; }
+.usage-swatch.l0 { background: var(--dawn-surface-elevated); }
+.usage-swatch.l1 { background: color-mix(in srgb, var(--dawn-accent) 25%, transparent); }
+.usage-swatch.l2 { background: color-mix(in srgb, var(--dawn-accent) 45%, transparent); }
+.usage-swatch.l3 { background: color-mix(in srgb, var(--dawn-accent) 70%, transparent); }
+.usage-swatch.l4 { background: var(--dawn-accent); }
+
+/* 饼图 + 图例 */
+.usage-pie-row { display: flex; align-items: center; gap: var(--dawn-space-4); flex-wrap: wrap; }
+.usage-pie { width: 140px; height: 140px; flex: 0 0 auto; }
+.usage-legend-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.usage-legend-list li { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.usage-legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-legend-num { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.usage-dot { width: 10px; height: 10px; border-radius: var(--dawn-radius-full); flex: 0 0 auto; }
+
+/**
+ * 六色。**不是随手挑的六个颜色**：都从强调色转出去，
+ * 保证明暗两套下都在同一亮度带上，且与界面别处不打架。
+ */
+.usage-slice.c0, .usage-dot.c0 { fill: var(--dawn-accent); background: var(--dawn-accent); }
+.usage-slice.c1, .usage-dot.c1 { fill: color-mix(in srgb, var(--dawn-accent) 60%, var(--dawn-success)); background: color-mix(in srgb, var(--dawn-accent) 60%, var(--dawn-success)); }
+.usage-slice.c2, .usage-dot.c2 { fill: color-mix(in srgb, var(--dawn-accent) 55%, var(--dawn-warning)); background: color-mix(in srgb, var(--dawn-accent) 55%, var(--dawn-warning)); }
+.usage-slice.c3, .usage-dot.c3 { fill: color-mix(in srgb, var(--dawn-accent) 45%, transparent); background: color-mix(in srgb, var(--dawn-accent) 45%, transparent); }
+.usage-slice.c4, .usage-dot.c4 { fill: color-mix(in srgb, var(--dawn-accent) 40%, var(--dawn-danger)); background: color-mix(in srgb, var(--dawn-accent) 40%, var(--dawn-danger)); }
+.usage-slice.c5, .usage-dot.c5 { fill: var(--dawn-text-3); background: var(--dawn-text-3); }
+.usage-slice { stroke: var(--dawn-surface-panel); stroke-width: 1.5; }
+
+.usage-notes { display: flex; flex-direction: column; gap: var(--dawn-space-2); }

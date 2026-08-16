@@ -51,7 +51,7 @@ import {
   WorkspacePanel,
   type KernelRow,
 } from "./Settings.js"
-import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标 } from "./icons.js"
+import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { FilesView, type FileContent, type Listing } from "./files.js"
 import {
@@ -64,6 +64,7 @@ import {
   type MCP装载,
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
+import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
 import { 新建会话可选的 } from "./agents.js"
@@ -557,6 +558,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [目录说明, 设目录说明] = useState<string | undefined>(undefined)
 
   const [权限档, 设权限档] = useState<"allow-all" | "deny-risky">("allow-all")
+  /**
+   * 用量（S21）。**进那一屏时才拉**——它要扫全表，而绝大多数会话
+   * 从头到尾不会打开这一屏。
+   */
+  const [用量, 设用量] = useState<用量数据 | undefined>(undefined)
+  const 拉用量 = useCallback(() => {
+    client.get<用量数据>("getUsage", {}).then(设用量).catch(fail)
+  }, [client])
   useEffect(() => {
     if (view !== "settings") return
     client
@@ -2179,6 +2188,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   title: t("外观"),
                   icon: <外观图标 className="row-icon" />,
                   body: <AppearancePanel />,
+                },
+                {
+                  /**
+                   * 用量（S21，2026-08-16 作者要的）。
+                   *
+                   * **摆在「外观」后面、「工具权限」前面**：它是"看"，
+                   * 后面几块是"配"——一屏里先看后配，比按字母排更像人的顺序。
+                   */
+                  id: "usage",
+                  title: t("用量"),
+                  icon: <用量图标 className="row-icon" />,
+                  body: (
+                    <UsagePanel
+                      data={用量}
+                      onReload={拉用量}
+                      onSetBudget={(tokens) => {
+                        client
+                          .get<{ dailyBudget?: number }>("setUsageBudget", { tokens })
+                          .then(() => 拉用量())
+                          .catch(fail)
+                      }}
+                    />
+                  ),
                 },
                 {
                   id: "permission",

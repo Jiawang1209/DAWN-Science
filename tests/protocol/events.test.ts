@@ -296,6 +296,13 @@ describe("协议版本 · 5.5", () => {
    *   `kernelOutput` 条目（②-A · K4）。** 判别式的**三处一起加**——
    *   这是 2.3 留下的教训：漏一处的症状是「某条路径上这个会话凭空消失」。
    *
+   *
+   * 6.1（2026-08-16）：`getUsage` / `setUsageBudget`（S21「用量」那一屏），
+   *   外加 `Cost` 的 `visible: false` 那一支现在允许带 token 三档。
+   *   两件都是加法，故 minor。第二条修的是一个长期的表达缺口：
+   *   **`visible` 说的是金额**，而 token 此前只能挂在 `visible: true` 上，
+   *   于是「钱看不见、token 看得见」没地方表达——那正是我们每一轮的实况。
+   *
    * 2.5（2026-08-10）：新增 `listKernels`（②-A · K2）。
    *   纯新增操作，故 minor。响应里必须带解释器路径——
    *   本机五个 kernelspec 里三个是 conda 环境，光看名字分不出哪个是哪个。
@@ -304,7 +311,7 @@ describe("协议版本 · 5.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("6.0")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("6.1")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

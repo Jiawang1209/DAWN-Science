@@ -99,6 +99,15 @@ export function 圆加号图标({ className }: 图标属性 = {}) {
   )
 }
 
+/** 用量。三根高低不同的柱子（S21，2026-08-16） */
+export function 用量图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path d="M2.4 9.2a1 1 0 0 1 1-1h1.2a1 1 0 0 1 1 1v3.6a1 1 0 0 1-1 1H3.4a1 1 0 0 1-1-1V9.2Zm4.8-3.6a1 1 0 0 1 1-1h1.2a1 1 0 0 1 1 1v7.2a1 1 0 0 1-1 1H8.2a1 1 0 0 1-1-1V5.6ZM12 2.6a1 1 0 0 1 1-1h1.2a1 1 0 0 1 1 1v10.2a1 1 0 0 1-1 1H13a1 1 0 0 1-1-1V2.6Z" />
+    </壳>
+  )
+}
+
 /** 更多（⋯）。三颗实心圆点 */
 export function 更多图标({ className }: 图标属性 = {}) {
   return (

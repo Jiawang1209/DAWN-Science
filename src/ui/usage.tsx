@@ -529,7 +529,17 @@ export function UsagePie({
 
   return (
     <div className="usage-block">
-      <h3 className="usage-block-title">{t("按模型")}</h3>
+      {/**
+        * **标题带总数**（2026-08-16 作者要的）。
+        *
+        * 它与顶上那格「累计 Token」是同一个数——**刻意重复一次**：
+        * 饼图说的是「这些占比是相对谁的」，而人正盯着饼看的时候，
+        * 让他抬头去顶上找那个分母，是把一次判断拆成两次。
+        */}
+      <h3 className="usage-block-title">
+        {t("按模型")}
+        <span className="usage-block-sum">{读数(总)}</span>
+      </h3>
       <div className="usage-pie-col" style={{ position: "relative" }}>
         <svg
           className="usage-pie"

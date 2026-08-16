@@ -3898,6 +3898,8 @@ pre {
 
 .usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .usage-block-title { margin: 0; font-size: 14px; font-weight: var(--dawn-weight-medium); }
+/** 标题旁边那个总数：**同一行、淡一档**——它是分母，不是第二个标题 */
+.usage-block-sum { margin-left: var(--dawn-space-2); color: var(--dawn-text-3); font-weight: 400; font-variant-numeric: tabular-nums; }
 /** 标题行：标题在左，切换在右（形状学自作者给的截图） */
 .usage-block-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
 .usage-seg { display: flex; align-items: center; gap: var(--dawn-space-3); margin-left: auto; }

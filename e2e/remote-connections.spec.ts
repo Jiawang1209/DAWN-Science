@@ -510,3 +510,63 @@ test("**动作条挤爆时裁掉而不换行**", async ({ dawn }) => {
   // ④ 容器没被撑宽：超出的那截落在框外，由 `.sidebar` 的 `overflow-x: hidden` 裁掉
   expect(m.颗[m.颗.length - 1]!.右, "容器被撑开了，那就不是裁").toBeGreaterThan(m.容器右)
 })
+
+/**
+ * **侧栏里没有一行是靠换行来容纳的**（2026-08-16，作者：
+ * *「远端服务器/Remote servers 也在换行。我们把侧边栏固定的选项，
+ * 中文/英文 也都不换行」*）。
+ *
+ * 这条**不点名任何一条入口**。点名的话，它只证明「远端服务器」这一条没事，
+ * 而下一个被加进侧栏的长词照样会断——那正是今天这件事的来路：
+ * 上一轮修好了服务器那三颗动作，分区标题却还在断。
+ *
+ * 扫的是几何：**内容高度超过一个行高 = 断了**。中英各扫一遍，
+ * 且把侧栏收到最窄——**英文 + 最窄是最紧的那个组合**，
+ * 实测也只有它抓得出东西（`Remote servers` 断成两行，52px）。
+ */
+test("**侧栏所有固定入口都不换行**：中英 × 最窄侧栏", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+
+  const 扫 = () =>
+    page.evaluate(() => {
+      const 断了: { 字: string; 高: number; 行高: number }[] = []
+      const 选 =
+        ".sidebar .row, .sidebar .side-section, .sidebar .side-head, .sidebar .remote-group-name"
+      for (const e of document.querySelectorAll(选)) {
+        const cs = getComputedStyle(e)
+        const 行高 = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4
+        const 内 =
+          e.getBoundingClientRect().height -
+          parseFloat(cs.paddingTop) -
+          parseFloat(cs.paddingBottom)
+        // 留 1.4 倍的余地：`min-height` 撑出来的那点不算断行
+        if (内 > 行高 * 1.4) {
+          断了.push({ 字: (e.textContent ?? "").trim().slice(0, 20), 高: Math.round(内), 行高: Math.round(行高) })
+        }
+      }
+      return 断了
+    })
+
+  const 收到最窄 = async () => {
+    const sash = page.locator(".side-sash")
+    await sash.focus()
+    for (let i = 0; i < 6; i++) await sash.press("ArrowLeft")
+    await expect
+      .poll(() =>
+        page.evaluate(() => Math.round(document.querySelector(".sidebar")!.getBoundingClientRect().width)),
+      )
+      .toBe(200)
+  }
+
+  await 收到最窄()
+  expect(await 扫(), "中文界面上有一行断了").toEqual([])
+
+  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await page.getByRole("button", { name: "外观", exact: true }).click()
+  await page.getByRole("radio", { name: "English" }).click()
+  await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 10_000 })
+  await page.keyboard.press("Escape")
+  await 展开远端英文(page)
+  expect(await 扫(), "英文界面上有一行断了").toEqual([])
+})

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1786514408639,
+  "lastScanned": 1786837232084,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cat >> e2e/attach.spec.ts << 'EOF'\n\n/**\n * **收不下图片的会话，不摆「上传图片」那一项**（2026-08-13）。\n *\n * cli（claude / codex 的 headless）与 kernel 会话的运行时没有把图片喂进去的入口\n * ——`SessionManager.write` 会当场报错。**报错是对的**（不静默丢掉），\n * 但更该做的是**不摆这个入口**：一个点下去只会得到「这类会话不能附图片」的\n * 菜单项，比没有更坏。\n *\n * 内置对话仍然有它——**这一条同时钉住两侧**，否则「都不画」也能让用例变绿。\n */\ntest(\"**内置对话有「上传图片」，内核会话没有**\", async ({ dawn }) => {\n  const { page } = dawn\n\n  // ① 内置对话：三项俱全\n  await 开一段临时会话(page)\n  await 等进了对话(page)\n  await page.locator(\".composer-controls .attach-trigger\").click()\n  await expect(page.getByRole(\"menuitem\", { name: \"上传图片\", exact: true })).toBeVisible()\n  await page.keyboard.press(\"Escape\")\n\n  // ② 换成内核会话：那一项不该在\n  const 有内核 = await page.evaluate(async () => {\n    const w = window as unknown as {\n      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }\n    }\n    const p = (await w.dawn.invoke(\"getProviders\", {})) as {\n      data?: { agents?: { agentId: string; kind?: string }[] }\n    }\n    const k = p.data?.agents?.find((a) => a.kind === \"kernel\")\n    if (!k) return false\n    await w.dawn.invoke(\"createTask\", { agentId: k.agentId })\n    return true\n  })\n  if (!有内核) return // 这套夹具没配内核 agent —— 上面那一半已经验过了\n\n  await page.reload()\n  await page.locator(\".session-list .sess-item .row\").first().click()\n  await 等进了对话(page)\n  await page.locator(\".composer-controls .attach-trigger\").click()\n  await expect(page.getByRole(\"menuitem\", { name: \"上传文件\", exact: true })).toBeVisible()\n  await expect(page.getByRole(\"menuitem\", { name: \"上传图片\", exact: true })).toHaveCount(0)\n})\nEOF\nnpm run build 2>&1 | tail -1 && npx playwright test e2e/attach.spec.ts -g \"上传图片\" 2>&1 | grep -E \"✓|✘|passed|failed\" | head -4",
-    "testCommand": "npm test 2>&1 | grep -E \"FAIL|Tests |Test Files\" | head -4; npx playwright test 2>&1 | tail -10",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/styles.css /tmp/styles.bak\n跑() { npm run build >/dev/null 2>&1; npx playwright test e2e/remote-connections.spec.ts -g \"同一条线\" 2>&1 | grep -E \"✓|✘|passed|failed|不一样|没给行尾|同一条竖线|字号不同\" | head -4; cp /tmp/styles.bak src/ui/styles.css; }\n\necho \"── 变异①：撤掉行的内缩与行尾那一格\"\npython3 -c \"\np='src/ui/styles.css';s=open(p).read()\ns=s.replace('  width: calc(100% - var(--dawn-space-3) - var(--dawn-row-tail));\\n  margin: 0 var(--dawn-row-tail) 0 var(--dawn-space-3);\\n  padding: 5px var(--dawn-space-3);','  padding: var(--dawn-space-2) var(--dawn-space-3);',1)\nopen(p,'w').write(s)\"\n跑\n\necho \"── 变异②：撤掉点那一列补的 8px\"\npython3 -c \"\np='src/ui/styles.css';s=open(p).read()\ns=s.replace('  height: 8px;\\n  margin: 0 4px;','  height: 8px;',1)\nopen(p,'w').write(s)\"\n跑\n\necho \"── 变异③：状态词字号退回 0.8em\"\npython3 -c \"\np='src/ui/styles.css';s=open(p).read()\ns=s.replace('.remote-status { flex: 0 0 auto; font-size: 12px;','.remote-status { flex: 0 0 auto; font-size: 0.8em;',1)\nopen(p,'w').write(s)\"\n跑\nnpm run build >/dev/null 2>&1; echo \"已还原\"",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nrm -f e2e/probe.spec.ts\nnpm run typecheck 2>&1 | tail -3\nnpm test 2>&1 | grep -E \"Test Files|Tests \" | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -86,7 +86,7 @@
     }
   },
   "conventions": {
-    "namingStyle": "camelCase/PascalCase",
+    "namingStyle": "camelCase",
     "importStyle": null,
     "testPattern": "*.test.ts",
     "fileOrganization": null
@@ -108,15 +108,15 @@
     "dist": {
       "path": "dist",
       "purpose": "Distribution/build output",
-      "fileCount": 0,
-      "lastAccessed": 1786514408531,
+      "fileCount": 1,
+      "lastAccessed": 1786837232066,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 4,
-      "lastAccessed": 1786514408535,
+      "lastAccessed": 1786837232066,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -126,41 +126,48 @@
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 52,
-      "lastAccessed": 1786514408557,
+      "fileCount": 76,
+      "lastAccessed": 1786837232069,
       "keyFiles": [
         "add-service.spec.ts",
         "agent-pill.spec.ts",
+        "attach.spec.ts",
         "base-url.spec.ts",
-        "boot.spec.ts",
-        "chat.spec.ts"
+        "boot.spec.ts"
       ]
     },
     "examples": {
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1786514408558,
+      "lastAccessed": 1786837232069,
       "keyFiles": []
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 5,
-      "lastAccessed": 1786514408560,
+      "fileCount": 6,
+      "lastAccessed": 1786837232070,
       "keyFiles": [
         "build-electron.mjs",
         "dev-mock.mjs",
         "fix-node-pty.mjs",
-        "mock-inference-server.mjs",
-        "smoke-native.ts"
+        "mcp-test-server.mjs",
+        "mock-inference-server.mjs"
       ]
+    },
+    "skills": {
+      "path": "skills",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1786837232070,
+      "keyFiles": []
     },
     "spikes": {
       "path": "spikes",
       "purpose": null,
-      "fileCount": 10,
-      "lastAccessed": 1786514408561,
+      "fileCount": 11,
+      "lastAccessed": 1786837232070,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -172,8 +179,8 @@
     "src": {
       "path": "src",
       "purpose": "Source code",
-      "fileCount": 2,
-      "lastAccessed": 1786514408564,
+      "fileCount": 3,
+      "lastAccessed": 1786837232070,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -183,14 +190,14 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1786514408566,
+      "lastAccessed": 1786837232070,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
-      "fileCount": 7,
-      "lastAccessed": 1786514408567,
+      "fileCount": 8,
+      "lastAccessed": 1786837232071,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
@@ -202,20 +209,21 @@
     "src/config": {
       "path": "src/config",
       "purpose": "Configuration files",
-      "fileCount": 4,
-      "lastAccessed": 1786514408581,
+      "fileCount": 5,
+      "lastAccessed": 1786837232071,
       "keyFiles": [
         "loader.ts",
-        "models-json.ts",
-        "schema.ts"
+        "mcp-writer.ts",
+        "models-json.ts"
       ]
     },
     "tests/config": {
       "path": "tests/config",
       "purpose": "Configuration files",
-      "fileCount": 2,
-      "lastAccessed": 1786514408595,
+      "fileCount": 3,
+      "lastAccessed": 1786837232071,
       "keyFiles": [
+        "mcp-writer.test.ts",
         "registry.test.ts",
         "writer.test.ts"
       ]
@@ -224,7 +232,7 @@
       "path": "tests/helpers",
       "purpose": "Helper functions",
       "fileCount": 1,
-      "lastAccessed": 1786514408600,
+      "lastAccessed": 1786837232071,
       "keyFiles": [
         "credentials.ts"
       ]
@@ -232,303 +240,15 @@
   },
   "hotPaths": [
     {
-      "path": "src/ui/views.tsx",
-      "accessCount": 46,
-      "lastAccessed": 1786578388210,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/App.tsx",
-      "accessCount": 25,
-      "lastAccessed": 1786578362994,
+      "path": "src/ui/tokens.css",
+      "accessCount": 2,
+      "lastAccessed": 1786837330734,
       "type": "file"
     },
     {
       "path": "src/ui/styles.css",
-      "accessCount": 16,
-      "lastAccessed": 1786579735562,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/tokens.css",
-      "accessCount": 10,
-      "lastAccessed": 1786578156698,
-      "type": "file"
-    },
-    {
-      "path": "e2e/sidebar-size.spec.ts",
-      "accessCount": 7,
-      "lastAccessed": 1786578815282,
-      "type": "file"
-    },
-    {
-      "path": "e2e/__screenshots__/对话-亮色-darwin.png",
-      "accessCount": 6,
-      "lastAccessed": 1786558256546,
-      "type": "file"
-    },
-    {
-      "path": "e2e/project-bulk.spec.ts",
-      "accessCount": 5,
-      "lastAccessed": 1786578844597,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-08-12-task-model.md",
-      "accessCount": 3,
-      "lastAccessed": 1786525196724,
-      "type": "file"
-    },
-    {
-      "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 3,
-      "lastAccessed": 1786535222239,
-      "type": "file"
-    },
-    {
-      "path": "tests/ui/design-contract.test.ts",
-      "accessCount": 3,
-      "lastAccessed": 1786535569909,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
-      "accessCount": 3,
-      "lastAccessed": 1786598429344,
-      "type": "file"
-    },
-    {
-      "path": "e2e/zz-probe.spec.ts",
       "accessCount": 2,
-      "lastAccessed": 1786525276442,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/icons.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1786526595080,
-      "type": "file"
-    },
-    {
-      "path": "e2e/sidebar-layout.spec.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786526949952,
-      "type": "file"
-    },
-    {
-      "path": "tests/ui/app-mvp.test.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1786527239362,
-      "type": "file"
-    },
-    {
-      "path": "e2e/fixtures.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786527929124,
-      "type": "file"
-    },
-    {
-      "path": "src/store/tasks.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786530216282,
-      "type": "file"
-    },
-    {
-      "path": "src/workbench/backend.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786534504091,
-      "type": "file"
-    },
-    {
-      "path": "e2e/task-workspace.spec.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786534824362,
-      "type": "file"
-    },
-    {
-      "path": "e2e/__screenshots__/空态-亮色-darwin.png",
-      "accessCount": 2,
-      "lastAccessed": 1786540226289,
-      "type": "file"
-    },
-    {
-      "path": "test-results/task-workspace-设完之后-归到项目栏，而且-agent-的手真的挪过去了-/test-failed-1.png",
-      "accessCount": 2,
-      "lastAccessed": 1786541938393,
-      "type": "file"
-    },
-    {
-      "path": "e2e/zz-sweep.spec.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786544245155,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/state/index.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786577891506,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/main.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1786577951077,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-actual.png",
-      "accessCount": 2,
-      "lastAccessed": 1786582240262,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-actual.png",
-      "accessCount": 1,
-      "lastAccessed": 1786524176416,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-对话-·-暗色/对话-暗色-actual.png",
-      "accessCount": 1,
-      "lastAccessed": 1786524201046,
-      "type": "file"
-    },
-    {
-      "path": "e2e/chat-column.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786524269135,
-      "type": "file"
-    },
-    {
-      "path": "e2e/markdown-render.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786524897784,
-      "type": "file"
-    },
-    {
-      "path": "docs/REFERENCES.md",
-      "accessCount": 1,
-      "lastAccessed": 1786524993218,
-      "type": "file"
-    },
-    {
-      "path": "test-results/probe-1-点完新建任务.png",
-      "accessCount": 1,
-      "lastAccessed": 1786525295940,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/format.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786525530064,
-      "type": "file"
-    },
-    {
-      "path": "e2e/task.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786526665729,
-      "type": "file"
-    },
-    {
-      "path": "tests/ui/views.test.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1786527602286,
-      "type": "file"
-    },
-    {
-      "path": "src/workbench/events.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786534418043,
-      "type": "file"
-    },
-    {
-      "path": "src/store/sessions.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786534438708,
-      "type": "file"
-    },
-    {
-      "path": "src/session/manager.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786534470766,
-      "type": "file"
-    },
-    {
-      "path": "tests/session/rehome.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786534749086,
-      "type": "file"
-    },
-    {
-      "path": "e2e/bulk-delete.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786538000692,
-      "type": "file"
-    },
-    {
-      "path": "test-results/task-workspace-空态就选好目录-选了目录再开口-→-直接进「项目」栏-/test-failed-1.png",
-      "accessCount": 1,
-      "lastAccessed": 1786541843544,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/skills.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1786544493755,
-      "type": "file"
-    },
-    {
-      "path": "test-results/cli-agent-CLI-agent-在对话框里-打一句，它答一句-——-判据-①/test-failed-1.png",
-      "accessCount": 1,
-      "lastAccessed": 1786550264414,
-      "type": "file"
-    },
-    {
-      "path": "e2e/model-pill.spec.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786558367716,
-      "type": "file"
-    },
-    {
-      "path": "e2e/__screenshots__/设置-亮色-darwin.png",
-      "accessCount": 1,
-      "lastAccessed": 1786561364387,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/state/theme.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786577648865,
-      "type": "file"
-    },
-    {
-      "path": "wb-side2.tmp.mjs",
-      "accessCount": 1,
-      "lastAccessed": 1786577738765,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/state/sidebar.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786577870851,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/i18n/index.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786579967425,
-      "type": "file"
-    },
-    {
-      "path": "scripts/i18n-wrap.mjs",
-      "accessCount": 1,
-      "lastAccessed": 1786580029328,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/i18n/en.ts",
-      "accessCount": 1,
-      "lastAccessed": 1786580216447,
+      "lastAccessed": 1786837354798,
       "type": "file"
     }
   ],

@@ -14,7 +14,7 @@
  *   2. **口令不回显**，且改别的字段不会把它弄丢
  *   3. **连不上要说清是为什么**，就在那一行上
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 test.use({
   dawnOptions: {
@@ -273,4 +273,53 @@ test("**同一台机器上的多段对话，收在同一台底下**", async ({ d
 
   await expect(page.locator(".side-server"), "同一台机器被拆成了两组").toHaveCount(1)
   await expect(page.locator(".side-server li")).toHaveCount(2)
+})
+
+/**
+ * **服务器行与下面的会话行落在同一条线上**（2026-08-16，作者报的两件）：
+ *
+ * > *「服务器的连接和未连接，能不能和下面会话中的 exited 保持对齐呢」*
+ * > *「服务器的位置也要和下面的会话也对齐一下」*
+ *
+ * 改之前量到的：服务器行通铺 `0 → 264`，会话行内缩 `12 → 216`；
+ * 状态词一个在 231、一个在 178，**差 53px**。
+ *
+ * 这里比的是**两者之间的差**，不是写死的坐标——侧栏可以被拖宽，
+ * 而「同一列里只有一条起跑线」不该随宽度变。
+ */
+test("**服务器行与会话行同一条线**：左缘、名字、状态词都对齐", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await expect(page.locator(".session-list li .state").first()).toBeVisible()
+
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await expect(page.locator(".remote-status").first()).toBeVisible()
+
+  const 量 = await page.evaluate(() => {
+    const 盒 = (sel: string) => {
+      const e = document.querySelector(sel) as HTMLElement | null
+      if (!e) return null
+      const r = e.getBoundingClientRect()
+      return { 左: r.left, 右: r.right, 字号: getComputedStyle(e).fontSize }
+    }
+    return {
+      服务器行: 盒(".remote-row"),
+      服务器名: 盒(".remote-label"),
+      服务器状态: 盒(".remote-status"),
+      会话行: 盒(".session-list li .row"),
+      会话名: 盒(".session-list li .sess-title"),
+      会话状态: 盒(".session-list li .state"),
+    }
+  })
+  for (const [名, 盒] of Object.entries(量)) expect(盒, `没量到 ${名}`).not.toBeNull()
+  const m = 量 as { [K in keyof typeof 量]: NonNullable<(typeof 量)[K]> }
+
+  const 差 = (a: number, b: number) => Math.abs(a - b)
+  expect(差(m.服务器行.左, m.会话行.左), "两种行的左内缩不一样").toBeLessThanOrEqual(2)
+  expect(差(m.服务器行.右, m.会话行.右), "服务器行没给行尾那一格留位置").toBeLessThanOrEqual(2)
+  expect(差(m.服务器名.左, m.会话名.左), "名字的起跑线不一样").toBeLessThanOrEqual(2)
+  // 状态词是**右对齐**的一列：右缘才是它的那条线
+  expect(差(m.服务器状态.右, m.会话状态.右), "状态词落不到同一条竖线上").toBeLessThanOrEqual(2)
+  expect(m.服务器状态.字号, "状态词字号不同档").toBe(m.会话状态.字号)
 })

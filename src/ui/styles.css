@@ -2505,15 +2505,37 @@ pre {
   color: var(--dawn-text-3);
 }
 .remote-list { list-style: none; margin: 0; padding: 0; }
+/**
+ * **服务器行与下面的会话行共用同一条线**（2026-08-16）。
+ *
+ * 此前它是通铺的（`0 → 264`），而会话行内缩到 `12 → 216`，
+ * 于是同一列里两种对齐；状态词更是差了 53px。作者报了两次：
+ * *「服务器的连接和未连接，能不能和下面会话中的 exited 保持对齐」*、
+ * *「服务器的位置也要和下面的会话也对齐一下」*。
+ *
+ * 照 `.row` 那一副：左内缩 12、内距 `5px 12px`、行尾留 `--dawn-row-tail`。
+ * **强调色改用 inset 阴影**——`border-left` 会占掉 2px 布局宽，
+ * 连着的那台就比没连的往右挪 2px（`.row.active` 早就是这么做的）。
+ */
 .remote-row {
-  padding: var(--dawn-space-2) var(--dawn-space-3);
-  border-left: 2px solid transparent;
+  width: calc(100% - var(--dawn-space-3) - var(--dawn-row-tail));
+  margin: 0 var(--dawn-row-tail) 0 var(--dawn-space-3);
+  padding: 5px var(--dawn-space-3);
+  border-radius: var(--dawn-radius-row);
+  /* 与 `.sidebar .row` 同一档字号：13 与 14 摞在一列里就是两种密度 */
+  font-size: 14px;
+  line-height: 21px;
 }
-.remote-row.on { border-left-color: var(--dawn-accent); }
+.remote-row.on { box-shadow: inset 2px 0 0 var(--dawn-accent); }
 .remote-main { display: flex; align-items: center; gap: var(--dawn-space-2); }
+/**
+ * 点是 8px，**占的位置是 16px**——会话行那一列是 16px 的图标。
+ * 不补这 8px，服务器名就比会话标题往左偏 8，一列里两条起跑线。
+ */
 .remote-dot {
   width: 8px;
   height: 8px;
+  margin: 0 4px;
   border-radius: var(--dawn-radius-full);
   flex: 0 0 auto;
   background: var(--dawn-text-3);
@@ -2522,18 +2544,19 @@ pre {
 .remote-row[data-state="connecting"] .remote-dot { background: var(--dawn-accent); }
 .remote-row[data-state="disconnected"] .remote-dot { background: var(--dawn-danger); }
 .remote-label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.remote-status { flex: 0 0 auto; font-size: 0.8em; color: var(--dawn-text-3); }
+/* 与会话行的 `alive/exited` 同一档：`.row .state` 是 12px */
+.remote-status { flex: 0 0 auto; font-size: 12px; color: var(--dawn-text-3); }
 .remote-sub {
   margin: 0;
-  padding-left: calc(8px + var(--dawn-space-2));
-  font-size: 0.8em;
+  padding-left: calc(16px + var(--dawn-space-2));
+  font-size: 12px;
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
 }
 /* 断了要说清为什么，**写在屏幕上**——只放进 title 等于没说 */
 .remote-reason {
   margin: 2px 0 0;
-  padding-left: calc(8px + var(--dawn-space-2));
+  padding-left: calc(16px + var(--dawn-space-2));
   font-size: 0.8em;
   color: var(--dawn-danger);
 }
@@ -2541,7 +2564,7 @@ pre {
 .remote-actions {
   display: flex;
   gap: var(--dawn-space-3);
-  padding-left: calc(8px + var(--dawn-space-2));
+  padding-left: calc(16px + var(--dawn-space-2));
   margin-top: 2px;
 }
 .remote-add { margin: var(--dawn-space-2) var(--dawn-space-3) 0; }

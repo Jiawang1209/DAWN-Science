@@ -49,6 +49,8 @@ export interface RunFinish {
   mayIncludeUserEdits?: boolean
   artifactCount?: number
   cost?: Cost
+  /** 这一轮实际是谁答的。**缺省 = 不知道**，不补默认值 */
+  model?: string
 }
 
 interface RunRow {
@@ -100,11 +102,17 @@ function costColumns(cost: Cost | undefined) {
       cost_invisible_reason: null,
     }
   }
+  /**
+   * **金额不可见时，token 照记**（2026-08-16）。
+   *
+   * 上一版这里三档全写 null——于是 provider 报的那些真数在这一行被丢掉了。
+   * 症状要到很久以后才看得见：「用量」那一屏建起来时，账本里一个 token 都没有。
+   */
   return {
     cost_visible: 0,
-    cost_input_tokens: null,
-    cost_output_tokens: null,
-    cost_cache_read_tokens: null,
+    cost_input_tokens: cost.inputTokens ?? null,
+    cost_output_tokens: cost.outputTokens ?? null,
+    cost_cache_read_tokens: cost.cacheReadTokens ?? null,
     cost_total_usd: null,
     cost_invisible_reason: cost.reason,
   }
@@ -121,7 +129,14 @@ function toCost(r: RunRow): Cost | undefined {
       totalUSD: r.cost_total_usd ?? 0,
     }
   }
-  return { visible: false, reason: r.cost_invisible_reason ?? "未说明" }
+  return {
+    visible: false,
+    reason: r.cost_invisible_reason ?? "未说明",
+    // **null 就整个不给**：缺省是「没记到」，写成 0 会被读成「这一轮免费」
+    ...(r.cost_input_tokens === null ? {} : { inputTokens: r.cost_input_tokens }),
+    ...(r.cost_output_tokens === null ? {} : { outputTokens: r.cost_output_tokens }),
+    ...(r.cost_cache_read_tokens === null ? {} : { cacheReadTokens: r.cost_cache_read_tokens }),
+  }
 }
 
 /** 未设字段整个省略而非留 null（沿用 ①-A 的纪律）——`"cost" in run` 才能反映真实情况。 */
@@ -261,7 +276,8 @@ export class RunStore {
           cost_output_tokens = COALESCE(@cost_output_tokens, cost_output_tokens),
           cost_cache_read_tokens = COALESCE(@cost_cache_read_tokens, cost_cache_read_tokens),
           cost_total_usd = COALESCE(@cost_total_usd, cost_total_usd),
-          cost_invisible_reason = COALESCE(@cost_invisible_reason, cost_invisible_reason)
+          cost_invisible_reason = COALESCE(@cost_invisible_reason, cost_invisible_reason),
+          model = COALESCE(@model, model)
         WHERE id = @runId`)
       .run({
         runId,
@@ -275,6 +291,7 @@ export class RunStore {
         mayIncludeUserEdits:
           fin.mayIncludeUserEdits === undefined ? null : fin.mayIncludeUserEdits ? 1 : 0,
         artifactCount: fin.artifactCount ?? null,
+        model: fin.model ?? null,
         ...costColumns(fin.cost),
       })
   }

@@ -26,6 +26,19 @@ export type RunStatus = z.infer<typeof RunStatusSchema>
  * 会让人以为免费。用可辨识联合在**类型层面**强制区分，而不是靠 UI 约定：
  * 约定会被绕过，类型不会。
  */
+/**
+ * 一次 Run 的花费。
+ *
+ * ## `visible` 说的是**金额**，不是 token（2026-08-16 补的这句话）
+ *
+ * 上一版把 token 三档只放在 `visible: true` 那一支里，于是
+ * **「钱看不见、token 看得见」这个最常见的情况没地方表达**——
+ * 而它正是我们每一轮的实况：provider 报 token，一分钱都不报。
+ * 结果是账本里一个 token 都没有，而运行时其实一直知道
+ * （上下文栏用的就是同一份数）。作者要做「用量」那一屏时才发现这件事。
+ *
+ * 所以 token 在两支里都能出现；`strict` 挡的仍然是**不可见时夹带金额**。
+ */
 export const CostSchema = z.discriminatedUnion("visible", [
   z.object({
     visible: z.literal(true),
@@ -38,6 +51,13 @@ export const CostSchema = z.discriminatedUnion("visible", [
     visible: z.literal(false),
     /** 为什么拿不到，例如「该 agent 使用自有订阅额度」 */
     reason: z.string().trim().min(1),
+    /**
+     * **拿得到的那部分照样报**。缺省 = 这一项也不知道，
+     * 与 0 不是一回事（0 会被读成「免费」）。
+     */
+    inputTokens: NonNegInt.optional(),
+    outputTokens: NonNegInt.optional(),
+    cacheReadTokens: NonNegInt.optional(),
   }).strict(), // strict：不可见时夹带金额会被拒，防止 UI 误读
 ])
 export type Cost = z.infer<typeof CostSchema>

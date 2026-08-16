@@ -53,7 +53,7 @@
   },
   "build": {
     "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ngrep -rn \"composer-footer\" e2e/ | head\npython3 -c \"\nimport glob\nn=0\nfor p in glob.glob('e2e/*.spec.ts'):\n    s=open(p).read()\n    if '.composer-footer' in s:\n        c=s.count('.composer-footer'); n+=c\n        open(p,'w').write(s.replace('.composer-footer','.composer-controls'))\n        print(p, c)\nprint('共',n)\"\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/sess-title.spec.ts 2>&1 | grep -E \"✘|passed|failed\" | head -3",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp e2e/files.spec.ts /tmp/f.bak\npython3 -c \"\np='e2e/files.spec.ts';s=open(p).read()\ns=s.replace('name: \\\"文件\\\", exact: true','name: \\\"文件\\\"',1);open(p,'w').write(s)\"\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"×|少了|Tests \" | head -4\ncp /tmp/f.bak e2e/files.spec.ts\necho \"── 还原后 ──\"\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"Tests \" | head -2\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -6",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

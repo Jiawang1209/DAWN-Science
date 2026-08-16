@@ -51,6 +51,31 @@ export interface RunRecorderOptions {
   now?: () => string
 }
 
+/**
+ * 把「金额那一支」与「攒下的 token」合成一条 `Cost`（2026-08-16）。
+ *
+ * 三种情况都要说得清：
+ *   - 运行时报了金额（`visible: true`）→ 它自己就带着 token，不动它；
+ *   - 报了「金额不可见 + 原因」→ 把 token 挂上去（**钱看不见 ≠ token 看不见**）；
+ *   - 一条成本事件都没来，但有 token → 也要记，原因写清楚是哪一类拿不到。
+ *
+ * 一个 token 都没收到时返回原样：**缺省表示「没记到」，不是 0**。
+ */
+function 合成成本(
+  cost: Cost | undefined,
+  tokens: { input: number; output: number; cacheRead: number } | undefined,
+): Cost | undefined {
+  if (!tokens) return cost
+  if (cost?.visible === true) return cost
+  return {
+    visible: false,
+    reason: cost?.reason ?? "该 provider 只报 token，不报金额",
+    inputTokens: tokens.input,
+    outputTokens: tokens.output,
+    ...(tokens.cacheRead ? { cacheReadTokens: tokens.cacheRead } : {}),
+  }
+}
+
 /** 一个会话当前开着的账目 */
 interface Open {
   /** 正在进行的 agent 回合。同一时刻至多一个 */
@@ -63,6 +88,19 @@ interface Open {
    * 与「不可见」是两回事（数据库那层用 `cost_visible IS NULL` 表达）。
    */
   pendingCost?: Cost | undefined
+  /**
+   * 这一轮攒下的 token（2026-08-16）。
+   *
+   * **一轮里可能有很多次模型调用**（每次工具调用之后都要再问一次模型），
+   * 每一次都有自己的用量——所以是**累加**，不是取最后一条。
+   * 上一版这条路整个不存在：运行时一直在发 `turn_usage`（上下文栏用的就是它），
+   * 而账本一个 token 都没记，于是「用量」那一屏无从谈起。
+   *
+   * 缺省 = 这一轮一次用量都没收到，**与「花了 0 个」不是一回事**。
+   */
+  pendingTokens?: { input: number; output: number; cacheRead: number } | undefined
+  /** 这一轮实际是谁答的。**后到的覆盖先到的**——换模型发生在轮内时以最后一次为准 */
+  pendingModel?: string | undefined
   /**
    * 这一轮里内核报过的错（2026-08-11）。
    *
@@ -188,6 +226,24 @@ export class RunRecorder {
       return
     }
 
+    /**
+     * **token 是一轮里累加出来的**（2026-08-16）。
+     *
+     * 与 `cost` 那条同一副纪律：先攒着、`idle` 才落库；
+     * 没有开着的回合就丢弃——**没有归属的账，记到上一轮头上就是算错人**。
+     */
+    if (event.kind === "turn_usage") {
+      if (!s?.turnRunId) return
+      const 攒 = s.pendingTokens ?? { input: 0, output: 0, cacheRead: 0 }
+      s.pendingTokens = {
+        input: 攒.input + (event.usage.input ?? 0),
+        output: 攒.output + (event.usage.output ?? 0),
+        cacheRead: 攒.cacheRead + (event.usage.cacheRead ?? 0),
+      }
+      if (event.model) s.pendingModel = event.model
+      return
+    }
+
     if (event.kind === "kernel_output") {
       /**
        * **内核报错要落到账本上**（2026-08-11 补）。
@@ -301,9 +357,13 @@ export class RunRecorder {
       const runId = s?.turnRunId
       if (!runId) return
       const cost = s!.pendingCost
+      const tokens = s!.pendingTokens
+      const 模型 = s!.pendingModel
       const 出错 = s!.turnError
       s!.turnRunId = undefined
       s!.pendingCost = undefined
+      s!.pendingTokens = undefined
+      s!.pendingModel = undefined
       s!.turnError = undefined
       this.runs.finish(runId, {
         // **跑挂了就记 failed**，不能因为「这一轮结束了」就叫完成
@@ -315,7 +375,18 @@ export class RunRecorder {
         // **没收到就整个不给这个字段**：`finish` 用 COALESCE，
         // 给 undefined 与不给是一回事，但显式写出来是为了说清楚
         // 「没记到成本」不该被写成 0（那会被读成「免费」）
-        ...(cost ? { cost } : {}),
+        /**
+         * **token 与金额是两件事**（2026-08-16）。
+         *
+         * provider 报 token、不报钱，于是这一轮的 `cost` 是
+         * `{visible:false, reason}`——上一版就到此为止，token 被扔了。
+         * 现在把攒下的三档挂上去：**钱看不见，不代表 token 也看不见。**
+         *
+         * 一次用量都没收到时**整个字段不给**（不是给 0）：
+         * 0 在「用量」那一屏上会被读成「这一轮免费」。
+         */
+        ...(合成成本(cost, tokens) ? { cost: 合成成本(cost, tokens)! } : {}),
+        ...(模型 ? { model: 模型 } : {}),
       })
       return
     }

@@ -156,6 +156,85 @@ describe("账本", () => {
     expect("cost" in theTurn()).toBe(false)
   })
 
+  /**
+   * **token 这条线，2026-08-16 之前也是断的**，而且断在同一个地方：
+   * 运行时一直在发 `turn_usage`（上下文栏用的就是它），账本一个都没记。
+   * 作者要做「用量」那一屏时才发现——**建屏之前先得有数**。
+   */
+  describe("token", () => {
+    it("**一轮里的每次模型调用都要累加** —— 不是取最后一条", () => {
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 100, output: 20 } })
+      // 工具调用之后又问了一次模型：**这一次也要算**
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 150, output: 30, cacheRead: 7 } })
+      rec.ingest({ kind: "cost", sessionId: SESSION, cost: { visible: false, reason: "只报 token" } })
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      expect(theTurn().cost).toEqual({
+        visible: false,
+        reason: "只报 token",
+        inputTokens: 250,
+        outputTokens: 50,
+        cacheReadTokens: 7,
+      })
+    })
+
+    /** **钱看不见，不代表 token 也看不见**——这正是上一版把它丢掉的理由 */
+    it("一条成本事件都没来，光有 token 也要落库", () => {
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 5, output: 6 } })
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      const c = theTurn().cost
+      expect(c?.visible).toBe(false)
+      expect(c).toMatchObject({ inputTokens: 5, outputTokens: 6 })
+    })
+
+    /** 报了真金额的（claude）不许被 token 覆盖掉 */
+    it("金额可见时，原样保留", () => {
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 999, output: 999 } })
+      rec.ingest({
+        kind: "cost",
+        sessionId: SESSION,
+        cost: { visible: true, inputTokens: 3, outputTokens: 4, totalUSD: 0.02 },
+      })
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      expect(theTurn().cost).toEqual({ visible: true, inputTokens: 3, outputTokens: 4, totalUSD: 0.02 })
+    })
+
+    it("**不跨轮残留**：第一轮报了、第二轮没报，第二轮就没有 token", () => {
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 5, output: 6 } })
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      const turns = runs.listByProject(PROJECT, {}).filter((r) => r.requestType === "agent_turn")
+      expect(turns.filter((t) => t.cost !== undefined)).toHaveLength(1)
+    })
+
+    /** **谁答的就记谁**：中途换模型时，以最后一次回执为准 */
+    it("记下实际答话的那个模型", () => {
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 1, output: 1 }, model: "deepseek/v4" })
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 1, output: 1 }, model: "kimi/k3" })
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      const row = db.prepare(`SELECT model FROM runs WHERE request_type = 'agent_turn'`).get() as {
+        model: string | null
+      }
+      expect(row.model).toBe("kimi/k3")
+    })
+
+    /** **老数据、或回执里没有 → NULL**，读作「不知道」，不是某个模型 */
+    it("没给模型时留 NULL，不补一个默认的", () => {
+      rec.beginTurn(SESSION)
+      rec.ingest({ kind: "turn_usage", sessionId: SESSION, usage: { input: 1, output: 1 } })
+      rec.ingest({ kind: "idle", sessionId: SESSION })
+      const row = db.prepare(`SELECT model FROM runs WHERE request_type = 'agent_turn'`).get() as {
+        model: string | null
+      }
+      expect(row.model).toBeNull()
+    })
+  })
+
   it("**没有开着的回合时丢弃** —— 硬记到上一轮就是把 A 的账算到 B 头上", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "idle", sessionId: SESSION })

@@ -903,6 +903,8 @@ export class NativeRuntime implements AgentRuntime {
     const u = latest.usage
     this.emit({
       kind: "turn_usage",
+      // **谁答的就记谁**：`实际模型` 是 pi 回执里那个，不是我们设的那个
+      ...(s.实际模型 ? { model: s.实际模型 } : {}),
       sessionId,
       usage: {
         ...(u.input !== undefined ? { input: u.input } : {}),

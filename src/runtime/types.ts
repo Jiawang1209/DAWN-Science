@@ -166,6 +166,14 @@ export type AgentEvent =
       kind: "turn_usage"
       sessionId: SessionId
       usage: { input?: number; output?: number; cacheRead?: number }
+      /**
+       * **这一份用量是谁花的**（2026-08-16，形如 `deepseek/deepseek-v4-flash`）。
+       *
+       * 取的是 pi 回执里那个**实际答话的**模型，不是我们设的那个——
+       * 中途换过模型的会话，两者会不一样，而账要算在真答的那个头上。
+       * 缺省 = 不知道（老运行时、或回执里没有），**与「某个模型」不是一回事**。
+       */
+      model?: string
     }
   /**
    * 系统提示。**既不是对话也不是工具**——混进 turn 会污染对话记录。

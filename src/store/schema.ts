@@ -103,6 +103,12 @@ export function migrate(db: Database.Database): void {
       cost_total_usd         REAL,
       cost_invisible_reason  TEXT,
 
+      -- 这一轮**实际是谁答的**（形如 deepseek/deepseek-v4-flash，S21，2026-08-16）。
+      -- 取自 provider 回执，不是我们设的那个：中途换过模型时两者不一样，
+      -- 而账要算在真答的那个头上。NULL = **不知道**（老数据、或回执里没有），
+      -- 与「某个模型」不是一回事——「用量」那一屏把它单列成「未记录」
+      model         TEXT,
+
       -- 进行中不得有结束时间；已结束必须有。自相矛盾的记录在这里就被拒
       CHECK (
         (status = 'running'  AND finished_at IS NULL) OR
@@ -169,6 +175,17 @@ export function migrate(db: Database.Database): void {
     db.exec(
       `ALTER TABLE runs ADD COLUMN environment_snapshot_id TEXT REFERENCES environment_snapshots(id)`,
     )
+  }
+
+  /**
+   * 这一轮是谁答的（S21，2026-08-16）。
+   *
+   * **老数据留 NULL**，与上面那条同一口径：它们产生时没记这件事，
+   * 拿会话「现在」用的模型补上去，就是用今天的事实冒充当时的（不变式 5）。
+   * 「用量」那一屏据此把它们单列成「未记录」，而不是摊进某个模型里。
+   */
+  if (!hasColumn(db, "runs", "model")) {
+    db.exec(`ALTER TABLE runs ADD COLUMN model TEXT`)
   }
 
   if (!hasColumn(db, "runs", "files_written")) {

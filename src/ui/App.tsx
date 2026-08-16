@@ -2200,16 +2200,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   title: t("用量"),
                   icon: <用量图标 className="row-icon" />,
                   body: (
-                    <UsagePanel
-                      data={用量}
-                      onReload={拉用量}
-                      onSetBudget={(tokens) => {
-                        client
-                          .get<{ dailyBudget?: number }>("setUsageBudget", { tokens })
-                          .then(() => 拉用量())
-                          .catch(fail)
-                      }}
-                    />
+                    <UsagePanel data={用量} onReload={拉用量} />
                   ),
                 },
                 {

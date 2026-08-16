@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -4\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/usage.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -4\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/usage.spec.ts 2>&1 | grep -E \"passed|failed\" | tail -2",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm run build >/dev/null 2>&1\ncp src/ui/usage.tsx /tmp/ux.bak; cp src/ui/styles.css /tmp/s.bak\n跑() { npm run build >/dev/null 2>&1; npx playwright test e2e/usage.spec.ts 2>&1 | grep -E \"✘  |passed|failed\" | head -3; cp /tmp/ux.bak src/ui/usage.tsx; cp /tmp/s.bak src/ui/styles.css; }\necho \"── ①日历退回 420px（没铺满）\"\npython3 -c \"\np='src/ui/styles.css';s=open(p).read()\ns=s.replace('.usage-heat { display: block; width: 100%; height: auto; }','.usage-heat { display: block; width: 420px; height: auto; }',1);open(p,'w').write(s)\"\n跑\necho \"── ②月份不画\"\npython3 -c \"\np='src/ui/usage.tsx';s=open(p).read()\ns=s.replace('    if (!有一号) continue','    if (有一号) continue',1);open(p,'w').write(s)\"\n跑\necho \"── ③浮层退回原生 title（我们那颗就不出现了）\"\npython3 -c \"\np='src/ui/usage.tsx';s=open(p).read()\ns=s.replace('''                  onMouseEnter={(e) => {\n                    const r = (e.target as SVGRectElement).getBoundingClientRect()\n                    设停在({ x: r.left + r.width / 2, y: r.top, date: 格子.date, tokens: 格子.tokens })\n                  }}''','',1);open(p,'w').write(s)\"\n跑\necho \"── ④图例带回厂家\"\npython3 -c \"\np='src/ui/usage.tsx';s=open(p).read()\ns=s.replace('{显示模型名(m.model, 全部名)}','{m.model}',1);open(p,'w').write(s)\"\n跑\nnpm run build >/dev/null 2>&1; echo 已还原",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 -c \"\np='src/ui/styles.css';s=open(p).read()\na='.usage-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }'\nb='''/** **名与值要看得出是一对**：一整屏宽的时候，两端对齐就成了两列不相干的数 */\n.usage-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; max-width: 380px; }'''\nassert s.count(a)==1\nopen(p,'w').write(s.replace(a,b))\"\nrm -f e2e/probe.spec.ts\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -5",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -321,6 +321,12 @@
       "path": "test-results/visual-设置-·-亮色/设置-亮色-diff.png",
       "accessCount": 1,
       "lastAccessed": 1786860892192,
+      "type": "file"
+    },
+    {
+      "path": "test-results/用量屏2.png",
+      "accessCount": 1,
+      "lastAccessed": 1786862459600,
       "type": "file"
     }
   ],

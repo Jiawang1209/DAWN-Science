@@ -574,15 +574,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 天": "{0}d",
   "当前连续天数": "Current streak",
   "最长连续天数": "Longest streak",
-  "今日用量": "Today's usage",
-  "改预算": "Adjust daily cap",
-  "设一个每日预算": "Set a daily budget",
-  "这个上限是你自己定的，不是平台额度——超了不会被拦住。":
-    "You set this cap yourself — it is not a plan quota, and going over it blocks nothing.",
-  "还没有每日预算。定一个之后，这里会画一条今天用了多少的进度条。":
-    "No daily budget yet. Set one and a bar will show how much of it today has used.",
-  "每天多少 token": "Tokens per day",
-  "填 0 取消预算": "0 removes the budget",
   "另有 {0} 个缓存读 token 没有算进总数：各家 provider 对它的含义不一样，合进去会重复计。":
     "A further {0} cache-read tokens are not in the total: providers disagree on what that number means, and folding it in would double-count.",
   "另有 {0} 个回合（约 {1} token）不知道是哪个模型花的——外部 CLI 的模型由它自己管，本版之前的历史回合也没记。它们不计入上面任何一处。":
@@ -594,10 +585,20 @@ export const EN: Readonly<Record<string, string>> = {
   "少": "Less",
   "多": "More",
   "按模型": "By model",
+  "活动洞察": "Activity",
+  "对话总数": "Chats",
+  "回合总数": "Turns",
+  "工具调用次数": "Tool calls",
+  "用过的工具种数": "Distinct tools",
+  "平均每回合": "Average per turn",
+  "{0} token": "{0} tokens",
+  "出错收场的回合": "Turns that failed",
+  "最常用的工具": "Most-used tools",
+  "还没有调用过任何工具。": "No tool calls yet.",
+  "{0} 次": "{0} runs",
   "还没有记到任何一次内置对话的用量。跑一轮对话之后再来看。":
     "No built-in chat usage recorded yet. Come back after a turn or two.",
   "按模型的用量占比": "Share of usage by model",
-  "{0}：{1} 个 Token": "{0}: {1} tokens",
   "{0} 回合": "{0} turns",
 
 }

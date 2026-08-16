@@ -1550,20 +1550,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      */
     getUsage: async () => {
       const 今天 = 本地日期(new Date())
-      const u = runs.usage(今天)
-      const 预算 = Number(settings?.get("usage.dailyBudget") ?? "")
-      return {
-        ...u,
-        // **没配、配了 0、配了脏数据 → 都是「没有预算」**，那时界面不画进度条
-        ...(Number.isInteger(预算) && 预算 > 0 ? { dailyBudget: 预算 } : {}),
-      }
-    },
-
-    setUsageBudget: async ({ tokens }) => {
-      if (!settings) throw fault("internal_error", "本次运行没有装配设置存储")
-      // **0 = 取消**：删掉这一格，而不是存一个 0（后者会画出一条分母为 0 的进度条）
-      settings.set("usage.dailyBudget", tokens > 0 ? String(tokens) : "", new Date().toISOString())
-      return tokens > 0 ? { dailyBudget: tokens } : {}
+      return runs.usage(今天)
     },
 
     getInterpreters: async () => settings?.interpreters() ?? {},

@@ -3877,27 +3877,8 @@ pre {
 .usage-stat-value { font-size: 20px; line-height: 28px; font-variant-numeric: tabular-nums; }
 .usage-stat-label { font-size: 12px; color: var(--dawn-text-3); }
 
-/* 今日进度条 */
-.usage-budget { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
-.usage-budget-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
-.usage-budget-title { font-weight: var(--dawn-weight-medium); }
-.usage-budget-num { color: var(--dawn-text-3); font-variant-numeric: tabular-nums; }
-.usage-budget-edit { margin-left: auto; }
-.usage-bar {
-  height: 10px;
-  border-radius: var(--dawn-radius-full);
-  background: var(--dawn-surface-elevated);
-  overflow: hidden;
-}
-.usage-bar-fill {
-  height: 100%;
-  background: var(--dawn-accent);
-  border-radius: var(--dawn-radius-full);
-  transition: width 200ms ease;
-}
-/** 超了要看得出来，**但不报警**：这是自己定的上限，超了什么也不会发生 */
-.usage-bar-fill.over { background: var(--dawn-warning); }
-.usage-budget-form { display: flex; align-items: flex-end; gap: var(--dawn-space-2); flex-wrap: wrap; }
+/* 今日进度条撤了（2026-08-16，作者：*「不需要每日预算，因为不用 token 怎么干活呢」*）。
+   给自己设一个超了也不会拦的上限，只是一个让人焦虑的装饰 */
 
 .usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .usage-block-title { margin: 0; font-size: 14px; font-weight: var(--dawn-weight-medium); }
@@ -3906,7 +3887,37 @@ pre {
  * 日历。**四档 + 空**，颜色全部从强调色派生——
  * 换配色时它跟着走，不用另配一套（作者打算换配色，见 palette 那条）。
  */
-.usage-heat { width: 100%; max-width: 420px; height: auto; }
+/**
+ * **铺满整块面板**（2026-08-16 作者要的：*「在 app 页面上平铺一下」*）。
+ *
+ * 上一版钉了 `max-width: 420px`，于是它缩在左上角一小块——
+ * 而一年 53 列的图，正是要靠宽度才看得出季节。
+ */
+.usage-heat-wrap { position: relative; }
+.usage-heat { display: block; width: 100%; height: auto; }
+/** 月份标：与副信息同一档，**不跟格子抢** */
+.usage-month { fill: var(--dawn-text-3); font-size: 9px; }
+/**
+ * 悬停浮层。**自己画，不用原生 `title`**——后者延迟半秒、没有样式、
+ * 暗色下还是白底，设计契约为此禁掉了按钮上的 `title=`。
+ *
+ * `pointer-events: none` 是要害：挡住下一格的话，
+ * 横着扫过一行会一格一格地闪。
+ */
+.usage-tip {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 8px));
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  white-space: nowrap;
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-float);
+  font-size: 12px;
+}
+.usage-cell { cursor: default; }
 .usage-cell.l0 { fill: var(--dawn-surface-elevated); }
 .usage-cell.l1 { fill: color-mix(in srgb, var(--dawn-accent) 25%, transparent); }
 .usage-cell.l2 { fill: color-mix(in srgb, var(--dawn-accent) 45%, transparent); }
@@ -3922,7 +3933,26 @@ pre {
 
 /* 饼图 + 图例 */
 .usage-pie-row { display: flex; align-items: center; gap: var(--dawn-space-4); flex-wrap: wrap; }
-.usage-pie { width: 140px; height: 140px; flex: 0 0 auto; }
+/** **大一点**（2026-08-16 作者要的）：140 → 208 */
+.usage-pie { width: 208px; height: 208px; flex: 0 0 auto; }
+.usage-slice { cursor: default; }
+
+/** 两栏。窄了自己叠成一栏——**不是靠断点，是靠内容放不下** */
+.usage-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--dawn-space-4);
+}
+/** **名与值要看得出是一对**：一整屏宽的时候，两端对齐就成了两列不相干的数 */
+.usage-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; max-width: 380px; }
+.usage-facts li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dawn-space-2);
+  min-height: var(--dawn-row-h);
+}
+.usage-fact-name { color: var(--dawn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-fact-value { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .usage-legend-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .usage-legend-list li { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .usage-legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

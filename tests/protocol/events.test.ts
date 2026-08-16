@@ -297,6 +297,11 @@ describe("协议版本 · 5.5", () => {
    *   这是 2.3 留下的教训：漏一处的症状是「某条路径上这个会话凭空消失」。
    *
    *
+   * 7.0（2026-08-16）：撤掉 `setUsageBudget`。**删操作即 major**——
+   *   哪怕它只活了一个小时（同一天加的每日预算，当天被作者撤：
+   *   *「不用 token 怎么干活呢」*）。留着一个没人调的操作躲开 major，
+   *   代价是下一个人以为它在服役。
+   *
    * 6.1（2026-08-16）：`getUsage` / `setUsageBudget`（S21「用量」那一屏），
    *   外加 `Cost` 的 `visible: false` 那一支现在允许带 token 三档。
    *   两件都是加法，故 minor。第二条修的是一个长期的表达缺口：
@@ -311,7 +316,7 @@ describe("协议版本 · 5.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("6.1")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.0")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

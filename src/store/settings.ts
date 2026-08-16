@@ -53,18 +53,6 @@ export type SettingKey =
    * 那是个用户永远找不到的地方），以及**选文件夹时从这儿起步**。
    */
   | "workspace.default"
-  /**
-   * **每天的 token 预算**（S21，2026-08-16，作者要的那条进度条）。
-   *
-   * 存的是一个十进制整数串；**没配 = 没有预算**，那时不画进度条
-   * ——一条没有分母的进度条是假的。
-   *
-   * 它与 Codex 那条进度条**不是一回事，这一点必须说清楚**：
-   * 那边的分母是平台给的套餐额度，我们这边没有额度这回事
-   * （用的是你自己的 key，按量付费）。所以这个数**是人自己定的**，
-   * 界面上要照实说它是「我给自己定的」，不是「平台给的」。
-   */
-  | "usage.dailyBudget"
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

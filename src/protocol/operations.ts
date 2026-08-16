@@ -976,18 +976,21 @@ export const OPERATIONS = {
         streak: z.object({ current: NonNegInt, longest: NonNegInt }).strict(),
         /** 有 token 但不知道是谁花的（外部 CLI、本版之前的历史） */
         unattributed: z.object({ runs: NonNegInt, tokens: NonNegInt }).strict(),
-        /** 人给自己定的每日预算。**没配就没有这一项**，那时不画进度条 */
-        dailyBudget: z.number().int().positive().optional(),
+        /** 活动洞察。**每一格都是数出来的，没有一个是估的** */
+        activity: z
+          .object({
+            chats: NonNegInt,
+            turns: NonNegInt,
+            toolCalls: NonNegInt,
+            distinctTools: NonNegInt,
+            failedTurns: NonNegInt,
+          })
+          .strict(),
+        /** 最常用的工具，最多十个 */
+        topTools: z.array(z.object({ name: z.string().min(1), runs: NonNegInt }).strict()),
       })
       .strict(),
     mutating: false,
-  },
-
-  /** 改每日预算。**0 = 取消**，与「设了 0」不是一回事（后者没有意义） */
-  setUsageBudget: {
-    request: z.object({ tokens: z.number().int().min(0) }).strict(),
-    response: z.object({ dailyBudget: z.number().int().positive().optional() }).strict(),
-    mutating: true,
   },
 
   setDefaultWorkspace: {

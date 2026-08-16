@@ -69,6 +69,27 @@ export interface 用量汇总 {
    * 摆出来而不是丢掉：*「一共就这么多」*与*「我们统计到这么多」*是两句话。
    */
   unattributed: { runs: number; tokens: number }
+  /**
+   * 活动洞察（2026-08-16 作者要的，形状学自他给的那张截图）。
+   *
+   * **每一格都是账本里数出来的，没有一个是估的。**
+   * 这一点必须守住：这一屏一旦掺进一个「大概」，
+   * 旁边那些真数字也跟着不可信了。
+   */
+  activity: {
+    /** 有过动静的会话数 */
+    chats: number
+    /** agent 回合数 */
+    turns: number
+    /** 工具调用次数 */
+    toolCalls: number
+    /** 用过多少种工具 */
+    distinctTools: number
+    /** 出错收场的回合数 */
+    failedTurns: number
+  }
+  /** 最常用的工具，从多到少，最多十个 */
+  topTools: { name: string; runs: number }[]
 }
 
 interface 行 {
@@ -129,7 +150,39 @@ export function 汇总用量(db: Database.Database, 今天: string): 用量汇�
     .sort((a, b) => b.tokens - a.tokens)
   const peak = daily.reduce<每日用量 | undefined>((最, d) => (最 && 最.tokens >= d.tokens ? 最 : d), undefined)
 
+  /**
+   * 活动那几格。**分开查**：上面那条只看有 token 的行，
+   * 而「跑了多少轮」「调了多少次工具」与 token 无关——
+   * 合成一条查询会让没记用量的回合凭空消失。
+   */
+  const 活 = db
+    .prepare(`
+      SELECT COUNT(DISTINCT session_id) AS chats,
+             SUM(CASE WHEN request_type = 'agent_turn' THEN 1 ELSE 0 END) AS turns,
+             SUM(CASE WHEN request_type LIKE 'tool_call:%' THEN 1 ELSE 0 END) AS toolCalls,
+             SUM(CASE WHEN request_type = 'agent_turn' AND has_error = 1 THEN 1 ELSE 0 END) AS failedTurns
+        FROM runs`)
+    .get() as { chats: number; turns: number | null; toolCalls: number | null; failedTurns: number | null }
+
+  const 工具 = db
+    .prepare(`
+      SELECT substr(request_type, 11) AS name, COUNT(*) AS runs
+        FROM runs
+       WHERE request_type LIKE 'tool_call:%'
+       GROUP BY name
+       ORDER BY runs DESC, name ASC
+       LIMIT 10`)
+    .all() as { name: string; runs: number }[]
+
   return {
+    activity: {
+      chats: 活.chats ?? 0,
+      turns: 活.turns ?? 0,
+      toolCalls: 活.toolCalls ?? 0,
+      distinctTools: 工具.length,
+      failedTurns: 活.failedTurns ?? 0,
+    },
+    topTools: 工具,
     total: input + output,
     input,
     output,

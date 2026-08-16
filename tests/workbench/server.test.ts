@@ -61,7 +61,6 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
       streak: { current: 0, longest: 0 },
       unattributed: { runs: 0, tokens: 0 },
     }),
-    setUsageBudget: async () => ({}),
     listRuns: async () => [],
     getRun: async () => {
       throw new Error("未实现")

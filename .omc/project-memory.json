@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/ui/App.tsx /tmp/app.bak\n跑() { npm run build >/dev/null 2>&1; npx playwright test e2e/terminal-dock.spec.ts -g \"按 × 关掉终端|敲 exit\" 2>&1 | grep -E \"✘  |passed|failed|Error: \" | head -4; cp /tmp/app.bak src/ui/App.tsx; }\n\necho \"── 变异①：撤掉「只在掀开那一下自动开」（effect 会把它接回来 / 新开一个）\"\npython3 -c \"\np='src/ui/App.tsx';s=open(p).read()\ns=s.replace('    if (掀开过了.current) return\\n    掀开过了.current = true\\n','',1);open(p,'w').write(s)\"\n跑\n\necho \"── 变异②：撤掉乐观摘除（等服务端回来才动界面）\"\npython3 -c \"\np='src/ui/App.tsx';s=open(p).read()\ns=s.replace('                设关掉的终端((前) => new Set(前).add(id))\\n','',1);open(p,'w').write(s)\"\n跑\nnpm run build >/dev/null 2>&1; echo 已还原",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -6",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ngrep -rn \"composer-footer\" e2e/ | head\npython3 -c \"\nimport glob\nn=0\nfor p in glob.glob('e2e/*.spec.ts'):\n    s=open(p).read()\n    if '.composer-footer' in s:\n        c=s.count('.composer-footer'); n+=c\n        open(p,'w').write(s.replace('.composer-footer','.composer-controls'))\n        print(p, c)\nprint('共',n)\"\nnpm run build >/dev/null 2>&1 && npx playwright test e2e/sess-title.spec.ts 2>&1 | grep -E \"✘|passed|failed\" | head -3",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp e2e/files.spec.ts /tmp/f.bak\npython3 -c \"\np='e2e/files.spec.ts';s=open(p).read()\ns=s.replace('name: \\\"文件\\\", exact: true','name: \\\"文件\\\"',1);open(p,'w').write(s)\"\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"×|少了|Tests \" | head -4\ncp /tmp/f.bak e2e/files.spec.ts\necho \"── 还原后 ──\"\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"Tests \" | head -2\nnpm test 2>&1 | grep -E \"Test Files|Tests |×\" | tail -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -240,6 +240,12 @@
   },
   "hotPaths": [
     {
+      "path": "src/ui/views.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1786855225568,
+      "type": "file"
+    },
+    {
       "path": "src/ui/tokens.css",
       "accessCount": 2,
       "lastAccessed": 1786837330734,
@@ -265,8 +271,8 @@
     },
     {
       "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
-      "accessCount": 1,
-      "lastAccessed": 1786841382786,
+      "accessCount": 2,
+      "lastAccessed": 1786856505520,
       "type": "file"
     },
     {

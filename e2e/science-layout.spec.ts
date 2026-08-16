@@ -16,7 +16,7 @@ test("文件那一屏能按下去，目录真的建出来，且它说了自己�
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
 
-  await page.getByRole("button", { name: "文件" }).click()
+  await page.getByRole("button", { name: "文件", exact: true }).click()
   const 按钮 = page.getByRole("button", { name: "按科研目录结构初始化" })
   await expect(按钮, "文件这一屏上够不着这个动作").toBeVisible()
   await 按钮.click()

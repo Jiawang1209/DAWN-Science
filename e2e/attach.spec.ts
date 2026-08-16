@@ -570,3 +570,64 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
   await expect(page.getByRole("menuitem", { name: "上传文件", exact: true })).toBeVisible()
   await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toHaveCount(0)
 })
+
+/**
+ * **输入卡下面就一行，六格，左右两组**（2026-08-16 作者要的）：
+ *
+ * > *「＋ 其实可以做一个 ＋ 带有一个圈的图标，然后后面可以跟着文字，上传文件」*
+ * > *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*
+ * > *「把终端也加一个 logo，放到下面，保持一行。」*
+ * > *「把模型和发送信息，放到下面，但是是放到对话框的右侧。」*
+ *
+ * 盯三件，都是几何事实：
+ *   ① **一行**——所有格子同一个 `top`（此前「选择工作目录」自己占一行）；
+ *   ② **左右两组**——上传/目录/终端在左，模型/发送在右，中间那格空档把它们分开；
+ *   ③ **那三颗都带图标、也都带字**——本项目为「看不见的能力等于不存在」栽过两次。
+ */
+test("**输入卡那一行：一行、六格、左右两组**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+
+  const m = await page.evaluate(() => {
+    const row = document.querySelector(".composer-controls") as HTMLElement
+    const 格 = [...row.children].map((e) => {
+      const q = e.getBoundingClientRect()
+      return {
+        类: (e as HTMLElement).className.split(" ")[0] ?? "",
+        字: (e.textContent ?? "").trim(),
+        图标: e.querySelectorAll("svg").length,
+        左: q.left,
+        右: q.right,
+        中: q.top + q.height / 2,
+      }
+    })
+    return { 行高: row.getBoundingClientRect().height, 格 }
+  })
+
+  // ① 一行：**行高只够一行**，且每一格的竖直中点都在同一条线上
+  expect(m.行高, `折成了两行（${m.行高}px）`).toBeLessThanOrEqual(40)
+  const 中线 = m.格.filter((g) => g.类 !== "composer-gap").map((g) => g.中)
+  expect(Math.max(...中线) - Math.min(...中线), "有格子掉到了第二行").toBeLessThanOrEqual(2)
+
+  // ② 顺序与分组
+  const 上传 = m.格.find((g) => g.字.includes("上传文件"))!
+  const 目录 = m.格.find((g) => g.字.includes("选择工作目录") || g.类.startsWith("ws-"))!
+  const 终端 = m.格.find((g) => g.字 === "终端")!
+  const 空档 = m.格.find((g) => g.类 === "composer-gap")!
+  const 发送 = m.格[m.格.length - 1]!
+  for (const [名, g] of Object.entries({ 上传, 目录, 终端, 空档 })) {
+    expect(g, `这一行上没有「${名}」`).toBeTruthy()
+  }
+  expect(上传.左).toBeLessThan(目录.左)
+  expect(目录.左).toBeLessThan(终端.左)
+  // **左组全在空档左边，右组全在它右边**——这就是「分成两组」的事实形式
+  expect(终端.右).toBeLessThanOrEqual(空档.左 + 1)
+  expect(发送.左).toBeGreaterThanOrEqual(空档.右 - 1)
+  expect(空档.右 - 空档.左, "空档被挤没了，两组就贴在一起了").toBeGreaterThan(8)
+
+  // ③ 图标 + 文字都在
+  expect(上传.图标, "「上传文件」没有那个带圈的加号").toBeGreaterThanOrEqual(1)
+  expect(终端.图标, "「终端」没有图标").toBeGreaterThanOrEqual(1)
+  expect(目录.图标, "「选择工作目录」没有图标").toBeGreaterThanOrEqual(1)
+})

@@ -27,7 +27,7 @@ test("点开一个 csv → 出现一张表，而不是一坨逗号", async ({ da
 
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
-  await page.getByRole("button", { name: "文件" }).click()
+  await page.getByRole("button", { name: "文件", exact: true }).click()
 
   // 展开到那个文件并点开
   await page.getByText("data", { exact: true }).click()
@@ -61,7 +61,7 @@ test("**原文不再当作表格的替代品** —— 打开 csv 不该看到一
 
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
-  await page.getByRole("button", { name: "文件" }).click()
+  await page.getByRole("button", { name: "文件", exact: true }).click()
   await page.getByText("x.csv", { exact: true }).click()
 
   await expect(page.locator(".table-preview")).toBeVisible()

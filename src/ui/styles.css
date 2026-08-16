@@ -693,12 +693,39 @@ pre {
   width: 100%;
   max-width: var(--dawn-thread-max-w);
 }
+/**
+ * 输入卡下面那一行（2026-08-16 重排，作者要的）。
+ *
+ * ```
+ * ⊕ 上传文件   📁 选择工作目录   ▣ 终端        ⋯        模型 ⌄   ⬆
+ * └──────── 这句话带着什么、在哪儿跑 ────────┘         └ 用谁发 ┘
+ * ```
+ *
+ * 此前是两行：控件一行、`选择工作目录` 自己一行（`.composer-footer`，
+ * 2026-08-12 照 WorkBuddy 的 `wb-input-footer` 抄的形态）。
+ * **但那一行上只有它一颗 chip**，白白高出 32px。
+ *
+ * 分组靠中间那一格空档（`.composer-gap`），不靠 `margin-right: auto`
+ * 挂在某一颗身上——挂在谁身上，谁就不能被摘掉。
+ *
+ * **不换行**（2026-08-16 立的那条：侧栏里没有一行是靠换行来容纳的，
+ * 输入卡同理）：主区窄下来时，让目录那颗自己截断，而不是整行折成两层。
+ */
 .composer-controls {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: var(--dawn-space-1);
+  flex-wrap: nowrap;
+  min-width: 0;
 }
+/* 中间那一格：**它是分界，不是间距** */
+.composer-gap { flex: 1 1 auto; min-width: var(--dawn-space-2); }
+/* 左手边那三颗都不许被压缩到断词——能让的只有目录那颗（它里面的路径会截断） */
+.composer-controls > .attach,
+.composer-controls .dock-toggle,
+.composer-controls .send-btn { flex: 0 0 auto; white-space: nowrap; }
+.composer-controls .ws-chip,
+.composer-controls .ws-entry { min-width: 0; }
 /* 2026-08-09：这里原本把 `.control` 的七条属性逐字抄了一遍，
    **抄到了长相，漏掉了行为**——`:focus-visible` 的聚焦环只挂在 `.control` 上，
    于是全应用最主要的那个输入框用的是 Chromium 默认聚焦环（取 macOS 系统强调色，
@@ -2663,19 +2690,8 @@ pre {
  * 属于「要发出去的这件事」，不属于「这段对话叫什么」
  * （所以它不在对话标题栏上，那是我上一版放错的地方）。
  */
-.composer-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--dawn-space-1);
-  min-height: 32px;
-  /**
-   * **左右不另加内距**：它长在输入卡里面，而卡自己已经给了 12
-   * （`.composer-box` 的 `padding: 12px 12px 0`）。
-   * 再加一层就是 24，chip 会比上面那行控件缩进得多。
-   */
-  padding: 0;
-  min-width: 0;
-}
+/* `.composer-footer` 撤了（2026-08-16）：那一行上只有一颗 chip，
+   它现在与上传、终端同排。**没有调用点的样式不留。** */
 /**
  * 一颗 chip（实测 `_chip_`）：`padding: 0 8px` · 圆角 8 ·
  * **无边框无底色** · `gap: 4` · 字 `14px/20px` · 色弱一档。
@@ -3366,7 +3382,7 @@ pre {
  *
  * **向上弹**：输入卡贴着窗口底部，向下会被切掉。
  */
-.attach { position: relative; margin-right: auto; }
+.attach { position: relative; }
 .attach-menu {
   position: absolute;
   bottom: calc(100% + var(--dawn-space-2));

@@ -180,7 +180,7 @@ test.describe("项目里的那条", () => {
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
     // 给它一个工作目录：这一步之后它会从「会话」栏挪到「项目」栏
-    await page.locator(".composer-footer").getByRole("button", { name: /选择工作目录/ }).click()
+    await page.locator(".composer-controls").getByRole("button", { name: /选择工作目录/ }).click()
     await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
 
     await page.locator(".proj-session-list .sess-title").first().hover()

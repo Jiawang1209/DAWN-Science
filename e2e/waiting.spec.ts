@@ -337,3 +337,60 @@ test("**复制之后旁边弹出提示，而按钮宽度不变**", async ({ dawn
     `提示被容器裁掉了：浮层左边 ${Math.round(盒.x)} < 容器左边 ${Math.round(容器.x)}`,
   ).toBeGreaterThanOrEqual(容器.x)
 })
+
+/**
+ * **Esc = 中断这一轮**（2026-08-16，作者：*「我在对话的时候，如果点击 ESC
+ * 就是中断对话，模仿一下 Codex」*）。
+ *
+ * ## 为什么不是「按钮已经够了」
+ *
+ * 那颗按钮**框里一有字就变成「插队」了**（2026-08-15 学 Hermes 定的，
+ * 理由是打了字的人按下去不该把自己的话丢掉）。代价当时就写清楚了：
+ * **想停下来的人得先把自己打的字删干净。** Esc 补的正是这条路——
+ * 它不看框里有没有东西。
+ *
+ * 所以这里**故意在框里留着字**：那是上一条路走不通的那个状态，
+ * 也是这条判据唯一有意义的地方。
+ */
+test.describe("Esc 中断", () => {
+  /**
+   * **延迟必须远长于断言窗口**（变异测试逼出来的）。
+   *
+   * 第一版用的是 4 秒——而那一轮 4 秒后**自己就结束了**，
+   * 于是「按 Esc 之后按钮变回发送」在把 Esc 整支删掉之后照样成立：
+   * 用例全绿，什么也没证明。20 秒 vs 5 秒的断言窗口，
+   * **这中间的差就是「是不是它停的」**。
+   */
+  test.use({ dawnOptions: { firstChunkDelayMs: 20_000 } })
+
+  test("**框里有字时按 Esc，照样停得下来**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("在吗")
+    await 框.press("Enter")
+    await expect(page.getByRole("button", { name: "停止", exact: true })).toBeVisible({
+      timeout: 5_000,
+    })
+
+    // 打第二句：那颗按钮此刻是「插队」，**没有「停止」可按了**
+    await 框.fill("这半句还没发")
+    await expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "插队", exact: true })).toBeVisible()
+
+    await 框.press("Escape")
+
+    // ① 真的停了：按钮在**远早于那一轮自己结束**的时候就变回了「发送」
+    await expect(page.getByRole("button", { name: "发送", exact: true })).toBeVisible({
+      timeout: 5_000,
+    })
+    // ② 那句回话**没来过**——停在了它到达之前
+    await expect(page.locator(".turns").getByText(/假模型已应答/)).toHaveCount(0)
+    // ③ 那三个点也得停——**一个永远在转的记号比没有更糟**
+    await expect(page.locator(".waiting")).toHaveCount(0)
+    // ④ **没打完的那半句还在**：Esc 不清草稿
+    await expect(框).toHaveValue("这半句还没发")
+  })
+})

@@ -600,7 +600,13 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
      * **代价必须由用例承担**：凡是按裸词 `设置` 找元素的地方，
      * 一律带 `exact: true`（精确匹配不做子串）。这一点由下面那条扫描盯着。
      */
-    const 放行 = new Set(["设置|去设置"])
+    /**
+     * `文件` / `上传文件`：前者是侧栏那个去处，后者是输入卡上那颗
+     * （2026-08-16 作者要的：*「＋ 后面可以跟着文字，上传文件」*）。
+     * 两个都是对的词——**那颗 `＋` 此前没有文字，正是本项目栽过两次的
+     * 「看不见的能力等于不存在」**，不该为了躲开子串再把它藏回去。
+     */
+    const 放行 = new Set(["设置|去设置", "文件|上传文件"])
     const 撞的: string[] = []
     for (const a of 名字) {
       for (const b of 名字) {
@@ -610,6 +616,42 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
       }
     }
     expect(撞的, "按名字找元素时子串会指向两个东西——换一个说法").toEqual([])
+  })
+
+  /**
+   * **放行的代价，由这条扫描收**（2026-08-16）。
+   *
+   * 上面那张放行表里写着：*「凡是按裸词找元素的地方，一律带 `exact: true`」*，
+   * 后面跟着一句「这一点由下面那条扫描盯着」。**而那条扫描并不存在**——
+   * 我今天加第二对放行时去找它，才发现那句话是空头支票。
+   *
+   * 一条只写在注释里的纪律，与没有纪律的区别只在于「下一个人会以为它有人管」。
+   */
+  it("**放行的那几个短词，用例里一律 `exact: true`**", () => {
+    const e2e = join(import.meta.dirname, "..", "..", "e2e")
+    const 短词 = ["设置", "文件"]
+    const 犯规: string[] = []
+    for (const f of readdirSync(e2e).filter((x) => x.endsWith(".spec.ts"))) {
+      const src = readFileSync(join(e2e, f), "utf8")
+      for (const 词 of 短词) {
+        // `name: "设置"` 后面若没跟 `exact`，这一处就会同时指向两个元素
+        const re = new RegExp(`name:\\s*"${词}"`, "g")
+        for (const m of src.matchAll(re)) {
+          /**
+           * **只看真的在按角色找元素的地方。**
+           *
+           * 第一版把 `visual.spec.ts` 里那个**截图用例的名字**
+           * （`{ name: "设置", go: … }`）也算了进去——一条假警。
+           * 而假警会把扫描训练成噪声，那时它就什么都不证明了。
+           */
+          const 前 = src.slice(Math.max(0, m.index - 60), m.index)
+          if (!/getBy\w*\(/.test(前)) continue
+          const 尾 = src.slice(m.index, m.index + 80)
+          if (!/exact:\s*true/.test(尾)) 犯规.push(`${f}：name: "${词}" 少了 exact: true`)
+        }
+      }
+    }
+    expect(犯规, "放行的前提就是这些地方精确匹配——不然那对撞车是真的").toEqual([])
   })
 
   it("**画布一律 16×16，实心是默认** —— 描边是例外，例外要写明在哪", () => {

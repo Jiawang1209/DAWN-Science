@@ -19,7 +19,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -661,19 +661,29 @@ function AttachButton({
     >
       <Button
         variant="ghost"
-        size="icon"
+        size="sm"
         className="attach-trigger"
         /**
-         * **不叫「上传」**：那三项都以「上传」开头，一个裸的「上传」
-         * 会同时指向四个东西——`getByRole(name)` 是子串匹配，
-         * 读屏与 Playwright 都一样。设计契约里那条扫描盯着这件事。
+         * **带上文字**（2026-08-16，作者：*「＋ 其实可以做一个 ＋ 带有一个圈的
+         * 图标，然后后面可以跟着文字，上传文件」*）。
+         *
+         * 它此前是一颗裸 `＋`，意思全靠 `aria-label` 说——而本项目为
+         * 「看不见的能力等于不存在」栽过两次（没标签的 `＋`、`opacity: 0` 的 `×`），
+         * 两次作者的反馈都是「没有这个功能」。**这是第三次，只是这回他先说了。**
+         *
+         * **`aria-label` 一并摘掉**：有了可见文字，名字就该是那几个字
+         * （WCAG 2.5.3：读屏念到的要包含眼睛看到的）。写一个不同的
+         * `aria-label` 只会让两者对不上。
+         *
+         * 与菜单里那一项同名**不构成歧义**：这颗是 `button`，那三项是
+         * `menuitem`——按角色找根本不会互相指到。
          */
-        aria-label={t("添加内容")}
         aria-haspopup="menu"
         aria-expanded={开着}
         onClick={() => 设开着((v) => !v)}
       >
-        <加号图标 />
+        <圆加号图标 />
+        {t("上传文件")}
       </Button>
       {开着 ? (
         <div className="menu attach-menu" role="menu" aria-label={t("添加内容")}>
@@ -3506,6 +3516,29 @@ export function ConversationView({
                * **只在行首、且输入框是空的时候拦**：一句话中间打 `@`
                * 多半是在写邮箱或者 handle，那时候弹出个浏览器是在捣乱。
                */
+              /**
+               * **Esc = 中断这一轮**（2026-08-16 作者要的：*「我在对话的时候，
+               * 如果点击 ESC 就是中断对话，模仿一下 Codex」*）。
+               *
+               * 中止的入口此前只有那颗按钮，而**框里一有字它就变成「插队」了**
+               * （2026-08-15 学 Hermes 定的）——于是「想停下来」的人得先把
+               * 自己打的字删干净。Esc 把这条路补上：**它不看框里有没有东西**。
+               *
+               * 三件与那颗按钮一模一样，缺一件都会让记号继续转：
+               * 收掉 `等回话`、立起 `喊停过`、再 `onAbort()`。
+               * （那三个点的终点是「有新东西冒出来」，而**中止不一定产生任何新条目**。）
+               *
+               * **不忙的时候什么也不做**：不清草稿。Esc 清空输入框是另一些应用的
+               * 做法，而在这里它会把人刚打的一段话吃掉——一个不可撤销的动作
+               * 不该挂在一个人人乱按的键上。
+               */
+              if (e.key === "Escape" && busy && onAbort) {
+                e.preventDefault()
+                设等回话(undefined)
+                设喊停过(true)
+                onAbort()
+                return
+              }
               const 空且在头 = draft.length === 0
               if (空且在头 && e.key === "/") {
                 e.preventDefault()
@@ -3662,15 +3695,20 @@ export function ConversationView({
               * 它与「换模型」不是同一件事，混进同一个菜单正是
               * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
               */}
-            {models && onPickModel ? (
-              <ModelPill
-                choices={models}
-                current={model}
-                busy={busy}
-                kind={session.kind}
-                onPick={onPickModel}
-                {...(serviceLabel ? { serviceLabel } : {})}
-                {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
+            {/**
+              * **「选择工作目录」从下面那一行搬上来**（2026-08-16 作者要的：
+              * *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*）。
+              *
+              * 它此前独占一行（`.composer-footer`）。那一行是 2026-08-12
+              * 照 WorkBuddy 的 `wb-input-footer` 抄的——**但我们这一行上
+              * 只有它一颗 chip**，于是输入卡下面白白高出 32px。
+              * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
+              * **这句话带着什么、在哪儿执行**。它们归一行。
+              */}
+            {onPickWorkspace || workspace ? (
+              <WorkspaceEntry
+                {...(workspace ? { workspace } : {})}
+                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
               />
             ) : null}
             {/**
@@ -3701,8 +3739,22 @@ export function ConversationView({
                   * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
                   * 于是英文界面上它一直是「终端面板」四个字。
                   */}
+                <终端图标 />
                 {t("终端")}
               </Button>
+            ) : null}
+            {/* 左手边到此为止。**这一格把「带什么、在哪跑」与「用谁发」分开** */}
+            <span className="composer-gap" aria-hidden="true" />
+            {models && onPickModel ? (
+              <ModelPill
+                choices={models}
+                current={model}
+                busy={busy}
+                kind={session.kind}
+                onPick={onPickModel}
+                {...(serviceLabel ? { serviceLabel } : {})}
+                {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
+              />
             ) : null}
             {/**
              * **圆形填充的发送键**（2026-08-12，学自 WorkBuddy）。
@@ -3802,14 +3854,6 @@ export function ConversationView({
             * 摆在输入卡下面才对：它说的是**这一句话会在哪儿执行**，
             * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
             */}
-          {onPickWorkspace || workspace ? (
-            <div className="composer-footer">
-              <WorkspaceEntry
-                {...(workspace ? { workspace } : {})}
-                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
-              />
-            </div>
-          ) : null}
         </div>
       </form>
     </div>
@@ -4825,6 +4869,39 @@ export function EmptyConversation({
                   }}
                 />
                 {/**
+                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
+                  *
+                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
+                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
+                  *
+                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
+                  * 选错了文件夹，再点一次换成对的就行；
+                  * **一个入口存在的理由不能是「它不会造成伤害」。**
+                  */}
+                {onPickDirectory ? (
+                  <WorkspaceEntry
+                    {...(工作目录 ? { workspace: 工作目录 } : {})}
+                    onPick={() => {
+                      void onPickDirectory().then((d) => {
+                        // **取消就什么都不做**：改主意不是错误
+                        if (d) 设工作目录(d)
+                      })
+                    }}
+                  />
+                ) : null}
+                {/**
+                  * **空态也要够得着终端**（2026-08-11）。
+                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
+                  */}
+                {onToggleDock ? (
+                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
+                    <终端图标 />
+                    {t("终端")}
+                  </Button>
+                ) : null}
+                {/* 左手边到此为止——与对话里那张同一副分法 */}
+                <span className="composer-gap" aria-hidden="true" />
+                {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
                   *
                   * 作者：*「我做的这个就属于是一个 agent，因此首页不应该是
@@ -4879,15 +4956,6 @@ export function EmptyConversation({
                     triggerLabel={agentLabel ? agentLabel(first) : first}
                   />
                 ) : null}
-                {/**
-                  * **空态也要够得着终端**（2026-08-11）。
-                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
-                  */}
-                {onToggleDock ? (
-                  <Button variant="text" size="sm" onClick={onToggleDock}>
-                    {t("终端")}
-                  </Button>
-                ) : null}
                 <Button type="submit" variant="primary" className="send-btn" aria-label={t("发送")}>
                   <上箭头图标 />
                 </Button>
@@ -4903,30 +4971,6 @@ export function EmptyConversation({
                 * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
                 * 而一开始就选对，什么都不用搬。
                 */}
-              {onPickDirectory ? (
-                <div className="composer-footer">
-                  {/**
-                    * **「改回普通对话」这里也没有了**（2026-08-13，作者截图圈的）。
-                    *
-                    * 我上一轮只摘了对话里那颗，空态这颗留着，理由是
-                    * 「这里还什么都没发生」。作者又圈了一次——他是对的，
-                    * 而我把「这个动作无害」当成了「这个动作有用」：
-                    * **选错了文件夹，再点一次 chip 换成对的那个就行**，
-                    * 「清空」多出来的只是一条通向同一个地方的岔路。
-                    *
-                    * **一个入口存在的理由不能是「它不会造成伤害」。**
-                    */}
-                  <WorkspaceEntry
-                    {...(工作目录 ? { workspace: 工作目录 } : {})}
-                    onPick={() => {
-                      void onPickDirectory().then((d) => {
-                        // **取消就什么都不做**：改主意不是错误
-                        if (d) 设工作目录(d)
-                      })
-                    }}
-                  />
-                </div>
-              ) : null}
             </div>
           </form>
         </div>

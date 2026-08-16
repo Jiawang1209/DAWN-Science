@@ -44,10 +44,14 @@ const 状态文字 = (s: RemoteState): string =>
     ? "alive"
     : s.kind === "connecting"
       ? t("连接中")
-      : s.kind === "idle"
-        ? t("未连")
-        : // **断了写 `exited`**（2026-08-15 作者要的）：与侧栏会话行同一套词
-          "exited"
+      : // **没连着的一律写 `exited`**（2026-08-16 作者定的：
+        //   *「not connected 其实就是 exited，connected 就是 alive 就可以了」*）。
+        //
+        // 这**推翻了 2026-08-15 的一条分法**：那时「人按的断开」写「未连」、
+        // 「掉线」写 `exited`，理由是后者要报原因。作者的意思是这一列只该有
+        // 会话行那两个词。**三种「没连着」仍然分得出来**，只是不靠这个词：
+        // 掉线的点是红的、且底下多一行原因；没连过的点是灰的、没有原因行。
+        "exited"
 
 export interface ConnectionDraft {
   id?: string | undefined

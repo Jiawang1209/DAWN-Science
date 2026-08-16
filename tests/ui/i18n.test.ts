@@ -112,10 +112,35 @@ describe("双语 · 英文那一面也要守中文那边的规矩", () => {
    *
    * 所以判据跟中文那边对齐：**看 JSX 里 `<Button>` 真的渲染了哪些 msgid。**
    */
+  /**
+   * ## 有 `aria-label` 时，**名字是它，不是里面那行字**（2026-08-16）
+   *
+   * 上一版把 `<Button>` 块里所有 msgid 一股脑收进来，包括 `aria-label` 的。
+   * 于是它抓出四条**假警**：
+   *
+   * ```
+   * "Select" ⊂ "Select projects"   ← 同一颗按钮：可见文字 vs 它自己的 aria-label
+   * "Select" ⊂ "Select chats"      ← 同上（另一列）
+   * "Select" ⊂ "Select servers"    ← 同上
+   * "Select" ⊂ "Select all"        ← 两颗按钮，但前者的名字是 "Select projects"
+   * ```
+   *
+   * **有 `aria-label` 就以它为名字**——读屏、`getByRole(name)` 都是这么定的。
+   * 所以「可见文字 ⊂ 自己的 aria-label」不是撞车，恰恰是 WCAG 2.5.3
+   * （label in name）**要求**的形状：读屏念出的名字得包含眼睛看到的那几个字。
+   * 上一版反着来，等于在奖励一个无障碍缺陷。
+   *
+   * 三颗「多选」按钮的可见文字本来就一模一样（三列各一颗），
+   * 靠 `aria-label` 分开——这条设计早就在了，是这条扫描没跟上。
+   */
   function 按钮里的msgid(src: string): string[] {
     const out: string[] = []
     for (const m of src.matchAll(/<Button\b[\s\S]*?<\/Button>/g)) {
-      for (const id of 调用点的msgid(m[0])) out.push(id)
+      const 块 = m[0]
+      const 名 = 块.match(/aria-label=(?:\{[^{}]*\}|"[^"]*")/)
+      // 嵌套大括号会让上面这条漏掉整个 aria-label，那时它会退回「收全部」——
+      // **退回的方向是多报，不是漏报**，所以不会把真撞车放过去
+      for (const id of 调用点的msgid(名 ? 名[0] : 块)) out.push(id)
     }
     return out
   }

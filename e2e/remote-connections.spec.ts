@@ -62,8 +62,10 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   // **分组是一个标签，不是树**；没分组的不会被塞进一个叫「未分组」的假分组
   await expect(page.locator(".remote-group-name")).toHaveText("集群")
   await expect(row.locator(".remote-sub")).toContainText("dawn@fake.example")
-  // **刚加的是「未连」，不是「连不上」**——我们还没试过
-  await expect(row.locator(".remote-status")).toHaveText("未连")
+  // **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。
+  // 「连不上」长什么样，由下面那条用例守（`exited` + 一行原因 + 红点）
+  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await expect(row.locator(".remote-reason")).toHaveCount(0)
 
   await row.getByRole("button", { name: "连接" }).click()
   // **2026-08-15 改词**：连上写 `alive`、断了写 `exited`——与侧栏会话行同一套
@@ -71,9 +73,18 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   await expect(row).toHaveAttribute("data-state", "ready")
 
   await row.getByRole("button", { name: "断开" }).click()
-  // **人按的断开是「未连」，不是 `exited`**——后者要报原因，两者不能混
-  await expect(row.locator(".remote-status")).toHaveText("未连")
+  /**
+   * **人按的断开也写 `exited`**（2026-08-16 作者定的：
+   * *「not connected 其实就是 exited，connected 就是 alive」*）。
+   *
+   * 这推翻了 2026-08-15 的分法（那时人按的断开写「未连」，掉线才写 `exited`）。
+   * **两者仍分得出来，只是不靠这个词**：掉线多一行原因、点是红的。
+   * 所以这里连着断言「没有原因行」——**没了它，这条用例与「连不上」那条
+   * 就再没有任何区别**，而那正是我们分不清两种断开的那一刻。
+   */
+  await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
+  await expect(row).toHaveAttribute("data-state", "idle")
 })
 
 test("**连不上时说清是为什么**，就在那一行上", async ({ dawn }) => {

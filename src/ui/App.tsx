@@ -2605,8 +2605,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 terminalTrimmed={termTrimmed}
                 kernelInstanceId={kernelInstanceId}
                 disabled={session.state === "exited"}
+                /**
+                 * **哪些会话停得下来**（A3，2026-08-16 加了 acp）。
+                 *
+                 * 这里是一张**白名单，不是「排除 pty」**：
+                 *   - `native`：pi 支持中止；
+                 *   - `acp`：发一条 `session/cancel`，agent 认它；
+                 *   - `cli`：headless 进程没有中止入口，只能杀——那是另一件事；
+                 *   - `pty` / `kernel`：中止是往终端送 Ctrl-C，语义完全不同。
+                 *
+                 * 给一颗按不下去的停止键，比没有更坏——
+                 * 而 `undefined` 时那颗键根本不画。
+                 */
                 onAbort={
-                  session.kind === "native" ? actions.abort : undefined
+                  session.kind === "native" || session.kind === "acp" ? actions.abort : undefined
                 }
                 onSend={(text, images, behavior) =>
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。

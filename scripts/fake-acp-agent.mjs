@@ -136,7 +136,26 @@ async function 处理(msg) {
     // 一段一段地吐，**与真 agent 一样是流式**
     const 段们 = [`${回话}`, 文字 ? `（你说的是：${文字}）` : ""].filter(Boolean)
     for (const 段 of 段们) {
-      if (取消了) break
+      if (取消了) {
+        /**
+         * **被取消时留一句可断言的痕迹**（A3）。
+         *
+         * 不留的话，「取消生效了」与「它本来就只说了这么多」在屏幕上
+         * 长得一模一样——那时那条用例证明不了任何事。
+         */
+        发({
+          jsonrpc: "2.0",
+          method: "session/update",
+          params: {
+            sessionId: params.sessionId,
+            update: {
+              sessionUpdate: "agent_message_chunk",
+              content: { type: "text", text: "【被取消了】" },
+            },
+          },
+        })
+        break
+      }
       发({
         jsonrpc: "2.0",
         method: "session/update",

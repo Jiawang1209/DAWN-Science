@@ -164,3 +164,55 @@ test.describe("ACP 权限卡", () => {
     })
   })
 })
+
+/**
+ * 取消（A3，2026-08-16）。
+ *
+ * ## 这条路此前**整个不存在**
+ *
+ * 停止按钮的开关写死成 `session.kind === "native"`——ACP 的 `abort()`
+ * 早就实现了（发一条 `session/cancel`），**只是没人调**。
+ * 那是最难发现的一类缺陷：运行时那侧的判据全绿，而界面上根本没有那颗键。
+ *
+ * 假 agent 被要求慢慢吐（每段之间停一会儿），并在收到取消时
+ * **留一句可断言的痕迹**——不留的话，「取消生效了」与
+ * 「它本来就只说了这么多」在屏幕上长得一模一样。
+ */
+test.describe("ACP 取消", () => {
+  test.use({
+    dawnOptions: {
+      providersYaml: PROVIDERS,
+      gitInit: true,
+      env: { FAKE_ACP_CHUNK_DELAY_MS: "3000" },
+    },
+  })
+
+  test("**跑起来能停**，停了就真的停了", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("说点什么")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // ① 跑起来之后，**同一个位置上是「停止」**
+    const 停止 = page.getByRole("button", { name: "停止", exact: true })
+    await expect(停止).toBeVisible({ timeout: 20_000 })
+
+    await 停止.click()
+
+    // ② agent 真的收到了取消——**这句痕迹是它自己留的**
+    await expect(page.getByText(/【被取消了】/).last()).toBeVisible({ timeout: 20_000 })
+
+    /**
+     * ③ 那三个点也要停。**一个永远在转的记号比没有更糟**——
+     * 本项目为它撤过一次功能。
+     */
+    await expect(page.locator(".waiting")).toHaveCount(0, { timeout: 20_000 })
+
+    // ④ 按钮变回「发送」：这一轮真的收口了
+    await expect(page.getByRole("button", { name: "发送", exact: true })).toBeVisible({
+      timeout: 20_000,
+    })
+  })
+})

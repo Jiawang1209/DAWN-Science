@@ -258,6 +258,19 @@ app.whenReady().then(() => {
       // **只有主进程碰得到 shell**。路径的合法性在后端已经校验过了
       openPath: (p: string) => shell.openPath(p),
       /**
+       * 系统的下载目录（批 4a，2026-08-17）。
+       *
+       * **只有主进程问得到 `app.getPath`**，而这正是不在别处按平台拼路径的理由：
+       * `~/Downloads` 与 `%USERPROFILE%\\Downloads` 会坏在别人机器上，
+       * 而且跟不上用户改过的系统设置。
+       */
+      /**
+       * **e2e 要能把它指到隔离目录里**（`DAWN_DOWNLOADS`）——
+       * 不然测试会往开发者真实的 `~/Downloads` 里落文件。
+       * 与 `DAWN_DEFAULT_WORKSPACE` 那几条同一个机制。
+       */
+      downloadsDir: process.env.DAWN_DOWNLOADS ?? app.getPath("downloads"),
+      /**
        * 子 agent 入口就打在主进程 bundle 旁边（`dist/electron/`）。
        *
        * **路径在这里算，不在 wiring 里算**——`import.meta.dirname` 只有这里

@@ -1152,6 +1152,62 @@ export const OPERATIONS = {
    * `ignored` 与 `omitted` **都要回**：忽略掉的与省略掉的如果不出声，
    * 人会以为那些文件不存在。
    */
+  /**
+   * 下载目录（批 4a，2026-08-17）。默认取 Electron 的 `app.getPath("downloads")`。
+   *
+   * **不按平台写死路径**：`~/Downloads` 与 `%USERPROFILE%\\Downloads` 是那类
+   * 会坏在别人机器上的东西，而 `app.getPath` 还跟得上用户改过的系统设置。
+   */
+  getDownloadDir: {
+    request: z.object({}).strict(),
+    response: z.object({ path: z.string().min(1), isDefault: z.boolean() }).strict(),
+    mutating: false,
+  },
+  setDownloadDir: {
+    request: z.object({ path: z.string() }).strict(),
+    response: z.object({ path: z.string().min(1), isDefault: z.boolean() }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 从一台服务器下载一个文件（批 4a）。
+   *
+   * **它不等传完就返回**：返回一个 id，进度由 `transferStatus` 轮询。
+   *
+   * 为什么是轮询而不是推送：推送那条通道是**会话专属**的
+   * （信封里带 `sessionId`，`events.ts` 写着「是这段对话自己的事」），
+   * 而传输不是会话事件——硬塞进去是撒谎。而另开一条推送通道，
+   * 相对 200ms 轮询的全部收益，在一根进度条上人眼看不出来。
+   */
+  startDownload: {
+    request: z
+      .object({ connectionId: z.string().min(1), path: z.string().min(1) })
+      .strict(),
+    response: z
+      .object({ transferId: z.string().min(1), name: z.string().min(1), target: z.string().min(1) })
+      .strict(),
+    mutating: true,
+  },
+  transferStatus: {
+    request: z.object({ transferId: z.string().min(1) }).strict(),
+    response: z
+      .object({
+        transferred: NonNegInt,
+        /** 总共多大。**取不到就缺席**，不拿 0 冒充——那会让进度条一直是满的 */
+        total: NonNegInt.optional(),
+        state: z.enum(["running", "done", "failed", "cancelled"]),
+        /** 失败的原因。**原样给**——「权限不够」和「连接断了」要分得出来 */
+        error: z.string().min(1).optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+  cancelTransfer: {
+    request: z.object({ transferId: z.string().min(1) }).strict(),
+    response: z.object({}).strict(),
+    mutating: true,
+  },
+
   listDirectory: {
     request: z
       .object({

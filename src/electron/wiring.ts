@@ -86,6 +86,8 @@ export interface CreateWorkbenchOptions {
    * 要能在没有 Electron 的测试里跑起来。主进程传 `shell.openPath`。
    */
   openPath?: (absolutePath: string) => Promise<string>
+  /** 系统的下载目录。**只有主进程问得到 `app.getPath("downloads")`** */
+  downloadsDir?: string
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
   /** 写权租约的 TTL（秒）。**默认 300**；e2e 调小它来验过期那条路 */
@@ -658,6 +660,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     },
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
     ...(opts.openPath ? { openPath: opts.openPath } : {}),
+    ...(opts.downloadsDir ? { downloadsDir: opts.downloadsDir } : {}),
   })
   /**
    * 开那台网关（B1 路线 B）。**每次运行一台**，会话身份由连接时报上来。

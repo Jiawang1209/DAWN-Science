@@ -289,6 +289,18 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.6（2026-08-17，分支 `feat/远端文件`）：从服务器下载文件
+ *
+ * 纯新增，故 minor：`getDownloadDir` / `setDownloadDir` /
+ * `startDownload` / `transferStatus` / `cancelTransfer`。
+ *
+ * **`startDownload` 不等传完就返回**，进度由 `transferStatus` 轮询。
+ * 推送那条通道是会话专属的（信封里带 `sessionId`），而传输不是会话事件；
+ * 另开一条推送通道相对 200ms 轮询的收益，在一根进度条上人眼看不出来。
+ *
+ * `total` **取不到就缺席**，不拿 0 冒充——那会让进度条一直是满的。
+ */
+/**
  * ## 7.5（2026-08-17，分支 `feat/远端文件`）：文件操作能指向一台服务器
  *
  * 纯新增，故 minor：`listDirectory` / `readFile` 多一个可选的 `connectionId`，
@@ -374,7 +386,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.5"
+export const WORKBENCH_PROTOCOL_VERSION = "7.6"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

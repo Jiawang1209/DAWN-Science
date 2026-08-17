@@ -553,6 +553,12 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
          */
         DAWN_SCRATCH_ROOT: join(dir, "scratch"),
         /**
+         * **下载落在隔离目录里**（批 4a，2026-08-17）。
+         * 不指的话，e2e 会往开发者真实的 `~/Downloads` 里堆文件——
+         * 一个会在别人机器上留垃圾的测试，比没有这条测试更坏。
+         */
+        DAWN_DOWNLOADS: join(dir, "downloads"),
+        /**
          * **内核搜索路径也要隔离**，理由与上一条完全一样，只是后果更难看：
          * 内核列表随机器而变，进了视觉基线就等于
          * ① 基线在别的机器上必然红，② **把开发者的个人路径以图片形式提交进仓库**。

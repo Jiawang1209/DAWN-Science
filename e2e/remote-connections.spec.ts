@@ -621,3 +621,81 @@ test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) 
   await 面板.getByRole("button", { name: /样本\.csv/ }).click()
   await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
 })
+
+/**
+ * **从服务器下载一个文件**（批 4a，2026-08-17）。
+ *
+ * 三件事一起验：文件真的落到本机、屏幕上说得出落在哪儿、
+ * 以及**本地文件不给「下载」那颗按钮**——它已经在这台机器上了，
+ * 给一颗「下载到本机」是荒唐的。
+ */
+test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn }) => {
+  const { page, dir } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: /读我\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
+
+  await page.getByRole("button", { name: "下载", exact: true }).click()
+
+  // **传完之后要说得出落在哪儿**，否则人得自己去猜
+  const 条 = page.locator(".xfer-text")
+  await expect(条).toContainText("下载好了", { timeout: 30_000 })
+
+  // 文件真的在本机上，且内容一字不差
+  const 落点 = (await 条.textContent())!.replace(/^.*下载好了：/, "").trim()
+  expect(落点, "说的落点不在这次的隔离目录里").toContain(dir)
+  const { readFileSync } = await import("node:fs")
+  expect(readFileSync(落点, "utf8")).toContain("这是一台假服务器")
+})
+
+/**
+ * **下载两次不会互相覆盖**（批 4a）。
+ *
+ * 默默覆盖是这里唯一不能选的：**你可能正在覆盖昨天那一版结果**。
+ * 「覆盖 / 另存一份 / 取消」那个三选一要问人，连同上传在 4b 做；
+ * 这一版先一律「另存一份」。
+ */
+test("下载同一个文件两次，第二份另存，不覆盖第一份", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await page.locator(".right-dock .files-view").getByRole("button", { name: /读我\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
+
+  const 落点 = async () => {
+    await page.getByRole("button", { name: "下载", exact: true }).click()
+    const 条 = page.locator(".xfer-text")
+    await expect(条).toContainText("下载好了", { timeout: 30_000 })
+    return (await 条.textContent())!.replace(/^.*下载好了：/, "").trim()
+  }
+  const 第一份 = await 落点()
+  const 第二份 = await 落点()
+
+  expect(第二份, "第二次下载把第一份覆盖了").not.toBe(第一份)
+  expect(第二份).toContain("(1)")
+  const { existsSync } = await import("node:fs")
+  expect(existsSync(第一份), "第一份不见了").toBe(true)
+  expect(existsSync(第二份)).toBe(true)
+})
+
+/** **本地文件不给「下载」**——它已经在这台机器上了 */
+test("本地文件没有「下载」那颗按钮", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  const { writeFileSync } = await import("node:fs")
+  writeFileSync(`${workspace}/本地的.md`, "# 本地\n")
+  await 开一段临时会话(page)
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: /本地的\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("本地", { timeout: 30_000 })
+  await expect(page.getByRole("button", { name: "下载", exact: true })).toHaveCount(0)
+})

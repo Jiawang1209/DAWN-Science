@@ -100,6 +100,13 @@ export interface WorkbenchBackendOptions {
    */
   scratchRoot?: string
   /**
+   * 系统的下载目录（批 4a，2026-08-17）。主进程给 `app.getPath("downloads")`。
+   *
+   * **不在这里按平台拼**：那类硬编码会坏在别人机器上，
+   * 而且跟不上用户改过的系统设置。没给就退回家目录下的 `Downloads`。
+   */
+  downloadsDir?: string
+  /**
    * `providers.yaml` 的路径。**给了才能在界面里加 agent**——
    * 没给就如实说「本次运行没有装配」，不偷偷退回某个猜出来的路径。
    */
@@ -457,6 +464,49 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    */
   const 系统默认工作目录 = () =>
     process.platform === "win32" ? join(homedir(), "Desktop") : join(homedir(), "DAWN")
+
+  /**
+   * 正在跑的那些传输（批 4a，2026-08-17）。
+   *
+   * **只在内存里**：传输不跨进程重启活着，应用一关它就该没了。
+   * 存进库的话，下次打开会看到一条「传了 37%」的僵尸记录。
+   */
+  interface 传输记录 {
+    已传: number
+    总共?: number
+    状态: "running" | "done" | "failed" | "cancelled"
+    错?: string
+    ac: AbortController
+    目标: string
+  }
+  const 传输们 = new Map<string, 传输记录>()
+
+  /**
+   * 系统的下载目录。**由主进程注入**（`app.getPath("downloads")`）。
+   *
+   * 没注入时退回家目录下的 `Downloads`——**并且这不是猜**：
+   * 那是三个平台上都存在的约定名。真要紧的是**不按平台写死整条路径**，
+   * 那类东西会坏在别人机器上（ACP 那条 `launch.ts` 刚栽过同一类）。
+   */
+  const 默认下载目录 = () => opts.downloadsDir ?? join(homedir(), "Downloads")
+
+  /**
+   * 重名就加一个序号。**批 4a 只做「另存一份」这一支**——
+   * 「覆盖 / 另存一份 / 取消」那个三选一要问人，连同上传一起在 4b 做。
+   *
+   * 默默覆盖是这里唯一不能选的：**你可能正在覆盖昨天那一版结果**。
+   */
+  const 不覆盖的名字 = (p: string) => {
+    if (!existsSync(p)) return p
+    const 点 = p.lastIndexOf(".")
+    const 主 = 点 > p.lastIndexOf("/") ? p.slice(0, 点) : p
+    const 尾 = 点 > p.lastIndexOf("/") ? p.slice(点) : ""
+    for (let i = 1; i < 1000; i++) {
+      const 试 = `${主} (${i})${尾}`
+      if (!existsSync(试)) return 试
+    }
+    throw fault("invalid_request", `${p} 这个名字已经有上千份了，换个下载目录吧`)
+  }
 
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
   const 密钥名 = (id: string) => `ssh:${id}`
@@ -1620,6 +1670,78 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!settings) throw fault("internal_error", "本次运行没有装配设置")
       settings.set("permission.mode", mode, new Date().toISOString())
       return { mode }
+    },
+
+    getDownloadDir: async () => {
+      const 配的 = settings?.get("download.dir")
+      return { path: 配的 || 默认下载目录(), isDefault: !配的 }
+    },
+
+    setDownloadDir: async ({ path }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+      const p = path.trim()
+      // **空串 = 恢复系统默认**，与工作目录那两条同一条规矩
+      if (p && !p.startsWith("/") && !/^[A-Za-z]:[\\/]/.test(p)) {
+        throw fault("invalid_request", `下载目录要写绝对路径，收到「${p}」`)
+      }
+      settings.set("download.dir", p, new Date().toISOString())
+      /** **建出来**：设了一个不存在的目录，第一次下载才炸就太晚了 */
+      if (p) mkdirSync(p, { recursive: true })
+      const 现在 = settings.get("download.dir")
+      return { path: 现在 || 默认下载目录(), isDefault: !现在 }
+    },
+
+    startDownload: async ({ connectionId, path }) => {
+      const e = 连着的(connectionId)
+      const 目录 = settings?.get("download.dir") || 默认下载目录()
+      mkdirSync(目录, { recursive: true })
+      const name = path.split("/").filter(Boolean).at(-1) ?? "下载"
+      const 目标 = 不覆盖的名字(join(目录, name))
+      const id = `tr-${randomUUID()}`
+      const ac = new AbortController()
+      const 一条: 传输记录 = { 已传: 0, 状态: "running", ac, 目标 }
+      传输们.set(id, 一条)
+      /**
+       * **不等它传完**。返回 id，进度由 `transferStatus` 轮询。
+       *
+       * 半截文件的清理在 `RemoteExecutor.download` 自己身上（批 0）——
+       * 它是唯一知道「传完没有」的那一层。
+       */
+      void e
+        .download(path, 目标, {
+          signal: ac.signal,
+          进度: (已传, 总共) => {
+            一条.已传 = 已传
+            if (总共 !== undefined) 一条.总共 = 总共
+          },
+        })
+        .then(() => {
+          一条.状态 = "done"
+        })
+        .catch((err: unknown) => {
+          // **取消与失败要分得开**：前者是人按的，后者是出了问题
+          一条.状态 = ac.signal.aborted ? "cancelled" : "failed"
+          一条.错 = err instanceof Error ? err.message : String(err)
+        })
+      return { transferId: id, name, target: 目标 }
+    },
+
+    transferStatus: async ({ transferId }) => {
+      const 一条 = 传输们.get(transferId)
+      // **查不到就说查不到**，不回一个「跑着呢」——那会让进度条永远转下去
+      if (!一条) throw fault("not_found", `没有这次传输：${transferId}`)
+      return {
+        transferred: 一条.已传,
+        // **取不到就缺席**，不拿 0 冒充：0 会让进度条一直是满的
+        ...(一条.总共 === undefined ? {} : { total: 一条.总共 }),
+        state: 一条.状态,
+        ...(一条.错 ? { error: 一条.错 } : {}),
+      }
+    },
+
+    cancelTransfer: async ({ transferId }) => {
+      传输们.get(transferId)?.ac.abort()
+      return {}
     },
 
     getDefaultWorkspace: async () => {

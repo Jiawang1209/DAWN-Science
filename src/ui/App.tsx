@@ -55,7 +55,7 @@ import {
 } from "./Settings.js"
 import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
-import { FilesView, type FileContent, type Listing } from "./files.js"
+import { FilesView, type FileContent, type Listing, type 传输态 } from "./files.js"
 import {
   AgentSkillsView,
   SubagentsView,
@@ -1773,6 +1773,75 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * `key` 变了组件重新挂载，上一台机器的路径与预览一起清空。
    * 留着比空着更坏：屏幕上是 gs191 的路径，内容却是本机的。
    */
+  /**
+   * 下载（批 4a，2026-08-17）。**只对远端给**——本地文件已经在这台机器上了，
+   * 给一颗「下载到本机」的按钮是荒唐的。
+   *
+   * 进度**轮询**，不走推送：推送那条通道是会话专属的（信封里带 `sessionId`），
+   * 而传输不是会话事件；另开一条推送通道相对 200ms 轮询的收益，
+   * 在一根进度条上人眼看不出来。
+   */
+  /**
+   * **传输 id 进 state，不进 ref**（2026-08-17 e2e 抓到的）。
+   *
+   * 第一版把它放在 `useRef` 里，而轮询那个 effect 的依赖是
+   * `[client, 传输?.state]`——**ref 变了不会重跑 effect**，
+   * 于是守卫 `!传输id.current` 永远拦在那儿，轮询一次都没起来。
+   * 屏幕上的表现是进度条停在「0 字节 / ？」，看起来像传输卡住了。
+   */
+  const [传输, 设传输] = useState<(传输态 & { id?: string }) | undefined>(undefined)
+  const 起点 = useRef<{ 时刻: number; 已传: number }>({ 时刻: 0, 已传: 0 })
+
+  const 下载 = useCallback(
+    (path: string) => {
+      if (!文件所在) return
+      设传输({ transferred: 0, state: "running" })
+      起点.current = { 时刻: Date.now(), 已传: 0 }
+      client
+        .get<{ transferId: string; name: string; target: string }>("startDownload", {
+          connectionId: 文件所在.connectionId,
+          path,
+        })
+        .then((r) => {
+          设传输((前) => ({
+            ...(前 ?? { transferred: 0, state: "running" as const }),
+            id: r.transferId,
+            target: r.target,
+          }))
+        })
+        .catch((e: unknown) => {
+          // **起不来也要出声**：不出声的表现是「点了下载没反应」
+          设传输({ transferred: 0, state: "failed", error: e instanceof Error ? e.message : String(e) })
+        })
+    },
+    [client, 文件所在],
+  )
+
+  useEffect(() => {
+    if (传输?.state !== "running" || !传输.id) return
+    const id = 传输.id
+    const t = setInterval(() => {
+      client
+        .get<{ transferred: number; total?: number; state: 传输态["state"]; error?: string }>(
+          "transferStatus",
+          { transferId: id },
+        )
+        .then((r) => {
+          // **速度在这一层算**：后端不认识时钟，那样它才能在测试里不依赖真实时间
+          const 现在 = Date.now()
+          const 秒 = (现在 - 起点.current.时刻) / 1000
+          const 速度 = 秒 > 0.3 ? (r.transferred - 起点.current.已传) / 秒 : undefined
+          if (秒 > 1) 起点.current = { 时刻: 现在, 已传: r.transferred }
+          设传输((前) => ({ ...前, ...r, ...(速度 ? { 速度 } : {}) }))
+        })
+        .catch(() => {
+          // 查不到多半是这次传输已经被清了；**停下来，不要一直转**
+          设传输((前) => (前 ? { ...前, state: "failed" } : 前))
+        })
+    }, 200)
+    return () => clearInterval(t)
+  }, [client, 传输?.state, 传输?.id])
+
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
 
   const 文件面板 = (
@@ -1780,6 +1849,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         key={文件面板身份}
         机器={文件所在?.label ?? t("本机")}
         初始根={文件所在?.cwd ?? ""}
+        {...(文件所在 ? { onDownload: 下载 } : {})}
+        {...(传输 ? { 传输 } : {})}
+        onCancel={() => {
+          if (传输?.id) void client.get("cancelTransfer", { transferId: 传输.id })
+        }}
         selected={filePath}
         content={fileContent}
         loadDir={loadDir}

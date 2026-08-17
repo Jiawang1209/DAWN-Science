@@ -19,6 +19,11 @@ export type SettingKey =
   | "interpreter.python"
   | "interpreter.r"
   /**
+   * 下载目录（批 4a，2026-08-17）。**空串 = 恢复系统默认**，
+   * 默认值来自 Electron 的 `app.getPath("downloads")`。
+   */
+  | "download.dir"
+  /**
    * 工具权限档位（2026-08-13）。取值见 `policy/permissions.ts` 的 `权限档`。
    *
    * **默认（没配）= `allow-all`**，也就是今天的行为。默认改成拦截会让

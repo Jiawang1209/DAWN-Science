@@ -46,7 +46,7 @@
 ### 2026-08-17 — 删文件：本地进废纸篓，远端永久，文案分得开（`feat/远端文件` · 批 5）
 
 - **Type**: feat
-- **Commit**: `待回填`
+- **Commit**: `e5c0fc6`
 - **What**:
   - **协议 7.8**：`deletePath`。返回值里那个 `trashed` 是要害——
     本地走 Electron 的废纸篓（**后悔得回来**），远端只有 SFTP `unlink`

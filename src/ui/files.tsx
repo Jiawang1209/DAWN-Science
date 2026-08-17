@@ -154,12 +154,18 @@ export function FilePreview({
   content,
   onOpenExternally,
   onDownload,
+  onDelete,
+  进废纸篓,
 }: {
   path: string | undefined
   content: FileContent | undefined
   onOpenExternally: (path: string) => void
   /** 给了才画「下载」。**本地文件不给**——它已经在这台机器上了 */
   onDownload?: (path: string) => void
+  /** 给了才画那颗删除。**文案跟着 `进废纸篓` 走** */
+  onDelete?: (path: string) => void
+  /** 这台机器上删了还回得来吗。**本地 true、远端 false** */
+  进废纸篓?: boolean
 }) {
   if (!path) {
     return <EmptyState title={t("选一个文件")} description={t("上面是这台机器上的目录。")} />
@@ -176,6 +182,18 @@ export function FilePreview({
         {onDownload ? (
           <Button variant="ghost" size="sm" onClick={() => onDownload(path)}>
             {t("下载")}
+          </Button>
+        ) : null}
+        {/**
+          * **本地删和远端删不是同一个操作，所以文案必须不同**（批 5）。
+          *
+          * 本地走 Electron 的废纸篓（后悔得回来），远端只有 SFTP `unlink`
+          * （没了就是没了）。同一颗按钮、同一个「删除」二字，
+          * 一边可恢复一边不可恢复——**这次的代价是数据**。
+          */}
+        {onDelete ? (
+          <Button variant="ghost" size="sm" onClick={() => onDelete(path)}>
+            {进废纸篓 ? t("移到废纸篓") : t("永久删除")}
           </Button>
         ) : null}
       </header>
@@ -361,6 +379,8 @@ export function FilesView({
   传输,
   onCancel,
   onUpload,
+  onDelete,
+  进废纸篓,
   刷新令牌 = 0,
 }: {
   selected: string | undefined
@@ -415,6 +435,8 @@ export function FilesView({
    * 屏幕上说「传好了」而树里没有它。那正是「看起来一切正常」的反面。
    */
   刷新令牌?: number
+  onDelete?: (path: string) => void
+  进废纸篓?: boolean
 }) {
   const [跳到, 设跳到] = useState("")
   /**
@@ -550,6 +572,8 @@ export function FilesView({
           content={content}
           onOpenExternally={onOpenExternally}
           {...(onDownload ? { onDownload } : {})}
+          {...(onDelete ? { onDelete } : {})}
+          {...(进废纸篓 === undefined ? {} : { 进废纸篓 })}
         />
       </section>
     </div>

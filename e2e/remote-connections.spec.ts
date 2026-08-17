@@ -750,3 +750,70 @@ test.describe("上传", () => {
       .toBeGreaterThan(1)
   })
 })
+
+/**
+ * **删除：本地与远端不是同一个操作**（批 5，2026-08-17）。
+ *
+ * 本地走废纸篓（**后悔得回来**），远端只有 `unlink`（**没了就是没了**）。
+ * 同一颗按钮、同一个「删除」二字，一边可恢复一边不可恢复——
+ * **这次的代价是数据**，所以文案与确认框必须分得开。
+ */
+test("远端删除说「永久」，本地说「废纸篓」，且都落账", async ({ dawn }) => {
+  const { page, workspace, dbPath } = dawn
+  const { writeFileSync, existsSync } = await import("node:fs")
+  writeFileSync(`${workspace}/要删的.txt`, "删我\n")
+
+  // ── 本地：文案是「移到废纸篓」，确认框说找得回来
+  await 开一段临时会话(page)
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: /要删的\.txt/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("删我", { timeout: 30_000 })
+  await page.getByRole("button", { name: "移到废纸篓", exact: true }).click()
+  await expect(page.getByText(/可以从废纸篓找回来/)).toBeVisible()
+  await page.getByRole("dialog").getByRole("button", { name: "移到废纸篓", exact: true }).click()
+
+  // 文件真的没了，**而且预览也清空了**——留着一张已经不存在的东西是最不能忍的
+  await expect
+    .poll(async () => existsSync(`${workspace}/要删的.txt`), { timeout: 15_000 })
+    .toBe(false)
+  await expect(page.locator(".file-preview")).toContainText("选一个文件")
+
+  // ── 远端：文案是「永久删除」，确认框说找不回来
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  /**
+   * **不用再点一次「文件」**——坞还开着，而面板**跟着会话走**。
+   * 再点一次是收起来（那正是切换键该有的语义）。
+   * 顺手把「换了会话，面板自己跟过去」钉在这儿。
+   */
+  await expect(面板.locator(".files-where-name")).toHaveText("假机器", { timeout: 30_000 })
+  await 面板.getByRole("button", { name: /读我\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
+
+  await expect(
+    page.getByRole("button", { name: "移到废纸篓", exact: true }),
+    "远端也说「废纸篓」——那台机器上根本没有废纸篓",
+  ).toHaveCount(0)
+  await page.getByRole("button", { name: "永久删除", exact: true }).click()
+  await expect(page.getByText(/上没有废纸篓，删了找不回来/)).toBeVisible()
+  await page.getByRole("dialog").getByRole("button", { name: "永久删除", exact: true }).click()
+
+  // 树上没有它了
+  await expect(面板.getByRole("button", { name: /读我\.md/ })).toHaveCount(0, { timeout: 30_000 })
+
+  // **两次删除都落账，而且可恢复与不可恢复在账本上长得不一样**
+  const { readRuns } = await import("./fixtures.js")
+  await expect
+    .poll(
+      async () => {
+        const 账 = await readRuns(dbPath)
+        const 删 = 账.map((r) => String(r["request_type"])).filter((x) => x.startsWith("file_delete"))
+        return { 废纸篓: 删.filter((x) => x.includes(":trash:")).length, 永久: 删.filter((x) => x.includes(":permanent:")).length }
+      },
+      { message: "删除没有落账，或者两种删法在账本上长得一样", timeout: 15_000 },
+    )
+    .toEqual({ 废纸篓: 1, 永久: 1 })
+})

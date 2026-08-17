@@ -1900,6 +1900,52 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (传输?.state === "done") 设刷新令牌((n) => n + 1)
   }, [传输?.state, 传输?.target])
 
+  /**
+   * 删一个文件（批 5，2026-08-17）。
+   *
+   * **确认框把你需要为之负责的事实摆全**（作者：*「自己要为自己的数据负责」*）：
+   * 哪台机器、**完整绝对路径**（不是相对的 `out/`——那句话在两台机器上
+   * 可以指两个地方）、以及**删了还回不回得来**。
+   */
+  const 删一个 = useCallback(
+    (path: string) => {
+      const 远端的 = 文件所在
+      const 干 = () => {
+        const 去哪删 = 远端的
+          ? { connectionId: 远端的.connectionId, path }
+          : projectId
+            ? { projectId, path }
+            : undefined
+        if (!去哪删) return
+        client
+          .get<{ trashed: boolean }>("deletePath", 去哪删)
+          .then(() => {
+            /**
+             * **正在预览的那个被删了，预览要清空并说一句。**
+             * 留着一张已经不存在的图，是这个项目最不能忍的
+             * 那种「看起来一切正常」。
+             */
+            if (filePath === path) {
+              setFilePath(undefined)
+              setFileContent(undefined)
+            }
+            设刷新令牌((n) => n + 1)
+          })
+          .catch(fail)
+      }
+      setConfirming({
+        title: 远端的 ? t("永久删除这个文件？") : t("把这个文件移到废纸篓？"),
+        detail: tf("{0}：{1}", 远端的?.label ?? t("本机"), path),
+        safety: 远端的
+          ? tf("{0} 上没有废纸篓，删了找不回来。", 远端的.label)
+          : t("可以从废纸篓找回来。"),
+        confirmLabel: 远端的 ? t("永久删除") : t("移到废纸篓"),
+        onConfirm: 干,
+      })
+    },
+    [client, projectId, 文件所在, filePath],
+  )
+
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
 
   const 文件面板 = (
@@ -1909,6 +1955,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         初始根={文件所在?.cwd ?? ""}
         {...(文件所在 ? { onDownload: 下载, onUpload: 上传 } : {})}
         刷新令牌={刷新令牌}
+        onDelete={删一个}
+        进废纸篓={!文件所在}
         {...(传输 ? { 传输 } : {})}
         onCancel={() => {
           if (传输?.id) void client.get("cancelTransfer", { transferId: 传输.id })

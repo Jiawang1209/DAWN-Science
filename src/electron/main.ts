@@ -258,6 +258,13 @@ app.whenReady().then(() => {
       // **只有主进程碰得到 shell**。路径的合法性在后端已经校验过了
       openPath: (p: string) => shell.openPath(p),
       /**
+       * 扔进废纸篓（批 5，2026-08-17）。**与 `openPath` 同一条注入缝。**
+       *
+       * 本地删除**可恢复**，远端只有 `unlink`（没了就是没了）——
+       * 这个差别一路带到按钮文案上。
+       */
+      trashItem: (p: string) => shell.trashItem(p),
+      /**
        * 系统的下载目录（批 4a，2026-08-17）。
        *
        * **只有主进程问得到 `app.getPath`**，而这正是不在别处按平台拼路径的理由：

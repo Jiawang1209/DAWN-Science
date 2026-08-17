@@ -115,6 +115,16 @@ export interface WorkbenchBackendOptions {
    */
   记一次上传?: (connectionId: string, 目标: string, 字节: number, 出错?: string) => void
   /**
+   * 记一次删除（批 5）。**同上：改变世界的操作要记一条 Run。**
+   * 而且删除不可逆——它比上传更该留下痕迹。
+   */
+  记一次删除?: (connectionId: string | undefined, 路径: string, 进了废纸篓: boolean) => void
+  /**
+   * 把一个本地文件扔进废纸篓。**只有主进程碰得到 `shell.trashItem`**，
+   * 与 `openPath` 走同一条注入缝。
+   */
+  trashItem?: (absolutePath: string) => Promise<void>
+  /**
    * `providers.yaml` 的路径。**给了才能在界面里加 agent**——
    * 没给就如实说「本次运行没有装配」，不偷偷退回某个猜出来的路径。
    */
@@ -340,7 +350,7 @@ async function 读成附件(
 const 远端预览上界 = 16 * 1024 * 1024
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传 } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1732,6 +1742,44 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           一条.错 = err instanceof Error ? err.message : String(err)
         })
       return { transferId: id, name, target: 目标 }
+    },
+
+    deletePath: async ({ projectId, connectionId, path }) => {
+      /**
+       * **本地与远端不是同一个操作**，所以这两支从头到尾分开写。
+       *
+       * 本地走废纸篓（**后悔得回来**），远端只有 `unlink`（**没了就是没了**）。
+       * 写成一支再分叉的话，迟早有人把「删」当成一件事来改。
+       */
+      if (connectionId) {
+        const e = 连着的(connectionId)
+        const st = await e.stat(path).catch((err: unknown) => {
+          throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+        })
+        // **目录这一批不删**：它要树上一个常驻的行内控件，单独做（见变更历史）
+        if (st.directory) throw fault("invalid_request", `${path} 是目录，这一版只删文件`)
+        await e.unlink(path).catch((err: unknown) => {
+          // **权限不够要说得出是权限不够**，不笼统地说「删不掉」
+          throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
+        })
+        记一次删除?.(connectionId, path, false)
+        return { trashed: false }
+      }
+
+      const p = projectStore.get(projectId!)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      /**
+       * **守卫照旧**：本地这条守的不是用户，是**渲染进程**——
+       * 一旦开了这个口子，它就能要求删任意路径。远端没有对应物
+       * （你就是那个账号本人），这个不对称是有意的。
+       */
+      const 全 = resolveInWorkspace(p.workspace, path)
+      if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
+      await trashItem(全).catch((err: unknown) => {
+        throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
+      })
+      记一次删除?.(undefined, 全, true)
+      return { trashed: true }
     },
 
     startUpload: async ({ connectionId, dir, localPath, onConflict }) => {

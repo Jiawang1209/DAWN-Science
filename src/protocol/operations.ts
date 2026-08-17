@@ -1197,6 +1197,31 @@ export const OPERATIONS = {
    *
    * 默默覆盖是这里唯一不能选的：**你可能正在覆盖昨天那一版数据**。
    */
+  /**
+   * 删一个文件（批 5，2026-08-17）。
+   *
+   * **本地与远端不是同一个操作**，返回值把这件事说出来：
+   * 本地走 Electron 的废纸篓（`trashed: true`，**后悔得回来**），
+   * 远端只有 SFTP `unlink`（`trashed: false`，**没了就是没了**）。
+   *
+   * 界面据此把按钮文案与确认框写成两套——同一颗按钮、同一个「删除」二字，
+   * 一边可恢复一边不可恢复，**这次的代价是数据**。
+   */
+  deletePath: {
+    request: z
+      .object({
+        projectId: z.string().min(1).optional(),
+        connectionId: z.string().min(1).optional(),
+        path: z.string().min(1),
+      })
+      .strict()
+      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
+        message: "projectId 与 connectionId 要给且只给一个",
+      }),
+    response: z.object({ trashed: z.boolean() }).strict(),
+    mutating: true,
+  },
+
   startUpload: {
     request: z
       .object({

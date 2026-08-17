@@ -86,6 +86,8 @@ export interface CreateWorkbenchOptions {
    * 要能在没有 Electron 的测试里跑起来。主进程传 `shell.openPath`。
    */
   openPath?: (absolutePath: string) => Promise<string>
+  /** 扔进废纸篓。**只有主进程碰得到 `shell.trashItem`** */
+  trashItem?: (absolutePath: string) => Promise<void>
   /** 系统的下载目录。**只有主进程问得到 `app.getPath("downloads")`** */
   downloadsDir?: string
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
@@ -661,6 +663,27 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
     ...(opts.openPath ? { openPath: opts.openPath } : {}),
     ...(opts.downloadsDir ? { downloadsDir: opts.downloadsDir } : {}),
+    ...(opts.trashItem ? { trashItem: opts.trashItem } : {}),
+    /** **删除也落一条 Run**（批 5 · 不变式 5）。删除不可逆，比上传更该留痕 */
+    记一次删除: (connectionId, 路径, 进了废纸篓) => {
+      const 那段 = connectionId
+        ? sessionStore.list().find((s) => s.connectionId === connectionId && s.state === "alive")
+        : sessionStore.list().find((s) => s.state === "alive" && !s.connectionId)
+      if (!那段?.projectId) return
+      const 此刻 = new Date().toISOString()
+      runStore.insert({
+        runId: `run-${randomUUID()}`,
+        projectId: 那段.projectId,
+        sessionId: 那段.id,
+        origin: "user",
+        // **进没进废纸篓写在类型里**：可恢复与不可恢复在账本上不能长得一样
+        requestType: `file_delete${进了废纸篓 ? ":trash" : ":permanent"}:${路径}`,
+        status: "completed",
+        startedAt: 此刻,
+        finishedAt: 此刻,
+        hasError: false,
+      })
+    },
     /**
      * **上传落一条 Run**（批 4b · 不变式 5）。
      *

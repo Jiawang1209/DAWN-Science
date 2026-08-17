@@ -678,12 +678,36 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 列一层目录。**失败要抛出去**——`DirNode` 接住之后显示原因，
    * 静静地给一个空目录会被读成「这个文件夹是空的」。
    */
+  /**
+   * 当前这一段。**两拨里都要找**（2026-08-11）：
+   * `sessions` 是当前项目的，`tempSessions` 是不属于任何项目的临时会话。
+   * 只找前者的话，点开一段临时会话会得到「没有这个会话」的空屏。
+   *
+   * （2026-08-17 挪到这儿：文件面板要知道这段会话长在哪台机器上，
+   * 而它比原来那个位置早。**编译器指出来的**，不是我想起来的。）
+   */
+  const session =
+    sessions.find((s) => s.sessionId === sessionId) ??
+    tempSessions.find((s) => s.sessionId === sessionId)
+
+  /**
+   * 这棵树长在哪台机器上（批 3，2026-08-17）。
+   *
+   * **跟着当前会话走，不给切换器**（作者定的）：本地会话看本地，
+   * 远端会话看那台服务器。你已经用「开哪段会话」表达过这个选择了，
+   * 再让你选一次是多余的。
+   */
+  const 文件所在 = session?.remote
+
   const loadDir = useCallback(
     async (path: string): Promise<Listing> => {
+      if (文件所在) {
+        return await client.get("listDirectory", { connectionId: 文件所在.connectionId, path })
+      }
       if (!projectId) throw new Error(t("还没有选中项目"))
       return await client.get("listDirectory", { projectId, path })
     },
-    [client, projectId],
+    [client, projectId, 文件所在],
   )
 
   /**
@@ -700,13 +724,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       点开文件面板()
       setFilePath(path)
       setFileContent(undefined)
-      if (!projectId) return
-      client
-        .get<FileContent>("readFile", { projectId, path })
-        .then(setFileContent)
-        .catch(fail)
+      // **跟着当前会话所在的机器**（批 3）：远端会话读那台服务器上的
+      const 去哪读 = 文件所在
+        ? { connectionId: 文件所在.connectionId, path }
+        : projectId
+          ? { projectId, path }
+          : undefined
+      if (!去哪读) return
+      client.get<FileContent>("readFile", 去哪读).then(setFileContent).catch(fail)
     },
-    [client, projectId],
+    [client, projectId, 文件所在],
   )
 
   const openExternally = useCallback(
@@ -1597,15 +1624,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
 
   /**
-   * 当前这一段。**两拨里都要找**（2026-08-11）：
-   * `sessions` 是当前项目的，`tempSessions` 是不属于任何项目的临时会话。
-   * 只找前者的话，点开一段临时会话会得到「没有这个会话」的空屏。
-   */
-  const session =
-    sessions.find((s) => s.sessionId === sessionId) ??
-    tempSessions.find((s) => s.sessionId === sessionId)
-
-  /**
    * 当前会话可选的模型与正在用的那个（①-B″ · U2）。
    *
    * **可选清单不必新造查询**——`getProviders` 已经回传了 `providers[].models`。
@@ -1750,8 +1768,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setRightDockOpen(true)
   }, [])
 
+  /**
+   * 文件面板的身份（批 3）。**换机器就换一份**——
+   * `key` 变了组件重新挂载，上一台机器的路径与预览一起清空。
+   * 留着比空着更坏：屏幕上是 gs191 的路径，内容却是本机的。
+   */
+  const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
+
   const 文件面板 = (
       <FilesView
+        key={文件面板身份}
+        机器={文件所在?.label ?? t("本机")}
+        初始根={文件所在?.cwd ?? ""}
         selected={filePath}
         content={fileContent}
         loadDir={loadDir}

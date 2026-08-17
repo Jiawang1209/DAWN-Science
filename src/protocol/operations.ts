@@ -1155,12 +1155,24 @@ export const OPERATIONS = {
   listDirectory: {
     request: z
       .object({
-        projectId: z.string().min(1),
-        /** 相对工作区的路径。**空串 = 根目录**；绝对路径会被拒 */
+        /** 本地：这个项目的工作区。与 `connectionId` **二选一** */
+        projectId: z.string().min(1).optional(),
+        /**
+         * 远端：这台服务器（②-B 的连接 id，7.5 起）。
+         *
+         * **给了它，`path` 就是那台机器上的绝对路径**——本地那条是
+         * 相对工作区的，两者不能混：一句 `out/` 在两台机器上指两个地方。
+         */
+        connectionId: z.string().min(1).optional(),
+        /** 本地时相对工作区（**空串 = 根目录**，绝对路径会被拒）；远端时是绝对路径 */
         path: z.string().default(""),
         includeIgnored: z.boolean().optional(),
       })
-      .strict(),
+      .strict()
+      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
+        // **两个都给或都不给，都是调用方没想清楚在看哪台机器**
+        message: "projectId 与 connectionId 要给且只给一个",
+      }),
     response: z
       .object({
         path: z.string(),
@@ -1190,7 +1202,17 @@ export const OPERATIONS = {
    * 一片空白会被读成「这个文件是空的」。
    */
   readFile: {
-    request: z.object({ projectId: z.string().min(1), path: z.string().min(1) }).strict(),
+    request: z
+      .object({
+        projectId: z.string().min(1).optional(),
+        /** 远端：这台服务器（7.5 起）。**给了它，`path` 是绝对路径** */
+        connectionId: z.string().min(1).optional(),
+        path: z.string().min(1),
+      })
+      .strict()
+      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
+        message: "projectId 与 connectionId 要给且只给一个",
+      }),
     response: z.discriminatedUnion("kind", [
       /**
        * **分隔文本读成一张表**（2026-08-14）。

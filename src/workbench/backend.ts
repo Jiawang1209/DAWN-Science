@@ -34,6 +34,8 @@ import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
   readFileForPreview as readWorkspaceFile,
+  分类预览,
+  mediaTypeOf,
   resolveInWorkspace,
 } from "../files/access.js"
 import type { RunRecorder } from "../project/run-recorder.js"
@@ -313,6 +315,15 @@ async function 读成附件(
   return 出
 }
 
+/**
+ * 远端预览的上界（批 3，2026-08-17）。
+ *
+ * 比本地那几档小得多：远端每一个字节都要过网络，
+ * 而**一个默默拉半天的预览与「卡住了」在屏幕上没有区别**。
+ * 「要不要传过来看」那一问连同进度条在批 4 做。
+ */
+const 远端预览上界 = 16 * 1024 * 1024
+
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
 
@@ -320,6 +331,81 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
    * 空名单会被读成「你还没加过服务器」，那和「这个功能没接上」是两回事。
    */
+  /**
+   * 拿一台**连着的**服务器的执行器（批 3，2026-08-17）。
+   *
+   * **没连上就说没连上**，不替人去连：一次「看看文件」不该顺带
+   * 拨一个可能要输密码、可能要等十几秒的连接。
+   */
+  const 连着的 = (connectionId: string) => {
+    const e = 远端().manager.executorOf(connectionId)
+    if (!e) throw fault("invalid_request", "这台服务器还没连上——先连上再看它的文件")
+    return e
+  }
+
+  /**
+   * 列远端一层目录。
+   *
+   * **没有守卫**，这是有意的：本地那条守的不是用户，是**渲染进程**
+   * （一开读文件的口子，它就能问后端要任意路径）；而远端你就是那个账号本人，
+   * SFTP 已经能碰它能碰的一切，再画一条我们自己的线是演戏。
+   */
+  const 远端列目录 = async (connectionId: string, path: string) => {
+    const 目录 = path || "."
+    const 条目 = await 连着的(connectionId).readdir(目录).catch((e: unknown) => {
+      // **原样说清楚是哪个路径、什么错**，不笼统地说「读不了」
+      throw fault("invalid_request", `读不了 ${目录}：${e instanceof Error ? e.message : String(e)}`)
+    })
+    return {
+      path: 目录,
+      entries: 条目
+        .map((e) => ({
+          name: e.name,
+          kind: e.directory ? ("dir" as const) : ("file" as const),
+          // **目录不报大小**——目录的「大小」是个误导（与本地那条同一份口径）
+          ...(e.directory ? {} : { size: e.size }),
+          /**
+           * SFTP 的 `readdir` 不给修改时间。**如实给一个占位而不是编一个**——
+           * 协议要求这一格，但我们没有它。批 4 走 `stat` 时再补。
+           */
+          modifiedAt: new Date(0).toISOString(),
+        }))
+        .sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "dir" ? -1 : 1)),
+      ignored: 0,
+      omitted: 0,
+    }
+  }
+
+  /**
+   * 读一个远端文件供预览。**分类与本地共用同一份**（`分类预览`）——
+   * 两份的话，本地和远端会对同一个 `.csv` 说两种话。
+   */
+  const 远端读文件 = async (connectionId: string, path: string) => {
+    const e = 连着的(connectionId)
+    const st = await e.stat(path).catch((err: unknown) => {
+      throw fault("invalid_request", `读不了 ${path}：${err instanceof Error ? err.message : String(err)}`)
+    })
+    if (st.directory) throw fault("invalid_request", `${path} 是目录，不是文件`)
+    /**
+     * **超过上界就不传**（批 3）。
+     *
+     * 远端预览本质上是一次下载；一个 800 MB 的文件默默拉半天，
+     * 与「卡住了」在屏幕上没有区别。**先说清多大**，
+     * 「要不要传过来看」那一问连同进度条在批 4 一起做。
+     */
+    if (st.size > 远端预览上界) {
+      return {
+        kind: "other" as const,
+        mediaType: mediaTypeOf(path),
+        bytes: st.size,
+        reason: `这个文件有 ${Math.round(st.size / 1024 / 1024)} MB，超过 ${远端预览上界 / 1024 / 1024} MB 没有传过来`,
+      }
+    }
+    // 一次取回，按需切片。**SFTP 没有便宜的部分读**，而上界已经挡在前面了
+    const buf = await e.readFile(path)
+    return 分类预览(path, st.size, (最多) => (最多 === undefined ? buf : buf.subarray(0, 最多)))
+  }
+
   const 远端 = () => {
     if (!remote) throw fault("internal_error", "本次运行没有装配远端连接")
     return remote
@@ -1598,8 +1684,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **工作区从项目取，不从请求取**——让调用方传工作区，
      * 等于把路径守卫的起点也交给它，那守卫就形同虚设。
      */
-    listDirectory: async ({ projectId, path, includeIgnored }) => {
-      const p = projectStore.get(projectId)
+    listDirectory: async ({ projectId, connectionId, path, includeIgnored }) => {
+      if (connectionId) return 远端列目录(connectionId, path)
+      const p = projectStore.get(projectId!)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
       return listWorkspaceDirectory(p.workspace, path, {
         ...(includeIgnored === undefined ? {} : { includeIgnored }),
@@ -1607,8 +1694,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /** 读一个文件供预览。**只读**，且路径守卫在 `files/access.ts` 里 */
-    readFile: async ({ projectId, path }) => {
-      const p = projectStore.get(projectId)
+    readFile: async ({ projectId, connectionId, path }) => {
+      if (connectionId) return 远端读文件(connectionId, path)
+      const p = projectStore.get(projectId!)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
       return readWorkspaceFile(p.workspace, path)
     },

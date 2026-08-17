@@ -336,6 +336,7 @@ export function FilesView({
   onInitLayout,
   layoutNote,
   机器,
+  初始根,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -361,6 +362,15 @@ export function FilesView({
    * 现在只有「本机」一种（批 3 接远端），但**位置与措辞先立好**。
    */
   机器?: string
+  /**
+   * 树从哪儿开始（批 3，2026-08-17）。
+   *
+   * **跟着你点进来的那个东西**：项目 → 工作区根（空串）；
+   * 远端会话 → 那段会话在服务器上的当前目录；服务器 → 家目录。
+   * 换机器时 `App` 会给这个组件换 `key`，于是状态从头来——
+   * **上一台机器的路径留在这儿，比空着更坏**。
+   */
+  初始根?: string
 }) {
   const [跳到, 设跳到] = useState("")
   /**
@@ -373,7 +383,7 @@ export function FilesView({
    * **路径不存在不用我们报**：换了根之后 `DirNode` 自己会把 `readdir`
    * 的错误显示出来。多写一处校验就是多一份会说不同话的实现。
    */
-  const [根, 设根] = useState("")
+  const [根, 设根] = useState(初始根 ?? "")
   return (
     <div className="files-view">
       <div className="files-where">
@@ -396,12 +406,12 @@ export function FilesView({
          * 没有这颗的话，一次手滑的跳转会让人以为整棵树没了——
          * 而这个项目已经为「进得去出不来」改过一次（项目概览与文件的返回键）。
          */}
-        {根 ? (
+        {根 !== (初始根 ?? "") ? (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              设根("")
+              设根(初始根 ?? "")
               设跳到("")
             }}
           >

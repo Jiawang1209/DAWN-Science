@@ -187,32 +187,49 @@ export function mediaTypeOf(path: string): string {
 }
 
 /**
- * 嗅一眼这个 `.txt` 是不是表。**只读前 64KB**——
- * 判据只看前十行，为此把一个 2GB 的日志整个读进来是荒唐的。
+ * 读一个**本地**文件供预览。只读，且带上界。
+ *
+ * 分类交给 `分类预览`——**它与远端那条共用同一份**。
  */
-function 看着像表(file: string, bytes: number): boolean {
-  const 嗅 = 64 * 1024
+export function readFileForPreview(workspace: string, relative: string): FileContent {
+  const file = resolveInWorkspace(workspace, relative)
+  const st = statSync(file)
+  if (st.isDirectory()) throw new UserFacingError(`${relative} 是目录，不是文件`)
+  return 分类预览(file, st.size, (最多) => (最多 === undefined ? readFileSync(file) : 部分读(file, 最多)))
+}
+
+/**
+ * 读前面若干字节。**不整个读进来**——嗅探与截断都只要开头那一段
+ * （判据只看前十行，为此把一个 2GB 的日志整个读进来是荒唐的）。
+ */
+function 部分读(file: string, 最多: number): Buffer {
+  const n = Math.max(0, 最多)
   const fd = openSync(file, "r")
   try {
-    const buf = Buffer.alloc(Math.min(嗅, bytes))
-    readSync(fd, buf, 0, buf.length, 0)
-    return 像表格吗(buf.toString("utf8"))
+    const buf = Buffer.alloc(n)
+    const 读到 = readSync(fd, buf, 0, n, 0)
+    return buf.subarray(0, 读到)
   } catch {
-    // 读不了就当它不是表：**后面那条 `text` 分支会照常处理并如实报错**
-    return false
+    // 读不了就当空的：**后面那些分支会照常处理并如实报错**
+    return Buffer.alloc(0)
   } finally {
     closeSync(fd)
   }
 }
 
-/** 读一个文件供预览。**只读，且带上界** */
-export function readFileForPreview(workspace: string, relative: string): FileContent {
-  const file = resolveInWorkspace(workspace, relative)
-  const st = statSync(file)
-  if (st.isDirectory()) throw new UserFacingError(`${relative} 是目录，不是文件`)
-
-  const mediaType = mediaTypeOf(file)
-  const bytes = st.size
+/**
+ * 把一堆字节判成「该怎么显示」。**只有这一份**（2026-08-17，批 3）。
+ *
+ * 抽出来是因为远端文件也要走同一套：本地读盘、远端走 SFTP，
+ * 而**分类必须是同一份**——两份的话，本地和远端会对同一个 `.csv`
+ * 说两种话，而那种不一致没有任何地方会报出来。
+ *
+ * @param 名 只用来推 mediaType（看扩展名）。远端传的是那台机器上的路径。
+ * @param 读 按需取字节。**给了上界就只取那么多**——嗅探表格只要 64 KB，
+ *   为它把一个 800 MB 的文件整个搬过来是荒唐的。
+ */
+export function 分类预览(名: string, bytes: number, 读: (最多?: number) => Buffer): FileContent {
+  const mediaType = mediaTypeOf(名)
 
   if (mediaType.startsWith("image/")) {
     if (bytes > IMAGE_MAX_BYTES) {
@@ -224,7 +241,7 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
         reason: `图片有 ${Math.round(bytes / 1024 / 1024)} MB，超过 ${IMAGE_MAX_BYTES / 1024 / 1024} MB 没有显示`,
       }
     }
-    return { kind: "image", mediaType, base64: readFileSync(file).toString("base64"), bytes }
+    return { kind: "image", mediaType, base64: 读().toString("base64"), bytes }
   }
 
   /**
@@ -245,13 +262,13 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
   const 可能是表 =
     mediaType === "text/csv" ||
     mediaType === "text/tab-separated-values" ||
-    (mediaType === "text/plain" && 看着像表(file, bytes))
+    (mediaType === "text/plain" && 像表格吗(读(64 * 1024).toString("utf8")))
 
   if (可能是表) {
     const 完整 = bytes <= 表格字节上界
     // **超了只读前面那段**，而不是拒绝打开：看一眼形状比什么都看不到有用得多
-    const buf = readFileSync(file)
-    const 正文 = (完整 ? buf : buf.subarray(0, 表格字节上界)).toString("utf8")
+    const buf = 完整 ? 读() : 读(表格字节上界)
+    const 正文 = buf.subarray(0, 表格字节上界).toString("utf8")
     return { kind: "table", mediaType, bytes, table: 读成表(正文, 完整) }
   }
 
@@ -265,7 +282,7 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
         reason: `PDF 有 ${Math.round(bytes / 1024 / 1024)} MB，超过 ${PDF_MAX_BYTES / 1024 / 1024} MB 没有显示，用系统程序打开`,
       }
     }
-    return { kind: "pdf", mediaType, base64: readFileSync(file).toString("base64"), bytes }
+    return { kind: "pdf", mediaType, base64: 读().toString("base64"), bytes }
   }
 
   const 是文本 = mediaType.startsWith("text/") || mediaType === "application/json"
@@ -278,7 +295,7 @@ export function readFileForPreview(workspace: string, relative: string): FileCon
     }
   }
 
-  const buf = readFileSync(file)
+  const buf = 读(TEXT_MAX_BYTES + 1)
   if (buf.byteLength <= TEXT_MAX_BYTES) {
     return { kind: "text", mediaType, text: buf.toString("utf8"), bytes }
   }

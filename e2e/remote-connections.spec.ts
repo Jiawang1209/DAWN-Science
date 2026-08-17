@@ -570,3 +570,54 @@ test("**侧栏所有固定入口都不换行**：中英 × 最窄侧栏", async 
   await 展开远端英文(page)
   expect(await 扫(), "英文界面上有一行断了").toEqual([])
 })
+
+/**
+ * **远端会话里打开「文件」，看到的必须是那台服务器**（批 3，2026-08-17）。
+ *
+ * 这条是这一批的收口判据，而它对应一个**已经存在过的 bug**：
+ * `listDirectory` / `readFile` 此前只认 `projectId`，用本地 fs 读；
+ * 而远端会话挂在一个隐藏的临时项目下，那个项目的工作区是**本机的 scratch 目录**。
+ * 于是你在 gs191 的会话里打开文件，看到的是本机的一个临时目录——
+ * **它不报错，就是安静地给你看错东西**。
+ */
+test("**远端会话的文件面板长在那台服务器上**，不是本机", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  const 面板 = page.locator(".right-dock .files-view")
+  await expect(面板).toBeVisible()
+
+  /**
+   * ① **头上写着是哪台机器**。不写的话本地与远端在屏幕上长得一模一样，
+   * 而那正是上面说的那个 bug 的形状——你根本没机会发现。
+   */
+  await expect(面板.locator(".files-where-name")).toHaveText("假机器")
+
+  // ② 树上是**那台机器**的东西（假服务器家目录里有「读我.md」与「数据」）
+  await expect(面板.getByRole("button", { name: /读我\.md/ })).toBeVisible({ timeout: 30_000 })
+  await expect(面板.getByRole("button", { name: /数据/ })).toBeVisible()
+
+  // ③ 预览读的也是那台机器上的字节
+  await 面板.getByRole("button", { name: /读我\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
+})
+
+/** **远端那棵树认得出目录与文件**——混了就是点一个目录去解码图片 */
+test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: /数据/ }).click()
+  // 点开目录之后，里面那个 CSV 出现了——**而且它被读成表，不是一坨逗号**
+  await 面板.getByRole("button", { name: /样本\.csv/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
+})

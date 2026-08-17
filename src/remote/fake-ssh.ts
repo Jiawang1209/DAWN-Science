@@ -21,6 +21,7 @@
  * 「口令根本没传到」这类错误全部吞掉——那正是最需要被发现的一类。
  */
 import { EventEmitter } from "node:events"
+import { Readable, Writable } from "node:stream"
 import type { SshClientLike } from "./ssh.js"
 
 /** 假机器上认的口令。**写死一个**——mock 模式的意义就是确定性 */
@@ -33,9 +34,73 @@ const 家 = "/home/dawn"
  * 一份小小的假文件系统。**够让 `ls` / `cat` 有话可说**，
  * 不试图做成一个真的文件系统——那是另一个项目。
  */
-const 文件: Record<string, string> = {
+const 初始文件: Record<string, string> = {
   [`${家}/读我.md`]: "# 这是一台假服务器\n\n它只在 mock 模式下存在。\n",
   [`${家}/数据/样本.csv`]: "id,值\n1,3.14\n2,2.72\n",
+  /**
+   * **一个够大的文件**，好让传输分成很多块。
+   *
+   * 全部同步吐完的话，「进度报了不止一次」与「传到一半能取消」两条判据
+   * **都会假绿**——它们根本没有机会发生。
+   */
+  [`${家}/数据/大文件.bin`]: "x".repeat(4096),
+}
+
+const 文件: Record<string, string> = { ...初始文件 }
+
+/**
+ * 写不进去的目录。**验「权限不够要说是权限不够」那条**——
+ * 一句笼统的「上传失败」会让人去查网络、查路径、查磁盘，就是想不到是权限。
+ */
+const 只读目录 = new Set<string>([`${家}/只读`])
+
+/** 只读目录里得有点东西，否则它在树上根本不出现 */
+文件[`${家}/只读/别动我.txt`] = "这个目录不让写\n"
+初始文件[`${家}/只读/别动我.txt`] = "这个目录不让写\n"
+
+/**
+ * 把假机器恢复原状。**测试之间必须叫一次**——
+ * 这张表是模块级的，上一条用例传上去的文件会漏给下一条
+ * （`FAKE_ACP_*` 那张手打清单漏过两次，同一个形状）。
+ */
+export function 重置假机器(): void {
+  for (const k of Object.keys(文件)) delete 文件[k]
+  Object.assign(文件, 初始文件)
+}
+
+/** 这台假机器的家目录。测试与 mock 都要能指得出来 */
+export const 假家目录 = 家
+
+/** 传输时每块多大。**小一点**，好让一个几 KB 的文件也能分成很多块 */
+const 块大小 = 256
+
+function 是目录(路径: string): boolean {
+  const p = `${路径.replace(/\/+$/, "")}/`
+  return Object.keys(文件).some((k) => k.startsWith(p))
+}
+
+/**
+ * 一份 `attrs`。**必须带 `isDirectory()`**——
+ * 真 ssh2 给的是 `Stats` 对象，而 `RemoteExecutor.readdir` 正是调它。
+ *
+ * 第一版这里是个字面量 `{ mode, size }`，于是**那条路一跑就抛 TypeError**。
+ * 没人发现，因为那三个 SFTP 方法当时一个调用点都没有——
+ * **写下来的代码不等于跑过的代码。**
+ */
+function 属性(路径: string) {
+  const 目录 = 是目录(路径)
+  return {
+    mode: 目录 ? 0o040755 : 0o100644,
+    size: 目录 ? 0 : Buffer.byteLength(文件[路径] ?? ""),
+    mtime: 1_755_000_000,
+    isDirectory: () => 目录,
+  }
+}
+
+/** 这个路径的上一级是不是只读的 */
+function 落在只读里(路径: string): boolean {
+  const 上级 = 路径.slice(0, 路径.lastIndexOf("/"))
+  return [...只读目录].some((d) => 上级 === d || 上级.startsWith(`${d}/`))
 }
 
 interface 通道 extends EventEmitter {
@@ -111,11 +176,14 @@ export function 造一台假服务器(): SshClientLike {
         else f(undefined, Buffer.from(v))
       },
       writeFile: (p: string, d: string | Buffer, f: (e?: Error) => void) => {
+        if (落在只读里(p)) return f(new Error("Permission denied"))
         文件[p] = d.toString()
         f()
       },
       readdir: (p: string, f: (e: Error | undefined, list?: unknown[]) => void) => {
-        const 前缀 = `${p.replace(/\/+$/, "")}/`
+        const 根 = p.replace(/\/+$/, "")
+        if (!是目录(根)) return f(new Error(`No such directory: ${p}`))
+        const 前缀 = `${根}/`
         const 名字 = new Set<string>()
         for (const k of Object.keys(文件)) {
           if (!k.startsWith(前缀)) continue
@@ -123,8 +191,90 @@ export function 造一台假服务器(): SshClientLike {
         }
         f(
           undefined,
-          [...名字].map((filename) => ({ filename, attrs: { mode: 0o100644, size: 0 } })),
+          // **`attrs` 要带 `isDirectory()`**，真 ssh2 给的是 `Stats`
+          [...名字].map((filename) => ({ filename, attrs: 属性(`${前缀}${filename}`) })),
         )
+      },
+      stat: (p: string, f: (e: Error | undefined, st?: unknown) => void) => {
+        if (文件[p] === undefined && !是目录(p)) return f(new Error(`No such file: ${p}`))
+        f(undefined, 属性(p))
+      },
+      unlink: (p: string, f: (e?: Error) => void) => {
+        if (文件[p] === undefined) return f(new Error(`No such file: ${p}`))
+        if (落在只读里(p)) return f(new Error("Permission denied"))
+        delete 文件[p]
+        f()
+      },
+      /** **只删空目录**——真 SFTP 就是这样，递归是调用方的事 */
+      rmdir: (p: string, f: (e?: Error) => void) => {
+        if (!是目录(p)) return f(new Error(`No such directory: ${p}`))
+        f(new Error("Directory not empty"))
+      },
+      /**
+       * **目标已存在就失败**——SFTP v3 的 `rename` 不是 POSIX 那种覆盖。
+       * 假成会覆盖的话，`upload` 里那段「先 unlink 再改名」永远走不到，
+       * 而它在真服务器上是必经之路。
+       */
+      rename: (从: string, 到: string, f: (e?: Error) => void) => {
+        if (文件[从] === undefined) return f(new Error(`No such file: ${从}`))
+        if (文件[到] !== undefined) return f(new Error("Failure: file already exists"))
+        文件[到] = 文件[从]!
+        delete 文件[从]
+        f()
+      },
+      /**
+       * **分块吐，而且隔一个宏任务**。
+       *
+       * 同步吐完的话「进度报了不止一次」与「传到一半能取消」两条判据
+       * 都会假绿——它们根本没有机会发生。
+       */
+      createReadStream: (p: string) => {
+        const 内容 = Buffer.from(文件[p] ?? "")
+        // 同上：**在被读那一刻就报**，不靠定时器
+        if (文件[p] === undefined) {
+          return new Readable({
+            read() {
+              this.destroy(new Error(`No such file: ${p}`))
+            },
+          })
+        }
+        let i = 0
+        return new Readable({
+          read() {
+            if (i >= 内容.length) return void this.push(null)
+            const 块 = 内容.subarray(i, i + 块大小)
+            i += 块大小
+            setTimeout(() => this.push(块), 1)
+          },
+        })
+      },
+      createWriteStream: (p: string) => {
+        /**
+         * **权限在第一次写那一刻就拒，不能靠定时器。**
+         *
+         * 第一版是 `setTimeout(() => w.destroy(…), 1)`，于是一个 1 字节的文件
+         * **在定时器落地之前就已经写完了**——上传成功，判据当场变红。
+         * 更坏的是它**时快时慢**：单独跑那一条是红的，整个文件一起跑是绿的。
+         * 假的东西一旦有竞态，它证明的就不再是被测代码。
+         */
+        if (落在只读里(p)) {
+          return new Writable({
+            write(_块: Buffer, _enc: unknown, done: (e?: Error) => void) {
+              done(new Error("Permission denied"))
+            },
+          })
+        }
+        const 块们: Buffer[] = []
+        return new Writable({
+          write(块: Buffer, _enc: unknown, done: (e?: Error) => void) {
+            块们.push(Buffer.from(块))
+            done()
+          },
+          final(done: (e?: Error) => void) {
+            文件[p] = Buffer.concat(块们).toString()
+            done()
+          },
+        })
       },
       end: () => {},
     })

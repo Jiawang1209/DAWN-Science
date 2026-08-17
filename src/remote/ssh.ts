@@ -36,6 +36,9 @@
  * 所以：如实进 `disconnected`，**绝不自动重跑**（重跑一条可能已经执行过的
  * 命令，比不跑危险得多），由上层决定怎么办。
  */
+import { createReadStream, createWriteStream } from "node:fs"
+import { rename as 改名, rm as 删掉, stat as 本地stat } from "node:fs/promises"
+import { pipeline } from "node:stream/promises"
 import type { Client, ClientChannel, ConnectConfig, SFTPWrapper } from "ssh2"
 
 /** 一台远端机器怎么连。**密码不在这里**——它由上层从钥匙串取了再传进来 */
@@ -348,6 +351,85 @@ export class RemoteExecutor {
     })
   }
 
+  /**
+   * 下载一个文件。**流式，可取消，不留半截文件。**
+   *
+   * ## 为什么不用 `fastGet`
+   *
+   * `fastGet` 带 `step` 进度、还并发拉块（高延迟链路上更快），
+   * 但它是回调式的，**没有中止口——取消不掉**。
+   * 而一颗按不动的「取消」比没有这颗按钮更糟。
+   * 我们拿速度换可取消，因为作者明确要取消。
+   *
+   * ## 「半截文件必须消失」这条保证在这儿，不在调用方
+   *
+   * 先落到 `<目标>.dawn-part`，传完才改名过去（同目录内改名是原子的）；
+   * 出错或取消就把 part 删掉。
+   *
+   * **放在调用方的话，每多一个调用方就多一次忘记的机会**——
+   * 而忘记的表现是：下载目录里躺着一个半截文件，
+   * 它跟完整的那个长得一模一样，你拿它去跑分析都不会发现。
+   *
+   * @param 进度 只报**字节**。速度由上层算——这一层不认识时钟，
+   *   那样它才能在测试里不依赖真实时间。
+   */
+  async download(
+    远端: string,
+    本地: string,
+    opts: { 进度?: (已传: number, 总共?: number) => void; signal?: AbortSignal } = {},
+  ): Promise<void> {
+    const s = await this.sftp()
+    const 总共 = (await this.stat(远端)).size
+    const part = `${本地}.dawn-part`
+    let 已传 = 0
+    const rs = s.createReadStream(远端)
+    rs.on("data", (块: string | Buffer) => {
+      已传 += 块.length
+      opts.进度?.(已传, 总共)
+    })
+    try {
+      await pipeline(rs, createWriteStream(part), ...(opts.signal ? [{ signal: opts.signal }] : []))
+      await 改名(part, 本地)
+    } catch (e) {
+      // **清干净**。清不掉也别把清理的错盖住原来那个——原因才是要说的那句
+      await 删掉(part, { force: true }).catch(() => {})
+      throw e
+    }
+  }
+
+  /**
+   * 上传一个文件。与 `download` **两头对称**：
+   * 流式、可取消、先落 part 再改名。
+   *
+   * **取消同样不该在服务器上留半个文件**——别人的机器上留垃圾比自己机器上更糟。
+   *
+   * @param 覆盖 SFTP v3 的 `rename` **在目标已存在时会失败**（不是 POSIX 那种覆盖）。
+   *   要覆盖就得先 `unlink` 再改名——**那一瞬间不是原子的**，如实说明，不假装是。
+   */
+  async upload(
+    本地: string,
+    远端: string,
+    opts: { 进度?: (已传: number, 总共?: number) => void; signal?: AbortSignal; 覆盖?: boolean } = {},
+  ): Promise<void> {
+    const s = await this.sftp()
+    const 总共 = (await 本地stat(本地)).size
+    const part = `${远端}.dawn-part`
+    let 已传 = 0
+    const rs = createReadStream(本地)
+    rs.on("data", (块: string | Buffer) => {
+      已传 += 块.length
+      opts.进度?.(已传, 总共)
+    })
+    try {
+      await pipeline(rs, s.createWriteStream(part), ...(opts.signal ? [{ signal: opts.signal }] : []))
+      if (opts.覆盖) await this.unlink(远端).catch(() => {})
+      await this.rename(part, 远端)
+    } catch (e) {
+      await this.unlink(part).catch(() => {})
+      throw e
+    }
+  }
+
   async readFile(path: string): Promise<Buffer> {
     const s = await this.sftp()
     return new Promise((resolve, reject) => {
@@ -359,6 +441,47 @@ export class RemoteExecutor {
     const s = await this.sftp()
     return new Promise((resolve, reject) => {
       s.writeFile(path, data, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  /**
+   * 一个条目的元信息。**目录与文件必须分得开**——
+   * 界面上「点进去」与「预览」是两件事，混了就是点一个目录去解码图片。
+   */
+  async stat(path: string): Promise<{ directory: boolean; size: number; modifiedAt?: Date }> {
+    const s = await this.sftp()
+    return new Promise((resolve, reject) => {
+      s.stat(path, (err, st) => {
+        if (err) return reject(err)
+        resolve({
+          directory: st.isDirectory(),
+          size: st.size,
+          // `mtime` 是秒；**取不到就不给这一格**，不拿 0 冒充 1970 年
+          ...(st.mtime ? { modifiedAt: new Date(st.mtime * 1000) } : {}),
+        })
+      })
+    })
+  }
+
+  async unlink(path: string): Promise<void> {
+    const s = await this.sftp()
+    return new Promise((resolve, reject) => {
+      s.unlink(path, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  /** **SFTP 的 `rmdir` 只删空目录**——递归是调用方的事，这一层不替它决定 */
+  async rmdir(path: string): Promise<void> {
+    const s = await this.sftp()
+    return new Promise((resolve, reject) => {
+      s.rmdir(path, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  async rename(从: string, 到: string): Promise<void> {
+    const s = await this.sftp()
+    return new Promise((resolve, reject) => {
+      s.rename(从, 到, (err) => (err ? reject(err) : resolve()))
     })
   }
 

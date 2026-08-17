@@ -213,7 +213,15 @@ pre {
 }
 .app-shell .body {
   display: grid;
-  grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr);
+  /**
+   * 三列：侧栏 ｜ 正文 ｜ 右侧坞（2026-08-17）。
+   *
+   * **坞关着时第三列是 0**，不是 `display: none`——与侧栏折叠同一条理由：
+   * 后者没有中间态，一下就没了，人看不出「它去哪了」。
+   *
+   * 三列的下限加起来是 `200 + 420 + 280 = 900`，那是窗口的最小可用宽度。
+   */
+  grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr) var(--dawn-dock-w);
   min-height: 0;
   /**
    * **那条缝按 `.body` 定位**（2026-08-13）。它不能挂在 `.sidebar` 里面——
@@ -4216,3 +4224,74 @@ pre {
 .sess-config-menu .btn.current { color: var(--dawn-text-1); }
 /** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
 .sess-config-mark { display: inline-flex; width: 16px; justify-content: center; vertical-align: -3px; }
+
+
+/* ── 右侧坞（`feat/远端文件` · 批 1，2026-08-17）──────────────────────
+ *
+ * 学 Codex 桌面版：顶右角一个菜单，选中的那一块占住右边一栏，**与对话并排**。
+ * 现在的「文件」是占满整屏的一个视图，于是**看文件的时候对话没了**——
+ * 而看图的真实场景恰恰是「模型刚跑完，我想边看图边说下一步」。
+ */
+.right-dock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: var(--dawn-hairline) solid var(--dawn-stroke-2);
+  background: var(--dawn-surface-panel);
+  /** 那条能拖的缝按它定位 */
+  position: relative;
+}
+.right-dock .dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  /** 标题不换行——侧栏那一整条纪律在这儿同样成立 */
+  white-space: nowrap;
+}
+/** 关闭那颗。**图标按钮也要有名字**——`aria-label` 在组件里给了 */
+.right-dock .dock-close { color: var(--dawn-text-3); flex: 0 0 auto; }
+.right-dock .dock-close:hover { color: var(--dawn-text-1); }
+.right-dock .dock-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dawn-text-1);
+}
+.right-dock .dock-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--dawn-space-3);
+}
+
+/* 顶栏最右那颗切换按钮。**开着关着都在同一个位置** */
+.dock-switch { position: relative; margin-left: auto; }
+.dock-switch-trigger { color: var(--dawn-text-2); white-space: nowrap; }
+.dock-switch-menu {
+  position: absolute;
+  top: calc(100% + var(--dawn-space-1));
+  right: 0;
+  min-width: 12rem;
+  padding: var(--dawn-space-1);
+  z-index: var(--z-modal);
+  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dock-switch-menu .btn {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  width: 100%;
+  text-align: left;
+  padding: 3px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+}
+.dock-switch-menu .btn:hover { background: var(--dawn-row-hover); }
+.dock-switch-menu .btn.current { color: var(--dawn-text-1); }
+/** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
+.dock-mark { display: inline-flex; width: 16px; justify-content: center; }
+/** 快捷键靠右。**比正文淡一档**——它是提示，不是这一行的主语 */
+.dock-key { margin-left: auto; color: var(--dawn-text-3); font-size: 11px; }

@@ -5,7 +5,9 @@
  * connection.ts   主进程权威   —— 后端能不能用
  * catalog.ts      后端权威     —— 项目/会话/Run/provider/凭证（渲染进程只是缓存）
  * transcript.ts   后端权威     —— 当前会话的对话与终端字节
- * view.ts         渲染进程自有 —— 看的是哪个面、哪个会话、dock 开没开
+ * view.ts         渲染进程自有 —— 看的是哪个面、哪个会话、底部 dock 开没开
+ * sidebar.ts      渲染进程自有 —— 侧栏多宽、折没折
+ * right-dock.ts   渲染进程自有 —— 右侧坞开没开、住着谁、多宽
  * ```
  *
  * 两个横切工具：
@@ -136,6 +138,25 @@ export {
   setSidebarCollapsed,
   toggleSidebar,
 } from "./sidebar.js"
+
+export {
+  $rightDockOpen,
+  $rightDockTenant,
+  $rightDockWidth,
+  RIGHT_DOCK_TENANT_KEY,
+  RIGHT_DOCK_WIDTH_KEY,
+  RIGHT_DOCK_DEFAULT,
+  RIGHT_DOCK_MIN,
+  RIGHT_DOCK_MAX,
+  全部房客,
+  clampDockWidth,
+  loadRightDock,
+  setRightDockOpen,
+  setRightDockTenant,
+  setRightDockWidth,
+  点开房客,
+  type 坞房客,
+} from "./right-dock.js"
 
 export { guard, currentGeneration, invalidate } from "./guard.js"
 export { sameList, setList, setValue } from "./identity.js"

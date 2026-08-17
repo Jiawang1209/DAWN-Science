@@ -41,6 +41,8 @@ import {
   TerminalView,
   type ModelChoice,
   type ServiceChoice,
+  DockSwitch,
+  RightDock,
 } from "./views.js"
 import {
   AppearancePanel,
@@ -146,6 +148,12 @@ import {
   toggleSidebar,
   SIDEBAR_MIN,
   SIDEBAR_MAX,
+  $rightDockOpen,
+  $rightDockTenant,
+  $rightDockWidth,
+  setRightDockOpen,
+  setRightDockWidth,
+  点开房客,
 } from "./state/index.js"
 
 import { t, tf, $lang } from "./i18n/index.js"
@@ -194,6 +202,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 会话开关们 = useStore($会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
+  const rightDockOpen = useStore($rightDockOpen)
+  const rightDockTenant = useStore($rightDockTenant)
+  const rightDockWidth = useStore($rightDockWidth)
   const sidebarWidth = useStore($sidebarWidth)
   const sidebarCollapsed = useStore($sidebarCollapsed)
   /**
@@ -269,6 +280,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     void loadSessions(client, projectId)
     void loadRuns(client, projectId)
   }, [client, projectId])
+
+  /**
+   * 右侧坞的快捷键（`feat/远端文件` · 批 1，2026-08-17）。
+   *
+   * **挂在 document 上**，与 ⌘K 同一条：它在任何地方都该管用，包括正在打字时。
+   *
+   * 键位照作者给的那张 Codex 截图：文件 ⌘P、审阅 ⌃⇧G。
+   * `⌘P` 在 Chromium 里是打印，**必须 `preventDefault`**——
+   * 不挡的话按下去会弹出一个打印对话框，而那与「快捷键没接上」
+   * 在人眼里长得完全不一样，会更让人困惑。
+   */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault()
+        点开房客("files")
+      } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
+        e.preventDefault()
+        点开房客("review")
+      }
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [])
 
   /**
    * 推送流。**只订阅一次**，进来的更新按当前正在看的会话过滤——
@@ -374,7 +409,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 「非渲染路径一律用 `$atom.get()` 直读」说的场景。
    */
   const refreshLedger = useCallback(async () => {
-    if ($view.get() !== "panel") return
+    /**
+     * **「账本这一屏开着没有」现在有两个来源**（2026-08-17，批 1）。
+     *
+     * 「产出」与「变更」搬去了右侧坞的「审阅」，而这个条件当时还写着
+     * `view === "panel"`——于是坞里那两张卡**再也不刷新**。
+     *
+     * 它的表现是最坏的一种：屏幕上写着「无法确定——没有取到 git 基线」，
+     * 而真相是「未改动任何文件」。**那句话看起来像一个正当答案**，
+     * 不像一个失效。e2e 当场抓住了它（`workspace-refresh`）。
+     *
+     * 教训不是「加个条件」，是：**把一块界面搬家时，喂它的那条管子
+     * 未必跟着搬**——而管子断了通常不出声。
+     */
+    const 在看账本 =
+      $view.get() === "panel" ||
+      ($rightDockOpen.get() && $rightDockTenant.get() === "review")
+    if (!在看账本) return
     void loadContextUsage(client, $activeSessionId.get())
     const pid = $activeProjectId.get()
     if (!pid) return
@@ -399,7 +450,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * 只在打开时取一次的话，那一屏会一直停在回合开始前的样子。
      */
     void refreshLedger()
-  }, [refreshLedger, sessionId, view, projectId, busy])
+    // **坞开合与换房客也要触发**：它们和切屏是同一件事的两个入口
+  }, [refreshLedger, sessionId, view, projectId, busy, rightDockOpen, rightDockTenant])
 
   /**
    * **窗口重新拿到焦点也要重取。**（①-B″ · U4 追加项的一半）
@@ -1812,6 +1864,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             {t("返回")}
           </Button>
         ) : null}
+        {/**
+          * **右侧坞的入口，钉在顶栏最右**（`feat/远端文件` · 批 1，2026-08-17）。
+          *
+          * 与左边那颗「折叠侧栏」同一条理由：坞关上之后，长在坞里的按钮
+          * 自己也没了，这个能力就只剩一条藏在别处的出路。
+          * 顶栏横跨整个窗口，**开着关着都在同一个位置**。
+          */}
+        <DockSwitch open={rightDockOpen} tenant={rightDockTenant} onPick={点开房客} />
       </div>
 
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
@@ -1878,6 +1938,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         style={
           {
             "--dawn-sidebar-w": sidebarCollapsed ? "0px" : `${sidebarWidth}px`,
+            /**
+             * 坞那一列的宽度。**关着时是 0，不是 `display: none`**——
+             * 与折叠同一条：后者没有中间态，一下就没了，人看不出「它去哪了」。
+             */
+            "--dawn-dock-w": rightDockOpen ? `${rightDockWidth}px` : "0px",
             /**
              * **内容的宽度不跟着收**（2026-08-15 作者报的）。
              *
@@ -2395,11 +2460,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <div className="panels">
               {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
                   另一个有而这一个没有时警告会整个消失（规格 7.5 禁止静默吞掉） */}
-              <AttributionCaveat show={mayIncludeUserEdits(runDetail?.fileChanges, runs)} />
+              {/**
+                * **「变更」两件搬去右侧坞的「审阅」了**（2026-08-17）。
+                *
+                * **不留一份在这儿**：两处显示同一件事，人就没法判断该信哪一个，
+                * 而这个项目已经为「两处长得一样的东西」栽过好几次。
+                * 归属告知（`AttributionCaveat`）跟着一起走——它解释的正是那些数。
+                */}
               <StatusPanel sessions={sessions} />
-              <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />
-              {/* 逐次工具调用那一层。**不变式 5 第一次有用户可见面** */}
-              <ToolChangesPanel runs={runs} onOpenFile={openFile} />
               {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
                   见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
               <CostPanel cost={latestCost} />
@@ -2741,6 +2809,35 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ) : null}
 
         </main>
+
+        {/**
+          * **右侧坞**（`feat/远端文件` · 批 1，2026-08-17）。
+          *
+          * 它是 `.body` 的第三列，**与左半的屏切换无关**（作者定的 Q3）：
+          * 切到「设置」或「项目概览」，这一栏还在。
+          *
+          * 本批只有「审阅」一个房客真的有内容；「文件」这一格现在如实说
+          * 「还没搬过来」——**不画一个空面板**，空白会被读成「这里什么都没有」。
+          */}
+        {rightDockOpen ? (
+          <RightDock
+            tenant={rightDockTenant}
+            width={rightDockWidth}
+            onWidth={setRightDockWidth}
+            onClose={() => setRightDockOpen(false)}
+          >
+            {rightDockTenant === "review" ? (
+              <>
+                {/* 归属告知跟着「变更」一起搬——**它解释的正是这一屏的数** */}
+                <AttributionCaveat show={mayIncludeUserEdits(runDetail?.fileChanges, runs)} />
+                <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />
+                <ToolChangesPanel runs={runs} onOpenFile={openFile} />
+              </>
+            ) : (
+              <p className="hint">{t("文件面板还没搬进来（批 2）。现在请走侧栏那个「文件」。")}</p>
+            )}
+          </RightDock>
+        ) : null}
       </div>
 
       <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />

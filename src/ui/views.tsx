@@ -13,6 +13,12 @@ import type { View } from "./state/view.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { 会话开关 } from "./state/transcript.js"
+import {
+  RIGHT_DOCK_MAX,
+  RIGHT_DOCK_MIN,
+  全部房客,
+  type 坞房客,
+} from "./state/right-dock.js"
 import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
@@ -20,7 +26,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -888,11 +894,25 @@ export function SideSash({
   min,
   max,
   onResize,
+  side = "left",
+  label,
 }: {
   width: number
   min: number
   max: number
   onResize: (px: number) => void
+  /**
+   * 这条缝贴着哪一边（2026-08-17，右侧坞要用）。
+   *
+   * **不另写一份拖拽实现**：抓指针、锚点不累加、键盘一步 16px 这三件
+   * 两边一模一样，而它们各自都栽过（不抓指针 → 手滑出 4px 就断；
+   * 累加 → 越界那几十像素被吃掉，拖回来不跟手）。
+   * 复制一份等于把这三个坑复制一遍。
+   *
+   * 两边真正的差别只有两处：**贴哪一边**，以及**往哪个方向拖是变宽**。
+   */
+  side?: "left" | "right"
+  label?: string
 }) {
   const [dragging, setDragging] = useState(false)
   /**
@@ -905,10 +925,10 @@ export function SideSash({
   return (
     <div
       className={`side-sash${dragging ? " dragging" : ""}`}
-      style={{ left: `${width - 2}px` }}
+      style={side === "left" ? { left: `${width - 2}px` } : { right: `${width - 2}px` }}
       role="separator"
       aria-orientation="vertical"
-      aria-label={t("调整侧栏宽度")}
+      aria-label={label ?? t("调整侧栏宽度")}
       aria-valuenow={width}
       aria-valuemin={min}
       aria-valuemax={max}
@@ -921,7 +941,9 @@ export function SideSash({
       }}
       onPointerMove={(e) => {
         if (!dragging) return
-        onResize(锚.current.w + (e.clientX - 锚.current.x))
+        // 右边那条：手往左推才是变宽，所以取反
+        const 走了 = e.clientX - 锚.current.x
+        onResize(锚.current.w + (side === "left" ? 走了 : -走了))
       }}
       onPointerUp={(e) => {
         setDragging(false)
@@ -930,15 +952,153 @@ export function SideSash({
       onPointerCancel={() => setDragging(false)}
       onKeyDown={(e) => {
         // 一步 16px：够看得出来，又不至于两下就撞到界
+        const 变 = (d: number) => onResize(width + (side === "left" ? d : -d))
         if (e.key === "ArrowLeft") {
-          onResize(width - 16)
+          变(-16)
           e.preventDefault()
         } else if (e.key === "ArrowRight") {
-          onResize(width + 16)
+          变(16)
           e.preventDefault()
         }
       }}
     />
+  )
+}
+
+/**
+ * 房客的名字。**菜单、标题、快捷键提示共用这一份**——
+ * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
+ */
+export function 房客名(who: 坞房客): string {
+  return who === "review" ? t("审阅") : t("文件")
+}
+
+/** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
+const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent)
+export function 房客快捷键(who: 坞房客): string {
+  return who === "review" ? (是Mac ? "⌃⇧G" : "Ctrl+Shift+G") : 是Mac ? "⌘P" : "Ctrl+P"
+}
+
+/**
+ * 顶栏最右那颗切换按钮（`feat/远端文件` · 批 1，2026-08-17）。
+ *
+ * ## 为什么在顶栏，不在坞自己的头上
+ *
+ * 与旁边那颗「折叠侧栏」是**同一条理由**：坞关上之后，长在坞里的按钮
+ * 自己也没了，于是这个能力只剩一条藏在别处的出路。
+ * 而顶栏横跨整个窗口，**开着关着都在同一个位置**。
+ *
+ * 这是本项目报过两次的那个形状（*「看不见的能力等于不存在」*：
+ * 没标签的 `＋`、`opacity: 0` 的删除键，两次作者的话都是「没有这个功能」）。
+ */
+export function DockSwitch({
+  open,
+  tenant,
+  onPick,
+}: {
+  open: boolean
+  tenant: 坞房客
+  onPick: (who: 坞房客) => void
+}) {
+  const [开着, 设开着] = useState(false)
+  const 盒 = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!开着) return
+    const 关 = (e: MouseEvent) => {
+      if (!盒.current?.contains(e.target as Node)) 设开着(false)
+    }
+    document.addEventListener("mousedown", 关)
+    return () => document.removeEventListener("mousedown", 关)
+  }, [开着])
+
+  return (
+    <div className="dock-switch" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="dock-switch-trigger"
+        aria-haspopup="menu"
+        aria-expanded={开着}
+        /**
+         * **标签带上当前是谁**：只写「面板」的话，关着的时候人不知道
+         * 点开会出来什么，开着的时候又和坞的标题重复。
+         */
+        aria-label={open ? tf("面板：{0}", 房客名(tenant)) : t("打开面板")}
+        onClick={() => 设开着((v) => !v)}
+      >
+        {open ? 房客名(tenant) : t("面板")}
+        <下拉图标 />
+      </Button>
+      {开着 ? (
+        <div className="menu dock-switch-menu" role="menu" aria-label={t("面板")}>
+          {全部房客.map((who) => (
+            <Button
+              key={who}
+              variant="ghost"
+              size="sm"
+              role="menuitemradio"
+              aria-checked={open && tenant === who}
+              className={open && tenant === who ? "current" : ""}
+              onClick={() => {
+                设开着(false)
+                onPick(who)
+              }}
+            >
+              <span className="dock-mark">{open && tenant === who ? <勾图标 /> : null}</span>
+              {房客名(who)}
+              <span className="dock-key">{房客快捷键(who)}</span>
+            </Button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * 右侧坞（`feat/远端文件` · 批 1）。
+ *
+ * **它不随左半的屏切换而收起**（作者定的）：切到「设置」或「项目概览」，
+ * 右边这一栏还在。「一边看设置一边看图」是成立的动线。
+ */
+export function RightDock({
+  tenant,
+  width,
+  onWidth,
+  onClose,
+  children,
+}: {
+  tenant: 坞房客
+  width: number
+  onWidth: (px: number) => void
+  onClose: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <aside className="right-dock" style={{ width: `${width}px` }} aria-label={房客名(tenant)}>
+      <SideSash
+        width={width}
+        min={RIGHT_DOCK_MIN}
+        max={RIGHT_DOCK_MAX}
+        onResize={onWidth}
+        side="right"
+        label={t("调整面板宽度")}
+      />
+      <header className="dock-head">
+        <h2 className="dock-title">{房客名(tenant)}</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="dock-close"
+          aria-label={t("关闭面板")}
+          onClick={onClose}
+        >
+          <关闭图标 />
+        </Button>
+      </header>
+      <div className="dock-body">{children}</div>
+    </aside>
   )
 }
 

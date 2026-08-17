@@ -4,6 +4,7 @@ import { App } from "./App.js"
 import { ErrorBoundary } from "./ErrorBoundary.js"
 import { loadTheme } from "./state/theme.js"
 import { loadSidebar } from "./state/sidebar.js"
+import { loadRightDock } from "./state/right-dock.js"
 import { loadLang } from "./i18n/index.js"
 import "./styles.css"
 
@@ -23,6 +24,15 @@ loadTheme()
  * 折叠状态更明显——**先闪一下侧栏再收掉**，那一下比不记住还难受。
  */
 loadSidebar()
+
+/**
+ * 右侧坞的房客与宽度**同样在第一帧之前**（2026-08-17）。
+ *
+ * 与侧栏同一条：晚一步就会先按默认宽画一帧再跳。
+ * **「开着没有」不在这里读**——它压根不持久化，
+ * 每次打开应用坞都是关着的（那是这个窗口此刻的样子，不是一条偏好）。
+ */
+loadRightDock()
 
 /**
  * **语言也在第一帧之前读回**（2026-08-13）。

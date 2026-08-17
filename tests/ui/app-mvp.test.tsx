@@ -17,12 +17,13 @@
  *     这一条在第一次跑的时候就抓到了我自己：`files` 是 `string[]`，
  *     我按对象数组写了
  */
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { act, render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { App } from "../../src/ui/App.js"
 import { createClient, type RawResponse } from "../../src/ui/client.js"
 import { OPERATIONS, WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 import type { SessionUpdate } from "../../src/protocol/index.js"
+import { setRightDockOpen } from "../../src/ui/state/right-dock.js"
 
 const RUN = {
   runId: "r1",
@@ -70,6 +71,20 @@ const proj = (workspace: string) => ({
   totalRunCount: 0,
   totalSessionCount: 0,
   unresolvedProblemCount: 0,
+})
+
+/**
+ * **右侧坞的状态是模块级的，会漏给下一条用例。**
+ *
+ * 上面那条「变更事实来自 client」把坞开起来看审阅，而
+ * 「没开着项目概览就不重取」假定的是**没人在看账本**——
+ * 坞留着开的话，后者会看到一次它不该看到的 IPC，红得像功能坏了。
+ *
+ * 今天同一个形状咬了三次（`FAKE_ACP_*` 那张手打清单、那台假服务器的文件表、
+ * 这里）。**共同点都是「模块级的东西没人负责恢复原状」。**
+ */
+beforeEach(() => {
+  setRightDockOpen(false)
 })
 
 function harness(
@@ -420,7 +435,15 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     // 三条硬要求里的第一条在真实界面上永远不会出现
     const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
-    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
+    /**
+     * **「变更」搬去右侧坞的「审阅」了**（2026-08-17，批 1）。
+     *
+     * 此前它长在「项目概览」那一屏上。搬走时**没有在原地留一份**——
+     * 两处显示同一件事，人就没法判断该信哪一个。
+     * 所以这条用例也跟着走：它验的是「事实来自 client」，不是「它长在哪一屏」。
+     */
+    fireEvent.click(screen.getByRole("button", { name: "打开面板" }))
+    fireEvent.click(screen.getByRole("menuitemradio", { name: /审阅/ }))
 
     expect(await screen.findByText("src/model.py")).toBeDefined()
     expect(screen.getByText(/可能包含你自己的修改/)).toBeDefined()

@@ -22,7 +22,7 @@
  * 那是不变式 5 明令禁止的编造。这条区别此前只有单元测试守着，
  * **单元测试证明不了它在真实产物上也成立**。
  */
-import { test, expect, readRuns, 在项目里开会话 } from "./fixtures.js"
+import { test, expect, readRuns, 在项目里开会话, 进审阅 } from "./fixtures.js"
 
 /** 中文文件名是刻意的：R3 撞出过 git 把非 ASCII 路径写成八进制转义的缺陷 */
 const 产出文件 = "分析结果.md"
@@ -44,7 +44,7 @@ test.describe("拿得到 git 事实时", () => {
     // 工具跑完之后模型才回这句 —— 它到了就说明整轮收工了
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 
-    await page.getByRole("button", { name: "项目概览" }).click()
+    await 进审阅(page)
     const panel = page.locator(".panel", { hasText: "变更" })
     // **是哪次工具调用改的** —— 计划里 U4 的原话，只给匿名序号等于没标
     await expect(panel).toContainText("write")
@@ -72,7 +72,7 @@ test.describe("拿不到 git 事实时", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 
-    await page.getByRole("button", { name: "项目概览" }).click()
+    await 进审阅(page)
     const panel = page.locator(".panel", { hasText: "变更" })
     await expect(panel).toContainText("write")
     await expect(panel).toContainText("无法确定改了什么")

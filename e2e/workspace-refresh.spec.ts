@@ -19,7 +19,7 @@
  */
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { test, expect, 在项目里开会话 } from "./fixtures.js"
+import { test, expect, 在项目里开会话, 进审阅 } from "./fixtures.js"
 
 test.use({ dawnOptions: { gitInit: true } })
 
@@ -31,7 +31,7 @@ test("从应用外面改了文件，切回来就看得见", async ({ dawn }) => 
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 
-  await page.getByRole("button", { name: "项目概览" }).click()
+  await 进审阅(page)
   const 产出 = page.locator(".panel", { hasText: "产出" })
   // 起点：仓库干净。**先断言这一句**，否则后面那句可能一开始就成立
   await expect(产出).toContainText("未改动任何文件")

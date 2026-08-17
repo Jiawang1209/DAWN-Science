@@ -44,6 +44,7 @@ export interface 用量数据 {
   activeDays: number
   streak: { current: number; longest: number }
   unattributed: { runs: number; tokens: number }
+  silentTurns: number
   activity: { chats: number; turns: number; toolCalls: number; distinctTools: number; failedTurns: number }
   topTools: { name: string; runs: number }[]
   byProject: { name: string; tokens: number; runs: number }[]
@@ -269,6 +270,23 @@ export function UsagePanel({
               "另有 {0} 个回合（约 {1} token）不知道是哪个模型花的——外部 CLI 的模型由它自己管，本版之前的历史回合也没记。它们不计入上面任何一处。",
               data.unattributed.runs,
               数(data.unattributed.tokens),
+            )}
+          </p>
+        ) : null}
+        {/**
+         * **「一个 token 都没记到」与「不知道是谁花的」是两句话。**
+         *
+         * 上面那条是「有 token，认不出模型」；这条是连 token 都没有。
+         * claude 的 ACP 适配器（0.16.2）`session/prompt` 的回执就只有
+         * `{"stopReason":"end_turn"}`——2026-08-17 拿真的量的。
+         * 不说的话，那些回合在这一屏上完全不存在，
+         * 而**一屏「一切正常」的统计，比一个标着「不知道」的格子更容易骗人**。
+         */}
+        {data.silentTurns > 0 ? (
+          <p className="caveat">
+            {tf(
+              "另有 {0} 个回合一个 token 都没记到——有的运行时不报（claude 的 ACP 适配器就不报），本版之前的历史回合也没有。没记到不等于没花。",
+              data.silentTurns,
             )}
           </p>
         ) : null}

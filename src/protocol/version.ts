@@ -289,6 +289,22 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.4（2026-08-17，分支 `acp`）：`getUsage` 多一格 `silentTurns`
+ *
+ * 纯新增，故 minor。
+ *
+ * **来由是拿真适配器撞出来的**：`@zed-industries/claude-code-acp` 0.16.2
+ * 的 `session/prompt` 回执只有 `{"stopReason":"end_turn"}`——**没有 usage**
+ * （同一天量的 codex 1.4.0 报得很全）。我们照「缺席不补 0」办，
+ * 于是那些回合在「用量」那一屏上**完全不出现**。
+ *
+ * 一屏「一切正常」的统计，比一个标着「不知道」的格子更容易骗人。
+ * 所以多这一格，把它们数出来。
+ *
+ * **措辞只能是「没记到」，不能是「这个适配器不报」**——
+ * 本版之前的历史回合也落在这里，而我们分不出这两者。
+ */
+/**
  * ## 7.3（A3，2026-08-16，分支 `acp`）：会话开关
  *
  * 纯新增，故 minor：快照上多一格 `configOptions`，
@@ -344,7 +360,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.3"
+export const WORKBENCH_PROTOCOL_VERSION = "7.4"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

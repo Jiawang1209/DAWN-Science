@@ -29,6 +29,7 @@
  * | `FAKE_ACP_ASK` | 置一即在回话之前**问一次权限**（A2） |
  * | `FAKE_ACP_CALL_MCP` | 置一即**真的去连 DAWN 递过来的那台 MCP 服务器**并调一次（B1） |
  * | `FAKE_ACP_RUN_KERNEL` | 给一段代码即改调 `dawn_run_in_kernel` 跑它（B1·B′，要真内核） |
+ * | `FAKE_ACP_LIKE_CLAUDE` | 置一即装成 claude 那台适配器：没有 `configOptions`，只有 `models`/`modes` |
  * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
  */
 
@@ -58,6 +59,36 @@ let 收下的MCP = []
  * select（**带分组**，验我们摊平那一段）、一个 boolean。
  * 真适配器给什么我们不知道，而**能处理未知与分组**才是这一层的价值。
  */
+/**
+ * **装成 claude 那台适配器**（2026-08-17，拿真的量出来的）。
+ *
+ * `@zed-industries/claude-code-acp` 0.16.2 不给 `configOptions`，
+ * 只给 `models` 与 `modes`，改设置走 `session/set_model` / `session/set_mode`，
+ * 而且**回的是空的 `{}`**（不带整份新开关）。
+ * `@agentclientprotocol/codex-acp` 1.4.0 则三样都给。
+ *
+ * 一台假 agent 只演一种适配器的话，我们验的就只是那一种。
+ */
+const 像claude = process.env["FAKE_ACP_LIKE_CLAUDE"] === "1"
+
+/** 键名刻意保持不对称：模型是 `modelId`，模式是 `id`——真适配器就是这样 */
+const 那两份 = {
+  models: {
+    currentModelId: "default",
+    availableModels: [
+      { modelId: "default", name: "Default (recommended)", description: "最能干的那个" },
+      { modelId: "haiku", name: "Haiku", description: "快而便宜" },
+    ],
+  },
+  modes: {
+    currentModeId: "default",
+    availableModes: [
+      { id: "default", name: "Default", description: "危险操作要问" },
+      { id: "acceptEdits", name: "Accept Edits", description: "文件改动自动接受" },
+    ],
+  },
+}
+
 const 开关们 = [
   {
     id: "model",
@@ -128,7 +159,17 @@ async function 处理(msg) {
       sessionId: `fake-acp-${Date.now()}`,
       _meta: { cwd: params?.cwd },
       // **开关随会话一起给**（A3）——真适配器就是这么报的
-      ...(process.env["FAKE_ACP_NO_CONFIG"] === "1" ? {} : { configOptions: 开关们 }),
+      /**
+       * **codex 那台三样都给**（`configOptions` + `models` + `modes`），
+       * claude 那台只给后两样。照着各自的真形状发——
+       * 只发 `configOptions` 的话，「已经有了就不再合成」那道闸
+       * 删掉也没人红（2026-08-17 变异测试当场抓到的假绿）。
+       */
+      ...(像claude
+        ? 那两份
+        : process.env["FAKE_ACP_NO_CONFIG"] === "1"
+          ? {}
+          : { configOptions: 开关们, ...那两份 }),
     })
   }
 
@@ -165,6 +206,12 @@ async function 处理(msg) {
   }
 
   if (method === "session/set_config_option") {
+    /**
+     * **claude 那台适配器根本没有这个方法**（2026-08-17 实测 0.16.2）。
+     * 回 -32601 而不是回一个空结果——两者在客户端那边要走完全不同的路，
+     * 而「回空结果」会让「我们发错了方法」这件事悄悄溜过去。
+     */
+    if (像claude) return 回错(id, -32601, '"Method not found": session/set_config_option')
     const 条 = 开关们.find((o) => o.id === params?.configId)
     if (!条) return 回错(id, -32602, `没有这个开关：${params?.configId}`)
     条.currentValue = params.value
@@ -173,6 +220,21 @@ async function 处理(msg) {
      * 而它顺带免掉了客户端的合并逻辑（合并只会多一种「合错了」的失效方式）。
      */
     return 回结果(id, { configOptions: 开关们 })
+  }
+
+  if (method === "session/set_model") {
+    const 有 = 那两份.models.availableModels.some((m) => m.modelId === params?.modelId)
+    if (!有) return 回错(id, -32602, `没有这个模型：${params?.modelId}`)
+    那两份.models.currentModelId = params.modelId
+    // **回空的 `{}`**——真 claude 就是这样，客户端得自己改当前值
+    return 回结果(id, {})
+  }
+
+  if (method === "session/set_mode") {
+    const 有 = 那两份.modes.availableModes.some((m) => m.id === params?.modeId)
+    if (!有) return 回错(id, -32602, `没有这个模式：${params?.modeId}`)
+    那两份.modes.currentModeId = params.modeId
+    return 回结果(id, {})
   }
 
   if (method === "session/cancel") {

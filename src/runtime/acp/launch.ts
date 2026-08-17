@@ -94,12 +94,43 @@ export function 算命令(起: 起法): {
 }
 
 /** 起一个适配器进程。stdio 是 `pipe`——ACP 就在 stdin/stdout 上说话 */
+/**
+ * **不该传给适配器的那些环境变量**（2026-08-17，拿真适配器撞出来的）。
+ *
+ * `@zed-industries/claude-code-acp` 在继承了 `CLAUDECODE` / `CLAUDE_CODE_*`
+ * 的环境里起不来，`session/new` 回的是：
+ *
+ * ```
+ * -32603 Internal error | "Query closed before response received"
+ * ```
+ *
+ * **那句话什么都没说明**——看起来像我们坏了，或者像没登录。
+ *
+ * 这几个变量描述的是**宿主那一层的会话身份**（谁起的、哪个会话、哪个 PID），
+ * 不是子进程的身份。传下去只会骗它：它以为自己长在另一段会话里。
+ *
+ * 会中招的场合很具体也很常见：**从一个 Claude Code 终端里 `npm run app`**。
+ *
+ * 只剔前缀命中的，不动 `ANTHROPIC_*` —— 那些是**凭据**，剔了就登不上。
+ */
+const 不往下传 = ["CLAUDECODE", "CLAUDE_CODE_", "CLAUDE_PID", "CLAUDE_EFFORT"]
+
+/** 滤掉宿主自己的会话身份。**导出是为了能单独验它**，它是一条判得动的规则 */
+export function 滤环境(源: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const 出: NodeJS.ProcessEnv = {}
+  for (const [k, v] of Object.entries(源)) {
+    if (不往下传.some((前) => k === 前 || k.startsWith(前))) continue
+    出[k] = v
+  }
+  return 出
+}
+
 export function 起适配器(起: 起法): ChildProcess {
   const c = 算命令(起)
   return spawn(c.command, c.args, {
     cwd: 起.cwd,
     stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, ...c.env },
+    env: { ...滤环境(process.env), ...c.env },
     /**
      * **POSIX 上单独成组**，好让停止时能连着子孙一起收
      * （`npx` 起的是一棵树）。Windows 没有进程组，那边走 `taskkill /T`。

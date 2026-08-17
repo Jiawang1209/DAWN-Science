@@ -29,24 +29,18 @@ afterEach(async () => {
   await 关掉?.()
   关掉 = undefined
   /**
-   * **每一个都要清。**
+   * **`FAKE_ACP_` 开头的一律清掉。**
    *
-   * 第一版这张清单漏了 A2 新加的两个，于是
-   * `FAKE_ACP_ASK_NO_OPTIONS` 漏到了下一条用例里——症状是
-   * 「等不到权限询问，收到的是 notice」，看起来像功能坏了。
-   * **一条用例把状态漏给下一条，比它自己红更难查。**
+   * 这里原先是一张手打的清单，而它已经漏过两次：
+   * A2 加的两个漏过一次（症状是「等不到权限询问」，看起来像功能坏了），
+   * 2026-08-17 加 `FAKE_ACP_LIKE_CLAUDE` 时又漏了一次——那次更难查，
+   * 因为泄漏出去的用例**单独跑是绿的**，只有整个文件一起跑才红。
+   *
+   * **一条用例把状态漏给下一条，比它自己红更难查**；
+   * 而一张要人记得去加的清单，迟早会有人忘。按前缀扫就不用记了。
    */
-  for (const k of [
-    "FAKE_ACP_FAIL_INIT",
-    "FAKE_ACP_USAGE",
-    "FAKE_ACP_REPLY",
-    "FAKE_ACP_ASK",
-    "FAKE_ACP_ASK_NO_OPTIONS",
-    "FAKE_ACP_NO_CONFIG",
-    "FAKE_ACP_CAN_LOAD",
-    "FAKE_ACP_LOAD_FAILS",
-  ]) {
-    delete process.env[k]
+  for (const k of Object.keys(process.env)) {
+    if (k.startsWith("FAKE_ACP_")) delete process.env[k]
   }
 })
 
@@ -383,6 +377,138 @@ describe("会话开关", () => {
     rt.write(s.sessionId, "在吗")
     await 等到(收, (e) => e.kind === "idle", "收口")
     expect(收.filter((e) => e.kind === "config_options")).toHaveLength(0)
+  })
+})
+
+/**
+ * **不给 `configOptions` 的适配器**（2026-08-17，拿真的量出来的）。
+ *
+ * `@zed-industries/claude-code-acp` 0.16.2 只给 `models` 与 `modes`，
+ * 而 `session/set_config_option` 在它那儿是 `-32601 Method not found`。
+ * 不合成的话，真 claude 接进来**模型与模式菜单是空的**——
+ * 而空菜单看起来像「这个 agent 不让换模型」，不像「我们没读那个字段」。
+ */
+describe("适配器只给 models / modes 时", () => {
+  it("**合成两个开关**，模型与模式都出得来", async () => {
+    const rt = 起一个({ FAKE_ACP_LIKE_CLAUDE: "1" })
+    const s = spec("m1")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    await 等到(收, (e) => e.kind === "config_options", "开关")
+    const 事 = 收.filter((e) => e.kind === "config_options").at(-1) as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >
+    const 表 = new Map(事.options.map((o) => [o.category, o]))
+
+    /**
+     * **模型用 `modelId`，模式用 `id`。** 这一处不对称是真适配器里量出来的；
+     * 写成一样的话模型那一支会全军覆没（每项都少了 value），
+     * 而表现是「菜单是空的」——与「它不让换模型」在屏幕上没有区别。
+     */
+    expect(表.get("model")?.options.map((o) => o.value)).toEqual(["default", "haiku"])
+    expect(表.get("mode")?.options.map((o) => o.value)).toEqual(["default", "acceptEdits"])
+    expect(表.get("model")?.current).toBe("default")
+    expect(表.get("mode")?.current).toBe("default")
+  })
+
+  it("改模型走 `session/set_model`，而且当前值真的变了", async () => {
+    const rt = 起一个({ FAKE_ACP_LIKE_CLAUDE: "1" })
+    const s = spec("m2")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    const 那个 = (收.find((e) => e.kind === "config_options") as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >).options.find((o) => o.category === "model")!
+    await rt.setConfigOption?.(s.sessionId, 那个.id, "haiku")
+    const 事 = 收.filter((e) => e.kind === "config_options").at(-1) as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >
+    /**
+     * 这条路与原生那条有一处实质不同：**它回的是空的 `{}`**，
+     * 不带整份新开关。所以当前值得我们自己改——不改的话菜单会弹回旧值，
+     * 看起来像「点了没生效」。
+     */
+    expect(事.options.find((o) => o.category === "model")?.current).toBe("haiku")
+  })
+
+  it("改模式走 `session/set_mode`", async () => {
+    const rt = 起一个({ FAKE_ACP_LIKE_CLAUDE: "1" })
+    const s = spec("m3")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    const 那个 = (收.find((e) => e.kind === "config_options") as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >).options.find((o) => o.category === "mode")!
+    await rt.setConfigOption?.(s.sessionId, 那个.id, "acceptEdits")
+    const 事 = 收.filter((e) => e.kind === "config_options").at(-1) as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >
+    expect(事.options.find((o) => o.category === "mode")?.current).toBe("acceptEdits")
+  })
+
+  /**
+   * **按支补，不是全有全无。**
+   *
+   * 真 codex（1.4.0）`configOptions` 里 `model` 与 `mode` 两个 category 都有，
+   * 于是它那儿一个都不合成。这台假 agent 有 model 没有 mode——
+   * 正好用来钉住「一支一支地看」：
+   *
+   * - 已经有 model 了还合成一个 → 菜单里**两个模型菜单**，
+   *   而「两处长得一样的东西，等于没有判据」；
+   * - 缺 mode 却不补 → 那一支的菜单是空的。
+   */
+  it("已有的那一支不合成，缺的那一支照补", async () => {
+    const rt = 起一个()
+    const s = spec("m4")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    const 事 = 收.find((e) => e.kind === "config_options") as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >
+    // 已经有 model 了：不再多一个
+    expect(事.options.filter((o) => o.category === "model")).toHaveLength(1)
+    expect(事.options.find((o) => o.category === "model")?.id).toBe("model")
+    // 这台假 agent 的 configOptions 里没有 mode 那一支：补上
+    expect(事.options.map((o) => o.id)).toEqual(["model", "thought", "yolo", "__dawn_mode"])
+  })
+
+  /**
+   * **换了模型，后面的 token 要记在新的那个头上**（A4）。
+   * 合成那条路是我们自己改当前值的，最容易漏掉这一步。
+   */
+  it("合成的模型开关也参与「用量记在谁头上」", async () => {
+    const rt = 起一个({ FAKE_ACP_LIKE_CLAUDE: "1", FAKE_ACP_USAGE: "1" })
+    const s = spec("m5")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    const 那个 = (收.find((e) => e.kind === "config_options") as Extract<
+      AgentEvent,
+      { kind: "config_options" }
+    >).options.find((o) => o.category === "model")!
+    await rt.setConfigOption?.(s.sessionId, 那个.id, "haiku")
+    rt.write(s.sessionId, "在吗")
+    await 等到(收, (e) => e.kind === "turn_usage", "用量")
+    const 用 = 收.find((e) => e.kind === "turn_usage") as Extract<
+      AgentEvent,
+      { kind: "turn_usage" }
+    >
+    expect(用.model).toMatch(/\/haiku$/)
   })
 })
 

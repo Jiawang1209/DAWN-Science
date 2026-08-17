@@ -14,8 +14,9 @@
 | **B1·C** | 外部 agent 干的活也产出文件事实（从 git 反推） | ✅ `422b72a` |
 | **B1·B** | 把我们自己的工具作为 MCP 递给它（网关 + MCP 服务器 + 记账） | ✅ `7acbc78` |
 | **B1·B′** | `dawn_run_in_kernel`（第四件工具） | ✅ `18b868f` |
+| **真机** | 拿真 codex / claude 适配器接一次，按结果修 | ✅ 待回填（见下） |
 
-协议从 7.0 走到 **7.3**（会话种类 `acp` → 权限询问 → 会话开关）。
+协议从 7.0 走到 **7.4**（会话种类 `acp` → 权限询问 → 会话开关 → `silentTurns`）。
 
 ### 路线 B 本体：已经通了（`7acbc78`）
 
@@ -56,6 +57,88 @@ ACP agent ──stdio/MCP──▶ scripts/dawn-mcp-server.mjs ──socket+令�
 等法上有一条钉了判据：**要先 `busy` 再 `idle` 才算跑完**。订上去那一刻内核多半就是
 idle 的（上一句刚跑完），见 idle 就收的话这一次一个字都收不到——而那看起来像
 「这段代码没有输出」。超时同样出声：把已经出来的交出去，并说清等了多久。
+
+---
+
+## 拿真适配器接了一次（2026-08-17）
+
+在此之前**整条链路从没跑过一个真适配器**——所有验证对面都是那台假 agent，
+协议形状全靠读 SDK 类型定义。作者：*「拿真适配器来测试，接一下 codex 再接一下 claude。」*
+
+两台都接上了，各真跑了一句。**下面这些数是量出来的，不是读来的。**
+
+### codex（`@agentclientprotocol/codex-acp` 1.4.0，`agentInfo` 报 1.1.9）
+
+| 我们的假设 | 结果 |
+|---|---|
+| `initialize` 那份参数 | ✅ 收下，`agentCapabilities.loadSession: true` |
+| `configOptions` 的形状 | ✅ 5 个 select，扁平 options（没有分组） |
+| setter 的参数名是 `configId` | ✅ **正好**——`optionId` / `id` 都回 `-32602` |
+| 回复里带整份新开关 | ✅ 真的带 |
+| `mcpServers` 那份 stdio 形状 | ✅ 收下（`env` 是 `[{name,value}]`） |
+| usage 字段叫 `inputTokens` / `outputTokens` | ✅ 一字不差 |
+
+回执：`usage: {totalTokens:22233, inputTokens:11214, cachedReadTokens:11008, outputTokens:11}`。
+另有一条我们没消费的 `usage_update` 通知（我们读的是回执里那份，够用）。
+
+它的 `configOptions` 里 `category` 依次是
+`mode` / `collaboration_mode` / `model` / `thought_level` / `model_config`。
+
+### claude（`@zed-industries/claude-code-acp` 0.16.2）
+
+**三处与我们的假设不符，都是纸上验不出来的。**
+
+#### 一、它没有 `configOptions`
+
+`session/new` 只回 `sessionId` / `models` / `modes`，而
+`session/set_config_option` 是 **`-32601` Method not found**。
+它认的是 `session/set_model {modelId}` 与 `session/set_mode {modeId}`，
+**两者都回空的 `{}`**（不带整份新开关）。
+
+于是我们只读 `configOptions` 的做法，会让真 claude 接进来
+**模型与模式菜单是空的**——而空菜单看起来像「这个 agent 不让换模型」。
+
+**已修（路线甲，作者定的）**：缺哪一支就合成哪一支，setter 按来源分流。
+一处**会咬人的不对称**：模型的键是 `modelId`，模式的键是 `id`。
+
+#### 二、继承的环境变量能把它掐死
+
+第一次跑，`session/new` 回的是：
+
+```
+-32603 Internal error | "Query closed before response received"
+```
+
+不是 fs 能力的问题（试过）。是宿主那层 Claude Code 的
+`CLAUDECODE` / `CLAUDE_CODE_*` 一串变量——去掉就通。
+会中招的场合很具体：**从一个 Claude Code 终端里 `npm run app`**。
+
+**已修**：起适配器时滤掉宿主的会话身份（`滤环境`）。
+`ANTHROPIC_*` 一个都不动——那些是凭据，剔了的表现是「登不上」，
+与「没配 key」在屏幕上一模一样。
+
+这一条是**在真适配器上验的**：把滤掉那一步拆掉，真 claude 当场又死。
+
+#### 三、它不报 usage
+
+`session/prompt` 的回执只有 `{"stopReason":"end_turn"}`。
+我们「缺席不补 0」那条做对了，但代价是那些回合在「用量」那一屏上
+**完全不出现**——而一屏「一切正常」的统计，比一个标着「不知道」的格子更容易骗人。
+
+**已修**：`getUsage` 多一格 `silentTurns`（协议 7.4）。
+措辞只能是**「没记到」**，不能是「这个适配器不报」——
+本版之前的历史回合也落在这里，我们分不出这两者。
+
+### 假 agent 也跟着长了一副新皮
+
+`FAKE_ACP_LIKE_CLAUDE=1` 装成 claude 那种（没有 `configOptions`，
+setter 回 `-32601`，`set_model`/`set_mode` 回空 `{}`）；
+普通模式则照 codex 的样子**三样都给**。
+一台假 agent 只演一种适配器的话，我们验的就只是那一种——
+这一条是变异测试逼出来的：假 agent 不给 `models` 时，
+「已有就不再合成」那道闸删掉也没人红。
+
+---
 
 ## 为什么现在做这件事
 

@@ -43,6 +43,46 @@
 
 ## 变更日志
 
+### 2026-08-17 — 拿真适配器接了一次 codex 与 claude，按结果修了三处（分支 `acp`）
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 整条 ACP 链路此前**从没跑过一个真适配器**——所有验证对面
+  都是那台假 agent，协议形状全靠读 SDK 类型定义。作者：*「拿真适配器来测试，
+  接一下 codex 再接一下 claude，看看真实效果怎么样。」*
+- **What**: 两台都接上并各真跑了一句。**codex（1.4.0）一处没错**：握手参数、
+  `configOptions` 形状、setter 的参数名 `configId`、`mcpServers` 的 stdio 形状、
+  usage 的 `inputTokens` / `outputTokens` —— 全部与我们的假设一致。
+  **claude（0.16.2）露出三处，都是纸上验不出来的**：
+  1. **它没有 `configOptions`**（`session/set_config_option` 是 `-32601`），
+     只给 `models` / `modes`，改设置走 `session/set_model` / `session/set_mode`
+     且**回空 `{}`**。修法是作者定的**路线甲**：缺哪一支就合成哪一支
+     （`合成开关`），setter 按来源分流，当前值我们自己改。
+     一处会咬人的不对称：模型的键是 `modelId`，模式的键是 `id`。
+  2. **继承的 `CLAUDECODE` / `CLAUDE_CODE_*` 能把它掐死**，报的是
+     `-32603 "Query closed before response received"`——那句话看起来像我们坏了。
+     新增 `滤环境`：起适配器时剔掉宿主那层的会话身份。
+     **`ANTHROPIC_*` 一个不动**——那是凭据，剔了的表现是「登不上」。
+  3. **它不报 usage**（回执只有 `stopReason`）。`getUsage` 多一格
+     `silentTurns`，协议升 **7.4**；措辞是「没记到」而非「这个适配器不报」——
+     本版之前的历史回合也落在这里，我们分不出这两者。
+  假 agent 新增 `FAKE_ACP_LIKE_CLAUDE`（装成 claude 那种），
+  普通模式改为照 codex 的样子**三样都给**。
+  `afterEach` 的 `FAKE_ACP_*` 清单改成**按前缀扫**——那张手打清单已经漏过两次。
+- **Impact**: 真 claude 接进来现在**有模型与模式菜单**、**在开发者的终端里起得来**、
+  **不会在用量屏上假装不存在**。协议 7.3 → 7.4（纯新增）。
+  codex 那条路一个字没改——它本来就是对的。
+- **Verification**:
+  - 单元：ACP 运行时 +5 条（合成、两条 setter 分流、按支补、合成的模型也进「谁答的」），
+    起进程 +3 条（滤环境），用量 +1 条。**逐条变异共 14 次，14 次全红**——
+    其中 3 次第一遍是假绿（假 agent 不给 `models`、夹具两类条数撞巧、
+    没有「只记了一半」的行），改夹具后才真红。
+  - **在真适配器上验的**：一次性探针走我们自己的 `起适配器`，
+    在带 `CLAUDE_CODE_*` 的环境里 → claude 开得出会话；
+    把 `滤环境` 拆掉 → 真 claude 当场又回 `-32603`。探针用完删掉。
+  - `npm test` 1647 绿；`npm run test:e2e` 307 + 6 绿；视觉基线 10 张绿。
+  - 两条扫描当场拦住我：协议版本与说明不一致、新 msgid 没有英文——**它们该红的时候红了**。
+
 ### 2026-08-17 — `dawn_run_in_kernel`：外部 agent 借我们的解释器跑代码（B1·B′，分支 `acp`）
 
 - **Type**: feat

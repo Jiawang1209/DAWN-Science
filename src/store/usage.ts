@@ -70,6 +70,22 @@ export interface 用量汇总 {
    */
   unattributed: { runs: number; tokens: number }
   /**
+   * **跑过、但一个 token 都没记到的回合**（2026-08-17）。
+   *
+   * 与 `unattributed` 是两回事，别合并：那边是「有 token，不知道是谁花的」，
+   * 这边是「连 token 都没有」。
+   *
+   * 它不是假想的：`@zed-industries/claude-code-acp` 0.16.2 的
+   * `session/prompt` 回执只有 `{"stopReason":"end_turn"}`，**没有 usage 字段**
+   * （2026-08-17 拿真适配器量的；同一天的 codex 1.4.0 报得很全）。
+   * 我们照「缺席不补 0」办，于是那些回合在这一屏上**完全不出现**——
+   * 而一屏「一切正常」的统计，比一个标着「不知道」的格子更容易骗人。
+   *
+   * 本版之前的历史回合也落在这里。所以措辞只能是「没记到」，
+   * **不能写成「这个适配器不报」**——我们分不出这两者。
+   */
+  silentTurns: number
+  /**
    * 活动洞察（2026-08-16 作者要的，形状学自他给的那张截图）。
    *
    * **每一格都是账本里数出来的，没有一个是估的。**
@@ -173,6 +189,20 @@ export function 汇总用量(db: Database.Database, 今天: string): 用量汇�
         FROM runs`)
     .get() as { chats: number; turns: number | null; toolCalls: number | null; failedTurns: number | null }
 
+  /**
+   * 一个 token 都没记到的回合。**单独一条查询**——上面那条
+   * `WHERE cost_… IS NOT NULL` 恰好把它们全滤掉了，
+   * 而「被滤掉」正是它们此前在这一屏上完全不存在的原因。
+   */
+  const 哑 = db
+    .prepare(`
+      SELECT COUNT(*) AS n
+        FROM runs
+       WHERE request_type = 'agent_turn'
+         AND cost_input_tokens IS NULL
+         AND cost_output_tokens IS NULL`)
+    .get() as { n: number | null }
+
   const 项目 = db
     .prepare(`
       SELECT COALESCE(p.name, '?') AS name,
@@ -207,6 +237,7 @@ export function 汇总用量(db: Database.Database, 今天: string): 用量汇�
     },
     topTools: 工具,
     byProject: 项目,
+    silentTurns: 哑.n ?? 0,
     total: input + output,
     input,
     output,

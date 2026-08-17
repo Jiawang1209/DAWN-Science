@@ -60,6 +60,84 @@ function 算谁答的(agentId: string, 开关: readonly 会话开关[] | undefin
   return 模型?.current ? `${agentId}/${模型.current}` : agentId
 }
 
+/**
+ * **有些适配器根本不给 `configOptions`**（2026-08-17，拿真适配器验出来的）。
+ *
+ * `@zed-industries/claude-code-acp` 0.16.2 只给 `models` 与 `modes`，
+ * `session/set_config_option` 在它那儿是 **`-32601` Method not found**；
+ * 而 `@agentclientprotocol/codex-acp` 1.4.0 三样都给。
+ *
+ * 不合成的话，真 claude 接进来**模型与模式菜单是空的**——
+ * 而空菜单看起来像「这个 agent 不让换模型」，不像「我们没读那个字段」。
+ *
+ * **只补缺的那一支**：`configOptions` 里已经有 `category: model` 的，
+ * 就不再合成一个 model——两个长得一样的菜单，等于没有判据。
+ *
+ * 返回值第二项是**这些是合成的**，`setConfigOption` 据它分流到
+ * `session/set_model` / `session/set_mode`。
+ */
+function 合成开关(原: unknown, 已有: readonly 会话开关[]): {
+  开关: 会话开关[]
+  合成的: Map<string, "model" | "mode">
+} {
+  const r = (原 ?? {}) as Record<string, unknown>
+  const 出: 会话开关[] = []
+  const 合成的 = new Map<string, "model" | "mode">()
+
+  const 取项 = (源: unknown, 键: "modelId" | "id") => {
+    const 项: { value: string; name: string; description?: string }[] = []
+    for (const x of Array.isArray(源) ? 源 : []) {
+      const y = x as Record<string, unknown>
+      if (typeof y[键] === "string" && typeof y["name"] === "string") {
+        项.push({
+          value: y[键] as string,
+          name: y["name"] as string,
+          ...(typeof y["description"] === "string" ? { description: y["description"] } : {}),
+        })
+      }
+    }
+    return 项
+  }
+
+  /**
+   * **模型用 `modelId`，模式用 `id`。**
+   * 这一处不对称是真适配器里量出来的，不是猜的——写成一样的话，
+   * 模型那一支会全军覆没（每一项都少了 value），而表现是「菜单是空的」。
+   */
+  const 模型源 = (r["models"] ?? {}) as Record<string, unknown>
+  if (!已有.some((o) => o.category === "model")) {
+    const 项 = 取项(模型源["availableModels"], "modelId")
+    if (项.length > 0) {
+      出.push({
+        id: "__dawn_model",
+        name: "Model",
+        category: "model",
+        kind: "select",
+        current: typeof 模型源["currentModelId"] === "string" ? (模型源["currentModelId"] as string) : "",
+        options: 项,
+      })
+      合成的.set("__dawn_model", "model")
+    }
+  }
+
+  const 模式源 = (r["modes"] ?? {}) as Record<string, unknown>
+  if (!已有.some((o) => o.category === "mode")) {
+    const 项 = 取项(模式源["availableModes"], "id")
+    if (项.length > 0) {
+      出.push({
+        id: "__dawn_mode",
+        name: "Mode",
+        category: "mode",
+        kind: "select",
+        current: typeof 模式源["currentModeId"] === "string" ? (模式源["currentModeId"] as string) : "",
+        options: 项,
+      })
+      合成的.set("__dawn_mode", "mode")
+    }
+  }
+  return { 开关: 出, 合成的 }
+}
+
 function 收窄开关(原: unknown): 会话开关[] {
   if (!Array.isArray(原)) return []
   const 出: 会话开关[] = []
@@ -145,6 +223,11 @@ interface 一段 {
    * `type: "boolean"` 且 `value` 是真布尔。
    */
   开关们?: readonly 会话开关[]
+  /**
+   * 这几个开关是**我们合成的**（见 `合成开关`），改它们要走
+   * `session/set_model` / `session/set_mode`，而不是 `set_config_option`。
+   */
+  合成的?: Map<string, "model" | "mode">
   /** 这一轮累计报到多少 token（ACP 报的是**累计**，我们要差值） */
   上次累计?: { input: number; output: number }
   /**
@@ -373,8 +456,11 @@ export class AcpRuntime implements AgentRuntime {
      * 这一段会话可以调哪些开关。**它可以一个都没有**——
      * 那时菜单不画（**不摆一个空菜单**）。
      */
-    const 开关 = 收窄开关((新 as Record<string, unknown>)["configOptions"])
+    const 原生 = 收窄开关((新 as Record<string, unknown>)["configOptions"])
+    const 补的 = 合成开关(新, 原生)
+    const 开关 = [...原生, ...补的.开关]
     段.开关们 = 开关
+    段.合成的 = 补的.合成的
     段.谁答的 = 算谁答的(段.agentId, 开关)
     if (开关.length > 0) {
       this.发(spec.sessionId, { kind: "config_options", sessionId: spec.sessionId, options: 开关 })
@@ -439,6 +525,33 @@ export class AcpRuntime implements AgentRuntime {
   async setConfigOption(sessionId: SessionId, configId: string, value: string): Promise<void> {
     const 段 = this.段们.get(sessionId)
     if (!段?.acpSessionId) return
+    /**
+     * **合成出来的那两个走别的方法**（2026-08-17）。
+     *
+     * `session/set_config_option` 在 claude 那台适配器上是
+     * `-32601 Method not found`——照旧发过去的话，用户点了模型菜单
+     * 会看到一句「不认识这个方法」，而那看起来像我们坏了。
+     *
+     * 这条路与原生那条还有一处实质不同：**它们回的是空的 `{}`**，
+     * 不带整份新开关。所以当前值得我们自己改——原生那条刻意不这么做
+     * （合并只会多一种「合错了」的失效方式），但这里没得选：
+     * 不改的话菜单会弹回旧值，看起来像「点了没生效」。
+     */
+    const 是合成的 = 段.合成的?.get(configId)
+    if (是合成的) {
+      await this.请求(
+        sessionId,
+        是合成的 === "model" ? "session/set_model" : "session/set_mode",
+        是合成的 === "model"
+          ? { sessionId: 段.acpSessionId, modelId: value }
+          : { sessionId: 段.acpSessionId, modeId: value },
+      )
+      const 新的 = (段.开关们 ?? []).map((o) => (o.id === configId ? { ...o, current: value } : o))
+      段.开关们 = 新的
+      段.谁答的 = 算谁答的(段.agentId, 新的)
+      this.发(sessionId, { kind: "config_options", sessionId, options: 新的 })
+      return
+    }
     const 是布尔 = 段.开关们?.find((o) => o.id === configId)?.kind === "boolean"
     const r = (await this.请求(sessionId, "session/set_config_option", {
       sessionId: 段.acpSessionId,

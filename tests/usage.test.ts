@@ -22,6 +22,8 @@ const 记一轮 = (opts: {
   output?: number | null
   cache?: number | null
   id?: string
+  /** 默认 `agent_turn`。**要能记别的**，否则「只数回合」那条判据验不动 */
+  type?: string
 }) => {
   const id = opts.id ?? `r${Math.random().toString(36).slice(2)}`
   db.prepare(`
@@ -29,10 +31,11 @@ const 记一轮 = (opts: {
                       started_at, finished_at, has_error,
                       cost_visible, cost_input_tokens, cost_output_tokens,
                       cost_cache_read_tokens, cost_invisible_reason, model)
-    VALUES (@id, 'p1', 's1', 'agent', 'agent_turn', 'completed',
+    VALUES (@id, 'p1', 's1', 'agent', @type, 'completed',
             @at, @at, 0, 0, @input, @output, @cache, '只报 token', @model)`).run({
     id,
     at: opts.at,
+    type: opts.type ?? "agent_turn",
     input: opts.input ?? null,
     output: opts.output ?? null,
     cache: opts.cache ?? null,
@@ -85,6 +88,50 @@ describe("没记模型的那些", () => {
     expect(u.byModel).toEqual([{ model: "deepseek/v4", tokens: 120, runs: 1 }])
     expect(u.daily).toEqual([{ date: "2026-08-16", tokens: 120 }])
     expect(u.unattributed).toEqual({ runs: 1, tokens: 800 })
+  })
+
+  /**
+   * **「一个 token 都没记到」是第三类，与前两类都不同。**
+   *
+   * `unattributed` 是「有 token，认不出模型」；这一类连 token 都没有。
+   * 它不是假想的：`@zed-industries/claude-code-acp` 0.16.2 的
+   * `session/prompt` 回执只有 `{"stopReason":"end_turn"}`
+   * （2026-08-17 拿真适配器量的）。照「缺席不补 0」办的结果是
+   * **那些回合在这一屏上完全不出现**——而一屏「一切正常」的统计，
+   * 比一个标着「不知道」的格子更容易骗人。
+   */
+  it("一个 token 都没记到的回合要数出来，且不与「无主」混为一谈", () => {
+    记一轮({ at: "2026-08-16T03:00:00.000Z", input: 100, output: 20, model: "deepseek/v4" })
+    // 有 token、没模型 —— 这是 unattributed
+    记一轮({ at: "2026-08-16T04:00:00.000Z", input: 500, output: 300, model: null })
+    /**
+     * 连 token 都没有 —— 这是 silentTurns（claude 的 ACP 适配器就长这样）。
+     *
+     * **两条都带模型**，且与「无主」那条的条数**不相等**：
+     * 相等的话，把判据写成 `model IS NULL` 也能蒙对
+     * （2026-08-17 变异测试当场抓到的假绿）。
+     */
+    记一轮({ at: "2026-08-16T05:00:00.000Z", input: null, output: null, model: "claude-acp/sonnet" })
+    记一轮({ at: "2026-08-16T06:00:00.000Z", input: null, output: null, model: "claude-acp/sonnet" })
+    /**
+     * **只记到一半也算记到了。**
+     * 判据写成只看 `input` 的话，这一条会被误当成「一个 token 都没记到」——
+     * 而它明明记到了 7 个。
+     */
+    记一轮({ at: "2026-08-16T06:30:00.000Z", input: null, output: 7, model: "deepseek/v4" })
+    /** **工具调用不算回合。** 不摆一条的话，「只数 agent_turn」那道闸删了也没人红 */
+    记一轮({
+      at: "2026-08-16T07:00:00.000Z",
+      input: null,
+      output: null,
+      model: null,
+      type: "tool_call:read",
+    })
+    const u = 汇总用量(db, "2026-08-16")
+    expect(u.silentTurns, "没记到的回合没数出来").toBe(2)
+    // **两类不许互相污染**
+    expect(u.unattributed).toEqual({ runs: 1, tokens: 800 })
+    expect(u.total).toBe(127)
   })
 
   it("**它不是 0**：一条无主的都没有时，也如实报 0 条", () => {

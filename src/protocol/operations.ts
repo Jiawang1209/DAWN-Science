@@ -978,6 +978,15 @@ export const OPERATIONS = {
         streak: z.object({ current: NonNegInt, longest: NonNegInt }).strict(),
         /** 有 token 但不知道是谁花的（外部 CLI、本版之前的历史） */
         unattributed: z.object({ runs: NonNegInt, tokens: NonNegInt }).strict(),
+        /**
+         * **跑过、但一个 token 都没记到的回合**（7.4）。
+         *
+         * 与 `unattributed` 是两回事：那边是「有 token，认不出模型」，
+         * 这边是连 token 都没有。claude 的 ACP 适配器（0.16.2）
+         * `session/prompt` 回执只有 `stopReason`，没有 usage
+         * （2026-08-17 拿真适配器量的）。
+         */
+        silentTurns: NonNegInt,
         /** 活动洞察。**每一格都是数出来的，没有一个是估的** */
         activity: z
           .object({

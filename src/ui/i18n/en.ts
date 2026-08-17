@@ -578,6 +578,8 @@ export const EN: Readonly<Record<string, string>> = {
     "A further {0} cache-read tokens are not in the total: providers disagree on what that number means, and folding it in would double-count.",
   "另有 {0} 个回合（约 {1} token）不知道是哪个模型花的——外部 CLI 的模型由它自己管，本版之前的历史回合也没记。它们不计入上面任何一处。":
     "Another {0} turns (about {1} tokens) have no model on record — external CLIs manage their own model, and turns from before this version were never tagged. They count towards nothing above.",
+  "另有 {0} 个回合一个 token 都没记到——有的运行时不报（claude 的 ACP 适配器就不报），本版之前的历史回合也没有。没记到不等于没花。":
+    "Another {0} turns have no token record at all — some runtimes never report them (claude's ACP adapter is one), and neither did turns from before this version. Nothing recorded is not the same as nothing spent.",
   "Token 活动": "Token activity",
   "每日": "Daily",
   "每周": "Weekly",

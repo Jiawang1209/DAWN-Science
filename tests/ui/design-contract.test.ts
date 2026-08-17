@@ -670,8 +670,23 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
    */
   it("**JSX 里的类名，styles.css 里都定义过**", () => {
     const css = read("styles.css")
+    /**
+     * **CSS 的注释也要剥掉**（2026-08-17）。
+     *
+     * 不剥的代价这个仓库刚付过：`styles.css` 里有两条注释在**讲述**
+     * 「`.menu` 这个类根本没有定义」那次事故，而它们里面的字面量 `.menu`
+     * 被这条扫描当成了定义。于是 A3 写下 `className="menu sess-config-menu"`
+     * 时，扫描一声不吭——那个菜单**从那天起就没有底板**
+     * （实测 `background: rgba(0,0,0,0)`、`box-shadow: none`），
+     * 直到 2026-08-17 截图给作者看时才发现。
+     *
+     * **一条把「关于 bug 的记述」当成「bug 的修复」的扫描，正好在原地失效。**
+     * TSX 那一侧第一版就剥了注释，CSS 这一侧漏了——
+     * 两侧不对称，而不对称的那一侧就是漏的那一侧。
+     */
+    const cssNoComments = css.replace(/\/\*[\s\S]*?\*\//g, "")
     const 有定义 = new Set<string>()
-    for (const m of css.matchAll(/\.([a-zA-Z][\w-]*)/g)) 有定义.add(m[1]!)
+    for (const m of cssNoComments.matchAll(/\.([a-zA-Z][\w-]*)/g)) 有定义.add(m[1]!)
     const 缺的 = new Set<string>()
     for (const f of tsxFiles()) {
       /**
@@ -738,6 +753,15 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
       "views.tsx：.side-section-toggle",
       "views.tsx：.stopping", "views.tsx：.thought-label", "views.tsx：.who-name",
       "views.tsx：.kout-rich",
+      /**
+       * **这两条是身份，不是样式**（2026-08-17 剥掉 CSS 注释后浮出来的）。
+       *
+       * 几何全在 `.pill` 上，`.agent-pill` / `.model-pill` 只用来区分
+       * 「这是哪一颗」——`styles.css` 第 901 行那条注释写着它们为什么必须
+       * 是两个名字：**曾经共用一个类名，于是选择器一下子匹配到两个元素**。
+       * 它们没有样式是对的，删掉反而会把那个 bug 请回来。
+       */
+      "views.tsx：.agent-pill", "views.tsx：.model-pill",
     ])
     expect(
       [...缺的].filter((x) => !欠账.has(x)).sort(),

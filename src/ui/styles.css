@@ -2300,6 +2300,33 @@ pre {
    原来是 `absolute`，被 `.session-list` 的 `overflow-y: auto` 裁掉——
    浏览器于是给出一条滚动条让人去够它；只有一条对话时列表根本没得滚，
    那个菜单就永远只露半截。位置由 `SessionRow` 按按钮的矩形算，开在行的右侧。 */
+/**
+ * **菜单的外壳。**（2026-08-17 才真的写出来）
+ *
+ * `.menu` 这个类此前**从来没有定义过**，而 JSX 里两处都写着它。
+ * 第一次栽在 `＋` 那个菜单上（作者：*「＋ 的这个样式，很难看」*），
+ * 当时的修法是把外壳塞进 `.attach-menu` 自己那一条——
+ * **没有去定义 `.menu`**，于是这个坑原封不动地留着。
+ *
+ * 第二次栽在会话开关菜单（A3）上：它写的是
+ * `className="menu sess-config-menu"`，而 `.sess-config-menu` 只给了定位。
+ * 于是那个菜单**没有底色、没有边、没有阴影**，文字直接浮在页面上、
+ * 还压进输入框——实测 `background: rgba(0,0,0,0)` / `box-shadow: none`。
+ * 从 2026-08-16 一直这样，到 2026-08-17 截图给作者看时才发现。
+ *
+ * **定位不放进来**：行菜单与 `＋` 是 `fixed`（要脱离会滚的盒子），
+ * 会话开关是贴着按钮的 `absolute`。外壳共用，定位各管各的。
+ */
+.menu,
+.row-menu,
+.attach-menu {
+  border-radius: var(--dawn-radius-md);
+  corner-shape: var(--dawn-corner-shape);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+}
+
 .row-menu,
 .attach-menu {
   position: fixed;
@@ -2308,11 +2335,6 @@ pre {
   display: flex;
   flex-direction: column;
   padding: var(--dawn-space-1);
-  border-radius: var(--dawn-radius-md);
-  corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-elevated);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
-  box-shadow: var(--dawn-shadow-float);
 }
 
 .row-menu .btn,
@@ -4176,6 +4198,8 @@ pre {
   max-height: 60vh;
   overflow-y: auto;
   padding: var(--dawn-space-2);
+  /** 它开在输入卡上方，要压得住下面的东西。**层级从令牌那把梯子取** */
+  z-index: var(--z-modal);
   transform-origin: bottom right;
   animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }

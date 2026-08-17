@@ -154,16 +154,12 @@ export function FilePreview({
   content,
   onOpenExternally,
   onDownload,
-  传输,
-  onCancel,
 }: {
   path: string | undefined
   content: FileContent | undefined
   onOpenExternally: (path: string) => void
   /** 给了才画「下载」。**本地文件不给**——它已经在这台机器上了 */
   onDownload?: (path: string) => void
-  传输?: 传输态 | undefined
-  onCancel?: () => void
 }) {
   if (!path) {
     return <EmptyState title={t("选一个文件")} description={t("上面是这台机器上的目录。")} />
@@ -183,45 +179,6 @@ export function FilePreview({
           </Button>
         ) : null}
       </header>
-
-      {/**
-        * **进度条贴着这个文件**（作者定的：*「当前文件下面有一个传输条，
-        * 包含传输进度和传输速度」*）。
-        *
-        * 总大小取不到时不画那根条，只报已传了多少——
-        * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
-        */}
-      {传输 ? (
-        <div className="xfer">
-          {传输.total ? (
-            <div className="xfer-bar">
-              <div
-                className="xfer-fill"
-                style={{ width: `${Math.min(100, (传输.transferred / 传输.total) * 100)}%` }}
-              />
-            </div>
-          ) : null}
-          <span className="xfer-text">
-            {传输.state === "done"
-              ? tf("下载好了：{0}", 传输.target ?? "")
-              : 传输.state === "cancelled"
-                ? t("取消了，没有留下半截文件")
-                : 传输.state === "failed"
-                  ? tf("下载失败：{0}", 传输.error ?? "")
-                  : tf(
-                      "{0} / {1}{2}",
-                      bytes(传输.transferred),
-                      传输.total ? bytes(传输.total) : "？",
-                      传输.速度 ? tf("　{0}/秒", bytes(Math.round(传输.速度))) : "",
-                    )}
-          </span>
-          {传输.state === "running" && onCancel ? (
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              {t("取消")}
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
 
       {content.kind === "table" ? (
         <数据表 t={content.table} />
@@ -403,6 +360,8 @@ export function FilesView({
   onDownload,
   传输,
   onCancel,
+  onUpload,
+  刷新令牌 = 0,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -441,6 +400,21 @@ export function FilesView({
   onDownload?: (path: string) => void
   传输?: 传输态 | undefined
   onCancel?: () => void
+  /**
+   * 传一个本机文件到**树上当前这个目录**。给了才画那颗按钮。
+   *
+   * **不长第二棵树**：另一头永远交给系统对话框，
+   * 与 composer 里那颗「上传文件」是同一条路。两棵树的话，
+   * 「我现在看的是哪边」就得靠人一直盯着。
+   */
+  onUpload?: (dir: string) => void
+  /**
+   * 变一下这个数，树就重读一遍（2026-08-17，e2e 撞出来的）。
+   *
+   * `DirNode` 读过一次就缓存住了——**传完一个文件之后树不会自己跟上**，
+   * 屏幕上说「传好了」而树里没有它。那正是「看起来一切正常」的反面。
+   */
+  刷新令牌?: number
 }) {
   const [跳到, 设跳到] = useState("")
   /**
@@ -468,7 +442,17 @@ export function FilesView({
             if (e.key !== "Enter") return
             const p = 跳到.trim()
             // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」
-            if (p) 设根(p.replace(/^\/+|\/+$/g, ""))
+            /**
+             * **只削结尾的斜杠，不削开头的**（2026-08-17 修）。
+             *
+             * 削开头对本地是对的（那边是相对工作区的路径），
+             * 对远端是错的——**那边绝对路径才是常态**，
+             * `/home/dawn` 被削成 `home/dawn` 之后 `readdir` 当然找不到。
+             *
+             * 本地输了绝对路径会被守卫**响亮拒绝**，那比悄悄改写它好：
+             * 悄悄改写等于替人决定他想去哪儿。
+             */
+            if (p) 设根(p.replace(/\/+$/, ""))
           }}
         />
         {/**
@@ -476,6 +460,11 @@ export function FilesView({
          * 没有这颗的话，一次手滑的跳转会让人以为整棵树没了——
          * 而这个项目已经为「进得去出不来」改过一次（项目概览与文件的返回键）。
          */}
+        {onUpload ? (
+          <Button variant="ghost" size="sm" onClick={() => onUpload(根)}>
+            {t("传到这里")}
+          </Button>
+        ) : null}
         {根 !== (初始根 ?? "") ? (
           <Button
             variant="ghost"
@@ -502,7 +491,7 @@ export function FilesView({
         <ul className="tree-list">
           {/** `key` 跟着根走：换根要**重新挂载**，否则上一处的列表还留在那儿 */}
           <DirNode
-            key={根}
+            key={`${根}#${刷新令牌}`}
             path={根}
             name={根}
             depth={0}
@@ -512,14 +501,55 @@ export function FilesView({
           />
         </ul>
       </nav>
+      {/**
+        * **传输条属于这个面板，不属于预览**（2026-08-17，e2e 撞出来的）。
+        *
+        * 作者要的是*「当前文件下面有一个传输条」*，第一版我照字面把它放进了
+        * `FilePreview`——**而上传时根本没有选中文件**，预览是空态，
+        * 条子压根不存在。屏幕上的表现是「点了传到这里，什么都没发生」。
+        *
+        * 文案也不能写死方向：同一根条子两头都用。
+        *
+        * 总大小取不到时不画那根条，只报已传了多少——
+        * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
+        */}
+      {传输 ? (
+        <div className="xfer">
+          {传输.total ? (
+            <div className="xfer-bar">
+              <div
+                className="xfer-fill"
+                style={{ width: `${Math.min(100, (传输.transferred / 传输.total) * 100)}%` }}
+              />
+            </div>
+          ) : null}
+          <span className="xfer-text">
+            {传输.state === "done"
+              ? tf("传好了：{0}", 传输.target ?? "")
+              : 传输.state === "cancelled"
+                ? t("取消了，没有留下半截文件")
+                : 传输.state === "failed"
+                  ? tf("传输失败：{0}", 传输.error ?? "")
+                  : tf(
+                      "{0} / {1}{2}",
+                      bytes(传输.transferred),
+                      传输.total ? bytes(传输.total) : "？",
+                      传输.速度 ? tf("　{0}/秒", bytes(Math.round(传输.速度))) : "",
+                    )}
+          </span>
+          {传输.state === "running" && onCancel ? (
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              {t("取消")}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       <section className="file-preview">
         <FilePreview
           path={selected}
           content={content}
           onOpenExternally={onOpenExternally}
           {...(onDownload ? { onDownload } : {})}
-          {...(传输 ? { 传输 } : {})}
-          {...(onCancel ? { onCancel } : {})}
         />
       </section>
     </div>

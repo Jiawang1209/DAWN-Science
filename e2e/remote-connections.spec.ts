@@ -645,10 +645,10 @@ test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn
 
   // **传完之后要说得出落在哪儿**，否则人得自己去猜
   const 条 = page.locator(".xfer-text")
-  await expect(条).toContainText("下载好了", { timeout: 30_000 })
+  await expect(条).toContainText("传好了", { timeout: 30_000 })
 
   // 文件真的在本机上，且内容一字不差
-  const 落点 = (await 条.textContent())!.replace(/^.*下载好了：/, "").trim()
+  const 落点 = (await 条.textContent())!.replace(/^.*传好了：/, "").trim()
   expect(落点, "说的落点不在这次的隔离目录里").toContain(dir)
   const { readFileSync } = await import("node:fs")
   expect(readFileSync(落点, "utf8")).toContain("这是一台假服务器")
@@ -674,8 +674,8 @@ test("下载同一个文件两次，第二份另存，不覆盖第一份", async
   const 落点 = async () => {
     await page.getByRole("button", { name: "下载", exact: true }).click()
     const 条 = page.locator(".xfer-text")
-    await expect(条).toContainText("下载好了", { timeout: 30_000 })
-    return (await 条.textContent())!.replace(/^.*下载好了：/, "").trim()
+    await expect(条).toContainText("传好了", { timeout: 30_000 })
+    return (await 条.textContent())!.replace(/^.*传好了：/, "").trim()
   }
   const 第一份 = await 落点()
   const 第二份 = await 落点()
@@ -698,4 +698,55 @@ test("本地文件没有「下载」那颗按钮", async ({ dawn }) => {
   await 面板.getByRole("button", { name: /本地的\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("本地", { timeout: 30_000 })
   await expect(page.getByRole("button", { name: "下载", exact: true })).toHaveCount(0)
+})
+
+/**
+ * **上传：撞名要问，而且账本上留得下**（批 4b，2026-08-17）。
+ *
+ * 三件事：文件真的到了那台机器；同名时**不默默覆盖**而是问三选一；
+ * 上传落一条 `file_upload` 的 Run（不变式 5——数据是什么时候、
+ * 从哪儿进去的，不该只有你自己记得）。
+ */
+test.describe("上传", () => {
+  test.use({ dawnOptions: { fakeSsh: true, pickFiles: ["/tmp/dawn-上传的.txt"] } })
+
+  test("**传上去、撞名问三选一、落一条账**", async ({ dawn }) => {
+    const { page, dbPath } = dawn
+    const { writeFileSync } = await import("node:fs")
+    writeFileSync("/tmp/dawn-上传的.txt", "这是从本机传上去的\n")
+
+    await 展开远端(page)
+    await 加一台(page, { label: "假机器" })
+    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+    await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+    await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+
+    const 面板 = page.locator(".right-dock .files-view")
+    await 面板.getByRole("button", { name: "传到这里", exact: true }).click()
+    await expect(page.locator(".xfer-text")).toContainText("传好了", { timeout: 30_000 })
+
+    // ① 树上真的多了那个文件
+    await 面板.getByRole("textbox", { name: "跳到路径" }).fill("/home/dawn")
+    await 面板.getByRole("textbox", { name: "跳到路径" }).press("Enter")
+    await expect(面板.getByRole("button", { name: /dawn-上传的\.txt/ })).toBeVisible({ timeout: 30_000 })
+
+    // ② **再传一次要问，不默默覆盖**
+    await 面板.getByRole("button", { name: "传到这里", exact: true }).click()
+    await expect(page.getByText(/已经在那台机器上了/)).toBeVisible({ timeout: 30_000 })
+    // 三条路都在，且**没有一个是另一个的子串**
+    await expect(page.getByRole("button", { name: "覆盖", exact: true })).toBeVisible()
+    await expect(page.getByRole("button", { name: "另存一份", exact: true })).toBeVisible()
+    await page.getByRole("button", { name: "另存一份", exact: true }).click()
+    await expect(page.locator(".xfer-text")).toContainText("传好了", { timeout: 30_000 })
+
+    // ③ **上传进账本**（不变式 5）
+    const { readRuns } = await import("./fixtures.js")
+    await expect
+      .poll(
+        async () =>
+          (await readRuns(dbPath)).filter((r) => String(r["request_type"]).startsWith("file_upload")).length,
+        { message: "上传没有落账", timeout: 15_000 },
+      )
+      .toBeGreaterThan(1)
+  })
 })

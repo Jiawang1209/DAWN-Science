@@ -845,7 +845,7 @@ async function 要缩略图(path: string): Promise<string | undefined> {
  * **抽出来是因为有两个入口**：`＋` 菜单，以及输入框行首那个 `@`。
  * 抄两遍的话，其中一份迟早会忘了处理「取消」。
  */
-async function 挑文件(kind: "any" | "image" | "data", workspace?: string): Promise<string[]> {
+export async function 挑文件(kind: "any" | "image" | "data", workspace?: string): Promise<string[]> {
   const w = window as unknown as {
     dawn?: { pickFiles?: (k: string, d?: string) => Promise<string[]> }
   }

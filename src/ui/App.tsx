@@ -42,8 +42,7 @@ import {
   type ModelChoice,
   type ServiceChoice,
   DockSwitch,
-  RightDock,
-} from "./views.js"
+  RightDock, 挑文件 } from "./views.js"
 import {
   AppearancePanel,
   KernelsPanel,
@@ -1842,6 +1841,65 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return () => clearInterval(t)
   }, [client, 传输?.state, 传输?.id])
 
+  /**
+   * 上传（批 4b，2026-08-17）。**另一头交给系统对话框**，不长第二棵树。
+   *
+   * 撞名时后端**什么都不做**、只回一句「撞名了」，由这里去问
+   * 「覆盖 / 另存一份 / 取消」——默默覆盖是唯一不能选的：
+   * **你可能正在覆盖昨天那一版数据**。
+   */
+  const 上传 = useCallback(
+    async (dir: string) => {
+      if (!文件所在) return
+      const 挑中 = await 挑文件("any")
+      const 本机路径 = 挑中[0]
+      if (!本机路径) return // 取消了：什么都不做，也不出声
+
+      const 发一次 = (onConflict: "ask" | "overwrite" | "keepBoth") =>
+        client
+          .get<
+            | { kind: "conflict"; name: string }
+            | { kind: "started"; transferId: string; target: string }
+          >("startUpload", {
+            connectionId: 文件所在.connectionId,
+            dir: dir || 文件所在.cwd,
+            localPath: 本机路径,
+            onConflict,
+          })
+          .then((r) => {
+            if (r.kind === "conflict") {
+              setConfirming({
+                title: tf("「{0}」已经在那台机器上了", r.name),
+                detail: t("覆盖会写掉那边那一份。另存一份会自动改名，两个都留着。"),
+                confirmLabel: t("覆盖"),
+                onConfirm: () => void 发一次("overwrite"),
+                altLabel: t("另存一份"),
+                onAlt: () => void 发一次("keepBoth"),
+              })
+              return
+            }
+            设传输({ transferred: 0, state: "running", id: r.transferId, target: r.target })
+            起点.current = { 时刻: Date.now(), 已传: 0 }
+          })
+          .catch((e: unknown) => {
+            // **起不来也要出声**：不出声的表现是「点了上传没反应」
+            设传输({ transferred: 0, state: "failed", error: e instanceof Error ? e.message : String(e) })
+          })
+
+      void 发一次("ask")
+    },
+    [client, 文件所在],
+  )
+
+  /**
+   * 传完一次就让树重读一遍。**不这么做的话，屏幕上说「传好了」而树里没有它**
+   * ——那正是「看起来一切正常」的反面（2026-08-17 e2e 撞出来的）。
+   */
+  const [刷新令牌, 设刷新令牌] = useState(0)
+  useEffect(() => {
+    if (传输?.state === "done") 设刷新令牌((n) => n + 1)
+  }, [传输?.state, 传输?.target])
+
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
 
   const 文件面板 = (
@@ -1849,7 +1907,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         key={文件面板身份}
         机器={文件所在?.label ?? t("本机")}
         初始根={文件所在?.cwd ?? ""}
-        {...(文件所在 ? { onDownload: 下载 } : {})}
+        {...(文件所在 ? { onDownload: 下载, onUpload: 上传 } : {})}
+        刷新令牌={刷新令牌}
         {...(传输 ? { 传输 } : {})}
         onCancel={() => {
           if (传输?.id) void client.get("cancelTransfer", { transferId: 传输.id })

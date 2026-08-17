@@ -661,6 +661,34 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.cliHome ? { cliHome: opts.cliHome } : {}),
     ...(opts.openPath ? { openPath: opts.openPath } : {}),
     ...(opts.downloadsDir ? { downloadsDir: opts.downloadsDir } : {}),
+    /**
+     * **上传落一条 Run**（批 4b · 不变式 5）。
+     *
+     * 它是对那台机器的一次写入，与 agent 改一个文件在性质上没有区别。
+     * 不记的话账本上有个洞：**数据是什么时候、从哪儿进去的，只有你自己记得**。
+     * 下载不记——它只读，不改变任何东西。
+     *
+     * 挂在那台服务器**当前那段活着的会话**上；找不到就不记，
+     * **不硬挂**：把 A 的账算到 B 头上比不记更坏。
+     */
+    记一次上传: (connectionId, 目标, 字节, 出错) => {
+      const 那段 = sessionStore.list().find((s) => s.connectionId === connectionId && s.state === "alive")
+      if (!那段?.projectId) return
+      const 此刻 = new Date().toISOString()
+      runStore.insert({
+        runId: `run-${randomUUID()}`,
+        projectId: 那段.projectId,
+        sessionId: 那段.id,
+        origin: "user",
+        // **路径写进类型后面那半**：账本上要查得到传的是什么
+        requestType: `file_upload:${目标}`,
+        status: 出错 ? "failed" : "completed",
+        startedAt: 此刻,
+        finishedAt: 此刻,
+        hasError: Boolean(出错),
+        ...(出错 ? { terminalReason: 出错 } : {}),
+      })
+    },
   })
   /**
    * 开那台网关（B1 路线 B）。**每次运行一台**，会话身份由连接时报上来。

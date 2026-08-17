@@ -27,6 +27,17 @@ export interface ConfirmRequest {
   safety?: React.ReactNode
   confirmLabel: string
   onConfirm: () => void
+  /**
+   * 第三个选项（批 4b，2026-08-17）。
+   *
+   * 上传撞名要给「覆盖 / 另存一份 / 取消」三条路——**两条不够**：
+   * 只有「覆盖」和「取消」的话，人想两个都留就只能先改名再传一次。
+   *
+   * **文案不许与另外两个互为子串**（设计契约那条扫描）：
+   * 「覆盖」「另存一份」「取消」三个互不包含。
+   */
+  altLabel?: string
+  onAlt?: () => void
 }
 
 export function ConfirmDialog({
@@ -57,6 +68,18 @@ export function ConfirmDialog({
           <Button autoFocus variant="secondary" size="sm" onClick={onCancel}>
             {t("取消")}
           </Button>
+          {request.altLabel && request.onAlt ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                request.onAlt?.()
+                onCancel()
+              }}
+            >
+              {request.altLabel}
+            </Button>
+          ) : null}
           <Button
             variant="danger"
             size="sm"

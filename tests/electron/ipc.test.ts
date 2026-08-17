@@ -13,6 +13,7 @@ function backend(): WorkbenchBackend {
     getDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     setDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     startDownload: async () => ({ transferId: "t1", name: "x", target: "/下载/x" }),
+    startUpload: async () => ({ kind: "started" as const, transferId: "t1", target: "/远端/x" }),
     transferStatus: async () => ({ transferred: 0, state: "running" as const }),
     cancelTransfer: async () => ({}),
     getProviders: async () => ({ agents: [], providers: [] }),

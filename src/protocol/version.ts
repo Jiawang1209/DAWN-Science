@@ -289,6 +289,15 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.7（2026-08-17，分支 `feat/远端文件`）：往服务器上传文件
+ *
+ * 纯新增，故 minor：`startUpload`。
+ *
+ * **它有两种回法**：目标已存在且 `onConflict` 是 `ask` 时什么都不做，
+ * 回一句「撞名了」，由界面去问「覆盖 / 另存一份 / 取消」，人选完再叫一次。
+ * 默默覆盖是这里唯一不能选的——**你可能正在覆盖昨天那一版数据**。
+ */
+/**
  * ## 7.6（2026-08-17，分支 `feat/远端文件`）：从服务器下载文件
  *
  * 纯新增，故 minor：`getDownloadDir` / `setDownloadDir` /
@@ -386,7 +395,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.6"
+export const WORKBENCH_PROTOCOL_VERSION = "7.7"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

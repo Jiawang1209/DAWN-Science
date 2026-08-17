@@ -54,7 +54,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -106,6 +106,14 @@ export interface WorkbenchBackendOptions {
    * 而且跟不上用户改过的系统设置。没给就退回家目录下的 `Downloads`。
    */
   downloadsDir?: string
+  /**
+   * 记一次上传（批 4b，2026-08-17）。**不变式 5**：
+   * 上传是对那台机器的一次写入，与 agent 改一个文件没有性质区别。
+   * 不记的话账本上有个洞——**数据是什么时候、从哪儿进去的，只有你自己记得**。
+   *
+   * 下载不给这个钩子：它只读，不改变任何东西。
+   */
+  记一次上传?: (connectionId: string, 目标: string, 字节: number, 出错?: string) => void
   /**
    * `providers.yaml` 的路径。**给了才能在界面里加 agent**——
    * 没给就如实说「本次运行没有装配」，不偷偷退回某个猜出来的路径。
@@ -332,7 +340,7 @@ async function 读成附件(
 const 远端预览上界 = 16 * 1024 * 1024
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传 } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1724,6 +1732,75 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           一条.错 = err instanceof Error ? err.message : String(err)
         })
       return { transferId: id, name, target: 目标 }
+    },
+
+    startUpload: async ({ connectionId, dir, localPath, onConflict }) => {
+      const e = 连着的(connectionId)
+      const name = localPath.split(/[\\/]/).filter(Boolean).at(-1) ?? "上传"
+      const 根 = dir.replace(/\/+$/, "")
+      let 目标 = `${根}/${name}`
+
+      /**
+       * **撞名要问人，不默默覆盖**——你可能正在覆盖昨天那一版数据。
+       *
+       * `stat` 抛错就当它不存在：那正是「没有这个文件」的样子。
+       * 而**判错方向的代价不对称**：误判成「存在」只是多问一句，
+       * 误判成「不存在」是直接覆盖。
+       */
+      const 已经有了 = await e
+        .stat(目标)
+        .then(() => true)
+        .catch(() => false)
+      if (已经有了) {
+        if (onConflict === "ask") return { kind: "conflict" as const, name }
+        if (onConflict === "keepBoth") {
+          const 点 = name.lastIndexOf(".")
+          const 主 = 点 > 0 ? name.slice(0, 点) : name
+          const 尾 = 点 > 0 ? name.slice(点) : ""
+          let 找到 = false
+          for (let i = 1; i < 1000 && !找到; i++) {
+            const 试 = `${根}/${主} (${i})${尾}`
+            const 有 = await e.stat(试).then(() => true).catch(() => false)
+            if (!有) {
+              目标 = 试
+              找到 = true
+            }
+          }
+          if (!找到) throw fault("invalid_request", `${name} 这个名字在那台机器上已经有上千份了`)
+        }
+      }
+
+      const 本地大小 = statSync(localPath).size
+      const id = `tr-${randomUUID()}`
+      const ac = new AbortController()
+      const 一条: 传输记录 = { 已传: 0, 总共: 本地大小, 状态: "running", ac, 目标 }
+      传输们.set(id, 一条)
+      void e
+        .upload(localPath, 目标, {
+          signal: ac.signal,
+          覆盖: 已经有了 && onConflict === "overwrite",
+          进度: (已传) => {
+            一条.已传 = 已传
+          },
+        })
+        .then(() => {
+          一条.状态 = "done"
+          /**
+           * **上传进账本**（不变式 5）。
+           *
+           * 它是对那台机器的一次写入，与 agent 改一个文件在性质上没有区别。
+           * 不记的话，账本上有个洞：**数据是什么时候、从哪儿进去的，
+           * 只有你自己记得**。下载不记——它只读，不改变任何东西。
+           */
+          记一次上传?.(connectionId, 目标, 本地大小, undefined)
+        })
+        .catch((err: unknown) => {
+          一条.状态 = ac.signal.aborted ? "cancelled" : "failed"
+          一条.错 = err instanceof Error ? err.message : String(err)
+          // **失败也记**：「它试过往一个只读目录传东西」本身就是事实
+          记一次上传?.(connectionId, 目标, 本地大小, 一条.错)
+        })
+      return { kind: "started" as const, transferId: id, target: 目标 }
     },
 
     transferStatus: async ({ transferId }) => {

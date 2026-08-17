@@ -1188,6 +1188,41 @@ export const OPERATIONS = {
       .strict(),
     mutating: true,
   },
+  /**
+   * 往一台服务器上传一个本机文件（批 4b，2026-08-17）。
+   *
+   * **同名要问人**，所以这个操作有两种回法：目标已存在且 `onConflict` 是
+   * `ask` 时，它**什么都不做**，回一句「撞名了」，由界面去问；
+   * 人选完再叫一次，带上 `overwrite` 或 `keepBoth`。
+   *
+   * 默默覆盖是这里唯一不能选的：**你可能正在覆盖昨天那一版数据**。
+   */
+  startUpload: {
+    request: z
+      .object({
+        connectionId: z.string().min(1),
+        /** 传到那台机器的这个目录（绝对路径） */
+        dir: z.string().min(1),
+        /** 本机上那个文件的绝对路径。**由原生选择器给**，界面不自己拼 */
+        localPath: z.string().min(1),
+        onConflict: z.enum(["ask", "overwrite", "keepBoth"]).default("ask"),
+      })
+      .strict(),
+    response: z.discriminatedUnion("kind", [
+      /** 撞名了，**没开始传**。界面去问「覆盖 / 另存一份 / 取消」 */
+      z.object({ kind: z.literal("conflict"), name: z.string().min(1) }).strict(),
+      z
+        .object({
+          kind: z.literal("started"),
+          transferId: z.string().min(1),
+          /** 最终落在那台机器的哪儿。**另存一份时它与原名不同**，要说得出来 */
+          target: z.string().min(1),
+        })
+        .strict(),
+    ]),
+    mutating: true,
+  },
+
   transferStatus: {
     request: z.object({ transferId: z.string().min(1) }).strict(),
     response: z

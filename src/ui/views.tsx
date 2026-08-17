@@ -1116,6 +1116,7 @@ export function SessionSidebar({
   onPickSession,
   onShowPanel,
   onShowFiles,
+  filesActive = false,
   onShowSkills,
   onShowSubagents,
   onShowPlugins,
@@ -1167,6 +1168,8 @@ export function SessionSidebar({
   onPickSession: (id: string) => void
   onShowPanel: () => void
   onShowFiles: () => void
+  /** 文件那一格亮不亮。**跟着坞走**，不再跟着 `view`。缺省当「没亮」 */
+  filesActive?: boolean
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
   /** 子 agent 那一屏（2026-08-15 从「技能」拆出来的，两者是两种东西） */
@@ -2321,8 +2324,13 @@ export function SessionSidebar({
             <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
               {t("项目概览")}
             </Row>
-            {/* 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路 */}
-            <Row active={view === "files"} className="panel-entry" onClick={onShowFiles}>
+            {/**
+              * 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路。
+              *
+              * **它现在打开右侧坞，不切屏**（2026-08-17，批 2）。
+              * 亮不亮跟着坞走——一个亮着的入口点下去毫无反应，人会以为它坏了。
+              */}
+            <Row active={filesActive} className="panel-entry" onClick={onShowFiles}>
               {t("文件")}
             </Row>
           </>

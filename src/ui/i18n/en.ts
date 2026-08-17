@@ -580,13 +580,14 @@ export const EN: Readonly<Record<string, string>> = {
     "Another {0} turns (about {1} tokens) have no model on record — external CLIs manage their own model, and turns from before this version were never tagged. They count towards nothing above.",
   "另有 {0} 个回合一个 token 都没记到——有的运行时不报（claude 的 ACP 适配器就不报），本版之前的历史回合也没有。没记到不等于没花。":
     "Another {0} turns have no token record at all — some runtimes never report them (claude's ACP adapter is one), and neither did turns from before this version. Nothing recorded is not the same as nothing spent.",
+  "跳到路径": "Go to path",
+  "输一个目录路径，回车跳过去": "Type a directory path, press Enter",
+  "回到根目录": "Top level",
   "审阅": "Review",
   "面板": "Panel",
   "面板：{0}": "Panel: {0}",
   "调整面板宽度": "Resize panel",
   "关闭面板": "Close panel",
-  "文件面板还没搬进来（批 2）。现在请走侧栏那个「文件」。":
-    "The files panel hasn't moved in yet (batch 2). For now use \u201cFiles\u201d in the sidebar.",
   "Token 活动": "Token activity",
   "每日": "Daily",
   "每周": "Weekly",

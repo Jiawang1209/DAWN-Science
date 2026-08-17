@@ -335,6 +335,7 @@ export function FilesView({
   onOpenExternally,
   onInitLayout,
   layoutNote,
+  机器,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -350,9 +351,64 @@ export function FilesView({
   onInitLayout?: () => void
   /** 上一次初始化做了什么。**做完要出声**，否则按下去像什么都没发生 */
   layoutNote?: string | undefined
+  /**
+   * 这棵树长在哪台机器上（批 2，2026-08-17）。
+   *
+   * **硬要求，不是装饰**：不写的话本地与远端在屏幕上长得一模一样，
+   * 而那正是这一片此前坏掉的方式——远端会话里打开「文件」，
+   * 它安静地给你看本机的一个临时目录，你根本没机会发现。
+   *
+   * 现在只有「本机」一种（批 3 接远端），但**位置与措辞先立好**。
+   */
+  机器?: string
 }) {
+  const [跳到, 设跳到] = useState("")
+  /**
+   * 树根。**跳转就是换根**（批 2，2026-08-17）。
+   *
+   * 只跳转，不搜索（见设计文档第三节）：跳转是一次 `readdir`，
+   * 而搜索在 SFTP 里**没有原语**，得递归走目录或者在别人机器上起一个 `find`
+   * ——那要有上界，而且截断了必须出声。等真的点累了再做。
+   *
+   * **路径不存在不用我们报**：换了根之后 `DirNode` 自己会把 `readdir`
+   * 的错误显示出来。多写一处校验就是多一份会说不同话的实现。
+   */
+  const [根, 设根] = useState("")
   return (
     <div className="files-view">
+      <div className="files-where">
+        <span className="files-where-name">{机器 ?? t("本机")}</span>
+        <input
+          className="control files-jump"
+          value={跳到}
+          aria-label={t("跳到路径")}
+          placeholder={t("输一个目录路径，回车跳过去")}
+          onChange={(e) => 设跳到(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return
+            const p = 跳到.trim()
+            // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」
+            if (p) 设根(p.replace(/^\/+|\/+$/g, ""))
+          }}
+        />
+        {/**
+         * **跳走之后要有路回来**（2026-08-17）。
+         * 没有这颗的话，一次手滑的跳转会让人以为整棵树没了——
+         * 而这个项目已经为「进得去出不来」改过一次（项目概览与文件的返回键）。
+         */}
+        {根 ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              设根("")
+              设跳到("")
+            }}
+          >
+            {t("回到根目录")}
+          </Button>
+        ) : null}
+      </div>
       <nav className="file-tree" aria-label={t("工作区文件")}>
         {onInitLayout ? (
           <div className="tree-actions">
@@ -364,7 +420,16 @@ export function FilesView({
           </div>
         ) : null}
         <ul className="tree-list">
-          <DirNode path="" name="" depth={0} selected={selected} onSelect={onSelect} load={loadDir} />
+          {/** `key` 跟着根走：换根要**重新挂载**，否则上一处的列表还留在那儿 */}
+          <DirNode
+            key={根}
+            path={根}
+            name={根}
+            depth={0}
+            selected={selected}
+            onSelect={onSelect}
+            load={loadDir}
+          />
         </ul>
       </nav>
       <section className="file-preview">

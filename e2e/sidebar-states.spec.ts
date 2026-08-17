@@ -75,7 +75,7 @@ test("会话建好后出现在侧栏列表里", async ({ dawn }) => {
  * **一个亮着的入口点下去毫无反应，人会以为它坏了**——
  * 所以这条把三个一起验，而不是只补设置那一个。
  */
-for (const 名 of ["项目概览", "文件", "设置"]) {
+for (const 名 of ["项目概览", "设置"]) {
   test(`「${名}」再点一次就回到对话`, async ({ dawn }) => {
     const { page } = dawn
     const 入口 = page.locator(".sidebar").getByRole("button", { name: 名, exact: true })
@@ -85,3 +85,23 @@ for (const 名 of ["项目概览", "文件", "设置"]) {
     await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
   })
 }
+
+/**
+ * **「文件」不再是一屏，所以「回得去」换了个说法**（2026-08-17，批 2）。
+ *
+ * 它现在开的是右侧坞——对话**从来没有被顶掉**，那正是把文件从整屏
+ * 搬进坞的全部理由。但上面那条纪律一个字都没变：
+ * **一个亮着的入口点下去毫无反应，人会以为它坏了**。
+ * 于是这里验的是「再点一次坞收起来」。
+ */
+test("「文件」开的是坞，再点一次收起来（对话全程都在）", async ({ dawn }) => {
+  const { page } = dawn
+  const 入口 = page.locator(".sidebar").getByRole("button", { name: "文件", exact: true })
+  await 入口.click()
+  await expect(page.locator(".right-dock .files-view")).toBeVisible()
+  // **对话没被顶掉**——这是搬家换来的东西，值得单独钉一句
+  await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
+  await 入口.click()
+  await expect(page.locator(".right-dock")).toBeHidden()
+  await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
+})

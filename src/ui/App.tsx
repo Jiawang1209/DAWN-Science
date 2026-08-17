@@ -152,6 +152,7 @@ import {
   $rightDockTenant,
   $rightDockWidth,
   setRightDockOpen,
+  setRightDockTenant,
   setRightDockWidth,
   点开房客,
 } from "./state/index.js"
@@ -691,7 +692,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const openFile = useCallback(
     (path: string) => {
-      setView("files")
+      /**
+       * **打开坞，不切屏**（2026-08-17，批 2）。
+       * 从「产出」里点一个文件名，对话不该消失——
+       * 那正是把文件从整屏搬进坞的全部理由。
+       */
+      点开文件面板()
       setFilePath(path)
       setFileContent(undefined)
       if (!projectId) return
@@ -1725,6 +1731,69 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 中止与打开项目还各自带着实现——命令面板再加一个入口就是第五份。
    * 现在按钮、快捷键、命令面板拿到的是同一个函数。
    */
+  /**
+   * 文件面板（`feat/远端文件` · 批 2，2026-08-17）。
+   *
+   * **它只有一份**，长在右侧坞里。此前它是 `view === "files"` 那一整屏——
+   * 于是看文件的时候对话没了，而看图的真实场景恰恰是
+   * 「模型刚跑完，我想边看图边说下一步」。
+   *
+   * 侧栏那个「文件」入口现在**打开坞**，不再切屏。
+   * 留着两个入口指向同一个东西，就是「两处长得一样的东西，等于没有判据」。
+   */
+  /**
+   * 开坞并切到文件那一格。**与 `点开房客` 不同：它永远是「开」，不是「切换」**——
+   * 从产出栏点一个文件名，人的意图是「给我看这个」，绝不会是「把面板关掉」。
+   */
+  const 点开文件面板 = useCallback(() => {
+    setRightDockTenant("files")
+    setRightDockOpen(true)
+  }, [])
+
+  const 文件面板 = (
+      <FilesView
+        selected={filePath}
+        content={fileContent}
+        loadDir={loadDir}
+        onSelect={openFile}
+        onOpenExternally={openExternally}
+        {...(projectId
+          ? {
+              onInitLayout: () => {
+                client
+                  .get<
+                    | { created: string[]; instructions: "written"; file: string }
+                    | {
+                        created: string[]
+                        instructions: "skipped"
+                        existingFile: string
+                        reason: string
+                      }
+                  >("initScienceLayout", { projectId })
+                  .then((r) => {
+                    /**
+                     * **两种结果说的话完全不同。**
+                     * 「写了」与「没写、因为你已经有一份」混成一句「已初始化」，
+                     * 人就会以为约定生效了，而实际上没有。
+                     */
+                    设目录说明(
+                      r.instructions === "written"
+                        ? tf("建了 {0} 个目录，约定已写入 {1}", String(r.created.length), r.file)
+                        : tf(
+                            "建了 {0} 个目录。{1}",
+                            String(r.created.length),
+                            r.reason,
+                          ),
+                    )
+                  })
+                  .catch(fail)
+              },
+              ...(目录说明 ? { layoutNote: 目录说明 } : {}),
+            }
+          : {})}
+      />
+  )
+
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => setView("settings"),
@@ -2000,7 +2069,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
           onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
-          onShowFiles={() => setView(view === "files" ? "conversation" : "files")}
+          /** **点它开坞**（批 2）。再点一次收起来——`点开房客` 就是这个语义 */
+          onShowFiles={() => 点开房客("files")}
+          filesActive={rightDockOpen && rightDockTenant === "files"}
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
           onDeleteProjects={askDeleteProjects}
@@ -2414,48 +2485,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               ]}
             />
             </div>
-          ) : view === "files" ? (
-            <FilesView
-              selected={filePath}
-              content={fileContent}
-              loadDir={loadDir}
-              onSelect={openFile}
-              onOpenExternally={openExternally}
-              {...(projectId
-                ? {
-                    onInitLayout: () => {
-                      client
-                        .get<
-                          | { created: string[]; instructions: "written"; file: string }
-                          | {
-                              created: string[]
-                              instructions: "skipped"
-                              existingFile: string
-                              reason: string
-                            }
-                        >("initScienceLayout", { projectId })
-                        .then((r) => {
-                          /**
-                           * **两种结果说的话完全不同。**
-                           * 「写了」与「没写、因为你已经有一份」混成一句「已初始化」，
-                           * 人就会以为约定生效了，而实际上没有。
-                           */
-                          设目录说明(
-                            r.instructions === "written"
-                              ? tf("建了 {0} 个目录，约定已写入 {1}", String(r.created.length), r.file)
-                              : tf(
-                                  "建了 {0} 个目录。{1}",
-                                  String(r.created.length),
-                                  r.reason,
-                                ),
-                          )
-                        })
-                        .catch(fail)
-                    },
-                    ...(目录说明 ? { layoutNote: 目录说明 } : {}),
-                  }
-                : {})}
-            />
           ) : view === "panel" ? (
             <div className="panels">
               {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
@@ -2834,7 +2863,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 <ToolChangesPanel runs={runs} onOpenFile={openFile} />
               </>
             ) : (
-              <p className="hint">{t("文件面板还没搬进来（批 2）。现在请走侧栏那个「文件」。")}</p>
+              文件面板
             )}
           </RightDock>
         ) : null}

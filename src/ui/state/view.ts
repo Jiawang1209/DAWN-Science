@@ -18,7 +18,14 @@ import { setValue } from "./identity.js"
  *
  * 2026-08-12 加了 `skills` / `mcp`（作者要的四个固定入口里的两个）。
  */
-export type View = "conversation" | "panel" | "settings" | "files" | "skills" | "subagents" | "plugins" | "mcp"
+/**
+ * **`"files"` 在 2026-08-17（批 2）摘掉了**：文件不再是一整屏，
+ * 它长在右侧坞里（`right-dock.ts`）。
+ *
+ * 留着一个没人设的取值，就是在类型上说一句不成立的话——
+ * 下一个读这行的人（包括几个月后的我）会以为还有那一屏。
+ */
+export type View = "conversation" | "panel" | "settings" | "skills" | "subagents" | "plugins" | "mcp"
 
 export const $view = atom<View>("conversation")
 

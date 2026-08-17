@@ -1665,17 +1665,61 @@ pre {
  * 左树右预览。**树的宽度固定、预览吃剩下的**——
  * 反过来的话，展开一个深目录会把预览挤没。
  */
+/**
+ * 文件面板（2026-08-17 批 2 起长在右侧坞里）。
+ *
+ * **上下，不是左右。** 坞最窄 280px，左右两栏会把树和预览一起挤扁。
+ * 上下的代价是各占一半高度，但**树一直看得见**——
+ * 「看着这张图，再点下一张」是这一屏的主要动作。
+ */
 .files-view {
   display: grid;
-  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  /**
+   * **三行，不是两行**：机器那一条 / 树 / 预览。
+   * 只写两行的话第三个孩子落进隐式行，而那一条会被撑成一大片空白
+   * ——2026-08-17 截图时当场看见的。
+   */
+  grid-template-rows: auto minmax(0, 2fr) minmax(0, 3fr);
   height: 100%;
   min-height: 0;
 }
 
 .file-tree {
   overflow: auto;
-  border-right: 1px solid var(--dawn-stroke-4);
+  border-bottom: 1px solid var(--dawn-stroke-4);
   padding: var(--dawn-space-2) 0;
+}
+
+/**
+ * **这是哪台机器**（批 2，2026-08-17）。
+ *
+ * 硬要求，不是装饰：不写的话本地与远端在屏幕上长得一模一样，
+ * 而那正是这一片此前坏掉的方式——远端会话里打开「文件」，
+ * 它安静地给你看本机的一个临时目录，你根本没机会发现。
+ *
+ * 现在只有「本机」一种，但**位置与措辞先立好**（批 3 接远端）。
+ */
+.files-where {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-bottom: 1px solid var(--dawn-stroke-4);
+  font-size: 12px;
+  color: var(--dawn-text-2);
+  white-space: nowrap;
+}
+.files-where-name { font-weight: 600; color: var(--dawn-text-1); }
+/** 路径框。**输一个目录就跳过去**——不做搜索（见设计文档第三节） */
+.files-jump {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--dawn-text-1);
+  background: var(--dawn-surface-input);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-sm);
+  padding: 2px var(--dawn-space-2);
 }
 
 .tree-list {
@@ -1697,7 +1741,7 @@ pre {
 
 .file-preview {
   overflow: auto;
-  padding: var(--dawn-space-4);
+  padding: var(--dawn-space-3);
   min-width: 0;
 }
 

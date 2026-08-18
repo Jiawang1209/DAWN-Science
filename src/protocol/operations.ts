@@ -1274,6 +1274,59 @@ export const OPERATIONS = {
         diff: z.string(),
         /** 太长时截断了多少。**不静默截断**（规格 7.5） */
         truncated: z.object({ keptLines: NonNegInt, totalLines: NonNegInt }).strict().optional(),
+        /**
+         * **表格文件才有的结构化摘要**（2026-08-18，作者选的甲）。
+         *
+         * 逐行 diff 是为代码发明的，用在数据表上会骗人：改一个列名它说
+         * 「每一行都变了」，一列换单位（g → mg）它还是说「每一行都变了」，
+         * 重排它说「全文件重写」。**后两种是数据分析里天天发生的事**，
+         * 而逐行 diff 在那两种情况下信息量接近零。
+         *
+         * 所以表格文件在 diff **上方**多一句结构化的话，下面仍是那份逐行差异——
+         * 两者都在，人自己决定信哪个。
+         *
+         * **缺席 = 这个文件没有摘要可说**（不是表 / 是新增的 / 工作区里已经没了），
+         * 与 `kind: "skipped"`（是表，但比不动）是两回事。
+         */
+        table: z
+          .discriminatedUnion("kind", [
+            z
+              .object({
+                kind: z.literal("diff"),
+                rows: z
+                  .object({ before: NonNegInt, after: NonNegInt, added: NonNegInt, removed: NonNegInt })
+                  .strict(),
+                columns: z.array(
+                  z
+                    .object({
+                      kind: z.enum(["added", "removed", "renamed"]),
+                      name: z.string(),
+                      /** 改名时的旧名字。**「改名」与「删一个加一个」不是同一句话** */
+                      from: z.string().optional(),
+                    })
+                    .strict(),
+                ),
+                /** **整列被同一个因子乘过**。`g → mg` 一句话说完，不必逐行看 */
+                scaled: z.array(z.object({ column: z.string(), factor: z.number() }).strict()),
+                /** 变了的格（**不含**被上面两条解释掉的）。只给前若干个 */
+                cells: z.array(
+                  z
+                    .object({ row: NonNegInt, column: z.string(), from: z.string(), to: z.string() })
+                    .strict(),
+                ),
+                /** 一共多少格变了。**给了上限就要说清总数**，不静默截断 */
+                cellsTotal: NonNegInt,
+                /** **一行都没少，只是顺序变了**——那时逐行 diff 会说「全文件重写」 */
+                reordered: z.literal(true).optional(),
+              })
+              .strict(),
+            /**
+             * 是表，但**没比**。太大时只比前面一段会得出错的结论
+             * （前 200 行互为置换 ≠ 一行都没少），**宁可说没比**。
+             */
+            z.object({ kind: z.literal("skipped"), reason: z.string().min(1) }).strict(),
+          ])
+          .optional(),
       })
       .strict(),
     mutating: false,

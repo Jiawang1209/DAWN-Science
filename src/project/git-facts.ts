@@ -283,6 +283,30 @@ export async function fileDiffAgainstHead(workspace: string, path: string): Prom
 }
 
 /**
+ * `HEAD` 里那一版的内容（2026-08-18）。
+ *
+ * 审阅那一屏要给表格文件加一句结构化的话（「这一列乘了 1000」），
+ * 而那需要**两张表**——逐行 diff 给不出旧的那一张，它给的是 patch。
+ *
+ * **不在 `HEAD` 里就返回 `undefined`**，不是空串：新增的文件与
+ * 「旧版是个空文件」是两件事，混成一个的话，一个刚跑出来的 CSV
+ * 会被说成「所有行都是新加的」——那句话正确但毫无信息量。
+ *
+ * 路径写成 `HEAD:./<path>`：**`./` 让它按 cwd 解析**，
+ * 与 `fileDiffAgainstHead` 那边的 pathspec 是同一个口径
+ * （不带 `./` 的话 git 按仓库根解析，workspace 不是仓库根时两边会指向不同文件）。
+ */
+export async function fileAtHead(workspace: string, path: string): Promise<string | undefined> {
+  try {
+    return await git(workspace, ["show", `HEAD:./${path}`])
+  } catch (e) {
+    // **不是仓库要往上抛**：那是调用方要如实说「没有基线」的情形，不是「这个文件是新的」
+    if (e instanceof NotAGitRepoError) throw e
+    return undefined
+  }
+}
+
+/**
  * **被 git 忽略、但落在科研约定目录里的那些产物**（2026-08-18）。
  *
  * ## 为什么单独要这一条

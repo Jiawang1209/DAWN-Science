@@ -626,6 +626,15 @@ export const EN: Readonly<Record<string, string>> = {
   "git 忽略了这些，所以上面那半看不到它们。它们来自账本，以及科研约定的那几个产物目录。":
     "git ignores these, so the half above cannot see them. They come from the ledger and from the convention artifact directories.",
   "内容没有变化。": "The contents did not change.",
+  "这是一张表 —— 先说结论": "This is a table — the short version",
+  "下面是逐行差异。": "The line-by-line diff follows.",
+  "一行都没少，只是顺序变了。": "Not a single row is missing — only the order changed.",
+  "「{0}」整列乘了 {1}": "The whole \u201c{0}\u201d column was multiplied by {1}",
+  "列「{0}」改名成「{1}」": "Column \u201c{0}\u201d was renamed to \u201c{1}\u201d",
+  "新增列「{0}」": "Column \u201c{0}\u201d added",
+  "删除列「{0}」": "Column \u201c{0}\u201d removed",
+  "行数 {0} → {1}": "{0} rows \u2192 {1} rows",
+  "另有 {0} 处单元格变化": "{0} more cell changes",
   "差异太长，只显示了前 {0} 行（一共 {1} 行）。":
     "The diff is long; showing the first {0} of {1} lines.",
   "新增": "added",

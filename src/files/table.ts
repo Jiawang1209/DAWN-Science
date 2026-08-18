@@ -161,8 +161,14 @@ export function 像表格吗(正文: string): boolean {
  *
  * `完整` 表示这段文本是不是整个文件——**不完整时不报总行数**，
  * 因为那时我们并不知道总共多少行。
+ *
+ * `行上限` 默认是 `预览行数`（200，够看清形状）。**审阅那一屏要传一个大得多的数**
+ * （2026-08-18）：那边比的是两张表之间改了什么，而
+ * *「只比了前 200 行就断言『一行都没少，只是顺序变了』」* 是一句会骗人的话。
+ * 谁读表谁决定读多少——**但读了多少必须报出来**，靠的是 `rowsRead` 与 `totalRows`
+ * 这一对（`truncated` 那句话同时也会说）。
  */
-export function 读成表(正文: string, 完整: boolean): 表格 {
+export function 读成表(正文: string, 完整: boolean, 行上限: number = 预览行数): 表格 {
   // **`\r\n` 与 `\r` 都要认**：Excel 存出来的 CSV 在 Windows 上是 `\r\n`
   const 全部行 = 正文.split(/\r\n|\r|\n/)
   // 末尾那个空行是分割产生的，不是一行数据
@@ -174,7 +180,7 @@ export function 读成表(正文: string, 完整: boolean): 表格 {
   const 分隔符 = 认分隔符(全部行[0]!)
   const 表头 = 切一行(全部行[0]!, 分隔符)
   const 数据行 = 全部行.slice(1)
-  const 取的行 = 数据行.slice(0, 预览行数).map((l) => 切一行(l, 分隔符))
+  const 取的行 = 数据行.slice(0, 行上限).map((l) => 切一行(l, 分隔符))
 
   const columns: 列摘要[] = 表头.map((name, i) => {
     const 这列 = 取的行.map((r) => r[i] ?? "")

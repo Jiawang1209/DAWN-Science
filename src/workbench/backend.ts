@@ -41,6 +41,7 @@ import {
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, changesAgainstHead, fileDiffAgainstHead, ignoredArtifacts, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { 表格摘要 } from "../project/table-review.js"
 import { discoverCliModels } from "../runtime/cli/models.js"
 import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
@@ -1879,12 +1880,23 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 原文 = await fileDiffAgainstHead(p.workspace, path).catch((e: unknown) => {
         throw fault("invalid_request", `算不出 ${path} 的差异：${e instanceof Error ? e.message : String(e)}`)
       })
+      /**
+       * **表格文件在 diff 上方多一句结构化的话**（2026-08-18，作者选的甲）。
+       *
+       * 算不出来不该连逐行差异一起赔进去——**摘要是加分项，diff 是主路径**。
+       * 所以这里接住异常并如实说一句，而不是让整个 `fileDiff` 失败。
+       */
+      const table = await 表格摘要(p.workspace, path).catch((e: unknown) => ({
+        kind: "skipped" as const,
+        reason: `算不出表格摘要：${e instanceof Error ? e.message : String(e)}`,
+      }))
       const 行 = 原文.split("\n")
-      if (行.length <= diff行上界) return { diff: 原文 }
+      if (行.length <= diff行上界) return { diff: 原文, ...(table ? { table } : {}) }
       // **截断要说清省了多少**（规格 7.5）
       return {
         diff: 行.slice(0, diff行上界).join("\n"),
         truncated: { keptLines: diff行上界, totalLines: 行.length },
+        ...(table ? { table } : {}),
       }
     },
 

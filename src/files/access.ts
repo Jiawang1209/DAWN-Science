@@ -236,8 +236,17 @@ function 部分读(file: string, 最多: number): Buffer {
  * @param 名 只用来推 mediaType（看扩展名）。远端传的是那台机器上的路径。
  * @param 读 按需取字节。**给了上界就只取那么多**——嗅探表格只要 64 KB，
  *   为它把一个 800 MB 的文件整个搬过来是荒唐的。
+ * @param 表格行上限 表读多少行。缺省是 `预览行数`（200，够看清形状）。
+ *   **审阅那一屏要传一个大得多的数**：那边比的是两张表之间改了什么，
+ *   只比前 200 行就下结论会骗人（2026-08-18）。**分类仍然只有这一份**——
+ *   这个参数只改「读多少」，不改「这是什么」。
  */
-export function 分类预览(名: string, bytes: number, 读: (最多?: number) => Buffer): FileContent {
+export function 分类预览(
+  名: string,
+  bytes: number,
+  读: (最多?: number) => Buffer,
+  表格行上限?: number,
+): FileContent {
   const mediaType = mediaTypeOf(名)
 
   if (mediaType.startsWith("image/")) {
@@ -278,7 +287,7 @@ export function 分类预览(名: string, bytes: number, 读: (最多?: number) 
     // **超了只读前面那段**，而不是拒绝打开：看一眼形状比什么都看不到有用得多
     const buf = 完整 ? 读() : 读(表格字节上界)
     const 正文 = buf.subarray(0, 表格字节上界).toString("utf8")
-    return { kind: "table", mediaType, bytes, table: 读成表(正文, 完整) }
+    return { kind: "table", mediaType, bytes, table: 读成表(正文, 完整, 表格行上限) }
   }
 
   if (mediaType === "application/pdf") {

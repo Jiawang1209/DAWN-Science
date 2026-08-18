@@ -4447,25 +4447,138 @@ pre {
 }
 .review-num { flex: 0 0 auto; font-size: 11px; color: var(--dawn-text-3); white-space: nowrap; }
 
-/** diff 本身。**横向自己滚**，不把整页撑宽 */
+/* ── diff 的排版：**量自 Codex 的构建产物**（2026-08-18）────────────
+ *
+ * 读的是 `webview/assets/*.css` 里的令牌值（边界见 `docs/REFERENCES.md`：
+ * **读事实，不读表达**）。逐条对上：
+ *
+ * | 他们 | 值 | 我们 |
+ * |---|---|---|
+ * | `--diffs-font-size` | 12px | 同 |
+ * | `--diffs-line-height` | 字号 × **1.8** | 同（原来是 1.5） |
+ * | `--diffs-min-number-column-width` | **4ch** | 同，**只给一列** |
+ * | `--turn-diff-row-padding-y` | .25rem | 同，文件头与行共用 |
+ * | `--color-editor-added/-deleted` | 亮 15% / 暗 23% | `--mix-diff` |
+ *
+ * 「只给一列行号」的理由写在 `src/ui/diff.ts` 的头注里：坞宽 280–720px，
+ * 两列 4ch 光行号就吃掉近 60px。
+ */
 .diff {
   margin: 0;
-  padding: var(--dawn-space-2);
   overflow-x: auto;
   font-family: var(--dawn-font-mono);
   font-size: 12px;
-  line-height: 1.5;
+  /** 量出来的 1.8。行与行之间松一档，长 diff 才扫得动 */
+  line-height: 1.8;
   background: var(--dawn-surface-input);
   border-radius: var(--dawn-radius-sm);
 }
-.diff span { display: block; white-space: pre; }
-.diff-add { background: color-mix(in srgb, var(--dawn-success) 12%, transparent); }
-.diff-del { background: color-mix(in srgb, var(--dawn-danger) 12%, transparent); }
-.diff-hunk { color: var(--dawn-text-3); }
-.diff-file { color: var(--dawn-text-2); font-weight: 600; }
-.review { display: block; }
-.review-diff { margin-top: var(--dawn-space-3); }
+.diff-row {
+  display: flex;
+  align-items: flex-start;
+  /** **底色必须是不透明的**：行号那一列钉住时靠 `background: inherit` 遮住滑过去的正文 */
+  background: var(--dawn-surface-input);
+  /** 行短于视口时也要铺满，否则钉住的行号右边会露出一截空白 */
+  min-width: max-content;
+  width: 100%;
+}
+/**
+ * 行号那一列。**横向滚动时钉住**——一行长起来是常事，
+ * 而滚出去之后「这是第几行」正是最需要还在眼前的东西。
+ *
+ * `user-select: none`：行号是画上去的，**不属于 diff 正文**。
+ * 不加的话复制出来那段就不再是一段能打的 patch。
+ */
+.diff-num {
+  position: sticky;
+  left: 0;
+  flex: 0 0 auto;
+  min-width: 4ch;
+  padding: 0 var(--dawn-space-2);
+  text-align: right;
+  /** 退一档就够——退到 text-4（30%）之后行号在亮色下几乎读不出来 */
+  color: var(--dawn-text-3);
+  background: inherit;
+  user-select: none;
+}
+.diff-text { white-space: pre; padding-right: var(--dawn-space-2); }
+.diff-add { background: color-mix(in srgb, var(--dawn-success) var(--mix-diff), var(--dawn-surface-input)); }
+.diff-del { background: color-mix(in srgb, var(--dawn-danger) var(--mix-diff), var(--dawn-surface-input)); }
+/** 加减行的行号也上色：**颜色之外还有 +/− 号**，不是只靠颜色说话 */
+.diff-add .diff-num { color: var(--dawn-success); }
+.diff-del .diff-num { color: var(--dawn-danger); }
+/**
+ * 块头是一条分隔带。**不能用 `--dawn-surface-panel`**：
+ * 它在亮色与暗色下都恰好与 `--dawn-surface-input` 同值，那条带子于是两个主题都看不见
+ * （2026-08-18 截图上量出来的）。用与加减行同一个手法——**兑成不透明的一档**，
+ * 这样钉住的行号靠 `background: inherit` 才遮得住滑过去的正文。
+ */
+.diff-hunk {
+  color: var(--dawn-text-3);
+  background: color-mix(in srgb, var(--dawn-text-1) var(--mix-fill-3), var(--dawn-surface-input));
+}
+.diff-meta { color: var(--dawn-text-2); font-weight: 600; }
 .review-status.produced { color: var(--dawn-text-3); }
+
+/**
+ * **选中一个文件之后，文件表限高并自己滚**（排版学 Codex 的另一半）。
+ *
+ * 不限高的话，仓库里改了三十个文件时 diff 被推到屏幕外面——
+ * 换一个文件就要把面板拖上去再拖下来，而 Codex 那一屏的要害恰恰是
+ * **换文件不离开这一屏**。没选中时不限高：那时整屏本来就该给这两张表。
+ */
+.review.picked .review-files {
+  max-height: 34vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.review-diff { margin-top: var(--dawn-space-3); }
+/**
+ * 文件头。**钉在顶上**——diff 长起来之后，
+ * 「我在看哪个文件」是第一个滚出视野的东西。
+ */
+.review-diff-head {
+  position: sticky;
+  top: 0;
+  /** 与表头同一个角色：**钉住的头压过滚过去的行**，所以用同一档 */
+  z-index: var(--z-table-head);
+  display: flex;
+  align-items: baseline;
+  gap: var(--dawn-space-2);
+  padding: 0.25rem var(--dawn-space-1);
+  margin-bottom: var(--dawn-space-1);
+  background: var(--dawn-surface-panel);
+  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
+}
+/**
+ * 表格文件的结论卡，**排在 diff 上面**（2026-08-18）。
+ *
+ * 它不是 diff 的一部分，所以**换一张面**：diff 那块是 `surface-input`，
+ * 这块是面板底加一条左边线——一眼看得出「这句话是 DAWN 说的，
+ * 下面那份是 git 说的」。
+ */
+.table-diff {
+  margin-bottom: var(--dawn-space-2);
+  padding: var(--dawn-space-2);
+  border-left: 2px solid var(--dawn-accent);
+  background: var(--dawn-fill-5);
+  border-radius: var(--dawn-radius-sm);
+}
+.table-diff-head {
+  margin: 0 0 var(--dawn-space-1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dawn-text-2);
+}
+.table-diff-list {
+  margin: 0;
+  padding-left: var(--dawn-space-4);
+  font-size: 12px;
+  color: var(--dawn-text-1);
+  overflow-wrap: anywhere;
+}
+.table-diff .hint { margin: var(--dawn-space-1) 0 0; }
+
 /** 审阅这一块**不许把坞撑宽**：长路径与长句子各自在自己那格里收 */
-.review { min-width: 0; overflow-x: hidden; }
+.review { display: block; min-width: 0; overflow-x: hidden; }
 .review .caveat, .review .hint { overflow-wrap: anywhere; }

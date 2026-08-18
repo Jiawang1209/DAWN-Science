@@ -148,6 +148,22 @@ test.describe("审阅 · 跟 git HEAD 比", () => {
     await expect(坞.locator(".diff")).toContainText("作者后来加的一行", { timeout: 30_000 })
     // 加的行**上了色**（一行以上很正常，收窄到第一条）
     await expect(坞.locator(".diff-add").first()).toBeVisible()
+    /**
+     * **行号那一列真的画出来了，而且是文件里的行号**（排版学 Codex，2026-08-18）。
+     *
+     * `README.md` 提交时只有一行（`# e2e 工作区`），`appendFileSync` 追加的是
+     * `\n作者后来加的一行\n`——于是那句话落在**第 3 行**，第 2 行是那个空行。
+     *
+     * **认准那一行去问，不要问「第一条加行」**：第一条加行是空行（第 2 行），
+     * 这个用例第一版就是这么写错的，而它当场报了 2。写死行号是有意的——
+     * 「有个数字在那儿」证明不了任何事，**错的行号比没有行号更坏**：
+     * 它会把人带到文件里另一个地方，而且看起来一切正常。
+     */
+    await expect(
+      坞.locator(".diff-add").filter({ hasText: "作者后来加的一行" }).locator(".diff-num"),
+    ).toHaveText("3")
+    // 文件头把「我在看哪个文件」摆出来（钉在顶上的那条）
+    await expect(坞.locator(".review-diff-head .review-path")).toHaveText("README.md")
 
     /**
      * ④ **产物那一半**：`out/` 被 `.gitignore` 挡着，`git diff HEAD` 一个字都不说。
@@ -165,5 +181,52 @@ test.describe("审阅 · 跟 git HEAD 比", () => {
      */
     const 产物们 = 坞.locator(".review-status.produced").locator("xpath=following-sibling::span")
     await expect(产物们).toHaveText(["figures/手放的.md", "out/工具写的.md"], { timeout: 30_000 })
+  })
+})
+
+/**
+ * **表格文件：先说结论，再看逐行差异**（2026-08-18，作者选的甲）。
+ *
+ * 这一条验的是这个功能存在的全部理由：*「某列单位 g → mg」* 在逐行 diff 里
+ * 是「每一行都变了」，信息量接近零；而真相是一句话——**这一列乘了 1000**。
+ *
+ * 单元测试已经把 `比两张表()` 与「旧的那张从 `HEAD` 来」各验过一遍。
+ * **这里验的是它真的走到了屏幕上**——那两件事在这个项目里被证明过不是一回事
+ * （419 个测试全绿的那一版，打开之后点什么都没反应）。
+ */
+test.describe("审阅 · 表格文件在 diff 上方多一句结论", () => {
+  test.use({ dawnOptions: { gitInit: true } })
+
+  test("一列换了单位，摘要说「乘了 1000」，而不是「每一行都变了」", async ({ dawn }) => {
+    const { page, workspace } = dawn
+    const { writeFileSync } = await import("node:fs")
+    const { execFileSync } = await import("node:child_process")
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: workspace, stdio: "pipe" })
+
+    // ① 先把「旧的那一张」提交进 HEAD —— 摘要的旧版来自 `git show HEAD:`
+    writeFileSync(`${workspace}/测量.csv`, "样品,质量\na,1\nb,2\nc,3\n")
+    git("add", "-A")
+    git("commit", "-qm", "原始测量")
+
+    // ② 换单位：g → mg。**逐行 diff 会说「三行全变了」**
+    writeFileSync(`${workspace}/测量.csv`, "样品,质量\na,1000\nb,2000\nc,3000\n")
+
+    await 在项目里开会话(page)
+    await 进审阅(page)
+
+    const 坞 = page.locator(".right-dock")
+    await 坞.getByRole("button", { name: /测量\.csv/ }).click()
+
+    // ③ 结论在上面
+    const 摘要 = 坞.locator(".table-diff")
+    await expect(摘要).toContainText("整列乘了 1000", { timeout: 30_000 })
+    /**
+     * **被那句话解释掉的格不再逐格重复**——那正是噪声的来源。
+     * 三行全部由「乘了 1000」解释得了，所以不该再冒出「另有 3 处单元格变化」。
+     */
+    await expect(摘要).not.toContainText("单元格变化")
+
+    // ④ **逐行差异仍在下面**：摘要是我们的判定，diff 是 git 的原始事实
+    await expect(坞.locator(".diff")).toContainText("1000")
   })
 })

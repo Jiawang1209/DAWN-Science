@@ -621,9 +621,10 @@ export const EN: Readonly<Record<string, string>> = {
   "仓库里的改动": "Changes in the repository",
   "跟上次提交比，仓库里没有改动。": "No changes in the repository since the last commit.",
   "这次跑出来的产物": "Artifacts produced",
-  "账本里没有 git 看不见的产物。": "The ledger has no artifacts that git cannot see.",
-  "git 忽略了这些，所以上面那半看不到它们——账本记得。":
-    "git ignores these, so the half above cannot see them — the ledger remembers.",
+  "没有记到 git 看不见的产物。散在约定目录之外、又不是 DAWN 的工具写的东西，这里看不见。":
+    "No artifacts recorded that git cannot see. Anything written outside the convention directories by something other than DAWN's own tools is invisible here.",
+  "git 忽略了这些，所以上面那半看不到它们。它们来自账本，以及科研约定的那几个产物目录。":
+    "git ignores these, so the half above cannot see them. They come from the ledger and from the convention artifact directories.",
   "内容没有变化。": "The contents did not change.",
   "差异太长，只显示了前 {0} 行（一共 {1} 行）。":
     "The diff is long; showing the first {0} of {1} lines.",

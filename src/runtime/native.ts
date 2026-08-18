@@ -459,7 +459,7 @@ export class NativeRuntime implements AgentRuntime {
           // **before 快照必须在真正执行之前完成**，所以要 await。
           // 这正是 Spike A-2 选「包装工具定义」而非 pi 文件扩展的原因之一：
           // 包装器天然是同步点，而普通事件订阅不阻塞
-          const handle = await probe?.begin(name)
+          const handle = await probe?.begin(name, params)
           try {
             return await original(toolCallId, params, signal, onUpdate, ctx)
           } finally {

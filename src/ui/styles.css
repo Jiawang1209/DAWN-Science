@@ -4466,3 +4466,6 @@ pre {
 .review { display: block; }
 .review-diff { margin-top: var(--dawn-space-3); }
 .review-status.produced { color: var(--dawn-text-3); }
+/** 审阅这一块**不许把坞撑宽**：长路径与长句子各自在自己那格里收 */
+.review { min-width: 0; overflow-x: hidden; }
+.review .caveat, .review .hint { overflow-wrap: anywhere; }

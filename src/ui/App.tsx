@@ -3202,8 +3202,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     client.get("fileDiff", { projectId: projectId ?? "", path })
                   }
                 />
-                {/* 归属告知跟着「变更」一起搬——**它解释的正是这一屏的数** */}
-                <AttributionCaveat show={mayIncludeUserEdits(runDetail?.fileChanges, runs)} />
+                {/**
+                  * 归属告知**由上面那块 `ReviewPanel` 说一次**（2026-08-18）——
+                  * 它离它解释的那些数最近。这儿再说一遍就是两处说同一件事。
+                  */}
                 <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />
                 <ToolChangesPanel runs={runs} onOpenFile={openFile} />
               </>

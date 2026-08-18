@@ -101,18 +101,34 @@ test.describe("审阅 · 跟 git HEAD 比", () => {
   test.use({
     dawnOptions: {
       gitInit: true,
-      toolCall: { toolName: "write", args: { path: "out/fig1.md", content: "# 假装是一张图\n" } },
+      toolCall: { toolName: "write", args: { path: "out/工具写的.md", content: "# 假装是一张图\n" } },
     },
   })
 
   test("**仓库里的改动**与**账本记的产物**各占一栏，点开有逐行差异", async ({ dawn }) => {
     const { page, workspace } = dawn
-    const { writeFileSync, appendFileSync } = await import("node:fs")
+    const { writeFileSync, mkdirSync, appendFileSync } = await import("node:fs")
 
     // ① 仓库里：改一个已经提交过的文件
     appendFileSync(`${workspace}/README.md`, "\n作者后来加的一行\n")
-    // ② `.gitignore` 挡住 out/ —— 待会儿模型往里写的东西，git 一个字都不会说
-    writeFileSync(`${workspace}/.gitignore`, "out/\n")
+    /**
+     * ② `.gitignore` 挡住 `figures/` —— 待会儿模型往里写的东西，git 一个字都不会说。
+     *
+     * **用作者真实约定里的目录**（`policy/science-layout.ts` 那一份）：
+     * 第一版我随手写了 `out/`，而它根本不在约定里，
+     * 于是「约定目录兜底」那条**正确地没看见它**，我却以为是功能坏了。
+     */
+    /**
+     * **两个来源要分得开**（2026-08-18 变异测试逼出来的）。
+     *
+     * 第一版两条路都指向同一个文件，于是**关掉任一条判据都还绿**——
+     * 弱得等于没验。现在各给一个只有它看得见的：
+     *   - `out/工具写的.md`：忽略、**不在科研约定里** → 只有工具包装器（甲）看得见
+     *   - `figures/手放的.md`：忽略、在约定里、**不是我们的工具写的** → 只有约定兜底（丙）看得见
+     */
+    writeFileSync(`${workspace}/.gitignore`, "figures/\nout/\n")
+    mkdirSync(`${workspace}/figures`, { recursive: true })
+    writeFileSync(`${workspace}/figures/手放的.md`, "外部 agent 用自己的 bash 写的\n")
 
     await 在项目里开会话(page)
     await page.getByPlaceholder(/今天帮你做些什么/).fill("写一张图")
@@ -140,9 +156,14 @@ test.describe("审阅 · 跟 git HEAD 比", () => {
     await expect(坞.getByRole("heading", { name: "这次跑出来的产物" })).toBeVisible()
     await expect(坞.getByText(/git 忽略了这些/)).toBeVisible()
     /**
-     * **这一条就是这一屏的立身之本**：`out/fig1.md` 被 `.gitignore` 挡着，
+     * **这一条就是这一屏的立身之本**：两个都被 `.gitignore` 挡着，
      * 上面那半（`git diff HEAD`）一个字都不会说它——而账本记得。
      */
-    await expect(坞.getByText("out/fig1.md")).toBeVisible({ timeout: 30_000 })
+    /**
+     * **收窄到产物那一栏**：这个路径在坞里出现两次（产物栏 + 下面那张变更卡），
+     * `getByText` 是子串匹配、且严格模式，宽着写会一次命中两个。
+     */
+    const 产物们 = 坞.locator(".review-status.produced").locator("xpath=following-sibling::span")
+    await expect(产物们).toHaveText(["figures/手放的.md", "out/工具写的.md"], { timeout: 30_000 })
   })
 })

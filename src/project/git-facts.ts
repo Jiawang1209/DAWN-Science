@@ -281,3 +281,38 @@ export async function fileDiffAgainstHead(workspace: string, path: string): Prom
     (e: unknown) => (e instanceof Error && "stdout" in e ? String((e as { stdout: unknown }).stdout) : ""),
   )
 }
+
+/**
+ * **被 git 忽略、但落在科研约定目录里的那些产物**（2026-08-18）。
+ *
+ * ## 为什么单独要这一条
+ *
+ * `git status` / `git diff` **都不列被 `.gitignore` 忽略的文件**，而科研仓库里
+ * `figures/`、`results/`、`data/processed/` 常常正好在 ignore 名单上——
+ * 于是一次分析生成 40 张图，两边都说「什么都没变」。
+ *
+ * ## 为什么不直接 `--ignored` 全列
+ *
+ * 那会把 `node_modules/`、`.venv/`、构建产物一起涌进来，**一屏几千行**，
+ * 而人要找的是那 40 张图。**限定在约定目录里**，噪声可控，
+ * 而且正好对着「看结果」这个场景。
+ *
+ * 代价说清楚：**产物散在约定目录之外的话，这一条看不见它们**。
+ * 那时如实说「看不见」，不假装看得见。
+ */
+export async function ignoredArtifacts(workspace: string, dirs: readonly string[]): Promise<string[]> {
+  if (dirs.length === 0) return []
+  const out = await git(workspace, [
+    "ls-files",
+    "--others",
+    "--ignored",
+    "--exclude-standard",
+    "--",
+    ...dirs,
+  ]).catch(() => "")
+  return out
+    .split("\n")
+    .map((s) => unquotePath(s.trim()))
+    .filter(Boolean)
+    .sort()
+}

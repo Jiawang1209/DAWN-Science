@@ -40,7 +40,7 @@ import {
 } from "../files/access.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
-import { diffSince, snapshot, changesAgainstHead, fileDiffAgainstHead, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { diffSince, snapshot, changesAgainstHead, fileDiffAgainstHead, ignoredArtifacts, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { discoverCliModels } from "../runtime/cli/models.js"
 import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
@@ -1845,7 +1845,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 屏幕上会说「什么都没变」。
        */
       const 仓库里有的 = new Set(tracked.map((x) => x.path))
-      const produced = [...runs.writtenFilesOf(projectId)]
+      /**
+       * 产物那一半有**两个来源**，缺一不可（2026-08-18）：
+       *
+       * ① **账本**——内置工具的包装器记的（连它自己声称写的路径一起，
+       *    且事后 `stat` 确认过）。这条覆盖你日常那条路。
+       * ② **约定目录里被 git 忽略的文件**——外部 agent（ACP / CLI）
+       *    用它自己的 bash 写东西，根本不经过我们的包装器；
+       *    它们的产物只能这么捞。
+       *
+       * 第一版只有 ①，而 ① 当时也是从 git 算的——**于是这一栏永远是空的**，
+       * 而屏幕上还写着「账本记得」。那是在骗人。
+       */
+      const 忽略里的产物 =
+        baseline === "head" ? await ignoredArtifacts(p.workspace, 科研目录) : []
+      const produced = [...new Set([...runs.writtenFilesOf(projectId), ...忽略里的产物])]
         .filter((f) => !仓库里有的.has(f))
         .sort()
         .map((path) => ({ path }))

@@ -105,6 +105,11 @@ export function ReviewPanel({
         * **归属告知**：本阶段没有 worktree 隔离，这一屏混着你自己手改的东西。
         * 跟 HEAD 比是累计口径，这一句因此更要紧，不是更次要。
         */}
+      {/**
+        * **归属告知只说一次**：旧的 `AttributionCaveat` 在同一个坞里
+        * 说着同一件事，两处说同一件事正是本项目反复消除的东西。
+        * 留这一句是因为**它离它解释的那些数最近**。
+        */}
       {data.mayIncludeUserEdits ? (
         <p className="caveat">{t("跟上次提交比。这里可能包含你自己的修改——本阶段还分不清是谁改的。")}</p>
       ) : null}
@@ -136,10 +141,17 @@ export function ReviewPanel({
 
       <h3 className="review-head">{t("这次跑出来的产物")}</h3>
       {data.produced.length === 0 ? (
-        <p className="hint">{t("账本里没有 git 看不见的产物。")}</p>
+        /**
+         * **说清楚看不见的是哪一类**，不要只说「没有」。
+         *
+         * 这一栏的来源有两个：账本（内置工具记的）与科研约定目录里
+         * 被 git 忽略的文件。**产物散在约定目录之外、又不是我们的工具写的**
+         * ——那时它对两边都是隐形的，而人有权知道这个边界。
+         */
+        <p className="hint">{t("没有记到 git 看不见的产物。散在约定目录之外、又不是 DAWN 的工具写的东西，这里看不见。")}</p>
       ) : (
         <>
-          <p className="caveat">{t("git 忽略了这些，所以上面那半看不到它们——账本记得。")}</p>
+          <p className="caveat">{t("git 忽略了这些，所以上面那半看不到它们。它们来自账本，以及科研约定的那几个产物目录。")}</p>
           <ul className="review-list">
             {data.produced.map((f) => (
               <li key={f.path}>

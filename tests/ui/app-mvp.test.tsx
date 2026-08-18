@@ -159,6 +159,24 @@ function harness(
         return runs
       case "getRun":
         return { ...RUN, fileChanges: CHANGES, cost: COST }
+      /**
+       * 审阅那一屏（2026-08-18）。**归属告知从这儿来**——
+       * 它跟着数据走，而不是写死在界面上。
+       */
+      case "reviewChanges":
+        return {
+          baseline: "head",
+          mayIncludeUserEdits: true,
+          tracked: CHANGES.files.map((path: string) => ({
+            path,
+            status: "modified",
+            added: 1,
+            removed: 0,
+          })),
+          produced: [],
+        }
+      case "fileDiff":
+        return { diff: "" }
       case "getProvenance":
         return { resourceId: "r1", provenanceComplete: true }
       case "openProject": {

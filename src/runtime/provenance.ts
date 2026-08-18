@@ -22,6 +22,8 @@
  * 非 git 仓库、git 调用失败——一律返回 `undefined`，让那条 Run 上**没有**这个字段。
  * 返回空数组会被读成「确认没改任何文件」，那是编造（不变式 5 明令禁止）。
  */
+import { statSync } from "node:fs"
+import { resolve } from "node:path"
 import { diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 
 /**
@@ -43,6 +45,41 @@ export const PRODUCING_TOOLS: ReadonlySet<string> = new Set([
 
 export function isProducing(toolName: string): boolean {
   return PRODUCING_TOOLS.has(toolName)
+}
+
+/**
+ * 这几个工具**自己就说得出写到哪儿**（2026-08-18）。
+ *
+ * `bash` 不在里面：它的参数是一条命令，写到哪儿只有它自己知道。
+ */
+const 会报路径的: ReadonlySet<string> = new Set(["write", "edit", "multiedit", "apply_patch"])
+
+/**
+ * 从工具入参里捞出它声称要写的那些路径。
+ *
+ * **各家键名不一**（`path` / `file_path` / `filePath`），而 `multiedit`
+ * 那类还会给一个数组。认不出就返回空——**认不出不等于可以编**。
+ */
+export function 声明的路径(toolName: string, params: unknown): string[] {
+  if (!会报路径的.has(toolName) || typeof params !== "object" || params === null) return []
+  const p = params as Record<string, unknown>
+  const 出: string[] = []
+  for (const k of ["path", "file_path", "filePath"]) {
+    const v = p[k]
+    if (typeof v === "string" && v.trim()) 出.push(v.trim())
+  }
+  const 批 = p["edits"] ?? p["files"]
+  if (Array.isArray(批)) {
+    for (const one of 批) {
+      if (typeof one !== "object" || one === null) continue
+      const o = one as Record<string, unknown>
+      for (const k of ["path", "file_path", "filePath"]) {
+        const v = o[k]
+        if (typeof v === "string" && v.trim()) 出.push(v.trim())
+      }
+    }
+  }
+  return [...new Set(出)]
 }
 
 /** 一次调用的文件事实 */
@@ -82,8 +119,21 @@ export class ProvenanceProbe {
    * @returns 完成句柄；**不观察这次时返回 `undefined`**——
    *   只读工具、非 git 仓库、快照失败都走这一支。
    */
-  async begin(toolName: string): Promise<ProvenanceHandle | undefined> {
+  async begin(toolName: string, params?: unknown): Promise<ProvenanceHandle | undefined> {
     if (!isProducing(toolName)) return undefined
+    /**
+     * **工具自己声称要写的那些路径**（2026-08-18）。
+     *
+     * 为什么必须有这一条：`diffSince` 用的是 `git status`，而它
+     * **不列被 `.gitignore` 忽略的文件**。科研仓库里 `figures/`、
+     * `results/`、`data/processed/` 常常正好在 ignore 名单上——
+     * 于是一次分析生成 40 张图，账本上是「没改任何文件」。
+     *
+     * 这**不违反不变式 5**（文件事实不听 agent 自述）：
+     * 声明只是候选，**跑完要 `stat` 一下确认文件真的在**才算数。
+     * 那是观察，不是转述。
+     */
+    const 声明 = 声明的路径(toolName, params)
     let before: GitBaseline
     try {
       before = await snapshot(this.workspace)
@@ -96,8 +146,21 @@ export class ProvenanceProbe {
       async finish(): Promise<ToolFileFacts | undefined> {
         try {
           const facts = await diffSince(workspace, before)
+          /**
+           * **声明过、而且事后真的在**的那些，并进去。
+           *
+           * 只并「存在」的：工具可能被拒、可能失败，那时它声称的路径
+           * 不该出现在账本上——**说它写了一个不存在的文件，比不说更坏**。
+           */
+          const 真在 = 声明.filter((rel) => {
+            try {
+              return statSync(resolve(workspace, rel)).isFile()
+            } catch {
+              return false
+            }
+          })
           return {
-            filesWritten: facts.files,
+            filesWritten: [...new Set([...facts.files, ...真在])].sort(),
             filesRead: [],
             mayIncludeUserEdits: facts.mayIncludeUserEdits,
           }

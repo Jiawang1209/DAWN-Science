@@ -1855,6 +1855,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 本机路径 = 挑中[0]
       if (!本机路径) return // 取消了：什么都不做，也不出声
 
+      /**
+       * **先把条子清空**（2026-08-18，真机上撞出来的）。
+       *
+       * 不清的话，从按下到服务器答复这一段，条子上挂着的是**上一次的结果**
+       * ——假 SSH 上那只有几毫秒，真机上是一到三秒，屏幕上就是
+       * 「我明明在传新的，它却说上一个传好了」。
+       */
+      设传输({ transferred: 0, state: "running" })
+      起点.current = { 时刻: Date.now(), 已传: 0 }
+
       const 发一次 = (onConflict: "ask" | "overwrite" | "keepBoth") =>
         client
           .get<
@@ -1868,6 +1878,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           })
           .then((r) => {
             if (r.kind === "conflict") {
+              // **问之前把条子撤掉**：还没开始传，留着一根转着的条是假象
+              设传输(undefined)
               setConfirming({
                 title: tf("「{0}」已经在那台机器上了", r.name),
                 detail: t("覆盖会写掉那边那一份。另存一份会自动改名，两个都留着。"),

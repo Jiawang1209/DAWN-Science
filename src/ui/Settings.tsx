@@ -365,12 +365,20 @@ export function WorkspacePanel({
   isDefault,
   onPick,
   onReset,
+  download,
 }: {
   path: string
   /** 是不是系统给的默认值。**「我没配过」与「我配的就是它」是两回事** */
   isDefault: boolean
   onPick: () => void
   onReset: () => void
+  /**
+   * 下载目录（2026-08-18，作者定的②）。**读不到就不画这一格**——
+   * 摆一个猜出来的路径比不摆更坏，它会指错地方。
+   */
+  download?:
+    | { path: string; isDefault: boolean; onPick: () => void; onReset: () => void }
+    | undefined
 }) {
   return (
     <Section>
@@ -395,6 +403,57 @@ export function WorkspacePanel({
           )}
         </div>
       </Row>
+
+      {/**
+        * **下载目录**（作者 2026-08-18 定的②：*「在设置里面，有一个工作目录，
+        * 其实这里面可以设置一个下载目录」*）。
+        *
+        * 后端从批 4a 起就有 `getDownloadDir` / `setDownloadDir`，
+        * **但界面上一个入口都没有**——于是从服务器拉下来的文件落到哪儿，
+        * 只能靠猜。「看不见的能力等于不存在」，这个项目为它栽过两次。
+        *
+        * ## 两颗按钮的文案为什么跟上面那一格不一样
+        *
+        * 上面那颗叫「换一个」。**同一屏上出现两颗「换一个」，按名字就找不准了**
+        * ——读屏的「按标签跳转」、Playwright 的 `getByRole(name)`、
+        * 以及人脑里的「点那个写着 X 的」，三者都是子串匹配。
+        *
+        * **「下载」与「文件」这两个词都不许出现在这两颗按钮上**，
+        * 两条都是扫描当场抓出来的、我自己撞的：
+        *   - 文件面板上那颗按钮就叫「下载」，而坞不随左半的屏切换而收起
+        *     （Q3，作者选的乙）——**它和这一屏真的会同时在场**，
+        *     于是「换个下载目录」把那颗按钮整个包在里面了；
+        *   - 侧栏那个去处叫「文件」，于是退而求其次的「换个文件夹」又撞了一次。
+        *
+        * 而「恢复默认」这一颗改叫「恢复系统默认」也不只是为了躲开撞名：
+        * **两个默认值的性质不同**。工作目录的默认是 DAWN 自己挑的（`~/DAWN`），
+        * 下载目录的默认是**系统那个**（`app.getPath("downloads")`，
+        * mac 上是 `~/Downloads`，Windows 上是它自己的下载文件夹，
+        * 而且跟得上你改过的系统设置）。这件事由上面那句 `desc` 说全——
+        * **说明文字里说得清的，就不要挤进按钮文案**。
+        */}
+      {download ? (
+        <Row
+          name={t("下载目录")}
+          desc={
+            download.isDefault
+              ? t("没设过，用的是系统的下载文件夹。从服务器拉下来的文件落在这儿。")
+              : t("从服务器拉下来的文件落在这儿。")
+          }
+        >
+          <div className="ws-setting">
+            <code className="ws-setting-path">{download.path}</code>
+            <Button variant="secondary" size="sm" onClick={download.onPick}>
+              {t("另选一处")}
+            </Button>
+            {download.isDefault ? null : (
+              <Button variant="text" size="sm" onClick={download.onReset}>
+                {t("恢复系统默认")}
+              </Button>
+            )}
+          </div>
+        </Row>
+      ) : null}
     </Section>
   )
 }

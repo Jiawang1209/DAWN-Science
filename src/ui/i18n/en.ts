@@ -474,6 +474,12 @@ export const EN: Readonly<Record<string, string>> = {
   "工作目录": "Working folder",
   "模型服务": "Model providers",
   "保存": "Save",
+  "下载目录": "Download folder",
+  "没设过，用的是系统的下载文件夹。从服务器拉下来的文件落在这儿。":
+    "Not set — using the system download folder. Files pulled from a server land here.",
+  "从服务器拉下来的文件落在这儿。": "Files pulled from a server land here.",
+  "另选一处": "Pick somewhere else",
+  "恢复系统默认": "Use the system default",
   "换一个": "Change",
   "恢复默认": "Reset to default",
   "重新扫描": "Rescan",

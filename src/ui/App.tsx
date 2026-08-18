@@ -987,6 +987,38 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     }
   }
 
+  /**
+   * **下载目录**（作者 2026-08-18 定的②）。
+   *
+   * 后端从批 4a 起就有这两个操作，**而界面上一直没有入口**——
+   * 于是从服务器拉下来的文件落到哪儿只能靠猜。
+   *
+   * 默认值来自主进程的 `app.getPath("downloads")`：mac 上是 `~/Downloads`，
+   * Windows 上是它自己的下载文件夹。**不按平台写死路径**——
+   * `app.getPath` 还跟得上用户改过的系统设置。
+   */
+  const [下载目录, 设下载目录状态] = useState<{ path: string; isDefault: boolean } | undefined>(
+    undefined,
+  )
+  useEffect(() => {
+    if (!ready) return
+    client
+      .get<{ path: string; isDefault: boolean }>("getDownloadDir", {})
+      .then(设下载目录状态)
+      .catch(() => {
+        /** **读不到就不画那一格**，不摆一个猜出来的路径——那会指错地方 */
+      })
+  }, [client, ready])
+  const 设下载目录 = async (path: string) => {
+    try {
+      设下载目录状态(
+        await client.get<{ path: string; isDefault: boolean }>("setDownloadDir", { path }),
+      )
+    } catch (e) {
+      fail(e)
+    }
+  }
+
   const remoteOpen = useStore($remoteOpen)
   const [connDraft, setConnDraft] = useState<
     (ConnectionDraft & { hasSecret?: boolean }) | undefined
@@ -2720,6 +2752,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                               })
                             }}
                             onReset={() => void 设默认工作区("")}
+                            {...(下载目录
+                              ? {
+                                  download: {
+                                    path: 下载目录.path,
+                                    isDefault: 下载目录.isDefault,
+                                    onPick: () => {
+                                      void client.pickDirectory(下载目录.path).then((d) => {
+                                        // **取消就什么都不做**：改主意不是错误
+                                        if (d) void 设下载目录(d)
+                                      })
+                                    },
+                                    // **空串 = 回到系统那个下载文件夹**（`store/settings.ts`）
+                                    onReset: () => void 设下载目录(""),
+                                  },
+                                }
+                              : {})}
                           />
                         ),
                       },

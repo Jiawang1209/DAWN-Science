@@ -3384,12 +3384,22 @@ pre {
 }
 /** 默认工作目录那一行：路径可能很长，别把按钮挤出去 */
 .ws-setting { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+/**
+ * **路径让位，按钮不让位**（2026-08-18）。
+ *
+ * 不写这两条的话，长路径会把按钮挤成竖着的一列字
+ * （下载目录那一格的默认值是 `/var/folders/…` 那种长路径，
+ * 「另选一处」当场被压成四行）——**测试一条都抓不住，只有看才发现**。
+ */
 .ws-setting-path {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--dawn-text-2);
 }
+.ws-setting .btn { flex: 0 0 auto; }
 
 /**
  * 添加模型服务：**一个弹窗**（2026-08-12，作者给了截图）。

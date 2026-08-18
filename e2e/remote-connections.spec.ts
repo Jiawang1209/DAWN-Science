@@ -14,7 +14,9 @@
  *   2. **口令不回显**，且改别的字段不会把它弄丢
  *   3. **连不上要说清是为什么**，就在那一行上
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
+import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
 
 test.use({
   dawnOptions: {
@@ -685,6 +687,69 @@ test("下载同一个文件两次，第二份另存，不覆盖第一份", async
   const { existsSync } = await import("node:fs")
   expect(existsSync(第一份), "第一份不见了").toBe(true)
   expect(existsSync(第二份)).toBe(true)
+})
+
+/**
+ * **下载落点：设置里改了，下载就真的落在那儿**（作者 2026-08-18 定的②）。
+ *
+ * 这一格的后端从批 4a 就有（`getDownloadDir` / `setDownloadDir`），
+ * **而界面上一个入口都没有**——于是从服务器拉下来的文件落到哪儿只能靠猜。
+ * 「看不见的能力等于不存在」，这个项目为它栽过两次。
+ *
+ * 所以这条从**设置那一屏点起**，一路验到磁盘上真的有那个文件：
+ * 中间任何一节断了（界面没接、协议没通、`startDownload` 不读设置），
+ * 它都会红。
+ */
+test.describe("下载落点", () => {
+  const 落点 = join(tmpdir(), "dawn-e2e-下载落点")
+  test.use({ dawnOptions: { fakeSsh: true, pickDirectory: 落点 } })
+
+  test("**设置里改了下载目录，文件就落在那儿**", async ({ dawn }) => {
+    const { page } = dawn
+    const { rmSync, readFileSync, readdirSync } = await import("node:fs")
+    // 上一次跑剩下的会让「另存一份」改名，断言就跟着飘
+    rmSync(落点, { recursive: true, force: true })
+
+    await 进设置(page, "工作目录")
+
+    /**
+     * **没设过与设过要分得开**：这句话只在「没设过」时出现，
+     * 而它同时说清了默认是**系统那个**下载文件夹
+     * （mac 上是 `~/Downloads`，Windows 上是它自己的那个）。
+     */
+    await expect(page.getByText("没设过，用的是系统的下载文件夹")).toBeVisible()
+    // 没设过时不给「恢复系统默认」——点了什么都不会变的按钮比没有更坏
+    await expect(page.getByRole("button", { name: "恢复系统默认", exact: true })).toHaveCount(0)
+
+    await page.getByRole("button", { name: "另选一处", exact: true }).click()
+    await expect(page.getByText(落点, { exact: false })).toBeVisible({ timeout: 30_000 })
+    // 设过之后那句「没设过」必须消失，且「恢复系统默认」出现
+    await expect(page.getByText("没设过，用的是系统的下载文件夹")).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "恢复系统默认", exact: true })).toBeVisible()
+
+    // ── 一路走到磁盘：加一台 → 开对话 → 下一个文件
+    await 展开远端(page)
+    await 加一台(page, { label: "假机器" })
+    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+    await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+    await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+    await page.locator(".right-dock .files-view").getByRole("button", { name: /读我\.md/ }).click()
+    await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
+
+    await page.getByRole("button", { name: "下载", exact: true }).click()
+    const 条 = page.locator(".xfer-text")
+    await expect(条).toContainText("传好了", { timeout: 30_000 })
+
+    /**
+     * **落在我设的那个目录里**，不是系统下载目录。
+     * 只断言屏幕上那句话不够——**屏幕说的与磁盘上的可以不一致**，
+     * 这条要的是后者。
+     */
+    const 说的落点 = (await 条.textContent())!.replace(/^.*传好了：/, "").trim()
+    expect(说的落点).toContain(落点)
+    expect(readdirSync(落点)).toContain("读我.md")
+    expect(readFileSync(说的落点, "utf8")).toContain("这是一台假服务器")
+  })
 })
 
 /** **本地文件不给「下载」**——它已经在这台机器上了 */

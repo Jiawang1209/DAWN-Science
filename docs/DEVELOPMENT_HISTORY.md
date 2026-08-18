@@ -46,7 +46,7 @@
 ### 2026-08-18 — ③ 的 spec：agent 的浏览器，先配一台，别先写代码
 
 - **Type**: docs
-- **Commit**: `待回填`
+- **Commit**: `059e28d`
 - **Motivation**: 作者定了「浏览器给 agent 用」并选丙之后要的那份 spec。
 - **What**: 新增 `docs/superpowers/specs/2026-08-18-agent的浏览器-design.md`。
   三条主要结论：

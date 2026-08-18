@@ -60,6 +60,28 @@ export const $rightDockTenant = atom<坞房客>("files")
 export const $rightDockWidth = atom<number>(RIGHT_DOCK_DEFAULT)
 
 /**
+ * **等着被打开的那条网址**（批 2，2026-08-18）。
+ *
+ * 消息里点了一条本机链接 → `App.tsx` 把房客切到「网页」并把地址放这儿 →
+ * 那一格自己拿去开。
+ *
+ * **不持久化**：它是一次点击的余波，不是「这个窗口现在的样子」。
+ * 存下来的话，重启之后会莫名其妙自己打开上次那一页。
+ */
+export const $待开网址 = atom<string | undefined>(undefined)
+
+/** 放一条进去。**同一条也要能再放一次**（人可能就是想重开），所以先清空 */
+export function 请打开网址(url: string): void {
+  $待开网址.set(undefined)
+  $待开网址.set(url)
+}
+
+/** 那一格开完了就把它收走——留着的话切走再切回会自己重开一遍 */
+export function 收走网址(): void {
+  $待开网址.set(undefined)
+}
+
+/**
  * 夹到上下界之间。**与侧栏那条同一个理由**：拖出界之后坞能压到 0 宽，
  * 那时它与「关掉」长得一模一样，而把手跟着宽度走，人再也拖不回来。
  *

@@ -27,6 +27,7 @@ import { WebContentsView, type BrowserWindow } from "electron"
 import { resolve, sep } from "node:path"
 import { realpathSync } from "node:fs"
 import { fileURLToPath } from "node:url"
+import { 本机主机吗, 解析地址 } from "../policy/local-url.js"
 
 /** 这一格自己的 cookie 罐子。**与 agent 那台浏览器也不共用**——两个读者，两套身份 */
 export const 网页预览分区 = "persist:dawn-web-preview"
@@ -67,24 +68,16 @@ export function 本机地址吗(
   if (!原) return { ok: false, why: "没有地址" }
 
   /**
-   * **地址栏里没人会打 `http://`。** 认不出协议时补一个再判——
-   * 但补出来的东西**照样要过下面同一道门**，不因为是我们补的就放行。
+   * **解析与主机名规则来自 `policy/local-url.ts`，两边共用**（批 2）。
+   *
+   * 渲染进程也要判「这条链接点了该进坞还是进系统浏览器」，而它碰不到 `fs`。
+   * 各写一份的话，一条链接会在「界面说能开」与「主进程说不能」之间打架，
+   * 而那种不一致没有任何地方会报出来。
+   *
+   * **这一层在它之上多一道**：`file:` 还要用 `realpath` 确认真在工作目录里。
    */
-  /**
-   * **`localhost:64070` 里那个冒号不是协议。** 只按 `^协议:` 判的话，
-   * `localhost` 会被当成协议名、`64070` 当成路径——第一版就是这么错的，
-   * 判据当场红了。分辨的办法是看冒号后面：**全是数字就是端口**。
-   */
-  const 像主机端口 = /^[a-zA-Z0-9.-]+:\d+(\/|$|\?)/.test(原)
-  const 有协议 = !像主机端口 && /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(原)
-  const 待判 = 有协议 ? 原 : `http://${原}`
-
-  let u: URL
-  try {
-    u = new URL(待判)
-  } catch {
-    return { ok: false, why: `「${原.slice(0, 60)}」不是一个地址` }
-  }
+  const u = 解析地址(原)
+  if (!u) return { ok: false, why: `「${原.slice(0, 60)}」不是一个地址` }
 
   if (u.protocol === "file:") {
     if (!workspace) return { ok: false, why: "这段会话没有工作目录，本机文件不知道该以哪儿为界" }
@@ -116,12 +109,7 @@ export function 本机地址吗(
     return { ok: false, why: `这一格只开 http(s) 与工作目录里的文件，不开 ${u.protocol}` }
   }
 
-  /**
-   * **严格相等，不做后缀匹配。** `localhost.evil.com` 与 `127.0.0.1.evil.com`
-   * 是真实存在的钓鱼写法，用 `endsWith` 判会当场放它们进来。
-   */
-  const 本机 = new Set(["localhost", "127.0.0.1", "[::1]", "::1"])
-  if (!本机.has(u.hostname)) {
+  if (!本机主机吗(u.hostname)) {
     return {
       ok: false,
       // **点名说是哪个主机**：笼统一句「不允许」会让人以为是功能坏了

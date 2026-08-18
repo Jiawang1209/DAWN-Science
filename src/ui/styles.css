@@ -4620,3 +4620,54 @@ pre {
   padding: var(--dawn-space-3);
   text-align: center;
 }
+
+/* 消息底下那张「网页预览」卡（批 2，2026-08-18，形状照作者的截图） */
+.weblink-card {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-3);
+  margin-top: var(--dawn-space-2);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-panel);
+}
+.weblink-icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--dawn-radius-sm);
+  background: var(--dawn-accent-soft);
+  color: var(--dawn-accent);
+}
+/** 两行：上面说这是什么，下面说要开的是哪儿。**长地址在自己那格里收** */
+.weblink-what { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.weblink-title { font-size: 13px; font-weight: 600; color: var(--dawn-text-1); }
+.weblink-url {
+  font-family: var(--dawn-font-mono);
+  font-size: 11px;
+  color: var(--dawn-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weblink-how { position: relative; flex: 0 0 auto; }
+/** 菜单**贴着按钮右对齐**：靠左的话它会伸到卡片外面去 */
+.weblink-menu {
+  position: absolute;
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  box-shadow: var(--dawn-shadow-float);
+  top: calc(100% + var(--dawn-space-1));
+  right: 0;
+  min-width: 12rem;
+  padding: var(--dawn-space-1);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  z-index: var(--z-modal-popover);
+}

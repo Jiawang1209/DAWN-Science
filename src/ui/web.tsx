@@ -30,7 +30,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "./primitives.js"
+import { 网页图标 } from "./icons.js"
+import { useStore } from "@nanostores/react"
 import { t } from "./i18n/index.js"
+import { $待开网址, 收走网址 } from "./state/index.js"
 
 export interface 网页状态 {
   url: string
@@ -94,6 +97,13 @@ export function WebPanel({ workspace }: { workspace?: string | undefined }) {
   }, [])
 
   useEffect(() => 桥()?.onState((s) => 设状态(s as 网页状态)), [])
+
+  /**
+   * **消息里点过来的那一条**（批 2）。`App.tsx` 把房客切到「网页」并把地址
+   * 放进 `$待开网址`，这里接住。开完立刻收走——留着的话，
+   * 切走再切回会自己把同一页重开一遍。
+   */
+  const 待开 = useStore($待开网址)
 
   /**
    * 把「该在哪儿、看不看得见」推给主进程。
@@ -164,6 +174,13 @@ export function WebPanel({ workspace }: { workspace?: string | undefined }) {
     对齐()
   }
 
+  useEffect(() => {
+    if (!待开) return
+    去(待开)
+    收走网址()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [待开])
+
   return (
     <div className="webview">
       <div className="webview-bar">
@@ -224,6 +241,75 @@ export function WebPanel({ workspace }: { workspace?: string | undefined }) {
           <p className="hint">{t("上面输一个本机地址，或者点消息里的链接。")}</p>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * 消息底下那张「网页预览」卡（批 2，2026-08-18，形状照作者的截图）。
+ *
+ * ## 为什么链接之外还要一张卡
+ *
+ * 链接本身点了就进坞（`markdown.tsx` 那一半）。但**光有链接说不出
+ * 「还能换个方式打开」**——作者要的那颗「打开方式 ▾」就是这件事：
+ * 在这儿开，还是交给系统浏览器。
+ *
+ * ## 一条消息只给一张
+ *
+ * 作者截图里就是一张。一条消息里出现好几个地址时，**链接本身照样点得动**——
+ * 这张卡是那条主线索的快捷方式，不是清单。
+ */
+export function 网页卡({
+  url,
+  onHere,
+  onSystem,
+}: {
+  url: string
+  onHere: (url: string) => void
+  onSystem: (url: string) => void
+}) {
+  const [开着, 设开着] = useState(false)
+  return (
+    <div className="weblink-card">
+      <span className="weblink-icon">
+        <网页图标 />
+      </span>
+      <span className="weblink-what">
+        <span className="weblink-title">{t("网页预览")}</span>
+        {/** **把地址摆出来**：一张只写「网站」的卡说不出它要开的是哪儿 */}
+        <span className="weblink-url">{url}</span>
+      </span>
+      <span className="weblink-how">
+        <Button variant="secondary" size="sm" aria-expanded={开着} onClick={() => 设开着((v) => !v)}>
+          {t("打开方式")}
+        </Button>
+        {开着 ? (
+          <div className="weblink-menu" role="menu">
+            <Button
+              variant="ghost"
+              size="sm"
+              role="menuitem"
+              onClick={() => {
+                设开着(false)
+                onHere(url)
+              }}
+            >
+              {t("在这儿打开")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              role="menuitem"
+              onClick={() => {
+                设开着(false)
+                onSystem(url)
+              }}
+            >
+              {t("用系统浏览器打开")}
+            </Button>
+          </div>
+        ) : null}
+      </span>
     </div>
   )
 }

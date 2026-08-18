@@ -25,6 +25,8 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
+import { 网页卡 } from "./web.js"
+import { 头一条本机地址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
@@ -3155,6 +3157,7 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
+  onOpenWeb,
   session,
   items,
   agents,
@@ -3282,6 +3285,8 @@ export function ConversationView({
    * **缺省 = 还没有内核，不做陈旧判断**——不猜。
    */
   kernelInstanceId?: string | undefined
+  /** 消息里点到本机地址时交给它（批 2）。**动作的家在 `App.tsx`** */
+  onOpenWeb?: ((url: string) => void) | undefined
 }) {
   /**
    * 草稿按**会话**取，不是按组件。
@@ -3576,6 +3581,7 @@ export function ConversationView({
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
                 nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
+                {...(onOpenWeb ? { onOpenWeb } : {})}
                 {...(disabled
                   ? {}
                   : {
@@ -4229,6 +4235,7 @@ export function TranscriptRow({
   nameOf,
   currentKernel,
   onResend,
+  onOpenWeb,
 }: {
   item: TranscriptItem
   agentId: string
@@ -4244,6 +4251,14 @@ export function TranscriptRow({
    * **不给就没有「修改」这颗**——一个点了没反应的按钮比没有更坏。
    */
   onResend?: ((text: string) => void) | undefined
+  /**
+   * 消息里点到**本机地址**时交给它（批 2，2026-08-18）。
+   *
+   * **走回调，不在这里改导航状态**——设计契约那一条：
+   * 叶子组件自己改的话，同一个跳转就有两个来源，而「谁先谁后」
+   * 取决于渲染顺序。动作的家在 `App.tsx`。
+   */
+  onOpenWeb?: ((url: string) => void) | undefined
 }) {
   if (item.type === "notice") {
     return <p className="caveat">{item.text}</p>
@@ -4441,7 +4456,22 @@ export function TranscriptRow({
           text={item.text}
           streaming={!mine && !item.final}
           {...(mine ? { className: "text" } : {})}
+          {...(onOpenWeb ? { onOpenLocal: onOpenWeb } : {})}
         />
+        {/**
+          * **消息底下那张「网页预览」卡**（批 2，形状照作者的截图）。
+          *
+          * 只在**模型说完了**之后给：流式过程中地址常常只打了一半，
+          * 那时冒出一张卡、地址还在自己变长，是最难看的一种闪烁。
+          * 自己说的话不给——那是你自己打的链接，不需要我们再推荐一次。
+          */}
+        {!mine && item.final && onOpenWeb && 头一条本机地址(item.text) ? (
+          <网页卡
+            url={头一条本机地址(item.text)!}
+            onHere={onOpenWeb}
+            onSystem={(u) => window.open(u, "_blank", "noopener,noreferrer")}
+          />
+        ) : null}
         {/**
          * **还在说的时候给一个会动的记号**（2026-08-10）。
          *

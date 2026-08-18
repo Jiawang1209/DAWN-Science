@@ -154,6 +154,7 @@ import {
   $rightDockWidth,
   setRightDockOpen,
   setRightDockTenant,
+  请打开网址,
   setRightDockWidth,
   点开房客,
 } from "./state/index.js"
@@ -2950,6 +2951,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 session={session}
                 items={items}
+                /**
+                 * **消息里点了一条本机地址**（批 2，2026-08-18）。
+                 *
+                 * 动作的家在这儿：切房客、把坞打开、把地址放进那个请求。
+                 * 叶子组件只发回调——设计契约那一条：叶子自己改导航状态的话，
+                 * 同一个跳转就有两个来源，而「谁先谁后」取决于渲染顺序。
+                 */
+                onOpenWeb={(url) => {
+                  setRightDockTenant("web")
+                  setRightDockOpen(true)
+                  请打开网址(url)
+                }}
                 {...(待答权限 ? { 待答权限 } : {})}
                 {...(会话开关们 ? { 会话开关们 } : {})}
                 onSetConfigOption={(configId, value) => {

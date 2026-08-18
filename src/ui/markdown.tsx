@@ -34,9 +34,10 @@
  * （`streamdown` / `shiki` / `use-stick-to-bottom`），
  * 放弃项是自己维护消息、工具调用、审批三类渲染器——**那正是我们本来就要自己定的东西**。
  */
-import { Component, type ErrorInfo, type ReactNode } from "react"
+import { Component, useMemo, type ErrorInfo, type ReactNode } from "react"
 import { Streamdown, type Components } from "streamdown"
 import { t } from "./i18n/index.js"
+import { 像本机地址吗 } from "../policy/local-url.js"
 
 /**
  * 把语义标签换回真的 HTML 标签。
@@ -44,16 +45,42 @@ import { t } from "./i18n/index.js"
  * **只覆盖行内语义那几个**，代码块与表格留给 streamdown——
  * 它在那里做了 shiki 高亮与复制/下载控件，那是我们选它的理由。
  */
-const components: Components = {
-  strong: ({ children }) => <strong>{children}</strong>,
-  em: ({ children }) => <em>{children}</em>,
-  // 外链在桌面应用里点开应当去系统浏览器，而不是把 Electron 窗口导航走。
-  // rel 是必须的：noopener 防止被打开的页面拿到 window.opener
-  a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noreferrer noopener">
-      {children}
-    </a>
-  ),
+/**
+ * 组件表是**按调用点造的**（批 2，2026-08-18）。
+ *
+ * 以前它是模块级常量。现在链接要认得「本机地址点了进坞」，
+ * 而那个动作是调用点给的回调——闭包得进得来。
+ */
+function 造组件(onOpenLocal?: (url: string) => void): Components {
+  return {
+    strong: ({ children }) => <strong>{children}</strong>,
+    em: ({ children }) => <em>{children}</em>,
+    /**
+     * **本机地址点了进坞，其余去系统浏览器。**
+     *
+     * 外链那一半：`target="_blank"` + 主进程的 `setWindowOpenHandler`
+     * （批 0 补的）把它交给系统浏览器。`rel` 是必须的——
+     * `noopener` 防止被打开的页面拿到 `window.opener`。
+     *
+     * 本机那一半是这一批新加的：**当场拦下**，交给坞里那一格。
+     * 判据用的是 `policy/local-url.ts`，与主进程那道门**同一份规则**——
+     * 各写一份的话，一条链接会在「界面说能开」与「主进程说不能」之间打架。
+     */
+    a: ({ href, children }) => (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        onClick={(e) => {
+          if (!href || !onOpenLocal || !像本机地址吗(href)) return
+          e.preventDefault()
+          onOpenLocal(href)
+        }}
+      >
+        {children}
+      </a>
+    ),
+  }
 }
 
 /**
@@ -110,9 +137,15 @@ export function AgentMarkdown({
   text,
   streaming,
   className,
+  onOpenLocal,
 }: {
   text: string
   streaming: boolean
+  /**
+   * 点到**本机地址**时交给它（批 2）。不给就退回老样子：
+   * 所有链接一律去系统浏览器。
+   */
+  onOpenLocal?: (url: string) => void
   /**
    * 额外的类名，落在**同一个元素**上（2026-08-14）。
    *
@@ -122,6 +155,7 @@ export function AgentMarkdown({
    */
   className?: string
 }) {
+  const components = useMemo(() => 造组件(onOpenLocal), [onOpenLocal])
   return (
     <div className={className ? `md ${className}` : "md"}>
       <渲染兜底 text={text}>

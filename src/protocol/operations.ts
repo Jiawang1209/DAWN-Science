@@ -1207,6 +1207,39 @@ export const OPERATIONS = {
    * 界面据此把按钮文案与确认框写成两套——同一颗按钮、同一个「删除」二字，
    * 一边可恢复一边不可恢复，**这次的代价是数据**。
    */
+  /**
+   * 一个路径是什么、有多大（批 5 之二，2026-08-17）。
+   *
+   * **删目录之前用它把确认框填满**：作者定的是
+   * *「自己要为自己的数据负责」*——而负责的前提是**知道自己要删掉什么**。
+   * 一个只写着 `out/` 的确认框给不了这个。
+   *
+   * `counted` 是 `partial` 时，`files` / `bytes` 的意思是「**至少**这么多」。
+   * 远端遍历可能很慢，**给它上界，数不完就如实说**——
+   * 编一个数字比不给数字更坏。
+   */
+  pathInfo: {
+    request: z
+      .object({
+        projectId: z.string().min(1).optional(),
+        connectionId: z.string().min(1).optional(),
+        path: z.string().min(1),
+      })
+      .strict()
+      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
+        message: "projectId 与 connectionId 要给且只给一个",
+      }),
+    response: z
+      .object({
+        directory: z.boolean(),
+        files: NonNegInt,
+        bytes: NonNegInt,
+        counted: z.enum(["complete", "partial"]),
+      })
+      .strict(),
+    mutating: false,
+  },
+
   deletePath: {
     request: z
       .object({

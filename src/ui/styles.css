@@ -4369,3 +4369,30 @@ pre {
 }
 /** 数字不换行——一根进度条旁边的字换行，整条会跳一下 */
 .xfer-text { white-space: nowrap; }
+
+/**
+ * 树行上那颗常驻的「⋯」（2026-08-18）。
+ *
+ * **常驻，不是悬停才出现**——这个项目为「看不见的能力等于不存在」
+ * 栽过两次（没标签的 `＋`、`opacity: 0` 的删除键）。
+ * 淡一档就够了：它是次要动作，但**始终看得见**。
+ */
+/** **在行的外面**：`Row` 自己是个 `<button>`，套进去是非法的 HTML */
+.tree-node { position: relative; }
+.tree-node > .row-actions {
+  position: absolute;
+  top: 0;
+  right: var(--dawn-space-2);
+}
+/**
+ * **树上这颗要常驻**（2026-08-18）。
+ *
+ * `.row-more` 的基线是 `opacity: 0`，会话行靠「当前行 / 悬停 / 聚焦」露出来
+ * ——那条退路成立，是因为**会话有「当前行」这个概念**（CLAUDE.md：
+ * 「悬停才出现的东西必须另有一个入口：当前行常驻、命令面板、或者干脆带上文字」）。
+ *
+ * **树上没有当前行**，所以那条退路在这儿不成立：它必须一直看得见。
+ * 淡一档就够——次要动作，但**始终在**。
+ */
+.tree-node > .row-actions .row-more { opacity: 1; color: var(--dawn-text-3); }
+.tree-node > .row-actions .row-more:hover { color: var(--dawn-text-1); }

@@ -26,7 +26,13 @@ test("目录树能翻，图片直接显示在应用里", async ({ dawn }) => {
   await page.getByRole("button", { name: "文件", exact: true }).click()
 
   // 根目录默认展开；点进 out
-  await page.getByRole("button", { name: /out/ }).click()
+  /**
+   * **目录名要 `exact`**（2026-08-18）：树行上那颗常驻的「⋯」
+   * 带着 `aria-label="目录操作：out"`，而**按名字找是子串匹配**——
+   * `/out/` 会一次命中两个。这是设计契约里那条
+   * 「放行的那几个短词，用例里一律 exact」的又一例。
+   */
+  await page.getByRole("button", { name: "out", exact: true }).click()
   await page.getByRole("button", { name: /图\.png/ }).click()
 
   const img = page.locator(".preview-img")

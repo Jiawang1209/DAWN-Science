@@ -599,7 +599,7 @@ test("**远端会话的文件面板长在那台服务器上**，不是本机", a
 
   // ② 树上是**那台机器**的东西（假服务器家目录里有「读我.md」与「数据」）
   await expect(面板.getByRole("button", { name: /读我\.md/ })).toBeVisible({ timeout: 30_000 })
-  await expect(面板.getByRole("button", { name: /数据/ })).toBeVisible()
+  await expect(面板.getByRole("button", { name: "数据", exact: true })).toBeVisible()
 
   // ③ 预览读的也是那台机器上的字节
   await 面板.getByRole("button", { name: /读我\.md/ }).click()
@@ -616,7 +616,7 @@ test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) 
   await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
 
   const 面板 = page.locator(".right-dock .files-view")
-  await 面板.getByRole("button", { name: /数据/ }).click()
+  await 面板.getByRole("button", { name: "数据", exact: true }).click()
   // 点开目录之后，里面那个 CSV 出现了——**而且它被读成表，不是一坨逗号**
   await 面板.getByRole("button", { name: /样本\.csv/ }).click()
   await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
@@ -816,4 +816,45 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
       { message: "删除没有落账，或者两种删法在账本上长得一样", timeout: 15_000 },
     )
     .toEqual({ 废纸篓: 1, 永久: 1 })
+})
+
+/**
+ * **删目录：入口常驻，确认框先说清删掉多少**（2026-08-18）。
+ *
+ * 两条纪律一起验：
+ * ① 那颗「⋯」**始终看得见**——不是悬停才出现（本项目栽过两次，
+ *    而 `toBeVisible()` 对 `opacity: 0` 仍然算可见，所以直接量它）；
+ * ② 确认框里**有数字**：作者定的是「自己为自己的数据负责」，
+ *    而负责的前提是知道自己要删掉什么。
+ */
+test("删目录：「⋯」常驻可见，确认框说得出有多少个文件", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  const { mkdirSync, writeFileSync, existsSync } = await import("node:fs")
+  /**
+   * **里面要有一层子目录**：平的话，「数目录要递归」那条判据
+   * 删掉递归也照样绿（2026-08-18 变异测试当场抓到的假绿）。
+   */
+  mkdirSync(`${workspace}/要删的目录/深一层`, { recursive: true })
+  writeFileSync(`${workspace}/要删的目录/a.txt`, "1\n")
+  writeFileSync(`${workspace}/要删的目录/b.txt`, "2\n")
+  writeFileSync(`${workspace}/要删的目录/深一层/c.txt`, "3\n")
+
+  await 开一段临时会话(page)
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  const 面板 = page.locator(".right-dock .files-view")
+  const 那颗 = 面板.getByRole("button", { name: /目录操作：要删的目录/ })
+  await expect(那颗).toBeVisible({ timeout: 30_000 })
+
+  // **直接量透明度**：`toBeVisible()` 对 `opacity: 0` 仍然算可见
+  const 透明度 = await 那颗.evaluate((el) => getComputedStyle(el).opacity)
+  expect(透明度, "那颗「⋯」是悬停才出现的——等于没有").not.toBe("0")
+
+  await 那颗.click()
+  // **确认框里有真数字**，不是一句「相关文件」
+  // 三个：顶上两个 + 子目录里那个。**数错一个都说明没递归**
+  await expect(page.getByText(/3 个文件/)).toBeVisible()
+  await expect(page.getByText(/可以从废纸篓找回来/)).toBeVisible()
+  await page.getByRole("dialog").getByRole("button", { name: "移到废纸篓", exact: true }).click()
+
+  await expect.poll(async () => existsSync(`${workspace}/要删的目录`), { timeout: 15_000 }).toBe(false)
 })

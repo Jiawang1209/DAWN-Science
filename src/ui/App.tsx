@@ -1907,6 +1907,56 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 哪台机器、**完整绝对路径**（不是相对的 `out/`——那句话在两台机器上
    * 可以指两个地方）、以及**删了还回不回得来**。
    */
+  /**
+   * 删一个目录（2026-08-18）。
+   *
+   * **先数清楚再问**：作者定的是*「自己要为自己的数据负责」*，
+   * 而负责的前提是**知道自己要删掉什么**——一个只写着 `out/` 的确认框
+   * 给不了这个。数不完就如实说「至少这么多」。
+   */
+  const 删一个目录 = useCallback(
+    (path: string) => {
+      const 远端的 = 文件所在
+      const 去哪 = 远端的
+        ? { connectionId: 远端的.connectionId, path }
+        : projectId
+          ? { projectId, path }
+          : undefined
+      if (!去哪) return
+      client
+        .get<{ files: number; bytes: number; counted: "complete" | "partial" }>("pathInfo", 去哪)
+        .then((info) => {
+          const 多少 =
+            info.counted === "partial"
+              ? tf("**至少** {0} 个文件（还没数完）", info.files)
+              : tf("{0} 个文件", info.files)
+          setConfirming({
+            title: 远端的 ? t("永久删除这个目录？") : t("把这个目录移到废纸篓？"),
+            detail: tf("{0}：{1}　—　{2}", 远端的?.label ?? t("本机"), path, 多少),
+            safety: 远端的
+              ? tf("{0} 上没有废纸篓，删了找不回来。", 远端的.label)
+              : t("可以从废纸篓找回来。"),
+            confirmLabel: 远端的 ? t("永久删除") : t("移到废纸篓"),
+            onConfirm: () => {
+              client
+                .get<{ trashed: boolean }>("deletePath", 去哪)
+                .then(() => {
+                  // 删掉的目录里可能就有正在预览的那个
+                  if (filePath?.startsWith(path)) {
+                    setFilePath(undefined)
+                    setFileContent(undefined)
+                  }
+                  设刷新令牌((n) => n + 1)
+                })
+                .catch(fail)
+            },
+          })
+        })
+        .catch(fail)
+    },
+    [client, projectId, 文件所在, filePath],
+  )
+
   const 删一个 = useCallback(
     (path: string) => {
       const 远端的 = 文件所在
@@ -1956,6 +2006,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         {...(文件所在 ? { onDownload: 下载, onUpload: 上传 } : {})}
         刷新令牌={刷新令牌}
         onDelete={删一个}
+        onDeleteDir={删一个目录}
         进废纸篓={!文件所在}
         {...(传输 ? { 传输 } : {})}
         onCancel={() => {

@@ -54,7 +54,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync, statSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -349,6 +349,13 @@ async function 读成附件(
  */
 const 远端预览上界 = 16 * 1024 * 1024
 
+/** 这几件是 `RemoteExecutor` 上我们用到的。**收窄成接口**，这一层不该认识整个执行器 */
+interface RemoteExecutorLike {
+  readdir(path: string): Promise<{ name: string; directory: boolean; size: number }[]>
+  unlink(path: string): Promise<void>
+  rmdir(path: string): Promise<void>
+}
+
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem } = opts
 
@@ -524,6 +531,67 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!existsSync(试)) return 试
     }
     throw fault("invalid_request", `${p} 这个名字已经有上千份了，换个下载目录吧`)
+  }
+
+  /**
+   * 遍历的上界（批 5 之二）。
+   *
+   * **远端每一层都是一次往返**，一个几万文件的目录能数上好几分钟。
+   * 到界就停，并如实说「至少这么多（还没数完）」——
+   * **编一个数字比不给数字更坏**。
+   */
+  const 数到这儿为止 = 5000
+
+  const 数一个本地目录 = (dir: string) => {
+    let files = 0
+    let bytes = 0
+    const 待办 = [dir]
+    while (待办.length > 0 && files < 数到这儿为止) {
+      const 这层 = 待办.pop()!
+      for (const e of readdirSync(这层, { withFileTypes: true })) {
+        if (files >= 数到这儿为止) break
+        const 全 = join(这层, e.name)
+        if (e.isDirectory()) 待办.push(全)
+        else {
+          files += 1
+          try {
+            bytes += statSync(全).size
+          } catch {
+            // 读不到大小就不加：**少算比编一个数好**
+          }
+        }
+      }
+    }
+    return { files, bytes, counted: (files >= 数到这儿为止 ? "partial" : "complete") as "partial" | "complete" }
+  }
+
+  const 数一个远端目录 = async (e: RemoteExecutorLike, dir: string) => {
+    let files = 0
+    let bytes = 0
+    const 待办 = [dir]
+    while (待办.length > 0 && files < 数到这儿为止) {
+      const 这层 = 待办.pop()!
+      const 条目 = await e.readdir(这层).catch(() => [])
+      for (const x of 条目) {
+        if (files >= 数到这儿为止) break
+        if (x.directory) 待办.push(`${这层}/${x.name}`)
+        else {
+          files += 1
+          bytes += x.size
+        }
+      }
+    }
+    return { files, bytes, counted: (files >= 数到这儿为止 ? "partial" : "complete") as "partial" | "complete" }
+  }
+
+  /** 递归删一个远端目录。**先删干净里面，再 `rmdir` 自己** */
+  const 递归删远端 = async (e: RemoteExecutorLike, dir: string): Promise<void> => {
+    for (const x of await e.readdir(dir)) {
+      const 全 = `${dir}/${x.name}`
+      if (x.directory) await 递归删远端(e, 全)
+      else await e.unlink(全)
+    }
+    await e.rmdir(dir)
   }
 
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
@@ -1744,6 +1812,24 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { transferId: id, name, target: 目标 }
     },
 
+    pathInfo: async ({ projectId, connectionId, path }) => {
+      if (connectionId) {
+        const e = 连着的(connectionId)
+        const st = await e.stat(path).catch((err: unknown) => {
+          throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+        })
+        if (!st.directory) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
+        const 数 = await 数一个远端目录(e, path)
+        return { directory: true, ...数 }
+      }
+      const p = projectStore.get(projectId!)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      const 全 = resolveInWorkspace(p.workspace, path)
+      const st = statSync(全)
+      if (!st.isDirectory()) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
+      return { directory: true, ...数一个本地目录(全) }
+    },
+
     deletePath: async ({ projectId, connectionId, path }) => {
       /**
        * **本地与远端不是同一个操作**，所以这两支从头到尾分开写。
@@ -1756,9 +1842,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const st = await e.stat(path).catch((err: unknown) => {
           throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
         })
-        // **目录这一批不删**：它要树上一个常驻的行内控件，单独做（见变更历史）
-        if (st.directory) throw fault("invalid_request", `${path} 是目录，这一版只删文件`)
-        await e.unlink(path).catch((err: unknown) => {
+        /**
+         * **目录要自己递归**：SFTP 的 `rmdir` 只删空目录。
+         *
+         * 半路失败**不回滚**——删掉的就是删掉了，假装回滚只会让人
+         * 以为什么都没发生。如实把失败那一句抛出去。
+         */
+        await (st.directory ? 递归删远端(e, path) : e.unlink(path)).catch((err: unknown) => {
           // **权限不够要说得出是权限不够**，不笼统地说「删不掉」
           throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
         })

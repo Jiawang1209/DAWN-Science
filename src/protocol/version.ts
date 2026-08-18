@@ -289,6 +289,15 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.9（2026-08-18，分支 `feat/远端文件`）：删目录，以及删之前先数清楚
+ *
+ * 纯新增，故 minor：`pathInfo`；`deletePath` 开始接受目录。
+ *
+ * **数清楚是「自己为自己的数据负责」的前提**：一个只写着 `out/` 的确认框
+ * 给不了这个。`counted: "partial"` 时那两个数的意思是「**至少**这么多」——
+ * 远端遍历可能很慢，**数不完就如实说，编一个数字比不给数字更坏**。
+ */
+/**
  * ## 7.8（2026-08-17，分支 `feat/远端文件`）：删一个文件
  *
  * 纯新增，故 minor：`deletePath`。
@@ -409,7 +418,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.8"
+export const WORKBENCH_PROTOCOL_VERSION = "7.9"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

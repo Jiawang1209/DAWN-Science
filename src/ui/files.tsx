@@ -47,6 +47,7 @@ function DirNode({
   selected,
   onSelect,
   load,
+  onDelete,
 }: {
   path: string
   name: string
@@ -54,6 +55,8 @@ function DirNode({
   selected: string | undefined
   onSelect: (path: string) => void
   load: (path: string) => Promise<Listing>
+  /** 删这个目录。**给了才画那颗「⋯」** */
+  onDelete?: (path: string) => void
 }) {
   const [open, setOpen] = useState(depth === 0)
   const [listing, setListing] = useState<Listing | undefined>(undefined)
@@ -79,6 +82,34 @@ function DirNode({
           <三角图标 className={`tree-caret${open ? " open" : ""}`} /> {name || "／"}
         </span>
       </Row>
+      {/**
+        * **目录的删除入口：一颗常驻的「⋯」**（2026-08-18）。
+        *
+        * 照会话行那颗——**不做成悬停才出现的**。这个项目为
+        * 「看不见的能力等于不存在」栽过两次（没标签的 `＋`、
+        * `opacity: 0` 的删除键），两次作者的话都是「没有这个功能」，
+        * 而两次代码都是好的。
+        *
+        * **必须在 `</Row>` 外面**：`Row` 自己就是个 `<button>`，
+        * 套进去既是非法的 HTML，也会让外层那颗的可及名字**吞掉**
+        * 内层的 `aria-label`——`getByRole` 于是一次匹配到两个元素。
+        * （2026-08-18 e2e 当场抓到。）
+        *
+        * 树根那一行不给：**删掉你正站着的那个目录之后，树指向哪儿？**
+        */}
+      {onDelete && depth > 0 ? (
+        <span className="row-actions">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="row-more"
+            aria-label={tf("目录操作：{0}", name)}
+            onClick={() => onDelete(path)}
+          >
+            ⋯
+          </Button>
+        </span>
+      ) : null}
       {open ? (
         error ? (
           // **读不了要说出来**，不是显示成一个空目录
@@ -97,6 +128,7 @@ function DirNode({
                   selected={selected}
                   onSelect={onSelect}
                   load={load}
+                  {...(onDelete ? { onDelete } : {})}
                 />
               ) : (
                 <li key={e.name}>
@@ -380,6 +412,7 @@ export function FilesView({
   onCancel,
   onUpload,
   onDelete,
+  onDeleteDir,
   进废纸篓,
   刷新令牌 = 0,
 }: {
@@ -436,6 +469,8 @@ export function FilesView({
    */
   刷新令牌?: number
   onDelete?: (path: string) => void
+  /** 删一个目录（树行上那颗「⋯」）。**与删文件分开传**：调用方要能只给其中一个 */
+  onDeleteDir?: (path: string) => void
   进废纸篓?: boolean
 }) {
   const [跳到, 设跳到] = useState("")
@@ -520,6 +555,7 @@ export function FilesView({
             selected={selected}
             onSelect={onSelect}
             load={loadDir}
+            {...(onDeleteDir ? { onDelete: onDeleteDir } : {})}
           />
         </ul>
       </nav>

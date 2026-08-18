@@ -38,6 +38,11 @@ export interface ConfirmRequest {
    */
   altLabel?: string
   onAlt?: () => void
+  /**
+   * 框关掉了（不管走的哪条路）。**批量上传靠它往下走**——
+   * 一批里有一个撞名、人点了取消，不能让整批就此卡住。
+   */
+  onDismiss?: () => void
 }
 
 export function ConfirmDialog({
@@ -49,6 +54,19 @@ export function ConfirmDialog({
 }) {
   if (!request) return null
 
+  /**
+   * **每一条出口都走这里**（2026-08-18）。
+   *
+   * 取消、Escape、确认、第三个选项——四条路，`onDismiss` 必须都发一次。
+   * 写成四份的话迟早有一条忘了，而忘了的表现是**批量上传卡在半路**
+   * （等一个永远不来的回调），看起来像应用死了。
+   */
+  const 收场 = (先干: (() => void) | undefined) => () => {
+    先干?.()
+    request.onDismiss?.()
+    onCancel()
+  }
+
   return (
     <div
       className="confirm-backdrop"
@@ -56,7 +74,7 @@ export function ConfirmDialog({
       aria-modal="true"
       aria-label={request.title}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onCancel()
+        if (e.key === "Escape") 收场(undefined)()
       }}
     >
       <div className="confirm">
@@ -65,7 +83,7 @@ export function ConfirmDialog({
         {request.safety ? <p className="confirm-safety">{request.safety}</p> : null}
         <div className="confirm-actions">
           {/* **焦点落在「取消」上**：危险的那个要多按一下才够得到 */}
-          <Button autoFocus variant="secondary" size="sm" onClick={onCancel}>
+          <Button autoFocus variant="secondary" size="sm" onClick={收场(undefined)}>
             {t("取消")}
           </Button>
           {request.altLabel && request.onAlt ? (
@@ -83,10 +101,7 @@ export function ConfirmDialog({
           <Button
             variant="danger"
             size="sm"
-            onClick={() => {
-              request.onConfirm()
-              onCancel()
-            }}
+            onClick={收场(request.onConfirm)}
           >
             {request.confirmLabel}
           </Button>

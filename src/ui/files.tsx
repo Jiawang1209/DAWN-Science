@@ -37,6 +37,28 @@ function bytes(n: number): string {
 /* ── 目录树 ──────────────────────────────────────────────────────── */
 
 /**
+ * 拖进来的那些东西，哪些是**本机文件**（2026-08-18）。
+ *
+ * 上传走的是 `localPath`——**拿不到磁盘路径就传不了**，
+ * 而那时必须响亮地说出来：从浏览器里拖来一张图、从压缩包里拖一个条目，
+ * 都是「看起来拖进去了，其实什么都没发生」。
+ *
+ * `pathForFile` 是 preload 暴露的那一个（composer 的附件拖拽用的同一条）——
+ * **Electron 32 起 `File.path` 已经没有了**。
+ */
+export function 拖进来的本机路径(files: readonly File[]): { 有: string[]; 没有: number } {
+  const w = window as unknown as { dawn?: { pathForFile?: (f: File) => string } }
+  const 有: string[] = []
+  let 没有 = 0
+  for (const f of files) {
+    const p = w.dawn?.pathForFile?.(f) ?? ""
+    if (p) 有.push(p)
+    else 没有 += 1
+  }
+  return { 有, 没有 }
+}
+
+/**
  * 一层目录。**按需展开，不预取整棵树**——
  * 一个 `node_modules` 就能让「打开文件视图」变成几十秒。
  */
@@ -48,6 +70,7 @@ function DirNode({
   onSelect,
   load,
   onDelete,
+  onDrop,
 }: {
   path: string
   name: string
@@ -57,8 +80,12 @@ function DirNode({
   load: (path: string) => Promise<Listing>
   /** 删这个目录。**给了才画那颗「⋯」** */
   onDelete?: (path: string) => void
+  /** 有文件被拖到这个目录上。**拖到哪一行就传到哪个目录** */
+  onDrop?: (dir: string, files: readonly File[]) => void
 }) {
   const [open, setOpen] = useState(depth === 0)
+  /** 有东西悬在这一行上。**放置高亮**——不给的话人不知道会落到哪个目录 */
+  const [悬着, 设悬着] = useState(false)
   const [listing, setListing] = useState<Listing | undefined>(undefined)
   const [error, setError] = useState<string | undefined>(undefined)
 
@@ -70,7 +97,33 @@ function DirNode({
   }, [open, listing, error, load, path])
 
   return (
-    <li className="tree-node">
+    <li
+      className={`tree-node${悬着 ? " drop-on" : ""}`}
+      onDragOver={
+        onDrop
+          ? (e) => {
+              /**
+               * **最里面那一层赢**：不 `stopPropagation` 的话事件冒到父目录，
+               * 高亮与落点就不是你看到的那一行了。
+               */
+              e.preventDefault()
+              e.stopPropagation()
+              设悬着(true)
+            }
+          : undefined
+      }
+      onDragLeave={onDrop ? () => 设悬着(false) : undefined}
+      onDrop={
+        onDrop
+          ? (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              设悬着(false)
+              onDrop(path, [...e.dataTransfer.files])
+            }
+          : undefined
+      }
+    >
       <Row
         className="tree-row"
         /* 缩进量**是数据**（树的层级），不是设计决定——与内核占比条同一条理由 */
@@ -129,6 +182,7 @@ function DirNode({
                   onSelect={onSelect}
                   load={load}
                   {...(onDelete ? { onDelete } : {})}
+                  {...(onDrop ? { onDrop } : {})}
                 />
               ) : (
                 <li key={e.name}>
@@ -413,6 +467,7 @@ export function FilesView({
   onUpload,
   onDelete,
   onDeleteDir,
+  onDropUpload,
   进废纸篓,
   刷新令牌 = 0,
 }: {
@@ -471,6 +526,14 @@ export function FilesView({
   onDelete?: (path: string) => void
   /** 删一个目录（树行上那颗「⋯」）。**与删文件分开传**：调用方要能只给其中一个 */
   onDeleteDir?: (path: string) => void
+  /**
+   * 把本机文件拖到某个目录上（2026-08-18）。
+   *
+   * **拖到哪一行就传到哪个目录**，而不是一律传到「当前目录」——
+   * 后者要人自己记住当前是哪儿，而**拖拽这个动作本身就在指位置**。
+   * 代价是每一行都要有放置高亮，不然人不知道会落在哪儿。
+   */
+  onDropUpload?: (dir: string, files: readonly File[]) => void
   进废纸篓?: boolean
 }) {
   const [跳到, 设跳到] = useState("")
@@ -556,6 +619,7 @@ export function FilesView({
             onSelect={onSelect}
             load={loadDir}
             {...(onDeleteDir ? { onDelete: onDeleteDir } : {})}
+            {...(onDropUpload ? { onDrop: onDropUpload } : {})}
           />
         </ul>
       </nav>

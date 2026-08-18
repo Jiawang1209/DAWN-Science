@@ -858,3 +858,64 @@ test("删目录：「⋯」常驻可见，确认框说得出有多少个文件",
 
   await expect.poll(async () => existsSync(`${workspace}/要删的目录`), { timeout: 15_000 }).toBe(false)
 })
+
+/**
+ * **拖拽上传**（2026-08-18）。
+ *
+ * ## 这条判据能验什么、不能验什么
+ *
+ * **不能**验「真的从访达拖一个文件进来」：`webUtils.getPathForFile` 只对
+ * 操作系统给的那个 `File` 有效，而 Playwright 造出来的 `File` **没有磁盘路径**
+ * ——它拿到的是空串。硬造一个假的 `pathForFile` 就等于绕开被测代码。
+ *
+ * **能**验两件真事，而且都是这条路上最容易错的：
+ * ① **落点高亮**：拖到哪一行，那一行要亮起来（看不出的落点等于赌一把）；
+ * ② **拿不到路径要出声**：那正是「看起来拖进去了，其实什么都没发生」。
+ *
+ * 「真的拖一个文件上去」由真机那一轮的手工验证覆盖。
+ */
+test("拖拽：落在哪一行就亮哪一行；拿不到本机路径要出声", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+
+  const 面板 = page.locator(".right-dock .files-view")
+  /**
+   * **`.last()` 才是最里面那个。**
+   *
+   * 树根那个 `<li>` **也包含**「数据」那颗按钮（它是祖先），
+   * 所以 `.first()` 拿到的是根，不是那一行——写成 `.first()` 的话，
+   * 「父目录不该亮」那条断言会跟自己打架。
+   */
+  const 数据行 = 面板.locator(".tree-node", { has: page.getByRole("button", { name: "数据", exact: true }) }).last()
+  await 数据行.waitFor({ timeout: 30_000 })
+
+  // ① 悬上去要亮，离开要灭
+  await 数据行.dispatchEvent("dragover", { dataTransfer: await page.evaluateHandle(() => new DataTransfer()) })
+  await expect(数据行).toHaveClass(/drop-on/)
+  /**
+   * **只有最里面那一行该亮。**
+   *
+   * 不 `stopPropagation` 的话，事件会冒到父目录（这里是树根那一层），
+   * 于是两行一起亮——而人根本判断不出会落到哪个目录。
+   */
+  await expect(
+    面板.locator(".tree-node").first(),
+    "父目录也亮了——落点冒上去了，人判断不出会传到哪儿",
+  ).not.toHaveClass(/drop-on/)
+  await 数据行.dispatchEvent("dragleave")
+  await expect(数据行).not.toHaveClass(/drop-on/)
+
+  // ② 松手时那些拿不到本机路径的，要**说出来**
+  await 数据行.dispatchEvent("drop", {
+    dataTransfer: await page.evaluateHandle(() => {
+      const dt = new DataTransfer()
+      dt.items.add(new File(["x"], "从浏览器拖来的.txt", { type: "text/plain" }))
+      return dt
+    }),
+  })
+  await expect(page.getByText(/拿不到本机路径/)).toBeVisible({ timeout: 15_000 })
+})

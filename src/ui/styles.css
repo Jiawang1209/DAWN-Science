@@ -4396,3 +4396,16 @@ pre {
  */
 .tree-node > .row-actions .row-more { opacity: 1; color: var(--dawn-text-3); }
 .tree-node > .row-actions .row-more:hover { color: var(--dawn-text-1); }
+
+/**
+ * 拖进来时的落点高亮（2026-08-18）。
+ *
+ * **每一行都要有**：拖到哪一行就传到哪个目录，
+ * 而人必须在松手之前就知道会落在哪儿——这与
+ * 「看不见的能力等于不存在」是同一条：**看不出的落点等于赌一把**。
+ */
+.tree-node.drop-on > .tree-row {
+  background: var(--dawn-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--dawn-accent);
+  border-radius: var(--dawn-radius-sm);
+}

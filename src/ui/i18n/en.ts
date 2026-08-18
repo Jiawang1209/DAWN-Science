@@ -597,6 +597,8 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 上没有废纸篓，删了找不回来。": "There is no Trash on {0} — this cannot be undone.",
   "可以从废纸篓找回来。": "You can restore it from the Trash.",
   "传到这里": "Upload here",
+  "有 {0} 个拖进来的东西拿不到本机路径，没有传":
+    "{0} of the dropped items have no local path, so they were not uploaded",
   "覆盖": "Replace",
   "另存一份": "Keep both",
   "「{0}」已经在那台机器上了": "\u201c{0}\u201d is already on that machine",

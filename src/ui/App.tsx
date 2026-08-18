@@ -54,7 +54,7 @@ import {
 } from "./Settings.js"
 import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
-import { FilesView, type FileContent, type Listing, type 传输态 } from "./files.js"
+import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态 } from "./files.js"
 import {
   AgentSkillsView,
   SubagentsView,
@@ -1848,59 +1848,86 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 「覆盖 / 另存一份 / 取消」——默默覆盖是唯一不能选的：
    * **你可能正在覆盖昨天那一版数据**。
    */
+  /**
+   * 传一个文件，**传完（或人做完选择）才 resolve**。
+   *
+   * 拖进来一批时要一个一个来——「全部覆盖」那种按钮是专门用来批量毁数据的。
+   */
+  const 传一个 = useCallback(
+    (dir: string, 本机路径: string) =>
+      new Promise<void>((完事) => {
+        if (!文件所在) return 完事()
+        /**
+         * **先把条子清空**（2026-08-18，真机上撞出来的）。
+         *
+         * 不清的话，从按下到服务器答复这一段，条子上挂着的是**上一次的结果**
+         * ——假 SFTP 上那只有几毫秒，真机上是一到三秒，屏幕上就是
+         * 「我明明在传新的，它却说上一个传好了」。
+         */
+        设传输({ transferred: 0, state: "running" })
+        起点.current = { 时刻: Date.now(), 已传: 0 }
+
+        const 发一次 = (onConflict: "ask" | "overwrite" | "keepBoth") =>
+          client
+            .get<
+              | { kind: "conflict"; name: string }
+              | { kind: "started"; transferId: string; target: string }
+            >("startUpload", {
+              connectionId: 文件所在.connectionId,
+              dir: dir || 文件所在.cwd,
+              localPath: 本机路径,
+              onConflict,
+            })
+            .then((r) => {
+              if (r.kind === "conflict") {
+                // **问之前把条子撤掉**：还没开始传，留着一根转着的条是假象
+                设传输(undefined)
+                setConfirming({
+                  title: tf("「{0}」已经在那台机器上了", r.name),
+                  detail: t("覆盖会写掉那边那一份。另存一份会自动改名，两个都留着。"),
+                  confirmLabel: t("覆盖"),
+                  onConfirm: () => void 发一次("overwrite"),
+                  altLabel: t("另存一份"),
+                  onAlt: () => void 发一次("keepBoth"),
+                  // **人点了取消也要往下走**，否则一批里有一个撞名就整批卡住
+                  onDismiss: () => 完事(),
+                })
+                return
+              }
+              设传输({ transferred: 0, state: "running", id: r.transferId, target: r.target })
+              起点.current = { 时刻: Date.now(), 已传: 0 }
+              完事()
+            })
+            .catch((e: unknown) => {
+              // **起不来也要出声**：不出声的表现是「点了上传没反应」
+              设传输({ transferred: 0, state: "failed", error: e instanceof Error ? e.message : String(e) })
+              完事()
+            })
+
+        void 发一次("ask")
+      }),
+    [client, 文件所在],
+  )
+
+  /**
+   * 传一批。**一个一个来，冲突一个一个问**（2026-08-18）。
+   * 「全部覆盖」那种按钮是专门用来批量毁数据的——一次点错，
+   * 昨天那一版结果整批没了。慢一点是这件事该有的代价。
+   */
+  const 传这些 = useCallback(
+    async (dir: string, 本机路径们: readonly string[]) => {
+      for (const p of 本机路径们) await 传一个(dir, p)
+    },
+    [传一个],
+  )
+
   const 上传 = useCallback(
     async (dir: string) => {
-      if (!文件所在) return
       const 挑中 = await 挑文件("any")
-      const 本机路径 = 挑中[0]
-      if (!本机路径) return // 取消了：什么都不做，也不出声
-
-      /**
-       * **先把条子清空**（2026-08-18，真机上撞出来的）。
-       *
-       * 不清的话，从按下到服务器答复这一段，条子上挂着的是**上一次的结果**
-       * ——假 SSH 上那只有几毫秒，真机上是一到三秒，屏幕上就是
-       * 「我明明在传新的，它却说上一个传好了」。
-       */
-      设传输({ transferred: 0, state: "running" })
-      起点.current = { 时刻: Date.now(), 已传: 0 }
-
-      const 发一次 = (onConflict: "ask" | "overwrite" | "keepBoth") =>
-        client
-          .get<
-            | { kind: "conflict"; name: string }
-            | { kind: "started"; transferId: string; target: string }
-          >("startUpload", {
-            connectionId: 文件所在.connectionId,
-            dir: dir || 文件所在.cwd,
-            localPath: 本机路径,
-            onConflict,
-          })
-          .then((r) => {
-            if (r.kind === "conflict") {
-              // **问之前把条子撤掉**：还没开始传，留着一根转着的条是假象
-              设传输(undefined)
-              setConfirming({
-                title: tf("「{0}」已经在那台机器上了", r.name),
-                detail: t("覆盖会写掉那边那一份。另存一份会自动改名，两个都留着。"),
-                confirmLabel: t("覆盖"),
-                onConfirm: () => void 发一次("overwrite"),
-                altLabel: t("另存一份"),
-                onAlt: () => void 发一次("keepBoth"),
-              })
-              return
-            }
-            设传输({ transferred: 0, state: "running", id: r.transferId, target: r.target })
-            起点.current = { 时刻: Date.now(), 已传: 0 }
-          })
-          .catch((e: unknown) => {
-            // **起不来也要出声**：不出声的表现是「点了上传没反应」
-            设传输({ transferred: 0, state: "failed", error: e instanceof Error ? e.message : String(e) })
-          })
-
-      void 发一次("ask")
+      // 取消了：什么都不做，也不出声
+      if (挑中.length > 0) await 传这些(dir, 挑中)
     },
-    [client, 文件所在],
+    [传这些],
   )
 
   /**
@@ -2015,7 +2042,27 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         key={文件面板身份}
         机器={文件所在?.label ?? t("本机")}
         初始根={文件所在?.cwd ?? ""}
-        {...(文件所在 ? { onDownload: 下载, onUpload: 上传 } : {})}
+        {...(文件所在
+          ? {
+              onDownload: 下载,
+              onUpload: 上传,
+              /**
+               * 拖进来（2026-08-18）。**拖到哪一行就传到哪个目录。**
+               *
+               * 拿不到本机路径的那些要**响亮说出来**：从浏览器里拖来的图、
+               * 压缩包里的条目，`webUtils.getPathForFile` 给的是空串，
+               * 而上传走的是 `localPath`——不说的话就是
+               * 「看起来拖进去了，其实什么都没发生」。
+               */
+              onDropUpload: (dir: string, files: readonly File[]) => {
+                const { 有, 没有 } = 拖进来的本机路径(files)
+                if (没有 > 0) {
+                  fail(new Error(tf("有 {0} 个拖进来的东西拿不到本机路径，没有传", 没有)))
+                }
+                if (有.length > 0) void 传这些(dir, 有)
+              },
+            }
+          : {})}
         刷新令牌={刷新令牌}
         onDelete={删一个}
         onDeleteDir={删一个目录}

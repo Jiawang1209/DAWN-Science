@@ -40,7 +40,7 @@ import {
 } from "../files/access.js"
 import type { RunRecorder } from "../project/run-recorder.js"
 import type { ProjectStore } from "../store/projects.js"
-import { diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { diffSince, snapshot, changesAgainstHead, fileDiffAgainstHead, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { discoverCliModels } from "../runtime/cli/models.js"
 import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
@@ -348,6 +348,14 @@ async function 读成附件(
  * 「要不要传过来看」那一问连同进度条在批 4 做。
  */
 const 远端预览上界 = 16 * 1024 * 1024
+
+/**
+ * 一个文件的 diff 最多给多少行（2026-08-18）。
+ *
+ * 一个几十万行的生成文件能把渲染进程拖垮，而**看前两千行足够判断
+ * 「这次改了什么性质的东西」**。超了要说清省了多少——不静默截断。
+ */
+const diff行上界 = 2000
 
 /** 这几件是 `RemoteExecutor` 上我们用到的。**收窄成接口**，这一层不该认识整个执行器 */
 interface RemoteExecutorLike {
@@ -1810,6 +1818,60 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           一条.错 = err instanceof Error ? err.message : String(err)
         })
       return { transferId: id, name, target: 目标 }
+    },
+
+    reviewChanges: async ({ projectId }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+
+      let tracked: Awaited<ReturnType<typeof changesAgainstHead>> = []
+      let baseline: "head" | "none" = "head"
+      try {
+        tracked = await changesAgainstHead(p.workspace)
+      } catch (e) {
+        /**
+         * **不是 git 仓库就如实说「没有基线」**，不返回一个空列表——
+         * 空列表读作「什么都没改」，而真相是「我们不知道」。
+         * 账本那一半照旧给：它不依赖 git。
+         */
+        if (e instanceof NotAGitRepoError) baseline = "none"
+        else throw e
+      }
+
+      /**
+       * 账本记得、而 git 看不见的那些（`.gitignore` 里的 `out/`、`data/raw/`）。
+       *
+       * **这一半是这一屏的立身之本**：只看 git 的话，一次分析生成 40 张图，
+       * 屏幕上会说「什么都没变」。
+       */
+      const 仓库里有的 = new Set(tracked.map((x) => x.path))
+      const produced = [...runs.writtenFilesOf(projectId)]
+        .filter((f) => !仓库里有的.has(f))
+        .sort()
+        .map((path) => ({ path }))
+
+      return {
+        baseline,
+        // **本阶段没有 worktree 隔离**，分不清是 agent 改的还是作者自己改的
+        mayIncludeUserEdits: true,
+        tracked,
+        produced,
+      }
+    },
+
+    fileDiff: async ({ projectId, path }) => {
+      const p = projectStore.get(projectId)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      const 原文 = await fileDiffAgainstHead(p.workspace, path).catch((e: unknown) => {
+        throw fault("invalid_request", `算不出 ${path} 的差异：${e instanceof Error ? e.message : String(e)}`)
+      })
+      const 行 = 原文.split("\n")
+      if (行.length <= diff行上界) return { diff: 原文 }
+      // **截断要说清省了多少**（规格 7.5）
+      return {
+        diff: 行.slice(0, diff行上界).join("\n"),
+        truncated: { keptLines: diff行上界, totalLines: 行.length },
+      }
     },
 
     pathInfo: async ({ projectId, connectionId, path }) => {

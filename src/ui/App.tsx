@@ -54,6 +54,7 @@ import {
 } from "./Settings.js"
 import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
+import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态 } from "./files.js"
 import {
   AgentSkillsView,
@@ -2035,6 +2036,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, projectId, 文件所在, filePath],
   )
 
+  /**
+   * 审阅那一屏的数据（2026-08-18）。**开着才拉**——
+   * 没人在看的时候跑 `git diff` 是白烧一次子进程。
+   */
+  const [审阅, 设审阅] = useState<审阅数据 | undefined>(undefined)
+  const 拉审阅 = useCallback(() => {
+    if (!projectId) return
+    client.get<审阅数据>("reviewChanges", { projectId }).then(设审阅).catch(fail)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, projectId])
+
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
 
   const 文件面板 = (
@@ -3176,6 +3188,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           >
             {rightDockTenant === "review" ? (
               <>
+                {/**
+                  * **「跟 git HEAD 比，改了什么」**（2026-08-18）。
+                  *
+                  * 它排在下面那两张卡之前：那两张答的是「这段会话干了什么」，
+                  * 而这一张答的是「从上次提交到现在，累计改了什么」——
+                  * **两个口径，刻意分开**，合成一个的话必有一个被答错。
+                  */}
+                <ReviewPanel
+                  data={审阅}
+                  onReload={拉审阅}
+                  loadDiff={(path) =>
+                    client.get("fileDiff", { projectId: projectId ?? "", path })
+                  }
+                />
                 {/* 归属告知跟着「变更」一起搬——**它解释的正是这一屏的数** */}
                 <AttributionCaveat show={mayIncludeUserEdits(runDetail?.fileChanges, runs)} />
                 <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />

@@ -1218,6 +1218,67 @@ export const OPERATIONS = {
    * 远端遍历可能很慢，**给它上界，数不完就如实说**——
    * 编一个数字比不给数字更坏。
    */
+  /**
+   * 审阅：**跟 `git HEAD` 比，这个项目现在改了什么**（2026-08-18）。
+   *
+   * 作者定的口径：*「和 Codex 一样，和 git HEAD 比」*。于是它答的是**累计**
+   * ——从上次提交到现在。这与账本那套「这段会话以来」是**两个口径，刻意分开**。
+   *
+   * ## 两个来源，而且必须分得开
+   *
+   * `tracked` 是仓库里的改动（**会被提交的**）；`produced` 是
+   * **账本记得、而 git 看不见的**那些——`out/`、`data/raw/` 这类目录写进
+   * `.gitignore` 是科研仓库的常态，于是一次分析生成 40 张图，
+   * `git diff HEAD` 会说**什么都没变**。
+   *
+   * **一个说「无变更」的审阅面板，而你刚跑完一整轮分析**——
+   * 那正是这个项目最忌讳的失效形状。git 答不出的那一半，账本答得出。
+   */
+  reviewChanges: {
+    request: z.object({ projectId: z.string().min(1) }).strict(),
+    response: z
+      .object({
+        /** `none` = 这个工作区不是 git 仓库。**如实说「不知道」，不编** */
+        baseline: z.enum(["head", "none"]),
+        /** **这一屏混着你自己手改的东西**：本阶段没有 worktree 隔离，分不清 */
+        mayIncludeUserEdits: z.boolean(),
+        tracked: z.array(
+          z
+            .object({
+              path: z.string().min(1),
+              status: z.enum(["modified", "added", "deleted"]),
+              added: NonNegInt,
+              removed: NonNegInt,
+              binary: z.literal(true).optional(),
+            })
+            .strict(),
+        ),
+        /** 账本记得、git 看不见的那些产物 */
+        produced: z.array(z.object({ path: z.string().min(1) }).strict()),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
+   * 一个文件跟 `HEAD` 比的逐行 diff（2026-08-18）。
+   *
+   * **未跟踪的文件也要给得出**——`git diff HEAD -- 新文件` 什么都不给，
+   * 而「新加的那些」恰恰最需要看。那一支走 `--no-index` 跟 `/dev/null` 比。
+   */
+  fileDiff: {
+    request: z.object({ projectId: z.string().min(1), path: z.string().min(1) }).strict(),
+    response: z
+      .object({
+        /** 统一 diff 原文。**空串 = 真的一行都没变**（比如只改了权限） */
+        diff: z.string(),
+        /** 太长时截断了多少。**不静默截断**（规格 7.5） */
+        truncated: z.object({ keptLines: NonNegInt, totalLines: NonNegInt }).strict().optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
   pathInfo: {
     request: z
       .object({

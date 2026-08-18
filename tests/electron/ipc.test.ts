@@ -16,6 +16,8 @@ function backend(): WorkbenchBackend {
     startUpload: async () => ({ kind: "started" as const, transferId: "t1", target: "/远端/x" }),
     deletePath: async () => ({ trashed: true }),
     pathInfo: async () => ({ directory: false, files: 1, bytes: 0, counted: "complete" as const }),
+    reviewChanges: async () => ({ baseline: "head" as const, mayIncludeUserEdits: true, tracked: [], produced: [] }),
+    fileDiff: async () => ({ diff: "" }),
     transferStatus: async () => ({ transferred: 0, state: "running" as const }),
     cancelTransfer: async () => ({}),
     getProviders: async () => ({ agents: [], providers: [] }),

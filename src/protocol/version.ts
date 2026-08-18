@@ -289,6 +289,18 @@
  *   留着旧名字并存，等于把它永久化。
  */
 /**
+ * ## 7.10（2026-08-18，分支 `feat/远端文件`）：审阅——跟 `git HEAD` 比
+ *
+ * 纯新增，故 minor：`reviewChanges` / `fileDiff`。
+ *
+ * **两个来源必须分得开**：`tracked` 是仓库里的改动（会被提交的），
+ * `produced` 是账本记得、而 git 看不见的产物。`out/` 这类目录写进
+ * `.gitignore` 是科研仓库的常态——只看 git 的话，一次分析生成 40 张图，
+ * 这一屏会说「什么都没变」。**git 答不出的那一半，账本答得出。**
+ *
+ * `baseline: "none"` 是「这个工作区不是 git 仓库」，**如实说不知道，不编**。
+ */
+/**
  * ## 7.9（2026-08-18，分支 `feat/远端文件`）：删目录，以及删之前先数清楚
  *
  * 纯新增，故 minor：`pathInfo`；`deletePath` 开始接受目录。
@@ -418,7 +430,7 @@
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.9"
+export const WORKBENCH_PROTOCOL_VERSION = "7.10"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

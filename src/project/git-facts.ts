@@ -187,3 +187,97 @@ export async function diffSince(
     computedAt: new Date().toISOString(),
   }
 }
+
+/**
+ * ── 审阅（2026-08-18）：**跟 `git HEAD` 比** ────────────────────────
+ *
+ * 与上面 `diffSince` 那一套是**两个口径，刻意分开**：
+ * 那边比的是「这段会话开始以来」（账本用），这边比的是
+ * 「从上次提交到现在」（作者选的，*「和 Codex 一样」*）。
+ * 合成一个的话，两个问题里必有一个被答错。
+ */
+
+/** 一个跟 HEAD 比出来的改动 */
+export interface HeadChange {
+  path: string
+  status: "modified" | "added" | "deleted"
+  /** 加了几行、减了几行。**二进制文件给不出**，那时两个都是 0 且 `binary` 为真 */
+  added: number
+  removed: number
+  binary?: true
+}
+
+/**
+ * 跟 `HEAD` 比，工作区现在是什么样。
+ *
+ * **未跟踪的文件要单独捞**：`git diff HEAD` 根本不看它们，
+ * 而数据分析里刚跑出来的 `out/fig1.png` 恰恰是未跟踪的——
+ * 漏掉它们，这一屏在最该说话的时候会说「什么都没变」。
+ */
+export async function changesAgainstHead(workspace: string): Promise<HeadChange[]> {
+  const 出 = new Map<string, HeadChange>()
+
+  // ① 跟踪中的：`--numstat` 给「加了几行减了几行」，二进制那行是 `-\t-`
+  const numstat = await git(workspace, ["diff", "HEAD", "--numstat"])
+  for (const line of numstat.split("\n")) {
+    if (!line.trim()) continue
+    const [a, r, ...rest] = line.split("\t")
+    const path = unquotePath(rest.join("\t"))
+    if (!path) continue
+    const 二进制 = a === "-" || r === "-"
+    出.set(path, {
+      path,
+      status: "modified",
+      added: 二进制 ? 0 : Number(a) || 0,
+      removed: 二进制 ? 0 : Number(r) || 0,
+      ...(二进制 ? { binary: true as const } : {}),
+    })
+  }
+
+  // ② 删掉的与新加的，`--name-status` 才说得清是哪一种
+  const nameStatus = await git(workspace, ["diff", "HEAD", "--name-status"])
+  for (const line of nameStatus.split("\n")) {
+    if (!line.trim()) continue
+    const [码, ...rest] = line.split("\t")
+    const path = unquotePath(rest[rest.length - 1] ?? "")
+    if (!path) continue
+    const 现有 = 出.get(path)
+    const status = 码?.startsWith("D") ? "deleted" : 码?.startsWith("A") ? "added" : "modified"
+    出.set(path, { path, status, added: 现有?.added ?? 0, removed: 现有?.removed ?? 0, ...(现有?.binary ? { binary: true as const } : {}) })
+  }
+
+  /**
+   * ③ **未跟踪的**。`git diff HEAD` 看不见它们，而它们往往正是这次跑出来的东西。
+   * 行数按「整个文件都是新加的」算——这就是事实。
+   */
+  const 未跟踪 = (await git(workspace, ["ls-files", "--others", "--exclude-standard"]))
+    .split("\n")
+    .map((s) => unquotePath(s.trim()))
+    .filter(Boolean)
+  for (const path of 未跟踪) {
+    if (出.has(path)) continue
+    出.set(path, { path, status: "added", added: 0, removed: 0 })
+  }
+
+  return [...出.values()].sort((a, b) => a.path.localeCompare(b.path))
+}
+
+/**
+ * 一个文件跟 `HEAD` 比的逐行 diff。
+ *
+ * **未跟踪的文件走 `--no-index` 跟 `/dev/null` 比**——`git diff HEAD -- 新文件`
+ * 什么都不给，而那正是「新加的那些」最需要看的东西。
+ */
+export async function fileDiffAgainstHead(workspace: string, path: string): Promise<string> {
+  const 跟踪中 = await git(workspace, ["ls-files", "--error-unmatch", "--", path])
+    .then(() => true)
+    .catch(() => false)
+  if (跟踪中) return git(workspace, ["diff", "HEAD", "--", path])
+  /**
+   * `--no-index` 在有差异时**退出码是 1**，而我们的 `git()` 把非零当失败。
+   * 这里把那一支接住：**有差异不是错误**。
+   */
+  return git(workspace, ["diff", "--no-index", "--", "/dev/null", path]).catch(
+    (e: unknown) => (e instanceof Error && "stdout" in e ? String((e as { stdout: unknown }).stdout) : ""),
+  )
+}

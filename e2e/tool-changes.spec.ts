@@ -80,3 +80,69 @@ test.describe("拿不到 git 事实时", () => {
     await expect(panel).not.toContainText("没有改动文件")
   })
 })
+
+/**
+ * **审阅：跟 `git HEAD` 比，而且两个来源分得开**（2026-08-18）。
+ *
+ * 这一屏最容易犯的错是**在最该说话的时候说「什么都没变」**：
+ * `out/`、`data/raw/` 这类目录写进 `.gitignore` 是科研仓库的常态，
+ * 于是一次分析生成 40 张图，`git diff HEAD` 一个字都不会说。
+ * **git 答不出的那一半，账本答得出**——所以这条同时验两半。
+ */
+test.describe("审阅 · 跟 git HEAD 比", () => {
+  /**
+   * **让假模型真的写一个被 git 忽略的文件**。
+   *
+   * 第一版我用 `writeFileSync` 手造了 `out/fig1.png`，然后指望它出现在
+   * 「产物」里——**错了**：产物那一半来自**账本**（`files_written`），
+   * 不是来自文件系统。一个 git 忽略、账本又没记过的文件，两边都看不见，
+   * **而那是诚实的**：我们确实不知道它是谁产出的。
+   */
+  test.use({
+    dawnOptions: {
+      gitInit: true,
+      toolCall: { toolName: "write", args: { path: "out/fig1.md", content: "# 假装是一张图\n" } },
+    },
+  })
+
+  test("**仓库里的改动**与**账本记的产物**各占一栏，点开有逐行差异", async ({ dawn }) => {
+    const { page, workspace } = dawn
+    const { writeFileSync, appendFileSync } = await import("node:fs")
+
+    // ① 仓库里：改一个已经提交过的文件
+    appendFileSync(`${workspace}/README.md`, "\n作者后来加的一行\n")
+    // ② `.gitignore` 挡住 out/ —— 待会儿模型往里写的东西，git 一个字都不会说
+    writeFileSync(`${workspace}/.gitignore`, "out/\n")
+
+    await 在项目里开会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("写一张图")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
+
+    await 进审阅(page)
+
+    const 坞 = page.locator(".right-dock")
+    // 仓库那一半看得见 README.md
+    await expect(坞.getByRole("button", { name: /README\.md/ })).toBeVisible({ timeout: 30_000 })
+    // **归属告知必须在**：跟 HEAD 比是累计口径，里面混着作者自己改的
+    await expect(坞.getByText(/可能包含你自己的修改/)).toBeVisible()
+
+    // ③ 点开看逐行差异
+    await 坞.getByRole("button", { name: /README\.md/ }).click()
+    await expect(坞.locator(".diff")).toContainText("作者后来加的一行", { timeout: 30_000 })
+    // 加的行**上了色**（一行以上很正常，收窄到第一条）
+    await expect(坞.locator(".diff-add").first()).toBeVisible()
+
+    /**
+     * ④ **产物那一半**：`out/` 被 `.gitignore` 挡着，`git diff HEAD` 一个字都不说。
+     * 这一栏在，说明「git 答不出的那半，账本答得出」那条真的接上了。
+     */
+    await expect(坞.getByRole("heading", { name: "这次跑出来的产物" })).toBeVisible()
+    await expect(坞.getByText(/git 忽略了这些/)).toBeVisible()
+    /**
+     * **这一条就是这一屏的立身之本**：`out/fig1.md` 被 `.gitignore` 挡着，
+     * 上面那半（`git diff HEAD`）一个字都不会说它——而账本记得。
+     */
+    await expect(坞.getByText("out/fig1.md")).toBeVisible({ timeout: 30_000 })
+  })
+})

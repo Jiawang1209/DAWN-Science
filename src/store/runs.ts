@@ -360,6 +360,34 @@ export class RunStore {
     return row ? toRun(row) : undefined
   }
 
+  /**
+   * 这个项目的账本里，**记得写过哪些文件**（2026-08-18，审阅那一屏用）。
+   *
+   * 它回答的是 git 答不出的那一半：`out/`、`data/raw/` 这类目录写进
+   * `.gitignore` 是科研仓库的常态，于是一次分析生成 40 张图，
+   * `git diff HEAD` 说「什么都没变」——**而账本记得**。
+   *
+   * `files_written` 为 NULL 的那些行**跳过**：那是「不知道」，不是「没写」。
+   */
+  writtenFilesOf(projectId: string, limit = 500): string[] {
+    const rows = this.db
+      .prepare(
+        `SELECT files_written FROM runs
+          WHERE project_id = ? AND files_written IS NOT NULL
+          ORDER BY started_at DESC LIMIT ?`,
+      )
+      .all(projectId, limit) as { files_written: string }[]
+    const 出 = new Set<string>()
+    for (const r of rows) {
+      try {
+        for (const f of JSON.parse(r.files_written) as string[]) 出.add(f)
+      } catch {
+        // 存坏了就跳过这一行：**少算比编一个好**
+      }
+    }
+    return [...出]
+  }
+
   /** 最近的在前——项目面板的历史栏要的就是这个顺序。 */
   listByProject(
     projectId: string,

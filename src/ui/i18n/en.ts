@@ -611,6 +611,27 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} / {1}{2}": "{0} / {1}{2}",
   "　{0}/秒": "  {0}/s",
   "审阅": "Review",
+  "正在算变更": "Computing changes",
+  "正在算差异": "Computing diff",
+  "这个工作区不是 git 仓库": "This workspace is not a git repository",
+  "没有基线，DAWN 不替它猜「改了什么」。下面那半仍然来自账本。":
+    "With no baseline, DAWN will not guess what changed. The lower half still comes from the ledger.",
+  "跟上次提交比。这里可能包含你自己的修改——本阶段还分不清是谁改的。":
+    "Compared against the last commit. This may include your own edits — at this stage we cannot tell them apart.",
+  "仓库里的改动": "Changes in the repository",
+  "跟上次提交比，仓库里没有改动。": "No changes in the repository since the last commit.",
+  "这次跑出来的产物": "Artifacts produced",
+  "账本里没有 git 看不见的产物。": "The ledger has no artifacts that git cannot see.",
+  "git 忽略了这些，所以上面那半看不到它们——账本记得。":
+    "git ignores these, so the half above cannot see them — the ledger remembers.",
+  "内容没有变化。": "The contents did not change.",
+  "差异太长，只显示了前 {0} 行（一共 {1} 行）。":
+    "The diff is long; showing the first {0} of {1} lines.",
+  "新增": "added",
+  "已删": "deleted",
+  "改动": "modified",
+  "二进制": "binary",
+  "产物": "artifact",
   "面板": "Panel",
   "面板：{0}": "Panel: {0}",
   "调整面板宽度": "Resize panel",

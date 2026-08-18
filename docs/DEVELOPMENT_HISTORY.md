@@ -43,6 +43,37 @@
 
 ## 变更日志
 
+### 2026-08-18 — 网页预览的 spec；并更正「Codex 没有给人看的浏览器面板」
+
+- **Type**: docs
+- **Commit**: `待回填`
+- **Motivation**: 作者拿出一张截图：*「其实我想实现的就是这个功能，当我在
+  DAWN-Science 里面要开启一个网站的时候，可以点击，然后在右侧侧边栏，进行渲染。」*
+  ——他要的是**给人看的**网页预览，不是（只是）给 agent 用的浏览器。
+- **What**:
+  - **先更正一条我自己的错**：当天早些时候我断言「Codex 的浏览器不是给人开
+    网页的一栏」，判据是「browser 没有独立 CSS chunk，而 `pdf-preview-panel` 有」。
+    **那条判据站不住**——那个目录里几百个 JS chunk **总共只有 29 个带独立 CSS**。
+    重量之后（仍只读文件名）看到 `thread-browser-panel-tabs`、
+    以及一整族 `*-side-panel-tab`：**Codex 两个都有**。
+    两份 spec 的相应段落都已就地更正。
+  - 新增 `2026-08-18-网页预览-design.md`。**渲染用 `WebContentsView`**：
+    `<iframe>` 要把整窗口的 CSP `frame-src` 放到 `http:`，
+    **而且换不来什么**（大量站点用 `X-Frame-Options` 拒绝被嵌）。
+  - **跑了一次 spike**（Electron 43，独立脚本）：装得上、有独立
+    `persist:` 分区、`setBounds` 可跟随、`will-navigate` 与
+    `setWindowOpenHandler` 都挂得上。
+  - **spike 撞出一条只有跑起来才知道的事**：窗口自己的 `capturePage()`
+    **截不到 `WebContentsView`**（那一栏是空白）。于是 Playwright 与十张
+    视觉基线**都看不见它**——判据必须走 `app.evaluate` 进主进程问
+    `getURL()`/`getTitle()`，DOM 断言会「绿得毫无意义」。
+  - 另一条同源的后果写进 spec：它**浮在 DOM 之上**，命令面板与确认框
+    会被它盖住（`z-index` 对它无效）——处置是**有模态浮层时把它藏起来**。
+- **Impact**: 纯文档。坞的房客回到三个，但**「网页」与「agent 的浏览器」
+  是两件事，各有一份 spec**，不再共用一个词。
+- **Verification**: spike 的每一条都有输出；`capturePage` 那条有截图为证。
+  Codex 那一节的更正是把原来的判据**证伪**之后才改的，不是换个说法。
+
 ### 2026-08-18 — ③ 的 spec：agent 的浏览器，先配一台，别先写代码
 
 - **Type**: docs

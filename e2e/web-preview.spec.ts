@@ -12,7 +12,7 @@
  * 拿 DOM 断言凑数的话，这一整块会「绿得毫无意义」——
  * 而那正是这个项目栽过三次的形状。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话, 在项目里开会话 } from "./fixtures.js"
 import { createServer, type Server } from "node:http"
 
 /** 进坞里的「网页」那一格 */
@@ -265,4 +265,53 @@ test("**下载落到设置里那个下载目录**，不另起一套", async ({ d
   await expect
     .poll(() => (existsSync(下载目录) ? readdirSync(下载目录) : []), { timeout: 30_000 })
     .toContain("下载我.csv")
+})
+
+/**
+ * **下载落一条 Run**（批 4，2026-08-18，作者选的乙）。
+ *
+ * 看网页不记（那不改变任何东西），**下载记**——它是数据进入这个项目的入口，
+ * 而那个 URL 在别的任何地方都不出现。
+ *
+ * **这个 URL 是观察不是转述**：请求是我们自己发的。
+ * `agent的浏览器` 那份 spec 里「URL 验不了」那条禁令拦的是模型自述，
+ * 在这里不成立——两者的区别正是这条判据存在的理由。
+ */
+test("**下载在账本上留得下：URL、落点、字节数**", async ({ dawn }) => {
+  const { app, page, dbPath } = dawn
+  // **要在项目里**：Run 挂在项目的活会话上，临时会话没有项目就不记
+  await 在项目里开会话(page)
+  await 开一页(page, 地址)
+  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
+
+  await 在页面里跑(app, `location.href = "/download.csv"`)
+
+  const 那条 = async () =>
+    (await readRuns(dbPath)).map((r) => String(r.request_type)).find((t) => t.startsWith("web_download:"))
+  await expect.poll(那条, { timeout: 30_000 }).toBeDefined()
+
+  const t = (await 那条())!
+  expect(t, "账本上没写它从哪儿来").toContain("/download.csv")
+  expect(t, "账本上没写它落到哪儿").toContain("下载我.csv")
+  // **字节数也要在**：一个 0 字节的「成功」是要看得出来的
+  expect(t).toMatch(/\(\d+B\)/)
+})
+
+test("**没有项目就不记，也不报错** —— 不硬挂，把 A 的账算到 B 头上比不记更坏", async ({ dawn }) => {
+  const { app, page, dbPath } = dawn
+  await 开一段临时会话(page) // 临时会话不属于任何项目
+  await 开一页(page, 地址)
+  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
+
+  await 在页面里跑(app, `location.href = "/download.csv"`)
+  const { existsSync, readdirSync } = await import("node:fs")
+  // 文件照样下下来——**不记账不等于不干活**
+  await expect
+    .poll(() => (existsSync(`${dawn.dir}/downloads`) ? readdirSync(`${dawn.dir}/downloads`) : []), { timeout: 30_000 })
+    .toContain("下载我.csv")
+
+  expect(
+    (await readRuns(dbPath)).map((r) => String(r.request_type)).filter((t) => t.startsWith("web_download:")),
+    "没有项目却硬挂了一条账",
+  ).toEqual([])
 })

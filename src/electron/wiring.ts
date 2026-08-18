@@ -167,6 +167,27 @@ export interface Workbench {
    * 而编出来的 id 迟早会被人当真。
    */
   onRemoteState(cb: (u: { connectionId: string; state: RemoteState }) => void): () => void
+  /**
+   * **网页那一格里的下载落一条 Run**（批 4，2026-08-18，作者选的乙）。
+   *
+   * ## 为什么下载在这里要记，而 SFTP 那条不记
+   *
+   * `远端文件` spec 第七节把「下载」判成不记，理由是*「只读，不改变任何东西」*
+   * ——**对 SFTP 那是对的**：源头是一台已经在账本里的机器（连接 + 绝对路径）。
+   *
+   * 网页里的下载差两点：**①它是数据进入这个项目的入口**，而那个 URL
+   * 在别的任何地方都不出现；**②这个 URL 是观察，不是转述**——
+   * 请求是我们自己发的，`will-download` 上那个 URL 与 `git status` 算出来的
+   * 文件差集同一个性质。`agent的浏览器` 那份 spec 里「URL 验不了」那条禁令
+   * 拦的是**模型自述**，在这里不成立。
+   *
+   * ## 它为什么长在 `Workbench` 上，而不是新开一条「主进程 → 账本」的路
+   *
+   * `will-download` 事件只有主进程看得见。但**给它一条通用的写账本的路，
+   * 以后什么都能顺着它写**。所以这里给的是**一个名字写死、形状写死的函数**
+   * ——与 `openPath` / `trashItem` 反方向的同一条缝。
+   */
+  记一次网页下载(入: { projectId?: string; url: string; 落点: string; 字节: number; 出错?: string }): void
   /** 启动对账修正的残留会话条数 */
   reconciled: number
   close(): void
@@ -714,6 +735,40 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     },
   })
   /**
+   * 网页那一格里的下载（批 4）。**挂在那个项目当前活着的会话上**；
+   * 找不到就不记，**不硬挂**——与上面两条同一条规矩：
+   * 把 A 的账算到 B 头上比不记更坏。
+   */
+  const 记一次网页下载 = (入: {
+    projectId?: string
+    url: string
+    落点: string
+    字节: number
+    出错?: string
+  }): void => {
+    if (!入.projectId) return
+    const 那段 = sessionStore.list().find((s2) => s2.projectId === 入.projectId && s2.state === "alive")
+    if (!那段) return
+    const 此刻 = new Date().toISOString()
+    runStore.insert({
+      runId: `run-${randomUUID()}`,
+      projectId: 入.projectId,
+      sessionId: 那段.id,
+      origin: "user",
+      /**
+       * **URL 与落点都写进类型里**：账本要答的是「这份数据从哪儿来、落到哪儿」，
+       * 少一半都答不出。字节数跟在后面——**一个 0 字节的「成功」是要看得出来的**。
+       */
+      requestType: `web_download:${入.url} → ${入.落点} (${入.字节}B)`,
+      status: 入.出错 ? "failed" : "completed",
+      startedAt: 此刻,
+      finishedAt: 此刻,
+      hasError: Boolean(入.出错),
+      ...(入.出错 ? { terminalReason: 入.出错 } : {}),
+    })
+  }
+
+  /**
    * 开那台网关（B1 路线 B）。**每次运行一台**，会话身份由连接时报上来。
    *
    * 四件工具的实现都在 `acp/tools.ts`；这里只负责把它需要的能力接上——
@@ -834,6 +889,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     db,
     sessions,
     events,
+    记一次网页下载,
     reconciled,
     /**
      * 装配好的内置运行时。**只为让「门接上了没有」可被验证**（2026-08-13）。

@@ -45,7 +45,7 @@ export interface 网页状态 {
 }
 
 type 网页命令 =
-  | { kind: "open"; url: string; workspace?: string }
+  | { kind: "open"; url: string; workspace?: string; projectId?: string }
   | { kind: "bounds"; x: number; y: number; width: number; height: number }
   | { kind: "visible"; on: boolean }
   | { kind: "back" }
@@ -64,7 +64,17 @@ const 桥 = (): 网页桥 | undefined =>
 /** 多久问一次「我被挡住了吗」。**浮层出现不会通知我们**，只能自己看 */
 const 命中间隔毫秒 = 250
 
-export function WebPanel({ workspace }: { workspace?: string | undefined }) {
+export function WebPanel({
+  workspace,
+  projectId,
+}: {
+  workspace?: string | undefined
+  /**
+   * 这一格现在属于哪个项目（批 4）。**下载那条 Run 挂在它上面**；
+   * 没有项目就不记——**不硬挂**，把 A 的账算到 B 头上比不记更坏。
+   */
+  projectId?: string | undefined
+}) {
   const 占位 = useRef<HTMLDivElement | null>(null)
   const [状态, 设状态] = useState<网页状态>({
     url: "",
@@ -160,7 +170,7 @@ export function WebPanel({ workspace }: { workspace?: string | undefined }) {
   const 去 = (地址: string) => {
     const s = 地址.trim()
     if (!s) return
-    发({ kind: "open", url: s, ...(workspace ? { workspace } : {}) })
+    发({ kind: "open", url: s, ...(workspace ? { workspace } : {}), ...(projectId ? { projectId } : {}) })
     /**
      * **刚建出来的那个视图要马上摆正。**
      *

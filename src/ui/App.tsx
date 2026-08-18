@@ -3277,7 +3277,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 * 真正的网页是主进程里一个 `WebContentsView`，浮在整个 DOM 之上。
                 * `workspace` 传下去是为了 `file:` 那一支：它要以工作目录为界。
                 */
-              <WebPanel workspace={currentWorkspace} />
+              <WebPanel workspace={currentWorkspace} {...(projectId ? { projectId } : {})} />
             ) : (
               文件面板
             )}

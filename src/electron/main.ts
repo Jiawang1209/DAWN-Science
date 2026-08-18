@@ -202,6 +202,14 @@ function createWindow(): void {
        * Electron 会弹一个原生保存对话框——那是我们完全没设计过的模态框。
        */
       () => 下载目录 ?? process.env.DAWN_DOWNLOADS ?? app.getPath("downloads"),
+      /**
+       * **下载落一条 Run**（批 4，作者选的乙）。
+       *
+       * 这不是「主进程能往账本里写东西」那条通用的路——`记一次网页下载`
+       * 是一个**名字写死、形状写死**的函数，与 `openPath` / `trashItem`
+       * 反方向的同一条缝。理由写在 `wiring.ts` 那个方法的注释里。
+       */
+      (入) => workbench?.记一次网页下载(入),
     ))
   ipcMain.handle(IPC_WEB_CONTROL, async (_e, cmd: 网页命令) => {
     刷下载目录()

@@ -43,7 +43,7 @@ export interface 网页状态 {
 }
 
 export type 网页命令 =
-  | { kind: "open"; url: string; workspace?: string }
+  | { kind: "open"; url: string; workspace?: string; projectId?: string }
   | { kind: "bounds"; x: number; y: number; width: number; height: number }
   | { kind: "visible"; on: boolean }
   | { kind: "back" }
@@ -184,11 +184,18 @@ export function 造网页预览(
    * 这一层不该知道 workbench 长什么样，与 `openPath` / `trashItem` 同一条缝。
    */
   取下载目录?: () => string | undefined,
+  /**
+   * 下载完了报一声（批 4，作者选的乙）。**这一层只报事实，不碰账本**——
+   * 它连账本长什么样都不该知道（与 `openPath` / `trashItem` 同一条缝）。
+   */
+  记下载?: (入: { projectId?: string; url: string; 落点: string; 字节: number; 出错?: string }) => void,
 ): 网页预览 {
   let view: WebContentsView | undefined
   let 上次错: string | undefined
   /** 上一次 `open` 带来的工作区。**弹窗那条要用它**——页面里点出来的链接同样要过门 */
   let 上次工作区: string | undefined
+  /** 上一次 `open` 带来的项目。**下载记账要挂在它上面**——没有就不记 */
+  let 上次项目: string | undefined
   let 想要的框: { x: number; y: number; width: number; height: number } | undefined
   let 想要可见 = false
 
@@ -288,8 +295,25 @@ export function 造网页预览(
        * 取不到配置就用注入进来的那个兜底，**不猜路径**。
        */
       if (目录) item.setSavePath(不覆盖(join(目录, item.getFilename())))
+      /**
+       * **`getURL()` 要在这里读**：`done` 那一刻它还在，但把整个 `item`
+       * 留到回调里去读是自找麻烦（它是一个会被回收的原生对象）。
+       */
+      const 来源 = item.getURL()
       item.once("done", (_e2, state) => {
-        上次错 = state === "completed" ? undefined : `下载没成：${item.getFilename()}（${state}）`
+        const 成了 = state === "completed"
+        上次错 = 成了 ? undefined : `下载没成：${item.getFilename()}（${state}）`
+        /**
+         * **成败都报**（批 4）。「它试过从这个 URL 拿东西」本身就是事实——
+         * 与上传那条「失败也记」同一条规矩。
+         */
+        记下载?.({
+          ...(上次项目 ? { projectId: 上次项目 } : {}),
+          url: 来源,
+          落点: item.getSavePath(),
+          字节: item.getReceivedBytes(),
+          ...(成了 ? {} : { 出错: String(state) }),
+        })
         通知()
       })
     })
@@ -314,6 +338,7 @@ export function 造网页预览(
       switch (命令.kind) {
         case "open": {
           上次工作区 = 命令.workspace
+          上次项目 = 命令.projectId
           const 判 = 可以开吗(命令.url, 命令.workspace)
           if (!判.ok) {
             // **响亮拒绝，不静默跳回去**（规格 7.5）

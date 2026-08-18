@@ -48,7 +48,7 @@ function 取文本(content: string | { type: string; text?: string }[]): string 
     .map((c) => (c.type === "text" ? (c.text ?? "") : c.type === "image" ? "（图片）" : ""))
     .join("")
 }
-import { ProvenanceProbe } from "./provenance.js"
+import { ProvenanceProbe, 套上溯源 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
@@ -574,8 +574,32 @@ export class NativeRuntime implements AgentRuntime {
      * 我第一次做变异测试就摘错了分支，结果「判据没红」，
      * 差点得出「这条 e2e 是空转」的错误结论。
      */
+    /**
+     * **外部工具也要进账本**（2026-08-18，作者选的丙）。
+     *
+     * 在这之前，这个方法的最后一句是
+     * `[...(base ?? []), ...内核工具, ...mcp工具]`——`base` 在
+     * `gatedTools` 里套过溯源探针，**后面两个直接拼上去**。
+     * 于是模型让内核画了一张图、让 MCP 服务器写了一份表，
+     * 账本上有那条 `tool_call:<工具名>` 的 Run，**却答不出它写了什么**。
+     * 而「哪一次调用产出了这个文件」正是不变式 5 存在的理由。
+     *
+     * **只套溯源，不套授权门**：MCP 工具有自己的门
+     * （`mcp-tool.ts` 的 `trusted` 判定——策略只有一个家），
+     * 再套一次内置那道门就是拿错了尺子量。
+     */
+    const 外部 = [...内核工具, ...mcp工具]
+    const 观察过的外部 =
+      this.opts.provenance === false
+        ? 外部
+        : 外部.map((d) =>
+            套上溯源(d as Record<string, unknown>, new ProvenanceProbe(spec.workspace), (toolCallId, facts) =>
+              this.emit({ kind: "tool_files", sessionId: spec.sessionId, toolCallId, ...facts }),
+            ),
+          )
+
     const entry = this.opts.subagentChildEntry
-    if (!entry) return [...(base ?? []), ...内核工具, ...mcp工具]
+    if (!entry) return [...(base ?? []), ...观察过的外部]
 
     const tool = createSubagentTool({
       sessionId: spec.sessionId,
@@ -599,7 +623,15 @@ export class NativeRuntime implements AgentRuntime {
     })
 
     // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上
-    return [...(base ?? []), ...内核工具, ...mcp工具, tool]
+    /**
+     * **两条 return 都要带上观察过的那一份。**
+     *
+     * 这个方法自己的注释里写着：*「桌面版的真实装配是给
+     * `subagentChildEntry` 的，所以跑起来走的是下面那条」*——
+     * 只改上面那条的话，**单测全绿而应用里一个字都没记**。
+     * 同一个坑本仓库踩过一次（退役的那个数据工具）。
+     */
+    return [...(base ?? []), ...观察过的外部, tool]
   }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {

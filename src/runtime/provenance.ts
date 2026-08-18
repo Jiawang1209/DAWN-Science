@@ -114,6 +114,33 @@ export class ProvenanceProbe {
   constructor(private readonly workspace: string) {}
 
   /**
+   * **外部工具即将执行**（2026-08-18）。「外部」指 MCP 服务器的工具，
+   * 以及内核里的 `run_code`——**不是我们写的那些**。
+   *
+   * ## 为什么它不走白名单
+   *
+   * `PRODUCING_TOOLS` 的前提是**「这些工具是我们写的，我们知道哪个会写文件」**。
+   * 对第三方工具这个前提不成立：名字是它自己起的、参数 schema 是它自己定的，
+   * **我们看不见它内部干什么**（`mcp-tool.ts` 那条「过门」的注释里就是这句）。
+   * 一台服务器完全可以起一个叫 `grep` 却真的往盘上写东西的工具。
+   *
+   * 所以**一律观察**。代价是每次调用多一对 `git status`——
+   * **这个代价我们早就在付**：`bash` 就在白名单里，而它的调用次数比 MCP
+   * 多一个数量级。
+   *
+   * ## 它比内置那条少一样东西
+   *
+   * 没有 `声明的路径`：那一条靠的是「我们认得 `write` 的入参里哪个键是路径」，
+   * 而第三方 schema 认不出来。**认不出不等于可以猜。**
+   * 后果要说清楚：**MCP 写进 `.gitignore` 里的文件，这一层看不见**
+   * （`git status` 不列被忽略的）。审阅那一屏靠 `ignoredArtifacts()`
+   * 在约定目录里兜一次底，但它只答得出「有这么个文件」，答不出「谁写的」。
+   */
+  async beginExternal(): Promise<ProvenanceHandle | undefined> {
+    return this.观察([])
+  }
+
+  /**
    * 工具即将执行。
    *
    * @returns 完成句柄；**不观察这次时返回 `undefined`**——
@@ -133,7 +160,11 @@ export class ProvenanceProbe {
      * 声明只是候选，**跑完要 `stat` 一下确认文件真的在**才算数。
      * 那是观察，不是转述。
      */
-    const 声明 = 声明的路径(toolName, params)
+    return this.观察(声明的路径(toolName, params))
+  }
+
+  /** 拍下 before，交回一个算差集的句柄。**拍不到就不观察**（非 git 仓库） */
+  private async 观察(声明: string[]): Promise<ProvenanceHandle | undefined> {
     let before: GitBaseline
     try {
       before = await snapshot(this.workspace)
@@ -181,4 +212,48 @@ export class ProvenanceProbe {
       },
     }
   }
+}
+
+/**
+ * 把一个**外部工具定义**套上溯源（2026-08-18）。
+ *
+ * 内置工具那条包装在 `native.ts` 的 `gatedTools` 里，它同时管授权门；
+ * 这一条**只管溯源**——MCP 工具有自己的门（`mcp-tool.ts` 的 `trusted` 判定，
+ * 策略只有一个家），再套一次内置那道门就是拿错了尺子量。
+ *
+ * 三条纪律：
+ *
+ * ① **原样转交。** 名字、说明、参数 schema、返回值一个都不动——
+ *    包装器改了工具的答复，模型学到的就是假的。
+ * ② **`finally` 里算。** 工具自己炸了，它在炸之前写下的东西**照样是事实**。
+ * ③ **算不出来就不发。** 发一条空的 `filesWritten` 会让那条 Run 说出
+ *    「确认没改任何文件」，而实情是「不知道」——两者不得混为一谈（不变式 5）。
+ */
+export function 套上溯源<T extends Record<string, unknown>>(
+  定义: T,
+  probe: ProvenanceProbe,
+  报: (toolCallId: string, facts: ToolFileFacts) => void,
+): T {
+  const original = (定义.execute as (...a: unknown[]) => Promise<unknown>).bind(定义)
+  return {
+    ...定义,
+    async execute(
+      toolCallId: string,
+      params: unknown,
+      signal: unknown,
+      onUpdate: unknown,
+      ctx: unknown,
+    ) {
+      // **before 必须在真正执行之前拍完**，所以要 await（与内置那条同理）
+      const handle = await probe.beginExternal()
+      try {
+        return await original(toolCallId, params, signal, onUpdate, ctx)
+      } finally {
+        if (handle) {
+          const facts = await handle.finish()
+          if (facts) 报(String(toolCallId), facts)
+        }
+      }
+    },
+  } as unknown as T
 }

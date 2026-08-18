@@ -16,7 +16,7 @@
  * ② 按「试一次」→ 真的连上，**并把它有哪些工具列出来**
  * ③ 缺密钥 → **点名说缺哪个**，而不是笼统一句「没配好」
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 在项目里开会话, 进审阅 } from "./fixtures.js"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { existsSync, readFileSync, rmSync } from "node:fs"
@@ -250,5 +250,82 @@ agents:
       .toContain("E2E_MCP_物证")
 
     rmSync(日志, { force: true })
+  })
+})
+
+/**
+ * **MCP 写的文件也要进账本**（2026-08-18，作者选的丙）。
+ *
+ * 在这之前 `native.ts` 的 `toolsFor` 最后一句是
+ * `[...(base ?? []), ...内核工具, ...mcp工具, tool]`——`base` 套过溯源探针，
+ * **后面两个直接拼上去**。于是 MCP 服务器写了一份数据，账本上有那条
+ * `tool_call:testbox__写一行` 的 Run，**却答不出它写了什么**。
+ *
+ * 单元测试验的是 `套上溯源()` 这个包装器本身。**它证明不了接线**——
+ * 而 `toolsFor` 有**两条 return**，桌面版走的是带 `subagentChildEntry`
+ * 的那一条（那个方法自己的注释里写着这句，本仓库为它踩过一次坑）。
+ * 只改上面那条的话，单测全绿而应用里一个字都没记。**这条用例盯的就是那个。**
+ */
+test.describe("MCP 写的文件进账本", () => {
+  const 产出 = "mcp写的.jsonl"
+
+  test.use({
+    dawnOptions: {
+      /** **必须是 git 仓库**：溯源靠 `git status` 算差集，不是仓库就整个不观察 */
+      gitInit: true,
+      providersYaml: `mcp:
+  testbox:
+    command: ${JSON.stringify(process.execPath)}
+    args: [${JSON.stringify(脚本)}]
+    env: [DAWN_MCP_TEST_LOG]
+agents:
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat]
+`,
+      toolCall: {
+        toolName: "testbox__写一行",
+        args: { message: "记一笔" },
+        say: "记好了。",
+      },
+    },
+  })
+
+  /**
+   * **别往这份 YAML 里写 `trusted`**（2026-08-18 当场踩的）。
+   * 它一度是配置里的一个键，后来被明确摘掉——「我已经过目了这台有哪些工具」
+   * 是**人的动作**，写进配置文件等于让它可以被一份 YAML 悄悄打开
+   * （`config/schema.ts:315` 那段注释：*「那是个漏洞」*）。
+   * 加上它的后果是配置整份不合法，**应用连窗口都开不出来**。
+   */
+  test("**MCP 服务器写进工作区的文件，变更 pane 上说得出是它写的**", async ({ dawn }) => {
+    const { page, workspace } = dawn
+
+    /**
+     * 让那台服务器**写进工作区**（默认那条 e2e 写的是 `tmpdir()`，
+     * 落在工作区外面，git 一个字都看不见）。密钥走同一条路：
+     * **没在配置里声明的环境变量进不去**。
+     */
+    await page.getByRole("button", { name: "MCP 服务器" }).click()
+    await page.getByRole("button", { name: "去填" }).first().click()
+    await page.getByRole("textbox", { name: "DAWN_MCP_TEST_LOG 的值" }).fill(join(workspace, 产出))
+    await page.getByRole("button", { name: "Store secret" }).or(page.getByRole("button", { name: "存下来" })).click()
+    await expect(page.getByText(/还差 DAWN_MCP_TEST_LOG/)).toHaveCount(0)
+
+    await 在项目里开会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("帮我记一笔")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText("记好了。")).toBeVisible({ timeout: 30_000 })
+
+    // ① 物证：它真的写了
+    await expect.poll(() => existsSync(join(workspace, 产出)), { timeout: 30_000 }).toBe(true)
+
+    // ② **账本答得出是哪次调用写的** —— 这一条修之前是红的
+    await 进审阅(page)
+    const 变更 = page.locator(".panel", { hasText: "变更" })
+    await expect(变更).toContainText("testbox__写一行", { timeout: 30_000 })
+    await expect(变更).toContainText(产出)
   })
 })

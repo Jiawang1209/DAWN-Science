@@ -39,7 +39,31 @@ let 服务: Server
 let 地址: string
 
 test.beforeAll(async () => {
-  服务 = createServer((_q, s) => {
+  服务 = createServer((q, s) => {
+    /**
+     * **路径一律用 ASCII。**
+     *
+     * 第一版写的是 `/另一页`，而浏览器发出来的是**百分号编码**过的
+     * `/%E5%8F%A6...`——这个 `===` 永远不成立，于是服务器回了首页，
+     * 判据红得像「弹窗没接住」，其实弹窗接得好好的（诊断探针当场量到
+     * URL 真的变了）。**非 ASCII 留给文件名去验**，见下面那个下载。
+     */
+    if (q.url === "/second") {
+      s.setHeader("content-type", "text/html; charset=utf-8")
+      s.end("<!doctype html><meta charset=utf-8><title>另一页</title><h1>弹窗落到这儿了</h1>")
+      return
+    }
+    if (q.url === "/download.csv") {
+      s.setHeader("content-type", "text/csv; charset=utf-8")
+      /**
+       * **HTTP 头只装得下 latin-1**，中文文件名要走 RFC 5987 的 `filename*`。
+       * 直接写中文会让 node 抛 `Invalid character in header content`——
+       * 这条判据当场撞到了，而它值得留着：**非 ASCII 的文件名是科研数据的常态**。
+       */
+      s.setHeader("content-disposition", "attachment; filename*=UTF-8''%E4%B8%8B%E8%BD%BD%E6%88%91.csv")
+      s.end("a,b\n1,2\n")
+      return
+    }
     s.setHeader("content-type", "text/html; charset=utf-8")
     s.end("<!doctype html><meta charset=utf-8><title>本机页</title><h1>DAWN_网页预览_物证</h1>")
   })
@@ -100,21 +124,52 @@ test("**有浮层挡着就藏起来** —— 它的 z-index 对命令面板无�
   await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(true)
 })
 
-test("**外网被拦下，而且屏幕上说得出为什么**", async ({ dawn }) => {
+/**
+ * **批 3 起：外网也开得了**（作者定的第二期「其次是任意网站」）。
+ *
+ * 这一条**替换了批 1 那条「外网被拦下」**——不是删掉判据，是那个行为
+ * 按作者定的分期变了。判据也跟着从「拦住了吗」变成「**真的放行了吗**」。
+ *
+ * **不打外网**：判据是「那个 view 被建出来并且开始导航了」。
+ * 批 3 之前，一个外网地址在门那儿就被拒了，`保证有()` 根本不会被调到，
+ * **一个 view 都不会有**——所以「有 view」这件事本身就是判据。
+ */
+test("**外网现在开得了** —— 门放行了，view 真的建出来了", async ({ dawn }) => {
   const { app, page } = dawn
   await 开一段临时会话(page)
   await 进网页(page)
-  await page.getByRole("textbox", { name: "网址" }).fill(地址)
-  await page.getByRole("textbox", { name: "网址" }).press("Enter")
-  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
+  expect(await 视图(app), "还没开任何东西就有了 view").toBeUndefined()
 
   await page.getByRole("textbox", { name: "网址" }).fill("https://example.com/")
   await page.getByRole("textbox", { name: "网址" }).press("Enter")
 
-  // **点名说是哪个主机**，不是笼统一句「不允许」
-  await expect(page.getByText(/example\.com 不是本机/)).toBeVisible({ timeout: 15_000 })
-  // 而且**真的没去**——只看屏幕上那句话的话，导航过去了也一样绿
-  expect((await 视图(app))!.url, "嘴上拦了，实际还是导航过去了").toContain(地址)
+  await expect.poll(async () => (await 视图(app)) !== undefined, { timeout: 30_000 }).toBe(true)
+  // 门那句「不是本机」不该再出现——它已经不是判据了
+  await expect(page.getByText(/不是本机/)).toHaveCount(0)
+})
+
+test("**工作目录外的 `file:` 仍然拦下** —— 放开的只有 http(s)", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 进网页(page)
+
+  await page.getByRole("textbox", { name: "网址" }).fill("file:///etc/passwd")
+  await page.getByRole("textbox", { name: "网址" }).press("Enter")
+
+  // **说得出为什么**，不是静默跳回去
+  await expect(page.getByText(/工作目录/)).toBeVisible({ timeout: 15_000 })
+})
+
+test("**一句话不是地址** —— 说它不像地址，不去把它当域名解析", async ({ dawn }) => {
+  const { app, page } = dawn
+  await 开一段临时会话(page)
+  await 进网页(page)
+
+  await page.getByRole("textbox", { name: "网址" }).fill("这不是一个地址")
+  await page.getByRole("textbox", { name: "网址" }).press("Enter")
+
+  await expect(page.getByText(/不像一个地址/)).toBeVisible({ timeout: 15_000 })
+  expect(await 视图(app), "把一句话当域名去解析了").toBeUndefined()
 })
 
 test("**切到别的房客要藏起来，切回来还是那一页**（没被销毁）", async ({ dawn }) => {
@@ -135,4 +190,79 @@ test("**切到别的房客要藏起来，切回来还是那一页**（没被销�
   await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(true)
   // 还是那一页——**切走不该把它销毁**，不然回来是一片空白
   expect((await 视图(app))!.title).toBe("本机页")
+})
+
+/**
+ * ── 放开任意网站之后，守卫全在这一段（批 3）────────────────────────
+ *
+ * 门那一层已经不看主机名了。**真正的边界是这个渲染进程被允许接触什么**，
+ * 所以下面三条才是这一批真正的判据。
+ *
+ * **驱动那个页面只能靠 `executeJavaScript`**：Playwright 够不着它
+ * （它不是 DOM、不是 window）。
+ */
+async function 在页面里跑(app: import("@playwright/test").ElectronApplication, js: string) {
+  return app.evaluate(async ({ BrowserWindow }, 代码) => {
+    const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes("/dist/ui/"))
+    const k = w?.contentView.children.find(
+      (c) => (c as unknown as { webContents?: unknown }).webContents !== undefined,
+    ) as unknown as { webContents: { executeJavaScript(s: string, gesture?: boolean): Promise<unknown> } } | undefined
+    /**
+     * **`userGesture: true` 不是可选的**：没有它，`window.open` 会被
+     * 弹窗拦截器直接挡掉，`setWindowOpenHandler` 一次都不会被调到——
+     * 判据于是红得像功能坏了，其实是探针少了一个参数（当场踩的）。
+     */
+    return k?.webContents.executeJavaScript(代码, true)
+  }, js)
+}
+
+async function 开一页(page: import("@playwright/test").Page, 到: string) {
+  await 进网页(page)
+  await page.getByRole("textbox", { name: "网址" }).fill(到)
+  await page.getByRole("textbox", { name: "网址" }).press("Enter")
+}
+
+test("**页面自己开新窗口时，就在这一栏里走** —— 不新开 Electron 窗口", async ({ dawn }) => {
+  const { app, page } = dawn
+  await 开一段临时会话(page)
+  await 开一页(page, 地址)
+  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
+
+  const 窗口数 = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)
+  const 前 = await 窗口数()
+  await 在页面里跑(app, `window.open("/second", "_blank")`)
+
+  // **在同一栏里导航过去**：批 1 时这里是一律 deny，那会让人点了没反应
+  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("另一页")
+  expect(await 窗口数(), "页面弹出了一个 Electron 窗口").toBe(前)
+})
+
+test("**权限一律拒** —— 不摆一个假的授权流程", async ({ dawn }) => {
+  const { app, page } = dawn
+  await 开一段临时会话(page)
+  await 开一页(page, 地址)
+  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
+
+  /**
+   * 「问一句人」需要一条主进程↔界面的往返，而那条今天还不存在
+   * （`Settings.tsx` 权限那一节如实写着同一件事）。
+   * **不存在的能力不该看起来存在**——所以是干脆地拒。
+   */
+  expect(await 在页面里跑(app, `Notification.requestPermission()`)).toBe("denied")
+})
+
+test("**下载落到设置里那个下载目录**，不另起一套", async ({ dawn }) => {
+  const { app, page, dir } = dawn
+  const { existsSync, readdirSync } = await import("node:fs")
+  await 开一段临时会话(page)
+  await 开一页(page, 地址)
+  await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
+
+  await 在页面里跑(app, `location.href = "/download.csv"`)
+
+  // 夹具把下载目录指到隔离目录里（`DAWN_DOWNLOADS`），落点就该在那儿
+  const 下载目录 = `${dir}/downloads`
+  await expect
+    .poll(() => (existsSync(下载目录) ? readdirSync(下载目录) : []), { timeout: 30_000 })
+    .toContain("下载我.csv")
 })

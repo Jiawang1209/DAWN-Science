@@ -26,7 +26,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
-import { 头一条本机地址 } from "../policy/local-url.js"
+import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
@@ -4464,10 +4464,15 @@ export function TranscriptRow({
           * 只在**模型说完了**之后给：流式过程中地址常常只打了一半，
           * 那时冒出一张卡、地址还在自己变长，是最难看的一种闪烁。
           * 自己说的话不给——那是你自己打的链接，不需要我们再推荐一次。
+          *
+          * **批 3 起外网也给这张卡**（那一格开得了任意网站了）。
+          * 而**直接点链接的去处没变**：本机进坞、外网去系统浏览器——
+          * 那是长年的默认，改它是另一个决定。要在坞里开外网，
+          * 走这张卡上的「在这儿打开」。
           */}
-        {!mine && item.final && onOpenWeb && 头一条本机地址(item.text) ? (
+        {!mine && item.final && onOpenWeb && 头一条网址(item.text) ? (
           <网页卡
-            url={头一条本机地址(item.text)!}
+            url={头一条网址(item.text)!}
             onHere={onOpenWeb}
             onSystem={(u) => window.open(u, "_blank", "noopener,noreferrer")}
           />

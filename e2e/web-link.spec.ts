@@ -89,18 +89,44 @@ test.describe("外网链接", () => {
     },
   })
 
-  test("**外网不给那张卡** —— 它说的是「在这儿开」，而外网这一批开不了", async ({ dawn }) => {
+  /**
+   * **批 3 起外网也给那张卡**（那一格开得了任意网站了）。
+   *
+   * 这一条**替换了批 2 那条「外网不给那张卡」**——不是删掉判据，
+   * 是行为按作者定的分期变了。只给本机的话，外网就只剩地址栏一条路进得去。
+   */
+  test("**外网也给那张卡**，卡上摆着要开的那个地址", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("给我文档")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    const 卡 = page.locator(".weblink-card")
+    await expect(卡).toBeVisible({ timeout: 30_000 })
+    await expect(卡).toContainText("example.com/doc")
+  })
+
+  /**
+   * **而直接点链接的去处没变**：外网仍然交给系统浏览器。
+   *
+   * 那是长年的默认，改它是另一个决定。要在坞里开外网，走卡上的「在这儿打开」。
+   * 判据：点完之后**没有起一个 web contents**，也**没有多出 Electron 窗口**
+   * （后者是批 0 那条守卫）。
+   */
+  test("**直接点外网链接，仍然去系统浏览器**，不在坞里开", async ({ dawn }) => {
     const { app, page } = dawn
     await 开一段临时会话(page)
     await page.getByPlaceholder(/今天帮你做些什么/).fill("给我文档")
     await page.getByRole("button", { name: "发送", exact: true }).click()
-    await expect(page.locator("a[href^='https://example.com']").first()).toBeVisible({ timeout: 30_000 })
+    const 链 = page.locator("a[href^='https://example.com']").first()
+    await expect(链).toBeVisible({ timeout: 30_000 })
 
-    await expect(page.locator(".weblink-card")).toHaveCount(0)
+    const 窗口数 = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)
+    const 前 = await 窗口数()
+    await 链.click()
+    await page.waitForTimeout(2000)
 
-    // 点它也不该把坞拽开、更不该起一个 web contents
-    await page.locator("a[href^='https://example.com']").first().click()
-    await page.waitForTimeout(1500)
     expect(await 视图标题(app), "外网链接把网页那一格起起来了").toBeUndefined()
+    expect(await 窗口数(), "点一个外链之后多出了 Electron 窗口").toBe(前)
   })
 })

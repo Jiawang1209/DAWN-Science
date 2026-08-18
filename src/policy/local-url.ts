@@ -66,16 +66,23 @@ export function 像本机地址吗(raw: string): boolean {
 }
 
 /**
- * 一段文字里**第一条本机地址**（给消息底下那张卡片用）。
+ * 一段文字里**第一条能在坞里打开的地址**（给消息底下那张卡片用）。
  *
  * **只取第一条**：作者截图里那张卡片就是一张。一条消息里出现好几个地址时，
  * 链接本身照样点得动——卡片是那条主线索的快捷方式，不是清单。
+ *
+ * **批 3 起它不再只认本机**：那一格现在开得了任意网站，而卡上那颗
+ * 「打开方式 ▾」正是让人挑「在这儿开还是去系统浏览器」的地方——
+ * 只给本机的话，外网就只剩地址栏一条路进得去，这个功能等于半残。
+ *
+ * **`file:` 不给卡**：它在不在工作目录里只有主进程说了算，
+ * 而一张点了才知道被拒的卡，比没有这张卡更让人困惑。
  */
-export function 头一条本机地址(text: string): string | undefined {
+export function 头一条网址(text: string): string | undefined {
   // markdown 里的地址两边常有 `)`、`。`、`，`，收尾要把它们摘掉
-  for (const m of text.matchAll(/\b(?:https?:\/\/|file:\/\/)[^\s<>"'）)】\]]+/g)) {
+  for (const m of text.matchAll(/\bhttps?:\/\/[^\s<>"'）)】\]]+/g)) {
     const 净 = m[0].replace(/[.,，。；;：:]+$/, "")
-    if (像本机地址吗(净)) return 净
+    if (解析地址(净)) return 净
   }
   return undefined
 }

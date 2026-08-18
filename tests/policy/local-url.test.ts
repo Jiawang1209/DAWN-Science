@@ -5,7 +5,7 @@
  * 与「主进程说不能」之间打架，而那种不一致没有任何地方会报出来。
  */
 import { describe, expect, it } from "vitest"
-import { 像本机地址吗, 头一条本机地址, 解析地址 } from "../../src/policy/local-url.js"
+import { 像本机地址吗, 头一条网址, 解析地址 } from "../../src/policy/local-url.js"
 
 describe("像本机地址吗", () => {
   it("本机放行，外网不放", () => {
@@ -39,28 +39,29 @@ describe("解析地址", () => {
   })
 })
 
-describe("头一条本机地址", () => {
+describe("头一条网址", () => {
   it("从一段话里捞出那一条", () => {
-    expect(头一条本机地址("可视化伴侣已在 http://localhost:64070 准备好，后面会展示完整产品闭环。"))
+    expect(头一条网址("可视化伴侣已在 http://localhost:64070 准备好，后面会展示完整产品闭环。"))
       .toBe("http://localhost:64070")
   })
 
   it("**收尾的标点不算地址的一部分**", () => {
     // 中文句号紧跟在地址后面是常态，带上它就打不开了
-    expect(头一条本机地址("去 http://127.0.0.1:8888/lab。")).toBe("http://127.0.0.1:8888/lab")
-    expect(头一条本机地址("见 (http://localhost:3000/x)")).toBe("http://localhost:3000/x")
+    expect(头一条网址("去 http://127.0.0.1:8888/lab。")).toBe("http://127.0.0.1:8888/lab")
+    expect(头一条网址("见 (http://localhost:3000/x)")).toBe("http://localhost:3000/x")
   })
 
-  it("**外网地址不给卡片** —— 那一张卡说的是「在这儿开」，而外网开不了", () => {
-    expect(头一条本机地址("详见 https://example.com/doc")).toBeUndefined()
+  it("**外网也给卡片**（批 3：那一格开得了任意网站了）", () => {
+    // 只给本机的话，外网就只剩地址栏一条路进得去，这个功能等于半残
+    expect(头一条网址("详见 https://example.com/doc")).toBe("https://example.com/doc")
   })
 
-  it("外网在前、本机在后时，捞的是**本机那一条**", () => {
-    expect(头一条本机地址("参考 https://example.com/ ，服务起在 http://localhost:5173/"))
-      .toBe("http://localhost:5173/")
+  it("**`file:` 不给卡** —— 在不在工作目录里只有主进程说了算", () => {
+    // 一张点了才知道被拒的卡，比没有这张卡更让人困惑
+    expect(头一条网址("打开 file:///tmp/a.html 看看")).toBeUndefined()
   })
 
   it("一条都没有就没有", () => {
-    expect(头一条本机地址("这段话里一个地址都没有")).toBeUndefined()
+    expect(头一条网址("这段话里一个地址都没有")).toBeUndefined()
   })
 })

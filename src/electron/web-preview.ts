@@ -24,8 +24,8 @@
  * **不给任何 preload**——它是别人的网页，不该碰到 `window.dawn`。
  */
 import { WebContentsView, type BrowserWindow } from "electron"
-import { resolve, sep } from "node:path"
-import { realpathSync } from "node:fs"
+import { join, resolve, sep } from "node:path"
+import { existsSync, realpathSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { 本机主机吗, 解析地址 } from "../policy/local-url.js"
 
@@ -52,7 +52,19 @@ export type 网页命令 =
   | { kind: "close" }
 
 /**
- * **这条地址是本机的吗**（批 1 只放本机，作者定的分期）。
+ * **这条地址开得了吗**（批 3 起：任意网站，作者定的第二期）。
+ *
+ * 批 1 时它只放本机。作者定的范围是「**先本机的东西，其次任意网站**」，
+ * 这一批放开了 http(s) 那一半——**而 `file:` 那一半一个字都没松**：
+ * 它仍然只认工作目录里的文件。
+ *
+ * ## 为什么放开 http(s) 不等于放弃守卫
+ *
+ * 守卫从「**哪些地址能开**」挪到了「**那个视图能干什么**」——
+ * 独立分区、拒绝一切权限请求、证书错误不放行、弹窗不新开窗口、
+ * 下载落到设置里那个目录。逐条见 `造网页预览`。
+ * **拿一张网址白名单当安全边界本来就是假的**：真正的边界是那个渲染进程
+ * 被允许接触什么。
  *
  * 纯函数，**不碰 Electron**：它要能在普通 node 测试里跑
  * （与 `ipc.ts` 那句「只有 Electron 才跑得起来的东西不塞进协议」同一条理由）。
@@ -60,7 +72,7 @@ export type 网页命令 =
  * @param workspace 给了才认工作区里的 `file:`。**不给就一个 file: 都不放**——
  *   拿家目录之类顶上，等于把守卫开在一个没人声明过的地方。
  */
-export function 本机地址吗(
+export function 可以开吗(
   raw: string,
   workspace: string | undefined,
 ): { ok: true; url: string } | { ok: false; why: string } {
@@ -78,6 +90,22 @@ export function 本机地址吗(
    */
   const u = 解析地址(原)
   if (!u) return { ok: false, why: `「${原.slice(0, 60)}」不是一个地址` }
+
+  /**
+   * **人没写协议、而那一串又不像个主机名时，说它不是地址**（批 3 补的）。
+   *
+   * 批 1 时这条不需要：主机名不是 `localhost` 就直接被拦了。放开任意网站
+   * 之后，`这不是一个地址` 会被 `new URL` 认成一个合法的 IDN 主机名——
+   * 判据当场红了，而它是对的：**那不是地址，是一句话**。
+   *
+   * 判据取「有点、有端口、或者就是 localhost」。**写了协议的就信他**——
+   * 那时他明确知道自己在干什么（内网单标签主机名是真实存在的）。
+   */
+  const 人写了协议 = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(原) && !/^[a-zA-Z0-9.-]+:\d+(\/|$|\?)/.test(原)
+  if (!人写了协议 && (u.protocol === "http:" || u.protocol === "https:")) {
+    const 像主机 = u.hostname.includes(".") || u.port !== "" || 本机主机吗(u.hostname)
+    if (!像主机) return { ok: false, why: `「${原.slice(0, 60)}」不像一个地址` }
+  }
 
   if (u.protocol === "file:") {
     if (!workspace) return { ok: false, why: "这段会话没有工作目录，本机文件不知道该以哪儿为界" }
@@ -108,14 +136,11 @@ export function 本机地址吗(
   if (u.protocol !== "http:" && u.protocol !== "https:") {
     return { ok: false, why: `这一格只开 http(s) 与工作目录里的文件，不开 ${u.protocol}` }
   }
-
-  if (!本机主机吗(u.hostname)) {
-    return {
-      ok: false,
-      // **点名说是哪个主机**：笼统一句「不允许」会让人以为是功能坏了
-      why: `${u.hostname} 不是本机。这一格现在只开本机的东西——用系统浏览器打开它。`,
-    }
-  }
+  /**
+   * **主机名不再是判据**（批 3）。留下 `本机主机吗` 的引用是给
+   * `local-url.ts` 那一半用的——渲染进程仍然要分辨「点这条链接该进坞
+   * 还是该去系统浏览器」，那是**动线**，不是**安全**。
+   */
   return { ok: true, url: u.href }
 }
 
@@ -129,12 +154,41 @@ export interface 网页预览 {
 const 空状态 = (): 网页状态 => ({ url: "", title: "", loading: false, canBack: false, canForward: false })
 
 /**
+ * 重名就改名，**不默默覆盖**。
+ *
+ * 与 SFTP 那条下载同一条规矩（批 4a 写下的）：*「默默覆盖是这里唯一不能选的
+ * ——你可能正在覆盖昨天那一版数据。」* 那边叫 `不覆盖的名字`，
+ * 在 backend 里；这一层碰不到它，所以照同一个形状再写一次
+ * **并在这里点名说它是同一条规矩**。
+ */
+function 不覆盖(目标: string): string {
+  if (!existsSync(目标)) return 目标
+  const 点 = 目标.lastIndexOf(".")
+  const [主, 尾] = 点 > 目标.lastIndexOf(sep) ? [目标.slice(0, 点), 目标.slice(点)] : [目标, ""]
+  for (let i = 1; i < 1000; i++) {
+    const 试 = `${主} (${i})${尾}`
+    if (!existsSync(试)) return 试
+  }
+  return 目标
+}
+
+/**
  * 造一个。**懒建**：没人打开过网页那一格时，一个 web contents 都不起——
  * 它是一个完整的渲染进程，为一个没人看的面板起一个不划算。
  */
-export function 造网页预览(win: BrowserWindow, 推: (s: 网页状态) => void): 网页预览 {
+export function 造网页预览(
+  win: BrowserWindow,
+  推: (s: 网页状态) => void,
+  /**
+   * 设置里那个下载目录（批 3）。**注入而不是在这里去问**——
+   * 这一层不该知道 workbench 长什么样，与 `openPath` / `trashItem` 同一条缝。
+   */
+  取下载目录?: () => string | undefined,
+): 网页预览 {
   let view: WebContentsView | undefined
   let 上次错: string | undefined
+  /** 上一次 `open` 带来的工作区。**弹窗那条要用它**——页面里点出来的链接同样要过门 */
+  let 上次工作区: string | undefined
   let 想要的框: { x: number; y: number; width: number; height: number } | undefined
   let 想要可见 = false
 
@@ -166,12 +220,79 @@ export function 造网页预览(win: BrowserWindow, 推: (s: 网页状态) => vo
       },
     })
     win.contentView.addChildView(v)
+
     /**
-     * **它自己不许再开窗口。** 页面里一个 `target=_blank` 就能弹出一个
-     * 我们完全没有 chrome 的 Electron 窗口——批 0 刚把主窗口那条堵上，
-     * 这里是同一个洞的第二个入口。
+     * ── 放开任意网站之后，守卫全在这一段（批 3）────────────────────
+     *
+     * 门那一层已经不看主机名了。**真正的边界是这个渲染进程被允许接触什么**，
+     * 而那正是下面这四条。设计文档第四节那张表逐条落实。
      */
-    v.webContents.setWindowOpenHandler(() => ({ action: "deny" }))
+
+    /**
+     * **弹窗不新开窗口，就在这一栏里走。**
+     *
+     * 批 1 时是一律 `deny`——那时只开本机的东西，`target=_blank` 罕见。
+     * 放开任意网站之后，`deny` 会让人点了没反应，而**「点了没反应」
+     * 与「这个功能坏了」在屏幕上长得一模一样**。
+     * 改成在同一栏里导航过去（仍然要过同一道门）。
+     */
+    v.webContents.setWindowOpenHandler(({ url }) => {
+      const 判 = 可以开吗(url, 上次工作区)
+      if (判.ok) void v.webContents.loadURL(判.url)
+      else {
+        上次错 = 判.why
+        通知()
+      }
+      return { action: "deny" }
+    })
+
+    /**
+     * **权限一律拒**（摄像头、麦克风、位置、通知、剪贴板…）。
+     *
+     * 第一版不摆一个假的授权流程：**问人需要一条主进程↔界面的往返**，
+     * 而那条今天还不存在（`Settings.tsx` 权限那一节如实写着同一件事）。
+     * **不存在的能力不该看起来存在**——所以是干脆地拒，不是假装在问。
+     */
+    v.webContents.session.setPermissionRequestHandler((_wc, permission, done) => {
+      console.error(`[网页预览] 拒绝了一次权限请求：${permission}`)
+      done(false)
+    })
+    v.webContents.session.setPermissionCheckHandler(() => false)
+
+    /**
+     * **证书错误不放行，而且说得出是哪个域、什么错**。
+     *
+     * Electron 的默认动作就是拒绝，但**默认是沉默的**——页面白着，
+     * 人不知道是网断了还是证书坏了。这里把话说出来（规格 7.5）。
+     */
+    v.webContents.on("certificate-error", (e, url, error) => {
+      e.preventDefault()
+      上次错 = `证书有问题，没有打开：${error}（${url.slice(0, 80)}）`
+      通知()
+    })
+
+    /**
+     * **下载落到设置里那个下载目录**——不另起一套。
+     *
+     * 那一格是作者 2026-08-18 定的②，已经做完了；这里只是把它接上。
+     * 取不到就交给 Electron 自己的默认，**不猜一个路径**。
+     */
+    v.webContents.session.on("will-download", (_e, item) => {
+      const 目录 = 取下载目录?.()
+      /**
+       * **一定要给一个落点。**
+       *
+       * 不给的话 Electron 会弹一个**原生保存对话框**——判据当场挂了 31 秒
+       * 才超时，而在真实使用里那是一个我们完全没设计过的模态框
+       * （窗口 `show: false` 时它甚至看不见）。
+       * 取不到配置就用注入进来的那个兜底，**不猜路径**。
+       */
+      if (目录) item.setSavePath(不覆盖(join(目录, item.getFilename())))
+      item.once("done", (_e2, state) => {
+        上次错 = state === "completed" ? undefined : `下载没成：${item.getFilename()}（${state}）`
+        通知()
+      })
+    })
     for (const ev of ["did-navigate", "did-navigate-in-page", "page-title-updated", "did-stop-loading", "did-start-loading"] as const) {
       v.webContents.on(ev as never, () => 通知())
     }
@@ -192,7 +313,8 @@ export function 造网页预览(win: BrowserWindow, 推: (s: 网页状态) => vo
     控制(命令) {
       switch (命令.kind) {
         case "open": {
-          const 判 = 本机地址吗(命令.url, 命令.workspace)
+          上次工作区 = 命令.workspace
+          const 判 = 可以开吗(命令.url, 命令.workspace)
           if (!判.ok) {
             // **响亮拒绝，不静默跳回去**（规格 7.5）
             上次错 = 判.why

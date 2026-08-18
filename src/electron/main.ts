@@ -171,10 +171,42 @@ function createWindow(): void {
    * 渲染进程不放（那正是「关了窗口进程还在」的经典来源）。
    */
   let 网页: 网页预览 | undefined
-  const 网页的 = (): 网页预览 => (网页 ??= 造网页预览(win, (状态) => {
-    if (!win.isDestroyed()) win.webContents.send(IPC_WEB_STATE, 状态)
-  }))
-  ipcMain.handle(IPC_WEB_CONTROL, async (_e, cmd: 网页命令) => 网页的().控制(cmd))
+  /**
+   * 下载落到设置里那个目录（批 3）。
+   *
+   * **`will-download` 是同步的**，那时来不及去问后端，所以这里存一份。
+   * 每收到一条网页命令就顺手刷新——**一次下载之前必然先有过一条命令**
+   * （至少是 `open`），所以这份缓存不会是空的。
+   * 取不到就留 `undefined`，交给 Electron 自己的默认——**不猜一个路径**。
+   */
+  let 下载目录: string | undefined
+  const 刷下载目录 = () => {
+    void ipcDispatch?.("getDownloadDir", {})
+      .then((r) => {
+        const p = (r as { data?: { path?: string } }).data?.path
+        if (typeof p === "string" && p) 下载目录 = p
+      })
+      .catch(() => {
+        /** 问不到就用 Electron 的默认。**不猜** */
+      })
+  }
+  const 网页的 = (): 网页预览 =>
+    (网页 ??= 造网页预览(
+      win,
+      (状态) => {
+        if (!win.isDestroyed()) win.webContents.send(IPC_WEB_STATE, 状态)
+      },
+      /**
+       * **永远给得出一个落点**：配置还没读到时用与 workbench 同一个兜底
+       * （`DAWN_DOWNLOADS` 或系统下载目录）。返回 `undefined` 的话，
+       * Electron 会弹一个原生保存对话框——那是我们完全没设计过的模态框。
+       */
+      () => 下载目录 ?? process.env.DAWN_DOWNLOADS ?? app.getPath("downloads"),
+    ))
+  ipcMain.handle(IPC_WEB_CONTROL, async (_e, cmd: 网页命令) => {
+    刷下载目录()
+    return 网页的().控制(cmd)
+  })
   /**
    * **窗口要关、或者应用要退，都得先把它拆掉。**
    *

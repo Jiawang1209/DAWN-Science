@@ -214,7 +214,7 @@ export function WebPanel({ workspace }: { workspace?: string | undefined }) {
         <input
           className="control webview-url"
           aria-label={t("网址")}
-          placeholder={t("localhost:8888 或工作目录里的 .html")}
+          placeholder={t("输一个网址，或工作目录里的 .html")}
           value={草稿 || 状态.url}
           onChange={(e) => 设草稿(e.target.value)}
           onKeyDown={(e) => {
@@ -238,7 +238,7 @@ export function WebPanel({ workspace }: { workspace?: string | undefined }) {
         */}
       <div className="webview-slot" ref={占位}>
         {状态.url ? null : (
-          <p className="hint">{t("上面输一个本机地址，或者点消息里的链接。")}</p>
+          <p className="hint">{t("上面输一个网址，或者点消息里的链接。")}</p>
         )}
       </div>
     </div>

@@ -37,9 +37,9 @@ import { setValue } from "./identity.js"
  * **`browser` 现在不在这个联合里**——它一点都还没有（全项目 0 处 `webview`），
  * 摆一个点开是空的房客，比不摆更坏。它单开一轮，那时再加进来。
  */
-export type 坞房客 = "review" | "files"
+export type 坞房客 = "review" | "files" | "web"
 
-export const 全部房客: readonly 坞房客[] = ["review", "files"]
+export const 全部房客: readonly 坞房客[] = ["review", "files", "web"]
 
 export const RIGHT_DOCK_TENANT_KEY = "dawn.global.right-dock-tenant"
 export const RIGHT_DOCK_WIDTH_KEY = "dawn.global.right-dock-width"

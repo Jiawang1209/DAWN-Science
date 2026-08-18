@@ -4592,3 +4592,31 @@ pre {
 /** 审阅这一块**不许把坞撑宽**：长路径与长句子各自在自己那格里收 */
 .review { display: block; min-width: 0; overflow-x: hidden; }
 .review .caveat, .review .hint { overflow-wrap: anywhere; }
+
+/* ── 网页预览那一格（批 1，2026-08-18）──────────────────────────────
+ *
+ * **这一块几乎是空的**：真正的网页是主进程里一个 `WebContentsView`，
+ * 它浮在整个 DOM 之上。这里只画 chrome，外加一个占位的方块——
+ * 那个方块的矩形就是那个视图该在的地方（`web.tsx`）。
+ */
+.webview { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: var(--dawn-space-2); }
+.webview-bar { display: flex; align-items: center; gap: var(--dawn-space-1); }
+/** 地址栏吃掉剩下的宽；前后退那三颗不让位 */
+.webview-url { flex: 1; min-width: 0; font-family: var(--dawn-font-mono); font-size: 12px; }
+.webview-bar .btn { flex: 0 0 auto; }
+.webview-error { margin: 0; overflow-wrap: anywhere; }
+/**
+ * 占位块。**它必须实实在在占着地方**——`getBoundingClientRect` 量的就是它，
+ * 而量出来的矩形直接就是那个网页的位置。塌成 0 高的话，网页会缩成一条线。
+ */
+.webview-slot {
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--dawn-radius-sm);
+  background: var(--dawn-surface-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dawn-space-3);
+  text-align: center;
+}

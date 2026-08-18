@@ -18,6 +18,8 @@ const EVENT_CHANNEL = "dawn:workbench:event"
 const PICK_DIRECTORY = "dawn:shell:pick-directory"
 const PICK_FILES = "dawn:shell:pick-files"
 const IMAGE_THUMB = "dawn:shell:image-thumb"
+const WEB_CONTROL = "dawn:web:control"
+const WEB_STATE = "dawn:web:state"
 
 contextBridge.exposeInMainWorld("dawn", {
   invoke: (operation: string, request: unknown, requestId?: string) =>
@@ -41,6 +43,21 @@ contextBridge.exposeInMainWorld("dawn", {
    */
   pickFiles: (kind: "any" | "image" | "data", defaultPath?: string): Promise<string[]> =>
     ipcRenderer.invoke(PICK_FILES, kind, defaultPath),
+
+  /**
+   * 网页预览那一格（批 1，2026-08-18）。
+   *
+   * **`onWebState` 只挂 `on`**，与 `onEvent` 同一条纪律：这条通道是单向的，
+   * 开一个反向口子等于把它变成第二个 invoke。
+   */
+  web: {
+    control: (cmd: unknown): Promise<unknown> => ipcRenderer.invoke(WEB_CONTROL, cmd),
+    onState: (cb: (s: unknown) => void): (() => void) => {
+      const h = (_e: IpcRendererEvent, s: unknown) => cb(s)
+      ipcRenderer.on(WEB_STATE, h)
+      return () => ipcRenderer.removeListener(WEB_STATE, h)
+    },
+  },
 
   /**
    * 一张图的**缩略图**，`data:` URL（2026-08-13）。

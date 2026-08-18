@@ -970,13 +970,16 @@ export function SideSash({
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "review" ? t("审阅") : t("文件")
+  return who === "review" ? t("审阅") : who === "web" ? t("网页") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
 const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent)
 export function 房客快捷键(who: 坞房客): string {
-  return who === "review" ? (是Mac ? "⌃⇧G" : "Ctrl+Shift+G") : 是Mac ? "⌘P" : "Ctrl+P"
+  if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
+  // **网页这一格暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
+  if (who === "web") return ""
+  return 是Mac ? "⌘P" : "Ctrl+P"
 }
 
 /**

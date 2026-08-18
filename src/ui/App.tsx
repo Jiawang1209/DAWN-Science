@@ -72,6 +72,7 @@ import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.
 import { 新建会话可选的 } from "./agents.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
+import { WebPanel } from "./web.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
 import {
@@ -3257,6 +3258,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />
                 <ToolChangesPanel runs={runs} onOpenFile={openFile} />
               </>
+            ) : rightDockTenant === "web" ? (
+              /**
+                * **网页那一格**（批 1，2026-08-18）。屏幕上这一块几乎是空的——
+                * 真正的网页是主进程里一个 `WebContentsView`，浮在整个 DOM 之上。
+                * `workspace` 传下去是为了 `file:` 那一支：它要以工作目录为界。
+                */
+              <WebPanel workspace={currentWorkspace} />
             ) : (
               文件面板
             )}

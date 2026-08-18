@@ -9,7 +9,8 @@ import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electro
 import { extname, join } from "node:path"
 import { readFile } from "node:fs/promises"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, createIpcHandler } from "./ipc.js"
+import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
+import { 造网页预览, type 网页命令, type 网页预览 } from "./web-preview.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
@@ -163,6 +164,36 @@ function createWindow(): void {
     void shell.openExternal(u.href)
     return true
   }
+
+  /**
+   * 网页预览那一格（批 1，2026-08-18）。**懒建**——没人打开过网页那一格时
+   * 一个 web contents 都不起。窗口关掉时跟着销毁，否则它会拽着一个
+   * 渲染进程不放（那正是「关了窗口进程还在」的经典来源）。
+   */
+  let 网页: 网页预览 | undefined
+  const 网页的 = (): 网页预览 => (网页 ??= 造网页预览(win, (状态) => {
+    if (!win.isDestroyed()) win.webContents.send(IPC_WEB_STATE, 状态)
+  }))
+  ipcMain.handle(IPC_WEB_CONTROL, async (_e, cmd: 网页命令) => 网页的().控制(cmd))
+  /**
+   * **窗口要关、或者应用要退，都得先把它拆掉。**
+   *
+   * 一个还活着的 `WebContentsView` 会把应用拽住不放——症状是
+   * *「Tearing down "dawn" exceeded the test timeout」*
+   * （批 1 当场撞到；`will-quit` 那段注释里记着同一症状的另一个原因）。
+   * **挂 `close` 而不是 `closed`**：后者触发时窗口已经销毁，那时再去
+   * `removeChildView` 就晚了。
+   */
+  const 拆掉网页 = () => {
+    try {
+      网页?.销毁()
+    } catch (e) {
+      console.error("[网页预览] 拆的时候出错（不拦退出）：", e)
+    }
+    网页 = undefined
+  }
+  win.on("close", 拆掉网页)
+  app.on("before-quit", 拆掉网页)
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     放外面开(url)

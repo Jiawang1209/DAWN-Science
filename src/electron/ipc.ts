@@ -32,6 +32,16 @@ export const IPC_EVENT_CHANNEL = "dawn:workbench:event"
  */
 export const IPC_PICK_DIRECTORY = "dawn:shell:pick-directory"
 
+/**
+ * 网页预览那一格（批 1，2026-08-18）。**同样刻意不做成协议操作**——
+ * 它操纵的是一个 `WebContentsView`，只有 Electron 里才有那个东西。
+ *
+ * **两条通道，与 workbench 那两条同一个理由**：请求/响应失败要回给发起者，
+ * 状态推送没有发起者可回。合并会逼着其中一方接受另一方的语义。
+ */
+export const IPC_WEB_CONTROL = "dawn:web:control"
+export const IPC_WEB_STATE = "dawn:web:state"
+
 export interface IpcHandler {
   (operation: unknown, request: unknown, ctx?: { requestId?: string }): Promise<WorkbenchResponse>
 }

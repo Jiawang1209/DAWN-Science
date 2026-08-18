@@ -999,64 +999,48 @@ export function 房客快捷键(who: 坞房客): string {
 export function DockSwitch({
   open,
   tenant,
-  onPick,
+  onToggle,
 }: {
   open: boolean
   tenant: 坞房客
-  onPick: (who: 坞房客) => void
+  /** 开 / 收。**它不再切换房客**——那件事归坞头部那条标签条 */
+  onToggle: () => void
 }) {
-  const [开着, 设开着] = useState(false)
-  const 盒 = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!开着) return
-    const 关 = (e: MouseEvent) => {
-      if (!盒.current?.contains(e.target as Node)) 设开着(false)
-    }
-    document.addEventListener("mousedown", 关)
-    return () => document.removeEventListener("mousedown", 关)
-  }, [开着])
-
+  /**
+   * **它只管开合，不再是一个切换器**（2026-08-18，作者定的）。
+   *
+   * ## 为什么把菜单摘掉
+   *
+   * 坞里现在有三个房客，而**其中两个只能靠拉开一个下拉菜单才发现**。
+   * 这个项目为「看不见的能力等于不存在」栽过两次（没有标签的 `＋`、
+   * `opacity: 0` 的 `×`），**两次作者的反馈都是「没有这个功能」**。
+   *
+   * 身份交给坞头部那条标签条——**三个名字一直摆在那儿**。
+   * 这颗按钮因此只剩一件事：开，或者收起。
+   *
+   * ## 文案恒定，开合由 `aria-expanded` 说
+   *
+   * 想过让它开着时改叫「收起面板」——**那个名字已经被底部终端那颗占着了**
+   * （`dock.tsx`），两颗同名按钮会同时在屏幕上，而这个项目
+   * 2026-08-12 一天被同名文案咬过三次。扫描当场拦下了它。
+   *
+   * 所以它是一颗标准的 disclosure：**名字一直是「面板：<谁>」**
+   * （关着时它告诉你点开会出来什么），开没开由 `aria-expanded` 报给读屏。
+   *
+   * **可见文案 = 可及名字**（`dock.tsx` 那条纪律）：不写 `aria-label`，
+   * 免得眼睛读到的与读屏念到的不是一句话。
+   */
   return (
-    <div className="dock-switch" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
+    <div className="dock-switch">
       <Button
         variant="ghost"
         size="sm"
         className="dock-switch-trigger"
-        aria-haspopup="menu"
-        aria-expanded={开着}
-        /**
-         * **标签带上当前是谁**：只写「面板」的话，关着的时候人不知道
-         * 点开会出来什么，开着的时候又和坞的标题重复。
-         */
-        aria-label={open ? tf("面板：{0}", 房客名(tenant)) : t("打开面板")}
-        onClick={() => 设开着((v) => !v)}
+        aria-expanded={open}
+        onClick={onToggle}
       >
-        {open ? 房客名(tenant) : t("面板")}
-        <下拉图标 />
+        {tf("面板：{0}", 房客名(tenant))}
       </Button>
-      {开着 ? (
-        <div className="menu dock-switch-menu" role="menu" aria-label={t("面板")}>
-          {全部房客.map((who) => (
-            <Button
-              key={who}
-              variant="ghost"
-              size="sm"
-              role="menuitemradio"
-              aria-checked={open && tenant === who}
-              className={open && tenant === who ? "current" : ""}
-              onClick={() => {
-                设开着(false)
-                onPick(who)
-              }}
-            >
-              <span className="dock-mark">{open && tenant === who ? <勾图标 /> : null}</span>
-              {房客名(who)}
-              <span className="dock-key">{房客快捷键(who)}</span>
-            </Button>
-          ))}
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -1072,12 +1056,15 @@ export function RightDock({
   width,
   onWidth,
   onClose,
+  onPick,
   children,
 }: {
   tenant: 坞房客
   width: number
   onWidth: (px: number) => void
   onClose: () => void
+  /** 点标签条上的某一格。**只换房客，不开合**——那件事归顶右角那颗 */
+  onPick: (who: 坞房客) => void
   children: React.ReactNode
 }) {
   return (
@@ -1090,8 +1077,31 @@ export function RightDock({
         side="right"
         label={t("调整面板宽度")}
       />
+      {/**
+        * **标签条，不是一个标题**（2026-08-18）。
+        *
+        * 三个房客的名字一直摆在这儿，**不用先拉开一个菜单才知道有它们**。
+        * 顶右角那颗因此只剩开合——身份归这一条。
+        *
+        * `role="tablist"` / `role="tab"` 不是装饰：读屏据此念出
+        * 「三个之中的第几个」，而那正是这条改动想给的东西。
+        */}
       <header className="dock-head">
-        <h2 className="dock-title">{房客名(tenant)}</h2>
+        <div className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
+          {全部房客.map((who) => (
+            <Button
+              key={who}
+              variant="ghost"
+              size="sm"
+              role="tab"
+              aria-selected={tenant === who}
+              className={`dock-tab-btn${tenant === who ? " current" : ""}`}
+              onClick={() => onPick(who)}
+            >
+              {房客名(who)}
+            </Button>
+          ))}
+        </div>
         <Button
           variant="ghost"
           size="icon"

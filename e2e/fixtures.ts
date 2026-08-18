@@ -195,9 +195,24 @@ export async function 打开agent菜单(page: Page): Promise<void> {
  * 开着是「面板：审阅」）——那是有意的：只写「面板」的话，
  * 关着时人不知道点开会出来什么。
  */
+export async function 开坞(page: Page): Promise<void> {
+  /**
+   * 顶右角那颗现在**只管开合**（2026-08-18）：文案恒定是「面板：<谁>」，
+   * 开没开看 `aria-expanded`。**已经开着就别再点**——那会把它收起来。
+   */
+  const 颗 = page.getByRole("button", { name: /^面板：/ })
+  await 颗.waitFor({ timeout: 30_000 })
+  if ((await 颗.getAttribute("aria-expanded")) !== "true") await 颗.click()
+}
+
+/** 进坞里的某一格。**走标签条**——切换器已经从顶右角的菜单搬到坞头部了 */
+export async function 进坞(page: Page, 房客: string): Promise<void> {
+  await 开坞(page)
+  await page.getByRole("tab", { name: 房客, exact: true }).click()
+}
+
 export async function 进审阅(page: Page): Promise<void> {
-  await page.getByRole("button", { name: /^(打开面板|面板：)/ }).click()
-  await page.getByRole("menuitemradio", { name: /审阅/ }).click()
+  await 进坞(page, "审阅")
 }
 
 /**

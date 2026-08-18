@@ -2305,7 +2305,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           * 自己也没了，这个能力就只剩一条藏在别处的出路。
           * 顶栏横跨整个窗口，**开着关着都在同一个位置**。
           */}
-        <DockSwitch open={rightDockOpen} tenant={rightDockTenant} onPick={点开房客} />
+        <DockSwitch
+          open={rightDockOpen}
+          tenant={rightDockTenant}
+          onToggle={() => setRightDockOpen(!rightDockOpen)}
+        />
       </div>
 
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
@@ -3247,6 +3251,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             width={rightDockWidth}
             onWidth={setRightDockWidth}
             onClose={() => setRightDockOpen(false)}
+            /**
+             * **点标签只换房客，不收起。**
+             *
+             * `点开房客` 那条「再点一次就收起」是给快捷键与侧栏入口用的；
+             * 一条标签条上点当前那一格却把面板收掉，是没人预期的。
+             */
+            onPick={setRightDockTenant}
           >
             {rightDockTenant === "review" ? (
               <>

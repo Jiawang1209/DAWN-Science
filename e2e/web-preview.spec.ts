@@ -12,14 +12,11 @@
  * 拿 DOM 断言凑数的话，这一整块会「绿得毫无意义」——
  * 而那正是这个项目栽过三次的形状。
  */
-import { test, expect, readRuns, 开一段临时会话, 在项目里开会话 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话, 在项目里开会话, 进坞 } from "./fixtures.js"
 import { createServer, type Server } from "node:http"
 
 /** 进坞里的「网页」那一格 */
-async function 进网页(page: import("@playwright/test").Page): Promise<void> {
-  await page.getByRole("button", { name: /^(打开面板|面板：)/ }).click()
-  await page.getByRole("menuitemradio", { name: /网页/ }).click()
-}
+const 进网页 = (page: import("@playwright/test").Page) => 进坞(page, "网页")
 
 /** 主进程里那个 view 现在什么样。**没有就返回 undefined**——「还没建」是一个答案 */
 async function 视图(app: import("@playwright/test").ElectronApplication) {
@@ -180,13 +177,11 @@ test("**切到别的房客要藏起来，切回来还是那一页**（没被销�
   await page.getByRole("textbox", { name: "网址" }).press("Enter")
   await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
 
-  await page.getByRole("button", { name: /^面板：/ }).click()
-  await page.getByRole("menuitemradio", { name: /审阅/ }).click()
+  await 进坞(page, "审阅")
   // **不藏的话它会继续盖在「审阅」上面**，那看起来就像审阅那一格坏了
   await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(false)
 
-  await page.getByRole("button", { name: /^面板：/ }).click()
-  await page.getByRole("menuitemradio", { name: /网页/ }).click()
+  await 进坞(page, "网页")
   await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(true)
   // 还是那一页——**切走不该把它销毁**，不然回来是一片空白
   expect((await 视图(app))!.title).toBe("本机页")

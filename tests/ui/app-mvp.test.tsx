@@ -460,8 +460,12 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
      * 两处显示同一件事，人就没法判断该信哪一个。
      * 所以这条用例也跟着走：它验的是「事实来自 client」，不是「它长在哪一屏」。
      */
-    fireEvent.click(screen.getByRole("button", { name: "打开面板" }))
-    fireEvent.click(screen.getByRole("menuitemradio", { name: /审阅/ }))
+    /**
+     * **切换器从顶右角的菜单搬到坞头部的标签条了**（2026-08-18）：
+     * 顶右角那颗只管开合，三个房客的名字一直摆在坞的头上。
+     */
+    fireEvent.click(screen.getByRole("button", { name: /^面板：/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "审阅" }))
 
     expect(await screen.findByText("src/model.py")).toBeDefined()
     expect(screen.getByText(/可能包含你自己的修改/)).toBeDefined()

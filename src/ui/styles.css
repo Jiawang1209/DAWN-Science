@@ -4309,6 +4309,24 @@ pre {
 /** 关闭那颗。**图标按钮也要有名字**——`aria-label` 在组件里给了 */
 .right-dock .dock-close { color: var(--dawn-text-3); flex: 0 0 auto; }
 .right-dock .dock-close:hover { color: var(--dawn-text-1); }
+/**
+ * 坞头部那条标签条（2026-08-18）。**三个名字一直摆着**——
+ * 顶右角那颗因此只剩开合，不再藏着两个没人知道的房客。
+ */
+.right-dock .dock-tabs-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; }
+.right-dock .dock-tab-btn:hover { color: var(--dawn-text-1); }
+/**
+ * 选中那一格：**字变实 + 一条底线**。
+ * 只靠颜色的话，色觉差异的人读不出「现在在哪一格」——
+ * 与 `.review-status` 那条「状态用词不用颜色」同一个理由。
+ */
+.right-dock .dock-tab-btn.current {
+  color: var(--dawn-text-1);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 0 var(--dawn-accent);
+  border-radius: 0;
+}
 .right-dock .dock-title {
   margin: 0;
   font-size: 13px;

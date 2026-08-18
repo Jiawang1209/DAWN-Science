@@ -43,6 +43,39 @@
 
 ## 变更日志
 
+### 2026-08-18 — 勘误：「浏览器房客」是我编的，而且与规格 §4 打架
+
+- **Type**: docs
+- **Commit**: `待回填`
+- **Motivation**: 作者问了一句*「浏览器房客是干啥的，是按照 codex 模仿来做的
+  打开浏览器页面吗」*。一查，这一格从头到尾是错的——**而它已经在设计文档里
+  躺了一天，还被排进了「接下来做什么」**。
+- **What**:
+  - **来历**：`2026-08-17-远端文件与右侧坞-design.md` 那句「坞里三个房客：
+    审阅 / 浏览器 / 文件」**没有任何作者原话支撑**，而同一份文档里别的每一条
+    决定都带引用。它是我列的。
+  - **冲突**：规格 `2026-08-06` §4「非目标」写着「…**内嵌浏览器**…| wispterm |
+    与核心命题正交」——**早就判过一次「不做」**。两份文档同时活着，没人发现。
+  - **Codex 也不是那个形状**（只读文件名，没读 bundle）：
+    `browser-use-settings-*`、`hidden-browser-use-webview-host-*`、
+    `hidden-background-webview-host-*`；`thread-browser-panel-tabs-*` 只有
+    152 字节**且没有对应的 CSS chunk**，而 `pdf-preview-panel` 与
+    `terminal-panel` 各自都有。**Codex 的浏览器是给 agent 用的，跑在隐藏
+    webview 里。** 作者当日采纳这个形状。
+  - **顺手把「坐哪一层」也量了**：pi **不带**浏览器工具（内置只有 bash /
+    edit / find / grep / ls）；而我们有 MCP 客户端（`src/mcp/客户端.ts` →
+    `native.ts` 的 `toolsFor` → pi 的 `customTools`），
+    **`playwright-mcp` / `chrome-devtools-mcp` 今天配上就能用**。
+    于是 ③ 的问题从「怎么做一个浏览器」变成「要不要自己做」，
+    而唯一只有我们答得出的理由是**不变式 5**：通用 MCP 服务器
+    **不会往账本里写一个字**，「这份数据从哪个 URL、什么时候拿的」就查不到。
+- **Impact**: 纯文档。坞的房客从三个订正为两个（审阅 / 文件），
+  YAGNI 那一条与「浏览器为什么单开」那一段一并改掉。**没有代码变更。**
+- **Verification**: 事实逐条可复核——文件名清单来自
+  `«REF»cx_app_learn/webview/assets/`（`ls`，未读任何 bundle 内容）；
+  pi 的工具清单来自 `node_modules/@earendil-works/pi-coding-agent/dist/core/tools/`；
+  MCP 接缝来自 `src/mcp/客户端.ts` 与 `src/runtime/native.ts:666`。
+
 ### 2026-08-18 — 下载落点定在设置里，而那一格界面上根本没有
 
 - **Type**: feat

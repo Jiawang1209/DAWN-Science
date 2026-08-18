@@ -16,7 +16,7 @@
  */
 import { join } from "node:path"
 import { tmpdir } from "node:os"
-import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 进设置, 进坞 } from "./fixtures.js"
 
 test.use({
   dawnOptions: {
@@ -589,7 +589,7 @@ test("**远端会话的文件面板长在那台服务器上**，不是本机", a
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   await expect(面板).toBeVisible()
 
@@ -615,7 +615,7 @@ test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) 
   await 加一台(page, { label: "假机器" })
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
 
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: "数据", exact: true }).click()
@@ -637,7 +637,7 @@ test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn
   await 加一台(page, { label: "假机器" })
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
 
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: /读我\.md/ }).click()
@@ -669,7 +669,7 @@ test("下载同一个文件两次，第二份另存，不覆盖第一份", async
   await 加一台(page, { label: "假机器" })
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   await page.locator(".right-dock .files-view").getByRole("button", { name: /读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
@@ -732,7 +732,7 @@ test.describe("下载落点", () => {
     await 加一台(page, { label: "假机器" })
     await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
     await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
-    await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+    await 进坞(page, "文件")
     await page.locator(".right-dock .files-view").getByRole("button", { name: /读我\.md/ }).click()
     await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
@@ -758,7 +758,7 @@ test("本地文件没有「下载」那颗按钮", async ({ dawn }) => {
   const { writeFileSync } = await import("node:fs")
   writeFileSync(`${workspace}/本地的.md`, "# 本地\n")
   await 开一段临时会话(page)
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: /本地的\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("本地", { timeout: 30_000 })
@@ -784,7 +784,7 @@ test.describe("上传", () => {
     await 加一台(page, { label: "假机器" })
     await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
     await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
-    await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+    await 进坞(page, "文件")
 
     const 面板 = page.locator(".right-dock .files-view")
     await 面板.getByRole("button", { name: "传到这里", exact: true }).click()
@@ -830,7 +830,7 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
 
   // ── 本地：文案是「移到废纸篓」，确认框说找得回来
   await 开一段临时会话(page)
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: /要删的\.txt/ }).click()
   await expect(page.locator(".file-preview")).toContainText("删我", { timeout: 30_000 })
@@ -905,7 +905,7 @@ test("删目录：「⋯」常驻可见，确认框说得出有多少个文件",
   writeFileSync(`${workspace}/要删的目录/深一层/c.txt`, "3\n")
 
   await 开一段临时会话(page)
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   const 那颗 = 面板.getByRole("button", { name: /目录操作：要删的目录/ })
   await expect(那颗).toBeVisible({ timeout: 30_000 })
@@ -945,7 +945,7 @@ test("拖拽：落在哪一行就亮哪一行；拿不到本机路径要出声",
   await 加一台(page, { label: "假机器" })
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
-  await page.locator(".sidebar").getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
 
   const 面板 = page.locator(".right-dock .files-view")
   /**

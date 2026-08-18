@@ -87,21 +87,30 @@ for (const 名 of ["项目概览", "设置"]) {
 }
 
 /**
- * **「文件」不再是一屏，所以「回得去」换了个说法**（2026-08-17，批 2）。
+ * **坞是开合的，而对话从来不被顶掉**（2026-08-17 批 2 起，2026-08-18 改了入口）。
  *
- * 它现在开的是右侧坞——对话**从来没有被顶掉**，那正是把文件从整屏
- * 搬进坞的全部理由。但上面那条纪律一个字都没变：
- * **一个亮着的入口点下去毫无反应，人会以为它坏了**。
- * 于是这里验的是「再点一次坞收起来」。
+ * 这条的来历：文件曾经是**一整屏**，侧栏那一项点下去对话就没了。
+ * 批 2 把它搬进右侧坞——**对话从此不被顶掉**，那正是搬家的全部理由。
+ *
+ * 2026-08-18 侧栏那一项摘掉了（三个房客里只有它另有一个入口，
+ * 那个不对称本身就让人觉得它是另一种东西）。
+ * **上面那条纪律一个字都没变**，只是换了它的着力点：
+ * 现在验的是顶右角那颗开合 + 坞头部的标签条。
  */
-test("「文件」开的是坞，再点一次收起来（对话全程都在）", async ({ dawn }) => {
+test("坞开得起来也收得回去，**对话全程都在**", async ({ dawn }) => {
   const { page } = dawn
-  const 入口 = page.locator(".sidebar").getByRole("button", { name: "文件", exact: true })
-  await 入口.click()
+  const 颗 = page.getByRole("button", { name: /^面板：/ })
+  await 颗.click()
+  await expect(page.locator(".right-dock")).toBeVisible()
+  // **三个房客的名字一直摆在坞头上**——不用先拉开一个菜单才知道有它们
+  for (const 名 of ["审阅", "文件", "网页"]) {
+    await expect(page.getByRole("tab", { name: 名, exact: true })).toBeVisible()
+  }
+  await page.getByRole("tab", { name: "文件", exact: true }).click()
   await expect(page.locator(".right-dock .files-view")).toBeVisible()
   // **对话没被顶掉**——这是搬家换来的东西，值得单独钉一句
   await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
-  await 入口.click()
+
+  await 颗.click()
   await expect(page.locator(".right-dock")).toBeHidden()
-  await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
 })

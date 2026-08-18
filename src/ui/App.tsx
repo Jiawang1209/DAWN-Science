@@ -2439,8 +2439,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
           /** **点它开坞**（批 2）。再点一次收起来——`点开房客` 就是这个语义 */
-          onShowFiles={() => 点开房客("files")}
-          filesActive={rightDockOpen && rightDockTenant === "files"}
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
           onDeleteProjects={askDeleteProjects}

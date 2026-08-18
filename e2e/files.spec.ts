@@ -6,7 +6,7 @@
  * **CSP 尤其**：`img-src` 少写一个 `data:`，图就是一个空框，
  * 而所有单元测试照样全绿。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 进坞 } from "./fixtures.js"
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -23,7 +23,7 @@ test("目录树能翻，图片直接显示在应用里", async ({ dawn }) => {
   writeFileSync(join(workspace, "out", "图.png"), PNG)
   writeFileSync(join(workspace, "out", "说明.md"), "# 分析结论\n\n这是正文。\n")
 
-  await page.getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
 
   // 根目录默认展开；点进 out
   /**
@@ -46,7 +46,7 @@ test("markdown 走渲染，其它文本按原文", async ({ dawn }) => {
   writeFileSync(join(workspace, "说明.md"), "# 分析结论\n")
   writeFileSync(join(workspace, "跑.py"), "print('hi')\n")
 
-  await page.getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   await page.getByRole("button", { name: /说明\.md/ }).click()
   // 渲染过的 markdown 里有真的 <h1>，不是一行 `# 分析结论`
   await expect(page.locator(".file-preview h1")).toHaveText("分析结论")
@@ -76,7 +76,7 @@ test("**PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP �
     if (/Content Security Policy|Refused to/i.test(m.text())) 违规.push(m.text())
   })
 
-  await page.getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   await page.getByRole("button", { name: /报告\.pdf/ }).click()
 
   const embed = page.locator(".preview-pdf")
@@ -97,7 +97,7 @@ test("**超上界的 PDF 说清多大**，而不是硬塞进内存", async ({ da
   // **先造文件再打开文件视图**：目录树是打开那一刻读的一层，
   // 反过来写的话它根本不在树里（上一版就是这么超时的）
   writeFileSync(join(workspace, "小.bin"), Buffer.alloc(16))
-  await page.getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   await page.getByRole("button", { name: /小\.bin/ }).click()
   await expect(page.locator(".preview-other .caveat")).toContainText("不能在应用里预览")
 })
@@ -106,6 +106,6 @@ test("**忽略掉的目录要出声**——不然人会以为它们不存在", a
   const { page, workspace } = dawn
   mkdirSync(join(workspace, "node_modules"), { recursive: true })
 
-  await page.getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   await expect(page.locator(".tree-note").first()).toContainText("已忽略")
 })

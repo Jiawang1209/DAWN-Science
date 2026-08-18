@@ -1130,8 +1130,6 @@ export function SessionSidebar({
   onPickProject,
   onPickSession,
   onShowPanel,
-  onShowFiles,
-  filesActive = false,
   onShowSkills,
   onShowSubagents,
   onShowPlugins,
@@ -1182,8 +1180,6 @@ export function SessionSidebar({
   onPickProject: (id: string) => void
   onPickSession: (id: string) => void
   onShowPanel: () => void
-  onShowFiles: () => void
-  /** 文件那一格亮不亮。**跟着坞走**，不再跟着 `view`。缺省当「没亮」 */
   filesActive?: boolean
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
@@ -2340,14 +2336,19 @@ export function SessionSidebar({
               {t("项目概览")}
             </Row>
             {/**
-              * 文件：**产出栏点文件名是主入口**，这里是「agent 没碰过的东西只能靠翻」那条路。
+              * **侧栏这一格「文件」摘掉了**（2026-08-18，作者定的）。
               *
-              * **它现在打开右侧坞，不切屏**（2026-08-17，批 2）。
-              * 亮不亮跟着坞走——一个亮着的入口点下去毫无反应，人会以为它坏了。
+              * 它的来历：文件曾经是**一整屏**，侧栏这一项是它唯一的入口。
+              * 批 2（2026-08-17）把那一屏摘了、改成打开右侧坞；
+              * 而这一次坞的头部长出了标签条，**三个房客的名字一直摆在那儿**——
+              * 于是这一项变成了「文件」的第二个入口。
+              *
+              * 摘它的理由不只是重复：**三个房客里只有「文件」在侧栏另有一个入口**，
+              * 而这个不对称本身就让人觉得它是另一种东西。
+              *
+              * 作者：*「既然我们可以看文件，我们就把左侧侧边栏的文件预览的窗口取消掉，
+              * 然后现在的文件预览就在右上角了嘛。」*
               */}
-            <Row active={filesActive} className="panel-entry" onClick={onShowFiles}>
-              {t("文件")}
-            </Row>
           </>
         ) : null}
       {/**

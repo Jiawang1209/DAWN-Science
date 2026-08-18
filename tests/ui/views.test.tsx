@@ -39,7 +39,6 @@ const base = {
   activeProjectId: "p1" as string | undefined,
   activeSessionId: undefined as string | undefined,
   view: "conversation" as const,
-  onShowFiles: () => {},
   onPickProject: noop,
   onPickSession: noop,
   onOpenProject: noop,

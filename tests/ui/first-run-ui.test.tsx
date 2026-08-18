@@ -34,7 +34,6 @@ const sidebar = (over: Partial<Parameters<typeof SessionSidebar>[0]> = {}) =>
       activeProjectId="p1"
       activeSessionId={undefined}
       view="conversation"
-      onShowFiles={() => {}}
       onPickProject={noop}
       onPickSession={noop}
       onShowPanel={noop}

@@ -15,7 +15,7 @@
  * `'unsafe-inline'`，这份用例不会红——所以下面**另有一条直接检查策略文本**，
  * 让「把墙拆掉」这件事至少要经过一次显式的修改。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 进坞 } from "./fixtures.js"
 
 /** 收集违规。Chromium 的 CSP 报错走 console，措辞里必有这一串 */
 function 收违规(page: import("@playwright/test").Page): string[] {
@@ -39,7 +39,7 @@ test("四个屏走一遍，**一条 CSP 违规都没有**", async ({ dawn }) => 
   await page.getByRole("button", { name: "项目概览" }).click()
   await expect(page.locator(".panels")).toBeVisible()
 
-  await page.getByRole("button", { name: "文件", exact: true }).click()
+  await 进坞(page, "文件")
   await expect(page.locator(".files-view")).toBeVisible()
 
   expect(违规, `被 CSP 拦下的东西：\n${违规.join("\n")}`).toEqual([])

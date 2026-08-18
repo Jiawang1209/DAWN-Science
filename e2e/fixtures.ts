@@ -586,6 +586,12 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
          * 给了这个值，用例就能走「点按钮 → 选文件夹」那条**真正的路**，
          * 而不是绕过界面直接打 IPC——后者验的是后端，不是接线。
          */
+        /**
+         * **e2e 里不真的去开系统浏览器**（2026-08-18）。
+         * 不给这个，点一个外链就会往作者脸上弹一个浏览器标签页——
+         * 与 `show: false` 是同一个理由：会让人少跑测试。
+         */
+        DAWN_NO_EXTERNAL: "1",
         ...(dawnOptions.pickDirectory ? { DAWN_PICK_DIRECTORY: dawnOptions.pickDirectory } : {}),
         ...(dawnOptions.pickFiles ? { DAWN_PICK_FILES: dawnOptions.pickFiles.join(",") } : {}),
       },

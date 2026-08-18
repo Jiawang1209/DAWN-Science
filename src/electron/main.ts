@@ -118,6 +118,72 @@ function createWindow(): void {
    */
   接上事件流(win)
 
+  /**
+   * **外链去系统浏览器，不在应用里新开一个裸窗口**（2026-08-18）。
+   *
+   * ## 修之前是什么样（探针实测，不是推断）
+   *
+   * `markdown.tsx` 把消息里的链接渲染成 `<a target="_blank">`，注释写着
+   * *「外链在桌面应用里点开应当去系统浏览器」*——**而代码没有做这件事**。
+   * 没有 `setWindowOpenHandler` 时 Electron 的默认动作是 `allow`，
+   * 于是点一下就**多出一个 Electron 窗口**（探针量到：窗口数 1 → 2），
+   * 里面是那个网站，**没有地址栏、没有后退**——人看不出自己在哪儿。
+   *
+   * 那个窗口本身不是提权（`sandbox: true` / `nodeIntegration: false` /
+   * `contextIsolation: true`，探针一并读出来了），但它是一个
+   * **没有任何 chrome 的浏览器窗口**，这不是我们要给的东西。
+   *
+   * ## 只放 http(s) 出去
+   *
+   * `shell.openExternal` 会把 `file:` 交给系统去打开——那等于绕过
+   * `files/access.ts` 那道路径守卫。**其余协议一律拒，并说出口**（规格 7.5）。
+   *
+   * ## e2e 里不真的去开浏览器
+   *
+   * `DAWN_NO_EXTERNAL` 给了就只记账不打开——否则每跑一次 e2e
+   * 就往作者脸上弹十几个浏览器标签页，那与 `show: false` 是同一个理由。
+   */
+  const 放外面开 = (raw: string): boolean => {
+    let u: URL
+    try {
+      u = new URL(raw)
+    } catch {
+      console.error(`[外链] 不是一个地址，没打开：${raw.slice(0, 120)}`)
+      return false
+    }
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      // **说出口**：静默不动会让人以为「点了没反应 = 坏了」
+      console.error(`[外链] 只放 http(s) 去系统浏览器，拒绝了：${u.protocol}//…`)
+      return false
+    }
+    if (process.env.DAWN_NO_EXTERNAL) {
+      console.log(`[外链] DAWN_NO_EXTERNAL：本该交给系统浏览器 → ${u.href}`)
+      return true
+    }
+    void shell.openExternal(u.href)
+    return true
+  }
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    放外面开(url)
+    // **一律 deny**：要么已经交给系统浏览器了，要么它本来就不该开
+    return { action: "deny" }
+  })
+
+  /**
+   * **主窗口不许被导航走。**
+   *
+   * 一个 `<a>` 不带 `target` 时点下去会就地导航——那会把整个应用
+   * **换成一个网页**，而且回不来（我们没有后退按钮）。
+   * 自家那份 `dist/ui/index.html` 例外。
+   */
+  win.webContents.on("will-navigate", (e, url) => {
+    if (url.startsWith("file://") && url.includes("/dist/ui/")) return
+    e.preventDefault()
+    console.error(`[导航拦截] 主窗口不许被导航走：${url.slice(0, 120)}`)
+    放外面开(url)
+  })
+
   // **渲染进程的报错必须能被看见。**
   // 此前它们只进 devtools，而 devtools 默认不开——于是「界面死了但主进程一切正常」
   // 这种最难查的情况，终端上一个字都没有。规格 7.5：失败必须出声。

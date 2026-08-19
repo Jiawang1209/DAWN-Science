@@ -14,10 +14,11 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("75 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 2 + 下载目录 2 + 传输 3）", () => {
+  it("76 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 2 + 下载目录 2 + 传输 3）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
+        "openProject",
         "addAcpAgent",
         "removeAgent",
         "getDownloadDir",
@@ -153,12 +154,29 @@ describe("请求校验", () => {
    *
    * 这条从「它长什么样」改成「它不该还在」——**删除也要有判据**，
    * 否则下一个人「顺手」把它加回来时没有任何东西会响。
+   *
+   * ---
+   *
+   * ## `openProject` 2026-08-19 回来了——**这是翻面，不是这条判据失效**
+   *
+   * **它当场拦住了我**，而且拦得对：我正是那个「顺手加回来」的人。
+   * 所以这里不是把它从名单上划掉了事，两边的理由都留着：
+   *
+   * - **T4 摘它的理由**：那时它是**开会话那条路的一环**
+   *   （开项目 → 在项目里建会话）。任务模型之后那条路只剩 `createTask` 一个入口，
+   *   而它没有界面入口，留着就是一个说不清归谁用的操作。
+   * - **现在加它的理由**：作者要*「选择文件夹后，立刻进入项目，文件tree也转入」*。
+   *   本地列目录**必须给 projectId**（路径相对工作区，绝对路径被守卫拒），
+   *   于是「文件树跟着走」需要一个「把文件夹认成项目」的动作——
+   *   **而它明确不建任何会话**，与 T4 摘掉的那个用途正好是两件事。
+   *
+   * 名字沿用旧的，因为**它确实就是那件事**（把文件夹认成项目）；
+   * 换个名字只会让人以为是两个东西。
    */
-  it("**旧的会话/项目入口不在协议里了**（T4）", () => {
+  it("**旧的会话入口不在协议里了**（T4；`openProject` 见上，2026-08-19 翻面）", () => {
     for (const 死的 of [
       "createSession",
       "createTemporarySession",
-      "openProject",
       "getProject",
       "previewTakeover",
       "steerSession",
@@ -166,6 +184,11 @@ describe("请求校验", () => {
     ]) {
       expect(operationNames(), `${死的} 又回来了`).not.toContain(死的)
     }
+    /**
+     * **回来的这个必须仍然是「只认领、不建会话」那一个。**
+     * 它一旦长出 `agentId` 之类的参数，就是 T4 摘掉的那个又回来了。
+     */
+    expect(Object.keys(OPERATIONS.openProject.request.shape ?? {})).toEqual(["workspace"])
   })
 
   it("writeToSession 要求写权持有者身份 —— 不能匿名写", () => {

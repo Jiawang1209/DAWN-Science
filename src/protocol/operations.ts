@@ -139,6 +139,37 @@ export const OPERATIONS = {
     response: z.array(ProjectSummarySchema),
     mutating: false,
   },
+  /**
+   * **把一个文件夹认成项目**（2026-08-19）。
+   *
+   * 作者：*「我在选择文件夹后，立刻进入项目，文件tree也转入。」*
+   *
+   * ## 为什么此前没有这个操作
+   *
+   * 项目一直是**顺手建出来的**——`createTask({workspace})` 里一句
+   * `projects.open(workspace)`。也就是说「这个文件夹是我的项目」这件事，
+   * 只能通过「开一段对话」来表达。
+   *
+   * 而空态那一屏选完文件夹之后，人最自然的下一步是**先看看里面有什么**：
+   * 那要文件树指过去，而本地列目录**必须给 projectId**
+   * （路径是相对工作区的，绝对路径会被守卫拒掉）。
+   * 于是「树跟着走」与「进项目」在这一层是同一件事，拆不开。
+   *
+   * ## 它不建任何会话
+   *
+   * **「开口那一刻才建」那条决定管的是任务/会话，不是项目。**
+   * 这个操作只回答「这个文件夹对应哪个项目」，侧栏上不会多出任何一行——
+   * 那一列是由任务分组出来的，**一个没有任务的项目在界面上根本不出现**。
+   *
+   * **幂等**：同一个文件夹永远命中同一条记录（`ProjectManager.open` 的既有语义），
+   * 所以选错了再选一次不会堆积。
+   */
+  openProject: {
+    request: z.object({ workspace: z.string().min(1) }).strict(),
+    response: ProjectSummarySchema,
+    mutating: true,
+  },
+
   listSessions: {
     request: ByProject.merge(Paged),
     response: z.array(SessionSummarySchema),

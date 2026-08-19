@@ -912,6 +912,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     listProjects: async () => projects.list(),
 
     /**
+     * **把一个文件夹认成项目**（2026-08-19，作者要的）。
+     *
+     * 作者：*「我在选择文件夹后，立刻进入项目，文件tree也转入。」*
+     *
+     * **只认领，不建会话**：「开口那一刻才建」那条决定管的是任务/会话。
+     * 侧栏那一列由任务分组而来，**一个没有任务的项目在界面上不出现**。
+     *
+     * **幂等**由 `ProjectManager.open` 保证：同一个文件夹永远命中同一条记录，
+     * 所以人选错了再选一次不会堆积出一串项目。
+     */
+    openProject: async ({ workspace }) => {
+      let rec
+      try {
+        rec = projects.open(workspace)
+      } catch (e) {
+        // 相对路径这类是**请求本身不合法**，不是内部故障——两者在界面上不该长得一样
+        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+      }
+      const 摘要 = projectStore.summary(rec.projectId)
+      if (!摘要) throw fault("internal_error", `刚打开的项目取不到摘要：${rec.projectId}`)
+      return 摘要
+    },
+
+    /**
      * 界面要列出可选 agent 才能新建会话，要列出 provider 才能填凭证。
      *
      * **2026-08-08 返工 R2**：`endpoints` 段没了，改为回传**本配置实际用到的

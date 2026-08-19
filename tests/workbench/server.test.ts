@@ -49,6 +49,7 @@ const project = {
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
     listProjects: async () => [project],
+    openProject: async () => project,
     // 批 4a 新增的五个（这份桩要覆盖全协议）
     getDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     setDownloadDir: async () => ({ path: "/下载", isDefault: true }),

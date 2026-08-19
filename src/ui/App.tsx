@@ -3361,7 +3361,50 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 // **返回 promise**：空态那张卡要据此在失败时把字和图还回去
                 新建任务({ agentId, firstMessage, workspace, images })
               }
-              onPickDirectory={() => client.pickDirectory(默认工作区?.path)}
+              /**
+               * **选完立刻进项目，文件树跟着换**（2026-08-19 作者定的）。
+               *
+               * 作者：*「我在选择文件夹后，立刻进入项目，文件tree也转入。
+               * 如果不选文件夹，那么就按照会话进行处理。」*
+               *
+               * ## 为什么非得真的「进项目」
+               *
+               * 本地列目录**必须给 projectId**（路径相对工作区，绝对路径被守卫拒），
+               * 所以「树跟着走」与「进项目」在这一层是同一件事，拆不开。
+               * 想只切树不进项目，就得给渲染进程开一条读任意本地目录的口子——
+               * **那道守卫不值得为这件事拆掉。**
+               *
+               * ## 它仍然不建任何会话
+               *
+               * 「开口那一刻才建」那条决定管的是**任务/会话**。这里只认领文件夹，
+               * 侧栏上不会多出一行（那一列由任务分组而来，
+               * **没有任务的项目在界面上根本不出现**），
+               * 而 `openProject` 是幂等的，选错了再选一次也不会堆积。
+               *
+               * **取消就什么都不做**：改主意不是错误。
+               */
+              onPickDirectory={() =>
+                client.pickDirectory(默认工作区?.path).then(async (d) => {
+                  if (!d) return null
+                  try {
+                    const p = await client.get<{ projectId: string }>("openProject", {
+                      workspace: d,
+                    })
+                    setActiveProjectId(p.projectId)
+                    // **项目名单也要跟上**：头上那一条要写得出它叫什么
+                    await loadProjects(client)
+                  } catch (e) {
+                    /**
+                     * **认不下来要出声，而且这一次不往下走**（规格 7.5）。
+                     * 静默吞掉的表现是「选了个文件夹，chip 变了、树没变」——
+                     * 而那正是这一轮要消掉的那个自相矛盾的中间态。
+                     */
+                    fail(e)
+                    return null
+                  }
+                  return d
+                })
+              }
               onOpenSettings={actions.openSettings}
             />
           )}

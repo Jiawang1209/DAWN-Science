@@ -187,3 +187,21 @@ export function 拆模型名(
   const 次 = [name, 后].filter(Boolean).join(" · ")
   return { 主: 前, ...(次 ? { 次 } : {}) }
 }
+
+/**
+ * **正规的年月日时间**（2026-08-20）：`2026-08-20 09:41`，本地时区。
+ *
+ * 文件树那一列起初写的是相对时间（`刚刚 / 3m / 2h`），作者当天改了主意：
+ * *「时间戳不需要 刚刚 / 3m / 2h 这种形式，直接就是正规的年月日时间就可以了。」*
+ * 相对时间回答的是「多久前」，而他要的是「哪一天几点生成的」——
+ * 一批结果隔几天再看，`5d` 还得心算。
+ *
+ * 不带秒：一列全是 `:07`、`:23` 只是噪声。**不用 `toLocaleString`**——
+ * 它的格式跟着系统语言走，同一列会在不同机器上长得不一样，而且不好测。
+ */
+export function 年月日时分(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return t("时间不明")
+  const 两位 = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${两位(d.getMonth() + 1)}-${两位(d.getDate())} ${两位(d.getHours())}:${两位(d.getMinutes())}`
+}

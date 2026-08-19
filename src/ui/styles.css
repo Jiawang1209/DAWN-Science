@@ -1815,12 +1815,17 @@ pre {
   white-space: nowrap;
 }
 
-/**
- * 文件行右侧「多久前改的」（2026-08-19）。**等宽数字**，与会话行的
- * `.sess-when` 同一套口径——两处写同一种相对时间，不该长得不一样。
- */
+/** 文件行右侧的修改时间（2026-08-19）。**等宽数字**，一列才对得齐 */
 .file-when {
   font-variant-numeric: tabular-nums;
+}
+
+/**
+ * 树里的类型图标（2026-08-20）。比侧栏那颗挨得近一点——
+ * 树行本来就窄，`space-2` 会让名字往右让太多。
+ */
+.tree-row .name .row-icon {
+  margin-right: var(--dawn-space-1);
 }
 
 .tree-note {

@@ -374,6 +374,98 @@ export function 刷新图标({ className }: 图标属性 = {}) {
   )
 }
 
+/**
+ * 文件树里按类型分的那几个（2026-08-20，作者要的：「文件夹、文本、md 文件
+ * 各自都有各自的图标，方便辨识」）。
+ *
+ * 全是同一张「带折角的纸」（`文件图标` 那个轮廓）**上面挖出不同的记号**——
+ * 同一族，一眼认得出都是文件，再看记号分类别。记号用 `fill: var(--dawn-bg)`
+ * 之类会在不同背景下失真，所以**全部走镂空**（`fill-rule="evenodd"`），
+ * 记号处露出底色。
+ */
+const 纸 = "M4 1.4h4.3l4.3 4.3v7.3c0 .9-.7 1.6-1.6 1.6H4c-.9 0-1.6-.7-1.6-1.6V3c0-.9.7-1.6 1.6-1.6Zm5 1.4v2.5c0 .3.2.5.5.5h2.5L9 2.8Z"
+
+/** 文本：三行字 */
+export function 文本文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M4.6 8.2h6.8v1.1H4.6V8.2Zm0 2.2h6.8v1.1H4.6v-1.1Zm0 2.2h4.5v1.1H4.6v-1.1Z`} />
+    </壳>
+  )
+}
+
+/** Markdown：一个「M」加一支向下的箭头（那个生态的惯用记号） */
+export function Markdown图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M4.4 12.6V8h1.2l1.3 1.7L8.2 8h1.2v4.6H8.2V9.9l-1.3 1.6-1.3-1.6v2.7H4.4Zm6.2-2V8h1.1v2.6h.9l-1.45 1.9-1.45-1.9h.9Z`} />
+    </壳>
+  )
+}
+
+/** 表格：四个格子 */
+export function 表格文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M4.6 8h6.8v5H4.6V8Zm1 1v1.1h2.4V9H5.6Zm3.4 0v1.1h2.4V9H9Zm-3.4 2.1V12h2.4v-.9H5.6Zm3.4 0V12h2.4v-.9H9Z`} />
+    </壳>
+  )
+}
+
+/** 图片：一座山一个太阳 */
+export function 图片文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M4.6 8h6.8v5H4.6V8Zm1 4h4.8L8.6 9.6 7.2 11.4l-.8-.9L5.6 12Zm4.2-3.3a.7.7 0 1 1 0 1.4.7.7 0 0 1 0-1.4Z`} />
+    </壳>
+  )
+}
+
+/** 代码：一对尖括号 */
+export function 代码文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M6.4 8.3 4.3 10.5l2.1 2.2.8-.8-1.4-1.4 1.4-1.4-.8-.8Zm3.2 0-.8.8 1.4 1.4-1.4 1.4.8.8 2.1-2.2-2.1-2.2Z`} />
+    </壳>
+  )
+}
+
+/** 脚本：一个提示符「>_」 */
+export function 脚本文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M4.6 8.4l.8-.8 2.3 2.3-2.3 2.3-.8-.8 1.5-1.5-1.5-1.5Zm3.6 3.4h3.2v1.1H8.2v-1.1Z`} />
+    </壳>
+  )
+}
+
+/** 笔记本：一段代码格加一段输出格 */
+export function 笔记本文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M4.6 8h6.8v2H4.6V8Zm0 3h6.8v2H4.6v-2Zm1-2.3v.6h1v-.6h-1Zm0 3v.6h1v-.6h-1Z`} />
+    </壳>
+  )
+}
+
+/** 压缩包：一条拉链 */
+export function 压缩包文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M6.4 2.6h1.2v1.2H6.4V2.6Zm1.2 1.2h1.2V5H7.6V3.8ZM6.4 5h1.2v1.2H6.4V5Zm1.2 1.2h1.2v1.2H7.6V6.2ZM6.4 7.4h1.2v1.2H6.4V7.4Zm0 2h2.4v3H6.4v-3Z`} />
+    </壳>
+  )
+}
+
+/** PDF：一个「P」 */
+export function PDF文件图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d={`${纸} M5.6 13V8h2.3c1.2 0 1.9.7 1.9 1.7s-.7 1.7-1.9 1.7H6.8V13H5.6Zm1.2-2.6h1c.5 0 .8-.3.8-.7s-.3-.7-.8-.7h-1v1.4Z`} />
+    </壳>
+  )
+}
+
 export function 停止图标({ className }: 图标属性 = {}) {
   return (
     <壳 {...(className ? { className } : {})}>

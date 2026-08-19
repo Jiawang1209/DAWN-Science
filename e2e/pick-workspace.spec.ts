@@ -204,7 +204,7 @@ test("**在外面往目录里丢文件，切回窗口树就跟上**", async ({ d
  * **这条不派 `focus` 事件**：上一条靠切窗口刷新，这一条只按按钮。
  * 两条路各自证明各自的。
  */
-test("**文件行写着「刚刚」；按「刷新」不切窗口也能看见新文件**", async ({ dawn }) => {
+test("**文件行写着修改时间与类型图标；按「刷新」不切窗口也能看见新文件**", async ({ dawn }) => {
   const { page } = dawn
 
   await page.getByRole("button", { name: "选择工作目录" }).click()
@@ -222,8 +222,26 @@ test("**文件行写着「刚刚」；按「刷新」不切窗口也能看见新
   const 行 = 坞.getByRole("button", { name: new RegExp(新的) })
   await expect(行, "按了刷新，刚写的文件还是看不见").toBeVisible({ timeout: 15_000 })
   /**
-   * **时间戳**：刚写进去的，必须写「刚刚」。红的样子：这一格空着（没画），
-   * 或者写着 `99d+`（远端那条 1970 占位的症状）。
+   * **时间戳**：正规的年月日时分（作者 2026-08-20 定的形式），而且得是
+   * **今年**——远端那条 1970 占位的症状就是年份不对。
    */
-  await expect(行.locator(".file-when"), "文件行没写多久前改的").toHaveText("刚刚")
+  await expect(行.locator(".file-when"), "文件行没写修改时间").toHaveText(
+    new RegExp(`^${new Date().getFullYear()}-\\d{2}-\\d{2} \\d{2}:\\d{2}$`),
+  )
+  /**
+   * **类型图标**：`.csv` 是表格、`.md` 是 Markdown、目录是文件夹——
+   * 三个都要在，而且**不是同一个**（都画成同一张纸就等于没画）。
+   */
+  const 图标路径 = async (名: RegExp | string) =>
+    坞.getByRole("button", { name: 名, ...(typeof 名 === "string" ? { exact: true } : {}) })
+      .locator("svg.row-icon path")
+      .first()
+      .getAttribute("d")
+  const 表 = await 图标路径(new RegExp(新的))
+  const 文 = await 图标路径(/认得出的文件\.md/)
+  const 夹 = await 图标路径("数据")
+  expect(表, "csv 行没有图标").toBeTruthy()
+  expect(文, "md 行没有图标").toBeTruthy()
+  expect(夹, "目录行没有图标").toBeTruthy()
+  expect(new Set([表, 文, 夹]).size, "三类画成了同一个图标").toBe(3)
 })

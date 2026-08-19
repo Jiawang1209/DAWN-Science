@@ -5,7 +5,7 @@
  * 这条**推翻了我之前写下的**「不缩写成 1.2k」——见 `src/ui/format.ts` 的说明。
  */
 import { describe, expect, it } from "vitest"
-import { formatDuration, formatTokens, 多久之前, 拆模型名 } from "../../src/ui/format.js"
+import { formatDuration, formatTokens, 多久之前, 拆模型名, 年月日时分 } from "../../src/ui/format.js"
 
 describe("token 数", () => {
   it("**1000 以下原样** —— 写成 0.1k 是把已知的精度扔掉", () => {
@@ -182,5 +182,15 @@ describe("拆模型名", () => {
       主: "Opus 4.6",
       次: "Opus 4.6 · 最能干",
     })
+  })
+})
+
+describe("年月日时分", () => {
+  it("**本地时区的 YYYY-MM-DD HH:mm**，不带秒", () => {
+    const d = new Date(2026, 7, 20, 9, 5)
+    expect(年月日时分(d.toISOString())).toBe("2026-08-20 09:05")
+  })
+  it("认不出来的时间要说出来，不是 NaN-NaN", () => {
+    expect(年月日时分("不是时间")).toBe("时间不明")
   })
 })

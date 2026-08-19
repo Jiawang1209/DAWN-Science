@@ -508,6 +508,48 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 加一个 ACP 适配器（2026-08-19）。
+   *
+   * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+   * 否则岂不是白开发了。」*
+   *
+   * ACP 那一整套 2026-08-16 就做完了——runtime、权限卡、模型旁边那个
+   * ACP 标记。**但默认配置里一个 acp agent 都没有，界面上也没有任何地方能加**，
+   * 于是那些代码对使用者而言等于不存在。这一条就是缺的那个入口。
+   *
+   * **它没有 provider / model**：ACP 的模型由适配器自己广播，
+   * 我们只知道「用哪条命令把它拉起来」。
+   */
+  addAcpAgent: {
+    request: z
+      .object({
+        /** 在配置里叫什么。小写字母、数字、连字符 */
+        agentId: z.string().min(1),
+        /** 适配器的可执行文件。**不是 `claude` / `codex` 本身** */
+        command: z.string().min(1),
+        args: z.array(z.string()).default([]),
+      })
+      .strict(),
+    response: z.object({ agentId: z.string().min(1) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 删一个 agent（2026-08-19）。
+   *
+   * **加得进去就得删得掉。** 「只能加不能删」意味着加错一次之后，
+   * 人又得回去打开那个 yaml——而「不必打开那个 yaml」正是
+   * `config/writer.ts` 存在的全部理由。
+   *
+   * **最后一个不给删**（后端会说清楚）：`agents:` 空了应用下次起不来。
+   */
+  removeAgent: {
+    request: z.object({ agentId: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   /** 拨本机那两个开关（协议 5.7）。**它们不写进任何会被分享的文件** */
   setMcpFlag: {
     request: z

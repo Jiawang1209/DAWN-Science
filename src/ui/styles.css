@@ -2099,6 +2099,93 @@ pre {
  * 控件靠右，**不许被压缩**。
  * 被压缩的输入框会先于说明文字消失，而它才是这一行的目的。
  */
+/**
+ * **文字按钮的「危险」变体**（2026-08-19）。
+ *
+ * 它此前**只是一个名字**：`views.tsx` 里那颗批量删除写着
+ * `className="danger"`，而 `styles.css` 里没有任何一条规则叫这个——
+ * 写它的人以为自己配了样式，屏幕上却什么都没发生。
+ * 设计契约那条扫描的既有欠账清单上，`views.tsx：.danger` 就是这一条。
+ * **现在把它做成真的，并把那条欠账划掉。**
+ *
+ * 为什么不直接用 `variant="danger"`：那是一颗**实心红**的按钮，
+ * 用在「一整屏底部的移除项目」上是对的，用在一行列表里太吵——
+ * 而一行里的删除本来就该看得见、但不该抢戏。
+ *
+ * **只改前景色**：悬停时的底色沿用 `text` / `ghost` 变体自己那一份。
+ * 为此新造一个 `--dawn-danger-soft` 令牌的话，暗色块也得跟着写一条，
+ * 而设计契约明令「暗色块只覆盖种子，不重新定义派生令牌」——
+ * 一个只为悬停底色而生的令牌不值这个代价。
+ */
+.btn.danger {
+  color: var(--dawn-danger);
+}
+
+/* ── ACP 适配器（2026-08-19）───────────────────────────────────────── */
+
+/**
+ * 已经接进来的那几条。**一行一个，删除键常驻**——
+ * 悬停才出现的删除键这个项目栽过一次（`opacity: 0` 的那颗 `×`）。
+ */
+.acp-list {
+  list-style: none;
+  margin: var(--dawn-space-3) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-1);
+}
+
+.acp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dawn-space-3);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-sm);
+}
+
+.acp-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  margin-top: var(--dawn-space-3);
+}
+
+/**
+ * 一个预置。**名字与那一行说明分两行**：
+ * 「Codex」告诉你这是什么，`@agentclientprotocol/codex-acp`
+ * 告诉你它到底会去跑什么——后者是判断「这条命令我信不信」的依据，
+ * 不该缩成一个 tooltip。
+ */
+.acp-preset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dawn-space-3);
+}
+
+.acp-preset-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.acp-preset-text .name { font-weight: 600; }
+.acp-preset-text .sub {
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-ui-size);
+  font-family: var(--dawn-font-mono);
+}
+
+.acp-custom {
+  margin-top: var(--dawn-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-1);
+}
+
 .set-control {
   display: flex;
   align-items: center;

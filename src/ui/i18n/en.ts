@@ -589,6 +589,28 @@ export const EN: Readonly<Record<string, string>> = {
   "输一个目录路径，回车跳过去": "Type a directory path, press Enter",
   "回到根目录": "Top level",
   "加宽": "Widen",
+  // ACP 适配器（2026-08-19）
+  "ACP 适配器": "ACP adapters",
+  "ACP 适配器是一个独立进程，DAWN 通过 Agent Client Protocol 跟它说话。它会主动问你要不要允许某次工具调用，所以这类会话里会多一张权限卡。":
+    "An ACP adapter is a separate process DAWN talks to over the Agent Client Protocol. It asks before each tool call, so these sessions show an extra permission card.",
+  "移除这个适配器": "Remove this adapter",
+  "还没有接入任何 ACP 适配器。": "No ACP adapter connected yet.",
+  "一键接入": "One-click setup",
+  "上面两条走 npx，需要机器上有 Node。已经装好适配器的话，用下面的自定义命令直接指过去。":
+    "Both presets run through npx, which needs Node on this machine. If the adapter is already installed, point at it with a custom command below.",
+  "在配置与模型选择器里显示成什么": "How it appears in the config and the model picker",
+  "参数": "Arguments",
+  "适配器名字": "Adapter name",
+  "适配器的可执行文件，不是 claude / codex 本身": "The adapter executable — not claude / codex themselves",
+  "适配器命令": "Adapter command",
+  "按空格分开。带空格的路径请直接改 providers.yaml":
+    "Separated by spaces. For paths containing spaces, edit providers.yaml directly.",
+  "适配器参数": "Adapter arguments",
+  // **不叫 "Connect this adapter"**：远端服务器那颗「连接」在英文里就是
+  // "Connect"，它会成为这一句的子串——而按名字找按钮是子串匹配
+  "接入这个适配器": "Add this adapter",
+  "先不接": "Not now",
+  "＋ 自定义一条命令": "＋ Custom command",
   "下载": "Download",
   "移到废纸篓": "Move to Trash",
   "永久删除这个目录？": "Erase this folder permanently?",

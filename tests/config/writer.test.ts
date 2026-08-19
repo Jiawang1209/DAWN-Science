@@ -11,7 +11,12 @@ import { afterEach, describe, expect, it } from "vitest"
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { addNativeAgent, setProviderConnection } from "../../src/config/writer.js"
+import {
+  addAcpAgent,
+  addNativeAgent,
+  removeAgent,
+  setProviderConnection,
+} from "../../src/config/writer.js"
 
 const dirs: string[] = []
 afterEach(() => {
@@ -195,5 +200,121 @@ describe("provider 的连接设置", () => {
     const 前 = readFileSync(f, "utf8").split("agents:")[1]
     setProviderConnection(f, "azure", { baseUrl: "https://a" })
     expect(readFileSync(f, "utf8").split("agents:")[1]).toBe(前)
+  })
+})
+
+/**
+ * **加一个 ACP 适配器**（2026-08-19）。
+ *
+ * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+ * 否则岂不是白开发了。」*
+ *
+ * ACP 那一整套（runtime、权限卡、界面标记）2026-08-16 就做完了，
+ * **但默认配置里一个 acp agent 都没有，界面上也没有任何地方能加**——
+ * 只能自己打开 `providers.yaml` 手写一段。这与 kimi 那次是同一件事：
+ * 「让人打开一个 yaml 手写一段，本身就是这个应用没做完。」
+ *
+ * 与 native 那条的差别在于**它没有 provider / model**：
+ * ACP 的模型由适配器自己广播，我们这边只知道「用哪条命令把它拉起来」。
+ */
+describe("加一个 ACP 适配器", () => {
+  it("加进去了，而且读得回来", () => {
+    const f = 配置()
+    const reg = addAcpAgent(f, {
+      agentId: "codex-acp",
+      command: "npx",
+      args: ["-y", "@agentclientprotocol/codex-acp"],
+    })
+    expect(reg.agents["codex-acp"]).toMatchObject({
+      kind: "acp",
+      command: "npx",
+      args: ["-y", "@agentclientprotocol/codex-acp"],
+    })
+  })
+
+  /** 别人手写的东西一个字节都不许动——与 native 那条同一套纪律 */
+  it("**别人的注释与行内列表原样不动**", () => {
+    const f = 配置()
+    addAcpAgent(f, { agentId: "codex-acp", command: "npx", args: ["-y", "x"] })
+    const 现在 = readFileSync(f, "utf8")
+    expect(现在).toContain("# 托管本地的 claude CLI")
+    expect(现在).toContain("models: [opus, sonnet]")
+    expect(现在.startsWith("# DAWN Science —— agent 配置")).toBe(true)
+  })
+
+  /**
+   * **参数里有空格 / 引号也要活着回来。**
+   *
+   * 适配器的参数是真会带路径的（`node /…/dist/index.js`），
+   * 而路径里有空格在 macOS 上是常态。手拼 YAML 最容易死在这儿——
+   * 所以这一条盯的是「写出去再读回来还是同一个数组」。
+   */
+  it("**带空格与引号的参数，读回来还是原样**", () => {
+    const f = 配置()
+    const args = ["/Users/某人/我的 文件夹/dist/index.js", '带"引号"的', "带#井号的"]
+    const reg = addAcpAgent(f, { agentId: "bundled-acp", command: "node", args })
+    expect((reg.agents["bundled-acp"] as { args: string[] }).args).toEqual(args)
+  })
+
+  /** 空的 args 是合法的：有些适配器就是一条光命令 */
+  it("不给参数也行", () => {
+    const f = 配置()
+    const reg = addAcpAgent(f, { agentId: "bare-acp", command: "my-acp", args: [] })
+    expect((reg.agents["bare-acp"] as { args: string[] }).args).toEqual([])
+  })
+
+  it("**同名的一律拒绝**，不覆盖用户手写的那一段", () => {
+    const f = 配置()
+    expect(() => addAcpAgent(f, { agentId: "ds-chat", command: "x", args: [] })).toThrow(
+      /已经有一个/,
+    )
+  })
+
+  it("命令是空的要当场拒绝——一个起不来的 agent 只会在建会话时才炸", () => {
+    const f = 配置()
+    expect(() => addAcpAgent(f, { agentId: "empty-cmd", command: "  ", args: [] })).toThrow()
+  })
+
+  it("id 不合法一律拒绝", () => {
+    for (const bad of ["有 空格", "带.点", "", "Ａ全角"]) {
+      const f = 配置()
+      expect(() => addAcpAgent(f, { agentId: bad, command: "x", args: [] })).toThrow()
+    }
+  })
+})
+
+/**
+ * **加得进去就得删得掉**（2026-08-19）。
+ *
+ * 「只能加不能删」在这个项目里已经是一种熟悉的坏味道：
+ * 界面上加错一个适配器之后，人又得回去打开那个 yaml——
+ * 而那正是这一整个文件存在的理由。
+ */
+describe("删一个 agent", () => {
+  it("删掉之后就读不到了，别人原样还在", () => {
+    const f = 配置()
+    addAcpAgent(f, { agentId: "codex-acp", command: "npx", args: ["-y", "x"] })
+    const reg = removeAgent(f, "codex-acp")
+    expect(reg.agents["codex-acp"]).toBeUndefined()
+    expect(reg.agents["ds-chat"]).toBeDefined()
+    expect(readFileSync(f, "utf8")).toContain("models: [opus, sonnet]")
+  })
+
+  it("删不存在的那个要出声，不静默当作成功", () => {
+    const f = 配置()
+    expect(() => removeAgent(f, "没有这个")).toThrow(/没有/)
+  })
+
+  /**
+   * **不许把最后一个 agent 删光。**
+   *
+   * `agents:` 变成空段之后配置读不回来，而那时应用下次起不来——
+   * 与 `addNativeAgent` 那条「写完读回来，读不回来就还原」同一个理由，
+   * 只是这一次能提前说清楚。
+   */
+  it("**最后一个不给删**", () => {
+    const f = 配置()
+    removeAgent(f, "claude")
+    expect(() => removeAgent(f, "ds-chat")).toThrow(/最后一个/)
   })
 })

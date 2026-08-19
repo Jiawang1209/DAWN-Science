@@ -749,7 +749,13 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
       "files.tsx：.preview", "files.tsx：.table-preview", "files.tsx：.tree-actions",
       "files.tsx：.tree-node", "panels.tsx：.tool-change", "panels.tsx：.turn-group",
       "primitives.tsx：.field-control", "primitives.tsx：.loader-label", "primitives.tsx：.opener",
-      "remote.tsx：.remote-group", "views.tsx：.danger", "views.tsx：.edit-btn",
+      /**
+       * **`views.tsx：.danger` 2026-08-19 划掉了。** 它此前只是一个名字：
+       * 批量删除那颗写着 `className="danger"`，而 `styles.css` 里
+       * 没有任何一条规则叫它——写它的人以为自己配了样式。
+       * 现在 `.btn.danger` 是真的（只改前景色），所以它不再是欠账。
+       */
+      "remote.tsx：.remote-group", "views.tsx：.edit-btn",
       "views.tsx：.side-section-toggle",
       "views.tsx：.stopping", "views.tsx：.thought-label", "views.tsx：.who-name",
       "views.tsx：.kout-rich",

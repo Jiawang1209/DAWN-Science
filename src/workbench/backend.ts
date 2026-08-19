@@ -9,7 +9,7 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
-import { addNativeAgent, setProviderConnection } from "../config/writer.js"
+import { addAcpAgent, addNativeAgent, removeAgent, setProviderConnection } from "../config/writer.js"
 import { homedir } from "node:os"
 import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
@@ -1367,6 +1367,58 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       // **连接也要断掉**：不断的话，删掉的那台还在池子里活着、工具还挂着
       await mcp?.池.关(name)
+      return { ok: true as const }
+    },
+
+    /**
+     * 加一个 ACP 适配器（2026-08-19）。
+     *
+     * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+     * 否则岂不是白开发了。」* ——代码全在，缺的只是一个入口。
+     *
+     * **加完当场就能在模型选择器里选到**：与 `setProviderConnection`
+     * 同一条纪律，原地更新那个被多处按引用持有的 `registry.agents`。
+     * 只写文件不更新内存的话，界面会说「已添加」而它要等重启才存在——
+     * **那是一句半真的话**。
+     *
+     * **不生成 `models.json`**（那是 native 那条路的事）：
+     * ACP 的模型由适配器自己广播。
+     */
+    addAcpAgent: async ({ agentId, command, args }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，加不了")
+      let 新的: ProviderRegistry
+      try {
+        新的 = addAcpAgent(configPath, { agentId, command, args })
+      } catch (e) {
+        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        throw e
+      }
+      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
+      Object.assign(registry.agents, 新的.agents)
+      return { agentId }
+    },
+
+    /**
+     * 删一个 agent（2026-08-19）。
+     *
+     * **加得进去就得删得掉**——加错一次之后还得回去打开那个 yaml 的话，
+     * `config/writer.ts` 这一整个文件就白写了。
+     *
+     * **正在用它的会话不动。** 那些会话已经起来了，删掉配置不该把它们掐掉；
+     * 而重启之后它们本来就续不上（`resume` 会说「未知的 agent」，
+     * 那句话是准确的）。悄悄把活着的进程杀掉才是意外。
+     */
+    removeAgent: async ({ agentId }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，删不了")
+      let 新的: ProviderRegistry
+      try {
+        新的 = removeAgent(configPath, agentId)
+      } catch (e) {
+        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        throw e
+      }
+      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
+      Object.assign(registry.agents, 新的.agents)
       return { ok: true as const }
     },
 

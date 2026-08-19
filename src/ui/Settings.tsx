@@ -1361,3 +1361,195 @@ function 自定义端点({
     </form>
   )
 }
+
+/* ── ACP 适配器 ───────────────────────────────────────────────────── */
+
+/**
+ * **预置那两个**（2026-08-19）。
+ *
+ * 两条都是拿真适配器撞出来过的（2026-08-16 那一轮，见
+ * `specs/2026-08-16-acp-runtime-design.md` 里逐条记着它们的差异），
+ * 所以这里写的不是「大概是这么用的」，是**跑通过的那条命令**。
+ *
+ * `npx -y` 那条要求机器上有 Node。**不假装没有这个前提**——
+ * 下面那句说明就写着它，而不是等人点下去看一串 ENOENT。
+ */
+const 预置适配器: readonly { agentId: string; 名: string; command: string; args: string[]; 说: string }[] = [
+  {
+    agentId: "codex-acp",
+    名: "Codex",
+    command: "npx",
+    args: ["-y", "@agentclientprotocol/codex-acp"],
+    说: "官方适配器 @agentclientprotocol/codex-acp",
+  },
+  {
+    agentId: "claude-code-acp",
+    名: "Claude Code",
+    command: "npx",
+    args: ["-y", "@zed-industries/claude-code-acp"],
+    说: "官方适配器 @zed-industries/claude-code-acp",
+  },
+]
+
+/**
+ * ACP 适配器（2026-08-19）。
+ *
+ * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+ * 否则岂不是白开发了。」*
+ *
+ * ## 为什么入口在设置里，而不在模型选择器里
+ *
+ * 作者说的是「选择模型的地方」，而缺的其实是**「怎么把它加进来」**——
+ * 那是配置，不是选择。塞进选择器的菜单里，那个菜单就同时是
+ * 「挑一个」和「造一个」两件事；而**配置这件事在这个应用里已经有一个家**
+ * （设置 → 模型服务就在隔壁）。
+ *
+ * **加完它立刻出现在模型选择器里**，带着 ACP 标记——那一半是早就做好的。
+ */
+export function AcpPanel({
+  agents,
+  onAdd,
+  onRemove,
+}: {
+  /** 现在配置里有哪些 acp agent */
+  agents: readonly string[]
+  onAdd: (agent: { agentId: string; command: string; args: string[] }) => void
+  onRemove: (agentId: string) => void
+}) {
+  const [自定义, 设自定义] = useState(false)
+  const [id, 设id] = useState("")
+  const [命令, 设命令] = useState("")
+  const [参数, 设参数] = useState("")
+
+  return (
+    <section className="settings-section">
+      <p className="hint">
+        {t(
+          "ACP 适配器是一个独立进程，DAWN 通过 Agent Client Protocol 跟它说话。它会主动问你要不要允许某次工具调用，所以这类会话里会多一张权限卡。",
+        )}
+      </p>
+
+      {agents.length > 0 ? (
+        <ul className="acp-list">
+          {agents.map((a) => (
+            <li key={a} className="acp-row">
+              <span className="name">{a}</span>
+              {/* **删除键常驻**，不是悬停才出现——那条本项目栽过两次 */}
+              {/**
+                * **文字按钮 + `.danger`，不是实心红的 `variant="danger"`。**
+                *
+                * 后者是一整屏底部那种「移除项目」用的，摆在一行列表里太吵。
+                * 而 `.danger` 这个类**在 2026-08-19 之前只是一个名字**
+                * （`styles.css` 里没有任何一条规则叫它，设计契约的既有欠账
+                * 清单上就挂着 `views.tsx：.danger`）——这一轮把它做成了真的。
+                */}
+              <Button variant="text" size="sm" className="danger" onClick={() => onRemove(a)}>
+                {t("移除这个适配器")}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        // **空态说清楚它是空的**，不是一片留白
+        <p className="hint">{t("还没有接入任何 ACP 适配器。")}</p>
+      )}
+
+      <div className="acp-add">
+        {预置适配器
+          .filter((p) => !agents.includes(p.agentId))
+          .map((p) => (
+            <div key={p.agentId} className="acp-preset">
+              <div className="acp-preset-text">
+                <span className="name">{p.名}</span>
+                <span className="sub">{p.说}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAdd({ agentId: p.agentId, command: p.command, args: p.args })}
+              >
+                {t("一键接入")}
+              </Button>
+            </div>
+          ))}
+        {/**
+          * **前提要说在前面。** `npx -y` 那两条要求机器上有 Node；
+          * 不说的话，点下去得到的是一串 ENOENT，而那与「你没装 Node」
+          * 之间隔着好几层。
+          */}
+        <p className="caveat">
+          {t("上面两条走 npx，需要机器上有 Node。已经装好适配器的话，用下面的自定义命令直接指过去。")}
+        </p>
+      </div>
+
+      {自定义 ? (
+        <form
+          className="acp-custom"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onAdd({
+              agentId: id.trim(),
+              command: 命令.trim(),
+              /**
+               * **按空白切，空的都丢掉。** 这里刻意不做 shell 解析：
+               * 带空格的路径请用下面那种写法（一行一个参数做不到时，
+               * 直接改 `providers.yaml`）。**不假装我们会解析引号**——
+               * 半个 shell 解析器比没有更坏。
+               */
+              args: 参数.split(/\s+/).filter(Boolean),
+            })
+            设id("")
+            设命令("")
+            设参数("")
+            设自定义(false)
+          }}
+        >
+          {/* **用既有的 `Row`**：设置里每一行长什么样已经有一个家了，
+              另造一套 `.set-field` 就是同一件事的第二份实现 */}
+          <Row name={t("名字")} desc={t("在配置与模型选择器里显示成什么")}>
+            <input
+              className="control"
+              value={id}
+              onChange={(e) => 设id(e.target.value)}
+              placeholder="my-acp"
+              aria-label={t("适配器名字")}
+            />
+          </Row>
+          <Row name={t("命令")} desc={t("适配器的可执行文件，不是 claude / codex 本身")}>
+            <input
+              className="control"
+              value={命令}
+              onChange={(e) => 设命令(e.target.value)}
+              placeholder="node"
+              aria-label={t("适配器命令")}
+            />
+          </Row>
+          <Row name={t("参数")} desc={t("按空格分开。带空格的路径请直接改 providers.yaml")}>
+            <input
+              className="control"
+              value={参数}
+              onChange={(e) => 设参数(e.target.value)}
+              placeholder="/path/to/adapter/dist/index.js"
+              aria-label={t("适配器参数")}
+            />
+          </Row>
+          <div className="state-action">
+            <Button type="submit" variant="primary" size="sm" disabled={!id.trim() || !命令.trim()}>
+              {t("接入这个适配器")}
+            </Button>
+            {/* **不叫「取消」**：确认框上那颗就叫这个，两处同名会让按名字找变成靠运气 */}
+            <Button variant="text" size="sm" onClick={() => 设自定义(false)}>
+              {t("先不接")}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div className="state-action">
+          <Button variant="text" size="sm" onClick={() => 设自定义(true)}>
+            {t("＋ 自定义一条命令")}
+          </Button>
+        </div>
+      )}
+    </section>
+  )
+}

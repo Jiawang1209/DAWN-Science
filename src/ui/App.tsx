@@ -46,6 +46,7 @@ import {
 import {
   AppearancePanel,
   KernelsPanel,
+  AcpPanel,
   SettingsPanel,
   SettingsShell,
   PermissionPanel,
@@ -2893,6 +2894,48 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }
               />
                     </>
+                  ),
+                },
+                {
+                  /**
+                   * **ACP 适配器**（2026-08-19，作者要的）。
+                   *
+                   * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+                   * 否则岂不是白开发了。」*
+                   *
+                   * 那一整套 2026-08-16 就做完了（runtime、权限卡、
+                   * 模型旁边那个 ACP 标记），**缺的只是「怎么把一个加进来」**——
+                   * 此前只能自己打开 `providers.yaml` 手写一段。
+                   *
+                   * **排在「模型服务」后面**：两者是同一类事（这个应用能跟谁说话），
+                   * 而这一类里 native 那条是绝大多数人唯一会用到的。
+                   */
+                  id: "acp",
+                  title: t("ACP 适配器"),
+                  icon: <模型图标 className="row-icon" />,
+                  body: (
+                    <AcpPanel
+                      agents={providers.agents
+                        .filter((a) => a.kind === "acp")
+                        .map((a) => a.agentId)}
+                      onAdd={(a) =>
+                        client
+                          .get("addAcpAgent", a)
+                          /**
+                           * **加完立刻重取 agent 列表**：不重取的话，
+                           * 界面说「已添加」而模型选择器还是旧的——
+                           * 而那正是作者当初在 kimi 那件事上撞到的同一种半真的话。
+                           */
+                          .then(() => loadProviders(client))
+                          .catch(fail)
+                      }
+                      onRemove={(agentId) =>
+                        client
+                          .get("removeAgent", { agentId })
+                          .then(() => loadProviders(client))
+                          .catch(fail)
+                      }
+                    />
                   ),
                 },
                 {

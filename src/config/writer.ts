@@ -31,22 +31,20 @@ import { loadRegistry } from "./loader.js"
 import type { ProviderRegistry } from "./schema.js"
 
 /**
- * 把新 agent 的几行插进 `agents:` 那一段的末尾。
+ * `agents:` 那一段从哪儿开始、到哪儿结束。
  *
- * **纯文本操作**：其余每一个字节原样保留——包括缩进风格、空行、
- * 以及用户手写的 `[opus, sonnet]` 这种行内列表。
+ * 段的末尾 = 最后一条**缩进**行。
+ *
+ * 空行不算末尾（段中间常有空行分组），但也不能把段尾的空行吞进来——
+ * 所以先扫到第一条顶格的非空行为止，再回退掉尾部的空行。
+ *
+ * **抽出来是因为加与删共用它**（2026-08-19 加删除时）：
+ * 两份「找段边界」的实现迟早各自漂移，而漂移的表现是
+ * 「加得进去、删的时候多吞了一行别人的东西」。
  */
-function 插入(原文: string, agent: NewNativeAgent): string {
-  const lines = 原文.split("\n")
+function agents段(lines: string[]): { 起: number; 末: number } {
   const 起 = lines.findIndex((l) => /^agents:\s*$/.test(l))
   if (起 < 0) throw new UserFacingError("配置里没有 `agents:` 这一段，不知道该往哪里加")
-
-  /**
-   * 段的末尾 = 最后一条**缩进**行。
-   *
-   * 空行不算末尾（段中间常有空行分组），但也不能把段尾的空行吞进来——
-   * 所以先扫到第一条顶格的非空行为止，再回退掉尾部的空行。
-   */
   let 末 = lines.length
   for (let i = 起 + 1; i < lines.length; i++) {
     const l = lines[i]!
@@ -57,6 +55,18 @@ function 插入(原文: string, agent: NewNativeAgent): string {
     }
   }
   while (末 > 起 + 1 && lines[末 - 1]!.trim() === "") 末 -= 1
+  return { 起, 末 }
+}
+
+/**
+ * 把新 agent 的几行插进 `agents:` 那一段的末尾。
+ *
+ * **纯文本操作**：其余每一个字节原样保留——包括缩进风格、空行、
+ * 以及用户手写的 `[opus, sonnet]` 这种行内列表。
+ */
+function 插入(原文: string, agent: NewNativeAgent): string {
+  const lines = 原文.split("\n")
+  const { 起, 末 } = agents段(lines)
 
   const 块 = [
     "",
@@ -269,4 +279,192 @@ function 写连接(原文: string, id: string, conn: ProviderConnectionInput): s
   }
   if (!有内容) return 原文
   return [...lines.slice(0, 末), ...块, ...lines.slice(末)].join("\n")
+}
+
+export interface NewAcpAgent {
+  agentId: string
+  /** 适配器的可执行文件。**不是 `claude` / `codex` 本身**——见 schema 里那段 */
+  command: string
+  args: string[]
+}
+
+/**
+ * 一个标量写成 YAML 里安全的样子。
+ *
+ * **一律加双引号，用 JSON 的转义规则**——YAML 的双引号标量与 JSON 字符串
+ * 在转义上是同一套，所以 `JSON.stringify` 就是正确答案，不必自己拼。
+ *
+ * 为什么不「看起来不需要就不加」：适配器的参数是真会带路径的
+ * （`node /…/dist/index.js`），而路径里有空格在 macOS 上是常态；
+ * `#` 会被读成注释、`:` 会被读成映射。**判断「这个字符串需不需要引号」
+ * 本身就是一份 YAML 实现**，而我们不该有第二份。
+ */
+function 引起来(s: string): string {
+  return JSON.stringify(s)
+}
+
+/**
+ * 加一个 `kind: acp` 的 agent（2026-08-19）。
+ *
+ * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+ * 否则岂不是白开发了。」*
+ *
+ * ACP 那一整套 2026-08-16 就做完了（runtime、权限卡、界面上的 ACP 标记），
+ * **但默认配置里一个 acp agent 都没有，界面上也没有任何地方能加**——
+ * 于是那些代码对使用者而言等于不存在。这与 kimi 那次是同一件事：
+ * *「让人打开一个 yaml 手写一段，本身就是这个应用没做完。」*
+ *
+ * ## 与 `addNativeAgent` 的差别只有一处
+ *
+ * **它没有 provider / model。** ACP 的模型由适配器自己广播
+ * （`session/new` 之后那串 `models`），我们这边只知道
+ * 「用哪条命令把它拉起来」。所以这里**不写 model 那一行**——
+ * 写一个猜出来的值，会在换模型时与适配器广播的那一串打架。
+ *
+ * 三条纪律与 native 那条完全一样：既有字节不动、同名不覆盖、
+ * 写完读回来读不回来就还原。
+ *
+ * @throws {UserFacingError} id 不合法、命令是空的、已存在、或写完读不回来
+ */
+export function addAcpAgent(file: string, agent: NewAcpAgent): ProviderRegistry {
+  if (!ID.test(agent.agentId)) {
+    throw new UserFacingError(
+      `agent 名字只能用小写字母、数字和连字符，且不超过 32 个字符（收到「${agent.agentId}」）`,
+    )
+  }
+  /**
+   * **空命令当场拒绝。** 放过去的话，它会在**建会话那一刻**才炸，
+   * 而那时的错误信息与「你在设置里加了一个没填命令的适配器」毫无关系。
+   */
+  if (agent.command.trim() === "") {
+    throw new UserFacingError("适配器的命令不能为空——那样它只会在你开始对话时才失败")
+  }
+  if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
+
+  const 原文 = readFileSync(file, "utf8")
+
+  const doc = parseDocument(原文)
+  const agents = doc.get("agents") as { has?: (k: string) => boolean } | undefined
+  if (!agents || typeof agents.has !== "function") {
+    throw new UserFacingError("配置里没有 `agents:` 这一段，不知道该往哪里加")
+  }
+  if (agents.has(agent.agentId)) {
+    throw new UserFacingError(`配置里已经有一个叫「${agent.agentId}」的 agent 了`)
+  }
+
+  const lines = 原文.split("\n")
+  const { 末 } = agents段(lines)
+  const 块 = [
+    "",
+    `  # 由 DAWN 在设置里添加`,
+    `  ${agent.agentId}:`,
+    `    kind: acp`,
+    `    command: ${引起来(agent.command.trim())}`,
+    `    args: [${agent.args.map(引起来).join(", ")}]`,
+    `    capabilities: [chat, exec]`,
+  ]
+  const 新文 = [...lines.slice(0, 末), ...块, ...lines.slice(末)].join("\n")
+
+  writeFileSync(file, 新文, "utf8")
+  try {
+    return loadRegistry(file)
+  } catch (err) {
+    writeFileSync(file, 原文, "utf8")
+    throw new UserFacingError(
+      `写进去的配置读不回来，已还原：${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+}
+
+/**
+ * 删掉一个 agent（2026-08-19）。
+ *
+ * **加得进去就得删得掉。** 「只能加不能删」在这个项目里已经是一种熟悉的
+ * 坏味道：界面上加错一个适配器之后，人又得回去打开那个 yaml——
+ * 而「不必打开那个 yaml」正是这一整个文件存在的理由。
+ *
+ * ## 它删的是「那个键连同它底下的缩进行」
+ *
+ * 纯文本，仍然不重新序列化。**紧挨在它上面的注释行也一起带走**——
+ * 留下一句孤零零的「# 由 DAWN 在设置里添加」比删不干净更难看，
+ * 而且下一个读这个文件的人会以为下面那个 agent 是我们加的。
+ *
+ * @throws {UserFacingError} 没有这个 agent、它是最后一个、或写完读不回来
+ */
+export function removeAgent(file: string, agentId: string): ProviderRegistry {
+  if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
+  const 原文 = readFileSync(file, "utf8")
+
+  const doc = parseDocument(原文)
+  const agents = doc.get("agents") as
+    | { has?: (k: string) => boolean; items?: unknown[] }
+    | undefined
+  if (!agents || typeof agents.has !== "function") {
+    throw new UserFacingError("配置里没有 `agents:` 这一段")
+  }
+  if (!agents.has(agentId)) throw new UserFacingError(`配置里没有叫「${agentId}」的 agent`)
+  /**
+   * **最后一个不给删。** `agents:` 变成空段之后配置读不回来，
+   * 而那意味着应用下次起不来——与「写完读回来，读不回来就还原」同一个理由，
+   * 只是这一次能提前把话说清楚，而不是让人看到一句「读不回来，已还原」。
+   */
+  if ((agents.items?.length ?? 0) <= 1) {
+    throw new UserFacingError(`「${agentId}」是最后一个 agent，删掉之后一个都不剩了`)
+  }
+
+  const lines = 原文.split("\n")
+  const { 起, 末 } = agents段(lines)
+  const 键 = new RegExp(`^(\\s+)${agentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*$`)
+  let 键行 = -1
+  let 从 = -1
+  let 缩进 = ""
+  for (let i = 起 + 1; i < 末; i++) {
+    const m = 键.exec(lines[i]!)
+    if (m) {
+      键行 = i
+      从 = i
+      缩进 = m[1]!
+      break
+    }
+  }
+  // 解析说有、文本里找不到——**不硬删**，那说明这份文件不是我们以为的样子
+  if (键行 < 0) throw new UserFacingError(`在配置里定位不到「${agentId}」那一段，没有改动文件`)
+
+  /**
+   * **往下先算，再往上吞注释。**
+   *
+   * 反过来写的话（先把 `从` 上移过注释，再 `到 = 从 + 1`），
+   * `到` 会从注释那一行起算，第一次循环看到的就是键那一行本身——
+   * 它不比 `缩进` 更深，于是当场退出，**结果只删掉了注释，agent 原样还在**。
+   * 这个洞是 2026-08-19 写完当场被单测抓住的。
+   */
+  let 到 = 键行 + 1
+  while (到 < 末) {
+    const l = lines[到]!
+    if (l.trim() === "") {
+      到 += 1
+      continue
+    }
+    if (l.startsWith(`${缩进} `) || l.startsWith(`${缩进}\t`)) {
+      到 += 1
+      continue
+    }
+    break
+  }
+  // 往上吞掉紧挨着的注释行——留下一句孤零零的「# 由 DAWN 在设置里添加」
+  // 比删不干净更难看，而且下一个人会以为下面那个 agent 是我们加的
+  while (从 > 起 + 1 && lines[从 - 1]!.trim().startsWith("#")) 从 -= 1
+  // 段尾时把前面那个空行也带走，免得留下一串空行
+  while (到 >= 末 && 从 > 起 + 1 && lines[从 - 1]!.trim() === "") 从 -= 1
+
+  const 新文 = [...lines.slice(0, 从), ...lines.slice(到)].join("\n")
+  writeFileSync(file, 新文, "utf8")
+  try {
+    return loadRegistry(file)
+  } catch (err) {
+    writeFileSync(file, 原文, "utf8")
+    throw new UserFacingError(
+      `删完之后的配置读不回来，已还原：${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
 }

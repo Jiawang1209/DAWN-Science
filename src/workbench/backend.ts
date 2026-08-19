@@ -30,6 +30,7 @@ import { 本地日期 } from "../store/usage.js"
 import { 合名单 } from "../mcp/名单.js"
 import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
+import { 是远端MCP } from "../config/schema.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
@@ -1301,18 +1302,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 名单 = 合名单(registry.mcp, 工作区)
       return {
         servers: 名单.服务器.map((台) => {
-          const cwd = 台.服务器.cwd ?? 工作区
+          /**
+           * **两种形态各答各的**（2026-08-19）：本机那种有 `command` / `cwd`，
+           * 远端那种有 `url` / `transport`。**要的密钥共用一格**——
+           * 本机是环境变量名、远端是请求头名，而「还差哪个没填」是同一个问题。
+           */
+          // **先落到一个 `const` 上**：类型守卫窄不动属性链（`台.服务器`）
+          const 服务器 = 台.服务器
+          const 远端 = 是远端MCP(服务器)
+          const cwd = 远端 ? 工作区 : (服务器.cwd ?? 工作区)
           const 已连 = mcp?.池.查(台.名, cwd)
-          const 缺 = (台.服务器.env ?? []).filter(
-            (v) => credentials.get(`mcp:${台.名}:${v}`) === undefined,
-          )
+          const 要的 = 远端 ? (服务器.headers ?? []) : (服务器.env ?? [])
+          const 缺 = 要的.filter((v) => credentials.get(`mcp:${台.名}:${v}`) === undefined)
           return {
             name: 台.名,
-            command: 台.服务器.command,
-            args: [...(台.服务器.args ?? [])],
-            env: [...(台.服务器.env ?? [])],
+            ...(远端
+              ? { url: 服务器.url, transport: 服务器.type }
+              : { command: 服务器.command }),
+            args: [...(远端 ? [] : (服务器.args ?? []))],
+            env: [...要的],
             missingSecrets: 缺,
-            ...(台.服务器.cwd ? { cwd: 台.服务器.cwd } : {}),
+            ...(!远端 && 服务器.cwd ? { cwd: 服务器.cwd } : {}),
             from: 台.来自 === "全局" ? ("global" as const) : ("project" as const),
             trusted: settings?.get(`mcp.trusted.${台.名}`) === "1",
             off: settings?.get(`mcp.off.${台.名}`) === "1",
@@ -1336,8 +1346,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 名单 = 合名单(registry.mcp, 工作区)
       const 台 = 名单.服务器.find((x) => x.名 === name)
       if (!台) throw fault("not_found", `名单里没有这台：${name}`)
-      // **先断开再连**：改完配置按「试一次」，要试的是新配置而不是旧连接
-      await mcp.池.关(name, 台.服务器.cwd ?? 工作区)
+      /**
+       * **先断开再连**：改完配置按「试一次」，要试的是新配置而不是旧连接。
+       *
+       * `cwd` 只有本机那种才有——远端那种我们连它的进程都看不见（2026-08-19）。
+       */
+      const 那台 = 台.服务器
+      await mcp.池.关(name, 是远端MCP(那台) ? 工作区 : (那台.cwd ?? 工作区))
       const r = await mcp.池.备好(name, 台.服务器, 工作区)
       return {
         ok: !r.失败,

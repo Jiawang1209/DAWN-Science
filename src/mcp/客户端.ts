@@ -22,7 +22,11 @@
  *    开五段对话就起五个 postgres 客户端，既慢又会把连接数打满。
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
+import { 是远端MCP } from "../config/schema.js"
 import type { McpServer } from "../config/schema.js"
 import { 工具全名 } from "./名单.js"
 
@@ -65,8 +69,13 @@ export type 取密 = (服务器名: string, 变量名: string) => string | undef
 
 interface 一条连接 {
   client: Client
-  transport: StdioClientTransport
+  /**
+   * **三种传输都可能**（2026-08-19 起）。这里用 SDK 的公共接口，
+   * 而不是钉死 `StdioClientTransport`——钉死的话，远端那两种在类型上就进不来。
+   */
+  transport: Transport
   工具: MCP工具[]
+  /** **只有本机那种有**：远端那条没有子进程，也就没有 stderr */
   stderr尾巴: string[]
 }
 
@@ -108,7 +117,11 @@ export class MCP池 {
    * ——抛出去的话，一台坏服务器会让整段会话开不了。
    */
   async 备好(名: string, 配: McpServer, 默认cwd?: string): Promise<一台的结果> {
-    const cwd = 配.cwd ?? 默认cwd
+    /**
+     * **远端那种没有 cwd**（2026-08-19）：它已经跑在别处了，
+     * 我们连它的进程都看不见，更谈不上决定它从哪个目录起。
+     */
+    const cwd = 是远端MCP(配) ? undefined : (配.cwd ?? 默认cwd)
     const k = this.键(名, cwd)
     const 有 = this.连着.get(k)
     if (有) return { 服务器名: 名, 工具: 有.工具 }
@@ -135,11 +148,39 @@ export class MCP池 {
      */
     const env: Record<string, string> = {}
     const 缺的: string[] = []
-    for (const 变量 of 配.env ?? []) {
+    /**
+     * **两种形态要的密钥不是同一样东西，但纪律是同一条**（2026-08-19）：
+     * 本机那种要环境变量，远端那种要请求头——
+     * **都只在配置里留名字，值一律走钥匙串**。
+     */
+    const 要的密钥 = 是远端MCP(配) ? (配.headers ?? []) : (配.env ?? [])
+    for (const 变量 of 要的密钥) {
       const v = this.opts.取密(名, 变量)
       if (v === undefined || v === "") 缺的.push(变量)
       else env[变量] = v
     }
+    /**
+     * **请求头的值只能是 ASCII**（2026-08-19，写完两分钟内自己踩到的）。
+     *
+     * HTTP 头走 Latin-1，塞一个中文进去，`fetch` 抛的是
+     * `Cannot convert argument to a ByteString because the character at index 7
+     * has a value of 25105`——**那句话对着一个刚填完令牌的人什么都没说**。
+     *
+     * 只在远端那条查：本机那条走的是环境变量，中文没问题。
+     */
+    if (是远端MCP(配)) {
+      const 带中文的 = Object.entries(env).filter(([, v]) => /[^\x00-\xff]/.test(v))
+      if (带中文的.length > 0) {
+        return {
+          服务器名: 名,
+          工具: [],
+          失败:
+            `${带中文的.map(([k]) => k).join("、")} 的值里有非 ASCII 字符——` +
+            `HTTP 请求头装不下它。令牌一般是纯字母数字，检查一下是不是复制时多带了什么。`,
+        }
+      }
+    }
+
     if (缺的.length > 0) {
       return {
         服务器名: 名,
@@ -149,7 +190,39 @@ export class MCP池 {
     }
 
     const 尾巴: string[] = []
-    const transport = new StdioClientTransport({
+    /**
+     * **按形态挑传输**（2026-08-19）。
+     *
+     * 官方 SDK 三种都有；我们收两种：`http`（streamable HTTP，现在的标准）
+     * 与 `sse`（老那套）。作者的原话是*「新的，或者老的，还是要适配的」*——
+     * 存量文档里 SSE 仍然常见，只收新的等于把一半的服务器挡在外面。
+     *
+     * **远端那条没有 stderr**：本机那条连不上时子进程的 stderr 往往是唯一线索
+     * （下面专门留了尾巴），而 HTTP 只有状态码与响应体。
+     * 所以那条路上的错误信息更要紧——见下面 `catch` 里那段。
+     */
+    /**
+     * **这一处的 `as Transport` 是 SDK 类型声明与我们更严的编译选项之间的摩擦，
+     * 不是语义问题**（2026-08-19）。
+     *
+     * `Transport` 接口写的是 `sessionId?: string`，而 `StreamableHTTPClientTransport`
+     * 上是 `sessionId: string | undefined`——在 `exactOptionalPropertyTypes: true`
+     * 下这两者不兼容（「可以没有这个属性」与「有这个属性但可能是 undefined」
+     * 是两件事，而那个区分正是我们打开这个选项想要的）。
+     *
+     * **收窄到这一行**，而不是把编译选项调松：那个选项在别处替我们挡过
+     * 真实的错误。
+     */
+    const transport: Transport = (是远端MCP(配)
+      ? 配.type === "sse"
+        ? new SSEClientTransport(new URL(配.url), {
+            requestInit: { headers: env },
+            eventSourceInit: { fetch: (u, i) => fetch(u, { ...i, headers: { ...i?.headers, ...env } }) },
+          })
+        : new StreamableHTTPClientTransport(new URL(配.url), {
+            requestInit: { headers: env },
+          })
+      : new StdioClientTransport({
       command: 配.command,
       ...(配.args ? { args: [...配.args] } : {}),
       ...(cwd ? { cwd } : {}),
@@ -159,7 +232,7 @@ export class MCP池 {
        * 而它崩掉时 stderr 往往是唯一线索——不留就等于把线索扔了。
        */
       stderr: "pipe",
-    })
+    })) as Transport
 
     const client = new Client(
       { name: "dawn-science", version: "0.0.1" },
@@ -178,7 +251,9 @@ export class MCP池 {
           `如果它是用 npx / uvx 起的，第一次要先把包下下来，多半就是慢在这儿——` +
           `在终端里先跑一遍那条命令，下完再回来按「试一次」。`,
       )
-      transport.stderr?.on("data", (b: Buffer) => {
+      // **只有本机那条有 stderr**：远端那两种连不上时只有状态码与响应体
+      const 子进程的 = transport instanceof StdioClientTransport ? transport : undefined
+      子进程的?.stderr?.on("data", (b: Buffer) => {
         for (const 行 of String(b).split("\n")) {
           if (!行.trim()) continue
           尾巴.push(行)
@@ -222,7 +297,8 @@ export class MCP池 {
   ): Promise<{ 文字: string; 出错了: boolean }> {
     const 备 = await this.备好(名, 配, 默认cwd)
     if (备.失败) return { 文字: `${名} 没连上：${备.失败}`, 出错了: true }
-    const 连 = this.连着.get(this.键(名, 配.cwd ?? 默认cwd))
+    // **远端那种没有 cwd**——键里那一格对它恒为空（与 `备好` 里同一条）
+    const 连 = this.连着.get(this.键(名, 是远端MCP(配) ? undefined : (配.cwd ?? 默认cwd)))
     if (!连) return { 文字: `${名} 没连上。`, 出错了: true }
 
     try {

@@ -324,8 +324,9 @@ export const EN: Readonly<Record<string, string>> = {
   "在下面按「试一次」看看连不连得上。": "Hit Try it now below to see whether it connects.",
   "密钥不会写进配置文件：我们只留变量名，值在下面每台各自的输入框里填，存进系统钥匙串。别人的文档里 env 带着值，那种写法迟早把 key 提交上去。":
     "Secrets never reach the config file: we keep only the variable names. Fill the values per server below; they go to the system keychain. Other docs put values in `env` — that habit commits your key sooner or later.",
-  "Python 写的服务器把 command 换成 uvx。目前只支持本地进程（stdio），还连不了只给 HTTP 地址的远程服务器。":
-    "For Python servers, use `uvx` as the command. Only local processes (stdio) are supported so far — remote HTTP-only servers cannot be connected yet.",
+  "已经跑在服务器上的那种，给地址：": "Already running on a server? Give it a URL:",
+  "Python 写的服务器把 command 换成 uvx。远程那种两套都收：type 写 http 是新的 streamable HTTP（一个端点），写 sse 是老那套；不写就按 http 算。":
+    "For Python servers use uvx instead of command. Remote servers work both ways: type \"http\" is the new streamable HTTP (single endpoint), \"sse\" is the older one; omit it and http is assumed.",
   "配好之后怎么用？": "How do I use it once it is set up?",
   "回到对话里说人话就行，不用记工具名。比如：":
     "Just say it in plain words in the chat — you never type tool names. For example:",

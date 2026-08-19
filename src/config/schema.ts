@@ -290,7 +290,11 @@ export type ProviderConnection = z.infer<typeof ProviderConnectionSchema>
  * **这份 YAML 是会被分享、会被 git 追踪的**——把 key 写进去，
  * 它迟早出现在某个仓库里。这条是作者的红线。
  */
-export const McpServerSchema = z
+/**
+ * 起在本机的那种：**我们把它作为子进程拉起来**，走 stdin/stdout。
+ * 这是 MCP 最常见的形态，绝大多数文档给的就是它。
+ */
+const 本机MCP = z
   .object({
     command: z.string().min(1),
     args: z.array(z.string()).optional(),
@@ -309,19 +313,69 @@ export const McpServerSchema = z
      * 它能读到的东西就完全不是你以为的那些。
      */
     cwd: z.string().min(1).optional(),
-    /**
-     * ## 两个开关**不在这里**（2026-08-15 改的）
-     *
-     * `trusted` / `disabled` 一度写在这份配置里。**那是个漏洞**：
-     * 项目级名单住在 `.dawn/mcp.yaml`，**会跟着仓库被 clone 下来**——
-     * 于是别人的仓库可以声明「这台我信得过」，而那台服务器是他写的。
-     *
-     * 信任只能由**坐在这台机器前的人**拨。所以两个开关都落在本机的库里
-     * （`settings` 的 `mcp.trusted.<名>` / `mcp.off.<名>`），
-     * 而不是任何一份会被分享的文件里。**一个事实一个家**。
-     */
   })
   .strict()
+
+/**
+ * 已经跑在别处的那种（2026-08-19）：**我们连过去，不负责它的生死。**
+ *
+ * 作者：*「我要对接的是我自己放在云服务器上的 MCP……新的 streamable HTTP
+ * （一个 `/mcp` 端点），但是我觉得新的，或者老的，还是要适配的。」*
+ *
+ * ## 两种都收，因为文档里两种都在
+ *
+ * - `http` —— **streamable HTTP**，一个端点收发（现在的标准）
+ * - `sse`  —— 老的那套（`/sse` 收事件 + `/messages` 发），存量文档里仍然常见
+ *
+ * **缺省是 `http`**：新东西才是默认，老的要显式说。
+ *
+ * ## 它与本机那种最要紧的差别：**没有 stderr**
+ *
+ * 本机那条连不上时，子进程的 stderr 往往是唯一线索（我们专门留了尾巴）。
+ * 这条只有 HTTP 状态码与响应体——所以连不上时那句话必须把**状态码**说出来，
+ * 否则「连不上」三个字对 401（密钥不对）和 404（地址写错）是同一句话。
+ */
+const 远端MCP = z
+  .object({
+    type: z.enum(["http", "sse"]).default("http"),
+    url: z.string().url(),
+    /**
+     * 要带上的请求头**名**（值在钥匙串里）——与本机那条的 `env` 同一套纪律。
+     *
+     * `["Authorization"]` 的意思是「发请求前，从钥匙串取
+     * `mcp:<服务器名>:Authorization` 当这个头的值」。**值不进配置文件**：
+     * 这份文件会被分享、会进 git，而一个 `Bearer …` 进了 git 就等于没有了。
+     */
+    headers: z.array(z.string().min(1)).optional(),
+  })
+  .strict()
+
+/**
+ * 一台 MCP 服务器。**两种形态，靠有没有 `url` 分**。
+ *
+ * ## 两个开关**不在这里**（2026-08-15 改的）
+ *
+ * `trusted` / `disabled` 一度写在这份配置里。**那是个漏洞**：
+ * 项目级名单住在 `.dawn/mcp.yaml`，**会跟着仓库被 clone 下来**——
+ * 于是别人的仓库可以声明「这台我信得过」，而那台服务器是他写的。
+ *
+ * 信任只能由**坐在这台机器前的人**拨。所以两个开关都落在本机的库里
+ * （`settings` 的 `mcp.trusted.<名>` / `mcp.off.<名>`），
+ * 而不是任何一份会被分享的文件里。**一个事实一个家**。
+ *
+ * 这一条对远端那种**更要紧**：一台 HTTP 服务器你连它的进程都看不见。
+ */
+export const McpServerSchema = z.union([本机MCP, 远端MCP])
+
+/**
+ * 这台是「连过去」的那种吗。**判据是有没有 `url`**，不是有没有 `type`——
+ * `type` 有默认值，而 `url` 是远端那条**唯一不可省**的东西。
+ */
+export function 是远端MCP(
+  台: z.infer<typeof McpServerSchema>,
+): 台 is z.infer<typeof 远端MCP> {
+  return "url" in 台
+}
 export type McpServer = z.infer<typeof McpServerSchema>
 
 export const ProviderRegistrySchema = z

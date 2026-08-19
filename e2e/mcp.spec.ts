@@ -153,7 +153,17 @@ test("**按「试一次」，真的连上并列出它有哪些工具**", async (
    * 「连上了但一个工具都没有」与「连上了且能用」在屏幕上长得一样。
    */
   await expect(page.getByText(/echo/)).toBeVisible()
-  await expect(page.getByText(/3 个工具/)).toBeVisible()
+  /**
+   * **盯「它报了几个」这件事本身，不盯那个数是几**（2026-08-19 改）。
+   *
+   * 上一版写死了「3 个工具」。那份假服务器 2026-08-19 加了第四个
+   * （远端 HTTP 那条用它作证密钥带没带过去），**这条就红了**——
+   * 而它想验的从来不是「一共几个」，是**「工具清单真的出来了」**：
+   * 只说「连上了」的话，「连上了但一个工具都没有」与「连上了且能用」
+   * 在屏幕上长得一样。
+   */
+  await expect(page.getByText(/\d+ 个工具/)).toBeVisible()
+  await expect(page.getByText(/boom/)).toBeVisible()
 })
 
 /**

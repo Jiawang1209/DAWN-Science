@@ -292,8 +292,13 @@ export function PluginsView() {
 /** 一台 MCP 服务器在界面上的样子（协议 5.7） */
 export interface MCP一台 {
   name: string
-  command: string
+  /** 起它的命令。**只有本机那种有**——与 `url` 恰好一个有一个没有 */
+  command?: string
   args: string[]
+  /** 连过去的地址。**只有远端那种有**（2026-08-19） */
+  url?: string
+  /** `http` = streamable HTTP（新），`sse` = 老那套 */
+  transport?: "http" | "sse"
   env: string[]
   missingSecrets: string[]
   cwd?: string
@@ -431,6 +436,21 @@ export function McpView({
     "env": { "NCBI_API_KEY": "..." }
   }
 }}`}</pre>
+        {/**
+          * **两种形态都给一个例子**（2026-08-19 作者要的：
+          * *「我要对接的是我自己放在云服务器上的 MCP」*）。
+          *
+          * 只给本机那个例子的话，人会照着它去改——而远端那种连 `command`
+          * 都没有，改不出来。**一个例子只教得会它自己那一种。**
+          */}
+        <p className="hint">{t("已经跑在服务器上的那种，给地址：")}</p>
+        <pre className="mcp-how-code">{`{"mcpServers": {
+  "my-cloud": {
+    "type": "http",
+    "url": "https://your-server.example/mcp",
+    "headers": { "Authorization": "Bearer ..." }
+  }
+}}`}</pre>
 
         <textarea
           className="control mcp-paste"
@@ -484,7 +504,7 @@ export function McpView({
           )}
         </p>
         <p className="hint">
-          {t("Python 写的服务器把 command 换成 uvx。目前只支持本地进程（stdio），还连不了只给 HTTP 地址的远程服务器。")}
+          {t("Python 写的服务器把 command 换成 uvx。远程那种两套都收：type 写 http 是新的 streamable HTTP（一个端点），写 sse 是老那套；不写就按 http 算。")}
         </p>
       </details>
 
@@ -539,7 +559,13 @@ export function McpView({
                 </p>
                 <p className="skill-desc">
                   <code>
-                    {s.command} {s.args.join(" ")}
+                    {/**
+                      * **两种形态各显示各的**（2026-08-19）：
+                      * 本机那种给命令行，远端那种给地址与传输方式。
+                      * 地址后面缀上 `http` / `sse`——**连不上时第一个要确认的
+                      * 就是它走的哪种**，而这两种的排查方向完全不同。
+                      */}
+                    {s.url ? `${s.url}　${s.transport ?? "http"}` : `${s.command ?? ""} ${s.args.join(" ")}`}
                   </code>
                 </p>
 

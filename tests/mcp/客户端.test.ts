@@ -45,7 +45,19 @@ describe("MCP 客户端 · 对着真服务器", () => {
   it("连上并列出工具", async () => {
     const r = await 池.备好("testbox", 一台())
     expect(r.失败, `没连上：${r.失败}`).toBeUndefined()
-    expect(r.工具.map((t) => t.工具名).sort()).toEqual(["boom", "echo", "写一行"])
+    /**
+     * **列的是「它报了哪些」，不是「它应该有哪些」**（2026-08-19 改）。
+     *
+     * 上一版写死了三个名字。2026-08-19 给这份假服务器加了第四个
+     * （`我收到的头`，远端那条用来作证密钥带没带过去），**这条就红了**——
+     * 而它想验的从来不是「一共几个」，是**「列得出来」**。
+     *
+     * 所以改成盯那三个仍然在。加一个工具不该让这条红，
+     * **少一个必须让它红**。
+     */
+    for (const 名 of ["boom", "echo", "写一行"]) {
+      expect(r.工具.map((t) => t.工具名), `少了 ${名}`).toContain(名)
+    }
   })
 
   /** **工具名带服务器前缀**：两台各有一个 `echo` 时，模型要分得清打给谁 */
@@ -223,5 +235,129 @@ describe("摘出文字", () => {
   it("**什么都没返回也要说一声** —— 一片空白会被读成「没调成」", () => {
     expect(摘出文字({ content: [] })).toContain("没有返回任何内容")
     expect(摘出文字(undefined)).toContain("没有返回任何内容")
+  })
+})
+
+/**
+ * **连一台已经跑着的 HTTP MCP 服务器**（2026-08-19，作者要的）。
+ *
+ * 作者：*「我要对接的是我自己放在云服务器上的 MCP……新的 streamable HTTP
+ * （一个 `/mcp` 端点），但是我觉得新的，或者老的，还是要适配的。」*
+ *
+ * ## 这一组为什么必须真起一个服务器
+ *
+ * 与上面 stdio 那一组同一条理由（准入规则 1）：拿一个假 transport 去测，
+ * 测到的只是我们自己那几行。**要验的是「我们这个客户端能不能跟一台真服务器
+ * 说上话」**——而这一次连"说话"的方式都换了（HTTP 而不是管道）。
+ *
+ * 用的是**同一份**假服务器（`scripts/mcp-test-server.mjs`），
+ * 只是给它 `DAWN_MCP_HTTP_PORT`。另写一份的话，两份的工具集迟早各自漂移，
+ * 那时「本机那条能用」就不再说明「远端那条也能用」。
+ */
+describe("远端那种：streamable HTTP", () => {
+  let 子进程: import("node:child_process").ChildProcess | undefined
+  let 端口 = 0
+
+  beforeEach(async () => {
+    const { spawn } = await import("node:child_process")
+    const net = await import("node:net")
+    // **要一个空闲端口**：写死端口的用例在并行跑的时候会互相踩
+    端口 = await new Promise<number>((res) => {
+      const s = net.createServer()
+      s.listen(0, () => {
+        const p = (s.address() as { port: number }).port
+        s.close(() => res(p))
+      })
+    })
+    子进程 = spawn(process.execPath, [服务器脚本], {
+      env: { ...process.env, DAWN_MCP_HTTP_PORT: String(端口) },
+      stdio: ["ignore", "ignore", "pipe"],
+    })
+    // 等它真的听上了再往下走——**不等的话这一组会变成一条抖动的用例**
+    await new Promise<void>((res, rej) => {
+      const 超时 = setTimeout(() => rej(new Error("假 MCP 服务器 5 秒内没起来")), 5000)
+      子进程!.stderr?.on("data", (b) => {
+        if (String(b).includes("streamable HTTP 起在")) {
+          clearTimeout(超时)
+          res()
+        }
+      })
+    })
+  })
+  afterEach(() => 子进程?.kill())
+
+  const 那台 = (over: Partial<McpServer> = {}): McpServer =>
+    ({ type: "http", url: `http://127.0.0.1:${端口}/mcp`, ...over }) as McpServer
+
+  it("**连得上，并且列得出它的工具**", async () => {
+    const r = await 池.备好("cloud", 那台())
+    expect(r.失败, `没连上：${r.失败}`).toBeUndefined()
+    expect(r.工具.map((t) => t.工具名)).toContain("echo")
+    // **工具名照旧带服务器前缀**：两台各有一个 echo 是常事
+    expect(r.工具.find((t) => t.工具名 === "echo")?.全名).toBe("cloud__echo")
+  })
+
+  it("调得动", async () => {
+    await 池.备好("cloud", 那台())
+    const r = await 池.调("cloud", 那台(), "echo", { message: "从云上回来" })
+    expect(r.出错了).toBe(false)
+    expect(r.文字).toContain("从云上回来")
+  })
+
+  /**
+   * **密钥真的跨过 HTTP 到了那一头**——这一条是整轮改动的要害。
+   *
+   * 钥匙串里的值 → 请求头 → 服务器收到。中间任何一环断掉，
+   * 上面两条照样绿（那台假服务器不要求鉴权），
+   * 而真实的云服务器会回 401——**到那时才发现，就太晚了**。
+   */
+  it("**请求头里的密钥真的带过去了**", async () => {
+    const 带密钥的池 = new MCP池({
+      取密: (服务器名, 变量名) =>
+        服务器名 === "cloud" && 变量名 === "Authorization" ? "Bearer tok-abc123" : undefined,
+    })
+    try {
+      const 配 = 那台({ headers: ["Authorization"] } as Partial<McpServer>)
+      const r = await 带密钥的池.备好("cloud", 配)
+      expect(r.失败, `没连上：${r.失败}`).toBeUndefined()
+      const 回 = await 带密钥的池.调("cloud", 配, "我收到的头", {})
+      expect(回.文字, "服务器那头没收到 Authorization").toContain("Bearer tok-abc123")
+    } finally {
+      await 带密钥的池.全关()
+    }
+  })
+
+  /**
+   * **少了密钥就不连，并说清少的是哪一个**——与 stdio 那条同一条纪律。
+   * 静默连上去的话，人会看到一串 401，而 401 与「你没填令牌」之间隔着好几层。
+   */
+  it("**没填的密钥要点名**，不是笼统一句连不上", async () => {
+    const r = await 池.备好("cloud", 那台({ headers: ["Authorization"] } as Partial<McpServer>))
+    expect(r.失败).toContain("Authorization")
+  })
+})
+
+
+/**
+ * **非 ASCII 的头值要说人话**（2026-08-19，写完两分钟内自己踩到的）。
+ *
+ * HTTP 头走 Latin-1。塞一个中文进去，`fetch` 抛的是
+ * `Cannot convert argument to a ByteString...`——**对着一个刚填完令牌的人，
+ * 那句话什么都没说**。
+ */
+describe("远端那种：头值只能是 ASCII", () => {
+  it("**说清是哪个头、为什么**", async () => {
+    const 池2 = new MCP池({ 取密: () => "Bearer 我的令牌" })
+    try {
+      const r = await 池2.备好("cloud", {
+        type: "http",
+        url: "http://127.0.0.1:1/mcp",
+        headers: ["Authorization"],
+      } as unknown as McpServer)
+      expect(r.失败).toContain("Authorization")
+      expect(r.失败).toContain("非 ASCII")
+    } finally {
+      await 池2.全关()
+    }
   })
 })

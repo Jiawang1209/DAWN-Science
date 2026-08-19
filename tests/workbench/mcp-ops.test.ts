@@ -142,7 +142,14 @@ describe("testMcpServer", () => {
     const { wb } = 起一个(一台("testbox"))
     const r = await 试(wb, { name: "testbox" })
     expect(r.ok, `没连上：${r.error}`).toBe(true)
-    expect(r.tools.map((t) => t.name).sort()).toEqual(["boom", "echo", "写一行"])
+    /**
+     * **盯「它们在」，不盯「一共几个」**（2026-08-19 改，同 `客户端.test.ts` 那条）。
+     * 那份共用的假服务器 2026-08-19 加了第四个工具（远端那条要用它作证），
+     * 而这条想验的是「列得出来」——加一个不该让它红，少一个必须让它红。
+     */
+    for (const 名 of ["boom", "echo", "写一行"]) {
+      expect(r.tools.map((t) => t.name), `少了 ${名}`).toContain(名)
+    }
     await wb.closeAsync(3000)
   })
 

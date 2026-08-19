@@ -45,11 +45,19 @@ const 长度上限 = 32
 
 export interface 新MCP服务器 {
   名: string
-  command: string
+  /** 本机那种：起它的命令。**与 `url` 恰好二选一** */
+  command?: string
   args?: readonly string[]
-  /** 要哪些环境变量。**只有名字**——值走钥匙串，不进这份文件 */
+  /**
+   * 要哪些密钥。**只有名字**——值走钥匙串，不进这份文件。
+   * 本机那种是环境变量名，远端那种是请求头名。
+   */
   env?: readonly string[]
   cwd?: string
+  /** 远端那种：连过去的地址（2026-08-19）。**与 `command` 恰好二选一** */
+  url?: string
+  /** `http` = streamable HTTP（新），`sse` = 老那套。**缺省 http** */
+  transport?: "http" | "sse"
 }
 
 /** YAML 的行内标量：拿不准就加引号。**宁可多一对引号，不可写出一份读不回来的文件** */
@@ -58,7 +66,19 @@ function 引(s: string): string {
 }
 
 function 成块(台: 新MCP服务器): string[] {
-  const 行 = [`  ${台.名}:`, `    command: ${引(台.command)}`]
+  /**
+   * **两种形态各写各的几行**（2026-08-19）。
+   *
+   * 远端那种写 `type` + `url` + `headers`；本机那种照旧。
+   * `type` **总是写出来**，哪怕是默认的 `http`——这份文件是给人读的，
+   * 而「它走哪种传输」正是排查连不上时第一个要确认的东西。
+   */
+  if (台.url) {
+    const 行 = [`  ${台.名}:`, `    type: ${引(台.transport ?? "http")}`, `    url: ${引(台.url)}`]
+    if (台.env && 台.env.length > 0) 行.push(`    headers: [${台.env.map(引).join(", ")}]`)
+    return 行
+  }
+  const 行 = [`  ${台.名}:`, `    command: ${引(台.command ?? "")}`]
   if (台.args && 台.args.length > 0) 行.push(`    args: [${台.args.map(引).join(", ")}]`)
   if (台.env && 台.env.length > 0) 行.push(`    env: [${台.env.map(引).join(", ")}]`)
   if (台.cwd) 行.push(`    cwd: ${引(台.cwd)}`)
@@ -113,7 +133,22 @@ export function addMcpServer(file: string, 台: 新MCP服务器): ProviderRegist
   if (台.名.length > 长度上限) {
     throw new UserFacingError(`服务器名不要超过 ${长度上限} 个字符（收到 ${台.名.length} 个）`)
   }
-  if (!台.command.trim()) throw new UserFacingError("`command` 不能是空的——不知道该怎么把它启动起来")
+  /**
+   * **两种形态，各校验各的**（2026-08-19）。
+   * 缺哪一样都要当场说清——放过去的话，它会在建会话那一刻才炸，
+   * 而那时的错误与「你加了一台没填地址的服务器」毫无关系。
+   */
+  if (台.url !== undefined) {
+    if (!台.url.trim()) throw new UserFacingError("`url` 不能是空的——不知道该连到哪儿")
+    try {
+      // eslint-disable-next-line no-new
+      new URL(台.url)
+    } catch {
+      throw new UserFacingError(`「${台.url}」不是一个合法的地址——要带上 http:// 或 https://`)
+    }
+  } else if (!台.command?.trim()) {
+    throw new UserFacingError("`command` 不能是空的——不知道该怎么把它启动起来")
+  }
   if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
 
   const 原文 = readFileSync(file, "utf8")
@@ -255,7 +290,7 @@ export function 从JSON解出(文本: string): {
   const 包 = 体["mcpServers"] ?? 体["servers"]
   if (包 && typeof 包 === "object") 体 = 包 as Record<string, unknown>
 
-  if (typeof 体["command"] !== "string") {
+  if (typeof 体["command"] !== "string" && typeof 体["url"] !== "string") {
     /** 还没到那一层：应当是 `{"名": {...}}` */
     const 键 = Object.keys(体)
     if (键.length === 0) throw new UserFacingError("这段 JSON 里没有任何服务器")
@@ -270,9 +305,48 @@ export function 从JSON解出(文本: string): {
     体 = 里 as Record<string, unknown>
   }
 
+  /**
+   * **两种形态：起在本机的给 `command`，跑在别处的给 `url`**（2026-08-19）。
+   *
+   * 作者要接的是他自己云服务器上那台（streamable HTTP）。
+   * 判据是**有没有 `url`**，不是有没有 `type`——`type` 有默认值，
+   * 而 `url` 是远端那条唯一不可省的东西。
+   */
+  const url = 体["url"]
+  if (typeof url === "string" && url.trim()) {
+    const t = 体["type"] ?? 体["transport"]
+    if (t !== undefined && t !== "http" && t !== "sse" && t !== "streamable-http") {
+      throw new UserFacingError(
+        `不认识的传输方式「${String(t)}」——只收 \`http\`（streamable HTTP）与 \`sse\`（老那套）。`,
+      )
+    }
+    /**
+     * **只取头的名字，值一律丢掉**——与 `env` 同一条纪律。
+     * `Authorization: Bearer …` 里那半句才是密钥，而这份文件会进 git。
+     */
+    const h = 体["headers"]
+    const 头名 =
+      h && typeof h === "object" && !Array.isArray(h)
+        ? Object.keys(h as Record<string, unknown>)
+        : Array.isArray(h)
+          ? (h as unknown[]).map((x) => String(x))
+          : []
+    return {
+      台: {
+        ...(名 ? { 名 } : {}),
+        url: url.trim(),
+        transport: t === "sse" ? ("sse" as const) : ("http" as const),
+        ...(头名.length > 0 ? { env: 头名 } : {}),
+      },
+      密钥名: 头名,
+    }
+  }
+
   const command = 体["command"]
   if (typeof command !== "string" || !command.trim()) {
-    throw new UserFacingError("这段 JSON 里没有 `command`——不知道该怎么把它启动起来")
+    throw new UserFacingError(
+      "这段 JSON 里既没有 `command`（本机起一个进程）也没有 `url`（连到已经跑着的那台）——不知道该怎么连它",
+    )
   }
 
   const args = Array.isArray(体["args"]) ? 体["args"].map((x) => String(x)) : undefined

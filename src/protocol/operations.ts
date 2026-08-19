@@ -449,9 +449,26 @@ export const OPERATIONS = {
           z
             .object({
               name: z.string().min(1),
-              command: z.string().min(1),
+              /**
+               * 起它的命令。**只有本机那种有**（2026-08-19 起可缺席）——
+               * 远端那种已经跑在别处，我们连它的进程都看不见。
+               */
+              command: z.string().min(1).optional(),
               args: z.array(z.string()),
-              /** 它要哪些环境变量。**只有名字**——值在钥匙串里，永不回传 */
+              /**
+               * 连过去的地址。**只有远端那种有**（2026-08-19）。
+               * 它与 `command` **恰好一个有一个没有**——界面据此知道该显示哪一样。
+               */
+              url: z.string().min(1).optional(),
+              /** 走哪种传输。`http` = streamable HTTP（新），`sse` = 老那套 */
+              transport: z.enum(["http", "sse"]).optional(),
+              /**
+               * 它要哪些密钥。**只有名字**——值在钥匙串里，永不回传。
+               *
+               * 本机那种是**环境变量名**，远端那种是**请求头名**
+               * （`Authorization` 这类）。两者纪律相同，所以共用这一格：
+               * 分成两格的话，「还差哪个没填」就要在界面上判断两次。
+               */
               env: z.array(z.string()),
               /** 哪几个还没填。**界面据此说「还差 PGURL」**，不是笼统一句没配好 */
               missingSecrets: z.array(z.string()),

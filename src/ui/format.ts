@@ -135,3 +135,55 @@ export function 多久之前(iso: string, 现在: number): string {
   const 天 = Math.floor(时 / 24)
   return 天 > 99 ? "99d+" : `${天}d`
 }
+
+/**
+ * 一条模型选项**该把哪个词摆在前面**（2026-08-19）。
+ *
+ * 作者：*「我要我选择的时候，直接是 Opus4.6 而不是 Default (recommended)。
+ * 你可以在 Opus4.6 后面显示 Default (recommended)，显示 Most capable for
+ * complex work，但是不要在选择的地方，选择 Default (recommended)。」*
+ *
+ * ## 两台真适配器的约定不一样——这条规则是量出来的，不是猜的
+ *
+ * ```
+ * codex-acp 1.1.9
+ *   name: "GPT-5.6-Sol (low)"           ← 本来就是具体模型
+ *   description: "Latest frontier agentic coding model. Fast responses…"
+ *
+ * claude-code-acp 0.16.2
+ *   name: "Default (recommended)"        ← 是个角色名，不是模型
+ *   description: "Opus 4.6 · Most capable for complex work"
+ *                 ↑ 具体模型藏在这儿
+ * ```
+ *
+ * 所以：**说明里带 `·` 时，把 `·` 前面那一段提到前面**，
+ * 原来的 `name` 与后半句退到第二行。codex 那台没有 `·`，**原样不动**。
+ *
+ * ## 为什么敢解析别人的自由文本
+ *
+ * 我一开始拒绝过这件事（「人家改一次排版我们就开始胡说」），作者驳回了，
+ * 而他是对的：**「Default (recommended)」在选择的地方等于什么都没说**。
+ *
+ * 让步的前提是**这条解析只会退化、不会胡说**：
+ *   - 没有 `·` → 原样（codex 全部走这条）；
+ *   - 提出来的那一段是空的、或长得不像一个名字（>40 字）→ 原样；
+ *   - 提出来的与 `name` 一样 → 原样（没有多说任何东西，就别多摆一行）。
+ *
+ * 也就是说，**万一哪天他们改了排版，最坏的结果是回到今天的样子**，
+ * 而不是屏幕上出现一句被切坏的话。
+ */
+export function 拆模型名(
+  name: string,
+  description?: string,
+): { 主: string; 次?: string } {
+  const 说 = description?.trim()
+  if (!说) return { 主: name }
+  const i = 说.indexOf("·")
+  if (i < 0) return { 主: name, 次: 说 }
+  const 前 = 说.slice(0, i).trim()
+  const 后 = 说.slice(i + 1).trim()
+  // **不像一个名字就别提**：空的、或者长得像一句话
+  if (!前 || 前.length > 40 || 前 === name) return { 主: name, 次: 说 }
+  const 次 = [name, 后].filter(Boolean).join(" · ")
+  return { 主: 前, ...(次 ? { 次 } : {}) }
+}

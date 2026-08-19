@@ -139,3 +139,46 @@ test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => 
   // 点完就收起——菜单不该赖着不走
   await expect(page.getByRole("menuitem", { name: /配置自定义模型/ })).toHaveCount(0)
 })
+
+/**
+ * **挑 LLM 的时候，每一条要标出它是哪一路**（2026-08-19 作者要的）。
+ *
+ * 作者：*「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP。」*
+ *
+ * ## 为什么这不是装饰
+ *
+ * 三条路**在一件实事上不同**：API 那条的权限门管得住；CLI 那条管不到、
+ * 也不会问你；ACP 那条管不到、但它会**主动问**。
+ * 一个人对着同一个输入框、却在三种规则下干活——不标出来，
+ * 「为什么这次它没问我就删了文件」永远说不清。
+ *
+ * ## 此前只有触发按钮上那一颗
+ *
+ * 也就是说：**你看得见「现在这段是哪一路」，看不见「要挑的这个是哪一路」**——
+ * 而挑之前才是需要知道的时候。
+ */
+test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP**", async ({ dawn }) => {
+  const { page } = dawn
+
+  const pill = page.locator(".composer-controls .agent-pill")
+  await expect(pill).toHaveCount(1)
+  await pill.locator("button").first().click()
+
+  const 单子 = page.locator(".agent-menu .new-group")
+  await expect(单子).toBeVisible()
+
+  /**
+   * 夹具那份配置里有 `ds-chat`（native）与两个 cli——
+   * **每一条都得有标记，不是「有几条带标记就算过」**：
+   * 少标一条，那一条看起来就像「没有这个属性」，而它其实有。
+   */
+  const 条数 = await 单子.getByRole("menuitem").count()
+  expect(条数, "挑 LLM 的单子是空的").toBeGreaterThan(0)
+  await expect(单子.locator(".kind"), "有的条目没有标记——少标一条比全不标更难发现").toHaveCount(
+    条数,
+  )
+  // 而且写的是那三个词之一，不是别的
+  for (const 字 of await 单子.locator(".kind").allTextContents()) {
+    expect(["API", "CLI", "ACP", "终端", "内核"]).toContain(字)
+  }
+})

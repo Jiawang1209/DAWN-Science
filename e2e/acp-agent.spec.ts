@@ -284,6 +284,7 @@ test.describe("ACP 会话开关", () => {
      * 我们一路把它收到了界面，然后没画——**答案就在载荷里，我们没显示**。
      */
     await expect(菜单, "选项底下那句说明没画出来").toContainText("更贵更强")
+
     // ④ boolean 画成可勾选的那种，不是两个单选
     await expect(菜单.getByRole("menuitemcheckbox")).toHaveCount(1)
 
@@ -297,6 +298,47 @@ test.describe("ACP 会话开关", () => {
      */
     await 菜单.getByRole("menuitemradio", { name: /^Opus/ }).click()
     await expect(触发).toContainText("Opus", { timeout: 20_000 })
+  })
+
+
+  /**
+   * **装成 claude 那台**：没有 `configOptions`，模型来自 `models`，
+   * 而且它的 `name` 是个**角色名**（`Default (recommended)`），
+   * 具体模型藏在 `description` 的 `·` 前面。
+   */
+  test.describe("装成 claude 那台时", () => {
+    test.use({
+      dawnOptions: { providersYaml: PROVIDERS, gitInit: true, env: { FAKE_ACP_LIKE_CLAUDE: "1" } },
+    })
+
+    /**
+     * **摆在前面的必须是具体模型**（2026-08-19 作者要的）。
+     *
+     * 作者：*「我要我选择的时候，直接是 Opus4.6 而不是 Default (recommended)。
+     * 你可以在 Opus4.6 后面显示 Default (recommended)，
+     * 显示 Most capable for complex work，但是不要在选择的地方，
+     * 选择 Default (recommended)。」*
+     *
+     * 「Default (recommended)」是适配器自己给的名字——**它在选择的地方
+     * 等于什么都没说**，而「它是谁」就写在旁边那句说明里。
+     */
+    test("**选择的地方写具体模型，角色名退到第二行**", async ({ dawn }) => {
+      const { page } = dawn
+      await 用某个agent开一段(page, /claude-acp/)
+      await 等进了对话(page)
+
+      const 触发 = page.locator(".sess-config-trigger")
+      // 按钮上也是具体模型，不是角色名
+      await expect(触发, "按钮上写的还是那个角色名").toHaveText(/Opus 4\.6/, { timeout: 30_000 })
+
+      await 触发.click()
+      const 头一项 = page.locator(".sess-config-menu").getByRole("menuitemradio").first()
+      await expect(头一项.locator(".sess-config-opt-name")).toHaveText("Opus 4.6")
+      // 角色名与说明都还在，只是退到第二行——**不是把它们扔掉**
+      await expect(头一项.locator(".sess-config-opt-desc")).toHaveText(
+        "Default (recommended) · 最能干的那个",
+      )
+    })
   })
 
   test.describe("不给开关时", () => {

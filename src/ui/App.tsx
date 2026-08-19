@@ -3334,6 +3334,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <EmptyConversation
               agents={agentIds}
               agentLabel={agentLabel}
+              /**
+               * **挑之前就要知道它是哪一路**（2026-08-19 作者要的：
+               * *「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP」*）。
+               */
+              agentKind={(id: string) => providers.agents.find((x) => x.agentId === id)?.kind}
               onToggleDock={toggleDock}
               /**
                * **首页开出来的是临时会话**（2026-08-11）。

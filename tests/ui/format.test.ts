@@ -5,7 +5,7 @@
  * 这条**推翻了我之前写下的**「不缩写成 1.2k」——见 `src/ui/format.ts` 的说明。
  */
 import { describe, expect, it } from "vitest"
-import { formatDuration, formatTokens, 多久之前 } from "../../src/ui/format.js"
+import { formatDuration, formatTokens, 多久之前, 拆模型名 } from "../../src/ui/format.js"
 
 describe("token 数", () => {
   it("**1000 以下原样** —— 写成 0.1k 是把已知的精度扔掉", () => {
@@ -128,5 +128,59 @@ describe("多久之前", () => {
   it("认不出的时间说「时间不明」", () => {
     expect(多久之前("不是时间", 现在)).toBe("时间不明")
     expect(多久之前("", 现在)).toBe("时间不明")
+  })
+})
+
+/**
+ * **模型选项该把哪个词摆在前面**（2026-08-19，作者要的）。
+ *
+ * 作者：*「我要我选择的时候，直接是 Opus4.6 而不是 Default (recommended)。」*
+ *
+ * 下面两组输入**都是从真适配器身上抄下来的原话**，不是编的：
+ * `claude-code-acp` 0.16.2 与 `codex-acp` 1.1.9 各起了一台问出来的。
+ * 这一条的价值全在「两台的约定不一样」上——只照一台写，另一台就会被切坏。
+ */
+describe("拆模型名", () => {
+  it("**claude 那台：把 `·` 前面那段提上来**", () => {
+    expect(拆模型名("Default (recommended)", "Opus 4.6 · Most capable for complex work")).toEqual({
+      主: "Opus 4.6",
+      次: "Default (recommended) · Most capable for complex work",
+    })
+    expect(拆模型名("Sonnet", "Sonnet 4.5 · Best for everyday tasks")).toEqual({
+      主: "Sonnet 4.5",
+      次: "Sonnet · Best for everyday tasks",
+    })
+  })
+
+  /** **codex 那台的 `name` 本来就是具体模型**，说明里没有 `·`——原样不动 */
+  it("codex 那台原样不动", () => {
+    expect(
+      拆模型名("GPT-5.6-Sol (low)", "Latest frontier agentic coding model. Fast responses with lighter reasoning"),
+    ).toEqual({
+      主: "GPT-5.6-Sol (low)",
+      次: "Latest frontier agentic coding model. Fast responses with lighter reasoning",
+    })
+  })
+
+  it("没有说明就只有名字", () => {
+    expect(拆模型名("Opus")).toEqual({ 主: "Opus" })
+    expect(拆模型名("Opus", "   ")).toEqual({ 主: "Opus" })
+  })
+
+  /**
+   * **只会退化，不会胡说。** 这三条是那条「敢不敢解析别人自由文本」的
+   * 全部理由：万一哪天他们改了排版，最坏也就是回到今天的样子。
+   */
+  it("**提不出像样的名字就退回原样**", () => {
+    // 前半段是空的
+    expect(拆模型名("Opus", "· 只有后半句")).toEqual({ 主: "Opus", 次: "· 只有后半句" })
+    // 前半段长得像一句话，不像名字
+    const 长 = "这是一句很长的说明文字它根本不是一个模型的名字而是一整段描述早就超过了四十个字的上限所以不该被提上来"
+    expect(拆模型名("Opus", `${长} · 后半句`).主).toBe("Opus")
+    // 提出来的与 name 一样：没多说任何东西
+    expect(拆模型名("Opus 4.6", "Opus 4.6 · 最能干")).toEqual({
+      主: "Opus 4.6",
+      次: "Opus 4.6 · 最能干",
+    })
   })
 })

@@ -4441,7 +4441,24 @@ pre {
 /** 组名比选项淡一档：**它是分类，不是可点的东西** */
 .sess-config-name { margin: 0 0 2px; font-size: 12px; color: var(--dawn-text-3); }
 .sess-config-desc { margin: 0 0 4px; font-size: 11px; color: var(--dawn-text-3); }
-.sess-config-menu .btn { display: block; width: 100%; text-align: left; padding: 3px var(--dawn-space-2); border-radius: var(--dawn-radius-sm); }
+/**
+ * **整行是一条 flex，勾和内容并排**（2026-08-19）。
+ *
+ * 原来是 `display: block` + 一个 `inline-flex` 的勾，靠行内流并排。
+ * 那在「一行字」时没问题；**说明变成两行之后，内容那一块挤不下，
+ * 于是整块换行——勾孤零零留在上一行**。截图时看见的（这一处不在
+ * 十张逐像素基线里，只有真去看）。
+ *
+ * `align-items: flex-start`：勾对齐第一行，不是垂直居中到两行中间。
+ */
+.sess-config-menu .btn {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 3px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+}
 .sess-config-menu .btn:hover { background: var(--dawn-row-hover); }
 .sess-config-menu .btn.current { color: var(--dawn-text-1); }
 /** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
@@ -4454,15 +4471,16 @@ pre {
  * `Opus 4.6 · Most capable for complex work`）——**那一行常常是唯一
  * 说得清「这一项到底是谁」的东西**，而我们此前收上来了却没画。
  *
- * **`inline-flex`，不是 `flex`**：这一行的按钮是 `display: block`，
- * 勾是 `inline-flex`。写成块级 flex 的话它自成一行，
- * **勾就跑到名字上面去了**——第一版就是这样，截图时当场看见的。
+ * **这一处的排版栽过两次，都是截图时才看见的**（都不在十张逐像素基线里）：
+ * 第一版写成块级 `flex`，它自成一行、勾跑到名字上面去；
+ * 改成 `inline-flex` 之后一行字时对了，**而说明一旦换行又整块掉下去**。
+ * 最后是把整行改成 flex（见 `.sess-config-menu .btn`），这里才踏实。
  */
 .sess-config-opt {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   gap: 1px;
-  vertical-align: top;
+  /** **允许它被压窄**，否则长说明会把整行撑出菜单 */
   min-width: 0;
 }
 .sess-config-opt-name { min-width: 0; }

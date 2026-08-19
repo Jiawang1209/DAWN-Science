@@ -76,8 +76,17 @@ const 那两份 = {
   models: {
     currentModelId: "default",
     availableModels: [
-      { modelId: "default", name: "Default (recommended)", description: "最能干的那个" },
-      { modelId: "haiku", name: "Haiku", description: "快而便宜" },
+      /**
+       * **说明里那个 `<模型> · <说明>` 的形状是照真 claude 抄的**
+       * （2026-08-19）：`@zed-industries/claude-code-acp` 0.16.2 报的是
+       * `name: "Default (recommended)"` + `description: "Opus 4.6 · Most capable…"`。
+       *
+       * 抄这个形状不是为了好看：界面有一条「把 `·` 前面那段提到前面」的规则
+       * （作者要的——*「直接是 Opus4.6 而不是 Default (recommended)」*）。
+       * **假的这里不带 `·`，那条规则就没有任何判据走得到它。**
+       */
+      { modelId: "default", name: "Default (recommended)", description: "Opus 4.6 · 最能干的那个" },
+      { modelId: "haiku", name: "Haiku", description: "Haiku 4.5 · 快而便宜" },
     ],
   },
   modes: {

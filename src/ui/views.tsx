@@ -28,7 +28,7 @@ import { $跑着的会话 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
-import { formatDuration, formatTokens, 多久之前, 短路径, 基名 } from "./format.js"
+import { formatDuration, formatTokens, 多久之前, 拆模型名, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
@@ -2612,7 +2612,20 @@ function SessionConfigMenu({
    * 没有 `model` 那一条时退回一个中性的名字。
    */
   const 模型 = options.find((o) => o.category === "model")
-  const 标 = 模型 ? (模型.options.find((x) => x.value === 模型.current)?.name ?? 模型.current) : undefined
+  /**
+   * 按钮上写**当前那个模型**。
+   *
+   * **写「Opus 4.6」，不写「Default (recommended)」**（2026-08-19 作者要的）：
+   * *「我要我选择的时候，直接是 Opus4.6 而不是 Default (recommended)。」*
+   * 哪个词该摆在前面由 `拆模型名` 决定，它是按两台真适配器量出来的
+   * （codex 那台的 `name` 本来就是具体模型，原样不动）。
+   */
+  const 当前项 = 模型?.options.find((x) => x.value === 模型.current)
+  const 标 = 模型
+    ? 当前项
+      ? 拆模型名(当前项.name, 当前项.description).主
+      : 模型.current
+    : undefined
 
   return (
     <div className="sess-config" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
@@ -2693,12 +2706,27 @@ function SessionConfigMenu({
                       * **说明进按钮里面，不放外面**：读屏念到的应当是
                       * 「Opus，更贵更强」——它正要据此决定点不点。
                       */}
-                    <span className="sess-config-opt">
-                      <span className="sess-config-opt-name">{x.name}</span>
-                      {x.description ? (
-                        <span className="sess-config-opt-desc">{x.description}</span>
-                      ) : null}
-                    </span>
+                    {/**
+                      * **前面那行是具体模型，后面那行才是角色名与说明**
+                      * （2026-08-19 作者要的）。
+                      *
+                      * 作者：*「你可以在 Opus4.6 后面显示 Default (recommended)，
+                      * 显示 Most capable for complex work，但是不要在选择的地方，
+                      * 选择 Default (recommended)。」*
+                      *
+                      * 哪个词该摆前面由 `拆模型名` 决定——**它是照两台真适配器
+                      * 量出来的**，而且只会退化不会胡说（说明里没有 `·` 就原样）。
+                      * 模式那一组的说明本来就没有 `·`，因此不受影响。
+                      */}
+                    {(() => {
+                      const { 主, 次 } = 拆模型名(x.name, x.description)
+                      return (
+                        <span className="sess-config-opt">
+                          <span className="sess-config-opt-name">{主}</span>
+                          {次 ? <span className="sess-config-opt-desc">{次}</span> : null}
+                        </span>
+                      )
+                    })()}
                   </Button>
                 ))
               )}
@@ -2777,6 +2805,7 @@ export function AgentPill({
   current,
   currentLabel,
   kind,
+  agentKind,
   label,
   services,
   onSwitchService,
@@ -2793,7 +2822,24 @@ export function AgentPill({
    * （作者：*「我选择 kimi-k3 的时候，后面的模型厂家能否帮我自动设置为 kimi」*）。
    */
   currentLabel?: string | undefined
-  kind?: "native" | "pty" | "cli" | "kernel" | undefined
+  /**
+   * 当前这一段是哪一路。
+   *
+   * **`acp` 2026-08-19 补进来了**：这个联合是手抄的，而 `acp` 那一路
+   * 2026-08-16 就有了——抄件与原件各自漂移的老毛病。改成从
+   * `SessionSummary` 推导，往后加第六种时这里编译不过，而不是安静地少一种。
+   */
+  kind?: SessionSummary["kind"] | undefined
+  /**
+   * **每一个候选各是哪一路**（2026-08-19 作者要的：
+   * *「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP。」*）。
+   *
+   * 与上面那个 `kind` 是两件事：那个说的是「现在这段是哪一路」，
+   * 这个说的是「要挑的这个是哪一路」——**而挑之前才是需要知道的时候**。
+   *
+   * **不给就不标**：旧调用点一个字不受影响。
+   */
+  agentKind?: ((agentId: string) => SessionSummary["kind"] | undefined) | undefined
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   label?: ((agentId: string) => string) | undefined
   /**
@@ -2915,6 +2961,19 @@ export function AgentPill({
                   }}
                 >
                   <span className="name">{label ? label(a) : a}</span>
+                  {/**
+                    * **每一条都标出它是哪一路**（2026-08-19 作者要的）：
+                    * *「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP。」*
+                    *
+                    * 此前只有触发按钮上那一颗标记——也就是说
+                    * **你只看得见「现在这段是哪一路」，看不见「要挑的这个是哪一路」**，
+                    * 而挑之前才是需要知道的时候：三条路的能力真的不一样
+                    * （API 的权限门管得住、CLI 管不到也不问、ACP 管不到但会主动问）。
+                    */}
+                  {(() => {
+                    const k = agentKind?.(a)
+                    return k ? <span className="kind">{KIND_LABEL[k]}</span> : null
+                  })()}
                   {a === current ? <span className="hint">{t("当前")}</span> : null}
                 </Row>
               </li>
@@ -5139,6 +5198,7 @@ const OPENERS: readonly { 标题: string; 说明: string; 发出去的话: strin
 export function EmptyConversation({
   agents,
   agentLabel,
+  agentKind,
   onStart,
   onToggleDock,
   onOpenSettings,
@@ -5147,6 +5207,11 @@ export function EmptyConversation({
   agents: readonly string[]
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   agentLabel?: ((agentId: string) => string) | undefined
+  /**
+   * 每一个候选各是哪一路（2026-08-19 作者要的）。
+   * **这一屏自己不看它，只是转手给 `AgentPill`**。
+   */
+  agentKind?: ((agentId: string) => SessionSummary["kind"] | undefined) | undefined
   /** 掀开／收起底部终端。**与 composer 上那颗、命令面板那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
   /**
@@ -5473,6 +5538,7 @@ export function EmptyConversation({
                 {first ? (
                   <AgentPill
                     agents={agents}
+                    {...(agentKind ? { agentKind } : {})}
                     {...(agentLabel ? { label: agentLabel } : {})}
                     /**
                      * **失败要在这一屏说出来**（T4，2026-08-13 修）。

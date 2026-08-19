@@ -361,7 +361,7 @@ const diff行上界 = 2000
 
 /** 这几件是 `RemoteExecutor` 上我们用到的。**收窄成接口**，这一层不该认识整个执行器 */
 interface RemoteExecutorLike {
-  readdir(path: string): Promise<{ name: string; directory: boolean; size: number }[]>
+  readdir(path: string): Promise<{ name: string; directory: boolean; size: number; mtimeMs: number }[]>
   unlink(path: string): Promise<void>
   rmdir(path: string): Promise<void>
 }
@@ -406,11 +406,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           kind: e.directory ? ("dir" as const) : ("file" as const),
           // **目录不报大小**——目录的「大小」是个误导（与本地那条同一份口径）
           ...(e.directory ? {} : { size: e.size }),
-          /**
-           * SFTP 的 `readdir` 不给修改时间。**如实给一个占位而不是编一个**——
-           * 协议要求这一格，但我们没有它。批 4 走 `stat` 时再补。
-           */
-          modifiedAt: new Date(0).toISOString(),
+          // 真值（2026-08-19 起）。此前是个 1970 占位，理由见 `ssh.ts` 的 `readdir`
+          modifiedAt: new Date(e.mtimeMs).toISOString(),
         }))
         .sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === "dir" ? -1 : 1)),
       ignored: 0,

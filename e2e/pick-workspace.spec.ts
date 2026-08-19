@@ -189,3 +189,41 @@ test("**在外面往目录里丢文件，切回窗口树就跟上**", async ({ d
     "刷新之后展开的目录塌回去了",
   ).toHaveClass(/./)
 })
+
+/**
+ * **文件行写着多久前改的；「刷新」按钮不靠切窗口也能看见新文件**（2026-08-19）。
+ *
+ * 作者：*「我只需要在文件树里面看到生成了什么数据就好，有时间戳，
+ * 我就知道哪个文件是新生成的了。」* 以及：*「可以给 DAWN 的文件里面
+ * 增加一个刷新的按钮……多刷新其实就好了。」*
+ *
+ * 两件事在一条用例里，因为它们盯的是同一行：刚写的文件要出现（刷新），
+ * 而且写着「刚刚」（时间）。此前文件行只有大小——**本地的 mtime 一直在
+ * 载荷里，没画；远端的干脆没取**。
+ *
+ * **这条不派 `focus` 事件**：上一条靠切窗口刷新，这一条只按按钮。
+ * 两条路各自证明各自的。
+ */
+test("**文件行写着「刚刚」；按「刷新」不切窗口也能看见新文件**", async ({ dawn }) => {
+  const { page } = dawn
+
+  await page.getByRole("button", { name: "选择工作目录" }).click()
+  await 进坞(page, "文件")
+  const 坞 = page.locator(".right-dock")
+  await expect(坞.getByRole("button", { name: /认得出的文件\.md/ })).toBeVisible({ timeout: 15_000 })
+
+  const 新的 = "按刷新才看见的.csv"
+  await expect(坞.getByRole("button", { name: new RegExp(新的) })).toHaveCount(0)
+  writeFileSync(join(目标, 新的), "x\n")
+
+  // 没切窗口、没上传、没删除——只按了这颗
+  await 坞.getByRole("button", { name: "刷新当前文件夹" }).click()
+
+  const 行 = 坞.getByRole("button", { name: new RegExp(新的) })
+  await expect(行, "按了刷新，刚写的文件还是看不见").toBeVisible({ timeout: 15_000 })
+  /**
+   * **时间戳**：刚写进去的，必须写「刚刚」。红的样子：这一格空着（没画），
+   * 或者写着 `99d+`（远端那条 1970 占位的症状）。
+   */
+  await expect(行.locator(".file-when"), "文件行没写多久前改的").toHaveText("刚刚")
+})

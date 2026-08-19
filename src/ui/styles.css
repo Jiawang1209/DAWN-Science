@@ -1815,6 +1815,14 @@ pre {
   white-space: nowrap;
 }
 
+/**
+ * 文件行右侧「多久前改的」（2026-08-19）。**等宽数字**，与会话行的
+ * `.sess-when` 同一套口径——两处写同一种相对时间，不该长得不一样。
+ */
+.file-when {
+  font-variant-numeric: tabular-nums;
+}
+
 .tree-note {
   padding: 0 var(--dawn-space-3);
   margin: 0 0 var(--dawn-space-1);

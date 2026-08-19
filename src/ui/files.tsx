@@ -16,9 +16,11 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
-import { 三角图标 } from "./icons.js"
+import { 三角图标, 刷新图标 } from "./icons.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
+import { 多久之前 } from "./format.js"
+import { use现在 } from "./views.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
  * 抄一份的代价：协议改了之后两边各自自洽，编译器一句话都不会说。
@@ -72,10 +74,17 @@ function DirNode({
   onDelete,
   onDrop,
   刷新令牌,
+  现在,
 }: {
   path: string
   name: string
   depth: number
+  /**
+   * 此刻（毫秒），**由树根读一次往下传**——每一层自己起一个心跳的话，
+   * 展开十个目录就是十个定时器，而且各自跳在不同的瞬间。
+   * 文件行用它写「多久前改的」。
+   */
+  现在: number
   selected: string | undefined
   onSelect: (path: string) => void
   load: (path: string) => Promise<Listing>
@@ -206,6 +215,7 @@ function DirNode({
                   selected={selected}
                   onSelect={onSelect}
                   load={load}
+                  现在={现在}
                   {...(刷新令牌 === undefined ? {} : { 刷新令牌 })}
                   {...(onDelete ? { onDelete } : {})}
                   {...(onDrop ? { onDrop } : {})}
@@ -219,7 +229,21 @@ function DirNode({
                     onClick={() => onSelect(path ? `${path}/${e.name}` : e.name)}
                   >
                     <span className="name">{e.name}</span>
-                    <span className="sub">{e.size === undefined ? "" : bytes(e.size)}</span>
+                    {/**
+                      * **多久前改的**（2026-08-19）。作者：*「我只需要在文件树里看到
+                      * 生成了什么数据就好，有时间戳我就知道哪个文件是新生成的了。」*
+                      *
+                      * 服务器上的目录多半不是 git 仓库，时间戳是那儿唯一现成的
+                      * 「什么是新的」。写法与会话行同一套（`刚刚 / 3m / 2h / 5d`），
+                      * **悬上去是完整时间**。目录行不写——目录的 mtime 含糊
+                      * （里面动一个文件它就变），与目录不报大小同一口径。
+                      */}
+                    <span className="sub">
+                      <span className="file-when" title={new Date(e.modifiedAt).toLocaleString()}>
+                        {多久之前(e.modifiedAt, 现在)}
+                      </span>
+                      {e.size === undefined ? "" : ` · ${bytes(e.size)}`}
+                    </span>
                   </Row>
                 </li>
               ),
@@ -592,6 +616,22 @@ export function FilesView({
    * 的错误显示出来。多写一处校验就是多一份会说不同话的实现。
    */
   const [根, 设根] = useState(初始根 ?? "")
+  const 现在 = use现在()
+  /**
+   * **手动刷新**（2026-08-19，作者要的）。
+   *
+   * 作者：*「可以给 DAWN 的文件里面增加一个刷新的按钮，这样就不需要
+   * 试试更新了，多刷新其实就好了。」*
+   *
+   * 自动刷新只管三件事（传完、删完、切回窗口）；在服务器上跑着的脚本
+   * 把文件写出来的那一刻，**界面上没有任何东西会知道**。与其替它猜
+   * 什么时候该刷，不如给一颗按钮——**自己按一下，比「怎么还不出来」好**。
+   *
+   * 它与外面传进来的令牌**相加**：两个来源，任一个动一下这一层就重读，
+   * 而且走的是同一条路（展开状态不丢）。
+   */
+  const [手动刷新, 设手动刷新] = useState(0)
+  const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
   return (
     <div className={铺开 ? "files-view files-wide" : "files-view"}>
       <div className="files-where">
@@ -624,6 +664,18 @@ export function FilesView({
          * 没有这颗的话，一次手滑的跳转会让人以为整棵树没了——
          * 而这个项目已经为「进得去出不来」改过一次（项目概览与文件的返回键）。
          */}
+        {/**
+          * 图标按钮，照作者常用的 SFTP 客户端那一颗。读屏名字是「刷新当前文件夹」。
+          * **不用 `title=`**（设计契约：无样式、半秒延迟、与主题不符）。
+          */}
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("刷新当前文件夹")}
+          onClick={() => 设手动刷新((n) => n + 1)}
+        >
+          <刷新图标 />
+        </Button>
         {onUpload ? (
           <Button variant="ghost" size="sm" onClick={() => onUpload(根)}>
             {t("传到这里")}
@@ -684,7 +736,8 @@ export function FilesView({
             selected={selected}
             onSelect={onSelect}
             load={loadDir}
-            刷新令牌={刷新令牌}
+            现在={现在}
+            刷新令牌={合令牌}
             {...(onDeleteDir ? { onDelete: onDeleteDir } : {})}
             {...(onDropUpload ? { onDrop: onDropUpload } : {})}
           />

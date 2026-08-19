@@ -75,8 +75,9 @@ function 造一个假客户端(环境输出 = "DAWNENV_PATH=/opt/conda/bin:/usr/
         writeFile: (_p: string, _d: unknown, f: (e?: Error) => void) => f(),
         readdir: (_p: string, f: (e: undefined, l: unknown[]) => void) =>
           f(undefined, [
-            { filename: "a.txt", attrs: { isDirectory: () => false, size: 3 } },
-            { filename: "sub", attrs: { isDirectory: () => true, size: 0 } },
+            // `mtime` 是**秒**（SFTP 的口径），`readdir` 要换成毫秒
+            { filename: "a.txt", attrs: { isDirectory: () => false, size: 3, mtime: 1_755_000_000 } },
+            { filename: "sub", attrs: { isDirectory: () => true, size: 0, mtime: 1_755_000_000 } },
           ]),
       } as never)
       return undefined as never
@@ -201,8 +202,8 @@ describe("文件", () => {
     await r.writeFile("/a", "x")
     const list = await r.readdir("/")
     expect(list).toEqual([
-      { name: "a.txt", directory: false, size: 3 },
-      { name: "sub", directory: true, size: 0 },
+      { name: "a.txt", directory: false, size: 3, mtimeMs: 1_755_000_000_000 },
+      { name: "sub", directory: true, size: 0, mtimeMs: 1_755_000_000_000 },
     ])
   })
 })

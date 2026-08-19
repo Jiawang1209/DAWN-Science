@@ -485,7 +485,21 @@ export class RemoteExecutor {
     })
   }
 
-  async readdir(path: string): Promise<{ name: string; directory: boolean; size: number }[]> {
+  /**
+   * 列一层目录。
+   *
+   * **`mtime` 也一起取**（2026-08-19）。此前这里只拿了名字/类型/大小，
+   * 后端于是给文件树填了个 1970 占位，注释还写着「SFTP 不给修改时间」——
+   * 可它就在旁边的 `attrs.mtime` 里（SFTP 协议的 `ATTRS` 本来就带时间）。
+   * 又一次「东西到手了，最后一步没往下传」。
+   *
+   * 作者要它的理由：*「我只需要在文件树里看到生成了什么数据就好，
+   * 有时间戳我就知道哪个是新生成的。」*——服务器上的目录多半不是 git 仓库，
+   * 时间戳是那儿唯一现成的「什么是新的」。
+   *
+   * SFTP 给的是**秒**；这里换成毫秒，与 `Date` 同一口径。
+   */
+  async readdir(path: string): Promise<{ name: string; directory: boolean; size: number; mtimeMs: number }[]> {
     const s = await this.sftp()
     return new Promise((resolve, reject) => {
       s.readdir(path, (err, list) => {
@@ -496,6 +510,7 @@ export class RemoteExecutor {
             // `longname` 的第一位是类型；`attrs.isDirectory()` 更直接
             directory: e.attrs.isDirectory(),
             size: e.attrs.size,
+            mtimeMs: e.attrs.mtime * 1000,
           })),
         )
       })

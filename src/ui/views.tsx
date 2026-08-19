@@ -1120,7 +1120,7 @@ export function RightDock({
 export function SessionSidebar({
   服务器名,
   projects,
-  sessions,
+  排序全集,
   agents,
   agentLabel,
   projectSessions = [],
@@ -1156,13 +1156,27 @@ export function SessionSidebar({
   onNewTaskIn,
 }: {
   projects: readonly ProjectSummary[]
-  sessions: readonly SessionSummary[]
+  /**
+   * **拖拽排序算新次序时的那个全集**（2026-08-19 从 `sessions` 改名）。
+   *
+   * ## 为什么值得改一个名字
+   *
+   * 它从前叫 `sessions`，因为它**曾经**是「会话」那一列要渲染的东西。
+   * 2026-08-14 之后侧栏三列全部由 `tasks` 驱动，它就只剩 `drop()` 一个消费者了——
+   * 而名字没跟着变。于是调用方还照着旧名字的意思去理解它，
+   * 顺手滤掉了远端那些（「远端会话不在这一列」——对渲染成立，对排序是错的），
+   * 结果是**服务器收纳里的行看起来能拖、松手什么都不发生**（作者 2026-08-19 报的）。
+   *
+   * **所以这里要的是「所有能参与排序的会话」，不是「某一列里显示的会话」。**
+   * 少给一个，那一个就静静地拖不动。
+   */
+  排序全集: readonly SessionSummary[]
   /** 可选的 agent（来自 providers.yaml）。空数组时新建按钮禁用并说明原因 */
   agents: string[]
   /**
    * **当前展开那个项目里的会话**（2026-08-11）。
    *
-   * 与上面那个 `sessions` 是两拨人：那一拨是**临时会话**
+   * 与上面那个 `排序全集` 是两拨人：那一拨是**临时会话**
    * （没有指定项目的），这一拨属于某个项目。
    */
   projectSessions?: readonly SessionSummary[] | undefined
@@ -1656,13 +1670,13 @@ export function SessionSidebar({
    */
   const drop = (targetId: string) => {
     setOver(undefined)
-    const from = sessions.find((x) => x.sessionId === dragging)
-    const to = sessions.find((x) => x.sessionId === targetId)
+    const from = 排序全集.find((x) => x.sessionId === dragging)
+    const to = 排序全集.find((x) => x.sessionId === targetId)
     setDragging(undefined)
     if (!from || !to || from.sessionId === to.sessionId) return
     if (from.pinned !== to.pinned) return
 
-    const ids = sessions.map((x) => x.sessionId)
+    const ids = 排序全集.map((x) => x.sessionId)
     const next = ids.filter((id) => id !== from.sessionId)
     next.splice(next.indexOf(to.sessionId), 0, from.sessionId)
     onReorderSessions?.(next)

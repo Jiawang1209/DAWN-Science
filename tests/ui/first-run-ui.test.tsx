@@ -29,7 +29,7 @@ const sidebar = (over: Partial<Parameters<typeof SessionSidebar>[0]> = {}) =>
   render(
     <SessionSidebar
       projects={[project()]}
-      sessions={[]}
+      排序全集={[]}
       agents={["ds-chat", "claude"]}
       activeProjectId="p1"
       activeSessionId={undefined}

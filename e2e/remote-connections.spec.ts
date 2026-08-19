@@ -984,3 +984,70 @@ test("拖拽：落在哪一行就亮哪一行；拿不到本机路径要出声",
   })
   await expect(page.getByText(/拿不到本机路径/)).toBeVisible({ timeout: 15_000 })
 })
+
+/**
+ * **服务器收纳里的会话也能拖着换位置**（作者 2026-08-19 报的）。
+ *
+ * > *「服务器里面的会话，我不能挪动鼠标更换位置。」*
+ *
+ * ## 它坏得很安静，所以这条用例盯的是「真的动了没有」
+ *
+ * 行上的 `draggable` 一直是给足的（`sessionOf` 查的是**没过滤**的那一拨），
+ * 落点线也画得出来——**只有松手之后什么都不发生**。
+ * 根因在 `App.tsx`：传给侧栏的 `sessions` 被 `!x.remote` 滤过一道，
+ * 而这个 prop 今天**唯一的消费者就是拖拽排序**，于是 `from`/`to` 双双查不到，
+ * `drop()` 一声不吭地 return。
+ *
+ * 那道过滤是 2026-08-11 加的，当时它挡的是**渲染**（远端会话别在「会话」
+ * 那一列里再出现一次）；2026-08-14 服务器那一列改成由 `tasks` 驱动之后，
+ * **理由失效了，过滤留下来了**。这条用例就是那个理由的墓碑。
+ */
+test("**服务器收纳里的会话，拖到哪就排到哪**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+
+  /**
+   * 两段远端会话，**各起一个不会撞的名字**。
+   *
+   * 不起名的话两行都叫「新会话」——本项目吃过三次
+   * 「两处长得一样的东西等于没有判据」，这里不再吃第四次。
+   */
+  const 建好了 = await page.evaluate(async () => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }
+    }
+    const p = (await w.dawn.invoke("getProviders", {})) as {
+      data?: { agents?: { agentId: string }[] }
+    }
+    const agentId = p.data?.agents?.[0]?.agentId
+    const conns = (await w.dawn.invoke("listConnections", {})) as { data?: { id: string }[] }
+    const connectionId = conns.data?.[0]?.id
+    if (!agentId || !connectionId) return false
+    for (const 名 of ["甲那一段", "乙那一段"]) {
+      const t = (await w.dawn.invoke("createTask", { agentId, connectionId })) as {
+        data?: { sessionId?: string }
+      }
+      if (!t.data?.sessionId) return false
+      await w.dawn.invoke("renameSession", { sessionId: t.data.sessionId, title: 名 })
+    }
+    return true
+  })
+  expect(建好了, "两段远端会话没建起来——那台假服务器没连上？").toBe(true)
+
+  await page.reload()
+  await 展开远端(page)
+
+  const 行 = page.locator(".side-server li .name")
+  await expect(行).toHaveCount(2, { timeout: 30_000 })
+  // 新的在上（与「会话」那一列同一套次序）
+  await expect(行.first()).toContainText("乙那一段")
+  await expect(行.nth(1)).toContainText("甲那一段")
+
+  await page.locator(".side-server li").nth(1).dragTo(page.locator(".side-server li").nth(0))
+
+  await expect(行.first(), "拖了，但一声不吭地没动——那正是作者报的现象").toContainText(
+    "甲那一段",
+  )
+  await expect(行.nth(1)).toContainText("乙那一段")
+})

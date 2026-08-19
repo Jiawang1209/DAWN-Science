@@ -197,7 +197,7 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
             unresolvedProblemCount: 0,
           },
         ]}
-        sessions={[]}
+        排序全集={[]}
         agents={agents}
         activeProjectId="p1"
         activeSessionId={undefined}
@@ -228,7 +228,7 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
             unresolvedProblemCount: 0,
           },
         ]}
-        sessions={[]}
+        排序全集={[]}
         agents={AGENTS}
         activeProjectId="p1"
         activeSessionId={undefined}

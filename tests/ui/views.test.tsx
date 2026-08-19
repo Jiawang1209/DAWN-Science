@@ -34,7 +34,7 @@ const session = (over: Partial<SessionSummary> = {}): SessionSummary => ({
 const noop = () => {}
 const base = {
   projects: [project()],
-  sessions: [] as SessionSummary[],
+  排序全集: [] as SessionSummary[],
   agents: ["ds-chat", "claude-code"],
   activeProjectId: "p1" as string | undefined,
   activeSessionId: undefined as string | undefined,

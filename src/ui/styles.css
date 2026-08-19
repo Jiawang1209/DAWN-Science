@@ -1727,17 +1727,21 @@ pre {
 }
 
 /**
- * **坞拉宽之后：横着分两栏——左预览、右树**（2026-08-19）。
+ * **坞拉宽之后：横着分两栏——左树、右预览**（2026-08-19 定，2026-08-20 换过边）。
  *
  * 上面那条「上下，不是左右」是**对着窄坞说的**，它一个字都还成立：
  * 280px 横着切两半，两边都读不出来。所以这不是推翻它，是**过了
  * `RIGHT_DOCK_两栏起点`（560px）才换的另一种摆法**。
  *
- * 形状取自作者给的那张 Codex 截图：**最右一列是文件树，
- * 紧挨着它左边是渲染出来的文件内容**。作者的话：
- * *「我们不能在主区放图，我们要放到旁边的文件区域的旁边。」*
- * 树在右边不是随手定的——它是**导航**，而导航靠着窗口边缘，
- * 内容才占住视线中心那一片。
+ * ## 哪边放树，换过一次——两边理由都留着
+ *
+ * - **第一版（08-19）左预览、右树**，形状取自作者给的那张 Codex 截图：
+ *   最右一列是树、紧挨着它左边是内容。我的理由：树是导航，导航靠着窗口边缘，
+ *   内容才占住视线中心。
+ * - **次日作者改了**：*「图片展示和文件树换个位置，文件预览在右侧，
+ *   文件树在左侧。」* 他天天用的那几个文件管理器（Finder、SFTP 客户端）
+ *   全是左树右内容，**手已经习惯往左找树**；「导航靠边」那条在一个
+ *   本来就贴着窗口右边的坞里也不成立——哪一栏都靠边。
  *
  * 用 `grid-template-areas` 而不是靠孩子的先后次序：
  * **传输条是有条件才出现的**，靠次序排会在它出现的那一刻把预览挤到下一行。
@@ -1748,19 +1752,19 @@ pre {
    * 而这一屏的全部意义是把省下来的每一像素给预览。
    * 180 是文件名开始被截的地方（本地量的）。
    */
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "where where"
-    "preview tree"
+    "tree preview"
     "xfer xfer";
 }
 .files-wide .files-where { grid-area: where; }
 .files-wide .file-tree {
   grid-area: tree;
-  /* 分界线跟着方向转：左右排时它在左边，不在下边 */
+  /* 分界线跟着方向转：左右排时它在树的右边，不在下边 */
   border-bottom: none;
-  border-left: 1px solid var(--dawn-stroke-4);
+  border-right: 1px solid var(--dawn-stroke-4);
 }
 .files-wide .xfer { grid-area: xfer; }
 .files-wide .file-preview { grid-area: preview; }

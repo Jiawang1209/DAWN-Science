@@ -2065,6 +2065,39 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [传输?.state, 传输?.target])
 
   /**
+   * **切回这个窗口就重读一遍文件树**（2026-08-19，作者报的）。
+   *
+   * 作者：*「我在挪动文件进去之后文件tree没有更新。」*
+   *
+   * ## 为什么此前不会更新
+   *
+   * 那个令牌只在**我们自己动手**时才 +1（传完、上传、删除）。
+   * 在 Finder 里把文件挪进去，**没有任何东西会告诉界面**——
+   * 于是屏幕上那棵树与磁盘上那个目录，从那一刻起就是两回事了。
+   *
+   * ## 为什么是「切回窗口」，不是文件监视器
+   *
+   * 监视器要递归盯住整个工作区。科研目录里动辄几十万个文件
+   * （一个 `data/raw` 就够），而**盯住它们的收益只发生在你回到这个窗口的那一刻**——
+   * 在别处改文件时没人在看那棵树。
+   *
+   * 「切回来」恰好就是那一刻，而且它是**免费**的：一个 `focus` 事件。
+   *
+   * ## 它现在敢这么做，是因为刷新不再重挂整棵树
+   *
+   * 令牌此前拌在树根的 `key` 里，一变就整棵重挂、**展开的目录全部塌回去**。
+   * 那样按 focus 刷新会变成「每次切回来树都收起来」，比不刷新更烦人。
+   * 改成逐层重读之后（见 `files.tsx` 的 `DirNode`），这一条才成立。
+   *
+   * **坞关着时 `FilesView` 根本没挂载**，所以这里不必判断——没人读，就没有开销。
+   */
+  useEffect(() => {
+    const 回来了 = () => 设刷新令牌((n) => n + 1)
+    window.addEventListener("focus", 回来了)
+    return () => window.removeEventListener("focus", 回来了)
+  }, [])
+
+  /**
    * 删一个文件（批 5，2026-08-17）。
    *
    * **确认框把你需要为之负责的事实摆全**（作者：*「自己要为自己的数据负责」*）：
@@ -2175,6 +2208,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 侧栏此刻真的占掉多少（收起来就是 0）。**坞的上界要拿它去算**——
    * 拿 `SIDEBAR_MIN` 去算会多给几十像素，坞照样越界，只是越得少一点。
    */
+  /**
+   * **人刚刚亲手选的那个工作目录**（2026-08-19 作者要的：
+   * *「应该立刻收纳入项目里面」*）。
+   *
+   * **它不是「当前活跃项目」**：应用一启动就有一个活跃项目（默认工作区），
+   * 拿那个当判据的话，「项目」那一列会**永远存在**——
+   * 第一版就是这么写的，十七条 e2e 当场红，含全部十张视觉基线。
+   *
+   * 作用域是**这个窗口、这一次**：它记的是「我刚点了那颗按钮」，
+   * 不落盘。真在那个目录里说了话之后，它自己会从任务里长出来，
+   * 这个值也就无关紧要了（侧栏那边会去重）。
+   */
+  const [刚选的工作区, 设刚选的工作区] = useState<string | undefined>(undefined)
+
   const 侧栏此刻多宽 = sidebarCollapsed ? 0 : sidebarWidth
 
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
@@ -2533,6 +2580,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * **取不到就让侧栏显示连接 id**——不在这里编一个占位名字。
            */
           服务器名={(id) => connections.find((c) => c.id === id)?.label}
+          {...(刚选的工作区 ? { 刚选的工作区 } : {})}
           /** **临时项目不进项目列表**：它们的会话在上面那一列 */
           projects={projects.filter((p) => !p.temporary)}
           /**
@@ -3391,6 +3439,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       workspace: d,
                     })
                     setActiveProjectId(p.projectId)
+                    // **让它立刻出现在「项目」收纳里**（作者要的）
+                    设刚选的工作区(d)
                     // **项目名单也要跟上**：头上那一条要写得出它叫什么
                     await loadProjects(client)
                   } catch (e) {

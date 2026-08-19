@@ -12,7 +12,7 @@
  * agent 写了哪些文件，那是最短的路径。这里的目录树是**补充**：
  * agent 没碰过的数据文件、上一次会话留下的东西，那些只能靠翻。
  */
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
@@ -71,6 +71,7 @@ function DirNode({
   load,
   onDelete,
   onDrop,
+  刷新令牌,
 }: {
   path: string
   name: string
@@ -82,6 +83,16 @@ function DirNode({
   onDelete?: (path: string) => void
   /** 有文件被拖到这个目录上。**拖到哪一行就传到哪个目录** */
   onDrop?: (dir: string, files: readonly File[]) => void
+  /**
+   * 变一下这个数，**这一层就重读一遍——但不重新挂载**（2026-08-19）。
+   *
+   * 上一版是把它拌进树根的 `key` 里，靠整棵树重挂来刷新。那确实会刷新，
+   * 代价是**每个人展开过的目录全部塌回去**：传完一个文件，
+   * 你刚翻到第三层的位置就没了。上传不常做，所以一直没人报。
+   *
+   * 现在它进 effect 的依赖：**展开状态是这一层自己的 `useState`，不动它**。
+   */
+  刷新令牌?: number | undefined
 }) {
   const [open, setOpen] = useState(depth === 0)
   /** 有东西悬在这一行上。**放置高亮**——不给的话人不知道会落到哪个目录 */
@@ -89,12 +100,26 @@ function DirNode({
   const [listing, setListing] = useState<Listing | undefined>(undefined)
   const [error, setError] = useState<string | undefined>(undefined)
 
+  /**
+   * **收到过的那个令牌**。用来分辨「第一次读」与「被要求重读」——
+   * 后者要清掉上一次的错误（上一次读失败的目录，重读时应当有机会成功）。
+   */
+  const 读过的令牌 = useRef<number | undefined>(undefined)
+
   useEffect(() => {
-    if (!open || listing || error) return
+    if (!open) return
+    const 要重读 = 读过的令牌.current !== undefined && 读过的令牌.current !== 刷新令牌
+    // 已经读到了、也没人要求重读，就不再问
+    if (!要重读 && (listing || error)) return
+    读过的令牌.current = 刷新令牌
     load(path)
-      .then(setListing)
+      .then((r) => {
+        setListing(r)
+        // **重读成功就把上一次的错抹掉**：留着的话人看到的是一段过期的坏消息
+        setError(undefined)
+      })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
-  }, [open, listing, error, load, path])
+  }, [open, listing, error, load, path, 刷新令牌])
 
   return (
     <li
@@ -181,6 +206,7 @@ function DirNode({
                   selected={selected}
                   onSelect={onSelect}
                   load={load}
+                  {...(刷新令牌 === undefined ? {} : { 刷新令牌 })}
                   {...(onDelete ? { onDelete } : {})}
                   {...(onDrop ? { onDrop } : {})}
                 />
@@ -643,15 +669,22 @@ export function FilesView({
           </div>
         ) : null}
         <ul className="tree-list">
-          {/** `key` 跟着根走：换根要**重新挂载**，否则上一处的列表还留在那儿 */}
+          {/**
+            * `key` **只跟着根走**：换根要重新挂载，否则上一处的列表还留在那儿。
+            *
+            * **令牌不再拌进 key**（2026-08-19）：拌进去等于「刷新 = 重挂整棵树」，
+            * 而重挂会把每一层展开状态清零。它现在作为 prop 往下走，
+            * 每一层自己重读——**展开的还展开着**。
+            */}
           <DirNode
-            key={`${根}#${刷新令牌}`}
+            key={根}
             path={根}
             name={根}
             depth={0}
             selected={selected}
             onSelect={onSelect}
             load={loadDir}
+            刷新令牌={刷新令牌}
             {...(onDeleteDir ? { onDelete: onDeleteDir } : {})}
             {...(onDropUpload ? { onDrop: onDropUpload } : {})}
           />

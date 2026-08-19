@@ -275,11 +275,27 @@ test.describe("ACP 会话开关", () => {
     for (const 名 of ["低", "高"]) {
       await expect(菜单.getByRole("menuitemradio", { name: 名, exact: true })).toBeVisible()
     }
+    /**
+     * ③′ **每一项底下那句说明要画出来**（2026-08-19 作者报的）。
+     *
+     * 作者：*「我竟然看到了 Default(recommended) 而不是 Opus 呢？」*
+     * 量过真适配器：那一项它自己就叫 `Default (recommended)`，
+     * **而它到底是谁写在 `description` 里**（`Opus 4.6 · Most capable…`）。
+     * 我们一路把它收到了界面，然后没画——**答案就在载荷里，我们没显示**。
+     */
+    await expect(菜单, "选项底下那句说明没画出来").toContainText("更贵更强")
     // ④ boolean 画成可勾选的那种，不是两个单选
     await expect(菜单.getByRole("menuitemcheckbox")).toHaveCount(1)
 
-    // ⑤ 选一个，**它真的换了**（按钮上的字跟着变）
-    await 菜单.getByRole("menuitemradio", { name: "Opus", exact: true }).click()
+    /**
+     * ⑤ 选一个，**它真的换了**（按钮上的字跟着变）。
+     *
+     * **名字前缀锚定，不再 `exact`**（2026-08-19）：说明进了按钮里面，
+     * 于是可访问名字成了「Opus 更贵更强」——**那是有意的**，
+     * 读屏正要据此决定点不点。`^` 保住了精确性：
+     * 这一列里没有第二个以 Opus 开头的。
+     */
+    await 菜单.getByRole("menuitemradio", { name: /^Opus/ }).click()
     await expect(触发).toContainText("Opus", { timeout: 20_000 })
   })
 

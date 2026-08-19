@@ -4447,6 +4447,28 @@ pre {
 /** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
 .sess-config-mark { display: inline-flex; width: 16px; justify-content: center; vertical-align: -3px; }
 
+/**
+ * **每一项的名字与说明**（2026-08-19）。名字一行、说明一行小字。
+ *
+ * 说明是适配器自己给的原话（claude 那台：
+ * `Opus 4.6 · Most capable for complex work`）——**那一行常常是唯一
+ * 说得清「这一项到底是谁」的东西**，而我们此前收上来了却没画。
+ *
+ * **`inline-flex`，不是 `flex`**：这一行的按钮是 `display: block`，
+ * 勾是 `inline-flex`。写成块级 flex 的话它自成一行，
+ * **勾就跑到名字上面去了**——第一版就是这样，截图时当场看见的。
+ */
+.sess-config-opt {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  vertical-align: top;
+  min-width: 0;
+}
+.sess-config-opt-name { min-width: 0; }
+.sess-config-opt-desc { font-size: 11px; color: var(--dawn-text-3); }
+
+
 
 /* ── 右侧坞（`feat/远端文件` · 批 1，2026-08-17）──────────────────────
  *

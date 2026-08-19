@@ -43,6 +43,47 @@
 
 ## 变更日志
 
+### 2026-08-19 — 会话开关菜单：每一项底下那句说明，收上来了却没画
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「我现在选择了 claude-code-acp，但是我竟然看到了
+  Default(recommended) 而不是 Opus 呢？」*
+- **先量，不猜**。起了一台真的 `@zed-industries/claude-code-acp` 0.16.2，
+  看它 `session/new` 到底报了什么：
+
+  ```
+  availableModels:
+    { modelId: "default", name: "Default (recommended)",
+      description: "Opus 4.6 · Most capable for complex work" }
+    { modelId: "sonnet",  name: "Sonnet", description: "Sonnet 4.5 · …" }
+    { modelId: "haiku",   name: "Haiku",  description: "Haiku 4.5 · …" }
+  currentModelId: "default"
+  ```
+
+  **「Default (recommended)」是适配器自己给的名字，不是我们编的**——
+  作者跑的确实就是 Opus 4.6。**而「它是谁」这句话就写在 `description` 里，
+  我们一路收到了界面（`合成开关` 取了这个字段），然后在渲染那一步没画。**
+- **What**: 菜单里每一项的名字下面画出它的 `description`。
+  - **照原样摆，不解析。** 不去把 `"Opus 4.6 · Most capable…"` 切开取第一段——
+    那是拿别人的自由文本当格式用，人家改一次排版我们就开始胡说。
+  - **说明进按钮里面，不放外面**：读屏念到的应当是「Opus，更贵更强」，
+    它正要据此决定点不点。代价是可访问名字变长，
+    三条 `exact: true` 的断言改成了前缀锚定（`/^Opus/`）——**那是有意的**。
+  - 触发按钮上仍然只写适配器给的 `name`。**不在那儿显示解析出来的模型名**，
+    理由同上。
+- **这是同一天里第三次同一个毛病**：**答案就在载荷里，我们没显示**。
+  另两次是 JSON-RPC 错误的 `data`（只抄了标题 `Invalid params`）、
+  以及这一条。三次的共同形状：**我们把别人给的东西取到了手里，
+  然后在最后一步自己决定「这个不用给人看」**——而那三次里，
+  被丢掉的恰恰是唯一说得清问题的那句话。
+- **Verification**: 1766 单元 / 349 e2e / 10 张视觉基线。
+  - e2e 新增一条盯「说明画出来了」，并把三条 `exact` 改成锚定前缀。
+  - **截图看了两次**：第一版把版排坏了——`.sess-config-opt` 写成块级 flex，
+    而那一行的按钮是 `display: block`、勾是 `inline-flex`，
+    于是**勾跑到名字上面去了**。改成 `inline-flex` 才对。
+    这一处逐像素基线盯不到（那个菜单不在十张里），**只有真去看**。
+
 ### 2026-08-19 — ACP 接真适配器撞出来的三件（`env` 形状、错误只抄标题、ACP 不该有模型 pill）
 
 - **Type**: fix

@@ -2671,7 +2671,34 @@ function SessionConfigMenu({
                     <span className="sess-config-mark" aria-hidden="true">
                       {x.value === o.current ? <勾图标 /> : null}
                     </span>
-                    {x.name}
+                    {/**
+                      * **每一项底下那行说明要画出来**（2026-08-19 作者报的）。
+                      *
+                      * 作者：*「我现在选择了 claude-code-acp，
+                      * 但是我竟然看到了 Default(recommended) 而不是 Opus 呢？」*
+                      *
+                      * 量过真适配器（`@zed-industries/claude-code-acp` 0.16.2）：
+                      * 那一项它自己就叫 `Default (recommended)`，**而它到底是谁
+                      * 写在 `description` 里**——`"Opus 4.6 · Most capable for complex work"`。
+                      * 我们**一路把它收到了界面（`合成开关` 取了这个字段），
+                      * 然后在这里没画**。
+                      *
+                      * 这是同一天里第三次同一个毛病：**答案就在载荷里，我们没显示**
+                      * （另两次：JSON-RPC 错误的 `data`、以及这一条）。
+                      * 所以这里的规矩是：**别人给了的说明，一律照原样摆出来**，
+                      * 不筛、不改写、也不去解析它——
+                      * 「`Opus 4.6 · …` 的第一段是模型名」这种解析是拿别人的
+                      * 自由文本当格式用，人家改一次排版我们就开始胡说。
+                      *
+                      * **说明进按钮里面，不放外面**：读屏念到的应当是
+                      * 「Opus，更贵更强」——它正要据此决定点不点。
+                      */}
+                    <span className="sess-config-opt">
+                      <span className="sess-config-opt-name">{x.name}</span>
+                      {x.description ? (
+                        <span className="sess-config-opt-desc">{x.description}</span>
+                      ) : null}
+                    </span>
                   </Button>
                 ))
               )}

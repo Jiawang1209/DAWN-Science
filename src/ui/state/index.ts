@@ -151,6 +151,8 @@ export {
   RIGHT_DOCK_DEFAULT,
   RIGHT_DOCK_MIN,
   RIGHT_DOCK_MAX,
+  RIGHT_DOCK_两栏起点,
+  坞的上界,
   全部房客,
   clampDockWidth,
   loadRightDock,

@@ -55,6 +55,26 @@ export const RIGHT_DOCK_DEFAULT = 380
  */
 export const RIGHT_DOCK_MAX = 720
 
+/**
+ * 到这个宽度，文件那一格就**横着分两栏**：左预览、右树（2026-08-19）。
+ *
+ * 形状取自作者给的那张 Codex 截图——最右一列是文件树，
+ * 紧挨着它左边是渲染出来的文件内容。作者的话：
+ * *「我们不能在主区放图，我们要放到旁边的文件区域的旁边。」*
+ *
+ * ## 这个数是怎么来的
+ *
+ * 树那一栏低于 200px 文件名就开始被截（`RIGHT_DOCK_MIN` 那条同一个理由），
+ * 而预览低于 340px 就回到了作者报的那个处境——量到的是 **317px 看不清**。
+ * 200 + 340 = 540，取整到 560。**再窄就摞回上下**：
+ * 横着切两半之后两边都读不出来，比摞着更糟。
+ *
+ * **它是一个阈值，不是一个偏好**：宽度本身才是人选的那个数，
+ * 摆法跟着宽度走。多存一个「要不要两栏」的开关，就会有
+ * 「拉得很窄却还是两栏」这种自相矛盾的状态。
+ */
+export const RIGHT_DOCK_两栏起点 = 560
+
 export const $rightDockOpen = atom(false)
 export const $rightDockTenant = atom<坞房客>("files")
 export const $rightDockWidth = atom<number>(RIGHT_DOCK_DEFAULT)
@@ -92,9 +112,67 @@ export function clampDockWidth(px: number): number {
   return Math.min(RIGHT_DOCK_MAX, Math.max(RIGHT_DOCK_MIN, Math.round(px)))
 }
 
-/** **先生效，再尝试记住**——存储写不进去不该连这次拖拽都不给拖 */
-export function setRightDockWidth(px: number): void {
-  const w = clampDockWidth(px)
+/**
+ * 对话那一列的承诺（`styles.css` 的 `.body`：
+ * `var(--dawn-sidebar-w) minmax(420px, 1fr) minmax(0, var(--dawn-dock-w))`）。
+ */
+const 对话最窄 = 420
+/** 侧栏的下限。**只在拿不到它此刻真实宽度时兜底** */
+const SIDEBAR_MIN = 200
+
+/**
+ * 这个窗口此刻**最宽能给坞多少**（2026-08-19 修的一个既有缺陷）。
+ *
+ * `RIGHT_DOCK_MAX = 720` 这个数是对着**足够宽的窗口**说的：
+ * 三列加起来要 200 + 420 + 720 = 1340。窗口只有 1280 的时候，
+ * `.body` 那个网格的第三列照样吃 720px——**坞的右边直接跑到窗口外面去**。
+ *
+ * 2026-08-19 量到的：vw 1280、坞 720 → 坞的盒子是 `x=684, w=720`，
+ * 右边界 1404，**超出 124px**，于是靠右那一栏（文件树）整个看不见了。
+ * 而屏幕上没有任何东西说这件事发生了——它长得就像「树没渲染出来」。
+ *
+ * 这不只是新加的那颗「加宽」的问题：**拖把手一直就能拖出屏幕**。
+ *
+ * ## 它只管「人此刻在选宽度」那条路，不管读回来的那条
+ *
+ * `loadRightDock` **不用它**：存下来的是「这个人喜欢多宽」，
+ * 而窗口小是此刻的事。启动时按小窗口把 720 改写成 404 并留在内存里，
+ * 等于**趁人不注意把他的偏好改了**——他后来拖大窗口也回不去。
+ * 越界那一头由 `.body` 那道 `minmax(0, …)` 兜着（宁可压窄，不越界）。
+ */
+export function 坞的上界(视口宽度?: number, 侧栏宽度?: number): number {
+  const vw =
+    视口宽度 ??
+    (typeof window === "undefined" || !Number.isFinite(window.innerWidth)
+      ? undefined
+      : window.innerWidth)
+  if (vw === undefined) return RIGHT_DOCK_MAX
+  /**
+   * **侧栏要用它此刻真正的宽度，不是 `SIDEBAR_MIN`**（2026-08-19 第一版就是这么算漏的）。
+   *
+   * 拿 200 去算，而侧栏实际是 264 时，上界会多给 64px——
+   * 坞照样越界，只是越得少一点。**算错的边界比没有边界更难发现**：
+   * 它在默认宽度下看起来是对的。
+   */
+  const 左边 = (侧栏宽度 ?? SIDEBAR_MIN) + 对话最窄
+  // **下界仍然是 `RIGHT_DOCK_MIN`**：窗口窄到连它都放不下时，
+  // 挤对话那一列也好过把坞压成一条看不见的缝（CSS 那道 `minmax(0, …)` 会兜住）
+  return Math.max(RIGHT_DOCK_MIN, Math.min(RIGHT_DOCK_MAX, Math.round(vw - 左边)))
+}
+
+/**
+ * **先生效，再尝试记住**——存储写不进去不该连这次拖拽都不给拖。
+ *
+ * @param 侧栏宽度 侧栏此刻真的占掉多少（收起来就是 0）。**拖拽那条路要给**——
+ *   不给就退回 `SIDEBAR_MIN`，上界会多算几十像素。
+ */
+export function setRightDockWidth(px: number, 侧栏宽度?: number): void {
+  /**
+   * **两道夹一次**：先夹到 `[MIN, MAX]`（那是这个组件本身的量程），
+   * 再夹到「这个窗口此刻放得下多少」。分两步是因为两者的理由不同——
+   * 前者是设计常量，后者跟着窗口变。
+   */
+  const w = Math.min(clampDockWidth(px), 坞的上界(undefined, 侧栏宽度))
   setValue($rightDockWidth, w)
   try {
     localStorage.setItem(RIGHT_DOCK_WIDTH_KEY, String(w))

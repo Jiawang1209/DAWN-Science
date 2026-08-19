@@ -588,6 +588,7 @@ export const EN: Readonly<Record<string, string>> = {
   "跳到路径": "Go to path",
   "输一个目录路径，回车跳过去": "Type a directory path, press Enter",
   "回到根目录": "Top level",
+  "加宽": "Widen",
   "下载": "Download",
   "移到废纸篓": "Move to Trash",
   "永久删除这个目录？": "Erase this folder permanently?",

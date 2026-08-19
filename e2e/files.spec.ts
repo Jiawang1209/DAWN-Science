@@ -109,3 +109,136 @@ test("**忽略掉的目录要出声**——不然人会以为它们不存在", a
   await 进坞(page, "文件")
   await expect(page.locator(".tree-note").first()).toContainText("已忽略")
 })
+
+/**
+ * **大图看不清：把预览挪到树旁边，而不是另开一屏**（作者 2026-08-19 报的）。
+ *
+ * > *「我点击一个图片，然后发现有的图片太大了，导致我回不到文件选择的地方了。」*
+ * > 随后，看过我做的第一版之后：
+ * > *「其实我们不能在主区放图啊，我们要放到旁边的文件区域的旁边，学习一下 codex。」*
+ *
+ * ## 先把量到的和报的分开
+ *
+ * 动手前用一次性探针在真实产物上量过：**树一直在**（`.file-tree` 可见、
+ * 251px、可滚），「回不去」没复现；**但图被挤成 317×475**，看不清是真的。
+ * 所以这一轮做的不是「修一个回不去的 bug」，是「给大图一个够宽的地方」。
+ *
+ * ## 走错过一版，两条判据同时指回来
+ *
+ * 第一版做成了主区那一整屏。作者当场否掉（上面那句），而 e2e 从另一头
+ * 量到同一件事：**图从 317px 只变成 312px**——坞还占着 377px，等于白铺开。
+ * 现在是坞里横着分两栏：**左预览、右树**（Codex 的形状）。
+ *
+ * ## 这条用例盯四件
+ *
+ * 1. 「加宽」**看得见**（不是悬停才出现——本项目为这个栽过两次，
+ *    而 `toBeVisible()` 对 `opacity: 0` 仍然算可见，所以直接量）；
+ * 2. 加宽之后**图真的变大了**（量 `getBoundingClientRect()`，不是「看起来大了」）；
+ * 3. **左预览、右树**：树在预览的右边，不是上边——这是作者指定的那个形状；
+ * 4. **对话还在**（这正是当初把文件从整屏搬进坞的全部理由，也是不做主区那一屏的理由）。
+ */
+test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", async ({ dawn }) => {
+  const { app, page, workspace } = dawn
+
+  /**
+   * **先把窗口开大。** 这不是为了让用例好过——三列并排本来就要地方：
+   * 侧栏 264 + 对话那一列承诺的 420 + 坞。夹具默认那个 1280 的窗口，
+   * 坞最宽只能到 596，减掉树那 220，预览反而不比摞着的时候宽。
+   *
+   * **这条约束是真的，不是测试环境的怪癖**，所以它写在这儿而不是被绕开：
+   * 窗口不够宽时「加宽」那颗按钮就不该出现（`坞的上界` 管这件事），
+   * 而下面这条用例验的是「窗口够宽时它确实有用」。
+   */
+  await app.evaluate(async ({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setSize(1600, 900)
+  })
+  await page.waitForFunction(() => window.innerWidth >= 1560)
+
+  /**
+   * 2400×3600 的灰度 PNG。**尺寸才是要害，不是字节数**——
+   * 挤扁一张图的是版面宽度，与文件多大无关。
+   * 现造而不是塞一个二进制进仓库：这几行比一个说不清来历的 fixture 好读。
+   */
+  const { deflateSync } = await import("node:zlib")
+  const 造大图 = (W: number, H: number) => {
+    const crcTable: number[] = []
+    for (let n = 0; n < 256; n++) {
+      let c = n
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+      crcTable[n] = c >>> 0
+    }
+    const crc32 = (buf: Buffer) => {
+      let crc = 0xffffffff
+      for (const b of buf) crc = crcTable[(crc ^ b) & 0xff]! ^ (crc >>> 8)
+      return (crc ^ 0xffffffff) >>> 0
+    }
+    const chunk = (type: string, data: Buffer) => {
+      const len = Buffer.alloc(4)
+      len.writeUInt32BE(data.length)
+      const td = Buffer.concat([Buffer.from(type, "ascii"), data])
+      const crc = Buffer.alloc(4)
+      crc.writeUInt32BE(crc32(td))
+      return Buffer.concat([len, td, crc])
+    }
+    const raw = Buffer.alloc((W + 1) * H)
+    for (let y = 0; y < H; y++) {
+      raw[y * (W + 1)] = 0
+      for (let x = 0; x < W; x++) raw[y * (W + 1) + 1 + x] = (x ^ y) & 0xff
+    }
+    const ihdr = Buffer.alloc(13)
+    ihdr.writeUInt32BE(W, 0)
+    ihdr.writeUInt32BE(H, 4)
+    ihdr[8] = 8
+    ihdr[9] = 0
+    return Buffer.concat([
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      chunk("IHDR", ihdr),
+      chunk("IDAT", deflateSync(raw)),
+      chunk("IEND", Buffer.alloc(0)),
+    ])
+  }
+  writeFileSync(join(workspace, "大图.png"), 造大图(2400, 3600))
+
+  await 进坞(page, "文件")
+
+  // ① 入口看得见。**`toBeVisible` 对 opacity:0 仍然算可见，所以直接量**
+  const 加宽 = page.getByRole("button", { name: "加宽" })
+  await expect(加宽).toBeVisible()
+  expect(await 加宽.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+
+  await page.getByRole("button", { name: /大图\.png/ }).click()
+  const img = page.locator(".preview-img")
+  await expect(img).toBeVisible()
+  const 窄的时候 = (await img.boundingBox())!
+  // 这就是作者看到的那张图：坞默认 380px，图被挤到三百出头
+  expect(窄的时候.width).toBeLessThan(400)
+
+  // ② 加宽
+  await 加宽.click()
+  await expect(page.locator(".files-wide")).toBeVisible()
+
+  const 宽的时候 = (await img.boundingBox())!
+  expect(
+    宽的时候.width,
+    `加宽之后没变大：${Math.round(窄的时候.width)}px → ${Math.round(宽的时候.width)}px`,
+  ).toBeGreaterThan(窄的时候.width * 1.3)
+
+  /**
+   * ③ **左预览、右树**——这是作者指定的形状（Codex 那张截图），
+   * 不是「反正两栏就行」。搞反的话导航跑到了视线中心，内容贴着窗口边。
+   */
+  const 树 = (await page.locator(".file-tree").boundingBox())!
+  const 预览 = (await page.locator(".file-preview").boundingBox())!
+  expect(树.x, "树跑到预览左边了——Codex 的形状是树靠右").toBeGreaterThan(预览.x)
+  // 而且是**并排**，不是上下摞（摞着的话两者 y 会差一整栏）
+  expect(Math.abs(树.y - 预览.y)).toBeLessThan(4)
+
+  /**
+   * ④ **对话还在。** 这是当初把文件从整屏搬进坞的全部理由，
+   * 也是这一轮不做主区那一屏的理由——加宽只是挤窄对话，不是顶掉它。
+   */
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+
+  // 加宽之后那颗按钮就该消失：按下去什么都不变的按钮比没有更让人怀疑自己点错了
+  await expect(page.getByRole("button", { name: "加宽" })).toHaveCount(0)
+})

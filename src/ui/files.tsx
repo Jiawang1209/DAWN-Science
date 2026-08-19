@@ -470,6 +470,8 @@ export function FilesView({
   onDropUpload,
   进废纸篓,
   刷新令牌 = 0,
+  铺开,
+  onExpand,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -535,6 +537,22 @@ export function FilesView({
    */
   onDropUpload?: (dir: string, files: readonly File[]) => void
   进废纸篓?: boolean
+  /**
+   * **横着分两栏的那一种摆法**（2026-08-19）。
+   *
+   * 同一个组件两种排布，**由坞的宽度决定**（`RIGHT_DOCK_两栏起点`）：
+   *   - 窄：**上下**摞——树在上、预览在下。280px 横着切两半，两边都读不出来。
+   *   - 宽：**左预览、右树**，形状取自作者给的那张 Codex 截图。
+   *
+   * **不为此复制一个组件**：两份长得一样的东西迟早各自漂移，
+   * 而这里真正不同的只有一件事——横着还是竖着。
+   */
+  铺开?: boolean
+  /**
+   * 「加宽」那颗按钮。**给了才画**——已经宽了的那一份不给：
+   * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
+   */
+  onExpand?: () => void
 }) {
   const [跳到, 设跳到] = useState("")
   /**
@@ -549,7 +567,7 @@ export function FilesView({
    */
   const [根, 设根] = useState(初始根 ?? "")
   return (
-    <div className="files-view">
+    <div className={铺开 ? "files-view files-wide" : "files-view"}>
       <div className="files-where">
         <span className="files-where-name">{机器 ?? t("本机")}</span>
         <input
@@ -595,6 +613,22 @@ export function FilesView({
             }}
           >
             {t("回到根目录")}
+          </Button>
+        ) : null}
+        {/**
+          * **「加宽」常驻在这一行**（2026-08-19）。
+          *
+          * 拖坞边上那根把手也能加宽，**但那条路没人找得到**——
+          * 本项目为「看不见的能力等于不存在」栽过两次（没有标签的 `＋`、
+          * `opacity: 0` 的 `×`），两次作者的反馈都是「没有这个功能」，
+          * 而两次代码都是好的。
+          *
+          * 也**不自动加宽**（比如「一选中图片就把坞拉开」）：
+          * 那会在人只想瞄一眼文件名的时候把对话挤窄。
+          */}
+        {onExpand ? (
+          <Button variant="ghost" size="sm" onClick={onExpand}>
+            {t("加宽")}
           </Button>
         ) : null}
       </div>

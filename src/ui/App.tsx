@@ -156,6 +156,9 @@ import {
   setRightDockTenant,
   请打开网址,
   setRightDockWidth,
+  RIGHT_DOCK_MAX,
+  RIGHT_DOCK_两栏起点,
+  坞的上界,
   点开房客,
 } from "./state/index.js"
 
@@ -2081,11 +2084,53 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, projectId])
 
+  /**
+   * 侧栏此刻真的占掉多少（收起来就是 0）。**坞的上界要拿它去算**——
+   * 拿 `SIDEBAR_MIN` 去算会多给几十像素，坞照样越界，只是越得少一点。
+   */
+  const 侧栏此刻多宽 = sidebarCollapsed ? 0 : sidebarWidth
+
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
 
-  const 文件面板 = (
+  /**
+   * 文件那一片**只有一份实现，两个摆法**（2026-08-19）。
+   *
+   * 坞窄的时候上下摞（树在上、预览在下）；**拉宽之后横着分两栏——
+   * 左预览、右树**，形状取自作者给的那张 Codex 截图：
+   * 最右一列是文件树，紧挨着它左边是渲染出来的文件内容。
+   *
+   * ## 为什么**不**做成主区那一屏（我先做错了一版）
+   *
+   * 作者先选了「主区开一屏」，做出来之后当场否掉：
+   * *「其实我们不能在主区放图啊，我们要放到旁边的文件区域的旁边，
+   * 学习一下 codex。」* 而 e2e 也从另一头量到同一件事——
+   * 图从 317px 只变成 312px，因为坞还占着 377px。
+   * **两条都指向同一个结论：预览该长在树旁边，不该另开一屏。**
+   *
+   * 换宽窄要**重新挂载**（`key` 带上摆法），否则 `DirNode` 的展开状态
+   * 会跨着两种排布留下来，看起来像树自己动了。
+   */
+  const 造文件面板 = (铺开: boolean) => (
       <FilesView
-        key={文件面板身份}
+        key={`${文件面板身份}#${铺开 ? "宽" : "窄"}`}
+        {...(铺开
+          ? { 铺开: true }
+          : {
+              /**
+               * 一颗一键加宽。**拖把手也能加宽，但那条路没人找得到**——
+               * 「看不见的能力等于不存在」这条本项目栽过两次。
+               *
+               * **已经顶到这个窗口能给的最宽时就不给这颗**：
+               * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
+               * 上界跟着窗口走（见 `坞的上界`）——窗口不够宽时 720 是拿不到的。
+               */
+              ...(rightDockWidth < 坞的上界(undefined, 侧栏此刻多宽)
+                ? {
+                    onExpand: () =>
+                      setRightDockWidth(坞的上界(undefined, 侧栏此刻多宽)),
+                  }
+                : {}),
+            })}
         机器={文件所在?.label ?? t("本机")}
         初始根={文件所在?.cwd ?? ""}
         {...(文件所在
@@ -3251,7 +3296,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           <RightDock
             tenant={rightDockTenant}
             width={rightDockWidth}
-            onWidth={setRightDockWidth}
+            onWidth={(px: number) => setRightDockWidth(px, 侧栏此刻多宽)}
             onClose={() => setRightDockOpen(false)}
             /**
              * **点标签只换房客，不收起。**
@@ -3292,7 +3337,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 */
               <WebPanel workspace={currentWorkspace} {...(projectId ? { projectId } : {})} />
             ) : (
-              文件面板
+              /**
+                * **摆法跟着坞的宽度走**（2026-08-19）。
+                *
+                * 不另存一个「要不要两栏」的开关：那样会出现
+                * 「拉得很窄却还是两栏」这种自相矛盾的状态，
+                * 而人选的那个数本来就是宽度。
+                */
+              造文件面板(rightDockWidth >= RIGHT_DOCK_两栏起点)
             )}
           </RightDock>
         ) : null}

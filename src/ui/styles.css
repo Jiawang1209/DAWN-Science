@@ -221,7 +221,19 @@ pre {
    *
    * 三列的下限加起来是 `200 + 420 + 280 = 900`，那是窗口的最小可用宽度。
    */
-  grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr) var(--dawn-dock-w);
+  /**
+   * **第三列写成 `minmax(0, …)`**（2026-08-19 修的一个既有缺陷）。
+   *
+   * 写成裸的 `var(--dawn-dock-w)` 时它是一个**固定**轨道：窗口放不下就
+   * 整行溢出，坞的右边直接跑到窗口外面。量到过的：vw 1280、坞 720，
+   * 坞的盒子 `x=684, w=720` → 右边界 1404，**超出 124px**，
+   * 于是靠右那一栏（文件树）整个看不见——而屏幕上没有任何东西说这件事发生了，
+   * 它长得就像「树没渲染出来」。
+   *
+   * `minmax(0, …)` 让它**宁可被压窄，也不越界**。JS 那侧还有一道上界
+   * （`坞的上界`），两道各管一头：这一道兜住任何算漏的情况。
+   */
+  grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr) minmax(0, var(--dawn-dock-w));
   min-height: 0;
   /**
    * **那条缝按 `.body` 定位**（2026-08-13）。它不能挂在 `.sidebar` 里面——
@@ -1683,6 +1695,45 @@ pre {
   height: 100%;
   min-height: 0;
 }
+
+/**
+ * **坞拉宽之后：横着分两栏——左预览、右树**（2026-08-19）。
+ *
+ * 上面那条「上下，不是左右」是**对着窄坞说的**，它一个字都还成立：
+ * 280px 横着切两半，两边都读不出来。所以这不是推翻它，是**过了
+ * `RIGHT_DOCK_两栏起点`（560px）才换的另一种摆法**。
+ *
+ * 形状取自作者给的那张 Codex 截图：**最右一列是文件树，
+ * 紧挨着它左边是渲染出来的文件内容**。作者的话：
+ * *「我们不能在主区放图，我们要放到旁边的文件区域的旁边。」*
+ * 树在右边不是随手定的——它是**导航**，而导航靠着窗口边缘，
+ * 内容才占住视线中心那一片。
+ *
+ * 用 `grid-template-areas` 而不是靠孩子的先后次序：
+ * **传输条是有条件才出现的**，靠次序排会在它出现的那一刻把预览挤到下一行。
+ */
+.files-wide {
+  /**
+   * 树那一栏**给下限、也给上限**：它是导航，宽了纯属浪费——
+   * 而这一屏的全部意义是把省下来的每一像素给预览。
+   * 180 是文件名开始被截的地方（本地量的）。
+   */
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "where where"
+    "preview tree"
+    "xfer xfer";
+}
+.files-wide .files-where { grid-area: where; }
+.files-wide .file-tree {
+  grid-area: tree;
+  /* 分界线跟着方向转：左右排时它在左边，不在下边 */
+  border-bottom: none;
+  border-left: 1px solid var(--dawn-stroke-4);
+}
+.files-wide .xfer { grid-area: xfer; }
+.files-wide .file-preview { grid-area: preview; }
 
 .file-tree {
   overflow: auto;

@@ -43,6 +43,51 @@
 
 ## 变更日志
 
+### 2026-08-19 — ACP 接真适配器撞出来的三件（`env` 形状、错误只抄标题、ACP 不该有模型 pill）
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 合回 main 之后作者第一次真用，两句话报了两件：
+  *「我在选择 claude-code-acp 的时候 ⚠ 操作 "createTask" 执行失败 什么情况」*、
+  *「我在调用 codex-acp 的时候，发送旁边的还显示的是 cli。」*
+- **What**:
+  - **① `mcpServers[].env` 送错了形状。** ACP 里它是 `EnvVariable[]`
+    （`{name, value}` 一条条列），我们送的是 `Record<string, string>`。
+    `@zed-industries/claude-code-acp` 0.16.2 当场回 `-32602 Invalid params`。
+    **`@agentclientprotocol/codex-acp` 对它宽容**——这就是 2026-08-17
+    那次真机没暴露的原因：那次接的是 codex。
+  - **② 我们只抄了错误的标题。** `位.败(new Error(err.message))` 把
+    JSON-RPC 的 `data` 扔了，而真适配器早把答案写在那儿：
+    `env: ["Invalid input: expected array, received object"]`。
+    **为了读到这一行，我不得不起一台真适配器手工重放握手。**
+    `message` 那一层本来就是分类（`Invalid params`），指望它具体是错的。
+    现在错误里带三样：**哪个方法、哪一类、它到底嫌什么**（`data` 截到 400 字，
+    并说清省了多少）。
+  - **③ ACP 会话不该有那颗模型 pill。** 作者看到的「cli」其实是它上面写的
+    **「CLI 默认」**——那句兜底是给 `cli` 写的。而根子不在文案：
+    那颗 pill 列的是各家 provider 的模型，点下去会去改这段会话的模型，
+    **可 ACP 里根本没有「换模型」这个操作**（`ModelPill` 上面那段注早写着）。
+    ACP 的模型由适配器广播，走的是左边那颗会话开关（claude 那台写着 `Sonnet`）。
+    做法是给它空清单，不加渲染判断——`ModelPill` 本来就有「没得选就不画」。
+- **为什么整套 e2e 全绿而这条路一步都走不动**：**我们那台假适配器不校验
+  `mcpServers`**。它现在校验了（照真适配器的口径，连 `data` 的形状一起学）。
+  这正是准入规则 ① 那句话的原话：*「两套 mock 会各自漂移，那时『本地是好的』
+  就不再意味着什么。」* 补充一条给后来人：**假的可以省掉一切行为，
+  但不能在契约的形状上比真的宽容**——宽容的那一格就是判据的盲区。
+  （顺带修了假 agent 自己的一处：它把 `env` 数组展开进对象，
+  于是那几个环境变量一个都没传下去。此前不出错，只因为我们送的恰好是对象。）
+- **那颗 pill 上的标记此前没有任何判据**：现有 ACP 用例盯的是对话头上的
+  `.conv-head .kind`，而作者眼睛落在 composer 里。**同一个类名、两个地方**，
+  于是「头上对了」被当成了「都对了」。
+- **Impact**: `codex-acp` 一直是能用的（作者库里三段 alive 的会话可证），
+  这一轮修的是 `claude-code-acp` 那条以及两台共有的显示问题。
+- **Verification**: 1766 单元 / 349 e2e / 10 张视觉基线。
+  - **拿两台真适配器各验了一次**：`claude-code-acp` 0.16.2 ✓、
+    `codex-acp` 1.1.9 ✓，`session/new` 都拿到了 sessionId。
+    **修好一台弄坏另一台**是这一类改动最容易犯的错，所以两台都跑。
+  - 假适配器补了 `mcpServers` 形状校验之后，
+    **把 `env` 改回对象形状会当场红**——这个洞从此有判据兜着。
+
 ### 2026-08-19 — `fixbug` 合回 main（快进，10 个 commit）
 
 - **Type**: chore

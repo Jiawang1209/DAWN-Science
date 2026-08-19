@@ -55,6 +55,45 @@ import type {
  *      **线上形状的差别留在这一层**。
  */
 /** 这一段的 token 记在谁头上：**agent 一定有，模型有就带上** */
+/**
+ * 把 ACP 回来的那条错误**说成一句人能照着办的话**（2026-08-19，规格 7.5）。
+ *
+ * ## 这是一次真实的代价
+ *
+ * 作者在模型选择器里挑了 `claude-code-acp`，屏幕上只有一句
+ * *「操作 createTask 执行失败」*，日志里也只有 `Error: Invalid params`——
+ * **既没说哪一个请求，也没说哪一个参数。** 我们不得不去起一台真适配器、
+ * 手工重放一遍握手，才知道它嫌的是 `mcpServers[].env` 的形状。
+ *
+ * 而那台适配器**早就把答案写在 `data` 里了**：
+ *
+ * ```
+ * env: ["Invalid input: expected array, received object"]
+ * ```
+ *
+ * ——是我们在 `位.败(new Error(err.message))` 那一行把它扔了。
+ *
+ * `message` 这一层是 JSON-RPC 的分类（`Invalid params` / `Internal error`），
+ * **本来就不该指望它具体**；具体的东西按约定在 `data` 里。只取 message，
+ * 等于**只抄了错误的标题**。
+ *
+ * 所以这里三样都带上：**哪个方法、哪一类、以及它到底嫌什么**。
+ */
+function 说清楚(method: string, err: { message?: string; code?: number; data?: unknown }): string {
+  const 类 = err.message ?? "没有说明的错误"
+  const 号 = err.code === undefined ? "" : `（${err.code}）`
+  /**
+   * `data` 什么形状都可能，所以原样 JSON 化。**截到 400 字**：
+   * 一条塞满屏幕的错误没人读，而**截断要说清省了多少**（规格 7.5）。
+   */
+  let 细 = ""
+  if (err.data !== undefined) {
+    const 全 = typeof err.data === "string" ? err.data : JSON.stringify(err.data)
+    细 = 全.length > 400 ? `：${全.slice(0, 400)}…（还有 ${全.length - 400} 字）` : `：${全}`
+  }
+  return `ACP 的 ${method} 被拒了${号}——${类}${细}`
+}
+
 function 算谁答的(agentId: string, 开关: readonly 会话开关[] | undefined): string {
   const 模型 = 开关?.find((o) => o.category === "model")
   return 模型?.current ? `${agentId}/${模型.current}` : agentId
@@ -196,7 +235,8 @@ interface 一段 {
   acpSessionId?: string
   sinks: Set<EventSink>
   /** 等回复的请求。key 是 JSON-RPC 的 id */
-  等着: Map<number, { 成: (v: unknown) => void; 败: (e: Error) => void }>
+  /** `method` 记着这是哪个请求——**错误回来时它是唯一能说清「哪一步失败了」的东西** */
+  等着: Map<number, { 成: (v: unknown) => void; 败: (e: Error) => void; method: string }>
   下一个id: number
   缓冲: string
   /** 这一段是哪个 agent（A4）。**记账要用**，而事件里只有 sessionId */
@@ -402,8 +442,35 @@ export class AcpRuntime implements AgentRuntime {
      * 而「不给工具」是一个合法的、明确的选择（路线 C 的客人模式）。
      */
     const 我 = this.opts.mcp?.(spec)
+    /**
+     * **`env` 是一个数组，不是一个对象**（2026-08-19，拿真适配器撞出来的）。
+     *
+     * ACP 里 `McpServer.env` 的类型是 `EnvVariable[]`——`{name, value}` 一条条列，
+     * 不是 `Record<string, string>`。送错形状的后果是
+     * `session/new` 直接回 `-32602 Invalid params`，
+     * 而**界面上只显示「操作 createTask 执行失败」**（作者报的就是这一句）。
+     *
+     * 真适配器的错误 `data` 里其实写得清清楚楚：
+     *
+     * ```
+     * env: ["Invalid input: expected array, received object"]
+     * ```
+     *
+     * ——**而我们把 `data` 丢掉了**，所以那句话谁也没看见。那条一并修了（见 `请求`）。
+     *
+     * 为什么此前没红：我们那台假适配器**不校验**这一格。
+     * 现在它校验了（`scripts/fake-acp-agent.mjs`），
+     * 这一类「形状对不上真契约」的漏才有判据兜着。
+     */
     const 我们的MCP = 我
-      ? [{ name: 我.name, command: 我.command, args: 我.args, env: 我.env }]
+      ? [
+          {
+            name: 我.name,
+            command: 我.command,
+            args: 我.args,
+            env: Object.entries(我.env).map(([name, value]) => ({ name, value })),
+          },
+        ]
       : []
 
     const 指纹 = AcpRuntime.指纹(cmd, spec.workspace)
@@ -675,8 +742,8 @@ export class AcpRuntime implements AgentRuntime {
     if (typeof id === "number" && 段.等着.has(id)) {
       const 位 = 段.等着.get(id)!
       段.等着.delete(id)
-      const err = msg["error"] as { message?: string } | undefined
-      if (err) 位.败(new Error(err.message ?? "ACP 返回了一个没有说明的错误"))
+      const err = msg["error"] as { message?: string; code?: number; data?: unknown } | undefined
+      if (err) 位.败(new Error(说清楚(位.method, err)))
       else 位.成(msg["result"])
       return
     }
@@ -756,7 +823,8 @@ export class AcpRuntime implements AgentRuntime {
     if (!段 || 段.停了) return Promise.reject(new Error("这一段 ACP 会话已经不在了"))
     const id = 段.下一个id++
     return new Promise((成, 败) => {
-      段.等着.set(id, { 成, 败 })
+      // **记下这是哪个方法**：错误回来时它是唯一能说清「哪一步失败了」的东西
+      段.等着.set(id, { 成, 败, method })
       段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`)
     })
   }

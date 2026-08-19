@@ -1837,11 +1837,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
    */
   const modelChoices: ModelChoice[] =
-    agentCfg?.kind === "cli"
-      ? (agentCfg.models ?? []).map((m) => ({ model: m }))
-      : providers.providers.flatMap((p) =>
-          (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),
-        )
+    /**
+     * **ACP 那条没有这颗 pill**（2026-08-19，作者报的）。
+     *
+     * 作者：*「我在调用 codex-acp 的时候，发送旁边的还显示的是 cli。」*
+     * 他看到的是那颗 pill 上写着**「CLI 默认」**——那句兜底文案是给 `cli`
+     * 写的（*「当前未知时如实标『CLI 默认』」*），ACP 落进去纯属误伤。
+     *
+     * 而比文案更糟的是**那颗 pill 本身不该在这儿**：它列的是
+     * 各家 provider 的模型，点一下会去改这段会话的模型——
+     * 可 **ACP 里根本没有「换模型」这个操作**（`ModelPill` 上面那段注写着）。
+     * ACP 的模型是适配器自己广播的，走的是左边那颗会话开关
+     * （claude 那台上就写着 `Sonnet`）。
+     *
+     * 给空清单而不是加一个 `kind !== "acp"` 的渲染判断：
+     * `ModelPill` 本来就有「没得选就不画」这条（`choices.length === 0`），
+     * **同一件事不写第二遍**。
+     */
+    agentCfg?.kind === "acp"
+      ? []
+      : agentCfg?.kind === "cli"
+        ? (agentCfg.models ?? []).map((m) => ({ model: m }))
+        : providers.providers.flatMap((p) =>
+            (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),
+          )
 
   /**
    * **界面上所有动作的唯一定义处**（①-B″ · U1）。

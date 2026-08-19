@@ -119,12 +119,51 @@ function 发(msg) {
   process.stdout.write(`${JSON.stringify(msg)}\n`)
 }
 
+/**
+ * `mcpServers` 那一格的形状对不对。**只校验形状，不校验语义**——
+ * 名字叫什么、命令存不存在，那是真 agent 拉起来时的事。
+ *
+ * @returns 有问题就回一段说明（照真适配器的口径：说清是哪一项、嫌什么），
+ *   没问题回 `undefined`
+ */
+function 挑出坏的MCP(list) {
+  if (list === undefined) return { _errors: ["Invalid input: expected array, received undefined"] }
+  if (!Array.isArray(list)) return { _errors: ["Invalid input: expected array"] }
+  for (let i = 0; i < list.length; i++) {
+    const 台 = list[i]
+    if (!台 || typeof 台 !== "object") return { [i]: { _errors: ["expected object"] } }
+    for (const k of ["name", "command"]) {
+      if (typeof 台[k] !== "string") return { [i]: { [k]: { _errors: ["expected string"] } } }
+    }
+    if (!Array.isArray(台.args)) return { [i]: { args: { _errors: ["expected array"] } } }
+    /**
+     * **这一条就是那个洞。** `env` 是 `[{name, value}]`，不是一个对象——
+     * 真适配器的原话：`Invalid input: expected array, received object`。
+     */
+    if (!Array.isArray(台.env)) {
+      return { [i]: { env: { _errors: [`Invalid input: expected array, received ${台.env === undefined ? "undefined" : typeof 台.env}`] } } }
+    }
+    for (const e of 台.env) {
+      if (!e || typeof e.name !== "string" || typeof e.value !== "string") {
+        return { [i]: { env: { _errors: ["每一条要是 {name: string, value: string}"] } } }
+      }
+    }
+  }
+  return undefined
+}
+
 function 回结果(id, result) {
   发({ jsonrpc: "2.0", id, result })
 }
 
-function 回错(id, code, message) {
-  发({ jsonrpc: "2.0", id, error: { code, message } })
+/**
+ * @param data 具体嫌什么。**照真适配器的口径放在 `data` 里**——
+ *   `message` 只是 JSON-RPC 的分类（`Invalid params`），指望它具体是错的。
+ *   （2026-08-19：客户端一侧一直只取 `message`、把 `data` 扔了，
+ *   于是屏幕上只剩「操作 createTask 执行失败」。两边一起修的。）
+ */
+function 回错(id, code, message, data) {
+  发({ jsonrpc: "2.0", id, error: { code, message, ...(data === undefined ? {} : { data }) } })
 }
 
 const 睡 = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -150,9 +189,24 @@ async function 处理(msg) {
 
   if (method === "session/new") {
     /**
-     * **DAWN 递过来的 MCP 服务器**（B1）。真 agent 会自己把它们拉起来；
-     * 这台假的只在被要求时拉一次，好让 e2e 能验「整条路通没通」。
+     * **像真适配器那样校验 `mcpServers`**（2026-08-19 补的）。
+     *
+     * ## 它是被一个真实的洞逼出来的
+     *
+     * DAWN 一直把 `env` 当成 `Record<string, string>` 送出去，
+     * 而 ACP 里它是 `EnvVariable[]`（`{name, value}` 一条条列）。
+     * 真的 `@zed-industries/claude-code-acp` 当场回 `-32602 Invalid params`，
+     * 作者在界面上看到的是一句「操作 createTask 执行失败」。
+     *
+     * **而这台假 agent 此前照单全收**——于是整套 e2e 全绿，
+     * 而那条路在真适配器上一步都走不动。
+     *
+     * 这正是本仓库那条准入规则的原话：*「两套 mock 会各自漂移，
+     * 那时『本地是好的』就不再意味着什么。」* 假的可以省掉一切**行为**，
+     * **但不能在契约的形状上比真的宽容**——宽容的那一格就是判据的盲区。
      */
+    const 坏的 = 挑出坏的MCP(params?.mcpServers)
+    if (坏的) return 回错(id, -32602, "Invalid params", 坏的)
     收下的MCP = params?.mcpServers ?? []
     // **cwd 原样回给我们**：用例据此验「它真的开在项目目录里」
     return 回结果(id, {
@@ -422,7 +476,14 @@ async function 调一次MCP(台, sessionId) {
   const { spawn } = await import("node:child_process")
   const p = spawn(台.command === "node" ? process.execPath : 台.command, 台.args, {
     stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, ...(台.env ?? {}) },
+    /**
+     * **`env` 是 `[{name, value}]`，摊平之后才能给 `spawn`**（2026-08-19）。
+     *
+     * 上一版写的是 `...(台.env ?? {})`——把一个数组展开进对象，
+     * 得到的是 `{0: {...}, 1: {...}}`，**于是那几个环境变量一个都没传下去**。
+     * 它此前不出错，只因为 DAWN 送的恰好是对象（而那正是那个洞本身）。
+     */
+    env: { ...process.env, ...Object.fromEntries((台.env ?? []).map((e) => [e.name, e.value])) },
   })
   let 缓 = ""
   const 等 = new Map()

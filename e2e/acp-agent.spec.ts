@@ -61,6 +61,26 @@ test.describe("ACP", () => {
      * 「为什么这次它没问我就删了文件」永远说不清。
      */
     await expect(page.locator(".conv-head .kind")).toHaveText("ACP")
+    /**
+     * **发送键旁边不该有那颗模型 pill**（2026-08-19 作者报的）。
+     *
+     * 作者：*「我在调用 codex-acp 的时候，发送旁边的还显示的是 cli。」*
+     * 他看到的是那颗 pill 上写着**「CLI 默认」**——那句兜底是给 `cli` 写的。
+     *
+     * 而根子不在文案：**ACP 里没有「换模型」这个操作**，
+     * 那颗 pill 列的却是各家 provider 的模型，点下去会去改这段会话的模型。
+     * ACP 的模型由适配器广播，走的是左边那颗会话开关。
+     *
+     * 此前这一处**没有任何判据**：上面那条盯的是对话头上那个 `.kind`，
+     * 而作者眼睛落在 composer 里。**同一个类名、两个地方**，
+     * 于是「头上对了」被当成了「都对了」，而 composer 那边错了三个月。
+     */
+    await expect(
+      page.locator(".composer-controls .model-pill"),
+      "ACP 会话上不该有模型 pill——它列的是各家 provider 的模型，而 ACP 换不了模型",
+    ).toHaveCount(0)
+    // **但模型这件事没有消失**：它在会话开关那颗上（假 agent 报的是 `Sonnet`）
+    await expect(page.locator(".composer-controls .sess-config-trigger")).toContainText("Sonnet")
 
     // ② 一句话进去，回话出来——**整条链通了**
     await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")

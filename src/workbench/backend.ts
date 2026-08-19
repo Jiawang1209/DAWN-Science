@@ -842,8 +842,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    *
    * 抽成一处而不是复制一份：两处长得一样的东西迟早各自漂移，
    * 而这段里每一步都是踩出来的（登录环境取家目录、`cd` 要落库并推给界面）。
+   *
+   * @param 起点 从哪个目录开始。**只有续接才给**（2026-08-19）：
+   *   新建一段对话从家目录开始，而**接着上一次聊要接在上一次那个目录里**——
+   *   记录里存 `remoteCwd` 正是为了这个。退回家目录的话，
+   *   界面上那条路径与 agent 实际所在的目录会对不上。
    */
-  async function 造远端参数(connectionId: string) {
+  async function 造远端参数(connectionId: string, 起点?: string) {
     const { store, manager } = 远端()
     const rec = store.get(connectionId)
     if (!rec) throw fault("not_found", `没有这台服务器：${connectionId}`)
@@ -865,7 +870,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const 家 = ex.loginEnv()["HOME"]
     if (!家) throw fault("internal_error", `问不出 ${rec.label} 上的家目录，没法决定从哪儿开始`)
 
-    let 现在在 = 家
+    let 现在在 = 起点 ?? 家
     let 会话id: string | undefined
     const spec = {
       connectionId,
@@ -1050,9 +1055,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 旧记录也可能已经没了。那时照旧回一份空的记录，
        * 界面显示「已退出」，与从前完全一致。**不假装续上了。**
        */
-      if (!sessions.isLive(sessionId) && sessions.get(sessionId)) {
+      const 记录 = sessions.get(sessionId)
+      /** 续接为什么没成。**留着**，下面那句订阅失败时要拿它说话 */
+      let 没续上因为: string | undefined
+      if (!sessions.isLive(sessionId) && 记录) {
         try {
-          await sessions.resume(sessionId)
+          /**
+           * **长在服务器上的那些，要连回那台机器再续**（2026-08-19 修）。
+           *
+           * 作者：*「点击服务器里面以前的会话的时候，连接不上之前的历史会话。」*
+           *
+           * 此前这里是光秃秃一个 `resume(sessionId)`——而 `resume()` 的第二个
+           * 参数恰恰是那台机器的执行器。不传的话，这段对话被拿到**本机**拉起，
+           * 工作目录是一条远端路径、本地根本不存在，于是必然失败。
+           * 与 2026-08-14 那次「任务标着远端、活跑在本机」是同一种错，
+           * 只是这一次发生在**续接**而不是**新建**。
+           */
+          const 远端参数 = 记录.connectionId
+            ? await 造远端参数(记录.connectionId, 记录.remoteCwd)
+            : undefined
+          await sessions.resume(sessionId, 远端参数?.spec as never)
+          远端参数?.认领(sessionId)
           events.track(sessionId, "native")
           sessions.attach(sessionId, (e) => {
             events.ingest(sessionId, e)
@@ -1060,8 +1083,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           })
           const 历史 = await sessions.history(sessionId)
           if (历史.length > 0) events.restore(sessionId, 历史.map(还原成条目))
-        } catch {
-          // 续不上就照旧：下面那句会如实抛「不在本进程中活动」
+        } catch (e) {
+          /**
+           * **不再静默吞掉**（规格 7.5，2026-08-19）。
+           *
+           * 从前这里是个空的 `catch {}`，于是无论「这类会话本来就续不了」
+           * 还是「那台服务器连不上」，界面看到的都是同一句
+           * 「不在本进程中活动」——那句话对**任何**原因都成立，
+           * 所以它其实什么都没说。作者报的正是这个：点了，一片空白，没人告诉他为什么。
+           *
+           * **也不在这里直接抛**：续不上未必意味着这次订阅要失败
+           * （本来就活着的、或者根本没记录的，下面那句照样成得了），
+           * 所以把原因记下来，交给真正失败的那一处去说。
+           */
+          没续上因为 = e instanceof Error ? e.message : String(e)
         }
       }
       try {
@@ -1069,7 +1104,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
         // 界面要能分辨它和「数据库炸了」
-        throw fault("not_found", err instanceof Error ? err.message : String(err))
+        //
+        // **知道真原因就说真原因**：那一句泛泛的话留给「确实只是没活着」。
+        throw fault("not_found", 没续上因为 ?? (err instanceof Error ? err.message : String(err)))
       }
     },
 

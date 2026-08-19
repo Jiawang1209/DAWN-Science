@@ -160,6 +160,38 @@ export const setConnections = (v: readonly RemoteConnection[]) => setList($conne
  * 不整份重取的原因：状态每变一次就重问一次列表，会在断线抖动时
  * 打出一串请求；而且列表回来之前那一小段时间里，界面显示的是旧状态。
  */
+
+/**
+ * **此刻哪几段会话正在等模型回话**（2026-08-19）。
+ *
+ * 作者选的形状：*「换成时间，但『正在跑』要看得见。」*
+ * 侧栏那一列平时写「多久之前」，只有这一段真在干活时换成一个跑着的标记。
+ *
+ * ## 它从推送流里来，不从账本里来
+ *
+ * 账本里也有 `status = 'running'`，但那是**落了盘的**：
+ * 应用崩过一次之后，那些 run 会永远停在 `running`——
+ * 于是侧栏会显示一堆根本没在跑的东西，**而那种谎最难发现**。
+ * 推送流则天然是对的：**重启之后什么都没在跑，那就是实话。**
+ *
+ * ## 为什么不复用当前会话那个 `busy`
+ *
+ * `busy` 是从 `$items` 派生的，而 `$items` **只有当前正在看的那一段**。
+ * 侧栏问的是「别的那几段呢」——同一个判据（有一条还没 `final` 的 agent 轮次），
+ * 两个作用域。判据只写一次，见 `App.tsx` 里那个订阅。
+ */
+export const $跑着的会话 = atom<ReadonlySet<string>>(new Set<string>())
+
+/** **没变就不换引用**：每来一个 token 换一次 Set，整条侧栏会跟着重渲染 */
+export function 标记在跑(sessionId: string, 在跑: boolean): void {
+  const 现在 = $跑着的会话.get()
+  if (现在.has(sessionId) === 在跑) return
+  const 下一个 = new Set(现在)
+  if (在跑) 下一个.add(sessionId)
+  else 下一个.delete(sessionId)
+  $跑着的会话.set(下一个)
+}
+
 export function setConnectionState(connectionId: string, state: RemoteConnection["state"]): void {
   const 现在 = $connections.get()
   const i = 现在.findIndex((c) => c.id === connectionId)

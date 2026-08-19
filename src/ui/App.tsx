@@ -157,6 +157,7 @@ import {
   setRightDockTenant,
   请打开网址,
   setRightDockWidth,
+  标记在跑,
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_两栏起点,
   坞的上界,
@@ -337,6 +338,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           setSessionCwd(u.sessionId, u.cwd)
           return
         }
+        /**
+         * **哪几段正在跑，在这里记**（2026-08-19）。
+         *
+         * 侧栏那一列平时写「多久之前」，正在等模型回话时换成一个跑着的标记
+         * （作者选的形状）。**这一段必须在下面那道
+         * 「不是当前会话就丢掉」的过滤之前**——它问的恰恰是别的那几段。
+         *
+         * 判据与当前会话那个 `busy` **是同一句话**（有一条还没 `final` 的
+         * agent 轮次），只是作用域不同：那个只看 `$items`，
+         * 而 `$items` 里只有正在看的那一段。**写两句不同的判据的话，
+         * 侧栏说在跑而对话里已经答完了这种事迟早会发生。**
+         */
+        if (u.type === "item" && u.item.type === "turn" && u.item.who === "agent") {
+          标记在跑(u.sessionId, !u.item.final)
+          /**
+           * **答完了就重取一次列表**：那一行的「多久之前」要立刻变成「刚刚」。
+           * 不取的话它会停在上一次的数上，而一个不动的相对时间**比没有更骗人**。
+           */
+          if (u.item.final) {
+            void loadTempSessions(client)
+            const pid = $activeProjectId.get()
+            if (pid) void loadSessions(client, pid)
+          }
+          // **不 return**：下面还要把这一条 upsert 进当前会话的 transcript
+        }
+        // 会话没了就不可能还在跑。**重启之后什么都没在跑，那是实话**
+        if (u.type === "state" && u.state === "exited") 标记在跑(u.sessionId, false)
         if (u.sessionId === $dockSessionId.get()) {
           if (u.type === "bytes") appendDockBytes(u.data)
           // 快照里的终端是**一整段字符串**（不是片段数组）

@@ -24,25 +24,39 @@ import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
+import { $跑着的会话 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
-import { formatDuration, formatTokens, 短路径, 基名 } from "./format.js"
+import { formatDuration, formatTokens, 多久之前, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
 /**
- * 会话行上的时间。**只到分钟**——秒在这里没有信息量，
- * 而且会让两个相邻会话看起来像在比谁更精确。
+ * **一分钟走一格的「现在」**（2026-08-19）。
+ *
+ * 侧栏那一列写的是相对时间。不给它一个心跳的话，一段 59 分钟前的对话
+ * 会一直显示 `59m`，直到你碰巧点了点别的东西才跳到 `1h`——
+ * **一个不动的相对时间比没有更骗人**。
+ *
+ * ## 为什么是 60 秒，不是 1 秒
+ *
+ * 这一列最细的刻度就是分钟（不到一分钟写「刚刚」）。
+ * 每秒重渲一次侧栏，换来的是**同一个字符串**。
+ *
+ * ## 为什么由侧栏一处读，不是每行各读一次
+ *
+ * 每行各读 `Date.now()` 的话，同一屏上的相对时间来自几十个不同的瞬间；
+ * 更要紧的是**读时钟的组件没法测**——那个 tick 也就没地方挂。
  */
-function clockOf(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return t("时间不明")
-  const 今天 = new Date().toDateString() === d.toDateString()
-  const hhmm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
-  // 今天的只给时刻，别的带月日——**「昨天 14:30」和「今天 14:30」不该长得一样**
-  return 今天 ? hhmm : `${d.getMonth() + 1}/${d.getDate()} ${hhmm}`
+function use现在(): number {
+  const [现在, 设现在] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => 设现在(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+  return 现在
 }
 
 /**
@@ -278,6 +292,8 @@ export function SessionRow({
   select,
   onHover,
   副标题,
+  跑着,
+  现在,
 }: {
   session: SessionSummary
   active: boolean
@@ -324,6 +340,23 @@ export function SessionRow({
    * 而「选择模式」这件事本身要由外面统一管：一次只能有一种模式。
    */
   select?: { checked: boolean; onToggle: () => void } | undefined
+  /**
+   * 这一段**此刻正在等模型回话**（2026-08-19）。
+   *
+   * 作者选的形状：*「换成时间，但『正在跑』要看得见。」*
+   * 平时那一格写「多久之前」，只有在跑时才换成标记——
+   * 理由是 `alive` 几乎恒真（它只意味着有个进程），而「它正在干活」是真信息：
+   * **你切走了也想知道**。
+   */
+  跑着?: boolean | undefined
+  /**
+   * 「现在」是几点。**由上面统一给，不在这一行里读时钟。**
+   *
+   * 每一行各读一次 `Date.now()` 的话，同一屏上的相对时间会来自几十个
+   * 不同的瞬间；更要紧的是**读时钟的组件没法测**——
+   * 一分钟一跳的那个 tick 也就没地方挂。
+   */
+  现在?: number | undefined
 }) {
   const [menu, setMenu] = useState(false)
   const [editing, setEditing] = useState<string | undefined>(undefined)
@@ -409,6 +442,17 @@ export function SessionRow({
       ]
         .filter(Boolean)
         .join(" ")}
+      /**
+       * **状态从屏幕上撤了，但判据还要它**（2026-08-19）。
+       *
+       * 那个 `alive` / `exited` 的字换成了时间。可视觉基线原先正是靠
+       * 「等 `.state.alive` 出现」才不会拍到 `starting` 那一帧——
+       * **摘掉一个东西的时候，挂在它身上的判据要先找到新的锚**，
+       * 否则那条基线会从「稳」变成「偶尔拍到半截」，而它红起来看不出原因。
+       *
+       * 放在 `data-` 上：**它不占一个像素**，所以不会把状态又画回屏幕上。
+       */
+      data-state={session.state}
       draggable={drag !== undefined}
       onDragStart={drag?.onStart}
       onDragEnd={drag?.onEnd}
@@ -498,11 +542,49 @@ export function SessionRow({
             * **远端仍然写目录**：对那条线来说「在哪个目录」比「什么时候建的」
             * 要紧得多——那是一次「把这里的文件都删了」会落到哪儿。
             */}
-          <span className="sub">
-            {session.remote ? 短路径(session.remote.cwd) : clockOf(session.createdAt)}
-          </span>
+          {/**
+            * **本地会话这一格现在是空的**（2026-08-19）。
+            *
+            * 它原先写创建时刻（`14:48`）。右端那一格换成「多久之前」之后，
+            * **同一行上就有了两个时间**——屏幕上量到的后果是标题被挤成
+            * 「100G 单细胞」「Kimi App 是」，而标题才是找对话时真正在读的东西。
+            *
+            * 两个里留哪个不用犹豫：`14:48` 要人自己拿今天几号去减，
+            * 而那正是这一轮要替人做掉的事。
+            *
+            * **远端仍然写目录**（2026-08-12 那条理由一个字没变）：
+            * 对那条线来说「在哪个目录」比「什么时候」要紧得多——
+            * 那是一次「把这里的文件都删了」会落到哪儿。
+            */}
+          {session.remote ? <span className="sub">{短路径(session.remote.cwd)}</span> : null}
         </span>
-        <span className={`state ${session.state}`}>{session.state}</span>
+        {/**
+          * **这一列写「多久之前」，不写 `alive`**（2026-08-19，作者要的，
+          * 形状取自 Hermes：`14h` `23h` `2d` `7d` `9d`）。
+          *
+          * 作者：*「我们现在的会话都是 alive 啥的，其实我们可以学习一下 Hermes，
+          * 距离上一次对话是多久了。」*
+          *
+          * ## 三个决定写在这里
+          *
+          * **① `alive` 是噪声，「正在跑」不是。** 前者几乎恒真——它只意味着
+          * 本进程里有一个活着的运行时；后者是你切走之后仍然想知道的事。
+          * 所以状态字换成时间，**但在跑时那一格换成跑着的标记**。
+          *
+          * **② 时间取自 `lastActiveAt`，缺席才退回 `createdAt`。**
+          * 那个字段是从账本反推的（见协议里那段）。
+          * 缺席的含义是**「建了但没干过活」**，退回创建时刻是这一层的决定——
+          * 协议那一层刻意没有替我们做这个决定。
+          *
+          * **③ 完整时刻进 `title` 之外的地方读不到，所以给 `data-when`。**
+          * 屏幕上那一截是「2d」，而判据与将来的悬停卡要拿得到原文。
+          */}
+        <span
+          className={`sess-when${跑着 ? " running" : ""}`}
+          data-when={session.lastActiveAt ?? session.createdAt}
+        >
+          {跑着 ? t("跑着") : 多久之前(session.lastActiveAt ?? session.createdAt, 现在 ?? Date.now())}
+        </span>
       </Row>
 
       {onDelete || onRename || onPin || onMove ? (
@@ -1532,6 +1614,16 @@ export function SessionSidebar({
   const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
 
   /**
+   * 侧栏那一列相对时间的两个来源（2026-08-19）。
+   *
+   * `现在` 一分钟走一格；`跑着的` 由推送流维护（见 `App.tsx` 那个订阅）。
+   * **两样都在这一处取，逐行传下去**——每行各订阅一次的话，
+   * 几十行就是几十个订阅，而它们要的是同一个值。
+   */
+  const 现在 = use现在()
+  const 跑着的 = useStore($跑着的会话)
+
+  /**
    * 这一行属于哪儿——卡上的第二行。
    *
    * **光有标题有时答不了「哪一段对话」**：两个课题下都可能有
@@ -1631,6 +1723,8 @@ export function SessionSidebar({
       <SessionRow
         key={task.taskId}
         session={s}
+        跑着={跑着的.has(s.sessionId)}
+        现在={现在}
         {...(选中它 ? { select: { checked: 已选!.has(task.taskId), onToggle: () => 切一个(task.taskId) } } : {})}
         active={s.sessionId === activeSessionId && view === "conversation"}
         current={s.sessionId === activeSessionId}

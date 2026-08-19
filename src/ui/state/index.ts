@@ -65,6 +65,8 @@ export {
   $connections,
   setConnections,
   setConnectionState,
+  $跑着的会话,
+  标记在跑,
   setSessionCwd,
   $remoteOpen,
   toggleRemoteOpen,

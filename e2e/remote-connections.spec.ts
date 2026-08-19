@@ -300,11 +300,20 @@ test("**同一台机器上的多段对话，收在同一台底下**", async ({ d
  *
  * 这里比的是**两者之间的差**，不是写死的坐标——侧栏可以被拖宽，
  * 而「同一列里只有一条起跑线」不该随宽度变。
+ *
+ * **2026-08-19 换了半个锚。** 会话行右端那一格从 `alive` 换成了
+ * 「多久之前」（`.sess-when`，作者要的，形状取自 Hermes）。
+ * 服务器那一行**仍然写 `alive` / `exited`**——那三个词是作者 2026-08-16 定的，
+ * 管的是连接不是会话。
+ *
+ * 所以这条判据的意思一个字没变：**那一列右缘只有一条竖线**。
+ * 只是右边那一格现在装的是别的内容——而这恰恰是它值得留着的理由：
+ * 换内容最容易顺手换掉宽度，而那时对齐会悄悄坏掉。
  */
 test("**服务器行与会话行同一条线**：左缘、名字、状态词都对齐", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await expect(page.locator(".session-list li .state").first()).toBeVisible()
+  await expect(page.locator(".session-list li .sess-when").first()).toBeVisible()
 
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
@@ -323,7 +332,7 @@ test("**服务器行与会话行同一条线**：左缘、名字、状态词都�
       服务器状态: 盒(".remote-status"),
       会话行: 盒(".session-list li .row"),
       会话名: 盒(".session-list li .sess-title"),
-      会话状态: 盒(".session-list li .state"),
+      会话状态: 盒(".session-list li .sess-when"),
     }
   })
   for (const [名, 盒] of Object.entries(量)) expect(盒, `没量到 ${名}`).not.toBeNull()
@@ -333,9 +342,9 @@ test("**服务器行与会话行同一条线**：左缘、名字、状态词都�
   expect(差(m.服务器行.左, m.会话行.左), "两种行的左内缩不一样").toBeLessThanOrEqual(2)
   expect(差(m.服务器行.右, m.会话行.右), "服务器行没给行尾那一格留位置").toBeLessThanOrEqual(2)
   expect(差(m.服务器名.左, m.会话名.左), "名字的起跑线不一样").toBeLessThanOrEqual(2)
-  // 状态词是**右对齐**的一列：右缘才是它的那条线
-  expect(差(m.服务器状态.右, m.会话状态.右), "状态词落不到同一条竖线上").toBeLessThanOrEqual(2)
-  expect(m.服务器状态.字号, "状态词字号不同档").toBe(m.会话状态.字号)
+  // 行尾那一格是**右对齐**的一列：右缘才是它的那条线
+  expect(差(m.服务器状态.右, m.会话状态.右), "行尾那一格落不到同一条竖线上").toBeLessThanOrEqual(2)
+  expect(m.服务器状态.字号, "行尾那一格字号不同档").toBe(m.会话状态.字号)
 })
 
 /**

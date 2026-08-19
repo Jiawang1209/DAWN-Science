@@ -538,6 +538,36 @@ pre {
  * 图标是路标，字才是内容——同色会让一列行看起来全是图标。
  */
 .sidebar .row .row-icon { color: var(--dawn-text-2); }
+/**
+ * **会话行右端那一格：多久之前**（2026-08-19，形状取自 Hermes）。
+ *
+ * 它接替了原来那个 `alive` / `exited`。三条：
+ *
+ * - **定宽 + 右对齐**：`14h` 与 `9d` 不一样长，不定宽的话标题的右边缘
+ *   会随每一行的时间长度上下参差，读起来像没对齐。
+ * - **不换行、不收缩**：`flex-shrink: 0`，否则标题一长就把它挤没了——
+ *   而它恰恰是这一列存在的理由。
+ * - 与 `.sub` 同一档灰（12px / `--dawn-text-3`）：**它是副信息**，
+ *   抢戏的话人先读到的是数字而不是标题。
+ */
+.sess-when {
+  flex-shrink: 0;
+  min-width: 2.4rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--dawn-text-3);
+  font-size: 12px;
+}
+
+/**
+ * **正在等模型回话的那一段。**
+ *
+ * 用 `--dawn-success` 而不是强调色：它与「这段会话是活的」是同一个意思，
+ * 而那个绿在本项目里已经代表这件事（远端连接的 `alive` 也是它）。
+ */
+.sess-when.running { color: var(--dawn-success); }
+
+/* 远端连接那一行仍然写状态词——**那三个词是作者 2026-08-16 定的** */
 .state.alive { color: var(--dawn-success); }
 .state.exited { color: var(--dawn-text-3); }
 .state.starting { color: var(--dawn-warning); }

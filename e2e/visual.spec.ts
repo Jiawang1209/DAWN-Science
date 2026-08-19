@@ -14,9 +14,10 @@
  * |---|---|
  * | 过渡动画（`transition: background-color 100ms`） | `animations: "disabled"` |
  * | 光标闪烁 | `caret: "hide"` |
- * | 会话状态 starting → alive | 截图前等到 `.state.alive` |
+ * | 会话状态 starting → alive | 截图前等到 `.sess-item[data-state="alive"]` |
  * | **耗时 `.dur`（跟墙上时钟走）** | `mask` 遮掉，见下 |
  * | **会话行的 `agent · HH:MM`（同上）** | 同样 `mask` 遮掉 |
+ * | **会话行右端的「多久之前」（同上）** | 同样 `mask` 遮掉 |
  * | 窗口尺寸 | `BrowserWindow` 固定 1280×840 |
  * | 模型回复 | 假模型的固定暗号 |
  * | 状态栏那句「未配置任何 API key」要等 providers 加载 | 截图前等它出现 |
@@ -67,9 +68,17 @@ async function setTheme(page: Page, label: "亮色" | "暗色") {
 async function startSession(page: Page, 首句 = "开始") {
   await 开一段临时会话(page, 首句)
   await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
-  // **等到状态落定**。starting → alive 是一次真实的状态迁移，
-  // 在它中间截图会得到一张随时机变化的图
-  await expect(page.locator(".session-list .state.alive")).toBeVisible()
+  /**
+   * **等到状态落定**。starting → alive 是一次真实的状态迁移，
+   * 在它中间截图会得到一张随时机变化的图。
+   *
+   * **锚点 2026-08-19 换了**：那一格原先写着 `alive`，现在写的是
+   * 「多久之前」（作者要的，形状取自 Hermes）。状态没有消失，
+   * 只是从屏幕上挪进了 `data-state`——**摘掉一个东西之前，
+   * 先给挂在它身上的判据找到新的锚**，否则这条基线会从「稳」
+   * 变成「偶尔拍到半截」，而它红起来看不出原因。
+   */
+  await expect(page.locator('.session-list .sess-item[data-state="alive"]')).toBeVisible()
 }
 
 /** 四个屏。每个负责把界面开到那个状态，然后返回 */
@@ -209,6 +218,13 @@ for (const theme of ["亮色", "暗色"] as const) {
         mask: [
           page.locator(".dur"),
           page.locator(".session-list .sess .sub"),
+          /**
+           * **会话行右端那一格是相对时间**（2026-08-19）：`14h` / `2d`。
+           * 它比 `.sub` 那个时刻更会变——夹具刚建的会话是「刚刚」，
+           * 一分钟后就成了 `1m`。**外面世界的东西不进逐像素基线**，
+           * 与 `.dur` / `.sub` 同一条理由。
+           */
+          page.locator(".session-list .sess-when"),
           /**
            * **摘要那一行里的「几个模型」来自 pi 的模型目录**，目录一更新它就变。
            * 和时钟是同一类：**外面世界的东西不进逐像素基线**。

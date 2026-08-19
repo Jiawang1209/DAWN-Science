@@ -589,6 +589,9 @@ export const EN: Readonly<Record<string, string>> = {
   "输一个目录路径，回车跳过去": "Type a directory path, press Enter",
   "回到根目录": "Top level",
   "加宽": "Widen",
+  // 会话行右端那一格（2026-08-19）
+  "刚刚": "just now",
+  "跑着": "running",
   // ACP 适配器（2026-08-19）
   "ACP 适配器": "ACP adapters",
   "ACP 适配器是一个独立进程，DAWN 通过 Agent Client Protocol 跟它说话。它会主动问你要不要允许某次工具调用，所以这类会话里会多一张权限卡。":

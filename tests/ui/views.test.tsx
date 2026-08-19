@@ -165,18 +165,27 @@ describe("侧栏 · 归类：有路径进项目，没路径进会话", () => {
     const { container } = render(<SessionSidebar {...base} {...带会话([task()], [session()])} />)
     expect(screen.getByText("新会话")).toBeDefined()
     /**
-     * **副信息只剩时刻，且在同一行的右端**（2026-08-12 改）。
+     * **副信息在同一行的右端，而且不许是空白。**
      *
-     * 上一版这里断言副行写着 `ds-chat · …`。那一行现在没有 agent 了：
-     * 实测 WorkBuddy 的会话行是 `240×31` 单行，我们的双行是 53——**高出七成**。
-     * 而 agent 已经不是这一行才答得了的问题：每条回答上都记着是谁答的
-     * （`item.by`），composer 上还有一颗 pill。
+     * 这条判据的**意图三次没变，锚换了两次**——留着这段账，
+     * 因为「它为什么换」比「它现在指哪儿」更值得下一个人知道：
      *
-     * 意图没变——**这一行不许是空白**，只是「不空白」的内容换了。
+     * | 时间 | 那一格写什么 | 为什么换 |
+     * |---|---|---|
+     * | 起初 | `ds-chat · …`（副行，双行 53px） | — |
+     * | 2026-08-12 | 创建时刻 `14:48`（收进同一行右端） | WorkBuddy 实测是 `240×31` 单行，双行**高出七成**；而「谁答的」每条回答上都记着 |
+     * | 2026-08-19 | **距离上一次对话多久**（`.sess-when`） | 作者要的（形状取自 Hermes）。`14:48` 要人自己拿今天几号去减 |
+     *
+     * 最后这次同时把 `.sub` 从本地会话行上摘了：右端有了时间之后，
+     * **同一行两个时间**会把标题挤成「100G 单细胞」——量到的。
+     * **远端那一行的 `.sub` 还在**，它写的是目录，不是时间。
      */
-    const sub = container.querySelector(".session-list .sess > .sub")
-    expect(sub?.textContent?.trim()).toMatch(/\d/)
+    const 那一格 = container.querySelector(".session-list .sess-when")
+    expect(那一格?.textContent?.trim()).toBeTruthy()
     expect(container.querySelector(".session-list .sess")?.textContent).not.toContain("ds-chat")
+    // **`alive` 从屏幕上撤了**，但状态没丢——它挪进了 `data-state`
+    expect(container.querySelector(".session-list .state")).toBeNull()
+    expect(container.querySelector(".session-list .sess-item")?.getAttribute("data-state")).toBeTruthy()
   })
 
   it("**有标题就用标题** —— 同一个 agent 的两段得分得开", () => {

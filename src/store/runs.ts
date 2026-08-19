@@ -402,6 +402,47 @@ export class RunStore {
     return rows.map(toRun)
   }
 
+  /**
+   * 每段会话**最后一次干活是什么时候**（2026-08-19）。
+   *
+   * 作者：*「我们现在的会话都是 alive 啥的，其实我们可以学习一下 Hermes，
+   * 距离上一次对话是多久了。」*
+   *
+   * ## 为什么从账本反推，而不是在 `sessions` 表上新加一列
+   *
+   * **新加一列的话，所有已经存在的会话都是空的**——屏幕上会是一整列
+   * 「时间不明」，那比现在显示创建时刻还糟。而账本里本来就记着每一次动作，
+   * **它对老数据立刻生效**。量过作者的库：33 段会话、1773 条 run，
+   * 最近 12 段里 8 段有账，且「最后一次 run」比「创建时刻」晚得很明显
+   * （有一段 01:40 建、03:38 才停）——**这正是 `createdAt` 是错的那个数的证据**。
+   *
+   * ## 取 `finished_at`，取不到才退回 `started_at`
+   *
+   * 一次跑了两小时的 run，它的「活动」延续到结束那一刻。
+   * 只看 `started_at` 的话，一段刚跑完两小时长任务的会话会显示成「2 小时前」。
+   * **还在跑的那条没有 `finished_at`**，退回开始时刻是对的。
+   *
+   * ## 一次查一个项目，不是一段会话查一次
+   *
+   * 侧栏一次要显示几十行。逐行查的话是几十次 SQL——
+   * 而这是一次 `GROUP BY` 就能答完的问题。
+   *
+   * @returns 只包含**真的有账**的那些会话。**没有账的不给条目**——
+   *   那与「零时刻」是两回事：它意味着「这段会话建了但没干过活」，
+   *   由调用方决定怎么显示（现在是退回创建时刻）。
+   */
+  最后活动时刻(projectId: string): Map<string, string> {
+    const rows = this.db
+      .prepare(
+        `SELECT session_id, MAX(COALESCE(finished_at, started_at)) AS last
+           FROM runs WHERE project_id = ? GROUP BY session_id`,
+      )
+      .all(projectId) as { session_id: string; last: string | null }[]
+    const m = new Map<string, string>()
+    for (const r of rows) if (r.last) m.set(r.session_id, r.last)
+    return m
+  }
+
   putProvenance(link: ProvenanceLink): void {
     this.db
       .prepare(`

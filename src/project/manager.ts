@@ -149,7 +149,16 @@ export class ProjectManager {
 
   /** 列出项目下的会话（协议实体形态） */
   sessions(projectId: string, remoteLabel?: (id: string) => string | undefined): SessionSummary[] {
-    return this.sessionStore.listByProject(projectId).map((s) => this.toSummary(projectId, s, remoteLabel))
+    /**
+     * **一次查完整个项目的「最后活动时刻」**（2026-08-19）。
+     *
+     * 侧栏一次要显示几十行，逐行去查就是几十次 SQL——
+     * 而这是一次 `GROUP BY` 能答完的问题。见 `RunStore.最后活动时刻`。
+     */
+    const 活动 = this.runStore.最后活动时刻(projectId)
+    return this.sessionStore
+      .listByProject(projectId)
+      .map((s) => this.toSummary(projectId, s, remoteLabel, 活动.get(s.id)))
   }
 
   /**
@@ -158,7 +167,12 @@ export class ProjectManager {
    * **`remoteLabel` 不给就退回连接 id**：那不好看，但**是实话**；
    * 编一个「未知服务器」出来会让人以为真有这么一台。
    */
-  toSummary(projectId: string, s: SessionRecord, remoteLabel?: (id: string) => string | undefined): SessionSummary {
+  toSummary(
+    projectId: string,
+    s: SessionRecord,
+    remoteLabel?: (id: string) => string | undefined,
+    lastActiveAt?: string,
+  ): SessionSummary {
     return {
       sessionId: s.id,
       projectId,
@@ -166,6 +180,12 @@ export class ProjectManager {
       kind: this.kindOf(s.agentId),
       state: s.state,
       createdAt: s.createdAt,
+      /**
+       * **没干过活就不给这个字段**（2026-08-19）。
+       * 不拿 `createdAt` 顶上——那样「建了没说话」与「刚说完话」
+       * 在协议这一层就分不开了，而它们是两件事。退回哪个值由界面决定。
+       */
+      ...(lastActiveAt === undefined ? {} : { lastActiveAt }),
       // **没有标题就不给这个字段**，不给空串——界面据此显示「新会话」
       ...(s.title === undefined ? {} : { title: s.title }),
       pinned: s.pinned,

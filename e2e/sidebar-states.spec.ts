@@ -61,9 +61,20 @@ test("设置可达且可返回", async ({ dawn }) => {
 test("会话建好后出现在侧栏列表里", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  // 列表里应当出现这个会话，且带状态
   await expect(page.locator(".session-list .row")).toHaveCount(1)
-  await expect(page.locator(".session-list .state")).toBeVisible()
+  /**
+   * **这一格 2026-08-19 从 `alive` 换成了「多久之前」**（作者要的，
+   * 形状取自 Hermes）。这条判据的意思一个字没变——
+   * *「行上要有那一格副信息，不是光秃秃一个标题」*——只是锚换了。
+   *
+   * 顺带把新的两条也钉在这儿：
+   *   - 刚建出来的会话写「刚刚」，**不是 `0m`**；
+   *   - 状态没有消失，只是挪进了 `data-state`（视觉基线仍然靠它等落定）。
+   */
+  const 那一格 = page.locator(".session-list .sess-when")
+  await expect(那一格).toBeVisible()
+  await expect(那一格).toHaveText("刚刚")
+  await expect(page.locator('.session-list .sess-item[data-state]')).toHaveCount(1)
 })
 
 /**

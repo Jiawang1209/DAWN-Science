@@ -153,8 +153,29 @@ test("**工作目录外的 `file:` 仍然拦下** —— 放开的只有 http(s)
   await page.getByRole("textbox", { name: "网址" }).fill("file:///etc/passwd")
   await page.getByRole("textbox", { name: "网址" }).press("Enter")
 
-  // **说得出为什么**，不是静默跳回去
-  await expect(page.getByText(/工作目录/)).toBeVisible({ timeout: 15_000 })
+  /**
+   * **说得出为什么**，不是静默跳回去。
+   *
+   * ## 这里为什么盯 `.webview-error` 而不是「页面上有没有『工作目录』这四个字」
+   *
+   * 上一版写的是 `getByText(/工作目录/)`，而 composer 上那颗按钮叫
+   * **「选择工作目录」**——同一个正则一次命中两个元素。后果是这条用例
+   * **抖，而且抖的方向最坏**：
+   *
+   *   - 守卫**没生效**（错误提示不出现）→ 只匹配到那颗按钮 → 一次轮询就绿；
+   *   - 守卫**生效了**（提示出现）→ 两个元素 → strict mode violation → 红。
+   *
+   * **它在功能坏掉时通过，在功能正常时才可能失败。** 2026-08-19 在
+   * 干净的 main 上连跑三次：红、绿、红——它一直是这样，只是从前
+   * 每次都恰好在提示渲染之前完成了第一次轮询。
+   *
+   * 这正是本仓库那条「两处长得一样的东西，等于没有判据」的第四次现形，
+   * 而按名字/文本找东西**是子串匹配**这一条也在设计契约里写着。
+   * 所以改成挑**只有目标状态才有**的东西：那句提示自己的类名。
+   */
+  const 提示 = page.locator(".webview-error")
+  await expect(提示).toBeVisible({ timeout: 15_000 })
+  await expect(提示).toContainText("工作目录外面")
 })
 
 test("**一句话不是地址** —— 说它不像地址，不去把它当域名解析", async ({ dawn }) => {

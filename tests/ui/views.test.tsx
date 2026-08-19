@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import {
   ConversationView,
   EmptyConversation,
@@ -740,5 +740,75 @@ describe("侧栏 · 整台服务器一起选", () => {
     const 台 = 台勾(c, "机器-a")
     expect(台.checked, "半选却显示成全勾").toBe(false)
     expect(台.indeterminate, "半选没有画成 indeterminate").toBe(true)
+  })
+})
+
+/**
+ * **那一列得自己往前走**（2026-08-19）。
+ *
+ * 侧栏右端写的是相对时间。**不给它一个心跳的话，一段 59 分钟前的对话会一直
+ * 显示 `59m`**，直到你碰巧点了点别的东西才跳到 `1h`——
+ * 而一个不动的相对时间**比没有更骗人**：它看起来一直在报告，其实早停了。
+ *
+ * 这一条值得单独写，因为它是这一轮里**唯一「写了但跑不出来」的那种**：
+ * 界面截图、e2e、纯函数测试全都验不到它——它们都只看某一个瞬间。
+ */
+describe("侧栏 · 相对时间会自己往前走", () => {
+  /** 让「刚刚 / 59m / 1h」这三档都出现在同一棵树上 */
+  const 一段 = (分钟前: number, id: string): SessionSummary =>
+    session({
+      sessionId: id,
+      title: `第 ${分钟前} 分钟`,
+      lastActiveAt: new Date(Date.now() - 分钟前 * 60_000).toISOString(),
+    })
+
+  it("**一分钟之后，59m 变成 1h**", () => {
+    vi.useFakeTimers()
+    try {
+      const s = 一段(59, "s1")
+      const { container } = render(
+        <SessionSidebar
+          {...base}
+          tasks={[task()]}
+          sessionOf={() => s}
+          sessionRank={() => 0}
+        />,
+      )
+      const 格 = () => container.querySelector(".session-list .sess-when")?.textContent
+      expect(格()).toBe("59m")
+
+      /**
+       * **推过一分钟**：那个 `setInterval` 该把它推到下一档。
+       *
+       * `act()` 是必须的：定时器回调里的 `setState` 发生在 React 的
+       * 渲染批次之外，不裹的话状态改了而树没重渲——
+       * **那样这条用例会红在一个假原因上**（第一版就是这么红的）。
+       */
+      act(() => {
+        vi.advanceTimersByTime(61_000)
+      })
+      expect(格(), "时间停在原地——那一列已经不再报告任何东西了").toBe("1h")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  /**
+   * **卸载之后不许还在跳。** 一个没清掉的 `setInterval` 在 React 里
+   * 会一直持着旧的闭包，症状是控制台里的「更新一个已卸载的组件」，
+   * 而它出现的时机与真正的原因往往隔着好几分钟。
+   */
+  it("**卸载之后心跳要停**", () => {
+    vi.useFakeTimers()
+    try {
+      const s = 一段(1, "s1")
+      const { unmount } = render(
+        <SessionSidebar {...base} tasks={[task()]} sessionOf={() => s} sessionRank={() => 0} />,
+      )
+      unmount()
+      expect(vi.getTimerCount(), "组件没了，定时器还挂着").toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

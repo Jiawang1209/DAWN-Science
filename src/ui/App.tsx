@@ -157,6 +157,7 @@ import {
   setRightDockTenant,
   请打开网址,
   setRightDockWidth,
+  $跑着的会话,
   标记在跑,
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_两栏起点,
@@ -360,6 +361,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             void loadTempSessions(client)
             const pid = $activeProjectId.get()
             if (pid) void loadSessions(client, pid)
+            /**
+             * **跑完了、而且人已经不在这一段上，就把它退订掉。**
+             *
+             * 上面那个 effect 的清理在「它还在跑」时**故意没有退订**
+             * （否则这一格会永远挂着「跑着」）。那份欠账在这里还：
+             * 不还的话，每切走一段跑着的对话就永久多留一份订阅，
+             * **而那种泄漏不出声**。
+             */
+            if (u.sessionId !== $activeSessionId.get()) {
+              client.forgetRevision(u.sessionId)
+              client.get("unsubscribeSession", { sessionId: u.sessionId }).catch(fail)
+            }
           }
           // **不 return**：下面还要把这一条 upsert 进当前会话的 transcript
         }
@@ -550,6 +563,32 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       void loadTempSessions(client)
     })
     return () => {
+      /**
+       * **还在跑的那一段，切走了也继续听着**（2026-08-19 修）。
+       *
+       * ## 这是一个探针拍下来的洞
+       *
+       * 侧栏那一格「跑着」的数据来自推送流。而 `events.bump` 里有一句
+       * `if (!this.subscribed.has(sessionId)) return`——**退订之后那一段的
+       * 一切更新都收不到了**。于是：切走一段正在跑的对话，
+       * 它的「跑着」**永远挂在那儿**，活早干完了也不掉。
+       *
+       * 量到的（`sleep 6` 的活，切走之后盯了 11 秒）：
+       * `甲那段：跑着 / 跑着 / 跑着 …` 一次都没变回去。
+       *
+       * **而「你切走了也想知道它在跑」正是作者选那个形状的理由**，
+       * 所以这不是一个边角——它恰恰是那颗标记存在的场景，
+       * 而在那个场景里它是个会粘住的谎。
+       *
+       * ## 为什么是「继续听」，不是「让忙闲绕过订阅」
+       *
+       * 后者要新增一种协议更新、还要回答「它算不算一次 revision」
+       * （渲染进程靠 revision 连号来发现丢帧）。
+       * 而这里要表达的意思本来就很简单：**它还在替我干活，我就继续听着。**
+       * 代价有界：只在跑着的时候多收一段的字节流，跑完就退订
+       * （见下面那个订阅里 `busy → false` 那一支）。
+       */
+      if ($跑着的会话.get().has(sessionId)) return
       client.forgetRevision(sessionId)
       client.get("unsubscribeSession", { sessionId }).catch(fail)
     }

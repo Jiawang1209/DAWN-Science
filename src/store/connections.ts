@@ -32,6 +32,16 @@ export interface ConnectionRecord {
   privateKeyPath?: string
   sortOrder: number
   createdAt: string
+  /**
+   * **上一次连上是什么时候**（2026-08-19）。
+   *
+   * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，就是显示时间。」*
+   *
+   * **缺省 = 从没连上过**（且账本里也没有任何会话在它上面干过活——
+   * schema v14 用那个事实回填过一次）。不是「零时刻」，
+   * 界面据此退回显示「加进来多久了」，但那个决定在界面那一层。
+   */
+  lastConnectedAt?: string
 }
 
 interface Row {
@@ -44,6 +54,7 @@ interface Row {
   private_key_path: string | null
   sort_order: number
   created_at: string
+  last_connected_at: string | null
 }
 
 const toRecord = (r: Row): ConnectionRecord => ({
@@ -57,6 +68,8 @@ const toRecord = (r: Row): ConnectionRecord => ({
   ...(r.private_key_path ? { privateKeyPath: r.private_key_path } : {}),
   sortOrder: r.sort_order,
   createdAt: r.created_at,
+  // **只在真有值时给这个字段**：缺席的意思是「从没连上过」，不是零时刻
+  ...(r.last_connected_at ? { lastConnectedAt: r.last_connected_at } : {}),
 })
 
 export class ConnectionStore {
@@ -124,6 +137,17 @@ export class ConnectionStore {
       )
     // **改不到就出声**：静默的 0 行更新会让界面显示「已保存」，而库里什么都没变
     if (r.changes === 0) throw new Error(`没有这台服务器：${rec.id}`)
+  }
+
+  /**
+   * **刚连上了。** 盖一个时间戳，供侧栏那一行在没连着时显示「上次是多久前」。
+   *
+   * 每一次连上都盖——包括「开一段远端对话」顺手连的那次
+   * （`造远端参数` 走的也是同一个管理器）。**盖在状态变成 `ready` 的那一刻**，
+   * 而不是「按下连接按钮」的那一刻：按了没连上不算连上过。
+   */
+  记下连上(id: string, iso: string): void {
+    this.db.prepare(`UPDATE remote_connections SET last_connected_at = ? WHERE id = ?`).run(iso, id)
   }
 
   remove(id: string): void {

@@ -344,6 +344,18 @@ export const RemoteConnectionSchema = z
     hasSecret: z.boolean(),
     sortOrder: z.int(),
     createdAt: Iso,
+    /**
+     * **上一次连上是什么时候**（2026-08-19）。
+     *
+     * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，
+     * 就是显示时间。」*
+     *
+     * **缺省 = 从没连上过**——而且账本里也没有任何会话在它上面干过活
+     * （schema v14 用那个事实回填过一次：一段会话在 T 时刻跑在这台机器上，
+     * 那么 T 时刻我们必然连着它）。缺席不是「零时刻」，
+     * 界面据此退回显示「加进来多久了」。
+     */
+    lastConnectedAt: Iso.optional(),
     /** 此刻的连接状态。**服务端说了算**——界面自己猜会猜成「以为连着」 */
     state: RemoteStateSchema,
   })

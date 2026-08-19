@@ -613,7 +613,22 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **口令从钥匙串取，与模型 key 同一个库**，键上带 `ssh:` 前缀免得撞名
     secretFor: (id) => opts.credentials.get(`ssh:${id}`),
     ...(process.env["SSH_AUTH_SOCK"] ? { agentSock: process.env["SSH_AUTH_SOCK"] } : {}),
-    onState: (connectionId, state) => 远端状态变了?.({ connectionId, state }),
+    onState: (connectionId, state) => {
+      /**
+       * **连上的那一刻盖一个时间戳**（2026-08-19）。
+       *
+       * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，
+       * 就是显示时间。」* 那个「时间」就是这里盖的。
+       *
+       * 盖在**这里**，因为 `onState` 是所有状态变化的唯一必经之路——
+       * 按钮连的、`造远端参数` 顺手连的、断线后重连的，全都从这儿过。
+       * 盖在「按下连接按钮」那一处的话，**按了没连上也会被记成连上过**。
+       */
+      if (state.kind === "ready") {
+        connectionStore.记下连上(connectionId, new Date().toISOString())
+      }
+      远端状态变了?.({ connectionId, state })
+    },
   })
   /** 状态推给界面的出口。**装配层接上之后才有值**——接不上就只是没人听 */
   let 远端状态变了: ((u: { connectionId: string; state: RemoteState }) => void) | undefined

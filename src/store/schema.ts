@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 13
+export const SCHEMA_VERSION = 14
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -607,6 +607,39 @@ export function migrate(db: Database.Database): void {
   db.exec(
     `UPDATE tasks SET session_id = from_session
       WHERE session_id IS NULL AND from_session IS NOT NULL`,
+  )
+
+  /**
+   * **v14（2026-08-19）：这台服务器上一次连上是什么时候。**
+   *
+   * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，就是显示时间。」*
+   *
+   * 会话那一列的时间是从账本反推的（`runs` 里本来就记着每一次动作）。
+   * **连接没有账本**——「连上过」这件事此前哪儿都没留痕，所以得新加一列。
+   *
+   * ## 但新列不必是空的：**它能从已有的事实回填**
+   *
+   * 一段会话跑在这台服务器上、且账本上记着它在 T 时刻干了活，
+   * 那么 **T 时刻我们必然连着这台机器**。这不是猜，是推论——
+   * 所以下面那句回填写的是事实，不是编造的默认值。
+   *
+   * 不回填的话，作者现有的每一台服务器都会显示「加进来多久了」，
+   * 而那个数与「上次用它是什么时候」可以差上好几周——
+   * **一个看起来很确定的错数，比留白更坏。**
+   *
+   * `WHERE last_connected_at IS NULL`：**只补空的**。真连过一次之后
+   * 那一列是准的，不该被这句推论覆盖回去。
+   */
+  if (!hasColumn(db, "remote_connections", "last_connected_at")) {
+    db.exec(`ALTER TABLE remote_connections ADD COLUMN last_connected_at TEXT`)
+  }
+  db.exec(
+    `UPDATE remote_connections SET last_connected_at = (
+       SELECT MAX(COALESCE(r.finished_at, r.started_at))
+         FROM runs r JOIN sessions s ON s.id = r.session_id
+        WHERE s.connection_id = remote_connections.id
+     )
+     WHERE last_connected_at IS NULL`,
   )
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(

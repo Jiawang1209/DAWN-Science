@@ -18,60 +18,63 @@
 import { useState } from "react"
 import type { RemoteConnection, RemoteState, SessionSummary } from "../protocol/index.js"
 import { Button, Field, Row } from "./primitives.js"
-import { SessionRow } from "./views.js"
-import { 短路径 } from "./format.js"
+import { SessionRow, use现在 } from "./views.js"
+import { 多久之前, 短路径 } from "./format.js"
 import { 服务器图标, 三角图标 } from "./icons.js"
 
 import { t } from "./i18n/index.js"
 /**
- * 状态怎么读。**点 + 文字成对**，不单给一个。
+ * **这一列写什么**（2026-08-16 定的三个词，2026-08-19 动了其中一个）。
  *
- * `disconnected` 的文字里不含原因——原因太长，放在副行上，
- * 但**它一定要出现在屏幕上**，不是只在 title 里（悬停才有的等于没有）。
+ * ```
+ * alive        连着
+ * connecting   正在连
+ * <多久之前>   连过、此刻没连着——写「上次连上是多久前」
+ * exited       从来没连上过（包括连不上）
+ * ```
+ *
+ * 作者 2026-08-19：*「远端服务器也需要激活的时候 alive，
+ * 非 alive 的话，就是显示时间。」* 以及**规则本身**：
+ * *「连接不上为什么不直接写 exited 呢？连接过了，然后断连了，直接写时间不就好了？」*
+ *
+ * ## `exited` 让位给时间，但只让在「有时间可写」的时候
+ *
+ * 与会话那一列同一条理由：**`exited` 对任何一台没连着的机器都成立，
+ * 所以它什么都没说**；而「上次用它是 2 天前 / 30 天前」是真信息——
+ * 那是你判断「这台还在不在、口令还有效吗」的依据。
+ *
+ * **没连上过的那些没有时间可写**，那时 `exited` 就是准确的那个词。
+ * （我一度在这里另造过一个「没连过」，作者当场否掉：*「在这里纠结什么呢？」*
+ * 他是对的——`exited` 本来就是「没在跑」，而没连过正是没在跑。
+ * 多一个词就多一套要解释的语义，而它没有多说任何事情。）
+ *
+ * **`connecting` 留着**：它是正在发生的事，且转瞬即逝。
+ * 在人盯着看结果的那几秒里跟他说「上次是 3 天前」，是答非所问。
+ *
+ * ## 这三个词为什么不走 `t()`
+ *
+ * 作者 2026-08-16 定的：*「无论中文模式还是英文模式，我们都是
+ * alive/connecting/exited」*。走 `t()` 的话英文表里要写自我映射
+ * （`alive → alive`），那只是给扫描看的噪声。代价说清楚：
+ * 它们对不读英文的人是行话——作者明确接受了这一点。
+ *
+ * （那一轮为此加过 gettext 的 `msgctxt`（`tc()`），随后没了调用点、一并撤掉。
+ * 真需要 msgctxt 时按 `docs/DEVELOPMENT_HISTORY.md` 2026-08-16 那条捡回来。）
+ *
+ * ## 三种「没连着」仍然分得出来
+ *
+ * | | 这一格 | 原因行 | 点 |
+ * |---|---|---|---|
+ * | 刚加的、没试过 | `exited` | 无 | 灰 |
+ * | 连不上（口令错等） | `exited` | **有** | 红 |
+ * | 连过又断了 | **一个时间** | 无 | 灰 |
  */
-const 状态文字 = (s: RemoteState): string =>
-  /**
-   * **这一列只有三个词，两种语言下都是它们**（2026-08-16 作者定的）：
-   *
-   * ```
-   * alive     connecting     exited
-   * ```
-   *
-   * 今天绕了一圈才回到这儿，绕的过程值得留下来：
-   *
-   * 1. 先是「连接 / 连接中 / 断连」对「alive / connecting / exited」，
-   *    为此给 i18n 补了 gettext 的 `msgctxt`（`tc()`）——因为**同一行上
-   *    那颗按钮本来就叫「连接」**，一个 msgid 给不出两个英文。
-   * 2. 然后作者定：*「无论中文模式还是英文模式，我们都是 alive/connecting/exited」*。
-   *
-   * 这么定解决了两件，都不是省事：
-   *
-   * - **下面的会话行本来就是 `alive` / `exited`，且不跟语言变**（那是会话的
-   *   状态枚举本身）。服务器跟着写，中文界面下两列才是同一套词；
-   *   否则「断连」对着 `exited`，又是「同一件事两个说法」。
-   * - **「连接中」那个撞车自己没了**：状态词 `connecting`、
-   *   而同一行上那颗按钮是「连接中…」——上一版两者只差一个省略号。
-   *
-   * 所以它们**不走 `t()`**：走了就要求英文表里写三条自我映射
-   * （`alive → alive`），那只是给扫描看的噪声。
-   * 代价说清楚：`alive` / `exited` 对不读英文的人是行话——
-   * 作者明确接受了这一点，会话那一列他已经这么用了很久。
-   *
-   * `tc()` 随之没有了调用点，一并撤掉（见 `docs/DEVELOPMENT_HISTORY.md`
-   * 2026-08-16 那条：真需要 msgctxt 时按那次的 commit 捡回来）。
-   */
-  s.kind === "ready"
-    ? "alive"
-    : s.kind === "connecting"
-      ? "connecting"
-      : // **没连着的一律写 `exited`**（2026-08-16 作者定的：
-        //   *「not connected 其实就是 exited，connected 就是 alive 就可以了」*）。
-        //
-        // 这**推翻了 2026-08-15 的一条分法**：那时「人按的断开」写「未连」、
-        // 「掉线」写 `exited`，理由是后者要报原因。作者的意思是这一列只该有
-        // 会话行那两个词。**三种「没连着」仍然分得出来**，只是不靠这个词：
-        // 掉线的点是红的、且底下多一行原因；没连过的点是灰的、没有原因行。
-        "exited"
+function 状态文字(conn: RemoteConnection, 正在连: boolean, 现在: number): string {
+  if (正在连) return "connecting"
+  if (conn.state.kind === "ready") return "alive"
+  // **没连上过就没有时间可写**，那时 `exited` 才是准确的那个词
+  return conn.lastConnectedAt ? 多久之前(conn.lastConnectedAt, 现在) : "exited"
+}
 
 export interface ConnectionDraft {
   id?: string | undefined
@@ -121,6 +124,15 @@ export function RemoteSection({
   /** 上一次操作失败了。**要在这一区里说**，不是丢进状态栏 */
   problem?: string | undefined
 }) {
+  /**
+   * **一分钟走一格**（2026-08-19）。没连着的那些行写的是相对时间，
+   * 不给心跳的话它会停在打开那一刻的数上——**一个不动的相对时间比没有更骗人**。
+   *
+   * 与侧栏共用同一个钩子（`use现在`）：抄第二份的代价不是那几行，
+   * 是**两份心跳迟早各自漂移**，那时人只会觉得「这个数有时候不准」。
+   */
+  const 现在 = use现在()
+
   /**
    * 按分组归拢。**没分组的排在前面，且不造一个叫「未分组」的假分组**——
    * 那个假分组会让「我明明没分组」变成「我在一个叫未分组的组里」。
@@ -181,6 +193,7 @@ export function RemoteSection({
                       key={c.id}
                       conn={c}
                       busy={busyId === c.id}
+                      现在={现在}
                       onEdit={() => onEdit(c)}
                       onConnect={() => onConnect(c)}
                       onDisconnect={() => onDisconnect(c)}
@@ -215,9 +228,16 @@ function ConnectionRow({
   onDisconnect,
   onNewSession,
   activeSessionId,
+  现在,
 }: {
   conn: RemoteConnection
   busy: boolean
+  /**
+   * 「现在」是几点。**由上面统一给，不在这一行里读时钟**——
+   * 与会话行同一条理由：每行各读一次的话，同一屏上的相对时间来自
+   * 几十个不同的瞬间，而且那个一分钟一跳的心跳没地方挂。
+   */
+  现在: number
   onEdit: () => void
   onConnect: () => void
   onDisconnect: () => void
@@ -225,14 +245,21 @@ function ConnectionRow({
   activeSessionId?: string | undefined
 }) {
   const 连着 = conn.state.kind === "ready"
-  const 状态 = busy ? "connecting" : 状态文字(conn.state)
+  const 连着中 = busy || conn.state.kind === "connecting"
+  const 状态 = 状态文字(conn, 连着中, 现在)
   return (
     <li className={`remote-row ${连着 ? "on" : ""}`} data-state={busy ? "connecting" : conn.state.kind}>
       <div className="remote-main">
         {/* 点是给一眼扫的；**文字才是那个意思本身** */}
         <span className="remote-dot" aria-hidden="true" />
         <span className="remote-label">{conn.label}</span>
-        <span className="remote-status">{状态}</span>
+        {/**
+          * `data-when` 让判据与将来的悬停卡拿得到原文——
+          * 屏幕上那一截是「2d」，从文本里读不出是哪一天。
+          */}
+        <span className="remote-status" data-when={conn.lastConnectedAt ?? conn.createdAt}>
+          {状态}
+        </span>
       </div>
       <p className="remote-sub">
         {conn.username}@{conn.host}

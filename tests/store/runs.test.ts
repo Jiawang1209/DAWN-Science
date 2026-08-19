@@ -45,12 +45,12 @@ const baseRun = {
 }
 
 describe("migrate v2", () => {
-  it("版本号升到 13 —— v13 让任务记住它跑的是哪段会话", () => {
+  it("版本号升到 14 —— v14 记下每台服务器上一次连上是什么时候", () => {
     const db = makeDb()
     const row = db.prepare(`SELECT value FROM schema_meta WHERE key='version'`).get() as { value: string }
     // 库里写的与常量一致：**迁移跑了没有，靠这一条**
     expect(row.value).toBe(String(SCHEMA_VERSION))
-    expect(SCHEMA_VERSION).toBe(13)
+    expect(SCHEMA_VERSION).toBe(14)
   })
 
   it("可重复执行（幂等）", () => {
@@ -262,5 +262,72 @@ describe("ProvenanceStore（在 RunStore 内）", () => {
 
   it("读取不存在的资源返回 undefined", () => {
     expect(runs.getProvenance("nope")).toBeUndefined()
+  })
+})
+
+/**
+ * **v14 那句回填**（2026-08-19）。
+ *
+ * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，就是显示时间。」*
+ *
+ * 会话那一列的时间是从账本反推的。**连接没有账本**——「连上过」这件事
+ * 此前哪儿都没留痕，所以新加了一列。而新列不必是空的：
+ *
+ * > 一段会话跑在这台服务器上、且账本记着它在 T 时刻干了活，
+ * > **那么 T 时刻我们必然连着这台机器。**
+ *
+ * 这不是猜，是推论——所以那句回填写的是事实。
+ * 不回填的话，作者现有的每一台服务器都会显示「加进来多久了」，
+ * 而那个数与「上次用它是什么时候」可以差上好几周：
+ * **一个看起来很确定的错数，比留白更坏。**
+ */
+describe("v14 · 服务器「上一次连上」", () => {
+  /** 造一台服务器 + 一段跑在它上面的会话 + 一条账 */
+  function 摆好(db: ReturnType<typeof makeDb>, opts: { 账时刻?: string; 已有?: string } = {}) {
+    db.prepare(
+      `INSERT INTO remote_connections (id, label, host, port, username, sort_order, created_at, last_connected_at)
+       VALUES ('c1','实验室','h',22,'u',0,'2026-07-01T00:00:00Z', ?)`,
+    ).run(opts.已有 ?? null)
+    db.prepare(`INSERT INTO projects (id, name, workspace, created_at) VALUES ('p1','x','/w','2026-07-01T00:00:00Z')`).run()
+    db.prepare(
+      `INSERT INTO sessions (id, agent_id, workspace, session_dir, state, created_at, project_id, connection_id, pinned, sort_order)
+       VALUES ('s1','a','/w','/w/.d','exited','2026-07-02T00:00:00Z','p1','c1',0,0)`,
+    ).run()
+    if (opts.账时刻) {
+      db.prepare(
+        `INSERT INTO runs (id, project_id, session_id, origin, request_type, status, started_at, finished_at, has_error)
+         VALUES ('r9','p1','s1','user','agent_turn','completed', ?, ?, 0)`,
+      ).run(opts.账时刻, opts.账时刻)
+    }
+  }
+  const 读 = (db: ReturnType<typeof makeDb>) =>
+    (db.prepare(`SELECT last_connected_at AS v FROM remote_connections WHERE id='c1'`).get() as { v: string | null }).v
+
+  it("**从账本反推**：会话在 T 干过活，那 T 时刻就连着", () => {
+    const db = makeDb()
+    摆好(db, { 账时刻: "2026-08-10T03:00:00Z" })
+    migrate(db) // 再跑一次迁移：回填那句在每次启动时都跑
+    expect(读(db)).toBe("2026-08-10T03:00:00Z")
+  })
+
+  /** **只补空的**：真连过一次之后那一列是准的，不该被这句推论覆盖回去 */
+  it("已经有准确值的不被覆盖", () => {
+    const db = makeDb()
+    摆好(db, { 账时刻: "2026-08-10T03:00:00Z", 已有: "2026-08-18T09:00:00Z" })
+    migrate(db)
+    expect(读(db)).toBe("2026-08-18T09:00:00Z")
+  })
+
+  /**
+   * **推不出来就留空**，不拿创建时刻顶上。
+   * 顶上的话，一台刚加进来、从没连过的服务器会显示「刚刚」——
+   * 而那一格的意思是「上次连上是多久前」，读起来就成了「刚刚连过」。
+   * 空着才让界面有机会说另一句话（「没连过」）。
+   */
+  it("**没有任何账就留空**——不拿创建时刻顶上", () => {
+    const db = makeDb()
+    摆好(db)
+    migrate(db)
+    expect(读(db)).toBeNull()
   })
 })

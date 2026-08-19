@@ -14,6 +14,7 @@
  *   2. **口令不回显**，且改别的字段不会把它弄丢
  *   3. **连不上要说清是为什么**，就在那一行上
  */
+import Database from "better-sqlite3"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { test, expect, 开一段临时会话, 进设置, 进坞 } from "./fixtures.js"
@@ -64,8 +65,13 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   // **分组是一个标签，不是树**；没分组的不会被塞进一个叫「未分组」的假分组
   await expect(page.locator(".remote-group-name")).toHaveText("集群")
   await expect(row.locator(".remote-sub")).toContainText("dawn@fake.example")
-  // **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。
-  // 「连不上」长什么样，由下面那条用例守（`exited` + 一行原因 + 红点）
+  /**
+   * **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。
+   *
+   * 2026-08-19 之后这一格在**连过**的机器上写时间，但这一台没连过——
+   * 没有时间可写，`exited` 就是准确的那个词（作者：
+   * *「连接不上为什么不直接写 exited 呢？」*）。
+   */
   await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
 
@@ -77,15 +83,24 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
 
   await row.getByRole("button", { name: "断开" }).click()
   /**
-   * **人按的断开也写 `exited`**（2026-08-16 作者定的：
-   * *「not connected 其实就是 exited，connected 就是 alive」*）。
+   * **人按的断开：那一格写「刚刚」**（2026-08-19，作者要的）。
    *
-   * 这推翻了 2026-08-15 的分法（那时人按的断开写「未连」，掉线才写 `exited`）。
-   * **两者仍分得出来，只是不靠这个词**：掉线多一行原因、点是红的。
-   * 所以这里连着断言「没有原因行」——**没了它，这条用例与「连不上」那条
-   * 就再没有任何区别**，而那正是我们分不清两种断开的那一刻。
+   * 刚刚才连上过，所以「上次连上是多久前」的答案就是「刚刚」——
+   * 这一格现在是**真信息**，而不是一个对所有没连着的机器都成立的 `exited`。
+   *
+   * ## 三种「没连着」现在分得比以前更开
+   *
+   * | | 那一格 | 原因行 |
+   * |---|---|---|
+   * | 刚加的、没试过 | 没连过 | 无 |
+   * | 连不上（口令错等） | 没连过 | **有** |
+   * | 连过又断了 | **一个时间** | 无 |
+   *
+   * 2026-08-16 那一版三种全写 `exited`，只能靠原因行与点的颜色分。
+   * 所以这里仍然连着断言「没有原因行」——**没了它，这条用例与
+   * 「连不上」那条就再没有区别**，而那正是我们分不清两种断开的那一刻。
    */
-  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await expect(row.locator(".remote-status")).toHaveText("刚刚")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
   await expect(row).toHaveAttribute("data-state", "idle")
 })
@@ -105,6 +120,10 @@ test("**连不上时说清是为什么**，就在那一行上", async ({ dawn })
   await expect(page.locator(".remote-problem")).toContainText(/authentication/i, {
     timeout: 15_000,
   })
+  /**
+   * **一次都没连上过，所以这一格仍是 `exited`**——而原因行说清是为什么。
+   * 与「刚加的还没试过」的区别全在那一行原因上（这一点 2026-08-16 就是如此）。
+   */
   await expect(row.locator(".remote-status")).toHaveText("exited")
   await expect(row.locator(".remote-reason")).toBeVisible()
 })
@@ -360,11 +379,17 @@ test("**服务器行与会话行同一条线**：左缘、名字、状态词都�
  * 顺带守住下面这件：**会话行那一列也是 `alive` / `exited`**，
  * 两列在两种语言下读的是同一套词。
  */
-test("**切了语言，服务器状态词不变**：始终 alive / exited", async ({ dawn }) => {
+test("**切了语言，那三个词不变**：alive / connecting / exited", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
   const 状态 = page.locator(".remote-row").first().locator(".remote-status")
+  /**
+   * **这条判据 2026-08-19 一个字没改，只是覆盖面小了一点**：
+   * 连过又断了的那一格现在写时间，而时间本来就不跟语言变。
+   * 剩下的三个词理由不变：**给它们套上 `t()`，中文界面下就会变回中文**，
+   * 而那正是作者 2026-08-16 不要的。
+   */
   await expect(状态).toHaveText("exited")
 
   await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
@@ -381,7 +406,8 @@ test("**切了语言，服务器状态词不变**：始终 alive / exited", asyn
   await expect(状态, "有人给这三个词套上了 t()").toHaveText("alive")
 
   await page.locator(".remote-row").first().getByRole("button", { name: "Disconnect" }).click()
-  await expect(状态).toHaveText("exited")
+  // 断开之后写的是时间——**时间本来就不跟语言变**
+  await expect(状态).toHaveText("just now")
 })
 
 /** 英文界面下那一区的标题是 `Remote servers` */
@@ -1059,4 +1085,41 @@ test("**服务器收纳里的会话，拖到哪就排到哪**", async ({ dawn })
     "甲那一段",
   )
   await expect(行.nth(1)).toContainText("乙那一段")
+})
+
+/**
+ * **没连着的那一行写「上次连上是多久前」**（2026-08-19，作者要的）。
+ *
+ * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，就是显示时间。」*
+ *
+ * 上面那条「整条路」已经验了刚断开时写「刚刚」。这一条补的是**隔了几天之后**——
+ * 而它同时是那条**回填**的端到端判据：
+ *
+ * 那一列（`last_connected_at`）是 schema v14 才加的，对作者现有的每一台
+ * 服务器都是空的。空着的话屏幕上会是一整列「没连过」，而他明明连过。
+ * 所以 v14 用一个**事实**回填：一段会话在 T 时刻跑在这台机器上，
+ * 那么 T 时刻我们必然连着它。`tests/store/runs.test.ts` 验的是那句 SQL，
+ * **这一条验的是它真的走到了屏幕上**。
+ */
+test("**隔了几天再看，那一行写的是「上次连上是多久前」**", async ({ dawn }) => {
+  const { page, dbPath } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "老机器" })
+
+  const row = page.locator(".remote-row").first()
+  await row.getByRole("button", { name: "连接" }).click()
+  await expect(row.locator(".remote-status")).toHaveText("alive", { timeout: 15_000 })
+  await row.getByRole("button", { name: "断开" }).click()
+  await expect(row.locator(".remote-status")).toHaveText("刚刚")
+
+  // 把那一刻挪到三天前
+  const db = new Database(dbPath)
+  db.prepare(`UPDATE remote_connections SET last_connected_at = ?`).run(
+    new Date(Date.now() - 3 * 24 * 3600_000).toISOString(),
+  )
+  db.close()
+  await page.reload()
+  await 展开远端(page)
+
+  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("3d")
 })

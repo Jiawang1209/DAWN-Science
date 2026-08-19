@@ -49,8 +49,13 @@ import { t, tf, msgid } from "./i18n/index.js"
  *
  * 每行各读 `Date.now()` 的话，同一屏上的相对时间来自几十个不同的瞬间；
  * 更要紧的是**读时钟的组件没法测**——那个 tick 也就没地方挂。
+ *
+ * **导出给「远端服务器」那一区共用**（2026-08-19）：它也写相对时间
+ * （没连着时写「上次连上是多久前」），而它长在 `App` 里、不在侧栏这棵树上。
+ * 抄第二份的代价不是那几行，是**两份心跳迟早会各自漂移**——
+ * 一个跳一个不跳的时候，人只会觉得「这个数有时候不准」。
  */
-function use现在(): number {
+export function use现在(): number {
   const [现在, 设现在] = useState(() => Date.now())
   useEffect(() => {
     const id = setInterval(() => 设现在(Date.now()), 60_000)

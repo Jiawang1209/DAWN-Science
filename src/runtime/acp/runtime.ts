@@ -767,8 +767,16 @@ export class AcpRuntime implements AgentRuntime {
 
   private 收一条(sessionId: SessionId, 段: 一段, msg: Record<string, unknown>): void {
     const id = msg["id"]
-    // ① 是我们那些请求的回复
-    if (typeof id === "number" && 段.等着.has(id)) {
+    /**
+     * ① 是我们那些请求的回复。
+     *
+     * **必须同时看「没有 `method`」**（2026-08-21 真 claude 撞出来的）：
+     * JSON-RPC 的 id 是按方向各自编号的——它的第 3 个请求与我们的第 3 个请求
+     * id 都是 3。只看 `等着.has(id)`，它问的第二次权限就被当成我们 prompt 的回复：
+     * 回合假收口，它的询问没人答，看起来像「它做了一半就不动了」。
+     * 带 `method` 的一定是请求，轮不到这里。
+     */
+    if (typeof id === "number" && msg["method"] === undefined && 段.等着.has(id)) {
       const 位 = 段.等着.get(id)!
       段.等着.delete(id)
       const err = msg["error"] as { message?: string; code?: number; data?: unknown } | undefined

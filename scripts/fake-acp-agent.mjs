@@ -48,7 +48,12 @@ let 累计输出 = 0
 let 取消了 = false
 /** 我们问出去的那些，等着客户端回。key 是 JSON-RPC id */
 const 问出去的 = new Map()
-let 下一个问id = 1000
+/**
+ * **从 1 编号，与我们自己发出去的请求撞 id**——真适配器就是这样（2026-08-21 真 claude 撞出来的）。
+ * JSON-RPC 的 id 是按方向各自编号的，客户端必须靠「有没有 `method`」分请求与回复，
+ * 不能靠 id。以前这里从 1000 起，正好把那个洞盖住了。
+ */
+let 下一个问id = 1
 /** 最近一次 prompt 的会话 id。协议违规那条要拿它当收件人 */
 let 最近的会话 = ""
 /** DAWN 在 `session/new` 里递过来的那些 MCP 服务器（B1） */
@@ -80,7 +85,7 @@ let 会话目录 = process.cwd()
 let 新建参数
 /** 调出去的客户端方法：id → resolve。与 `问出去的`（权限）分开记，错误也要拿得到 */
 const 调出去的 = new Map()
-let 下一个调id = 5000
+let 下一个调id = 1
 
 /** 调一次客户端方法，回 `{result}` 或 `{error}`。**不抛**：用例要看见错误长什么样 */
 function 调(method, params) {

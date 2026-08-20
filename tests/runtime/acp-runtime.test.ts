@@ -9,7 +9,7 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import { join } from "node:path"
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { AcpRuntime } from "../../src/runtime/acp/runtime.js"
 import type { AgentEvent, SessionSpec } from "../../src/runtime/types.js"
@@ -793,5 +793,55 @@ describe("客户端的手（T1）", () => {
       "假 agent 复述参数",
     )
     expect(话.kind === "output" && 话.data).toContain('"disallowedTools":["Grep","Glob","NotebookEdit"]')
+  })
+})
+
+describe("远端会话（T2）", () => {
+  it("**写落在服务器上，影子目录没动**；session/new 的 cwd 是影子；system prompt 说了实话", async () => {
+    const rt = 起一个({ FAKE_ACP_USE_HANDS: "1", FAKE_ACP_ECHO_NEW_PARAMS: "1" })
+    const 工作区 = mkdtempSync(join(tmpdir(), "dawn-acp-remote-"))
+    const 文件 = new Map<string, string>()
+    const 调用: string[] = []
+    const ex: import("../../src/runtime/types.js").RemoteLike = {
+      async exec(command, o) {
+        调用.push(`${command}@${o?.cwd}`)
+        if (command.startsWith("mkdir")) return { code: 0, stdout: "", stderr: "" }
+        return { code: 0, stdout: "终端通了", stderr: "" }
+      },
+      async readFile(p) {
+        const v = 文件.get(p)
+        if (v === undefined) throw new Error(`no ${p}`)
+        return Buffer.from(v)
+      },
+      async writeFile(p, d) {
+        文件.set(p, String(d))
+      },
+    }
+    const s = {
+      ...spec("r1"),
+      workspace: 工作区,
+      sessionDir: join(工作区, ".dawn", "sessions", "r1"),
+      remote: { executor: ex, cwd: { get: () => "/home/u/proj", set: () => {} } },
+    } as SessionSpec
+    const 影子 = join(s.sessionDir, "acp-shadow")
+    文件.set("/home/u/proj/手-读.txt", "服务器上读到的")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "用手")
+    await 等到(收, (e) => e.kind === "idle", "回合收口")
+    const 话 = 收
+      .filter((e): e is Extract<AgentEvent, { kind: "output" }> => e.kind === "output")
+      .map((e) => e.data)
+      .join("")
+
+    // 假 agent 把 `<cwd>/手-读.txt` 发来，cwd 是影子 → 翻译成远端
+    expect(话).toContain('【手·读】{"result":{"content":"服务器上读到的"}}')
+    expect(文件.get("/home/u/proj/手-写.txt")).toBe("假 agent 写的")
+    expect(existsSync(join(影子, "手-写.txt"))).toBe(false)
+    expect(调用.some((c) => c.endsWith("@/home/u/proj") && c.includes("printf 终端通了"))).toBe(true)
+    expect(话).toContain(`"cwd":${JSON.stringify(影子)}`)
+    expect(话).toMatch(/"systemPrompt":\{"append":"[^"]*服务器[^"]*\/home\/u\/proj/)
   })
 })

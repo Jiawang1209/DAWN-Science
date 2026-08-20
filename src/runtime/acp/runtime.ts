@@ -30,9 +30,10 @@
  * 3. **缺席不等于零**：没收到 usage 就不发 `turn_usage`，不补 0。
  */
 import type { ChildProcess } from "node:child_process"
-import { existsSync } from "node:fs"
+import { existsSync, mkdirSync } from "node:fs"
+import { join } from "node:path"
 import { 起适配器, 收进程 } from "./launch.js"
-import { 客户端的手, 本机后端, 本机门, 手的错误 } from "./hands.js"
+import { 客户端的手, 本机后端, 本机门, 远端后端, 远端门, 影子翻译, 手的错误 } from "./hands.js"
 import { UserFacingError } from "../../errors.js"
 import type {
   会话开关,
@@ -359,7 +360,29 @@ export class AcpRuntime implements AgentRuntime {
         `这段会话的工作目录不在了：${spec.workspace}。ACP 适配器要在这个目录里起，先把它建回来或换一个目录。`,
       )
     }
-    const proc = 起适配器({ command: cmd.command, args: cmd.args, cwd: spec.workspace })
+    /**
+     * **远端会话的适配器仍起在本机**（T2）——脑子在本机、手在服务器。
+     * claude-code-acp 要 `cwd` 在本机存在（SDK 在那里 spawn；给它不存在的路径，
+     * 回的是一句与环境变量问题一模一样的 "Query closed before response received"），
+     * 于是给它一个空影子目录；它说的 `<影子>/x` 我们听成 `<远端cwd>/x`（`影子翻译`）。
+     */
+    const 影子 = spec.remote ? join(spec.sessionDir, "acp-shadow") : undefined
+    if (影子) mkdirSync(影子, { recursive: true })
+    const 本机cwd = 影子 ?? spec.workspace
+    const 译 = spec.remote && 影子 ? 影子翻译(影子, spec.remote.cwd.get()) : undefined
+    // `记录` 只在命令结束后才调，那时段早已进了 `段们`，`发` 送得到
+    const 记录 = (text: string) => this.发(spec.sessionId, { kind: "notice", sessionId: spec.sessionId, text })
+    const 手 =
+      spec.remote && 译
+        ? new 客户端的手(远端后端(spec.remote.executor), {
+            门: 译.包(远端门(spec.remote.cwd)),
+            默认cwd: spec.remote.cwd.get(),
+            翻译命令: 译.命令,
+            记录,
+          })
+        : new 客户端的手(本机后端(), { 门: 本机门(spec.workspace), 默认cwd: spec.workspace, 记录 })
+
+    const proc = 起适配器({ command: cmd.command, args: cmd.args, cwd: 本机cwd })
     const 段: 一段 = {
       proc,
       sinks: new Set(),
@@ -369,12 +392,7 @@ export class AcpRuntime implements AgentRuntime {
       agentId: this.opts.agentIdOf?.(spec) ?? "acp",
       stderr尾: [],
       待答: new Map(),
-      手: new 客户端的手(本机后端(), {
-        门: 本机门(spec.workspace),
-        默认cwd: spec.workspace,
-        // `记录` 只在命令结束后才调，那时段早已进了 `段们`，`发` 送得到
-        记录: (text) => this.发(spec.sessionId, { kind: "notice", sessionId: spec.sessionId, text }),
-      }),
+      手,
       停了: false,
     }
     this.段们.set(spec.sessionId, 段)
@@ -507,9 +525,9 @@ export class AcpRuntime implements AgentRuntime {
       try {
         const r = (await this.请求(spec.sessionId, "session/load", {
           sessionId: 旧.acpSessionId,
-          cwd: spec.workspace,
+          cwd: 本机cwd,
           mcpServers: 我们的MCP,
-          _meta: 会话_META,
+          _meta: this.会话meta(spec, 影子),
         })) as { configOptions?: unknown }
         新 = { sessionId: 旧.acpSessionId, ...(r ?? {}) }
       } catch (e) {
@@ -537,9 +555,9 @@ export class AcpRuntime implements AgentRuntime {
 
     if (!新) {
       新 = (await this.请求(spec.sessionId, "session/new", {
-        cwd: spec.workspace,
+        cwd: 本机cwd,
         mcpServers: 我们的MCP,
-        _meta: 会话_META,
+        _meta: this.会话meta(spec, 影子),
       })) as { sessionId?: string; configOptions?: unknown }
     }
     if (!新?.sessionId) throw new UserFacingError("ACP 适配器没有回 sessionId，这一段起不来")
@@ -690,6 +708,25 @@ export class AcpRuntime implements AgentRuntime {
   }
 
   /* ── 里面 ─────────────────────────────────────────────────── */
+
+  /**
+   * `_meta`：`claudeCode.options.disallowedTools` 见 `会话_META`；
+   * 远端会话再加 `systemPrompt.append`——**给它说实话**：它的工作目录在服务器上，
+   * 影子路径等价于远端路径。它用哪个写法都对（影子会被翻译，远端路径原样放行）。
+   */
+  private 会话meta(spec: SessionSpec, 影子: string | undefined): Record<string, unknown> {
+    if (!spec.remote || !影子) return 会话_META
+    const 远 = spec.remote.cwd.get()
+    return {
+      ...会话_META,
+      systemPrompt: {
+        append:
+          `你的工作目录实际在一台远端服务器上：${远}。` +
+          `本机路径 ${影子} 只是它的影子——两种写法指向同一个地方，文件读写与命令都会在服务器上执行。` +
+          `提到路径时优先用服务器上的路径（${远}）。`,
+      },
+    }
+  }
 
   private async 一轮(sessionId: SessionId, 段: 一段, 文本: string): Promise<void> {
     try {

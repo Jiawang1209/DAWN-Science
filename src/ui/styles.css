@@ -418,8 +418,20 @@ pre {
    * 不裁的话那 0.25 秒里会冒出一条横向滚动条。
    */
   overflow-x: hidden;
-  overflow-y: auto;
+  /**
+   * **竖向不再由侧栏整体滚**（2026-08-20，作者要的）：整体滚会把底部那行
+   * 「设置」滚出屏幕。滚动交给中间的 `.side-scroll`，上下两端钉住。
+   */
+  overflow-y: hidden;
   padding-bottom: 12px;
+}
+
+/** 会话那一片自己滚；`min-height: 0` 是 flex 子项能收缩的前提 */
+.side-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 /* 12px 水平内距 = 列表内缩 4 + 行内距 8。**标题与它统领的行必须齐左**，
    差 4px 就会看出来是两个各自定的数 */
@@ -1015,7 +1027,8 @@ pre {
  * 挂在每一行上的话，剩余空间会被它们各分一份，
  * 三个入口就在侧栏上摊成三段（T3-a 之后列表空着不占位，当场露出来）。
  */
-.side-bottom { margin-top: auto; }
+/* 滚动区 `flex: 1` 已把它压到底；`auto` 留着是空列表时的兜底 */
+.side-bottom { margin-top: auto; flex-shrink: 0; }
 /**
  * 底部那三个入口（2026-08-12 **去掉分割线**）。
  *

@@ -51,7 +51,8 @@ test("概览在坞里打开，侧栏底部没有那一行", async ({ dawn }) => 
   const { page } = dawn
   await expect(page.locator(".sidebar").getByRole("button", { name: "项目概览" })).toHaveCount(0)
   await 进坞(page, "概览")
-  await expect(page.locator(".dock-overview .panel").first()).toBeVisible()
+  // 没选会话时概览是一句指路的话（2026-08-20 收窄成会话作用域）
+  await expect(page.getByText(/还没有选中会话/)).toBeVisible()
   // 对话还在——坞是旁边的一栏，不是替换主区（这正是搬家的理由）
   await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 })
@@ -140,4 +141,40 @@ test("坞开得起来也收得回去，**对话全程都在**；那颗按钮两�
   await 颗.click()
   await expect(page.locator(".right-dock")).toBeHidden()
   await expect(颗, "关上之后要回到「面板」").toHaveText("面板")
+})
+
+/**
+ * **「设置」永远钉在侧栏底部；会话多了由中间那片自己滚**（2026-08-20，
+ * 作者要的：*「设置永远都固定在下面，如果会话的内容太多了，
+ * 就用上下滑轮去寻找」*）。
+ *
+ * 此前 `.sidebar` 整体 `overflow-y: auto`——列表一长，「设置」跟着
+ * 滚出屏幕。这条用真会话把列表塞到溢出，然后量两件事：
+ * 滚动发生在 `.side-scroll` 里，而「设置」的盒子仍在视口内。
+ */
+test("**会话塞满一屏之后，「设置」仍然钉在底部可见**", async ({ dawn }) => {
+  const { page } = dawn
+  // 30 段够溢出任何一块开发屏；直接调 createTask（与夹具「开一段临时会话」同一条路）
+  await page.evaluate(async () => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }
+    }
+    const p = (await w.dawn.invoke("getProviders", {})) as { data?: { agents?: { agentId: string }[] } }
+    const agentId = p.data!.agents![0]!.agentId
+    for (let i = 0; i < 30; i++) await w.dawn.invoke("createTask", { agentId })
+  })
+  await page.reload()
+  await expect(page.locator(".sidebar .sess-item").first()).toBeVisible({ timeout: 30_000 })
+
+  const 滚 = await page.locator(".side-scroll").evaluate((el) => ({
+    scrollHeight: el.scrollHeight,
+    clientHeight: el.clientHeight,
+  }))
+  expect(滚.scrollHeight, "列表没有溢出——这条用例证明不了任何事").toBeGreaterThan(滚.clientHeight)
+
+  const 设置 = page.locator(".side-bottom").getByRole("button", { name: "设置", exact: true })
+  await expect(设置).toBeVisible()
+  const 盒 = (await 设置.boundingBox())!
+  const 视口 = await page.evaluate(() => window.innerHeight)
+  expect(盒.y + 盒.height, "「设置」被会话列表挤出屏幕了").toBeLessThanOrEqual(视口 + 1)
 })

@@ -10,7 +10,7 @@
  *   - **磁盘上的文件夹一个字节都没动**——移除项目最容易被误读成删文件夹
  *   - 删会话**不动账本**：那件事发生过，不因为你删掉会话就没发生
  */
-import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js"
+import { test, expect, 在项目里开会话 } from "./fixtures.js"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -82,8 +82,12 @@ test("移除项目：确认框摆真数字，**且磁盘上的文件夹还在**"
   writeFileSync(join(workspace, "我的数据.csv"), "a,b\n1,2\n")
   await 建会话并说一句(page, "会话一")
 
-  await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
-  await page.getByRole("button", { name: "移除项目" }).click()
+  /**
+   * **入口换到项目行上**（2026-08-20）：概览收窄成「当前这段会话」之后，
+   * 「移除项目」这个项目级动作从那儿移走了——项目行上的那颗与它
+   * 本来就是同一个动作（App 里同一个 `askDeleteProject`）。
+   */
+  await page.getByRole("button", { name: /删除项目：/ }).click()
 
   // **真数字**：刚建了一个会话，确认框上就得是 1
   await expect(page.locator(".confirm-detail")).toContainText("1")

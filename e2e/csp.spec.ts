@@ -38,7 +38,8 @@ test("四个屏走一遍，**一条 CSP 违规都没有**", async ({ dawn }) => 
   await page.getByRole("button", { name: "返回" }).click()
   // 概览住在坞里了（2026-08-20）
   await 进坞(page, "概览")
-  await expect(page.locator(".dock-overview .panel").first()).toBeVisible()
+  // 没选会话时概览是一句指路的话（2026-08-20 收窄成会话作用域）
+  await expect(page.getByText(/还没有选中会话/)).toBeVisible()
 
   await 进坞(page, "文件")
   await expect(page.locator(".files-view")).toBeVisible()

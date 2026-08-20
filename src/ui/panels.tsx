@@ -32,29 +32,11 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="empty">{children}</p>
 }
 
-/* ── 状态 ─────────────────────────────────────────────────────────── */
-
-export function StatusPanel({ sessions }: { sessions: readonly SessionSummary[] }) {
-  if (sessions.length === 0) {
-    return (
-      <Panel title={t("状态")}>
-        <Empty>{t("还没有会话")}</Empty>
-      </Panel>
-    )
-  }
-  const alive = sessions.filter((s) => s.state === "alive").length
-  const starting = sessions.filter((s) => s.state === "starting").length
-  const exited = sessions.filter((s) => s.state === "exited").length
-  return (
-    <Panel title={t("状态")}>
-      <ul className="stat-row">
-        <li>存活 {alive}</li>
-        {starting > 0 ? <li>启动中 {starting}</li> : null}
-        <li>已退出 {exited}</li>
-      </ul>
-    </Panel>
-  )
-}
+/**
+ * **「状态」面板 2026-08-20 删掉了**（概览收窄成「当前这段会话」时，
+ * 作者定的）。它列的是项目里所有会话，而侧栏本来就在答这个问题——
+ * 两处答同一件事等于没有判据。
+ */
 
 /* ── 产出 ─────────────────────────────────────────────────────────── */
 

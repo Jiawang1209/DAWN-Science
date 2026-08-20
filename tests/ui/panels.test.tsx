@@ -14,7 +14,6 @@ import {
   CostPanel,
   ProvenanceBadge,
   RunsPanel,
-  StatusPanel,
 } from "../../src/ui/panels.js"
 import type { Cost, FileChangeFacts, RunSummary, SessionSummary } from "../../src/protocol/index.js"
 
@@ -159,19 +158,6 @@ describe("硬要求 ③ 溯源不完整必须显示原因", () => {
     )
     expect(screen.getByText(/不完整/)).toBeDefined()
     expect(screen.getByText(/内置工具不经过注入的 MCP/)).toBeDefined()
-  })
-})
-
-describe("状态栏", () => {
-  it("区分存活与已退出的会话", () => {
-    render(<StatusPanel sessions={[session(), session({ sessionId: "s2", state: "exited" })]} />)
-    expect(screen.getByText(/存活\s*1/)).toBeDefined()
-    expect(screen.getByText(/已退出\s*1/)).toBeDefined()
-  })
-
-  it("没有会话时如实说没有", () => {
-    render(<StatusPanel sessions={[]} />)
-    expect(screen.getByText(/还没有会话/)).toBeDefined()
   })
 })
 

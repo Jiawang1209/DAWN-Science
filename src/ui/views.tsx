@@ -1986,6 +1986,15 @@ export function SessionSidebar({
         */}
       <hr className="side-divider" />
 
+      {/**
+        * **会话那一片自己滚，「设置」永远钉在底**（2026-08-20，作者要的：
+        * *「设置永远都固定在下面，如果会话的内容太多了，就用上下滑轮去寻找」*）。
+        *
+        * 此前是 `.sidebar` 整体 `overflow-y: auto`——列表一长，
+        * 底部那行「设置」跟着滚出屏幕。现在滚动交给这个盒子：
+        * 顶部动作、横线、底部入口都不动，中间这片超高就出滚轮。
+        */}
+      <div className="side-scroll">
       {agents.length === 0 ? (
         <div className="pad">
           <p className="hint">{t("配置里还没有可用的 agent")}</p>
@@ -2481,6 +2490,7 @@ export function SessionSidebar({
         *
         * 收进一个盒子，`auto` 只留一个：它们仍然贴着底，彼此挨着。
         */}
+      </div>
       <div className="side-bottom">
         {/**
           * **「项目概览」那一行 2026-08-20 摘掉了**（作者定的：

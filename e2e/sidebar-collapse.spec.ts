@@ -109,8 +109,13 @@ test("**侧栏有滚动条时，内容不许被横向裁掉**", async ({ dawn })
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   }
 
+  /**
+   * **量 `.side-scroll`，不再量 `.sidebar`**（2026-08-20）：「设置」钉底那一轮
+   * 把竖向滚动从侧栏整体搬进了中间那个盒子——滚动条在哪，量具就在哪，
+   * 这条用例守的东西（滚动条出现时内容不许被横向裁掉）一个字没变。
+   */
   const 量 = await page.evaluate(() => {
-    const s = document.querySelector(".sidebar") as HTMLElement
+    const s = document.querySelector(".sidebar .side-scroll") as HTMLElement
     return {
       有竖向滚动条: s.scrollHeight > s.clientHeight,
       可视宽: s.clientWidth,

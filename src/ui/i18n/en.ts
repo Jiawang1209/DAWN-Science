@@ -91,7 +91,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 的端点地址": "Endpoint URL for {0}",
   "{0} 的协议": "Protocol for {0}",
   "{0} 的模型清单": "Model list for {0}",
-  "状态": "Status",
   "变更": "Changes",
   "产出": "Outputs",
   "上下文": "Context",
@@ -195,7 +194,6 @@ export const EN: Readonly<Record<string, string>> = {
   "模型": "Models",
   "视图": "View",
   "主题：{0}": "Theme: {0}",
-  "还没有会话": "No chats yet",
   "终端的中止是按 Ctrl-C，不走这个命令": "Terminals are interrupted with Ctrl-C, not this command",
   "外部 CLI 里只有部分能「只停这一轮」，界面还分不清是哪一种，暂未开放": "Only some external CLIs can stop just the current turn, and the interface cannot yet tell which — so this is not offered",
   "当前没有正在进行的回合": "No turn is running right now",
@@ -262,6 +260,8 @@ export const EN: Readonly<Record<string, string>> = {
   "项目": "Projects",
   "会话": "Chats",
   "概览": "Overview",
+  "还没有选中会话。开一段对话，这里就是它的事实面：成本、上下文、变量、环境与账本。":
+    "No chat is selected. Start one and this becomes its fact sheet: cost, context, variables, environment and the ledger.",
   "文件": "Files",
   "设置": "Settings",
   "设置分类": "Settings sections",
@@ -463,8 +463,6 @@ export const EN: Readonly<Record<string, string>> = {
   "磁盘上的文件夹一个都不会被删除。": "Not one folder on disk will be deleted.",
   "磁盘上的文件夹不会被删除。": "The folder on disk will not be deleted.",
   "移除项目": "Remove project",
-  "从工作台移除这个项目，连同它的会话与账本。":
-    "Remove this project from the workbench, along with its chats and ledger.",
   "会断开这台机器的连接，并把它的登录口令从系统钥匙串里删掉。":
     "This disconnects the host and removes its credentials from the system keychain.",
 

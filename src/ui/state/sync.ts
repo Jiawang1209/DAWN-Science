@@ -121,8 +121,14 @@ export const loadSessions = (c: WorkbenchClient, projectId: string): Promise<voi
     })
     .catch(fail)
 
-export const loadRuns = (c: WorkbenchClient, projectId: string): Promise<void> =>
-  c.get<RunSummary[]>("listRuns", { projectId }).then((v) => {
+/**
+ * @param sessionId 给了就只取**这段会话**的 Run（2026-08-20，作者定的：
+ *   概览「应该是针对单一一个会话的，而不是全部的概览」）。协议与后端
+ *   一直支持这个参数，只是界面从没传过。不给 = 项目全量（没选会话时
+ *   审阅那一格还要用）。
+ */
+export const loadRuns = (c: WorkbenchClient, projectId: string, sessionId?: string): Promise<void> =>
+  c.get<RunSummary[]>("listRuns", { projectId, ...(sessionId ? { sessionId } : {}) }).then((v) => {
       setRuns(v)
     })
     .catch(fail)

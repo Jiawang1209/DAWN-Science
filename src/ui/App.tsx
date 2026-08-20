@@ -26,7 +26,6 @@ import {
   ProvenanceBadge,
   RunsPanel,
   mayIncludeUserEdits,
-  StatusPanel,
   ToolChangesPanel,
   VariablesPanel,
   EnvironmentPanel,
@@ -289,6 +288,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     if (!projectId) return
     void loadSessions(client, projectId)
+    /**
+     * **这里刻意不带 `sessionId`，也不进依赖**（2026-08-20 当天踩的）。
+     *
+     * 第一版为了「账本按会话取」把 `sessionId` 加进了依赖：
+     * 建任务的那一拍 `$activeSessionId` 先变、`$activeProjectId` 后变，
+     * effect 于是带着**过期的 projectId** 重放了一次 `loadSessions`——
+     * 刚建的会话被旧项目的空列表冲掉，症状是**用户自己那一轮不渲染**
+     * （e2e `task-workspace` 两条当场红）。
+     *
+     * 会话作用域由 `refreshLedger` 负责：它只在有人看着账本时跑，
+     * 依赖里本来就有 `sessionId`。这里只做项目级的初始装载。
+     */
     void loadRuns(client, projectId)
   }, [client, projectId])
 
@@ -479,7 +490,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     void loadContextUsage(client, $activeSessionId.get())
     const pid = $activeProjectId.get()
     if (!pid) return
-    await loadRuns(client, pid)
+    await loadRuns(client, pid, $activeSessionId.get())
     loadRunDetail(client, $runs.get()[0]?.runId)
   }, [client])
 
@@ -3533,52 +3544,44 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 * 变量/环境两个 effect 与 `在看账本` 的条件都已改看这一格。
                 */
 <div className="dock-overview">
-              {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
-                  另一个有而这一个没有时警告会整个消失（规格 7.5 禁止静默吞掉） */}
               {/**
-                * **「变更」两件搬去右侧坞的「审阅」了**（2026-08-17）。
+                * **这一格答的是「当前这段会话」**（2026-08-20，作者定的：
+                * *「概览应该是针对单一一个会话的，而不是全部的概览」*）。
                 *
-                * **不留一份在这儿**：两处显示同一件事，人就没法判断该信哪一个，
-                * 而这个项目已经为「两处长得一样的东西」栽过好几次。
-                * 归属告知（`AttributionCaveat`）跟着一起走——它解释的正是那些数。
+                * 收窄时拿掉的两块，各有各的理由：
+                * - **「状态」删了**——它列项目里所有会话，而侧栏本来就在答
+                *   这个问题，两处答同一件事等于没有判据；
+                * - **「移除项目」移走了**——项目级的危险动作不该躺在一段会话
+                *   的概览里；每一行项目上已经有删除入口（同一个动作）。
+                *
+                * 成本与历史不在这儿另起口径：`loadRuns` 现在带着
+                * `sessionId` 取，喂进来的就已经是这段会话的（管子跟着搬）。
                 */}
-              <StatusPanel sessions={sessions} />
-              {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
-                  见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
-              <CostPanel cost={latestCost} />
-              {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
-              <ContextPanel usage={contextUsage} />
-              {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
-              <VariablesPanel state={variables} />
-              {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
-              <EnvironmentPanel state={environment} />
-              <RunsPanel runs={runs} />
-              {/**
-                * 移除项目放在**项目概览**里：它是项目作用域的动作，
-                * 而侧栏的下拉框是「切到哪个项目」——**切换的地方不该同时是删除的地方**。
-                */}
-              <section className="panel danger-zone">
-                <h3 className="panel-title">{t("移除项目")}</h3>
-                <div className="panel-body">
-                  <p className="hint">
-                    {t("从工作台移除这个项目，连同它的会话与账本。")}
-                    <em className="set-emph">{t("磁盘上的文件夹不会被删除。")}</em>
-                  </p>
-                  <div className="state-action">
-                    <Button variant="danger" size="sm" onClick={() => askDeleteProject()}>
-                      {t("移除项目")}
-                    </Button>
-                  </div>
-                </div>
-              </section>
-              {provenance ? (
-                <section className="panel">
-                  <h3 className="panel-title">{t("溯源")}</h3>
-                  <div className="panel-body">
-                    <ProvenanceBadge link={provenance} />
-                  </div>
-                </section>
-              ) : null}
+              {!sessionId ? (
+                // **没选会话就说清楚**，不摆一排空面板——空面板会被读成「什么都没发生」
+                <p className="empty">{t("还没有选中会话。开一段对话，这里就是它的事实面：成本、上下文、变量、环境与账本。")}</p>
+              ) : (
+                <>
+                  {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
+                      见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
+                  <CostPanel cost={latestCost} />
+                  {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
+                  <ContextPanel usage={contextUsage} />
+                  {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
+                  <VariablesPanel state={variables} />
+                  {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
+                  <EnvironmentPanel state={environment} />
+                  <RunsPanel runs={runs} />
+                  {provenance ? (
+                    <section className="panel">
+                      <h3 className="panel-title">{t("溯源")}</h3>
+                      <div className="panel-body">
+                        <ProvenanceBadge link={provenance} />
+                      </div>
+                    </section>
+                  ) : null}
+                </>
+              )}
             </div>
             ) : rightDockTenant === "web" ? (
               /**

@@ -153,13 +153,15 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
      * 旧的（项目概览-*）同轮删除。
      */
     name: "概览",
-    // 坞里多块面板竖着摞 + 空态
+    /**
+     * **概览收窄成「当前这段会话」之后（2026-08-20），没选会话时它只有
+     * 一句指路的话**——这张基线截的就是这个空态：它是新用户第一眼
+     * 看到的样子，值得钉住。
+     */
     go: async (page) => {
       await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
       await 进坞(page, "概览")
-      // `.dock-overview` 是骨架。等到面板都挂上，否则会截到「少一块」的中间态
-      await expect(page.locator(".dock-overview .panel").first()).toBeVisible()
-      await expect(page.getByText("还没有记录")).toBeVisible()
+      await expect(page.getByText(/还没有选中会话/)).toBeVisible()
     },
   },
 ]

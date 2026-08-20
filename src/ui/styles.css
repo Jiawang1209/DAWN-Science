@@ -1819,6 +1819,12 @@ pre {
   white-space: nowrap;
 }
 
+/** 视觉服务右上那颗「已就绪」。绿的与「活着」同一支（会话行、远端连接都是它） */
+.vision-ready {
+  color: var(--dawn-success);
+  font-size: 12px;
+}
+
 /** 文件行右侧的修改时间（2026-08-19）。**等宽数字**，一列才对得齐 */
 .file-when {
   font-variant-numeric: tabular-nums;

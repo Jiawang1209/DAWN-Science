@@ -356,6 +356,18 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
+    /**
+     * 视觉服务（2026-08-20）。**现取现用**：读的是被 `saveVision` 原地更新的
+     * 那一个 registry 对象与钥匙串，设置里改完不用重启。
+     * 三样缺一样就是 undefined——**缺失不等于能用**。
+     */
+    vision: () => {
+      const v = registry.vision
+      const key = opts.credentials.get("vision:apiKey")
+      return v?.enabled && v.baseUrl && v.model && key
+        ? { baseUrl: v.baseUrl, model: v.model, apiKey: key }
+        : undefined
+    },
     gate: 权限门,
     // 给了才认这两个位置；不给就完全是 pi 的原样
     skills: 技能位置,

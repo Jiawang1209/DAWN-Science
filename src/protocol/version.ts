@@ -445,8 +445,11 @@
  *   **「钱看不见、token 看得见」没地方表达**，而那正是我们每一轮的实况
  *   （provider 报 token，一分钱都不报）。结果是账本里一个 token 都没有，
  *   而运行时其实一直知道。作者要做「用量」那一屏时才发现。
+ *
+ * 7.12（2026-08-20）：视觉服务——`getVision` / `saveVision` / `testVision`。
+ *   纯新增。让目录里没声明收图的模型（DeepSeek 等）借一个视觉端点看图。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.11"
+export const WORKBENCH_PROTOCOL_VERSION = "7.12"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

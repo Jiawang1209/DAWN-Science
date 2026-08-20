@@ -27,7 +27,7 @@
  * 而左边已经有一条应用侧栏了——**再叠一条会让人不知道自己在哪一层**。
  * 颜色与类名同样不取（那是它的表达，不是事实）。
  */
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
@@ -1406,6 +1406,200 @@ const 预置适配器: readonly { agentId: string; 名: string; command: string;
  *
  * **加完它立刻出现在模型选择器里**，带着 ACP 标记——那一半是早就做好的。
  */
+
+/* ── 视觉服务 ─────────────────────────────────────────────────────── */
+
+/** `getVision` 回来的那份。**没有密钥本身**，只有配没配过 */
+export interface VisionState {
+  enabled: boolean
+  api: string
+  baseUrl?: string | undefined
+  model?: string | undefined
+  hasSecret: boolean
+  ready: boolean
+}
+
+/**
+ * 在线视觉服务（2026-08-20，作者要的；设计定案见
+ * `specs/2026-08-20-视觉服务-design.md`）。
+ *
+ * 作者：*「给 deepseek 添加一个视觉，放在设置里面的模型选择里面，
+ * 做一个选择框，是否添加视觉，选择之后才能调用。」* 并给了一张他用过的
+ * 插件截图——字段与措辞照它：API 协议 / API 地址 / 模型名称 / API 密钥 /
+ * 「已保存；留空表示不修改」/ 测试视觉模型。
+ *
+ * **全局一份，谁的目录里没声明收图谁用**——所以它放在「模型服务」
+ * 这一屏里，而不是挂在某一家 provider 底下。
+ *
+ * 三个注入的异步函数而不是直接拿 client：**这块面板要能在单测里
+ * 用假函数摆布**（与别的面板同一副做法）。
+ */
+export function VisionPanel({
+  load,
+  save,
+  test,
+}: {
+  load: () => Promise<VisionState>
+  save: (v: { enabled: boolean; baseUrl?: string; model?: string; secret?: string }) => Promise<{ ready: boolean }>
+  test: () => Promise<{ ok: boolean; text: string }>
+}) {
+  const [态, set态] = useState<VisionState | undefined>(undefined)
+  const [enabled, setEnabled] = useState(false)
+  const [baseUrl, setBaseUrl] = useState("")
+  const [model, setModel] = useState("")
+  const [secret, setSecret] = useState("")
+  const [说明, set说明] = useState<string | undefined>(undefined)
+  const [测试中, set测试中] = useState(false)
+  const [测试结果, set测试结果] = useState<{ ok: boolean; text: string } | undefined>(undefined)
+
+  useEffect(() => {
+    load()
+      .then((v) => {
+        set态(v)
+        setEnabled(v.enabled)
+        setBaseUrl(v.baseUrl ?? "")
+        setModel(v.model ?? "")
+      })
+      // 读不到也要出声——**一块默认值的表单与「读失败」在屏幕上不能长一样**
+      .catch((e: unknown) => set说明(`读不到视觉配置：${e instanceof Error ? e.message : String(e)}`))
+    /**
+     * **只在挂载时读一次**，deps 故意不含 `load`：调用方图省事传的是
+     * 内联箭头，每次渲染都是新引用，进 deps 就是每帧重读一遍配置。
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <Section
+      title={t("在线视觉服务")}
+      desc={
+        <>
+          {t("让目录里没声明支持图片的模型（DeepSeek 等）借这个端点看图：贴进对话的图会先被它转述成文字，agent 也多一个 look_at_image 工具去看工作区里的图。")}
+          {態徽章(态)}
+        </>
+      }
+    >
+      <div className="svc-field">
+        <label className="svc-field-name" htmlFor="vision-enabled">
+          {t("启用视觉")}
+        </label>
+        {/**
+          * 作者要的那个选择框。**不勾 = 两条缝都不接**，一切如旧——
+          * 这一格是整个功能的总闸，所以放最上面。
+          */}
+        <input
+          id="vision-enabled"
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => setEnabled(e.target.checked)}
+        />
+      </div>
+
+      <字段 label={t("API 协议")} htmlFor="vision-api" hint={t("目前只支持这一种；视觉端点几乎都兼容它。")}>
+        {/* 只有一项也画成下拉：**留着位**，下一种协议来时这里不用改形状 */}
+        <select id="vision-api" className="control" value="openai-completions" onChange={() => {}}>
+          <option value="openai-completions">OpenAI Chat Completions</option>
+        </select>
+      </字段>
+
+      <字段 label={t("API 地址")} htmlFor="vision-url" hint={t("兼容端点的根地址，不带 /chat/completions。")}>
+        <input
+          id="vision-url"
+          className="control mono"
+          value={baseUrl}
+          placeholder="https://your-vision.example/v1"
+          onChange={(e) => setBaseUrl(e.target.value)}
+        />
+      </字段>
+
+      <字段 label={t("模型名称")} htmlFor="vision-model" hint={t("那个端点上的视觉模型 id。")}>
+        <input
+          id="vision-model"
+          className="control mono"
+          value={model}
+          placeholder="qwen-vl-plus"
+          onChange={(e) => setModel(e.target.value)}
+        />
+      </字段>
+
+      <字段
+        label={t("API 密钥")}
+        htmlFor="vision-key"
+        hint={t("密钥存在系统的安全存储里，保存后不会回显。")}
+      >
+        <input
+          id="vision-key"
+          className="control mono"
+          type="password"
+          value={secret}
+          placeholder={态?.hasSecret ? t("已保存；留空表示不修改") : t("还没有保存密钥")}
+          onChange={(e) => setSecret(e.target.value)}
+        />
+      </字段>
+
+      <div className="svc-actions">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => {
+            save({
+              enabled,
+              ...(baseUrl.trim() ? { baseUrl: baseUrl.trim() } : {}),
+              ...(model.trim() ? { model: model.trim() } : {}),
+              ...(secret ? { secret } : {}),
+            })
+              .then(({ ready }) => {
+                setSecret("")
+                set测试结果(undefined)
+                set说明(ready ? t("已保存，视觉服务就绪。") : t("已保存，但还没就绪——看右上角缺什么。"))
+                return load().then((v) => set态(v))
+              })
+              .catch((e: unknown) => set说明(`保存失败：${e instanceof Error ? e.message : String(e)}`))
+          }}
+        >
+          {t("存下来")}
+        </Button>
+        {/**
+          * **真调一次**，与 MCP 的「试一次」同一个理由：填完配置不试一发，
+          * 第一次失败会发生在正经干活的时候。发的是一块内置的红色方块——
+          * 端点回「红色」就是真通了，人眼可核对。
+          */}
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={测试中}
+          onClick={() => {
+            set测试中(true)
+            set测试结果(undefined)
+            test()
+              .then(set测试结果)
+              .catch((e: unknown) => set测试结果({ ok: false, text: e instanceof Error ? e.message : String(e) }))
+              .finally(() => set测试中(false))
+          }}
+        >
+          {测试中 ? t("正在测…") : t("测试视觉模型")}
+        </Button>
+      </div>
+      {说明 ? <p className="hint">{说明}</p> : null}
+      {测试结果 ? (
+        <p className={测试结果.ok ? "hint" : "caveat"}>
+          {测试结果.ok ? tf("端点回话了：{0}", 测试结果.text) : tf("测试失败：{0}", 测试结果.text)}
+        </p>
+      ) : null}
+    </Section>
+  )
+}
+
+/** 右上那颗状态。**「未配置”不写成错误**——没配是常态，不是事故 */
+function 態徽章(态: VisionState | undefined) {
+  if (!态) return null
+  return 态.ready ? (
+    <span className="vision-ready"> {t("已就绪")}</span>
+  ) : 态.enabled ? (
+    <span className="caveat"> {t("已启用但未配置齐")}</span>
+  ) : null
+}
+
 export function AcpPanel({
   agents,
   onAdd,

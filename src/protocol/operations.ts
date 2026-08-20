@@ -557,6 +557,65 @@ export const OPERATIONS = {
   },
 
   /**
+   * 视觉服务的三个操作（协议 7.12，2026-08-20）。
+   *
+   * 作者：*「给 deepseek 添加一个视觉……做一个选择框，是否添加视觉，
+   * 选择之后才能调用。」* 全局一份，谁的目录里没声明收图谁用。
+   * 设计定案见 `specs/2026-08-20-视觉服务-design.md`。
+   */
+  getVision: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        enabled: z.boolean(),
+        api: z.string(),
+        baseUrl: z.string().optional(),
+        model: z.string().optional(),
+        /** 只说配没配过，**永不回显**（与 provider / MCP 同一条纪律） */
+        hasSecret: z.boolean(),
+        /**
+         * 勾了、且三样都齐 = 就绪。**缺失不等于能用**：
+         * `enabled: true` 但缺地址/模型/密钥时它是 false，界面写清缺哪样。
+         */
+        ready: z.boolean(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  saveVision: {
+    request: z
+      .object({
+        enabled: z.boolean(),
+        baseUrl: z.string().optional(),
+        model: z.string().optional(),
+        /** 留空 = 不改动已存的那份；给了就换。**只进钥匙串，不进文件** */
+        secret: z.string().optional(),
+      })
+      .strict(),
+    response: z.object({ ready: z.boolean() }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 「测试视觉模型」：发一张内置的诊断小图**真调一次**，成败原样回。
+   * 与 MCP 的 `testMcpServer` 同一个理由：填完配置不试一发，
+   * 第一次失败会发生在正经干活的时候。
+   */
+  testVision: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        ok: z.boolean(),
+        /** 成功时是端点回的描述（截断过要说明），失败时是原样的错误 */
+        text: z.string(),
+      })
+      .strict(),
+    /** 只发一次诊断调用，不改任何状态——但它出网，界面别在轮询里调它 */
+    mutating: false,
+  },
+
+  /**
    * 加一个 ACP 适配器（2026-08-19）。
    *
    * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，

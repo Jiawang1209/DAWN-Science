@@ -52,6 +52,8 @@ import { ProvenanceProbe, 套上溯源 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
+import { createLookAtImageTool } from "../tools/look-at-image.js"
+import { 描述图片 } from "./vision.js"
 import { createMcpTools } from "../tools/mcp-tool.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
@@ -162,6 +164,14 @@ export interface NativeRuntimeOptions {
    * 只在明确不需要时置 false（例如纯对话的性能测试）。
    */
   provenance?: boolean
+  /**
+   * 视觉服务（2026-08-20）。**给了才有转述与 `look_at_image`。**
+   *
+   * 是个 getter 而不是一份值：设置里改了配置要立刻生效，
+   * 而运行时在装配时就建好了。返回 undefined = 没勾或没配齐，
+   * 两条缝都不接，一切如旧（与 `kernels` / `mcp` 同一副做法）。
+   */
+  vision?: () => import("./vision.js").视觉端点 | undefined
   /**
    * 子 agent 入口的可执行文件路径（`dist/electron/subagent-child.js`）。
    *
@@ -546,6 +556,12 @@ export class NativeRuntime implements AgentRuntime {
      * 而这个方法是同步的。备好的活儿在 `start()` 里干。
      */
     mcp工具: unknown[] = [],
+    /**
+     * 这个模型的目录里声明了收图（2026-08-20）。**从外面传进来**：
+     * 判断要看 `model.input`，而解析模型是 async 的，`start()` 里已经做了。
+     * 收图的模型不给 `look_at_image`——它自己能看，多一个工具只会让它绕路。
+     */
+    模型收图 = true,
   ): unknown[] | undefined {
     const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
 
@@ -562,6 +578,23 @@ export class NativeRuntime implements AgentRuntime {
     const 内核工具 = this.opts.kernels
       ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
       : []
+
+    /**
+     * `look_at_image`：视觉服务的缝二（2026-08-20）。
+     * **两个条件都要**：装配给了 `vision`，且这个模型的目录里没声明收图。
+     * 注册决定在建会话这一刻拿的模型——中途 `setModel` 不重算工具表
+     * （pi 的 `customTools` 是建会话时装上去的），这一条如实写在设计文档里。
+     */
+    const 视觉工具 =
+      this.opts.vision && !模型收图
+        ? [
+            createLookAtImageTool({
+              端点: this.opts.vision,
+              workspace: spec.workspace,
+              remote: spec.remote,
+            }),
+          ]
+        : []
 
     /**
      * **MCP 工具与 `run_code` 一样，两条 return 都要带上**——
@@ -588,7 +621,7 @@ export class NativeRuntime implements AgentRuntime {
      * （`mcp-tool.ts` 的 `trusted` 判定——策略只有一个家），
      * 再套一次内置那道门就是拿错了尺子量。
      */
-    const 外部 = [...内核工具, ...mcp工具]
+    const 外部 = [...内核工具, ...视觉工具, ...mcp工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部
@@ -695,7 +728,14 @@ export class NativeRuntime implements AgentRuntime {
       }
     }
 
-    const customTools = this.toolsFor(spec, native, mcp工具)
+    const customTools = this.toolsFor(
+      spec,
+      native,
+      mcp工具,
+      // **缺失不等于不收**：目录没写 `input` 时当它收图，宁可少给一个工具
+      // 也不给收图的模型塞一个绕路的（`writeWithImages` 的「明确不收」同一口径）
+      !(Array.isArray(model.input) && !model.input.includes("image")),
+    )
 
     /**
      * **这段对话的记录住在它自己的目录里**（会话续接，2026-08-11）。
@@ -1139,14 +1179,54 @@ export class NativeRuntime implements AgentRuntime {
      * 那就在对话里留一句话，然后**照常把这一轮发出去**。
      */
     const 明确不收 = Array.isArray(model?.input) && !model.input.includes("image")
-    if (明确不收) {
+    if (!明确不收) {
+      this.送一轮(sessionId, data, images, behavior)
+      return
+    }
+
+    /**
+     * **视觉服务的缝一：贴图转述**（2026-08-20，做法 A；设计定案见
+     * `specs/2026-08-20-视觉服务-design.md`）。
+     *
+     * 视觉可用 → 先把图交给视觉端点要一份描述，把描述并进这一轮文字发出去；
+     * 没配 → 上面那句原话照说；**调用失败 → 说清原因，这一轮照发**
+     * （作者 2026-08-13 定过：对话是要有的）。
+     *
+     * 这个方法是同步签名（`void`），转述是异步的——所以走「先收下、后送出」：
+     * pi 的 `prompt()` 本来就允许晚一拍。失败经 notice 出声，不静默吞。
+     */
+    const 端点 = this.opts.vision?.()
+    if (!端点) {
       this.emit({
         kind: "notice",
         sessionId,
         text: `模型 ${model.id} 的目录里没有声明支持图片，这 ${images.length} 张可能不会被它看到。`,
       })
+      this.送一轮(sessionId, data, images, behavior)
+      return
     }
-    this.送一轮(sessionId, data, images, behavior)
+    void 描述图片(端点, images)
+      .then((描述) => {
+        this.emit({
+          kind: "notice",
+          sessionId,
+          text: `模型 ${model.id} 收不了图，这 ${images.length} 张已由 ${端点.model} 转述给它。`,
+        })
+        const 并入 = `${data}
+
+[以下是随消息附上的 ${images.length} 张图片，由视觉模型 ${端点.model} 转述]
+${描述}`
+        // **图仍然带着**：转录里人要看得见原图；pi 那边不收就丢，无所谓
+        this.送一轮(sessionId, 并入, images, behavior)
+      })
+      .catch((e: unknown) => {
+        this.emit({
+          kind: "notice",
+          sessionId,
+          text: `视觉转述失败（${e instanceof Error ? e.message : String(e)}），这一轮按原样发出，模型 ${model.id} 可能看不到那 ${images.length} 张图。`,
+        })
+        this.送一轮(sessionId, data, images, behavior)
+      })
   }
 
   private 送一轮(

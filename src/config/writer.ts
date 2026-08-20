@@ -326,6 +326,46 @@ function 引起来(s: string): string {
  *
  * @throws {UserFacingError} id 不合法、命令是空的、已存在、或写完读不回来
  */
+export interface VisionInput {
+  enabled: boolean
+  baseUrl?: string | undefined
+  model?: string | undefined
+}
+
+/**
+ * 写视觉服务那一段（2026-08-20）。**整段重写**：它只有四个字段、
+ * 全部由这一个设置卡管，不像 providers 那样要在别人手写的段里做微创。
+ * **密钥不经过这里**——它去钥匙串（`vision:apiKey`）。
+ */
+export function setVision(file: string, v: VisionInput): ProviderRegistry {
+  if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
+  const 原文 = readFileSync(file, "utf8")
+  const lines = 原文.split("\n")
+  const 段 = 段范围(lines, "vision")
+
+  const 新段 = [
+    "vision:",
+    `  enabled: ${v.enabled}`,
+    ...(v.baseUrl?.trim() ? [`  baseUrl: ${引(v.baseUrl.trim())}`] : []),
+    ...(v.model?.trim() ? [`  model: ${引(v.model.trim())}`] : []),
+  ]
+
+  const 新行 = 段
+    ? [...lines.slice(0, 段[0]), ...新段, ...lines.slice(段[1])]
+    : [...lines, ...(lines[lines.length - 1]?.trim() === "" ? [] : [""]), ...新段, ""]
+
+  const 新文 = 新行.join("\n")
+  writeFileSync(file, 新文, "utf8")
+  try {
+    return loadRegistry(file)
+  } catch (err) {
+    writeFileSync(file, 原文, "utf8")
+    throw new UserFacingError(
+      `写进去的配置读不回来，已还原：${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+}
+
 export function addAcpAgent(file: string, agent: NewAcpAgent): ProviderRegistry {
   if (!ID.test(agent.agentId)) {
     throw new UserFacingError(

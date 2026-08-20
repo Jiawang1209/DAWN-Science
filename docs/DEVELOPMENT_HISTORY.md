@@ -43,6 +43,33 @@
 
 ## 变更日志
 
+### 2026-08-20 — 视觉服务：让不能看图的模型看图（转述 + look_at_image）
+
+- **Type**: feat
+- **Motivation**: 作者：*「给 deepseek 添加一个视觉，放在设置里面的模型选择里面，
+  做一个选择框，是否添加视觉，选择之后才能调用。」* 并给了他用过的插件截图。
+  两条边界他定的：**全局一份**（谁的目录里没声明收图谁用）、走**做法 A**。
+  设计定案：`specs/2026-08-20-视觉服务-design.md`（`17e5b47`）。
+- **What**:
+  - `schema.ts` 注册表加可选段 `vision`（enabled / api / baseUrl / model）；
+    `writer.ts` `setVision` 整段重写；**密钥只进钥匙串**（`vision:apiKey`）。
+  - `runtime/vision.ts`：一次 OpenAI Chat Completions（`stream: false`），
+    fetch、不引新依赖；三种失败各自出声（超时 / 非 200 带原话 / 回 200 但空）。
+  - **缝一**（`native.ts` `writeWithImages`）：模型明确不收图且视觉可用 →
+    先转述、描述并进这一轮文字；失败 → 说清原因**照发**（对话是要有的）。
+  - **缝二**（`toolsFor`）：`look_at_image` 工具，只在「视觉可用且模型不收图」
+    时注册；本地走 `resolveInWorkspace`，远端走执行器 `readFile`；进溯源。
+  - 协议 7.12：`getVision` / `saveVision` / `testVision`（发一块内置红色方块
+    真调一次）。设置「模型服务」屏加「在线视觉服务」卡（照作者截图的字段）。
+  - mock：视觉端点共用那台假推理服务器（同一种协议，「我收到了 N 张图」
+    同时覆盖四条路），规则 ① 达成。
+- **Impact**: 协议 minor 升级（纯新增）；`vision` 段缺失时一切如旧。
+- **Verification**: 新单元 20 条（writer 4 / 客户端 6 / 工具 5 / 后端操作 5）+
+  缝一分岔 4 条（白盒）；e2e `vision.spec.ts` 演完整闭环（设置卡 → 测试按钮 →
+  贴图 → 「已由 qwen-vl-mock 转述」出现、旧句子消失、假服务器真收到 image_url）。
+  设置屏两张视觉基线按纪律先看 diff（红的正是新卡本身）再重存、重存后复验。
+  全量：typecheck 清洁 / 1832 单元 / 361 e2e / 10 视觉基线全绿。
+
 ### 2026-08-20 — 坞拉宽之后的两栏换边：左树、右预览
 
 - **Type**: refactor

@@ -149,6 +149,13 @@ export function startMockInferenceServer(opts = {}) {
        * 光数 `"image_url"` 每张图会数出两个（一次是 type 的值，一次是对象的键）。
        * 第一版就是这么把一张图数成两张的。
        */
+      /**
+       * **视觉服务共用这台假服务器**（2026-08-20，规则 ①）。
+       * 视觉端点说的就是同一种 OpenAI Chat Completions（`stream: false`），
+       * 所以下面这条「收到图就报几张」同时覆盖：贴图直发收图模型、
+       * 视觉转述、`look_at_image` 工具、设置里的「测试视觉模型」——
+       * 四条路的断言都认这句话。
+       */
       const 图片数 = (用户说的.match(/"type":"image_url"/g) ?? []).length
       const reply = 图片数 > 0
         ? `假模型已应答：我收到了 ${图片数} 张图。`

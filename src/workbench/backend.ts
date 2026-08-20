@@ -9,7 +9,8 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
-import { addAcpAgent, addNativeAgent, removeAgent, setProviderConnection } from "../config/writer.js"
+import { addAcpAgent, addNativeAgent, removeAgent, setProviderConnection, setVision } from "../config/writer.js"
+import { 描述图片 } from "../runtime/vision.js"
 import { homedir } from "node:os"
 import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
@@ -366,6 +367,13 @@ interface RemoteExecutorLike {
   rmdir(path: string): Promise<void>
 }
 
+/**
+ * 「测试视觉模型」发的那张诊断图：**一块 32×32 的纯红色方块**（内置，
+ * 不读磁盘）。答案唯一、肉眼可核对——端点回「红色方块」就是真通了。
+ */
+const 诊断图PNG =
+  "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
+
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem } = opts
 
@@ -602,6 +610,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   }
 
   /** 钥匙串里的键。**加前缀**：SSH 口令与模型 key 共用一个凭证库，撞名就是串号 */
+  /**
+   * 视觉服务此刻的状态（2026-08-20）。**缺失不等于能用**：
+   * `enabled: true` 但缺地址/模型/密钥的任何一样，`ready` 就是 false，
+   * 且说清缺哪样——界面照着这句写「未配置」的原因。
+   */
+  const 视觉状态 = () => {
+    const v = registry.vision
+    const hasSecret = credentials.get("vision:apiKey") !== undefined
+    const 缺 = [
+      ...(v?.baseUrl ? [] : ["API 地址"]),
+      ...(v?.model ? [] : ["模型名称"]),
+      ...(hasSecret ? [] : ["API 密钥"]),
+    ].join("、")
+    return {
+      enabled: v?.enabled ?? false,
+      api: v?.api ?? "openai-completions",
+      ...(v?.baseUrl ? { baseUrl: v.baseUrl } : {}),
+      ...(v?.model ? { model: v.model } : {}),
+      hasSecret,
+      ready: (v?.enabled ?? false) && 缺 === "",
+      缺: 缺 ? `缺 ${缺}` : "",
+    }
+  }
+
   const 密钥名 = (id: string) => `ssh:${id}`
 
   /**
@@ -2338,6 +2370,53 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        */
       onProvidersChanged?.(新的.providers)
       return {}
+    },
+
+    /**
+     * 视觉服务（协议 7.12，2026-08-20）。设计定案见
+     * `specs/2026-08-20-视觉服务-design.md`。密钥键名 `vision:apiKey`，
+     * **只进钥匙串**；响应里只有 `hasSecret`（回显一次就落进截图和录屏）。
+     */
+    getVision: async () => {
+      // `缺` 是给 testVision 的内部字段——协议响应是 strict 的，带上就握不了手
+      const { 缺: _缺, ...对外 } = 视觉状态()
+      return 对外
+    },
+
+    saveVision: async ({ enabled, baseUrl, model, secret }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有配置文件，视觉服务没地方保存")
+      let 新的: typeof registry
+      try {
+        新的 = setVision(configPath, {
+          enabled,
+          ...(baseUrl === undefined ? {} : { baseUrl }),
+          ...(model === undefined ? {} : { model }),
+        })
+      } catch (err) {
+        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+        throw err
+      }
+      // 原地更新那一个被多处持有的对象（同 saveProviderConnection 的理由）
+      registry.vision = 新的.vision
+      // **留空 = 不改动已存的那份**；给了才换（照作者截图那句占位语）
+      if (secret !== undefined && secret !== "") credentials.set("vision:apiKey", secret)
+      return { ready: 视觉状态().ready }
+    },
+
+    testVision: async () => {
+      const 态 = 视觉状态()
+      if (!态.ready) return { ok: false, text: `视觉服务未就绪：${态.缺 || "未启用"}` }
+      try {
+        const 描述 = await 描述图片(
+          { baseUrl: 态.baseUrl!, model: 态.model!, apiKey: credentials.get("vision:apiKey")! },
+          [{ data: 诊断图PNG, mimeType: "image/png" }],
+          "这是一张诊断图片。用一句话说出你看到的形状与颜色。",
+        )
+        return { ok: true, text: 描述 }
+      } catch (e) {
+        // **原样回**：失败的那句话就是全部诊断依据，不替人转写
+        return { ok: false, text: e instanceof Error ? e.message : String(e) }
+      }
     },
 
     renameSession: async ({ sessionId, title }) => {

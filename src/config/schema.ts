@@ -393,6 +393,26 @@ export const ProviderRegistrySchema = z
      * 两台服务器各有一个 `query` 是常事，不加前缀模型就分不清打给谁。
      */
     mcp: z.record(z.string(), McpServerSchema).optional(),
+    /**
+     * 视觉服务（2026-08-20，作者要的）。**全局一份**，谁的目录里没声明收图
+     * 谁用——不是某个 provider 专属。设计定案见
+     * `specs/2026-08-20-视觉服务-design.md`。
+     *
+     * **密钥不在这里**（钥匙串键名 `vision`），与 provider / MCP 同一条纪律。
+     * `enabled` 是作者要的那个选择框：不勾，两条缝（贴图转述、看图工具）
+     * 都不接，一切如旧。
+     */
+    vision: z
+      .object({
+        enabled: z.boolean().default(false),
+        /** 协议形态。目前只认这一种；字段留着是给下一种协议的位 */
+        api: z.literal("openai-completions").default("openai-completions"),
+        baseUrl: z.string().min(1).optional(),
+        model: z.string().min(1).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
 export type ProviderRegistry = z.infer<typeof ProviderRegistrySchema>
+export type VisionConfig = NonNullable<ProviderRegistry["vision"]>

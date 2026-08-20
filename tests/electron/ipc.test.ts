@@ -11,6 +11,10 @@ function backend(): WorkbenchBackend {
     listProjects: async () => [project],
     openProject: async () => project,
     // 批 4a 新增的五个（这份桩要覆盖全协议，少一个就编译不过）
+    // 视觉服务的三个（协议 7.12）
+    getVision: async () => ({ enabled: false, api: "openai-completions", hasSecret: false, ready: false }),
+    saveVision: async () => ({ ready: false }),
+    testVision: async () => ({ ok: false, text: "桩" }),
     getDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     setDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     startDownload: async () => ({ transferId: "t1", name: "x", target: "/下载/x" }),

@@ -3996,10 +3996,14 @@ pre {
   align-items: center;
   margin: var(--dawn-space-2) 0 0;
   padding: 3px calc(var(--dawn-space-3) * 2);
-  /* 比分区标题**轻一级**：它在收纳里面，不与它并列 */
-  font-size: 12px;
-  line-height: 20px;
-  color: var(--dawn-text-3);
+  /**
+   * **字号与会话行同一档**（2026-08-21 作者要的：*「IP 地址文字太小了，咋的也要和
+   * 会话标题的文字大小一致」*）。此前 12px，比行小两档，「轻一级」靠字号表达；
+   * 现在轻一级只靠颜色（text-2，比行的 text-1 淡一档），字号不再参与。
+   */
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--dawn-text-2);
 }
 
 /**

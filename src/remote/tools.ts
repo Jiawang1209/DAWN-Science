@@ -18,7 +18,7 @@
  * 与本地那条（`files/access.ts` 的 `resolveInWorkspace`）同一条纪律：
  * **越界的路径一律拒绝**。远端更要紧——那台机器上还有别人的东西。
  */
-import type { RemoteExecutor } from "./ssh.js"
+import type { RemoteLike } from "../runtime/types.js"
 
 /** pi 的工具定义。**我们只碰 `execute`**，其余原样透传 */
 type ToolDef = Record<string, unknown> & {
@@ -98,7 +98,7 @@ export interface 远端工作目录 {
 }
 
 export interface RemoteToolsOptions {
-  executor: RemoteExecutor
+  executor: RemoteLike
   /** 会话此刻在哪个目录。**相对路径以它为准**；它会随 `cd` 变 */
   cwd: 远端工作目录
 }
@@ -139,7 +139,7 @@ export function 改造成远端工具(原定义: ToolDef[], opts: RemoteToolsOpt
 }
 
 async function 读(
-  ex: RemoteExecutor,
+  ex: RemoteLike,
   ws: 远端工作目录,
   p: { path: string; offset?: number; limit?: number },
 ): Promise<ToolResult> {
@@ -164,7 +164,7 @@ async function 读(
 }
 
 async function 写(
-  ex: RemoteExecutor,
+  ex: RemoteLike,
   ws: 远端工作目录,
   p: { path: string; content: string },
 ): Promise<ToolResult> {
@@ -187,7 +187,7 @@ async function 写(
 }
 
 async function 改(
-  ex: RemoteExecutor,
+  ex: RemoteLike,
   ws: 远端工作目录,
   p: { path: string; edits: { oldText: string; newText: string }[] },
 ): Promise<ToolResult> {
@@ -259,7 +259,7 @@ export function 摘出目录(stdout: string): { 正文: string; 目录?: string 
 }
 
 async function 跑(
-  ex: RemoteExecutor,
+  ex: RemoteLike,
   ws: 远端工作目录,
   p: { command: string; timeout?: number },
   signal: AbortSignal | undefined,
@@ -311,7 +311,7 @@ const 摘要 = (s: string) => (s.length <= 40 ? s : `${s.slice(0, 40)}…`)
 export function 挑工具后端(
   原始: ToolDef[],
   cwd: 远端工作目录,
-  remote: RemoteExecutor | undefined,
+  remote: RemoteLike | undefined,
 ): ToolDef[] {
   return remote ? 改造成远端工具(原始, { executor: remote, cwd }) : 原始
 }

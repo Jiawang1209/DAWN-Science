@@ -219,6 +219,13 @@ export function startMockInferenceServer(opts = {}) {
   })
 }
 
+/**
+ * 每次 tool call 一个新 id（2026-08-21）。此前写死 `call_mock`：同一段会话里
+ * 第二次调工具，界面按 id 归并，第二张卡被第一张吃掉——验「第二轮还能跑命令」时
+ * 看起来像没调。真模型的 id 本来就每次不同。
+ */
+let 调用序号 = 0
+const 下一个调用id = () => `call_mock_${++调用序号}`
 const MODEL_ID = "mock-model"
 
 /** 把回复切成几段发，**让流式路径真的被走到**——一次性发完等于没测流式 */
@@ -252,7 +259,7 @@ function streamChunks(reply, tool, thinking) {
           index: 0,
           delta: {
             tool_calls: [{
-              index: 0, id: "call_mock", type: "function",
+              index: 0, id: 下一个调用id(), type: "function",
               function: { name: tool.toolName, arguments: JSON.stringify(tool.args) },
             }],
           },
@@ -306,7 +313,7 @@ function nonStreamPayload(reply, tool) {
     choices: [{
       index: 0,
       message: tool
-        ? { role: "assistant", content: tool.say ?? null, tool_calls: [{ id: "call_mock", type: "function", function: { name: tool.toolName, arguments: JSON.stringify(tool.args) } }] }
+        ? { role: "assistant", content: tool.say ?? null, tool_calls: [{ id: 下一个调用id(), type: "function", function: { name: tool.toolName, arguments: JSON.stringify(tool.args) } }] }
         : { role: "assistant", content: reply },
       finish_reason: tool ? "tool_calls" : "stop",
     }],

@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 服务器会话断线重连之后能接着用
+
+- **Type**: fix
+- **Commit**: `4598586`
+- **Motivation**: 作者：*「服务器的会话，断开之后会继不上。」* 根因：`造远端参数` 把当时那个 `RemoteExecutor` **实例**焊进工具闭包（native 的四个工具、ACP 的手、`look_at_image`）；SSH 一断，`RemoteConnections` 扔掉它、人按「连接」造出新的——旧会话握着死的那个，每条命令都报「远端不可用（disconnected/idle）」，只能另起一段。
+- **What**: `RemoteConnections.handleOf(id, label)` 返回一个 `RemoteLike` **句柄**：每次调用现查 `executorOf`；没连着时抛一句人话「服务器「X」已断开：原因——在侧栏按「连接」再继续」。`造远端参数` 改用句柄。**不静默重连的纪律不动**（重连后那边是全新进程，`cd`/后台任务都没了，这件事得由人知道并按下去）。顺手把 `remote/tools.ts` 的类型从 `RemoteExecutor` 放宽到 `RemoteLike`，去掉 `native.ts` 里那个 `as never`。mock：tool call id 改为递增（此前写死 `call_mock`，同一会话第二次调工具的卡被界面按 id 归并吃掉）；e2e fixture 新增 `toolCall.perTurn`（最后一条是用户发言时才调，不循环）。
+- **Impact**: 断线前的远端会话在重连后继续可用；错误文案变成可操作的人话。
+- **Verification**: `tests/remote/connections.test.ts` +1（断了说人话、连上后同一句柄通）；新 e2e「断开 → 连接 → 同一段会话里的命令仍然打到远端」，**修前红**（收到「远端不可用（idle）」）修后绿；remote/workbench/runtime 单测 403 全绿；远端相关 e2e 33 全绿。
+
 ### 2026-08-21 — 合并前审查：ACP 借手的六个洞 + 今天两处自己的
 
 - **Type**: fix

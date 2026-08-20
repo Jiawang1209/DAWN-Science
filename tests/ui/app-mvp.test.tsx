@@ -482,7 +482,11 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
   it("成本栏显示真实数字", async () => {
     const h = harness({ runs: [{ ...RUN, cost: COST }], projects: [proj("/w/proj")] })
     await openAndStart(h)
-    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
+    /**
+     * **概览 2026-08-20 搬进坞**：入口是坞头部的标签条，不再是侧栏一行。
+     */
+    fireEvent.click(screen.getByRole("button", { name: /^面板：/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "概览" }))
     /**
      * 2026-08-11：1200 现在写作 `1.2k`（作者：*「token 的消耗，
      * 变换一下单位 k tokens」*）。**断言的意图没变**——
@@ -513,7 +517,9 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
   it("**窗口重新获得焦点时重取账本** —— 产出栏是现算的，切出去再回来它已经旧了", async () => {
     const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
-    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
+    // 概览 2026-08-20 搬进坞：先开坞，再点标签
+    fireEvent.click(screen.getByRole("button", { name: /^面板：/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "概览" }))
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
 
     const before = h.calls.filter((c) => c.op === "listRuns").length
@@ -587,10 +593,14 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
    * 轻负载下 `createSession` 总快于用户的下一次点击。
    * **「只在忙的时候错」不是偶发，是窗口小。**
    */
-  it("会话建好之前切到项目概览 —— 回调到达后**仍然停在项目概览**", async () => {
+  /**
+   * **2026-08-20 换了演员，缺陷不变**：这条原来用「项目概览」演——
+   * 概览搬进坞之后它不再顶掉对话，「被拽回对话」对它不再成立。
+   * 迟到回调那个缺陷仍然真实，改用「设置」演：它还是一整屏。
+   */
+  it("会话建好之前切到设置 —— 回调到达后**仍然停在设置**", async () => {
     const h = harness({ projects: [proj("/w/proj")], deferCreateSession: true })
-    const { container } = render(<App client={h.client} />)
-    const panels = () => container.querySelectorAll(".panel").length
+    render(<App client={h.client} />)
 
     await 从首页开始()
     await waitFor(() =>
@@ -598,17 +608,17 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
   )
 
     // 会话还没建好，用户已经切走了
-    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
-    await waitFor(() => expect(panels()).toBeGreaterThan(0))
+    fireEvent.click(screen.getByRole("button", { name: "设置" }))
+    await waitFor(() => expect(screen.getByRole("radiogroup", { name: "主题" })).toBeDefined())
 
     // 迟到的回调到了
     h.releaseCreateSession()
 
-    // **仍然在项目概览上。** 修复前这里会被拽回对话，composer 冒出来
+    // **仍然在设置上。** 修复前这里会被拽回对话，composer 冒出来
     await waitFor(() => expect(h.calls.some((c) => c.op === "subscribeSession")).toBe(true))
-    
+
     expect(screen.queryByPlaceholderText(/今天帮你做些什么/)).toBeNull()
-    expect(panels()).toBeGreaterThan(0)
+    expect(screen.getByRole("radiogroup", { name: "主题" })).toBeDefined()
   })
 
   it("**没切走的话照常进对话** —— 修复不能把正常路径也一起改掉", async () => {

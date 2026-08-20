@@ -11,7 +11,7 @@
  * 所以这里跑真实构建产物，从说一句话一直看到面板上的字。
  */
 import { resolve } from "node:path"
-import { test, expect, 在项目里开会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, 在项目里开会话, 等进了对话, 进坞 } from "./fixtures.js"
 
 test("native 会话：如实说「不可见」并给出原因，而不是停在「尚未记录」", async ({ dawn }) => {
   const { page } = dawn
@@ -22,7 +22,7 @@ test("native 会话：如实说「不可见」并给出原因，而不是停在�
   await page.keyboard.press("Enter")
   await expect(page.locator(".turn.agent")).toHaveCount(1, { timeout: 30_000 })
 
-  await page.getByRole("button", { name: "项目概览" }).click()
+  await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
   const cost = page.locator(".panel", { has: page.getByText("成本", { exact: true }) })
 
   // ① **不再是「尚未记录」**——我们记了这一轮，只是记不到钱
@@ -69,7 +69,7 @@ test.describe("claude 会话：金额是真数", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".turn.agent")).not.toHaveCount(0, { timeout: 30_000 })
 
-    await page.getByRole("button", { name: "项目概览" }).click()
+    await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
     const cost = page.locator(".panel", { has: page.getByText("成本", { exact: true }) })
     // 假 CLI 报的是 0.001 —— **面板上的数必须就是它**
     await expect(cost.getByText(/\$0\.001/)).toBeVisible({ timeout: 15_000 })

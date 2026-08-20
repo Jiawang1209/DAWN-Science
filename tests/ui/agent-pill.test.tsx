@@ -204,7 +204,6 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
         view="conversation"
         onPickProject={() => {}}
         onPickSession={() => {}}
-        onShowPanel={() => {}}
       />,
     )
 
@@ -236,7 +235,6 @@ describe("agent pill · 侧栏那份要真的搬走", () => {
         onPickProject={() => {}}
         onPickSession={() => {}}
         onNewTask={onNewTask}
-        onShowPanel={() => {}}
       />,
     )
     // T3-a：侧栏上那颗改叫「新建任务」，**这条守的东西没变**——

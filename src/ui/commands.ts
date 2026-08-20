@@ -205,11 +205,16 @@ export function buildCommands(ctx: CommandContext): Command[] {
    *
    * 想开一个新目录：新建任务 → 选工作目录。**一个动作一个家。**
    */
+  /**
+   * **「概览」2026-08-20 从整屏搬进坞**（作者定的）。这条命令留着——
+   * 命令面板是它除坞标签条外的另一条路，动作变成打开坞的那一格。
+   * 标题跟着页签走：**同一个东西在两处必须叫同一个名字**。
+   */
   out.push({
     id: "project.panel",
-    title: t("项目概览"),
+    title: t("概览"),
     group: "项目",
-    keywords: "overview runs 历史 产出",
+    keywords: "overview runs 历史 账本 项目概览",
     run: () => actions.showProjectPanel(),
   })
 
@@ -230,7 +235,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
    * 要么根本不存在。**现在它有对象了**：对话区底下那条 dock。
    *
    * 留在命令面板里的理由：composer 上那颗按钮只在有会话时才有，
-   * 而人在「文件」或「项目概览」那一屏也可能想开个终端。
+   * 而人在设置那一屏也可能想开个终端。
    */
   out.push({
     id: "view.terminal",

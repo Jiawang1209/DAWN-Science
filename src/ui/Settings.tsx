@@ -1470,6 +1470,7 @@ export function VisionPanel({
   }, [])
 
   return (
+    <div className="vision-card">
     <Section
       title={t("在线视觉服务")}
       desc={
@@ -1587,6 +1588,7 @@ export function VisionPanel({
         </p>
       ) : null}
     </Section>
+    </div>
   )
 }
 

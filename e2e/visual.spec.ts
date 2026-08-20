@@ -47,7 +47,7 @@
  *    那不是回归，是没有那个平台的基线。将来上 CI 必须在 macOS 上跑，或者补一套。
  * 2. 基线**只覆盖这四个屏 × 两个主题**。别的屏改坏了它不会说话。
  */
-import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话, 进坞 } from "./fixtures.js"
 import type { Page } from "@playwright/test"
 
 /**
@@ -147,12 +147,18 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
     },
   },
   {
-    name: "项目概览",
-    // 多个面板并排 + 列表 + 空态
+    /**
+     * **2026-08-20 起概览住在坞里**——这一屏因此从「整屏」变成
+     * 「对话 + 右侧坞开着概览」。基线文件名跟着换（概览-*），
+     * 旧的（项目概览-*）同轮删除。
+     */
+    name: "概览",
+    // 坞里多块面板竖着摞 + 空态
     go: async (page) => {
-      await page.getByRole("button", { name: "项目概览" }).click()
-      // 同上：`.panels` 是骨架。等到面板都挂上，否则会截到「少一块」的中间态
-      await expect(page.locator(".panels .panel")).not.toHaveCount(0)
+      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+      await 进坞(page, "概览")
+      // `.dock-overview` 是骨架。等到面板都挂上，否则会截到「少一块」的中间态
+      await expect(page.locator(".dock-overview .panel").first()).toBeVisible()
       await expect(page.getByText("还没有记录")).toBeVisible()
     },
   },

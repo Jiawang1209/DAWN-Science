@@ -261,7 +261,7 @@ export const EN: Readonly<Record<string, string>> = {
   "远端服务器": "Remote servers",
   "项目": "Projects",
   "会话": "Chats",
-  "项目概览": "Project overview",
+  "概览": "Overview",
   "文件": "Files",
   "设置": "Settings",
   "设置分类": "Settings sections",
@@ -454,11 +454,11 @@ export const EN: Readonly<Record<string, string>> = {
   "取消": "Cancel",
   "会停掉它的进程，并删掉这个会话与它的对话记录。":
     "This stops its process and deletes the chat along with its transcript.",
-  "账本不动：这个会话对文件做过什么，记录仍然留在「项目概览」里。":
+  "账本不动：这个会话对文件做过什么，记录仍然留在坞的「概览」里。":
     "The ledger is untouched: what this chat did to your files is still recorded under Project overview.",
   "会停掉它们的进程，并删掉这些会话与它们的对话记录。":
     "This stops their processes and deletes these chats along with their transcripts.",
-  "账本不动：它们对文件做过什么，记录仍然留在「项目概览」里。":
+  "账本不动：它们对文件做过什么，记录仍然留在坞的「概览」里。":
     "The ledger is untouched: what they did to your files is still recorded under Project overview.",
   "磁盘上的文件夹一个都不会被删除。": "Not one folder on disk will be deleted.",
   "磁盘上的文件夹不会被删除。": "The folder on disk will not be deleted.",

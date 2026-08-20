@@ -239,11 +239,15 @@ describe("侧栏 · 归类：有路径进项目，没路径进会话", () => {
     expect(container.querySelectorAll(".sess-item")).toHaveLength(0)
   })
 
-  it("项目概览是侧栏底部入口，不是首页", () => {
-    const onShowPanel = vi.fn()
-    render(<SessionSidebar {...base} onShowPanel={onShowPanel} />)
-    fireEvent.click(screen.getByRole("button", { name: "项目概览" }))
-    expect(onShowPanel).toHaveBeenCalled()
+  /**
+   * **「项目概览」那一行 2026-08-20 摘掉了**（作者定的）：概览搬进右侧坞
+   * 第三个页签，侧栏不再有它。这条判据翻面——**不许再出现**：
+   * 出现就意味着同一个东西有了两个入口（「文件」那一格 2026-08-18
+   * 就是为这个摘的）。
+   */
+  it("侧栏底部**没有**「项目概览」——它住在坞里", () => {
+    render(<SessionSidebar {...base} />)
+    expect(screen.queryByRole("button", { name: "项目概览" })).toBeNull()
   })
 })
 

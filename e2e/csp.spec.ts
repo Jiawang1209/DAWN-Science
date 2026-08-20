@@ -36,8 +36,9 @@ test("四个屏走一遍，**一条 CSP 违规都没有**", async ({ dawn }) => 
   await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
 
   await page.getByRole("button", { name: "返回" }).click()
-  await page.getByRole("button", { name: "项目概览" }).click()
-  await expect(page.locator(".panels")).toBeVisible()
+  // 概览住在坞里了（2026-08-20）
+  await 进坞(page, "概览")
+  await expect(page.locator(".dock-overview .panel").first()).toBeVisible()
 
   await 进坞(page, "文件")
   await expect(page.locator(".files-view")).toBeVisible()

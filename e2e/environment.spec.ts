@@ -10,7 +10,7 @@
  * 单元测试对每一段都有，而**每一段都对、装没装上没人知道**，
  * 是这个项目栽过好几次的形状。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 /**
  * **标题里不能出现「内核会话」四个字**（2026-08-13 踩到的）：
@@ -23,7 +23,7 @@ test("普通对话也有环境 —— 机器本身就是环境", async ({ dawn }
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
 
-  await page.getByRole("button", { name: "项目概览" }).click()
+  await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
 
   /**
    * **按标题定位**，不按「面板里含这两个字」——子串匹配迟早被别处的一句话撞上
@@ -53,7 +53,7 @@ test("**机器那一支不画解释器** —— 两种快照不共用一个形�
   const { page } = dawn
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
-  await page.getByRole("button", { name: "项目概览" }).click()
+  await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
 
   const panel = page.locator(".panel", { has: page.getByText("环境", { exact: true }) })
   await expect(panel).toBeVisible()

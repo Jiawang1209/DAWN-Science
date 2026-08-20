@@ -473,8 +473,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * 未必跟着搬**——而管子断了通常不出声。
      */
     const 在看账本 =
-      $view.get() === "panel" ||
-      ($rightDockOpen.get() && $rightDockTenant.get() === "review")
+      $rightDockOpen.get() &&
+      ($rightDockTenant.get() === "review" || $rightDockTenant.get() === "overview")
     if (!在看账本) return
     void loadContextUsage(client, $activeSessionId.get())
     const pid = $activeProjectId.get()
@@ -672,8 +672,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 想看最新的，切走再切回来（与产出栏同一个手势）。
    */
   const [variables, setVariables] = useState<VariablesState>(undefined)
+  const 在看概览 = rightDockOpen && rightDockTenant === "overview"
   useEffect(() => {
-    if (view !== "panel" || !sessionId) {
+    if (!在看概览 || !sessionId) {
       setVariables(undefined)
       return
     }
@@ -681,7 +682,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .get<Exclude<VariablesState, undefined>>("listVariables", { sessionId })
       .then(setVariables)
       .catch(fail)
-  }, [client, view, sessionId])
+  }, [client, 在看概览, sessionId])
 
   /**
    * 环境快照（S17）。与变量同一个手势：**开着面板时取一次**。
@@ -714,7 +715,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const [environment, setEnvironment] = useState<EnvironmentState>(undefined)
   useEffect(() => {
-    if (view !== "panel" || !sessionId) {
+    if (!在看概览 || !sessionId) {
       setEnvironment(undefined)
       return
     }
@@ -722,7 +723,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .get<Exclude<EnvironmentState, undefined>>("getEnvironment", { sessionId })
       .then(setEnvironment)
       .catch(fail)
-  }, [client, view, sessionId])
+  }, [client, 在看概览, sessionId])
 
   /**
    * 能用来**开一段对话**的那些。
@@ -1308,7 +1309,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setConfirming({
         title: tf("删除会话「{0}」？", 名),
         detail: <>{t("会停掉它的进程，并删掉这个会话与它的对话记录。")}</>,
-        safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在「项目概览」里。")}</>,
+        safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在坞的「概览」里。")}</>,
         confirmLabel: "删除会话",
         onConfirm: () => {
           client
@@ -1435,7 +1436,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setConfirming({
         title: tf("删除这 {0} 段对话？", targets.length),
         detail: <>{t("会停掉它们的进程，并删掉这些会话与它们的对话记录。")}</>,
-        safety: <>{t("账本不动：它们对文件做过什么，记录仍然留在「项目概览」里。")}</>,
+        safety: <>{t("账本不动：它们对文件做过什么，记录仍然留在坞的「概览」里。")}</>,
         confirmLabel: tf("删除 {0} 段", targets.length),
         onConfirm: () => {
           /**
@@ -2346,7 +2347,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
       toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
-      showProjectPanel: () => setView("panel"),
+      /** 概览住在坞里了（2026-08-20）。命令面板这条打开坞的那一格 */
+      showProjectPanel: () => {
+        setRightDockTenant("overview")
+        setRightDockOpen(true)
+      },
       /**
        * **面板里那条也是「新建任务」**（T4，2026-08-13）。
        *
@@ -2618,7 +2623,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setActiveSessionId(id)
             setView("conversation")
           }}
-          onShowPanel={() => setView(view === "panel" ? "conversation" : "panel")}
           /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
           onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
           onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
@@ -3106,55 +3110,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               ]}
             />
             </div>
-          ) : view === "panel" ? (
-            <div className="panels">
-              {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
-                  另一个有而这一个没有时警告会整个消失（规格 7.5 禁止静默吞掉） */}
-              {/**
-                * **「变更」两件搬去右侧坞的「审阅」了**（2026-08-17）。
-                *
-                * **不留一份在这儿**：两处显示同一件事，人就没法判断该信哪一个，
-                * 而这个项目已经为「两处长得一样的东西」栽过好几次。
-                * 归属告知（`AttributionCaveat`）跟着一起走——它解释的正是那些数。
-                */}
-              <StatusPanel sessions={sessions} />
-              {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
-                  见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
-              <CostPanel cost={latestCost} />
-              {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
-              <ContextPanel usage={contextUsage} />
-              {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
-              <VariablesPanel state={variables} />
-              {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
-              <EnvironmentPanel state={environment} />
-              <RunsPanel runs={runs} />
-              {/**
-                * 移除项目放在**项目概览**里：它是项目作用域的动作，
-                * 而侧栏的下拉框是「切到哪个项目」——**切换的地方不该同时是删除的地方**。
-                */}
-              <section className="panel danger-zone">
-                <h3 className="panel-title">{t("移除项目")}</h3>
-                <div className="panel-body">
-                  <p className="hint">
-                    {t("从工作台移除这个项目，连同它的会话与账本。")}
-                    <em className="set-emph">{t("磁盘上的文件夹不会被删除。")}</em>
-                  </p>
-                  <div className="state-action">
-                    <Button variant="danger" size="sm" onClick={() => askDeleteProject()}>
-                      {t("移除项目")}
-                    </Button>
-                  </div>
-                </div>
-              </section>
-              {provenance ? (
-                <section className="panel">
-                  <h3 className="panel-title">{t("溯源")}</h3>
-                  <div className="panel-body">
-                    <ProvenanceBadge link={provenance} />
-                  </div>
-                </section>
-              ) : null}
-            </div>
           ) : session && session.kind === "pty" ? (
             /**
              * **终端只在 dock 里**（2026-08-11）。
@@ -3568,6 +3523,63 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 <ChangesPanel facts={runDetail?.fileChanges} onOpenFile={openFile} />
                 <ToolChangesPanel runs={runs} onOpenFile={openFile} />
               </>
+            ) : rightDockTenant === "overview" ? (
+              /**
+                * **概览**（2026-08-20 从整屏搬进坞，作者定的）。
+                * 七块面板竖着摞；「变更/产出」不在这儿——它们 2026-08-17
+                * 就搬去「审阅」了，两处显示同一件事等于没有判据。
+                *
+                * **管子跟着搬**（2026-08-17 的教训原文就在 `refreshLedger` 上）：
+                * 变量/环境两个 effect 与 `在看账本` 的条件都已改看这一格。
+                */
+<div className="dock-overview">
+              {/* 归属告知说一次。**两个来源合并判定**——只看其中一个的话，
+                  另一个有而这一个没有时警告会整个消失（规格 7.5 禁止静默吞掉） */}
+              {/**
+                * **「变更」两件搬去右侧坞的「审阅」了**（2026-08-17）。
+                *
+                * **不留一份在这儿**：两处显示同一件事，人就没法判断该信哪一个，
+                * 而这个项目已经为「两处长得一样的东西」栽过好几次。
+                * 归属告知（`AttributionCaveat`）跟着一起走——它解释的正是那些数。
+                */}
+              <StatusPanel sessions={sessions} />
+              {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
+                  见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
+              <CostPanel cost={latestCost} />
+              {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
+              <ContextPanel usage={contextUsage} />
+              {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
+              <VariablesPanel state={variables} />
+              {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
+              <EnvironmentPanel state={environment} />
+              <RunsPanel runs={runs} />
+              {/**
+                * 移除项目放在**项目概览**里：它是项目作用域的动作，
+                * 而侧栏的下拉框是「切到哪个项目」——**切换的地方不该同时是删除的地方**。
+                */}
+              <section className="panel danger-zone">
+                <h3 className="panel-title">{t("移除项目")}</h3>
+                <div className="panel-body">
+                  <p className="hint">
+                    {t("从工作台移除这个项目，连同它的会话与账本。")}
+                    <em className="set-emph">{t("磁盘上的文件夹不会被删除。")}</em>
+                  </p>
+                  <div className="state-action">
+                    <Button variant="danger" size="sm" onClick={() => askDeleteProject()}>
+                      {t("移除项目")}
+                    </Button>
+                  </div>
+                </div>
+              </section>
+              {provenance ? (
+                <section className="panel">
+                  <h3 className="panel-title">{t("溯源")}</h3>
+                  <div className="panel-body">
+                    <ProvenanceBadge link={provenance} />
+                  </div>
+                </section>
+              ) : null}
+            </div>
             ) : rightDockTenant === "web" ? (
               /**
                 * **网页那一格**（批 1，2026-08-18）。屏幕上这一块几乎是空的——

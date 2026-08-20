@@ -1059,15 +1059,15 @@ export function SideSash({
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "review" ? t("审阅") : who === "web" ? t("网页") : t("文件")
+  return who === "review" ? t("审阅") : who === "web" ? t("网页") : who === "overview" ? t("概览") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
 const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent)
 export function 房客快捷键(who: 坞房客): string {
   if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
-  // **网页这一格暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
-  if (who === "web") return ""
+  // **网页与概览暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
+  if (who === "web" || who === "overview") return ""
   return 是Mac ? "⌘P" : "Ctrl+P"
 }
 
@@ -1217,7 +1217,6 @@ export function SessionSidebar({
   view,
   onPickProject,
   onPickSession,
-  onShowPanel,
   onShowSkills,
   onShowSubagents,
   onShowPlugins,
@@ -1281,7 +1280,6 @@ export function SessionSidebar({
   view: View
   onPickProject: (id: string) => void
   onPickSession: (id: string) => void
-  onShowPanel: () => void
   filesActive?: boolean
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
@@ -2476,29 +2474,15 @@ export function SessionSidebar({
         * 收进一个盒子，`auto` 只留一个：它们仍然贴着底，彼此挨着。
         */}
       <div className="side-bottom">
-        {/* 项目面板与文件都降为侧栏底部的入口，不再是首页 */}
-        {active ? (
-          <>
-            {/* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */}
-            <Row active={view === "panel"} className="panel-entry" onClick={onShowPanel}>
-              {t("项目概览")}
-            </Row>
-            {/**
-              * **侧栏这一格「文件」摘掉了**（2026-08-18，作者定的）。
-              *
-              * 它的来历：文件曾经是**一整屏**，侧栏这一项是它唯一的入口。
-              * 批 2（2026-08-17）把那一屏摘了、改成打开右侧坞；
-              * 而这一次坞的头部长出了标签条，**三个房客的名字一直摆在那儿**——
-              * 于是这一项变成了「文件」的第二个入口。
-              *
-              * 摘它的理由不只是重复：**三个房客里只有「文件」在侧栏另有一个入口**，
-              * 而这个不对称本身就让人觉得它是另一种东西。
-              *
-              * 作者：*「既然我们可以看文件，我们就把左侧侧边栏的文件预览的窗口取消掉，
-              * 然后现在的文件预览就在右上角了嘛。」*
-              */}
-          </>
-        ) : null}
+        {/**
+          * **「项目概览」那一行 2026-08-20 摘掉了**（作者定的：
+          * *「左边侧边栏的项目概览，对于整个 DAWN 来说应该没有任何意义了。」*）。
+          * 概览搬进了右侧坞（第三个页签）——坞的标签条常驻，
+          * 不违反「看不见的能力等于不存在」。
+          *
+          * 「文件」那一格更早（2026-08-18）就是同一个理由摘的：
+          * 坞的标签条已经把名字一直摆在那儿，侧栏再放一份就是第二个入口。
+          */}
       {/**
         * **设置常驻，不跟着项目走**（2026-08-12 挪出那个条件，T3-a 顺手修的）。
         *

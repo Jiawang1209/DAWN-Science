@@ -20,7 +20,7 @@
  * 「先跑其余的，再跑它」。这么做的理由只有一个——
  * **红着的全量套件会教人忽略红色**，而那比一个待查的 bug 更贵。
  */
-import { test, expect, readRuns, 开一段临时会话, 等进了对话 , 进设置, 用某个agent开一段 } from "./fixtures.js"
+import { test, expect, readRuns, 开一段临时会话, 等进了对话 , 进设置, 用某个agent开一段, 进坞 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -89,7 +89,7 @@ test.describe("内核会话", () => {
      * 前面那个 `e2e_v = 7` 是在 Console 里定义的——**它必须出现在面板上**，
      * 否则「人和 agent 共用同一个活会话」就只剩半句。
      */
-    await page.getByRole("button", { name: "项目概览" }).click()
+    await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
     const panel = page.locator(".panel", { has: page.getByText("变量", { exact: true }) })
     await expect(panel).toBeVisible()
     // 定位到**名字**那一格：变量名也可能出现在别人的预览里
@@ -238,7 +238,7 @@ test.describe("R 内核会话", () => {
     await expect(page.locator(".kout-text").last()).toContainText("V = 7", { timeout: 60_000 })
 
     // **变量面板对 R 也有** —— 它走的是与 Python 不同的编码，所以必须单独验
-    await page.getByRole("button", { name: "项目概览" }).click()
+    await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
     const panel = page.locator(".panel", { has: page.getByText("变量", { exact: true }) })
     await expect(panel.locator(".var .name", { hasText: "e2e_r" })).toBeVisible({ timeout: 60_000 })
     await expect(panel.locator(".var", { hasText: "e2e_r" })).toContainText("numeric")

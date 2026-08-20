@@ -5,7 +5,7 @@
  * 假后端报 `prompt_tokens: 12`——**面板上必须出现这个数**，
  * 而不是停在「尚未采集」。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 test("说过一句话之后，上下文面板给出真实的 token 数", async ({ dawn }) => {
   const { page } = dawn
@@ -15,7 +15,7 @@ test("说过一句话之后，上下文面板给出真实的 token 数", async (
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
 
-  await page.getByRole("button", { name: "项目概览" }).click()
+  await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
   /**
    * **按标题定位，不按「面板里含这三个字」。**
    *
@@ -43,6 +43,6 @@ test("**下表明写「按字节」** —— 不写清楚，人会把它当成 t
   const { page } = dawn
   await expect(page.locator(".app-shell")).toBeVisible()
   await 开一段临时会话(page)
-  await page.getByRole("button", { name: "项目概览" }).click()
+  await 进坞(page, "概览")  // 概览 2026-08-20 搬进坞
   await expect(page.locator(".panel", { hasText: "上下文" })).toContainText("按字节，不是 token")
 })

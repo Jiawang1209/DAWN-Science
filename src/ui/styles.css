@@ -573,18 +573,32 @@ pre {
 .state.starting { color: var(--dawn-warning); }
 
 .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+/**
+ * 崩溃屏还穿着 `.panels`（ErrorBoundary）。概览搬走之后它是唯一的穿着者，
+ * 三列网格对一张报错卡没有意义，收成一列居中。
+ */
 .panels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  /* 行距比列距大一档：**面板高度参差不齐**，行距等于列距时下一行会像贴上来 */
-  gap: var(--dawn-space-6) var(--dawn-space-3);
-  /* 内容少时贴顶，不要被拉伸 */
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-4);
   padding: var(--dawn-space-3) var(--dawn-page-inset-x);
   max-width: var(--dawn-page-max-w);
   width: 100%;
   margin: 0 auto;
   overflow: auto;
+}
+
+/**
+ * 概览（2026-08-20 从整屏搬进坞）。原来那份 `.panels` 是三列网格——
+ * 坞里只有一列的宽度，**竖着摞**，与审阅那一格同一种节奏。
+ */
+.dock-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-4);
+  padding: var(--dawn-space-3);
+  overflow: auto;
+  min-height: 0;
 }
 /* 扁平：面板不套边框盒子，只用一条发丝线分隔标题 */
 .panel { min-width: 0; }
@@ -1818,6 +1832,21 @@ pre {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/**
+ * 视觉服务整个装进一个**带边框的卡片**（2026-08-20，作者要的：
+ * 「在线视觉服务的内容，应该单独做一个卡片 box」，照他给的那张插件截图）。
+ * 它与上面 provider 列表不是同一类东西——那是「每家一份」的清单，
+ * 这是全局唯一的一块，边框就是这句区别的视觉形式。
+ */
+.vision-card {
+  max-width: 40rem;
+  margin: 0 auto var(--dawn-space-6);
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-md);
+  padding: var(--dawn-space-4);
+}
+.vision-card .set-section { margin-bottom: 0; }
 
 /** 视觉服务右上那颗「已就绪」。绿的与「活着」同一支（会话行、远端连接都是它） */
 .vision-ready {

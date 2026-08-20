@@ -4,7 +4,7 @@
  * 「不知道下一步该点哪里」是本项目被打回三次的那个问题。
  * 一个状态如果只说「没有 X」而不指向能解决它的地方，就是一条死路。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 /**
  * **一条都没有时，侧栏只剩那个入口**（2026-08-12 改，T3-a）。
@@ -41,12 +41,18 @@ test("空对话区给的是**能直接打字的输入卡**，不是一句提示"
   await expect(page.locator(".turns").getByText("直接说")).toBeVisible({ timeout: 30_000 })
 })
 
-test("项目概览是侧栏底部入口，不是首页", async ({ dawn }) => {
+/**
+ * **概览住在坞里，侧栏底部没有它**（2026-08-20，作者定的）。
+ * 此前这条验的是「项目概览是侧栏底部入口」——判据翻面，两边理由都在：
+ * 当年要入口是因为它是一整屏；现在坞的标签条就是常驻入口，
+ * 侧栏再放一行就是第二个入口（「文件」那一格 2026-08-18 为同一个理由摘过）。
+ */
+test("概览在坞里打开，侧栏底部没有那一行", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "项目概览" }).click()
-  await expect(page.locator(".panels")).toBeVisible()
-  // 能回得来——单向门不是出路
-  await 开一段临时会话(page)
+  await expect(page.locator(".sidebar").getByRole("button", { name: "项目概览" })).toHaveCount(0)
+  await 进坞(page, "概览")
+  await expect(page.locator(".dock-overview .panel").first()).toBeVisible()
+  // 对话还在——坞是旁边的一栏，不是替换主区（这正是搬家的理由）
   await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
 })
 
@@ -86,7 +92,8 @@ test("会话建好后出现在侧栏列表里", async ({ dawn }) => {
  * **一个亮着的入口点下去毫无反应，人会以为它坏了**——
  * 所以这条把三个一起验，而不是只补设置那一个。
  */
-for (const 名 of ["项目概览", "设置"]) {
+// **「项目概览」2026-08-20 摘掉了**（概览搬进坞），这一组只剩「设置」
+for (const 名 of ["设置"]) {
   test(`「${名}」再点一次就回到对话`, async ({ dawn }) => {
     const { page } = dawn
     const 入口 = page.locator(".sidebar").getByRole("button", { name: 名, exact: true })

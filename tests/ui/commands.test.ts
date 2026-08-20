@@ -85,7 +85,7 @@ describe("命令注册表 · 形状", () => {
    * **改的是场景，不是意图。**
    */
   it("不在对话视图时，「视图」组给得出回去的路", () => {
-    const groups = new Set(build({ view: "panel" }).map((c) => c.group))
+    const groups = new Set(build({ view: "settings" }).map((c) => c.group))
     expect(groups.has("视图" as never)).toBe(true)
   })
 })

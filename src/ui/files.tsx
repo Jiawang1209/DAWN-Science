@@ -30,6 +30,8 @@ import {
   笔记本文件图标,
   压缩包文件图标,
   PDF文件图标,
+  下载图标,
+  上传图标,
 } from "./icons.js"
 import { 文件类按名字, type 文件类 } from "./file-kind.js"
 
@@ -316,6 +318,9 @@ export interface 传输态 {
   速度?: number
   /** 落在本机哪儿。传完之后要说得出来，否则人得自己去猜 */
   target?: string
+  /** 传的是哪个文件（basename）。卡上第一行写它——一根没有名字的条不知道在传谁 */
+  name?: string
+  方向?: "下载" | "上传"
 }
 
 export function FilePreview({
@@ -530,6 +535,72 @@ function 数据表({ t: 表 }: { t: Extract<FileContent, { kind: "table" }>["tab
           </table>
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * 传输卡（2026-08-21 重画；作者：*「服务器下载的进度条，太丑了」*）。
+ *
+ * 上一版是一根 4px 的线加一串字挤在一行。现在三行：
+ *   ① 方向图标 + 文件名 + 右边的百分比（或状态词）
+ *   ② 进度条（总量未知时走不定式的流光，**不拿 0 当分母**——那会画出一根永远是满的条）
+ *   ③ 已传 / 总量 · 速度 · 预计剩余 + 取消
+ * 完成 / 失败 / 取消各自换色换词；完成写落在哪儿。
+ */
+function 传输卡({ 传输, onCancel }: { 传输: 传输态; onCancel?: () => void }) {
+  const 有总量 = Boolean(传输.total && 传输.total > 0)
+  const 比 = 有总量 ? Math.min(1, 传输.transferred / 传输.total!) : undefined
+  const 剩秒 =
+    有总量 && 传输.速度 && 传输.速度 > 0 && 传输.state === "running"
+      ? Math.max(0, Math.round((传输.total! - 传输.transferred) / 传输.速度))
+      : undefined
+  const 剩余 =
+    剩秒 === undefined ? undefined : 剩秒 >= 3600 ? tf("约 {0} 小时", Math.round(剩秒 / 360) / 10) : 剩秒 >= 60 ? tf("约 {0} 分钟", Math.ceil(剩秒 / 60)) : tf("约 {0} 秒", 剩秒)
+  // 完成时右上角写 100%，「传好了：落点」在下面那行说；失败 / 取消用词
+  const 状态词 =
+    传输.state === "done" ? "100%" : 传输.state === "failed" ? t("失败") : 传输.state === "cancelled" ? t("已取消") : undefined
+  return (
+    <div className={`xfer xfer-${传输.state}`} role="status" aria-live="polite">
+      <div className="xfer-head">
+        <span className="xfer-icon" aria-hidden="true">
+          {传输.方向 === "上传" ? <上传图标 /> : <下载图标 />}
+        </span>
+        <span className="xfer-name" title={传输.name ?? ""}>
+          {传输.name ?? (传输.方向 === "上传" ? t("上传") : t("下载"))}
+        </span>
+        <span className="xfer-pct">
+          {状态词 ?? (比 === undefined ? "…" : `${Math.floor(比 * 100)}%`)}
+        </span>
+      </div>
+      <div className={`xfer-bar${比 === undefined && 传输.state === "running" ? " indeterminate" : ""}`}>
+        <div
+          className="xfer-fill"
+          style={{ width: `${比 === undefined ? (传输.state === "running" ? 40 : 100) : 比 * 100}%` }}
+        />
+      </div>
+      <div className="xfer-foot">
+        <span className="xfer-text">
+          {传输.state === "done"
+            ? tf("传好了：{0}", 传输.target ?? "")
+            : 传输.state === "cancelled"
+              ? t("取消了，没有留下半截文件")
+              : 传输.state === "failed"
+                ? tf("传输失败：{0}", 传输.error ?? "")
+                : [
+                    `${bytes(传输.transferred)} / ${有总量 ? bytes(传输.total!) : "？"}`,
+                    传输.速度 ? tf("{0}/秒", bytes(Math.round(传输.速度))) : undefined,
+                    剩余,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+        </span>
+        {传输.state === "running" && onCancel ? (
+          <Button variant="text" size="inline" onClick={onCancel}>
+            {t("取消")}
+          </Button>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -822,37 +893,7 @@ export function FilesView({
         * 总大小取不到时不画那根条，只报已传了多少——
         * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
         */}
-      {传输 ? (
-        <div className="xfer">
-          {传输.total ? (
-            <div className="xfer-bar">
-              <div
-                className="xfer-fill"
-                style={{ width: `${Math.min(100, (传输.transferred / 传输.total) * 100)}%` }}
-              />
-            </div>
-          ) : null}
-          <span className="xfer-text">
-            {传输.state === "done"
-              ? tf("传好了：{0}", 传输.target ?? "")
-              : 传输.state === "cancelled"
-                ? t("取消了，没有留下半截文件")
-                : 传输.state === "failed"
-                  ? tf("传输失败：{0}", 传输.error ?? "")
-                  : tf(
-                      "{0} / {1}{2}",
-                      bytes(传输.transferred),
-                      传输.total ? bytes(传输.total) : "？",
-                      传输.速度 ? tf("　{0}/秒", bytes(Math.round(传输.速度))) : "",
-                    )}
-          </span>
-          {传输.state === "running" && onCancel ? (
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              {t("取消")}
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+      {传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}
       <section className="file-preview">
         <FilePreview
           path={selected}

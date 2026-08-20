@@ -2073,7 +2073,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * ——假 SFTP 上那只有几毫秒，真机上是一到三秒，屏幕上就是
          * 「我明明在传新的，它却说上一个传好了」。
          */
-        设传输({ transferred: 0, state: "running" })
+        设传输({ transferred: 0, state: "running", 方向: "上传", name: 本机路径.split("/").pop() ?? 本机路径 })
         起点.current = { 时刻: Date.now(), 已传: 0 }
 
         const 发一次 = (onConflict: "ask" | "overwrite" | "keepBoth") =>
@@ -2103,7 +2103,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 })
                 return
               }
-              设传输({ transferred: 0, state: "running", id: r.transferId, target: r.target })
+              设传输((前) => ({ ...前, transferred: 0, state: "running", id: r.transferId, target: r.target }))
               起点.current = { 时刻: Date.now(), 已传: 0 }
               完事()
             })

@@ -4708,29 +4708,99 @@ pre {
  * 作者：*「当前文件下面有一个传输条，包含传输进度和传输速度」*。
  * **贴着那个文件**，不是一个飘在别处的下载列表。
  */
+/**
+ * 传输卡（2026-08-21 重画；作者：*「服务器下载的进度条，太丑了」*）。
+ * 三行：名字行 / 条 / 数字行。完成、失败、取消各换一种色——**颜色只是加强，
+ * 词仍然写着**（DESIGN.md：不只靠颜色表达含义）。
+ */
 .xfer {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--dawn-space-2);
-  padding: var(--dawn-space-2) 0;
+  margin: var(--dawn-space-2) var(--dawn-space-3);
+  padding: var(--dawn-space-3);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-fill-1);
   font-size: 12px;
   color: var(--dawn-text-2);
 }
+.xfer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  min-width: 0;
+}
+.xfer-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--dawn-accent);
+}
+.xfer-icon svg { width: 14px; height: 14px; }
+.xfer-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-1);
+}
+.xfer-pct {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--dawn-text-1);
+}
 .xfer-bar {
-  flex: 1;
-  min-width: 4rem;
-  height: 4px;
-  border-radius: var(--dawn-radius-xs);
-  background: var(--dawn-stroke-4);
+  position: relative;
+  height: 6px;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-fill-3);
   overflow: hidden;
 }
 .xfer-fill {
   height: 100%;
+  border-radius: var(--dawn-radius-full);
   background: var(--dawn-accent);
-  transition: width 120ms linear;
+  transition: width 160ms ease-out;
+}
+/* 总量未知：一段 40% 的亮条来回走，**说的是「在动」，不是「到了哪」** */
+.xfer-bar.indeterminate .xfer-fill {
+  position: absolute;
+  left: 0;
+  animation: xfer-slide 1.2s ease-in-out infinite alternate;
+}
+@keyframes xfer-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xfer-bar.indeterminate .xfer-fill { animation: none; width: 100% !important; opacity: 0.5; }
+}
+.xfer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dawn-space-2);
+  min-width: 0;
 }
 /** 数字不换行——一根进度条旁边的字换行，整条会跳一下 */
-.xfer-text { white-space: nowrap; }
+.xfer-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.xfer-done .xfer-fill { background: var(--dawn-success); }
+.xfer-done .xfer-icon,
+.xfer-done .xfer-pct { color: var(--dawn-success); }
+.xfer-failed .xfer-fill { background: var(--dawn-danger); }
+.xfer-failed .xfer-icon,
+.xfer-failed .xfer-pct { color: var(--dawn-danger); }
+.xfer-cancelled .xfer-fill { background: var(--dawn-text-3); }
+.xfer-cancelled .xfer-icon,
+.xfer-cancelled .xfer-pct { color: var(--dawn-text-3); }
 
 /**
  * 树行上那颗常驻的「⋯」（2026-08-18）。

@@ -34,6 +34,7 @@ import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
+import { 按类分组 } from "./agent-groups.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
  *
@@ -2987,35 +2988,32 @@ export function AgentPill({
             */}
           <div className="new-group">
           <p className="agent-menu-head">{t("新建会话，用哪个 LLM：")}</p>
-          <ul>
-            {agents.map((a) => (
-              <li key={a}>
-                <Row
-                  role="menuitem"
-                  onClick={() => {
-                    setOpen(false)
-                    onPick(a)
-                  }}
-                >
-                  <span className="name">{label ? label(a) : a}</span>
-                  {/**
-                    * **每一条都标出它是哪一路**（2026-08-19 作者要的）：
-                    * *「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP。」*
-                    *
-                    * 此前只有触发按钮上那一颗标记——也就是说
-                    * **你只看得见「现在这段是哪一路」，看不见「要挑的这个是哪一路」**，
-                    * 而挑之前才是需要知道的时候：三条路的能力真的不一样
-                    * （API 的权限门管得住、CLI 管不到也不问、ACP 管不到但会主动问）。
-                    */}
-                  {(() => {
-                    const k = agentKind?.(a)
-                    return k ? <span className="kind">{KIND_LABEL[k]}</span> : null
-                  })()}
-                  {a === current ? <span className="hint">{t("当前")}</span> : null}
-                </Row>
-              </li>
-            ))}
-          </ul>
+          {/**
+            * **按 API / ACP / CLI 分组，组内按字母**（2026-08-21 作者要的：
+            * *「现在太乱了」*）。组头写的是那一路的名字；每条后面那颗 `kind` 标记
+            * 因此不必再画——组头已经说了。
+            */}
+          {按类分组(agents, (id) => agentKind?.(id), (id) => (label ? label(id) : id)).map((组) => (
+            <div key={组.kind} className="agent-kind-group">
+              <p className="model-group-head">{组.kind === "其它" ? t("其它") : KIND_LABEL[组.kind]}</p>
+              <ul>
+                {组.agentIds.map((a) => (
+                  <li key={a}>
+                    <Row
+                      role="menuitem"
+                      onClick={() => {
+                        setOpen(false)
+                        onPick(a)
+                      }}
+                    >
+                      <span className="name">{label ? label(a) : a}</span>
+                      {a === current ? <span className="hint">{t("当前")}</span> : null}
+                    </Row>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
           </div>
           {/**
             * **底一条把「这里没有我要的」接到「去哪加一个」**（2026-08-13）。

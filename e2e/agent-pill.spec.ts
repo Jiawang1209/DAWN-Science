@@ -157,7 +157,7 @@ test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => 
  * 也就是说：**你看得见「现在这段是哪一路」，看不见「要挑的这个是哪一路」**——
  * 而挑之前才是需要知道的时候。
  */
-test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP**", async ({ dawn }) => {
+test("**挑 LLM 那张单子按 API / ACP / CLI 分组，组内按字母**", async ({ dawn }) => {
   const { page } = dawn
 
   const pill = page.locator(".composer-controls .agent-pill")
@@ -168,17 +168,25 @@ test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP**", async (
   await expect(单子).toBeVisible()
 
   /**
-   * 夹具那份配置里有 `ds-chat`（native）与两个 cli——
-   * **每一条都得有标记，不是「有几条带标记就算过」**：
-   * 少标一条，那一条看起来就像「没有这个属性」，而它其实有。
+   * **2026-08-21 改**：作者说三路混在一起「太乱了」，要分组、组内按字母。
+   * 标记从每一条挪到了组头——每一条仍然能看出是哪一路（它在哪个组下面），
+   * 而且一眼就能看出「这一路有几个」。
    */
-  const 条数 = await 单子.getByRole("menuitem").count()
-  expect(条数, "挑 LLM 的单子是空的").toBeGreaterThan(0)
-  await expect(单子.locator(".kind"), "有的条目没有标记——少标一条比全不标更难发现").toHaveCount(
-    条数,
-  )
-  // 而且写的是那三个词之一，不是别的
-  for (const 字 of await 单子.locator(".kind").allTextContents()) {
-    expect(["API", "CLI", "ACP", "终端", "内核"]).toContain(字)
+  const 组头 = 单子.locator(".agent-kind-group .model-group-head")
+  const 组名 = await 组头.allTextContents()
+  expect(组名.length, "没有分组").toBeGreaterThan(0)
+  for (const 字 of 组名) expect(["API", "ACP", "CLI", "其它"]).toContain(字)
+  // 组的顺序固定：API → ACP → CLI → 其它
+  const 序 = ["API", "ACP", "CLI", "其它"]
+  expect([...组名].sort((a, b) => 序.indexOf(a) - 序.indexOf(b))).toEqual(组名)
+  // 每一组里按字母（不分大小写）
+  for (const 组 of await 单子.locator(".agent-kind-group").all()) {
+    const 名 = await 组.locator(".name").allTextContents()
+    const 排好 = [...名].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }))
+    expect(名, "组内没按字母排").toEqual(排好)
   }
+  // 每一条都落在某个组里，没有游离的
+  const 条数 = await 单子.getByRole("menuitem").count()
+  const 组里的 = await 单子.locator(".agent-kind-group [role=menuitem]").count()
+  expect(组里的).toBe(条数)
 })

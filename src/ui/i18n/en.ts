@@ -608,6 +608,7 @@ export const EN: Readonly<Record<string, string>> = {
   "跑着": "running",
   // ACP 适配器（2026-08-19）
   "ACP 适配器": "ACP adapters",
+  "其它": "Other",
   "ACP 适配器是一个独立进程，DAWN 通过 Agent Client Protocol 跟它说话。它会主动问你要不要允许某次工具调用，所以这类会话里会多一张权限卡。":
     "An ACP adapter is a separate process DAWN talks to over the Agent Client Protocol. It asks before each tool call, so these sessions show an extra permission card.",
   "移除这个适配器": "Remove this adapter",

@@ -31,7 +31,7 @@
 - Create: `src/runtime/acp/hands.ts`
 - Test: `tests/runtime/acp-hands.test.ts`
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 ```ts
 // tests/runtime/acp-hands.test.ts
@@ -119,12 +119,12 @@ describe("路径门：与 native 的 gatedTools 同口径", () => {
 })
 ```
 
-- [ ] **Step 2: 跑一次，确认失败**
+- [x] **Step 2: 跑一次，确认失败**
 
 Run: `npx vitest run tests/runtime/acp-hands.test.ts`
 Expected: FAIL，`Cannot find module '../../src/runtime/acp/hands.js'`
 
-- [ ] **Step 3: 最小实现（fs 两个 + 门；终端方法先抛 -32601）**
+- [x] **Step 3: 最小实现（fs 两个 + 门；终端方法先抛 -32601）**
 
 ```ts
 // src/runtime/acp/hands.ts
@@ -323,12 +323,12 @@ void sep
 void 默认输出上限
 ```
 
-- [ ] **Step 4: 跑测试，确认通过**
+- [x] **Step 4: 跑测试，确认通过**
 
 Run: `npx vitest run tests/runtime/acp-hands.test.ts`
 Expected: 8 passed
 
-- [ ] **Step 5: typecheck 并提交**
+- [x] **Step 5: typecheck 并提交**
 
 Run: `npm run typecheck`
 Expected: 无错误（`释放全部` 调 `放终端` 会抛——测试里 `afterEach` 用了 `?.` 且没有终端时循环不进去，不会触发）
@@ -346,7 +346,7 @@ git commit -m "feat(acp): 客户端的手——fs/read_text_file、fs/write_text
 - Modify: `src/runtime/acp/hands.ts`（替换 Task 1 里「Task 2」那五个桩）
 - Test: `tests/runtime/acp-hands.test.ts`
 
-- [ ] **Step 1: 追加失败的测试**
+- [x] **Step 1: 追加失败的测试**
 
 ```ts
 // 追加到 tests/runtime/acp-hands.test.ts 末尾
@@ -439,12 +439,12 @@ describe("terminal/*", () => {
 })
 ```
 
-- [ ] **Step 2: 跑一次，确认新用例失败**
+- [x] **Step 2: 跑一次，确认新用例失败**
 
 Run: `npx vitest run tests/runtime/acp-hands.test.ts`
 Expected: 8 passed, 7 failed（都是「还没实现」）
 
-- [ ] **Step 3: 把五个桩换成实现**
+- [x] **Step 3: 把五个桩换成实现**
 
 把 Task 1 里 `/* ── terminal：Task 2 ── */` 到类结尾之间的五个桩，以及文件末尾两行 `void`，整体替换为：
 
@@ -551,12 +551,12 @@ function 单引号(s: string): string {
 
 并把文件顶部 `import { dirname, isAbsolute, relative, resolve, sep } from "node:path"` 改成不含 `sep`。
 
-- [ ] **Step 4: 跑测试，确认通过**
+- [x] **Step 4: 跑测试，确认通过**
 
 Run: `npx vitest run tests/runtime/acp-hands.test.ts`
 Expected: 15 passed
 
-- [ ] **Step 5: typecheck 并提交**
+- [x] **Step 5: typecheck 并提交**
 
 Run: `npm run typecheck`
 
@@ -575,13 +575,13 @@ git commit -m "feat(acp): 客户端的手——terminal/* 五个方法，超限�
 准入规则 1：新增协议操作必须在同一次改动里补假后端。假 agent 置 `FAKE_ACP_USE_HANDS=1` 时，
 在 `session/prompt` 里**真的**调七个方法，并把每一步的结果说成一句话，用例据此断言。
 
-- [ ] **Step 1: 在文件头的开关表（第 33 行附近）加一行**
+- [x] **Step 1: 在文件头的开关表（第 33 行附近）加一行**
 
 ```js
  * | `FAKE_ACP_USE_HANDS` | 置一即在回话前**真调客户端的手**：读 `<cwd>/手-读.txt`、写 `<cwd>/手-写.txt`、跑 `printf`（T1） |
 ```
 
-- [ ] **Step 2: 在 `initialize` 分支里记下客户端能力**
+- [x] **Step 2: 在 `initialize` 分支里记下客户端能力**
 
 找到 `if (method === "initialize") {`，在它读 `FAKE_ACP_FAIL_INIT` 之前加：
 
@@ -608,7 +608,7 @@ function 调(method, params) {
 }
 ```
 
-- [ ] **Step 3: 收回复时先认 `调出去的`**
+- [x] **Step 3: 收回复时先认 `调出去的`**
 
 找到 `// 客户端回了我们问出去的那一条` 那一段，在它**前面**加：
 
@@ -621,7 +621,7 @@ function 调(method, params) {
   }
 ```
 
-- [ ] **Step 4: 在 `session/prompt` 里、权限询问那段之后加**
+- [x] **Step 4: 在 `session/prompt` 里、权限询问那段之后加**
 
 ```js
     /**
@@ -660,17 +660,17 @@ function 调(method, params) {
 
 并在 `session/new` 分支里记下 cwd：找到 `if (method === "session/new") {`，在其内第一行加 `会话目录 = params?.cwd`，在文件顶部 `let 客户端能力 = {}` 旁加 `let 会话目录 = process.cwd()`。
 
-- [ ] **Step 5: 手跑一次假 agent 看握手还正常**
+- [x] **Step 5: 手跑一次假 agent 看握手还正常**
 
 Run: `printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{"fs":{"readTextFile":true,"writeTextFile":true},"terminal":true}}}\n' | node scripts/fake-acp-agent.mjs | head -1`
 Expected: 一行 JSON，含 `"id":1` 与 `agentCapabilities`
 
-- [ ] **Step 6: 全量测试仍绿（假 agent 被很多用例共用）**
+- [x] **Step 6: 全量测试仍绿（假 agent 被很多用例共用）**
 
 Run: `npx vitest run tests/runtime/acp-runtime.test.ts`
 Expected: 全部 passed（这一步改的是假 agent 的**新增**分支，旧路径不变）
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add scripts/fake-acp-agent.mjs
@@ -685,7 +685,7 @@ git commit -m "feat(mock): 假 ACP agent 置 FAKE_ACP_USE_HANDS 时真调客户�
 - Modify: `src/runtime/acp/runtime.ts`
 - Test: `tests/runtime/acp-runtime.test.ts`
 
-- [ ] **Step 1: 写失败的整条路测试**
+- [x] **Step 1: 写失败的整条路测试**
 
 追加到 `tests/runtime/acp-runtime.test.ts` 末尾：
 
@@ -751,12 +751,12 @@ describe("客户端的手（T1）", () => {
 
 并在文件头开关表加一行 `| FAKE_ACP_ECHO_NEW_PARAMS | 置一即把 session/new 收到的参数原样复述（验 _meta） |`。
 
-- [ ] **Step 2: 跑一次，确认两条都失败**
+- [x] **Step 2: 跑一次，确认两条都失败**
 
 Run: `npx vitest run tests/runtime/acp-runtime.test.ts -t "客户端的手"`
 Expected: 2 failed——第一条话里含「客户端没声明」，第二条找不到 `disallowedTools`
 
-- [ ] **Step 3: 运行时改四处**
+- [x] **Step 3: 运行时改四处**
 
 (a) import：
 
@@ -851,17 +851,17 @@ const 会话_META = {
     await 段.手.释放全部()
 ```
 
-- [ ] **Step 4: 跑这两条与整个文件**
+- [x] **Step 4: 跑这两条与整个文件**
 
 Run: `npx vitest run tests/runtime/acp-runtime.test.ts`
 Expected: 全部 passed（含新加的 2 条）
 
-- [ ] **Step 5: typecheck、全量单测**
+- [x] **Step 5: typecheck、全量单测**
 
 Run: `npm run typecheck && npm test`
 Expected: 全绿。若 `tests/ui/design-contract.test.ts` 或 `source-hygiene` 有新规则咬到（如「不许用 `/etc/hostname` 之类绝对路径」），按它的提示改测试里的越界路径为 `join(tmpdir(), "dawn-hands-外面.txt")`。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/runtime/acp/runtime.ts tests/runtime/acp-runtime.test.ts scripts/fake-acp-agent.mjs
@@ -874,11 +874,11 @@ git commit -m "feat(acp): 运行时把手借给适配器——fs/terminal 能力
 
 **Files:** 无改动；验证。
 
-- [ ] **Step 1: 起 mock 链路，确认旧路径没坏**
+- [x] **Step 1: 起 mock 链路，确认旧路径没坏**
 
 Run: `npm run dev:mock`，建一个 ACP agent 的会话，发一句话，看到假 agent 的暗号回话，回合收口。关掉。
 
-- [ ] **Step 2: 真 claude-code-acp**
+- [x] **Step 2: 真 claude-code-acp**
 
 用 `npm run app` 起应用（**不要从 Claude Code 的终端里起**——`CLAUDECODE` 环境变量那条坑），在设置里确认有 claude 那条 ACP agent，选一个本机项目建会话，发：
 
@@ -889,11 +889,11 @@ Run: `npm run dev:mock`，建一个 ACP agent 的会话，发一句话，看到�
 - 右侧坞「审阅」里这一轮的文件事实仍然出现（B1 的 git 反推没被影响）；
 - 对话里**没有**「DAWN 不支持 …」字样。
 
-- [ ] **Step 3: 真 codex-acp 不受影响**
+- [x] **Step 3: 真 codex-acp 不受影响**
 
 同一应用里换 codex 那条 agent，发「回答 OK」。判据：正常回话，握手与 `session/new` 没报错。
 
-- [ ] **Step 4: 若哪一条红了**
+- [x] **Step 4: 若哪一条红了**
 
 先怀疑自己（`add-without-breaking`）：把 `clientCapabilities` 临时改回三个 false 再试——恢复就是我们这一版的问题；不恢复就是环境。不要静默跳过这一步，在历史条目里如实写。
 
@@ -904,11 +904,11 @@ Run: `npm run dev:mock`，建一个 ACP agent 的会话，发一句话，看到�
 **Files:**
 - Modify: `docs/DEVELOPMENT_HISTORY.md`
 
-- [ ] **Step 1: 先回填上一条的 hash**
+- [x] **Step 1: 先回填上一条的 hash**
 
 Run: `git log --oneline -5`，把「ACP agent 在服务器上干活：设计定案」那条里的「修订：待回填」换成 `7144f80`。
 
-- [ ] **Step 2: 顶部追加**
+- [x] **Step 2: 顶部追加**
 
 ```markdown
 ### 2026-08-20 — ACP 客户端的手（T1，本机版）：claude 的读/改/跑全部经过 DAWN
@@ -921,7 +921,7 @@ Run: `git log --oneline -5`，把「ACP agent 在服务器上干活：设计定�
 - **Verification**: `tests/runtime/acp-hands.test.ts` 15 条、`acp-runtime.test.ts` 新增 2 条（对着假 agent 起真进程）；`npm test`、`typecheck` 全绿；真 claude-code-acp 与真 codex-acp 各跑一轮（Task 5 的判据）。
 ```
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add docs/DEVELOPMENT_HISTORY.md

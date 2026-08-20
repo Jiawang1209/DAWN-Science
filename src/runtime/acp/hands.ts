@@ -21,6 +21,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { dirname, isAbsolute, resolve } from "node:path"
 import { spawn, type ChildProcess } from "node:child_process"
 import { 看风险 } from "../../policy/permissions.js"
+import { 收进程 } from "./launch.js"
 import { 解析远端路径 } from "../../remote/tools.js"
 import type { RemoteCwd, RemoteLike } from "../types.js"
 
@@ -61,11 +62,18 @@ export function 本机后端(): 手的后端 {
        * **走 shell**：agent 给的是一整句话（`grep -rl 'x' . 2>/dev/null`），
        * 不是 argv。native 的 bash 工具也是这么跑的。
        */
+      /**
+       * **自成进程组**（2026-08-21 审查抓到的，本机复现过）：`shell: true` 起的是
+       * 一层 `sh -c`，`proc.kill` 只送给那层壳——`sleep 30 | cat` 里的 `sleep`
+       * 被过继给 PID 1 继续活；`trap '' TERM` 的命令则让 `释放全部` 永远等不到。
+       * `launch.ts` 收适配器进程时早就为同一件事用了「detached + 杀负 pid」，这里照做。
+       */
       const proc: ChildProcess = spawn(command, {
         cwd,
         env: { ...process.env, ...env },
         shell: true,
         stdio: ["ignore", "pipe", "pipe"],
+        detached: process.platform !== "win32",
       })
       const 听众: Array<(c: Buffer) => void> = []
       const 喂 = (c: Buffer) => 听众.forEach((f) => f(c))
@@ -74,11 +82,18 @@ export function 本机后端(): 手的后端 {
       return {
         onData: (cb) => 听众.push(cb),
         exited: new Promise((成) => {
-          proc.once("exit", (code, signal) => 成(signal ? { signal } : { exitCode: code ?? 0 }))
+          /**
+           * **在 `close` 上结算，不在 `exit` 上**：`exit` 时 stdout 的尾巴可能还在路上，
+           * `wait_for_exit` 之后的 `output` 会拿到半截还说 `truncated: false`
+           * （`(sleep 0.2; echo LATE) & echo EARLY` 五次里五次丢 LATE）。
+           * `close` 等的是管道关——后台孙进程握着管道时它也跟着等，
+           * 这正是「输出完整」的定义。
+           */
+          proc.once("close", (code, signal) => 成(signal ? { signal } : { exitCode: code ?? 0 }))
           // 起不来（shell 不在之类）也要收口，不然 wait_for_exit 永远挂着
           proc.once("error", () => 成({ exitCode: 127 }))
         }),
-        kill: () => proc.kill("SIGTERM"),
+        kill: () => 收进程(proc),
       }
     },
   }
@@ -113,7 +128,14 @@ export function 远端后端(ex: RemoteLike): 手的后端 {
         (r) => {
           const 出 = Buffer.from(r.stdout + r.stderr)
           if (出.length > 0) 听众.forEach((f) => f(出))
-          return r.signal ? { signal: r.signal } : { exitCode: r.code ?? 0 }
+          /**
+           * **被杀的不能报成 0**（2026-08-21 审查抓到的）：`ssh.ts` 的 abort 路径自己关通道，
+           * 结果是 `code: undefined` 且没有 `signal`——此前映成 `exitCode: 0`，
+           * agent 会以为 `sleep 999` 正常跑完了。`ExecResult` 上写着：信号杀死时 code 是 undefined。
+           */
+          if (r.signal) return { signal: r.signal }
+          if (r.code === undefined) return { signal: 控.signal.aborted ? "SIGTERM" : "SIGKILL" }
+          return { exitCode: r.code }
         },
         (e: unknown) => {
           听众.forEach((f) => f(Buffer.from(e instanceof Error ? e.message : String(e))))

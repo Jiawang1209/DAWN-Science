@@ -9,7 +9,14 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
-import { addAcpAgent, addNativeAgent, removeAgent, setProviderConnection, setVision } from "../config/writer.js"
+import {
+  addAcpAgent,
+  addNativeAgent,
+  removeAgent,
+  setAcpRemoteCapable,
+  setProviderConnection,
+  setVision,
+} from "../config/writer.js"
 import { 描述图片 } from "../runtime/vision.js"
 import { homedir } from "node:os"
 import { randomUUID } from "node:crypto"
@@ -1215,7 +1222,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        */
       if (connectionId) {
         const def = registry.agents[agentId]
-        if (def && !能上服务器(def)) {
+        // **不认识的 agentId 也在这儿拒**：放它过去，要先连一次服务器才失败
+        if (!def) throw fault("invalid_request", `配置里没有叫「${agentId}」的 agent`)
+        if (!能上服务器(def)) {
           throw fault(
             "invalid_request",
             `「${agentId}」的手到不了服务器——它自己读写文件、跑命令，都在本机。` +
@@ -1499,6 +1508,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       let 新的: ProviderRegistry
       try {
         新的 = removeAgent(configPath, agentId)
+      } catch (e) {
+        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        throw e
+      }
+      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
+      Object.assign(registry.agents, 新的.agents)
+      return { ok: true as const }
+    },
+
+    /** 给已接入的 ACP 标上／摘掉「能上服务器」。**与加／删同一套：写文件，再原地换内存里那份** */
+    setAcpRemoteCapable: async ({ agentId, remoteCapable }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，改不了")
+      let 新的: ProviderRegistry
+      try {
+        新的 = setAcpRemoteCapable(configPath, agentId, remoteCapable)
       } catch (e) {
         if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
         throw e

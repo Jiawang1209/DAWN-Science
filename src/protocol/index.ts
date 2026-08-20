@@ -8,6 +8,7 @@
  * not directly on Tauri commands, Ark, Jupyter messages, or aisdk internals"*
  */
 export { WORKBENCH_PROTOCOL_VERSION, isCompatible } from "./version.js"
+export { 能上服务器 } from "./remote-capable.js"
 
 export {
   CostSchema,

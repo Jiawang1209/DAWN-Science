@@ -15,6 +15,7 @@ import {
   addAcpAgent,
   addNativeAgent,
   removeAgent,
+  setAcpRemoteCapable,
   setProviderConnection,
 } from "../../src/config/writer.js"
 import { 能上服务器 } from "../../src/config/schema.js"
@@ -332,5 +333,49 @@ describe("删一个 agent", () => {
     const f = 配置()
     removeAgent(f, "claude")
     expect(() => removeAgent(f, "ds-chat")).toThrow(/最后一个/)
+  })
+})
+
+/**
+ * **给已接入的 ACP 标上／摘掉「能上服务器」**（2026-08-21）。
+ *
+ * T3 之前接入的 `claude-code-acp` 没有这个标记，而远端会话只认带标记的——
+ * 作者那天在界面上哪儿都找不到它，最后是靠「移除再一键接入」绕过去的。
+ * 一个标记不该要人删掉重来；它就是一行配置，改那一行。
+ */
+describe("ACP 的 remoteCapable", () => {
+  it("没写过的：加上那一行；写过的：原地改，不留两行", () => {
+    const f = 配置()
+    addAcpAgent(f, { agentId: "claude-code-acp", command: "npx", args: ["-y", "x"] })
+    let reg = setAcpRemoteCapable(f, "claude-code-acp", true)
+    expect(reg.agents["claude-code-acp"]).toMatchObject({ kind: "acp", remoteCapable: true })
+    expect(readFileSync(f, "utf8").match(/remoteCapable/g)?.length).toBe(1)
+
+    reg = setAcpRemoteCapable(f, "claude-code-acp", false)
+    expect(reg.agents["claude-code-acp"]).toMatchObject({ remoteCapable: false })
+    expect(readFileSync(f, "utf8").match(/remoteCapable/g)?.length).toBe(1)
+    // 别人原样还在
+    expect(reg.agents["ds-chat"]).toBeDefined()
+  })
+
+  it("手写的 4 空格缩进也照抄，不写死两格", () => {
+    const f = 配置()
+    writeFileSync(
+      f,
+      `agents:\n    ds-chat:\n        kind: native\n        provider: deepseek\n        model: x\n        capabilities: [chat]\n    acp1:\n        kind: acp\n        command: node\n        args: []\n        capabilities: [chat]\n`,
+    )
+    const reg = setAcpRemoteCapable(f, "acp1", true)
+    expect(reg.agents["acp1"]).toMatchObject({ remoteCapable: true })
+    expect(readFileSync(f, "utf8")).toContain("\n        remoteCapable: true")
+  })
+
+  it("不是 ACP 的不给标——native 天生能上，cli 天生不能，标了是骗人", () => {
+    const f = 配置()
+    expect(() => setAcpRemoteCapable(f, "ds-chat", true)).toThrow(/ACP/)
+  })
+
+  it("不存在的要出声", () => {
+    const f = 配置()
+    expect(() => setAcpRemoteCapable(f, "没有这个", true)).toThrow(/没有/)
   })
 })

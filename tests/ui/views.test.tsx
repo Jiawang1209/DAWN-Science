@@ -333,7 +333,6 @@ describe("对话视图", () => {
       <ConversationView
         session={session({ kind: "pty" })}
         items={[]}
-        agents={["ds-chat"]}
         onSend={noop}
       />,
     )

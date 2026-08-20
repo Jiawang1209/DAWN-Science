@@ -1620,11 +1620,20 @@ export function AcpPanel({
   agents,
   onAdd,
   onRemove,
+  onSetRemoteCapable,
 }: {
-  /** 现在配置里有哪些 acp agent */
-  agents: readonly string[]
+  /** 现在配置里有哪些 acp agent，以及各自能不能把手借到服务器 */
+  agents: readonly { agentId: string; remoteCapable: boolean }[]
   onAdd: (agent: { agentId: string; command: string; args: string[]; remoteCapable?: boolean }) => void
   onRemove: (agentId: string) => void
+  /**
+   * 标上／摘掉「能上服务器」（2026-08-21）。
+   *
+   * T3 之前接入的 `claude-code-acp` 没有这个标记，而远端会话只认带标记的——
+   * 作者那天在界面上哪儿都找不到它，最后靠「移除再一键接入」绕过去。
+   * 一个标记不该要人删掉重来。
+   */
+  onSetRemoteCapable: (agentId: string, on: boolean) => void
 }) {
   const [自定义, 设自定义] = useState(false)
   const [id, 设id] = useState("")
@@ -1641,9 +1650,34 @@ export function AcpPanel({
 
       {agents.length > 0 ? (
         <ul className="acp-list">
-          {agents.map((a) => (
-            <li key={a} className="acp-row">
-              <span className="name">{a}</span>
+          {agents.map((a) => {
+            /**
+             * **预置里本该能上、配置里却没标**：这就是 T3 之前接入的老条目。
+             * 直接说出来，而不是让人对着一条「只在本机运行」猜为什么远端列表里没有它。
+             */
+            const 预置 = 预置适配器.find((p) => p.agentId === a.agentId)
+            const 老条目 = Boolean(预置?.remoteCapable) && !a.remoteCapable
+            return (
+            <li key={a.agentId} className="acp-row">
+              <div className="acp-row-text">
+                <span className="name">{a.agentId}</span>
+                {/* **每一条都写清手到不到得了服务器**——远端建会话只认能到的 */}
+                <span className={`sub${老条目 ? " caveat" : ""}`}>
+                  {a.remoteCapable
+                    ? t("手能到服务器：读写与命令落在远端")
+                    : 老条目
+                      ? t("接入时还没有「能上服务器」这个标记——它其实能，标上之后远端会话就能选它")
+                      : t("只在本机运行")}
+                </span>
+              </div>
+              {/* **切换键常驻**，与删除键一样不靠悬停 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onSetRemoteCapable(a.agentId, !a.remoteCapable)}
+              >
+                {a.remoteCapable ? t("改为只在本机") : t("标为能上服务器")}
+              </Button>
               {/* **删除键常驻**，不是悬停才出现——那条本项目栽过两次 */}
               {/**
                 * **文字按钮 + `.danger`，不是实心红的 `variant="danger"`。**
@@ -1653,11 +1687,12 @@ export function AcpPanel({
                 * （`styles.css` 里没有任何一条规则叫它，设计契约的既有欠账
                 * 清单上就挂着 `views.tsx：.danger`）——这一轮把它做成了真的。
                 */}
-              <Button variant="text" size="sm" className="danger" onClick={() => onRemove(a)}>
+              <Button variant="text" size="sm" className="danger" onClick={() => onRemove(a.agentId)}>
                 {t("移除这个适配器")}
               </Button>
             </li>
-          ))}
+            )
+          })}
         </ul>
       ) : (
         // **空态说清楚它是空的**，不是一片留白
@@ -1666,7 +1701,7 @@ export function AcpPanel({
 
       <div className="acp-add">
         {预置适配器
-          .filter((p) => !agents.includes(p.agentId))
+          .filter((p) => !agents.some((a) => a.agentId === p.agentId))
           .map((p) => (
             <div key={p.agentId} className="acp-preset">
               <div className="acp-preset-text">

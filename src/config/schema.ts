@@ -235,21 +235,8 @@ export const AgentDefSchema = z.discriminatedUnion("kind", [
 ])
 export type AgentDef = z.infer<typeof AgentDefSchema>
 
-/**
- * 这个 agent 的手到不到得了服务器——**远端会话只能用这些**。
- *
- * - native：四个工具经 `RemoteExecutor`，到得了。
- * - acp：看 `remoteCapable`。
- * - cli / kernel / pty：运行时不认 `spec.remote`（`grep -c remote` 为 0），
- *   起在远端任务里也是本机干活——所以是假。
- *
- * 判据只住这一处：后端拒、界面滤，都调它。
- */
-export function 能上服务器(def: Pick<AgentDef, "kind"> & { remoteCapable?: boolean | undefined }): boolean {
-  if (def.kind === "native") return true
-  if (def.kind === "acp") return def.remoteCapable === true
-  return false
-}
+/** 判据住在 protocol 里（界面与后端共用，且界面只许经 protocol 取）；这里只是转发给后端用 */
+export { 能上服务器 } from "../protocol/remote-capable.js"
 
 /**
  * 一个 provider 的**连接设置**（2026-08-10）。

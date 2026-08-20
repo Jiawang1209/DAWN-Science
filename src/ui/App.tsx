@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
-import { 能上服务器 } from "../config/schema.js"
+import { 能上服务器 } from "../protocol/index.js"
 import {
   AttributionCaveat,
   ChangesPanel,
@@ -72,7 +72,6 @@ import { TerminalDock } from "./dock.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
-import { 新建会话可选的 } from "./agents.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { WebPanel } from "./web.js"
@@ -1155,6 +1154,50 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     } finally {
       setConnSaving(false)
     }
+  }
+
+  /**
+   * 模型 pill 里点了一个 ACP 适配器（2026-08-21，作者在服务器上建会话时报的）。
+   *
+   * 作者：*「我在点击服务器连接的时候，肯定是要点击新对话的，那么这个页面
+   * 现在就应该保持不变，然后在选择模型的时候，就应该显示出有 claude-code-acp 才对。」*
+   *
+   * ACP 换不了模型也换不了家，所以这一步是**另起一段**：远端会话就起在同一台
+   * 服务器上，本地的就起在同一个工作目录。
+   *
+   * **空会话直接顶替**：点服务器建出来的那段「新对话」还一个字没说，
+   * 这时人想的是「改用 claude」而不是「再来一段」——留着那段空的，
+   * 侧栏里就多一条永远空着的「新对话」。有历史的会话不动，另开一段。
+   */
+  const 用ACP另起一段 = async (agentId: string) => {
+    if (!session) return
+    const 旧任务 = 当前任务
+    /**
+     * **「空」看 `session.title`，不看 `items`**（2026-08-21 审查抓到的）：
+     * 切会话那一瞬 `$items` 被清空、快照回来之前它一直是空的——
+     * 那时按 `items.length === 0` 判，一段有历史的会话会被当成空的**删掉**。
+     * `title` 的定义就是「还没说过话」（协议 2.12），而且它跟着会话摘要走、不会被清。
+     * 两个都空才算空：宁可多留一条空会话，不冒删掉历史的险。
+     */
+    const 是空的 = !session.title && items.length === 0
+    const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
+      agentId,
+      ...(session.remote
+        ? { connectionId: session.remote.connectionId }
+        : 旧任务?.workspace
+          ? { workspace: 旧任务.workspace }
+          : {}),
+    })
+    if (!t.sessionId) throw new Error("任务建好了却没有会话——这一步不该悄悄过去")
+    if (是空的 && 旧任务) {
+      // **新的起来了再删旧的**；删不掉只是多一条空会话，不该拦住切换
+      await client.get("deleteTask", { taskId: 旧任务.taskId }).catch(() => {})
+    }
+    await Promise.all([loadTasks(client), loadTempSessions(client), loadConnections(client)])
+    if (projectId) await loadSessions(client, projectId)
+    setActiveSessionId(t.sessionId)
+    setView("conversation")
+    await 取写权(t.sessionId)
   }
 
   /**
@@ -3094,7 +3137,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     <AcpPanel
                       agents={providers.agents
                         .filter((a) => a.kind === "acp")
-                        .map((a) => a.agentId)}
+                        .map((a) => ({ agentId: a.agentId, remoteCapable: 能上服务器(a) }))}
+                      onSetRemoteCapable={(agentId, on) =>
+                        client
+                          .get("setAcpRemoteCapable", { agentId, remoteCapable: on })
+                          // 与加／删同一条：改完立刻重取，不说半真的话
+                          .then(() => loadProviders(client))
+                          .catch(fail)
+                      }
                       onAdd={(a) =>
                         client
                           .get("addAcpAgent", a)
@@ -3235,25 +3285,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     { onPickWorkspace: () => void 选工作目录(当前任务.taskId) }
                   : {})}
                 /**
-                 * **能就地换的，就不要在「新建会话」那一组里再出现一次**
-                 * （2026-08-11 修）。
-                 *
-                 * 作者：*「同一个对话，我切换模型，依旧会弹出新的对话，
-                 * 而不是继续对话。」* 那颗 pill 的菜单里有两组，
-                 * 上组「就地换服务（对话不断）」、下组「新建会话，用哪个 LLM」——
-                 * **同一家 DeepSeek 在两组里各出现一次**，
-                 * 而人是照着「换 LLM」这几个字点的，于是点中了会新开对话的那个。
-                 *
-                 * 现在下组只留**换不过去的那些**（CLI / 终端 / 内核那类：
-                 * 一个 API 会话没法半路变成 claude 会话）。
-                 * 想另起一段仍然有路——侧栏那颗「新建会话」。
+                 * 模型 pill 里那一组 ACP 适配器（2026-08-21）。
+                 * 远端会话只列手能到服务器的（T3）——此前这条过滤挂在一个
+                 * 早就没人读的 `agents` 参数上，等于没做。
                  */
-                agents={新建会话可选的(
-                  // 远端会话里另起一段也是远端的——只列手能到服务器的（T3）
-                  session.remote ? 远端能用的agentIds : agentIds,
-                  (id) => providers.agents.find((a) => a.agentId === id)?.kind,
-                  Boolean(services && services.length > 0),
-                )}
+                acpAgents={(session.remote ? 远端能用的agentIds : agentIds)
+                  .filter((id) => providers.agents.find((a) => a.agentId === id)?.kind === "acp")
+                  .map((id) => ({ agentId: id, label: agentLabel(id) }))}
+                onPickAgent={(id) => {
+                  void 用ACP另起一段(id).catch(fail)
+                }}
                 models={modelChoices}
                 model={currentModel}
                 agentLabel={agentLabel}

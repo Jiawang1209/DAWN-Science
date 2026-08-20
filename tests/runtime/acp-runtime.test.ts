@@ -779,6 +779,30 @@ describe("客户端的手（T1）", () => {
     expect(话).toContain('【手·放】{"result":{}}')
   })
 
+  /**
+   * **适配器死了，它借的手要收回来**（2026-08-21 审查抓到的）。
+   *
+   * 此前只有 `stop()` 会 `释放全部`，而进程 `exit` 那条路只把等着的请求打失败——
+   * 于是 claude-code-acp 崩了之后，它起的 `python train.py` 还在机器上跑，
+   * 直到应用退出都没有人能杀它。
+   */
+  it("适配器崩了 → 它开着没收的终端一起被杀", async () => {
+    const 标 = `sleep 30.${process.pid}`
+    const rt = 起一个({ FAKE_ACP_LEAVE_TERMINAL: `${标} | cat` })
+    const { s } = 带工作区("h3")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId).catch(() => {})
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "开了就跑")
+    await 等到(收, (e) => e.kind === "output" && e.data.includes("【手·开】"), "终端开了")
+    await 等到(收, (e) => e.kind === "exited", "适配器退出")
+    await new Promise((r) => setTimeout(r, 300))
+    const { execSync } = await import("node:child_process")
+    const 活着 = execSync(`ps -axo command | grep -F ${JSON.stringify(标)} | grep -v grep || true`).toString().trim()
+    expect(活着, "适配器死了，它起的命令还活着").toBe("")
+  })
+
   it("session/new 带上 `_meta.claudeCode.options.disallowedTools`", async () => {
     const rt = 起一个({ FAKE_ACP_ECHO_NEW_PARAMS: "1" })
     const s = spec("h2")

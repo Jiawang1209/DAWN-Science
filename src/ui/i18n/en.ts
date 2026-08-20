@@ -63,6 +63,10 @@ export const EN: Readonly<Record<string, string>> = {
   "只在本机运行": "runs on this machine only",
   "手能到服务器：读写与命令落在远端": "reaches the server: file I/O and commands run remotely",
   "自定义的适配器默认只在本机运行。": "Custom adapters run on this machine only by default.",
+  "接入时还没有「能上服务器」这个标记——它其实能，标上之后远端会话就能选它":
+    "Added before the server-capable flag existed — it can reach the server; mark it and remote chats can pick it",
+  "标为能上服务器": "Mark server-capable",
+  "改为只在本机": "Make local-only",
   "删除会话「{0}」？": "Delete the chat “{0}”?",
   "删除这 {0} 段对话？": "Delete these {0} chats?",
   "删除 {0} 段": "Delete {0}",

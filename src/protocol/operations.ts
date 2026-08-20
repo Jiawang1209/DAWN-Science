@@ -664,6 +664,19 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 给已接入的 ACP 标上／摘掉「能上服务器」（协议 7.13，2026-08-21）。
+   *
+   * T3 之前接入的适配器没有这个标记，而远端会话只认带标记的——
+   * 作者那天靠「移除再一键接入」绕过去。一个标记不该要人删掉重来。
+   * **只对 `kind: acp` 生效**，后端会说清楚。
+   */
+  setAcpRemoteCapable: {
+    request: z.object({ agentId: z.string().min(1), remoteCapable: z.boolean() }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   /** 拨本机那两个开关（协议 5.7）。**它们不写进任何会被分享的文件** */
   setMcpFlag: {
     request: z

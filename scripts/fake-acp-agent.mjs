@@ -32,6 +32,7 @@
  * | `FAKE_ACP_LIKE_CLAUDE` | 置一即装成 claude 那台适配器：没有 `configOptions`，只有 `models`/`modes` |
  * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
  * | `FAKE_ACP_USE_HANDS` | 置一即在回话前**真调客户端的手**：读 `<cwd>/手-读.txt`、写 `<cwd>/手-写.txt`、跑 `printf`（T1） |
+ * | `FAKE_ACP_LEAVE_TERMINAL` | 设成一条命令：开一个终端跑它、**不 release**，然后适配器自己崩掉（退出码 9）。验「适配器死了，它借的手要收回来」 |
  * | `FAKE_ACP_ECHO_NEW_PARAMS` | 置一即把 `session/new` 收到的参数原样复述（验 `_meta`） |
  */
 
@@ -411,6 +412,24 @@ async function 处理(msg) {
         const 放 = await 调("terminal/release", { sessionId: sid, terminalId: tid })
         说(`【手·放】${JSON.stringify(放)}`)
       }
+    }
+    /** 开一个终端不收，然后自己死掉——客户端得替我收（2026-08-21 审查抓到的洞） */
+    if (process.env["FAKE_ACP_LEAVE_TERMINAL"]) {
+      const 开 = await 调("terminal/create", {
+        sessionId: params.sessionId,
+        command: process.env["FAKE_ACP_LEAVE_TERMINAL"],
+        outputByteLimit: 4096,
+      })
+      发({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId: params.sessionId,
+          update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text: `【手·开】${JSON.stringify(开)}` } },
+        },
+      })
+      setTimeout(() => process.exit(9), 50)
+      return
     }
     if (process.env["FAKE_ACP_ECHO_NEW_PARAMS"] === "1") {
       发({

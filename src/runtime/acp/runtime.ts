@@ -443,8 +443,16 @@ export class AcpRuntime implements AgentRuntime {
         败(new Error(`ACP 适配器退出了（退出码 ${code ?? "未知"}）${this.尾巴(段)}`))
       }
       段.等着.clear()
+      /**
+       * **它死了，它借的手要收回来**（2026-08-21 审查抓到的）。此前只有 `stop()` 收，
+       * 而 manager 对已经 `exited` 的会话不再调 `stop()`——于是适配器崩了之后，
+       * 它起的 `python train.py` 还在机器上跑，直到应用退出都没人能杀它。
+       */
+      void 段.手.释放全部().catch(() => {})
       this.发(spec.sessionId, { kind: "exited", sessionId: spec.sessionId, exitCode: code ?? 0 })
     })
+    // stdin 那头关了还往里写（迟到的终端结果）会是一个没人听的 'error'——主进程直接崩
+    proc.stdin?.on("error", () => {})
 
     await 起来了
 
@@ -700,9 +708,14 @@ export class AcpRuntime implements AgentRuntime {
       this.答(段, id, undefined)
       段.待答.delete(rid)
     }
+    /**
+     * **先关门，再收手**：`释放全部` 要等每个命令退出，这期间 agent 还可能发来
+     * `terminal/create`；不先把 `停了` 立起来，那一个新起的子进程谁都不会再杀
+     * （`释放全部` 迭代的是动手前那一份快照）。关了门之后 ④ 会拒掉它。
+     */
+    段.停了 = true
     // 借出去的终端一起收——不然 agent 死了，它起的 `sleep 999` 还活着
     await 段.手.释放全部()
-    段.停了 = true
     收进程(段.proc)
     this.段们.delete(sessionId)
   }
@@ -891,6 +904,11 @@ export class AcpRuntime implements AgentRuntime {
      */
     if (typeof id === "number" && typeof msg["method"] === "string") {
       const method = msg["method"]
+      // 正在收场／已经停了：不再借手——这时开出来的终端没人会收
+      if (段.停了) {
+        this.回错(段, id, "这一段会话正在结束，不再受理请求", -32000)
+        return
+      }
       void 段.手.处理(method, msg["params"]).then(
         (result) => this.回结果(段, id, result),
         (e: unknown) => {
@@ -923,10 +941,12 @@ export class AcpRuntime implements AgentRuntime {
   }
 
   private 回结果(段: 一段, id: number, result: unknown): void {
+    if (!段.proc.stdin?.writable) return
     段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, result: result ?? {} })}\n`)
   }
 
   private 回错(段: 一段, id: number, message: string, code = -32601): void {
+    if (!段.proc.stdin?.writable) return
     段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } })}\n`)
   }
 

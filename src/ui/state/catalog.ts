@@ -18,7 +18,7 @@ import type {
   RunSummary,
   SessionSummary,
 } from "../../protocol/index.js"
-import { setList, setValue } from "./identity.js"
+import { sameList, setList, setValue } from "./identity.js"
 import type { ContextUsage } from "../panels.js"
 
 /** `getRun` 的返回：Run 摘要 + 可选的产出事实与成本 */
@@ -85,14 +85,15 @@ export const setProvenance = (v: ProvenanceLink | undefined) => setValue($proven
 
 export function setProviders(v: Providers): void {
   const prev = $providers.get()
-  if (
-    prev.agents.length === v.agents.length &&
-    prev.providers.length === v.providers.length &&
-    prev.agents.every((a, i) => a.agentId === v.agents[i]?.agentId) &&
-    prev.providers.every((p, i) => p.providerId === v.providers[i]?.providerId)
-  ) {
-    return
-  }
+  /**
+   * **按内容比，不只按 id**（2026-08-21 修）。
+   *
+   * 上一版只比两串 id：名单没变就当什么都没变。于是「给 claude-code-acp
+   * 标上能上服务器」文件写了、后端内存换了，界面停在旧数据上——
+   * 按钮按了没反应。同一个洞也咬得到 provider 的模型清单。
+   * `sameList` 是全站那条「内容没变就不换引用」的实现，嵌套字段走序列化比较。
+   */
+  if (sameList(prev.agents, v.agents) && sameList(prev.providers, v.providers)) return
   $providers.set(v)
 }
 

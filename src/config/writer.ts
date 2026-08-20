@@ -435,6 +435,49 @@ export function addAcpAgent(file: string, agent: NewAcpAgent): ProviderRegistry 
  *
  * @throws {UserFacingError} 没有这个 agent、它是最后一个、或写完读不回来
  */
+/**
+ * 在 `agents:` 段的文本里定位一个 agent 的块：键那一行、它的缩进、块尾（不含）。
+ * `removeAgent` 与 `setAcpRemoteCapable` 共用——两处各写一遍就会各自长歪。
+ *
+ * **往下先算，再往上吞注释**（调用方的事）。反过来写的话（先把起点上移过注释，
+ * 再从起点 + 1 往下数），第一次循环看到的就是键那一行本身——它不比缩进更深，
+ * 于是当场退出，**结果只删掉了注释，agent 原样还在**。2026-08-19 被单测抓住的。
+ */
+function 找agent块(
+  lines: string[],
+  起: number,
+  末: number,
+  agentId: string,
+): { 键行: number; 缩进: string; 到: number } {
+  const 键 = new RegExp(`^(\\s+)${agentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*$`)
+  let 键行 = -1
+  let 缩进 = ""
+  for (let i = 起 + 1; i < 末; i++) {
+    const m = 键.exec(lines[i]!)
+    if (m) {
+      键行 = i
+      缩进 = m[1]!
+      break
+    }
+  }
+  // 解析说有、文本里找不到——**不硬改**，那说明这份文件不是我们以为的样子
+  if (键行 < 0) throw new UserFacingError(`在配置里定位不到「${agentId}」那一段，没有改动文件`)
+  let 到 = 键行 + 1
+  while (到 < 末) {
+    const l = lines[到]!
+    if (l.trim() === "") {
+      到 += 1
+      continue
+    }
+    if (l.startsWith(`${缩进} `) || l.startsWith(`${缩进}\t`)) {
+      到 += 1
+      continue
+    }
+    break
+  }
+  return { 键行, 缩进, 到 }
+}
+
 export function removeAgent(file: string, agentId: string): ProviderRegistry {
   if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
   const 原文 = readFileSync(file, "utf8")
@@ -458,43 +501,8 @@ export function removeAgent(file: string, agentId: string): ProviderRegistry {
 
   const lines = 原文.split("\n")
   const { 起, 末 } = agents段(lines)
-  const 键 = new RegExp(`^(\\s+)${agentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*$`)
-  let 键行 = -1
-  let 从 = -1
-  let 缩进 = ""
-  for (let i = 起 + 1; i < 末; i++) {
-    const m = 键.exec(lines[i]!)
-    if (m) {
-      键行 = i
-      从 = i
-      缩进 = m[1]!
-      break
-    }
-  }
-  // 解析说有、文本里找不到——**不硬删**，那说明这份文件不是我们以为的样子
-  if (键行 < 0) throw new UserFacingError(`在配置里定位不到「${agentId}」那一段，没有改动文件`)
-
-  /**
-   * **往下先算，再往上吞注释。**
-   *
-   * 反过来写的话（先把 `从` 上移过注释，再 `到 = 从 + 1`），
-   * `到` 会从注释那一行起算，第一次循环看到的就是键那一行本身——
-   * 它不比 `缩进` 更深，于是当场退出，**结果只删掉了注释，agent 原样还在**。
-   * 这个洞是 2026-08-19 写完当场被单测抓住的。
-   */
-  let 到 = 键行 + 1
-  while (到 < 末) {
-    const l = lines[到]!
-    if (l.trim() === "") {
-      到 += 1
-      continue
-    }
-    if (l.startsWith(`${缩进} `) || l.startsWith(`${缩进}\t`)) {
-      到 += 1
-      continue
-    }
-    break
-  }
+  const { 键行, 缩进, 到 } = 找agent块(lines, 起, 末, agentId)
+  let 从 = 键行
   // 往上吞掉紧挨着的注释行——留下一句孤零零的「# 由 DAWN 在设置里添加」
   // 比删不干净更难看，而且下一个人会以为下面那个 agent 是我们加的
   while (从 > 起 + 1 && lines[从 - 1]!.trim().startsWith("#")) 从 -= 1
@@ -509,6 +517,62 @@ export function removeAgent(file: string, agentId: string): ProviderRegistry {
     writeFileSync(file, 原文, "utf8")
     throw new UserFacingError(
       `删完之后的配置读不回来，已还原：${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+}
+
+/**
+ * 给一个已接入的 ACP 标上／摘掉「能上服务器」（2026-08-21）。
+ *
+ * T3 之前接入的 `claude-code-acp` 没有这个标记，而远端会话只认带标记的——
+ * 作者那天在界面上哪儿都找不到它，最后靠「移除再一键接入」绕过去。
+ * 一个标记不该要人删掉重来：它就是一行配置，改那一行。
+ *
+ * **只对 `kind: acp` 生效**：native 天生能上、cli/pty/kernel 天生不能
+ * （`schema.ts` 的 `能上服务器`），给它们写这一行是一句骗人的话。
+ */
+export function setAcpRemoteCapable(file: string, agentId: string, on: boolean): ProviderRegistry {
+  if (!existsSync(file)) throw new UserFacingError(`找不到配置文件：${file}`)
+  const 原文 = readFileSync(file, "utf8")
+  const doc = parseDocument(原文)
+  const agents = doc.get("agents") as { has?: (k: string) => boolean; get?: (k: string) => unknown } | undefined
+  if (!agents || typeof agents.has !== "function" || typeof agents.get !== "function") {
+    throw new UserFacingError("配置里没有 `agents:` 这一段")
+  }
+  if (!agents.has(agentId)) throw new UserFacingError(`配置里没有叫「${agentId}」的 agent`)
+  const def = agents.get(agentId) as { get?: (k: string) => unknown } | undefined
+  if (def?.get?.("kind") !== "acp") {
+    throw new UserFacingError(`「${agentId}」不是 ACP 适配器，「能上服务器」这个标记只对 ACP 有意义`)
+  }
+
+  const lines = 原文.split("\n")
+  const { 起, 末 } = agents段(lines)
+  const { 键行, 缩进, 到 } = 找agent块(lines, 起, 末, agentId)
+  /**
+   * **子键的缩进照抄块里已有的那一行**，不写死两格（2026-08-21 审查抓到的）：
+   * 手写的 4 空格嵌套 yaml 里写死两格会落在第 6 列、兄弟在第 8 列，
+   * 读回来是「All mapping items must start at the same column」——每点一次都「已还原」。
+   */
+  const 首子行 = lines.slice(键行 + 1, 到).find((l) => l.trim() !== "" && !l.trim().startsWith("#"))
+  const 子缩进 = 首子行 ? /^(\s*)/.exec(首子行)![1]! : `${缩进}  `
+  const 新行 = `${子缩进}remoteCapable: ${on ? "true" : "false"}`
+  const 已有 = lines.findIndex((l, i) => i > 键行 && i < 到 && /^\s+remoteCapable\s*:/.test(l))
+  let 新文: string
+  if (已有 >= 0) {
+    新文 = [...lines.slice(0, 已有), 新行, ...lines.slice(已有 + 1)].join("\n")
+  } else {
+    // 插在块里最后一个非空行后面——块尾可能带着空行，别把它写到空行之后
+    let 插 = 到
+    while (插 > 键行 + 1 && lines[插 - 1]!.trim() === "") 插 -= 1
+    新文 = [...lines.slice(0, 插), 新行, ...lines.slice(插)].join("\n")
+  }
+  writeFileSync(file, 新文, "utf8")
+  try {
+    return loadRegistry(file)
+  } catch (err) {
+    writeFileSync(file, 原文, "utf8")
+    throw new UserFacingError(
+      `改完之后的配置读不回来，已还原：${err instanceof Error ? err.message : String(err)}`,
     )
   }
 }

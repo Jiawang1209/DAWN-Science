@@ -448,8 +448,11 @@
  *
  * 7.12（2026-08-20）：视觉服务——`getVision` / `saveVision` / `testVision`。
  *   纯新增。让目录里没声明收图的模型（DeepSeek 等）借一个视觉端点看图。
+ *
+ * 7.13（2026-08-21）：`setAcpRemoteCapable`——给已接入的 ACP 标上／摘掉「能上服务器」。
+ *   纯新增。T3 之前接入的适配器没有这个标记，此前只能删了重加。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.12"
+export const WORKBENCH_PROTOCOL_VERSION = "7.13"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

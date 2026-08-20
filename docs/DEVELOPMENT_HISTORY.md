@@ -46,7 +46,7 @@
 ### 2026-08-21 — 合并前审查：ACP 借手的六个洞 + 今天两处自己的
 
 - **Type**: fix
-- **Commit**: `待回填`
+- **Commit**: `52b2ac0`
 - **Motivation**: 合并 `acp-terminal` 进 `main` 之前对整条分支做了一次 high 档代码审查（8 个角度 + 逐条反驳验证），确认了十来条。挑「确定是 bug、修法明确」的当场修。
 - **What**:
   - `hands.ts` 本机后端：命令 **自成进程组**，kill 走 `收进程`（杀负 pid）——此前 `proc.kill` 只送给 `sh -c` 那层壳，`sleep 30 | cat` 里的 `sleep` 过继给 PID 1（本机复现）；`exited` 改在 **`close`** 上结算——`exit` 时 stdout 尾巴还在路上，`wait_for_exit` 后的 `output` 拿到半截还说 `truncated: false`（五次五次丢）。
@@ -63,7 +63,7 @@
 ### 2026-08-21 — 已接入的 ACP 能一键标「能上服务器」；`setProviders` 按内容比较
 
 - **Type**: fix
-- **Commit**: `待回填`
+- **Commit**: `52b2ac0`
 - **Motivation**: 上一条的欠账，作者要求当场补：T3 之前接入的 `claude-code-acp` 没有 `remoteCapable`，设置里的已接入列表看不出哪条能到服务器、也不提示老条目要重接，作者那天靠「移除再一键接入」绕过去。另：T3 让 `App.tsx` 直接 import `config/schema.ts`，`ui-boundary.test.ts` 在 HEAD 上就是红的。
 - **What**: ① 协议 **7.13** 新增 `setAcpRemoteCapable`（纯新增）；`config/writer.ts` 新增同名函数——原地改／插那一行，只对 `kind: acp` 生效；`removeAgent` 的定位块逻辑抽成 `找agent块` 共用。② 设置「ACP 适配器」已接入列表每行写清「手能到服务器 / 只在本机运行」，**切换键常驻**；预置里本该能上、配置里却没标的老条目，直接说「接入时还没有这个标记——它其实能」。③ `能上服务器` 搬到 `src/protocol/remote-capable.ts`（`config/schema.ts` 转发），修掉边界违规。④ **`setProviders` 此前只比两串 id**——字段变了当没变，于是标记写进了文件、后端换了内存，界面停在旧数据上，按钮按了没反应（同一个洞也咬得到 provider 的模型清单）；改为 `sameList` 按内容比。
 - **Impact**: 配置文件格式不变；老配置不再需要删了重加。`setProviders` 的修正会让此前「id 没变但内容变了」的场景开始正确刷新。
@@ -72,7 +72,7 @@
 ### 2026-08-21 — 远端新对话的模型选择器里列出能上服务器的 ACP 适配器
 
 - **Type**: fix
-- **Commit**: `待回填`
+- **Commit**: `52b2ac0`
 - **Motivation**: 作者在 `acp-terminal` 分支上试 T3，点服务器「新对话」后**哪儿都找不到 `claude-code-acp`**。根因：T3 做了 `remoteCapable` 标记、后端拒绝、`远端能用的agentIds` 过滤，**却没有门**——`startRemoteSession` 直接拿第一个能上服务器的 agent（DeepSeek）静默建会话；会话里的模型 pill 只列 API 模型；过滤结果传给了 `ConversationView` 一个 2026-08-12 起就没人读的 `agents` 参数。作者定的形状：*「这个页面现在就应该保持不变，然后在选择模型的时候，就应该显示出有 claude-code-acp 才对。」*
 - **What**: `ModelPill` 新增 `agents` / `onPickAgent`，菜单底部多一组「ACP 适配器」（`svc-mark kind-mark` 写字「ACP」，不用首字母）；`ConversationView` 的死参数 `agents` 换成 `acpAgents` + `onPickAgent`；`App.tsx` 新增 `用ACP另起一段`：远端起在同一台服务器、本地起在同一工作目录，**空会话（timeline 为空）直接顶替并删掉旧任务**，有历史的另开一段。远端会话只列 `能上服务器` 的 ACP，本地列全部。**ACP 会话里 pill 仍不画**（2026-08-19 定案不动，第一版破了它、被 `acp-agent.spec.ts` 当场抓住后收回）。`新建会话可选的` 在 App 里不再使用（模块与其单测保留）。
 - **Impact**: 纯界面；协议与配置文件格式不变。旧配置里 T3 之前接入的 `claude-code-acp` 没有 `remoteCapable`，需在设置里移除后重新「一键接入」——已接入列表看不出哪条能到服务器、老条目没有升级提示，**这是一笔欠账**。

@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
+import { 能上服务器 } from "../config/schema.js"
 import {
   AttributionCaveat,
   ChangesPanel,
@@ -750,6 +751,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
 
   /**
+   * **在服务器上干活时能用的**（T3，2026-08-21）：native，加标了 `remoteCapable` 的 ACP。
+   *
+   * 此前远端新建取的是 `agentIds[0]`——配置里第一个是 codex-acp 的话，
+   * 远端会话静默变成本机 codex。判据与后端同一个函数（`能上服务器`），
+   * 后端也拒；这里先滤，是不让人点到一个注定被拒的。
+   */
+  const 远端能用的agentIds = useMemo(
+    () => providers.agents.filter((a) => a.kind !== "pty" && 能上服务器(a)).map((a) => a.agentId),
+    [providers],
+  )
+
+  /**
    * 新建会话并直接进对话。
    *
    * **侧栏与空对话区共用它**——Hermes：*"One action, one home. A command may have
@@ -1151,9 +1164,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 人点的是「在这台机器上干活」，不该让他先按一次连接再按一次新建。
    */
   const startRemoteSession = async (c: { id: string; label: string }) => {
-    const agentId = agentIds[0]
+    // **只从手能到服务器的里面挑**（T3）；codex-acp / cli / kernel 会在本机跑，不算
+    const agentId = 远端能用的agentIds[0]
     if (!agentId) {
-      setConnProblem(t("配置里还没有可用的 agent——先去设置里加一个"))
+      setConnProblem(
+        t("没有能在服务器上干活的 agent——API 模型可以，标了「能上服务器」的 ACP 适配器（如 Claude Code）也可以"),
+      )
       return
     }
     setConnBusy(c.id)
@@ -3233,7 +3249,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 想另起一段仍然有路——侧栏那颗「新建会话」。
                  */
                 agents={新建会话可选的(
-                  agentIds,
+                  // 远端会话里另起一段也是远端的——只列手能到服务器的（T3）
+                  session.remote ? 远端能用的agentIds : agentIds,
                   (id) => providers.agents.find((a) => a.agentId === id)?.kind,
                   Boolean(services && services.length > 0),
                 )}

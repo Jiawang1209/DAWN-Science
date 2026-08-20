@@ -1374,20 +1374,34 @@ function 自定义端点({
  * `npx -y` 那条要求机器上有 Node。**不假装没有这个前提**——
  * 下面那句说明就写着它，而不是等人点下去看一串 ENOENT。
  */
-const 预置适配器: readonly { agentId: string; 名: string; command: string; args: string[]; 说: string }[] = [
+/**
+ * `remoteCapable`：它会不会把读写与命令借给 DAWN（T3，2026-08-21，真适配器上量的）。
+ * 借的那个在远端会话里手能伸到服务器；不借的只能在本机干活，远端建会话时不列它。
+ * `说` 里把这件事写出来——**挑之前就该知道**，不是建完会话才发现它在本机。
+ */
+const 预置适配器: readonly {
+  agentId: string
+  名: string
+  command: string
+  args: string[]
+  remoteCapable: boolean
+  说: () => string
+}[] = [
   {
     agentId: "codex-acp",
     名: "Codex",
     command: "npx",
     args: ["-y", "@agentclientprotocol/codex-acp"],
-    说: "官方适配器 @agentclientprotocol/codex-acp",
+    remoteCapable: false,
+    说: () => `@agentclientprotocol/codex-acp · ${t("只在本机运行")}`,
   },
   {
     agentId: "claude-code-acp",
     名: "Claude Code",
     command: "npx",
     args: ["-y", "@zed-industries/claude-code-acp"],
-    说: "官方适配器 @zed-industries/claude-code-acp",
+    remoteCapable: true,
+    说: () => `@zed-industries/claude-code-acp · ${t("手能到服务器：读写与命令落在远端")}`,
   },
 ]
 
@@ -1609,7 +1623,7 @@ export function AcpPanel({
 }: {
   /** 现在配置里有哪些 acp agent */
   agents: readonly string[]
-  onAdd: (agent: { agentId: string; command: string; args: string[] }) => void
+  onAdd: (agent: { agentId: string; command: string; args: string[]; remoteCapable?: boolean }) => void
   onRemove: (agentId: string) => void
 }) {
   const [自定义, 设自定义] = useState(false)
@@ -1657,12 +1671,14 @@ export function AcpPanel({
             <div key={p.agentId} className="acp-preset">
               <div className="acp-preset-text">
                 <span className="name">{p.名}</span>
-                <span className="sub">{p.说}</span>
+                <span className="sub">{p.说()}</span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onAdd({ agentId: p.agentId, command: p.command, args: p.args })}
+                onClick={() =>
+                  onAdd({ agentId: p.agentId, command: p.command, args: p.args, remoteCapable: p.remoteCapable })
+                }
               >
                 {t("一键接入")}
               </Button>
@@ -1675,6 +1691,8 @@ export function AcpPanel({
           */}
         <p className="caveat">
           {t("上面两条走 npx，需要机器上有 Node。已经装好适配器的话，用下面的自定义命令直接指过去。")}
+          {" "}
+          {t("自定义的适配器默认只在本机运行。")}
         </p>
       </div>
 

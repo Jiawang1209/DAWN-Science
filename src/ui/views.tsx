@@ -28,7 +28,7 @@ import { $跑着的会话 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
-import { formatDuration, formatTokens, 多久之前, 拆模型名, 短路径, 基名 } from "./format.js"
+import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
 import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
@@ -213,6 +213,12 @@ const 浮层延时毫秒 = 420
 export interface 悬停浮层 {
   全文: string
   副: string | undefined
+  /**
+   * 卡上的细节行（2026-08-21，作者：*「对话窗口仅仅保留题目，然后剩余的详细信息
+   * 都放入鼠标滑动窗口里面」*，并给了 Codex 侧栏那张图）。
+   * 行上只留标题，上次活动、目录、对话数这些挪到这儿。
+   */
+  详情?: readonly string[] | undefined
   上: number
   左: number
 }
@@ -229,14 +235,19 @@ export function 浮层事件(
   报: ((x: 悬停浮层 | undefined) => void) | undefined,
   全文: string,
   副?: string,
+  详情?: readonly string[],
 ) {
   if (!报) return {}
   return {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
       const 行 = e.currentTarget
       const 标题 = 行.querySelector(".sess-title") as HTMLElement | null
-      // **看得全就不弹**：再弹一张卡只是挡住它自己
-      if (!标题 || 标题.scrollWidth - 标题.clientWidth <= 1) return
+      const 被截了 = Boolean(标题 && 标题.scrollWidth - 标题.clientWidth > 1)
+      /**
+       * **没东西可补就不弹**：标题看得全、又没有细节行，再弹一张卡只是挡住它自己。
+       * 有细节行时就弹——行上只留标题之后，那些信息只有这儿能看（2026-08-21）。
+       */
+      if (!被截了 && !(详情 && 详情.length > 0)) return
       clearTimeout(浮层计时)
       浮层计时 = setTimeout(() => {
         const r = 行.getBoundingClientRect()
@@ -248,7 +259,7 @@ export function 浮层事件(
          * 「卡压在侧栏上了」一次就红。
          */
         const 侧 = 行.closest(".sidebar")?.getBoundingClientRect()
-        报({ 全文, 副, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
+        报({ 全文, 副, 详情, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
       }, 浮层延时毫秒)
     },
     onMouseLeave: () => {
@@ -298,6 +309,7 @@ export function SessionRow({
   select,
   onHover,
   副标题,
+  详情,
   跑着,
   现在,
 }: {
@@ -317,6 +329,8 @@ export function SessionRow({
   onHover?: ((x: 悬停浮层 | undefined) => void) | undefined
   /** 卡上第二行：这段对话属于哪儿。**光有标题有时答不了「哪一段」** */
   副标题?: string | undefined
+  /** 卡上的细节行（上次活动、目录…）。**行上只留标题**，这些在这儿看 */
+  详情?: readonly string[] | undefined
   onPick: () => void
   onDelete?: (() => void) | undefined
   onRename?: ((title: string) => void) | undefined
@@ -424,7 +438,7 @@ export function SessionRow({
   }
 
   const 跑 = 用跑马灯()
-  const 浮 = 浮层事件(onHover, 名字, 副标题)
+  const 浮 = 浮层事件(onHover, 名字, 副标题, 详情)
   /** 两套事件合到一起：**都挂在同一行上**，各管各的 */
   const 悬停 = {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
@@ -562,7 +576,7 @@ export function SessionRow({
             * 对那条线来说「在哪个目录」比「什么时候」要紧得多——
             * 那是一次「把这里的文件都删了」会落到哪儿。
             */}
-          {session.remote ? <span className="sub">{短路径(session.remote.cwd)}</span> : null}
+          {/* 远端目录 2026-08-21 起挪到悬停卡上——行上只留标题（作者定的） */}
         </span>
         {/**
           * **这一列写「多久之前」，不写 `alive`**（2026-08-19，作者要的，
@@ -1629,6 +1643,12 @@ export function SessionSidebar({
    * 删除那一步 `filter` 一过就把它们悄悄丢了。
    * 能勾、勾得上、按下删除、然后它还在：**这就是静默截断**（规格 7.5）。
    */
+  /** 悬停卡上的细节行：上次活动、远端目录（行上不再写） */
+  const 会话详情 = (s: SessionSummary): string[] => [
+    tf("上次活动 {0}", 年月日时分(s.lastActiveAt ?? s.createdAt)),
+    ...(s.remote ? [tf("目录 {0}", s.remote.cwd)] : []),
+  ]
+
   const 任务行 = (task: TaskSummary, 可勾: boolean) => {
     /**
      * **哪一列在多选，就只有那一列长勾选框**（2026-08-14 扩到三列）。
@@ -1706,6 +1726,7 @@ export function SessionSidebar({
         {...(agentLabel ? { label: agentLabel } : {})}
         onHover={设浮着的}
         {...(属于哪儿(task) ? { 副标题: 属于哪儿(task) } : {})}
+        详情={会话详情(s)}
         onPick={() => onPickTask?.(task)}
         {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
@@ -1772,6 +1793,13 @@ export function SessionSidebar({
         >
           <p className="sess-hover-title">{浮着的.全文}</p>
           {浮着的.副 ? <p className="sess-hover-sub">{浮着的.副}</p> : null}
+          {浮着的.详情 && 浮着的.详情.length > 0 ? (
+            <ul className="sess-hover-details">
+              {浮着的.详情.map((行, i) => (
+                <li key={i}>{行}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
       {/**
@@ -2076,16 +2104,22 @@ export function SessionSidebar({
                     <Row
                       active={展开}
                       onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(展开 ? null : 路径))}
+                      /**
+                       * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
+                       * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——
+                       * 那个理由没变，答案换了地方：悬停就看得到，不再占一行。
+                       */
+                      {...浮层事件(设浮着的, 基名(路径), 路径, [tf("{0} 段对话", 里面的.length)])}
                     >
                       <span className="sess">
                         <span className="name">
                           {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
                           <三角图标 className={`twisty${展开 ? " open" : ""}`} />
                           <项目图标 />
-                          {基名(路径)}
+                          <span className="sess-title" data-full={基名(路径)}>
+                            <span className="sess-title-run">{基名(路径)}</span>
+                          </span>
                         </span>
-                        {/* 全路径常驻一行：**同名文件夹到处都是**，只写 basename 分不出哪个是哪个 */}
-                        <span className="sub" title={路径}>{短路径(路径)}</span>
                       </span>
                     </Row>
                     {/**

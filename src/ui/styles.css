@@ -4246,6 +4246,19 @@ pre {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
+/* 细节行（2026-08-21）：一条细线隔开，每行一件事 */
+.sess-hover-details {
+  list-style: none;
+  margin: var(--dawn-space-2) 0 0;
+  padding: var(--dawn-space-2) 0 0;
+  border-top: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  color: var(--dawn-text-2);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-1);
+}
+.sess-hover-details li { overflow-wrap: anywhere; }
 
 /* ── 用量（S21，2026-08-16）─────────────────────────────────────── */
 

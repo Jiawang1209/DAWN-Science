@@ -144,9 +144,16 @@ test("**短标题：不跑马灯，也不弹卡**", async ({ dawn }) => {
   expect(没溢出, "这条标题也溢出了，换一句更短的").toBe(true)
 
   await 标题.hover()
-  await page.waitForTimeout(900) // 比浮层那 420ms 长，确保「没弹」不是还没到时候
+  await page.waitForTimeout(900) // 比浮层那 420ms 长
   await expect(标题, "没溢出却跑起来了").not.toHaveAttribute("data-跑", "1")
-  await expect(page.locator(".sess-hover-card"), "看得全的标题还弹了卡").toHaveCount(0)
+  /**
+   * **卡照样弹，但弹的是细节**（2026-08-21 改：作者要行上只留标题、细节进悬停卡）。
+   * 此前这里断言「看得全就不弹」——那时卡上只有标题，弹了等于挡住自己；
+   * 现在卡上有「上次活动」这些行上不再写的东西，所以它该出现。
+   */
+  const 卡 = page.locator(".sess-hover-card")
+  await expect(卡, "行上不写的细节只能在卡上看，卡却没弹").toHaveCount(1)
+  await expect(卡.locator(".sess-hover-details")).toContainText("上次活动")
 })
 
 /**

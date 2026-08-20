@@ -9,7 +9,14 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
-import { addAcpAgent, addNativeAgent, removeAgent, setProviderConnection, setVision } from "../config/writer.js"
+import {
+  addAcpAgent,
+  addNativeAgent,
+  removeAgent,
+  setAcpRemoteCapable,
+  setProviderConnection,
+  setVision,
+} from "../config/writer.js"
 import { 描述图片 } from "../runtime/vision.js"
 import { homedir } from "node:os"
 import { randomUUID } from "node:crypto"
@@ -31,7 +38,7 @@ import { 本地日期 } from "../store/usage.js"
 import { 合名单 } from "../mcp/名单.js"
 import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
-import { 是远端MCP } from "../config/schema.js"
+import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
@@ -991,6 +998,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         agents: Object.entries(registry.agents).map(([agentId, def]) => ({
           agentId,
           kind: def.kind,
+          ...(def.kind === "acp" ? { remoteCapable: def.remoteCapable } : {}),
           ...(def.kind === "native"
             ? { provider: def.provider, model: def.model }
             : {
@@ -1205,6 +1213,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     createTask: async ({ agentId, workspace, connectionId }) => {
       const store = 任务库()
       if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
+      /**
+       * **远端任务只收手能到服务器的 agent**（T3，2026-08-21）。
+       *
+       * 此前这里什么都收：codex-acp / cli / kernel 的运行时不认 `spec.remote`，
+       * 建出来的任务标着「远端」、活跑在本机——静默错位。
+       * 在**连服务器之前**拒（连一次要好几秒，拒绝不该先让人等）。
+       */
+      if (connectionId) {
+        const def = registry.agents[agentId]
+        // **不认识的 agentId 也在这儿拒**：放它过去，要先连一次服务器才失败
+        if (!def) throw fault("invalid_request", `配置里没有叫「${agentId}」的 agent`)
+        if (!能上服务器(def)) {
+          throw fault(
+            "invalid_request",
+            `「${agentId}」的手到不了服务器——它自己读写文件、跑命令，都在本机。` +
+              `远端会话请用 API 模型，或标了「能上服务器」的 ACP 适配器（如 claude-code-acp）。`,
+          )
+        }
+      }
 
       /**
        * **不设路径时给它一个自己的目录**（T3）。
@@ -1452,11 +1479,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **不生成 `models.json`**（那是 native 那条路的事）：
      * ACP 的模型由适配器自己广播。
      */
-    addAcpAgent: async ({ agentId, command, args }) => {
+    addAcpAgent: async ({ agentId, command, args, remoteCapable }) => {
       if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，加不了")
       let 新的: ProviderRegistry
       try {
-        新的 = addAcpAgent(configPath, { agentId, command, args })
+        新的 = addAcpAgent(configPath, { agentId, command, args, ...(remoteCapable ? { remoteCapable } : {}) })
       } catch (e) {
         if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
         throw e
@@ -1481,6 +1508,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       let 新的: ProviderRegistry
       try {
         新的 = removeAgent(configPath, agentId)
+      } catch (e) {
+        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        throw e
+      }
+      for (const k of Object.keys(registry.agents)) delete registry.agents[k]
+      Object.assign(registry.agents, 新的.agents)
+      return { ok: true as const }
+    },
+
+    /** 给已接入的 ACP 标上／摘掉「能上服务器」。**与加／删同一套：写文件，再原地换内存里那份** */
+    setAcpRemoteCapable: async ({ agentId, remoteCapable }) => {
+      if (!configPath) throw fault("invalid_request", "本次运行没有装配配置文件，改不了")
+      let 新的: ProviderRegistry
+      try {
+        新的 = setAcpRemoteCapable(configPath, agentId, remoteCapable)
       } catch (e) {
         if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
         throw e

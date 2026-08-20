@@ -3080,6 +3080,8 @@ export function ModelPill({
   serviceLabel,
   onConfigure,
   kind,
+  agents,
+  onPickAgent,
 }: {
   /** 能换到哪些。native 会话是「所有配好的服务 × 各自的模型」 */
   choices: readonly ModelChoice[]
@@ -3097,6 +3099,25 @@ export function ModelPill({
    * 它决定了能不能就地换服务、模型清单从哪来、「CLI 默认」是什么意思。
    */
   kind?: SessionSummary["kind"] | undefined
+  /**
+   * **ACP 适配器也列在这里**（2026-08-21，作者在服务器上建会话时报的）。
+   *
+   * 作者：*「我在点击服务器连接的时候，肯定是要点击新对话的，那么这个页面
+   * 现在就应该保持不变，然后在选择模型的时候，就应该显示出有 claude-code-acp 才对。」*
+   *
+   * 此前远端路径上**没有任何一处能挑到 ACP agent**：点服务器直接拿第一个
+   * 能上服务器的 agent 建会话，而这颗 pill 只列 API 模型——`remoteCapable`
+   * 标记、后端的拒绝逻辑都对，只是没有门能走到它。
+   *
+   * ACP 换不了模型也换不了家（2026-08-19 那段注写着），所以点它**不是就地换**，
+   * 由 `onPickAgent` 的实现者决定怎么办（App 里：另起一段；空会话就顶替）。
+   * 这一组单独列、带 ACP 标记，**不与 API 那几组混在一起**——
+   * 2026-08-11 那次「点了以为换模型、结果新开对话」正是因为两种语义长得一样。
+   *
+   * **不给就不画这一组**：旧调用点一个字不受影响。
+   */
+  agents?: readonly { agentId: string; label: string }[] | undefined
+  onPickAgent?: ((agentId: string) => void) | undefined
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -3117,10 +3138,18 @@ export function ModelPill({
    * 那条件逼着配置去钉一个 `model`，而钉模型会**覆盖用户自己 CLI 的配置**。
    * 当前未知时如实标「CLI 默认」——**那是实情，不是缺陷**。
    */
+  /**
+   * **ACP 会话里这颗仍然不画**（2026-08-19 作者定的，`acp-agent.spec.ts` 守着）：
+   * 那时它的模型由左边那颗会话开关说。ACP 那一组只长在 API 会话的菜单里——
+   * 「从 API 换去 claude」有门就够了，不为它把 08-19 撤掉的东西请回来。
+   */
   if (choices.length === 0) return null
+  const acp列表 = agents ?? []
 
   const 同一条 = (c: ModelChoice) => c.model === current?.model && c.provider === current?.provider
   const 叫什么 = (p: string | undefined) => (p ? (serviceLabel?.(p) ?? p) : "CLI")
+  const 当前名 = current?.model ?? t("CLI 默认")
+  const 当前标 = 叫什么(current?.provider).slice(0, 1).toUpperCase()
 
   /**
    * **按服务分组**（2026-08-12）。
@@ -3156,13 +3185,13 @@ export function ModelPill({
         className="model-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={tf("当前模型：{0}。点击切换", current?.model ?? t("CLI 默认"))}
+        aria-label={tf("当前模型：{0}。点击切换", 当前名)}
         onClick={() => setOpen((v) => !v)}
       >
         <span className="svc-mark" aria-hidden="true">
-          {叫什么(current?.provider).slice(0, 1).toUpperCase()}
+          {当前标}
         </span>
-        <span className="model-name">{current?.model ?? t("CLI 默认")}</span>
+        <span className="model-name">{当前名}</span>
         <三角图标 className={`model-caret${open ? " open" : ""}`} />
       </Button>
 
@@ -3215,6 +3244,32 @@ export function ModelPill({
                 </ul>
               </li>
             ))}
+            {acp列表.length > 0 && onPickAgent ? (
+              <li className="model-group">
+                <p className="model-group-head">{t("ACP 适配器")}</p>
+                <ul>
+                  {acp列表.map((a) => (
+                    <li key={a.agentId}>
+                      <Row
+                        role="menuitem"
+                        aria-disabled={Boolean(busy)}
+                        onClick={() => {
+                          if (busy) return
+                          setOpen(false)
+                          onPickAgent(a.agentId)
+                        }}
+                      >
+                        {/* **ACP 标记写字，不靠首字母**：它不是哪一家，是另一条路 */}
+                        <span className="svc-mark kind-mark" aria-hidden="true">
+                          ACP
+                        </span>
+                        <span className="name">{a.label}</span>
+                      </Row>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ) : null}
           </ul>
           {/**
             * **配置自定义模型**（2026-08-12，学自 WorkBuddy 那个浮层的底一条）。
@@ -3407,7 +3462,8 @@ export function ConversationView({
   onOpenWeb,
   session,
   items,
-  agents,
+  acpAgents,
+  onPickAgent,
   agentLabel,
   services,
   currentServiceLabel,
@@ -3446,9 +3502,14 @@ export function ConversationView({
   serviceLabel?: ((providerId: string) => string) | undefined
   /** 「配置自定义模型」通向哪。**不给就不画那一条** */
   onOpenSettings?: (() => void) | undefined
-  /** 可选的 agent 清单，给 composer 右下角那颗 pill 用 */
-  agents?: readonly string[] | undefined
-  /** 用另一个 agent 新建会话。**不是就地切换**——agentId 建会话时绑死 */
+  /**
+   * 模型 pill 里那一组 ACP 适配器（2026-08-21）。**不是就地切换**——
+   * agentId 建会话时绑死，点它由 App 决定另起一段还是顶替空会话。
+   * 此前这儿有个 `agents` 参数，2026-08-12 把下组挪走之后就没人读它了——
+   * 于是 T3「远端只列手能到服务器的」那条过滤实际上没有任何界面在显示。
+   */
+  acpAgents?: readonly { agentId: string; label: string }[] | undefined
+  onPickAgent?: ((agentId: string) => void) | undefined
   /**
    * 能换到哪些模型。**2026-08-11 起跨服务**：native 会话拿到的是
    * 「所有配好的服务 × 各自的模型」，按服务分组。
@@ -4362,6 +4423,8 @@ export function ConversationView({
                 busy={busy}
                 kind={session.kind}
                 onPick={onPickModel}
+                {...(acpAgents ? { agents: acpAgents } : {})}
+                {...(onPickAgent ? { onPickAgent } : {})}
                 {...(serviceLabel ? { serviceLabel } : {})}
                 {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
               />

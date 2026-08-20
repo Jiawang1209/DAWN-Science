@@ -30,8 +30,10 @@
  * 3. **缺席不等于零**：没收到 usage 就不发 `turn_usage`，不补 0。
  */
 import type { ChildProcess } from "node:child_process"
-import { existsSync } from "node:fs"
+import { existsSync, mkdirSync } from "node:fs"
+import { join } from "node:path"
 import { 起适配器, 收进程 } from "./launch.js"
+import { 客户端的手, 本机后端, 本机门, 远端后端, 远端门, 影子翻译, 手的错误 } from "./hands.js"
 import { UserFacingError } from "../../errors.js"
 import type {
   会话开关,
@@ -277,10 +279,24 @@ interface 一段 {
    * 而那看起来像「它死了」。
    */
   待答: Map<string, number>
+  /** 这一段借给 agent 的手（T1）。`stop` 时释放里面的终端 */
+  手: 客户端的手
   停了: boolean
 }
 
 const STDERR尾行数 = 40
+
+/**
+ * `session/new` / `session/load` 的 `_meta`：**只有 claude-code-acp 读它**，别的适配器当它不存在
+ * （codex-acp 1.6.2 验过收下不报错）。
+ *
+ * `disallowedTools`：Grep / Glob / NotebookEdit 不经过 `fs/*`——它们直接摸适配器所在机器的磁盘，
+ * 是借手之后**仅剩的漏网**。禁掉之后它改用 `grep` 走 terminal（量过）。
+ * WebFetch / WebSearch 留着：网络从本机走，无所谓。
+ */
+const 会话_META = {
+  claudeCode: { options: { disallowedTools: ["Grep", "Glob", "NotebookEdit"] } },
+} as const
 
 export class AcpRuntime implements AgentRuntime {
   private readonly 段们 = new Map<SessionId, 一段>()
@@ -344,7 +360,29 @@ export class AcpRuntime implements AgentRuntime {
         `这段会话的工作目录不在了：${spec.workspace}。ACP 适配器要在这个目录里起，先把它建回来或换一个目录。`,
       )
     }
-    const proc = 起适配器({ command: cmd.command, args: cmd.args, cwd: spec.workspace })
+    /**
+     * **远端会话的适配器仍起在本机**（T2）——脑子在本机、手在服务器。
+     * claude-code-acp 要 `cwd` 在本机存在（SDK 在那里 spawn；给它不存在的路径，
+     * 回的是一句与环境变量问题一模一样的 "Query closed before response received"），
+     * 于是给它一个空影子目录；它说的 `<影子>/x` 我们听成 `<远端cwd>/x`（`影子翻译`）。
+     */
+    const 影子 = spec.remote ? join(spec.sessionDir, "acp-shadow") : undefined
+    if (影子) mkdirSync(影子, { recursive: true })
+    const 本机cwd = 影子 ?? spec.workspace
+    const 译 = spec.remote && 影子 ? 影子翻译(影子, spec.remote.cwd.get()) : undefined
+    // `记录` 只在命令结束后才调，那时段早已进了 `段们`，`发` 送得到
+    const 记录 = (text: string) => this.发(spec.sessionId, { kind: "notice", sessionId: spec.sessionId, text })
+    const 手 =
+      spec.remote && 译
+        ? new 客户端的手(远端后端(spec.remote.executor), {
+            门: 译.包(远端门(spec.remote.cwd)),
+            默认cwd: spec.remote.cwd.get(),
+            翻译命令: 译.命令,
+            记录,
+          })
+        : new 客户端的手(本机后端(), { 门: 本机门(spec.workspace), 默认cwd: spec.workspace, 记录 })
+
+    const proc = 起适配器({ command: cmd.command, args: cmd.args, cwd: 本机cwd })
     const 段: 一段 = {
       proc,
       sinks: new Set(),
@@ -354,6 +392,7 @@ export class AcpRuntime implements AgentRuntime {
       agentId: this.opts.agentIdOf?.(spec) ?? "acp",
       stderr尾: [],
       待答: new Map(),
+      手,
       停了: false,
     }
     this.段们.set(spec.sessionId, 段)
@@ -404,8 +443,16 @@ export class AcpRuntime implements AgentRuntime {
         败(new Error(`ACP 适配器退出了（退出码 ${code ?? "未知"}）${this.尾巴(段)}`))
       }
       段.等着.clear()
+      /**
+       * **它死了，它借的手要收回来**（2026-08-21 审查抓到的）。此前只有 `stop()` 收，
+       * 而 manager 对已经 `exited` 的会话不再调 `stop()`——于是适配器崩了之后，
+       * 它起的 `python train.py` 还在机器上跑，直到应用退出都没人能杀它。
+       */
+      void 段.手.释放全部().catch(() => {})
       this.发(spec.sessionId, { kind: "exited", sessionId: spec.sessionId, exitCode: code ?? 0 })
     })
+    // stdin 那头关了还往里写（迟到的终端结果）会是一个没人听的 'error'——主进程直接崩
+    proc.stdin?.on("error", () => {})
 
     await 起来了
 
@@ -415,7 +462,12 @@ export class AcpRuntime implements AgentRuntime {
      */
     const 初 = (await this.请求(spec.sessionId, "initialize", {
       protocolVersion: 1,
-      clientCapabilities: { fs: { readTextFile: false, writeTextFile: false } },
+      /**
+       * **把手借出去**（T1，2026-08-20）。claude-code-acp 看见这三样为真，
+       * 就把自己的 Read/Write/Edit/Bash 禁掉、改调我们的 `fs/*` 与 `terminal/*`
+       * （量过：specs/2026-08-20-acp-terminal-design.md §一）。codex-acp 不看，照旧。
+       */
+      clientCapabilities: { fs: { readTextFile: true, writeTextFile: true }, terminal: true },
       clientInfo: { name: "DAWN Science", version: "0.0.1" },
     }).catch((e: unknown) => {
       const 因 = e instanceof Error ? e.message : String(e)
@@ -481,8 +533,9 @@ export class AcpRuntime implements AgentRuntime {
       try {
         const r = (await this.请求(spec.sessionId, "session/load", {
           sessionId: 旧.acpSessionId,
-          cwd: spec.workspace,
+          cwd: 本机cwd,
           mcpServers: 我们的MCP,
+          _meta: this.会话meta(spec, 影子),
         })) as { configOptions?: unknown }
         新 = { sessionId: 旧.acpSessionId, ...(r ?? {}) }
       } catch (e) {
@@ -510,8 +563,9 @@ export class AcpRuntime implements AgentRuntime {
 
     if (!新) {
       新 = (await this.请求(spec.sessionId, "session/new", {
-        cwd: spec.workspace,
+        cwd: 本机cwd,
         mcpServers: 我们的MCP,
+        _meta: this.会话meta(spec, 影子),
       })) as { sessionId?: string; configOptions?: unknown }
     }
     if (!新?.sessionId) throw new UserFacingError("ACP 适配器没有回 sessionId，这一段起不来")
@@ -654,12 +708,38 @@ export class AcpRuntime implements AgentRuntime {
       this.答(段, id, undefined)
       段.待答.delete(rid)
     }
+    /**
+     * **先关门，再收手**：`释放全部` 要等每个命令退出，这期间 agent 还可能发来
+     * `terminal/create`；不先把 `停了` 立起来，那一个新起的子进程谁都不会再杀
+     * （`释放全部` 迭代的是动手前那一份快照）。关了门之后 ④ 会拒掉它。
+     */
     段.停了 = true
+    // 借出去的终端一起收——不然 agent 死了，它起的 `sleep 999` 还活着
+    await 段.手.释放全部()
     收进程(段.proc)
     this.段们.delete(sessionId)
   }
 
   /* ── 里面 ─────────────────────────────────────────────────── */
+
+  /**
+   * `_meta`：`claudeCode.options.disallowedTools` 见 `会话_META`；
+   * 远端会话再加 `systemPrompt.append`——**给它说实话**：它的工作目录在服务器上，
+   * 影子路径等价于远端路径。它用哪个写法都对（影子会被翻译，远端路径原样放行）。
+   */
+  private 会话meta(spec: SessionSpec, 影子: string | undefined): Record<string, unknown> {
+    if (!spec.remote || !影子) return 会话_META
+    const 远 = spec.remote.cwd.get()
+    return {
+      ...会话_META,
+      systemPrompt: {
+        append:
+          `你的工作目录实际在一台远端服务器上：${远}。` +
+          `本机路径 ${影子} 只是它的影子——两种写法指向同一个地方，文件读写与命令都会在服务器上执行。` +
+          `提到路径时优先用服务器上的路径（${远}）。`,
+      },
+    }
+  }
 
   private async 一轮(sessionId: SessionId, 段: 一段, 文本: string): Promise<void> {
     try {
@@ -738,8 +818,16 @@ export class AcpRuntime implements AgentRuntime {
 
   private 收一条(sessionId: SessionId, 段: 一段, msg: Record<string, unknown>): void {
     const id = msg["id"]
-    // ① 是我们那些请求的回复
-    if (typeof id === "number" && 段.等着.has(id)) {
+    /**
+     * ① 是我们那些请求的回复。
+     *
+     * **必须同时看「没有 `method`」**（2026-08-21 真 claude 撞出来的）：
+     * JSON-RPC 的 id 是按方向各自编号的——它的第 3 个请求与我们的第 3 个请求
+     * id 都是 3。只看 `等着.has(id)`，它问的第二次权限就被当成我们 prompt 的回复：
+     * 回合假收口，它的询问没人答，看起来像「它做了一半就不动了」。
+     * 带 `method` 的一定是请求，轮不到这里。
+     */
+    if (typeof id === "number" && msg["method"] === undefined && 段.等着.has(id)) {
       const 位 = 段.等着.get(id)!
       段.等着.delete(id)
       const err = msg["error"] as { message?: string; code?: number; data?: unknown } | undefined
@@ -809,12 +897,25 @@ export class AcpRuntime implements AgentRuntime {
     }
 
     /**
-     * ④ 别的请求（读写文件、终端）**如实拒绝，并说清楚**。
+     * ④ 别的请求——**读写文件、终端——交给手**（T1）。
      *
-     * 静默不回会让它一直等，而那个表现是「它卡住了」。
+     * 它在等回复，不回它就一直卡着（表现是「它死了」）。
+     * 所以成了回 result，败了回带 code 的 error——两条路都**必须**写回去。
      */
     if (typeof id === "number" && typeof msg["method"] === "string") {
-      this.回错(段, id, `DAWN 这一版还不支持 ${String(msg["method"])}`)
+      const method = msg["method"]
+      // 正在收场／已经停了：不再借手——这时开出来的终端没人会收
+      if (段.停了) {
+        this.回错(段, id, "这一段会话正在结束，不再受理请求", -32000)
+        return
+      }
+      void 段.手.处理(method, msg["params"]).then(
+        (result) => this.回结果(段, id, result),
+        (e: unknown) => {
+          if (e instanceof 手的错误) this.回错(段, id, e.message, e.code)
+          else this.回错(段, id, `${method} 失败：${e instanceof Error ? e.message : String(e)}`, -32603)
+        },
+      )
     }
   }
 
@@ -839,10 +940,14 @@ export class AcpRuntime implements AgentRuntime {
     段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, result: { outcome } })}\n`)
   }
 
-  private 回错(段: 一段, id: number, message: string): void {
-    段.proc.stdin?.write(
-      `${JSON.stringify({ jsonrpc: "2.0", id, error: { code: -32601, message } })}\n`,
-    )
+  private 回结果(段: 一段, id: number, result: unknown): void {
+    if (!段.proc.stdin?.writable) return
+    段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, result: result ?? {} })}\n`)
+  }
+
+  private 回错(段: 一段, id: number, message: string, code = -32601): void {
+    if (!段.proc.stdin?.writable) return
+    段.proc.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } })}\n`)
   }
 
   private 尾巴(段: 一段): string {

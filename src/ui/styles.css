@@ -2261,18 +2261,25 @@ pre {
   gap: var(--dawn-space-3);
 }
 
-.acp-preset-text {
+/* 已接入那一行与预置卡同一套文字排法：名字在上、说明在下（2026-08-21 已接入行也有说明了） */
+.acp-preset-text,
+.acp-row-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
-.acp-preset-text .name { font-weight: 600; }
-.acp-preset-text .sub {
+.acp-preset-text .name,
+.acp-row-text .name { font-weight: 600; }
+.acp-preset-text .sub,
+.acp-row-text .sub {
   color: var(--dawn-text-3);
   font-size: var(--dawn-ui-size);
   font-family: var(--dawn-font-mono);
 }
+/* 老条目那句提醒不是等宽的说明，是一句要人读的话 */
+.acp-row-text .sub.caveat { font-family: var(--dawn-font-sans); }
 
 .acp-custom {
   margin-top: var(--dawn-space-3);
@@ -3529,6 +3536,18 @@ pre {
   color: var(--dawn-text-2);
   font-size: 0.68rem;
   font-weight: var(--dawn-weight-semibold);
+}
+
+/**
+ * 标记写的是「哪一路」而不是「哪一家」时（模型 pill 里那组 ACP，2026-08-21）：
+ * 三个字母塞不进一个圆，放宽成胶囊。颜色与 `.svc-mark` 同一套——
+ * 它说的仍是「这一条属于谁」，只是答案不是厂家首字母。
+ */
+.svc-mark.kind-mark {
+  width: auto;
+  padding: 0 0.4rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.02em;
 }
 .model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /** **朝上**：浮层从 pill 往上开，箭头就该指向它开的方向 */

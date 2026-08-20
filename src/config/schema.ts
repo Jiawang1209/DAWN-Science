@@ -212,6 +212,17 @@ const AcpAgentSchema = z
     command: z.string().min(1),
     args: z.array(z.string()).default([]),
     capabilities: z.array(CapabilitySchema),
+    /**
+     * **这台适配器会不会把手借给我们**（T3，2026-08-21）。
+     *
+     * ACP 允许 agent 把读写与命令交给客户端（`fs/*`、`terminal/*`），DAWN 接了这条
+     * （`runtime/acp/hands.ts`）。借手的 agent 在远端会话里手能伸到服务器；
+     * 不借的（codex-acp 1.6.2，量过）只能在本机干活。
+     *
+     * **握手判不出来**——ACP 里 agent 不声明这一点，所以由配置显式标。
+     * **缺省假**：缺失不等于支持。预置的 claude-code-acp 为真。
+     */
+    remoteCapable: z.boolean().default(false),
   })
   .strict()
 
@@ -223,6 +234,9 @@ export const AgentDefSchema = z.discriminatedUnion("kind", [
   AcpAgentSchema,
 ])
 export type AgentDef = z.infer<typeof AgentDefSchema>
+
+/** 判据住在 protocol 里（界面与后端共用，且界面只许经 protocol 取）；这里只是转发给后端用 */
+export { 能上服务器 } from "../protocol/remote-capable.js"
 
 /**
  * 一个 provider 的**连接设置**（2026-08-10）。

@@ -58,6 +58,15 @@ export const EN: Readonly<Record<string, string>> = {
   "删除会话：{0}": "Delete chat: {0}",
   "还没有选中项目": "No project selected",
   "配置里还没有可用的 agent——先去设置里加一个": "No usable agent in the config — add one in settings first",
+  "没有能在服务器上干活的 agent——API 模型可以，标了「能上服务器」的 ACP 适配器（如 Claude Code）也可以":
+    "No agent can work on the server — API models can, and so can ACP adapters marked as server-capable (e.g. Claude Code)",
+  "只在本机运行": "runs on this machine only",
+  "手能到服务器：读写与命令落在远端": "reaches the server: file I/O and commands run remotely",
+  "自定义的适配器默认只在本机运行。": "Custom adapters run on this machine only by default.",
+  "接入时还没有「能上服务器」这个标记——它其实能，标上之后远端会话就能选它":
+    "Added before the server-capable flag existed — it can reach the server; mark it and remote chats can pick it",
+  "标为能上服务器": "Mark server-capable",
+  "改为只在本机": "Make local-only",
   "删除会话「{0}」？": "Delete the chat “{0}”?",
   "删除这 {0} 段对话？": "Delete these {0} chats?",
   "删除 {0} 段": "Delete {0}",

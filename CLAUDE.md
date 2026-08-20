@@ -16,6 +16,7 @@
 | **坞里第三格「网页」**：消息里的链接点开就渲染 | `specs/2026-08-18-网页预览-design.md` + `plans/2026-08-18-网页预览.md`（勾全打完） |
 | **给 agent 配一个浏览器**（走 MCP，不是我们写的） | `docs/怎么给-agent-配一个浏览器.md` · `specs/2026-08-18-agent的浏览器-design.md` |
 | **接一个 ACP 适配器**（设置里那一格，2026-08-19 补的入口） | `specs/2026-08-16-acp-runtime-design.md` 最后一节 |
+| **ACP agent 在服务器上干活**（claude 借手、codex 不借；分支 `acp-terminal`） | `specs/2026-08-20-acp-terminal-design.md` + `plans/2026-08-20-acp-terminal-T1.md`、`2026-08-21-acp-terminal-T2.md`、`-T3.md`（勾全打完） |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

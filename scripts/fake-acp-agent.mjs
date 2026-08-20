@@ -31,6 +31,9 @@
  * | `FAKE_ACP_RUN_KERNEL` | 给一段代码即改调 `dawn_run_in_kernel` 跑它（B1·B′，要真内核） |
  * | `FAKE_ACP_LIKE_CLAUDE` | 置一即装成 claude 那台适配器：没有 `configOptions`，只有 `models`/`modes` |
  * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
+ * | `FAKE_ACP_USE_HANDS` | 置一即在回话前**真调客户端的手**：读 `<cwd>/手-读.txt`、写 `<cwd>/手-写.txt`、跑 `printf`（T1） |
+ * | `FAKE_ACP_LEAVE_TERMINAL` | 设成一条命令：开一个终端跑它、**不 release**，然后适配器自己崩掉（退出码 9）。验「适配器死了，它借的手要收回来」 |
+ * | `FAKE_ACP_ECHO_NEW_PARAMS` | 置一即把 `session/new` 收到的参数原样复述（验 `_meta`） |
  */
 
 /** **刻意包含一句可断言的暗号**，e2e 靠它判断整条链通了 */
@@ -46,7 +49,12 @@ let 累计输出 = 0
 let 取消了 = false
 /** 我们问出去的那些，等着客户端回。key 是 JSON-RPC id */
 const 问出去的 = new Map()
-let 下一个问id = 1000
+/**
+ * **从 1 编号，与我们自己发出去的请求撞 id**——真适配器就是这样（2026-08-21 真 claude 撞出来的）。
+ * JSON-RPC 的 id 是按方向各自编号的，客户端必须靠「有没有 `method`」分请求与回复，
+ * 不能靠 id。以前这里从 1000 起，正好把那个洞盖住了。
+ */
+let 下一个问id = 1
 /** 最近一次 prompt 的会话 id。协议违规那条要拿它当收件人 */
 let 最近的会话 = ""
 /** DAWN 在 `session/new` 里递过来的那些 MCP 服务器（B1） */
@@ -70,6 +78,24 @@ let 收下的MCP = []
  * 一台假 agent 只演一种适配器的话，我们验的就只是那一种。
  */
 const 像claude = process.env["FAKE_ACP_LIKE_CLAUDE"] === "1"
+
+/** 客户端握手时声明的能力。**没声明就不调**——真适配器也是这么干的 */
+let 客户端能力 = {}
+/** `session/new` 给的工作目录与整份参数（`FAKE_ACP_USE_HANDS` / `FAKE_ACP_ECHO_NEW_PARAMS` 用） */
+let 会话目录 = process.cwd()
+let 新建参数
+/** 调出去的客户端方法：id → resolve。与 `问出去的`（权限）分开记，错误也要拿得到 */
+const 调出去的 = new Map()
+let 下一个调id = 1
+
+/** 调一次客户端方法，回 `{result}` 或 `{error}`。**不抛**：用例要看见错误长什么样 */
+function 调(method, params) {
+  const id = 下一个调id++
+  return new Promise((成) => {
+    调出去的.set(id, 成)
+    发({ jsonrpc: "2.0", id, method, params })
+  })
+}
 
 /** 键名刻意保持不对称：模型是 `modelId`，模式是 `id`——真适配器就是这样 */
 const 那两份 = {
@@ -181,6 +207,7 @@ async function 处理(msg) {
   const { id, method, params } = msg
 
   if (method === "initialize") {
+    客户端能力 = params?.clientCapabilities ?? {}
     if (process.env["FAKE_ACP_FAIL_INIT"] === "1") {
       // **失败要出声**：我们的运行时应当把这句话原样摆到屏幕上
       return 回错(id, -32603, "假 agent 被要求在初始化时失败")
@@ -197,6 +224,8 @@ async function 处理(msg) {
   }
 
   if (method === "session/new") {
+    会话目录 = params?.cwd ?? 会话目录
+    新建参数 = params
     /**
      * **像真适配器那样校验 `mcpServers`**（2026-08-19 补的）。
      *
@@ -348,6 +377,74 @@ async function 处理(msg) {
       })
     }
     /**
+     * **真调客户端的手**（T1）。七个方法各一次，每一步说一句话——
+     * 用例靠这些话断言「经过了运行时」，而不是只看文件有没有变（那也看）。
+     */
+    if (process.env["FAKE_ACP_USE_HANDS"] === "1") {
+      const 说 = (text) =>
+        发({
+          jsonrpc: "2.0",
+          method: "session/update",
+          params: {
+            sessionId: params.sessionId,
+            update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text } },
+          },
+        })
+      if (!客户端能力.fs?.readTextFile || !客户端能力.fs?.writeTextFile || !客户端能力.terminal) {
+        说(`【手】客户端没声明 fs/terminal：${JSON.stringify(客户端能力)}`)
+      } else {
+        const cwd = 会话目录
+        const sid = params.sessionId
+        const 读 = await 调("fs/read_text_file", { sessionId: sid, path: `${cwd}/手-读.txt` })
+        说(`【手·读】${JSON.stringify(读)}`)
+        const 写 = await 调("fs/write_text_file", { sessionId: sid, path: `${cwd}/手-写.txt`, content: "假 agent 写的" })
+        说(`【手·写】${JSON.stringify(写)}`)
+        // **越界的是写，不是读**——读不设门（native 的口径，理由在 permissions.ts）
+        const 越界 = await 调("fs/write_text_file", { sessionId: sid, path: "/etc/dawn-不给写.txt", content: "" })
+        说(`【手·越界】${JSON.stringify(越界)}`)
+        const 开 = await 调("terminal/create", { sessionId: sid, command: "printf 终端通了", outputByteLimit: 4096 })
+        说(`【手·开】${JSON.stringify(开)}`)
+        const tid = 开.result?.terminalId
+        const 退 = await 调("terminal/wait_for_exit", { sessionId: sid, terminalId: tid })
+        说(`【手·退】${JSON.stringify(退)}`)
+        const 出 = await 调("terminal/output", { sessionId: sid, terminalId: tid })
+        说(`【手·出】${JSON.stringify(出)}`)
+        const 放 = await 调("terminal/release", { sessionId: sid, terminalId: tid })
+        说(`【手·放】${JSON.stringify(放)}`)
+      }
+    }
+    /** 开一个终端不收，然后自己死掉——客户端得替我收（2026-08-21 审查抓到的洞） */
+    if (process.env["FAKE_ACP_LEAVE_TERMINAL"]) {
+      const 开 = await 调("terminal/create", {
+        sessionId: params.sessionId,
+        command: process.env["FAKE_ACP_LEAVE_TERMINAL"],
+        outputByteLimit: 4096,
+      })
+      发({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId: params.sessionId,
+          update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text: `【手·开】${JSON.stringify(开)}` } },
+        },
+      })
+      setTimeout(() => process.exit(9), 50)
+      return
+    }
+    if (process.env["FAKE_ACP_ECHO_NEW_PARAMS"] === "1") {
+      发({
+        jsonrpc: "2.0",
+        method: "session/update",
+        params: {
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: { type: "text", text: `【session/new 参数】${JSON.stringify(新建参数)}` },
+          },
+        },
+      })
+    }
+    /**
      * **真的把那台 MCP 服务器拉起来，调一次工具**（B1）。
      *
      * 这一段是整条路唯一的判据来源：它证明的不是「我们发过 mcpServers」，
@@ -417,6 +514,14 @@ async function 处理(msg) {
         ? { usage: { totalTokens: 累计输入 + 累计输出, inputTokens: 累计输入, outputTokens: 累计输出 } }
         : {}),
     })
+  }
+
+  // 客户端回了我们调出去的客户端方法
+  if (method === undefined && id !== undefined && 调出去的.has(id)) {
+    const 成 = 调出去的.get(id)
+    调出去的.delete(id)
+    成(msg.error ? { error: msg.error } : { result: msg.result })
+    return
   }
 
   // 客户端回了我们问出去的那一条

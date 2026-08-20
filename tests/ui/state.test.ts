@@ -16,6 +16,7 @@
  *      会让昂贵的树白重渲染一遍
  */
 import { beforeEach, describe, expect, it } from "vitest"
+import { $providers, setProviders } from "../../src/ui/state/catalog.js"
 import type { TranscriptItem } from "../../src/protocol/index.js"
 import {
   $items,
@@ -166,5 +167,36 @@ describe("提示 · 失败必须出声（规格 7.5）", () => {
     note("同样的错")
     note("同样的错")
     expect($notes.get()).toEqual(["同样的错"])
+  })
+})
+
+/**
+ * **`setProviders` 要看内容，不只看 id**（2026-08-21 抓到的）。
+ *
+ * 上一版只比 agentId / providerId 两串名单：名单没变就当什么都没变。
+ * 于是「给 claude-code-acp 标上能上服务器」写进了文件、后端也换了内存，
+ * 界面却停在旧数据上——按钮按了没反应，而那正是 identity.ts 头上说的
+ * 「看起来完全正常、最难查的一种坏」。同一个洞也咬得到 provider 的模型清单。
+ */
+describe("setProviders", () => {
+  const 一份 = (remoteCapable: boolean) => ({
+    agents: [
+      { agentId: "ds-chat", kind: "native" as const, provider: "deepseek", model: "x" },
+      { agentId: "claude-code-acp", kind: "acp" as const, command: "npx", remoteCapable },
+    ],
+    providers: [],
+  })
+  it("id 没变、字段变了 → 要换", () => {
+    setProviders(一份(false))
+    const before = $providers.get()
+    setProviders(一份(true))
+    expect($providers.get()).not.toBe(before)
+    expect($providers.get().agents[1]).toMatchObject({ remoteCapable: true })
+  })
+  it("什么都没变 → 不换引用", () => {
+    setProviders(一份(true))
+    const before = $providers.get()
+    setProviders(一份(true))
+    expect($providers.get()).toBe(before)
   })
 })

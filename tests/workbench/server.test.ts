@@ -125,6 +125,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     removeMcpServer: async () => ({ ok: true as const }),
     addAcpAgent: async () => ({ agentId: "codex-acp" }),
     removeAgent: async () => ({ ok: true as const }),
+    setAcpRemoteCapable: async () => ({ ok: true as const }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

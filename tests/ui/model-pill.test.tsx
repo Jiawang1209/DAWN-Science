@@ -94,3 +94,38 @@ describe("模型选择器", () => {
     expect(container.querySelector(".model-pill")).toBeNull()
   })
 })
+
+/**
+ * **ACP 适配器也列在这里**（2026-08-21，作者在服务器上建会话时报的）。
+ *
+ * 作者：*「我在点击服务器连接的时候，肯定是要点击新对话的，那么这个页面
+ * 现在就应该保持不变，然后在选择模型的时候，就应该显示出有 claude-code-acp 才对。」*
+ *
+ * 此前远端路径上**没有任何一处能挑到 ACP agent**：点服务器直接拿第一个
+ * 能上服务器的 agent（DeepSeek）建会话，而这颗 pill 只列 API 模型。
+ * ACP 换不了模型也换不了家，但它得**看得见**——看不见等于不存在。
+ */
+describe("模型选择器 · ACP 适配器", () => {
+  const acp = [{ agentId: "claude-code-acp", label: "claude-code-acp" }]
+
+  it("**ACP 单独一组，带 ACP 标记**，点一条 → onPickAgent 收到 agentId", () => {
+    const onPickAgent = vi.fn()
+    开({ agents: acp, onPickAgent })
+    const 菜单 = screen.getByRole("menu", { name: "切换模型" })
+    const 组头 = [...菜单.querySelectorAll(".model-group-head")].map((x) => x.textContent)
+    expect(组头).toContain("ACP 适配器")
+    const 条 = screen.getByRole("menuitem", { name: /claude-code-acp/ })
+    expect(条.textContent).toContain("ACP")
+    fireEvent.click(条)
+    expect(onPickAgent).toHaveBeenCalledWith("claude-code-acp")
+  })
+
+  /**
+   * **ACP 会话里这颗仍然不画**——2026-08-19 作者定的，`acp-agent.spec.ts` 守着。
+   * 这一组只长在 API 会话的菜单里：有了「从 API 换去 claude」这扇门就够。
+   */
+  it("**只有 ACP、没有模型时照样不画** —— 不把 08-19 撤掉的东西请回来", () => {
+    render(<ModelPill choices={[]} current={undefined} onPick={() => {}} agents={acp} onPickAgent={() => {}} />)
+    expect(screen.queryByRole("button")).toBeNull()
+  })
+})

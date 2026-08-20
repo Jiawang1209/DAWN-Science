@@ -1123,3 +1123,60 @@ test("**隔了几天再看，那一行写的是「上次连上是多久前」**"
 
   await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("3d")
 })
+
+/**
+ * **远端建会话只用手能到服务器的 agent**（T3，2026-08-21）。
+ *
+ * 此前「新对话」取的是配置里第一个 agent。第一个是 codex-acp 的话，
+ * 远端会话标着服务器、活跑在本机——codex-acp 不把读写与命令借给客户端（真适配器上量过）。
+ * 这里把一个**不借手**的 ACP agent 放在第一位，断言建出来的仍是 API 那一路；
+ * 直接 invoke 硬塞那个 agent，后端要拒并说清。
+ */
+test.describe("远端建会话的准入", () => {
+  const 假ACP = join(import.meta.dirname, "..", "scripts", "fake-acp-agent.mjs")
+  test.use({
+    dawnOptions: {
+      fakeSsh: true,
+      providersYaml: `agents:
+  本机的-acp:
+    kind: acp
+    command: node
+    args: ["${假ACP}"]
+    capabilities: [chat, exec]
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat, exec]
+`,
+    },
+  })
+
+  test("第一位是不借手的 ACP：服务器上的「新对话」跳过它，用 API 那一路", async ({ dawn }) => {
+    const { page } = dawn
+    await 展开远端(page)
+    await 加一台(page, { label: "假机器" })
+    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+
+    const 头 = page.locator(".conv-remote")
+    await expect(头).toBeVisible({ timeout: 30_000 })
+    await expect(头.locator(".conv-remote-host")).toHaveText("假机器")
+    // **是 API 那一路**：composer 里有模型 pill（ACP 会话上没有——acp-agent.spec 盯着这条），
+    // 头上也没有 `.kind` 标记（native 不画；外部那几路才画）
+    await expect(page.locator(".composer-controls .model-pill")).toBeVisible()
+    await expect(page.locator(".conv-head .kind")).toHaveCount(0)
+
+    // 硬塞也不行：后端拒，并说清它会在本机跑
+    const 拒绝 = await page.evaluate(async () => {
+      const w = window as unknown as {
+        dawn: { invoke: (op: string, req: unknown) => Promise<{ ok?: boolean; error?: { message?: string } }> }
+      }
+      const conns = (await w.dawn.invoke("listConnections", {})) as { data?: { id: string }[] }
+      const connectionId = conns.data?.[0]?.id
+      const r = await w.dawn.invoke("createTask", { agentId: "本机的-acp", connectionId })
+      return JSON.stringify(r)
+    })
+    expect(拒绝).toContain("到不了服务器")
+    expect(拒绝).toContain("本机的-acp")
+  })
+})

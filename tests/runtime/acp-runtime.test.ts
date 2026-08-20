@@ -9,6 +9,7 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import { join } from "node:path"
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { AcpRuntime } from "../../src/runtime/acp/runtime.js"
 import type { AgentEvent, SessionSpec } from "../../src/runtime/types.js"
@@ -741,5 +742,130 @@ describe("用量记在谁头上", () => {
       { kind: "turn_usage" }
     >
     expect(u.model).toBe("codex-acp")
+  })
+})
+
+describe("客户端的手（T1）", () => {
+  /** 用一个临时目录当工作区：假 agent 要在里面读、写 */
+  const 带工作区 = (id: string) => {
+    const 工作区 = mkdtempSync(join(tmpdir(), "dawn-acp-hands-"))
+    writeFileSync(join(工作区, "手-读.txt"), "读到了")
+    return { s: { ...spec(id), workspace: 工作区 } as SessionSpec, 工作区 }
+  }
+
+  it("**握手声明了 fs 与 terminal**，假 agent 七个方法各调一次都有回音", async () => {
+    const rt = 起一个({ FAKE_ACP_USE_HANDS: "1" })
+    const { s, 工作区 } = 带工作区("h1")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "用手")
+    await 等到(收, (e) => e.kind === "idle", "回合收口")
+    const 话 = 收
+      .filter((e): e is Extract<AgentEvent, { kind: "output" }> => e.kind === "output")
+      .map((e) => e.data)
+      .join("")
+
+    expect(话).not.toContain("客户端没声明")
+    expect(话).toContain('【手·读】{"result":{"content":"读到了"}}')
+    expect(话).toContain('【手·写】{"result":{}}')
+    expect(readFileSync(join(工作区, "手-写.txt"), "utf8")).toBe("假 agent 写的")
+    // 越界：code 要是 -32602，且话里有那条路径
+    expect(话).toMatch(/【手·越界】\{"error":\{"code":-32602,"message":"[^"]*dawn-不给写/)
+    expect(话).toMatch(/【手·开】\{"result":\{"terminalId":"t\d+"\}\}/)
+    expect(话).toContain('【手·退】{"result":{"exitCode":0}}')
+    expect(话).toContain('"output":"终端通了","truncated":false,"exitStatus":{"exitCode":0}')
+    expect(话).toContain('【手·放】{"result":{}}')
+  })
+
+  /**
+   * **适配器死了，它借的手要收回来**（2026-08-21 审查抓到的）。
+   *
+   * 此前只有 `stop()` 会 `释放全部`，而进程 `exit` 那条路只把等着的请求打失败——
+   * 于是 claude-code-acp 崩了之后，它起的 `python train.py` 还在机器上跑，
+   * 直到应用退出都没有人能杀它。
+   */
+  it("适配器崩了 → 它开着没收的终端一起被杀", async () => {
+    const 标 = `sleep 30.${process.pid}`
+    const rt = 起一个({ FAKE_ACP_LEAVE_TERMINAL: `${标} | cat` })
+    const { s } = 带工作区("h3")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId).catch(() => {})
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "开了就跑")
+    await 等到(收, (e) => e.kind === "output" && e.data.includes("【手·开】"), "终端开了")
+    await 等到(收, (e) => e.kind === "exited", "适配器退出")
+    await new Promise((r) => setTimeout(r, 300))
+    const { execSync } = await import("node:child_process")
+    const 活着 = execSync(`ps -axo command | grep -F ${JSON.stringify(标)} | grep -v grep || true`).toString().trim()
+    expect(活着, "适配器死了，它起的命令还活着").toBe("")
+  })
+
+  it("session/new 带上 `_meta.claudeCode.options.disallowedTools`", async () => {
+    const rt = 起一个({ FAKE_ACP_ECHO_NEW_PARAMS: "1" })
+    const s = spec("h2")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "看参数")
+    const 话 = await 等到(
+      收,
+      (e) => e.kind === "output" && e.data.includes("【session/new 参数】"),
+      "假 agent 复述参数",
+    )
+    expect(话.kind === "output" && 话.data).toContain('"disallowedTools":["Grep","Glob","NotebookEdit"]')
+  })
+})
+
+describe("远端会话（T2）", () => {
+  it("**写落在服务器上，影子目录没动**；session/new 的 cwd 是影子；system prompt 说了实话", async () => {
+    const rt = 起一个({ FAKE_ACP_USE_HANDS: "1", FAKE_ACP_ECHO_NEW_PARAMS: "1" })
+    const 工作区 = mkdtempSync(join(tmpdir(), "dawn-acp-remote-"))
+    const 文件 = new Map<string, string>()
+    const 调用: string[] = []
+    const ex: import("../../src/runtime/types.js").RemoteLike = {
+      async exec(command, o) {
+        调用.push(`${command}@${o?.cwd}`)
+        if (command.startsWith("mkdir")) return { code: 0, stdout: "", stderr: "" }
+        return { code: 0, stdout: "终端通了", stderr: "" }
+      },
+      async readFile(p) {
+        const v = 文件.get(p)
+        if (v === undefined) throw new Error(`no ${p}`)
+        return Buffer.from(v)
+      },
+      async writeFile(p, d) {
+        文件.set(p, String(d))
+      },
+    }
+    const s = {
+      ...spec("r1"),
+      workspace: 工作区,
+      sessionDir: join(工作区, ".dawn", "sessions", "r1"),
+      remote: { executor: ex, cwd: { get: () => "/home/u/proj", set: () => {} } },
+    } as SessionSpec
+    const 影子 = join(s.sessionDir, "acp-shadow")
+    文件.set("/home/u/proj/手-读.txt", "服务器上读到的")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "用手")
+    await 等到(收, (e) => e.kind === "idle", "回合收口")
+    const 话 = 收
+      .filter((e): e is Extract<AgentEvent, { kind: "output" }> => e.kind === "output")
+      .map((e) => e.data)
+      .join("")
+
+    // 假 agent 把 `<cwd>/手-读.txt` 发来，cwd 是影子 → 翻译成远端
+    expect(话).toContain('【手·读】{"result":{"content":"服务器上读到的"}}')
+    expect(文件.get("/home/u/proj/手-写.txt")).toBe("假 agent 写的")
+    expect(existsSync(join(影子, "手-写.txt"))).toBe(false)
+    expect(调用.some((c) => c.endsWith("@/home/u/proj") && c.includes("printf 终端通了"))).toBe(true)
+    expect(话).toContain(`"cwd":${JSON.stringify(影子)}`)
+    expect(话).toMatch(/"systemPrompt":\{"append":"[^"]*服务器[^"]*\/home\/u\/proj/)
   })
 })

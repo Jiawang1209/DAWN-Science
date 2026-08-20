@@ -29,7 +29,7 @@ import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -65,18 +65,6 @@ export function use现在(): number {
   return 现在
 }
 
-/**
- * 侧栏里那两个图标（2026-08-11 起有，2026-08-12 改成实心）。
- *
- * 作者：*「对话的话，前面有一个交流的图标；项目的话，前面有一个文件夹的图标。」*
- * 后来又提：*「我们的图标也没有 workbuddy 好看……他们的图标质感非常的棒。」*
- *
- * 于是这两个改成走 `icons.tsx`——**实心、`fill: currentColor`**，
- * 那份文件的文件头写了为什么描边做不到同一件事。
- */
-function 会话图标() {
-  return <对话图标 className="row-icon" />
-}
 
 /**
  * 对话头上的**工作目录**（T3-b，2026-08-12）。
@@ -218,9 +206,30 @@ export interface 悬停浮层 {
    * 都放入鼠标滑动窗口里面」*，并给了 Codex 侧栏那张图）。
    * 行上只留标题，上次活动、目录、对话数这些挪到这儿。
    */
-  详情?: readonly string[] | undefined
+  详情?: readonly 详情行[] | undefined
+  /** 标题前的图标：行上不再画图标了（作者要的），它在这儿说「这是对话 / 项目 / 服务器」 */
+  标图?: "对话" | "文件夹" | "服务器" | undefined
   上: number
   左: number
+}
+
+/** 卡上的一行细节：图标说类别，字说内容 */
+export interface 详情行 {
+  图: "文件夹" | "时钟" | "服务器" | "对话"
+  文: string
+}
+
+function 详情图(图: 详情行["图"]) {
+  switch (图) {
+    case "文件夹":
+      return <文件夹图标 className="row-icon" />
+    case "时钟":
+      return <时钟图标 className="row-icon" />
+    case "服务器":
+      return <服务器图标 className="row-icon" />
+    case "对话":
+      return <对话图标 className="row-icon" />
+  }
 }
 
 /**
@@ -235,7 +244,8 @@ export function 浮层事件(
   报: ((x: 悬停浮层 | undefined) => void) | undefined,
   全文: string,
   副?: string,
-  详情?: readonly string[],
+  详情?: readonly 详情行[],
+  标图?: 悬停浮层["标图"],
 ) {
   if (!报) return {}
   return {
@@ -259,7 +269,7 @@ export function 浮层事件(
          * 「卡压在侧栏上了」一次就红。
          */
         const 侧 = 行.closest(".sidebar")?.getBoundingClientRect()
-        报({ 全文, 副, 详情, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
+        报({ 全文, 副, 详情, 标图, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
       }, 浮层延时毫秒)
     },
     onMouseLeave: () => {
@@ -330,7 +340,7 @@ export function SessionRow({
   /** 卡上第二行：这段对话属于哪儿。**光有标题有时答不了「哪一段」** */
   副标题?: string | undefined
   /** 卡上的细节行（上次活动、目录…）。**行上只留标题**，这些在这儿看 */
-  详情?: readonly string[] | undefined
+  详情?: readonly 详情行[] | undefined
   onPick: () => void
   onDelete?: (() => void) | undefined
   onRename?: ((title: string) => void) | undefined
@@ -438,7 +448,7 @@ export function SessionRow({
   }
 
   const 跑 = 用跑马灯()
-  const 浮 = 浮层事件(onHover, 名字, 副标题, 详情)
+  const 浮 = 浮层事件(onHover, 名字, 副标题, 详情, "对话")
   /** 两套事件合到一起：**都挂在同一行上**，各管各的 */
   const 悬停 = {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
@@ -517,8 +527,7 @@ export function SessionRow({
       >
         <span className="sess">
           <span className="name">
-            {/* 图标在最前面：**一眼分出「这是对话」还是「这是项目」**（仿 Codex） */}
-            <会话图标 />
+            {/* 行上不再画对话图标（2026-08-21 作者要的）：它挪到悬停卡的标题前 */}
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
               <span className="pin-mark" aria-label={t("已置顶")}>
@@ -1643,10 +1652,14 @@ export function SessionSidebar({
    * 删除那一步 `filter` 一过就把它们悄悄丢了。
    * 能勾、勾得上、按下删除、然后它还在：**这就是静默截断**（规格 7.5）。
    */
-  /** 悬停卡上的细节行：上次活动、远端目录（行上不再写） */
-  const 会话详情 = (s: SessionSummary): string[] => [
-    tf("上次活动 {0}", 年月日时分(s.lastActiveAt ?? s.createdAt)),
-    ...(s.remote ? [tf("目录 {0}", s.remote.cwd)] : []),
+  /**
+   * 悬停卡上的细节行（行上不再写）：**图标说类别、字说内容**（2026-08-21 作者要的：
+   * 目录用文件夹图标、上次活动用时钟图标）。属于哪个项目 / 哪台机器也进这里。
+   */
+  const 会话详情 = (task: TaskSummary, s: SessionSummary): 详情行[] => [
+    ...(task.workspace && !task.connectionId ? [{ 图: "文件夹" as const, 文: task.workspace }] : []),
+    ...(s.remote ? [{ 图: "服务器" as const, 文: s.remote.label }, { 图: "文件夹" as const, 文: s.remote.cwd }] : []),
+    { 图: "时钟" as const, 文: 年月日时分(s.lastActiveAt ?? s.createdAt) },
   ]
 
   const 任务行 = (task: TaskSummary, 可勾: boolean) => {
@@ -1688,9 +1701,8 @@ export function SessionSidebar({
             active={task.taskId === activeTaskId}
             className="task-row"
             onClick={() => (选中它 ? 切一个(task.taskId) : onPickTask?.(task))}
-            {...浮层事件(设浮着的, task.title ?? t("新任务"), 属于哪儿(task))}
+            {...浮层事件(设浮着的, task.title ?? t("新任务"), 属于哪儿(task), undefined, "对话")}
           >
-            <对话图标 className="row-icon" />
             {/* **与认得出的那条一样处理**：标题自己一个元素，才推得动 */}
             <span className="name">
               <span className="sess-title" data-full={task.title ?? t("新任务")}>
@@ -1725,8 +1737,7 @@ export function SessionSidebar({
         current={s.sessionId === activeSessionId}
         {...(agentLabel ? { label: agentLabel } : {})}
         onHover={设浮着的}
-        {...(属于哪儿(task) ? { 副标题: 属于哪儿(task) } : {})}
-        详情={会话详情(s)}
+        详情={会话详情(task, s)}
         onPick={() => onPickTask?.(task)}
         {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
@@ -1791,12 +1802,18 @@ export function SessionSidebar({
           style={{ top: `${浮着的.上}px`, left: `${浮着的.左}px` }}
           aria-hidden="true"
         >
-          <p className="sess-hover-title">{浮着的.全文}</p>
+          <p className="sess-hover-title">
+            {浮着的.标图 ? 详情图(浮着的.标图 === "对话" ? "对话" : 浮着的.标图) : null}
+            <span>{浮着的.全文}</span>
+          </p>
           {浮着的.副 ? <p className="sess-hover-sub">{浮着的.副}</p> : null}
           {浮着的.详情 && 浮着的.详情.length > 0 ? (
             <ul className="sess-hover-details">
               {浮着的.详情.map((行, i) => (
-                <li key={i}>{行}</li>
+                <li key={i}>
+                  {详情图(行.图)}
+                  <span>{行.文}</span>
+                </li>
               ))}
             </ul>
           ) : null}
@@ -2109,7 +2126,16 @@ export function SessionSidebar({
                        * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——
                        * 那个理由没变，答案换了地方：悬停就看得到，不再占一行。
                        */
-                      {...浮层事件(设浮着的, 基名(路径), 路径, [tf("{0} 段对话", 里面的.length)])}
+                      {...浮层事件(
+                        设浮着的,
+                        基名(路径),
+                        undefined,
+                        [
+                          { 图: "文件夹", 文: 路径 },
+                          { 图: "对话", 文: tf("{0} 段对话", 里面的.length) },
+                        ],
+                        "文件夹",
+                      )}
                     >
                       <span className="sess">
                         <span className="name">

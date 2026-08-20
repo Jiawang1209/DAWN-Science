@@ -92,10 +92,11 @@ test("**跑马灯只在自己的框里跑，不压住图标**", async ({ dawn })
       const r = el.getBoundingClientRect()
       return { 左: Math.round(r.left), 右: Math.round(r.right) }
     })
+  // 行上的图标 2026-08-21 撤了（作者要的）；现在守的是「不压出行的左缘」
   const 图标右 = await page
-    .locator(".session-list li .name svg")
+    .locator(".session-list li .row")
     .first()
-    .evaluate((el) => Math.round(el.getBoundingClientRect().right))
+    .evaluate((el) => Math.round(el.getBoundingClientRect().left))
 
   const 之前 = await 框()
   expect(之前.左, "还没跑就压着图标了").toBeGreaterThanOrEqual(图标右)
@@ -153,7 +154,9 @@ test("**短标题：不跑马灯，也不弹卡**", async ({ dawn }) => {
    */
   const 卡 = page.locator(".sess-hover-card")
   await expect(卡, "行上不写的细节只能在卡上看，卡却没弹").toHaveCount(1)
-  await expect(卡.locator(".sess-hover-details")).toContainText("上次活动")
+  // 上次活动那一行：时钟图标 + 年月日时分
+  await expect(卡.locator(".sess-hover-details li").last()).toContainText(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)
+  await expect(卡.locator(".sess-hover-details li svg").last()).toBeVisible()
 })
 
 /**
@@ -194,7 +197,8 @@ test.describe("项目里的那条", () => {
     const 卡 = page.locator(".sess-hover-card")
     await expect(卡).toBeVisible({ timeout: 5_000 })
 
-    const 第二行 = (await 卡.locator(".sess-hover-sub").textContent()) ?? ""
+    // 路径在细节行里（2026-08-21 起，前面是文件夹图标）
+    const 第二行 = (await 卡.locator(".sess-hover-details li").first().textContent()) ?? ""
     expect(第二行, "第二行是空的").not.toBe("")
     expect(第二行, "只给了文件夹名，没给路径").toContain("/")
     expect(第二行.split("/").length, "看起来只有一层，不像完整路径").toBeGreaterThan(2)
@@ -209,10 +213,9 @@ test("**临时会话：卡上不给文件夹位置**", async ({ dawn }) => {
   await 标题.hover()
   const 卡 = page.locator(".sess-hover-card")
   await expect(卡).toBeVisible({ timeout: 5_000 })
-  await expect(
-    卡.locator(".sess-hover-sub"),
-    "临时会话摆出了一个人从没选过的路径",
-  ).toHaveCount(0)
+  await expect(卡.locator(".sess-hover-sub")).toHaveCount(0)
+  // 细节行里只有时钟那一条，**没有文件夹那一条**：临时会话不摆一个人从没选过的路径
+  await expect(卡.locator(".sess-hover-details li"), "临时会话摆出了一个人从没选过的路径").toHaveCount(1)
 })
 
 test("**悬停一会儿，旁边浮出全文**", async ({ dawn }) => {

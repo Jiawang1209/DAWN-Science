@@ -223,6 +223,8 @@ test("**项目行一行：名字在行上，路径与对话数在悬停卡上**"
   const 卡 = page.locator(".sess-hover-card")
   await expect(卡).toHaveCount(1, { timeout: 3_000 })
   await expect(卡.locator(".sess-hover-title")).toHaveText("dawn-proj-bulk-甲")
-  await expect(卡.locator(".sess-hover-sub")).toContainText("dawn-proj-bulk-甲")
-  await expect(卡.locator(".sess-hover-details")).toContainText("1 段对话")
+  // 细节行：文件夹图标 + 全路径；对话图标 + 对话数
+  await expect(卡.locator(".sess-hover-details li").nth(0)).toContainText("dawn-proj-bulk-甲")
+  await expect(卡.locator(".sess-hover-details li").nth(0).locator("svg")).toBeVisible()
+  await expect(卡.locator(".sess-hover-details li").nth(1)).toContainText("1 段对话")
 })

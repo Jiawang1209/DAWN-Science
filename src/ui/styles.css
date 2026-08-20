@@ -1134,8 +1134,9 @@ pre {
  */
 .proj-session-list .sess,
 .server-session-list .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+/* 文件夹 / 服务器底下的会话**缩进一级**（2026-08-21 作者要的）：层级靠位置说，不靠图标 */
 .proj-session-list,
-.server-session-list { list-style: none; margin: 0; padding: 0; }
+.server-session-list { list-style: none; margin: 0; padding: 0 0 0 var(--dawn-space-4); }
 /**
  * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
  * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。
@@ -2944,13 +2945,13 @@ pre {
 .remote-row.on { box-shadow: inset 2px 0 0 var(--dawn-accent); }
 .remote-main { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**
- * 点是 8px，**占的位置是 16px**——会话行那一列是 16px 的图标。
- * 不补这 8px，服务器名就比会话标题往左偏 8，一列里两条起跑线。
+ * 点在行尾、贴着状态词（2026-08-21 挪的）。此前在名字前面、补成 16px 宽去对齐
+ * 会话行的图标；会话行不画图标了，它留在前面就是一列里两条起跑线。
  */
 .remote-dot {
   width: 8px;
   height: 8px;
-  margin: 0 4px;
+  margin: 0;
   border-radius: var(--dawn-radius-full);
   flex: 0 0 auto;
   background: var(--dawn-text-3);
@@ -2963,7 +2964,7 @@ pre {
 .remote-status { flex: 0 0 auto; font-size: 12px; color: var(--dawn-text-3); }
 .remote-sub {
   margin: 0;
-  padding-left: calc(16px + var(--dawn-space-2));
+  padding-left: 0;
   font-size: 12px;
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
@@ -4231,7 +4232,12 @@ pre {
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dawn-space-2);
 }
+.sess-hover-title .row-icon,
+.sess-hover-details .row-icon { flex: 0 0 auto; margin-top: 0.2em; color: var(--dawn-text-3); }
 
 /**
  * 第二行：项目给**完整路径**，服务器给机器名（2026-08-15 作者逐条定的）。
@@ -4258,7 +4264,14 @@ pre {
   flex-direction: column;
   gap: var(--dawn-space-1);
 }
-.sess-hover-details li { overflow-wrap: anywhere; }
+.sess-hover-details li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dawn-space-2);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.sess-hover-details li > span { min-width: 0; }
 
 /* ── 用量（S21，2026-08-16）─────────────────────────────────────── */
 

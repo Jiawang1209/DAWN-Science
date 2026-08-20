@@ -47,7 +47,7 @@ async function 造项目(page: Page, 路径们: string[]): Promise<void> {
     for (const workspace of paths) await w.dawn.invoke("createTask", { agentId, workspace })
   }, 路径们)
   await page.reload()
-  await expect(page.locator(".proj-list .proj-item")).toHaveCount(路径们.length, { timeout: 30_000 })
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(new Set(路径们).size, { timeout: 30_000 })
 }
 
 /** 造一段**没有路径**的对话，好让「会话」那一栏也在场 */
@@ -120,9 +120,59 @@ test("**进项目多选，会话那边就退出去**", async ({ dawn }) => {
   // **仍然只有一条**：项目那边开了，会话那边关了
   await expect(page.locator(".side-bulkbar")).toHaveCount(1)
   await expect(page.getByRole("button", { name: "多选会话", exact: true })).toBeVisible()
-  // 而且勾选框只长在项目行上
+  // 而且勾选框只长在项目那一列：项目头一颗；散的那一段一颗都不长
   await expect(page.getByRole("checkbox", { name: /选择项目/ })).toHaveCount(1)
-  await expect(page.getByRole("checkbox", { name: /选择会话/ })).toHaveCount(0)
+  await expect(page.locator(".session-list .sess-check")).toHaveCount(0)
+})
+
+/**
+ * **项目里的会话能逐段勾**（2026-08-21，作者报的：*「项目里面的会话，没有办法多选」*）。
+ *
+ * 此前项目那一列的多选只认「整个项目」：集合里装的是路径，底下的会话行不长勾选框。
+ * 现在集合里装的是会话：项目头那颗是「它名下全部」（勾了一部分就半勾），
+ * 全选了的项目整个移除，只选了几段的只删那几段、项目留着。
+ */
+test("**一个项目三段会话，勾两段删两段，项目还在**", async ({ dawn }) => {
+  const { page } = dawn
+  await 造项目(page, [甲, 甲, 甲])
+  // 三段同路径合成一个项目
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1)
+  await page.locator(".proj-list .proj-item .row").first().click()
+  await expect(page.locator(".proj-session-list .sess-item")).toHaveCount(3)
+
+  await page.getByRole("button", { name: "多选项目", exact: true }).click()
+  const 行勾 = page.locator(".proj-session-list .sess-check")
+  await expect(行勾, "项目底下的会话行没长出勾选框").toHaveCount(3)
+  await 行勾.nth(0).check()
+  await 行勾.nth(1).check()
+  await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 2")
+  // 项目头那颗半勾：勾了一部分，既不是全选也不是没选
+  const 头勾 = page.getByRole("checkbox", { name: /选择项目：dawn-proj-bulk-甲/ })
+  expect(await 头勾.evaluate((el) => (el as HTMLInputElement).indeterminate)).toBe(true)
+
+  await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
+  // 确认框说的是「删对话」，不是「移除项目」——按实际发生的事起标题
+  await expect(page.locator(".confirm")).toContainText("删除这 2 段对话")
+  await expect(page.locator(".confirm")).toContainText("项目本身留着")
+  await page.locator(".confirm").getByRole("button", { name: /删除 2 段/ }).click()
+
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+  // 项目还展开着（删之前人点开的），底下剩一段
+  await expect(page.locator(".proj-session-list .sess-item")).toHaveCount(1)
+  await expect(page.locator(".side-bulkbar")).toHaveCount(0)
+})
+
+test("**项目头那颗勾选框 = 它名下全部**，全选了就整个移除", async ({ dawn }) => {
+  const { page } = dawn
+  await 造项目(page, [甲, 甲, 乙])
+  await page.getByRole("button", { name: "多选项目", exact: true }).click()
+  await page.getByRole("checkbox", { name: /选择项目：dawn-proj-bulk-甲/ }).check()
+  await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 2")
+  await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
+  await expect(page.locator(".confirm")).toContainText("移除这 1 个项目")
+  await page.locator(".confirm").getByRole("button", { name: /移除 1 个/ }).click()
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+  await expect(page.locator(".proj-list .sess .name")).toContainText("dawn-proj-bulk-乙")
 })
 
 /**

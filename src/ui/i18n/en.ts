@@ -70,6 +70,9 @@ export const EN: Readonly<Record<string, string>> = {
   "删除会话「{0}」？": "Delete the chat “{0}”?",
   "删除这 {0} 段对话？": "Delete these {0} chats?",
   "删除 {0} 段": "Delete {0}",
+  "其中 {0} 个项目名下的对话全选了，会连项目一起从工作台移除。":
+    "{0} of the projects have every chat selected and will be removed from the workbench along with them.",
+  "会一并删除相应的账本记录。项目本身留着。": "Their ledger records go too. The projects themselves stay.",
   "有 {0} 段没删掉：{1}": "{0} could not be deleted: {1}",
   "从工作台移除这 {0} 个项目？": "Remove these {0} projects from the workbench?",
   "移除 {0} 个": "Remove {0}",

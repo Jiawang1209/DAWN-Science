@@ -1376,9 +1376,19 @@ export function SessionSidebar({
    * 比一个说清楚自己搜什么的更坏（不变式 5）。占位符把范围写出来。
    */
   search?: { value: string; onChange: (v: string) => void; onClose: () => void } | undefined
+  /**
+   * 项目那一列多选之后按「删除」。**`整个` 为真 = 这个项目名下的会话全选了**，
+   * 连项目记录一起移除；否则只删 `tasks` 里那几段、项目留着（2026-08-21 起
+   * 项目里的会话能逐段勾，作者报的：*「项目里面的会话，没有办法多选」*）。
+   */
   onDeleteProjects?:
     | ((
-        groups: readonly { workspace: string; projectId?: string; tasks: readonly TaskSummary[] }[],
+        groups: readonly {
+          workspace: string
+          projectId?: string
+          tasks: readonly TaskSummary[]
+          整个: boolean
+        }[],
         done: () => void,
       ) => void)
     | undefined
@@ -1487,6 +1497,15 @@ export function SessionSidebar({
       const n = new Set(前.集合)
       if (n.has(id)) n.delete(id)
       else n.add(id)
+      return { ...前, 集合: n }
+    })
+  /** 一组一起切：全在就全摘，否则全加（项目头那颗勾选框用，2026-08-21） */
+  const 切一组 = (ids: readonly string[]) =>
+    设多选((前) => {
+      if (!前 || ids.length === 0) return 前
+      const n = new Set(前.集合)
+      if (ids.every((id) => n.has(id))) ids.forEach((id) => n.delete(id))
+      else ids.forEach((id) => n.add(id))
       return { ...前, 集合: n }
     })
   const 进选择 = (列: "会话" | "项目" | "服务器") =>
@@ -1598,6 +1617,8 @@ export function SessionSidebar({
   if (刚选的工作区 && !项目组.some(([p]) => p === 刚选的工作区)) {
     项目组.unshift([刚选的工作区, []])
   }
+  /** 项目那一列多选的全集：**是会话，不是项目**（2026-08-21 起能逐段勾） */
+  const 项目里全部 = 项目组.flatMap(([, 里面的]) => 里面的)
 
   /**
    * **任务行就是会话行**（T3-a）。
@@ -1711,7 +1732,9 @@ export function SessionSidebar({
      * 本项目栽过好几次，所以判据要按**这一行属于哪一列**来算。
      */
     const 属于服务器列 = task.connectionId !== undefined
-    const 选中它 = 可勾 && (属于服务器列 ? 选服务器中 : 选会话中)
+    // 项目底下的行归「项目」那一轮管（2026-08-21 起能逐段勾）；散的归「会话」
+    const 属于项目列 = !属于服务器列 && task.workspace !== undefined
+    const 选中它 = 可勾 && (属于服务器列 ? 选服务器中 : 属于项目列 ? 选项目中 : 选会话中)
     const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
     if (!s) {
       /**
@@ -2086,13 +2109,13 @@ export function SessionSidebar({
                   设多选({
                     列: "项目",
                     集合:
-                      已选!.size === 项目组.length
+                      已选!.size === 项目里全部.length
                         ? new Set()
-                        : new Set(项目组.map(([路径]) => 路径)),
+                        : new Set(项目里全部.map((t) => t.taskId)),
                   })
                 }
               >
-                {已选!.size === 项目组.length ? t("全不选") : t("全选")}
+                {已选!.size === 项目里全部.length ? t("全不选") : t("全选")}
               </Button>
               <Button
                 variant="text"
@@ -2100,13 +2123,18 @@ export function SessionSidebar({
                 className="menu-danger"
                 disabled={已选!.size === 0}
                 onClick={() => {
+                  // **集合里装的是 taskId**：全选了的项目整个移除，只选了几段的只删那几段
                   const 要删的 = 项目组
-                    .filter(([路径]) => 已选!.has(路径))
-                    .map(([路径, 里面的]) => ({
-                      workspace: 路径,
-                      ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
-                      tasks: 里面的,
-                    }))
+                    .map(([路径, 里面的]) => {
+                      const 选了 = 里面的.filter((t) => 已选!.has(t.taskId))
+                      return {
+                        workspace: 路径,
+                        ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
+                        tasks: 选了,
+                        整个: 选了.length === 里面的.length,
+                      }
+                    })
+                    .filter((g) => g.tasks.length > 0)
                   onDeleteProjects?.(要删的, () => 设多选(undefined))
                 }}
               >
@@ -2128,14 +2156,20 @@ export function SessionSidebar({
                       <input
                         type="checkbox"
                         className="sess-check"
-                        checked={已选!.has(路径)}
-                        onChange={() => 切一个(路径)}
+                        checked={里面的.length > 0 && 里面的.every((t) => 已选!.has(t.taskId))}
+                        // 刚选的空文件夹底下一段都没有：没东西可选
+                        disabled={里面的.length === 0}
+                        // **勾了一部分就半勾**：项目头那颗说的是「它名下的会话」，不是另一个东西
+                        ref={(el) => {
+                          if (el) el.indeterminate = 里面的.some((t) => 已选!.has(t.taskId)) && !里面的.every((t) => 已选!.has(t.taskId))
+                        }}
+                        onChange={() => 切一组(里面的.map((t) => t.taskId))}
                         aria-label={tf("选择项目：{0}", 基名(路径))}
                       />
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一个(路径) : 设展开(展开 ? null : 路径))}
+                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(展开 ? null : 路径))}
                     >
                       <span className="sess">
                         <span className="name">
@@ -2196,8 +2230,8 @@ export function SessionSidebar({
                   </div>
                   {展开 ? (
                     <ul className="proj-session-list">
-                      {/* **不可勾**：会话那一轮多选管不着项目底下的行，见 `任务行` 的注 */}
-                      {里面的.map((t) => 任务行(t, false))}
+                      {/* 归「项目」那一轮多选管（`任务行` 按列判），「会话」那一轮仍管不着它们 */}
+                      {里面的.map((t) => 任务行(t, true))}
                     </ul>
                   ) : null}
                 </li>

@@ -1564,17 +1564,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         workspace: string
         projectId?: string
         tasks: readonly import("../protocol/index.js").TaskSummary[]
+        /** 名下的会话全选了 → 连项目一起移除；否则只删选中的那几段（2026-08-21） */
+        整个?: boolean
       }[],
       done: () => void,
     ) => {
       if (groups.length === 0) return
       const 会话数 = groups.reduce((n, g) => n + g.tasks.length, 0)
+      const 整个的 = groups.filter((g) => g.整个 !== false)
+      const 只删几段 = 整个的.length < groups.length
       setConfirming({
-        title: tf("从工作台移除这 {0} 个项目？", groups.length),
+        // **按实际发生的事起标题**：只勾了几段会话时，说「删对话」，不说「移除项目」
+        title: 只删几段
+          ? tf("删除这 {0} 段对话？", 会话数)
+          : tf("从工作台移除这 {0} 个项目？", groups.length),
         detail: (
           <>
             {/* **整句走 `tf`，不拿 `<b>` 把它劈成两半**——英文语序不同，拼出来是半句话 */}
-            {tf("会一并移除它们名下的 {0} 段对话与相应的账本记录。", 会话数)}
+            {只删几段
+              ? 整个的.length > 0
+                ? tf("其中 {0} 个项目名下的对话全选了，会连项目一起从工作台移除。", 整个的.length)
+                : t("会一并删除相应的账本记录。项目本身留着。")
+              : tf("会一并移除它们名下的 {0} 段对话与相应的账本记录。", 会话数)}
           </>
         ),
         safety: (
@@ -1584,13 +1595,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             {groups.map((g) => g.workspace).join("\n")}
           </>
         ),
-        confirmLabel: tf("移除 {0} 个", groups.length),
+        confirmLabel: 只删几段 ? tf("删除 {0} 段", 会话数) : tf("移除 {0} 个", groups.length),
         onConfirm: () => {
           void (async () => {
             const 没删掉: string[] = []
             for (const g of groups) {
               try {
-                if (g.projectId) {
+                if (g.projectId && g.整个 !== false) {
                   await client.get("deleteProject", { projectId: g.projectId })
                 } else {
                   // **没有 projectId 也要删得掉**：按 taskId 走（协议 4.9）

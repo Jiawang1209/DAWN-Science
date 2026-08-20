@@ -11,12 +11,18 @@
  *
  * ## 路径门
  *
- * 与 native 的 `gatedTools` 同口径：读写限于会话工作区，越界回 `-32602` 并把那条路径说出来。
- * ACP 的路径**一律绝对**——相对路径的含义取决于谁的 cwd，拒掉比猜安全。
+ * 与 native 的四个工具**同一套判据**，不另写：本机复用 `policy/permissions.ts` 的 `看风险`
+ * （读不设门、写圈在工作区并保护 `data/raw`），远端复用 `remote/tools.ts` 的 `解析远端路径`
+ * （默认无界，`界` 可选）。越界回 `-32602` 并把那条路径说出来。
+ * 本机的路径**一律绝对**——相对路径的含义取决于谁的 cwd，拒掉比猜安全；
+ * 远端的相对路径按远端 cwd 解析，那是 `解析远端路径` 一直以来的口径。
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises"
-import { dirname, isAbsolute, relative, resolve } from "node:path"
+import { dirname, isAbsolute, resolve } from "node:path"
 import { spawn, type ChildProcess } from "node:child_process"
+import { 看风险 } from "../../policy/permissions.js"
+import { 解析远端路径 } from "../../remote/tools.js"
+import type { RemoteCwd, RemoteLike } from "../types.js"
 
 /** JSON-RPC 能看懂的错误：带 code。运行时原样写回对方 */
 export class 手的错误 extends Error {
@@ -78,9 +84,121 @@ export function 本机后端(): 手的后端 {
   }
 }
 
+/**
+ * 远端后端：读写走 SFTP，命令走一次 `exec`。
+ *
+ * **不流式**：`RemoteLike.exec` 是跑完整体回，所以 `terminal/output` 在命令结束前
+ * 看到的是空。claude-code-acp 的用法是 `wait_for_exit` 之后再 `output`，正好够用；
+ * 真要中途看输出，那是 `RemoteExecutor` 加流式接口的事，不在这里假装。
+ *
+ * `env` 变成 `export K='v'; ` 前缀——`RemoteLike.exec` 没有 env 参数，
+ * 而 `RemoteExecutor` 自己也是这么给登录环境的（`ssh.ts` 里 `前缀` 那段）。
+ */
+export function 远端后端(ex: RemoteLike): 手的后端 {
+  return {
+    readFile: async (p) => (await ex.readFile(p)).toString("utf8"),
+    async writeFile(p, content) {
+      const 父 = p.replace(/\/[^/]*$/, "") || "/"
+      const r = await ex.exec(`mkdir -p ${单引号(父)}`)
+      if (r.code !== 0) throw new Error(`建不了目录 ${父}：${r.stderr || r.stdout}`)
+      await ex.writeFile(p, content)
+    },
+    exec(command, { cwd, env }) {
+      const 前缀 = Object.entries(env)
+        .map(([k, v]) => `export ${k}=${单引号(v)}; `)
+        .join("")
+      const 控 = new AbortController()
+      const 听众: Array<(c: Buffer) => void> = []
+      const exited = ex.exec(前缀 + command, { cwd, signal: 控.signal }).then(
+        (r) => {
+          const 出 = Buffer.from(r.stdout + r.stderr)
+          if (出.length > 0) 听众.forEach((f) => f(出))
+          return r.signal ? { signal: r.signal } : { exitCode: r.code ?? 0 }
+        },
+        (e: unknown) => {
+          听众.forEach((f) => f(Buffer.from(e instanceof Error ? e.message : String(e))))
+          return { exitCode: 127 }
+        },
+      )
+      return { onData: (cb) => 听众.push(cb), exited, kill: () => 控.abort() }
+    },
+  }
+}
+
+/**
+ * 门：收一条路径，回它该用的绝对路径，或抛 `手的错误`。
+ * **按操作分**——native 的判据里读与写不是一回事（读不设门）。
+ */
+export interface 手的门 {
+  读(path: string): string
+  写(path: string): string
+  /** 终端的 cwd。不按路径拦（native 的 bash 也不拦），只做形状检查 */
+  cwd(path: string): string
+}
+
+/** 本机：复用 `看风险`——与 native 的 write/edit **同一个函数**，不另写一套 */
+export function 本机门(工作区: string): 手的门 {
+  const 绝对 = (p: string) => {
+    if (!isAbsolute(p)) throw new 手的错误(-32602, `路径必须是绝对路径：${p}`)
+    return resolve(p)
+  }
+  return {
+    读: 绝对,
+    写(p) {
+      const 路 = 绝对(p)
+      const 险 = 看风险("write", { path: 路 }, { workspace: 工作区 })
+      if (险) throw new 手的错误(-32602, 险.说明)
+      return 路
+    },
+    cwd: 绝对,
+  }
+}
+
+/** 远端门：复用 `解析远端路径`——与 native 的远端四工具同一个函数。默认无界 */
+export function 远端门(cwd: RemoteCwd): 手的门 {
+  const 解 = (p: string) => {
+    try {
+      return 解析远端路径(cwd.get(), p, cwd.界)
+    } catch (e) {
+      throw new 手的错误(-32602, e instanceof Error ? e.message : String(e))
+    }
+  }
+  return { 读: 解, 写: 解, cwd: 解 }
+}
+
+/**
+ * 影子翻译（T2）。
+ *
+ * claude-code-acp 要求 `session/new` 的 `cwd` 在本机存在（SDK 在那里 spawn），
+ * 而远端会话的真目录在服务器上。于是给它一个空的本机影子目录，
+ * 它说的 `<影子>/x` 我们听成 `<远端cwd>/x`。**不以影子开头的绝对路径原样放行**——
+ * 用户说的 `/data/raw/x.csv` 就是服务器上的那个文件。
+ */
+export function 影子翻译(影子: string, 远端: string) {
+  const 根 = 影子.replace(/\/+$/, "")
+  const 路径 = (p: string) => (p === 根 ? 远端 : p.startsWith(`${根}/`) ? 远端 + p.slice(根.length) : p)
+  const 命令 = (s: string) =>
+    s.split(根).reduce((acc, 段, i) => {
+      if (i === 0) return 段
+      // 只有后面紧跟 `/`、空白、结尾或 shell 分隔符的才是影子路径；`/local/shadow2` 不是
+      const 下一个 = 段[0]
+      const 算 = 下一个 === undefined || 下一个 === "/" || /[\s'"`;&|)]/.test(下一个)
+      return acc + (算 ? 远端 : 根) + 段
+    }, "")
+  const 包 = (内: 手的门): 手的门 => ({
+    读: (p) => 内.读(路径(p)),
+    写: (p) => 内.写(路径(p)),
+    cwd: (p) => 内.cwd(路径(p)),
+  })
+  return { 路径, 命令, 包 }
+}
+
 interface 手的选项 {
-  /** 读写与命令都限在这里面（绝对路径） */
-  工作区: string
+  门: 手的门
+  /** `terminal/create` 不给 cwd 时在哪跑 */
+  默认cwd: string
+  /** 远端会话里把命令串中的影子路径换掉（`影子翻译().命令`）。本机不给 */
+  翻译命令?: (s: string) => string
   /** 我们自己的日志口：截断了多少字节等，协议里没有格子放的话从这里出声 */
   记录: (text: string) => void
 }
@@ -135,7 +253,7 @@ export class 客户端的手 {
   /* ── fs ───────────────────────────────────────────────── */
 
   private async 读(p: Record<string, unknown>) {
-    const path = this.门(p["path"])
+    const path = this.路径(p["path"], "读")
     let text: string
     try {
       text = await this.后端.readFile(path)
@@ -153,7 +271,7 @@ export class 客户端的手 {
   }
 
   private async 写(p: Record<string, unknown>) {
-    const path = this.门(p["path"])
+    const path = this.路径(p["path"], "写")
     if (typeof p["content"] !== "string") throw new 手的错误(-32602, "fs/write_text_file 缺 content")
     try {
       await this.后端.writeFile(path, p["content"])
@@ -163,15 +281,10 @@ export class 客户端的手 {
     return {}
   }
 
-  /** 路径门。回规范化后的绝对路径 */
-  private 门(raw: unknown): string {
-    if (typeof raw !== "string" || !isAbsolute(raw)) {
-      throw new 手的错误(-32602, `路径必须是绝对路径：${String(raw)}`)
-    }
-    const 绝 = resolve(raw)
-    const 相 = relative(this.opts.工作区, 绝)
-    if (相 === "" || (!相.startsWith("..") && !isAbsolute(相))) return 绝
-    throw new 手的错误(-32602, `${raw} 在这段会话的工作区（${this.opts.工作区}）之外，不给读写`)
+  /** 路径门。形状在这儿查，判据在注入的 `门` 里 */
+  private 路径(raw: unknown, 作: "读" | "写" | "cwd"): string {
+    if (typeof raw !== "string") throw new 手的错误(-32602, `路径必须是字符串：${String(raw)}`)
+    return this.opts.门[作](raw)
   }
 
   /* ── terminal ─────────────────────────────────────────── */
@@ -187,8 +300,9 @@ export class 客户端的手 {
     const args = Array.isArray(p["args"])
       ? (p["args"] as unknown[]).filter((a): a is string => typeof a === "string")
       : []
-    const command = [p["command"], ...args.map(单引号)].join(" ")
-    const cwd = p["cwd"] === undefined ? this.opts.工作区 : this.门(p["cwd"])
+    const 原命令 = [p["command"], ...args.map(单引号)].join(" ")
+    const command = this.opts.翻译命令?.(原命令) ?? 原命令
+    const cwd = p["cwd"] === undefined ? this.opts.默认cwd : this.路径(p["cwd"], "cwd")
     /** `env` 是 `[{name, value}]`——与 `mcpServers[].env` 同一形状（2026-08-19 撞过） */
     const env: Record<string, string> = {}
     if (Array.isArray(p["env"])) {

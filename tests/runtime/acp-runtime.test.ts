@@ -772,7 +772,7 @@ describe("客户端的手（T1）", () => {
     expect(话).toContain('【手·写】{"result":{}}')
     expect(readFileSync(join(工作区, "手-写.txt"), "utf8")).toBe("假 agent 写的")
     // 越界：code 要是 -32602，且话里有那条路径
-    expect(话).toMatch(/【手·越界】\{"error":\{"code":-32602,"message":"[^"]*\/etc\/hostname/)
+    expect(话).toMatch(/【手·越界】\{"error":\{"code":-32602,"message":"[^"]*dawn-不给写/)
     expect(话).toMatch(/【手·开】\{"result":\{"terminalId":"t\d+"\}\}/)
     expect(话).toContain('【手·退】{"result":{"exitCode":0}}')
     expect(话).toContain('"output":"终端通了","truncated":false,"exitStatus":{"exitCode":0}')

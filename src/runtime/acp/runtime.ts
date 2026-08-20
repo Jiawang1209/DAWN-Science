@@ -32,7 +32,7 @@
 import type { ChildProcess } from "node:child_process"
 import { existsSync } from "node:fs"
 import { 起适配器, 收进程 } from "./launch.js"
-import { 客户端的手, 本机后端, 手的错误 } from "./hands.js"
+import { 客户端的手, 本机后端, 本机门, 手的错误 } from "./hands.js"
 import { UserFacingError } from "../../errors.js"
 import type {
   会话开关,
@@ -370,7 +370,8 @@ export class AcpRuntime implements AgentRuntime {
       stderr尾: [],
       待答: new Map(),
       手: new 客户端的手(本机后端(), {
-        工作区: spec.workspace,
+        门: 本机门(spec.workspace),
+        默认cwd: spec.workspace,
         // `记录` 只在命令结束后才调，那时段早已进了 `段们`，`发` 送得到
         记录: (text) => this.发(spec.sessionId, { kind: "notice", sessionId: spec.sessionId, text }),
       }),

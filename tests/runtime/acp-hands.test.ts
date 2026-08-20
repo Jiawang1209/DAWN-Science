@@ -8,7 +8,16 @@ import { afterEach, describe, expect, it } from "vitest"
 import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { 客户端的手, 本机后端, 手的错误 } from "../../src/runtime/acp/hands.js"
+import {
+  客户端的手,
+  本机后端,
+  本机门,
+  远端后端,
+  远端门,
+  影子翻译,
+  手的错误,
+} from "../../src/runtime/acp/hands.js"
+import type { RemoteLike } from "../../src/runtime/types.js"
 
 let 工作区: string
 let 手: 客户端的手
@@ -22,7 +31,7 @@ const 抓 = (p: Promise<unknown>) =>
   )
 const 建 = () => {
   工作区 = mkdtempSync(join(tmpdir(), "dawn-hands-"))
-  手 = new 客户端的手(本机后端(), { 工作区, 记录: () => {} })
+  手 = new 客户端的手(本机后端(), { 门: 本机门(工作区), 默认cwd: 工作区, 记录: () => {} })
   return 手
 }
 afterEach(async () => {
@@ -67,11 +76,20 @@ describe("fs/write_text_file", () => {
   })
 })
 
-describe("路径门：与 native 的 gatedTools 同口径", () => {
-  it("工作区外的绝对路径拒绝，code 是 -32602，话里有那条路径", async () => {
+describe("路径门：复用 native 的 `看风险`", () => {
+  it("**读不设门**——工作区外也读得到（native 就是这样，理由在 permissions.ts）", async () => {
+    建()
+    const 外 = join(tmpdir(), `dawn-hands-外面-${process.pid}.txt`)
+    writeFileSync(外, "外面的")
+    const r = await 手.处理("fs/read_text_file", { sessionId: "s", path: 外 })
+    expect(r).toEqual({ content: "外面的" })
+    rmSync(外)
+  })
+
+  it("写到工作区外拒绝，code 是 -32602，话里有那条路径", async () => {
     建()
     const 外 = join(tmpdir(), "dawn-hands-外面.txt")
-    const e = await 抓(手.处理("fs/read_text_file", { sessionId: "s", path: 外 }))
+    const e = await 抓(手.处理("fs/write_text_file", { sessionId: "s", path: 外, content: "" }))
     expect(e).toBeInstanceOf(手的错误)
     expect(e.code).toBe(-32602)
     expect(e.message).toContain("dawn-hands-外面.txt")
@@ -79,9 +97,19 @@ describe("路径门：与 native 的 gatedTools 同口径", () => {
 
   it("`..` 爬出去也拒绝", async () => {
     建()
-    const e = await 抓(手
-      .处理("fs/write_text_file", { sessionId: "s", path: join(工作区, "..", "爬.txt"), content: "" }))
+    const e = await 抓(
+      手.处理("fs/write_text_file", { sessionId: "s", path: join(工作区, "..", "爬.txt"), content: "" }),
+    )
     expect(e.code).toBe(-32602)
+  })
+
+  it("`data/raw/` 是原始数据，不给写", async () => {
+    建()
+    const e = await 抓(
+      手.处理("fs/write_text_file", { sessionId: "s", path: join(工作区, "data", "raw", "x.csv"), content: "" }),
+    )
+    expect(e.code).toBe(-32602)
+    expect(e.message).toContain("原始")
   })
 
   it("相对路径拒绝——ACP 的路径一律绝对", async () => {
@@ -130,7 +158,7 @@ describe("terminal/*", () => {
     expect(退.signal).toBe("SIGTERM")
   })
 
-  it("cwd 默认是工作区；给了 cwd 也得在工作区里", async () => {
+  it("cwd 默认是工作区；给了 cwd 就用它", async () => {
     建()
     mkdirSync(join(工作区, "子"))
     const a = (await 手.处理("terminal/create", { sessionId: "s", command: "pwd" })) as { terminalId: string }
@@ -150,9 +178,6 @@ describe("terminal/*", () => {
       output: string
     }
     expect(出b.output.trim().endsWith("子")).toBe(true)
-
-    const e = await 抓(手.处理("terminal/create", { sessionId: "s", command: "pwd", cwd: tmpdir() }))
-    expect(e.code).toBe(-32602)
   })
 
   it("env 是 `[{name,value}]` 数组，真的传进去", async () => {
@@ -170,7 +195,7 @@ describe("terminal/*", () => {
   it("超过 outputByteLimit 从头丢、truncated 为真，并在我们的日志里说清丢了多少", async () => {
     const 记: string[] = []
     工作区 = mkdtempSync(join(tmpdir(), "dawn-hands-"))
-    手 = new 客户端的手(本机后端(), { 工作区, 记录: (t) => 记.push(t) })
+    手 = new 客户端的手(本机后端(), { 门: 本机门(工作区), 默认cwd: 工作区, 记录: (t) => 记.push(t) })
     const { terminalId } = (await 手.处理("terminal/create", {
       sessionId: "s",
       command: "printf 'abcdefghij'",
@@ -201,5 +226,106 @@ describe("terminal/*", () => {
     const e = await 抓(手.处理("terminal/wait_for_exit", { sessionId: "s", terminalId: "t999" }))
     expect(e.code).toBe(-32602)
     expect(e.message).toContain("t999")
+  })
+})
+
+/** 假执行器：文件放在内存里，exec 只认几条命令，并记下每一次调用 */
+function 假执行器() {
+  const 文件 = new Map<string, string>()
+  const 调用: Array<{ command: string; cwd: string | undefined }> = []
+  const ex: RemoteLike = {
+    async exec(command, options) {
+      调用.push({ command, cwd: options?.cwd })
+      if (command.startsWith("mkdir -p ")) return { code: 0, stdout: "", stderr: "" }
+      if (command.includes("exit 2")) return { code: 2, stdout: "出", stderr: "错" }
+      return { code: 0, stdout: `ran:${command}@${options?.cwd ?? ""}`, stderr: "" }
+    },
+    async readFile(path) {
+      const v = 文件.get(path)
+      if (v === undefined) throw new Error(`No such file: ${path}`)
+      return Buffer.from(v)
+    },
+    async writeFile(path, data) {
+      文件.set(path, String(data))
+    },
+  }
+  return { ex, 文件, 调用 }
+}
+
+describe("远端后端：手伸到服务器上", () => {
+  const 远 = { get: () => "/home/u/proj", set: () => {} }
+
+  it("读写走执行器；写之前 `mkdir -p` 父目录", async () => {
+    const { ex, 文件, 调用 } = 假执行器()
+    文件.set("/home/u/proj/a.txt", "服务器上的")
+    手 = new 客户端的手(远端后端(ex), { 门: 远端门(远), 默认cwd: 远.get(), 记录: () => {} })
+    expect(await 手.处理("fs/read_text_file", { sessionId: "s", path: "/home/u/proj/a.txt" })).toEqual({
+      content: "服务器上的",
+    })
+    await 手.处理("fs/write_text_file", { sessionId: "s", path: "/home/u/proj/深/b.txt", content: "写上去" })
+    expect(文件.get("/home/u/proj/深/b.txt")).toBe("写上去")
+    expect(调用.some((c) => c.command === "mkdir -p '/home/u/proj/深'")).toBe(true)
+  })
+
+  it("终端：在远端 cwd 里跑；env 变成命令前缀；退出码与合流输出都回来", async () => {
+    const { ex, 调用 } = 假执行器()
+    手 = new 客户端的手(远端后端(ex), { 门: 远端门(远), 默认cwd: 远.get(), 记录: () => {} })
+    const { terminalId } = (await 手.处理("terminal/create", {
+      sessionId: "s",
+      command: "printf 出; exit 2",
+      env: [{ name: "K", value: "v'1" }],
+    })) as { terminalId: string }
+    expect(await 手.处理("terminal/wait_for_exit", { sessionId: "s", terminalId })).toEqual({ exitCode: 2 })
+    const 出 = (await 手.处理("terminal/output", { sessionId: "s", terminalId })) as { output: string }
+    expect(出.output).toBe("出错")
+    expect(调用.at(-1)).toEqual({ command: "export K='v'\\''1'; printf 出; exit 2", cwd: "/home/u/proj" })
+  })
+
+  it("远端门：默认无界（与 remote/tools 一致）；给了界就拦", async () => {
+    const { ex } = 假执行器()
+    手 = new 客户端的手(远端后端(ex), { 门: 远端门(远), 默认cwd: 远.get(), 记录: () => {} })
+    await 手.处理("fs/write_text_file", { sessionId: "s", path: "/tmp/随便.txt", content: "" })
+    const 圈 = new 客户端的手(远端后端(ex), {
+      门: 远端门({ ...远, 界: "/home/u/proj" }),
+      默认cwd: 远.get(),
+      记录: () => {},
+    })
+    const e = await 抓(圈.处理("fs/write_text_file", { sessionId: "s", path: "/tmp/随便.txt", content: "" }))
+    expect(e.code).toBe(-32602)
+    expect(e.message).toContain("/tmp/随便.txt")
+  })
+
+  it("相对路径按远端 cwd 解析——`解析远端路径` 的口径", async () => {
+    const { ex, 文件 } = 假执行器()
+    文件.set("/home/u/proj/r.txt", "相对的")
+    手 = new 客户端的手(远端后端(ex), { 门: 远端门(远), 默认cwd: 远.get(), 记录: () => {} })
+    expect(await 手.处理("fs/read_text_file", { sessionId: "s", path: "r.txt" })).toEqual({ content: "相对的" })
+  })
+})
+
+describe("影子翻译：agent 以为在本机影子目录，其实在远端", () => {
+  const 译 = 影子翻译("/local/shadow", "/home/u/proj")
+
+  it("以影子开头的路径换前缀；别的绝对路径原样放行", () => {
+    expect(译.路径("/local/shadow/a/b.txt")).toBe("/home/u/proj/a/b.txt")
+    expect(译.路径("/local/shadow")).toBe("/home/u/proj")
+    expect(译.路径("/data/raw/x.csv")).toBe("/data/raw/x.csv")
+    // **前缀相似不算**：/local/shadow2 不是影子目录
+    expect(译.路径("/local/shadow2/x")).toBe("/local/shadow2/x")
+  })
+
+  it("命令字符串里出现的影子路径也换", () => {
+    expect(译.命令("ls /local/shadow/data && cat /local/shadow/a.txt")).toBe(
+      "ls /home/u/proj/data && cat /home/u/proj/a.txt",
+    )
+    expect(译.命令("cd /local/shadow; ls")).toBe("cd /home/u/proj; ls")
+    expect(译.命令("ls /local/shadow2")).toBe("ls /local/shadow2")
+  })
+
+  it("包一层门：先翻译，再交给里面的门", () => {
+    const 内 = 远端门({ get: () => "/home/u/proj", set: () => {}, 界: "/home/u/proj" })
+    const 门 = 译.包(内)
+    expect(门.写("/local/shadow/out.txt")).toBe("/home/u/proj/out.txt")
+    expect(() => 门.写("/local/shadow/../x")).toThrow()
   })
 })

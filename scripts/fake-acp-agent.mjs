@@ -398,7 +398,8 @@ async function 处理(msg) {
         说(`【手·读】${JSON.stringify(读)}`)
         const 写 = await 调("fs/write_text_file", { sessionId: sid, path: `${cwd}/手-写.txt`, content: "假 agent 写的" })
         说(`【手·写】${JSON.stringify(写)}`)
-        const 越界 = await 调("fs/read_text_file", { sessionId: sid, path: "/etc/hostname" })
+        // **越界的是写，不是读**——读不设门（native 的口径，理由在 permissions.ts）
+        const 越界 = await 调("fs/write_text_file", { sessionId: sid, path: "/etc/dawn-不给写.txt", content: "" })
         说(`【手·越界】${JSON.stringify(越界)}`)
         const 开 = await 调("terminal/create", { sessionId: sid, command: "printf 终端通了", outputByteLimit: 4096 })
         说(`【手·开】${JSON.stringify(开)}`)

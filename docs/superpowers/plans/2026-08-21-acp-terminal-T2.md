@@ -32,7 +32,7 @@
 - Modify: `src/runtime/acp/hands.ts`
 - Test: `tests/runtime/acp-hands.test.ts`
 
-- [ ] **Step 1: 改测试——读放开、终端 cwd 放开、写仍拦、`data/raw` 拦**
+- [x] **Step 1: 改测试——读放开、终端 cwd 放开、写仍拦、`data/raw` 拦**
 
 把 `describe("路径门：与 native 的 gatedTools 同口径")` 整段换成：
 
@@ -101,12 +101,12 @@ const 建 = () => {
 
 import 加 `本机门`。超限那条用例里的 `new 客户端的手(...)` 同样改。
 
-- [ ] **Step 2: 跑，确认红**
+- [x] **Step 2: 跑，确认红**
 
 Run: `npx vitest run tests/runtime/acp-hands.test.ts`
 Expected: 编译错（`本机门` 不存在 / 选项形状不对）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 `hands.ts`：
 
@@ -165,17 +165,17 @@ interface 手的选项 {
 
 `relative` 不再用，从 import 里去掉。
 
-- [ ] **Step 4: 跑，确认绿；typecheck**
+- [x] **Step 4: 跑，确认绿；typecheck**
 
 Run: `npx vitest run tests/runtime/acp-hands.test.ts && npm run typecheck`
 Expected: 16 passed；typecheck 过（`runtime.ts` 那处 `new 客户端的手` 也要跟着改：`{ 门: 本机门(spec.workspace), 默认cwd: spec.workspace, 记录 }`）
 
-- [ ] **Step 5: 整条路的测试也得仍绿**
+- [x] **Step 5: 整条路的测试也得仍绿**
 
 Run: `npx vitest run tests/runtime/acp-runtime.test.ts`
 Expected: 29 passed（假 agent 那条「越界读 `/etc/hostname`」现在**读得到或读不到都不是 -32602 了**——把假 agent 里那一步改成越界**写** `/etc/dawn-不给写.txt`，用例断言改成匹配 `【手·越界】{"error":{"code":-32602,"message":"[^"]*dawn-不给写`）
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/runtime/acp/hands.ts src/runtime/acp/runtime.ts tests/runtime/acp-hands.test.ts tests/runtime/acp-runtime.test.ts scripts/fake-acp-agent.mjs
@@ -190,7 +190,7 @@ git commit -m "refactor(acp): 手的门改为注入策略，本机复用 permiss
 - Modify: `src/runtime/acp/hands.ts`
 - Test: `tests/runtime/acp-hands.test.ts`
 
-- [ ] **Step 1: 测试（假执行器）**
+- [x] **Step 1: 测试（假执行器）**
 
 追加：
 
@@ -296,9 +296,9 @@ describe("影子翻译：agent 以为在本机影子目录，其实在远端", (
 })
 ```
 
-- [ ] **Step 2: 跑，确认红**
+- [x] **Step 2: 跑，确认红**
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 `hands.ts` 追加：
 
@@ -388,7 +388,7 @@ export function 影子翻译(影子: string, 远端: string) {
 
 `客户端的手` 加一个可选 `翻译命令?: (s: string) => string` 到 `手的选项`，`开终端` 里拼好 `command` 后 `const 命令串 = this.opts.翻译命令?.(command) ?? command`，传给后端。
 
-- [ ] **Step 4: 跑，确认绿；typecheck；提交**
+- [x] **Step 4: 跑，确认绿；typecheck；提交**
 
 ```bash
 git add src/runtime/acp/hands.ts tests/runtime/acp-hands.test.ts
@@ -403,7 +403,7 @@ git commit -m "feat(acp): 远端后端、远端门（复用 解析远端路径�
 - Modify: `src/runtime/acp/runtime.ts`
 - Test: `tests/runtime/acp-runtime.test.ts`
 
-- [ ] **Step 1: 测试（假 agent + 假执行器）**
+- [x] **Step 1: 测试（假 agent + 假执行器）**
 
 ```ts
 describe("远端会话（T2）", () => {
@@ -457,9 +457,9 @@ describe("远端会话（T2）", () => {
 
 import 补 `existsSync`。
 
-- [ ] **Step 2: 跑，确认红**
+- [x] **Step 2: 跑，确认红**
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 `runtime.ts`：
 
@@ -518,9 +518,9 @@ import 补 `existsSync`。
 
 指纹 `AcpRuntime.指纹(cmd, spec.workspace)` 不变。
 
-- [ ] **Step 4: 跑全部 ACP 测试、typecheck、`npm test`**
+- [x] **Step 4: 跑全部 ACP 测试、typecheck、`npm test`**
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add src/runtime/acp/runtime.ts tests/runtime/acp-runtime.test.ts
@@ -531,12 +531,12 @@ git commit -m "feat(acp): 远端会话——影子目录、路径翻译、手打
 
 ### Task 4: 真机验证（准入规则 3）
 
-- [ ] **Step 1: 假服务器**——`npm run dev:mock` 里有 `造一台假服务器`（`src/remote/fake-ssh.ts`）：建一个远端会话、选 claude 那条 ACP agent（mock 模式下是假 agent 置 `FAKE_ACP_USE_HANDS`？否——mock 的 ACP agent 是假 agent，手动发话看它回「手·读」即可）。
-- [ ] **Step 2: 真服务器**——需要作者放行 ssh 或在会话里 `! ssh …`。用 `scratchpad/real/run.mts` 的思路，把 `spec.remote` 接上真 `RemoteExecutor`，跑四步任务；判据：服务器目录里出现文件、影子目录空、对话里路径是服务器路径。
-- [ ] **Step 3: 红了先怀疑自己**。
+- [x] **Step 1: 假服务器**——`npm run dev:mock` 里有 `造一台假服务器`（`src/remote/fake-ssh.ts`）：建一个远端会话、选 claude 那条 ACP agent（mock 模式下是假 agent 置 `FAKE_ACP_USE_HANDS`？否——mock 的 ACP agent 是假 agent，手动发话看它回「手·读」即可）。
+- [x] **Step 2: 真服务器**——需要作者放行 ssh 或在会话里 `! ssh …`。用 `scratchpad/real/run.mts` 的思路，把 `spec.remote` 接上真 `RemoteExecutor`，跑四步任务；判据：服务器目录里出现文件、影子目录空、对话里路径是服务器路径。
+- [x] **Step 3: 红了先怀疑自己**。
 
 ---
 
 ### Task 5: 开发历史
 
-- [ ] 回填上一条 hash；顶部追加 T2 条目（Type feat；What 列 Task 1–3；Impact 写清「T1 的门按 native 口径放宽：读不设门、终端 cwd 不拦」；Verification 列测试数与真机结果——真机没验就**如实写没验**）。
+- [x] 回填上一条 hash；顶部追加 T2 条目（Type feat；What 列 Task 1–3；Impact 写清「T1 的门按 native 口径放宽：读不设门、终端 cwd 不拦」；Verification 列测试数与真机结果——真机没验就**如实写没验**）。

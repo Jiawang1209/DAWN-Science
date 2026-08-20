@@ -43,10 +43,19 @@
 
 ## 变更日志
 
-### 2026-08-21 — ACP 客户端的手（T1，本机版）：claude 的读/改/跑全部经过 DAWN
+### 2026-08-21 — ACP 客户端的手（T2）：claude 的手伸到服务器上
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 规格 `2026-08-20-acp-terminal-design.md` T2。T1 之后手在本机；远端会话选 claude 仍是本机干活。
+- **What**: `hands.ts` 的门改为注入策略——本机复用 `policy/permissions.看风险`（读不设门、写圈工作区并护 `data/raw`），远端复用 `remote/tools.解析远端路径`（默认无界）；新增 `远端后端`（读写走 `RemoteLike`，命令走一次 `exec`，env 变 `export` 前缀，不流式——`wait_for_exit` 之后 `output` 正是 claude 的用法）与 `影子翻译`。`AcpRuntime` 有 `spec.remote` 时：适配器起在 `<sessionDir>/acp-shadow/`（空目录，SDK 要 cwd 本机存在），`session/new` 的 `cwd` 也给影子，路径与命令串里的影子前缀换成远端 cwd，`_meta.systemPrompt.append` 告诉它真目录在服务器。
+- **Impact**: **T1 的门按 native 口径放宽**：读不再限工作区、终端 cwd 不拦——与 native 四工具同一判据。远端会话里 claude 类 ACP agent 的读/写/命令全部落在服务器；codex 不借手，仍在本机（T3 在界面上把它从远端建会话里拿掉）。本机会话行为不变。
+- **Verification**: `acp-hands.test.ts` 24 条、`acp-runtime.test.ts` 30 条（新增远端一条：假 agent + 假执行器，写落在「远端」、影子目录空、`_meta` 里有影子 cwd 与 system prompt）；`npm test` 1861 全绿、typecheck 过。**真 claude-code-acp** 接一个把 `/srv/fake` 映射到本机目录的 `RemoteLike` 跑五步：它报的工作目录是 `/srv/fake/proj`，读/`ls`/`grep`/`mkdir`/写六次调用全部打到执行器，影子目录零文件。**真 ssh 服务器上没验**（作者机器的 ssh 被权限拦住）——差的只是 `RemoteExecutor` 本身，而它是 native 远端工具一直在用的那一个。
+
+### 2026-08-21 — ACP 客户端的手（T1，本机版）：claude 的读/改/跑全部经过 DAWN
+
+- **Type**: feat
+- **Commit**: `16753e9`…`a2e526b`（计划勾全 `5c844ad`）
 - **Motivation**: 规格 `2026-08-20-acp-terminal-design.md` T1。此前握手声明「没有 fs/terminal」，claude-code-acp 只能用自带工具直接摸磁盘，DAWN 对它干了什么一无所知，也没法在 T2 把它的手伸到服务器上。
 - **What**: 新增 `src/runtime/acp/hands.ts`（七个客户端方法、与 native 同口径的路径门、终端输出超限从头丢并记数）；`AcpRuntime` 握手声明 `fs`+`terminal`，`session/new`/`load` 带 `_meta.claudeCode.options.disallowedTools: [Grep, Glob, NotebookEdit]`，④ 分支由「一律拒绝」改为交给手，`stop` 释放终端；假 agent 加 `FAKE_ACP_USE_HANDS` / `FAKE_ACP_ECHO_NEW_PARAMS`。**顺带修了一个旧 bug**（`ab1eaed`）：`收一条` 只看 id 不看 `method`，对方的第 3 个请求与我们的第 3 个请求 id 相同时被当成回复——真 claude 第二次问权限就撞上了，症状是「做了一半回合就收口」。假 agent 的 id 此前从 1000/5000 起，恰好盖住了这个洞，现改为从 1 起。
 - **Impact**: claude 类 ACP agent 的文件读写与命令现在经过运行时；codex 不读这些能力，行为不变（真机验过）。本机会话的路径门收紧为「工作区之内」——与 native 一致。文件事实仍由 git 反推（B1），未改。

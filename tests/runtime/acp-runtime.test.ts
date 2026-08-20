@@ -9,6 +9,7 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import { join } from "node:path"
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { AcpRuntime } from "../../src/runtime/acp/runtime.js"
 import type { AgentEvent, SessionSpec } from "../../src/runtime/types.js"
@@ -741,5 +742,56 @@ describe("用量记在谁头上", () => {
       { kind: "turn_usage" }
     >
     expect(u.model).toBe("codex-acp")
+  })
+})
+
+describe("客户端的手（T1）", () => {
+  /** 用一个临时目录当工作区：假 agent 要在里面读、写 */
+  const 带工作区 = (id: string) => {
+    const 工作区 = mkdtempSync(join(tmpdir(), "dawn-acp-hands-"))
+    writeFileSync(join(工作区, "手-读.txt"), "读到了")
+    return { s: { ...spec(id), workspace: 工作区 } as SessionSpec, 工作区 }
+  }
+
+  it("**握手声明了 fs 与 terminal**，假 agent 七个方法各调一次都有回音", async () => {
+    const rt = 起一个({ FAKE_ACP_USE_HANDS: "1" })
+    const { s, 工作区 } = 带工作区("h1")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "用手")
+    await 等到(收, (e) => e.kind === "idle", "回合收口")
+    const 话 = 收
+      .filter((e): e is Extract<AgentEvent, { kind: "output" }> => e.kind === "output")
+      .map((e) => e.data)
+      .join("")
+
+    expect(话).not.toContain("客户端没声明")
+    expect(话).toContain('【手·读】{"result":{"content":"读到了"}}')
+    expect(话).toContain('【手·写】{"result":{}}')
+    expect(readFileSync(join(工作区, "手-写.txt"), "utf8")).toBe("假 agent 写的")
+    // 越界：code 要是 -32602，且话里有那条路径
+    expect(话).toMatch(/【手·越界】\{"error":\{"code":-32602,"message":"[^"]*\/etc\/hostname/)
+    expect(话).toMatch(/【手·开】\{"result":\{"terminalId":"t\d+"\}\}/)
+    expect(话).toContain('【手·退】{"result":{"exitCode":0}}')
+    expect(话).toContain('"output":"终端通了","truncated":false,"exitStatus":{"exitCode":0}')
+    expect(话).toContain('【手·放】{"result":{}}')
+  })
+
+  it("session/new 带上 `_meta.claudeCode.options.disallowedTools`", async () => {
+    const rt = 起一个({ FAKE_ACP_ECHO_NEW_PARAMS: "1" })
+    const s = spec("h2")
+    await rt.start(s)
+    关掉 = () => rt.stop(s.sessionId)
+    const 收: AgentEvent[] = []
+    rt.attach(s.sessionId, (e) => 收.push(e))
+    rt.write(s.sessionId, "看参数")
+    const 话 = await 等到(
+      收,
+      (e) => e.kind === "output" && e.data.includes("【session/new 参数】"),
+      "假 agent 复述参数",
+    )
+    expect(话.kind === "output" && 话.data).toContain('"disallowedTools":["Grep","Glob","NotebookEdit"]')
   })
 })

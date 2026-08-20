@@ -43,10 +43,19 @@
 
 ## 变更日志
 
+### 2026-08-21 — ACP 客户端的手（T1，本机版）：claude 的读/改/跑全部经过 DAWN
+
+- **Type**: feat
+- **Commit**: 待回填
+- **Motivation**: 规格 `2026-08-20-acp-terminal-design.md` T1。此前握手声明「没有 fs/terminal」，claude-code-acp 只能用自带工具直接摸磁盘，DAWN 对它干了什么一无所知，也没法在 T2 把它的手伸到服务器上。
+- **What**: 新增 `src/runtime/acp/hands.ts`（七个客户端方法、与 native 同口径的路径门、终端输出超限从头丢并记数）；`AcpRuntime` 握手声明 `fs`+`terminal`，`session/new`/`load` 带 `_meta.claudeCode.options.disallowedTools: [Grep, Glob, NotebookEdit]`，④ 分支由「一律拒绝」改为交给手，`stop` 释放终端；假 agent 加 `FAKE_ACP_USE_HANDS` / `FAKE_ACP_ECHO_NEW_PARAMS`。**顺带修了一个旧 bug**（`ab1eaed`）：`收一条` 只看 id 不看 `method`，对方的第 3 个请求与我们的第 3 个请求 id 相同时被当成回复——真 claude 第二次问权限就撞上了，症状是「做了一半回合就收口」。假 agent 的 id 此前从 1000/5000 起，恰好盖住了这个洞，现改为从 1 起。
+- **Impact**: claude 类 ACP agent 的文件读写与命令现在经过运行时；codex 不读这些能力，行为不变（真机验过）。本机会话的路径门收紧为「工作区之内」——与 native 一致。文件事实仍由 git 反推（B1），未改。
+- **Verification**: `tests/runtime/acp-hands.test.ts` 15 条、`acp-runtime.test.ts` 新增 2 条（对着假 agent 起真进程）；`npm test` 1851 全绿、`typecheck` 过；ACP 相关 e2e 12 条全绿；用产品 `AcpRuntime` 起**真** claude-code-acp 跑四步任务（读、写、`ls`、搜索），七种客户端方法共 11 次调用、零错误、文件落地；真 codex-acp 回话与用量正常。
+
 ### 2026-08-20 — ACP agent 在服务器上干活：设计定案（分支 `acp-terminal`）
 
 - **Type**: docs
-- **Commit**: `953712b`（修订：待回填）
+- **Commit**: `953712b`（修订 `7144f80`，计划 `16fe2ba`）
 - **Motivation**: 连着服务器时选 codex / claude code，会话看起来是远端的，实际跑在本机目录（`AcpRuntime` 不认 `spec.remote`）。作者问「为什么 Agent + API 能在服务器上执行而 ACP 不能」，并要求两条都做到。
 - **What**: 新增 `docs/superpowers/specs/2026-08-20-acp-terminal-design.md`。拿真适配器量出：claude-code-acp 会把读/改/跑借给客户端（`fs/*`、`terminal/*`），Grep 漏网可用 `session/new` 的 `_meta.claudeCode.options.disallowedTools` 堵上，但 `cwd` 必须本机存在；codex-acp 1.6.2 完全不借手，但核心经 `CODEX_PATH` 起、stdio 上 JSON-RPC，可用中继把 `codex app-server` 跑到服务器上。定案：claude 走「客户端的手 + 影子目录 + 路径翻译」；codex 那条要往服务器放二进制，**作者不允许**，改为标「本机运行」、远端建会话不列出；分 T1–T3。
 - **Impact**: 纯文档；代码未动。`cli` 类 agent 在远端建会话时将不再列出（T4）。

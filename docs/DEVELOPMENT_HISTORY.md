@@ -46,11 +46,11 @@
 ### 2026-08-20 — ACP agent 在服务器上干活：设计定案（分支 `acp-terminal`）
 
 - **Type**: docs
-- **Commit**: 待回填
+- **Commit**: `953712b`（修订：待回填）
 - **Motivation**: 连着服务器时选 codex / claude code，会话看起来是远端的，实际跑在本机目录（`AcpRuntime` 不认 `spec.remote`）。作者问「为什么 Agent + API 能在服务器上执行而 ACP 不能」，并要求两条都做到。
-- **What**: 新增 `docs/superpowers/specs/2026-08-20-acp-terminal-design.md`。拿真适配器量出：claude-code-acp 会把读/改/跑借给客户端（`fs/*`、`terminal/*`），Grep 漏网可用 `session/new` 的 `_meta.claudeCode.options.disallowedTools` 堵上，但 `cwd` 必须本机存在；codex-acp 1.6.2 完全不借手，但核心经 `CODEX_PATH` 起、stdio 上 JSON-RPC，可用中继把 `codex app-server` 跑到服务器上。定案：claude 走「客户端的手 + 影子目录 + 路径翻译」，codex 走「本机中继 + 二进制分发 + 凭据显式确认」；分 T1–T4。
+- **What**: 新增 `docs/superpowers/specs/2026-08-20-acp-terminal-design.md`。拿真适配器量出：claude-code-acp 会把读/改/跑借给客户端（`fs/*`、`terminal/*`），Grep 漏网可用 `session/new` 的 `_meta.claudeCode.options.disallowedTools` 堵上，但 `cwd` 必须本机存在；codex-acp 1.6.2 完全不借手，但核心经 `CODEX_PATH` 起、stdio 上 JSON-RPC，可用中继把 `codex app-server` 跑到服务器上。定案：claude 走「客户端的手 + 影子目录 + 路径翻译」；codex 那条要往服务器放二进制，**作者不允许**，改为标「本机运行」、远端建会话不列出；分 T1–T3。
 - **Impact**: 纯文档；代码未动。`cli` 类 agent 在远端建会话时将不再列出（T4）。
-- **Verification**: 探针在真适配器上各跑四轮（见规格 §一）；codex 经 ssh 那一段尚未在真服务器上验（作者的机器要作者放行），规格里列为待验两条。
+- **Verification**: 探针在真适配器上各跑四轮（见规格 §一）；codex 经 ssh 那一段因作者否决未再验。
 
 ### 2026-08-20 — 概览收窄成「当前这段会话」；侧栏「设置」钉底
 

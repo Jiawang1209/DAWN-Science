@@ -8,8 +8,8 @@
 答：native 那条脑子在本机（pi 的 loop 调 API）、手经 `RemoteExecutor` 伸到服务器。
 **ACP 的 agent 是脑子和手焊在一个进程里的**，所以要分别想办法把手拆出来。
 
-**作者定的范围**：claude 与 codex **两条都要**。服务器大概率装不了这两样，
-所以前提是**服务器上只多文件、不装东西**（sshd 之外不要求任何软件）。
+**作者定的范围**：claude 与 codex 两条都想要；**服务器上不装东西、也不放文件**（sshd 之外不要求任何东西）。
+这条约束下 codex 做不到（见 §二），定案是 claude 做全、codex 标「本机运行」。
 
 ---
 
@@ -63,25 +63,18 @@
 **为什么不用 `.claude/settings.json` 的 `permissions.deny`**：验过也成立，但它要落在一个目录里，
 而那个目录的归属（用户的工作区？我们的影子？）就是一个新的作用域问题。`_meta` 是按会话给的，没有落盘。
 
-### codex：手整个搬到服务器，脑子留在本机
+### codex：这一版不上服务器（作者 2026-08-20 定）
 
-codex-acp 的 JS 层（协议翻译、与 OpenAI 的会话）留在本机；`CODEX_PATH` 指向**中继**，
-中继把 stdio 接到服务器上的 `codex app-server`。服务器上只需要一个二进制文件。
+codex 的读写与 shell 都长在 Rust 核心里，适配器不借手。把核心跑到服务器上
+在技术上是通的（`CODEX_PATH` 指向中继、stdio 桥到 ssh、`session/new` 的 `cwd` 给服务器路径，
+本地已验到 `CODEX_PATH` 这一层），**但要往服务器放一个二进制文件，作者明确不允许**。
 
-| 层 | 决定 |
-|---|---|
-| 二进制从哪来 | `@openai/codex-linux-{x64,arm64}` npm 包里那一个文件。版本跟着 codex-acp 声明的 `@openai/codex` 走，**不跟本机装的 codex**（本机 0.146，包要 0.148——两套版本各自说清） |
-| 放哪 | 服务器 `~/.dawn/bin/codex-<version>`；`uname -m` 定平台；已存在且大小一致就不传 |
-| 传之前 | **显式确认**：「要往 `<label>` 传 codex 二进制（NN MB）」，一次一台，记在 `remote_connections` 上，不是配置文件 |
-| 中继 | 本机一个 unix socket / Windows 命名管道，由主进程服务；`CODEX_PATH` 是一个用 Electron-as-Node 跑的小脚本，把自己的 stdio 接到那个 socket。主进程这一端把 socket 桥到 `RemoteExecutor` 上一条 `exec("CODEX_HOME=… ~/.dawn/bin/codex-<v> app-server")` 的 channel。**复用已经开着的 ssh 连接**——不再要一次密码、不依赖系统 `ssh` 二进制（Windows） |
-| 凭据 | 两种，**都要用户显式选**，默认哪种都不给：① 把本机 `~/.codex/auth.json` 送到服务器 `~/.dawn/codex-home/auth.json`（0600），`CODEX_HOME` 指它；② `OPENAI_API_KEY` 经 exec 的环境前缀传过去。界面上写明「服务器能看到这份凭据」。claude 那条没有这个问题，要在对比里说出来 |
-| `session/new` | `cwd: remoteCwd`——直接给服务器路径，app-server 在服务器上 |
-| 杀 | 中继断开 = channel 关；`RemoteExecutor` 按 PID 杀进程组 |
+没有二进制的替代只有一个半吊子：MCP 给它一套远端读/写/跑，再靠 `session/request_permission`
+拒掉它自带的写与命令。**读拦不住**——`ls`/`cat` 这类它当可信命令自动放行，不来问。
+结果是读本机、写远端，一半对一半错。这是静默错位，不做。
 
-**待在真服务器上验的两条**（本机 ssh 不通，作者的服务器要作者放行；本地已验到 `CODEX_PATH` 这一层）：
-
-1. codex-acp 的 JS 层有没有在本机摸 `cwd`（比如 `existsSync`）。摸了就也要一个影子目录。
-2. `app-server` 在 musl/glibc 服务器上起得来、`CODEX_HOME` 认得到。
+**定案**：codex 明确标为「在本机运行」。远端建会话时**不列出**（与 `cli` 类同一口径）。
+哪天上游适配器也借手了，它自然走 claude 那条路，我们不用改。
 
 ### 两条共用的
 
@@ -89,7 +82,7 @@ codex-acp 的 JS 层（协议翻译、与 OpenAI 的会话）留在本机；`COD
 - **账本**：`fs/write_text_file` 经过我们，claude 的 `filesWritten` 可以从这里记**真的**，
   不必从 git 反推（B1 路线 C）。**这一版不改**——两套一起上会打架（`wiring.ts:542` 的理由）。记在这里，下一轮处理。
 - **模拟后端**：`scripts/mock-inference-server.mjs` 里的假 ACP agent**同一次改动里**学会发 `fs/*`、`terminal/*`（准入规则 1）。
-- **出声**：远端会话里 `kind: cli` 的 agent 仍跑本机——**建会话的菜单里不列出**（准入规则里「看不见等于不存在」的反面：能看见的必须是真的）。
+- **出声**：远端会话里 `kind: cli` 与 codex 仍跑本机——**建会话的菜单里不列出**（「看不见等于不存在」的反面：能看见的必须是真的）。怎么判定一个 ACP agent「借不借手」：**握手判不出来**——ACP 里 agent 不声明「我会用客户端的 fs/terminal」，所以按 agent 定义里一个显式标记 `remoteCapable`：预置的 claude 条目为真、codex 为假，自定义条目默认为假（缺失不等于支持）。
 
 ---
 
@@ -99,8 +92,7 @@ codex-acp 的 JS 层（协议翻译、与 OpenAI 的会话）留在本机；`COD
 |---|---|---|
 | T1 | `AcpRuntime` 实现 `fs/*`、`terminal/*`（本机版），握手改能力，`_meta` 给 disallowedTools，假 agent 跟上 | 单元：七种方法各一条；e2e：mock 模式下 claude 类 agent 的「读/改/跑」经过运行时 |
 | T2 | 接 `spec.remote`：影子目录、路径翻译、路径门、远端执行器 | 单元：翻译的双向与「不以影子开头原样放行」；真服务器上跑一遍探针同款任务，服务器目录被改、本机影子目录没动 |
-| T3 | codex 中继 + 二进制分发 + 凭据确认 | 真服务器上同款任务；断开连接时服务器上没有孤儿 `codex app-server` |
-| T4 | 界面：远端建会话时 `cli` 不列；codex 的两处确认；设置里 ACP 那一格写清「claude 不需要凭据上服务器 / codex 需要」 | 设计契约扫描；视觉基线看 diff |
+| T3 | 界面：远端建会话时只列「手能到服务器」的 agent（native、claude 类 ACP）；codex / `cli` 不列，并在设置里 ACP 那一格说明原因 | 设计契约扫描；视觉基线看 diff |
 
 T1 不碰远端，任何时候都能合；T2 之后本机会话的行为**不变**（影子目录只在 `spec.remote` 有时启用）。
 
@@ -110,4 +102,4 @@ T1 不碰远端，任何时候都能合；T2 之后本机会话的行为**不变
 
 - 不给 codex 塞一套「远端文件 / 远端 shell」MCP 工具再靠提示词叫它别用自带的——它会忘，忘了就是静默写到本机。
 - 不把整个 claude-code-acp 搬到服务器——要 Node、要登录态，作者明说服务器装不了。
-- 不把 `~/.codex/auth.json` 默认送上服务器。
+- 不往服务器放任何文件（二进制、凭据都不行）——作者定的。

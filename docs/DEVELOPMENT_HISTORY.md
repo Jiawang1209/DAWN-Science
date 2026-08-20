@@ -43,10 +43,19 @@
 
 ## 变更日志
 
-### 2026-08-21 — ACP 客户端的手（T2）：claude 的手伸到服务器上
+### 2026-08-21 — ACP 客户端的手（T3）：远端会话只收手能到服务器的 agent
 
 - **Type**: feat
 - **Commit**: 待回填
+- **Motivation**: 规格 `2026-08-20-acp-terminal-design.md` T3。远端「新对话」此前取配置里第一个 agent，第一个是 codex-acp 时远端会话静默变成本机 codex；`createTask({connectionId})` 也什么 agent 都收。
+- **What**: `AcpAgentSchema` 加 `remoteCapable`（缺省假）；判据只住 `schema.能上服务器`（native 真、acp 看标记、cli/kernel/pty 假——它们的运行时不认 `spec.remote`）。后端 `createTask` 带 `connectionId` 时在连服务器之前拒绝并说清；`getProviders` 给 acp 的 `remoteCapable`；`addAcpAgent` 透传、写入文件时为真才写一行。界面：`远端能用的agentIds`，远端新建取其第一个，远端会话里 pill 的「新建会话」只列它；一个都没有时出声。设置里预置两条写明「只在本机运行」/「手能到服务器」，claude-code-acp 一键接入带 `remoteCapable: true`；自定义默认只在本机。
+- **Impact**: 远端任务不再可能落到本机干活的 agent 上——以前能建的 codex-acp/cli/kernel 远端任务现在被拒（出声）。本机任务不受影响。
+- **Verification**: 单测 `tests/config/writer.test.ts` +1、`tests/workbench/remote-agent-gate.test.ts` 3 条；`npm test` 1865 全绿、typecheck 过、UI 契约 476 条过；e2e `remote-connections` 新增一条（第一位放不借手的假 ACP，点「新对话」建出的是 API 那一路；硬塞走后端回「到不了服务器」），remote-connections / acp-setup / agent-pill / acp-agent 共 46 条全绿。视觉基线「命令面板·亮色」红过一次，diff 只在面板上下边缘，重跑 4 次与 main 上同条都绿——抖动，**未重存**。
+
+### 2026-08-21 — ACP 客户端的手（T2）：claude 的手伸到服务器上
+
+- **Type**: feat
+- **Commit**: `2ab2d84`、`28f4ca7`（历史 `f7e5db1`）
 - **Motivation**: 规格 `2026-08-20-acp-terminal-design.md` T2。T1 之后手在本机；远端会话选 claude 仍是本机干活。
 - **What**: `hands.ts` 的门改为注入策略——本机复用 `policy/permissions.看风险`（读不设门、写圈工作区并护 `data/raw`），远端复用 `remote/tools.解析远端路径`（默认无界）；新增 `远端后端`（读写走 `RemoteLike`，命令走一次 `exec`，env 变 `export` 前缀，不流式——`wait_for_exit` 之后 `output` 正是 claude 的用法）与 `影子翻译`。`AcpRuntime` 有 `spec.remote` 时：适配器起在 `<sessionDir>/acp-shadow/`（空目录，SDK 要 cwd 本机存在），`session/new` 的 `cwd` 也给影子，路径与命令串里的影子前缀换成远端 cwd，`_meta.systemPrompt.append` 告诉它真目录在服务器。
 - **Impact**: **T1 的门按 native 口径放宽**：读不再限工作区、终端 cwd 不拦——与 native 四工具同一判据。远端会话里 claude 类 ACP agent 的读/写/命令全部落在服务器；codex 不借手，仍在本机（T3 在界面上把它从远端建会话里拿掉）。本机会话行为不变。

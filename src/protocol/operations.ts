@@ -241,6 +241,11 @@ export const OPERATIONS = {
            * **缺省 = 没声明**，那时界面不显示模型选择器——不假装有得选。
            */
           models: z.array(z.string()).optional(),
+          /**
+           * acp：它把手借给客户端吗（T3）。界面据此决定远端建会话列不列它。
+           * **只有 acp 有这个字段**——native 不用标（总能上），别的总不能。
+           */
+          remoteCapable: z.boolean().optional(),
         }),
       ),
       /**
@@ -636,6 +641,8 @@ export const OPERATIONS = {
         /** 适配器的可执行文件。**不是 `claude` / `codex` 本身** */
         command: z.string().min(1),
         args: z.array(z.string()).default([]),
+        /** 它把手借给客户端吗——远端会话只能用这样的（schema 里那段）。缺省假 */
+        remoteCapable: z.boolean().optional(),
       })
       .strict(),
     response: z.object({ agentId: z.string().min(1) }).strict(),

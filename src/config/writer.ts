@@ -286,6 +286,8 @@ export interface NewAcpAgent {
   /** 适配器的可执行文件。**不是 `claude` / `codex` 本身**——见 schema 里那段 */
   command: string
   args: string[]
+  /** 它把手借给客户端吗（schema 里那段）。**缺省假**，为真才写进文件 */
+  remoteCapable?: boolean
 }
 
 /**
@@ -402,6 +404,8 @@ export function addAcpAgent(file: string, agent: NewAcpAgent): ProviderRegistry 
     `    command: ${引起来(agent.command.trim())}`,
     `    args: [${agent.args.map(引起来).join(", ")}]`,
     `    capabilities: [chat, exec]`,
+    // 假是缺省，不写——少一行别人读配置时少一个要查的词
+    ...(agent.remoteCapable ? [`    remoteCapable: true`] : []),
   ]
   const 新文 = [...lines.slice(0, 末), ...块, ...lines.slice(末)].join("\n")
 

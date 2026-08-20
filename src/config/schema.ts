@@ -212,6 +212,17 @@ const AcpAgentSchema = z
     command: z.string().min(1),
     args: z.array(z.string()).default([]),
     capabilities: z.array(CapabilitySchema),
+    /**
+     * **这台适配器会不会把手借给我们**（T3，2026-08-21）。
+     *
+     * ACP 允许 agent 把读写与命令交给客户端（`fs/*`、`terminal/*`），DAWN 接了这条
+     * （`runtime/acp/hands.ts`）。借手的 agent 在远端会话里手能伸到服务器；
+     * 不借的（codex-acp 1.6.2，量过）只能在本机干活。
+     *
+     * **握手判不出来**——ACP 里 agent 不声明这一点，所以由配置显式标。
+     * **缺省假**：缺失不等于支持。预置的 claude-code-acp 为真。
+     */
+    remoteCapable: z.boolean().default(false),
   })
   .strict()
 
@@ -223,6 +234,22 @@ export const AgentDefSchema = z.discriminatedUnion("kind", [
   AcpAgentSchema,
 ])
 export type AgentDef = z.infer<typeof AgentDefSchema>
+
+/**
+ * 这个 agent 的手到不到得了服务器——**远端会话只能用这些**。
+ *
+ * - native：四个工具经 `RemoteExecutor`，到得了。
+ * - acp：看 `remoteCapable`。
+ * - cli / kernel / pty：运行时不认 `spec.remote`（`grep -c remote` 为 0），
+ *   起在远端任务里也是本机干活——所以是假。
+ *
+ * 判据只住这一处：后端拒、界面滤，都调它。
+ */
+export function 能上服务器(def: Pick<AgentDef, "kind"> & { remoteCapable?: boolean | undefined }): boolean {
+  if (def.kind === "native") return true
+  if (def.kind === "acp") return def.remoteCapable === true
+  return false
+}
 
 /**
  * 一个 provider 的**连接设置**（2026-08-10）。

@@ -17,6 +17,7 @@ import {
   removeAgent,
   setProviderConnection,
 } from "../../src/config/writer.js"
+import { 能上服务器 } from "../../src/config/schema.js"
 
 const dirs: string[] = []
 afterEach(() => {
@@ -230,6 +231,21 @@ describe("加一个 ACP 适配器", () => {
       command: "npx",
       args: ["-y", "@agentclientprotocol/codex-acp"],
     })
+  })
+
+  /**
+   * **手能不能到服务器**（T3，2026-08-21）。缺省假——「缺失不等于支持」。
+   * claude-code-acp 借手（读写、命令走我们），codex-acp 不借；预置那两条据此各写各的。
+   */
+  it("`remoteCapable` 为真才写进去；不给就读回 false", () => {
+    const f = 配置()
+    const reg = addAcpAgent(f, { agentId: "claude-acp", command: "npx", args: ["-y", "y"], remoteCapable: true })
+    expect(reg.agents["claude-acp"]).toMatchObject({ kind: "acp", remoteCapable: true })
+    expect(readFileSync(f, "utf8")).toContain("remoteCapable: true")
+    const reg2 = addAcpAgent(f, { agentId: "codex-acp", command: "npx", args: ["-y", "x"] })
+    expect(reg2.agents["codex-acp"]).toMatchObject({ kind: "acp", remoteCapable: false })
+    expect(能上服务器(reg2.agents["claude-acp"]!)).toBe(true)
+    expect(能上服务器(reg2.agents["codex-acp"]!)).toBe(false)
   })
 
   /** 别人手写的东西一个字节都不许动——与 native 那条同一套纪律 */

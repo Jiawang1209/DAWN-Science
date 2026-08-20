@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 坞里「文件树 ↔ 预览」之间能拖
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「面板中的文件和预览之间，应该可以挪动，现在没办法挪动。」* 此前两者的分界是写死的（宽坞 `minmax(180px, 220px)` 列，窄坞 `2fr/3fr` 行）。
+- **What**: `SideSash` 搬出 `views.tsx` 到 `src/ui/sash.tsx`（`views.tsx` 转发，调用点不改），新增 `orientation`（横缝，上下拖，键盘 ↑↓）与 `attach="edge"`（贴在父元素尾边，不按数字定位）。`files.tsx` 树外面套 `.file-tree-box`（缝不能贴在 `overflow:auto` 的 `nav` 上——外沿 4px 被裁掉点不到；盒子 `z-index:1`，否则网格里后面的预览会盖住那 2px）。宽坞拖列宽、窄坞拖行高，两个数两个键：`dawn.global.file-tree-width` / `-height`，`right-dock.ts` 里 `setFileTreeWidth/Height`、`loadFileTree`（`main.tsx` 启动时读），上界按容器此刻尺寸夹（预览至少留 160）。
+- **Impact**: 纯新增；没拖过时的缺省与原来一样（宽 220 / 高 200）。
+- **Verification**: 新 e2e「窄坞上下拖、宽坞左右拖，都记得住」（拖、量 `boundingBox`、reload 后仍是那个数）；files / sidebar-size / remote-connections 44 条全绿；视觉基线 10 张全绿；`tests/ui` 477 全绿。
+
 ### 2026-08-21 — 项目里的会话能逐段多选
 
 - **Type**: fix

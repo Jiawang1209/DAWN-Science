@@ -332,6 +332,35 @@ pre {
 .side-sash:focus-visible {
   outline: none;
 }
+/**
+ * 横缝与贴边缝（2026-08-21，坞里「树 ↔ 预览」）。
+ * `edge`：贴在父元素的尾边，父元素要 `position: relative`；`horizontal`：上下拖。
+ */
+.side-sash.horizontal {
+  top: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 4px;
+  cursor: row-resize;
+}
+.side-sash.horizontal::before {
+  left: 0;
+  right: 0;
+  top: 50%;
+  bottom: auto;
+  width: auto;
+  height: 1px;
+  transform: translateY(-50%);
+}
+.side-sash.edge:not(.horizontal) {
+  left: auto;
+  right: -2px;
+}
+.side-sash.edge.horizontal {
+  bottom: -2px;
+}
 .app-shell.agent-first .body { grid-template-columns: minmax(0, 1fr); }
 .app-shell.agent-first .sidebar { display: none; }
 
@@ -1779,7 +1808,8 @@ pre {
    * 而这一屏的全部意义是把省下来的每一像素给预览。
    * 180 是文件名开始被截的地方（本地量的）。
    */
-  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  /* 列宽由内联样式给（人拖的，2026-08-21）；这里的是没拖过时的缺省 */
+  grid-template-columns: 220px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "where where"
@@ -1787,7 +1817,7 @@ pre {
     "xfer xfer";
 }
 .files-wide .files-where { grid-area: where; }
-.files-wide .file-tree {
+.files-wide .file-tree-box {
   grid-area: tree;
   /* 分界线跟着方向转：左右排时它在树的右边，不在下边 */
   border-bottom: none;
@@ -1796,9 +1826,21 @@ pre {
 .files-wide .xfer { grid-area: xfer; }
 .files-wide .file-preview { grid-area: preview; }
 
-.file-tree {
-  overflow: auto;
+/* 树的外层盒子：尾边那条能拖的缝贴在它身上（树本身 overflow:auto，贴不住） */
+.file-tree-box {
+  position: relative;
+  /* 网格里的孩子按 DOM 次序盖：后面的预览会盖住贴在这盒子外沿那 2px 缝，所以抬一层 */
+  z-index: var(--z-sibling-lift);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
   border-bottom: 1px solid var(--dawn-stroke-4);
+}
+.file-tree {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding: var(--dawn-space-2) 0;
 }
 

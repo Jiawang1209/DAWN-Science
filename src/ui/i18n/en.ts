@@ -280,6 +280,8 @@ export const EN: Readonly<Record<string, string>> = {
   "去设置": "Open settings",
   "返回": "Back",
   "调整侧栏宽度": "Resize sidebar",
+  "调整文件树宽度": "Resize file tree width",
+  "调整文件树高度": "Resize file tree height",
   "收起侧边栏": "Hide sidebar",
   "展开侧边栏": "Show sidebar",
 

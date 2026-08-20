@@ -34,6 +34,9 @@ import {
 import { 文件类按名字, type 文件类 } from "./file-kind.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
+import { useStore } from "@nanostores/react"
+import { SideSash } from "./sash.js"
+import { $fileTreeHeight, $fileTreeWidth, FILE_TREE_MIN, setFileTreeHeight, setFileTreeWidth } from "./state/right-dock.js"
 import { 年月日时分 } from "./format.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
@@ -661,8 +664,28 @@ export function FilesView({
    */
   const [手动刷新, 设手动刷新] = useState(0)
   const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
+  const 树宽 = useStore($fileTreeWidth)
+  const 树高 = useStore($fileTreeHeight)
+  const 容器 = useRef<HTMLDivElement>(null)
+  const 容器宽 = () => 容器.current?.clientWidth ?? 0
+  // 减掉「这是哪台机器」那一条：它占的是第一行，树从第二行起
+  const 容器高 = () =>
+    (容器.current?.clientHeight ?? 0) -
+    (容器.current?.querySelector<HTMLElement>(".files-where")?.offsetHeight ?? 0)
   return (
-    <div className={铺开 ? "files-view files-wide" : "files-view"}>
+    <div
+      ref={容器}
+      className={铺开 ? "files-view files-wide" : "files-view"}
+      /**
+       * **树那一栏的尺寸由人拖**（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动」*）。
+       * 宽坞是列宽、窄坞是行高——两个数两个键，上下界按容器此刻的尺寸夹。
+       */
+      style={
+        铺开
+          ? { gridTemplateColumns: `${树宽}px minmax(0, 1fr)` }
+          : { gridTemplateRows: `auto ${树高}px minmax(0, 1fr)` }
+      }
+    >
       <div className="files-where">
         <span className="files-where-name">{机器 ?? t("本机")}</span>
         <input
@@ -739,6 +762,12 @@ export function FilesView({
           </Button>
         ) : null}
       </div>
+      {/**
+        * 树外面套一层盒子，缝贴在盒子的尾边（宽坞在右、窄坞在下）。
+        * **不能直接贴在 `nav` 上**：它 `overflow: auto`，贴在外沿的 4px 会被裁掉、点不到
+        * （e2e 第一次跑就是这么红的）。
+        */}
+      <div className="file-tree-box">
       <nav className="file-tree" aria-label={t("工作区文件")}>
         {onInitLayout ? (
           <div className="tree-actions">
@@ -771,6 +800,16 @@ export function FilesView({
           />
         </ul>
       </nav>
+        <SideSash
+          attach="edge"
+          orientation={铺开 ? "vertical" : "horizontal"}
+          width={铺开 ? 树宽 : 树高}
+          min={FILE_TREE_MIN}
+          max={铺开 ? 容器宽() : 容器高()}
+          onResize={(px) => (铺开 ? setFileTreeWidth(px, 容器宽()) : setFileTreeHeight(px, 容器高()))}
+          label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
+        />
+      </div>
       {/**
         * **传输条属于这个面板，不属于预览**（2026-08-17，e2e 撞出来的）。
         *

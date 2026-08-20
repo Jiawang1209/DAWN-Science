@@ -243,3 +243,61 @@ export function loadRightDock(): { tenant: 坞房客; width: number } {
   $rightDockWidth.set(宽)
   return { tenant: 房客, width: 宽 }
 }
+
+/* ── 文件面板里「树 ↔ 预览」那条缝（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动」*） ── */
+
+export const FILE_TREE_WIDTH_KEY = "dawn.global.file-tree-width"
+export const FILE_TREE_HEIGHT_KEY = "dawn.global.file-tree-height"
+/** 宽坞（左右摆）时树的宽；窄坞（上下摆）时树的高。**两个量，两个键**——它们是两种摆法里的两个数 */
+export const FILE_TREE_WIDTH_DEFAULT = 220
+export const FILE_TREE_HEIGHT_DEFAULT = 200
+export const FILE_TREE_MIN = 120
+
+export const $fileTreeWidth = atom<number>(FILE_TREE_WIDTH_DEFAULT)
+export const $fileTreeHeight = atom<number>(FILE_TREE_HEIGHT_DEFAULT)
+
+/**
+ * 夹到 `[MIN, 容器 - 预览最少要的]`。上界由调用方量了容器给——
+ * 它跟着坞宽 / 面板高变，不是常量。
+ */
+export function clampFileTree(px: number, 容器: number, 预览至少 = 160): number {
+  const 上 = Math.max(FILE_TREE_MIN, 容器 - 预览至少)
+  return Math.max(FILE_TREE_MIN, Math.min(上, Math.round(px)))
+}
+
+export function setFileTreeWidth(px: number, 容器宽: number): void {
+  const w = clampFileTree(px, 容器宽)
+  setValue($fileTreeWidth, w)
+  try {
+    localStorage.setItem(FILE_TREE_WIDTH_KEY, String(w))
+  } catch (e) {
+    console.error("[文件面板] 树宽保存失败，本次拖动仍然生效，但重启后不会被记住：", e)
+  }
+}
+
+export function setFileTreeHeight(px: number, 容器高: number): void {
+  const h = clampFileTree(px, 容器高)
+  setValue($fileTreeHeight, h)
+  try {
+    localStorage.setItem(FILE_TREE_HEIGHT_KEY, String(h))
+  } catch (e) {
+    console.error("[文件面板] 树高保存失败，本次拖动仍然生效，但重启后不会被记住：", e)
+  }
+}
+
+export function loadFileTree(): void {
+  for (const [key, atom_, 默认] of [
+    [FILE_TREE_WIDTH_KEY, $fileTreeWidth, FILE_TREE_WIDTH_DEFAULT],
+    [FILE_TREE_HEIGHT_KEY, $fileTreeHeight, FILE_TREE_HEIGHT_DEFAULT],
+  ] as const) {
+    try {
+      const v = localStorage.getItem(key)
+      if (v === null) continue
+      const n = Number(v)
+      if (Number.isFinite(n) && n >= FILE_TREE_MIN) atom_.set(n)
+      else console.error(`[文件面板] 存储里的 ${key} 无法识别：${JSON.stringify(v)}，回落到 ${默认}`)
+    } catch (e) {
+      console.error("[文件面板] 读不到已保存的树尺寸，回落到默认：", e)
+    }
+  }
+}

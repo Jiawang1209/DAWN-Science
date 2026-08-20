@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 终端按对话分；关掉就彻底关掉；启动时清掉终端尸体
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「我点开终端的时候，发现有很多已经死掉的终端……我关掉的，应该彻底关掉，最起码每次开启新会话，我再次点击终端的话，要是一个新的终端。」* 根因三处：① dock 只从「当前项目的会话」里找终端，在家目录开的落在临时那一拨——**标签一栏是空的，关不掉、看不见**，掀一次面板就多一个进程；② 按 × 只 `stopSession`，记录留着，下次启动变成「已结束」；③ 启动对账只把残留标成 exited，终端的尸体一直攒着。
+- **What**: `App.tsx` 终端列表合并 `sessions` + `tempSessions`；新增渲染进程状态 `$终端归属`（终端 → 它归属的对话，`sessionStorage` key `dawn.window.terminal-owner`，活过页面重载、不活过应用重启），dock 只列当前对话的终端，切换对话时换成那段的、没有就新开；× → `stopSession` 后 `deleteSession`；`SessionManager.reconcileOnStartup` 把 exited 的 pty 记录直接删掉（终端没有任何可恢复的东西；对话会话只标不删）。
+- **Impact**: 别的对话的终端仍然活着（切回去就在），只是不摆在当前这段里。
+- **Verification**: `tests/session` +1（启动对账删终端、留对话）；e2e `terminal-dock` +2（家目录终端有标签、× 后记录为零；两段对话各自一个终端）——第一次跑抓到 fixture 的 reload 把内存态清了，改存 sessionStorage；dock 套件 11 条全绿；`tests/ui` 477 全绿。
+
 ### 2026-08-21 — 侧栏行只留标题，细节进悬停卡
 
 - **Type**: feat

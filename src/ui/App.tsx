@@ -138,6 +138,9 @@ import {
   toggleDock,
   setDockOpen,
   setDockSessionId,
+  $终端归属,
+  无会话,
+  记终端归属,
   setDockChunks,
   appendDockBytes,
   resetDockTerminal,
@@ -1719,10 +1722,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 所以按「谁关的」分，不按状态分。
    */
   const [关掉的终端, 设关掉的终端] = useState<ReadonlySet<string>>(() => new Set())
-  /** 这个项目里的终端会话。**它们不在会话列表里**，只在 dock 里 */
+  const 终端归属 = useStore($终端归属)
+  /** dock 此刻归谁：当前对话；没有对话时是「无会话」那一格 */
+  const 终端主人 = sessionId ?? 无会话
+  /**
+   * **当前这段对话的终端**（2026-08-21 起按对话分）。
+   *
+   * 两拨都要找：项目里的在 `sessions`，没有项目时开的在 `tempSessions`——
+   * 上一版只看前者，于是在家目录开的终端**在 dock 里没有标签**：
+   * 关不掉、也看不见，掀一次面板就多一个进程，这正是作者报的「一大堆死掉的终端」。
+   *
+   * 别的对话的终端不列（它们还活着，切回去就在）；没记归属的一律列出来——
+   * 藏起来等于把一个活着的进程从所有入口上摘掉。
+   */
   const 终端们 = useMemo(
-    () => sessions.filter((x) => x.kind === "pty" && !关掉的终端.has(x.sessionId)),
-    [sessions, 关掉的终端],
+    () =>
+      [...sessions, ...tempSessions].filter(
+        (x) =>
+          x.kind === "pty" &&
+          !关掉的终端.has(x.sessionId) &&
+          (终端归属.get(x.sessionId) ?? 终端主人) === 终端主人,
+      ),
+    [sessions, tempSessions, 关掉的终端, 终端归属, 终端主人],
   )
   /** 起终端用哪个 agent。**配置里没有 pty agent 就开不了**，如实说 */
   const ptyAgentId = providers.agents.find((a) => a.kind === "pty")?.agentId
@@ -1758,6 +1779,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ...(项目还在 ? { projectId: pid! } : {}),
       })
       .then((r) => {
+        // **记下它是从哪段对话开的**：dock 按对话分，不记就哪儿都不归
+        记终端归属(r.sessionId, 终端主人)
         setDockSessionId(r.sessionId)
         if (项目还在) void loadSessions(client, pid!)
         void loadTempSessions(client)
@@ -1774,7 +1797,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         return 取写权(r.sessionId)
       })
       .catch(fail)
-  }, [client, ptyAgentId])
+  }, [client, ptyAgentId, 终端主人])
 
   /**
    * 掀开 dock 时**如果还没有终端，就开一个**。
@@ -1793,23 +1816,27 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 关完最后一个之后该看见的是 dock 里那句「还没有终端。点『＋ 新开』开一个」——
    * 那句话在上一版**根本到不了**。
    */
-  const 掀开过了 = useRef(false)
+  /**
+   * **按「这段对话」记掀开过没有**（2026-08-21 改）：切到另一段对话，
+   * dock 要换成那段的终端——没有就新开一个；而不是把上一段的接着摆在这儿。
+   */
+  const 掀开过的主人 = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (!dockOpen) {
-      掀开过了.current = false
+      掀开过的主人.current = undefined
       return
     }
-    if (掀开过了.current) return
-    掀开过了.current = true
-    if (dockSessionId) return
+    if (掀开过的主人.current === 终端主人) return
+    掀开过的主人.current = 终端主人
     const 活着的 = 终端们.find((t) => t.state !== "exited")
     if (活着的) {
       setDockSessionId(活着的.sessionId)
       return
     }
+    setDockSessionId(undefined)
     // **没有项目也能开**——那时终端开在家目录（2026-08-11）
     if (ptyAgentId) 开一个终端()
-  }, [dockOpen, dockSessionId, 终端们, projectId, ptyAgentId, 开一个终端])
+  }, [dockOpen, 终端主人, 终端们, ptyAgentId, 开一个终端])
 
 
   /**
@@ -3535,8 +3562,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 设关掉的终端((前) => new Set(前).add(id))
                 const 下一个 = 终端们.find((x) => x.sessionId !== id && x.state !== "exited")
                 if ($dockSessionId.get() === id) setDockSessionId(下一个?.sessionId)
+                /**
+                 * **停掉之后连记录一起删**（2026-08-21，作者：*「我关掉的，应该彻底关掉」*）。
+                 * 终端没有可恢复的东西；留一条 exited 记录只会在下次变成一排「已结束」。
+                 */
                 client
                   .get("stopSession", { sessionId: id })
+                  .catch(() => {})
+                  .then(() => client.get("deleteSession", { sessionId: id }))
                   .then(() => {
                     const pid = $activeProjectId.get()
                     if (pid) void loadSessions(client, pid)

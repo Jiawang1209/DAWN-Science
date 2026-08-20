@@ -224,3 +224,63 @@ test("**敲 exit：标签留着，标成已结束**", async ({ dawn }) => {
   await expect(dock.getByText("已结束")).toBeVisible({ timeout: 30_000 })
   await expect(dock.locator(".dock-tab"), "自己死掉的不该悄悄消失").toHaveCount(1)
 })
+
+/**
+ * **没有项目、没有对话时开的终端，也得有标签、也得关得掉**（2026-08-21，作者报的：
+ * *「我点开终端的时候，发现有很多已经死掉的终端」*）。
+ *
+ * 根因：dock 只从「当前项目的会话」里找终端，而在家目录开的那个落在临时会话那一拨——
+ * 于是标签一栏是空的：关不掉、看不见，掀一次面板就多一个进程。
+ */
+test("**家目录的终端有标签；按 × 连记录一起删掉**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.getByRole("button", { name: "终端", exact: true }).click()
+  const dock = page.locator(".dock")
+  await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
+  await expect(dock.locator(".dock-tab"), "家目录开的终端在 dock 里没有标签").toHaveCount(1)
+
+  await dock.getByRole("button", { name: /关闭终端 1/ }).click()
+  await expect(dock.locator(".dock-tab")).toHaveCount(0)
+  // **彻底关掉**：库里连记录都没有了，下次启动不会再变成一排「已结束」
+  const 剩下 = await page.evaluate(async () => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown[] }> } }
+    const r = await w.dawn.invoke("listTemporarySessions", {})
+    return (r.data ?? []).filter((s) => (s as { kind: string }).kind === "pty").length
+  })
+  expect(剩下, "按了 × 记录还在").toBe(0)
+})
+
+/**
+ * **换一段对话，就是另一个终端**（作者要的：*「每次开启新会话，我再次点击终端的话，
+ * 要是一个新的终端」*）。上一段的还活着、切回去就在，但不摆在这一段里。
+ */
+test("**每段对话各自的终端**：切换对话，dock 跟着换", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.getByRole("button", { name: "终端", exact: true }).click()
+  const dock = page.locator(".dock")
+  await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
+  await expect(dock.locator(".dock-tab")).toHaveCount(1)
+  const 第一段的终端 = await page.evaluate(() =>
+    (document.querySelector(".dock-tab [aria-current='true']") as HTMLElement | null)?.textContent,
+  )
+
+  // 再开一段对话、再掀开终端：里面应该是**新的一个**，而不是上一段那个
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  if (!(await dock.isVisible())) await page.getByRole("button", { name: "终端", exact: true }).click()
+  await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
+  await expect(dock.locator(".dock-tab"), "第二段对话里看到的不止它自己的终端").toHaveCount(1)
+  // 两段各一个：后端一共两条终端会话（项目里的 + 临时的都数）
+  const 总数 = await page.evaluate(async () => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown[] }> } }
+    const 数 = (xs: unknown[] | undefined) => (xs ?? []).filter((s) => (s as { kind: string }).kind === "pty").length
+    let n = 数((await w.dawn.invoke("listTemporarySessions", {})).data)
+    const ps = (await w.dawn.invoke("listProjects", { pageSize: 50 })).data as { projectId: string }[] | undefined
+    for (const p of ps ?? []) n += 数((await w.dawn.invoke("listSessions", { projectId: p.projectId })).data)
+    return n
+  })
+  expect(总数).toBe(2)
+  expect(第一段的终端).toBeTruthy()
+})

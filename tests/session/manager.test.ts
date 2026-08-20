@@ -433,3 +433,29 @@ describe("DAWN 不该在用户的仓库里留下痕迹", () => {
     rmSync(ws, { recursive: true, force: true })
   })
 })
+
+/**
+ * **上次留下的终端尸体在启动时清掉**（2026-08-21，作者报的：*「我点开终端的时候，
+ * 发现有很多已经死掉的终端」*）。
+ *
+ * 终端（pty）没有任何可恢复的东西：进程没了，屏幕上的字节也没存。
+ * 把它们标成 exited 再摆回 dock 里，人看到的是一排「已结束」的标签，
+ * 而每一条都只能按 × 送走。对话会话不一样——它有转录、有账本，**只标不删**。
+ */
+describe("SessionManager · 启动对账", () => {
+  it("终端的残留记录直接删掉；对话的只标 exited", async () => {
+    const ctx = makeManager()
+    const 终端 = await ctx.mgr.create("claude-code", "/tmp/w")
+    const 对话 = await ctx.mgr.create("ds-agent", "/tmp/w")
+    // 模拟进程换了一代：bound 清空、库里还是 alive
+    const mgr2 = new SessionManager({
+      store: ctx.store,
+      registry,
+      runtimes: { native: ctx.runtime, pty: ctx.runtime },
+      workspaceRoot: "/tmp/dawn-test",
+    })
+    mgr2.reconcileOnStartup()
+    expect(ctx.store.get(终端.id), "终端尸体还在库里").toBeUndefined()
+    expect(ctx.store.get(对话.id)?.state).toBe("exited")
+  })
+})

@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { NotAGitRepoError, diffSince, snapshot } from "../../src/project/git-facts.js"
+import { NotAGitRepoError, changesAgainstHead, diffSince, fileDiffAgainstHead, snapshot } from "../../src/project/git-facts.js"
 
 function git(cwd: string, ...args: string[]): string {
   return execFileSync("git", args, {
@@ -143,5 +143,55 @@ describe("diffSince", () => {
     const notRepo = mkdtempSync(join(tmpdir(), "dawn-notgit-"))
     await expect(diffSince(notRepo, baseline)).rejects.toBeInstanceOf(NotAGitRepoError)
     rmSync(notRepo, { recursive: true, force: true })
+  })
+})
+
+/**
+ * **`git init` 之后、第一次 commit 之前**（2026-08-20，作者报的两个 bug
+ * 同一根因）。那时 `HEAD` 是悬空引用——此前 `snapshot` 与
+ * `changesAgainstHead` 都直接以 128 失败，症状是**审阅整格报错、
+ * 新开终端也开不了**（建会话要拍基线）。
+ *
+ * 现在退到**空树**：「所有文件都是新加的」正是一个没有提交的仓库的事实。
+ */
+describe("空仓库（还没有第一次 commit）", () => {
+  function 空仓库(): string {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-git-空-"))
+    git(dir, "init", "-q", "-b", "main")
+    writeFileSync(join(dir, "刚写的.csv"), "a,b\n")
+    return dir
+  }
+
+  it("snapshot 拍得出基线，head 是空树的哈希而不是炸掉", async () => {
+    const dir = 空仓库()
+    const base = await snapshot(dir)
+    expect(base.head).toMatch(/^[0-9a-f]{40,64}$/)
+    expect(base.dirtyFiles).toContain("刚写的.csv")
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("拍完基线、agent 写了文件，diffSince 报得出来（比对时仍然没有 commit）", async () => {
+    const dir = 空仓库()
+    const base = await snapshot(dir)
+    writeFileSync(join(dir, "agent写的.txt"), "x\n")
+    const facts = await diffSince(dir, base)
+    expect(facts.files).toContain("agent写的.txt")
+    // 基线时就有、之后没动过的那个不算 agent 的
+    expect(facts.files).not.toContain("刚写的.csv")
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("changesAgainstHead：所有文件都算新加——那正是实情", async () => {
+    const dir = 空仓库()
+    const 变 = await changesAgainstHead(dir)
+    expect(变.map((x) => `${x.status}:${x.path}`)).toContain("added:刚写的.csv")
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("fileDiffAgainstHead：未跟踪的照旧走 /dev/null 那支，给得出全文", async () => {
+    const dir = 空仓库()
+    const d = await fileDiffAgainstHead(dir, "刚写的.csv")
+    expect(d).toContain("+a,b")
+    rmSync(dir, { recursive: true, force: true })
   })
 })

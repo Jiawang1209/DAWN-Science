@@ -115,20 +115,29 @@ for (const 名 of ["设置"]) {
  * **上面那条纪律一个字都没变**，只是换了它的着力点：
  * 现在验的是顶右角那颗开合 + 坞头部的标签条。
  */
-test("坞开得起来也收得回去，**对话全程都在**", async ({ dawn }) => {
+test("坞开得起来也收得回去，**对话全程都在**；那颗按钮两态两个名字", async ({ dawn }) => {
   const { page } = dawn
-  const 颗 = page.getByRole("button", { name: /^面板：/ })
+  const 颗 = page.getByRole("button", { name: /^面板/ })
+  /**
+   * **关着叫「面板」，开着叫「面板：<谁>」**（2026-08-20 作者定的：
+   * *「面板默认情况下就叫面板，我打开之后可以变为审阅、文件、概览、网页」*）。
+   * 此前是恒定「面板：<谁>」——关着时把上一次开的是谁漏出来了。
+   */
+  await expect(颗).toHaveText("面板")
   await 颗.click()
   await expect(page.locator(".right-dock")).toBeVisible()
-  // **三个房客的名字一直摆在坞头上**——不用先拉开一个菜单才知道有它们
-  for (const 名 of ["审阅", "文件", "网页"]) {
+  await expect(颗).toHaveText(/^面板：/)
+  // **四个房客的名字一直摆在坞头上**——不用先拉开一个菜单才知道有它们
+  for (const 名 of ["审阅", "文件", "概览", "网页"]) {
     await expect(page.getByRole("tab", { name: 名, exact: true })).toBeVisible()
   }
   await page.getByRole("tab", { name: "文件", exact: true }).click()
   await expect(page.locator(".right-dock .files-view")).toBeVisible()
+  await expect(颗, "开着时名字要跟着房客走").toHaveText("面板：文件")
   // **对话没被顶掉**——这是搬家换来的东西，值得单独钉一句
   await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
 
   await 颗.click()
   await expect(page.locator(".right-dock")).toBeHidden()
+  await expect(颗, "关上之后要回到「面板」").toHaveText("面板")
 })

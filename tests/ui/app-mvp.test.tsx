@@ -464,7 +464,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
      * **切换器从顶右角的菜单搬到坞头部的标签条了**（2026-08-18）：
      * 顶右角那颗只管开合，三个房客的名字一直摆在坞的头上。
      */
-    fireEvent.click(screen.getByRole("button", { name: /^面板：/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
     fireEvent.click(screen.getByRole("tab", { name: "审阅" }))
 
     expect(await screen.findByText("src/model.py")).toBeDefined()
@@ -485,7 +485,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     /**
      * **概览 2026-08-20 搬进坞**：入口是坞头部的标签条，不再是侧栏一行。
      */
-    fireEvent.click(screen.getByRole("button", { name: /^面板：/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
     fireEvent.click(screen.getByRole("tab", { name: "概览" }))
     /**
      * 2026-08-11：1200 现在写作 `1.2k`（作者：*「token 的消耗，
@@ -518,7 +518,7 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     const h = harness({ runs: [RUN], projects: [proj("/w/proj")] })
     await openAndStart(h)
     // 概览 2026-08-20 搬进坞：先开坞，再点标签
-    fireEvent.click(screen.getByRole("button", { name: /^面板：/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
     fireEvent.click(screen.getByRole("tab", { name: "概览" }))
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
 

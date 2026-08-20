@@ -191,16 +191,16 @@ export async function 打开agent菜单(page: Page): Promise<void> {
  * 而坞的入口将来还会变（快捷键、菜单文案）。抄三份的话，
  * 改一次要改三处，而漏掉的那一处会红得像功能坏了。
  *
- * 顶栏那颗按钮**开着关着的名字不一样**（关着是「打开面板」，
- * 开着是「面板：审阅」）——那是有意的：只写「面板」的话，
- * 关着时人不知道点开会出来什么。
+ * 顶栏那颗按钮**两态两个名字**（2026-08-20 作者定的）：
+ * 关着叫「面板」，开着叫「面板：<谁>」——名字说的是此刻的事实。
  */
 export async function 开坞(page: Page): Promise<void> {
   /**
-   * 顶右角那颗现在**只管开合**（2026-08-18）：文案恒定是「面板：<谁>」，
-   * 开没开看 `aria-expanded`。**已经开着就别再点**——那会把它收起来。
+   * 顶右角那颗只管开合（2026-08-18）；开没开看 `aria-expanded`。
+   * **已经开着就别再点**——那会把它收起来。
+   * 名字两态（2026-08-20）：`/^面板/` 两种都接得住。
    */
-  const 颗 = page.getByRole("button", { name: /^面板：/ })
+  const 颗 = page.getByRole("button", { name: /^面板/ })
   await 颗.waitFor({ timeout: 30_000 })
   if ((await 颗.getAttribute("aria-expanded")) !== "true") await 颗.click()
 }

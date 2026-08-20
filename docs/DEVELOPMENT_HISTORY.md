@@ -43,6 +43,32 @@
 
 ## 变更日志
 
+### 2026-08-20 — 空仓库把审阅和「新开终端」一起弄坏；面板按钮两态命名
+
+- **Type**: fix
+- **Motivation**: 作者报了三个：①关闭终端后新开不出；②「把文件夹做 git
+  仓库的时候，审阅是没有工作的」；③面板按钮关着时该叫「面板」。
+  ①② 是**同一个洞**：`git init` 之后、第一次 commit 之前 `HEAD` 悬空，
+  `git diff HEAD` 与 `rev-parse HEAD` 都以 128 失败——审阅整格报错，
+  **建任何会话都要拍 git 基线**，连终端都开不出。直路探针全绿，
+  真相在 app 日志里（`createTerminalSession 失败: … rev-parse HEAD`）。
+- **What**:
+  - `git-facts.ts` 新增 `可比对的基线`：HEAD 解析不出（且确实是仓库）
+    就退到**空树**（哈希现场算，不写死 SHA-1 常量——SHA-256 仓库里是
+    另一个值）。`snapshot` / `diffSince` 两端 / `changesAgainstHead` /
+    `fileDiffAgainstHead` 全部改走它。「所有文件都是新加的」正是
+    一个没有提交的仓库的事实。
+  - `DockSwitch` 名字两态：关着「面板」、开着「面板：<谁>」（作者定的）。
+    `开坞` 等三处判据从 `/^面板：/` 放宽为 `/^面板/`。
+- **Impact**: 空仓库工作区从「几乎全残」变为正常；无破坏性变更。
+- **Verification**: 单元 4 条（空仓库的 snapshot / diffSince / 
+  changesAgainstHead / fileDiffAgainstHead）；新 e2e `empty-repo.spec.ts`
+  复刻作者的动作序列（git init 未 commit → 开终端 → 关掉再新开 → 审阅
+  列出「新加」）——旧代码下该场景的失败有 app 日志为证；
+  `sidebar-states` 那条补两态名字断言；1836 单元 / 361 e2e 全绿；
+  基线因按钮文案重存，其中命令面板·暗色第一次重存写进了未稳定帧
+  （CLAUDE.md 警告过的那种），单独重存后连验三遍绿。
+
 ### 2026-08-20 — 概览搬进坞（第三个页签）；视觉服务装进卡片；侧栏底部只剩「设置」
 
 - **Type**: refactor

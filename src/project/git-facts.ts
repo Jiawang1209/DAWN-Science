@@ -126,8 +126,35 @@ async function hashFiles(workspace: string, files: string[]): Promise<Record<str
   return out
 }
 
+/**
+ * **拿什么当「上一版」来比**（2026-08-20，作者报的两个 bug 同一根因）。
+ *
+ * `git init` 之后、第一次 commit 之前，`HEAD` 是个悬空引用——
+ * `git diff HEAD` 与 `git rev-parse HEAD` 都以 128 失败。此前没人处理这一态，
+ * 于是：**审阅整格报错，新开终端也开不了**（建会话要拍基线）。
+ *
+ * 处理办法：HEAD 解析得出就用 `HEAD`；解析不出（且确实是仓库）就退到
+ * **空树**——「所有文件都是新加的」正是一个还没有提交的仓库的事实。
+ * 空树的哈希**现场算**（`hash-object -t tree /dev/null`），
+ * 不写死那个著名常量：SHA-256 仓库里它是另一个值。
+ */
+async function 可比对的基线(workspace: string): Promise<string> {
+  try {
+    await git(workspace, ["rev-parse", "--verify", "HEAD"])
+    return "HEAD"
+  } catch (e) {
+    if (e instanceof NotAGitRepoError) throw e
+    return (await git(workspace, ["hash-object", "-t", "tree", "/dev/null"])).trim()
+  }
+}
+
 export async function snapshot(workspace: string): Promise<GitBaseline> {
-  const head = (await git(workspace, ["rev-parse", "HEAD"])).trim()
+  /**
+   * 空仓库（没有第一次 commit）时这里存的是**空树的哈希**——
+   * 它同样是一个可以 `git diff <它>..<后来>` 的锚点，语义就是「从零开始」。
+   */
+  const 基线 = await 可比对的基线(workspace)
+  const head = 基线 === "HEAD" ? (await git(workspace, ["rev-parse", "HEAD"])).trim() : 基线
   const dirty = parsePorcelain(
     await git(workspace, ["status", "--porcelain", "--untracked-files=all"]),
   ).sort()
@@ -158,7 +185,8 @@ export async function diffSince(
 
   // 两个来源合并：基线之后的提交 + 当前工作区未提交的改动。
   // 只看其一都会漏——agent 可能自己 commit 了，也可能改完没提交。
-  const committed = (await git(workspace, ["diff", "--name-only", `${baseline.head}..HEAD`]))
+  // 右端同样可能是悬空的 HEAD（基线拍完、比对时仍然一次 commit 都没有）
+  const committed = (await git(workspace, ["diff", "--name-only", `${baseline.head}..${await 可比对的基线(workspace)}`]))
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean)
@@ -217,8 +245,10 @@ export interface HeadChange {
 export async function changesAgainstHead(workspace: string): Promise<HeadChange[]> {
   const 出 = new Map<string, HeadChange>()
 
+  // 空仓库时跟空树比：所有已暂存/未跟踪的都算新加，那正是实情
+  const 基线 = await 可比对的基线(workspace)
   // ① 跟踪中的：`--numstat` 给「加了几行减了几行」，二进制那行是 `-\t-`
-  const numstat = await git(workspace, ["diff", "HEAD", "--numstat"])
+  const numstat = await git(workspace, ["diff", 基线, "--numstat"])
   for (const line of numstat.split("\n")) {
     if (!line.trim()) continue
     const [a, r, ...rest] = line.split("\t")
@@ -235,7 +265,7 @@ export async function changesAgainstHead(workspace: string): Promise<HeadChange[
   }
 
   // ② 删掉的与新加的，`--name-status` 才说得清是哪一种
-  const nameStatus = await git(workspace, ["diff", "HEAD", "--name-status"])
+  const nameStatus = await git(workspace, ["diff", 基线, "--name-status"])
   for (const line of nameStatus.split("\n")) {
     if (!line.trim()) continue
     const [码, ...rest] = line.split("\t")
@@ -272,7 +302,7 @@ export async function fileDiffAgainstHead(workspace: string, path: string): Prom
   const 跟踪中 = await git(workspace, ["ls-files", "--error-unmatch", "--", path])
     .then(() => true)
     .catch(() => false)
-  if (跟踪中) return git(workspace, ["diff", "HEAD", "--", path])
+  if (跟踪中) return git(workspace, ["diff", await 可比对的基线(workspace), "--", path])
   /**
    * `--no-index` 在有差异时**退出码是 1**，而我们的 `git()` 把非零当失败。
    * 这里把那一支接住：**有差异不是错误**。

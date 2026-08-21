@@ -287,6 +287,13 @@ test("**树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住*
   await expect.poll(async () => (await 树.boundingBox())!.width).toBeGreaterThan(起宽 + 80)
   const 拖后宽 = (await 树.boundingBox())!.width
 
+  // ②′ 「收窄」是加宽的反向：回到默认宽，回到上下摆（作者：*「有加宽选项，怎么能没有恢复选项呢」*）
+  await page.getByRole("button", { name: "收窄" }).click()
+  await expect(page.locator(".files-wide")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "加宽" })).toBeVisible()
+  await page.getByRole("button", { name: "加宽" }).click()
+  await expect(page.locator(".files-wide")).toBeVisible()
+
   // ③ 重开之后两个数都还在
   await page.reload()
   await 进坞(page, "文件")

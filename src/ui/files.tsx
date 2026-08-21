@@ -626,6 +626,7 @@ export function FilesView({
   刷新令牌 = 0,
   铺开,
   onExpand,
+  onShrink,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -707,6 +708,11 @@ export function FilesView({
    * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
    */
   onExpand?: () => void
+  /**
+   * 「收窄」——加宽的反向（2026-08-21，作者：*「有加宽选项，怎么能没有恢复选项呢」*）。
+   * 只在已经铺开时给；与「加宽」互斥，同一个位置两颗里永远只有一颗。
+   */
+  onShrink?: () => void
 }) {
   const [跳到, 设跳到] = useState("")
   /**
@@ -830,6 +836,11 @@ export function FilesView({
         {onExpand ? (
           <Button variant="ghost" size="sm" onClick={onExpand}>
             {t("加宽")}
+          </Button>
+        ) : null}
+        {onShrink ? (
+          <Button variant="ghost" size="sm" onClick={onShrink}>
+            {t("收窄")}
           </Button>
         ) : null}
       </div>

@@ -281,6 +281,7 @@ export const EN: Readonly<Record<string, string>> = {
   "返回": "Back",
   "调整侧栏宽度": "Resize sidebar",
   "{0} 段对话": "{0} chats",
+  "收窄": "Narrow",
   "调整文件树宽度": "Resize file tree width",
   "调整文件树高度": "Resize file tree height",
   "收起侧边栏": "Hide sidebar",

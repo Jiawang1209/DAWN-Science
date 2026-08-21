@@ -161,6 +161,7 @@ import {
   setRightDockTenant,
   请打开网址,
   setRightDockWidth,
+  RIGHT_DOCK_DEFAULT,
   $跑着的会话,
   标记在跑,
   RIGHT_DOCK_MAX,
@@ -2359,7 +2360,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <FilesView
         key={`${文件面板身份}#${铺开 ? "宽" : "窄"}`}
         {...(铺开
-          ? { 铺开: true }
+          ? {
+              铺开: true,
+              // 加宽的反向：回到默认宽（作者：*「有加宽选项，怎么能没有恢复选项呢」*）
+              onShrink: () => setRightDockWidth(RIGHT_DOCK_DEFAULT, 侧栏此刻多宽),
+            }
           : {
               /**
                * 一颗一键加宽。**拖把手也能加宽，但那条路没人找得到**——

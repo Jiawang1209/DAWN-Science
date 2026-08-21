@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 文件面板「加宽」配了反向的「收窄」
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「面板里面的文件有加宽选项，怎么能没有恢复选项呢。」*
+- **What**: `FilesView` 新 prop `onShrink`，铺开时在「加宽」那个位置画「收窄」（两颗互斥）；`App.tsx` 接 `setRightDockWidth(RIGHT_DOCK_DEFAULT)`。文案用「收窄」不用「恢复」——设置里已有「恢复默认」，子串撞名。
+- **Impact**: 纯新增。
+- **Verification**: e2e `files`「树 ↔ 预览的缝」里加了收窄 → 回到上下摆 → 再加宽；files 7 条全绿；`tests/ui` 480 全绿。
+
 ### 2026-08-21 — 首页挑 LLM 的单子按类归拢、组内按字母（不画组头）
 
 - **Type**: feat

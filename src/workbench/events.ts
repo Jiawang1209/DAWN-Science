@@ -110,6 +110,12 @@ interface Entry {
 export class SessionTranscripts {
   private readonly entries = new Map<SessionId, Entry>()
   private readonly subscribed = new Set<SessionId>()
+  /**
+   * **钉住的会话**（远程助理，2026-08-21）：界面订没订都推。
+   * 微信通道要一直听着它绑的那段，而 `subscribed` 跟着界面走——人切到别的会话，
+   * 界面退订，通道就聋了。两个集合分开，谁都不替谁做决定。
+   */
+  private readonly pinned = new Set<SessionId>()
   private readonly listeners = new Set<(u: SessionUpdate) => void>()
 
   constructor(private readonly opts: SessionTranscriptsOptions) {}
@@ -164,10 +170,19 @@ export class SessionTranscripts {
     this.subscribed.delete(sessionId)
   }
 
+  pin(sessionId: SessionId): void {
+    this.pinned.add(sessionId)
+  }
+
+  unpin(sessionId: SessionId): void {
+    this.pinned.delete(sessionId)
+  }
+
   /** 会话彻底不要了时清掉。这是内存，不是账本。 */
   forget(sessionId: SessionId): void {
     this.entries.delete(sessionId)
     this.subscribed.delete(sessionId)
+    this.pinned.delete(sessionId)
   }
 
   dispose(): void {
@@ -695,7 +710,7 @@ export class SessionTranscripts {
       )
       return
     }
-    if (!this.subscribed.has(sessionId)) return
+    if (!this.subscribed.has(sessionId) && !this.pinned.has(sessionId)) return
     // 复制一份再遍历：监听者可能在回调里退订
     for (const cb of [...this.listeners]) cb(update)
   }

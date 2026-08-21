@@ -199,10 +199,14 @@ export class IlinkClient {
       longpolling_timeout_ms?: number
     }
     try {
-      r = (await this.post(this.baseUrl, "ilink/bot/getupdates", { get_updates_buf: cursor }, token, timeoutMs, signal)) as typeof r
+      // **客户端比服务端多等 5 s**：服务端说 35 s 就在 35 s 回，两边同时到点会撞成一次假失败
+      r = (await this.post(this.baseUrl, "ilink/bot/getupdates", { get_updates_buf: cursor }, token, timeoutMs + 5_000, signal)) as typeof r
     } catch (e) {
-      // 客户端超时是正常的：空着回去，游标不变，接着轮
-      if (e instanceof Error && e.name === "AbortError") return { msgs: [], cursor, nextTimeoutMs: timeoutMs, staleToken: false }
+      // 客户端超时是正常的：空着回去，游标不变，接着轮。
+      // **两个名字都认**：`AbortSignal.timeout` 抛的是 `TimeoutError`，外部取消才是 `AbortError`
+      if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
+        return { msgs: [], cursor, nextTimeoutMs: timeoutMs, staleToken: false }
+      }
       throw e
     }
     if (r.errcode === -14 || r.ret === -14) return { msgs: [], cursor, nextTimeoutMs: timeoutMs, staleToken: true }

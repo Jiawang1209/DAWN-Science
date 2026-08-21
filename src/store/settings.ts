@@ -16,6 +16,20 @@ import type Database from "better-sqlite3"
 
 /** 认得的设置键。**闭集**——写进一个拼错的键等于静默丢配置 */
 export type SettingKey =
+  /**
+   * 远程助理 · 微信（2026-08-21）。**token 不在这儿**——它进钥匙串（`weixin:botToken`）。
+   * 这几个都不是秘密：绑定的 bot / 用户 id、账号基址、长轮询游标、最近一条的
+   * `context_token`、绑着的会话、通知开关（json）。设计文档里写的是新表，
+   * 做的时候改成这几把键：七个标量不值得一张表。
+   */
+  | "weixin.botId"
+  | "weixin.userId"
+  | "weixin.baseUrl"
+  | "weixin.cursor"
+  | "weixin.contextToken"
+  | "weixin.sessionId"
+  | "weixin.boundAt"
+  | "weixin.notify"
   | "interpreter.python"
   | "interpreter.r"
   /**

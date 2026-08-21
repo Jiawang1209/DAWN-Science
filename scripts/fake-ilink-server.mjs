@@ -78,7 +78,8 @@ export function startFakeIlinkServer(opts = {}) {
       return 回JSON(res, { ok: true })
     }
     if (p === "/__fake/qr/need_code") {
-      扫码态 = { status: "need_verifycode" }
+      // 码对了之后回到「已扫」；剧本再推一步才到确认
+      扫码态 = { status: "scaned" }
       待配对码 = true
       return 回JSON(res, { ok: true })
     }
@@ -128,10 +129,8 @@ export function startFakeIlinkServer(opts = {}) {
       // 要配对码时：带对了码才往下走
       if (待配对码) {
         const code = url.searchParams.get("verify_code")
-        if (code === "1234") {
-          待配对码 = false
-          扫码态 = { status: "scaned" }
-        } else return 回JSON(res, { status: "need_verifycode" })
+        if (code === "1234") 待配对码 = false
+        else return 回JSON(res, { status: "need_verifycode" })
       }
       return 回JSON(res, 扫码态)
     }

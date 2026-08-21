@@ -26,6 +26,17 @@ import http from "node:http"
 export const CANNED_REPLY = "假模型已应答：DAWN 的整条链路是通的。"
 
 /**
+ * 假改写：三引号里的原文前面加「改写：」；原文前面若有参考块（【对话背景】【项目文档】【相关代码】），
+ * 把块的标题复述在最前面——e2e 据此看「这次带没带上下文、带的是哪种」。
+ */
+function 假改写(最后一句) {
+  const m = /"""\n([\s\S]*?)\n"""/.exec(最后一句)
+  const 原 = m ? m[1] : 最后一句
+  const 带 = ["【对话背景", "【项目文档", "【相关代码"].filter((k) => 最后一句.includes(k)).map((k) => k.slice(1))
+  return `${带.length ? `（参考了：${带.join("、")}）` : ""}改写：${原}`
+}
+
+/**
  * 一段**富 markdown** 回复。用户说的话里带「markdown」时给它。
  *
  * 它存在的理由是排版：作者 2026-08-10 说*「回复的 markdown 格式并不美观」*，
@@ -157,11 +168,30 @@ export function startMockInferenceServer(opts = {}) {
        * 四条路的断言都认这句话。
        */
       const 图片数 = (用户说的.match(/"type":"image_url"/g) ?? []).length
-      const reply = 图片数 > 0
-        ? `假模型已应答：我收到了 ${图片数} 张图。`
-        : 用户说的.includes("markdown")
-          ? MARKDOWN_REPLY
-          : 默认回复
+      /**
+       * **提示词增强也共用这台假服务器**（2026-08-21，规则 ①）。
+       * 认两种请求：system 里带「只输出改写后的提示词」= 一次改写，回「改写：<三引号里的原文>」
+       * （原文前还带着什么参考块，原样复述在前面，e2e 据此断言带没带上下文）；
+       * user 里带「只回一个 JSON 对象」= 一次判定，按正文里有没有「相关」「开发」「README」回 JSON。
+       */
+      const 文本 = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : "")
+      const 系统原文 = 文本(body.messages?.find?.((m) => m.role === "system")?.content)
+      const 最后一句 = 文本([...(body.messages ?? [])].reverse().find((m) => m.role === "user")?.content)
+      const 增强 = 系统原文.includes("只输出改写后的提示词")
+      const 判定 = 最后一句.includes("只回一个 JSON 对象")
+      const reply = 判定
+        ? 最后一句.includes('"related"')
+          ? JSON.stringify({ related: /相关/.test(最后一句.split("当前输入")[0] ?? ""), reason: "假判定" })
+          : 最后一句.includes("isDevIntent")
+            ? JSON.stringify({ isDevIntent: /开发|功能|代码|重构/.test(最后一句.split("对话背景")[0] ?? ""), reason: "假判定" })
+            : JSON.stringify({ relatedDocs: (最后一句.match(/📄 ([^\n]+)/g) ?? []).map((x) => x.slice(2).trim()).filter((p) => /README|相关/.test(p)), hasProjectMap: /目录树|src\//.test(最后一句), codePaths: ["src/"], reason: "假判定" })
+        : 增强
+          ? 假改写(最后一句)
+          : 图片数 > 0
+            ? `假模型已应答：我收到了 ${图片数} 张图。`
+            : 用户说的.includes("markdown")
+              ? MARKDOWN_REPLY
+              : 默认回复
 
       const tool = opts.toolCall?.(body)
       const stream = body.stream !== false

@@ -1525,6 +1525,50 @@ ${描述}`
    * pi 抛的是 `No API key for <provider>/<model>`（Spike E 实测）。
    * 原样丢给用户等于让他自己猜下一步该干什么。
    */
+  /**
+   * 用这段会话**此刻的模型与凭证**问一句、拿整段回答（提示词增强，2026-08-21）。
+   *
+   * 不经过会话：不进转录、不进账本、不占回合。`ModelRuntime.completeSimple` 自己解析凭证，
+   * 所以这里不碰钥匙串。没有会话时给 `provider` + `model`（空态屏用配置里第一个 native）。
+   *
+   * **失败如实抛**：模型说 `stopReason: "error"` 就把它的话原样给出去，不吞成空串。
+   */
+  async 问一句(
+    目标: { sessionId: SessionId } | { provider: string; model: string },
+    req: { system?: string; user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+  ): Promise<{ text: string; model: string }> {
+    const runtime = await this.runtime()
+    const model =
+      "sessionId" in 目标
+        ? (() => {
+            const s = this.sessions.get(目标.sessionId)
+            if (!s) throw new Error(`会话 "${目标.sessionId}" 未启动`)
+            const m = s.session.model
+            if (!m) throw new Error(`会话 "${目标.sessionId}" 还没选定模型`)
+            return m
+          })()
+        : await this.resolveModel(目标.provider, 目标.model)
+    const msg = await runtime.completeSimple(
+      model,
+      {
+        ...(req.system ? { systemPrompt: req.system } : {}),
+        messages: [{ role: "user", content: req.user, timestamp: Date.now() }],
+      },
+      {
+        maxTokens: req.maxTokens,
+        temperature: req.temperature ?? 0.3,
+        ...(req.signal ? { signal: req.signal } : {}),
+      },
+    )
+    if (msg.stopReason === "error") throw new Error(msg.errorMessage ?? "模型报错但没说原因")
+    if (msg.stopReason === "aborted") throw Object.assign(new Error("已取消"), { name: "AbortError" })
+    const text = msg.content
+      .filter((c): c is Extract<typeof c, { type: "text" }> => c.type === "text")
+      .map((c) => c.text)
+      .join("")
+    return { text, model: `${model.provider}/${model.id}` }
+  }
+
   async setModel(sessionId: SessionId, provider: string, modelId: string): Promise<void> {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法换模型`)

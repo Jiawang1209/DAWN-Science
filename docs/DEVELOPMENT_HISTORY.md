@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 提示词增强 E1：提示词、清洗、检索三个纯模块 + 模型口子 + 假模型规则
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者给了 `Fishsb/dsh-prompt-enhancer` 要「给 DAWN 也加上提示词增强」。读了它的源码（解读在 `ccb_hive_code_learn/dsh-prompt-enhancer-解读.md`），设计在 `docs/superpowers/specs/2026-08-21-提示词增强-design.md`。**它没有 LICENSE**：只借思路，提示词与代码全部自己写。作者定：三档（基础 / 标准 / 专家）、用当前会话的模型、不做记忆链。
+- **What**: `src/enhance/prompts.ts`（纪律层 + 方法层 + 参考规则 + 三个判定模板 + 拼装；纯常量，单测锁关键句）、`clean.ts`（剥导语 / 结语 / 包裹 / 指令回显，最多三轮；**不剥原文前缀**）、`retrieve.ts`（切窗、逐窗判定命中即止、中英混排关键词、文件名打分、命中行 ±2 片段、挑文档；**打不中就不带**）。`NativeRuntime.问一句`：用会话此刻的模型（或给定 provider+model）经 `ModelRuntime.completeSimple` 问一句，不进转录不进账本。`mock-inference-server` 认两种请求：system 带「只输出改写后的提示词」回「改写：<原文>」并复述带了哪些参考块；user 带「只回一个 JSON 对象」按正文回判定 JSON。
+- **Impact**: 还没有操作与界面（E2）。
+- **Verification**: `tests/enhance` 25 条（提示词关键句、清洗六类、切窗 / 判定 / 关键词 / 打分 / 片段 / 挑文档）；`tests/integration/enhance-ask` 3 条真走 pi 到假模型；设计契约全绿。
+
 ### 2026-08-21 — 远程助理 T4：图片双向、工具进度条目、正在输入
 
 - **Type**: feat

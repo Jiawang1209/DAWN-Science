@@ -1,8 +1,8 @@
 /**
- * composer 上那颗「✨ 增强 · 标准 ▾」（提示词增强 E2，2026-08-21）。
+ * composer 上那颗「✦ 增强 ▾」（提示词增强 E2，2026-08-21）。
  *
  * 设计：`docs/superpowers/specs/2026-08-21-提示词增强-design.md`「界面」一节。
- * 点 ✨ 用当前档增强；点档名换档（基础 / 标准 / 专家，记在 `dawn.global.enhance-mode`）；
+ * 点文字用当前档增强；点小箭头换档（基础 / 标准 / 专家，记在 `dawn.global.enhance-mode`，只在菜单里显示）；
  * 增强中变「取消」；改完变「撤回」，**撤回最多 5 层、敲键盘也不消失**
  * （参考项目那条「一敲键就没」不抄——人改两个字再想撤回是常事）。
  *
@@ -151,8 +151,11 @@ export function EnhanceControl({
 
   return (
     <div className="enhance-control" ref={box}>
+      {/**
+        * **一颗按钮、两个点击区**（2026-08-21 作者定的：档位与增强合并，省位置）：
+        * 点文字 = 增强（忙时 = 放弃）；点右边那个小箭头 = 换档。档位只在菜单里看得见。
+        */}
       {忙 ? (
-        // 忙着时这颗就是「放弃」：按下去停掉这次改写、草稿不动
         <Button variant="ghost" size="sm" className="enhance-main busy" onClick={去取消}>
           <span className="enhance-spin" aria-hidden="true" />
           <span>{tf("{0}…放弃", 忙)}</span>
@@ -164,14 +167,13 @@ export function EnhanceControl({
       )}
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         className="enhance-mode"
         aria-haspopup="menu"
         aria-expanded={菜单}
         aria-label={tf("档位：{0}", 档名[mode]())}
         onClick={() => 设菜单((v) => !v)}
       >
-        {档名[mode]()}
         <下拉图标 />
       </Button>
       {/* 空草稿时按钮是灰的——**灰要说为什么**，这句常驻在旁边，不靠悬停 */}

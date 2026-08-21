@@ -5197,7 +5197,8 @@ pre {
 /* 按钮文字不许竖排；那行挤了就让说明文字省略，不让按钮变形 */
 .enhance-control .btn { white-space: nowrap; flex: 0 0 auto; }
 .enhance-main.busy { color: var(--dawn-text-2); }
-.enhance-mode { padding-left: var(--dawn-space-1); padding-right: var(--dawn-space-1); color: var(--dawn-text-3); }
+/* 小箭头紧贴「增强」：它是同一颗按钮的另一半，不是另一个控件 */
+.enhance-mode { margin-left: -6px; color: var(--dawn-text-3); }
 .enhance-mode svg { width: 12px; height: 12px; }
 .enhance-undo { color: var(--dawn-text-2); }
 .enhance-note {

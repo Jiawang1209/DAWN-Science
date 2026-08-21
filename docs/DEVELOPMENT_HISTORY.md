@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 增强按钮与档位合成一颗
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「增强和基础、标准和专家，其实应该合并为一个，这样可以更加节约位置。」*
+- **What**: `enhance.tsx`：「✦ 增强 ▾」一颗按钮两个点击区——点文字增强（忙时放弃），点小箭头弹档位菜单；档位只在菜单里显示（当前档高亮），行内不再写档名。
+- **Impact**: 视觉基线十张重存并复验。
+- **Verification**: e2e `enhance` 4 条、visual 10 张、agent-pill / model-switch 全绿；`tests/ui` 480 全绿；截图发给作者。
+
 ### 2026-08-21 — 提示词增强 E2–E4：三档编排、`enhancePrompt` 操作、composer 上那颗 ✨
 
 - **Type**: feat

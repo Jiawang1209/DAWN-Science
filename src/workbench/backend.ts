@@ -41,6 +41,7 @@ import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writ
 import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
 import { 增强 } from "../enhance/enhance.js"
+import { 搜文件名 } from "../files/search.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
 import { readdir, readFile as 读本地 } from "node:fs/promises"
 import { join as 拼路径, relative as 相对 } from "node:path"
@@ -2410,6 +2411,39 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return listWorkspaceDirectory(p.workspace, path, {
         ...(includeIgnored === undefined ? {} : { includeIgnored }),
       })
+    },
+
+    /** 按文件名搜（7.16）。本地走 fs、远端走 SFTP，**同一个走法**（`files/search.ts`） */
+    searchFiles: async ({ projectId, connectionId, path, query }) => {
+      if (connectionId) {
+        const e = 连着的(connectionId)
+        return 搜文件名(
+          async (dir) => (await e.readdir(dir || ".")).map((x) => ({ name: x.name, kind: x.directory ? ("dir" as const) : ("file" as const) })),
+          path || ".",
+          query,
+        )
+      }
+      const p = projectStore.get(projectId!)
+      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      // 起点也要过守卫：越界的 path 在这里就抛。
+      // **根用人给的相对路径，不用守卫回来的绝对路径**——那是 realpath，
+      // macOS 上 `/var` 会变成 `/private/var`，再 `relative()` 回去就是一串 `..`
+      resolveInWorkspace(p.workspace, path || ".")
+      const 起点 = (path || "").replace(/^\.\//, "").replace(/\/+$/, "").replace(/^\.$/, "")
+      const r = await 搜文件名(
+        async (dir) => {
+          const 条 = await readdir(resolveInWorkspace(p.workspace, dir || "."), { withFileTypes: true })
+          return 条.map((d) => ({
+            name: d.name,
+            // 符号链接不进去；它指向的是不是目录都无所谓——走法只看 `kind === "dir" && !symlink`
+            kind: d.isDirectory() ? ("dir" as const) : ("file" as const),
+            symlink: d.isSymbolicLink(),
+          }))
+        },
+        起点,
+        query,
+      )
+      return r
     },
 
     /** 读一个文件供预览。**只读**，且路径守卫在 `files/access.ts` 里 */

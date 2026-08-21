@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1786837232084,
+  "lastScanned": 1787244516750,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\ncp src/electron/wiring.ts /tmp/w.bak; cp src/runtime/acp/runtime.ts /tmp/r.bak; cp src/acp/tools.ts /tmp/t.bak\n跑() { npm run build >/dev/null 2>&1; npx playwright test e2e/acp-agent.spec.ts -g \"用我们的工具\" 2>&1 | grep -E \"✘  |passed|failed\" | head -2; cp /tmp/w.bak src/electron/wiring.ts; cp /tmp/r.bak src/runtime/acp/runtime.ts; cp /tmp/t.bak src/acp/tools.ts; }\necho \"── ①不把 MCP 递过去（退回客人模式）\"\npython3 -c \"\np='src/runtime/acp/runtime.ts';s=open(p).read()\ns=s.replace('    const 我 = this.opts.mcp?.(spec)','    const 我 = undefined as undefined | { name: string; command: string; args: string[]; env: Record<string, string> }\\n    void this.opts.mcp',1)\nopen(p,'w').write(s)\"\n跑\necho \"── ②调用不落账\"\npython3 -c \"\np='src/acp/tools.ts';s=open(p).read()\ns=s.replace('      const r = await 干(装配, sessionId, 工具名, 参数)\\n      记(false)','      const r = await 干(装配, sessionId, 工具名, 参数)',1)\nopen(p,'w').write(s)\"\n跑\necho \"── ③父账不挂\"\npython3 -c \"\np='src/electron/wiring.ts';s=open(p).read()\ns=s.replace('        const 父 = runRecorder.当前回合(sessionId)','        const 父 = undefined as string | undefined',1)\nopen(p,'w').write(s)\"\n跑\necho \"── ④工具清单在那台服务器里写死（不问 DAWN）\"\npython3 -c \"\np='src/electron/wiring.ts';s=open(p).read()\ns=s.replace('    工具们: () => 工具清单(),','    工具们: () => [],',1)\nopen(p,'w').write(s)\"\n跑\nnpm run build >/dev/null 2>&1; echo 已还原",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpm test 2>&1 | grep -E \"Test Files|Tests |×|FAIL\" | tail -4",
+    "buildCommand": "python3 - <<'EOF'\np='src/workbench/backend.ts'; s=open(p).read()\nold='''      // 起点也要过守卫：越界的 path 在这里就抛\n      const 起点 = resolveInWorkspace(p.workspace, path || \".\")\n      const r = await 搜文件名('''\nnew='''      // 起点也要过守卫：越界的 path 在这里就抛。\n      // **根用人给的相对路径，不用守卫回来的绝对路径**——那是 realpath，\n      // macOS 上 `/var` 会变成 `/private/var`，再 `relative()` 回去就是一串 `..`\n      resolveInWorkspace(p.workspace, path || \".\")\n      const 起点 = (path || \"\").replace(/^\\\\.\\\\//, \"\").replace(/\\\\/+$/, \"\").replace(/^\\\\.$/, \"\")\n      const r = await 搜文件名('''\nassert old in s\ns=s.replace(old,new).replace('''        相对(p.workspace, 起点),\n        query,\n      )\n      return r''','''        起点,\n        query,\n      )\n      return r''')\nopen(p,'w').write(s)\nEOF\nnpx tsc --noEmit -p . 2>&1 | grep -v \"npm notice\" | head -3; npm run build 2>&1 | grep -i \"error\" | head -3; npx playwright test e2e/files.spec.ts 2>&1 | tail -4",
+    "testCommand": "sed -i '' 's|  \"搜文件名\": \"Search file names\",|  \"搜文件名\": \"Find by file name\",|' src/ui/i18n/en.ts && npx vitest run tests/ui 2>&1 | grep -E \"Tests |FAIL\" | head -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -109,65 +109,66 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1786837232066,
+      "lastAccessed": 1787244516704,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 4,
-      "lastAccessed": 1786837232066,
+      "fileCount": 5,
+      "lastAccessed": 1787244516705,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
-        "REFERENCES.md"
+        "REFERENCES.md",
+        "怎么给-agent-配一个浏览器.md"
       ]
     },
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 76,
-      "lastAccessed": 1786837232069,
+      "fileCount": 85,
+      "lastAccessed": 1787244516713,
       "keyFiles": [
+        "acp-agent.spec.ts",
+        "acp-setup.spec.ts",
         "add-service.spec.ts",
         "agent-pill.spec.ts",
-        "attach.spec.ts",
-        "base-url.spec.ts",
-        "boot.spec.ts"
+        "attach.spec.ts"
       ]
     },
     "examples": {
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1786837232069,
+      "lastAccessed": 1787244516716,
       "keyFiles": []
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 6,
-      "lastAccessed": 1786837232070,
+      "fileCount": 8,
+      "lastAccessed": 1787244516717,
       "keyFiles": [
         "build-electron.mjs",
+        "dawn-mcp-server.mjs",
         "dev-mock.mjs",
-        "fix-node-pty.mjs",
-        "mcp-test-server.mjs",
-        "mock-inference-server.mjs"
+        "fake-acp-agent.mjs",
+        "fix-node-pty.mjs"
       ]
     },
     "skills": {
       "path": "skills",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1786837232070,
+      "lastAccessed": 1787244516717,
       "keyFiles": []
     },
     "spikes": {
       "path": "spikes",
       "purpose": null,
       "fileCount": 11,
-      "lastAccessed": 1786837232070,
+      "lastAccessed": 1787244516717,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -180,7 +181,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1786837232070,
+      "lastAccessed": 1787244516718,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -190,14 +191,14 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1786837232070,
+      "lastAccessed": 1787244516718,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
-      "fileCount": 8,
-      "lastAccessed": 1786837232071,
+      "fileCount": 9,
+      "lastAccessed": 1787244516718,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
@@ -210,7 +211,7 @@
       "path": "src/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1786837232071,
+      "lastAccessed": 1787244516726,
       "keyFiles": [
         "loader.ts",
         "mcp-writer.ts",
@@ -220,19 +221,19 @@
     "tests/config": {
       "path": "tests/config",
       "purpose": "Configuration files",
-      "fileCount": 3,
-      "lastAccessed": 1786837232071,
+      "fileCount": 4,
+      "lastAccessed": 1787244516727,
       "keyFiles": [
         "mcp-writer.test.ts",
         "registry.test.ts",
-        "writer.test.ts"
+        "vision-writer.test.ts"
       ]
     },
     "tests/helpers": {
       "path": "tests/helpers",
       "purpose": "Helper functions",
       "fileCount": 1,
-      "lastAccessed": 1786837232071,
+      "lastAccessed": 1787244516728,
       "keyFiles": [
         "credentials.ts"
       ]
@@ -246,15 +247,39 @@
       "type": "file"
     },
     {
+      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
+      "accessCount": 5,
+      "lastAccessed": 1787269287569,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
+      "accessCount": 5,
+      "lastAccessed": 1787300208590,
+      "type": "file"
+    },
+    {
       "path": "src/ui/tokens.css",
-      "accessCount": 2,
-      "lastAccessed": 1786837330734,
+      "accessCount": 4,
+      "lastAccessed": 1787035046059,
       "type": "file"
     },
     {
       "path": "src/ui/styles.css",
-      "accessCount": 2,
-      "lastAccessed": 1786837354798,
+      "accessCount": 4,
+      "lastAccessed": 1787115740182,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-设置-·-亮色/设置-亮色-diff.png",
+      "accessCount": 4,
+      "lastAccessed": 1787184807031,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/state/right-dock.ts",
+      "accessCount": 3,
+      "lastAccessed": 1787116006939,
       "type": "file"
     },
     {
@@ -270,33 +295,21 @@
       "type": "file"
     },
     {
-      "path": "test-results/visual-对话-·-亮色/对话-亮色-diff.png",
+      "path": "src/ui/usage.tsx",
       "accessCount": 2,
-      "lastAccessed": 1786856505520,
+      "lastAccessed": 1786930594338,
       "type": "file"
     },
     {
-      "path": "test-results/visual-设置-·-亮色/设置-亮色-diff.png",
+      "path": "test-results/visual-命令面板-·-亮色/命令面板-亮色-diff.png",
       "accessCount": 2,
-      "lastAccessed": 1786867011216,
+      "lastAccessed": 1787243486232,
       "type": "file"
     },
     {
       "path": "src/ui/dock.tsx",
       "accessCount": 1,
       "lastAccessed": 1786850477373,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-空态-·-亮色/空态-亮色-diff.png",
-      "accessCount": 1,
-      "lastAccessed": 1786851903589,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-命令面板-·-亮色/命令面板-亮色-diff.png",
-      "accessCount": 1,
-      "lastAccessed": 1786851912505,
       "type": "file"
     },
     {
@@ -309,12 +322,6 @@
       "path": "tests/usage.test.ts",
       "accessCount": 1,
       "lastAccessed": 1786859429550,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/usage.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1786859896848,
       "type": "file"
     },
     {
@@ -441,6 +448,96 @@
       "path": "src/acp/tools.ts",
       "accessCount": 1,
       "lastAccessed": 1786913680582,
+      "type": "file"
+    },
+    {
+      "path": "src/acp/kernel.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786915605070,
+      "type": "file"
+    },
+    {
+      "path": "tests/acp/kernel.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786915770244,
+      "type": "file"
+    },
+    {
+      "path": "tests/tmp-real-acp.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786930464091,
+      "type": "file"
+    },
+    {
+      "path": "e2e/tmp-shot.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786935060252,
+      "type": "file"
+    },
+    {
+      "path": "e2e/tmp-files.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786938415149,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-17-远端文件与右侧坞-design.md",
+      "accessCount": 1,
+      "lastAccessed": 1786939662960,
+      "type": "file"
+    },
+    {
+      "path": "src/remote/fake-ssh.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786942601917,
+      "type": "file"
+    },
+    {
+      "path": "tests/remote/sftp.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786942936354,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/right-dock.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786968500954,
+      "type": "file"
+    },
+    {
+      "path": "e2e/tmp-dock.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1786969558704,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-项目概览-·-亮色/项目概览-亮色-diff.png",
+      "accessCount": 1,
+      "lastAccessed": 1786969823946,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-项目概览-·-亮色/项目概览-亮色-actual.png",
+      "accessCount": 1,
+      "lastAccessed": 1786969841911,
+      "type": "file"
+    },
+    {
+      "path": "test-results/workspace-refresh-从应用外面改了文件，切回来就看得见/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786970801153,
+      "type": "file"
+    },
+    {
+      "path": "test-results/remote-connections--远端文件下得下来-，而且说得出落在哪儿/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786976608562,
+      "type": "file"
+    },
+    {
+      "path": "test-results/remote-connections-上传-传上去、撞名问三选一、落一条账-/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1786978979092,
       "type": "file"
     }
   ],

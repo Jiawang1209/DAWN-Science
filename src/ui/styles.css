@@ -5225,3 +5225,19 @@ pre {
 }
 @keyframes enhance-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .enhance-spin { animation: none; } }
+
+/* ── 文件面板 · 按名字搜（dock-polish ③，2026-08-21） ── */
+.files-search-results { overflow: auto; }
+.files-search { flex: 1; }
+.files-search-results .search-hit .sub {
+  display: block;
+  font-size: 11px;
+  color: var(--dawn-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.files-search-note {
+  margin: var(--dawn-space-2) var(--dawn-space-3);
+  font-size: 11px;
+}

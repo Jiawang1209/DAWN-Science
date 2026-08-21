@@ -19,6 +19,7 @@ import { AgentMarkdown } from "./markdown.js"
 import {
   三角图标,
   刷新图标,
+  搜索图标,
   文件夹图标,
   文件图标,
   文本文件图标,
@@ -622,6 +623,78 @@ function 传输卡({ 传输, onCancel }: { 传输: 传输态; onCancel?: () => v
   )
 }
 
+export type SearchResult = ResponseOf<"searchFiles">
+
+/**
+ * 搜索结果单（dock-polish ③）。**截断要出声**：停在哪条预算上、看了多少、跳过了几个目录，
+ * 一句话说清——「只有这些」与「只看了这些」在屏幕上必须长得不一样。
+ */
+function SearchResults({
+  查询,
+  结果,
+  错,
+  忙,
+  根,
+  selected,
+  onPick,
+}: {
+  查询: string
+  结果: SearchResult | undefined
+  错: string | undefined
+  忙: boolean
+  根: string
+  selected: string | undefined
+  onPick: (m: SearchResult["matches"][number]) => void
+}) {
+  if (!查询) return <div className="files-search-results"><EmptyState title={t("输文件名的一部分开始搜")} /></div>
+  if (错) return <div className="files-search-results"><EmptyState title={t("搜不了")} description={错} /></div>
+  if (!结果) return <Loader label={t("搜索中")} />
+  const 根前缀 = 根 === "" ? "" : `${根.replace(/\/+$/, "")}/`
+  const 显示 = (p: string) => (根前缀 && p.startsWith(根前缀) ? p.slice(根前缀.length) : p)
+  const 截断句 = 结果.truncated
+    ? 结果.truncated === "matches"
+      ? tf("只列了前 {0} 条就停了——再打几个字缩小范围", 结果.matches.length)
+      : 结果.truncated === "visited"
+        ? tf("看了 {0} 条还没看完就停了——换个起点或再打几个字", 结果.visited)
+        : tf("搜了一会儿没搜完（看了 {0} 条）——换个起点或再打几个字", 结果.visited)
+    : undefined
+  const 跳过句 = 结果.skippedDirs > 0 ? tf("没进 {0} 个默认忽略的目录（.git、node_modules 这类）", 结果.skippedDirs) : undefined
+  return (
+    <nav className="file-tree files-search-results" aria-label={t("搜索结果")} aria-busy={忙}>
+      {结果.matches.length === 0 ? (
+        <EmptyState title={tf("没有名字里带「{0}」的", 查询)} description={tf("看了 {0} 条", 结果.visited)} />
+      ) : (
+        <ul className="tree-list">
+          {结果.matches.map((m) => {
+            const 相 = 显示(m.path)
+            const 斜 = 相.lastIndexOf("/")
+            const 名 = 斜 >= 0 ? 相.slice(斜 + 1) : 相
+            const 在 = 斜 >= 0 ? 相.slice(0, 斜) : ""
+            return (
+              <li key={m.path}>
+                <Row active={m.path === selected} className="tree-row search-hit" onClick={() => onPick(m)}>
+                  {m.kind === "dir" ? <文件夹图标 className="row-icon" /> : <文件图标 className="row-icon" />}
+                  <span className="sess">
+                    <span className="name">{名}</span>
+                    {在 ? <span className="sub">{在}</span> : null}
+                  </span>
+                </Row>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {截断句 || 跳过句 ? (
+        <p className="caveat files-search-note">
+          {截断句}
+          {截断句 && 跳过句 ? " · " : ""}
+          {跳过句}
+        </p>
+      ) : null}
+    </nav>
+  )
+}
+
 export function FilesView({
   selected,
   content,
@@ -644,6 +717,7 @@ export function FilesView({
   铺开,
   onExpand,
   onShrink,
+  search,
   展开,
   onToggle,
 }: {
@@ -735,8 +809,20 @@ export function FilesView({
    * 只在已经铺开时给；与「加宽」互斥，同一个位置两颗里永远只有一颗。
    */
   onShrink?: () => void
+  /** 按名字搜（dock-polish ③）。没给就不画那颗放大镜 */
+  search?: ((query: string, 根: string) => Promise<SearchResult>) | undefined
 }) {
   const [跳到, 设跳到] = useState("")
+  /**
+   * **搜索模式**（2026-08-21，dock-polish ③）。放大镜一按，路径框换成搜索框，
+   * 树换成结果单；Esc 或再按一次放大镜退出。两个框**占位符不同**——
+   * 长得一样的两个输入框等于没有判据（2026-08-12 那三次）。
+   */
+  const [搜着, 设搜着] = useState(false)
+  const [查询, 设查询] = useState("")
+  const [结果, 设结果] = useState<SearchResult | undefined>(undefined)
+  const [搜错, 设搜错] = useState<string | undefined>(undefined)
+  const [搜忙, 设搜忙] = useState(false)
   /**
    * 树根。**跳转就是换根**（批 2，2026-08-17）。
    *
@@ -763,6 +849,37 @@ export function FilesView({
    */
   const [手动刷新, 设手动刷新] = useState(0)
   const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
+  // 打字停 250ms 再搜；结果回来时查询已经变了就丢掉——晚到的旧结果不许盖新的
+  useEffect(() => {
+    if (!搜着 || !search) return
+    const q = 查询.trim()
+    if (!q) {
+      设结果(undefined)
+      设搜错(undefined)
+      return
+    }
+    let 作废 = false
+    const id = setTimeout(() => {
+      设搜忙(true)
+      search(q, 根)
+        .then((r) => {
+          if (作废) return
+          设结果(r)
+          设搜错(undefined)
+        })
+        .catch((e: unknown) => {
+          if (作废) return
+          设搜错(e instanceof Error ? e.message : String(e))
+        })
+        .finally(() => {
+          if (!作废) 设搜忙(false)
+        })
+    }, 250)
+    return () => {
+      作废 = true
+      clearTimeout(id)
+    }
+  }, [搜着, 查询, 根, search])
   const 树宽 = useStore($fileTreeWidth)
   const 树高 = useStore($fileTreeHeight)
   const 容器 = useRef<HTMLDivElement>(null)
@@ -787,29 +904,60 @@ export function FilesView({
     >
       <div className="files-where">
         <span className="files-where-name">{机器 ?? t("本机")}</span>
-        <input
-          className="control files-jump"
-          value={跳到}
-          aria-label={t("跳到路径")}
-          placeholder={t("输一个目录路径，回车跳过去")}
-          onChange={(e) => 设跳到(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return
-            const p = 跳到.trim()
-            // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」
-            /**
-             * **只削结尾的斜杠，不削开头的**（2026-08-17 修）。
-             *
-             * 削开头对本地是对的（那边是相对工作区的路径），
-             * 对远端是错的——**那边绝对路径才是常态**，
-             * `/home/dawn` 被削成 `home/dawn` 之后 `readdir` 当然找不到。
-             *
-             * 本地输了绝对路径会被守卫**响亮拒绝**，那比悄悄改写它好：
-             * 悄悄改写等于替人决定他想去哪儿。
-             */
-            if (p) 设根(p.replace(/\/+$/, ""))
-          }}
-        />
+        {搜着 && search ? (
+          <input
+            className="control files-jump files-search"
+            value={查询}
+            autoFocus
+            aria-label={t("搜文件名")}
+            placeholder={t("输文件名的一部分，Esc 退出搜索")}
+            onChange={(e) => 设查询(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                设搜着(false)
+                设查询("")
+              }
+            }}
+          />
+        ) : (
+          <input
+            className="control files-jump"
+            value={跳到}
+            aria-label={t("跳到路径")}
+            placeholder={t("输一个目录路径，回车跳过去")}
+            onChange={(e) => 设跳到(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return
+              const p = 跳到.trim()
+              // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」
+              /**
+               * **只削结尾的斜杠，不削开头的**（2026-08-17 修）。
+               *
+               * 削开头对本地是对的（那边是相对工作区的路径），
+               * 对远端是错的——**那边绝对路径才是常态**，
+               * `/home/dawn` 被削成 `home/dawn` 之后 `readdir` 当然找不到。
+               *
+               * 本地输了绝对路径会被守卫**响亮拒绝**，那比悄悄改写它好：
+               * 悄悄改写等于替人决定他想去哪儿。
+               */
+              if (p) 设根(p.replace(/\/+$/, ""))
+            }}
+          />
+        )}
+        {search ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={搜着 ? t("退出搜索") : t("搜文件名")}
+            aria-pressed={搜着}
+            onClick={() => {
+              设搜着((v) => !v)
+              设查询("")
+            }}
+          >
+            <搜索图标 />
+          </Button>
+        ) : null}
         {/**
          * **跳走之后要有路回来**（2026-08-17）。
          * 没有这颗的话，一次手滑的跳转会让人以为整棵树没了——
@@ -872,6 +1020,24 @@ export function FilesView({
         * （e2e 第一次跑就是这么红的）。
         */}
       <div className="file-tree-box">
+      {搜着 && search ? (
+        <SearchResults
+          查询={查询.trim()}
+          结果={结果}
+          错={搜错}
+          忙={搜忙}
+          根={根}
+          selected={selected}
+          onPick={(m) => {
+            if (m.kind === "dir") {
+              // 选中目录 = 跳过去；搜索到此为止
+              设根(m.path)
+              设搜着(false)
+              设查询("")
+            } else onSelect(m.path)
+          }}
+        />
+      ) : (
       <nav className="file-tree" aria-label={t("工作区文件")}>
         {onInitLayout ? (
           <div className="tree-actions">
@@ -906,6 +1072,7 @@ export function FilesView({
           />
         </ul>
       </nav>
+      )}
         <SideSash
           attach="edge"
           orientation={铺开 ? "vertical" : "horizontal"}

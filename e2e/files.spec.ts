@@ -347,3 +347,55 @@ test("**切走再切回来，树还展开着、文件还选着**", async ({ dawn
   await expect(树.locator(".tree-row.active", { hasText: "目标.md" })).toHaveCount(1)
   await expect(page.locator(".file-preview")).toContainText("目标")
 })
+
+/**
+ * **按名字搜**（dock-polish ③，2026-08-21）。三件事：深处的文件搜得到并且点了就开；
+ * 默认忽略的目录不进去**而且说了**；查询变了旧结果不留。
+ */
+test("**按名字搜得到深处的文件，忽略掉的目录要出声**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "src", "ui", "state"), { recursive: true })
+  writeFileSync(join(workspace, "src", "ui", "state", "right-dock.ts"), "export const x = 1\n")
+  mkdirSync(join(workspace, "node_modules", "dock-lib"), { recursive: true })
+  writeFileSync(join(workspace, "node_modules", "dock-lib", "dock.js"), "// 不该被搜到\n")
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "搜文件名", exact: true }).click()
+  const 框 = 面板.getByPlaceholder("输文件名的一部分，Esc 退出搜索")
+  await expect(框).toBeVisible()
+  await 框.fill("dock")
+
+  const 结果 = 面板.locator(".files-search-results")
+  await expect(结果.getByRole("button", { name: /right-dock\.ts/ })).toBeVisible()
+  // node_modules 里那个不在单子上，而且说了跳过了它
+  await expect(结果).not.toContainText("dock.js")
+  await expect(结果.locator(".files-search-note")).toContainText("没进 1 个默认忽略的目录")
+
+  // 点了就开
+  await 结果.getByRole("button", { name: /right-dock\.ts/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("export const x = 1")
+
+  // 换个搜不到的词：旧结果不留，说清看了几条
+  await 框.fill("不存在的名字")
+  await expect(结果).toContainText("没有名字里带「不存在的名字」的")
+  await expect(结果.getByRole("button", { name: /right-dock\.ts/ })).toHaveCount(0)
+
+  // Esc 退出：树回来了
+  await 框.press("Escape")
+  await expect(面板.getByRole("button", { name: "src", exact: true })).toBeVisible()
+})
+
+test("**命中到上限就停，并且说停在哪**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "多"), { recursive: true })
+  for (let i = 0; i < 230; i++) writeFileSync(join(workspace, "多", `hit-${String(i).padStart(3, "0")}.txt`), "")
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "搜文件名", exact: true }).click()
+  await 面板.getByPlaceholder("输文件名的一部分，Esc 退出搜索").fill("hit-")
+  const 结果 = 面板.locator(".files-search-results")
+  await expect(结果.locator(".files-search-note")).toContainText("只列了前 200 条就停了")
+  await expect(结果.locator(".search-hit")).toHaveCount(200)
+})

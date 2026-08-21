@@ -1747,6 +1747,35 @@ export const OPERATIONS = {
   },
 
   /**
+   * 按文件名搜（7.16，dock-polish ③）。**有预算、截断出声**：
+   * 命中 200 / 看过 10 万条 / 4 秒，停在哪条就说哪条。走法见 `files/search.ts`。
+   */
+  searchFiles: {
+    request: z
+      .object({
+        projectId: z.string().min(1).optional(),
+        connectionId: z.string().min(1).optional(),
+        /** 从哪儿搜起：本地相对工作区（空 = 根），远端绝对路径 */
+        path: z.string().default(""),
+        query: z.string().min(1),
+      })
+      .strict()
+      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
+        message: "projectId 与 connectionId 要给且只给一个",
+      }),
+    response: z
+      .object({
+        matches: z.array(z.object({ path: z.string(), kind: z.enum(["file", "dir"]) }).strict()),
+        visited: z.int().min(0),
+        skippedDirs: z.int().min(0),
+        unreadable: z.int().min(0),
+        truncated: z.enum(["matches", "visited", "time"]).optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
    * 读一个文件供预览（②-A′ · F2）。**只读。**
    *
    * 三态：文本 / 图片 / 其它。**「其它」必须说清是什么、多大**——

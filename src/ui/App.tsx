@@ -58,7 +58,7 @@ import {
 import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
-import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态 } from "./files.js"
+import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
 import { 读记忆, 记记忆, type FilesMemory } from "./state/files-memory.js"
 import type { EnhanceMode, EnhanceOutcome } from "./enhance.js"
@@ -823,6 +823,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 文件所在 = session?.remote
 
+  const searchFiles = useCallback(
+    async (query: string, 根: string): Promise<SearchResult> => {
+      if (文件所在) return await client.get<SearchResult>("searchFiles", { connectionId: 文件所在.connectionId, path: 根, query })
+      if (!projectId) throw new Error(t("还没有选中项目"))
+      return await client.get<SearchResult>("searchFiles", { projectId, path: 根, query })
+    },
+    [client, projectId, 文件所在],
+  )
   const loadDir = useCallback(
     async (path: string): Promise<Listing> => {
       if (文件所在) {
@@ -2489,6 +2497,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onToggle={切展开}
         content={fileContent}
         loadDir={loadDir}
+        search={searchFiles}
         onSelect={openFile}
         onOpenExternally={openExternally}
         {...(projectId

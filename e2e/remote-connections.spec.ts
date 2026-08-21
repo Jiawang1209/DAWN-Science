@@ -703,6 +703,25 @@ test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) 
   await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
 })
 
+/** **远端也能按名字搜**（dock-polish ③）——走的是 SFTP 的 readdir，不靠那台机器上有没有 `find` */
+test("远端文件面板按名字搜，结果是那台机器上的", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+  await 进坞(page, "文件")
+
+  const 面板 = page.locator(".right-dock .files-view")
+  await expect(面板.getByRole("button", { name: /读我\.md/ })).toBeVisible({ timeout: 30_000 })
+  await 面板.getByRole("button", { name: "搜文件名", exact: true }).click()
+  await 面板.getByPlaceholder("输文件名的一部分，Esc 退出搜索").fill("样本")
+  const 结果 = 面板.locator(".files-search-results")
+  await expect(结果.getByRole("button", { name: /样本\.csv/ })).toBeVisible({ timeout: 30_000 })
+  await 结果.getByRole("button", { name: /样本\.csv/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
+})
+
 /**
  * **从服务器下载一个文件**（批 4a，2026-08-17）。
  *

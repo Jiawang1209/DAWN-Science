@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-21 — 文件面板按名字搜：有预算、截断出声、本地远端同一个走法
+
+- **Type**: feat
+- **Motivation**: `dock-polish` 第一档 ③。`files.tsx` 里 2026-08-17 写的是「只跳转不搜索——搜索要有上界、截断了必须出声，等真的点累了再做」。DSH-better-sidebar 给了那套上界的形状（命中数 / 看过的条目数 / 时间三条预算，停在哪条说哪条），照它做。
+- **What**: `src/files/search.ts` `搜文件名(readdir, 根, query, 预算)`——**走法注入**，宽度优先，名字不分大小写子串匹配（查询带 `/` 就对相对路径匹配），预算 200 命中 / 10 万条 / 4 秒，`DEFAULT_IGNORED` 不进去并计数，**符号链接不进去**，读不了的目录跳过计数。协议 7.16 新增 `searchFiles`（`projectId | connectionId` + `path` + `query`）；本地走 `fs.readdir`，远端走 SFTP `readdir`——**不用那台机器的 `find`**（假机器不认它，而且 `find` 说不出「看了多少」）。界面：`files-where` 那一行加一颗放大镜，按下后路径框换成搜索框（**占位符与路径框不同**）、树换成结果单；点文件开预览，点目录就跳根并退出搜索；Esc 退出；打字停 250 ms 才搜、晚到的旧结果不许盖新的；底下一句说清截断在哪、跳过了几个目录。
+- **Impact**: 纯新增；`listDirectory` 与跳转不动。踩了一条：本地根一开始用守卫回来的 `realpath` 再 `relative()`，macOS 上 `/var` → `/private/var` 变成一串 `..`、被守卫拒、界面上是「看了 0 条」——改成直接用人给的相对路径，守卫只做守卫。
+- **Verification**: `tests/files/search.test.ts` 10 条（顺序、路径匹配、忽略、符号链接、三种截断、读不了、绝对根、空查询）；协议计数测试改 91；e2e 新增三条：本地深处文件搜到并点开 + `node_modules` 不进且出声 + 换词旧结果不留 + Esc 回树；230 个命中停在 200 并说清；远端假机器搜「样本」点开预览出 3.14。全量 vitest 与 files / remote-connections / visual e2e 绿。
+
 ### 2026-08-21 — 网页格地址：没写协议的外网主机补 https，本机仍补 http
 
 - **Type**: fix

@@ -278,6 +278,12 @@ export interface MockToolCallSpec {
    * 否则模型拿到工具结果后会再调一次，一路循环到撞上限，用例表现为超时。
    */
   once?: boolean
+  /**
+   * **每一轮都调一次**（2026-08-21）：只在请求的最后一条是用户发言时触发，
+   * 拿到工具结果之后的那次追问不触发——所以不会循环。
+   * 给「断开再连上，第二句还能打到远端」这类要验第二轮的用例用。
+   */
+  perTurn?: boolean
 }
 
 export interface DawnOptions {
@@ -396,7 +402,13 @@ export interface DawnOptions {
 function toolCallHook(spec: MockToolCallSpec | undefined) {
   if (!spec) return undefined
   let fired = false
-  return () => {
+  return (body: { messages?: Array<{ role?: string }> }) => {
+    if (spec.perTurn) {
+      const 最后 = body.messages?.at(-1)
+      return 最后?.role === "user"
+        ? { toolName: spec.toolName, args: spec.args, ...(spec.say ? { say: spec.say } : {}) }
+        : undefined
+    }
     if (fired && (spec.once ?? true)) return undefined
     fired = true
     // ** 不给就不带**：旧用例一个字节不变

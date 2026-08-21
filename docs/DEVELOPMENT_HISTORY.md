@@ -43,6 +43,96 @@
 
 ## 变更日志
 
+### 2026-08-21 — 文件面板「加宽」配了反向的「收窄」
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「面板里面的文件有加宽选项，怎么能没有恢复选项呢。」*
+- **What**: `FilesView` 新 prop `onShrink`，铺开时在「加宽」那个位置画「收窄」（两颗互斥）；`App.tsx` 接 `setRightDockWidth(RIGHT_DOCK_DEFAULT)`。文案用「收窄」不用「恢复」——设置里已有「恢复默认」，子串撞名。
+- **Impact**: 纯新增。
+- **Verification**: e2e `files`「树 ↔ 预览的缝」里加了收窄 → 回到上下摆 → 再加宽；files 7 条全绿；`tests/ui` 480 全绿。
+
+### 2026-08-21 — 首页挑 LLM 的单子按类归拢、组内按字母（不画组头）
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「要对模型进行分类，API 放到一起，ACP 放到一起，CLI 放到一起，现在太乱了。每一个类型之内，要按照英文字母进行排序。」* 我第一版画了组头、撤了每条后面的标记；作者当场改口：*「还是想以前一样，模型后面是类型，不用明确的搞出分类。」* 于是分类只体现在顺序上。
+- **What**: 新模块 `src/ui/agent-groups.ts` `按类分组`：API → ACP → CLI → 其它，组内按显示名字母序（不分大小写，同名按 id 兜底）。`AgentPill` 仍是一张平铺单子、每条后面带 API/CLI/ACP 标记（2026-08-19 作者要的），只是按 `按类分组` 摊平后的顺序列。
+- **Impact**: 只改顺序，外观不变。
+- **Verification**: 单测 +3；e2e `agent-pill` 那条加了顺序判据（同类相邻且按固定序、同类之内字母序）；agent-pill / acp-setup / visual 19 条全绿；`tests/ui` 480 全绿。
+
+### 2026-08-21 — 服务器收纳里机器那一行字号与会话行同档
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「服务器收纳里面的 IP 地址，文字大小太小了，咋的也要和会话标题的文字大小一致吧。」*
+- **What**: `.side-subhead` 12px/20px → 14px/21px（与 `.sidebar .row` 同档），颜色 text-3 → text-2：「轻一级」只靠颜色，不再靠字号。
+- **Impact**: 纯样式。
+- **Verification**: remote-connections + 视觉基线 38 条全绿（基线没碰到这一行）；设计契约扫描全绿。
+
+### 2026-08-21 — 侧栏：行上撤掉对话图标，悬停卡用图标说类别，子行缩进一级
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「会话都是带有一个信息的 logo，要求把这个 logo 取消掉，放入鼠标的滑动窗口里面；滑动窗口里涉及目录的替换为文件夹 logo，『上次活动』替换为 time 的 logo；用空格或 Tab 对文件夹 / 服务器下面的会话进行分级。」*
+- **What**: `SessionRow` 与认不出会话的那种任务行都不再画对话图标；`悬停浮层` 的 `详情` 改为结构化 `{图, 文}[]`，加 `标图`（卡标题前：对话 / 文件夹）；会话卡 = 对话图标 + 标题，文件夹 + 项目路径（或 服务器 + 机器名、文件夹 + 远端 cwd），时钟 + 上次活动；项目卡 = 文件夹 + 名，文件夹 + 全路径，对话 + N 段对话。新图标 `时钟图标`。`.proj-session-list` / `.server-session-list` 左内缩一级。远端服务器行的状态点从名字前挪到行尾——它原先补成 16px 去对齐会话行的图标，图标撤了再留在前面就是一列里两条起跑线（`remote-connections` 那条对齐用例抓到的，差 24px）。
+- **Impact**: 视觉基线「对话」明暗两张重存（diff 只在会话那一行：图标没了、标题左移），重存后整套再跑一遍全绿。`sess-title` 三条、`project-bulk` 一条的判据跟着从 `.sess-hover-sub` 改到细节行。
+- **Verification**: project-bulk / sess-title / visual / remote-connections / sidebar-layout 62 条全绿；`tests/ui` 477 全绿；截图发给作者。
+
+### 2026-08-21 — 终端按对话分；关掉就彻底关掉；启动时清掉终端尸体
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「我点开终端的时候，发现有很多已经死掉的终端……我关掉的，应该彻底关掉，最起码每次开启新会话，我再次点击终端的话，要是一个新的终端。」* 根因三处：① dock 只从「当前项目的会话」里找终端，在家目录开的落在临时那一拨——**标签一栏是空的，关不掉、看不见**，掀一次面板就多一个进程；② 按 × 只 `stopSession`，记录留着，下次启动变成「已结束」；③ 启动对账只把残留标成 exited，终端的尸体一直攒着。
+- **What**: `App.tsx` 终端列表合并 `sessions` + `tempSessions`；新增渲染进程状态 `$终端归属`（终端 → 它归属的对话，`sessionStorage` key `dawn.window.terminal-owner`，活过页面重载、不活过应用重启），dock 只列当前对话的终端，切换对话时换成那段的、没有就新开；× → `stopSession` 后 `deleteSession`；`SessionManager.reconcileOnStartup` 把 exited 的 pty 记录直接删掉（终端没有任何可恢复的东西；对话会话只标不删）。
+- **Impact**: 别的对话的终端仍然活着（切回去就在），只是不摆在当前这段里。
+- **Verification**: `tests/session` +1（启动对账删终端、留对话）；e2e `terminal-dock` +2（家目录终端有标签、× 后记录为零；两段对话各自一个终端）——第一次跑抓到 fixture 的 reload 把内存态清了，改存 sessionStorage；dock 套件 11 条全绿；`tests/ui` 477 全绿。
+
+### 2026-08-21 — 侧栏行只留标题，细节进悬停卡
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「对话窗口仅仅保留题目，然后剩余的详细信息都放入鼠标滑动窗口里面」*，并给了 Codex 侧栏那张图（项目行只展示 title，细节在悬停浮层里）。
+- **What**: `悬停浮层` 加 `详情` 行，`浮层事件` 多收一个细节数组；**有细节就弹**（此前只在标题被截断时弹）。卡上多一段 `.sess-hover-details`（细线隔开，每行一件事）。会话行：去掉远端目录那一行；卡上写「上次活动 <完整时刻>」「目录 <远端 cwd>」。项目行：去掉常驻的路径第二行，变单行；卡上写全名 / 全路径 / N 段对话。右端「多久之前」保留（08-19 作者要的 Hermes 形状）。
+- **Impact**: 项目行从两行变一行；「看得全就不弹卡」那条旧规则改成「没东西可补才不弹」。
+- **Verification**: e2e `sess-title`「短标题」改为断言卡弹出且带「上次活动」；`project-bulk`「项目行两行」翻成「一行 + 悬停卡」；project-bulk / sess-title / visual / remote-connections 51 条全绿；`tests/ui` 477 全绿；截图发给作者。
+
+### 2026-08-21 — 传输进度条重画成一张卡
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「服务器下载的进度条，太丑了，需要美化一下。」* 上一版是一根 4px 的线加一串字挤在一行，连在传哪个文件都不写。
+- **What**: `files.tsx` 新组件 `传输卡`：三行——方向图标 + 文件名 + 百分比 / 状态词；6px 圆角进度条（总量未知走不定式流光，`prefers-reduced-motion` 时不动）；已传 / 总量 · 速度 · 预计剩余 + 取消。完成 / 失败 / 取消各换色换词，颜色只是加强、词仍然写着。`传输态` 加 `name` / `方向`，`App.tsx` 起传输时带上。新图标 `下载图标` / `上传图标`。i18n 同步。
+- **Impact**: 完成态文案仍是「传好了：落点」（e2e 与人都靠它找文件），没改。
+- **Verification**: 远端下载 / 上传 e2e 4 条全绿；files 7 条、视觉基线 10 张全绿；`tests/ui` 477 全绿（契约扫描抓过一次 `border-radius: inherit` 与缺的 i18n，已补）；五种状态明暗截图发给作者。
+
+### 2026-08-21 — 坞里「文件树 ↔ 预览」之间能拖
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「面板中的文件和预览之间，应该可以挪动，现在没办法挪动。」* 此前两者的分界是写死的（宽坞 `minmax(180px, 220px)` 列，窄坞 `2fr/3fr` 行）。
+- **What**: `SideSash` 搬出 `views.tsx` 到 `src/ui/sash.tsx`（`views.tsx` 转发，调用点不改），新增 `orientation`（横缝，上下拖，键盘 ↑↓）与 `attach="edge"`（贴在父元素尾边，不按数字定位）。`files.tsx` 树外面套 `.file-tree-box`（缝不能贴在 `overflow:auto` 的 `nav` 上——外沿 4px 被裁掉点不到；盒子 `z-index:1`，否则网格里后面的预览会盖住那 2px）。宽坞拖列宽、窄坞拖行高，两个数两个键：`dawn.global.file-tree-width` / `-height`，`right-dock.ts` 里 `setFileTreeWidth/Height`、`loadFileTree`（`main.tsx` 启动时读），上界按容器此刻尺寸夹（预览至少留 160）。
+- **Impact**: 纯新增；没拖过时的缺省与原来一样（宽 220 / 高 200）。
+- **Verification**: 新 e2e「窄坞上下拖、宽坞左右拖，都记得住」（拖、量 `boundingBox`、reload 后仍是那个数）；files / sidebar-size / remote-connections 44 条全绿；视觉基线 10 张全绿；`tests/ui` 477 全绿。
+
+### 2026-08-21 — 项目里的会话能逐段多选
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「项目里面的会话，没有办法多选。」* 此前项目那一列的多选只认整个项目（集合里装路径），底下的会话行写死 `可勾: false`——那是 2026-08-13 为「会话多选勾得上却删不掉」打的补丁，补成了「根本勾不上」。
+- **What**: `views.tsx` 项目列的集合改装 **taskId**；`任务行` 按「这一行属于哪一列」决定归谁管（服务器 / 项目 / 散的），项目底下的行归「项目」那一轮；项目头那颗勾选框 = 它名下全部，勾了一部分就 **半勾**（`indeterminate`），刚选的空文件夹那颗禁用；新增 `切一组`。`onDeleteProjects` 的组带 `整个`：全选了的项目连项目记录一起移除（老行为），只选了几段的只删那几段、项目留着；`App.tsx` 确认框按实际发生的事起标题（「删除这 N 段对话？」/「从工作台移除这 N 个项目？」）。
+- **Impact**: 老路径（勾项目头 → 整个移除）不变；多了逐段的路。
+- **Verification**: e2e `project-bulk` +2（三段勾两段删两段、项目留着、头勾半勾、确认框文案；勾项目头 = 全部、整个移除）；改 1（项目多选时勾选框只长在项目那一列）；`project-bulk` 7 条 + sidebar 相关 37 条全绿；`tests/ui` 477 全绿。
+
+### 2026-08-21 — 服务器会话断线重连之后能接着用
+
+- **Type**: fix
+- **Commit**: `4598586`
+- **Motivation**: 作者：*「服务器的会话，断开之后会继不上。」* 根因：`造远端参数` 把当时那个 `RemoteExecutor` **实例**焊进工具闭包（native 的四个工具、ACP 的手、`look_at_image`）；SSH 一断，`RemoteConnections` 扔掉它、人按「连接」造出新的——旧会话握着死的那个，每条命令都报「远端不可用（disconnected/idle）」，只能另起一段。
+- **What**: `RemoteConnections.handleOf(id, label)` 返回一个 `RemoteLike` **句柄**：每次调用现查 `executorOf`；没连着时抛一句人话「服务器「X」已断开：原因——在侧栏按「连接」再继续」。`造远端参数` 改用句柄。**不静默重连的纪律不动**（重连后那边是全新进程，`cd`/后台任务都没了，这件事得由人知道并按下去）。顺手把 `remote/tools.ts` 的类型从 `RemoteExecutor` 放宽到 `RemoteLike`，去掉 `native.ts` 里那个 `as never`。mock：tool call id 改为递增（此前写死 `call_mock`，同一会话第二次调工具的卡被界面按 id 归并吃掉）；e2e fixture 新增 `toolCall.perTurn`（最后一条是用户发言时才调，不循环）。
+- **Impact**: 断线前的远端会话在重连后继续可用；错误文案变成可操作的人话。
+- **Verification**: `tests/remote/connections.test.ts` +1（断了说人话、连上后同一句柄通）；新 e2e「断开 → 连接 → 同一段会话里的命令仍然打到远端」，**修前红**（收到「远端不可用（idle）」）修后绿；remote/workbench/runtime 单测 403 全绿；远端相关 e2e 33 全绿。
+
 ### 2026-08-21 — 合并前审查：ACP 借手的六个洞 + 今天两处自己的
 
 - **Type**: fix

@@ -51,3 +51,39 @@ export function appendDockBytes(data: string): void {
 export function resetDockTerminal(): void {
   $dockChunks.set([])
 }
+
+/**
+ * 每个终端是从哪段对话里开出来的（2026-08-21，作者要的：*「每次开启新会话，
+ * 我再次点击终端的话，要是一个新的终端，而不能是以前一大堆关闭的终端开开着」*）。
+ *
+ * **只在内存里**：终端活不过本进程（启动对账会把尸体删掉），归属也不用活得更久。
+ * 键是终端的 sessionId，值是它归属的对话 sessionId；没有对话时用 `无会话`。
+ */
+export const 无会话 = "（无会话）"
+/**
+ * **存 `sessionStorage`，不存 `localStorage`**：它要活过一次页面重载（开发时常有），
+ * 但不该活过应用重启——那时终端早没了，启动对账会把尸体删掉。
+ * key 里写明作用域是 window（本项目的规矩：搞错作用域就是一个会话的东西渗进另一个）。
+ */
+const 终端归属KEY = "dawn.window.terminal-owner"
+function 读归属(): ReadonlyMap<string, string> {
+  try {
+    const raw = sessionStorage.getItem(终端归属KEY)
+    if (!raw) return new Map()
+    const obj = JSON.parse(raw) as Record<string, string>
+    return new Map(Object.entries(obj))
+  } catch {
+    return new Map()
+  }
+}
+export const $终端归属 = atom<ReadonlyMap<string, string>>(读归属())
+export function 记终端归属(终端: string, 归属: string): void {
+  const n = new Map($终端归属.get())
+  n.set(终端, 归属)
+  $终端归属.set(n)
+  try {
+    sessionStorage.setItem(终端归属KEY, JSON.stringify(Object.fromEntries(n)))
+  } catch (e) {
+    console.error("[终端] 归属保存失败，本次仍然生效，但重载页面后不会被记住：", e)
+  }
+}

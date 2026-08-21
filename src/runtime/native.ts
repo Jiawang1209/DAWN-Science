@@ -526,7 +526,7 @@ export class NativeRuntime implements AgentRuntime {
     const 定义 = 挑工具后端(
       原始,
       remote?.cwd ?? { get: () => cwd, set: () => {} },
-      remote?.executor as never,
+      remote?.executor,
     )
     return 定义.map((d) => wrap(d))
   }

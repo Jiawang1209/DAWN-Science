@@ -138,6 +138,31 @@ describe("连接管理器", () => {
     expect(m.executorOf("c1")).toBeUndefined()
   })
 
+  /**
+   * **会话握的是「这台机器」，不是某一次连接**（2026-08-21，作者报的：
+   * *「服务器的会话，断开之后会继不上。」*）。
+   *
+   * 此前 `造远端参数` 把当时那个 `RemoteExecutor` 实例焊进工具闭包；SSH 一断，
+   * 管理器扔掉它、人按「连接」造出一个新的——旧会话还握着死的那个，
+   * 每条命令都报底层的「远端不可用（disconnected）」，只能另起一段。
+   * 不静默重连的纪律不动：没连着时报一句人话，连上之后**同一个句柄**就通了。
+   */
+  it("**句柄跟着机器走**：断了说人话，按过「连接」之后旧句柄继续能用", async () => {
+    const { c } = 假客户端()
+    const m = new RemoteConnections({ createClient: () => c, secretFor: () => "pw" })
+    await m.connect(记录())
+    const 柄 = m.handleOf("c1", "实验室")
+    await expect(柄.exec("true")).resolves.toBeDefined()
+
+    c.emit("close")
+    await new Promise((r) => setTimeout(r, 5))
+    await expect(柄.exec("true")).rejects.toThrow(/实验室.*断|断.*实验室/)
+    await expect(柄.exec("true")).rejects.toThrow(/连接/)
+
+    await m.connect(记录())
+    await expect(柄.exec("true")).resolves.toBeDefined()
+  })
+
   it("**人按的断开是 idle，不是 disconnected** —— 两者混一起就没法分开说", async () => {
     const { c } = 假客户端()
     const m = new RemoteConnections({ createClient: () => c, secretFor: () => "pw" })

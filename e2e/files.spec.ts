@@ -246,3 +246,59 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   // 加宽之后那颗按钮就该消失：按下去什么都不变的按钮比没有更让人怀疑自己点错了
   await expect(page.getByRole("button", { name: "加宽" })).toHaveCount(0)
 })
+
+/**
+ * **树与预览之间那条缝能拖**（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动，现在没办法挪动」*）。
+ *
+ * 两种摆法各一条缝：窄坞上下摆，缝横着、拖的是树的高；宽坞左右摆，缝竖着、拖的是树的宽。
+ * 拖完的数要记住——重开之后还是那个数，不然每次打开都得再拖一遍。
+ */
+test("**树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住**", async ({ dawn }) => {
+  const { app, page } = dawn
+  await 进坞(page, "文件")
+  const 树 = page.locator(".file-tree")
+  await expect(树).toBeVisible()
+  const 缝 = page.locator(".file-tree-box .side-sash")
+  const 拖 = async (dx: number, dy: number) => {
+    await 缝.hover()
+    const b = (await 缝.boundingBox())!
+    await page.mouse.down()
+    await page.mouse.move(b.x + b.width / 2 + dx, b.y + b.height / 2 + dy, { steps: 8 })
+    await page.mouse.up()
+  }
+
+  // ① 窄坞：缝横着，往下拖树变高
+  await expect(缝).toHaveAttribute("aria-orientation", "horizontal")
+  const 起高 = (await 树.boundingBox())!.height
+  await 拖(0, 80)
+  await expect.poll(async () => (await 树.boundingBox())!.height).toBeGreaterThan(起高 + 60)
+  const 拖后高 = (await 树.boundingBox())!.height
+
+  // ② 宽坞：缝竖着，往右拖树变宽
+  await app.evaluate(async ({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setSize(1600, 900)
+  })
+  await page.waitForFunction(() => window.innerWidth >= 1560)
+  await page.getByRole("button", { name: "加宽" }).click()
+  await expect(page.locator(".files-wide")).toBeVisible()
+  await expect(缝).toHaveAttribute("aria-orientation", "vertical")
+  const 起宽 = (await 树.boundingBox())!.width
+  await 拖(100, 0)
+  await expect.poll(async () => (await 树.boundingBox())!.width).toBeGreaterThan(起宽 + 80)
+  const 拖后宽 = (await 树.boundingBox())!.width
+
+  // ②′ 「收窄」是加宽的反向：回到默认宽，回到上下摆（作者：*「有加宽选项，怎么能没有恢复选项呢」*）
+  await page.getByRole("button", { name: "收窄" }).click()
+  await expect(page.locator(".files-wide")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "加宽" })).toBeVisible()
+  await page.getByRole("button", { name: "加宽" }).click()
+  await expect(page.locator(".files-wide")).toBeVisible()
+
+  // ③ 重开之后两个数都还在
+  await page.reload()
+  await 进坞(page, "文件")
+  await expect(page.locator(".files-wide")).toBeVisible()
+  await expect.poll(async () => Math.round((await 树.boundingBox())!.width)).toBe(Math.round(拖后宽))
+  const 存的高 = await page.evaluate(() => localStorage.getItem("dawn.global.file-tree-height"))
+  expect(Math.abs(Number(存的高) - 拖后高)).toBeLessThan(3)
+})

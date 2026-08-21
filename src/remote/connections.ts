@@ -18,6 +18,7 @@
 import { readFile } from "node:fs/promises"
 import { RemoteExecutor, type RemoteState, type SshClientLike } from "./ssh.js"
 import type { ConnectionRecord } from "../store/connections.js"
+import type { RemoteLike } from "../runtime/types.js"
 
 export interface ConnectionsOptions {
   /** 造一个 SSH 客户端。**注入的理由是可测**——单测塞一个假的进来 */
@@ -41,6 +42,33 @@ export class RemoteConnections {
   /** 此刻的状态。**没见过的一律 `idle`**——那是实话：我们没试过 */
   stateOf(id: string): RemoteState {
     return this.状态.get(id) ?? { kind: "idle" }
+  }
+
+  /**
+   * 给会话用的句柄：**握的是「这台机器」，不是某一次连接**（2026-08-21）。
+   *
+   * 作者：*「服务器的会话，断开之后会继不上。」* 此前 `造远端参数` 把当时那个
+   * `RemoteExecutor` 实例焊进工具闭包；SSH 一断，管理器扔掉它、人按「连接」
+   * 造出一个新的——旧会话还握着死的那个，每条命令都报底层的
+   * 「远端不可用（disconnected）」，只能另起一段。
+   *
+   * 句柄每次调用现查 `executorOf`：连着就走当前那条连接；没连着就报一句人话，
+   * 告诉人去按「连接」。**不在这里顺手重连**——纪律 1 不动：重连之后那边是一个
+   * 全新的进程，`cd`、后台任务都不在了，这件事得由人知道并按下去。
+   */
+  handleOf(id: string, label: string): RemoteLike {
+    const 拿 = (): RemoteExecutor => {
+      const ex = this.executorOf(id)
+      if (ex) return ex
+      const s = this.stateOf(id)
+      const 为什么 = s.kind === "disconnected" ? `：${s.reason}` : s.kind === "connecting" ? "：正在连接" : ""
+      throw new Error(`服务器「${label}」已断开${为什么}——在侧栏按「连接」再继续`)
+    }
+    return {
+      exec: (command, options) => Promise.resolve().then(() => 拿().exec(command, options)),
+      readFile: (path) => Promise.resolve().then(() => 拿().readFile(path)),
+      writeFile: (path, data) => Promise.resolve().then(() => 拿().writeFile(path, data)),
+    }
   }
 
   /** 连着的那个执行器。**没连上就是 undefined**，不在这里顺手连一下 */

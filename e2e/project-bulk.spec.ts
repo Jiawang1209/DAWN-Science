@@ -47,7 +47,7 @@ async function 造项目(page: Page, 路径们: string[]): Promise<void> {
     for (const workspace of paths) await w.dawn.invoke("createTask", { agentId, workspace })
   }, 路径们)
   await page.reload()
-  await expect(page.locator(".proj-list .proj-item")).toHaveCount(路径们.length, { timeout: 30_000 })
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(new Set(路径们).size, { timeout: 30_000 })
 }
 
 /** 造一段**没有路径**的对话，好让「会话」那一栏也在场 */
@@ -120,9 +120,59 @@ test("**进项目多选，会话那边就退出去**", async ({ dawn }) => {
   // **仍然只有一条**：项目那边开了，会话那边关了
   await expect(page.locator(".side-bulkbar")).toHaveCount(1)
   await expect(page.getByRole("button", { name: "多选会话", exact: true })).toBeVisible()
-  // 而且勾选框只长在项目行上
+  // 而且勾选框只长在项目那一列：项目头一颗；散的那一段一颗都不长
   await expect(page.getByRole("checkbox", { name: /选择项目/ })).toHaveCount(1)
-  await expect(page.getByRole("checkbox", { name: /选择会话/ })).toHaveCount(0)
+  await expect(page.locator(".session-list .sess-check")).toHaveCount(0)
+})
+
+/**
+ * **项目里的会话能逐段勾**（2026-08-21，作者报的：*「项目里面的会话，没有办法多选」*）。
+ *
+ * 此前项目那一列的多选只认「整个项目」：集合里装的是路径，底下的会话行不长勾选框。
+ * 现在集合里装的是会话：项目头那颗是「它名下全部」（勾了一部分就半勾），
+ * 全选了的项目整个移除，只选了几段的只删那几段、项目留着。
+ */
+test("**一个项目三段会话，勾两段删两段，项目还在**", async ({ dawn }) => {
+  const { page } = dawn
+  await 造项目(page, [甲, 甲, 甲])
+  // 三段同路径合成一个项目
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1)
+  await page.locator(".proj-list .proj-item .row").first().click()
+  await expect(page.locator(".proj-session-list .sess-item")).toHaveCount(3)
+
+  await page.getByRole("button", { name: "多选项目", exact: true }).click()
+  const 行勾 = page.locator(".proj-session-list .sess-check")
+  await expect(行勾, "项目底下的会话行没长出勾选框").toHaveCount(3)
+  await 行勾.nth(0).check()
+  await 行勾.nth(1).check()
+  await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 2")
+  // 项目头那颗半勾：勾了一部分，既不是全选也不是没选
+  const 头勾 = page.getByRole("checkbox", { name: /选择项目：dawn-proj-bulk-甲/ })
+  expect(await 头勾.evaluate((el) => (el as HTMLInputElement).indeterminate)).toBe(true)
+
+  await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
+  // 确认框说的是「删对话」，不是「移除项目」——按实际发生的事起标题
+  await expect(page.locator(".confirm")).toContainText("删除这 2 段对话")
+  await expect(page.locator(".confirm")).toContainText("项目本身留着")
+  await page.locator(".confirm").getByRole("button", { name: /删除 2 段/ }).click()
+
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+  // 项目还展开着（删之前人点开的），底下剩一段
+  await expect(page.locator(".proj-session-list .sess-item")).toHaveCount(1)
+  await expect(page.locator(".side-bulkbar")).toHaveCount(0)
+})
+
+test("**项目头那颗勾选框 = 它名下全部**，全选了就整个移除", async ({ dawn }) => {
+  const { page } = dawn
+  await 造项目(page, [甲, 甲, 乙])
+  await page.getByRole("button", { name: "多选项目", exact: true }).click()
+  await page.getByRole("checkbox", { name: /选择项目：dawn-proj-bulk-甲/ }).check()
+  await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 2")
+  await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
+  await expect(page.locator(".confirm")).toContainText("移除这 1 个项目")
+  await page.locator(".confirm").getByRole("button", { name: /移除 1 个/ }).click()
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
+  await expect(page.locator(".proj-list .sess .name")).toContainText("dawn-proj-bulk-乙")
 })
 
 /**
@@ -153,55 +203,28 @@ test("**项目底下的会话行不参与「会话」多选**", async ({ dawn })
 })
 
 /**
- * **路径在名字下面另起一行**（作者：*「现在展示的不好看」*）。
+ * **项目行只留名字，路径与对话数在悬停卡上**（2026-08-21，作者给了 Codex 那张图：
+ * *「他其实只展示了 title，然后剩余的细节都放入到了鼠标的滑动边框里面」*）。
  *
- * 判据是两个盒子的顶边不同——同一行的话它们的 y 相等。
- * 会话行仍然是单行（实测 WorkBuddy 是 `240×31`），所以那一列不能跟着变。
+ * 08-13 那版把全路径常驻第二行（*「同名文件夹到处都是」*）。那个理由没变，
+ * 答案换了地方：悬停就看得到，不再占一行。
  */
-test("**项目行两行：名字在上，路径在下**", async ({ dawn }) => {
+test("**项目行一行：名字在行上，路径与对话数在悬停卡上**", async ({ dawn }) => {
   const { page } = dawn
   await 造项目(page, [甲])
 
-  const 名 = page.locator(".proj-list .sess > .name").first()
-  const 路径 = page.locator(".proj-list .sess > .sub").first()
-  await expect(路径).toBeVisible()
+  const 行 = page.locator(".proj-list .proj-item .row").first()
+  await expect(行.locator(".sess > .sub")).toHaveCount(0)
+  // 单行：行高不超过会话行那种单行的高度（实测 WorkBuddy 是 31）
+  const 高 = (await 行.boundingBox())!.height
+  expect(高).toBeLessThan(40)
 
-  const a = (await 名.boundingBox())!
-  const b = (await 路径.boundingBox())!
-  // 路径整个落在名字下面，没有任何重叠
-  expect(b.y).toBeGreaterThanOrEqual(a.y + a.height - 1)
-  // 而且它们左缘齐平——错开一两像素在一列里一眼就看得出来
-  expect(Math.round(b.x)).toBe(Math.round(a.x))
-})
-
-/**
- * **别的项目里的会话，也点得进去**（2026-08-13，作者报的：
- * *「为什么有的会话，可以点击进去，有的会话不能点击进去呢？」*）。
- *
- * 不是随机的：`sessions` 里**只有当前打开那个项目的会话**，
- * 而 `onPickTask` 上一版只从会话摘要取 projectId——别的项目里的那些
- * 摘要根本不在手上，于是项目不切、`session` 查不到、主区回落成初始画面。
- * **看起来就是「点了没反应」。**
- *
- * 判据挑的是 `.conv-title`：它只有对话那一屏有。
- * 挑输入框不行——初始画面也有一模一样的占位符（本项目 2026-08-12 栽过）。
- */
-test("**点开另一个项目里的会话，真的进得去**", async ({ dawn }) => {
-  const { page } = dawn
-  await 造项目(page, [甲, 乙])
-
-  // 展开第一个项目，进它底下那一段——这一步把「当前项目」钉在甲上
-  const 甲行 = page.locator(".proj-list .proj-item").first()
-  await 甲行.locator(".row").first().click()
-  await 甲行.locator(".proj-session-list .sess-item .row").first().click()
-  await expect(page.locator(".conv-title")).toBeVisible({ timeout: 30_000 })
-
-  // 现在去点**另一个项目**里的那一段
-  const 乙行 = page.locator(".proj-list .proj-item").nth(1)
-  await 乙行.locator(".row").first().click()
-  await 乙行.locator(".proj-session-list .sess-item .row").first().click()
-
-  // **进得去**，而不是回落到初始画面
-  await expect(page.locator(".conv-title")).toBeVisible({ timeout: 30_000 })
-  await expect(page.locator(".welcome-title")).toHaveCount(0)
+  await 行.hover()
+  const 卡 = page.locator(".sess-hover-card")
+  await expect(卡).toHaveCount(1, { timeout: 3_000 })
+  await expect(卡.locator(".sess-hover-title")).toHaveText("dawn-proj-bulk-甲")
+  // 细节行：文件夹图标 + 全路径；对话图标 + 对话数
+  await expect(卡.locator(".sess-hover-details li").nth(0)).toContainText("dawn-proj-bulk-甲")
+  await expect(卡.locator(".sess-hover-details li").nth(0).locator("svg")).toBeVisible()
+  await expect(卡.locator(".sess-hover-details li").nth(1)).toContainText("1 段对话")
 })

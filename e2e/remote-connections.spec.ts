@@ -252,6 +252,50 @@ test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
 })
 
 /**
+ * **断开再连上，同一段会话接着用**（2026-08-21，作者报的：*「服务器的会话，断开之后会继不上。」*）。
+ *
+ * 此前工具闭包焊死了断线前那个 `RemoteExecutor`，按「连接」造出新的也换不进去，
+ * 每条命令都报「远端不可用」，只能另起一段。现在会话握的是「这台机器」的句柄。
+ * 「不静默重连」不动：中间那一步仍然要人按「连接」。
+ */
+test.describe("断线重连", () => {
+  // 第二轮也要调工具——默认的 `once` 只调第一轮
+  test.use({
+    dawnOptions: { fakeSsh: true, toolCall: { toolName: "bash", args: { command: "pwd" }, perTurn: true } },
+  })
+
+test("**断开 → 连接 → 同一段会话里的命令仍然打到远端**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { label: "假机器" })
+  const row = page.locator(".remote-row").first()
+  await row.getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+
+  // 先说一句，证明这段会话活着、工具已经绑好
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这儿有什么")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator(".tool").first().locator(".tool-head")).toBeVisible()
+
+  // 断开、再连上——**中间要人按**，这一条纪律没变
+  await row.getByRole("button", { name: "断开" }).click()
+  await expect(row.getByRole("button", { name: "连接", exact: true })).toBeVisible()
+  await row.getByRole("button", { name: "连接", exact: true }).click()
+  await expect(row.getByRole("button", { name: "断开" })).toBeVisible({ timeout: 30_000 })
+
+  // 同一段会话里再说一句：命令必须还是打到那台机器
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("再看一眼")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).nth(1)).toBeVisible({ timeout: 30_000 })
+  const tool = page.locator(".tool").nth(1)
+  await tool.locator(".tool-head").click()
+  await expect(tool.locator(".tool-result"), "断线重连之后这段会话的命令没打到远端").toContainText("/home/dawn")
+  await expect(tool.locator(".tool-result")).not.toContainText("远端不可用")
+})
+})
+
+/**
  * **在服务器上开的对话，要落进侧栏那个「服务器」收纳**（2026-08-14 作者报的）。
  *
  * 作者：*「我刚刚在同一个服务器里面加入了一个新的会话……

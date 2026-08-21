@@ -736,8 +736,21 @@ export class SessionManager {
     return this.store.list()
   }
 
-  /** 进程启动时调用：上次遗留的 starting/alive 显式转 exited（见 store 的同名方法）。 */
+  /**
+   * 进程启动时调用：上次遗留的 starting/alive 显式转 exited（见 store 的同名方法）。
+   *
+   * **终端（pty）的残留记录直接删掉**（2026-08-21，作者报的：*「我点开终端的时候，
+   * 发现有很多已经死掉的终端」*）。终端没有任何可恢复的东西——进程没了，
+   * 屏幕上的字节也没存；标成 exited 再摆回 dock 里，人看到的是一排「已结束」，
+   * 每一条都只能按 × 送走。对话会话有转录、有账本，**只标不删**。
+   */
   reconcileOnStartup(): number {
-    return this.store.reconcileOnStartup()
+    const n = this.store.reconcileOnStartup()
+    for (const rec of this.store.list()) {
+      if (rec.state === "exited" && this.registry.agents[rec.agentId]?.kind === "pty") {
+        this.store.delete(rec.id)
+      }
+    }
+    return n
   }
 }

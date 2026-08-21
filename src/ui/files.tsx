@@ -30,10 +30,15 @@ import {
   笔记本文件图标,
   压缩包文件图标,
   PDF文件图标,
+  下载图标,
+  上传图标,
 } from "./icons.js"
 import { 文件类按名字, type 文件类 } from "./file-kind.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
+import { useStore } from "@nanostores/react"
+import { SideSash } from "./sash.js"
+import { $fileTreeHeight, $fileTreeWidth, FILE_TREE_MIN, setFileTreeHeight, setFileTreeWidth } from "./state/right-dock.js"
 import { 年月日时分 } from "./format.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
@@ -313,6 +318,9 @@ export interface 传输态 {
   速度?: number
   /** 落在本机哪儿。传完之后要说得出来，否则人得自己去猜 */
   target?: string
+  /** 传的是哪个文件（basename）。卡上第一行写它——一根没有名字的条不知道在传谁 */
+  name?: string
+  方向?: "下载" | "上传"
 }
 
 export function FilePreview({
@@ -531,6 +539,72 @@ function 数据表({ t: 表 }: { t: Extract<FileContent, { kind: "table" }>["tab
   )
 }
 
+/**
+ * 传输卡（2026-08-21 重画；作者：*「服务器下载的进度条，太丑了」*）。
+ *
+ * 上一版是一根 4px 的线加一串字挤在一行。现在三行：
+ *   ① 方向图标 + 文件名 + 右边的百分比（或状态词）
+ *   ② 进度条（总量未知时走不定式的流光，**不拿 0 当分母**——那会画出一根永远是满的条）
+ *   ③ 已传 / 总量 · 速度 · 预计剩余 + 取消
+ * 完成 / 失败 / 取消各自换色换词；完成写落在哪儿。
+ */
+function 传输卡({ 传输, onCancel }: { 传输: 传输态; onCancel?: () => void }) {
+  const 有总量 = Boolean(传输.total && 传输.total > 0)
+  const 比 = 有总量 ? Math.min(1, 传输.transferred / 传输.total!) : undefined
+  const 剩秒 =
+    有总量 && 传输.速度 && 传输.速度 > 0 && 传输.state === "running"
+      ? Math.max(0, Math.round((传输.total! - 传输.transferred) / 传输.速度))
+      : undefined
+  const 剩余 =
+    剩秒 === undefined ? undefined : 剩秒 >= 3600 ? tf("约 {0} 小时", Math.round(剩秒 / 360) / 10) : 剩秒 >= 60 ? tf("约 {0} 分钟", Math.ceil(剩秒 / 60)) : tf("约 {0} 秒", 剩秒)
+  // 完成时右上角写 100%，「传好了：落点」在下面那行说；失败 / 取消用词
+  const 状态词 =
+    传输.state === "done" ? "100%" : 传输.state === "failed" ? t("失败") : 传输.state === "cancelled" ? t("已取消") : undefined
+  return (
+    <div className={`xfer xfer-${传输.state}`} role="status" aria-live="polite">
+      <div className="xfer-head">
+        <span className="xfer-icon" aria-hidden="true">
+          {传输.方向 === "上传" ? <上传图标 /> : <下载图标 />}
+        </span>
+        <span className="xfer-name" title={传输.name ?? ""}>
+          {传输.name ?? (传输.方向 === "上传" ? t("上传") : t("下载"))}
+        </span>
+        <span className="xfer-pct">
+          {状态词 ?? (比 === undefined ? "…" : `${Math.floor(比 * 100)}%`)}
+        </span>
+      </div>
+      <div className={`xfer-bar${比 === undefined && 传输.state === "running" ? " indeterminate" : ""}`}>
+        <div
+          className="xfer-fill"
+          style={{ width: `${比 === undefined ? (传输.state === "running" ? 40 : 100) : 比 * 100}%` }}
+        />
+      </div>
+      <div className="xfer-foot">
+        <span className="xfer-text">
+          {传输.state === "done"
+            ? tf("传好了：{0}", 传输.target ?? "")
+            : 传输.state === "cancelled"
+              ? t("取消了，没有留下半截文件")
+              : 传输.state === "failed"
+                ? tf("传输失败：{0}", 传输.error ?? "")
+                : [
+                    `${bytes(传输.transferred)} / ${有总量 ? bytes(传输.total!) : "？"}`,
+                    传输.速度 ? tf("{0}/秒", bytes(Math.round(传输.速度))) : undefined,
+                    剩余,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+        </span>
+        {传输.state === "running" && onCancel ? (
+          <Button variant="text" size="inline" onClick={onCancel}>
+            {t("取消")}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export function FilesView({
   selected,
   content,
@@ -552,6 +626,7 @@ export function FilesView({
   刷新令牌 = 0,
   铺开,
   onExpand,
+  onShrink,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -633,6 +708,11 @@ export function FilesView({
    * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
    */
   onExpand?: () => void
+  /**
+   * 「收窄」——加宽的反向（2026-08-21，作者：*「有加宽选项，怎么能没有恢复选项呢」*）。
+   * 只在已经铺开时给；与「加宽」互斥，同一个位置两颗里永远只有一颗。
+   */
+  onShrink?: () => void
 }) {
   const [跳到, 设跳到] = useState("")
   /**
@@ -661,8 +741,28 @@ export function FilesView({
    */
   const [手动刷新, 设手动刷新] = useState(0)
   const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
+  const 树宽 = useStore($fileTreeWidth)
+  const 树高 = useStore($fileTreeHeight)
+  const 容器 = useRef<HTMLDivElement>(null)
+  const 容器宽 = () => 容器.current?.clientWidth ?? 0
+  // 减掉「这是哪台机器」那一条：它占的是第一行，树从第二行起
+  const 容器高 = () =>
+    (容器.current?.clientHeight ?? 0) -
+    (容器.current?.querySelector<HTMLElement>(".files-where")?.offsetHeight ?? 0)
   return (
-    <div className={铺开 ? "files-view files-wide" : "files-view"}>
+    <div
+      ref={容器}
+      className={铺开 ? "files-view files-wide" : "files-view"}
+      /**
+       * **树那一栏的尺寸由人拖**（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动」*）。
+       * 宽坞是列宽、窄坞是行高——两个数两个键，上下界按容器此刻的尺寸夹。
+       */
+      style={
+        铺开
+          ? { gridTemplateColumns: `${树宽}px minmax(0, 1fr)` }
+          : { gridTemplateRows: `auto ${树高}px minmax(0, 1fr)` }
+      }
+    >
       <div className="files-where">
         <span className="files-where-name">{机器 ?? t("本机")}</span>
         <input
@@ -738,7 +838,18 @@ export function FilesView({
             {t("加宽")}
           </Button>
         ) : null}
+        {onShrink ? (
+          <Button variant="ghost" size="sm" onClick={onShrink}>
+            {t("收窄")}
+          </Button>
+        ) : null}
       </div>
+      {/**
+        * 树外面套一层盒子，缝贴在盒子的尾边（宽坞在右、窄坞在下）。
+        * **不能直接贴在 `nav` 上**：它 `overflow: auto`，贴在外沿的 4px 会被裁掉、点不到
+        * （e2e 第一次跑就是这么红的）。
+        */}
+      <div className="file-tree-box">
       <nav className="file-tree" aria-label={t("工作区文件")}>
         {onInitLayout ? (
           <div className="tree-actions">
@@ -771,6 +882,16 @@ export function FilesView({
           />
         </ul>
       </nav>
+        <SideSash
+          attach="edge"
+          orientation={铺开 ? "vertical" : "horizontal"}
+          width={铺开 ? 树宽 : 树高}
+          min={FILE_TREE_MIN}
+          max={铺开 ? 容器宽() : 容器高()}
+          onResize={(px) => (铺开 ? setFileTreeWidth(px, 容器宽()) : setFileTreeHeight(px, 容器高()))}
+          label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
+        />
+      </div>
       {/**
         * **传输条属于这个面板，不属于预览**（2026-08-17，e2e 撞出来的）。
         *
@@ -783,37 +904,7 @@ export function FilesView({
         * 总大小取不到时不画那根条，只报已传了多少——
         * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
         */}
-      {传输 ? (
-        <div className="xfer">
-          {传输.total ? (
-            <div className="xfer-bar">
-              <div
-                className="xfer-fill"
-                style={{ width: `${Math.min(100, (传输.transferred / 传输.total) * 100)}%` }}
-              />
-            </div>
-          ) : null}
-          <span className="xfer-text">
-            {传输.state === "done"
-              ? tf("传好了：{0}", 传输.target ?? "")
-              : 传输.state === "cancelled"
-                ? t("取消了，没有留下半截文件")
-                : 传输.state === "failed"
-                  ? tf("传输失败：{0}", 传输.error ?? "")
-                  : tf(
-                      "{0} / {1}{2}",
-                      bytes(传输.transferred),
-                      传输.total ? bytes(传输.total) : "？",
-                      传输.速度 ? tf("　{0}/秒", bytes(Math.round(传输.速度))) : "",
-                    )}
-          </span>
-          {传输.state === "running" && onCancel ? (
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              {t("取消")}
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+      {传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}
       <section className="file-preview">
         <FilePreview
           path={selected}

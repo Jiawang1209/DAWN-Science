@@ -28,11 +28,13 @@ import { $跑着的会话 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
-import { formatDuration, formatTokens, 多久之前, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
+import { 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
+import { SideSash } from "./sash.js"
+import { 按类分组 } from "./agent-groups.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
  *
@@ -64,18 +66,6 @@ export function use现在(): number {
   return 现在
 }
 
-/**
- * 侧栏里那两个图标（2026-08-11 起有，2026-08-12 改成实心）。
- *
- * 作者：*「对话的话，前面有一个交流的图标；项目的话，前面有一个文件夹的图标。」*
- * 后来又提：*「我们的图标也没有 workbuddy 好看……他们的图标质感非常的棒。」*
- *
- * 于是这两个改成走 `icons.tsx`——**实心、`fill: currentColor`**，
- * 那份文件的文件头写了为什么描边做不到同一件事。
- */
-function 会话图标() {
-  return <对话图标 className="row-icon" />
-}
 
 /**
  * 对话头上的**工作目录**（T3-b，2026-08-12）。
@@ -212,8 +202,35 @@ const 浮层延时毫秒 = 420
 export interface 悬停浮层 {
   全文: string
   副: string | undefined
+  /**
+   * 卡上的细节行（2026-08-21，作者：*「对话窗口仅仅保留题目，然后剩余的详细信息
+   * 都放入鼠标滑动窗口里面」*，并给了 Codex 侧栏那张图）。
+   * 行上只留标题，上次活动、目录、对话数这些挪到这儿。
+   */
+  详情?: readonly 详情行[] | undefined
+  /** 标题前的图标：行上不再画图标了（作者要的），它在这儿说「这是对话 / 项目 / 服务器」 */
+  标图?: "对话" | "文件夹" | "服务器" | undefined
   上: number
   左: number
+}
+
+/** 卡上的一行细节：图标说类别，字说内容 */
+export interface 详情行 {
+  图: "文件夹" | "时钟" | "服务器" | "对话"
+  文: string
+}
+
+function 详情图(图: 详情行["图"]) {
+  switch (图) {
+    case "文件夹":
+      return <文件夹图标 className="row-icon" />
+    case "时钟":
+      return <时钟图标 className="row-icon" />
+    case "服务器":
+      return <服务器图标 className="row-icon" />
+    case "对话":
+      return <对话图标 className="row-icon" />
+  }
 }
 
 /**
@@ -228,14 +245,20 @@ export function 浮层事件(
   报: ((x: 悬停浮层 | undefined) => void) | undefined,
   全文: string,
   副?: string,
+  详情?: readonly 详情行[],
+  标图?: 悬停浮层["标图"],
 ) {
   if (!报) return {}
   return {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
       const 行 = e.currentTarget
       const 标题 = 行.querySelector(".sess-title") as HTMLElement | null
-      // **看得全就不弹**：再弹一张卡只是挡住它自己
-      if (!标题 || 标题.scrollWidth - 标题.clientWidth <= 1) return
+      const 被截了 = Boolean(标题 && 标题.scrollWidth - 标题.clientWidth > 1)
+      /**
+       * **没东西可补就不弹**：标题看得全、又没有细节行，再弹一张卡只是挡住它自己。
+       * 有细节行时就弹——行上只留标题之后，那些信息只有这儿能看（2026-08-21）。
+       */
+      if (!被截了 && !(详情 && 详情.length > 0)) return
       clearTimeout(浮层计时)
       浮层计时 = setTimeout(() => {
         const r = 行.getBoundingClientRect()
@@ -247,7 +270,7 @@ export function 浮层事件(
          * 「卡压在侧栏上了」一次就红。
          */
         const 侧 = 行.closest(".sidebar")?.getBoundingClientRect()
-        报({ 全文, 副, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
+        报({ 全文, 副, 详情, 标图, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
       }, 浮层延时毫秒)
     },
     onMouseLeave: () => {
@@ -297,6 +320,7 @@ export function SessionRow({
   select,
   onHover,
   副标题,
+  详情,
   跑着,
   现在,
 }: {
@@ -316,6 +340,8 @@ export function SessionRow({
   onHover?: ((x: 悬停浮层 | undefined) => void) | undefined
   /** 卡上第二行：这段对话属于哪儿。**光有标题有时答不了「哪一段」** */
   副标题?: string | undefined
+  /** 卡上的细节行（上次活动、目录…）。**行上只留标题**，这些在这儿看 */
+  详情?: readonly 详情行[] | undefined
   onPick: () => void
   onDelete?: (() => void) | undefined
   onRename?: ((title: string) => void) | undefined
@@ -423,7 +449,7 @@ export function SessionRow({
   }
 
   const 跑 = 用跑马灯()
-  const 浮 = 浮层事件(onHover, 名字, 副标题)
+  const 浮 = 浮层事件(onHover, 名字, 副标题, 详情, "对话")
   /** 两套事件合到一起：**都挂在同一行上**，各管各的 */
   const 悬停 = {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
@@ -502,8 +528,7 @@ export function SessionRow({
       >
         <span className="sess">
           <span className="name">
-            {/* 图标在最前面：**一眼分出「这是对话」还是「这是项目」**（仿 Codex） */}
-            <会话图标 />
+            {/* 行上不再画对话图标（2026-08-21 作者要的）：它挪到悬停卡的标题前 */}
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
               <span className="pin-mark" aria-label={t("已置顶")}>
@@ -561,7 +586,7 @@ export function SessionRow({
             * 对那条线来说「在哪个目录」比「什么时候」要紧得多——
             * 那是一次「把这里的文件都删了」会落到哪儿。
             */}
-          {session.remote ? <span className="sub">{短路径(session.remote.cwd)}</span> : null}
+          {/* 远端目录 2026-08-21 起挪到悬停卡上——行上只留标题（作者定的） */}
         </span>
         {/**
           * **这一列写「多久之前」，不写 `alive`**（2026-08-19，作者要的，
@@ -956,103 +981,8 @@ function 相对于(路径: string, 根?: string): string {
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
 
-/**
- * 侧栏与正文之间那条可以拖的缝（2026-08-13，作者：*「侧边栏其实可以挪动，
- * 往左挪动，可以看到更少的信息，往右挪动，可以看到更多的信息」*）。
- *
- * ## 量出来的（CDP 连运行中的 WorkBuddy，`_sash_`）
- *
- * ```
- * width: 4px   cursor: col-resize   position: absolute   z-index: 10
- * 背景透明；::before 是居中的 1px 细线，平时也透明
- * hover / 拖动中 细线才亮起来
- * ```
- *
- * **4px 宽、1px 可见**这件事是刻意的：命中区要比看得见的那条粗，
- * 否则拖它成了一件靠手稳的事。（Fitts 定律的老结论，它那儿是照做的。）
- *
- * ## 它是 `separator`，不是 `button`
- *
- * ARIA 的窗格分隔条模式：`role="separator"` + `aria-valuenow/min/max`，
- * 并且**可聚焦、方向键能调**。
- * 「拖」是鼠标独占的动作——只给拖的话，这个能力对键盘用户等于不存在，
- * 而那正是本项目已经踩过两次的那条（*「看不见的能力等于不存在」*）。
- */
-export function SideSash({
-  width,
-  min,
-  max,
-  onResize,
-  side = "left",
-  label,
-}: {
-  width: number
-  min: number
-  max: number
-  onResize: (px: number) => void
-  /**
-   * 这条缝贴着哪一边（2026-08-17，右侧坞要用）。
-   *
-   * **不另写一份拖拽实现**：抓指针、锚点不累加、键盘一步 16px 这三件
-   * 两边一模一样，而它们各自都栽过（不抓指针 → 手滑出 4px 就断；
-   * 累加 → 越界那几十像素被吃掉，拖回来不跟手）。
-   * 复制一份等于把这三个坑复制一遍。
-   *
-   * 两边真正的差别只有两处：**贴哪一边**，以及**往哪个方向拖是变宽**。
-   */
-  side?: "left" | "right"
-  label?: string
-}) {
-  const [dragging, setDragging] = useState(false)
-  /**
-   * **记下按下那一刻的锚点，不用每次事件的增量累加。**
-   * 累加会在夹到上下界时丢步：手往左推过了头再推回来，
-   * 侧栏不跟手——因为越界的那几十像素被吃掉了，没人记得它们。
-   */
-  const 锚 = useRef({ x: 0, w: width })
-
-  return (
-    <div
-      className={`side-sash${dragging ? " dragging" : ""}`}
-      style={side === "left" ? { left: `${width - 2}px` } : { right: `${width - 2}px` }}
-      role="separator"
-      aria-orientation="vertical"
-      aria-label={label ?? t("调整侧栏宽度")}
-      aria-valuenow={width}
-      aria-valuemin={min}
-      aria-valuemax={max}
-      tabIndex={0}
-      onPointerDown={(e) => {
-        锚.current = { x: e.clientX, w: width }
-        setDragging(true)
-        // **抓住指针**：不抓的话手一滑出这 4px，拖动就断在半路
-        e.currentTarget.setPointerCapture(e.pointerId)
-      }}
-      onPointerMove={(e) => {
-        if (!dragging) return
-        // 右边那条：手往左推才是变宽，所以取反
-        const 走了 = e.clientX - 锚.current.x
-        onResize(锚.current.w + (side === "left" ? 走了 : -走了))
-      }}
-      onPointerUp={(e) => {
-        setDragging(false)
-        e.currentTarget.releasePointerCapture(e.pointerId)
-      }}
-      onPointerCancel={() => setDragging(false)}
-      onKeyDown={(e) => {
-        // 一步 16px：够看得出来，又不至于两下就撞到界
-        const 变 = (d: number) => onResize(width + (side === "left" ? d : -d))
-        if (e.key === "ArrowLeft") {
-          变(-16)
-          e.preventDefault()
-        } else if (e.key === "ArrowRight") {
-          变(16)
-          e.preventDefault()
-        }
-      }}
-    />
-  )
-}
+/** 搬去了 `sash.tsx`（2026-08-21）；这里转发，调用点一个字不改 */
+export { SideSash }
 
 /**
  * 房客的名字。**菜单、标题、快捷键提示共用这一份**——
@@ -1376,9 +1306,19 @@ export function SessionSidebar({
    * 比一个说清楚自己搜什么的更坏（不变式 5）。占位符把范围写出来。
    */
   search?: { value: string; onChange: (v: string) => void; onClose: () => void } | undefined
+  /**
+   * 项目那一列多选之后按「删除」。**`整个` 为真 = 这个项目名下的会话全选了**，
+   * 连项目记录一起移除；否则只删 `tasks` 里那几段、项目留着（2026-08-21 起
+   * 项目里的会话能逐段勾，作者报的：*「项目里面的会话，没有办法多选」*）。
+   */
   onDeleteProjects?:
     | ((
-        groups: readonly { workspace: string; projectId?: string; tasks: readonly TaskSummary[] }[],
+        groups: readonly {
+          workspace: string
+          projectId?: string
+          tasks: readonly TaskSummary[]
+          整个: boolean
+        }[],
         done: () => void,
       ) => void)
     | undefined
@@ -1487,6 +1427,15 @@ export function SessionSidebar({
       const n = new Set(前.集合)
       if (n.has(id)) n.delete(id)
       else n.add(id)
+      return { ...前, 集合: n }
+    })
+  /** 一组一起切：全在就全摘，否则全加（项目头那颗勾选框用，2026-08-21） */
+  const 切一组 = (ids: readonly string[]) =>
+    设多选((前) => {
+      if (!前 || ids.length === 0) return 前
+      const n = new Set(前.集合)
+      if (ids.every((id) => n.has(id))) ids.forEach((id) => n.delete(id))
+      else ids.forEach((id) => n.add(id))
       return { ...前, 集合: n }
     })
   const 进选择 = (列: "会话" | "项目" | "服务器") =>
@@ -1598,6 +1547,8 @@ export function SessionSidebar({
   if (刚选的工作区 && !项目组.some(([p]) => p === 刚选的工作区)) {
     项目组.unshift([刚选的工作区, []])
   }
+  /** 项目那一列多选的全集：**是会话，不是项目**（2026-08-21 起能逐段勾） */
+  const 项目里全部 = 项目组.flatMap(([, 里面的]) => 里面的)
 
   /**
    * **任务行就是会话行**（T3-a）。
@@ -1702,6 +1653,16 @@ export function SessionSidebar({
    * 删除那一步 `filter` 一过就把它们悄悄丢了。
    * 能勾、勾得上、按下删除、然后它还在：**这就是静默截断**（规格 7.5）。
    */
+  /**
+   * 悬停卡上的细节行（行上不再写）：**图标说类别、字说内容**（2026-08-21 作者要的：
+   * 目录用文件夹图标、上次活动用时钟图标）。属于哪个项目 / 哪台机器也进这里。
+   */
+  const 会话详情 = (task: TaskSummary, s: SessionSummary): 详情行[] => [
+    ...(task.workspace && !task.connectionId ? [{ 图: "文件夹" as const, 文: task.workspace }] : []),
+    ...(s.remote ? [{ 图: "服务器" as const, 文: s.remote.label }, { 图: "文件夹" as const, 文: s.remote.cwd }] : []),
+    { 图: "时钟" as const, 文: 年月日时分(s.lastActiveAt ?? s.createdAt) },
+  ]
+
   const 任务行 = (task: TaskSummary, 可勾: boolean) => {
     /**
      * **哪一列在多选，就只有那一列长勾选框**（2026-08-14 扩到三列）。
@@ -1711,7 +1672,9 @@ export function SessionSidebar({
      * 本项目栽过好几次，所以判据要按**这一行属于哪一列**来算。
      */
     const 属于服务器列 = task.connectionId !== undefined
-    const 选中它 = 可勾 && (属于服务器列 ? 选服务器中 : 选会话中)
+    // 项目底下的行归「项目」那一轮管（2026-08-21 起能逐段勾）；散的归「会话」
+    const 属于项目列 = !属于服务器列 && task.workspace !== undefined
+    const 选中它 = 可勾 && (属于服务器列 ? 选服务器中 : 属于项目列 ? 选项目中 : 选会话中)
     const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
     if (!s) {
       /**
@@ -1739,9 +1702,8 @@ export function SessionSidebar({
             active={task.taskId === activeTaskId}
             className="task-row"
             onClick={() => (选中它 ? 切一个(task.taskId) : onPickTask?.(task))}
-            {...浮层事件(设浮着的, task.title ?? t("新任务"), 属于哪儿(task))}
+            {...浮层事件(设浮着的, task.title ?? t("新任务"), 属于哪儿(task), undefined, "对话")}
           >
-            <对话图标 className="row-icon" />
             {/* **与认得出的那条一样处理**：标题自己一个元素，才推得动 */}
             <span className="name">
               <span className="sess-title" data-full={task.title ?? t("新任务")}>
@@ -1776,7 +1738,7 @@ export function SessionSidebar({
         current={s.sessionId === activeSessionId}
         {...(agentLabel ? { label: agentLabel } : {})}
         onHover={设浮着的}
-        {...(属于哪儿(task) ? { 副标题: 属于哪儿(task) } : {})}
+        详情={会话详情(task, s)}
         onPick={() => onPickTask?.(task)}
         {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
@@ -1841,8 +1803,21 @@ export function SessionSidebar({
           style={{ top: `${浮着的.上}px`, left: `${浮着的.左}px` }}
           aria-hidden="true"
         >
-          <p className="sess-hover-title">{浮着的.全文}</p>
+          <p className="sess-hover-title">
+            {浮着的.标图 ? 详情图(浮着的.标图 === "对话" ? "对话" : 浮着的.标图) : null}
+            <span>{浮着的.全文}</span>
+          </p>
           {浮着的.副 ? <p className="sess-hover-sub">{浮着的.副}</p> : null}
+          {浮着的.详情 && 浮着的.详情.length > 0 ? (
+            <ul className="sess-hover-details">
+              {浮着的.详情.map((行, i) => (
+                <li key={i}>
+                  {详情图(行.图)}
+                  <span>{行.文}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
       {/**
@@ -2086,13 +2061,13 @@ export function SessionSidebar({
                   设多选({
                     列: "项目",
                     集合:
-                      已选!.size === 项目组.length
+                      已选!.size === 项目里全部.length
                         ? new Set()
-                        : new Set(项目组.map(([路径]) => 路径)),
+                        : new Set(项目里全部.map((t) => t.taskId)),
                   })
                 }
               >
-                {已选!.size === 项目组.length ? t("全不选") : t("全选")}
+                {已选!.size === 项目里全部.length ? t("全不选") : t("全选")}
               </Button>
               <Button
                 variant="text"
@@ -2100,13 +2075,18 @@ export function SessionSidebar({
                 className="menu-danger"
                 disabled={已选!.size === 0}
                 onClick={() => {
+                  // **集合里装的是 taskId**：全选了的项目整个移除，只选了几段的只删那几段
                   const 要删的 = 项目组
-                    .filter(([路径]) => 已选!.has(路径))
-                    .map(([路径, 里面的]) => ({
-                      workspace: 路径,
-                      ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
-                      tasks: 里面的,
-                    }))
+                    .map(([路径, 里面的]) => {
+                      const 选了 = 里面的.filter((t) => 已选!.has(t.taskId))
+                      return {
+                        workspace: 路径,
+                        ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
+                        tasks: 选了,
+                        整个: 选了.length === 里面的.length,
+                      }
+                    })
+                    .filter((g) => g.tasks.length > 0)
                   onDeleteProjects?.(要删的, () => 设多选(undefined))
                 }}
               >
@@ -2128,24 +2108,45 @@ export function SessionSidebar({
                       <input
                         type="checkbox"
                         className="sess-check"
-                        checked={已选!.has(路径)}
-                        onChange={() => 切一个(路径)}
+                        checked={里面的.length > 0 && 里面的.every((t) => 已选!.has(t.taskId))}
+                        // 刚选的空文件夹底下一段都没有：没东西可选
+                        disabled={里面的.length === 0}
+                        // **勾了一部分就半勾**：项目头那颗说的是「它名下的会话」，不是另一个东西
+                        ref={(el) => {
+                          if (el) el.indeterminate = 里面的.some((t) => 已选!.has(t.taskId)) && !里面的.every((t) => 已选!.has(t.taskId))
+                        }}
+                        onChange={() => 切一组(里面的.map((t) => t.taskId))}
                         aria-label={tf("选择项目：{0}", 基名(路径))}
                       />
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一个(路径) : 设展开(展开 ? null : 路径))}
+                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(展开 ? null : 路径))}
+                      /**
+                       * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
+                       * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——
+                       * 那个理由没变，答案换了地方：悬停就看得到，不再占一行。
+                       */
+                      {...浮层事件(
+                        设浮着的,
+                        基名(路径),
+                        undefined,
+                        [
+                          { 图: "文件夹", 文: 路径 },
+                          { 图: "对话", 文: tf("{0} 段对话", 里面的.length) },
+                        ],
+                        "文件夹",
+                      )}
                     >
                       <span className="sess">
                         <span className="name">
                           {/* 展开标记：**它同时是「这里面还有东西」的唯一提示** */}
                           <三角图标 className={`twisty${展开 ? " open" : ""}`} />
                           <项目图标 />
-                          {基名(路径)}
+                          <span className="sess-title" data-full={基名(路径)}>
+                            <span className="sess-title-run">{基名(路径)}</span>
+                          </span>
                         </span>
-                        {/* 全路径常驻一行：**同名文件夹到处都是**，只写 basename 分不出哪个是哪个 */}
-                        <span className="sub" title={路径}>{短路径(路径)}</span>
                       </span>
                     </Row>
                     {/**
@@ -2196,8 +2197,8 @@ export function SessionSidebar({
                   </div>
                   {展开 ? (
                     <ul className="proj-session-list">
-                      {/* **不可勾**：会话那一轮多选管不着项目底下的行，见 `任务行` 的注 */}
-                      {里面的.map((t) => 任务行(t, false))}
+                      {/* 归「项目」那一轮多选管（`任务行` 按列判），「会话」那一轮仍管不着它们 */}
+                      {里面的.map((t) => 任务行(t, true))}
                     </ul>
                   ) : null}
                 </li>
@@ -2987,34 +2988,34 @@ export function AgentPill({
             */}
           <div className="new-group">
           <p className="agent-menu-head">{t("新建会话，用哪个 LLM：")}</p>
+          {/**
+            * **排法按类归拢、组内按字母，但不画组头**（2026-08-21 作者定的）。
+            * 作者先说「太乱了，要分类」，看到组头之后改口：*「还是想以前一样，
+            * 模型后面是类型，不用明确的搞出分类。」* 所以标记留在每一条后面
+            * （2026-08-19 他要的），分类只体现在**顺序**上：API → ACP → CLI，组内字母序。
+            */}
           <ul>
-            {agents.map((a) => (
-              <li key={a}>
-                <Row
-                  role="menuitem"
-                  onClick={() => {
-                    setOpen(false)
-                    onPick(a)
-                  }}
-                >
-                  <span className="name">{label ? label(a) : a}</span>
-                  {/**
-                    * **每一条都标出它是哪一路**（2026-08-19 作者要的）：
-                    * *「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP。」*
-                    *
-                    * 此前只有触发按钮上那一颗标记——也就是说
-                    * **你只看得见「现在这段是哪一路」，看不见「要挑的这个是哪一路」**，
-                    * 而挑之前才是需要知道的时候：三条路的能力真的不一样
-                    * （API 的权限门管得住、CLI 管不到也不问、ACP 管不到但会主动问）。
-                    */}
-                  {(() => {
-                    const k = agentKind?.(a)
-                    return k ? <span className="kind">{KIND_LABEL[k]}</span> : null
-                  })()}
-                  {a === current ? <span className="hint">{t("当前")}</span> : null}
-                </Row>
-              </li>
-            ))}
+            {按类分组(agents, (id) => agentKind?.(id), (id) => (label ? label(id) : id))
+              .flatMap((组) => 组.agentIds)
+              .map((a) => (
+                <li key={a}>
+                  <Row
+                    role="menuitem"
+                    onClick={() => {
+                      setOpen(false)
+                      onPick(a)
+                    }}
+                  >
+                    <span className="name">{label ? label(a) : a}</span>
+                    {/* **每一条都标出它是哪一路**（2026-08-19 作者要的）：挑之前才是需要知道的时候 */}
+                    {(() => {
+                      const k = agentKind?.(a)
+                      return k ? <span className="kind">{KIND_LABEL[k]}</span> : null
+                    })()}
+                    {a === current ? <span className="hint">{t("当前")}</span> : null}
+                  </Row>
+                </li>
+              ))}
           </ul>
           </div>
           {/**

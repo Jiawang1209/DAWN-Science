@@ -157,7 +157,7 @@ test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => 
  * 也就是说：**你看得见「现在这段是哪一路」，看不见「要挑的这个是哪一路」**——
  * 而挑之前才是需要知道的时候。
  */
-test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP**", async ({ dawn }) => {
+test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP，且按类归拢、组内按字母**", async ({ dawn }) => {
   const { page } = dawn
 
   const pill = page.locator(".composer-controls .agent-pill")
@@ -174,11 +174,23 @@ test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP**", async (
    */
   const 条数 = await 单子.getByRole("menuitem").count()
   expect(条数, "挑 LLM 的单子是空的").toBeGreaterThan(0)
-  await expect(单子.locator(".kind"), "有的条目没有标记——少标一条比全不标更难发现").toHaveCount(
-    条数,
-  )
-  // 而且写的是那三个词之一，不是别的
-  for (const 字 of await 单子.locator(".kind").allTextContents()) {
-    expect(["API", "CLI", "ACP", "终端", "内核"]).toContain(字)
+  await expect(单子.locator(".kind"), "有的条目没有标记——少标一条比全不标更难发现").toHaveCount(条数)
+  const 标 = await 单子.locator(".kind").allTextContents()
+  for (const 字 of 标) expect(["API", "CLI", "ACP", "终端", "内核"]).toContain(字)
+
+  /**
+   * **2026-08-21**：作者嫌乱，要按类归拢、组内按字母——但**不画组头**
+   * （*「还是想以前一样，模型后面是类型」*）。所以这里验的是顺序：
+   * 同类相邻且 API → ACP → CLI，同类之内显示名字母序（不分大小写）。
+   */
+  const 序 = ["API", "ACP", "CLI", "终端", "内核"]
+  const 名 = await 单子.locator("[role=menuitem] .name").allTextContents()
+  for (let i = 1; i < 标.length; i++) {
+    const 前 = 序.indexOf(标[i - 1]!)
+    const 后 = 序.indexOf(标[i]!)
+    expect(后, "不同类的没有归拢到一起或顺序不对").toBeGreaterThanOrEqual(前)
+    if (前 === 后) {
+      expect(名[i - 1]!.localeCompare(名[i]!, "en", { sensitivity: "base" }), "同类之内没按字母").toBeLessThanOrEqual(0)
+    }
   }
 })

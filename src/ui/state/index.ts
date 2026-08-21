@@ -43,6 +43,9 @@ export {
   setDockChunks,
   appendDockBytes,
   resetDockTerminal,
+  $终端归属,
+  无会话,
+  记终端归属,
 } from "./dock.js"
 
 export {

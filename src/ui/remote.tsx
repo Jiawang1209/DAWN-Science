@@ -250,9 +250,13 @@ function ConnectionRow({
   return (
     <li className={`remote-row ${连着 ? "on" : ""}`} data-state={busy ? "connecting" : conn.state.kind}>
       <div className="remote-main">
-        {/* 点是给一眼扫的；**文字才是那个意思本身** */}
-        <span className="remote-dot" aria-hidden="true" />
         <span className="remote-label">{conn.label}</span>
+        {/**
+          * 点是给一眼扫的；**文字才是那个意思本身**。
+          * **挪到了行尾**（2026-08-21）：它原先在名字前面、占 16px，是为了跟会话行
+          * 前面那颗图标对齐；会话行的图标撤了，点再留在前面就是一列里两条起跑线。
+          */}
+        <span className="remote-dot" aria-hidden="true" />
         {/**
           * `data-when` 让判据与将来的悬停卡拿得到原文——
           * 屏幕上那一截是「2d」，从文本里读不出是哪一天。

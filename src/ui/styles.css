@@ -5241,3 +5241,24 @@ pre {
   margin: var(--dawn-space-2) var(--dawn-space-3);
   font-size: 11px;
 }
+
+/* ── 文件面板 · 行菜单（dock-polish ⑤）。「⋯」的样式沿用上面 2026-08-18 那组 `.tree-node > .row-actions` ── */
+.tree-row-menu { min-width: 180px; }
+.files-row-note {
+  margin: var(--dawn-space-1) var(--dawn-space-3);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 文件行右边现在也有「⋯」了：给时间戳那一截让出位置，别压在一起 */
+.tree-node > .tree-row { padding-right: calc(var(--dawn-space-2) + 28px); }
+
+/* ── 坞里一格坏了（dock-polish ⑥） ── */
+.pane-broken {
+  padding: var(--dawn-space-4);
+  display: grid;
+  gap: var(--dawn-space-2);
+  align-content: start;
+}
+.pane-broken-title { font-weight: 600; color: var(--dawn-text-1); }

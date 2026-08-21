@@ -679,11 +679,11 @@ test("**远端会话的文件面板长在那台服务器上**，不是本机", a
   await expect(面板.locator(".files-where-name")).toHaveText("假机器")
 
   // ② 树上是**那台机器**的东西（假服务器家目录里有「读我.md」与「数据」）
-  await expect(面板.getByRole("button", { name: /读我\.md/ })).toBeVisible({ timeout: 30_000 })
+  await expect(面板.getByRole("button", { name: /^读我\.md/ })).toBeVisible({ timeout: 30_000 })
   await expect(面板.getByRole("button", { name: "数据", exact: true })).toBeVisible()
 
   // ③ 预览读的也是那台机器上的字节
-  await 面板.getByRole("button", { name: /读我\.md/ }).click()
+  await 面板.getByRole("button", { name: /^读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 })
 
@@ -699,7 +699,7 @@ test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) 
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: "数据", exact: true }).click()
   // 点开目录之后，里面那个 CSV 出现了——**而且它被读成表，不是一坨逗号**
-  await 面板.getByRole("button", { name: /样本\.csv/ }).click()
+  await 面板.getByRole("button", { name: /^样本\.csv/ }).click()
   await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
 })
 
@@ -713,12 +713,12 @@ test("远端文件面板按名字搜，结果是那台机器上的", async ({ da
   await 进坞(page, "文件")
 
   const 面板 = page.locator(".right-dock .files-view")
-  await expect(面板.getByRole("button", { name: /读我\.md/ })).toBeVisible({ timeout: 30_000 })
+  await expect(面板.getByRole("button", { name: /^读我\.md/ })).toBeVisible({ timeout: 30_000 })
   await 面板.getByRole("button", { name: "搜文件名", exact: true }).click()
   await 面板.getByPlaceholder("输文件名的一部分，Esc 退出搜索").fill("样本")
   const 结果 = 面板.locator(".files-search-results")
-  await expect(结果.getByRole("button", { name: /样本\.csv/ })).toBeVisible({ timeout: 30_000 })
-  await 结果.getByRole("button", { name: /样本\.csv/ }).click()
+  await expect(结果.getByRole("button", { name: /^样本\.csv/ })).toBeVisible({ timeout: 30_000 })
+  await 结果.getByRole("button", { name: /^样本\.csv/ }).click()
   await expect(page.locator(".file-preview")).toContainText("3.14", { timeout: 30_000 })
 })
 
@@ -738,7 +738,7 @@ test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn
   await 进坞(page, "文件")
 
   const 面板 = page.locator(".right-dock .files-view")
-  await 面板.getByRole("button", { name: /读我\.md/ }).click()
+  await 面板.getByRole("button", { name: /^读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
   await page.getByRole("button", { name: "下载", exact: true }).click()
@@ -768,7 +768,7 @@ test("下载同一个文件两次，第二份另存，不覆盖第一份", async
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 进坞(page, "文件")
-  await page.locator(".right-dock .files-view").getByRole("button", { name: /读我\.md/ }).click()
+  await page.locator(".right-dock .files-view").getByRole("button", { name: /^读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
   const 落点 = async () => {
@@ -831,7 +831,7 @@ test.describe("下载落点", () => {
     await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
     await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
     await 进坞(page, "文件")
-    await page.locator(".right-dock .files-view").getByRole("button", { name: /读我\.md/ }).click()
+    await page.locator(".right-dock .files-view").getByRole("button", { name: /^读我\.md/ }).click()
     await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
     await page.getByRole("button", { name: "下载", exact: true }).click()
@@ -858,7 +858,7 @@ test("本地文件没有「下载」那颗按钮", async ({ dawn }) => {
   await 开一段临时会话(page)
   await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
-  await 面板.getByRole("button", { name: /本地的\.md/ }).click()
+  await 面板.getByRole("button", { name: /^本地的\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("本地", { timeout: 30_000 })
   await expect(page.getByRole("button", { name: "下载", exact: true })).toHaveCount(0)
 })
@@ -891,7 +891,7 @@ test.describe("上传", () => {
     // ① 树上真的多了那个文件
     await 面板.getByRole("textbox", { name: "跳到路径" }).fill("/home/dawn")
     await 面板.getByRole("textbox", { name: "跳到路径" }).press("Enter")
-    await expect(面板.getByRole("button", { name: /dawn-上传的\.txt/ })).toBeVisible({ timeout: 30_000 })
+    await expect(面板.getByRole("button", { name: /^dawn-上传的\.txt/ })).toBeVisible({ timeout: 30_000 })
 
     // ② **再传一次要问，不默默覆盖**
     await 面板.getByRole("button", { name: "传到这里", exact: true }).click()
@@ -930,7 +930,7 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
   await 开一段临时会话(page)
   await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
-  await 面板.getByRole("button", { name: /要删的\.txt/ }).click()
+  await 面板.getByRole("button", { name: /^要删的\.txt/ }).click()
   await expect(page.locator(".file-preview")).toContainText("删我", { timeout: 30_000 })
   await page.getByRole("button", { name: "移到废纸篓", exact: true }).click()
   await expect(page.getByText(/可以从废纸篓找回来/)).toBeVisible()
@@ -953,7 +953,7 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
    * 顺手把「换了会话，面板自己跟过去」钉在这儿。
    */
   await expect(面板.locator(".files-where-name")).toHaveText("假机器", { timeout: 30_000 })
-  await 面板.getByRole("button", { name: /读我\.md/ }).click()
+  await 面板.getByRole("button", { name: /^读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
   await expect(
@@ -965,7 +965,7 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
   await page.getByRole("dialog").getByRole("button", { name: "永久删除", exact: true }).click()
 
   // 树上没有它了
-  await expect(面板.getByRole("button", { name: /读我\.md/ })).toHaveCount(0, { timeout: 30_000 })
+  await expect(面板.getByRole("button", { name: /^读我\.md/ })).toHaveCount(0, { timeout: 30_000 })
 
   // **两次删除都落账，而且可恢复与不可恢复在账本上长得不一样**
   const { readRuns } = await import("./fixtures.js")
@@ -1013,6 +1013,8 @@ test("删目录：「⋯」常驻可见，确认框说得出有多少个文件",
   expect(透明度, "那颗「⋯」是悬停才出现的——等于没有").not.toBe("0")
 
   await 那颗.click()
+  // 「⋯」现在开的是菜单（dock-polish ⑤），删除在里面
+  await page.getByRole("menu").getByRole("menuitem", { name: "删除" }).click()
   // **确认框里有真数字**，不是一句「相关文件」
   // 三个：顶上两个 + 子目录里那个。**数错一个都说明没递归**
   await expect(page.getByText(/3 个文件/)).toBeVisible()

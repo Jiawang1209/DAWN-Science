@@ -2386,6 +2386,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 切走再切回来照样在（此前树靠 key 重挂，一切换全塌）。读回来经过清洗；写是防抖的。
    */
   const 树根 = 文件所在?.cwd ?? ""
+  /**
+   * 行菜单的两样（dock-polish ⑤）。路径：本地相对 = 树上的路径、绝对 = 工作区 + 它；
+   * 远端树上的本来就是绝对路径，相对是去掉会话 cwd 那一截。
+   * 插进输入框：追加到**当前会话**的草稿末尾，`@相对路径 `——没有会话就没有这一项。
+   */
+  const 行路径 = useCallback(
+    (path: string) => {
+      if (文件所在) {
+        const 前缀 = 树根 ? `${树根.replace(/\/+$/, "")}/` : ""
+        return { 相对: 前缀 && path.startsWith(前缀) ? path.slice(前缀.length) : path, 绝对: path }
+      }
+      return { 相对: path, 绝对: currentWorkspace ? `${currentWorkspace.replace(/\/+$/, "")}/${path}` : path }
+    },
+    [文件所在, 树根, currentWorkspace],
+  )
+  const 插进输入框 = useCallback(
+    (text: string) => {
+      if (!sessionId) return
+      const 旧 = draftOf(sessionId)
+      setDraft(sessionId, 旧 && !/\s$/.test(旧) ? `${旧} ${text} ` : `${旧}${text} `)
+    },
+    [sessionId],
+  )
   const [树记忆, 设树记忆] = useState<FilesMemory>(() => 读记忆(文件面板身份, 树根))
   const 树记忆身份 = useRef(文件面板身份)
   useEffect(() => {
@@ -2498,6 +2521,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         content={fileContent}
         loadDir={loadDir}
         search={searchFiles}
+        路径={行路径}
+        {...(sessionId ? { onInsert: 插进输入框 } : {})}
         onSelect={openFile}
         onOpenExternally={openExternally}
         {...(projectId

@@ -822,6 +822,18 @@ export const EN: Readonly<Record<string, string>> = {
 
   // 文件面板 · 按名字搜（dock-polish ③）
   "搜文件名": "Find by file name",
+  // 文件面板 · 行菜单（dock-polish ⑤）
+  "文件操作：{0}": "File actions: {0}",
+  "复制相对路径": "Copy relative path",
+  "复制绝对路径": "Copy absolute path",
+  "已复制相对路径：{0}": "Copied relative path: {0}",
+  "已复制绝对路径：{0}": "Copied absolute path: {0}",
+  "复制不了：{0}": "Could not copy: {0}",
+  "插进输入框": "Insert into composer",
+  // 坞里一格一个的错误边界（dock-polish ⑥）
+  "「{0}」这一格坏了": "The \"{0}\" pane broke",
+  "再开这一格": "Reopen this pane",
+  "别的地方还能用；同样的内容已经打到终端里。": "Everything else still works; the same details went to the terminal.",
   "退出搜索": "Exit search",
   "输文件名的一部分，Esc 退出搜索": "Type part of a file name; Esc to exit search",
   "输文件名的一部分开始搜": "Type part of a file name to search",

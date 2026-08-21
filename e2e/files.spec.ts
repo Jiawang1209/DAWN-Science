@@ -34,7 +34,7 @@ test("目录树能翻，图片直接显示在应用里", async ({ dawn }) => {
    * 「放行的那几个短词，用例里一律 exact」的又一例。
    */
   await page.getByRole("button", { name: "out", exact: true }).click()
-  await page.getByRole("button", { name: /图\.png/ }).click()
+  await page.getByRole("button", { name: /^图\.png/ }).click()
 
   const img = page.locator(".preview-img")
   await expect(img).toBeVisible()
@@ -48,11 +48,11 @@ test("markdown 走渲染，其它文本按原文", async ({ dawn }) => {
   writeFileSync(join(workspace, "跑.py"), "print('hi')\n")
 
   await 进坞(page, "文件")
-  await page.getByRole("button", { name: /说明\.md/ }).click()
+  await page.getByRole("button", { name: /^说明\.md/ }).click()
   // 渲染过的 markdown 里有真的 <h1>，不是一行 `# 分析结论`
   await expect(page.locator(".file-preview h1")).toHaveText("分析结论")
 
-  await page.getByRole("button", { name: /跑\.py/ }).click()
+  await page.getByRole("button", { name: /^跑\.py/ }).click()
   // **代码不该被当成 markdown 改写**
   await expect(page.locator(".preview-text")).toContainText("print('hi')")
 })
@@ -78,7 +78,7 @@ test("**PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP �
   })
 
   await 进坞(page, "文件")
-  await page.getByRole("button", { name: /报告\.pdf/ }).click()
+  await page.getByRole("button", { name: /^报告\.pdf/ }).click()
 
   const embed = page.locator(".preview-pdf")
   await expect(embed).toBeVisible()
@@ -99,7 +99,7 @@ test("**超上界的 PDF 说清多大**，而不是硬塞进内存", async ({ da
   // 反过来写的话它根本不在树里（上一版就是这么超时的）
   writeFileSync(join(workspace, "小.bin"), Buffer.alloc(16))
   await 进坞(page, "文件")
-  await page.getByRole("button", { name: /小\.bin/ }).click()
+  await page.getByRole("button", { name: /^小\.bin/ }).click()
   await expect(page.locator(".preview-other .caveat")).toContainText("不能在应用里预览")
 })
 
@@ -208,7 +208,7 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   await expect(加宽).toBeVisible()
   expect(await 加宽.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
 
-  await page.getByRole("button", { name: /大图\.png/ }).click()
+  await page.getByRole("button", { name: /^大图\.png/ }).click()
   const img = page.locator(".preview-img")
   await expect(img).toBeVisible()
   const 窄的时候 = (await img.boundingBox())!
@@ -323,7 +323,7 @@ test("**切走再切回来，树还展开着、文件还选着**", async ({ dawn
   const 树 = page.locator(".file-tree")
   await 树.getByRole("button", { name: /^深$/ }).click()
   await 树.getByRole("button", { name: /^更深$/ }).click()
-  await 树.getByRole("button", { name: /目标\.md/ }).click()
+  await 树.getByRole("button", { name: /^目标\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("目标", { timeout: 30_000 })
 
   // 切到项目乙：树换成乙的，目标不在
@@ -337,13 +337,13 @@ test("**切走再切回来，树还展开着、文件还选着**", async ({ dawn
   await page.waitForTimeout(5_500)
   await page.locator(".proj-list .proj-item .row", { hasText: "dawn-tree-memory-乙" }).click()
   await page.locator(".proj-session-list .sess-item .row").first().click()
-  await expect(树.getByRole("button", { name: /别的\.md/ })).toBeVisible({ timeout: 30_000 })
-  await expect(树.getByRole("button", { name: /目标\.md/ })).toHaveCount(0)
+  await expect(树.getByRole("button", { name: /^别的\.md/ })).toBeVisible({ timeout: 30_000 })
+  await expect(树.getByRole("button", { name: /^目标\.md/ })).toHaveCount(0)
 
   // 切回甲：两层还展开着、目标还选着、预览还是它
   await page.locator(".proj-list .proj-item .row", { hasText: "workspace" }).click()
   await page.locator(".proj-session-list .sess-item .row").first().click()
-  await expect(树.getByRole("button", { name: /目标\.md/ }), "切回来树塌了").toBeVisible({ timeout: 30_000 })
+  await expect(树.getByRole("button", { name: /^目标\.md/ }), "切回来树塌了").toBeVisible({ timeout: 30_000 })
   await expect(树.locator(".tree-row.active", { hasText: "目标.md" })).toHaveCount(1)
   await expect(page.locator(".file-preview")).toContainText("目标")
 })
@@ -367,19 +367,19 @@ test("**按名字搜得到深处的文件，忽略掉的目录要出声**", asyn
   await 框.fill("dock")
 
   const 结果 = 面板.locator(".files-search-results")
-  await expect(结果.getByRole("button", { name: /right-dock\.ts/ })).toBeVisible()
+  await expect(结果.getByRole("button", { name: /^right-dock\.ts/ })).toBeVisible()
   // node_modules 里那个不在单子上，而且说了跳过了它
   await expect(结果).not.toContainText("dock.js")
   await expect(结果.locator(".files-search-note")).toContainText("没进 1 个默认忽略的目录")
 
   // 点了就开
-  await 结果.getByRole("button", { name: /right-dock\.ts/ }).click()
+  await 结果.getByRole("button", { name: /^right-dock\.ts/ }).click()
   await expect(page.locator(".file-preview")).toContainText("export const x = 1")
 
   // 换个搜不到的词：旧结果不留，说清看了几条
   await 框.fill("不存在的名字")
   await expect(结果).toContainText("没有名字里带「不存在的名字」的")
-  await expect(结果.getByRole("button", { name: /right-dock\.ts/ })).toHaveCount(0)
+  await expect(结果.getByRole("button", { name: /^right-dock\.ts/ })).toHaveCount(0)
 
   // Esc 退出：树回来了
   await 框.press("Escape")
@@ -398,4 +398,42 @@ test("**命中到上限就停，并且说停在哪**", async ({ dawn }) => {
   const 结果 = 面板.locator(".files-search-results")
   await expect(结果.locator(".files-search-note")).toContainText("只列了前 200 条就停了")
   await expect(结果.locator(".search-hit")).toHaveCount(200)
+})
+
+/**
+ * **行菜单**（dock-polish ⑤）：复制相对 / 绝对路径、`@路径` 插进输入框。
+ * 「⋯」与右键两个入口都验——右键是看不见的能力，「⋯」才是人找得到的那个。
+ */
+test("**树行的菜单：复制路径、插进输入框**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "data"), { recursive: true })
+  writeFileSync(join(workspace, "data", "样本.csv"), "a,b\n1,2\n")
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"])
+
+  await 在项目里开会话(page)
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "data", exact: true }).click()
+  await expect(面板.getByRole("button", { name: /^样本\.csv/ })).toBeVisible()
+
+  // ① 「⋯」→ 复制相对路径
+  await 面板.getByRole("button", { name: "文件操作：样本.csv" }).click()
+  await page.getByRole("menu").getByRole("menuitem", { name: "复制相对路径" }).click()
+  await expect(面板.locator(".files-row-note")).toContainText("已复制相对路径：data/样本.csv")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("data/样本.csv")
+
+  // ② 右键 → 复制绝对路径（工作区 + 相对）
+  await 面板.getByRole("button", { name: /^样本\.csv/ }).click({ button: "right" })
+  await page.getByRole("menu").getByRole("menuitem", { name: "复制绝对路径" }).click()
+  const 绝对 = await page.evaluate(() => navigator.clipboard.readText())
+  expect(绝对.endsWith("/data/样本.csv")).toBe(true)
+  expect(绝对.startsWith("/")).toBe(true)
+
+  // ③ 目录也有；插进输入框 → 草稿末尾多了 `@data `
+  await 面板.getByRole("button", { name: "目录操作：data" }).click()
+  await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data ")
+  await 面板.getByRole("button", { name: "文件操作：样本.csv" }).click()
+  await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data @data/样本.csv ")
 })

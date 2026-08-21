@@ -451,8 +451,11 @@
  *
  * 7.13（2026-08-21）：`setAcpRemoteCapable`——给已接入的 ACP 标上／摘掉「能上服务器」。
  *   纯新增。T3 之前接入的适配器没有这个标记，此前只能删了重加。
+ *
+ * 7.14（2026-08-21）：远程助理 · 微信——`weixinGetStatus` / `weixinStartLogin` /
+ *   `weixinSubmitCode` / `weixinCancelLogin` / `weixinUnbind` / `weixinBindSession`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.13"
+export const WORKBENCH_PROTOCOL_VERSION = "7.14"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

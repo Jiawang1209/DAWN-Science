@@ -59,6 +59,7 @@ import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态 } from "./files.js"
+import { RemoteAssistantView, useSessionChoices, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
 import {
   AgentSkillsView,
   SubagentsView,
@@ -283,6 +284,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 还提示「先打开一个项目文件夹」——**明明已经有项目了**。
    * 这个缺陷是 Task 2.23 的 App 级测试撞出来的，叶子组件测试碰不到它。
    */
+  /**
+   * **别人替你建的会话也要出现在侧栏**（远程助理，2026-08-21）。
+   *
+   * 微信里说第一句话时，后端会替你建一段会话——界面此前只在自己按下去之后才重拉任务，
+   * 于是那段会话在侧栏上不存在，而微信里已经在聊了。每 5 s 拉一次任务与临时会话；
+   * `setList` 内容没变就不换引用，不会白白重渲染。**没有推送**：任务列表不属于任何会话，
+   * 塞进 `SessionUpdate` 要造假 id（与微信状态同一个理由）。
+   */
+  useEffect(() => {
+    const id = setInterval(() => {
+      void loadTasks(client)
+      void loadTempSessions(client)
+    }, 5_000)
+    return () => clearInterval(id)
+  }, [client])
+
   useEffect(() => {
     // **临时项目不算数**：它是一次没指定项目的对话，不该被当成「当前项目」
     const 正式的 = projects.filter((p) => !p.temporary)
@@ -1874,6 +1891,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * cli / pty / kernel 保持用 id：`claude` / `codex` / `shell`
    * 本来就是人叫它们的名字。
    */
+  /* ── 远程助理（2026-08-21） ── */
+  const 载微信状态 = useCallback(() => client.get<WeixinStatus>("weixinGetStatus", {}), [client])
+  const 载微信通知 = useCallback(() => client.get<NotifySettings>("weixinGetNotify", {}), [client])
+  const 微信可绑的 = useSessionChoices(tasks)
+
   const agentLabel = useCallback(
     (agentId: string): string => {
       const a = providers.agents.find((x) => x.agentId === agentId)
@@ -2741,6 +2763,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
           onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
+          onShowAssistant={() => setView(view === "assistant" ? "conversation" : "assistant")}
           /** **点它开坞**（批 2）。再点一次收起来——`点开房客` 就是这个语义 */
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
@@ -2949,6 +2972,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             />
           ) : view === "plugins" ? (
             <PluginsView />
+          ) : view === "assistant" ? (
+            <RemoteAssistantView
+              load={载微信状态}
+              startLogin={() => client.get("weixinStartLogin", {})}
+              submitCode={(code) => client.get("weixinSubmitCode", { code })}
+              cancelLogin={() => client.get("weixinCancelLogin", {})}
+              unbind={() => client.get("weixinUnbind", {})}
+              sessions={微信可绑的}
+              bindSession={(sessionId) => client.get("weixinBindSession", { sessionId })}
+              openSession={(id) => {
+                setActiveSessionId(id)
+                setView("conversation")
+              }}
+              loadNotify={载微信通知}
+              setNotify={(patch) => client.get("weixinSetNotify", patch)}
+            />
           ) : view === "mcp" ? (
             /**
              * MCP 那一屏（2026-08-15）。

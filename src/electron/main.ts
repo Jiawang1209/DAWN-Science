@@ -401,6 +401,8 @@ app.whenReady().then(() => {
        * 这个差别一路带到按钮文案上。
        */
       trashItem: (p: string) => shell.trashItem(p),
+      // 远程助理：人在电脑前（窗口在前台）就不往微信推通知
+      isForeground: () => BrowserWindow.getFocusedWindow() !== null,
       /**
        * 系统的下载目录（批 4a，2026-08-17）。
        *

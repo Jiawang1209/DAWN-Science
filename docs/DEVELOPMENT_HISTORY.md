@@ -43,6 +43,47 @@
 
 ## 变更日志
 
+### 2026-08-21 — 远程助理 T4：图片双向、工具进度条目、正在输入
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 设计文档第四期，把微信这条收尾。
+- **What**: 微信发来的图片：下载解密（两种 `aes_key` 编码都认）后按 bytes 走 `writeToSession({images})`——与界面上贴图同一条路，类型按文件头猜；文件 / 视频 / 无转写语音只说收到了。回答里引用的本机图片（绝对路径 png/jpg/gif/webp，最多 3 张）传去微信（`uploadMedia` + `imageItem`）。绑着那段的工具调用映成 `TOOL_CALL_START / RESULT` 进度条目（开始一次、结束一次）。「正在输入」：`getconfig` 拿一次票，收到话时开、最终回答时关；拿不到票就不发，绝不为它报错。假微信的 `/__fake/inbound` 支持带图（测试端自己加密塞 CDN）。
+- **Impact**: 纯新增。
+- **Verification**: `tests/channels` +2（图片进会话、类型按头猜；进度两条 + 回答里的图传过去，不存在的路径跳过并记日志）；全量见下一条合并记录。
+
+### 2026-08-21 — 远程助理 T3：通知三件 + 微信里回「同意」+ `/新建 #项目`
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 设计文档第三期。另：作者问*「以后能否接通到服务器，或者是项目的形式」*——服务器与已有会话当时就能（`/用 N`、`/新建 @服务器`），项目那一形补上 `/新建 #项目名`。
+- **What**: `EventHub.onAnyUpdate`（不受订阅门管——通知要听的恰恰是没打开的会话）。通道：跑完（用户 turn 到 agent 最终 turn 超过 60 s；绑着那段不推，回答本身会过去）、出错（非零退出码、系统提示条）、等权限（`snapshot.pendingPermission`，同一问只推一次；**不看前台**，它在等你）；窗口在前台时别的都不推（`isForeground` 由 `main.ts` 给 `BrowserWindow.getFocusedWindow()`——设计里写的是「且那段会话开着」，后端只知道前台，按前台判）。微信里回「同意 / 拒绝 / 允许 / 不行 / yes / no」→ `answerPermission`，挑 `allow_once` / `reject_once`（没有就按前缀，再没有取首尾）。开关存 `weixin.notify`（json，缺省全开），协议 **7.14** 加 `weixinGetNotify / weixinSetNotify`；那一屏多一张「通知」卡四个开关。**联系人名字**：协议没有改名接口（官方插件源码全篇无 nickname），微信里一律叫「微信ClawBot」——页面改成实话，建议设备注「DAWN-Science」。
+- **Impact**: 中枢没有「error」事件，出错按退出码 + 系统提示算；native 的权限门没有「问一句」这一档，同意只对 ACP 会话有效（开关旁写明）。
+- **Verification**: `tests/channels` +5（跑完门槛与用时、绑着的不推、出错、前台闭嘴而等权限照推、同意 → allow_once、同一问不重复、拒绝 → reject、没在等时说清、开关能关、`/新建 #项目`）；e2e +1（假 ACP 问权限 → 假微信收到 → 回同意 → agent 拿到 `allow_once`）；remote-assistant 3 条、visual、acp-agent 全绿；UI / 协议 / workbench / channels 776 全绿。
+
+### 2026-08-21 — 远程助理 T2：微信通道接进后端与界面（扫码绑定、文字往返、斜杠命令）
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 设计文档第二期：绑定那一屏 + 钥匙串 + 专属会话 + 文字往返 + 斜杠命令。
+- **What**:
+  - `src/channels/weixin/channel.ts`：扫码状态机（逐态出声、配对码、过期换码、已绑过）、长轮询（连败退避、-14 → `stale`）、**只认扫码那个人**、专属会话（第一句话时 `createTask`）、斜杠命令 `/会话 /用 N /新建 [@服务器] /停 /在哪 /帮助`、最终回答（`turn` 且 `final`）切段送回并带 `context_token`。**只调后端自己的操作**（`WeixinOps` 列出契约），与界面同一条路；写之前按 `user` 取租约——e2e 第一次跑抓到的（「写入被拒：user 未持有租约」）。
+  - `EventHub.pin/unpin`：通道钉住它绑的会话，不跟着界面的订阅走。
+  - 协议 **7.14**：`weixinGetStatus / StartLogin / SubmitCode / CancelLogin / Unbind / BindSession`。状态靠界面轮询（扫码中 1 s、平时 5 s）；设计里写的 `SessionUpdate.kind:"weixin"` 放弃——它按会话封套，绑定不属于任何会话。设计里的新表也放弃，改成 `settings` 里七把 `weixin.*` 键；token 走 `credentials`（钥匙串，键 `weixin:botToken`）。
+  - 界面：侧栏「远端服务器」正下方一项「远程助理」（手机图标）；`src/ui/remote-assistant.tsx` 那一屏——微信卡（二维码用 `qrcode` 出 SVG、白底；每一态一句话；配对码输入；已绑定后显示联系人 / 微信 id / 绑定时间 / 话落到哪段 + 换一段；解绑；失效变红可重扫）、飞书占位卡。**依赖决策**：`qrcode`（MIT，纯 JS）只在渲染进程出一张 SVG，不碰网络。
+  - `App.tsx` 每 5 s 拉一次任务与临时会话——后端替人建的会话此前在侧栏上不存在。
+  - `DAWN_FAKE_ILINK=<url>` 把微信那头指到假服务器；e2e 夹具 `fakeIlink: true`；`dev:mock` 也起假微信并打印推进剧本的 curl。
+- **Impact**: 视觉基线十张重存（diff 只是侧栏多一行，复验全绿）。未做：通知、权限同意（T3）、图片 / 工具进度 / 正在输入（T4）。
+- **Verification**: `tests/channels` 26 条（扫码全流程、只认主人、最终回答带 context_token、-14、斜杠命令、解绑）；e2e `remote-assistant` 2 条跑真实产物：入口 → 扫码（含错配对码）→ 已绑定 → 微信说一句 → 侧栏出现、对话里有、假模型回答回到假微信 → 陌生人不回 → 失效变红；斜杠命令有回音、解绑回未绑定；UI / 协议 / workbench 单测 722 全绿；sidebar / task / terminal-dock e2e 绿；视觉 10 张复验绿。
+
+### 2026-08-21 — 远程助理 T1：微信 iLink 协议客户端 + 假微信
+
+- **Type**: feat
+- **Motivation**: 作者要把 DAWN 接到微信官方的「ClawBot」（*「微信这边，其实不就是接入的微信龙虾吗？」*）。设计见 `docs/superpowers/specs/2026-08-21-远程助理-design.md`；协议从腾讯官方插件 `@tencent-weixin/openclaw-weixin@2.4.6`（MIT）源码读出，记在 `docs/微信-iLink-协议笔记.md`——README 与代码有八处不一致，以代码为准。
+- **What**: `src/channels/weixin/ilink.ts`：`IlinkClient`（头、扫码两步、长轮询、发文字 / 工具进度条目、`getconfig` / `sendtyping` / `notify*`、CDN 上传下载）+ AES-128-ECB 与两种 `aes_key` 编码 + `读入站`（文字 / 语音转写 / 引用 / 媒体挑选）+ `切段`（≤ 4000，换行处断）。**fetch 注入**；`qrBaseUrl` 只给假微信用（线上写死默认）。`scripts/fake-ilink-server.mjs`：dev:mock 与 e2e 共用的假微信，真协议 + `/__fake/*` 测试把手（推进扫码、塞消息、读发出的、让 token 失效）。
+- **Impact**: 纯新增，还没接到会话与界面（T2）。
+- **Verification**: `tests/channels/weixin-ilink.test.ts` 17 条（假 fetch 走完扫码状态机、游标、-14、发消息形状、切段、AES 往返、两种 key 编码、上传下载、入站解析）；`tests/channels/weixin-fake-server.test.ts` 3 条真客户端 × 假微信走真 socket（证明两边说同一种话）。
+
 ### 2026-08-21 — 文件面板「加宽」配了反向的「收窄」
 
 - **Type**: feat

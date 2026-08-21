@@ -39,6 +39,8 @@ import { 合名单 } from "../mcp/名单.js"
 import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
 import { 是远端MCP, 能上服务器 } from "../config/schema.js"
+import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
+import { IlinkClient } from "../channels/weixin/ilink.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
   listDirectory as listWorkspaceDirectory,
@@ -165,6 +167,8 @@ export interface WorkbenchBackendOptions {
    * 而不是让记账员反过来问后端。
    */
   onEnvironmentFrozen?: (sessionId: string, snapshotId: string) => void
+  /** 窗口在不在前台（远程助理：人在电脑前就不推通知）。不给 = 不知道 = 照推 */
+  isForeground?: () => boolean
   /**
    * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
@@ -382,7 +386,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem, isForeground } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -946,7 +950,42 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     return def.language === "R" ? "execute_r" : def.language === "python" ? "execute_python" : "kernel_execute"
   }
 
-  return {
+  /**
+   * 远程助理 · 微信（2026-08-21）。**通道只调下面这些操作，不碰任何内部对象**——
+   * 微信里说一句与界面上按发送走的是同一条路。`ops` 是懒取的：通道建在操作表之前，
+   * 第一次真用到时表已经在了。
+   *
+   * `DAWN_FAKE_ILINK=<url>`：e2e / dev:mock 把微信那头指到假服务器（与 `DAWN_FAKE_SSH` 同一套惯例）。
+   */
+  const 假微信 = process.env["DAWN_FAKE_ILINK"]
+  const 微信 = new WeixinChannel({
+    client: (baseUrl) =>
+      new IlinkClient(
+        假微信 ? { baseUrl: baseUrl ?? 假微信, qrBaseUrl: 假微信, cdnBaseUrl: `${假微信}/c2c` } : { ...(baseUrl ? { baseUrl } : {}) },
+      ),
+    settings: {
+      get: (k) => settings?.get(k),
+      set: (k, v, now) => settings?.set(k, v, now),
+    },
+    credentials,
+    events,
+    // 操作表的返回类型是按协议推导的宽类型；这几个操作的真实返回形状就是 `WeixinOps` 写的那几种
+    ops: () => backend as unknown as WeixinOps,
+    ...(isForeground ? { isForeground } : {}),
+    defaultAgentId: () => Object.entries(registry.agents).find(([, d]) => d.kind === "native")?.[0],
+    whereIs: (sessionId) => {
+      const rec = sessions.get(sessionId)
+      if (!rec?.connectionId) return undefined
+      const c = remote?.store.get(rec.connectionId)
+      return { ...(c?.label ? { label: c.label } : {}), ...(rec.remoteCwd ? { cwd: rec.remoteCwd } : {}) }
+    },
+    log: (line) => console.error(line),
+  })
+  const 要设置 = () => {
+    if (!settings) throw fault("invalid_request", "本次运行没有设置存储，接不了微信")
+  }
+
+  const backend: WorkbenchBackend = {
     listProjects: async () => projects.list(),
 
     /**
@@ -2592,5 +2631,59 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw fault("conflict", err instanceof Error ? err.message : String(err))
       }
     },
+
+    /* ── 远程助理 · 微信 ── */
+    weixinGetStatus: async () => {
+      const st = 微信.status()
+      return {
+        state: st.state,
+        ...(st.login ? { login: st.login } : {}),
+        ...(st.botId ? { botId: st.botId } : {}),
+        ...(st.userId ? { userId: st.userId } : {}),
+        ...(st.boundAt ? { boundAt: st.boundAt } : {}),
+        ...(st.sessionId ? { sessionId: st.sessionId } : {}),
+        ...(st.lastError ? { lastError: st.lastError } : {}),
+        contactName: st.contactName,
+      }
+    },
+    weixinStartLogin: async () => {
+      要设置()
+      try {
+        await 微信.startLogin()
+      } catch (e) {
+        throw fault("internal_error", `要不到二维码：${e instanceof Error ? e.message : String(e)}`)
+      }
+      return { ok: true as const }
+    },
+    weixinSubmitCode: async ({ code }) => {
+      try {
+        微信.submitVerifyCode(code)
+      } catch (e) {
+        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+      }
+      return { ok: true as const }
+    },
+    weixinCancelLogin: async () => {
+      微信.cancelLogin()
+      return { ok: true as const }
+    },
+    weixinUnbind: async () => {
+      await 微信.unbind()
+      return { ok: true as const }
+    },
+    weixinBindSession: async ({ sessionId }) => {
+      if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      await 微信.bindSession(sessionId)
+      return { ok: true as const }
+    },
+    weixinGetNotify: async () => 微信.notifySettings(),
+    weixinSetNotify: async (patch) => {
+      要设置()
+      return 微信.setNotifySettings(patch)
+    },
   }
+
+  // 上次绑过的话，启动就开始听
+  微信.start()
+  return backend
 }

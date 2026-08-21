@@ -43,6 +43,33 @@
 
 ## 变更日志
 
+### 2026-08-21 — 增强按钮与档位合成一颗
+
+- **Type**: fix
+- **Commit**: `待回填`
+- **Motivation**: 作者：*「增强和基础、标准和专家，其实应该合并为一个，这样可以更加节约位置。」*
+- **What**: `enhance.tsx`：「✦ 增强 ▾」一颗按钮两个点击区——点文字增强（忙时放弃），点小箭头弹档位菜单；档位只在菜单里显示（当前档高亮），行内不再写档名。
+- **Impact**: 视觉基线十张重存并复验。
+- **Verification**: e2e `enhance` 4 条、visual 10 张、agent-pill / model-switch 全绿；`tests/ui` 480 全绿；截图发给作者。
+
+### 2026-08-21 — 提示词增强 E2–E4：三档编排、`enhancePrompt` 操作、composer 上那颗 ✨
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 设计文档第二到四期一起做——编排器把三档串起来，后端与界面一次接全。
+- **What**: `src/enhance/enhance.ts`：基础 = 调一次；标准 = 切窗逐判命中即止；专家 = 标准 + 开发意图判定 → `.md` 候选（关键词打分 + 一手片段，**根 README 永远是候选**）→ 挑文档 → 有项目地图再扫代码。**检索任何一步失败 / 没命中都不带、但写进 `note`**。协议 **7.15** `enhancePrompt` / `cancelEnhance`；后端用 `NativeRuntime.问一句`（经 `askOnce` 注入）、中枢 `peekItems` 读对话（只要最终的 user / agent turn）、工作区本地走 fs、**远端走那台机器的 `find` / `readFile`**；超时基础 30 s / 标准 60 s / 专家 90 s；ACP / CLI 会话如实拒绝。界面 `src/ui/enhance.tsx`：`✦ 增强 · 标准 ▾`（档位记 `dawn.global.enhance-mode`，默认标准）；增强中变「改写中…放弃」；撤回栈 5 层、敲键不消失；`⌘⇧E`；空草稿灰着并常驻「先写点什么」；「带上了 / 没带上下文」写在 composer 下一行。新图标 `星图标`（不用 ✨ 字符）。ACP / CLI 会话不画；空态屏用配置里第一个 API 模型。
+- **Impact**: 视觉基线十张重存两次——第一次存进了一张**布局挤坏**的（按钮文字竖排、模型 pill 盖到档位按钮上，专家档 e2e 点不到它才发现）；修法：增强那组 `nowrap` + 不可压缩，工作目录 chip 的路径最多 14rem；再存一次并复验。`.enhance-control` 不借 `.pill` 类名——「composer 上只有一颗 pill」守的是换模型那件事。
+- **Verification**: `tests/enhance` 33 条（三档编排：带什么、不带时说什么、取消信号传到模型）；e2e `enhance` 4 条跑真实产物：基础 + 撤回 + 空态灰、标准带对话、专家带文档与代码 / 不像开发任务时说出来、增强中放弃；composer 相关与视觉 57 条全绿；`tests/ui` 480、协议 / workbench 298 全绿。
+
+### 2026-08-21 — 提示词增强 E1：提示词、清洗、检索三个纯模块 + 模型口子 + 假模型规则
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 作者给了 `Fishsb/dsh-prompt-enhancer` 要「给 DAWN 也加上提示词增强」。读了它的源码（解读在 `ccb_hive_code_learn/dsh-prompt-enhancer-解读.md`），设计在 `docs/superpowers/specs/2026-08-21-提示词增强-design.md`。**它没有 LICENSE**：只借思路，提示词与代码全部自己写。作者定：三档（基础 / 标准 / 专家）、用当前会话的模型、不做记忆链。
+- **What**: `src/enhance/prompts.ts`（纪律层 + 方法层 + 参考规则 + 三个判定模板 + 拼装；纯常量，单测锁关键句）、`clean.ts`（剥导语 / 结语 / 包裹 / 指令回显，最多三轮；**不剥原文前缀**）、`retrieve.ts`（切窗、逐窗判定命中即止、中英混排关键词、文件名打分、命中行 ±2 片段、挑文档；**打不中就不带**）。`NativeRuntime.问一句`：用会话此刻的模型（或给定 provider+model）经 `ModelRuntime.completeSimple` 问一句，不进转录不进账本。`mock-inference-server` 认两种请求：system 带「只输出改写后的提示词」回「改写：<原文>」并复述带了哪些参考块；user 带「只回一个 JSON 对象」按正文回判定 JSON。
+- **Impact**: 还没有操作与界面（E2）。
+- **Verification**: `tests/enhance` 25 条（提示词关键句、清洗六类、切窗 / 判定 / 关键词 / 打分 / 片段 / 挑文档）；`tests/integration/enhance-ask` 3 条真走 pi 到假模型；设计契约全绿。
+
 ### 2026-08-21 — 远程助理 T4：图片双向、工具进度条目、正在输入
 
 - **Type**: feat

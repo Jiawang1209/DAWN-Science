@@ -454,8 +454,10 @@
  *
  * 7.14（2026-08-21）：远程助理 · 微信——`weixinGetStatus` / `weixinStartLogin` /
  *   `weixinSubmitCode` / `weixinCancelLogin` / `weixinUnbind` / `weixinBindSession`。纯新增。
+ *
+ * 7.15（2026-08-21）：提示词增强——`enhancePrompt` / `cancelEnhance`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.14"
+export const WORKBENCH_PROTOCOL_VERSION = "7.15"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

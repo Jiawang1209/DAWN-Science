@@ -3091,6 +3091,9 @@ pre {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* 路径能让多少让多少，但**最多占这么宽**——2026-08-21 增强那颗按钮加进来之后，
+     长路径会把右手边的模型 pill 顶到别的按钮上面去 */
+  max-width: 14rem;
 }
 /** 「这是一段普通对话」：它是那个状态的**含义**，比 chip 再弱一档 */
 .ws-chip-note { color: var(--dawn-text-4); font-size: 12px; white-space: nowrap; }
@@ -5188,3 +5191,37 @@ pre {
 .ra-toggles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .ra-toggle { display: flex; align-items: flex-start; gap: var(--dawn-space-2); cursor: pointer; }
 .ra-toggle input { margin-top: 0.2em; }
+
+/* ── 提示词增强（2026-08-21） ─────────────────────────────────── */
+.enhance-control { position: relative; display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+/* 按钮文字不许竖排；那行挤了就让说明文字省略，不让按钮变形 */
+.enhance-control .btn { white-space: nowrap; flex: 0 0 auto; }
+.enhance-main.busy { color: var(--dawn-text-2); }
+/* 小箭头紧贴「增强」：它是同一颗按钮的另一半，不是另一个控件 */
+.enhance-mode { margin-left: -6px; color: var(--dawn-text-3); }
+.enhance-mode svg { width: 12px; height: 12px; }
+.enhance-undo { color: var(--dawn-text-2); }
+.enhance-note {
+  margin-left: var(--dawn-space-2);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 18rem;
+}
+.enhance-menu { left: 0; right: auto; min-width: 18rem; }
+.enhance-menu .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.enhance-menu .sub { color: var(--dawn-text-3); font-size: 12px; }
+.enhance-spin {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--dawn-stroke-3);
+  border-top-color: var(--dawn-accent);
+  border-radius: var(--dawn-radius-full);
+  animation: enhance-spin 0.8s linear infinite;
+}
+@keyframes enhance-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .enhance-spin { animation: none; } }

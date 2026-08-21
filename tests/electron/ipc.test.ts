@@ -87,6 +87,8 @@ function backend(): WorkbenchBackend {
     weixinBindSession: async () => ({ ok: true as const }),
     weixinGetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
     weixinSetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
+    enhancePrompt: async () => ({ text: "", usedContext: null, model: "x" }),
+    cancelEnhance: async () => ({ ok: true as const }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

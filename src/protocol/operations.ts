@@ -664,6 +664,44 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /* ── 提示词增强（协议 7.15，2026-08-21） ──────────────────────────
+   * 设计：`docs/superpowers/specs/2026-08-21-提示词增强-design.md`。
+   * 用这段会话此刻的模型另起一问把草稿改写，不进转录不进账本。
+   */
+  enhancePrompt: {
+    request: z
+      .object({
+        text: z.string().min(1),
+        mode: z.enum(["basic", "standard", "expert"]),
+        /** 有会话就用它的模型与对话历史；没有（空态屏）就用配置里第一个 native */
+        sessionId: z.string().min(1).optional(),
+        /** 取消用的把手；界面自己造 */
+        requestId: z.string().min(1),
+      })
+      .strict(),
+    response: z
+      .object({
+        text: z.string(),
+        usedContext: z
+          .object({
+            rounds: z.tuple([z.int(), z.int()]).optional(),
+            docs: z.array(z.string()).optional(),
+            code: z.array(z.string()).optional(),
+          })
+          .strict()
+          .nullable(),
+        note: z.string().optional(),
+        model: z.string(),
+      })
+      .strict(),
+    mutating: false,
+  },
+  cancelEnhance: {
+    request: z.object({ requestId: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   /* ── 远程助理 · 微信（协议 7.14，2026-08-21） ──────────────────────
    * 设计：`docs/superpowers/specs/2026-08-21-远程助理-design.md`。
    * 绑定状态是轮询拿的（界面在那一屏开着时每秒问一次）；没有推送——

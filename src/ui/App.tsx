@@ -60,6 +60,7 @@ import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态 } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
+import type { EnhanceMode, EnhanceOutcome } from "./enhance.js"
 import {
   AgentSkillsView,
   SubagentsView,
@@ -1891,6 +1892,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * cli / pty / kernel 保持用 id：`claude` / `codex` / `shell`
    * 本来就是人叫它们的名字。
    */
+  /* ── 提示词增强（2026-08-21） ── */
+  const 去增强 = useCallback(
+    (sessionId: string | undefined) =>
+      (req: { text: string; mode: EnhanceMode; requestId: string }) =>
+        client.get<EnhanceOutcome & { model: string }>("enhancePrompt", { ...req, ...(sessionId ? { sessionId } : {}) }),
+    [client],
+  )
+  const 取消增强 = useCallback((requestId: string) => client.get("cancelEnhance", { requestId }), [client])
+
   /* ── 远程助理（2026-08-21） ── */
   const 载微信状态 = useCallback(() => client.get<WeixinStatus>("weixinGetStatus", {}), [client])
   const 载微信通知 = useCallback(() => client.get<NotifySettings>("weixinGetNotify", {}), [client])
@@ -3385,6 +3395,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 {...(switchProblem ? { switchProblem } : {})}
                 onToggleDock={toggleDock}
                 dockOpen={dockOpen}
+                {...(session.kind === "native" ? { onEnhance: 去增强(session.sessionId), onCancelEnhance: 取消增强 } : {})}
                 /**
                  * **换服务 = 换到那家的第一个模型**。
                  *
@@ -3506,6 +3517,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               agentKind={(id: string) => providers.agents.find((x) => x.agentId === id)?.kind}
               onToggleDock={toggleDock}
+              {...(providers.agents.some((a) => a.kind === "native") ? { onEnhance: 去增强(undefined), onCancelEnhance: 取消增强 } : {})}
               /**
                * **首页开出来的是临时会话**（2026-08-11）。
                *

@@ -288,6 +288,15 @@ export function 关闭图标({ className }: 图标属性 = {}) {
   )
 }
 
+/** 四角星：提示词增强那颗按钮（2026-08-21）。不用 ✨ 字符——emoji 跟不了 currentColor */
+export function 星图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path d="M8 1.2c.3 0 .6.2.7.5l1.3 3.4 3.4 1.3a.75.75 0 0 1 0 1.4l-3.4 1.3-1.3 3.4a.75.75 0 0 1-1.4 0L6 9.1 2.6 7.8a.75.75 0 0 1 0-1.4L6 5.1l1.3-3.4c.1-.3.4-.5.7-.5Z" />
+    </壳>
+  )
+}
+
 /** 手机：侧栏「远程助理」那一项（2026-08-21） */
 export function 手机图标({ className }: 图标属性 = {}) {
   return (

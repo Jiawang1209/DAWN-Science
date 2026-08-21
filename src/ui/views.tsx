@@ -34,6 +34,7 @@ import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
+import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import { 按类分组 } from "./agent-groups.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
@@ -3484,6 +3485,8 @@ export function ConversationView({
   会话开关们,
   onSetConfigOption,
   onToggleDock,
+  onEnhance,
+  onCancelEnhance,
   dockOpen,
   models,
   model,
@@ -3558,6 +3561,9 @@ export function ConversationView({
   onSetConfigOption?: ((configId: string, value: string) => void) | undefined
   /** 掀开／收起底部终端。**与命令面板里那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
+  /** 提示词增强（2026-08-21）。不给 = 这段会话做不了（ACP / CLI），那颗按钮不画 */
+  onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
+  onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
   dockOpen?: boolean | undefined
   /**
    * 这个会话的 agent 该怎么称呼（`ds-chat` → `DeepSeek`）。
@@ -3644,6 +3650,8 @@ export function ConversationView({
   const [拖着, 设拖着] = useState(false)
   /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [发送出错, 设发送出错] = useState<string | undefined>(undefined)
+  /** 增强带了什么 / 为什么没带（不是错误，灰字） */
+  const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
   /**
    * 这一次提交要的是**排队**还是**插队**（2026-08-15）。
    *
@@ -4291,6 +4299,7 @@ export function ConversationView({
             * 于是「发失败」在屏幕上与「什么都没发生」长得一模一样。
             */}
           {发送出错 ? <p className="caveat composer-problem">⚠ {发送出错}</p> : null}
+          {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
           {/**
             * **两条路都要看得见**（2026-08-15）。
             *
@@ -4416,6 +4425,16 @@ export function ConversationView({
                 <终端图标 />
                 {t("终端")}
               </Button>
+            ) : null}
+            {onEnhance && onCancelEnhance ? (
+              <EnhanceControl
+                draft={draft}
+                setDraft={(text) => setDraft(session.sessionId, text)}
+                enhance={onEnhance}
+                cancel={onCancelEnhance}
+                onProblem={设发送出错}
+                onNote={设增强说明}
+              />
             ) : null}
             {/* 左手边到此为止。**这一格把「带什么、在哪跑」与「用谁发」分开** */}
             <span className="composer-gap" aria-hidden="true" />
@@ -5311,6 +5330,8 @@ export function EmptyConversation({
   agentKind,
   onStart,
   onToggleDock,
+  onEnhance,
+  onCancelEnhance,
   onOpenSettings,
   onPickDirectory,
 }: {
@@ -5324,6 +5345,9 @@ export function EmptyConversation({
   agentKind?: ((agentId: string) => SessionSummary["kind"] | undefined) | undefined
   /** 掀开／收起底部终端。**与 composer 上那颗、命令面板那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
+  /** 提示词增强（2026-08-21）。空态屏用配置里第一个 API 模型 */
+  onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
+  onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
   /**
    * 第二个参数给了的话，**建完之后把这句话真的发出去**。
    * 第三个是工作目录（2026-08-12）——**给了就归「项目」，不给就归「会话」**。
@@ -5368,6 +5392,7 @@ export function EmptyConversation({
   const [空态拖着, 设空态拖着] = useState(false)
   /** 第一句话没发出去的原因。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [开场出错, 设开场出错] = useState<string | undefined>(undefined)
+  const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
   return (
     <div className="conversation empty-conv">
       {first ? (
@@ -5563,6 +5588,7 @@ export function EmptyConversation({
                 * 于是「发失败」在屏幕上与「什么都没发生」长得一模一样。
                 */}
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
+              {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
               <div className="composer-controls">
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton
@@ -5616,6 +5642,9 @@ export function EmptyConversation({
                     <终端图标 />
                     {t("终端")}
                   </Button>
+                ) : null}
+                {onEnhance && onCancelEnhance ? (
+                  <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
                 ) : null}
                 {/* 左手边到此为止——与对话里那张同一副分法 */}
                 <span className="composer-gap" aria-hidden="true" />

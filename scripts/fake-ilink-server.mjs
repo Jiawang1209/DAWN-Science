@@ -99,13 +99,24 @@ export function startFakeIlinkServer(opts = {}) {
     }
     if (p === "/__fake/inbound") {
       const b = json()
+      const items = []
+      if (b.text) items.push({ type: 1, text_item: { text: String(b.text) } })
+      /**
+       * `image: { base64, aesKeyHex }`：测试端自己用 AES-128-ECB 加密好、塞进 CDN，
+       * 这里只造条目——与真微信一样，图片条目带 hex 的 `aeskey`。
+       */
+      if (b.image) {
+        const key = `dl-${randomBytes(6).toString("hex")}`
+        存的密文.set(key, Buffer.from(b.image.base64, "base64"))
+        items.push({ type: 2, image_item: { media: { encrypt_query_param: key, encrypt_type: 1 }, aeskey: b.image.aesKeyHex } })
+      }
       排队的.push({
         message_id: `m${Date.now()}`,
         from_user_id: b.from ?? FAKE_USER_ID,
         to_user_id: FAKE_BOT_ID,
         create_time_ms: Date.now(),
         message_type: 1,
-        item_list: [{ type: 1, text_item: { text: String(b.text ?? "") } }],
+        item_list: items,
         context_token: b.context_token ?? `ctx-${randomBytes(4).toString("hex")}`,
       })
       唤醒()

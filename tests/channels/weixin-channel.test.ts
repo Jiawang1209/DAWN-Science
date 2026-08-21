@@ -4,7 +4,7 @@
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { startFakeIlinkServer, FAKE_BOT_TOKEN, FAKE_USER_ID } from "../../scripts/fake-ilink-server.mjs"
-import { IlinkClient } from "../../src/channels/weixin/ilink.js"
+import { IlinkClient, aesEcbEncrypt } from "../../src/channels/weixin/ilink.js"
 import { WeixinChannel, WEIXIN_TOKEN_KEY, type WeixinDeps, type WeixinOps } from "../../src/channels/weixin/channel.js"
 import type { SessionUpdate } from "../../src/protocol/events.js"
 import type { TaskSummary } from "../../src/protocol/entities.js"
@@ -22,7 +22,7 @@ function 假世界() {
   const 全听 = new Set<(u: SessionUpdate) => void>()
   const 钉住的 = new Set<string>()
   const tasks: TaskSummary[] = []
-  const 写了: { sessionId: string; data: string }[] = []
+  const 写了: { sessionId: string; data: string; images?: { mimeType: string; data: string }[] }[] = []
   const 中止了: string[] = []
   const 答了: { sessionId: string; requestId: string; optionId?: string }[] = []
   let 前台 = false
@@ -47,7 +47,7 @@ function 假世界() {
     },
     listTasks: async () => tasks,
     listConnections: async () => [{ id: "c1", label: "实验室" }],
-    writeToSession: async (r) => void 写了.push(r),
+    writeToSession: async (r) => void 写了.push(r as { sessionId: string; data: string; images?: { mimeType: string; data: string }[] }),
     abortSession: async ({ sessionId }) => void 中止了.push(sessionId),
     subscribeSession: async () => ({}),
     acquireLease: async () => ({}),
@@ -75,6 +75,10 @@ function 假世界() {
     ops: () => ops,
     defaultAgentId: () => "ds-chat",
     whereIs: (id) => (tasks.find((t) => t.sessionId === id)?.connectionId ? { label: "实验室", cwd: "/home/u/proj" } : undefined),
+    readFile: async (p) => {
+      if (p === "/tmp/out/plot.png") return Buffer.from("\x89PNG\r\n\x1a\n" + "fakepng", "latin1")
+      throw new Error(`没有 ${p}`)
+    },
   }
   const 已绑 = () => {
     秘密.set(WEIXIN_TOKEN_KEY, FAKE_BOT_TOKEN)
@@ -100,7 +104,7 @@ function 假世界() {
         pendingPermission: { requestId, title, options: [{ optionId: "a", name: "允许", kind: "allow_once" }, { optionId: "r", name: "拒绝", kind: "reject_once" }] },
       },
     } as unknown as SessionUpdate)
-  return { deps, 设置, 秘密, tasks, 写了, 中止了, 答了, 钉住的, 已绑, 会话说, 会话退出, 会话问权限, 设前台: (v: boolean) => (前台 = v), 走时: (ms: number) => (现在 += ms) }
+  return { deps, 设置, 秘密, tasks, 写了, 中止了, 答了, 钉住的, 已绑, 会话说, 会话退出, 会话问权限, 广播, 设前台: (v: boolean) => (前台 = v), 走时: (ms: number) => (现在 += ms) }
 }
 
 const 等到 = async (f: () => boolean | Promise<boolean>, 说明: string, ms = 3000) => {
@@ -370,6 +374,51 @@ describe("通知（T3）", () => {
     await s.发来("/新建 #不存在")
     await 等到(async () => (await 发了几条()) === 2, "回了")
     expect(await 最后()).toContain("生态中心")
+    ch.stop()
+  })
+})
+
+describe("图片、进度、正在输入（T4）", () => {
+  const 发了 = async () => (await s.发出的()) as { item_list: { type: number; text_item?: { text: string }; image_item?: unknown; tool_call_start_item?: unknown; tool_call_result_item?: { status: string } }[] }[]
+
+  it("微信发来的图片：下载解密后按 bytes 进会话，类型按文件头猜", async () => {
+    const w = 假世界()
+    w.已绑()
+    const ch = new WeixinChannel(w.deps)
+    ch.start()
+    const key = Buffer.alloc(16, 3)
+    const png = Buffer.from("\x89PNG\r\n\x1a\nhello", "latin1")
+    await s.发来("看这张", { image: { base64: aesEcbEncrypt(key, png).toString("base64"), aesKeyHex: key.toString("hex") } })
+    await 等到(() => w.写了.length === 1, "写进会话")
+    expect(w.写了[0]!.data).toBe("看这张")
+    expect(w.写了[0]!.images?.[0]).toMatchObject({ mimeType: "image/png", data: png.toString("base64") })
+    ch.stop()
+  })
+
+  it("工具调用 → 开始 / 结束两条进度；回答里引用的本机图片传去微信", async () => {
+    const w = 假世界()
+    w.已绑()
+    await w.deps.ops().createTask({ agentId: "x" })
+    w.设置.set("weixin.sessionId", "s1")
+    const ch = new WeixinChannel(w.deps)
+    ch.start()
+    const 工具 = (status: "running" | "ok") => {
+      const u = { workbenchProtocolVersion: "7.14", sessionId: "s1", revision: 1, type: "item", item: { type: "tool", id: "c1", name: "bash", input: {}, status } } as unknown as SessionUpdate
+      w.广播(u)
+    }
+    工具("running")
+    工具("ok")
+    await 等到(async () => (await 发了()).length === 2, "两条进度")
+    const 发 = await 发了()
+    expect(发[0]!.item_list[0]).toMatchObject({ type: 11, tool_call_start_item: { tool_name: "bash", tool_call_id: "c1" } })
+    expect(发[1]!.item_list[0]).toMatchObject({ type: 12, tool_call_result_item: { status: "completed" } })
+
+    w.会话说("s1", "画好了，见 /tmp/out/plot.png（还有一张不存在的 /tmp/no.png）")
+    await 等到(async () => (await 发了()).length === 4, "文字 + 一张图")
+    const 后 = await 发了()
+    expect(后[2]!.item_list[0]!.type).toBe(1)
+    expect(后[3]!.item_list[0]).toMatchObject({ type: 2 })
+    expect((后[3]!.item_list[0] as { image_item: { aeskey: string } }).image_item.aeskey).toMatch(/^[0-9a-f]{32}$/)
     ch.stop()
   })
 })

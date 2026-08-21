@@ -18,7 +18,8 @@
  * - token 在钥匙串（`credentials` 端口，键 `weixin:botToken`），不落设置表。
  * - token 失效（-14）：停轮询、状态变 `stale`，界面那张卡会说「重新扫码」。
  */
-import { IlinkClient, type InboundText, type QrStatus, 切段, 读入站 } from "./ilink.js"
+import { readFile } from "node:fs/promises"
+import { IlinkClient, imageItem, type InboundText, type QrStatus, 切段, 读入站 } from "./ilink.js"
 import type { SessionUpdate } from "../../protocol/events.js"
 import type { TaskSummary } from "../../protocol/entities.js"
 
@@ -52,7 +53,12 @@ export interface WeixinOps {
   createTask(req: { agentId: string; workspace?: string; connectionId?: string }): Promise<TaskSummary>
   listTasks(): Promise<readonly TaskSummary[]>
   listConnections(): Promise<readonly { id: string; label: string }[]>
-  writeToSession(req: { sessionId: string; data: string; as: "user" }): Promise<unknown>
+  writeToSession(req: {
+    sessionId: string
+    data: string
+    as: "user"
+    images?: { from: "bytes"; data: string; mimeType: string }[]
+  }): Promise<unknown>
   /** 写之前要持有写权——微信那头就是同一个人，按 `user` 取（`user` 永远取得到） */
   acquireLease(req: { sessionId: string; holder: "user" }): Promise<unknown>
   abortSession(req: { sessionId: string }): Promise<unknown>
@@ -85,6 +91,8 @@ export interface WeixinDeps {
   whereIs: (sessionId: string) => { label?: string; cwd?: string } | undefined
   log?: (line: string) => void
   now?: () => number
+  /** 读本机文件（回答里引用的图片要传去微信）。可注入只为可测 */
+  readFile?: (path: string) => Promise<Buffer>
 }
 
 export type WeixinSettingKey =
@@ -129,6 +137,10 @@ export class WeixinChannel {
   private readonly 问过的 = new Map<string, string>()
   /** 最近一次推出去的权限询问（微信里回「同意」答的就是它） */
   private 待答: { sessionId: string; requestId: string; title: string; options: readonly { optionId: string; name: string; kind: string }[] } | undefined
+  /** 「正在输入」的票（`getconfig` 给的）。没有票就不发 */
+  private 输入票: string | undefined
+  /** 已经向微信报过「开始」的工具调用，结束时才报结果 */
+  private readonly 报过的工具 = new Set<string>()
 
   constructor(private readonly deps: WeixinDeps) {}
 
@@ -369,10 +381,24 @@ export class WeixinChannel {
     }
     if (入.contextToken) this.deps.settings.set("weixin.contextToken", 入.contextToken, new Date().toISOString())
     const text = 入.text.trim()
-    if (!text) {
-      if (入.media) await this.回(`收到一个${入.media.kind === "image" ? "图片" : "文件"}，这一版还不会看它（下一期）`)
+    /**
+     * **图片跟着话一起进会话**（T4）：下载解密后按 bytes 交给 `writeToSession`，
+     * 与界面上贴图同一条路（协议 4.12）。文件 / 视频 / 语音（无转写）这一版只说收到了。
+     */
+    let images: { from: "bytes"; data: string; mimeType: string }[] | undefined
+    if (入.media?.kind === "image") {
+      try {
+        const 字节 = await this.deps.client(this.baseUrl()).downloadMedia(入.media.media, 入.media.aesKeyHex)
+        images = [{ from: "bytes", data: 字节.toString("base64"), mimeType: 猜图片类型(字节) }]
+      } catch (e) {
+        await this.回(`图片没下下来：${e instanceof Error ? e.message : String(e)}`)
+        return
+      }
+    } else if (入.media && !text) {
+      await this.回(`收到一个${入.media.kind === "voice" ? "语音" : "文件"}，这一版只会看图片和文字。`)
       return
     }
+    if (!text && !images) return
     const 答权限 = await this.回答权限(text)
     if (答权限 !== undefined) {
       await this.回(答权限)
@@ -388,7 +414,8 @@ export class WeixinChannel {
     const sessionId = await this.确保有会话()
     // 写权跟着人走：界面选中会话时取一次，微信来一句也取一次——同一个人，同一种持有者
     await this.deps.ops().acquireLease({ sessionId, holder: "user" })
-    await this.deps.ops().writeToSession({ sessionId, data: text, as: "user" })
+    await this.deps.ops().writeToSession({ sessionId, data: text || "（看图）", as: "user", ...(images ? { images } : {}) })
+    void this.正在输入(true)
   }
 
   /** 认识的命令回一段话；不认识的回 `undefined`，原样进模型 */
@@ -562,10 +589,78 @@ export class WeixinChannel {
 
   private async 会话有动静(u: SessionUpdate): Promise<void> {
     const s = this.deps.settings.get("weixin.sessionId")
-    if (!s || u.sessionId !== s) return
-    if (u.type !== "item" || u.item.type !== "turn" || u.item.who !== "agent" || !u.item.final) return
+    if (!s || u.sessionId !== s || u.type !== "item") return
+    /**
+     * **工具调用映成进度条目**（T4）：微信客户端会画成「正在用 bash…」。
+     * 开始报一次、结束报一次，只报结束不报开始的话微信那头没有对应的起点。
+     */
+    if (u.item.type === "tool") {
+      const 工具 = u.item
+      const 键 = `${s}:${工具.id}`
+      if (工具.status === "running" && !this.报过的工具.has(键)) {
+        this.报过的工具.add(键)
+        await this.发进度(() => this.deps.client(this.baseUrl()).sendToolStart(this.token()!, this.主人()!, 工具.name, 工具.id, this.ctx()))
+      } else if (工具.status !== "running" && this.报过的工具.has(键)) {
+        this.报过的工具.delete(键)
+        const status = 工具.status === "ok" ? "completed" : "failed"
+        await this.发进度(() => this.deps.client(this.baseUrl()).sendToolResult(this.token()!, this.主人()!, 工具.name, 工具.id, status, this.ctx()))
+      }
+      return
+    }
+    if (u.item.type !== "turn" || u.item.who !== "agent" || !u.item.final) return
     const text = u.item.text.trim()
+    void this.正在输入(false)
     if (text) await this.回(text)
+    await this.把图发过去(text)
+  }
+
+  /** 回答里引用的本机图片（绝对路径，png/jpg/gif/webp）传去微信，最多 3 张 */
+  private async 把图发过去(text: string): Promise<void> {
+    const 路径们 = [...new Set(text.match(/(?:\/[^\s"'()<>`]+)\.(?:png|jpe?g|gif|webp)/gi) ?? [])].slice(0, 3)
+    if (路径们.length === 0) return
+    const token = this.token()
+    const to = this.主人()
+    if (!token || !to) return
+    const client = this.deps.client(this.baseUrl())
+    for (const p of 路径们) {
+      try {
+        const 字节 = await (this.deps.readFile ?? ((f: string) => readFile(f)))(p)
+        const up = await client.uploadMedia(token, to, 1, 字节)
+        await client.sendItem(token, to, imageItem(up), this.ctx())
+      } catch (e) {
+        this.log(`图片 ${p} 没传去微信：${e instanceof Error ? e.message : String(e)}`)
+      }
+    }
+  }
+
+  private async 发进度(f: () => Promise<unknown>): Promise<void> {
+    if (!this.token() || !this.主人()) return
+    await f().catch((e: unknown) => this.log(`进度没发出去：${e instanceof Error ? e.message : String(e)}`))
+  }
+
+  /** 「正在输入」：要先拿一张票；拿不到就算了（插件也是这么做的），绝不为它报错 */
+  private async 正在输入(开: boolean): Promise<void> {
+    const token = this.token()
+    const user = this.主人()
+    if (!token || !user) return
+    const client = this.deps.client(this.baseUrl())
+    try {
+      if (this.输入票 === undefined) this.输入票 = (await client.getConfig(token, user, this.ctx())).typingTicket
+      if (!this.输入票) return
+      await client.sendTyping(token, user, this.输入票, 开)
+    } catch {
+      /* 正在输入只是礼貌，失败不出声 */
+    }
+  }
+
+  private token(): string | undefined {
+    return this.deps.credentials.get(WEIXIN_TOKEN_KEY)
+  }
+  private 主人(): string | undefined {
+    return this.deps.settings.get("weixin.userId")
+  }
+  private ctx(): string | undefined {
+    return this.deps.settings.get("weixin.contextToken")
   }
 
   private async 回(text: string): Promise<void> {
@@ -613,4 +708,12 @@ function 时长(ms: number): string {
   if (s < 60) return `${s} 秒`
   const m = Math.floor(s / 60)
   return `${m} 分 ${s % 60} 秒`
+}
+
+/** 按文件头猜图片类型；猜不出按 jpeg（微信发来的绝大多数是它） */
+function 猜图片类型(b: Buffer): string {
+  if (b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png"
+  if (b.length >= 6 && b.toString("ascii", 0, 6).startsWith("GIF8")) return "image/gif"
+  if (b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP") return "image/webp"
+  return "image/jpeg"
 }

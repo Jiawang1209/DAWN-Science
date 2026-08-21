@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "python3 - <<'EOF'\np='src/workbench/backend.ts'; s=open(p).read()\nold='''      // 起点也要过守卫：越界的 path 在这里就抛\n      const 起点 = resolveInWorkspace(p.workspace, path || \".\")\n      const r = await 搜文件名('''\nnew='''      // 起点也要过守卫：越界的 path 在这里就抛。\n      // **根用人给的相对路径，不用守卫回来的绝对路径**——那是 realpath，\n      // macOS 上 `/var` 会变成 `/private/var`，再 `relative()` 回去就是一串 `..`\n      resolveInWorkspace(p.workspace, path || \".\")\n      const 起点 = (path || \"\").replace(/^\\\\.\\\\//, \"\").replace(/\\\\/+$/, \"\").replace(/^\\\\.$/, \"\")\n      const r = await 搜文件名('''\nassert old in s\ns=s.replace(old,new).replace('''        相对(p.workspace, 起点),\n        query,\n      )\n      return r''','''        起点,\n        query,\n      )\n      return r''')\nopen(p,'w').write(s)\nEOF\nnpx tsc --noEmit -p . 2>&1 | grep -v \"npm notice\" | head -3; npm run build 2>&1 | grep -i \"error\" | head -3; npx playwright test e2e/files.spec.ts 2>&1 | tail -4",
-    "testCommand": "sed -i '' 's|  \"搜文件名\": \"Search file names\",|  \"搜文件名\": \"Find by file name\",|' src/ui/i18n/en.ts && npx vitest run tests/ui 2>&1 | grep -E \"Tests |FAIL\" | head -3",
+    "buildCommand": "npm run build 2>&1 | grep -ci \"error\"; npx playwright test e2e/sidebar-size.spec.ts e2e/files.spec.ts e2e/right-dock.spec.ts 2>&1 | tail -4",
+    "testCommand": "python3 - <<'EOF'\np='src/ui/sash.tsx'; s=open(p).read()\ns=s.replace('''  onResize: (px: number) => void''','''  /**\n   * `phase`（2026-08-21，dock-polish ④，学自 DSH-better-sidebar）：\n   * 拖的过程中每帧最多一次 `\"drag\"`——调用方只改 store、不落盘；\n   * 抬手 / `pointercancel` / 键盘一步是 `\"commit\"`——这一次才写 localStorage。\n   * **`pointercancel` 提交的是最后一个位置，不回滚**：系统手势把指针抢走时，\n   * 人看到的是拖到那儿的样子，回滚等于界面自己跳一下。\n   */\n  onResize: (px: number, phase: \"drag\" | \"commit\") => void''',1)\nopen(p,'w').write(s)\nEOF\nnpx tsc --noEmit -p . 2>&1 | grep -v \"npm notice\" | head -5; npx vitest run tests/ui 2>&1 | grep -E \"Tests |FAIL\"",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

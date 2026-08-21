@@ -64,9 +64,11 @@ export function clampWidth(px: number): number {
  * 设宽度。**与 `setTheme` 同一条顺序：先生效，再尝试记住。**
  * 存储写不进去（配额满、隐私模式）不该连这次拖拽都不给拖。
  */
-export function setSidebarWidth(px: number): void {
+/** `记住 = false` 是拖动中途（一帧一次）：只改 store，不落盘；抬手那次才写 */
+export function setSidebarWidth(px: number, 记住 = true): void {
   const w = clampWidth(px)
   setValue($sidebarWidth, w)
+  if (!记住) return
   try {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, String(w))
   } catch (e) {

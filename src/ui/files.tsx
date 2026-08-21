@@ -1079,7 +1079,7 @@ export function FilesView({
           width={铺开 ? 树宽 : 树高}
           min={FILE_TREE_MIN}
           max={铺开 ? 容器宽() : 容器高()}
-          onResize={(px) => (铺开 ? setFileTreeWidth(px, 容器宽()) : setFileTreeHeight(px, 容器高()))}
+          onResize={(px, phase) => (铺开 ? setFileTreeWidth(px, 容器宽(), phase === "commit") : setFileTreeHeight(px, 容器高(), phase === "commit"))}
           label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
         />
       </div>

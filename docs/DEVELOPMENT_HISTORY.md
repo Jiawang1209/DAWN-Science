@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-21 — 拖缝：一帧一次、抬手才落盘、`pointercancel` 提交不回滚
+
+- **Type**: perf
+- **Motivation**: `dock-polish` 第一档 ④。四条 `SideSash`（侧栏、右坞、树 ↔ 预览的横竖两条）此前**每个 `pointermove`** 都走一遍 store → 整棵重渲染 → `localStorage.setItem`；触控板一秒发上百个 move，屏幕只画六十帧。DSH-better-sidebar 的做法：拖的过程按帧写，抬手一次提交；指针被系统手势抢走（`pointercancel`）时提交最后的位置而不是回滚。
+- **What**: `src/ui/sash.tsx`：`onResize(px, phase)`，`phase = "drag"` 每帧最多一次（rAF 合并）、`"commit"` 在 `pointerup` / `pointercancel` / 键盘一步各一次；没动过就抬手不提交；卸载时取消挂着的帧。四个 store 设置函数（`setSidebarWidth` / `setRightDockWidth` / `setFileTreeWidth` / `setFileTreeHeight`）加 `记住 = true` 参数，`drag` 阶段传 `false` 只改 store 不落盘。`views.tsx` 的 `onWidth` 跟着带上 `记住`。
+- **Impact**: 拖动时 localStorage 从每个事件一次变成抬手一次；重渲染从每个事件一次变成每帧一次。没有直写 DOM（那要每个调用方都知道自己的目标元素，收益不抵耦合）——每帧一次 store 更新对这几条缝已经够。行为不变：夹界、键盘、取反规则同前。
+- **Verification**: 新增 `tests/ui/sash.test.tsx` 4 条（一帧合并 + 抬手提交、`pointercancel` 提交、右边取反 + 键盘提交、没动不提交）；`tests/ui` 487 绿；e2e `sidebar-size` / `files` / `right-dock` 19 绿（第一轮三套并跑时「重开之后宽度还在」红过一次，之后四轮都绿，那条走的是键盘 → 直接 commit，与本次改动无关，记下观察）。
+
 ### 2026-08-21 — 文件面板按名字搜：有预算、截断出声、本地远端同一个走法
 
 - **Type**: feat

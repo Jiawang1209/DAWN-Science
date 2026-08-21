@@ -1087,7 +1087,7 @@ export function RightDock({
 }: {
   tenant: 坞房客
   width: number
-  onWidth: (px: number) => void
+  onWidth: (px: number, 记住: boolean) => void
   onClose: () => void
   /** 点标签条上的某一格。**只换房客，不开合**——那件事归顶右角那颗 */
   onPick: (who: 坞房客) => void
@@ -1099,7 +1099,7 @@ export function RightDock({
         width={width}
         min={RIGHT_DOCK_MIN}
         max={RIGHT_DOCK_MAX}
-        onResize={onWidth}
+        onResize={(px, phase) => onWidth(px, phase === "commit")}
         side="right"
         label={t("调整面板宽度")}
       />

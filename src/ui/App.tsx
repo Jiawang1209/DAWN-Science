@@ -3009,7 +3009,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             width={sidebarWidth}
             min={SIDEBAR_MIN}
             max={SIDEBAR_MAX}
-            onResize={setSidebarWidth}
+            onResize={(px, phase) => setSidebarWidth(px, phase === "commit")}
           />
         ) : null}
 
@@ -3710,7 +3710,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           <RightDock
             tenant={rightDockTenant}
             width={rightDockWidth}
-            onWidth={(px: number) => setRightDockWidth(px, 侧栏此刻多宽)}
+            onWidth={(px: number, 记住: boolean) => setRightDockWidth(px, 侧栏此刻多宽, 记住)}
             onClose={() => setRightDockOpen(false)}
             /**
              * **点标签只换房客，不收起。**

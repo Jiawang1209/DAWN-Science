@@ -437,3 +437,52 @@ test("**树行的菜单：复制路径、插进输入框**", async ({ dawn }) =>
   await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
   await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data @data/样本.csv ")
 })
+
+/**
+ * **悬停卡与不换行**（2026-08-21 作者要的两条）：
+ * ① 鼠标停在文件 / 文件夹上弹出信息卡（照左侧栏那张），开在坞的**左边**、不出屏；
+ * ② 树拖得再窄，行上「时间 · 大小」也是一行，不折成两行把行撑高。
+ */
+test("**悬停文件弹信息卡；拖窄了时间戳也不折行**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "数据"), { recursive: true })
+  writeFileSync(join(workspace, "数据", "一个名字很长很长很长很长的样本文件.csv"), "a,b\n1,2\n")
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "数据", exact: true }).click()
+  const 行 = 面板.getByRole("button", { name: /^一个名字很长/ })
+  await expect(行).toBeVisible()
+
+  // ① 文件：卡上有所在目录、修改时间、大小；卡整个在坞的左边
+  await 行.hover()
+  const 卡 = page.locator(".sess-hover-card")
+  await expect(卡).toBeVisible({ timeout: 5_000 })
+  await expect(卡).toContainText("一个名字很长很长很长很长的样本文件.csv")
+  await expect(卡.locator(".sess-hover-details li")).toHaveCount(3)
+  await expect(卡).toContainText("数据")
+  await expect(卡).toContainText(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)
+  await expect(卡).toContainText("8 字节")
+  const 卡框 = (await 卡.boundingBox())!
+  const 坞框 = (await page.locator(".right-dock").boundingBox())!
+  expect(卡框.x + 卡框.width).toBeLessThanOrEqual(坞框.x + 1)
+  expect(卡框.x).toBeGreaterThanOrEqual(0)
+
+  // 文件夹也弹：只有所在目录那一行
+  await 面板.getByRole("button", { name: "数据", exact: true }).hover()
+  await expect(卡.locator(".sess-hover-details li")).toHaveCount(1, { timeout: 5_000 })
+
+  // ② 拖窄树（坞是窄的，缝横着——先加宽成两栏再把树拖窄）
+  await 面板.getByRole("button", { name: "加宽" }).click()
+  const 缝 = 面板.getByRole("separator", { name: "调整文件树宽度" })
+  const 缝框 = (await 缝.boundingBox())!
+  await page.mouse.move(缝框.x + 缝框.width / 2, 缝框.y + 缝框.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(缝框.x - 200, 缝框.y + 缝框.height / 2, { steps: 6 })
+  await page.mouse.up()
+  const 高 = await 行.evaluate((el) => el.getBoundingClientRect().height)
+  const 行高 = await 行.evaluate((el) => parseFloat(getComputedStyle(el).minHeight))
+  expect(高, "时间 · 大小折成两行把行撑高了").toBeLessThanOrEqual(行高 + 1)
+  const 副 = 行.locator(".sub")
+  expect(await 副.evaluate((el) => getComputedStyle(el).whiteSpace)).toBe("nowrap")
+})

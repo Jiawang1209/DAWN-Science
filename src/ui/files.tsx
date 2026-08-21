@@ -39,6 +39,7 @@ import { 文件类按名字, type 文件类 } from "./file-kind.js"
 import { t, tf, msgid } from "./i18n/index.js"
 import { useStore } from "@nanostores/react"
 import { SideSash } from "./sash.js"
+import { HoverCard, 浮层事件, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { $fileTreeHeight, $fileTreeWidth, FILE_TREE_MIN, setFileTreeHeight, setFileTreeWidth } from "./state/right-dock.js"
 import { 年月日时分 } from "./format.js"
 /**
@@ -187,9 +188,26 @@ function 行操作钮({ path, name, kind, 操作, 菜单, 设菜单 }: { path: s
   )
 }
 
+/** 悬停卡往哪儿开：标题是 `.name`、贴坞的左缘（坞贴着屏幕右缘，往右开就出屏了） */
+const 树上的卡 = { 标题: ".name", 容器: ".right-dock", 开在: "左边" as const }
+/** 路径里最后一个斜杠之前的那段；根写成「／」 */
+const 所在目录 = (path: string) => {
+  const i = path.lastIndexOf("/")
+  return i > 0 ? path.slice(0, i) : "／"
+}
+
 /** 文件那一行。拆出来是因为每一行要有自己的菜单状态 */
-function FileRow({ path, entry: e, depth, selected, onSelect, 操作 }: { path: string; entry: Listing["entries"][number]; depth: number; selected: string | undefined; onSelect: (path: string) => void; 操作?: 行操作 }) {
+function FileRow({ path, entry: e, depth, selected, onSelect, 操作, 浮 }: { path: string; entry: Listing["entries"][number]; depth: number; selected: string | undefined; onSelect: (path: string) => void; 操作?: 行操作; 浮?: ((x: 悬停浮层 | undefined) => void) | undefined }) {
   const [菜单, 设菜单] = useState<{ top: number; left: number } | undefined>(undefined)
+  /**
+   * 悬停卡（2026-08-21 作者要的：*「鼠标悬浮在文件/文件夹上的时候，弹出文件信息，模仿左边侧边栏」*）。
+   * 行上那截时间 · 大小在树拖窄时会被省略掉，**卡上是全的**：所在目录、修改时间、大小。
+   */
+  const 详情: 详情行[] = [
+    { 图: "文件夹", 文: 所在目录(path) },
+    { 图: "时钟", 文: 年月日时分(e.modifiedAt) },
+    ...(e.size === undefined ? [] : [{ 图: "文件" as const, 文: bytes(e.size) }]),
+  ]
   return (
     <li className="tree-node">
 
@@ -198,6 +216,7 @@ function FileRow({ path, entry: e, depth, selected, onSelect, 操作 }: { path: 
                     active={selected === path}
                     style={{ paddingLeft: `calc(var(--dawn-space-2) + ${depth + 1} * var(--dawn-space-3))` }}
                     onClick={() => onSelect(path)}
+                    {...浮层事件(浮, e.name, undefined, 详情, "文件", 树上的卡)}
                     onContextMenu={
                       操作
                         ? (ev) => {
@@ -245,6 +264,7 @@ function DirNode({
   刷新令牌,
   展开,
   onToggle,
+  浮,
 }: {
   path: string
   name: string
@@ -252,6 +272,8 @@ function DirNode({
   selected: string | undefined
   onSelect: (path: string) => void
   load: (path: string) => Promise<Listing>
+  /** 悬停卡往哪儿报。树根那一行不弹 */
+  浮?: ((x: 悬停浮层 | undefined) => void) | undefined
   /** 行上的操作（复制路径、插进输入框、删）。**给了才画那颗「⋯」**；树根那一行不画 */
   操作?: 行操作
   /** 有文件被拖到这个目录上。**拖到哪一行就传到哪个目录** */
@@ -341,6 +363,7 @@ function DirNode({
         /* 缩进量**是数据**（树的层级），不是设计决定——与内核占比条同一条理由 */
         style={{ paddingLeft: `calc(var(--dawn-space-2) + ${depth} * var(--dawn-space-3))` }}
         onClick={() => setOpen((v) => !v)}
+        {...(depth > 0 ? 浮层事件(浮, name, undefined, [{ 图: "文件夹", 文: 所在目录(path) }], "文件夹", 树上的卡) : {})}
         onContextMenu={
           操作 && depth > 0
             ? (e) => {
@@ -394,6 +417,7 @@ function DirNode({
                   load={load}
                   {...(刷新令牌 === undefined ? {} : { 刷新令牌 })}
                   {...(操作 ? { 操作 } : {})}
+                  {...(浮 ? { 浮 } : {})}
                   {...(onDrop ? { onDrop } : {})}
                   {...(展开 ? { 展开 } : {})}
                   {...(onToggle ? { onToggle } : {})}
@@ -407,6 +431,7 @@ function DirNode({
                   selected={selected}
                   onSelect={onSelect}
                   {...(操作 ? { 操作 } : {})}
+                  {...(浮 ? { 浮 } : {})}
                 />
               ),
             )}
@@ -966,6 +991,8 @@ export function FilesView({
    */
   const [手动刷新, 设手动刷新] = useState(0)
   const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
+  /** 悬停在哪一行上（那张卡是 fixed 的，画在面板最外层） */
+  const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
   /** 行菜单做完一件事说一句（复制成没成）；三秒后自己消失 */
   const [行注, 设行注] = useState<string | undefined>(undefined)
   useEffect(() => {
@@ -1038,6 +1065,7 @@ export function FilesView({
           : { gridTemplateRows: `auto ${树高}px minmax(0, 1fr)` }
       }
     >
+      <HoverCard 浮着的={浮着的} />
       <div className="files-where">
         <span className="files-where-name">{机器 ?? t("本机")}</span>
         {搜着 && search ? (
@@ -1207,6 +1235,7 @@ export function FilesView({
             load={loadDir}
             刷新令牌={合令牌}
             {...(操作 ? { 操作 } : {})}
+            浮={设浮着的}
             {...(onDropUpload ? { onDrop: onDropUpload } : {})}
             {...(展开 ? { 展开 } : {})}
             {...(onToggle ? { onToggle } : {})}

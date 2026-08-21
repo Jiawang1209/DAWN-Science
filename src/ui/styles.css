@@ -5262,3 +5262,16 @@ pre {
   align-content: start;
 }
 .pane-broken-title { font-weight: 600; color: var(--dawn-text-1); }
+
+/**
+ * 文件行的「时间 · 大小」**不换行**（2026-08-21 作者要的：拖窄分割线时它折成两行，
+ * 一行就变高了）。与标题同一套：单行、省略号；名字先让，它后让。
+ */
+.tree-row .sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.tree-row .name { flex: 1 1 auto; }

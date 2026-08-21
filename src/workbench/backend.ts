@@ -167,6 +167,8 @@ export interface WorkbenchBackendOptions {
    * 而不是让记账员反过来问后端。
    */
   onEnvironmentFrozen?: (sessionId: string, snapshotId: string) => void
+  /** 窗口在不在前台（远程助理：人在电脑前就不推通知）。不给 = 不知道 = 照推 */
+  isForeground?: () => boolean
   /**
    * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
@@ -384,7 +386,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem, isForeground } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -969,6 +971,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     events,
     // 操作表的返回类型是按协议推导的宽类型；这几个操作的真实返回形状就是 `WeixinOps` 写的那几种
     ops: () => backend as unknown as WeixinOps,
+    ...(isForeground ? { isForeground } : {}),
     defaultAgentId: () => Object.entries(registry.agents).find(([, d]) => d.kind === "native")?.[0],
     whereIs: (sessionId) => {
       const rec = sessions.get(sessionId)
@@ -2672,6 +2675,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
       await 微信.bindSession(sessionId)
       return { ok: true as const }
+    },
+    weixinGetNotify: async () => 微信.notifySettings(),
+    weixinSetNotify: async (patch) => {
+      要设置()
+      return 微信.setNotifySettings(patch)
     },
   }
 

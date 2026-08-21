@@ -132,6 +132,8 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     weixinCancelLogin: async () => ({ ok: true as const }),
     weixinUnbind: async () => ({ ok: true as const }),
     weixinBindSession: async () => ({ ok: true as const }),
+    weixinGetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
+    weixinSetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

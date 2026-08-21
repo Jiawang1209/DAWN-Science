@@ -86,6 +86,8 @@ export interface CreateWorkbenchOptions {
    * 要能在没有 Electron 的测试里跑起来。主进程传 `shell.openPath`。
    */
   openPath?: (absolutePath: string) => Promise<string>
+  /** 窗口在不在前台（远程助理的通知据此闭嘴） */
+  isForeground?: () => boolean
   /** 扔进废纸篓。**只有主进程碰得到 `shell.trashItem`** */
   trashItem?: (absolutePath: string) => Promise<void>
   /** 系统的下载目录。**只有主进程问得到 `app.getPath("downloads")`** */
@@ -712,6 +714,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.openPath ? { openPath: opts.openPath } : {}),
     ...(opts.downloadsDir ? { downloadsDir: opts.downloadsDir } : {}),
     ...(opts.trashItem ? { trashItem: opts.trashItem } : {}),
+    ...(opts.isForeground ? { isForeground: opts.isForeground } : {}),
     /** **删除也落一条 Run**（批 5 · 不变式 5）。删除不可逆，比上传更该留痕 */
     记一次删除: (connectionId, 路径, 进了废纸篓) => {
       const 那段 = connectionId

@@ -57,6 +57,9 @@ export interface WeixinOps {
   acquireLease(req: { sessionId: string; holder: "user" }): Promise<unknown>
   abortSession(req: { sessionId: string }): Promise<unknown>
   subscribeSession(req: { sessionId: string }): Promise<unknown>
+  /** 微信里回「同意 / 拒绝」→ 与界面上按权限卡同一个操作 */
+  answerPermission(req: { sessionId: string; requestId: string; optionId?: string }): Promise<unknown>
+  listProjects(): Promise<readonly { projectId: string; name: string; workspace: string }[]>
 }
 
 export interface WeixinDeps {
@@ -66,7 +69,15 @@ export interface WeixinDeps {
     set(key: WeixinSettingKey, value: string, now: string): void
   }
   credentials: { get(k: string): string | undefined; set(k: string, v: string): void; delete(k: string): void }
-  events: { onUpdate(cb: (u: SessionUpdate) => void): () => void; pin(id: string): void; unpin(id: string): void }
+  events: {
+    onUpdate(cb: (u: SessionUpdate) => void): () => void
+    /** 每段会话的每条更新（通知用，不看订没订） */
+    onAnyUpdate(cb: (u: SessionUpdate) => void): () => void
+    pin(id: string): void
+    unpin(id: string): void
+  }
+  /** 人在不在电脑前：窗口在前台就不推通知（设计里写的是「且那段会话开着」，后端只知道前台，按前台判） */
+  isForeground?: () => boolean
   ops: () => WeixinOps
   /** 新建专属会话用哪个 agent：配置里第一个 native */
   defaultAgentId: () => string | undefined
@@ -88,6 +99,17 @@ export type WeixinSettingKey =
 
 export const CONTACT_NAME = "DAWN-Science"
 
+/** 通知开关（`weixin.notify` 里的 json）。**缺省全开** */
+export interface NotifySettings {
+  done: boolean
+  error: boolean
+  permission: boolean
+  quietWhenFocused: boolean
+}
+export const NOTIFY_DEFAULT: NotifySettings = { done: true, error: true, permission: true, quietWhenFocused: true }
+/** 跑完通知的门槛：一问一答的短回合不推 */
+export const DONE_MIN_MS = 60_000
+
 const 轮询退避毫秒 = 2_000
 const 连败退避毫秒 = 30_000
 const 二维码最多刷新 = 3
@@ -99,7 +121,14 @@ export class WeixinChannel {
   private 轮询中止: AbortController | undefined
   private lastError: string | undefined
   private 退订: (() => void) | undefined
+  private 退订全部: (() => void) | undefined
   private stale = false
+  /** 每段会话这一轮从哪一刻开始（用户那条 turn 到的时候） */
+  private readonly 回合起点 = new Map<string, number>()
+  /** 每段会话已经通知过的权限询问，免得同一问推两次 */
+  private readonly 问过的 = new Map<string, string>()
+  /** 最近一次推出去的权限询问（微信里回「同意」答的就是它） */
+  private 待答: { sessionId: string; requestId: string; title: string; options: readonly { optionId: string; name: string; kind: string }[] } | undefined
 
   constructor(private readonly deps: WeixinDeps) {}
 
@@ -119,6 +148,27 @@ export class WeixinChannel {
       lastError: this.lastError,
       contactName: CONTACT_NAME,
     }
+  }
+
+  notifySettings(): NotifySettings {
+    try {
+      const raw = this.deps.settings.get("weixin.notify")
+      return raw ? { ...NOTIFY_DEFAULT, ...(JSON.parse(raw) as Partial<NotifySettings>) } : NOTIFY_DEFAULT
+    } catch {
+      return NOTIFY_DEFAULT
+    }
+  }
+
+  setNotifySettings(patch: { [K in keyof NotifySettings]?: boolean | undefined }): NotifySettings {
+    const 旧 = this.notifySettings()
+    const next: NotifySettings = {
+      done: patch.done ?? 旧.done,
+      error: patch.error ?? 旧.error,
+      permission: patch.permission ?? 旧.permission,
+      quietWhenFocused: patch.quietWhenFocused ?? 旧.quietWhenFocused,
+    }
+    this.deps.settings.set("weixin.notify", JSON.stringify(next), new Date().toISOString())
+    return next
   }
 
   /* ── 绑定 ── */
@@ -262,6 +312,7 @@ export class WeixinChannel {
     const 已绑 = this.deps.settings.get("weixin.sessionId")
     if (已绑) void this.bindSession(已绑)
     this.退订 = this.deps.events.onUpdate((u) => void this.会话有动静(u))
+    this.退订全部 = this.deps.events.onAnyUpdate((u) => void this.该不该通知(u))
     const client = this.deps.client(this.baseUrl())
     void client.notifyStart(token)
     void (async () => {
@@ -304,6 +355,8 @@ export class WeixinChannel {
     this.轮询中止 = undefined
     this.退订?.()
     this.退订 = undefined
+    this.退订全部?.()
+    this.退订全部 = undefined
   }
 
   /* ── 入站 ── */
@@ -318,6 +371,11 @@ export class WeixinChannel {
     const text = 入.text.trim()
     if (!text) {
       if (入.media) await this.回(`收到一个${入.media.kind === "image" ? "图片" : "文件"}，这一版还不会看它（下一期）`)
+      return
+    }
+    const 答权限 = await this.回答权限(text)
+    if (答权限 !== undefined) {
+      await this.回(答权限)
       return
     }
     if (text.startsWith("/")) {
@@ -340,7 +398,15 @@ export class WeixinChannel {
     switch (cmd) {
       case "帮助":
       case "help":
-        return ["/会话  列出最近的会话", "/用 N  接到第 N 段", "/新建  另起一段；/新建 @服务器名 在那台机器上开", "/停  中止当前这一轮", "/在哪  现在绑着哪段、在哪台机器", "别的话直接说就行"].join("\n")
+        return [
+          "/会话  列出最近的会话",
+          "/用 N  接到第 N 段",
+          "/新建  另起一段；/新建 @服务器名 在那台机器上开；/新建 #项目名 在那个项目里开",
+          "/停  中止当前这一轮",
+          "/在哪  现在绑着哪段、在哪台机器",
+          "有权限要你点头时，回「同意」或「拒绝」",
+          "别的话直接说就行",
+        ].join("\n")
       case "会话": {
         const 列 = await this.最近的()
         if (列.length === 0) return "还没有会话。直接说话就会新建一段。"
@@ -356,19 +422,28 @@ export class WeixinChannel {
         return `好，接到「${t.title ?? "新会话"}」了。`
       }
       case "新建": {
-        const 名 = arg.startsWith("@") ? arg.slice(1) : undefined
+        // `@服务器名` 在那台机器上开；`#项目名` 在那个项目（文件夹）里开（作者问的：能不能接到服务器或项目）
+        const 服务器 = arg.startsWith("@") ? arg.slice(1) : undefined
+        const 项目 = arg.startsWith("#") ? arg.slice(1) : undefined
         let connectionId: string | undefined
-        if (名) {
-          const c = (await this.deps.ops().listConnections()).find((x) => x.label === 名)
-          if (!c) return `没有叫「${名}」的服务器。`
+        let workspace: string | undefined
+        if (服务器) {
+          const c = (await this.deps.ops().listConnections()).find((x) => x.label === 服务器)
+          if (!c) return `没有叫「${服务器}」的服务器。发 /会话 看看都有哪些。`
           connectionId = c.id
+        }
+        if (项目) {
+          const ps = await this.deps.ops().listProjects()
+          const p = ps.find((x) => x.name === 项目 || x.workspace.split("/").pop() === 项目)
+          if (!p) return `没有叫「${项目}」的项目。有这些：${ps.map((x) => x.name).join("、") || "（空）"}`
+          workspace = p.workspace
         }
         const agentId = this.deps.defaultAgentId()
         if (!agentId) return "配置里还没有可用的 agent。"
-        const t = await this.deps.ops().createTask({ agentId, ...(connectionId ? { connectionId } : {}) })
+        const t = await this.deps.ops().createTask({ agentId, ...(connectionId ? { connectionId } : {}), ...(workspace ? { workspace } : {}) })
         if (!t.sessionId) return "建是建了，却没有会话——这一步不该悄悄过去。"
         await this.bindSession(t.sessionId)
-        return 名 ? `在「${名}」上开了一段新会话，说吧。` : "开了一段新会话，说吧。"
+        return 服务器 ? `在「${服务器}」上开了一段新会话，说吧。` : 项目 ? `在项目「${项目}」里开了一段新会话，说吧。` : "开了一段新会话，说吧。"
       }
       case "停": {
         const s = this.deps.settings.get("weixin.sessionId")
@@ -405,6 +480,82 @@ export class WeixinChannel {
     if (!t.sessionId) throw new Error("任务建好了却没有会话")
     await this.bindSession(t.sessionId)
     return t.sessionId
+  }
+
+  /* ── 通知（T3） ── */
+
+  /**
+   * 三种时刻主动推：跑完（这一轮超过 60 s）、出错（会话非零退出 / 系统提示）、等权限。
+   * **听的是所有会话**，不只绑着的那段。窗口在前台时不推（人就在电脑前）。
+   */
+  private async 该不该通知(u: SessionUpdate): Promise<void> {
+    const n = this.notifySettings()
+    const sid = u.sessionId
+    if (u.type === "item" && u.item.type === "turn") {
+      if (u.item.who === "user") {
+        this.回合起点.set(sid, this.deps.now?.() ?? Date.now())
+        return
+      }
+      if (u.item.who === "agent" && u.item.final) {
+        const 起 = this.回合起点.get(sid)
+        this.回合起点.delete(sid)
+        if (!n.done || 起 === undefined) return
+        const 用了 = (this.deps.now?.() ?? Date.now()) - 起
+        if (用了 < DONE_MIN_MS) return
+        if (sid === this.deps.settings.get("weixin.sessionId")) return // 绑着的那段回答本身就会送过去
+        await this.推(`『${await this.标题(sid)}』跑完了（用时 ${时长(用了)}）。回 /会话 再 /用 N 可接着聊。`, n)
+      }
+      return
+    }
+    if (u.type === "state" && u.state === "exited" && u.exitCode !== undefined && u.exitCode !== 0) {
+      if (!n.error) return
+      await this.推(`『${await this.标题(sid)}』出错退出了（退出码 ${u.exitCode}）。`, n)
+      return
+    }
+    if (u.type === "item" && u.item.type === "notice") {
+      if (!n.error) return
+      await this.推(`『${await this.标题(sid)}』：${u.item.text}`, n)
+      return
+    }
+    if (u.type === "snapshot") {
+      const p = u.snapshot.pendingPermission
+      if (!p) {
+        if (this.待答?.sessionId === sid) this.待答 = undefined
+        return
+      }
+      if (this.问过的.get(sid) === p.requestId) return
+      this.问过的.set(sid, p.requestId)
+      this.待答 = { sessionId: sid, requestId: p.requestId, title: p.title, options: p.options }
+      if (!n.permission) return
+      // 等权限**永远推**，不看前台：它是在等你，不推就卡在那儿
+      await this.回(`『${await this.标题(sid)}』想：${p.title}\n回「同意」放行，回「拒绝」不让。`)
+    }
+  }
+
+  /** 微信里的「同意 / 拒绝」：答最近推出去的那一问。不是这两个词就回 undefined，照常往下走 */
+  private async 回答权限(text: string): Promise<string | undefined> {
+    const 同意 = /^(同意|允许|可以|好|yes|y|ok)$/i.test(text)
+    const 拒绝 = /^(拒绝|不行|不|不要|no|n)$/i.test(text)
+    if (!同意 && !拒绝) return undefined
+    const p = this.待答
+    if (!p) return "现在没有在等你点头的事。"
+    const 挑 = (pred: (k: string, name: string) => boolean) => p.options.find((o) => pred(o.kind.toLowerCase(), o.name))
+    const 选 = 同意
+      ? (挑((k) => k === "allow_once") ?? 挑((k) => k.startsWith("allow")) ?? p.options[0])
+      : (挑((k) => k === "reject_once") ?? 挑((k) => k.startsWith("reject")) ?? p.options[p.options.length - 1])
+    this.待答 = undefined
+    await this.deps.ops().answerPermission({ sessionId: p.sessionId, requestId: p.requestId, ...(选 ? { optionId: 选.optionId } : {}) })
+    return 同意 ? `好，放行了：${p.title}` : `已拒绝：${p.title}`
+  }
+
+  private async 推(text: string, n: NotifySettings): Promise<void> {
+    if (n.quietWhenFocused && this.deps.isForeground?.()) return
+    await this.回(text)
+  }
+
+  private async 标题(sessionId: string): Promise<string> {
+    const t = (await this.deps.ops().listTasks()).find((x) => x.sessionId === sessionId)
+    return t?.title ?? "新会话"
   }
 
   /* ── 出站 ── */
@@ -455,4 +606,11 @@ function 等(ms: number, signal: AbortSignal): Promise<void> {
       成()
     })
   })
+}
+
+function 时长(ms: number): string {
+  const s = Math.round(ms / 1000)
+  if (s < 60) return `${s} 秒`
+  const m = Math.floor(s / 60)
+  return `${m} 分 ${s % 60} 秒`
 }

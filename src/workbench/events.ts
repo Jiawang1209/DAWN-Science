@@ -117,6 +117,11 @@ export class SessionTranscripts {
    */
   private readonly pinned = new Set<SessionId>()
   private readonly listeners = new Set<(u: SessionUpdate) => void>()
+  /**
+   * **不受订阅门管的听众**（远程助理的通知，2026-08-21）：每一段会话的每一条更新都给。
+   * 订阅那道门是给界面省事的（没打开的会话不推）；通知恰恰要听的是没打开的那些。
+   */
+  private readonly 全听 = new Set<(u: SessionUpdate) => void>()
 
   constructor(private readonly opts: SessionTranscriptsOptions) {}
 
@@ -150,6 +155,14 @@ export class SessionTranscripts {
     this.listeners.add(cb)
     return () => {
       this.listeners.delete(cb)
+    }
+  }
+
+  /** 每一段会话、每一条更新，**不看订没订**。通知用 */
+  onAnyUpdate(cb: (u: SessionUpdate) => void): () => void {
+    this.全听.add(cb)
+    return () => {
+      this.全听.delete(cb)
     }
   }
 
@@ -710,6 +723,7 @@ export class SessionTranscripts {
       )
       return
     }
+    for (const cb of [...this.全听]) cb(update)
     if (!this.subscribed.has(sessionId) && !this.pinned.has(sessionId)) return
     // 复制一份再遍历：监听者可能在回调里退订
     for (const cb of [...this.listeners]) cb(update)

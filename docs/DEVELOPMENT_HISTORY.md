@@ -43,6 +43,15 @@
 
 ## 变更日志
 
+### 2026-08-21 — 远程助理 T3：通知三件 + 微信里回「同意」+ `/新建 #项目`
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 设计文档第三期。另：作者问*「以后能否接通到服务器，或者是项目的形式」*——服务器与已有会话当时就能（`/用 N`、`/新建 @服务器`），项目那一形补上 `/新建 #项目名`。
+- **What**: `EventHub.onAnyUpdate`（不受订阅门管——通知要听的恰恰是没打开的会话）。通道：跑完（用户 turn 到 agent 最终 turn 超过 60 s；绑着那段不推，回答本身会过去）、出错（非零退出码、系统提示条）、等权限（`snapshot.pendingPermission`，同一问只推一次；**不看前台**，它在等你）；窗口在前台时别的都不推（`isForeground` 由 `main.ts` 给 `BrowserWindow.getFocusedWindow()`——设计里写的是「且那段会话开着」，后端只知道前台，按前台判）。微信里回「同意 / 拒绝 / 允许 / 不行 / yes / no」→ `answerPermission`，挑 `allow_once` / `reject_once`（没有就按前缀，再没有取首尾）。开关存 `weixin.notify`（json，缺省全开），协议 **7.14** 加 `weixinGetNotify / weixinSetNotify`；那一屏多一张「通知」卡四个开关。**联系人名字**：协议没有改名接口（官方插件源码全篇无 nickname），微信里一律叫「微信ClawBot」——页面改成实话，建议设备注「DAWN-Science」。
+- **Impact**: 中枢没有「error」事件，出错按退出码 + 系统提示算；native 的权限门没有「问一句」这一档，同意只对 ACP 会话有效（开关旁写明）。
+- **Verification**: `tests/channels` +5（跑完门槛与用时、绑着的不推、出错、前台闭嘴而等权限照推、同意 → allow_once、同一问不重复、拒绝 → reject、没在等时说清、开关能关、`/新建 #项目`）；e2e +1（假 ACP 问权限 → 假微信收到 → 回同意 → agent 拿到 `allow_once`）；remote-assistant 3 条、visual、acp-agent 全绿；UI / 协议 / workbench / channels 776 全绿。
+
 ### 2026-08-21 — 远程助理 T2：微信通道接进后端与界面（扫码绑定、文字往返、斜杠命令）
 
 - **Type**: feat

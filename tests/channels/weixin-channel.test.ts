@@ -19,13 +19,17 @@ function 假世界() {
   const 设置 = new Map<string, string>()
   const 秘密 = new Map<string, string>()
   const 听众 = new Set<(u: SessionUpdate) => void>()
+  const 全听 = new Set<(u: SessionUpdate) => void>()
   const 钉住的 = new Set<string>()
   const tasks: TaskSummary[] = []
   const 写了: { sessionId: string; data: string }[] = []
   const 中止了: string[] = []
+  const 答了: { sessionId: string; requestId: string; optionId?: string }[] = []
+  let 前台 = false
+  let 现在 = 1_000_000
   let n = 0
   const ops: WeixinOps = {
-    createTask: async ({ agentId, connectionId }) => {
+    createTask: async ({ agentId, connectionId, workspace }) => {
       n += 1
       const t: TaskSummary = {
         taskId: `t${n}`,
@@ -35,6 +39,7 @@ function 假世界() {
         sortOrder: n,
         createdAt: new Date(2026, 7, 21, 0, n).toISOString(),
         ...(connectionId ? { connectionId } : {}),
+        ...(workspace ? { workspace } : {}),
       }
       void agentId
       tasks.push(t)
@@ -46,6 +51,8 @@ function 假世界() {
     abortSession: async ({ sessionId }) => void 中止了.push(sessionId),
     subscribeSession: async () => ({}),
     acquireLease: async () => ({}),
+    answerPermission: async (r) => void 答了.push(r),
+    listProjects: async () => [{ projectId: "p1", name: "生态中心", workspace: "/Users/u/Applied-Ecology" }],
   }
   const deps: WeixinDeps = {
     client: (baseUrl) => new IlinkClient({ baseUrl: baseUrl ?? s.url, qrBaseUrl: s.url, cdnBaseUrl: `${s.url}/c2c` }),
@@ -56,9 +63,15 @@ function 假世界() {
         听众.add(cb)
         return () => 听众.delete(cb)
       },
+      onAnyUpdate: (cb) => {
+        全听.add(cb)
+        return () => 全听.delete(cb)
+      },
       pin: (id) => void 钉住的.add(id),
       unpin: (id) => void 钉住的.delete(id),
     },
+    isForeground: () => 前台,
+    now: () => 现在,
     ops: () => ops,
     defaultAgentId: () => "ds-chat",
     whereIs: (id) => (tasks.find((t) => t.sessionId === id)?.connectionId ? { label: "实验室", cwd: "/home/u/proj" } : undefined),
@@ -69,17 +82,25 @@ function 假世界() {
     设置.set("weixin.userId", FAKE_USER_ID)
     设置.set("weixin.baseUrl", s.url)
   }
-  const 会话说 = (sessionId: string, text: string, final = true) => {
-    const u = {
-      workbenchProtocolVersion: "7.13",
-      sessionId,
-      revision: 1,
-      type: "item",
-      item: { type: "turn", id: "i1", who: "agent", text, final },
-    } as unknown as SessionUpdate
+  const 广播 = (u: SessionUpdate) => {
+    for (const cb of 全听) cb(u)
     for (const cb of 听众) cb(u)
   }
-  return { deps, 设置, 秘密, tasks, 写了, 中止了, 钉住的, 已绑, 会话说 }
+  const 会话说 = (sessionId: string, text: string, final = true, who: "agent" | "user" = "agent") =>
+    广播({ workbenchProtocolVersion: "7.14", sessionId, revision: 1, type: "item", item: { type: "turn", id: "i1", who, text, final } } as unknown as SessionUpdate)
+  const 会话退出 = (sessionId: string, exitCode: number) =>
+    广播({ workbenchProtocolVersion: "7.14", sessionId, revision: 1, type: "state", state: "exited", exitCode } as unknown as SessionUpdate)
+  const 会话问权限 = (sessionId: string, requestId: string, title: string) =>
+    广播({
+      workbenchProtocolVersion: "7.14",
+      sessionId,
+      revision: 1,
+      type: "snapshot",
+      snapshot: {
+        pendingPermission: { requestId, title, options: [{ optionId: "a", name: "允许", kind: "allow_once" }, { optionId: "r", name: "拒绝", kind: "reject_once" }] },
+      },
+    } as unknown as SessionUpdate)
+  return { deps, 设置, 秘密, tasks, 写了, 中止了, 答了, 钉住的, 已绑, 会话说, 会话退出, 会话问权限, 设前台: (v: boolean) => (前台 = v), 走时: (ms: number) => (现在 += ms) }
 }
 
 const 等到 = async (f: () => boolean | Promise<boolean>, 说明: string, ms = 3000) => {
@@ -242,5 +263,113 @@ describe("解绑", () => {
     expect(w.设置.get("weixin.botId")).toBeUndefined()
     expect(ch.status().state).toBe("unbound")
     vi.restoreAllMocks()
+  })
+})
+
+describe("通知（T3）", () => {
+  const 最后 = async () => ((await s.发出的()).at(-1) as { item_list: { text_item: { text: string } }[] }).item_list[0]!.text_item.text
+  const 发了几条 = async () => (await s.发出的()).length
+
+  it("跑完：这一轮超过 60 s 才推，带标题与用时；绑着的那段不推（回答本身会过去）", async () => {
+    const w = 假世界()
+    w.已绑()
+    await w.deps.ops().createTask({ agentId: "x" }) // s1 会话1
+    const ch = new WeixinChannel(w.deps)
+    ch.start()
+    w.会话说("s1", "问", true, "user")
+    w.走时(10_000)
+    w.会话说("s1", "短答")
+    await new Promise((r) => setTimeout(r, 150))
+    expect(await 发了几条()).toBe(0)
+    w.会话说("s1", "再问", true, "user")
+    w.走时(125_000)
+    w.会话说("s1", "长答")
+    await 等到(async () => (await 发了几条()) === 1, "推了跑完")
+    expect(await 最后()).toMatch(/『会话1』跑完了（用时 2 分 5 秒）/)
+    // 绑着的那段：不再推「跑完」
+    w.设置.set("weixin.sessionId", "s1")
+    w.会话说("s1", "问", true, "user")
+    w.走时(125_000)
+    w.会话说("s1", "答")
+    await 等到(async () => (await 发了几条()) === 2, "回答送过去")
+    expect(await 最后()).toBe("答")
+    ch.stop()
+  })
+
+  it("出错：非零退出码推；窗口在前台时不推（等权限除外）", async () => {
+    const w = 假世界()
+    w.已绑()
+    await w.deps.ops().createTask({ agentId: "x" })
+    const ch = new WeixinChannel(w.deps)
+    ch.start()
+    w.会话退出("s1", 1)
+    await 等到(async () => (await 发了几条()) === 1, "推了出错")
+    expect(await 最后()).toMatch(/『会话1』出错退出了（退出码 1）/)
+    w.设前台(true)
+    w.会话退出("s1", 2)
+    await new Promise((r) => setTimeout(r, 150))
+    expect(await 发了几条()).toBe(1)
+    w.会话问权限("s1", "req1", "运行 rm -rf build")
+    await 等到(async () => (await 发了几条()) === 2, "等权限照推")
+    expect(await 最后()).toMatch(/想：运行 rm -rf build[\s\S]*同意/)
+    ch.stop()
+  })
+
+  it("微信里回「同意」→ answerPermission 选 allow_once；同一问不推两次；回「拒绝」选 reject", async () => {
+    const w = 假世界()
+    w.已绑()
+    await w.deps.ops().createTask({ agentId: "x" })
+    const ch = new WeixinChannel(w.deps)
+    ch.start()
+    w.会话问权限("s1", "req1", "写文件 a.txt")
+    w.会话问权限("s1", "req1", "写文件 a.txt")
+    await 等到(async () => (await 发了几条()) === 1, "推了一次")
+    await s.发来("同意")
+    await 等到(() => w.答了.length === 1, "答了")
+    expect(w.答了[0]).toEqual({ sessionId: "s1", requestId: "req1", optionId: "a" })
+    await 等到(async () => (await 发了几条()) === 2, "回了确认")
+    expect(await 最后()).toContain("放行了")
+
+    w.会话问权限("s1", "req2", "删目录")
+    await 等到(async () => (await 发了几条()) === 3, "推了第二问")
+    await s.发来("拒绝")
+    await 等到(() => w.答了.length === 2, "答了第二问")
+    expect(w.答了[1]).toMatchObject({ requestId: "req2", optionId: "r" })
+
+    await s.发来("同意")
+    await 等到(async () => (await 发了几条()) === 5, "没在等时说清楚")
+    expect(await 最后()).toContain("没有在等你点头的事")
+    ch.stop()
+  })
+
+  it("通知开关能关：done 关了就不推跑完", async () => {
+    const w = 假世界()
+    w.已绑()
+    await w.deps.ops().createTask({ agentId: "x" })
+    const ch = new WeixinChannel(w.deps)
+    expect(ch.notifySettings()).toEqual({ done: true, error: true, permission: true, quietWhenFocused: true })
+    ch.setNotifySettings({ done: false })
+    ch.start()
+    w.会话说("s1", "问", true, "user")
+    w.走时(125_000)
+    w.会话说("s1", "答")
+    await new Promise((r) => setTimeout(r, 150))
+    expect(await 发了几条()).toBe(0)
+    ch.stop()
+  })
+
+  it("/新建 #项目名：在那个项目里开", async () => {
+    const w = 假世界()
+    w.已绑()
+    const ch = new WeixinChannel(w.deps)
+    ch.start()
+    await s.发来("/新建 #Applied-Ecology")
+    await 等到(async () => (await 发了几条()) === 1, "回了")
+    expect(await 最后()).toContain("项目「Applied-Ecology」")
+    expect(w.tasks[0]).toMatchObject({ workspace: "/Users/u/Applied-Ecology" })
+    await s.发来("/新建 #不存在")
+    await 等到(async () => (await 发了几条()) === 2, "回了")
+    expect(await 最后()).toContain("生态中心")
+    ch.stop()
   })
 })

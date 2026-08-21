@@ -22,7 +22,8 @@ test("**扫码绑定 → 微信说话 → 回答回到微信 → 失效要出声
   await expect(page.getByRole("heading", { name: "远程助理" })).toBeVisible()
   const 卡 = page.locator(".ra-card").first()
   await expect(卡.locator(".ra-state")).toHaveText("未绑定")
-  await expect(卡).toContainText("DAWN-Science")
+  // 名字是微信定的，改不了——页面上说实话、给备注建议
+  await expect(page.getByText(/设个备注/)).toContainText("DAWN-Science")
 
   // ② 扫码：二维码画出来了；每一态都出声
   await 卡.getByRole("button", { name: "扫码绑定" }).click()
@@ -89,4 +90,67 @@ test("**斜杠命令**：/会话 /在哪 /帮助 有回音；解绑后卡回未�
 
   await 卡.getByRole("button", { name: "解绑微信" }).click()
   await expect(卡.locator(".ra-state")).toHaveText("未绑定", { timeout: 10_000 })
+})
+
+/**
+ * **微信里回「同意」，权限就放行**（T3）。
+ *
+ * 假 ACP 在回话前问一次权限；微信里收到「想：… 回同意放行」；回「同意」→ 假 agent 收到 `allow_once`，
+ * 把答案原样说出来（【权限结果】）。
+ */
+test.describe("权限：微信里回同意", () => {
+  const 假ACP = new URL("../scripts/fake-acp-agent.mjs", import.meta.url).pathname
+  test.use({
+    dawnOptions: {
+      fakeIlink: true,
+      env: { FAKE_ACP_ASK: "1" },
+      providersYaml: `agents:
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-v4-flash
+    capabilities: [chat, exec]
+  问权限的-acp:
+    kind: acp
+    command: node
+    args: ["${假ACP}"]
+    capabilities: [chat, exec]
+`,
+    },
+  })
+
+  test("假 ACP 问 → 微信收到 → 回「同意」→ agent 拿到 allow_once", async ({ dawn }) => {
+    const { page, weixin } = dawn
+    if (!weixin) throw new Error("夹具没起假微信")
+    // 绑定
+    await page.getByRole("button", { name: "远程助理", exact: true }).click()
+    const 卡 = page.locator(".ra-card").first()
+    await 卡.getByRole("button", { name: "扫码绑定" }).click()
+    await expect(卡.locator(".ra-qr svg")).toBeVisible({ timeout: 10_000 })
+    await weixin.推进扫码("confirm")
+    await expect(卡.locator(".ra-state")).toHaveText("已绑定", { timeout: 20_000 })
+
+    // 电脑上开一段 ACP 会话，微信里 /用 接过去
+    await page.evaluate(async () => {
+      const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<unknown> } }
+      await w.dawn.invoke("createTask", { agentId: "问权限的-acp" })
+    })
+    await weixin.发来("/会话")
+    await expect.poll(async () => (await weixin.发出的()).length, { timeout: 20_000 }).toBe(1)
+    await weixin.发来("/用 1")
+    await expect.poll(async () => (await weixin.发出的()).length, { timeout: 20_000 }).toBe(2)
+
+    // 说一句 → 假 ACP 问权限 → 微信里收到提示
+    await weixin.发来("读一下数据")
+    const 文 = async () => ((await weixin.发出的()) as { item_list: { text_item: { text: string } }[] }[]).map((m) => m.item_list[0]!.text_item.text)
+    await expect.poll(async () => (await 文()).some((x) => x.includes("回「同意」放行")), { timeout: 30_000 }).toBe(true)
+    expect((await 文()).at(-1)).toContain("读一下 data/raw/观测.csv")
+
+    // 回「同意」→ agent 收到 allow_once（它把答案原样说出来）
+    await weixin.发来("同意")
+    await expect.poll(async () => (await 文()).some((x) => x.includes("放行了")), { timeout: 20_000 }).toBe(true)
+    await expect.poll(async () => (await 文()).some((x) => x.includes('【权限结果】') && x.includes('"optionId":"yes"')), {
+      timeout: 30_000,
+    }).toBe(true)
+  })
 })

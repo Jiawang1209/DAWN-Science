@@ -722,6 +722,28 @@ export const OPERATIONS = {
     response: z.object({ ok: z.literal(true) }).strict(),
     mutating: true,
   },
+  /** 通知开关：跑完（> 60 s）/ 出错 / 等权限 / 在电脑前时不推 */
+  weixinGetNotify: {
+    request: z.object({}).strict(),
+    response: z
+      .object({ done: z.boolean(), error: z.boolean(), permission: z.boolean(), quietWhenFocused: z.boolean() })
+      .strict(),
+    mutating: false,
+  },
+  weixinSetNotify: {
+    request: z
+      .object({
+        done: z.boolean().optional(),
+        error: z.boolean().optional(),
+        permission: z.boolean().optional(),
+        quietWhenFocused: z.boolean().optional(),
+      })
+      .strict(),
+    response: z
+      .object({ done: z.boolean(), error: z.boolean(), permission: z.boolean(), quietWhenFocused: z.boolean() })
+      .strict(),
+    mutating: true,
+  },
 
   /**
    * 给已接入的 ACP 标上／摘掉「能上服务器」（协议 7.13，2026-08-21）。

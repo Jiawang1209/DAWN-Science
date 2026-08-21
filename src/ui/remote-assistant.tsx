@@ -16,7 +16,9 @@ import { t, tf } from "./i18n/index.js"
 import { 年月日时分 } from "./format.js"
 import type { ResponseOf } from "../protocol/index.js"
 
+const CONTACT = "DAWN-Science"
 export type WeixinStatus = ResponseOf<"weixinGetStatus">
+export type NotifySettings = ResponseOf<"weixinGetNotify">
 
 export function RemoteAssistantView({
   load,
@@ -27,6 +29,8 @@ export function RemoteAssistantView({
   sessions,
   bindSession,
   openSession,
+  loadNotify,
+  setNotify,
 }: {
   load: () => Promise<WeixinStatus>
   startLogin: () => Promise<unknown>
@@ -37,7 +41,13 @@ export function RemoteAssistantView({
   sessions: readonly { sessionId: string; title: string }[]
   bindSession: (sessionId: string) => Promise<unknown>
   openSession: (sessionId: string) => void
+  loadNotify: () => Promise<NotifySettings>
+  setNotify: (patch: Partial<NotifySettings>) => Promise<NotifySettings>
 }) {
+  const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
+  useEffect(() => {
+    loadNotify().then(设通知).catch(() => 设通知(undefined))
+  }, [loadNotify])
   const [状态, 设状态] = useState<WeixinStatus | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
   const [码, 设码] = useState("")
@@ -78,6 +88,11 @@ export function RemoteAssistantView({
       <header className="skills-head">
         <h1 className="panel-title">{t("远程助理")}</h1>
         <p>{t("人不在电脑前，也能跟 DAWN 说话。微信里那个联系人就是 DAWN 本人。")}</p>
+        {/**
+          * **名字是微信定的**：协议里没有改名接口（官方插件源码全篇没有 nickname 之类的字），
+          * 所有接进去的都叫「微信ClawBot」。作者要叫 DAWN-Science——只能靠备注。说实话，不假装。
+          */}
+        <p className="hint">{tf("微信里它显示为「微信ClawBot」（这个名字微信不让改）；可以给它设个备注，比如「{0}」。", CONTACT)}</p>
       </header>
 
       {出错 ? <p className="caveat">{出错}</p> : null}
@@ -99,8 +114,6 @@ export function RemoteAssistantView({
               <p className="caveat">{状态.lastError}</p>
             ) : null}
             <dl className="ra-facts">
-              <dt>{t("联系人")}</dt>
-              <dd>{状态.contactName}</dd>
               <dt>{t("绑定的微信")}</dt>
               <dd className="mono">{状态.userId ?? "—"}</dd>
               {状态.boundAt ? (
@@ -154,12 +167,46 @@ export function RemoteAssistantView({
           </div>
         ) : (
           <div className="ra-unbound">
-            <p>{tf("用微信扫一扫，通讯录里会多一个联系人「{0}」。", 状态.contactName)}</p>
+            <p>{t("用微信扫一扫，通讯录里会多一个联系人。")}</p>
             <Button variant="outline" size="sm" onClick={做(startLogin)}>
               {t("扫码绑定")}
             </Button>
             {状态.lastError ? <p className="caveat">{状态.lastError}</p> : null}
           </div>
+        )}
+      </section>
+
+      <section className="ra-card" aria-labelledby="ra-notify">
+        <h2 id="ra-notify" className="ra-card-title">{t("通知")}</h2>
+        <p className="hint">{t("这几件事发生时，推一条到微信（不只绑着的那段，所有会话都算）。")}</p>
+        {通知 ? (
+          <ul className="ra-toggles">
+            {(
+              [
+                ["done", t("任务跑完（超过 60 秒的）")],
+                ["error", t("出错")],
+                ["permission", t("等我点头——回「同意」或「拒绝」即可放行（只对 ACP 会话）")],
+                ["quietWhenFocused", t("我正在电脑前（窗口在前台）时不推；等权限的照推")],
+              ] as const
+            ).map(([k, 文]) => (
+              <li key={k}>
+                <label className="ra-toggle">
+                  <input
+                    type="checkbox"
+                    checked={通知[k]}
+                    onChange={(e) => {
+                      const v = e.target.checked
+                      设通知({ ...通知, [k]: v })
+                      setNotify({ [k]: v }).then(设通知).catch((err: unknown) => 设出错(err instanceof Error ? err.message : String(err)))
+                    }}
+                  />
+                  <span>{文}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="hint">{t("正在问状态…")}</p>
         )}
       </section>
 

@@ -34,6 +34,12 @@ describe("解析地址", () => {
   it("`localhost:64070` 里那个冒号是端口，不是协议", () => {
     expect(解析地址("localhost:64070")?.href).toBe("http://localhost:64070/")
   })
+
+  it("没写协议：本机补 http、外网补 https（2026-08-21，学自 DSH-better-sidebar）", () => {
+    expect(解析地址("192.168.1.8:8000/x")?.href).toBe("http://192.168.1.8:8000/x")
+    expect(解析地址("example.com/a?b=1")?.href).toBe("https://example.com/a?b=1")
+    expect(解析地址("http://example.com")?.href).toBe("http://example.com/")
+  })
   it("认不出来就返回 undefined，**不猜**", () => {
     expect(解析地址("这不是地址 里面还有空格")).toBeUndefined()
   })

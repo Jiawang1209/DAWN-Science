@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-21 — 网页格地址：没写协议的外网主机补 https，本机仍补 http
+
+- **Type**: fix
+- **Motivation**: `dock-polish` 第一档 ②「URL 规范化」。读 DSH-better-sidebar 时对照发现：我们的 `可以开吗` + `解析地址` 早已只放 http(s) 与工作目录内 `file:`、其余协议响亮拒绝、不像地址的说不像——比它的严。唯一值得借的一点是**没写协议时的默认**：它补 `https://`，我们一律补 `http://`，外网站点今天大多会被浏览器拦或者重定向。
+- **What**: `src/policy/local-url.ts` `解析地址`：没写协议时先按 `http://` 解析看主机名，`localhost` / `*.localhost` / 点分 IP 保持 `http`，别的换成 `https`。主进程与渲染进程共用这一处，两边判断一致。
+- **Impact**: 地址栏敲 `example.com` 现在开 `https://example.com/`；`localhost:64070`、`192.168.x.x:8000` 行为不变。它那套「iframe 被拒就给个外开按钮」对我们不成立（网页格是 Electron `WebContentsView`，不是 iframe），不做。
+- **Verification**: `tests/policy/local-url.test.ts` 新增一条三向断言；`tests/electron/网页地址门.test.ts` 那条「补全仍过同一道门」改为外网 https / 本机 http 两路；`tests/policy tests/electron tests/ui` 574 绿。
+
 ### 2026-08-21 — 坞打磨 ①：文件树的记忆——展开过的目录、选中的文件，切走再切回来不塌
 
 - **Type**: feat

@@ -1856,19 +1856,25 @@ pre {
  */
 .files-where {
   display: flex;
+  /**
+   * **放不下就折行，按钮一个都不许丢**（2026-08-21 作者：窗口没最大化时
+   * 「收窄 / 搜索 / 恢复」根本看不见——此前 `nowrap` 让它们被裁在右边外面）。
+   */
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--dawn-space-2);
+  gap: var(--dawn-space-1) var(--dawn-space-2);
   padding: var(--dawn-space-2) var(--dawn-space-3);
   border-bottom: 1px solid var(--dawn-stroke-4);
   font-size: 12px;
   color: var(--dawn-text-2);
   white-space: nowrap;
 }
+.files-where > .btn { flex: 0 0 auto; }
 .files-where-name { font-weight: 600; color: var(--dawn-text-1); }
 /** 路径框。**输一个目录就跳过去**——不做搜索（见设计文档第三节） */
 .files-jump {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 120px;
+  min-width: 120px;
   font: inherit;
   color: var(--dawn-text-1);
   background: var(--dawn-surface-input);
@@ -1934,26 +1940,40 @@ pre {
   min-width: 0;
 }
 
+/**
+ * 预览头两行（2026-08-21 重排，作者：「文件 title 的排版很难看」——
+ * 此前是一行 flex，坞一窄，文件名被挤成一个字一行、按钮也竖着排）。
+ * 第一行：文件名独占，按词断、不逐字；第二行：左边类型 · 大小，右边按钮，按钮不折。
+ */
 .preview-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--dawn-space-3);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dawn-space-1) var(--dawn-space-3);
   margin-bottom: var(--dawn-space-3);
   padding-bottom: var(--dawn-space-2);
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
 
 .preview-head .name {
+  flex: 1 1 100%;
+  min-width: 0;
   font-weight: 600;
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.4;
 }
 
 .preview-head .sub {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--dawn-text-3);
   font-size: var(--dawn-ui-size);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.preview-head .btn { flex: 0 0 auto; white-space: nowrap; }
 
 /* 图按原始像素显示，但**不许撑破容器** */
 .preview-img {
@@ -5271,7 +5291,8 @@ pre {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 0 1 auto;
+  /* **先缩时间戳，再缩文件名**（2026-08-21 作者定的顺序）：shrink 比例悬殊，名字几乎不动直到它缩没 */
+  flex: 0 1000 auto;
   min-width: 0;
 }
 .tree-row .name { flex: 1 1 auto; }

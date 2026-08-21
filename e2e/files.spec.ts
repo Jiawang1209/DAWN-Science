@@ -486,3 +486,56 @@ test("**悬停文件弹信息卡；拖窄了时间戳也不折行**", async ({ d
   const 副 = 行.locator(".sub")
   expect(await 副.evaluate((el) => getComputedStyle(el).whiteSpace)).toBe("nowrap")
 })
+
+/**
+ * **窗口不大时的三条**（2026-08-21 作者截图给的）：
+ * ① 顶行的放大镜 / 刷新 / 加宽（或收窄）在窄坞里也看得见、点得到——此前被裁在右边外面；
+ * ② 行上先缩时间戳再缩文件名；
+ * ③ 预览头：文件名不逐字竖排，按钮不折成竖条。
+ */
+test("**窄坞：顶行按钮都在、先缩时间戳、预览头不竖排**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  writeFileSync(join(workspace, "AGENTS.md"), "# 产物落位\n\n正文。\n")
+  await page.setViewportSize({ width: 1200, height: 760 })
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+
+  // ① 三颗都在面板的可视范围里
+  // 第三颗是「加宽」还是「收窄」取决于此刻坞的宽度（顶到窗口上限时两颗都不给，那是设计）
+  const 宽窄 = (await 面板.getByRole("button", { name: "收窄", exact: true }).count()) > 0 ? "收窄" : (await 面板.getByRole("button", { name: "加宽", exact: true }).count()) > 0 ? "加宽" : undefined
+  for (const 名 of ["搜文件名", "刷新当前文件夹", ...(宽窄 ? [宽窄] : [])]) {
+    const b = 面板.getByRole("button", { name: 名, exact: true })
+    await expect(b).toBeVisible()
+    const 框 = (await b.boundingBox())!
+    const 盒 = (await 面板.boundingBox())!
+    expect(框.x + 框.width, `${名} 被裁在面板外面`).toBeLessThanOrEqual(盒.x + 盒.width + 1)
+  }
+
+  // ② 文件行：名字与时间戳谁先缩——把树拖到很窄之后，名字仍有宽度、时间戳先没
+  const 行 = 面板.getByRole("button", { name: /^AGENTS\.md/ })
+  await expect(行).toBeVisible()
+  // 把整个坞拖窄（坞自己那条缝往右推），树跟着窄——不管此刻是一栏还是两栏都成立
+  const 缝 = page.getByRole("separator", { name: "调整面板宽度" })
+  const 缝框 = (await 缝.boundingBox())!
+  await page.mouse.move(缝框.x + 缝框.width / 2, 缝框.y + 缝框.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(缝框.x + 400, 缝框.y + 缝框.height / 2, { steps: 8 })
+  await page.mouse.up()
+  const 名宽 = await 行.locator(".name").evaluate((el) => el.getBoundingClientRect().width)
+  const 副宽 = await 行.locator(".sub").evaluate((el) => el.getBoundingClientRect().width)
+  const 副内容宽 = await 行.locator(".sub").evaluate((el) => el.scrollWidth)
+  expect(副宽, "时间戳该先缩").toBeLessThan(副内容宽)
+  expect(名宽).toBeGreaterThan(40)
+
+  // ③ 预览头
+  await 行.click()
+  const 头 = page.locator(".preview-head")
+  await expect(头.locator(".name")).toHaveText("AGENTS.md")
+  const 名高 = await 头.locator(".name").evaluate((el) => el.getBoundingClientRect().height)
+  const 一行 = await 头.locator(".name").evaluate((el) => parseFloat(getComputedStyle(el).lineHeight))
+  expect(名高, "文件名竖排了").toBeLessThanOrEqual(一行 + 1)
+  const 删 = 头.getByRole("button", { name: "移到废纸篓" })
+  const 删高 = (await 删.boundingBox())!.height
+  expect(删高, "按钮折成竖条了").toBeLessThan(40)
+})

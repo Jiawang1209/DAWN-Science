@@ -17,8 +17,9 @@
  *
  * 「看不见的能力等于不存在」有个反面：**不存在的能力不该看起来存在**。
  */
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button, EmptyState, Loader } from "./primitives.js"
+import { HoverCard, 浮层事件, type 悬停浮层 } from "./hover-card.js"
 
 import { t, tf } from "./i18n/index.js"
 export interface Skill {
@@ -166,6 +167,43 @@ export interface AgentSkill装载 {
   dirs: { builtin?: string; global?: string; project?: string }
 }
 
+/** 悬停卡开在行的右边、贴着页面的右缘算 */
+const 清单上的卡 = { 标题: ".skill-name-text", 容器: ".skills-page", 开在: "左边" as const }
+
+/** 行尾那颗「⋯」：开 / 只手动 / 关 / 删除。与会话行、文件行同一套菜单形状 */
+function 行尾菜单({ s, 忙, 档名, onMode, onDelete }: { s: AgentSkill; 忙: boolean; 档名: (m: 调用档) => string; onMode: (m: 调用档) => void; onDelete: () => void }) {
+  const [开着, 设开着] = useState<{ top: number; left: number } | undefined>(undefined)
+  const 按钮 = useRef<HTMLButtonElement>(null)
+  const 打开 = () => {
+    const r = 按钮.current?.getBoundingClientRect()
+    if (!r) return
+    const 高 = 170
+    设开着({ top: Math.min(Math.max(8, r.bottom + 4), window.innerHeight - 高 - 8), left: Math.max(8, r.right - 180) })
+  }
+  return (
+    <div className="row-actions skill-row-actions">
+      <Button ref={按钮} variant="ghost" size="icon" className="row-more" aria-label={tf("技能操作：{0}", s.name)} aria-expanded={Boolean(开着)} disabled={忙} onClick={() => (开着 ? 设开着(undefined) : 打开())}>
+        ⋯
+      </Button>
+      {开着 ? (
+        <>
+          <div className="menu-scrim" onClick={() => 设开着(undefined)} />
+          <div className="row-menu" role="menu" aria-label={tf("技能操作：{0}", s.name)} style={{ top: 开着.top, left: 开着.left }}>
+            {(["model", "manual", "off"] as const).map((m) => (
+              <Button key={m} variant="ghost" size="inline" role="menuitemradio" aria-checked={s.invocation === m} onClick={() => { 设开着(undefined); if (m !== s.invocation) onMode(m) }}>
+                {s.invocation === m ? "✓ " : ""}{档名(m)}
+              </Button>
+            ))}
+            <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>
+              {t("删除")}
+            </Button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
 /**
  * **Agent Skills** 那一屏（S20，2026-08-15）。
  *
@@ -197,6 +235,9 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
   const [忙, 设忙] = useState<string | undefined>(undefined)
   /** 上一件事的结果或错误，摆在列表上面——**失败必须出声** */
   const [回话, 设回话] = useState<{ kind: "ok" | "bad"; text: string } | undefined>(undefined)
+  const [筛, 设筛] = useState<"all" | AgentSkill["from"]>("all")
+  const [搜, 设搜] = useState("")
+  const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
 
   useEffect(() => {
     if (!load) return
@@ -276,9 +317,12 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
   const 来处 = (f: AgentSkill["from"]) =>
     f === "builtin" ? t("自带") : f === "project" ? t("这个项目带的") : t("你写的")
   const 档名 = (m: 调用档) => (m === "model" ? t("开") : m === "manual" ? t("只手动") : t("关"))
+  const 状态名 = (m: 调用档) => (m === "model" ? t("已启用") : m === "manual" ? t("只能手动调用") : t("已关"))
+  const 筛出来 = 数据.skills.filter((x) => (筛 === "all" || x.from === 筛) && (!搜.trim() || `${x.name} ${x.description}`.toLowerCase().includes(搜.trim().toLowerCase())))
 
   return (
     <div className="skills-page">
+      <HoverCard 浮着的={浮着的} />
       <header className="skills-head">
         <h1 className="panel-title">{t("Agent Skills")}</h1>
         <p className="hint">
@@ -343,56 +387,62 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
           description={t("在上面那几个目录里建一个文件夹，放一个 SKILL.md 就行。")}
         />
       ) : (
-        <ul className="skill-list">
-          {数据.skills.map((s) => (
-            <li key={s.filePath} className="skill" data-authored="" data-state={s.invocation === "off" ? "off" : undefined}>
-              <p className="skill-name">
-                {s.name}
-                <span className="mcp-from">{来处(s.from)}</span>
-                {/* **只能显式调的要标出来**：不标的话，人会以为模型没在用它是坏了 */}
-                {s.invocation === "manual" ? <span className="mcp-off">{t("只能手动调用")}</span> : null}
-                {s.invocation === "off" ? <span className="mcp-off">{t("已关")}</span> : null}
-              </p>
-              {actions && s.mutable ? (
-                <div className="skill-controls">
-                  {/**
-                    * 三档，不是一个开关（dsh-skills-manager 是一个开关管两件事——有人只想
-                    * 「模型别自己用、我手动还能调」）。写进 SKILL.md 的 frontmatter。
-                    */}
-                  <div className="theme-choices" role="radiogroup" aria-label={tf("{0} 的调用方式", s.name)}>
-                    {(["model", "manual", "off"] as const).map((m) => (
-                      <Button
-                        key={m}
-                        variant={s.invocation === m ? "primary" : "secondary"}
-                        size="sm"
-                        role="radio"
-                        aria-checked={s.invocation === m}
-                        disabled={忙 === s.filePath}
-                        onClick={() => {
-                          if (m === s.invocation) return
-                          void 做(s.filePath, async () => {
-                            await actions.setInvocation(s.filePath, m)
-                            return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m))
-                          })
-                        }}
-                      >
-                        {档名(m)}
-                      </Button>
-                    ))}
-                  </div>
-                  <Button variant="ghost" size="sm" className="menu-danger" disabled={忙 === s.filePath} onClick={() => void 去删(s)}>
-                    {t("删除")}
+        <>
+          {/**
+            * **一张密的清单，不是一摞卡片**（2026-08-21 作者给了 DSH 技能页那张图）：
+            * 每行两行高——名字 + 来源标签 + 状态标签，下面说明单行省略；细线分隔；
+            * 路径进悬停卡；操作收进行尾的「⋯」。上面一行：来源筛选 + 搜索 + 计数。
+            */}
+          <div className="skills-filters">
+            <div className="theme-choices" role="radiogroup" aria-label={t("来源")}>
+              {(["all", "project", "global", "builtin"] as const).map((k) => {
+                const n = k === "all" ? 数据.skills.length : 数据.skills.filter((x) => x.from === k).length
+                if (k !== "all" && n === 0) return null
+                return (
+                  <Button key={k} variant={筛 === k ? "primary" : "secondary"} size="sm" role="radio" aria-checked={筛 === k} onClick={() => 设筛(k)}>
+                    {k === "all" ? t("全部") : 来处(k)}（{n}）
                   </Button>
-                </div>
-              ) : null}
-              {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
-              <p className="skill-desc">{s.description}</p>
-              <p className="skill-meta">
-                <span className="skill-path">{s.filePath}</span>
-              </p>
-            </li>
-          ))}
-        </ul>
+                )
+              })}
+            </div>
+            <input
+              className="control skills-search"
+              type="search"
+              value={搜}
+              aria-label={t("搜技能")}
+              placeholder={t("按名字或说明搜")}
+              onChange={(e) => 设搜(e.target.value)}
+            />
+            <span className="skills-count hint">
+              {tf("{0} 个，{1} 个开着", 数据.skills.length, 数据.skills.filter((x) => x.invocation === "model").length)}
+            </span>
+          </div>
+          {筛出来.length === 0 ? (
+            <EmptyState title={t("没有对上的技能")} description={t("换个词，或者把筛选清掉。")} />
+          ) : (
+            <ul className="skill-group" aria-label={t("技能清单")}>
+              {筛出来.map((s) => (
+                <li key={s.filePath} className="skill-row" data-authored="" data-state={s.invocation === "off" ? "off" : undefined}>
+                  <div
+                    className="skill-row-main"
+                    {...浮层事件(设浮着的, s.name, s.description, [{ 图: "文件夹", 文: s.filePath }], undefined, 清单上的卡)}
+                  >
+                    <p className="skill-name">
+                      <span className="skill-name-text">{s.name}</span>
+                      <span className="tag">{来处(s.from)}</span>
+                      <span className={`tag tag-${s.invocation}`}>{状态名(s.invocation)}</span>
+                    </p>
+                    {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
+                    <p className="skill-desc">{s.description}</p>
+                  </div>
+                  {actions && s.mutable ? (
+                    <行尾菜单 s={s} 忙={忙 === s.filePath} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
       {/** **写坏了要看得见**：静静不出现的话，人只会以为「我写的技能没生效」 */}

@@ -1738,10 +1738,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             mutable: from !== "builtin",
           }
         }),
-        problems: r.diagnostics.map((d) => ({
-          path: String((d as { path?: unknown }).path ?? ""),
-          reason: String((d as { message?: unknown }).message ?? ""),
-        })),
+        problems: r.diagnostics
+          // **目录还不存在不算「写坏了」**：项目还没建 `.dawn/skills` 是常态，列出来只会把真问题淹了
+          .filter((d) => !(/skill path does not exist/i.test(String((d as { message?: unknown }).message ?? "")) && 按序.some((x) => x.path === String((d as { path?: unknown }).path ?? ""))))
+          .map((d) => ({
+            path: String((d as { path?: unknown }).path ?? ""),
+            reason: String((d as { message?: unknown }).message ?? ""),
+          })),
         dirs: {
           ...(位置.自带目录 ? { builtin: 位置.自带目录 } : {}),
           ...(位置.全局目录 ? { global: 位置.全局目录 } : {}),

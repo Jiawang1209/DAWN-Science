@@ -120,29 +120,33 @@ test.describe("管理", () => {
     技能文件(全局, "my-skill")
     await page.getByRole("button", { name: "Agent Skills" }).click()
     const 屏 = page.locator(".skills-page")
-    const 行 = 屏.locator(".skill", { hasText: "my-skill" })
+    const 行 = 屏.locator(".skill-row", { hasText: "my-skill" })
     await expect(行).toBeVisible()
-    const 组 = 行.getByRole("radiogroup", { name: "my-skill 的调用方式" })
-    await expect(组.getByRole("radio", { name: "开" })).toHaveAttribute("aria-checked", "true")
+    await expect(行).toContainText("已启用")
+    const 选 = async (档: string) => {
+      await 行.getByRole("button", { name: "技能操作：my-skill" }).click()
+      await page.getByRole("menu").getByRole("menuitemradio", { name: new RegExp(`${档}$`) }).click()
+    }
 
-    await 组.getByRole("radio", { name: "只手动" }).click()
+    await 选("只手动")
     await expect(屏.locator('[role="status"]')).toContainText("改为只手动")
     await expect(行).toContainText("只能手动调用")
     expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toBe("---\nname: my-skill\ndescription: 说明 my-skill\n# 注释\ndisable-model-invocation: true\n---\n正文\n")
 
-    await 组.getByRole("radio", { name: "关" }).click()
+    await 选("关")
     await expect(行).toContainText("已关")
     expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toContain("user-invocable: false")
 
-    await 组.getByRole("radio", { name: "开" }).click()
-    await expect(组.getByRole("radio", { name: "开" })).toHaveAttribute("aria-checked", "true")
+    await 选("开")
+    await expect(行).toContainText("已启用")
     expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toBe("---\nname: my-skill\ndescription: 说明 my-skill\n# 注释\n---\n正文\n")
 
-    // 自带的：有行、没开关、没删除
-    const 自带行 = 屏.locator(".skill", { hasText: "writing-skills" })
+    // 自带的：有行、没有「⋯」
+    const 自带行 = 屏.locator(".skill-row", { hasText: "writing-skills" })
     await expect(自带行).toBeVisible()
-    await expect(自带行.getByRole("radiogroup")).toHaveCount(0)
-    await expect(自带行.getByRole("button", { name: "删除" })).toHaveCount(0)
+    await expect(自带行.getByRole("button", { name: /技能操作/ })).toHaveCount(0)
+    // 项目还没建 .dawn/skills 不算「读不进来」
+    await expect(屏).not.toContainText("skill path does not exist")
   })
 
 })
@@ -185,13 +189,14 @@ test.describe("删除", () => {
     const 全局 = join(dir, "skills")
     技能文件(全局, "doomed")
     await page.getByRole("button", { name: "Agent Skills" }).click()
-    const 行 = page.locator(".skills-page .skill", { hasText: "doomed" })
-    await 行.getByRole("button", { name: "删除" }).click()
+    const 行 = page.locator(".skills-page .skill-row", { hasText: "doomed" })
+    await 行.getByRole("button", { name: "技能操作：doomed" }).click()
+    await page.getByRole("menu").getByRole("menuitem", { name: "删除" }).click()
     const 框 = page.getByRole("dialog")
     await expect(框).toContainText("删掉技能「doomed」？")
     await 框.getByRole("button", { name: "移到废纸篓" }).click()
     await expect(page.locator(".skills-page [role=\"status\"]")).toContainText("已移到废纸篓")
-    await expect(page.locator(".skills-page .skill", { hasText: "doomed" })).toHaveCount(0)
+    await expect(page.locator(".skills-page .skill-row", { hasText: "doomed" })).toHaveCount(0)
     await expect.poll(() => existsSync(join(全局, "doomed"))).toBe(false)
   })
 })

@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-21 — 远程助理 T1：微信 iLink 协议客户端 + 假微信
+
+- **Type**: feat
+- **Motivation**: 作者要把 DAWN 接到微信官方的「ClawBot」（*「微信这边，其实不就是接入的微信龙虾吗？」*）。设计见 `docs/superpowers/specs/2026-08-21-远程助理-design.md`；协议从腾讯官方插件 `@tencent-weixin/openclaw-weixin@2.4.6`（MIT）源码读出，记在 `docs/微信-iLink-协议笔记.md`——README 与代码有八处不一致，以代码为准。
+- **What**: `src/channels/weixin/ilink.ts`：`IlinkClient`（头、扫码两步、长轮询、发文字 / 工具进度条目、`getconfig` / `sendtyping` / `notify*`、CDN 上传下载）+ AES-128-ECB 与两种 `aes_key` 编码 + `读入站`（文字 / 语音转写 / 引用 / 媒体挑选）+ `切段`（≤ 4000，换行处断）。**fetch 注入**；`qrBaseUrl` 只给假微信用（线上写死默认）。`scripts/fake-ilink-server.mjs`：dev:mock 与 e2e 共用的假微信，真协议 + `/__fake/*` 测试把手（推进扫码、塞消息、读发出的、让 token 失效）。
+- **Impact**: 纯新增，还没接到会话与界面（T2）。
+- **Verification**: `tests/channels/weixin-ilink.test.ts` 17 条（假 fetch 走完扫码状态机、游标、-14、发消息形状、切段、AES 往返、两种 key 编码、上传下载、入站解析）；`tests/channels/weixin-fake-server.test.ts` 3 条真客户端 × 假微信走真 socket（证明两边说同一种话）。
+
 ### 2026-08-21 — 文件面板「加宽」配了反向的「收窄」
 
 - **Type**: feat

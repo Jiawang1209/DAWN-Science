@@ -43,7 +43,14 @@ export function 解析地址(raw: string): URL | undefined {
   const 像主机端口 = /^[a-zA-Z0-9.-]+:\d+(\/|$|\?)/.test(原)
   const 有协议 = !像主机端口 && /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(原)
   try {
-    return new URL(有协议 ? 原 : `http://${原}`)
+    if (有协议) return new URL(原)
+    /**
+     * 没写协议：**本机补 `http`，别的补 `https`**（2026-08-21，学自 DSH-better-sidebar 的地址规范化）。
+     * 本地开发服务器几乎都是明文的，外网今天几乎都是 https；
+     * 写反了前者是「连不上」、后者是「被浏览器拦」，两边都不如一开始就对。
+     */
+    const 试 = new URL(`http://${原}`)
+    return 本机主机吗(试.hostname) || /^\d+\.\d+\.\d+\.\d+$/.test(试.hostname) ? 试 : new URL(`https://${原}`)
   } catch {
     return undefined
   }

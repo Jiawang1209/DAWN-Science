@@ -89,6 +89,7 @@ function backend(): WorkbenchBackend {
     weixinSetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
     enhancePrompt: async () => ({ text: "", usedContext: null, model: "x" }),
     cancelEnhance: async () => ({ ok: true as const }),
+    searchFiles: async () => ({ matches: [], visited: 0, skippedDirs: 0, unreadable: 0 }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

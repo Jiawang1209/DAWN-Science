@@ -358,6 +358,11 @@ pre {
   left: auto;
   right: -2px;
 }
+/* `side="right"` 的贴边缝贴的是父元素的**左**缘（右坞那条：坞被压窄时它仍在坞的真实边上） */
+.side-sash.edge.lead:not(.horizontal) {
+  right: auto;
+  left: -2px;
+}
 .side-sash.edge.horizontal {
   bottom: -2px;
 }
@@ -1856,19 +1861,25 @@ pre {
  */
 .files-where {
   display: flex;
+  /**
+   * **放不下就折行，按钮一个都不许丢**（2026-08-21 作者：窗口没最大化时
+   * 「收窄 / 搜索 / 恢复」根本看不见——此前 `nowrap` 让它们被裁在右边外面）。
+   */
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--dawn-space-2);
+  gap: var(--dawn-space-1) var(--dawn-space-2);
   padding: var(--dawn-space-2) var(--dawn-space-3);
   border-bottom: 1px solid var(--dawn-stroke-4);
   font-size: 12px;
   color: var(--dawn-text-2);
   white-space: nowrap;
 }
+.files-where > .btn { flex: 0 0 auto; }
 .files-where-name { font-weight: 600; color: var(--dawn-text-1); }
 /** 路径框。**输一个目录就跳过去**——不做搜索（见设计文档第三节） */
 .files-jump {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 120px;
+  min-width: 120px;
   font: inherit;
   color: var(--dawn-text-1);
   background: var(--dawn-surface-input);
@@ -1934,26 +1945,40 @@ pre {
   min-width: 0;
 }
 
+/**
+ * 预览头两行（2026-08-21 重排，作者：「文件 title 的排版很难看」——
+ * 此前是一行 flex，坞一窄，文件名被挤成一个字一行、按钮也竖着排）。
+ * 第一行：文件名独占，按词断、不逐字；第二行：左边类型 · 大小，右边按钮，按钮不折。
+ */
 .preview-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--dawn-space-3);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dawn-space-1) var(--dawn-space-3);
   margin-bottom: var(--dawn-space-3);
   padding-bottom: var(--dawn-space-2);
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
 
 .preview-head .name {
+  flex: 1 1 100%;
+  min-width: 0;
   font-weight: 600;
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.4;
 }
 
 .preview-head .sub {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--dawn-text-3);
   font-size: var(--dawn-ui-size);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.preview-head .btn { flex: 0 0 auto; white-space: nowrap; }
 
 /* 图按原始像素显示，但**不许撑破容器** */
 .preview-img {
@@ -4656,6 +4681,8 @@ pre {
 .right-dock {
   display: flex;
   flex-direction: column;
+  /* 占满网格给它的那一列——列被压窄它就窄，内容不许伸出窗口（2026-08-21） */
+  width: 100%;
   min-width: 0;
   min-height: 0;
   border-left: var(--dawn-hairline) solid var(--dawn-stroke-2);
@@ -5225,3 +5252,54 @@ pre {
 }
 @keyframes enhance-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .enhance-spin { animation: none; } }
+
+/* ── 文件面板 · 按名字搜（dock-polish ③，2026-08-21） ── */
+.files-search-results { overflow: auto; }
+.files-search { flex: 1; }
+.files-search-results .search-hit .sub {
+  display: block;
+  font-size: 11px;
+  color: var(--dawn-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.files-search-note {
+  margin: var(--dawn-space-2) var(--dawn-space-3);
+  font-size: 11px;
+}
+
+/* ── 文件面板 · 行菜单（dock-polish ⑤）。「⋯」的样式沿用上面 2026-08-18 那组 `.tree-node > .row-actions` ── */
+.tree-row-menu { min-width: 180px; }
+.files-row-note {
+  margin: var(--dawn-space-1) var(--dawn-space-3);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 文件行右边现在也有「⋯」了：给时间戳那一截让出位置，别压在一起 */
+.tree-node > .tree-row { padding-right: calc(var(--dawn-space-2) + 28px); }
+
+/* ── 坞里一格坏了（dock-polish ⑥） ── */
+.pane-broken {
+  padding: var(--dawn-space-4);
+  display: grid;
+  gap: var(--dawn-space-2);
+  align-content: start;
+}
+.pane-broken-title { font-weight: 600; color: var(--dawn-text-1); }
+
+/**
+ * 文件行的「时间 · 大小」**不换行**（2026-08-21 作者要的：拖窄分割线时它折成两行，
+ * 一行就变高了）。与标题同一套：单行、省略号；名字先让，它后让。
+ */
+.tree-row .sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* **先缩时间戳，再缩文件名**（2026-08-21 作者定的顺序）：shrink 比例悬殊，名字几乎不动直到它缩没 */
+  flex: 0 1000 auto;
+  min-width: 0;
+}
+.tree-row .name { flex: 1 1 auto; }

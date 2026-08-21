@@ -51,7 +51,7 @@ test("**选完文件夹，文件树立刻转到那个目录**", async ({ dawn })
   await 进坞(page, "文件")
   await expect(page.locator(".right-dock .file-tree")).toBeVisible()
   await expect(
-    page.locator(".right-dock").getByRole("button", { name: /认得出的文件\.md/ }),
+    page.locator(".right-dock").getByRole("button", { name: /^认得出的文件\.md/ }),
     "还没选文件夹，树里就已经有那个目录的东西了——这条用例证明不了任何事",
   ).toHaveCount(0)
 
@@ -67,7 +67,7 @@ test("**选完文件夹，文件树立刻转到那个目录**", async ({ dawn })
    * 红的样子很好认：chip 变了而树没变，也就是作者报的那个中间态。
    */
   await expect(
-    page.locator(".right-dock").getByRole("button", { name: /认得出的文件\.md/ }),
+    page.locator(".right-dock").getByRole("button", { name: /^认得出的文件\.md/ }),
     "chip 变了，文件树还指着旧地方",
   ).toBeVisible({ timeout: 15_000 })
   await expect(page.locator(".right-dock").getByRole("button", { name: "数据", exact: true })).toBeVisible()
@@ -157,12 +157,12 @@ test("**在外面往目录里丢文件，切回窗口树就跟上**", async ({ d
   await page.getByRole("button", { name: "选择工作目录" }).click()
   await 进坞(page, "文件")
   await expect(
-    page.locator(".right-dock").getByRole("button", { name: /认得出的文件\.md/ }),
+    page.locator(".right-dock").getByRole("button", { name: /^认得出的文件\.md/ }),
   ).toBeVisible({ timeout: 15_000 })
 
   const 新的 = "刚挪进来的.csv"
   await expect(
-    page.locator(".right-dock").getByRole("button", { name: new RegExp(新的) }),
+    page.locator(".right-dock").getByRole("button", { name: new RegExp(`^${新的}`) }),
     "还没挪进去就已经有了——这条用例证明不了任何事",
   ).toHaveCount(0)
 
@@ -180,7 +180,7 @@ test("**在外面往目录里丢文件，切回窗口树就跟上**", async ({ d
   await page.evaluate(() => window.dispatchEvent(new Event("focus")))
 
   await expect(
-    page.locator(".right-dock").getByRole("button", { name: new RegExp(新的) }),
+    page.locator(".right-dock").getByRole("button", { name: new RegExp(`^${新的}`) }),
     "在外面挪进去的文件，切回来还是看不见",
   ).toBeVisible({ timeout: 15_000 })
   // **展开的那一层还开着**：刷新是重读，不是重挂
@@ -210,16 +210,16 @@ test("**文件行写着修改时间与类型图标；按「刷新」不切窗口
   await page.getByRole("button", { name: "选择工作目录" }).click()
   await 进坞(page, "文件")
   const 坞 = page.locator(".right-dock")
-  await expect(坞.getByRole("button", { name: /认得出的文件\.md/ })).toBeVisible({ timeout: 15_000 })
+  await expect(坞.getByRole("button", { name: /^认得出的文件\.md/ })).toBeVisible({ timeout: 15_000 })
 
   const 新的 = "按刷新才看见的.csv"
-  await expect(坞.getByRole("button", { name: new RegExp(新的) })).toHaveCount(0)
+  await expect(坞.getByRole("button", { name: new RegExp(`^${新的}`) })).toHaveCount(0)
   writeFileSync(join(目标, 新的), "x\n")
 
   // 没切窗口、没上传、没删除——只按了这颗
   await 坞.getByRole("button", { name: "刷新当前文件夹" }).click()
 
-  const 行 = 坞.getByRole("button", { name: new RegExp(新的) })
+  const 行 = 坞.getByRole("button", { name: new RegExp(`^${新的}`) })
   await expect(行, "按了刷新，刚写的文件还是看不见").toBeVisible({ timeout: 15_000 })
   /**
    * **时间戳**：正规的年月日时分（作者 2026-08-20 定的形式），而且得是
@@ -237,8 +237,8 @@ test("**文件行写着修改时间与类型图标；按「刷新」不切窗口
       .locator("svg.row-icon path")
       .first()
       .getAttribute("d")
-  const 表 = await 图标路径(new RegExp(新的))
-  const 文 = await 图标路径(/认得出的文件\.md/)
+  const 表 = await 图标路径(new RegExp(`^${新的}`))
+  const 文 = await 图标路径(/^认得出的文件\.md/)
   const 夹 = await 图标路径("数据")
   expect(表, "csv 行没有图标").toBeTruthy()
   expect(文, "md 行没有图标").toBeTruthy()

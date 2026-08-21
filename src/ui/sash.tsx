@@ -2,7 +2,7 @@
  * 能拖的缝（2026-08-13 生于侧栏；2026-08-17 右坞复用；2026-08-21 搬出 `views.tsx`
  * 并加了横向——坞里「文件树 ↔ 预览」要用，而 `files.tsx` 不该为一条缝去 import 整个 `views.tsx`）。
  */
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { t } from "./i18n/index.js"
 
 /**
@@ -40,7 +40,14 @@ export function SideSash({
   width: number
   min: number
   max: number
-  onResize: (px: number) => void
+  /**
+   * `phase`（2026-08-21，dock-polish ④，学自 DSH-better-sidebar）：
+   * 拖的过程中每帧最多一次 `"drag"`——调用方只改 store、不落盘；
+   * 抬手 / `pointercancel` / 键盘一步是 `"commit"`——这一次才写 localStorage。
+   * **`pointercancel` 提交的是最后一个位置，不回滚**：系统手势把指针抢走时，
+   * 人看到的是拖到那儿的样子，回滚等于界面自己跳一下。
+   */
+  onResize: (px: number, phase: "drag" | "commit") => void
   /**
    * 竖缝（左右拖，默认）还是横缝（上下拖）。**2026-08-21 为坞里「树 ↔ 预览」加的**：
    * 坞窄时两者上下摆，那条缝得横着；逻辑与竖的一模一样，只是换了轴。
@@ -72,6 +79,26 @@ export function SideSash({
    * 侧栏不跟手——因为越界的那几十像素被吃掉了，没人记得它们。
    */
   const 锚 = useRef({ x: 0, w: width })
+  /** 这次拖动里最后算出来的宽度；没动过是 undefined */
+  const 最后 = useRef<number | undefined>(undefined)
+  const 帧 = useRef<number | undefined>(undefined)
+  useEffect(
+    () => () => {
+      if (帧.current !== undefined) cancelAnimationFrame(帧.current)
+    },
+    [],
+  )
+  /** 抬手 / 被打断：把最后一个位置提交出去。**没动过就不提交** */
+  const 提交 = () => {
+    if (帧.current !== undefined) {
+      cancelAnimationFrame(帧.current)
+      帧.current = undefined
+    }
+    setDragging(false)
+    const px = 最后.current
+    最后.current = undefined
+    if (px !== undefined) onResize(px, "commit")
+  }
 
   const 横 = orientation === "horizontal"
   const 位置 =
@@ -85,7 +112,7 @@ export function SideSash({
 
   return (
     <div
-      className={`side-sash${横 ? " horizontal" : ""}${attach === "edge" ? " edge" : ""}${dragging ? " dragging" : ""}`}
+      className={`side-sash${横 ? " horizontal" : ""}${attach === "edge" ? " edge" : ""}${attach === "edge" && side === "right" ? " lead" : ""}${dragging ? " dragging" : ""}`}
       {...(位置 ? { style: 位置 } : {})}
       role="separator"
       aria-orientation={横 ? "horizontal" : "vertical"}
@@ -104,16 +131,27 @@ export function SideSash({
         if (!dragging) return
         // 右边那条：手往左推才是变宽，所以取反
         const 走了 = 读(e) - 锚.current.x
-        onResize(锚.current.w + (side === "left" ? 走了 : -走了))
+        最后.current = 锚.current.w + (side === "left" ? 走了 : -走了)
+        // **一帧一次**：触控板一秒发上百个 move，屏幕一秒只画六十帧，多出来的全是白算
+        if (帧.current === undefined) {
+          帧.current = requestAnimationFrame(() => {
+            帧.current = undefined
+            if (最后.current !== undefined) onResize(最后.current, "drag")
+          })
+        }
       }}
       onPointerUp={(e) => {
-        setDragging(false)
+        if (dragging) {
+          const 走了 = 读(e) - 锚.current.x
+          if (走了 !== 0) 最后.current = 锚.current.w + (side === "left" ? 走了 : -走了)
+        }
+        提交()
         e.currentTarget.releasePointerCapture(e.pointerId)
       }}
-      onPointerCancel={() => setDragging(false)}
+      onPointerCancel={提交}
       onKeyDown={(e) => {
         // 一步 16px：够看得出来，又不至于两下就撞到界
-        const 变 = (d: number) => onResize(width + (side === "left" ? d : -d))
+        const 变 = (d: number) => onResize(width + (side === "left" ? d : -d), "commit")
         const 减 = 横 ? "ArrowUp" : "ArrowLeft"
         const 加 = 横 ? "ArrowDown" : "ArrowRight"
         if (e.key === 减) {

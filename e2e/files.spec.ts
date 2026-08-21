@@ -6,7 +6,8 @@
  * **CSP 尤其**：`img-src` 少写一个 `data:`，图就是一个空框，
  * 而所有单元测试照样全绿。
  */
-import { test, expect, 进坞 } from "./fixtures.js"
+import { test, expect, 进坞, 在项目里开会话 } from "./fixtures.js"
+import { tmpdir } from "node:os"
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -33,7 +34,7 @@ test("目录树能翻，图片直接显示在应用里", async ({ dawn }) => {
    * 「放行的那几个短词，用例里一律 exact」的又一例。
    */
   await page.getByRole("button", { name: "out", exact: true }).click()
-  await page.getByRole("button", { name: /图\.png/ }).click()
+  await page.getByRole("button", { name: /^图\.png/ }).click()
 
   const img = page.locator(".preview-img")
   await expect(img).toBeVisible()
@@ -47,11 +48,11 @@ test("markdown 走渲染，其它文本按原文", async ({ dawn }) => {
   writeFileSync(join(workspace, "跑.py"), "print('hi')\n")
 
   await 进坞(page, "文件")
-  await page.getByRole("button", { name: /说明\.md/ }).click()
+  await page.getByRole("button", { name: /^说明\.md/ }).click()
   // 渲染过的 markdown 里有真的 <h1>，不是一行 `# 分析结论`
   await expect(page.locator(".file-preview h1")).toHaveText("分析结论")
 
-  await page.getByRole("button", { name: /跑\.py/ }).click()
+  await page.getByRole("button", { name: /^跑\.py/ }).click()
   // **代码不该被当成 markdown 改写**
   await expect(page.locator(".preview-text")).toContainText("print('hi')")
 })
@@ -77,7 +78,7 @@ test("**PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP �
   })
 
   await 进坞(page, "文件")
-  await page.getByRole("button", { name: /报告\.pdf/ }).click()
+  await page.getByRole("button", { name: /^报告\.pdf/ }).click()
 
   const embed = page.locator(".preview-pdf")
   await expect(embed).toBeVisible()
@@ -98,7 +99,7 @@ test("**超上界的 PDF 说清多大**，而不是硬塞进内存", async ({ da
   // 反过来写的话它根本不在树里（上一版就是这么超时的）
   writeFileSync(join(workspace, "小.bin"), Buffer.alloc(16))
   await 进坞(page, "文件")
-  await page.getByRole("button", { name: /小\.bin/ }).click()
+  await page.getByRole("button", { name: /^小\.bin/ }).click()
   await expect(page.locator(".preview-other .caveat")).toContainText("不能在应用里预览")
 })
 
@@ -207,7 +208,7 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   await expect(加宽).toBeVisible()
   expect(await 加宽.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
 
-  await page.getByRole("button", { name: /大图\.png/ }).click()
+  await page.getByRole("button", { name: /^大图\.png/ }).click()
   const img = page.locator(".preview-img")
   await expect(img).toBeVisible()
   const 窄的时候 = (await img.boundingBox())!
@@ -218,11 +219,11 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   await 加宽.click()
   await expect(page.locator(".files-wide")).toBeVisible()
 
+  // 坞现在跟着网格那一列走，列宽有 0.25s 过渡——等它到位再量（2026-08-21）
+  await expect
+    .poll(async () => (await img.boundingBox())!.width, { message: "加宽之后没变大" })
+    .toBeGreaterThan(窄的时候.width * 1.3)
   const 宽的时候 = (await img.boundingBox())!
-  expect(
-    宽的时候.width,
-    `加宽之后没变大：${Math.round(窄的时候.width)}px → ${Math.round(宽的时候.width)}px`,
-  ).toBeGreaterThan(窄的时候.width * 1.3)
 
   /**
    * ③ **左树、右预览**——作者 2026-08-20 指定的形状，不是「反正两栏就行」。
@@ -301,4 +302,274 @@ test("**树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住*
   await expect.poll(async () => Math.round((await 树.boundingBox())!.width)).toBe(Math.round(拖后宽))
   const 存的高 = await page.evaluate(() => localStorage.getItem("dawn.global.file-tree-height"))
   expect(Math.abs(Number(存的高) - 拖后高)).toBeLessThan(3)
+})
+
+/**
+ * **树的记忆**（2026-08-21，学自 DSH-better-sidebar 的会话级状态）：展开过的目录、选中的文件，
+ * 切到别的项目再切回来照样在。此前树靠 key 重挂，一切换全塌——而「agent 在改你的文件，
+ * 你切个会话再切回来」是最常见的动作。
+ */
+test("**切走再切回来，树还展开着、文件还选着**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "深", "更深"), { recursive: true })
+  writeFileSync(join(workspace, "深", "更深", "目标.md"), "# 目标\n")
+  const 乙 = join(tmpdir(), `dawn-tree-memory-乙-${process.pid}`)
+  mkdirSync(乙, { recursive: true })
+  writeFileSync(join(乙, "别的.md"), "# 别的\n")
+
+  // 在项目甲（夹具的 workspace）里开会话，打开文件面板，展开两层、选中目标
+  await 在项目里开会话(page)
+  await 进坞(page, "文件")
+  const 树 = page.locator(".file-tree")
+  await 树.getByRole("button", { name: /^深$/ }).click()
+  await 树.getByRole("button", { name: /^更深$/ }).click()
+  await 树.getByRole("button", { name: /^目标\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("目标", { timeout: 30_000 })
+
+  // 切到项目乙：树换成乙的，目标不在
+  await page.evaluate(async (ws) => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { agents?: { agentId: string }[] } }> } }
+    const p = await w.dawn.invoke("getProviders", {})
+    await w.dawn.invoke("createTask", { agentId: p.data?.agents?.[0]?.agentId, workspace: ws })
+  }, 乙)
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(2, { timeout: 30_000 })
+  // 项目名单 5 s 一拉；等它知道乙这个项目再点（点了靠它找 projectId）
+  await page.waitForTimeout(5_500)
+  await page.locator(".proj-list .proj-item .row", { hasText: "dawn-tree-memory-乙" }).click()
+  await page.locator(".proj-session-list .sess-item .row").first().click()
+  await expect(树.getByRole("button", { name: /^别的\.md/ })).toBeVisible({ timeout: 30_000 })
+  await expect(树.getByRole("button", { name: /^目标\.md/ })).toHaveCount(0)
+
+  // 切回甲：两层还展开着、目标还选着、预览还是它
+  await page.locator(".proj-list .proj-item .row", { hasText: "workspace" }).click()
+  await page.locator(".proj-session-list .sess-item .row").first().click()
+  await expect(树.getByRole("button", { name: /^目标\.md/ }), "切回来树塌了").toBeVisible({ timeout: 30_000 })
+  await expect(树.locator(".tree-row.active", { hasText: "目标.md" })).toHaveCount(1)
+  await expect(page.locator(".file-preview")).toContainText("目标")
+})
+
+/**
+ * **按名字搜**（dock-polish ③，2026-08-21）。三件事：深处的文件搜得到并且点了就开；
+ * 默认忽略的目录不进去**而且说了**；查询变了旧结果不留。
+ */
+test("**按名字搜得到深处的文件，忽略掉的目录要出声**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "src", "ui", "state"), { recursive: true })
+  writeFileSync(join(workspace, "src", "ui", "state", "right-dock.ts"), "export const x = 1\n")
+  mkdirSync(join(workspace, "node_modules", "dock-lib"), { recursive: true })
+  writeFileSync(join(workspace, "node_modules", "dock-lib", "dock.js"), "// 不该被搜到\n")
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "搜文件名", exact: true }).click()
+  const 框 = 面板.getByPlaceholder("输文件名的一部分，Esc 退出搜索")
+  await expect(框).toBeVisible()
+  await 框.fill("dock")
+
+  const 结果 = 面板.locator(".files-search-results")
+  await expect(结果.getByRole("button", { name: /^right-dock\.ts/ })).toBeVisible()
+  // node_modules 里那个不在单子上，而且说了跳过了它
+  await expect(结果).not.toContainText("dock.js")
+  await expect(结果.locator(".files-search-note")).toContainText("没进 1 个默认忽略的目录")
+
+  // 点了就开
+  await 结果.getByRole("button", { name: /^right-dock\.ts/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("export const x = 1")
+
+  // 换个搜不到的词：旧结果不留，说清看了几条
+  await 框.fill("不存在的名字")
+  await expect(结果).toContainText("没有名字里带「不存在的名字」的")
+  await expect(结果.getByRole("button", { name: /^right-dock\.ts/ })).toHaveCount(0)
+
+  // Esc 退出：树回来了
+  await 框.press("Escape")
+  await expect(面板.getByRole("button", { name: "src", exact: true })).toBeVisible()
+})
+
+test("**命中到上限就停，并且说停在哪**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "多"), { recursive: true })
+  for (let i = 0; i < 230; i++) writeFileSync(join(workspace, "多", `hit-${String(i).padStart(3, "0")}.txt`), "")
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "搜文件名", exact: true }).click()
+  await 面板.getByPlaceholder("输文件名的一部分，Esc 退出搜索").fill("hit-")
+  const 结果 = 面板.locator(".files-search-results")
+  await expect(结果.locator(".files-search-note")).toContainText("只列了前 200 条就停了")
+  await expect(结果.locator(".search-hit")).toHaveCount(200)
+})
+
+/**
+ * **行菜单**（dock-polish ⑤）：复制相对 / 绝对路径、`@路径` 插进输入框。
+ * 「⋯」与右键两个入口都验——右键是看不见的能力，「⋯」才是人找得到的那个。
+ */
+test("**树行的菜单：复制路径、插进输入框**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "data"), { recursive: true })
+  writeFileSync(join(workspace, "data", "样本.csv"), "a,b\n1,2\n")
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"])
+
+  await 在项目里开会话(page)
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "data", exact: true }).click()
+  await expect(面板.getByRole("button", { name: /^样本\.csv/ })).toBeVisible()
+
+  // ① 「⋯」→ 复制相对路径
+  await 面板.getByRole("button", { name: "文件操作：样本.csv" }).click()
+  await page.getByRole("menu").getByRole("menuitem", { name: "复制相对路径" }).click()
+  await expect(面板.locator(".files-row-note")).toContainText("已复制相对路径：data/样本.csv")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("data/样本.csv")
+
+  // ② 右键 → 复制绝对路径（工作区 + 相对）
+  await 面板.getByRole("button", { name: /^样本\.csv/ }).click({ button: "right" })
+  await page.getByRole("menu").getByRole("menuitem", { name: "复制绝对路径" }).click()
+  const 绝对 = await page.evaluate(() => navigator.clipboard.readText())
+  expect(绝对.endsWith("/data/样本.csv")).toBe(true)
+  expect(绝对.startsWith("/")).toBe(true)
+
+  // ③ 目录也有；插进输入框 → 草稿末尾多了 `@data `
+  await 面板.getByRole("button", { name: "目录操作：data" }).click()
+  await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data ")
+  await 面板.getByRole("button", { name: "文件操作：样本.csv" }).click()
+  await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
+  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data @data/样本.csv ")
+})
+
+/**
+ * **悬停卡与不换行**（2026-08-21 作者要的两条）：
+ * ① 鼠标停在文件 / 文件夹上弹出信息卡（照左侧栏那张），开在坞的**左边**、不出屏；
+ * ② 树拖得再窄，行上「时间 · 大小」也是一行，不折成两行把行撑高。
+ */
+test("**悬停文件弹信息卡；拖窄了时间戳也不折行**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "数据"), { recursive: true })
+  writeFileSync(join(workspace, "数据", "一个名字很长很长很长很长的样本文件.csv"), "a,b\n1,2\n")
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "数据", exact: true }).click()
+  const 行 = 面板.getByRole("button", { name: /^一个名字很长/ })
+  await expect(行).toBeVisible()
+
+  // ① 文件：卡上有所在目录、修改时间、大小；卡整个在坞的左边
+  await 行.hover()
+  const 卡 = page.locator(".sess-hover-card")
+  await expect(卡).toBeVisible({ timeout: 5_000 })
+  await expect(卡).toContainText("一个名字很长很长很长很长的样本文件.csv")
+  await expect(卡.locator(".sess-hover-details li")).toHaveCount(3)
+  await expect(卡).toContainText("数据")
+  await expect(卡).toContainText(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)
+  await expect(卡).toContainText("8 字节")
+  const 卡框 = (await 卡.boundingBox())!
+  const 坞框 = (await page.locator(".right-dock").boundingBox())!
+  expect(卡框.x + 卡框.width).toBeLessThanOrEqual(坞框.x + 1)
+  expect(卡框.x).toBeGreaterThanOrEqual(0)
+
+  // 文件夹也弹：只有所在目录那一行
+  await 面板.getByRole("button", { name: "数据", exact: true }).hover()
+  await expect(卡.locator(".sess-hover-details li")).toHaveCount(1, { timeout: 5_000 })
+
+  // ② 拖窄树（坞是窄的，缝横着——先加宽成两栏再把树拖窄）
+  await 面板.getByRole("button", { name: "加宽" }).click()
+  const 缝 = 面板.getByRole("separator", { name: "调整文件树宽度" })
+  const 缝框 = (await 缝.boundingBox())!
+  await page.mouse.move(缝框.x + 缝框.width / 2, 缝框.y + 缝框.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(缝框.x - 200, 缝框.y + 缝框.height / 2, { steps: 6 })
+  await page.mouse.up()
+  const 高 = await 行.evaluate((el) => el.getBoundingClientRect().height)
+  const 行高 = await 行.evaluate((el) => parseFloat(getComputedStyle(el).minHeight))
+  expect(高, "时间 · 大小折成两行把行撑高了").toBeLessThanOrEqual(行高 + 1)
+  const 副 = 行.locator(".sub")
+  expect(await 副.evaluate((el) => getComputedStyle(el).whiteSpace)).toBe("nowrap")
+})
+
+/**
+ * **窗口不大时的三条**（2026-08-21 作者截图给的）：
+ * ① 顶行的放大镜 / 刷新 / 加宽（或收窄）在窄坞里也看得见、点得到——此前被裁在右边外面；
+ * ② 行上先缩时间戳再缩文件名；
+ * ③ 预览头：文件名不逐字竖排，按钮不折成竖条。
+ */
+test("**窄坞：顶行按钮都在、先缩时间戳、预览头不竖排**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  writeFileSync(join(workspace, "AGENTS.md"), "# 产物落位\n\n正文。\n")
+  await page.setViewportSize({ width: 1200, height: 760 })
+
+  await 进坞(page, "文件")
+  const 面板 = page.locator(".right-dock .files-view")
+
+  // ① 三颗都在面板的可视范围里
+  // 第三颗是「加宽」还是「收窄」取决于此刻坞的宽度（顶到窗口上限时两颗都不给，那是设计）
+  const 宽窄 = (await 面板.getByRole("button", { name: "收窄", exact: true }).count()) > 0 ? "收窄" : (await 面板.getByRole("button", { name: "加宽", exact: true }).count()) > 0 ? "加宽" : undefined
+  for (const 名 of ["搜文件名", "刷新当前文件夹", ...(宽窄 ? [宽窄] : [])]) {
+    const b = 面板.getByRole("button", { name: 名, exact: true })
+    await expect(b).toBeVisible()
+    const 框 = (await b.boundingBox())!
+    const 盒 = (await 面板.boundingBox())!
+    expect(框.x + 框.width, `${名} 被裁在面板外面`).toBeLessThanOrEqual(盒.x + 盒.width + 1)
+  }
+
+  // ② 文件行：名字与时间戳谁先缩——把树拖到很窄之后，名字仍有宽度、时间戳先没
+  const 行 = 面板.getByRole("button", { name: /^AGENTS\.md/ })
+  await expect(行).toBeVisible()
+  // 把整个坞拖窄（坞自己那条缝往右推），树跟着窄——不管此刻是一栏还是两栏都成立
+  const 缝 = page.getByRole("separator", { name: "调整面板宽度" })
+  const 缝框 = (await 缝.boundingBox())!
+  await page.mouse.move(缝框.x + 缝框.width / 2, 缝框.y + 缝框.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(缝框.x + 400, 缝框.y + 缝框.height / 2, { steps: 8 })
+  await page.mouse.up()
+  const 名宽 = await 行.locator(".name").evaluate((el) => el.getBoundingClientRect().width)
+  const 副宽 = await 行.locator(".sub").evaluate((el) => el.getBoundingClientRect().width)
+  const 副内容宽 = await 行.locator(".sub").evaluate((el) => el.scrollWidth)
+  expect(副宽, "时间戳该先缩").toBeLessThan(副内容宽)
+  expect(名宽).toBeGreaterThan(40)
+
+  // ③ 预览头
+  await 行.click()
+  const 头 = page.locator(".preview-head")
+  await expect(头.locator(".name")).toHaveText("AGENTS.md")
+  const 名高 = await 头.locator(".name").evaluate((el) => el.getBoundingClientRect().height)
+  const 一行 = await 头.locator(".name").evaluate((el) => parseFloat(getComputedStyle(el).lineHeight))
+  expect(名高, "文件名竖排了").toBeLessThanOrEqual(一行 + 1)
+  const 删 = 头.getByRole("button", { name: "移到废纸篓" })
+  const 删高 = (await 删.boundingBox())!.height
+  expect(删高, "按钮折成竖条了").toBeLessThan(40)
+})
+
+/**
+ * **坞不许伸出窗口**（2026-08-21 作者截图：窗口没最大化时，网格那一列被压窄了，
+ * 坞却仍是 `width: 720px`，「加宽 / 搜索 / 刷新」全在屏幕右边看不见的地方）。
+ * 坞现在占满那一列——列多宽它多宽，按钮跟着变。缝也贴坞的真实边。
+ */
+test("**坞宽过了窗口能给的：坞被压进窗口里，按钮都看得见，缝在坞的真实边上**", async ({ dawn }) => {
+  const { page } = dawn
+  await 进坞(page, "文件")
+  // 先在宽窗口里把坞拉到最宽
+  await page.setViewportSize({ width: 1600, height: 800 })
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "加宽", exact: true }).click()
+  const 坞 = page.locator(".right-dock")
+  // 列宽有 0.25s 的过渡，等它到位
+  await expect.poll(async () => (await 坞.boundingBox())!.width).toBeGreaterThan(600)
+
+  // 再把窗口缩小：坞必须整个在窗口里
+  await page.setViewportSize({ width: 1000, height: 700 })
+  await expect
+    .poll(async () => {
+      const b = (await 坞.boundingBox())!
+      return Math.round(b.x + b.width)
+    })
+    .toBeLessThanOrEqual(1000)
+  for (const 名 of ["搜文件名", "刷新当前文件夹"]) {
+    const 框 = (await 面板.getByRole("button", { name: 名, exact: true }).boundingBox())!
+    expect(框.x + 框.width, `${名} 在窗口外面`).toBeLessThanOrEqual(1000)
+  }
+  // 缝贴着坞此刻的左缘（不是按 720 算出来的位置）
+  const 缝框 = (await page.getByRole("separator", { name: "调整面板宽度" }).boundingBox())!
+  const 坞框 = (await 坞.boundingBox())!
+  expect(Math.abs(缝框.x + 缝框.width / 2 - 坞框.x)).toBeLessThanOrEqual(3)
 })

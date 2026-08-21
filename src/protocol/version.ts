@@ -456,8 +456,10 @@
  *   `weixinSubmitCode` / `weixinCancelLogin` / `weixinUnbind` / `weixinBindSession`。纯新增。
  *
  * 7.15（2026-08-21）：提示词增强——`enhancePrompt` / `cancelEnhance`。纯新增。
+ *
+ * 7.16（2026-08-21）：文件面板按名字搜——`searchFiles`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.15"
+export const WORKBENCH_PROTOCOL_VERSION = "7.16"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

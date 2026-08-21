@@ -19,6 +19,7 @@ import { AgentMarkdown } from "./markdown.js"
 import {
   三角图标,
   刷新图标,
+  搜索图标,
   文件夹图标,
   文件图标,
   文本文件图标,
@@ -38,6 +39,7 @@ import { 文件类按名字, type 文件类 } from "./file-kind.js"
 import { t, tf, msgid } from "./i18n/index.js"
 import { useStore } from "@nanostores/react"
 import { SideSash } from "./sash.js"
+import { HoverCard, 浮层事件, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { $fileTreeHeight, $fileTreeWidth, FILE_TREE_MIN, setFileTreeHeight, setFileTreeWidth } from "./state/right-dock.js"
 import { 年月日时分 } from "./format.js"
 /**
@@ -103,6 +105,153 @@ export function 拖进来的本机路径(files: readonly File[]): { 有: string[
  * 一层目录。**按需展开，不预取整棵树**——
  * 一个 `node_modules` 就能让「打开文件视图」变成几十秒。
  */
+/**
+ * 树行上的操作（dock-polish ⑤，2026-08-21，学自 DSH-better-sidebar 的右键菜单）：
+ * 复制相对 / 绝对路径、把 `@路径` 塞进输入框、删除。
+ * **两个入口**：行上那颗常驻的「⋯」与右键——右键是看不见的能力，所以「⋯」不能省。
+ * 路径怎么算由 `FilesView` 给（本地 = 工作区 + 相对；远端 = 本来就是绝对的）。
+ */
+export interface 行操作 {
+  /** 回 `{ 相对, 绝对 }`。本地相对工作区、绝对拼上工作区；远端绝对就是路径本身、相对是去掉树根 */
+  路径: (path: string) => { 相对: string; 绝对: string }
+  /** 给了才有「插进输入框」 */
+  onInsert?: ((text: string) => void) | undefined
+  /** 给了才有「删除」。目录与文件各自的删法由调用方按 `kind` 分 */
+  onDelete?: ((path: string, kind: "file" | "dir") => void) | undefined
+  /** 复制成没成，往面板顶上那句说 */
+  onNote: (msg: string) => void
+}
+
+function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: string; name: string; kind: "file" | "dir"; 操作: 行操作; 位置: { top: number; left: number }; onClose: () => void }) {
+  const { 相对, 绝对 } = 操作.路径(path)
+  const 复制 = (文本: string, 成了: string) => {
+    onClose()
+    navigator.clipboard
+      .writeText(文本)
+      .then(() => 操作.onNote(成了))
+      // **复制失败要出声**：剪贴板被拒（焦点不在窗口里）时，人以为粘出来的是刚才那条
+      .catch((e: unknown) => 操作.onNote(tf("复制不了：{0}", e instanceof Error ? e.message : String(e))))
+  }
+  return (
+    <>
+      <div className="menu-scrim" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose() }} />
+      <div className="row-menu tree-row-menu" role="menu" aria-label={kind === "dir" ? tf("目录操作：{0}", name) : tf("文件操作：{0}", name)} style={{ top: 位置.top, left: 位置.left }}>
+        <Button variant="ghost" size="inline" role="menuitem" onClick={() => 复制(相对, tf("已复制相对路径：{0}", 相对))}>
+          {t("复制相对路径")}
+        </Button>
+        <Button variant="ghost" size="inline" role="menuitem" onClick={() => 复制(绝对, tf("已复制绝对路径：{0}", 绝对))}>
+          {t("复制绝对路径")}
+        </Button>
+        {操作.onInsert ? (
+          <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onClose(); 操作.onInsert!(`@${相对}`) }}>
+            {t("插进输入框")}
+          </Button>
+        ) : null}
+        {操作.onDelete ? (
+          <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onClose(); 操作.onDelete!(path, kind) }}>
+            {t("删除")}
+          </Button>
+        ) : null}
+      </div>
+    </>
+  )
+}
+
+/** 菜单开在哪：按钮旁边（点「⋯」）或指针处（右键）。下面放不下就往上翻 */
+function 菜单位置(e: { clientX: number; clientY: number }, 按钮?: HTMLElement | null): { top: number; left: number } {
+  const 高 = 160
+  if (按钮) {
+    const r = 按钮.getBoundingClientRect()
+    return { top: Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8), left: r.right + 6 }
+  }
+  return { top: Math.min(Math.max(8, e.clientY), window.innerHeight - 高 - 8), left: Math.min(e.clientX, window.innerWidth - 220) }
+}
+
+/** 行上那颗「⋯」+ 它开出来的菜单。文件行与目录行共用 */
+function 行操作钮({ path, name, kind, 操作, 菜单, 设菜单 }: { path: string; name: string; kind: "file" | "dir"; 操作: 行操作; 菜单: { top: number; left: number } | undefined; 设菜单: (p: { top: number; left: number } | undefined) => void }) {
+  const 按钮 = useRef<HTMLButtonElement>(null)
+  return (
+    <span className="row-actions">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="row-more"
+        ref={按钮}
+        aria-label={kind === "dir" ? tf("目录操作：{0}", name) : tf("文件操作：{0}", name)}
+        aria-expanded={Boolean(菜单)}
+        onClick={(e) => 设菜单(菜单 ? undefined : 菜单位置(e, 按钮.current))}
+      >
+        ⋯
+      </Button>
+      {菜单 ? <TreeRowMenu path={path} name={name} kind={kind} 操作={操作} 位置={菜单} onClose={() => 设菜单(undefined)} /> : null}
+    </span>
+  )
+}
+
+/** 悬停卡往哪儿开：标题是 `.name`、贴坞的左缘（坞贴着屏幕右缘，往右开就出屏了） */
+const 树上的卡 = { 标题: ".name", 容器: ".right-dock", 开在: "左边" as const }
+/** 路径里最后一个斜杠之前的那段；根写成「／」 */
+const 所在目录 = (path: string) => {
+  const i = path.lastIndexOf("/")
+  return i > 0 ? path.slice(0, i) : "／"
+}
+
+/** 文件那一行。拆出来是因为每一行要有自己的菜单状态 */
+function FileRow({ path, entry: e, depth, selected, onSelect, 操作, 浮 }: { path: string; entry: Listing["entries"][number]; depth: number; selected: string | undefined; onSelect: (path: string) => void; 操作?: 行操作; 浮?: ((x: 悬停浮层 | undefined) => void) | undefined }) {
+  const [菜单, 设菜单] = useState<{ top: number; left: number } | undefined>(undefined)
+  /**
+   * 悬停卡（2026-08-21 作者要的：*「鼠标悬浮在文件/文件夹上的时候，弹出文件信息，模仿左边侧边栏」*）。
+   * 行上那截时间 · 大小在树拖窄时会被省略掉，**卡上是全的**：所在目录、修改时间、大小。
+   */
+  const 详情: 详情行[] = [
+    { 图: "文件夹", 文: 所在目录(path) },
+    { 图: "时钟", 文: 年月日时分(e.modifiedAt) },
+    ...(e.size === undefined ? [] : [{ 图: "文件" as const, 文: bytes(e.size) }]),
+  ]
+  return (
+    <li className="tree-node">
+
+                  <Row
+                    className="tree-row"
+                    active={selected === path}
+                    style={{ paddingLeft: `calc(var(--dawn-space-2) + ${depth + 1} * var(--dawn-space-3))` }}
+                    onClick={() => onSelect(path)}
+                    {...浮层事件(浮, e.name, undefined, 详情, "文件", 树上的卡)}
+                    onContextMenu={
+                      操作
+                        ? (ev) => {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            设菜单(菜单位置(ev))
+                          }
+                        : undefined
+                    }
+                  >
+                    <span className="name">
+                      <类型图标 类={文件类按名字(e.name, "file")} />
+                      {e.name}
+                    </span>
+                    {/**
+                      * **什么时候改的**（2026-08-19 起）。作者：*「我只需要在文件树里看到
+                      * 生成了什么数据就好，有时间戳我就知道哪个文件是新生成的了。」*
+                      *
+                      * 服务器上的目录多半不是 git 仓库，时间戳是那儿唯一现成的
+                      * 「什么是新的」。第一版写的是相对时间（`刚刚 / 3m`），
+                      * 作者次日改成**正规的年月日时分**——理由见 `年月日时分`。
+                      * 目录行不写——目录的 mtime 含糊（里面动一个文件它就变），
+                      * 与目录不报大小同一口径。
+                      */}
+                    <span className="sub">
+                      <span className="file-when">{年月日时分(e.modifiedAt)}</span>
+                      {e.size === undefined ? "" : ` · ${bytes(e.size)}`}
+                    </span>
+                  </Row>
+
+      {操作 ? <行操作钮 path={path} name={e.name} kind="file" 操作={操作} 菜单={菜单} 设菜单={设菜单} /> : null}
+    </li>
+  )
+}
+
 function DirNode({
   path,
   name,
@@ -110,9 +259,12 @@ function DirNode({
   selected,
   onSelect,
   load,
-  onDelete,
+  操作,
   onDrop,
   刷新令牌,
+  展开,
+  onToggle,
+  浮,
 }: {
   path: string
   name: string
@@ -120,8 +272,10 @@ function DirNode({
   selected: string | undefined
   onSelect: (path: string) => void
   load: (path: string) => Promise<Listing>
-  /** 删这个目录。**给了才画那颗「⋯」** */
-  onDelete?: (path: string) => void
+  /** 悬停卡往哪儿报。树根那一行不弹 */
+  浮?: ((x: 悬停浮层 | undefined) => void) | undefined
+  /** 行上的操作（复制路径、插进输入框、删）。**给了才画那颗「⋯」**；树根那一行不画 */
+  操作?: 行操作
   /** 有文件被拖到这个目录上。**拖到哪一行就传到哪个目录** */
   onDrop?: (dir: string, files: readonly File[]) => void
   /**
@@ -134,10 +288,24 @@ function DirNode({
    * 现在它进 effect 的依赖：**展开状态是这一层自己的 `useState`，不动它**。
    */
   刷新令牌?: number | undefined
+  /**
+   * **展开状态由外面给**（2026-08-21）：此前住在每个节点自己的 `useState` 里，树一重挂全塌。
+   * 现在是一张按路径记的表，面板切走再切回来照样展开着（`state/files-memory.ts`）。
+   * 不给就退回旧行为（根展开、别的收着）。
+   */
+  展开?: ReadonlySet<string> | undefined
+  onToggle?: ((path: string, open: boolean) => void) | undefined
 }) {
-  const [open, setOpen] = useState(depth === 0)
+  const [自开, 设自开] = useState(depth === 0)
+  const open = 展开 ? 展开.has(path) : 自开
+  const setOpen = (f: (v: boolean) => boolean) => {
+    const 下 = f(open)
+    if (展开 && onToggle) onToggle(path, 下)
+    else 设自开(下)
+  }
   /** 有东西悬在这一行上。**放置高亮**——不给的话人不知道会落到哪个目录 */
   const [悬着, 设悬着] = useState(false)
+  const [菜单, 设菜单] = useState<{ top: number; left: number } | undefined>(undefined)
   const [listing, setListing] = useState<Listing | undefined>(undefined)
   const [error, setError] = useState<string | undefined>(undefined)
 
@@ -195,6 +363,16 @@ function DirNode({
         /* 缩进量**是数据**（树的层级），不是设计决定——与内核占比条同一条理由 */
         style={{ paddingLeft: `calc(var(--dawn-space-2) + ${depth} * var(--dawn-space-3))` }}
         onClick={() => setOpen((v) => !v)}
+        {...(depth > 0 ? 浮层事件(浮, name, undefined, [{ 图: "文件夹", 文: 所在目录(path) }], "文件夹", 树上的卡) : {})}
+        onContextMenu={
+          操作 && depth > 0
+            ? (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                设菜单(菜单位置(e))
+              }
+            : undefined
+        }
       >
         <span className="name">
           {/* 一个三角靠旋转表达两态：两个不同的字形会让展开看起来像换了个东西 */}
@@ -218,19 +396,7 @@ function DirNode({
         *
         * 树根那一行不给：**删掉你正站着的那个目录之后，树指向哪儿？**
         */}
-      {onDelete && depth > 0 ? (
-        <span className="row-actions">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="row-more"
-            aria-label={tf("目录操作：{0}", name)}
-            onClick={() => onDelete(path)}
-          >
-            ⋯
-          </Button>
-        </span>
-      ) : null}
+      {操作 && depth > 0 ? <行操作钮 path={path} name={name} kind="dir" 操作={操作} 菜单={菜单} 设菜单={设菜单} /> : null}
       {open ? (
         error ? (
           // **读不了要说出来**，不是显示成一个空目录
@@ -250,37 +416,23 @@ function DirNode({
                   onSelect={onSelect}
                   load={load}
                   {...(刷新令牌 === undefined ? {} : { 刷新令牌 })}
-                  {...(onDelete ? { onDelete } : {})}
+                  {...(操作 ? { 操作 } : {})}
+                  {...(浮 ? { 浮 } : {})}
                   {...(onDrop ? { onDrop } : {})}
+                  {...(展开 ? { 展开 } : {})}
+                  {...(onToggle ? { onToggle } : {})}
                 />
               ) : (
-                <li key={e.name}>
-                  <Row
-                    className="tree-row"
-                    active={selected === (path ? `${path}/${e.name}` : e.name)}
-                    style={{ paddingLeft: `calc(var(--dawn-space-2) + ${depth + 1} * var(--dawn-space-3))` }}
-                    onClick={() => onSelect(path ? `${path}/${e.name}` : e.name)}
-                  >
-                    <span className="name">
-                      <类型图标 类={文件类按名字(e.name, "file")} />
-                      {e.name}
-                    </span>
-                    {/**
-                      * **什么时候改的**（2026-08-19 起）。作者：*「我只需要在文件树里看到
-                      * 生成了什么数据就好，有时间戳我就知道哪个文件是新生成的了。」*
-                      *
-                      * 服务器上的目录多半不是 git 仓库，时间戳是那儿唯一现成的
-                      * 「什么是新的」。第一版写的是相对时间（`刚刚 / 3m`），
-                      * 作者次日改成**正规的年月日时分**——理由见 `年月日时分`。
-                      * 目录行不写——目录的 mtime 含糊（里面动一个文件它就变），
-                      * 与目录不报大小同一口径。
-                      */}
-                    <span className="sub">
-                      <span className="file-when">{年月日时分(e.modifiedAt)}</span>
-                      {e.size === undefined ? "" : ` · ${bytes(e.size)}`}
-                    </span>
-                  </Row>
-                </li>
+                <FileRow
+                  key={e.name}
+                  path={path ? `${path}/${e.name}` : e.name}
+                  entry={e}
+                  depth={depth}
+                  selected={selected}
+                  onSelect={onSelect}
+                  {...(操作 ? { 操作 } : {})}
+                  {...(浮 ? { 浮 } : {})}
+                />
               ),
             )}
             {/* **忽略与省略都要出声**，否则人会以为那些文件不存在 */}
@@ -605,6 +757,78 @@ function 传输卡({ 传输, onCancel }: { 传输: 传输态; onCancel?: () => v
   )
 }
 
+export type SearchResult = ResponseOf<"searchFiles">
+
+/**
+ * 搜索结果单（dock-polish ③）。**截断要出声**：停在哪条预算上、看了多少、跳过了几个目录，
+ * 一句话说清——「只有这些」与「只看了这些」在屏幕上必须长得不一样。
+ */
+function SearchResults({
+  查询,
+  结果,
+  错,
+  忙,
+  根,
+  selected,
+  onPick,
+}: {
+  查询: string
+  结果: SearchResult | undefined
+  错: string | undefined
+  忙: boolean
+  根: string
+  selected: string | undefined
+  onPick: (m: SearchResult["matches"][number]) => void
+}) {
+  if (!查询) return <div className="files-search-results"><EmptyState title={t("输文件名的一部分开始搜")} /></div>
+  if (错) return <div className="files-search-results"><EmptyState title={t("搜不了")} description={错} /></div>
+  if (!结果) return <Loader label={t("搜索中")} />
+  const 根前缀 = 根 === "" ? "" : `${根.replace(/\/+$/, "")}/`
+  const 显示 = (p: string) => (根前缀 && p.startsWith(根前缀) ? p.slice(根前缀.length) : p)
+  const 截断句 = 结果.truncated
+    ? 结果.truncated === "matches"
+      ? tf("只列了前 {0} 条就停了——再打几个字缩小范围", 结果.matches.length)
+      : 结果.truncated === "visited"
+        ? tf("看了 {0} 条还没看完就停了——换个起点或再打几个字", 结果.visited)
+        : tf("搜了一会儿没搜完（看了 {0} 条）——换个起点或再打几个字", 结果.visited)
+    : undefined
+  const 跳过句 = 结果.skippedDirs > 0 ? tf("没进 {0} 个默认忽略的目录（.git、node_modules 这类）", 结果.skippedDirs) : undefined
+  return (
+    <nav className="file-tree files-search-results" aria-label={t("搜索结果")} aria-busy={忙}>
+      {结果.matches.length === 0 ? (
+        <EmptyState title={tf("没有名字里带「{0}」的", 查询)} description={tf("看了 {0} 条", 结果.visited)} />
+      ) : (
+        <ul className="tree-list">
+          {结果.matches.map((m) => {
+            const 相 = 显示(m.path)
+            const 斜 = 相.lastIndexOf("/")
+            const 名 = 斜 >= 0 ? 相.slice(斜 + 1) : 相
+            const 在 = 斜 >= 0 ? 相.slice(0, 斜) : ""
+            return (
+              <li key={m.path}>
+                <Row active={m.path === selected} className="tree-row search-hit" onClick={() => onPick(m)}>
+                  {m.kind === "dir" ? <文件夹图标 className="row-icon" /> : <文件图标 className="row-icon" />}
+                  <span className="sess">
+                    <span className="name">{名}</span>
+                    {在 ? <span className="sub">{在}</span> : null}
+                  </span>
+                </Row>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {截断句 || 跳过句 ? (
+        <p className="caveat files-search-note">
+          {截断句}
+          {截断句 && 跳过句 ? " · " : ""}
+          {跳过句}
+        </p>
+      ) : null}
+    </nav>
+  )
+}
+
 export function FilesView({
   selected,
   content,
@@ -627,6 +851,11 @@ export function FilesView({
   铺开,
   onExpand,
   onShrink,
+  search,
+  路径,
+  onInsert,
+  展开,
+  onToggle,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -703,6 +932,9 @@ export function FilesView({
    * 而这里真正不同的只有一件事——横着还是竖着。
    */
   铺开?: boolean
+  /** 展开状态与切换（按路径记，面板外面持有；见 `DirNode.展开`） */
+  展开?: ReadonlySet<string> | undefined
+  onToggle?: ((path: string, open: boolean) => void) | undefined
   /**
    * 「加宽」那颗按钮。**给了才画**——已经宽了的那一份不给：
    * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
@@ -713,8 +945,26 @@ export function FilesView({
    * 只在已经铺开时给；与「加宽」互斥，同一个位置两颗里永远只有一颗。
    */
   onShrink?: () => void
+  /** 按名字搜（dock-polish ③）。没给就不画那颗放大镜 */
+  search?: ((query: string, 根: string) => Promise<SearchResult>) | undefined
+  /**
+   * 行菜单要的两样（dock-polish ⑤）：怎么把树上的路径算成「相对 / 绝对」，
+   * 以及「插进输入框」往哪儿插。`路径` 没给就没有行菜单（连「⋯」也不画）。
+   */
+  路径?: ((path: string) => { 相对: string; 绝对: string }) | undefined
+  onInsert?: ((text: string) => void) | undefined
 }) {
   const [跳到, 设跳到] = useState("")
+  /**
+   * **搜索模式**（2026-08-21，dock-polish ③）。放大镜一按，路径框换成搜索框，
+   * 树换成结果单；Esc 或再按一次放大镜退出。两个框**占位符不同**——
+   * 长得一样的两个输入框等于没有判据（2026-08-12 那三次）。
+   */
+  const [搜着, 设搜着] = useState(false)
+  const [查询, 设查询] = useState("")
+  const [结果, 设结果] = useState<SearchResult | undefined>(undefined)
+  const [搜错, 设搜错] = useState<string | undefined>(undefined)
+  const [搜忙, 设搜忙] = useState(false)
   /**
    * 树根。**跳转就是换根**（批 2，2026-08-17）。
    *
@@ -741,6 +991,58 @@ export function FilesView({
    */
   const [手动刷新, 设手动刷新] = useState(0)
   const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
+  /** 悬停在哪一行上（那张卡是 fixed 的，画在面板最外层） */
+  const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
+  /** 行菜单做完一件事说一句（复制成没成）；三秒后自己消失 */
+  const [行注, 设行注] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (!行注) return
+    const id = setTimeout(() => 设行注(undefined), 3000)
+    return () => clearTimeout(id)
+  }, [行注])
+  const 操作: 行操作 | undefined = useMemo(
+    () =>
+      路径
+        ? {
+            路径,
+            onInsert,
+            onDelete: onDelete || onDeleteDir ? (p, kind) => (kind === "dir" ? onDeleteDir?.(p) : onDelete?.(p)) : undefined,
+            onNote: 设行注,
+          }
+        : undefined,
+    [路径, onInsert, onDelete, onDeleteDir],
+  )
+  // 打字停 250ms 再搜；结果回来时查询已经变了就丢掉——晚到的旧结果不许盖新的
+  useEffect(() => {
+    if (!搜着 || !search) return
+    const q = 查询.trim()
+    if (!q) {
+      设结果(undefined)
+      设搜错(undefined)
+      return
+    }
+    let 作废 = false
+    const id = setTimeout(() => {
+      设搜忙(true)
+      search(q, 根)
+        .then((r) => {
+          if (作废) return
+          设结果(r)
+          设搜错(undefined)
+        })
+        .catch((e: unknown) => {
+          if (作废) return
+          设搜错(e instanceof Error ? e.message : String(e))
+        })
+        .finally(() => {
+          if (!作废) 设搜忙(false)
+        })
+    }, 250)
+    return () => {
+      作废 = true
+      clearTimeout(id)
+    }
+  }, [搜着, 查询, 根, search])
   const 树宽 = useStore($fileTreeWidth)
   const 树高 = useStore($fileTreeHeight)
   const 容器 = useRef<HTMLDivElement>(null)
@@ -763,31 +1065,63 @@ export function FilesView({
           : { gridTemplateRows: `auto ${树高}px minmax(0, 1fr)` }
       }
     >
+      <HoverCard 浮着的={浮着的} />
       <div className="files-where">
         <span className="files-where-name">{机器 ?? t("本机")}</span>
-        <input
-          className="control files-jump"
-          value={跳到}
-          aria-label={t("跳到路径")}
-          placeholder={t("输一个目录路径，回车跳过去")}
-          onChange={(e) => 设跳到(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return
-            const p = 跳到.trim()
-            // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」
-            /**
-             * **只削结尾的斜杠，不削开头的**（2026-08-17 修）。
-             *
-             * 削开头对本地是对的（那边是相对工作区的路径），
-             * 对远端是错的——**那边绝对路径才是常态**，
-             * `/home/dawn` 被削成 `home/dawn` 之后 `readdir` 当然找不到。
-             *
-             * 本地输了绝对路径会被守卫**响亮拒绝**，那比悄悄改写它好：
-             * 悄悄改写等于替人决定他想去哪儿。
-             */
-            if (p) 设根(p.replace(/\/+$/, ""))
-          }}
-        />
+        {搜着 && search ? (
+          <input
+            className="control files-jump files-search"
+            value={查询}
+            autoFocus
+            aria-label={t("搜文件名")}
+            placeholder={t("输文件名的一部分，Esc 退出搜索")}
+            onChange={(e) => 设查询(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                设搜着(false)
+                设查询("")
+              }
+            }}
+          />
+        ) : (
+          <input
+            className="control files-jump"
+            value={跳到}
+            aria-label={t("跳到路径")}
+            placeholder={t("输一个目录路径，回车跳过去")}
+            onChange={(e) => 设跳到(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return
+              const p = 跳到.trim()
+              // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」
+              /**
+               * **只削结尾的斜杠，不削开头的**（2026-08-17 修）。
+               *
+               * 削开头对本地是对的（那边是相对工作区的路径），
+               * 对远端是错的——**那边绝对路径才是常态**，
+               * `/home/dawn` 被削成 `home/dawn` 之后 `readdir` 当然找不到。
+               *
+               * 本地输了绝对路径会被守卫**响亮拒绝**，那比悄悄改写它好：
+               * 悄悄改写等于替人决定他想去哪儿。
+               */
+              if (p) 设根(p.replace(/\/+$/, ""))
+            }}
+          />
+        )}
+        {search ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={搜着 ? t("退出搜索") : t("搜文件名")}
+            aria-pressed={搜着}
+            onClick={() => {
+              设搜着((v) => !v)
+              设查询("")
+            }}
+          >
+            <搜索图标 />
+          </Button>
+        ) : null}
         {/**
          * **跳走之后要有路回来**（2026-08-17）。
          * 没有这颗的话，一次手滑的跳转会让人以为整棵树没了——
@@ -849,7 +1183,30 @@ export function FilesView({
         * **不能直接贴在 `nav` 上**：它 `overflow: auto`，贴在外沿的 4px 会被裁掉、点不到
         * （e2e 第一次跑就是这么红的）。
         */}
+      {行注 ? (
+        <p className="caveat files-row-note" role="status">
+          {行注}
+        </p>
+      ) : null}
       <div className="file-tree-box">
+      {搜着 && search ? (
+        <SearchResults
+          查询={查询.trim()}
+          结果={结果}
+          错={搜错}
+          忙={搜忙}
+          根={根}
+          selected={selected}
+          onPick={(m) => {
+            if (m.kind === "dir") {
+              // 选中目录 = 跳过去；搜索到此为止
+              设根(m.path)
+              设搜着(false)
+              设查询("")
+            } else onSelect(m.path)
+          }}
+        />
+      ) : (
       <nav className="file-tree" aria-label={t("工作区文件")}>
         {onInitLayout ? (
           <div className="tree-actions">
@@ -877,18 +1234,22 @@ export function FilesView({
             onSelect={onSelect}
             load={loadDir}
             刷新令牌={合令牌}
-            {...(onDeleteDir ? { onDelete: onDeleteDir } : {})}
+            {...(操作 ? { 操作 } : {})}
+            浮={设浮着的}
             {...(onDropUpload ? { onDrop: onDropUpload } : {})}
+            {...(展开 ? { 展开 } : {})}
+            {...(onToggle ? { onToggle } : {})}
           />
         </ul>
       </nav>
+      )}
         <SideSash
           attach="edge"
           orientation={铺开 ? "vertical" : "horizontal"}
           width={铺开 ? 树宽 : 树高}
           min={FILE_TREE_MIN}
           max={铺开 ? 容器宽() : 容器高()}
-          onResize={(px) => (铺开 ? setFileTreeWidth(px, 容器宽()) : setFileTreeHeight(px, 容器高()))}
+          onResize={(px, phase) => (铺开 ? setFileTreeWidth(px, 容器宽(), phase === "commit") : setFileTreeHeight(px, 容器高(), phase === "commit"))}
           label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
         />
       </div>

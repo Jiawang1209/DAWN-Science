@@ -43,6 +43,77 @@
 
 ## 变更日志
 
+### 2026-08-21 — 右坞占满它那一列，不再写死像素宽：窗口没最大化时坞不伸出窗口
+
+- **Type**: fix
+- **Motivation**: 作者截图：窗口没最大化时「加宽 / 搜索 / 刷新」全在屏幕右边看不见的地方，他提议「按钮随面板变化，做容器内部的相对位置，而不是绝对位置」——说中了：`.body` 的网格列是 `minmax(0, 坞宽)`、会被压窄，但 `<aside class="right-dock">` 自己又写着 `width: 720px`，于是内容从被压窄的列里伸到窗口外。
+- **What**: `views.tsx` `RightDock` 去掉内联 `width`，`.right-dock { width: 100% }` 占满网格那一列；`width` 这个 prop 现在只喂缝的 `aria-valuenow`。坞的缝改成 `attach="edge"`——`SideSash` 的贴边模式对 `side="right"` 贴父元素**左**缘（新类 `.lead`）——否则按 720 算出来的偏移在坞被压窄时落在坞外面。
+- **Impact**: 坞的实际宽度 = min(记住的宽, 窗口能给的)；窗口一变坞和里面的按钮跟着变。副作用：坞的宽度现在跟着网格列的 0.25s 过渡动，e2e「大图加宽后变大」那条改为轮询到位再量。
+- **Verification**: 新增 e2e「坞宽过了窗口能给的」：1600 宽拉到最宽，再缩到 1000 宽，坞右缘 ≤ 1000、放大镜 / 刷新都在窗口内、缝的中线与坞左缘差 ≤ 3px。files 14、right-dock / web-preview / sidebar-size / remote-connections 共 64 绿；视觉基线 10 绿。
+
+### 2026-08-21 — 文件面板窄的时候：顶行按钮不再被裁掉、先缩时间戳再缩文件名、预览头两行
+
+- **Type**: fix
+- **Motivation**: 作者在没最大化的窗口里截图：①顶行的放大镜 / 刷新 / 收窄根本看不见（`nowrap` 的一行被裁在右边外面）；②拖分割线时要先缩时间戳、再缩文件名；③预览头的文件名被挤成一个字一行、「移到废纸篓」竖着排。
+- **What**: 全在 `styles.css`。`.files-where` 允许折行、按钮 `flex: 0 0 auto`、路径框 `flex: 1 1 120px`；`.tree-row .sub` `flex-shrink: 1000`（名字几乎不动直到时间戳缩没）；`.preview-head` 改 `flex-wrap`：文件名 `flex-basis: 100%` 独占一行、按词断不逐字，第二行左边类型 · 大小（单行省略）、右边按钮不折。
+- **Impact**: 纯样式；宽坞下外观不变（视觉基线 10 张仍绿）。
+- **Verification**: e2e 新增「窄坞：顶行按钮都在、先缩时间戳、预览头不竖排」（1200×760 视口：三颗按钮都在面板可视范围内；把坞拖窄后 `.sub` 的宽 < 它的 scrollWidth 而名字仍 > 40px；预览头文件名高度 ≤ 一行、删除按钮高 < 40）；files / remote-connections / pick-workspace 全绿；视觉基线 10 绿。写判据时发现 980 宽下「加宽 / 收窄」两颗都不给——那是既有设计（坞已顶到窗口上限），判据按此放宽。
+
+### 2026-08-21 — 文件树：悬停弹信息卡（照侧栏那张）；「时间 · 大小」拖窄了也不折行
+
+- **Type**: feat
+- **Motivation**: 作者看了 `dock-polish` 的构建之后提的两条：①挪树 ↔ 预览的分割线时，文件行的时间戳与大小折成两行；②鼠标悬浮在文件 / 文件夹上要弹文件信息，模仿左侧栏。
+- **What**: 侧栏的悬停卡抽到 `src/ui/hover-card.tsx`（`HoverCard` / `浮层事件` / `详情图` / 两个类型），`views.tsx` 改为从它导入——`files.tsx` 不该为一张卡去 import 整个 `views.tsx`。`浮层事件` 多一个「哪儿」参数：标题选择器、贴哪个容器、开在容器右边（侧栏）还是左边（右坞贴着屏幕右缘，往右开就出屏）；`悬停浮层` 加 `右`，卡按屏幕右缘定位。树上：文件行弹「所在目录 / 修改时间 / 大小」三行（标图是文件），目录行弹「所在目录」一行，树根不弹；卡贴 `.right-dock` 的左缘。`.tree-row .sub` 改单行省略、名字先让它后让。
+- **Impact**: 侧栏那张卡行为不变（默认参数就是原来的口径）。树行高度在任何宽度下都是一行。
+- **Verification**: `tests/ui` 489 绿；e2e 新增「悬停文件弹信息卡；拖窄了时间戳也不折行」（卡有三行、整张在坞左边且不出屏、文件夹一行、拖窄后行高 ≤ 最小行高且 `white-space: nowrap`）；files / sess-title / project-bulk / sidebar-size 26 + 24 绿；视觉基线 10 绿。第一版卡贴的是 `.files-view`，判据量出卡右缘压进坞 3.5px——改贴 `.right-dock`。
+
+### 2026-08-21 — 坞里一格一个的错误边界：一格坏了别连累别的格
+
+- **Type**: feat
+- **Motivation**: `dock-polish` 第一档 ⑥。此前只有顶层 `ErrorBoundary`——预览一个怪文件把「文件」那一格炸了，整个界面跟着白屏。DSH-better-sidebar 的 `RenderBoundary` 是按面板包的。
+- **What**: `src/ui/pane-boundary.tsx` `PaneBoundary`：说清是哪一格、什么错，一颗「再开这一格」，错误与组件栈打到终端。`RightDock` 的 `dock-body` 里按房客给 `key` 包一层——切走再切回来就是一次重试。与顶层那个同一条纪律：坏掉之后那一屏用裸 `<button>`，不依赖可能同样坏掉的 primitive（设计契约的例外名单加了它）。
+- **Impact**: 纯新增；没坏时原样渲染。
+- **Verification**: `tests/ui/pane-boundary.test.tsx` 2 条（抛错 → 说明 + 重试恢复；没炸原样）；`tests/ui` 489 绿。
+
+### 2026-08-21 — 文件树的行菜单：复制相对 / 绝对路径、`@路径` 插进输入框、删除
+
+- **Type**: feat
+- **Motivation**: `dock-polish` 第一档 ⑤。把文件路径交给 agent 此前要自己打；DSH-better-sidebar 的右键菜单有「复制相对 / 绝对路径」「插进输入框」。
+- **What**: `files.tsx` 新增 `TreeRowMenu`（沿用会话行的 `.row-menu` + 背板），**两个入口**：行上常驻的「⋯」（文件行此前没有，现在也有；树根那行不给）与右键——右键是看不见的能力，所以「⋯」不能省。项：复制相对路径 / 复制绝对路径 / 插进输入框（追加 `@相对路径 ` 到当前会话草稿；没会话就没这一项）/ 删除（目录与文件各走原来的删法，目录那颗「⋯」此前是直接弹确认框，现在进了菜单）。路径口径由 `App.tsx` 给：本地相对 = 树上路径、绝对 = 工作区 + 它；远端绝对 = 路径本身、相对 = 去掉会话 cwd。复制成没成在面板顶上说一句（三秒消失）——剪贴板被拒也出声。文件行右侧给「⋯」让出位置，免得压住时间戳。
+- **Impact**: 每个文件行多了一颗名为「文件操作：<名>」的按钮——**按名字找是子串匹配**，e2e 里 36 处 `getByRole("button", { name: /x\.md/ })` 一下各命中两个。改成 `/^x\.md/`：行的可及名字以文件名开头、「⋯」的以「文件操作：」开头。审阅面板那几处不是树行，不加 `^`。远端删除那条 e2e 改为「⋯ → 删除」。
+- **Verification**: `tests/ui` 489 绿；e2e 新增「树行的菜单：复制路径、插进输入框」（「⋯」复制相对路径 + 剪贴板真值；右键复制绝对路径；目录与文件各插一次，草稿成 `@data @data/样本.csv `）；files / remote-connections / pick-workspace / tool-changes 45 + 9 绿；全量 e2e 见下一条的记录。
+
+### 2026-08-21 — 拖缝：一帧一次、抬手才落盘、`pointercancel` 提交不回滚
+
+- **Type**: perf
+- **Motivation**: `dock-polish` 第一档 ④。四条 `SideSash`（侧栏、右坞、树 ↔ 预览的横竖两条）此前**每个 `pointermove`** 都走一遍 store → 整棵重渲染 → `localStorage.setItem`；触控板一秒发上百个 move，屏幕只画六十帧。DSH-better-sidebar 的做法：拖的过程按帧写，抬手一次提交；指针被系统手势抢走（`pointercancel`）时提交最后的位置而不是回滚。
+- **What**: `src/ui/sash.tsx`：`onResize(px, phase)`，`phase = "drag"` 每帧最多一次（rAF 合并）、`"commit"` 在 `pointerup` / `pointercancel` / 键盘一步各一次；没动过就抬手不提交；卸载时取消挂着的帧。四个 store 设置函数（`setSidebarWidth` / `setRightDockWidth` / `setFileTreeWidth` / `setFileTreeHeight`）加 `记住 = true` 参数，`drag` 阶段传 `false` 只改 store 不落盘。`views.tsx` 的 `onWidth` 跟着带上 `记住`。
+- **Impact**: 拖动时 localStorage 从每个事件一次变成抬手一次；重渲染从每个事件一次变成每帧一次。没有直写 DOM（那要每个调用方都知道自己的目标元素，收益不抵耦合）——每帧一次 store 更新对这几条缝已经够。行为不变：夹界、键盘、取反规则同前。
+- **Verification**: 新增 `tests/ui/sash.test.tsx` 4 条（一帧合并 + 抬手提交、`pointercancel` 提交、右边取反 + 键盘提交、没动不提交）；`tests/ui` 487 绿；e2e `sidebar-size` / `files` / `right-dock` 19 绿（第一轮三套并跑时「重开之后宽度还在」红过一次，之后四轮都绿，那条走的是键盘 → 直接 commit，与本次改动无关，记下观察）。
+
+### 2026-08-21 — 文件面板按名字搜：有预算、截断出声、本地远端同一个走法
+
+- **Type**: feat
+- **Motivation**: `dock-polish` 第一档 ③。`files.tsx` 里 2026-08-17 写的是「只跳转不搜索——搜索要有上界、截断了必须出声，等真的点累了再做」。DSH-better-sidebar 给了那套上界的形状（命中数 / 看过的条目数 / 时间三条预算，停在哪条说哪条），照它做。
+- **What**: `src/files/search.ts` `搜文件名(readdir, 根, query, 预算)`——**走法注入**，宽度优先，名字不分大小写子串匹配（查询带 `/` 就对相对路径匹配），预算 200 命中 / 10 万条 / 4 秒，`DEFAULT_IGNORED` 不进去并计数，**符号链接不进去**，读不了的目录跳过计数。协议 7.16 新增 `searchFiles`（`projectId | connectionId` + `path` + `query`）；本地走 `fs.readdir`，远端走 SFTP `readdir`——**不用那台机器的 `find`**（假机器不认它，而且 `find` 说不出「看了多少」）。界面：`files-where` 那一行加一颗放大镜，按下后路径框换成搜索框（**占位符与路径框不同**）、树换成结果单；点文件开预览，点目录就跳根并退出搜索；Esc 退出；打字停 250 ms 才搜、晚到的旧结果不许盖新的；底下一句说清截断在哪、跳过了几个目录。
+- **Impact**: 纯新增；`listDirectory` 与跳转不动。踩了一条：本地根一开始用守卫回来的 `realpath` 再 `relative()`，macOS 上 `/var` → `/private/var` 变成一串 `..`、被守卫拒、界面上是「看了 0 条」——改成直接用人给的相对路径，守卫只做守卫。
+- **Verification**: `tests/files/search.test.ts` 10 条（顺序、路径匹配、忽略、符号链接、三种截断、读不了、绝对根、空查询）；协议计数测试改 91；e2e 新增三条：本地深处文件搜到并点开 + `node_modules` 不进且出声 + 换词旧结果不留 + Esc 回树；230 个命中停在 200 并说清；远端假机器搜「样本」点开预览出 3.14。全量 vitest 与 files / remote-connections / visual e2e 绿。
+
+### 2026-08-21 — 网页格地址：没写协议的外网主机补 https，本机仍补 http
+
+- **Type**: fix
+- **Motivation**: `dock-polish` 第一档 ②「URL 规范化」。读 DSH-better-sidebar 时对照发现：我们的 `可以开吗` + `解析地址` 早已只放 http(s) 与工作目录内 `file:`、其余协议响亮拒绝、不像地址的说不像——比它的严。唯一值得借的一点是**没写协议时的默认**：它补 `https://`，我们一律补 `http://`，外网站点今天大多会被浏览器拦或者重定向。
+- **What**: `src/policy/local-url.ts` `解析地址`：没写协议时先按 `http://` 解析看主机名，`localhost` / `*.localhost` / 点分 IP 保持 `http`，别的换成 `https`。主进程与渲染进程共用这一处，两边判断一致。
+- **Impact**: 地址栏敲 `example.com` 现在开 `https://example.com/`；`localhost:64070`、`192.168.x.x:8000` 行为不变。它那套「iframe 被拒就给个外开按钮」对我们不成立（网页格是 Electron `WebContentsView`，不是 iframe），不做。
+- **Verification**: `tests/policy/local-url.test.ts` 新增一条三向断言；`tests/electron/网页地址门.test.ts` 那条「补全仍过同一道门」改为外网 https / 本机 http 两路；`tests/policy tests/electron tests/ui` 574 绿。
+
+### 2026-08-21 — 坞打磨 ①：文件树的记忆——展开过的目录、选中的文件，切走再切回来不塌
+
+- **Type**: feat
+- **Motivation**: 学自 `omdsh-dev/DSH-better-sidebar`（MIT，解读在 `ccb_hive_code_learn/DSH-better-sidebar-解读.md`）的「会话级状态 + 读回时清洗」。此前展开状态住在每个 `DirNode` 自己的 `useState`，树靠 key 重挂，一切换项目 / 远端全塌——而「agent 在改你的文件，你切个会话再切回来」是最常见的动作。
+- **What**: `src/ui/state/files-memory.ts`：按「这棵树是谁的」记（`dawn.files.<身份>.memory`，身份与 `文件面板身份` 同口径），**读回逐字段清洗**（只拒 `..`；远端的根与展开项是绝对路径，不能拒 `/`；根默认展开、人收起了记 `rootClosed`；最多 300 个目录），**写按键各自防抖 200 ms、同一引用不写**。`DirNode` / `FilesView` 的展开状态可由外面给（`展开` / `onToggle`），不给退回旧行为。`App.tsx` 按身份读写、切换时把选中的文件也带回来。顺手：后台 5 s 轮询也拉项目名单——点别的项目里的任务时靠它找 projectId，名单旧了切不过去（e2e 抓到的）。
+- **Verification**: `tests/ui/files-memory` 3 条；e2e `files`「切走再切回来，树还展开着、文件还选着」（两层目录 + 选中 + 切到另一个项目再切回）；files / remote-connections / project-bulk / visual 全绿；`tests/ui` 483 全绿。
+
 ### 2026-08-21 — 增强按钮与档位合成一颗
 
 - **Type**: fix

@@ -90,10 +90,12 @@ describe("网页地址门", () => {
     expect(r.url).toBe("http://localhost:64070/")
   })
 
-  it("补全出来的东西**仍然要过同一道门**（现在这道门放 http(s)）", () => {
+  it("补全出来的东西**仍然要过同一道门**；外网主机名没写协议补 https（本机仍是 http）", () => {
     const r = 可以开吗("example.com", ws)
     expect(r.ok).toBe(true)
     if (!r.ok) throw new Error("上一句断言过了")
-    expect(r.url).toBe("http://example.com/")
+    expect(r.url).toBe("https://example.com/")
+    const 本机 = 可以开吗("127.0.0.1:8888", ws)
+    expect(本机.ok && 本机.url).toBe("http://127.0.0.1:8888/")
   })
 })

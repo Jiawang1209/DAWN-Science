@@ -172,7 +172,7 @@ export function 坞的上界(视口宽度?: number, 侧栏宽度?: number): numb
  * @param 侧栏宽度 侧栏此刻真的占掉多少（收起来就是 0）。**拖拽那条路要给**——
  *   不给就退回 `SIDEBAR_MIN`，上界会多算几十像素。
  */
-export function setRightDockWidth(px: number, 侧栏宽度?: number): void {
+export function setRightDockWidth(px: number, 侧栏宽度?: number, 记住 = true): void {
   /**
    * **两道夹一次**：先夹到 `[MIN, MAX]`（那是这个组件本身的量程），
    * 再夹到「这个窗口此刻放得下多少」。分两步是因为两者的理由不同——
@@ -180,6 +180,7 @@ export function setRightDockWidth(px: number, 侧栏宽度?: number): void {
    */
   const w = Math.min(clampDockWidth(px), 坞的上界(undefined, 侧栏宽度))
   setValue($rightDockWidth, w)
+  if (!记住) return
   try {
     localStorage.setItem(RIGHT_DOCK_WIDTH_KEY, String(w))
   } catch (e) {
@@ -265,9 +266,10 @@ export function clampFileTree(px: number, 容器: number, 预览至少 = 160): n
   return Math.max(FILE_TREE_MIN, Math.min(上, Math.round(px)))
 }
 
-export function setFileTreeWidth(px: number, 容器宽: number): void {
+export function setFileTreeWidth(px: number, 容器宽: number, 记住 = true): void {
   const w = clampFileTree(px, 容器宽)
   setValue($fileTreeWidth, w)
+  if (!记住) return
   try {
     localStorage.setItem(FILE_TREE_WIDTH_KEY, String(w))
   } catch (e) {
@@ -275,9 +277,10 @@ export function setFileTreeWidth(px: number, 容器宽: number): void {
   }
 }
 
-export function setFileTreeHeight(px: number, 容器高: number): void {
+export function setFileTreeHeight(px: number, 容器高: number, 记住 = true): void {
   const h = clampFileTree(px, 容器高)
   setValue($fileTreeHeight, h)
+  if (!记住) return
   try {
     localStorage.setItem(FILE_TREE_HEIGHT_KEY, String(h))
   } catch (e) {

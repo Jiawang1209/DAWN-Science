@@ -10,6 +10,8 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
+import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
+import { PaneBoundary } from "./pane-boundary.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { 会话开关 } from "./state/transcript.js"
@@ -181,106 +183,6 @@ function 项目图标() {
  * 固定时长的话，短标题嗖一下、长标题慢吞吞。这里按「每秒 40 像素」算，
  * **所有标题的阅读速度一样**。
  */
-/**
- * 悬停时在侧栏旁边浮出全文（2026-08-15 作者要的，形态取自 Codex）。
- *
- * ## 为什么要有它，而跑马灯还不够
- *
- * 跑马灯一次只能看见一小段，读一句长标题要等它跑完；而浮层是**一眼全见**。
- * 作者截图里那张卡还带着它属于哪个项目——**「哪一段对话」这个问题，
- * 光有标题有时答不了**（两个课题下都可能有「梳理数据中心介绍思路」）。
- *
- * ## 三件事定死
- *
- * 1. **`position: fixed`**。侧栏是 `overflow: auto` 的，绝对定位的子元素
- *    会跟着列表一起滚走——这个坑本仓库记过一次（那条缝的把手）。
- * 2. **要等一下再出**（`延时毫秒`）。鼠标从上往下扫过十条会话时，
- *    每条都弹一张卡是灾难。
- * 3. **短标题不弹**。看得全的东西再弹一张卡，只是挡住了它自己。
- */
-const 浮层延时毫秒 = 420
-
-export interface 悬停浮层 {
-  全文: string
-  副: string | undefined
-  /**
-   * 卡上的细节行（2026-08-21，作者：*「对话窗口仅仅保留题目，然后剩余的详细信息
-   * 都放入鼠标滑动窗口里面」*，并给了 Codex 侧栏那张图）。
-   * 行上只留标题，上次活动、目录、对话数这些挪到这儿。
-   */
-  详情?: readonly 详情行[] | undefined
-  /** 标题前的图标：行上不再画图标了（作者要的），它在这儿说「这是对话 / 项目 / 服务器」 */
-  标图?: "对话" | "文件夹" | "服务器" | undefined
-  上: number
-  左: number
-}
-
-/** 卡上的一行细节：图标说类别，字说内容 */
-export interface 详情行 {
-  图: "文件夹" | "时钟" | "服务器" | "对话"
-  文: string
-}
-
-function 详情图(图: 详情行["图"]) {
-  switch (图) {
-    case "文件夹":
-      return <文件夹图标 className="row-icon" />
-    case "时钟":
-      return <时钟图标 className="row-icon" />
-    case "服务器":
-      return <服务器图标 className="row-icon" />
-    case "对话":
-      return <对话图标 className="row-icon" />
-  }
-}
-
-/**
- * 计时器放在模块上，不放在每一行里。
- *
- * **同时只会浮一张卡**——从上往下扫过十条时，后一条本来就该顶掉前一条的等待。
- * 每行各存一个的话，还得挨个清，而漏清一个就是一张凭空冒出来的卡。
- */
-let 浮层计时: ReturnType<typeof setTimeout> | undefined
-
-export function 浮层事件(
-  报: ((x: 悬停浮层 | undefined) => void) | undefined,
-  全文: string,
-  副?: string,
-  详情?: readonly 详情行[],
-  标图?: 悬停浮层["标图"],
-) {
-  if (!报) return {}
-  return {
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-      const 行 = e.currentTarget
-      const 标题 = 行.querySelector(".sess-title") as HTMLElement | null
-      const 被截了 = Boolean(标题 && 标题.scrollWidth - 标题.clientWidth > 1)
-      /**
-       * **没东西可补就不弹**：标题看得全、又没有细节行，再弹一张卡只是挡住它自己。
-       * 有细节行时就弹——行上只留标题之后，那些信息只有这儿能看（2026-08-21）。
-       */
-      if (!被截了 && !(详情 && 详情.length > 0)) return
-      clearTimeout(浮层计时)
-      浮层计时 = setTimeout(() => {
-        const r = 行.getBoundingClientRect()
-        /**
-         * **贴侧栏的右缘，不是这一行的右缘**（2026-08-15 判据当场抓到的）。
-         *
-         * 行比侧栏窄（左右都有内边距），按行的右缘放，卡就**落在侧栏里面**、
-         * 压住旁边那几条会话。第一版就是这么写的，e2e 那条
-         * 「卡压在侧栏上了」一次就红。
-         */
-        const 侧 = 行.closest(".sidebar")?.getBoundingClientRect()
-        报({ 全文, 副, 详情, 标图, 上: r.top, 左: (侧?.right ?? r.right) + 8 })
-      }, 浮层延时毫秒)
-    },
-    onMouseLeave: () => {
-      clearTimeout(浮层计时)
-      报(undefined)
-    },
-  }
-}
-
 function 用跑马灯() {
   return {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
@@ -1087,20 +989,29 @@ export function RightDock({
 }: {
   tenant: 坞房客
   width: number
-  onWidth: (px: number) => void
+  onWidth: (px: number, 记住: boolean) => void
   onClose: () => void
   /** 点标签条上的某一格。**只换房客，不开合**——那件事归顶右角那颗 */
   onPick: (who: 坞房客) => void
   children: React.ReactNode
 }) {
   return (
-    <aside className="right-dock" style={{ width: `${width}px` }} aria-label={房客名(tenant)}>
+    /**
+      * **宽度是那一列给的，不在这儿写死**（2026-08-21 作者截图抓到的：窗口没最大化时
+      * 网格那一列被压窄了，坞却仍是 `width: 720px`，内容从列里伸到窗口外面——
+      * 「加宽 / 搜索 / 刷新」全在屏幕右边看不见的地方）。
+      * 列宽由 `.body` 的 `--dawn-dock-w` 定，`minmax(0, …)` 让它宁可被压窄也不越界；
+      * 坞占满那一列，窗口一变按钮跟着变。`width` 这个 prop 现在只喂给那条缝的 `aria-valuenow`。
+      */
+    <aside className="right-dock" aria-label={房客名(tenant)}>
       <SideSash
         width={width}
         min={RIGHT_DOCK_MIN}
         max={RIGHT_DOCK_MAX}
-        onResize={onWidth}
+        onResize={(px, phase) => onWidth(px, phase === "commit")}
         side="right"
+        /* 贴坞的真实左缘，不按 `width` 算偏移——坞被窗口压窄时两者不相等（2026-08-21） */
+        attach="edge"
         label={t("调整面板宽度")}
       />
       {/**
@@ -1138,7 +1049,12 @@ export function RightDock({
           <关闭图标 />
         </Button>
       </header>
-      <div className="dock-body">{children}</div>
+      {/* 一格一个的边界，按房客给 key：切走再切回来就是一次重试（dock-polish ⑥） */}
+      <div className="dock-body">
+        <PaneBoundary key={tenant} 名={房客名(tenant)}>
+          {children}
+        </PaneBoundary>
+      </div>
     </aside>
   )
 }
@@ -1801,29 +1717,7 @@ export function SessionSidebar({
         * 读屏的人已经从行本身读到了完整标题（DOM 里是全文，
         * 省略号是 CSS 干的），再念一遍是噪声。
         */}
-      {浮着的 ? (
-        <div
-          className="sess-hover-card"
-          style={{ top: `${浮着的.上}px`, left: `${浮着的.左}px` }}
-          aria-hidden="true"
-        >
-          <p className="sess-hover-title">
-            {浮着的.标图 ? 详情图(浮着的.标图 === "对话" ? "对话" : 浮着的.标图) : null}
-            <span>{浮着的.全文}</span>
-          </p>
-          {浮着的.副 ? <p className="sess-hover-sub">{浮着的.副}</p> : null}
-          {浮着的.详情 && 浮着的.详情.length > 0 ? (
-            <ul className="sess-hover-details">
-              {浮着的.详情.map((行, i) => (
-                <li key={i}>
-                  {详情图(行.图)}
-                  <span>{行.文}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
+      <HoverCard 浮着的={浮着的} />
       {/**
         * **两段，各自「一个动作 + 它管的那一列」**（2026-08-11 重排）。
         *

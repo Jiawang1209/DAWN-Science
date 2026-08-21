@@ -16,7 +16,8 @@
  * **本文件的职责因此变得很窄**：把 pi 的会话事件翻译成本项目的 `AgentEvent`，
  * 以及把每个会话隔离在自己的 agentDir 里。
  */
-import { mkdirSync } from "node:fs"
+import { 读调用策略 } from "../skills/invocation.js"
+import { mkdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import {
   createAgentSession,
@@ -773,6 +774,21 @@ export class NativeRuntime implements AgentRuntime {
       cwd: spec.workspace,
       agentDir,
       settingsManager,
+      /**
+       * **「关」了的技能从清单里剔掉**（skills-manage，2026-08-21）。
+       * pi 认 `disable-model-invocation`（模型看不见、`/skill:` 还能调），但不认 `user-invocable: false`；
+       * 三档里的「关」= 谁都不给，只能在这儿过滤——读的是文件上那两行，与技能屏同一份真相。
+       */
+      skillsOverride: (base) => ({
+        ...base,
+        skills: base.skills.filter((sk) => {
+          try {
+            return 读调用策略(readFileSync(sk.filePath, "utf8")) !== "off"
+          } catch {
+            return true
+          }
+        }),
+      }),
       appendSystemPromptOverride: (base) => [
         ...base,
         `You are currently running on the model "${当前模型}". ` +

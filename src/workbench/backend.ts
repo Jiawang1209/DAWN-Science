@@ -42,9 +42,11 @@ import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
+import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invocation.js"
+import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
-import { readdir, readFile as 读本地 } from "node:fs/promises"
-import { join as 拼路径, relative as 相对 } from "node:path"
+import { readdir, readFile as 读本地, writeFile, rename, rm } from "node:fs/promises"
+import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep } from "node:path"
 import { IlinkClient } from "../channels/weixin/ilink.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
@@ -71,7 +73,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -136,6 +138,8 @@ export interface WorkbenchBackendOptions {
    * 而且删除不可逆——它比上传更该留下痕迹。
    */
   记一次删除?: (connectionId: string | undefined, 路径: string, 进了废纸篓: boolean) => void
+  /** 技能的改动也落账（7.17）：启停、导入、删除——都是对磁盘的一次写 */
+  记一次技能?: (event: "invocation" | "import" | "import-overwrite" | "delete", 路径: string, 详情?: string) => void
   /**
    * 把一个本地文件扔进废纸篓。**只有主进程碰得到 `shell.trashItem`**，
    * 与 `openPath` 走同一条注入缝。
@@ -399,7 +403,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem, isForeground, askOnce } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, trashItem, isForeground, askOnce } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -996,6 +1000,47 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   })
   const 要设置 = () => {
     if (!settings) throw fault("invalid_request", "本次运行没有设置存储，接不了微信")
+  }
+
+  /* ── 技能管理的守卫（7.17）：只许碰「你写的」与「这个项目带的」两个目录里的 SKILL.md ── */
+  const 技能目标根 = (to: "global" | "project", projectId: string | undefined): string => {
+    const 位置 = skills ?? {}
+    if (to === "global") {
+      if (!位置.全局目录) throw fault("internal_error", "本次运行没有装配全局技能目录")
+      return 位置.全局目录
+    }
+    if (!projectId) throw fault("invalid_request", "导进项目要先说是哪个项目")
+    const p = projectStore.get(projectId)
+    if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+    if (!位置.项目目录名) throw fault("internal_error", "本次运行没有装配项目技能目录")
+    return join(p.workspace, 位置.项目目录名)
+  }
+  /** 路径必须是某个可改目录下一层的 `<name>/SKILL.md`；自带目录里的、别处的、深层的都拒 */
+  const 技能文件必须可改 = (filePath: string): string => {
+    const 位置 = skills ?? {}
+    const 文件 = resolve(filePath)
+    if (basename(文件) !== "SKILL.md") throw fault("invalid_request", "只改技能的 SKILL.md")
+    const 可改根 = [
+      ...(位置.全局目录 ? [resolve(位置.全局目录)] : []),
+      ...(位置.项目目录名 ? projectStore.list().map((p) => resolve(p.workspace, 位置.项目目录名!)) : []),
+    ]
+    const 根 = 可改根.find((r) => dirname(dirname(文件)) === r)
+    if (!根) {
+      if (位置.自带目录 && 文件.startsWith(resolve(位置.自带目录) + sep)) throw fault("invalid_request", "自带的技能在应用包里，只读；想改就复制一份到你自己的目录")
+      throw fault("invalid_request", `${文件} 不在任何一个可改的技能目录里`)
+    }
+    return 文件
+  }
+  /** 同目录临时文件 + rename：中断不会留下半截 SKILL.md */
+  const 原子写 = async (文件: string, 内容: string) => {
+    const 临 = join(dirname(文件), `.SKILL.md.dawn-${process.pid}-${Date.now()}.tmp`)
+    try {
+      await writeFile(临, 内容, "utf8")
+      await rename(临, 文件)
+    } catch (e) {
+      await rm(临, { force: true }).catch(() => undefined)
+      throw e
+    }
   }
 
   /* ── 提示词增强的工作区读法：本地走 fs，远端走那台机器的 find / cat ── */
@@ -1674,23 +1719,82 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 判来处 = (filePath: string): "builtin" | "global" | "project" =>
         按序.find((x) => filePath.startsWith(x.path))?.from ?? "global"
       return {
-        skills: r.skills.map((s) => ({
-          name: s.name,
-          description: s.description,
-          filePath: s.filePath,
-          from: 判来处(s.filePath),
-          manualOnly: s.disableModelInvocation,
-        })),
-        problems: r.diagnostics.map((d) => ({
-          path: String((d as { path?: unknown }).path ?? ""),
-          reason: String((d as { message?: unknown }).message ?? ""),
-        })),
+        skills: r.skills.map((s) => {
+          const from = 判来处(s.filePath)
+          let invocation: 调用档 = s.disableModelInvocation ? "manual" : "model"
+          try {
+            invocation = 读调用策略(readFileSync(s.filePath, "utf8"))
+          } catch {
+            /* 读不了就按 pi 给的那一档 */
+          }
+          return {
+            name: s.name,
+            description: s.description,
+            filePath: s.filePath,
+            from,
+            manualOnly: s.disableModelInvocation,
+            invocation,
+            // 自带的在应用包里，只读
+            mutable: from !== "builtin",
+          }
+        }),
+        problems: r.diagnostics
+          // **目录还不存在不算「写坏了」**：项目还没建 `.dawn/skills` 是常态，列出来只会把真问题淹了
+          .filter((d) => !(/skill path does not exist/i.test(String((d as { message?: unknown }).message ?? "")) && 按序.some((x) => x.path === String((d as { path?: unknown }).path ?? ""))))
+          .map((d) => ({
+            path: String((d as { path?: unknown }).path ?? ""),
+            reason: String((d as { message?: unknown }).message ?? ""),
+          })),
         dirs: {
           ...(位置.自带目录 ? { builtin: 位置.自带目录 } : {}),
           ...(位置.全局目录 ? { global: 位置.全局目录 } : {}),
           ...(项目目录 ? { project: 项目目录 } : {}),
         },
       }
+    },
+
+    /* ── 技能管理（7.17，skills-manage） ── */
+
+    setSkillInvocation: async ({ filePath, mode }) => {
+      const 文件 = 技能文件必须可改(filePath)
+      const 原 = await 读本地(文件, "utf8")
+      const 新 = 写调用策略(原, mode)
+      if (新 === undefined) throw fault("invalid_request", `${文件} 没有完整的 frontmatter（开头结尾各一行 ---），不敢改`)
+      if (新 !== 原) await 原子写(文件, 新)
+      记一次技能?.("invocation", 文件, mode)
+      return { mode }
+    },
+
+    importSkill: async ({ source, to, projectId, overwrite, dryRun }) => {
+      const 根 = 技能目标根(to, projectId)
+      if (dryRun) {
+        const r = await 预检技能(source, 根)
+        if ("why" in r) throw fault("invalid_request", r.why)
+        return { kind: r.kind, pending: r.待导, conflicts: r.冲突, imported: [], skipped: [], failed: r.失败 }
+      }
+      const r = await 导入技能(source, 根, overwrite === true)
+      if ("why" in r) throw fault("invalid_request", r.why)
+      for (const x of r.导了) 记一次技能?.(x.覆盖了 ? "import-overwrite" : "import", x.dest, source)
+      return {
+        kind: r.kind,
+        pending: [],
+        conflicts: [],
+        imported: r.导了.map((x) => ({ name: x.name, dest: x.dest, overwritten: x.覆盖了, warnings: x.警告 })),
+        skipped: r.跳过,
+        failed: r.失败,
+      }
+    },
+
+    deleteSkill: async ({ filePath }) => {
+      const 文件 = 技能文件必须可改(filePath)
+      const 目录 = dirname(文件)
+      if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
+      await trashItem(目录).catch((err: unknown) => {
+        throw fault("invalid_request", `删不掉 ${目录}：${err instanceof Error ? err.message : String(err)}`)
+      })
+      记一次删除?.(undefined, 目录, true)
+      记一次技能?.("delete", 目录)
+      return { trashed: true as const }
     },
 
     listSubagents: async ({ projectId }) => {

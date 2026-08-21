@@ -5303,3 +5303,65 @@ pre {
   min-width: 0;
 }
 .tree-row .name { flex: 1 1 auto; }
+
+/* ── 技能管理（skills-manage，2026-08-21；清单形状照作者给的 DSH 技能页那张图） ── */
+.skills-actions { display: flex; gap: var(--dawn-space-2); margin-top: var(--dawn-space-2); }
+.skills-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-3);
+  margin: var(--dawn-space-3) 0 var(--dawn-space-2);
+  flex-wrap: wrap;
+}
+.skills-filters .theme-choices { margin-bottom: 0; }
+.skills-search {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+  font: inherit;
+  color: var(--dawn-text-1);
+  background: var(--dawn-surface-input);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-sm);
+  padding: 4px var(--dawn-space-2);
+}
+.skills-count { margin-left: auto; white-space: nowrap; }
+/* 一个分组框，行之间细线；**不是一摞各自带边框的卡** */
+.skill-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-surface-panel);
+  overflow: hidden;
+}
+.skill-row {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-3);
+  padding: 10px var(--dawn-space-4);
+  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
+}
+.skill-row:last-child { border-bottom: 0; }
+.skill-row:hover { background: var(--dawn-row-hover); }
+.skill-row[data-state="off"] .skill-row-main { opacity: 0.55; }
+.skill-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.skill-row .skill-name { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.skill-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 说明**单行省略**：两行说明让一屏只看得见七八个技能；全文在悬停卡上 */
+.skill-row .skill-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: none; font-size: 12px; }
+.tag {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-xs);
+  color: var(--dawn-text-2);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: normal;
+}
+.tag-model { border-color: var(--dawn-success); color: var(--dawn-success); }
+.tag-manual { border-color: var(--dawn-warning); color: var(--dawn-warning); }
+.tag-off { border-color: var(--dawn-stroke-3); color: var(--dawn-text-3); }
+.skill-row-actions .row-more { opacity: 1; color: var(--dawn-text-3); }
+.skill-row-actions .row-more:hover { color: var(--dawn-text-1); }

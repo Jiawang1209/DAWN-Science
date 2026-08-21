@@ -17,8 +17,9 @@
  *
  * 「看不见的能力等于不存在」有个反面：**不存在的能力不该看起来存在**。
  */
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button, EmptyState, Loader } from "./primitives.js"
+import { HoverCard, 浮层事件, type 悬停浮层 } from "./hover-card.js"
 
 import { t, tf } from "./i18n/index.js"
 export interface Skill {
@@ -128,12 +129,79 @@ export interface AgentSkill {
   filePath: string
   from: "builtin" | "global" | "project"
   manualOnly: boolean
+  /** 三档（7.17）：开 / 只手动 / 关 */
+  invocation: 调用档
+  /** 自带的只读 */
+  mutable: boolean
+}
+export type 调用档 = "model" | "manual" | "off"
+
+export interface 导入回执 {
+  kind: "single" | "batch"
+  pending: { name: string; source: string }[]
+  conflicts: { name: string; source: string }[]
+  imported: { name: string; dest: string; overwritten: boolean; warnings: string[] }[]
+  skipped: { name: string; source: string }[]
+  failed: { source: string; why: string }[]
+}
+
+/**
+ * 技能屏能做的三件事（skills-manage，2026-08-21，学自 dsh-skills-manager）。
+ * **都写文件**：档位写进 SKILL.md 的 frontmatter（别的工具也认这两行），导入是复制目录，删是进废纸篓。
+ * 没给就还是那张只读清单。
+ */
+export interface SkillActions {
+  setInvocation: (filePath: string, mode: 调用档) => Promise<unknown>
+  importSkill: (req: { source: string; to: "global" | "project"; overwrite?: boolean; dryRun?: boolean }) => Promise<导入回执>
+  deleteSkill: (filePath: string) => Promise<unknown>
+  pickDirectory: () => Promise<string | null>
+  /** 问一句「覆盖？」「删？」——走全局那个确认框 */
+  问: (req: { title: string; detail: React.ReactNode; confirmLabel: string; altLabel?: string | undefined }) => Promise<"confirm" | "alt" | "cancel">
+  /** 有当前项目才给「导进这个项目」 */
+  hasProject: boolean
 }
 
 export interface AgentSkill装载 {
   skills: AgentSkill[]
   problems: { path: string; reason: string }[]
   dirs: { builtin?: string; global?: string; project?: string }
+}
+
+/** 悬停卡开在行的右边、贴着页面的右缘算 */
+const 清单上的卡 = { 标题: ".skill-name-text", 容器: ".skills-page", 开在: "左边" as const }
+
+/** 行尾那颗「⋯」：开 / 只手动 / 关 / 删除。与会话行、文件行同一套菜单形状 */
+function 行尾菜单({ s, 忙, 档名, onMode, onDelete }: { s: AgentSkill; 忙: boolean; 档名: (m: 调用档) => string; onMode: (m: 调用档) => void; onDelete: () => void }) {
+  const [开着, 设开着] = useState<{ top: number; left: number } | undefined>(undefined)
+  const 按钮 = useRef<HTMLButtonElement>(null)
+  const 打开 = () => {
+    const r = 按钮.current?.getBoundingClientRect()
+    if (!r) return
+    const 高 = 170
+    设开着({ top: Math.min(Math.max(8, r.bottom + 4), window.innerHeight - 高 - 8), left: Math.max(8, r.right - 180) })
+  }
+  return (
+    <div className="row-actions skill-row-actions">
+      <Button ref={按钮} variant="ghost" size="icon" className="row-more" aria-label={tf("技能操作：{0}", s.name)} aria-expanded={Boolean(开着)} disabled={忙} onClick={() => (开着 ? 设开着(undefined) : 打开())}>
+        ⋯
+      </Button>
+      {开着 ? (
+        <>
+          <div className="menu-scrim" onClick={() => 设开着(undefined)} />
+          <div className="row-menu" role="menu" aria-label={tf("技能操作：{0}", s.name)} style={{ top: 开着.top, left: 开着.left }}>
+            {(["model", "manual", "off"] as const).map((m) => (
+              <Button key={m} variant="ghost" size="inline" role="menuitemradio" aria-checked={s.invocation === m} onClick={() => { 设开着(undefined); if (m !== s.invocation) onMode(m) }}>
+                {s.invocation === m ? "✓ " : ""}{档名(m)}
+              </Button>
+            ))}
+            <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>
+              {t("删除")}
+            </Button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
 }
 
 /**
@@ -158,9 +226,18 @@ export interface AgentSkill装载 {
  * 2. **它从哪儿来**：自带 / 你写的 / 这个项目带的。**同名时项目 > 全局 > 自带**
  * 3. **往哪儿放**——三个目录的路径都写出来，否则「怎么加一个」无从下手
  */
-export function AgentSkillsView({ load }: { load?: (() => Promise<AgentSkill装载>) | undefined }) {
+export function AgentSkillsView({ load, actions }: { load?: (() => Promise<AgentSkill装载>) | undefined; actions?: SkillActions | undefined }) {
   const [数据, 设数据] = useState<AgentSkill装载 | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
+  /** 改动之后重读用的令牌 */
+  const [代, 设代] = useState(0)
+  /** 正在做的那件事（按 filePath 或 "import"），做完清掉 */
+  const [忙, 设忙] = useState<string | undefined>(undefined)
+  /** 上一件事的结果或错误，摆在列表上面——**失败必须出声** */
+  const [回话, 设回话] = useState<{ kind: "ok" | "bad"; text: string } | undefined>(undefined)
+  const [筛, 设筛] = useState<"all" | AgentSkill["from"]>("all")
+  const [搜, 设搜] = useState("")
+  const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
 
   useEffect(() => {
     if (!load) return
@@ -171,7 +248,67 @@ export function AgentSkillsView({ load }: { load?: (() => Promise<AgentSkill装�
     return () => {
       还在 = false
     }
-  }, [load])
+  }, [load, 代])
+
+  const 做 = async (key: string, 事: () => Promise<string | undefined>) => {
+    设忙(key)
+    设回话(undefined)
+    try {
+      const 说 = await 事()
+      if (说) 设回话({ kind: "ok", text: 说 })
+      设代((n) => n + 1)
+    } catch (e) {
+      设回话({ kind: "bad", text: e instanceof Error ? e.message : String(e) })
+    } finally {
+      设忙(undefined)
+    }
+  }
+
+  const 去导入 = async (to: "global" | "project") => {
+    if (!actions) return
+    const source = await actions.pickDirectory()
+    if (!source) return
+    await 做("import", async () => {
+      const 检 = await actions.importSkill({ source, to, dryRun: true })
+      if (检.pending.length + 检.conflicts.length === 0) {
+        // 全失败：把每条原因说出来
+        throw new Error(检.failed.map((f) => `${f.source}：${f.why}`).join("；"))
+      }
+      let overwrite = false
+      if (检.conflicts.length > 0) {
+        const 答 = await actions.问({
+          title: tf("已经有同名的技能：{0}", 检.conflicts.map((c) => c.name).join("、")),
+          detail: t("覆盖会用新的整个替换旧的目录（旧的不进废纸篓）。不覆盖就只导没撞名的那些。"),
+          confirmLabel: t("覆盖"),
+          altLabel: 检.pending.length > 0 ? t("只导没撞名的") : undefined,
+        })
+        if (答 === "cancel") return undefined
+        overwrite = 答 === "confirm"
+      }
+      const r = await actions.importSkill({ source, to, overwrite })
+      const 段 = [
+        r.imported.length ? tf("导了 {0} 个：{1}", r.imported.length, r.imported.map((x) => x.name + (x.overwritten ? t("（覆盖）") : "")).join("、")) : undefined,
+        r.skipped.length ? tf("跳过 {0} 个同名的", r.skipped.length) : undefined,
+        r.failed.length ? tf("{0} 个失败：{1}", r.failed.length, r.failed.map((f) => f.why).join("；")) : undefined,
+        ...r.imported.flatMap((x) => x.warnings),
+      ].filter(Boolean)
+      return 段.join("。") + t("。新会话起生效")
+    })
+  }
+
+  const 去删 = async (s: AgentSkill) => {
+    if (!actions) return
+    const 答 = await actions.问({
+      title: tf("删掉技能「{0}」？", s.name),
+      detail: <code>{s.filePath.replace(/\/SKILL\.md$/, "")}</code>,
+      confirmLabel: t("移到废纸篓"),
+    })
+    if (答 !== "confirm") return
+    await 做(s.filePath, async () => {
+      await actions.deleteSkill(s.filePath)
+      return tf("「{0}」已移到废纸篓。新会话起生效", s.name)
+    })
+  }
 
   if (!load) return <EmptyState title={t("本次运行没有装配技能")} description={t("这是启动时的装配问题，不是配置问题。")} />
   if (出错) return <EmptyState title={t("读不到技能")} description={出错} />
@@ -179,14 +316,39 @@ export function AgentSkillsView({ load }: { load?: (() => Promise<AgentSkill装�
 
   const 来处 = (f: AgentSkill["from"]) =>
     f === "builtin" ? t("自带") : f === "project" ? t("这个项目带的") : t("你写的")
+  const 档名 = (m: 调用档) => (m === "model" ? t("开") : m === "manual" ? t("只手动") : t("关"))
+  const 状态名 = (m: 调用档) => (m === "model" ? t("已启用") : m === "manual" ? t("只能手动调用") : t("已关"))
+  const 筛出来 = 数据.skills.filter((x) => (筛 === "all" || x.from === 筛) && (!搜.trim() || `${x.name} ${x.description}`.toLowerCase().includes(搜.trim().toLowerCase())))
 
   return (
     <div className="skills-page">
+      <HoverCard 浮着的={浮着的} />
       <header className="skills-head">
         <h1 className="panel-title">{t("Agent Skills")}</h1>
         <p className="hint">
           {t("一个技能 = 一个文件夹 + 一个 SKILL.md，是写给模型读的说明书：什么时候用它、什么时候别用、怎么用。模型自己判断要不要读，你也可以用 /skill:名字 显式调。")}
         </p>
+        {actions ? (
+          <div className="skills-actions">
+            {/**
+              * **导入**（skills-manage）：从本机选一个含 SKILL.md 的文件夹（或一筐），复制进来。
+              * 「新建」仍然不做——让 agent 写（`writing-skills`），这里只管「下下来的怎么进来」。
+              */}
+            <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
+              {t("导入到你写的…")}
+            </Button>
+            {actions.hasProject ? (
+              <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
+                {t("导入到这个项目…")}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {回话 ? (
+          <p className={回话.kind === "bad" ? "caveat" : "mcp-ok"} role="status">
+            {回话.text}
+          </p>
+        ) : null}
       </header>
 
       {/**
@@ -225,23 +387,62 @@ export function AgentSkillsView({ load }: { load?: (() => Promise<AgentSkill装�
           description={t("在上面那几个目录里建一个文件夹，放一个 SKILL.md 就行。")}
         />
       ) : (
-        <ul className="skill-list">
-          {数据.skills.map((s) => (
-            <li key={s.filePath} className="skill" data-authored="">
-              <p className="skill-name">
-                {s.name}
-                <span className="mcp-from">{来处(s.from)}</span>
-                {/* **只能显式调的要标出来**：不标的话，人会以为模型没在用它是坏了 */}
-                {s.manualOnly ? <span className="mcp-off">{t("只能手动调用")}</span> : null}
-              </p>
-              {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
-              <p className="skill-desc">{s.description}</p>
-              <p className="skill-meta">
-                <span className="skill-path">{s.filePath}</span>
-              </p>
-            </li>
-          ))}
-        </ul>
+        <>
+          {/**
+            * **一张密的清单，不是一摞卡片**（2026-08-21 作者给了 DSH 技能页那张图）：
+            * 每行两行高——名字 + 来源标签 + 状态标签，下面说明单行省略；细线分隔；
+            * 路径进悬停卡；操作收进行尾的「⋯」。上面一行：来源筛选 + 搜索 + 计数。
+            */}
+          <div className="skills-filters">
+            <div className="theme-choices" role="radiogroup" aria-label={t("来源")}>
+              {(["all", "project", "global", "builtin"] as const).map((k) => {
+                const n = k === "all" ? 数据.skills.length : 数据.skills.filter((x) => x.from === k).length
+                if (k !== "all" && n === 0) return null
+                return (
+                  <Button key={k} variant={筛 === k ? "primary" : "secondary"} size="sm" role="radio" aria-checked={筛 === k} onClick={() => 设筛(k)}>
+                    {k === "all" ? t("全部") : 来处(k)}（{n}）
+                  </Button>
+                )
+              })}
+            </div>
+            <input
+              className="control skills-search"
+              type="search"
+              value={搜}
+              aria-label={t("搜技能")}
+              placeholder={t("按名字或说明搜")}
+              onChange={(e) => 设搜(e.target.value)}
+            />
+            <span className="skills-count hint">
+              {tf("{0} 个，{1} 个开着", 数据.skills.length, 数据.skills.filter((x) => x.invocation === "model").length)}
+            </span>
+          </div>
+          {筛出来.length === 0 ? (
+            <EmptyState title={t("没有对上的技能")} description={t("换个词，或者把筛选清掉。")} />
+          ) : (
+            <ul className="skill-group" aria-label={t("技能清单")}>
+              {筛出来.map((s) => (
+                <li key={s.filePath} className="skill-row" data-authored="" data-state={s.invocation === "off" ? "off" : undefined}>
+                  <div
+                    className="skill-row-main"
+                    {...浮层事件(设浮着的, s.name, s.description, [{ 图: "文件夹", 文: s.filePath }], undefined, 清单上的卡)}
+                  >
+                    <p className="skill-name">
+                      <span className="skill-name-text">{s.name}</span>
+                      <span className="tag">{来处(s.from)}</span>
+                      <span className={`tag tag-${s.invocation}`}>{状态名(s.invocation)}</span>
+                    </p>
+                    {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
+                    <p className="skill-desc">{s.description}</p>
+                  </div>
+                  {actions && s.mutable ? (
+                    <行尾菜单 s={s} 忙={忙 === s.filePath} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
       {/** **写坏了要看得见**：静静不出现的话，人只会以为「我写的技能没生效」 */}

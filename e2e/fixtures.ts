@@ -579,6 +579,8 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         // **外部 CLI 的配置也要隔离**：不指的话会去读开发机真实的 ~/.codex，
         // 那正是这份文件开头明令禁止的暗管道（2026-08-09 加模型自动发现时捅的洞）
         DAWN_CLI_HOME: join(dir, "cli-home"),
+        // **全局技能目录也要隔离**（2026-08-21 才发现一直指着开发机真实的 ~/DAWN/skills）
+        DAWN_SKILLS_DIR: join(dir, "skills"),
         /**
          * **临时会话的目录根也要隔离**（2026-08-11）——
          * 不隔离的话，跑一次 e2e 就往开发机的 `~/DAWN/scratch` 里建一串目录。

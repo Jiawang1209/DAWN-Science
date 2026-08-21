@@ -458,8 +458,11 @@
  * 7.15（2026-08-21）：提示词增强——`enhancePrompt` / `cancelEnhance`。纯新增。
  *
  * 7.16（2026-08-21）：文件面板按名字搜——`searchFiles`。纯新增。
+ *
+ * 7.17（2026-08-21）：技能管理——`listAgentSkills` 多 `invocation` / `mutable`；
+ *   新增 `setSkillInvocation` / `importSkill` / `deleteSkill`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.16"
+export const WORKBENCH_PROTOCOL_VERSION = "7.17"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

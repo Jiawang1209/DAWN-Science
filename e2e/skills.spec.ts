@@ -99,3 +99,104 @@ test.describe("两屏", () => {
     await expect(page.getByRole("button", { name: "子 Agent" })).toBeVisible()
   })
 })
+
+/**
+ * **技能管理**（skills-manage，2026-08-21，学自 dsh-skills-manager）：三档开关写进 SKILL.md、
+ * 导入（预检 → 撞名问覆盖 → 复制到位）、删除进废纸篓。全局技能目录由夹具隔离到临时目录。
+ */
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync } from "node:fs"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
+
+const 技能文件 = (root: string, name: string, 正文 = "正文\n") => {
+  mkdirSync(join(root, name), { recursive: true })
+  writeFileSync(join(root, name, "SKILL.md"), `---\nname: ${name}\ndescription: 说明 ${name}\n# 注释\n---\n${正文}`)
+}
+
+test.describe("管理", () => {
+  test("**三档开关写进 SKILL.md 的 frontmatter，别的一字不动；自带的没有开关**", async ({ dawn }) => {
+    const { page, dir } = dawn
+    const 全局 = join(dir, "skills")
+    技能文件(全局, "my-skill")
+    await page.getByRole("button", { name: "Agent Skills" }).click()
+    const 屏 = page.locator(".skills-page")
+    const 行 = 屏.locator(".skill-row", { hasText: "my-skill" })
+    await expect(行).toBeVisible()
+    await expect(行).toContainText("已启用")
+    const 选 = async (档: string) => {
+      await 行.getByRole("button", { name: "技能操作：my-skill" }).click()
+      await page.getByRole("menu").getByRole("menuitemradio", { name: new RegExp(`${档}$`) }).click()
+    }
+
+    await 选("只手动")
+    await expect(屏.locator('[role="status"]')).toContainText("改为只手动")
+    await expect(行).toContainText("只能手动调用")
+    expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toBe("---\nname: my-skill\ndescription: 说明 my-skill\n# 注释\ndisable-model-invocation: true\n---\n正文\n")
+
+    await 选("关")
+    await expect(行).toContainText("已关")
+    expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toContain("user-invocable: false")
+
+    await 选("开")
+    await expect(行).toContainText("已启用")
+    expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toBe("---\nname: my-skill\ndescription: 说明 my-skill\n# 注释\n---\n正文\n")
+
+    // 自带的：有行、没有「⋯」
+    const 自带行 = 屏.locator(".skill-row", { hasText: "writing-skills" })
+    await expect(自带行).toBeVisible()
+    await expect(自带行.getByRole("button", { name: /技能操作/ })).toHaveCount(0)
+    // 项目还没建 .dawn/skills 不算「读不进来」
+    await expect(屏).not.toContainText("skill path does not exist")
+  })
+
+})
+
+/** 导入：系统目录选择器是模态框，路径由夹具的 `pickDirectory` 注入——被替掉的只有「路径从哪来」这一步 */
+const 来源 = mkdtempSync(join(tmpdir(), "dawn-skill-src-"))
+技能文件(来源, "Fresh Skill")
+技能文件(来源, "old-one", "新\n")
+test.describe("导入", () => {
+  test.use({ dawnOptions: { pickDirectory: 来源 } })
+
+  test("**撞名先问，覆盖就换、不覆盖就跳过；说清导了几个**", async ({ dawn }) => {
+    const { page, dir } = dawn
+    const 全局 = join(dir, "skills")
+    技能文件(全局, "old-one", "旧\n")
+    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByRole("button", { name: "导入到你写的…" }).click()
+
+    const 框 = page.getByRole("dialog")
+    await expect(框).toContainText("已经有同名的技能：old-one")
+    await 框.getByRole("button", { name: "只导没撞名的" }).click()
+    const 状态 = page.locator(".skills-page [role=\"status\"]")
+    await expect(状态).toContainText("导了 1 个：fresh-skill")
+    await expect(状态).toContainText("跳过 1 个同名的")
+    expect(existsSync(join(全局, "fresh-skill", "SKILL.md"))).toBe(true)
+    expect(readFileSync(join(全局, "old-one", "SKILL.md"), "utf8")).toContain("旧")
+    await expect(page.locator(".skills-page")).toContainText("fresh-skill")
+
+    // 再来一次选「覆盖」
+    await page.getByRole("button", { name: "导入到你写的…" }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "覆盖", exact: true }).click()
+    await expect(状态).toContainText("old-one（覆盖）")
+    expect(readFileSync(join(全局, "old-one", "SKILL.md"), "utf8")).toContain("新")
+  })
+})
+
+test.describe("删除", () => {
+  test("**删除：确认后整个目录进废纸篓，列表里没了**", async ({ dawn }) => {
+    const { page, dir } = dawn
+    const 全局 = join(dir, "skills")
+    技能文件(全局, "doomed")
+    await page.getByRole("button", { name: "Agent Skills" }).click()
+    const 行 = page.locator(".skills-page .skill-row", { hasText: "doomed" })
+    await 行.getByRole("button", { name: "技能操作：doomed" }).click()
+    await page.getByRole("menu").getByRole("menuitem", { name: "删除" }).click()
+    const 框 = page.getByRole("dialog")
+    await expect(框).toContainText("删掉技能「doomed」？")
+    await 框.getByRole("button", { name: "移到废纸篓" }).click()
+    await expect(page.locator(".skills-page [role=\"status\"]")).toContainText("已移到废纸篓")
+    await expect(page.locator(".skills-page .skill-row", { hasText: "doomed" })).toHaveCount(0)
+    await expect.poll(() => existsSync(join(全局, "doomed"))).toBe(false)
+  })
+})

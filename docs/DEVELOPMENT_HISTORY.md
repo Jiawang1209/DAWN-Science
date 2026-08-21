@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-21 — 技能管理：三档开关写进 SKILL.md、从本机导入、删除进废纸篓（协议 7.17）
+
+- **Type**: feat
+- **Motivation**: 读了 `MichengAI/dsh-skills-manager`（Apache-2.0，解读在 `ccb_hive_code_learn/dsh-skills-manager-解读.md`）。我们的 Agent Skills 屏是只读清单：技能一多想让模型别看见某个只能删目录；下下来的技能目录怎么进 DAWN 没答案。作者定：开关**写进文件**。设计：`docs/superpowers/specs/2026-08-21-技能管理-design.md`。
+- **What**: `src/skills/invocation.ts`（三档 开 / 只手动 / 关 ↔ `disable-model-invocation` / `user-invocable`，文本级替换、读不坏）、`src/skills/import.ts`（预检 → 临时目录复制 → 备份 → 回滚；只认目录形态；kebab 规整）。协议 7.17：`listAgentSkills` 多 `invocation` / `mutable`，新增 `setSkillInvocation` / `importSkill` / `deleteSkill`；后端守卫只许碰「你写的」与项目两个目录下一层的 `SKILL.md`，自带的拒并说清；原子写；`记一次技能` 落账。`native.ts` `skillsOverride` 把「关」的从 pi 的清单里剔掉（pi 不认 `user-invocable`）。界面：每个可改技能一组三档 radio + 删除；顶上「导入到你写的… / 导入到这个项目…」，撞名弹「覆盖 / 只导没撞名的」；每次都说「新会话起生效」。**顺手修**：e2e 的全局技能目录一直指着开发机真实的 `~/DAWN/skills`，加 `DAWN_SKILLS_DIR`、夹具隔离。
+- **Impact**: 纯新增；自带技能行为不变。与 dsh-skills-manager 的三处不同：三档而非一个开关；只认目录形态；删除进废纸篓。
+- **Verification**: `tests/skills` 34 条（策略读写 11：BOM / CRLF / 注释 / 幂等 / 无 frontmatter 拒；导入 23：单个 / 文件 / 一筐 / 冲突 / 符号链接 / 重叠 / 中文名 / 覆盖与备份清理）；`tests/workbench/skill-ops` 4 条（列表档位、改档只动两行、自带拒、别处拒、删进废纸篓、导入预检与项目目标）；协议计数 94；e2e `skills.spec` 新增 3 条（开关写文件逐字比对 + 自带无开关；导入撞名两条路；删除进废纸篓）真构建全过；全量 vitest 1995 绿；视觉基线 10 绿。
+
 ### 2026-08-21 — 右坞占满它那一列，不再写死像素宽：窗口没最大化时坞不伸出窗口
 
 - **Type**: fix

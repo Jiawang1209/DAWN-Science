@@ -5303,3 +5303,8 @@ pre {
   min-width: 0;
 }
 .tree-row .name { flex: 1 1 auto; }
+
+/* ── 技能管理（skills-manage，2026-08-21） ── */
+.skills-actions { display: flex; gap: var(--dawn-space-2); margin-top: var(--dawn-space-2); }
+.skill-controls { display: flex; align-items: center; gap: var(--dawn-space-3); margin-top: var(--dawn-space-1); }
+.skill-controls .theme-choices { margin-bottom: 0; }

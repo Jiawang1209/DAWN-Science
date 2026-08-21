@@ -858,6 +858,14 @@ export const OPERATIONS = {
               from: z.enum(["builtin", "global", "project"]),
               /** 只能显式 `/skill:名` 调，模型不会自己用 */
               manualOnly: z.boolean(),
+              /**
+               * 三档调用策略（7.17）：`model` 缺省 / `manual` 只手动 / `off` 谁都不给。
+               * 读自 SKILL.md 的 frontmatter（`disable-model-invocation` / `user-invocable`）。
+               * `off` 的技能**仍然列出来**——藏起来的话人会以为它没了。
+               */
+              invocation: z.enum(["model", "manual", "off"]),
+              /** 能不能改：自带的在应用包里，只读 */
+              mutable: z.boolean(),
             })
             .strict(),
         ),
@@ -874,6 +882,52 @@ export const OPERATIONS = {
       })
       .strict(),
     mutating: false,
+  },
+
+  /* ── 技能管理（7.17，skills-manage，学自 dsh-skills-manager） ──────────── */
+
+  /** 改一个技能的调用档：写进它的 SKILL.md（文本级替换那两行）。自带的拒 */
+  setSkillInvocation: {
+    request: z.object({ filePath: z.string().min(1), mode: z.enum(["model", "manual", "off"]) }).strict(),
+    response: z.object({ mode: z.enum(["model", "manual", "off"]) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 从本机某处导入技能。**两阶段**：`dryRun` 回预检（有冲突界面再问「覆盖？」），
+   * 正式导入回导了 / 跳过 / 失败。目标：`global`（你写的）或 `project`（要 `projectId`）。
+   */
+  importSkill: {
+    request: z
+      .object({
+        source: z.string().min(1),
+        to: z.enum(["global", "project"]),
+        projectId: z.string().min(1).optional(),
+        overwrite: z.boolean().optional(),
+        dryRun: z.boolean().optional(),
+      })
+      .strict(),
+    response: z
+      .object({
+        kind: z.enum(["single", "batch"]),
+        /** 预检时：能直接导的 */
+        pending: z.array(z.object({ name: z.string(), source: z.string() }).strict()),
+        /** 预检时：目标里已有同名 */
+        conflicts: z.array(z.object({ name: z.string(), source: z.string() }).strict()),
+        /** 正式导入时：导了的 */
+        imported: z.array(z.object({ name: z.string(), dest: z.string(), overwritten: z.boolean(), warnings: z.array(z.string()) }).strict()),
+        skipped: z.array(z.object({ name: z.string(), source: z.string() }).strict()),
+        failed: z.array(z.object({ source: z.string(), why: z.string() }).strict()),
+      })
+      .strict(),
+    mutating: true,
+  },
+
+  /** 删一个技能目录（进废纸篓）。自带的拒 */
+  deleteSkill: {
+    request: z.object({ filePath: z.string().min(1) }).strict(),
+    response: z.object({ trashed: z.literal(true) }).strict(),
+    mutating: true,
   },
 
   /**

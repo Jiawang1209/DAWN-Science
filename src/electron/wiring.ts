@@ -717,6 +717,23 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.isForeground ? { isForeground: opts.isForeground } : {}),
     // 提示词增强：用会话此刻的模型问一句
     askOnce: (目标, req) => nativeRuntime.问一句(目标, req),
+    /** 技能的启停 / 导入 / 删除各落一条 Run（7.17）。挂在当前活着的本地会话的项目下；没有就不记 */
+    记一次技能: (event, 路径, 详情) => {
+      const 那段 = sessionStore.list().find((s) => s.state === "alive" && !s.connectionId)
+      if (!那段?.projectId) return
+      const 此刻 = new Date().toISOString()
+      runStore.insert({
+        runId: `run-${randomUUID()}`,
+        projectId: 那段.projectId,
+        sessionId: 那段.id,
+        origin: "user",
+        requestType: `skill_${event}:${路径}${详情 ? `:${详情}` : ""}`,
+        status: "completed",
+        startedAt: 此刻,
+        finishedAt: 此刻,
+        hasError: false,
+      })
+    },
     /** **删除也落一条 Run**（批 5 · 不变式 5）。删除不可逆，比上传更该留痕 */
     记一次删除: (connectionId, 路径, 进了废纸篓) => {
       const 那段 = connectionId

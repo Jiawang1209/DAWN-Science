@@ -52,6 +52,8 @@ const SCRATCH_ROOT = process.env.DAWN_SCRATCH_ROOT
  * 「每个用例一套全新的目录」。
  */
 const CLI_HOME = process.env.DAWN_CLI_HOME
+/** 全局技能目录（skills-manage，2026-08-21）。e2e 用它隔离——此前一直指着开发机真实的 `~/DAWN/skills` */
+const SKILLS_DIR = process.env.DAWN_SKILLS_DIR
 
 /**
  * 用假服务器代替真 SSH（②-B · R3）。**mock 模式与 e2e 用。**
@@ -436,6 +438,7 @@ app.whenReady().then(() => {
        */
       builtinSkillsDir: join(import.meta.dirname, "..", "skills"),
       ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
+      ...(SKILLS_DIR ? { skillsDir: SKILLS_DIR } : {}),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       ...(FAKE_SSH ? { fakeSsh: true } : {}),

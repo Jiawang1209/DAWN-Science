@@ -69,6 +69,7 @@ import {
   PluginsView,
   type SkillLoad,
   type AgentSkill装载,
+  type 导入回执,
   type MCP装载,
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
@@ -3049,6 +3050,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               load={() =>
                 client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
               }
+              actions={{
+                setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
+                importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+                deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
+                pickDirectory: () => client.pickDirectory(默认工作区?.path),
+                hasProject: Boolean(projectId),
+                /** 走全局那个确认框，包成一个 Promise：确认 / 第三个选项 / 取消三条路各回一个词 */
+                问: (req) =>
+                  new Promise((resolve) => {
+                    let 答了 = false
+                    const 答 = (v: "confirm" | "alt" | "cancel") => {
+                      if (答了) return
+                      答了 = true
+                      resolve(v)
+                    }
+                    setConfirming({
+                      title: req.title,
+                      detail: req.detail,
+                      confirmLabel: req.confirmLabel,
+                      onConfirm: () => 答("confirm"),
+                      ...(req.altLabel ? { altLabel: req.altLabel, onAlt: () => 答("alt") } : {}),
+                      onDismiss: () => 答("cancel"),
+                    })
+                  }),
+              }}
             />
           ) : view === "subagents" ? (
             <SubagentsView

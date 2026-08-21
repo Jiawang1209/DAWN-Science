@@ -17,6 +17,7 @@ import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 // @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 npm run dev:mock
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "../scripts/mock-inference-server.mjs"
+import { startFakeIlinkServer, type FakeIlinkServer } from "../scripts/fake-ilink-server.mjs"
 
 const ROOT = resolve(import.meta.dirname, "..")
 
@@ -236,6 +237,8 @@ export interface DawnFixture {
   workspace: string
   /** 假服务器收到的请求。用来证明测试**不是空转通过** */
   requests: unknown[]
+  /** 假微信（开了 `fakeIlink` 才有）：推进扫码、塞消息、读发出的、让 token 失效 */
+  weixin?: FakeIlinkServer
   /**
    * 关掉应用再打开（同一套目录）。返回新窗口。
    *
@@ -334,6 +337,8 @@ export interface DawnOptions {
    * 假的只有「另一端是谁」——认证仍是真判的，口令不对照样拒。
    */
   fakeSsh?: boolean
+  /** 起一个假微信（远程助理），`DAWN_FAKE_ILINK` 指过去；夹具上多一个 `weixin` 把手 */
+  fakeIlink?: boolean
   /**
    * 假模型「想」的内容（2026-08-12）。**给了才发。**
    *
@@ -452,6 +457,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawnOptions: [{}, { option: true }],
 
   dawn: async ({ dawnOptions }, use) => {
+    const weixin = dawnOptions.fakeIlink ? await startFakeIlinkServer({ longPollMs: 1_000 }) : undefined
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
@@ -595,6 +601,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           ? {}
           : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
         ...(dawnOptions.fakeSsh ? { DAWN_FAKE_SSH: "1" } : {}),
+        ...(weixin ? { DAWN_FAKE_ILINK: weixin.url } : {}),
         /**
          * **测试不把窗口弹出来**（2026-08-11，作者提）。
          *
@@ -709,6 +716,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       workspace,
       requests: server.requests,
       mockUrl: server.url,
+      ...(weixin ? { weixin } : {}),
       重开,
     })
 
@@ -722,6 +730,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       console.error("[e2e] Electron 关不掉：", err instanceof Error ? err.message : String(err))
     })
     await server.close()
+    await weixin?.close()
     rmSync(dir, { recursive: true, force: true })
   },
 })

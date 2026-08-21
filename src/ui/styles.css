@@ -5123,3 +5123,65 @@ pre {
   align-items: stretch;
   z-index: var(--z-modal-popover);
 }
+
+/* ── 远程助理（2026-08-21） ─────────────────────────────────────── */
+.ra-page { gap: var(--dawn-space-4); }
+.ra-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-3);
+  padding: var(--dawn-space-4);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-fill-1);
+  max-width: 62ch;
+}
+.ra-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  margin: 0;
+  font-size: 1rem;
+  font-weight: var(--dawn-weight-semibold);
+}
+/* 状态词：颜色只是加强，词仍然写着 */
+.ra-state {
+  font-size: 12px;
+  font-weight: var(--dawn-weight-medium);
+  padding: 1px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-fill-3);
+  color: var(--dawn-text-2);
+}
+.ra-state-bound { color: var(--dawn-success); }
+.ra-state-stale { color: var(--dawn-danger); }
+.ra-state-logging_in { color: var(--dawn-accent); }
+.ra-login { display: flex; gap: var(--dawn-space-4); align-items: flex-start; }
+.ra-qr {
+  flex: 0 0 auto;
+  width: 200px;
+  height: 200px;
+  padding: var(--dawn-space-2);
+  /* 二维码底永远是白：暗色主题下反色的码微信扫不出来 */
+  background: var(--theme-gray-0);
+  border-radius: var(--dawn-radius-sm);
+}
+.ra-qr svg { display: block; width: 100%; height: 100%; }
+.ra-login-text { display: flex; flex-direction: column; gap: var(--dawn-space-2); min-width: 0; }
+.ra-step { margin: 0; }
+.ra-step-verify_code_wrong,
+.ra-step-failed { color: var(--dawn-danger); }
+.ra-step-confirmed { color: var(--dawn-success); }
+.ra-code { display: flex; flex-direction: column; gap: var(--dawn-space-2); max-width: 20rem; }
+.ra-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--dawn-space-1) var(--dawn-space-4);
+  margin: 0;
+}
+.ra-facts dt { color: var(--dawn-text-3); }
+.ra-facts dd { margin: 0; display: flex; align-items: center; gap: var(--dawn-space-2); flex-wrap: wrap; min-width: 0; }
+.ra-bind-select { max-width: 16rem; }
+.ra-bound,
+.ra-unbound { display: flex; flex-direction: column; gap: var(--dawn-space-3); }
+.ra-actions { display: flex; gap: var(--dawn-space-2); align-items: center; }

@@ -23,6 +23,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "./mock-inference-server.mjs"
+import { startFakeIlinkServer } from "./fake-ilink-server.mjs"
 
 const ROOT = resolve(import.meta.dirname, "..")
 
@@ -32,6 +33,13 @@ if (!existsSync(join(ROOT, "dist", "electron", "main.js"))) {
 }
 
 const server = await startMockInferenceServer()
+/**
+ * 假微信（远程助理）。扫码那一屏点「扫码绑定」之后，用下面这几条推进剧本：
+ *   curl -X POST <url>/__fake/qr/scan      curl -X POST <url>/__fake/qr/confirm
+ *   curl -X POST <url>/__fake/inbound -d '{"text":"在吗"}'      curl <url>/__fake/sent
+ */
+const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
+console.log(`假微信：${weixin.url}（/__fake/qr/scan · /__fake/qr/confirm · /__fake/inbound · /__fake/sent）`)
 
 const dir = mkdtempSync(join(tmpdir(), "dawn-mock-"))
 const workspace = join(dir, "workspace")
@@ -77,12 +85,14 @@ const child = spawn(
       DAWN_CONFIG: configPath,
       DAWN_DB: join(dir, "dawn.db"),
       DAWN_MODELS_JSON: modelsPath,
+      DAWN_FAKE_ILINK: weixin.url,
     },
   },
 )
 
 const shutdown = async () => {
   await server.close()
+  await weixin.close()
   process.exit(0)
 }
 child.on("exit", shutdown)

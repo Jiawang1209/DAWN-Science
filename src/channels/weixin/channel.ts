@@ -53,6 +53,8 @@ export interface WeixinOps {
   listTasks(): Promise<readonly TaskSummary[]>
   listConnections(): Promise<readonly { id: string; label: string }[]>
   writeToSession(req: { sessionId: string; data: string; as: "user" }): Promise<unknown>
+  /** 写之前要持有写权——微信那头就是同一个人，按 `user` 取（`user` 永远取得到） */
+  acquireLease(req: { sessionId: string; holder: "user" }): Promise<unknown>
   abortSession(req: { sessionId: string }): Promise<unknown>
   subscribeSession(req: { sessionId: string }): Promise<unknown>
 }
@@ -326,6 +328,8 @@ export class WeixinChannel {
       }
     }
     const sessionId = await this.确保有会话()
+    // 写权跟着人走：界面选中会话时取一次，微信来一句也取一次——同一个人，同一种持有者
+    await this.deps.ops().acquireLease({ sessionId, holder: "user" })
     await this.deps.ops().writeToSession({ sessionId, data: text, as: "user" })
   }
 

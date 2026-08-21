@@ -43,6 +43,21 @@
 
 ## 变更日志
 
+### 2026-08-21 — 远程助理 T2：微信通道接进后端与界面（扫码绑定、文字往返、斜杠命令）
+
+- **Type**: feat
+- **Commit**: `待回填`
+- **Motivation**: 设计文档第二期：绑定那一屏 + 钥匙串 + 专属会话 + 文字往返 + 斜杠命令。
+- **What**:
+  - `src/channels/weixin/channel.ts`：扫码状态机（逐态出声、配对码、过期换码、已绑过）、长轮询（连败退避、-14 → `stale`）、**只认扫码那个人**、专属会话（第一句话时 `createTask`）、斜杠命令 `/会话 /用 N /新建 [@服务器] /停 /在哪 /帮助`、最终回答（`turn` 且 `final`）切段送回并带 `context_token`。**只调后端自己的操作**（`WeixinOps` 列出契约），与界面同一条路；写之前按 `user` 取租约——e2e 第一次跑抓到的（「写入被拒：user 未持有租约」）。
+  - `EventHub.pin/unpin`：通道钉住它绑的会话，不跟着界面的订阅走。
+  - 协议 **7.14**：`weixinGetStatus / StartLogin / SubmitCode / CancelLogin / Unbind / BindSession`。状态靠界面轮询（扫码中 1 s、平时 5 s）；设计里写的 `SessionUpdate.kind:"weixin"` 放弃——它按会话封套，绑定不属于任何会话。设计里的新表也放弃，改成 `settings` 里七把 `weixin.*` 键；token 走 `credentials`（钥匙串，键 `weixin:botToken`）。
+  - 界面：侧栏「远端服务器」正下方一项「远程助理」（手机图标）；`src/ui/remote-assistant.tsx` 那一屏——微信卡（二维码用 `qrcode` 出 SVG、白底；每一态一句话；配对码输入；已绑定后显示联系人 / 微信 id / 绑定时间 / 话落到哪段 + 换一段；解绑；失效变红可重扫）、飞书占位卡。**依赖决策**：`qrcode`（MIT，纯 JS）只在渲染进程出一张 SVG，不碰网络。
+  - `App.tsx` 每 5 s 拉一次任务与临时会话——后端替人建的会话此前在侧栏上不存在。
+  - `DAWN_FAKE_ILINK=<url>` 把微信那头指到假服务器；e2e 夹具 `fakeIlink: true`；`dev:mock` 也起假微信并打印推进剧本的 curl。
+- **Impact**: 视觉基线十张重存（diff 只是侧栏多一行，复验全绿）。未做：通知、权限同意（T3）、图片 / 工具进度 / 正在输入（T4）。
+- **Verification**: `tests/channels` 26 条（扫码全流程、只认主人、最终回答带 context_token、-14、斜杠命令、解绑）；e2e `remote-assistant` 2 条跑真实产物：入口 → 扫码（含错配对码）→ 已绑定 → 微信说一句 → 侧栏出现、对话里有、假模型回答回到假微信 → 陌生人不回 → 失效变红；斜杠命令有回音、解绑回未绑定；UI / 协议 / workbench 单测 722 全绿；sidebar / task / terminal-dock e2e 绿；视觉 10 张复验绿。
+
 ### 2026-08-21 — 远程助理 T1：微信 iLink 协议客户端 + 假微信
 
 - **Type**: feat

@@ -45,6 +45,7 @@ function 假世界() {
     writeToSession: async (r) => void 写了.push(r),
     abortSession: async ({ sessionId }) => void 中止了.push(sessionId),
     subscribeSession: async () => ({}),
+    acquireLease: async () => ({}),
   }
   const deps: WeixinDeps = {
     client: (baseUrl) => new IlinkClient({ baseUrl: baseUrl ?? s.url, qrBaseUrl: s.url, cdnBaseUrl: `${s.url}/c2c` }),

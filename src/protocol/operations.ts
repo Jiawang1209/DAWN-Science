@@ -664,6 +664,65 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /* ── 远程助理 · 微信（协议 7.14，2026-08-21） ──────────────────────
+   * 设计：`docs/superpowers/specs/2026-08-21-远程助理-design.md`。
+   * 绑定状态是轮询拿的（界面在那一屏开着时每秒问一次）；没有推送——
+   * 设计文档里写的 `SessionUpdate.kind: "weixin"` 放弃了：`SessionUpdate` 是按会话
+   * 封套的，绑定不属于任何会话，硬塞进去要造一个假 sessionId。
+   */
+  weixinGetStatus: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        state: z.enum(["unbound", "logging_in", "bound", "stale"]),
+        login: z
+          .object({
+            qrUrl: z.string(),
+            step: z.enum(["wait", "scaned", "need_verifycode", "verify_code_wrong", "expired", "redirect", "confirmed", "failed"]),
+            message: z.string(),
+          })
+          .strict()
+          .optional(),
+        botId: z.string().optional(),
+        userId: z.string().optional(),
+        boundAt: z.string().optional(),
+        sessionId: z.string().optional(),
+        lastError: z.string().optional(),
+        contactName: z.string(),
+      })
+      .strict(),
+    mutating: false,
+  },
+  /** 开始扫码。立刻返回；进度从 `weixinGetStatus` 看 */
+  weixinStartLogin: {
+    request: z.object({}).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  /** 手机上显示的配对码 */
+  weixinSubmitCode: {
+    request: z.object({ code: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  weixinCancelLogin: {
+    request: z.object({}).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  /** 解绑：清钥匙串与设置、停轮询 */
+  weixinUnbind: {
+    request: z.object({}).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  /** 把微信接到某段会话（界面上挑的） */
+  weixinBindSession: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   /**
    * 给已接入的 ACP 标上／摘掉「能上服务器」（协议 7.13，2026-08-21）。
    *

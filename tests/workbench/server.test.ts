@@ -126,6 +126,12 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     addAcpAgent: async () => ({ agentId: "codex-acp" }),
     removeAgent: async () => ({ ok: true as const }),
     setAcpRemoteCapable: async () => ({ ok: true as const }),
+    weixinGetStatus: async () => ({ state: "unbound" as const, contactName: "DAWN-Science" }),
+    weixinStartLogin: async () => ({ ok: true as const }),
+    weixinSubmitCode: async () => ({ ok: true as const }),
+    weixinCancelLogin: async () => ({ ok: true as const }),
+    weixinUnbind: async () => ({ ok: true as const }),
+    weixinBindSession: async () => ({ ok: true as const }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

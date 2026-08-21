@@ -29,7 +29,7 @@ import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 手机图标, 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -1157,6 +1157,7 @@ export function SessionSidebar({
   onPickSession,
   onShowSkills,
   onShowSubagents,
+  onShowAssistant,
   onShowPlugins,
   onShowMcp,
   onDeleteSession,
@@ -1223,6 +1224,8 @@ export function SessionSidebar({
   onShowSkills?: (() => void) | undefined
   /** 子 agent 那一屏（2026-08-15 从「技能」拆出来的，两者是两种东西） */
   onShowSubagents?: (() => void) | undefined
+  /** 「远程助理」（2026-08-21）。**放在远端服务器正下面**（作者定的位置） */
+  onShowAssistant?: (() => void) | undefined
   /** 插件那一屏。同上 */
   onShowPlugins?: (() => void) | undefined
   /** MCP 那一屏。同上 */
@@ -1951,6 +1954,12 @@ export function SessionSidebar({
           </Row>
         ) : null}
         {remote ?? null}
+        {onShowAssistant ? (
+          <Row active={view === "assistant"} className="side-action" onClick={onShowAssistant}>
+            <手机图标 className="row-icon" />
+            <span className="name">{t("远程助理")}</span>
+          </Row>
+        ) : null}
       </div>
       {/**
         * **一条横线**（作者明确要的）。

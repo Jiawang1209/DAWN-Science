@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
+import { PaneBoundary } from "./pane-boundary.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { 会话开关 } from "./state/transcript.js"
@@ -1138,7 +1139,12 @@ export function RightDock({
           <关闭图标 />
         </Button>
       </header>
-      <div className="dock-body">{children}</div>
+      {/* 一格一个的边界，按房客给 key：切走再切回来就是一次重试（dock-polish ⑥） */}
+      <div className="dock-body">
+        <PaneBoundary key={tenant} 名={房客名(tenant)}>
+          {children}
+        </PaneBoundary>
+      </div>
     </aside>
   )
 }

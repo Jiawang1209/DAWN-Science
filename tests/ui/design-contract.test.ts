@@ -140,11 +140,11 @@ describe("设计契约 · primitive 不被调用点覆写", () => {
   })
 
   it("功能组件不直接写 <button>，一律走 Button primitive", () => {
-    // 例外只有两处，且都有硬理由：
+    // 例外只有三处，且都有硬理由：
     //   primitives.tsx —— 它就是 Button 的定义处
-    //   ErrorBoundary.tsx —— 它在 React 树已经崩了之后渲染，
+    //   ErrorBoundary.tsx / pane-boundary.tsx —— 它们在 React 子树已经崩了之后渲染，
     //     此时不能再依赖任何可能同样崩掉的组件
-    const exempt = new Set(["primitives.tsx", "ErrorBoundary.tsx"])
+    const exempt = new Set(["primitives.tsx", "ErrorBoundary.tsx", "pane-boundary.tsx"])
     for (const f of tsxFiles()) {
       if (exempt.has(f)) continue
       const hits = findLines(read(f), (l) => /<button[\s>]/.test(l))

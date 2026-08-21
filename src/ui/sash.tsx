@@ -112,7 +112,7 @@ export function SideSash({
 
   return (
     <div
-      className={`side-sash${横 ? " horizontal" : ""}${attach === "edge" ? " edge" : ""}${dragging ? " dragging" : ""}`}
+      className={`side-sash${横 ? " horizontal" : ""}${attach === "edge" ? " edge" : ""}${attach === "edge" && side === "right" ? " lead" : ""}${dragging ? " dragging" : ""}`}
       {...(位置 ? { style: 位置 } : {})}
       role="separator"
       aria-orientation={横 ? "horizontal" : "vertical"}

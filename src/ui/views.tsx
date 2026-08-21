@@ -996,13 +996,22 @@ export function RightDock({
   children: React.ReactNode
 }) {
   return (
-    <aside className="right-dock" style={{ width: `${width}px` }} aria-label={房客名(tenant)}>
+    /**
+      * **宽度是那一列给的，不在这儿写死**（2026-08-21 作者截图抓到的：窗口没最大化时
+      * 网格那一列被压窄了，坞却仍是 `width: 720px`，内容从列里伸到窗口外面——
+      * 「加宽 / 搜索 / 刷新」全在屏幕右边看不见的地方）。
+      * 列宽由 `.body` 的 `--dawn-dock-w` 定，`minmax(0, …)` 让它宁可被压窄也不越界；
+      * 坞占满那一列，窗口一变按钮跟着变。`width` 这个 prop 现在只喂给那条缝的 `aria-valuenow`。
+      */
+    <aside className="right-dock" aria-label={房客名(tenant)}>
       <SideSash
         width={width}
         min={RIGHT_DOCK_MIN}
         max={RIGHT_DOCK_MAX}
         onResize={(px, phase) => onWidth(px, phase === "commit")}
         side="right"
+        /* 贴坞的真实左缘，不按 `width` 算偏移——坞被窗口压窄时两者不相等（2026-08-21） */
+        attach="edge"
         label={t("调整面板宽度")}
       />
       {/**

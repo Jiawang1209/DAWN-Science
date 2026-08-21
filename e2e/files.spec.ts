@@ -219,11 +219,11 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   await 加宽.click()
   await expect(page.locator(".files-wide")).toBeVisible()
 
+  // 坞现在跟着网格那一列走，列宽有 0.25s 过渡——等它到位再量（2026-08-21）
+  await expect
+    .poll(async () => (await img.boundingBox())!.width, { message: "加宽之后没变大" })
+    .toBeGreaterThan(窄的时候.width * 1.3)
   const 宽的时候 = (await img.boundingBox())!
-  expect(
-    宽的时候.width,
-    `加宽之后没变大：${Math.round(窄的时候.width)}px → ${Math.round(宽的时候.width)}px`,
-  ).toBeGreaterThan(窄的时候.width * 1.3)
 
   /**
    * ③ **左树、右预览**——作者 2026-08-20 指定的形状，不是「反正两栏就行」。
@@ -538,4 +538,38 @@ test("**窄坞：顶行按钮都在、先缩时间戳、预览头不竖排**", a
   const 删 = 头.getByRole("button", { name: "移到废纸篓" })
   const 删高 = (await 删.boundingBox())!.height
   expect(删高, "按钮折成竖条了").toBeLessThan(40)
+})
+
+/**
+ * **坞不许伸出窗口**（2026-08-21 作者截图：窗口没最大化时，网格那一列被压窄了，
+ * 坞却仍是 `width: 720px`，「加宽 / 搜索 / 刷新」全在屏幕右边看不见的地方）。
+ * 坞现在占满那一列——列多宽它多宽，按钮跟着变。缝也贴坞的真实边。
+ */
+test("**坞宽过了窗口能给的：坞被压进窗口里，按钮都看得见，缝在坞的真实边上**", async ({ dawn }) => {
+  const { page } = dawn
+  await 进坞(page, "文件")
+  // 先在宽窗口里把坞拉到最宽
+  await page.setViewportSize({ width: 1600, height: 800 })
+  const 面板 = page.locator(".right-dock .files-view")
+  await 面板.getByRole("button", { name: "加宽", exact: true }).click()
+  const 坞 = page.locator(".right-dock")
+  // 列宽有 0.25s 的过渡，等它到位
+  await expect.poll(async () => (await 坞.boundingBox())!.width).toBeGreaterThan(600)
+
+  // 再把窗口缩小：坞必须整个在窗口里
+  await page.setViewportSize({ width: 1000, height: 700 })
+  await expect
+    .poll(async () => {
+      const b = (await 坞.boundingBox())!
+      return Math.round(b.x + b.width)
+    })
+    .toBeLessThanOrEqual(1000)
+  for (const 名 of ["搜文件名", "刷新当前文件夹"]) {
+    const 框 = (await 面板.getByRole("button", { name: 名, exact: true }).boundingBox())!
+    expect(框.x + 框.width, `${名} 在窗口外面`).toBeLessThanOrEqual(1000)
+  }
+  // 缝贴着坞此刻的左缘（不是按 720 算出来的位置）
+  const 缝框 = (await page.getByRole("separator", { name: "调整面板宽度" }).boundingBox())!
+  const 坞框 = (await 坞.boundingBox())!
+  expect(Math.abs(缝框.x + 缝框.width / 2 - 坞框.x)).toBeLessThanOrEqual(3)
 })

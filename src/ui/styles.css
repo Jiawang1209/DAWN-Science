@@ -358,6 +358,11 @@ pre {
   left: auto;
   right: -2px;
 }
+/* `side="right"` 的贴边缝贴的是父元素的**左**缘（右坞那条：坞被压窄时它仍在坞的真实边上） */
+.side-sash.edge.lead:not(.horizontal) {
+  right: auto;
+  left: -2px;
+}
 .side-sash.edge.horizontal {
   bottom: -2px;
 }
@@ -4676,6 +4681,8 @@ pre {
 .right-dock {
   display: flex;
   flex-direction: column;
+  /* 占满网格给它的那一列——列被压窄它就窄，内容不许伸出窗口（2026-08-21） */
+  width: 100%;
   min-width: 0;
   min-height: 0;
   border-left: var(--dawn-hairline) solid var(--dawn-stroke-2);

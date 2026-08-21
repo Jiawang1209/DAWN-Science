@@ -715,6 +715,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.downloadsDir ? { downloadsDir: opts.downloadsDir } : {}),
     ...(opts.trashItem ? { trashItem: opts.trashItem } : {}),
     ...(opts.isForeground ? { isForeground: opts.isForeground } : {}),
+    // 提示词增强：用会话此刻的模型问一句
+    askOnce: (目标, req) => nativeRuntime.问一句(目标, req),
     /** **删除也落一条 Run**（批 5 · 不变式 5）。删除不可逆，比上传更该留痕 */
     记一次删除: (connectionId, 路径, 进了废纸篓) => {
       const 那段 = connectionId

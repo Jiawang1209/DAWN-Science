@@ -56,8 +56,8 @@ function 剥指令回显(s: string): string {
 function 剥导语(s: string): string {
   for (const 导 of 导语们) {
     if (s.startsWith(导)) {
-      const 余 = s.slice(导.length).replace(/^[：:\s]*/, "")
-      if (余) return 余.trim()
+      // 只剩一句导语、后面什么都没有 → 这就是空输出，别把导语当结果
+      return s.slice(导.length).replace(/^[：:\s]*/, "").trim()
     }
   }
   return s

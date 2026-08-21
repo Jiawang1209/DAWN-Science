@@ -183,7 +183,8 @@ export function startMockInferenceServer(opts = {}) {
         ? 最后一句.includes('"related"')
           ? JSON.stringify({ related: /相关/.test(最后一句.split("当前输入")[0] ?? ""), reason: "假判定" })
           : 最后一句.includes("isDevIntent")
-            ? JSON.stringify({ isDevIntent: /开发|功能|代码|重构/.test(最后一句.split("对话背景")[0] ?? ""), reason: "假判定" })
+            // 只看「当前输入」那一段——模板的定义文字里本来就有「开发」二字
+            ? JSON.stringify({ isDevIntent: /开发|功能|代码|重构/.test((最后一句.split("当前输入：")[1] ?? "").split("对话背景")[0] ?? ""), reason: "假判定" })
             : JSON.stringify({ relatedDocs: (最后一句.match(/📄 ([^\n]+)/g) ?? []).map((x) => x.slice(2).trim()).filter((p) => /README|相关/.test(p)), hasProjectMap: /目录树|src\//.test(最后一句), codePaths: ["src/"], reason: "假判定" })
         : 增强
           ? 假改写(最后一句)

@@ -40,6 +40,10 @@ import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
 import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
+import { 增强 } from "../enhance/enhance.js"
+import { 忽略目录 } from "../enhance/retrieve.js"
+import { readdir, readFile as 读本地 } from "node:fs/promises"
+import { join as 拼路径, relative as 相对 } from "node:path"
 import { IlinkClient } from "../channels/weixin/ilink.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
@@ -169,6 +173,14 @@ export interface WorkbenchBackendOptions {
   onEnvironmentFrozen?: (sessionId: string, snapshotId: string) => void
   /** 窗口在不在前台（远程助理：人在电脑前就不推通知）。不给 = 不知道 = 照推 */
   isForeground?: () => boolean
+  /**
+   * 用某段会话此刻的模型（或给定 provider + model）问一句（提示词增强，2026-08-21）。
+   * 就是 `NativeRuntime.问一句`；不给 = 这次运行没有 native 运行时，增强操作会如实拒绝。
+   */
+  askOnce?: (
+    目标: { sessionId: string } | { provider: string; model: string },
+    req: { system?: string; user: string; maxTokens: number; signal?: AbortSignal },
+  ) => Promise<{ text: string; model: string }>
   /**
    * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
@@ -386,7 +398,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem, isForeground } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, trashItem, isForeground, askOnce } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -983,6 +995,49 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   })
   const 要设置 = () => {
     if (!settings) throw fault("invalid_request", "本次运行没有设置存储，接不了微信")
+  }
+
+  /* ── 提示词增强的工作区读法：本地走 fs，远端走那台机器的 find / cat ── */
+  const 增强中 = new Map<string, AbortController>()
+  async function 列工作区(rec: { workspace: string; connectionId?: string | undefined; remoteCwd?: string | undefined }, 后缀: RegExp, 最深: number): Promise<string[]> {
+    if (rec.connectionId) {
+      const ex = 远端().manager.executorOf(rec.connectionId)
+      if (!ex) throw new Error("服务器没连着")
+      const 根 = rec.remoteCwd ?? rec.workspace
+      const 排除 = [...忽略目录].map((d) => `-name ${JSON.stringify(d)} -prune -o`).join(" ")
+      const r = await ex.exec(`find . -maxdepth ${最深} \( ${排除} -type f -print \) 2>/dev/null | head -2000`, { cwd: 根, timeoutSec: 5 })
+      return r.stdout
+        .split("\n")
+        .map((l) => l.replace(/^\.\//, ""))
+        .filter((l) => l && 后缀.test(l))
+    }
+    const 出: string[] = []
+    const 走 = async (dir: string, 深: number) => {
+      if (深 > 最深 || 出.length >= 2000) return
+      let 条: import("node:fs").Dirent[]
+      try {
+        条 = await readdir(dir, { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const d of 条) {
+        const 全 = 拼路径(dir, d.name)
+        if (d.isDirectory()) {
+          if (!忽略目录.has(d.name)) await 走(全, 深 + 1)
+        } else if (后缀.test(d.name)) 出.push(相对(rec.workspace, 全))
+      }
+    }
+    await 走(rec.workspace, 1)
+    return 出
+  }
+  async function 读工作区(rec: { workspace: string; connectionId?: string | undefined; remoteCwd?: string | undefined }, p: string): Promise<string> {
+    if (rec.connectionId) {
+      const ex = 远端().manager.executorOf(rec.connectionId)
+      if (!ex) throw new Error("服务器没连着")
+      const 根 = rec.remoteCwd ?? rec.workspace
+      return (await ex.readFile(`${根.replace(/\/$/, "")}/${p}`)).toString("utf8").slice(0, 200_000)
+    }
+    return (await 读本地(拼路径(rec.workspace, p), "utf8")).slice(0, 200_000)
   }
 
   const backend: WorkbenchBackend = {
@@ -2630,6 +2685,59 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         throw fault("conflict", err instanceof Error ? err.message : String(err))
       }
+    },
+
+    /* ── 提示词增强（7.15） ── */
+    enhancePrompt: async ({ text, mode, sessionId, requestId }) => {
+      if (!askOnce) throw fault("invalid_request", "这次运行没有 native 运行时，做不了提示词增强")
+      const rec = sessionId ? sessions.get(sessionId) : undefined
+      if (sessionId && !rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      const kind = rec ? registry.agents[rec.agentId]?.kind : undefined
+      if (rec && kind !== "native") throw fault("invalid_request", "这段会话的模型不在我们手里（ACP / CLI），增强只对 API 会话可用")
+      // 没会话（空态屏）：用配置里第一个 native agent 的模型
+      const 目标 = rec
+        ? { sessionId: rec.id }
+        : (() => {
+            const first = Object.values(registry.agents).find((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
+            if (!first) throw fault("invalid_request", "配置里没有 API 模型，做不了增强")
+            return { provider: first.provider, model: first.model }
+          })()
+      const 控 = new AbortController()
+      增强中.set(requestId, 控)
+      const 超时 = setTimeout(() => 控.abort(), mode === "basic" ? 30_000 : mode === "standard" ? 60_000 : 90_000)
+      let 用的模型 = ""
+      try {
+        const r = await 增强(text, mode, {
+          问: async (req) => {
+            const a = await askOnce(目标, { ...req, signal: 控.signal })
+            用的模型 = a.model
+            return a.text
+          },
+          历史: async () =>
+            rec
+              ? events
+                  .peekItems(rec.id)
+                  .filter((i): i is Extract<typeof i, { type: "turn" }> => i.type === "turn" && i.final && i.text.trim() !== "")
+                  .map((i) => ({ who: i.who, text: i.text }))
+              : [],
+          列文件: async (后缀, 最深) => (rec ? 列工作区(rec, 后缀, 最深) : []),
+          读文件: async (p) => (rec ? 读工作区(rec, p) : ""),
+          signal: 控.signal,
+        })
+        return { text: r.text, usedContext: r.usedContext, ...(r.note ? { note: r.note } : {}), model: 用的模型 }
+      } catch (e) {
+        if (控.signal.aborted) throw fault("invalid_request", 增强中.has(requestId) ? "增强超时了，这次没改" : "已取消")
+        throw fault("internal_error", e instanceof Error ? e.message : String(e))
+      } finally {
+        clearTimeout(超时)
+        增强中.delete(requestId)
+      }
+    },
+    cancelEnhance: async ({ requestId }) => {
+      const 控 = 增强中.get(requestId)
+      增强中.delete(requestId)
+      控?.abort()
+      return { ok: true as const }
     },
 
     /* ── 远程助理 · 微信 ── */

@@ -158,6 +158,11 @@ export class SessionTranscripts {
     }
   }
 
+  /** 此刻的转录条目，**不订阅、不改状态**（提示词增强读对话历史用）。没追踪的回空 */
+  peekItems(sessionId: SessionId): readonly TranscriptItem[] {
+    return this.entries.get(sessionId)?.items ?? []
+  }
+
   /** 每一段会话、每一条更新，**不看订没订**。通知用 */
   onAnyUpdate(cb: (u: SessionUpdate) => void): () => void {
     this.全听.add(cb)

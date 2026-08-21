@@ -2989,31 +2989,34 @@ export function AgentPill({
           <div className="new-group">
           <p className="agent-menu-head">{t("新建会话，用哪个 LLM：")}</p>
           {/**
-            * **按 API / ACP / CLI 分组，组内按字母**（2026-08-21 作者要的：
-            * *「现在太乱了」*）。组头写的是那一路的名字；每条后面那颗 `kind` 标记
-            * 因此不必再画——组头已经说了。
+            * **排法按类归拢、组内按字母，但不画组头**（2026-08-21 作者定的）。
+            * 作者先说「太乱了，要分类」，看到组头之后改口：*「还是想以前一样，
+            * 模型后面是类型，不用明确的搞出分类。」* 所以标记留在每一条后面
+            * （2026-08-19 他要的），分类只体现在**顺序**上：API → ACP → CLI，组内字母序。
             */}
-          {按类分组(agents, (id) => agentKind?.(id), (id) => (label ? label(id) : id)).map((组) => (
-            <div key={组.kind} className="agent-kind-group">
-              <p className="model-group-head">{组.kind === "其它" ? t("其它") : KIND_LABEL[组.kind]}</p>
-              <ul>
-                {组.agentIds.map((a) => (
-                  <li key={a}>
-                    <Row
-                      role="menuitem"
-                      onClick={() => {
-                        setOpen(false)
-                        onPick(a)
-                      }}
-                    >
-                      <span className="name">{label ? label(a) : a}</span>
-                      {a === current ? <span className="hint">{t("当前")}</span> : null}
-                    </Row>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <ul>
+            {按类分组(agents, (id) => agentKind?.(id), (id) => (label ? label(id) : id))
+              .flatMap((组) => 组.agentIds)
+              .map((a) => (
+                <li key={a}>
+                  <Row
+                    role="menuitem"
+                    onClick={() => {
+                      setOpen(false)
+                      onPick(a)
+                    }}
+                  >
+                    <span className="name">{label ? label(a) : a}</span>
+                    {/* **每一条都标出它是哪一路**（2026-08-19 作者要的）：挑之前才是需要知道的时候 */}
+                    {(() => {
+                      const k = agentKind?.(a)
+                      return k ? <span className="kind">{KIND_LABEL[k]}</span> : null
+                    })()}
+                    {a === current ? <span className="hint">{t("当前")}</span> : null}
+                  </Row>
+                </li>
+              ))}
+          </ul>
           </div>
           {/**
             * **底一条把「这里没有我要的」接到「去哪加一个」**（2026-08-13）。

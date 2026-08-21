@@ -3616,9 +3616,6 @@ pre {
 }
 .model-list { list-style: none; margin: 0; padding: 0; }
 .model-group + .model-group { margin-top: var(--dawn-space-2); }
-/* 挑 LLM 那张单子里按 API / ACP / CLI 分的组（2026-08-21） */
-.agent-kind-group > ul { list-style: none; margin: 0; padding: 0; }
-.agent-kind-group + .agent-kind-group { margin-top: var(--dawn-space-2); }
 .model-group > ul { list-style: none; margin: 0; padding: 0; }
 /** 组头说的是「哪家」：合并成一颗之后，这是唯一说得出它的地方 */
 .model-group-head {

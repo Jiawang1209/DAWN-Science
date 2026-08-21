@@ -6,7 +6,8 @@
  * **CSP 尤其**：`img-src` 少写一个 `data:`，图就是一个空框，
  * 而所有单元测试照样全绿。
  */
-import { test, expect, 进坞 } from "./fixtures.js"
+import { test, expect, 进坞, 在项目里开会话 } from "./fixtures.js"
+import { tmpdir } from "node:os"
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -301,4 +302,48 @@ test("**树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住*
   await expect.poll(async () => Math.round((await 树.boundingBox())!.width)).toBe(Math.round(拖后宽))
   const 存的高 = await page.evaluate(() => localStorage.getItem("dawn.global.file-tree-height"))
   expect(Math.abs(Number(存的高) - 拖后高)).toBeLessThan(3)
+})
+
+/**
+ * **树的记忆**（2026-08-21，学自 DSH-better-sidebar 的会话级状态）：展开过的目录、选中的文件，
+ * 切到别的项目再切回来照样在。此前树靠 key 重挂，一切换全塌——而「agent 在改你的文件，
+ * 你切个会话再切回来」是最常见的动作。
+ */
+test("**切走再切回来，树还展开着、文件还选着**", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  mkdirSync(join(workspace, "深", "更深"), { recursive: true })
+  writeFileSync(join(workspace, "深", "更深", "目标.md"), "# 目标\n")
+  const 乙 = join(tmpdir(), `dawn-tree-memory-乙-${process.pid}`)
+  mkdirSync(乙, { recursive: true })
+  writeFileSync(join(乙, "别的.md"), "# 别的\n")
+
+  // 在项目甲（夹具的 workspace）里开会话，打开文件面板，展开两层、选中目标
+  await 在项目里开会话(page)
+  await 进坞(page, "文件")
+  const 树 = page.locator(".file-tree")
+  await 树.getByRole("button", { name: /^深$/ }).click()
+  await 树.getByRole("button", { name: /^更深$/ }).click()
+  await 树.getByRole("button", { name: /目标\.md/ }).click()
+  await expect(page.locator(".file-preview")).toContainText("目标", { timeout: 30_000 })
+
+  // 切到项目乙：树换成乙的，目标不在
+  await page.evaluate(async (ws) => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { agents?: { agentId: string }[] } }> } }
+    const p = await w.dawn.invoke("getProviders", {})
+    await w.dawn.invoke("createTask", { agentId: p.data?.agents?.[0]?.agentId, workspace: ws })
+  }, 乙)
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(2, { timeout: 30_000 })
+  // 项目名单 5 s 一拉；等它知道乙这个项目再点（点了靠它找 projectId）
+  await page.waitForTimeout(5_500)
+  await page.locator(".proj-list .proj-item .row", { hasText: "dawn-tree-memory-乙" }).click()
+  await page.locator(".proj-session-list .sess-item .row").first().click()
+  await expect(树.getByRole("button", { name: /别的\.md/ })).toBeVisible({ timeout: 30_000 })
+  await expect(树.getByRole("button", { name: /目标\.md/ })).toHaveCount(0)
+
+  // 切回甲：两层还展开着、目标还选着、预览还是它
+  await page.locator(".proj-list .proj-item .row", { hasText: "workspace" }).click()
+  await page.locator(".proj-session-list .sess-item .row").first().click()
+  await expect(树.getByRole("button", { name: /目标\.md/ }), "切回来树塌了").toBeVisible({ timeout: 30_000 })
+  await expect(树.locator(".tree-row.active", { hasText: "目标.md" })).toHaveCount(1)
+  await expect(page.locator(".file-preview")).toContainText("目标")
 })

@@ -43,6 +43,13 @@
 
 ## 变更日志
 
+### 2026-08-21 — 坞打磨 ①：文件树的记忆——展开过的目录、选中的文件，切走再切回来不塌
+
+- **Type**: feat
+- **Motivation**: 学自 `omdsh-dev/DSH-better-sidebar`（MIT，解读在 `ccb_hive_code_learn/DSH-better-sidebar-解读.md`）的「会话级状态 + 读回时清洗」。此前展开状态住在每个 `DirNode` 自己的 `useState`，树靠 key 重挂，一切换项目 / 远端全塌——而「agent 在改你的文件，你切个会话再切回来」是最常见的动作。
+- **What**: `src/ui/state/files-memory.ts`：按「这棵树是谁的」记（`dawn.files.<身份>.memory`，身份与 `文件面板身份` 同口径），**读回逐字段清洗**（只拒 `..`；远端的根与展开项是绝对路径，不能拒 `/`；根默认展开、人收起了记 `rootClosed`；最多 300 个目录），**写按键各自防抖 200 ms、同一引用不写**。`DirNode` / `FilesView` 的展开状态可由外面给（`展开` / `onToggle`），不给退回旧行为。`App.tsx` 按身份读写、切换时把选中的文件也带回来。顺手：后台 5 s 轮询也拉项目名单——点别的项目里的任务时靠它找 projectId，名单旧了切不过去（e2e 抓到的）。
+- **Verification**: `tests/ui/files-memory` 3 条；e2e `files`「切走再切回来，树还展开着、文件还选着」（两层目录 + 选中 + 切到另一个项目再切回）；files / remote-connections / project-bulk / visual 全绿；`tests/ui` 483 全绿。
+
 ### 2026-08-21 — 增强按钮与档位合成一颗
 
 - **Type**: fix

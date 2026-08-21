@@ -60,6 +60,7 @@ import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态 } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
+import { 读记忆, 记记忆, type FilesMemory } from "./state/files-memory.js"
 import type { EnhanceMode, EnhanceOutcome } from "./enhance.js"
 import {
   AgentSkillsView,
@@ -297,6 +298,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const id = setInterval(() => {
       void loadTasks(client)
       void loadTempSessions(client)
+      // 项目也要拉：点别的项目里的任务时靠这份名单找 projectId，名单旧了就切不过去
+      void loadProjects(client)
     }, 5_000)
     return () => clearInterval(id)
   }, [client])
@@ -2371,6 +2374,43 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
 
   /**
+   * **这棵树的记忆**（2026-08-21）：展开过哪些目录、选中的是哪个文件，按身份记在 localStorage，
+   * 切走再切回来照样在（此前树靠 key 重挂，一切换全塌）。读回来经过清洗；写是防抖的。
+   */
+  const 树根 = 文件所在?.cwd ?? ""
+  const [树记忆, 设树记忆] = useState<FilesMemory>(() => 读记忆(文件面板身份, 树根))
+  const 树记忆身份 = useRef(文件面板身份)
+  useEffect(() => {
+    if (树记忆身份.current === 文件面板身份) return
+    树记忆身份.current = 文件面板身份
+    const m = 读记忆(文件面板身份, 树根)
+    设树记忆(m)
+    // 选中的那个文件也跟着回来——**没有就清掉**，不把上一棵树的文件留在预览里
+    if (m.selected) openFile(m.selected)
+    else {
+      setFilePath(undefined)
+      setFileContent(undefined)
+    }
+  }, [文件面板身份, 树根, openFile])
+  useEffect(() => {
+    记记忆(文件面板身份, 树记忆, 树根)
+  }, [文件面板身份, 树记忆, 树根])
+  const 展开集合 = useMemo(() => new Set(树记忆.expanded), [树记忆.expanded])
+  const 切展开 = useCallback(
+    (path: string, open: boolean) =>
+      设树记忆((前) => {
+        const 有 = 前.expanded.includes(path)
+        if (有 === open) return 前
+        return { ...前, expanded: open ? [...前.expanded, path] : 前.expanded.filter((p) => p !== path && !p.startsWith(`${path}/`)) }
+      }),
+    [],
+  )
+  // 选中的文件变了就记下（只记相对路径，绝对的是远端那条线的事）
+  useEffect(() => {
+    设树记忆((前) => (前.selected === filePath ? 前 : filePath ? { ...前, selected: filePath } : (({ selected: _, ...rest }) => rest)(前)))
+  }, [filePath])
+
+  /**
    * 文件那一片**只有一份实现，两个摆法**（2026-08-19）。
    *
    * 坞窄的时候上下摞（树在上、预览在下）；**拉宽之后横着分两栏——
@@ -2445,6 +2485,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           if (传输?.id) void client.get("cancelTransfer", { transferId: 传输.id })
         }}
         selected={filePath}
+        展开={展开集合}
+        onToggle={切展开}
         content={fileContent}
         loadDir={loadDir}
         onSelect={openFile}

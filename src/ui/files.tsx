@@ -113,6 +113,8 @@ function DirNode({
   onDelete,
   onDrop,
   刷新令牌,
+  展开,
+  onToggle,
 }: {
   path: string
   name: string
@@ -134,8 +136,21 @@ function DirNode({
    * 现在它进 effect 的依赖：**展开状态是这一层自己的 `useState`，不动它**。
    */
   刷新令牌?: number | undefined
+  /**
+   * **展开状态由外面给**（2026-08-21）：此前住在每个节点自己的 `useState` 里，树一重挂全塌。
+   * 现在是一张按路径记的表，面板切走再切回来照样展开着（`state/files-memory.ts`）。
+   * 不给就退回旧行为（根展开、别的收着）。
+   */
+  展开?: ReadonlySet<string> | undefined
+  onToggle?: ((path: string, open: boolean) => void) | undefined
 }) {
-  const [open, setOpen] = useState(depth === 0)
+  const [自开, 设自开] = useState(depth === 0)
+  const open = 展开 ? 展开.has(path) : 自开
+  const setOpen = (f: (v: boolean) => boolean) => {
+    const 下 = f(open)
+    if (展开 && onToggle) onToggle(path, 下)
+    else 设自开(下)
+  }
   /** 有东西悬在这一行上。**放置高亮**——不给的话人不知道会落到哪个目录 */
   const [悬着, 设悬着] = useState(false)
   const [listing, setListing] = useState<Listing | undefined>(undefined)
@@ -252,6 +267,8 @@ function DirNode({
                   {...(刷新令牌 === undefined ? {} : { 刷新令牌 })}
                   {...(onDelete ? { onDelete } : {})}
                   {...(onDrop ? { onDrop } : {})}
+                  {...(展开 ? { 展开 } : {})}
+                  {...(onToggle ? { onToggle } : {})}
                 />
               ) : (
                 <li key={e.name}>
@@ -627,6 +644,8 @@ export function FilesView({
   铺开,
   onExpand,
   onShrink,
+  展开,
+  onToggle,
 }: {
   selected: string | undefined
   content: FileContent | undefined
@@ -703,6 +722,9 @@ export function FilesView({
    * 而这里真正不同的只有一件事——横着还是竖着。
    */
   铺开?: boolean
+  /** 展开状态与切换（按路径记，面板外面持有；见 `DirNode.展开`） */
+  展开?: ReadonlySet<string> | undefined
+  onToggle?: ((path: string, open: boolean) => void) | undefined
   /**
    * 「加宽」那颗按钮。**给了才画**——已经宽了的那一份不给：
    * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
@@ -879,6 +901,8 @@ export function FilesView({
             刷新令牌={合令牌}
             {...(onDeleteDir ? { onDelete: onDeleteDir } : {})}
             {...(onDropUpload ? { onDrop: onDropUpload } : {})}
+            {...(展开 ? { 展开 } : {})}
+            {...(onToggle ? { onToggle } : {})}
           />
         </ul>
       </nav>

@@ -162,6 +162,7 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
         kernelInstanceId: snap.kernelInstanceId,
         configOptions: snap.configOptions,
         pendingPermission: snap.pendingPermission,
+        team: snap.team,
       })
       c.expectRevision(sessionId, snap.revision)
     })

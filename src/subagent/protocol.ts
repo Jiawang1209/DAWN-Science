@@ -36,6 +36,18 @@ export interface SubagentChildSpec {
   modelsPath?: string
   /** provider → apiKey。**只走这里，不进环境变量** */
   credentials?: Record<string, string>
+  /**
+   * **团队成员模式**（team-board，2026-08-22）。给了就：
+   * - 会话记录落在 `sessionDir`，`resume` 为真时**续上一轮的会话文件**（同一个成员下一轮还记得上一轮）——
+   *   进程仍是新的，不变式 1 不变；
+   * - 多两个工具 `team_send` / `team_status`，走 stdout 上的 `call` 行、stdin 上的 `reply` 行与父进程说话。
+   */
+  member?: {
+    team: string
+    name: string
+    sessionDir: string
+    resume: boolean
+  }
 }
 
 /**
@@ -45,9 +57,27 @@ export interface SubagentChildSpec {
  * （界面的 chip 组要显示子 agent 正在调什么工具），
  * **那时加一个成员即可，不必改父侧的解析形状**。
  */
-export type SubagentChildMessage =
+export type SubagentDoneMessage =
   | { type: "done"; ok: true; output: string }
   | { type: "done"; ok: false; error: string }
+
+/** 成员模式：一次工具调用，等父进程回一行 `reply` */
+export interface SubagentCallMessage {
+  type: "call"
+  id: string
+  name: string
+  params: unknown
+}
+
+export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage
+
+/** 父 → 子（只在成员模式）：工具调用的回应，一行一条 */
+export interface SubagentParentReply {
+  type: "reply"
+  id: string
+  ok: boolean
+  result: string
+}
 
 /** 子进程的环境变量。**只有这一个**，其余一律走 stdin */
 export const RUN_AS_NODE = "ELECTRON_RUN_AS_NODE"

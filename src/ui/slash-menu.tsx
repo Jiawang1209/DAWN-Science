@@ -17,7 +17,7 @@ export function 在打斜杠(draft: string): boolean {
 }
 
 export function 斜杠选完(item: SlashItem): string {
-  return item.kind === "skill" ? `/skill:${item.name} ` : `用子 agent「${item.name}」来做：`
+  return item.kind === "skill" ? `/skill:${item.name} ` : item.kind === "team" ? "/team " : `用子 agent「${item.name}」来做：`
 }
 
 export function 筛斜杠(items: readonly SlashItem[], draft: string): SlashItem[] {
@@ -63,9 +63,9 @@ export function SlashMenu({
           onMouseEnter={() => onHover(i)}
           onClick={() => onPick(x)}
         >
-          <span className="slash-kind tag">{x.kind === "skill" ? t("技能") : t("子 agent")}</span>
+          <span className="slash-kind tag">{x.kind === "skill" ? t("技能") : x.kind === "team" ? t("团队") : t("子 agent")}</span>
           <span className="slash-name">{x.title ?? x.name}</span>
-          {x.title ? <span className="slash-slug">{x.kind === "skill" ? `/skill:${x.name}` : x.name}</span> : x.kind === "skill" ? <span className="slash-slug">{`/skill:${x.name}`}</span> : null}
+          {x.title ? <span className="slash-slug">{x.kind === "skill" ? `/skill:${x.name}` : x.kind === "team" ? "/team" : x.name}</span> : x.kind === "skill" ? <span className="slash-slug">{`/skill:${x.name}`}</span> : null}
           <span className="slash-desc">{x.description}</span>
         </Button>
       ))}

@@ -8,7 +8,7 @@
  * 并由 `guard()` 保证飞行中的旧请求不会把内容倒灌回来。
  */
 import { atom } from "nanostores"
-import type { TranscriptItem } from "../../protocol/index.js"
+import type { TranscriptItem, TeamSnapshot } from "../../protocol/index.js"
 import { sameList, setList, setValue, shallowEqual } from "./identity.js"
 import { invalidate } from "./guard.js"
 
@@ -65,6 +65,8 @@ export function applySnapshot(snap: {
   pendingPermission?: 待答的权限 | undefined
   /** 这一段可以调的开关（A3）。**缺省 = 这条运行时没有这回事** */
   configOptions?: readonly 会话开关[] | undefined
+  /** 这段会话的团队（team-board）。缺省 = 没建过 */
+  team?: TeamSnapshot | undefined
 }): void {
   setItems(snap.items)
   const term = snap.terminal ? [snap.terminal] : []
@@ -73,6 +75,7 @@ export function applySnapshot(snap: {
   setValue($kernelInstanceId, snap.kernelInstanceId)
   $待答权限.set(snap.pendingPermission)
   $会话开关.set(snap.configOptions)
+  $团队.set(snap.team)
 }
 
 /** 一次还没结果的权限询问（A2）。**选项原样来自 agent** */
@@ -108,6 +111,11 @@ export interface 会话开关 {
  * **缺省 = 这条运行时没有这回事**，界面据此不画那个菜单。
  */
 export const $会话开关 = atom<readonly 会话开关[] | undefined>(undefined)
+/** 当前会话的团队快照（team-board，2026-08-22）。作用域 = 正在看的那一段；切会话清掉 */
+export const $团队 = atom<TeamSnapshot | undefined>(undefined)
+export function setTeam(t: TeamSnapshot | undefined): void {
+  $团队.set(t)
+}
 
 /**
  * **当前**内核实例的身份（②-A · K5 · S13）。
@@ -141,5 +149,6 @@ export function resetTranscript(): void {
   $待答权限.set(undefined)
   // 开关也跟着走：切到另一段会话，那颗菜单里的选项本来就不是它的
   $会话开关.set(undefined)
+  $团队.set(undefined)
   invalidate()
 }

@@ -285,6 +285,8 @@ export type AgentEvent =
       /** 失败原因。**`ok` 为 false 时必须有**——不带原因的失败等于没报 */
       error?: string
     }
+  /** 这段会话的团队变了（team-board，2026-08-22）。整份快照；真相在磁盘，这只是搬一份给界面 */
+  | { kind: "team_changed"; sessionId: SessionId; team: import("../protocol/events.js").TeamSnapshot }
   /**
    * **一整轮真正结束**（用户发话 → 若干次模型响应与工具执行 → 收工）。
    *

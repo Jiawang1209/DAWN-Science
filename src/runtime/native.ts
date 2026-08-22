@@ -19,7 +19,7 @@
 import { 读调用策略 } from "../skills/invocation.js"
 import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
 import { dirname } from "node:path"
-import { mkdirSync, readFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import {
   createAgentSession,
@@ -57,6 +57,8 @@ import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
+import { 团队调度器 } from "../team/scheduler.js"
+import { createTeamTools, 队长协议 } from "../team/tools.js"
 import { 描述图片 } from "./vision.js"
 import { createMcpTools } from "../tools/mcp-tool.js"
 import type { 对话内核 } from "../kernel/挂载.js"
@@ -584,6 +586,23 @@ export class NativeRuntime implements AgentRuntime {
    * 但那条 Run 没有 `files_written`。按不变式 5 的规矩，
    * **缺省读作「不知道」，这正是此刻的实情。**
    */
+  /** 目录里每个 provider 的 api key（读得到的那些），递给子进程。OAuth 类的凭证不递——子进程没法刷新 */
+  private async 子进程凭证(): Promise<Record<string, string> | undefined> {
+    const store = this.opts.credentials
+    if (!store) return undefined
+    const out: Record<string, string> = {}
+    const providers = [...new Set((await this.runtime()).getModels().map((m) => m.provider))]
+    for (const p of providers) {
+      try {
+        const c = await store.read(p)
+        if (c && c.type === "api_key" && c.key) out[p] = c.key
+      } catch {
+        // 读不到就不递；子进程会照 pi 的缺省路径再找一次
+      }
+    }
+    return Object.keys(out).length ? out : undefined
+  }
+
   private toolsFor(
     spec: SessionSpec,
     native: { provider: string; model: string },
@@ -599,6 +618,8 @@ export class NativeRuntime implements AgentRuntime {
      * 收图的模型不给 `look_at_image`——它自己能看，多一个工具只会让它绕路。
      */
     模型收图 = true,
+    /** 递给子进程的 api key（provider → key）；见 `子进程凭证` */
+    子进程凭证?: Record<string, string>,
   ): unknown[] | undefined {
     const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
 
@@ -690,6 +711,7 @@ export class NativeRuntime implements AgentRuntime {
         ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
         // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）
         agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
+        ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
       },
     })
 
@@ -702,7 +724,57 @@ export class NativeRuntime implements AgentRuntime {
      * 只改上面那条的话，**单测全绿而应用里一个字都没记**。
      * 同一个坑本仓库踩过一次（退役的那个数据工具）。
      */
-    return [...(base ?? []), ...观察过的外部, tool]
+    /**
+     * 团队（team-board，2026-08-22，学自 dsh-agent-teams）：队长的 7 个工具，坐在 `subagent` 旁边。
+     * 一个会话一份调度器（冷却、跑着的成员在它身上），成员各自一个子进程、各自可续的会话目录；
+     * 每一轮都发 `subagent_start/end`——账本照样一条 Run，对话流照样一组 chip（toolCallId = `team:<id>`）。
+     */
+    const 定义 = () => {
+      return loadSubagentsFrom(this.子agent层(spec.workspace)).agents.filter((a) => !a.disabled)
+    }
+    let 团队轮序 = 0
+    const 调度器 = new 团队调度器({
+      sessionDir: spec.sessionDir,
+      定义,
+      跑: {
+        childOf: () => ({ command: process.execPath, args: [entry], env: { [RUN_AS_NODE]: "1" } }),
+        context: {
+          provider: native.provider,
+          model: native.model,
+          cwd: spec.workspace,
+          ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
+          ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
+        },
+      },
+      onChange: (team) => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: team as never }),
+      onTurn: (e) => {
+        const toolCallId = `team:${e.team.id}`
+        if (e.phase === "start") {
+          this.emit({ kind: "subagent_start", sessionId: spec.sessionId, toolCallId, index: 团队轮序++, agent: `${e.member}${e.taskId ? ` · ${e.taskId}` : ""}`, task: e.taskId ?? "消息" })
+        } else {
+          this.emit({ kind: "subagent_end", sessionId: spec.sessionId, toolCallId, index: 团队轮序 - 1, ok: e.ok ?? false, ...(e.error ? { error: e.error } : {}) })
+        }
+      },
+    })
+    const 当前团队 = { id: 读当前团队(spec.sessionDir) }
+    const 团队工具 = createTeamTools({
+      sessionId: spec.sessionId,
+      调度器,
+      定义,
+      当前: { get: () => 当前团队.id, set: (id) => { 当前团队.id = id; 记当前团队(spec.sessionDir, id) } },
+      已知模型: async () => (await this.runtime()).getModels().map((m) => ({ provider: m.provider, model: m.id })),
+    })
+    // 会话重开时把团队快照推一遍：界面那一格才知道它还在
+    if (当前团队.id) {
+      try {
+        const t = 调度器.读(当前团队.id)
+        queueMicrotask(() => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: t as never }))
+      } catch {
+        当前团队.id = undefined
+      }
+    }
+
+    return [...(base ?? []), ...观察过的外部, tool, ...团队工具]
   }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {
@@ -766,6 +838,13 @@ export class NativeRuntime implements AgentRuntime {
       }
     }
 
+    /**
+     * **子进程要带上 key**（2026-08-22 作者实测抓的：团队成员报「No API key found for deepseek」）。
+     * 父会话的凭证在钥匙串里，子进程是新进程，pi 只会去找 `~/.pi/auth.json` 与环境变量——
+     * 这条通道（`spec.credentials`）一直在，只是从来没人填。`subagent` 工具同样受益。
+     * e2e 的假模型不要 key，所以它没抓到。
+     */
+    const 子进程凭证 = await this.子进程凭证()
     const customTools = this.toolsFor(
       spec,
       native,
@@ -773,6 +852,7 @@ export class NativeRuntime implements AgentRuntime {
       // **缺失不等于不收**：目录没写 `input` 时当它收图，宁可少给一个工具
       // 也不给收图的模型塞一个绕路的（`writeWithImages` 的「明确不收」同一口径）
       !(Array.isArray(model.input) && !model.input.includes("image")),
+      子进程凭证,
     )
 
     /**
@@ -844,6 +924,8 @@ export class NativeRuntime implements AgentRuntime {
       },
       appendSystemPromptOverride: (base) => [
         ...base,
+        // 队长协议（team-board）：模型不知道该怎么分工，就不会分工
+        ...(this.opts.subagentChildEntry ? [队长协议] : []),
         `You are currently running on the model "${当前模型}". ` +
           `If the user asks which model you are, answer with exactly this. ` +
           `Do not guess from environment variables or from earlier turns — ` +
@@ -1851,5 +1933,23 @@ ${描述}`
     s.session.dispose()
     this.sessions.delete(sessionId)
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
+  }
+}
+
+/** 当前活着的团队 id 记在会话目录里的一行文件——重开会话还接得上 */
+function 读当前团队(sessionDir: string): string | undefined {
+  try {
+    const v = readFileSync(join(sessionDir, "teams", "current"), "utf8").trim()
+    return v || undefined
+  } catch {
+    return undefined
+  }
+}
+function 记当前团队(sessionDir: string, id: string | undefined): void {
+  try {
+    mkdirSync(join(sessionDir, "teams"), { recursive: true })
+    writeFileSync(join(sessionDir, "teams", "current"), id ?? "", "utf8")
+  } catch (e) {
+    console.error("[团队] 记不住当前团队：", e instanceof Error ? e.message : String(e))
   }
 }

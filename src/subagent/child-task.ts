@@ -7,7 +7,7 @@
  * 拆开的理由是可测：真跑 pi 要有模型、凭证与网络，而这里要验的全是**边界行为**
  * （空输出、报错、异常），那些恰恰是真会话里最难稳定复现的。
  */
-import type { SubagentChildMessage, SubagentChildSpec } from "./protocol.js"
+import type { SubagentDoneMessage, SubagentChildSpec } from "./protocol.js"
 
 /** 本层需要 pi 会话的**全部**能力。窄到这个程度，假实现才写得出来 */
 export interface ChildPiSession {
@@ -28,7 +28,7 @@ interface PiEventShape {
 export async function runChildTask(
   spec: SubagentChildSpec,
   createSession: ChildSessionFactory,
-): Promise<SubagentChildMessage> {
+): Promise<SubagentDoneMessage> {
   let session: ChildPiSession
   try {
     session = await createSession(spec)
@@ -70,6 +70,14 @@ export async function runChildTask(
    * **基于一段并不存在的结论**去做计划，而它看不出这段结论是空的。
    */
   if (!text.trim()) {
+    /**
+     * **团队成员例外**（2026-08-22 作者实测定的）：成员常把意见写进文件、最后一句没说话——
+     * 那是做完了，不是失败。记成完成、但结果里明说「没有文字结果」，下游引用它时看到的是实话，队长知道去核文件。
+     * chain 模式仍然算失败：上一步空结果往下传等于编造，那条理由没变。
+     */
+    if (spec.member) {
+      return { type: "done", ok: true, output: `（成员「${spec.member.name}」这一轮没有给出文字结果。它应当已把产物写进了文件——核对产物后再用，别把这句当结论。）` }
+    }
     return done(false, `子 agent "${spec.agent}" 跑完了，但没有产生任何输出`)
   }
 
@@ -82,7 +90,7 @@ function withPartial(reason: string, partial: string): string {
   return t ? `${reason}（已产出的部分：${t}）` : reason
 }
 
-function done(ok: false, error: string): SubagentChildMessage {
+function done(ok: false, error: string): SubagentDoneMessage {
   return { type: "done", ok, error }
 }
 

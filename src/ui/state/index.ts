@@ -30,6 +30,8 @@ export {
   $kernelInstanceId,
   $待答权限,
   $会话开关,
+  $团队,
+  setTeam,
   resetTranscript,
 } from "./transcript.js"
 

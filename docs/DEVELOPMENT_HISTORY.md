@@ -43,6 +43,31 @@
 
 ## 变更日志
 
+### 2026-08-22 — 团队那一格改成卡片；成员空输出不再误判为失败
+
+- **Type**: feat + fix
+- **Motivation**: 作者：「不同的成分用不同的卡片存起来，比较清晰」；实测「子 agent 跑完了但没有产生任何输出」其实是做完了（意见写进了文件）。
+- **What**: 团队头一张卡（名字 · 进度 · 目标 · 一条细进度条）；**一个成员一张卡**（浅底 + 发丝线，卡里不套卡：任务是行、消息是引用行）；在跑的卡左缘一条强调色，已移除的整卡降透明度；共享池 / 队长自己做的各一张、底色更淡；结束的团队成员卡默认收起。成员那一轮**只有报错 / 被杀 / 超时才算失败**：没文字就记完成、结果里明说「没有文字结果，去核文件」（chain 模式仍按老规矩算失败）；成员人设加一句「哪怕写进了文件也要回要点」。
+- **Verification**: `tests/subagent/child-task.test.ts` 加成员例外一条；团队 / 子 agent / 视觉 e2e 绿；两张探针截图（在跑 / 完成）确认。
+
+### 2026-08-22 — 团队：坞里那一格按层次分；子进程带上 key；两个真 bug
+
+- **Type**: fix + feat
+- **Motivation**: 作者实测：① 成员报「No API key found for deepseek」；② 看完面板「太乱了，要分层次」。
+- **What**:
+  - **子进程带 key**：建会话时把目录里每个 provider 的 api key 读出来随规格递给子进程（`spec.credentials` 这条通道一直在、从没人填）。**原来的 `subagent` 工具同样是坏的**——e2e 的假模型不要 key，所以一直没抓到。
+  - 面板按层次：成员（名字 · 人设 · 模型 · 状态）→ 它名下的任务 → 与它有关的消息；队长自己做的、共享池各一组。
+  - 修：自动任务编号撞上显式 id（显式 t1–t3 之后再建一个没 id 的编成了第二个 t1，调度器随即被绊倒、整轮派活中断）；调度器领不了某项时跳过并寄系统消息，不再中断。
+- **Verification**: `tests/team` 23 条；`e2e/team.spec.ts`、`subagent.spec`、视觉绿；探针截图确认 4/4 完成。
+
+### 2026-08-22 — 团队：队长 + 可续聊成员 + 带依赖与 attempt 令牌的任务板（学自 NanmiCoder/dsh-agent-teams）
+
+- **Type**: feat
+- **Motivation**: `subagent` 只有 single / parallel / chain，每个任务一次性、链只能线性；科研的活是 DAG 且同一个「人」常要做第二轮；模型也不知道该怎么分工。作者读完解读：「第一档和第二档我都要」。
+- **What**: `src/team/`——状态机（依赖 / 领取 / attempt 令牌 / 转派 / 邮箱 / 归档，`state.ts`）、一轮的子进程运行器（`runner.ts`）、事件驱动调度器（`scheduler.ts`：送信优先、并发 4、令牌结算、`等变化`）、队长 9 个工具（`tools.ts`，含我们加的 `team_wait`）与队长协议（进系统提示）。**成员可各自指定模型**（作者要的）：`team_create` 成员项可选 `model: provider/model`，建队时对着目录核，缺省跟队长当前模型；优先级 成员 → 子 agent 定义 → 队长。`subagent/child.ts`：stdin 按行读规格、成员模式续会话（`SessionManager.continueRecent`）、两个 RPC 工具 `team_send` / `team_status`。协议 7.22：快照多 `team`、更新多一种 `team`，没有新操作。坞里一格「团队」（`ui/team-panel.tsx`），`/` 菜单第一项「组一支团队」→ `/team `。每一轮发 `subagent_start/end`，账本与对话 chip 不另写。设计定案 `specs/2026-08-22-团队-design.md`。
+- **Impact**: 进程边界不变（不变式 1）：「可续聊」靠同一成员下一轮续它那份会话文件。成员的领取 / 结算由调度器做，不靠模型走仪式。真相在 `<会话目录>/teams/<id>/team.json`。上限 8 成员 / 32 任务 / 并发 4 / 一轮 30 分钟。
+- **Verification**: `tests/team/state.test.ts` 14 条；`tests/team/scheduler.test.ts` 6 条用**真子进程**压依赖、并发、续会话、互发消息、迟到结果被丢、中止；`e2e/team.spec.ts` 假模型建队、两个真成员按依赖跑完、坞 / chip / 磁盘三处对上；全量见提交。
+
 ### 2026-08-22 — 多选时，机器行的勾选框落到时间那一列
 
 - **Type**: fix

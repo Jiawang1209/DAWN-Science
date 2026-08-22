@@ -49,6 +49,7 @@ export interface SubagentActions {
   pickDirectory: () => Promise<string | null>
   问: (req: { title: string; detail: React.ReactNode; confirmLabel: string; altLabel?: string | undefined }) => Promise<"confirm" | "alt" | "cancel">
   hasProject: boolean
+  onChanged?: (() => void) | undefined
 }
 
 /**
@@ -83,6 +84,7 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
       const 说 = await 事()
       if (说) 设回话({ kind: "ok", text: 说 })
       设代((n) => n + 1)
+      actions?.onChanged?.()
     } catch (e) {
       设回话({ kind: "bad", text: e instanceof Error ? e.message : String(e) })
     } finally {
@@ -311,6 +313,8 @@ export interface SkillActions {
   问: (req: { title: string; detail: React.ReactNode; confirmLabel: string; altLabel?: string | undefined }) => Promise<"confirm" | "alt" | "cancel">
   /** 有当前项目才给「导进这个项目」 */
   hasProject: boolean
+  /** 做完一件事（导入 / 删除 / 启停）报一声：侧栏的数要跟着变 */
+  onChanged?: (() => void) | undefined
 }
 
 export interface AgentSkill装载 {
@@ -409,6 +413,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
       const 说 = await 事()
       if (说) 设回话({ kind: "ok", text: 说 })
       设代((n) => n + 1)
+      actions?.onChanged?.()
     } catch (e) {
       设回话({ kind: "bad", text: e instanceof Error ? e.message : String(e) })
     } finally {

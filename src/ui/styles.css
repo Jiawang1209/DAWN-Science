@@ -3510,8 +3510,8 @@ pre {
   transition: transform 120ms ease;
 }
 .remote-head .caret.open { transform: rotate(90deg); }
-/* 远端那一行的计数改用 `.side-count`（2026-08-22）；三角仍在行尾 */
-.remote-head .caret { margin-left: auto; }
+/* 远端那一行的计数改用 `.side-count`（2026-08-22）；三角仍在行尾，占的宽度与会话行的「⋯」一样 */
+.remote-head .caret { margin-left: 0; }
 
 /**
  * 顶部固定区与下面两列之间那条线（2026-08-12，作者要的）。
@@ -3552,11 +3552,20 @@ pre {
   margin-left: var(--dawn-space-3);
   accent-color: var(--dawn-accent);
 }
+/**
+ * 侧栏上的计数**竖排成一列**（2026-08-22 作者要的）：推到行尾，与下面会话行右端的时间那一列对齐。
+ * 会话行的时间右边还有一颗「⋯」，固定入口行没有——所以这里留出同样的一段，数字的右缘才在同一条线上。
+ */
 .side-count {
-  margin-left: 4px;
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
   color: var(--dawn-text-3);
+  font-size: 12px;
 }
+/* 固定入口行没有尾部按钮：留出会话行「⋯」那一段（量出来是 36px），数字右缘才与时间那一列同线 */
+.side-action .side-count { margin-right: 36px; }
+/* 远端那一行尾部是三角（1em 宽）：数字与三角之间留的量 = 36 − 三角宽 */
+.remote-head .side-count { margin-right: 14px; }
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */

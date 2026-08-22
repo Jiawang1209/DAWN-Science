@@ -15,7 +15,8 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   mkdirSync(全局, { recursive: true })
   writeFileSync(join(全局, "my-helper.md"), "---\nname: my-helper\ndescription: 我自己写的帮手\ngroup: 写作与审查\n---\n你是帮手。\n")
 
-  await page.getByRole("button", { name: "子 Agent" }).click()
+  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("23")
+  await page.getByRole("button", { name: /^子 Agent/ }).click()
   const 屏 = page.locator(".skills-page")
   await expect(屏).toContainText("23 个，23 个开着")
   await expect(屏.locator(".skill-row", { hasText: "stat-consultant" })).toContainText("自带")
@@ -37,10 +38,13 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   await expect(行).toContainText("已停用")
   expect(readFileSync(join(全局, "my-helper.md"), "utf8")).toContain("disabled: true")
   await expect(屏).toContainText("23 个，22 个开着")
+  // 侧栏的数跟着动（停用一个 → 22），不用等轮询
+  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("22")
   await 行.getByRole("button", { name: "子 agent 操作：my-helper" }).click()
   await page.getByRole("menu").getByRole("menuitem", { name: "启用" }).click()
   await expect(行).toContainText("已启用")
   expect(readFileSync(join(全局, "my-helper.md"), "utf8")).not.toContain("disabled")
+  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("23")
 })
 
 test("**输入框按 `/`：只有技能与子 agent 的菜单，边打边筛；/skill:名 真把人设送进了模型**", async ({ dawn }) => {

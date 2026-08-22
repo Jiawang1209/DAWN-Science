@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 侧栏计数竖排成一列、与会话行的时间同线；数字动了才重取，不轮询
+
+- **Type**: fix
+- **Motivation**: 作者：个数要竖排对齐，和下面会话行的时间保持一致才好看；不用每 5 秒刷，有增加的时候自然就增加。
+- **What**: `.side-count` 推到行尾（`margin-left: auto`，12px，`text-3`）。会话行的时间右边还有一颗「⋯」，固定入口行没有——`.side-action .side-count` 留 36px、远端那行（尾部是 1em 的三角）留 14px，**量出来**三列右缘都在 204px。App 去掉 5 秒轮询；技能屏 / 子 agent 屏的 `actions.onChanged` 在导入 / 删除 / 启停做完后报一声，App 据此重取；切项目、切屏照旧重取。
+- **Impact**: 视觉基线按纪律看 diff（只有数字的位置与字号、远端三角的位置）后 `=all` 重存、两遍验过。
+- **Verification**: `subagent-roster.spec` 加了「停用一个 → 侧栏 22 → 启用 → 23」的断言；skills / sidebar-layout 共 20 绿；视觉 10 绿 ×2。
+
 ### 2026-08-22 — 侧栏：「Agent Skills」改叫「Skills」；三个计数同一副样子、跟着目录变
 
 - **Type**: fix

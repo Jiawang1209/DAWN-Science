@@ -2706,12 +2706,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     setSlashItems([...技能单, ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) }))])
   }, [技能单, 子agent名册])
-  /** 5 秒一班车也捎上：你往目录里放了新的 .md / SKILL.md，侧栏的数字跟着变（2026-08-22 作者要的） */
+  /**
+   * 侧栏那两个数**动了才重取**（2026-08-22 作者：「不用每五秒刷，有增加的时候自然就增加」）：
+   * 技能屏 / 子 agent 屏做完一件事（导入、删除、启停）报一声，这里 +1；切项目、切屏也重取。
+   */
   const [名册代, 设名册代] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => 设名册代((n) => n + 1), 5_000)
-    return () => clearInterval(id)
-  }, [])
+  const 名册变了 = useCallback(() => 设名册代((n) => n + 1), [])
   useEffect(() => {
     let 还在 = true
     client
@@ -3214,6 +3214,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 pickDirectory: () => client.pickDirectory(默认工作区?.path),
                 问: 问一句,
                 hasProject: Boolean(projectId),
+                onChanged: 名册变了,
               }}
             />
           ) : view === "plugins" ? (

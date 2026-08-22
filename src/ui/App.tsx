@@ -2706,6 +2706,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     setSlashItems([...技能单, ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) }))])
   }, [技能单, 子agent名册])
+  /** 5 秒一班车也捎上：你往目录里放了新的 .md / SKILL.md，侧栏的数字跟着变（2026-08-22 作者要的） */
+  const [名册代, 设名册代] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => 设名册代((n) => n + 1), 5_000)
+    return () => clearInterval(id)
+  }, [])
   useEffect(() => {
     let 还在 = true
     client
@@ -2724,7 +2730,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return () => {
       还在 = false
     }
-  }, [client, projectId, view])
+  }, [client, projectId, view, 名册代])
   const commands = useMemo(
     () =>
       buildCommands({

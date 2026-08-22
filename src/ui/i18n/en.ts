@@ -349,7 +349,7 @@ export const EN: Readonly<Record<string, string>> = {
     "If you get \u201cnot vetted yet\u201d, the permission gate stopped it: turn on \u201cI vetted this server\u201d for that one, or switch the permission mode to allow-all in Settings.",
   "删掉 {0}": "Remove {0}",
   // Agent Skills 与子 Agent 两屏（2026-08-15 拆开的，此前共用「技能」一个词）
-  "Agent Skills": "Agent Skills",
+  "Skills": "Skills",
   "子 Agent": "Subagents",
   "本次运行没有装配技能": "Skills were not assembled for this run",
   "正在读技能": "Reading skills",

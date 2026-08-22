@@ -193,7 +193,7 @@ for (const theme of ["亮色", "暗色"] as const) {
        */
       if (!sidebarCollapsedFor(screen.name)) {
         await expect(page.getByRole("button", { name: /子 Agent/ })).toContainText(/\d/)
-        await expect(page.getByRole("button", { name: /Agent Skills/ })).toContainText(/\d/)
+        await expect(page.getByRole("button", { name: /^Skills/ })).toContainText(/\d/)
       }
 
       /**

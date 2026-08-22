@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 侧栏：「Agent Skills」改叫「Skills」；三个计数同一副样子、跟着目录变
+
+- **Type**: fix
+- **Motivation**: 作者三条：多一个 Agent 没意义；个数要随新加的 skill / 子 agent 变；远端服务器的个数位置与字号要和 Skills 的对齐。
+- **What**: 侧栏行与技能屏标题改「Skills」（e2e 选择器同步）。远端那一行的计数改用 `.side-count`（与「Skills 3」「子 Agent 22」「会话 1」同一个类：名字后 4px、等宽数字、`text-3` 灰），三角退到行尾；`.remote-count` 删掉。两个数字跟 5 秒一班车重取——往目录里放了新的 `.md` / `SKILL.md`，数字跟着变。子 agent 屏上的分组名是 frontmatter 里的内容，标 `data-authored`（i18n 扫描按规矩放过）。
+- **Impact**: 十张视觉基线按纪律看 diff（标签、计数颜色、三角位置，都是这次要的）后 `=all` 重存并再验。
+- **Verification**: skills / sidebar-layout / i18n / remote-connections 60 绿；视觉 10 绿；`tests/ui` 489。
+
 ### 2026-08-22 — 输入框的 `/`：只弹技能与子 agent 的菜单，不再开整个命令面板
 
 - **Type**: fix

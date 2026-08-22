@@ -2928,13 +2928,6 @@ pre {
 .tree-caret.open { transform: rotate(90deg); }
 
 .remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; }
-.remote-count {
-  margin-left: auto;
-  flex: 0 0 auto;
-  font-size: 0.8em;
-  color: var(--dawn-text-3);
-  font-variant-numeric: tabular-nums;
-}
 /* **自己滚，不跟着整条侧栏一起长**：服务器多起来时，
    它不该把下面的「设置」挤出屏幕 */
 .remote-body { max-height: 40vh; overflow-y: auto; padding-bottom: var(--dawn-space-2); }
@@ -3517,7 +3510,8 @@ pre {
   transition: transform 120ms ease;
 }
 .remote-head .caret.open { transform: rotate(90deg); }
-.remote-head .remote-count { margin-left: auto; }
+/* 远端那一行的计数改用 `.side-count`（2026-08-22）；三角仍在行尾 */
+.remote-head .caret { margin-left: auto; }
 
 /**
  * 顶部固定区与下面两列之间那条线（2026-08-12，作者要的）。
@@ -3561,6 +3555,7 @@ pre {
 .side-count {
   margin-left: 4px;
   font-variant-numeric: tabular-nums;
+  color: var(--dawn-text-3);
 }
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。

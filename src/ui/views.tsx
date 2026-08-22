@@ -1848,7 +1848,7 @@ export function SessionSidebar({
         {onShowSkills ? (
           <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
             <技能图标 className="row-icon" />
-            <span className="name">{t("Agent Skills")}</span>
+            <span className="name">{t("Skills")}</span>
             {skillCount !== undefined ? <span className="side-count">{skillCount}</span> : null}
           </Row>
         ) : null}

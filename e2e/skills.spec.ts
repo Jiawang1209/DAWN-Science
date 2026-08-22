@@ -66,7 +66,7 @@ test.describe("自带技能", () => {
 test.describe("两屏", () => {
   test("**Agent Skills 那屏列出了自带的那几个，并说清它们从哪儿来**", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByRole("button", { name: "Skills" }).click()
 
     const 屏 = page.locator(".skills-page")
     await expect(屏).toContainText("dataset-first-look")
@@ -80,7 +80,7 @@ test.describe("两屏", () => {
 
   test("**「往哪儿放」说清三个目录与优先级**", async ({ dawn }) => {
     const { page } = dawn
-    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByRole("button", { name: "Skills" }).click()
     await page.getByText("往哪儿放？").click()
     await expect(page.locator(".mcp-how")).toContainText(/越靠上的那一份赢/)
     // **名字的形状要说**——它与今天那个「中文名让整段对话 400」是同一类
@@ -95,7 +95,7 @@ test.describe("两屏", () => {
     /** 它说的是 `.dawn/agents/`，不是 skills */
     await expect(屏).toContainText(".dawn/agents")
     /** **两个入口都在侧栏上**，而且名字互不为子串 */
-    await expect(page.getByRole("button", { name: "Agent Skills" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Skills" })).toBeVisible()
     await expect(page.getByRole("button", { name: "子 Agent" })).toBeVisible()
   })
 })
@@ -118,7 +118,7 @@ test.describe("管理", () => {
     const { page, dir } = dawn
     const 全局 = join(dir, "skills")
     技能文件(全局, "my-skill")
-    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByRole("button", { name: "Skills" }).click()
     const 屏 = page.locator(".skills-page")
     const 行 = 屏.locator(".skill-row", { hasText: "my-skill" })
     await expect(行).toBeVisible()
@@ -162,7 +162,7 @@ test.describe("导入", () => {
     const { page, dir } = dawn
     const 全局 = join(dir, "skills")
     技能文件(全局, "old-one", "旧\n")
-    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByRole("button", { name: "Skills" }).click()
     await page.getByRole("button", { name: "导入到你写的…" }).click()
 
     const 框 = page.getByRole("dialog")
@@ -188,7 +188,7 @@ test.describe("删除", () => {
     const { page, dir } = dawn
     const 全局 = join(dir, "skills")
     技能文件(全局, "doomed")
-    await page.getByRole("button", { name: "Agent Skills" }).click()
+    await page.getByRole("button", { name: "Skills" }).click()
     const 行 = page.locator(".skills-page .skill-row", { hasText: "doomed" })
     await 行.getByRole("button", { name: "技能操作：doomed" }).click()
     await page.getByRole("menu").getByRole("menuitem", { name: "删除" }).click()

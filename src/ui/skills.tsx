@@ -183,7 +183,7 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
                 {t("全部")}（{数据.agents.length}）
               </Button>
               {组们.map((g) => (
-                <Button key={g} variant={筛组 === g ? "primary" : "secondary"} size="sm" role="radio" aria-checked={筛组 === g} onClick={() => 设筛组(g)}>
+                <Button key={g} variant={筛组 === g ? "primary" : "secondary"} size="sm" role="radio" aria-checked={筛组 === g} data-authored="" onClick={() => 设筛组(g)}>
                   {g}（{数据.agents.filter((a) => (a.group ?? t("其它")) === g).length}）
                 </Button>
               ))}
@@ -476,7 +476,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
     <div className="skills-page">
       <HoverCard 浮着的={浮着的} />
       <header className="skills-head">
-        <h1 className="panel-title">{t("Agent Skills")}</h1>
+        <h1 className="panel-title">{t("Skills")}</h1>
         <p className="hint">
           {t("一个技能 = 一个文件夹 + 一个 SKILL.md，是写给模型读的说明书：什么时候用它、什么时候别用、怎么用。模型自己判断要不要读，你也可以用 /skill:名字 显式调。")}
         </p>

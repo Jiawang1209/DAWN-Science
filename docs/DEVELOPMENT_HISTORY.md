@@ -43,6 +43,13 @@
 
 ## 变更日志
 
+### 2026-08-22 — 多选时，机器行的勾选框落到时间那一列
+
+- **Type**: fix
+- **Motivation**: 作者：「服务器收纳下面 IP 那一行的多选按钮，要和下面会话的时间戳对齐」。量出来勾选框右缘 221，时间 188。
+- **What**: `.side-subhead-row .sess-check { margin-right: 36px }`。
+- **Verification**: `remote-connections.spec` 新增一条（勾右 = 时间右）；量线、视觉绿。
+
 ### 2026-08-22 — 当前会话的底色改浅灰；项目行的「＋ / 删」落到「多选」那条线
 
 - **Type**: fix

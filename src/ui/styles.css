@@ -1180,12 +1180,15 @@ pre {
 .proj-session-list .sess,
 .server-session-list .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
 /* 文件夹 / 服务器底下的会话**缩进一级**（2026-08-21 作者要的）：层级靠位置说，不靠图标 */
+/**
+ * **会话比它上面那一行更靠右——层次靠缩进说**（2026-08-22 作者：「要和项目收纳、IP 地址保持距离，分出层次」；
+ * 我第一版把它们缩到了父级左边，反了）。量出来：机器名文字左缘 45、项目名（含文件夹图标）63；
+ * 会话文字左缘定在 72——比两种父级都深。四处会话行（最近 / 项目底下 / 机器底下 / 散的）同一条线。
+ */
 .proj-session-list,
-.server-session-list { list-style: none; margin: 0; padding: 0 0 0 var(--dawn-space-4); }
-/* 散的那几段（「会话」收纳）与「最近」里的：**与机器 / 项目底下的会话同一条左缘**（2026-08-22 作者要的，文字左缘 40）——
-   它们没有父级那一层缩进，这里把那 16px 补上 */
+.server-session-list,
 .session-list.loose-list,
-.session-list.recent-list { padding-left: var(--dawn-space-4); }
+.session-list.recent-list { list-style: none; margin: 0; padding: 0 0 0 48px; }
 /**
  * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
  * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。

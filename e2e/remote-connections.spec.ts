@@ -402,9 +402,14 @@ test("**服务器行与会话行同一条线**：左缘、名字、状态词都�
   const m = 量 as { [K in keyof typeof 量]: NonNullable<(typeof 量)[K]> }
 
   const 差 = (a: number, b: number) => Math.abs(a - b)
-  expect(差(m.服务器行.左, m.会话行.左), "两种行的左内缩不一样").toBeLessThanOrEqual(2)
+  /**
+   * 左缘不再与会话行比（2026-08-22）：作者要会话比它的父级（机器名 / 项目名）更靠右、分出层次，
+   * 会话行因此缩进到 72。服务器行是面板里的顶层项，左缘照固定入口行那一列（`.side-action .row`）。
+   * **右缘与状态词仍与会话行同线**——那才是作者 2026-08-16 两次报的东西。
+   */
+  const 入口行 = (await page.locator(".side-action").first().boundingBox())!
+  expect(差(m.服务器行.左, 入口行.x), "服务器行与固定入口行的左内缩不一样").toBeLessThanOrEqual(2)
   expect(差(m.服务器行.右, m.会话行.右), "服务器行没给行尾那一格留位置").toBeLessThanOrEqual(2)
-  expect(差(m.服务器名.左, m.会话名.左), "名字的起跑线不一样").toBeLessThanOrEqual(2)
   // 行尾那一格是**右对齐**的一列：右缘才是它的那条线
   expect(差(m.服务器状态.右, m.会话状态.右), "行尾那一格落不到同一条竖线上").toBeLessThanOrEqual(2)
   expect(m.服务器状态.字号, "行尾那一格字号不同档").toBe(m.会话状态.字号)

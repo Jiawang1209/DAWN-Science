@@ -1250,6 +1250,21 @@ test.describe("远端建会话的准入", () => {
  * **机器名太长就截断、悬停给全名**（2026-08-22 作者给图：「服务器的 IP 地址为什么没有收缩」）。
  * 此前那一行是 flex 子项默认的 `min-width: auto`——名字再长也不让步，把整列撑歪。
  */
+test("**服务器收纳里的机器名（短的）贴着三角，不漂到中间**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { host: "gs1.cn", user: "u" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".side-server")).toHaveCount(1)
+  const 贴 = await page.evaluate(() => {
+    const t = document.querySelector(".side-subhead .twisty")!.getBoundingClientRect()
+    const n = document.querySelector(".side-subhead .name")!
+    const r = document.createRange(); r.selectNodeContents(n)
+    return r.getBoundingClientRect().left - t.right
+  })
+  expect(贴, "机器名没贴着三角（格子比文字宽时文字漂到中间了）").toBeLessThan(12)
+})
+
 test("**服务器收纳里的机器名：一行截断，悬停弹全名**", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
@@ -1258,6 +1273,14 @@ test("**服务器收纳里的机器名：一行截断，悬停弹全名**", asyn
   await expect(page.locator(".side-server")).toHaveCount(1)
   const 名 = page.locator(".side-subhead .name")
   expect(await 名.evaluate((el) => el.scrollWidth > el.clientWidth + 1), "名字没截断").toBe(true)
+  // 名字**贴着三角**：这一格坐在按钮里，按钮默认居中，格子比文字宽时文字会漂到中间（作者给图抓的）
+  const 贴 = await page.evaluate(() => {
+    const t = document.querySelector(".side-subhead .twisty")!.getBoundingClientRect()
+    const n = document.querySelector(".side-subhead .name")!
+    const r = document.createRange(); r.selectNodeContents(n)
+    return r.getBoundingClientRect().left - t.right
+  })
+  expect(贴, "机器名没贴着三角").toBeLessThan(12)
   // 计数仍在数字那一列（与会话时间同线）
   const 数右 = await page.locator(".side-subhead .side-count").evaluate((el) => Math.round(el.getBoundingClientRect().right))
   const 时间右 = await page.locator(".sess-when").first().evaluate((el) => Math.round(el.getBoundingClientRect().right))

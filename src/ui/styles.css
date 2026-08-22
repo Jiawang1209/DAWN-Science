@@ -4112,7 +4112,9 @@ pre {
   margin-right: var(--dawn-space-1);
 }
 /* 机器名（`user@host`）与会话标题同一种收缩：一行、截断、省略号；三角与计数不让 */
-.side-subhead .name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `text-align: left` 不能省：这一格坐在按钮里（按钮默认居中），格子比文字宽时文字会漂到中间——
+   2026-08-22 作者给图：三角与机器名之间空出一大截 */
+.side-subhead .name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .side-subhead .twisty,
 .side-subhead .side-count { flex: 0 0 auto; }
 

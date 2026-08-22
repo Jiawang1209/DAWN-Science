@@ -1245,3 +1245,23 @@ test.describe("远端建会话的准入", () => {
     expect(拒绝).toContain("本机的-acp")
   })
 })
+
+/**
+ * **机器名太长就截断、悬停给全名**（2026-08-22 作者给图：「服务器的 IP 地址为什么没有收缩」）。
+ * 此前那一行是 flex 子项默认的 `min-width: auto`——名字再长也不让步，把整列撑歪。
+ */
+test("**服务器收纳里的机器名：一行截断，悬停弹全名**", async ({ dawn }) => {
+  const { page } = dawn
+  await 展开远端(page)
+  await 加一台(page, { host: "gs191.genek.cn.very.long.hostname.example", user: "ug2478" })
+  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await expect(page.locator(".side-server")).toHaveCount(1)
+  const 名 = page.locator(".side-subhead .name")
+  expect(await 名.evaluate((el) => el.scrollWidth > el.clientWidth + 1), "名字没截断").toBe(true)
+  // 计数仍在数字那一列（与会话时间同线）
+  const 数右 = await page.locator(".side-subhead .side-count").evaluate((el) => Math.round(el.getBoundingClientRect().right))
+  const 时间右 = await page.locator(".sess-when").first().evaluate((el) => Math.round(el.getBoundingClientRect().right))
+  expect(数右).toBe(时间右)
+  await 名.hover()
+  await expect(page.locator(".sess-hover-card")).toContainText("ug2478@gs191.genek.cn.very.long.hostname.example")
+})

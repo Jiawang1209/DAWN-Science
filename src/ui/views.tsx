@@ -2381,6 +2381,8 @@ export function SessionSidebar({
                   className="side-subhead"
                   aria-expanded={!收起了(connectionId)}
                   onClick={() => 切收起(connectionId)}
+                  /* 名字截断了就弹卡给全名——与会话标题同一套（2026-08-22 作者：「和下面 title 一样的效果」） */
+                  {...浮层事件(设浮着的, 服务器名?.(connectionId) ?? connectionId, undefined, undefined, "服务器", { 标题: ".name", 容器: ".sidebar", 开在: "右边" })}
                 >
                   <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
                   {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}

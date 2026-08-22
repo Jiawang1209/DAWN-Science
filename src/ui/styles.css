@@ -4084,6 +4084,8 @@ pre {
   align-items: center;
   margin: var(--dawn-space-2) 0 0;
   padding: 3px calc(var(--dawn-space-3) * 2);
+  /* 行能缩（2026-08-22 作者：「服务器的 IP 地址为什么没有收缩」）：flex 子项默认 min-width:auto，名字再长也不让步 */
+  min-width: 0;
   /**
    * **字号与会话行同一档**（2026-08-21 作者要的：*「IP 地址文字太小了，咋的也要和
    * 会话标题的文字大小一致」*）。此前 12px，比行小两档，「轻一级」靠字号表达；
@@ -4106,6 +4108,10 @@ pre {
 .side-section-icon {
   margin-right: var(--dawn-space-1);
 }
+/* 机器名（`user@host`）与会话标题同一种收缩：一行、截断、省略号；三角与计数不让 */
+.side-subhead .name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-subhead .twisty,
+.side-subhead .side-count { flex: 0 0 auto; }
 
 /**
  * 连上了那个 `alive` 用绿色（2026-08-15 作者要的）。

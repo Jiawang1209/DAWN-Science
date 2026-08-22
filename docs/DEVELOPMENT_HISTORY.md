@@ -43,6 +43,13 @@
 
 ## 变更日志
 
+### 2026-08-22 — 服务器收纳里的机器名：一行截断、悬停给全名
+
+- **Type**: fix
+- **Motivation**: 作者给图：「服务器的 IP 地址为什么没有收缩呢……和下面 title 一样的效果」。
+- **What**: `.side-subhead` 与里面的 `.name` 补 `min-width: 0` + 截断省略（flex 子项默认 `min-width: auto`，名字再长也不让步）；三角与计数不让；截断时悬停弹 `HoverCard` 给全名，与会话标题同一套 `浮层事件`。
+- **Verification**: `remote-connections.spec` 新增一条（超长 host 截断、计数仍与时间同线、悬停卡含全名）；`sidebar-columns`、视觉绿。
+
 ### 2026-08-22 — 「远端服务器」那一行：三角紧贴计数
 
 - **Type**: fix

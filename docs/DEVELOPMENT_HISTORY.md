@@ -43,6 +43,16 @@
 
 ## 变更日志
 
+### 2026-08-22 — 团队：坞里那一格按层次分；子进程带上 key；两个真 bug
+
+- **Type**: fix + feat
+- **Motivation**: 作者实测：① 成员报「No API key found for deepseek」；② 看完面板「太乱了，要分层次」。
+- **What**:
+  - **子进程带 key**：建会话时把目录里每个 provider 的 api key 读出来随规格递给子进程（`spec.credentials` 这条通道一直在、从没人填）。**原来的 `subagent` 工具同样是坏的**——e2e 的假模型不要 key，所以一直没抓到。
+  - 面板按层次：成员（名字 · 人设 · 模型 · 状态）→ 它名下的任务 → 与它有关的消息；队长自己做的、共享池各一组。
+  - 修：自动任务编号撞上显式 id（显式 t1–t3 之后再建一个没 id 的编成了第二个 t1，调度器随即被绊倒、整轮派活中断）；调度器领不了某项时跳过并寄系统消息，不再中断。
+- **Verification**: `tests/team` 23 条；`e2e/team.spec.ts`、`subagent.spec`、视觉绿；探针截图确认 4/4 完成。
+
 ### 2026-08-22 — 团队：队长 + 可续聊成员 + 带依赖与 attempt 令牌的任务板（学自 NanmiCoder/dsh-agent-teams）
 
 - **Type**: feat

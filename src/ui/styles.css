@@ -5606,33 +5606,39 @@ pre {
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
 .recent-list { margin-bottom: var(--dawn-space-2); }
 
-/* ── 团队（team-board，2026-08-22，学自 dsh-agent-teams；坞里一格）────────────────────────── */
-.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-4); }
+/* ── 团队（team-board，2026-08-22，学自 dsh-agent-teams；坞里一格）────────────────────────
+   按层次：成员（一行：名字 · 人设 · 模型 · 状态）→ 它名下的任务 → 与它有关的消息。每层往右缩一档 */
+.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .team-empty { padding: var(--dawn-space-3); }
-.team-head { display: flex; flex-direction: column; gap: var(--dawn-space-1); }
-.team-name { margin: 0; font-size: 15px; font-weight: 600; }
+.team-head { display: flex; flex-direction: column; gap: var(--dawn-space-1); padding-bottom: var(--dawn-space-2); border-bottom: 1px solid var(--dawn-stroke-3); }
+.team-head-row { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
+.team-name { margin: 0; font-size: 15px; font-weight: 600; flex: 1 1 auto; min-width: 0; }
+.team-progress { color: var(--dawn-text-3); font-size: 12px; white-space: nowrap; }
 .team-goal { margin: 0; color: var(--dawn-text-2); }
-.team-progress { margin: 0; color: var(--dawn-text-3); font-size: 12px; }
-.team-section-title { margin: 0 0 var(--dawn-space-2); font-size: 12px; font-weight: 600; color: var(--dawn-text-3); }
-.team-members ul, .team-tasks ol, .team-mail ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-1); }
-.team-member { display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; }
-.team-member-name { font-weight: 600; }
-.team-member-agent { color: var(--dawn-text-3); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.team-member-status { margin-left: auto; font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; }
+.team-group-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; min-width: 0; }
+.team-group-head .twisty { flex: 0 0 auto; align-self: center; }
+.team-group-name { font-weight: 600; flex: 0 0 auto; }
+.team-member-agent { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); }
+.team-member-model { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); padding: 0 var(--dawn-space-1); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
+.team-member-status { margin-left: auto; font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; }
 .team-member-status.working { color: var(--dawn-accent); }
-.team-member.removed { opacity: 0.5; }
-.team-task { border-top: 1px solid var(--dawn-stroke-3); padding-top: var(--dawn-space-1); }
+.team-group.removed .team-group-head { opacity: 0.55; }
+.team-group-body { padding: var(--dawn-space-1) 0 var(--dawn-space-2) var(--dawn-space-4); display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.team-member-role { margin: 0; color: var(--dawn-text-3); font-size: 12px; }
+.team-tasks, .team-mail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-1); }
+.team-none { margin: 0; }
+.team-task { min-width: 0; }
 .team-task-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; }
 .team-task-id { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); font-size: 12px; }
-.team-task-subject { font-weight: 600; }
+.team-task-subject { font-weight: 500; }
 .team-task-status { font-size: 12px; color: var(--dawn-text-3); }
 .team-task-status.in_progress, .team-task-status.claimed { color: var(--dawn-accent); }
 .team-task-status.completed { color: var(--dawn-success); }
 .team-task-status.failed { color: var(--dawn-danger); }
-.team-task-who, .team-task-deps { font-size: 12px; color: var(--dawn-text-3); }
+.team-task-deps { font-size: 12px; color: var(--dawn-text-3); }
 .team-task-body { padding: var(--dawn-space-1) 0 var(--dawn-space-2) var(--dawn-space-4); }
 .team-task-desc { margin: 0 0 var(--dawn-space-2); color: var(--dawn-text-2); white-space: pre-wrap; }
 .team-task-output { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; max-height: 24rem; overflow: auto; }
-.team-msg { display: flex; flex-direction: column; gap: 2px; }
+.team-msg { display: flex; flex-direction: column; gap: 2px; padding-left: var(--dawn-space-2); border-left: 2px solid var(--dawn-stroke-3); }
 .team-msg-who { font-size: 12px; color: var(--dawn-text-3); }
-.team-msg-text { white-space: pre-wrap; }
+.team-msg-text { white-space: pre-wrap; color: var(--dawn-text-2); font-size: 12px; }

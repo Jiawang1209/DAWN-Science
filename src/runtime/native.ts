@@ -586,6 +586,23 @@ export class NativeRuntime implements AgentRuntime {
    * 但那条 Run 没有 `files_written`。按不变式 5 的规矩，
    * **缺省读作「不知道」，这正是此刻的实情。**
    */
+  /** 目录里每个 provider 的 api key（读得到的那些），递给子进程。OAuth 类的凭证不递——子进程没法刷新 */
+  private async 子进程凭证(): Promise<Record<string, string> | undefined> {
+    const store = this.opts.credentials
+    if (!store) return undefined
+    const out: Record<string, string> = {}
+    const providers = [...new Set((await this.runtime()).getModels().map((m) => m.provider))]
+    for (const p of providers) {
+      try {
+        const c = await store.read(p)
+        if (c && c.type === "api_key" && c.key) out[p] = c.key
+      } catch {
+        // 读不到就不递；子进程会照 pi 的缺省路径再找一次
+      }
+    }
+    return Object.keys(out).length ? out : undefined
+  }
+
   private toolsFor(
     spec: SessionSpec,
     native: { provider: string; model: string },
@@ -601,6 +618,8 @@ export class NativeRuntime implements AgentRuntime {
      * 收图的模型不给 `look_at_image`——它自己能看，多一个工具只会让它绕路。
      */
     模型收图 = true,
+    /** 递给子进程的 api key（provider → key）；见 `子进程凭证` */
+    子进程凭证?: Record<string, string>,
   ): unknown[] | undefined {
     const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
 
@@ -692,6 +711,7 @@ export class NativeRuntime implements AgentRuntime {
         ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
         // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）
         agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
+        ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
       },
     })
 
@@ -723,6 +743,7 @@ export class NativeRuntime implements AgentRuntime {
           model: native.model,
           cwd: spec.workspace,
           ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
+          ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
         },
       },
       onChange: (team) => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: team as never }),
@@ -817,6 +838,13 @@ export class NativeRuntime implements AgentRuntime {
       }
     }
 
+    /**
+     * **子进程要带上 key**（2026-08-22 作者实测抓的：团队成员报「No API key found for deepseek」）。
+     * 父会话的凭证在钥匙串里，子进程是新进程，pi 只会去找 `~/.pi/auth.json` 与环境变量——
+     * 这条通道（`spec.credentials`）一直在，只是从来没人填。`subagent` 工具同样受益。
+     * e2e 的假模型不要 key，所以它没抓到。
+     */
+    const 子进程凭证 = await this.子进程凭证()
     const customTools = this.toolsFor(
       spec,
       native,
@@ -824,6 +852,7 @@ export class NativeRuntime implements AgentRuntime {
       // **缺失不等于不收**：目录没写 `input` 时当它收图，宁可少给一个工具
       // 也不给收图的模型塞一个绕路的（`writeWithImages` 的「明确不收」同一口径）
       !(Array.isArray(model.input) && !model.input.includes("image")),
+      子进程凭证,
     )
 
     /**

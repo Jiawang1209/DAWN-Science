@@ -50,6 +50,14 @@ describe("成员与任务的建立", () => {
     expect(() => 加任务(team, { subject: "x", assignee: "丙" })).toThrow(/不存在的成员/)
     expect(() => 加任务(team, { id: "t1", subject: "x" })).toThrow(/已经有一个 id/)
   })
+  it("显式 id 占了 t1–t3 之后，自动编号跳到 t4——不会编出第二个 t1", () => {
+    const team = 一支()
+    加任务(team, { id: "t1", subject: "a" })
+    加任务(team, { id: "t2", subject: "b" })
+    加任务(team, { id: "t3", subject: "c" })
+    expect(加任务(team, { subject: "d" }).id).toBe("t4")
+    expect(加任务(team, { subject: "e" }).id).toBe("t5")
+  })
 })
 
 describe("依赖与领取", () => {

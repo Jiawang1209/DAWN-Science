@@ -130,9 +130,16 @@ export class 团队调度器 {
       const 任务 = 挑就绪任务(team, m.name)
       if (任务) {
         let attemptId = ""
-        this.改(teamId, (t) => {
-          attemptId = 领取(t, 任务.id, m.name, this.now()).attemptId
-        })
+        try {
+          this.改(teamId, (t) => {
+            attemptId = 领取(t, 任务.id, m.name, this.now()).attemptId
+          })
+        } catch (e) {
+          // 领不了（磁盘上刚被别人改过）：**跳过这一项，别让整轮派活中断**——2026-08-22 一个重名 id 曾把调度器绊倒，
+          // 队长收一条系统消息，人在坞里看得到
+          this.改(teamId, (t) => 发消息(t, { from: m.name, to: "captain", content: `（系统）没能领下 ${任务.id}：${e instanceof Error ? e.message : String(e)}` }, this.now()))
+          continue
+        }
         const 最新 = this.读(teamId)
         const 派单 = 派单文本(最新, 任务.id)
         void this.起一轮(teamId, m.name, { taskId: 任务.id, attemptId }, 派单)

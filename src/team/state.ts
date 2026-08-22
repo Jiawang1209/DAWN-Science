@@ -100,8 +100,11 @@ export function 加任务(
     if (!/^[\p{L}\p{N}_-]{1,40}$/u.test(id)) throw new 团队错误(`任务 id「${id}」不合规。`)
     if (team.tasks.some((x) => x.id === id)) throw new 团队错误(`已经有一个 id 为「${id}」的任务。`)
   } else {
-    team.taskSeq += 1
-    id = `t${team.taskSeq}`
+    // 自动编号要跳过已经被显式占用的 id（2026-08-22 抓的：显式 t1/t2/t3 之后再建一个没 id 的，编成了第二个 t1）
+    do {
+      team.taskSeq += 1
+      id = `t${team.taskSeq}`
+    } while (team.tasks.some((x) => x.id === id))
   }
   const deps = [...new Set((t.dependencies ?? []).map((d) => d.trim()).filter(Boolean))]
   for (const d of deps) {

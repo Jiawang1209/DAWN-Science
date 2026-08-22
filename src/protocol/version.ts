@@ -461,8 +461,11 @@
  *
  * 7.17（2026-08-21）：技能管理——`listAgentSkills` 多 `invocation` / `mutable`；
  *   新增 `setSkillInvocation` / `importSkill` / `deleteSkill`。纯新增。
+ *
+ * 7.18（2026-08-22）：会话归档——`SessionSummary.archivedAt`；`setSessionArchived` /
+ *   `listArchivedSessions` / `deleteArchivedSessions`；`deleteSession` 多回 `transcriptTrashed`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.17"
+export const WORKBENCH_PROTOCOL_VERSION = "7.18"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

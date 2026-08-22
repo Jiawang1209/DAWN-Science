@@ -190,6 +190,7 @@ export class ProjectManager {
       ...(s.title === undefined ? {} : { title: s.title }),
       pinned: s.pinned,
       sortOrder: s.sortOrder,
+      ...(s.archivedAt === undefined ? {} : { archivedAt: s.archivedAt }),
       ...(s.pid === undefined ? {} : { pid: s.pid }),
       ...(s.exitCode === undefined ? {} : { exitCode: s.exitCode }),
       // **这段对话长在哪台机器的哪个目录**（②-B · R4′）。缺省 = 本地

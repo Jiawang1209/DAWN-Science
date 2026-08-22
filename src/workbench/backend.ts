@@ -138,6 +138,8 @@ export interface WorkbenchBackendOptions {
    * 而且删除不可逆——它比上传更该留下痕迹。
    */
   记一次删除?: (connectionId: string | undefined, 路径: string, 进了废纸篓: boolean) => void
+  /** 归档 / 取消归档落账（7.18）。**删除不落**——删除那条账本自己留着，见 `deleteSession` */
+  记一次会话?: (event: "archive" | "unarchive", projectId: string | undefined, sessionId: string) => void
   /** 技能的改动也落账（7.17）：启停、导入、删除——都是对磁盘的一次写 */
   记一次技能?: (event: "invocation" | "import" | "import-overwrite" | "delete", 路径: string, 详情?: string) => void
   /**
@@ -403,7 +405,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, trashItem, isForeground, askOnce } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, isForeground, askOnce } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1000,6 +1002,51 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   })
   const 要设置 = () => {
     if (!settings) throw fault("invalid_request", "本次运行没有设置存储，接不了微信")
+  }
+
+  /** 删一个会话：停进程 → 删记录 → 删任务 → **最后**会话目录进废纸篓（顺序见里面）。`deleteSession` 与「删掉全部归档」共用 */
+  const 删一个会话 = async (sessionId: string): Promise<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }> => {
+      const rec = sessions.get(sessionId)
+      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      const removed = await sessions.remove(sessionId)
+      if (!removed) throw fault("not_found", `没有这个会话：${sessionId}`)
+      // 转录只活在内存里，跟着走
+      events.forget(sessionId)
+      baselines.delete(sessionId)
+      /**
+       * **任务跟着走**（T3-a，2026-08-12）。
+       *
+       * 任务是「一段对话 + 一个可选的路径」——会话没了，那段对话就没了。
+       * 不删的话侧栏上会挂着一行指向死会话的「新任务」，
+       * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
+       */
+      任务库().removeBySessions([sessionId])
+      /**
+       * **账本留着，并且把还剩多少说出来。**
+       * 一句「已删除」会让人以为历史也一起没了——而它没有，
+       * 这正是这个产品与一个聊天窗口的区别（不变式 5）。
+       */
+      const kept = rec.projectId ? runs.countByProject(rec.projectId) : 0
+      /**
+       * **最后才碰磁盘**（2026-08-22，学自 dsh-archive-manager 的删除顺序）：上面记账那些失败了，
+       * 目录还在、可以重试；目录进了废纸篓之后再失败就什么都找不回来了。
+       * 此前这个操作**根本不删目录**——`<workspace>/.dawn/sessions/<id>`（pi 的 jsonl、工具输出转储）
+       * 一直留在用户的仓库里，而界面说的是「删掉对话记录」。进废纸篓而不是 rm：与删文件同一口径，删错了能捞。
+       */
+      let transcriptTrashed = false
+      let problem: string | undefined
+      if (!existsSync(rec.sessionDir)) problem = undefined
+      else if (!trashItem) problem = "本次运行没有装配废纸篓，会话目录留在原处"
+      else {
+        try {
+          await trashItem(rec.sessionDir)
+          transcriptTrashed = true
+        } catch (e) {
+          problem = `会话目录没删掉，留在 ${rec.sessionDir}：${e instanceof Error ? e.message : String(e)}`
+          console.error(`[会话] ${problem}`)
+        }
+      }
+      return { ledgerKept: kept, transcriptTrashed, ...(problem ? { problem } : {}) }
   }
 
   /* ── 技能管理的守卫（7.17）：只许碰「你写的」与「这个项目带的」两个目录里的 SKILL.md ── */
@@ -2752,30 +2799,43 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { ledgerKept: kept }
     },
 
-    deleteSession: async ({ sessionId }) => {
+    deleteSession: async ({ sessionId }) => 删一个会话(sessionId),
+
+    /* ── 归档（7.18） ── */
+
+    setSessionArchived: async ({ sessionId, archived }) => {
       const rec = sessions.get(sessionId)
       if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
-      const removed = await sessions.remove(sessionId)
-      if (!removed) throw fault("not_found", `没有这个会话：${sessionId}`)
-      // 转录只活在内存里，跟着走
-      events.forget(sessionId)
-      baselines.delete(sessionId)
-      /**
-       * **任务跟着走**（T3-a，2026-08-12）。
-       *
-       * 任务是「一段对话 + 一个可选的路径」——会话没了，那段对话就没了。
-       * 不删的话侧栏上会挂着一行指向死会话的「新任务」，
-       * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
-       */
-      任务库().removeBySessions([sessionId])
-      /**
-       * **账本留着，并且把还剩多少说出来。**
-       * 一句「已删除」会让人以为历史也一起没了——而它没有，
-       * 这正是这个产品与一个聊天窗口的区别（不变式 5）。
-       */
-      const kept = rec.projectId ? runs.countByProject(rec.projectId) : 0
-      return { ledgerKept: kept }
+      sessions.setArchived(sessionId, archived)
+      记一次会话?.(archived ? "archive" : "unarchive", rec.projectId, sessionId)
+      return {}
     },
+
+    listArchivedSessions: async () => ({
+      sessions: sessions.listArchived().flatMap((r) => {
+        const p = r.projectId ? projectStore.get(r.projectId) : undefined
+        if (!p || !r.projectId) return []
+        return [{ ...projects.toSummary(r.projectId, r, 服务器名), projectName: p.name, workspace: p.workspace }]
+      }),
+    }),
+
+    deleteArchivedSessions: async () => {
+      let deleted = 0
+      let transcriptsTrashed = 0
+      const problems: string[] = []
+      for (const r of sessions.listArchived()) {
+        try {
+          const 回 = await 删一个会话(r.id)
+          deleted += 1
+          if (回.transcriptTrashed) transcriptsTrashed += 1
+          else if (回.problem) problems.push(`${r.title ?? r.id}：${回.problem}`)
+        } catch (e) {
+          problems.push(`${r.title ?? r.id}：${e instanceof Error ? e.message : String(e)}`)
+        }
+      }
+      return { deleted, transcriptsTrashed, problems }
+    },
+
 
     deletionImpact: async ({ projectId }) => {
       const p = projectStore.get(projectId)

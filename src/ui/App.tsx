@@ -73,6 +73,7 @@ import {
   type MCP装载,
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
+import { ArchivedView, type 归档的会话 } from "./archived.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -295,15 +296,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * `setList` 内容没变就不换引用，不会白白重渲染。**没有推送**：任务列表不属于任何会话，
    * 塞进 `SessionUpdate` 要造假 id（与微信状态同一个理由）。
    */
+  /** 归档了几段（侧栏那一行只在 > 0 时画）。启动时取一次，之后跟着 5 秒那班车，归档 / 取消归档之后立刻重取 */
+  const [归档数, 设归档数] = useState(0)
+  const 重取归档数 = useCallback(
+    () =>
+      client
+        .get<{ sessions: unknown[] }>("listArchivedSessions", {})
+        .then((r) => 设归档数(r.sessions.length))
+        .catch(() => {}),
+    [client],
+  )
+  useEffect(() => {
+    void 重取归档数()
+  }, [重取归档数])
   useEffect(() => {
     const id = setInterval(() => {
       void loadTasks(client)
       void loadTempSessions(client)
       // 项目也要拉：点别的项目里的任务时靠这份名单找 projectId，名单旧了就切不过去
       void loadProjects(client)
+      void 重取归档数()
     }, 5_000)
     return () => clearInterval(id)
-  }, [client])
+  }, [client, 重取归档数])
 
   useEffect(() => {
     // **临时项目不算数**：它是一次没指定项目的对话，不该被当成「当前项目」
@@ -1407,6 +1422,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return () => clearInterval(t)
   }, [ready, sessionId, 取写权])
 
+  /** 走全局那个确认框，包成一个 Promise：确认 / 第三个选项 / 取消三条路各回一个词（技能屏、已归档屏共用） */
+  const 问一句 = useCallback(
+    (req: { title: string; detail: React.ReactNode; confirmLabel: string; altLabel?: string | undefined }) =>
+      new Promise<"confirm" | "alt" | "cancel">((resolve) => {
+        let 答了 = false
+        const 答 = (v: "confirm" | "alt" | "cancel") => {
+          if (答了) return
+          答了 = true
+          resolve(v)
+        }
+        setConfirming({
+          title: req.title,
+          detail: req.detail,
+          confirmLabel: req.confirmLabel,
+          onConfirm: () => 答("confirm"),
+          ...(req.altLabel ? { altLabel: req.altLabel, onAlt: () => 答("alt") } : {}),
+          onDismiss: () => 答("cancel"),
+        })
+      }),
+    [],
+  )
+  const 载已归档 = useCallback(() => client.get<{ sessions: 归档的会话[] }>("listArchivedSessions", {}), [client])
+
   const askDeleteSession = useCallback(
     (s: SessionSummary) => {
       const 名 = s.title ?? "新会话"
@@ -1417,8 +1455,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         confirmLabel: "删除会话",
         onConfirm: () => {
           client
-            .get<{ ledgerKept: number }>("deleteSession", { sessionId: s.sessionId })
-            .then(() => {
+            .get<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }>("deleteSession", { sessionId: s.sessionId })
+            .then((r) => {
+              // **目录没进废纸篓要出声**（2026-08-22）：确认框说了「删掉对话记录」，没做到就得说
+              if (!r.transcriptTrashed && r.problem) note(r.problem)
               // 删的正好是当前这个，就把选中清掉——**不要留一个指向空的选中**
               if ($activeSessionId.get() === s.sessionId) {
                 setActiveSessionId(undefined)
@@ -1479,6 +1519,42 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       client.get("setSessionPinned", { sessionId: s.sessionId, pinned }).then(重取会话).catch(fail)
     },
     [client, 重取会话],
+  )
+
+  /**
+   * 归档（2026-08-22，学自 dsh-archive-manager）：**藏，不删**。进程不停、记录不动，
+   * 只是从侧栏消失、到「已归档」那一屏去。正在看的那段归档了就把选中清掉——不留一个指向空的选中。
+   */
+  const 归档几段 = useCallback(
+    async (ids: readonly string[]) => {
+      const 没成: string[] = []
+      for (const id of ids) {
+        try {
+          await client.get("setSessionArchived", { sessionId: id, archived: true })
+        } catch {
+          没成.push(id)
+        }
+      }
+      if ($activeSessionId.get() && ids.includes($activeSessionId.get()!)) {
+        setActiveSessionId(undefined)
+        setView("conversation")
+      }
+      await 重取会话()
+      await loadTasks(client)
+      await 重取归档数()
+      if (没成.length > 0) note(tf("有 {0} 段没归档成", 没成.length))
+      else note(tf("已归档 {0} 段；在侧栏「已归档」里能找回来", ids.length))
+    },
+    [client, 重取会话, 重取归档数, note],
+  )
+  const archiveSession = useCallback((s: SessionSummary) => void 归档几段([s.sessionId]), [归档几段])
+  const archiveMany = useCallback(
+    (targets: readonly import("../protocol/index.js").TaskSummary[], done: () => void) => {
+      const ids = targets.flatMap((t) => (t.sessionId ? [t.sessionId] : []))
+      if (ids.length < targets.length) note(tf("有 {0} 段没有会话，归档不了", targets.length - ids.length))
+      void 归档几段(ids).finally(done)
+    },
+    [归档几段, note],
   )
 
   const moveSession = useCallback(
@@ -2877,6 +2953,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onDeleteTask={(t) => askDeleteMany([t], () => {})}
           onRenameSession={renameSession}
           onPinSession={pinSession}
+          onArchiveSession={archiveSession}
+          onArchiveMany={archiveMany}
+          archivedCount={归档数}
+          onShowArchived={() => setView(view === "archived" ? "conversation" : "archived")}
           onMoveSession={moveSession}
           onReorderSessions={reorderSessions}
           /**
@@ -3056,24 +3136,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
                 pickDirectory: () => client.pickDirectory(默认工作区?.path),
                 hasProject: Boolean(projectId),
-                /** 走全局那个确认框，包成一个 Promise：确认 / 第三个选项 / 取消三条路各回一个词 */
-                问: (req) =>
-                  new Promise((resolve) => {
-                    let 答了 = false
-                    const 答 = (v: "confirm" | "alt" | "cancel") => {
-                      if (答了) return
-                      答了 = true
-                      resolve(v)
-                    }
-                    setConfirming({
-                      title: req.title,
-                      detail: req.detail,
-                      confirmLabel: req.confirmLabel,
-                      onConfirm: () => 答("confirm"),
-                      ...(req.altLabel ? { altLabel: req.altLabel, onAlt: () => 答("alt") } : {}),
-                      onDismiss: () => 答("cancel"),
-                    })
-                  }),
+                问: 问一句,
               }}
             />
           ) : view === "subagents" ? (
@@ -3084,6 +3147,27 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             />
           ) : view === "plugins" ? (
             <PluginsView />
+          ) : view === "archived" ? (
+            <ArchivedView
+              load={载已归档}
+              unarchive={(sessionId) => client.get("setSessionArchived", { sessionId, archived: false }).then(async (r) => { await 重取会话(); await loadTasks(client); await 重取归档数(); return r })}
+              remove={(sessionId) => client.get<{ transcriptTrashed: boolean; problem?: string }>("deleteSession", { sessionId }).then(async (r) => { await loadTasks(client); await 重取归档数(); return r })}
+              removeAll={() => client.get<{ deleted: number; transcriptsTrashed: number; problems: string[] }>("deleteArchivedSessions", {}).then(async (r) => { await loadTasks(client); await 重取归档数(); return r })}
+              问={问一句}
+              onOpen={(s) => {
+                void client
+                  .get("setSessionArchived", { sessionId: s.sessionId, archived: false })
+                  .then(async () => {
+                    setActiveProjectId(s.projectId)
+                    await loadSessions(client, s.projectId)
+                    await loadTasks(client)
+                    await 重取归档数()
+                    setActiveSessionId(s.sessionId)
+                    setView("conversation")
+                  })
+                  .catch(fail)
+              }}
+            />
           ) : view === "assistant" ? (
             <RemoteAssistantView
               load={载微信状态}

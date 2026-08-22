@@ -253,6 +253,8 @@ export const SessionSummarySchema = z
     pinned: z.boolean(),
     /** 列表里的位置。**每条都有**，见 schema v8：混用手动序与创建序是一笔烂账 */
     sortOrder: z.int(),
+    /** 归档时刻（7.18）。项目列表不列归档了的；只在 `listArchivedSessions` 里带着这个字段 */
+    archivedAt: Iso.optional(),
     pid: z.int().optional(),
     exitCode: z.int().optional(),
     createdAt: Iso,

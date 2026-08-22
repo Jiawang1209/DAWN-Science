@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("94 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3）", () => {
+  it("97 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
@@ -52,6 +52,7 @@ describe("操作注册表", () => {
         "deleteTask",
         "listSubagents",
         "listAgentSkills",
+        "listArchivedSessions",
         "listMcpServers",
         "testMcpServer",
         "setMcpFlag",
@@ -72,6 +73,7 @@ describe("操作注册表", () => {
         "disconnectRemote",
         "listTemporarySessions",
         "deleteCredential",
+        "deleteArchivedSessions",
         "deleteProject",
         "deleteSession",
         "deletionImpact",
@@ -87,6 +89,7 @@ describe("操作注册表", () => {
         "setInterpreter",
         "setProviderConnection",
         "setSessionModel",
+        "setSessionArchived",
         "setSessionPinned",
         "initScienceLayout",
         "getPermissionMode",

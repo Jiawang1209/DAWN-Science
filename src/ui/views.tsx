@@ -31,7 +31,7 @@ import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 手机图标, 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 手机图标, 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -218,6 +218,7 @@ export function SessionRow({
   onDelete,
   onRename,
   onPin,
+  onArchive,
   onMove,
   drag,
   select,
@@ -249,6 +250,8 @@ export function SessionRow({
   onDelete?: (() => void) | undefined
   onRename?: ((title: string) => void) | undefined
   onPin?: (() => void) | undefined
+  /** 归档（2026-08-22）：从侧栏藏起来，不删。**没给就不画** */
+  onArchive?: (() => void) | undefined
   onMove?: ((direction: "up" | "down") => void) | undefined
   /**
    * 拖拽排序的接线。**不给就整行不可拖**——
@@ -520,7 +523,7 @@ export function SessionRow({
         </span>
       </Row>
 
-      {onDelete || onRename || onPin || onMove ? (
+      {onDelete || onRename || onPin || onMove || onArchive ? (
         <div className="row-actions">
           <Button
             variant="ghost"
@@ -562,6 +565,11 @@ export function SessionRow({
                       {t("下移")}
                     </Button>
                   </>
+                ) : null}
+                {onArchive ? (
+                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onArchive(); setMenu(false) }}>
+                    {t("收进归档")}
+                  </Button>
                 ) : null}
                 {onDelete ? (
                   <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onDelete(); setMenu(false) }}>
@@ -1080,6 +1088,10 @@ export function SessionSidebar({
   onDeleteSession,
   onRenameSession,
   onPinSession,
+  onArchiveSession,
+  onArchiveMany,
+  archivedCount,
+  onShowArchived,
   onMoveSession,
   onReorderSessions,
   onOpenSettings,
@@ -1163,6 +1175,13 @@ export function SessionSidebar({
   onDeleteSession?: ((session: SessionSummary) => void) | undefined
   onRenameSession?: ((session: SessionSummary, title: string) => void) | undefined
   onPinSession?: ((session: SessionSummary, pinned: boolean) => void) | undefined
+  /** 归档一段（2026-08-22，学自 dsh-archive-manager）：藏，不删 */
+  onArchiveSession?: ((session: SessionSummary) => void) | undefined
+  /** 批量归档。与 `onDeleteMany` 同一套「做完再收摊」 */
+  onArchiveMany?: ((tasks: readonly TaskSummary[], done: () => void) => void) | undefined
+  /** 归档了几段、以及点开「已归档」那一屏。**N = 0 时那一行不画**——空的入口是噪音 */
+  archivedCount?: number | undefined
+  onShowArchived?: (() => void) | undefined
   onMoveSession?: ((session: SessionSummary, direction: "up" | "down") => void) | undefined
   /** 拖拽排序。**菜单里的上移／下移仍然留着**——那是键盘可达的那条路 */
   onReorderSessions?: ((orderedIds: string[]) => void) | undefined
@@ -1663,6 +1682,7 @@ export function SessionSidebar({
         {...(onDeleteSession ? { onDelete: () => onDeleteSession(s) } : {})}
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
         {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
+        {...(onArchiveSession ? { onArchive: () => onArchiveSession(s) } : {})}
         {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
         {...(onReorderSessions
           ? {
@@ -1855,6 +1875,17 @@ export function SessionSidebar({
             <span className="name">{t("远程助理")}</span>
           </Row>
         ) : null}
+        {/**
+          * **「已归档」只在真有归档的时候出现**（2026-08-22）。看不见的能力等于不存在，
+          * 但一个永远空的入口也是噪音——作者问过「会影响侧栏吗」，答案是：没归档过就一个像素都不变。
+          */}
+        {onShowArchived && (archivedCount ?? 0) > 0 ? (
+          <Row active={view === "archived"} className="side-action" onClick={onShowArchived}>
+            <归档图标 className="row-icon" />
+            <span className="name">{t("已归档")}</span>
+            <span className="side-count">{archivedCount}</span>
+          </Row>
+        ) : null}
       </div>
       {/**
         * **一条横线**（作者明确要的）。
@@ -1973,6 +2004,11 @@ export function SessionSidebar({
               >
                 {已选!.size === 项目里全部.length ? t("全不选") : t("全选")}
               </Button>
+              {onArchiveMany ? (
+                <Button variant="text" size="inline" disabled={已选!.size === 0} onClick={() => onArchiveMany(项目组.flatMap(([, 里面的]) => 里面的.filter((t) => 已选!.has(t.taskId))), () => 设多选(undefined))}>
+                  {t("收进归档")}
+                </Button>
+              ) : null}
               <Button
                 variant="text"
                 size="inline"
@@ -2189,6 +2225,11 @@ export function SessionSidebar({
               >
                 {已选!.size === 服务器可批量的.length ? t("全不选") : t("全选")}
               </Button>
+              {onArchiveMany ? (
+                <Button variant="text" size="inline" disabled={已选!.size === 0} onClick={() => onArchiveMany(服务器可批量的.filter((x) => 已选!.has(x.taskId)), () => 设多选(undefined))}>
+                  {t("收进归档")}
+                </Button>
+              ) : null}
               <Button
                 variant="text"
                 size="inline"
@@ -2353,6 +2394,11 @@ export function SessionSidebar({
               >
                 {已选!.size === 可批量的.length ? t("全不选") : t("全选")}
               </Button>
+              {onArchiveMany ? (
+                <Button variant="text" size="inline" disabled={已选!.size === 0} onClick={() => onArchiveMany(可批量的.filter((x) => 已选!.has(x.taskId)), () => 设多选(undefined))}>
+                  {t("收进归档")}
+                </Button>
+              ) : null}
               <Button
                 variant="text"
                 size="inline"

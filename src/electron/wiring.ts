@@ -717,6 +717,22 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.isForeground ? { isForeground: opts.isForeground } : {}),
     // 提示词增强：用会话此刻的模型问一句
     askOnce: (目标, req) => nativeRuntime.问一句(目标, req),
+    /** 归档 / 取消归档各落一条 Run（7.18），挂在那段会话自己的项目下 */
+    记一次会话: (event, projectId, sessionId) => {
+      if (!projectId) return
+      const 此刻 = new Date().toISOString()
+      runStore.insert({
+        runId: `run-${randomUUID()}`,
+        projectId,
+        sessionId,
+        origin: "user",
+        requestType: `session_${event}`,
+        status: "completed",
+        startedAt: 此刻,
+        finishedAt: 此刻,
+        hasError: false,
+      })
+    },
     /** 技能的启停 / 导入 / 删除各落一条 Run（7.17）。挂在当前活着的本地会话的项目下；没有就不记 */
     记一次技能: (event, 路径, 详情) => {
       const 那段 = sessionStore.list().find((s) => s.state === "alive" && !s.connectionId)

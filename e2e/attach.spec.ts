@@ -237,12 +237,12 @@ test.describe("提示不说谎", () => {
       const 框 = page.getByPlaceholder(/今天帮你做些什么/)
       await expect(框).toBeVisible()
 
-      // `/` 打开命令面板 —— 技能与指令都在那儿
+      // `/` 弹技能与子 agent 的菜单（2026-08-22 起不再是整个命令面板——那个归 ⌘K）
       await 框.press("/")
-      await expect(page.getByRole("dialog", { name: /命令面板/ })).toBeVisible()
+      await expect(page.getByRole("listbox", { name: "技能与子 agent" })).toBeVisible()
       await page.keyboard.press("Escape")
-      // **别把那个 `/` 留在框里**：拦下来了就不该再落字
-      await expect(框).toHaveValue("")
+      await expect(page.getByRole("listbox", { name: "技能与子 agent" })).toHaveCount(0)
+      await 框.fill("")
 
       // `@` 开文件浏览器，挑完把路径写进来
       await 框.press("@")

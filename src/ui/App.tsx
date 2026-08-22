@@ -75,6 +75,7 @@ import {
 import { TerminalDock } from "./dock.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
+import { setSlashItems, type SlashItem } from "./state/view.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -2700,6 +2701,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
   /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
   const [技能数, 设技能数] = useState<number | undefined>(undefined)
+  const [技能单, 设技能单] = useState<SlashItem[]>([])
+  /** 输入框 `/` 菜单的单子：技能 + 子 agent（两个输入框共用一份 store） */
+  useEffect(() => {
+    setSlashItems([...技能单, ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) }))])
+  }, [技能单, 子agent名册])
   useEffect(() => {
     let 还在 = true
     client
@@ -2708,7 +2714,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .catch(() => {})
     client
       .get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
-      .then((r) => 还在 && 设技能数(r.skills.filter((x) => x.invocation !== "off").length))
+      .then((r) => {
+        if (!还在) return
+        const 开着的 = r.skills.filter((x) => x.invocation !== "off")
+        设技能数(开着的.length)
+        设技能单(开着的.map((x) => ({ kind: "skill" as const, name: x.name, description: x.description })))
+      })
       .catch(() => {})
     return () => {
       还在 = false
@@ -2718,10 +2729,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     () =>
       buildCommands({
         actions, agents: agentIds, session, busy, view, dockOpen,
-        subagents: 子agent名册,
-        ...(session ? { setDraft: (text: string) => setDraft(session.sessionId, text) } : {}),
       }),
-    [actions, agentIds, session, busy, view, dockOpen, 子agent名册],
+    [actions, agentIds, session, busy, view, dockOpen],
   )
 
   // **只有 exhausted 才配得上占满全屏。** connecting/reconnecting/degraded

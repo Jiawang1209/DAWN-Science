@@ -48,7 +48,6 @@ export const COMMAND_GROUPS = [
   msgid("项目"),
   msgid("视图"),
   msgid("设置"),
-  msgid("子 agent"),
 ] as const
 export type CommandGroup = (typeof COMMAND_GROUPS)[number]
 
@@ -107,13 +106,6 @@ export interface CommandContext {
   view: View
   /** 底部终端开着没有。**决定那条命令说「打开」还是「收起」** */
   dockOpen?: boolean
-  /**
-   * 子 agent 名册（agents-roster，2026-08-22）。`/` 在空输入框行首开的就是这个面板，
-   * 所以「派谁」「按谁的规矩聊」都在这儿挑：选中往草稿里写一句开头。
-   */
-  subagents?: readonly { name: string; title?: string | undefined; description: string; group?: string | undefined }[]
-  /** 往当前会话的草稿里写（替换） */
-  setDraft?: (text: string) => void
 }
 
 const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
@@ -151,25 +143,6 @@ export function buildCommands(ctx: CommandContext): Command[] {
   const { actions, agents } = ctx
   const out: Command[] = []
 
-  // ── 子 agent：派出去 / 叫进来 ───────────────────────────────────
-  if (ctx.subagents && ctx.setDraft && ctx.session) {
-    for (const a of ctx.subagents) {
-      out.push({
-        id: `subagent-dispatch:${a.name}`,
-        title: tf("派子 agent「{0}」", a.title ?? a.name),
-        group: "子 agent",
-        keywords: `${a.name} ${a.description} ${a.group ?? ""} 派 委派 subagent`,
-        run: () => ctx.setDraft!(`用子 agent「${a.name}」来做：`),
-      })
-      out.push({
-        id: `subagent-skill:${a.name}`,
-        title: tf("按「{0}」的规矩聊", a.title ?? a.name),
-        group: "子 agent",
-        keywords: `${a.name} ${a.description} ${a.group ?? ""} skill 技能 规矩`,
-        run: () => ctx.setDraft!(`/skill:${a.name} `),
-      })
-    }
-  }
 
   // ── 会话 ─────────────────────────────────────────────────────────
   /**

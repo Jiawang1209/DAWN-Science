@@ -145,3 +145,19 @@ export function togglePalette(): void {
 export const setView = (v: View) => setValue($view, v)
 export const setActiveProjectId = (v: string | undefined) => setValue($activeProjectId, v)
 export const setActiveSessionId = (v: string | undefined) => setValue($activeSessionId, v)
+
+/**
+ * 输入框里按 `/` 弹的那份单子（2026-08-22，作者：`/` 弹出整个命令面板是错的，那儿该只有技能与子 agent）。
+ * 由 App 在启动与切项目时填；两个输入框（对话屏、空态屏）共用。
+ */
+export interface SlashItem {
+  kind: "skill" | "subagent"
+  /** 标识符：技能名 / 子 agent 名，`/skill:名` 或派它时用的 */
+  name: string
+  /** 给人看的名字（子 agent 的 `title`）；没有就用 name */
+  title?: string | undefined
+  description: string
+  group?: string | undefined
+}
+export const $slashItems = atom<readonly SlashItem[]>([])
+export const setSlashItems = (items: readonly SlashItem[]) => $slashItems.set(items)

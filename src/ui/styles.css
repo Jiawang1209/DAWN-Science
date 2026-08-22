@@ -5416,3 +5416,38 @@ pre {
 .schedule-run-row .skill-row-main { width: auto; }
 .tag-bad { border-color: var(--dawn-danger); color: var(--dawn-danger); }
 .skill-slug { font-family: var(--dawn-font-mono); }
+
+/* ── 输入框上方的 `/` 菜单（2026-08-22） ── */
+.composer { position: relative; }
+.slash-menu {
+  position: absolute;
+  left: var(--dawn-space-3);
+  right: var(--dawn-space-3);
+  bottom: calc(100% - var(--dawn-space-2));
+  z-index: var(--z-modal-popover);
+  max-height: 18rem;
+  overflow: auto;
+  padding: var(--dawn-space-1);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+  display: flex;
+  flex-direction: column;
+}
+.slash-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+  gap: var(--dawn-space-2);
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  padding: 4px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+}
+.slash-item.active { background: var(--dawn-row-hover); }
+.slash-name { font-weight: var(--dawn-weight-medium); white-space: nowrap; }
+.slash-slug { font-family: var(--dawn-font-mono); font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; }
+.slash-desc { font-size: 12px; color: var(--dawn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slash-kind { flex: none; }
+.slash-empty, .slash-foot { margin: var(--dawn-space-1) var(--dawn-space-2); }

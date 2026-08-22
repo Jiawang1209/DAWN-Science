@@ -2450,7 +2450,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     getPermissionMode: async () => ({
-      mode: settings?.get("permission.mode") === "deny-risky" ? ("deny-risky" as const) : ("allow-all" as const),
+      mode: ((v) => (v === "deny-risky" || v === "ask-risky" ? v : "allow-all"))(settings?.get("permission.mode")) as "allow-all" | "ask-risky" | "deny-risky",
     }),
 
     setPermissionMode: async ({ mode }) => {

@@ -4679,7 +4679,7 @@ pre {
   border-radius: var(--dawn-radius-lg);
   background: var(--dawn-accent-soft);
 }
-.perm-card-title { margin: 0; font-weight: var(--dawn-weight-medium); }
+.perm-card-title { white-space: pre-wrap; margin: 0; font-weight: var(--dawn-weight-medium); }
 /** **不换行**：与侧栏那条同一副纪律，放不下就裁，不折成两层 */
 .perm-card-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
 .perm-card-options .btn { white-space: nowrap; }

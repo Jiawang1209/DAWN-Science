@@ -489,20 +489,25 @@ export function PermissionPanel({
   mode,
   onChange,
 }: {
-  mode: "allow-all" | "deny-risky"
-  onChange: (m: "allow-all" | "deny-risky") => void
+  mode: "allow-all" | "ask-risky" | "deny-risky"
+  onChange: (m: "allow-all" | "ask-risky" | "deny-risky") => void
 }) {
   const 档位 = [
     {
       值: "allow-all" as const,
       名: t("全放行"),
-      说: t("内置 agent 可以任意读写、执行命令。这是目前的默认。"),
+      说: t("内置 agent 可以任意读写、执行命令。只拦硬拒清单。这是目前的默认。"),
+    },
+    {
+      值: "ask-risky" as const,
+      名: t("问一句"),
+      说: t("危险操作（改 data/raw/、写到工作区外、删除会话之前就有的文件、装包、联网、git push、没过目的 MCP 工具）弹一张卡让你点「允许这一次」；拒绝或 5 分钟没答都按拒，理由回给模型让它改道。删这段会话自己生成的文件不问。"),
     },
     {
       值: "deny-risky" as const,
       名: t("拦下危险操作"),
       说: t(
-        "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。拦下就是拦下——这一版还不能「问你一句然后放行」。",
+        "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。要「问你一句然后放行」选上面那档。",
       ),
     },
   ]
@@ -527,7 +532,7 @@ export function PermissionPanel({
         */}
       <p className="caveat">
         {t(
-          "这是一道工具门，不是沙箱：它只管内置的 read / write / edit / bash 四个工具，管不到子 agent 与 MCP 带进来的工具，也拦不住绕过工具的路子。",
+          "这是一道工具门，不是沙箱：它管内置的 read / write / edit / bash 四个工具和没过目的 MCP 工具，管不到子 agent 自己的工具，也拦不住绕过工具的路子。硬拒清单（sudo、删到主目录 / 系统目录 / 凭据目录、带凭据出网、强推远端）任何档都拒。",
         )}
       </p>
     </section>

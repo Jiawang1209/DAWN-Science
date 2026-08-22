@@ -767,7 +767,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /** 上一次「按科研目录结构初始化」做了什么。**做完要出声** */
   const [目录说明, 设目录说明] = useState<string | undefined>(undefined)
 
-  const [权限档, 设权限档] = useState<"allow-all" | "deny-risky">("allow-all")
+  const [权限档, 设权限档] = useState<"allow-all" | "ask-risky" | "deny-risky">("allow-all")
   /**
    * 用量（S21）。**进那一屏时才拉**——它要扫全表，而绝大多数会话
    * 从头到尾不会打开这一屏。
@@ -779,7 +779,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     if (view !== "settings") return
     client
-      .get<{ mode: "allow-all" | "deny-risky" }>("getPermissionMode", {})
+      .get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("getPermissionMode", {})
       .then((r) => 设权限档(r.mode))
       .catch(fail)
   }, [client, view])
@@ -3409,7 +3409,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                         const 旧的 = 权限档
                         设权限档(m)
                         client
-                          .get<{ mode: "allow-all" | "deny-risky" }>("setPermissionMode", { mode: m })
+                          .get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("setPermissionMode", { mode: m })
                           .then((r) => 设权限档(r.mode))
                           .catch((e: unknown) => {
                             设权限档(旧的)

@@ -119,7 +119,7 @@ export const ScheduleSpecSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("everyDays"), everyDays: z.int().min(1), time: 时间HHmm, start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), timeZone: z.string().min(1) }).strict(),
 ])
 /** 工具权限档（与设置里那两档同一口径）。定时任务的会话按它自己存的走 */
-export const PermissionTierSchema = z.enum(["allow-all", "deny-risky"])
+export const PermissionTierSchema = z.enum(["allow-all", "ask-risky", "deny-risky"])
 export const ScheduleRunSchema = z
   .object({
     id: z.string(),
@@ -1539,14 +1539,14 @@ export const OPERATIONS = {
 
   getPermissionMode: {
     request: Empty,
-    response: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),
+    response: z.object({ mode: z.enum(["allow-all", "ask-risky", "deny-risky"]) }).strict(),
     mutating: false,
   },
 
   setPermissionMode: {
-    request: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),
+    request: z.object({ mode: z.enum(["allow-all", "ask-risky", "deny-risky"]) }).strict(),
     /** **回显现状**：看不见自己改成了什么，等于没改 */
-    response: z.object({ mode: z.enum(["allow-all", "deny-risky"]) }).strict(),
+    response: z.object({ mode: z.enum(["allow-all", "ask-risky", "deny-risky"]) }).strict(),
     mutating: true,
   },
 

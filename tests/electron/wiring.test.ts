@@ -11,6 +11,7 @@ import { join } from "node:path"
 import { createWorkbench } from "../../src/electron/wiring.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { NativeRuntime } from "../../src/runtime/native.js"
+import type { AgentEvent } from "../../src/runtime/types.js"
 import { 对话内核 } from "../../src/kernel/挂载.js"
 import { SettingsStore } from "../../src/store/settings.js"
 import { 造门 } from "../../src/policy/permissions.js"
@@ -204,7 +205,7 @@ describe("createWorkbench", () => {
  * 直接调它的 `execute`，看门有没有把它拦下。
  */
 describe("工具权限门 · 接线", () => {
-  function 造运行时(档: "allow-all" | "deny-risky") {
+  function 造运行时(档: "allow-all" | "ask-risky" | "deny-risky") {
     return new NativeRuntime({ gate: 造门(() => 档) })
   }
 
@@ -278,6 +279,84 @@ describe("工具权限门 · 接线", () => {
 
     const r = await 跑(write!, { path: "data/raw/a.csv", content: "x" })
     expect(r.isError, "wiring 里那句 gate 没接上——门在运行时那层是好的，但没装上去").toBe(true)
+  })
+
+  /**
+   * **问一句**（2026-08-23，学自 dsh-auto-mode 的 ask）：危险操作不再直接拒，而是发一条 `permission_request`
+   * （与 ACP 权限卡同一形状），等 `answerPermission`。点「允许这一次」就真写进去；拒绝就把理由回给模型。
+   */
+  describe("ask-risky 档：问一句", () => {
+    it("**允许这一次 → 真的写进去**；卡的形状与 ACP 的一样、答完卡会消失", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "dawn-ask-"))
+      cleanups.push(() => rmSync(dir, { recursive: true, force: true }))
+      const rt = 造运行时("ask-risky")
+      const 事件: AgentEvent[] = []
+      rt.attach("s1" as never, (e) => 事件.push(e))
+      const write = 工具们(rt, dir).find((t) => t.name === "write")!
+      const p = 跑(write, { path: "data/raw/a.csv", content: "人点了允许" })
+      // 等卡弹出来
+      await new Promise((r) => setTimeout(r, 50))
+      const 问 = 事件.find((e) => e.kind === "permission_request") as Extract<AgentEvent, { kind: "permission_request" }> | undefined
+      expect(问, "问一句档没发出权限询问").toBeDefined()
+      expect(问!.title).toMatch(/data\/raw/)
+      expect(问!.options.map((o) => o.optionId)).toEqual(["allow_once", "reject"])
+      rt.answerPermission("s1" as never, 问!.requestId, "allow_once")
+      const r = await p
+      expect(r.isError).toBeUndefined()
+      expect(readFileSync(join(dir, "data/raw/a.csv"), "utf8")).toBe("人点了允许")
+      expect(事件.some((e) => e.kind === "permission_settled" && e.requestId === 问!.requestId), "答完了卡要消失").toBe(true)
+    })
+
+    it("**拒绝 → 不写，理由回给模型**，说清是人拒的", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "dawn-ask-"))
+      cleanups.push(() => rmSync(dir, { recursive: true, force: true }))
+      const rt = 造运行时("ask-risky")
+      const 事件: AgentEvent[] = []
+      rt.attach("s1" as never, (e) => 事件.push(e))
+      const write = 工具们(rt, dir).find((t) => t.name === "write")!
+      const p = 跑(write, { path: "data/raw/a.csv", content: "x" })
+      await new Promise((r) => setTimeout(r, 50))
+      const 问 = 事件.find((e) => e.kind === "permission_request") as Extract<AgentEvent, { kind: "permission_request" }>
+      rt.answerPermission("s1" as never, 问.requestId, "reject")
+      const r = await p
+      expect(r.isError).toBe(true)
+      expect(r.content?.[0]?.text).toMatch(/人拒绝了/)
+      expect(existsSync(join(dir, "data/raw/a.csv"))).toBe(false)
+    })
+
+    it("**硬拒不问**：sudo 在问一句档也直接拒，不发询问", async () => {
+      const rt = 造运行时("ask-risky")
+      const 事件: AgentEvent[] = []
+      rt.attach("s1" as never, (e) => 事件.push(e))
+      const bash = 工具们(rt, "/w/proj").find((t) => t.name === "bash")!
+      const r = await 跑(bash, { command: "sudo rm -rf /var/log" })
+      expect(r.isError).toBe(true)
+      expect(r.content?.[0]?.text).toMatch(/提权/)
+      expect(事件.some((e) => e.kind === "permission_request")).toBe(false)
+    })
+  })
+
+  /**
+   * **本会话产物**（2026-08-23，学自 dsh-auto-mode 的产物登记）：这段会话自己 `write` 出来的文件，
+   * 拦下档删它也不拦；会话之前就有的照拦。
+   */
+  it("拦下档：删本会话自己写出来的文件不拦，删之前就有的拦", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-artifact-"))
+    cleanups.push(() => rmSync(dir, { recursive: true, force: true }))
+    writeFileSync(join(dir, "old.csv"), "之前就有")
+    const rt = 造运行时("deny-risky")
+    const 全部 = 工具们(rt, dir)
+    const write = 全部.find((t) => t.name === "write")!
+    const bash = 全部.find((t) => t.name === "bash")!
+    await 跑(write, { path: "tmp.csv", content: "本会话写的" })
+    expect(existsSync(join(dir, "tmp.csv"))).toBe(true)
+    const 删新 = await 跑(bash, { command: "rm tmp.csv" })
+    expect(删新.isError, "删本会话自己写的文件被拦了").not.toBe(true)
+    expect(existsSync(join(dir, "tmp.csv"))).toBe(false)
+    const 删旧 = await 跑(bash, { command: "rm old.csv" })
+    expect(删旧.isError).toBe(true)
+    expect(删旧.content?.[0]?.text).toMatch(/之前就有/)
+    expect(existsSync(join(dir, "old.csv"))).toBe(true)
   })
 
   it("语境真的传下去了：工作区之外的写入拦得住", async () => {

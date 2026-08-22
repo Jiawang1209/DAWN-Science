@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-23 — 权限三档：问一句、硬拒清单、本会话产物（学自 NanmiCoder/dsh-auto-mode）
+
+- **Type**: feat
+- **Motivation**: 对照 dsh-auto-mode 之后作者定「按照他的来」。我们的门只有全放行 / 拦下：没有「问一句」（当年缺一条往返，ACP 权限卡已把路铺好）、没有硬拒清单（`rm -rf ~`、`sudo` 在全放行档一个字不拦）、不分「删自己刚生成的」与「删之前就有的」。
+- **What**: `权限档` 三档（`allow-all / ask-risky / deny-risky`）；`照这一档` 回三态决定；新类别「硬拒」任何档都拒（sudo、强推、带凭据出网、动盘、删 / 写到根 / 系统目录 / 主目录顶层 / 凭据目录）；删除目标看不清（glob / 变量 / 管道 / xargs / find -delete / 多目标）就拒并要求每次一个可见目标；`policy/artifacts.ts` 登记本会话新建的文件（inode + 出生时间），删它们不算删除；`NativeRuntime.问权限`：ask → `permission_request`（与 ACP 卡同形）→ `answerPermission` → 继续 / 拒，5 分钟超时与会话中止都算拒，答完发 `permission_settled` 清卡；MCP 没过目的工具在问一句档也问；系统提示加「动文件的规矩」；设置三档与说明；输入卡权限菜单三项。设计定案 `specs/2026-08-23-权限三档-design.md`。
+- **Impact**: `ToolGate` 的契约从 `string | undefined` 改成三态决定；wiring 与 backend 读设置时此前把非 deny 的值一律折成全放行——**这正是 e2e 抓到的 bug**（存了问一句却按全放行跑）。定时任务仍只在全放行 / 拦下里选。仍不是沙箱。
+- **Verification**: `tests/policy` 62 条；`tests/electron/wiring.test.ts` 走真实工具包装验问一句 / 硬拒 / 产物；`e2e/permission.spec.ts` 6 条（三档、弹卡允许真删、拒绝没删、sudo 全放行也拒）；全量见提交。
+
 ### 2026-08-22 — 团队那一格改成卡片；成员空输出不再误判为失败
 
 - **Type**: feat + fix

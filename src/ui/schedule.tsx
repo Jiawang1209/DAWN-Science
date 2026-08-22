@@ -41,7 +41,7 @@ export interface 定时摘要 {
   workspace?: string
   connectionId?: string
   where: string
-  permission: "allow-all" | "deny-risky"
+  permission: "allow-all" | "ask-risky" | "deny-risky"
   nextAt?: string
   lastRun?: 运行摘要
 }
@@ -49,8 +49,8 @@ export interface 定时摘要 {
 export interface ScheduleActions {
   load: () => Promise<{ schedules: 定时摘要[]; nextDueAt?: string }>
   loadRuns: (id?: string) => Promise<{ runs: 运行摘要[] }>
-  create: (req: { name: string; prompt: string; schedule: 计划; agentId: string; workspace?: string; connectionId?: string; permission?: "allow-all" | "deny-risky" }) => Promise<unknown>
-  update: (req: { id: string; name?: string; prompt?: string; schedule?: 计划; status?: "active" | "paused"; permission?: "allow-all" | "deny-risky" }) => Promise<unknown>
+  create: (req: { name: string; prompt: string; schedule: 计划; agentId: string; workspace?: string; connectionId?: string; permission?: "allow-all" | "ask-risky" | "deny-risky" }) => Promise<unknown>
+  update: (req: { id: string; name?: string; prompt?: string; schedule?: 计划; status?: "active" | "paused"; permission?: "allow-all" | "ask-risky" | "deny-risky" }) => Promise<unknown>
   remove: (id: string) => Promise<unknown>
   runNow: (id: string) => Promise<unknown>
   问: (req: { title: string; detail: React.ReactNode; confirmLabel: string }) => Promise<"confirm" | "alt" | "cancel">
@@ -97,7 +97,7 @@ interface 表单 {
   day: number
   everyDays: number
   start: string
-  permission: "allow-all" | "deny-risky"
+  permission: "allow-all" | "ask-risky" | "deny-risky"
   去哪: string
   agentId: string
 }

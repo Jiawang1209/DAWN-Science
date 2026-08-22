@@ -23,7 +23,7 @@ import { diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 import { 开网关 } from "../acp/gateway.js"
 import { 工具清单, 建调用 } from "../acp/tools.js"
 import { 建跑内核 } from "../acp/kernel.js"
-import { 造门, 造MCP门 } from "../policy/permissions.js"
+import { 造门, 造MCP门, type 权限档 } from "../policy/permissions.js"
 import { MCP池 } from "../mcp/客户端.js"
 import { 合名单 } from "../mcp/名单.js"
 import { SessionManager, type PtyAgentDef } from "../session/manager.js"
@@ -257,8 +257,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * 那是「设置里改了、界面上没反应」的经典形状。
    */
   /** 定时任务的会话按它自己存的档（2026-08-22）；别的会话跟全局设置 */
-  const 按会话的档 = new Map<string, "allow-all" | "deny-risky">()
-  const 权限门 = 造门((sessionId) => (sessionId && 按会话的档.get(sessionId)) || (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"))
+  const 按会话的档 = new Map<string, 权限档>()
+  /** 设置里存的档（2026-08-23 起三档）；不认识的值当全放行，**但要能认出 ask-risky**——此前这里把它折成了全放行 */
+  const 读全局档 = (): 权限档 => {
+    const v = settingsStore.get("permission.mode")
+    return v === "deny-risky" || v === "ask-risky" ? v : "allow-all"
+  }
+  const 权限门 = 造门((sessionId) => (sessionId && 按会话的档.get(sessionId)) || 读全局档())
 
   /**
    * Jupyter 内核的运行时。**提出来命名，因为现在有两个用处**（②，2026-08-14）：
@@ -316,7 +321,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   const mcp门 = 造MCP门(
-    () => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"),
+    读全局档,
     /**
      * **信任读本机的设置库，不读配置文件。**
      * 项目级名单住在 `.dawn/mcp.yaml`，会跟着仓库被 clone——
@@ -377,7 +382,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         if (档) 按会话的档.set(sid, 档)
         else 按会话的档.delete(sid)
       },
-      全局: () => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"),
+      全局: 读全局档,
     },
     /**
      * 视觉服务（2026-08-20）。**现取现用**：读的是被 `saveVision` 原地更新的
@@ -956,7 +961,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         建: async (sessionId, req) => {
           const rec = sessionStore.get(sessionId)
           if (!rec) throw new Error(`没有这段会话：${sessionId}`)
-          const 档 = 按会话的档.get(sessionId) ?? (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all")
+          const 档 = 按会话的档.get(sessionId) ?? 读全局档()
           const d = (await backend.createSchedule({
             name: req.name, prompt: req.prompt, schedule: req.schedule as never, agentId: rec.agentId,
             ...(rec.connectionId ? { connectionId: rec.connectionId } : { workspace: rec.workspace }),

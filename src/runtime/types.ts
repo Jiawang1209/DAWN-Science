@@ -240,6 +240,8 @@ export type AgentEvent =
       title: string
       options: readonly { optionId: string; name: string; kind: string }[]
     }
+  /** 一次询问答完了 / 超时了 / 取消了（2026-08-23，原生会话的「问一句」）：卡要消失 */
+  | { kind: "permission_settled"; sessionId: SessionId; requestId: string }
   /**
    * 一次工具调用的**文件事实**（不变式 5：从 git 事实算，不听 agent 声明）。
    *

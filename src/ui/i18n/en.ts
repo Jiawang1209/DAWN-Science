@@ -135,13 +135,15 @@ export const EN: Readonly<Record<string, string>> = {
   "多选服务器": "Select servers",
   "工具权限": "Tool permissions",
   "全放行": "Permit everything",
-  "内置 agent 可以任意读写、执行命令。这是目前的默认。":
-    "The built-in agent may read, write and run anything. This is the current default.",
+  "内置 agent 可以任意读写、执行命令。只拦硬拒清单。这是目前的默认。":
+    "The built-in agent may read, write and run anything; only the hard-deny list is blocked. This is the current default.",
+  "问一句": "Ask first",
+  "危险操作（改 data/raw/、写到工作区外、删除会话之前就有的文件、装包、联网、git push、没过目的 MCP 工具）弹一张卡让你点「允许这一次」；拒绝或 5 分钟没答都按拒，理由回给模型让它改道。删这段会话自己生成的文件不问。": "Risky actions (editing data/raw/, writing outside the workspace, deleting files that existed before this session, installing packages, network access, git push, unreviewed MCP tools) show a card to click “Allow once”; rejecting or 5 minutes of silence counts as a denial and the reason goes back to the model. Deleting files this session created itself is not asked.",
   "拦下危险操作": "Block risky operations",
-  "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。拦下就是拦下——这一版还不能「问你一句然后放行」。":
-    "Writing to data/raw/, writing outside the workspace, deleting, installing packages, network access and git push are refused, and the reason is handed to the model so it can take another route. **Blocked means blocked** — this version cannot yet ask you and then let it through.",
-  "这是一道工具门，不是沙箱：它只管内置的 read / write / edit / bash 四个工具，管不到子 agent 与 MCP 带进来的工具，也拦不住绕过工具的路子。":
-    "This is a tool gate, not a sandbox: it covers only the four built-in tools (read / write / edit / bash). It does not cover tools brought in by sub-agents or MCP, and it cannot stop anything that bypasses tools altogether.",
+  "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。要「问你一句然后放行」选上面那档。":
+    "Writing to data/raw/, writing outside the workspace, deleting, installing packages, network access and git push are refused, and the reason is handed to the model so it can take another route. Pick the tier above if you want to be asked first.",
+  "这是一道工具门，不是沙箱：它管内置的 read / write / edit / bash 四个工具和没过目的 MCP 工具，管不到子 agent 自己的工具，也拦不住绕过工具的路子。硬拒清单（sudo、删到主目录 / 系统目录 / 凭据目录、带凭据出网、强推远端）任何档都拒。":
+    "This is a tool gate, not a sandbox: it covers the four built-in tools (read / write / edit / bash) and unreviewed MCP tools. It does not cover sub-agents' own tools, and it cannot stop anything that bypasses tools altogether. The hard-deny list (sudo, deleting into the home / system / credential directories, sending credentials over the network, force-push) is blocked at every tier.",
   "环境": "Environment",
   // 机器快照那一支（②-B · R5）。**「系统」不能复用**——那个 msgid 归账本的
   // `origin: system`，同一个中文串两种含义、一份译文，必有一处是错的

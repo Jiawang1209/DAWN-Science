@@ -19,8 +19,9 @@
 import { 读调用策略 } from "../skills/invocation.js"
 import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
 import { dirname } from "node:path"
+import { randomUUID } from "node:crypto"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { join, isAbsolute } from "node:path"
 import {
   createAgentSession,
   createBashToolDefinition,
@@ -57,6 +58,7 @@ import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
+import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器 } from "../team/scheduler.js"
 import { createTeamTools, 队长协议 } from "../team/tools.js"
 import { 描述图片 } from "./vision.js"
@@ -96,6 +98,8 @@ export interface ToolGateContext {
   remote?: boolean
   /** 哪段会话在调（2026-08-22，定时任务按会话定档） */
   sessionId?: string
+  /** 这段会话自己创建的文件（2026-08-23）：删它们不算删除 */
+  本会话创建?: (绝对路径: string) => boolean
 }
 
 /**
@@ -109,7 +113,7 @@ export type ToolGate = (
   toolName: string,
   params: Record<string, unknown>,
   ctx: ToolGateContext,
-) => string | undefined
+) => import("../policy/permissions.js").门的决定
 
 export interface NativeRuntimeOptions {
   /**
@@ -131,9 +135,9 @@ export interface NativeRuntimeOptions {
    * 不给就不摆这一条。
    */
   permissionTier?: {
-    取: (sessionId: SessionId) => "allow-all" | "deny-risky" | undefined
-    设: (sessionId: SessionId, 档: "allow-all" | "deny-risky" | undefined) => void
-    全局: () => "allow-all" | "deny-risky"
+    取: (sessionId: SessionId) => "allow-all" | "ask-risky" | "deny-risky" | undefined
+    设: (sessionId: SessionId, 档: "allow-all" | "ask-risky" | "deny-risky" | undefined) => void
+    全局: () => "allow-all" | "ask-risky" | "deny-risky"
   }
   /**
    * 技能的两个位置（S20，2026-08-15）。**不给就完全是原来的样子。**
@@ -176,7 +180,7 @@ export interface NativeRuntimeOptions {
       问题: readonly string[]
     }>
     池: import("../mcp/客户端.js").MCP池
-    门?: (服务器名: string) => string | undefined
+    门?: (服务器名: string) => import("../policy/permissions.js").门的决定
   }
   /**
    * 对话的内核（②，2026-08-14）。**给了才有 `run_code` 这个工具。**
@@ -485,6 +489,9 @@ export class NativeRuntime implements AgentRuntime {
     if (!gate && !provenance) return undefined
     const probe = provenance ? new ProvenanceProbe(cwd) : undefined
     const emit = (e: AgentEvent) => this.emit(e)
+    /** 本会话产物（2026-08-23）：删自己建的不算删除。一个会话一份 */
+    const 产物 = this.产物登记(sessionId)
+    const 问 = (title: string, reason: string, signal: AbortSignal | undefined) => this.问权限(sessionId, title, reason, signal)
     const wrap = (definition: Record<string, unknown>) => {
       const original = (definition.execute as (...a: unknown[]) => Promise<unknown>).bind(definition)
       const name = String(definition.name)
@@ -498,19 +505,35 @@ export class NativeRuntime implements AgentRuntime {
           ctx: unknown,
         ) {
           if (gate) {
-            const reason = gate(name, params, { workspace: cwd, sessionId, ...(remote ? { remote: true } : {}) })
-            if (reason !== undefined) {
+            const 决定 = gate(name, params, { workspace: cwd, sessionId, ...(remote ? { remote: true } : {}), 本会话创建: (p) => 产物.是本会话创建(p) })
+            if (决定.kind === "deny") {
               // **回一条 isError 结果，不要抛异常**——抛异常会中断整轮，
               // 模型学不到「这条被拒了」。Spike A-2 实测确认。
-              return { content: [{ type: "text", text: reason }], isError: true, details: undefined }
+              return { content: [{ type: "text", text: 决定.reason }], isError: true, details: undefined }
+            }
+            if (决定.kind === "ask") {
+              // **问一句**（2026-08-23）：弹 ACP 那张权限卡，等人点；拒绝 / 超时都把理由回给模型让它改道
+              const 答 = await 问(摘要(name, params), 决定.reason, signal)
+              if (答 !== "allow") {
+                return {
+                  content: [{ type: "text", text: 答 === "timeout" ? `${决定.reason}（等了 5 分钟没有人回答，按拒绝处理。换一条不需要这个动作的路，或让人来做。）` : `${决定.reason}（人拒绝了这一次。换一条不需要这个动作的路。）` }],
+                  isError: true,
+                  details: undefined,
+                }
+              }
             }
           }
+          // 执行前记下「要建的文件此前在不在」，成功后只登记此前不存在的（覆盖已有文件不算新建）
+          const 要建的 = 要建的文件(name, params, cwd)
+          const 之前 = 要建的.map((p) => [p, 产物登记.存在(p)] as const)
           // **before 快照必须在真正执行之前完成**，所以要 await。
           // 这正是 Spike A-2 选「包装工具定义」而非 pi 文件扩展的原因之一：
           // 包装器天然是同步点，而普通事件订阅不阻塞
           const handle = await probe?.begin(name, params)
           try {
-            return await original(toolCallId, params, signal, onUpdate, ctx)
+            const r = await original(toolCallId, params, signal, onUpdate, ctx)
+            if (!(r as { isError?: boolean } | undefined)?.isError) for (const [p, 有] of 之前) 产物.登记新建(p, 有)
+            return r
           } finally {
             if (handle) {
               const facts = await handle.finish()
@@ -586,6 +609,56 @@ export class NativeRuntime implements AgentRuntime {
    * 但那条 Run 没有 `files_written`。按不变式 5 的规矩，
    * **缺省读作「不知道」，这正是此刻的实情。**
    */
+  /** 一个会话一份产物登记（2026-08-23）。会话停了就丢 */
+  private readonly 产物们 = new Map<SessionId, 产物登记>()
+  private 产物登记(sessionId: SessionId): 产物登记 {
+    let r = this.产物们.get(sessionId)
+    if (!r) {
+      r = new 产物登记()
+      this.产物们.set(sessionId, r)
+    }
+    return r
+  }
+
+  /** 正在等人回答的询问：requestId → 回答它 */
+  private readonly 待答 = new Map<string, (答: "allow" | "deny") => void>()
+
+  /**
+   * **问一句**（2026-08-23，学自 dsh-auto-mode 的 ask）：发一条 `permission_request`（与 ACP 的权限卡同一形状），
+   * 等界面回 `answerPermission`。最多等 5 分钟；会话中止也算拒。
+   * 回答之后发 `permission_settled` 让卡消失——不发的话按钮还能按，按了什么都不会发生。
+   */
+  private 问权限(sessionId: SessionId, title: string, reason: string, signal: AbortSignal | undefined): Promise<"allow" | "deny" | "timeout"> {
+    const requestId = `ask-${randomUUID()}`
+    return new Promise((resolve) => {
+      const 收 = (答: "allow" | "deny" | "timeout") => {
+        this.待答.delete(requestId)
+        clearTimeout(timer)
+        signal?.removeEventListener("abort", onAbort)
+        this.emit({ kind: "permission_settled", sessionId, requestId })
+        resolve(答)
+      }
+      const timer = setTimeout(() => 收("timeout"), 5 * 60_000)
+      const onAbort = () => 收("deny")
+      signal?.addEventListener("abort", onAbort, { once: true })
+      this.待答.set(requestId, 收)
+      this.emit({
+        kind: "permission_request",
+        sessionId,
+        requestId,
+        title: `${title}\n${reason}`,
+        options: [
+          { optionId: "allow_once", name: "允许这一次", kind: "allow_once" },
+          { optionId: "reject", name: "拒绝", kind: "reject_once" },
+        ],
+      })
+    })
+  }
+
+  answerPermission(_sessionId: SessionId, requestId: string, optionId?: string): void {
+    this.待答.get(requestId)?.(optionId === "allow_once" ? "allow" : "deny")
+  }
+
   /** 目录里每个 provider 的 api key（读得到的那些），递给子进程。OAuth 类的凭证不递——子进程没法刷新 */
   private async 子进程凭证(): Promise<Record<string, string> | undefined> {
     const store = this.opts.credentials
@@ -824,6 +897,7 @@ export class NativeRuntime implements AgentRuntime {
           工具: r.工具,
           ...(spec.workspace ? { 工作区: spec.workspace } : {}),
           ...(门 ? { 门 } : {}),
+          问: (title, reason) => this.问权限(spec.sessionId, title, reason, undefined),
         })
         for (const 问题 of r.问题) {
           this.emit({ kind: "notice", sessionId: spec.sessionId, text: `MCP：${问题}` })
@@ -926,6 +1000,8 @@ export class NativeRuntime implements AgentRuntime {
         ...base,
         // 队长协议（team-board）：模型不知道该怎么分工，就不会分工
         ...(this.opts.subagentChildEntry ? [队长协议] : []),
+        // 删除指引（2026-08-23，学自 dsh-auto-mode）：帮规划的，不是安全边界——边界在门上
+        删除指引,
         `You are currently running on the model "${当前模型}". ` +
           `If the user asks which model you are, answer with exactly this. ` +
           `Do not guess from environment variables or from earlier turns — ` +
@@ -1074,7 +1150,7 @@ export class NativeRuntime implements AgentRuntime {
     const 档 = this.opts.permissionTier
     if (档) {
       const 全局 = 档.全局()
-      const 名 = (x: "allow-all" | "deny-risky") => (x === "allow-all" ? "全放行" : "拦下危险操作")
+      const 名 = (x: "allow-all" | "ask-risky" | "deny-risky") => (x === "allow-all" ? "全放行" : x === "ask-risky" ? "问一句" : "拦下危险操作")
       开关.push({
         id: "dawn.permission",
         name: "权限",
@@ -1084,8 +1160,9 @@ export class NativeRuntime implements AgentRuntime {
         current: 档.取(sessionId) ?? "inherit",
         options: [
           { value: "inherit", name: `${名(全局)} · 跟随设置`, description: "设置里改了，这段跟着变" },
-          { value: "allow-all", name: "全放行", description: "内置 agent 可以任意读写、执行命令" },
-          { value: "deny-risky", name: "拦下危险操作", description: "改 data/raw/、写到工作区外、删除、装包、联网、git push 会被拒绝" },
+          { value: "allow-all", name: "全放行", description: "只拦硬拒清单（sudo、删到主目录 / 系统目录、凭据外传、强推）" },
+          { value: "ask-risky", name: "问一句", description: "危险操作弹一张卡让你点「允许这一次」；拒绝 / 5 分钟没答都按拒，理由回给模型" },
+          { value: "deny-risky", name: "拦下危险操作", description: "改 data/raw/、写到工作区外、删除、装包、联网、git push 直接拒绝" },
         ],
       })
     }
@@ -1117,7 +1194,7 @@ export class NativeRuntime implements AgentRuntime {
     if (configId === "dawn.permission") {
       const 档 = this.opts.permissionTier
       if (!档) throw new Error("这一版没有接按会话的权限档")
-      if (value !== "inherit" && value !== "allow-all" && value !== "deny-risky") throw new Error(`不认识的权限档：${value}`)
+      if (value !== "inherit" && value !== "allow-all" && value !== "ask-risky" && value !== "deny-risky") throw new Error(`不认识的权限档：${value}`)
       档.设(sessionId, value === "inherit" ? undefined : value)
     } else if (configId === "dawn.thinking") {
       const 级 = ["minimal", "low", "medium", "high", "xhigh", "max"]
@@ -1953,3 +2030,24 @@ function 记当前团队(sessionDir: string, id: string | undefined): void {
     console.error("[团队] 记不住当前团队：", e instanceof Error ? e.message : String(e))
   }
 }
+
+/** 给权限卡看的一句：工具名 + 主参数 */
+function 摘要(name: string, params: Record<string, unknown>): string {
+  const 主 = typeof params.command === "string" ? params.command : typeof params.path === "string" ? params.path : ""
+  return 主 ? `${name}：${主.length > 160 ? `${主.slice(0, 160)}…` : 主}` : name
+}
+
+/** 这次调用会创建哪些文件（写 / 编辑的目标，shell 重定向的目标）——给产物登记用 */
+function 要建的文件(name: string, params: Record<string, unknown>, cwd: string): string[] {
+  if ((name === "write" || name === "edit") && typeof params.path === "string") return [isAbsolute(params.path) ? params.path : join(cwd, params.path)]
+  if (name === "bash" && typeof params.command === "string") return 重定向目标(params.command).map((t) => (isAbsolute(t) ? t : join(cwd, t)))
+  return []
+}
+
+/** 给模型的删除指引（学自 dsh-auto-mode 的 Auto 动态提示）。它帮规划，不是安全边界；门才是 */
+const 删除指引 = `## 动文件的规矩
+- 删除是最高风险的操作。能移动到 .dawn/trash/、能 git rm、能改名留底，就别直接 rm。
+- 一次只删一个可见的字面目标；不要用通配符、变量、管道或 find -delete 去删——那种删除会被直接拒。
+- 这段会话自己生成的文件可以清；会话之前就有的文件、data/raw/ 里的东西，删之前先问人。
+- 不要 sudo，不要碰主目录顶层与系统目录，不要把凭据发到网上——这些任何档都会被拒，别反复试。
+- 被拒了就换一条不需要那个动作的路，或把需要人做的那一步说清楚交给人。`

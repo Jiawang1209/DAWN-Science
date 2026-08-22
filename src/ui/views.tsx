@@ -27,7 +27,10 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
-import { $跑着的会话 } from "./state/catalog.js"
+import { TurnNavigator } from "./turn-navigator.js"
+
+export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
+import { $跑着的会话, $未读 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
@@ -220,6 +223,9 @@ export function SessionRow({
   onRename,
   onPin,
   onArchive,
+  onExtra,
+  未读,
+  onMarkUnread,
   onMove,
   drag,
   select,
@@ -253,6 +259,11 @@ export function SessionRow({
   onPin?: (() => void) | undefined
   /** 归档（2026-08-22）：从侧栏藏起来，不删。**没给就不画** */
   onArchive?: (() => void) | undefined
+  /** 菜单补的五项（2026-08-22，学自 dsh-codex-ui）：fork、在访达里打开、复制三样 */
+  onExtra?: ((action: 会话额外动作) => void) | undefined
+  /** 未读点与「标为未读」（codex-polish ⑤） */
+  未读?: boolean | undefined
+  onMarkUnread?: (() => void) | undefined
   onMove?: ((direction: "up" | "down") => void) | undefined
   /**
    * 拖拽排序的接线。**不给就整行不可拖**——
@@ -516,6 +527,8 @@ export function SessionRow({
           * **③ 完整时刻进 `title` 之外的地方读不到，所以给 `data-when`。**
           * 屏幕上那一截是「2d」，而判据与将来的悬停卡要拿得到原文。
           */}
+        {/* 未读点（codex-polish ⑤）：不是正看着的那段说完了。跑着的时候不画——跑着本身就是状态 */}
+        {未读 && !跑着 ? <span className="sess-unread" aria-label={t("有新回复")} /> : null}
         <span
           className={`sess-when${跑着 ? " running" : ""}`}
           data-when={session.lastActiveAt ?? session.createdAt}
@@ -524,7 +537,7 @@ export function SessionRow({
         </span>
       </Row>
 
-      {onDelete || onRename || onPin || onMove || onArchive ? (
+      {onDelete || onRename || onPin || onMove || onArchive || onExtra ? (
         <div className="row-actions">
           <Button
             variant="ghost"
@@ -571,6 +584,30 @@ export function SessionRow({
                   <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onArchive(); setMenu(false) }}>
                     {t("收进归档")}
                   </Button>
+                ) : null}
+                {onMarkUnread && !未读 ? (
+                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMarkUnread(); setMenu(false) }}>
+                    {t("标为未读")}
+                  </Button>
+                ) : null}
+                {onExtra ? (
+                  <>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("fork"); setMenu(false) }}>
+                      {t("在新会话中继续")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("openDir"); setMenu(false) }}>
+                      {t("在访达中打开工作目录")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyPath"); setMenu(false) }}>
+                      {t("复制工作目录")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyTitle"); setMenu(false) }}>
+                      {t("复制标题")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyId"); setMenu(false) }}>
+                      {t("复制会话 ID")}
+                    </Button>
+                  </>
                 ) : null}
                 {onDelete ? (
                   <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onDelete(); setMenu(false) }}>
@@ -1092,6 +1129,8 @@ export function SessionSidebar({
   onRenameSession,
   onPinSession,
   onArchiveSession,
+  onSessionExtra,
+  onMarkUnread,
   onArchiveMany,
   archivedCount,
   onShowArchived,
@@ -1184,6 +1223,8 @@ export function SessionSidebar({
   onPinSession?: ((session: SessionSummary, pinned: boolean) => void) | undefined
   /** 归档一段（2026-08-22，学自 dsh-archive-manager）：藏，不删 */
   onArchiveSession?: ((session: SessionSummary) => void) | undefined
+  onSessionExtra?: ((session: SessionSummary, task: TaskSummary, action: 会话额外动作) => void) | undefined
+  onMarkUnread?: ((session: SessionSummary) => void) | undefined
   /** 批量归档。与 `onDeleteMany` 同一套「做完再收摊」 */
   onArchiveMany?: ((tasks: readonly TaskSummary[], done: () => void) => void) | undefined
   /** 归档了几段、以及点开「已归档」那一屏。**N = 0 时那一行不画**——空的入口是噪音 */
@@ -1358,7 +1399,10 @@ export function SessionSidebar({
    * 收起来的那些（2026-08-15 作者要的）：机器按 `connectionId`，会话那一列用 `"会话"`。
    * **默认全展开**——收起是人的动作，不是我们替他做的决定。
    */
-  const [收起的, 设收起] = useState<ReadonlySet<string>>(new Set())
+  const [收起的, 设收起] = useState<ReadonlySet<string>>(
+    // 例外：「最近」默认收起——它的行是下面各列的抄写，两份同时摊开就是两处长得一样（见本文件 2026-08-12 的教训）
+    new Set(["最近"]),
+  )
   const 收起了 = (k: string) => 收起的.has(k)
   const 切收起 = (k: string) =>
     设收起((前) => {
@@ -1469,6 +1513,22 @@ export function SessionSidebar({
     if (已有) 已有[1].push(t)
     else 项目组.push([t.workspace, [t]])
   }
+
+  /**
+   * **「最近」段**（codex-polish 第二档，2026-08-22，学自 dsh-codex-ui）：跨项目、跨服务器按上次活动取前 5 条。
+   * **只有会话分散在两个以上收纳里时才出现**——只有一个收纳时它就是下面那列的抄写，两处一样等于没有判据。
+   */
+  const 收纳数 = (服务器组.length > 0 ? 1 : 0) + (项目组.length > 0 ? 1 : 0) + (散的.length > 0 ? 1 : 0)
+  const 最近的 =
+    收纳数 >= 2 && sessionOf
+      ? 全部任务
+          .map((t) => ({ t, s: t.sessionId ? sessionOf(t.sessionId) : undefined }))
+          .filter((x): x is { t: TaskSummary; s: SessionSummary } => x.s !== undefined)
+          .sort((a, b) => (b.s.lastActiveAt ?? b.s.createdAt).localeCompare(a.s.lastActiveAt ?? a.s.createdAt))
+          .slice(0, 5)
+          .map((x) => x.t)
+      : []
+
   /**
    * **人刚刚亲手选的那个文件夹，一句话都还没说也要在这一列里**
    * （2026-08-19 作者报的）。
@@ -1567,6 +1627,7 @@ export function SessionSidebar({
    */
   const 现在 = use现在()
   const 跑着的 = useStore($跑着的会话)
+  const 未读的 = useStore($未读)
 
   /**
    * 这一行属于哪儿——卡上的第二行。
@@ -1692,6 +1753,9 @@ export function SessionSidebar({
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
         {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
         {...(onArchiveSession ? { onArchive: () => onArchiveSession(s) } : {})}
+        {...(onSessionExtra ? { onExtra: (a: 会话额外动作) => onSessionExtra(s, task, a) } : {})}
+        未读={未读的.has(s.sessionId)}
+        {...(onMarkUnread ? { onMarkUnread: () => onMarkUnread(s) } : {})}
         {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
         {...(onReorderSessions
           ? {
@@ -1942,6 +2006,26 @@ export function SessionSidebar({
         *
         * **一条都没有时整块不出现**：一个写着 `(0)` 的标题占一行、什么都没说。
         */}
+      {最近的.length > 0 ? (
+        <>
+          <p className="side-section">
+            <Button
+              variant="text"
+              size="inline"
+              className="side-section-toggle"
+              aria-expanded={!收起了("最近")}
+              onClick={() => 切收起("最近")}
+            >
+              <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
+              <时钟图标 className="side-section-icon" />
+              <span className="side-section-title">{t("最近")}</span>
+              <span className="side-count side-section-count">{最近的.length}</span>
+            </Button>
+          </p>
+          {收起了("最近") ? null : <ul className="session-list recent-list">{最近的.map((t) => 任务行(t, false))}</ul>}
+        </>
+      ) : null}
+
       {项目组.length > 0 ? (
         <>
           <p className="side-section">
@@ -1967,7 +2051,8 @@ export function SessionSidebar({
               ) : (
                 <文件夹描边图标 className="side-section-icon" />
               )}
-              {t("项目")} <span className="side-count">{项目组.length}</span>
+              <span className="side-section-title">{t("项目")}</span>
+              <span className="side-count side-section-count">{项目组.length}</span>
             </Button>
             {/**
               * **入口叫「批量」，不叫「多选」**（2026-08-13）。
@@ -2199,7 +2284,8 @@ export function SessionSidebar({
               ) : (
                 <服务器描边图标 className="side-section-icon" />
               )}
-              {t("服务器")} <span className="side-count">{服务器组.length}</span>
+              <span className="side-section-title">{t("服务器")}</span>
+              <span className="side-count side-section-count">{服务器组.length}</span>
             </Button>
             {/**
               * **看得见的是「多选」，读屏听见的是「多选服务器」**——
@@ -2366,7 +2452,8 @@ export function SessionSidebar({
               ) : (
                 <对话描边图标 className="side-section-icon" />
               )}
-              {t("会话")} <span className="side-count">{散的.length}</span>
+              <span className="side-section-title">{t("会话")}</span>
+              <span className="side-count side-section-count">{散的.length}</span>
             </Button>
             {/**
               * **「选择」在分区标题上**（2026-08-12）。
@@ -2626,17 +2713,21 @@ function SessionConfigMenu({
    * （codex 那台的 `name` 本来就是具体模型，原样不动）。
    */
   const 当前项 = 模型?.options.find((x) => x.value === 模型.current)
+  // 没有模型那一条（原生会话）就把权限档写在扳机上——dsh-codex-ui 的输入卡就是这么摆的，一眼看到这段在哪一档
+  const 档 = options.find((o) => o.category === "mode")
+  // 扳机上只写档名（「全放行」），「· 跟随设置」那半截留在菜单里——输入卡那一行容不下长字
+  const 档名 = 档?.options.find((x) => x.value === 档.current)?.name.split(" · ")[0]
   const 标 = 模型
     ? 当前项
       ? 拆模型名(当前项.name, 当前项.description).主
       : 模型.current
-    : undefined
+    : 档名
 
   return (
     <div className="sess-config" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
       <Button
         variant="ghost"
-        size="sm"
+        size="inline"
         className="sess-config-trigger"
         aria-haspopup="menu"
         aria-expanded={开着}
@@ -3399,27 +3490,44 @@ function 等着({ 从, 在想 }: { 从: number; 在想: boolean }) {
  * 少一次请求，也少一处会与对话对不上的数。
  */
 function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
+  /**
+   * **整段会话的账**（codex-polish ③，2026-08-22，学自 dsh-codex-ui 底部那条）：
+   * 轮数、工具调用次数与耗时、token 三项、缓存命中率。此前只有 token 三项。
+   * 数全来自转录条目：轮 = 你说的那几条；工具耗时 = 每条工具的 endedAt − startedAt。
+   */
   const 合 = useMemo(() => {
     let input = 0
     let output = 0
     let cache = 0
     let 有过 = false
+    let 轮 = 0
+    let 工具 = 0
+    let 工具毫秒 = 0
     for (const it of items) {
+      if (it.type === "turn" && it.who === "user") 轮 += 1
+      if (it.type === "tool") {
+        工具 += 1
+        if (it.startedAt !== undefined && it.endedAt !== undefined) 工具毫秒 += Math.max(0, it.endedAt - it.startedAt)
+      }
       if (it.type !== "turn" || !it.usage) continue
       有过 = true
       input += it.usage.input ?? 0
       output += it.usage.output ?? 0
       cache += it.usage.cacheRead ?? 0
     }
-    return 有过 ? { input, output, cache } : undefined
+    return 有过 ? { input, output, cache, 轮, 工具, 工具毫秒, 命中: input + cache > 0 ? Math.round((cache / (input + cache)) * 100) : undefined } : undefined
   }, [items])
 
   // **一轮都还没说过话时什么都不显示**：一排 0 会被读成「不花钱」
   if (!合) return null
+  const 时长 = (ms: number) => (ms < 1000 ? `${ms} ms` : ms < 60_000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.floor(ms / 60_000)} m ${Math.round((ms % 60_000) / 1000)} s`)
   return (
-    <span className="session-usage" title={t("这一整段对话累计")}>
-      本次 输入 {formatTokens(合.input)} · 输出 {formatTokens(合.output)} · 缓存{" "}
-      {formatTokens(合.cache)}
+    <span className="session-usage" aria-label={t("这一整段对话累计")}>
+      {tf("{0} 轮", 合.轮)}
+      {合.工具 > 0 ? ` · ${tf("工具 {0} 次", 合.工具)}${合.工具毫秒 > 0 ? ` ${时长(合.工具毫秒)}` : ""}` : ""}
+      {" · "}
+      {tf("输入 {0} · 输出 {1} · 缓存 {2}", formatTokens(合.input), formatTokens(合.output), formatTokens(合.cache))}
+      {合.命中 !== undefined ? ` · ${tf("命中 {0}%", 合.命中)}` : ""}
     </span>
   )
 }
@@ -3428,6 +3536,7 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
 
 export function ConversationView({
   onOpenWeb,
+  onExport,
   session,
   items,
   acpAgents,
@@ -3557,6 +3666,8 @@ export function ConversationView({
   ) => void | Promise<void>
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
+  /** 导出这段对话为 markdown（codex-polish ④）。回落到哪了，好说给人 */
+  onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
   disabled?: boolean | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
@@ -3747,6 +3858,8 @@ export function ConversationView({
    * 「看看这张图」这种意图人常常懒得打字。
    */
   const 有东西要发 = draft.trim().length > 0 || 待发图.length > 0
+  const [导出中, 设导出中] = useState(false)
+  const [导出说, 设导出说] = useState<string | undefined>(undefined)
 
   return (
     <div className="conversation">
@@ -3797,6 +3910,24 @@ export function ConversationView({
          * **一个口径不明的合计，比没有合计更容易让人算错账。**
          */}
         <SessionUsage items={items} />
+        {onExport && items.some((x) => x.type === "turn") ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="conv-export"
+            disabled={导出中}
+            onClick={() => {
+              设导出中(true)
+              onExport()
+                .then((r) => 设导出说(tf("已导出 {0} 轮到 {1}", r.turns, r.path)))
+                .catch((e: unknown) => 设导出说(tf("导不了：{0}", e instanceof Error ? e.message : String(e))))
+                .finally(() => 设导出中(false))
+            }}
+          >
+            {t("导出对话")}
+          </Button>
+        ) : null}
+        {导出说 ? <span className="hint conv-export-note">{导出说}</span> : null}
         {/**
          * **这段对话的手在哪台机器的哪个目录**（②-B · R4′）。
          *
@@ -3842,6 +3973,8 @@ export function ConversationView({
        * 用户往上翻去看前面说了什么，下一个 token 到达时又被弹回底部。
        * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
        */}
+      {/* 轮次导航（2026-08-22，学自 dsh-codex-ui）：左缘一条刻度尺，一刻一轮你说的话 */}
+      <TurnNavigator items={items} />
       <StickToBottom className="turns" resize="smooth" initial="smooth">
         {/**
           * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：
@@ -4026,6 +4159,7 @@ export function ConversationView({
          * 聚焦环因此挂在**卡**上（`:focus-within`）而不是 textarea 上：
          * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
+        <div className="composer-card">
         <div className="composer-box">
           {/**
             * 待发的图片（协议 4.12，2026-08-13）。
@@ -4293,138 +4427,12 @@ export function ConversationView({
             <p className="caveat composer-hint">{t("回车插队 · Cmd/Ctrl+回车排到这一轮后面")}</p>
           ) : null}
           <div className="composer-controls">
-            {/**
-              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
-              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
-              * 所以分居两端——中间那段空白就是它们的分界。
-              */}
-            <AttachButton
-              {...(workspace ? { workspace } : {})}
-              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
-              onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
-              /**
-               * **去重**：同一张图挑两次只算一张。
-               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
-               * 分不出「我挑重了」还是「界面画重了」。
-               */
-              /**
-               * **只有内置对话收得下图片**（2026-08-13）。
-               *
-               * cli（claude / codex 的 headless）与 kernel 会话的运行时
-               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
-               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
-               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
-               * 比没有更坏。
-               *
-               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
-               */
-              {...(session.kind !== "native"
-                ? {}
-                : {
-              onAttachImages: (paths: readonly string[]) => {
-                设待发图((前) => [
-                  ...前,
-                  ...paths
-                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
-                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
-                ])
-                /**
-                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
-                 * 人按完「上传图片」会有一段什么都不发生的空窗，
-                 * 而那正是「点了没反应」的样子。
-                 */
-                for (const p of paths) {
-                  void 要缩略图(p).then((预览) => {
-                    if (!预览) return
-                    设待发图((前) =>
-                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
-                    )
-                  })
-                }
-              },
-                  })}
-            />
-            {/**
-              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
-              *
-              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
-              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
-              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
-              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
-              *
-              * 「用别的 agent 开一段新对话」（claude / codex 这类）
-              * **留在命令面板**（`⌘K` →「新建会话：…」）：
-              * 它与「换模型」不是同一件事，混进同一个菜单正是
-              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
-              */}
-            {/**
-              * **「选择工作目录」从下面那一行搬上来**（2026-08-16 作者要的：
-              * *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*）。
-              *
-              * 它此前独占一行（`.composer-footer`）。那一行是 2026-08-12
-              * 照 WorkBuddy 的 `wb-input-footer` 抄的——**但我们这一行上
-              * 只有它一颗 chip**，于是输入卡下面白白高出 32px。
-              * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
-              * **这句话带着什么、在哪儿执行**。它们归一行。
-              */}
-            {onPickWorkspace || workspace ? (
-              <WorkspaceEntry
-                {...(workspace ? { workspace } : {})}
-                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
-              />
-            ) : null}
-            {/**
-              * **终端的入口在对话这一侧**（2026-08-11）。
-              *
-               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
-              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
-              *
-              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
-              */}
-            {onToggleDock ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="dock-toggle"
-                aria-pressed={dockOpen ?? false}
-                onClick={onToggleDock}
-              >
-                {/**
-                  * **就叫「终端」**（2026-08-16 作者定的）。
-                  *
-                  * 此前叫「终端面板」，理由是「终端」两个字是「打开终端」
-                  * 「＋ 新终端」的一部分——那是**拿人看的字去解决机器找元素的问题**，
-                  * 代价付错了地方（同一副错误 2026-08-13 在「批量／多选」上付过一次）。
-                  * 现在换成把那几处多余的「终端」去掉：面板自己就叫终端，
-                  * 里面的按钮再说一遍「终端」本来就是废话。
-                  *
-                  * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
-                  * 于是英文界面上它一直是「终端面板」四个字。
-                  */}
-                <终端图标 />
-                {t("终端")}
-              </Button>
-            ) : null}
-            {onEnhance && onCancelEnhance ? (
-              <EnhanceControl
-                draft={draft}
-                setDraft={(text) => setDraft(session.sessionId, text)}
-                enhance={onEnhance}
-                cancel={onCancelEnhance}
-                onProblem={设发送出错}
-                onNote={设增强说明}
-              />
-            ) : null}
-            {/* 左手边到此为止。**这一格把「带什么、在哪跑」与「用谁发」分开** */}
             <span className="composer-gap" aria-hidden="true" />
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
               * 不摆一个点开是空的菜单。
               */}
-            {会话开关们 && 会话开关们.length > 0 && onSetConfigOption ? (
-              <SessionConfigMenu options={会话开关们} onSet={onSetConfigOption} />
-            ) : null}
-            {models && onPickModel ? (
+                        {models && onPickModel ? (
               <ModelPill
                 choices={models}
                 current={model}
@@ -4536,6 +4544,137 @@ export function ConversationView({
             * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
             */}
         </div>
+
+          {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
+          <div className="composer-footer">
+            {/**
+              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
+              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
+              * 所以分居两端——中间那段空白就是它们的分界。
+              */}
+            <AttachButton
+              {...(workspace ? { workspace } : {})}
+              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
+              onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
+              /**
+               * **去重**：同一张图挑两次只算一张。
+               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
+               * 分不出「我挑重了」还是「界面画重了」。
+               */
+              /**
+               * **只有内置对话收得下图片**（2026-08-13）。
+               *
+               * cli（claude / codex 的 headless）与 kernel 会话的运行时
+               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
+               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
+               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
+               * 比没有更坏。
+               *
+               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
+               */
+              {...(session.kind !== "native"
+                ? {}
+                : {
+              onAttachImages: (paths: readonly string[]) => {
+                设待发图((前) => [
+                  ...前,
+                  ...paths
+                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                ])
+                /**
+                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
+                 * 人按完「上传图片」会有一段什么都不发生的空窗，
+                 * 而那正是「点了没反应」的样子。
+                 */
+                for (const p of paths) {
+                  void 要缩略图(p).then((预览) => {
+                    if (!预览) return
+                    设待发图((前) =>
+                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                    )
+                  })
+                }
+              },
+                  })}
+            />
+            {/**
+              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
+              *
+              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
+              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
+              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
+              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
+              *
+              * 「用别的 agent 开一段新对话」（claude / codex 这类）
+              * **留在命令面板**（`⌘K` →「新建会话：…」）：
+              * 它与「换模型」不是同一件事，混进同一个菜单正是
+              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
+              */}
+            {/**
+              * **「选择工作目录」从下面那一行搬上来**（2026-08-16 作者要的：
+              * *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*）。
+              *
+              * 它此前独占一行（`.composer-footer`）。那一行是 2026-08-12
+              * 照 WorkBuddy 的 `wb-input-footer` 抄的——**但我们这一行上
+              * 只有它一颗 chip**，于是输入卡下面白白高出 32px。
+              * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
+              * **这句话带着什么、在哪儿执行**。它们归一行。
+              */}
+            {onPickWorkspace || workspace ? (
+              <WorkspaceEntry
+                {...(workspace ? { workspace } : {})}
+                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
+              />
+            ) : null}
+            {/**
+              * **终端的入口在对话这一侧**（2026-08-11）。
+              *
+               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
+              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
+              *
+              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
+              */}
+{onToggleDock ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="dock-toggle"
+                aria-pressed={dockOpen ?? false}
+                onClick={onToggleDock}
+              >
+                {/**
+                  * **就叫「终端」**（2026-08-16 作者定的）。
+                  *
+                  * 此前叫「终端面板」，理由是「终端」两个字是「打开终端」
+                  * 「＋ 新终端」的一部分——那是**拿人看的字去解决机器找元素的问题**，
+                  * 代价付错了地方（同一副错误 2026-08-13 在「批量／多选」上付过一次）。
+                  * 现在换成把那几处多余的「终端」去掉：面板自己就叫终端，
+                  * 里面的按钮再说一遍「终端」本来就是废话。
+                  *
+                  * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
+                  * 于是英文界面上它一直是「终端面板」四个字。
+                  */}
+                <终端图标 />
+                {t("终端")}
+              </Button>
+            ) : null}
+                        {onEnhance && onCancelEnhance ? (
+              <EnhanceControl
+                draft={draft}
+                setDraft={(text) => setDraft(session.sessionId, text)}
+                enhance={onEnhance}
+                cancel={onCancelEnhance}
+                onProblem={设发送出错}
+                onNote={设增强说明}
+              />
+            ) : null}
+            {/* 前三样说「带什么、在哪跑」，这一颗说「怎么改」——靠右 */}
+            {会话开关们 && 会话开关们.length > 0 && onSetConfigOption ? (
+              <SessionConfigMenu options={会话开关们} onSet={onSetConfigOption} />
+            ) : null}
+          </div>
+        </div>
       </form>
     </div>
   )
@@ -4628,7 +4767,7 @@ export function TranscriptRow({
    */
   if (编辑 !== undefined) {
     return (
-      <div className={`turn ${item.who} editing`}>
+      <div className={`turn ${item.who} editing`} data-turn-id={item.id}>
         <span className="sr-only">{t("正在修改你说过的一段话")}</span>
         <div className="bubble">
           <textarea
@@ -4673,7 +4812,7 @@ export function TranscriptRow({
   }
 
   return (
-    <div className={`turn ${item.who}`}>
+    <div className={`turn ${item.who}`} data-turn-id={item.id}>
       {/**
        * **身份不能只靠底色。**
        *
@@ -5484,6 +5623,7 @@ export function EmptyConversation({
               })
             }}
           >
+            <div className="composer-card">
             <div className="composer-box">
               {/**
                 * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
@@ -5589,63 +5729,6 @@ export function EmptyConversation({
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
               <div className="composer-controls">
-                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
-                <AttachButton
-                  {...(工作目录 ? { workspace: 工作目录 } : {})}
-                  onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
-                  onAttachImages={(paths) => {
-                    设空态图((前) => [
-                      ...前,
-                      ...paths
-                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
-                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
-                    ])
-                    // 预览后到，chip 先出现——与对话里那一份同一条
-                    for (const p of paths) {
-                      void 要缩略图(p).then((预览) => {
-                        if (!预览) return
-                        设空态图((前) =>
-                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
-                        )
-                      })
-                    }
-                  }}
-                />
-                {/**
-                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
-                  *
-                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
-                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
-                  *
-                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
-                  * 选错了文件夹，再点一次换成对的就行；
-                  * **一个入口存在的理由不能是「它不会造成伤害」。**
-                  */}
-                {onPickDirectory ? (
-                  <WorkspaceEntry
-                    {...(工作目录 ? { workspace: 工作目录 } : {})}
-                    onPick={() => {
-                      void onPickDirectory().then((d) => {
-                        // **取消就什么都不做**：改主意不是错误
-                        if (d) 设工作目录(d)
-                      })
-                    }}
-                  />
-                ) : null}
-                {/**
-                  * **空态也要够得着终端**（2026-08-11）。
-                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
-                  */}
-                {onToggleDock ? (
-                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
-                    <终端图标 />
-                    {t("终端")}
-                  </Button>
-                ) : null}
-                {onEnhance && onCancelEnhance ? (
-                  <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
-                ) : null}
-                {/* 左手边到此为止——与对话里那张同一副分法 */}
                 <span className="composer-gap" aria-hidden="true" />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
@@ -5718,6 +5801,68 @@ export function EmptyConversation({
                 * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
                 * 而一开始就选对，什么都不用搬。
                 */}
+            </div>
+
+              {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
+              <div className="composer-footer">
+                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
+                <AttachButton
+                  {...(工作目录 ? { workspace: 工作目录 } : {})}
+                  onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
+                  onAttachImages={(paths) => {
+                    设空态图((前) => [
+                      ...前,
+                      ...paths
+                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                    ])
+                    // 预览后到，chip 先出现——与对话里那一份同一条
+                    for (const p of paths) {
+                      void 要缩略图(p).then((预览) => {
+                        if (!预览) return
+                        设空态图((前) =>
+                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                        )
+                      })
+                    }
+                  }}
+                />
+                {/**
+                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
+                  *
+                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
+                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
+                  *
+                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
+                  * 选错了文件夹，再点一次换成对的就行；
+                  * **一个入口存在的理由不能是「它不会造成伤害」。**
+                  */}
+                {onPickDirectory ? (
+                  <WorkspaceEntry
+                    {...(工作目录 ? { workspace: 工作目录 } : {})}
+                    onPick={() => {
+                      void onPickDirectory().then((d) => {
+                        // **取消就什么都不做**：改主意不是错误
+                        if (d) 设工作目录(d)
+                      })
+                    }}
+                  />
+                ) : null}
+                {/**
+                  * **空态也要够得着终端**（2026-08-11）。
+                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
+                  */}
+{onToggleDock ? (
+                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
+                    <终端图标 />
+                    {t("终端")}
+                  </Button>
+                ) : null}
+                                {onEnhance && onCancelEnhance ? (
+                  <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
+                ) : null}
+                {/* 左手边到此为止——与对话里那张同一副分法 */}
+              </div>
             </div>
           </form>
         </div>

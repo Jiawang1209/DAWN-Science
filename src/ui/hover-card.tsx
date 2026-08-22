@@ -3,6 +3,7 @@
  * `files.tsx` 不该为一张卡去 import 整个 `views.tsx`）。
  */
 import type React from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import { 时钟图标, 对话图标, 文件夹图标, 文件图标, 服务器图标 } from "./icons.js"
 
 /**
@@ -121,11 +122,29 @@ export function 浮层事件(
  * `aria-hidden`：它是那一行的重复，不是新信息。
  */
 export function HoverCard({ 浮着的 }: { 浮着的: 悬停浮层 | undefined }) {
+  const 卡 = useRef<HTMLDivElement>(null)
+  const [顶, 设顶] = useState<number | undefined>(undefined)
+  /**
+   * **靠下的行，卡片不能伸出窗口底**（2026-08-22 作者报：「下面的会话悬停之后信息显示不全」）。
+   * 卡是 `position: fixed`、顶对齐那一行；行在窗口下半截时卡片的下半截就在屏幕外。
+   * 渲染后量一次实际高度，底超出就整张往上挪，最少留 8px 边。
+   */
+  useLayoutEffect(() => {
+    if (!浮着的 || !卡.current) {
+      设顶(undefined)
+      return
+    }
+    const 高 = 卡.current.offsetHeight
+    const 最低 = window.innerHeight - 8
+    设顶(浮着的.上 + 高 > 最低 ? Math.max(8, 最低 - 高) : 浮着的.上)
+  }, [浮着的])
   if (!浮着的) return null
+  const top = `${顶 ?? 浮着的.上}px`
   return (
     <div
+      ref={卡}
       className="sess-hover-card"
-      style={浮着的.右 !== undefined ? { top: `${浮着的.上}px`, right: `${浮着的.右}px` } : { top: `${浮着的.上}px`, left: `${浮着的.左}px` }}
+      style={浮着的.右 !== undefined ? { top, right: `${浮着的.右}px` } : { top, left: `${浮着的.左}px` }}
       aria-hidden="true"
     >
       <p className="sess-hover-title">

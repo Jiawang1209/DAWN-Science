@@ -370,6 +370,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
+    /** 输入卡上的权限档（codex-polish 第二档）：与上面那道门**读同一张表**，两处不会分家 */
+    permissionTier: {
+      取: (sid) => 按会话的档.get(sid),
+      设: (sid, 档) => {
+        if (档) 按会话的档.set(sid, 档)
+        else 按会话的档.delete(sid)
+      },
+      全局: () => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"),
+    },
     /**
      * 视觉服务（2026-08-20）。**现取现用**：读的是被 `saveVision` 原地更新的
      * 那一个 registry 对象与钥匙串，设置里改完不用重启。

@@ -134,13 +134,13 @@ test("主输入框的聚焦环用的是主题强调色，不是系统色", async
    *
    * 输入区变成一张卡（textarea + 模型选择器在同一个面里）之后，
    * 环画在 textarea 上就会与卡的边缘成为两条相距 8px 的平行线。
-   * 所以它挂在 `.composer-box:focus-within` 上。
+   * 所以它挂在 `.composer-card:focus-within` 上（2026-08-22 起卡有了底下的附栏，环挂在整张卡上）。
    *
    * **这条测试守的东西一点没变**：点进输入框之后，
    * 那个可见的聚焦指示必须由我们指定、且等于主题强调色。
    * 换的只是它长在哪个盒子上。
    */
-  const ring = page.locator(".composer-box")
+  const ring = page.locator(".composer-card")
   const s = await ring.evaluate((el) => {
     const c = getComputedStyle(el)
     // **让浏览器自己把令牌解析成 rgb**。令牌原文可能是 `#10a37f`、`color-mix(...)`、

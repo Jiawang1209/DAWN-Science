@@ -161,8 +161,16 @@ export function EnhanceControl({
           <span>{tf("{0}…放弃", 忙)}</span>
         </Button>
       ) : (
-        <Button variant="ghost" size="sm" className="enhance-main" disabled={空} onClick={() => void 去增强()}>
-          <星图标 className="row-icon" /> {t("增强")}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="enhance-main"
+          disabled={空}
+          /* 灰的理由进标签，不再常驻一句话在旁边（2026-08-22 作者：「后面的先写点什么，有点儿不好看」） */
+          aria-label={空 ? t("先写点什么再优化") : t("优化输入")}
+          onClick={() => void 去增强()}
+        >
+          <星图标 className="row-icon" /> {t("优化输入")}
         </Button>
       )}
       <Button
@@ -176,8 +184,6 @@ export function EnhanceControl({
       >
         <下拉图标 />
       </Button>
-      {/* 空草稿时按钮是灰的——**灰要说为什么**，这句常驻在旁边，不靠悬停 */}
-      {空 && !忙 ? <span className="enhance-note hint">{t("先写点什么")}</span> : null}
       {栈.length > 0 ? (
         <Button variant="ghost" size="sm" className="enhance-undo" onClick={撤回}>
           {栈.length > 1 ? tf("撤回（{0}）", 栈.length) : t("撤回")}

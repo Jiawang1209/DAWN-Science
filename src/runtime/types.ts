@@ -493,6 +493,12 @@ export interface AgentRuntime {
   setConfigOption?(sessionId: SessionId, configId: string, value: string): Promise<void>
   /** 上下文用量。只有 native 有；拿不到时返回 undefined（**缺就是缺**） */
   contextUsage?(sessionId: SessionId): ContextUsage | undefined
+  /**
+   * 这一段现在有哪些开关（codex-polish 第二档，2026-08-22）。
+   * **要有这一问**：`start()` 里 emit 的那份在 `attach` 之前就发了，没人听见；
+   * 壳接好线之后来问一次，再把它当一条 `config_options` 事件并进记录。
+   */
+  configOptions?(sessionId: SessionId): readonly 会话开关[] | undefined
   /** 插一句引导，不打断整轮。只有 native 有 */
   steer?(sessionId: SessionId, text: string): Promise<void>
   resize?(sessionId: SessionId, cols: number, rows: number): void

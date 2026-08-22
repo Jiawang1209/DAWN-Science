@@ -105,7 +105,7 @@ test("**服务器上的新对话：模型选择器里有 claude-acp、没有 cod
   await 等进了对话(page)
   await expect(page.locator(".conv-remote .conv-remote-host")).toHaveText("假机器")
   await expect(page.locator(".conv-head .kind")).toHaveText("ACP")
-  await expect(page.locator(".composer-controls .model-pill")).toHaveCount(0)
+  await expect(page.locator(".composer-card .model-pill")).toHaveCount(0)
 
   // ④ **空会话被顶替，不是多出一条**：那台机器底下只有这一段
   await expect(page.locator(".side-server").locator("li")).toHaveCount(1)

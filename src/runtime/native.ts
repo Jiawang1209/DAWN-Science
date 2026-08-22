@@ -61,7 +61,7 @@ import { 描述图片 } from "./vision.js"
 import { createMcpTools } from "../tools/mcp-tool.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
-import type { CredentialStore } from "@earendil-works/pi-ai"
+import type { CredentialStore, ThinkingLevel } from "@earendil-works/pi-ai"
 import type {
   AgentEvent,
   AgentRuntime,
@@ -74,6 +74,7 @@ import type {
   RestoredItem,
   ImageAttachment,
   送法,
+  会话开关,
 } from "./types.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
@@ -121,6 +122,17 @@ export interface NativeRuntimeOptions {
   modelsPath?: string
   /** 可选的授权门。给出时内置工具被替换为包装过的版本 */
   gate?: ToolGate
+  /**
+   * **按会话的权限档**（codex-polish 第二档，2026-08-22，学自 dsh-codex-ui 把权限档放在输入卡上）。
+   * 门本身在 `gate` 里、档位表在壳那边（定时任务 2026-08-22 先有的）；这里只是把它**摆到输入卡的会话设置菜单里**：
+   * `取` 给出这一段的覆盖值（没覆盖就 undefined），`设` 写覆盖（undefined = 跟随全局设置），`全局` 给当前全局档好写在菜单上。
+   * 不给就不摆这一条。
+   */
+  permissionTier?: {
+    取: (sessionId: SessionId) => "allow-all" | "deny-risky" | undefined
+    设: (sessionId: SessionId, 档: "allow-all" | "deny-risky" | undefined) => void
+    全局: () => "allow-all" | "deny-risky"
+  }
   /**
    * 技能的两个位置（S20，2026-08-15）。**不给就完全是原来的样子。**
    *
@@ -957,7 +969,82 @@ export class NativeRuntime implements AgentRuntime {
       stuck: new StuckGuard(),
     })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
+    this.发会话开关(spec.sessionId)
     return { sessionId: spec.sessionId, pid }
+  }
+
+  /**
+   * **原生会话也有「会话设置」菜单**（codex-polish 第二档，2026-08-22）。
+   * 走 ACP 那套 `config_options`——界面早就会画，不用另起一个组件：
+   * - `dawn.permission`（category `mode`）：跟随设置 / 全放行 / 拦下危险操作；
+   * - `dawn.thinking`（category `thought_level`）：**只在模型支持推理强度时才有这一条**。
+   *   pi 的 `setThinkingLevel` 对不支持的模型会被静默忽略，摆一个没作用的开关就是在骗人。
+   */
+  private 发会话开关(sessionId: SessionId): void {
+    const 开关 = this.configOptions(sessionId)
+    if (开关 && 开关.length > 0) this.emit({ kind: "config_options", sessionId, options: 开关 })
+  }
+
+  configOptions(sessionId: SessionId): readonly 会话开关[] | undefined {
+    const s = this.sessions.get(sessionId)
+    if (!s) return undefined
+    const 开关: 会话开关[] = []
+    const 档 = this.opts.permissionTier
+    if (档) {
+      const 全局 = 档.全局()
+      const 名 = (x: "allow-all" | "deny-risky") => (x === "allow-all" ? "全放行" : "拦下危险操作")
+      开关.push({
+        id: "dawn.permission",
+        name: "权限",
+        description: "只管这一段对话；设置里那个是全局默认",
+        category: "mode",
+        kind: "select",
+        current: 档.取(sessionId) ?? "inherit",
+        options: [
+          { value: "inherit", name: `${名(全局)} · 跟随设置`, description: "设置里改了，这段跟着变" },
+          { value: "allow-all", name: "全放行", description: "内置 agent 可以任意读写、执行命令" },
+          { value: "deny-risky", name: "拦下危险操作", description: "改 data/raw/、写到工作区外、删除、装包、联网、git push 会被拒绝" },
+        ],
+      })
+    }
+    if (s.session.supportsThinking()) {
+      const 级: { value: ThinkingLevel; name: string }[] = [
+        { value: "minimal", name: "最少" },
+        { value: "low", name: "低" },
+        { value: "medium", name: "中" },
+        { value: "high", name: "高" },
+        { value: "xhigh", name: "更高" },
+        { value: "max", name: "最高" },
+      ]
+      开关.push({
+        id: "dawn.thinking",
+        name: "推理强度",
+        description: "模型先想多久再答。越高越慢、越贵",
+        category: "thought_level",
+        kind: "select",
+        current: s.session.thinkingLevel,
+        options: 级,
+      })
+    }
+    return 开关
+  }
+
+  async setConfigOption(sessionId: SessionId, configId: string, value: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    if (configId === "dawn.permission") {
+      const 档 = this.opts.permissionTier
+      if (!档) throw new Error("这一版没有接按会话的权限档")
+      if (value !== "inherit" && value !== "allow-all" && value !== "deny-risky") throw new Error(`不认识的权限档：${value}`)
+      档.设(sessionId, value === "inherit" ? undefined : value)
+    } else if (configId === "dawn.thinking") {
+      const 级 = ["minimal", "low", "medium", "high", "xhigh", "max"]
+      if (!级.includes(value)) throw new Error(`不认识的推理强度：${value}`)
+      s.session.setThinkingLevel(value as ThinkingLevel)
+    } else {
+      throw new Error(`原生会话没有这个开关：${configId}`)
+    }
+    this.发会话开关(sessionId)
   }
 
   /**
@@ -1736,6 +1823,8 @@ ${描述}`
       })
     }
     this.emit({ kind: "model", sessionId, provider: 真provider, model: 真model })
+    // 换了模型，「支持不支持推理强度」可能变了——整份重发
+    this.发会话开关(sessionId)
   }
 
   async abort(sessionId: SessionId): Promise<void> {

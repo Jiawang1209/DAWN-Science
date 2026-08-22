@@ -59,7 +59,7 @@ test.describe("挑文件", () => {
 
     const 框 = page.getByPlaceholder(/今天帮你做些什么/)
     await 框.fill("看看这两个")
-    await page.locator(".composer-controls .attach-trigger").click()
+    await page.locator(".composer-card .attach-trigger").click()
 
     const 菜单 = page.getByRole("menu", { name: "添加内容" })
     await expect(菜单).toBeVisible()
@@ -103,7 +103,7 @@ test.describe("挑文件", () => {
     const { page } = dawn
     const 框 = page.getByPlaceholder(/今天帮你做些什么/)
     await 框.fill("先挑个文件")
-    await page.locator(".composer-controls .attach-trigger").click()
+    await page.locator(".composer-card .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
     await expect(框).toHaveValue(/甲\.csv/)
   })
@@ -130,7 +130,7 @@ test.describe("三项都通", () => {
     test(`**「${名}」点下去，路径进了输入框**`, async ({ dawn }) => {
       const { page } = dawn
       const 框 = page.getByPlaceholder(/今天帮你做些什么/)
-      await page.locator(".composer-controls .attach-trigger").click()
+      await page.locator(".composer-card .attach-trigger").click()
       await page.getByRole("menuitem", { name: 名, exact: true }).click()
       await expect(框).toHaveValue(/甲\.csv/)
       // 点完就收起——菜单不该赖着不走
@@ -165,7 +165,7 @@ test.describe("图片真的送进模型", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.locator(".composer-controls .attach-trigger").click()
+    await page.locator(".composer-card .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
 
     /**
@@ -201,7 +201,7 @@ test.describe("图片真的送进模型", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.locator(".composer-controls .attach-trigger").click()
+    await page.locator(".composer-card .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
     await expect(page.locator(".attached-one")).toHaveCount(1)
 
@@ -521,7 +521,7 @@ test("**Esc 收掉「＋」的菜单**", async ({ dawn }) => {
   const { page } = dawn
   await page.locator(".composer").waitFor({ timeout: 30_000 })
 
-  await page.locator(".composer-controls .attach-trigger").click()
+  await page.locator(".composer-card .attach-trigger").click()
   await expect(page.getByRole("menu", { name: "添加内容" })).toBeVisible()
 
   await page.keyboard.press("Escape")
@@ -544,7 +544,7 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
   // ① 内置对话：三项俱全
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.locator(".composer-controls .attach-trigger").click()
+  await page.locator(".composer-card .attach-trigger").click()
   await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toBeVisible()
   await page.keyboard.press("Escape")
 
@@ -566,67 +566,75 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
   await page.reload()
   await page.locator(".session-list .sess-item .row").first().click()
   await 等进了对话(page)
-  await page.locator(".composer-controls .attach-trigger").click()
+  await page.locator(".composer-card .attach-trigger").click()
   await expect(page.getByRole("menuitem", { name: "上传文件", exact: true })).toBeVisible()
   await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toHaveCount(0)
 })
 
 /**
- * **输入卡下面就一行，六格，左右两组**（2026-08-16 作者要的）：
+ * **输入卡 = 卡内一行 + 卡底一条附栏**（2026-08-22 作者拿 WorkBuddy 的图点名要的；
+ * 它取代了 2026-08-16 的「一行六格」——那时作者要的是一行，今天说「对话框的地方实在是太多了」）。
  *
- * > *「＋ 其实可以做一个 ＋ 带有一个圈的图标，然后后面可以跟着文字，上传文件」*
- * > *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*
- * > *「把终端也加一个 logo，放到下面，保持一行。」*
- * > *「把模型和发送信息，放到下面，但是是放到对话框的右侧。」*
+ * > *「把输入文件、选择文件夹、prompt 增强放入对话框整体的下面，用不同颜色进行区分，学习一下 workbuddy」*
  *
- * 盯三件，都是几何事实：
- *   ① **一行**——所有格子同一个 `top`（此前「选择工作目录」自己占一行）；
- *   ② **左右两组**——上传/目录/终端在左，模型/发送在右，中间那格空档把它们分开；
- *   ③ **那三颗都带图标、也都带字**——本项目为「看不见的能力等于不存在」栽过两次。
+ * 盯四件，都是几何事实：
+ *   ① 卡内那一行：只有右边的模型与发送（2026-08-22 作者又把终端也挪下去了），**一行**；
+ *   ② 附栏在卡内那一行**下面**，上传 / 目录 / 终端 / 优化输入在那里，也是**一行**；
+ *   ③ 附栏的底色与卡内不同——「不同颜色区分」是作者的原话；
+ *   ④ 那几颗都带图标也都带字——本项目为「看不见的能力等于不存在」栽过两次。
  */
-test("**输入卡那一行：一行、六格、左右两组**", async ({ dawn }) => {
+test("**输入卡：卡内一行（模型 · 发送），卡底一条附栏（上传 · 目录 · 终端 · 优化输入）**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
 
-  const m = await page.evaluate(() => {
-    const row = document.querySelector(".composer-controls") as HTMLElement
-    const 格 = [...row.children].map((e) => {
-      const q = e.getBoundingClientRect()
-      return {
-        类: (e as HTMLElement).className.split(" ")[0] ?? "",
-        字: (e.textContent ?? "").trim(),
-        图标: e.querySelectorAll("svg").length,
-        左: q.left,
-        右: q.right,
-        中: q.top + q.height / 2,
-      }
-    })
-    return { 行高: row.getBoundingClientRect().height, 格 }
-  })
+  const 量 = (sel: string) =>
+    page.evaluate((s) => {
+      const row = document.querySelector(s) as HTMLElement
+      const 格 = [...row.children].map((e) => {
+        const q = e.getBoundingClientRect()
+        return {
+          类: (e as HTMLElement).className.split(" ")[0] ?? "",
+          字: (e.textContent ?? "").trim(),
+          图标: e.querySelectorAll("svg").length,
+          左: q.left,
+          右: q.right,
+          中: q.top + q.height / 2,
+        }
+      })
+      const r = row.getBoundingClientRect()
+      return { 顶: r.top, 底: r.bottom, 行高: r.height, 底色: getComputedStyle(row).backgroundColor, 格 }
+    }, sel)
+  const 行 = await 量(".composer-controls")
+  const 栏 = await 量(".composer-footer")
 
-  // ① 一行：**行高只够一行**，且每一格的竖直中点都在同一条线上
-  expect(m.行高, `折成了两行（${m.行高}px）`).toBeLessThanOrEqual(40)
-  const 中线 = m.格.filter((g) => g.类 !== "composer-gap").map((g) => g.中)
-  expect(Math.max(...中线) - Math.min(...中线), "有格子掉到了第二行").toBeLessThanOrEqual(2)
+  // ① 卡内那一行：一行，空档 | 模型 · 发送——右边那组贴右
+  expect(行.行高, `卡内那一行折了（${行.行高}px）`).toBeLessThanOrEqual(40)
+  const 行中线 = 行.格.filter((g) => g.类 !== "composer-gap").map((g) => g.中)
+  expect(Math.max(...行中线) - Math.min(...行中线)).toBeLessThanOrEqual(2)
+  const 空档 = 行.格.find((g) => g.类 === "composer-gap")!
+  const 发送 = 行.格[行.格.length - 1]!
+  expect(发送.左).toBeGreaterThanOrEqual(空档.右 - 1)
 
-  // ② 顺序与分组
-  const 上传 = m.格.find((g) => g.字.includes("上传文件"))!
-  const 目录 = m.格.find((g) => g.字.includes("选择工作目录") || g.类.startsWith("ws-"))!
-  const 终端 = m.格.find((g) => g.字 === "终端")!
-  const 空档 = m.格.find((g) => g.类 === "composer-gap")!
-  const 发送 = m.格[m.格.length - 1]!
-  for (const [名, g] of Object.entries({ 上传, 目录, 终端, 空档 })) {
-    expect(g, `这一行上没有「${名}」`).toBeTruthy()
-  }
+  // ② 附栏在下面、一行，上传 / 目录 / 增强都在那里
+  expect(栏.顶).toBeGreaterThanOrEqual(行.底 - 1)
+  expect(栏.行高, `附栏折了（${栏.行高}px）`).toBeLessThanOrEqual(40)
+  const 上传 = 栏.格.find((g) => g.字.includes("上传文件"))!
+  const 目录 = 栏.格.find((g) => g.字.includes("选择工作目录") || g.类.startsWith("ws-"))!
+  const 终端 = 栏.格.find((g) => g.字 === "终端")!
+  const 优化 = 栏.格.find((g) => g.字.includes("优化输入"))!
+  for (const [名, g] of Object.entries({ 上传, 目录, 终端, 优化 })) expect(g, `附栏上没有「${名}」`).toBeTruthy()
   expect(上传.左).toBeLessThan(目录.左)
   expect(目录.左).toBeLessThan(终端.左)
-  // **左组全在空档左边，右组全在它右边**——这就是「分成两组」的事实形式
-  expect(终端.右).toBeLessThanOrEqual(空档.左 + 1)
-  expect(发送.左).toBeGreaterThanOrEqual(空档.右 - 1)
-  expect(空档.右 - 空档.左, "空档被挤没了，两组就贴在一起了").toBeGreaterThan(8)
+  expect(终端.左).toBeLessThan(优化.左)
+  // 卡内那一行上**不再有**它们
+  expect(行.格.some((g) => g.字.includes("上传文件") || g.类.startsWith("ws-") || g.字 === "终端")).toBe(false)
 
-  // ③ 图标 + 文字都在
+  // ③ 两种底色
+  const 卡内底色 = await page.locator(".composer-box").evaluate((el) => getComputedStyle(el).backgroundColor)
+  expect(栏.底色 === 卡内底色 || 栏.底色 === "rgba(0, 0, 0, 0)" ? "同色" : "异色", "附栏与卡内同一种底色，分不开").toBe("异色")
+
+  // ④ 图标 + 文字都在
   expect(上传.图标, "「上传文件」没有那个带圈的加号").toBeGreaterThanOrEqual(1)
   expect(终端.图标, "「终端」没有图标").toBeGreaterThanOrEqual(1)
   expect(目录.图标, "「选择工作目录」没有图标").toBeGreaterThanOrEqual(1)

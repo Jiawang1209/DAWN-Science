@@ -470,8 +470,10 @@
  *
  * 7.20（2026-08-22）：子 agent 名册——`listSubagents` 多三层 / 分组 / 停用且 `projectId` 可不给；
  *   新增 `setSubagentEnabled` / `importSubagents` / `deleteSubagent`。纯新增。
+ *
+ * 7.21（2026-08-22）：`exportSession`——一段对话导成 markdown。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.20"
+export const WORKBENCH_PROTOCOL_VERSION = "7.21"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

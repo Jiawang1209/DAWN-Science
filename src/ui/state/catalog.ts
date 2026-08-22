@@ -244,3 +244,33 @@ export function setSessionCwd(sessionId: string, cwd: string): void {
  */
 export const $tasks = atom<readonly TaskSummary[]>([])
 export const setTasks = (v: readonly TaskSummary[]) => setList($tasks, v)
+
+/**
+ * **未读**（codex-polish ⑤，2026-08-22，学自 dsh-codex-ui 的未读圆点）：
+ * 一段会话在你没看着的时候（不是当前选中）说完了一轮 → 记一个点；点开就清。
+ * 持久化 `dawn.global.unread`：重启之后「哪几段回来了还没看」不该忘。人也能手动标回未读。
+ */
+const UNREAD_KEY = "dawn.global.unread"
+const 读未读 = (): ReadonlySet<string> => {
+  try {
+    const raw = localStorage.getItem(UNREAD_KEY)
+    const arr: unknown = raw ? JSON.parse(raw) : []
+    return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [])
+  } catch {
+    return new Set()
+  }
+}
+export const $未读 = atom<ReadonlySet<string>>(typeof localStorage === "undefined" ? new Set<string>() : 读未读())
+export function 标未读(sessionId: string, 未读: boolean): void {
+  const 现在 = $未读.get()
+  if (现在.has(sessionId) === 未读) return
+  const 下一个 = new Set(现在)
+  if (未读) 下一个.add(sessionId)
+  else 下一个.delete(sessionId)
+  $未读.set(下一个)
+  try {
+    localStorage.setItem(UNREAD_KEY, JSON.stringify([...下一个]))
+  } catch (e) {
+    console.error("[未读] 记不住，本次仍然生效：", e)
+  }
+}

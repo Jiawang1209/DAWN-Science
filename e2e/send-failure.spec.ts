@@ -98,7 +98,7 @@ test.describe("第一句就失败", () => {
     const 起初 = await page.locator(".sidebar .sess-item").count()
 
     // 挑一张「存在于选择器、不存在于磁盘」的图
-    await page.locator(".composer-controls .attach-trigger").click()
+    await page.locator(".composer-card .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
     await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
 

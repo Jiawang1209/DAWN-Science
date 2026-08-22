@@ -21,7 +21,7 @@ test("**输入卡右下角只有一颗 pill**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await 等进了对话(page)
 
-  const 控件行 = page.locator(".composer-controls")
+  const 控件行 = page.locator(".composer-card")
   await expect(控件行.locator(".model-pill")).toHaveCount(1)
   /**
    * **agent pill 不在这一行里了**：它搬去了初始画面（挑 LLM 发生在开口之前）。

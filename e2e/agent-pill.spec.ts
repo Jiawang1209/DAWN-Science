@@ -85,7 +85,7 @@ test("用**服务名**称呼它，不是配置里那个键", async ({ dawn }) =>
 test("**输入卡这一行只有一颗 pill** —— 误按从形状上就不可能", async ({ dawn }) => {
   const { page } = dawn
   await startSession(page)
-  await expect(page.locator(".composer-controls .pill")).toHaveCount(1)
+  await expect(page.locator(".composer-card .pill")).toHaveCount(1)
   await page.locator(".model-pill .model-trigger").click()
   await expect(page.getByRole("menu", { name: "切换模型" })).toBeVisible()
   await expect(page.getByRole("menu", { name: "新建会话" })).toHaveCount(0)
@@ -126,7 +126,7 @@ test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => 
    * 那个 skip 掩盖的是一个真 bug：首页那颗 pill 当时有 `agents.length > 1`
    * 的门槛，而**只配了一家的人恰恰最需要「配置自定义模型」**。
    */
-  const pill = page.locator(".composer-controls .agent-pill")
+  const pill = page.locator(".composer-card .agent-pill")
   await expect(pill).toHaveCount(1)
 
   await pill.locator("button").first().click()
@@ -160,7 +160,7 @@ test("**首页挑 LLM 那里，能直接跳到配模型**", async ({ dawn }) => 
 test("**挑 LLM 那张单子上，每一条都标着 API / CLI / ACP，且按类归拢、组内按字母**", async ({ dawn }) => {
   const { page } = dawn
 
-  const pill = page.locator(".composer-controls .agent-pill")
+  const pill = page.locator(".composer-card .agent-pill")
   await expect(pill).toHaveCount(1)
   await pill.locator("button").first().click()
 

@@ -7,13 +7,12 @@ import { writeFileSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
 
 const 输入框 = (page: import("@playwright/test").Page) => page.getByPlaceholder(/今天帮你做些什么/)
-const 增强键 = (page: import("@playwright/test").Page) => page.getByRole("button", { name: "增强", exact: true })
+const 增强键 = (page: import("@playwright/test").Page) => page.getByRole("button", { name: "优化输入", exact: true })
 
 test("**基础：点一下草稿被改写；撤回回到原样；空草稿按钮灰着并说为什么**", async ({ dawn }) => {
   const { page } = dawn
-  // 空草稿：灰 + 旁边一句话
-  await expect(增强键(page)).toBeDisabled()
-  await expect(page.getByText("先写点什么")).toBeVisible()
+  // 空草稿：灰；理由在标签里（2026-08-22 起不再常驻一句话在旁边）
+  await expect(page.getByRole("button", { name: "先写点什么再优化", exact: true })).toBeDisabled()
 
   await 输入框(page).fill("把图画好看点")
   // 档位字标默认「标准」；这条用基础

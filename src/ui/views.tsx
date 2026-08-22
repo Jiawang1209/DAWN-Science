@@ -2018,10 +2018,9 @@ export function SessionSidebar({
             >
               <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
               <时钟图标 className="side-section-icon" />
-              {t("最近")}
+              <span className="side-section-title">{t("最近")}</span>
+              <span className="side-count side-section-count">{最近的.length}</span>
             </Button>
-            {/* 个数自成一列、靠右（2026-08-22 作者：「会话的个数也要保持一列，靠右 18px」） */}
-            <span className="side-count side-section-count">{最近的.length}</span>
           </p>
           {收起了("最近") ? null : <ul className="session-list recent-list">{最近的.map((t) => 任务行(t, false))}</ul>}
         </>
@@ -2052,7 +2051,8 @@ export function SessionSidebar({
               ) : (
                 <文件夹描边图标 className="side-section-icon" />
               )}
-              {t("项目")}
+              <span className="side-section-title">{t("项目")}</span>
+              <span className="side-count side-section-count">{项目组.length}</span>
             </Button>
             {/**
               * **入口叫「批量」，不叫「多选」**（2026-08-13）。
@@ -2087,8 +2087,6 @@ export function SessionSidebar({
                 {选项目中 ? t("完成") : t("多选")}
               </Button>
             ) : null}
-            {/* 个数自成一列、靠右（2026-08-22 作者：「会话的个数也要保持一列，靠右 18px」） */}
-            <span className="side-count side-section-count">{项目组.length}</span>
           </p>
           {选项目中 ? (
             <div className="side-bulkbar">
@@ -2286,7 +2284,8 @@ export function SessionSidebar({
               ) : (
                 <服务器描边图标 className="side-section-icon" />
               )}
-              {t("服务器")}
+              <span className="side-section-title">{t("服务器")}</span>
+              <span className="side-count side-section-count">{服务器组.length}</span>
             </Button>
             {/**
               * **看得见的是「多选」，读屏听见的是「多选服务器」**——
@@ -2306,8 +2305,6 @@ export function SessionSidebar({
                 {选服务器中 ? t("完成") : t("多选")}
               </Button>
             ) : null}
-            {/* 个数自成一列、靠右（2026-08-22 作者：「会话的个数也要保持一列，靠右 18px」） */}
-            <span className="side-count side-section-count">{服务器组.length}</span>
           </p>
           {/**
             * 选择模式下那一条：**已选几段、全选、删除**。
@@ -2455,7 +2452,8 @@ export function SessionSidebar({
               ) : (
                 <对话描边图标 className="side-section-icon" />
               )}
-              {t("会话")}
+              <span className="side-section-title">{t("会话")}</span>
+              <span className="side-count side-section-count">{散的.length}</span>
             </Button>
             {/**
               * **「选择」在分区标题上**（2026-08-12）。
@@ -2475,8 +2473,6 @@ export function SessionSidebar({
                 {选会话中 ? t("完成") : t("多选")}
               </Button>
             ) : null}
-            {/* 个数自成一列、靠右（2026-08-22 作者：「会话的个数也要保持一列，靠右 18px」） */}
-            <span className="side-count side-section-count">{散的.length}</span>
           </p>
           {/**
             * 选择模式下的那一条：**已选几段、全选、删除**。

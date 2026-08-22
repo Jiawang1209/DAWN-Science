@@ -3506,7 +3506,7 @@ pre {
    * 我们此前是 `padding: 0 12px` 且没有行高：标题的字比行里的字更靠左，
    * 一列扫下来那一层缩进是歪的。
    */
-  padding: 5px 18px 5px calc(var(--dawn-space-3) * 2);
+  padding: 5px calc(var(--dawn-space-3) * 2);
   /**
    * **字号与上面那组固定入口一致**（2026-08-15 作者要的：
    * *「项目收纳、服务器收纳、会话收纳的文字和大小应该和上面固定的项目一样，
@@ -3573,16 +3573,16 @@ pre {
  * 标题该粗（它统领这一列），动作不该。
  */
 /**
- * 分区标题右边两列（2026-08-22 作者要的）：
- * - 「多选」与会话行的时间**同一条右缘**（188）；
- * - 分区计数（最近 / 项目 / 服务器 / 会话）自成一列，**右缘离侧栏右边 18px**（作者给的数）。
- * 计数列**定宽**（容得下三位数）、右对齐：不定宽的话「1」与「18」不一样宽，「多选」会跟着数字的位数左右挪。
- * 算式：侧栏 264 − 右内距 18 − 计数列 28 − 「多选」右缘 188 = 30，就是「多选」右边留的量。
+ * 分区标题那一行的两列（2026-08-22 作者要的，改过一次）：
+ * - 「多选」与会话行的时间**同一条右缘**（188）：侧栏 264 − 右内距 24 − 188 = 52；
+ * - 分区计数（最近 / 项目 / 服务器 / 会话）**紧跟标题、自成一列、靠左**——
+ *   标题占固定宽（「服务器」三个字是最宽的），计数才能落在同一条竖线上。
+ *   作者先说「靠右 18px」，随即更正为「靠左边，而不是靠右边」。
  */
-.side-bulk { margin-left: auto; font-weight: 400; margin-right: 30px; }
+.side-bulk { margin-left: auto; font-weight: 400; margin-right: 52px; }
+.side-section-title { display: inline-block; min-width: 3em; }
 /* 两个类名：`.side-count` 那条 `margin-left: auto` 写在后面，单类名压不过它 */
-.side-section .side-section-count { margin-left: 0; flex: 0 0 auto; width: 28px; text-align: right; }
-.side-section:not(:has(.side-bulk)) .side-section-count { margin-left: auto; }
+.side-section .side-section-count { margin-left: var(--dawn-space-1); flex: 0 0 auto; }
 .side-section { display: flex; align-items: center; }
 /**
  * 选择模式那一条。**数字常驻**：「删掉 3 段对话」比「删掉选中的」

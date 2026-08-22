@@ -1,7 +1,7 @@
 /**
  * 侧栏的三条竖线（2026-08-22，作者四次点名，给过图）：
  * ① 右边收尾那一列——会话行的「⋯」、项目行的「＋ / 删」——**同一条右缘**；
- * ③ 分区标题的计数（最近 / 项目 / 服务器 / 会话）自成一列，**右缘离侧栏右边 18px**（作者给的数）；
+ * ③ 分区标题的计数（最近 / 项目 / 服务器 / 会话）紧跟标题、自成一列、**靠左**（作者先说靠右 18px，随即更正为靠左）；
  * ② 数字那一列——「多选」也在这一列（作者第四次点名）——「Skills N」「子 Agent N」「远端服务器 N」「已归档 N」、服务器那台机器标题上的 N、
  *    「最近 N」之外的所有 `.side-count`——与会话行的时间**同一条右缘**。
  * 三个右缘各差十几像素，一眼就是歪的；量出来才算对齐，不量就只是「看着差不多」。
@@ -41,12 +41,11 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   expect(项目动作.length).toBeGreaterThan(0)
   expect([...new Set([...项目动作, ...会话动作])], "收尾那一列的右缘不止一条").toHaveLength(1)
 
-  // ③ 分区计数：一列，离侧栏右边 18px
-  const 侧栏右 = (await 右缘(".sidebar"))[0]!
-  const 分区数 = await 右缘(".side-section-count")
+  // ③ 分区计数：紧跟标题、左缘一列（「服务器」比「项目」宽一个字，标题不定宽的话它们对不上）
+  const 左缘 = (s: string) => page.evaluate((sel) => [...document.querySelectorAll(sel)].map((e) => Math.round(e.getBoundingClientRect().left)), s)
+  const 分区数 = await 左缘(".side-section-count")
   expect(分区数.length, "最近 / 项目 / 服务器 的计数没找全（「会话」那段已归档，那一列不在）").toBeGreaterThanOrEqual(3)
-  expect([...new Set(分区数)], `分区计数不在一列：${分区数}`).toHaveLength(1)
-  expect(侧栏右 - 分区数[0]!, "分区计数离侧栏右边不是 18px").toBe(18)
+  expect([...new Set(分区数)], `分区计数的左缘不在一列：${分区数}`).toHaveLength(1)
 
   const 固定入口 = await 右缘(".side-action .side-count")
   const 远端 = await 右缘(".remote-head .side-count")

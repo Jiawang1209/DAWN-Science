@@ -65,4 +65,9 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   expect(时间.length).toBeGreaterThan(1)
   const 数字列 = new Set([...固定入口, ...远端, ...机器, ...时间, ...多选])
   expect([...数字列], `数字那一列的右缘不止一条：入口 ${固定入口} · 远端 ${远端} · 机器 ${机器} · 时间 ${时间} · 多选 ${多选}`).toHaveLength(1)
+
+  // ④ 所有会话行（最近 / 项目底下 / 机器底下 / 散的）**同一条左缘**（2026-08-22 作者要的：都按机器底下的那一列对齐）
+  await page.getByRole("button", { name: /^最近/ }).click()
+  const 会话文字左 = await page.evaluate(() => [...new Set([...document.querySelectorAll(".sess-item .sess-title")].map((el) => { const r = document.createRange(); r.selectNodeContents(el); return Math.round(r.getBoundingClientRect().left) }))])
+  expect(会话文字左, `会话行的左缘不止一条：${会话文字左}`).toHaveLength(1)
 })

@@ -2520,7 +2520,7 @@ export function SessionSidebar({
             </div>
           ) : null}
           {收起了("会话") ? null : (
-            <ul className="session-list">{散的.map((t) => 任务行(t, true))}</ul>
+            <ul className="session-list loose-list">{散的.map((t) => 任务行(t, true))}</ul>
           )}
         </>
       ) : null}

@@ -1182,6 +1182,10 @@ pre {
 /* 文件夹 / 服务器底下的会话**缩进一级**（2026-08-21 作者要的）：层级靠位置说，不靠图标 */
 .proj-session-list,
 .server-session-list { list-style: none; margin: 0; padding: 0 0 0 var(--dawn-space-4); }
+/* 散的那几段（「会话」收纳）与「最近」里的：**与机器 / 项目底下的会话同一条左缘**（2026-08-22 作者要的，文字左缘 40）——
+   它们没有父级那一层缩进，这里把那 16px 补上 */
+.session-list.loose-list,
+.session-list.recent-list { padding-left: var(--dawn-space-4); }
 /**
  * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
  * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。

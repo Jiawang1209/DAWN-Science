@@ -264,3 +264,28 @@ test("**悬停一会儿，旁边浮出全文**", async ({ dawn }) => {
   await page.locator(".app-shell").hover({ position: { x: 5, y: 5 } })
   await expect(卡).toHaveCount(0)
 })
+
+/**
+ * **靠下的行，悬停卡不能伸出窗口底**（2026-08-22 作者报：「下面的会话悬停之后信息显示不全」）。
+ * 卡是 fixed、顶对齐那一行；行在下半截时卡片下半截在屏幕外。现在量完高度往上夹。
+ */
+test("**窗口矮的时候，靠下那行的悬停卡整张都在屏幕里**", async ({ dawn }) => {
+  const { page } = dawn
+  // 标题写长：卡上标题要换行摊开，卡就高；行那么多：最后一行贴着侧栏底
+  const 长题 = "这一段的标题故意写得很长很长，长到悬停卡上要换好几行才摊得开，这样卡才够高，才能把那个伸出窗口底的毛病逼出来"
+  for (const n of ["一", "二", "三", "四", "五", "六"]) await 开一段临时会话(page, `第${n}段·${长题}`)
+  // 把窗口压矮，让最后一行落到窗口下沿附近
+  await page.setViewportSize({ width: 1100, height: 560 })
+  const 行 = page.locator(".session-list li .sess-title").last()
+  await 行.scrollIntoViewIfNeeded()
+  const 行框 = (await 行.boundingBox())!
+  expect(行框.y, "这一行没在下半截，用例测不到要测的事").toBeGreaterThan(560 * 0.7)
+  // 行的一角可能压在侧栏底那条之下，不做可点性检查，直接把鼠标挪到行上
+  await 行.hover({ force: true })
+  const 卡 = page.locator(".sess-hover-card")
+  await expect(卡).toHaveCount(1)
+  await expect.poll(async () => {
+    const b = await 卡.boundingBox()
+    return b ? b.y + b.height <= 560 && b.y >= 0 : false
+  }, { message: "卡的底伸出了窗口" }).toBe(true)
+})

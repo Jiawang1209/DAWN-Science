@@ -1399,7 +1399,10 @@ export function SessionSidebar({
    * 收起来的那些（2026-08-15 作者要的）：机器按 `connectionId`，会话那一列用 `"会话"`。
    * **默认全展开**——收起是人的动作，不是我们替他做的决定。
    */
-  const [收起的, 设收起] = useState<ReadonlySet<string>>(new Set())
+  const [收起的, 设收起] = useState<ReadonlySet<string>>(
+    // 例外：「最近」默认收起——它的行是下面各列的抄写，两份同时摊开就是两处长得一样（见本文件 2026-08-12 的教训）
+    new Set(["最近"]),
+  )
   const 收起了 = (k: string) => 收起的.has(k)
   const 切收起 = (k: string) =>
     设收起((前) => {
@@ -1510,6 +1513,22 @@ export function SessionSidebar({
     if (已有) 已有[1].push(t)
     else 项目组.push([t.workspace, [t]])
   }
+
+  /**
+   * **「最近」段**（codex-polish 第二档，2026-08-22，学自 dsh-codex-ui）：跨项目、跨服务器按上次活动取前 5 条。
+   * **只有会话分散在两个以上收纳里时才出现**——只有一个收纳时它就是下面那列的抄写，两处一样等于没有判据。
+   */
+  const 收纳数 = (服务器组.length > 0 ? 1 : 0) + (项目组.length > 0 ? 1 : 0) + (散的.length > 0 ? 1 : 0)
+  const 最近的 =
+    收纳数 >= 2 && sessionOf
+      ? 全部任务
+          .map((t) => ({ t, s: t.sessionId ? sessionOf(t.sessionId) : undefined }))
+          .filter((x): x is { t: TaskSummary; s: SessionSummary } => x.s !== undefined)
+          .sort((a, b) => (b.s.lastActiveAt ?? b.s.createdAt).localeCompare(a.s.lastActiveAt ?? a.s.createdAt))
+          .slice(0, 5)
+          .map((x) => x.t)
+      : []
+
   /**
    * **人刚刚亲手选的那个文件夹，一句话都还没说也要在这一列里**
    * （2026-08-19 作者报的）。
@@ -1987,6 +2006,25 @@ export function SessionSidebar({
         *
         * **一条都没有时整块不出现**：一个写着 `(0)` 的标题占一行、什么都没说。
         */}
+      {最近的.length > 0 ? (
+        <>
+          <p className="side-section">
+            <Button
+              variant="text"
+              size="inline"
+              className="side-section-toggle"
+              aria-expanded={!收起了("最近")}
+              onClick={() => 切收起("最近")}
+            >
+              <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
+              <时钟图标 className="side-section-icon" />
+              {t("最近")} <span className="side-count">{最近的.length}</span>
+            </Button>
+          </p>
+          {收起了("最近") ? null : <ul className="session-list recent-list">{最近的.map((t) => 任务行(t, false))}</ul>}
+        </>
+      ) : null}
+
       {项目组.length > 0 ? (
         <>
           <p className="side-section">
@@ -2671,17 +2709,21 @@ function SessionConfigMenu({
    * （codex 那台的 `name` 本来就是具体模型，原样不动）。
    */
   const 当前项 = 模型?.options.find((x) => x.value === 模型.current)
+  // 没有模型那一条（原生会话）就把权限档写在扳机上——dsh-codex-ui 的输入卡就是这么摆的，一眼看到这段在哪一档
+  const 档 = options.find((o) => o.category === "mode")
+  // 扳机上只写档名（「全放行」），「· 跟随设置」那半截留在菜单里——输入卡那一行容不下长字
+  const 档名 = 档?.options.find((x) => x.value === 档.current)?.name.split(" · ")[0]
   const 标 = 模型
     ? 当前项
       ? 拆模型名(当前项.name, 当前项.description).主
       : 模型.current
-    : undefined
+    : 档名
 
   return (
     <div className="sess-config" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
       <Button
         variant="ghost"
-        size="sm"
+        size="inline"
         className="sess-config-trigger"
         aria-haspopup="menu"
         aria-expanded={开着}

@@ -553,6 +553,11 @@ export class SessionManager {
     return this.bound.get(sessionId)?.contextUsage?.(sessionId)
   }
 
+  /** 这一段现在有哪些开关（没有这一问的运行时给 undefined） */
+  configOptions(sessionId: SessionId) {
+    return this.bound.get(sessionId)?.configOptions?.(sessionId)
+  }
+
   /**
    * 这个会话现在有哪些变量（②-A · K5 · S14）。**只有内核会话有。**
    *

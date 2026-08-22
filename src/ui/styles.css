@@ -5526,3 +5526,5 @@ pre {
 }
 .conv-export-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 28rem; }
 .conv-export { flex: none; }
+/* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
+.recent-list { margin-bottom: var(--dawn-space-2); }

@@ -43,6 +43,17 @@
 
 ## 变更日志
 
+### 2026-08-22 — codex-polish 第二档：「最近」段、输入卡上的权限档、推理强度；悬停卡不再伸出窗口底
+
+- **Type**: feat + fix
+- **Motivation**: 作者要第二档三件；同时报「下面的会话悬停之后信息显示不全」。
+- **What**:
+  ⑥ 侧栏「最近」段：会话分散在两个以上收纳（服务器 / 项目 / 会话）时才出现，跨收纳按上次活动取前 5 条；**默认收起**——它的行是下面各列的抄写，两份同时摊开就是「两处长得一样」。
+  ⑦⑧ **原生会话也走 ACP 那套 `config_options`**，界面早就会画、不另起组件：`NativeRuntime.configOptions()` 给 `dawn.permission`（跟随设置 / 全放行 / 拦下危险操作，读写 wiring 里那张 `按会话的档`——与工具门同一张表）和 `dawn.thinking`（**只在 `session.supportsThinking()` 时才有**，pi 对不支持的模型会静默忽略，摆一个没用的开关是骗人）；`setConfigOption` 落到 `setThinkingLevel` / 档位表。`start()` 里 emit 的那份在 attach 之前就发了没人听见，所以壳在 attach 之后（建会话与恢复两条路）再问一次并入记录；换模型后整份重发。扳机上没有模型那条时写权限档。
+  修：`HoverCard` 渲染后量高度，底超出窗口就整张往上夹（`useLayoutEffect`）。
+- **Impact**: 没有新协议操作、无 schema 变更。权限档的按会话覆盖只存在内存（与定时任务那份同一张表），重启回到跟随设置。
+- **Verification**: `e2e/codex-polish-2.spec.ts` 三条（最近段的出现条件与默认收起；菜单里切到拦下危险操作之后 `curl` 真被拒、全局设置不动；假模型不支持推理强度时菜单里没那一条）；`sess-title.spec` 新增矮窗口悬停卡用例（去掉修法它确实红）；vitest 2041 绿；全量 e2e 与视觉见提交。
+
 ### 2026-08-22 — codex-polish：轮次导航、会话菜单五项、统计条、导出 markdown、未读圆点（学自 dsh-codex-ui）
 
 - **Type**: feat

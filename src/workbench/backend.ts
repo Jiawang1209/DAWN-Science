@@ -815,6 +815,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // **记账与呈现是两件事，各走各的。**
       runRecorder?.ingest(e)
     })
+    // 开关那份在 attach 之前就 emit 过了、没人听见——接好线再问一次（codex-polish 第二档）
+    const 开关 = sessions.configOptions(rec.id)
+    if (开关 && 开关.length > 0) events.ingest(rec.id, { kind: "config_options", sessionId: rec.id, options: 开关 })
     // PTY 的「命令」不可观测（只有字节流），可观测的是会话本身
     if (kind === "pty") runRecorder?.beginPtySession(rec.id)
 
@@ -1534,6 +1537,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           })
           const 历史 = await sessions.history(sessionId)
           if (历史.length > 0) events.restore(sessionId, 历史.map(还原成条目))
+          const 开关 = sessions.configOptions(sessionId)
+          if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
         } catch (e) {
           /**
            * **不再静默吞掉**（规格 7.5，2026-08-19）。

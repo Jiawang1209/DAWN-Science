@@ -968,6 +968,7 @@ export const EN: Readonly<Record<string, string>> = {
   "已导出 {0} 轮到 {1}": "Exported {0} turns to {1}",
   "导不了：{0}": "Could not export: {0}",
   "导出对话": "Export conversation",
+  "最近": "Recent",
   // 子 agent 名册（agents-roster，2026-08-22）
   "正在读子 agent": "Reading subagents",
   "派出去干一件事、拿结果回来的人：它在另一个进程里、看不见这段对话，只拿到人设和你交代的任务。每一份人设同时也是一个技能——想在这段对话里按它的规矩聊，就 /skill:名字。": "Someone you send off to do one thing and bring the result back: it runs in another process, cannot see this conversation, and gets only its persona and the task you give it. Every persona is also a skill — to chat by its rules in this conversation, use /skill:name.",

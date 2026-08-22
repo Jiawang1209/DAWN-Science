@@ -155,6 +155,8 @@ console.log("build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/")
 
 if (existsSync("skills")) {
   cpSync("skills", join("dist", "skills"), { recursive: true })
+  // 自带的子 agent（2026-08-22）：与技能同一条理由，随应用发布、只读
+  cpSync("agents", join("dist", "agents"), { recursive: true })
   console.log("build-electron: 自带技能已拷进 dist/skills")
 }
 

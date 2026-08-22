@@ -74,6 +74,9 @@ export interface CreateWorkbenchOptions {
    * 想改？把那个文件夹复制到 `~/DAWN/skills` 下再改——那是显式的。
    */
   builtinSkillsDir?: string
+  /** 自带的子 agent（随应用发布，只读）；全局的在 `~/DAWN/agents`（或 `DAWN_AGENTS_DIR`） */
+  builtinAgentsDir?: string
+  agentsDir?: string
   configPath: string
   dbPath: string
   readOnly?: boolean
@@ -359,6 +362,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.builtinSkillsDir ? { 自带目录: opts.builtinSkillsDir } : {}),
   }
 
+  /** 子 agent 与技能同一套三层（2026-08-22）：`~/DAWN/agents` 你写的、自带的随应用、项目 `.dawn/agents` */
+  const 子agent位置 = {
+    全局目录: opts.agentsDir ?? join(homedir(), "DAWN", "agents"),
+    ...(opts.builtinAgentsDir ? { 自带目录: opts.builtinAgentsDir } : {}),
+  }
+
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
     /**
@@ -376,6 +385,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     gate: 权限门,
     // 给了才认这两个位置；不给就完全是 pi 的原样
     skills: 技能位置,
+    subagents: 子agent位置,
     // 给了才有那些外部工具；不给的装配一个字不受影响
     mcp: { 取工具: 取MCP工具, 池: mcp池, 门: mcp门 },
     // 给了才有 `run_code`；不给的装配（CLI、测试替身）一个字不受影响
@@ -669,6 +679,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     mcp: { 池: mcp池 },
     // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
     skills: 技能位置,
+    subagents: 子agent位置,
     tasks: new TaskStore(db),
     schedules: new ScheduleStore(db),
     设会话权限: (sessionId, 档) => 按会话的档.set(sessionId, 档),
@@ -925,6 +936,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
        * 取不到当前回合时**不硬挂**（它在两轮之间调的）——
        * 那是把 A 的账算到 B 头上。
        */
+      /** 子 agent 名册的第二级：按当前会话的项目读三层，停用的不列 */
+      列子agent: async (sessionId) => {
+        const rec = sessionStore.get(sessionId)
+        const r = (await backend.listSubagents(rec?.projectId ? { projectId: rec.projectId } : {})) as { agents: { name: string; description: string; group?: string; disabled: boolean }[] }
+        return r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.group ? { group: a.group } : {}) }))
+      },
       /** 定时任务（第二档）：跑在当前会话所在处、用同一个 agent；「拦危险的」档建成暂停的 */
       定时: {
         建: async (sessionId, req) => {

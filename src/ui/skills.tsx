@@ -22,23 +22,48 @@ import { Button, EmptyState, Loader } from "./primitives.js"
 import { HoverCard, 浮层事件, type 悬停浮层 } from "./hover-card.js"
 
 import { t, tf } from "./i18n/index.js"
+
 export interface Skill {
   name: string
   description: string
-  tools?: string[] | undefined
-  model?: string | undefined
+  tools?: string[]
+  model?: string
   filePath: string
+  from: "builtin" | "global" | "project"
+  title?: string
+  group?: string
+  disabled: boolean
+  mutable: boolean
 }
-
 export interface SkillLoad {
   agents: Skill[]
   problems: { filePath: string; reason: string }[]
   dir: string
+  dirs: { builtin?: string; global?: string; project?: string }
 }
 
-export function SubagentsView({ load }: { load?: (() => Promise<SkillLoad>) | undefined }) {
+export interface SubagentActions {
+  setEnabled: (filePath: string, enabled: boolean) => Promise<unknown>
+  importSubagents: (req: { source: string; to: "global" | "project"; overwrite?: boolean; dryRun?: boolean }) => Promise<导入回执>
+  deleteSubagent: (filePath: string) => Promise<unknown>
+  pickDirectory: () => Promise<string | null>
+  问: (req: { title: string; detail: React.ReactNode; confirmLabel: string; altLabel?: string | undefined }) => Promise<"confirm" | "alt" | "cancel">
+  hasProject: boolean
+}
+
+/**
+ * **子 Agent** 那一屏（S20；2026-08-22 改成名册：三层、分组、停用、导入，形状与技能屏同一套）。
+ * 每一份定义同时也是一个技能（`/skill:名`）——同一份文件，两处登记。
+ */
+export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLoad>) | undefined; actions?: SubagentActions | undefined }) {
   const [数据, 设数据] = useState<SkillLoad | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
+  const [代, 设代] = useState(0)
+  const [忙, 设忙] = useState<string | undefined>(undefined)
+  const [回话, 设回话] = useState<{ kind: "ok" | "bad"; text: string } | undefined>(undefined)
+  const [筛组, 设筛组] = useState<string>("all")
+  const [搜, 设搜] = useState("")
+  const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
 
   useEffect(() => {
     if (!load) return
@@ -49,62 +74,163 @@ export function SubagentsView({ load }: { load?: (() => Promise<SkillLoad>) | un
     return () => {
       还在 = false
     }
-  }, [load])
+  }, [load, 代])
 
-  if (!load) {
-    return (
-      <EmptyState
-        title={t("还没有打开的工作目录")}
-        description={t("子 agent 是按工作目录存的（.dawn/agents/），先给这段对话选一个文件夹。")}
-      />
-    )
+  const 做 = async (key: string, 事: () => Promise<string | undefined>) => {
+    设忙(key)
+    设回话(undefined)
+    try {
+      const 说 = await 事()
+      if (说) 设回话({ kind: "ok", text: 说 })
+      设代((n) => n + 1)
+    } catch (e) {
+      设回话({ kind: "bad", text: e instanceof Error ? e.message : String(e) })
+    } finally {
+      设忙(undefined)
+    }
   }
+
+  const 去导入 = async (to: "global" | "project") => {
+    if (!actions) return
+    const source = await actions.pickDirectory()
+    if (!source) return
+    await 做("import", async () => {
+      const 检 = await actions.importSubagents({ source, to, dryRun: true })
+      if (检.pending.length + 检.conflicts.length === 0) throw new Error(检.failed.map((f) => `${f.source}：${f.why}`).join("；") || t("这里没有可导的定义"))
+      let overwrite = false
+      if (检.conflicts.length > 0) {
+        const 答 = await actions.问({
+          title: tf("已经有同名的子 agent：{0}", 检.conflicts.map((c) => c.name).join("、")),
+          detail: t("覆盖会用新文件替换旧的。不覆盖就只导没撞名的那些。"),
+          confirmLabel: t("覆盖"),
+          altLabel: 检.pending.length > 0 ? t("只导没撞名的") : undefined,
+        })
+        if (答 === "cancel") return undefined
+        overwrite = 答 === "confirm"
+      }
+      const r = await actions.importSubagents({ source, to, overwrite })
+      return [
+        r.imported.length ? tf("导了 {0} 个：{1}", r.imported.length, r.imported.map((x) => x.name).join("、")) : undefined,
+        r.skipped.length ? tf("跳过 {0} 个同名的", r.skipped.length) : undefined,
+        r.failed.length ? tf("{0} 个失败：{1}", r.failed.length, r.failed.map((f) => f.why).join("；")) : undefined,
+      ].filter(Boolean).join("。") + t("。新会话起生效")
+    })
+  }
+
   if (出错) return <EmptyState title={t("读不到子 agent")} description={出错} />
-  if (!数据) return <Loader label={t("正在读这个工作目录里的子 agent")} />
+  if (!数据) return <Loader label={t("正在读子 agent")} />
+
+  const 来处 = (f: Skill["from"]) => (f === "builtin" ? t("自带") : f === "project" ? t("这个项目带的") : t("你写的"))
+  const 组们 = [...new Set(数据.agents.map((a) => a.group ?? t("其它")))]
+  const 筛出来 = 数据.agents.filter((a) => (筛组 === "all" || (a.group ?? t("其它")) === 筛组) && (!搜.trim() || `${a.title ?? ""} ${a.name} ${a.description}`.toLowerCase().includes(搜.trim().toLowerCase())))
 
   return (
     <div className="skills-page">
+      <HoverCard 浮着的={浮着的} />
       <header className="skills-head">
         <h1 className="panel-title">{t("子 Agent")}</h1>
-        {/**
-          * **把目录说出来**。技能是手写的 md 文件——
-          * 不说清楚放哪儿，「怎么加一个」就无从下手。
-          */}
-        <p className="hint">
-          {t("每个")} <code>.md</code> {t("文件是一个子 agent，放在")} <code>{数据.dir}</code>
-        </p>
+        <p className="hint">{t("派出去干一件事、拿结果回来的人：它在另一个进程里、看不见这段对话，只拿到人设和你交代的任务。每一份人设同时也是一个技能——想在这段对话里按它的规矩聊，就 /skill:名字。")}</p>
+        {actions ? (
+          <div className="skills-actions">
+            <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
+              {t("导入到你写的…")}
+            </Button>
+            {actions.hasProject ? (
+              <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
+                {t("导入到这个项目…")}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {回话 ? (
+          <p className={回话.kind === "bad" ? "caveat" : "mcp-ok"} role="status">
+            {回话.text}
+          </p>
+        ) : null}
       </header>
 
-      {数据.agents.length === 0 ? (
-        <EmptyState
-          title={t("这个工作目录里还没有子 agent")}
-          description={tf("在 {0} 下建一个 .md 文件就行。那个目录里有一份 scout.md.example，去掉 .example 后缀即可启用。", 数据.dir)}
-        />
-      ) : (
+      <details className="mcp-how" open={数据.agents.length === 0}>
+        <summary>{t("往哪儿放？")}</summary>
+        <p className="hint">{t("同名时，越靠上的那一份赢：")}</p>
         <ul className="skill-list">
-          {数据.agents.map((a) => (
-            <li key={a.filePath} className="skill">
-              <p className="skill-name">{a.name}</p>
-              {/* **给模型看的选择依据**，不是装饰——它决定父 agent 会不会选中它 */}
-              <p className="skill-desc">{a.description}</p>
-              <p className="skill-meta">
-                {/**
-                  * **缺省 = 继承默认工具集**，不是「一个工具都不给」。
-                  * 缺失不等于相同，缺失也不等于支持——这里的默认值才是要害。
-                  */}
-                <span>{a.tools ? tf("工具：{0}", a.tools.join("、")) : t("工具：继承默认那一套")}</span>
-                <span>{a.model ? tf("模型：{0}", a.model) : t("模型：跟当前会话")}</span>
-                <span className="skill-path">{a.filePath}</span>
-              </p>
-            </li>
-          ))}
+          {(
+            [
+              ["project", t("这个项目带的")],
+              ["global", t("你写的")],
+              ["builtin", t("自带")],
+            ] as const
+          ).map(([k, 名]) =>
+            数据.dirs[k] ? (
+              <li key={k} className="skill">
+                <p className="skill-name">{名}</p>
+                <p className="skill-desc">
+                  <code>{数据.dirs[k]}</code>
+                </p>
+              </li>
+            ) : null,
+          )}
         </ul>
+        <p className="caveat">{t("一个 .md 一个子 agent：frontmatter 写 name / description（可选 tools / model / group），正文就是它的人设。")}</p>
+      </details>
+
+      {数据.agents.length === 0 ? (
+        <EmptyState title={t("还没有子 agent")} description={t("在上面那几个目录里放一个 .md 就行。")} />
+      ) : (
+        <>
+          <div className="skills-filters">
+            <div className="theme-choices" role="radiogroup" aria-label={t("分组")}>
+              <Button variant={筛组 === "all" ? "primary" : "secondary"} size="sm" role="radio" aria-checked={筛组 === "all"} onClick={() => 设筛组("all")}>
+                {t("全部")}（{数据.agents.length}）
+              </Button>
+              {组们.map((g) => (
+                <Button key={g} variant={筛组 === g ? "primary" : "secondary"} size="sm" role="radio" aria-checked={筛组 === g} onClick={() => 设筛组(g)}>
+                  {g}（{数据.agents.filter((a) => (a.group ?? t("其它")) === g).length}）
+                </Button>
+              ))}
+            </div>
+            <input className="control skills-search" type="search" value={搜} aria-label={t("搜子 agent")} placeholder={t("按名字或说明搜")} onChange={(e) => 设搜(e.target.value)} />
+            <span className="skills-count hint">{tf("{0} 个，{1} 个开着", 数据.agents.length, 数据.agents.filter((a) => !a.disabled).length)}</span>
+          </div>
+          {筛出来.length === 0 ? (
+            <EmptyState title={t("没有对上的子 agent")} description={t("换个词，或者把筛选清掉。")} />
+          ) : (
+            <ul className="skill-group" aria-label={t("子 agent 清单")}>
+              {筛出来.map((a) => (
+                <li key={a.filePath} className="skill-row" data-authored="" data-state={a.disabled ? "off" : undefined}>
+                  <div
+                    className="skill-row-main"
+                    {...浮层事件(设浮着的, a.title ?? a.name, a.description, [{ 图: "文件夹", 文: a.filePath }, { 图: "文件", 文: a.tools ? tf("工具：{0}", a.tools.join("、")) : t("工具：继承默认那一套") }], undefined, 清单上的卡)}
+                  >
+                    <p className="skill-name">
+                      <span className="skill-name-text">{a.title ?? a.name}</span>
+                      {a.title ? <span className="tag skill-slug">{a.name}</span> : null}
+                      <span className="tag">{来处(a.from)}</span>
+                      {a.group ? <span className="tag">{a.group}</span> : null}
+                      <span className={`tag ${a.disabled ? "tag-off" : "tag-model"}`}>{a.disabled ? t("已停用") : t("已启用")}</span>
+                    </p>
+                    <p className="skill-desc">{a.description}</p>
+                  </div>
+                  {actions && a.mutable ? (
+                    <子agent行尾菜单
+                      a={a}
+                      忙={忙 === a.filePath}
+                      onToggle={() => void 做(a.filePath, async () => { await actions.setEnabled(a.filePath, a.disabled); return a.disabled ? tf("「{0}」启用了。新会话起生效", a.name) : tf("「{0}」停用了。新会话起生效", a.name) })}
+                      onDelete={() =>
+                        void (async () => {
+                          const 答 = await actions.问({ title: tf("删掉子 agent「{0}」？", a.name), detail: <code>{a.filePath}</code>, confirmLabel: t("移到废纸篓") })
+                          if (答 !== "confirm") return
+                          await 做(a.filePath, async () => { await actions.deleteSubagent(a.filePath); return tf("「{0}」已移到废纸篓。新会话起生效", a.name) })
+                        })()
+                      }
+                    />
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
-      {/**
-        * **读不进来的不静默跳过**（规格 7.5）。
-        * 一个格式写错的定义静静地不出现，人只会以为「我写的技能没生效」。
-        */}
       {数据.problems.length > 0 ? (
         <section className="skill-problems">
           <h2 className="panel-title">{t("这几个读不进来")}</h2>
@@ -117,6 +243,32 @@ export function SubagentsView({ load }: { load?: (() => Promise<SkillLoad>) | un
             ))}
           </ul>
         </section>
+      ) : null}
+    </div>
+  )
+}
+
+function 子agent行尾菜单({ a, 忙, onToggle, onDelete }: { a: Skill; 忙: boolean; onToggle: () => void; onDelete: () => void }) {
+  const [开着, 设开着] = useState<{ top: number; left: number } | undefined>(undefined)
+  const 按钮 = useRef<HTMLButtonElement>(null)
+  const 打开 = () => {
+    const r = 按钮.current?.getBoundingClientRect()
+    if (!r) return
+    设开着({ top: Math.min(Math.max(8, r.bottom + 4), window.innerHeight - 120), left: Math.max(8, r.right - 180) })
+  }
+  return (
+    <div className="row-actions skill-row-actions">
+      <Button ref={按钮} variant="ghost" size="icon" className="row-more" aria-label={tf("子 agent 操作：{0}", a.name)} aria-expanded={Boolean(开着)} disabled={忙} onClick={() => (开着 ? 设开着(undefined) : 打开())}>
+        ⋯
+      </Button>
+      {开着 ? (
+        <>
+          <div className="menu-scrim" onClick={() => 设开着(undefined)} />
+          <div className="row-menu" role="menu" aria-label={tf("子 agent 操作：{0}", a.name)} style={{ top: 开着.top, left: 开着.left }}>
+            <Button variant="ghost" size="inline" role="menuitem" onClick={() => { 设开着(undefined); onToggle() }}>{a.disabled ? t("启用") : t("停用")}</Button>
+            <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>{t("删除")}</Button>
+          </div>
+        </>
       ) : null}
     </div>
   )

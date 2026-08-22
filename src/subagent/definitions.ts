@@ -74,6 +74,14 @@ export interface SubagentDefinition {
   systemPrompt: string
   /** 出问题时要能指回具体哪个文件 */
   filePath: string
+  /** 它从哪儿来（2026-08-22 起三层）：自带 / 你写的 / 这个项目带的。同名时项目 > 全局 > 自带 */
+  from?: "builtin" | "global" | "project"
+  /** 给人看的名字（frontmatter `title`，可以是中文）；`name` 仍是给模型与文件的安全标识符 */
+  title?: string
+  /** 分组（frontmatter `group`），只给屏上分区用；没写就「其它」 */
+  group?: string
+  /** 停用了（frontmatter `disabled: true`）：屏上列出来，但不给模型、不当技能 */
+  disabled?: boolean
 }
 
 export interface DefinitionProblem {
@@ -155,6 +163,53 @@ export function loadSubagentDefinitions(projectRoot: string): DefinitionLoad {
   return { agents, problems }
 }
 
+/**
+ * 三层目录一起读（2026-08-22，学自 dsh-agency-agents 的「名册」）：
+ * 顺序就是优先级——先给的赢，同名后来的记一条「重复」。每一层的 `from` 标在定义上。
+ * 目录不存在不是错误。
+ */
+export function loadSubagentsFrom(层: readonly { dir: string; from: "builtin" | "global" | "project" }[]): DefinitionLoad {
+  const agents: SubagentDefinition[] = []
+  const problems: DefinitionProblem[] = []
+  const seen = new Map<string, SubagentDefinition>()
+  for (const { dir, from } of 层) {
+    if (!existsSync(dir)) continue
+    let names: string[]
+    try {
+      names = readdirSync(dir)
+    } catch (err) {
+      problems.push({ filePath: dir, reason: `读不了定义目录：${message(err)}` })
+      continue
+    }
+    for (const name of names.filter((n) => n.endsWith(".md")).sort()) {
+      const filePath = join(dir, name)
+      let raw: string
+      try {
+        raw = readFileSync(filePath, "utf8")
+      } catch (err) {
+        problems.push({ filePath, reason: `读不了这个文件：${message(err)}` })
+        continue
+      }
+      const { frontmatter, body } = parseFrontmatter<Record<string, string>>(raw)
+      const def = validate(filePath, frontmatter, body)
+      if ("reason" in def) {
+        problems.push({ filePath, reason: def.reason })
+        continue
+      }
+      const prior = seen.get(def.name)
+      if (prior) {
+        // 跨层同名不算写坏：项目级盖住自带的正是设计；只在同一层里才是重复
+        if (prior.from === from) problems.push({ filePath, reason: `名字 "${def.name}" 与 ${prior.filePath} 重复，已保留先读到的那个` })
+        continue
+      }
+      const 完整: SubagentDefinition = { ...def, from }
+      seen.set(def.name, 完整)
+      agents.push(完整)
+    }
+  }
+  return { agents, problems }
+}
+
 function validate(
   filePath: string,
   fm: Record<string, string>,
@@ -181,6 +236,9 @@ function validate(
     .filter(Boolean)
 
   const model = (fm.model ?? "").trim()
+  const group = (fm.group ?? "").trim()
+  const title = (fm.title ?? "").trim()
+  const disabled = /^(true|yes|on|1)$/i.test(String(fm.disabled ?? "").trim())
 
   return {
     name,
@@ -188,6 +246,9 @@ function validate(
     // **空表要退回缺省**：写了 `tools:` 却是空的，意图是「没写」，不是「不给工具」
     ...(tools.length > 0 ? { tools } : {}),
     ...(model ? { model } : {}),
+    ...(title ? { title } : {}),
+    ...(group ? { group } : {}),
+    ...(disabled ? { disabled: true } : {}),
     systemPrompt,
     filePath,
   }

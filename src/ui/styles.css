@@ -5415,3 +5415,4 @@ pre {
 .schedule-runs .panel-title { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .schedule-run-row .skill-row-main { width: auto; }
 .tag-bad { border-color: var(--dawn-danger); color: var(--dawn-danger); }
+.skill-slug { font-family: var(--dawn-font-mono); }

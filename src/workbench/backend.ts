@@ -50,7 +50,7 @@ import type { 权限档 } from "../policy/permissions.js"
 import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invocation.js"
 import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
-import { readdir, readFile as 读本地, writeFile, rename, rm } from "node:fs/promises"
+import { readdir, readFile as 读本地, writeFile, rename, rm, stat, copyFile } from "node:fs/promises"
 import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep } from "node:path"
 import { IlinkClient } from "../channels/weixin/ilink.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
@@ -76,7 +76,7 @@ import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
-import { AGENTS_DIR, loadSubagentDefinitions } from "../subagent/definitions.js"
+import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
 import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync } from "node:fs"
 
@@ -164,6 +164,8 @@ export interface WorkbenchBackendOptions {
    * 不返回空名单假装「你还没建过任务」。
    */
   tasks?: TaskStore
+  /** 子 agent 的三层（7.20）：自带（只读）与你写的；项目那一层固定 `<工作区>/.dawn/agents` */
+  subagents?: { 全局目录?: string; 自带目录?: string }
   /** 定时任务的两张表（7.19）。**不给就没有定时**——界面如实说「本次运行没有装配」 */
   schedules?: ScheduleStore
   /** 定时任务的设置；不给用默认 */
@@ -418,7 +420,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, isForeground, askOnce } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1101,6 +1103,104 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       await rm(临, { force: true }).catch(() => undefined)
       throw e
     }
+  }
+
+  /* ── 子 agent 名册的守卫与导入（7.20） ── */
+  const 子agent层 = (workspace: string | undefined) => [
+    ...(workspace ? [{ dir: join(workspace, AGENTS_DIR), from: "project" as const }] : []),
+    ...(子agent位置?.全局目录 ? [{ dir: 子agent位置.全局目录, from: "global" as const }] : []),
+    ...(子agent位置?.自带目录 ? [{ dir: 子agent位置.自带目录, from: "builtin" as const }] : []),
+  ]
+  const 子agent目标根 = (to: "global" | "project", projectId: string | undefined): string => {
+    if (to === "global") {
+      if (!子agent位置?.全局目录) throw fault("internal_error", "本次运行没有装配全局子 agent 目录")
+      return 子agent位置.全局目录
+    }
+    if (!projectId) throw fault("invalid_request", "导进项目要先说是哪个项目")
+    const p = projectStore.get(projectId)
+    if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+    return join(p.workspace, AGENTS_DIR)
+  }
+  /** 路径必须是「你写的」或某个项目 `.dawn/agents` 下一层的 `.md`；自带的拒 */
+  const 子agent文件必须可改 = (filePath: string): string => {
+    const 文件 = resolve(filePath)
+    if (!文件.endsWith(".md")) throw fault("invalid_request", "只改 .md 的定义文件")
+    const 可改根 = [
+      ...(子agent位置?.全局目录 ? [resolve(子agent位置.全局目录)] : []),
+      ...projectStore.list().map((p) => resolve(p.workspace, AGENTS_DIR)),
+    ]
+    if (!可改根.includes(dirname(文件))) {
+      if (子agent位置?.自带目录 && 文件.startsWith(resolve(子agent位置.自带目录) + sep)) throw fault("invalid_request", "自带的子 agent 在应用包里，只读；想改就复制一份到你自己的目录")
+      throw fault("invalid_request", `${文件} 不在任何一个可改的子 agent 目录里`)
+    }
+    return 文件
+  }
+  /** 停用 = frontmatter 里 `disabled: true` 一行；启用 = 把那一行删掉。文本级替换，别的不动 */
+  const 写停用 = (text: string, 停: boolean): string | undefined => {
+    const bom = text.charCodeAt(0) === 0xfeff ? "\ufeff" : ""
+    const 正 = bom ? text.slice(1) : text
+    const 换行 = 正.includes("\r\n") ? "\r\n" : "\n"
+    const 行们 = 正.split(/\r?\n/)
+    if (行们[0]?.trim() !== "---") return undefined
+    const end = 行们.findIndex((l, i) => i > 0 && l.trim() === "---")
+    if (end < 0) return undefined
+    const 头 = 行们.slice(1, end).filter((l) => !/^disabled\s*:/.test(l))
+    if (停) 头.push("disabled: true")
+    return bom + ["---", ...头, "---", ...行们.slice(end + 1)].join(换行)
+  }
+  /** 导入 `.md` 定义（一个或一筐）。同名冲突先问；覆盖前备份、失败回滚 */
+  const 导入定义文件 = async (source: string, 根: string, 覆盖: boolean, 只预检: boolean) => {
+    const st = await stat(source).catch(() => undefined)
+    if (!st) return { why: `路径不存在：${source}` }
+    const 文件们 = st.isDirectory() ? (await readdir(source)).filter((n) => n.endsWith(".md")).map((n) => join(source, n)) : source.endsWith(".md") ? [source] : []
+    if (文件们.length === 0) return { why: `这里没有 .md 的定义文件：${source}` }
+    const pending: { name: string; source: string }[] = []
+    const conflicts: { name: string; source: string }[] = []
+    const failed: { source: string; why: string }[] = []
+    for (const f of 文件们) {
+      const r = loadSubagentsFrom([{ dir: dirname(f), from: "global" }]).agents.find((a) => resolve(a.filePath) === resolve(f))
+      if (!r) {
+        failed.push({ source: f, why: "读不进来（frontmatter 缺 name / description，或正文为空）" })
+        continue
+      }
+      const dest = join(根, `${r.name}.md`)
+      if (resolve(dest) === resolve(f)) {
+        failed.push({ source: f, why: "来源就是目标" })
+        continue
+      }
+      ;(existsSync(dest) ? conflicts : pending).push({ name: r.name, source: f })
+    }
+    if (只预检) return { pending, conflicts, imported: [], skipped: [], failed }
+    const imported: { name: string; dest: string; overwritten: boolean }[] = []
+    const skipped: { name: string; source: string }[] = []
+    if (pending.length + (覆盖 ? conflicts.length : 0) > 0) mkdirSync(根, { recursive: true })
+    for (const c of pending) {
+      const dest = join(根, `${c.name}.md`)
+      try {
+        await copyFile(c.source, dest)
+        imported.push({ name: c.name, dest, overwritten: false })
+      } catch (e) {
+        failed.push({ source: c.source, why: e instanceof Error ? e.message : String(e) })
+      }
+    }
+    for (const c of conflicts) {
+      if (!覆盖) {
+        skipped.push(c)
+        continue
+      }
+      const dest = join(根, `${c.name}.md`)
+      const 备份 = `${dest}.dawn-backup-${Date.now()}`
+      try {
+        await rename(dest, 备份)
+        await copyFile(c.source, dest)
+        await rm(备份, { force: true })
+        imported.push({ name: c.name, dest, overwritten: true })
+      } catch (e) {
+        await rename(备份, dest).catch(() => undefined)
+        failed.push({ source: c.source, why: e instanceof Error ? e.message : String(e) })
+      }
+    }
+    return { pending: [], conflicts: [], imported, skipped, failed }
   }
 
   /* ── 提示词增强的工作区读法：本地走 fs，远端走那台机器的 find / cat ── */
@@ -1945,8 +2045,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     listSubagents: async ({ projectId }) => {
-      const p = requireProject(projectId)
-      const 读到的 = loadSubagentDefinitions(p.workspace)
+      const p = projectId ? projectStore.get(projectId) : undefined
+      if (projectId && !p) throw fault("not_found", `没有这个项目：${projectId}`)
+      const 层 = 子agent层(p?.workspace)
+      const 读到的 = loadSubagentsFrom(层)
       return {
         agents: 读到的.agents.map((a) => ({
           name: a.name,
@@ -1954,10 +2056,48 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           ...(a.tools ? { tools: a.tools } : {}),
           ...(a.model ? { model: a.model } : {}),
           filePath: a.filePath,
+          from: a.from ?? "project",
+          ...(a.title ? { title: a.title } : {}),
+          ...(a.group ? { group: a.group } : {}),
+          disabled: Boolean(a.disabled),
+          mutable: a.from !== "builtin",
         })),
         problems: 读到的.problems,
-        dir: join(p.workspace, AGENTS_DIR),
+        dir: p ? join(p.workspace, AGENTS_DIR) : "",
+        dirs: {
+          ...(子agent位置?.自带目录 ? { builtin: 子agent位置.自带目录 } : {}),
+          ...(子agent位置?.全局目录 ? { global: 子agent位置.全局目录 } : {}),
+          ...(p ? { project: join(p.workspace, AGENTS_DIR) } : {}),
+        },
       }
+    },
+
+    /* ── 子 agent 名册（7.20） ── */
+
+    setSubagentEnabled: async ({ filePath, enabled }) => {
+      const 文件 = 子agent文件必须可改(filePath)
+      const 原 = await 读本地(文件, "utf8")
+      const 新 = 写停用(原, !enabled)
+      if (新 === undefined) throw fault("invalid_request", `${文件} 没有完整的 frontmatter，不敢改`)
+      if (新 !== 原) await 原子写(文件, 新)
+      return { enabled }
+    },
+
+    importSubagents: async ({ source, to, projectId, overwrite, dryRun }) => {
+      const 根 = 子agent目标根(to, projectId)
+      const r = await 导入定义文件(source, 根, overwrite === true, dryRun === true)
+      if ("why" in r) throw fault("invalid_request", r.why)
+      return r
+    },
+
+    deleteSubagent: async ({ filePath }) => {
+      const 文件 = 子agent文件必须可改(filePath)
+      if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
+      await trashItem(文件).catch((err: unknown) => {
+        throw fault("invalid_request", `删不掉 ${文件}：${err instanceof Error ? err.message : String(err)}`)
+      })
+      记一次删除?.(undefined, 文件, true)
+      return { trashed: true as const }
     },
 
     listConnections: async () => 远端().store.list().map(装配),

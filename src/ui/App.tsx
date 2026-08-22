@@ -2696,9 +2696,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, session, sessions, askDeleteSession, 回到初始画面],
   )
 
+  /** 子 agent 名册（命令面板里「派」与「按规矩聊」两组用）。启动取一次，项目切换时再取；停用的不列 */
+  const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
+  useEffect(() => {
+    let 还在 = true
+    client
+      .get<SkillLoad>("listSubagents", projectId ? { projectId } : {})
+      .then((r) => 还在 && 设子agent名册(r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))))
+      .catch(() => {})
+    return () => {
+      还在 = false
+    }
+  }, [client, projectId, view])
   const commands = useMemo(
-    () => buildCommands({ actions, agents: agentIds, session, busy, view, dockOpen }),
-    [actions, agentIds, session, busy, view, dockOpen],
+    () =>
+      buildCommands({
+        actions, agents: agentIds, session, busy, view, dockOpen,
+        subagents: 子agent名册,
+        ...(session ? { setDraft: (text: string) => setDraft(session.sessionId, text) } : {}),
+      }),
+    [actions, agentIds, session, busy, view, dockOpen, 子agent名册],
   )
 
   // **只有 exhausted 才配得上占满全屏。** connecting/reconnecting/degraded
@@ -3166,9 +3183,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             />
           ) : view === "subagents" ? (
             <SubagentsView
-              {...(projectId
-                ? { load: () => client.get<SkillLoad>("listSubagents", { projectId }) }
-                : {})}
+              load={() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {})}
+              actions={{
+                setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
+                importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+                deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
+                pickDirectory: () => client.pickDirectory(默认工作区?.path),
+                问: 问一句,
+                hasProject: Boolean(projectId),
+              }}
             />
           ) : view === "plugins" ? (
             <PluginsView />

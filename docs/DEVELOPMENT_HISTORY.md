@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 子 agent 名册：自带 22 份科研人设、三层目录、分组与停用、一份既是子 agent 也是技能（协议 7.20）
+
+- **Type**: feat
+- **Motivation**: 读了 `MichengAI/dsh-agency-agents`（解读在 `ccb_hive_code_learn/dsh-agency-agents-解读.md`）。我们子 agent 的机制比它齐（single / parallel / chain），**内容一份都没有**；它 271 份里绝大多数是做生意的。作者定：自己写 22 份（数据科学、统计、生态、生命科学、GIS、建模、可视化、写作审查），**一份两用**。设计：`docs/superpowers/specs/2026-08-22-子agent名册-design.md`。
+- **What**: `agents/*.md` 22 份（中文人设，`title` / `group` / 部分 `tools` 收紧；构建拷到 `dist/agents`）。`subagent/definitions.ts` `loadSubagentsFrom(三层)`，frontmatter 认 `title` / `group` / `disabled`。`native.ts`：`subagents` 三层给 `subagent` 工具；`skillsOverride` 把未停用的子 agent 登记成技能。`subagent/tool.ts` 描述改两级（名字按组 + 「没合适的就别派」），`acp/tools.ts` 加 `dawn_list_subagents`。协议 7.20：`listSubagents` 多来源 / 标题 / 分组 / 停用 / 三处路径、不要求项目；新增 `setSubagentEnabled`（frontmatter `disabled` 一行，文本级替换、自带拒）/ `importSubagents`（`.md` 一个或一筐，预检 → 覆盖备份回滚）/ `deleteSubagent`（废纸篓）。界面：「子 Agent」屏改成名册（分组筛、搜、标签、「⋯」、导入、三处路径）；命令面板多一组「派子 agent「X」」「按「X」的规矩聊」。`wiring.ts` / `main.ts` 装配，`DAWN_AGENTS_DIR` 隔离 e2e。它三份相关的 persona 作样本放 `docs/samples/`（MIT，带 LICENSE）。
+- **Impact**: 纯新增；旧的项目级定义照旧。`subagent` 工具描述变短了（只列名字）。
+- **Verification**: 单元 +7（三层优先级、同层重复、停用与 tools 解析、22 份全读得进来且有分组；后端列表 / 停用写文件 / 自带拒 / 导入 / 删除）共 2039；e2e `subagent-roster.spec` 2 条（22 份 + 分组筛 + 搜 + 停用写文件；命令面板派 / 聊 + **`/skill:stat-consultant` 真把人设送进了假模型**）；skills / subagent / palette / acp-agent 29 绿；视觉 10 绿。
+
 ### 2026-08-22 — 定时任务第二档：每月 / 每 N 天、每条任务自己的权限档、对话里一句话就建、结果推微信、记录筛
 
 - **Type**: feat

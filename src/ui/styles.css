@@ -3616,8 +3616,10 @@ pre {
 /* 固定入口行没有尾部按钮：留出会话行「⋯」那一段加行的右内距（量出来是 52px），数字右缘才与时间那一列同线。
    2026-08-22 晚：会话行右内距 8 → 24（收尾那一列统一到「多选」的右缘），这里跟着 36 → 52 */
 .side-action .side-count { margin-right: 52px; }
-/* 远端那一行尾部是三角（1em 宽）：数字与三角之间留的量 = 52 − 三角宽 */
-.remote-head .side-count { margin-right: 30px; }
+/* 远端那一行尾部是三角（1em 宽）。数字仍落在 188 那条线上，但三角**紧贴数字**——
+   2026-08-22 作者：「折叠和个数有很大的 gap，必须缩小点」。于是空留在三角右边：52 − 三角宽 − 4 */
+.remote-head .side-count { margin-right: var(--dawn-space-1); }
+.remote-head .side-count + .caret { margin-right: 26px; }
 /* 服务器收纳里那台机器的标题行（`ug2478@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
 .side-subhead .side-count { margin-right: 27px; }
 

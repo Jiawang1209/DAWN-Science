@@ -28,6 +28,7 @@
  * | `FAKE_ACP_USAGE` | 置一即在回合结束时报 usage（**累计值**，验差值那条） |
  * | `FAKE_ACP_ASK` | 置一即在回话之前**问一次权限**（A2） |
  * | `FAKE_ACP_CALL_MCP` | 置一即**真的去连 DAWN 递过来的那台 MCP 服务器**并调一次（B1） |
+ * | `FAKE_ACP_SCHEDULE` | 与上一条同用：调的是 `dawn_schedule_create`，建一条叫这个名的每天任务 |
  * | `FAKE_ACP_RUN_KERNEL` | 给一段代码即改调 `dawn_run_in_kernel` 跑它（B1·B′，要真内核） |
  * | `FAKE_ACP_LIKE_CLAUDE` | 置一即装成 claude 那台适配器：没有 `configOptions`，只有 `models`/`modes` |
  * | `FAKE_ACP_ASK_NO_OPTIONS` | 置一即问一次但**一个选项都不给**（验那条退路） |
@@ -648,6 +649,15 @@ async function 调一次MCP(台, sessionId) {
       })
       const 出 = 跑.result?.content?.[0]?.text ?? 跑.error?.message ?? "（没有内容）"
       return `工具=[${名们}] 内核=${出}`
+    }
+    /** 第二档（2026-08-22）：对话里建一条定时任务。置 `FAKE_ACP_SCHEDULE=<名字>` 就调这件 */
+    if (process.env["FAKE_ACP_SCHEDULE"]) {
+      const 建 = await 问("tools/call", {
+        name: "dawn_schedule_create",
+        arguments: { name: process.env["FAKE_ACP_SCHEDULE"], prompt: "每天看看数据", kind: "daily", time: "09:00" },
+      })
+      const 出 = 建.result?.content?.[0]?.text ?? 建.error?.message ?? "（没有内容）"
+      return `工具=[${名们}] 定时=${出}`
     }
     const 调 = await 问("tools/call", {
       name: "dawn_record_note",

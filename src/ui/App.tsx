@@ -74,6 +74,7 @@ import {
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
+import { ScheduleView, type ScheduleActions } from "./schedule.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -1444,6 +1445,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [],
   )
   const 载已归档 = useCallback(() => client.get<{ sessions: 归档的会话[] }>("listArchivedSessions", {}), [client])
+  /** 「定时」那一屏要的一切（7.19）。去处 = 你打开的项目 + 服务器；agent 去掉终端那种 */
+  const 定时操作 = useMemo<ScheduleActions>(
+    () => ({
+      load: () => client.get("listSchedules", {}),
+      loadRuns: (id) => client.get("listScheduleRuns", { ...(id ? { id } : {}), limit: 100 }),
+      create: (req) => client.get("createSchedule", req),
+      update: (req) => client.get("updateSchedule", req),
+      remove: (id) => client.get("deleteSchedule", { id }),
+      runNow: (id) => client.get("runScheduleNow", { id }),
+      问: 问一句,
+      openSession: (sid) => {
+        const rec = [...sessions, ...tempSessions].find((s) => s.sessionId === sid)
+        if (rec) setActiveProjectId(rec.projectId)
+        setActiveSessionId(sid)
+        setView("conversation")
+        void loadTasks(client)
+      },
+      projects: projects.filter((p) => !p.temporary).map((p) => ({ projectId: p.projectId, name: p.name, workspace: p.workspace })),
+      connections: connections.map((c) => ({ id: c.id, label: c.label })),
+      agents: providers.agents.filter((a) => a.kind !== "pty").map((a) => ({ agentId: a.agentId, remoteCapable: 能上服务器(a) })),
+    }),
+    [client, 问一句, sessions, tempSessions, projects, connections, providers],
+  )
 
   const askDeleteSession = useCallback(
     (s: SessionSummary) => {
@@ -2957,6 +2981,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onArchiveMany={archiveMany}
           archivedCount={归档数}
           onShowArchived={() => setView(view === "archived" ? "conversation" : "archived")}
+          onShowSchedule={() => setView(view === "schedule" ? "conversation" : "schedule")}
           onMoveSession={moveSession}
           onReorderSessions={reorderSessions}
           /**
@@ -3147,6 +3172,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             />
           ) : view === "plugins" ? (
             <PluginsView />
+          ) : view === "schedule" ? (
+            <ScheduleView actions={定时操作} />
           ) : view === "archived" ? (
             <ArchivedView
               load={载已归档}

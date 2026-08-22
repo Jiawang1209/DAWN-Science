@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 14
+export const SCHEMA_VERSION = 15
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -650,6 +650,46 @@ export function migrate(db: Database.Database): void {
      )
      WHERE last_connected_at IS NULL`,
   )
+
+  /**
+   * **v15（2026-08-22）：定时任务**（学自 dsh-automation）。两张表：定义与运行。
+   * `schedule` 是 JSON（四种计划，见 `schedule/recurrence.ts`）；定义改一次 `revision` +1，
+   * 运行记录带着当时的 revision 与任务说明快照——**计划只表达未来意图**，改了定义不动已排队的那次。
+   * `occurrence_key` 唯一：同一次到期只造一条记录（at-most-once）。
+   */
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS schedules (
+      id            TEXT PRIMARY KEY,
+      revision      INTEGER NOT NULL DEFAULT 1,
+      name          TEXT NOT NULL,
+      prompt        TEXT NOT NULL,
+      status        TEXT NOT NULL CHECK (status IN ('active','paused')),
+      schedule      TEXT NOT NULL,
+      agent_id      TEXT NOT NULL,
+      workspace     TEXT,
+      connection_id TEXT,
+      permission    TEXT NOT NULL,
+      created_at    TEXT NOT NULL,
+      updated_at    TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS schedule_runs (
+      id             TEXT PRIMARY KEY,
+      schedule_id    TEXT NOT NULL,
+      revision       INTEGER NOT NULL,
+      occurrence_key TEXT NOT NULL UNIQUE,
+      trigger        TEXT NOT NULL CHECK (trigger IN ('schedule','manual')),
+      scheduled_for  TEXT NOT NULL,
+      status         TEXT NOT NULL CHECK (status IN ('queued','running','succeeded','failed','skipped','cancelled')),
+      prompt         TEXT NOT NULL,
+      session_id     TEXT,
+      started_at     TEXT,
+      finished_at    TEXT,
+      summary        TEXT,
+      error_code     TEXT,
+      error_message  TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_schedule_runs_schedule ON schedule_runs(schedule_id, scheduled_for DESC);
+  `)
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

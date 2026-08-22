@@ -43,6 +43,22 @@
 
 ## 变更日志
 
+### 2026-08-22 — 定时任务第二档：每月 / 每 N 天、每条任务自己的权限档、对话里一句话就建、结果推微信、记录筛
+
+- **Type**: feat
+- **Motivation**: 作者：「第二档依旧也要做」。
+- **What**: `recurrence.ts` 加 `monthly` / `everyDays`（按日期规则的共用走法）。权限：`policy/permissions.ts` 的语境与 `native.ts` 的 `ToolGateContext` 多 `sessionId`，`造门` 的取档收它；`wiring.ts` 一张「按会话的档」表，定时会话按定义存的档登记（`设会话权限`）。`acp/tools.ts` 三件工具 `dawn_schedule_create / list / delete`（跑在当前会话所在处、同一个 agent；「拦危险的」档建成暂停的并让模型说清）；`fake-acp-agent.mjs` 加 `FAKE_ACP_SCHEDULE` 旋钮。微信 `定时跑完了`（跟 `done` / `error` 开关）。界面：表单加每月 / 每 N 天与权限两档、列表标「全放行」、执行记录按时段 × 状态筛。协议：`ScheduleSpecSchema` 多两种、`permission` 进请求与摘要。
+- **Impact**: 纯新增。「全放行」的定时会话不问人也不拦——表单上如实写着；缺省仍是「拦危险的」。
+- **Verification**: 单元 +7（月 / 每 N 天、按会话定档、三件工具）共 2032 绿；e2e `schedule.spec` 4 条（新增：假 ACP 经真 MCP 网关建一条 → 回话带「暂停」→「定时」里按恢复；每月 / 每 N 天 / 全放行标签 / 状态筛）；acp-agent / permission 14 绿；视觉 10 绿。
+
+### 2026-08-22 — 定时任务：到点开一段全新会话跑任务说明（协议 7.19，schema v15）
+
+- **Type**: feat
+- **Motivation**: 读了 `MichengAI/dsh-automation`（Apache-2.0，解读在 `ccb_hive_code_learn/dsh-automation-解读.md`）。DAWN 没有任何定时能力，而「定时在服务器上拉数据、跑脚本」是科研里最实际的定时需求；地基（`createTask` / `writeToSession` / 权限门 / 账本 / 远端会话）都在。设计：`docs/superpowers/specs/2026-08-22-定时任务-design.md`。
+- **What**: `src/schedule/recurrence.ts`（四种计划，带时区不引 luxon）、`domain.ts`（快照、occurrence key、幂等 run id）、`scheduler.ts`（pump / 认领 / 并发 / 补跑窗口 / 重启收拾 / 立即运行，时钟与执行器注入）；`store/schedules.ts` + schema v15 两张表。后端执行器：`createTask` → 标题「<名> · <时刻>」→ 租约 → 写任务说明 → 等 agent 这一轮 `final`（摘要）/ 会话退出 / 60 分钟超时 / 取消。协议 7.19 六个操作。界面：侧栏常驻「定时」一行；`schedule.tsx`（常驻「DAWN 关着不跑」、列表、新建 / 编辑表单、暂停恢复、⋯ 菜单、执行记录点开会话）。`wiring.ts` 装配 `ScheduleStore`。
+- **Impact**: 纯新增。侧栏多一行 → 十张视觉基线按纪律看过 diff（只是多一行、下面整体下移）后重存并再验。与它的差别：不做 agent 工具（对话里建）、不做月 / 每 N 天、权限用全局设置（如实写在屏上）；多出来的是**能选服务器**。
+- **Verification**: `tests/schedule` 16 条（时区反解、四种计划下一次 / 最近到期、校验；调度器 at-most-once / 重叠 / 补跑窗口 / 重启 / 暂停 / 手动 / 执行器抛错 / timer）；`tests/workbench/schedule-ops` 3 条（建改列删、坏输入拒、**立即运行走完整条路**：全新会话、标题、摘要、lastRun）；协议计数 103；e2e `schedule.spec` 2 条真构建 + 假模型全过（建 → 立即跑 → 记录成功摘要是假模型那句 → 点开会话标题带任务名 → 暂停 → 删除记录还在；坏输入当场说）；sidebar / skills / archive 39 绿；全量 vitest 2025；视觉 10 绿。
+
 ### 2026-08-22 — 会话归档（藏不是删）+ 删会话真把会话目录送进废纸篓（协议 7.18）
 
 - **Type**: feat

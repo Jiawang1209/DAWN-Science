@@ -163,3 +163,14 @@ describe("已知缺口：不认识的工具一律放行", () => {
     expect(看风险("subagent", { prompt: "去把 data/raw 删了" }, 本地)).toBeUndefined()
   })
 })
+
+describe("造门 · 按会话定档（2026-08-22，定时任务）", () => {
+  it("门把语境里的 sessionId 交给取档；定时的会话按自己的档，别的跟全局", () => {
+    const 按会话 = new Map<string, "allow-all" | "deny-risky">([["定时的", "deny-risky"]])
+    const 门 = 造门((sid) => (sid && 按会话.get(sid)) || "allow-all")
+    const 参数 = { path: "data/raw/a.csv", content: "x" }
+    expect(门("write", 参数, { ...本地, sessionId: "定时的" })).toBeTruthy()
+    expect(门("write", 参数, { ...本地, sessionId: "普通的" })).toBeUndefined()
+    expect(门("write", 参数, 本地)).toBeUndefined()
+  })
+})

@@ -1092,6 +1092,7 @@ export function SessionSidebar({
   onArchiveMany,
   archivedCount,
   onShowArchived,
+  onShowSchedule,
   onMoveSession,
   onReorderSessions,
   onOpenSettings,
@@ -1182,6 +1183,8 @@ export function SessionSidebar({
   /** 归档了几段、以及点开「已归档」那一屏。**N = 0 时那一行不画**——空的入口是噪音 */
   archivedCount?: number | undefined
   onShowArchived?: (() => void) | undefined
+  /** 「定时」那一屏（2026-08-22，学自 dsh-automation）。常驻：它是建东西的入口，不像「已归档」 */
+  onShowSchedule?: (() => void) | undefined
   onMoveSession?: ((session: SessionSummary, direction: "up" | "down") => void) | undefined
   /** 拖拽排序。**菜单里的上移／下移仍然留着**——那是键盘可达的那条路 */
   onReorderSessions?: ((orderedIds: string[]) => void) | undefined
@@ -1879,6 +1882,12 @@ export function SessionSidebar({
           * **「已归档」只在真有归档的时候出现**（2026-08-22）。看不见的能力等于不存在，
           * 但一个永远空的入口也是噪音——作者问过「会影响侧栏吗」，答案是：没归档过就一个像素都不变。
           */}
+        {onShowSchedule ? (
+          <Row active={view === "schedule"} className="side-action" onClick={onShowSchedule}>
+            <时钟图标 className="row-icon" />
+            <span className="name">{t("定时")}</span>
+          </Row>
+        ) : null}
         {onShowArchived && (archivedCount ?? 0) > 0 ? (
           <Row active={view === "archived"} className="side-action" onClick={onShowArchived}>
             <归档图标 className="row-icon" />

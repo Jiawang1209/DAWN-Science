@@ -41,6 +41,7 @@ import { SessionTranscripts } from "../workbench/events.js"
 import { Client as SshClient } from "ssh2"
 import { ConnectionStore } from "../store/connections.js"
 import { TaskStore } from "../store/tasks.js"
+import { ScheduleStore } from "../store/schedules.js"
 import { RemoteConnections } from "../remote/connections.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
 import type { RemoteState, SshClientLike } from "../remote/ssh.js"
@@ -252,7 +253,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * 读一次的话，在设置里改完档要等下次建会话才生效，
    * 那是「设置里改了、界面上没反应」的经典形状。
    */
-  const 权限门 = 造门(() => (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"))
+  /** 定时任务的会话按它自己存的档（2026-08-22）；别的会话跟全局设置 */
+  const 按会话的档 = new Map<string, "allow-all" | "deny-risky">()
+  const 权限门 = 造门((sessionId) => (sessionId && 按会话的档.get(sessionId)) || (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all"))
 
   /**
    * Jupyter 内核的运行时。**提出来命名，因为现在有两个用处**（②，2026-08-14）：
@@ -667,6 +670,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
     skills: 技能位置,
     tasks: new TaskStore(db),
+    schedules: new ScheduleStore(db),
+    设会话权限: (sessionId, 档) => 按会话的档.set(sessionId, 档),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,
@@ -920,6 +925,26 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
        * 取不到当前回合时**不硬挂**（它在两轮之间调的）——
        * 那是把 A 的账算到 B 头上。
        */
+      /** 定时任务（第二档）：跑在当前会话所在处、用同一个 agent；「拦危险的」档建成暂停的 */
+      定时: {
+        建: async (sessionId, req) => {
+          const rec = sessionStore.get(sessionId)
+          if (!rec) throw new Error(`没有这段会话：${sessionId}`)
+          const 档 = 按会话的档.get(sessionId) ?? (settingsStore.get("permission.mode") === "deny-risky" ? "deny-risky" : "allow-all")
+          const d = (await backend.createSchedule({
+            name: req.name, prompt: req.prompt, schedule: req.schedule as never, agentId: rec.agentId,
+            ...(rec.connectionId ? { connectionId: rec.connectionId } : { workspace: rec.workspace }),
+            permission: 档,
+          })) as { id: string; name: string; status: string; nextAt?: string; where: string }
+          if (档 === "deny-risky") {
+            const 停 = (await backend.updateSchedule({ id: d.id, status: "paused" })) as typeof d
+            return 停
+          }
+          return d
+        },
+        列: async () => ((await backend.listSchedules({})) as { schedules: never[] }).schedules,
+        删: async (id) => { await backend.deleteSchedule({ id }) },
+      },
       记一笔: (sessionId, requestType, 详情) => {
         const rec = sessionStore.get(sessionId)
         if (!rec?.projectId) return

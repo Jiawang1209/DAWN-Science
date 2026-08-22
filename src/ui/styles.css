@@ -5384,3 +5384,34 @@ pre {
 .archived-row-main { width: auto; margin: 0; padding: 0; min-height: 0; border-radius: var(--dawn-radius-sm); align-items: stretch; }
 .archived-row-main .skill-desc { display: flex; align-items: center; gap: var(--dawn-space-1); }
 .archived-row-actions { display: flex; gap: var(--dawn-space-1); flex: none; }
+
+/* ── 定时那一屏（schedule，2026-08-22） ── */
+.schedule-page { min-width: 0; }
+.schedule-form {
+  display: grid;
+  gap: var(--dawn-space-3);
+  padding: var(--dawn-space-4);
+  margin-bottom: var(--dawn-space-4);
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
+  background: var(--dawn-surface-panel);
+  max-width: 48rem;
+}
+.schedule-field { display: grid; gap: var(--dawn-space-1); }
+.schedule-field > span:first-child { font-size: 12px; color: var(--dawn-text-2); }
+.schedule-field .control,
+.schedule-time {
+  font: inherit;
+  color: var(--dawn-text-1);
+  background: var(--dawn-surface-input);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-sm);
+  padding: 4px var(--dawn-space-2);
+}
+.schedule-time { width: max-content; }
+.schedule-inline { display: flex; gap: var(--dawn-space-2); flex-wrap: wrap; }
+.schedule-field .theme-choices { margin-bottom: 0; }
+.schedule-runs { margin-top: var(--dawn-space-6); }
+.schedule-runs .panel-title { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.schedule-run-row .skill-row-main { width: auto; }
+.tag-bad { border-color: var(--dawn-danger); color: var(--dawn-danger); }

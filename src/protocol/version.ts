@@ -464,8 +464,11 @@
  *
  * 7.18（2026-08-22）：会话归档——`SessionSummary.archivedAt`；`setSessionArchived` /
  *   `listArchivedSessions` / `deleteArchivedSessions`；`deleteSession` 多回 `transcriptTrashed`。纯新增。
+ *
+ * 7.19（2026-08-22）：定时任务——`listSchedules` / `createSchedule` / `updateSchedule` / `deleteSchedule` /
+ *   `runScheduleNow` / `listScheduleRuns`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.18"
+export const WORKBENCH_PROTOCOL_VERSION = "7.19"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

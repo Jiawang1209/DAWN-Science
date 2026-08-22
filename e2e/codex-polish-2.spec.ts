@@ -65,3 +65,16 @@ test("**⑧ 模型不支持推理强度时，菜单里没有那一条**", async 
   await expect(菜单).toContainText("权限")
   await expect(菜单).not.toContainText("推理强度")
 })
+
+/**
+ * **先有一段别的会话，再点开一段新的：会话设置那颗第一次就得在**（2026-08-22 抓的）。
+ * 根因在 `loadRunDetail` 借用了 `guard()` 的全局世代：切会话时一条 Run 详情在飞，
+ * 整份快照就被判成过时丢掉。症状正是「第一次点开没有、切走再回来就有」。
+ */
+test("**切到另一段会话时，会话设置那颗第一次就在**——快照不被别的请求作废", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page, "先有的那段")
+  await 在项目里开会话(page)
+  await page.locator(".proj-session-list .sess-item .row").first().click()
+  await expect(page.locator(".sess-config-trigger")).toHaveCount(1)
+})

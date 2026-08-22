@@ -1228,7 +1228,7 @@ test.describe("远端建会话的准入", () => {
     await expect(头.locator(".conv-remote-host")).toHaveText("假机器")
     // **是 API 那一路**：composer 里有模型 pill（ACP 会话上没有——acp-agent.spec 盯着这条），
     // 头上也没有 `.kind` 标记（native 不画；外部那几路才画）
-    await expect(page.locator(".composer-controls .model-pill")).toBeVisible()
+    await expect(page.locator(".composer-card .model-pill")).toBeVisible()
     await expect(page.locator(".conv-head .kind")).toHaveCount(0)
 
     // 硬塞也不行：后端拒，并说清它会在本机跑

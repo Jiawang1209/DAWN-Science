@@ -4155,6 +4155,7 @@ export function ConversationView({
          * 聚焦环因此挂在**卡**上（`:focus-within`）而不是 textarea 上：
          * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
+        <div className="composer-card">
         <div className="composer-box">
           {/**
             * 待发的图片（协议 4.12，2026-08-13）。
@@ -4422,95 +4423,7 @@ export function ConversationView({
             <p className="caveat composer-hint">{t("回车插队 · Cmd/Ctrl+回车排到这一轮后面")}</p>
           ) : null}
           <div className="composer-controls">
-            {/**
-              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
-              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
-              * 所以分居两端——中间那段空白就是它们的分界。
-              */}
-            <AttachButton
-              {...(workspace ? { workspace } : {})}
-              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
-              onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
-              /**
-               * **去重**：同一张图挑两次只算一张。
-               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
-               * 分不出「我挑重了」还是「界面画重了」。
-               */
-              /**
-               * **只有内置对话收得下图片**（2026-08-13）。
-               *
-               * cli（claude / codex 的 headless）与 kernel 会话的运行时
-               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
-               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
-               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
-               * 比没有更坏。
-               *
-               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
-               */
-              {...(session.kind !== "native"
-                ? {}
-                : {
-              onAttachImages: (paths: readonly string[]) => {
-                设待发图((前) => [
-                  ...前,
-                  ...paths
-                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
-                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
-                ])
-                /**
-                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
-                 * 人按完「上传图片」会有一段什么都不发生的空窗，
-                 * 而那正是「点了没反应」的样子。
-                 */
-                for (const p of paths) {
-                  void 要缩略图(p).then((预览) => {
-                    if (!预览) return
-                    设待发图((前) =>
-                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
-                    )
-                  })
-                }
-              },
-                  })}
-            />
-            {/**
-              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
-              *
-              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
-              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
-              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
-              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
-              *
-              * 「用别的 agent 开一段新对话」（claude / codex 这类）
-              * **留在命令面板**（`⌘K` →「新建会话：…」）：
-              * 它与「换模型」不是同一件事，混进同一个菜单正是
-              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
-              */}
-            {/**
-              * **「选择工作目录」从下面那一行搬上来**（2026-08-16 作者要的：
-              * *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*）。
-              *
-              * 它此前独占一行（`.composer-footer`）。那一行是 2026-08-12
-              * 照 WorkBuddy 的 `wb-input-footer` 抄的——**但我们这一行上
-              * 只有它一颗 chip**，于是输入卡下面白白高出 32px。
-              * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
-              * **这句话带着什么、在哪儿执行**。它们归一行。
-              */}
-            {onPickWorkspace || workspace ? (
-              <WorkspaceEntry
-                {...(workspace ? { workspace } : {})}
-                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
-              />
-            ) : null}
-            {/**
-              * **终端的入口在对话这一侧**（2026-08-11）。
-              *
-               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
-              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
-              *
-              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
-              */}
-            {onToggleDock ? (
+{onToggleDock ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -4534,26 +4447,12 @@ export function ConversationView({
                 {t("终端")}
               </Button>
             ) : null}
-            {onEnhance && onCancelEnhance ? (
-              <EnhanceControl
-                draft={draft}
-                setDraft={(text) => setDraft(session.sessionId, text)}
-                enhance={onEnhance}
-                cancel={onCancelEnhance}
-                onProblem={设发送出错}
-                onNote={设增强说明}
-              />
-            ) : null}
-            {/* 左手边到此为止。**这一格把「带什么、在哪跑」与「用谁发」分开** */}
             <span className="composer-gap" aria-hidden="true" />
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
               * 不摆一个点开是空的菜单。
               */}
-            {会话开关们 && 会话开关们.length > 0 && onSetConfigOption ? (
-              <SessionConfigMenu options={会话开关们} onSet={onSetConfigOption} />
-            ) : null}
-            {models && onPickModel ? (
+                        {models && onPickModel ? (
               <ModelPill
                 choices={models}
                 current={model}
@@ -4664,6 +4563,113 @@ export function ConversationView({
             * 摆在输入卡下面才对：它说的是**这一句话会在哪儿执行**，
             * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
             */}
+        </div>
+
+          {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
+          <div className="composer-footer">
+            {/**
+              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
+              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
+              * 所以分居两端——中间那段空白就是它们的分界。
+              */}
+            <AttachButton
+              {...(workspace ? { workspace } : {})}
+              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
+              onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
+              /**
+               * **去重**：同一张图挑两次只算一张。
+               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
+               * 分不出「我挑重了」还是「界面画重了」。
+               */
+              /**
+               * **只有内置对话收得下图片**（2026-08-13）。
+               *
+               * cli（claude / codex 的 headless）与 kernel 会话的运行时
+               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
+               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
+               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
+               * 比没有更坏。
+               *
+               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
+               */
+              {...(session.kind !== "native"
+                ? {}
+                : {
+              onAttachImages: (paths: readonly string[]) => {
+                设待发图((前) => [
+                  ...前,
+                  ...paths
+                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                ])
+                /**
+                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
+                 * 人按完「上传图片」会有一段什么都不发生的空窗，
+                 * 而那正是「点了没反应」的样子。
+                 */
+                for (const p of paths) {
+                  void 要缩略图(p).then((预览) => {
+                    if (!预览) return
+                    设待发图((前) =>
+                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                    )
+                  })
+                }
+              },
+                  })}
+            />
+            {/**
+              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
+              *
+              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
+              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
+              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
+              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
+              *
+              * 「用别的 agent 开一段新对话」（claude / codex 这类）
+              * **留在命令面板**（`⌘K` →「新建会话：…」）：
+              * 它与「换模型」不是同一件事，混进同一个菜单正是
+              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
+              */}
+            {/**
+              * **「选择工作目录」从下面那一行搬上来**（2026-08-16 作者要的：
+              * *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*）。
+              *
+              * 它此前独占一行（`.composer-footer`）。那一行是 2026-08-12
+              * 照 WorkBuddy 的 `wb-input-footer` 抄的——**但我们这一行上
+              * 只有它一颗 chip**，于是输入卡下面白白高出 32px。
+              * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
+              * **这句话带着什么、在哪儿执行**。它们归一行。
+              */}
+            {onPickWorkspace || workspace ? (
+              <WorkspaceEntry
+                {...(workspace ? { workspace } : {})}
+                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
+              />
+            ) : null}
+            {/**
+              * **终端的入口在对话这一侧**（2026-08-11）。
+              *
+               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
+              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
+              *
+              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
+              */}
+                        {onEnhance && onCancelEnhance ? (
+              <EnhanceControl
+                draft={draft}
+                setDraft={(text) => setDraft(session.sessionId, text)}
+                enhance={onEnhance}
+                cancel={onCancelEnhance}
+                onProblem={设发送出错}
+                onNote={设增强说明}
+              />
+            ) : null}
+            {/* 前三样说「带什么、在哪跑」，这一颗说「怎么改」——靠右 */}
+            {会话开关们 && 会话开关们.length > 0 && onSetConfigOption ? (
+              <SessionConfigMenu options={会话开关们} onSet={onSetConfigOption} />
+            ) : null}
+          </div>
         </div>
       </form>
     </div>
@@ -5613,6 +5619,7 @@ export function EmptyConversation({
               })
             }}
           >
+            <div className="composer-card">
             <div className="composer-box">
               {/**
                 * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
@@ -5718,63 +5725,12 @@ export function EmptyConversation({
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
               <div className="composer-controls">
-                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
-                <AttachButton
-                  {...(工作目录 ? { workspace: 工作目录 } : {})}
-                  onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
-                  onAttachImages={(paths) => {
-                    设空态图((前) => [
-                      ...前,
-                      ...paths
-                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
-                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
-                    ])
-                    // 预览后到，chip 先出现——与对话里那一份同一条
-                    for (const p of paths) {
-                      void 要缩略图(p).then((预览) => {
-                        if (!预览) return
-                        设空态图((前) =>
-                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
-                        )
-                      })
-                    }
-                  }}
-                />
-                {/**
-                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
-                  *
-                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
-                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
-                  *
-                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
-                  * 选错了文件夹，再点一次换成对的就行；
-                  * **一个入口存在的理由不能是「它不会造成伤害」。**
-                  */}
-                {onPickDirectory ? (
-                  <WorkspaceEntry
-                    {...(工作目录 ? { workspace: 工作目录 } : {})}
-                    onPick={() => {
-                      void onPickDirectory().then((d) => {
-                        // **取消就什么都不做**：改主意不是错误
-                        if (d) 设工作目录(d)
-                      })
-                    }}
-                  />
-                ) : null}
-                {/**
-                  * **空态也要够得着终端**（2026-08-11）。
-                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
-                  */}
-                {onToggleDock ? (
+{onToggleDock ? (
                   <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
                     <终端图标 />
                     {t("终端")}
                   </Button>
                 ) : null}
-                {onEnhance && onCancelEnhance ? (
-                  <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
-                ) : null}
-                {/* 左手边到此为止——与对话里那张同一副分法 */}
                 <span className="composer-gap" aria-hidden="true" />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
@@ -5847,6 +5803,62 @@ export function EmptyConversation({
                 * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
                 * 而一开始就选对，什么都不用搬。
                 */}
+            </div>
+
+              {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
+              <div className="composer-footer">
+                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
+                <AttachButton
+                  {...(工作目录 ? { workspace: 工作目录 } : {})}
+                  onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
+                  onAttachImages={(paths) => {
+                    设空态图((前) => [
+                      ...前,
+                      ...paths
+                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                    ])
+                    // 预览后到，chip 先出现——与对话里那一份同一条
+                    for (const p of paths) {
+                      void 要缩略图(p).then((预览) => {
+                        if (!预览) return
+                        设空态图((前) =>
+                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                        )
+                      })
+                    }
+                  }}
+                />
+                {/**
+                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
+                  *
+                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
+                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
+                  *
+                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
+                  * 选错了文件夹，再点一次换成对的就行；
+                  * **一个入口存在的理由不能是「它不会造成伤害」。**
+                  */}
+                {onPickDirectory ? (
+                  <WorkspaceEntry
+                    {...(工作目录 ? { workspace: 工作目录 } : {})}
+                    onPick={() => {
+                      void onPickDirectory().then((d) => {
+                        // **取消就什么都不做**：改主意不是错误
+                        if (d) 设工作目录(d)
+                      })
+                    }}
+                  />
+                ) : null}
+                {/**
+                  * **空态也要够得着终端**（2026-08-11）。
+                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
+                  */}
+                                {onEnhance && onCancelEnhance ? (
+                  <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
+                ) : null}
+                {/* 左手边到此为止——与对话里那张同一副分法 */}
+              </div>
             </div>
           </form>
         </div>

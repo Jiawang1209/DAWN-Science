@@ -867,13 +867,10 @@ pre {
    * **无边框那条是关键**：一个描边的框看起来是「表单控件」，
    * 一个只靠阴影浮起来的面看起来是「可以往里写东西的地方」。
    */
-  padding: var(--dawn-space-3) var(--dawn-space-3) 0;
+  padding: var(--dawn-space-3) var(--dawn-space-3) var(--dawn-space-2);
   min-height: 8.5rem;
-  border: 1px solid transparent;
-  border-radius: var(--dawn-radius-composer);
-  box-shadow: var(--dawn-shadow-composer);
   background: var(--dawn-surface-input);
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  border-radius: var(--dawn-radius-composer) var(--dawn-radius-composer) 0 0;
 }
 /**
  * 聚焦环**与 `.control` 用同一种写法**（2px 强调色，offset -1）。
@@ -884,11 +881,48 @@ pre {
  * 主输入框曾经退回 Chromium 默认环、取操作系统强调色）。
  * **测试查得对，所以改的是实现。**
  */
-.composer-box:focus-within {
+.composer-card:focus-within {
   outline: 2px solid var(--dawn-accent);
   outline-offset: -1px;
   border-color: transparent;
 }
+/**
+ * **卡 = 写的那块 + 底下一条附栏**（2026-08-22，作者拿 WorkBuddy 的图点名要的）。
+ *
+ * WorkBuddy 的输入区是一张卡，白的那块里只有 `＋`、模型、发送；
+ * 「选择工作空间 · 默认权限」在卡底下一条浅灰的附栏里。**两种底色把「写、发」
+ * 与「准备」分开**——作者的原话是「对话框的地方实在是太多了」：
+ * 八样东西挤在一行上，每一样都没重点。
+ *
+ * 这条附栏 2026-08-12 抄过一次、8-16 撤了（那时上面只有一颗 chip，白高 32px）。
+ * 现在上面四样（上传 / 目录 / 增强 / 权限），它有理由回来。
+ * 圆角、阴影、聚焦环都挂在卡上——环画在里面那块的话会切过附栏。
+ */
+.composer-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  border-radius: var(--dawn-radius-composer);
+  box-shadow: var(--dawn-shadow-composer);
+  /* **不许 `overflow: hidden`**：模型与会话设置的菜单都往上弹，剪了就点不到（2026-08-22 e2e 抓的）。圆角由上下两半各自负责 */
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.composer-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  flex-wrap: nowrap;
+  min-width: 0;
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  border-radius: 0 0 var(--dawn-radius-composer) var(--dawn-radius-composer);
+  /* 与卡内不同的一种底色——「用不同颜色进行区分」是作者的原话；取侧栏那一档灰，整个壳里只有这一种「次一级的面」 */
+  background: var(--dawn-surface-sidebar);
+}
+.composer-footer > .attach { flex: 0 0 auto; white-space: nowrap; }
+.composer-footer .ws-chip,
+.composer-footer .ws-entry { min-width: 0; }
+/* 前三样说「带什么、在哪跑」，权限说「怎么改」——后者靠右，与前者分开 */
+.composer-footer .sess-config { margin-left: auto; }
 /**
  * 卡里的文本区：**只负责文字**，盒子归卡。
  *
@@ -1127,7 +1161,12 @@ pre {
  */
 .proj-list { list-style: none; margin: 0; padding: 0; }
 .proj-item { position: relative; display: block; }
-.proj-head { display: flex; align-items: center; }
+/**
+ * **侧栏里收尾的那一列只有一条右缘**（2026-08-22 作者：「项目收纳里文件夹后面的 ＋，应该和多选保持一列」）。
+ * 此前三个右缘：「多选」到 240、会话行的 ⋯ 到 256、项目行的 ＋/删到 264——各自差十几像素，一眼就是歪的。
+ * 现在项目行与会话行都留 24px 右内距，与「多选」那颗（分区标题内距 12 + 自身）对齐到同一条线。
+ */
+.proj-head { display: flex; align-items: center; padding-right: var(--dawn-space-6); }
 .proj-head > .row { flex: 1; min-width: 0; }
 /* 展开的项目：**它的会话嵌在下面**，缩进一档表示归属 */
 .proj-sessions { padding-left: var(--dawn-space-3); }
@@ -2508,7 +2547,8 @@ pre {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding-right: var(--dawn-space-2);
+  /* 与项目行的 ＋ 同一条右缘（见 `.proj-head`） */
+  padding-right: var(--dawn-space-6);
 }
 
 .sess-item > .row {
@@ -3562,10 +3602,11 @@ pre {
   color: var(--dawn-text-3);
   font-size: 12px;
 }
-/* 固定入口行没有尾部按钮：留出会话行「⋯」那一段（量出来是 36px），数字右缘才与时间那一列同线 */
-.side-action .side-count { margin-right: 36px; }
-/* 远端那一行尾部是三角（1em 宽）：数字与三角之间留的量 = 36 − 三角宽 */
-.remote-head .side-count { margin-right: 14px; }
+/* 固定入口行没有尾部按钮：留出会话行「⋯」那一段加行的右内距（量出来是 52px），数字右缘才与时间那一列同线。
+   2026-08-22 晚：会话行右内距 8 → 24（收尾那一列统一到「多选」的右缘），这里跟着 36 → 52 */
+.side-action .side-count { margin-right: 52px; }
+/* 远端那一行尾部是三角（1em 宽）：数字与三角之间留的量 = 52 − 三角宽 */
+.remote-head .side-count { margin-right: 30px; }
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */

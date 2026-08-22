@@ -76,11 +76,11 @@ test.describe("ACP", () => {
      * 于是「头上对了」被当成了「都对了」，而 composer 那边错了三个月。
      */
     await expect(
-      page.locator(".composer-controls .model-pill"),
+      page.locator(".composer-card .model-pill"),
       "ACP 会话上不该有模型 pill——它列的是各家 provider 的模型，而 ACP 换不了模型",
     ).toHaveCount(0)
     // **但模型这件事没有消失**：它在会话开关那颗上（假 agent 报的是 `Sonnet`）
-    await expect(page.locator(".composer-controls .sess-config-trigger")).toContainText("Sonnet")
+    await expect(page.locator(".composer-card .sess-config-trigger")).toContainText("Sonnet")
 
     // ② 一句话进去，回话出来——**整条链通了**
     await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")

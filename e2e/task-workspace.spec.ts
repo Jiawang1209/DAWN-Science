@@ -53,7 +53,7 @@ test("**没设的时候，入口就在输入卡下面那一行**", async ({ dawn
    *
    * **常驻，不做悬停才出现**（本项目为此被报过两次「没有这个功能」）。
    */
-  const chip = page.locator(".composer-controls").getByRole("button", { name: /选择工作目录/ })
+  const chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
   await expect(chip).toBeVisible()
 })
 
@@ -91,7 +91,7 @@ test.describe("设完之后", () => {
      * 而单独跑必绿：时序窗口小。
      */
     await expect(page.locator(".conv-title")).toBeVisible({ timeout: 30_000 })
-    await expect(page.locator(".composer-controls")).toBeVisible()
+    await expect(page.locator(".composer-card")).toBeVisible()
 
     /**
      * **点用户真正点的那颗按钮。**
@@ -101,7 +101,7 @@ test.describe("设完之后", () => {
      * 从按钮到后端到刷新的整条接线都是真走的。
      * 绕过界面直接打 IPC 验的是后端，而**接线才是本项目翻过车的地方**。
      */
-    await page.locator(".composer-controls").getByRole("button", { name: /选择工作目录/ }).click()
+    await page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ }).click()
 
     /**
      * ① **对话里留了一行。**
@@ -112,7 +112,7 @@ test.describe("设完之后", () => {
     await expect(page.locator(".turns")).toContainText("已归入项目", { timeout: 30_000 })
 
     // ② chip 上写着它现在在哪，不再是「选择工作目录」
-    await expect(page.locator(".composer-controls .ws-chip-label").first()).not.toHaveText(
+    await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
       /选择工作目录/,
     )
 
@@ -164,11 +164,11 @@ test.describe("空态就选好目录", () => {
   test("**选了目录再开口 → 直接进「项目」栏**", async ({ dawn }) => {
     const { page } = dawn
     // 空态自己就是一张输入卡，下面挂着同一颗 chip
-    const chip = page.locator(".composer-controls").getByRole("button", { name: /选择工作目录/ })
+    const chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
     await expect(chip).toBeVisible()
     await chip.click()
     // 选完之后 chip 上写的是路径，不再是「选择工作目录」
-    await expect(page.locator(".composer-controls .ws-chip-label").first()).not.toHaveText(
+    await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
       /选择工作目录/,
     )
 
@@ -219,9 +219,9 @@ test.describe("开场卡", () => {
   test("**选了目录再点开场卡 → 进「项目」栏，不是「会话」栏**", async ({ dawn }) => {
     const { page } = dawn
 
-    const chip = page.locator(".composer-controls").getByRole("button", { name: /选择工作目录/ })
+    const chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
     await chip.click()
-    await expect(page.locator(".composer-controls .ws-chip-label").first()).not.toHaveText(
+    await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
       /选择工作目录/,
     )
 
@@ -264,10 +264,10 @@ test.describe("选好目录之后", () => {
      * 而那是把「这个动作无害」当成了「这个动作有用」。
      * **选错文件夹的答案是再点一次 chip 换成对的那个**，不是清空。
      */
-    const 空态chip = page.locator(".composer-controls").getByRole("button", { name: /选择工作目录/ })
+    const 空态chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
     await 空态chip.click()
     await expect(
-      page.locator(".composer-controls").getByRole("button", { name: "改回普通对话" }),
+      page.locator(".composer-card").getByRole("button", { name: "改回普通对话" }),
     ).toHaveCount(0)
 
     // 开口 —— 从这一刻起它就是一个项目了
@@ -275,7 +275,7 @@ test.describe("选好目录之后", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await 等进了对话(page)
 
-    const 底栏 = page.locator(".composer-controls")
+    const 底栏 = page.locator(".composer-card")
     // **反向的门没了**
     await expect(底栏.getByRole("button", { name: "改回普通对话" })).toHaveCount(0)
     // **而「再选一次」还在**——那才是「选错了」的答案

@@ -178,15 +178,24 @@ export function loadRunDetail(c: WorkbenchClient, runId: string | undefined): vo
   setRunDetail(undefined)
   setProvenance(undefined)
   if (!runId) return
-  const g = guard()
+  /**
+   * **自己的世代，不借 `guard()` 那个**（2026-08-22 抓的）。
+   * `guard()` 的计数器是全局一份：这里领一个新号，就把正在飞的 `resyncSession` 判成了过时——
+   * 切会话时恰好有一条 Run 详情在取，整份快照（含会话开关）就被静静丢掉。
+   * 症状是「同一段会话，第一次点开没有权限那颗，切走再回来就有」。
+   * 两个互不相干的请求不该共用一个「谁更新」的判据。
+   */
+  const 我的 = ++运行详情世代
+  const 过时 = () => 我的 !== 运行详情世代
   c.get<RunDetail>("getRun", { runId })
     .then((r) => {
-      if (!g.stale()) setRunDetail(r)
+      if (!过时()) setRunDetail(r)
     })
     .catch(fail)
   c.get<ProvenanceLink>("getProvenance", { resourceId: runId })
     .then((p) => {
-      if (!g.stale()) setProvenance(p)
+      if (!过时()) setProvenance(p)
     })
     .catch(() => {})
 }
+let 运行详情世代 = 0

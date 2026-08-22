@@ -176,7 +176,7 @@ export async function 用某个agent开一段(page: Page, agent: RegExp): Promis
 
 /** 掀开 composer 右下那颗 pill 的菜单。**菜单本身是判据**，别用别的东西代 */
 export async function 打开agent菜单(page: Page): Promise<void> {
-  const pill = page.locator(".composer-controls .agent-pill")
+  const pill = page.locator(".composer-card .agent-pill")
   await pill.waitFor({ timeout: 60_000 })
   await pill.locator("button").first().click()
   await page.getByRole("menu").waitFor({ timeout: 30_000 })

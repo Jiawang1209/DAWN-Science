@@ -88,7 +88,7 @@ test("**换完之后，下一次请求真的打到新模型**", async ({ dawn })
 test("**composer 上只有一个菜单，不会按错**", async ({ dawn }) => {
   const { page } = dawn
   await start(page)
-  await expect(page.locator(".composer-controls .pill")).toHaveCount(1)
+  await expect(page.locator(".composer-card .pill")).toHaveCount(1)
   await page.locator(".composer .model-pill").getByRole("button").click()
   await expect(page.getByRole("menu", { name: "切换模型" })).toBeVisible()
   // 「新建会话」那个菜单不在这一屏上——它搬去了初始画面

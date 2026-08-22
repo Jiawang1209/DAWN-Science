@@ -3618,8 +3618,11 @@ pre {
 .side-action .side-count { margin-right: 52px; }
 /* 远端那一行尾部是三角（1em 宽）。数字仍落在 188 那条线上，但三角**紧贴数字**——
    2026-08-22 作者：「折叠和个数有很大的 gap，必须缩小点」。于是空留在三角右边：52 − 三角宽 − 4 */
-.remote-head .side-count { margin-right: var(--dawn-space-1); }
-.remote-head .side-count + .caret { margin-right: 26px; }
+/* 三角落到**收尾那一列**（右缘 240，与会话行的「⋯」、项目行的「＋」同线）——
+   2026-08-22 作者再给图：是三角到侧栏右边那截空要减，不是三角到数字的。
+   数字仍在 188：240 − 三角宽 14 − 188 = 38，就是数字右边留的量 */
+.remote-head .side-count { margin-right: 30px; } /* 行本身有 8px 的 gap，所以 38 − 8 */
+.remote-head .side-count + .caret { margin-right: 0; }
 /* 服务器收纳里那台机器的标题行（`ug2478@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
 .side-subhead .side-count { margin-right: 27px; }
 

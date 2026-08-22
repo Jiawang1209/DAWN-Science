@@ -27,7 +27,10 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
-import { $跑着的会话 } from "./state/catalog.js"
+import { TurnNavigator } from "./turn-navigator.js"
+
+export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
+import { $跑着的会话, $未读 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
@@ -220,6 +223,9 @@ export function SessionRow({
   onRename,
   onPin,
   onArchive,
+  onExtra,
+  未读,
+  onMarkUnread,
   onMove,
   drag,
   select,
@@ -253,6 +259,11 @@ export function SessionRow({
   onPin?: (() => void) | undefined
   /** 归档（2026-08-22）：从侧栏藏起来，不删。**没给就不画** */
   onArchive?: (() => void) | undefined
+  /** 菜单补的五项（2026-08-22，学自 dsh-codex-ui）：fork、在访达里打开、复制三样 */
+  onExtra?: ((action: 会话额外动作) => void) | undefined
+  /** 未读点与「标为未读」（codex-polish ⑤） */
+  未读?: boolean | undefined
+  onMarkUnread?: (() => void) | undefined
   onMove?: ((direction: "up" | "down") => void) | undefined
   /**
    * 拖拽排序的接线。**不给就整行不可拖**——
@@ -516,6 +527,8 @@ export function SessionRow({
           * **③ 完整时刻进 `title` 之外的地方读不到，所以给 `data-when`。**
           * 屏幕上那一截是「2d」，而判据与将来的悬停卡要拿得到原文。
           */}
+        {/* 未读点（codex-polish ⑤）：不是正看着的那段说完了。跑着的时候不画——跑着本身就是状态 */}
+        {未读 && !跑着 ? <span className="sess-unread" aria-label={t("有新回复")} /> : null}
         <span
           className={`sess-when${跑着 ? " running" : ""}`}
           data-when={session.lastActiveAt ?? session.createdAt}
@@ -524,7 +537,7 @@ export function SessionRow({
         </span>
       </Row>
 
-      {onDelete || onRename || onPin || onMove || onArchive ? (
+      {onDelete || onRename || onPin || onMove || onArchive || onExtra ? (
         <div className="row-actions">
           <Button
             variant="ghost"
@@ -571,6 +584,30 @@ export function SessionRow({
                   <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onArchive(); setMenu(false) }}>
                     {t("收进归档")}
                   </Button>
+                ) : null}
+                {onMarkUnread && !未读 ? (
+                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMarkUnread(); setMenu(false) }}>
+                    {t("标为未读")}
+                  </Button>
+                ) : null}
+                {onExtra ? (
+                  <>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("fork"); setMenu(false) }}>
+                      {t("在新会话中继续")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("openDir"); setMenu(false) }}>
+                      {t("在访达中打开工作目录")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyPath"); setMenu(false) }}>
+                      {t("复制工作目录")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyTitle"); setMenu(false) }}>
+                      {t("复制标题")}
+                    </Button>
+                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyId"); setMenu(false) }}>
+                      {t("复制会话 ID")}
+                    </Button>
+                  </>
                 ) : null}
                 {onDelete ? (
                   <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onDelete(); setMenu(false) }}>
@@ -1092,6 +1129,8 @@ export function SessionSidebar({
   onRenameSession,
   onPinSession,
   onArchiveSession,
+  onSessionExtra,
+  onMarkUnread,
   onArchiveMany,
   archivedCount,
   onShowArchived,
@@ -1184,6 +1223,8 @@ export function SessionSidebar({
   onPinSession?: ((session: SessionSummary, pinned: boolean) => void) | undefined
   /** 归档一段（2026-08-22，学自 dsh-archive-manager）：藏，不删 */
   onArchiveSession?: ((session: SessionSummary) => void) | undefined
+  onSessionExtra?: ((session: SessionSummary, task: TaskSummary, action: 会话额外动作) => void) | undefined
+  onMarkUnread?: ((session: SessionSummary) => void) | undefined
   /** 批量归档。与 `onDeleteMany` 同一套「做完再收摊」 */
   onArchiveMany?: ((tasks: readonly TaskSummary[], done: () => void) => void) | undefined
   /** 归档了几段、以及点开「已归档」那一屏。**N = 0 时那一行不画**——空的入口是噪音 */
@@ -1567,6 +1608,7 @@ export function SessionSidebar({
    */
   const 现在 = use现在()
   const 跑着的 = useStore($跑着的会话)
+  const 未读的 = useStore($未读)
 
   /**
    * 这一行属于哪儿——卡上的第二行。
@@ -1692,6 +1734,9 @@ export function SessionSidebar({
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
         {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
         {...(onArchiveSession ? { onArchive: () => onArchiveSession(s) } : {})}
+        {...(onSessionExtra ? { onExtra: (a: 会话额外动作) => onSessionExtra(s, task, a) } : {})}
+        未读={未读的.has(s.sessionId)}
+        {...(onMarkUnread ? { onMarkUnread: () => onMarkUnread(s) } : {})}
         {...(onMoveSession ? { onMove: (d: "up" | "down") => onMoveSession(s, d) } : {})}
         {...(onReorderSessions
           ? {
@@ -3399,27 +3444,44 @@ function 等着({ 从, 在想 }: { 从: number; 在想: boolean }) {
  * 少一次请求，也少一处会与对话对不上的数。
  */
 function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
+  /**
+   * **整段会话的账**（codex-polish ③，2026-08-22，学自 dsh-codex-ui 底部那条）：
+   * 轮数、工具调用次数与耗时、token 三项、缓存命中率。此前只有 token 三项。
+   * 数全来自转录条目：轮 = 你说的那几条；工具耗时 = 每条工具的 endedAt − startedAt。
+   */
   const 合 = useMemo(() => {
     let input = 0
     let output = 0
     let cache = 0
     let 有过 = false
+    let 轮 = 0
+    let 工具 = 0
+    let 工具毫秒 = 0
     for (const it of items) {
+      if (it.type === "turn" && it.who === "user") 轮 += 1
+      if (it.type === "tool") {
+        工具 += 1
+        if (it.startedAt !== undefined && it.endedAt !== undefined) 工具毫秒 += Math.max(0, it.endedAt - it.startedAt)
+      }
       if (it.type !== "turn" || !it.usage) continue
       有过 = true
       input += it.usage.input ?? 0
       output += it.usage.output ?? 0
       cache += it.usage.cacheRead ?? 0
     }
-    return 有过 ? { input, output, cache } : undefined
+    return 有过 ? { input, output, cache, 轮, 工具, 工具毫秒, 命中: input + cache > 0 ? Math.round((cache / (input + cache)) * 100) : undefined } : undefined
   }, [items])
 
   // **一轮都还没说过话时什么都不显示**：一排 0 会被读成「不花钱」
   if (!合) return null
+  const 时长 = (ms: number) => (ms < 1000 ? `${ms} ms` : ms < 60_000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.floor(ms / 60_000)} m ${Math.round((ms % 60_000) / 1000)} s`)
   return (
-    <span className="session-usage" title={t("这一整段对话累计")}>
-      本次 输入 {formatTokens(合.input)} · 输出 {formatTokens(合.output)} · 缓存{" "}
-      {formatTokens(合.cache)}
+    <span className="session-usage" aria-label={t("这一整段对话累计")}>
+      {tf("{0} 轮", 合.轮)}
+      {合.工具 > 0 ? ` · ${tf("工具 {0} 次", 合.工具)}${合.工具毫秒 > 0 ? ` ${时长(合.工具毫秒)}` : ""}` : ""}
+      {" · "}
+      {tf("输入 {0} · 输出 {1} · 缓存 {2}", formatTokens(合.input), formatTokens(合.output), formatTokens(合.cache))}
+      {合.命中 !== undefined ? ` · ${tf("命中 {0}%", 合.命中)}` : ""}
     </span>
   )
 }
@@ -3428,6 +3490,7 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
 
 export function ConversationView({
   onOpenWeb,
+  onExport,
   session,
   items,
   acpAgents,
@@ -3557,6 +3620,8 @@ export function ConversationView({
   ) => void | Promise<void>
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
+  /** 导出这段对话为 markdown（codex-polish ④）。回落到哪了，好说给人 */
+  onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
   disabled?: boolean | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
@@ -3747,6 +3812,8 @@ export function ConversationView({
    * 「看看这张图」这种意图人常常懒得打字。
    */
   const 有东西要发 = draft.trim().length > 0 || 待发图.length > 0
+  const [导出中, 设导出中] = useState(false)
+  const [导出说, 设导出说] = useState<string | undefined>(undefined)
 
   return (
     <div className="conversation">
@@ -3797,6 +3864,24 @@ export function ConversationView({
          * **一个口径不明的合计，比没有合计更容易让人算错账。**
          */}
         <SessionUsage items={items} />
+        {onExport && items.some((x) => x.type === "turn") ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="conv-export"
+            disabled={导出中}
+            onClick={() => {
+              设导出中(true)
+              onExport()
+                .then((r) => 设导出说(tf("已导出 {0} 轮到 {1}", r.turns, r.path)))
+                .catch((e: unknown) => 设导出说(tf("导不了：{0}", e instanceof Error ? e.message : String(e))))
+                .finally(() => 设导出中(false))
+            }}
+          >
+            {t("导出对话")}
+          </Button>
+        ) : null}
+        {导出说 ? <span className="hint conv-export-note">{导出说}</span> : null}
         {/**
          * **这段对话的手在哪台机器的哪个目录**（②-B · R4′）。
          *
@@ -3842,6 +3927,8 @@ export function ConversationView({
        * 用户往上翻去看前面说了什么，下一个 token 到达时又被弹回底部。
        * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
        */}
+      {/* 轮次导航（2026-08-22，学自 dsh-codex-ui）：左缘一条刻度尺，一刻一轮你说的话 */}
+      <TurnNavigator items={items} />
       <StickToBottom className="turns" resize="smooth" initial="smooth">
         {/**
           * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：
@@ -4628,7 +4715,7 @@ export function TranscriptRow({
    */
   if (编辑 !== undefined) {
     return (
-      <div className={`turn ${item.who} editing`}>
+      <div className={`turn ${item.who} editing`} data-turn-id={item.id}>
         <span className="sr-only">{t("正在修改你说过的一段话")}</span>
         <div className="bubble">
           <textarea
@@ -4673,7 +4760,7 @@ export function TranscriptRow({
   }
 
   return (
-    <div className={`turn ${item.who}`}>
+    <div className={`turn ${item.who}`} data-turn-id={item.id}>
       {/**
        * **身份不能只靠底色。**
        *

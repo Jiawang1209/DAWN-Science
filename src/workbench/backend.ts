@@ -42,6 +42,7 @@ import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
+import { 转录成markdown, 导出文件名 } from "../session/export.js"
 import { ScheduleStore } from "../store/schedules.js"
 import { Scheduler, type 完成 as 定时完成 } from "../schedule/scheduler.js"
 import { 下一次 as 计划下一次, 校验计划 } from "../schedule/recurrence.js"
@@ -3103,6 +3104,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     listScheduleRuns: async ({ id, limit }) => ({ runs: 要定时().runs(id, limit).map(运行摘要) }),
+
+    exportSession: async ({ sessionId, dir }) => {
+      const rec = sessions.get(sessionId)
+      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      const items = events.peekItems(sessionId)
+      if (items.length === 0) throw fault("invalid_request", "这段对话在本次运行里没有转录可导（重启之前的对话要先点开、让它重新加载）")
+      const 目录 = dir ?? (settings?.get("download.dir") || 默认下载目录())
+      mkdirSync(目录, { recursive: true })
+      const 名 = 导出文件名(rec.title ?? "新对话", rec.id)
+      const 路径 = join(目录, 名)
+      const 文 = 转录成markdown({ title: rec.title ?? "新对话", agentId: rec.agentId, createdAt: rec.createdAt, workspace: rec.workspace }, items)
+      await writeFile(路径, 文, "utf8")
+      return { path: 路径, turns: items.filter((x) => x.type === "turn" && x.who === "user").length }
+    },
 
     /* ── 归档（7.18） ── */
 

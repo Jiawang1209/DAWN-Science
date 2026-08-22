@@ -74,6 +74,7 @@ import {
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
+import type { 会话额外动作 } from "./views.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
 import { setSlashItems, type SlashItem } from "./state/view.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
@@ -171,6 +172,7 @@ import {
   RIGHT_DOCK_DEFAULT,
   $跑着的会话,
   标记在跑,
+  标未读,
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_两栏起点,
   坞的上界,
@@ -407,6 +409,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 而 `$items` 里只有正在看的那一段。**写两句不同的判据的话，
          * 侧栏说在跑而对话里已经答完了这种事迟早会发生。**
          */
+        /**
+         * **开口那一刻就算在跑**（2026-08-22，codex-polish ⑤ 的 e2e 抓出来的）。
+         * 此前只在第一段 agent 字节到达时才标「跑着」——而真模型第一个字往往要几秒。
+         * 在那几秒里切走，上面那个 effect 的清理看到「没在跑」就把这一段退订了：
+         * 侧栏的跑着标记、答完之后的未读点，**全都收不到**。
+         */
+        if (u.type === "item" && u.item.type === "turn" && u.item.who === "user") 标记在跑(u.sessionId, true)
         if (u.type === "item" && u.item.type === "turn" && u.item.who === "agent") {
           标记在跑(u.sessionId, !u.item.final)
           /**
@@ -414,6 +423,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 不取的话它会停在上一次的数上，而一个不动的相对时间**比没有更骗人**。
            */
           if (u.item.final) {
+            // 不是正看着的那段说完了 → 未读点（codex-polish ⑤）
+            if (u.sessionId !== $activeSessionId.get()) 标未读(u.sessionId, true)
             void loadTempSessions(client)
             const pid = $activeProjectId.get()
             if (pid) void loadSessions(client, pid)
@@ -1573,6 +1584,48 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, 重取会话, 重取归档数, note],
   )
   const archiveSession = useCallback((s: SessionSummary) => void 归档几段([s.sessionId]), [归档几段])
+  /**
+   * 会话菜单补的五项（codex-polish ②，2026-08-22，学自 dsh-codex-ui）。
+   * fork = 在同一个地方（项目 / 服务器）用同一个 agent 开一段新的，把上一段最后一句助手的话当开场写进草稿——
+   * 不复制转录（那是另一段独立的对话），只带个引子。
+   */
+  const sessionExtra = useCallback(
+    (s: SessionSummary, task: import("../protocol/index.js").TaskSummary, action: 会话额外动作) => {
+      const 标题 = s.title ?? t("新对话")
+      const 复制 = (文: string, 说: string) => void navigator.clipboard.writeText(文).then(() => note(说)).catch((e: unknown) => fail(e instanceof Error ? e : new Error(String(e))))
+      if (action === "copyTitle") return 复制(标题, tf("已复制标题：{0}", 标题))
+      if (action === "copyId") return 复制(s.sessionId, tf("已复制会话 ID：{0}", s.sessionId))
+      if (action === "copyPath") {
+        const p = s.remote?.cwd ?? task.workspace ?? projects.find((x) => x.projectId === s.projectId)?.workspace ?? ""
+        return 复制(p, tf("已复制工作目录：{0}", p))
+      }
+      if (action === "openDir") {
+        if (s.remote) return note(t("远端的目录打不开本机的访达"))
+        client.get<{ problem?: string }>("openExternally", { projectId: s.projectId, path: "." }).then((r) => { if (r.problem) fail(new Error(r.problem)) }).catch(fail)
+        return
+      }
+      // fork
+      const 最后一句 = [...$items.get()].reverse().find((x) => x.type === "turn" && x.who === "agent" && x.final)
+      void client
+        .get<{ sessionId?: string }>("createTask", { agentId: s.agentId, ...(s.remote ? { connectionId: s.remote.connectionId } : task.workspace ? { workspace: task.workspace } : {}) })
+        .then(async (r) => {
+          await loadTasks(client)
+          if (s.projectId) await loadSessions(client, s.projectId)
+          if (!r.sessionId) return
+          const 引子 = 最后一句 && 最后一句.type === "turn" && $activeSessionId.get() === s.sessionId ? `接着上一段「${标题}」的结论：
+> ${最后一句.text.trim().slice(0, 600).replace(/\n/g, "\n> ")}
+
+` : `接着上一段「${标题}」：
+
+`
+          setDraft(r.sessionId, 引子)
+          setActiveSessionId(r.sessionId)
+          setView("conversation")
+        })
+        .catch(fail)
+    },
+    [client, projects, note, fail],
+  )
   const archiveMany = useCallback(
     (targets: readonly import("../protocol/index.js").TaskSummary[], done: () => void) => {
       const ids = targets.flatMap((t) => (t.sessionId ? [t.sessionId] : []))
@@ -2980,6 +3033,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setView("conversation")
           }}
           onPickSession={(id) => {
+            标未读(id, false)
             setActiveSessionId(id)
             setView("conversation")
           }}
@@ -3018,6 +3072,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onRenameSession={renameSession}
           onPinSession={pinSession}
           onArchiveSession={archiveSession}
+          onSessionExtra={sessionExtra}
+          onMarkUnread={(s) => 标未读(s.sessionId, true)}
           onArchiveMany={archiveMany}
           archivedCount={归档数}
           onShowArchived={() => setView(view === "archived" ? "conversation" : "archived")}
@@ -3125,6 +3181,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 ? projects.find((p) => p.workspace === 任务.workspace)?.projectId
                 : undefined)
             if (任务.workspace && pid) setActiveProjectId(pid)
+            标未读(任务.sessionId, false)
             setActiveSessionId(任务.sessionId)
             setView("conversation")
           }}
@@ -3582,6 +3639,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 叶子组件只发回调——设计契约那一条：叶子自己改导航状态的话，
                  * 同一个跳转就有两个来源，而「谁先谁后」取决于渲染顺序。
                  */
+                onExport={() => client.get<{ path: string; turns: number }>("exportSession", { sessionId: session!.sessionId })}
                 onOpenWeb={(url) => {
                   setRightDockTenant("web")
                   setRightDockOpen(true)

@@ -2127,6 +2127,16 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /**
+   * 把一段对话导成 markdown（7.21，codex-polish ④）。落到下载目录（或给的 `dir`），回路径。
+   * **只导本次运行里追踪着的转录**：这个进程没见过的会话导不了，如实说，不去翻 pi 的 jsonl 硬拼。
+   */
+  exportSession: {
+    request: z.object({ sessionId: z.string().min(1), dir: z.string().min(1).optional() }).strict(),
+    response: z.object({ path: z.string().min(1), turns: z.int().min(0) }).strict(),
+    mutating: true,
+  },
+
   /* ── 归档（7.18，session-archive，学自 dsh-archive-manager）：藏，不是删 ── */
 
   /** 归档 / 取消归档。记账位不动——取消归档回原来的位置。运行中的会话照样可以归档（只是从侧栏藏起来） */

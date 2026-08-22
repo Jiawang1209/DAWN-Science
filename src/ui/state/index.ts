@@ -70,6 +70,8 @@ export {
   setConnectionState,
   $跑着的会话,
   标记在跑,
+  标未读,
+  $未读,
   setSessionCwd,
   $remoteOpen,
   toggleRemoteOpen,

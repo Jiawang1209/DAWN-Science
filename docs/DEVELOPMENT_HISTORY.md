@@ -43,6 +43,19 @@
 
 ## 变更日志
 
+### 2026-08-22 — codex-polish：轮次导航、会话菜单五项、统计条、导出 markdown、未读圆点（学自 dsh-codex-ui）
+
+- **Type**: feat
+- **Motivation**: 读 MichengAI/dsh-codex-ui 之后挑出五件我们没有或做得不如它的小事，作者说「都要」。
+- **What**:
+  ① `src/ui/turn-navigator.tsx`：三轮起对话区右侧出一排刻度（鱼眼放大、当前轮高亮），点一格 `scrollIntoView` 到那一轮；`.turn` 带 `data-turn-id`。
+  ② 会话行 ⋯ 菜单补「在新会话中继续 / 在访达中打开工作目录 / 复制工作目录 / 复制标题 / 复制会话 ID / 标为未读」（`会话额外动作`，App 里 `sessionExtra`；远端目录打不开访达会出声）。
+  ③ 头部 `SessionUsage` 改成统计条：N 轮 · 工具次数 · 输入/输出/缓存 · 命中率。
+  ④ 协议新增 `exportSession {sessionId, dir?} → {path, turns}`（7.21，107 个操作）；`src/session/export.ts` 纯函数把转录写成 markdown（每轮原文、工具一行摘要、用量合计），落到设置的下载目录；头部「导出对话」按钮。
+  ⑤ `$未读 / 标未读`（持久化 `dawn.global.unread`）：不是正看着的那段说完一轮就亮 `.sess-unread`，点开就灭；也能手动标回未读。
+- **Impact**: 两处顺手修掉的真问题——(a) 「跑着」此前只在第一段 agent 字节到达时才标，真模型首字要几秒，那几秒里切走会把这一段退订掉，侧栏的跑着标记与回复全收不到；现在用户开口那一刻就标；(b) `TurnNavigator` 监听滚动要挂在 `use-stick-to-bottom` 自己套的那层无类名容器上，挂 `.turns` 收不到。
+- **Verification**: `tests/session/export.test.ts`；`e2e/codex-polish.spec.ts` 四条（统计+导出真落文件、导航跳转、菜单复制与「在新会话中继续」、未读亮灭）；vitest 2041 绿；全量 e2e 与视觉基线见提交。
+
 ### 2026-08-22 — 22 份自带子 agent 人设按九段骨架写满
 
 - **Type**: docs

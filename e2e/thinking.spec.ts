@@ -103,7 +103,7 @@ test.describe("思考", () => {
     await page.getByPlaceholder(/今天帮你做些什么/).fill("第一问")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
-    await expect(头).toContainText("本次")
+    await expect(头).toContainText("1 轮") // codex-polish ③ 之后头上是统计条：轮数 · 用量
     const 第一次 = (await 头.textContent())!
 
     await page.getByPlaceholder(/今天帮你做些什么/).fill("第二问")

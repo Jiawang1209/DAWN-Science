@@ -5455,3 +5455,74 @@ pre {
 .slash-desc { font-size: 12px; color: var(--dawn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slash-kind { flex: none; }
 .slash-empty, .slash-foot { margin: var(--dawn-space-1) var(--dawn-space-2); }
+
+/* ── 轮次导航（codex-polish ①，2026-08-22） ── */
+.conversation { position: relative; }
+.turn-nav {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  max-height: calc(100% - 120px);
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 0;
+  z-index: var(--z-sash);
+}
+.turn-tick {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.turn-tick::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  height: 2px;
+  width: var(--tick-w);
+  border-radius: var(--dawn-radius-xs);
+  background: var(--dawn-text-4);
+  transition: width 120ms ease, background-color 120ms ease;
+}
+.turn-tick.current::before { background: var(--dawn-text-1); }
+.turn-tick.near::before { background: var(--dawn-accent); }
+.turn-tick-summary {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 18rem;
+  padding: 3px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+  color: var(--dawn-text-1);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* ── 未读点（codex-polish ⑤） ── */
+.sess-unread {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-accent);
+  margin-right: var(--dawn-space-1);
+}
+.conv-export-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 28rem; }
+.conv-export { flex: none; }

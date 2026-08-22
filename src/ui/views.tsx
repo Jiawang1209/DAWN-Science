@@ -25,7 +25,8 @@ import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
-import { $drafts, clearDraft, setDraft, togglePalette } from "./state/view.js"
+import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
+import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
 import { $跑着的会话 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
@@ -1081,6 +1082,8 @@ export function SessionSidebar({
   onPickProject,
   onPickSession,
   onShowSkills,
+  skillCount,
+  subagentCount,
   onShowSubagents,
   onShowAssistant,
   onShowPlugins,
@@ -1152,6 +1155,9 @@ export function SessionSidebar({
   filesActive?: boolean
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
+  /** 侧栏那两行后面的数字（2026-08-22 作者要的）：有几份技能 / 几个子 agent（只算开着的）。没给就不画 */
+  skillCount?: number | undefined
+  subagentCount?: number | undefined
   /** 子 agent 那一屏（2026-08-15 从「技能」拆出来的，两者是两种东西） */
   onShowSubagents?: (() => void) | undefined
   /** 「远程助理」（2026-08-21）。**放在远端服务器正下面**（作者定的位置） */
@@ -1842,13 +1848,15 @@ export function SessionSidebar({
         {onShowSkills ? (
           <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
             <技能图标 className="row-icon" />
-            <span className="name">{t("Agent Skills")}</span>
+            <span className="name">{t("Skills")}</span>
+            {skillCount !== undefined ? <span className="side-count">{skillCount}</span> : null}
           </Row>
         ) : null}
         {onShowSubagents ? (
           <Row active={view === "subagents"} className="side-action" onClick={onShowSubagents}>
             <对话图标 className="row-icon" />
             <span className="name">{t("子 Agent")}</span>
+            {subagentCount !== undefined ? <span className="side-count">{subagentCount}</span> : null}
           </Row>
         ) : null}
         {/**
@@ -3609,6 +3617,9 @@ export function ConversationView({
    * 每次提交后清回 false：默认是插队（回车），排队要按住 Cmd/Ctrl。
    */
   const 排队ref = useRef(false)
+  const 斜杠单 = useStore($slashItems)
+  const [斜杠选中, 设斜杠选中] = useState(0)
+  const [斜杠关了, 设斜杠关了] = useState(false)
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -4060,10 +4071,13 @@ export function ConversationView({
               ))}
             </ul>
           ) : null}
+          {在打斜杠(draft) && !斜杠关了 ? (
+            <SlashMenu items={斜杠单} draft={draft} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { setDraft(session.sessionId, 斜杠选完(x)); 设斜杠选中(0) }} />
+          ) : null}
           <textarea
             className="control composer-field"
             value={draft}
-            onChange={(e) => setDraft(session.sessionId, e.target.value)}
+            onChange={(e) => { setDraft(session.sessionId, e.target.value); 设斜杠选中(0); 设斜杠关了(false) }}
             /**
              * **粘一张图进来就当附件**（协议 4.13，2026-08-13，作者提）。
              *
@@ -4081,6 +4095,26 @@ export function ConversationView({
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
+              // `/` 菜单开着：上下挑、回车选、Esc 关——都不落到下面的发送逻辑
+              if (在打斜杠(draft) && !斜杠关了) {
+                const 列 = 筛斜杠(斜杠单, draft)
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                  e.preventDefault()
+                  if (列.length) 设斜杠选中((i) => (i + (e.key === "ArrowDown" ? 1 : 列.length - 1)) % 列.length)
+                  return
+                }
+                if (e.key === "Enter" && !e.shiftKey && 列.length) {
+                  e.preventDefault()
+                  setDraft(session.sessionId, 斜杠选完(列[Math.min(斜杠选中, 列.length - 1)]!))
+                  设斜杠选中(0)
+                  return
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault()
+                  设斜杠关了(true)
+                  return
+                }
+              }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
                 /**
@@ -4130,12 +4164,8 @@ export function ConversationView({
                 onAbort()
                 return
               }
+              // `/` 不再开命令面板（2026-08-22）：它开的是上面那份只有技能与子 agent 的菜单——打进去自然就弹
               const 空且在头 = draft.length === 0
-              if (空且在头 && e.key === "/") {
-                e.preventDefault()
-                togglePalette()
-                return
-              }
               if (空且在头 && e.key === "@") {
                 e.preventDefault()
                 void 挑文件("any", workspace).then((选中) => {
@@ -5326,6 +5356,9 @@ export function EmptyConversation({
   const first = agents[0]
   /** 这一屏的草稿。**不进 `$drafts`**：那份是按会话分的，而这里还没有会话 */
   const [草稿, 设草稿] = useState("")
+  const 斜杠单 = useStore($slashItems)
+  const [斜杠选中, 设斜杠选中] = useState(0)
+  const [斜杠关了, 设斜杠关了] = useState(false)
   /**
    * 还没建任务，所以工作目录先记在这一屏上（2026-08-12）。
    * 发出去的那一刻它跟着 `onStart` 一起走——**归到哪一栏由它决定**。
@@ -5478,11 +5511,14 @@ export function EmptyConversation({
                   ))}
                 </ul>
               ) : null}
+              {在打斜杠(草稿) && !斜杠关了 ? (
+                <SlashMenu items={斜杠单} draft={草稿} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { 设草稿(斜杠选完(x)); 设斜杠选中(0) }} />
+              ) : null}
               <textarea
                 className="control composer-field"
                 value={草稿}
                 autoFocus
-                onChange={(e) => 设草稿(e.target.value)}
+                onChange={(e) => { 设草稿(e.target.value); 设斜杠选中(0); 设斜杠关了(false) }}
                 /**
                  * **这一屏也能粘图**（2026-08-13 补，作者报的：
                  * *「我现在复制一个图片，然后粘贴到窗口，为什么不显示图片呢？」*）。
@@ -5503,6 +5539,25 @@ export function EmptyConversation({
                 }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {
+                  if (在打斜杠(草稿) && !斜杠关了) {
+                    const 列 = 筛斜杠(斜杠单, 草稿)
+                    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                      e.preventDefault()
+                      if (列.length) 设斜杠选中((i) => (i + (e.key === "ArrowDown" ? 1 : 列.length - 1)) % 列.length)
+                      return
+                    }
+                    if (e.key === "Enter" && !e.shiftKey && 列.length) {
+                      e.preventDefault()
+                      设草稿(斜杠选完(列[Math.min(斜杠选中, 列.length - 1)]!))
+                      设斜杠选中(0)
+                      return
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault()
+                      设斜杠关了(true)
+                      return
+                    }
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
                     e.currentTarget.form?.requestSubmit()
@@ -5516,11 +5571,6 @@ export function EmptyConversation({
                    * 换一屏就成了谎**。
                    */
                   const 空且在头 = 草稿.length === 0
-                  if (空且在头 && e.key === "/") {
-                    e.preventDefault()
-                    togglePalette()
-                    return
-                  }
                   if (空且在头 && e.key === "@") {
                     e.preventDefault()
                     void 挑文件("any", 工作目录).then((选中) => {

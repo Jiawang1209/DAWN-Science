@@ -2928,13 +2928,6 @@ pre {
 .tree-caret.open { transform: rotate(90deg); }
 
 .remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; }
-.remote-count {
-  margin-left: auto;
-  flex: 0 0 auto;
-  font-size: 0.8em;
-  color: var(--dawn-text-3);
-  font-variant-numeric: tabular-nums;
-}
 /* **自己滚，不跟着整条侧栏一起长**：服务器多起来时，
    它不该把下面的「设置」挤出屏幕 */
 .remote-body { max-height: 40vh; overflow-y: auto; padding-bottom: var(--dawn-space-2); }
@@ -3517,7 +3510,8 @@ pre {
   transition: transform 120ms ease;
 }
 .remote-head .caret.open { transform: rotate(90deg); }
-.remote-head .remote-count { margin-left: auto; }
+/* 远端那一行的计数改用 `.side-count`（2026-08-22）；三角仍在行尾，占的宽度与会话行的「⋯」一样 */
+.remote-head .caret { margin-left: 0; }
 
 /**
  * 顶部固定区与下面两列之间那条线（2026-08-12，作者要的）。
@@ -3558,10 +3552,20 @@ pre {
   margin-left: var(--dawn-space-3);
   accent-color: var(--dawn-accent);
 }
+/**
+ * 侧栏上的计数**竖排成一列**（2026-08-22 作者要的）：推到行尾，与下面会话行右端的时间那一列对齐。
+ * 会话行的时间右边还有一颗「⋯」，固定入口行没有——所以这里留出同样的一段，数字的右缘才在同一条线上。
+ */
 .side-count {
-  margin-left: 4px;
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
+  color: var(--dawn-text-3);
+  font-size: 12px;
 }
+/* 固定入口行没有尾部按钮：留出会话行「⋯」那一段（量出来是 36px），数字右缘才与时间那一列同线 */
+.side-action .side-count { margin-right: 36px; }
+/* 远端那一行尾部是三角（1em 宽）：数字与三角之间留的量 = 36 − 三角宽 */
+.remote-head .side-count { margin-right: 14px; }
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
@@ -5415,3 +5419,39 @@ pre {
 .schedule-runs .panel-title { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .schedule-run-row .skill-row-main { width: auto; }
 .tag-bad { border-color: var(--dawn-danger); color: var(--dawn-danger); }
+.skill-slug { font-family: var(--dawn-font-mono); }
+
+/* ── 输入框上方的 `/` 菜单（2026-08-22） ── */
+.composer { position: relative; }
+.slash-menu {
+  position: absolute;
+  left: var(--dawn-space-3);
+  right: var(--dawn-space-3);
+  bottom: calc(100% - var(--dawn-space-2));
+  z-index: var(--z-modal-popover);
+  max-height: 18rem;
+  overflow: auto;
+  padding: var(--dawn-space-1);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+  display: flex;
+  flex-direction: column;
+}
+.slash-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+  gap: var(--dawn-space-2);
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  padding: 4px var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+}
+.slash-item.active { background: var(--dawn-row-hover); }
+.slash-name { font-weight: var(--dawn-weight-medium); white-space: nowrap; }
+.slash-slug { font-family: var(--dawn-font-mono); font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; }
+.slash-desc { font-size: 12px; color: var(--dawn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slash-kind { flex: none; }
+.slash-empty, .slash-foot { margin: var(--dawn-space-1) var(--dawn-space-2); }

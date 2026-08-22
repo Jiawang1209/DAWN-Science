@@ -75,6 +75,7 @@ import {
 import { TerminalDock } from "./dock.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
+import { setSlashItems, type SlashItem } from "./state/view.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -2696,8 +2697,45 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, session, sessions, askDeleteSession, 回到初始画面],
   )
 
+  /** 子 agent 名册（命令面板里「派」与「按规矩聊」两组用）。启动取一次，项目切换时再取；停用的不列 */
+  const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
+  /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
+  const [技能数, 设技能数] = useState<number | undefined>(undefined)
+  const [技能单, 设技能单] = useState<SlashItem[]>([])
+  /** 输入框 `/` 菜单的单子：技能 + 子 agent（两个输入框共用一份 store） */
+  useEffect(() => {
+    setSlashItems([...技能单, ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) }))])
+  }, [技能单, 子agent名册])
+  /**
+   * 侧栏那两个数**动了才重取**（2026-08-22 作者：「不用每五秒刷，有增加的时候自然就增加」）：
+   * 技能屏 / 子 agent 屏做完一件事（导入、删除、启停）报一声，这里 +1；切项目、切屏也重取。
+   */
+  const [名册代, 设名册代] = useState(0)
+  const 名册变了 = useCallback(() => 设名册代((n) => n + 1), [])
+  useEffect(() => {
+    let 还在 = true
+    client
+      .get<SkillLoad>("listSubagents", projectId ? { projectId } : {})
+      .then((r) => 还在 && 设子agent名册(r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))))
+      .catch(() => {})
+    client
+      .get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
+      .then((r) => {
+        if (!还在) return
+        const 开着的 = r.skills.filter((x) => x.invocation !== "off")
+        设技能数(开着的.length)
+        设技能单(开着的.map((x) => ({ kind: "skill" as const, name: x.name, description: x.description })))
+      })
+      .catch(() => {})
+    return () => {
+      还在 = false
+    }
+  }, [client, projectId, view, 名册代])
   const commands = useMemo(
-    () => buildCommands({ actions, agents: agentIds, session, busy, view, dockOpen }),
+    () =>
+      buildCommands({
+        actions, agents: agentIds, session, busy, view, dockOpen,
+      }),
     [actions, agentIds, session, busy, view, dockOpen],
   )
 
@@ -2947,6 +2985,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }}
           /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
           onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
+          skillCount={技能数}
+          subagentCount={子agent名册.length}
           onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
           onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
@@ -3166,9 +3206,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             />
           ) : view === "subagents" ? (
             <SubagentsView
-              {...(projectId
-                ? { load: () => client.get<SkillLoad>("listSubagents", { projectId }) }
-                : {})}
+              load={() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {})}
+              actions={{
+                setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
+                importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+                deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
+                pickDirectory: () => client.pickDirectory(默认工作区?.path),
+                问: 问一句,
+                hasProject: Boolean(projectId),
+                onChanged: 名册变了,
+              }}
             />
           ) : view === "plugins" ? (
             <PluginsView />

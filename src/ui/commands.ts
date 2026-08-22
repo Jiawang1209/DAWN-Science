@@ -143,6 +143,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
   const { actions, agents } = ctx
   const out: Command[] = []
 
+
   // ── 会话 ─────────────────────────────────────────────────────────
   /**
    * **一条，不是每个 agent 一条**（T4，2026-08-13）。

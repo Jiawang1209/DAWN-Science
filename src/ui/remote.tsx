@@ -166,8 +166,9 @@ export function RemoteSection({
         <服务器图标 className="row-icon" />
         <span className="name">{t("远端服务器")}</span>
         {/* **收起时也要说有几台**：否则收起等于把它们藏没了 */}
+        {/* 与「Skills 3」「子 Agent 22」同一副样子、同一个位置（2026-08-22 作者要的对齐） */}
         {connections.length > 0 ? (
-          <span className="remote-count">{connections.length}</span>
+          <span className="side-count">{connections.length}</span>
         ) : null}
         <三角图标 className={`caret${open ? " open" : ""}`} />
       </Row>

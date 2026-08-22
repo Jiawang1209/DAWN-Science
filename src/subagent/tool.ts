@@ -19,7 +19,7 @@
  * 换来的是「改完定义不用重启会话」。对手写 markdown 的东西，这个交换是划算的。
  */
 import { Type } from "typebox"
-import { loadSubagentDefinitions } from "./definitions.js"
+import { loadSubagentsFrom, type DefinitionLoad, loadSubagentDefinitions } from "./definitions.js"
 import {
   SubagentExecutor,
   SUBAGENT_LIMITS,
@@ -34,6 +34,11 @@ export interface SubagentToolOptions {
   sessionId: SessionId
   /** 定义从这里找：`<projectRoot>/.dawn/agents/*.md` */
   projectRoot: string
+  /**
+   * 三层目录（2026-08-22）：自带 / 你写的 / 项目。给了就按它读（项目 > 全局 > 自带），
+   * 没给退回只读项目那一层（老行为）。`disabled` 的不给模型。
+   */
+  dirs?: readonly { dir: string; from: "builtin" | "global" | "project" }[] | undefined
   childOf: ChildFactory
   /**
    * 子进程规格里与任务无关的那一半（模型、凭证、工作区、agentDir）。
@@ -93,7 +98,10 @@ const text = (s: string, isError = false): ToolResult => ({
 })
 
 export function createSubagentTool(opts: SubagentToolOptions) {
-  const load = () => loadSubagentDefinitions(opts.projectRoot)
+  const load = (): DefinitionLoad => {
+    const r = opts.dirs ? loadSubagentsFrom(opts.dirs) : loadSubagentDefinitions(opts.projectRoot)
+    return { ...r, agents: r.agents.filter((a) => !a.disabled) }
+  }
 
   return {
     name: "subagent",
@@ -159,11 +167,23 @@ function describe(load: ReturnType<typeof loadSubagentDefinitions>): string {
       "**恰好给一组，不要同时给两组。**",
   ]
 
-  lines.push(
-    load.agents.length === 0
-      ? "当前**没有定义任何子 agent**（在 .dawn/agents/ 下写 markdown 定义文件）。"
-      : `可用的子 agent：${load.agents.map((a) => `${a.name}（${a.description}）`).join("；")}`,
-  )
+  /**
+   * **两级**（2026-08-22，学自 dsh-agency-agents 的 `list_experts`）：这里只列名字与分组，
+   * 详情靠 `dawn_list_subagents` 一次查——二十几份的说明每轮都塞进描述，模型每轮都要付那些 token。
+   */
+  if (load.agents.length === 0) {
+    lines.push("当前**没有定义任何子 agent**（在 .dawn/agents/ 下写 markdown 定义文件）。")
+  } else {
+    const 按组 = new Map<string, string[]>()
+    for (const a of load.agents) {
+      const g = a.group ?? "其它"
+      按组.set(g, [...(按组.get(g) ?? []), a.name])
+    }
+    lines.push(
+      `可用的子 agent（按组）：${[...按组.entries()].map(([g, 名]) => `${g}：${名.join("、")}`).join("；")}。` +
+        "不确定哪个合适时先调 dawn_list_subagents 看各自的说明；**没有合适的就别派**，自己做。",
+    )
+  }
 
   // 读不进来的也要说。用户写错 frontmatter 时，这是唯一会出声的地方
   if (load.problems.length > 0) {

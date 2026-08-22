@@ -932,6 +932,45 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /* ── 子 agent 名册（7.20，agents-roster，学自 dsh-agency-agents） ──────── */
+
+  /** 停用 / 启用：写进定义文件 frontmatter 的 `disabled` 一行（文本级替换）。自带的拒 */
+  setSubagentEnabled: {
+    request: z.object({ filePath: z.string().min(1), enabled: z.boolean() }).strict(),
+    response: z.object({ enabled: z.boolean() }).strict(),
+    mutating: true,
+  },
+
+  /** 从本机导入定义（一个 `.md` 或一筐 `.md`）。两阶段同 `importSkill` */
+  importSubagents: {
+    request: z
+      .object({
+        source: z.string().min(1),
+        to: z.enum(["global", "project"]),
+        projectId: z.string().min(1).optional(),
+        overwrite: z.boolean().optional(),
+        dryRun: z.boolean().optional(),
+      })
+      .strict(),
+    response: z
+      .object({
+        pending: z.array(z.object({ name: z.string(), source: z.string() }).strict()),
+        conflicts: z.array(z.object({ name: z.string(), source: z.string() }).strict()),
+        imported: z.array(z.object({ name: z.string(), dest: z.string(), overwritten: z.boolean() }).strict()),
+        skipped: z.array(z.object({ name: z.string(), source: z.string() }).strict()),
+        failed: z.array(z.object({ source: z.string(), why: z.string() }).strict()),
+      })
+      .strict(),
+    mutating: true,
+  },
+
+  /** 删定义文件（进废纸篓）。自带的拒 */
+  deleteSubagent: {
+    request: z.object({ filePath: z.string().min(1) }).strict(),
+    response: z.object({ trashed: z.literal(true) }).strict(),
+    mutating: true,
+  },
+
   /* ── 技能管理（7.17，skills-manage，学自 dsh-skills-manager） ──────────── */
 
   /** 改一个技能的调用档：写进它的 SKILL.md（文本级替换那两行）。自带的拒 */
@@ -985,7 +1024,8 @@ export const OPERATIONS = {
    * 这个操作只是把它们端出来。改名的理由见上面 `listAgentSkills`。
    */
   listSubagents: {
-    request: ByProject,
+    /** 7.20 起 `projectId` 可不给：自带与你写的那两层不需要项目 */
+    request: z.object({ projectId: z.string().min(1).optional() }).strict(),
     response: z
       .object({
         agents: z.array(
@@ -997,13 +1037,25 @@ export const OPERATIONS = {
               tools: z.array(z.string()).optional(),
               model: z.string().min(1).optional(),
               filePath: z.string().min(1),
+              /** 三层（7.20）：自带 / 你写的 / 这个项目带的。同名时项目 > 全局 > 自带 */
+              from: z.enum(["builtin", "global", "project"]),
+              /** 给人看的名字（可中文）；`name` 是标识符 */
+              title: z.string().optional(),
+              /** 分组（frontmatter `group`） */
+              group: z.string().optional(),
+              /** 停用了：列出来、不给模型、不当技能 */
+              disabled: z.boolean(),
+              /** 自带的只读 */
+              mutable: z.boolean(),
             })
             .strict(),
         ),
         /** 读不进来的那些。**不静默跳过** */
         problems: z.array(z.object({ filePath: z.string(), reason: z.string() }).strict()),
-        /** 定义目录在哪。**界面要能把这个路径说出来**，否则「去哪写」没人知道 */
-        dir: z.string().min(1),
+        /** 定义目录在哪。**界面要能把这个路径说出来**，否则「去哪写」没人知道。7.20 起是项目那一层（没项目时空） */
+        dir: z.string(),
+        /** 三层各在哪（7.20） */
+        dirs: z.object({ builtin: z.string().optional(), global: z.string().optional(), project: z.string().optional() }).strict(),
       })
       .strict(),
     mutating: false,

@@ -17,6 +17,8 @@
  * 以及把每个会话隔离在自己的 agentDir 里。
  */
 import { 读调用策略 } from "../skills/invocation.js"
+import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
+import { dirname } from "node:path"
 import { mkdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import {
@@ -29,6 +31,7 @@ import {
   ModelRuntime,
   SessionManager,
   SettingsManager,
+  createSyntheticSourceInfo,
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
@@ -125,6 +128,15 @@ export interface NativeRuntimeOptions {
    * **这一层我们不写**（路线图 S20 的原话）。我们只负责告诉它去哪儿找——
    * 因为它默认的两个位置在我们这儿都不好使（见 `start` 里的说明）。
    */
+  /**
+   * 子 agent 的三层目录（2026-08-22，学自 dsh-agency-agents）。项目那一层固定是 `<工作区>/.dawn/agents`；
+   * 自带的随应用发布、只读；你写的在全局目录。同名时项目 > 全局 > 自带。
+   * **每一份定义同时也是一个技能**（`/skill:名` 把人设叫进主对话）——同一份文件、两处登记。
+   */
+  subagents?: {
+    全局目录?: string
+    自带目录?: string
+  }
   skills?: {
     /** 全局技能目录。**一个固定位置**，不跟着会话走 */
     全局目录?: string
@@ -442,6 +454,16 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /** 把 pi 的工具定义套上授权门。不给 gate 时返回 undefined，走 pi 的内置工具。 */
+  /** 子 agent 的三层：项目 > 全局 > 自带 */
+  private 子agent层(workspace: string): { dir: string; from: "builtin" | "global" | "project" }[] {
+    const s = this.opts.subagents ?? {}
+    return [
+      { dir: join(workspace, AGENTS_DIR), from: "project" },
+      ...(s.全局目录 ? [{ dir: s.全局目录, from: "global" as const }] : []),
+      ...(s.自带目录 ? [{ dir: s.自带目录, from: "builtin" as const }] : []),
+    ]
+  }
+
   private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"]): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
@@ -640,6 +662,7 @@ export class NativeRuntime implements AgentRuntime {
     const tool = createSubagentTool({
       sessionId: spec.sessionId,
       projectRoot: spec.workspace,
+      dirs: this.子agent层(spec.workspace),
       emit: (e) => this.emit(e),
       childOf: () => ({
         // Spike F：**不能写死 `"node"`**——打包之后用户机器上不一定有它
@@ -781,16 +804,32 @@ export class NativeRuntime implements AgentRuntime {
        * pi 认 `disable-model-invocation`（模型看不见、`/skill:` 还能调），但不认 `user-invocable: false`；
        * 三档里的「关」= 谁都不给，只能在这儿过滤——读的是文件上那两行，与技能屏同一份真相。
        */
-      skillsOverride: (base) => ({
-        ...base,
-        skills: base.skills.filter((sk) => {
+      skillsOverride: (base) => {
+        const 留下 = base.skills.filter((sk) => {
           try {
             return 读调用策略(readFileSync(sk.filePath, "utf8")) !== "off"
           } catch {
             return true
           }
-        }),
-      }),
+        })
+        /**
+         * **子 agent 的人设同时也是技能**（2026-08-22，作者定的「一份两用」）：`/skill:名` 把那套规矩叫进主对话，
+         * `subagent` 工具把它派出去。同一份文件——pi 读技能时剥掉 frontmatter，正文正好就是人设。
+         * 技能名撞了的让技能赢（那是人专门写的）。停用的不登记。
+         */
+        const 已有 = new Set(留下.map((sk) => sk.name))
+        const 来自子agent = loadSubagentsFrom(this.子agent层(spec.workspace)).agents
+          .filter((a) => !a.disabled && !已有.has(a.name))
+          .map((a) => ({
+            name: a.name,
+            description: a.description,
+            filePath: a.filePath,
+            baseDir: dirname(a.filePath),
+            sourceInfo: createSyntheticSourceInfo(a.filePath, { source: "dawn-subagent", scope: a.from === "project" ? "project" : "user", origin: "top-level", baseDir: dirname(a.filePath) }),
+            disableModelInvocation: false,
+          }))
+        return { ...base, skills: [...留下, ...来自子agent] }
+      },
       appendSystemPromptOverride: (base) => [
         ...base,
         `You are currently running on the model "${当前模型}". ` +

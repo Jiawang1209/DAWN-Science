@@ -54,6 +54,8 @@ export interface 工具装配 {
     requestType: string,
     详情: { 出错: boolean; 说明?: string },
   ) => void
+  /** 子 agent 的名册（7.20，两级发现的第二级）：名字、分组、说明 */
+  列子agent?: (sessionId: string) => Promise<{ name: string; description: string; group?: string | undefined }[]>
   /**
    * 定时任务（第二档，2026-08-22，学自 dsh-automation 的 `automation_*` 工具）。
    * **跑在哪、用哪个 agent 都取当前这段会话的**——在哪儿说的就在哪儿跑。
@@ -117,6 +119,11 @@ export function 工具清单(有内核: boolean): 网关工具[] {
         required: ["resourceId"],
         additionalProperties: false,
       },
+    },
+    {
+      name: "dawn_list_subagents",
+      description: "列出当前能派的子 agent：名字、分组、各自擅长什么。`subagent` 工具的描述里只有名字，拿不准派谁时先调这个。",
+      schema: 空参数,
     },
     {
       name: "dawn_schedule_create",
@@ -257,6 +264,15 @@ async function 干(
     if (typeof 文 !== "string" || !文.trim()) throw new Error("要给一句非空的 text")
     // 记账在外层统一做，这里只回执
     return { 文本: `记下了：${文.trim()}` }
+  }
+
+  if (工具名 === "dawn_list_subagents") {
+    if (!装配.列子agent) throw new Error("本次运行没有装配子 agent 名册")
+    const 们 = await 装配.列子agent(sessionId)
+    if (们.length === 0) return { 文本: "现在一个子 agent 都没有。" }
+    const 按组 = new Map<string, string[]>()
+    for (const a of 们) 按组.set(a.group ?? "其它", [...(按组.get(a.group ?? "其它") ?? []), `- ${a.name}：${a.description}`])
+    return { 文本: [...按组.entries()].map(([g, 行]) => `## ${g}\n${行.join("\n")}`).join("\n\n") }
   }
 
   if (工具名 === "dawn_schedule_create") {

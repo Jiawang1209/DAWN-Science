@@ -43,6 +43,54 @@
 
 ## 变更日志
 
+### 2026-08-22 — 22 份自带子 agent 人设按九段骨架写满
+
+- **Type**: docs
+- **Motivation**: 作者：「以你来感觉，是不是有点儿太简略了？」——是。第一版每份 25–30 行，只有「你是谁、怎么工作、交付什么」；给模型看的操作手册缺的不是字数，是决策表、具体到函数名的工具、例子、交付模板、常见坑、分工。
+- **What**: 先写满统计顾问、数据清洗员两份给作者看口气（作者：可以），再按同一骨架铺另外 20 份。每份九段：身份与边界（含「什么时候不该找我、该转给谁」——22 份之间的分工写进文件）· 先问清什么 · 决策表 · 步骤 · 工具与命令 · 常见坑 · 交付模板 · 一个例子（用作者领域的场景，输出是摘要形态）· DAWN 的工作约定。总计 2,592 行，每份 97–134 行。
+- **Impact**: 只改 `agents/*.md` 内容；frontmatter 不动。`subagent` 工具描述只列名字，人设长度不影响每轮 token；派出去时整份进子进程的系统提示（每份约 3–4k token）。
+- **Verification**: `tests/subagent/roster.test.ts` 22 份全读得进来；`subagent-roster.spec` / `subagent.spec` e2e 绿（`/skill:stat-consultant` 仍把正文送进模型）。
+
+### 2026-08-22 — 侧栏计数竖排成一列、与会话行的时间同线；数字动了才重取，不轮询
+
+- **Type**: fix
+- **Motivation**: 作者：个数要竖排对齐，和下面会话行的时间保持一致才好看；不用每 5 秒刷，有增加的时候自然就增加。
+- **What**: `.side-count` 推到行尾（`margin-left: auto`，12px，`text-3`）。会话行的时间右边还有一颗「⋯」，固定入口行没有——`.side-action .side-count` 留 36px、远端那行（尾部是 1em 的三角）留 14px，**量出来**三列右缘都在 204px。App 去掉 5 秒轮询；技能屏 / 子 agent 屏的 `actions.onChanged` 在导入 / 删除 / 启停做完后报一声，App 据此重取；切项目、切屏照旧重取。
+- **Impact**: 视觉基线按纪律看 diff（只有数字的位置与字号、远端三角的位置）后 `=all` 重存、两遍验过。
+- **Verification**: `subagent-roster.spec` 加了「停用一个 → 侧栏 22 → 启用 → 23」的断言；skills / sidebar-layout 共 20 绿；视觉 10 绿 ×2。
+
+### 2026-08-22 — 侧栏：「Agent Skills」改叫「Skills」；三个计数同一副样子、跟着目录变
+
+- **Type**: fix
+- **Motivation**: 作者三条：多一个 Agent 没意义；个数要随新加的 skill / 子 agent 变；远端服务器的个数位置与字号要和 Skills 的对齐。
+- **What**: 侧栏行与技能屏标题改「Skills」（e2e 选择器同步）。远端那一行的计数改用 `.side-count`（与「Skills 3」「子 Agent 22」「会话 1」同一个类：名字后 4px、等宽数字、`text-3` 灰），三角退到行尾；`.remote-count` 删掉。两个数字跟 5 秒一班车重取——往目录里放了新的 `.md` / `SKILL.md`，数字跟着变。子 agent 屏上的分组名是 frontmatter 里的内容，标 `data-authored`（i18n 扫描按规矩放过）。
+- **Impact**: 十张视觉基线按纪律看 diff（标签、计数颜色、三角位置，都是这次要的）后 `=all` 重存并再验。
+- **Verification**: skills / sidebar-layout / i18n / remote-connections 60 绿；视觉 10 绿；`tests/ui` 489。
+
+### 2026-08-22 — 输入框的 `/`：只弹技能与子 agent 的菜单，不再开整个命令面板
+
+- **Type**: fix
+- **Motivation**: 作者：「对话框里选 `/`，弹出来的是其他的功能，不对。」此前 `/` 在空输入框行首开的是 ⌘K 那个命令面板（打开设置、切主题都在里面）——占位符说的是「/调用技能与指令」。
+- **What**: `src/ui/slash-menu.tsx`：草稿以 `/` 开头且没打到空格就贴着输入框上方弹一份单子，只有两类：技能（`/skill:名`）与子 agent（派出去）；边打边按名字 / 中文名 / 说明筛；↑↓ 挑、回车选、Esc 关；选技能草稿换成 `/skill:名 `，选子 agent 换成「用子 agent「名」来做：」——只写草稿不发。单子住在 `$slashItems`（App 启动与切项目时填），两个输入框（对话屏、空态屏）共用。命令面板里前一条加的「子 agent」两组命令撤掉——同一件事不该有两个入口。命令面板仍是 ⌘K。
+- **Impact**: `/` 的行为变了：以前开命令面板，现在开技能 / 子 agent 菜单。`attach.spec` 那条「/ 有反应」按此改写。
+- **Verification**: e2e `subagent-roster.spec`（菜单里有技能也有子 agent、没有「打开设置」、边打边筛、回车选子 agent、点技能写 `/skill:`、`/skill:stat-consultant` 真送进模型）与 `attach.spec` 两屏的 `/` 各绿；palette 全绿；全量 vitest 2039；视觉 10 绿。
+
+### 2026-08-22 — 侧栏「Agent Skills」「子 Agent」后面挂个数
+
+- **Type**: feat
+- **Motivation**: 作者：有 22 份了，侧栏该显示个数。
+- **What**: `Sidebar` 多 `skillCount` / `subagentCount`（`side-count`，与「项目 1」同一形状）；App 启动与切项目时各取一次，只算开着的（技能不含「关」了的，子 agent 不含停用的）。
+- **Impact**: 侧栏两行各多一个数字。十张视觉基线：两个小数字落在 `maxDiffPixels: 100` 的容差内、本来会悄悄放过——按纪律重存并再验；`visual.spec` 截图前先等这两个数字出现（它们是异步取的，不等会是一场竞态）。**顺手抓到一个坑**：`--update-snapshots` 缺省是 `changed`，只重写**比对失败**的那几张——容差以内的漂移永远存不进去，基线会一点点过时而没人知道。脚本改成 `--update-snapshots=all`。
+- **Verification**: 视觉 10 绿（重存后再验）；`tests/ui` 489 绿。
+
+### 2026-08-22 — 子 agent 名册：自带 22 份科研人设、三层目录、分组与停用、一份既是子 agent 也是技能（协议 7.20）
+
+- **Type**: feat
+- **Motivation**: 读了 `MichengAI/dsh-agency-agents`（解读在 `ccb_hive_code_learn/dsh-agency-agents-解读.md`）。我们子 agent 的机制比它齐（single / parallel / chain），**内容一份都没有**；它 271 份里绝大多数是做生意的。作者定：自己写 22 份（数据科学、统计、生态、生命科学、GIS、建模、可视化、写作审查），**一份两用**。设计：`docs/superpowers/specs/2026-08-22-子agent名册-design.md`。
+- **What**: `agents/*.md` 22 份（中文人设，`title` / `group` / 部分 `tools` 收紧；构建拷到 `dist/agents`）。`subagent/definitions.ts` `loadSubagentsFrom(三层)`，frontmatter 认 `title` / `group` / `disabled`。`native.ts`：`subagents` 三层给 `subagent` 工具；`skillsOverride` 把未停用的子 agent 登记成技能。`subagent/tool.ts` 描述改两级（名字按组 + 「没合适的就别派」），`acp/tools.ts` 加 `dawn_list_subagents`。协议 7.20：`listSubagents` 多来源 / 标题 / 分组 / 停用 / 三处路径、不要求项目；新增 `setSubagentEnabled`（frontmatter `disabled` 一行，文本级替换、自带拒）/ `importSubagents`（`.md` 一个或一筐，预检 → 覆盖备份回滚）/ `deleteSubagent`（废纸篓）。界面：「子 Agent」屏改成名册（分组筛、搜、标签、「⋯」、导入、三处路径）；命令面板多一组「派子 agent「X」」「按「X」的规矩聊」。`wiring.ts` / `main.ts` 装配，`DAWN_AGENTS_DIR` 隔离 e2e。它三份相关的 persona 作样本放 `docs/samples/`（MIT，带 LICENSE）。
+- **Impact**: 纯新增；旧的项目级定义照旧。`subagent` 工具描述变短了（只列名字）。
+- **Verification**: 单元 +7（三层优先级、同层重复、停用与 tools 解析、22 份全读得进来且有分组；后端列表 / 停用写文件 / 自带拒 / 导入 / 删除）共 2039；e2e `subagent-roster.spec` 2 条（22 份 + 分组筛 + 搜 + 停用写文件；命令面板派 / 聊 + **`/skill:stat-consultant` 真把人设送进了假模型**）；skills / subagent / palette / acp-agent 29 绿；视觉 10 绿。
+
 ### 2026-08-22 — 定时任务第二档：每月 / 每 N 天、每条任务自己的权限档、对话里一句话就建、结果推微信、记录筛
 
 - **Type**: feat

@@ -467,8 +467,11 @@
  *
  * 7.19（2026-08-22）：定时任务——`listSchedules` / `createSchedule` / `updateSchedule` / `deleteSchedule` /
  *   `runScheduleNow` / `listScheduleRuns`。纯新增。
+ *
+ * 7.20（2026-08-22）：子 agent 名册——`listSubagents` 多三层 / 分组 / 停用且 `projectId` 可不给；
+ *   新增 `setSubagentEnabled` / `importSubagents` / `deleteSubagent`。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.19"
+export const WORKBENCH_PROTOCOL_VERSION = "7.20"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

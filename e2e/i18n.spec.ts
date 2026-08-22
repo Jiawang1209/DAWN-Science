@@ -120,7 +120,7 @@ test("**默认就是英文，且每一屏上都没有汉字**", async ({ dawn })
   }
 
   await 屏("首页", async () => {})
-  await 屏("Agent Skills", () => page.getByRole("button", { name: "Agent Skills" }).click())
+  await 屏("Skills", () => page.getByRole("button", { name: "Skills" }).click())
   await 屏("子 Agent", () => page.getByRole("button", { name: "Subagents" }).click())
   await 屏("插件", () => page.getByRole("button", { name: "Plugins" }).click())
   await 屏("MCP", () => page.getByRole("button", { name: "MCP servers" }).click())

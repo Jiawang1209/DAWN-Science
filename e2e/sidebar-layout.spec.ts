@@ -261,8 +261,9 @@ test("**固定入口在横线上面，项目与会话在下面**", async ({ dawn
 
   const 横线 = await y(".side-divider")
   // 2026-08-15：「技能」拆成了 Agent Skills 与子 Agent 两个入口
-  for (const 名 of ["新建任务", "Agent Skills", "子 Agent", "MCP 服务器"]) {
-    expect(await y(`.sidebar >> role=button[name="${名}"]`), `${名} 应在横线上面`).toBeLessThan(横线)
+  // 「Skills」「子 Agent」后面挂着个数（2026-08-22），按行首匹配
+  for (const 名 of ["新建任务", "Skills", "子 Agent", "MCP 服务器"]) {
+    expect(await y(`.sidebar >> role=button[name=/^${名}/]`), `${名} 应在横线上面`).toBeLessThan(横线)
   }
   expect(await y(".remote-head"), "远端连接应在横线上面").toBeLessThan(横线)
   // 分区标题（项目 / 会话）在线下面

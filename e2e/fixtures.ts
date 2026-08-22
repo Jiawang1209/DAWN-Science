@@ -581,6 +581,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         DAWN_CLI_HOME: join(dir, "cli-home"),
         // **全局技能目录也要隔离**（2026-08-21 才发现一直指着开发机真实的 ~/DAWN/skills）
         DAWN_SKILLS_DIR: join(dir, "skills"),
+        DAWN_AGENTS_DIR: join(dir, "agents"),
         /**
          * **临时会话的目录根也要隔离**（2026-08-11）——
          * 不隔离的话，跑一次 e2e 就往开发机的 `~/DAWN/scratch` 里建一串目录。

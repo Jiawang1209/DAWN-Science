@@ -43,6 +43,13 @@
 
 ## 变更日志
 
+### 2026-08-22 — 当前会话的底色改浅灰；项目行的「＋ / 删」落到「多选」那条线
+
+- **Type**: fix
+- **Motivation**: 作者：「项目收纳下面的会话怎么还有白色背景」「删除按钮要和上面的多选保持对齐一列」。
+- **What**: `.sess-item.current > .row` 底色 `surface-elevated`（白）→ `--dawn-row-active`（浅灰，项目行选中本来就是它——那条 `.proj-item.current > .row` 从没命中过项目行的 `.row`，两种「你在这里」此前是两种底）；`.proj-head` 右内距 8 → 36，删除键右缘 188。
+- **Verification**: `sidebar-columns.spec`（项目动作 = 多选 = 188；会话 ⋯ 仍 216）；侧栏相关 spec 绿；视觉重存。
+
 ### 2026-08-22 — 会话行比父级更靠右：四处会话文字左缘 62，分出层次
 
 - **Type**: feat

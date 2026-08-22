@@ -39,7 +39,9 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   const 会话动作 = await 右缘(".sess-item .row-actions")
   expect(多选.length).toBeGreaterThan(0)
   expect(项目动作.length).toBeGreaterThan(0)
-  expect([...new Set([...项目动作, ...会话动作])], "收尾那一列的右缘不止一条").toHaveLength(1)
+  // 2026-08-22 作者改：项目行的「＋ / 删」右缘落到「多选」那条线（188）上；会话行的 ⋯ 仍在收尾线（216）
+  expect([...new Set([...项目动作, ...多选])], `项目行的删除键不在「多选」那条线上：${项目动作} vs ${多选}`).toHaveLength(1)
+  expect([...new Set(会话动作)], "会话行 ⋯ 的右缘不止一条").toHaveLength(1)
 
   // ③ 分区计数：紧跟标题、左缘一列（「服务器」比「项目」宽一个字，标题不定宽的话它们对不上）
   const 左缘 = (s: string) => page.evaluate((sel) => [...document.querySelectorAll(sel)].map((e) => Math.round(e.getBoundingClientRect().left)), s)

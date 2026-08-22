@@ -1167,7 +1167,8 @@ pre {
  * 此前三个右缘：「多选」到 240、会话行的 ⋯ 到 256、项目行的 ＋/删到 264——各自差十几像素，一眼就是歪的。
  * 现在项目行与会话行都留 24px 右内距，与「多选」那颗（分区标题内距 12 + 自身）对齐到同一条线。
  */
-.proj-head { display: flex; align-items: center; padding-right: var(--dawn-space-2); }
+/* 右内距 36：删除键的右缘落到「多选」那条线（188）上（2026-08-22 作者要的）；会话行的 ⋯ 仍在 216 */
+.proj-head { display: flex; align-items: center; padding-right: 36px; }
 .proj-head > .row { flex: 1; min-width: 0; }
 /* 展开的项目：**它的会话嵌在下面**，缩进一档表示归属 */
 .proj-sessions { padding-left: var(--dawn-space-3); }
@@ -3429,9 +3430,12 @@ pre {
 
 /* 选中态：**圆角浅底 pill**，不是左侧竖条（2026-08-12，学自 WorkBuddy）。
    竖条是「这一条被标记了」，pill 是「你在这里」——后者才是选中该说的话 */
+/* 底色用 `--dawn-row-active`（浅灰），不用白的 `surface-elevated`（2026-08-22 作者：「怎么还有白色背景」）——
+   项目行选中时本来就是这层灰（它的 `.row` 不在 `.proj-item` 直属下，下面那条一直没命中它），
+   两种「你在这里」现在是同一种底 */
 .sess-item.current > .row,
 .proj-item.current > .row {
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-row-active);
   border-radius: var(--dawn-radius-md);
   border-left-color: transparent;
 }

@@ -54,6 +54,17 @@ export interface 工具装配 {
     requestType: string,
     详情: { 出错: boolean; 说明?: string },
   ) => void
+  /**
+   * 定时任务（第二档，2026-08-22，学自 dsh-automation 的 `automation_*` 工具）。
+   * **跑在哪、用哪个 agent 都取当前这段会话的**——在哪儿说的就在哪儿跑。
+   * 建出来的按当前会话的权限档：「全放行」直接生效；「拦危险的」建成**暂停**的，
+   * 要人到「定时」里按恢复——这就是我们的「授权卡」：无人值守的东西不该由一句话就开起来。
+   */
+  定时?: {
+    建: (sessionId: string, req: { name: string; prompt: string; schedule: Record<string, unknown> }) => Promise<{ id: string; name: string; status: string; nextAt?: string; where: string }>
+    列: () => Promise<{ id: string; name: string; status: string; schedule: Record<string, unknown>; nextAt?: string; lastRun?: { status: string; summary?: string; error?: { message: string } } }[]>
+    删: (id: string) => Promise<void>
+  }
 }
 
 const 空参数 = { type: "object", properties: {}, additionalProperties: false }
@@ -106,6 +117,40 @@ export function 工具清单(有内核: boolean): 网关工具[] {
         required: ["resourceId"],
         additionalProperties: false,
       },
+    },
+    {
+      name: "dawn_schedule_create",
+      description:
+        "建一条 DAWN 定时任务：到点了会开一段全新的会话（跑在当前这段会话所在的项目 / 服务器上，用同一个 agent），把 prompt 发给它。" +
+        "prompt 要自包含——那段会话记不得现在这段对话。计划四选一：daily（time）/ weekly（weekdays + time）/ interval（everyMinutes）/ once（at，ISO）/ monthly（day + time）/ everyDays（everyDays + start + time）。" +
+        "当前会话是「拦危险的」档时，建出来是暂停的，要用户到「定时」里按恢复——告诉用户这一点。",
+      schema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "短名字" },
+          prompt: { type: "string", description: "每次独立运行都用的、自包含的任务说明" },
+          kind: { type: "string", enum: ["daily", "weekly", "interval", "once", "monthly", "everyDays"] },
+          time: { type: "string", description: "HH:mm（daily / weekly / monthly / everyDays）" },
+          weekdays: { type: "array", items: { type: "string", enum: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] }, description: "weekly 用" },
+          everyMinutes: { type: "integer", description: "interval 用，最小 1" },
+          at: { type: "string", description: "once 用，ISO 时刻" },
+          day: { type: "integer", description: "monthly 用，1–31" },
+          everyDays: { type: "integer", description: "everyDays 用" },
+          start: { type: "string", description: "everyDays 用，YYYY-MM-DD 起点" },
+        },
+        required: ["name", "prompt", "kind"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "dawn_schedule_list",
+      description: "列出 DAWN 的定时任务：名字、计划、下一次、上一次结果。",
+      schema: 空参数,
+    },
+    {
+      name: "dawn_schedule_delete",
+      description: "删一条 DAWN 定时任务（先用 dawn_schedule_list 拿 id）。运行记录留着。",
+      schema: { type: "object", properties: { id: { type: "string" } }, required: ["id"], additionalProperties: false },
     },
     {
       name: "dawn_record_note",
@@ -212,6 +257,48 @@ async function 干(
     if (typeof 文 !== "string" || !文.trim()) throw new Error("要给一句非空的 text")
     // 记账在外层统一做，这里只回执
     return { 文本: `记下了：${文.trim()}` }
+  }
+
+  if (工具名 === "dawn_schedule_create") {
+    if (!装配.定时) throw new Error("本次运行没有装配定时任务")
+    const name = 参数["name"]
+    const prompt = 参数["prompt"]
+    const kind = 参数["kind"]
+    if (typeof name !== "string" || typeof prompt !== "string" || typeof kind !== "string") throw new Error("要给 name、prompt、kind")
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+    const schedule: Record<string, unknown> =
+      kind === "daily" ? { kind, time: 参数["time"], timeZone }
+      : kind === "weekly" ? { kind, weekdays: 参数["weekdays"], time: 参数["time"], timeZone }
+      : kind === "interval" ? { kind, everyMinutes: 参数["everyMinutes"], anchor: new Date().toISOString(), timeZone }
+      : kind === "once" ? { kind, at: 参数["at"], timeZone }
+      : kind === "monthly" ? { kind, day: 参数["day"], time: 参数["time"], timeZone }
+      : { kind: "everyDays", everyDays: 参数["everyDays"], start: 参数["start"] ?? new Date().toISOString().slice(0, 10), time: 参数["time"], timeZone }
+    const d = await 装配.定时.建(sessionId, { name, prompt, schedule })
+    return {
+      文本:
+        d.status === "paused"
+          ? `建好了「${d.name}」（id ${d.id}），跑在 ${d.where}。**现在是暂停的**：当前会话是「拦危险的」档，无人值守的任务要用户自己到侧栏「定时」里按「恢复」才会开始跑。请把这一点告诉用户。`
+          : `建好了「${d.name}」（id ${d.id}），跑在 ${d.where}${d.nextAt ? `，下一次 ${d.nextAt}` : ""}。`,
+    }
+  }
+
+  if (工具名 === "dawn_schedule_list") {
+    if (!装配.定时) throw new Error("本次运行没有装配定时任务")
+    const 们 = await 装配.定时.列()
+    if (们.length === 0) return { 文本: "还没有定时任务。" }
+    return {
+      文本: 们
+        .map((d) => `- ${d.name}（id ${d.id}，${d.status === "paused" ? "暂停中" : "活着"}）计划 ${JSON.stringify(d.schedule)}${d.nextAt ? `，下一次 ${d.nextAt}` : ""}${d.lastRun ? `，上次 ${d.lastRun.status}${d.lastRun.summary ? `：${d.lastRun.summary.slice(0, 200)}` : d.lastRun.error ? `：${d.lastRun.error.message}` : ""}` : ""}`)
+        .join("\n"),
+    }
+  }
+
+  if (工具名 === "dawn_schedule_delete") {
+    if (!装配.定时) throw new Error("本次运行没有装配定时任务")
+    const id = 参数["id"]
+    if (typeof id !== "string") throw new Error("要给 id")
+    await 装配.定时.删(id)
+    return { 文本: `删了 ${id}。运行记录留着。` }
   }
 
   throw new Error(`DAWN 没有这个工具：${工具名}`)

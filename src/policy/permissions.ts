@@ -77,6 +77,8 @@ export interface 语境 {
    * 代价是别人的**。」* 所以远端的拒绝理由要指名这一点。
    */
   remote?: boolean
+  /** 哪段会话在调（2026-08-22）。定时任务的会话按它自己存的档走，不跟全局设置 */
+  sessionId?: string
 }
 
 /**
@@ -238,7 +240,7 @@ export function 造MCP门(取档: () => 权限档, 取信得过: (服务器名: 
     照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名)))
 }
 
-export function 造门(取档: () => 权限档) {
+export function 造门(取档: (sessionId?: string) => 权限档) {
   return (工具名: string, 参数: Record<string, unknown>, 语境: 语境): string | undefined =>
-    照这一档(取档(), 看风险(工具名, 参数, 语境))
+    照这一档(取档(语境.sessionId), 看风险(工具名, 参数, 语境))
 }

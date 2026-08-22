@@ -5409,6 +5409,7 @@ pre {
   padding: 4px var(--dawn-space-2);
 }
 .schedule-time { width: max-content; }
+.schedule-inline { display: flex; gap: var(--dawn-space-2); flex-wrap: wrap; }
 .schedule-field .theme-choices { margin-bottom: 0; }
 .schedule-runs { margin-top: var(--dawn-space-6); }
 .schedule-runs .panel-title { display: flex; align-items: center; gap: var(--dawn-space-2); }

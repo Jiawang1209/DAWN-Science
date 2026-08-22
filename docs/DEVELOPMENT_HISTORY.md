@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 定时任务第二档：每月 / 每 N 天、每条任务自己的权限档、对话里一句话就建、结果推微信、记录筛
+
+- **Type**: feat
+- **Motivation**: 作者：「第二档依旧也要做」。
+- **What**: `recurrence.ts` 加 `monthly` / `everyDays`（按日期规则的共用走法）。权限：`policy/permissions.ts` 的语境与 `native.ts` 的 `ToolGateContext` 多 `sessionId`，`造门` 的取档收它；`wiring.ts` 一张「按会话的档」表，定时会话按定义存的档登记（`设会话权限`）。`acp/tools.ts` 三件工具 `dawn_schedule_create / list / delete`（跑在当前会话所在处、同一个 agent；「拦危险的」档建成暂停的并让模型说清）；`fake-acp-agent.mjs` 加 `FAKE_ACP_SCHEDULE` 旋钮。微信 `定时跑完了`（跟 `done` / `error` 开关）。界面：表单加每月 / 每 N 天与权限两档、列表标「全放行」、执行记录按时段 × 状态筛。协议：`ScheduleSpecSchema` 多两种、`permission` 进请求与摘要。
+- **Impact**: 纯新增。「全放行」的定时会话不问人也不拦——表单上如实写着；缺省仍是「拦危险的」。
+- **Verification**: 单元 +7（月 / 每 N 天、按会话定档、三件工具）共 2032 绿；e2e `schedule.spec` 4 条（新增：假 ACP 经真 MCP 网关建一条 → 回话带「暂停」→「定时」里按恢复；每月 / 每 N 天 / 全放行标签 / 状态筛）；acp-agent / permission 14 绿；视觉 10 绿。
+
 ### 2026-08-22 — 定时任务：到点开一段全新会话跑任务说明（协议 7.19，schema v15）
 
 - **Type**: feat

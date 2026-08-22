@@ -46,6 +46,7 @@ import { ScheduleStore } from "../store/schedules.js"
 import { Scheduler, type 完成 as 定时完成 } from "../schedule/scheduler.js"
 import { 下一次 as 计划下一次, 校验计划 } from "../schedule/recurrence.js"
 import type { 定义 as 定时定义, 运行 as 定时运行 } from "../schedule/domain.js"
+import type { 权限档 } from "../policy/permissions.js"
 import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invocation.js"
 import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
@@ -167,6 +168,10 @@ export interface WorkbenchBackendOptions {
   schedules?: ScheduleStore
   /** 定时任务的设置；不给用默认 */
   scheduleConfig?: { 补跑窗口分钟?: number; 最多并发?: number; 超时分钟?: number; 每条留几条记录?: number }
+  /** 给某段会话定权限档（定时任务的会话按定义里存的档走）。不给就都跟全局设置 */
+  设会话权限?: (sessionId: string, 档: 权限档) => void
+  /** 一次定时运行结束了（推微信用）。不给就不推 */
+  定时结束了?: (d: 定时定义, r: 定时运行) => void
   /**
    * 远端连接（②-B · R3）。**名单在库里，谁连着在管理器里。**
    *
@@ -413,7 +418,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, isForeground, askOnce } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, isForeground, askOnce } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1158,6 +1163,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       id: d.id, revision: d.revision, name: d.name, prompt: d.prompt, status: d.status, schedule: d.schedule, agentId: d.agentId,
       ...(d.workspace ? { workspace: d.workspace } : {}), ...(d.connectionId ? { connectionId: d.connectionId } : {}),
       where: d.connectionId ? (服务器名(d.connectionId) ?? d.connectionId) : (d.workspace ?? ""),
+      permission: d.permission,
       createdAt: d.createdAt, updatedAt: d.updatedAt,
       ...(next ? { nextAt: next } : {}), ...(最近 ? { lastRun: 运行摘要(最近) } : {}),
     }
@@ -1172,6 +1178,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const t = (await backend.createTask({ agentId: d.agentId, ...(d.workspace ? { workspace: d.workspace } : {}), ...(d.connectionId ? { connectionId: d.connectionId } : {}) })) as { sessionId?: string }
     const sessionId = t.sessionId
     if (!sessionId) return { status: "failed", error: { code: "no_session", message: "开任务时没有拿到会话" } }
+    // 这段会话按定义里存的档走（门每次调用都问，所以建好会话、写话之前定就来得及）
+    设会话权限?.(sessionId, d.permission)
     projects.setSessionTitle(sessionId, `${d.name} · ${new Date(r.scheduledFor).toLocaleString("zh-CN", { hour12: false })}`)
     const 等结束 = new Promise<定时完成>((resolve) => {
       let 完了 = false
@@ -1210,7 +1218,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     ? new Scheduler({
         store: 定时库,
         now: () => new Date().toISOString(),
-        执行: 定时执行器,
+        执行: async (d, r, signal) => {
+          const 完 = await 定时执行器(d, r, signal)
+          const 结果 = { ...r, status: 完.status, ...(完.summary ? { summary: 完.summary } : {}), ...(完.error ? { error: 完.error } : {}), ...(完.sessionId ? { sessionId: 完.sessionId } : {}) }
+          定时结束了?.(d, 结果)
+          // 推微信：绑了才发；跟「跑完 / 出错」两个开关走
+          void 微信.定时跑完了(d.name, 完.status, 完.summary ?? 完.error?.message, new Date().toLocaleString("zh-CN", { hour12: false })).catch(() => {})
+          return 完
+        },
         补跑窗口毫秒: (定时设置?.补跑窗口分钟 ?? 15) * 60_000,
         最多并发: 定时设置?.最多并发 ?? 2,
         每条留几条记录: 定时设置?.每条留几条记录 ?? 200,
@@ -2897,7 +2912,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
     },
 
-    createSchedule: async ({ name, prompt, schedule, agentId, workspace, connectionId }) => {
+    createSchedule: async ({ name, prompt, schedule, agentId, workspace, connectionId, permission }) => {
       const 库 = 要定时()
       const 毛病 = 校验计划(schedule)
       if (毛病) throw fault("invalid_request", 毛病)
@@ -2907,14 +2922,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const d: 定时定义 = {
         id: `sch-${randomUUID()}`, revision: 1, name: name.trim(), prompt: prompt.trim(), status: "active", schedule, agentId,
         ...(workspace ? { workspace } : {}), ...(connectionId ? { connectionId } : {}),
-        permission: "deny-risky", createdAt: now, updatedAt: now,
+        permission: permission ?? "deny-risky", createdAt: now, updatedAt: now,
       }
       库.put(d)
       void 调度器?.requestPump()
       return 定时摘要(d)
     },
 
-    updateSchedule: async ({ id, name, prompt, schedule, status }) => {
+    updateSchedule: async ({ id, name, prompt, schedule, status, permission }) => {
       const 库 = 要定时()
       const 旧 = 库.get(id)
       if (!旧) throw fault("not_found", `没有这条定时任务：${id}`)
@@ -2926,7 +2941,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const d: 定时定义 = {
         ...旧, revision: 旧.revision + 1, updatedAt: new Date().toISOString(),
         ...(name !== undefined ? { name: name.trim() } : {}), ...(prompt !== undefined ? { prompt: prompt.trim() } : {}),
-        ...(schedule ? { schedule } : {}), ...(status ? { status } : {}),
+        ...(schedule ? { schedule } : {}), ...(status ? { status } : {}), ...(permission ? { permission } : {}),
       }
       库.put(d)
       void 调度器?.requestPump()

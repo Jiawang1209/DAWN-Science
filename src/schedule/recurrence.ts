@@ -14,6 +14,10 @@ export type 计划 =
   | { kind: "daily"; time: string; timeZone: string }
   | { kind: "weekly"; weekdays: 星期[]; time: string; timeZone: string }
   | { kind: "interval"; everyMinutes: number; anchor: string; timeZone: string }
+  /** 每月几号（第二档）。没有那一天的月份跳过 */
+  | { kind: "monthly"; day: number; time: string; timeZone: string }
+  /** 每 N 天（第二档），从 `start`（本地 y-m-d）那天起算 */
+  | { kind: "everyDays"; everyDays: number; time: string; start: string; timeZone: string }
 
 export type 星期 = "MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU"
 const 星期序: 星期[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
@@ -40,6 +44,11 @@ export function 校验计划(p: 计划): string | undefined {
   }
   if (!时间格式.test(p.time)) return `时间要写成 HH:mm（24 小时），给的是 ${p.time}`
   if (p.kind === "weekly" && p.weekdays.length === 0) return "每周至少选一个星期"
+  if (p.kind === "monthly" && (!Number.isInteger(p.day) || p.day < 1 || p.day > 31)) return "每月几号要在 1 到 31 之间"
+  if (p.kind === "everyDays") {
+    if (!Number.isInteger(p.everyDays) || p.everyDays < 1) return "每几天至少 1 天"
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.start)) return `起点要写成 YYYY-MM-DD，给的是 ${p.start}`
+  }
   return undefined
 }
 
@@ -88,16 +97,29 @@ export function 下一次(p: 计划, after: string): string | null {
   }
   const [h, mi] = p.time.split(":").map(Number) as [number, number]
   const 本 = 本地分量(a, p.timeZone)
-  // 从「after 那天」起逐天找第一个严格大于 after 的候选；最多看 8 天（每周至少一天）
-  for (let i = 0; i <= 8; i++) {
+  // 从「after 那天」起逐天找第一个严格大于 after 且合规则的候选；每周最多看 8 天、每月最多 62 天、每 N 天最多 N+1 天
+  const 最多 = p.kind === "monthly" ? 62 : p.kind === "everyDays" ? p.everyDays + 1 : 8
+  for (let i = 0; i <= 最多; i++) {
     const [y, m, d] = 加天(本.y, 本.m, 本.d, i)
+    if (!这天合规则(p, y, m, d)) continue
     const 候选 = 本地时刻转UTC(y, m, d, h, mi, p.timeZone)
     const t = Date.parse(候选)
     if (t <= a) continue
-    if (p.kind === "weekly" && !p.weekdays.includes(本地分量(t, p.timeZone).wd)) continue
     return 候选
   }
   return null
+}
+
+/** 按日期的规则：每天都合；每周看星期；每月看几号；每 N 天看离起点的天数 */
+function 这天合规则(p: 计划, y: number, m: number, d: number): boolean {
+  if (p.kind === "weekly") return p.weekdays.includes(星期序[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]!)
+  if (p.kind === "monthly") return d === p.day
+  if (p.kind === "everyDays") {
+    const [sy, sm, sd] = p.start.split("-").map(Number) as [number, number, number]
+    const 差 = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(sy, sm - 1, sd)) / 一天)
+    return 差 >= 0 && 差 % p.everyDays === 0
+  }
+  return true
 }
 
 /** now 之前（含）最近的一次到期；还没到过回 null */
@@ -112,12 +134,13 @@ export function 最近一次到期(p: 计划, now: string): string | null {
   }
   const [h, mi] = p.time.split(":").map(Number) as [number, number]
   const 本 = 本地分量(n, p.timeZone)
-  for (let i = 0; i <= 8; i++) {
+  const 最多 = p.kind === "monthly" ? 62 : p.kind === "everyDays" ? p.everyDays + 1 : 8
+  for (let i = 0; i <= 最多; i++) {
     const [y, m, d] = 加天(本.y, 本.m, 本.d, -i)
+    if (!这天合规则(p, y, m, d)) continue
     const 候选 = 本地时刻转UTC(y, m, d, h, mi, p.timeZone)
     const t = Date.parse(候选)
     if (t > n) continue
-    if (p.kind === "weekly" && !p.weekdays.includes(本地分量(t, p.timeZone).wd)) continue
     return 候选
   }
   return null

@@ -115,7 +115,11 @@ export const ScheduleSpecSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("daily"), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
   z.object({ kind: z.literal("weekly"), weekdays: z.array(z.enum(["MO", "TU", "WE", "TH", "FR", "SA", "SU"])).min(1), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
   z.object({ kind: z.literal("interval"), everyMinutes: z.int().min(1), anchor: z.string().min(1), timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("monthly"), day: z.int().min(1).max(31), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("everyDays"), everyDays: z.int().min(1), time: 时间HHmm, start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), timeZone: z.string().min(1) }).strict(),
 ])
+/** 工具权限档（与设置里那两档同一口径）。定时任务的会话按它自己存的走 */
+export const PermissionTierSchema = z.enum(["allow-all", "deny-risky"])
 export const ScheduleRunSchema = z
   .object({
     id: z.string(),
@@ -144,6 +148,7 @@ export const ScheduleSummarySchema = z
     connectionId: z.string().optional(),
     /** 服务器的名字（有 connectionId 时）；界面不该自己去查 */
     where: z.string(),
+    permission: PermissionTierSchema,
     createdAt: z.string(),
     updatedAt: z.string(),
     nextAt: z.string().optional(),
@@ -2025,6 +2030,8 @@ export const OPERATIONS = {
         agentId: z.string().min(1),
         workspace: z.string().min(1).optional(),
         connectionId: z.string().min(1).optional(),
+        /** 缺省「拦危险的」——无人值守的边界是收紧的，不是放开的 */
+        permission: PermissionTierSchema.optional(),
       })
       .strict()
       .refine((r) => Boolean(r.workspace) !== Boolean(r.connectionId), { message: "workspace 与 connectionId 要给且只给一个" }),
@@ -2041,6 +2048,7 @@ export const OPERATIONS = {
         prompt: z.string().min(1).optional(),
         schedule: ScheduleSpecSchema.optional(),
         status: z.enum(["active", "paused"]).optional(),
+        permission: PermissionTierSchema.optional(),
       })
       .strict(),
     response: ScheduleSummarySchema,

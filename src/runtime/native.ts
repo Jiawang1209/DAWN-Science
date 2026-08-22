@@ -88,6 +88,8 @@ export interface ToolGateContext {
   workspace: string
   /** 这是不是一台远端机器。**远端跑错的代价可能是别人的**（②-B 计划 §3.2） */
   remote?: boolean
+  /** 哪段会话在调（2026-08-22，定时任务按会话定档） */
+  sessionId?: string
 }
 
 /**
@@ -460,7 +462,7 @@ export class NativeRuntime implements AgentRuntime {
           ctx: unknown,
         ) {
           if (gate) {
-            const reason = gate(name, params, { workspace: cwd, ...(remote ? { remote: true } : {}) })
+            const reason = gate(name, params, { workspace: cwd, sessionId, ...(remote ? { remote: true } : {}) })
             if (reason !== undefined) {
               // **回一条 isError 结果，不要抛异常**——抛异常会中断整轮，
               // 模型学不到「这条被拒了」。Spike A-2 实测确认。

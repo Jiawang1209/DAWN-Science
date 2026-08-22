@@ -67,3 +67,21 @@ describe("校验计划", () => {
     expect(校验计划({ kind: "daily", time: "08:00", timeZone: 沪 })).toBeUndefined()
   })
 })
+
+describe("第二档：每月、每 N 天", () => {
+  it("每月 31 号 08:00：没有 31 号的月份跳过；严格大于 after", () => {
+    const p: 计划 = { kind: "monthly", day: 31, time: "08:00", timeZone: "Asia/Shanghai" }
+    // 2026-09 没有 31 → 10-31
+    expect(下一次(p, "2026-08-31T00:00:00.000Z")).toBe("2026-10-31T00:00:00.000Z")
+    expect(最近一次到期(p, "2026-09-15T00:00:00.000Z")).toBe("2026-08-31T00:00:00.000Z")
+    expect(校验计划({ kind: "monthly", day: 0, time: "08:00", timeZone: "Asia/Shanghai" })).toMatch(/1.*31/)
+  })
+  it("每 3 天 09:00，从起点那天起算", () => {
+    const p: 计划 = { kind: "everyDays", everyDays: 3, time: "09:00", start: "2026-08-22", timeZone: "Asia/Shanghai" }
+    expect(下一次(p, "2026-08-22T00:00:00.000Z")).toBe("2026-08-22T01:00:00.000Z")
+    expect(下一次(p, "2026-08-22T01:00:00.000Z")).toBe("2026-08-25T01:00:00.000Z")
+    expect(最近一次到期(p, "2026-08-24T00:00:00.000Z")).toBe("2026-08-22T01:00:00.000Z")
+    expect(最近一次到期(p, "2026-08-21T00:00:00.000Z")).toBeNull()
+    expect(校验计划({ kind: "everyDays", everyDays: 0, time: "09:00", start: "2026-08-22", timeZone: "Asia/Shanghai" })).toMatch(/天/)
+  })
+})

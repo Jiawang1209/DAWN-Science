@@ -575,6 +575,17 @@ export class WeixinChannel {
     return 同意 ? `好，放行了：${p.title}` : `已拒绝：${p.title}`
   }
 
+  /**
+   * 定时任务跑完了推一句（第二档，2026-08-22）。**跟「跑完通知」同一个开关**（`done` / `error`），
+   * 没绑微信就什么都不发；不看「窗口在前台就不推」——定时的事多半发生在人不在的时候，但在也该知道。
+   */
+  async 定时跑完了(任务名: string, 状态: "succeeded" | "failed" | "cancelled", 摘要: string | undefined, 何时: string): Promise<void> {
+    const n = this.notifySettings()
+    if (状态 === "succeeded" ? !n.done : !n.error) return
+    const 头 = 状态 === "succeeded" ? `⏰ 定时「${任务名}」跑完了（${何时}）` : 状态 === "failed" ? `⏰ 定时「${任务名}」失败了（${何时}）` : `⏰ 定时「${任务名}」取消了（${何时}）`
+    await this.回(摘要 ? `${头}\n${摘要.slice(0, 1500)}` : 头)
+  }
+
   private async 推(text: string, n: NotifySettings): Promise<void> {
     if (n.quietWhenFocused && this.deps.isForeground?.()) return
     await this.回(text)

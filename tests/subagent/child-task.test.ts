@@ -71,6 +71,17 @@ describe("**空输出算失败，不算成功且无内容**", () => {
     expect(!r.ok && r.error).toMatch(/没有|输出/)
   })
 
+  /**
+   * **团队成员例外**（2026-08-22 作者实测定的）：成员常把意见写进文件、最后一句没说话——那是做完了。
+   * 记成完成，但结果里明说「没有文字结果」，下游与队长看到的是实话。
+   */
+  it("成员模式：没文字 = 完成，但结果里明说没有文字结果、要去核文件", async () => {
+    const r = await runChildTask({ ...SPEC, member: { team: "t", name: "审稿", sessionDir: "/x", resume: false } }, fakeSession({ deltas: [] }))
+    expect(r.ok).toBe(true)
+    expect(r.ok && r.output).toMatch(/审稿.*没有给出文字结果/)
+    expect(r.ok && r.output).toMatch(/核对产物/)
+  })
+
   it("只吐了空白也算空", async () => {
     const r = await runChildTask(SPEC, fakeSession({ deltas: ["  ", "\n"] }))
     expect(r.ok).toBe(false)

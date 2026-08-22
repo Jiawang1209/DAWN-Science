@@ -5607,30 +5607,40 @@ pre {
 .recent-list { margin-bottom: var(--dawn-space-2); }
 
 /* ── 团队（team-board，2026-08-22，学自 dsh-agent-teams；坞里一格）────────────────────────
-   按层次：成员（一行：名字 · 人设 · 模型 · 状态）→ 它名下的任务 → 与它有关的消息。每层往右缩一档 */
-.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-3); }
+   按层次：团队头一张卡；**一个成员一张卡**（浅底 + 发丝线 + 小圆角，卡里不再套卡）；
+   任务是卡里的行，消息是左侧一条细线的引用行；共享池 / 队长自己做的各一张、底色再淡一档。
+   在跑的成员卡左缘一条强调色（与会话行「跑着」同一个做法）；已移除的整卡降透明度。
+   作者 2026-08-22 要的：「不同的成分用不同的卡片存起来，这样比较清晰」。 */
+.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .team-empty { padding: var(--dawn-space-3); }
-.team-head { display: flex; flex-direction: column; gap: var(--dawn-space-1); padding-bottom: var(--dawn-space-2); border-bottom: 1px solid var(--dawn-stroke-3); }
+.team-card { background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-2) var(--dawn-space-3); }
+.team-card.pool { background: transparent; }
+.team-card.working { box-shadow: inset 3px 0 0 var(--dawn-accent); }
+.team-card.removed { opacity: 0.55; }
+.team-head { display: flex; flex-direction: column; gap: var(--dawn-space-1); }
 .team-head-row { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
 .team-name { margin: 0; font-size: 15px; font-weight: 600; flex: 1 1 auto; min-width: 0; }
 .team-progress { color: var(--dawn-text-3); font-size: 12px; white-space: nowrap; }
 .team-goal { margin: 0; color: var(--dawn-text-2); }
-.team-group-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; min-width: 0; }
+.team-bar { display: flex; height: 3px; margin-top: var(--dawn-space-1); border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); overflow: hidden; }
+.team-bar-done { background: var(--dawn-success); }
+.team-bar-dead { background: var(--dawn-text-4); }
+.team-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-1) var(--dawn-space-2); width: 100%; text-align: left; min-width: 0; }
 .team-group-head .twisty { flex: 0 0 auto; align-self: center; }
 .team-group-name { font-weight: 600; flex: 0 0 auto; }
 .team-member-agent { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); }
-.team-member-model { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); padding: 0 var(--dawn-space-1); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
+.team-member-model { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); padding: 0 var(--dawn-space-1); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); white-space: nowrap; }
 .team-member-status { margin-left: auto; font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; }
 .team-member-status.working { color: var(--dawn-accent); }
-.team-group.removed .team-group-head { opacity: 0.55; }
-.team-group-body { padding: var(--dawn-space-1) 0 var(--dawn-space-2) var(--dawn-space-4); display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.team-group-body { padding: var(--dawn-space-1) 0 0 var(--dawn-space-4); display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .team-member-role { margin: 0; color: var(--dawn-text-3); font-size: 12px; }
 .team-tasks, .team-mail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-1); }
 .team-none { margin: 0; }
 .team-task { min-width: 0; }
 .team-task-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; }
 .team-task-id { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); font-size: 12px; }
-.team-task-subject { font-weight: 500; }
+/* 标题跟着 id 走、能缩：否则窄列里 id 自己占一行、标题掉到第二行 */
+.team-task-subject { font-weight: 500; flex: 1 1 12ch; min-width: 0; }
 .team-task-status { font-size: 12px; color: var(--dawn-text-3); }
 .team-task-status.in_progress, .team-task-status.claimed { color: var(--dawn-accent); }
 .team-task-status.completed { color: var(--dawn-success); }

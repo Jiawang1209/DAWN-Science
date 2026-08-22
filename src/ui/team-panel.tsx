@@ -41,17 +41,22 @@ export function TeamPanel() {
   const team = useStore($团队)
   const [收起的, 设收起的] = useState<ReadonlySet<string>>(new Set())
   const [开着的任务, 设开着的任务] = useState<string | undefined>(undefined)
+  // 结束了的团队：成员卡默认收起（回看历史不用翻）；人点开哪张算哪张
+  const [展开的, 设展开的] = useState<ReadonlySet<string>>(new Set())
   if (!team) return <p className="hint team-empty">{t("这段会话没有团队。对模型说「用团队分工做…」，或在输入框打 /team。")}</p>
 
   const 完成 = team.tasks.filter((x) => x.status === "completed").length
   const 终 = team.tasks.filter((x) => ["completed", "failed", "cancelled"].includes(x.status)).length
-  const 切 = (k: string) =>
-    设收起的((前) => {
+  const 切 = (k: string) => {
+    const 翻 = (前: ReadonlySet<string>) => {
       const 新 = new Set(前)
       if (新.has(k)) 新.delete(k)
       else 新.add(k)
       return 新
-    })
+    }
+    if (team.finishedAt) 设展开的(翻)
+    else 设收起的(翻)
+  }
 
   // 分组：成员 → 它名下的任务 + 与它有关的消息；队长；共享池
   const 组: { key: string; 成员?: 成员; 题: string; 任务: 任务[]; 消息: 消息[] }[] = team.members.map((m) => ({
@@ -68,7 +73,7 @@ export function TeamPanel() {
 
   return (
     <div className="team-panel" data-team={team.id} data-finished={team.finishedAt ? "1" : "0"}>
-      <header className="team-head">
+      <header className={`team-head team-card${team.finishedAt ? " finished" : ""}`}>
         <div className="team-head-row">
           <h2 className="team-name" data-authored="1">{team.name}</h2>
           <span className="team-progress">
@@ -77,15 +82,20 @@ export function TeamPanel() {
             {team.finishedAt ? ` · ${t("已结束")}` : ""}
           </span>
         </div>
-        <p className="team-goal" data-authored="1">{team.goal}</p>
+        {team.finishedAt ? null : <p className="team-goal" data-authored="1">{team.goal}</p>}
+        {/* 一条细进度：完成的绿、失败/取消的灰、还没的空 */}
+        <div className="team-bar" role="progressbar" aria-valuemin={0} aria-valuemax={team.tasks.length} aria-valuenow={完成} aria-label={t("任务进度")}>
+          <span className="team-bar-done" style={{ width: `${team.tasks.length ? (完成 / team.tasks.length) * 100 : 0}%` }} />
+          <span className="team-bar-dead" style={{ width: `${team.tasks.length ? ((终 - 完成) / team.tasks.length) * 100 : 0}%` }} />
+        </div>
       </header>
 
       {组.map((g) => {
-        const 收 = 收起的.has(g.key)
+        const 收 = team.finishedAt ? !展开的.has(g.key) : 收起的.has(g.key)
         const m = g.成员
         const 手上 = m ? g.任务.find((x) => x.status === "claimed" || x.status === "in_progress") : undefined
         return (
-          <section key={g.key} className={`team-group${m ? ` ${m.status}` : ""}`} data-member={g.key} {...(m ? { "data-status": m.status } : {})}>
+          <section key={g.key} className={`team-group team-card${m ? ` ${m.status}` : " pool"}`} data-member={g.key} {...(m ? { "data-status": m.status } : {})}>
             <Button variant="ghost" size="inline" className="team-group-head" aria-expanded={!收} onClick={() => 切(g.key)}>
               <三角图标 className={`twisty${收 ? "" : " open"}`} />
               <span className="team-group-name" data-authored="1">{g.题}</span>

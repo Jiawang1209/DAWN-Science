@@ -990,6 +990,7 @@ export const EN: Readonly<Record<string, string>> = {
   "共享池（还没人领）": "Shared pool (unclaimed)",
   "{0} 项": "{0} tasks",
   "没有任务": "No tasks",
+  "任务进度": "Task progress",
   "→ {0}": "→ {0}",
   "← {0}": "← {0}",
   // 子 agent 名册（agents-roster，2026-08-22）

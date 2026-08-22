@@ -26,7 +26,7 @@ import { setValue } from "./identity.js"
  * 留着一个没人设的取值，就是在类型上说一句不成立的话——
  * 下一个读这行的人（包括几个月后的我）会以为还有那一屏。
  */
-export type View = "conversation" | "settings" | "skills" | "subagents" | "plugins" | "mcp" | "assistant" | "archived"
+export type View = "conversation" | "settings" | "skills" | "subagents" | "plugins" | "mcp" | "assistant" | "archived" | "schedule"
 
 export const $view = atom<View>("conversation")
 

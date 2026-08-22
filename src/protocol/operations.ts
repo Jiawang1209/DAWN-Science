@@ -108,6 +108,49 @@ const ByProject = z.object({ projectId: z.string().min(1) })
 /** 写权持有者。与 ①-A 的 `Holder` 同构。 */
 const HolderSchema = z.enum(["engine", "user"])
 
+/* ── 定时任务的形状（7.19） ── */
+const 时间HHmm = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
+export const ScheduleSpecSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("once"), at: z.string().min(1), timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("daily"), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("weekly"), weekdays: z.array(z.enum(["MO", "TU", "WE", "TH", "FR", "SA", "SU"])).min(1), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("interval"), everyMinutes: z.int().min(1), anchor: z.string().min(1), timeZone: z.string().min(1) }).strict(),
+])
+export const ScheduleRunSchema = z
+  .object({
+    id: z.string(),
+    scheduleId: z.string(),
+    revision: z.int(),
+    trigger: z.enum(["schedule", "manual"]),
+    scheduledFor: z.string(),
+    status: z.enum(["queued", "running", "succeeded", "failed", "skipped", "cancelled"]),
+    sessionId: z.string().optional(),
+    startedAt: z.string().optional(),
+    finishedAt: z.string().optional(),
+    summary: z.string().optional(),
+    error: z.object({ code: z.string(), message: z.string() }).strict().optional(),
+  })
+  .strict()
+export const ScheduleSummarySchema = z
+  .object({
+    id: z.string(),
+    revision: z.int(),
+    name: z.string(),
+    prompt: z.string(),
+    status: z.enum(["active", "paused"]),
+    schedule: ScheduleSpecSchema,
+    agentId: z.string(),
+    workspace: z.string().optional(),
+    connectionId: z.string().optional(),
+    /** 服务器的名字（有 connectionId 时）；界面不该自己去查 */
+    where: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    nextAt: z.string().optional(),
+    lastRun: ScheduleRunSchema.optional(),
+  })
+  .strict()
+
 // ── 操作注册表 ─────────────────────────────────────────────────────────────
 
 export interface OperationDef {
@@ -1956,6 +1999,72 @@ export const OPERATIONS = {
      */
     response: z.object({ ledgerKept: z.int().min(0), transcriptTrashed: z.boolean(), problem: z.string().optional() }).strict(),
     mutating: true,
+  },
+
+  /* ── 定时任务（7.19，schedule，学自 dsh-automation） ─────────────────────── */
+
+  listSchedules: {
+    request: Empty,
+    response: z
+      .object({
+        schedules: z.array(ScheduleSummarySchema),
+        /** DAWN 关着的时候不跑——界面要常驻说这句；这里顺便把「下一次是什么时候」给出来 */
+        nextDueAt: z.string().optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 建一条。`workspace`（本机项目）与 `connectionId`（服务器）二选一 */
+  createSchedule: {
+    request: z
+      .object({
+        name: z.string().min(1),
+        prompt: z.string().min(1),
+        schedule: ScheduleSpecSchema,
+        agentId: z.string().min(1),
+        workspace: z.string().min(1).optional(),
+        connectionId: z.string().min(1).optional(),
+      })
+      .strict()
+      .refine((r) => Boolean(r.workspace) !== Boolean(r.connectionId), { message: "workspace 与 connectionId 要给且只给一个" }),
+    response: ScheduleSummarySchema,
+    mutating: true,
+  },
+
+  /** 改名字 / 说明 / 计划 / 暂停恢复。**改了版本号 +1**，已排队的那次按旧的跑 */
+  updateSchedule: {
+    request: z
+      .object({
+        id: z.string().min(1),
+        name: z.string().min(1).optional(),
+        prompt: z.string().min(1).optional(),
+        schedule: ScheduleSpecSchema.optional(),
+        status: z.enum(["active", "paused"]).optional(),
+      })
+      .strict(),
+    response: ScheduleSummarySchema,
+    mutating: true,
+  },
+
+  /** 删定义；**运行记录留着** */
+  deleteSchedule: {
+    request: z.object({ id: z.string().min(1) }).strict(),
+    response: z.object({}).strict(),
+    mutating: true,
+  },
+
+  /** 立即跑一次：不管暂停、不管到期，照样全新会话 */
+  runScheduleNow: {
+    request: z.object({ id: z.string().min(1) }).strict(),
+    response: ScheduleRunSchema,
+    mutating: true,
+  },
+
+  listScheduleRuns: {
+    request: z.object({ id: z.string().min(1).optional(), limit: z.int().min(1).max(500).default(100) }).strict(),
+    response: z.object({ runs: z.array(ScheduleRunSchema) }).strict(),
+    mutating: false,
   },
 
   /* ── 归档（7.18，session-archive，学自 dsh-archive-manager）：藏，不是删 ── */

@@ -42,6 +42,10 @@ import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
+import { ScheduleStore } from "../store/schedules.js"
+import { Scheduler, type 完成 as 定时完成 } from "../schedule/scheduler.js"
+import { 下一次 as 计划下一次, 校验计划 } from "../schedule/recurrence.js"
+import type { 定义 as 定时定义, 运行 as 定时运行 } from "../schedule/domain.js"
 import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invocation.js"
 import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
@@ -159,6 +163,10 @@ export interface WorkbenchBackendOptions {
    * 不返回空名单假装「你还没建过任务」。
    */
   tasks?: TaskStore
+  /** 定时任务的两张表（7.19）。**不给就没有定时**——界面如实说「本次运行没有装配」 */
+  schedules?: ScheduleStore
+  /** 定时任务的设置；不给用默认 */
+  scheduleConfig?: { 补跑窗口分钟?: number; 最多并发?: number; 超时分钟?: number; 每条留几条记录?: number }
   /**
    * 远端连接（②-B · R3）。**名单在库里，谁连着在管理器里。**
    *
@@ -405,7 +413,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, isForeground, askOnce } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, isForeground, askOnce } = opts
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -1132,6 +1140,83 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     }
     return (await 读本地(拼路径(rec.workspace, p), "utf8")).slice(0, 200_000)
   }
+
+  /* ── 定时任务（7.19）：执行器 = 开一段任务 → 写任务说明 → 等 agent 这一轮结束 ── */
+  const 要定时 = (): ScheduleStore => {
+    if (!定时库) throw fault("internal_error", "本次运行没有装配定时任务")
+    return 定时库
+  }
+  const 运行摘要 = (r: 定时运行) => ({
+    id: r.id, scheduleId: r.scheduleId, revision: r.revision, trigger: r.trigger, scheduledFor: r.scheduledFor, status: r.status,
+    ...(r.sessionId ? { sessionId: r.sessionId } : {}), ...(r.startedAt ? { startedAt: r.startedAt } : {}), ...(r.finishedAt ? { finishedAt: r.finishedAt } : {}),
+    ...(r.summary ? { summary: r.summary } : {}), ...(r.error ? { error: r.error } : {}),
+  })
+  const 定时摘要 = (d: 定时定义) => {
+    const 最近 = 定时库?.runs(d.id, 1)[0]
+    const next = d.status === "active" ? 计划下一次(d.schedule, new Date().toISOString()) : null
+    return {
+      id: d.id, revision: d.revision, name: d.name, prompt: d.prompt, status: d.status, schedule: d.schedule, agentId: d.agentId,
+      ...(d.workspace ? { workspace: d.workspace } : {}), ...(d.connectionId ? { connectionId: d.connectionId } : {}),
+      where: d.connectionId ? (服务器名(d.connectionId) ?? d.connectionId) : (d.workspace ?? ""),
+      createdAt: d.createdAt, updatedAt: d.updatedAt,
+      ...(next ? { nextAt: next } : {}), ...(最近 ? { lastRun: 运行摘要(最近) } : {}),
+    }
+  }
+  /**
+   * 跑一次。**全新会话、不继承任何对话**（照 dsh-automation）：`createTask` 开一段，标题「<任务名> · <时刻>」，
+   * 以用户身份写进任务说明，等 agent 这一轮的 `final` 那条——那段文字就是摘要。
+   * 会话退出 / 超时 / 被取消都各自落一个码。无人值守，权限用设置里的档，问不到人的一律拒（门本来就是这么做的）。
+   */
+  const 定时执行器 = async (d: 定时定义, r: 定时运行, signal: AbortSignal): Promise<定时完成> => {
+    const 超时毫秒 = (定时设置?.超时分钟 ?? 60) * 60_000
+    const t = (await backend.createTask({ agentId: d.agentId, ...(d.workspace ? { workspace: d.workspace } : {}), ...(d.connectionId ? { connectionId: d.connectionId } : {}) })) as { sessionId?: string }
+    const sessionId = t.sessionId
+    if (!sessionId) return { status: "failed", error: { code: "no_session", message: "开任务时没有拿到会话" } }
+    projects.setSessionTitle(sessionId, `${d.name} · ${new Date(r.scheduledFor).toLocaleString("zh-CN", { hour12: false })}`)
+    const 等结束 = new Promise<定时完成>((resolve) => {
+      let 完了 = false
+      const 收 = (v: 定时完成) => {
+        if (完了) return
+        完了 = true
+        clearTimeout(计时)
+        退订()
+        signal.removeEventListener("abort", 取消)
+        resolve({ ...v, sessionId })
+      }
+      const 退订 = events.onAnyUpdate((u) => {
+        if (u.sessionId !== sessionId) return
+        if (u.type === "state" && u.state === "exited") 收({ status: "failed", error: { code: "session_exited", message: `会话在这一轮结束前退出了（exit ${u.exitCode ?? "?"}）` } })
+        if (u.type === "item" && u.item.type === "turn" && u.item.who === "agent" && u.item.final) 收({ status: "succeeded", summary: u.item.text.trim().slice(0, 2000) })
+      })
+      const 计时 = setTimeout(() => {
+        void sessions.abort(sessionId).catch(() => {})
+        收({ status: "failed", error: { code: "timeout", message: `跑了 ${定时设置?.超时分钟 ?? 60} 分钟还没结束，停了` } })
+      }, 超时毫秒)
+      const 取消 = () => {
+        void sessions.abort(sessionId).catch(() => {})
+        收({ status: "cancelled", error: { code: "cancelled", message: "DAWN 停了，这一次取消" } })
+      }
+      signal.addEventListener("abort", 取消)
+    })
+    try {
+      sessions.leases.acquire(sessionId, "user")
+      await backend.writeToSession({ sessionId, data: r.prompt, as: "user" })
+    } catch (e) {
+      return { status: "failed", sessionId, error: { code: "write_failed", message: e instanceof Error ? e.message : String(e) } }
+    }
+    return 等结束
+  }
+  const 调度器 = 定时库
+    ? new Scheduler({
+        store: 定时库,
+        now: () => new Date().toISOString(),
+        执行: 定时执行器,
+        补跑窗口毫秒: (定时设置?.补跑窗口分钟 ?? 15) * 60_000,
+        最多并发: 定时设置?.最多并发 ?? 2,
+        每条留几条记录: 定时设置?.每条留几条记录 ?? 200,
+        log: (m) => console.error(`[定时] ${m}`),
+      })
+    : undefined
 
   const backend: WorkbenchBackend = {
     listProjects: async () => projects.list(),
@@ -2801,6 +2886,69 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     deleteSession: async ({ sessionId }) => 删一个会话(sessionId),
 
+    /* ── 定时任务（7.19，schedule，学自 dsh-automation） ── */
+
+    listSchedules: async () => {
+      const 库 = 要定时()
+      const now = new Date().toISOString()
+      return {
+        schedules: 库.list().map(定时摘要),
+        ...(调度器 ? (() => { const n = 调度器.下一次到期(now); return n ? { nextDueAt: n } : {} })() : {}),
+      }
+    },
+
+    createSchedule: async ({ name, prompt, schedule, agentId, workspace, connectionId }) => {
+      const 库 = 要定时()
+      const 毛病 = 校验计划(schedule)
+      if (毛病) throw fault("invalid_request", 毛病)
+      if (!registry.agents[agentId]) throw fault("invalid_request", `配置里没有叫「${agentId}」的 agent`)
+      if (connectionId && !远端().store.get(connectionId)) throw fault("not_found", `没有这台服务器：${connectionId}`)
+      const now = new Date().toISOString()
+      const d: 定时定义 = {
+        id: `sch-${randomUUID()}`, revision: 1, name: name.trim(), prompt: prompt.trim(), status: "active", schedule, agentId,
+        ...(workspace ? { workspace } : {}), ...(connectionId ? { connectionId } : {}),
+        permission: "deny-risky", createdAt: now, updatedAt: now,
+      }
+      库.put(d)
+      void 调度器?.requestPump()
+      return 定时摘要(d)
+    },
+
+    updateSchedule: async ({ id, name, prompt, schedule, status }) => {
+      const 库 = 要定时()
+      const 旧 = 库.get(id)
+      if (!旧) throw fault("not_found", `没有这条定时任务：${id}`)
+      if (schedule) {
+        const 毛病 = 校验计划(schedule)
+        if (毛病) throw fault("invalid_request", 毛病)
+      }
+      // **版本号 +1、updatedAt 往前**：已排队的那次按旧的跑；改之前的到期也不再认领
+      const d: 定时定义 = {
+        ...旧, revision: 旧.revision + 1, updatedAt: new Date().toISOString(),
+        ...(name !== undefined ? { name: name.trim() } : {}), ...(prompt !== undefined ? { prompt: prompt.trim() } : {}),
+        ...(schedule ? { schedule } : {}), ...(status ? { status } : {}),
+      }
+      库.put(d)
+      void 调度器?.requestPump()
+      return 定时摘要(d)
+    },
+
+    deleteSchedule: async ({ id }) => {
+      const 库 = 要定时()
+      if (!库.delete(id)) throw fault("not_found", `没有这条定时任务：${id}`)
+      void 调度器?.requestPump()
+      return {}
+    },
+
+    runScheduleNow: async ({ id }) => {
+      要定时()
+      if (!调度器) throw fault("internal_error", "本次运行没有装配调度器")
+      const r = await 调度器.立即运行(id).catch((e: unknown) => { throw fault("not_found", e instanceof Error ? e.message : String(e)) })
+      return 运行摘要(r)
+    },
+
+    listScheduleRuns: async ({ id, limit }) => ({ runs: 要定时().runs(id, limit).map(运行摘要) }),
+
     /* ── 归档（7.18） ── */
 
     setSessionArchived: async ({ sessionId, archived }) => {
@@ -2991,5 +3139,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
   // 上次绑过的话，启动就开始听
   微信.start()
+  // 定时：收拾上次没跑完的，然后按下一次到期设 timer
+  调度器?.start()
   return backend
 }

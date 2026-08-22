@@ -41,6 +41,7 @@ import { SessionTranscripts } from "../workbench/events.js"
 import { Client as SshClient } from "ssh2"
 import { ConnectionStore } from "../store/connections.js"
 import { TaskStore } from "../store/tasks.js"
+import { ScheduleStore } from "../store/schedules.js"
 import { RemoteConnections } from "../remote/connections.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
 import type { RemoteState, SshClientLike } from "../remote/ssh.js"
@@ -667,6 +668,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
     skills: 技能位置,
     tasks: new TaskStore(db),
+    schedules: new ScheduleStore(db),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,

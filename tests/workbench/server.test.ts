@@ -143,6 +143,12 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     setSessionArchived: async () => ({}),
     listArchivedSessions: async () => ({ sessions: [] }),
     deleteArchivedSessions: async () => ({ deleted: 0, transcriptsTrashed: 0, problems: [] }),
+    listSchedules: async () => ({ schedules: [] }),
+    createSchedule: async () => { throw new Error("stub") },
+    updateSchedule: async () => { throw new Error("stub") },
+    deleteSchedule: async () => ({}),
+    runScheduleNow: async () => { throw new Error("stub") },
+    listScheduleRuns: async () => ({ runs: [] }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

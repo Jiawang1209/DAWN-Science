@@ -81,13 +81,13 @@ test("**往右拖变宽，往左拖变窄**", async ({ dawn }) => {
   await 等宽(page).toBe(起宽 + 60)
   const 宽了 = 起宽 + 60
 
-  // 往左 120
+  // 往左 80（默认 224 起：+60 − 80 = 204，仍在 `SIDEBAR_MIN` 200 之上；此前是 −120，那是默认 264 时的数）
   const box2 = (await sash.boundingBox())!
   await page.mouse.move(box2.x + box2.width / 2, box2.y + 200)
   await page.mouse.down()
-  await page.mouse.move(box2.x + box2.width / 2 - 120, box2.y + 200, { steps: 10 })
+  await page.mouse.move(box2.x + box2.width / 2 - 80, box2.y + 200, { steps: 10 })
   await page.mouse.up()
-  await 等宽(page).toBe(宽了 - 120)
+  await 等宽(page).toBe(宽了 - 80)
 })
 
 /**

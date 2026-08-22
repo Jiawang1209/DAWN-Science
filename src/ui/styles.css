@@ -1167,7 +1167,7 @@ pre {
  * 此前三个右缘：「多选」到 240、会话行的 ⋯ 到 256、项目行的 ＋/删到 264——各自差十几像素，一眼就是歪的。
  * 现在项目行与会话行都留 24px 右内距，与「多选」那颗（分区标题内距 12 + 自身）对齐到同一条线。
  */
-.proj-head { display: flex; align-items: center; padding-right: var(--dawn-space-6); }
+.proj-head { display: flex; align-items: center; padding-right: var(--dawn-space-2); }
 .proj-head > .row { flex: 1; min-width: 0; }
 /* 展开的项目：**它的会话嵌在下面**，缩进一档表示归属 */
 .proj-sessions { padding-left: var(--dawn-space-3); }
@@ -2548,13 +2548,16 @@ pre {
   display: flex;
   align-items: center;
   gap: 2px;
-  /* 与项目行的 ＋ 同一条右缘（见 `.proj-head`） */
-  padding-right: var(--dawn-space-6);
+  /* 与项目行的 ＋ 同一条右缘（见 `.proj-head`）：⋯ 的右缘 = 侧栏右缘 − 8 */
+  padding-right: var(--dawn-space-2);
 }
 
 .sess-item > .row {
   flex: 1 1 auto;
   min-width: 0;
+  /* 时间那一列要落在侧栏右缘 − 36（作者定的 188 @ 224）：⋯ 占 26 + 行尾 8 + 2 gap = 36，行自己的右内距与右外距都得是 0 */
+  padding-right: 0;
+  margin-right: 0;
 }
 
 .row-kill {
@@ -2995,7 +2998,8 @@ pre {
 .remote-row {
   width: calc(100% - var(--dawn-space-3) - var(--dawn-row-tail));
   margin: 0 var(--dawn-row-tail) 0 var(--dawn-space-3);
-  padding: 5px var(--dawn-space-3);
+  /* 右内距 0：会话行（`.sess-item > .row`）右内距是 0，状态词才与时间那一列同线（188 @ 224） */
+  padding: 5px 0 5px var(--dawn-space-3);
   border-radius: var(--dawn-radius-row);
   /* 与 `.sidebar .row` 同一档字号：13 与 14 摞在一列里就是两种密度 */
   font-size: 14px;
@@ -3579,7 +3583,7 @@ pre {
  *   标题占固定宽（「服务器」三个字是最宽的），计数才能落在同一条竖线上。
  *   作者先说「靠右 18px」，随即更正为「靠左边，而不是靠右边」。
  */
-.side-bulk { margin-left: auto; font-weight: 400; margin-right: 52px; }
+.side-bulk { margin-left: auto; font-weight: 400; margin-right: 12px; }
 .side-section-title { display: inline-block; min-width: 3em; }
 /* 两个类名：`.side-count` 那条 `margin-left: auto` 写在后面，单类名压不过它 */
 .side-section .side-section-count { margin-left: var(--dawn-space-1); flex: 0 0 auto; }
@@ -3615,7 +3619,7 @@ pre {
 }
 /* 固定入口行没有尾部按钮：留出会话行「⋯」那一段加行的右内距（量出来是 52px），数字右缘才与时间那一列同线。
    2026-08-22 晚：会话行右内距 8 → 24（收尾那一列统一到「多选」的右缘），这里跟着 36 → 52 */
-.side-action .side-count { margin-right: 52px; }
+.side-action .side-count { margin-right: 12px; }
 /* 远端那一行尾部是三角（1em 宽）。数字仍落在 188 那条线上，但三角**紧贴数字**——
    2026-08-22 作者：「折叠和个数有很大的 gap，必须缩小点」。于是空留在三角右边：52 − 三角宽 − 4 */
 /* 「远端服务器」那一行（2026-08-22 作者给的数）：数字到三角盒 10px，三角到侧栏右边 10px。
@@ -3626,7 +3630,7 @@ pre {
 .remote-head { width: calc(100% - var(--dawn-space-3) - 11px); margin-right: 11px; padding-right: 0; } /* 同上，量出来 9 才是 10 */
 .remote-head .side-count + .caret { margin-right: 0; }
 /* 服务器收纳里那台机器的标题行（`ug2478@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
-.side-subhead .side-count { margin-right: 27px; }
+.side-subhead .side-count { margin-right: 11px; }
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
@@ -4146,7 +4150,7 @@ pre {
   display: flex;
   align-items: center;
   gap: var(--dawn-space-1);
-  padding-right: calc(var(--dawn-space-3) * 2);
+  padding-right: 0;
 }
 
 .side-subhead-row .side-subhead {

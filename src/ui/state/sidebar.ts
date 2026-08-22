@@ -38,7 +38,7 @@ export const SIDEBAR_WIDTH_KEY = "dawn.global.sidebar-width"
 export const SIDEBAR_COLLAPSED_KEY = "dawn.global.sidebar-collapsed"
 
 /** 实测 WorkBuddy 的侧栏是 264px，我们的令牌本来就是这个数 */
-export const SIDEBAR_DEFAULT = 264
+export const SIDEBAR_DEFAULT = 224 // 2026-08-22 作者定的（此前照 WorkBuddy 的 264）：数字列 188 + 10 + 三角 16 + 10
 /** 再窄，「会话 12」这种分区标题就开始被挤 */
 export const SIDEBAR_MIN = 200
 /** 再宽，正文栏就低于 `.body` 里那个 `minmax(420px, 1fr)` 的承诺 */

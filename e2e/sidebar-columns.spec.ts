@@ -48,8 +48,8 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   expect([...new Set(分区数)], `分区计数的左缘不在一列：${分区数}`).toHaveLength(1)
 
   const 固定入口 = await 右缘(".side-action .side-count")
-  // 「远端服务器」那一行的数不在这一列：作者 2026-08-22 给的是两个数——数字到三角盒 10、三角到侧栏右边 10，
-  // 这两个数定下来，那个数就只能跟着三角走
+  // 「远端服务器」那一行：数字在 188 那条线上，三角到数字 10、三角到侧栏右边 10——作者定的三个数，
+  // 侧栏默认宽度 224 就是这么来的（188 + 10 + 16 + 10）
   const 远端几何 = await page.evaluate(() => {
     const c = document.querySelector(".remote-head .side-count")!.getBoundingClientRect()
     const k = document.querySelector(".remote-head .caret")!.getBoundingClientRect()
@@ -57,7 +57,7 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
     return { 数字到三角: Math.round(k.left - c.right), 三角到侧栏右边: Math.round(s.right - k.right) }
   })
   expect(远端几何).toEqual({ 数字到三角: 10, 三角到侧栏右边: 10 })
-  const 远端: number[] = []
+  const 远端 = await 右缘(".remote-head .side-count")
   const 机器 = await 右缘(".side-subhead .side-count")
   const 时间 = await 右缘(".sess-when")
   expect(固定入口.length, "Skills / 子 Agent / 已归档 的数没找到").toBeGreaterThanOrEqual(3)

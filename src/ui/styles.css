@@ -918,7 +918,8 @@ pre {
   /* 与卡内不同的一种底色——「用不同颜色进行区分」是作者的原话；取侧栏那一档灰，整个壳里只有这一种「次一级的面」 */
   background: var(--dawn-surface-sidebar);
 }
-.composer-footer > .attach { flex: 0 0 auto; white-space: nowrap; }
+.composer-footer > .attach,
+.composer-footer .dock-toggle { flex: 0 0 auto; white-space: nowrap; }
 .composer-footer .ws-chip,
 .composer-footer .ws-entry { min-width: 0; }
 /* 前三样说「带什么、在哪跑」，权限说「怎么改」——后者靠右，与前者分开 */
@@ -3607,6 +3608,8 @@ pre {
 .side-action .side-count { margin-right: 52px; }
 /* 远端那一行尾部是三角（1em 宽）：数字与三角之间留的量 = 52 − 三角宽 */
 .remote-head .side-count { margin-right: 30px; }
+/* 服务器收纳里那台机器的标题行（`ug2478@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
+.side-subhead .side-count { margin-right: 27px; }
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
@@ -5269,20 +5272,11 @@ pre {
 /* 按钮文字不许竖排；那行挤了就让说明文字省略，不让按钮变形 */
 .enhance-control .btn { white-space: nowrap; flex: 0 0 auto; }
 .enhance-main.busy { color: var(--dawn-text-2); }
-/* 小箭头紧贴「增强」：它是同一颗按钮的另一半，不是另一个控件 */
+/* 小箭头紧贴「优化输入」：它是同一颗按钮的另一半，不是另一个控件 */
 .enhance-mode { margin-left: -6px; color: var(--dawn-text-3); }
 .enhance-mode svg { width: 12px; height: 12px; }
 .enhance-undo { color: var(--dawn-text-2); }
-.enhance-note {
-  margin-left: var(--dawn-space-2);
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 0 1 auto;
-  max-width: 18rem;
-}
+/* `.enhance-note` 撤了（2026-08-22）：「先写点什么」那句不再常驻，理由进了 aria-label。没有调用点的样式不留 */
 .enhance-menu { left: 0; right: auto; min-width: 18rem; }
 .enhance-menu .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .enhance-menu .sub { color: var(--dawn-text-3); font-size: 12px; }

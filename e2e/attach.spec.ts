@@ -578,12 +578,12 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
  * > *「把输入文件、选择文件夹、prompt 增强放入对话框整体的下面，用不同颜色进行区分，学习一下 workbuddy」*
  *
  * 盯四件，都是几何事实：
- *   ① 卡内那一行：终端在左、模型与发送在右，中间一格空档分开，**一行**；
- *   ② 附栏在卡内那一行**下面**，上传 / 目录 / 增强在那里，也是**一行**；
+ *   ① 卡内那一行：只有右边的模型与发送（2026-08-22 作者又把终端也挪下去了），**一行**；
+ *   ② 附栏在卡内那一行**下面**，上传 / 目录 / 终端 / 优化输入在那里，也是**一行**；
  *   ③ 附栏的底色与卡内不同——「不同颜色区分」是作者的原话；
  *   ④ 那几颗都带图标也都带字——本项目为「看不见的能力等于不存在」栽过两次。
  */
-test("**输入卡：卡内一行（终端 | 模型 · 发送），卡底一条附栏（上传 · 目录 · 增强）**", async ({ dawn }) => {
+test("**输入卡：卡内一行（模型 · 发送），卡底一条附栏（上传 · 目录 · 终端 · 优化输入）**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
@@ -608,15 +608,12 @@ test("**输入卡：卡内一行（终端 | 模型 · 发送），卡底一条�
   const 行 = await 量(".composer-controls")
   const 栏 = await 量(".composer-footer")
 
-  // ① 卡内那一行：一行，终端 | 空档 | 模型 · 发送
+  // ① 卡内那一行：一行，空档 | 模型 · 发送——右边那组贴右
   expect(行.行高, `卡内那一行折了（${行.行高}px）`).toBeLessThanOrEqual(40)
   const 行中线 = 行.格.filter((g) => g.类 !== "composer-gap").map((g) => g.中)
   expect(Math.max(...行中线) - Math.min(...行中线)).toBeLessThanOrEqual(2)
-  const 终端 = 行.格.find((g) => g.字 === "终端")!
   const 空档 = 行.格.find((g) => g.类 === "composer-gap")!
   const 发送 = 行.格[行.格.length - 1]!
-  expect(终端, "卡内那一行上没有「终端」").toBeTruthy()
-  expect(终端.右).toBeLessThanOrEqual(空档.左 + 1)
   expect(发送.左).toBeGreaterThanOrEqual(空档.右 - 1)
 
   // ② 附栏在下面、一行，上传 / 目录 / 增强都在那里
@@ -624,12 +621,14 @@ test("**输入卡：卡内一行（终端 | 模型 · 发送），卡底一条�
   expect(栏.行高, `附栏折了（${栏.行高}px）`).toBeLessThanOrEqual(40)
   const 上传 = 栏.格.find((g) => g.字.includes("上传文件"))!
   const 目录 = 栏.格.find((g) => g.字.includes("选择工作目录") || g.类.startsWith("ws-"))!
-  const 增强 = 栏.格.find((g) => g.字.includes("增强"))!
-  for (const [名, g] of Object.entries({ 上传, 目录, 增强 })) expect(g, `附栏上没有「${名}」`).toBeTruthy()
+  const 终端 = 栏.格.find((g) => g.字 === "终端")!
+  const 优化 = 栏.格.find((g) => g.字.includes("优化输入"))!
+  for (const [名, g] of Object.entries({ 上传, 目录, 终端, 优化 })) expect(g, `附栏上没有「${名}」`).toBeTruthy()
   expect(上传.左).toBeLessThan(目录.左)
-  expect(目录.左).toBeLessThan(增强.左)
+  expect(目录.左).toBeLessThan(终端.左)
+  expect(终端.左).toBeLessThan(优化.左)
   // 卡内那一行上**不再有**它们
-  expect(行.格.some((g) => g.字.includes("上传文件") || g.类.startsWith("ws-"))).toBe(false)
+  expect(行.格.some((g) => g.字.includes("上传文件") || g.类.startsWith("ws-") || g.字 === "终端")).toBe(false)
 
   // ③ 两种底色
   const 卡内底色 = await page.locator(".composer-box").evaluate((el) => getComputedStyle(el).backgroundColor)

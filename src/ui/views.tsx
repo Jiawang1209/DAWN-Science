@@ -4423,30 +4423,6 @@ export function ConversationView({
             <p className="caveat composer-hint">{t("回车插队 · Cmd/Ctrl+回车排到这一轮后面")}</p>
           ) : null}
           <div className="composer-controls">
-{onToggleDock ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="dock-toggle"
-                aria-pressed={dockOpen ?? false}
-                onClick={onToggleDock}
-              >
-                {/**
-                  * **就叫「终端」**（2026-08-16 作者定的）。
-                  *
-                  * 此前叫「终端面板」，理由是「终端」两个字是「打开终端」
-                  * 「＋ 新终端」的一部分——那是**拿人看的字去解决机器找元素的问题**，
-                  * 代价付错了地方（同一副错误 2026-08-13 在「批量／多选」上付过一次）。
-                  * 现在换成把那几处多余的「终端」去掉：面板自己就叫终端，
-                  * 里面的按钮再说一遍「终端」本来就是废话。
-                  *
-                  * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
-                  * 于是英文界面上它一直是「终端面板」四个字。
-                  */}
-                <终端图标 />
-                {t("终端")}
-              </Button>
-            ) : null}
             <span className="composer-gap" aria-hidden="true" />
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
@@ -4655,6 +4631,30 @@ export function ConversationView({
               *
               * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
               */}
+{onToggleDock ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="dock-toggle"
+                aria-pressed={dockOpen ?? false}
+                onClick={onToggleDock}
+              >
+                {/**
+                  * **就叫「终端」**（2026-08-16 作者定的）。
+                  *
+                  * 此前叫「终端面板」，理由是「终端」两个字是「打开终端」
+                  * 「＋ 新终端」的一部分——那是**拿人看的字去解决机器找元素的问题**，
+                  * 代价付错了地方（同一副错误 2026-08-13 在「批量／多选」上付过一次）。
+                  * 现在换成把那几处多余的「终端」去掉：面板自己就叫终端，
+                  * 里面的按钮再说一遍「终端」本来就是废话。
+                  *
+                  * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
+                  * 于是英文界面上它一直是「终端面板」四个字。
+                  */}
+                <终端图标 />
+                {t("终端")}
+              </Button>
+            ) : null}
                         {onEnhance && onCancelEnhance ? (
               <EnhanceControl
                 draft={draft}
@@ -5725,12 +5725,6 @@ export function EmptyConversation({
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
               <div className="composer-controls">
-{onToggleDock ? (
-                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
-                    <终端图标 />
-                    {t("终端")}
-                  </Button>
-                ) : null}
                 <span className="composer-gap" aria-hidden="true" />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
@@ -5854,6 +5848,12 @@ export function EmptyConversation({
                   * **空态也要够得着终端**（2026-08-11）。
                   * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
                   */}
+{onToggleDock ? (
+                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
+                    <终端图标 />
+                    {t("终端")}
+                  </Button>
+                ) : null}
                                 {onEnhance && onCancelEnhance ? (
                   <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
                 ) : null}

@@ -1,11 +1,11 @@
 /**
- * 侧栏的两条竖线（2026-08-22，作者三次点名，最后一次给了图）：
- * ① 右边收尾那一列——「多选」、会话行的「⋯」、项目行的「＋ / 删」——**同一条右缘**；
- * ② 数字那一列——「Skills N」「子 Agent N」「远端服务器 N」「已归档 N」、服务器那台机器标题上的 N、
+ * 侧栏的三条竖线（2026-08-22，作者四次点名，给过图）：
+ * ① 右边收尾那一列——会话行的「⋯」、项目行的「＋ / 删」——**同一条右缘**；
+ * ③ 分区标题的计数（最近 / 项目 / 服务器 / 会话）自成一列，**右缘离侧栏右边 18px**（作者给的数）；
+ * ② 数字那一列——「多选」也在这一列（作者第四次点名）——「Skills N」「子 Agent N」「远端服务器 N」「已归档 N」、服务器那台机器标题上的 N、
  *    「最近 N」之外的所有 `.side-count`——与会话行的时间**同一条右缘**。
  * 三个右缘各差十几像素，一眼就是歪的；量出来才算对齐，不量就只是「看着差不多」。
  *
- * 分区标题里跟在字后面的那个数（「项目 1」「服务器 2」「最近 5」）不在这一列里——它贴着标题走，作者的图里也没框它。
  */
 import { test, expect, 开一段临时会话, 在项目里开会话 } from "./fixtures.js"
 
@@ -39,7 +39,14 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   const 会话动作 = await 右缘(".sess-item .row-actions")
   expect(多选.length).toBeGreaterThan(0)
   expect(项目动作.length).toBeGreaterThan(0)
-  expect([...new Set([...多选, ...项目动作, ...会话动作])], "收尾那一列的右缘不止一条").toHaveLength(1)
+  expect([...new Set([...项目动作, ...会话动作])], "收尾那一列的右缘不止一条").toHaveLength(1)
+
+  // ③ 分区计数：一列，离侧栏右边 18px
+  const 侧栏右 = (await 右缘(".sidebar"))[0]!
+  const 分区数 = await 右缘(".side-section-count")
+  expect(分区数.length, "最近 / 项目 / 服务器 的计数没找全（「会话」那段已归档，那一列不在）").toBeGreaterThanOrEqual(3)
+  expect([...new Set(分区数)], `分区计数不在一列：${分区数}`).toHaveLength(1)
+  expect(侧栏右 - 分区数[0]!, "分区计数离侧栏右边不是 18px").toBe(18)
 
   const 固定入口 = await 右缘(".side-action .side-count")
   const 远端 = await 右缘(".remote-head .side-count")
@@ -49,6 +56,6 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   expect(远端.length).toBeGreaterThan(0)
   expect(机器.length).toBeGreaterThan(0)
   expect(时间.length).toBeGreaterThan(1)
-  const 数字列 = new Set([...固定入口, ...远端, ...机器, ...时间])
-  expect([...数字列], `数字那一列的右缘不止一条：入口 ${固定入口} · 远端 ${远端} · 机器 ${机器} · 时间 ${时间}`).toHaveLength(1)
+  const 数字列 = new Set([...固定入口, ...远端, ...机器, ...时间, ...多选])
+  expect([...数字列], `数字那一列的右缘不止一条：入口 ${固定入口} · 远端 ${远端} · 机器 ${机器} · 时间 ${时间} · 多选 ${多选}`).toHaveLength(1)
 })

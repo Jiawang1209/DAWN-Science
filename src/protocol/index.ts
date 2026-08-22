@@ -46,7 +46,7 @@ export {
   SessionUpdateSchema,
   TranscriptItemSchema,
 } from "./events.js"
-export type { RemoteUpdate, SessionSnapshot, SessionUpdate, TranscriptItem } from "./events.js"
+export type { RemoteUpdate, SessionSnapshot, SessionUpdate, TranscriptItem, TeamSnapshot } from "./events.js"
 
 export {
   DEFAULT_PAGE_SIZE,

@@ -5605,3 +5605,34 @@ pre {
 .conv-export { flex: none; }
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
 .recent-list { margin-bottom: var(--dawn-space-2); }
+
+/* ── 团队（team-board，2026-08-22，学自 dsh-agent-teams；坞里一格）────────────────────────── */
+.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-4); }
+.team-empty { padding: var(--dawn-space-3); }
+.team-head { display: flex; flex-direction: column; gap: var(--dawn-space-1); }
+.team-name { margin: 0; font-size: 15px; font-weight: 600; }
+.team-goal { margin: 0; color: var(--dawn-text-2); }
+.team-progress { margin: 0; color: var(--dawn-text-3); font-size: 12px; }
+.team-section-title { margin: 0 0 var(--dawn-space-2); font-size: 12px; font-weight: 600; color: var(--dawn-text-3); }
+.team-members ul, .team-tasks ol, .team-mail ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-1); }
+.team-member { display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; }
+.team-member-name { font-weight: 600; }
+.team-member-agent { color: var(--dawn-text-3); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.team-member-status { margin-left: auto; font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; }
+.team-member-status.working { color: var(--dawn-accent); }
+.team-member.removed { opacity: 0.5; }
+.team-task { border-top: 1px solid var(--dawn-stroke-3); padding-top: var(--dawn-space-1); }
+.team-task-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; }
+.team-task-id { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); font-size: 12px; }
+.team-task-subject { font-weight: 600; }
+.team-task-status { font-size: 12px; color: var(--dawn-text-3); }
+.team-task-status.in_progress, .team-task-status.claimed { color: var(--dawn-accent); }
+.team-task-status.completed { color: var(--dawn-success); }
+.team-task-status.failed { color: var(--dawn-danger); }
+.team-task-who, .team-task-deps { font-size: 12px; color: var(--dawn-text-3); }
+.team-task-body { padding: var(--dawn-space-1) 0 var(--dawn-space-2) var(--dawn-space-4); }
+.team-task-desc { margin: 0 0 var(--dawn-space-2); color: var(--dawn-text-2); white-space: pre-wrap; }
+.team-task-output { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; max-height: 24rem; overflow: auto; }
+.team-msg { display: flex; flex-direction: column; gap: 2px; }
+.team-msg-who { font-size: 12px; color: var(--dawn-text-3); }
+.team-msg-text { white-space: pre-wrap; }

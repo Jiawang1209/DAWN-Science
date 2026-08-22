@@ -19,7 +19,7 @@
 import { 读调用策略 } from "../skills/invocation.js"
 import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
 import { dirname } from "node:path"
-import { mkdirSync, readFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import {
   createAgentSession,
@@ -57,6 +57,8 @@ import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
+import { 团队调度器 } from "../team/scheduler.js"
+import { createTeamTools, 队长协议 } from "../team/tools.js"
 import { 描述图片 } from "./vision.js"
 import { createMcpTools } from "../tools/mcp-tool.js"
 import type { 对话内核 } from "../kernel/挂载.js"
@@ -702,7 +704,56 @@ export class NativeRuntime implements AgentRuntime {
      * 只改上面那条的话，**单测全绿而应用里一个字都没记**。
      * 同一个坑本仓库踩过一次（退役的那个数据工具）。
      */
-    return [...(base ?? []), ...观察过的外部, tool]
+    /**
+     * 团队（team-board，2026-08-22，学自 dsh-agent-teams）：队长的 7 个工具，坐在 `subagent` 旁边。
+     * 一个会话一份调度器（冷却、跑着的成员在它身上），成员各自一个子进程、各自可续的会话目录；
+     * 每一轮都发 `subagent_start/end`——账本照样一条 Run，对话流照样一组 chip（toolCallId = `team:<id>`）。
+     */
+    const 定义 = () => {
+      return loadSubagentsFrom(this.子agent层(spec.workspace)).agents.filter((a) => !a.disabled)
+    }
+    let 团队轮序 = 0
+    const 调度器 = new 团队调度器({
+      sessionDir: spec.sessionDir,
+      定义,
+      跑: {
+        childOf: () => ({ command: process.execPath, args: [entry], env: { [RUN_AS_NODE]: "1" } }),
+        context: {
+          provider: native.provider,
+          model: native.model,
+          cwd: spec.workspace,
+          ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
+        },
+      },
+      onChange: (team) => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: team as never }),
+      onTurn: (e) => {
+        const toolCallId = `team:${e.team.id}`
+        if (e.phase === "start") {
+          this.emit({ kind: "subagent_start", sessionId: spec.sessionId, toolCallId, index: 团队轮序++, agent: `${e.member}${e.taskId ? ` · ${e.taskId}` : ""}`, task: e.taskId ?? "消息" })
+        } else {
+          this.emit({ kind: "subagent_end", sessionId: spec.sessionId, toolCallId, index: 团队轮序 - 1, ok: e.ok ?? false, ...(e.error ? { error: e.error } : {}) })
+        }
+      },
+    })
+    const 当前团队 = { id: 读当前团队(spec.sessionDir) }
+    const 团队工具 = createTeamTools({
+      sessionId: spec.sessionId,
+      调度器,
+      定义,
+      当前: { get: () => 当前团队.id, set: (id) => { 当前团队.id = id; 记当前团队(spec.sessionDir, id) } },
+      已知模型: async () => (await this.runtime()).getModels().map((m) => ({ provider: m.provider, model: m.id })),
+    })
+    // 会话重开时把团队快照推一遍：界面那一格才知道它还在
+    if (当前团队.id) {
+      try {
+        const t = 调度器.读(当前团队.id)
+        queueMicrotask(() => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: t as never }))
+      } catch {
+        当前团队.id = undefined
+      }
+    }
+
+    return [...(base ?? []), ...观察过的外部, tool, ...团队工具]
   }
 
   async start(spec: SessionSpec): Promise<SessionHandle> {
@@ -844,6 +895,8 @@ export class NativeRuntime implements AgentRuntime {
       },
       appendSystemPromptOverride: (base) => [
         ...base,
+        // 队长协议（team-board）：模型不知道该怎么分工，就不会分工
+        ...(this.opts.subagentChildEntry ? [队长协议] : []),
         `You are currently running on the model "${当前模型}". ` +
           `If the user asks which model you are, answer with exactly this. ` +
           `Do not guess from environment variables or from earlier turns — ` +
@@ -1851,5 +1904,23 @@ ${描述}`
     s.session.dispose()
     this.sessions.delete(sessionId)
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
+  }
+}
+
+/** 当前活着的团队 id 记在会话目录里的一行文件——重开会话还接得上 */
+function 读当前团队(sessionDir: string): string | undefined {
+  try {
+    const v = readFileSync(join(sessionDir, "teams", "current"), "utf8").trim()
+    return v || undefined
+  } catch {
+    return undefined
+  }
+}
+function 记当前团队(sessionDir: string, id: string | undefined): void {
+  try {
+    mkdirSync(join(sessionDir, "teams"), { recursive: true })
+    writeFileSync(join(sessionDir, "teams", "current"), id ?? "", "utf8")
+  } catch (e) {
+    console.error("[团队] 记不住当前团队：", e instanceof Error ? e.message : String(e))
   }
 }

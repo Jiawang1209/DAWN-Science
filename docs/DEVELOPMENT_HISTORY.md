@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 团队：队长 + 可续聊成员 + 带依赖与 attempt 令牌的任务板（学自 NanmiCoder/dsh-agent-teams）
+
+- **Type**: feat
+- **Motivation**: `subagent` 只有 single / parallel / chain，每个任务一次性、链只能线性；科研的活是 DAG 且同一个「人」常要做第二轮；模型也不知道该怎么分工。作者读完解读：「第一档和第二档我都要」。
+- **What**: `src/team/`——状态机（依赖 / 领取 / attempt 令牌 / 转派 / 邮箱 / 归档，`state.ts`）、一轮的子进程运行器（`runner.ts`）、事件驱动调度器（`scheduler.ts`：送信优先、并发 4、令牌结算、`等变化`）、队长 9 个工具（`tools.ts`，含我们加的 `team_wait`）与队长协议（进系统提示）。**成员可各自指定模型**（作者要的）：`team_create` 成员项可选 `model: provider/model`，建队时对着目录核，缺省跟队长当前模型；优先级 成员 → 子 agent 定义 → 队长。`subagent/child.ts`：stdin 按行读规格、成员模式续会话（`SessionManager.continueRecent`）、两个 RPC 工具 `team_send` / `team_status`。协议 7.22：快照多 `team`、更新多一种 `team`，没有新操作。坞里一格「团队」（`ui/team-panel.tsx`），`/` 菜单第一项「组一支团队」→ `/team `。每一轮发 `subagent_start/end`，账本与对话 chip 不另写。设计定案 `specs/2026-08-22-团队-design.md`。
+- **Impact**: 进程边界不变（不变式 1）：「可续聊」靠同一成员下一轮续它那份会话文件。成员的领取 / 结算由调度器做，不靠模型走仪式。真相在 `<会话目录>/teams/<id>/team.json`。上限 8 成员 / 32 任务 / 并发 4 / 一轮 30 分钟。
+- **Verification**: `tests/team/state.test.ts` 14 条；`tests/team/scheduler.test.ts` 6 条用**真子进程**压依赖、并发、续会话、互发消息、迟到结果被丢、中止；`e2e/team.spec.ts` 假模型建队、两个真成员按依赖跑完、坞 / chip / 磁盘三处对上；全量见提交。
+
 ### 2026-08-22 — 多选时，机器行的勾选框落到时间那一列
 
 - **Type**: fix

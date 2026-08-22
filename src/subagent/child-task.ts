@@ -7,7 +7,7 @@
  * 拆开的理由是可测：真跑 pi 要有模型、凭证与网络，而这里要验的全是**边界行为**
  * （空输出、报错、异常），那些恰恰是真会话里最难稳定复现的。
  */
-import type { SubagentChildMessage, SubagentChildSpec } from "./protocol.js"
+import type { SubagentDoneMessage, SubagentChildSpec } from "./protocol.js"
 
 /** 本层需要 pi 会话的**全部**能力。窄到这个程度，假实现才写得出来 */
 export interface ChildPiSession {
@@ -28,7 +28,7 @@ interface PiEventShape {
 export async function runChildTask(
   spec: SubagentChildSpec,
   createSession: ChildSessionFactory,
-): Promise<SubagentChildMessage> {
+): Promise<SubagentDoneMessage> {
   let session: ChildPiSession
   try {
     session = await createSession(spec)
@@ -82,7 +82,7 @@ function withPartial(reason: string, partial: string): string {
   return t ? `${reason}（已产出的部分：${t}）` : reason
 }
 
-function done(ok: false, error: string): SubagentChildMessage {
+function done(ok: false, error: string): SubagentDoneMessage {
   return { type: "done", ok, error }
 }
 

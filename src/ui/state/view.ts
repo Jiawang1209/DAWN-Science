@@ -151,7 +151,8 @@ export const setActiveSessionId = (v: string | undefined) => setValue($activeSes
  * 由 App 在启动与切项目时填；两个输入框（对话屏、空态屏）共用。
  */
 export interface SlashItem {
-  kind: "skill" | "subagent"
+  /** `team`：团队模式那一项（team-board，2026-08-22）——选了把草稿换成 `/team ` */
+  kind: "skill" | "subagent" | "team"
   /** 标识符：技能名 / 子 agent 名，`/skill:名` 或派它时用的 */
   name: string
   /** 给人看的名字（子 agent 的 `title`）；没有就用 name */

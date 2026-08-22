@@ -328,7 +328,7 @@ describe("协议版本 · 5.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.21")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.22")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

@@ -258,7 +258,8 @@ const KernelOutputItem = z
           kind: z.literal("error"),
           ename: z.string(),
           evalue: z.string(),
-          /** 原始 traceback，**带 ANSI 转义**。渲染层再处理，不在协议里丢信息 */
+          
+/** 原始 traceback，**带 ANSI 转义**。渲染层再处理，不在协议里丢信息 */
           traceback: z.array(z.string()),
         })
         .strict(),
@@ -274,6 +275,57 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
   KernelOutputItem,
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
+
+/** 团队快照（team-board，7.22）。字段照 `src/team/types.ts`；协议这一侧只管形状 */
+export const TeamSnapshotSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string(),
+    goal: z.string(),
+    captainSessionId: z.string(),
+    createdAt: z.number(),
+    finishedAt: z.number().optional(),
+    members: z.array(
+      z
+        .object({
+          name: z.string(),
+          agent: z.string(),
+          role: z.string().optional(),
+          provider: z.string().optional(),
+          model: z.string().optional(),
+          status: z.enum(["idle", "working", "removed"]),
+          sessionDir: z.string(),
+          turns: z.number(),
+          joinedAt: z.number(),
+        })
+        .strict(),
+    ),
+    tasks: z.array(
+      z
+        .object({
+          id: z.string(),
+          subject: z.string(),
+          description: z.string().optional(),
+          status: z.enum(["pending", "claimed", "in_progress", "completed", "failed", "cancelled"]),
+          assignee: z.string().optional(),
+          dependencies: z.array(z.string()),
+          output: z.string().optional(),
+          attempt: z.number(),
+          attemptId: z.string().optional(),
+          createdAt: z.number(),
+          updatedAt: z.number(),
+        })
+        .strict(),
+    ),
+    messages: z.array(
+      z
+        .object({ id: z.string(), from: z.string(), to: z.string(), content: z.string(), ts: z.number(), deliveredAt: z.number().optional() })
+        .strict(),
+    ),
+    taskSeq: z.number(),
+  })
+  .strict()
+export type TeamSnapshot = z.infer<typeof TeamSnapshotSchema>
 
 export const SessionSnapshotSchema = z
   .object({
@@ -384,6 +436,11 @@ export const SessionSnapshotSchema = z
       })
       .strict()
       .optional(),
+    /**
+     * 这段会话带的团队（team-board，7.22，学自 dsh-agent-teams）。**真相在磁盘**，这里是一份快照：
+     * 成员、任务（含依赖、attempt、结果）、邮箱。缺省 = 这段会话没建过团队。
+     */
+    team: TeamSnapshotSchema.optional(),
   })
   .strict()
 export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>
@@ -422,6 +479,8 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
    * **而那正是「以为在 A 目录、其实在 B 目录」的来源**。
    */
   z.object({ ...envelope, type: z.literal("cwd"), cwd: z.string().min(1) }).strict(),
+  /** 团队变了（team-board，7.22）：整份换掉——它给的就是整份新的，合并只会多一种「合错了」 */
+  z.object({ ...envelope, type: z.literal("team"), team: TeamSnapshotSchema }).strict(),
   /** 全量重放。客户端发现 revision 跳号后由服务端补发，或订阅时的首帧 */
   z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])

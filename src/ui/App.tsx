@@ -82,6 +82,7 @@ import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
+import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -110,6 +111,8 @@ import {
   applySnapshot,
   $待答权限,
   $会话开关,
+  $团队,
+  setTeam,
   connectFailed,
   connectStarted,
   connectSucceeded,
@@ -469,8 +472,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             pendingPermission: u.snapshot.pendingPermission,
             // 这一段可以调的开关（A3）。**缺省 = 没有这回事**
             configOptions: u.snapshot.configOptions,
+            team: u.snapshot.team,
           })
         }
+        // 团队变了（team-board）：整份换掉
+        if (u.type === "team") setTeam(u.team)
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
         if (u.type === "state" && u.state === "exited") {
           const pid = $activeProjectId.get()
@@ -2757,7 +2763,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [技能单, 设技能单] = useState<SlashItem[]>([])
   /** 输入框 `/` 菜单的单子：技能 + 子 agent（两个输入框共用一份 store） */
   useEffect(() => {
-    setSlashItems([...技能单, ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) }))])
+    setSlashItems([
+      // 团队模式（team-board）：永远在最前——它不是名册里的一员，是一种做法
+      { kind: "team" as const, name: "team", title: t("组一支团队"), description: t("让模型当队长：拉几个子 agent 当成员、拆成带依赖的任务、自动派活；进度在坞里「团队」那一格") },
+      ...技能单,
+      ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) })),
+    ])
   }, [技能单, 子agent名册])
   /**
    * 侧栏那两个数**动了才重取**（2026-08-22 作者：「不用每五秒刷，有增加的时候自然就增加」）：
@@ -4059,6 +4070,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 </>
               )}
             </div>
+            ) : rightDockTenant === "team" ? (
+              <TeamPanel />
             ) : rightDockTenant === "web" ? (
               /**
                 * **网页那一格**（批 1，2026-08-18）。屏幕上这一块几乎是空的——

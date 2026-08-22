@@ -38,10 +38,13 @@ import {
   createAgentSession,
   DefaultResourceLoader,
   ModelRuntime,
+  SessionManager,
 } from "@earendil-works/pi-coding-agent"
+import { Type } from "typebox"
+import { randomUUID } from "node:crypto"
 import type { Credential, CredentialStore } from "@earendil-works/pi-ai"
 import { runChildTask, type ChildPiSession } from "./child-task.js"
-import type { SubagentChildMessage, SubagentChildSpec } from "./protocol.js"
+import type { SubagentChildMessage, SubagentChildSpec, SubagentParentReply } from "./protocol.js"
 
 /**
  * 只读的内存凭证库。
@@ -107,14 +110,26 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   })
   await resourceLoader.reload()
 
+  /**
+   * **团队成员续会话**（team-board，2026-08-22）：记录落在成员自己的目录；`resume` 时续最近那份。
+   * 这就是「可续聊」——进程是新的，记忆在会话文件里。
+   */
+  const sessionManager = spec.member
+    ? spec.member.resume
+      ? SessionManager.continueRecent(spec.cwd, spec.member.sessionDir)
+      : SessionManager.create(spec.cwd, spec.member.sessionDir)
+    : undefined
+
   const { session } = await createAgentSession({
     cwd: spec.cwd,
     agentDir: spec.agentDir,
     model,
     modelRuntime,
     resourceLoader,
+    ...(sessionManager ? { sessionManager } : {}),
     // 定义里没写 tools 就用 pi 的默认工具集——**缺省不等于「不给工具」**
     ...(spec.tools ? { tools: spec.tools } : {}),
+    ...(spec.member ? { customTools: 成员工具(spec.member.name) as never } : {}),
   })
 
   return {
@@ -123,14 +138,97 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   }
 }
 
+/**
+ * stdin 按行读：**第一行是规格**（JSON 一行），后面的行是父进程对工具调用的回应（只在成员模式）。
+ * 老的写法是读到 EOF——成员模式下父进程要一直开着 stdin 回话，读到 EOF 就永远等不到规格。
+ * JSON.stringify 不会产生裸换行，所以「一行」对规格是安全的；父进程不写换行就关掉的老情形也兼容。
+ */
+const 等回应 = new Map<string, (r: SubagentParentReply) => void>()
+let 行缓冲 = ""
+let 规格就绪: ((s: string) => void) | undefined
+let 规格文本: string | undefined
+
+function 收一行(line: string): void {
+  const t = line.trim()
+  if (!t) return
+  if (规格文本 === undefined) {
+    规格文本 = t
+    规格就绪?.(t)
+    return
+  }
+  try {
+    const r = JSON.parse(t) as SubagentParentReply
+    if (r && r.type === "reply") 等回应.get(r.id)?.(r)
+  } catch {
+    // 不是一行合法的回应：忽略，父侧自己会超时报错
+  }
+}
+
+process.stdin.setEncoding("utf8")
+process.stdin.on("data", (d: string) => {
+  行缓冲 += d
+  let i: number
+  while ((i = 行缓冲.indexOf("\n")) >= 0) {
+    收一行(行缓冲.slice(0, i))
+    行缓冲 = 行缓冲.slice(i + 1)
+  }
+})
+process.stdin.on("end", () => {
+  if (行缓冲) 收一行(行缓冲)
+  行缓冲 = ""
+})
+
 function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
-    let raw = ""
-    process.stdin.setEncoding("utf8")
-    process.stdin.on("data", (d) => (raw += d))
-    process.stdin.on("end", () => resolve(raw))
+    if (规格文本 !== undefined) return resolve(规格文本)
+    规格就绪 = resolve
     process.stdin.on("error", reject)
   })
+}
+
+/** 成员模式的工具：调用 = 往 stdout 写一行 `call`，等 stdin 上同 id 的 `reply` */
+function 调父进程(name: string, params: unknown): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const id = randomUUID()
+    const timer = setTimeout(() => {
+      等回应.delete(id)
+      reject(new Error(`${name}：父进程 60 秒没有回应`))
+    }, 60_000)
+    等回应.set(id, (r) => {
+      clearTimeout(timer)
+      等回应.delete(id)
+      if (r.ok) resolve(r.result)
+      else reject(new Error(r.result))
+    })
+    process.stdout.write(`${JSON.stringify({ type: "call", id, name, params } satisfies SubagentChildMessage)}\n`)
+  })
+}
+
+function 成员工具(自己: string) {
+  const text = (s: string, isError = false) => ({ content: [{ type: "text" as const, text: s }], ...(isError ? { isError: true } : {}), details: undefined })
+  const 包 = (name: string) => async (_id: string, params: unknown) => {
+    try {
+      return text(await 调父进程(name, params))
+    } catch (e) {
+      return text(e instanceof Error ? e.message : String(e), true)
+    }
+  }
+  return [
+    {
+      name: "team_send",
+      label: "team_send",
+      description: `给队长或队友发一条消息（你是 ${自己}）。to 填 "captain" 或队友的名字；消息会进对方的邮箱并唤醒对方。做完任务的报告也用它发给 captain。`,
+      parameters: Type.Object({ to: Type.String({ description: '"captain" 或队友名' }), content: Type.String({ description: "要说的话" }) }),
+      execute: 包("team_send"),
+    },
+    {
+      name: "team_status",
+      label: "team_status",
+      description: "看一眼团队现状：成员、任务与状态、你手上的任务。",
+      parameters: Type.Object({}),
+      execute: 包("team_status"),
+    },
+  ]
 }
 
 function emit(msg: SubagentChildMessage): void {

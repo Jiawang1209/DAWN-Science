@@ -20,6 +20,7 @@
 | **定时任务**：到点开一段全新会话跑任务说明（学自 dsh-automation） | `specs/2026-08-22-定时任务-design.md` |
 | **会话归档**：藏不是删；删会话真删会话目录（学自 dsh-archive-manager） | `specs/2026-08-22-会话归档-design.md` |
 | **技能管理**：三档开关写进 SKILL.md、导入、删除（学自 dsh-skills-manager） | `specs/2026-08-21-技能管理-design.md` |
+| **团队**：队长 + 可续聊成员 + 带依赖与 attempt 令牌的任务板（学自 dsh-agent-teams） | `specs/2026-08-22-团队-design.md` · 解读在 `ccb_hive_code_learn/dsh-agent-teams-解读.md` |
 | **ACP agent 在服务器上干活**（claude 借手、codex 不借；分支 `acp-terminal`） | `specs/2026-08-20-acp-terminal-design.md` + `plans/2026-08-20-acp-terminal-T1.md`、`2026-08-21-acp-terminal-T2.md`、`-T3.md`（勾全打完） |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |

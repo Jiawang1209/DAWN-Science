@@ -938,7 +938,7 @@ export { SideSash }
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "review" ? t("审阅") : who === "web" ? t("网页") : who === "overview" ? t("概览") : t("文件")
+  return who === "review" ? t("审阅") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "team" ? t("团队") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */

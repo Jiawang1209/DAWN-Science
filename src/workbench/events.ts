@@ -80,6 +80,8 @@ interface Entry {
    * 这一段可以调的开关（A3，只有 acp 有）。**缺省 = 这条运行时没有这回事**，
    * 与「有但是空的」不是一回事——界面据此决定不画那个菜单。
    */
+  /** 这段会话的团队（team-board）。缺省 = 没建过 */
+  team?: import("../protocol/events.js").TeamSnapshot | undefined
   configOptions:
     | {
         id: string
@@ -143,6 +145,7 @@ export class SessionTranscripts {
       exitCode: undefined,
       openTurnId: undefined,
       configOptions: undefined,
+      team: undefined,
       pendingPermission: undefined,
       turnSeq: 0,
       思考起于: undefined,
@@ -317,6 +320,13 @@ export class SessionTranscripts {
        * 这一段可以调的开关变了（A3）。**整份换掉**——
        * 它给的就是整份新的，合并只会多一种「合错了」的失效方式。
        */
+      /** 团队变了（team-board）：整份换掉，推一条 `team` 更新；快照里也带着 */
+      case "team_changed": {
+        e.team = event.team
+        this.bump(sessionId, e, { type: "team", team: event.team })
+        return
+      }
+
       case "config_options": {
         e.configOptions = event.options.map((o) => ({
           ...o,
@@ -774,6 +784,7 @@ export class SessionTranscripts {
       ...(e.kernelInstanceId ? { kernelInstanceId: e.kernelInstanceId } : {}),
       ...(e.configOptions?.length ? { configOptions: e.configOptions } : {}),
       ...(e.pendingPermission ? { pendingPermission: e.pendingPermission } : {}),
+      ...(e.team ? { team: e.team } : {}),
     }
   }
 }

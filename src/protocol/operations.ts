@@ -1949,7 +1949,39 @@ export const OPERATIONS = {
    */
   deleteSession: {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
-    response: z.object({ ledgerKept: z.int().min(0) }).strict(),
+    /**
+     * `transcriptTrashed`（7.18）：会话目录（pi 的 jsonl、工具输出转储）**真的进了废纸篓**才是 true。
+     * 此前这个操作只删数据库那一行，界面却说「删掉对话记录」——说多了。
+     * 没有目录（还没说过话）或废纸篓不可用时是 false，理由在 `problem` 里。
+     */
+    response: z.object({ ledgerKept: z.int().min(0), transcriptTrashed: z.boolean(), problem: z.string().optional() }).strict(),
+    mutating: true,
+  },
+
+  /* ── 归档（7.18，session-archive，学自 dsh-archive-manager）：藏，不是删 ── */
+
+  /** 归档 / 取消归档。记账位不动——取消归档回原来的位置。运行中的会话照样可以归档（只是从侧栏藏起来） */
+  setSessionArchived: {
+    request: z.object({ sessionId: z.string().min(1), archived: z.boolean() }).strict(),
+    response: z.object({}).strict(),
+    mutating: true,
+  },
+
+  /** 全部归档了的，跨项目，最近归档的在前；每条带它的项目名好分组 */
+  listArchivedSessions: {
+    request: Empty,
+    response: z
+      .object({
+        sessions: z.array(SessionSummarySchema.extend({ projectName: z.string(), workspace: z.string() })),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 删掉全部归档了的（每条走 `deleteSession` 同一条路）。回真的删了几个、几个目录进了废纸篓 */
+  deleteArchivedSessions: {
+    request: Empty,
+    response: z.object({ deleted: z.int().min(0), transcriptsTrashed: z.int().min(0), problems: z.array(z.string()) }).strict(),
     mutating: true,
   },
 

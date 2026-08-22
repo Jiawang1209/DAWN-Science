@@ -67,7 +67,16 @@ export class TaskStore {
   /** **置顶的在前，各组内新的在上**——与会话列表同一条序（schema v8 的说明） */
   list(): TaskRecord[] {
     const rows = this.db
-      .prepare(`SELECT * FROM tasks ORDER BY pinned DESC, sort_order DESC, id DESC`)
+      /**
+       * **归档了的会话，它的任务也不列**（2026-08-22）：侧栏「会话」那一列是从任务长出来的，
+       * 只在 `sessions` 里藏的话这一列照样挂着它。没有会话的任务（还没开口）照列。
+       */
+      .prepare(
+        `SELECT t.* FROM tasks t
+          LEFT JOIN sessions s ON s.id = t.session_id
+          WHERE s.archived_at IS NULL
+          ORDER BY t.pinned DESC, t.sort_order DESC, t.id DESC`,
+      )
       .all() as Row[]
     return rows.map(toRecord)
   }

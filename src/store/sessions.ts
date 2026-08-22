@@ -39,6 +39,8 @@ export interface SessionRecord {
   title?: string
   /** 置顶。**只是分组，不是另一种序**——置顶的和没置顶的各自按 `sortOrder` 排 */
   pinned: boolean
+  /** 归档时刻。**有值 = 藏起来了**：项目列表不列，位置与置顶原样留着 */
+  archivedAt?: string
   /** 列表里的位置。**每条都有**，见 schema v8 的说明 */
   sortOrder: number
   /**
@@ -58,7 +60,7 @@ export interface SessionRecord {
  * （`MAX(sort_order) + 1`），让调用方去算等于把「新的排在哪」这件事
  * 复制到每一个调用点。
  */
-export type NewSessionRecord = Omit<SessionRecord, "pinned" | "sortOrder">
+export type NewSessionRecord = Omit<SessionRecord, "pinned" | "sortOrder" | "archivedAt">
 
 interface Row {
   id: string
@@ -75,6 +77,7 @@ interface Row {
   acp_fingerprint?: string | null
   title: string | null
   pinned: number
+  archived_at?: string | null
   sort_order: number | null
   connection_id: string | null
   remote_cwd: string | null
@@ -100,6 +103,7 @@ function toRecord(r: Row): SessionRecord {
     ...(r.connection_id ? { connectionId: r.connection_id } : {}),
     ...(r.remote_cwd ? { remoteCwd: r.remote_cwd } : {}),
     pinned: r.pinned === 1,
+    ...(r.archived_at ? { archivedAt: r.archived_at } : {}),
     // 理论上回填之后不会有 NULL；真有就当它排在最后，**不抛**
     sortOrder: r.sort_order ?? 0,
   }
@@ -144,7 +148,7 @@ export class SessionStore {
        * `id` 兜底只是为了**顺序绝对稳定**——两条位置相同时不该每次刷新都换个样。
        */
       .prepare(
-        `SELECT * FROM sessions WHERE project_id = ?
+        `SELECT * FROM sessions WHERE project_id = ? AND archived_at IS NULL
           ORDER BY pinned DESC, sort_order DESC, id DESC`,
       )
       .all(projectId) as Row[]
@@ -239,6 +243,28 @@ export class SessionStore {
     )
   }
 
+  /**
+   * 归档 / 取消归档（2026-08-22）。**只动 `archived_at`**，位置与置顶不碰。
+   * 重复归档不改写时刻；没这条回 false。
+   */
+  setArchived(id: string, archived: boolean): boolean {
+    const r = archived
+      ? this.db.prepare(`UPDATE sessions SET archived_at = COALESCE(archived_at, ?) WHERE id = ?`).run(new Date().toISOString(), id)
+      : this.db.prepare(`UPDATE sessions SET archived_at = NULL WHERE id = ?`).run(id)
+    return r.changes > 0
+  }
+
+  /** 全部归档了的，最近归档的在前 */
+  listArchived(): SessionRecord[] {
+    const rows = this.db.prepare(`SELECT * FROM sessions WHERE archived_at IS NOT NULL ORDER BY archived_at DESC, id DESC`).all() as Row[]
+    return rows.map(toRecord)
+  }
+
+  countArchived(): number {
+    const r = this.db.prepare(`SELECT COUNT(*) AS n FROM sessions WHERE archived_at IS NOT NULL`).get() as { n: number }
+    return r.n
+  }
+
   setPinned(id: string, pinned: boolean): boolean {
     return (
       this.db.prepare(`UPDATE sessions SET pinned = ? WHERE id = ?`).run(pinned ? 1 : 0, id)
@@ -274,7 +300,7 @@ export class SessionStore {
          * 本地那些的 `connection_id` 是 NULL，`IS ?` 同样成立——**一条规则管两边**。
          */
         `SELECT id, sort_order FROM sessions
-          WHERE project_id IS ? AND connection_id IS ? AND pinned = ? AND sort_order ${更大 ? ">" : "<"} ?
+          WHERE project_id IS ? AND connection_id IS ? AND pinned = ? AND archived_at IS NULL AND sort_order ${更大 ? ">" : "<"} ?
           ORDER BY sort_order ${更大 ? "ASC" : "DESC"} LIMIT 1`,
       )
       .get(me.projectId ?? null, me.connectionId ?? null, me.pinned ? 1 : 0, me.sortOrder) as

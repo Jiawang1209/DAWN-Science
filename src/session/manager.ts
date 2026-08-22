@@ -710,6 +710,19 @@ export class SessionManager {
     return this.store.setPinned(sessionId, pinned)
   }
 
+  /** 归档 / 取消归档（2026-08-22）：藏，不是删；进程不动 */
+  setArchived(sessionId: SessionId, archived: boolean): boolean {
+    return this.store.setArchived(sessionId, archived)
+  }
+
+  listArchived(): SessionRecord[] {
+    return this.store.listArchived()
+  }
+
+  countArchived(): number {
+    return this.store.countArchived()
+  }
+
   move(sessionId: SessionId, direction: "up" | "down"): boolean {
     return this.store.move(sessionId, direction)
   }

@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 会话归档（藏不是删）+ 删会话真把会话目录送进废纸篓（协议 7.18）
+
+- **Type**: feat
+- **Motivation**: 读了 `MichengAI/dsh-archive-manager`（Apache-2.0，解读在 `ccb_hive_code_learn/dsh-archive-manager-解读.md`）。会话一多侧栏就满，唯一办法是删；对照时发现**真 bug**：「删除会话」说「删掉对话记录」，实际只删数据库那一行，`<workspace>/.dawn/sessions/<id>` 一直留在用户仓库里。设计：`docs/superpowers/specs/2026-08-22-会话归档-design.md`。
+- **What**: schema 加 `sessions.archived_at`；`listByProject` / 任务列表 / 上下移邻居查找都跳过归档的，记账位不动、取消归档回原位。协议 7.18：`SessionSummary.archivedAt`，新增 `setSessionArchived` / `listArchivedSessions` / `deleteArchivedSessions`，`deleteSession` 多回 `transcriptTrashed` / `problem`。后端 `删一个会话` 抽成一个函数：停进程 → 删记录 → 删任务 → **最后**会话目录进废纸篓，失败把路径报出来；归档 / 取消归档各落一条 Run。界面：会话行「⋯」与三条批量条多「收进归档」；侧栏「远程助理」下一行「已归档 N」只在 N > 0 时画；新屏 `archived.tsx`（按项目分组、搜、放回去、删除、清空归档先问、点行 = 放回去并打开）；归档当前那段把选中清掉；删会话后目录没进废纸篓要出声。`问一句`（确认框包成 Promise）抽出来给技能屏、已归档屏共用。
+- **Impact**: 没归档过时侧栏一个像素不变（视觉基线 10 张仍绿）。旧库迁移只加一列。与它的差别：我们不需要墓碑 / 投影缓存那套（SQLite 单一真相）。文案按「按钮互不为子串」改成「收进归档 / 放回去 / 清空归档」。
+- **Verification**: `tests/store/session-archive` 6 条（列表排除、回原位、幂等、邻居、计数、任务列表）；`tests/workbench/session-archive` 3 条（归档 / 列表带项目名 / 落账、**删会话目录进废纸篓且如实回报**、清空归档只删归档的）；协议计数 97；e2e `session-archive.spec` 4 条真构建全过（入口出现与消失、放回去回原位、归档当前那段、删除后目录不在、多选归档 + 清空归档）；session-organize / bulk-delete / delete / project-bulk / sidebar-layout / sidebar-states 共 46 绿；全量 vitest 2004；视觉基线 10 绿。
+
 ### 2026-08-21 — 技能屏改成一张密的清单：名字 + 来源 / 状态标签、说明单行、行尾「⋯」、顶上筛选与搜索
 
 - **Type**: refactor

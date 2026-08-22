@@ -422,6 +422,15 @@ export function migrate(db: Database.Database): void {
   }
 
   /**
+   * **归档（2026-08-22，学自 dsh-archive-manager）：藏，不是删。**
+   * `archived_at` 非空 = 归档了：项目列表不列它，`sort_order` / `pinned` 原样留着——
+   * 取消归档时它回到原来的位置。没有「归档目录」，不搬文件。
+   */
+  if (!hasColumn(db, "sessions", "archived_at")) {
+    db.exec(`ALTER TABLE sessions ADD COLUMN archived_at TEXT`)
+  }
+
+  /**
    * **v12（2026-08-12）：任务**——把项目 / 项目下的会话 / 临时会话收成一样东西。
    *
    * 作者：*「改成 workbuddy 的新建任务……可以在任务的对话框里面设置工作路径。

@@ -2698,11 +2698,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   /** 子 agent 名册（命令面板里「派」与「按规矩聊」两组用）。启动取一次，项目切换时再取；停用的不列 */
   const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
+  /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
+  const [技能数, 设技能数] = useState<number | undefined>(undefined)
   useEffect(() => {
     let 还在 = true
     client
       .get<SkillLoad>("listSubagents", projectId ? { projectId } : {})
       .then((r) => 还在 && 设子agent名册(r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))))
+      .catch(() => {})
+    client
+      .get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
+      .then((r) => 还在 && 设技能数(r.skills.filter((x) => x.invocation !== "off").length))
       .catch(() => {})
     return () => {
       还在 = false
@@ -2964,6 +2970,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }}
           /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
           onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
+          skillCount={技能数}
+          subagentCount={子agent名册.length}
           onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
           onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
           onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}

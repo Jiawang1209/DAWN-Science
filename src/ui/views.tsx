@@ -1081,6 +1081,8 @@ export function SessionSidebar({
   onPickProject,
   onPickSession,
   onShowSkills,
+  skillCount,
+  subagentCount,
   onShowSubagents,
   onShowAssistant,
   onShowPlugins,
@@ -1152,6 +1154,9 @@ export function SessionSidebar({
   filesActive?: boolean
   /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
   onShowSkills?: (() => void) | undefined
+  /** 侧栏那两行后面的数字（2026-08-22 作者要的）：有几份技能 / 几个子 agent（只算开着的）。没给就不画 */
+  skillCount?: number | undefined
+  subagentCount?: number | undefined
   /** 子 agent 那一屏（2026-08-15 从「技能」拆出来的，两者是两种东西） */
   onShowSubagents?: (() => void) | undefined
   /** 「远程助理」（2026-08-21）。**放在远端服务器正下面**（作者定的位置） */
@@ -1843,12 +1848,14 @@ export function SessionSidebar({
           <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
             <技能图标 className="row-icon" />
             <span className="name">{t("Agent Skills")}</span>
+            {skillCount !== undefined ? <span className="side-count">{skillCount}</span> : null}
           </Row>
         ) : null}
         {onShowSubagents ? (
           <Row active={view === "subagents"} className="side-action" onClick={onShowSubagents}>
             <对话图标 className="row-icon" />
             <span className="name">{t("子 Agent")}</span>
+            {subagentCount !== undefined ? <span className="side-count">{subagentCount}</span> : null}
           </Row>
         ) : null}
         {/**

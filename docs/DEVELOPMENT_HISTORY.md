@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-22 — 侧栏「Agent Skills」「子 Agent」后面挂个数
+
+- **Type**: feat
+- **Motivation**: 作者：有 22 份了，侧栏该显示个数。
+- **What**: `Sidebar` 多 `skillCount` / `subagentCount`（`side-count`，与「项目 1」同一形状）；App 启动与切项目时各取一次，只算开着的（技能不含「关」了的，子 agent 不含停用的）。
+- **Impact**: 侧栏两行各多一个数字。十张视觉基线：两个小数字落在 `maxDiffPixels: 100` 的容差内、本来会悄悄放过——按纪律重存并再验；`visual.spec` 截图前先等这两个数字出现（它们是异步取的，不等会是一场竞态）。
+- **Verification**: 视觉 10 绿（重存后再验）；`tests/ui` 489 绿。
+
 ### 2026-08-22 — 子 agent 名册：自带 22 份科研人设、三层目录、分组与停用、一份既是子 agent 也是技能（协议 7.20）
 
 - **Type**: feat

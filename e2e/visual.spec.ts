@@ -166,6 +166,9 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
   },
 ]
 
+/** 哪几张的侧栏是收起的（那时两行不在屏上，不用等数字） */
+const sidebarCollapsedFor = (_name: string): boolean => false
+
 for (const theme of ["亮色", "暗色"] as const) {
   for (const screen of SCREENS) {
     test(`${screen.name} · ${theme}`, async ({ dawn }) => {
@@ -184,6 +187,14 @@ for (const theme of ["亮色", "暗色"] as const) {
        * 这条等待放在**所有**屏之前，因为状态栏在每一屏都在。
        */
       await expect(page.locator(".statusbar .caveat")).toBeVisible()
+      /**
+       * **侧栏那两个数字是异步取的**（2026-08-22）：「Agent Skills 3」「子 Agent 22」在一次 IPC 之后才画。
+       * 不等它们，截图会随机落在数字出现前后——那看着像图片对比不稳定，其实是一场普通的竞态。
+       */
+      if (!sidebarCollapsedFor(screen.name)) {
+        await expect(page.getByRole("button", { name: /子 Agent/ })).toContainText(/\d/)
+        await expect(page.getByRole("button", { name: /Agent Skills/ })).toContainText(/\d/)
+      }
 
       /**
        * **把指针挪到一个不会悬停任何东西的角落。**

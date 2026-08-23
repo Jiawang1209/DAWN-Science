@@ -1821,7 +1821,6 @@ pre {
 /* 保存按钮不许被输入框挤成两行 */
 .cred-form .btn { flex: 0 0 auto; white-space: nowrap; }
 /* 参考区默认收起：它只是帮人填上面那两个框，不该占主视野 */
-.kernel-ref { margin-top: var(--dawn-space-3); }
 .kernel-ref summary { color: var(--dawn-text-3); font-size: 12px; cursor: pointer; }
 
 /* ── 文件浏览与预览（②-A′ · F3/F4） ─────────────────────────────── */
@@ -2306,7 +2305,8 @@ pre {
 /* 右边那一格里的按钮不许折行（卡有了内距之后那一列窄了 30px，「保存」曾被掰成两行） */
 .set-control .btn { white-space: nowrap; }
 .set-section-bare .set-rows { background: transparent; border: 0; border-radius: 0; padding: 0; }
-.set-rows > .set-row:last-child {
+.set-rows > .set-row:last-child,
+.set-rows > .set-row:has(+ .kernel-ref) {
   border-bottom: none;
 }
 
@@ -2454,9 +2454,10 @@ pre {
 }
 
 /* 折叠的参考清单挂在一节的末尾，与行区分开 */
-.set-section .kernel-ref {
-  margin-top: var(--dawn-space-3);
-  padding-top: var(--dawn-space-3);
+/* 参考清单住在卡里，是卡的最后一「行」：上面一条线与前一行分开，自己不再画线（2026-08-23 作者截图：曾画成两条） */
+.set-rows > .kernel-ref {
+  margin: 0;
+  padding: var(--dawn-space-3) 0;
   border-top: 1px solid var(--dawn-stroke-4);
 }
 

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 内核设置：参考清单前多画了一条线
+
+- **Type**: fix
+- **Motivation**: 作者截图：R 解释器下面有两条线，「参考：本机注册过的 Jupyter 内核」贴着卡底。
+- **What**: `.kernel-ref` 进了 `.set-rows` 卡之后不再是 `:last-child` 之外的东西——它自己画 `border-top`，前一行的 `border-bottom` 也没去掉。改成：前一行 `:has(+ .kernel-ref)` 去底线；`.set-rows > .kernel-ref` 只画上线、上下各留 space-3。
+- **Impact**: 仅内核设置一屏。
+- **Verification**: 探针截图一条线；视觉基线 10/10。
+
 ### 2026-08-23 — 美化①补：设置里的动作按钮绿底白字、勾选框绿、说明文字精简
 
 - **Type**: refactor

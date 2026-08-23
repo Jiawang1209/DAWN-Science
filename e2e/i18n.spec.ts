@@ -120,6 +120,8 @@ test("**默认就是英文，且每一屏上都没有汉字**", async ({ dawn })
   }
 
   await 屏("首页", async () => {})
+  // 2026-08-23 起这四屏住在设置的「Extensions」一组里
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
   await 屏("Skills", () => page.getByRole("button", { name: "Skills" }).click())
   await 屏("子 Agent", () => page.getByRole("button", { name: "Subagents" }).click())
   await 屏("插件", () => page.getByRole("button", { name: "Plugins" }).click())

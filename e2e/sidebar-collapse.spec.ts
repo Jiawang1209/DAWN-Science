@@ -102,7 +102,8 @@ test("**侧栏有滚动条时，内容不许被横向裁掉**", async ({ dawn })
     BrowserWindow.getAllWindows()[0]?.setSize(1100, 420)
   })
 
-  for (let i = 0; i < 3; i++) {
+  // 2026-08-23 侧栏少了五个固定入口，多堆两段才够出滚动条
+  for (let i = 0; i < 5; i++) {
     await 开一段临时会话(page)
     await page.getByPlaceholder(/今天帮你做些什么/).fill(`第 ${i} 段对话，标题要够长才看得出被裁没有`)
     await page.getByRole("button", { name: "发送", exact: true }).click()

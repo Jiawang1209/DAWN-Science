@@ -5,7 +5,7 @@
  * ③ 命令面板里有「派子 agent」「按规矩聊」，选中往草稿写开头；
  * ④ **一份两用**：`/skill:名` 真的把人设送进了模型（假模型收到的请求里有那段正文）。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -15,8 +15,9 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   mkdirSync(全局, { recursive: true })
   writeFileSync(join(全局, "my-helper.md"), "---\nname: my-helper\ndescription: 我自己写的帮手\ngroup: 写作与审查\n---\n你是帮手。\n")
 
-  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("23")
-  await page.getByRole("button", { name: /^子 Agent/ }).click()
+  // 2026-08-23 起在设置的「扩展」一组里；那一行后面挂着计数
+  await 进设置(page, "子 Agent")
+  await expect(page.locator(".settings-nav-item", { hasText: "子 Agent" })).toContainText("23")
   const 屏 = page.locator(".skills-page")
   await expect(屏).toContainText("23 个，23 个开着")
   await expect(屏.locator(".skill-row", { hasText: "stat-consultant" })).toContainText("自带")

@@ -118,6 +118,8 @@ export {
   setDraft,
   clearDraft,
   setView,
+  $settingsSection,
+  openSettingsSection,
   setActiveProjectId,
   setActiveSessionId,
   type View,

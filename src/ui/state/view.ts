@@ -26,9 +26,19 @@ import { setValue } from "./identity.js"
  * 留着一个没人设的取值，就是在类型上说一句不成立的话——
  * 下一个读这行的人（包括几个月后的我）会以为还有那一屏。
  */
-export type View = "conversation" | "settings" | "skills" | "subagents" | "plugins" | "mcp" | "assistant" | "archived" | "schedule"
+export type View = "conversation" | "settings" | "archived" | "schedule"
 
 export const $view = atom<View>("conversation")
+
+/**
+ * 设置屏里选中的分类（2026-08-23）。**技能 / 子 agent / 插件 / MCP / 远程助理从侧栏并进了设置**（作者：「前 4 个内容保留，剩下的都并入设置」），
+ * 所以「去技能那一屏」= `setView("settings")` + 这一把。`undefined` = 设置屏自己的默认（第一项）。
+ */
+export const $settingsSection = atom<string | undefined>(undefined)
+export const openSettingsSection = (id?: string) => {
+  $settingsSection.set(id)
+  $view.set("settings")
+}
 
 /**
  * 当前选中的项目与会话。

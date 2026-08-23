@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-23 — 侧栏瘦身：技能 / 子 Agent / 插件 / MCP / 远程助理并进设置的「扩展」一组
+
+- **Type**: refactor
+- **Motivation**: 作者：*「左侧边栏固定的内容有点儿多」*；分法是留下会变、要看、要点进去干活的（新建任务、远端服务器、定时），搬走配一次就很少碰的——作者定：*「前 4 个内容保留，剩下的都并入设置」*。
+- **What**: `View` 去掉那五个值；新 store `$settingsSection` + `openSettingsSection(id)`，`SettingsShell` 改成可受控、支持分组标题与行尾计数（计数 `aria-hidden`，不进按钮名字）；五个屏原样挂进设置「扩展」一组（`skills` / `subagents` / `plugins` / `mcp` / `assistant`），屏里自己那行标题在设置里不画；侧栏五行与对应 props 删掉；命令面板多五条「设置：X」（`Actions.openSettingsSection`）。e2e 夹具 `进设置` 改成已在设置里就不再点那颗会切回去的「设置」；涉及的 spec 全改走 `进设置`。
+- **Impact**: 侧栏横线上面只剩新建任务 / 远端服务器 / 定时；`/` 菜单、⌘K 到技能与子 agent 的路没断。
+- **Verification**: `tests/ui` 509 绿；e2e `skills` / `mcp` / `sidebar-layout` / `remote-assistant` / `i18n` / `permission` / `schedule` 35 绿；探针截图看过侧栏与设置；全量单元 2121 绿；全量 e2e 408 绿 + 14 红——10 张视觉基线（侧栏少了五行，diff 图只有侧栏）重存并连验两遍，另 4 条靠侧栏高度 / 计数的用例（`sess-title` 悬停卡、`sidebar-collapse` 滚动条、`sidebar-columns` 计数列、`subagent-roster` 入口）按新形状改了判据后绿。
+
 ### 2026-08-23 — `/` 菜单里把子 agent 的「当技能叫进来」那条路露出来
 
 - **Type**: fix

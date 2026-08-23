@@ -62,7 +62,8 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   const 远端 = await 右缘(".remote-head .side-count")
   const 机器 = await 右缘(".side-subhead .side-count")
   const 时间 = await 右缘(".sess-when")
-  expect(固定入口.length, "Skills / 子 Agent / 已归档 的数没找到").toBeGreaterThanOrEqual(3)
+  // 2026-08-23 技能 / 子 Agent 并进了设置，固定入口上带数的只剩「已归档」
+  expect(固定入口.length, "已归档 的数没找到").toBeGreaterThanOrEqual(1)
   expect(机器.length).toBeGreaterThan(0)
   expect(时间.length).toBeGreaterThan(1)
   const 数字列 = new Set([...固定入口, ...远端, ...机器, ...时间, ...多选])

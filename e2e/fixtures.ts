@@ -224,8 +224,9 @@ export async function 进审阅(page: Page): Promise<void> {
  * 不点的话找不到，而那与「这个控件坏了」在报错上长得一模一样。
  */
 export async function 进设置(page: Page, 分类: string): Promise<void> {
-  await page.getByRole("button", { name: "设置", exact: true }).click()
-  await page.getByRole("button", { name: 分类, exact: true }).click()
+  // 侧栏那颗「设置」是开关（再点一次回对话）——已经在设置里就别再点它，直接换分类（2026-08-23 扩展五屏并进设置后连着切的用例多了）
+  if ((await page.locator(".settings-nav").count()) === 0) await page.getByRole("button", { name: "设置", exact: true }).click()
+  await page.locator(".settings-nav").getByRole("button", { name: 分类, exact: true }).click()
 }
 
 export interface DawnFixture {

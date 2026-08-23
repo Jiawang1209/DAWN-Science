@@ -5875,12 +5875,13 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
 .session-tabs::-webkit-scrollbar { display: none; }
+/* 每个分栏等宽（2026-08-23 作者：「长度不应该跟着 title 变化，太长了就用 … 展示」） */
 .session-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
-  max-width: 18rem;
+  width: 11rem;
   padding: 6px var(--dawn-space-2) 8px;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -5891,5 +5892,5 @@ pre {
 .session-tab-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); flex: 0 0 auto; }
 .session-tab[data-running="1"] .session-tab-dot { background: var(--dawn-success); }
 .session-tab[data-unread="1"] .session-tab-dot { background: var(--dawn-accent); }
-.session-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.session-tab-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; text-align: left; }
 .session-tab-new { flex: 0 0 auto; margin-bottom: 4px; color: var(--dawn-text-3); }

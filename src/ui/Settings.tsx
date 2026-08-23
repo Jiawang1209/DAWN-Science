@@ -30,6 +30,7 @@
 import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
+import { 关闭图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
@@ -1049,8 +1050,16 @@ function 添加模型服务({
       onKeyDown={(e) => {
         if (e.key === "Escape") set开(false)
       }}
+      // 点到框外也关（2026-08-23 作者：「退不出去了」——Esc 只在焦点落在框里时管用）
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) set开(false)
+      }}
     >
       <div className="confirm svc-add">
+        {/* 右上角一颗 ×（作者要的）；名字不叫「关闭」——别处还有同名的 */}
+        <Button variant="ghost" size="icon" className="svc-add-close" aria-label={t("收起添加模型服务")} onClick={() => set开(false)}>
+          <关闭图标 />
+        </Button>
         <h2 className="confirm-title">
           添加模型服务
           {/**
@@ -1077,12 +1086,6 @@ function 添加模型服务({
           onClick={() => set路("自定义")}
         >
           {t("自定义端点")}
-        </Button>
-        {/* **不叫「取消」**：确认框上那颗就叫这个，两处同名会让
-            「按名字找按钮」变成靠运气的事——屏幕阅读器与测试都一样。
-            这颗做的事是「不加了，把这一段收起来」，就照着说 */}
-        <Button variant="text" size="sm" onClick={() => set开(false)}>
-          {t("先不加")}
         </Button>
       </div>
         {路 === "pi" ? (

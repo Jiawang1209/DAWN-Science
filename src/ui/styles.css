@@ -3843,11 +3843,13 @@ pre {
  * 因为里面是一张表单而不是一句话；给它自己的滚动，别把按钮顶出屏幕。
  */
 .svc-add {
+  position: relative;
   width: min(34rem, calc(100vw - 4rem));
   max-height: 80vh;
   overflow-y: auto;
   text-align: left;
 }
+.svc-add-close { position: absolute; top: var(--dawn-space-3); right: var(--dawn-space-3); color: var(--dawn-text-3); }
 /** 标题旁那句：**说清这里能加什么**，不说的话地址格式只能靠试 */
 .svc-add-note {
   margin-left: var(--dawn-space-2);

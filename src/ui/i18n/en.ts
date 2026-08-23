@@ -493,7 +493,7 @@ export const EN: Readonly<Record<string, string>> = {
   "只支持 OpenAI 兼容协议的端点": "OpenAI-compatible endpoints only",
   "添加方式": "How to add it",
   "自定义端点": "Custom endpoint",
-  "先不加": "Not now",
+  "收起添加模型服务": "Close add model service",
   "pi 认识的 provider": "Providers pi knows",
   "pi 认识的 provider 都已经配过了。要加别的就走「自定义端点」。":
     "Every provider pi knows is already configured. To add another, use “Custom endpoint”.",

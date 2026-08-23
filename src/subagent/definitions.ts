@@ -168,7 +168,13 @@ export function loadSubagentDefinitions(projectRoot: string): DefinitionLoad {
  * 顺序就是优先级——先给的赢，同名后来的记一条「重复」。每一层的 `from` 标在定义上。
  * 目录不存在不是错误。
  */
-export function loadSubagentsFrom(层: readonly { dir: string; from: "builtin" | "global" | "project" }[]): DefinitionLoad {
+export function loadSubagentsFrom(
+  层: readonly { dir: string; from: "builtin" | "global" | "project" }[],
+  opts: {
+    /** 自带的停没停（2026-08-23）：自带文件只读，停用记在设置里，这里问一声 */
+    自带停用?: ((name: string) => boolean) | undefined
+  } = {},
+): DefinitionLoad {
   const agents: SubagentDefinition[] = []
   const problems: DefinitionProblem[] = []
   const seen = new Map<string, SubagentDefinition>()
@@ -202,7 +208,7 @@ export function loadSubagentsFrom(层: readonly { dir: string; from: "builtin" |
         if (prior.from === from) problems.push({ filePath, reason: `名字 "${def.name}" 与 ${prior.filePath} 重复，已保留先读到的那个` })
         continue
       }
-      const 完整: SubagentDefinition = { ...def, from }
+      const 完整: SubagentDefinition = { ...def, from, ...(from === "builtin" && opts.自带停用?.(def.name) ? { disabled: true } : {}) }
       seen.set(def.name, 完整)
       agents.push(完整)
     }

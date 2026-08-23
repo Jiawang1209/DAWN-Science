@@ -20,7 +20,7 @@ import type { RemoteConnection, RemoteState, SessionSummary } from "../protocol/
 import { Button, Field, Row } from "./primitives.js"
 import { SessionRow, use现在 } from "./views.js"
 import { 多久之前, 短路径 } from "./format.js"
-import { 服务器图标, 三角图标 } from "./icons.js"
+import { 服务器描边图标, 三角图标 } from "./icons.js"
 
 import { t } from "./i18n/index.js"
 /**
@@ -163,7 +163,8 @@ export function RemoteSection({
         * 现在与别的行一样：**图标在前，展开标记退到行尾**。
         */}
       <Row className="remote-head" aria-expanded={open} onClick={onToggle}>
-        <服务器图标 className="row-icon" />
+        {/* 固定入口用描边（2026-08-23 作者定的） */}
+        <服务器描边图标 className="row-icon" />
         <span className="name">{t("远端服务器")}</span>
         {/* **收起时也要说有几台**：否则收起等于把它们藏没了 */}
         {/* 与「Skills 3」「子 Agent 22」同一副样子、同一个位置（2026-08-22 作者要的对齐） */}

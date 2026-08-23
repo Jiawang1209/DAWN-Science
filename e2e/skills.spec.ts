@@ -95,8 +95,8 @@ test.describe("两屏", () => {
     /** 它说的是 `.dawn/agents/`，不是 skills */
     await expect(屏).toContainText(".dawn/agents")
     /** **两个入口都在设置的「扩展」一组里**（2026-08-23 从侧栏并进来的），而且名字互不为子串 */
-    await expect(page.getByRole("button", { name: "Skills" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "子 Agent" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Skills", exact: true })).toBeVisible()
+    await expect(page.getByRole("button", { name: "子 Agent", exact: true })).toBeVisible()
     await expect(page.locator(".settings-nav-group")).toContainText("扩展")
   })
 })
@@ -142,10 +142,20 @@ test.describe("管理", () => {
     await expect(行).toContainText("已启用")
     expect(readFileSync(join(全局, "my-skill", "SKILL.md"), "utf8")).toBe("---\nname: my-skill\ndescription: 说明 my-skill\n# 注释\n---\n正文\n")
 
-    // 自带的：有行、没有「⋯」
+    // 自带的：有「⋯」能换档、**没有「删除」**（文件在应用包里）；档位落在设置里，文件一字不动（2026-08-23 作者要的）
     const 自带行 = 屏.locator(".skill-row", { hasText: "writing-skills" })
     await expect(自带行).toBeVisible()
-    await expect(自带行.getByRole("button", { name: /技能操作/ })).toHaveCount(0)
+    await 自带行.getByRole("button", { name: /技能操作/ }).click()
+    const 自带菜单 = page.getByRole("menu", { name: /技能操作/ })
+    await expect(自带菜单.getByRole("menuitem", { name: "删除" })).toHaveCount(0)
+    await 自带菜单.getByRole("menuitemradio", { name: /关$/ }).click()
+    await expect(自带行).toContainText("关")
+    // 切走再回来：存下去了
+    await 进设置(page, "子 Agent")
+    await 进设置(page, "Skills")
+    await expect(屏.locator(".skill-row", { hasText: "writing-skills" })).toContainText("关")
+    await 屏.locator(".skill-row", { hasText: "writing-skills" }).getByRole("button", { name: /技能操作/ }).click()
+    await page.getByRole("menu", { name: /技能操作/ }).getByRole("menuitemradio", { name: /开$/ }).click()
     // 项目还没建 .dawn/skills 不算「读不进来」
     await expect(屏).not.toContainText("skill path does not exist")
   })

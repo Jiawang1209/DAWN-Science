@@ -9,6 +9,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
+import { SettingsStore } from "../../src/store/settings.js"
 import { SessionStore } from "../../src/store/sessions.js"
 import { RunStore } from "../../src/store/runs.js"
 import { TaskStore } from "../../src/store/tasks.js"
@@ -48,7 +49,9 @@ function 起一套() {
   const runs = new RunStore(db)
   const 扔了: string[] = []
   const 账: string[] = []
+  const settings = new SettingsStore(db)
   const backend = createWorkbenchBackend({
+    settings,
     projects: new ProjectManager({ projects: projectStore, sessions: sessionStore, runs, registry }),
     projectStore,
     runs,
@@ -65,7 +68,7 @@ function 起一套() {
     },
     记一次技能: (event, 路径, 详情) => 账.push(`${event}:${路径}${详情 ? `:${详情}` : ""}`),
   })
-  return { backend, 全局, 自带, dir, 扔了, 账 }
+  return { backend, settings, 全局, 自带, dir, 扔了, 账 }
 }
 
 describe("技能管理", () => {
@@ -85,10 +88,17 @@ describe("技能管理", () => {
     expect(账).toEqual([`invocation:${文件}:off`, `invocation:${文件}:model`])
   })
 
-  it("自带的拒改、拒删，并说清是自带的；别处的路径也拒", async () => {
-    const { backend, 自带, dir } = 起一套()
-    await expect(backend.setSkillInvocation({ filePath: join(自带, "shipped", "SKILL.md"), mode: "off" })).rejects.toThrow(/自带/)
-    await expect(backend.deleteSkill({ filePath: join(自带, "shipped", "SKILL.md") })).rejects.toThrow(/自带/)
+  it("自带的：换档落在设置里、文件一字不动（2026-08-23）；删仍拒，并说清是自带的；别处的路径也拒", async () => {
+    const { backend, 自带, dir, settings } = 起一套()
+    const 自带文件 = join(自带, "shipped", "SKILL.md")
+    const 原 = readFileSync(自带文件, "utf8")
+    await expect(backend.setSkillInvocation({ filePath: 自带文件, mode: "off" })).resolves.toEqual({ mode: "off" })
+    expect(readFileSync(自带文件, "utf8")).toBe(原)
+    expect(settings.get("skill.mode.shipped")).toBe("off")
+    // 列出来的档位读的是设置里那把键
+    const 列 = (await backend.listAgentSkills({})) as { skills: { name: string; invocation: string }[] }
+    expect(列.skills.find((x) => x.name === "shipped")?.invocation).toBe("off")
+    await expect(backend.deleteSkill({ filePath: 自带文件 })).rejects.toThrow(/自带/)
     writeFileSync(join(dir, "SKILL.md"), "---\nname: x\n---\n")
     await expect(backend.setSkillInvocation({ filePath: join(dir, "SKILL.md"), mode: "off" })).rejects.toThrow(/不在任何一个可改/)
     // 穿越：全局目录里更深一层的不算技能

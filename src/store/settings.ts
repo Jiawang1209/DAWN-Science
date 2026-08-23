@@ -50,6 +50,13 @@ export type SettingKey =
    * `@` 引用（2026-08-23，学自 dsh-at-file 第二档）：粘贴进来的 `@` 算不算（"0" = 算；没配 = 不算）；
    * 文件名过滤规则（json 数组）——全局一套，按工作区一套（键后面跟工作区绝对路径）。
    */
+  /**
+   * 自带的技能 / 子 agent 的开关（2026-08-23，作者：「自带的内容都是已启用，现在没有取消启用的按钮」）。
+   * 自带的文件在应用包里只读，所以档位不能写进 frontmatter，落在这儿：`skill.mode.<名>` 取值 model / manual / off；
+   * `subagent.off.<名>` = "1" 停用。运行时与设置屏读的是同一把键（都经 `技能位置.自带档` / `子agent位置.自带停用`）。
+   */
+  | `skill.mode.${string}`
+  | `subagent.off.${string}`
   | "atfile.ignorePasted"
   | "atfile.rules"
   | `atfile.rules.${string}`

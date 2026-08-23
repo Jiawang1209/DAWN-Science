@@ -39,6 +39,8 @@ export interface SubagentToolOptions {
    * 没给退回只读项目那一层（老行为）。`disabled` 的不给模型。
    */
   dirs?: readonly { dir: string; from: "builtin" | "global" | "project" }[] | undefined
+  /** 自带的停没停（设置里那把键）；与 `dirs` 一起给 */
+  自带停用?: ((name: string) => boolean) | undefined
   childOf: ChildFactory
   /**
    * 子进程规格里与任务无关的那一半（模型、凭证、工作区、agentDir）。
@@ -99,7 +101,7 @@ const text = (s: string, isError = false): ToolResult => ({
 
 export function createSubagentTool(opts: SubagentToolOptions) {
   const load = (): DefinitionLoad => {
-    const r = opts.dirs ? loadSubagentsFrom(opts.dirs) : loadSubagentDefinitions(opts.projectRoot)
+    const r = opts.dirs ? loadSubagentsFrom(opts.dirs, { 自带停用: opts.自带停用 }) : loadSubagentDefinitions(opts.projectRoot)
     return { ...r, agents: r.agents.filter((a) => !a.disabled) }
   }
 

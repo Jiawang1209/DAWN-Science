@@ -212,10 +212,11 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
                     </p>
                     <p className="skill-desc">{a.description}</p>
                   </div>
-                  {actions && a.mutable ? (
+                  {actions ? (
                     <子agent行尾菜单
                       a={a}
                       忙={忙 === a.filePath}
+                      可删={a.mutable}
                       onToggle={() => void 做(a.filePath, async () => { await actions.setEnabled(a.filePath, a.disabled); return a.disabled ? tf("「{0}」启用了。新会话起生效", a.name) : tf("「{0}」停用了。新会话起生效", a.name) })}
                       onDelete={() =>
                         void (async () => {
@@ -250,7 +251,7 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
   )
 }
 
-function 子agent行尾菜单({ a, 忙, onToggle, onDelete }: { a: Skill; 忙: boolean; onToggle: () => void; onDelete: () => void }) {
+function 子agent行尾菜单({ a, 忙, 可删, onToggle, onDelete }: { a: Skill; 忙: boolean; /** 自带的只能启停、不能删（文件在应用包里） */ 可删: boolean; onToggle: () => void; onDelete: () => void }) {
   const [开着, 设开着] = useState<{ top: number; left: number } | undefined>(undefined)
   const 按钮 = useRef<HTMLButtonElement>(null)
   const 打开 = () => {
@@ -268,7 +269,7 @@ function 子agent行尾菜单({ a, 忙, onToggle, onDelete }: { a: Skill; 忙: b
           <div className="menu-scrim" onClick={() => 设开着(undefined)} />
           <div className="row-menu" role="menu" aria-label={tf("子 agent 操作：{0}", a.name)} style={{ top: 开着.top, left: 开着.left }}>
             <Button variant="ghost" size="inline" role="menuitem" onClick={() => { 设开着(undefined); onToggle() }}>{a.disabled ? t("启用") : t("停用")}</Button>
-            <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>{t("删除")}</Button>
+            {可删 ? <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>{t("删除")}</Button> : null}
           </div>
         </>
       ) : null}
@@ -327,7 +328,7 @@ export interface AgentSkill装载 {
 const 清单上的卡 = { 标题: ".skill-name-text", 容器: ".skills-page", 开在: "左边" as const }
 
 /** 行尾那颗「⋯」：开 / 只手动 / 关 / 删除。与会话行、文件行同一套菜单形状 */
-function 行尾菜单({ s, 忙, 档名, onMode, onDelete }: { s: AgentSkill; 忙: boolean; 档名: (m: 调用档) => string; onMode: (m: 调用档) => void; onDelete: () => void }) {
+function 行尾菜单({ s, 忙, 可删, 档名, onMode, onDelete }: { s: AgentSkill; 忙: boolean; /** 自带的只能换档、不能删 */ 可删: boolean; 档名: (m: 调用档) => string; onMode: (m: 调用档) => void; onDelete: () => void }) {
   const [开着, 设开着] = useState<{ top: number; left: number } | undefined>(undefined)
   const 按钮 = useRef<HTMLButtonElement>(null)
   const 打开 = () => {
@@ -350,9 +351,11 @@ function 行尾菜单({ s, 忙, 档名, onMode, onDelete }: { s: AgentSkill; 忙
                 {s.invocation === m ? "✓ " : ""}{档名(m)}
               </Button>
             ))}
-            <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>
-              {t("删除")}
-            </Button>
+            {可删 ? (
+              <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { 设开着(undefined); onDelete() }}>
+                {t("删除")}
+              </Button>
+            ) : null}
           </div>
         </>
       ) : null}
@@ -592,8 +595,8 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
                     {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
                     <p className="skill-desc">{s.description}</p>
                   </div>
-                  {actions && s.mutable ? (
-                    <行尾菜单 s={s} 忙={忙 === s.filePath} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
+                  {actions ? (
+                    <行尾菜单 s={s} 忙={忙 === s.filePath} 可删={s.mutable} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
                   ) : null}
                 </li>
               ))}

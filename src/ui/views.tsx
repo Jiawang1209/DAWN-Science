@@ -38,7 +38,7 @@ import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 归档图标, 手机图标, 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -450,6 +450,7 @@ export function SessionRow({
         <span className="sess">
           <span className="name">
             {/* 行上不再画对话图标（2026-08-21 作者要的）：它挪到悬停卡的标题前 */}
+            {/* 行首那个「-」（2026-08-23 作者要的：表示收纳下面的一段单独会话）由 `.sess .name::before` 画——不进文本，读屏与判据都不碰它 */}
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
               <span className="pin-mark" aria-label={t("已置顶")}>
@@ -1853,7 +1854,7 @@ export function SessionSidebar({
       ) : null}
       <div className="side-actions">
         <Row className="side-action" disabled={!fallbackAgent} onClick={onNewTask}>
-          <加号图标 className="row-icon" />
+          <加号描边图标 className="row-icon" />
           <span className="name">{t("新建任务")}</span>
         </Row>
         {/**
@@ -1889,13 +1890,13 @@ export function SessionSidebar({
           */}
         {onShowSchedule ? (
           <Row active={view === "schedule"} className="side-action" onClick={onShowSchedule}>
-            <时钟图标 className="row-icon" />
+            <时钟描边图标 className="row-icon" />
             <span className="name">{t("定时")}</span>
           </Row>
         ) : null}
         {onShowArchived && (archivedCount ?? 0) > 0 ? (
           <Row active={view === "archived"} className="side-action" onClick={onShowArchived}>
-            <归档图标 className="row-icon" />
+            <归档描边图标 className="row-icon" />
             <span className="name">{t("已归档")}</span>
             <span className="side-count">{archivedCount}</span>
           </Row>
@@ -1950,7 +1951,8 @@ export function SessionSidebar({
               onClick={() => 切收起("最近")}
             >
               <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
-              <时钟图标 className="side-section-icon" />
+              {/* 与项目 / 服务器 / 会话同一条：收起实心、展开描边（2026-08-23 作者指出「最近」漏了） */}
+              {收起了("最近") ? <时钟图标 className="side-section-icon" /> : <时钟描边图标 className="side-section-icon" />}
               <span className="side-section-title">{t("最近")}</span>
               <span className="side-count side-section-count">{最近的.length}</span>
             </Button>

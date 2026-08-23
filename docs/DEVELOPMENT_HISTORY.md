@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 附栏三颗「备好了才变黑」：上传 / 目录 / 终端对齐「优化输入」的行为
+
+- **Type**: feat
+- **Motivation**: 作者定的：终端静默时该与另外三颗同色（此前常黑）；四颗都按「执行完动作转黑色实心」——带上图、选定目录、终端开着、写了字（优化输入原本就对）。明确不跟主题色。
+- **What**: `.composer-footer` 里 attach-trigger / ws-chip / dock-toggle 静默 `text-3`；`data-ready`（AttachButton 新 prop，对话传 `待发图`、空态传 `空态图`；WorkspaceEntry 按 workspace）与 `aria-pressed` 转 `text-1`。原 `.dock-toggle[aria-pressed] { accent }` 改 text-1。
+- **Impact**: 附栏观感；视觉基线 8 张重存（diff 只在附栏那一行）。
+- **Verification**: 新 `e2e/composer-ready.spec.ts` 3 条（终端开关变色、项目会话目录黑 / 临时会话淡、贴图后上传变黑）连跑两轮；attach / session-tabs 回归绿；基线重存后连验两轮 10/10。
+
 ### 2026-08-25 — 色板旁的独立吸管键删掉：屏幕取色只从色盘面板里进
 
 - **Type**: refactor

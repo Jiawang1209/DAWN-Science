@@ -1137,7 +1137,12 @@ pre {
   flex: 0 0 auto;
 }
 /* composer 上那颗终端按钮：开着时看得出来 */
-.dock-toggle[aria-pressed="true"] { color: var(--dawn-accent); }
+/**
+ * 附栏三颗（上传 / 目录 / 终端）：**备好前淡灰、备好后黑色实心**（2026-08-25 作者定的；
+ * 优化输入本来就是这个行为——没字灰、有字深，这三颗对齐它）。
+ * 「备好」各自的意思：带上了图、选定了目录、终端开着。作者明确说了不跟主题色。
+ */
+.dock-toggle[aria-pressed="true"] { color: var(--dawn-text-1); }
 .dock-tabs {
   display: flex;
   gap: 8px;
@@ -6070,3 +6075,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .dropper-hint { margin: 0; font-size: 11px; color: var(--dawn-text-2); }
 .dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
 .dropper-err { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); }
+
+/* 附栏三颗的静默态：与「优化输入」同一档淡（终端此前常黑，作者报的） */
+.composer-footer .attach-trigger,
+.composer-footer .ws-chip,
+.composer-footer .dock-toggle { color: var(--dawn-text-3); }
+.composer-footer .attach[data-ready] .attach-trigger,
+.composer-footer .ws-chip[data-ready] { color: var(--dawn-text-1); }
+.composer-footer .dock-toggle[aria-pressed="true"] { color: var(--dawn-text-1); }

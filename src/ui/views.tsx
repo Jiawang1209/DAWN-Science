@@ -108,7 +108,7 @@ function WorkspaceEntry({
   const 文字 = workspace ? 短路径(workspace) : t("选择工作目录")
   if (!onPick) {
     return (
-      <span className="ws-chip" title={workspace ?? undefined}>
+      <span className="ws-chip" data-ready={workspace ? "1" : undefined} title={workspace ?? undefined}>
         <文件夹图标 />
         <span className="ws-chip-label">{文字}</span>
       </span>
@@ -120,6 +120,7 @@ function WorkspaceEntry({
         variant="ghost"
         size="sm"
         className="ws-chip"
+        data-ready={workspace ? "1" : undefined}
         /**
          * **那句话从这颗按钮上摘掉了**（2026-08-13）。
          *
@@ -669,7 +670,10 @@ function AttachButton({
   workspace,
   onInsert,
   onAttachImages,
+  ready,
 }: {
+  /** 已经带上东西了（图片 chips 在了）——按钮转黑色实心（2026-08-25 作者定的） */
+  ready?: boolean | undefined
   /** 这段对话的工作目录。**用来把路径缩成相对的**，也用作浏览器的起点 */
   workspace?: string | undefined
   /** 文件与数据：**把路径写进输入框**——agent 用 bash 去读它 */
@@ -718,7 +722,7 @@ function AttachButton({
 
   return (
     <div
-      className="attach"
+      className="attach" data-ready={ready ? "1" : undefined}
       ref={盒}
       /**
        * **Esc 也能收**（2026-08-13 补）。
@@ -4549,6 +4553,7 @@ export function ConversationView({
               */}
             <AttachButton
               {...(workspace ? { workspace } : {})}
+              ready={待发图.length > 0}
               /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
               onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
               /**
@@ -5852,6 +5857,7 @@ export function EmptyConversation({
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
+                  ready={空态图.length > 0}
                   onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
                   onAttachImages={(paths) => {
                     设空态图((前) => [

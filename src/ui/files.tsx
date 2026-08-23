@@ -63,7 +63,7 @@ function bytes(n: number): string {
  * 每一类一个图标（2026-08-20，作者要的）。**映射只有这一张表**，
  * 树里目录行与文件行都从这儿取。类别怎么判在 `file-kind.ts`。
  */
-function 类型图标({ 类 }: { 类: 文件类 }) {
+export function 类型图标({ 类 }: { 类: 文件类 }) {
   switch (类) {
     case "dir": return <文件夹图标 className="row-icon" />
     case "markdown": return <Markdown图标 className="row-icon" />

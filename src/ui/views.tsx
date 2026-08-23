@@ -28,6 +28,8 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
+import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
+import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
@@ -3544,6 +3546,8 @@ export function ConversationView({
   onOpenWeb,
   onExport,
   权限,
+  引用文件,
+  onOpenReference,
   session,
   items,
   acpAgents,
@@ -3677,6 +3681,9 @@ export function ConversationView({
   onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
   /** 输入卡上那颗权限（2026-08-23）：这一段的档、是否跟着默认、选了怎么办 */
   权限?: { 当前: 权限档; 跟随默认: boolean; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
+  /** `@` 引用工作区文件（2026-08-23，学自 dsh-at-file）：文件在哪、怎么取；点引用栏怎么开 */
+  引用文件?: 引用文件源 | undefined
+  onOpenReference?: ((path: string) => void) | undefined
   disabled?: boolean | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
@@ -3740,6 +3747,22 @@ export function ConversationView({
   const 斜杠单 = useStore($slashItems)
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
+  // `@` 菜单：光标位置由输入框报（onSelect），选中下标与 `/` 那份同理由输入框管
+  const 输入框 = useRef<HTMLTextAreaElement>(null)
+  const [光标, 设光标] = useState(0)
+  const [艾特选中, 设艾特选中] = useState(0)
+  const [艾特关了, 设艾特关了] = useState(false)
+  const 艾特位 = !艾特关了 && !disabled ? 在打艾特(draft, 光标) : undefined
+  const 艾特态 = use艾特候选(艾特位?.query, 引用文件)
+  const 写回 = (r: { draft: string; caret: number }) => {
+    setDraft(session.sessionId, r.draft)
+    设艾特选中(0)
+    // 光标要落在令牌后面——等 React 把值写进去再挪
+    requestAnimationFrame(() => {
+      输入框.current?.setSelectionRange(r.caret, r.caret)
+      设光标(r.caret)
+    })
+  }
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -4217,10 +4240,16 @@ export function ConversationView({
           {在打斜杠(draft) && !斜杠关了 ? (
             <SlashMenu items={斜杠单} draft={draft} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { setDraft(session.sessionId, 斜杠选完(x)); 设斜杠选中(0) }} />
           ) : null}
+          {艾特位 ? (
+            <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(draft, 艾特位, x.path, x.kind))} />
+          ) : null}
+          <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => setDraft(session.sessionId, 抠掉引用(draft, p))} />
           <textarea
+            ref={输入框}
             className="control composer-field"
             value={draft}
-            onChange={(e) => { setDraft(session.sessionId, e.target.value); 设斜杠选中(0); 设斜杠关了(false) }}
+            onChange={(e) => { setDraft(session.sessionId, e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
+            onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
             /**
              * **粘一张图进来就当附件**（协议 4.13，2026-08-13，作者提）。
              *
@@ -4234,10 +4263,37 @@ export function ConversationView({
                 设待发图((前) => [...前, ...图们])
               })
               if (粘的是图(e)) e.preventDefault()
+              // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
+              else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
             }}
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
+              // `@` 菜单开着：上下挑、回车引用、→ 钻目录、Esc 关
+              if (艾特位) {
+                const 列 = 艾特态.行
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                  e.preventDefault()
+                  if (列.length) 设艾特选中((i) => (i + (e.key === "ArrowDown" ? 1 : 列.length - 1)) % 列.length)
+                  return
+                }
+                const 当前 = 列[Math.min(艾特选中, Math.max(列.length - 1, 0))]
+                if (e.key === "Enter" && !e.shiftKey && 当前) {
+                  e.preventDefault()
+                  写回(艾特选完(draft, 艾特位, 当前.path, 当前.kind))
+                  return
+                }
+                if (e.key === "ArrowRight" && 当前?.kind === "dir" && e.currentTarget.selectionStart === 艾特位.end && e.currentTarget.selectionEnd === 艾特位.end) {
+                  e.preventDefault()
+                  写回(艾特选完(draft, 艾特位, 当前.path, "dir", true))
+                  return
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault()
+                  设艾特关了(true)
+                  return
+                }
+              }
               // `/` 菜单开着：上下挑、回车选、Esc 关——都不落到下面的发送逻辑
               if (在打斜杠(draft) && !斜杠关了) {
                 const 列 = 筛斜杠(斜杠单, draft)
@@ -4307,19 +4363,8 @@ export function ConversationView({
                 onAbort()
                 return
               }
-              // `/` 不再开命令面板（2026-08-22）：它开的是上面那份只有技能与子 agent 的菜单——打进去自然就弹
-              const 空且在头 = draft.length === 0
-              if (空且在头 && e.key === "@") {
-                e.preventDefault()
-                void 挑文件("any", workspace).then((选中) => {
-                  if (选中.length === 0) return
-                  setDraft(
-                    session.sessionId,
-                    选中.map((p) => 相对于(p, workspace)).join(" "),
-                  )
-                })
-                return
-              }
+              // `/` 不再开命令面板（2026-08-22）：它开的是上面那份只有技能与子 agent 的菜单——打进去自然就弹。
+              // `@` 同理（2026-08-23）：打进去就弹路径菜单，不再开系统文件对话框
               /**
                * **↑ / ↓ 翻自己说过的话**（2026-08-11，作者提）。
                *
@@ -5459,6 +5504,8 @@ export function EmptyConversation({
   onStart,
   onToggleDock,
   权限,
+  引用文件,
+  onOpenReference,
   onEnhance,
   onCancelEnhance,
   onOpenSettings,
@@ -5474,9 +5521,12 @@ export function EmptyConversation({
   agentKind?: ((agentId: string) => SessionSummary["kind"] | undefined) | undefined
   /** 掀开／收起底部终端。**与 composer 上那颗、命令面板那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
-  /** 提示词增强（2026-08-21）。空态屏用配置里第一个 API 模型 */
   /** 空态屏上那颗权限改的是默认（2026-08-23） */
   权限?: { 当前: 权限档; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
+  /** `@` 引用：选了工作目录才有源；没有就在菜单里说清 */
+  引用文件?: 引用文件源 | undefined
+  onOpenReference?: ((path: string) => void) | undefined
+  /** 提示词增强（2026-08-21）。空态屏用配置里第一个 API 模型 */
   onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
   onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
   /**
@@ -5511,6 +5561,20 @@ export function EmptyConversation({
   const 斜杠单 = useStore($slashItems)
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
+  const 输入框 = useRef<HTMLTextAreaElement>(null)
+  const [光标, 设光标] = useState(0)
+  const [艾特选中, 设艾特选中] = useState(0)
+  const [艾特关了, 设艾特关了] = useState(false)
+  const 艾特位 = !艾特关了 ? 在打艾特(草稿, 光标) : undefined
+  const 艾特态 = use艾特候选(艾特位?.query, 引用文件)
+  const 写回 = (r: { draft: string; caret: number }) => {
+    设草稿(r.draft)
+    设艾特选中(0)
+    requestAnimationFrame(() => {
+      输入框.current?.setSelectionRange(r.caret, r.caret)
+      设光标(r.caret)
+    })
+  }
   /**
    * 还没建任务，所以工作目录先记在这一屏上（2026-08-12）。
    * 发出去的那一刻它跟着 `onStart` 一起走——**归到哪一栏由它决定**。
@@ -5667,11 +5731,17 @@ export function EmptyConversation({
               {在打斜杠(草稿) && !斜杠关了 ? (
                 <SlashMenu items={斜杠单} draft={草稿} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { 设草稿(斜杠选完(x)); 设斜杠选中(0) }} />
               ) : null}
+              {艾特位 ? (
+                <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(草稿, 艾特位, x.path, x.kind))} />
+              ) : null}
+              <AtRail draft={草稿} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => 设草稿(抠掉引用(草稿, p))} />
               <textarea
+                ref={输入框}
                 className="control composer-field"
                 value={草稿}
                 autoFocus
-                onChange={(e) => { 设草稿(e.target.value); 设斜杠选中(0); 设斜杠关了(false) }}
+                onChange={(e) => { 设草稿(e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
+                onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
                 /**
                  * **这一屏也能粘图**（2026-08-13 补，作者报的：
                  * *「我现在复制一个图片，然后粘贴到窗口，为什么不显示图片呢？」*）。
@@ -5689,9 +5759,34 @@ export function EmptyConversation({
                     设空态图((前) => [...前, ...图们])
                   })
                   if (粘的是图(e)) e.preventDefault()
+                  else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
                 }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {
+                  if (艾特位) {
+                    const 列 = 艾特态.行
+                    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                      e.preventDefault()
+                      if (列.length) 设艾特选中((i) => (i + (e.key === "ArrowDown" ? 1 : 列.length - 1)) % 列.length)
+                      return
+                    }
+                    const 当前 = 列[Math.min(艾特选中, Math.max(列.length - 1, 0))]
+                    if (e.key === "Enter" && !e.shiftKey && 当前) {
+                      e.preventDefault()
+                      写回(艾特选完(草稿, 艾特位, 当前.path, 当前.kind))
+                      return
+                    }
+                    if (e.key === "ArrowRight" && 当前?.kind === "dir" && e.currentTarget.selectionStart === 艾特位.end && e.currentTarget.selectionEnd === 艾特位.end) {
+                      e.preventDefault()
+                      写回(艾特选完(草稿, 艾特位, 当前.path, "dir", true))
+                      return
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault()
+                      设艾特关了(true)
+                      return
+                    }
+                  }
                   if (在打斜杠(草稿) && !斜杠关了) {
                     const 列 = 筛斜杠(斜杠单, 草稿)
                     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -5723,15 +5818,7 @@ export function EmptyConversation({
                    * 提示一样，那么提示承诺的事就得一样——**只在一屏上兑现的承诺，
                    * 换一屏就成了谎**。
                    */
-                  const 空且在头 = 草稿.length === 0
-                  if (空且在头 && e.key === "@") {
-                    e.preventDefault()
-                    void 挑文件("any", 工作目录).then((选中) => {
-                      if (选中.length > 0) {
-                        设草稿(选中.map((p) => 相对于(p, 工作目录)).join(" "))
-                      }
-                    })
-                  }
+                  // `@` 打进去就弹路径菜单（2026-08-23），不再开系统文件对话框
                 }}
               />
               {/**

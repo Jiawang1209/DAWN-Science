@@ -52,7 +52,7 @@ const THEME_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
  * 一节设置。**标题 + 一行说明 + 若干行**——说明这一行不是装饰，
  * 它回答「这一节是干什么的」，少了它每一节都要靠标题猜。
  */
-function Section({
+export function Section({
   title,
   desc,
   children,
@@ -81,7 +81,7 @@ function Section({
  *
  * 说明写在名字下面而不是控件下面——**读的顺序是先知道这是什么，再决定填什么**。
  */
-function Row({
+export function Row({
   name,
   desc,
   htmlFor,

@@ -113,6 +113,8 @@ function backend(): WorkbenchBackend {
 
     initScienceLayout: async () => ({ created: [], instructions: "written" as const, file: "AGENTS.md" }),
     getPermissionMode: async () => ({ mode: "allow-all" as const }),
+    getAtFileSettings: async () => ({ ignorePasted: true, globalRules: [] }),
+    setAtFileSettings: async () => ({ ignorePasted: true, globalRules: [] }),
     setPermissionMode: async () => ({ mode: "deny-risky" as const }),
     getDefaultWorkspace: async () => ({ path: "/w", isDefault: true }),
     setDefaultWorkspace: async () => ({ path: "/w", isDefault: true }),

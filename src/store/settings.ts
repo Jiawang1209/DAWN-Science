@@ -47,6 +47,13 @@ export type SettingKey =
    */
   | "permission.mode"
   /**
+   * `@` 引用（2026-08-23，学自 dsh-at-file 第二档）：粘贴进来的 `@` 算不算（"0" = 算；没配 = 不算）；
+   * 文件名过滤规则（json 数组）——全局一套，按工作区一套（键后面跟工作区绝对路径）。
+   */
+  | "atfile.ignorePasted"
+  | "atfile.rules"
+  | `atfile.rules.${string}`
+  /**
    * 「这台 MCP 服务器我过目了」（2026-08-15）。键是 `mcp.trusted.<服务器名>`。
    *
    * ## 为什么它不在 `providers.yaml` 里

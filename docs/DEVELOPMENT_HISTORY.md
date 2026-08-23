@@ -43,6 +43,22 @@
 
 ## 变更日志
 
+### 2026-08-23 — `@` 引用第二档：粘贴的 `@` 不算、文件名过滤规则（协议 7.23）
+
+- **Type**: feat
+- **Motivation**: 作者：*「第二档也要做」*。学 dsh-at-file 剩下的两样。
+- **What**: `files/mentions.ts` 加 `粘贴标记` / `护住粘贴的艾特` / `剥掉粘贴标记`（`扫引用` 与 `在打艾特` 见标记即跳过）、`文件规则` / `规则的毛病` / `编文件规则`；协议 7.23 `getAtFileSettings` / `setAtFileSettings`（服务端再验坏正则）；设置键 `atfile.ignorePasted` / `atfile.rules` / `atfile.rules.<工作区>`；`backend.ts` 发送前扫完剥标记（模型与转录都不见它）；`ui/at-menu.tsx` 的 `接管粘贴`（两张输入卡都接，只在剪贴板文字有 `@x` 时接管）与候选过滤；新设置页 `ui/at-settings.tsx`「文件引用」（开关、全局规则、工作区规则带继承的全局灰行、坏正则存不进去）；`Settings.tsx` 导出 `Section` / `Row`。
+- **Impact**: 默认粘贴的 `@` 不算（与它一致）；规则只影响 `@` 菜单，不动坞里文件格与 `searchFiles`。
+- **Verification**: 单元新增 5 条（粘贴往返、规则判据）；`tests/ui` 499 绿（扫描拦了「Clear」子串、线那头回 `{}` 时不许炸）；e2e `at-file.spec.ts` 5 条（粘贴带真实路径模型收不到且无标记泄漏、关掉后不接管；规则真的让菜单不列、坏正则按钮禁用）；探针截图看过设置页；全量单元 2111（操作注册表 107→109；`tests/mcp/客户端` 一条在全量下偶发、单跑绿）；全量 e2e 420 绿 + 设置那两张视觉基线因新分类重存（命令面板亮色照旧拿 actual 救回），连验两遍绿。
+
+### 2026-08-23 — `@` 引用工作区文件：输入卡上的路径菜单 + 引用栏 + 发送前附 workspace-reference（学自 dsh-at-file）
+
+- **Type**: feat
+- **Motivation**: 占位符从 2026-08-19 起写着「@引用工作区文件」，而 `@` 只在空框行首开一个系统文件对话框——承诺了却没有的能力。作者：*「我知道我原来写过，但是实现的并不好，所以这次借助这个仓库的代码」*。学 `omdsh-dev/dsh-at-file`，解读在 `ccb_hive_code_learn/dsh-at-file-解读.md`，定案在 `specs/2026-08-23-at引用-design.md`。
+- **What**: 新建 `src/files/mentions.ts`（唯一一份识别语法、`扫引用`、`展开引用`——只验存在、附 `<workspace-reference path kind [host]/>`、原文不动；全角标点是边界）、`src/ui/at-file.ts`（`在打艾特` / `艾特选完` / `抠掉引用` / 借来的 `排路径` / `成候选行`）、`src/ui/at-menu.tsx`（`AtMenu` + `use艾特候选`：空 / `xx/` 走 `listDirectory`，有词走 `searchFiles` 再本地排，截断出声；`AtRail` 引用栏，正在打的不进栏）。两张输入卡都接上（上下 / 回车 / → 钻目录 / Esc；光标由 `onSelect` 报），删掉旧的系统对话框那一支。`App.tsx` 传 `引用文件`（坞里文件格那两条，远端跟着那台机器）。`backend.ts` 的 `writeToSession` 在 `sessions.write` 前 `附上引用`（本地 `stat`、远端 `executor.stat`），转录存原文。`files.tsx` 的 `类型图标` 导出复用。样式 `.at-*`；design-contract 新增「`@路径` 正则只在 mentions.ts 写一次」。
+- **Impact**: 原生 / ACP / 远端会话都受益（在后端那一步展开）；不存在的 `@alice` 什么都不发生；协议没加操作。
+- **Verification**: `tests/files/mentions.test.ts` + `tests/ui/at-file.test.ts` 18 条（第一轮抓到全角逗号被吞进路径，改了语法）；`tests/ui` 489 绿（扫描拦了 `title=`、自造令牌、缺英文）；`e2e/at-file.spec.ts` 3 条（模型收到引用、不带内容、屏幕上仍是原文）；探针截图看过菜单与引用栏；全量单元 2107 绿；全量 e2e 418 绿 + 2 红——`attach.spec.ts`「提示不说谎」那两条还断言 `@` 开系统对话框，改成断言弹菜单后绿；十张视觉基线没动（菜单不在基线那几屏里）。
+
 ### 2026-08-23 — 权限档搬进输入卡：附栏右侧一颗上拉菜单，设置里的「工具权限」删了
 
 - **Type**: feat

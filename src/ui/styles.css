@@ -5709,3 +5709,49 @@ pre {
 }
 .perm-pill-default input { margin: 0; }
 .perm-pill-note { margin: var(--dawn-space-2) var(--dawn-space-3) 0; font-size: 11px; line-height: 1.4; }
+
+/* ============ `@` 引用工作区文件（2026-08-23，学自 dsh-at-file） ============ */
+/** 菜单借 `.slash-menu` 的壳；一行是 图标 | 文件名 | 父目录 */
+.at-menu .at-item {
+  grid-template-columns: auto minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+}
+.at-icon { display: inline-flex; color: var(--dawn-text-2); }
+.at-icon .row-icon { width: 16px; height: 16px; }
+/** 长文件名换行不省略——重名时父目录写进了主标题，截掉就分不清了 */
+.at-name { white-space: normal; word-break: break-all; }
+.at-dir { color: var(--dawn-text-3); }
+/** 引用栏：输入框上方，一行一个。点路径开、× 抠掉草稿里那几个字 */
+.at-rail {
+  list-style: none;
+  margin: 0 0 var(--dawn-space-2);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dawn-space-1) var(--dawn-space-2);
+}
+.at-rail-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 0 2px 0 var(--dawn-space-1);
+  border-radius: var(--dawn-radius-sm);
+  background: var(--dawn-surface-panel);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+}
+.at-rail-path { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--dawn-text-2); font-family: var(--dawn-font-mono); font-size: 12px; }
+.at-rail-path:disabled { opacity: 1; cursor: default; }
+.at-rail-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.at-rail-x { color: var(--dawn-text-3); }
+.at-rail-x:hover { color: var(--dawn-text-1); }
+/** 设置 · 文件引用（第二档） */
+.at-toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.at-rules-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); align-items: flex-start; min-width: 0; }
+.at-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.at-rule { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.at-rule.inherited { opacity: 0.6; }
+.at-rule-pattern { font-family: var(--dawn-font-mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.at-rule-add { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
+.at-rule-add .control { width: auto; }
+.at-rule-cs { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--dawn-text-2); }

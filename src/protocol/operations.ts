@@ -102,6 +102,24 @@ const Paged = z.object({
   after: z.string().min(1).optional(),
 })
 
+/** `@` 引用的文件名过滤规则（7.23）。**无效正则在两头都拒**：界面存之前验，服务端也验 */
+const FileRuleSchema = z
+  .object({
+    kind: z.enum(["exact", "regex"]),
+    pattern: z.string().min(1),
+    caseSensitive: z.boolean().default(false),
+  })
+  .strict()
+const AtFileSettingsSchema = z
+  .object({
+    /** 粘贴进来的 `@` 不算引用（默认开） */
+    ignorePasted: z.boolean(),
+    globalRules: z.array(FileRuleSchema),
+    /** 只在请求给了 `workspace` 时有 */
+    workspaceRules: z.array(FileRuleSchema).optional(),
+  })
+  .strict()
+
 const Empty = z.object({}).strict()
 const ByProject = z.object({ projectId: z.string().min(1) })
 
@@ -1547,6 +1565,33 @@ export const OPERATIONS = {
     request: z.object({ mode: z.enum(["allow-all", "ask-risky", "deny-risky"]) }).strict(),
     /** **回显现状**：看不见自己改成了什么，等于没改 */
     response: z.object({ mode: z.enum(["allow-all", "ask-risky", "deny-risky"]) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * `@` 引用的设置（7.23，2026-08-23，学自 dsh-at-file 的第二档）：
+   * 粘贴进来的 `@` 算不算；文件名过滤规则——**全局一套 + 按工作区一套**，
+   * 每条是「精确文件名 / 正则 + 是否区分大小写」。给了 `workspace` 才回那一套。
+   */
+  getAtFileSettings: {
+    request: z.object({ workspace: z.string().optional() }).strict(),
+    response: AtFileSettingsSchema,
+    mutating: false,
+  },
+
+  setAtFileSettings: {
+    request: z
+      .object({
+        ignorePasted: z.boolean().optional(),
+        globalRules: z.array(FileRuleSchema).optional(),
+        /** 要改哪个工作区的那一套；给了 `workspaceRules` 就必须给它 */
+        workspace: z.string().optional(),
+        workspaceRules: z.array(FileRuleSchema).optional(),
+      })
+      .strict()
+      .refine((r) => r.workspaceRules === undefined || Boolean(r.workspace), { message: "改工作区的规则要说是哪个工作区" }),
+    /** 回显现状 */
+    response: AtFileSettingsSchema,
     mutating: true,
   },
 

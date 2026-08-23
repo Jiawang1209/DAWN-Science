@@ -6,6 +6,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
+import { SettingsStore } from "../../src/store/settings.js"
 import { SessionStore } from "../../src/store/sessions.js"
 import { RunStore } from "../../src/store/runs.js"
 import { TaskStore } from "../../src/store/tasks.js"
@@ -43,7 +44,9 @@ function 起一套() {
   const sessions = new SessionManager({ store: sessionStore, registry, runtimes: { native: new FakeRuntime(), pty: new FakeRuntime() }, workspaceRoot: tmpdir() })
   const runs = new RunStore(db)
   const 扔了: string[] = []
+  const settings = new SettingsStore(db)
   const backend = createWorkbenchBackend({
+    settings,
     projects: new ProjectManager({ projects: projectStore, sessions: sessionStore, runs, registry }),
     projectStore, runs, sessions, credentials: memoryCredentials(), registry,
     events: new SessionTranscripts({ terminalMaxChars: 10_000 }), tasks: new TaskStore(db),
@@ -51,7 +54,7 @@ function 起一套() {
     subagents: { 全局目录: 全局, 自带目录: 自带 },
     trashItem: async (p) => { 扔了.push(p); rmSync(p, { force: true }) },
   })
-  return { backend, 全局, 自带, dir, 扔了 }
+  return { backend, settings, 全局, 自带, dir, 扔了 }
 }
 
 describe("子 agent 名册", () => {
@@ -67,10 +70,14 @@ describe("子 agent 名册", () => {
     await backend.setSubagentEnabled({ filePath: 文件, enabled: true })
     expect(readFileSync(文件, "utf8")).toBe(`---\nname: mine\ndescription: 说明 mine\n# 注释\n---\n正文\n`)
   })
-  it("自带的拒改、拒删", async () => {
-    const { backend, 自带 } = 起一套()
-    await expect(backend.setSubagentEnabled({ filePath: join(自带, "shipped.md"), enabled: false })).rejects.toThrow(/自带/)
-    await expect(backend.deleteSubagent({ filePath: join(自带, "shipped.md") })).rejects.toThrow(/自带/)
+  it("自带的：停用落在设置里、文件一字不动（2026-08-23）；删仍拒", async () => {
+    const { backend, 自带, settings } = 起一套()
+    const 文件 = join(自带, "shipped.md")
+    const 原 = readFileSync(文件, "utf8")
+    await expect(backend.setSubagentEnabled({ filePath: 文件, enabled: false })).resolves.toEqual({ enabled: false })
+    expect(readFileSync(文件, "utf8")).toBe(原)
+    expect(settings.get("subagent.off.shipped")).toBe("1")
+    await expect(backend.deleteSubagent({ filePath: 文件 })).rejects.toThrow(/自带/)
   })
   it("导入：预检报冲突；不覆盖跳过、覆盖换新；删进废纸篓", async () => {
     const { backend, 全局, dir, 扔了 } = 起一套()

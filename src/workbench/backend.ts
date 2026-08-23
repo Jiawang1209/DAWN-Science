@@ -167,7 +167,7 @@ export interface WorkbenchBackendOptions {
    */
   tasks?: TaskStore
   /** 子 agent 的三层（7.20）：自带（只读）与你写的；项目那一层固定 `<工作区>/.dawn/agents` */
-  subagents?: { 全局目录?: string; 自带目录?: string }
+  subagents?: { 全局目录?: string; 自带目录?: string; 自带停用?: ((name: string) => boolean) | undefined }
   /** 定时任务的两张表（7.19）。**不给就没有定时**——界面如实说「本次运行没有装配」 */
   schedules?: ScheduleStore
   /** 定时任务的设置；不给用默认 */
@@ -226,7 +226,7 @@ export interface WorkbenchBackendOptions {
    * 技能的三个位置（S20，2026-08-15）。**与运行时用的是同一份**——
    * 两处各写各的话，屏上列的与实际跑的会分家。
    */
-  skills?: { 全局目录?: string; 项目目录名?: string; 自带目录?: string }
+  skills?: { 全局目录?: string; 项目目录名?: string; 自带目录?: string; 自带档?: ((name: string) => "model" | "manual" | "off" | undefined) | undefined }
   /** 配置里的 provider 注册表，供界面列出可选 agent */
   registry: ProviderRegistry
   /** 会话事件中枢。界面靠它才能看见 agent 说了什么 */
@@ -1122,6 +1122,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
     if (!位置.项目目录名) throw fault("internal_error", "本次运行没有装配项目技能目录")
     return join(p.workspace, 位置.项目目录名)
+  }
+  /** 自带的技能 / 子 agent 的开关读的是设置里那把键（2026-08-23）——与运行时（wiring 里的闭包）同一把 */
+  const 自带技能档 = (name: string): "model" | "manual" | "off" | undefined => {
+    const v = settings?.get(`skill.mode.${name}`)
+    return v === "model" || v === "manual" || v === "off" ? v : undefined
+  }
+  const 自带子agent停用 = (name: string): boolean => settings?.get(`subagent.off.${name}`) === "1"
+  /** frontmatter 里的 `name:`——自带的技能 / 子 agent 用它当设置键（目录名可能与它不同） */
+  const 读定义名 = (filePath: string): string | undefined => {
+    try {
+      const 头 = readFileSync(filePath, "utf8").slice(0, 4000)
+      const m = /^---\r?\n[\s\S]*?^name:\s*["']?([^"'\r\n]+)["']?\s*$/m.exec(头)
+      return m?.[1]?.trim() || undefined
+    } catch {
+      return undefined
+    }
   }
   /** 路径必须是某个可改目录下一层的 `<name>/SKILL.md`；自带目录里的、别处的、深层的都拒 */
   const 技能文件必须可改 = (filePath: string): string => {
@@ -2022,6 +2038,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           } catch {
             /* 读不了就按 pi 给的那一档 */
           }
+          // 自带的档位记在设置里（文件只读）
+          if (from === "builtin") invocation = 自带技能档(s.name) ?? invocation
           return {
             name: s.name,
             description: s.description,
@@ -2051,6 +2069,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     /* ── 技能管理（7.17，skills-manage） ── */
 
     setSkillInvocation: async ({ filePath, mode }) => {
+      // 自带的：文件只读，档位落到设置里（2026-08-23）
+      const 自带根 = skills?.自带目录
+      if (自带根 && resolve(filePath).startsWith(resolve(自带根) + sep)) {
+        if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+        const 名 = 读定义名(filePath) ?? basename(dirname(filePath))
+        settings.set(`skill.mode.${名}`, mode, new Date().toISOString())
+        记一次技能?.("invocation", resolve(filePath), mode)
+        return { mode }
+      }
       const 文件 = 技能文件必须可改(filePath)
       const 原 = await 读本地(文件, "utf8")
       const 新 = 写调用策略(原, mode)
@@ -2096,7 +2123,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const p = projectId ? projectStore.get(projectId) : undefined
       if (projectId && !p) throw fault("not_found", `没有这个项目：${projectId}`)
       const 层 = 子agent层(p?.workspace)
-      const 读到的 = loadSubagentsFrom(层)
+      const 读到的 = loadSubagentsFrom(层, { 自带停用: 自带子agent停用 })
       return {
         agents: 读到的.agents.map((a) => ({
           name: a.name,
@@ -2123,6 +2150,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     /* ── 子 agent 名册（7.20） ── */
 
     setSubagentEnabled: async ({ filePath, enabled }) => {
+      // 自带的：文件只读，停用落到设置里（2026-08-23）
+      const 自带根 = 子agent位置?.自带目录
+      if (自带根 && resolve(filePath).startsWith(resolve(自带根) + sep)) {
+        if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+        const 名 = 读定义名(filePath) ?? basename(filePath, ".md")
+        settings.set(`subagent.off.${名}`, enabled ? "0" : "1", new Date().toISOString())
+        return { enabled }
+      }
       const 文件 = 子agent文件必须可改(filePath)
       const 原 = await 读本地(文件, "utf8")
       const 新 = 写停用(原, !enabled)

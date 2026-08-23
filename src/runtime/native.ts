@@ -154,6 +154,8 @@ export interface NativeRuntimeOptions {
   subagents?: {
     全局目录?: string
     自带目录?: string
+    /** 自带的停没停（2026-08-23，设置里那把键）——与设置屏同一个闭包 */
+    自带停用?: ((name: string) => boolean) | undefined
   }
   skills?: {
     /** 全局技能目录。**一个固定位置**，不跟着会话走 */
@@ -162,6 +164,8 @@ export interface NativeRuntimeOptions {
     项目目录名?: string
     /** 自带技能（随应用发布，只读）。**空目录等于没有**，所以我们带几个 */
     自带目录?: string
+    /** 自带技能的档位（2026-08-23）：文件只读，档位记在设置里；没记过回 undefined = 按文件 */
+    自带档?: ((name: string) => "model" | "manual" | "off" | undefined) | undefined
   }
   /**
    * MCP（2026-08-15）。**给了才有那些外部工具。**
@@ -769,6 +773,7 @@ export class NativeRuntime implements AgentRuntime {
       sessionId: spec.sessionId,
       projectRoot: spec.workspace,
       dirs: this.子agent层(spec.workspace),
+      自带停用: this.opts.subagents?.自带停用,
       emit: (e) => this.emit(e),
       childOf: () => ({
         // Spike F：**不能写死 `"node"`**——打包之后用户机器上不一定有它
@@ -803,7 +808,7 @@ export class NativeRuntime implements AgentRuntime {
      * 每一轮都发 `subagent_start/end`——账本照样一条 Run，对话流照样一组 chip（toolCallId = `team:<id>`）。
      */
     const 定义 = () => {
-      return loadSubagentsFrom(this.子agent层(spec.workspace)).agents.filter((a) => !a.disabled)
+      return loadSubagentsFrom(this.子agent层(spec.workspace), { 自带停用: this.opts.subagents?.自带停用 }).agents.filter((a) => !a.disabled)
     }
     let 团队轮序 = 0
     const 调度器 = new 团队调度器({
@@ -971,20 +976,30 @@ export class NativeRuntime implements AgentRuntime {
        * 三档里的「关」= 谁都不给，只能在这儿过滤——读的是文件上那两行，与技能屏同一份真相。
        */
       skillsOverride: (base) => {
-        const 留下 = base.skills.filter((sk) => {
+        // 自带的档位记在设置里（文件只读）——先问它，没记过再看文件
+        const 自带根 = this.opts.skills?.自带目录
+        const 档 = (sk: { name: string; filePath: string }): "model" | "manual" | "off" => {
+          const 记的 = 自带根 && sk.filePath.startsWith(自带根) ? this.opts.skills?.自带档?.(sk.name) : undefined
+          if (记的) return 记的
           try {
-            return 读调用策略(readFileSync(sk.filePath, "utf8")) !== "off"
+            return 读调用策略(readFileSync(sk.filePath, "utf8"))
           } catch {
-            return true
+            return "model"
           }
-        })
+        }
+        const 留下 = base.skills
+          .map((sk) => {
+            const m = 档(sk)
+            return m === "off" ? undefined : m === "manual" ? { ...sk, disableModelInvocation: true } : sk
+          })
+          .filter((sk): sk is NonNullable<typeof sk> => sk !== undefined)
         /**
          * **子 agent 的人设同时也是技能**（2026-08-22，作者定的「一份两用」）：`/skill:名` 把那套规矩叫进主对话，
          * `subagent` 工具把它派出去。同一份文件——pi 读技能时剥掉 frontmatter，正文正好就是人设。
          * 技能名撞了的让技能赢（那是人专门写的）。停用的不登记。
          */
         const 已有 = new Set(留下.map((sk) => sk.name))
-        const 来自子agent = loadSubagentsFrom(this.子agent层(spec.workspace)).agents
+        const 来自子agent = loadSubagentsFrom(this.子agent层(spec.workspace), { 自带停用: this.opts.subagents?.自带停用 }).agents
           .filter((a) => !a.disabled && !已有.has(a.name))
           .map((a) => ({
             name: a.name,

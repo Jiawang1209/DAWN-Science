@@ -22,7 +22,6 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   await expect(屏).toContainText("23 个，23 个开着")
   await expect(屏.locator(".skill-row", { hasText: "stat-consultant" })).toContainText("自带")
   await expect(屏.locator(".skill-row", { hasText: "stat-consultant" })).toContainText("统计顾问")
-  await expect(屏.locator(".skill-row", { hasText: "stat-consultant" }).getByRole("button", { name: /子 agent 操作/ })).toHaveCount(0)
 
   // 按组筛
   await 屏.getByRole("radio", { name: /^地理信息/ }).click()
@@ -46,6 +45,24 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   await expect(行).toContainText("已启用")
   expect(readFileSync(join(全局, "my-helper.md"), "utf8")).not.toContain("disabled")
   await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("23")
+
+  // **自带的也能停用**（2026-08-23 作者要的）：菜单里有「停用」、没有「删除」；停用落在设置里、文件不动；`/` 菜单里它就没了
+  const 自带 = 屏.locator(".skill-row", { hasText: "stat-consultant" })
+  await 自带.getByRole("button", { name: "子 agent 操作：stat-consultant" }).click()
+  const 自带菜单 = page.getByRole("menu", { name: "子 agent 操作：stat-consultant" })
+  await expect(自带菜单.getByRole("menuitem", { name: "删除" })).toHaveCount(0)
+  await 自带菜单.getByRole("menuitem", { name: "停用" }).click()
+  await expect(自带).toContainText("已停用")
+  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("22")
+  await page.getByRole("button", { name: "返回", exact: true }).click()
+  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  await 框.fill("/统计顾问")
+  await expect(page.getByRole("listbox", { name: "技能与子 agent" })).not.toContainText("统计顾问")
+  await 框.fill("")
+  await 进设置(page, "子 Agent")
+  await 自带.getByRole("button", { name: "子 agent 操作：stat-consultant" }).click()
+  await page.getByRole("menu", { name: "子 agent 操作：stat-consultant" }).getByRole("menuitem", { name: "启用" }).click()
+  await expect(自带).toContainText("已启用")
 })
 
 test("**输入框按 `/`：只有技能与子 agent 的菜单，边打边筛；/skill:名 真把人设送进了模型**", async ({ dawn }) => {

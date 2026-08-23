@@ -44,8 +44,10 @@ export function 转录成markdown(头: 导出头, items: readonly TranscriptItem
   return 行.join("\n")
 }
 
-/** 文件名：标题去掉不能进文件名的字符，空了用 id */
-export function 导出文件名(title: string, id: string): string {
+/** 文件名：`标题 + 时间戳.md`（2026-08-23 作者定的）；标题去掉不能进文件名的字符，空了用 id。时间戳本地时间、到秒，导两次不互相盖 */
+export function 导出文件名(title: string, id: string, when: Date = new Date()): string {
   const 净 = title.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60)
-  return `${净 || id}.md`
+  const p = (n: number) => String(n).padStart(2, "0")
+  const 戳 = `${when.getFullYear()}${p(when.getMonth() + 1)}${p(when.getDate())}-${p(when.getHours())}${p(when.getMinutes())}${p(when.getSeconds())}`
+  return `${净 || id} ${戳}.md`
 }

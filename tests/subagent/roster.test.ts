@@ -52,6 +52,24 @@ describe("loadSubagentsFrom", () => {
   })
 })
 
+describe("自带的停用记在设置里（2026-08-23）", () => {
+  it("`自带停用` 只管自带那一层：自带的被标 disabled，你写的同名不受它管", () => {
+    const 箱 = mkdtempSync(join(tmpdir(), "dawn-roster-"))
+    dirs.push(箱)
+    写(join(箱, "builtin"), "a")
+    写(join(箱, "builtin"), "b")
+    写(join(箱, "global"), "c")
+    const r = loadSubagentsFrom(
+      [
+        { dir: join(箱, "global"), from: "global" },
+        { dir: join(箱, "builtin"), from: "builtin" },
+      ],
+      { 自带停用: (n) => n === "a" || n === "c" },
+    )
+    expect(r.agents.map((x) => [x.name, Boolean(x.disabled)])).toEqual([["c", false], ["a", true], ["b", false]])
+  })
+})
+
 describe("自带的 22 份", () => {
   it("全读得进来、没有问题、每份有分组、名字与文件名一致", () => {
     const r = loadSubagentsFrom([{ dir: resolve("agents"), from: "builtin" }])

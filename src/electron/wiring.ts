@@ -365,12 +365,19 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     全局目录: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
     项目目录名: join(".dawn", "skills"),
     ...(opts.builtinSkillsDir ? { 自带目录: opts.builtinSkillsDir } : {}),
+    /** 自带技能的档位：设置里那把键（2026-08-23）。没记过 = 按文件 */
+    自带档: (name: string) => {
+      const v = settingsStore.get(`skill.mode.${name}`)
+      return v === "model" || v === "manual" || v === "off" ? v : undefined
+    },
   }
 
   /** 子 agent 与技能同一套三层（2026-08-22）：`~/DAWN/agents` 你写的、自带的随应用、项目 `.dawn/agents` */
   const 子agent位置 = {
     全局目录: opts.agentsDir ?? join(homedir(), "DAWN", "agents"),
     ...(opts.builtinAgentsDir ? { 自带目录: opts.builtinAgentsDir } : {}),
+    /** 自带的停没停：设置里那把键（2026-08-23）。运行时与设置屏共用这一个闭包 */
+    自带停用: (name: string) => settingsStore.get(`subagent.off.${name}`) === "1",
   }
 
   const nativeRuntime = new NativeRuntime({

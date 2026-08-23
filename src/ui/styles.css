@@ -1175,7 +1175,8 @@ pre {
  * 现在项目行与会话行都留 24px 右内距，与「多选」那颗（分区标题内距 12 + 自身）对齐到同一条线。
  */
 /* 右内距 36：删除键的右缘落到「多选」那条线（188）上（2026-08-22 作者要的）；会话行的 ⋯ 仍在 216 */
-.proj-head { display: flex; align-items: center; padding-right: 36px; }
+/* 文件夹行比收纳标题缩进一档（2026-08-23 作者：「文件夹图标要在项目收纳和会话之间」）：收纳图标 45 → 文件夹图标 53 → 会话圆点 57 */
+.proj-head { display: flex; align-items: center; padding-right: 36px; padding-left: 8px; }
 .proj-head > .row { flex: 1; min-width: 0; }
 /* 展开的项目：**它的会话嵌在下面**，缩进一档表示归属 */
 .proj-sessions { padding-left: var(--dawn-space-3); }
@@ -1196,7 +1197,7 @@ pre {
 .proj-session-list,
 .server-session-list,
 .session-list.loose-list,
-.session-list.recent-list { list-style: none; margin: 0; padding: 0 0 0 38px; } /* 72 → 62：作者「往左挪 10」 */
+.session-list.recent-list { list-style: none; margin: 0; padding: 0 0 0 33px; } /* 文字左缘 72 → 62 → 47 → 57：作者「往左挪 10」；加了「-」后「往左挪 15」；文件夹行缩进之后会话再让开一档 */
 /**
  * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
  * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。
@@ -3356,8 +3357,9 @@ pre {
 /* 只有思考、没有正文的那一条：**不画气泡与用量**，只留思考本身 */
 .turn.thought-only { display: block; }
 /* 这一整段对话的累计，摆在对话头上——它回答的是「这次聊下来花了多少」 */
+/* 标题下面那一行（2026-08-23）：标题一行、用量第二行；这一块吃掉中间的空，右边留给动作 */
+.conv-head-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
 .session-usage {
-  margin-right: auto;
   font-size: 0.8em;
   color: var(--dawn-text-3);
   font-variant-numeric: tabular-nums;
@@ -4284,6 +4286,10 @@ pre {
  * 不溢出就一个像素都不动（一条本来看得全的标题在鼠标划过时抖一下，
  * 是最廉价的那种烦人）。
  */
+/* 会话行行首那个点（2026-08-23 作者：「-」太小，改成点，照的是他给的截图）：伪元素画，不进文本；在跑的那段绿，其余淡灰 */
+.sess-item .sess .name::before,
+.sess-item .task-row > .name::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-right: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); align-self: center; }
+.sess-item[data-running="1"] .sess .name::before { background: var(--dawn-success); }
 .sess-title {
   display: block;
   min-width: 0;

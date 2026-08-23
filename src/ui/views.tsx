@@ -38,7 +38,7 @@ import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 归档图标, 手机图标, 时钟图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -405,6 +405,7 @@ export function SessionRow({
        * 放在 `data-` 上：**它不占一个像素**，所以不会把状态又画回屏幕上。
        */
       data-state={session.state}
+      data-running={跑着 ? "1" : undefined}
       draggable={drag !== undefined}
       onDragStart={drag?.onStart}
       onDragEnd={drag?.onEnd}
@@ -450,6 +451,7 @@ export function SessionRow({
         <span className="sess">
           <span className="name">
             {/* 行上不再画对话图标（2026-08-21 作者要的）：它挪到悬停卡的标题前 */}
+            {/* 行首那个点（2026-08-23 作者要的：先是「-」，嫌小，改成点；在跑的那段点是绿的）由 `.sess .name::before` 画——不进文本，读屏与判据都不碰它 */}
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
               <span className="pin-mark" aria-label={t("已置顶")}>
@@ -1352,7 +1354,12 @@ export function SessionSidebar({
    * 点了也收不起来（作者：*「`未命名文件夹` 折叠不进去，但 `tmp_dir` 可以」*，
    * 差别正是前者装着当前会话）。**自动展开是个默认值，不该压过人的选择。**
    */
-  const [展开的项目, 设展开] = useState<string | undefined | null>(undefined)
+  /**
+   * **每个文件夹各自记**（2026-08-23 作者：「只能打开一个，关闭一个？这里有点儿 bug」）——此前是一个字符串，
+   * 开第二个就把第一个顶掉了。`手动` 里没记的那些走默认：装着当前会话的自动展开。
+   */
+  const [手动展开, 设手动展开] = useState<ReadonlyMap<string, boolean>>(new Map())
+  const 设展开 = (路径: string, 开: boolean) => 设手动展开((前) => new Map(前).set(路径, 开))
 
   /**
    * **批量选择**（2026-08-12，作者：*「会话越来越多了，能否给我来一个
@@ -1853,7 +1860,7 @@ export function SessionSidebar({
       ) : null}
       <div className="side-actions">
         <Row className="side-action" disabled={!fallbackAgent} onClick={onNewTask}>
-          <加号图标 className="row-icon" />
+          <加号描边图标 className="row-icon" />
           <span className="name">{t("新建任务")}</span>
         </Row>
         {/**
@@ -1889,13 +1896,13 @@ export function SessionSidebar({
           */}
         {onShowSchedule ? (
           <Row active={view === "schedule"} className="side-action" onClick={onShowSchedule}>
-            <时钟图标 className="row-icon" />
+            <时钟描边图标 className="row-icon" />
             <span className="name">{t("定时")}</span>
           </Row>
         ) : null}
         {onShowArchived && (archivedCount ?? 0) > 0 ? (
           <Row active={view === "archived"} className="side-action" onClick={onShowArchived}>
-            <归档图标 className="row-icon" />
+            <归档描边图标 className="row-icon" />
             <span className="name">{t("已归档")}</span>
             <span className="side-count">{archivedCount}</span>
           </Row>
@@ -1950,7 +1957,8 @@ export function SessionSidebar({
               onClick={() => 切收起("最近")}
             >
               <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
-              <时钟图标 className="side-section-icon" />
+              {/* 与项目 / 服务器 / 会话同一条：收起实心、展开描边（2026-08-23 作者指出「最近」漏了） */}
+              {收起了("最近") ? <时钟图标 className="side-section-icon" /> : <时钟描边图标 className="side-section-icon" />}
               <span className="side-section-title">{t("最近")}</span>
               <span className="side-count side-section-count">{最近的.length}</span>
             </Button>
@@ -2072,10 +2080,8 @@ export function SessionSidebar({
           {收起了("项目") ? null : (
           <ul className="proj-list">
             {项目组.map(([路径, 里面的]) => {
-              const 展开 =
-                展开的项目 === 路径 ||
-                // **只在人没选过时才自动展开**（见 `展开的项目` 的三态说明）
-                (展开的项目 === undefined && 里面的.some((t) => t.taskId === activeTaskId))
+              // 人点过的按人的；没点过的：装着当前会话就自动展开（自动展开是默认值，不压过人的选择）
+              const 展开 = 手动展开.get(路径) ?? 里面的.some((t) => t.taskId === activeTaskId)
               return (
                 <li key={路径} className={`proj-item${展开 ? " current" : ""}`}>
                   <div className="proj-head">
@@ -2096,7 +2102,7 @@ export function SessionSidebar({
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(展开 ? null : 路径))}
+                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(路径, !展开))}
                       /**
                        * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
                        * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——
@@ -3829,7 +3835,11 @@ export function ConversationView({
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
-        <h1 className="conv-title">{session.title ?? t("新对话")}</h1>
+        {/* 标题一行、用量第二行（2026-08-23 作者：「title 应该是换行之后，才是 token 的消耗」） */}
+        <div className="conv-head-text">
+          <h1 className="conv-title">{session.title ?? t("新对话")}</h1>
+          <SessionUsage items={items} />
+        </div>
         {/**
           * **不是内置那条时说一声**（2026-08-12）。
           *
@@ -3871,7 +3881,6 @@ export function ConversationView({
          * 含了 `缓存`」——各家口径不同，我还没验过。
          * **一个口径不明的合计，比没有合计更容易让人算错账。**
          */}
-        <SessionUsage items={items} />
         {onExport && items.some((x) => x.type === "turn") ? (
           <Button
             variant="ghost"

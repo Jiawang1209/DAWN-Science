@@ -33,6 +33,7 @@ import { Button } from "./primitives.js"
 import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
+import { Eyedropper } from "./eyedropper.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -301,6 +302,7 @@ export function AppearancePanel() {
     // 格式不对就留着红框，**不悄悄吞掉**；清空等于放弃
     if (hex || v.trim() === "") 设色草稿(undefined)
   }
+  const [取色中, 设取色中] = useState(false)
   const [悬着, 设悬着] = useState(false)
   const [聚焦着, 设聚焦着] = useState(false)
   useEffect(() => {
@@ -411,15 +413,14 @@ export function AppearancePanel() {
               onClick={() => setAccent(o.hex)}
             />
           ))}
-          {/* 自定义：原生取色器——macOS 弹系统色盘；它的值永远是六位小写十六进制 */}
-          <label className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`} title={t("自定义")}>
-            <input
-              type="color"
-              value={accent}
-              aria-label={t("自定义强调色")}
-              onChange={(e) => setAccent(e.target.value)}
-            />
-          </label>
+          {/* 取色器（2026-08-24 作者给了图）：进入放大镜取色模式，从界面上任意一点取色 */}
+          <button
+            type="button"
+            className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`}
+            title={t("取色器")}
+            aria-label={t("取色器")}
+            onClick={() => 设取色中(true)}
+          />
           <span
             className="accent-value-wrap"
             onMouseEnter={() => 设悬着(true)}
@@ -454,6 +455,7 @@ export function AppearancePanel() {
           </span>
         </div>
       </Row>
+      {取色中 ? <Eyedropper onPick={setAccent} onClose={() => 设取色中(false)} /> : null}
     </Section>
   )
 }

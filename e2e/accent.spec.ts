@@ -35,16 +35,15 @@ test("**选一颗预置色，强调色与「活着」跟着变，「成功」仍
   expect(await 读令牌(page, "--theme-user-accent")).toBe("#2f6feb")
 })
 
-test("**自定义取色器**：给一个浅色，按钮上的字自动换成深色", async ({ dawn }) => {
+test("**浅色主题色**：按钮上的字自动换成深色", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   await 进设置(page, "外观")
-  const 取色 = page.getByLabel("自定义强调色")
-  await 取色.fill("#ffd240")
+  const 框 = page.getByLabel("颜色值，可输入 HEX 或 RGB")
+  await 框.fill("#ffd240")
+  await 框.press("Enter")
   expect(await 读令牌(page, "--theme-user-accent")).toBe("#ffd240")
   expect(await 读令牌(page, "--dawn-on-accent")).toBe("#0d0d0d")
-  // 预置里没有它，「自定义」那颗标为当前
-  await expect(page.locator(".accent-custom")).toHaveClass(/current/)
 })
 
 test("**颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标复制，Shift 切格式", async ({ dawn }) => {
@@ -78,4 +77,39 @@ test("**颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标�
   await page.getByRole("button", { name: "复制颜色值" }).click()
   await expect(page.locator(".accent-tip")).toHaveText("已复制")
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("rgb(224, 112, 26)")
+})
+
+test("**取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift 切格式，点击定为主题色", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await 进设置(page, "外观")
+  await page.getByRole("button", { name: "取色器", exact: true }).click()
+  const 罩 = page.getByRole("dialog", { name: "取色器" })
+  await expect(罩).toBeVisible()
+  // 等截图就绪（起手提示换成「移动鼠标取色」）再动鼠标
+  await expect(罩.locator(".dropper-start")).toContainText("移动鼠标取色")
+  // 挪到「粉」色块正中：读出来的就该是那个粉
+  const 粉 = (await page.getByRole("radio", { name: "粉" }).boundingBox())!
+  const x = Math.round(粉.x + 粉.width / 2)
+  const y = Math.round(粉.y + 粉.height / 2)
+  await page.mouse.move(x, y)
+  await page.mouse.move(x, y) // 第一动只是长出面板，第二动确保采到样
+  const 面板 = 罩.locator(".dropper-panel")
+  await expect(面板).toBeVisible()
+  await expect(罩.locator(".dropper-xy")).toContainText(`(${x}`)
+  // 默认 RGB 格式（作者截图上就是三元组）
+  await expect(罩.locator(".dropper-val code")).toHaveText("214, 51, 108")
+  await page.keyboard.press("Shift")
+  await expect(罩.locator(".dropper-val code")).toHaveText("#d6336c")
+  await page.keyboard.press("c")
+  await expect(罩.locator(".dropper-val code")).toHaveText("已复制")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("#d6336c")
+  // 点击选定：主题色变粉，覆盖层收掉
+  await page.mouse.click(x, y)
+  await expect(罩).toHaveCount(0)
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--theme-user-accent").trim())).toBe("#d6336c")
+  // Esc 能退（再开一次直接退）
+  await page.getByRole("button", { name: "取色器", exact: true }).click()
+  await page.keyboard.press("Escape")
+  await expect(page.getByRole("dialog", { name: "取色器" })).toHaveCount(0)
 })

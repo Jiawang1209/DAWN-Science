@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-24 — 取色器：放大镜从界面上取色（作者给了图）
+
+- **Type**: feat
+- **Motivation**: 作者按回上一版「取色器 = 系统色盘」：要的是截图上那种——十字线跟着鼠标、放大镜看像素、实时坐标与颜色值、按 C 复制、按 Shift 切 RGB/HEX、点一下定为主题色。
+- **What**: 新窄 IPC 通道 `dawn:shell:capture-page`（`webContents.capturePage` 截自己的窗口，**不用 desktopCapturer**——那条在 macOS 要「屏幕录制」权限；与 `pickDirectory` 同一条「不进协议」的理由）。新组件 `src/ui/eyedropper.tsx`：进入时截一帧进 canvas，此后从静态帧采样；十字线 + 放大镜（19×19 源像素放大 12 倍，中心格描框）+ 坐标 + 色值（默认 RGB）+ 两行提示；C 复制、Shift 切格式、点击选定、Esc 退出；采样在 effect 里做（第一次移动时面板还没挂上，事件处理里画不进放大镜——踩过）。外观里的「自定义」色块改为进取色模式；系统色盘撤了（任意色走 HEX/RGB 输入框）。
+- **Impact**: 外观一行 + 新覆盖层；协议未动（窄通道不计入 109）。
+- **Verification**: e2e `accent.spec.ts` 4 绿（对着「粉」色块读出 214, 51, 108、C 进剪贴板、Shift 切换、点击定色、Esc 退出），连跑两轮；tests/ui 517；视觉基线 10/10。
+
 ### 2026-08-24 — 主题色那一格：能输 HEX / RGB，悬停冒提示，图标复制，Shift 切格式
 
 - **Type**: feat

@@ -5985,3 +5985,41 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   pointer-events: none;
 }
 .accent-tip:empty { display: none; }
+
+/* ── 取色器（2026-08-24） ─────────────────────────────────────── */
+.dropper { position: fixed; inset: 0; z-index: var(--z-modal-popover); cursor: crosshair; }
+.dropper-src { display: none; }
+.dropper-line-v, .dropper-line-h { position: absolute; pointer-events: none; background: var(--dawn-accent); opacity: 0.9; }
+.dropper-line-v { top: 0; bottom: 0; width: 1px; }
+.dropper-line-h { left: 0; right: 0; height: 1px; }
+.dropper-panel {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--dawn-space-2);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-float);
+}
+.dropper-loupe { position: relative; overflow: hidden; border: 1px solid var(--dawn-stroke-3); }
+.dropper-loupe canvas { display: block; }
+.dropper-cell {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--dawn-surface-elevated);
+  outline: 1px solid var(--dawn-text-1);
+  pointer-events: none;
+}
+.dropper-xy { margin: 4px 0 0; font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-1); }
+.dropper-val { margin: 0; display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); }
+.dropper-val code { font-family: var(--dawn-font-mono); }
+.dropper-swatch { width: 12px; height: 12px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
+.dropper-hint { margin: 0; font-size: 11px; color: var(--dawn-text-2); }
+.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
+.dropper-err { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); }

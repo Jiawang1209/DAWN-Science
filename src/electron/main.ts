@@ -9,7 +9,7 @@ import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electro
 import { extname, join } from "node:path"
 import { readFile } from "node:fs/promises"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
+import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
 import { 造网页预览, type 网页命令, type 网页预览 } from "./web-preview.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
@@ -474,6 +474,16 @@ app.whenReady().then(() => {
   }
 
   ipcDispatch = createIpcHandler(workbench.server)
+
+  /**
+   * 取色器的一帧（2026-08-24）：截**自己的窗口**用 `capturePage`——
+   * 不走 desktopCapturer，那条在 macOS 上要「屏幕录制」权限，而我们只取自己页面上的颜色。
+   */
+  ipcMain.handle(IPC_CAPTURE_PAGE, async (e) => {
+    const img = await e.sender.capturePage()
+    const size = img.getSize()
+    return { dataUrl: img.toDataURL(), width: size.width, height: size.height }
+  })
 
   // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
   ipcMain.handle(IPC_PICK_DIRECTORY, async (e, defaultPath?: string) => {

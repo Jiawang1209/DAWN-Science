@@ -16,6 +16,7 @@ import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "ele
 const CHANNEL = "dawn:workbench:invoke"
 const EVENT_CHANNEL = "dawn:workbench:event"
 const PICK_DIRECTORY = "dawn:shell:pick-directory"
+const CAPTURE_PAGE = "dawn:shell:capture-page"
 const PICK_FILES = "dawn:shell:pick-files"
 const IMAGE_THUMB = "dawn:shell:image-thumb"
 const WEB_CONTROL = "dawn:web:control"
@@ -31,6 +32,10 @@ contextBridge.exposeInMainWorld("dawn", {
    */
   pickDirectory: (defaultPath?: string): Promise<string | null> =>
     ipcRenderer.invoke(PICK_DIRECTORY, defaultPath),
+
+  /** 取色器的一帧（2026-08-24）：当前窗口的截图与像素尺寸 */
+  capturePage: (): Promise<{ dataUrl: string; width: number; height: number }> =>
+    ipcRenderer.invoke(CAPTURE_PAGE),
 
   /**
    * 原生文件选择器（2026-08-13，作者要的那颗 `＋`）。**可以多选。**

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 远程助理：卡片与其它设置页同宽；按钮绿色片状不拉满
+
+- **Type**: fix
+- **Motivation**: 作者：远程助理的框与上面各页不一样。
+- **What**: `.ra-card` 去 `max-width: 62ch`，圆角升到 lg 与其它卡一致；卡里 `.btn` 不再被 flex 列拉满；`remote-assistant.tsx` 的 outline 键改 primary。
+- **Impact**: 仅样式。
+- **Verification**: 探针截图；remote-assistant e2e 与视觉基线绿。
+
 ### 2026-08-23 — MCP 服务器一行：「试一次」圆角绿键，「删掉 x」灰色圆角键
 
 - **Type**: refactor

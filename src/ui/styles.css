@@ -5285,9 +5285,12 @@ pre {
   padding: var(--dawn-space-4);
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
-  border-radius: var(--dawn-radius-md);
-  max-width: 62ch;
+  border-radius: var(--dawn-radius-lg);
 }
+/* 卡里的按钮不拉满（flex 列里 stretch 会把它扯成一整条） */
+.ra-card .btn { align-self: flex-start; }
+.ra-unbound { display: flex; flex-direction: column; gap: var(--dawn-space-3); align-items: flex-start; }
+.ra-unbound p { margin: 0; }
 .ra-card-title {
   display: flex;
   align-items: center;

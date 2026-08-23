@@ -303,11 +303,11 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
             <div className="theme-choices" role="radiogroup" aria-label={t("工具权限")}>
               {(["deny-risky", "allow-all"] as const).map((p) => (
                 <Button key={p} variant={编辑.f.permission === p ? "primary" : "secondary"} size="sm" role="radio" aria-checked={编辑.f.permission === p} onClick={() => 设编辑({ ...编辑, f: { ...编辑.f, permission: p } })}>
-                  {p === "deny-risky" ? t("拦危险的") : t("全放行")}
+                  {p === "deny-risky" ? t("自动拦截") : t("完全访问")}
                 </Button>
               ))}
             </div>
-            <span className="hint">{t("无人值守：「拦危险的」会拒掉改原始数据、装包、联网、删东西；问不到人的一律拒。")}</span>
+            <span className="hint">{t("无人值守：「自动拦截」会拒掉改原始数据、装包、联网、删东西；问不到人的一律拒。")}</span>
           </div>
           {!编辑.id ? (
             <>
@@ -360,7 +360,7 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
                   <span className="tag">{说计划(d.schedule)}</span>
                   <span className="tag">{d.where}</span>
                   {d.status === "paused" ? <span className="tag tag-off">{t("暂停中")}</span> : null}
-                  {d.permission === "allow-all" ? <span className="tag tag-bad">{t("全放行")}</span> : null}
+                  {d.permission === "allow-all" ? <span className="tag tag-bad">{t("完全访问")}</span> : null}
                   {d.lastRun ? <span className={`tag tag-${d.lastRun.status === "succeeded" ? "model" : d.lastRun.status === "failed" ? "bad" : "manual"}`}>{tf("上次{0}", 状态名(d.lastRun.status))}</span> : null}
                 </p>
                 <p className="skill-desc">

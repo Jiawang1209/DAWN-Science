@@ -1150,7 +1150,7 @@ export class NativeRuntime implements AgentRuntime {
     const 档 = this.opts.permissionTier
     if (档) {
       const 全局 = 档.全局()
-      const 名 = (x: "allow-all" | "ask-risky" | "deny-risky") => (x === "allow-all" ? "全放行" : x === "ask-risky" ? "问一句" : "拦下危险操作")
+      const 名 = (x: "allow-all" | "ask-risky" | "deny-risky") => (x === "allow-all" ? "完全访问权限" : x === "ask-risky" ? "请求批准" : "自动拦截")
       开关.push({
         id: "dawn.permission",
         name: "权限",
@@ -1160,9 +1160,9 @@ export class NativeRuntime implements AgentRuntime {
         current: 档.取(sessionId) ?? "inherit",
         options: [
           { value: "inherit", name: `${名(全局)} · 跟随设置`, description: "设置里改了，这段跟着变" },
-          { value: "allow-all", name: "全放行", description: "只拦硬拒清单（sudo、删到主目录 / 系统目录、凭据外传、强推）" },
-          { value: "ask-risky", name: "问一句", description: "危险操作弹一张卡让你点「允许这一次」；拒绝 / 5 分钟没答都按拒，理由回给模型" },
-          { value: "deny-risky", name: "拦下危险操作", description: "改 data/raw/、写到工作区外、删除、装包、联网、git push 直接拒绝" },
+          { value: "deny-risky", name: "自动拦截", description: "改 data/raw/、写到工作区外、删除、装包、联网、git push 直接拒绝" },
+          { value: "ask-risky", name: "请求批准", description: "危险操作弹一张卡让你点「允许这一次」；拒绝 / 5 分钟没答都按拒，理由回给模型" },
+          { value: "allow-all", name: "完全访问权限", description: "只拦硬拒清单（sudo、删到主目录 / 系统目录、凭据外传、强推）" },
         ],
       })
     }

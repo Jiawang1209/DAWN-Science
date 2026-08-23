@@ -51,7 +51,6 @@ import {
   VisionPanel,
   type VisionState,
   SettingsShell,
-  PermissionPanel,
   WorkspacePanel,
   type KernelRow,
 } from "./Settings.js"
@@ -776,13 +775,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 拉用量 = useCallback(() => {
     client.get<用量数据>("getUsage", {}).then(设用量).catch(fail)
   }, [client])
+  // 输入卡上那颗权限是唯一入口（2026-08-23）：默认档一进来就取，不再只在设置屏取
   useEffect(() => {
-    if (view !== "settings") return
+    if (!ready) return
     client
       .get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("getPermissionMode", {})
       .then((r) => 设权限档(r.mode))
       .catch(fail)
-  }, [client, view])
+  }, [client, ready])
+  const 设默认档 = useCallback(
+    (m: "allow-all" | "ask-risky" | "deny-risky") => {
+      const 旧的 = 权限档
+      设权限档(m)
+      client
+        .get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("setPermissionMode", { mode: m })
+        .then((r) => 设权限档(r.mode))
+        .catch((e: unknown) => {
+          设权限档(旧的)
+          fail(e)
+        })
+    },
+    [client, 权限档],
+  )
 
   const [environment, setEnvironment] = useState<EnvironmentState>(undefined)
   useEffect(() => {
@@ -3396,29 +3410,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     <UsagePanel data={用量} onReload={拉用量} />
                   ),
                 },
-                {
-                  id: "permission",
-                  title: t("工具权限"),
-                  icon: <设置图标 className="row-icon" />,
-                  body: (
-                    <PermissionPanel
-                      mode={权限档}
-                      onChange={(m) => {
-                        // **乐观先动**：单选按钮点了不动是最难受的一种失灵；
-                        // 失败时如实退回去并出声
-                        const 旧的 = 权限档
-                        设权限档(m)
-                        client
-                          .get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("setPermissionMode", { mode: m })
-                          .then((r) => 设权限档(r.mode))
-                          .catch((e: unknown) => {
-                            设权限档(旧的)
-                            fail(e)
-                          })
-                      }}
-                    />
-                  ),
-                },
                 ...(默认工作区
                   ? [
                       {
@@ -3651,6 +3642,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 同一个跳转就有两个来源，而「谁先谁后」取决于渲染顺序。
                  */
                 onExport={() => client.get<{ path: string; turns: number }>("exportSession", { sessionId: session!.sessionId })}
+                {...(() => {
+                  // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
+                  const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
+                  if (!开) return {}
+                  const 跟随 = 开.current === "inherit"
+                  const 当前 = (跟随 ? 权限档 : (开.current as "allow-all" | "ask-risky" | "deny-risky"))
+                  return {
+                    权限: {
+                      当前,
+                      跟随默认: 跟随,
+                      onPick: (档: "allow-all" | "ask-risky" | "deny-risky", 也作为默认: boolean) => {
+                        client.get("setSessionConfigOption", { sessionId: session.sessionId, configId: "dawn.permission", value: 档 }).catch(fail)
+                        if (也作为默认) 设默认档(档)
+                      },
+                    },
+                  }
+                })()}
                 onOpenWeb={(url) => {
                   setRightDockTenant("web")
                   setRightDockOpen(true)
@@ -3845,6 +3853,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                * *「我要你在模型选择的时候，标记出是 API 还是 CLI 还是 ACP」*）。
                */
               agentKind={(id: string) => providers.agents.find((x) => x.agentId === id)?.kind}
+              权限={{ 当前: 权限档, onPick: (档) => 设默认档(档) }}
               onToggleDock={toggleDock}
               {...(providers.agents.some((a) => a.kind === "native") ? { onEnhance: 去增强(undefined), onCancelEnhance: 取消增强 } : {})}
               /**

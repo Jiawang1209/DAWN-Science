@@ -1,7 +1,7 @@
 /**
  * codex-polish 第二档（2026-08-22，学自 dsh-codex-ui）：
  * ⑥ 侧栏「最近」段——会话分散在两个以上收纳时才出现，跨收纳按上次活动取前 5 条，默认收起；
- * ⑦ 输入卡上的权限档——原生会话的「会话设置」菜单里有「权限」，选「拦下危险操作」之后这段的危险命令真的被拒；
+ * ⑦ 输入卡上的权限档——原生会话的输入卡上有「权限」那颗（2026-08-23 前在「会话设置」菜单里），选「拦下危险操作」之后这段的危险命令真的被拒；
  * ⑧ 推理强度——只在模型支持时才有那一条（假模型不支持，所以这里验的是**不摆一个没用的开关**）。
  */
 import { test, expect, 开一段临时会话, 在项目里开会话 } from "./fixtures.js"
@@ -34,11 +34,12 @@ test.describe("⑦ 输入卡上的权限档", () => {
   test("**菜单里选「拦下危险操作」，只对这一段生效**：危险命令被拒；设置里仍是全放行", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    const 扳机 = page.locator(".sess-config-trigger")
-    await expect(扳机).toHaveText(/^全放行/)
+    // 2026-08-23 起权限有自己那颗（`.perm-pill`），不再挤在「会话设置」菜单里
+    const 扳机 = page.locator(".composer-footer .perm-pill-trigger")
+    await expect(扳机).toHaveText(/^完全访问/)
     await 扳机.click()
-    await page.getByRole("menuitemradio", { name: /^拦下危险操作/ }).click()
-    await expect(扳机).toContainText("拦下危险操作")
+    await page.getByRole("menuitemradio", { name: /^自动拦截/ }).click()
+    await expect(扳机).toContainText("自动拦截")
 
     await page.getByPlaceholder(/今天帮你做些什么/).fill("去拉一下")
     await page.keyboard.press("Enter")
@@ -49,21 +50,20 @@ test.describe("⑦ 输入卡上的权限档", () => {
     await 工具.click()
     await expect(工具).toContainText(/拒绝执行.*访问网络/)
 
-    // 全局设置没被动过
-    await page.getByRole("button", { name: "设置", exact: true }).click()
-    await page.getByRole("button", { name: "工具权限" }).click()
-    await expect(page.locator(".perm-choice", { hasText: "全放行" }).locator("input")).toBeChecked()
+    // 全局默认没被动过（走应用自己那条 IPC 读，不另开后门）
+    const 默认档 = await page.evaluate(async () => {
+      const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { mode?: string } }> } }
+      return (await w.dawn.invoke("getPermissionMode", {})).data?.mode
+    })
+    expect(默认档).toBe("allow-all")
   })
 })
 
-test("**⑧ 模型不支持推理强度时，菜单里没有那一条**", async ({ dawn }) => {
+test("**⑧ 模型不支持推理强度时，「会话设置」那颗整个不画**（权限自 2026-08-23 起有自己那颗，剩下的菜单空了就不摆）", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.locator(".sess-config-trigger").click()
-  const 菜单 = page.getByRole("menu", { name: "会话设置" })
-  await expect(菜单).toBeVisible()
-  await expect(菜单).toContainText("权限")
-  await expect(菜单).not.toContainText("推理强度")
+  await expect(page.locator(".composer-footer .perm-pill-trigger")).toBeVisible()
+  await expect(page.locator(".sess-config-trigger")).toHaveCount(0)
 })
 
 /**
@@ -76,5 +76,6 @@ test("**切到另一段会话时，会话设置那颗第一次就在**——快�
   await 开一段临时会话(page, "先有的那段")
   await 在项目里开会话(page)
   await page.locator(".proj-session-list .sess-item .row").first().click()
-  await expect(page.locator(".sess-config-trigger")).toHaveCount(1)
+  // 同一份会话开关快照喂的是权限那颗（2026-08-23 起）
+  await expect(page.locator(".composer-footer .perm-pill-trigger")).toHaveCount(1)
 })

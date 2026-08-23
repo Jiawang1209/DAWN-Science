@@ -1,5 +1,5 @@
 /**
- * 工具权限，在真实产物上看得见、按得动（2026-08-13）。
+ * 工具权限，在真实产物上看得见、按得动（2026-08-13；2026-08-23 起唯一入口是输入卡上那颗「权限」，设置里那一格删了）。
  *
  * 判据（30 条）与接线（3 条）都有了，**而按本项目自己的规矩，
  * 在这一屏上看不见之前它等于不存在**。
@@ -8,70 +8,71 @@
  * 沙箱是操作系统层的强制隔离，我们这是自己代码里的一道工具门——
  * 叫错名字会让人在「全放行」那一档下做出错误判断。
  */
-import { test, expect, 进设置, 在项目里开会话 } from "./fixtures.js"
+import { test, expect, 在项目里开会话 } from "./fixtures.js"
 import { existsSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-test("设置里有「工具权限」，三档都在，且说清了各自意味着什么", async ({ dawn }) => {
-  const { page } = dawn
+/** 空态屏上那颗：改的是默认 */
+async function 空态那颗(page: import("@playwright/test").Page) {
   await expect(page.locator(".app-shell")).toBeVisible()
-  await 进设置(page, "工具权限")
+  return page.locator(".perm-pill-trigger").first()
+}
 
-  await expect(page.getByText("全放行")).toBeVisible()
-  await expect(page.getByText("问一句", { exact: true })).toBeVisible()
-  await expect(page.getByText("拦下危险操作")).toBeVisible()
+test("输入卡上有「权限」那颗，三档都在，且说清了各自意味着什么", async ({ dawn }) => {
+  const { page } = dawn
+  const 扳机 = await 空态那颗(page)
+  await expect(扳机).toBeVisible()
+  await 扳机.click()
+  const 菜单 = page.getByRole("menu", { name: "工具权限" })
+  await expect(菜单.getByRole("menuitemradio", { name: /^完全访问/ })).toBeVisible()
+  await expect(菜单.getByRole("menuitemradio", { name: /^请求批准/ })).toBeVisible()
+  await expect(菜单.getByRole("menuitemradio", { name: /^自动拦截/ })).toBeVisible()
   // **拒绝理由要说得出去哪儿写**——不然模型只会原地打转
-  await expect(page.getByText(/data\/raw/).first()).toBeVisible()
+  await expect(菜单.getByText(/原始数据/).first()).toBeVisible()
 })
 
 test("**默认是全放行** —— 不在毫无预兆的情况下让人开始撞墙", async ({ dawn }) => {
   const { page } = dawn
-  await expect(page.locator(".app-shell")).toBeVisible()
-  await 进设置(page, "工具权限")
-
-  const 全放行 = page.locator(".perm-choice", { hasText: "全放行" }).locator("input")
-  await expect(全放行).toBeChecked()
+  const 扳机 = await 空态那颗(page)
+  await expect(扳机).toHaveText(/^完全访问/)
+  await 扳机.click()
+  await expect(page.getByRole("menuitemradio", { name: /^完全访问/ })).toHaveAttribute("aria-checked", "true")
 })
 
-test("换一档，重进设置还是那一档 —— 存下去了，不是只在界面上动了动", async ({ dawn }) => {
+test("空态屏上换一档，进会话再回来还是那一档 —— 存下去了，不是只在界面上动了动", async ({ dawn }) => {
   const { page } = dawn
-  await expect(page.locator(".app-shell")).toBeVisible()
-  await 进设置(page, "工具权限")
+  const 扳机 = await 空态那颗(page)
+  await 扳机.click()
+  await page.getByRole("menuitemradio", { name: /^自动拦截/ }).click()
+  await expect(扳机).toHaveText(/^自动拦截/)
 
-  await page.locator(".perm-choice", { hasText: "拦下危险操作" }).locator("input").check()
-  await expect(
-    page.locator(".perm-choice", { hasText: "拦下危险操作" }).locator("input"),
-  ).toBeChecked()
-
-  // 走一圈再回来：**没存下去的话这里会退回全放行**
-  await page.getByRole("button", { name: "外观" }).click()
-  await page.getByRole("button", { name: "工具权限" }).click()
-  await expect(
-    page.locator(".perm-choice", { hasText: "拦下危险操作" }).locator("input"),
-    "改完的档位没有存下来",
-  ).toBeChecked()
+  // 新开的会话跟着默认走
+  await 在项目里开会话(page)
+  await expect(page.locator(".composer-footer .perm-pill-trigger"), "新会话没有跟上改过的默认").toHaveText(/^自动拦截/)
+  // 真存下去了：后端读出来也是这一档
+  const 默认档 = await page.evaluate(async () => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { mode?: string } }> } }
+    return (await w.dawn.invoke("getPermissionMode", {})).data?.mode
+  })
+  expect(默认档, "改完的档位没有存下来").toBe("deny-risky")
+  // 设置里不该再有「工具权限」那一格——它只有一个入口
+  await page.getByRole("button", { name: "设置", exact: true }).click()
+  await expect(page.getByRole("button", { name: "工具权限" })).toHaveCount(0)
 })
 
 /**
  * **名字不许比能力大。**
  *
- * 这道门只管内置的四个工具，管不到子 agent 与 MCP 带进来的，
- * 也拦不住绕过工具的路子。这一屏上必须写着这句话——
+ * 这道门只管内置的工具与没过目的 MCP，管不到子 agent 与绕过工具的路子。菜单底下必须写着这句话——
  * 不写的话，「拦下危险操作」会被读成「什么都拦得住」。
  */
-test("**这一屏不自称沙箱**，并写明了它管不到哪儿", async ({ dawn }) => {
+test("**菜单不自称沙箱**，并写明了硬拒清单任何档都拒", async ({ dawn }) => {
   const { page } = dawn
-  await expect(page.locator(".app-shell")).toBeVisible()
-  await 进设置(page, "工具权限")
-
-  /**
-   * **定位到那句话本身，不是「页面上含 MCP 三个字」**（2026-08-13 当场撞到）：
-   * 侧栏上还有一颗「MCP 服务器」按钮，`getByText(/MCP/)` 一下子匹配到两个，
-   * Playwright 严格模式直接报错。**定位器松，就迟早会被别处的一句话撞上。**
-   */
-  const 边界说明 = page.locator(".settings-body .caveat")
+  const 扳机 = await 空态那颗(page)
+  await 扳机.click()
+  const 边界说明 = page.locator(".perm-pill-note")
   await expect(边界说明).toContainText("不是沙箱")
-  await expect(边界说明, "管不到 MCP 这件事必须写在这一屏上").toContainText("MCP")
+  await expect(边界说明).toContainText("任何档都拒")
 })
 
 /**
@@ -84,12 +85,14 @@ test.describe("问一句", () => {
   test("**卡弹出来；允许 → 真删了；拒绝 → 没删、模型拿到理由**", async ({ dawn }) => {
     const { page, workspace } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
-    await 进设置(page, "工具权限")
-    await page.locator(".perm-choice", { hasText: "问一句" }).locator("input").check()
-    await page.getByRole("button", { name: "返回", exact: true }).click()
-
     writeFileSync(join(workspace, "old.txt"), "之前就有")
     await 在项目里开会话(page)
+    // 会话里那颗：只改这一段
+    const 扳机 = page.locator(".composer-footer .perm-pill-trigger")
+    await expect(扳机).toHaveText(/^完全访问/)
+    await 扳机.click()
+    await page.getByRole("menuitemradio", { name: /^请求批准/ }).click()
+    await expect(扳机).toHaveText(/^请求批准/)
     await page.getByPlaceholder(/今天帮你做些什么/).fill("删掉 old.txt")
     await page.keyboard.press("Enter")
     // 卡：标题里有命令，两个按钮

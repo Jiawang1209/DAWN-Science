@@ -2296,6 +2296,15 @@ pre {
   max-width: 62ch;
 }
 
+/* 成组的设置装进卡里（2026-08-23 作者提的：「每一个内容下，只要是区分出内容的，都改为刚才的格式」）——标题与说明留在卡外，行在卡内 */
+.set-rows {
+  background: var(--dawn-surface-elevated);
+  border: 1px solid var(--dawn-stroke-accent);
+  border-radius: var(--dawn-radius-lg);
+  padding: 0 var(--dawn-space-4);
+}
+/* 右边那一格里的按钮不许折行（卡有了内距之后那一列窄了 30px，「保存」曾被掰成两行） */
+.set-control .btn { white-space: nowrap; }
 .set-rows > .set-row:last-child {
   border-bottom: none;
 }
@@ -4444,7 +4453,8 @@ pre {
 /* 今日进度条撤了（2026-08-16，作者：*「不需要每日预算，因为不用 token 怎么干活呢」*）。
    给自己设一个超了也不会拦的上限，只是一个让人焦虑的装饰 */
 
-.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+/* 用量那几块也装进卡（2026-08-23 作者：设置里成组的内容都用卡） */
+.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-3) var(--dawn-space-4); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); }
 .usage-block-title { margin: 0; font-size: 14px; font-weight: var(--dawn-weight-medium); }
 /** 标题旁边那个总数：**同一行、淡一档**——它是分母，不是第二个标题 */
 .usage-block-sum { margin-left: var(--dawn-space-2); color: var(--dawn-text-3); font-weight: 400; font-variant-numeric: tabular-nums; }
@@ -4489,7 +4499,8 @@ pre {
   font-size: 12px;
 }
 .usage-cell { cursor: default; }
-.usage-cell.l0 { fill: var(--dawn-surface-elevated); }
+/* 空格子有自己的底（2026-08-23：卡片改成 elevated 之后它和卡同色、整张图消失了） */
+.usage-cell.l0 { fill: var(--dawn-fill-3); }
 .usage-cell.l1 { fill: color-mix(in srgb, var(--dawn-accent) 25%, transparent); }
 .usage-cell.l2 { fill: color-mix(in srgb, var(--dawn-accent) 45%, transparent); }
 .usage-cell.l3 { fill: color-mix(in srgb, var(--dawn-accent) 70%, transparent); }

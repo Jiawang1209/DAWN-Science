@@ -4284,9 +4284,10 @@ pre {
  * 不溢出就一个像素都不动（一条本来看得全的标题在鼠标划过时抖一下，
  * 是最廉价的那种烦人）。
  */
-/* 会话行行首那个「-」（2026-08-23）：伪元素画，不进文本；定宽、淡一档，不挤标题 */
+/* 会话行行首那个点（2026-08-23 作者：「-」太小，改成点，照的是他给的截图）：伪元素画，不进文本；在跑的那段绿，其余淡灰 */
 .sess-item .sess .name::before,
-.sess-item .task-row > .name::before { content: "-"; flex: 0 0 auto; width: 10px; color: var(--dawn-text-3); text-align: center; }
+.sess-item .task-row > .name::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-right: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); align-self: center; }
+.sess-item[data-running="1"] .sess .name::before { background: var(--dawn-success); }
 .sess-title {
   display: block;
   min-width: 0;

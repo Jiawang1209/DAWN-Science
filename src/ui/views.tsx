@@ -405,6 +405,7 @@ export function SessionRow({
        * 放在 `data-` 上：**它不占一个像素**，所以不会把状态又画回屏幕上。
        */
       data-state={session.state}
+      data-running={跑着 ? "1" : undefined}
       draggable={drag !== undefined}
       onDragStart={drag?.onStart}
       onDragEnd={drag?.onEnd}
@@ -450,7 +451,7 @@ export function SessionRow({
         <span className="sess">
           <span className="name">
             {/* 行上不再画对话图标（2026-08-21 作者要的）：它挪到悬停卡的标题前 */}
-            {/* 行首那个「-」（2026-08-23 作者要的：表示收纳下面的一段单独会话）由 `.sess .name::before` 画——不进文本，读屏与判据都不碰它 */}
+            {/* 行首那个点（2026-08-23 作者要的：先是「-」，嫌小，改成点；在跑的那段点是绿的）由 `.sess .name::before` 画——不进文本，读屏与判据都不碰它 */}
             {/* 置顶标记在名字前面：**它是这一行的属性，不是一个动作** */}
             {session.pinned ? (
               <span className="pin-mark" aria-label={t("已置顶")}>

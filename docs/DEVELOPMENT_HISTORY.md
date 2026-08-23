@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-23 — 对话区顶上的会话分栏（同一项目 / 同一服务器）；`@` 与 `/` 菜单与输入卡同宽
+
+- **Type**: feat
+- **Motivation**: 作者拿着截图：同一个项目文件夹 / 同一台服务器下的多段会话，除了侧栏，还要能在对话窗口上边横着开多个分栏切换；另报 `@` 弹出的菜单比输入卡还宽。
+- **What**: 新建 `src/ui/session-tabs.tsx`（`SessionTabs`：点 · 标题，当前那个下面一条强调色线，在跑的点绿、未读的点强调色，末尾「＋」在同一处再开一段，切过去时滚进视野）；`App.tsx` 在 `ConversationView` 上方按「同一处」筛 `sessions`（远端按 `remote.connectionId`，本地按 `projectId` 且项目不是临时的），点了走与侧栏同一条 `setActiveSessionId`，「＋」本地走 `新建任务({workspace})`、远端走 `startRemoteSession`。菜单宽度：`.composer-box` 成定位祖先，`.slash-menu` 改 `left/right: 0`——此前挂在铺满主区的 `.composer` 上。
+- **Impact**: 散的（临时）会话没有这一条；`/` 菜单一并变成与卡同宽。
+- **Verification**: `e2e/session-tabs.spec.ts` 2 条（切换、＋ 再开、散的没有；`@` 菜单与 `.composer-box` 同 x 同宽）；单元 2122 绿；全量 e2e 423 绿 + 1 红（`files.spec` 切项目那条用 `.first()` 点会话，文件夹各自展开之后甲不再被收起——改成在乙那一格里点后绿）；十张视觉基线没动（分栏只在项目会话里出现，基线那几屏是散的会话）。
+
 ### 2026-08-23 — fix-dug-0823 第三批：会话行前改小圆点、标题下一行是用量、导出文件名带时间戳、「会话」收纳图标实心 / 空心同一轮廓
 
 - **Type**: fix

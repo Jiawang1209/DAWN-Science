@@ -848,6 +848,7 @@ pre {
  * 卡的边缘与聚焦环会成为两条相距 8px 的平行线。
  */
 .composer-box {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--dawn-space-2);
@@ -5515,11 +5516,12 @@ pre {
 
 /* ── 输入框上方的 `/` 菜单（2026-08-22） ── */
 .composer { position: relative; }
+/* 定位祖先是 `.composer-box`（2026-08-23 作者：「@ 弹出的窗口比对话窗口还大」——此前挂在铺满主区的 `.composer` 上）：与输入卡同宽、贴着它上沿弹 */
 .slash-menu {
   position: absolute;
-  left: var(--dawn-space-3);
-  right: var(--dawn-space-3);
-  bottom: calc(100% - var(--dawn-space-2));
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--dawn-space-1));
   z-index: var(--z-modal-popover);
   max-height: 18rem;
   overflow: auto;
@@ -5861,3 +5863,33 @@ pre {
 /* 扩展那五屏挂进设置之后（2026-08-23）：外壳已在右边顶上写了这一块叫什么，屏里自己那一行标题不再画——同一句话说两遍不是层次，是噪声 */
 .settings-body .skills-page { padding: 0; max-width: none; }
 .settings-body .skills-page > .skills-head > .panel-title { display: none; }
+
+/* ── 对话区顶上的会话分栏（2026-08-23，作者给的截图：点 · 标题，当前那个下面一条强调色线，末尾一个 ＋）── */
+.session-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--dawn-space-1);
+  padding: var(--dawn-space-2) var(--dawn-space-8) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--dawn-stroke-4);
+}
+.session-tabs::-webkit-scrollbar { display: none; }
+.session-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  max-width: 18rem;
+  padding: 6px var(--dawn-space-2) 8px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--dawn-text-3);
+}
+.session-tab:hover { color: var(--dawn-text-2); background: transparent; }
+.session-tab.current { color: var(--dawn-text-1); border-bottom-color: var(--dawn-accent); }
+.session-tab-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); flex: 0 0 auto; }
+.session-tab[data-running="1"] .session-tab-dot { background: var(--dawn-success); }
+.session-tab[data-unread="1"] .session-tab-dot { background: var(--dawn-accent); }
+.session-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.session-tab-new { flex: 0 0 auto; margin-bottom: 4px; color: var(--dawn-text-3); }

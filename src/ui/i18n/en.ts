@@ -1147,4 +1147,8 @@ export const EN: Readonly<Record<string, string>> = {
   // 设置 · 扩展那一组（2026-08-23）
   "扩展": "Extensions",
   "设置：{0}": "Settings: {0}",
+
+  // 对话区顶上的会话分栏（2026-08-23）
+  "同一处的会话": "Sessions in the same place",
+  "在这里再开一段": "Start another session here",
 }

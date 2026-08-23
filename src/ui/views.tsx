@@ -1353,7 +1353,12 @@ export function SessionSidebar({
    * 点了也收不起来（作者：*「`未命名文件夹` 折叠不进去，但 `tmp_dir` 可以」*，
    * 差别正是前者装着当前会话）。**自动展开是个默认值，不该压过人的选择。**
    */
-  const [展开的项目, 设展开] = useState<string | undefined | null>(undefined)
+  /**
+   * **每个文件夹各自记**（2026-08-23 作者：「只能打开一个，关闭一个？这里有点儿 bug」）——此前是一个字符串，
+   * 开第二个就把第一个顶掉了。`手动` 里没记的那些走默认：装着当前会话的自动展开。
+   */
+  const [手动展开, 设手动展开] = useState<ReadonlyMap<string, boolean>>(new Map())
+  const 设展开 = (路径: string, 开: boolean) => 设手动展开((前) => new Map(前).set(路径, 开))
 
   /**
    * **批量选择**（2026-08-12，作者：*「会话越来越多了，能否给我来一个
@@ -2074,10 +2079,8 @@ export function SessionSidebar({
           {收起了("项目") ? null : (
           <ul className="proj-list">
             {项目组.map(([路径, 里面的]) => {
-              const 展开 =
-                展开的项目 === 路径 ||
-                // **只在人没选过时才自动展开**（见 `展开的项目` 的三态说明）
-                (展开的项目 === undefined && 里面的.some((t) => t.taskId === activeTaskId))
+              // 人点过的按人的；没点过的：装着当前会话就自动展开（自动展开是默认值，不压过人的选择）
+              const 展开 = 手动展开.get(路径) ?? 里面的.some((t) => t.taskId === activeTaskId)
               return (
                 <li key={路径} className={`proj-item${展开 ? " current" : ""}`}>
                   <div className="proj-head">
@@ -2098,7 +2101,7 @@ export function SessionSidebar({
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(展开 ? null : 路径))}
+                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(路径, !展开))}
                       /**
                        * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
                        * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——

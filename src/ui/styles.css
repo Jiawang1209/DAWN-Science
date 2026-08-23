@@ -4285,7 +4285,8 @@ pre {
  * 是最廉价的那种烦人）。
  */
 /* 会话行行首那个「-」（2026-08-23）：伪元素画，不进文本；定宽、淡一档，不挤标题 */
-.sess-item .sess .name::before { content: "-"; flex: 0 0 auto; width: 10px; color: var(--dawn-text-3); text-align: center; }
+.sess-item .sess .name::before,
+.sess-item .task-row > .name::before { content: "-"; flex: 0 0 auto; width: 10px; color: var(--dawn-text-3); text-align: center; }
 .sess-title {
   display: block;
   min-width: 0;

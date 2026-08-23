@@ -34,6 +34,7 @@ import { 关闭图标, 复制图标, 吸管图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
 import { Eyedropper } from "./eyedropper.js"
+import { ColorPanel } from "./color-panel.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -303,29 +304,8 @@ export function AppearancePanel() {
     if (hex || v.trim() === "") 设色草稿(undefined)
   }
   const [取色中, 设取色中] = useState(false)
-  /**
-   * 系统色盘打开时，色块下面浮一块与取色器同款的信息板（2026-08-24 作者要的）：
-   * 实时色值 + 「按 C 复制 / 按 Shift 切换」。色盘是系统面板，收不到它的关闭事件——
-   * Esc 或点回界面任意处收板。
-   */
+  /** 自绘色盘开没开（2026-08-24）；键盘与关闭都在 ColorPanel 里自理 */
   const [色盘中, 设色盘中] = useState(false)
-  useEffect(() => {
-    if (!色盘中) return
-    const 键 = (e: KeyboardEvent) => {
-      if (e.key === "Escape") 设色盘中(false)
-      else if (e.key === "Shift") 设色格式((f) => (f === "hex" ? "rgb" : "hex"))
-      else if (e.key === "c" || e.key === "C") 复制色值()
-    }
-    const 点 = (e: MouseEvent) => {
-      if (!(e.target instanceof Element) || !e.target.closest(".accent-custom")) 设色盘中(false)
-    }
-    window.addEventListener("keydown", 键)
-    window.addEventListener("mousedown", 点)
-    return () => {
-      window.removeEventListener("keydown", 键)
-      window.removeEventListener("mousedown", 点)
-    }
-  })
   const [悬着, 设悬着] = useState(false)
   const [聚焦着, 设聚焦着] = useState(false)
   useEffect(() => {
@@ -441,26 +421,26 @@ export function AppearancePanel() {
           </div>
           {/* 下一行：系统色盘 + 屏幕取色器 + 颜色值 */}
           <div className="accent-row">
-          {/* 自定义：系统色盘（macOS 调色板）——选一个界面上没有的颜色走这条 */}
-          <label className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`} title={t("自定义")}>
-            <input
-              type="color"
-              value={accent}
-              aria-label={t("自定义强调色")}
-              onClick={() => 设色盘中(true)}
-              onChange={(e) => setAccent(e.target.value)}
+          {/* 色盘（2026-08-24 作者拍板自绘）：C 复制 / Shift 切格式 / 点一下定色 / Esc，都长在面板里——系统面板是另一个窗口，这些键够不着它 */}
+          <span className="accent-custom-wrap">
+            <button
+              type="button"
+              className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`}
+              aria-label={t("色盘")}
+              onClick={() => 设色盘中((v) => !v)}
             />
             {色盘中 ? (
-              <span className="accent-liveboard" role="status" aria-live="polite">
-                <span className="dropper-val">
-                  <span className="dropper-swatch" style={{ background: accent }} aria-hidden="true" />
-                  <code>{已复制 ? t("已复制") : 色值}</code>
-                </span>
-                <span className="dropper-hint">{t("按 C 复制颜色值")}</span>
-                <span className="dropper-hint">{t("按 Shift 切换 RGB/HEX")}</span>
-              </span>
+              <ColorPanel
+                accent={accent}
+                onPick={setAccent}
+                onClose={() => 设色盘中(false)}
+                onEyedropper={() => {
+                  设色盘中(false)
+                  设取色中(true)
+                }}
+              />
             ) : null}
-          </label>
+          </span>
           {/* 取色器（2026-08-24 作者给了图）：放大镜从界面上取色——C 复制、Shift 切 RGB/HEX、点击定色、Esc 退出 */}
           <Button variant="ghost" size="icon" className="accent-dropper-btn" aria-label={t("取色器")} onClick={() => 设取色中(true)}>
             <吸管图标 />

@@ -5972,25 +5972,51 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .accent-choices .accent-value[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
 .accent-copy { width: 26px; height: 26px; }
 .accent-dropper-btn { width: 26px; height: 26px; }
-/* 系统色盘开着时浮在色块下面的信息板：与取色器面板同一副壳 */
-.accent-liveboard {
+/* 自绘色盘（2026-08-24）：浮在色块下面，同一副浮层壳 */
+.accent-custom-wrap { position: relative; display: inline-flex; }
+.cpanel {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  z-index: var(--z-tooltip);
+  z-index: var(--z-modal-popover);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  white-space: nowrap;
+  gap: var(--dawn-space-2);
+  width: 240px;
   padding: var(--dawn-space-2);
   background: var(--dawn-surface-elevated);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
+}
+.cpanel-sv { position: relative; width: 100%; height: 150px; border-radius: var(--dawn-radius-sm); cursor: crosshair; touch-action: none; }
+.cpanel-dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--dawn-surface-elevated);
+  outline: 1px solid var(--dawn-text-1);
+  border-radius: var(--dawn-radius-full);
   pointer-events: none;
 }
-.accent-custom { position: relative; overflow: visible; }
+.cpanel-mid { display: flex; align-items: center; gap: var(--dawn-space-2); width: 100%; }
+.cpanel-now { width: 24px; height: 24px; flex: 0 0 auto; border-radius: var(--dawn-radius-full); border: 1px solid var(--dawn-stroke-3); }
+.cpanel-hue { position: relative; flex: 1 1 auto; height: 12px; border-radius: var(--dawn-radius-full); cursor: pointer; touch-action: none; }
+.cpanel-hue-dot {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--dawn-surface-elevated);
+  outline: 1px solid var(--dawn-stroke-2);
+  border-radius: var(--dawn-radius-full);
+  pointer-events: none;
+  background: transparent;
+}
+.cpanel .dropper-val { font-size: var(--dawn-fs-meta); }
 .accent-tip {
   position: absolute;
   top: calc(100% + 6px);

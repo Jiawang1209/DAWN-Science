@@ -61,6 +61,32 @@ export function 三元组转hex(text: string): string | undefined {
   return toHex(v[0]!, v[1]!, v[2]!)
 }
 
+/** hex → HSV（h 0-360，s/v 0-1）。自绘色盘用：方块是 s×v，条是 h */
+export function hex转hsv(hex: string): { h: number; s: number; v: number } {
+  const [r, g, b] = toRgb(hex).map((x) => x / 255) as [number, number, number]
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const d = max - min
+  let h = 0
+  if (d > 0) {
+    if (max === r) h = 60 * (((g - b) / d) % 6)
+    else if (max === g) h = 60 * ((b - r) / d + 2)
+    else h = 60 * ((r - g) / d + 4)
+  }
+  if (h < 0) h += 360
+  return { h, s: max === 0 ? 0 : d / max, v: max }
+}
+
+/** HSV → hex */
+export function hsv转hex(h: number, s: number, v: number): string {
+  const c = v * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = v - c
+  const [r, g, b] =
+    h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]
+  return toHex((r + m) * 255, (g + m) * 255, (b + m) * 255)
+}
+
 /** WCAG 相对亮度（0 黑 … 1 白） */
 export function 相对亮度(hex: string): number {
   const [r, g, b] = toRgb(hex).map((v) => {

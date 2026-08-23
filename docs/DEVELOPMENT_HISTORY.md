@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-24 — 色盘自绘：C 复制 / Shift 切格式 / 点一下定色 / Esc，长在面板里
+
+- **Type**: feat
+- **Motivation**: 作者最终拍板：系统色盘与取色器**都**要有「按 C 复制、按 Shift 切 RGB/HEX、点一下定色、Esc 退出」。系统面板是另一个窗口，这些键够不着它——上一版信息板与它叠成两块（作者截图）就是这个裂缝。
+- **What**: 新组件 `src/ui/color-panel.tsx`：明度方块（s×v，pointer capture 拖）+ 色相条（13 个算出来的端点，无色值字面量）+ 吸管捷径（收面板进屏幕取色）+ 预览圆 + 当前值行 + 两行提示；点到哪主题色定到哪；C / Shift / Esc 同取色器。`state/accent.ts` 加 `hex转hsv` / `hsv转hex`。原生 `<input type="color">` 与 `.accent-liveboard` 撤掉。
+- **Impact**: 外观下一行的「色盘」现在是自绘面板；不再弹 macOS 调色板。
+- **Verification**: accent e2e 5 绿（点方块定色、拖色相变色、Shift/C/Esc、吸管捷径直通取色器）；tests/ui 517；视觉基线 10/10。
+
 ### 2026-08-24 — 主题色两行布局；系统色盘也带信息板
 
 - **Type**: feat

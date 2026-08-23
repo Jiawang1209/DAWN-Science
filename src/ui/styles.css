@@ -3356,8 +3356,9 @@ pre {
 /* 只有思考、没有正文的那一条：**不画气泡与用量**，只留思考本身 */
 .turn.thought-only { display: block; }
 /* 这一整段对话的累计，摆在对话头上——它回答的是「这次聊下来花了多少」 */
+/* 标题下面那一行（2026-08-23）：标题一行、用量第二行；这一块吃掉中间的空，右边留给动作 */
+.conv-head-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
 .session-usage {
-  margin-right: auto;
   font-size: 0.8em;
   color: var(--dawn-text-3);
   font-variant-numeric: tabular-nums;

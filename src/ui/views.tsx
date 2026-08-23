@@ -3835,7 +3835,11 @@ export function ConversationView({
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
-        <h1 className="conv-title">{session.title ?? t("新对话")}</h1>
+        {/* 标题一行、用量第二行（2026-08-23 作者：「title 应该是换行之后，才是 token 的消耗」） */}
+        <div className="conv-head-text">
+          <h1 className="conv-title">{session.title ?? t("新对话")}</h1>
+          <SessionUsage items={items} />
+        </div>
         {/**
           * **不是内置那条时说一声**（2026-08-12）。
           *
@@ -3877,7 +3881,6 @@ export function ConversationView({
          * 含了 `缓存`」——各家口径不同，我还没验过。
          * **一个口径不明的合计，比没有合计更容易让人算错账。**
          */}
-        <SessionUsage items={items} />
         {onExport && items.some((x) => x.type === "turn") ? (
           <Button
             variant="ghost"

@@ -5963,23 +5963,25 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   overflow: hidden;
 }
 .accent-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-/* 颜色值那一格：一个片状键，mono 字；点击复制、Shift 切格式。「已复制」贴在右边，不挤动色值 */
-.accent-value {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--dawn-space-2);
-  height: 26px;
-  padding: 0 var(--dawn-space-2);
-  border: 1px solid var(--dawn-stroke-3);
-  border-radius: var(--dawn-radius-md);
+/* 颜色值那一格（2026-08-24）：一个输入框 + 复制图标；提示浮在下方，悬停 / 聚焦时出现 */
+.accent-value-wrap { position: relative; display: inline-flex; align-items: center; gap: 2px; }
+.accent-choices .accent-value { width: 11.5em; height: 26px; padding: 0 var(--dawn-space-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.accent-choices .accent-value[data-invalid] { border-color: var(--dawn-danger); }
+.accent-choices .accent-value[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
+.accent-copy { width: 26px; height: 26px; }
+.accent-tip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-tooltip);
+  white-space: nowrap;
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  font-size: 11px;
+  color: var(--dawn-text-2);
   background: var(--dawn-surface-elevated);
-  color: var(--dawn-text-1);
-  font: inherit;
-  cursor: pointer;
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-float);
+  pointer-events: none;
 }
-.accent-value:hover { border-color: var(--dawn-stroke-2); background: var(--dawn-control-hover); }
-.accent-value:focus-visible { outline: 2px solid var(--dawn-accent); outline-offset: -1px; }
-.accent-value code { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
-.accent-copied { font-size: 11px; color: var(--dawn-live); }
-.accent-copied:empty { display: none; }
+.accent-tip:empty { display: none; }

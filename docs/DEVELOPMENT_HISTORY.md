@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-24 — 主题色那一格：能输 HEX / RGB，悬停冒提示，图标复制，Shift 切格式
+
+- **Type**: feat
+- **Motivation**: 作者：悬停要有提示说明可复制、Shift 可切换；那一格要能输入 HEX 与 RGB。
+- **What**: `.accent-value` 改为 `.control` 输入框（收 `#rrggbb` / `rgb(r,g,b)` / `r,g,b` / `r g b`，回车或失焦生效，Esc 放弃，坏值红框不吞）；右边一颗 `复制图标` 按钮；悬停 / 聚焦时 `.accent-tip` 浮在下方写「可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式」，复制后换成「已复制」。
+- **Impact**: 仅外观一行。
+- **Verification**: e2e 3 绿（输 RGB / 输 HEX / 坏值 / 提示 / 剪贴板真值）；tests/ui 517；视觉基线 10/10。
+
 ### 2026-08-24 — 主题色：两个输入框撤掉，改成一格颜色值——点击复制、Shift 切 HEX / RGB
 
 - **Type**: refactor

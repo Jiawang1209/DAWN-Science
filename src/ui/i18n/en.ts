@@ -1156,6 +1156,7 @@ export const EN: Readonly<Record<string, string>> = {
   "自定义": "Custom",
   "自定义强调色": "Custom accent color",
   "强调色选择": "Accent color choices",
-  "点击复制；按 Shift 切换 HEX / RGB": "Click to copy; press Shift to toggle HEX / RGB",
-  "颜色值 {0}，点击复制，按 Shift 切换格式": "Color {0}; click to copy, press Shift to toggle format",
+  "颜色值，可输入 HEX 或 RGB": "Color value; HEX or RGB",
+  "复制颜色值": "Copy color value",
+  "可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式": "Type HEX or RGB, Enter to apply · click icon to copy · Shift toggles format",
 }

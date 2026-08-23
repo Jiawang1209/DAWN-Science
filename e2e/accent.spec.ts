@@ -47,26 +47,35 @@ test("**自定义取色器**：给一个浅色，按钮上的字自动换成深�
   await expect(page.locator(".accent-custom")).toHaveClass(/current/)
 })
 
-test("**颜色值只有一格**：点它复制，Shift 在 HEX / RGB 间切换", async ({ dawn }) => {
+test("**颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标复制，Shift 切格式", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   await 进设置(page, "外观")
   await page.getByRole("radio", { name: "蓝" }).click()
-  const 格 = page.locator(".accent-value")
-  await expect(格.locator("code")).toHaveText("#2f6feb")
-  // 两个输入框撤了（2026-08-24 作者按回）
-  await expect(page.getByLabel("HEX 颜色值")).toHaveCount(0)
-  await expect(page.getByLabel("RGB 颜色值")).toHaveCount(0)
-  await 格.hover()
+  const 框 = page.getByLabel("颜色值，可输入 HEX 或 RGB")
+  await expect(框).toHaveValue("#2f6feb")
+  // 悬上去立刻有提示，说清三件事
+  await 框.hover()
+  await expect(page.locator(".accent-tip")).toContainText("Shift")
   await page.keyboard.press("Shift")
-  await expect(格.locator("code")).toHaveText("rgb(47, 111, 235)")
-  await 格.click()
-  await expect(格.locator(".accent-copied")).toHaveText("已复制")
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("rgb(47, 111, 235)")
-  // 键盘：C 复制、Shift 切回
-  await 格.focus()
-  await page.keyboard.press("Shift")
-  await expect(格.locator("code")).toHaveText("#2f6feb")
-  await page.keyboard.press("c")
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("#2f6feb")
+  await expect(框).toHaveValue("rgb(47, 111, 235)")
+  // 输 RGB 回车生效，预置里对上的那颗标为当前
+  await 框.fill("214, 51, 108")
+  await 框.press("Enter")
+  expect(await 读令牌(page, "--theme-user-accent")).toBe("#d6336c")
+  await expect(page.getByRole("radio", { name: "粉" })).toHaveAttribute("aria-checked", "true")
+  // 输 HEX 也收
+  await 框.fill("#e0701a")
+  await 框.press("Enter")
+  expect(await 读令牌(page, "--theme-user-accent")).toBe("#e0701a")
+  // 坏值留红框、不吞
+  await 框.fill("orange")
+  await 框.press("Enter")
+  await expect(框).toHaveAttribute("aria-invalid", "true")
+  expect(await 读令牌(page, "--theme-user-accent")).toBe("#e0701a")
+  await 框.press("Escape")
+  // 图标复制（此刻是 RGB 格式）
+  await page.getByRole("button", { name: "复制颜色值" }).click()
+  await expect(page.locator(".accent-tip")).toHaveText("已复制")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("rgb(224, 112, 26)")
 })

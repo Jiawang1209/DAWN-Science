@@ -30,9 +30,9 @@
 import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
-import { 关闭图标 } from "./icons.js"
+import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
-import { $accent, ACCENT_PRESETS, setAccent, hex转三元组 } from "./state/accent.js"
+import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -285,22 +285,30 @@ export function AppearancePanel() {
   const lang = useStore($lang)
   const accent = useStore($accent)
   /**
-   * 颜色值只显示**一个**（2026-08-24 作者按回：两个框「很愚蠢」）：点它或按 C 复制，按 Shift 在 HEX / RGB 间切换。
-   * 取色器才是输入；这一格只负责「告诉你现在是什么、让你带走」。
+   * 颜色值只有**一格**（2026-08-24 作者定的）：它既显示也能改——收 HEX 或 RGB，回车生效、Esc 放弃；
+   * 悬停或聚焦时按 Shift 切换 HEX / RGB；右边一颗图标复制。悬上去立刻冒提示说清这三件事。
    */
   const [色格式, 设色格式] = useState<"hex" | "rgb">("hex")
   const [已复制, 设已复制] = useState(false)
   const 色值 = 色格式 === "hex" ? accent : hex转三元组(accent)
-  // 鼠标悬在那一格上、或它拿着焦点时，Shift 切格式、C 复制——**一个监听**，两种情形同时成立也只切一次
+  const [色草稿, 设色草稿] = useState<string | undefined>(undefined)
+  const 解色 = (v: string): string | undefined => (isHex(v.trim()) ? v.trim().toLowerCase() : 三元组转hex(v))
+  const 色坏了 = 色草稿 !== undefined && 色草稿.trim() !== "" && 解色(色草稿) === undefined
+  const 提交色 = () => {
+    const v = 色草稿 ?? ""
+    const hex = 解色(v)
+    if (hex) setAccent(hex)
+    // 格式不对就留着红框，**不悄悄吞掉**；清空等于放弃
+    if (hex || v.trim() === "") 设色草稿(undefined)
+  }
   const [悬着, 设悬着] = useState(false)
   const [聚焦着, 设聚焦着] = useState(false)
   useEffect(() => {
     if (!悬着 && !聚焦着) return
     const 听 = (e: KeyboardEvent) => {
-      if (e.key === "Shift") 设色格式((f) => (f === "hex" ? "rgb" : "hex"))
-      else if (e.key === "c" || e.key === "C") {
-        e.preventDefault()
-        复制色值()
+      if (e.key === "Shift") {
+        设色格式((f) => (f === "hex" ? "rgb" : "hex"))
+        设色草稿(undefined)
       }
     }
     window.addEventListener("keydown", 听)
@@ -412,22 +420,38 @@ export function AppearancePanel() {
               onChange={(e) => setAccent(e.target.value)}
             />
           </label>
-          <button
-            type="button"
-            className="accent-value"
-            title={t("点击复制；按 Shift 切换 HEX / RGB")}
-            aria-label={tf("颜色值 {0}，点击复制，按 Shift 切换格式", 色值)}
-            data-format={色格式}
+          <span
+            className="accent-value-wrap"
             onMouseEnter={() => 设悬着(true)}
             onMouseLeave={() => 设悬着(false)}
-            onFocus={() => 设聚焦着(true)}
-            onBlur={() => 设聚焦着(false)}
-            onClick={复制色值}
           >
-            <code>{色值}</code>
-            {/* 复制完说一声，1.2 秒后收回；用 role=status 让读屏也听到 */}
-            <span className="accent-copied" role="status" aria-live="polite">{已复制 ? t("已复制") : ""}</span>
-          </button>
+            <input
+              className="control accent-value"
+              data-format={色格式}
+              data-invalid={色坏了 ? "1" : undefined}
+              value={色草稿 ?? 色值}
+              spellCheck={false}
+              aria-label={t("颜色值，可输入 HEX 或 RGB")}
+              aria-invalid={色坏了 || undefined}
+              onChange={(e) => 设色草稿(e.target.value)}
+              onFocus={() => 设聚焦着(true)}
+              onBlur={() => {
+                设聚焦着(false)
+                提交色()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") 提交色()
+                if (e.key === "Escape") 设色草稿(undefined)
+              }}
+            />
+            <Button variant="ghost" size="icon" className="accent-copy" aria-label={t("复制颜色值")} onClick={复制色值}>
+              <复制图标 />
+            </Button>
+            {/* 悬上去就说清三件事；复制完换成「已复制」。role=status 让读屏也听到 */}
+            <span className="accent-tip" role="status" aria-live="polite">
+              {已复制 ? t("已复制") : 悬着 || 聚焦着 ? t("可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式") : ""}
+            </span>
+          </span>
         </div>
       </Row>
     </Section>

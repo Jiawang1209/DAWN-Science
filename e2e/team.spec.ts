@@ -59,8 +59,9 @@ test.describe("组一支团队", () => {
     const 格 = page.locator(".team-panel")
     await expect(格).toBeVisible()
     await expect(格.locator(".team-name")).toHaveText("审稿小队")
-    // 按层次：两个成员组，各自底下一项任务
+    // 按层次：两个成员组，各自底下一项任务（2026-08-23 起成员默认收起，点开才看任务——照 dsh-agent-teams 那张图）
     await expect(格.locator(".team-group")).toHaveCount(2)
+    for (const 名 of ["踏勘", "审稿"]) await 格.locator(`.team-group[data-member="${名}"] .team-group-head`).click()
     await expect(格.locator(".team-task")).toHaveCount(2)
     await expect(格.locator('.team-group[data-member="踏勘"] .team-task[data-task="t1"]')).toHaveCount(1)
     await expect(格.locator('.team-group[data-member="审稿"] .team-task[data-task="t2"]')).toHaveCount(1)
@@ -74,7 +75,7 @@ test.describe("组一支团队", () => {
     await 格.locator('.team-task[data-task="t2"] .team-task-head').click()
     await expect(格.locator('.team-task[data-task="t2"] .team-task-output')).toContainText("假模型已应答")
     // 成员空闲、各跑了一轮；审稿那一行写着它自己的模型，踏勘没写（跟队长）
-    await expect(格.locator('.team-group[data-member="踏勘"] .team-group-head')).toContainText("1 轮")
+    await expect(格.locator('.team-group[data-member="踏勘"] .team-group-body')).toContainText("1 轮")
     await expect(格.locator('.team-group[data-member="审稿"] .team-group-head')).toContainText("deepseek-v4-deep")
     await expect(格.locator('.team-group[data-member="踏勘"] .team-group-head')).not.toContainText("deepseek-v4")
 

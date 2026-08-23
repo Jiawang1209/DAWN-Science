@@ -5613,40 +5613,102 @@ pre {
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
 .recent-list { margin-bottom: var(--dawn-space-2); }
 
-/* ── 团队（team-board，2026-08-22，学自 dsh-agent-teams；坞里一格）────────────────────────
-   按层次：团队头一张卡；**一个成员一张卡**（浅底 + 发丝线 + 小圆角，卡里不再套卡）；
-   任务是卡里的行，消息是左侧一条细线的引用行；共享池 / 队长自己做的各一张、底色再淡一档。
-   在跑的成员卡左缘一条强调色（与会话行「跑着」同一个做法）；已移除的整卡降透明度。
-   作者 2026-08-22 要的：「不同的成分用不同的卡片存起来，这样比较清晰」。 */
-.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+/* ── 团队（team-board，2026-08-22；2026-08-23 照 dsh-agent-teams 的活动面板重画——作者拿着它的截图要的）──────
+   六段：标题行 / 队长卡 / 总进度（一任务一段）/ 成员树（左侧竖线分叉）/ 队长自己的 · 共享池 / 任务依赖（小 DAG）。
+   颜色只有四档：在跑 = 强调色、等待依赖 = 警示色、已交付 = 成功色、未交付 = 淡字色。 */
+.team-panel { padding: var(--dawn-space-3); font-size: 13px; display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .team-empty { padding: var(--dawn-space-3); }
-.team-card { background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-2) var(--dawn-space-3); }
-.team-card.pool { background: transparent; }
-.team-card.working { box-shadow: inset 3px 0 0 var(--dawn-accent); }
-.team-card.removed { opacity: 0.55; }
-.team-head { display: flex; flex-direction: column; gap: var(--dawn-space-1); }
-.team-head-row { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
-.team-name { margin: 0; font-size: 15px; font-weight: 600; flex: 1 1 auto; min-width: 0; }
-.team-progress { color: var(--dawn-text-3); font-size: 12px; white-space: nowrap; }
-.team-goal { margin: 0; color: var(--dawn-text-2); }
-.team-bar { display: flex; height: 3px; margin-top: var(--dawn-space-1); border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); overflow: hidden; }
-.team-bar-done { background: var(--dawn-success); }
-.team-bar-dead { background: var(--dawn-text-4); }
-.team-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-1) var(--dawn-space-2); width: 100%; text-align: left; min-width: 0; }
-.team-group-head .twisty { flex: 0 0 auto; align-self: center; }
-.team-group-name { font-weight: 600; flex: 0 0 auto; }
+.team-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); }
+.team-name { margin: 0; font-size: 15px; font-weight: 600; min-width: 0; }
+.team-pill { font-size: 11px; padding: 1px var(--dawn-space-2); border-radius: var(--dawn-radius-full); background: var(--dawn-row-hover); color: var(--dawn-text-2); }
+.team-stats { margin-left: auto; display: inline-flex; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: 12px; white-space: nowrap; }
+.team-goal { margin: calc(-1 * var(--dawn-space-2)) 0 0; color: var(--dawn-text-2); }
+
+/* 头像：首字 + 强调色打底，按名字稳定转一圈色相——不写裸色 */
+.team-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 28px; height: 28px; border-radius: var(--dawn-radius-full); background: var(--dawn-accent); color: var(--dawn-on-accent); font-size: 12px; font-weight: 600; }
+.team-avatar.captain { width: 32px; height: 32px; }
+.team-avatar[data-hue="1"] { filter: hue-rotate(45deg); }
+.team-avatar[data-hue="2"] { filter: hue-rotate(90deg); }
+.team-avatar[data-hue="3"] { filter: hue-rotate(135deg); }
+.team-avatar[data-hue="4"] { filter: hue-rotate(180deg); }
+.team-avatar[data-hue="5"] { filter: hue-rotate(225deg); }
+.team-avatar[data-hue="6"] { filter: hue-rotate(270deg); }
+.team-avatar[data-hue="7"] { filter: hue-rotate(315deg); }
+
+/* ② 队长卡 */
+.team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-3); }
+.team-captain-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.team-captain-line { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
+.team-captain-name { font-weight: 600; }
+.team-captain-state { font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; }
+.team-captain-state[data-busy="1"] { color: var(--dawn-accent); }
+
+/* ③ 总进度 */
+.team-progress-block { display: flex; flex-direction: column; gap: var(--dawn-space-1); }
+.team-progress-title { font-size: 12px; color: var(--dawn-text-3); }
+.team-segments { display: flex; gap: 3px; height: 6px; }
+.team-segments > span { flex: 1 1 0; border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); }
+/* 在跑 = 条纹（品牌色是绿，与「已交付」的成功色同属一族；条纹让它在同一色相里也认得出） */
+.team-segments > span[data-state="running"] { background: repeating-linear-gradient(90deg, var(--dawn-accent) 0 4px, var(--dawn-stroke-3) 4px 7px); }
+.team-segments > span[data-state="blocked"] { background: var(--dawn-warning); }
+.team-segments > span[data-state="completed"] { background: var(--dawn-success); }
+.team-segments > span[data-state="dead"] { background: var(--dawn-text-4); }
+.team-legend { display: flex; gap: var(--dawn-space-3); font-size: 11px; color: var(--dawn-text-3); }
+.team-legend > span::before, .team-summary-dot { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: var(--dawn-radius-full); margin-right: 4px; vertical-align: 1px; background: var(--dawn-stroke-3); }
+.team-legend > span[data-state="running"]::before { background: var(--dawn-accent); }
+.team-legend > span[data-state="blocked"]::before { background: var(--dawn-warning); }
+.team-legend > span[data-state="completed"]::before { background: var(--dawn-success); }
+.team-summary { display: flex; align-items: center; gap: 4px; padding: var(--dawn-space-1) var(--dawn-space-2); border-radius: var(--dawn-radius-sm); background: var(--dawn-row-hover); font-size: 12px; color: var(--dawn-text-2); }
+.team-summary[data-state="running"] .team-summary-dot { background: var(--dawn-accent); }
+.team-summary[data-state="blocked"] .team-summary-dot { background: var(--dawn-warning); }
+.team-summary[data-state="completed"] .team-summary-dot { background: var(--dawn-success); }
+
+/* ④ 成员树 */
+.team-members-toggle { display: flex; justify-content: space-between; width: 100%; font-weight: 600; }
+.team-members-toggle .twisty { margin-right: 4px; }
+.team-tree { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding-left: var(--dawn-space-3); position: relative; }
+/* 左边那条竖线 + 每个成员一根分叉 */
+.team-tree::before { content: ""; position: absolute; left: 4px; top: 0; bottom: var(--dawn-space-3); width: 2px; background: var(--dawn-stroke-3); }
+.team-member { position: relative; padding-left: var(--dawn-space-3); }
+.team-branch { position: absolute; left: calc(-1 * var(--dawn-space-3) + 4px); top: 18px; width: calc(var(--dawn-space-3) + var(--dawn-space-2)); height: 2px; background: var(--dawn-stroke-3); }
+.team-member-row { display: flex; align-items: center; gap: var(--dawn-space-2); width: 100%; text-align: left; min-width: 0; padding: var(--dawn-space-1) 0; }
+.team-member.working .team-avatar { box-shadow: 0 0 0 2px var(--dawn-accent); }
+.team-member.removed { opacity: 0.55; }
+.team-member-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+.team-member-line { display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; flex-wrap: wrap; }
+.team-group-name { font-weight: 600; }
 .team-member-agent { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); }
 .team-member-model { color: var(--dawn-text-3); font-size: 12px; font-family: var(--dawn-font-mono); padding: 0 var(--dawn-space-1); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); white-space: nowrap; }
-.team-member-status { margin-left: auto; font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; }
+.team-member-status-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-member-status { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; max-width: 40%; overflow: hidden; }
 .team-member-status.working { color: var(--dawn-accent); }
-.team-group-body { padding: var(--dawn-space-1) 0 0 var(--dawn-space-4); display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.team-member-count { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); }
+.team-assign { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-1); padding-left: calc(28px + var(--dawn-space-2)); font-size: 11px; }
+.team-chip { font-family: var(--dawn-font-mono); font-size: 11px; padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-2); }
+.team-chip[data-state="running"] { border-color: var(--dawn-accent); color: var(--dawn-accent); }
+.team-chip[data-state="blocked"] { border-color: var(--dawn-warning); color: var(--dawn-warning); }
+.team-chip[data-state="completed"] { border-color: var(--dawn-success); color: var(--dawn-success); }
+.team-group-body { padding: var(--dawn-space-2) 0 0 calc(28px + var(--dawn-space-2)); display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .team-member-role { margin: 0; color: var(--dawn-text-3); font-size: 12px; }
+.team-member-role:empty { display: none; }
+
+/* ⑥ 队长自己做的 / 共享池：窄一档的组 */
+.team-group { min-width: 0; }
+.team-side { padding: var(--dawn-space-1) 0; }
+.team-side.pool .team-group-name { color: var(--dawn-text-2); }
+/* `.team-progress` 是 e2e 盯的那句总结（与 `.team-summary` 同一元素） */
+.team-progress { min-width: 0; }
+.team-side .team-group-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; }
+.team-side .team-group-head .twisty { align-self: center; }
+.team-side .team-member-status { margin-left: auto; flex-direction: row; }
+.team-side .team-group-body { padding-left: var(--dawn-space-4); }
+
+/* 任务行 / 消息（成员点开之后那份分层，与此前一致） */
 .team-tasks, .team-mail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-1); }
 .team-none { margin: 0; }
 .team-task { min-width: 0; }
-.team-task-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); width: 100%; text-align: left; }
+.team-task-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-1) var(--dawn-space-2); width: 100%; text-align: left; min-width: 0; }
 .team-task-id { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); font-size: 12px; }
-/* 标题跟着 id 走、能缩：否则窄列里 id 自己占一行、标题掉到第二行 */
 .team-task-subject { font-weight: 500; flex: 1 1 12ch; min-width: 0; }
 .team-task-status { font-size: 12px; color: var(--dawn-text-3); }
 .team-task-status.in_progress, .team-task-status.claimed { color: var(--dawn-accent); }
@@ -5659,6 +5721,38 @@ pre {
 .team-msg { display: flex; flex-direction: column; gap: 2px; padding-left: var(--dawn-space-2); border-left: 2px solid var(--dawn-stroke-3); }
 .team-msg-who { font-size: 12px; color: var(--dawn-text-3); }
 .team-msg-text { white-space: pre-wrap; color: var(--dawn-text-2); font-size: 12px; }
+
+/* ⑤ 任务依赖：小 DAG */
+.team-deps { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding-top: var(--dawn-space-2); border-top: 1px solid var(--dawn-stroke-4); }
+.team-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--dawn-space-2); }
+.team-section-toggle { font-weight: 600; }
+.team-section-toggle .twisty { margin-right: 4px; }
+.team-dag-viewport { overflow-x: auto; padding: var(--dawn-space-1) 0; }
+.team-dag { position: relative; }
+.team-dag[data-layout="parallel"] { display: flex; flex-wrap: wrap; gap: var(--dawn-space-2); }
+.team-dag-edges { position: absolute; inset: 0; overflow: visible; }
+.team-dag-edges path { fill: none; stroke: var(--dawn-stroke-2); stroke-width: 1.5; }
+.team-dag-edges path[data-active="1"] { stroke: var(--dawn-accent); stroke-width: 2; }
+.team-dag-edges path[data-dimmed="1"] { opacity: 0.25; }
+.team-dag-node { position: absolute; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; padding: 2px var(--dawn-space-2); border-radius: var(--dawn-radius-sm); border: 1px solid var(--dawn-stroke-3); background: var(--dawn-surface-elevated); text-align: left; line-height: 1.15; }
+.team-dag[data-layout="parallel"] .team-dag-node { position: static; min-width: 92px; }
+.team-dag-node[data-focused="1"] { border-color: var(--dawn-accent); }
+.team-dag-node[data-dimmed="1"] { opacity: 0.35; }
+.team-dag-node[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--dawn-accent); }
+.team-dag-node-head { display: inline-flex; align-items: center; gap: 4px; font-family: var(--dawn-font-mono); font-size: 11px; font-weight: 600; }
+.team-dag-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); }
+.team-dag-node[data-state="running"] .team-dag-dot { background: var(--dawn-accent); }
+.team-dag-node[data-state="blocked"] .team-dag-dot { background: var(--dawn-warning); }
+.team-dag-node[data-state="completed"] .team-dag-dot { background: var(--dawn-success); }
+.team-dag-node[data-state="completed"] { border-color: color-mix(in srgb, var(--dawn-success) 40%, transparent); }
+.team-dag-node-label { font-size: 10px; color: var(--dawn-text-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-task-detail { display: flex; flex-direction: column; gap: 2px; padding: var(--dawn-space-1) var(--dawn-space-2); border-radius: var(--dawn-radius-sm); background: var(--dawn-row-hover); font-size: 12px; }
+.team-task-detail-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; }
+.team-task-detail-subject { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-badge { font-size: 11px; padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-3); white-space: nowrap; }
+.team-badge[data-state="running"] { border-color: var(--dawn-accent); color: var(--dawn-accent); }
+.team-badge[data-state="blocked"] { border-color: var(--dawn-warning); color: var(--dawn-warning); }
+.team-badge[data-state="completed"] { border-color: var(--dawn-success); color: var(--dawn-success); }
 
 /* ============ 输入卡上那颗「权限」（2026-08-23；作者给的样子：每档一颗图标、名字加粗、说明一行、当前项右边打勾；全放行用警示色） ============ */
 .perm-pill { position: relative; flex: 0 0 auto; }

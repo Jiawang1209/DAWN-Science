@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-24 — 主题色：系统色盘拿回来，与放大镜取色器并排
+
+- **Type**: fix
+- **Motivation**: 作者：放大镜的样式对，但上一版的系统色盘更好用——两个结合。
+- **What**: 「自定义」色块恢复为原生 `<input type="color">`（macOS 调色板）；旁边新增吸管键（新 `吸管图标`）进放大镜取色模式（C 复制 / Shift 切 RGB/HEX / 点击定色 / Esc 退出，不变）。
+- **Impact**: 外观一行两颗入口；其余不动。
+- **Verification**: accent e2e 4 + 视觉基线 10 全绿；tests/ui 517。
+
 ### 2026-08-24 — 取色器：放大镜从界面上取色（作者给了图）
 
 - **Type**: feat

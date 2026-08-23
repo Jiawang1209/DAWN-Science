@@ -1153,6 +1153,8 @@ export const EN: Readonly<Record<string, string>> = {
   "橙": "Orange",
   "粉": "Pink",
   "灰": "Gray",
+  "自定义": "Custom",
+  "自定义强调色": "Custom accent color",
   "取色器": "Color picker",
   "按 C 复制颜色值": "Press C to copy the color",
   "按 Shift 切换 RGB/HEX": "Press Shift to toggle RGB/HEX",

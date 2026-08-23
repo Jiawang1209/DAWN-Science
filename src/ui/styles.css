@@ -5969,6 +5969,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .accent-choices .accent-value[data-invalid] { border-color: var(--dawn-danger); }
 .accent-choices .accent-value[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
 .accent-copy { width: 26px; height: 26px; }
+.accent-dropper-btn { width: 26px; height: 26px; }
 .accent-tip {
   position: absolute;
   top: calc(100% + 6px);

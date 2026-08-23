@@ -1059,4 +1059,14 @@ export const EN: Readonly<Record<string, string>> = {
   "也作为以后新会话的默认": "Also make it the default for new sessions",
   "（这一段现在跟着默认）": "(this session currently follows the default)",
   "这是一道工具门，不是沙箱。硬拒清单（sudo、删到主目录 / 系统目录、带凭据出网、强推）任何档都拒。": "This is a tool gate, not a sandbox. The hard-deny list (sudo, deleting home / system dirs, sending credentials out, force push) is refused in every tier.",
+
+  // `@` 引用工作区文件（2026-08-23）
+  "还有 {0} 条没列出来——再打几个字": "{0} more not shown — type a few more characters",
+  "引用工作区文件": "Reference a workspace file",
+  "先选一个工作目录，才有文件可以引用": "Pick a working directory first — then there are files to reference",
+  "正在找…": "Looking…",
+  "没有对上的文件": "No matching file",
+  "↑↓ 挑，回车引用；→ 进目录": "↑↓ to choose, Enter to reference, → to enter a directory",
+  "引用的文件": "Referenced files",
+  "不引用 {0}": "Drop reference {0}",
 }

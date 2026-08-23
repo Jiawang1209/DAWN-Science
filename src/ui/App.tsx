@@ -917,6 +917,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client, projectId, 文件所在],
   )
 
+  /**
+   * `@` 引用的文件源（2026-08-23，学自 dsh-at-file）：就是坞里文件格那两条（`loadDir` / `searchFiles`），
+   * 远端会话跟着那台机器、令牌相对它的当前目录。**没有项目 / 没有远端 = 没有源**——菜单里要说清。
+   */
+  const 引用文件 = useMemo(
+    () => (projectId || 文件所在 ? { 根: 文件所在?.cwd ?? "", loadDir, search: searchFiles } : undefined),
+    [projectId, 文件所在, loadDir, searchFiles],
+  )
+  /** 点引用栏那一行：远端读那台机器；本地打开坞里的预览（readFile 那条路） */
+  const 打开引用 = useCallback((path: string) => openFile(文件所在 ? `${文件所在.cwd.replace(/\/+$/, "")}/${path}` : path), [openFile, 文件所在])
+
   const openExternally = useCallback(
     (path: string) => {
       if (!projectId) return
@@ -3642,6 +3653,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 同一个跳转就有两个来源，而「谁先谁后」取决于渲染顺序。
                  */
                 onExport={() => client.get<{ path: string; turns: number }>("exportSession", { sessionId: session!.sessionId })}
+                引用文件={引用文件}
+                onOpenReference={打开引用}
                 {...(() => {
                   // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
                   const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
@@ -3854,6 +3867,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               agentKind={(id: string) => providers.agents.find((x) => x.agentId === id)?.kind}
               权限={{ 当前: 权限档, onPick: (档) => 设默认档(档) }}
+              引用文件={引用文件}
+              onOpenReference={打开引用}
               onToggleDock={toggleDock}
               {...(providers.agents.some((a) => a.kind === "native") ? { onEnhance: 去增强(undefined), onCancelEnhance: 取消增强 } : {})}
               /**

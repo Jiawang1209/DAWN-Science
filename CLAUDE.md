@@ -14,6 +14,7 @@
 | 各阶段的详细计划 | `docs/superpowers/plans/` —— 文件名里的阶段号即为准 |
 | **右侧坞**：文件（本地/远端）、传输、删除、审阅 | `specs/2026-08-17-远端文件与右侧坞-design.md` |
 | **坞里第三格「网页」**：消息里的链接点开就渲染 | `specs/2026-08-18-网页预览-design.md` + `plans/2026-08-18-网页预览.md`（勾全打完） |
+| **`@` 引用工作区文件**：路径 + 类型，不喂内容；一份识别语法（学自 dsh-at-file） | `specs/2026-08-23-at引用-design.md` · 解读在 `ccb_hive_code_learn/dsh-at-file-解读.md` |
 | **给 agent 配一个浏览器**（走 MCP，不是我们写的） | `docs/怎么给-agent-配一个浏览器.md` · `specs/2026-08-18-agent的浏览器-design.md` |
 | **接一个 ACP 适配器**（设置里那一格，2026-08-19 补的入口） | `specs/2026-08-16-acp-runtime-design.md` 最后一节 |
 | **子 agent 名册**：22 份自带、三层、一份两用（学自 dsh-agency-agents） | `specs/2026-08-22-子agent名册-design.md` |

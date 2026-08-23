@@ -244,9 +244,9 @@ test.describe("提示不说谎", () => {
       await expect(page.getByRole("listbox", { name: "技能与子 agent" })).toHaveCount(0)
       await 框.fill("")
 
-      // `@` 开文件浏览器，挑完把路径写进来
+      // `@` 弹工作区路径菜单（2026-08-23 起，学自 dsh-at-file；此前是开系统文件对话框）——细节在 at-file.spec.ts
       await 框.press("@")
-      await expect(框).toHaveValue(/甲\.csv/, { timeout: 10_000 })
+      await expect(page.getByRole("listbox", { name: "引用工作区文件" })).toBeVisible()
     })
   }
 })

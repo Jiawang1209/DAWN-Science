@@ -184,6 +184,23 @@ describe("设计契约 · 可访问性与文案", () => {
 
 describe("设计契约 · 一个动作一个家", () => {
   /**
+   * `@路径` 的识别语法只有 `src/files/mentions.ts` 那一份（2026-08-23，学自 dsh-at-file 的
+   * recognition contract）：输入卡的菜单、引用栏、发送前的扫描都从那里取。
+   * 各抄一份正则，迟早有一处认的和别处不一样——症状是「栏里有、发出去没有」。
+   */
+  it("**`@路径` 的正则只在 files/mentions.ts 里写一次**", () => {
+    const src = join(UI_DIR, "..")
+    const 走 = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
+        d.isDirectory() ? 走(join(dir, d.name)) : /\.tsx?$/.test(d.name) ? [join(dir, d.name)] : [],
+      )
+    const 命中 = 走(src)
+      .filter((f) => /@\(\[\^/.test(readFileSync(f, "utf8")))
+      .map((f) => f.slice(src.length + 1))
+    expect(命中, "别处又写了一份 @路径 的正则——从 files/mentions.ts 取").toEqual(["files/mentions.ts"])
+  })
+
+  /**
    * Hermes：
    * > ***"One action, one home."*** *A command may have keyboard, palette, and visible
    * > affordances, but they **invoke the same action and state**.

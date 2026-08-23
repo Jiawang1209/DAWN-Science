@@ -27,6 +27,7 @@ import { 科研目录, 约定正文, pi会读的指令文件, 我们写的指令
 import type { ShellEnvironment } from "../env/snapshot.js"
 import { deriveSessionTitle } from "../session/title.js"
 import { readFile } from "node:fs/promises"
+import { 展开引用 } from "../files/mentions.js"
 import { extname } from "node:path"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
 import type { ImageAttachment } from "../runtime/types.js"
@@ -980,6 +981,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 拿不到语言时退回 `kernel_execute`——**不猜**（写死 python 的话，
    * 一个 R 会话的账本会指着一门它没用过的语言）。
    */
+  async function 附上引用(sessionId: string, text: string): Promise<{ text: string; refs: { path: string; kind: "file" | "directory" }[] }> {
+    if (!text.includes("@")) return { text, refs: [] }
+    const rec = sessions.get(sessionId)
+    if (!rec) return { text, refs: [] }
+    if (rec.connectionId) {
+      const e = 远端().manager.executorOf(rec.connectionId)
+      const 根 = rec.remoteCwd ?? rec.workspace
+      if (!e || !根) return { text, refs: [] }
+      return 展开引用(
+        text,
+        async (rel) => {
+          const st = await e.stat(`${根.replace(/\/+$/, "")}/${rel}`)
+          return st.directory ? "directory" : "file"
+        },
+        rec.connectionId,
+      )
+    }
+    return 展开引用(text, async (rel) => {
+      // 守卫在 `resolveInWorkspace`：越界直接抛 → 当不存在
+      const st = await stat(resolveInWorkspace(rec.workspace, rel))
+      return st.isDirectory() ? "directory" : st.isFile() ? "file" : undefined
+    })
+  }
+
   function 这一轮叫什么(sessionId: string): string | undefined {
     const rec = sessions.get(sessionId)
     const agentId = rec?.agentId
@@ -2227,8 +2252,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 会让人对着三张图挨个试。
        */
       const 附图 = await 读成附件(images ?? [])
+      /**
+       * `@路径` 引用（2026-08-23，学自 dsh-at-file）：**发送前只验存在**，把存在的拼成
+       * `<workspace-reference path kind />` 附在人这句话后面；内容不读、目录不列——模型要看自己用工具读，
+       * 那一步过权限门、进账本。转录里存的仍是人写的原文（`events.userTurn` 收的是 `data`）。
+       * 本地 `stat` 相对工作区、远端相对那段会话的当前目录；本地会话对远端路径、远端会话对本地路径都不认。
+       */
+      const 发出去的 = as === "user" ? (await 附上引用(sessionId, data)).text : data
       try {
-        sessions.write(sessionId, data, as, 附图, behavior)
+        sessions.write(sessionId, 发出去的, as, 附图, behavior)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。

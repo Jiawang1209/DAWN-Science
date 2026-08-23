@@ -108,8 +108,10 @@ pre {
 .btn-primary:active:not(:disabled) { filter: brightness(0.94); }
 
 /* 无盒子的行内文字按钮。hover 加下划线而不是加底——它不是一个"面" */
-.btn-text { padding: 0; color: var(--dawn-accent); }
-.btn-text:hover:not(:disabled) { text-decoration: underline; }
+/* 文字按钮：次要动作，绿字会跟发送键抢（2026-08-12 定的；2026-08-23 把后面那段推翻收回到这儿） */
+.btn-text { padding: 0; color: var(--dawn-text-2); }
+.btn-text:hover:not(:disabled) { color: var(--dawn-text-1); text-decoration: underline; }
+.btn-text:focus-visible { color: var(--dawn-text-1); }
 
 .btn-destructive { background: var(--dawn-danger); color: var(--dawn-on-accent); }
 
@@ -176,6 +178,8 @@ pre {
   color: var(--dawn-text-1);
   font: inherit;
 }
+/* 悬停把描边提一档（2026-08-23，Claude / Codex 的输入框都这么做）；聚焦仍是那一圈环 */
+.control:hover:not(:focus-visible):not(:disabled) { border-color: var(--dawn-stroke-2); }
 .control:focus-visible { outline: 2px solid var(--dawn-accent); outline-offset: -1px; border-color: transparent; }
 .field-invalid .control { border-color: var(--dawn-danger); }
 
@@ -419,7 +423,9 @@ pre {
   width: 32px;
   height: 32px;
 }
-.topbar .brand { font-weight: var(--dawn-weight-semibold); color: var(--dawn-accent); }
+/* 品牌字：标题的字重与颜色——**可点不等于要变成一个按钮的样子**；悬停才回强调色 */
+.topbar .brand { font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); padding: 0; }
+.topbar .brand:hover { color: var(--dawn-accent); }
 .topbar .spacer { flex: 1; }
 .statusbar {
   display: flex;
@@ -552,7 +558,7 @@ pre {
   cursor: pointer;
 }
 .row:hover { background: var(--dawn-row-hover); }
-.row.active { background: var(--dawn-row-active); box-shadow: inset 2px 0 0 var(--dawn-accent); }
+.row.active { background: var(--dawn-row-active); }
 /* 副信息 12px：实测 WorkBuddy 的时刻是 `12px`，与分区标题同一档 */
 .row .sub, .row .state { color: var(--dawn-text-3); font-size: 12px; }
 /**
@@ -787,7 +793,8 @@ pre {
    */
   margin: 0 auto var(--dawn-space-10);
 }
-.turn .who { display: block; color: var(--dawn-text-3); font-size: 11px; margin-bottom: 2px; }
+/* 说话人名（学自 WorkBuddy）：**它是这段话的归属，不是一个标签**——与正文同色、半粗；图标与名字并排 */
+.turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); font-size: 0.85rem; font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); margin-bottom: var(--dawn-space-2); }
 /* 输入区在上、控件行在下且右对齐 —— 学自 Hermes composer 的
    `<div className="ml-auto flex …">`。**控件靠右，输入区独占一整行** */
 .composer {
@@ -909,6 +916,8 @@ pre {
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .composer-footer {
+  position: relative;
+  z-index: var(--z-sibling-lift);
   display: flex;
   align-items: center;
   gap: var(--dawn-space-1);
@@ -927,8 +936,7 @@ pre {
 .composer-footer .sess-config { margin-left: auto; }
 /** 权限那颗跟在右边；只有它一颗时它自己顶到右边 */
 .composer-footer .perm-pill { flex: 0 0 auto; }
-/** 附栏自己起一层：菜单向上弹时压在输入盒（模型颗、发送键）之上，不然它们从菜单里透出来（2026-08-23 探针看见的） */
-.composer-footer { position: relative; z-index: var(--z-sibling-lift); }
+/* 附栏自己起一层（见上面 `.composer-footer`）：菜单向上弹时压在输入盒（模型颗、发送键）之上 */
 .composer-footer .perm-pill:first-child,
 .composer-footer .sess-config + .perm-pill { margin-left: var(--dawn-space-2); }
 .composer-footer > .perm-pill:not(.sess-config + .perm-pill) { margin-left: auto; }
@@ -2750,16 +2758,14 @@ pre {
 
 .row-menu,
 .attach-menu {
-  position: fixed;
   z-index: var(--z-modal);
-  min-width: 8rem;
   display: flex;
   flex-direction: column;
   padding: var(--dawn-space-1);
 }
+.row-menu { position: fixed; min-width: 8rem; }
 
-.row-menu .btn,
-.attach-menu .btn {
+.row-menu .btn {
   justify-content: flex-start;
   width: 100%;
 }
@@ -2945,13 +2951,6 @@ pre {
 /* 添加入口：**一个按钮**，二选一在点开之后 */
 .svc-add-entry { margin-top: var(--dawn-space-2); }
 
-.svc-add {
-  margin-top: var(--dawn-space-2);
-  padding: var(--dawn-space-3);
-  border: 1px dashed var(--dawn-stroke-2);
-  border-radius: var(--dawn-radius-md);
-}
-
 .svc-tabs {
   display: flex;
   align-items: center;
@@ -2985,10 +2984,11 @@ pre {
  */
 .remote-head { justify-content: flex-start; }
 /** 文件树的展开标记：与远端那一行同一副做法——**一个三角，靠旋转** */
+
 .tree-caret { color: var(--dawn-text-3); transition: transform 120ms ease; }
 .tree-caret.open { transform: rotate(90deg); }
-
-.remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; }
+.remote-head .caret { flex: 0 0 auto; color: var(--dawn-text-3); width: 1em; transition: transform 120ms ease; }
+.remote-head .caret.open { transform: rotate(90deg); }
 /* **自己滚，不跟着整条侧栏一起长**：服务器多起来时，
    它不该把下面的「设置」挤出屏幕 */
 .remote-body { max-height: 40vh; overflow-y: auto; padding-bottom: var(--dawn-space-2); }
@@ -3406,14 +3406,6 @@ pre {
 }
 .bubble > :first-child { margin-top: 0; }
 
-/* 说话人名（2026-08-12，学自 WorkBuddy）：**它是这段话的归属，不是一个标签**。
-   原先 11px 浅灰，轻到像装饰；加重之后「谁说的」一眼可辨 */
-.turn .who {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--dawn-text-1);
-  margin-bottom: var(--dawn-space-2);
-}
 /**
  * 用量**紧跟在图标后面**（2026-08-12 改，CDP 实测 WorkBuddy）。
  *
@@ -3481,17 +3473,6 @@ pre {
  * **它要看起来能点**：`.btn-text` 已经给了 hover 与聚焦环，
  * 这里只把它恢复成标题的字重与颜色——**可点不等于要变成一个按钮的样子**。
  */
-.topbar .brand {
-  color: var(--dawn-text-1);
-  font-weight: var(--dawn-weight-semibold);
-  padding: 0;
-}
-.topbar .brand:hover { color: var(--dawn-accent); }
-/* 文字按钮：它们是次要动作，绿字会跟发送键抢 */
-.btn-text { color: var(--dawn-text-2); }
-.btn-text:hover, .btn-text:focus-visible { color: var(--dawn-text-1); }
-/* 选中态已经改成 pill，那道绿色竖条是旧形态的残留 */
-.row.active { box-shadow: none; }
 /**
  * **聚焦环保持强调色，不收敛。**
  *
@@ -3503,7 +3484,6 @@ pre {
  */
 
 /* 说话人：头像 + 名字并排 */
-.turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .who-avatar {
   width: 1.5rem;
   height: 1.5rem;
@@ -3522,6 +3502,8 @@ pre {
    **它不是一行可点的东西**，所以更小更淡、且上面留白比下面大——
    「它统领下面这些」这句话是靠间距说的 */
 .side-section {
+  display: flex;
+  align-items: center;
   margin: var(--dawn-space-4) 0 0;
   /**
    * **与行同一条左缘**（2026-08-12 实测）。
@@ -3567,17 +3549,7 @@ pre {
  * 一个三角靠旋转表达两态：两个不同的字形会让展开这件事看起来像换了个东西。
  */
 /** 文件树的展开标记：与远端那一行同一副做法——**一个三角，靠旋转** */
-.tree-caret { color: var(--dawn-text-3); transition: transform 120ms ease; }
-.tree-caret.open { transform: rotate(90deg); }
 
-.remote-head .caret {
-  margin-left: var(--dawn-space-2);
-  color: var(--dawn-text-3);
-  transition: transform 120ms ease;
-}
-.remote-head .caret.open { transform: rotate(90deg); }
-/* 远端那一行的计数改用 `.side-count`（2026-08-22）；三角仍在行尾，占的宽度与会话行的「⋯」一样 */
-.remote-head .caret { margin-left: 0; }
 
 /**
  * 顶部固定区与下面两列之间那条线（2026-08-12，作者要的）。
@@ -3608,7 +3580,6 @@ pre {
 .side-section-title { display: inline-block; min-width: 3em; }
 /* 两个类名：`.side-count` 那条 `margin-left: auto` 写在后面，单类名压不过它 */
 .side-section .side-section-count { margin-left: var(--dawn-space-1); flex: 0 0 auto; }
-.side-section { display: flex; align-items: center; }
 /**
  * 选择模式那一条。**数字常驻**：「删掉 3 段对话」比「删掉选中的」
  * 可判断得多——按下之前就该知道自己要删掉几个。
@@ -3655,7 +3626,6 @@ pre {
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
-.composer-field { font-size: 15px; line-height: 1.75; }
 
 /* 气泡的形状与底色**只在一处定义**（往上找 `_userMessageBubble_` 那段注释）。
    这里曾经再写一遍圆角，于是「气泡长什么样」有了两个家 */
@@ -3729,7 +3699,9 @@ pre {
   z-index: var(--z-modal);
   padding: var(--dawn-space-2) 0;
   border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-surface-panel);
+  /* 浮层坐 elevated（2026-08-23 审查抓的：暗色下 panel 比底面还深，浮层反而更黑） */
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
 }
 .model-list { list-style: none; margin: 0; padding: 0; }
@@ -3903,7 +3875,6 @@ pre {
   bottom: calc(100% + var(--dawn-space-2));
   left: 0;
   min-width: 11rem;
-  padding: var(--dawn-space-1);
   gap: 1px;
   /**
    * **弹出来那一下**（2026-08-13，作者：*「弹出来的效果也要好看，
@@ -5894,3 +5865,10 @@ pre {
 .session-tab[data-unread="1"] .session-tab-dot { background: var(--dawn-accent); }
 .session-tab-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; text-align: left; }
 .session-tab-new { flex: 0 0 auto; margin-bottom: 4px; color: var(--dawn-text-3); }
+
+/* ── 滚动条（2026-08-23 审查抓的：此前一处都没管，Windows / Linux 或「始终显示」时是 15px 的灰白槽）── */
+* { scrollbar-width: thin; scrollbar-color: var(--dawn-stroke-2) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--dawn-stroke-2); border-radius: var(--dawn-radius-full); }
+*::-webkit-scrollbar-thumb:hover { background: var(--dawn-stroke-1); }

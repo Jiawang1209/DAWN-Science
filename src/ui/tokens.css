@@ -527,4 +527,6 @@
   --dawn-shadow-sm:
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 5%, transparent),
     0 1px 2px color-mix(in srgb, #000000 35%, transparent);
+  /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
+  --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
 }

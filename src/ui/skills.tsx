@@ -961,7 +961,7 @@ export function McpView({
                 <p className="skill-meta">
                   <Button
                     variant="primary"
-                    size="inline"
+                    size="sm"
                     onClick={() => {
                       if (!onTest) return
                       void onTest(s.name).then((r) => {
@@ -1001,8 +1001,8 @@ export function McpView({
                     */}
                   {s.from === "global" && onRemove ? (
                     <Button
-                      variant="text"
-                      size="inline"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => void onRemove(s.name).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     >
                       {tf("删掉 {0}", s.name)}

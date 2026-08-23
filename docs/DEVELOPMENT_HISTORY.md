@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — MCP 服务器一行：「试一次」圆角绿键，「删掉 x」灰色圆角键
+
+- **Type**: refactor
+- **Motivation**: 作者截图：「试一次」是方的；「删掉 pubmed」只是一行字。
+- **What**: `skills.tsx` MCP 行两颗按钮由 `size="inline"` 改 `size="sm"`（与外观的片状键同形）；删掉 → `variant="secondary"`。
+- **Impact**: 仅样式。
+- **Verification**: 探针截图；mcp e2e 与视觉基线绿。
+
 ### 2026-08-23 — 设置各页同一个宽；内核卡不再被溢出撑大
 
 - **Type**: fix

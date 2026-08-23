@@ -94,7 +94,10 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
 
   const 去导入 = async (to: "global" | "project") => {
     if (!actions) return
-    const source = await actions.pickDirectory()
+    const source = await actions.pickDirectory().catch((e: unknown) => {
+      设出错(e instanceof Error ? e.message : String(e))
+      return null
+    })
     if (!source) return
     await 做("import", async () => {
       const 检 = await actions.importSubagents({ source, to, dryRun: true })
@@ -103,7 +106,7 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
       if (检.conflicts.length > 0) {
         const 答 = await actions.问({
           title: tf("已经有同名的子 agent：{0}", 检.conflicts.map((c) => c.name).join("、")),
-          detail: t("覆盖会用新文件替换旧的。不覆盖就只导没撞名的那些。"),
+          detail: t("覆盖：替换同名文件；不覆盖：跳过同名项。"),
           confirmLabel: t("覆盖"),
           altLabel: 检.pending.length > 0 ? t("只导没撞名的") : undefined,
         })
@@ -131,14 +134,14 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
       <HoverCard 浮着的={浮着的} />
       <header className="skills-head">
         <h1 className="panel-title">{t("子 Agent")}</h1>
-        <p className="hint">{t("派出去干一件事、拿结果回来的人：它在另一个进程里、看不见这段对话，只拿到人设和你交代的任务。每一份人设同时也是一个技能——想在这段对话里按它的规矩聊，就 /skill:名字。")}</p>
+        <p className="hint">{t("独立进程中执行单个任务并返回结果。每个子 agent 同时也是技能，可用 /skill:名字 调用。")}</p>
         {actions ? (
           <div className="skills-actions">
-            <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
+            <Button variant="primary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
               {t("导入到你写的…")}
             </Button>
             {actions.hasProject ? (
-              <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
+              <Button variant="primary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
                 {t("导入到这个项目…")}
               </Button>
             ) : null}
@@ -172,7 +175,7 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
             ) : null,
           )}
         </ul>
-        <p className="caveat">{t("一个 .md 一个子 agent：frontmatter 写 name / description（可选 tools / model / group），正文就是它的人设。")}</p>
+        <p className="caveat">{t("一个 .md 一个子 agent：frontmatter 写 name / description，正文是人设。")}</p>
       </details>
 
       {数据.agents.length === 0 ? (
@@ -426,7 +429,10 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
 
   const 去导入 = async (to: "global" | "project") => {
     if (!actions) return
-    const source = await actions.pickDirectory()
+    const source = await actions.pickDirectory().catch((e: unknown) => {
+      设出错(e instanceof Error ? e.message : String(e))
+      return null
+    })
     if (!source) return
     await 做("import", async () => {
       const 检 = await actions.importSkill({ source, to, dryRun: true })
@@ -438,7 +444,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
       if (检.conflicts.length > 0) {
         const 答 = await actions.问({
           title: tf("已经有同名的技能：{0}", 检.conflicts.map((c) => c.name).join("、")),
-          detail: t("覆盖会用新的整个替换旧的目录（旧的不进废纸篓）。不覆盖就只导没撞名的那些。"),
+          detail: t("覆盖：替换同名目录；不覆盖：跳过同名项。"),
           confirmLabel: t("覆盖"),
           altLabel: 检.pending.length > 0 ? t("只导没撞名的") : undefined,
         })
@@ -486,7 +492,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
       <header className="skills-head">
         <h1 className="panel-title">{t("Skills")}</h1>
         <p className="hint">
-          {t("一个技能 = 一个文件夹 + 一个 SKILL.md，是写给模型读的说明书：什么时候用它、什么时候别用、怎么用。模型自己判断要不要读，你也可以用 /skill:名字 显式调。")}
+          {t("技能 = 文件夹 + SKILL.md。模型按需读取，也可用 /skill:名字 显式调用。")}
         </p>
         {actions ? (
           <div className="skills-actions">
@@ -494,11 +500,11 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
               * **导入**（skills-manage）：从本机选一个含 SKILL.md 的文件夹（或一筐），复制进来。
               * 「新建」仍然不做——让 agent 写（`writing-skills`），这里只管「下下来的怎么进来」。
               */}
-            <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
+            <Button variant="primary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
               {t("导入到你写的…")}
             </Button>
             {actions.hasProject ? (
-              <Button variant="secondary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
+              <Button variant="primary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
                 {t("导入到这个项目…")}
               </Button>
             ) : null}
@@ -537,14 +543,14 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
           )}
         </ul>
         <p className="caveat">
-          {t("名字只能用小写字母、数字和连字符——它要送进模型，中文和空格都不行。")}
+          {t("名字仅限小写字母、数字和连字符。")}
         </p>
       </details>
 
       {数据.skills.length === 0 ? (
         <EmptyState
           title={t("还没有技能")}
-          description={t("在上面那几个目录里建一个文件夹，放一个 SKILL.md 就行。")}
+          description={t("在上述目录中新建文件夹并放入 SKILL.md。")}
         />
       ) : (
         <>
@@ -789,7 +795,7 @@ export function McpView({
       <details className="mcp-how" open={数据.servers.length === 0}>
         <summary>{t("加一台 MCP 服务器")}</summary>
 
-        <p className="hint">{t("从那台服务器的文档里，把这样一段 JSON 整段复制过来：")}</p>
+        <p className="hint">{t("粘贴服务器文档中的 JSON 配置：")}</p>
         <pre className="mcp-how-code">{`{"mcpServers": {
   "pubmed": {
     "command": "npx",
@@ -865,7 +871,7 @@ export function McpView({
           )}
         </p>
         <p className="hint">
-          {t("Python 写的服务器把 command 换成 uvx。远程那种两套都收：type 写 http 是新的 streamable HTTP（一个端点），写 sse 是老那套；不写就按 http 算。")}
+          {t("Python 服务器用 uvx；远程服务器 type 填 http 或 sse，默认 http。")}
         </p>
       </details>
 
@@ -954,14 +960,14 @@ export function McpView({
 
                 <p className="skill-meta">
                   <Button
-                    variant="text"
-                    size="inline"
+                    variant="primary"
+                    size="sm"
                     onClick={() => {
                       if (!onTest) return
                       void onTest(s.name).then((r) => {
                         设试的结果((前) => ({ ...前, [s.name]: { ok: r.ok, ...(r.error ? { error: r.error } : {}) } }))
                         重取()
-                      })
+                      }).catch((e: unknown) => 设试的结果((前) => ({ ...前, [s.name]: { ok: false, error: e instanceof Error ? e.message : String(e) } })))
                     }}
                   >
                     {t("试一次")}
@@ -975,7 +981,7 @@ export function McpView({
                     <input
                       type="checkbox"
                       checked={s.trusted}
-                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted).then(重取)}
+                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     />
                     {t("这台我信得过")}
                   </label>
@@ -983,7 +989,7 @@ export function McpView({
                     <input
                       type="checkbox"
                       checked={s.off}
-                      onChange={() => void onFlag?.(s.name, "off", !s.off).then(重取)}
+                      onChange={() => void onFlag?.(s.name, "off", !s.off).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     />
                     {t("先别连它")}
                   </label>
@@ -995,9 +1001,9 @@ export function McpView({
                     */}
                   {s.from === "global" && onRemove ? (
                     <Button
-                      variant="text"
-                      size="inline"
-                      onClick={() => void onRemove(s.name).then(重取)}
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => void onRemove(s.name).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     >
                       {tf("删掉 {0}", s.name)}
                     </Button>
@@ -1019,14 +1025,14 @@ export function McpView({
                           onChange={(e) => 设密文(e.target.value)}
                         />
                         <Button
-                          variant="text"
+                          variant="primary"
                           size="inline"
                           onClick={() => {
                             void onSecret?.(s.name, v, 密文).then(() => {
                               设密文("")
                               设填着的(undefined)
                               重取()
-                            })
+                            }).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
                           }}
                         >
                           {t("存下来")}

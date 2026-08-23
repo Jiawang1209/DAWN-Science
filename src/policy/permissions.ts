@@ -149,11 +149,13 @@ export function 看风险(
     if (!p) return undefined
     const 绝对 = isAbsolute(p) ? p : resolve(语境.workspace, p)
     const 相对 = relative(语境.workspace, 绝对)
-    const 硬 = 受保护路径理由(绝对)
+    const 在工作区里 = !(相对.startsWith("..") || isAbsolute(相对))
+    // 工作区里的东西不走硬拒（工作区可能就在 /var/folders 这类地方——那是它自己的地盘）
+    const 硬 = 在工作区里 ? undefined : 受保护路径理由(绝对)
     if (硬) return { 类别: "硬拒", 说明: 远端补一句(`拒绝写入 ${p}：${硬}`) }
 
     // **`..` 开头 = 逃出了工作区**；绝对路径不在工作区下时 relative 也会这样开头
-    if (相对.startsWith("..") || isAbsolute(相对)) {
+    if (!在工作区里) {
       return {
         类别: "工作区之外",
         说明: 远端补一句(
@@ -302,6 +304,11 @@ const 受保护前缀 = [
 export function 受保护路径理由(绝对: string): string | undefined {
   const p = resolve(绝对).replace(/\/+$/, "") || "/"
   if (受保护前缀.some((r) => (r.replace(/\/+$/, "") || "/") === p)) return `${p} 是系统目录、你的主目录或它的顶层目录，不碰。`
+  // 系统目录**连里面的一起**（2026-08-23 审查抓的：此前只比根本身，`rm -rf /usr/lib`、`write ~/.zshrc` 只算「工作区外」）；主目录只拦顶层文件，子目录让给工作区判
+  // `/var` 不整棵算（macOS 的临时目录在 /var/folders），只拦 /var 的顶层；`/Users` `/home` 拦到别人的主目录
+  const 系统根 = ["/etc", "/usr", "/bin", "/sbin", "/System", "/Library", "/private/etc", "/Applications", "/Users", "/home"]
+  if (系统根.some((r) => p === r || p.startsWith(`${r}/`)) && !p.startsWith(`${HOME}/`)) return `${p} 在系统目录里，不碰。`
+  if (p.startsWith(`${HOME}/`) && !p.slice(HOME.length + 1).includes("/") && /^\./.test(p.slice(HOME.length + 1))) return `${p} 是主目录顶层的点文件（shell / 工具的配置），不碰。`
   const 凭据 = [".ssh", ".aws", ".gnupg", ".kube"].map((d) => join(HOME, d))
   if (凭据.some((d) => p === d || p.startsWith(`${d}/`))) return `${p} 在凭据目录里，不碰。`
   return undefined
@@ -309,11 +316,15 @@ export function 受保护路径理由(绝对: string): string | undefined {
 
 const 凭据形状 = /(BEGIN (RSA |OPENSSH )?PRIVATE KEY|\b(sk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{8,}\b|Bearer\s+[A-Za-z0-9._~+/-]{8,}|\.ssh\/(id_|config)|\.aws\/credentials|\$\{?[A-Z_]*(TOKEN|SECRET|API_KEY|PASSWORD)[A-Z_]*\}?)/i
 
-export function 硬拒理由(cmd: string): string | undefined {
+export function 硬拒理由(原cmd: string): string | undefined {
+  // 行续接先接回一行（2026-08-23 审查抓的）：`rm -rf \` + 换行 + `/` 被按行切开后目标成了 `\`，而 shell 执行的是 `rm -rf /`
+  const cmd = 原cmd.replace(/\\\r?\n/g, " ")
   if (/(^|[\s;&|(])(sudo|doas|su)(\s|$)/.test(cmd)) return `拒绝执行 \`${cmd}\`：提权（sudo / su）任何档都不放。`
-  if (/\bgit\s+push\b.*(--force\b|\s-f\b|\s\+[^\s]+:)/.test(cmd)) return `拒绝执行 \`${cmd}\`：强推会覆盖远端历史，任何档都不放。`
+  if (/\bgit\b.*\bpush\b.*(--force\b|\s-f\b|\s\+[^\s]+(:|\s|$))/.test(cmd)) return `拒绝执行 \`${cmd}\`：强推会覆盖远端历史，任何档都不放。`
   if (/\b(curl|wget|nc|scp|rsync)\b/.test(cmd) && 凭据形状.test(cmd)) return `拒绝执行 \`${cmd}\`：命令里带着私钥 / token 形状的东西还要出网，这是凭据外传的形状，任何档都不放。`
   if (/\b(mkfs|diskutil\s+erase|dd\s+if=.*of=\/dev\/|shutdown|reboot|launchctl\s+unload|chmod\s+-R\s+777\s+\/)/.test(cmd)) return `拒绝执行 \`${cmd}\`：它会动系统或整块盘，任何档都不放。`
+  // `find / -delete`、`find ~ -delete`：目标是算出来的，但起点已经说明了一切
+  if (/\bfind\s+(\/(\s|$)|\/(Users|home|etc|usr|var|bin|System|Library)\b|\$\{?HOME\}?|~(\/|\s|$))[^\n]*-delete\b/.test(cmd)) return `拒绝执行 \`${cmd}\`：从根或主目录起 find -delete，任何档都不放。`
   if (删除命令.test(cmd)) {
     const 目标 = 删除目标(cmd)
     if (目标 !== "看不清") {
@@ -321,8 +332,9 @@ export function 硬拒理由(cmd: string): string | undefined {
         const 理由 = 受保护路径理由(t.startsWith("~") ? join(HOME, t.slice(1)) : t)
         if (理由) return `拒绝执行 \`${cmd}\`：${理由}`
       }
-    } else if (/\brm\b.*(\$HOME|~\/?\s|~\/?$|\s\/\s|\s\/\*)/.test(cmd)) {
-      return `拒绝执行 \`${cmd}\`：删除的目标指向主目录或根，任何档都不放。`
+    } else if (/\b(rm|rmdir|shred)\b.*(\$\{?HOME\}?|~(\/|\s|$)|\s\/(\s|$|\*)|\s\/(Users|home|etc|usr|var|bin|System|Library)(\/|\s|$)|\$\([^)]*\/[^)]*\))/.test(cmd)) {
+      // 看不清的删除里只要出现根 / 主目录 / 系统目录 / 命令替换里带斜杠——宁可多拒（2026-08-23 审查抓的：`\rm -rf /`、`rm -rf ${HOME}`、`rm -rf $(echo /)` 此前都漏过）
+      return `拒绝执行 \`${cmd}\`：删除的目标指向主目录、根或系统目录，任何档都不放。`
     }
   }
   return undefined
@@ -333,7 +345,8 @@ export function 硬拒理由(cmd: string): string | undefined {
  * 有通配符、变量、命令替换、管道进来的、或者一条命令里多个删除——都算看不清。
  * 只处理最常见的形状；不认识的形状一律「看不清」，宁可多拒不可漏放。
  */
-export function 删除目标(cmd: string): string[] | "看不清" {
+export function 删除目标(原cmd: string): string[] | "看不清" {
+  const cmd = 原cmd.replace(/\\\r?\n/g, " ")
   // find -delete / xargs rm：目标是算出来的，整条都看不清
   if (/\bfind\b.*-delete\b|\bxargs\b/.test(cmd)) return "看不清"
   const 段 = cmd.split(/&&|\|\||;|\n/).map((x) => x.trim()).filter(Boolean)

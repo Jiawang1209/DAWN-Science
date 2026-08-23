@@ -231,6 +231,8 @@ interface NativeSession {
   /** 改「你现在跑在哪个模型上」那句话。**换模型时必须调**，否则它照旧答上一个 */
   设当前模型: (v: string) => void
   unsubscribe: () => void
+  /** 关会话时收尾：中止团队调度器里还在跑的成员（2026-08-23 审查抓的：此前关会话后成员子进程照跑、向已删会话 emit） */
+  收尾?: () => void
   pid: number
   /**
    * 最近一次 `prompt()` 的 promise（已挂 catch，永不 reject）。
@@ -625,7 +627,9 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   /** 正在等人回答的询问：requestId → 回答它 */
-  private readonly 待答 = new Map<string, (答: "allow" | "deny") => void>()
+  private readonly 待答 = new Map<string, { sessionId: SessionId; 答: (答: "allow" | "deny") => void }>()
+  /** 每段会话的团队调度器怎么收（`toolsFor` 里登记，`stop` 时调）：关会话不能让成员子进程继续跑 */
+  private readonly 团队收尾 = new Map<SessionId, () => void>()
 
   /**
    * **问一句**（2026-08-23，学自 dsh-auto-mode 的 ask）：发一条 `permission_request`（与 ACP 的权限卡同一形状），
@@ -645,7 +649,7 @@ export class NativeRuntime implements AgentRuntime {
       const timer = setTimeout(() => 收("timeout"), 5 * 60_000)
       const onAbort = () => 收("deny")
       signal?.addEventListener("abort", onAbort, { once: true })
-      this.待答.set(requestId, 收)
+      this.待答.set(requestId, { sessionId, 答: 收 })
       this.emit({
         kind: "permission_request",
         sessionId,
@@ -659,8 +663,11 @@ export class NativeRuntime implements AgentRuntime {
     })
   }
 
-  answerPermission(_sessionId: SessionId, requestId: string, optionId?: string): void {
-    this.待答.get(requestId)?.(optionId === "allow_once" ? "allow" : "deny")
+  answerPermission(sessionId: SessionId, requestId: string, optionId?: string): void {
+    const 等 = this.待答.get(requestId)
+    // **只认那段会话自己的答**（2026-08-23 审查抓的：此前忽略 sessionId，任何会话都能替别人按「允许」）
+    if (!等 || 等.sessionId !== sessionId) return
+    等.答(optionId === "allow_once" ? "allow" : "deny")
   }
 
   /** 目录里每个 provider 的 api key（读得到的那些），递给子进程。OAuth 类的凭证不递——子进程没法刷新 */
@@ -841,6 +848,9 @@ export class NativeRuntime implements AgentRuntime {
       定义,
       当前: { get: () => 当前团队.id, set: (id) => { 当前团队.id = id; 记当前团队(spec.sessionDir, id) } },
       已知模型: async () => (await this.runtime()).getModels().map((m) => ({ provider: m.provider, model: m.id })),
+    })
+    this.团队收尾.set(spec.sessionId, () => {
+      if (当前团队.id) 调度器.中止全部(当前团队.id)
     })
     // 会话重开时把团队快照推一遍：界面那一格才知道它还在
     if (当前团队.id) {
@@ -1133,6 +1143,10 @@ export class NativeRuntime implements AgentRuntime {
        */
       实际模型: `${native.provider}/${native.model}`,
       unsubscribe,
+      收尾: () => {
+        this.团队收尾.get(spec.sessionId)?.()
+        this.团队收尾.delete(spec.sessionId)
+      },
       pid,
       pending: undefined,
       inFlight: 0,
@@ -2021,6 +2035,10 @@ ${描述}`
     if (!s) return
     // 先中止在跑的一轮，再退订，最后释放——顺序反了会在 dispose 之后收到事件
     await s.session.abort().catch(() => {})
+    s.收尾?.()
+    this.产物们.delete(sessionId)
+    // 还在等人答的权限卡一律按拒——会话都没了，5 分钟后再向它发 settled 没有意义
+    for (const [id, 等] of [...this.待答]) if (等.sessionId === sessionId) { this.待答.delete(id); 等.答("deny") }
     s.unsubscribe()
     s.session.dispose()
     this.sessions.delete(sessionId)

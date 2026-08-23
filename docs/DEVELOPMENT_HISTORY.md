@@ -8,6 +8,166 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 色板旁的独立吸管键删掉：屏幕取色只从色盘面板里进
+
+- **Type**: refactor
+- **Motivation**: 作者：功能冗余——色盘面板里已有吸管捷径。
+- **What**: 外观第二行的独立取色器按钮删除；`Eyedropper` 覆盖层保留，入口只剩色盘面板里那颗「屏幕取色」。e2e 两处入口跟着改。
+- **Impact**: 仅外观一行。
+- **Verification**: accent 7 + 视觉基线 10 全绿；tests/ui 517。
+
+### 2026-08-25 — 色盘弹出层改 fixed：整块永远可见（撤销 93a7bbf 后的根治）
+
+- **Type**: fix
+- **Motivation**: 作者连按两版：色盘弹出内容显示不全、要滚动；「做矮面板」与「translateY 钳制」都不对，撤销 `93a7bbf`。根因：面板 `absolute` 挂在设置页的滚动容器里，跟内容一起滚，窗口矮时被下缘裁住。
+- **What**: revert `93a7bbf`（`274e253`）；`ColorPanel` 改 `position: fixed` 按色块锚点定位——下方放得下贴下，不够翻上方，再不够贴窗口下缘对齐；resize / 捕获阶段 scroll / 字体就位都重算；量出位置前 `visibility: hidden` 防闪。面板尺寸未动。
+- **Impact**: 色盘脱离滚动上下文；内容与大小不变。
+- **Verification**: 480 高与 320 高两条 e2e（面板整块在视口内）连跑两轮绿；accent 7 绿；视觉基线 10/10。
+
+### 2026-08-24 — 色盘不逼人滚动：按剩余空间选摆法
+
+- **Type**: fix
+- **Motivation**: 作者：色盘弹出来太长，得上下滚动才看得到下面的颜色。
+- **What**: `ColorPanel` 挂上后量真实高度对锚点定摆法：下面装得下贴下；不够翻上；上下都不够（矮窗口）固定在视口正中。CSS `data-place` 三档。
+- **Impact**: 仅色盘定位。
+- **Verification**: 新 e2e：480 高窗口下面板整个在视口内，连跑两轮；accent 6 绿；视觉基线 10/10。
+
+### 2026-08-24 — 色盘自绘：C 复制 / Shift 切格式 / 点一下定色 / Esc，长在面板里
+
+- **Type**: feat
+- **Motivation**: 作者最终拍板：系统色盘与取色器**都**要有「按 C 复制、按 Shift 切 RGB/HEX、点一下定色、Esc 退出」。系统面板是另一个窗口，这些键够不着它——上一版信息板与它叠成两块（作者截图）就是这个裂缝。
+- **What**: 新组件 `src/ui/color-panel.tsx`：明度方块（s×v，pointer capture 拖）+ 色相条（13 个算出来的端点，无色值字面量）+ 吸管捷径（收面板进屏幕取色）+ 预览圆 + 当前值行 + 两行提示；点到哪主题色定到哪；C / Shift / Esc 同取色器。`state/accent.ts` 加 `hex转hsv` / `hsv转hex`。原生 `<input type="color">` 与 `.accent-liveboard` 撤掉。
+- **Impact**: 外观下一行的「色盘」现在是自绘面板；不再弹 macOS 调色板。
+- **Verification**: accent e2e 5 绿（点方块定色、拖色相变色、Shift/C/Esc、吸管捷径直通取色器）；tests/ui 517；视觉基线 10/10。
+
+### 2026-08-24 — 主题色两行布局；系统色盘也带信息板
+
+- **Type**: feat
+- **Motivation**: 作者定的布局：上一行预置色；下一行系统色盘 + 屏幕取色器 + 颜色值。并且系统色盘打开时也要有取色器那块信息板（实时色值、按 C 复制、按 Shift 切 RGB/HEX）。
+- **What**: `.accent-choices` 拆成两个 `.accent-row`；色盘点开时色块下浮 `.accent-liveboard`（与取色器面板同一副壳）：在色盘里拖颜色，板上的值实时跟；C 复制、Shift 切格式、Esc 或点回界面收板。
+- **Impact**: 仅外观一行。
+- **Verification**: accent e2e 5 绿连跑两轮（合成 click 预挂 preventDefault，不真弹系统面板）；视觉基线 10/10；tests/ui 517。
+
+### 2026-08-24 — 主题色：系统色盘拿回来，与放大镜取色器并排
+
+- **Type**: fix
+- **Motivation**: 作者：放大镜的样式对，但上一版的系统色盘更好用——两个结合。
+- **What**: 「自定义」色块恢复为原生 `<input type="color">`（macOS 调色板）；旁边新增吸管键（新 `吸管图标`）进放大镜取色模式（C 复制 / Shift 切 RGB/HEX / 点击定色 / Esc 退出，不变）。
+- **Impact**: 外观一行两颗入口；其余不动。
+- **Verification**: accent e2e 4 + 视觉基线 10 全绿；tests/ui 517。
+
+### 2026-08-24 — 取色器：放大镜从界面上取色（作者给了图）
+
+- **Type**: feat
+- **Motivation**: 作者按回上一版「取色器 = 系统色盘」：要的是截图上那种——十字线跟着鼠标、放大镜看像素、实时坐标与颜色值、按 C 复制、按 Shift 切 RGB/HEX、点一下定为主题色。
+- **What**: 新窄 IPC 通道 `dawn:shell:capture-page`（`webContents.capturePage` 截自己的窗口，**不用 desktopCapturer**——那条在 macOS 要「屏幕录制」权限；与 `pickDirectory` 同一条「不进协议」的理由）。新组件 `src/ui/eyedropper.tsx`：进入时截一帧进 canvas，此后从静态帧采样；十字线 + 放大镜（19×19 源像素放大 12 倍，中心格描框）+ 坐标 + 色值（默认 RGB）+ 两行提示；C 复制、Shift 切格式、点击选定、Esc 退出；采样在 effect 里做（第一次移动时面板还没挂上，事件处理里画不进放大镜——踩过）。外观里的「自定义」色块改为进取色模式；系统色盘撤了（任意色走 HEX/RGB 输入框）。
+- **Impact**: 外观一行 + 新覆盖层；协议未动（窄通道不计入 109）。
+- **Verification**: e2e `accent.spec.ts` 4 绿（对着「粉」色块读出 214, 51, 108、C 进剪贴板、Shift 切换、点击定色、Esc 退出），连跑两轮；tests/ui 517；视觉基线 10/10。
+
+### 2026-08-24 — 主题色那一格：能输 HEX / RGB，悬停冒提示，图标复制，Shift 切格式
+
+- **Type**: feat
+- **Motivation**: 作者：悬停要有提示说明可复制、Shift 可切换；那一格要能输入 HEX 与 RGB。
+- **What**: `.accent-value` 改为 `.control` 输入框（收 `#rrggbb` / `rgb(r,g,b)` / `r,g,b` / `r g b`，回车或失焦生效，Esc 放弃，坏值红框不吞）；右边一颗 `复制图标` 按钮；悬停 / 聚焦时 `.accent-tip` 浮在下方写「可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式」，复制后换成「已复制」。
+- **Impact**: 仅外观一行。
+- **Verification**: e2e 3 绿（输 RGB / 输 HEX / 坏值 / 提示 / 剪贴板真值）；tests/ui 517；视觉基线 10/10。
+
+### 2026-08-24 — 主题色：两个输入框撤掉，改成一格颜色值——点击复制、Shift 切 HEX / RGB
+
+- **Type**: refactor
+- **Motivation**: 作者按回：「后面单独出现两个框显示颜色就很愚蠢」。取色器才是输入，那一格只负责告诉你现在是什么、让你带走。
+- **What**: `AppearancePanel` 的 HEX / RGB 两个 `.control` 删掉，换成一颗 `.accent-value` 片状键：显示当前色值；点击或按 C 复制（「已复制」1.2 秒）；悬停或聚焦时按 Shift 切换 HEX / RGB（一个 window 监听，两种情形同时成立也只切一次）。`三元组转hex` 留在 `state/accent.ts`（单元测试还在用）。
+- **Impact**: 仅外观一行；上一条记录里的两个文本框不复存在。
+- **Verification**: e2e `accent.spec.ts` 3 绿（含剪贴板真值）；tests/ui 517；视觉基线 10/10。
+
+### 2026-08-23 — 主题色：HEX 与 RGB 两个文本框，取色两种写法都给、两边都能改
+
+- **Type**: feat
+- **Motivation**: 作者：除了取色器，要能直接敲 HEX；取色返回 RGB 再返回 HEX。
+- **What**: 外观「主题色」一行在色块右边加 `#rrggbb` 与 `rgb(r, g, b)` 两个 `.control`：跟着当前色显示，回车 / 失焦生效，Esc 放弃；格式不对留红框（聚焦环也转红），**不悄悄吞掉**。`state/accent.ts` 加 `hex转三元组` / `三元组转hex`（收 `rgb(…)` / `a,b,c` / `a b c`，超 255 不收）。
+- **Impact**: 仅外观一行。
+- **Verification**: 单元 +1（互转）；e2e +2（HEX 回车生效、坏值红框；RGB 同步显示、改 RGB 生效）；视觉基线 10/10。
+
+### 2026-08-23 — 主题色：外观里一键换色；「活着」跟主题色、「对错」固定红绿
+
+- **Type**: feat
+- **Motivation**: 作者：绿色应当是可选的，外观里放一个颜色选择器一键换；并定案「活的东西跟着你，对错还是红绿」。
+- **What**: `tokens.css` 加 `--theme-user-accent / -dark / --theme-user-on-accent / -dark` 四个种子，`--theme-accent` 与 `--dawn-on-accent` 从它们派生，新令牌 `--dawn-live`；`styles.css` 里 10 处「活着」（会话呼吸点、标签页点、running 时间、服务器绿点、已绑定、`ok`）由 `--dawn-success` 改 `--dawn-live`，18 处「对错」不动。新文件 `state/accent.ts`（存取、行内样式、相对亮度 / 暗色变体 / 按钮字色）；`AppearancePanel` 加「主题色」一行：六个预置 + 原生取色器；`main.tsx` 启动时 `loadAccent()`。默认绿不写行内样式，保住手调的暗色 `#19c37d`。规格 `specs/2026-08-23-主题色-design.md`，CLAUDE.md 加入口。
+- **Impact**: 默认外观一个像素不变（视觉基线 10 张未动）；换色后整屏跟随，diff / 任务板 / 传输的红绿不受影响。设计契约：`type="color"` 加入非文本录入的放行。
+- **Verification**: `tests/ui/accent.test.ts` 5 绿；`e2e/accent.spec.ts` 2 绿（含重载持久与浅色换深字）；tests/ui 516 绿；视觉基线 10/10；全量见提交。
+
+### 2026-08-23 — 项目收纳的多选改成与服务器收纳同一套
+
+- **Type**: fix
+- **Motivation**: 作者：服务器收纳的多选与删除是期待的样子，项目收纳与它不一致，要以服务器为准。差在两点：多选时点项目行是「整组选中」而不是展开收起；名下会话全勾了会连项目一起从工作台移除（2026-08-21 定的），机器那一列则只删会话。
+- **What**: `views.tsx` 项目收纳的「删除」改走 `onDeleteMany`（只删勾中的会话，走同一个「删 N 段对话」确认框）；多选时点行仍是展开/收起，选整组只靠项目头的勾选框；「多选」入口改由 `onDeleteMany` 把关。移除项目仍走行上的垃圾桶。`project-bulk.spec.ts` 三条断言跟着改，并加了「多选时点行只展开收起」的判据。
+- **Impact**: 项目多选不再移除项目记录；名下会话删光后该项目从收纳里消失（收纳按会话分组），与机器那列一致。
+- **Verification**: project-bulk / sidebar-columns 12 绿；tests/ui 绿。
+
+### 2026-08-23 — 侧栏：服务器收纳里的机器行与项目行同一副形状
+
+- **Type**: fix
+- **Motivation**: 作者：项目收纳下「图标+文件夹」的位置很好，服务器收纳下「图标+IP」也应该学它。量出来机器行三角在 x=25（项目行 32）、没图标、名字淡一档、展开没底色。
+- **What**: `views.tsx` 机器行三角后加 `服务器图标`；`styles.css` `.side-subhead-row` 照 `.proj-head` 留 8px，行按 `.row` 的内距 / 高度 / 圆角 / 悬停 / 展开底色，去掉 `.btn` 的 1px 边，`.side-count` 右距 11→12 补回那 1px，勾选框右距 36→24。两条「名字贴着三角」的 e2e 改成量名字与前一个元素（现在是图标）的间距。
+- **Impact**: 仅侧栏样式；计数右缘仍在 188 那条线上。
+- **Verification**: 探针量到机器行三角 32 / 行高 31 与项目行完全一致；sidebar-columns / remote-connections / 视觉基线 43 绿。
+
+### 2026-08-23 — 美化②：文字只有四档（标题 18 / 小标题 14 / 正文 13 / 次要 12）
+
+- **Type**: refactor
+- **Motivation**: 美化计划第二项。`styles.css` 里有 27 种字号，其中 14/15/16/20/1rem/1.25rem 全是「标题」的不同写法；字重 `600` 与 `--dawn-weight-semibold` 混写。切屏时标题忽大忽小。
+- **What**: `tokens.css` 新增 `--dawn-fs-title / -sub / -meta`（正文沿用 `--dawn-ui-size`）。屏标题（设置页、Skills、欢迎页、用量大数字、md h1）归 18；卡/节标题（set-section、confirm、team-name、会话标题、ra-card、侧栏分区标题、usage-block、md h2）归 14 semibold；命令面板输入框、工作区片、远端行、所有裸 13px 归正文；裸 12px 与 `.turn .who` 归次要。字重字面量全部换令牌。放行：11px 徽章、≤10px 图表刻度、em 相对值、`.sidebar .row` 14px（量自 WorkBuddy）。`design-contract.test.ts` 新增两条扫描把这条规则守住。
+- **Impact**: 全局文字层级；视觉基线 10 张全部重存。
+- **Verification**: `tests/ui` 509 绿（含新扫描）；视觉基线重存后连验两轮 10/10（命令面板暗色照老法子拷 `-actual`）；全量 e2e 424：421 绿 + 3 条过期断言（`@` 菜单量在弹出动画中途、下载目录旧文案、用量旧版面）改正后各自复验绿。
+
+### 2026-08-23 — 设置里的勾选框放大到与绿键同高
+
+- **Type**: refactor
+- **Motivation**: 作者：对勾框太小，要正方形、与绿色圆角键同高。
+- **What**: `.settings-body input[type=checkbox]` 22×22；远程助理与 MCP 行改为垂直居中对齐（此前 baseline 对齐会把旁边的按钮压下去）。
+- **Impact**: 仅设置页样式。
+- **Verification**: 探针截图两处；mcp / remote-assistant / skills e2e 与视觉基线绿。
+
+### 2026-08-23 — 远程助理：卡片与其它设置页同宽；按钮绿色片状不拉满
+
+- **Type**: fix
+- **Motivation**: 作者：远程助理的框与上面各页不一样。
+- **What**: `.ra-card` 去 `max-width: 62ch`，圆角升到 lg 与其它卡一致；卡里 `.btn` 不再被 flex 列拉满；`remote-assistant.tsx` 的 outline 键改 primary。
+- **Impact**: 仅样式。
+- **Verification**: 探针截图；remote-assistant e2e 与视觉基线绿。
+
+### 2026-08-23 — MCP 服务器一行：「试一次」圆角绿键，「删掉 x」灰色圆角键
+
+- **Type**: refactor
+- **Motivation**: 作者截图：「试一次」是方的；「删掉 pubmed」只是一行字。
+- **What**: `skills.tsx` MCP 行两颗按钮由 `size="inline"` 改 `size="sm"`（与外观的片状键同形）；删掉 → `variant="secondary"`。
+- **Impact**: 仅样式。
+- **Verification**: 探针截图；mcp e2e 与视觉基线绿。
+
+### 2026-08-23 — 设置各页同一个宽；内核卡不再被溢出撑大
+
+- **Type**: fix
+- **Motivation**: 作者：外观 / 文件引用 / 工作目录 / 模型服务 / 内核 比 Skills / 用量 / ACP 窄一截，切页割裂；内核一点输入框卡还会变大。
+- **What**: `.set-section` 去掉 `max-width: 40rem; margin: 0 auto`，与其它页共用 `settings-body` 整宽；`.set-row` 右列由 `minmax(0, 280px)` 改 `auto`（此前 18rem 路径框 + 保存键装不下，溢出把卡撑宽）；路径框 22rem。
+- **Impact**: 仅设置页版式。
+- **Verification**: 探针截图五页与 Skills 同宽、聚焦内核输入框卡不变；add-service / kernel-settings / at-file e2e 绿；视觉基线「设置」两张重存，连验两轮 10/10。
+
+### 2026-08-23 — 内核设置：参考清单前多画了一条线
+
+- **Type**: fix
+- **Motivation**: 作者截图：R 解释器下面有两条线，「参考：本机注册过的 Jupyter 内核」贴着卡底。
+- **What**: `.kernel-ref` 进了 `.set-rows` 卡之后不再是 `:last-child` 之外的东西——它自己画 `border-top`，前一行的 `border-bottom` 也没去掉。改成：前一行 `:has(+ .kernel-ref)` 去底线；`.set-rows > .kernel-ref` 只画上线、上下各留 space-3。
+- **Impact**: 仅内核设置一屏。
+- **Verification**: 探针截图一条线；视觉基线 10/10。
+
+### 2026-08-23 — 美化①补：设置里的动作按钮绿底白字、勾选框绿、说明文字精简
+
+- **Type**: refactor
+- **Motivation**: 作者：设置里很多按钮是灰的、对号框也是灰的，要与「外观」里的绿色一致；各项下面的解释说明太啰嗦，按标准软件的写法收紧。
+- **What**: `Settings.tsx`（内核保存 / 刷新 / ＋添加模型服务 / 换一个）、`at-settings.tsx`（加一条规则）、`skills.tsx`（导入 ×4、MCP 试一次 / 存下来）一律 `variant="primary"`；`styles.css` 全局 `input[type=checkbox|radio] { accent-color: var(--dawn-accent) }`；36 条说明文字改成一句话（`en.ts` 同步改键）；`settings.test.tsx` 与 `acp-setup.spec.ts` 的文案断言跟着改。
+- **Impact**: 只动界面；无协议、无数据变化。
+- **Verification**: `vitest tests/ui` 509 绿；`skills / mcp / add-service / i18n / acp-setup / subagent-roster` 六份 e2e 23 绿；视觉基线重存（设置两张按预期变），命令面板两张照老法子拷 `-actual` 救回，连验两轮 10/10。
+
 ### 条目格式
 
 ```markdown
@@ -42,6 +202,33 @@
 ---
 
 ## 变更日志
+
+### 2026-08-23 — 美化①（表面层次）+ 设置里的几处整理
+
+- **Type**: refactor
+- **Motivation**: 作者定的：卡片「白底 + 绿色细边，悬停照旧」，设置里成组的内容都用这种卡；模型服务最外面那层框去掉；「在线视觉服务」整块删掉（DeepSeek 已能看图）；用量里「按模型」饼图与图例左右并排、「按项目」挪到它下面。
+- **What**: `--dawn-stroke-accent`（强调色 45%）；卡片选择器统一 `surface-elevated + 1px stroke-accent`（整块 lg / 列表 md / 小件 sm）；`.set-rows` 成卡，`Section` 加 `className`，模型服务那一屏用 `set-section-bare` 不套外框；`.usage-block` 成卡、饼图 + 图例改成一行、`usage-stack` 把按项目放到按模型下面；热力图空格子用 `fill-3`；浮层只留一副壳 + 同一个弹出（对话框不弹）；菜单项同一 hover；模型菜单行齐左。删掉设置里的 `VisionPanel` 挂载（后端 `getVision` / `saveVision` / `testVision` 与转述那条缝都还在，`e2e/vision.spec.ts` 改走 IPC 配）。
+- **Bug**: 钥匙串里的 `ssh:<连接>` 与 `weixin:botToken` 被当成 provider 列进「模型服务」（作者截图抓的）——`CredentialStore.configured()` 只回 provider。
+- **Verification**: `credentials.test.ts` 加一条；`tests/ui` 509 绿；视觉基线按屏重存连验两遍；`vision` / `add-service` e2e 绿。
+
+### 2026-08-23 — check-beautify 第三批：审查里「低」的一批清完
+
+- **Type**: fix
+- **What**: 后端——`deleteTask` 走 `删一个会话`（目录进废纸篓）；`pathInfo` 找不到回 `invalid_request`；技能来处按带分隔符的前缀；CSV 引号里的换行接回一行（`接回引号里的换行`）；租约时钟回拨只出声、按上次时刻记；会话停了清产物登记与按会话的档（`设会话权限(…, undefined)`）；`rehome` 停之前先判能不能续；远端 `connect` 并发共用一次；启动时删掉的终端连任务行一起删；定时 timer 最多睡 60 s；定时写话失败立即收监听与计时。界面——打开归档 / 定时跑出的对话不切到临时项目；不认识的会话行当前态也亮；空态「终端」与对话里同一副；拖图 / 粘图失败出声；定时表单切远端时校正 agent；几处漏 `t()`；hooks 顺序。
+- **Verification**: `lease.test.ts` 那条「不可回退」改成「回退不抛、仍单调」；`table.test.ts` 加引号换行一条；单元 2133 绿；全量 e2e 418 绿 + 6 张空态 / 概览 / 命令面板基线（diff 只有那颗「终端」的内距）重存连验两遍。
+
+### 2026-08-23 — check-beautify 第二批：退出时收干净、运行时自退解绑、迁移进事务、系统目录按前缀硬拒、远端 read 有上限、界面里几处失败不再静默
+
+- **Type**: fix
+- **What**: `close()` 也 fire-and-forget `stopAll` / MCP 全关 / 定时调度器与微信的 `stop`（backend 经 `注册收摊` 登记）；运行时自行 `exited` 时解绑并放租约（此前 `resume` 见 bound 就不重拉、再发话落到死 runtime）；`migrate` 整个包进事务；`受保护路径理由` 对系统目录按前缀、主目录顶层点文件也拦，但**工作区里的路径不走硬拒**（工作区可能就在 `/var/folders`）；远端 `read` 256 KB 上限、截断出声；MCP 屏五处 promise、导入选目录、定时记录读取都接住失败；删目录只清它底下的预览。
+- **Verification**: 单元 2132 绿（`permissions.test.ts` 那条「绝对路径逃出去」改成区分系统目录 / 别处；`wiring.test.ts` 用 `/tmp` 路径测「工作区之外」）；相关 e2e 55 绿。
+
+### 2026-08-23 — check-beautify 第一批：全面审查修掉 20 条真 bug；样式表去重与暗色修正；分栏等宽
+
+- **Type**: fix
+- **Motivation**: 作者：「开发接近尾声，对所有代码功能做一个全方位的检查和审查」。三路并行审查（界面接线 / 主进程与运行时 / 视觉层），逐条核实后修。
+- **What**: 安全与数据——`fileDiff` 先过守卫（此前能读工作区外文件）、`deletePath` 拒工作区根、硬拒清单堵上 `\rm`、`${HOME}`、`$(…)`、行续接、`find / -delete`、`git push +main`、`git -C … push -f`，`answerPermission` 只认本会话且关会话时未答按拒，关会话中止团队调度器，subagent 工具透传 `signal`，子进程等 stdout 冲完再退，团队迟到结果改用系统发件人、每成员前重读快照，散的对话各自一个临时目录，删项目连已归档一起，`UserFacingError` 回 `invalid_request`。界面——远端会话的分栏从 `tempSessions` 取，命令面板删会话两拨都找，树记忆恢复不经 `openFile`（不再擅自开坞），`ConversationView` / `TeamPanel` 按会话 key，图片-only 的一句可见，已结束会话不推「等回话」，起手卡 / 修改→发送接住失败，定时「每月 / 每 N 天」保留时间，技能屏 `onChanged`，扩展三屏 `load` 记住引用。视觉——11 处同一选择器写两遍的推翻段收回源头，`.model-menu` 坐 elevated，暗色 `--dawn-shadow-composer` 改真影子，`.control:hover` 描边，全局细滚动条，`.attach-menu` 不再被共用块盖掉。会话分栏等宽 11rem。
+- **Verification**: 新增 `permissions.test.ts` 7 条硬拒回归、`backend.test.ts` 3 条（越界 diff、删根、各自目录）；单元 2132 绿；全量 e2e 420 绿 + 1 条 `web-link` 0 ms 起不来的偶发（单跑绿）；视觉基线 10 张重存（diff 只有暗色影子与品牌字色）连验两遍。
 
 ### 2026-08-23 — 对话区顶上的会话分栏（同一项目 / 同一服务器）；`@` 与 `/` 菜单与输入卡同宽
 

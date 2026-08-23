@@ -105,7 +105,8 @@ const 今天 = () => new Date().toISOString().slice(0, 10)
 const 空表单 = (agentId: string, 去哪: string): 表单 => ({ name: "", prompt: "", kind: "daily", time: "09:00", at: "", everyMinutes: 60, weekdays: ["MO"], day: 1, everyDays: 2, start: 今天(), permission: "deny-risky", 去哪, agentId })
 const 表单自定义 = (d: 定时摘要): 表单 => ({
   name: d.name, prompt: d.prompt, kind: d.schedule.kind,
-  time: d.schedule.kind === "daily" || d.schedule.kind === "weekly" ? d.schedule.time : "09:00",
+  // 每月 / 每 N 天也有时间（2026-08-23 审查抓的：此前编辑这两种会把时间悄悄改回 09:00）
+  time: d.schedule.kind === "daily" || d.schedule.kind === "weekly" || d.schedule.kind === "monthly" || d.schedule.kind === "everyDays" ? d.schedule.time : "09:00",
   at: d.schedule.kind === "once" ? ISO转本地(d.schedule.at) : "",
   everyMinutes: d.schedule.kind === "interval" ? d.schedule.everyMinutes : 60,
   weekdays: d.schedule.kind === "weekly" ? d.schedule.weekdays : ["MO"],
@@ -150,7 +151,8 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
     actions
       .loadRuns(看记录的)
       .then((r) => 还在 && 设记录(r.runs))
-      .catch(() => {})
+      // 读不到要出声（2026-08-23 审查抓的：此前吞掉之后显示「还没跑过」）
+      .catch((e: unknown) => 还在 && 设回话({ kind: "bad", text: e instanceof Error ? e.message : String(e) }))
     return () => {
       还在 = false
     }
@@ -313,7 +315,17 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
             <>
               <label className="schedule-field">
                 <span>{t("跑在哪")}</span>
-                <select className="control" value={编辑.f.去哪} onChange={(e) => 设编辑({ ...编辑, f: { ...编辑.f, 去哪: e.target.value } })}>
+                <select
+                  className="control"
+                  value={编辑.f.去哪}
+                  onChange={(e) => {
+                    const 去哪 = e.target.value
+                    // 切到远端时当前 agent 可能手到不了服务器——校正到能用的第一项（2026-08-23 审查抓的：此前只靠服务端拒）
+                    const 能用 = actions.agents.filter((a) => !去哪.startsWith("远端:") || a.remoteCapable)
+                    const agentId = 能用.some((a) => a.agentId === 编辑.f.agentId) ? 编辑.f.agentId : (能用[0]?.agentId ?? 编辑.f.agentId)
+                    设编辑({ ...编辑, f: { ...编辑.f, 去哪, agentId } })
+                  }}
+                >
                   {去处.map((x) => (
                     <option key={x.key} value={x.key}>
                       {x.label} — {x.sub}

@@ -153,7 +153,7 @@ export function RemoteAssistantView({
             </dl>
             <div className="ra-actions">
               {状态.state === "stale" ? (
-                <Button variant="outline" size="sm" onClick={做(startLogin)}>
+                <Button variant="primary" size="sm" onClick={做(startLogin)}>
                   {t("重新扫码")}
                 </Button>
               ) : null}
@@ -168,7 +168,7 @@ export function RemoteAssistantView({
         ) : (
           <div className="ra-unbound">
             <p>{t("用微信扫一扫，通讯录里会多一个联系人。")}</p>
-            <Button variant="outline" size="sm" onClick={做(startLogin)}>
+            <Button variant="primary" size="sm" onClick={做(startLogin)}>
               {t("扫码绑定")}
             </Button>
             {状态.lastError ? <p className="caveat">{状态.lastError}</p> : null}
@@ -285,7 +285,7 @@ function 扫码中({
             <Field id="ra-code" label={t("手机上显示的配对码")}>
               <input id="ra-code" className="control" value={码} onChange={(e) => 设码(e.target.value)} inputMode="numeric" autoFocus />
             </Field>
-            <Button type="submit" variant="outline" size="sm" disabled={!码.trim()}>
+            <Button type="submit" variant="primary" size="sm" disabled={!码.trim()}>
               {t("提交配对码")}
             </Button>
           </form>

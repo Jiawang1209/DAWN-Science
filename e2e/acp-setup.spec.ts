@@ -76,7 +76,7 @@ test("**加一个 ACP 适配器，然后真的用它聊一段**", async ({ dawn 
   await expect(page.getByText("@agentclientprotocol/codex-acp")).toBeVisible()
   await expect(page.getByText("@zed-industries/claude-code-acp")).toBeVisible()
   // **前提写在旁边**，不是等人点下去看一串 ENOENT
-  await expect(page.getByText(/需要机器上有 Node/)).toBeVisible()
+  await expect(page.getByText(/需要 Node/)).toBeVisible()
 
   // ③ 自定义那条路：指向我们自己那个假适配器
   await 接一个(page, "my-acp")

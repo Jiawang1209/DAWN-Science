@@ -61,6 +61,11 @@ describe("凭证库 · 基本读写", () => {
     const s = new CredentialStore({ file: newFile(), safeStorage: working })
     s.set("ds", "sk-secret")
     expect(s.configured()).toEqual(["ds"])
+    // 钥匙串里别的秘密（ssh 密码、微信 token）不算 provider（2026-08-23 作者截图抓的：它们曾出现在「模型服务」里）
+    s.set("ssh:conn-1", "pw")
+    s.set("weixin:botToken", "tok")
+    expect(s.configured()).toEqual(["ds"])
+    expect(s.get("ssh:conn-1")).toBe("pw")
     expect(JSON.stringify(s.configured())).not.toContain("sk-secret")
   })
 })

@@ -175,7 +175,7 @@ export function ArchivedView({
                               const 答 = await 问({
                                 title: tf("删除会话「{0}」？", s.title ?? t("新会话")),
                                 detail: t("会停掉它的进程，删掉会话记录，对话记录进废纸篓。账本不动。"),
-                                confirmLabel: "删除会话",
+                                confirmLabel: t("删除会话"),
                               })
                               if (答 !== "confirm") return
                               await 做(s.sessionId, async () => {

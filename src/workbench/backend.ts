@@ -80,7 +80,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -168,12 +168,14 @@ export interface WorkbenchBackendOptions {
   tasks?: TaskStore
   /** 子 agent 的三层（7.20）：自带（只读）与你写的；项目那一层固定 `<工作区>/.dawn/agents` */
   subagents?: { 全局目录?: string; 自带目录?: string; 自带停用?: ((name: string) => boolean) | undefined }
+  /** 退出时要收的东西在这儿登记（2026-08-23 审查抓的：此前定时调度器的 timer、微信轮询没人停，每次退出都留孤儿） */
+  注册收摊?: (f: () => Promise<void> | void) => void
   /** 定时任务的两张表（7.19）。**不给就没有定时**——界面如实说「本次运行没有装配」 */
   schedules?: ScheduleStore
   /** 定时任务的设置；不给用默认 */
   scheduleConfig?: { 补跑窗口分钟?: number; 最多并发?: number; 超时分钟?: number; 每条留几条记录?: number }
   /** 给某段会话定权限档（定时任务的会话按定义里存的档走）。不给就都跟全局设置 */
-  设会话权限?: (sessionId: string, 档: 权限档) => void
+  设会话权限?: (sessionId: string, 档: 权限档 | undefined) => void
   /** 一次定时运行结束了（推微信用）。不给就不推 */
   定时结束了?: (d: 定时定义, r: 定时运行) => void
   /**
@@ -1082,6 +1084,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
        */
       任务库().removeBySessions([sessionId])
+      设会话权限?.(sessionId, undefined)
       /**
        * **账本留着，并且把还剩多少说出来。**
        * 一句「已删除」会让人以为历史也一起没了——而它没有，
@@ -1343,6 +1346,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     // 这段会话按定义里存的档走（门每次调用都问，所以建好会话、写话之前定就来得及）
     设会话权限?.(sessionId, d.permission)
     projects.setSessionTitle(sessionId, `${d.name} · ${new Date(r.scheduledFor).toLocaleString("zh-CN", { hour12: false })}`)
+    let 收外: ((v: 定时完成) => void) | undefined
     const 等结束 = new Promise<定时完成>((resolve) => {
       let 完了 = false
       const 收 = (v: 定时完成) => {
@@ -1367,12 +1371,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         收({ status: "cancelled", error: { code: "cancelled", message: "DAWN 停了，这一次取消" } })
       }
       signal.addEventListener("abort", 取消)
+      收外 = 收
     })
     try {
       sessions.leases.acquire(sessionId, "user")
       await backend.writeToSession({ sessionId, data: r.prompt, as: "user" })
     } catch (e) {
-      return { status: "failed", sessionId, error: { code: "write_failed", message: e instanceof Error ? e.message : String(e) } }
+      // 写话失败也要把监听、计时、abort 钩子收干净（2026-08-23 审查抓的：此前留到 60 分钟超时才触发一次无谓的 abort）
+      const 失败: 定时完成 = { status: "failed", sessionId, error: { code: "write_failed", message: e instanceof Error ? e.message : String(e) } }
+      收外?.(失败)
+      return 失败
     }
     return 等结束
   }
@@ -1717,10 +1725,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 任务上标着「远端」而活跑在本地，是两件事对不上。
        */
       const 远端参数 = connectionId ? await 造远端参数(connectionId) : undefined
+      /**
+       * **没给工作目录的对话各自一个目录**（2026-08-23 审查抓的）：此前传 `undefined` 下去，`起一个会话` 退回临时项目的根——
+       * 所有散的对话共用一个目录，文件互相可见、互相覆盖；而 `setTaskWorkspace(undefined)` 那条路早就是各自一个子目录。两条路现在一样。
+       */
+      const 去处 = workspace ?? (connectionId ? undefined : projects.temporaryWorkspace(要有临时根()))
       const 会话 = await 起一个会话(
         归属.projectId,
         agentId,
-        workspace,
+        去处,
         远端参数?.spec as never,
       )
       远端参数?.认领(会话.sessionId)
@@ -2028,7 +2041,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       })
       /** 一个技能来自哪儿：按它的文件落在哪个目录下判 */
       const 判来处 = (filePath: string): "builtin" | "global" | "project" =>
-        按序.find((x) => filePath.startsWith(x.path))?.from ?? "global"
+        // 带分隔符比（`/a/skills` 不该认成 `/a/skills-old` 下面的）
+        按序.find((x) => filePath === x.path || filePath.startsWith(x.path.replace(/\/+$/, "") + sep))?.from ?? "global"
       return {
         skills: r.skills.map((s) => {
           const from = 判来处(s.filePath)
@@ -2670,6 +2684,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     fileDiff: async ({ projectId, path }) => {
       const p = projectStore.get(projectId)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      // **先过守卫**（2026-08-23 审查抓的）：此前直接交给 `git diff --no-index`，`../x` 或绝对路径能把工作区外的文件当 diff 读回来
+      resolveInWorkspace(p.workspace, path)
       const 原文 = await fileDiffAgainstHead(p.workspace, path).catch((e: unknown) => {
         throw fault("invalid_request", `算不出 ${path} 的差异：${e instanceof Error ? e.message : String(e)}`)
       })
@@ -2706,7 +2722,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const p = projectStore.get(projectId!)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
       const 全 = resolveInWorkspace(p.workspace, path)
-      const st = statSync(全)
+      let st: ReturnType<typeof statSync>
+      try {
+        st = statSync(全)
+      } catch (err) {
+        throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+      }
       if (!st.isDirectory()) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
       return { directory: true, ...数一个本地目录(全) }
     },
@@ -2745,6 +2766,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * （你就是那个账号本人），这个不对称是有意的。
        */
       const 全 = resolveInWorkspace(p.workspace, path)
+      // **工作区根本身不许删**（2026-08-23 审查抓的）：守卫允许 `real === root`，`""` / `.` 会把整个工作区丢进废纸篓
+      if (全 === realpathSync(p.workspace)) throw fault("invalid_request", "不能删工作区本身——要删就删里面的东西")
       if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
       await trashItem(全).catch((err: unknown) => {
         throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
@@ -3128,14 +3151,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!t) throw fault("not_found", `没有这个任务：${taskId}`)
 
       let kept = 0
-      if (t.sessionId) {
-        const rec = sessions.get(t.sessionId)
-        if (rec) {
-          await sessions.remove(t.sessionId)
-          events.forget(t.sessionId)
-          baselines.delete(t.sessionId)
-          kept = rec.projectId ? runs.countByProject(rec.projectId) : 0
-        }
+      if (t.sessionId && sessions.get(t.sessionId)) {
+        // **与 `deleteSession` 同一条路**（2026-08-23 审查抓的：此前不走 `删一个会话`，会话目录留在磁盘上，与「删会话真删目录」不一致）
+        const r = await 删一个会话(t.sessionId)
+        kept = r.ledgerKept
       }
       store.remove(taskId)
       /**
@@ -3280,7 +3299,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * **先把活着的会话停掉**，再删记录。反过来的话进程还活着
        * 而我们已经忘了它是谁的——一个没人认领的孤儿进程。
        */
-      for (const rec of sessions.listByProject(projectId)) {
+      // **连已归档的一起**（2026-08-23 审查抓的）：`listByProject` 不列归档的，它们的会话不停、任务不清，行却被 `deleteByProject` 删了——侧栏留一条指向不存在会话的「新任务」
+      const 全部会话 = [...sessions.listByProject(projectId), ...sessions.listArchived().filter((r) => r.projectId === projectId)]
+      for (const rec of 全部会话) {
         if (rec.state !== "exited") await sessions.stop(rec.id).catch(() => {})
         events.forget(rec.id)
         baselines.delete(rec.id)
@@ -3289,7 +3310,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * **先记下有哪些会话，再删**：删完就查不到了，
        * 而任务是按 sessionId 挂着的（T3-a）。
        */
-      const 它的会话 = sessions.listByProject(projectId).map((r) => r.id)
+      const 它的会话 = 全部会话.map((r) => r.id)
       任务库().removeBySessions(它的会话)
       const sessionsDeleted = sessions.deleteByProject(projectId)
       const runsDeleted = runs.deleteByProject(projectId)
@@ -3417,5 +3438,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   微信.start()
   // 定时：收拾上次没跑完的，然后按下一次到期设 timer
   调度器?.start()
+  opts.注册收摊?.(() => 微信.stop())
+  if (调度器) opts.注册收摊?.(() => 调度器.stop())
   return backend
 }

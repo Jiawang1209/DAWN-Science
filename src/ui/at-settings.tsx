@@ -60,7 +60,7 @@ function 加规则({ onAdd, 标签 }: { onAdd: (r: 文件规则) => void; 标签
         <input type="checkbox" checked={cs} onChange={(e) => 设cs(e.target.checked)} />
         <span>{t("区分大小写")}</span>
       </label>
-      <Button type="submit" variant="secondary" size="sm" disabled={!pattern || Boolean(病)}>
+      <Button type="submit" variant="primary" size="sm" disabled={!pattern || Boolean(病)}>
         {标签}
       </Button>
       {病 ? <span className="caveat">{病}</span> : null}
@@ -80,20 +80,20 @@ export function AtFilePanel({
 }) {
   return (
     <Section>
-      <Row name={t("粘贴进来的 @ 不算引用")} desc={t("从别处复制来的一段话里有 @alice、甚至有真实存在的 @路径，都不开菜单、不发给模型。关掉则一视同仁。")}>
+      <Row name={t("粘贴进来的 @ 不算引用")} desc={t("粘贴的文本里的 @ 不触发引用。")}>
         <label className="at-toggle">
           <input type="checkbox" checked={设置.ignorePasted} onChange={(e) => onChange({ ignorePasted: e.target.checked })} />
           <span>{设置.ignorePasted ? t("开") : t("关")}</span>
         </label>
       </Row>
 
-      <Row name={t("全局过滤规则")} desc={t("@ 菜单里不列这些文件名。只看文件名，不看父目录。所有工作区共用。")}>
+      <Row name={t("全局过滤规则")} desc={t("按文件名过滤 @ 菜单，所有工作区共用。")}>
         <div className="at-rules-block">
           <ul className="at-rules" aria-label={t("全局过滤规则")}>
             {设置.globalRules.map((r, i) => (
               <规则行 key={`${r.kind}:${r.pattern}:${i}`} r={r} onRemove={() => onChange({ globalRules: 设置.globalRules.filter((_, j) => j !== i) })} />
             ))}
-            {设置.globalRules.length === 0 ? <li className="hint">{t("还没有规则——内置的忽略目录（.git、node_modules 这类）不在这里，它们一直生效")}</li> : null}
+            {设置.globalRules.length === 0 ? <li className="hint">{t("还没有规则。内置忽略目录（.git、node_modules 等）始终生效。")}</li> : null}
           </ul>
           <加规则 标签={t("加一条全局规则")} onAdd={(r) => onChange({ globalRules: [...设置.globalRules, r] })} />
           {设置.globalRules.length > 0 ? (
@@ -125,7 +125,7 @@ export function AtFilePanel({
           </div>
         </Row>
       ) : (
-        <p className="hint">{t("选中一个项目之后，这里还能给那个工作区单独加规则。")}</p>
+        <p className="hint">{t("选中项目后可为该工作区单独加规则。")}</p>
       )}
     </Section>
   )

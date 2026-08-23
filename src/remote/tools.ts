@@ -151,8 +151,12 @@ async function 读(
   }
   try {
     const buf = await ex.readFile(路径)
-    const 全文 = buf.toString("utf8")
-    if (p.offset === undefined && p.limit === undefined) return 文本(全文)
+    // **有上限、截断出声**（2026-08-23 审查抓的：此前几十 MB 的远端文件会整个回给模型）
+    const 上限 = 256 * 1024
+    const 截了 = buf.length > 上限
+    const 全文 = (截了 ? buf.subarray(0, 上限) : buf).toString("utf8")
+    const 尾 = 截了 ? `\n\n[只读了前 ${上限} 字节，文件共 ${buf.length} 字节；用 offset / limit 读后面的]` : ""
+    if (p.offset === undefined && p.limit === undefined) return 文本(全文 + 尾)
     // 行号从 1 起，与 pi 的 schema 一致（`offset` 说的是 1-indexed）
     const 行 = 全文.split("\n")
     const 起 = Math.max(0, (p.offset ?? 1) - 1)

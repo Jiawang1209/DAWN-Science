@@ -38,6 +38,8 @@ declare global {
       onEvent?: EventSource
       /** 原生目录选择器。取消时 null */
       pickDirectory?: (defaultPath?: string) => Promise<string | null>
+      /** 取色器的一帧（2026-08-24）：当前窗口截图 */
+      capturePage?: () => Promise<{ dataUrl: string; width: number; height: number }>
     }
   }
 }

@@ -235,7 +235,7 @@ describe("模型服务 · 添加", () => {
      */
     // 说明文字里也写着同一句话，所以断言限定在报错那一条上
     expect(document.querySelector(".svc-add .caveat")?.textContent).toMatch(
-      /pi 要求每个服务都有一把钥匙/,
+      /可填任意值/,
     )
     expect(onSaveConnection).not.toHaveBeenCalled()
   })

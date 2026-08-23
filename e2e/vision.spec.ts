@@ -12,7 +12,7 @@
  * 视觉端点就是那台假推理服务器——它说的本来就是同一种
  * OpenAI Chat Completions（规则 ①：mock 与 e2e 共用一份假后端）。
  */
-import { test, expect, 进设置, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
 test.describe("视觉服务", () => {
   /** 演作者那台机器：模型目录里没有 `input`，图送不出去——正是要视觉的场景 */
@@ -21,23 +21,12 @@ test.describe("视觉服务", () => {
   test("**设置卡配好、测一发；贴图之后对话里出现「已转述」**", async ({ dawn }) => {
     const { page, mockUrl, requests } = dawn
 
-    // ── ① 设置卡 ──────────────────────────────────────────────
-    await 进设置(page, "模型服务")
-    await expect(page.getByText("在线视觉服务")).toBeVisible()
-
-    await page.getByLabel("启用视觉").check()
-    await page.locator("#vision-url").fill(mockUrl)
-    await page.locator("#vision-model").fill("qwen-vl-mock")
-    await page.locator("#vision-key").fill("sk-e2e")
-    await page.getByRole("button", { name: "存下来", exact: true }).click()
-    await expect(page.getByText("已保存，视觉服务就绪。")).toBeVisible({ timeout: 10_000 })
-
-    /**
-     * **「测试视觉模型」真调一次**：发的是内置的红色方块诊断图，
-     * 假服务器数 image_url——这句话只有字节真到了对面才会出现。
-     */
-    await page.getByRole("button", { name: "测试视觉模型", exact: true }).click()
-    await expect(page.getByText(/端点回话了：.*我收到了 1 张图/)).toBeVisible({ timeout: 15_000 })
+    // ── ① 配好视觉服务（2026-08-23 起设置里没有那一格了——DeepSeek 自己能看图；视觉转述这条缝还在，走应用自己的 IPC 配）──
+    const r = await page.evaluate(async (url) => {
+      const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { ready?: boolean } }> } }
+      return (await w.dawn.invoke("saveVision", { enabled: true, baseUrl: url, model: "qwen-vl-mock", secret: "sk-e2e" })).data
+    }, mockUrl)
+    expect(r?.ready).toBe(true)
 
     // ── ② 贴图那条缝 ──────────────────────────────────────────
     const 之前收到 = requests.length

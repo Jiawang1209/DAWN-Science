@@ -168,7 +168,8 @@ export function UsagePanel({
         * **口径与饼图一致**（只算记了模型的回合），所以两边总数对得上——
         * 人一定会去加。
         */}
-      <div className="usage-half">
+      {/* 按模型在上、按项目在下（2026-08-23 作者定的）；饼图与图例左右并排 */}
+      <div className="usage-stack">
         <UsagePie byModel={data.byModel} lang={lang} />
         <div className="usage-block">
           <h3 className="usage-block-title">{t("按项目")}</h3>

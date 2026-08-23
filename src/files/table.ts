@@ -79,6 +79,23 @@ export function 认分隔符(第一行: string): "," | "\t" | ";" {
  * 不引三方库：这一层只需要 RFC4180 的那几条，
  * 而多一个依赖就要多回答一次「它坐在哪一层、放弃了什么」（规格 §4）。
  */
+/** 一行里引号数是奇数 = 记录没完，下一物理行接上（用 `\n` 接，字段里保留换行） */
+export function 接回引号里的换行(行们: readonly string[]): string[] {
+  const 出: string[] = []
+  let 攒: string | undefined
+  for (const 行 of 行们) {
+    const 候 = 攒 === undefined ? 行 : `${攒}\n${行}`
+    const 引号数 = (候.match(/"/g) ?? []).length
+    if (引号数 % 2 === 1) 攒 = 候
+    else {
+      出.push(候)
+      攒 = undefined
+    }
+  }
+  if (攒 !== undefined) 出.push(攒)
+  return 出
+}
+
 export function 切一行(行: string, 分隔符: string): string[] {
   const 出: string[] = []
   let 当前 = ""
@@ -169,8 +186,9 @@ export function 像表格吗(正文: string): boolean {
  * 这一对（`truncated` 那句话同时也会说）。
  */
 export function 读成表(正文: string, 完整: boolean, 行上限: number = 预览行数): 表格 {
-  // **`\r\n` 与 `\r` 都要认**：Excel 存出来的 CSV 在 Windows 上是 `\r\n`
-  const 全部行 = 正文.split(/\r\n|\r|\n/)
+  // **`\r\n` 与 `\r` 都要认**：Excel 存出来的 CSV 在 Windows 上是 `\r\n`。
+  // **引号里的换行不是行尾**（2026-08-23 审查抓的：此前把一条记录切成两行、列数错位）——按引号奇偶把物理行接回去
+  const 全部行 = 接回引号里的换行(正文.split(/\r\n|\r|\n/))
   // 末尾那个空行是分割产生的，不是一行数据
   while (全部行.length > 0 && 全部行[全部行.length - 1] === "") 全部行.pop()
   if (全部行.length === 0) {

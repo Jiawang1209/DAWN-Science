@@ -820,14 +820,14 @@ test.describe("下载落点", () => {
      * 而它同时说清了默认是**系统那个**下载文件夹
      * （mac 上是 `~/Downloads`，Windows 上是它自己的那个）。
      */
-    await expect(page.getByText("没设过，用的是系统的下载文件夹")).toBeVisible()
+    await expect(page.getByText("未设置，使用系统下载文件夹")).toBeVisible()
     // 没设过时不给「恢复系统默认」——点了什么都不会变的按钮比没有更坏
     await expect(page.getByRole("button", { name: "恢复系统默认", exact: true })).toHaveCount(0)
 
     await page.getByRole("button", { name: "另选一处", exact: true }).click()
     await expect(page.getByText(落点, { exact: false })).toBeVisible({ timeout: 30_000 })
     // 设过之后那句「没设过」必须消失，且「恢复系统默认」出现
-    await expect(page.getByText("没设过，用的是系统的下载文件夹")).toHaveCount(0)
+    await expect(page.getByText("未设置，使用系统下载文件夹")).toHaveCount(0)
     await expect(page.getByRole("button", { name: "恢复系统默认", exact: true })).toBeVisible()
 
     // ── 一路走到磁盘：加一台 → 开对话 → 下一个文件
@@ -1262,10 +1262,11 @@ test("**服务器收纳里的机器名（短的）贴着三角，不漂到中间
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".side-server")).toHaveCount(1)
   const 贴 = await page.evaluate(() => {
-    const t = document.querySelector(".side-subhead .twisty")!.getBoundingClientRect()
+    // 2026-08-23 三角与名字之间加了服务器图标（学项目行）；量的是名字与它前一个东西的间距
+    const 前 = document.querySelector(".side-subhead .name")!.previousElementSibling!.getBoundingClientRect()
     const n = document.querySelector(".side-subhead .name")!
     const r = document.createRange(); r.selectNodeContents(n)
-    return r.getBoundingClientRect().left - t.right
+    return r.getBoundingClientRect().left - 前.right
   })
   expect(贴, "机器名没贴着三角（格子比文字宽时文字漂到中间了）").toBeLessThan(12)
 })
@@ -1280,10 +1281,11 @@ test("**服务器收纳里的机器名：一行截断，悬停弹全名**", asyn
   expect(await 名.evaluate((el) => el.scrollWidth > el.clientWidth + 1), "名字没截断").toBe(true)
   // 名字**贴着三角**：这一格坐在按钮里，按钮默认居中，格子比文字宽时文字会漂到中间（作者给图抓的）
   const 贴 = await page.evaluate(() => {
-    const t = document.querySelector(".side-subhead .twisty")!.getBoundingClientRect()
+    // 2026-08-23 三角与名字之间加了服务器图标（学项目行）；量的是名字与它前一个东西的间距
+    const 前 = document.querySelector(".side-subhead .name")!.previousElementSibling!.getBoundingClientRect()
     const n = document.querySelector(".side-subhead .name")!
     const r = document.createRange(); r.selectNodeContents(n)
-    return r.getBoundingClientRect().left - t.right
+    return r.getBoundingClientRect().left - 前.right
   })
   expect(贴, "机器名没贴着三角").toBeLessThan(12)
   // 计数仍在数字那一列（与会话时间同线）

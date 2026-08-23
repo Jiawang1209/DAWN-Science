@@ -68,7 +68,10 @@ export class LeaseManager {
   private assertMonotonic(sessionId: SessionId, now: Date): void {
     const last = this.lastSeen.get(sessionId)
     if (last !== undefined && now.getTime() < last) {
-      throw new Error(`会话 "${sessionId}" 的时间戳回退：${now.toISOString()} 早于上次记录`)
+      // 系统时钟被拨回去了（NTP 校时、手动改时间）——**出声但不卡死**（2026-08-23 审查抓的：此前这段会话此后每次取 / 放租约都抛）。
+      // 审计链按「上次记录的时刻」往后记，顺序仍然单调
+      console.error(`[租约] 会话 "${sessionId}" 的时钟回退：${now.toISOString()} 早于上次记录，按上次时刻记`)
+      now.setTime(last)
     }
     this.lastSeen.set(sessionId, now.getTime())
   }

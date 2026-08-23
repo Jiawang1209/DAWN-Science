@@ -261,7 +261,7 @@ describe("设计契约 · 表单控件一律走 .control", () => {
      * 所以这条规则要防的那个洞（退回 Chromium 默认环、取操作系统强调色）
      * 在这里不存在——它本来就该用系统那一套。
      */
-    const 非文本录入 = /type=["'](checkbox|radio)["']/
+    const 非文本录入 = /type=["'](checkbox|radio|color)["']/ // color：原生取色器，自己画不了聚焦环（2026-08-23）
     for (const f of tsxFiles()) {
       const lines = read(f).split("\n")
       const bad: string[] = []
@@ -374,6 +374,28 @@ describe("设计契约 · 几何只从令牌来", () => {
       read("styles.css"),
       (l) => /border-radius:/.test(l) && !/--dawn-radius-/.test(l) && !/border-radius:\s*0\b/.test(l),
     )
+    expect(offenders).toEqual([])
+  })
+
+  it("文字字号只有四档（2026-08-23 美化 ②）—— 14/15/16/20px 全是「标题」的不同写法，不许再长回来", () => {
+    // 放行：四档令牌、聊天/代码字号令牌、11px 徽章、≤10px 的图表刻度与字形记号、em 相对值（markdown 内嵌）、
+    // 侧栏行 14px（量自 WorkBuddy，`.sidebar .row` 那一处专门注释过）
+    const offenders = findLines(
+      read("styles.css"),
+      (l) =>
+        /font-size:/.test(l) &&
+        !/--dawn-(fs-(title|sub|meta)|ui-size|chat-size|code-size)/.test(l) &&
+        !/font-size:\s*(11|10|9)px/.test(l) &&
+        !/font-size:\s*[0-9.]+em\b/.test(l) &&
+        !/\.sidebar \.row \{/.test(l) &&
+        !/font-size:\s*0\.(6|68|72|95)rem/.test(l) && // 单字母记号与图标尺寸，不是文字
+        !/font-size:\s*28px/.test(l), // 欢迎页那颗「D」字形
+    )
+    expect(offenders, "字号请归到 --dawn-fs-title / -sub / --dawn-ui-size / --dawn-fs-meta").toEqual([])
+  })
+
+  it("font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家", () => {
+    const offenders = findLines(read("styles.css"), (l) => /font-weight:\s*(500|600|700)\b/.test(l))
     expect(offenders).toEqual([])
   })
 

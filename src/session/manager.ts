@@ -346,7 +346,12 @@ export class SessionManager {
       this.store.updateState(id, "alive", { pid: handle.pid })
       // 进程自行退出时把退出码回写入库——否则库里会永远停在 alive
       runtime.attach(id, (e) => {
-        if (e.kind === "exited") this.store.updateState(id, "exited", { exitCode: e.exitCode })
+        if (e.kind === "exited") {
+          this.store.updateState(id, "exited", { exitCode: e.exitCode })
+          // 运行时自己退了就解绑、放租约（2026-08-23 审查抓的：此前 `isLive()` 仍 true、`resume()` 见 bound 就不重拉，再发话落到死 runtime）
+          if (this.bound.get(id) === runtime) this.bound.delete(id)
+          this.leases.release(id)
+        }
       })
       /**
        * **从库里读回来**，不拿内存里那份拼一个。
@@ -650,6 +655,10 @@ export class SessionManager {
       throw new UserFacingError("这段对话长在远端服务器上——换目录直接跟它说就行，不必在这里设")
     }
     if (rec.workspace === workspace) return rec
+    // **停之前先判能不能续**（2026-08-23 审查抓的：此前 stop → 搬 → 改库 → `resume` 才抛「不支持续接」，会话已死、路径没改）
+    if (this.registry.agents[rec.agentId]?.kind !== "native") {
+      throw new UserFacingError("这种会话换了目录续不上——只有内置对话支持换工作目录；另起一段吧")
+    }
 
     await this.stop(sessionId)
 
@@ -767,8 +776,12 @@ export class SessionManager {
     for (const rec of this.store.list()) {
       if (rec.state === "exited" && this.registry.agents[rec.agentId]?.kind === "pty") {
         this.store.delete(rec.id)
+        this.删掉的终端.push(rec.id)
       }
     }
     return n
   }
+
+  /** 启动时删掉的终端会话 id（2026-08-23 审查抓的：它们的任务行要跟着删，否则每次重启留一排孤儿「新任务」） */
+  readonly 删掉的终端: string[] = []
 }

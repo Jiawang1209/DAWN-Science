@@ -30,7 +30,11 @@
 import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
+import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
+import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
+import { Eyedropper } from "./eyedropper.js"
+import { ColorPanel } from "./color-panel.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -56,7 +60,10 @@ export function Section({
   title,
   desc,
   children,
+  className,
 }: {
+  /** `set-section-bare`：里面自己带卡的（模型服务那一列），外面就不再套一层 */
+  className?: string | undefined
   /**
    * **不给就不画标题**（2026-08-12）。
    *
@@ -68,7 +75,7 @@ export function Section({
   children: React.ReactNode
 }) {
   return (
-    <section className="set-section">
+    <section className={`set-section${className ? ` ${className}` : ""}`}>
       {title ? <h3 className="set-section-title">{title}</h3> : null}
       {desc ? <div className="set-section-desc">{desc}</div> : null}
       <div className="set-rows">{children}</div>
@@ -163,7 +170,7 @@ export function KernelsPanel({
          * 今天栽过两次，所以强调一律走 CSS。）
          */
         <>
-          {t("配置里 kind: kernel 的 agent 靠这两个路径起内核。")}
+          {t("内核型 agent 使用以下解释器。")}
           <em className="set-emph">{t("没有配置就不能用。")}</em>
         </>
       }
@@ -171,14 +178,14 @@ export function KernelsPanel({
       <InterpreterField
         id="interp-python"
         label={t("Python 解释器")}
-        hint={t("例如 /usr/local/bin/python3 或某个 conda 环境里的 bin/python。需要它装了 ipykernel。")}
+        hint={t("需已安装 ipykernel。")}
         value={interpreters.python}
         onSave={(v) => onSetInterpreter("python", v)}
       />
       <InterpreterField
         id="interp-r"
         label={t("R 解释器")}
-        hint={t("例如 /usr/local/bin/R。需要它装了 IRkernel。")}
+        hint={t("需已安装 IRkernel。")}
         value={interpreters.r}
         onSave={(v) => onSetInterpreter("R", v)}
       />
@@ -215,7 +222,7 @@ export function KernelsPanel({
             </p>
           ) : null}
           <div className="state-action">
-            <Button variant="outline" size="sm" onClick={onRefresh}>
+            <Button variant="primary" size="sm" onClick={onRefresh}>
               {t("重新扫描")}
             </Button>
           </div>
@@ -257,7 +264,7 @@ function InterpreterField({
         aria-label={label}
       />
       <Button
-        variant="outline"
+        variant="primary"
         size="sm"
         disabled={draft === undefined}
         onClick={() => {
@@ -271,9 +278,52 @@ function InterpreterField({
   )
 }
 
+/** 预置色的名字走静态 `t`，让 i18n 的孤儿扫描看得见它们 */
+const 预置色名 = (n: string): string =>
+  ({ 绿: t("绿"), 蓝: t("蓝"), 紫: t("紫"), 橙: t("橙"), 粉: t("粉"), 灰: t("灰") })[n] ?? n
+
 export function AppearancePanel() {
   const theme = useStore($theme)
   const lang = useStore($lang)
+  const accent = useStore($accent)
+  /**
+   * 颜色值只有**一格**（2026-08-24 作者定的）：它既显示也能改——收 HEX 或 RGB，回车生效、Esc 放弃；
+   * 悬停或聚焦时按 Shift 切换 HEX / RGB；右边一颗图标复制。悬上去立刻冒提示说清这三件事。
+   */
+  const [色格式, 设色格式] = useState<"hex" | "rgb">("hex")
+  const [已复制, 设已复制] = useState(false)
+  const 色值 = 色格式 === "hex" ? accent : hex转三元组(accent)
+  const [色草稿, 设色草稿] = useState<string | undefined>(undefined)
+  const 解色 = (v: string): string | undefined => (isHex(v.trim()) ? v.trim().toLowerCase() : 三元组转hex(v))
+  const 色坏了 = 色草稿 !== undefined && 色草稿.trim() !== "" && 解色(色草稿) === undefined
+  const 提交色 = () => {
+    const v = 色草稿 ?? ""
+    const hex = 解色(v)
+    if (hex) setAccent(hex)
+    // 格式不对就留着红框，**不悄悄吞掉**；清空等于放弃
+    if (hex || v.trim() === "") 设色草稿(undefined)
+  }
+  const [取色中, 设取色中] = useState(false)
+  /** 自绘色盘开没开（2026-08-24）；键盘与关闭都在 ColorPanel 里自理 */
+  const [色盘中, 设色盘中] = useState(false)
+  const [悬着, 设悬着] = useState(false)
+  const [聚焦着, 设聚焦着] = useState(false)
+  useEffect(() => {
+    if (!悬着 && !聚焦着) return
+    const 听 = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        设色格式((f) => (f === "hex" ? "rgb" : "hex"))
+        设色草稿(undefined)
+      }
+    }
+    window.addEventListener("keydown", 听)
+    return () => window.removeEventListener("keydown", 听)
+  })
+  const 复制色值 = () =>
+    void navigator.clipboard.writeText(色值).then(() => {
+      设已复制(true)
+      setTimeout(() => 设已复制(false), 1200)
+    }).catch((e: unknown) => console.error("[accent] 复制失败：", e))
 
   return (
     <Section>
@@ -290,7 +340,7 @@ export function AppearancePanel() {
         */}
       <Row
         name={t("语言")}
-        desc={t("界面语言。默认英文；这个选择记在这台机器上。")}
+        desc={t("界面语言。")}
       >
         <div className="theme-choices" role="radiogroup" aria-label={t("语言")}>
           {(["zh", "en"] as const).map((v) => (
@@ -328,7 +378,7 @@ export function AppearancePanel() {
                 "跟随系统——系统当前是{0}",
                 resolveTheme("system") === "dark" ? t("暗色") : t("亮色"),
               )
-            : t("「跟随系统」不是亮色的同义词，它是一条会随系统变化的规则")
+            : t("跟随系统：随系统外观自动切换。")
         }
       >
         <div className="theme-choices" role="radiogroup" aria-label={t("主题")}>
@@ -346,6 +396,87 @@ export function AppearancePanel() {
           ))}
         </div>
       </Row>
+      {/**
+        * **主题色**（2026-08-23 作者要的：「一键改为其他颜色」）。
+        * 六个预置 + 系统取色器；选的瞬间整屏就变（种子只有一个）。
+        * 「活着」跟着它，「对错」仍是红绿——见 state/accent.ts 头注。
+        */}
+      <Row name={t("主题色")} desc={t("主动作、选中态与正在运行的标记都用它。")}>
+        <div className="accent-choices">
+          {/* 上一行：预置色（2026-08-24 作者定的两行布局） */}
+          <div className="accent-row" role="radiogroup" aria-label={t("强调色选择")}>
+          {ACCENT_PRESETS.map((o) => (
+            <button
+              key={o.hex}
+              type="button"
+              className={`accent-swatch${accent === o.hex ? " current" : ""}`}
+              style={{ background: o.hex }}
+              role="radio"
+              aria-checked={accent === o.hex}
+              aria-label={预置色名(o.name)}
+              title={预置色名(o.name)}
+              onClick={() => setAccent(o.hex)}
+            />
+          ))}
+          </div>
+          {/* 下一行：系统色盘 + 屏幕取色器 + 颜色值 */}
+          <div className="accent-row">
+          {/* 色盘（2026-08-24 作者拍板自绘）：C 复制 / Shift 切格式 / 点一下定色 / Esc，都长在面板里——系统面板是另一个窗口，这些键够不着它 */}
+          <span className="accent-custom-wrap">
+            <button
+              type="button"
+              className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`}
+              aria-label={t("色盘")}
+              onClick={() => 设色盘中((v) => !v)}
+            />
+            {色盘中 ? (
+              <ColorPanel
+                accent={accent}
+                onPick={setAccent}
+                onClose={() => 设色盘中(false)}
+                onEyedropper={() => {
+                  设色盘中(false)
+                  设取色中(true)
+                }}
+              />
+            ) : null}
+          </span>
+          <span
+            className="accent-value-wrap"
+            onMouseEnter={() => 设悬着(true)}
+            onMouseLeave={() => 设悬着(false)}
+          >
+            <input
+              className="control accent-value"
+              data-format={色格式}
+              data-invalid={色坏了 ? "1" : undefined}
+              value={色草稿 ?? 色值}
+              spellCheck={false}
+              aria-label={t("颜色值，可输入 HEX 或 RGB")}
+              aria-invalid={色坏了 || undefined}
+              onChange={(e) => 设色草稿(e.target.value)}
+              onFocus={() => 设聚焦着(true)}
+              onBlur={() => {
+                设聚焦着(false)
+                提交色()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") 提交色()
+                if (e.key === "Escape") 设色草稿(undefined)
+              }}
+            />
+            <Button variant="ghost" size="icon" className="accent-copy" aria-label={t("复制颜色值")} onClick={复制色值}>
+              <复制图标 />
+            </Button>
+            {/* 悬上去就说清三件事；复制完换成「已复制」。role=status 让读屏也听到 */}
+            <span className="accent-tip" role="status" aria-live="polite">
+              {已复制 ? t("已复制") : 悬着 || 聚焦着 ? t("可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式") : ""}
+            </span>
+          </span>
+          </div>
+        </div>
+      </Row>
+      {取色中 ? <Eyedropper onPick={setAccent} onClose={() => 设取色中(false)} /> : null}
     </Section>
   )
 }
@@ -386,13 +517,13 @@ export function WorkspacePanel({
         name={t("默认工作目录")}
         desc={
           isDefault
-            ? t("没设过，用的是系统默认。没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
-            : t("没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
+            ? t("未设置，使用系统默认。新对话的默认目录。")
+            : t("新对话的默认目录。")
         }
       >
         <div className="ws-setting">
           <code className="ws-setting-path">{path}</code>
-          <Button variant="secondary" size="sm" onClick={onPick}>
+          <Button variant="primary" size="sm" onClick={onPick}>
             {t("换一个")}
           </Button>
           {/* **配过才给「恢复默认」**：没配过时它点了什么都不会变 */}
@@ -437,13 +568,13 @@ export function WorkspacePanel({
           name={t("下载目录")}
           desc={
             download.isDefault
-              ? t("没设过，用的是系统的下载文件夹。从服务器拉下来的文件落在这儿。")
+              ? t("未设置，使用系统下载文件夹。")
               : t("从服务器拉下来的文件落在这儿。")
           }
         >
           <div className="ws-setting">
             <code className="ws-setting-path">{download.path}</code>
-            <Button variant="secondary" size="sm" onClick={download.onPick}>
+            <Button variant="primary" size="sm" onClick={download.onPick}>
               {t("另选一处")}
             </Button>
             {download.isDefault ? null : (
@@ -622,9 +753,10 @@ export function SettingsPanel({
 
   return (
     <Section
+      className="set-section-bare"
       desc={
         credentials.encrypted ? (
-          t("填了 key 就能在对话里选它的模型。密钥存在系统的安全存储里（macOS Keychain），已存的值不会回显——界面只知道配没配。")
+          t("密钥保存在系统安全存储中，不回显。")
         ) : (
           /* **加密状态如实告知。** 没有 keychain 时它是明文，这必须是警告而不是说明 */
           <span className="caveat">{t("⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录")}</span>
@@ -863,7 +995,7 @@ function 服务编辑器({
       <字段
         label="API key"
         htmlFor={`cred-${id}`}
-        hint={t("存在系统的加密存储里，不写进配置文件。已存的值不会回显——界面拿不到它，也不该拿到。")}
+        hint={t("保存在系统安全存储中，不回显。")}
       >
         <div className="svc-line">
           <input
@@ -920,7 +1052,7 @@ function 服务编辑器({
       <字段
         label={t("协议")}
         htmlFor={`api-${id}`}
-        hint={t("留空交给 pi 自己判断。自建的 OpenAI 兼容端点通常填 openai-completions；猜错的表现是请求发得出去、对面用另一种格式回，而报错与协议毫无关系。")}
+        hint={t("留空自动判断；自建 OpenAI 兼容端点通常为 openai-completions。")}
       >
         <input
           id={`api-${id}`}
@@ -937,7 +1069,7 @@ function 服务编辑器({
         htmlFor={`models-${id}`}
         hint={
           pi认识 ? (
-            <>{t("用逗号隔开。留空就用 pi 自带的目录——它认识这个 provider 的模型。")}</>
+            <>{t("逗号分隔；留空使用内置目录。")}</>
           ) : (
             <>
               {t("用逗号隔开。")}<em className="set-emph">{t("自建端点必须写")}</em>
@@ -1018,7 +1150,7 @@ function 添加模型服务({
   if (!开) {
     return (
       <div className="svc-add-entry">
-        <Button variant="outline" size="sm" onClick={() => set开(true)}>
+        <Button variant="primary" size="sm" onClick={() => set开(true)}>
           {t("＋ 添加模型服务")}
         </Button>
       </div>
@@ -1045,8 +1177,16 @@ function 添加模型服务({
       onKeyDown={(e) => {
         if (e.key === "Escape") set开(false)
       }}
+      // 点到框外也关（2026-08-23 作者：「退不出去了」——Esc 只在焦点落在框里时管用）
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) set开(false)
+      }}
     >
       <div className="confirm svc-add">
+        {/* 右上角一颗 ×（作者要的）；名字不叫「关闭」——别处还有同名的 */}
+        <Button variant="ghost" size="icon" className="svc-add-close" aria-label={t("收起添加模型服务")} onClick={() => set开(false)}>
+          <关闭图标 />
+        </Button>
         <h2 className="confirm-title">
           添加模型服务
           {/**
@@ -1073,12 +1213,6 @@ function 添加模型服务({
           onClick={() => set路("自定义")}
         >
           {t("自定义端点")}
-        </Button>
-        {/* **不叫「取消」**：确认框上那颗就叫这个，两处同名会让
-            「按名字找按钮」变成靠运气的事——屏幕阅读器与测试都一样。
-            这颗做的事是「不加了，把这一段收起来」，就照着说 */}
-        <Button variant="text" size="sm" onClick={() => set开(false)}>
-          {t("先不加")}
         </Button>
       </div>
         {路 === "pi" ? (
@@ -1125,7 +1259,7 @@ function 从列表里挑({
   const 当前 = 命中.includes(选中) ? 选中 : (命中[0] ?? "")
 
   if (可挑.length === 0) {
-    return <p className="hint">{t("pi 认识的 provider 都已经配过了。要加别的就走「自定义端点」。")}</p>
+    return <p className="hint">{t("内置 provider 均已配置；其他请用「自定义端点」。")}</p>
   }
 
   return (
@@ -1139,13 +1273,13 @@ function 从列表里挑({
          * 不填的话点完「添加」什么都不会发生，而界面会看起来像成功了。
          */
         if (!key.trim()) {
-          return set问题(t("要填 key——pi 要求每个服务都有一把钥匙才肯调用。"))
+          return set问题(t("需要填 key。"))
         }
         set问题(undefined)
         onAdd(当前, key.trim())
       }}
     >
-      <字段 label={t("挑一个")} htmlFor="pick-provider" hint={t("地址、协议、模型目录 pi 都有，只缺一把钥匙。")}>
+      <字段 label={t("挑一个")} htmlFor="pick-provider" hint={t("地址、协议与模型目录已内置，只需 key。")}>
         <div className="svc-line">
           <input
             className="control"
@@ -1240,7 +1374,7 @@ function 自定义端点({
          */
         if (!key.trim()) {
           return set问题(
-            t("要填 key：pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）随便填一个值即可，比如 local。"),
+            t("需要填 key；本地端点可填任意值。"),
           )
         }
         set问题(undefined)
@@ -1250,7 +1384,7 @@ function 自定义端点({
       <字段
         label={t("名字")}
         htmlFor="new-id"
-        hint={t("它会写进 providers.yaml 当键，也会显示在对话的模型选择器里。")}
+        hint={t("用作配置键，并显示在模型选择器中。")}
       >
         <input
           id="new-id"
@@ -1274,7 +1408,7 @@ function 自定义端点({
       <字段
         label={t("协议")}
         htmlFor="new-api"
-        hint={t("大多数自建端点是 OpenAI 兼容的，保持默认即可。")}
+        hint={t("自建端点通常保持默认。")}
       >
         <input
           id="new-api"
@@ -1288,7 +1422,7 @@ function 自定义端点({
       <字段
         label={t("模型清单")}
         htmlFor="new-models"
-        hint={t("用逗号隔开。pi 猜不出你的端点上跑着什么，所以这一项必须写。")}
+        hint={t("逗号分隔，必填。")}
       >
         <input
           id="new-models"
@@ -1302,7 +1436,7 @@ function 自定义端点({
       <字段
         label="API key"
         htmlFor="new-key"
-        hint={t("pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）用不上它，随便填一个值即可，比如 local。")}
+        hint={t("本地端点（vLLM / Ollama）可填任意值。")}
       >
         <input
           id="new-key"
@@ -1689,7 +1823,7 @@ export function AcpPanel({
           * 之间隔着好几层。
           */}
         <p className="caveat">
-          {t("上面两条走 npx，需要机器上有 Node。已经装好适配器的话，用下面的自定义命令直接指过去。")}
+          {t("预置项通过 npx 运行，需要 Node；已安装的适配器用自定义命令。")}
           {" "}
           {t("自定义的适配器默认只在本机运行。")}
         </p>
@@ -1728,7 +1862,7 @@ export function AcpPanel({
               aria-label={t("适配器名字")}
             />
           </Row>
-          <Row name={t("命令")} desc={t("适配器的可执行文件，不是 claude / codex 本身")}>
+          <Row name={t("命令")} desc={t("适配器的可执行文件。")}>
             <input
               className="control"
               value={命令}
@@ -1737,7 +1871,7 @@ export function AcpPanel({
               aria-label={t("适配器命令")}
             />
           </Row>
-          <Row name={t("参数")} desc={t("按空格分开。带空格的路径请直接改 providers.yaml")}>
+          <Row name={t("参数")} desc={t("按空格分隔。")}>
             <input
               className="control"
               value={参数}

@@ -111,7 +111,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
     description: describe(load()),
     parameters,
 
-    async execute(toolCallId: string, params: Params): Promise<ToolResult> {
+    async execute(toolCallId: string, params: Params, signal?: AbortSignal): Promise<ToolResult> {
       const req = toRequest(params)
       if ("error" in req) return text(req.error, true)
 
@@ -136,7 +136,8 @@ export function createSubagentTool(opts: SubagentToolOptions) {
         },
       })
 
-      const summary = await executor.run(req.request, agents)
+      // 人按了停止，子 agent 进程也要停（2026-08-23 审查抓的：此前把 pi 给的 signal 丢了，停止后子进程继续跑、继续烧钱）
+      const summary = await executor.run(req.request, agents, signal)
 
       // 每个任务发一条 end。**必须带原因**，账本的 terminalReason 靠它
       summary.results.forEach((r, index) => {

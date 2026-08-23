@@ -48,8 +48,11 @@ describe("判据 · 不许写到工作区外面", () => {
     expect(r?.说明).toContain("/w/proj")
   })
 
-  it("绝对路径逃出去也被拦", () => {
-    expect(看风险("write", { path: "/etc/hosts" }, 本地)?.类别).toBe("工作区之外")
+  it("绝对路径逃出去也被拦：系统目录里的是硬拒（2026-08-23 起连里面的一起），别处的是「工作区之外」", () => {
+    expect(看风险("write", { path: "/etc/hosts" }, 本地)?.类别).toBe("硬拒")
+    expect(看风险("write", { path: "/tmp/somewhere/x.txt" }, 本地)?.类别).toBe("工作区之外")
+    expect(看风险("write", { path: `${process.env.HOME}/.zshrc` }, 本地)?.类别).toBe("硬拒")
+    expect(看风险("write", { path: `${process.env.HOME}/scratch/x.txt` }, 本地)?.类别).toBe("工作区之外")
   })
 
   it("工作区里面照常放行", () => {
@@ -160,6 +163,14 @@ describe("硬拒清单（2026-08-23）", () => {
     ["git push --force origin main", /强推/],
     ["git push -f", /强推/],
     ["rm -rf ~", /主目录或根|主目录/],
+    // 2026-08-23 审查抓的四条漏放：转义的 rm、花括号 HOME、命令替换里带根、行续接
+    ["\\rm -rf /", /主目录|根|系统目录/],
+    ["rm -rf ${HOME}", /主目录|根/],
+    ["rm -rf $(echo /)", /主目录|根|系统目录/],
+    ["rm -rf \\\n/", /主目录|根|系统目录/],
+    ["find / -name '*.log' -delete", /find -delete/],
+    ["git push origin +main", /强推/],
+    ["git -C sub push -f", /强推/],
     ["rm -rf ~/", /主目录|根/],
     ["rm -rf /", /系统目录|根/],
     ["rm -rf $HOME/x", /主目录|根/],

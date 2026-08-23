@@ -65,7 +65,17 @@
   /* ── 种子（亮色）。**换肤只需要改这一段** ────────────────────── */
   /* 前景基色：文字、描边、填充、交互态全部从它派生 */
   --theme-base: var(--theme-gray-1000);
-  --theme-accent: #10a37f;
+  /**
+   * **主题色是人选的**（2026-08-23 作者要的：外观里一键换色）。
+   * `--theme-user-accent*` 四个是种子的种子：默认写在这儿，运行时由 `state/accent.ts` 以行内样式覆盖到 `<html>` 上。
+   * 亮 / 暗各一个——暗底上同一个色要提亮一档才不会沉进背景（绿的就是 #10a37f → #19c37d）；
+   * 按钮上的字也各一个——浅色主题色配白字读不出来，由 JS 按亮度判。
+   */
+  --theme-user-accent: #10a37f;
+  --theme-user-accent-dark: #19c37d;
+  --theme-user-on-accent: #ffffff;
+  --theme-user-on-accent-dark: #0d0d0d;
+  --theme-accent: var(--theme-user-accent);
 
   /* 面。亮色下内容区是纯白，浮在略深的应用底之上 */
   --theme-surface-app: var(--theme-gray-50);
@@ -185,7 +195,15 @@
   --dawn-accent: var(--theme-accent);
   --dawn-accent-solid: color-mix(in srgb, var(--theme-accent) var(--mix-accent-solid), var(--theme-gray-1000));
   --dawn-accent-soft: color-mix(in srgb, var(--theme-accent) var(--mix-accent-soft), transparent);
-  --dawn-on-accent: var(--theme-gray-0);
+  /* 卡片的描边（2026-08-23 作者定的：「卡片里面应该是白色背景，然后边框使用绿色的线」）——强调色兑淡一档，满饱和的绿框会和发送键抢 */
+  --dawn-stroke-accent: color-mix(in srgb, var(--theme-accent) 45%, transparent);
+  --dawn-on-accent: var(--theme-user-on-accent);
+  /**
+   * **活着**（正在跑、已连上、已绑定）**跟着主题色走**；**对错**（`--dawn-success` / `--dawn-danger`）**不跟**。
+   * 2026-08-23 作者定的：「活的东西跟着你，对错还是红绿」——diff 的加绿删红、任务板的完成/失败是几十年的约定，
+   * 主题换成橙红时它们不能撞色。此前两者混用一个 `--dawn-success`。
+   */
+  --dawn-live: var(--theme-accent);
 
   /**
    * 语义色。**名字说用途，不说颜色**（`--dawn-red` → `--dawn-danger`）。
@@ -366,6 +384,15 @@
   --dawn-weight-semibold: 600;
 
   /**
+   * **文字只有四档**（2026-08-23 美化 ②）：标题 18 / 小标题 14 / 正文 13（`--dawn-ui-size`）/ 次要 12。
+   * 11px 只给徽章与胶囊（mono 小标），图标尺寸与图表刻度不算文字。
+   * 此前 27 种字号——其中 14/15/16/20/1rem/1.25rem 全是「标题」的不同写法。
+   */
+  --dawn-fs-title: 18px;
+  --dawn-fs-sub: 14px;
+  --dawn-fs-meta: 12px;
+
+  /**
    * ── 圆角：一个标量统管，方便整体调"软硬" ────────────────────
    *
    * **标量从 1 改成 1.25**（规范 §3.6：`--codex-corner-radius-scale`）。
@@ -486,8 +513,8 @@
   color-scheme: dark;
 
   --theme-base: var(--theme-gray-100);
-  /* 暗底上要用更亮的一档绿，否则强调色会沉进背景 */
-  --theme-accent: #19c37d;
+  /* 暗底上要用更亮的一档，否则强调色会沉进背景 */
+  --theme-accent: var(--theme-user-accent-dark);
 
   /* 侧栏最深、内容区抬起——四个相邻档位做出四层高度 */
   --theme-surface-app: var(--theme-gray-900);
@@ -498,7 +525,7 @@
 
   /* 暗底上强调色已经够亮，实心按钮直接用它，配深色字 */
   --mix-accent-solid: 100%;
-  --dawn-on-accent: var(--theme-gray-1000);
+  --dawn-on-accent: var(--theme-user-on-accent-dark);
 
   --mix-scrim: 58%;
 
@@ -527,4 +554,6 @@
   --dawn-shadow-sm:
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 5%, transparent),
     0 1px 2px color-mix(in srgb, #000000 35%, transparent);
+  /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
+  --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
 }

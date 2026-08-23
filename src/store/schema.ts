@@ -34,7 +34,11 @@ function hasColumn(db: Database.Database, table: string, column: string): boolea
 export function migrate(db: Database.Database): void {
   db.pragma("journal_mode = WAL")
   db.pragma("foreign_keys = ON")
+  // **整个迁移一个事务**（2026-08-23 审查抓的）：v? 那一步先建 `_new` 表再换名，中途崩了下次会撞 `already exists`，应用永远起不来
+  db.transaction(() => 迁移步骤(db))()
+}
 
+function 迁移步骤(db: Database.Database): void {
   const from = currentVersion(db)
 
   // ── v1：会话表 ────────────────────────────────────────────────────────

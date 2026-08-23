@@ -255,9 +255,9 @@ async function main(): Promise<void> {
 
 void main().then(
   () => {
-    // **显式退出。** pi 可能留着定时器或未关闭的句柄，
-    // 那会让子进程在结果早已写出之后还挂着，父侧于是一直等 `close`
-    process.exit(0)
+    // **显式退出，但等 stdout 冲完**（2026-08-23 审查抓的：管道写入是异步的，`exit` 紧跟 `emit(done)` 会把超过一个缓冲区的结果截掉，
+    // 父侧就报「正常退出但没有结果」）。pi 可能留着定时器或未关闭的句柄，所以仍要显式退
+    process.stdout.write("", () => process.exit(0))
   },
   (err: unknown) => {
     // 兜底：`main` 本身不该抛，抛了也要留下一句话再走

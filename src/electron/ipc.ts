@@ -31,6 +31,8 @@ export const IPC_EVENT_CHANNEL = "dawn:workbench:event"
  * 取消返回 null 而不是报错——用户改主意不是错误。
  */
 export const IPC_PICK_DIRECTORY = "dawn:shell:pick-directory"
+/** 取色器要看像素（2026-08-24 作者要的放大镜取色）：截当前窗口一帧。与选目录同理，走窄通道不进协议 */
+export const IPC_CAPTURE_PAGE = "dawn:shell:capture-page"
 
 /**
  * 网页预览那一格（批 1，2026-08-18）。**同样刻意不做成协议操作**——

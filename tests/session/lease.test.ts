@@ -57,10 +57,12 @@ describe("LeaseManager · 获取与抢占", () => {
     expect(lm.current("s1", at(61))).toBeUndefined()
   })
 
-  it("时间戳不可回退", () => {
+  it("时间戳回退：不抛、按上次时刻记——审计链仍单调（2026-08-23 改：此前一次校时会让这段会话永远取不到租约）", () => {
     const lm = new LeaseManager({ ttlSeconds: 60 })
     lm.acquire("s1", "engine", at(10))
-    expect(() => lm.acquire("s1", "user", at(5))).toThrow(/回退/)
+    expect(() => lm.acquire("s1", "user", at(5))).not.toThrow()
+    const 最后 = lm.audit("s1").at(-1)!
+    expect(new Date(最后.at).getTime()).toBeGreaterThanOrEqual(at(10).getTime())
   })
 })
 

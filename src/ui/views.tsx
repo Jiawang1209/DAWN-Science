@@ -1687,7 +1687,7 @@ export function SessionSidebar({
        * 删除只需要 `taskId`（协议 4.9），所以这里给得起。
        */
       return (
-        <li key={task.taskId} className="sess-item">
+        <li key={task.taskId} className={`sess-item${task.taskId === activeTaskId ? " current" : ""}`}>
           {选中它 ? (
             <input
               type="checkbox"
@@ -2004,7 +2004,7 @@ export function SessionSidebar({
               * 「没有一个按钮文案是另一个的子串」就是它的自动化形式。
               * 「多选项目」也不行：它把「多选」整个包在里面。
               */}
-            {onDeleteProjects ? (
+            {onDeleteMany ? (
               <Button
                 variant="text"
                 size="inline"
@@ -2031,7 +2031,7 @@ export function SessionSidebar({
           </p>
           {选项目中 ? (
             <div className="side-bulkbar">
-              <span className="side-bulk-count">已选 {已选!.size}</span>
+              <span className="side-bulk-count">{tf("已选 {0}", 已选!.size)}</span>
               <Button
                 variant="text"
                 size="inline"
@@ -2057,21 +2057,17 @@ export function SessionSidebar({
                 size="inline"
                 className="menu-danger"
                 disabled={已选!.size === 0}
-                onClick={() => {
-                  // **集合里装的是 taskId**：全选了的项目整个移除，只选了几段的只删那几段
-                  const 要删的 = 项目组
-                    .map(([路径, 里面的]) => {
-                      const 选了 = 里面的.filter((t) => 已选!.has(t.taskId))
-                      return {
-                        workspace: 路径,
-                        ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
-                        tasks: 选了,
-                        整个: 选了.length === 里面的.length,
-                      }
-                    })
-                    .filter((g) => g.tasks.length > 0)
-                  onDeleteProjects?.(要删的, () => 设多选(undefined))
-                }}
+                onClick={() =>
+                  /**
+                   * **与服务器收纳同一套**（2026-08-23 作者定的）：多选删的只是勾中的会话，项目本身留着——
+                   * 一如机器那一列删会话不动机器。此前「名下会话全勾了就连项目一起移除」（08-21）被作者推翻：
+                   * 两个收纳的多选长得一样，按下去的结果却不一样，等于没有判据。移除项目仍走行上的垃圾桶。
+                   */
+                  onDeleteMany?.(
+                    项目里全部.filter((t) => 已选!.has(t.taskId)),
+                    () => 设多选(undefined),
+                  )
+                }
               >
                 {t("删除")}
               </Button>
@@ -2102,7 +2098,8 @@ export function SessionSidebar({
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(路径, !展开))}
+                      /* 多选时点行仍是展开/收起，选整组只靠前面那颗勾选框——与机器那一行同一套（2026-08-23 作者定的） */
+                      onClick={() => 设展开(路径, !展开)}
                       /**
                        * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
                        * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——
@@ -2324,6 +2321,8 @@ export function SessionSidebar({
                   {...浮层事件(设浮着的, 服务器名?.(connectionId) ?? connectionId, undefined, undefined, "服务器", { 标题: ".name", 容器: ".sidebar", 开在: "右边" })}
                 >
                   <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
+                  {/* 与项目行同一副形状：三角 + 图标 + 名字（2026-08-23 作者：「服务器收纳下面图标+IP 也应该学项目那一行」） */}
+                  <服务器图标 />
                   {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
                   <span className="name">{服务器名?.(connectionId) ?? connectionId}</span>
                   <span className="side-count">{些.length}</span>
@@ -2423,7 +2422,7 @@ export function SessionSidebar({
             */}
           {选会话中 ? (
             <div className="side-bulkbar">
-              <span className="side-bulk-count">已选 {已选!.size}</span>
+              <span className="side-bulk-count">{tf("已选 {0}", 已选!.size)}</span>
               <Button
                 variant="text"
                 size="inline"
@@ -2517,6 +2516,7 @@ export function SessionSidebar({
     </aside>
   )
 }
+
 
 /**
  * 侧栏里的一行项目（2026-08-11）。
@@ -3754,7 +3754,8 @@ export function ConversationView({
      * 记一笔这种做法，只要多一条发送路径就会漏一次；而「最后一条是用户发言」
      * 是**转录自己说得出来的事实**，哪条路发的都算数。
      */
-    const 转录在等 = 最后?.type === "turn" && 最后.who === "user"
+    // 会话已结束就不等了（2026-08-23 审查抓的：死会话以人的发言收尾会永远转「等回话」、发送键变「停止」）
+    const 转录在等 = 最后?.type === "turn" && 最后.who === "user" && !disabled
     if (等回话 === undefined) {
       if (转录在等 && !喊停过) {
         设等回话(items.length - 1)
@@ -3982,7 +3983,8 @@ export function ConversationView({
                        * 忘了取写权、或者忘了把话回灌进事件流。
                        */
                       onResend: (text: string) => {
-                        onSend(text)
+                        // 失败要出声（2026-08-23 审查抓的：此前不接 promise，发失败就什么都没发生）
+                        void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
                         设位置(-1)
                       },
                     })}
@@ -4035,7 +4037,7 @@ export function ConversationView({
           void 文件们成图(图们).then((批) => {
             设待发图((前) => [...前, ...批])
             补预览(批, 设待发图)
-          })
+          }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
         }}
         onSubmit={(e) => {
           e.preventDefault()
@@ -4200,7 +4202,7 @@ export function ConversationView({
               void 从粘贴里捡图(e).then((图们) => {
                 if (图们.length === 0) return
                 设待发图((前) => [...前, ...图们])
-              })
+              }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
               if (粘的是图(e)) e.preventDefault()
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
@@ -4745,10 +4747,10 @@ export function TranscriptRow({
    * **代价说清楚**：这条发言的 token 用量因此不在对话里显示。
    * 它没有丢——账本（项目概览）记着，而那本来就是查用量的地方。
    */
-  if (没说话(item)) return null
-
   /** 正在改的那份文字。**undefined = 没在改** */
   const [编辑, 设编辑] = useState<string | undefined>(undefined)
+  // hooks 之后再判空（2026-08-23 审查抓的：条件 return 在 useState 前面违反 hooks 顺序）
+  if (没说话(item)) return null
 
   /**
    * **改一句自己说过的话，再发出去**（2026-08-11，作者提，仿 Codex）。
@@ -5442,6 +5444,7 @@ export function EmptyConversation({
   agentKind,
   onStart,
   onToggleDock,
+  dockOpen,
   权限,
   引用文件,
   onOpenReference,
@@ -5462,6 +5465,8 @@ export function EmptyConversation({
   onToggleDock?: (() => void) | undefined
   /** 空态屏上那颗权限改的是默认（2026-08-23） */
   权限?: { 当前: 权限档; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
+  /** 坞开没开——「终端」那颗的按下态，与对话里那颗同一副 */
+  dockOpen?: boolean | undefined
   /** `@` 引用：选了工作目录才有源；没有就在菜单里说清 */
   引用文件?: 引用文件源 | undefined
   onOpenReference?: ((path: string) => void) | undefined
@@ -5562,7 +5567,7 @@ export function EmptyConversation({
                 <Button
                   variant="outline"
                   size="card"
-                  onClick={() => onStart(first, t(o.发出去的话), 工作目录)}
+                  onClick={() => void Promise.resolve(onStart(first, t(o.发出去的话), 工作目录)).catch((e: unknown) => 设开场出错(e instanceof Error ? e.message : String(e)))}
                 >
                   <span className="opener-title">{t(o.标题)}</span>
                   <span className="opener-sub">{t(o.说明)}</span>
@@ -5605,7 +5610,7 @@ export function EmptyConversation({
               void 文件们成图(图们).then((批) => {
                 设空态图((前) => [...前, ...批])
                 补预览(批, 设空态图)
-              })
+              }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
             }}
             onSubmit={(e) => {
               e.preventDefault()
@@ -5696,7 +5701,7 @@ export function EmptyConversation({
                   void 从粘贴里捡图(e).then((图们) => {
                     if (图们.length === 0) return
                     设空态图((前) => [...前, ...图们])
-                  })
+                  }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
                   if (粘的是图(e)) e.preventDefault()
                   else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
                 }}
@@ -5891,8 +5896,9 @@ export function EmptyConversation({
                   * **空态也要够得着终端**（2026-08-11）。
                   * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
                   */}
-{onToggleDock ? (
-                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
+                {/* 与对话里那颗同一副样子（2026-08-23 审查抓的：这里是 text、没有 aria-pressed） */}
+                {onToggleDock ? (
+                  <Button variant="ghost" size="sm" className="dock-toggle" aria-pressed={dockOpen ?? false} onClick={onToggleDock}>
                     <终端图标 />
                     {t("终端")}
                   </Button>

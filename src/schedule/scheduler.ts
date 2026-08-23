@@ -33,7 +33,8 @@ export interface 调度器依赖 {
   onChange?: (() => void) | undefined
 }
 
-const 最大timer = 2_147_483_647
+/** 一次 timer 最多睡 60 s（2026-08-23 审查抓的）：合盖期间单调时钟不走，一个长 timer 醒来时墙钟早过了，到期的那次会变成 misfire；短轮询醒来后立刻按墙钟判 */
+const 最大timer = 60_000
 
 export class Scheduler {
   private readonly 活着 = new Map<string, { abort: AbortController; promise: Promise<void> }>()

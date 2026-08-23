@@ -116,9 +116,13 @@ export class CredentialStore {
     this.write({ ...data, entries })
   }
 
-  /** 已配置凭证的 endpoint 列表。**只返回 id，不返回值。** */
+  /**
+   * 已配置凭证的 provider 列表。**只返回 id，不返回值。**
+   * 钥匙串里还住着别的秘密（`ssh:<连接>` 的密码、`weixin:botToken`）——它们不是模型服务，
+   * 列出去会在「模型服务」里冒出一排「ssh:conn-… 没有模型」（2026-08-23 作者截图抓的）
+   */
   configured(): string[] {
-    return Object.keys(this.read().entries)
+    return Object.keys(this.read().entries).filter((k) => !/^(ssh|weixin):/.test(k))
   }
 }
 

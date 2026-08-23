@@ -543,6 +543,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   // 上次进程留下的 starting/alive 不可能仍然存活，显式转 exited（规格 7.5）
   const reconciled = sessions.reconcileOnStartup()
+  const taskStore = new TaskStore(db)
+  // 删掉的终端会话，任务行一起走（2026-08-23）
+  if (sessions.删掉的终端.length) taskStore.removeBySessions(sessions.删掉的终端)
 
   const projects = new ProjectManager({
     projects: projectStore,
@@ -692,7 +695,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    */
   let 网关: import("../acp/gateway.js").网关句柄 | undefined
 
+  /** 退出时要收的：定时调度器、微信轮询（backend 登记进来） */
+  const 收摊们: Array<() => Promise<void> | void> = []
   const backend = createWorkbenchBackend({
+    注册收摊: (f) => 收摊们.push(f),
     onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },
     // MCP 那一屏要能问「这台连上了没有、有哪些工具」——**问的是同一个池子**，
@@ -701,9 +707,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
     skills: 技能位置,
     subagents: 子agent位置,
-    tasks: new TaskStore(db),
+    tasks: taskStore,
     schedules: new ScheduleStore(db),
-    设会话权限: (sessionId, 档) => 按会话的档.set(sessionId, 档),
+    // 给 undefined = 会话没了，把它那一档忘掉（2026-08-23 审查抓的：这张表只增不删）
+    设会话权限: (sessionId, 档) => (档 ? 按会话的档.set(sessionId, 档) : 按会话的档.delete(sessionId)),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,
@@ -1039,6 +1046,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       if (closed) return
       closed = true
       events.dispose()
+      // **不等也要发出去**（2026-08-23 审查抓的）：没有内核会话时走的是同步 `close()`，此前连 `stopAll` / MCP 全关 / 定时器都没动——
+      // 子 agent、团队成员、MCP 服务器全成孤儿。这里 fire-and-forget：能收多少收多少，不让退出卡住
+      for (const f of 收摊们) void Promise.resolve().then(f).catch(() => undefined)
+      void sessions.stopAll().catch(() => undefined)
+      void mcp池.全关().catch(() => undefined)
       // **退出时把连接断干净**：留着的 SSH socket 会让进程不肯退
       remoteConnections.closeAll()
       db.close()
@@ -1067,7 +1079,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          * 不收就是一堆孤儿进程——而它们多半连着数据库。
          * 与会话一起进同一个超时竞赛：**收摊不能因为一台服务器不肯退而卡住**。
          */
-        Promise.all([sessions.stopAll(), mcp池.全关()]),
+        Promise.all([sessions.stopAll(), mcp池.全关(), ...收摊们.map((f) => Promise.resolve().then(f))]),
         new Promise<void>((r) => setTimeout(r, timeoutMs)),
       ])
       this.close()

@@ -63,18 +63,37 @@ export function ColorPanel({
    * 下面装不下就翻到色块上方（2026-08-24 作者报的：面板太长，得滚动才看得全）。
    * 挂上之后量一次真实高度——面板高度是内容定的，写死一个数下次改内容又会错。
    */
-  const [摆法, 设摆法] = useState<"down" | "up" | "center">("down")
+  /**
+   * **弹出层脱离滚动容器**（2026-08-25 作者按回两版之后定的根治法）：
+   * 此前面板 `absolute` 挂在设置页的滚动容器里，跟着内容滚，窗口矮时被下缘裁住——
+   * 于是「显示不全、得滚动」。现在 `fixed` 按色块定位：下方放不下就翻上方，
+   * 再不行贴窗口下缘对齐——**弹出来的永远是完整一块**。窗口缩放 / 滚动 / 字体就位都重算。
+   */
+  const [位, 设位] = useState<{ left: number; top: number } | undefined>(undefined)
   useEffect(() => {
     const el = 根.current
     const 锚 = el?.parentElement
     if (!el || !锚) return
-    const 高 = el.getBoundingClientRect().height + 8
-    const 锚框 = 锚.getBoundingClientRect()
-    if (window.innerHeight - 锚框.bottom >= 高) 设摆法("down")
-    else if (锚框.top >= 高) 设摆法("up")
-    // 上下都不够（矮窗口）：固定在视口正中，宁可盖住行也不逼人滚动
-    else 设摆法("center")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const 算 = () => {
+      const a = 锚.getBoundingClientRect()
+      const h = el.offsetHeight
+      const w = el.offsetWidth
+      const left = Math.max(8, Math.min(a.right - w, window.innerWidth - w - 8))
+      let top = a.bottom + 6
+      if (top + h > window.innerHeight - 8) top = a.top - h - 6
+      if (top < 8) top = Math.max(8, window.innerHeight - h - 8)
+      设位({ left, top })
+    }
+    算()
+    const raf = requestAnimationFrame(算)
+    void document.fonts?.ready.then(算)
+    window.addEventListener("resize", 算)
+    window.addEventListener("scroll", 算, true)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener("resize", 算)
+      window.removeEventListener("scroll", 算, true)
+    }
   }, [])
 
   // 点面板外面 = 关（mousedown 而不是 click：拖出去松手不该关）
@@ -127,7 +146,7 @@ export function ColorPanel({
   const 黑 = hsv转hex(0, 0, 0)
 
   return (
-    <div ref={根} className="cpanel" data-place={摆法} role="dialog" aria-label={t("色盘")}>
+    <div ref={根} className="cpanel" style={位 ? { left: 位.left, top: 位.top } : { visibility: "hidden" }} role="dialog" aria-label={t("色盘")}>
       <div
         className="cpanel-sv"
         role="slider"

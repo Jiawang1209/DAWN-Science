@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 色盘弹出层改 fixed：整块永远可见（撤销 93a7bbf 后的根治）
+
+- **Type**: fix
+- **Motivation**: 作者连按两版：色盘弹出内容显示不全、要滚动；「做矮面板」与「translateY 钳制」都不对，撤销 `93a7bbf`。根因：面板 `absolute` 挂在设置页的滚动容器里，跟内容一起滚，窗口矮时被下缘裁住。
+- **What**: revert `93a7bbf`（`274e253`）；`ColorPanel` 改 `position: fixed` 按色块锚点定位——下方放得下贴下，不够翻上方，再不够贴窗口下缘对齐；resize / 捕获阶段 scroll / 字体就位都重算；量出位置前 `visibility: hidden` 防闪。面板尺寸未动。
+- **Impact**: 色盘脱离滚动上下文；内容与大小不变。
+- **Verification**: 480 高与 320 高两条 e2e（面板整块在视口内）连跑两轮绿；accent 7 绿；视觉基线 10/10。
+
 ### 2026-08-24 — 色盘不逼人滚动：按剩余空间选摆法
 
 - **Type**: fix

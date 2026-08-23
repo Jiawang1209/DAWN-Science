@@ -2036,6 +2036,7 @@ ${描述}`
     // 先中止在跑的一轮，再退订，最后释放——顺序反了会在 dispose 之后收到事件
     await s.session.abort().catch(() => {})
     s.收尾?.()
+    this.产物们.delete(sessionId)
     // 还在等人答的权限卡一律按拒——会话都没了，5 分钟后再向它发 settled 没有意义
     for (const [id, 等] of [...this.待答]) if (等.sessionId === sessionId) { this.待答.delete(id); 等.答("deny") }
     s.unsubscribe()

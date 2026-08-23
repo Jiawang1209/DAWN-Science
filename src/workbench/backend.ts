@@ -175,7 +175,7 @@ export interface WorkbenchBackendOptions {
   /** 定时任务的设置；不给用默认 */
   scheduleConfig?: { 补跑窗口分钟?: number; 最多并发?: number; 超时分钟?: number; 每条留几条记录?: number }
   /** 给某段会话定权限档（定时任务的会话按定义里存的档走）。不给就都跟全局设置 */
-  设会话权限?: (sessionId: string, 档: 权限档) => void
+  设会话权限?: (sessionId: string, 档: 权限档 | undefined) => void
   /** 一次定时运行结束了（推微信用）。不给就不推 */
   定时结束了?: (d: 定时定义, r: 定时运行) => void
   /**
@@ -1084,6 +1084,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
        */
       任务库().removeBySessions([sessionId])
+      设会话权限?.(sessionId, undefined)
       /**
        * **账本留着，并且把还剩多少说出来。**
        * 一句「已删除」会让人以为历史也一起没了——而它没有，
@@ -1345,6 +1346,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     // 这段会话按定义里存的档走（门每次调用都问，所以建好会话、写话之前定就来得及）
     设会话权限?.(sessionId, d.permission)
     projects.setSessionTitle(sessionId, `${d.name} · ${new Date(r.scheduledFor).toLocaleString("zh-CN", { hour12: false })}`)
+    let 收外: ((v: 定时完成) => void) | undefined
     const 等结束 = new Promise<定时完成>((resolve) => {
       let 完了 = false
       const 收 = (v: 定时完成) => {
@@ -1369,12 +1371,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         收({ status: "cancelled", error: { code: "cancelled", message: "DAWN 停了，这一次取消" } })
       }
       signal.addEventListener("abort", 取消)
+      收外 = 收
     })
     try {
       sessions.leases.acquire(sessionId, "user")
       await backend.writeToSession({ sessionId, data: r.prompt, as: "user" })
     } catch (e) {
-      return { status: "failed", sessionId, error: { code: "write_failed", message: e instanceof Error ? e.message : String(e) } }
+      // 写话失败也要把监听、计时、abort 钩子收干净（2026-08-23 审查抓的：此前留到 60 分钟超时才触发一次无谓的 abort）
+      const 失败: 定时完成 = { status: "failed", sessionId, error: { code: "write_failed", message: e instanceof Error ? e.message : String(e) } }
+      收外?.(失败)
+      return 失败
     }
     return 等结束
   }
@@ -2035,7 +2041,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       })
       /** 一个技能来自哪儿：按它的文件落在哪个目录下判 */
       const 判来处 = (filePath: string): "builtin" | "global" | "project" =>
-        按序.find((x) => filePath.startsWith(x.path))?.from ?? "global"
+        // 带分隔符比（`/a/skills` 不该认成 `/a/skills-old` 下面的）
+        按序.find((x) => filePath === x.path || filePath.startsWith(x.path.replace(/\/+$/, "") + sep))?.from ?? "global"
       return {
         skills: r.skills.map((s) => {
           const from = 判来处(s.filePath)
@@ -2715,7 +2722,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const p = projectStore.get(projectId!)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
       const 全 = resolveInWorkspace(p.workspace, path)
-      const st = statSync(全)
+      let st: ReturnType<typeof statSync>
+      try {
+        st = statSync(全)
+      } catch (err) {
+        throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+      }
       if (!st.isDirectory()) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
       return { directory: true, ...数一个本地目录(全) }
     },
@@ -3139,14 +3151,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!t) throw fault("not_found", `没有这个任务：${taskId}`)
 
       let kept = 0
-      if (t.sessionId) {
-        const rec = sessions.get(t.sessionId)
-        if (rec) {
-          await sessions.remove(t.sessionId)
-          events.forget(t.sessionId)
-          baselines.delete(t.sessionId)
-          kept = rec.projectId ? runs.countByProject(rec.projectId) : 0
-        }
+      if (t.sessionId && sessions.get(t.sessionId)) {
+        // **与 `deleteSession` 同一条路**（2026-08-23 审查抓的：此前不走 `删一个会话`，会话目录留在磁盘上，与「删会话真删目录」不一致）
+        const r = await 删一个会话(t.sessionId)
+        kept = r.ledgerKept
       }
       store.remove(taskId)
       /**

@@ -543,6 +543,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   // 上次进程留下的 starting/alive 不可能仍然存活，显式转 exited（规格 7.5）
   const reconciled = sessions.reconcileOnStartup()
+  const taskStore = new TaskStore(db)
+  // 删掉的终端会话，任务行一起走（2026-08-23）
+  if (sessions.删掉的终端.length) taskStore.removeBySessions(sessions.删掉的终端)
 
   const projects = new ProjectManager({
     projects: projectStore,
@@ -704,9 +707,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
     skills: 技能位置,
     subagents: 子agent位置,
-    tasks: new TaskStore(db),
+    tasks: taskStore,
     schedules: new ScheduleStore(db),
-    设会话权限: (sessionId, 档) => 按会话的档.set(sessionId, 档),
+    // 给 undefined = 会话没了，把它那一档忘掉（2026-08-23 审查抓的：这张表只增不删）
+    设会话权限: (sessionId, 档) => (档 ? 按会话的档.set(sessionId, 档) : 按会话的档.delete(sessionId)),
     projects, projectStore, runs: runStore, sessions, credentials: opts.credentials, registry, events,
     settings: settingsStore,
     configPath: opts.configPath,

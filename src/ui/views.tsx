@@ -1687,7 +1687,7 @@ export function SessionSidebar({
        * 删除只需要 `taskId`（协议 4.9），所以这里给得起。
        */
       return (
-        <li key={task.taskId} className="sess-item">
+        <li key={task.taskId} className={`sess-item${task.taskId === activeTaskId ? " current" : ""}`}>
           {选中它 ? (
             <input
               type="checkbox"
@@ -2031,7 +2031,7 @@ export function SessionSidebar({
           </p>
           {选项目中 ? (
             <div className="side-bulkbar">
-              <span className="side-bulk-count">已选 {已选!.size}</span>
+              <span className="side-bulk-count">{tf("已选 {0}", 已选!.size)}</span>
               <Button
                 variant="text"
                 size="inline"
@@ -2423,7 +2423,7 @@ export function SessionSidebar({
             */}
           {选会话中 ? (
             <div className="side-bulkbar">
-              <span className="side-bulk-count">已选 {已选!.size}</span>
+              <span className="side-bulk-count">{tf("已选 {0}", 已选!.size)}</span>
               <Button
                 variant="text"
                 size="inline"
@@ -2517,6 +2517,7 @@ export function SessionSidebar({
     </aside>
   )
 }
+
 
 /**
  * 侧栏里的一行项目（2026-08-11）。
@@ -4037,7 +4038,7 @@ export function ConversationView({
           void 文件们成图(图们).then((批) => {
             设待发图((前) => [...前, ...批])
             补预览(批, 设待发图)
-          })
+          }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
         }}
         onSubmit={(e) => {
           e.preventDefault()
@@ -4202,7 +4203,7 @@ export function ConversationView({
               void 从粘贴里捡图(e).then((图们) => {
                 if (图们.length === 0) return
                 设待发图((前) => [...前, ...图们])
-              })
+              }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
               if (粘的是图(e)) e.preventDefault()
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
@@ -4747,10 +4748,10 @@ export function TranscriptRow({
    * **代价说清楚**：这条发言的 token 用量因此不在对话里显示。
    * 它没有丢——账本（项目概览）记着，而那本来就是查用量的地方。
    */
-  if (没说话(item)) return null
-
   /** 正在改的那份文字。**undefined = 没在改** */
   const [编辑, 设编辑] = useState<string | undefined>(undefined)
+  // hooks 之后再判空（2026-08-23 审查抓的：条件 return 在 useState 前面违反 hooks 顺序）
+  if (没说话(item)) return null
 
   /**
    * **改一句自己说过的话，再发出去**（2026-08-11，作者提，仿 Codex）。
@@ -5444,6 +5445,7 @@ export function EmptyConversation({
   agentKind,
   onStart,
   onToggleDock,
+  dockOpen,
   权限,
   引用文件,
   onOpenReference,
@@ -5464,6 +5466,8 @@ export function EmptyConversation({
   onToggleDock?: (() => void) | undefined
   /** 空态屏上那颗权限改的是默认（2026-08-23） */
   权限?: { 当前: 权限档; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
+  /** 坞开没开——「终端」那颗的按下态，与对话里那颗同一副 */
+  dockOpen?: boolean | undefined
   /** `@` 引用：选了工作目录才有源；没有就在菜单里说清 */
   引用文件?: 引用文件源 | undefined
   onOpenReference?: ((path: string) => void) | undefined
@@ -5607,7 +5611,7 @@ export function EmptyConversation({
               void 文件们成图(图们).then((批) => {
                 设空态图((前) => [...前, ...批])
                 补预览(批, 设空态图)
-              })
+              }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
             }}
             onSubmit={(e) => {
               e.preventDefault()
@@ -5698,7 +5702,7 @@ export function EmptyConversation({
                   void 从粘贴里捡图(e).then((图们) => {
                     if (图们.length === 0) return
                     设空态图((前) => [...前, ...图们])
-                  })
+                  }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
                   if (粘的是图(e)) e.preventDefault()
                   else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
                 }}
@@ -5893,8 +5897,9 @@ export function EmptyConversation({
                   * **空态也要够得着终端**（2026-08-11）。
                   * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
                   */}
-{onToggleDock ? (
-                  <Button variant="text" size="sm" className="dock-toggle" onClick={onToggleDock}>
+                {/* 与对话里那颗同一副样子（2026-08-23 审查抓的：这里是 text、没有 aria-pressed） */}
+                {onToggleDock ? (
+                  <Button variant="ghost" size="sm" className="dock-toggle" aria-pressed={dockOpen ?? false} onClick={onToggleDock}>
                     <终端图标 />
                     {t("终端")}
                   </Button>

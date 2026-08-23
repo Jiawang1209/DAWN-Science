@@ -315,7 +315,17 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
             <>
               <label className="schedule-field">
                 <span>{t("跑在哪")}</span>
-                <select className="control" value={编辑.f.去哪} onChange={(e) => 设编辑({ ...编辑, f: { ...编辑.f, 去哪: e.target.value } })}>
+                <select
+                  className="control"
+                  value={编辑.f.去哪}
+                  onChange={(e) => {
+                    const 去哪 = e.target.value
+                    // 切到远端时当前 agent 可能手到不了服务器——校正到能用的第一项（2026-08-23 审查抓的：此前只靠服务端拒）
+                    const 能用 = actions.agents.filter((a) => !去哪.startsWith("远端:") || a.remoteCapable)
+                    const agentId = 能用.some((a) => a.agentId === 编辑.f.agentId) ? 编辑.f.agentId : (能用[0]?.agentId ?? 编辑.f.agentId)
+                    设编辑({ ...编辑, f: { ...编辑.f, 去哪, agentId } })
+                  }}
+                >
                   {去处.map((x) => (
                     <option key={x.key} value={x.key}>
                       {x.label} — {x.sub}

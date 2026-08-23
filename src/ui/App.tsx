@@ -1535,7 +1535,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       问: 问一句,
       openSession: (sid) => {
         const rec = [...sessions, ...tempSessions].find((s) => s.sessionId === sid)
-        if (rec) setActiveProjectId(rec.projectId)
+        // 临时项目不切（与 `onPickTask` 同一条判据，2026-08-23 审查抓的：切过去会把侧栏项目换成「临时会话」那个）
+        const 临时 = rec ? projects.find((p) => p.projectId === rec.projectId)?.temporary : false
+        if (rec && !临时) setActiveProjectId(rec.projectId)
         setActiveSessionId(sid)
         setView("conversation")
         void loadTasks(client)
@@ -3332,7 +3334,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 void client
                   .get("setSessionArchived", { sessionId: s.sessionId, archived: false })
                   .then(async () => {
-                    setActiveProjectId(s.projectId)
+                    if (!projects.find((p) => p.projectId === s.projectId)?.temporary) setActiveProjectId(s.projectId)
                     await loadSessions(client, s.projectId)
                     await loadTasks(client)
                     await 重取归档数()
@@ -3980,6 +3982,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               agentKind={(id: string) => providers.agents.find((x) => x.agentId === id)?.kind}
               权限={{ 当前: 权限档, onPick: (档) => 设默认档(档) }}
+              dockOpen={dockOpen}
               引用文件={引用文件}
               onOpenReference={打开引用}
               onToggleDock={toggleDock}

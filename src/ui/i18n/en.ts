@@ -1151,4 +1151,8 @@ export const EN: Readonly<Record<string, string>> = {
   // 对话区顶上的会话分栏（2026-08-23）
   "同一处的会话": "Sessions in the same place",
   "在这里再开一段": "Start another session here",
+
+  // 2026-08-23 审查：漏掉 t() 的几句
+  "文件较大，只显示了前 {0}（共 {1}）": "The file is large; only the first {0} shown (of {1})",
+  "删除会话": "Trash session",
 }

@@ -544,8 +544,7 @@ export function FilePreview({
           )}
           {content.truncated ? (
             <p className="hint">
-              文件较大，只显示了前 {bytes(content.truncated.keptBytes)}（共{" "}
-              {bytes(content.truncated.originalBytes)}）
+              {tf("文件较大，只显示了前 {0}（共 {1}）", bytes(content.truncated.keptBytes), bytes(content.truncated.originalBytes))}
             </p>
           ) : null}
         </>

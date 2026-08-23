@@ -478,7 +478,7 @@ export function ConnectionDialog({
               })
             }
           >
-            {saving ? t("保存中…") : "保存"}
+            {saving ? t("保存中…") : t("保存")}
           </Button>
         </div>
       </div>

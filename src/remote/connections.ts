@@ -84,6 +84,17 @@ export class RemoteConnections {
    */
   async connect(rec: ConnectionRecord): Promise<RemoteState> {
     if (this.状态.get(rec.id)?.kind === "ready") return this.stateOf(rec.id)
+    // 正在连就共用那一次（2026-08-23 审查抓的：两处并发 connect 会造两个 executor，前一个的 SSH 永不 end）
+    const 在飞 = this.连接中.get(rec.id)
+    if (在飞) return 在飞
+    const p = this.真连(rec).finally(() => this.连接中.delete(rec.id))
+    this.连接中.set(rec.id, p)
+    return p
+  }
+
+  private readonly 连接中 = new Map<string, Promise<RemoteState>>()
+
+  private async 真连(rec: ConnectionRecord): Promise<RemoteState> {
 
     const 私钥 = rec.privateKeyPath
       ? await (this.opts.readKeyFile ?? readFile)(rec.privateKeyPath).catch((e: unknown) => {

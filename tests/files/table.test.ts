@@ -11,6 +11,16 @@
 import { describe, expect, it } from "vitest"
 import { 认分隔符, 切一行, 推断列类型, 读成表, 像表格吗, 预览行数 } from "../../src/files/table.js"
 
+describe("引号里的换行（2026-08-23）", () => {
+  it("字段里的换行不切行：列数对得上，换行留在字段里", () => {
+    const r = 读成表('name,note\n甲,"第一行\n第二行"\n乙,单行\n', true)
+    expect(r.columns.map((c) => c.name)).toEqual(["name", "note"])
+    expect(r.rows).toHaveLength(2)
+    expect(r.rows[0]?.[1]).toBe("第一行\n第二行")
+    expect(r.rows[1]?.[1]).toBe("单行")
+  })
+})
+
 describe("认分隔符 · 看内容，不看扩展名", () => {
   it("逗号", () => expect(认分隔符("a,b,c")).toBe(","))
   it("制表符", () => expect(认分隔符("a\tb\tc")).toBe("\t"))

@@ -1970,7 +1970,8 @@ pre {
 .vision-card {
   max-width: 40rem;
   margin: 0 auto var(--dawn-space-6);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   padding: var(--dawn-space-4);
 }
@@ -2366,7 +2367,8 @@ pre {
   justify-content: space-between;
   gap: var(--dawn-space-3);
   padding: var(--dawn-space-2) var(--dawn-space-3);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
 }
 
@@ -2742,6 +2744,8 @@ pre {
  * **定位不放进来**：行菜单与 `＋` 是 `fixed`（要脱离会滚的盒子），
  * 会话开关是贴着按钮的 `absolute`。外壳共用，定位各管各的。
  */
+/* 卡片（2026-08-23 美化 ①，作者定的）：**白底（暗色下 elevated）+ 绿色细边**——卡要浮在页面上，不是画在页面上；悬停效果各卡照旧。
+   浮层另一副壳，见下 */
 /* **浮层只有这一副壳**（2026-08-23 美化 ①）：elevated 底 + 发丝线 + 浮层阴影 + 同一个 120 ms 弹出。
    菜单、气泡卡、提示条都挂在这条上，各自只留定位与内距。对话框（`.confirm` / `.palette`）圆角大一档 */
 .menu,
@@ -2912,7 +2916,8 @@ pre {
  */
 
 .svc {
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   margin-bottom: var(--dawn-space-2);
 }
@@ -3986,7 +3991,8 @@ pre {
   height: 76px;
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   overflow: hidden;
 }
 /**
@@ -4421,7 +4427,8 @@ pre {
 .usage-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   overflow: hidden;
 }
@@ -4609,7 +4616,8 @@ pre {
   align-items: start;
   gap: 2px var(--dawn-space-2);
   padding: var(--dawn-space-3);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   cursor: pointer;
 }
@@ -4651,7 +4659,8 @@ pre {
   flex-direction: column;
   gap: 2px;
   padding: var(--dawn-space-3);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
 }
 .skill-name { margin: 0; font-weight: var(--dawn-weight-medium); }
@@ -5209,7 +5218,8 @@ pre {
   gap: var(--dawn-space-3);
   margin-top: var(--dawn-space-2);
   padding: var(--dawn-space-2) var(--dawn-space-3);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
 }
 .weblink-icon {
@@ -5255,7 +5265,8 @@ pre {
   flex-direction: column;
   gap: var(--dawn-space-3);
   padding: var(--dawn-space-4);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
   max-width: 62ch;
 }
@@ -5414,7 +5425,8 @@ pre {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   overflow: hidden;
 }
@@ -5475,7 +5487,8 @@ pre {
   gap: var(--dawn-space-3);
   padding: var(--dawn-space-4);
   margin-bottom: var(--dawn-space-4);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   max-width: 48rem;
 }
@@ -5628,7 +5641,8 @@ pre {
 .team-avatar[data-hue="7"] { filter: hue-rotate(315deg); }
 
 /* ② 队长卡 */
-.team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-4); }
+.team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated); }
 .team-captain-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 .team-captain-line { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
 .team-captain-name { font-weight: 600; }
@@ -5822,7 +5836,8 @@ pre {
   max-width: 100%;
   padding: 0 2px 0 var(--dawn-space-1);
   border-radius: var(--dawn-radius-sm);
-  border: 1px solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-accent);
+  background: var(--dawn-surface-elevated);
 }
 .at-rail-path { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--dawn-text-2); font-family: var(--dawn-font-mono); font-size: 12px; }
 .at-rail-path:disabled { opacity: 1; cursor: default; }

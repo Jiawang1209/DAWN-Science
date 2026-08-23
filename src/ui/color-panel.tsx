@@ -63,18 +63,33 @@ export function ColorPanel({
    * 下面装不下就翻到色块上方（2026-08-24 作者报的：面板太长，得滚动才看得全）。
    * 挂上之后量一次真实高度——面板高度是内容定的，写死一个数下次改内容又会错。
    */
-  const [摆法, 设摆法] = useState<"down" | "up" | "center">("down")
+  /**
+   * **钳进视口**（2026-08-25 作者再报：上一版「挂上时量一次选摆法」在真机上仍被裁——
+   * 量的那一帧字体还没就位、窗口也比测试矮）。现在不选档位：超出视口多少就 translateY 挪多少，
+   * 且窗口缩放、页面滚动、字体就位都重算。直接写 style，不走 state——量-改-再量不该触发渲染循环。
+   */
   useEffect(() => {
     const el = 根.current
-    const 锚 = el?.parentElement
-    if (!el || !锚) return
-    const 高 = el.getBoundingClientRect().height + 8
-    const 锚框 = 锚.getBoundingClientRect()
-    if (window.innerHeight - 锚框.bottom >= 高) 设摆法("down")
-    else if (锚框.top >= 高) 设摆法("up")
-    // 上下都不够（矮窗口）：固定在视口正中，宁可盖住行也不逼人滚动
-    else 设摆法("center")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!el) return
+    const 钳 = () => {
+      el.style.transform = ""
+      const r = el.getBoundingClientRect()
+      const 超下 = r.bottom - (window.innerHeight - 8)
+      if (超下 > 0) {
+        const 挪 = Math.min(超下, Math.max(0, r.top - 8))
+        el.style.transform = `translateY(${-挪}px)`
+      }
+    }
+    钳()
+    const raf = requestAnimationFrame(钳)
+    void document.fonts?.ready.then(钳)
+    window.addEventListener("resize", 钳)
+    window.addEventListener("scroll", 钳, true)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener("resize", 钳)
+      window.removeEventListener("scroll", 钳, true)
+    }
   }, [])
 
   // 点面板外面 = 关（mousedown 而不是 click：拖出去松手不该关）
@@ -127,7 +142,7 @@ export function ColorPanel({
   const 黑 = hsv转hex(0, 0, 0)
 
   return (
-    <div ref={根} className="cpanel" data-place={摆法} role="dialog" aria-label={t("色盘")}>
+    <div ref={根} className="cpanel" role="dialog" aria-label={t("色盘")}>
       <div
         className="cpanel-sv"
         role="slider"

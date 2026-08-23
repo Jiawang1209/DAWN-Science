@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 色盘钳进视口：超出多少挪多少，滚动 / 缩放 / 字体就位都重算
+
+- **Type**: fix
+- **Motivation**: 作者真机复现：上一版「挂上时量一次、三档摆法」仍被裁——量的那一帧字体没就位、真实窗口更矮。
+- **What**: `ColorPanel` 撤掉档位，改 translateY 钳制：底部超出视口就上挪（不越过顶部），mount + rAF + `document.fonts.ready` + resize + 捕获阶段 scroll 都重算；直接写 style 不走 state。
+- **Impact**: 仅色盘定位。
+- **Verification**: 480 高与 320 高两条 e2e 连跑两轮全绿；accent 7 绿；视觉基线 10/10；tests/ui 517。
+
 ### 2026-08-24 — 色盘不逼人滚动：按剩余空间选摆法
 
 - **Type**: fix

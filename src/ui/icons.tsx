@@ -90,6 +90,18 @@ export function 加号图标({ className }: 图标属性 = {}) {
  * 不是 `stroke`：描边的粗细是绝对的，颜色一淡它就先散掉，
  * 而这颗图标旁边就跟着一行字，两者必须永远在同一档上。
  */
+/** 实心圆、＋镂空（2026-08-25 作者：「上传文件本身也该是实心灰」）——灰黑只靠 color 变 */
+export function 实心圆加号图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path
+        fillRule="evenodd"
+        d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 3.9a.75.75 0 0 1 1.5 0v2.35h2.35a.75.75 0 0 1 0 1.5H8.75v2.35a.75.75 0 0 1-1.5 0V8.75H4.9a.75.75 0 0 1 0-1.5h2.35V4.9Z"
+      />
+    </壳>
+  )
+}
+
 export function 圆加号图标({ className }: 图标属性 = {}) {
   return (
     <壳 {...(className ? { className } : {})}>

@@ -38,7 +38,7 @@ import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -761,7 +761,7 @@ function AttachButton({
         aria-expanded={开着}
         onClick={() => 设开着((v) => !v)}
       >
-        <圆加号图标 />
+        <实心圆加号图标 />
         {t("上传文件")}
       </Button>
       {开着 ? (

@@ -1196,7 +1196,7 @@ pre {
 .proj-session-list,
 .server-session-list,
 .session-list.loose-list,
-.session-list.recent-list { list-style: none; margin: 0; padding: 0 0 0 38px; } /* 72 → 62：作者「往左挪 10」 */
+.session-list.recent-list { list-style: none; margin: 0; padding: 0 0 0 23px; } /* 72 → 62 → 47：作者「往左挪 10」，2026-08-23 加了「-」之后又「往左挪 15」 */
 /**
  * 展开标记：**它同时是「这里面还有东西」的唯一提示**。
  * **一个三角靠旋转表达两态**——两个不同的字形会让展开看起来像换了个东西。

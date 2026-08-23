@@ -346,7 +346,12 @@ export class SessionManager {
       this.store.updateState(id, "alive", { pid: handle.pid })
       // 进程自行退出时把退出码回写入库——否则库里会永远停在 alive
       runtime.attach(id, (e) => {
-        if (e.kind === "exited") this.store.updateState(id, "exited", { exitCode: e.exitCode })
+        if (e.kind === "exited") {
+          this.store.updateState(id, "exited", { exitCode: e.exitCode })
+          // 运行时自己退了就解绑、放租约（2026-08-23 审查抓的：此前 `isLive()` 仍 true、`resume()` 见 bound 就不重拉，再发话落到死 runtime）
+          if (this.bound.get(id) === runtime) this.bound.delete(id)
+          this.leases.release(id)
+        }
       })
       /**
        * **从库里读回来**，不拿内存里那份拼一个。

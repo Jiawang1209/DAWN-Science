@@ -2519,7 +2519,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 .get<{ trashed: boolean }>("deletePath", 去哪)
                 .then(() => {
                   // 删掉的目录里可能就有正在预览的那个
-                  if (filePath?.startsWith(path)) {
+                  // 删的是目录时只清它**底下**的预览（`out` 不该连带 `out2/x.png`）——2026-08-23 审查抓的
+                  if (filePath === path || filePath?.startsWith(`${path.replace(/\/+$/, "")}/`)) {
                     setFilePath(undefined)
                     setFileContent(undefined)
                   }

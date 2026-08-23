@@ -43,6 +43,12 @@
 
 ## 变更日志
 
+### 2026-08-23 — check-beautify 第二批：退出时收干净、运行时自退解绑、迁移进事务、系统目录按前缀硬拒、远端 read 有上限、界面里几处失败不再静默
+
+- **Type**: fix
+- **What**: `close()` 也 fire-and-forget `stopAll` / MCP 全关 / 定时调度器与微信的 `stop`（backend 经 `注册收摊` 登记）；运行时自行 `exited` 时解绑并放租约（此前 `resume` 见 bound 就不重拉、再发话落到死 runtime）；`migrate` 整个包进事务；`受保护路径理由` 对系统目录按前缀、主目录顶层点文件也拦，但**工作区里的路径不走硬拒**（工作区可能就在 `/var/folders`）；远端 `read` 256 KB 上限、截断出声；MCP 屏五处 promise、导入选目录、定时记录读取都接住失败；删目录只清它底下的预览。
+- **Verification**: 单元 2132 绿（`permissions.test.ts` 那条「绝对路径逃出去」改成区分系统目录 / 别处；`wiring.test.ts` 用 `/tmp` 路径测「工作区之外」）；相关 e2e 55 绿。
+
 ### 2026-08-23 — check-beautify 第一批：全面审查修掉 20 条真 bug；样式表去重与暗色修正；分栏等宽
 
 - **Type**: fix

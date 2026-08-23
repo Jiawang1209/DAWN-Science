@@ -48,8 +48,11 @@ describe("判据 · 不许写到工作区外面", () => {
     expect(r?.说明).toContain("/w/proj")
   })
 
-  it("绝对路径逃出去也被拦", () => {
-    expect(看风险("write", { path: "/etc/hosts" }, 本地)?.类别).toBe("工作区之外")
+  it("绝对路径逃出去也被拦：系统目录里的是硬拒（2026-08-23 起连里面的一起），别处的是「工作区之外」", () => {
+    expect(看风险("write", { path: "/etc/hosts" }, 本地)?.类别).toBe("硬拒")
+    expect(看风险("write", { path: "/tmp/somewhere/x.txt" }, 本地)?.类别).toBe("工作区之外")
+    expect(看风险("write", { path: `${process.env.HOME}/.zshrc` }, 本地)?.类别).toBe("硬拒")
+    expect(看风险("write", { path: `${process.env.HOME}/scratch/x.txt` }, 本地)?.类别).toBe("工作区之外")
   })
 
   it("工作区里面照常放行", () => {

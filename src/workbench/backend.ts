@@ -168,6 +168,8 @@ export interface WorkbenchBackendOptions {
   tasks?: TaskStore
   /** 子 agent 的三层（7.20）：自带（只读）与你写的；项目那一层固定 `<工作区>/.dawn/agents` */
   subagents?: { 全局目录?: string; 自带目录?: string; 自带停用?: ((name: string) => boolean) | undefined }
+  /** 退出时要收的东西在这儿登记（2026-08-23 审查抓的：此前定时调度器的 timer、微信轮询没人停，每次退出都留孤儿） */
+  注册收摊?: (f: () => Promise<void> | void) => void
   /** 定时任务的两张表（7.19）。**不给就没有定时**——界面如实说「本次运行没有装配」 */
   schedules?: ScheduleStore
   /** 定时任务的设置；不给用默认 */
@@ -3428,5 +3430,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   微信.start()
   // 定时：收拾上次没跑完的，然后按下一次到期设 timer
   调度器?.start()
+  opts.注册收摊?.(() => 微信.stop())
+  if (调度器) opts.注册收摊?.(() => 调度器.stop())
   return backend
 }

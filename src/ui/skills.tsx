@@ -94,7 +94,10 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
 
   const 去导入 = async (to: "global" | "project") => {
     if (!actions) return
-    const source = await actions.pickDirectory()
+    const source = await actions.pickDirectory().catch((e: unknown) => {
+      设出错(e instanceof Error ? e.message : String(e))
+      return null
+    })
     if (!source) return
     await 做("import", async () => {
       const 检 = await actions.importSubagents({ source, to, dryRun: true })
@@ -426,7 +429,10 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
 
   const 去导入 = async (to: "global" | "project") => {
     if (!actions) return
-    const source = await actions.pickDirectory()
+    const source = await actions.pickDirectory().catch((e: unknown) => {
+      设出错(e instanceof Error ? e.message : String(e))
+      return null
+    })
     if (!source) return
     await 做("import", async () => {
       const 检 = await actions.importSkill({ source, to, dryRun: true })
@@ -961,7 +967,7 @@ export function McpView({
                       void onTest(s.name).then((r) => {
                         设试的结果((前) => ({ ...前, [s.name]: { ok: r.ok, ...(r.error ? { error: r.error } : {}) } }))
                         重取()
-                      })
+                      }).catch((e: unknown) => 设试的结果((前) => ({ ...前, [s.name]: { ok: false, error: e instanceof Error ? e.message : String(e) } })))
                     }}
                   >
                     {t("试一次")}
@@ -975,7 +981,7 @@ export function McpView({
                     <input
                       type="checkbox"
                       checked={s.trusted}
-                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted).then(重取)}
+                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     />
                     {t("这台我信得过")}
                   </label>
@@ -983,7 +989,7 @@ export function McpView({
                     <input
                       type="checkbox"
                       checked={s.off}
-                      onChange={() => void onFlag?.(s.name, "off", !s.off).then(重取)}
+                      onChange={() => void onFlag?.(s.name, "off", !s.off).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     />
                     {t("先别连它")}
                   </label>
@@ -997,7 +1003,7 @@ export function McpView({
                     <Button
                       variant="text"
                       size="inline"
-                      onClick={() => void onRemove(s.name).then(重取)}
+                      onClick={() => void onRemove(s.name).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     >
                       {tf("删掉 {0}", s.name)}
                     </Button>
@@ -1026,7 +1032,7 @@ export function McpView({
                               设密文("")
                               设填着的(undefined)
                               重取()
-                            })
+                            }).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
                           }}
                         >
                           {t("存下来")}

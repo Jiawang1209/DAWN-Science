@@ -151,7 +151,8 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
     actions
       .loadRuns(看记录的)
       .then((r) => 还在 && 设记录(r.runs))
-      .catch(() => {})
+      // 读不到要出声（2026-08-23 审查抓的：此前吞掉之后显示「还没跑过」）
+      .catch((e: unknown) => 还在 && 设回话({ kind: "bad", text: e instanceof Error ? e.message : String(e) }))
     return () => {
       还在 = false
     }

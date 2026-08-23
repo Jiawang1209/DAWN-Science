@@ -362,7 +362,7 @@ describe("工具权限门 · 接线", () => {
   it("语境真的传下去了：工作区之外的写入拦得住", async () => {
     const 全部 = 工具们(造运行时("deny-risky"), "/w/proj")
     const write = 全部.find((t) => t.name === "write")
-    const r = await 跑(write!, { path: "/etc/hosts", content: "x" })
+    const r = await 跑(write!, { path: "/tmp/dawn-outside-x.txt", content: "x" })
     expect(r.isError).toBe(true)
     expect(r.content?.[0]?.text).toMatch(/工作区/)
   })

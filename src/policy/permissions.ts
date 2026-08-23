@@ -149,11 +149,13 @@ export function 看风险(
     if (!p) return undefined
     const 绝对 = isAbsolute(p) ? p : resolve(语境.workspace, p)
     const 相对 = relative(语境.workspace, 绝对)
-    const 硬 = 受保护路径理由(绝对)
+    const 在工作区里 = !(相对.startsWith("..") || isAbsolute(相对))
+    // 工作区里的东西不走硬拒（工作区可能就在 /var/folders 这类地方——那是它自己的地盘）
+    const 硬 = 在工作区里 ? undefined : 受保护路径理由(绝对)
     if (硬) return { 类别: "硬拒", 说明: 远端补一句(`拒绝写入 ${p}：${硬}`) }
 
     // **`..` 开头 = 逃出了工作区**；绝对路径不在工作区下时 relative 也会这样开头
-    if (相对.startsWith("..") || isAbsolute(相对)) {
+    if (!在工作区里) {
       return {
         类别: "工作区之外",
         说明: 远端补一句(
@@ -302,6 +304,11 @@ const 受保护前缀 = [
 export function 受保护路径理由(绝对: string): string | undefined {
   const p = resolve(绝对).replace(/\/+$/, "") || "/"
   if (受保护前缀.some((r) => (r.replace(/\/+$/, "") || "/") === p)) return `${p} 是系统目录、你的主目录或它的顶层目录，不碰。`
+  // 系统目录**连里面的一起**（2026-08-23 审查抓的：此前只比根本身，`rm -rf /usr/lib`、`write ~/.zshrc` 只算「工作区外」）；主目录只拦顶层文件，子目录让给工作区判
+  // `/var` 不整棵算（macOS 的临时目录在 /var/folders），只拦 /var 的顶层；`/Users` `/home` 拦到别人的主目录
+  const 系统根 = ["/etc", "/usr", "/bin", "/sbin", "/System", "/Library", "/private/etc", "/Applications", "/Users", "/home"]
+  if (系统根.some((r) => p === r || p.startsWith(`${r}/`)) && !p.startsWith(`${HOME}/`)) return `${p} 在系统目录里，不碰。`
+  if (p.startsWith(`${HOME}/`) && !p.slice(HOME.length + 1).includes("/") && /^\./.test(p.slice(HOME.length + 1))) return `${p} 是主目录顶层的点文件（shell / 工具的配置），不碰。`
   const 凭据 = [".ssh", ".aws", ".gnupg", ".kube"].map((d) => join(HOME, d))
   if (凭据.some((d) => p === d || p.startsWith(`${d}/`))) return `${p} 在凭据目录里，不碰。`
   return undefined

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 色板旁的独立吸管键删掉：屏幕取色只从色盘面板里进
+
+- **Type**: refactor
+- **Motivation**: 作者：功能冗余——色盘面板里已有吸管捷径。
+- **What**: 外观第二行的独立取色器按钮删除；`Eyedropper` 覆盖层保留，入口只剩色盘面板里那颗「屏幕取色」。e2e 两处入口跟着改。
+- **Impact**: 仅外观一行。
+- **Verification**: accent 7 + 视觉基线 10 全绿；tests/ui 517。
+
 ### 2026-08-25 — 色盘弹出层改 fixed：整块永远可见（撤销 93a7bbf 后的根治）
 
 - **Type**: fix

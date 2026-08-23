@@ -5971,7 +5971,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .accent-choices .accent-value[data-invalid] { border-color: var(--dawn-danger); }
 .accent-choices .accent-value[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
 .accent-copy { width: 26px; height: 26px; }
-.accent-dropper-btn { width: 26px; height: 26px; }
 /* 自绘色盘（2026-08-24）：浮在色块下面，同一副浮层壳 */
 .accent-custom-wrap { position: relative; display: inline-flex; }
 .cpanel {

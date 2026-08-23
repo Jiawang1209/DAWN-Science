@@ -83,7 +83,9 @@ test("**取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift �
   const { page } = dawn
   await 在项目里开会话(page)
   await 进设置(page, "外观")
-  await page.getByRole("button", { name: "取色器", exact: true }).click()
+  // 2026-08-25 独立吸管键删了（作者：冗余）——屏幕取色从色盘面板里进
+  await page.getByRole("button", { name: "色盘", exact: true }).click()
+  await page.getByRole("dialog", { name: "色盘" }).getByRole("button", { name: "屏幕取色" }).click()
   const 罩 = page.getByRole("dialog", { name: "取色器" })
   await expect(罩).toBeVisible()
   // 等截图就绪（起手提示换成「移动鼠标取色」）再动鼠标
@@ -109,7 +111,8 @@ test("**取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift �
   await expect(罩).toHaveCount(0)
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--theme-user-accent").trim())).toBe("#d6336c")
   // Esc 能退（再开一次直接退）
-  await page.getByRole("button", { name: "取色器", exact: true }).click()
+  await page.getByRole("button", { name: "色盘", exact: true }).click()
+  await page.getByRole("dialog", { name: "色盘" }).getByRole("button", { name: "屏幕取色" }).click()
   await page.keyboard.press("Escape")
   await expect(page.getByRole("dialog", { name: "取色器" })).toHaveCount(0)
 })

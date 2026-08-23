@@ -30,7 +30,7 @@
 import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
-import { 关闭图标, 复制图标, 吸管图标 } from "./icons.js"
+import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
 import { Eyedropper } from "./eyedropper.js"
@@ -441,10 +441,6 @@ export function AppearancePanel() {
               />
             ) : null}
           </span>
-          {/* 取色器（2026-08-24 作者给了图）：放大镜从界面上取色——C 复制、Shift 切 RGB/HEX、点击定色、Esc 退出 */}
-          <Button variant="ghost" size="icon" className="accent-dropper-btn" aria-label={t("取色器")} onClick={() => 设取色中(true)}>
-            <吸管图标 />
-          </Button>
           <span
             className="accent-value-wrap"
             onMouseEnter={() => 设悬着(true)}

@@ -167,7 +167,7 @@ export function KernelsPanel({
          * 今天栽过两次，所以强调一律走 CSS。）
          */
         <>
-          {t("配置里 kind: kernel 的 agent 靠这两个路径起内核。")}
+          {t("内核型 agent 使用以下解释器。")}
           <em className="set-emph">{t("没有配置就不能用。")}</em>
         </>
       }
@@ -175,14 +175,14 @@ export function KernelsPanel({
       <InterpreterField
         id="interp-python"
         label={t("Python 解释器")}
-        hint={t("例如 /usr/local/bin/python3 或某个 conda 环境里的 bin/python。需要它装了 ipykernel。")}
+        hint={t("需已安装 ipykernel。")}
         value={interpreters.python}
         onSave={(v) => onSetInterpreter("python", v)}
       />
       <InterpreterField
         id="interp-r"
         label={t("R 解释器")}
-        hint={t("例如 /usr/local/bin/R。需要它装了 IRkernel。")}
+        hint={t("需已安装 IRkernel。")}
         value={interpreters.r}
         onSave={(v) => onSetInterpreter("R", v)}
       />
@@ -219,7 +219,7 @@ export function KernelsPanel({
             </p>
           ) : null}
           <div className="state-action">
-            <Button variant="outline" size="sm" onClick={onRefresh}>
+            <Button variant="primary" size="sm" onClick={onRefresh}>
               {t("重新扫描")}
             </Button>
           </div>
@@ -261,7 +261,7 @@ function InterpreterField({
         aria-label={label}
       />
       <Button
-        variant="outline"
+        variant="primary"
         size="sm"
         disabled={draft === undefined}
         onClick={() => {
@@ -294,7 +294,7 @@ export function AppearancePanel() {
         */}
       <Row
         name={t("语言")}
-        desc={t("界面语言。默认英文；这个选择记在这台机器上。")}
+        desc={t("界面语言。")}
       >
         <div className="theme-choices" role="radiogroup" aria-label={t("语言")}>
           {(["zh", "en"] as const).map((v) => (
@@ -332,7 +332,7 @@ export function AppearancePanel() {
                 "跟随系统——系统当前是{0}",
                 resolveTheme("system") === "dark" ? t("暗色") : t("亮色"),
               )
-            : t("「跟随系统」不是亮色的同义词，它是一条会随系统变化的规则")
+            : t("跟随系统：随系统外观自动切换。")
         }
       >
         <div className="theme-choices" role="radiogroup" aria-label={t("主题")}>
@@ -390,13 +390,13 @@ export function WorkspacePanel({
         name={t("默认工作目录")}
         desc={
           isDefault
-            ? t("没设过，用的是系统默认。没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
-            : t("没给工作目录的对话会落在这儿，选文件夹也从这儿起步。")
+            ? t("未设置，使用系统默认。新对话的默认目录。")
+            : t("新对话的默认目录。")
         }
       >
         <div className="ws-setting">
           <code className="ws-setting-path">{path}</code>
-          <Button variant="secondary" size="sm" onClick={onPick}>
+          <Button variant="primary" size="sm" onClick={onPick}>
             {t("换一个")}
           </Button>
           {/* **配过才给「恢复默认」**：没配过时它点了什么都不会变 */}
@@ -441,13 +441,13 @@ export function WorkspacePanel({
           name={t("下载目录")}
           desc={
             download.isDefault
-              ? t("没设过，用的是系统的下载文件夹。从服务器拉下来的文件落在这儿。")
+              ? t("未设置，使用系统下载文件夹。")
               : t("从服务器拉下来的文件落在这儿。")
           }
         >
           <div className="ws-setting">
             <code className="ws-setting-path">{download.path}</code>
-            <Button variant="secondary" size="sm" onClick={download.onPick}>
+            <Button variant="primary" size="sm" onClick={download.onPick}>
               {t("另选一处")}
             </Button>
             {download.isDefault ? null : (
@@ -629,7 +629,7 @@ export function SettingsPanel({
       className="set-section-bare"
       desc={
         credentials.encrypted ? (
-          t("填了 key 就能在对话里选它的模型。密钥存在系统的安全存储里（macOS Keychain），已存的值不会回显——界面只知道配没配。")
+          t("密钥保存在系统安全存储中，不回显。")
         ) : (
           /* **加密状态如实告知。** 没有 keychain 时它是明文，这必须是警告而不是说明 */
           <span className="caveat">{t("⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录")}</span>
@@ -868,7 +868,7 @@ function 服务编辑器({
       <字段
         label="API key"
         htmlFor={`cred-${id}`}
-        hint={t("存在系统的加密存储里，不写进配置文件。已存的值不会回显——界面拿不到它，也不该拿到。")}
+        hint={t("保存在系统安全存储中，不回显。")}
       >
         <div className="svc-line">
           <input
@@ -925,7 +925,7 @@ function 服务编辑器({
       <字段
         label={t("协议")}
         htmlFor={`api-${id}`}
-        hint={t("留空交给 pi 自己判断。自建的 OpenAI 兼容端点通常填 openai-completions；猜错的表现是请求发得出去、对面用另一种格式回，而报错与协议毫无关系。")}
+        hint={t("留空自动判断；自建 OpenAI 兼容端点通常为 openai-completions。")}
       >
         <input
           id={`api-${id}`}
@@ -942,7 +942,7 @@ function 服务编辑器({
         htmlFor={`models-${id}`}
         hint={
           pi认识 ? (
-            <>{t("用逗号隔开。留空就用 pi 自带的目录——它认识这个 provider 的模型。")}</>
+            <>{t("逗号分隔；留空使用内置目录。")}</>
           ) : (
             <>
               {t("用逗号隔开。")}<em className="set-emph">{t("自建端点必须写")}</em>
@@ -1023,7 +1023,7 @@ function 添加模型服务({
   if (!开) {
     return (
       <div className="svc-add-entry">
-        <Button variant="outline" size="sm" onClick={() => set开(true)}>
+        <Button variant="primary" size="sm" onClick={() => set开(true)}>
           {t("＋ 添加模型服务")}
         </Button>
       </div>
@@ -1132,7 +1132,7 @@ function 从列表里挑({
   const 当前 = 命中.includes(选中) ? 选中 : (命中[0] ?? "")
 
   if (可挑.length === 0) {
-    return <p className="hint">{t("pi 认识的 provider 都已经配过了。要加别的就走「自定义端点」。")}</p>
+    return <p className="hint">{t("内置 provider 均已配置；其他请用「自定义端点」。")}</p>
   }
 
   return (
@@ -1146,13 +1146,13 @@ function 从列表里挑({
          * 不填的话点完「添加」什么都不会发生，而界面会看起来像成功了。
          */
         if (!key.trim()) {
-          return set问题(t("要填 key——pi 要求每个服务都有一把钥匙才肯调用。"))
+          return set问题(t("需要填 key。"))
         }
         set问题(undefined)
         onAdd(当前, key.trim())
       }}
     >
-      <字段 label={t("挑一个")} htmlFor="pick-provider" hint={t("地址、协议、模型目录 pi 都有，只缺一把钥匙。")}>
+      <字段 label={t("挑一个")} htmlFor="pick-provider" hint={t("地址、协议与模型目录已内置，只需 key。")}>
         <div className="svc-line">
           <input
             className="control"
@@ -1247,7 +1247,7 @@ function 自定义端点({
          */
         if (!key.trim()) {
           return set问题(
-            t("要填 key：pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）随便填一个值即可，比如 local。"),
+            t("需要填 key；本地端点可填任意值。"),
           )
         }
         set问题(undefined)
@@ -1257,7 +1257,7 @@ function 自定义端点({
       <字段
         label={t("名字")}
         htmlFor="new-id"
-        hint={t("它会写进 providers.yaml 当键，也会显示在对话的模型选择器里。")}
+        hint={t("用作配置键，并显示在模型选择器中。")}
       >
         <input
           id="new-id"
@@ -1281,7 +1281,7 @@ function 自定义端点({
       <字段
         label={t("协议")}
         htmlFor="new-api"
-        hint={t("大多数自建端点是 OpenAI 兼容的，保持默认即可。")}
+        hint={t("自建端点通常保持默认。")}
       >
         <input
           id="new-api"
@@ -1295,7 +1295,7 @@ function 自定义端点({
       <字段
         label={t("模型清单")}
         htmlFor="new-models"
-        hint={t("用逗号隔开。pi 猜不出你的端点上跑着什么，所以这一项必须写。")}
+        hint={t("逗号分隔，必填。")}
       >
         <input
           id="new-models"
@@ -1309,7 +1309,7 @@ function 自定义端点({
       <字段
         label="API key"
         htmlFor="new-key"
-        hint={t("pi 要求每个服务都有一把钥匙才肯调用。本地端点（vLLM / Ollama）用不上它，随便填一个值即可，比如 local。")}
+        hint={t("本地端点（vLLM / Ollama）可填任意值。")}
       >
         <input
           id="new-key"
@@ -1696,7 +1696,7 @@ export function AcpPanel({
           * 之间隔着好几层。
           */}
         <p className="caveat">
-          {t("上面两条走 npx，需要机器上有 Node。已经装好适配器的话，用下面的自定义命令直接指过去。")}
+          {t("预置项通过 npx 运行，需要 Node；已安装的适配器用自定义命令。")}
           {" "}
           {t("自定义的适配器默认只在本机运行。")}
         </p>
@@ -1735,7 +1735,7 @@ export function AcpPanel({
               aria-label={t("适配器名字")}
             />
           </Row>
-          <Row name={t("命令")} desc={t("适配器的可执行文件，不是 claude / codex 本身")}>
+          <Row name={t("命令")} desc={t("适配器的可执行文件。")}>
             <input
               className="control"
               value={命令}
@@ -1744,7 +1744,7 @@ export function AcpPanel({
               aria-label={t("适配器命令")}
             />
           </Row>
-          <Row name={t("参数")} desc={t("按空格分开。带空格的路径请直接改 providers.yaml")}>
+          <Row name={t("参数")} desc={t("按空格分隔。")}>
             <input
               className="control"
               value={参数}

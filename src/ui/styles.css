@@ -5911,3 +5911,6 @@ pre {
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: var(--dawn-stroke-2); border-radius: var(--dawn-radius-full); }
 *::-webkit-scrollbar-thumb:hover { background: var(--dawn-stroke-1); }
+
+/* 勾选框一律绿（2026-08-23 作者：设置里的对号框都换成绿色） */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); }

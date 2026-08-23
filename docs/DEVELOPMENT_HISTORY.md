@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 美化①补：设置里的动作按钮绿底白字、勾选框绿、说明文字精简
+
+- **Type**: refactor
+- **Motivation**: 作者：设置里很多按钮是灰的、对号框也是灰的，要与「外观」里的绿色一致；各项下面的解释说明太啰嗦，按标准软件的写法收紧。
+- **What**: `Settings.tsx`（内核保存 / 刷新 / ＋添加模型服务 / 换一个）、`at-settings.tsx`（加一条规则）、`skills.tsx`（导入 ×4、MCP 试一次 / 存下来）一律 `variant="primary"`；`styles.css` 全局 `input[type=checkbox|radio] { accent-color: var(--dawn-accent) }`；36 条说明文字改成一句话（`en.ts` 同步改键）；`settings.test.tsx` 与 `acp-setup.spec.ts` 的文案断言跟着改。
+- **Impact**: 只动界面；无协议、无数据变化。
+- **Verification**: `vitest tests/ui` 509 绿；`skills / mcp / add-service / i18n / acp-setup / subagent-roster` 六份 e2e 23 绿；视觉基线重存（设置两张按预期变），命令面板两张照老法子拷 `-actual` 救回，连验两轮 10/10。
+
 ### 条目格式
 
 ```markdown

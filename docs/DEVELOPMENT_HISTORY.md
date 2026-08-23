@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-24 — 主题色：两个输入框撤掉，改成一格颜色值——点击复制、Shift 切 HEX / RGB
+
+- **Type**: refactor
+- **Motivation**: 作者按回：「后面单独出现两个框显示颜色就很愚蠢」。取色器才是输入，那一格只负责告诉你现在是什么、让你带走。
+- **What**: `AppearancePanel` 的 HEX / RGB 两个 `.control` 删掉，换成一颗 `.accent-value` 片状键：显示当前色值；点击或按 C 复制（「已复制」1.2 秒）；悬停或聚焦时按 Shift 切换 HEX / RGB（一个 window 监听，两种情形同时成立也只切一次）。`三元组转hex` 留在 `state/accent.ts`（单元测试还在用）。
+- **Impact**: 仅外观一行；上一条记录里的两个文本框不复存在。
+- **Verification**: e2e `accent.spec.ts` 3 绿（含剪贴板真值）；tests/ui 517；视觉基线 10/10。
+
 ### 2026-08-23 — 主题色：HEX 与 RGB 两个文本框，取色两种写法都给、两边都能改
 
 - **Type**: feat

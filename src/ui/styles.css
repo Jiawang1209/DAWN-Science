@@ -5963,9 +5963,23 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   overflow: hidden;
 }
 .accent-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-/* HEX 文本框：七个等宽字的宽度，与色块同高 */
-.accent-choices .accent-hex { flex: 0 0 auto; width: 7.5em; height: 26px; padding: 0 var(--dawn-space-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
-/* 坏值：聚焦时也要红——聚焦环本来是主题色，错了就换成危险色 */
-.accent-choices .accent-hex[data-invalid] { border-color: var(--dawn-danger); }
-.accent-choices .accent-hex[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
-.accent-choices .accent-rgb { width: 11.5em; }
+/* 颜色值那一格：一个片状键，mono 字；点击复制、Shift 切格式。「已复制」贴在右边，不挤动色值 */
+.accent-value {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  height: 26px;
+  padding: 0 var(--dawn-space-2);
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  color: var(--dawn-text-1);
+  font: inherit;
+  cursor: pointer;
+}
+.accent-value:hover { border-color: var(--dawn-stroke-2); background: var(--dawn-control-hover); }
+.accent-value:focus-visible { outline: 2px solid var(--dawn-accent); outline-offset: -1px; }
+.accent-value code { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.accent-copied { font-size: 11px; color: var(--dawn-live); }
+.accent-copied:empty { display: none; }

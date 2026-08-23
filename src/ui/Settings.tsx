@@ -32,7 +32,7 @@ import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { 关闭图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
-import { $accent, ACCENT_PRESETS, DEFAULT_ACCENT, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
+import { $accent, ACCENT_PRESETS, setAccent, hex转三元组 } from "./state/accent.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -284,26 +284,33 @@ export function AppearancePanel() {
   const theme = useStore($theme)
   const lang = useStore($lang)
   const accent = useStore($accent)
-  /** HEX 文本框的草稿（2026-08-23 作者要的：除了取色器还能直接敲 #rrggbb）；undefined = 跟着当前值走 */
-  const [hex草稿, 设hex草稿] = useState<string | undefined>(undefined)
-  const hex显示 = hex草稿 ?? accent
-  const hex坏了 = hex草稿 !== undefined && !isHex(hex草稿.trim())
-  const 提交hex = () => {
-    const v = (hex草稿 ?? "").trim()
-    if (isHex(v)) setAccent(v)
-    // 格式不对就留着红框，**不悄悄吞掉**；清空等于放弃
-    if (isHex(v) || v === "") 设hex草稿(undefined)
-  }
-  /** RGB 那一格同一套：取色返回 RGB 与 HEX 两种写法，两边都能改（2026-08-23 作者要的） */
-  const [三元组草稿, 设三元组草稿] = useState<string | undefined>(undefined)
-  const 三元组显示 = 三元组草稿 ?? hex转三元组(accent)
-  const 三元组坏了 = 三元组草稿 !== undefined && 三元组草稿.trim() !== "" && 三元组转hex(三元组草稿) === undefined
-  const 提交三元组 = () => {
-    const v = (三元组草稿 ?? "").trim()
-    const hex = 三元组转hex(v)
-    if (hex) setAccent(hex)
-    if (hex || v === "") 设三元组草稿(undefined)
-  }
+  /**
+   * 颜色值只显示**一个**（2026-08-24 作者按回：两个框「很愚蠢」）：点它或按 C 复制，按 Shift 在 HEX / RGB 间切换。
+   * 取色器才是输入；这一格只负责「告诉你现在是什么、让你带走」。
+   */
+  const [色格式, 设色格式] = useState<"hex" | "rgb">("hex")
+  const [已复制, 设已复制] = useState(false)
+  const 色值 = 色格式 === "hex" ? accent : hex转三元组(accent)
+  // 鼠标悬在那一格上、或它拿着焦点时，Shift 切格式、C 复制——**一个监听**，两种情形同时成立也只切一次
+  const [悬着, 设悬着] = useState(false)
+  const [聚焦着, 设聚焦着] = useState(false)
+  useEffect(() => {
+    if (!悬着 && !聚焦着) return
+    const 听 = (e: KeyboardEvent) => {
+      if (e.key === "Shift") 设色格式((f) => (f === "hex" ? "rgb" : "hex"))
+      else if (e.key === "c" || e.key === "C") {
+        e.preventDefault()
+        复制色值()
+      }
+    }
+    window.addEventListener("keydown", 听)
+    return () => window.removeEventListener("keydown", 听)
+  })
+  const 复制色值 = () =>
+    void navigator.clipboard.writeText(色值).then(() => {
+      设已复制(true)
+      setTimeout(() => 设已复制(false), 1200)
+    }).catch((e: unknown) => console.error("[accent] 复制失败：", e))
 
   return (
     <Section>
@@ -405,37 +412,22 @@ export function AppearancePanel() {
               onChange={(e) => setAccent(e.target.value)}
             />
           </label>
-          {/* HEX 直接敲：回车或失焦生效；三位简写不收（与取色器、存储同一种写法） */}
-          <input
-            className="control accent-hex"
-            data-invalid={hex坏了 ? "1" : undefined}
-            value={hex显示}
-            spellCheck={false}
-            aria-label={t("HEX 颜色值")}
-            aria-invalid={hex坏了 || undefined}
-            placeholder={DEFAULT_ACCENT}
-            onChange={(e) => 设hex草稿(e.target.value)}
-            onBlur={提交hex}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") 提交hex()
-              if (e.key === "Escape") 设hex草稿(undefined)
-            }}
-          />
-          <input
-            className="control accent-hex accent-rgb"
-            data-invalid={三元组坏了 ? "1" : undefined}
-            value={三元组显示}
-            spellCheck={false}
-            aria-label={t("RGB 颜色值")}
-            aria-invalid={三元组坏了 || undefined}
-            placeholder="r, g, b"
-            onChange={(e) => 设三元组草稿(e.target.value)}
-            onBlur={提交三元组}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") 提交三元组()
-              if (e.key === "Escape") 设三元组草稿(undefined)
-            }}
-          />
+          <button
+            type="button"
+            className="accent-value"
+            title={t("点击复制；按 Shift 切换 HEX / RGB")}
+            aria-label={tf("颜色值 {0}，点击复制，按 Shift 切换格式", 色值)}
+            data-format={色格式}
+            onMouseEnter={() => 设悬着(true)}
+            onMouseLeave={() => 设悬着(false)}
+            onFocus={() => 设聚焦着(true)}
+            onBlur={() => 设聚焦着(false)}
+            onClick={复制色值}
+          >
+            <code>{色值}</code>
+            {/* 复制完说一声，1.2 秒后收回；用 role=status 让读屏也听到 */}
+            <span className="accent-copied" role="status" aria-live="polite">{已复制 ? t("已复制") : ""}</span>
+          </button>
         </div>
       </Row>
     </Section>

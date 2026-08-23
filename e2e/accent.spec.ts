@@ -47,33 +47,26 @@ test("**自定义取色器**：给一个浅色，按钮上的字自动换成深�
   await expect(page.locator(".accent-custom")).toHaveClass(/current/)
 })
 
-test("**HEX 文本框**：敲 #rrggbb 回车就生效；格式不对留红框、不吞掉", async ({ dawn }) => {
-  const { page } = dawn
-  await 在项目里开会话(page)
-  await 进设置(page, "外观")
-  const 框 = page.getByLabel("HEX 颜色值")
-  await expect(框).toHaveValue("#10a37f")
-  await 框.fill("#e0701a")
-  await 框.press("Enter")
-  expect(await 读令牌(page, "--theme-user-accent")).toBe("#e0701a")
-  await expect(page.getByRole("radio", { name: "橙" })).toHaveAttribute("aria-checked", "true")
-  await 框.fill("orange")
-  await 框.press("Enter")
-  await expect(框).toHaveAttribute("aria-invalid", "true")
-  expect(await 读令牌(page, "--theme-user-accent")).toBe("#e0701a")
-})
-
-test("**RGB 文本框**：取色后同时给 RGB 与 HEX；改 RGB 也生效", async ({ dawn }) => {
+test("**颜色值只有一格**：点它复制，Shift 在 HEX / RGB 间切换", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   await 进设置(page, "外观")
   await page.getByRole("radio", { name: "蓝" }).click()
-  await expect(page.getByLabel("HEX 颜色值")).toHaveValue("#2f6feb")
-  await expect(page.getByLabel("RGB 颜色值")).toHaveValue("rgb(47, 111, 235)")
-  const 框 = page.getByLabel("RGB 颜色值")
-  await 框.fill("214, 51, 108")
-  await 框.press("Enter")
-  expect(await 读令牌(page, "--theme-user-accent")).toBe("#d6336c")
-  await expect(page.getByLabel("HEX 颜色值")).toHaveValue("#d6336c")
-  await expect(page.getByRole("radio", { name: "粉" })).toHaveAttribute("aria-checked", "true")
+  const 格 = page.locator(".accent-value")
+  await expect(格.locator("code")).toHaveText("#2f6feb")
+  // 两个输入框撤了（2026-08-24 作者按回）
+  await expect(page.getByLabel("HEX 颜色值")).toHaveCount(0)
+  await expect(page.getByLabel("RGB 颜色值")).toHaveCount(0)
+  await 格.hover()
+  await page.keyboard.press("Shift")
+  await expect(格.locator("code")).toHaveText("rgb(47, 111, 235)")
+  await 格.click()
+  await expect(格.locator(".accent-copied")).toHaveText("已复制")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("rgb(47, 111, 235)")
+  // 键盘：C 复制、Shift 切回
+  await 格.focus()
+  await page.keyboard.press("Shift")
+  await expect(格.locator("code")).toHaveText("#2f6feb")
+  await page.keyboard.press("c")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("#2f6feb")
 })

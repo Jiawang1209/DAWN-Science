@@ -1099,13 +1099,9 @@ pre {
   z-index: var(--z-modal-popover);
   min-width: 200px;
   padding: 4px;
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-elevated);
   /* 浮起来的面：阴影 + 发丝线，不是粗边框。
      0.5px 在 2x 屏上正好是一个物理像素——面与面因此是"分开"，不是"框住"。
      这里敢用是因为还有阴影兜底；输入框、按钮那种需要明确边界的仍是 1px */
-  box-shadow: var(--dawn-shadow-float);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
 }
 /**
  * 底部那一组（2026-08-12）。**`auto` 只留一个**——
@@ -1974,8 +1970,8 @@ pre {
 .vision-card {
   max-width: 40rem;
   margin: 0 auto var(--dawn-space-6);
-  border: 1px solid var(--dawn-stroke-3);
-  border-radius: var(--dawn-radius-md);
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-lg);
   padding: var(--dawn-space-4);
 }
 .vision-card .set-section { margin-bottom: 0; }
@@ -2370,8 +2366,8 @@ pre {
   justify-content: space-between;
   gap: var(--dawn-space-3);
   padding: var(--dawn-space-2) var(--dawn-space-3);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
-  border-radius: var(--dawn-radius-sm);
+  border: 1px solid var(--dawn-stroke-4);
+  border-radius: var(--dawn-radius-md);
 }
 
 .acp-add {
@@ -2746,14 +2742,52 @@ pre {
  * **定位不放进来**：行菜单与 `＋` 是 `fixed`（要脱离会滚的盒子），
  * 会话开关是贴着按钮的 `absolute`。外壳共用，定位各管各的。
  */
+/* **浮层只有这一副壳**（2026-08-23 美化 ①）：elevated 底 + 发丝线 + 浮层阴影 + 同一个 120 ms 弹出。
+   菜单、气泡卡、提示条都挂在这条上，各自只留定位与内距。对话框（`.confirm` / `.palette`）圆角大一档 */
 .menu,
 .row-menu,
-.attach-menu {
+.attach-menu,
+.agent-menu,
+.model-menu,
+.weblink-menu,
+.slash-menu,
+.sess-hover-card,
+.usage-tip,
+.turn-tick-summary {
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-elevated);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
+}
+.menu,
+.row-menu,
+.attach-menu,
+.agent-menu,
+.model-menu,
+.weblink-menu,
+.slash-menu {
+  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu, .row-menu, .attach-menu, .agent-menu, .model-menu, .weblink-menu, .slash-menu { animation: dawn-fade 120ms ease-out; }
+}
+/* 菜单项：同一个高度、同一个 hover 底（它们是「行」，不是「控件」） */
+.menu .btn,
+.row-menu .btn,
+.attach-menu .btn,
+.agent-menu .btn,
+.slash-menu .btn,
+.model-menu .btn {
+  border-radius: var(--dawn-radius-sm);
+}
+.menu .btn:hover:not(:disabled),
+.row-menu .btn:hover:not(:disabled),
+.attach-menu .btn:hover:not(:disabled),
+.agent-menu .btn:hover:not(:disabled),
+.slash-menu .btn:hover:not(:disabled),
+.model-menu .btn:hover:not(:disabled) {
+  background: var(--dawn-row-hover);
 }
 
 .row-menu,
@@ -2879,9 +2913,8 @@ pre {
 
 .svc {
   border: 1px solid var(--dawn-stroke-4);
-  border-radius: var(--dawn-radius-md);
+  border-radius: var(--dawn-radius-lg);
   margin-bottom: var(--dawn-space-2);
-  background: var(--dawn-surface-panel);
 }
 
 .svc.open { border-color: var(--dawn-stroke-2); }
@@ -3698,11 +3731,7 @@ pre {
   /* 与行菜单同一档：它们是同一类东西（贴着某个控件开的浮层） */
   z-index: var(--z-modal);
   padding: var(--dawn-space-2) 0;
-  border-radius: var(--dawn-radius-lg);
   /* 浮层坐 elevated（2026-08-23 审查抓的：暗色下 panel 比底面还深，浮层反而更黑） */
-  background: var(--dawn-surface-elevated);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
-  box-shadow: var(--dawn-shadow-float);
 }
 .model-list { list-style: none; margin: 0; padding: 0; }
 .model-group + .model-group { margin-top: var(--dawn-space-2); }
@@ -3716,6 +3745,9 @@ pre {
   font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-3);
 }
+/* 行齐左、名字吃掉中间、勾靠右（2026-08-23 美化 ①抓的：`.row` 是 space-between，没勾的那几行名字飘到右边） */
+.model-menu .row { justify-content: flex-start; }
+.model-menu .row .name { flex: 1 1 auto; min-width: 0; }
 .model-check { margin-left: auto; color: var(--dawn-accent); }
 /** 底一条：把「这里没有我要的那个」接到「去哪加一个」 */
 .model-menu-foot {
@@ -3909,12 +3941,12 @@ pre {
  * 不是整个取消：位移与缩放是「从哪儿来」的信息，而淡入不会引起前庭不适。
  * 这与 `.loader-glyph` / `dawn-thinking` 那两处是同一条。
  */
+@keyframes dawn-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 @media (prefers-reduced-motion: reduce) {
   .attach-menu { animation: dawn-fade 120ms ease-out; }
-  @keyframes dawn-fade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 }
 /* 菜单项：整行可点、齐左，图标与字在一条线上 */
 .attach-menu .btn {
@@ -3954,8 +3986,7 @@ pre {
   height: 76px;
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-sidebar);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-4);
   overflow: hidden;
 }
 /**
@@ -4323,10 +4354,7 @@ pre {
   z-index: var(--z-modal-popover);
   max-width: 320px;
   padding: var(--dawn-space-3);
-  border-radius: var(--dawn-radius-md);
   /* 浮层无框：阴影 + 发丝线，不是粗边框（见本文件开头那条） */
-  background: var(--dawn-surface-elevated);
-  box-shadow: var(--dawn-shadow-float);
   /* **不吃鼠标**：它就贴在行的旁边，吃了的话鼠标一碰它，行就算离开了 */
   pointer-events: none;
 }
@@ -4451,10 +4479,6 @@ pre {
   pointer-events: none;
   white-space: nowrap;
   padding: var(--dawn-space-1) var(--dawn-space-2);
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-elevated);
-  border: 1px solid var(--dawn-stroke-4);
-  box-shadow: var(--dawn-shadow-float);
   font-size: 12px;
 }
 .usage-cell { cursor: default; }
@@ -4692,7 +4716,6 @@ pre {
   /** 它开在输入卡上方，要压得住下面的东西。**层级从令牌那把梯子取** */
   z-index: var(--z-modal);
   transform-origin: bottom right;
-  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .sess-config-group + .sess-config-group {
   margin-top: var(--dawn-space-2);
@@ -4821,7 +4844,6 @@ pre {
   min-width: 12rem;
   padding: var(--dawn-space-1);
   z-index: var(--z-modal);
-  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dock-switch-menu .btn {
   display: flex;
@@ -5187,9 +5209,8 @@ pre {
   gap: var(--dawn-space-3);
   margin-top: var(--dawn-space-2);
   padding: var(--dawn-space-2) var(--dawn-space-3);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-panel);
 }
 .weblink-icon {
   flex: 0 0 auto;
@@ -5217,10 +5238,6 @@ pre {
 /** 菜单**贴着按钮右对齐**：靠左的话它会伸到卡片外面去 */
 .weblink-menu {
   position: absolute;
-  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-elevated);
-  box-shadow: var(--dawn-shadow-float);
   top: calc(100% + var(--dawn-space-1));
   right: 0;
   min-width: 12rem;
@@ -5238,9 +5255,8 @@ pre {
   flex-direction: column;
   gap: var(--dawn-space-3);
   padding: var(--dawn-space-4);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-md);
-  background: var(--dawn-fill-1);
   max-width: 62ch;
 }
 .ra-card-title {
@@ -5400,7 +5416,6 @@ pre {
   padding: 0;
   border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-surface-panel);
   overflow: hidden;
 }
 .skill-row {
@@ -5462,7 +5477,6 @@ pre {
   margin-bottom: var(--dawn-space-4);
   border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-surface-panel);
   max-width: 48rem;
 }
 .schedule-field { display: grid; gap: var(--dawn-space-1); }
@@ -5497,10 +5511,6 @@ pre {
   max-height: 18rem;
   overflow: auto;
   padding: var(--dawn-space-1);
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-surface-elevated);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
-  box-shadow: var(--dawn-shadow-float);
   display: flex;
   flex-direction: column;
 }
@@ -5618,7 +5628,7 @@ pre {
 .team-avatar[data-hue="7"] { filter: hue-rotate(315deg); }
 
 /* ② 队长卡 */
-.team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-3); }
+.team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-4); }
 .team-captain-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 .team-captain-line { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
 .team-captain-name { font-weight: 600; }
@@ -5749,7 +5759,6 @@ pre {
   padding: var(--dawn-space-2);
   z-index: var(--z-modal);
   transform-origin: bottom right;
-  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .perm-pill-menu .btn.perm-pill-item {
   display: flex;
@@ -5813,8 +5822,7 @@ pre {
   max-width: 100%;
   padding: 0 2px 0 var(--dawn-space-1);
   border-radius: var(--dawn-radius-sm);
-  background: var(--dawn-surface-panel);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  border: 1px solid var(--dawn-stroke-4);
 }
 .at-rail-path { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--dawn-text-2); font-family: var(--dawn-font-mono); font-size: 12px; }
 .at-rail-path:disabled { opacity: 1; cursor: default; }

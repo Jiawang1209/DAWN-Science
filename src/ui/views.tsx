@@ -2324,6 +2324,8 @@ export function SessionSidebar({
                   {...浮层事件(设浮着的, 服务器名?.(connectionId) ?? connectionId, undefined, undefined, "服务器", { 标题: ".name", 容器: ".sidebar", 开在: "右边" })}
                 >
                   <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
+                  {/* 与项目行同一副形状：三角 + 图标 + 名字（2026-08-23 作者：「服务器收纳下面图标+IP 也应该学项目那一行」） */}
+                  <服务器图标 />
                   {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
                   <span className="name">{服务器名?.(connectionId) ?? connectionId}</span>
                   <span className="side-count">{些.length}</span>

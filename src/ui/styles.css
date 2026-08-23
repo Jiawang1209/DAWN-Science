@@ -3672,7 +3672,7 @@ pre {
 .remote-head { width: calc(100% - var(--dawn-space-3) - 11px); margin-right: 11px; padding-right: 0; } /* 同上，量出来 9 才是 10 */
 .remote-head .side-count + .caret { margin-right: 0; }
 /* 服务器收纳里那台机器的标题行（`ug2478@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
-.side-subhead .side-count { margin-right: 11px; }
+.side-subhead .side-count { margin-right: 12px; } /* 2026-08-23 行去掉 1px 边框后补 1 */
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。
    **它比正文行距还松**——正在写的东西要比读的东西更宽松 */
@@ -4191,19 +4191,35 @@ pre {
  * 勾选框在名字之后（作者要的位置）；标题占满剩余宽度，
  * 于是无论机器名多长，勾选框都贴在右边同一列上。
  */
+/**
+ * 机器那一行**与项目那一行同一副几何**（2026-08-23 作者：「图标+IP 也应该学项目那一行」）：
+ * 外面 `.proj-head` 那样留 8px，里面按 `.row` 的内距 / 高度 / 圆角 / 悬停 / 展开底色来。
+ * 此前它是「分区小标题」的样式：没图标、左缘差 7px、字淡一档、展开时没有底色——一列扫下来是两种行。
+ */
 .side-subhead-row {
   display: flex;
   align-items: center;
   gap: var(--dawn-space-1);
-  padding-right: 0;
+  margin: 0 var(--dawn-space-3);
+  padding-left: 8px;
 }
 
 .side-subhead-row .side-subhead {
   flex: 1 1 auto;
   min-width: 0;
+  margin: 0;
+  gap: var(--dawn-space-1);
+  min-height: var(--dawn-row-h);
+  padding: 5px var(--dawn-space-3);
+  border-radius: var(--dawn-radius-row);
+  border: 0; /* `.btn` 自带 1px 透明边，会让三角比项目行的偏 1px */
+  color: var(--dawn-text-1);
 }
-/* 机器那一行的勾选框（多选时）：右缘落到时间那一列（188 @ 224）——2026-08-22 作者要的 */
-.side-subhead-row .sess-check { margin-right: 36px; }
+.side-subhead-row .side-subhead:hover { background: var(--dawn-row-hover); }
+.side-subhead-row .side-subhead[aria-expanded="true"] { background: var(--dawn-row-active); }
+.side-subhead-row .side-subhead .row-icon { color: var(--dawn-text-2); }
+/* 机器那一行的勾选框（多选时）：右缘落到时间那一列（188 @ 224）——2026-08-22 作者要的；行外已留 12，这里再 24 */
+.side-subhead-row .sess-check { margin-right: 24px; }
 
 /**
  * 忙着时那一行提示：**回车插队 / Cmd+回车排队**（2026-08-15）。

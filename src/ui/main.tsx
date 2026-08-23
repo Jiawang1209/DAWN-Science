@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 import { App } from "./App.js"
 import { ErrorBoundary } from "./ErrorBoundary.js"
 import { loadTheme } from "./state/theme.js"
+import { loadAccent } from "./state/accent.js"
 import { loadSidebar } from "./state/sidebar.js"
 import { loadFileTree, loadRightDock } from "./state/right-dock.js"
 import { loadLang } from "./i18n/index.js"
@@ -16,6 +17,7 @@ import "./styles.css"
  * 换来的是 `tokens.css` 里只有一份暗色种子。
  */
 loadTheme()
+loadAccent()
 
 /**
  * 侧栏的宽度与折叠**也在第一帧之前读回**（2026-08-13）。

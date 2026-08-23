@@ -614,13 +614,13 @@ pre {
 /**
  * **正在等模型回话的那一段。**
  *
- * 用 `--dawn-success` 而不是强调色：它与「这段会话是活的」是同一个意思，
+ * 用 `--dawn-live`（跟主题色走）：它与「这段会话是活的」是同一个意思，
  * 而那个绿在本项目里已经代表这件事（远端连接的 `alive` 也是它）。
  */
-.sess-when.running { color: var(--dawn-success); }
+.sess-when.running { color: var(--dawn-live); }
 
 /* 远端连接那一行仍然写状态词——**那三个词是作者 2026-08-16 定的** */
-.state.alive { color: var(--dawn-success); }
+.state.alive { color: var(--dawn-live); }
 .state.exited { color: var(--dawn-text-3); }
 .state.starting { color: var(--dawn-warning); }
 
@@ -734,7 +734,7 @@ pre {
   font-size: 11px;
 }
 .run.err .status { color: var(--dawn-danger); }
-.prov.ok { color: var(--dawn-success); }
+.prov.ok { color: var(--dawn-live); }
 .prov.partial { color: var(--dawn-warning); }
 
 /* ── 对话 ───────────────────────────────────────────────────────── */
@@ -1978,7 +1978,7 @@ pre {
 
 /** 视觉服务右上那颗「已就绪」。绿的与「活着」同一支（会话行、远端连接都是它） */
 .vision-ready {
-  color: var(--dawn-success);
+  color: var(--dawn-live);
   font-size: var(--dawn-fs-meta);
 }
 
@@ -3086,7 +3086,7 @@ pre {
   flex: 0 0 auto;
   background: var(--dawn-text-3);
 }
-.remote-row[data-state="ready"] .remote-dot { background: var(--dawn-success); }
+.remote-row[data-state="ready"] .remote-dot { background: var(--dawn-live); }
 .remote-row[data-state="connecting"] .remote-dot { background: var(--dawn-accent); }
 .remote-row[data-state="disconnected"] .remote-dot { background: var(--dawn-danger); }
 .remote-label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -4176,7 +4176,7 @@ pre {
  * 扫一眼就知道它们说的是同一件事。挂在既有的 `data-state` 上，不新加类。
  */
 .remote-row[data-state="ready"] .remote-status {
-  color: var(--dawn-success);
+  color: var(--dawn-live);
 }
 
 /** 断了写 `exited`，用危险色——与「连着是绿的」成对，一眼分得开 */
@@ -4331,7 +4331,7 @@ pre {
 /* 会话行行首那个点（2026-08-23 作者：「-」太小，改成点，照的是他给的截图）：伪元素画，不进文本；在跑的那段绿，其余淡灰 */
 .sess-item .sess .name::before,
 .sess-item .task-row > .name::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-right: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); align-self: center; }
-.sess-item[data-running="1"] .sess .name::before { background: var(--dawn-success); }
+.sess-item[data-running="1"] .sess .name::before { background: var(--dawn-live); }
 .sess-title {
   display: block;
   min-width: 0;
@@ -5327,7 +5327,7 @@ pre {
   background: var(--dawn-fill-3);
   color: var(--dawn-text-2);
 }
-.ra-state-bound { color: var(--dawn-success); }
+.ra-state-bound { color: var(--dawn-live); }
 .ra-state-stale { color: var(--dawn-danger); }
 .ra-state-logging_in { color: var(--dawn-accent); }
 .ra-login { display: flex; gap: var(--dawn-space-4); align-items: flex-start; }
@@ -5495,7 +5495,7 @@ pre {
   line-height: 16px;
   font-weight: normal;
 }
-.tag-model { border-color: var(--dawn-success); color: var(--dawn-success); }
+.tag-model { border-color: var(--dawn-live); color: var(--dawn-live); }
 .tag-manual { border-color: var(--dawn-warning); color: var(--dawn-warning); }
 .tag-off { border-color: var(--dawn-stroke-3); color: var(--dawn-text-3); }
 .skill-row-actions .row-more { opacity: 1; color: var(--dawn-text-3); }
@@ -5924,7 +5924,7 @@ pre {
 .session-tab:hover { color: var(--dawn-text-2); background: transparent; }
 .session-tab.current { color: var(--dawn-text-1); border-bottom-color: var(--dawn-accent); }
 .session-tab-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); flex: 0 0 auto; }
-.session-tab[data-running="1"] .session-tab-dot { background: var(--dawn-success); }
+.session-tab[data-running="1"] .session-tab-dot { background: var(--dawn-live); }
 .session-tab[data-unread="1"] .session-tab-dot { background: var(--dawn-accent); }
 .session-tab-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-ui-size); text-align: left; }
 .session-tab-new { flex: 0 0 auto; margin-bottom: 4px; color: var(--dawn-text-3); }
@@ -5940,3 +5940,26 @@ pre {
 input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); }
 /* 勾选框放大到与 `sm` 按钮一个高（2026-08-23 作者：原来的太小，要正方形、和绿键同高） */
 .settings-body input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }
+
+/* ── 主题色选择（2026-08-23） ───────────────────────────────── */
+.accent-choices { display: flex; align-items: center; gap: var(--dawn-space-2); }
+/* 色块：与 `sm` 片状键同高（26px）；当前那颗外面套一圈主题色环 */
+.accent-swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-full);
+  cursor: pointer;
+  box-shadow: none;
+}
+.accent-swatch.current { box-shadow: 0 0 0 2px var(--dawn-surface-elevated), 0 0 0 4px var(--dawn-accent); }
+.accent-swatch:focus-visible { outline: 2px solid var(--dawn-accent); outline-offset: 2px; }
+/* 自定义那颗：色轮感用四色锥形渐变；里面的原生取色器铺满、透明，点它就弹系统色盘 */
+.accent-custom {
+  display: inline-block;
+  background: conic-gradient(from 0deg, var(--dawn-danger), var(--dawn-warning), var(--dawn-success), var(--dawn-accent), var(--dawn-danger));
+  overflow: hidden;
+}
+.accent-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }

@@ -32,6 +32,7 @@ import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { 关闭图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
+import { $accent, ACCENT_PRESETS, setAccent } from "./state/accent.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -275,9 +276,14 @@ function InterpreterField({
   )
 }
 
+/** 预置色的名字走静态 `t`，让 i18n 的孤儿扫描看得见它们 */
+const 预置色名 = (n: string): string =>
+  ({ 绿: t("绿"), 蓝: t("蓝"), 紫: t("紫"), 橙: t("橙"), 粉: t("粉"), 灰: t("灰") })[n] ?? n
+
 export function AppearancePanel() {
   const theme = useStore($theme)
   const lang = useStore($lang)
+  const accent = useStore($accent)
 
   return (
     <Section>
@@ -348,6 +354,37 @@ export function AppearancePanel() {
               {t(o.label)}
             </Button>
           ))}
+        </div>
+      </Row>
+      {/**
+        * **主题色**（2026-08-23 作者要的：「一键改为其他颜色」）。
+        * 六个预置 + 系统取色器；选的瞬间整屏就变（种子只有一个）。
+        * 「活着」跟着它，「对错」仍是红绿——见 state/accent.ts 头注。
+        */}
+      <Row name={t("主题色")} desc={t("主动作、选中态与正在运行的标记都用它。")}>
+        <div className="accent-choices" role="radiogroup" aria-label={t("强调色选择")}>
+          {ACCENT_PRESETS.map((o) => (
+            <button
+              key={o.hex}
+              type="button"
+              className={`accent-swatch${accent === o.hex ? " current" : ""}`}
+              style={{ background: o.hex }}
+              role="radio"
+              aria-checked={accent === o.hex}
+              aria-label={预置色名(o.name)}
+              title={预置色名(o.name)}
+              onClick={() => setAccent(o.hex)}
+            />
+          ))}
+          {/* 自定义：原生取色器——macOS 弹系统色盘；它的值永远是六位小写十六进制 */}
+          <label className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`} title={t("自定义")}>
+            <input
+              type="color"
+              value={accent}
+              aria-label={t("自定义强调色")}
+              onChange={(e) => setAccent(e.target.value)}
+            />
+          </label>
         </div>
       </Row>
     </Section>

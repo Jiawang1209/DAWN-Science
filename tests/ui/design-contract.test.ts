@@ -261,7 +261,7 @@ describe("设计契约 · 表单控件一律走 .control", () => {
      * 所以这条规则要防的那个洞（退回 Chromium 默认环、取操作系统强调色）
      * 在这里不存在——它本来就该用系统那一套。
      */
-    const 非文本录入 = /type=["'](checkbox|radio)["']/
+    const 非文本录入 = /type=["'](checkbox|radio|color)["']/ // color：原生取色器，自己画不了聚焦环（2026-08-23）
     for (const f of tsxFiles()) {
       const lines = read(f).split("\n")
       const bad: string[] = []

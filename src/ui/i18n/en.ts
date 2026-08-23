@@ -1145,4 +1145,15 @@ export const EN: Readonly<Record<string, string>> = {
   // 2026-08-23 审查：漏掉 t() 的几句
   "文件较大，只显示了前 {0}（共 {1}）": "The file is large; only the first {0} shown (of {1})",
   "删除会话": "Trash session",
+  "主题色": "Accent color",
+  "主动作、选中态与正在运行的标记都用它。": "Used for primary actions, selection and running indicators.",
+  "绿": "Green",
+  "蓝": "Blue",
+  "紫": "Purple",
+  "橙": "Orange",
+  "粉": "Pink",
+  "灰": "Gray",
+  "自定义": "Custom",
+  "自定义强调色": "Custom accent color",
+  "强调色选择": "Accent color choices",
 }

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 主题色：外观里一键换色；「活着」跟主题色、「对错」固定红绿
+
+- **Type**: feat
+- **Motivation**: 作者：绿色应当是可选的，外观里放一个颜色选择器一键换；并定案「活的东西跟着你，对错还是红绿」。
+- **What**: `tokens.css` 加 `--theme-user-accent / -dark / --theme-user-on-accent / -dark` 四个种子，`--theme-accent` 与 `--dawn-on-accent` 从它们派生，新令牌 `--dawn-live`；`styles.css` 里 10 处「活着」（会话呼吸点、标签页点、running 时间、服务器绿点、已绑定、`ok`）由 `--dawn-success` 改 `--dawn-live`，18 处「对错」不动。新文件 `state/accent.ts`（存取、行内样式、相对亮度 / 暗色变体 / 按钮字色）；`AppearancePanel` 加「主题色」一行：六个预置 + 原生取色器；`main.tsx` 启动时 `loadAccent()`。默认绿不写行内样式，保住手调的暗色 `#19c37d`。规格 `specs/2026-08-23-主题色-design.md`，CLAUDE.md 加入口。
+- **Impact**: 默认外观一个像素不变（视觉基线 10 张未动）；换色后整屏跟随，diff / 任务板 / 传输的红绿不受影响。设计契约：`type="color"` 加入非文本录入的放行。
+- **Verification**: `tests/ui/accent.test.ts` 5 绿；`e2e/accent.spec.ts` 2 绿（含重载持久与浅色换深字）；tests/ui 516 绿；视觉基线 10/10；全量见提交。
+
 ### 2026-08-23 — 项目收纳的多选改成与服务器收纳同一套
 
 - **Type**: fix

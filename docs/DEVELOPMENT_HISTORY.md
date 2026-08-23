@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 设置里的勾选框放大到与绿键同高
+
+- **Type**: refactor
+- **Motivation**: 作者：对勾框太小，要正方形、与绿色圆角键同高。
+- **What**: `.settings-body input[type=checkbox]` 22×22；远程助理与 MCP 行改为垂直居中对齐（此前 baseline 对齐会把旁边的按钮压下去）。
+- **Impact**: 仅设置页样式。
+- **Verification**: 探针截图两处；mcp / remote-assistant / skills e2e 与视觉基线绿。
+
 ### 2026-08-23 — 远程助理：卡片与其它设置页同宽；按钮绿色片状不拉满
 
 - **Type**: fix

@@ -4249,6 +4249,9 @@ pre {
   cursor: pointer;
 }
 
+/* MCP 行里按钮与勾选框一齐居中（勾选框放大后 baseline 对齐会把「删掉」压下去） */
+.skill-meta:has(.mcp-switch) { align-items: center; }
+
 .mcp-secret {
   display: flex;
   align-items: center;
@@ -5342,7 +5345,7 @@ pre {
 .ra-actions { display: flex; gap: var(--dawn-space-2); align-items: center; }
 .ra-toggles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-2); }
 .ra-toggle { display: flex; align-items: flex-start; gap: var(--dawn-space-2); cursor: pointer; }
-.ra-toggle input { margin-top: 0.2em; }
+.ra-toggle { align-items: center; }
 
 /* ── 提示词增强（2026-08-21） ─────────────────────────────────── */
 .enhance-control { position: relative; display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto; }
@@ -5919,3 +5922,5 @@ pre {
 
 /* 勾选框一律绿（2026-08-23 作者：设置里的对号框都换成绿色） */
 input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); }
+/* 勾选框放大到与 `sm` 按钮一个高（2026-08-23 作者：原来的太小，要正方形、和绿键同高） */
+.settings-body input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }

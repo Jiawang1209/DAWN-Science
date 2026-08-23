@@ -55,6 +55,7 @@ import {
   type KernelRow,
 } from "./Settings.js"
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
+import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则 } from "../files/mentions.js"
 import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
@@ -177,6 +178,7 @@ import {
   setRightDockWidth,
   RIGHT_DOCK_DEFAULT,
   $跑着的会话,
+  $未读,
   标记在跑,
   标未读,
   RIGHT_DOCK_MAX,
@@ -211,6 +213,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const projects = useStore($projects)
   const sessions = useStore($sessions)
   const tempSessions = useStore($tempSessions)
+  const 跑着的会话 = useStore($跑着的会话)
+  const 未读的 = useStore($未读)
   const runs = useStore($runs)
   const runDetail = useStore($runDetail)
   const provenance = useStore($provenance)
@@ -3713,6 +3717,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </div>
           ) : session ? (
             <>
+              {/* 同一处（同一个项目文件夹 / 同一台服务器）的会话横着排一行（2026-08-23 作者要的）；散的会话没有「同一处」，不画 */}
+              {(() => {
+                const 远端 = session.remote?.connectionId
+                const 项目 = projects.find((p) => p.projectId === session.projectId)
+                if (!远端 && (!项目 || 项目.temporary)) return null
+                const 同处 = sessions.filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
+                return (
+                  <SessionTabs
+                    tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId) }))}
+                    current={session.sessionId}
+                    onPick={(id) => {
+                      标未读(id, false)
+                      setActiveSessionId(id)
+                    }}
+                    onNew={
+                      远端
+                        ? () => {
+                            const c = connections.find((x) => x.id === 远端)
+                            if (c) void startRemoteSession({ id: c.id, label: c.label })
+                          }
+                        : 项目
+                          ? () => void 新建任务({ workspace: 项目.workspace }).catch(fail)
+                          : undefined
+                    }
+                  />
+                )
+              })()}
               <ConversationView
                 session={session}
                 items={items}

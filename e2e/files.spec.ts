@@ -335,14 +335,16 @@ test("**切走再切回来，树还展开着、文件还选着**", async ({ dawn
   await expect(page.locator(".proj-list .proj-item")).toHaveCount(2, { timeout: 30_000 })
   // 项目名单 5 s 一拉；等它知道乙这个项目再点（点了靠它找 projectId）
   await page.waitForTimeout(5_500)
-  await page.locator(".proj-list .proj-item .row", { hasText: "dawn-tree-memory-乙" }).click()
-  await page.locator(".proj-session-list .sess-item .row").first().click()
+  // 2026-08-23 起文件夹各自展开（甲不再被乙顶收起），所以会话要在乙那一格里点，不能 `.first()`
+  const 乙格 = page.locator(".proj-list .proj-item", { hasText: "dawn-tree-memory-乙" })
+  await 乙格.locator(".proj-head .row").click()
+  await 乙格.locator(".proj-session-list .sess-item .row").first().click()
   await expect(树.getByRole("button", { name: /^别的\.md/ })).toBeVisible({ timeout: 30_000 })
   await expect(树.getByRole("button", { name: /^目标\.md/ })).toHaveCount(0)
 
   // 切回甲：两层还展开着、目标还选着、预览还是它
-  await page.locator(".proj-list .proj-item .row", { hasText: "workspace" }).click()
-  await page.locator(".proj-session-list .sess-item .row").first().click()
+  const 甲格 = page.locator(".proj-list .proj-item", { hasText: "workspace" })
+  await 甲格.locator(".proj-session-list .sess-item .row").first().click()
   await expect(树.getByRole("button", { name: /^目标\.md/ }), "切回来树塌了").toBeVisible({ timeout: 30_000 })
   await expect(树.locator(".tree-row.active", { hasText: "目标.md" })).toHaveCount(1)
   await expect(page.locator(".file-preview")).toContainText("目标")

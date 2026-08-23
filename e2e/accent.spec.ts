@@ -113,3 +113,34 @@ test("**取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift �
   await page.keyboard.press("Escape")
   await expect(page.getByRole("dialog", { name: "取色器" })).toHaveCount(0)
 })
+
+test("**系统色盘也带信息板**：开着时实时显示色值，C 复制、Shift 切格式、Esc 收板", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await 进设置(page, "外观")
+  // 触发 onClick 但拦掉默认动作——真弹出系统色盘的话 Playwright 就驱动不了了
+  await page.getByLabel("自定义强调色").evaluate((el) => {
+    el.addEventListener("click", (e) => e.preventDefault(), { once: true })
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }))
+  })
+  const 板 = page.locator(".accent-liveboard")
+  await expect(板).toBeVisible()
+  await expect(板).toContainText("按 C 复制颜色值")
+  await expect(板).toContainText("按 Shift 切换 RGB/HEX")
+  await expect(板.locator("code")).toHaveText("#10a37f")
+  await page.keyboard.press("Shift")
+  await expect(板.locator("code")).toHaveText("rgb(16, 163, 127)")
+  await page.keyboard.press("c")
+  await expect(板.locator("code")).toHaveText("已复制")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("rgb(16, 163, 127)")
+  // 色盘里拖颜色 = input 持续 change：板上的值实时跟
+  await page.getByLabel("自定义强调色").evaluate((el) => {
+    const i = el as HTMLInputElement
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!
+    set.call(i, "#7c5cff")
+    i.dispatchEvent(new Event("change", { bubbles: true }))
+  })
+  await expect(板.locator("code")).toHaveText("rgb(124, 92, 255)")
+  await page.keyboard.press("Escape")
+  await expect(板).toHaveCount(0)
+})

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-24 — 主题色两行布局；系统色盘也带信息板
+
+- **Type**: feat
+- **Motivation**: 作者定的布局：上一行预置色；下一行系统色盘 + 屏幕取色器 + 颜色值。并且系统色盘打开时也要有取色器那块信息板（实时色值、按 C 复制、按 Shift 切 RGB/HEX）。
+- **What**: `.accent-choices` 拆成两个 `.accent-row`；色盘点开时色块下浮 `.accent-liveboard`（与取色器面板同一副壳）：在色盘里拖颜色，板上的值实时跟；C 复制、Shift 切格式、Esc 或点回界面收板。
+- **Impact**: 仅外观一行。
+- **Verification**: accent e2e 5 绿连跑两轮（合成 click 预挂 preventDefault，不真弹系统面板）；视觉基线 10/10；tests/ui 517。
+
 ### 2026-08-24 — 主题色：系统色盘拿回来，与放大镜取色器并排
 
 - **Type**: fix

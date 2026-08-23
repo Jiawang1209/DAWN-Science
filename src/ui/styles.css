@@ -5942,7 +5942,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .settings-body input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }
 
 /* ── 主题色选择（2026-08-23） ───────────────────────────────── */
-.accent-choices { display: flex; align-items: center; gap: var(--dawn-space-2); }
+/* 两行（2026-08-24 作者定的）：上行预置色，下行系统色盘 + 吸管 + 颜色值。右对齐与设置行的控件列一致 */
+.accent-choices { display: flex; flex-direction: column; align-items: flex-end; gap: var(--dawn-space-2); }
+.accent-row { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /* 色块：与 `sm` 片状键同高（26px）；当前那颗外面套一圈主题色环 */
 .accent-swatch {
   position: relative;
@@ -5970,6 +5972,25 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .accent-choices .accent-value[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
 .accent-copy { width: 26px; height: 26px; }
 .accent-dropper-btn { width: 26px; height: 26px; }
+/* 系统色盘开着时浮在色块下面的信息板：与取色器面板同一副壳 */
+.accent-liveboard {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-tooltip);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  padding: var(--dawn-space-2);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-float);
+  pointer-events: none;
+}
+.accent-custom { position: relative; overflow: visible; }
 .accent-tip {
   position: absolute;
   top: calc(100% + 6px);

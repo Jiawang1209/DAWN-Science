@@ -134,7 +134,7 @@ test("**活动洞察数的是真事**", async ({ dawn }) => {
  * 「对齐」的事实形式是**几何**：几行图例的同一列，左缘要在同一条竖线上。
  * 只看「有没有那几个字」是验不出对齐的——上一版用 flex 时字也都在。
  */
-test("**饼图占一半、图例在下面且列对齐**", async ({ dawn }) => {
+test("**饼图与图例左右并排、按项目在按模型下面、图例列对齐**（2026-08-23 作者定的版面）", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
@@ -144,35 +144,32 @@ test("**饼图占一半、图例在下面且列对齐**", async ({ dawn }) => {
   await 进用量(page)
 
   const m = await page.evaluate(() => {
-    const 半 = document.querySelector(".usage-half") as HTMLElement
-    const 饼块 = 半.children[0] as HTMLElement
-    const 排行块 = 半.children[1] as HTMLElement
+    const 栈 = document.querySelector(".usage-stack") as HTMLElement
+    const 按模型 = 栈.children[0] as HTMLElement
+    const 按项目 = 栈.children[1] as HTMLElement
     const svg = document.querySelector(".usage-pie") as SVGElement
     const 图例 = document.querySelector(".usage-legend-list") as HTMLElement
-    const 数们 = [...document.querySelectorAll(".usage-legend-num")].map(
-      (e) => e.getBoundingClientRect().left,
-    )
-    const 名们 = [...document.querySelectorAll(".usage-legend-name")].map(
-      (e) => e.getBoundingClientRect().left,
-    )
+    const 数们 = [...document.querySelectorAll(".usage-legend-num")].map((e) => e.getBoundingClientRect().left)
+    const 名们 = [...document.querySelectorAll(".usage-legend-name")].map((e) => e.getBoundingClientRect().left)
     return {
-      整宽: 半.getBoundingClientRect().width,
-      饼块宽: 饼块.getBoundingClientRect().width,
-      排行块左: 排行块.getBoundingClientRect().left,
-      饼块右: 饼块.getBoundingClientRect().right,
+      饼右: svg.getBoundingClientRect().right,
+      饼顶: svg.getBoundingClientRect().top,
       饼底: svg.getBoundingClientRect().bottom,
+      图例左: 图例.getBoundingClientRect().left,
       图例顶: 图例.getBoundingClientRect().top,
+      按模型底: 按模型.getBoundingClientRect().bottom,
+      按项目顶: 按项目.getBoundingClientRect().top,
       数们,
       名们,
     }
   })
 
-  // ① 两块各占一半（各自不少于四成，且左右分开）
-  expect(m.饼块宽 / m.整宽, "饼图那一块没占到一半").toBeGreaterThan(0.4)
-  expect(m.排行块左, "两块叠在一起了").toBeGreaterThanOrEqual(m.饼块右 - 1)
+  // ① 图例在饼图**右边**，且顶部落在饼图的高度范围内（并排，不是换行）
+  expect(m.图例左, "图例没在饼图右边").toBeGreaterThanOrEqual(m.饼右 - 1)
+  expect(m.图例顶, "图例掉到饼图下面去了").toBeLessThan(m.饼底)
 
-  // ② 图例在饼图**下面**，不是右边
-  expect(m.图例顶, "图例还在饼图旁边").toBeGreaterThanOrEqual(m.饼底 - 1)
+  // ② 「按项目」在「按模型」下面
+  expect(m.按项目顶, "按项目没在按模型下面").toBeGreaterThanOrEqual(m.按模型底 - 1)
 
   /**
    * ③ 列对齐。**只有一行时这一条什么也证明不了**，所以显式跳过并说清楚——
@@ -182,10 +179,6 @@ test("**饼图占一半、图例在下面且列对齐**", async ({ dawn }) => {
     expect(Math.max(...m.数们) - Math.min(...m.数们), "token 那一列没对齐").toBeLessThanOrEqual(1)
     expect(Math.max(...m.名们) - Math.min(...m.名们), "名字那一列没对齐").toBeLessThanOrEqual(1)
   }
-
-  // ④ 另一半是「按项目」，且数得出东西
-  await expect(page.getByRole("heading", { name: "按项目" })).toBeVisible()
-  await expect(page.locator(".usage-rank li").first()).toBeVisible()
 })
 
 /**

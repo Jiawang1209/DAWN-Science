@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 美化②：文字只有四档（标题 18 / 小标题 14 / 正文 13 / 次要 12）
+
+- **Type**: refactor
+- **Motivation**: 美化计划第二项。`styles.css` 里有 27 种字号，其中 14/15/16/20/1rem/1.25rem 全是「标题」的不同写法；字重 `600` 与 `--dawn-weight-semibold` 混写。切屏时标题忽大忽小。
+- **What**: `tokens.css` 新增 `--dawn-fs-title / -sub / -meta`（正文沿用 `--dawn-ui-size`）。屏标题（设置页、Skills、欢迎页、用量大数字、md h1）归 18；卡/节标题（set-section、confirm、team-name、会话标题、ra-card、侧栏分区标题、usage-block、md h2）归 14 semibold；命令面板输入框、工作区片、远端行、所有裸 13px 归正文；裸 12px 与 `.turn .who` 归次要。字重字面量全部换令牌。放行：11px 徽章、≤10px 图表刻度、em 相对值、`.sidebar .row` 14px（量自 WorkBuddy）。`design-contract.test.ts` 新增两条扫描把这条规则守住。
+- **Impact**: 全局文字层级；视觉基线 10 张全部重存。
+- **Verification**: `tests/ui` 509 绿（含新扫描）；视觉基线重存后连验两轮 10/10（命令面板暗色照老法子拷 `-actual`）；全量 e2e 424：421 绿 + 3 条过期断言（`@` 菜单量在弹出动画中途、下载目录旧文案、用量旧版面）改正后各自复验绿。
+
 ### 2026-08-23 — 设置里的勾选框放大到与绿键同高
 
 - **Type**: refactor

@@ -36,6 +36,8 @@ test("**`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的�
   await page.getByPlaceholder(/今天帮你做些什么/).fill("看 @")
   const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
   await expect(菜单).toBeVisible()
+  // 浮层有 120ms 的弹出缩放——动画没播完量到的是缩小的那一帧（2026-08-23 偶发红过一次：x 差 2px）
+  await 菜单.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)))
   const 卡 = (await page.locator(".composer-box").boundingBox())!
   const 菜 = (await 菜单.boundingBox())!
   expect(Math.round(菜.x)).toBe(Math.round(卡.x))

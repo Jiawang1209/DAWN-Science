@@ -820,14 +820,14 @@ test.describe("下载落点", () => {
      * 而它同时说清了默认是**系统那个**下载文件夹
      * （mac 上是 `~/Downloads`，Windows 上是它自己的那个）。
      */
-    await expect(page.getByText("没设过，用的是系统的下载文件夹")).toBeVisible()
+    await expect(page.getByText("未设置，使用系统下载文件夹")).toBeVisible()
     // 没设过时不给「恢复系统默认」——点了什么都不会变的按钮比没有更坏
     await expect(page.getByRole("button", { name: "恢复系统默认", exact: true })).toHaveCount(0)
 
     await page.getByRole("button", { name: "另选一处", exact: true }).click()
     await expect(page.getByText(落点, { exact: false })).toBeVisible({ timeout: 30_000 })
     // 设过之后那句「没设过」必须消失，且「恢复系统默认」出现
-    await expect(page.getByText("没设过，用的是系统的下载文件夹")).toHaveCount(0)
+    await expect(page.getByText("未设置，使用系统下载文件夹")).toHaveCount(0)
     await expect(page.getByRole("button", { name: "恢复系统默认", exact: true })).toBeVisible()
 
     // ── 一路走到磁盘：加一台 → 开对话 → 下一个文件

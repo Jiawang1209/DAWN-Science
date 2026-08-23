@@ -72,6 +72,15 @@ test("**输入框按 `/`：只有技能与子 agent 的菜单，边打边筛；/
   await 菜.getByRole("option", { name: /writing-skills/ }).click()
   await expect(框).toHaveValue("/skill:writing-skills ")
 
+  // **子 agent 的另一条路在菜单里看得见**（2026-08-23 作者：「我现在好像没有把 agent 当作 skill 去做呢？」）：
+  // 行上写着 `/skill:名`；打 `/skill:stat` 能筛到它，回车写的是 /skill:名 而不是派出去
+  await 框.fill("/统计顾问")
+  await expect(菜.getByRole("option", { name: /统计顾问/ })).toContainText("/skill:stat-consultant")
+  await 框.fill("/skill:stat-consultant")
+  await expect(菜.getByRole("option", { name: /统计顾问/ })).toBeVisible()
+  await 框.press("Enter")
+  await expect(框).toHaveValue("/skill:stat-consultant ")
+
   await 框.fill("/skill:stat-consultant 我的数据是计数，该用什么模型")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect.poll(() => JSON.stringify(requests).includes("应用统计顾问"), { timeout: 30_000 }).toBe(true)

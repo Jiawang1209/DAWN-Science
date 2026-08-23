@@ -16,8 +16,14 @@ export function 在打斜杠(draft: string): boolean {
   return /^\/[^\s]*$/.test(draft)
 }
 
-export function 斜杠选完(item: SlashItem): string {
-  return item.kind === "skill" ? `/skill:${item.name} ` : item.kind === "team" ? "/team " : `用子 agent「${item.name}」来做：`
+/**
+ * 选完写什么进草稿。子 agent 有两条路（2026-08-22 作者定的「一份两用」，2026-08-23 才在这份菜单里露出来）：
+ * 打的是 `/skill:…` 就写 `/skill:名 `（把那套规矩叫进主对话），否则写「用子 agent「名」来做：」（派出去）。
+ */
+export function 斜杠选完(item: SlashItem, draft = ""): string {
+  if (item.kind === "team") return "/team "
+  if (item.kind === "skill" || /^\/skill:/i.test(draft)) return `/skill:${item.name} `
+  return `用子 agent「${item.name}」来做：`
 }
 
 export function 筛斜杠(items: readonly SlashItem[], draft: string): SlashItem[] {
@@ -65,11 +71,24 @@ export function SlashMenu({
         >
           <span className="slash-kind tag">{x.kind === "skill" ? t("技能") : x.kind === "team" ? t("团队") : t("子 agent")}</span>
           <span className="slash-name">{x.title ?? x.name}</span>
-          {x.title ? <span className="slash-slug">{x.kind === "skill" ? `/skill:${x.name}` : x.kind === "team" ? "/team" : x.name}</span> : x.kind === "skill" ? <span className="slash-slug">{`/skill:${x.name}`}</span> : null}
+          {x.kind === "skill" ? (
+            <span className="slash-slug">{`/skill:${x.name}`}</span>
+          ) : x.kind === "team" ? (
+            x.title ? <span className="slash-slug">/team</span> : null
+          ) : (
+            // 子 agent：两个写法都摆出来——名字是派出去，`/skill:名` 是叫进主对话（同一份文件，两种用法）
+            <span className="slash-slug">
+              {x.name}
+              <span className="slash-slug-alt">{` · /skill:${x.name}`}</span>
+            </span>
+          )}
           <span className="slash-desc">{x.description}</span>
         </Button>
       ))}
-      <p className="hint slash-foot">{tf("↑↓ 挑，回车选；{0}", t("⌘K 是命令面板"))}</p>
+      <p className="hint slash-foot">
+        {/^\/skill:/i.test(draft) ? t("回车把这套规矩叫进主对话（/skill:）") : t("回车：技能叫进主对话，子 agent 派出去；打 /skill:名 可把子 agent 当技能叫进来")}
+        {` · ${t("⌘K 是命令面板")}`}
+      </p>
     </div>
   )
 }

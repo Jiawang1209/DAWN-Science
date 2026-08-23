@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-23 — `/` 菜单里把子 agent 的「当技能叫进来」那条路露出来
+
+- **Type**: fix
+- **Motivation**: 作者：*「我现在好像没有把 agent 当作 skill 去做呢？」*——2026-08-22 的「一份两用」只在运行时登记了（pi 的技能表里有），`/` 菜单里子 agent 那一行只有「派出去」，`/skill:名` 看不见、选不到。看不见的能力等于不存在。
+- **What**: `slash-menu.tsx`：子 agent 行同时写 `名 · /skill:名`；`斜杠选完(item, draft)` 在草稿以 `/skill:` 开头时写 `/skill:名 `，否则仍是派出去；底部提示改成说清两条路。两张输入卡把草稿传进去。`.slash-slug-alt` 样式。
+- **Impact**: 只改菜单文案与选完写什么；运行时不动。
+- **Verification**: `tests/ui/slash-menu.test.ts` 3 条；`tests/ui` 506 绿；`e2e/subagent-roster.spec.ts` 加了筛 + 回车那一段（第一版 `stat` 筛到了另一个内置 agent，改成全名）；探针截图看过。
+
 ### 2026-08-23 — 团队面板照 dsh-agent-teams 的活动面板重画（分段进度、成员树、任务依赖 DAG）
 
 - **Type**: feat

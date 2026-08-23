@@ -1012,7 +1012,6 @@ export const EN: Readonly<Record<string, string>> = {
   "还没有技能与子 agent": "No skills or subagents yet",
   "没有对上的": "No match",
   "技能": "skill",
-  "↑↓ 挑，回车选；{0}": "↑↓ to move, Enter to pick; {0}",
   "⌘K 是命令面板": "⌘K opens the command palette",
   "子 agent": "Subagents",
   "停用": "Disable",
@@ -1140,4 +1139,8 @@ export const EN: Readonly<Record<string, string>> = {
   "—": "—",
   "{0} 消息": "{0} messages",
   "拆解 · 派发 · 汇总": "Break down · assign · collect",
+
+  // `/` 菜单：子 agent 两条路（2026-08-23）
+  "回车把这套规矩叫进主对话（/skill:）": "Enter brings this rulebook into the main chat (/skill:)",
+  "回车：技能叫进主对话，子 agent 派出去；打 /skill:名 可把子 agent 当技能叫进来": "Enter: a skill joins the main chat, a sub-agent is dispatched; type /skill:name to bring a sub-agent in as a skill",
 }

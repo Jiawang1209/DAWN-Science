@@ -5536,6 +5536,7 @@ pre {
 .slash-item.active { background: var(--dawn-row-hover); }
 .slash-name { font-weight: var(--dawn-weight-medium); white-space: nowrap; }
 .slash-slug { font-family: var(--dawn-font-mono); font-size: 12px; color: var(--dawn-text-3); white-space: nowrap; }
+.slash-slug-alt { color: var(--dawn-text-4); }
 .slash-desc { font-size: 12px; color: var(--dawn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slash-kind { flex: none; }
 .slash-empty, .slash-foot { margin: var(--dawn-space-1) var(--dawn-space-2); }

@@ -4238,7 +4238,7 @@ export function ConversationView({
             </ul>
           ) : null}
           {在打斜杠(draft) && !斜杠关了 ? (
-            <SlashMenu items={斜杠单} draft={draft} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { setDraft(session.sessionId, 斜杠选完(x)); 设斜杠选中(0) }} />
+            <SlashMenu items={斜杠单} draft={draft} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { setDraft(session.sessionId, 斜杠选完(x, draft)); 设斜杠选中(0) }} />
           ) : null}
           {艾特位 ? (
             <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(draft, 艾特位, x.path, x.kind))} />
@@ -4304,7 +4304,7 @@ export function ConversationView({
                 }
                 if (e.key === "Enter" && !e.shiftKey && 列.length) {
                   e.preventDefault()
-                  setDraft(session.sessionId, 斜杠选完(列[Math.min(斜杠选中, 列.length - 1)]!))
+                  setDraft(session.sessionId, 斜杠选完(列[Math.min(斜杠选中, 列.length - 1)]!, draft))
                   设斜杠选中(0)
                   return
                 }
@@ -5729,7 +5729,7 @@ export function EmptyConversation({
                 </ul>
               ) : null}
               {在打斜杠(草稿) && !斜杠关了 ? (
-                <SlashMenu items={斜杠单} draft={草稿} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { 设草稿(斜杠选完(x)); 设斜杠选中(0) }} />
+                <SlashMenu items={斜杠单} draft={草稿} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { 设草稿(斜杠选完(x, 草稿)); 设斜杠选中(0) }} />
               ) : null}
               {艾特位 ? (
                 <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(草稿, 艾特位, x.path, x.kind))} />
@@ -5796,7 +5796,7 @@ export function EmptyConversation({
                     }
                     if (e.key === "Enter" && !e.shiftKey && 列.length) {
                       e.preventDefault()
-                      设草稿(斜杠选完(列[Math.min(斜杠选中, 列.length - 1)]!))
+                      设草稿(斜杠选完(列[Math.min(斜杠选中, 列.length - 1)]!, 草稿))
                       设斜杠选中(0)
                       return
                     }

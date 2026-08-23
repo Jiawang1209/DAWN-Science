@@ -2135,6 +2135,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   /* ── 远程助理（2026-08-21） ── */
   const 载微信状态 = useCallback(() => client.get<WeixinStatus>("weixinGetStatus", {}), [client])
+  /** 扩展三屏的 `load` 记住引用（2026-08-23 审查抓的：内联箭头函数让那三屏的 effect 每次渲染都重拉一遍——后台会话每到一个 token 就打一次） */
+  const 载技能 = useCallback(() => client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {}), [client, projectId])
+  const 载子agent = useCallback(() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {}), [client, projectId])
+  const 载MCP = useCallback(() => client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {}), [client, projectId])
   const 载微信通知 = useCallback(() => client.get<NotifySettings>("weixinGetNotify", {}), [client])
   const 微信可绑的 = useSessionChoices(tasks)
 
@@ -2637,13 +2641,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     树记忆身份.current = 文件面板身份
     const m = 读记忆(文件面板身份, 树根)
     设树记忆(m)
-    // 选中的那个文件也跟着回来——**没有就清掉**，不把上一棵树的文件留在预览里
-    if (m.selected) openFile(m.selected)
-    else {
+    // 选中的那个文件也跟着回来——**没有就清掉**，不把上一棵树的文件留在预览里。
+    // **不经 `openFile`**（2026-08-23 审查抓的：它第一句是「点开文件面板」——切会话会擅自把坞弹出来、房客换成文件）
+    if (m.selected) {
+      setFilePath(m.selected)
+      setFileContent(undefined)
+      const 去哪读 = 文件所在 ? { connectionId: 文件所在.connectionId, path: m.selected } : projectId ? { projectId, path: m.selected } : undefined
+      if (去哪读) client.get<FileContent>("readFile", 去哪读).then(setFileContent).catch(fail)
+    } else {
       setFilePath(undefined)
       setFileContent(undefined)
     }
-  }, [文件面板身份, 树根, openFile])
+  }, [文件面板身份, 树根, client, projectId, 文件所在])
   useEffect(() => {
     记记忆(文件面板身份, 树记忆, 树根)
   }, [文件面板身份, 树记忆, 树根])
@@ -2734,7 +2743,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         进废纸篓={!文件所在}
         {...(传输 ? { 传输 } : {})}
         onCancel={() => {
-          if (传输?.id) void client.get("cancelTransfer", { transferId: 传输.id })
+          if (传输?.id) client.get("cancelTransfer", { transferId: 传输.id }).catch(fail)
         }}
         selected={filePath}
         展开={展开集合}
@@ -2805,7 +2814,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       newTask: 回到初始画面,
       /** **与侧栏那个 × 同一个动作。** 面板里选中的那个会话 */
       deleteSession: () => {
-        const s = sessions.find((x) => x.sessionId === $activeSessionId.get())
+        // 两拨都找（2026-08-23 审查抓的：远端 / 散的会话住在 `tempSessions`，只查 `sessions` 时命令亮着、按下去没反应）
+        const id = $activeSessionId.get()
+        const s = sessions.find((x) => x.sessionId === id) ?? tempSessions.find((x) => x.sessionId === id)
         if (s) askDeleteSession(s)
       },
       abort: () => {
@@ -3575,11 +3586,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 只有自带与全局那些——**那不是错误，是实情**。
              */
             <AgentSkillsView
-              load={() =>
-                client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
-              }
+              load={载技能}
               actions={{
                 setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
+                onChanged: 名册变了,
                 importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
                 deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
                 pickDirectory: () => client.pickDirectory(默认工作区?.path),
@@ -3597,7 +3607,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   count: 子agent名册.length,
                   body: (
             <SubagentsView
-              load={() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {})}
+              load={载子agent}
               actions={{
                 setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
                 importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
@@ -3632,9 +3642,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 没有当前项目时就只有全局那些——那不是错误，是实情。
              */
             <McpView
-              load={() =>
-                client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {})
-              }
+              load={载MCP}
               onTest={(name) =>
                 client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
                   "testMcpServer",
@@ -3722,7 +3730,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 const 远端 = session.remote?.connectionId
                 const 项目 = projects.find((p) => p.projectId === session.projectId)
                 if (!远端 && (!项目 || 项目.temporary)) return null
-                const 同处 = sessions.filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
+                // 远端会话住在 `tempSessions`（2026-08-23 审查抓的：只筛 `sessions` 时远端那一条分栏永远是空的）
+                const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
                 return (
                   <SessionTabs
                     tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId) }))}
@@ -3745,6 +3754,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 )
               })()}
               <ConversationView
+                key={session.sessionId}
                 session={session}
                 items={items}
                 /**
@@ -4197,7 +4207,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               )}
             </div>
             ) : rightDockTenant === "team" ? (
-              <TeamPanel />
+              <TeamPanel key={sessionId} />
             ) : rightDockTenant === "web" ? (
               /**
                 * **网页那一格**（批 1，2026-08-18）。屏幕上这一块几乎是空的——

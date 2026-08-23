@@ -43,6 +43,13 @@
 
 ## 变更日志
 
+### 2026-08-23 — check-beautify 第一批：全面审查修掉 20 条真 bug；样式表去重与暗色修正；分栏等宽
+
+- **Type**: fix
+- **Motivation**: 作者：「开发接近尾声，对所有代码功能做一个全方位的检查和审查」。三路并行审查（界面接线 / 主进程与运行时 / 视觉层），逐条核实后修。
+- **What**: 安全与数据——`fileDiff` 先过守卫（此前能读工作区外文件）、`deletePath` 拒工作区根、硬拒清单堵上 `\rm`、`${HOME}`、`$(…)`、行续接、`find / -delete`、`git push +main`、`git -C … push -f`，`answerPermission` 只认本会话且关会话时未答按拒，关会话中止团队调度器，subagent 工具透传 `signal`，子进程等 stdout 冲完再退，团队迟到结果改用系统发件人、每成员前重读快照，散的对话各自一个临时目录，删项目连已归档一起，`UserFacingError` 回 `invalid_request`。界面——远端会话的分栏从 `tempSessions` 取，命令面板删会话两拨都找，树记忆恢复不经 `openFile`（不再擅自开坞），`ConversationView` / `TeamPanel` 按会话 key，图片-only 的一句可见，已结束会话不推「等回话」，起手卡 / 修改→发送接住失败，定时「每月 / 每 N 天」保留时间，技能屏 `onChanged`，扩展三屏 `load` 记住引用。视觉——11 处同一选择器写两遍的推翻段收回源头，`.model-menu` 坐 elevated，暗色 `--dawn-shadow-composer` 改真影子，`.control:hover` 描边，全局细滚动条，`.attach-menu` 不再被共用块盖掉。会话分栏等宽 11rem。
+- **Verification**: 新增 `permissions.test.ts` 7 条硬拒回归、`backend.test.ts` 3 条（越界 diff、删根、各自目录）；单元 2132 绿；全量 e2e 420 绿 + 1 条 `web-link` 0 ms 起不来的偶发（单跑绿）；视觉基线 10 张重存（diff 只有暗色影子与品牌字色）连验两遍。
+
 ### 2026-08-23 — 对话区顶上的会话分栏（同一项目 / 同一服务器）；`@` 与 `/` 菜单与输入卡同宽
 
 - **Type**: feat

@@ -3754,7 +3754,8 @@ export function ConversationView({
      * 记一笔这种做法，只要多一条发送路径就会漏一次；而「最后一条是用户发言」
      * 是**转录自己说得出来的事实**，哪条路发的都算数。
      */
-    const 转录在等 = 最后?.type === "turn" && 最后.who === "user"
+    // 会话已结束就不等了（2026-08-23 审查抓的：死会话以人的发言收尾会永远转「等回话」、发送键变「停止」）
+    const 转录在等 = 最后?.type === "turn" && 最后.who === "user" && !disabled
     if (等回话 === undefined) {
       if (转录在等 && !喊停过) {
         设等回话(items.length - 1)
@@ -3982,7 +3983,8 @@ export function ConversationView({
                        * 忘了取写权、或者忘了把话回灌进事件流。
                        */
                       onResend: (text: string) => {
-                        onSend(text)
+                        // 失败要出声（2026-08-23 审查抓的：此前不接 promise，发失败就什么都没发生）
+                        void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
                         设位置(-1)
                       },
                     })}
@@ -5562,7 +5564,7 @@ export function EmptyConversation({
                 <Button
                   variant="outline"
                   size="card"
-                  onClick={() => onStart(first, t(o.发出去的话), 工作目录)}
+                  onClick={() => void Promise.resolve(onStart(first, t(o.发出去的话), 工作目录)).catch((e: unknown) => 设开场出错(e instanceof Error ? e.message : String(e)))}
                 >
                   <span className="opener-title">{t(o.标题)}</span>
                   <span className="opener-sub">{t(o.说明)}</span>

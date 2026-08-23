@@ -518,6 +518,7 @@ export type RemoteUpdate = z.infer<typeof RemoteUpdateSchema>
  *
  * **藏在两个文件里的同一个判断，迟早有一个落后于另一个。** 所以它只有一份。
  */
-export function 没说话(item: { type: string; text?: string }): boolean {
-  return item.type === "turn" && !(item.text ?? "").trim()
+export function 没说话(item: { type: string; text?: string | undefined; images?: readonly unknown[] | undefined }): boolean {
+  // 只有图、没有字的那一句也是说了话（2026-08-23 审查抓的：此前在转录里隐形）
+  return item.type === "turn" && !(item.text ?? "").trim() && !(item.images && item.images.length > 0)
 }

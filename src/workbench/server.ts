@@ -14,6 +14,7 @@
  * 先定接口 + Fake，真实现随后（当初 `AgentRuntime` + `FakeRuntime` 即如此）。
  */
 import { z } from "zod"
+import { UserFacingError } from "../errors.js"
 import {
   OPERATIONS,
   WORKBENCH_PROTOCOL_VERSION,
@@ -146,6 +147,8 @@ export class WorkbenchServer {
         // 业务性失败：保留后端指定的错误码与消息
         return this.fail(err.workbenchCode, err.message, false, requestId)
       }
+      // 守卫抛的「在工作区之外」「找不到」这类**本来就是写给人看的**（2026-08-23 审查抓的：此前一律压成「操作执行失败」，界面看不到原因）
+      if (err instanceof UserFacingError) return this.fail("invalid_request", err.message, false, requestId)
       // 意外异常：归一为 internal_error。**原始信息只进日志，不进响应**——
       // 它可能含路径、连接串、密钥片段。Rho 的注释同此：details are not exposed publicly。
       this.onInternalError?.(operation, err)

@@ -80,7 +80,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync } from "node:fs"
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -1717,10 +1717,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 任务上标着「远端」而活跑在本地，是两件事对不上。
        */
       const 远端参数 = connectionId ? await 造远端参数(connectionId) : undefined
+      /**
+       * **没给工作目录的对话各自一个目录**（2026-08-23 审查抓的）：此前传 `undefined` 下去，`起一个会话` 退回临时项目的根——
+       * 所有散的对话共用一个目录，文件互相可见、互相覆盖；而 `setTaskWorkspace(undefined)` 那条路早就是各自一个子目录。两条路现在一样。
+       */
+      const 去处 = workspace ?? (connectionId ? undefined : projects.temporaryWorkspace(要有临时根()))
       const 会话 = await 起一个会话(
         归属.projectId,
         agentId,
-        workspace,
+        去处,
         远端参数?.spec as never,
       )
       远端参数?.认领(会话.sessionId)
@@ -2670,6 +2675,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     fileDiff: async ({ projectId, path }) => {
       const p = projectStore.get(projectId)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      // **先过守卫**（2026-08-23 审查抓的）：此前直接交给 `git diff --no-index`，`../x` 或绝对路径能把工作区外的文件当 diff 读回来
+      resolveInWorkspace(p.workspace, path)
       const 原文 = await fileDiffAgainstHead(p.workspace, path).catch((e: unknown) => {
         throw fault("invalid_request", `算不出 ${path} 的差异：${e instanceof Error ? e.message : String(e)}`)
       })
@@ -2745,6 +2752,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * （你就是那个账号本人），这个不对称是有意的。
        */
       const 全 = resolveInWorkspace(p.workspace, path)
+      // **工作区根本身不许删**（2026-08-23 审查抓的）：守卫允许 `real === root`，`""` / `.` 会把整个工作区丢进废纸篓
+      if (全 === realpathSync(p.workspace)) throw fault("invalid_request", "不能删工作区本身——要删就删里面的东西")
       if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
       await trashItem(全).catch((err: unknown) => {
         throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
@@ -3280,7 +3289,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * **先把活着的会话停掉**，再删记录。反过来的话进程还活着
        * 而我们已经忘了它是谁的——一个没人认领的孤儿进程。
        */
-      for (const rec of sessions.listByProject(projectId)) {
+      // **连已归档的一起**（2026-08-23 审查抓的）：`listByProject` 不列归档的，它们的会话不停、任务不清，行却被 `deleteByProject` 删了——侧栏留一条指向不存在会话的「新任务」
+      const 全部会话 = [...sessions.listByProject(projectId), ...sessions.listArchived().filter((r) => r.projectId === projectId)]
+      for (const rec of 全部会话) {
         if (rec.state !== "exited") await sessions.stop(rec.id).catch(() => {})
         events.forget(rec.id)
         baselines.delete(rec.id)
@@ -3289,7 +3300,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * **先记下有哪些会话，再删**：删完就查不到了，
        * 而任务是按 sessionId 挂着的（T3-a）。
        */
-      const 它的会话 = sessions.listByProject(projectId).map((r) => r.id)
+      const 它的会话 = 全部会话.map((r) => r.id)
       任务库().removeBySessions(它的会话)
       const sessionsDeleted = sessions.deleteByProject(projectId)
       const runsDeleted = runs.deleteByProject(projectId)

@@ -105,7 +105,8 @@ const 今天 = () => new Date().toISOString().slice(0, 10)
 const 空表单 = (agentId: string, 去哪: string): 表单 => ({ name: "", prompt: "", kind: "daily", time: "09:00", at: "", everyMinutes: 60, weekdays: ["MO"], day: 1, everyDays: 2, start: 今天(), permission: "deny-risky", 去哪, agentId })
 const 表单自定义 = (d: 定时摘要): 表单 => ({
   name: d.name, prompt: d.prompt, kind: d.schedule.kind,
-  time: d.schedule.kind === "daily" || d.schedule.kind === "weekly" ? d.schedule.time : "09:00",
+  // 每月 / 每 N 天也有时间（2026-08-23 审查抓的：此前编辑这两种会把时间悄悄改回 09:00）
+  time: d.schedule.kind === "daily" || d.schedule.kind === "weekly" || d.schedule.kind === "monthly" || d.schedule.kind === "everyDays" ? d.schedule.time : "09:00",
   at: d.schedule.kind === "once" ? ISO转本地(d.schedule.at) : "",
   everyMinutes: d.schedule.kind === "interval" ? d.schedule.everyMinutes : 60,
   weekdays: d.schedule.kind === "weekly" ? d.schedule.weekdays : ["MO"],

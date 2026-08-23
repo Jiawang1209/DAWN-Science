@@ -127,7 +127,8 @@ export class 团队调度器 {
         void this.起一轮(teamId, m.name, undefined, 信件文本(信))
         continue
       }
-      const 任务 = 挑就绪任务(team, m.name)
+      // 每个成员前重读一遍（2026-08-23 审查抓的）：上一个成员刚领走的任务，按循环开头那份快照还是「待领」，第二个人会去领同一项
+      const 任务 = 挑就绪任务(this.读(teamId), m.name)
       if (任务) {
         let attemptId = ""
         try {
@@ -200,13 +201,18 @@ export class 团队调度器 {
         } catch (e) {
           丢了 = e instanceof Error ? e.message : String(e)
         }
-      } else if (!结果.ok) {
-        // 送信那一轮挂了：把原因寄给队长，别静默
+      } else if (!结果.ok && mm && mm.status !== "removed") {
+        // 送信那一轮挂了：把原因寄给队长，别静默（成员已被移除就不寄——`发消息` 不认已移除的发件人）
         发消息(t, { from: member, to: "captain", content: `（系统）这一轮处理消息时失败：${结果.error}` }, this.now())
       }
     })
     if (丢了) {
-      this.改(teamId, (t) => 发消息(t, { from: member, to: "captain", content: `（系统）「${member}」迟到的结果被丢弃：${丢了}` }, this.now()))
+      // 系统消息用 `from: "captain"`（2026-08-23 审查抓的）：成员可能已经被移除 / 团队已结束，`发消息` 会因「不是这支团队的人」再抛一次——而这里是 void 调用，抛出去就是 unhandledRejection
+      try {
+        this.改(teamId, (t) => 发消息(t, { from: "captain", to: "captain", content: `（系统）「${member}」迟到的结果被丢弃：${丢了}` }, this.now()))
+      } catch (e) {
+        console.error("[团队] 记不下迟到结果的说明：", e instanceof Error ? e.message : String(e))
+      }
     }
     this.opts.onTurn?.({ team, member, taskId: 任务?.taskId, phase: "end", ok: 结果.ok, ...(结果.error ? { error: 结果.error } : {}) })
     // 它空闲了、任务图变了——再踢

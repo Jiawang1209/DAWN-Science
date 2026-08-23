@@ -138,6 +138,38 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(sessions[0]!.projectId).toBe(pid)
   })
 
+  /** 2026-08-23 审查抓的三条：越界的 diff、删工作区根、散的对话共用一个目录 */
+  it("**fileDiff 不读工作区外的文件**：`../x` 与绝对路径都是 invalid_request", async () => {
+    await 开一段(repo)
+    const pid = await 取项目(repo)
+    for (const path of ["../../etc/hosts", "/etc/hosts"]) {
+      const r = await ctx.server.handle("fileDiff", { projectId: pid, path })
+      expect(r.ok, path).toBe(false)
+      if (!r.ok) expect(r.error.code).toBe("invalid_request")
+    }
+  })
+
+  it("**deletePath 不删工作区本身**：`.` / `./` 都拒（空串契约本身就挡）", async () => {
+    await 开一段(repo)
+    const pid = await 取项目(repo)
+    for (const path of [".", "./"]) {
+      const r = await ctx.server.handle("deletePath", { projectId: pid, path })
+      expect(r.ok, JSON.stringify(path)).toBe(false)
+      if (!r.ok) expect(r.error.message).toMatch(/工作区本身/)
+    }
+    expect(existsSync(join(repo, "seed.txt"))).toBe(true)
+  })
+
+  it("**没给工作目录的两段对话各自一个目录**，不共用临时根", async () => {
+    const a = await 开一段()
+    const b = await 开一段()
+    const store = new SessionStore(ctx.db)
+    const wa = store.get(a)?.workspace
+    const wb = store.get(b)?.workspace
+    expect(wa, "没有 workspace").toBeTruthy()
+    expect(wa).not.toBe(wb)
+  })
+
   it("无租约写入 → conflict，而不是 internal_error", async () => {
     const sid = await 开一段(repo)
 

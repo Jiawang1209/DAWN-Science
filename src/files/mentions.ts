@@ -39,6 +39,8 @@ export function 扫引用(text: string): 引用[] {
   const 出: 引用[] = []
   for (const m of text.matchAll(引用令牌)) {
     const 原 = m[1]!
+    // 粘贴进来的（带标记）不算——见 `粘贴标记`
+    if (原.includes("\u2060")) continue
     // 先剥尾随标点，再剥目录形式的尾 `/`
     const 去标点 = 原.replace(尾随标点, "")
     const path = 去标点.replace(/\/+$/, "")
@@ -83,4 +85,55 @@ export async function 展开引用(text: string, 查: 查路径, host?: string):
   }
   if (refs.length === 0) return { text, refs }
   return { text: `${text}\n\n${refs.map((r) => 引用标记(r, host)).join("\n")}`, refs }
+}
+
+/* ---------- 第二档（学 dsh-at-file）：粘贴的 `@` 不算；文件名过滤 ---------- */
+
+/**
+ * 粘贴标记：零宽的 word-joiner，塞在粘贴进来的每个 `@` 后面。
+ * 屏幕上看不见、草稿一字不变，但识别语法看见它就知道「这不是人打的手势」——
+ * 从别的应用复制来的一段里的 `@alice`、哪怕是真实存在的 `@data/a.csv`，都不开菜单、不进栏、不发给模型。
+ * 发给模型 / 存转录前剥掉。
+ */
+export const 粘贴标记 = "⁠"
+export function 护住粘贴的艾特(text: string): string {
+  return text.replace(/@(?=[^\s@])/g, `@${粘贴标记}`)
+}
+export function 剥掉粘贴标记(text: string): string {
+  return text.replaceAll(粘贴标记, "")
+}
+
+/** 一条文件名过滤规则：精确文件名（不含路径分隔符）或正则；都只看文件名，不看父目录 */
+export interface 文件规则 {
+  kind: "exact" | "regex"
+  pattern: string
+  caseSensitive: boolean
+}
+
+/** 正则写坏了要在存之前就说——这里回错误字样，没错回 undefined */
+export function 规则的毛病(r: 文件规则): string | undefined {
+  if (!r.pattern) return "空的"
+  if (r.kind === "exact" && /[\\/]/.test(r.pattern)) return "精确匹配只认文件名，不能带路径分隔符"
+  if (r.kind === "regex") {
+    try {
+      new RegExp(r.pattern, r.caseSensitive ? "" : "i")
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e)
+    }
+  }
+  return undefined
+}
+
+/** 编成一个判据：这个文件名该不该从 `@` 菜单里滤掉。坏规则跳过（两头都验过，这里只是兜底） */
+export function 编文件规则(rules: readonly 文件规则[]): (name: string) => boolean {
+  const 判 = rules
+    .filter((r) => !规则的毛病(r))
+    .map((r) =>
+      r.kind === "exact"
+        ? r.caseSensitive
+          ? (n: string) => n === r.pattern
+          : (n: string) => n.toLowerCase() === r.pattern.toLowerCase()
+        : ((re) => (n: string) => re.test(n))(new RegExp(r.pattern, r.caseSensitive ? "" : "i")),
+    )
+  return (name) => 判.some((f) => f(name))
 }

@@ -2,7 +2,7 @@
  * 输入卡上 `@` 菜单的纯逻辑（2026-08-23，学自 dsh-at-file）。
  * 识别语法从 `files/mentions.ts` 取，这里只管：光标前是不是在打一个 `@`、选完怎么写回草稿、候选怎么排。
  */
-import { 扫引用 } from "../files/mentions.js"
+import { 扫引用, 粘贴标记 } from "../files/mentions.js"
 
 export interface 艾特位置 {
   /** `@` 所在下标 */
@@ -23,6 +23,8 @@ export function 在打艾特(draft: string, caret: number): 艾特位置 | undef
   if (at < 0) return undefined
   const 中间 = 前.slice(at + 1)
   if (/[\s@]/.test(中间)) return undefined
+  // 粘贴进来的 `@`（带标记）不是在打手势
+  if (中间.includes(粘贴标记)) return undefined
   if (at > 0 && !/\s/.test(前[at - 1]!)) return undefined
   return { start: at, end: caret, query: 中间 }
 }

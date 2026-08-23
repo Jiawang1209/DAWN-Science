@@ -10,12 +10,13 @@
  * **不另建索引**：dsh-at-file 的 `atFile/search` 就是我们现成的 `listDirectory` + `searchFiles`，远端白得。
  */
 import { useEffect, useMemo, useRef, useState } from "react"
+import type React from "react"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import { 文件类按名字 } from "./file-kind.js"
 import { 类型图标, type Listing, type SearchResult } from "./files.js"
 import { 成候选行, 排路径, type 候选行, type 路径条目 } from "./at-file.js"
-import { 扫引用 } from "../files/mentions.js"
+import { 扫引用, 护住粘贴的艾特 } from "../files/mentions.js"
 import { 关闭图标 } from "./icons.js"
 
 /** 菜单最多摆多少条（dsh-at-file 也是 50：可滚的视口） */
@@ -27,6 +28,10 @@ export interface 引用文件源 {
   根: string
   loadDir: (path: string) => Promise<Listing>
   search: (query: string, 根: string) => Promise<SearchResult>
+  /** 第二档：这个文件名该不该从菜单里滤掉（全局 + 工作区规则编好的判据） */
+  滤掉?: ((name: string) => boolean) | undefined
+  /** 第二档：粘贴进来的 `@` 要不要护住（不算引用） */
+  护粘贴?: boolean | undefined
 }
 
 function 拼(根: string, rel: string): string {
@@ -38,6 +43,24 @@ function 去根(根: string, p: string): string {
   if (!根) return p
   const 前缀 = `${根.replace(/\/+$/, "")}/`
   return p.startsWith(前缀) ? p.slice(前缀.length) : p
+}
+
+/**
+ * 粘贴时护住 `@`（第二档）：剪贴板里的文字有 `@x` 就接管这次粘贴——把标记塞进去再写进草稿。
+ * 只有文字、且真有 `@` 才接管；不然让浏览器照常粘。回 true = 接管了。
+ */
+export function 接管粘贴(e: React.ClipboardEvent<HTMLTextAreaElement>, 源: 引用文件源 | undefined, 写: (草稿: string, caret: number) => void): boolean {
+  if (!源?.护粘贴) return false
+  const 文 = e.clipboardData.getData("text/plain")
+  if (!文) return false
+  const 护 = 护住粘贴的艾特(文)
+  if (护 === 文) return false
+  e.preventDefault()
+  const el = e.currentTarget
+  const 前 = el.value.slice(0, el.selectionStart)
+  const 后 = el.value.slice(el.selectionEnd)
+  写(前 + 护 + 后, 前.length + 护.length)
+  return true
 }
 
 export interface 候选状态 {
@@ -64,7 +87,7 @@ export function use艾特候选(query: string | undefined, 源: 引用文件源 
       if (q === "" || q.endsWith("/")) {
         const 目录 = q.replace(/\/+$/, "")
         const l = await 源.loadDir(拼(源.根, 目录))
-        const 条: 路径条目[] = l.entries.map((e) => ({ path: 目录 ? `${目录}/${e.name}` : e.name, kind: e.kind }))
+        const 条: 路径条目[] = l.entries.filter((e) => !源.滤掉?.(e.name)).map((e) => ({ path: 目录 ? `${目录}/${e.name}` : e.name, kind: e.kind }))
         const 行 = 成候选行(排路径(条, "", 最多候选))
         const 省 = l.omitted + (条.length > 最多候选 ? 条.length - 最多候选 : 0)
         return { 行, 忙: false, ...(省 ? { 说明: tf("还有 {0} 条没列出来——再打几个字", 省) } : {}) }
@@ -74,7 +97,7 @@ export function use艾特候选(query: string | undefined, 源: 引用文件源 
       const 起点 = 斜 >= 0 ? q.slice(0, 斜) : ""
       const 词 = 斜 >= 0 ? q.slice(斜 + 1) : q
       const r = await 源.search(词, 拼(源.根, 起点))
-      const 条: 路径条目[] = r.matches.map((m) => ({ path: 去根(源.根, m.path), kind: m.kind }))
+      const 条: 路径条目[] = r.matches.filter((m) => !源.滤掉?.(m.path.split("/").at(-1)!)).map((m) => ({ path: 去根(源.根, m.path), kind: m.kind }))
       const 行 = 成候选行(排路径(条, q, 最多候选))
       const 说明 =
         r.truncated === "matches"

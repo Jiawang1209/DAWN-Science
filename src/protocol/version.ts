@@ -473,8 +473,9 @@
  *
  * 7.21（2026-08-22）：`exportSession`——一段对话导成 markdown。纯新增。
  * 7.22（2026-08-22）：团队（team-board）——快照多 `team`、更新多一种 `team`。纯新增，没有新操作。
+ * 7.23（2026-08-23）：`getAtFileSettings` / `setAtFileSettings`——`@` 引用的第二档（粘贴不算、文件名过滤）。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.22"
+export const WORKBENCH_PROTOCOL_VERSION = "7.23"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

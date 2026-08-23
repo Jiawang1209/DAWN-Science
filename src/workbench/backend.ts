@@ -27,7 +27,7 @@ import { 科研目录, 约定正文, pi会读的指令文件, 我们写的指令
 import type { ShellEnvironment } from "../env/snapshot.js"
 import { deriveSessionTitle } from "../session/title.js"
 import { readFile } from "node:fs/promises"
-import { 展开引用 } from "../files/mentions.js"
+import { 展开引用, 剥掉粘贴标记, 规则的毛病, type 文件规则 } from "../files/mentions.js"
 import { extname } from "node:path"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
 import type { ImageAttachment } from "../runtime/types.js"
@@ -981,6 +981,23 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 拿不到语言时退回 `kernel_execute`——**不猜**（写死 python 的话，
    * 一个 R 会话的账本会指着一门它没用过的语言）。
    */
+  /** `@` 引用的设置（7.23）。规则存 json；坏掉的（手改过库）当空 */
+  function 读艾特设置(workspace: string | undefined): { ignorePasted: boolean; globalRules: 文件规则[]; workspaceRules?: 文件规则[] } {
+    const 读规则 = (key: "atfile.rules" | `atfile.rules.${string}`): 文件规则[] => {
+      try {
+        const v = JSON.parse(settings?.get(key) ?? "[]") as unknown
+        return Array.isArray(v) ? (v as 文件规则[]).filter((r) => r && typeof r.pattern === "string" && (r.kind === "exact" || r.kind === "regex")).map((r) => ({ kind: r.kind, pattern: r.pattern, caseSensitive: Boolean(r.caseSensitive) })) : []
+      } catch {
+        return []
+      }
+    }
+    return {
+      ignorePasted: settings?.get("atfile.ignorePasted") !== "0",
+      globalRules: 读规则("atfile.rules"),
+      ...(workspace ? { workspaceRules: 读规则(`atfile.rules.${workspace}`) } : {}),
+    }
+  }
+
   async function 附上引用(sessionId: string, text: string): Promise<{ text: string; refs: { path: string; kind: "file" | "directory" }[] }> {
     if (!text.includes("@")) return { text, refs: [] }
     const rec = sessions.get(sessionId)
@@ -2258,7 +2275,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 那一步过权限门、进账本。转录里存的仍是人写的原文（`events.userTurn` 收的是 `data`）。
        * 本地 `stat` 相对工作区、远端相对那段会话的当前目录；本地会话对远端路径、远端会话对本地路径都不认。
        */
-      const 发出去的 = as === "user" ? (await 附上引用(sessionId, data)).text : data
+      // 粘贴标记只活在草稿里：引用扫完（带标记的不算）就剥掉，模型与转录都不该见到它
+      const 发出去的 = 剥掉粘贴标记(as === "user" ? (await 附上引用(sessionId, data)).text : data)
+      data = 剥掉粘贴标记(data)
       try {
         sessions.write(sessionId, 发出去的, as, 附图, behavior)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
@@ -2479,6 +2498,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         instructions: "written" as const,
         file: 我们写的指令文件,
       }
+    },
+
+    getAtFileSettings: async ({ workspace }) => 读艾特设置(workspace),
+
+    setAtFileSettings: async ({ ignorePasted, globalRules, workspace, workspaceRules }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+      const now = new Date().toISOString()
+      for (const r of [...(globalRules ?? []), ...(workspaceRules ?? [])]) {
+        const 病 = 规则的毛病(r)
+        if (病) throw fault("invalid_request", `这条规则不成立（${r.pattern}）：${病}`)
+      }
+      if (ignorePasted !== undefined) settings.set("atfile.ignorePasted", ignorePasted ? "1" : "0", now)
+      if (globalRules) settings.set("atfile.rules", JSON.stringify(globalRules), now)
+      if (workspaceRules && workspace) settings.set(`atfile.rules.${workspace}`, JSON.stringify(workspaceRules), now)
+      return 读艾特设置(workspace)
     },
 
     getPermissionMode: async () => ({

@@ -54,7 +54,9 @@ import {
   WorkspacePanel,
   type KernelRow,
 } from "./Settings.js"
-import { 外观图标, 文件夹图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
+import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
+import { 编文件规则 } from "../files/mentions.js"
+import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
@@ -921,9 +923,35 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * `@` 引用的文件源（2026-08-23，学自 dsh-at-file）：就是坞里文件格那两条（`loadDir` / `searchFiles`），
    * 远端会话跟着那台机器、令牌相对它的当前目录。**没有项目 / 没有远端 = 没有源**——菜单里要说清。
    */
+  /** `@` 引用的第二档设置（7.23）：粘贴不算、文件名过滤。跟着当前项目的工作区取（那一套规则按工作区存） */
+  const 当前工作区路径 = projects.find((p) => p.projectId === projectId)?.workspace
+  const [艾特设置, 设艾特设置] = useState<艾特设置>({ ignorePasted: true, globalRules: [] })
+  /** 线那头回的东西不信到底：缺字段就按默认（测试里的假 client 对不认识的操作回 `{}`） */
+  const 整理艾特设置 = (r: Partial<艾特设置> | undefined): 艾特设置 => ({
+    ignorePasted: r?.ignorePasted ?? true,
+    globalRules: Array.isArray(r?.globalRules) ? r.globalRules : [],
+    ...(Array.isArray(r?.workspaceRules) ? { workspaceRules: r.workspaceRules } : {}),
+  })
+  useEffect(() => {
+    if (!ready) return
+    client
+      .get<艾特设置>("getAtFileSettings", 当前工作区路径 ? { workspace: 当前工作区路径 } : {})
+      .then((r) => 设艾特设置(整理艾特设置(r)))
+      .catch(fail)
+  }, [client, ready, 当前工作区路径])
+  const 改艾特设置 = useCallback(
+    (patch: { ignorePasted?: boolean; globalRules?: 艾特设置["globalRules"]; workspaceRules?: 艾特设置["globalRules"] }) => {
+      client
+        .get<艾特设置>("setAtFileSettings", { ...patch, ...(当前工作区路径 ? { workspace: 当前工作区路径 } : {}) })
+        .then((r) => 设艾特设置(整理艾特设置(r)))
+        .catch(fail)
+    },
+    [client, 当前工作区路径],
+  )
+  const 滤掉 = useMemo(() => 编文件规则([...艾特设置.globalRules, ...(艾特设置.workspaceRules ?? [])]), [艾特设置])
   const 引用文件 = useMemo(
-    () => (projectId || 文件所在 ? { 根: 文件所在?.cwd ?? "", loadDir, search: searchFiles } : undefined),
-    [projectId, 文件所在, loadDir, searchFiles],
+    () => (projectId || 文件所在 ? { 根: 文件所在?.cwd ?? "", loadDir, search: searchFiles, 滤掉, 护粘贴: 艾特设置.ignorePasted } : undefined),
+    [projectId, 文件所在, loadDir, searchFiles, 滤掉, 艾特设置.ignorePasted],
   )
   /** 点引用栏那一行：远端读那台机器；本地打开坞里的预览（readFile 那条路） */
   const 打开引用 = useCallback((path: string) => openFile(文件所在 ? `${文件所在.cwd.replace(/\/+$/, "")}/${path}` : path), [openFile, 文件所在])
@@ -3406,6 +3434,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   title: t("外观"),
                   icon: <外观图标 className="row-icon" />,
                   body: <AppearancePanel />,
+                },
+                {
+                  id: "atfile",
+                  title: t("文件引用"),
+                  icon: <文件图标 className="row-icon" />,
+                  body: <AtFilePanel 设置={艾特设置} workspace={当前工作区路径} onChange={改艾特设置} />,
                 },
                 {
                   /**

@@ -28,7 +28,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
-import { AtMenu, AtRail, use艾特候选, type 引用文件源 } from "./at-menu.js"
+import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 
@@ -4263,6 +4263,8 @@ export function ConversationView({
                 设待发图((前) => [...前, ...图们])
               })
               if (粘的是图(e)) e.preventDefault()
+              // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
+              else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
             }}
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
@@ -5757,6 +5759,7 @@ export function EmptyConversation({
                     设空态图((前) => [...前, ...图们])
                   })
                   if (粘的是图(e)) e.preventDefault()
+                  else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
                 }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {

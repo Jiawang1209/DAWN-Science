@@ -56,7 +56,7 @@ import {
 } from "./Settings.js"
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 编文件规则 } from "../files/mentions.js"
-import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标 } from "./icons.js"
+import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
@@ -158,6 +158,8 @@ import {
   resetDockTerminal,
   setTheme,
   setView,
+  $settingsSection,
+  openSettingsSection,
   upsertItem,
   $sidebarWidth,
   $sidebarCollapsed,
@@ -217,6 +219,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const sessionModels = useStore($sessionModels)
   const contextUsage = useStore($contextUsage)
   const projectId = useStore($activeProjectId)
+  const 设置分类 = useStore($settingsSection)
   const sessionId = useStore($activeSessionId)
   const view = useStore($view)
   const items = useStore($items)
@@ -2779,6 +2782,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => setView("settings"),
+      openSettingsSection: (id) => openSettingsSection(id),
       /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
       toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
@@ -3101,14 +3105,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setActiveSessionId(id)
             setView("conversation")
           }}
-          /* **再点一次就回去**：一个亮着的入口点下去毫无反应，人会以为它坏了 */
-          onShowSkills={() => setView(view === "skills" ? "conversation" : "skills")}
-          skillCount={技能数}
-          subagentCount={子agent名册.length}
-          onShowSubagents={() => setView(view === "subagents" ? "conversation" : "subagents")}
-          onShowPlugins={() => setView(view === "plugins" ? "conversation" : "plugins")}
-          onShowMcp={() => setView(view === "mcp" ? "conversation" : "mcp")}
-          onShowAssistant={() => setView(view === "assistant" ? "conversation" : "assistant")}
+          /* 技能 / 子 agent / 插件 / MCP / 远程助理 2026-08-23 起住在设置的「扩展」一组里，侧栏不再放 */
           /** **点它开坞**（批 2）。再点一次收起来——`点开房客` 就是这个语义 */
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
@@ -3306,41 +3303,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ) : null}
 
         <main className="main">
-          {view === "skills" ? (
-            /**
-             * **Agent Skills**（S20，2026-08-15）。
-             * 按项目问：项目级 `.dawn/skills/` 会追加几个；没有当前项目时
-             * 只有自带与全局那些——**那不是错误，是实情**。
-             */
-            <AgentSkillsView
-              load={() =>
-                client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
-              }
-              actions={{
-                setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
-                importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
-                deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
-                pickDirectory: () => client.pickDirectory(默认工作区?.path),
-                hasProject: Boolean(projectId),
-                问: 问一句,
-              }}
-            />
-          ) : view === "subagents" ? (
-            <SubagentsView
-              load={() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {})}
-              actions={{
-                setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
-                importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
-                deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
-                pickDirectory: () => client.pickDirectory(默认工作区?.path),
-                问: 问一句,
-                hasProject: Boolean(projectId),
-                onChanged: 名册变了,
-              }}
-            />
-          ) : view === "plugins" ? (
-            <PluginsView />
-          ) : view === "schedule" ? (
+          {view === "schedule" ? (
             <ScheduleView actions={定时操作} />
           ) : view === "archived" ? (
             <ArchivedView
@@ -3361,52 +3324,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     setView("conversation")
                   })
                   .catch(fail)
-              }}
-            />
-          ) : view === "assistant" ? (
-            <RemoteAssistantView
-              load={载微信状态}
-              startLogin={() => client.get("weixinStartLogin", {})}
-              submitCode={(code) => client.get("weixinSubmitCode", { code })}
-              cancelLogin={() => client.get("weixinCancelLogin", {})}
-              unbind={() => client.get("weixinUnbind", {})}
-              sessions={微信可绑的}
-              bindSession={(sessionId) => client.get("weixinBindSession", { sessionId })}
-              openSession={(id) => {
-                setActiveSessionId(id)
-                setView("conversation")
-              }}
-              loadNotify={载微信通知}
-              setNotify={(patch) => client.get("weixinSetNotify", patch)}
-            />
-          ) : view === "mcp" ? (
-            /**
-             * MCP 那一屏（2026-08-15）。
-             *
-             * **按项目问**：项目级 `.dawn/mcp.yaml` 会追加几台，
-             * 没有当前项目时就只有全局那些——那不是错误，是实情。
-             */
-            <McpView
-              load={() =>
-                client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {})
-              }
-              onTest={(name) =>
-                client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
-                  "testMcpServer",
-                  projectId ? { name, projectId } : { name },
-                )
-              }
-              onFlag={async (name, flag, value) => {
-                await client.get("setMcpFlag", { name, flag, value })
-              }}
-              onSecret={async (name, varName, secret) => {
-                await client.get("setMcpSecret", { name, varName, secret })
-              }}
-              onAdd={(json) =>
-                client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
-              }
-              onRemove={async (name) => {
-                await client.get("removeMcpServer", { name })
               }}
             />
           ) : view === "settings" ? (
@@ -3640,7 +3557,127 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     </>
                   ),
                 },
+                /* ── 扩展（2026-08-23）：从侧栏并进来的五屏，原样挂在这儿——作者：「前 4 个内容保留，剩下的都并入设置」 ── */
+                {
+                  id: "skills",
+                  group: t("扩展"),
+                  title: t("Skills"),
+                  icon: <技能图标 className="row-icon" />,
+                  count: 技能数,
+                  body: (
+            /**
+             * **Agent Skills**（S20，2026-08-15）。
+             * 按项目问：项目级 `.dawn/skills/` 会追加几个；没有当前项目时
+             * 只有自带与全局那些——**那不是错误，是实情**。
+             */
+            <AgentSkillsView
+              load={() =>
+                client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
+              }
+              actions={{
+                setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
+                importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+                deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
+                pickDirectory: () => client.pickDirectory(默认工作区?.path),
+                hasProject: Boolean(projectId),
+                问: 问一句,
+              }}
+            />
+                  ),
+                },
+                {
+                  id: "subagents",
+                  group: t("扩展"),
+                  title: t("子 Agent"),
+                  icon: <对话图标 className="row-icon" />,
+                  count: 子agent名册.length,
+                  body: (
+            <SubagentsView
+              load={() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {})}
+              actions={{
+                setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
+                importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+                deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
+                pickDirectory: () => client.pickDirectory(默认工作区?.path),
+                问: 问一句,
+                hasProject: Boolean(projectId),
+                onChanged: 名册变了,
+              }}
+            />
+                  ),
+                },
+                {
+                  id: "plugins",
+                  group: t("扩展"),
+                  title: t("插件"),
+                  icon: <插件图标 className="row-icon" />,
+                  body: (
+            <PluginsView />
+                  ),
+                },
+                {
+                  id: "mcp",
+                  group: t("扩展"),
+                  title: t("MCP 服务器"),
+                  icon: <设置图标 className="row-icon" />,
+                  body: (
+            /**
+             * MCP 那一屏（2026-08-15）。
+             *
+             * **按项目问**：项目级 `.dawn/mcp.yaml` 会追加几台，
+             * 没有当前项目时就只有全局那些——那不是错误，是实情。
+             */
+            <McpView
+              load={() =>
+                client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {})
+              }
+              onTest={(name) =>
+                client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
+                  "testMcpServer",
+                  projectId ? { name, projectId } : { name },
+                )
+              }
+              onFlag={async (name, flag, value) => {
+                await client.get("setMcpFlag", { name, flag, value })
+              }}
+              onSecret={async (name, varName, secret) => {
+                await client.get("setMcpSecret", { name, varName, secret })
+              }}
+              onAdd={(json) =>
+                client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
+              }
+              onRemove={async (name) => {
+                await client.get("removeMcpServer", { name })
+              }}
+            />
+                  ),
+                },
+                {
+                  id: "assistant",
+                  group: t("扩展"),
+                  title: t("远程助理"),
+                  icon: <手机图标 className="row-icon" />,
+                  body: (
+            <RemoteAssistantView
+              load={载微信状态}
+              startLogin={() => client.get("weixinStartLogin", {})}
+              submitCode={(code) => client.get("weixinSubmitCode", { code })}
+              cancelLogin={() => client.get("weixinCancelLogin", {})}
+              unbind={() => client.get("weixinUnbind", {})}
+              sessions={微信可绑的}
+              bindSession={(sessionId) => client.get("weixinBindSession", { sessionId })}
+              openSession={(id) => {
+                setActiveSessionId(id)
+                setView("conversation")
+              }}
+              loadNotify={载微信通知}
+              setNotify={(patch) => client.get("weixinSetNotify", patch)}
+            />
+                  ),
+                },
               ]}
+              selected={设置分类}
+              onSelect={(id) => $settingsSection.set(id)}
             />
             </div>
           ) : session && session.kind === "pty" ? (

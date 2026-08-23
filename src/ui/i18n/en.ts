@@ -1143,4 +1143,8 @@ export const EN: Readonly<Record<string, string>> = {
   // `/` 菜单：子 agent 两条路（2026-08-23）
   "回车把这套规矩叫进主对话（/skill:）": "Enter brings this rulebook into the main chat (/skill:)",
   "回车：技能叫进主对话，子 agent 派出去；打 /skill:名 可把子 agent 当技能叫进来": "Enter: a skill joins the main chat, a sub-agent is dispatched; type /skill:name to bring a sub-agent in as a skill",
+
+  // 设置 · 扩展那一组（2026-08-23）
+  "扩展": "Extensions",
+  "设置：{0}": "Settings: {0}",
 }

@@ -77,6 +77,8 @@ export interface Command {
  */
 export interface Actions {
   openSettings(): void
+  /** 直接开到设置里的某一类（2026-08-23，扩展那五屏从侧栏并进设置之后，⌘K 仍要一步到位） */
+  openSettingsSection(id: string): void
   showConversation(): void
   showProjectPanel(): void
   /**
@@ -254,6 +256,21 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "settings 偏好 凭证 主题 api key",
     run: () => actions.openSettings(),
   })
+  for (const [id, 名, 词] of [
+    ["skills", t("Skills"), "skills 技能"],
+    ["subagents", t("子 Agent"), "subagent 子agent 名册"],
+    ["plugins", t("插件"), "plugins 插件"],
+    ["mcp", t("MCP 服务器"), "mcp 服务器 工具"],
+    ["assistant", t("远程助理"), "weixin 微信 远程助理"],
+  ] as const) {
+    out.push({
+      id: `settings.${id}`,
+      title: tf("设置：{0}", 名),
+      group: "设置",
+      keywords: 词,
+      run: () => actions.openSettingsSection(id),
+    })
+  }
   // **形参不能叫 `t`**：那会遮住 i18n 的 `t()`，而遮住之后是「调用一个对象」的编译错
   for (const 主题 of THEMES) {
     out.push({

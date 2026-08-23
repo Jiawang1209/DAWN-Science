@@ -197,10 +197,7 @@ for (const theme of ["亮色", "暗色"] as const) {
        * 整个跟着列表的高度变。等 `document.fonts.ready` 比猜一个延时诚实。
        */
       await page.evaluate(() => document.fonts.ready)
-      if (!sidebarCollapsedFor(screen.name)) {
-        await expect(page.getByRole("button", { name: /子 Agent/ })).toContainText(/\d/)
-        await expect(page.getByRole("button", { name: /^Skills/ })).toContainText(/\d/)
-      }
+      // 技能 / 子 agent 的计数 2026-08-23 起在设置里，不在侧栏上了——这一屏没有要等的数
 
       /**
        * **把指针挪到一个不会悬停任何东西的角落。**

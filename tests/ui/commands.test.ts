@@ -32,6 +32,7 @@ const session: SessionSummary = {
 function actions(): Actions {
   return {
     openSettings: vi.fn(),
+    openSettingsSection: vi.fn(),
     showConversation: vi.fn(),
     showProjectPanel: vi.fn(),
     newTask: vi.fn(),

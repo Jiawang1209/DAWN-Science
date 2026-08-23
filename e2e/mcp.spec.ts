@@ -16,7 +16,7 @@
  * ② 按「试一次」→ 真的连上，**并把它有哪些工具列出来**
  * ③ 缺密钥 → **点名说缺哪个**，而不是笼统一句「没配好」
  */
-import { test, expect, 开一段临时会话, 在项目里开会话, 进审阅 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 在项目里开会话, 进审阅, 进设置 } from "./fixtures.js"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { existsSync, readFileSync, rmSync } from "node:fs"
@@ -44,7 +44,7 @@ test.use({ dawnOptions: { providersYaml: 配置 } })
 
 test("**配了的两台都列出来，还没试过就说还没试过**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "MCP 服务器")
 
   /**
    * **按 `.skill-name` 找，不按精确文本。**
@@ -79,7 +79,7 @@ test("**配了的两台都列出来，还没试过就说还没试过**", async (
  */
 test("**屏上写清了怎么配（密钥不进文件）和怎么用（看工具行）**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "MCP 服务器")
 
   // 两块都是折叠的，先点开
   await page.getByText("加一台 MCP 服务器").click()
@@ -107,7 +107,7 @@ test("**屏上写清了怎么配（密钥不进文件）和怎么用（看工具
  */
 test("**粘一段 JSON 就加进来了，而且立刻能用**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "MCP 服务器")
 
   const 那段 = JSON.stringify({
     mcpServers: {
@@ -142,7 +142,7 @@ test("**粘一段 JSON 就加进来了，而且立刻能用**", async ({ dawn })
 
 test("**按「试一次」，真的连上并列出它有哪些工具**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "MCP 服务器")
 
   // 第一颗「试一次」属于「testbox」那一条
   await page.getByRole("button", { name: "试一次" }).first().click()
@@ -175,7 +175,7 @@ test("**按「试一次」，真的连上并列出它有哪些工具**", async (
  */
 test("信任开关拨完留得住", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "MCP 服务器")
 
   const 开关 = page.getByRole("checkbox", { name: "这台我信得过" }).first()
   await expect(开关).not.toBeChecked()
@@ -189,8 +189,8 @@ test("信任开关拨完留得住", async ({ dawn }) => {
   await expect(开关).toBeChecked()
 
   // 切走再切回来：**留不住的话，那一下只是界面上的假动作**
-  await page.getByRole("button", { name: "子 Agent" }).click()
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "子 Agent")
+  await 进设置(page, "MCP 服务器")
   await expect(page.getByRole("checkbox", { name: "这台我信得过" }).first()).toBeChecked()
 })
 
@@ -242,7 +242,7 @@ agents:
     rmSync(日志, { force: true })
 
     // 密钥（这里是日志路径）走同一条路：**没在配置里声明的环境变量进不去**
-    await page.getByRole("button", { name: "MCP 服务器" }).click()
+    await 进设置(page, "MCP 服务器")
     await page.getByRole("button", { name: "去填" }).first().click()
     await page.getByRole("textbox", { name: "DAWN_MCP_TEST_LOG 的值" }).fill(日志)
     await page.getByRole("button", { name: "Store secret" }).or(page.getByRole("button", { name: "存下来" })).click()
@@ -318,7 +318,7 @@ agents:
      * 落在工作区外面，git 一个字都看不见）。密钥走同一条路：
      * **没在配置里声明的环境变量进不去**。
      */
-    await page.getByRole("button", { name: "MCP 服务器" }).click()
+    await 进设置(page, "MCP 服务器")
     await page.getByRole("button", { name: "去填" }).first().click()
     await page.getByRole("textbox", { name: "DAWN_MCP_TEST_LOG 的值" }).fill(join(workspace, 产出))
     await page.getByRole("button", { name: "Store secret" }).or(page.getByRole("button", { name: "存下来" })).click()

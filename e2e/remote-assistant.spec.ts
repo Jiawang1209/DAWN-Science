@@ -7,7 +7,7 @@
  * 这份用例盯的是整条路：侧栏入口 → 扫码（含配对码）→ 卡变「已绑定」→
  * 微信里说一句 → 电脑上那段会话里出现 → 模型的回答回到微信 → token 失效卡变红。
  */
-import { test, expect } from "./fixtures.js"
+import { test, expect, 进设置 } from "./fixtures.js"
 
 test.use({ dawnOptions: { fakeIlink: true } })
 
@@ -15,10 +15,8 @@ test("**扫码绑定 → 微信说话 → 回答回到微信 → 失效要出声
   const { page, weixin } = dawn
   if (!weixin) throw new Error("夹具没起假微信")
 
-  // ① 入口在「远端服务器」正下面，名字叫「远程助理」
-  const 入口 = page.getByRole("button", { name: "远程助理", exact: true })
-  await expect(入口).toBeVisible()
-  await 入口.click()
+  // ① 入口在设置的「扩展」一组里（2026-08-23 从侧栏并进来的），名字叫「远程助理」
+  await 进设置(page, "远程助理")
   await expect(page.getByRole("heading", { name: "远程助理" })).toBeVisible()
   const 卡 = page.locator(".ra-card").first()
   await expect(卡.locator(".ra-state")).toHaveText("未绑定")
@@ -62,8 +60,8 @@ test("**扫码绑定 → 微信说话 → 回答回到微信 → 失效要出声
   await page.waitForTimeout(2_500)
   expect((await weixin.发出的()).length).toBe(之前)
 
-  // ⑤ token 失效：卡变红、说清要重新扫码（此刻在对话屏，点一下回到远程助理）
-  await 入口.click()
+  // ⑤ token 失效：卡变红、说清要重新扫码（此刻在对话屏，回到设置里的远程助理）
+  await 进设置(page, "远程助理")
   await expect(page.getByRole("heading", { name: "远程助理" })).toBeVisible()
   await weixin.让失效()
   await expect(卡.locator(".ra-state")).toHaveText("绑定失效", { timeout: 20_000 })
@@ -73,7 +71,7 @@ test("**扫码绑定 → 微信说话 → 回答回到微信 → 失效要出声
 test("**斜杠命令**：/会话 /在哪 /帮助 有回音；解绑后卡回未绑定", async ({ dawn }) => {
   const { page, weixin } = dawn
   if (!weixin) throw new Error("夹具没起假微信")
-  await page.getByRole("button", { name: "远程助理", exact: true }).click()
+  await 进设置(page, "远程助理")
   const 卡 = page.locator(".ra-card").first()
   await 卡.getByRole("button", { name: "扫码绑定" }).click()
   await expect(卡.locator(".ra-qr svg")).toBeVisible({ timeout: 10_000 })
@@ -123,7 +121,7 @@ test.describe("权限：微信里回同意", () => {
     const { page, weixin } = dawn
     if (!weixin) throw new Error("夹具没起假微信")
     // 绑定
-    await page.getByRole("button", { name: "远程助理", exact: true }).click()
+    await 进设置(page, "远程助理")
     const 卡 = page.locator(".ra-card").first()
     await 卡.getByRole("button", { name: "扫码绑定" }).click()
     await expect(卡.locator(".ra-qr svg")).toBeVisible({ timeout: 10_000 })

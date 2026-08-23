@@ -3774,6 +3774,8 @@ pre {
 }
 /** 与侧栏那些行同一副长相：**同一种东西不该有两种样子** */
 .settings-nav-item { justify-content: flex-start; width: 100%; margin: 0; }
+/* 分组标题（「扩展」，2026-08-23）：比条目淡一档、上面留一口气——它是分类，不是可点的东西 */
+.settings-nav-group { margin: var(--dawn-space-3) 0 var(--dawn-space-1); padding: 0 var(--dawn-space-3); font-size: 11px; color: var(--dawn-text-3); text-transform: uppercase; letter-spacing: 0.04em; }
 /**
  * 选中态：**实底**（实测 WorkBuddy 的选中项就是一块浅灰底 + 加粗），
  * 而不是一条竖线——竖线是「这一条被标记了」，实底才是「你在这里」。
@@ -5850,3 +5852,6 @@ pre {
 .at-rule-add { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
 .at-rule-add .control { width: auto; }
 .at-rule-cs { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--dawn-text-2); }
+/* 扩展那五屏挂进设置之后（2026-08-23）：外壳已在右边顶上写了这一块叫什么，屏里自己那一行标题不再画——同一句话说两遍不是层次，是噪声 */
+.settings-body .skills-page { padding: 0; max-width: none; }
+.settings-body .skills-page > .skills-head > .panel-title { display: none; }

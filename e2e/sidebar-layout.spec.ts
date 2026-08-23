@@ -21,7 +21,7 @@
  * 入口与它统领的那一列必须挨着、空着的时候不许白占空隙、
  * `⋯` 不许被列表裁掉。
  */
-import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话, 进设置 } from "./fixtures.js"
 
 /**
  * **一个入口。**
@@ -260,10 +260,12 @@ test("**固定入口在横线上面，项目与会话在下面**", async ({ dawn
     (await page.locator(sel).first().boundingBox())!.y
 
   const 横线 = await y(".side-divider")
-  // 2026-08-15：「技能」拆成了 Agent Skills 与子 Agent 两个入口
-  // 「Skills」「子 Agent」后面挂着个数（2026-08-22），按行首匹配
-  for (const 名 of ["新建任务", "Skills", "子 Agent", "MCP 服务器"]) {
+  // 2026-08-23：技能 / 子 Agent / 插件 / MCP / 远程助理并进了设置，横线上面只剩新建任务、远端、定时
+  for (const 名 of ["新建任务", "定时"]) {
     expect(await y(`.sidebar >> role=button[name=/^${名}/]`), `${名} 应在横线上面`).toBeLessThan(横线)
+  }
+  for (const 名 of ["Skills", "子 Agent", "插件", "MCP 服务器", "远程助理"]) {
+    expect(await page.locator(`.sidebar >> role=button[name=/^${名}/]`).count(), `${名} 不该还在侧栏上`).toBe(0)
   }
   expect(await y(".remote-head"), "远端连接应在横线上面").toBeLessThan(横线)
   // 分区标题（项目 / 会话）在线下面
@@ -287,7 +289,7 @@ test("**固定入口在横线上面，项目与会话在下面**", async ({ dawn
 test("**子 Agent 那一屏说得出「去哪写」**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByRole("button", { name: "子 Agent" }).click()
+  await 进设置(page, "子 Agent")
   await expect(page.locator(".skills-page")).toBeVisible()
   // 目录要说出来：不说清楚放哪儿，「怎么加一个」就无从下手
   await expect(page.locator(".skills-page")).toContainText(".dawn/agents")
@@ -306,7 +308,7 @@ test("**子 Agent 那一屏说得出「去哪写」**", async ({ dawn }) => {
  */
 test("**一台都没配时，说清去哪儿加**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "MCP 服务器" }).click()
+  await 进设置(page, "MCP 服务器")
   await expect(page.locator(".skills-page")).toContainText(/还没有配 MCP 服务器/)
   // **路径要说出来**：不说清放哪儿，「怎么加一个」就无从下手（与技能那一屏同一条）
   await expect(page.locator(".skills-page")).toContainText("providers.yaml")

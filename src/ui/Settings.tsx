@@ -27,7 +27,7 @@
  * 而左边已经有一条应用侧栏了——**再叠一条会让人不知道自己在哪一层**。
  * 颜色与类名同样不取（那是它的表达，不是事实）。
  */
-import { useEffect, useState } from "react"
+import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
@@ -474,29 +474,53 @@ export function WorkspacePanel({
  * **我们没有那些**，照抄一个点进去是空的列表比没有更坏——
  * 这里只列真的能配的四块。
  */
+export interface SettingsSection {
+  id: string
+  title: string
+  icon: React.ReactNode
+  body: React.ReactNode
+  /** 分组标题（2026-08-23，「扩展」那一组）：同一组连着写，组名只在第一项前画一次 */
+  group?: string | undefined
+  /** 行尾的计数（技能 / 子 agent 那两个数从侧栏搬过来的） */
+  count?: number | undefined
+}
+
 export function SettingsShell({
   sections,
+  selected,
+  onSelect,
 }: {
-  sections: { id: string; title: string; icon: React.ReactNode; body: React.ReactNode }[]
+  sections: SettingsSection[]
+  /** 受控：外面（命令面板、侧栏）要能直接指到某一类 */
+  selected?: string | undefined
+  onSelect?: ((id: string) => void) | undefined
 }) {
-  const [选中, 设选中] = useState(sections[0]?.id)
+  const [自己的, 设自己的] = useState(sections[0]?.id)
+  const 选中 = selected ?? 自己的
   const 当前 = sections.find((s) => s.id === 选中) ?? sections[0]
   if (!当前) return null
+  const 选 = (id: string) => {
+    设自己的(id)
+    onSelect?.(id)
+  }
   return (
     <div className="settings-shell">
       <nav className="settings-nav" aria-label={t("设置分类")}>
-        {sections.map((s) => (
-          <Button
-            key={s.id}
-            variant="ghost"
-            size="sm"
-            className={`row settings-nav-item${s.id === 当前.id ? " current" : ""}`}
-            aria-current={s.id === 当前.id ? "page" : undefined}
-            onClick={() => 设选中(s.id)}
-          >
-            {s.icon}
-            <span className="name">{s.title}</span>
-          </Button>
+        {sections.map((s, i) => (
+          <Fragment key={s.id}>
+            {s.group && sections[i - 1]?.group !== s.group ? <p className="settings-nav-group">{s.group}</p> : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`row settings-nav-item${s.id === 当前.id ? " current" : ""}`}
+              aria-current={s.id === 当前.id ? "page" : undefined}
+              onClick={() => 选(s.id)}
+            >
+              {s.icon}
+              <span className="name">{s.title}</span>
+              {s.count !== undefined ? <span className="side-count" aria-hidden="true">{s.count}</span> : null}
+            </Button>
+          </Fragment>
         ))}
       </nav>
       {/**

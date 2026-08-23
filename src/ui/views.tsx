@@ -1121,13 +1121,6 @@ export function SessionSidebar({
   view,
   onPickProject,
   onPickSession,
-  onShowSkills,
-  skillCount,
-  subagentCount,
-  onShowSubagents,
-  onShowAssistant,
-  onShowPlugins,
-  onShowMcp,
   onDeleteSession,
   onRenameSession,
   onPinSession,
@@ -1195,19 +1188,6 @@ export function SessionSidebar({
   onPickProject: (id: string) => void
   onPickSession: (id: string) => void
   filesActive?: boolean
-  /** 技能那一屏。**不给就不画那一行**——不摆一个点了没反应的入口 */
-  onShowSkills?: (() => void) | undefined
-  /** 侧栏那两行后面的数字（2026-08-22 作者要的）：有几份技能 / 几个子 agent（只算开着的）。没给就不画 */
-  skillCount?: number | undefined
-  subagentCount?: number | undefined
-  /** 子 agent 那一屏（2026-08-15 从「技能」拆出来的，两者是两种东西） */
-  onShowSubagents?: (() => void) | undefined
-  /** 「远程助理」（2026-08-21）。**放在远端服务器正下面**（作者定的位置） */
-  onShowAssistant?: (() => void) | undefined
-  /** 插件那一屏。同上 */
-  onShowPlugins?: (() => void) | undefined
-  /** MCP 那一屏。同上 */
-  onShowMcp?: (() => void) | undefined
   /** 删掉某个项目。**与项目概览里那个是同一个动作**，不是第二份实现 */
   onDeleteProject?: ((projectId: string) => void) | undefined
   /** 正开着设置屏。左下角那一行据此高亮 */
@@ -1901,58 +1881,8 @@ export function SessionSidebar({
           *
           * **不存在的能力不该看起来存在**——这是「看不见的能力等于不存在」的反面。
           */}
-        {/**
-          * **Agent Skills 与子 agent 是两个入口**（2026-08-15 作者定的）。
-          *
-          * 此前它们共用「技能」一个词，而**两个不同的东西共用一个名字**
-          * 正是这个仓库最忌讳的含混：
-          *   · Agent Skill = 写给模型读的说明书（何时用、怎么用）
-          *   · 子 agent   = 派一个分身去干活
-          *
-          * 名字跟生态走（Hermes / Codex / Claude 都叫 Skills），
-          * 于是你看到的任何一份 Agent Skills 文档都对得上。
-          */}
-        {onShowSkills ? (
-          <Row active={view === "skills"} className="side-action" onClick={onShowSkills}>
-            <技能图标 className="row-icon" />
-            <span className="name">{t("Skills")}</span>
-            {skillCount !== undefined ? <span className="side-count">{skillCount}</span> : null}
-          </Row>
-        ) : null}
-        {onShowSubagents ? (
-          <Row active={view === "subagents"} className="side-action" onClick={onShowSubagents}>
-            <对话图标 className="row-icon" />
-            <span className="name">{t("子 Agent")}</span>
-            {subagentCount !== undefined ? <span className="side-count">{subagentCount}</span> : null}
-          </Row>
-        ) : null}
-        {/**
-          * **插件**（2026-08-12，作者要的，放在技能下面）。
-          *
-          * 与技能、MCP 同一条边界：**这一屏只说真话**。
-          * 插件在我们这儿还没有承载体——不像技能（`.dawn/agents/*.md` 本来就能跑）、
-          * 也不像 MCP（管道通了、只差界面）。所以它如实说清「还没有」，
-          * 并指出**现在能装的能力是哪两样**，而不是摆一个空列表。
-          */}
-        {onShowPlugins ? (
-          <Row active={view === "plugins"} className="side-action" onClick={onShowPlugins}>
-            <插件图标 className="row-icon" />
-            <span className="name">{t("插件")}</span>
-          </Row>
-        ) : null}
-        {onShowMcp ? (
-          <Row active={view === "mcp"} className="side-action" onClick={onShowMcp}>
-            <设置图标 className="row-icon" />
-            <span className="name">{t("MCP 服务器")}</span>
-          </Row>
-        ) : null}
+        {/* 技能 / 子 agent / 插件 / MCP / 远程助理 2026-08-23 起在设置的「扩展」一组里（作者：「前 4 个内容保留，剩下的都并入设置」） */}
         {remote ?? null}
-        {onShowAssistant ? (
-          <Row active={view === "assistant"} className="side-action" onClick={onShowAssistant}>
-            <手机图标 className="row-icon" />
-            <span className="name">{t("远程助理")}</span>
-          </Row>
-        ) : null}
         {/**
           * **「已归档」只在真有归档的时候出现**（2026-08-22）。看不见的能力等于不存在，
           * 但一个永远空的入口也是噪音——作者问过「会影响侧栏吗」，答案是：没归档过就一个像素都不变。

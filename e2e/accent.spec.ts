@@ -46,3 +46,34 @@ test("**自定义取色器**：给一个浅色，按钮上的字自动换成深�
   // 预置里没有它，「自定义」那颗标为当前
   await expect(page.locator(".accent-custom")).toHaveClass(/current/)
 })
+
+test("**HEX 文本框**：敲 #rrggbb 回车就生效；格式不对留红框、不吞掉", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await 进设置(page, "外观")
+  const 框 = page.getByLabel("HEX 颜色值")
+  await expect(框).toHaveValue("#10a37f")
+  await 框.fill("#e0701a")
+  await 框.press("Enter")
+  expect(await 读令牌(page, "--theme-user-accent")).toBe("#e0701a")
+  await expect(page.getByRole("radio", { name: "橙" })).toHaveAttribute("aria-checked", "true")
+  await 框.fill("orange")
+  await 框.press("Enter")
+  await expect(框).toHaveAttribute("aria-invalid", "true")
+  expect(await 读令牌(page, "--theme-user-accent")).toBe("#e0701a")
+})
+
+test("**RGB 文本框**：取色后同时给 RGB 与 HEX；改 RGB 也生效", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await 进设置(page, "外观")
+  await page.getByRole("radio", { name: "蓝" }).click()
+  await expect(page.getByLabel("HEX 颜色值")).toHaveValue("#2f6feb")
+  await expect(page.getByLabel("RGB 颜色值")).toHaveValue("rgb(47, 111, 235)")
+  const 框 = page.getByLabel("RGB 颜色值")
+  await 框.fill("214, 51, 108")
+  await 框.press("Enter")
+  expect(await 读令牌(page, "--theme-user-accent")).toBe("#d6336c")
+  await expect(page.getByLabel("HEX 颜色值")).toHaveValue("#d6336c")
+  await expect(page.getByRole("radio", { name: "粉" })).toHaveAttribute("aria-checked", "true")
+})

@@ -46,6 +46,21 @@ function toHex(r: number, g: number, b: number): string {
   return `#${c(r)}${c(g)}${c(b)}`
 }
 
+/** `#10a37f` → `rgb(16, 163, 127)`：取色器旁边那一格给人看、也给人改（2026-08-23 作者要的） */
+export function hex转三元组(hex: string): string {
+  const [r, g, b] = toRgb(hex)
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+/** 收 `rgb(16, 163, 127)` / `16,163,127` / `16 163 127`；不合法或超 255 → undefined */
+export function 三元组转hex(text: string): string | undefined {
+  const m = /^\s*(?:rgba?\(\s*)?(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*\)?\s*$/i.exec(text)
+  if (!m) return undefined
+  const v = [m[1], m[2], m[3]].map(Number)
+  if (v.some((n) => n > 255)) return undefined
+  return toHex(v[0]!, v[1]!, v[2]!)
+}
+
 /** WCAG 相对亮度（0 黑 … 1 白） */
 export function 相对亮度(hex: string): number {
   const [r, g, b] = toRgb(hex).map((v) => {

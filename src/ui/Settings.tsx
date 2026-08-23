@@ -32,7 +32,7 @@ import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { 关闭图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
-import { $accent, ACCENT_PRESETS, setAccent } from "./state/accent.js"
+import { $accent, ACCENT_PRESETS, DEFAULT_ACCENT, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -284,6 +284,26 @@ export function AppearancePanel() {
   const theme = useStore($theme)
   const lang = useStore($lang)
   const accent = useStore($accent)
+  /** HEX 文本框的草稿（2026-08-23 作者要的：除了取色器还能直接敲 #rrggbb）；undefined = 跟着当前值走 */
+  const [hex草稿, 设hex草稿] = useState<string | undefined>(undefined)
+  const hex显示 = hex草稿 ?? accent
+  const hex坏了 = hex草稿 !== undefined && !isHex(hex草稿.trim())
+  const 提交hex = () => {
+    const v = (hex草稿 ?? "").trim()
+    if (isHex(v)) setAccent(v)
+    // 格式不对就留着红框，**不悄悄吞掉**；清空等于放弃
+    if (isHex(v) || v === "") 设hex草稿(undefined)
+  }
+  /** RGB 那一格同一套：取色返回 RGB 与 HEX 两种写法，两边都能改（2026-08-23 作者要的） */
+  const [三元组草稿, 设三元组草稿] = useState<string | undefined>(undefined)
+  const 三元组显示 = 三元组草稿 ?? hex转三元组(accent)
+  const 三元组坏了 = 三元组草稿 !== undefined && 三元组草稿.trim() !== "" && 三元组转hex(三元组草稿) === undefined
+  const 提交三元组 = () => {
+    const v = (三元组草稿 ?? "").trim()
+    const hex = 三元组转hex(v)
+    if (hex) setAccent(hex)
+    if (hex || v === "") 设三元组草稿(undefined)
+  }
 
   return (
     <Section>
@@ -385,6 +405,37 @@ export function AppearancePanel() {
               onChange={(e) => setAccent(e.target.value)}
             />
           </label>
+          {/* HEX 直接敲：回车或失焦生效；三位简写不收（与取色器、存储同一种写法） */}
+          <input
+            className="control accent-hex"
+            data-invalid={hex坏了 ? "1" : undefined}
+            value={hex显示}
+            spellCheck={false}
+            aria-label={t("HEX 颜色值")}
+            aria-invalid={hex坏了 || undefined}
+            placeholder={DEFAULT_ACCENT}
+            onChange={(e) => 设hex草稿(e.target.value)}
+            onBlur={提交hex}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") 提交hex()
+              if (e.key === "Escape") 设hex草稿(undefined)
+            }}
+          />
+          <input
+            className="control accent-hex accent-rgb"
+            data-invalid={三元组坏了 ? "1" : undefined}
+            value={三元组显示}
+            spellCheck={false}
+            aria-label={t("RGB 颜色值")}
+            aria-invalid={三元组坏了 || undefined}
+            placeholder="r, g, b"
+            onChange={(e) => 设三元组草稿(e.target.value)}
+            onBlur={提交三元组}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") 提交三元组()
+              if (e.key === "Escape") 设三元组草稿(undefined)
+            }}
+          />
         </div>
       </Row>
     </Section>

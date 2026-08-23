@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { DEFAULT_ACCENT, ACCENT_PRESETS, 暗色变体, 按钮字色, 相对亮度, isHex, applyAccent } from "../../src/ui/state/accent.js"
+import { DEFAULT_ACCENT, ACCENT_PRESETS, 暗色变体, 按钮字色, 相对亮度, isHex, applyAccent, hex转三元组, 三元组转hex } from "../../src/ui/state/accent.js"
 
 describe("主题色", () => {
   it("默认绿与 tokens.css 里写的种子是同一个值——两处都写了，就得互相对得上", () => {
@@ -40,5 +40,14 @@ describe("主题色", () => {
     applyAccent("#2f6feb", el)
     expect(Object.keys(set).sort()).toEqual(["--theme-user-accent", "--theme-user-accent-dark", "--theme-user-on-accent", "--theme-user-on-accent-dark"])
     expect(set["--theme-user-accent"]).toBe("#2f6feb")
+  })
+
+  it("HEX ↔ RGB 互转：三种常见写法都收，超 255 与乱写不收", () => {
+    expect(hex转三元组("#10a37f")).toBe("rgb(16, 163, 127)")
+    expect(三元组转hex("rgb(16, 163, 127)")).toBe("#10a37f")
+    expect(三元组转hex("16,163,127")).toBe("#10a37f")
+    expect(三元组转hex("16 163 127")).toBe("#10a37f")
+    expect(三元组转hex("rgb(300, 0, 0)")).toBeUndefined()
+    expect(三元组转hex("orange")).toBeUndefined()
   })
 })

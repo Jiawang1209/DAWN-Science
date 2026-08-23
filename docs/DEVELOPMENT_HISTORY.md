@@ -43,6 +43,14 @@
 
 ## 变更日志
 
+### 2026-08-23 — 美化①（表面层次）+ 设置里的几处整理
+
+- **Type**: refactor
+- **Motivation**: 作者定的：卡片「白底 + 绿色细边，悬停照旧」，设置里成组的内容都用这种卡；模型服务最外面那层框去掉；「在线视觉服务」整块删掉（DeepSeek 已能看图）；用量里「按模型」饼图与图例左右并排、「按项目」挪到它下面。
+- **What**: `--dawn-stroke-accent`（强调色 45%）；卡片选择器统一 `surface-elevated + 1px stroke-accent`（整块 lg / 列表 md / 小件 sm）；`.set-rows` 成卡，`Section` 加 `className`，模型服务那一屏用 `set-section-bare` 不套外框；`.usage-block` 成卡、饼图 + 图例改成一行、`usage-stack` 把按项目放到按模型下面；热力图空格子用 `fill-3`；浮层只留一副壳 + 同一个弹出（对话框不弹）；菜单项同一 hover；模型菜单行齐左。删掉设置里的 `VisionPanel` 挂载（后端 `getVision` / `saveVision` / `testVision` 与转述那条缝都还在，`e2e/vision.spec.ts` 改走 IPC 配）。
+- **Bug**: 钥匙串里的 `ssh:<连接>` 与 `weixin:botToken` 被当成 provider 列进「模型服务」（作者截图抓的）——`CredentialStore.configured()` 只回 provider。
+- **Verification**: `credentials.test.ts` 加一条；`tests/ui` 509 绿；视觉基线按屏重存连验两遍；`vision` / `add-service` e2e 绿。
+
 ### 2026-08-23 — check-beautify 第三批：审查里「低」的一批清完
 
 - **Type**: fix

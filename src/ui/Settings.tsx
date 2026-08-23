@@ -56,7 +56,10 @@ export function Section({
   title,
   desc,
   children,
+  className,
 }: {
+  /** `set-section-bare`：里面自己带卡的（模型服务那一列），外面就不再套一层 */
+  className?: string | undefined
   /**
    * **不给就不画标题**（2026-08-12）。
    *
@@ -68,7 +71,7 @@ export function Section({
   children: React.ReactNode
 }) {
   return (
-    <section className="set-section">
+    <section className={`set-section${className ? ` ${className}` : ""}`}>
       {title ? <h3 className="set-section-title">{title}</h3> : null}
       {desc ? <div className="set-section-desc">{desc}</div> : null}
       <div className="set-rows">{children}</div>
@@ -622,6 +625,7 @@ export function SettingsPanel({
 
   return (
     <Section
+      className="set-section-bare"
       desc={
         credentials.encrypted ? (
           t("填了 key 就能在对话里选它的模型。密钥存在系统的安全存储里（macOS Keychain），已存的值不会回显——界面只知道配没配。")

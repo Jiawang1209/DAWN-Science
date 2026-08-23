@@ -48,8 +48,6 @@ import {
   KernelsPanel,
   AcpPanel,
   SettingsPanel,
-  VisionPanel,
-  type VisionState,
   SettingsShell,
   WorkspacePanel,
   type KernelRow,
@@ -3493,16 +3491,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
                     .catch(fail)
                 }
-              />
-              {/**
-                * **在线视觉服务**（2026-08-20，作者要的）。放在这一屏是他的原话：
-                * 「放在设置里面的模型选择里面」。全局一份，不挂在某家 provider 底下。
-                * 三个函数用 useCallback 不必——这块面板只在设置屏挂载。
-                */}
-              <VisionPanel
-                load={() => client.get<VisionState>("getVision", {})}
-                save={(v) => client.get<{ ready: boolean }>("saveVision", v)}
-                test={() => client.get<{ ok: boolean; text: string }>("testVision", {})}
               />
                     </>
                   ),

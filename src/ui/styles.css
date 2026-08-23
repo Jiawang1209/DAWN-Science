@@ -2305,6 +2305,7 @@ pre {
 }
 /* 右边那一格里的按钮不许折行（卡有了内距之后那一列窄了 30px，「保存」曾被掰成两行） */
 .set-control .btn { white-space: nowrap; }
+.set-section-bare .set-rows { background: transparent; border: 0; border-radius: 0; padding: 0; }
 .set-rows > .set-row:last-child {
   border-bottom: none;
 }
@@ -4525,7 +4526,9 @@ pre {
   align-items: start;
 }
 /** 饼在上、图例在下 */
-.usage-pie-col { display: flex; flex-direction: column; align-items: center; gap: var(--dawn-space-3); }
+.usage-pie-col { display: flex; flex-direction: row; align-items: center; gap: var(--dawn-space-6); }
+.usage-pie-col .usage-legend-list { flex: 1 1 auto; min-width: 0; }
+.usage-stack { display: flex; flex-direction: column; gap: var(--dawn-space-4); }
 
 /**
  * 按项目那一列。**底衬的长度就是占比**——

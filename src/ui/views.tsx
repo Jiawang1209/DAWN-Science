@@ -26,6 +26,7 @@ import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
+import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
 import { TurnNavigator } from "./turn-navigator.js"
 
@@ -2719,11 +2720,14 @@ function SessionConfigMenu({
   const 档 = options.find((o) => o.category === "mode")
   // 扳机上只写档名（「全放行」），「· 跟随设置」那半截留在菜单里——输入卡那一行容不下长字
   const 档名 = 档?.options.find((x) => x.value === 档.current)?.name.split(" · ")[0]
+  // 权限那条自 2026-08-23 起走自己的那颗（`PermissionPill`），这里多半只剩推理强度——扳机上写它当前那一项
+  const 头一条 = options[0]
+  const 头一条名 = 头一条?.options.find((x) => x.value === 头一条.current)?.name.split(" · ")[0] ?? 头一条?.name
   const 标 = 模型
     ? 当前项
       ? 拆模型名(当前项.name, 当前项.description).主
       : 模型.current
-    : 档名
+    : (档名 ?? 头一条名)
 
   return (
     <div className="sess-config" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
@@ -3539,6 +3543,7 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
 export function ConversationView({
   onOpenWeb,
   onExport,
+  权限,
   session,
   items,
   acpAgents,
@@ -3670,6 +3675,8 @@ export function ConversationView({
   onAbort?: (() => void) | undefined
   /** 导出这段对话为 markdown（codex-polish ④）。回落到哪了，好说给人 */
   onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
+  /** 输入卡上那颗权限（2026-08-23）：这一段的档、是否跟着默认、选了怎么办 */
+  权限?: { 当前: 权限档; 跟随默认: boolean; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
   disabled?: boolean | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
@@ -4671,10 +4678,11 @@ export function ConversationView({
                 onNote={设增强说明}
               />
             ) : null}
-            {/* 前三样说「带什么、在哪跑」，这一颗说「怎么改」——靠右 */}
-            {会话开关们 && 会话开关们.length > 0 && onSetConfigOption ? (
-              <SessionConfigMenu options={会话开关们} onSet={onSetConfigOption} />
+            {/* 前三样说「带什么、在哪跑」，右边两颗说「怎么改」：权限那颗是唯一入口（2026-08-23，替掉设置里的「工具权限」） */}
+            {会话开关们 && 会话开关们.some((o) => o.category !== "mode") && onSetConfigOption ? (
+              <SessionConfigMenu options={会话开关们.filter((o) => o.category !== "mode")} onSet={onSetConfigOption} />
             ) : null}
+            {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}
           </div>
         </div>
       </form>
@@ -5450,6 +5458,7 @@ export function EmptyConversation({
   agentKind,
   onStart,
   onToggleDock,
+  权限,
   onEnhance,
   onCancelEnhance,
   onOpenSettings,
@@ -5466,6 +5475,8 @@ export function EmptyConversation({
   /** 掀开／收起底部终端。**与 composer 上那颗、命令面板那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
   /** 提示词增强（2026-08-21）。空态屏用配置里第一个 API 模型 */
+  /** 空态屏上那颗权限改的是默认（2026-08-23） */
+  权限?: { 当前: 权限档; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
   onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
   onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
   /**
@@ -5863,7 +5874,8 @@ export function EmptyConversation({
                                 {onEnhance && onCancelEnhance ? (
                   <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
                 ) : null}
-                {/* 左手边到此为止——与对话里那张同一副分法 */}
+                {/* 空态屏上那颗改的是**默认**（还没有会话） */}
+                {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}
               </div>
             </div>
           </form>

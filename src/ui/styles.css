@@ -924,6 +924,13 @@ pre {
 .composer-footer .ws-entry { min-width: 0; }
 /* 前三样说「带什么、在哪跑」，权限说「怎么改」——后者靠右，与前者分开 */
 .composer-footer .sess-config { margin-left: auto; }
+/** 权限那颗跟在右边；只有它一颗时它自己顶到右边 */
+.composer-footer .perm-pill { flex: 0 0 auto; }
+/** 附栏自己起一层：菜单向上弹时压在输入盒（模型颗、发送键）之上，不然它们从菜单里透出来（2026-08-23 探针看见的） */
+.composer-footer { position: relative; z-index: var(--z-sibling-lift); }
+.composer-footer .perm-pill:first-child,
+.composer-footer .sess-config + .perm-pill { margin-left: var(--dawn-space-2); }
+.composer-footer > .perm-pill:not(.sess-config + .perm-pill) { margin-left: auto; }
 /**
  * 卡里的文本区：**只负责文字**，盒子归卡。
  *
@@ -4679,7 +4686,7 @@ pre {
   border-radius: var(--dawn-radius-lg);
   background: var(--dawn-accent-soft);
 }
-.perm-card-title { margin: 0; font-weight: var(--dawn-weight-medium); }
+.perm-card-title { white-space: pre-wrap; margin: 0; font-weight: var(--dawn-weight-medium); }
 /** **不换行**：与侧栏那条同一副纪律，放不下就裁，不折成两层 */
 .perm-card-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
 .perm-card-options .btn { white-space: nowrap; }
@@ -5652,3 +5659,53 @@ pre {
 .team-msg { display: flex; flex-direction: column; gap: 2px; padding-left: var(--dawn-space-2); border-left: 2px solid var(--dawn-stroke-3); }
 .team-msg-who { font-size: 12px; color: var(--dawn-text-3); }
 .team-msg-text { white-space: pre-wrap; color: var(--dawn-text-2); font-size: 12px; }
+
+/* ============ 输入卡上那颗「权限」（2026-08-23；作者给的样子：每档一颗图标、名字加粗、说明一行、当前项右边打勾；全放行用警示色） ============ */
+.perm-pill { position: relative; flex: 0 0 auto; }
+.perm-pill-trigger { display: inline-flex; align-items: center; gap: 4px; color: var(--dawn-text-2); white-space: nowrap; }
+.perm-pill-trigger[data-tier="allow-all"] { color: var(--dawn-warning); }
+.perm-pill-menu {
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-2));
+  right: 0;
+  width: 22rem;
+  max-width: 80vw;
+  padding: var(--dawn-space-2);
+  z-index: var(--z-modal);
+  transform-origin: bottom right;
+  animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.perm-pill-menu .btn.perm-pill-item {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-3);
+  width: 100%;
+  text-align: left;
+  padding: 8px var(--dawn-space-3);
+  border-radius: var(--dawn-radius-sm);
+  color: var(--dawn-text-1);
+}
+.perm-pill-menu .btn.perm-pill-item:hover { background: var(--dawn-row-hover); }
+.perm-pill-item-icon { display: inline-flex; flex: 0 0 auto; color: var(--dawn-text-2); }
+.perm-pill-item-text { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; gap: 2px; }
+.perm-pill-item-name { font-size: 13px; font-weight: 600; }
+.perm-pill-item-desc { font-size: 12px; color: var(--dawn-text-3); white-space: normal; }
+.perm-pill-item-mark { display: inline-flex; flex: 0 0 auto; width: 16px; justify-content: center; color: var(--dawn-text-1); }
+/** 全放行那一档整条用警示色——它是三档里唯一会放过危险操作的 */
+.perm-pill-item[data-tier="allow-all"] .perm-pill-item-icon,
+.perm-pill-item[data-tier="allow-all"] .perm-pill-item-name,
+.perm-pill-item[data-tier="allow-all"] .perm-pill-item-mark { color: var(--dawn-warning); }
+.perm-pill-item[data-tier="allow-all"] .perm-pill-item-desc { color: var(--dawn-warning); opacity: .85; }
+.perm-pill-default {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--dawn-space-2);
+  padding: var(--dawn-space-2) var(--dawn-space-3) 0;
+  border-top: 1px solid var(--dawn-stroke-4);
+  font-size: 12px;
+  color: var(--dawn-text-2);
+  cursor: pointer;
+}
+.perm-pill-default input { margin: 0; }
+.perm-pill-note { margin: var(--dawn-space-2) var(--dawn-space-3) 0; font-size: 11px; line-height: 1.4; }

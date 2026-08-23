@@ -27,18 +27,20 @@
  * （能拦得住的前提是 `noTools: "builtin"`：不关掉 pi 的内置工具，
  * 等于门旁边留着一扇没锁的侧门。那条已经在 `native.ts` 里守着了。）
  */
-import { isAbsolute, relative, resolve } from "node:path"
+import { isAbsolute, join, relative, resolve } from "node:path"
+import { homedir } from "node:os"
 import { 原始数据目录 } from "./science-layout.js"
 
 /**
- * 档位。**只有两档，因为只做得到两档。**
- *
- * 「问一句人」那两档（每次都问 / 只问危险的）需要一条从主进程到界面再回来的
- * 往返，那条还没有。**现在就把名字占上、行为却是直接拒绝**，
- * 就是本项目最忌讳的那种静默偏离——所以名字如实叫「拦下」，
- * 等询问那条路通了再加「问一句」。
+ * 档位（2026-08-23 起三档，学自 NanmiCoder/dsh-auto-mode 的 allow / ask / deny）：
+ * - `allow-all`  全放行：只拦硬拒清单；
+ * - `ask-risky`  问一句：危险操作弹一张卡让人点「允许这一次」，拒绝 / 超时都把理由回给模型让它改道；
+ * - `deny-risky` 拦下：危险操作直接拒。
+ * 「问一句」此前做不了，因为缺一条从主进程到界面再回来的往返；ACP 的权限卡（2026-08-16）把那条路铺好了，
+ * 现在原生会话复用它。
  */
-export type 权限档 = "allow-all" | "deny-risky"
+export type 权限档 = "allow-all" | "ask-risky" | "deny-risky"
+export const 全部权限档: readonly 权限档[] = ["allow-all", "ask-risky", "deny-risky"]
 
 /** 危险的种类。**分类不是为了好看**，是因为拒绝理由必须说清是哪一种 */
 export type 危险类别 =
@@ -60,11 +62,21 @@ export type 危险类别 =
    * 「这台我信得过」。
    */
   | "外部工具"
+  /**
+   * **硬拒**（2026-08-23，学自 dsh-auto-mode 的「单调硬拒」）：sudo、删到 Home / 根 / 系统目录、
+   * 凭据外传、强推远端。**任何档都拒，后面的规则与「问一句」都盖不过它。**
+   */
+  | "硬拒"
 
 export interface 风险 {
   类别: 危险类别
   /** 给模型看的话。**要能据此改道**，不是一句「拒绝」 */
   说明: string
+  /**
+   * 连问都不问，直接拒（但不是硬拒：全放行档仍放）。给「目标看不清」的删除用：
+   * glob / 变量 / 多目标 / 管道——人在卡上也判不了它会删掉什么，问了等于把责任推给人。
+   */
+  不可问?: boolean
 }
 
 export interface 语境 {
@@ -79,6 +91,12 @@ export interface 语境 {
   remote?: boolean
   /** 哪段会话在调（2026-08-22）。定时任务的会话按它自己存的档走，不跟全局设置 */
   sessionId?: string
+  /**
+   * **这段会话自己创建的文件**（2026-08-23，学自 dsh-auto-mode 的产物登记）：
+   * 删它们是可重来的低风险，不问；删会话之前就有的才算「删除」。
+   * 给绝对路径，答「是不是本会话建的且身份没变」。不给 = 一律当「之前就有的」。
+   */
+  本会话创建?: (绝对路径: string) => boolean
 }
 
 /**
@@ -102,7 +120,7 @@ const 装包命令 =
 const 联网命令 = /\b(curl|wget|scp|rsync|ssh|nc|ftp)\b/
 
 /** 删掉东西。`mv` 也算——它能悄悄覆盖掉一个已有文件 */
-const 删除命令 = /\brm\s|\brmdir\b|\bshred\b|\bmv\s|\btruncate\b|>\s*\/dev\/sd/
+const 删除命令 = /\brm\s|\brmdir\b|\bshred\b|\bmv\s|\btruncate\b|>\s*\/dev\/sd|\bfind\b.*-delete\b|\bxargs\b.*\brm\b/
 
 const 发布命令 = /\bgit\s+push\b/
 
@@ -131,6 +149,8 @@ export function 看风险(
     if (!p) return undefined
     const 绝对 = isAbsolute(p) ? p : resolve(语境.workspace, p)
     const 相对 = relative(语境.workspace, 绝对)
+    const 硬 = 受保护路径理由(绝对)
+    if (硬) return { 类别: "硬拒", 说明: 远端补一句(`拒绝写入 ${p}：${硬}`) }
 
     // **`..` 开头 = 逃出了工作区**；绝对路径不在工作区下时 relative 也会这样开头
     if (相对.startsWith("..") || isAbsolute(相对)) {
@@ -157,6 +177,9 @@ export function 看风险(
   if (工具名 === "bash") {
     const cmd = typeof 参数.command === "string" ? 参数.command : ""
     if (!cmd) return undefined
+    // ── 硬拒：任何档都拒，谁也盖不过（学自 dsh-auto-mode 的 hardDenyShellReason）──
+    const 硬 = 硬拒理由(cmd)
+    if (硬) return { 类别: "硬拒", 说明: 远端补一句(硬) }
     /**
      * **顺序是有讲究的**：一条命令可能同时踩几样
      * （`pip install` 也会联网），报**最要紧的那个**——
@@ -175,7 +198,18 @@ export function 看风险(
       }
     }
     if (删除命令.test(cmd)) {
-      return { 类别: "删除", 说明: 远端补一句(`拒绝执行 \`${cmd}\`：它会删除或覆盖文件，而那不可撤销。`) }
+      const 目标 = 删除目标(cmd)
+      // 目标看不清（glob / 变量 / 管道 / 多目标）：连问都不问——人在卡上也判不了它会删掉什么
+      if (目标 === "看不清") {
+        return {
+          类别: "删除",
+          不可问: true,
+          说明: 远端补一句(`拒绝执行 \`${cmd}\`：删除的目标里有通配符、变量、管道或多个目标，看不清会删掉什么。请改成**每次一个可见的字面目标**再试。`),
+        }
+      }
+      // 全是本会话自己建的：可重来的低风险，放
+      if (目标.length > 0 && 语境.本会话创建 && 目标.every((t) => 语境.本会话创建!(isAbsolute(t) ? t : resolve(语境.workspace, t)))) return undefined
+      return { 类别: "删除", 说明: 远端补一句(`拒绝执行 \`${cmd}\`：它会删除或覆盖会话之前就有的文件，而那不可撤销。能移动到 .dawn/trash/ 或用 git rm 就别直接删。`) }
     }
     if (联网命令.test(cmd)) {
       return { 类别: "联网", 说明: 远端补一句(`拒绝执行 \`${cmd}\`：它要访问网络。需要的话请人来确认。`) }
@@ -192,10 +226,19 @@ export function 看风险(
   return undefined
 }
 
-/** 门的答复。`undefined` = 放行（与 `ToolGate` 的契约一致） */
-export function 照这一档(档: 权限档, 风险: 风险 | undefined): string | undefined {
-  if (档 === "allow-all") return undefined
-  return 风险?.说明
+/** 门的答复（2026-08-23 起三态；`ToolGate` 的契约随之改） */
+export type 门的决定 = { kind: "allow" } | { kind: "deny"; reason: string } | { kind: "ask"; reason: string; 类别: 危险类别 }
+
+/**
+ * 三态（学自 dsh-auto-mode）：硬拒任何档都拒；全放行只拦硬拒；拦下档直接拒；
+ * 问一句档把危险操作交给人——但「目标看不清」的删除连问都不问。
+ */
+export function 照这一档(档: 权限档, 风险: 风险 | undefined): 门的决定 {
+  if (!风险) return { kind: "allow" }
+  if (风险.类别 === "硬拒") return { kind: "deny", reason: 风险.说明 }
+  if (档 === "allow-all") return { kind: "allow" }
+  if (档 === "deny-risky" || 风险.不可问) return { kind: "deny", reason: 风险.说明 }
+  return { kind: "ask", reason: 风险.说明, 类别: 风险.类别 }
 }
 
 /**
@@ -236,11 +279,75 @@ export function 看MCP风险(服务器名: string, 信得过: boolean | undefine
  * 项目级名单会跟着仓库被 clone，让它声明自己可信等于没有门。
  */
 export function 造MCP门(取档: () => 权限档, 取信得过: (服务器名: string) => boolean) {
-  return (服务器名: string): string | undefined =>
-    照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名)))
+  return (服务器名: string): 门的决定 => 照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名)))
 }
 
 export function 造门(取档: (sessionId?: string) => 权限档) {
-  return (工具名: string, 参数: Record<string, unknown>, 语境: 语境): string | undefined =>
+  return (工具名: string, 参数: Record<string, unknown>, 语境: 语境): 门的决定 =>
     照这一档(取档(语境.sessionId), 看风险(工具名, 参数, 语境))
+}
+
+// ── 硬拒清单与删除目标（2026-08-23，照 dsh-auto-mode 的 shell.ts / paths.ts 重写成我们的规则）──
+
+const HOME = homedir()
+/** 受保护的根：删到、写到这些地方任何档都拒 */
+const 受保护前缀 = [
+  "/", "/etc", "/usr", "/bin", "/sbin", "/var", "/System", "/Library", "/private/etc", "/Applications",
+  HOME,
+  join(HOME, ".ssh"), join(HOME, ".aws"), join(HOME, ".gnupg"), join(HOME, ".kube"), join(HOME, ".config"),
+  join(HOME, "Library"), join(HOME, "Desktop"), join(HOME, "Documents"),
+]
+
+/** 路径本身（不含子项）就是受保护的根，或者在凭据目录底下 */
+export function 受保护路径理由(绝对: string): string | undefined {
+  const p = resolve(绝对).replace(/\/+$/, "") || "/"
+  if (受保护前缀.some((r) => (r.replace(/\/+$/, "") || "/") === p)) return `${p} 是系统目录、你的主目录或它的顶层目录，不碰。`
+  const 凭据 = [".ssh", ".aws", ".gnupg", ".kube"].map((d) => join(HOME, d))
+  if (凭据.some((d) => p === d || p.startsWith(`${d}/`))) return `${p} 在凭据目录里，不碰。`
+  return undefined
+}
+
+const 凭据形状 = /(BEGIN (RSA |OPENSSH )?PRIVATE KEY|\b(sk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{8,}\b|Bearer\s+[A-Za-z0-9._~+/-]{8,}|\.ssh\/(id_|config)|\.aws\/credentials|\$\{?[A-Z_]*(TOKEN|SECRET|API_KEY|PASSWORD)[A-Z_]*\}?)/i
+
+export function 硬拒理由(cmd: string): string | undefined {
+  if (/(^|[\s;&|(])(sudo|doas|su)(\s|$)/.test(cmd)) return `拒绝执行 \`${cmd}\`：提权（sudo / su）任何档都不放。`
+  if (/\bgit\s+push\b.*(--force\b|\s-f\b|\s\+[^\s]+:)/.test(cmd)) return `拒绝执行 \`${cmd}\`：强推会覆盖远端历史，任何档都不放。`
+  if (/\b(curl|wget|nc|scp|rsync)\b/.test(cmd) && 凭据形状.test(cmd)) return `拒绝执行 \`${cmd}\`：命令里带着私钥 / token 形状的东西还要出网，这是凭据外传的形状，任何档都不放。`
+  if (/\b(mkfs|diskutil\s+erase|dd\s+if=.*of=\/dev\/|shutdown|reboot|launchctl\s+unload|chmod\s+-R\s+777\s+\/)/.test(cmd)) return `拒绝执行 \`${cmd}\`：它会动系统或整块盘，任何档都不放。`
+  if (删除命令.test(cmd)) {
+    const 目标 = 删除目标(cmd)
+    if (目标 !== "看不清") {
+      for (const t of 目标) {
+        const 理由 = 受保护路径理由(t.startsWith("~") ? join(HOME, t.slice(1)) : t)
+        if (理由) return `拒绝执行 \`${cmd}\`：${理由}`
+      }
+    } else if (/\brm\b.*(\$HOME|~\/?\s|~\/?$|\s\/\s|\s\/\*)/.test(cmd)) {
+      return `拒绝执行 \`${cmd}\`：删除的目标指向主目录或根，任何档都不放。`
+    }
+  }
+  return undefined
+}
+
+/**
+ * 一条 rm / rmdir / shred / mv 的目标。**看不清就说看不清**（学自它的「动态目标直接拒」）：
+ * 有通配符、变量、命令替换、管道进来的、或者一条命令里多个删除——都算看不清。
+ * 只处理最常见的形状；不认识的形状一律「看不清」，宁可多拒不可漏放。
+ */
+export function 删除目标(cmd: string): string[] | "看不清" {
+  // find -delete / xargs rm：目标是算出来的，整条都看不清
+  if (/\bfind\b.*-delete\b|\bxargs\b/.test(cmd)) return "看不清"
+  const 段 = cmd.split(/&&|\|\||;|\n/).map((x) => x.trim()).filter(Boolean)
+  const 删段 = 段.filter((x) => /^(rm|rmdir|shred|mv|truncate)\b/.test(x) || /\s(rm|rmdir|shred|mv|truncate)\s/.test(x))
+  if (删段.length !== 1) return "看不清"
+  const 句 = 删段[0]!
+  if (/[|`$*?{}\[\]]/.test(句) || /\bxargs\b|\bfind\b/.test(句)) return "看不清"
+  const 词 = 句.split(/\s+/).filter(Boolean)
+  const i = 词.findIndex((w) => /^(rm|rmdir|shred|mv|truncate)$/.test(w))
+  if (i < 0) return "看不清"
+  const 目标 = 词.slice(i + 1).filter((w) => !w.startsWith("-"))
+  if (目标.length === 0) return "看不清"
+  // mv：最后一个是去处，前面的是被覆盖 / 挪走的；只有「两个」才看得清
+  if (词[i] === "mv") return 目标.length === 2 ? [目标[0]!] : "看不清"
+  if (目标.length > 1) return "看不清"
+  return 目标.map((t) => t.replace(/^["']|["']$/g, ""))
 }

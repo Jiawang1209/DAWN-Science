@@ -43,6 +43,22 @@
 
 ## 变更日志
 
+### 2026-08-23 — 权限档搬进输入卡：附栏右侧一颗上拉菜单，设置里的「工具权限」删了
+
+- **Type**: feat
+- **Motivation**: 作者看完三档之后定的：*「应该放入到对话框里面，和上传文件、选择文件夹一行，但是靠右侧，搞一个上拉菜单，和优化输入类型一致。同时可以替换掉设置里面的工具权限」*。两处入口（设置一格 + 会话菜单里一条）是两套判据；现在只剩一颗。
+- **What**: 新建 `src/ui/permission-pill.tsx`（`PermissionPill`：扳机写当前档名带图标；菜单三项**由低到高**排——「自动拦截」(deny-risky，终端图标) →「请求批准」(ask-risky，手掌图标) →「完全访问权限」(allow-all，感叹号、警示色，扳机上简作「完全访问」)——名字照作者给的截图，图上中间那档叫「帮我批准」而我们这一档是拒不是替人批，名字不能比能力大，所以叫「自动拦截」；每项名字加粗、下面一行说明、当前项右边打勾；底下一行「也作为以后新会话的默认」复选框，只在会话里画；最底灰字说「不是沙箱、硬拒任何档都拒」）。`views.tsx` 两张输入卡都接上：会话里那颗改会话开关 `dawn.permission`（勾了复选框顺手写默认），空态那颗直接改默认；`SessionConfigMenu` 不再收 `mode` 类的开关，扳机标签回落到剩下那条的当前项。`App.tsx` 一进来就取 `getPermissionMode`，新加 `设默认档`（失败回滚）；删掉设置里 `permission` 那一类与 `Settings.tsx` 的 `PermissionPanel` 及其四句 i18n。样式 `.perm-pill*`。规格 `2026-08-23-权限三档-design.md` 界面那一行改写。
+- **Impact**: 设置屏少一格；原生会话输入卡附栏右侧多一颗「完全访问 ▾」；会话开关 `dawn.permission` 的选项名与顺序同步改（值不变）；定时任务建表单里两档改叫「自动拦截 / 完全访问」，acp / cli 会话没有 `dawn.permission` 开关所以不画；定时任务建表单里那两档不动。
+- **Verification**: `tests/ui` 489 绿（i18n 缺失 / 孤儿都清了）；`npm test` 全绿；e2e `permission.spec.ts`（改写四条走那颗）、`codex-polish-2.spec.ts`（⑦ 改走那颗、⑧ 改成「菜单空了整颗不画」、切会话快照那条改盯那颗）、`schedule.spec.ts` 改走空态那颗；十张视觉基线重存（空态 / 设置 / 命令面板 / 概览 各明暗——diff 图只有那颗与删掉的一格；命令面板亮色那张照旧拿稳定化后的 actual 救回）并连验两遍绿；全量 e2e 407 绿（改名之前那一轮，改名后重跑三个涉及的 spec 14 绿）。
+
+### 2026-08-23 — 权限三档：问一句、硬拒清单、本会话产物（学自 NanmiCoder/dsh-auto-mode）
+
+- **Type**: feat
+- **Motivation**: 对照 dsh-auto-mode 之后作者定「按照他的来」。我们的门只有全放行 / 拦下：没有「问一句」（当年缺一条往返，ACP 权限卡已把路铺好）、没有硬拒清单（`rm -rf ~`、`sudo` 在全放行档一个字不拦）、不分「删自己刚生成的」与「删之前就有的」。
+- **What**: `权限档` 三档（`allow-all / ask-risky / deny-risky`）；`照这一档` 回三态决定；新类别「硬拒」任何档都拒（sudo、强推、带凭据出网、动盘、删 / 写到根 / 系统目录 / 主目录顶层 / 凭据目录）；删除目标看不清（glob / 变量 / 管道 / xargs / find -delete / 多目标）就拒并要求每次一个可见目标；`policy/artifacts.ts` 登记本会话新建的文件（inode + 出生时间），删它们不算删除；`NativeRuntime.问权限`：ask → `permission_request`（与 ACP 卡同形）→ `answerPermission` → 继续 / 拒，5 分钟超时与会话中止都算拒，答完发 `permission_settled` 清卡；MCP 没过目的工具在问一句档也问；系统提示加「动文件的规矩」；设置三档与说明；输入卡权限菜单三项。设计定案 `specs/2026-08-23-权限三档-design.md`。
+- **Impact**: `ToolGate` 的契约从 `string | undefined` 改成三态决定；wiring 与 backend 读设置时此前把非 deny 的值一律折成全放行——**这正是 e2e 抓到的 bug**（存了问一句却按全放行跑）。定时任务仍只在全放行 / 拦下里选。仍不是沙箱。
+- **Verification**: `tests/policy` 62 条；`tests/electron/wiring.test.ts` 走真实工具包装验问一句 / 硬拒 / 产物；`e2e/permission.spec.ts` 6 条（三档、弹卡允许真删、拒绝没删、sudo 全放行也拒）；全量见提交。
+
 ### 2026-08-22 — 团队那一格改成卡片；成员空输出不再误判为失败
 
 - **Type**: feat + fix

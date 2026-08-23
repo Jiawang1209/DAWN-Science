@@ -134,14 +134,10 @@ export const EN: Readonly<Record<string, string>> = {
   "结束多选服务器": "Finish selecting servers",
   "多选服务器": "Select servers",
   "工具权限": "Tool permissions",
-  "全放行": "Permit everything",
-  "内置 agent 可以任意读写、执行命令。这是目前的默认。":
-    "The built-in agent may read, write and run anything. This is the current default.",
-  "拦下危险操作": "Block risky operations",
-  "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。拦下就是拦下——这一版还不能「问你一句然后放行」。":
-    "Writing to data/raw/, writing outside the workspace, deleting, installing packages, network access and git push are refused, and the reason is handed to the model so it can take another route. **Blocked means blocked** — this version cannot yet ask you and then let it through.",
-  "这是一道工具门，不是沙箱：它只管内置的 read / write / edit / bash 四个工具，管不到子 agent 与 MCP 带进来的工具，也拦不住绕过工具的路子。":
-    "This is a tool gate, not a sandbox: it covers only the four built-in tools (read / write / edit / bash). It does not cover tools brought in by sub-agents or MCP, and it cannot stop anything that bypasses tools altogether.",
+  "完全访问权限": "Full access",
+  "完全访问": "Full access",
+  "请求批准": "Ask for approval",
+  "自动拦截": "Auto-block",
   "环境": "Environment",
   // 机器快照那一支（②-B · R5）。**「系统」不能复用**——那个 msgid 归账本的
   // `origin: system`，同一个中文串两种含义、一份译文，必有一处是错的
@@ -1030,8 +1026,7 @@ export const EN: Readonly<Record<string, string>> = {
   "每月几号": "Day of month",
   "每几天": "Every how many days",
   "从哪天起": "Starting from",
-  "拦危险的": "Block risky",
-  "无人值守：「拦危险的」会拒掉改原始数据、装包、联网、删东西；问不到人的一律拒。": "Unattended: \"Block risky\" refuses edits to raw data, package installs, network and deletes; anything that needs a person is refused.",
+  "无人值守：「自动拦截」会拒掉改原始数据、装包、联网、删东西；问不到人的一律拒。": "Unattended: “Auto-block” refuses editing raw data, installing, network and deletions; anything that would need a person is refused.",
   "时段": "Period",
   "这一周": "This week",
   "这个月": "This month",
@@ -1057,4 +1052,11 @@ export const EN: Readonly<Record<string, string>> = {
   "搜了一会儿没搜完（看了 {0} 条）——换个起点或再打几个字": "Ran out of time (looked at {0} entries) — try a narrower start point or a longer query",
   "没进 {0} 个默认忽略的目录（.git、node_modules 这类）": "Skipped {0} ignored directories (.git, node_modules and the like)",
 
+  // 输入卡上那颗「权限」（2026-08-23）
+  "可不受限制地读写文件、执行命令、访问互联网；只拦硬拒清单": "Unrestricted file access, commands and internet; only the hard-deny list is blocked",
+  "改原始数据、写到工作区外、删旧文件、装包、联网时始终询问你": "Always asks you before editing raw data, writing outside the workspace, deleting old files, installing or using the internet",
+  "检测到的风险操作直接拒绝，把理由回给模型让它改道": "Detected risky operations are refused outright; the reason goes back to the model",
+  "也作为以后新会话的默认": "Also make it the default for new sessions",
+  "（这一段现在跟着默认）": "(this session currently follows the default)",
+  "这是一道工具门，不是沙箱。硬拒清单（sudo、删到主目录 / 系统目录、带凭据出网、强推）任何档都拒。": "This is a tool gate, not a sandbox. The hard-deny list (sudo, deleting home / system dirs, sending credentials out, force push) is refused in every tier.",
 }

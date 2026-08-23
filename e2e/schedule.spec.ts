@@ -96,9 +96,9 @@ test.describe("对话里建", () => {
   test("**agent 调 dawn_schedule_create → 建成暂停的、回话说清 → 「定时」里按恢复**", async ({ dawn }) => {
     const { page } = dawn
     // 先把全局档切到「拦下危险操作」——这就是建成暂停的那条路
-    await 进设置(page, "工具权限")
-    await page.locator(".perm-choice", { hasText: "拦下危险操作" }).locator("input").check()
-    await page.getByRole("button", { name: "返回", exact: true }).click()
+    await page.locator(".perm-pill-trigger").first().click()
+    await page.getByRole("menuitemradio", { name: /^自动拦截/ }).click()
+    await expect(page.locator(".perm-pill-trigger").first()).toHaveText(/^自动拦截/)
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
     await page.getByPlaceholder(/今天帮你做些什么/).fill("每天早上九点帮我看看数据")
@@ -130,11 +130,11 @@ test("**第二档的计划与筛**：每月、每 N 天、权限档标签、记�
   await 表.getByLabel("任务说明").fill("汇总这个月")
   await 表.getByRole("radio", { name: "每月" }).click()
   await 表.getByLabel("每月几号").fill("1")
-  await 表.getByRole("radio", { name: "全放行" }).click()
+  await 表.getByRole("radio", { name: "完全访问" }).click()
   await 表.getByRole("button", { name: "建好" }).click()
   const 行 = 屏.locator(".skill-row", { hasText: "月报" }).first()
   await expect(行).toContainText("每月 1 号 09:00")
-  await expect(行).toContainText("全放行")
+  await expect(行).toContainText("完全访问")
 
   await 屏.getByRole("button", { name: "新建定时任务" }).click()
   const 表2 = 屏.getByRole("form", { name: "新建定时任务" })

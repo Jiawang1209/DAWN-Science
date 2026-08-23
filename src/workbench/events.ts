@@ -342,6 +342,10 @@ export class SessionTranscripts {
        * 理由见 `pendingPermission` 那条注释：它是一个还没结果的问题，
        * 不是「发生过什么」。
        */
+      case "permission_settled":
+        this.清权限询问(sessionId)
+        return
+
       case "permission_request":
         this.收权限询问(sessionId, {
           requestId: event.requestId,

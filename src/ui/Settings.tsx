@@ -474,66 +474,6 @@ export function WorkspacePanel({
  * **我们没有那些**，照抄一个点进去是空的列表比没有更坏——
  * 这里只列真的能配的四块。
  */
-/**
- * 工具权限（2026-08-13）。
- *
- * **刻意不叫「沙箱」。** 沙箱是操作系统层的强制隔离（Codex 在 macOS 上走 seatbelt、
- * Linux 上走 landlock）；我们这里是自己代码里的一道门——模型走我们包装过的工具时
- * 拦得住，绕过去就拦不住。叫它沙箱会让人在「全放行」那一档下做出错误判断，
- * 而**不存在的能力不该看起来存在**。
- *
- * **只有两档，因为只做得到两档**：「问一句人」需要一条主进程↔界面的往返，
- * 那条还没有。这一屏如实写出「拦下」，而不是写「请求批准」然后偷偷拒绝。
- */
-export function PermissionPanel({
-  mode,
-  onChange,
-}: {
-  mode: "allow-all" | "deny-risky"
-  onChange: (m: "allow-all" | "deny-risky") => void
-}) {
-  const 档位 = [
-    {
-      值: "allow-all" as const,
-      名: t("全放行"),
-      说: t("内置 agent 可以任意读写、执行命令。这是目前的默认。"),
-    },
-    {
-      值: "deny-risky" as const,
-      名: t("拦下危险操作"),
-      说: t(
-        "改动 data/raw/、写到工作区之外、删除、装包、联网、git push 会被拒绝，并把理由告诉模型让它改道。拦下就是拦下——这一版还不能「问你一句然后放行」。",
-      ),
-    },
-  ]
-  return (
-    <section className="settings-section">
-      {档位.map((d) => (
-        <label key={d.值} className={`perm-choice${mode === d.值 ? " current" : ""}`}>
-          <input
-            type="radio"
-            name="permission-mode"
-            checked={mode === d.值}
-            onChange={() => onChange(d.值)}
-          />
-          <span className="name">{d.名}</span>
-          <span className="sub">{d.说}</span>
-        </label>
-      ))}
-      {/**
-        * **能力的边界要写在旁边，不写在文档里。** 人是照着这一屏做判断的，
-        * 而这道门管不到子 agent 与 MCP 带进来的工具——不说的话，
-        * 「拦下危险操作」会被读成「什么都拦得住」。
-        */}
-      <p className="caveat">
-        {t(
-          "这是一道工具门，不是沙箱：它只管内置的 read / write / edit / bash 四个工具，管不到子 agent 与 MCP 带进来的工具，也拦不住绕过工具的路子。",
-        )}
-      </p>
-    </section>
-  )
-}
-
 export function SettingsShell({
   sections,
 }: {

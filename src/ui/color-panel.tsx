@@ -59,6 +59,24 @@ export function ColorPanel({
     window.addEventListener("keydown", 键)
     return () => window.removeEventListener("keydown", 键)
   })
+  /**
+   * 下面装不下就翻到色块上方（2026-08-24 作者报的：面板太长，得滚动才看得全）。
+   * 挂上之后量一次真实高度——面板高度是内容定的，写死一个数下次改内容又会错。
+   */
+  const [摆法, 设摆法] = useState<"down" | "up" | "center">("down")
+  useEffect(() => {
+    const el = 根.current
+    const 锚 = el?.parentElement
+    if (!el || !锚) return
+    const 高 = el.getBoundingClientRect().height + 8
+    const 锚框 = 锚.getBoundingClientRect()
+    if (window.innerHeight - 锚框.bottom >= 高) 设摆法("down")
+    else if (锚框.top >= 高) 设摆法("up")
+    // 上下都不够（矮窗口）：固定在视口正中，宁可盖住行也不逼人滚动
+    else 设摆法("center")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // 点面板外面 = 关（mousedown 而不是 click：拖出去松手不该关）
   const 根 = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
@@ -109,7 +127,7 @@ export function ColorPanel({
   const 黑 = hsv转hex(0, 0, 0)
 
   return (
-    <div ref={根} className="cpanel" role="dialog" aria-label={t("色盘")}>
+    <div ref={根} className="cpanel" data-place={摆法} role="dialog" aria-label={t("色盘")}>
       <div
         className="cpanel-sv"
         role="slider"

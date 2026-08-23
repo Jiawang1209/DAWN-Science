@@ -149,3 +149,17 @@ test("**自绘色盘**：点方块定色、拖色相条变色，C 复制、Shift
   await page.keyboard.press("Escape")
   await expect(page.getByRole("dialog", { name: "色盘" })).toHaveCount(0)
 })
+
+test("**窗口矮时色盘往上翻**，整个面板都在视口里，不用滚动", async ({ dawn }) => {
+  const { page } = dawn
+  await page.setViewportSize({ width: 1100, height: 480 })
+  await 在项目里开会话(page)
+  await 进设置(page, "外观")
+  await page.getByRole("button", { name: "色盘", exact: true }).click()
+  const 盘 = page.getByRole("dialog", { name: "色盘" })
+  await expect(盘).toBeVisible()
+  const r = (await 盘.boundingBox())!
+  const 高 = await page.evaluate(() => window.innerHeight)
+  expect(r.y, "面板顶出了视口").toBeGreaterThanOrEqual(0)
+  expect(r.y + r.height, "面板底出了视口——还得滚动才看得全").toBeLessThanOrEqual(高)
+})

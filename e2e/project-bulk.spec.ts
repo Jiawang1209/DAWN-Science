@@ -88,13 +88,12 @@ test("**选一个，删一个，另一个还在**", async ({ dawn }) => {
   await page.getByRole("checkbox", { name: /选择项目：dawn-proj-bulk-甲/ }).check()
   await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 1")
 
-  // ③ 确认框摆真数字，并把「不会发生什么」说在前面
+  // ③ 确认框摆真数字。**删的是会话，不是项目**（2026-08-23 作者定的：与服务器收纳同一套——机器那列删会话不动机器）
   await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
-  await expect(page.locator(".confirm")).toContainText("移除这 1 个项目")
-  await expect(page.locator(".confirm-safety")).toContainText("文件夹一个都不会被删除")
-  await page.locator(".confirm").getByRole("button", { name: /移除 1 个/ }).click()
+  await expect(page.locator(".confirm")).toContainText("删除这 1 段对话")
+  await page.locator(".confirm").getByRole("button", { name: /删除 1 段/ }).click()
 
-  // ④ 少了正好一个，且留下的是另一个
+  // ④ 甲名下没有会话了，收纳里自然少一条（收纳按会话分组），留下的是另一个
   await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
   await expect(page.locator(".proj-list .sess .name")).toContainText("dawn-proj-bulk-乙")
 
@@ -153,7 +152,7 @@ test("**一个项目三段会话，勾两段删两段，项目还在**", async (
   await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
   // 确认框说的是「删对话」，不是「移除项目」——按实际发生的事起标题
   await expect(page.locator(".confirm")).toContainText("删除这 2 段对话")
-  await expect(page.locator(".confirm")).toContainText("项目本身留着")
+  // 2026-08-23 起与服务器收纳共用同一个「删 N 段对话」确认框
   await page.locator(".confirm").getByRole("button", { name: /删除 2 段/ }).click()
 
   await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
@@ -162,15 +161,21 @@ test("**一个项目三段会话，勾两段删两段，项目还在**", async (
   await expect(page.locator(".side-bulkbar")).toHaveCount(0)
 })
 
-test("**项目头那颗勾选框 = 它名下全部**，全选了就整个移除", async ({ dawn }) => {
+test("**项目头那颗勾选框 = 它名下全部**，删的仍是会话；多选时点项目那一行只展开收起", async ({ dawn }) => {
   const { page } = dawn
   await 造项目(page, [甲, 甲, 乙])
   await page.getByRole("button", { name: "多选项目", exact: true }).click()
+  // 与机器那一行同一套：多选时点行不选组，只展开/收起
+  const 甲行 = page.locator(".proj-list .proj-item").filter({ hasText: "dawn-proj-bulk-甲" }).locator(".row").first()
+  await 甲行.click()
+  await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 0")
+  await expect(page.locator(".proj-session-list .sess-item")).toHaveCount(2)
+  await 甲行.click()
   await page.getByRole("checkbox", { name: /选择项目：dawn-proj-bulk-甲/ }).check()
   await expect(page.locator(".side-bulkbar .side-bulk-count")).toHaveText("已选 2")
   await page.locator(".side-bulkbar").getByRole("button", { name: "删除" }).click()
-  await expect(page.locator(".confirm")).toContainText("移除这 1 个项目")
-  await page.locator(".confirm").getByRole("button", { name: /移除 1 个/ }).click()
+  await expect(page.locator(".confirm")).toContainText("删除这 2 段对话")
+  await page.locator(".confirm").getByRole("button", { name: /删除 2 段/ }).click()
   await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
   await expect(page.locator(".proj-list .sess .name")).toContainText("dawn-proj-bulk-乙")
 })

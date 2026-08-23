@@ -2004,7 +2004,7 @@ export function SessionSidebar({
               * 「没有一个按钮文案是另一个的子串」就是它的自动化形式。
               * 「多选项目」也不行：它把「多选」整个包在里面。
               */}
-            {onDeleteProjects ? (
+            {onDeleteMany ? (
               <Button
                 variant="text"
                 size="inline"
@@ -2057,21 +2057,17 @@ export function SessionSidebar({
                 size="inline"
                 className="menu-danger"
                 disabled={已选!.size === 0}
-                onClick={() => {
-                  // **集合里装的是 taskId**：全选了的项目整个移除，只选了几段的只删那几段
-                  const 要删的 = 项目组
-                    .map(([路径, 里面的]) => {
-                      const 选了 = 里面的.filter((t) => 已选!.has(t.taskId))
-                      return {
-                        workspace: 路径,
-                        ...(项目id(里面的) ? { projectId: 项目id(里面的)! } : {}),
-                        tasks: 选了,
-                        整个: 选了.length === 里面的.length,
-                      }
-                    })
-                    .filter((g) => g.tasks.length > 0)
-                  onDeleteProjects?.(要删的, () => 设多选(undefined))
-                }}
+                onClick={() =>
+                  /**
+                   * **与服务器收纳同一套**（2026-08-23 作者定的）：多选删的只是勾中的会话，项目本身留着——
+                   * 一如机器那一列删会话不动机器。此前「名下会话全勾了就连项目一起移除」（08-21）被作者推翻：
+                   * 两个收纳的多选长得一样，按下去的结果却不一样，等于没有判据。移除项目仍走行上的垃圾桶。
+                   */
+                  onDeleteMany?.(
+                    项目里全部.filter((t) => 已选!.has(t.taskId)),
+                    () => 设多选(undefined),
+                  )
+                }
               >
                 {t("删除")}
               </Button>
@@ -2102,7 +2098,8 @@ export function SessionSidebar({
                     ) : null}
                     <Row
                       active={展开}
-                      onClick={() => (选项目中 ? 切一组(里面的.map((t) => t.taskId)) : 设展开(路径, !展开))}
+                      /* 多选时点行仍是展开/收起，选整组只靠前面那颗勾选框——与机器那一行同一套（2026-08-23 作者定的） */
+                      onClick={() => 设展开(路径, !展开)}
                       /**
                        * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
                        * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-23 — 设置各页同一个宽；内核卡不再被溢出撑大
+
+- **Type**: fix
+- **Motivation**: 作者：外观 / 文件引用 / 工作目录 / 模型服务 / 内核 比 Skills / 用量 / ACP 窄一截，切页割裂；内核一点输入框卡还会变大。
+- **What**: `.set-section` 去掉 `max-width: 40rem; margin: 0 auto`，与其它页共用 `settings-body` 整宽；`.set-row` 右列由 `minmax(0, 280px)` 改 `auto`（此前 18rem 路径框 + 保存键装不下，溢出把卡撑宽）；路径框 22rem。
+- **Impact**: 仅设置页版式。
+- **Verification**: 探针截图五页与 Skills 同宽、聚焦内核输入框卡不变；add-service / kernel-settings / at-file e2e 绿；视觉基线「设置」两张重存，连验两轮 10/10。
+
 ### 2026-08-23 — 内核设置：参考清单前多画了一条线
 
 - **Type**: fix

@@ -2235,9 +2235,9 @@ pre {
   min-height: 0;
 }
 
+/* **与 Skills / 用量 / ACP 同一个宽**（2026-08-23 作者：几页尺寸不一，切换有割裂感）——不再压成 40rem 居中的窄块 */
 .set-section {
-  max-width: 40rem;
-  margin: 0 auto var(--dawn-space-6);
+  margin: 0 0 var(--dawn-space-6);
 }
 
 .set-section-title {
@@ -2284,7 +2284,8 @@ pre {
  */
 .set-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
+  /* 右列按内容定宽：此前 `minmax(0, 280px)` 装不下 18rem 路径框 + 保存键，内核那张卡被溢出撑大 */
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--dawn-space-4);
   padding: var(--dawn-space-3) 0;
@@ -2442,7 +2443,7 @@ pre {
 
 /* 路径比 key 长得多，给它更宽的一档 */
 .set-control .control.path {
-  width: 18rem;
+  width: 22rem;
   font-family: var(--dawn-font-mono);
   font-size: 12px;
 }

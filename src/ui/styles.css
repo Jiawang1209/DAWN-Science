@@ -2954,7 +2954,11 @@ pre {
   text-align: left;
 }
 
-.svc-head:hover { background: var(--dawn-surface-elevated); }
+/* 悬停底要跟着卡的圆角走（2026-08-25 作者报的：方角灰底戳出圆角框）。
+   展开时下缘变方——它下面还接着 body，不是卡的尾 */
+.svc-head:hover { background: var(--dawn-row-hover); }
+.svc-head { border-radius: calc(var(--dawn-radius-lg) - 1px); }
+.svc.open > .svc-head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 
 .svc-name {
   font-weight: var(--dawn-weight-semibold);

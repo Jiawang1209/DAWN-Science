@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 模型服务行的悬停底跟着卡的圆角走
+
+- **Type**: fix
+- **Motivation**: 作者：悬停不同模型时灰底是方角，与外面的圆角框没重叠。
+- **What**: `.svc-head` 圆角 = 卡的 lg − 1px，展开时下缘转方（下面接着 body）；悬停底换 `row-hover`。插件卡共用同一套类，一并受益。
+- **Impact**: 模型服务与插件两屏的悬停观感。
+- **Verification**: add-service / providers / office-plugin / 视觉基线全绿；探针截图贴合。
+
 ### 2026-08-25 — 插件卡改用「模型服务」的形制
 
 - **Type**: style

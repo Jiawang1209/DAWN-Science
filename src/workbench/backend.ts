@@ -1741,6 +1741,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const rec = {
         taskId: `task-${randomUUID()}`,
         ...(workspace ? { workspace } : {}),
+        // 临时会话把 scratch 落点说出来（协议 entities 里那一格的注）；远端没有本机落点
+        ...(!workspace && 去处 ? { scratchWorkspace: 去处 } : {}),
         ...(connectionId ? { connectionId } : {}),
         sessionId: 会话.sessionId,
         pinned: false,

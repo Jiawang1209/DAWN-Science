@@ -1158,7 +1158,6 @@ export const EN: Readonly<Record<string, string>> = {
   "色相": "Hue",
   "屏幕取色": "Pick from screen",
   "取色器": "Color picker",
-  "移除附件 {0}": "Remove attachment {0}",
   "按 C 复制颜色值": "Press C to copy the color",
   "按 Shift 切换 RGB/HEX": "Press Shift to toggle RGB/HEX",
   "移动鼠标取色，点击选定，Esc 退出": "Move to sample, click to pick, Esc to exit",

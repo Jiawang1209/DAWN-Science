@@ -385,6 +385,12 @@ export const TaskSummarySchema = z
      * **不进这里**——摆出来只会让人看见一个自己从没选过的路径。
      */
     workspace: z.string().min(1).optional(),
+    /**
+     * 临时会话的 scratch 目录（2026-08-25）。上面那条「实现细节不进这里」说的是**别摆给人看**——
+     * 这一格不是给人看的：空态排队的外部文件要在会话建出来的那一刻知道往哪儿落盘，
+     * 界面拿它当落点，不显示、不参与「临时 / 项目」的分组判据（那仍看 `workspace`）。
+     */
+    scratchWorkspace: z.string().min(1).optional(),
     /** 活儿在哪台远端机器上（②-B · R3）。**缺省 = 本地** */
     connectionId: z.string().min(1).optional(),
     /**

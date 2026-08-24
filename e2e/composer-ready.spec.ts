@@ -3,6 +3,9 @@
  * 上传文件（带上图）、选择工作目录（选定了）、终端（开着）——备好前淡灰、备好后黑色实心；
  * 优化输入本来就是这个行为，这三颗对齐它。作者明确不跟主题色。
  */
+import { mkdtempSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { test, expect, 在项目里开会话, 开一段临时会话 } from "./fixtures.js"
 
 const 颜色 = (page: import("@playwright/test").Page, sel: string) =>
@@ -46,4 +49,24 @@ test("**上传文件**：带上一张图之后转黑色实心", async ({ dawn })
   await expect(page.locator(".attached-one")).toHaveCount(1)
   const 带上了 = await 颜色(page, ".composer-footer .attach-trigger")
   expect(带上了).not.toBe(淡)
+})
+
+test.describe("走「上传文件」插路径也算带上了", () => {
+  const 目录 = mkdtempSync(join(tmpdir(), "dawn-ready-"))
+  const 甲 = join(目录, "数据.csv")
+  writeFileSync(甲, "a,b\n1,2\n")
+  test.use({ dawnOptions: { pickFiles: [甲] } })
+  test("**上传文件（非图片）之后按钮转黑**，发送后回到淡的", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    const 色 = () => page.locator(".composer-footer .attach-trigger").evaluate((el) => getComputedStyle(el).color)
+    const 淡 = await 色()
+    await page.locator(".composer-footer .attach-trigger").click()
+    await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
+    await expect(page.locator(".composer-box textarea")).toHaveValue(/数据\.csv/)
+    expect(await 色(), "插了文件路径按钮没变黑").not.toBe(淡)
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    expect(await 色(), "发送后没回到淡的").toBe(淡)
+  })
 })

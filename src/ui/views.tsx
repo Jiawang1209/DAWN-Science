@@ -717,7 +717,16 @@ function AttachButton({
       onAttachImages(选中)
       return
     }
-    onInsert(选中.map((p) => 相对于(p, workspace)).join(" "))
+    /**
+     * **插的是 `@` 引用，不是裸路径**（2026-08-25 作者点破：「上传文件按理和 @ 是一个样子」）。
+     * 同一份识别语法（`引用令牌`）会让它出现在输入框上方的引用栏里：点得开、摘得掉，
+     * 发送时按「路径 + 类型」交给模型——与手敲 `@` 完全同一条路。
+     * **带空白的路径进不了令牌**（识别到空白就断），这样的退回裸路径——退化但不撒谎。
+     */
+    onInsert(选中.map((p) => {
+      const 相对 = 相对于(p, workspace)
+      return /\s/.test(相对) ? 相对 : `@${相对}`
+    }).join(" "))
   }
 
   return (
@@ -3670,6 +3679,12 @@ export function ConversationView({
    * 图却已经发过了」这种事变得可能。
    */
   const [待发图, 设待发图] = useState<待发的图[]>([])
+  /**
+   * 走「上传文件 / 数据」插过路径（2026-08-25 作者报的：只有图会让按钮变黑，文件不会）。
+   * 它跟着草稿的生命周期走：发送时归零。**不去解析草稿文字**——插进去的是普通文本，
+   * 人改没改、删没删，猜出来的判断只会更错。
+   */
+  const [附过文件, 设附过文件] = useState(false)
   /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */
   const [拖着, 设拖着] = useState(false)
   /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
@@ -4100,6 +4115,7 @@ export function ConversationView({
            */
           const 这次的图 = 待发图
           设待发图([])
+          设附过文件(false)
           clearDraft(session.sessionId)
           设位置(-1)
           设发送出错(undefined)
@@ -4553,9 +4569,12 @@ export function ConversationView({
               */}
             <AttachButton
               {...(workspace ? { workspace } : {})}
-              ready={待发图.length > 0}
+              ready={待发图.length > 0 || 附过文件}
               /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
-              onInsert={(文本) => setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)}
+              onInsert={(文本) => {
+                setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)
+                设附过文件(true)
+              }}
               /**
                * **去重**：同一张图挑两次只算一张。
                * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
@@ -5529,6 +5548,8 @@ export function EmptyConversation({
    * 发出去的那一刻它跟着 `onStart` 一起走——**归到哪一栏由它决定**。
    */
   const [工作目录, 设工作目录] = useState<string | undefined>(undefined)
+  /** 与对话里那份同一个理由（2026-08-25）：插过文件路径也算「带上了」 */
+  const [空态附过, 设空态附过] = useState(false)
   /**
    * 这一屏粘/挑进来、还没发出去的图（2026-08-13）。
    *
@@ -5636,6 +5657,7 @@ export function EmptyConversation({
                */
               const 这次的图 = 空态图
               设空态图([])
+              设空态附过(false)
               设草稿("")
               设开场出错(undefined)
               void Promise.resolve(
@@ -5857,8 +5879,11 @@ export function EmptyConversation({
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
-                  ready={空态图.length > 0}
-                  onInsert={(文本) => 设草稿((前) => (前 ? `${前} ${文本}` : 文本))}
+                  ready={空态图.length > 0 || 空态附过}
+                  onInsert={(文本) => {
+                    设草稿((前) => (前 ? `${前} ${文本}` : 文本))
+                    设空态附过(true)
+                  }}
                   onAttachImages={(paths) => {
                     设空态图((前) => [
                       ...前,

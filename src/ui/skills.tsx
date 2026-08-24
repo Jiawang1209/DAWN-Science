@@ -671,6 +671,7 @@ export function PluginsView({ load, onFlag }: {
 }) {
   const [插件们, 设插件们] = useState<插件一个[] | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
+  const [展开的, 设展开的] = useState<string | undefined>(undefined)
   const 重取 = useCallback(() => {
     load().then((r) => 设插件们(r.plugins)).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
   }, [load])
@@ -698,45 +699,52 @@ export function PluginsView({ load, onFlag }: {
         <p>{t("插件是随应用内置、经过审查的工具包。开关改动对下一段新会话生效。")}</p>
       </header>
       {出错 ? <p className="caveat">{出错}</p> : null}
-      {插件们 === undefined ? null : (
-        <ul className="skill-list">
-          {插件们.map((p) => (
-            <li key={p.id} className="skill plugin-card" data-state={p.on ? "on" : "off"}>
-              <p className="skill-name">
-                {插件文案(p.name)}
-                <span className="mcp-from">{tf("{0} 个工具", p.families.reduce((n, f) => n + f.tools.length, 0))}</span>
-                {p.on ? <span className="badge-on">{t("已启用")}</span> : <span className="mcp-off">{t("已关闭")}</span>}
-              </p>
-              <p className="skill-meta">
-                <label className="mcp-switch">
+      {/* 与「模型服务」同一副形制（2026-08-25 作者按回：插件卡自创的排版太丑）：一行一张 .svc 卡，整行可点展开 */}
+      {插件们?.map((p) => {
+        const 开着 = p.families.filter((f) => f.on).length
+        const 展开 = 展开的 === p.id
+        return (
+          <div key={p.id} className={`svc plugin-card${展开 ? " open" : ""}`} data-state={p.on ? "on" : "off"}>
+            <Button variant="ghost" size="inline" className="svc-head" aria-expanded={展开} onClick={() => 设展开的(展开 ? undefined : p.id)}>
+              <span className="svc-name">{插件文案(p.name)}</span>
+              <span className="svc-sum">
+                {p.on
+                  ? tf("{0} 个工具 · 开着 {1}/{2} 族", p.families.reduce((n, f) => n + f.tools.length, 0), 开着, p.families.length)
+                  : t("整个关着")}
+              </span>
+              <span className="svc-toggle">{展开 ? t("收起") : t("配置它")}</span>
+            </Button>
+            {展开 ? (
+              <div className="svc-body">
+                <label className="mcp-switch plugin-master">
                   <input type="checkbox" checked={p.on} onChange={() => 拨(p.id, undefined, !p.on)} />
                   {t("启用这个插件")}
                 </label>
-              </p>
-              <ul className="plugin-family-list">
-                {p.families.map((f) => (
-                  <li key={f.key} className="plugin-family" data-on={p.on && f.on ? "1" : undefined}>
-                    <label className="mcp-switch plugin-family-head">
-                      <input
-                        type="checkbox"
-                        checked={f.on}
-                        disabled={!p.on}
-                        onChange={() => 拨(p.id, f.key, !f.on)}
-                        aria-label={tf("启用 {0} 工具", 插件文案(f.name))}
-                      />
-                      <类型图标 类={文件类按名字(`a.${f.key === "ppt" ? "pptx" : f.key}`, "file")} />
-                      <span className="plugin-family-name">{插件文案(f.name)}</span>
-                      <span className="plugin-family-count">{f.tools.length}</span>
-                    </label>
-                    {/* 工具名如实列出：**列出来的就是模型此刻真的有的**（关着的族淡显不藏） */}
-                    <p className="plugin-tools">{f.tools.map((x) => x.name).join(" · ")}</p>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      )}
+                <ul className="plugin-family-list">
+                  {p.families.map((f) => (
+                    <li key={f.key} className="plugin-family" data-on={p.on && f.on ? "1" : undefined}>
+                      <label className="mcp-switch plugin-family-head">
+                        <input
+                          type="checkbox"
+                          checked={f.on}
+                          disabled={!p.on}
+                          onChange={() => 拨(p.id, f.key, !f.on)}
+                          aria-label={tf("启用 {0} 工具", 插件文案(f.name))}
+                        />
+                        <类型图标 类={文件类按名字(`a.${f.key === "ppt" ? "pptx" : f.key}`, "file")} />
+                        <span className="plugin-family-name">{插件文案(f.name)}</span>
+                        <span className="plugin-family-count">{f.tools.length}</span>
+                        {/* 工具名同一行扫过去（学 .svc-sum：mono、淡、省略号）——**列的就是模型此刻真的有的** */}
+                        <span className="plugin-family-tools">{f.tools.map((x) => x.name).join(" · ")}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        )
+      })}
     </div>
   )
 }

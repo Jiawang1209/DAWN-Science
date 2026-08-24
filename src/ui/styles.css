@@ -6152,13 +6152,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   -webkit-box-decoration-break: clone;
 }
 
-/* 插件卡（2026-08-25，承载体 v1）：族一行 = 勾选框 + 类型图标 + 名 + 计数，其下淡显工具名 */
+/* 插件卡（2026-08-25，两版：自创排版被作者按回，改与 .svc 同形制）。族行 = 勾 + 图标 + 名 + 数 + 工具名扫尾 */
+.plugin-master { margin: var(--dawn-space-2) 0; }
+.plugin-family-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.plugin-family { padding: var(--dawn-space-1) 0; border-top: 1px solid var(--dawn-stroke-4); }
+.plugin-family-head { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.plugin-family-name { font-weight: var(--dawn-weight-medium); flex: 0 0 auto; }
+.plugin-family-count { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); flex: 0 0 auto; }
+.plugin-family-tools { flex: 1 1 auto; min-width: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-family: var(--dawn-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.plugin-family[data-on] .plugin-family-name { color: var(--dawn-text-1); }
 .plugin-card[data-state="off"] .plugin-family-list { opacity: 0.55; }
-.plugin-family-list { list-style: none; margin: var(--dawn-space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--dawn-space-2); }
-.plugin-family { padding: var(--dawn-space-2) var(--dawn-space-3); border: 1px solid var(--dawn-stroke-4); border-radius: var(--dawn-radius-md); }
-.plugin-family[data-on] { border-color: var(--dawn-stroke-accent); }
-.plugin-family-head { display: flex; align-items: center; gap: var(--dawn-space-2); }
-.plugin-family-name { font-weight: var(--dawn-weight-medium); }
-.plugin-family-count { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
-.plugin-tools { margin: var(--dawn-space-1) 0 0 30px; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-family: var(--dawn-font-mono); }
 .badge-on { color: var(--dawn-live); border: 1px solid var(--dawn-live); border-radius: var(--dawn-radius-sm); padding: 0 4px; font-size: 11px; }

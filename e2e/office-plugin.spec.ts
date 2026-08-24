@@ -15,6 +15,8 @@ test("**插件卡**：Office 文档四族齐全；关一族要持久、写明下
   await expect(卡).toHaveCount(1)
   await expect(卡).toContainText("Office 文档")
   await expect(卡).toContainText("14 个工具")
+  // 与「模型服务」同一副形制：整行可点展开
+  await 卡.getByRole("button", { name: /配置它/ }).click()
   for (const 名 of ["电子表格", "PDF", "演示文稿", "Word 文档"]) await expect(卡).toContainText(名)
   // 工具名如实列出
   await expect(卡).toContainText("xlsx_recalc")
@@ -23,6 +25,8 @@ test("**插件卡**：Office 文档四族齐全；关一族要持久、写明下
   await page.getByRole("checkbox", { name: "启用 演示文稿 工具" }).uncheck()
   await page.getByRole("button", { name: "返回" }).click()
   await 进设置(page, "插件")
+  // 卡默认收起（与模型服务一致）——先展开再看
+  await page.getByRole("button", { name: /配置它/ }).click()
   await expect(page.getByRole("checkbox", { name: "启用 演示文稿 工具" })).not.toBeChecked()
   // 「下一段生效」写在头上——不许静默
   await expect(page.locator(".skills-head")).toContainText("下一段新会话生效")

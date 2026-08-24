@@ -1172,11 +1172,12 @@ export const EN: Readonly<Record<string, string>> = {
   "再点一次：确认清理": "Click again to confirm cleanup",
   "清理本会话附件": "Clean this session's attachments",
   "插件是随应用内置、经过审查的工具包。开关改动对下一段新会话生效。": "Plugins are built-in, reviewed tool packs. Toggles apply to the next new session.",
-  "{0} 个工具": "{0} tools",
   "启用这个插件": "Enable this plugin",
   "启用 {0} 工具": "Enable {0} tools",
   "Office 文档": "Office documents",
   "电子表格": "Spreadsheets",
   "演示文稿": "Presentations",
   "Word 文档": "Word documents",
+  "{0} 个工具 · 开着 {1}/{2} 族": "{0} tools · {1}/{2} families on",
+  "整个关着": "Entirely off",
 }

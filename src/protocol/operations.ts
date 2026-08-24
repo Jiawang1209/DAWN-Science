@@ -1039,6 +1039,35 @@ export const OPERATIONS = {
     response: z.object({ on: z.boolean() }).strict(),
   },
 
+  /* ── agent 浏览器旁观（2026-08-25，坞「网页」格收编）─────────────────── */
+
+  /**
+   * agent 那台 headless 浏览器的旁观面：开没开、当前页、去过哪儿。
+   * **历史是观察不是转述**——记在我们自己的 `page.on("load")` 上，
+   * 与 `web_download` 同一性质（`agent的浏览器` spec §4 那条「URL 验不了」拦的是模型自述）。
+   */
+  browserObserve: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        open: z.boolean(),
+        channel: z.string(),
+        activeUrl: z.string(),
+        activeTitle: z.string(),
+        tabs: z.number().int().min(0),
+        history: z.array(z.object({ url: z.string(), title: z.string(), at: z.string() }).strict()),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 活跃页截一帧（PNG base64）。浏览器没开就报错，**不静默回空图** */
+  browserFrame: {
+    request: z.object({}).strict(),
+    response: z.object({ png: z.string().min(1) }).strict(),
+    mutating: false,
+  },
+
   setSkillInvocation: {
     request: z.object({ filePath: z.string().min(1), mode: z.enum(["model", "manual", "off"]) }).strict(),
     response: z.object({ mode: z.enum(["model", "manual", "off"]) }).strict(),

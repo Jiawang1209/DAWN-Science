@@ -10,6 +10,7 @@
  */
 import type { ProviderRegistry } from "../config/schema.js"
 import { 插件册 } from "../tools/plugins.js"
+import { 旁观, 截一帧 } from "../tools/browser/session.js"
 import {
   addAcpAgent,
   addNativeAgent,
@@ -2117,6 +2118,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       settings.set(`${p.键}.${family}` as never, on ? "" : "0", now)
       return { on }
+    },
+
+    /* ── agent 浏览器旁观（2026-08-25，规格 2026-08-25-agent浏览器旁观-design.md）──
+     * 浏览器插件的会话层与工具同进程，这里直接读它的模块级状态——
+     * 不新开 IPC 通道，主进程不认识浏览器插件的内部。 */
+
+    browserObserve: async () => await 旁观(),
+
+    browserFrame: async () => {
+      try {
+        return { png: await 截一帧() }
+      } catch (e) {
+        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+      }
     },
 
     setSkillInvocation: async ({ filePath, mode }) => {

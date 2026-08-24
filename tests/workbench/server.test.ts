@@ -139,6 +139,8 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     searchFiles: async () => ({ matches: [], visited: 0, skippedDirs: 0, unreadable: 0 }),
     listPlugins: async () => ({ plugins: [] }),
     setPluginFlag: async () => ({ on: true }),
+    browserObserve: async () => ({ open: false, channel: "", activeUrl: "", activeTitle: "", tabs: 0, history: [] }),
+    browserFrame: async () => ({ png: "aGk=" }),
     setSkillInvocation: async () => ({ mode: "model" as const }),
     importSkill: async () => ({ kind: "single" as const, pending: [], conflicts: [], imported: [], skipped: [], failed: [] }),
     deleteSkill: async () => ({ trashed: true as const }),

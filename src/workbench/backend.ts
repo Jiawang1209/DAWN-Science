@@ -9,7 +9,7 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
-import { OFFICE族 } from "../tools/office/index.js"
+import { 插件册 } from "../tools/plugins.js"
 import {
   addAcpAgent,
   addNativeAgent,
@@ -2087,44 +2087,35 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     /* ── 插件（2026-08-25，承载体 v1，学自 dsh-office） ── */
 
-    listPlugins: async () => {
-      const 开 = {
-        off: settings?.get("plugin.office.off") === "1",
-        xlsx: settings?.get("plugin.office.xlsx") !== "0",
-        pdf: settings?.get("plugin.office.pdf") !== "0",
-        ppt: settings?.get("plugin.office.ppt") !== "0",
-        docx: settings?.get("plugin.office.docx") !== "0",
-      }
-      return {
-        plugins: [
-          {
-            id: "office",
-            name: "Office 文档",
-            on: !开.off,
-            families: OFFICE族.map((f) => ({
-              key: f.族,
-              name: f.名,
-              on: 开[f.族],
-              tools: f.工具.map((t) => ({ name: t.name, description: t.description })),
-            })),
-          },
-        ],
-      }
-    },
+    listPlugins: async () => ({
+      plugins: 插件册.map((p) => ({
+        id: p.id,
+        name: p.名,
+        on: settings?.get(`${p.键}.off` as never) !== "1",
+        families: p.族们().map((f) => ({
+          key: f.key,
+          name: f.name,
+          on: settings?.get(`${p.键}.${f.key}` as never) !== "0",
+          tools: f.tools,
+        })),
+      })),
+    }),
 
     setPluginFlag: async ({ pluginId, family, on }) => {
-      if (pluginId !== "office") throw fault("invalid_request", `没有叫「${pluginId}」的插件`)
+      const p = 插件册.find((x) => x.id === pluginId)
+      if (!p) throw fault("invalid_request", `没有叫「${pluginId}」的插件。有的是：${插件册.map((x) => x.id).join("、")}`)
       if (!settings) throw fault("internal_error", "本次运行没有装配设置")
       const now = new Date().toISOString()
       if (!family) {
         // 整包开关存「off」一把键：默认开着，只记「关」这个偏离
-        settings.set("plugin.office.off", on ? "" : "1", now)
+        settings.set(`${p.键}.off` as never, on ? "" : "1", now)
         return { on }
       }
-      if (!OFFICE族.some((f) => f.族 === family)) {
-        throw fault("invalid_request", `Office 插件没有「${family}」这一族。有的是：${OFFICE族.map((f) => f.族).join("、")}`)
+      const 族们 = p.族们()
+      if (!族们.some((f) => f.key === family)) {
+        throw fault("invalid_request", `「${p.名}」插件没有「${family}」这一族。有的是：${族们.map((f) => f.key).join("、")}`)
       }
-      settings.set(`plugin.office.${family}`, on ? "" : "0", now)
+      settings.set(`${p.键}.${family}` as never, on ? "" : "0", now)
       return { on }
     },
 

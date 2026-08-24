@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 浏览器插件：agent 的手伸进真浏览器（学自 dsh-reef）
+
+- **Type**: feat
+- **Motivation**: 作者：「我们有浏览器和网页了但不太够」，指定研读 dsh-browser-panel（已 404，能力在 huey1in/reef）。与坞「网页」格不重叠（人看 vs agent 操作）；与「外部 MCP 配浏览器」并存（内置开箱即用，MCP 进阶）。
+- **What**: `src/tools/browser/`（session 共享浏览器：playwright-core 复用系统 Edge/Chrome、lazy 启动、探测失败说人话；tools 15 个四族——snapshot 文本优先、elements 给现成选择器、eval 净化 JSON、截图双阈值清理、下载带 Cookie 落工作区）；`src/tools/plugins.ts` 插件册成为唯一名单（backend 两 op 改走册子）；runtime `browserEnable` 第五组、设置键 `plugin.browser.*`；插件屏第二张卡。playwright-core external（createRequire 同雷）。
+- **Impact**: 插件两张卡；模型多 15 个 browser_* 工具；访问历史留口给第二步（坞实时画面）。
+- **Verification**: 单元 8 条（名册/清理/净化 + **真 Chrome 整链路** open→snapshot→elements→type/click→eval→screenshot）；e2e 4 条连跑两轮（第二张卡持久开关；假模型点名调 browser_status 出工具卡）；tests 全套 642 项相关目录绿。
+
 ### 2026-08-25 — 插件卡默认展开；文件引用的加规则表单两行对齐
 
 - **Type**: style

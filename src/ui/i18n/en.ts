@@ -1180,4 +1180,8 @@ export const EN: Readonly<Record<string, string>> = {
   "Word 文档": "Word documents",
   "{0} 个工具 · 开着 {1}/{2} 族": "{0} tools · {1}/{2} families on",
   "整个关着": "Entirely off",
+  "浏览器": "Browser",
+  "浏览": "Browse",
+  "读页": "Read page",
+  "操作": "Act",
 }

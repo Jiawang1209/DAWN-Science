@@ -58,6 +58,7 @@ import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
+import { browserTools, type Browser开关 } from "../tools/browser/index.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
 import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器 } from "../team/scheduler.js"
@@ -119,6 +120,8 @@ export type ToolGate = (
 export interface NativeRuntimeOptions {
   /** Office 插件的族开关（设置里那张插件卡；不给 = 不装）。每次建会话时问一遍，改了开关下一段生效 */
   officeEnable?: () => Office开关
+  /** 浏览器插件的族开关（2026-08-25，学自 dsh-reef）；同一套约定 */
+  browserEnable?: () => Browser开关
   /**
    * 按 provider 取凭证。**必须带缓存**——见下方 `ModelRuntime` 的注释。
    *
@@ -771,7 +774,8 @@ export class NativeRuntime implements AgentRuntime {
      * 与内核/视觉/MCP 同一组「外部」——同样要过 tool_files 观察与两条 return。
      */
     const office工具组 = this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []
-    const 外部 = [...内核工具, ...视觉工具, ...office工具组, ...mcp工具]
+    const browser工具组 = this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable()) : []
+    const 外部 = [...内核工具, ...视觉工具, ...office工具组, ...browser工具组, ...mcp工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部

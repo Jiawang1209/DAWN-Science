@@ -663,7 +663,7 @@ export interface 插件一个 {
  */
 /** 插件与族的名字来自后端（协议里是数据不是文案）；这里静态映射一层 `t`，让 i18n 的孤儿扫描看得见 */
 const 插件文案 = (n: string): string =>
-  ({ "Office 文档": t("Office 文档"), 电子表格: t("电子表格"), PDF: "PDF", 演示文稿: t("演示文稿"), "Word 文档": t("Word 文档") })[n] ?? n
+  ({ "Office 文档": t("Office 文档"), 电子表格: t("电子表格"), PDF: "PDF", 演示文稿: t("演示文稿"), "Word 文档": t("Word 文档"), 浏览器: t("浏览器"), 浏览: t("浏览"), 读页: t("读页"), 操作: t("操作"), 产物: t("产物") })[n] ?? n
 
 export function PluginsView({ load, onFlag }: {
   load: () => Promise<{ plugins: 插件一个[] }>

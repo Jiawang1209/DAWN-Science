@@ -100,8 +100,8 @@ const text = (s: string, isError = false): ToolResult => ({
   details: undefined,
 })
 
-/** 把一个移植定义包成 pi 的工具（与 `createRunCodeTool` 同一副形状） */
-function 包成pi工具(定义: Office工具定义, workspace: string) {
+/** 把一个插件定义包成 pi 的工具（与 `createRunCodeTool` 同一副形状）。browser 插件也用它（没列进 `路径参数` 的名字不做路径解析） */
+export function 包成pi工具(定义: Office工具定义, workspace: string) {
   return {
     name: 定义.name,
     label: 定义.name,

@@ -92,6 +92,8 @@ export type SettingKey =
    * 插件随应用自带，装好即可用，这个默认写在插件卡上。
    */
   | `plugin.office.${string}`
+  /** 浏览器插件（2026-08-25，学自 dsh-reef）：同一套约定 */
+  | `plugin.browser.${string}`
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

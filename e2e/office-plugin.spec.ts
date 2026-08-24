@@ -12,15 +12,16 @@ test("**插件卡**：Office 文档四族齐全；关一族要持久、写明下
   await 在项目里开会话(page)
   await 进设置(page, "插件")
   const 卡 = page.locator(".plugin-card")
-  await expect(卡).toHaveCount(1)
-  await expect(卡).toContainText("Office 文档")
-  await expect(卡).toContainText("14 个工具")
+  // 2026-08-25 起两张：Office 文档 + 浏览器
+  await expect(卡).toHaveCount(2)
+  await expect(卡.first()).toContainText("Office 文档")
+  await expect(卡.first()).toContainText("14 个工具")
   // 默认展开（2026-08-25 作者定的：总共没多少插件），头上写着「收起」
-  await expect(卡.getByRole("button", { name: /收起/ })).toBeVisible()
-  for (const 名 of ["电子表格", "PDF", "演示文稿", "Word 文档"]) await expect(卡).toContainText(名)
+  await expect(卡.first().getByRole("button", { name: /收起/ })).toBeVisible()
+  for (const 名 of ["电子表格", "PDF", "演示文稿", "Word 文档"]) await expect(卡.first()).toContainText(名)
   // 工具名如实列出
-  await expect(卡).toContainText("xlsx_recalc")
-  await expect(卡).toContainText("pptx_edit")
+  await expect(卡.first()).toContainText("xlsx_recalc")
+  await expect(卡.first()).toContainText("pptx_edit")
   // 关掉演示文稿那一族 → 重进设置还是关的
   await page.getByRole("checkbox", { name: "启用 演示文稿 工具" }).uncheck()
   await page.getByRole("button", { name: "返回" }).click()

@@ -68,6 +68,13 @@ describe("真实后端 · 经服务端端到端", () => {
     repo = newRepo()
   })
 
+  it("browserObserve 没开如实说；browserFrame 响亮拒（2026-08-25 旁观面）", async () => {
+    const d = (await ctx.backend.browserObserve({})) as { open: boolean; history: unknown[] }
+    expect(d.open).toBe(false)
+    expect(Array.isArray(d.history)).toBe(true)
+    await expect(ctx.backend.browserFrame({})).rejects.toThrow(/没开/)
+  })
+
   /**
    * 开一段带工作路径的对话，返回它的 sessionId（T4，2026-08-13）。
    *

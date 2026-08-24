@@ -55,6 +55,7 @@
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.20.1",
+    "playwright-core": "^1.62.1",
     "pptxgenjs": "^4.0.1",
     "qrcode": "^1.5.4",
     "rxjs": "^7.8.2",

@@ -8,6 +8,22 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — agent 浏览器旁观：坞「网页」格一格两子页签
+
+- **Type**: feat
+- **Motivation**: 作者问「agent 解析网页时我还能浏览吗、浏览在坞哪里」，随后定的：把浏览器插件留的口（session 历史 50 条）做成坞里的旁观面，**并与「网页」格合并**——一格两子页签（「自己浏览」|「agent 旁观」），不开第六格。合并只合到格这一层：两台浏览器是两个进程两套登录态，agent 那台没有可见表面，只能旁观（截图一帧 + 去过哪儿）。
+- **What**: `session.ts` 加 `旁观`/`截一帧`（**不走 `要页面()`**——旁观不许偷偷把浏览器拉起来）；协议加 `browserObserve`/`browserFrame` 两条只读操作（113 个操作），后端直读工具同进程的模块态，不新开 IPC；`web.tsx` 分面（离开浏览面立刻 `visible:false` 藏 WebContentsView，消息链接强制落浏览面）；新 `agent-browser.tsx`（2s 轻轮询、活跃 URL 变了自动重截、点历史条目在**自己的会话**里重新访问且措辞说清不是 agent 那份）；页签活跃点用 `--dawn-live`。子页签文案避开「浏览」（「用系统浏览器打开」的子串，契约扫描抓的）。
+- **Impact**: 坞「网页」格从单面变两面；历史是**观察不是转述**（记在我们自己的 `page.on("load")` 上）；子页签不持久化；历史仍是内存态不进账本。
+- **Verification**: 单测 2163 全绿（含 session 旁观面 2 条、后端路由 1 条、协议清点更新、契约扫描抓过一次令牌错位已改）；`browser-live` 真 Chrome 验 observe 有历史、frame 是合法 PNG（魔数）；e2e 14 条全过（新增：两子页签 + 空态如实说；切「agent 旁观」时 WebContentsView 真藏、切回还在原页——走 `视图(app)` 主进程探针）；十张视觉基线全绿未动。
+
+### 2026-08-25 — 浏览器插件：agent 的手伸进真浏览器（学自 dsh-reef）
+
+- **Type**: feat
+- **Motivation**: 作者：「我们有浏览器和网页了但不太够」，指定研读 dsh-browser-panel（已 404，能力在 huey1in/reef）。与坞「网页」格不重叠（人看 vs agent 操作）；与「外部 MCP 配浏览器」并存（内置开箱即用，MCP 进阶）。
+- **What**: `src/tools/browser/`（session 共享浏览器：playwright-core 复用系统 Edge/Chrome、lazy 启动、探测失败说人话；tools 15 个四族——snapshot 文本优先、elements 给现成选择器、eval 净化 JSON、截图双阈值清理、下载带 Cookie 落工作区）；`src/tools/plugins.ts` 插件册成为唯一名单（backend 两 op 改走册子）；runtime `browserEnable` 第五组、设置键 `plugin.browser.*`；插件屏第二张卡。playwright-core external（createRequire 同雷）。
+- **Impact**: 插件两张卡；模型多 15 个 browser_* 工具；访问历史留口给第二步（坞实时画面）。
+- **Verification**: 单元 8 条（名册/清理/净化 + **真 Chrome 整链路** open→snapshot→elements→type/click→eval→screenshot）；e2e 4 条连跑两轮（第二张卡持久开关；假模型点名调 browser_status 出工具卡）；tests 全套 642 项相关目录绿。
+
 ### 2026-08-25 — 插件卡默认展开；文件引用的加规则表单两行对齐
 
 - **Type**: style

@@ -404,6 +404,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         : undefined
     },
     gate: 权限门,
+    /** 浏览器插件（2026-08-25，学自 dsh-reef）：同一套「没记过 = 开着」 */
+    browserEnable: () => ({
+      off: settingsStore.get("plugin.browser.off") === "1",
+      browse: settingsStore.get("plugin.browser.browse") !== "0",
+      read: settingsStore.get("plugin.browser.read") !== "0",
+      act: settingsStore.get("plugin.browser.act") !== "0",
+      artifact: settingsStore.get("plugin.browser.artifact") !== "0",
+    }),
     /** Office 插件的族开关（2026-08-25，学自 dsh-office）：设置键没记过 = 开着——插件卡上写明这个默认 */
     officeEnable: () => ({
       off: settingsStore.get("plugin.office.off") === "1",

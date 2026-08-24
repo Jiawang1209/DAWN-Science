@@ -4241,7 +4241,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 * 真正的网页是主进程里一个 `WebContentsView`，浮在整个 DOM 之上。
                 * `workspace` 传下去是为了 `file:` 那一支：它要以工作目录为界。
                 */
-              <WebPanel workspace={currentWorkspace} {...(projectId ? { projectId } : {})} />
+              <WebPanel
+                workspace={currentWorkspace}
+                {...(projectId ? { projectId } : {})}
+                agent={{
+                  observe: () => client.get("browserObserve", {}),
+                  frame: async () => (await client.get<{ png: string }>("browserFrame", {})).png,
+                }}
+              />
             ) : (
               /**
                 * **摆法跟着坞的宽度走**（2026-08-19）。

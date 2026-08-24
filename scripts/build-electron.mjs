@@ -40,6 +40,8 @@ const external = [
   "docx",
   "mammoth",
   "fontkit",
+  // 浏览器插件（2026-08-25，学自 dsh-reef）：playwright-core 同样自带 createRequire，还要在运行时找它的包内资源
+  "playwright-core",
   "electron",
   "better-sqlite3",
   "node-pty",

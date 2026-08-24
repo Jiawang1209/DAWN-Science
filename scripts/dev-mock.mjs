@@ -84,6 +84,7 @@ const child = spawn(
       ...process.env,
       DAWN_CONFIG: configPath,
       DAWN_DB: join(dir, "dawn.db"),
+      DAWN_MEMORIES_DIR: join(dir, "memories"),
       DAWN_MODELS_JSON: modelsPath,
       DAWN_FAKE_ILINK: weixin.url,
     },

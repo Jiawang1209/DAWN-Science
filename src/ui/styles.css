@@ -6083,3 +6083,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-footer .attach[data-ready] .attach-trigger,
 .composer-footer .ws-chip[data-ready] { color: var(--dawn-text-1); }
 .composer-footer .dock-toggle[aria-pressed="true"] { color: var(--dawn-text-1); }
+
+/* 外部文件的 chip（2026-08-25，学自 dsh-paste-input 的 dock chip）：图标 + 名 + 大小 + ×，一行一颗——
+   与图片 chip 不同形（图片是方缩略图），因为它们回答的问题不同：图看内容，文件认名字 */
+.attached-one.attached-file {
+  width: auto;
+  height: 32px;
+  gap: var(--dawn-space-1);
+  padding: 0 var(--dawn-space-1) 0 var(--dawn-space-2);
+  border: 1px solid var(--dawn-stroke-accent);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+}
+.attached-file .attached-name { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-fs-meta); }
+.attached-file .attached-size { color: var(--dawn-text-3); font-size: 11px; white-space: nowrap; }
+.attached-file .attached-x { position: static; opacity: 1; width: 20px; height: 20px; }
+.attach-usage { display: flex; flex-direction: column; gap: var(--dawn-space-2); align-items: flex-start; }
+.attach-usage-line { margin: 0; font-variant-numeric: tabular-nums; }

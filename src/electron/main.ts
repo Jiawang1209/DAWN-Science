@@ -9,7 +9,8 @@ import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electro
 import { extname, join } from "node:path"
 import { readFile } from "node:fs/promises"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
+import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_ATTACH_SAVE, IPC_ATTACH_USAGE, IPC_ATTACH_CLEAN, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
+import { 存附件, 附件用量of, 清附件 } from "../files/attachments.js"
 import { 造网页预览, type 网页命令, type 网页预览 } from "./web-preview.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
@@ -484,6 +485,13 @@ app.whenReady().then(() => {
     const size = img.getSize()
     return { dataUrl: img.toDataURL(), width: size.width, height: size.height }
   })
+
+  // 外部文件附件（2026-08-25）：发送才落盘；逻辑住在 src/files/attachments.ts
+  ipcMain.handle(IPC_ATTACH_SAVE, (_e, 工作区: string, sessionId: string, 文件们: { 名: string; 源路径?: string; 字节?: Uint8Array }[]) =>
+    存附件(工作区, sessionId, 文件们.map((f) => ({ 名: f.名, 源路径: f.源路径, 字节: f.字节 ? new Uint8Array(f.字节) : undefined }))),
+  )
+  ipcMain.handle(IPC_ATTACH_USAGE, (_e, 工作区: string, sessionId: string) => 附件用量of(工作区, sessionId))
+  ipcMain.handle(IPC_ATTACH_CLEAN, (_e, 工作区: string, sessionId: string) => 清附件(工作区, sessionId))
 
   // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
   ipcMain.handle(IPC_PICK_DIRECTORY, async (e, defaultPath?: string) => {

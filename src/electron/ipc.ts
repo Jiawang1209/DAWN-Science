@@ -33,6 +33,13 @@ export const IPC_EVENT_CHANNEL = "dawn:workbench:event"
 export const IPC_PICK_DIRECTORY = "dawn:shell:pick-directory"
 /** 取色器要看像素（2026-08-24 作者要的放大镜取色）：截当前窗口一帧。与选目录同理，走窄通道不进协议 */
 export const IPC_CAPTURE_PAGE = "dawn:shell:capture-page"
+/**
+ * 外部文件附件（2026-08-25，学自 dsh-paste-input）：发送那一刻把粘贴 / 拖拽的文件写进工作区。
+ * 与选目录同理走窄通道：字节从渲染进程来（剪贴板），落盘在主进程；纯逻辑在 src/files/attachments.ts，node 下可测
+ */
+export const IPC_ATTACH_SAVE = "dawn:shell:attach-save"
+export const IPC_ATTACH_USAGE = "dawn:shell:attach-usage"
+export const IPC_ATTACH_CLEAN = "dawn:shell:attach-clean"
 
 /**
  * 网页预览那一格（批 1，2026-08-18）。**同样刻意不做成协议操作**——

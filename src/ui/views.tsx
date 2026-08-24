@@ -8,7 +8,7 @@
  * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
  * 打开 app 时要做的事是跟 agent 说话。
  */
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
@@ -3685,6 +3685,55 @@ export function ConversationView({
    * 人改没改、删没删，猜出来的判断只会更错。
    */
   const [附过文件, 设附过文件] = useState(false)
+  /**
+   * 粘贴 / 拖拽进来的**外部文件**（2026-08-25，学自 dsh-paste-input，解读见
+   * `ccb_hive_code_learn/dsh-paste-input-解读.md`）：**只在内存排队，发送那一刻才落盘**
+   * 进 `<工作区>/.dawn/attachments/…` 并以 `@相对路径` 进消息——×掉 chip = 磁盘无痕。
+   * 拖拽的文件拿得到真实路径就记路径（落盘时主进程直接复制，字节不过 IPC）；
+   * 剪贴板来的没有路径，握着 File 等发送时取字节。
+   */
+  const [待发文件, 设待发文件] = useState<{ 名: string; 字节数: number; file?: File; 源路径?: string }[]>([])
+  const 收外部文件 = useCallback((files: readonly File[]) => {
+    if (files.length === 0) return
+    设待发文件((前) => [
+      ...前,
+      ...files.map((f) => {
+        const p = window.dawn?.pathForFile?.(f) ?? ""
+        return { 名: f.name || "未命名", 字节数: f.size, ...(p ? { 源路径: p } : { file: f }) }
+      }),
+    ])
+  }, [])
+  /** 整页拖拽（学它的 page-level drop）：图走「随轮送字节」的老路，其余进外部文件队列 */
+  useEffect(() => {
+    const onDragover = (e: DragEvent) => {
+      if ([...(e.dataTransfer?.items ?? [])].some((it) => it.kind === "file")) e.preventDefault()
+    }
+    const onDrop = (e: DragEvent) => {
+      // 卡上已有自己的 onDrop（拖图那条老路）：它接住的（preventDefault 过）这里不再收，收两次 = 两个 chip
+      if (e.defaultPrevented) return
+      const files = [...(e.dataTransfer?.files ?? [])]
+      if (files.length === 0) return
+      e.preventDefault()
+      const 图 = files.filter((f) => f.type.startsWith("image/"))
+      const 其余 = files.filter((f) => !f.type.startsWith("image/"))
+      if (图.length > 0 && session.kind === "native") {
+        void 文件们成图(图).then((批) => {
+          设待发图((前) => [...前, ...批])
+          补预览(批, 设待发图)
+        }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
+        收外部文件(其余)
+      } else {
+        // 非 native 会话收不下图片字节——图也按外部文件落盘走 @ 引用
+        收外部文件(files)
+      }
+    }
+    document.addEventListener("dragover", onDragover)
+    document.addEventListener("drop", onDrop)
+    return () => {
+      document.removeEventListener("dragover", onDragover)
+      document.removeEventListener("drop", onDrop)
+    }
+  }, [收外部文件, session.kind])
   /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */
   const [拖着, 设拖着] = useState(false)
   /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
@@ -4066,7 +4115,7 @@ export function ConversationView({
            * 「看看这张图」这种意图，人常常懒得打字——
            * 拦下来的话表现是「按了发送什么都没发生」。
            */
-          if (!text && 待发图.length === 0) return
+          if (!text && 待发图.length === 0 && 待发文件.length === 0) return
           /**
            * **上一轮还在跑就不许再发**（2026-08-15 作者第三次报同一句报错）。
            *
@@ -4114,7 +4163,9 @@ export function ConversationView({
            * 而屏幕上什么都没有，那正是作者看见的「没有任何反应」。
            */
           const 这次的图 = 待发图
+          const 这次的文件 = 待发文件
           设待发图([])
+          设待发文件([])
           设附过文件(false)
           clearDraft(session.sessionId)
           设位置(-1)
@@ -4123,22 +4174,46 @@ export function ConversationView({
           设等回话(items.length)
           设等回话时刻(Date.now())
           设喊停过(false)
-          void Promise.resolve(
+          void (async () => {
+            /**
+             * **外部文件在这一刻落盘**（2026-08-25，学自 dsh-paste-input 的「发送才落盘」）：
+             * 写进工作区附件目录，然后以 `@相对路径` 拼进这句话——与手敲 `@` 完全同一条路。
+             * 没有工作目录就当场出声（规格 7.5），话与文件都还在。
+             */
+            let 终文 = text
+            if (这次的文件.length > 0) {
+              const save = window.dawn?.attachSave
+              if (!save) throw new Error("这个环境里没有落盘通道，外部文件发不出去")
+              if (!workspace) throw new Error("这段对话没有工作目录，外部文件没处放——先选择工作目录")
+              const 存 = await save(
+                workspace,
+                session.sessionId,
+                await Promise.all(
+                  这次的文件.map(async (f) => ({
+                    名: f.名,
+                    ...(f.源路径 ? { 源路径: f.源路径 } : { 字节: new Uint8Array(await f.file!.arrayBuffer()) }),
+                  })),
+                ),
+              )
+              const 引 = 存.相对路径们.map((p) => `@${p}`).join(" ")
+              终文 = 终文 ? `${终文} ${引}` : 引
+            }
             /**
              * **不忙时一个多余的参数都不传。**「空数组」「不给」在协议上同义，
              * 在调用点上不是：多一个 `undefined` 会让所有
              * 「这一句是怎么发出去的」的断言都要跟着改，而它们关心的不是这个。
              */
-            这次的图.length > 0
-              ? onSend(text, 这次的图.map(报给协议), ...(送法 ? [送法] : []))
+            return 这次的图.length > 0
+              ? onSend(终文, 这次的图.map(报给协议), ...(送法 ? [送法] : []))
               : 送法
-                ? onSend(text, undefined, 送法)
-                : onSend(text),
-          ).catch((e: unknown) => {
+                ? onSend(终文, undefined, 送法)
+                : onSend(终文)
+          })().catch((e: unknown) => {
             设发送出错(e instanceof Error ? e.message : String(e))
             // **原样还回去**：人不该为一次失败重打一遍、重挑一遍
             setDraft(session.sessionId, text)
             设待发图(这次的图)
+            设待发文件(这次的文件)
           })
         }}
       >
@@ -4166,6 +4241,26 @@ export function ConversationView({
             * 而「附了图它却说没看见」正是这条路上最难查的那种错。
             * 每一张都能单独摘掉：挑错一张不该逼人把三张全清了重来。
             */}
+          {待发文件.length > 0 ? (
+            <ul className="attached">
+              {待发文件.map((f, i) => (
+                <li key={`${f.名}-${i}`} className="attached-one attached-file">
+                  <文件图标 />
+                  <span className="attached-name">{f.名}</span>
+                  <span className="attached-size">{formatBytes(f.字节数)}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="attached-x"
+                    aria-label={tf("移除附件 {0}", f.名)}
+                    onClick={() => 设待发文件((前) => 前.filter((_, j) => j !== i))}
+                  >
+                    <关闭图标 />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {待发图.length > 0 ? (
             <ul className="attached">
               {待发图.map((图, i) => (
@@ -4223,6 +4318,13 @@ export function ConversationView({
                 if (图们.length === 0) return
                 设待发图((前) => [...前, ...图们])
               }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
+              // 剪贴板里的**非图片文件**也收（2026-08-25 学自 dsh-paste-input）：发送才落盘
+              const 别的 = [...(e.clipboardData?.files ?? [])].filter((f) => !f.type.startsWith("image/"))
+              if (别的.length > 0) {
+                收外部文件(别的)
+                e.preventDefault()
+                return
+              }
               if (粘的是图(e)) e.preventDefault()
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
@@ -4569,7 +4671,7 @@ export function ConversationView({
               */}
             <AttachButton
               {...(workspace ? { workspace } : {})}
-              ready={待发图.length > 0 || 附过文件}
+              ready={待发图.length > 0 || 附过文件 || 待发文件.length > 0}
               /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
               onInsert={(文本) => {
                 setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)

@@ -73,6 +73,7 @@ import {
   type MCP装载,
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
+import { AttachUsagePanel } from "./attach-panel.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import type { 会话额外动作 } from "./views.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
@@ -4187,6 +4188,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
                   <EnvironmentPanel state={environment} />
                   <RunsPanel runs={runs} />
+                  {/* 外部附件（2026-08-25，学自 dsh-paste-input）：本会话粘贴 / 拖拽落盘的占用与清理 */}
+                  {currentWorkspace ? <AttachUsagePanel workspace={currentWorkspace} sessionId={sessionId} /> : null}
                   {provenance ? (
                     <section className="panel">
                       <h3 className="panel-title">{t("溯源")}</h3>

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 外部文件附件：粘贴 / 拖拽 → 发送才落盘 → `@` 引用（学自 dsh-paste-input）
+
+- **Type**: feat
+- **Motivation**: 作者指定精读 `dsh-paste-input` 并裁剪集成：抄「整页拖拽 + 粘贴任意文件」「发送才落盘」「owner marker + 用量/清理」，不抄 HTTP 批次协议 / Host 栅栏 / 气泡折叠。
+- **What**: 新 `src/files/attachments.ts`（消毒、撞名让位、越界检查、marker、半截批次回滚）+ 窄 IPC 三条；对话 composer 收剪贴板非图片文件与整页拖拽（拖图老路优先，`defaultPrevented` 去重），chip 可单独摘除，发送时落盘拼 `@相对路径`，失败话/图/文件原样还回；概览新格「外部附件」用量 + 两步清理。空态不收（会话未建）；无工作目录当场出声。规格与解读各一份，CLAUDE.md 加入口。
+- **Impact**: 上传/粘贴/拖拽/手敲 `@` 四条入口合流到同一份引用语法；`.dawn/attachments` 新目录约定。
+- **Verification**: 单元 2147（新 6 条）；`paste-input.spec.ts` 3 条连跑两轮绿（全链路含磁盘 marker 与清理）；attach / composer-ready / at-file / 视觉基线全绿。
+
 ### 2026-08-25 — 上传文件 = 替你敲一个 `@`；插过文件按钮也转黑
 
 - **Type**: feat

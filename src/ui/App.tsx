@@ -55,7 +55,7 @@ import {
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则 } from "../files/mentions.js"
-import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标 } from "./icons.js"
+import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
@@ -85,6 +85,7 @@ import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
+import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
 import {
@@ -2863,6 +2864,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
   /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
   const [技能数, 设技能数] = useState<number | undefined>(undefined)
+  /** 设置「记忆」入口的待确认角标(建议 + 待装技能;0 = 不显示) */
+  const [记忆待确认数, 设记忆待确认数] = useState<number | undefined>(undefined)
   const [技能单, 设技能单] = useState<SlashItem[]>([])
   /** 输入框 `/` 菜单的单子：技能 + 子 agent（两个输入框共用一份 store） */
   useEffect(() => {
@@ -2894,10 +2897,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         设技能单(开着的.map((x) => ({ kind: "skill" as const, name: x.name, description: x.description })))
       })
       .catch(() => {})
+    client
+      .get<{ pending: number }>("memoryOverview", 当前工作区路径 ? { workspace: 当前工作区路径 } : {})
+      .then((r) => 还在 && 设记忆待确认数(r.pending))
+      .catch(() => {})
     return () => {
       还在 = false
     }
-  }, [client, projectId, view, 名册代])
+  }, [client, projectId, view, 名册代, 当前工作区路径])
   const commands = useMemo(
     () =>
       buildCommands({
@@ -3618,6 +3625,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 问: 问一句,
               }}
             />
+                  ),
+                },
+                {
+                  /**
+                   * 记忆(2026-08-25,学自 dsh-memory-evolve):三轨确认制长期记忆。
+                   * 角标 = 待确认数(0 不显示)——0 也挂数字就成了噪音。
+                   */
+                  id: "memory",
+                  group: t("扩展"),
+                  title: t("记忆"),
+                  icon: <记忆图标 className="row-icon" />,
+                  count: 记忆待确认数 || undefined,
+                  body: (
+            <MemoryPanel client={client} workspace={当前工作区路径} onChanged={名册变了} />
                   ),
                 },
                 {

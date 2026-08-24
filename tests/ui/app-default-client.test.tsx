@@ -74,7 +74,8 @@ describe("App · 默认 client 路径（生产环境唯一走的那条）", () =
     await settle()
     // 启动只需握手 + listProjects + listCredentials + getProviders 这几发。
     // 上不封顶地重复 = client 身份每次渲染都变，effect 跟着无限重跑
-    expect(invokes.length).toBeLessThan(15)
+    // （2026-08-25 +1：记忆角标的 memoryOverview 随名册那发一起取——预算如实上调，不是放松）
+    expect(invokes.length).toBeLessThan(16)
   })
 
   it("IPC 监听器只注册一次 —— 每次渲染都注册会把内存吃穿", async () => {

@@ -1202,4 +1202,39 @@ export const EN: Readonly<Record<string, string>> = {
   "还没去过任何地方。": "Nowhere yet.",
   "重新访问（你自己的会话，不是 agent 看到的那份）":
     "Revisit (your own session, not what the agent saw)",
+
+  // 记忆（2026-08-25，学自 dsh-memory-evolve）
+  "记忆": "Memory",
+  "待确认({0})": "Awaiting confirmation ({0})",
+  "模型提议的长期记忆与技能。采纳后下一段会话生效;拒绝即丢弃;归档是不注入的冷存储。":
+    "Long-term memories and skills the model proposed. Approved items take effect in the next session; rejected ones are dropped; archiving is cold storage that never gets injected.",
+  "没有待确认的——模型提议之后会出现在这里。": "Nothing awaiting confirmation — model proposals will show up here.",
+  "用户档案": "User profile",
+  "全局事实": "Global facts",
+  "项目关键记忆": "Project key memory",
+  "提过 {0} 次": "Proposed {0} times",
+  "理由:{0}": "Reason: {0}",
+  "采纳": "Approve",
+  "拒绝": "Decline",
+  "改一改": "Tweak first",
+  "改一改再采纳": "Edit before approving",
+  "换一条轨": "Pick another track",
+  "装进技能库": "Add to library",
+  "看完整 SKILL.md": "View full SKILL.md",
+  "记忆库": "Memory store",
+  "看哪条轨": "Which track",
+  "看归档的": "Show archived",
+  "当前没有活跃项目——开一段带工作区的会话,才有它的项目关键记忆。":
+    "No active project — open a session with a workspace to see its project key memory.",
+  "这条轨落在项目的 .dawn/memory/ 里,提交进 git 就跟着仓库走(协作者可见;私人向的放用户档案)。":
+    "This track lives in the project's .dawn/memory/; commit it to git and it travels with the repo (visible to collaborators — keep private notes in the user profile).",
+  "直接添加一条记忆": "Add a memory directly",
+  "直接记一条(你添加 = 你确认,下一段会话生效)": "Add one directly (adding is confirming; takes effect next session)",
+  "归档是空的。": "The archive is empty.",
+  "这条轨还是空的。": "This track is still empty.",
+  "移回主记忆": "Unarchive",
+  "抹掉这条": "Drop entry",
+  "提议": "Propose",
+  "查看": "Inspect",
+  "技能沉淀": "Skill harvest",
 }

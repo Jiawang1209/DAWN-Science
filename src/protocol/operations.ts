@@ -1068,6 +1068,95 @@ export const OPERATIONS = {
     mutating: false,
   },
 
+  /* ── 记忆（2026-08-25，规格 2026-08-25-记忆-design.md，学自 dsh-memory-evolve）── */
+
+  /** 概要：待确认数（角标用）+ 三轨条数。key 轨要 workspace（没有就不算它） */
+  memoryOverview: {
+    request: z.object({ workspace: z.string().optional() }).strict(),
+    response: z
+      .object({
+        pending: z.number().int().min(0),
+        tracks: z.array(
+          z.object({ target: z.string(), count: z.number().int().min(0), archived: z.number().int().min(0) }).strict(),
+        ),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 待确认队列：记忆建议 + 待装技能 */
+  memorySuggestions: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        suggestions: z.array(
+          z
+            .object({
+              id: z.string(),
+              target: z.string(),
+              content: z.string(),
+              reason: z.string(),
+              hits: z.number().int().min(1),
+              time: z.string(),
+              workspace: z.string().optional(),
+            })
+            .strict(),
+        ),
+        pendingSkills: z.array(
+          z.object({ name: z.string(), description: z.string(), content: z.string() }).strict(),
+        ),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 处理一条待确认：采纳（记忆建议可改文案/改轨）/ 归档（仅记忆建议）/ 拒绝 */
+  memoryResolve: {
+    request: z
+      .object({
+        kind: z.enum(["suggestion", "skill"]),
+        /** suggestion 的 id / 技能名 */
+        id: z.string().min(1),
+        decision: z.enum(["approve", "archive", "reject"]),
+        content: z.string().optional(),
+        target: z.enum(["user", "memory", "key"]).optional(),
+        /** key 建议没带 workspace 时采纳方指定（当前项目） */
+        workspace: z.string().optional(),
+      })
+      .strict(),
+    response: z.object({ ok: z.boolean(), message: z.string() }).strict(),
+    mutating: true,
+  },
+
+  /** 单轨读（archived=true 读归档） */
+  memoryEntries: {
+    request: z
+      .object({
+        target: z.enum(["user", "memory", "key"]),
+        workspace: z.string().optional(),
+        archived: z.boolean().optional(),
+      })
+      .strict(),
+    response: z.object({ entries: z.array(z.string()) }).strict(),
+    mutating: false,
+  },
+
+  /** 界面直写（人即确认者）：加 / 改正文 / 删 / 归档 / 转正 */
+  memoryWrite: {
+    request: z
+      .object({
+        action: z.enum(["add", "update", "remove", "archive", "promote"]),
+        target: z.enum(["user", "memory", "key"]),
+        workspace: z.string().optional(),
+        content: z.string().optional(),
+        match: z.string().optional(),
+        branches: z.array(z.string()).optional(),
+      })
+      .strict(),
+    response: z.object({ ok: z.boolean(), message: z.string() }).strict(),
+    mutating: true,
+  },
+
   setSkillInvocation: {
     request: z.object({ filePath: z.string().min(1), mode: z.enum(["model", "manual", "off"]) }).strict(),
     response: z.object({ mode: z.enum(["model", "manual", "off"]) }).strict(),

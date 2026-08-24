@@ -48,6 +48,8 @@ import type { RemoteState, SshClientLike } from "../remote/ssh.js"
 import { WorkbenchServer } from "../workbench/server.js"
 import { MemoryStore, gitBranch } from "../memory/store.js"
 import { 渲染快照 } from "../memory/snapshot.js"
+import { SuggestionQueue } from "../memory/queue.js"
+import { 待装技能 } from "../memory/pending-skills.js"
 
 /**
  * 每会话事件缓冲的字符上限。
@@ -377,6 +379,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     memoriesDir: 记忆根,
     skillsDir: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
   }
+  const 记忆队列 = new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl"))
+  const 待装技能库 = new 待装技能(join(记忆根, "pending-skills"), () => 记忆依赖.skillsDir)
 
   const 技能位置 = {
     全局目录: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
@@ -750,6 +754,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **与运行时同一份**：两处各写各的，屏上列的与实际跑的会分家
     skills: 技能位置,
     subagents: 子agent位置,
+    // 记忆（2026-08-25）：**与运行时同一份**（同一个 记忆库 实例），屏上确认的就是会话里注入的
+    memory: { store: 记忆库, queue: 记忆队列, pending: 待装技能库 },
     tasks: taskStore,
     schedules: new ScheduleStore(db),
     // 给 undefined = 会话没了，把它那一档忘掉（2026-08-23 审查抓的：这张表只增不删）

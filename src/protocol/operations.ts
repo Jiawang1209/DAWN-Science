@@ -992,6 +992,53 @@ export const OPERATIONS = {
   /* ── 技能管理（7.17，skills-manage，学自 dsh-skills-manager） ──────────── */
 
   /** 改一个技能的调用档：写进它的 SKILL.md（文本级替换那两行）。自带的拒 */
+  /**
+   * 插件（2026-08-25，承载体 v1，学自 dsh-office）：插件 = 仓库里审过的内置工具包，
+   * 不做任意 JS 加载。目前一个：Office 文档（四族 14 工具）。列表带每族的工具名——
+   * 界面那张卡照这个画，**列出来的就是模型此刻真的有的**。
+   */
+  listPlugins: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        plugins: z.array(
+          z
+            .object({
+              id: z.string().min(1),
+              name: z.string().min(1),
+              /** 整包开关（false = 一个工具都不装） */
+              on: z.boolean(),
+              families: z.array(
+                z
+                  .object({
+                    key: z.string().min(1),
+                    name: z.string().min(1),
+                    on: z.boolean(),
+                    tools: z.array(z.object({ name: z.string().min(1), description: z.string() }).strict()),
+                  })
+                  .strict(),
+              ),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /** 拨一个插件开关：`family` 不给 = 整包；改了下一段会话生效（工具是建会话时装上去的） */
+  setPluginFlag: {
+    request: z
+      .object({
+        pluginId: z.string().min(1),
+        family: z.string().min(1).optional(),
+        on: z.boolean(),
+      })
+      .strict(),
+    mutating: true,
+    response: z.object({ on: z.boolean() }).strict(),
+  },
+
   setSkillInvocation: {
     request: z.object({ filePath: z.string().min(1), mode: z.enum(["model", "manual", "off"]) }).strict(),
     response: z.object({ mode: z.enum(["model", "manual", "off"]) }).strict(),

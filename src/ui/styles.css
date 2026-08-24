@@ -2954,7 +2954,11 @@ pre {
   text-align: left;
 }
 
-.svc-head:hover { background: var(--dawn-surface-elevated); }
+/* 悬停底要跟着卡的圆角走（2026-08-25 作者报的：方角灰底戳出圆角框）。
+   展开时下缘变方——它下面还接着 body，不是卡的尾 */
+.svc-head:hover { background: var(--dawn-row-hover); }
+.svc-head { border-radius: calc(var(--dawn-radius-lg) - 1px); }
+.svc.open > .svc-head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 
 .svc-name {
   font-weight: var(--dawn-weight-semibold);
@@ -5896,8 +5900,11 @@ pre {
 .at-rule { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .at-rule.inherited { opacity: 0.6; }
 .at-rule-pattern { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.at-rule-add { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
-.at-rule-add .control { width: auto; }
+/* 两行（2026-08-25 作者定的）：上行 = 定宽方式选择 + 文件名框（两栏左缘因此对齐）；下行 = 区分大小写 + 提交 */
+.at-rule-add { display: grid; grid-template-columns: 6em minmax(0, 16rem); align-items: center; gap: var(--dawn-space-2); }
+.at-rule-add select.control { width: 6em; }
+.at-rule-add input.control { width: 100%; }
+.at-rule-line2 { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--dawn-space-3); }
 .at-rule-cs { display: inline-flex; align-items: center; gap: 4px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
 /* 扩展那五屏挂进设置之后（2026-08-23）：外壳已在右边顶上写了这一块叫什么，屏里自己那一行标题不再画——同一句话说两遍不是层次，是噪声 */
 .settings-body .skills-page { padding: 0; max-width: none; }
@@ -6151,3 +6158,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+
+/* 插件卡（2026-08-25，两版：自创排版被作者按回，改与 .svc 同形制）。族行 = 勾 + 图标 + 名 + 数 + 工具名扫尾 */
+.plugin-master { margin: var(--dawn-space-2) 0; }
+.plugin-family-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.plugin-family { padding: var(--dawn-space-1) 0; border-top: 1px solid var(--dawn-stroke-4); }
+.plugin-family-head { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.plugin-family-name { font-weight: var(--dawn-weight-medium); flex: 0 0 auto; }
+.plugin-family-count { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); flex: 0 0 auto; }
+.plugin-family-tools { flex: 1 1 auto; min-width: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-family: var(--dawn-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.plugin-family[data-on] .plugin-family-name { color: var(--dawn-text-1); }
+.plugin-card[data-state="off"] .plugin-family-list { opacity: 0.55; }
+.badge-on { color: var(--dawn-live); border: 1px solid var(--dawn-live); border-radius: var(--dawn-radius-sm); padding: 0 4px; font-size: 11px; }

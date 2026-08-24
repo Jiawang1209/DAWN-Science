@@ -404,6 +404,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         : undefined
     },
     gate: 权限门,
+    /** Office 插件的族开关（2026-08-25，学自 dsh-office）：设置键没记过 = 开着——插件卡上写明这个默认 */
+    officeEnable: () => ({
+      off: settingsStore.get("plugin.office.off") === "1",
+      xlsx: settingsStore.get("plugin.office.xlsx") !== "0",
+      pdf: settingsStore.get("plugin.office.pdf") !== "0",
+      ppt: settingsStore.get("plugin.office.ppt") !== "0",
+      docx: settingsStore.get("plugin.office.docx") !== "0",
+    }),
     // 给了才认这两个位置；不给就完全是 pi 的原样
     skills: 技能位置,
     subagents: 子agent位置,

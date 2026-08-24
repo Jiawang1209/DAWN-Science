@@ -9,6 +9,7 @@
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
  */
 import type { ProviderRegistry } from "../config/schema.js"
+import { OFFICE族 } from "../tools/office/index.js"
 import {
   addAcpAgent,
   addNativeAgent,
@@ -2083,6 +2084,49 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /* ── 技能管理（7.17，skills-manage） ── */
+
+    /* ── 插件（2026-08-25，承载体 v1，学自 dsh-office） ── */
+
+    listPlugins: async () => {
+      const 开 = {
+        off: settings?.get("plugin.office.off") === "1",
+        xlsx: settings?.get("plugin.office.xlsx") !== "0",
+        pdf: settings?.get("plugin.office.pdf") !== "0",
+        ppt: settings?.get("plugin.office.ppt") !== "0",
+        docx: settings?.get("plugin.office.docx") !== "0",
+      }
+      return {
+        plugins: [
+          {
+            id: "office",
+            name: "Office 文档",
+            on: !开.off,
+            families: OFFICE族.map((f) => ({
+              key: f.族,
+              name: f.名,
+              on: 开[f.族],
+              tools: f.工具.map((t) => ({ name: t.name, description: t.description })),
+            })),
+          },
+        ],
+      }
+    },
+
+    setPluginFlag: async ({ pluginId, family, on }) => {
+      if (pluginId !== "office") throw fault("invalid_request", `没有叫「${pluginId}」的插件`)
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+      const now = new Date().toISOString()
+      if (!family) {
+        // 整包开关存「off」一把键：默认开着，只记「关」这个偏离
+        settings.set("plugin.office.off", on ? "" : "1", now)
+        return { on }
+      }
+      if (!OFFICE族.some((f) => f.族 === family)) {
+        throw fault("invalid_request", `Office 插件没有「${family}」这一族。有的是：${OFFICE族.map((f) => f.族).join("、")}`)
+      }
+      settings.set(`plugin.office.${family}`, on ? "" : "0", now)
+      return { on }
+    },
 
     setSkillInvocation: async ({ filePath, mode }) => {
       // 自带的：文件只读，档位落到设置里（2026-08-23）

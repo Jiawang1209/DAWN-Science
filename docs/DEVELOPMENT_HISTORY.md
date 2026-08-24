@@ -8,6 +8,38 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 插件卡默认展开；文件引用的加规则表单两行对齐
+
+- **Type**: style
+- **Motivation**: 作者：插件没几个，默认展开；文件引用里「精确 / 文件名框 / 区分大小写 / 加一条规则」挤一行对不齐——勾选与提交放各自下一行。
+- **What**: 插件卡状态改记「收起了哪些」（默认全展开，头行写「收起」）；`加规则` 表单改两行 grid（上行定宽方式选择 6em + 文件名框，两栏左缘对齐；下行区分大小写 + 提交键）。
+- **Impact**: 两屏排版。
+- **Verification**: office-plugin / at-file 7 绿连跑两轮；视觉基线 10/10；tests/ui 517。
+
+### 2026-08-25 — 模型服务行的悬停底跟着卡的圆角走
+
+- **Type**: fix
+- **Motivation**: 作者：悬停不同模型时灰底是方角，与外面的圆角框没重叠。
+- **What**: `.svc-head` 圆角 = 卡的 lg − 1px，展开时下缘转方（下面接着 body）；悬停底换 `row-hover`。插件卡共用同一套类，一并受益。
+- **Impact**: 模型服务与插件两屏的悬停观感。
+- **Verification**: add-service / providers / office-plugin / 视觉基线全绿；探针截图贴合。
+
+### 2026-08-25 — 插件卡改用「模型服务」的形制
+
+- **Type**: style
+- **Motivation**: 作者按回第一版自创排版（「太丑了」），指定学模型服务。
+- **What**: 插件卡换成 `.svc` 同款：头行 = 名字 + 摘要（14 个工具 · 开着 4/4 族，mono 淡色）+「配置它/收起」，整行可点展开；展开后总开关一行 + 族按行排（勾 + 类型图标 + 名 + 数 + 工具名右扫省略）。默认收起。
+- **Impact**: 仅插件屏排版。
+- **Verification**: office-plugin e2e ×2 连跑两轮、视觉基线 10/10、tests/ui 517。
+
+### 2026-08-25 — Office 插件：插件承载体 v1（学自 dsh-office）
+
+- **Type**: feat
+- **Motivation**: 作者指定研读 dsh-office 并充盈设置里的插件屏。该屏原来如实写着「装什么、怎么加载、边界在哪都没定」——这次给出三问的答案：插件 = 仓库里审过的内置工具包；走 pi `customTools` 建会话时装；office 管交付物、数据计算仍走内核。
+- **What**: vendor 天枢移植版工具逻辑进 `src/tools/office/`（xlsx 5 + pdf 4 + pptx 3 + docx 2 = 14 个工具，Apache-2.0 头注保留），`index.ts` 装配层（DSL→JSON Schema、pi 壳、路径进工作区、错误出声）；`toolsFor` 第四组 + 设置键 `plugin.office.*`；协议 +2（`listPlugins`/`setPluginFlag`，109→111，注册表判据同改）；插件屏第一张真卡（四族开关 + 类型图标 + 工具名单，乐观翻转）；自带技能 `office-docs`。依赖 8 库全 external（esbuild 撞 `createRequire` 实测炸过主进程，与 pi 同雷）；pdf-parse 锁 1.1.1 并导内层实现。
+- **Impact**: 模型有了写 xlsx/pdf/pptx/docx 交付物的手；协议 111 op；自带技能 3→4。
+- **Verification**: `tests/tools/office.test.ts` 6 条全链路往返；e2e 插件卡 + **假模型调 `xlsx_write` 磁盘长出真 xlsx**；单元 2153；skills/visual/mcp 回归 26 绿。
+
 ### 2026-08-25 — 空态的 @ 灰底不再飘到中间
 
 - **Type**: fix

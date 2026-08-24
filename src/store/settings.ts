@@ -86,6 +86,12 @@ export type SettingKey =
    * 那是个用户永远找不到的地方），以及**选文件夹时从这儿起步**。
    */
   | "workspace.default"
+  /**
+   * Office 插件（2026-08-25，学自 dsh-office）：`plugin.office.off` = "1" 整个关；
+   * `plugin.office.<xlsx|pdf|ppt|docx>` = "0" 关那一族。**没记过 = 开着**——
+   * 插件随应用自带，装好即可用，这个默认写在插件卡上。
+   */
+  | `plugin.office.${string}`
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

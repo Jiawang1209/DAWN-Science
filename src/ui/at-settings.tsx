@@ -56,14 +56,17 @@ function 加规则({ onAdd, 标签 }: { onAdd: (r: 文件规则) => void; 标签
         <option value="regex">{t("正则")}</option>
       </select>
       <input className="control" value={pattern} onChange={(e) => 设pattern(e.target.value)} placeholder={kind === "exact" ? t("文件名，如 .DS_Store") : t("正则，如 \\.tmp$")} aria-label={t("规则")} />
-      <label className="at-rule-cs">
-        <input type="checkbox" checked={cs} onChange={(e) => 设cs(e.target.checked)} />
-        <span>{t("区分大小写")}</span>
-      </label>
-      <Button type="submit" variant="primary" size="sm" disabled={!pattern || Boolean(病)}>
-        {标签}
-      </Button>
-      {病 ? <span className="caveat">{病}</span> : null}
+      {/* 第二行：勾选与提交各归各行（2026-08-25 作者定的——挤一行时三样元素对不齐） */}
+      <div className="at-rule-line2">
+        <label className="at-rule-cs">
+          <input type="checkbox" checked={cs} onChange={(e) => 设cs(e.target.checked)} />
+          <span>{t("区分大小写")}</span>
+        </label>
+        <Button type="submit" variant="primary" size="sm" disabled={!pattern || Boolean(病)}>
+          {标签}
+        </Button>
+        {病 ? <span className="caveat">{病}</span> : null}
+      </div>
     </form>
   )
 }

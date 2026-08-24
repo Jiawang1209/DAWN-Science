@@ -138,3 +138,27 @@ test("**空态也收**：粘一个文件 → @ 进草稿 → 第一句话建会�
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await expect(page.locator(".turn").first()).toContainText(/@\.dawn\/attachments\/.+开场\.txt/)
 })
+
+test("**粘贴的图能点开看大图**（学 Codex）：点缩略图开层、Esc 关", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await page.locator(".composer-box textarea").focus()
+  await page.evaluate(() => {
+    const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
+    const dt = new DataTransfer()
+    dt.items.add(new File([bytes], "一像素.png", { type: "image/png" }))
+    document.querySelector(".composer-box textarea")!.dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }),
+    )
+  })
+  // 字节来的图当场带预览（不是标题）
+  const 缩 = page.locator(".attached-thumb")
+  await expect(缩).toHaveCount(1)
+  await page.getByRole("button", { name: "看大图：一像素.png" }).click()
+  const 层 = page.getByRole("dialog", { name: "一像素.png" })
+  await expect(层).toBeVisible()
+  await expect(层.locator("img")).toBeVisible()
+  await page.keyboard.press("Escape")
+  await expect(层).toHaveCount(0)
+})

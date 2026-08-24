@@ -909,6 +909,31 @@ export function 可令牌名(名: string): string {
   return n === "" || n === "." || n === ".." ? "_" : n
 }
 
+/**
+ * 点开附件缩略图看大图（2026-08-25，作者要的，学 Codex）：对话窗口里一层浅罩 + 原图，
+ * 点罩或 Esc 关。带路径的用 `file://` 取原图（缩略图是缩过的）；字节的直接用手上的 dataURL。
+ */
+export function 附图大图({ src, 名, onClose }: { src: string; 名: string; onClose: () => void }) {
+  useEffect(() => {
+    const 键 = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", 键)
+    return () => window.removeEventListener("keydown", 键)
+  }, [onClose])
+  return (
+    <div className="img-lightbox" role="dialog" aria-label={名} onClick={onClose}>
+      <img src={src} alt={名} onClick={(e) => e.stopPropagation()} />
+    </div>
+  )
+}
+
+/** 缩略图 → 大图的取图口径：路径的走 file://（原图），字节的用手上的 dataURL */
+export function 大图来源(图: 待发的图): string | undefined {
+  if (图.from === "path") return `file://${encodeURI(图.path)}`
+  return 图.预览
+}
+
 function 粘的是图(e: React.ClipboardEvent): boolean {
   return 捡出图片文件(e.clipboardData).length > 0
 }
@@ -3709,6 +3734,8 @@ export function ConversationView({
    * 剪贴板来的没有路径，握着 File 等发送时取字节。
    */
   const [待发文件, 设待发文件] = useState<排队的外部文件[]>([])
+  /** 点开看大图的那张（2026-08-25，学 Codex）；undefined = 没开 */
+  const [看大图, 设看大图] = useState<待发的图 | undefined>(undefined)
   /** 收外部文件 = **替你敲一个 `@`**（2026-08-25 作者给了图）：插 `@令牌` 进草稿、引用栏出 chip；队列只管发送时怎么落盘 */
   const 草稿ref = useRef(draft)
   草稿ref.current = draft
@@ -4351,7 +4378,9 @@ export function ConversationView({
                     * 图本身还是好的**，不该因此把这一项整个藏起来。
                     */}
                   {图.预览 ? (
-                    <img className="attached-thumb" src={图.预览} alt={图.名} />
+                    <Button variant="ghost" size="inline" className="attached-open" aria-label={tf("看大图：{0}", 图.名)} onClick={() => 设看大图(图)}>
+                      <img className="attached-thumb" src={图.预览} alt={图.名} />
+                    </Button>
                   ) : (
                     <span className="attached-name">{图.名}</span>
                   )}
@@ -4368,6 +4397,7 @@ export function ConversationView({
               ))}
             </ul>
           ) : null}
+          {看大图 ? <附图大图 src={大图来源(看大图) ?? ""} 名={看大图.名} onClose={() => 设看大图(undefined)} /> : null}
           {在打斜杠(draft) && !斜杠关了 ? (
             <SlashMenu items={斜杠单} draft={draft} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { setDraft(session.sessionId, 斜杠选完(x, draft)); 设斜杠选中(0) }} />
           ) : null}
@@ -4392,6 +4422,8 @@ export function ConversationView({
               void 从粘贴里捡图(e).then((图们) => {
                 if (图们.length === 0) return
                 设待发图((前) => [...前, ...图们])
+                // 带路径的图要问主进程拿缩略图——拖拽那条路一直有，这里漏过（2026-08-25 作者报「缩略图竟然是标题」）
+                补预览(图们, 设待发图)
               }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
               // 剪贴板里的**非图片文件**也收（2026-08-25 学自 dsh-paste-input）：发送才落盘
               const 别的 = [...(e.clipboardData?.files ?? [])].filter((f) => !f.type.startsWith("image/"))
@@ -5763,6 +5795,7 @@ export function EmptyConversation({
   const [空态图, 设空态图] = useState<待发的图[]>([])
   /** 空态排队的外部文件（2026-08-25 作者实测在空态粘 / 拖没反应——原来的「空态不收」边界撤了） */
   const [空态文件, 设空态文件] = useState<排队的外部文件[]>([])
+  const [空看大图, 设空看大图] = useState<待发的图 | undefined>(undefined)
   const 空插令牌 = useCallback((令牌们: readonly string[]) => {
     if (令牌们.length === 0) return
     // 尾随一个空格：插完光标若正停在令牌末尾，会被 `在打艾特` 当成「正在打的 @」——菜单弹开、chip 不进栏（2026-08-25 作者截图）
@@ -5972,7 +6005,9 @@ export function EmptyConversation({
                   {空态图.map((图, i) => (
                     <li key={`${图.名}-${i}`} className="attached-one">
                       {图.预览 ? (
-                        <img className="attached-thumb" src={图.预览} alt={图.名} />
+                        <Button variant="ghost" size="inline" className="attached-open" aria-label={tf("看大图：{0}", 图.名)} onClick={() => 设空看大图(图)}>
+                          <img className="attached-thumb" src={图.预览} alt={图.名} />
+                        </Button>
                       ) : (
                         <span className="attached-name">{图.名}</span>
                       )}
@@ -5989,6 +6024,7 @@ export function EmptyConversation({
                   ))}
                 </ul>
               ) : null}
+              {空看大图 ? <附图大图 src={大图来源(空看大图) ?? ""} 名={空看大图.名} onClose={() => 设空看大图(undefined)} /> : null}
               {在打斜杠(草稿) && !斜杠关了 ? (
                 <SlashMenu items={斜杠单} draft={草稿} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { 设草稿(斜杠选完(x, 草稿)); 设斜杠选中(0) }} />
               ) : null}
@@ -6018,6 +6054,7 @@ export function EmptyConversation({
                   void 从粘贴里捡图(e).then((图们) => {
                     if (图们.length === 0) return
                     设空态图((前) => [...前, ...图们])
+                    补预览(图们, 设空态图)
                   }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
                   const 空别的 = [...(e.clipboardData?.files ?? [])].filter((f) => !f.type.startsWith("image/"))
                   if (空别的.length > 0) {

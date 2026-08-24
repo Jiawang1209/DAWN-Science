@@ -1167,6 +1167,7 @@ export const EN: Readonly<Record<string, string>> = {
   "颜色值，可输入 HEX 或 RGB": "Color value; HEX or RGB",
   "复制颜色值": "Copy color value",
   "可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式": "Type HEX or RGB, Enter to apply · click icon to copy · Shift toggles format",
+  "看大图：{0}": "View image: {0}",
   "外部附件": "External attachments",
   "这段会话还没有落盘的外部附件。粘贴或拖入文件，发送时会复制进工作区。": "No external attachments on disk for this session yet. Paste or drop files; they are copied into the workspace on send.",
   "{0} 批 · {1} 个文件 · {2}": "{0} batches · {1} files · {2}",

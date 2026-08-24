@@ -6101,3 +6101,26 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .attached-file .attached-x { position: static; opacity: 1; width: 20px; height: 20px; }
 .attach-usage { display: flex; flex-direction: column; gap: var(--dawn-space-2); align-items: flex-start; }
 .attach-usage-line { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* 看大图（2026-08-25，学 Codex）：对话窗口上一层浅罩 + 原图，点罩或 Esc 关 */
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dawn-scrim);
+  cursor: zoom-out;
+}
+.img-lightbox img {
+  max-width: min(92vw, 1400px);
+  max-height: 88vh;
+  border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-float);
+  background: var(--dawn-surface-elevated);
+  cursor: default;
+}
+/* 缩略图那颗按钮：零内距，别把 96px 的方块再垫大 */
+.attached-open { padding: 0; border-radius: var(--dawn-radius-md); display: block; }
+.attached-open .attached-thumb { display: block; }

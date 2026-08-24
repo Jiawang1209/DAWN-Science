@@ -59,6 +59,7 @@ import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
+import { memoryTools, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
 import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器 } from "../team/scheduler.js"
@@ -122,6 +123,15 @@ export interface NativeRuntimeOptions {
   officeEnable?: () => Office开关
   /** 浏览器插件的族开关（2026-08-25，学自 dsh-reef）；同一套约定 */
   browserEnable?: () => Browser开关
+  /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：族开关 + 目录依赖；同一套约定 */
+  memoryEnable?: () => Memory开关
+  memoryDeps?: () => Memory依赖
+  /**
+   * 记忆快照（规格 `2026-08-25-记忆-design.md` §三）：建会话时渲染一次拼进
+   * 系统提示词——**确认的记忆下一段会话生效**，与插件开关同一条契约。
+   * 空串 = 没有记忆，一个字都不注入。
+   */
+  memorySnapshot?: (workspace: string) => string
   /**
    * 按 provider 取凭证。**必须带缓存**——见下方 `ModelRuntime` 的注释。
    *
@@ -775,7 +785,11 @@ export class NativeRuntime implements AgentRuntime {
      */
     const office工具组 = this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []
     const browser工具组 = this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable()) : []
-    const 外部 = [...内核工具, ...视觉工具, ...office工具组, ...browser工具组, ...mcp工具]
+    const memory工具组 =
+      this.opts.memoryEnable && this.opts.memoryDeps
+        ? memoryTools(spec.workspace, this.opts.memoryEnable(), this.opts.memoryDeps())
+        : []
+    const 外部 = [...内核工具, ...视觉工具, ...office工具组, ...browser工具组, ...memory工具组, ...mcp工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部
@@ -987,6 +1001,20 @@ export class NativeRuntime implements AgentRuntime {
      * pi 那些踩出来的操作指导原样留着，扔掉它们 agent 会当场变笨。
      */
     let 当前模型 = `${native.model}（provider：${native.provider}）`
+    /**
+     * 记忆快照(2026-08-25):渲染失败不许拦会话——记忆是增益不是准入条件,
+     * 坏一个记忆文件不该让人开不了对话;失败出声(notice),不静默。
+     */
+    let 记忆快照 = ""
+    try {
+      记忆快照 = this.opts.memorySnapshot?.(spec.workspace) ?? ""
+    } catch (e) {
+      this.emit({
+        kind: "notice",
+        sessionId: spec.sessionId,
+        text: `记忆快照没渲染出来(本段会话不带记忆):${e instanceof Error ? e.message : String(e)}`,
+      })
+    }
     const settingsManager = SettingsManager.create(spec.workspace, agentDir)
     const resourceLoader = new DefaultResourceLoader({
       cwd: spec.workspace,
@@ -1035,6 +1063,8 @@ export class NativeRuntime implements AgentRuntime {
       },
       appendSystemPromptOverride: (base) => [
         ...base,
+        // 记忆快照（2026-08-25）：建会话时渲染一次——确认的记忆下一段会话生效
+        ...(记忆快照 ? [记忆快照] : []),
         // 队长协议（team-board）：模型不知道该怎么分工，就不会分工
         ...(this.opts.subagentChildEntry ? [队长协议] : []),
         // 删除指引（2026-08-23，学自 dsh-auto-mode）：帮规划的，不是安全边界——边界在门上

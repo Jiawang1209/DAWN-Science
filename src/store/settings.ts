@@ -94,6 +94,8 @@ export type SettingKey =
   | `plugin.office.${string}`
   /** 浏览器插件（2026-08-25，学自 dsh-reef）：同一套约定 */
   | `plugin.browser.${string}`
+  /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：同一套约定 */
+  | `plugin.memory.${string}`
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

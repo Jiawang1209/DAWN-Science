@@ -46,6 +46,8 @@ import { RemoteConnections } from "../remote/connections.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
 import type { RemoteState, SshClientLike } from "../remote/ssh.js"
 import { WorkbenchServer } from "../workbench/server.js"
+import { MemoryStore, gitBranch } from "../memory/store.js"
+import { 渲染快照 } from "../memory/snapshot.js"
 
 /**
  * 每会话事件缓冲的字符上限。
@@ -77,6 +79,8 @@ export interface CreateWorkbenchOptions {
   /** 自带的子 agent（随应用发布，只读）；全局的在 `~/DAWN/agents`（或 `DAWN_AGENTS_DIR`） */
   builtinAgentsDir?: string
   agentsDir?: string
+  /** 全局记忆根（USER.md/MEMORY.md/队列/待装技能）。**测试必须给**——不给就落到开发机的 `~/DAWN/memories` */
+  memoriesDir?: string
   configPath: string
   dbPath: string
   readOnly?: boolean
@@ -361,6 +365,19 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * **项目级用 `.dawn/skills`**，与 `.dawn/agents/`、`.dawn/mcp.yaml` 同一个家；
    * pi 默认那个是 `.pi/skills`，我们不跟——一个项目里两套隐藏目录更难解释。
    */
+  /**
+   * 记忆的家（2026-08-25，学自 dsh-memory-evolve；规格 `2026-08-25-记忆-design.md`）。
+   * 与技能同一条理由放在看得见的地方：`~/DAWN/memories`——记忆文件是给人直接
+   * 编辑的（drift guard 兜着），藏进应用数据目录就没人编辑得了。
+   * key 轨**不在这儿**：它落各项目工作区的 `.dawn/memory/`（可进 git）。
+   */
+  const 记忆根 = opts.memoriesDir ?? join(homedir(), "DAWN", "memories")
+  const 记忆库 = new MemoryStore(记忆根)
+  const 记忆依赖 = {
+    memoriesDir: 记忆根,
+    skillsDir: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
+  }
+
   const 技能位置 = {
     全局目录: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
     项目目录名: join(".dawn", "skills"),
@@ -420,6 +437,16 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       ppt: settingsStore.get("plugin.office.ppt") !== "0",
       docx: settingsStore.get("plugin.office.docx") !== "0",
     }),
+    /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：同一套「没记过 = 开着」 */
+    memoryEnable: () => ({
+      off: settingsStore.get("plugin.memory.off") === "1",
+      propose: settingsStore.get("plugin.memory.propose") !== "0",
+      read: settingsStore.get("plugin.memory.read") !== "0",
+      skill: settingsStore.get("plugin.memory.skill") !== "0",
+    }),
+    memoryDeps: () => 记忆依赖,
+    /** 记忆快照：建会话时渲染（当前 git 分支实时取；确认的记忆下一段会话生效） */
+    memorySnapshot: (ws) => 渲染快照(记忆库, ws, gitBranch(ws)),
     // 给了才认这两个位置；不给就完全是 pi 的原样
     skills: 技能位置,
     subagents: 子agent位置,

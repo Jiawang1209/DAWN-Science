@@ -8,7 +8,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterAll, describe, expect, it } from "vitest"
 import { browserTools } from "../../src/tools/browser/index.js"
-import { 关浏览器 } from "../../src/tools/browser/session.js"
+import { 关浏览器, 旁观, 截一帧 } from "../../src/tools/browser/session.js"
 
 const 有浏览器 = await (async () => {
   try {
@@ -69,5 +69,16 @@ describe.skipIf(!有浏览器)("浏览器插件 · 真链路（本机没有 Chro
     const r = await 取("browser_screenshot").execute("7", {})
     expect(r.isError).toBeUndefined()
     expect(readdirSync(join(ws, ".dawn", "screenshots")).some((n) => n.endsWith(".png"))).toBe(true)
+  }, 30_000)
+
+  it("旁观：open 之后 observe 里有那条历史；frame 是合法 PNG（2026-08-25 旁观面）", async () => {
+    const d = await 旁观()
+    expect(d.open).toBe(true)
+    expect(d.history.length).toBeGreaterThan(0)
+    expect(d.history[0]?.url).toBeTruthy()
+    // page.url() 回的是百分号编码过的（web-preview e2e 为同一件事栽过）——解码再比
+    expect(decodeURIComponent(d.activeUrl)).toContain("页.html")
+    const png = Buffer.from(await 截一帧(), "base64")
+    expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
   }, 30_000)
 })

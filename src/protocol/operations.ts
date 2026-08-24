@@ -849,6 +849,77 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /* ── 远程助理 · 飞书（2026-08-25）────────────────────────────────────
+   * 设计：`docs/superpowers/specs/2026-08-25-飞书通道-design.md`。
+   * 与微信那组同形；差异只有两处：设备流没有配对码（无 SubmitCode），
+   * login.step 只有三态（官方设备流不暴露中间态）。
+   */
+  feishuGetStatus: {
+    request: z.object({}).strict(),
+    response: z
+      .object({
+        state: z.enum(["unbound", "logging_in", "bound", "stale"]),
+        login: z
+          .object({
+            qrUrl: z.string(),
+            step: z.enum(["wait", "confirmed", "failed"]),
+            message: z.string(),
+          })
+          .strict()
+          .optional(),
+        openId: z.string().optional(),
+        boundAt: z.string().optional(),
+        sessionId: z.string().optional(),
+        lastError: z.string().optional(),
+        contactName: z.string(),
+      })
+      .strict(),
+    mutating: false,
+  },
+  /** 开始设备流扫码（会创建一个飞书自建应用）。立刻返回；进度从 `feishuGetStatus` 看 */
+  feishuStartLogin: {
+    request: z.object({}).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  feishuCancelLogin: {
+    request: z.object({}).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  /** 解绑：清钥匙串与设置、断长连接 */
+  feishuUnbind: {
+    request: z.object({}).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  feishuBindSession: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(),
+    mutating: true,
+  },
+  feishuGetNotify: {
+    request: z.object({}).strict(),
+    response: z
+      .object({ done: z.boolean(), error: z.boolean(), permission: z.boolean(), quietWhenFocused: z.boolean() })
+      .strict(),
+    mutating: false,
+  },
+  feishuSetNotify: {
+    request: z
+      .object({
+        done: z.boolean().optional(),
+        error: z.boolean().optional(),
+        permission: z.boolean().optional(),
+        quietWhenFocused: z.boolean().optional(),
+      })
+      .strict(),
+    response: z
+      .object({ done: z.boolean(), error: z.boolean(), permission: z.boolean(), quietWhenFocused: z.boolean() })
+      .strict(),
+    mutating: true,
+  },
+
   /**
    * 给已接入的 ACP 标上／摘掉「能上服务器」（协议 7.13，2026-08-21）。
    *

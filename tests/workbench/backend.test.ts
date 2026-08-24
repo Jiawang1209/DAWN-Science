@@ -10,6 +10,7 @@ import { ProjectStore } from "../../src/store/projects.js"
 import { RunStore } from "../../src/store/runs.js"
 import { SessionStore } from "../../src/store/sessions.js"
 import { TaskStore } from "../../src/store/tasks.js"
+import { SettingsStore } from "../../src/store/settings.js"
 import { EnvironmentStore } from "../../src/store/environments.js"
 import { ProjectManager } from "../../src/project/manager.js"
 import { SessionManager } from "../../src/session/manager.js"
@@ -65,7 +66,7 @@ function make() {
     queue: new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl")),
     pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
   }
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory })
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db) })
   return { db, projectStore, runStore, sessions, projects, backend, events, memory, server: new WorkbenchServer(backend) }
 }
 
@@ -82,6 +83,15 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(d.open).toBe(false)
     expect(Array.isArray(d.history)).toBe(true)
     await expect(ctx.backend.browserFrame({})).rejects.toThrow(/没开/)
+  })
+
+  it("飞书:初始 unbound;通知开关持久(2026-08-25 远程助理第二格)", async () => {
+    const st = (await ctx.backend.feishuGetStatus({})) as { state: string; contactName: string }
+    expect(st.state).toBe("unbound")
+    expect(st.contactName).toBe("DAWN-Science")
+    const n = (await ctx.backend.feishuSetNotify({ done: false })) as { done: boolean }
+    expect(n.done).toBe(false)
+    expect(((await ctx.backend.feishuGetNotify({})) as { done: boolean }).done).toBe(false)
   })
 
   it("记忆五操作整链路：提议→角标→采纳落盘→浏览可见；拒绝清队列（2026-08-25）", async () => {

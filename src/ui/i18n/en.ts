@@ -1184,4 +1184,22 @@ export const EN: Readonly<Record<string, string>> = {
   "浏览": "Browse",
   "读页": "Read page",
   "操作": "Act",
+
+  // agent 浏览器旁观（2026-08-25，坞「网页」格一格两子页签）
+  "这一格看谁的": "Whose view",
+  "自己浏览": "Browse here",
+  "agent 旁观": "Agent view",
+  "正在问 agent 的浏览器…": "Asking the agent's browser…",
+  "agent 还没用过浏览器。它一动，这里就能看到它去过哪儿、正在看什么。":
+    "The agent hasn't used the browser yet. Once it does, you'll see where it went and what it's looking at.",
+  "agent 当前页的截图": "Screenshot of the agent's current page",
+  "画面还没截过——按「刷新画面」。": "No frame captured yet — press \"Refresh frame\".",
+  "浏览器已经关了，画面没了；去过哪儿还在下面。":
+    "The browser is closed, so the frame is gone; its visits are still listed below.",
+  "刷新画面": "Refresh frame",
+  "截于 {0}": "Captured at {0}",
+  "去过哪儿": "Where it went",
+  "还没去过任何地方。": "Nowhere yet.",
+  "重新访问（你自己的会话，不是 agent 看到的那份）":
+    "Revisit (your own session, not what the agent saw)",
 }

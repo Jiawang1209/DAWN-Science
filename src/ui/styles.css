@@ -5257,6 +5257,79 @@ pre {
   text-align: center;
 }
 
+/* ── 网页格分面（2026-08-25，agent 浏览器旁观）───────────────────────── */
+.web-subtabs { display: flex; gap: var(--dawn-space-1); flex: 0 0 auto; }
+.web-subtabs [aria-selected="true"] { background: var(--dawn-control-active); }
+/** 活跃点：agent 那台浏览器开着。**活着跟主题色**（主题色 spec 那条） */
+.agent-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--dawn-radius-full);
+  margin-left: var(--dawn-space-1);
+  background: var(--dawn-live);
+}
+/** 「自己浏览」那半：藏的时候整块 display:none，占位块矩形归 0，命中测试自会把 view 收掉 */
+.web-browse { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: var(--dawn-space-2); }
+.agent-watch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-3);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.agent-watch-empty { margin: var(--dawn-space-3); }
+.agent-frame img {
+  max-width: 100%;
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-sm);
+}
+.agent-frame-bar { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.agent-frame-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-fs-meta);
+  color: var(--dawn-text-3);
+}
+.agent-frame-at { flex: 0 0 auto; }
+.agent-frame-title { margin: 0; font-size: var(--dawn-fs-sub); color: var(--dawn-text-2); }
+.agent-visits ul { list-style: none; margin: 0; padding: 0; }
+.agent-visit {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--dawn-space-2);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  border-radius: var(--dawn-radius-xs);
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.agent-visit:hover { background: var(--dawn-row-hover); }
+.agent-visit-at { color: var(--dawn-text-3); font-variant-numeric: tabular-nums; font-size: var(--dawn-fs-meta); }
+.agent-visit-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-visit-url {
+  grid-column: 2;
+  color: var(--dawn-text-3);
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-fs-meta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 消息底下那张「网页预览」卡（批 2，2026-08-18，形状照作者的截图） */
 .weblink-card {
   display: flex;

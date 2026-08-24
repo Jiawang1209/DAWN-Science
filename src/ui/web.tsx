@@ -34,6 +34,7 @@ import { 网页图标 } from "./icons.js"
 import { useStore } from "@nanostores/react"
 import { t } from "./i18n/index.js"
 import { $待开网址, 收走网址 } from "./state/index.js"
+import { AgentBrowserPane, type Agent旁观数据 } from "./agent-browser.js"
 
 export interface 网页状态 {
   url: string
@@ -67,6 +68,7 @@ const 命中间隔毫秒 = 250
 export function WebPanel({
   workspace,
   projectId,
+  agent,
 }: {
   workspace?: string | undefined
   /**
@@ -74,6 +76,8 @@ export function WebPanel({
    * 没有项目就不记——**不硬挂**，把 A 的账算到 B 头上比不记更坏。
    */
   projectId?: string | undefined
+  /** 「agent 旁观」面的取数口（2026-08-25）：观察 agent 那台 headless 浏览器 */
+  agent: { observe(): Promise<Agent旁观数据>; frame(): Promise<string> }
 }) {
   const 占位 = useRef<HTMLDivElement | null>(null)
   const [状态, 设状态] = useState<网页状态>({
@@ -86,6 +90,39 @@ export function WebPanel({
   const [草稿, 设草稿] = useState("")
   /** 上一次推给主进程的样子。**一样就不推**——否则 250ms 一次的 IPC 白烧 */
   const 上次 = useRef<string>("")
+
+  /**
+   * 这一格现在看谁的（2026-08-25，一格两子页签）。
+   * **不持久化**——它是这个窗口此刻的样子，进坞默认落「自己浏览」。
+   */
+  const [面, 设面] = useState<"browse" | "agent">("browse")
+  const [旁观数, 设旁观数] = useState<Agent旁观数据 | undefined>()
+  const [旁观错, 设旁观错] = useState("")
+
+  /**
+   * 2s 轻轮询旁观面。**两个面都要**：页签上的活跃点在「自己浏览」面也得亮，
+   * 不然 agent 正在动这件事就看不见了。取的是便宜的 observe，截帧另算。
+   */
+  useEffect(() => {
+    let 活 = true
+    const 问 = () =>
+      void agent
+        .observe()
+        .then((d) => {
+          if (!活) return
+          设旁观数(d)
+          设旁观错("")
+        })
+        .catch((e) => {
+          if (活) 设旁观错(e instanceof Error ? e.message : String(e))
+        })
+    问()
+    const 计 = setInterval(问, 2000)
+    return () => {
+      活 = false
+      clearInterval(计)
+    }
+  }, [agent])
 
   /**
    * **回执要收下。**
@@ -184,8 +221,21 @@ export function WebPanel({
     对齐()
   }
 
+  /**
+   * 切面。离开「自己浏览」时要**立刻**把 `WebContentsView` 藏掉——
+   * 不藏的话它会盖在 agent 面上（那 view 浮在整个 DOM 之上），
+   * 而等 250ms 的命中测试 tick 会闪一帧。切回来清指纹，让对齐重推一次。
+   */
+  const 切面 = (到: "browse" | "agent") => {
+    设面(到)
+    上次.current = ""
+    if (到 !== "browse") 发({ kind: "visible", on: false })
+  }
+
   useEffect(() => {
     if (!待开) return
+    // 消息里点过来的链接是**给人看的**——强制落「自己浏览」面
+    设面("browse")
     去(待开)
     收走网址()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -193,6 +243,36 @@ export function WebPanel({
 
   return (
     <div className="webview">
+      {/* 一格两子页签（2026-08-25）：「自己浏览」给人，「agent 旁观」看它。
+          文案不叫「浏览」——那是「用系统浏览器打开」的子串，契约扫描会抓 */}
+      <div className="web-subtabs" role="tablist" aria-label={t("这一格看谁的")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          role="tab"
+          aria-selected={面 === "browse"}
+          onClick={() => 切面("browse")}
+        >
+          {t("自己浏览")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          role="tab"
+          aria-selected={面 === "agent"}
+          onClick={() => 切面("agent")}
+        >
+          {t("agent 旁观")}
+          {旁观数?.open ? <span className="agent-live-dot" aria-hidden /> : null}
+        </Button>
+      </div>
+
+      {/**
+        * 「自己浏览」那半**不卸载**，只藏（display:none）：`状态` 与命中测试的
+        * interval 都活着；藏起来后占位块矩形为 0，interval 自会把 visible:false
+        * 推过去兜底（切面时已经先推过一次了）。
+        */}
+      <div className="web-browse" style={面 === "browse" ? undefined : { display: "none" }}>
       <div className="webview-bar">
         <Button
           variant="ghost"
@@ -251,6 +331,19 @@ export function WebPanel({
           <p className="hint">{t("上面输一个网址，或者点消息里的链接。")}</p>
         )}
       </div>
+      </div>
+
+      {面 === "agent" ? (
+        <AgentBrowserPane
+          数={旁观数}
+          错={旁观错}
+          frame={agent.frame}
+          onRevisit={(url) => {
+            切面("browse")
+            去(url)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

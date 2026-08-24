@@ -121,6 +121,24 @@ test("**有浮层挡着就藏起来** —— 它的 z-index 对命令面板无�
   await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(true)
 })
 
+test("**切到「agent 旁观」时它也得藏** —— 切回来还在原页（2026-08-25 一格两面）", async ({ dawn }) => {
+  const { app, page } = dawn
+  await 开一段临时会话(page)
+  await 进网页(page)
+  await page.getByRole("textbox", { name: "网址" }).fill(地址)
+  await page.getByRole("textbox", { name: "网址" }).press("Enter")
+  await expect.poll(async () => (await 视图(app))?.url ?? "", { timeout: 30_000 }).toContain(地址)
+
+  // 那个 view 浮在所有 HTML 之上——不藏的话它会盖在 agent 面上
+  await page.getByRole("tab", { name: "agent 旁观" }).click()
+  await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(false)
+
+  // 切回来：**没有被销毁**，还是那一页
+  await page.getByRole("tab", { name: "自己浏览" }).click()
+  await expect.poll(async () => (await 视图(app))?.visible, { timeout: 15_000 }).toBe(true)
+  expect((await 视图(app))?.url ?? "").toContain(地址)
+})
+
 /**
  * **批 3 起：外网也开得了**（作者定的第二期「其次是任意网站」）。
  *

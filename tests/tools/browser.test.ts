@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest"
 import { browser工具定义, 清截图, 净化 } from "../../src/tools/browser/tools.js"
 import { browserTools } from "../../src/tools/browser/index.js"
 import { 插件册 } from "../../src/tools/plugins.js"
+import { 旁观, 截一帧 } from "../../src/tools/browser/session.js"
 
 describe("浏览器插件", () => {
   it("15 个工具、四族；关一族少一族；off 全关", () => {
@@ -37,6 +38,20 @@ describe("浏览器插件", () => {
     const 删了 = 清截图(d)
     expect(删了).toBe(1)
     expect(readdirSync(d).sort()).toEqual(["别人的.txt", "新.png"])
+  })
+
+  describe("旁观面（2026-08-25，坞「网页」格的「agent 旁观」页签）", () => {
+    it("没开时如实说没开，历史照给（空数组也是答案）", async () => {
+      const d = await 旁观()
+      expect(d.open).toBe(false)
+      expect(Array.isArray(d.history)).toBe(true)
+      expect(d.activeTitle).toBe("")
+    })
+
+    it("没开时截帧响亮拒绝，不静默回空图，也不偷偷把浏览器拉起来", async () => {
+      await expect(截一帧()).rejects.toThrow(/没开/)
+      expect((await 旁观()).open).toBe(false)
+    })
   })
 
   it("净化：函数与 bigint 降级、循环引用不炸", () => {

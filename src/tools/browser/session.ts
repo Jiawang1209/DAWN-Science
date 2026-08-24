@@ -119,3 +119,30 @@ export async function 关浏览器(): Promise<void> {
   标签们.clear()
   活跃 = null
 }
+
+/** 旁观面（2026-08-25，坞「网页」格「agent 旁观」页签）：便宜的状态 + 历史，轮询用它 */
+export async function 旁观(): Promise<{
+  open: boolean
+  channel: string
+  activeUrl: string
+  activeTitle: string
+  tabs: number
+  history: { url: string; title: string; at: string }[]
+}> {
+  const s = 状态()
+  const t = 活跃 ? 标签们.get(活跃) : undefined
+  const activeTitle = s.open && t && !t.page.isClosed() ? await t.page.title().catch(() => "") : ""
+  return { open: s.open, channel: s.channel, activeUrl: s.activeUrl, tabs: s.tabs, activeTitle, history: [...历史] }
+}
+
+/**
+ * 活跃页截一帧（PNG 的 base64）。**不走 `要页面()`**——那条会 lazy 启动浏览器，
+ * 而旁观面只看不推：没开就抛，话写给人看。
+ */
+export async function 截一帧(): Promise<string> {
+  const t = 活跃 ? 标签们.get(活跃) : undefined
+  if (!浏览器?.isConnected() || !t || t.page.isClosed()) {
+    throw new Error("浏览器没开——agent 用过之后这里才有画面。")
+  }
+  return (await t.page.screenshot()).toString("base64")
+}

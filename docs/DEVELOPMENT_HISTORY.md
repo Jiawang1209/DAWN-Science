@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 空态的 @ 灰底不再飘到中间
+
+- **Type**: fix
+- **Motivation**: 作者截图：空态输入卡里灰底跑到行中间。根因：空态英雄区的 `text-align: center` 顺继承链进了镜像层，textarea 却不跟着（各自对齐不同 = 高亮飘）。
+- **What**: `.composer-hl` 与 `.composer-input-wrap > textarea` 都钉死 `text-align: start`。e2e 补一条空态对齐判据（灰底距行首 = 内距 ±2px）。
+- **Impact**: 仅空态输入卡。
+- **Verification**: paste-input 9 绿连跑两轮；at-file + 视觉基线 15 绿。
+
 ### 2026-08-25 — 输入框里的 `@文件名` 带灰底（学 Codex）
 
 - **Type**: feat

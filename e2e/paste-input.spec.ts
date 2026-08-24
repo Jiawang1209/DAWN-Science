@@ -181,3 +181,21 @@ test("**@ 在输入框里带灰底**（学 Codex）：手敲与粘贴同一份�
   await 粘一个文件(page, "补一份.txt", "x")
   await expect(page.locator(".composer-hl .hl-ref")).toHaveCount(3)
 })
+
+test("**空态的高亮也不飘**：英雄区的 text-align 摸不进镜像层", async ({ dawn }) => {
+  const { page } = dawn
+  await expect(page.locator(".composer-box textarea")).toBeVisible()
+  await page.evaluate(() => {
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    const dt = new DataTransfer()
+    dt.items.add(new File([new TextEncoder().encode("x")], "tmp.txt", { type: "text/plain" }))
+    document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }))
+  })
+  await expect(page.locator(".composer-hl .hl-ref")).toHaveCount(1)
+  const m = await page.evaluate(() => {
+    const t = document.querySelector(".composer-input-wrap textarea")!.getBoundingClientRect()
+    const r = document.querySelector(".composer-hl .hl-ref")!.getBoundingClientRect()
+    return { 差: Math.abs(r.x - t.x - 8) } // 8 = composer-field 的内距
+  })
+  expect(m.差, "灰底没贴着行首——镜像层的对齐又飘了").toBeLessThanOrEqual(2)
+})

@@ -6131,11 +6131,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-input-wrap { position: relative; display: flex; flex-direction: column; min-height: 0; }
 /* 只提 textarea：镜像层同样带 composer-field 类，这条不加 textarea 会把它也拉回文档流（涂色错一行，踩过）。
    不写 z-index：两者都定位过，textarea 在 DOM 后面天然压在镜像层上 */
-.composer-input-wrap > textarea.composer-field { position: relative; }
+.composer-input-wrap > textarea.composer-field { position: relative; text-align: start; }
 .composer-hl {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* 空态的英雄区 text-align: center 会顺着继承链摸进来，textarea 却不跟（2026-08-25 作者截图：灰底飘到中间）——两边都钉死 */
+  text-align: start;
   overflow: hidden;
   color: transparent;
   white-space: pre-wrap;

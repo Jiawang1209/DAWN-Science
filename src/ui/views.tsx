@@ -3727,11 +3727,38 @@ export function ConversationView({
         收外部文件(files)
       }
     }
+    /**
+     * 粘贴也在**页面级**听（2026-08-25 作者实测「粘贴没效果」——光标不在输入框里时，
+     * 挂在 textarea 上的 onPaste 根本不会响；dsh-paste-input 原版就是 document 级）。
+     * 输入框自己的 onPaste 先跑（React 在根上分发），接住文件会 preventDefault——这里看见就不再收。
+     */
+    const onPaste = (e: ClipboardEvent) => {
+      // 输入卡里的粘贴归输入框自己的 onPaste 管（按**目标**分家，不按 defaultPrevented——
+      // 测试造的事件常忘了 cancelable，preventDefault 会静默失效）
+      if (e.defaultPrevented) return
+      if (e.target instanceof Element && e.target.closest(".composer-box")) return
+      const files = [...(e.clipboardData?.files ?? [])]
+      if (files.length === 0) return
+      e.preventDefault()
+      const 图 = files.filter((f) => f.type.startsWith("image/"))
+      const 其余 = files.filter((f) => !f.type.startsWith("image/"))
+      if (图.length > 0 && session.kind === "native") {
+        void 文件们成图(图).then((批) => {
+          设待发图((前) => [...前, ...批])
+          补预览(批, 设待发图)
+        }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
+        收外部文件(其余)
+      } else {
+        收外部文件(files)
+      }
+    }
     document.addEventListener("dragover", onDragover)
     document.addEventListener("drop", onDrop)
+    document.addEventListener("paste", onPaste)
     return () => {
       document.removeEventListener("dragover", onDragover)
       document.removeEventListener("drop", onDrop)
+      document.removeEventListener("paste", onPaste)
     }
   }, [收外部文件, session.kind])
   /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */

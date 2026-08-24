@@ -85,3 +85,16 @@ test("**拖拽外部文件也进队列**；概览里能看到用量并两步清�
   const 会话目录 = join(根, readdirSync(根)[0]!)
   expect(readdirSync(会话目录)).toHaveLength(0)
 })
+
+test("**光标不在输入框也能粘**（页面级监听）", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  // 焦点故意放在 body 上，往 document 粘
+  await page.evaluate(() => {
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    const dt = new DataTransfer()
+    dt.items.add(new File([new TextEncoder().encode("x")], "游离粘贴.txt", { type: "text/plain" }))
+    document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }))
+  })
+  await expect(page.locator(".attached-file")).toHaveCount(1)
+})

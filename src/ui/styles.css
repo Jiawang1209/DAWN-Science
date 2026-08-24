@@ -5900,8 +5900,11 @@ pre {
 .at-rule { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .at-rule.inherited { opacity: 0.6; }
 .at-rule-pattern { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.at-rule-add { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
-.at-rule-add .control { width: auto; }
+/* 两行（2026-08-25 作者定的）：上行 = 定宽方式选择 + 文件名框（两栏左缘因此对齐）；下行 = 区分大小写 + 提交 */
+.at-rule-add { display: grid; grid-template-columns: 6em minmax(0, 16rem); align-items: center; gap: var(--dawn-space-2); }
+.at-rule-add select.control { width: 6em; }
+.at-rule-add input.control { width: 100%; }
+.at-rule-line2 { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--dawn-space-3); }
 .at-rule-cs { display: inline-flex; align-items: center; gap: 4px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
 /* 扩展那五屏挂进设置之后（2026-08-23）：外壳已在右边顶上写了这一块叫什么，屏里自己那一行标题不再画——同一句话说两遍不是层次，是噪声 */
 .settings-body .skills-page { padding: 0; max-width: none; }

@@ -671,7 +671,8 @@ export function PluginsView({ load, onFlag }: {
 }) {
   const [插件们, 设插件们] = useState<插件一个[] | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
-  const [展开的, 设展开的] = useState<string | undefined>(undefined)
+  /** 默认全展开（2026-08-25 作者定的：总共没多少插件）；记的是「收起了哪些」 */
+  const [收起的, 设收起的] = useState<ReadonlySet<string>>(new Set())
   const 重取 = useCallback(() => {
     load().then((r) => 设插件们(r.plugins)).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
   }, [load])
@@ -702,10 +703,10 @@ export function PluginsView({ load, onFlag }: {
       {/* 与「模型服务」同一副形制（2026-08-25 作者按回：插件卡自创的排版太丑）：一行一张 .svc 卡，整行可点展开 */}
       {插件们?.map((p) => {
         const 开着 = p.families.filter((f) => f.on).length
-        const 展开 = 展开的 === p.id
+        const 展开 = !收起的.has(p.id)
         return (
           <div key={p.id} className={`svc plugin-card${展开 ? " open" : ""}`} data-state={p.on ? "on" : "off"}>
-            <Button variant="ghost" size="inline" className="svc-head" aria-expanded={展开} onClick={() => 设展开的(展开 ? undefined : p.id)}>
+            <Button variant="ghost" size="inline" className="svc-head" aria-expanded={展开} onClick={() => 设收起的((前) => { const 新 = new Set(前); if (展开) 新.add(p.id); else 新.delete(p.id); return 新 })}>
               <span className="svc-name">{插件文案(p.name)}</span>
               <span className="svc-sum">
                 {p.on

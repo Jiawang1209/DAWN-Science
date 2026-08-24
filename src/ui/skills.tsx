@@ -17,6 +17,8 @@
  *
  * 「看不见的能力等于不存在」有个反面：**不存在的能力不该看起来存在**。
  */
+import { 文件类按名字 } from "./file-kind.js"
+import { 类型图标 } from "./files.js"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button, EmptyState, Loader } from "./primitives.js"
 import { HoverCard, 浮层事件, type 悬停浮层 } from "./hover-card.js"
@@ -639,19 +641,102 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
  * MCP 是管道通了只差界面，而**插件在我们这儿还没有承载体**——
  * 装什么、怎么加载、边界在哪，一样都还没定。
  */
-export function PluginsView() {
+export interface 插件一族 {
+  key: string
+  name: string
+  on: boolean
+  tools: { name: string; description: string }[]
+}
+export interface 插件一个 {
+  id: string
+  name: string
+  on: boolean
+  families: 插件一族[]
+}
+
+/**
+ * 插件那一屏（2026-08-25 起有了第一个承载体，学自 dsh-office）。
+ *
+ * **插件 = 仓库里审过的内置工具包**，不做任意 JS 加载——「装什么、怎么加载、
+ * 边界在哪」这三问的答案。第一张卡：Office 文档（四族 14 工具）。
+ * 开关改的是设置键，**下一段会话生效**（工具是建会话时装上去的）——卡上写明。
+ */
+/** 插件与族的名字来自后端（协议里是数据不是文案）；这里静态映射一层 `t`，让 i18n 的孤儿扫描看得见 */
+const 插件文案 = (n: string): string =>
+  ({ "Office 文档": t("Office 文档"), 电子表格: t("电子表格"), PDF: "PDF", 演示文稿: t("演示文稿"), "Word 文档": t("Word 文档") })[n] ?? n
+
+export function PluginsView({ load, onFlag }: {
+  load: () => Promise<{ plugins: 插件一个[] }>
+  onFlag: (pluginId: string, family: string | undefined, on: boolean) => Promise<unknown>
+}) {
+  const [插件们, 设插件们] = useState<插件一个[] | undefined>(undefined)
+  const [出错, 设出错] = useState<string | undefined>(undefined)
+  const 重取 = useCallback(() => {
+    load().then((r) => 设插件们(r.plugins)).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
+  }, [load])
+  useEffect(重取, [重取])
+  const 拨 = (id: string, family: string | undefined, on: boolean) => {
+    // **乐观翻转**：受控勾选框等后端回包才动，就是「点了没反应」的那半秒；失败再重取纠正
+    设插件们((前) =>
+      前?.map((p) =>
+        p.id !== id
+          ? p
+          : family
+            ? { ...p, families: p.families.map((f) => (f.key === family ? { ...f, on } : f)) }
+            : { ...p, on },
+      ),
+    )
+    void onFlag(id, family, on).then(重取).catch((e: unknown) => {
+      设出错(e instanceof Error ? e.message : String(e))
+      重取()
+    })
+  }
   return (
     <div className="skills-page">
       <header className="skills-head">
         <h1 className="panel-title">{t("插件")}</h1>
+        <p>{t("插件是随应用内置、经过审查的工具包。开关改动对下一段新会话生效。")}</p>
       </header>
-      <EmptyState
-        title={t("还没有插件这套东西")}
-        /* **整段一句话，不用 `+` 拼**——拼接在英文里是另一套语序（见 en.ts 的头注） */
-        description={t(
-          "现在能装进来的能力有两样，各自在旁边那两屏：「技能」是你自己写的子 agent（.dawn/agents/*.md，写完就能用）；「MCP 服务器」是外部工具，管道通了、还差配置界面。插件要装什么、怎么加载、边界在哪，都还没定——定下来之前这里不会有列表。",
-        )}
-      />
+      {出错 ? <p className="caveat">{出错}</p> : null}
+      {插件们 === undefined ? null : (
+        <ul className="skill-list">
+          {插件们.map((p) => (
+            <li key={p.id} className="skill plugin-card" data-state={p.on ? "on" : "off"}>
+              <p className="skill-name">
+                {插件文案(p.name)}
+                <span className="mcp-from">{tf("{0} 个工具", p.families.reduce((n, f) => n + f.tools.length, 0))}</span>
+                {p.on ? <span className="badge-on">{t("已启用")}</span> : <span className="mcp-off">{t("已关闭")}</span>}
+              </p>
+              <p className="skill-meta">
+                <label className="mcp-switch">
+                  <input type="checkbox" checked={p.on} onChange={() => 拨(p.id, undefined, !p.on)} />
+                  {t("启用这个插件")}
+                </label>
+              </p>
+              <ul className="plugin-family-list">
+                {p.families.map((f) => (
+                  <li key={f.key} className="plugin-family" data-on={p.on && f.on ? "1" : undefined}>
+                    <label className="mcp-switch plugin-family-head">
+                      <input
+                        type="checkbox"
+                        checked={f.on}
+                        disabled={!p.on}
+                        onChange={() => 拨(p.id, f.key, !f.on)}
+                        aria-label={tf("启用 {0} 工具", 插件文案(f.name))}
+                      />
+                      <类型图标 类={文件类按名字(`a.${f.key === "ppt" ? "pptx" : f.key}`, "file")} />
+                      <span className="plugin-family-name">{插件文案(f.name)}</span>
+                      <span className="plugin-family-count">{f.tools.length}</span>
+                    </label>
+                    {/* 工具名如实列出：**列出来的就是模型此刻真的有的**（关着的族淡显不藏） */}
+                    <p className="plugin-tools">{f.tools.map((x) => x.name).join(" · ")}</p>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

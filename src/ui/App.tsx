@@ -3647,7 +3647,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   title: t("插件"),
                   icon: <插件图标 className="row-icon" />,
                   body: (
-            <PluginsView />
+            <PluginsView
+              load={() => client.get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {})}
+              onFlag={(pluginId, family, on) => client.get("setPluginFlag", { pluginId, ...(family ? { family } : {}), on })}
+            />
                   ),
                 },
                 {

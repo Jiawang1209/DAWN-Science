@@ -25,6 +25,21 @@ import { join } from "node:path"
  * 这个缺陷单测与 typecheck 都发现不了，**只有真启动一次才会撞上**。
  */
 const external = [
+  /**
+   * Office 插件的文档库（2026-08-25，学自 dsh-office）：exceljs / pdfkit 一族
+   * 各自带 `createRequire` 注入，bundle 进来就和上面 pi 的那颗同名炸弹一样——
+   * 主进程 `SyntaxError: Identifier 'createRequire' has already been declared`（实测）。
+   */
+  "exceljs",
+  "pdfkit",
+  "pdf-lib",
+  "pdf-parse",
+  "pdf-parse/lib/pdf-parse.js",
+  "pptxgenjs",
+  "jszip",
+  "docx",
+  "mammoth",
+  "fontkit",
   "electron",
   "better-sqlite3",
   "node-pty",

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — Office 插件：插件承载体 v1（学自 dsh-office）
+
+- **Type**: feat
+- **Motivation**: 作者指定研读 dsh-office 并充盈设置里的插件屏。该屏原来如实写着「装什么、怎么加载、边界在哪都没定」——这次给出三问的答案：插件 = 仓库里审过的内置工具包；走 pi `customTools` 建会话时装；office 管交付物、数据计算仍走内核。
+- **What**: vendor 天枢移植版工具逻辑进 `src/tools/office/`（xlsx 5 + pdf 4 + pptx 3 + docx 2 = 14 个工具，Apache-2.0 头注保留），`index.ts` 装配层（DSL→JSON Schema、pi 壳、路径进工作区、错误出声）；`toolsFor` 第四组 + 设置键 `plugin.office.*`；协议 +2（`listPlugins`/`setPluginFlag`，109→111，注册表判据同改）；插件屏第一张真卡（四族开关 + 类型图标 + 工具名单，乐观翻转）；自带技能 `office-docs`。依赖 8 库全 external（esbuild 撞 `createRequire` 实测炸过主进程，与 pi 同雷）；pdf-parse 锁 1.1.1 并导内层实现。
+- **Impact**: 模型有了写 xlsx/pdf/pptx/docx 交付物的手；协议 111 op；自带技能 3→4。
+- **Verification**: `tests/tools/office.test.ts` 6 条全链路往返；e2e 插件卡 + **假模型调 `xlsx_write` 磁盘长出真 xlsx**；单元 2153；skills/visual/mcp 回归 26 绿。
+
 ### 2026-08-25 — 空态的 @ 灰底不再飘到中间
 
 - **Type**: fix

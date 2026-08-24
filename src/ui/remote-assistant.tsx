@@ -19,6 +19,7 @@ import type { ResponseOf } from "../protocol/index.js"
 const CONTACT = "DAWN-Science"
 export type WeixinStatus = ResponseOf<"weixinGetStatus">
 export type NotifySettings = ResponseOf<"weixinGetNotify">
+export type FeishuStatus = ResponseOf<"feishuGetStatus">
 
 export function RemoteAssistantView({
   load,
@@ -31,6 +32,7 @@ export function RemoteAssistantView({
   openSession,
   loadNotify,
   setNotify,
+  feishu,
 }: {
   load: () => Promise<WeixinStatus>
   startLogin: () => Promise<unknown>
@@ -43,6 +45,16 @@ export function RemoteAssistantView({
   openSession: (sessionId: string) => void
   loadNotify: () => Promise<NotifySettings>
   setNotify: (patch: Partial<NotifySettings>) => Promise<NotifySettings>
+  /** 飞书那一格（2026-08-25，第二格）：与微信同形，少一个配对码 */
+  feishu: {
+    load: () => Promise<FeishuStatus>
+    startLogin: () => Promise<unknown>
+    cancelLogin: () => Promise<unknown>
+    unbind: () => Promise<unknown>
+    bindSession: (sessionId: string) => Promise<unknown>
+    loadNotify: () => Promise<NotifySettings>
+    setNotify: (patch: Partial<NotifySettings>) => Promise<NotifySettings>
+  }
 }) {
   const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
   useEffect(() => {
@@ -210,10 +222,221 @@ export function RemoteAssistantView({
         )}
       </section>
 
-      <section className="ra-card">
-        <h2 className="ra-card-title">{t("飞书")}</h2>
-        <p className="hint">{t("还没接。微信这条跑顺了再做。")}</p>
-      </section>
+      <飞书卡 {...feishu} sessions={sessions} openSession={openSession} />
+    </div>
+  )
+}
+
+/**
+ * 飞书卡（2026-08-25，规格 `2026-08-25-飞书通道-design.md`）。
+ * 形制照微信卡；差异：设备流没有配对码；扫码会**创建一个飞书自建应用**，这句要说清。
+ * 通知开关是飞书自己那份（`feishu.notify`），与微信各自持久。
+ */
+function 飞书卡({
+  load,
+  startLogin,
+  cancelLogin,
+  unbind,
+  bindSession,
+  loadNotify,
+  setNotify,
+  sessions,
+  openSession,
+}: {
+  load: () => Promise<FeishuStatus>
+  startLogin: () => Promise<unknown>
+  cancelLogin: () => Promise<unknown>
+  unbind: () => Promise<unknown>
+  bindSession: (sessionId: string) => Promise<unknown>
+  loadNotify: () => Promise<NotifySettings>
+  setNotify: (patch: Partial<NotifySettings>) => Promise<NotifySettings>
+  sessions: readonly { sessionId: string; title: string }[]
+  openSession: (sessionId: string) => void
+}) {
+  const [状态, 设状态] = useState<FeishuStatus | undefined>(undefined)
+  const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
+  const [出错, 设出错] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    loadNotify().then(设通知).catch(() => 设通知(undefined))
+  }, [loadNotify])
+  useEffect(() => {
+    let 停 = false
+    let 计时: ReturnType<typeof setTimeout> | undefined
+    const 问 = async () => {
+      try {
+        const s = await load()
+        if (停) return
+        设状态(s)
+        计时 = setTimeout(问, s.state === "logging_in" ? 1_000 : 5_000)
+      } catch (e) {
+        if (停) return
+        设出错(e instanceof Error ? e.message : String(e))
+        计时 = setTimeout(问, 5_000)
+      }
+    }
+    void 问()
+    return () => {
+      停 = true
+      if (计时) clearTimeout(计时)
+    }
+  }, [load])
+  const 做 = (f: () => Promise<unknown>) => () => {
+    设出错(undefined)
+    f()
+      .then(() => load().then(设状态))
+      .catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
+  }
+  return (
+    <section className="ra-card" aria-labelledby="ra-feishu">
+      <h2 id="ra-feishu" className="ra-card-title">
+        {t("飞书")}
+        {状态 ? <span className={`ra-state ra-state-${状态.state}`}>{状态词(状态.state)}</span> : null}
+      </h2>
+      {出错 ? <p className="caveat">{出错}</p> : null}
+      {!状态 ? (
+        <p className="hint">{t("正在问状态…")}</p>
+      ) : 状态.state === "logging_in" && 状态.login ? (
+        <飞书扫码中 login={状态.login} cancel={做(cancelLogin)} />
+      ) : 状态.state === "bound" || 状态.state === "stale" ? (
+        <div className="ra-bound">
+          {状态.state === "stale" ? (
+            <p className="caveat">{状态.lastError ?? t("绑定失效了，重新扫码")}</p>
+          ) : 状态.lastError ? (
+            <p className="caveat">{状态.lastError}</p>
+          ) : null}
+          <dl className="ra-facts">
+            <dt>{t("绑定的飞书账号")}</dt>
+            <dd className="mono">{状态.openId ?? "—"}</dd>
+            {状态.boundAt ? (
+              <>
+                <dt>{t("绑定时间")}</dt>
+                <dd>{年月日时分(状态.boundAt)}</dd>
+              </>
+            ) : null}
+            <dt>{t("飞书里的话落到")}</dt>
+            <dd>
+              {状态.sessionId ? (
+                <Button variant="text" size="inline" onClick={() => openSession(状态.sessionId!)}>
+                  {sessions.find((s) => s.sessionId === 状态.sessionId)?.title ?? t("一段会话")}
+                </Button>
+              ) : (
+                <span className="hint">{t("还没有——飞书里说第一句话时会新建一段")}</span>
+              )}
+              {sessions.length > 0 ? (
+                <select
+                  className="control ra-bind-select"
+                  aria-label={t("飞书绑到哪段会话")}
+                  value=""
+                  onChange={(e) => {
+                    const id = e.target.value
+                    if (id) 做(() => bindSession(id))()
+                  }}
+                >
+                  <option value="">{t("换一段…")}</option>
+                  {sessions.map((s) => (
+                    <option key={s.sessionId} value={s.sessionId}>
+                      {s.title}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </dd>
+          </dl>
+          <div className="ra-actions">
+            {状态.state === "stale" ? (
+              <Button variant="primary" size="sm" onClick={做(startLogin)}>
+                {t("重新扫码")}
+              </Button>
+            ) : null}
+            <Button variant="text" size="sm" className="danger" onClick={做(unbind)}>
+              {t("解绑飞书")}
+            </Button>
+          </div>
+          <p className="hint">{t("飞书里发 /帮助 看能用的命令（与微信同一套）。")}</p>
+        </div>
+      ) : (
+        <div className="ra-unbound">
+          <p>{t("用飞书扫一扫。会在你的飞书租户里创建一个自建应用（就是这个机器人），扫码的人是唯一授权人。")}</p>
+          <Button variant="primary" size="sm" onClick={做(startLogin)}>
+            {t("添加飞书机器人")}
+          </Button>
+          {状态.lastError ? <p className="caveat">{状态.lastError}</p> : null}
+        </div>
+      )}
+      <div className="ra-feishu-notify">
+        <h3 className="panel-title">{t("飞书通知")}</h3>
+        {通知 ? (
+          <ul className="ra-toggles">
+            {(
+              [
+                ["done", t("任务跑完（超过 60 秒的）")],
+                ["error", t("出错")],
+                ["permission", t("等我点头——回「同意」或「拒绝」即可放行（只对 ACP 会话）")],
+                ["quietWhenFocused", t("我正在电脑前（窗口在前台）时不推；等权限的照推")],
+              ] as const
+            ).map(([k, 文]) => (
+              <li key={k}>
+                <label className="ra-toggle">
+                  <input
+                    type="checkbox"
+                    checked={通知[k]}
+                    onChange={(e) => {
+                      const v = e.target.checked
+                      设通知({ ...通知, [k]: v })
+                      setNotify({ [k]: v }).then(设通知).catch((err: unknown) => 设出错(err instanceof Error ? err.message : String(err)))
+                    }}
+                  />
+                  <span>{文}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="hint">{t("正在问状态…")}</p>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function 飞书扫码中({ login, cancel }: { login: NonNullable<FeishuStatus["login"]>; cancel: () => void }) {
+  const [svg, 设svg] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    let 停 = false
+    if (!login.qrUrl) {
+      设svg(undefined)
+      return
+    }
+    QRCode.toString(login.qrUrl, { type: "svg", margin: 1, width: 200 })
+      .then((s) => {
+        if (!停) 设svg(s)
+      })
+      .catch(() => 设svg(undefined))
+    return () => {
+      停 = true
+    }
+  }, [login.qrUrl])
+  const 结束了 = login.step === "confirmed" || login.step === "failed"
+  return (
+    <div className="ra-login">
+      {svg && !结束了 ? (
+        <div className="ra-qr ra-feishu-qr" role="img" aria-label={t("飞书绑定二维码")} dangerouslySetInnerHTML={{ __html: svg }} />
+      ) : null}
+      <div className="ra-login-text">
+        <p className={`ra-step ra-step-${login.step}`} aria-live="polite">
+          {login.message}
+        </p>
+        {!结束了 && login.qrUrl && !svg ? (
+          <p className="hint">
+            {t("二维码画不出来，打开这个链接也行：")} <span className="mono">{login.qrUrl}</span>
+          </p>
+        ) : null}
+        {!结束了 ? (
+          <Button variant="text" size="sm" onClick={cancel}>
+            {t("不扫了")}
+          </Button>
+        ) : null}
+      </div>
     </div>
   )
 }

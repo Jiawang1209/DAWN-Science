@@ -631,7 +631,6 @@ export const EN: Readonly<Record<string, string>> = {
   "我正在电脑前（窗口在前台）时不推；等权限的照推": "Stay quiet while I'm at the computer (window focused); approvals still come through",
   "扫码绑定": "Scan to bind",
   "飞书": "Feishu",
-  "还没接。微信这条跑顺了再做。": "Not connected yet. Coming after WeChat settles.",
   "已绑定": "Bound",
   "扫码中": "Scanning",
   "绑定失效": "Binding expired",
@@ -1237,4 +1236,17 @@ export const EN: Readonly<Record<string, string>> = {
   "提议": "Propose",
   "查看": "Inspect",
   "技能沉淀": "Skill harvest",
+
+  // 远程助理 · 飞书（2026-08-25）
+  "绑定的飞书账号": "Bound Feishu account",
+  "飞书里的话落到": "Feishu messages land in",
+  "还没有——飞书里说第一句话时会新建一段": "None yet — the first Feishu message starts one",
+  "飞书绑到哪段会话": "Bind Feishu to which session",
+  "解绑飞书": "Unlink Feishu",
+  "飞书里发 /帮助 看能用的命令（与微信同一套）。": "Send /help in Feishu for the commands (same set as WeChat).",
+  "用飞书扫一扫。会在你的飞书租户里创建一个自建应用（就是这个机器人），扫码的人是唯一授权人。":
+    "Scan with Feishu. This creates a custom app (the bot) in your Feishu tenant; whoever scans is the only authorized user.",
+  "添加飞书机器人": "Add Feishu bot",
+  "飞书通知": "Feishu notifications",
+  "飞书绑定二维码": "Feishu binding QR code",
 }

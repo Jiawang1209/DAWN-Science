@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 输入框里的 `@文件名` 带灰底（学 Codex）
+
+- **Type**: feat
+- **Motivation**: 作者：手敲 @ / 粘贴 / 拖拽生成的 `@+文件名` 要在对话框里凸显成一个文件整体，模仿 Codex。
+- **What**: 新组件 `引用高亮层`——textarea 底下垫一层同 class（同字号内距）的镜像 div，文字透明、只给 `扫引用` 认出的 token 涂 `fill-2` 圆角底（`box-decoration-break: clone` 折行两截各自圆角；不加内距，加了就与 textarea 排版错位）；滚动由 textarea onScroll 同步。两个 composer 都挂。踩了两个坑并记进注释：镜像层带着 composer-field 类被自己的 z-index 规则拉回文档流（涂色错一行）；z-index 字面量被契约扫描按回，改用 DOM 顺序。
+- **Impact**: 仅输入框视觉；光标 / 输入法 / 选区在 textarea 上不受影响；三个来源共享同一份识别。
+- **Verification**: 新 e2e：两 token 各自高亮、镜像层与 textarea 四边差 ≤1px、粘贴再加一枚变三枚；paste-input / at-file / session-tabs 15 绿连跑两轮；attach + 视觉基线 29 绿；tests/ui 517。
+
 ### 2026-08-25 — 粘贴的图片：缩略图补上；缩略图点开看大图（学 Codex）
 
 - **Type**: fix

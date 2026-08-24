@@ -162,3 +162,22 @@ test("**粘贴的图能点开看大图**（学 Codex）：点缩略图开层、E
   await page.keyboard.press("Escape")
   await expect(层).toHaveCount(0)
 })
+
+test("**@ 在输入框里带灰底**（学 Codex）：手敲与粘贴同一份高亮；镜像层与输入框逐像素同框", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  const 框 = page.locator(".composer-box textarea")
+  await 框.fill("看看 @data/raw/a.csv 和 @AGENTS.md")
+  await expect(page.locator(".composer-hl .hl-ref")).toHaveCount(2)
+  await expect(page.locator(".composer-hl .hl-ref").first()).toHaveText("@data/raw/a.csv")
+  // 镜像层与 textarea 必须同位同大——错一像素高亮就飘（选择器那回踩过：涂色错一行）
+  const 对齐 = await page.evaluate(() => {
+    const t = document.querySelector(".composer-input-wrap textarea")!.getBoundingClientRect()
+    const h = document.querySelector(".composer-hl")!.getBoundingClientRect()
+    return { dx: Math.abs(t.x - h.x), dy: Math.abs(t.y - h.y), dw: Math.abs(t.width - h.width), dh: Math.abs(t.height - h.height) }
+  })
+  expect(Math.max(对齐.dx, 对齐.dy, 对齐.dw, 对齐.dh)).toBeLessThanOrEqual(1)
+  // 粘贴插入的令牌也走同一份高亮
+  await 粘一个文件(page, "补一份.txt", "x")
+  await expect(page.locator(".composer-hl .hl-ref")).toHaveCount(3)
+})

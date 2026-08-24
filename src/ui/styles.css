@@ -6124,3 +6124,28 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 /* 缩略图那颗按钮：零内距，别把 96px 的方块再垫大 */
 .attached-open { padding: 0; border-radius: var(--dawn-radius-md); display: block; }
 .attached-open .attached-thumb { display: block; }
+
+/* 引用高亮（2026-08-25，学 Codex）：textarea 底下的镜像层，文字透明、只画 @token 的灰底。
+   同 class（control composer-field）拿同一套字号与内距——**镜像层与 textarea 的排版必须逐像素一致**，
+   所以这里只改颜色与定位，不碰任何几何 */
+.composer-input-wrap { position: relative; display: flex; flex-direction: column; min-height: 0; }
+/* 只提 textarea：镜像层同样带 composer-field 类，这条不加 textarea 会把它也拉回文档流（涂色错一行，踩过）。
+   不写 z-index：两者都定位过，textarea 在 DOM 后面天然压在镜像层上 */
+.composer-input-wrap > textarea.composer-field { position: relative; }
+.composer-hl {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  color: transparent;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  resize: none;
+}
+/* 灰底圆角只垫在字形正下方（不加内距——加了就和 textarea 的排版错位）；折行时两截各自圆角 */
+.composer-hl .hl-ref {
+  background: var(--dawn-fill-2);
+  border-radius: var(--dawn-radius-xs);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}

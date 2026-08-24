@@ -29,6 +29,7 @@ import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./sta
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
+import { 扫引用 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 
@@ -907,6 +908,38 @@ export interface 排队的外部文件 {
 export function 可令牌名(名: string): string {
   const n = 名.normalize("NFC").replace(/[/\\<>:"|?*\u0000-\u001f]/g, "_").replace(/\s+/g, "_")
   return n === "" || n === "." || n === ".." ? "_" : n
+}
+
+/**
+ * 输入框底下的**引用高亮层**（2026-08-25，作者要的，学 Codex）：
+ * textarea 自己画不了子串样式——底下垫一层排版完全相同的镜像（同 class 拿同一套字号与内距，
+ * 文字透明），只给 `@文件名` 那几段涂灰底圆角。手敲 @ / 粘贴 / 拖拽走的都是同一份 `扫引用`，
+ * 所以三个来源一起亮。光标、输入法、选区全在 textarea 上，不受影响；滚动由外面同步进来。
+ */
+export function 引用高亮层({ text, 滚 }: { text: string; 滚: number }) {
+  const 层 = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (层.current) 层.current.scrollTop = 滚
+  })
+  const 引用们 = 扫引用(text)
+  if (引用们.length === 0) return null
+  const 段: React.ReactNode[] = []
+  let pos = 0
+  for (const r of 引用们) {
+    if (r.start > pos) 段.push(text.slice(pos, r.start))
+    段.push(
+      <span key={r.start} className="hl-ref">
+        {text.slice(r.start, r.end)}
+      </span>,
+    )
+    pos = r.end
+  }
+  if (pos < text.length) 段.push(text.slice(pos))
+  return (
+    <div ref={层} className="control composer-field composer-hl" aria-hidden="true">
+      {段}
+    </div>
+  )
 }
 
 /**
@@ -3736,6 +3769,8 @@ export function ConversationView({
   const [待发文件, 设待发文件] = useState<排队的外部文件[]>([])
   /** 点开看大图的那张（2026-08-25，学 Codex）；undefined = 没开 */
   const [看大图, 设看大图] = useState<待发的图 | undefined>(undefined)
+  /** 引用高亮层要跟着 textarea 内部滚动（2026-08-25） */
+  const [高亮滚, 设高亮滚] = useState(0)
   /** 收外部文件 = **替你敲一个 `@`**（2026-08-25 作者给了图）：插 `@令牌` 进草稿、引用栏出 chip；队列只管发送时怎么落盘 */
   const 草稿ref = useRef(draft)
   草稿ref.current = draft
@@ -4405,12 +4440,15 @@ export function ConversationView({
             <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(draft, 艾特位, x.path, x.kind))} />
           ) : null}
           <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => setDraft(session.sessionId, 抠掉引用(draft, p))} />
+          <div className="composer-input-wrap">
+          <引用高亮层 text={draft} 滚={高亮滚} />
           <textarea
             ref={输入框}
             className="control composer-field"
             value={draft}
             onChange={(e) => { setDraft(session.sessionId, e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
             onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
+            onScroll={(e) => 设高亮滚(e.currentTarget.scrollTop)}
             /**
              * **粘一张图进来就当附件**（协议 4.13，2026-08-13，作者提）。
              *
@@ -4605,6 +4643,7 @@ export function ConversationView({
               }
             }}
           />
+          </div>
           {/**
            * 右对齐的控件行。学自 Hermes composer `controls.tsx` 的
            * `<div className="ml-auto flex …">`——**控件靠右，输入区靠左**。
@@ -5796,6 +5835,7 @@ export function EmptyConversation({
   /** 空态排队的外部文件（2026-08-25 作者实测在空态粘 / 拖没反应——原来的「空态不收」边界撤了） */
   const [空态文件, 设空态文件] = useState<排队的外部文件[]>([])
   const [空看大图, 设空看大图] = useState<待发的图 | undefined>(undefined)
+  const [空高亮滚, 设空高亮滚] = useState(0)
   const 空插令牌 = useCallback((令牌们: readonly string[]) => {
     if (令牌们.length === 0) return
     // 尾随一个空格：插完光标若正停在令牌末尾，会被 `在打艾特` 当成「正在打的 @」——菜单弹开、chip 不进栏（2026-08-25 作者截图）
@@ -6032,6 +6072,8 @@ export function EmptyConversation({
                 <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(草稿, 艾特位, x.path, x.kind))} />
               ) : null}
               <AtRail draft={草稿} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => 设草稿(抠掉引用(草稿, p))} />
+              <div className="composer-input-wrap">
+              <引用高亮层 text={草稿} 滚={空高亮滚} />
               <textarea
                 ref={输入框}
                 className="control composer-field"
@@ -6039,6 +6081,7 @@ export function EmptyConversation({
                 autoFocus
                 onChange={(e) => { 设草稿(e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
                 onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
+                onScroll={(e) => 设空高亮滚(e.currentTarget.scrollTop)}
                 /**
                  * **这一屏也能粘图**（2026-08-13 补，作者报的：
                  * *「我现在复制一个图片，然后粘贴到窗口，为什么不显示图片呢？」*）。
@@ -6142,6 +6185,7 @@ export function EmptyConversation({
                   // `@` 打进去就弹路径菜单（2026-08-23），不再开系统文件对话框
                 }}
               />
+              </div>
               {/**
                 * **第一句没发出去的原因，摆在这儿**（2026-08-13）。
                 * 它此前只经 `note()` 走到别处——而那条路人看不见，

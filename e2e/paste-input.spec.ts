@@ -22,7 +22,9 @@ test("**粘贴外部文件 = 替你敲一个 @**：草稿出 @令牌、引用栏
   await 在项目里开会话(page)
   await 粘一个文件(page, "实验 数据.csv", "a,b\n1,2\n")
   // 草稿里是 @令牌（空白已换 _），引用栏出 chip（作者给的图就是这个形状）
-  await expect(page.locator(".composer-box textarea")).toHaveValue("@实验_数据.csv")
+  await expect(page.locator(".composer-box textarea")).toHaveValue("@实验_数据.csv ")
+  // 插完不算「正在打的 @」：菜单不弹、chip 进栏（2026-08-25 作者截图抓的）
+  await expect(page.getByRole("listbox", { name: "引用工作区文件" })).toHaveCount(0)
   await expect(page.locator(".at-rail-row")).toHaveCount(1)
   await expect(page.locator(".at-rail-row")).toContainText("实验_数据.csv")
   // 发送前磁盘上什么都没有（发送才落盘）
@@ -90,7 +92,7 @@ test("**光标不在输入框也能粘**（页面级监听），照样进 @", as
     document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }))
   })
   await expect(page.locator(".at-rail-row")).toHaveCount(1)
-  await expect(page.locator(".composer-box textarea")).toHaveValue("@游离粘贴.txt")
+  await expect(page.locator(".composer-box textarea")).toHaveValue("@游离粘贴.txt ")
 })
 
 test("**Finder 式复制（只有 file:// uri-list）**：草稿出 @、发送后换写真实路径", async ({ dawn }) => {
@@ -107,7 +109,7 @@ test("**Finder 式复制（只有 file:// uri-list）**：草稿出 @、发送�
     document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }))
   }, 源)
   await expect(page.locator(".at-rail-row")).toHaveCount(1)
-  await expect(page.locator(".composer-box textarea")).toHaveValue("@AGENTS.md")
+  await expect(page.locator(".composer-box textarea")).toHaveValue("@AGENTS.md ")
   const 框 = page.locator(".composer-box textarea")
   await 框.fill((await 框.inputValue()) + " 读一下规则")
   await page.getByRole("button", { name: "发送", exact: true }).click()
@@ -130,7 +132,7 @@ test("**空态也收**：粘一个文件 → @ 进草稿 → 第一句话建会�
   })
   await expect(page.locator(".at-rail-row")).toHaveCount(1)
   const 框 = page.locator(".composer-box textarea")
-  await expect(框).toHaveValue("@开场.txt")
+  await expect(框).toHaveValue("@开场.txt ")
   await 框.fill((await 框.inputValue()) + " 带着它开一段")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })

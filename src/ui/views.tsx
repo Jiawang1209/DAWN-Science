@@ -3714,7 +3714,8 @@ export function ConversationView({
   草稿ref.current = draft
   const 插令牌 = useCallback((令牌们: readonly string[]) => {
     if (令牌们.length === 0) return
-    const 添 = 令牌们.map((t) => `@${t}`).join(" ")
+    // 尾随一个空格：插完光标若正停在令牌末尾，会被 `在打艾特` 当成「正在打的 @」——菜单弹开、chip 不进栏（2026-08-25 作者截图）
+    const 添 = 令牌们.map((t) => `@${t}`).join(" ") + " "
     const 前 = 草稿ref.current
     const 新 = 前 ? (/\s$/.test(前) ? `${前}${添}` : `${前} ${添}`) : 添
     setDraft(session.sessionId, 新)
@@ -5764,7 +5765,8 @@ export function EmptyConversation({
   const [空态文件, 设空态文件] = useState<排队的外部文件[]>([])
   const 空插令牌 = useCallback((令牌们: readonly string[]) => {
     if (令牌们.length === 0) return
-    const 添 = 令牌们.map((t) => `@${t}`).join(" ")
+    // 尾随一个空格：插完光标若正停在令牌末尾，会被 `在打艾特` 当成「正在打的 @」——菜单弹开、chip 不进栏（2026-08-25 作者截图）
+    const 添 = 令牌们.map((t) => `@${t}`).join(" ") + " "
     设草稿((前) => (前 ? (/\s$/.test(前) ? `${前}${添}` : `${前} ${添}`) : 添))
   }, [])
   const 空收 = useCallback((files: readonly File[]) => {

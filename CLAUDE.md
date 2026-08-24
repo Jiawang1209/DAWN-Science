@@ -28,6 +28,7 @@
 | **外部文件附件**：粘贴/拖拽→发送才落盘→`@` 引用（学自 dsh-paste-input） | `specs/2026-08-25-外部文件附件-design.md` · 解读在 `ccb_hive_code_learn/dsh-paste-input-解读.md` |
 | **Office 插件**：插件承载体 v1，四族 14 工具（学自 dsh-office） | `specs/2026-08-25-office插件-design.md` · 解读在 `ccb_hive_code_learn/dsh-office-解读.md` |
 | **浏览器插件**：agent 的手伸进真浏览器，四族 15 工具（学自 dsh-reef） | `specs/2026-08-25-浏览器插件-design.md` · 解读在 `ccb_hive_code_learn/dsh-reef-浏览器-解读.md` |
+| **agent 浏览器旁观**：坞「网页」格一格两子页签，旁观 agent 的 headless 浏览器 | `specs/2026-08-25-agent浏览器旁观-design.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

@@ -22,9 +22,11 @@ playwright 拉起的 headless Chromium,**没有可见表面**,原理上嵌不进
 
 ## 一、格内形状
 
-- 子页签行:**「浏览」|「agent」**(文案互不为子串,进设计契约扫描)。
-- 「浏览」:原样不动(WebContentsView + 地址栏 + 门)。
-- 「agent」:上半是活跃页**截图一帧**(URL + 标题 + 「刷新画面」+ 截帧时刻),
+- 子页签行:**「自己浏览」|「agent 旁观」**。
+  > **✅ 实现时更正**(原写「浏览/agent」):「浏览」是「用系统浏览器打开」的子串,
+  > 设计契约那条「没有一个按钮文案是另一个的子串」的扫描当场就会抓——改成互不为子串的这对。
+- 「自己浏览」:原样不动(WebContentsView + 地址栏 + 门)。
+- 「agent 旁观」:上半是活跃页**截图一帧**(URL + 标题 + 「刷新画面」+ 截帧时刻),
   下半是**去过哪儿**(最近 50 条:时刻 / 标题 / URL)。
 - agent 浏览器没开时**不藏页签**(看不见的能力等于不存在),摆空态
   「agent 还没用过浏览器」;开着时页签带活跃点。
@@ -53,11 +55,16 @@ agent 的浏览器活在 **workbench 后端进程**(`src/tools/browser/session.t
 
 ## 四、判据(三条准入规则逐条对)
 
+> **✅ 实现时更正**:原表第一行写「假后端补假历史 + 假 PNG」、第三行写「e2e 看得见假历史与假帧」。
+> 都不对——这两条是 **workbench 协议操作**,`dev:mock` 与 e2e 跑的都是**真后端 + 假模型**
+> (`mock-inference-server` 管的是模型协议,与 `listPlugins` 同例,不需要 mock 分支);
+> e2e 里 agent 浏览器没开,**空态就是真话**,真数据链路归 `browser-live.test.ts`。
+
 | 规则 | 怎么满足 |
 |---|---|
-| 新协议操作补 mock | 同一份假后端补 `browserObserve`/`browserFrame`(假历史 + 定死的假 PNG),`dev:mock` 与 e2e 共用 |
-| 可判定规则进扫描 | 「浏览」「agent」入子串扫描名单 |
-| 主路径自己验 | 单测:路由形状、没开时的空态回话;`browser-live.test.ts` 加一段:真开一页 → observe 有那条历史、frame 是合法 PNG;e2e(mock):切到 agent 页签看得见假历史与假帧、点历史条目落回「浏览」。**agent 页签是普通 DOM,Playwright 看得见**——比「浏览」页签好验。视觉基线:帧与时刻 mask 掉 |
+| 新协议操作补 mock | 不适用:workbench 协议操作由真后端服务(同 `listPlugins`),模型协议的 mock 不涉及 |
+| 可判定规则进扫描 | 「自己浏览」「agent 旁观」自动落进现有的按钮子串扫描(中文 `design-contract.test.ts`、英文 `i18n.test.ts`) |
+| 主路径自己验 | 单测:session 旁观面(没开如实说、截帧响亮拒且不偷偷启动)、后端路由;`browser-live.test.ts`:真开一页 → observe 有那条历史、frame 是合法 PNG(魔数校验);e2e:两个子页签、空态如实说、**切到「agent 旁观」时 WebContentsView 真的藏了、切回还在原页**(走 `视图(app)` 主进程探针)。**agent 面是普通 DOM,Playwright 看得见**——比「自己浏览」那半好验。视觉基线:网页格不在五屏里,十张基线不动(已验全绿) |
 
 ## 五、不做什么
 

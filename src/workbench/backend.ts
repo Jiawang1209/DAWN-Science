@@ -128,6 +128,15 @@ export interface WorkbenchBackendOptions {
    */
   scratchRoot?: string
   /**
+   * 记忆（2026-08-25，规格 2026-08-25-记忆-design.md）。**与运行时同一份**——
+   * 另开一份的话，屏上确认的与会话里注入的会分家。不给就是没装配（操作如实拒）。
+   */
+  memory?: {
+    store: import("../memory/store.js").MemoryStore
+    queue: import("../memory/queue.js").SuggestionQueue
+    pending: import("../memory/pending-skills.js").待装技能
+  }
+  /**
    * 系统的下载目录（批 4a，2026-08-17）。主进程给 `app.getPath("downloads")`。
    *
    * **不在这里按平台拼**：那类硬编码会坏在别人机器上，
@@ -426,7 +435,13 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, memory } = opts
+
+  /** 记忆没装配就如实拒（与 scratchRoot 同一条：不猜路径、不静默降级） */
+  const 要记忆 = () => {
+    if (!memory) throw fault("internal_error", "本次运行没有装配记忆")
+    return memory
+  }
 
   /**
    * 远端那一套装配好了没有。**没装配就如实说**，不返回一个空名单——
@@ -2132,6 +2147,109 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (e) {
         throw fault("invalid_request", e instanceof Error ? e.message : String(e))
       }
+    },
+
+    /* ── 记忆（2026-08-25，规格 2026-08-25-记忆-design.md）── */
+
+    memoryOverview: async ({ workspace }) => {
+      const m = 要记忆()
+      const ctx = workspace ? { workspace } : undefined
+      const 轨数 = (target: "user" | "memory" | "key") => {
+        // key 没有 workspace 时如实报 0，不猜路径
+        if (target === "key" && !workspace) return { target, count: 0, archived: 0 }
+        try {
+          return { target, count: m.store.entries(target, ctx).length, archived: m.store.archived(target, ctx).length }
+        } catch {
+          return { target, count: 0, archived: 0 }
+        }
+      }
+      return {
+        pending: m.queue.list().length + m.pending.list().length,
+        tracks: [轨数("user"), 轨数("memory"), 轨数("key")],
+      }
+    },
+
+    memorySuggestions: async () => {
+      const m = 要记忆()
+      return {
+        suggestions: m.queue.list().map((e) => ({
+          id: e.id,
+          target: e.target,
+          content: e.content,
+          reason: e.reason,
+          hits: e.hits,
+          time: e.time,
+          ...(e.workspace ? { workspace: e.workspace } : {}),
+        })),
+        pendingSkills: m.pending.list(),
+      }
+    },
+
+    memoryResolve: async ({ kind, id, decision, content, target, workspace }) => {
+      const m = 要记忆()
+      if (kind === "skill") {
+        if (decision === "archive") return { ok: false, message: "技能没有归档一说：批准装进技能库，或拒绝" }
+        const r = decision === "approve" ? m.pending.approve(id) : m.pending.reject(id)
+        return { ok: r.ok, message: r.message }
+      }
+      // 记忆建议：先取出，失败放回（不丢建议）
+      const 条 = m.queue.take(id)
+      if (!条) return { ok: false, message: "队列里没有这条建议（可能已被处理）" }
+      if (decision === "reject") return { ok: true, message: "已拒绝" }
+      const 终轨 = target ?? 条.target
+      const 终文 = (content ?? 条.content).trim()
+      const ws = workspace ?? 条.workspace
+      const ctx = {
+        ...(ws ? { workspace: ws } : {}),
+        ...(条.branches && 条.branches.length > 0 ? { branches: 条.branches } : {}),
+      }
+      if (终轨 === "key" && !ws) {
+        m.queue.putBack(条)
+        return { ok: false, message: "key 建议需要项目工作区——带上 workspace 再采纳（建议留在队列里）" }
+      }
+      const r =
+        decision === "approve"
+          ? m.store.add(终轨, 终文, ctx)
+          : (() => {
+              // 归档一条建议 = 直接落归档文件（不经过主轨）
+              const 先 = m.store.add(终轨, 终文, ctx)
+              if (!先.ok && !先.duplicate) return 先
+              return m.store.archive(终轨, 终文.slice(0, 40), ctx)
+            })()
+      if (!r.ok && !r.duplicate) {
+        m.queue.putBack(条)
+        return { ok: false, message: `${r.message}（建议留在队列里）` }
+      }
+      return { ok: true, message: decision === "approve" ? `已写入 ${终轨}（下一段会话生效）` : "已归档（不注入，可转正）" }
+    },
+
+    memoryEntries: async ({ target, workspace, archived }) => {
+      const m = 要记忆()
+      const ctx = workspace ? { workspace } : undefined
+      try {
+        return { entries: archived === true ? m.store.archived(target, ctx) : m.store.entries(target, ctx) }
+      } catch (e) {
+        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+      }
+    },
+
+    memoryWrite: async ({ action, target, workspace, content, match, branches }) => {
+      const m = 要记忆()
+      const ctx = {
+        ...(workspace ? { workspace } : {}),
+        ...(branches && branches.length > 0 ? { branches } : {}),
+      }
+      const r =
+        action === "add"
+          ? m.store.add(target, String(content ?? ""), ctx)
+          : action === "update"
+            ? m.store.updateBody(target, String(match ?? ""), String(content ?? ""), ctx)
+            : action === "remove"
+              ? m.store.remove(target, String(match ?? ""), ctx)
+              : action === "archive"
+                ? m.store.archive(target, String(match ?? ""), ctx)
+                : m.store.promote(target, String(match ?? ""), ctx)
+      return { ok: r.ok, message: r.message }
     },
 
     setSkillInvocation: async ({ filePath, mode }) => {

@@ -120,6 +120,17 @@ export function 用量图标({ className }: 图标属性 = {}) {
   )
 }
 
+/** 记忆(2026-08-25)。一颗大脑轮廓太做作——用「层叠的三条」示意分层记忆 */
+export function 记忆图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path d="M8 1.8 14 5 8 8.2 2 5 8 1.8Z" />
+      <path d="M2.6 8.1 8 11l5.4-2.9.9.5L8 12.2 1.7 8.6l.9-.5Z" />
+      <path d="M2.6 11.1 8 14l5.4-2.9.9.5L8 15.2 1.7 11.6l.9-.5Z" />
+    </壳>
+  )
+}
+
 /** 更多（⋯）。三颗实心圆点 */
 export function 更多图标({ className }: 图标属性 = {}) {
   return (

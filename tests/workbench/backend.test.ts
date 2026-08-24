@@ -15,6 +15,9 @@ import { ProjectManager } from "../../src/project/manager.js"
 import { SessionManager } from "../../src/session/manager.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
 import { createWorkbenchBackend } from "../../src/workbench/backend.js"
+import { MemoryStore } from "../../src/memory/store.js"
+import { SuggestionQueue } from "../../src/memory/queue.js"
+import { 待装技能 } from "../../src/memory/pending-skills.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { WorkbenchServer } from "../../src/workbench/server.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
@@ -56,8 +59,14 @@ function make() {
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
   const events = new SessionTranscripts({ terminalMaxChars: 10_000 })
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")) })
-  return { db, projectStore, runStore, sessions, projects, backend, events, server: new WorkbenchServer(backend) }
+  const 记忆根 = mkdtempSync(join(tmpdir(), "dawn-memories-"))
+  const memory = {
+    store: new MemoryStore(记忆根),
+    queue: new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl")),
+    pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
+  }
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory })
+  return { db, projectStore, runStore, sessions, projects, backend, events, memory, server: new WorkbenchServer(backend) }
 }
 
 describe("真实后端 · 经服务端端到端", () => {
@@ -73,6 +82,26 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(d.open).toBe(false)
     expect(Array.isArray(d.history)).toBe(true)
     await expect(ctx.backend.browserFrame({})).rejects.toThrow(/没开/)
+  })
+
+  it("记忆五操作整链路：提议→角标→采纳落盘→浏览可见；拒绝清队列（2026-08-25）", async () => {
+    const ws = mkdtempSync(join(tmpdir(), "mem-ws-"))
+    expect(((await ctx.backend.memorySuggestions({})) as { suggestions: unknown[] }).suggestions).toHaveLength(0)
+    // 经 make() 里同一份 queue 入队（工具侧在 e2e 验；同一实例是装配纪律）
+    ctx.memory.queue.propose("key", "口径用基线年龄", "统计口径", { workspace: ws })
+    ctx.memory.queue.propose("memory", "服务器时区是 UTC+8", "环境事实")
+    expect(((await ctx.backend.memoryOverview({ workspace: ws })) as { pending: number }).pending).toBe(2)
+    const q2 = (await ctx.backend.memorySuggestions({})) as { suggestions: { id: string; target: string }[] }
+    const key条 = q2.suggestions.find((x) => x.target === "key")!
+    expect(((await ctx.backend.memoryResolve({ kind: "suggestion", id: key条.id, decision: "approve" })) as { ok: boolean }).ok).toBe(true)
+    const e = (await ctx.backend.memoryEntries({ target: "key", workspace: ws })) as { entries: string[] }
+    expect(e.entries.join("\n")).toContain("口径用基线年龄")
+    const 余 = (await ctx.backend.memorySuggestions({})) as { suggestions: { id: string }[] }
+    await ctx.backend.memoryResolve({ kind: "suggestion", id: 余.suggestions[0]!.id, decision: "reject" })
+    expect(((await ctx.backend.memoryOverview({})) as { pending: number }).pending).toBe(0)
+    await ctx.backend.memoryWrite({ action: "add", target: "user", content: "偏好设计讨论" })
+    const u = (await ctx.backend.memoryEntries({ target: "user" })) as { entries: string[] }
+    expect(u.entries.join("\n")).toContain("偏好设计讨论")
   })
 
   /**

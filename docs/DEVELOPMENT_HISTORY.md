@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 记忆：三轨确认制长期记忆 + 技能沉淀（学自 dsh-memory-evolve）
+
+- **Type**: feat
+- **Motivation**: 路线图 R11 把「记忆」标为全项目唯一没有成熟开源对照的一格；作者研读 `csyangwen/dsh-memory-evolve`（Hermes 血统）后拍板引入。DAWN 此前没有跨会话记忆——会话历史是原始记录、账本是事实层、AGENTS.md 靠人写；这一格补「学到了什么」：账本答"发生过什么"（观察），记忆答"我们学到了什么"（经确认的结论）。
+- **What**: `src/memory/`（store 三轨 + 盖戳 + drift guard + pid 锁 + 威胁扫描；queue hits 去重；pending-skills 校验/批准/拒绝；snapshot 三段 + 分支过滤 + 固定职责文本）。三轨全确认制（比 dsh 更保守：主会话也不许直写注入轨）；user/memory 落 `~/DAWN/memories/`，**key 落工作区 `.dawn/memory/`（可进 git，免费跨机同步——dsh 那套条目级合并器整个不抄）**。工具面 `memory_propose`/`memory_list`/`skill_propose` 走插件册第三卡（`plugin.memory.*`）；注入坐 pi `DefaultResourceLoader.appendSystemPromptOverride`（建会话渲染，**下一段会话生效**，渲染失败出声不拦会话）；协议五操作（118 个）+ 设置「记忆」屏（待确认区可改文案/改轨、hits 频次、三轨浏览、归档转正）+ 侧栏角标；`DAWN_MEMORIES_DIR` 贯通 main/e2e/dev-mock 隔离。日志轨与审查节奏器缓做（依赖模型自觉，账本已记事实）。
+- **Impact**: DAWN 首次拥有跨会话记忆与 AI 自产技能的进化环；插件三张卡；协议 113→118；`.dawn/memory/` 进入工作区目录约定。
+- **Verification**: 单测 2185 全绿（store round-trip/drift/锁/盖戳剥重/分支过滤/队列去重/技能校验/后端五操作整链路/契约扫描——子串撞车修了三处、令牌错位零处）；e2e 2 条全过，**注入判据走假服务器收到的原始请求**：采纳后新会话的 system 真含那条（同时验证"下一段会话生效"契约）；启动取数预算 14→15 如实上调。
+
 ### 2026-08-25 — agent 浏览器旁观：坞「网页」格一格两子页签
 
 - **Type**: feat

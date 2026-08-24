@@ -56,6 +56,8 @@ const SCRATCH_ROOT = process.env.DAWN_SCRATCH_ROOT
 const CLI_HOME = process.env.DAWN_CLI_HOME
 /** 全局技能目录（skills-manage，2026-08-21）。e2e 用它隔离——此前一直指着开发机真实的 `~/DAWN/skills` */
 const SKILLS_DIR = process.env.DAWN_SKILLS_DIR
+/** 全局记忆根。与 `DAWN_SKILLS_DIR` 同一套惯例:e2e/mock 指向隔离目录 */
+const MEMORIES_DIR = process.env.DAWN_MEMORIES_DIR
 /** 全局子 agent 目录（2026-08-22）。e2e 用它隔离 */
 const AGENTS_DIR_ENV = process.env.DAWN_AGENTS_DIR
 
@@ -446,6 +448,7 @@ app.whenReady().then(() => {
       ...(AGENTS_DIR_ENV ? { agentsDir: AGENTS_DIR_ENV } : {}),
       ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
       ...(SKILLS_DIR ? { skillsDir: SKILLS_DIR } : {}),
+      ...(MEMORIES_DIR ? { memoriesDir: MEMORIES_DIR } : {}),
       ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       ...(FAKE_SSH ? { fakeSsh: true } : {}),

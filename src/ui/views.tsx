@@ -3693,6 +3693,11 @@ export function ConversationView({
    * 剪贴板来的没有路径，握着 File 等发送时取字节。
    */
   const [待发文件, 设待发文件] = useState<{ 名: string; 字节数: number; file?: File; 源路径?: string }[]>([])
+  /**
+   * Finder ⌘C 一个文件再粘贴，Chromium 的 `clipboardData.files` 常是**空的**——
+   * 只给一段文本（文件名）和 `text/uri-list`（`file://` 地址）。不看后者的话，
+   * 裸文件名会被当普通文本粘进草稿，模型再去找这个名字当然找不到（2026-08-25 作者撞的）。
+   */
   const 收外部文件 = useCallback((files: readonly File[]) => {
     if (files.length === 0) return
     设待发文件((前) => [
@@ -3702,6 +3707,33 @@ export function ConversationView({
         return { 名: f.name || "未命名", 字节数: f.size, ...(p ? { 源路径: p } : { file: f }) }
       }),
     ])
+  }, [])
+  const 从uri单收 = useCallback((dt: DataTransfer | null): boolean => {
+    const 列 = (dt?.getData("text/uri-list") ?? "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith("file://"))
+    if (列.length === 0) return false
+    设待发文件((前) => [
+      ...前,
+      ...列.map((u) => {
+        const 路径 = decodeURIComponent(new URL(u).pathname)
+        return { 名: 路径.split("/").pop() || "未命名", 字节数: 0, 源路径: 路径 }
+      }),
+    ])
+    return true
+  }, [])
+  /** 最后一层（Finder 连 uri-list 都不给时）：问主进程要系统剪贴板里的文件路径 */
+  const 从系统剪贴板收 = useCallback(() => {
+    void window.dawn?.clipboardFiles?.().then((路径们) => {
+      if (!路径们 || 路径们.length === 0) return
+      设待发文件((前) => [
+        ...前,
+        ...路径们
+          .filter((p) => !前.some((x) => x.源路径 === p))
+          .map((p) => ({ 名: p.split("/").pop() || "未命名", 字节数: 0, 源路径: p })),
+      ])
+    }).catch(() => {})
   }, [])
   /** 整页拖拽（学它的 page-level drop）：图走「随轮送字节」的老路，其余进外部文件队列 */
   useEffect(() => {
@@ -3738,7 +3770,15 @@ export function ConversationView({
       if (e.defaultPrevented) return
       if (e.target instanceof Element && e.target.closest(".composer-box")) return
       const files = [...(e.clipboardData?.files ?? [])]
-      if (files.length === 0) return
+      if (files.length === 0) {
+        if (从uri单收(e.clipboardData)) {
+          e.preventDefault()
+          return
+        }
+        // 光标不在输入框：文本本来也没处去，问一声系统剪贴板不亏
+        从系统剪贴板收()
+        return
+      }
       e.preventDefault()
       const 图 = files.filter((f) => f.type.startsWith("image/"))
       const 其余 = files.filter((f) => !f.type.startsWith("image/"))
@@ -4274,7 +4314,9 @@ export function ConversationView({
                 <li key={`${f.名}-${i}`} className="attached-one attached-file">
                   <文件图标 />
                   <span className="attached-name">{f.名}</span>
-                  <span className="attached-size">{formatBytes(f.字节数)}</span>
+                  {/* 来源路径给认（2026-08-25 作者：「文件不应该只看名字」）；剪贴板字节来的没有来源 */}
+                  {f.源路径 ? <span className="attached-path">{短路径(f.源路径.split("/").slice(0, -1).join("/") || "/")}</span> : null}
+                  <span className="attached-size">{f.字节数 > 0 ? formatBytes(f.字节数) : ""}</span>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -4350,6 +4392,36 @@ export function ConversationView({
               if (别的.length > 0) {
                 收外部文件(别的)
                 e.preventDefault()
+                return
+              }
+              // Finder 复制的文件：files 空、只有 file:// 的 uri-list（见 `从uri单收` 的注）
+              if ((e.clipboardData?.files.length ?? 0) === 0 && 从uri单收(e.clipboardData)) {
+                e.preventDefault()
+                return
+              }
+              /**
+               * 最后一层（2026-08-25 作者实测：Finder ⌘C 有时 files 与 uri-list 都空，
+               * 只给一段文件名文本）：文本长得像**单个文件名**（无换行、带扩展名、不长）就先拦下，
+               * 问主进程系统剪贴板里有没有真路径；有 → chip；没有 → 把这段文本原样还进草稿——
+               * **宁可多问一次，不把文件名漏进消息里让模型去猜**。
+               */
+              const 文 = e.clipboardData?.getData("text/plain") ?? ""
+              // **整段就是一个裸文件名**才动手：无空白、无 @、带扩展名。像「看看 @a.csv」这种句子照常粘——拦错一句话比漏一个文件更坏
+              if ((e.clipboardData?.files.length ?? 0) === 0 && /^[^\s@]{1,255}\.[A-Za-z0-9]{1,8}$/.test(文.trim())) {
+                e.preventDefault()
+                void window.dawn?.clipboardFiles?.().then((路径们) => {
+                  if (路径们 && 路径们.length > 0) {
+                    设待发文件((前) => [
+                      ...前,
+                      ...路径们
+                        .filter((p) => !前.some((x) => x.源路径 === p))
+                        .map((p) => ({ 名: p.split("/").pop() || "未命名", 字节数: 0, 源路径: p })),
+                    ])
+                  } else {
+                    // 不是文件，就是一段普通文本——原样还回，不吞
+                    setDraft(session.sessionId, draft ? `${draft}${文}` : 文)
+                  }
+                }).catch(() => setDraft(session.sessionId, draft ? `${draft}${文}` : 文))
                 return
               }
               if (粘的是图(e)) e.preventDefault()

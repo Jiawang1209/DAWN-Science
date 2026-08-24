@@ -40,6 +40,8 @@ export const IPC_CAPTURE_PAGE = "dawn:shell:capture-page"
 export const IPC_ATTACH_SAVE = "dawn:shell:attach-save"
 export const IPC_ATTACH_USAGE = "dawn:shell:attach-usage"
 export const IPC_ATTACH_CLEAN = "dawn:shell:attach-clean"
+/** Finder ⌘C 文件后渲染进程常拿不到 File 对象（2026-08-25 作者撞的）：主进程读系统剪贴板里的文件路径 */
+export const IPC_CLIPBOARD_FILES = "dawn:shell:clipboard-files"
 
 /**
  * 网页预览那一格（批 1，2026-08-18）。**同样刻意不做成协议操作**——

@@ -6097,6 +6097,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .attached-file .attached-name { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-fs-meta); }
 .attached-file .attached-size { color: var(--dawn-text-3); font-size: 11px; white-space: nowrap; }
+.attached-file .attached-path { color: var(--dawn-text-3); font-size: 11px; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
 .attached-file .attached-x { position: static; opacity: 1; width: 20px; height: 20px; }
 .attach-usage { display: flex; flex-direction: column; gap: var(--dawn-space-2); align-items: flex-start; }
 .attach-usage-line { margin: 0; font-variant-numeric: tabular-nums; }

@@ -98,3 +98,34 @@ test("**光标不在输入框也能粘**（页面级监听）", async ({ dawn })
   })
   await expect(page.locator(".attached-file")).toHaveCount(1)
 })
+
+test("**Finder 式复制（只有 file:// uri-list）也收**：chip 带来源路径，发送后 @ 引用可用", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  // 造一个真实文件扮演「Finder 里复制的」
+  const { writeFileSync } = await import("node:fs")
+  const 源 = join(workspace, "AGENTS.md")
+  writeFileSync(源, "# 规则\n照做\n")
+  await 在项目里开会话(page)
+  await page.evaluate((p) => {
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    const dt = new DataTransfer()
+    dt.setData("text/uri-list", `file://${encodeURI(p)}`)
+    dt.setData("text/plain", "AGENTS.md")
+    document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }))
+  }, 源)
+  const chip = page.locator(".attached-file")
+  await expect(chip).toHaveCount(1)
+  await expect(chip).toContainText("AGENTS.md")
+  // 来源路径在 chip 上（截断显示，内容里有工作区目录名）
+  await expect(chip.locator(".attached-path")).toBeVisible()
+  // 裸文件名没有漏进草稿
+  await expect(page.locator(".composer-box textarea")).toHaveValue("")
+  await page.locator(".composer-box textarea").fill("读一下规则")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator(".turn").first()).toContainText(/@\.dawn\/attachments\/.+AGENTS\.md/)
+  const 根 = join(workspace, ".dawn", "attachments")
+  const 会话目录 = join(根, readdirSync(根)[0]!)
+  const 批次 = join(会话目录, readdirSync(会话目录)[0]!)
+  expect(readFileSync(join(批次, "AGENTS.md"), "utf8")).toContain("照做")
+})

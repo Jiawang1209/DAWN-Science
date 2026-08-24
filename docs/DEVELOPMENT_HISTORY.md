@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — Finder 复制文件的三层兜底；文件 chip 带来源路径
+
+- **Type**: fix
+- **Motivation**: 作者实测：Finder ⌘C 一个 md 再粘贴，只有裸文件名进了草稿，模型找不到（`clipboardData.files` 为空是 Chromium 对 Finder 复制的常态）；并要求 chip 不能只看名字、要带路径。
+- **What**: 粘贴收文件改三层：① `clipboardData.files`；② `text/uri-list` 的 `file://`（同步拦下，路径走主进程复制）；③ 整段是**裸文件名**（无空白、无 @、带扩展名）时拦下问主进程读系统剪贴板（新窄 IPC `dawn:shell:clipboard-files`：macOS NSFilenamesPboardType plist + public.file-url，win FileNameW）——有路径出 chip，没有就把文本原样还回草稿，不吞。第三层判据曾拦错「看看 @a.csv」整句（at-file e2e 抓的），收紧后回归绿。文件 chip 新增来源路径灰字（`短路径`，截断）。
+- **Impact**: 仅粘贴入口与 chip 展示；`@` 语法未动。
+- **Verification**: paste-input（含 Finder 式 uri-list 全链路：chip 带路径、裸名不漏、发送后 @ 引用 + 磁盘内容）/ attach / at-file 29 绿连跑两轮；composer-ready 与视觉基线绿；第三层（系统剪贴板）在真机 Finder 复制下人工验证。
+
 ### 2026-08-25 — 外部文件附件：粘贴 / 拖拽 → 发送才落盘 → `@` 引用（学自 dsh-paste-input）
 
 - **Type**: feat

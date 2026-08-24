@@ -20,6 +20,7 @@ const CAPTURE_PAGE = "dawn:shell:capture-page"
 const ATTACH_SAVE = "dawn:shell:attach-save"
 const ATTACH_USAGE = "dawn:shell:attach-usage"
 const ATTACH_CLEAN = "dawn:shell:attach-clean"
+const CLIPBOARD_FILES = "dawn:shell:clipboard-files"
 const PICK_FILES = "dawn:shell:pick-files"
 const IMAGE_THUMB = "dawn:shell:image-thumb"
 const WEB_CONTROL = "dawn:web:control"
@@ -50,6 +51,9 @@ contextBridge.exposeInMainWorld("dawn", {
     ipcRenderer.invoke(ATTACH_USAGE, workspace, sessionId),
   attachClean: (workspace: string, sessionId: string): Promise<{ 批次: number; 文件: number; 字节: number }> =>
     ipcRenderer.invoke(ATTACH_CLEAN, workspace, sessionId),
+
+  /** 系统剪贴板里的文件路径（2026-08-25）：Finder ⌘C 后渲染进程拿不到 File 对象时的最后一层 */
+  clipboardFiles: (): Promise<string[]> => ipcRenderer.invoke(CLIPBOARD_FILES),
 
   /** 取色器的一帧（2026-08-24）：当前窗口的截图与像素尺寸 */
   capturePage: (): Promise<{ dataUrl: string; width: number; height: number }> =>

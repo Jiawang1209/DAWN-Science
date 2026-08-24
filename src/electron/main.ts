@@ -5,11 +5,12 @@
  * 装配在 `wiring.ts`、派发在 `workbench/server.ts`、桥接逻辑在 `ipc.ts`——
  * 三者都不认识 Electron，因此都能单独测。这里剩下的部分正是「测不了、也不值得测」的那些。
  */
-import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
+import { app, clipboard, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
+import { fileURLToPath } from "node:url"
 import { extname, join } from "node:path"
 import { readFile } from "node:fs/promises"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
-import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_ATTACH_SAVE, IPC_ATTACH_USAGE, IPC_ATTACH_CLEAN, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
+import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_ATTACH_SAVE, IPC_ATTACH_USAGE, IPC_ATTACH_CLEAN, IPC_CLIPBOARD_FILES, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
 import { 存附件, 附件用量of, 清附件 } from "../files/attachments.js"
 import { 造网页预览, type 网页命令, type 网页预览 } from "./web-preview.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
@@ -492,6 +493,33 @@ app.whenReady().then(() => {
   )
   ipcMain.handle(IPC_ATTACH_USAGE, (_e, 工作区: string, sessionId: string) => 附件用量of(工作区, sessionId))
   ipcMain.handle(IPC_ATTACH_CLEAN, (_e, 工作区: string, sessionId: string) => 清附件(工作区, sessionId))
+
+  /**
+   * 系统剪贴板里的文件路径（2026-08-25）：Finder ⌘C 之后渲染进程的 `clipboardData.files`
+   * 常是空的、只有一段文件名文本——真路径住在 pasteboard 的私有格式里，只有主进程读得到。
+   * macOS 先试多文件的 NSFilenamesPboardType（plist），再试单文件的 public.file-url。
+   */
+  ipcMain.handle(IPC_CLIPBOARD_FILES, () => {
+    try {
+      if (process.platform === "darwin") {
+        const plist = clipboard.read("NSFilenamesPboardType")
+        if (plist) {
+          const 些 = [...plist.matchAll(/<string>([^<]*)<\/string>/g)].map((m) =>
+            m[1]!.replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">"),
+          )
+          if (些.length > 0) return 些
+        }
+        const u = clipboard.read("public.file-url")
+        if (u) return [fileURLToPath(u.trim())]
+      } else if (process.platform === "win32") {
+        const buf = clipboard.readBuffer("FileNameW")
+        if (buf.length > 0) return [buf.toString("ucs2").replace(/\0+$/, "")]
+      }
+    } catch (e) {
+      console.error("[剪贴板] 读文件路径失败：", e)
+    }
+    return []
+  })
 
   // 选目录走独立窄通道：它要用 dialog，而协议服务端必须能在 node 下测
   ipcMain.handle(IPC_PICK_DIRECTORY, async (e, defaultPath?: string) => {

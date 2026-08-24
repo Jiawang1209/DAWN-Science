@@ -50,6 +50,8 @@ declare global {
       attachClean?: (workspace: string, sessionId: string) => Promise<{ 批次: number; 文件: number; 字节: number }>
       /** 拖拽的 File → 真实路径（Electron webUtils）；拿不到给空串 */
       pathForFile?: (file: File) => string
+      /** 系统剪贴板里的文件路径；读不到给空数组 */
+      clipboardFiles?: () => Promise<string[]>
     }
   }
 }

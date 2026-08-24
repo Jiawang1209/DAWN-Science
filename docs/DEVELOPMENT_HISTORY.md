@@ -8,6 +8,62 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 空态的 @ 灰底不再飘到中间
+
+- **Type**: fix
+- **Motivation**: 作者截图：空态输入卡里灰底跑到行中间。根因：空态英雄区的 `text-align: center` 顺继承链进了镜像层，textarea 却不跟着（各自对齐不同 = 高亮飘）。
+- **What**: `.composer-hl` 与 `.composer-input-wrap > textarea` 都钉死 `text-align: start`。e2e 补一条空态对齐判据（灰底距行首 = 内距 ±2px）。
+- **Impact**: 仅空态输入卡。
+- **Verification**: paste-input 9 绿连跑两轮；at-file + 视觉基线 15 绿。
+
+### 2026-08-25 — 输入框里的 `@文件名` 带灰底（学 Codex）
+
+- **Type**: feat
+- **Motivation**: 作者：手敲 @ / 粘贴 / 拖拽生成的 `@+文件名` 要在对话框里凸显成一个文件整体，模仿 Codex。
+- **What**: 新组件 `引用高亮层`——textarea 底下垫一层同 class（同字号内距）的镜像 div，文字透明、只给 `扫引用` 认出的 token 涂 `fill-2` 圆角底（`box-decoration-break: clone` 折行两截各自圆角；不加内距，加了就与 textarea 排版错位）；滚动由 textarea onScroll 同步。两个 composer 都挂。踩了两个坑并记进注释：镜像层带着 composer-field 类被自己的 z-index 规则拉回文档流（涂色错一行）；z-index 字面量被契约扫描按回，改用 DOM 顺序。
+- **Impact**: 仅输入框视觉；光标 / 输入法 / 选区在 textarea 上不受影响；三个来源共享同一份识别。
+- **Verification**: 新 e2e：两 token 各自高亮、镜像层与 textarea 四边差 ≤1px、粘贴再加一枚变三枚；paste-input / at-file / session-tabs 15 绿连跑两轮；attach + 视觉基线 29 绿；tests/ui 517。
+
+### 2026-08-25 — 粘贴的图片：缩略图补上；缩略图点开看大图（学 Codex）
+
+- **Type**: fix
+- **Motivation**: 作者：拖拽的图有缩略图，粘贴的却显示成标题；并要求无论怎么进来的图都能点开在对话窗口里预览。
+- **What**: ① 带真实路径的图要靠 `补预览` 问主进程拿缩略图——拖拽那条路一直有，对话与空态的 textarea 粘贴两条路漏调了，补上。② 新组件 `附图大图`（浅罩 + 原图，点罩或 Esc 关）；缩略图包成可点按钮（aria「看大图：名」）；路径图用 `file://` 取原图（缩略图是缩过的），字节图用手上的 dataURL。两个 composer 都挂。
+- **Impact**: 仅附件图片的预览与查看。
+- **Verification**: 新 e2e（粘 1px png → 缩略图非标题 → 点开层 → Esc 关）；paste-input + attach 26 绿连跑两轮；视觉基线 10/10。
+
+### 2026-08-25 — 粘贴插入的 `@` 不再被当成「正在打」
+
+- **Type**: fix
+- **Motivation**: 作者截图：拖拽正常，粘贴后 `@` 菜单弹开、引用栏不出 chip——程序插入令牌后光标停在令牌末尾，被 `在打艾特` 当成正在打的 `@`（打完才进栏是规则）。
+- **What**: `插令牌` / `空插令牌` 在令牌后补一个尾随空格，光标落在空格后即「打完了」。e2e 补判据：粘完菜单不弹、chip 进栏。
+- **Impact**: 仅程序插入路径；手敲 `@` 的行为不变。
+- **Verification**: paste-input + at-file 11 绿连跑两轮。
+
+### 2026-08-25 — 外部文件附件收口：粘贴 / 拖拽 = 替你敲一个 `@`；空态也收
+
+- **Type**: feat
+- **Motivation**: 作者两轮实测定的最终形态（给了图）：粘贴 / 拖入文件后应当**与手敲 `@` 一模一样**——草稿里出 `@AGENTS.md`、引用栏出带类型图标的 chip、× = 抠掉引用；且空态（还没有会话的首屏）也要收——此前「空态不收」的边界正是作者「粘了没反应」的现场。
+- **What**: 收文件不再画单独的文件 chip 行，改为插 `@令牌`（`可令牌名` 与后端 `安全文件名` 同一套规则）进草稿，引用栏（AtRail）天然出 chip；发送时**只落盘令牌还在草稿里的**（×掉 = 磁盘无痕），逐个把 `@令牌` 换写成落盘后的 `@相对路径`。空态同一套：文件排队 + `@令牌` 进草稿，第一句话建会话后由 App 落盘换写——临时会话的 scratch 落点通过协议新字段 `TaskSummary.scratchWorkspace` 暴露（`workspace` 空着仍是「临时 / 项目」的分组判据，不动）。粘贴监听页面级（光标在哪都行）。
+- **Impact**: 四个入口（手敲 @ / 上传按钮 / 粘贴 / 拖拽）在界面形态上也合流了；协议 entities 加一个可选字段（无新 op）。
+- **Verification**: paste-input 6 条连跑两轮（@ 进草稿、引用栏 chip、×无痕、Finder 式 uri-list、空态开场、概览两步清理）；attach / at-file / composer-ready / tasks / 视觉基线 38 绿；单元 2147。
+
+### 2026-08-25 — Finder 复制文件的三层兜底；文件 chip 带来源路径
+
+- **Type**: fix
+- **Motivation**: 作者实测：Finder ⌘C 一个 md 再粘贴，只有裸文件名进了草稿，模型找不到（`clipboardData.files` 为空是 Chromium 对 Finder 复制的常态）；并要求 chip 不能只看名字、要带路径。
+- **What**: 粘贴收文件改三层：① `clipboardData.files`；② `text/uri-list` 的 `file://`（同步拦下，路径走主进程复制）；③ 整段是**裸文件名**（无空白、无 @、带扩展名）时拦下问主进程读系统剪贴板（新窄 IPC `dawn:shell:clipboard-files`：macOS NSFilenamesPboardType plist + public.file-url，win FileNameW）——有路径出 chip，没有就把文本原样还回草稿，不吞。第三层判据曾拦错「看看 @a.csv」整句（at-file e2e 抓的），收紧后回归绿。文件 chip 新增来源路径灰字（`短路径`，截断）。
+- **Impact**: 仅粘贴入口与 chip 展示；`@` 语法未动。
+- **Verification**: paste-input（含 Finder 式 uri-list 全链路：chip 带路径、裸名不漏、发送后 @ 引用 + 磁盘内容）/ attach / at-file 29 绿连跑两轮；composer-ready 与视觉基线绿；第三层（系统剪贴板）在真机 Finder 复制下人工验证。
+
+### 2026-08-25 — 外部文件附件：粘贴 / 拖拽 → 发送才落盘 → `@` 引用（学自 dsh-paste-input）
+
+- **Type**: feat
+- **Motivation**: 作者指定精读 `dsh-paste-input` 并裁剪集成：抄「整页拖拽 + 粘贴任意文件」「发送才落盘」「owner marker + 用量/清理」，不抄 HTTP 批次协议 / Host 栅栏 / 气泡折叠。
+- **What**: 新 `src/files/attachments.ts`（消毒、撞名让位、越界检查、marker、半截批次回滚）+ 窄 IPC 三条；对话 composer 收剪贴板非图片文件与整页拖拽（拖图老路优先，`defaultPrevented` 去重），chip 可单独摘除，发送时落盘拼 `@相对路径`，失败话/图/文件原样还回；概览新格「外部附件」用量 + 两步清理。空态不收（会话未建）；无工作目录当场出声。规格与解读各一份，CLAUDE.md 加入口。
+- **Impact**: 上传/粘贴/拖拽/手敲 `@` 四条入口合流到同一份引用语法；`.dawn/attachments` 新目录约定。
+- **Verification**: 单元 2147（新 6 条）；`paste-input.spec.ts` 3 条连跑两轮绿（全链路含磁盘 marker 与清理）；attach / composer-ready / at-file / 视觉基线全绿。
+
 ### 2026-08-25 — 上传文件 = 替你敲一个 `@`；插过文件按钮也转黑
 
 - **Type**: feat

@@ -73,6 +73,7 @@ import {
   type MCP装载,
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
+import { AttachUsagePanel } from "./attach-panel.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import type { 会话额外动作 } from "./views.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
@@ -1019,9 +1020,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       agentId?: string | undefined
       /** 第一句话带的图（协议 4.13）。**空态那一屏也能粘图** */
       images?: readonly import("./views.js").图片来源[] | undefined
+      /** 空态排队的外部文件（2026-08-25）：会话建出来之后在这里落盘、拼 `@`——空态自己没有 sessionId */
+      files?: readonly import("./views.js").排队的外部文件[] | undefined
     } = {},
   ) => {
-    const { workspace, firstMessage, images } = opts
+    const { workspace, firstMessage, images, files } = opts
     const agentId = opts.agentId ?? agentIds[0]
     if (!agentId) {
       note(t("配置里还没有可用的 agent——先去设置里加一个"))
@@ -1071,6 +1074,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
         await 取写权(t.sessionId)
         /**
+         * 空态排队的外部文件（2026-08-25）：会话刚建出来、sessionId 到手，**此刻落盘**。
+         * 落进这段会话真实的工作区（没选目录时就是 scratch——`t.workspace` 是准的），
+         * `@相对路径` 拼进第一句。失败当场抛，外面那层把字、图、文件都还回空态。
+         */
+        let 首句 = firstMessage
+        // 令牌还在首句里的才落盘（引用栏 ×掉的当没发生过），令牌换写成落盘后的真实路径
+        const 活的 = (files ?? []).filter((f) => 首句?.includes(`@${f.令牌}`))
+        if (活的.length > 0) {
+          const save = window.dawn?.attachSave
+          if (!save) throw new Error("这个环境里没有落盘通道，外部文件发不出去")
+          const 落点 = t.workspace ?? t.scratchWorkspace ?? workspace
+          if (!落点) throw new Error("这段会话没有工作目录，外部文件没处放")
+          const 存 = await save(
+            落点,
+            t.sessionId,
+            await Promise.all(
+              活的.map(async (f) => ({
+                名: f.名,
+                ...(f.源路径 ? { 源路径: f.源路径 } : { 字节: new Uint8Array(await f.file!.arrayBuffer()) }),
+              })),
+            ),
+          )
+          活的.forEach((f, i) => {
+            首句 = 首句!.replace(`@${f.令牌}`, `@${存.相对路径们[i]!}`)
+          })
+        }
+        /**
          * **建完立刻把第一句发出去**（2026-08-12）。
          *
          * 空态那张输入卡与起手卡片都走这条：人已经打好字了，
@@ -1083,11 +1113,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 「看看这张」这种意图，人常常懒得打字——
          * 拦下来的表现是「粘了图、按了发送，什么都没发生」。
          */
-        if (firstMessage || (images && images.length > 0)) {
+        if (首句 || (images && images.length > 0)) {
           try {
             await client.get("writeToSession", {
               sessionId: t.sessionId,
-              data: firstMessage ?? "",
+              data: 首句 ?? "",
               as: "user",
               ...(images && images.length > 0 ? { images: [...images] } : {}),
             })
@@ -3992,9 +4022,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                * *「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
                * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
                */
-              onStart={(agentId, firstMessage, workspace, images) =>
-                // **返回 promise**：空态那张卡要据此在失败时把字和图还回去
-                新建任务({ agentId, firstMessage, workspace, images })
+              onStart={(agentId, firstMessage, workspace, images, files) =>
+                // **返回 promise**：空态那张卡要据此在失败时把字、图、文件还回去
+                新建任务({ agentId, firstMessage, workspace, images, files })
               }
               /**
                * **选完立刻进项目，文件树跟着换**（2026-08-19 作者定的）。
@@ -4187,6 +4217,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   {/* 环境：**准入时刻冻结的那一份**，不是现在重新探的 */}
                   <EnvironmentPanel state={environment} />
                   <RunsPanel runs={runs} />
+                  {/* 外部附件（2026-08-25，学自 dsh-paste-input）：本会话粘贴 / 拖拽落盘的占用与清理 */}
+                  {currentWorkspace ? <AttachUsagePanel workspace={currentWorkspace} sessionId={sessionId} /> : null}
                   {provenance ? (
                     <section className="panel">
                       <h3 className="panel-title">{t("溯源")}</h3>

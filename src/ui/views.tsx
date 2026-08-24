@@ -8,7 +8,7 @@
  * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
  * 打开 app 时要做的事是跟 agent 说话。
  */
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
@@ -29,6 +29,7 @@ import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./sta
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
+import { 扫引用 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 
@@ -893,6 +894,79 @@ function 补预览(批: readonly 待发的图[], 设: (f: (前: 待发的图[]) 
 }
 
 /** 这一次粘贴里有没有图片。**两处 composer 共用同一个判据** */
+/** 排队中的外部文件（2026-08-25，学自 dsh-paste-input）：源路径与字节二选一，发送才落盘 */
+export interface 排队的外部文件 {
+  名: string
+  /** 进 `@` 令牌的名字（空白与分隔符已换 `_`）：粘贴时插进草稿的是 `@令牌`，发送时换写成落盘后的真实路径 */
+  令牌: string
+  字节数: number
+  file?: File | undefined
+  源路径?: string | undefined
+}
+
+/** 与 files/attachments.ts 的 `安全文件名` 同一套规则（客户端不 import node 模块，抄规则不抄实现） */
+export function 可令牌名(名: string): string {
+  const n = 名.normalize("NFC").replace(/[/\\<>:"|?*\u0000-\u001f]/g, "_").replace(/\s+/g, "_")
+  return n === "" || n === "." || n === ".." ? "_" : n
+}
+
+/**
+ * 输入框底下的**引用高亮层**（2026-08-25，作者要的，学 Codex）：
+ * textarea 自己画不了子串样式——底下垫一层排版完全相同的镜像（同 class 拿同一套字号与内距，
+ * 文字透明），只给 `@文件名` 那几段涂灰底圆角。手敲 @ / 粘贴 / 拖拽走的都是同一份 `扫引用`，
+ * 所以三个来源一起亮。光标、输入法、选区全在 textarea 上，不受影响；滚动由外面同步进来。
+ */
+export function 引用高亮层({ text, 滚 }: { text: string; 滚: number }) {
+  const 层 = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (层.current) 层.current.scrollTop = 滚
+  })
+  const 引用们 = 扫引用(text)
+  if (引用们.length === 0) return null
+  const 段: React.ReactNode[] = []
+  let pos = 0
+  for (const r of 引用们) {
+    if (r.start > pos) 段.push(text.slice(pos, r.start))
+    段.push(
+      <span key={r.start} className="hl-ref">
+        {text.slice(r.start, r.end)}
+      </span>,
+    )
+    pos = r.end
+  }
+  if (pos < text.length) 段.push(text.slice(pos))
+  return (
+    <div ref={层} className="control composer-field composer-hl" aria-hidden="true">
+      {段}
+    </div>
+  )
+}
+
+/**
+ * 点开附件缩略图看大图（2026-08-25，作者要的，学 Codex）：对话窗口里一层浅罩 + 原图，
+ * 点罩或 Esc 关。带路径的用 `file://` 取原图（缩略图是缩过的）；字节的直接用手上的 dataURL。
+ */
+export function 附图大图({ src, 名, onClose }: { src: string; 名: string; onClose: () => void }) {
+  useEffect(() => {
+    const 键 = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", 键)
+    return () => window.removeEventListener("keydown", 键)
+  }, [onClose])
+  return (
+    <div className="img-lightbox" role="dialog" aria-label={名} onClick={onClose}>
+      <img src={src} alt={名} onClick={(e) => e.stopPropagation()} />
+    </div>
+  )
+}
+
+/** 缩略图 → 大图的取图口径：路径的走 file://（原图），字节的用手上的 dataURL */
+export function 大图来源(图: 待发的图): string | undefined {
+  if (图.from === "path") return `file://${encodeURI(图.path)}`
+  return 图.预览
+}
+
 function 粘的是图(e: React.ClipboardEvent): boolean {
   return 捡出图片文件(e.clipboardData).length > 0
 }
@@ -3685,6 +3759,134 @@ export function ConversationView({
    * 人改没改、删没删，猜出来的判断只会更错。
    */
   const [附过文件, 设附过文件] = useState(false)
+  /**
+   * 粘贴 / 拖拽进来的**外部文件**（2026-08-25，学自 dsh-paste-input，解读见
+   * `ccb_hive_code_learn/dsh-paste-input-解读.md`）：**只在内存排队，发送那一刻才落盘**
+   * 进 `<工作区>/.dawn/attachments/…` 并以 `@相对路径` 进消息——×掉 chip = 磁盘无痕。
+   * 拖拽的文件拿得到真实路径就记路径（落盘时主进程直接复制，字节不过 IPC）；
+   * 剪贴板来的没有路径，握着 File 等发送时取字节。
+   */
+  const [待发文件, 设待发文件] = useState<排队的外部文件[]>([])
+  /** 点开看大图的那张（2026-08-25，学 Codex）；undefined = 没开 */
+  const [看大图, 设看大图] = useState<待发的图 | undefined>(undefined)
+  /** 引用高亮层要跟着 textarea 内部滚动（2026-08-25） */
+  const [高亮滚, 设高亮滚] = useState(0)
+  /** 收外部文件 = **替你敲一个 `@`**（2026-08-25 作者给了图）：插 `@令牌` 进草稿、引用栏出 chip；队列只管发送时怎么落盘 */
+  const 草稿ref = useRef(draft)
+  草稿ref.current = draft
+  const 插令牌 = useCallback((令牌们: readonly string[]) => {
+    if (令牌们.length === 0) return
+    // 尾随一个空格：插完光标若正停在令牌末尾，会被 `在打艾特` 当成「正在打的 @」——菜单弹开、chip 不进栏（2026-08-25 作者截图）
+    const 添 = 令牌们.map((t) => `@${t}`).join(" ") + " "
+    const 前 = 草稿ref.current
+    const 新 = 前 ? (/\s$/.test(前) ? `${前}${添}` : `${前} ${添}`) : 添
+    setDraft(session.sessionId, 新)
+    草稿ref.current = 新
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.sessionId, setDraft])
+  /**
+   * Finder ⌘C 一个文件再粘贴，Chromium 的 `clipboardData.files` 常是**空的**——
+   * 只给一段文本（文件名）和 `text/uri-list`（`file://` 地址）。不看后者的话，
+   * 裸文件名会被当普通文本粘进草稿，模型再去找这个名字当然找不到（2026-08-25 作者撞的）。
+   */
+  const 收外部文件 = useCallback((files: readonly File[]) => {
+    if (files.length === 0) return
+    const 新的 = files.map((f) => {
+      const p = window.dawn?.pathForFile?.(f) ?? ""
+      return { 名: f.name || "未命名", 令牌: 可令牌名(f.name || "未命名"), 字节数: f.size, ...(p ? { 源路径: p } : { file: f }) }
+    })
+    设待发文件((前) => [...前, ...新的])
+    插令牌(新的.map((x) => x.令牌))
+  }, [插令牌])
+  const 收源路径们 = useCallback((路径们: readonly string[]) => {
+    const 新的 = 路径们.map((p) => {
+      const 名 = p.split("/").pop() || "未命名"
+      return { 名, 令牌: 可令牌名(名), 字节数: 0, 源路径: p }
+    })
+    设待发文件((前) => [...前, ...新的.filter((x) => !前.some((y) => y.源路径 === x.源路径))])
+    插令牌(新的.map((x) => x.令牌))
+  }, [插令牌])
+  const 从uri单收 = useCallback((dt: DataTransfer | null): boolean => {
+    const 列 = (dt?.getData("text/uri-list") ?? "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith("file://"))
+    if (列.length === 0) return false
+    收源路径们(列.map((u) => decodeURIComponent(new URL(u).pathname)))
+    return true
+  }, [收源路径们])
+  /** 最后一层（Finder 连 uri-list 都不给时）：问主进程要系统剪贴板里的文件路径 */
+  const 从系统剪贴板收 = useCallback(() => {
+    void window.dawn?.clipboardFiles?.().then((路径们) => {
+      if (路径们 && 路径们.length > 0) 收源路径们(路径们)
+    }).catch(() => {})
+  }, [收源路径们])
+  /** 整页拖拽（学它的 page-level drop）：图走「随轮送字节」的老路，其余进外部文件队列 */
+  useEffect(() => {
+    const onDragover = (e: DragEvent) => {
+      if ([...(e.dataTransfer?.items ?? [])].some((it) => it.kind === "file")) e.preventDefault()
+    }
+    const onDrop = (e: DragEvent) => {
+      // 卡上已有自己的 onDrop（拖图那条老路）：它接住的（preventDefault 过）这里不再收，收两次 = 两个 chip
+      if (e.defaultPrevented) return
+      const files = [...(e.dataTransfer?.files ?? [])]
+      if (files.length === 0) return
+      e.preventDefault()
+      const 图 = files.filter((f) => f.type.startsWith("image/"))
+      const 其余 = files.filter((f) => !f.type.startsWith("image/"))
+      if (图.length > 0 && session.kind === "native") {
+        void 文件们成图(图).then((批) => {
+          设待发图((前) => [...前, ...批])
+          补预览(批, 设待发图)
+        }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
+        收外部文件(其余)
+      } else {
+        // 非 native 会话收不下图片字节——图也按外部文件落盘走 @ 引用
+        收外部文件(files)
+      }
+    }
+    /**
+     * 粘贴也在**页面级**听（2026-08-25 作者实测「粘贴没效果」——光标不在输入框里时，
+     * 挂在 textarea 上的 onPaste 根本不会响；dsh-paste-input 原版就是 document 级）。
+     * 输入框自己的 onPaste 先跑（React 在根上分发），接住文件会 preventDefault——这里看见就不再收。
+     */
+    const onPaste = (e: ClipboardEvent) => {
+      // 输入卡里的粘贴归输入框自己的 onPaste 管（按**目标**分家，不按 defaultPrevented——
+      // 测试造的事件常忘了 cancelable，preventDefault 会静默失效）
+      if (e.defaultPrevented) return
+      if (e.target instanceof Element && e.target.closest(".composer-box")) return
+      const files = [...(e.clipboardData?.files ?? [])]
+      if (files.length === 0) {
+        if (从uri单收(e.clipboardData)) {
+          e.preventDefault()
+          return
+        }
+        // 光标不在输入框：文本本来也没处去，问一声系统剪贴板不亏
+        从系统剪贴板收()
+        return
+      }
+      e.preventDefault()
+      const 图 = files.filter((f) => f.type.startsWith("image/"))
+      const 其余 = files.filter((f) => !f.type.startsWith("image/"))
+      if (图.length > 0 && session.kind === "native") {
+        void 文件们成图(图).then((批) => {
+          设待发图((前) => [...前, ...批])
+          补预览(批, 设待发图)
+        }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
+        收外部文件(其余)
+      } else {
+        收外部文件(files)
+      }
+    }
+    document.addEventListener("dragover", onDragover)
+    document.addEventListener("drop", onDrop)
+    document.addEventListener("paste", onPaste)
+    return () => {
+      document.removeEventListener("dragover", onDragover)
+      document.removeEventListener("drop", onDrop)
+      document.removeEventListener("paste", onPaste)
+    }
+  }, [收外部文件, session.kind])
   /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */
   const [拖着, 设拖着] = useState(false)
   /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
@@ -4066,7 +4268,7 @@ export function ConversationView({
            * 「看看这张图」这种意图，人常常懒得打字——
            * 拦下来的话表现是「按了发送什么都没发生」。
            */
-          if (!text && 待发图.length === 0) return
+          if (!text && 待发图.length === 0 && 待发文件.length === 0) return
           /**
            * **上一轮还在跑就不许再发**（2026-08-15 作者第三次报同一句报错）。
            *
@@ -4114,7 +4316,9 @@ export function ConversationView({
            * 而屏幕上什么都没有，那正是作者看见的「没有任何反应」。
            */
           const 这次的图 = 待发图
+          const 这次的文件 = 待发文件
           设待发图([])
+          设待发文件([])
           设附过文件(false)
           clearDraft(session.sessionId)
           设位置(-1)
@@ -4123,22 +4327,50 @@ export function ConversationView({
           设等回话(items.length)
           设等回话时刻(Date.now())
           设喊停过(false)
-          void Promise.resolve(
+          void (async () => {
+            /**
+             * **外部文件在这一刻落盘**（2026-08-25，学自 dsh-paste-input 的「发送才落盘」）：
+             * 写进工作区附件目录，然后以 `@相对路径` 拼进这句话——与手敲 `@` 完全同一条路。
+             * 没有工作目录就当场出声（规格 7.5），话与文件都还在。
+             */
+            let 终文 = text
+            // **令牌还在草稿里的才落盘**：引用栏 ×掉的（令牌被抠掉）就当没发生过——磁盘无痕
+            const 活的 = 这次的文件.filter((f) => 终文.includes(`@${f.令牌}`))
+            if (活的.length > 0) {
+              const save = window.dawn?.attachSave
+              if (!save) throw new Error("这个环境里没有落盘通道，外部文件发不出去")
+              if (!workspace) throw new Error("这段对话没有工作目录，外部文件没处放——先选择工作目录")
+              const 存 = await save(
+                workspace,
+                session.sessionId,
+                await Promise.all(
+                  活的.map(async (f) => ({
+                    名: f.名,
+                    ...(f.源路径 ? { 源路径: f.源路径 } : { 字节: new Uint8Array(await f.file!.arrayBuffer()) }),
+                  })),
+                ),
+              )
+              // 逐个把 `@令牌` 换写成落盘后的 `@相对路径`（同名多份时按插入顺序对上第一个未换的）
+              活的.forEach((f, i) => {
+                终文 = 终文.replace(`@${f.令牌}`, `@${存.相对路径们[i]!}`)
+              })
+            }
             /**
              * **不忙时一个多余的参数都不传。**「空数组」「不给」在协议上同义，
              * 在调用点上不是：多一个 `undefined` 会让所有
              * 「这一句是怎么发出去的」的断言都要跟着改，而它们关心的不是这个。
              */
-            这次的图.length > 0
-              ? onSend(text, 这次的图.map(报给协议), ...(送法 ? [送法] : []))
+            return 这次的图.length > 0
+              ? onSend(终文, 这次的图.map(报给协议), ...(送法 ? [送法] : []))
               : 送法
-                ? onSend(text, undefined, 送法)
-                : onSend(text),
-          ).catch((e: unknown) => {
+                ? onSend(终文, undefined, 送法)
+                : onSend(终文)
+          })().catch((e: unknown) => {
             设发送出错(e instanceof Error ? e.message : String(e))
             // **原样还回去**：人不该为一次失败重打一遍、重挑一遍
             setDraft(session.sessionId, text)
             设待发图(这次的图)
+            设待发文件(这次的文件)
           })
         }}
       >
@@ -4181,7 +4413,9 @@ export function ConversationView({
                     * 图本身还是好的**，不该因此把这一项整个藏起来。
                     */}
                   {图.预览 ? (
-                    <img className="attached-thumb" src={图.预览} alt={图.名} />
+                    <Button variant="ghost" size="inline" className="attached-open" aria-label={tf("看大图：{0}", 图.名)} onClick={() => 设看大图(图)}>
+                      <img className="attached-thumb" src={图.预览} alt={图.名} />
+                    </Button>
                   ) : (
                     <span className="attached-name">{图.名}</span>
                   )}
@@ -4198,6 +4432,7 @@ export function ConversationView({
               ))}
             </ul>
           ) : null}
+          {看大图 ? <附图大图 src={大图来源(看大图) ?? ""} 名={看大图.名} onClose={() => 设看大图(undefined)} /> : null}
           {在打斜杠(draft) && !斜杠关了 ? (
             <SlashMenu items={斜杠单} draft={draft} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { setDraft(session.sessionId, 斜杠选完(x, draft)); 设斜杠选中(0) }} />
           ) : null}
@@ -4205,12 +4440,15 @@ export function ConversationView({
             <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(draft, 艾特位, x.path, x.kind))} />
           ) : null}
           <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => setDraft(session.sessionId, 抠掉引用(draft, p))} />
+          <div className="composer-input-wrap">
+          <引用高亮层 text={draft} 滚={高亮滚} />
           <textarea
             ref={输入框}
             className="control composer-field"
             value={draft}
             onChange={(e) => { setDraft(session.sessionId, e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
             onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
+            onScroll={(e) => 设高亮滚(e.currentTarget.scrollTop)}
             /**
              * **粘一张图进来就当附件**（协议 4.13，2026-08-13，作者提）。
              *
@@ -4222,7 +4460,41 @@ export function ConversationView({
               void 从粘贴里捡图(e).then((图们) => {
                 if (图们.length === 0) return
                 设待发图((前) => [...前, ...图们])
+                // 带路径的图要问主进程拿缩略图——拖拽那条路一直有，这里漏过（2026-08-25 作者报「缩略图竟然是标题」）
+                补预览(图们, 设待发图)
               }).catch((err: unknown) => 设发送出错(err instanceof Error ? err.message : String(err)))
+              // 剪贴板里的**非图片文件**也收（2026-08-25 学自 dsh-paste-input）：发送才落盘
+              const 别的 = [...(e.clipboardData?.files ?? [])].filter((f) => !f.type.startsWith("image/"))
+              if (别的.length > 0) {
+                收外部文件(别的)
+                e.preventDefault()
+                return
+              }
+              // Finder 复制的文件：files 空、只有 file:// 的 uri-list（见 `从uri单收` 的注）
+              if ((e.clipboardData?.files.length ?? 0) === 0 && 从uri单收(e.clipboardData)) {
+                e.preventDefault()
+                return
+              }
+              /**
+               * 最后一层（2026-08-25 作者实测：Finder ⌘C 有时 files 与 uri-list 都空，
+               * 只给一段文件名文本）：文本长得像**单个文件名**（无换行、带扩展名、不长）就先拦下，
+               * 问主进程系统剪贴板里有没有真路径；有 → chip；没有 → 把这段文本原样还进草稿——
+               * **宁可多问一次，不把文件名漏进消息里让模型去猜**。
+               */
+              const 文 = e.clipboardData?.getData("text/plain") ?? ""
+              // **整段就是一个裸文件名**才动手：无空白、无 @、带扩展名。像「看看 @a.csv」这种句子照常粘——拦错一句话比漏一个文件更坏
+              if ((e.clipboardData?.files.length ?? 0) === 0 && /^[^\s@]{1,255}\.[A-Za-z0-9]{1,8}$/.test(文.trim())) {
+                e.preventDefault()
+                void window.dawn?.clipboardFiles?.().then((路径们) => {
+                  if (路径们 && 路径们.length > 0) {
+                    收源路径们(路径们)
+                  } else {
+                    // 不是文件，就是一段普通文本——原样还回，不吞
+                    setDraft(session.sessionId, draft ? `${draft}${文}` : 文)
+                  }
+                }).catch(() => setDraft(session.sessionId, draft ? `${draft}${文}` : 文))
+                return
+              }
               if (粘的是图(e)) e.preventDefault()
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
@@ -4371,6 +4643,7 @@ export function ConversationView({
               }
             }}
           />
+          </div>
           {/**
            * 右对齐的控件行。学自 Hermes composer `controls.tsx` 的
            * `<div className="ml-auto flex …">`——**控件靠右，输入区靠左**。
@@ -4569,7 +4842,7 @@ export function ConversationView({
               */}
             <AttachButton
               {...(workspace ? { workspace } : {})}
-              ready={待发图.length > 0 || 附过文件}
+              ready={待发图.length > 0 || 附过文件 || 待发文件.some((f) => draft.includes(`@${f.令牌}`))}
               /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
               onInsert={(文本) => {
                 setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)
@@ -5512,6 +5785,8 @@ export function EmptyConversation({
     firstMessage?: string,
     workspace?: string,
     images?: readonly 图片来源[],
+    /** 空态排队的外部文件（2026-08-25）：会话建出来之后由 App 落盘、拼 `@`——空态自己没有 sessionId */
+    files?: readonly 排队的外部文件[],
   ) => void | Promise<void>
   /**
    * 弹原生目录选择器（2026-08-12）。**不给就不画那颗 chip**。
@@ -5557,6 +5832,89 @@ export function EmptyConversation({
    * 这一份在「第一句话发出去、会话建出来」的那一刻整个消失。
    */
   const [空态图, 设空态图] = useState<待发的图[]>([])
+  /** 空态排队的外部文件（2026-08-25 作者实测在空态粘 / 拖没反应——原来的「空态不收」边界撤了） */
+  const [空态文件, 设空态文件] = useState<排队的外部文件[]>([])
+  const [空看大图, 设空看大图] = useState<待发的图 | undefined>(undefined)
+  const [空高亮滚, 设空高亮滚] = useState(0)
+  const 空插令牌 = useCallback((令牌们: readonly string[]) => {
+    if (令牌们.length === 0) return
+    // 尾随一个空格：插完光标若正停在令牌末尾，会被 `在打艾特` 当成「正在打的 @」——菜单弹开、chip 不进栏（2026-08-25 作者截图）
+    const 添 = 令牌们.map((t) => `@${t}`).join(" ") + " "
+    设草稿((前) => (前 ? (/\s$/.test(前) ? `${前}${添}` : `${前} ${添}`) : 添))
+  }, [])
+  const 空收 = useCallback((files: readonly File[]) => {
+    if (files.length === 0) return
+    const 新的 = files.map((f) => {
+      const p = window.dawn?.pathForFile?.(f) ?? ""
+      return { 名: f.name || "未命名", 令牌: 可令牌名(f.name || "未命名"), 字节数: f.size, ...(p ? { 源路径: p } : { file: f }) }
+    })
+    设空态文件((前) => [...前, ...新的])
+    空插令牌(新的.map((x) => x.令牌))
+  }, [空插令牌])
+  const 空源收 = useCallback((路径们: readonly string[]) => {
+    const 新的 = 路径们.map((p) => {
+      const 名 = p.split("/").pop() || "未命名"
+      return { 名, 令牌: 可令牌名(名), 字节数: 0, 源路径: p }
+    })
+    设空态文件((前) => [...前, ...新的.filter((x) => !前.some((y) => y.源路径 === x.源路径))])
+    空插令牌(新的.map((x) => x.令牌))
+  }, [空插令牌])
+  const 空uri收 = useCallback((dt: DataTransfer | null): boolean => {
+    const 列 = (dt?.getData("text/uri-list") ?? "").split(/\r?\n/).map((l) => l.trim()).filter((l) => l.startsWith("file://"))
+    if (列.length === 0) return false
+    空源收(列.map((u) => decodeURIComponent(new URL(u).pathname)))
+    return true
+  }, [空源收])
+  const 空系统收 = useCallback(() => {
+    void window.dawn?.clipboardFiles?.().then((路径们) => {
+      if (路径们 && 路径们.length > 0) 空源收(路径们)
+    }).catch(() => {})
+  }, [空源收])
+  useEffect(() => {
+    const onDragover = (e: DragEvent) => {
+      if ([...(e.dataTransfer?.items ?? [])].some((it) => it.kind === "file")) e.preventDefault()
+    }
+    const onDrop = (e: DragEvent) => {
+      if (e.defaultPrevented) return
+      const files = [...(e.dataTransfer?.files ?? [])]
+      if (files.length === 0) return
+      e.preventDefault()
+      const 图 = files.filter((f) => f.type.startsWith("image/"))
+      void 文件们成图(图).then((批) => {
+        设空态图((前) => [...前, ...批])
+        补预览(批, 设空态图)
+      }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
+      空收(files.filter((f) => !f.type.startsWith("image/")))
+    }
+    const onPaste = (e: ClipboardEvent) => {
+      if (e.defaultPrevented) return
+      if (e.target instanceof Element && e.target.closest(".composer-box")) return
+      const files = [...(e.clipboardData?.files ?? [])]
+      if (files.length === 0) {
+        if (空uri收(e.clipboardData)) {
+          e.preventDefault()
+          return
+        }
+        空系统收()
+        return
+      }
+      e.preventDefault()
+      const 图 = files.filter((f) => f.type.startsWith("image/"))
+      void 文件们成图(图).then((批) => {
+        设空态图((前) => [...前, ...批])
+        补预览(批, 设空态图)
+      }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
+      空收(files.filter((f) => !f.type.startsWith("image/")))
+    }
+    document.addEventListener("dragover", onDragover)
+    document.addEventListener("drop", onDrop)
+    document.addEventListener("paste", onPaste)
+    return () => {
+      document.removeEventListener("dragover", onDragover)
+      document.removeEventListener("drop", onDrop)
+      document.removeEventListener("paste", onPaste)
+    }
+  }, [空收, 空uri收, 空系统收])
   const [空态拖着, 设空态拖着] = useState(false)
   /** 第一句话没发出去的原因。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [开场出错, 设开场出错] = useState<string | undefined>(undefined)
@@ -5642,7 +6000,7 @@ export function EmptyConversation({
               e.preventDefault()
               const t = 草稿.trim()
               // **只有图、没有字也算一句话**（与对话里那一份同一条）
-              if (!t && 空态图.length === 0) return
+              if (!t && 空态图.length === 0 && 空态文件.length === 0) return
               /**
                * **没有图就只传三个参数。**「空数组」与「不给」在协议上是同一个意思，
                * 而在调用点上不是：多传一个 `undefined` 会让所有
@@ -5656,18 +6014,23 @@ export function EmptyConversation({
                * 「字和图一起消失，屏幕上什么都没有」。
                */
               const 这次的图 = 空态图
+              const 这次的文件 = 空态文件
               设空态图([])
+              设空态文件([])
               设空态附过(false)
               设草稿("")
               设开场出错(undefined)
               void Promise.resolve(
-                这次的图.length > 0
-                  ? onStart(first, t || undefined, 工作目录, 这次的图.map(报给协议))
-                  : onStart(first, t || undefined, 工作目录),
+                这次的文件.length > 0
+                  ? onStart(first, t || undefined, 工作目录, 这次的图.map(报给协议), 这次的文件)
+                  : 这次的图.length > 0
+                    ? onStart(first, t || undefined, 工作目录, 这次的图.map(报给协议))
+                    : onStart(first, t || undefined, 工作目录),
               ).catch((e: unknown) => {
                 设开场出错(e instanceof Error ? e.message : String(e))
                 设草稿(t)
                 设空态图(这次的图)
+                设空态文件(这次的文件)
               })
             }}
           >
@@ -5682,7 +6045,9 @@ export function EmptyConversation({
                   {空态图.map((图, i) => (
                     <li key={`${图.名}-${i}`} className="attached-one">
                       {图.预览 ? (
-                        <img className="attached-thumb" src={图.预览} alt={图.名} />
+                        <Button variant="ghost" size="inline" className="attached-open" aria-label={tf("看大图：{0}", 图.名)} onClick={() => 设空看大图(图)}>
+                          <img className="attached-thumb" src={图.预览} alt={图.名} />
+                        </Button>
                       ) : (
                         <span className="attached-name">{图.名}</span>
                       )}
@@ -5699,6 +6064,7 @@ export function EmptyConversation({
                   ))}
                 </ul>
               ) : null}
+              {空看大图 ? <附图大图 src={大图来源(空看大图) ?? ""} 名={空看大图.名} onClose={() => 设空看大图(undefined)} /> : null}
               {在打斜杠(草稿) && !斜杠关了 ? (
                 <SlashMenu items={斜杠单} draft={草稿} selected={斜杠选中} onHover={设斜杠选中} onPick={(x) => { 设草稿(斜杠选完(x, 草稿)); 设斜杠选中(0) }} />
               ) : null}
@@ -5706,6 +6072,8 @@ export function EmptyConversation({
                 <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(草稿, 艾特位, x.path, x.kind))} />
               ) : null}
               <AtRail draft={草稿} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => 设草稿(抠掉引用(草稿, p))} />
+              <div className="composer-input-wrap">
+              <引用高亮层 text={草稿} 滚={空高亮滚} />
               <textarea
                 ref={输入框}
                 className="control composer-field"
@@ -5713,6 +6081,7 @@ export function EmptyConversation({
                 autoFocus
                 onChange={(e) => { 设草稿(e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
                 onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
+                onScroll={(e) => 设空高亮滚(e.currentTarget.scrollTop)}
                 /**
                  * **这一屏也能粘图**（2026-08-13 补，作者报的：
                  * *「我现在复制一个图片，然后粘贴到窗口，为什么不显示图片呢？」*）。
@@ -5728,7 +6097,31 @@ export function EmptyConversation({
                   void 从粘贴里捡图(e).then((图们) => {
                     if (图们.length === 0) return
                     设空态图((前) => [...前, ...图们])
+                    补预览(图们, 设空态图)
                   }).catch((err: unknown) => 设开场出错(err instanceof Error ? err.message : String(err)))
+                  const 空别的 = [...(e.clipboardData?.files ?? [])].filter((f) => !f.type.startsWith("image/"))
+                  if (空别的.length > 0) {
+                    空收(空别的)
+                    e.preventDefault()
+                    return
+                  }
+                  if ((e.clipboardData?.files.length ?? 0) === 0 && 空uri收(e.clipboardData)) {
+                    e.preventDefault()
+                    return
+                  }
+                  const 空文 = e.clipboardData?.getData("text/plain") ?? ""
+                  if ((e.clipboardData?.files.length ?? 0) === 0 && /^[^\s@]{1,255}\.[A-Za-z0-9]{1,8}$/.test(空文.trim())) {
+                    e.preventDefault()
+                    void window.dawn?.clipboardFiles?.().then((路径们) => {
+                      if (路径们 && 路径们.length > 0) {
+                        空源收(路径们)
+                      } else {
+                        // 不是文件就是普通文本——原样还回，不吞
+                        设草稿((前) => (前 ? `${前}${空文}` : 空文))
+                      }
+                    }).catch(() => 设草稿((前) => (前 ? `${前}${空文}` : 空文)))
+                    return
+                  }
                   if (粘的是图(e)) e.preventDefault()
                   else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
                 }}
@@ -5792,6 +6185,7 @@ export function EmptyConversation({
                   // `@` 打进去就弹路径菜单（2026-08-23），不再开系统文件对话框
                 }}
               />
+              </div>
               {/**
                 * **第一句没发出去的原因，摆在这儿**（2026-08-13）。
                 * 它此前只经 `note()` 走到别处——而那条路人看不见，
@@ -5879,7 +6273,7 @@ export function EmptyConversation({
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
-                  ready={空态图.length > 0 || 空态附过}
+                  ready={空态图.length > 0 || 空态附过 || 空态文件.some((f) => 草稿.includes(`@${f.令牌}`))}
                   onInsert={(文本) => {
                     设草稿((前) => (前 ? `${前} ${文本}` : 文本))
                     设空态附过(true)

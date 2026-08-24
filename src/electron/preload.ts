@@ -17,6 +17,10 @@ const CHANNEL = "dawn:workbench:invoke"
 const EVENT_CHANNEL = "dawn:workbench:event"
 const PICK_DIRECTORY = "dawn:shell:pick-directory"
 const CAPTURE_PAGE = "dawn:shell:capture-page"
+const ATTACH_SAVE = "dawn:shell:attach-save"
+const ATTACH_USAGE = "dawn:shell:attach-usage"
+const ATTACH_CLEAN = "dawn:shell:attach-clean"
+const CLIPBOARD_FILES = "dawn:shell:clipboard-files"
 const PICK_FILES = "dawn:shell:pick-files"
 const IMAGE_THUMB = "dawn:shell:image-thumb"
 const WEB_CONTROL = "dawn:web:control"
@@ -32,6 +36,24 @@ contextBridge.exposeInMainWorld("dawn", {
    */
   pickDirectory: (defaultPath?: string): Promise<string | null> =>
     ipcRenderer.invoke(PICK_DIRECTORY, defaultPath),
+
+  /**
+   * 外部文件附件（2026-08-25，学自 dsh-paste-input）：发送那一刻落盘。
+   * 字节走结构化克隆（剪贴板文件没有路径）；拖拽的文件用 `pathForFile` 拿真实路径走复制，不搬字节。
+   */
+  attachSave: (
+    workspace: string,
+    sessionId: string,
+    files: { 名: string; 源路径?: string; 字节?: Uint8Array }[],
+  ): Promise<{ 批次目录: string; 相对路径们: string[] }> =>
+    ipcRenderer.invoke(ATTACH_SAVE, workspace, sessionId, files),
+  attachUsage: (workspace: string, sessionId: string): Promise<{ 批次: number; 文件: number; 字节: number }> =>
+    ipcRenderer.invoke(ATTACH_USAGE, workspace, sessionId),
+  attachClean: (workspace: string, sessionId: string): Promise<{ 批次: number; 文件: number; 字节: number }> =>
+    ipcRenderer.invoke(ATTACH_CLEAN, workspace, sessionId),
+
+  /** 系统剪贴板里的文件路径（2026-08-25）：Finder ⌘C 后渲染进程拿不到 File 对象时的最后一层 */
+  clipboardFiles: (): Promise<string[]> => ipcRenderer.invoke(CLIPBOARD_FILES),
 
   /** 取色器的一帧（2026-08-24）：当前窗口的截图与像素尺寸 */
   capturePage: (): Promise<{ dataUrl: string; width: number; height: number }> =>

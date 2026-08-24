@@ -40,6 +40,18 @@ declare global {
       pickDirectory?: (defaultPath?: string) => Promise<string | null>
       /** 取色器的一帧（2026-08-24）：当前窗口截图 */
       capturePage?: () => Promise<{ dataUrl: string; width: number; height: number }>
+      /** 外部文件附件（2026-08-25）：发送才落盘 */
+      attachSave?: (
+        workspace: string,
+        sessionId: string,
+        files: { 名: string; 源路径?: string; 字节?: Uint8Array }[],
+      ) => Promise<{ 批次目录: string; 相对路径们: string[] }>
+      attachUsage?: (workspace: string, sessionId: string) => Promise<{ 批次: number; 文件: number; 字节: number }>
+      attachClean?: (workspace: string, sessionId: string) => Promise<{ 批次: number; 文件: number; 字节: number }>
+      /** 拖拽的 File → 真实路径（Electron webUtils）；拿不到给空串 */
+      pathForFile?: (file: File) => string
+      /** 系统剪贴板里的文件路径；读不到给空数组 */
+      clipboardFiles?: () => Promise<string[]>
     }
   }
 }

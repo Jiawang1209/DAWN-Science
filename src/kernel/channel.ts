@@ -583,7 +583,10 @@ export async function launchKernelChannel(
     diagnose = (e) => diagnoseLaunch(opts.kernelName ?? "", discovery, e)
   }
 
-  let kernel: { spawn: KernelProcess & { stderr?: NodeJS.ReadableStream }; config: unknown }
+  let kernel: {
+    spawn: KernelProcess & { stderr?: NodeJS.ReadableStream; stdout?: NodeJS.ReadableStream }
+    config: unknown
+  }
   try {
     /**
      * **用 `launchSpec` 而不是 `launch(名字)`。**
@@ -624,6 +627,19 @@ export async function launchKernelChannel(
     stderrTail = (stderrTail + d).slice(-STDERR_TAIL)
   })
 
+  /**
+   * **stdout 也必须有人读**（审查 debug H8）。内核走 ZMQ,fd1 平时是空的;
+   * 但绕过 ipykernel 直写 fd1 的东西(C 扩展、`os.system`/子进程、某些绘图后端的告警)
+   * 会攒在管道缓冲里,一旦攒过 ~64KB 又没人读,内核的那次写就**永久阻塞**——
+   * 表现为「跑一段带原生输出的代码,内核卡死再不回话」。挂一个 data 处理让它一直流,
+   * 顺便留一小段尾巴:握手失败时它偶尔也带着线索。
+   */
+  let stdoutTail = ""
+  kernel.spawn.stdout?.setEncoding?.("utf8")
+  kernel.spawn.stdout?.on("data", (d: string) => {
+    stdoutTail = (stdoutTail + d).slice(-STDERR_TAIL)
+  })
+
   const channel = createKernelChannel({
     channel: (await createMainChannel(kernel.config as never)) as unknown as RawChannel,
     process: kernel.spawn,
@@ -647,7 +663,7 @@ export async function launchKernelChannel(
   } catch (err) {
     // **握手超时的真正原因往往在 stderr 里**，只报「超时」等于把线索扔了
     await channel.close()
-    const d = diagnose(stderrTail)
+    const d = diagnose(stderrTail || stdoutTail)
     throw new UserFacingError(
       d
         ? `${d.message}${"evidence" in d && d.evidence ? `\n${d.evidence}` : ""}`

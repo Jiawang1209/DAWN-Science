@@ -5385,11 +5385,11 @@ function KernelOutputRow({
    */
   const 来源 =
     item.language === "python" ? (
-      <span className="kout-lang" title="Python 内核">
+      <span className="kout-lang" title={t("Python 内核")}>
         <Python图标 className="kout-lang-icon" />
       </span>
     ) : item.language === "R" ? (
-      <span className="kout-lang" title="R 内核">
+      <span className="kout-lang" title={t("R 内核")}>
         <R图标 className="kout-lang-icon" />
       </span>
     ) : null

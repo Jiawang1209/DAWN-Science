@@ -1262,4 +1262,11 @@ export const EN: Readonly<Record<string, string>> = {
   "从全局配置里移除它;这一屏加进来的可以再加回来。": "Removes it from the global config; anything added on this screen can be added back.",
   "确认删掉": "Yes, remove it",
   "微信通知": "WeChat notifications",
+  // 审查 debug I7:命令面板漏译（三元/错误串绕过了 t()）
+  "还没有会话": "No active session yet",
+  "收起终端": "Hide terminal",
+  "打开终端": "Show terminal",
+  // 审查 debug Ji18n:内核输出的语言徽标 title 漏译
+  "Python 内核": "Python kernel",
+  "R 内核": "R kernel",
 }

@@ -1606,7 +1606,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         title: tf("删除会话「{0}」？", 名),
         detail: <>{t("会停掉它的进程，并删掉这个会话与它的对话记录。")}</>,
         safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在坞的「概览」里。")}</>,
-        confirmLabel: "删除会话",
+        confirmLabel: t("删除会话"),
         onConfirm: () => {
           client
             .get<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }>("deleteSession", { sessionId: s.sessionId })

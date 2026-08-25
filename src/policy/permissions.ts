@@ -148,25 +148,24 @@ export function 看风险(
   if (工具名 === "write" || 工具名 === "edit") {
     const p = typeof 参数.path === "string" ? 参数.path : undefined
     if (!p) return undefined
-    let 绝对 = isAbsolute(p) ? resolve(p) : resolve(语境.workspace, p)
+    // **root 与目标必须用同一套 realpath 基准**(审查 debug A4,连带修 A4 的回归):
+    // macOS 上 workspace 常在 /var/folders,而 /var→/private/var。若只 realpath root、
+    // 目标却基于原 workspace 解析,两者前缀(/private/var vs /var)对不上 → 误判「工作区之外」。
+    // 所以:先 realpath root,再以它为基准解析相对路径,最后 realpath 父目录挡符号链接逃逸。
+    // **只对本地会话做**:远端路径在本机 realpath 毫无意义(远端 /etc 与本机不是一回事)。
     let root = 语境.workspace
-    // **符号链接逃逸**（审查 debug A4）:字符串归一化挡不住 `ln -s /etc ws/link` 后写
-    // `link/passwd`——`resolve` 的结果仍以 ws 开头。realpath 父目录把它还原成真实位置。
-    // 目标文件本身可能还不存在(write 是创建),所以只 realpath 父目录。
-    // **只对本地会话做**:远端路径在本机 realpath 毫无意义(远端的 /etc 与本机的不是一回事,
-    // 且 macOS 的 /etc→/private/etc 会把远端路径解错)——远端的符号链接要在远端解,我们做不到。
     if (!语境.remote) {
-      try {
-        绝对 = join(realpathSync(dirname(绝对)), basename(绝对))
-      } catch {
-        /* 父目录还不存在:用字符串路径判 */
-      }
       try {
         root = realpathSync(语境.workspace)
       } catch {
         /* 工作区路径不存在(测试里常见):用字符串判 */
       }
     }
+    let 绝对 = isAbsolute(p) ? resolve(p) : resolve(root, p)
+    // 符号链接逃逸(`ln -s /etc ws/link` 后写 `link/passwd`)+ /var→/private/var 这类对齐:
+    // realpath **目标存在的最长前缀**,拼上还不存在的尾段。这样目标与 root 用同一套真实路径基准,
+    // 既挡住软链逃逸,又不会因 macOS 的 /var 软链把工作区内的路径误判成外面(A4 回归的根因)。
+    if (!语境.remote) 绝对 = realpath存在前缀(绝对)
     const 相对 = relative(root, 绝对)
     const 在工作区里 = !(相对.startsWith("..") || isAbsolute(相对))
     // 工作区里的东西不走硬拒（工作区可能就在 /var/folders 这类地方——那是它自己的地盘）
@@ -322,6 +321,27 @@ const 受保护前缀 = [
   join(HOME, ".ssh"), join(HOME, ".aws"), join(HOME, ".gnupg"), join(HOME, ".kube"), join(HOME, ".config"),
   join(HOME, "Library"), join(HOME, "Desktop"), join(HOME, "Documents"),
 ]
+
+/**
+ * realpath **存在的最长前缀**,拼回还不存在的尾段（审查 debug A4）。
+ * write 的目标文件常还不存在(是创建),无法整段 realpath;但要挡符号链接逃逸、
+ * 又要与 realpath 后的工作区根用同一套真实路径基准(macOS 的 /var→/private/var),
+ * 只能 realpath 目标里已经存在的那部分。全程不存在(如纯虚构绝对路径)则原样返回。
+ */
+function realpath存在前缀(p: string): string {
+  let cur = resolve(p)
+  const 尾: string[] = []
+  for (;;) {
+    try {
+      return 尾.length > 0 ? join(realpathSync(cur), ...尾) : realpathSync(cur)
+    } catch {
+      const 父 = dirname(cur)
+      if (父 === cur) return resolve(p) // 到根都不存在:原样
+      尾.unshift(basename(cur))
+      cur = 父
+    }
+  }
+}
 
 /** 路径本身（不含子项）就是受保护的根，或者在凭据目录底下。
  *

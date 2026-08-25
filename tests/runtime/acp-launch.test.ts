@@ -10,7 +10,8 @@
  * 算命令是**纯函数**，平台可注入，所以三个平台都能在这一台机器上验。
  */
 import { describe, expect, it } from "vitest"
-import { 算命令, 滤环境 } from "../../src/runtime/acp/launch.js"
+import { spawn } from "node:child_process"
+import { 算命令, 滤环境, 收进程 } from "../../src/runtime/acp/launch.js"
 
 const 基 = { cwd: "/w", execPath: "/Applications/DAWN.app/Contents/MacOS/DAWN" }
 
@@ -133,4 +134,24 @@ describe("不该有的副作用", () => {
     const args = ["-y", "@a/b", "--flag", "值 带空格"]
     expect(算命令({ ...基, command: "npx", args, platform: "linux" }).args).toEqual(args)
   })
+})
+
+describe("收进程：SIGTERM 挡得住时升级到 SIGKILL（审查 debug H5）", () => {
+  // Windows 走 taskkill，与信号无关，这条只在 POSIX 上有意义
+  it.skipIf(process.platform === "win32")(
+    "**`trap '' TERM` 的进程也要死** —— 否则等它退出的 stop() 永久挂住",
+    async () => {
+      // 吞掉 TERM、只能被 KILL 收掉;detached 自成组,与真适配器同样起法
+      const proc = spawn("sh", ["-c", "trap '' TERM; while true; do sleep 1; done"], {
+        stdio: "ignore",
+        detached: true,
+      })
+      await new Promise((r) => setTimeout(r, 50)) // 等 trap 装上
+      收进程(proc, "linux", 100) // 宽限期 100ms 后补 SIGKILL
+      const 退 = await new Promise<{ code: number | null; signal: string | null }>((r) =>
+        proc.once("exit", (code, signal) => r({ code, signal })),
+      )
+      expect(退.signal).toBe("SIGKILL") // TERM 被吞,是 KILL 收的场
+    },
+  )
 })

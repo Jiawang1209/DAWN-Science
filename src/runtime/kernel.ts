@@ -133,6 +133,19 @@ export class KernelRuntime implements AgentRuntime {
       }
     })
 
+    /**
+     * **内核进程意外死亡也要收口**（审查 debug H2）:OOM / 段错误时既没有 idle 也没有
+     * 我们主动 close,`执行()` 的 promise 会永挂,那一轮 run_code「发过去了永远没回音」。
+     * 转发进程死亡为一条 exited,让在等的那一轮结束、这段会话从表里清掉。
+     */
+    channel.onExit?.(() => {
+      const live = this.sessions.get(spec.sessionId)
+      if (!live) return // 已经 close 掉了(主动关停走的是 stop 那条路)
+      this.sessions.delete(spec.sessionId)
+      this.emit({ kind: "notice", sessionId: spec.sessionId, text: "内核进程意外退出了(可能是内存耗尽或崩溃)——这一段代码没有跑完。" })
+      this.emit({ kind: "exited", sessionId: spec.sessionId, exitCode: 1 })
+    })
+
     this.emit({ kind: "started", sessionId: spec.sessionId, pid: 0 })
     return { sessionId: spec.sessionId, pid: 0 }
   }

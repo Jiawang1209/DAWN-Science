@@ -111,4 +111,10 @@ export interface KernelChannel {
    * 反复调用是安全的。
    */
   close(): Promise<void>
+  /**
+   * 内核进程**意外死亡**时触发一次（审查 debug H2）:OOM 被杀 / 段错误。
+   * 运行时据此收口那一轮,否则 `执行()` 的 promise 永挂、run_code 永远没有回音。
+   * 可选:假 channel(测试)可以不实现。
+   */
+  onExit?(cb: () => void): Unsubscribe
 }

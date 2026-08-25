@@ -467,6 +467,17 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     interrupt,
     close,
     ready,
+    /**
+     * 内核进程**意外死亡**时触发(审查 debug H2):OOM 被杀 / 段错误 —— 那时
+     * 既没有 idle 也没有我们主动 close,`执行()` 的 promise 会永挂,run_code 那一轮
+     * 「发过去了永远没有回音」。把进程的 exit 事件转发上去,让运行时能收口。
+     */
+    onExit(cb: () => void): () => void {
+      opts.process.once?.("exit", cb)
+      return () => {
+        /* 进程只死一次,once 无需显式移除 */
+      }
+    },
   }
 }
 

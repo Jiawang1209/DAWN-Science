@@ -327,7 +327,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   const mcp门 = 造MCP门(
-    读全局档,
+    // 与 native 那道门同一套取档(审查 debug A8):定时任务/会话级档也管得住 MCP 工具,不再只看全局
+    (sessionId) => (sessionId && 按会话的档.get(sessionId)) || 读全局档(),
     /**
      * **信任读本机的设置库，不读配置文件。**
      * 项目级名单住在 `.dawn/mcp.yaml`，会跟着仓库被 clone——

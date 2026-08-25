@@ -41,6 +41,7 @@ interface 一台的样子 {
   missingSecrets: string[]
   from: string
   trusted: boolean
+  fingerprint?: string
   off: boolean
   state: string
   error?: string

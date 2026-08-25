@@ -114,6 +114,20 @@ export function 包成pi工具(定义: Office工具定义, workspace: string) {
         if (typeof v === "string" && v && !isAbsolute(v)) 参[k] = join(workspace, v)
         else if (Array.isArray(v)) 参[k] = v.map((x) => (typeof x === "string" && x && !isAbsolute(x) ? join(workspace, x) : x))
       }
+      /**
+       * **嵌套路径也要解析进工作区**(审查 debug E7)。`slides[].image` 藏在数组里的对象上,
+       * 不在顶层 `路径参数` 名单里,此前完全没被解析——模型给对了相对路径,pptxgenjs 却按 cwd 找、
+       * 报「图片不存在」。这是 pptx 唯一的嵌套路径字段(背景是颜色,不是图)。
+       */
+      if ((定义.name === "pptx_create" || 定义.name === "pptx_edit") && Array.isArray(参.slides)) {
+        参.slides = 参.slides.map((s) => {
+          if (s && typeof s === "object") {
+            const img = (s as Record<string, unknown>).image
+            if (typeof img === "string" && img && !isAbsolute(img)) return { ...s, image: join(workspace, img) }
+          }
+          return s
+        })
+      }
       try {
         const r = await 定义.execute(参)
         return text(r.content)

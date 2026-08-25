@@ -72,7 +72,7 @@ describe("记忆存储核心", () => {
     expect(s.add("key", "没给工作区").ok).toBe(false)
   })
 
-  it("drift guard:人手改过的文件,改/删拒绝并备份;append 照常", () => {
+  it("drift guard:人手改过的文件,改/删/加**一律**拒绝并备份(审查 debug C7)", () => {
     const 根 = 临时()
     const s = new MemoryStore(根)
     s.add("memory", "第一条")
@@ -81,7 +81,47 @@ describe("记忆存储核心", () => {
     const r = s.updateBody("memory", "第一条", "改成这样")
     expect(r.ok).toBe(false)
     expect(String(r.message)).toContain(".bak.")
-    expect(s.add("memory", "追加不受 drift 影响").ok).toBe(true)
+    // **add 也走 drift guard**:它其实是全文件重写,drift 时旧实现会把手改内容归一抹平、
+    // .bak 永不出现。现在 add 与改/删同样拒绝并备份。
+    const a = s.add("memory", "追加时若文件已漂移就不该悄悄重写")
+    expect(a.ok).toBe(false)
+    expect(String(a.message)).toContain(".bak.")
+    // 手改的那段内容还原样留在文件里,没被 add 归一抹掉
+    expect(readFileSync(f, "utf8")).toContain("人手涂改")
+  })
+
+  it("归档轨也有 drift guard:手改过归档文件后,再归档/转正拒绝并备份(审查 debug C9)", () => {
+    const 根 = 临时()
+    const s = new MemoryStore(根)
+    s.add("memory", "甲")
+    s.add("memory", "乙")
+    s.archive("memory", "甲") // 归档文件里现在有一条
+    const af = join(根, "MEMORY-archive.md")
+    writeFileSync(af, readFileSync(af, "utf8") + "人手在归档里加了注")
+    // 再归档一条 → 要重写归档文件,检测到漂移就拒并备份
+    const r = s.archive("memory", "乙")
+    expect(r.ok).toBe(false)
+    expect(String(r.message)).toContain(".bak.")
+    // 转正也一样
+    const p = s.promote("memory", "甲")
+    expect(p.ok).toBe(false)
+    expect(String(p.message)).toContain(".bak.")
+    // 手改内容原样还在,没被归一抹掉
+    expect(readFileSync(af, "utf8")).toContain("人手在归档里加了注")
+  })
+
+  it("addArchived 一步直落归档、不碰主轨(审查 debug Cx)", () => {
+    const 根 = 临时()
+    const s = new MemoryStore(根)
+    // 主轨先放一条前 40 字相同的,证明旧的「add 主轨再 archive 按前 40 字匹配」会撞车;新路径不受影响
+    s.add("memory", "同一个开头的前四十个字用来撞匹配——主轨这条")
+    const r = s.addArchived("memory", "同一个开头的前四十个字用来撞匹配——归档这条")
+    expect(r.ok).toBe(true)
+    // 主轨仍只有原来那一条,归档条没污染主轨(不会被注入)
+    expect(s.entries("memory")).toHaveLength(1)
+    expect(s.archived("memory").some((e) => e.includes("归档这条"))).toBe(true)
+    // 去重:同句再归档一次不重复
+    expect(s.addArchived("memory", "同一个开头的前四十个字用来撞匹配——归档这条").duplicate).toBe(true)
   })
 
   it("归档:先归档后删除;转正回主轨;归档文件不与主轨混", () => {

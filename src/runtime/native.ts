@@ -17,6 +17,7 @@
  * 以及把每个会话隔离在自己的 agentDir 里。
  */
 import { 读调用策略 } from "../skills/invocation.js"
+import { UserFacingError } from "../errors.js"
 import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
 import { dirname } from "node:path"
 import { randomUUID } from "node:crypto"
@@ -329,6 +330,19 @@ interface PiEvent {
 export class NativeRuntime implements AgentRuntime {
   private readonly sessions = new Map<SessionId, NativeSession>()
   private readonly sinks = new Map<SessionId, Set<EventSink>>()
+  /**
+   * 正在启动的那一段(审查 debug E4)。`start()` 有一长串 await(解析模型、起 MCP、建 pi 会话),
+   * 重复对同一 sessionId 调 start——双击、resubscribe 竞态——会各跑一遍,第二遍的 `sessions.set`
+   * 覆盖第一遍,第一段 pi 会话 + 订阅 + MCP 池成孤儿(事件翻倍、账本重复计数)。记住"起中"promise:
+   * 并发第二次调用等同一个,而不是再起一段。
+   */
+  private readonly 起中 = new Map<SessionId, Promise<SessionHandle>>()
+  /**
+   * 启动还没完成时就有人请求停(审查 debug E5)。此前 `stop()` 里 `sessions.get` 拿不到
+   * 尚未登记的会话就直接返回,可等 `start()` 跑完把会话登记上去,那一段就永远没人停了——
+   * pi 会话不 dispose、订阅常驻。记一笔,让 `start()` 收尾时把刚起来的立刻停掉。
+   */
+  private readonly 已请求停 = new Set<SessionId>()
   /**
    * native 会话不对应真实进程，pid 是合成的序号，只为满足 `SessionHandle` 契约
    * 与会话表的 `pid` 列。**它不可用于 `process.kill`**，与 PtyRuntime 的 pid 语义不同。
@@ -956,7 +970,34 @@ export class NativeRuntime implements AgentRuntime {
     return [...(base ?? []), ...观察过的外部, tool, ...团队工具]
   }
 
+  /**
+   * 起一段会话。**重入保护 + 启动期停止收尾**(审查 debug E4/E5)——真正的启动逻辑在 `启动一次`。
+   */
   async start(spec: SessionSpec): Promise<SessionHandle> {
+    const id = spec.sessionId
+    // 已经有活着的同 id 会话:重复开是调用方的 bug,响亮拒,别静默丢掉旧的(E4)
+    if (this.sessions.has(id)) {
+      throw new UserFacingError(`会话 "${id}" 已经在运行了，不能重复开(先停掉它再开)`)
+    }
+    // 已经有人在起同一段:并发第二次调用等同一个 promise,不再起第二段(E4)
+    const 在起 = this.起中.get(id)
+    if (在起) return 在起
+    const p = this.启动一次(spec)
+    this.起中.set(id, p)
+    try {
+      const handle = await p
+      // 启动过程中有人请求停 → 立刻把刚起来的这段停掉,别让它漏成孤儿(E5)
+      if (this.已请求停.delete(id)) {
+        await this.stop(id).catch(() => {})
+        throw new UserFacingError(`会话 "${id}" 在启动过程中被停止了`)
+      }
+      return handle
+    } finally {
+      this.起中.delete(id)
+    }
+  }
+
+  private async 启动一次(spec: SessionSpec): Promise<SessionHandle> {
     const native = spec.native
     if (!native) {
       throw new Error(`native 运行时需要 provider 与 model，会话 "${spec.sessionId}" 未提供`)
@@ -2138,8 +2179,18 @@ ${描述}`
   }
 
   async stop(sessionId: SessionId): Promise<void> {
+    // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
+    // 记一笔并等启动结束——start() 的收尾会据此把刚起来的立刻停掉。
+    if (this.起中.has(sessionId) && !this.sessions.has(sessionId)) {
+      this.已请求停.add(sessionId)
+      await this.起中.get(sessionId)!.catch(() => {})
+      // 到这里 start() 的收尾要么已经把它停干净(下面 get 拿不到直接返回),要么启动失败了
+    }
     const s = this.sessions.get(sessionId)
     if (!s) return
+    // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
+    // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
+    this.sessions.delete(sessionId)
     // 先中止在跑的一轮，再退订，最后释放——顺序反了会在 dispose 之后收到事件
     await s.session.abort().catch(() => {})
     s.收尾?.()
@@ -2148,7 +2199,6 @@ ${描述}`
     for (const [id, 等] of [...this.待答]) if (等.sessionId === sessionId) { this.待答.delete(id); 等.答("deny") }
     s.unsubscribe()
     s.session.dispose()
-    this.sessions.delete(sessionId)
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
   }
 }

@@ -154,9 +154,15 @@ const LOCK_TIMEOUT_MS = 5_000
 const LOCK_RETRY_MS = 25
 const 已持锁 = new Set<string>()
 
-function 锁过期(lockPath: string): boolean {
+/**
+ * 判这把锁是不是残留。**返回它判定时看到的 mtimeMs**(不是 boolean)——
+ * 调用方据此做 compare-and-delete:只删 mtime 没变过的那把(审查 debug C13)。
+ * `null` = 不是残留 / 已经没了,不该删。
+ */
+function 锁残留于(lockPath: string): number | null {
   try {
     const info = statSync(lockPath)
+    const 残留 = (是: boolean) => (是 ? info.mtimeMs : null)
     try {
       const owner = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: number }
       if (typeof owner.pid === "number") {
@@ -165,17 +171,17 @@ function 锁过期(lockPath: string): boolean {
           // **pid 存活也要有 mtime 上限**(审查 debug C8):记忆锁内操作是毫秒级的,
           // 若一把锁持有超过这个上限,几乎必然是崩溃残留 + pid 被系统复用给了别的进程——
           // 旧实现「pid 存活即有效」完全短路了 mtime 兜底,残留锁永久有效,该目录的记忆写入永久失败。
-          return Date.now() - info.mtimeMs > 持锁上限MS
+          return 残留(Date.now() - info.mtimeMs > 持锁上限MS)
         } catch {
-          return true // 持有者已死(断电/中断残留),或别的用户的进程(EPERM)——都当 stale
+          return 残留(true) // 持有者已死(断电/中断残留),或别的用户的进程(EPERM)——都当 stale
         }
       }
     } catch {
       // 无 pid / 不可解析 → 按 mtime 判
     }
-    return Date.now() - info.mtimeMs > STALE_LOCK_MS
+    return 残留(Date.now() - info.mtimeMs > STALE_LOCK_MS)
   } catch {
-    return false
+    return null
   }
 }
 
@@ -202,7 +208,17 @@ export function withLock<T>(dir: string, fn: () => T): T {
       if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e
     }
     if (拿到) break
-    if (锁过期(lockPath)) rmSync(lockPath, { force: true })
+    // **compare-and-delete**(审查 debug C13):判残留与删除之间有窗口——别的进程可能刚把这把
+    // 残留锁删了、又建了一把新的自己的锁。若我们无条件 rm,就把人家刚拿到的活锁删了,两个进程一起进。
+    // 只删「mtime 与判定时一致」的那把:别人重建过的话 mtime 变了,我们不动它。
+    const 残留mtime = 锁残留于(lockPath)
+    if (残留mtime !== null) {
+      try {
+        if (statSync(lockPath).mtimeMs === 残留mtime) rmSync(lockPath, { force: true })
+      } catch {
+        /* 已经被别人清了 */
+      }
+    }
     if (Date.now() >= 死线) throw new Error("记忆:等锁超时(另一个进程占着记忆目录)")
     睡(LOCK_RETRY_MS)
   }
@@ -287,7 +303,14 @@ export class MemoryStore {
     return parseEntries(this.读(this.定位(target, ctx, true)).text)
   }
 
-  /** 追加一条(append-only,免 drift guard):扫描 → 盖戳 → 去重 → 落盘。 */
+  /**
+   * 追加一条:扫描 → 盖戳 → 去重 → 落盘。
+   *
+   * **走 drift guard,和 updateBody/remove 一样**(审查 debug C7)。此前这里号称
+   * 「append-only 免 drift」,可它其实是 `parseEntries`→整文件 `原子写` 的**全量重写**:
+   * 文件被手工改成非规范形态时,旧路径不备份、直接把它归一重写掉——drift 信号(有人动过这个文件)
+   * 被 add 悄悄抹平,`.bak` 永远不出现。全量重写就该受同一道 guard 管。
+   */
   add(target: 记忆轨, content: string, ctx?: 轨上下文): 写结果 {
     let loc: { dir: string; file: string }
     try {
@@ -304,9 +327,12 @@ export class MemoryStore {
     if (险) return { ok: false, message: 险 }
     const 戳好 = 盖戳(正, target === "key" ? ctx?.branches : undefined)
     return withLock(loc.dir, () => {
-      const { text, size } = this.读(loc)
-      if (text === "" && size > 0) return { ok: false, message: "记忆:文件读不出来,拒绝写入以免抹掉历史" }
-      const entries = parseEntries(text)
+      const r = this.重载(loc)
+      if (r.kind === "drift") {
+        return { ok: false, message: `记忆:${loc.file} 被手工改过,不敢整文件重写;原文已备份到 ${r.backup},请手动处理` }
+      }
+      if (r.kind === "read-failed") return { ok: false, message: "记忆:文件读不出来,拒绝写入以免抹掉历史" }
+      const entries = r.entries
       // 去重:剥 [id:] 与日期戳、**保留分支作用域**再比(审查 debug#1)——
       // 同一句话跨日期判重,而 main/dev 上的同句不误判。
       const 目标键 = 去重键(戳好)
@@ -315,6 +341,42 @@ export class MemoryStore {
       }
       this.原子写(loc, [...entries, 戳好])
       return { ok: true, message: `已写入 ${target}(现 ${entries.length + 1} 条)` }
+    })
+  }
+
+  /**
+   * **直接往归档轨追加一条,一步到位、不经主轨**(审查 debug Cx)。
+   *
+   * 采纳建议时选「归档」用这个。此前 backend 是「add 到主轨 → archive 移过去」两步非原子:
+   * 若第二步(archive,按前 40 字匹配)因撞多条失败,条目就**留在主轨被注入**——与「归档=不注入」的
+   * 意图正好相反,而建议还被放回队列反复冒出来。归档本就是"落进归档文件",没有理由先污染主轨。
+   * 与 add 同样的校验 + 去重 + drift guard,只是落点是归档文件。
+   */
+  addArchived(target: 记忆轨, content: string, ctx?: 轨上下文): 写结果 {
+    let 归loc: { dir: string; file: string }
+    try {
+      归loc = this.定位(target, ctx, true)
+    } catch (e) {
+      return { ok: false, message: e instanceof Error ? e.message : String(e) }
+    }
+    const 正 = String(content ?? "").trim()
+    if (!正) return { ok: false, message: "记忆:内容为空,没有可写的" }
+    if (正.includes("§")) return { ok: false, message: "记忆:内容不能包含条目分隔符 §" }
+    const 险 = scanThreat(正)
+    if (险) return { ok: false, message: 险 }
+    const 戳好 = 盖戳(正, target === "key" ? ctx?.branches : undefined)
+    return withLock(归loc.dir, () => {
+      const r = this.重载(归loc)
+      if (r.kind === "drift") {
+        return { ok: false, message: `记忆:${归loc.file} 被手工改过,不敢整文件重写;原文已备份到 ${r.backup},请手动处理` }
+      }
+      if (r.kind === "read-failed") return { ok: false, message: "记忆:归档文件读不出来,拒绝写入以免抹掉历史" }
+      const 目标键 = 去重键(戳好)
+      if (r.entries.some((e) => 去重键(e) === 目标键)) {
+        return { ok: true, duplicate: true, message: "归档里已有一模一样的条目,没有重复添加" }
+      }
+      this.原子写(归loc, [...r.entries, 戳好])
+      return { ok: true, message: "已归档(不注入,可转正)" }
     })
   }
 
@@ -407,7 +469,14 @@ export class MemoryStore {
       const 命 = this.命中(r.entries, match)
       if ("error" in 命) return { ok: false, message: 命.error }
       const 原文 = r.entries[命.index]!
-      this.原子写(归loc, [...parseEntries(this.读(归loc).text), 原文])
+      // **归档轨也走 drift guard**(审查 debug C9):归档文件同样是全量重写,人若在归档页手工
+      // 整理过(加注、重排),旧实现直接 parseEntries→归一重写会把那些编辑抹掉。手改过就备份并拒。
+      const 归r = this.重载(归loc)
+      if (归r.kind === "drift") {
+        return { ok: false, message: `记忆:${归loc.file} 被手工改过,不敢动;原文已备份到 ${归r.backup}` }
+      }
+      if (归r.kind === "read-failed") return { ok: false, message: "记忆:归档文件读不出来,拒绝操作" }
+      this.原子写(归loc, [...归r.entries, 原文])
       const next = [...r.entries]
       next.splice(命.index, 1)
       this.原子写(loc, next)
@@ -424,7 +493,13 @@ export class MemoryStore {
       return { ok: false, message: e instanceof Error ? e.message : String(e) }
     }
     return withLock(归loc.dir, () => {
-      const 归条 = parseEntries(this.读(归loc).text)
+      // **归档轨也走 drift guard**(审查 debug C9):转正会重写归档文件,手改过就备份并拒,不悄悄归一
+      const 归r = this.重载(归loc)
+      if (归r.kind === "drift") {
+        return { ok: false, message: `记忆:${归loc.file} 被手工改过,不敢动;原文已备份到 ${归r.backup}` }
+      }
+      if (归r.kind === "read-failed") return { ok: false, message: "记忆:归档文件读不出来,拒绝操作" }
+      const 归条 = 归r.entries
       const 命 = this.命中(归条, match)
       if ("error" in 命) return { ok: false, message: 命.error }
       const 原文 = 归条[命.index]!

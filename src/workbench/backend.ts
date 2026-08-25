@@ -2237,12 +2237,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const r =
         decision === "approve"
           ? m.store.add(终轨, 终文, ctx)
-          : (() => {
-              // 归档一条建议 = 直接落归档文件（不经过主轨）
-              const 先 = m.store.add(终轨, 终文, ctx)
-              if (!先.ok && !先.duplicate) return 先
-              return m.store.archive(终轨, 终文.slice(0, 40), ctx)
-            })()
+          // 归档一条建议 = **一步直落归档文件**（审查 debug Cx）。此前是 add 到主轨→archive 两步非原子:
+          // archive 按前 40 字匹配,撞多条就失败,而那时条目已经在主轨上、会被注入——与「归档=不注入」相反。
+          : m.store.addArchived(终轨, 终文, ctx)
       if (!r.ok && !r.duplicate) {
         m.queue.putBack(条)
         return { ok: false, message: `${r.message}（建议留在队列里）` }

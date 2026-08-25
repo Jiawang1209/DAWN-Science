@@ -96,7 +96,10 @@ export function memory工具定义(
           entries = entries.filter((e) => e.toLowerCase().includes(q))
         }
         const 总 = entries.length
-        const limit = Math.max(1, Math.min(Number(args.limit ?? 50), 500))
+        // limit 传了非数字(如 "abc")时 Number→NaN,slice(0,NaN) 会静默返回空数组,
+        // 却照报「共 N 条」——模型据此以为记忆空了(审查 debug C10)。NaN 一律退回默认 50。
+        const n = Number(args.limit ?? 50)
+        const limit = Number.isFinite(n) ? Math.max(1, Math.min(n, 500)) : 50
         entries = entries.slice(0, limit)
         if (总 === 0) return { content: `${target}:没有条目` }
         const 截 = 总 > entries.length ? `(共 ${总} 条,只列前 ${entries.length}——加 filter 缩小范围)` : ""

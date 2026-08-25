@@ -3,7 +3,7 @@
  * 走 `officeTools` 包出来的 pi 工具面（含 JSON Schema 转换与工作区路径解析），
  * 不直接戳内部函数：验的是模型将要摸到的那一面。
  */
-import { mkdtempSync, existsSync, readdirSync } from "node:fs"
+import { mkdtempSync, existsSync, readdirSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
@@ -119,6 +119,25 @@ describe("office 插件", () => {
     expect(改.isError).toBeUndefined()
     const 再读 = await 取(ws, "pptx_read").execute("t4", { file_path: "路线图.pptx" })
     expect(文字(再读)).toContain("Roadmap 2027")
+  })
+
+  it("pptx：slides[].image 的相对路径解析进工作区(审查 debug E7)", async () => {
+    const ws = mkdtempSync(join(tmpdir(), "dawn-office-"))
+    // 工作区里放一张真 png(1x1 透明),模型给相对路径
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "base64",
+    )
+    writeFileSync(join(ws, "图.png"), png)
+    const 造 = await 取(ws, "pptx_create").execute("t1", {
+      destination_path: "带图.pptx",
+      slides: [{ type: "image", title: "配图", image: "图.png" }], // 相对路径,不带工作区前缀
+    })
+    expect(造.isError).toBeUndefined()
+    expect(existsSync(join(ws, "带图.pptx"))).toBe(true)
+    // **真嵌进去了才算数**:路径没解析时 pptxgenjs 找不到文件会静默不嵌入,读回就是 0 张图。
+    const 读 = await 取(ws, "pptx_read").execute("t2", { file_path: "带图.pptx", include: "summary" })
+    expect(文字(读)).toMatch(/1 image\(s\)/)
   })
 
   it("docx：生成（表格 + 水印）→ 读回", async () => {

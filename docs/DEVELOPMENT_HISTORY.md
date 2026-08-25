@@ -8,6 +8,22 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修：工具/运行时（E 系列）收口（debug 分支）
+
+- **Type**: fix
+- **Motivation**: 承接全库审查，清 E 域（工具与原生运行时）。E4/E5 是 native 会话 start/stop 的重入与时序，属核心链路；E7 是 pptx 配图路径，用户直接撞得到。
+- **What**: **E4** `NativeRuntime.start()` 补重入保护——已有活会话拒绝重复开（响亮报错，不静默丢旧的）、并发同 id 的 start 收敛到同一个"起中"promise，不再各起一段留孤儿（pi 会话/订阅/MCP 池翻倍、账本重复计数）。**E5** `stop()` 在 `start()` 完成前被调用时，记一笔"起完就停"、等启动结束后由 start 的收尾立刻停掉刚起来的那段（此前 `sessions.get` 拿不到未登记会话就返回，导致它起完后永远没人停）；`stop()` 改为同步认领（先从表摘除）防两条收尾路径 double-dispose。**E7** pptx `slides[].image` 嵌套相对路径解析进工作区（此前只解析顶层路径参数，配图相对路径被 pptxgenjs 按 cwd 找不到）。**E9** 截图清理只删 DAWN 时间戳命名的截图，用户手放进 `.dawn/screenshots/` 的 png 不再被误删（旧测试用任意名编码了错误行为，一并改对）。**E10** 开标签 goto 失败时关掉空白页、不留作活跃标签（下载名对 `/` 结尾 URL 的兜底早批已修）。核实 E1（pdf_create 写盘异常走 reject）、E2（下载写入目标工作区守卫）早批（`bfc24fa`）已修，表列同步。
+- **Impact**: 无破坏性 API 变更（新增私有 `启动一次`、`MemoryStore.addArchived` 已在 C 批加）；`NativeRuntime.start()` 现在遇重复启动会抛 `UserFacingError`。E 域除 E6（共享浏览器跨工作区，⏸ 待架构决策）外全部修完。
+- **Verification**: 单测 2240 全绿（新增回归：E4 重复 start 抛错 + 并发收敛、E5 启动期 stop 不漏孤儿、E7 slides 图真嵌入、E9 用户 png 存活）；typecheck 干净。
+
+### 2026-08-25 — 全库审查续修：记忆域（C 系列）全部收口（debug 分支）
+
+- **Type**: fix
+- **Motivation**: 承接全库审查，清记忆域剩余中低危。记忆是作者最看重、也是全项目唯一无成熟开源对照的一格，数据正确性优先。核实发现 C5/C6/C8 早批（`3fb3a59`）已修、只是台账表列没同步；其余 C7/Cx/C9-C13 逐条修完。
+- **What**: **C7** `add` 号称 append-only 免 drift，实为整文件重写——改为与 updateBody/remove 同走 drift guard，文件被手改时备份并拒，不再悄悄归一抹掉手改内容。**Cx** 采纳建议选「归档」原为 `add 到主轨→archive` 两步非原子（archive 按前 40 字匹配，撞多条即失败，而条目已在主轨会被注入）——新增 `MemoryStore.addArchived` 一步直落归档轨，backend `memoryResolve` 改用它。**C9** 归档轨（archive/promote）补 drift guard，手工整理过的归档不再被归一重排。**C10** `memory_list` 的 `limit` 传非数字时 `Number→NaN`、`slice(0,NaN)` 静默返回空却报「共 N 条」——NaN 退回默认 50。**C11** 批准技能时 `renameSync` 撞已存目录抛 ENOTEMPTY（EXDEV 回退还静默合并）——目录存在即响亮拒。**C12** frontmatter 逐行正则把 YAML 块标量 `|`/`>` 当字面量、描述丢成一个竖线——块标量指示符一律拒收。**C13** 清残留锁存在「判定与删除之间别人重建了锁」的窄窗口——改 compare-and-delete（只删 mtime 未变的那把）。
+- **Impact**: 无破坏性 API 变更（`addArchived` 为新增方法）；一处契约变更——`add` 现在遇 drift 会拒绝（此前静默重写），对应单测已更新。记忆域 C1-C14 + Cx 共 15 条全部修完。
+- **Verification**: 单测 2236 全绿（新增回归：C7 drift 时 add 也拒并备份、C9 手改归档后 archive/promote 拒并备份、C10 非数字 limit、C11 撞目录不合并、C12 块标量拒收、Cx addArchived 只落归档不污染主轨且去重）；typecheck 干净。
+
 ### 2026-08-25 — 全库审查续修批 4/6：资源泄漏与挂死 + 会话切换竞态（debug 分支）
 
 - **Type**: fix

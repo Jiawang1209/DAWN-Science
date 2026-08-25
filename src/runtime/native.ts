@@ -873,7 +873,7 @@ export class NativeRuntime implements AgentRuntime {
     // 过同一道 write 判据补上——不存在的能力不该看起来存在。
     const 门于插件 = this.插件门包装(spec)
     const office工具组 = (this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []).map(门于插件)
-    const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable()) : []).map(门于插件)
+    const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable(), spec.sessionId) : []).map(门于插件)
     const memory工具组 =
       this.opts.memoryEnable && this.opts.memoryDeps
         ? memoryTools(spec.workspace, this.opts.memoryEnable(), this.opts.memoryDeps())
@@ -2210,6 +2210,10 @@ ${描述}`
     for (const [id, 等] of [...this.待答]) if (等.sessionId === sessionId) { this.待答.delete(id); 等.答("deny") }
     s.unsubscribe()
     s.session.dispose()
+    // **这段对话用过的 run_code 内核也回收**(审查 debug H1):它们挂在 `对话内核` 里、不在 SessionManager,
+    // 会话停了不收的话,python/R 进程与它的 zeromq socket 一直留着——端口泄漏,退出时还会 SIGABRT。
+    // 收全部只在退出时兜底;按会话收才让长时间跑不积压一堆死内核。
+    void this.opts.kernels?.收(sessionId).catch(() => {})
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
   }
 }

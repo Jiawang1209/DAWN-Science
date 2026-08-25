@@ -21,7 +21,7 @@ import {
   WorkbenchErrorSchema,
   WorkbenchSuccessSchema,
   MAX_PAGE_SIZE,
-  isMutating,
+  只读模式该拦,
   operationNames,
   type ErrorCode,
 } from "../protocol/index.js"
@@ -129,7 +129,7 @@ export class WorkbenchServer {
     }
 
     // 2. 只读模式：可写操作在这里挡下，不进后端
-    if (this.readOnly && isMutating(operation)) {
+    if (this.readOnly && 只读模式该拦(operation)) {
       return this.fail("invalid_request", `服务端处于只读模式，拒绝可写操作 "${operation}"`, false, requestId)
     }
 

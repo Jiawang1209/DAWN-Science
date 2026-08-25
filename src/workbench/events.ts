@@ -394,7 +394,7 @@ export class SessionTranscripts {
         const id = e.openTurnId
         const 旧 = e.items.find((x) => x.id === id)
         // 前面那条「只想没说」的并进来——同一轮里的思考只该有一处
-        const 并来的 = 旧 ? {} : this.吸收只想没说的(e, id)
+        const 并来的 = 旧 ? {} : this.吸收只想没说的(sessionId, e, id)
         const 想的 =
           (并来的.thinking ?? "") + (旧?.type === "turn" ? (旧.thinking ?? "") : "") + event.delta
         this.putItem(sessionId, e, {
@@ -661,13 +661,16 @@ export class SessionTranscripts {
    * **只吸收「没有正文」的那种**——已经说过话的那条是真的一轮发言，
    * 吞掉它就是删掉了模型说过的话。
    */
-  private 吸收只想没说的(e: Entry, 新id: string): { thinking?: string; thinkingMs?: number } {
+  private 吸收只想没说的(sessionId: SessionId, e: Entry, 新id: string): { thinking?: string; thinkingMs?: number } {
     const i = e.items.findIndex(
       (x) => x.type === "turn" && x.who === "agent" && x.id !== 新id && 没说话(x) && x.thinking,
     )
     if (i < 0) return {}
     const 旧 = e.items[i] as Extract<TranscriptItem, { type: "turn" }>
     e.items.splice(i, 1)
+    // **告诉实时流的订阅者把它删掉**（审查 debug F3）:它已经被推过去了,不发 dropItem 的话
+    // 客户端那头还留着这条孤立的思考——「你出现了两次」。快照那一路不含它,只需补实时流这一条。
+    this.bump(sessionId, e, { type: "dropItem", id: 旧.id })
     return {
       ...(旧.thinking === undefined ? {} : { thinking: 旧.thinking }),
       ...(旧.thinkingMs === undefined ? {} : { thinkingMs: 旧.thinkingMs }),

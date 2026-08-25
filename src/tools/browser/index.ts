@@ -13,10 +13,10 @@ export interface Browser开关 {
   artifact: boolean
 }
 
-export function browserTools(workspace: string, 开: Browser开关): unknown[] {
+export function browserTools(workspace: string, 开: Browser开关, 会话?: string): unknown[] {
   if (开.off) return []
   const 出: unknown[] = []
-  for (const f of browser工具定义(workspace)) {
+  for (const f of browser工具定义(workspace, 会话)) {
     if (!开[f.族 as keyof Omit<Browser开关, "off">]) continue
     for (const d of f.工具) 出.push(包成pi工具(d, workspace))
   }

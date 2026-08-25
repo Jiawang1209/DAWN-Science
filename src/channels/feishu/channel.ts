@@ -268,6 +268,17 @@ export class FeishuChannel {
     this.deps.events.pin(sessionId)
   }
 
+  /**
+   * **绑着的那段会话被归档了**(审查 debug F5,与微信同):出声 + 解掉会话绑定(不动账号)。
+   * 不说的话,归档后下一条飞书消息静默落进新会话,上下文断了没人知道。
+   */
+  async 会话归档了(sessionId: string): Promise<void> {
+    if (this.deps.settings.get("feishu.sessionId") !== sessionId) return
+    this.deps.events.unpin(sessionId)
+    this.deps.settings.set("feishu.sessionId", "", new Date().toISOString())
+    await this.回("你绑定的那段会话被归档了。下一句话我会替你新开一段（可以用 /会话 挑一段已有的接上）。").catch(() => {})
+  }
+
   /* ── 长连接 ── */
 
   /** 进程启动(或刚绑好)时调:有凭证就连上听 */

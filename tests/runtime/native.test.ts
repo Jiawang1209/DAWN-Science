@@ -98,6 +98,16 @@ describe("NativeRuntime · 重入与启动期停止(审查 debug E4/E5)", () => 
     await r.stop(spec.sessionId)
   })
 
+  it("**停会话时回收这段对话的 run_code 内核**(审查 debug H1)", async () => {
+    const 收了: string[] = []
+    const 假内核 = { 收: async (对话: string) => (收了.push(对话), { 收了: [], 没收掉: [] }) }
+    const r = new NativeRuntime({ credentials: fakeCredentials(), kernels: 假内核 as never })
+    const spec = 活spec()
+    await r.start(spec)
+    await r.stop(spec.sessionId)
+    expect(收了).toContain(spec.sessionId)
+  })
+
   it("**启动还没完成就 stop → 起来的那段被立刻停掉,不漏成孤儿**(E5)", async () => {
     const r = runtime()
     const spec = 活spec()

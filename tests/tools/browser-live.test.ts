@@ -81,4 +81,19 @@ describe.skipIf(!有浏览器)("浏览器插件 · 真链路（本机没有 Chro
     const png = Buffer.from(await 截一帧(), "base64")
     expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
   }, 30_000)
+
+  it("**两段会话各用各的活跃标签,不互相串页面**(审查 debug E6)", async () => {
+    const 页B = join(ws, "页B.html")
+    writeFileSync(页B, `<!doctype html><title>B 的页</title><body><h1>会话 B 专属</h1></body>`)
+    // 两套工具,各带一个会话 id
+    const A = (browserTools(ws, 全开, "会话A") as 工具[]).find((t) => t.name === "browser_open")!
+    const B = (browserTools(ws, 全开, "会话B") as 工具[]).find((t) => t.name === "browser_open")!
+    const snapA = (browserTools(ws, 全开, "会话A") as 工具[]).find((t) => t.name === "browser_snapshot")!
+    await A.execute("a1", { url: `file://${页}` })
+    await B.execute("b1", { url: `file://${页B}` })
+    // A 再取快照:应当仍是 A 自己那张页,不是 B 刚打开的那张
+    const 出A = 文字(await snapA.execute("a2", {}))
+    expect(出A).toContain("DAWN 试验页")
+    expect(出A).not.toContain("会话 B 专属")
+  }, 30_000)
 })

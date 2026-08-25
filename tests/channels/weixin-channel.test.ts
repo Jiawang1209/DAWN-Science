@@ -270,6 +270,33 @@ describe("解绑", () => {
   })
 })
 
+describe("绑定的会话被归档（审查 debug F5）", () => {
+  it("出声 + 解会话绑定（不动账号凭证）", async () => {
+    const w = 假世界()
+    w.已绑()
+    w.设置.set("weixin.sessionId", "sX")
+    w.钉住的.add("sX")
+    const ch = new WeixinChannel(w.deps) // 不 start:会话归档了 走的是发送,不需要轮询(起了轮询会抢后续测试的消息)
+    await ch.会话归档了("sX")
+    // 会话绑定清了、不再钉着，但账号还绑着(token 还在)
+    expect(w.设置.get("weixin.sessionId")).toBeFalsy()
+    expect(w.钉住的.has("sX")).toBe(false)
+    expect(w.秘密.has(WEIXIN_TOKEN_KEY)).toBe(true)
+    // 微信里出了一声
+    const 发 = (await s.发出的()) as { item_list: { type: number; text_item?: { text: string } }[] }[]
+    expect(发.some((m) => m.item_list.some((it) => it.text_item?.text.includes("归档")))).toBe(true)
+  })
+
+  it("不是绑的那一段就不管", async () => {
+    const w = 假世界()
+    w.已绑()
+    w.设置.set("weixin.sessionId", "sX")
+    const ch = new WeixinChannel(w.deps)
+    await ch.会话归档了("别的会话")
+    expect(w.设置.get("weixin.sessionId")).toBe("sX") // 没动
+  })
+})
+
 describe("通知（T3）", () => {
   const 最后 = async () => ((await s.发出的()).at(-1) as { item_list: { text_item: { text: string } }[] }).item_list[0]!.text_item.text
   const 发了几条 = async () => (await s.发出的()).length

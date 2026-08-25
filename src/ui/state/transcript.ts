@@ -45,6 +45,14 @@ export function upsertItem(item: TranscriptItem): void {
   $items.set(next)
 }
 
+/** 按 id 从转录里删掉一条（审查 debug F3）：服务端把「只想没说」并进新的一条时,实时流靠它把旧的那条撤掉 */
+export function dropItem(id: string): void {
+  const prev = $items.get()
+  const i = prev.findIndex((x) => x.id === id)
+  if (i < 0) return
+  $items.set(prev.filter((x) => x.id !== id))
+}
+
 export function appendBytes(data: string): void {
   $terminal.set([...$terminal.get(), data])
 }

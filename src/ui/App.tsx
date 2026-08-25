@@ -162,6 +162,7 @@ import {
   $settingsSection,
   openSettingsSection,
   upsertItem,
+  dropItem,
   $sidebarWidth,
   $sidebarCollapsed,
   setSidebarWidth,
@@ -481,6 +482,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
         if (u.sessionId !== $activeSessionId.get()) return
         if (u.type === "item") upsertItem(u.item)
+        if (u.type === "dropItem") dropItem(u.id) // 服务端摘掉一条(如「只想没说」并进新的)——实时流跟着删(审查 debug F3)
         if (u.type === "bytes") appendBytes(u.data)
         if (u.type === "snapshot") {
           applySnapshot({

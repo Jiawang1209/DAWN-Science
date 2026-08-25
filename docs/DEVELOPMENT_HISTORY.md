@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修：架构/协议批（H1/E6/F2/F3/F5，作者拍板后实现），审查全部清零
+
+- **Type**: fix
+- **Motivation**: 剩余 5 条 ⏸ 触及协议契约或跨子系统设计。作者拍板「都修」后逐条做完。至此九路精读发现的每一条真缺陷全部修复并配回归,审查结束。
+- **What**: **H1** native 会话停止时回收该对话的 run_code 内核(`对话内核.收(sessionId)`)——此前只在 app 退出时兜底(`收全部`),长时间跑会积压死内核 + zeromq 端口泄漏。**E6** 浏览器进程仍共享,但活跃标签按会话隔离:加 `会话活跃`/`标签主` 两张表,`要页面(sessionId)` 返回本会话自己的活跃标签、标签也归会话所有——两段会话不再互相开走页面、B 的截图/下载不再对着 A 的页;坞「旁观」仍看全局最近活跃。sessionId 从 native 装配穿到 `browserTools`。**F2** readOnly 模式改为拦 `mutating || sideEffects`:给 OperationDef 加 `sideEffects` 标志,标注 subscribeSession / testMcpServer / getEnvironment / openExternally(它们不改数据但会起进程/连 SSH/拉外部应用),新增 `只读模式该拦()`。**F3** 协议加 `dropItem` 事件:服务端把「只想没说」的 turn 并进新 turn 时(`吸收只想没说的`),对实时流推一条 dropItem 让客户端撤掉那条——修掉作者报的「你出现了两次」;客户端 `transcript.ts` 加 `dropItem()`。**F5** 归档一段被微信/飞书绑定的会话时,通道出声(IM 里说一句)+ 解会话绑定(不动账号凭证)——下条消息不再静默落进新会话、上下文断而无提示。
+- **Impact**: 协议新增 `SessionUpdate.dropItem` 事件与 `OperationDef.sideEffects` 字段;`browserTools`/`browser工具定义` 加可选 sessionId 参数;两个通道加 `会话归档了()` 方法。无破坏性数据/存储变更。
+- **Verification**: 单测 2261 全绿;新增回归:H1(停会话调收)、E6(两会话不串页,真链路)、F2(readOnly 拦 subscribeSession)、F3(吸收时推 dropItem 且 id 对)、F5(归档出声+解绑、非绑的不动);typecheck 干净。**全库审查台账 ☐ 与 ⏸ 全部清零,约 116 条已修配回归测试。**
+
 ### 2026-08-25 — 全库审查续修：安全边界批（A6/A8/A16/B2/G6，作者拍板后实现）
 
 - **Type**: fix

@@ -341,6 +341,18 @@ export class WeixinChannel {
     this.deps.events.pin(sessionId)
   }
 
+  /**
+   * **绑着的那段会话被归档了**(审查 debug F5)。归档会把它从任务列表里藏掉,下一条微信消息
+   * 就会静默落进一段新会话——上下文断了却没人说一声。这里出声 + 解掉会话绑定(不动账号凭证),
+   * 人下次说话时新会话是明明白白开的,不是莫名其妙换了个对象。只处理绑着的正是这一段的情形。
+   */
+  async 会话归档了(sessionId: string): Promise<void> {
+    if (this.deps.settings.get("weixin.sessionId") !== sessionId) return
+    this.deps.events.unpin(sessionId)
+    this.deps.settings.set("weixin.sessionId", "", new Date().toISOString())
+    await this.回("你绑定的那段会话被归档了。下一句话我会替你新开一段（可以用 /会话 挑一段已有的接上）。").catch(() => {})
+  }
+
   /* ── 轮询 ── */
 
   /** 进程启动（或刚绑好）时调：有凭证就开始听 */

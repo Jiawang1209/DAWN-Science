@@ -12,8 +12,8 @@ test("**插件卡**：Office 文档四族齐全；关一族要持久、写明下
   await 在项目里开会话(page)
   await 进设置(page, "插件")
   const 卡 = page.locator(".plugin-card")
-  // 2026-08-25 起两张：Office 文档 + 浏览器
-  await expect(卡).toHaveCount(2)
+  // 2026-08-25 起三张：Office 文档 + 浏览器 + 记忆
+  await expect(卡).toHaveCount(3)
   await expect(卡.first()).toContainText("Office 文档")
   await expect(卡.first()).toContainText("14 个工具")
   // 默认展开（2026-08-25 作者定的：总共没多少插件），头上写着「收起」

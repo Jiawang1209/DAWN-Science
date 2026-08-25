@@ -1571,11 +1571,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return projects.sessions(projectId, 服务器名)
     },
 
-    listRuns: async ({ projectId, sessionId, pageSize }) => {
+    listRuns: async ({ projectId, sessionId, pageSize, after }) => {
       requireProject(projectId)
       return projects.runs(projectId, {
         ...(sessionId ? { sessionId } : {}),
         limit: pageSize,
+        // 游标透传(审查 debug F9):此前 after 被接收却丢弃,分页永远回第一页
+        ...(after ? { after } : {}),
       })
     },
 
@@ -2454,8 +2456,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          *
          * 认证失败、主机不通、私钥读不到——在界面上都长成「连不上」，
          * 但要人去改的东西完全不同。原样把底层的话带上去。
+         *
+         * **认证失败是 `invalid_request` 不是 `internal_error`**（审查 debug F8):
+         * 密码/私钥不对是**用户给错了输入**,不是系统内部故障。ssh2 的认证失败带
+         * `level: "client-authentication"`,消息是「All configured authentication methods failed」。
+         * 报成 internal_error 会让「密码错」显示成「系统出错了」,人不知道该去改密码。
          */
-        throw fault("internal_error", e instanceof Error ? e.message : String(e))
+        const 消息 = e instanceof Error ? e.message : String(e)
+        const level = (e as { level?: string })?.level
+        const 是认证失败 = level === "client-authentication" || /authentication method|auth.*fail/i.test(消息)
+        throw fault(是认证失败 ? "invalid_request" : "internal_error", 消息)
       }
       return 装配(rec)
     },

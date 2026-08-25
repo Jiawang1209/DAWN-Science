@@ -42,6 +42,12 @@ const DEV_URL = process.env.DAWN_DEV_SERVER
  */
 const MODELS_JSON = process.env.DAWN_MODELS_JSON
 /**
+ * **凭证守卫的关闭是独立开关**（审查 debug G7)。此前它搭在 `DAWN_MODELS_JSON` 上——
+ * 而那个变量的正当用途不止 mock:生产里也可能拿它覆盖模型目录/端点,一旦那样做,凭证守卫就
+ * 悄无声息地消失了。拆开:只有 mock / e2e 显式设这个标志时才跳过守卫,给个模型目录不再顺手关掉它。
+ */
+const SKIP_CREDENTIAL_GATE = process.env.DAWN_SKIP_CREDENTIAL_GATE === "1"
+/**
  * 临时会话的目录根（2026-08-11）。**e2e 必须覆盖它**——
  * 不覆盖的话，跑一次测试就会往开发机的 `~/DAWN/scratch` 里建目录。
  * 与 `DAWN_CONFIG` / `DAWN_DB` 是同一套惯例。
@@ -455,7 +461,8 @@ app.whenReady().then(() => {
       ...(CLI_HOME ? { cliHome: CLI_HOME } : {}),
       ...(SKILLS_DIR ? { skillsDir: SKILLS_DIR } : {}),
       ...(MEMORIES_DIR ? { memoriesDir: MEMORIES_DIR } : {}),
-      ...(MODELS_JSON ? { modelsPath: MODELS_JSON, skipCredentialGate: true } : {}),
+      ...(MODELS_JSON ? { modelsPath: MODELS_JSON } : {}),
+      ...(SKIP_CREDENTIAL_GATE ? { skipCredentialGate: true } : {}),
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       ...(FAKE_SSH ? { fakeSsh: true } : {}),
       ...(LEASE_TTL ? { leaseTtlSeconds: LEASE_TTL } : {}),

@@ -1097,17 +1097,27 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       events.dispose()
       // **不等也要发出去**（2026-08-23 审查抓的）：没有内核会话时走的是同步 `close()`，此前连 `stopAll` / MCP 全关 / 定时器都没动——
       // 子 agent、团队成员、MCP 服务器全成孤儿。这里 fire-and-forget：能收多少收多少，不让退出卡住
-      for (const f of 收摊们) void Promise.resolve().then(f).catch(() => undefined)
-      void sessions.stopAll().catch(() => undefined)
+      const 收摊done = 收摊们.map((f) => Promise.resolve().then(f).catch(() => undefined))
+      // **db.close() 要等会话收摊完**（审查 debug G2）：`stopAll()` 是异步的,它停每段会话时会发 `exited`,
+      // 而 exited 的 attach 回调要写库。此前 `db.close()` 紧跟在 fire-and-forget 的 stopAll 后同步执行,
+      // stopAll 稍后发的 exited 撞上已关的库 → 「database not open」在一个没人接的异步回调里抛 → 主进程崩。
+      // 把关库延到这些收尾都 settle 之后;远端连接/网关是同步的,照旧立刻断。
+      const 会话done = sessions.stopAll().catch(() => undefined)
       // 对话内核也要收（审查 debug H1）：run_code 用过的内核不在 SessionManager 里,
       // 同步 close 分支此前完全漏掉它——zeromq socket 不关会 SIGABRT
-      void 对话的内核.收全部().catch(() => undefined)
-      void mcp池.全关().catch(() => undefined)
+      const 内核done = 对话的内核.收全部().catch(() => undefined)
+      const mcpdone = mcp池.全关().catch(() => undefined)
       // **退出时把连接断干净**：留着的 SSH socket 会让进程不肯退
       remoteConnections.closeAll()
       // 网关也要关(审查 debug H10):否则 server 不关、unix socket 文件留在 runtimeDir 里越积越多
       网关?.关掉()
-      db.close()
+      void Promise.allSettled([...收摊done, 会话done, 内核done, mcpdone]).then(() => {
+        try {
+          db.close()
+        } catch {
+          /* 已经关了或从没开过——退出路径不为收尾报错 */
+        }
+      })
     },
 
     /**

@@ -391,13 +391,32 @@ export class RunStore {
   /** 最近的在前——项目面板的历史栏要的就是这个顺序。 */
   listByProject(
     projectId: string,
-    opts: { sessionId?: string; limit?: number } = {},
+    opts: { sessionId?: string; limit?: number; after?: string } = {},
   ): RunSummary[] {
-    const where = opts.sessionId ? `project_id = ? AND session_id = ?` : `project_id = ?`
-    const args: unknown[] = opts.sessionId ? [projectId, opts.sessionId] : [projectId]
+    const 子句: string[] = ["project_id = ?"]
+    const args: unknown[] = [projectId]
+    if (opts.sessionId) {
+      子句.push("session_id = ?")
+      args.push(opts.sessionId)
+    }
+    /**
+     * **游标分页(审查 debug F9)**:此前 `after` 被接了却从不使用,永远回第一页。
+     * 排序是 `started_at DESC, id DESC`,所以 keyset 条件是「排在游标那条之后」——
+     * `started_at` 更早,或同刻而 id 更小。游标是上一页最后一条 run 的 id;查不到就当没有游标
+     * (响亮地退回首页而不是抛,分页游标失效不该让列表整个打不开)。
+     */
+    if (opts.after) {
+      const 锚 = this.db
+        .prepare(`SELECT started_at, id FROM runs WHERE id = ?`)
+        .get(opts.after) as { started_at: string; id: string } | undefined
+      if (锚) {
+        子句.push("(started_at < ? OR (started_at = ? AND id < ?))")
+        args.push(锚.started_at, 锚.started_at, 锚.id)
+      }
+    }
     const limit = opts.limit ?? 200
     const rows = this.db
-      .prepare(`SELECT * FROM runs WHERE ${where} ORDER BY started_at DESC, id DESC LIMIT ?`)
+      .prepare(`SELECT * FROM runs WHERE ${子句.join(" AND ")} ORDER BY started_at DESC, id DESC LIMIT ?`)
       .all(...args, limit) as RunRow[]
     return rows.map(toRun)
   }

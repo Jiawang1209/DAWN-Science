@@ -581,7 +581,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         DAWN_CONFIG: configPath,
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
-        ...(dawnOptions.noModelsBase ? {} : { DAWN_MODELS_JSON: modelsPath }),
+        // 给模型基底时一并跳过凭证守卫(审查 debug G7:拆成独立开关后,e2e 要显式带上它,
+        // 保持「有模型基底 = 跳守卫」这条既有行为一字不差)
+        ...(dawnOptions.noModelsBase ? {} : { DAWN_MODELS_JSON: modelsPath, DAWN_SKIP_CREDENTIAL_GATE: "1" }),
         // **外部 CLI 的配置也要隔离**：不指的话会去读开发机真实的 ~/.codex，
         // 那正是这份文件开头明令禁止的暗管道（2026-08-09 加模型自动发现时捅的洞）
         DAWN_CLI_HOME: join(dir, "cli-home"),

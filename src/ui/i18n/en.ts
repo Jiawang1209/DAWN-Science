@@ -1261,4 +1261,5 @@ export const EN: Readonly<Record<string, string>> = {
   "删掉 MCP 服务器「{0}」？": "Remove MCP server “{0}”?",
   "从全局配置里移除它;这一屏加进来的可以再加回来。": "Removes it from the global config; anything added on this screen can be added back.",
   "确认删掉": "Yes, remove it",
+  "微信通知": "WeChat notifications",
 }

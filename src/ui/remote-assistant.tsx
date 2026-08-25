@@ -209,7 +209,8 @@ export function RemoteAssistantView({
         <h2 id="ra-notify" className="ra-card-title">{t("通知")}</h2>
         <p className="hint">{t("这几件事发生时，推一条到微信（不只绑着的那段，所有会话都算）。")}</p>
         {通知 ? (
-          <ul className="ra-toggles">
+          // group + 平台名（审查 debug J5）：飞书卡有一组一字不差的开关，不区分的话读屏/自动化认不出哪组是哪个
+          <ul className="ra-toggles" role="group" aria-label={t("微信通知")}>
             {(
               [
                 ["done", t("任务跑完（超过 60 秒的）")],
@@ -403,7 +404,7 @@ function 飞书卡({
       <div className="ra-feishu-notify">
         <h3 className="panel-title">{t("飞书通知")}</h3>
         {通知 ? (
-          <ul className="ra-toggles">
+          <ul className="ra-toggles" role="group" aria-label={t("飞书通知")}>
             {(
               [
                 ["done", t("任务跑完（超过 60 秒的）")],

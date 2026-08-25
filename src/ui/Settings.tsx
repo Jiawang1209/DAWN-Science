@@ -292,6 +292,8 @@ export function AppearancePanel() {
    */
   const [色格式, 设色格式] = useState<"hex" | "rgb">("hex")
   const [已复制, 设已复制] = useState(false)
+  // 复制失败要出声（审查 debug J4：files.tsx 同动作会说，这里此前只 console.error——剪贴板被拒时人以为复制成了）
+  const [复制出错, 设复制出错] = useState<string | undefined>(undefined)
   const 色值 = 色格式 === "hex" ? accent : hex转三元组(accent)
   const [色草稿, 设色草稿] = useState<string | undefined>(undefined)
   const 解色 = (v: string): string | undefined => (isHex(v.trim()) ? v.trim().toLowerCase() : 三元组转hex(v))
@@ -324,9 +326,14 @@ export function AppearancePanel() {
   })
   const 复制色值 = () =>
     void navigator.clipboard.writeText(色值).then(() => {
+      设复制出错(undefined)
       设已复制(true)
       setTimeout(() => 设已复制(false), 1200)
-    }).catch((e: unknown) => console.error("[accent] 复制失败：", e))
+    }).catch((e: unknown) => {
+      // 出声，不只 console：剪贴板被拒（焦点不在窗口）时，人以为粘出来的是这个色值
+      设复制出错(tf("复制不了：{0}", e instanceof Error ? e.message : String(e)))
+      setTimeout(() => 设复制出错(undefined), 2400)
+    })
 
   return (
     <Section>
@@ -472,8 +479,8 @@ export function AppearancePanel() {
               <复制图标 />
             </Button>
             {/* 悬上去就说清三件事；复制完换成「已复制」。role=status 让读屏也听到 */}
-            <span className="accent-tip" role="status" aria-live="polite">
-              {已复制 ? t("已复制") : 悬着 || 聚焦着 ? t("可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式") : ""}
+            <span className={`accent-tip${复制出错 ? " caveat" : ""}`} role="status" aria-live="polite">
+              {复制出错 ?? (已复制 ? t("已复制") : 悬着 || 聚焦着 ? t("可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式") : "")}
             </span>
           </span>
           </div>

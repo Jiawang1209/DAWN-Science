@@ -873,7 +873,7 @@ export class NativeRuntime implements AgentRuntime {
     // 过同一道 write 判据补上——不存在的能力不该看起来存在。
     const 门于插件 = this.插件门包装(spec)
     const office工具组 = (this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []).map(门于插件)
-    const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable()) : []).map(门于插件)
+    const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable(), spec.sessionId) : []).map(门于插件)
     const memory工具组 =
       this.opts.memoryEnable && this.opts.memoryDeps
         ? memoryTools(spec.workspace, this.opts.memoryEnable(), this.opts.memoryDeps())

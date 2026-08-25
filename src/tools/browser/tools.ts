@@ -93,7 +93,8 @@ export function 净化(v: unknown): unknown {
   }
 }
 
-export function browser工具定义(workspace: string): { 族: string; 名: string; 工具: Office工具定义[] }[] {
+export function browser工具定义(workspace: string, 会话?: string): { 族: string; 名: string; 工具: Office工具定义[] }[] {
+  // 会话 id 让每段会话用自己的活跃标签,不互相串页面(审查 debug E6)
   const 浏览: Office工具定义[] = [
     {
       name: "browser_open",
@@ -105,10 +106,10 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       },
       execute: async (args) => {
         if (args.new_tab) {
-          const t = await 开标签(String(args.url))
+          const t = await 开标签(String(args.url), 会话)
           return { content: `已在新标签 ${t.id} 打开 ${t.page.url()}\n标题：${await t.page.title()}` }
         }
-        const page = await 要页面()
+        const page = await 要页面(会话)
         await page.goto(String(args.url), { waitUntil: "domcontentloaded", timeout: 默认超时 })
         return { content: `已打开 ${page.url()}\n标题：${await page.title()}` }
       },
@@ -122,13 +123,13 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       },
       execute: async (args) => {
         if (args.action === "list") {
-          const 列 = 列标签()
+          const 列 = 列标签(会话)
           if (列.length === 0) return { content: "没有开着的标签。" }
           return { content: 列.map((t) => `${t.active ? "* " : "  "}${t.id}  ${t.url}`).join("\n") }
         }
         const id = String(args.id ?? "")
-        if (args.action === "switch") return { content: 切标签(id) ? `已切到 ${id}` : `没有标签 ${id}` }
-        return { content: (await 关标签(id)) ? `已关 ${id}` : `没有标签 ${id}` }
+        if (args.action === "switch") return { content: 切标签(id, 会话) ? `已切到 ${id}` : `没有标签 ${id}` }
+        return { content: (await 关标签(id, 会话)) ? `已关 ${id}` : `没有标签 ${id}` }
       },
     },
     {
@@ -136,7 +137,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       description: "后退一页。",
       parameters: {},
       execute: async () => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         await page.goBack({ waitUntil: "domcontentloaded", timeout: 默认超时 }).catch(() => {})
         return { content: `现在在 ${page.url()}` }
       },
@@ -146,7 +147,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       description: "刷新当前页。",
       parameters: {},
       execute: async () => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         await page.reload({ waitUntil: "domcontentloaded", timeout: 默认超时 })
         return { content: `已刷新 ${page.url()}` }
       },
@@ -159,7 +160,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         ms: { type: "integer", description: "没给 selector 时干等的毫秒数（≤10000）" },
       },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         if (args.selector) {
           await page.waitForSelector(String(args.selector), { timeout: 默认超时 })
           return { content: `出现了：${args.selector}` }
@@ -173,7 +174,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       description: "浏览器状态：开没开、几个标签、当前 URL。",
       parameters: {},
       execute: async () => {
-        const s = 状态()
+        const s = 状态(会话)
         return {
           content: s.open
             ? `开着（${s.channel}）· ${s.tabs} 个标签 · 当前 ${s.activeUrl || "（空标签）"}`
@@ -202,7 +203,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         max_links: { type: "integer", description: "最多列几条链接（默认 40）" },
       },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         const maxT = Math.min(Number(args.max_text ?? 8000), 40_000)
         const maxL = Math.min(Number(args.max_links ?? 40), 200)
         const d = await page.evaluate(
@@ -237,7 +238,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         max: { type: "integer", description: "最多列几个（默认 60，上限 200）" },
       },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         const max = Math.min(Math.max(Number(args.max ?? 60), 1), 200)
         const 列 = await page.evaluate((maxN: number) => {
           const out: string[] = []
@@ -276,7 +277,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       description: "点击一个元素（CSS 选择器，browser_elements 会给现成的）。",
       parameters: { selector: { type: "string", required: true, description: "CSS 选择器" } },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         await page.click(String(args.selector), { timeout: 默认超时 })
         await page.waitForLoadState("domcontentloaded").catch(() => {})
         return { content: `点了 ${args.selector}\n现在在 ${page.url()}` }
@@ -292,7 +293,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         submit: { type: "boolean", description: "打完按回车" },
       },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         const sel = String(args.selector)
         if (args.clear) await page.fill(sel, String(args.text), { timeout: 默认超时 })
         else {
@@ -308,7 +309,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       description: "按一个键（Enter / Tab / Escape / ArrowDown …）。",
       parameters: { key: { type: "string", required: true, description: "键名" } },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         await page.keyboard.press(String(args.key))
         return { content: `按了 ${args.key}` }
       },
@@ -318,7 +319,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
       description: "在页面上下文执行一段 JS，返回值净化成 JSON。snapshot/elements 不够用时的精确手段。",
       parameters: { code: { type: "string", required: true, description: "JS 表达式或语句（其返回值会被带回）" } },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         const r = await page.evaluate((code: string) => {
           // eslint-disable-next-line no-eval
           return eval(code)
@@ -336,7 +337,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         full_page: { type: "boolean", description: "整页长图（默认视口）" },
       },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         const 目录 = join(workspace, ".dawn", "screenshots")
         mkdirSync(目录, { recursive: true })
         const 名 = `${new Date().toISOString().replace(/[:.]/g, "-")}.png`
@@ -353,7 +354,7 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         save_as: { type: "string", description: "存成的相对路径（默认按 URL 尾段取名，落工作区根）" },
       },
       execute: async (args) => {
-        const page = await 要页面()
+        const page = await 要页面(会话)
         const url = String(args.url)
         const resp = await page.request.get(url, { timeout: 30_000 })
         if (!resp.ok()) throw new Error(`下载失败：HTTP ${resp.status()} ${url}`)

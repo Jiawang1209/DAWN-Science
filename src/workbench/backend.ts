@@ -3498,6 +3498,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
       sessions.setArchived(sessionId, archived)
       记一次会话?.(archived ? "archive" : "unarchive", rec.projectId, sessionId)
+      // **归档了绑着它的 IM 通道要出声 + 解会话绑定**(审查 debug F5):否则下一条微信/飞书消息
+      // 静默落进新会话,上下文断了却没人说一声。只处理归档(不是取消归档);通道各自判「是不是绑的这一段」。
+      if (archived) {
+        await 微信.会话归档了(sessionId).catch(() => {})
+        await 飞书.会话归档了(sessionId).catch(() => {})
+      }
       return {}
     },
 

@@ -148,6 +148,8 @@ export function gitBranch(cwd: string | undefined): string | undefined {
 /* ── 目录锁(dsh :344-419):锁文件带 pid,先探存活再看 mtime ── */
 
 const STALE_LOCK_MS = 10_000
+/** pid 存活时的持锁上限(审查 debug C8):超过它即使 pid 活着也当残留——记忆操作毫秒级,不该持锁这么久 */
+const 持锁上限MS = 60_000
 const LOCK_TIMEOUT_MS = 5_000
 const LOCK_RETRY_MS = 25
 const 已持锁 = new Set<string>()
@@ -160,9 +162,12 @@ function 锁过期(lockPath: string): boolean {
       if (typeof owner.pid === "number") {
         try {
           process.kill(owner.pid, 0) // 信号 0 = 只探测存活
-          return false
+          // **pid 存活也要有 mtime 上限**(审查 debug C8):记忆锁内操作是毫秒级的,
+          // 若一把锁持有超过这个上限,几乎必然是崩溃残留 + pid 被系统复用给了别的进程——
+          // 旧实现「pid 存活即有效」完全短路了 mtime 兜底,残留锁永久有效,该目录的记忆写入永久失败。
+          return Date.now() - info.mtimeMs > 持锁上限MS
         } catch {
-          return true // 持有者已死(断电/中断残留)
+          return true // 持有者已死(断电/中断残留),或别的用户的进程(EPERM)——都当 stale
         }
       }
     } catch {

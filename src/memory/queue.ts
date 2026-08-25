@@ -32,15 +32,26 @@ export class SuggestionQueue {
   constructor(private readonly file: string) {}
 
   private readAll(): 建议条[] {
+    let text: string
     try {
-      return readFileSync(this.file, "utf8")
-        .split("\n")
-        .filter((l) => l.length > 0)
-        .map((l) => JSON.parse(l) as 建议条)
+      text = readFileSync(this.file, "utf8")
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code === "ENOENT") return []
       throw e
     }
+    // **逐行解析,坏行跳过**(审查 debug C6):文件是纯文本 JSONL,人手编辑/外部工具截断后
+    // 若整体 JSON.parse 抛,会让 memory_propose、待确认区、采纳全部不可用且无恢复路径。
+    // 一行损坏不该拖垮整个队列——跳过它,其余照读(store 侧对同类损坏有 drift guard,队列侧此前一条没有)。
+    const 出: 建议条[] = []
+    for (const l of text.split("\n")) {
+      if (!l.trim()) continue
+      try {
+        出.push(JSON.parse(l) as 建议条)
+      } catch {
+        /* 坏行跳过 */
+      }
+    }
+    return 出
   }
 
   private writeAll(entries: 建议条[]): void {
@@ -72,9 +83,9 @@ export class SuggestionQueue {
     return withLock(dirname(this.file), () => {
       const entries = this.readAll()
       const n = 归一(正)
-      const 旧 = entries.find(
-        (e) => e.target === target && (归一(e.content) === n || 归一(e.content).includes(n) || n.includes(归一(e.content))),
-      )
+      // **只按完全相等去重**(审查 debug C5):旧实现用「互相包含」,把「用 uv 管环境,禁 conda,
+      // 数据只读」这类更丰富的新建议当成旧短句「用 uv 管环境」的重复,只 hits+1、内容整段丢弃。
+      const 旧 = entries.find((e) => e.target === target && 归一(e.content) === n)
       if (旧) {
         旧.hits += 1
         旧.lastSeen = now

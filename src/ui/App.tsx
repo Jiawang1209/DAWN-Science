@@ -757,10 +757,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setVariables(undefined)
       return
     }
+    // 陈旧守卫(I4):快切两会话时,A 的变量回来晚了不许覆盖 B 的面板。切 sessionId → effect 重跑 → cleanup 作废上一发
+    let 作废 = false
     client
       .get<Exclude<VariablesState, undefined>>("listVariables", { sessionId })
-      .then(setVariables)
+      .then((v) => { if (!作废) setVariables(v) })
       .catch(fail)
+    return () => { 作废 = true }
   }, [client, 在看概览, sessionId])
 
   /**
@@ -813,10 +816,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setEnvironment(undefined)
       return
     }
+    // 陈旧守卫(I4):同变量,A 的环境快照回来晚了不许覆盖 B
+    let 作废 = false
     client
       .get<Exclude<EnvironmentState, undefined>>("getEnvironment", { sessionId })
-      .then(setEnvironment)
+      .then((v) => { if (!作废) setEnvironment(v) })
       .catch(fail)
+    return () => { 作废 = true }
   }, [client, 在看概览, sessionId])
 
   /**
@@ -855,6 +861,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const [filePath, setFilePath] = useState<string | undefined>(undefined)
   const [fileContent, setFileContent] = useState<FileContent | undefined>(undefined)
+  /**
+   * readFile 的陈旧守卫(审查 debug I2)。**先点大文件再点小文件**时,大文件的
+   * readFile 后回来会顶着小文件的名字把内容覆盖上去——名字是 B、内容是 A,在说谎。
+   * 每次发 readFile 领一张递增票,回来只在票还是最新时才落内容。openFile 与
+   * 切树记忆两处共用这一张票(它们改的是同一个 filePath/fileContent)。
+   */
+  const 读票 = useRef(0)
 
   /**
    * 列一层目录。**失败要抛出去**——`DirNode` 接住之后显示原因，
@@ -921,7 +934,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ? { projectId, path }
           : undefined
       if (!去哪读) return
-      client.get<FileContent>("readFile", 去哪读).then(setFileContent).catch(fail)
+      const 票 = ++读票.current
+      client.get<FileContent>("readFile", 去哪读)
+        .then((c) => { if (票 === 读票.current) setFileContent(c) })
+        .catch(fail)
     },
     [client, projectId, 文件所在],
   )
@@ -1429,6 +1445,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 作者报的「点了没反应」，实情多半是「点了，失败了，但那句话在屏幕另一头」。
    */
   const [switchProblem, setSwitchProblem] = useState<string | undefined>(undefined)
+  // 换会话就清掉上一段的换模型报错(审查 debug I5):它语义上属于某个会话,
+  // 但摆在 composer 上是全局的——不清的话,A 换模型失败的那句 ⚠ 会挂到 B 的输入框上。
+  useEffect(() => {
+    setSwitchProblem(undefined)
+  }, [sessionId])
 
   /**
    * pi 认识的全部 provider（2026-08-10）。**「我能配谁」，不是「我配过谁」**。
@@ -2681,7 +2702,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setFilePath(m.selected)
       setFileContent(undefined)
       const 去哪读 = 文件所在 ? { connectionId: 文件所在.connectionId, path: m.selected } : projectId ? { projectId, path: m.selected } : undefined
-      if (去哪读) client.get<FileContent>("readFile", 去哪读).then(setFileContent).catch(fail)
+      if (去哪读) {
+        const 票 = ++读票.current
+        client.get<FileContent>("readFile", 去哪读)
+          .then((c) => { if (票 === 读票.current) setFileContent(c) })
+          .catch(fail)
+      }
     } else {
       setFilePath(undefined)
       setFileContent(undefined)

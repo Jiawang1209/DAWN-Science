@@ -22,6 +22,7 @@ function 假世界() {
   const 秘密 = new Map<string, string>()
   const 听众 = new Set<(u: SessionUpdate) => void>()
   const 全听 = new Set<(u: SessionUpdate) => void>()
+  const 钉住的 = new Set<string>()
   const tasks: TaskSummary[] = []
   const 写了: { sessionId: string; data: string }[] = []
   const 中止了: string[] = []
@@ -59,14 +60,14 @@ function 假世界() {
     events: {
       onUpdate: (cb) => (听众.add(cb), () => 听众.delete(cb)),
       onAnyUpdate: (cb) => (全听.add(cb), () => 全听.delete(cb)),
-      pin: () => {},
-      unpin: () => {},
+      pin: (id) => void 钉住的.add(id),
+      unpin: (id) => void 钉住的.delete(id),
     },
     ops: () => ops,
     defaultAgentId: () => "native-1",
     whereIs: () => undefined,
   }
-  return { deps, 设置, 秘密, 听众, 全听, tasks, 写了, 中止了, 答了 }
+  return { deps, 设置, 秘密, 听众, 全听, 钉住的, tasks, 写了, 中止了, 答了 }
 }
 
 const 等 = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -194,6 +195,80 @@ describe("飞书通道", () => {
     expect(w.答了).toEqual([{ sessionId: sid, requestId: "r1", optionId: "o1" }])
     sent = await s.发出的()
     expect(JSON.stringify(sent)).toContain("放行")
+    ch.stop()
+  })
+
+  it("审查 debug D2:关掉权限通知 = 不推**也不设待答**,回「同意」不放行没见过的询问", async () => {
+    const w = 假世界()
+    const ch = new FeishuChannel(w.deps)
+    直接绑好(w)
+    ch.setNotifySettings({ permission: false })
+    ch.start()
+    await 等(100)
+    await s.发来("先建会话", { messageId: "p0" })
+    await 等(400)
+    const sid = w.设置.get("feishu.sessionId")!
+    for (const cb of [...w.全听]) {
+      cb({
+        type: "snapshot",
+        sessionId: sid,
+        snapshot: { pendingPermission: { requestId: "危险", title: "想跑 rm -rf", options: [{ optionId: "allow", name: "允许", kind: "allow_once" }] } },
+      } as unknown as SessionUpdate)
+    }
+    await 等(200)
+    const 之前 = (await s.发出的()).filter((x) => x.kind === "text").length
+    await s.发来("好", { messageId: "p1" })
+    await 等(400)
+    // 没推权限询问(text 没多一条「想跑」),且「好」没有放行——answerPermission 没被调
+    expect(w.答了).toHaveLength(0)
+    const 之后 = await s.发出的()
+    expect(JSON.stringify(之后)).not.toContain("想跑 rm")
+    // 「好」得到的是「现在没有在等你点头的事」,不是放行
+    expect(JSON.stringify(之后.slice(之前))).not.toContain("放行")
+    ch.stop()
+  })
+
+  it("审查 debug D5:解绑清 sessionId 并 unpin,换人绑定不落进前一个人的会话", async () => {
+    const w = 假世界()
+    const ch = new FeishuChannel(w.deps)
+    直接绑好(w)
+    ch.start()
+    await 等(100)
+    await s.发来("甲的私密话", { messageId: "j1" })
+    await 等(400)
+    const 甲会话 = w.设置.get("feishu.sessionId")!
+    expect(w.钉住的.has(甲会话)).toBe(true)
+    ch.stop()
+    await ch.unbind()
+    // sessionId 清了、unpin 了
+    expect(w.设置.get("feishu.sessionId")).toBeUndefined()
+    expect(w.钉住的.has(甲会话)).toBe(false)
+    // 乙换号绑上(直接绑好 = 新凭证),start 不会读到残留 sessionId
+    直接绑好(w)
+    const ch2 = new FeishuChannel(w.deps)
+    ch2.start()
+    await 等(100)
+    await s.发来("我是新扫码的乙", { messageId: "y1" })
+    await 等(400)
+    // 乙的话进的是**新建**会话,不是甲的 s1
+    expect(w.写了.at(-1)!.sessionId).not.toBe(甲会话)
+    expect(w.写了.at(-1)!.data).toBe("我是新扫码的乙")
+    ch2.stop()
+  })
+
+  it("审查 debug D12:非 text 消息在去重前不回信,WS 重投同 messageId 只回一次", async () => {
+    const w = 假世界()
+    const ch = new FeishuChannel(w.deps)
+    直接绑好(w)
+    ch.start()
+    await 等(100)
+    await s.发来("", { messageId: "IMG-1", messageType: "image" })
+    await 等(300)
+    // WS 重连重投同一条
+    await s.发来("", { messageId: "IMG-1", messageType: "image" })
+    await 等(300)
+    const 提示条数 = (await s.发出的()).filter((x) => x.kind === "text" && String(x.text).includes("只看文字")).length
+    expect(提示条数).toBe(1)
     ch.stop()
   })
 

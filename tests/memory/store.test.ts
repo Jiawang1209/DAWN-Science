@@ -96,6 +96,49 @@ describe("记忆存储核心", () => {
     expect(s.entries("memory")).toHaveLength(1)
   })
 
+  describe("审查 debug 修复(2026-08-25)", () => {
+    it("#1 去重保留分支作用域:main 已有,dev 采纳同句不被误判为重复", () => {
+      const 根 = 临时()
+      const ws = 临时()
+      const s = new MemoryStore(根)
+      expect(s.add("key", "端口 8080", { workspace: ws, branches: ["main"] }).ok).toBe(true)
+      const r = s.add("key", "端口 8080", { workspace: ws, branches: ["dev"] })
+      expect(r.duplicate).not.toBe(true)
+      expect(r.ok).toBe(true)
+      expect(s.entries("key", { workspace: ws })).toHaveLength(2)
+      // 同分支同句仍判重
+      expect(s.add("key", "端口 8080", { workspace: ws, branches: ["main"] }).duplicate).toBe(true)
+    })
+
+    it("#2 正文含 § 被拒,不劈成两条", () => {
+      const s = new MemoryStore(临时())
+      const r = s.add("memory", "步骤一\n§\n步骤二")
+      expect(r.ok).toBe(false)
+      expect(String(r.message)).toContain("§")
+      expect(s.entries("memory")).toHaveLength(0)
+    })
+
+    it("#3 盖戳只剥纯时间戳,带文字的方括号标签保留", () => {
+      expect(盖戳("[2024-03-05 组会] 决定用基线年龄")).toContain("组会")
+      // 纯日期与日期时间仍被剥(程序盖今天)
+      expect(盖戳("[2020-01-01] 旧")).not.toContain("2020")
+      expect(盖戳("[2020-01-01 09:30] 旧")).not.toContain("2020")
+    })
+
+    it("#4 分支作用域只认参数:正文以 [branch:] 开头不劫持;显式 branches 不被覆盖", () => {
+      // 正文里的 [branch:dev] 字面量被剥,不当作用域
+      expect(parseEntryBranches(盖戳("[branch:dev] 这是讲解"))).toBeNull()
+      // 显式 main 生效,不被正文里的 dev 覆盖
+      expect(parseEntryBranches(盖戳("[branch:dev] 文字", ["main"]))).toEqual(["main"])
+    })
+
+    it("#14 正文冒充的 [id:] 被剥,不泄进上下文", () => {
+      const 出 = 盖戳("[id:aabbccdd] [2020-01-01] 旧条目")
+      expect(出).not.toContain("[id:")
+      expect(出).toMatch(/^\[\d{4}-\d{2}-\d{2}\] 旧条目$/)
+    })
+  })
+
   it("匹配纪律:多条命中报歧义不动手;0 条如实说没有", () => {
     const 根 = 临时()
     const s = new MemoryStore(根)

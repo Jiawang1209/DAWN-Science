@@ -52,7 +52,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 小时 {1} 分": "{0}h {1}m",
   "正在连接本地后端…": "Connecting to the local backend…",
   "连接失败，已重试 {0} 次": "Connection failed after {0} attempts",
-  "连接断开，正在重试（第 {0} / {1} 次）：{2}": "Disconnected, retrying ({0} of {1}): {2}",
   "删除会话：{0}": "Delete chat: {0}",
   "还没有选中项目": "No project selected",
   "配置里还没有可用的 agent——先去设置里加一个": "No usable agent in the config — add one in settings first",
@@ -1249,4 +1248,8 @@ export const EN: Readonly<Record<string, string>> = {
   "添加飞书机器人": "Add Feishu bot",
   "飞书通知": "Feishu notifications",
   "飞书绑定二维码": "Feishu binding QR code",
+
+  // 审查 debug 修复新增文案
+  "算不出差异：{0}": "Could not compute the diff: {0}",
+  "连接断开（第 {0} / {1} 次）：{2}": "Disconnected (attempt {0} / {1}): {2}",
 }

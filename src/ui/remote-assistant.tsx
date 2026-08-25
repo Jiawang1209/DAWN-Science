@@ -208,8 +208,12 @@ export function RemoteAssistantView({
                     checked={通知[k]}
                     onChange={(e) => {
                       const v = e.target.checked
+                      const 旧 = 通知
                       设通知({ ...通知, [k]: v })
-                      setNotify({ [k]: v }).then(设通知).catch((err: unknown) => 设出错(err instanceof Error ? err.message : String(err)))
+                      setNotify({ [k]: v }).then(设通知).catch((err: unknown) => {
+                        设通知(旧) // 审查 debug J8:失败回滚,不然屏显开而后端关
+                        设出错(err instanceof Error ? err.message : String(err))
+                      })
                     }}
                   />
                   <span>{文}</span>
@@ -267,6 +271,7 @@ function 飞书卡({
         const s = await load()
         if (停) return
         设状态(s)
+        设出错(undefined) // 审查 debug J7:轮询成功要清错,否则瞬时抖动后红字永久留
         计时 = setTimeout(问, s.state === "logging_in" ? 1_000 : 5_000)
       } catch (e) {
         if (停) return
@@ -382,8 +387,12 @@ function 飞书卡({
                     checked={通知[k]}
                     onChange={(e) => {
                       const v = e.target.checked
+                      const 旧 = 通知
                       设通知({ ...通知, [k]: v })
-                      setNotify({ [k]: v }).then(设通知).catch((err: unknown) => 设出错(err instanceof Error ? err.message : String(err)))
+                      setNotify({ [k]: v }).then(设通知).catch((err: unknown) => {
+                        设通知(旧) // 审查 debug J8:失败回滚,不然屏显开而后端关
+                        设出错(err instanceof Error ? err.message : String(err))
+                      })
                     }}
                   />
                   <span>{文}</span>

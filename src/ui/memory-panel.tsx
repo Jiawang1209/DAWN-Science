@@ -259,15 +259,15 @@ export function MemoryPanel({
                     <span className="memory-entry-ops">
                       {看归档 ? (
                         /* 归档页只有转正——归档本身就是「不删」的去处,再给删除就自相矛盾 */
-                        <Button variant="ghost" size="sm" onClick={() => 直写("promote", { match: e.slice(0, 60) })}>
+                        <Button variant="ghost" size="sm" onClick={() => 直写("promote", { match: e })}>
                           {t("移回主记忆")}
                         </Button>
                       ) : (
                         <>
-                          <Button variant="ghost" size="sm" onClick={() => 直写("archive", { match: e.slice(0, 60) })}>
+                          <Button variant="ghost" size="sm" onClick={() => 直写("archive", { match: e })}>
                             {t("收进归档")}
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => 直写("remove", { match: e.slice(0, 60) })}>
+                          <Button variant="ghost" size="sm" onClick={() => 直写("remove", { match: e })}>
                             {t("抹掉这条")}
                           </Button>
                         </>

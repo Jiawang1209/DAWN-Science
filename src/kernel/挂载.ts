@@ -236,4 +236,23 @@ export class 对话内核 {
     }
     return { 收了, 没收掉 }
   }
+
+  /**
+   * 现在有没有活着的对话内核（审查 debug H1）。退出时 `needsGracefulShutdown`
+   * 要认它——run_code 用过的内核不进 SessionManager.bound,旧的存活判断看不见它,
+   * 于是退出走同步 close 分支,zeromq socket 一次没关 → `Napi::Error` + SIGABRT。
+   */
+  有活内核(): boolean {
+    return this.表.size > 0
+  }
+
+  /**
+   * 收掉所有对话的内核（审查 debug H1）。退出收摊调它——否则 python/R 进程与
+   * 每台 5 个 ZMQ 端口一直留到进程被杀。逐台收,收不掉的吞掉(退出路径不该因一台卡住)。
+   */
+  async 收全部(): Promise<void> {
+    for (const 对话 of new Set([...this.表.values()].map((k) => k.对话))) {
+      await this.收(对话).catch(() => {})
+    }
+  }
 }

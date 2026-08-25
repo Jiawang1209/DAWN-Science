@@ -311,7 +311,10 @@ export function AppearancePanel() {
   useEffect(() => {
     if (!悬着 && !聚焦着) return
     const 听 = (e: KeyboardEvent) => {
-      if (e.key === "Shift") {
+      // **焦点在输入框里时,Shift 是打字不是切格式**(审查 debug J1):`#`(Shift+3)与
+      // 每个大写 A–F 都会先发一次 Shift keydown,旧实现据此翻转格式并清空草稿 →
+      // 「颜色值」框根本打不进 HEX。只在悬停色卡(未聚焦输入框)时才用 Shift 切 hex/rgb。
+      if (e.key === "Shift" && !(document.activeElement instanceof HTMLInputElement)) {
         设色格式((f) => (f === "hex" ? "rgb" : "hex"))
         设色草稿(undefined)
       }

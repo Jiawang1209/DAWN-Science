@@ -61,11 +61,16 @@ describe("凭证库 · 基本读写", () => {
     const s = new CredentialStore({ file: newFile(), safeStorage: working })
     s.set("ds", "sk-secret")
     expect(s.configured()).toEqual(["ds"])
-    // 钥匙串里别的秘密（ssh 密码、微信 token）不算 provider（2026-08-23 作者截图抓的：它们曾出现在「模型服务」里）
+    // 钥匙串里带 `<域>:` 前缀的秘密都不算 provider（审查 debug F1：曾漏 feishu/vision/mcp，
+    // 冒进「模型服务」列表还能被误删）——凡带冒号一律排除
     s.set("ssh:conn-1", "pw")
     s.set("weixin:botToken", "tok")
+    s.set("feishu:appSecret", "sec")
+    s.set("vision:apiKey", "vk")
+    s.set("mcp:context7:API_KEY", "mk")
     expect(s.configured()).toEqual(["ds"])
     expect(s.get("ssh:conn-1")).toBe("pw")
+    expect(s.get("feishu:appSecret")).toBe("sec")
     expect(JSON.stringify(s.configured())).not.toContain("sk-secret")
   })
 })

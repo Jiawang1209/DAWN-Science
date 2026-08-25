@@ -2,7 +2,7 @@
  * 建议队列(hits 去重)与待装技能(校验/批准/拒绝)——2026-08-25,
  * 学自 dsh-memory-evolve review.js(enqueueSuggestion)与 skills.js。
  */
-import { mkdtempSync, existsSync } from "node:fs"
+import { mkdtempSync, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
@@ -23,6 +23,23 @@ describe("建议队列", () => {
     expect(q.list()).toHaveLength(0)
     // take 不存在的 id → undefined,队列不动
     expect(q.take("没有这个")).toBeUndefined()
+  })
+
+  it("C5 更丰富的建议不被短建议吞掉(只按完全相等去重)", () => {
+    const q = new SuggestionQueue(join(mkdtempSync(join(tmpdir(), "q-")), "SUGGESTIONS.jsonl"))
+    q.propose("memory", "用 uv 管环境", "偏好")
+    q.propose("memory", "用 uv 管环境,禁 conda,数据只读", "更完整")
+    expect(q.list()).toHaveLength(2) // 两条独立,不互相吞
+  })
+
+  it("C6 坏 JSON 行不炸整个队列", () => {
+    const f = join(mkdtempSync(join(tmpdir(), "q-")), "SUGGESTIONS.jsonl")
+    const q = new SuggestionQueue(f)
+    q.propose("memory", "好条目", "x")
+    // 人手/外部工具塞一行坏 JSON
+    writeFileSync(f, readFileSync(f, "utf8") + "{截断的坏行\n")
+    expect(() => q.list()).not.toThrow()
+    expect(q.list().some((e) => e.content === "好条目")).toBe(true)
   })
 
   it("不同轨同内容不去重;威胁内容拒收", () => {

@@ -118,11 +118,19 @@ export class CredentialStore {
 
   /**
    * 已配置凭证的 provider 列表。**只返回 id，不返回值。**
-   * 钥匙串里还住着别的秘密（`ssh:<连接>` 的密码、`weixin:botToken`）——它们不是模型服务，
-   * 列出去会在「模型服务」里冒出一排「ssh:conn-… 没有模型」（2026-08-23 作者截图抓的）
+   *
+   * 钥匙串里还住着一堆**不是模型服务**的秘密，它们都带 `<域>:` 前缀:
+   * `ssh:<连接>` · `weixin:botToken` · `feishu:appSecret` · `vision:apiKey` ·
+   * `mcp:<服务器>:<变量>`。这些若冒进设置的「模型服务」列表(2026-08-23 作者截图抓的),
+   * 不但显示成「xxx 没有模型」,点「移除」还会**真删掉飞书密钥 / MCP 密钥 / 视觉 key**
+   * (审查 debug F1:2026-08-23 只补了 ssh/weixin,08-25 新增的三类没跟上)。
+   *
+   * **provider id 一定不含冒号**(pi 的 provider 名是 `deepseek`/`openai` 这类),
+   * 所以判据反过来更稳:**带 `:` 前缀的一律不是模型服务**——将来再加带前缀的秘密自动排除,
+   * 不用记得回这里补名单。
    */
   configured(): string[] {
-    return Object.keys(this.read().entries).filter((k) => !/^(ssh|weixin):/.test(k))
+    return Object.keys(this.read().entries).filter((k) => !k.includes(":"))
   }
 }
 

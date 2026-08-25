@@ -140,6 +140,7 @@ export function ReviewPanel({
 }) {
   const [选中, 设选中] = useState<string | undefined>(undefined)
   const [差异, 设差异] = useState<差异结果 | undefined>(undefined)
+  const [算差异出错, 设算差异出错] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     onReload()
@@ -148,10 +149,17 @@ export function ReviewPanel({
   useEffect(() => {
     if (!选中) return
     设差异(undefined)
+    设算差异出错(undefined)
     let 作废 = false
-    void loadDiff(选中).then((d) => {
-      if (!作废) 设差异(d)
-    })
+    void loadDiff(选中)
+      .then((d) => {
+        if (!作废) 设差异(d)
+      })
+      // **取不到 diff 要出声**（审查 debug J2）:不 catch 的话文件已删/git 报错时永久停在
+      // 「正在算差异」的转圈上,外加一条 unhandled rejection。失败必须出声(规格 7.5)。
+      .catch((e: unknown) => {
+        if (!作废) 设算差异出错(e instanceof Error ? e.message : String(e))
+      })
     return () => {
       作废 = true
     }
@@ -270,7 +278,9 @@ export function ReviewPanel({
               </span>
             ) : null}
           </header>
-          {!差异 ? (
+          {算差异出错 ? (
+            <p className="caveat">{tf("算不出差异：{0}", 算差异出错)}</p>
+          ) : !差异 ? (
             <Loader label={t("正在算差异")} inline />
           ) : 差异.diff === "" ? (
             // **空 diff 是一个答案**，不是出错：内容没变（比如只改了权限）

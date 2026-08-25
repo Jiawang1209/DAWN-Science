@@ -154,9 +154,15 @@ const LOCK_TIMEOUT_MS = 5_000
 const LOCK_RETRY_MS = 25
 const 已持锁 = new Set<string>()
 
-function 锁过期(lockPath: string): boolean {
+/**
+ * 判这把锁是不是残留。**返回它判定时看到的 mtimeMs**(不是 boolean)——
+ * 调用方据此做 compare-and-delete:只删 mtime 没变过的那把(审查 debug C13)。
+ * `null` = 不是残留 / 已经没了,不该删。
+ */
+function 锁残留于(lockPath: string): number | null {
   try {
     const info = statSync(lockPath)
+    const 残留 = (是: boolean) => (是 ? info.mtimeMs : null)
     try {
       const owner = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: number }
       if (typeof owner.pid === "number") {
@@ -165,17 +171,17 @@ function 锁过期(lockPath: string): boolean {
           // **pid 存活也要有 mtime 上限**(审查 debug C8):记忆锁内操作是毫秒级的,
           // 若一把锁持有超过这个上限,几乎必然是崩溃残留 + pid 被系统复用给了别的进程——
           // 旧实现「pid 存活即有效」完全短路了 mtime 兜底,残留锁永久有效,该目录的记忆写入永久失败。
-          return Date.now() - info.mtimeMs > 持锁上限MS
+          return 残留(Date.now() - info.mtimeMs > 持锁上限MS)
         } catch {
-          return true // 持有者已死(断电/中断残留),或别的用户的进程(EPERM)——都当 stale
+          return 残留(true) // 持有者已死(断电/中断残留),或别的用户的进程(EPERM)——都当 stale
         }
       }
     } catch {
       // 无 pid / 不可解析 → 按 mtime 判
     }
-    return Date.now() - info.mtimeMs > STALE_LOCK_MS
+    return 残留(Date.now() - info.mtimeMs > STALE_LOCK_MS)
   } catch {
-    return false
+    return null
   }
 }
 
@@ -202,7 +208,17 @@ export function withLock<T>(dir: string, fn: () => T): T {
       if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e
     }
     if (拿到) break
-    if (锁过期(lockPath)) rmSync(lockPath, { force: true })
+    // **compare-and-delete**(审查 debug C13):判残留与删除之间有窗口——别的进程可能刚把这把
+    // 残留锁删了、又建了一把新的自己的锁。若我们无条件 rm,就把人家刚拿到的活锁删了,两个进程一起进。
+    // 只删「mtime 与判定时一致」的那把:别人重建过的话 mtime 变了,我们不动它。
+    const 残留mtime = 锁残留于(lockPath)
+    if (残留mtime !== null) {
+      try {
+        if (statSync(lockPath).mtimeMs === 残留mtime) rmSync(lockPath, { force: true })
+      } catch {
+        /* 已经被别人清了 */
+      }
+    }
     if (Date.now() >= 死线) throw new Error("记忆:等锁超时(另一个进程占着记忆目录)")
     睡(LOCK_RETRY_MS)
   }
@@ -287,7 +303,14 @@ export class MemoryStore {
     return parseEntries(this.读(this.定位(target, ctx, true)).text)
   }
 
-  /** 追加一条(append-only,免 drift guard):扫描 → 盖戳 → 去重 → 落盘。 */
+  /**
+   * 追加一条:扫描 → 盖戳 → 去重 → 落盘。
+   *
+   * **走 drift guard,和 updateBody/remove 一样**(审查 debug C7)。此前这里号称
+   * 「append-only 免 drift」,可它其实是 `parseEntries`→整文件 `原子写` 的**全量重写**:
+   * 文件被手工改成非规范形态时,旧路径不备份、直接把它归一重写掉——drift 信号(有人动过这个文件)
+   * 被 add 悄悄抹平,`.bak` 永远不出现。全量重写就该受同一道 guard 管。
+   */
   add(target: 记忆轨, content: string, ctx?: 轨上下文): 写结果 {
     let loc: { dir: string; file: string }
     try {
@@ -304,9 +327,12 @@ export class MemoryStore {
     if (险) return { ok: false, message: 险 }
     const 戳好 = 盖戳(正, target === "key" ? ctx?.branches : undefined)
     return withLock(loc.dir, () => {
-      const { text, size } = this.读(loc)
-      if (text === "" && size > 0) return { ok: false, message: "记忆:文件读不出来,拒绝写入以免抹掉历史" }
-      const entries = parseEntries(text)
+      const r = this.重载(loc)
+      if (r.kind === "drift") {
+        return { ok: false, message: `记忆:${loc.file} 被手工改过,不敢整文件重写;原文已备份到 ${r.backup},请手动处理` }
+      }
+      if (r.kind === "read-failed") return { ok: false, message: "记忆:文件读不出来,拒绝写入以免抹掉历史" }
+      const entries = r.entries
       // 去重:剥 [id:] 与日期戳、**保留分支作用域**再比(审查 debug#1)——
       // 同一句话跨日期判重,而 main/dev 上的同句不误判。
       const 目标键 = 去重键(戳好)

@@ -72,7 +72,7 @@ describe("记忆存储核心", () => {
     expect(s.add("key", "没给工作区").ok).toBe(false)
   })
 
-  it("drift guard:人手改过的文件,改/删拒绝并备份;append 照常", () => {
+  it("drift guard:人手改过的文件,改/删/加**一律**拒绝并备份(审查 debug C7)", () => {
     const 根 = 临时()
     const s = new MemoryStore(根)
     s.add("memory", "第一条")
@@ -81,7 +81,13 @@ describe("记忆存储核心", () => {
     const r = s.updateBody("memory", "第一条", "改成这样")
     expect(r.ok).toBe(false)
     expect(String(r.message)).toContain(".bak.")
-    expect(s.add("memory", "追加不受 drift 影响").ok).toBe(true)
+    // **add 也走 drift guard**:它其实是全文件重写,drift 时旧实现会把手改内容归一抹平、
+    // .bak 永不出现。现在 add 与改/删同样拒绝并备份。
+    const a = s.add("memory", "追加时若文件已漂移就不该悄悄重写")
+    expect(a.ok).toBe(false)
+    expect(String(a.message)).toContain(".bak.")
+    // 手改的那段内容还原样留在文件里,没被 add 归一抹掉
+    expect(readFileSync(f, "utf8")).toContain("人手涂改")
   })
 
   it("归档:先归档后删除;转正回主轨;归档文件不与主轨混", () => {

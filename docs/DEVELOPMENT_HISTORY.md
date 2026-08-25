@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修：记忆域（C 系列）全部收口（debug 分支）
+
+- **Type**: fix
+- **Motivation**: 承接全库审查，清记忆域剩余中低危。记忆是作者最看重、也是全项目唯一无成熟开源对照的一格，数据正确性优先。核实发现 C5/C6/C8 早批（`3fb3a59`）已修、只是台账表列没同步；其余 C7/Cx/C9-C13 逐条修完。
+- **What**: **C7** `add` 号称 append-only 免 drift，实为整文件重写——改为与 updateBody/remove 同走 drift guard，文件被手改时备份并拒，不再悄悄归一抹掉手改内容。**Cx** 采纳建议选「归档」原为 `add 到主轨→archive` 两步非原子（archive 按前 40 字匹配，撞多条即失败，而条目已在主轨会被注入）——新增 `MemoryStore.addArchived` 一步直落归档轨，backend `memoryResolve` 改用它。**C9** 归档轨（archive/promote）补 drift guard，手工整理过的归档不再被归一重排。**C10** `memory_list` 的 `limit` 传非数字时 `Number→NaN`、`slice(0,NaN)` 静默返回空却报「共 N 条」——NaN 退回默认 50。**C11** 批准技能时 `renameSync` 撞已存目录抛 ENOTEMPTY（EXDEV 回退还静默合并）——目录存在即响亮拒。**C12** frontmatter 逐行正则把 YAML 块标量 `|`/`>` 当字面量、描述丢成一个竖线——块标量指示符一律拒收。**C13** 清残留锁存在「判定与删除之间别人重建了锁」的窄窗口——改 compare-and-delete（只删 mtime 未变的那把）。
+- **Impact**: 无破坏性 API 变更（`addArchived` 为新增方法）；一处契约变更——`add` 现在遇 drift 会拒绝（此前静默重写），对应单测已更新。记忆域 C1-C14 + Cx 共 15 条全部修完。
+- **Verification**: 单测 2236 全绿（新增回归：C7 drift 时 add 也拒并备份、C9 手改归档后 archive/promote 拒并备份、C10 非数字 limit、C11 撞目录不合并、C12 块标量拒收、Cx addArchived 只落归档不污染主轨且去重）；typecheck 干净。
+
 ### 2026-08-25 — 全库审查续修批 4/6：资源泄漏与挂死 + 会话切换竞态（debug 分支）
 
 - **Type**: fix

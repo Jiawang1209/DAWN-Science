@@ -33,6 +33,7 @@ export function RemoteAssistantView({
   loadNotify,
   setNotify,
   feishu,
+  问,
 }: {
   load: () => Promise<WeixinStatus>
   startLogin: () => Promise<unknown>
@@ -55,6 +56,8 @@ export function RemoteAssistantView({
     loadNotify: () => Promise<NotifySettings>
     setNotify: (patch: Partial<NotifySettings>) => Promise<NotifySettings>
   }
+  /** 解绑前问一句（审查 debug J13：解绑清凭证、断连接，是不可逆动作）。走全局那个确认框 */
+  问?: ((req: { title: string; detail: React.ReactNode; confirmLabel: string }) => Promise<"confirm" | "alt" | "cancel">) | undefined
 }) {
   const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
   useEffect(() => {
@@ -94,6 +97,20 @@ export function RemoteAssistantView({
       .then(() => load().then(设状态))
       .catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
   }
+
+  // 解绑前先问一句（审查 debug J13）。没装 `问` 就退回直接做，不拦死
+  const 解绑 = () =>
+    做(async () => {
+      if (问) {
+        const 答 = await 问({
+          title: t("解绑微信？"),
+          detail: <span className="hint">{t("会清掉凭证、断开连接;要再用得重新扫码绑定。")}</span>,
+          confirmLabel: t("确认解绑"),
+        })
+        if (答 !== "confirm") return
+      }
+      await unbind()
+    })
 
   return (
     <div className="skills-page ra-page">
@@ -169,7 +186,7 @@ export function RemoteAssistantView({
                   {t("重新扫码")}
                 </Button>
               ) : null}
-              <Button variant="text" size="sm" className="danger" onClick={做(unbind)}>
+              <Button variant="text" size="sm" className="danger" onClick={解绑()}>
                 {t("解绑微信")}
               </Button>
             </div>
@@ -226,7 +243,7 @@ export function RemoteAssistantView({
         )}
       </section>
 
-      <飞书卡 {...feishu} sessions={sessions} openSession={openSession} />
+      <飞书卡 {...feishu} sessions={sessions} openSession={openSession} 问={问} />
     </div>
   )
 }
@@ -246,6 +263,7 @@ function 飞书卡({
   setNotify,
   sessions,
   openSession,
+  问,
 }: {
   load: () => Promise<FeishuStatus>
   startLogin: () => Promise<unknown>
@@ -256,6 +274,7 @@ function 飞书卡({
   setNotify: (patch: Partial<NotifySettings>) => Promise<NotifySettings>
   sessions: readonly { sessionId: string; title: string }[]
   openSession: (sessionId: string) => void
+  问?: ((req: { title: string; detail: React.ReactNode; confirmLabel: string }) => Promise<"confirm" | "alt" | "cancel">) | undefined
 }) {
   const [状态, 设状态] = useState<FeishuStatus | undefined>(undefined)
   const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
@@ -291,6 +310,19 @@ function 飞书卡({
       .then(() => load().then(设状态))
       .catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
   }
+  // 解绑前先问一句（审查 debug J13）
+  const 解绑 = () =>
+    做(async () => {
+      if (问) {
+        const 答 = await 问({
+          title: t("解绑飞书？"),
+          detail: <span className="hint">{t("会清掉凭证、断开连接;要再用得重新扫码绑定。")}</span>,
+          confirmLabel: t("确认解绑"),
+        })
+        if (答 !== "confirm") return
+      }
+      await unbind()
+    })
   return (
     <section className="ra-card" aria-labelledby="ra-feishu">
       <h2 id="ra-feishu" className="ra-card-title">
@@ -353,7 +385,7 @@ function 飞书卡({
                 {t("重新扫码")}
               </Button>
             ) : null}
-            <Button variant="text" size="sm" className="danger" onClick={做(unbind)}>
+            <Button variant="text" size="sm" className="danger" onClick={解绑()}>
               {t("解绑飞书")}
             </Button>
           </div>

@@ -1252,4 +1252,13 @@ export const EN: Readonly<Record<string, string>> = {
   // 审查 debug 修复新增文案
   "算不出差异：{0}": "Could not compute the diff: {0}",
   "连接断开（第 {0} / {1} 次）：{2}": "Disconnected (attempt {0} / {1}): {2}",
+
+  // 审查 debug J12/J13:删 MCP 服务器 / 解绑通道的确认框
+  "解绑微信？": "Unbind WeChat?",
+  "解绑飞书？": "Unlink Feishu?",
+  "会清掉凭证、断开连接;要再用得重新扫码绑定。": "This clears the credentials and disconnects; you'll need to scan the QR code again to reconnect.",
+  "确认解绑": "Yes, unbind",
+  "删掉 MCP 服务器「{0}」？": "Remove MCP server “{0}”?",
+  "从全局配置里移除它;这一屏加进来的可以再加回来。": "Removes it from the global config; anything added on this screen can be added back.",
+  "确认删掉": "Yes, remove it",
 }

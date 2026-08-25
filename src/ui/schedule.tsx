@@ -439,7 +439,13 @@ export function ScheduleView({ actions }: { actions?: ScheduleActions | undefine
           <ul className="skill-group">
             {筛过的记录.map((r) => (
               <li key={r.id} className="skill-row schedule-run-row">
-                <Row className="skill-row-main archived-row-main" onClick={() => r.sessionId && actions.openSession(r.sessionId)}>
+                <Row
+                  className="skill-row-main archived-row-main"
+                  // 没有 sessionId 的（skipped / 还在排队的）点开无处可去——**别装成能点的按钮**（审查 debug J14）:
+                  // 此前它照样是按钮态,点了什么都不发生。disabled 后不可点、不聚焦,视觉上也不再伪装可点。
+                  disabled={!r.sessionId}
+                  onClick={() => r.sessionId && actions.openSession(r.sessionId)}
+                >
                   <p className="skill-name">
                     <span className={`tag tag-${r.status === "succeeded" ? "model" : r.status === "failed" ? "bad" : "manual"}`}>{状态名(r.status)}</span>
                     <span className="skill-name-text">{数据.schedules.find((d) => d.id === r.scheduleId)?.name ?? r.scheduleId}</span>

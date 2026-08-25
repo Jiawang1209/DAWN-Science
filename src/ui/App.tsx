@@ -3716,6 +3716,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              */
             <McpView
               load={载MCP}
+              问={问一句}
               onTest={(name) =>
                 client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
                   "testMcpServer",
@@ -3745,6 +3746,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   body: (
             <RemoteAssistantView
               load={载微信状态}
+              问={问一句}
               startLogin={() => client.get("weixinStartLogin", {})}
               submitCode={(code) => client.get("weixinSubmitCode", { code })}
               cancelLogin={() => client.get("weixinCancelLogin", {})}

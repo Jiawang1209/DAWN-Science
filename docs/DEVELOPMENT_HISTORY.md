@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修批 4/6：资源泄漏与挂死 + 会话切换竞态（debug 分支）
+
+- **Type**: fix
+- **Motivation**: 承接全库审查（九路精读 agent，`docs/superpowers/2026-08-25-全库审查-发现清单.md`）。首批约 46 条高危已合入 main，本轮清 H 系列（内核/ACP/团队/子 agent 的资源泄漏与永久挂死）与 I 系列（会话切换竞态）——都属于「长时间跑或特定快速操作才显现」，不影响功能与安全，但会拖垮长会话。
+- **What**: **H2** 内核进程意外死亡（OOM/段错误）转发为 `exited`，`run_code` 不再永挂（`kernel/channel.ts` 加 `onExit`、`runtime/kernel.ts` 订阅）。**H4** 内核懒起 TOCTOU：`kernel/挂载.ts`+`acp/kernel.ts` 记住"起中"promise，并发同语言不再各起一台泄漏孤儿。**H5** ACP `收进程` SIGTERM 挡不住（`trap '' TERM`）时宽限后升级 SIGKILL。**H6** 子 agent/团队成员改 `detached` 自成进程组、`杀掉后代` 整组杀，孙进程（npm test/python）不成孤儿。**H7** 子 agent 补 10 分钟墙钟上界。**H8** 内核 stdout 加 drain，绕过 ipykernel 直写 fd1 的输出不再攒满管道写死内核。**H9** ACP 握手/开会话失败时收掉已起活的适配器进程树。**H10** 网关退出关 socket 删文件（`wiring.ts` close 补 `网关?.关掉()`）。**H11** PTY 会话退出清订阅表。**H12** 后台 `踢一下` 加 catch 不炸进程。**I2-I5** 会话切换竞态：readFile 后回覆盖（票据守卫）、账本/用量渗漏（身份守卫）、变量/环境面板串会话（cleanup 作废）、换模型报错挂错会话（切会话清零）。
+- **Impact**: 无破坏性改动，全部为加固；`收进程` 签名多一个可选 `graceMs`（默认 3s）；`杀掉后代` 从 `subagent/executor.ts` 导出供 `team/runner.ts` 复用。H 系列除 H1（对话内核回收，⏸ 待架构决策）外全部清完。
+- **Verification**: 单测 2232 全绿（新增回归：H4 并发只起一台、H5 `trap TERM` 进程被 SIGKILL 收掉、H7 墙钟超时中止、I3 加载器身份守卫 5 条）；typecheck 干净。累计约 62 条已修配回归测试。
+
 ### 2026-08-25 — 飞书通道：远程助理第二格（学自 dsh-feishu / dsh-im）
 
 - **Type**: feat

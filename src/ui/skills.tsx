@@ -807,6 +807,7 @@ export function McpView({
   onSecret,
   onAdd,
   onRemove,
+  问,
 }: {
   load?: (() => Promise<MCP装载>) | undefined
   onTest?: ((name: string) => Promise<{ ok: boolean; error?: string; tools: { name: string }[] }>) | undefined
@@ -815,6 +816,8 @@ export function McpView({
   /** 粘一段 JSON 加一台。**解析在服务端做**——密钥的值在那里就被丢掉了 */
   onAdd?: ((json: string) => Promise<{ name: string; needsSecrets: string[] }>) | undefined
   onRemove?: ((name: string) => Promise<void>) | undefined
+  /** 删前问一句（审查 debug J12：删技能/子 agent 都问，删 MCP 服务器此前不问）。走全局那个确认框 */
+  问?: ((req: { title: string; detail: React.ReactNode; confirmLabel: string }) => Promise<"confirm" | "alt" | "cancel">) | undefined
 } = {}) {
   const [数据, 设数据] = useState<MCP装载 | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
@@ -1097,7 +1100,21 @@ export function McpView({
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => void onRemove(s.name).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
+                      onClick={() =>
+                        void (async () => {
+                          // 删前问一句（审查 debug J12）：不可逆动作与删技能/子 agent 同一种问法
+                          if (问) {
+                            const 答 = await 问({
+                              title: tf("删掉 MCP 服务器「{0}」？", s.name),
+                              detail: <span className="hint">{t("从全局配置里移除它;这一屏加进来的可以再加回来。")}</span>,
+                              confirmLabel: t("确认删掉"),
+                            })
+                            if (答 !== "confirm") return
+                          }
+                          await onRemove(s.name)
+                          重取()
+                        })().catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
+                      }
                     >
                       {tf("删掉 {0}", s.name)}
                     </Button>

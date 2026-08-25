@@ -102,6 +102,8 @@ export function AgentBrowserPane({
                 <button
                   type="button"
                   className="agent-visit"
+                  // aria-label 而不是只靠 title（审查 debug J15）:title 读屏念不可靠,这颗按钮的可名此前只有子里那串时间
+                  aria-label={t("重新访问（你自己的会话，不是 agent 看到的那份）")}
                   title={t("重新访问（你自己的会话，不是 agent 看到的那份）")}
                   onClick={() => onRevisit(h.url)}
                 >

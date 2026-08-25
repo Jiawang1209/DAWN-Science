@@ -242,6 +242,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const sidebarWidth = useStore($sidebarWidth)
   const sidebarCollapsed = useStore($sidebarCollapsed)
   /**
+   * 视口宽（审查 debug I8）：文件面板「两栏还是上下摞」的判据依赖 `坞的上界`,而它读 `window.innerWidth`。
+   * 没有这个监听,窗口拉窄后组件不重渲染——坞被上界夹到放不下两栏了,判据却还按存储的宽给两栏,挤成一团。
+   */
+  const [视口宽, 设视口宽] = useState(() => (typeof window === "undefined" ? 0 : window.innerWidth))
+  useEffect(() => {
+    const on = () => 设视口宽(window.innerWidth)
+    window.addEventListener("resize", on)
+    return () => window.removeEventListener("resize", on)
+  }, [])
+  /**
    * **换语言 = 整棵树重挂**（2026-08-13）。
    *
    * `t()` 是普通函数调用，不是 hook——它读的是 `$lang.get()`，
@@ -371,6 +381,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // **焦点在终端里就让开**（审查 debug I6）：终端是一整块键盘面,Ctrl+P/Ctrl+K 是 shell 的绑定
+      // (上一条历史 / kill-line)。此前全局 handler 照抢,结果 shell 收到 ^P 的同时右坞还弹出来抢焦点。
+      if ((e.target as Element | null)?.closest?.(".term-host")) return
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "p") {
         e.preventDefault()
         点开房客("files")
@@ -1606,7 +1619,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         title: tf("删除会话「{0}」？", 名),
         detail: <>{t("会停掉它的进程，并删掉这个会话与它的对话记录。")}</>,
         safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在坞的「概览」里。")}</>,
-        confirmLabel: "删除会话",
+        confirmLabel: t("删除会话"),
         onConfirm: () => {
           client
             .get<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }>("deleteSession", { sessionId: s.sessionId })
@@ -3716,6 +3729,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              */
             <McpView
               load={载MCP}
+              问={问一句}
               onTest={(name) =>
                 client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
                   "testMcpServer",
@@ -3745,6 +3759,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   body: (
             <RemoteAssistantView
               load={载微信状态}
+              问={问一句}
               startLogin={() => client.get("weixinStartLogin", {})}
               submitCode={(code) => client.get("weixinSubmitCode", { code })}
               cancelLogin={() => client.get("weixinCancelLogin", {})}
@@ -4315,7 +4330,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 * 「拉得很窄却还是两栏」这种自相矛盾的状态，
                 * 而人选的那个数本来就是宽度。
                 */
-              造文件面板(rightDockWidth >= RIGHT_DOCK_两栏起点)
+              // 两栏判据用**有效宽度**(夹到坞此刻能占到的上界),不是存储的原值(审查 debug I8):
+              // 窗口太窄时上界会把它压到 720 以下,那就该上下摞,而不是硬挤两栏
+              造文件面板(Math.min(rightDockWidth, 坞的上界(视口宽 || undefined, 侧栏此刻多宽)) >= RIGHT_DOCK_两栏起点)
             )}
           </RightDock>
         ) : null}

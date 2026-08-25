@@ -50,6 +50,14 @@ export function TerminalPane({
   const fit = useRef<import("@xterm/addon-fit").FitAddon | undefined>(undefined)
   /** 已经写进 xterm 的片段数。**不是字符数**——片段是原子的 */
   const written = useRef(0)
+  /**
+   * **chunks 的最新值放 ref**（审查 debug J17）。挂载那个 effect 只跑一次,里面的异步 `import`
+   * 完成后调的 `flush()` 闭包捕获的是**首帧的 chunks**(那时还是空的)。秒结束的命令,输出全在
+   * import 那段窗口里到达——首帧闭包看不到,而每次 chunks 变触发的 `[chunks]` flush 又都因终端
+   * 还没就绪早早 return。结果 import 完成后那次 flush 写的是空,终端一片白。让 flush 从 ref 读最新值。
+   */
+  const chunksRef = useRef(chunks)
+  chunksRef.current = chunks
   const inputRef = useRef(onInput)
   /**
    * **换主题时终端要跟着换**（2026-08-11）。
@@ -162,8 +170,9 @@ export function TerminalPane({
   function flush() {
     const t = term.current
     if (!t) return
-    for (let i = written.current; i < chunks.length; i++) t.write(chunks[i]!)
-    written.current = chunks.length
+    const 现 = chunksRef.current // 读最新,不读闭包里可能过时的 chunks（J17）
+    for (let i = written.current; i < 现.length; i++) t.write(现[i]!)
+    written.current = 现.length
   }
 
   // 只写新增的部分。整份重写会让光标位置与滚动全部错乱

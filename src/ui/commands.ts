@@ -118,7 +118,7 @@ const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
 
 /** 中止为什么用不了。**分清是哪一种，笼统写「不可用」等于没说** */
 function abortUnavailable(ctx: CommandContext): string | undefined {
-  if (!ctx.session) return "还没有会话"
+  if (!ctx.session) return t("还没有会话")
   /**
    * **这句话此前是假的**（2026-08-09 · ①-C 修）。
    *
@@ -242,7 +242,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
    */
   out.push({
     id: "view.terminal",
-    title: ctx.dockOpen ? "收起终端" : "打开终端",
+    title: ctx.dockOpen ? t("收起终端") : t("打开终端"),
     group: "视图",
     keywords: "terminal shell 终端 命令行",
     run: () => actions.toggleDock(),

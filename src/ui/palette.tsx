@@ -46,6 +46,9 @@ export function CommandPalette({ commands }: { commands: readonly Command[] }) {
   // ⌘K / Ctrl+K。**挂在 document 上**——它在任何地方都该管用，包括正在打字时
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // 唯一的例外是终端（审查 debug I6）：那里 Ctrl+K 是 shell 的 kill-line,把它抢过来开命令面板
+      // 会让人在终端里删不了行、还莫名弹出面板。焦点在终端里就让开。
+      if ((e.target as Element | null)?.closest?.(".term-host")) return
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
         togglePalette()

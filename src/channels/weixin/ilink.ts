@@ -510,9 +510,23 @@ export function 切段(text: string, limit = 4000): string[] {
   while (rest.length > limit) {
     let cut = rest.lastIndexOf("\n", limit)
     if (cut < limit / 2) cut = limit
+    cut = 避开代理对(rest, cut)
     out.push(rest.slice(0, cut))
     rest = rest.slice(cut).replace(/^\n/, "")
   }
   if (rest) out.push(rest)
   return out
+}
+
+/**
+ * 别把 UTF-16 代理对(emoji 等星光面字符)从中间劈开(审查 debug D13):
+ * `slice(0, cut)` 若正好停在高代理与低代理之间,两半都成了非法码点,发出去是乱码 �。
+ * `cut-1` 处是高代理(0xD800-0xDBFF)就把切点往前挪一位,让整个代理对留给下一段。
+ */
+function 避开代理对(s: string, cut: number): number {
+  if (cut > 0 && cut < s.length) {
+    const c = s.charCodeAt(cut - 1)
+    if (c >= 0xd800 && c <= 0xdbff) return cut - 1
+  }
+  return cut
 }

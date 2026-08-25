@@ -129,6 +129,10 @@ export function realFeishuSdk(): FeishuSdk {
     连接(凭, onMessage, onState) {
       let stopped = false
       let ws: WSClient | undefined
+      // **停了之后的状态回调一律吞掉**(审查 debug D15):WSClient 的 onError/迟到的 catch 可能在
+      // 这条连接已被 stop()、甚至新连接已建起之后才触发 onState("closed"),盖掉新连接的 ready——
+      // 界面显示「断了」实则连着。stopped 之后不再往上报任何状态。
+      const 报状态: typeof onState = (s) => { if (!stopped) onState(s) }
       void (async () => {
         const lark = await 载()
         if (stopped) return
@@ -154,13 +158,13 @@ export function realFeishuSdk(): FeishuSdk {
           appId: 凭.appId,
           appSecret: 凭.appSecret,
           domain: 凭.domain === "lark" ? lark.Domain.Lark : lark.Domain.Feishu,
-          onReady: () => onState("ready"),
-          onReconnecting: () => onState("reconnecting"),
-          onReconnected: () => onState("ready"),
-          onError: () => onState("closed"),
+          onReady: () => 报状态("ready"),
+          onReconnecting: () => 报状态("reconnecting"),
+          onReconnected: () => 报状态("ready"),
+          onError: () => 报状态("closed"),
         })
         await ws.start({ eventDispatcher: dispatcher })
-      })().catch(() => onState("closed"))
+      })().catch(() => 报状态("closed"))
       return {
         stop() {
           stopped = true

@@ -191,11 +191,23 @@ export class WeixinChannel {
    */
   async startLogin(): Promise<void> {
     if (this.login) return
+    // **同步占位,挡并发第二次**(审查 debug D3):此前 `this.login` 在 `await fetchQrCode` 之后才赋值,
+    // 两次几乎同时进来都能越过上面的守卫,各起一条扫码流——cancelLogin 只关一条,孤儿循环仍在写 token。
+    // 与飞书侧同一手法:进门就先占上 login,取到码再把 qrUrl 补上。
+    this.login = { qrUrl: "", step: "wait", message: "正在取二维码…" }
     const client = this.deps.client()
     const 中止 = new AbortController()
     this.登录中止 = 中止
     const token = this.deps.credentials.get(WEIXIN_TOKEN_KEY)
-    let qr = await client.fetchQrCode(token ? [token] : [])
+    let qr: Awaited<ReturnType<typeof client.fetchQrCode>>
+    try {
+      qr = await client.fetchQrCode(token ? [token] : [])
+    } catch (e) {
+      // 取码就失败:清掉占位,别把界面卡在「正在取二维码」上,也让下次点击能重来
+      this.login = { qrUrl: "", step: "failed", message: e instanceof Error ? e.message : String(e) }
+      this.登录中止 = undefined
+      return
+    }
     this.login = { qrUrl: qr.url, step: "wait", message: "用微信扫一扫" }
     void (async () => {
       let 刷新了 = 0
@@ -313,6 +325,11 @@ export class WeixinChannel {
     }
     this.stale = false
     this.lastError = undefined
+    // **清掉与旧账号绑定的临时票**(审查 debug D17):输入票(typing ticket)是按账号发的,
+    // 报过的工具键也属于旧会话——不清的话换个账号绑上会拿旧票去发「正在输入」(对新账号无效),
+    // 报过的工具集也只增不减。它们都随账号走,解绑就该一起清。
+    this.输入票 = undefined
+    this.报过的工具.clear()
   }
 
   /** 把微信接到某段已有会话（界面上挑的，或 `/用 N`） */
@@ -403,8 +420,15 @@ export class WeixinChannel {
         const 字节 = await this.deps.client(this.baseUrl()).downloadMedia(入.media.media, 入.media.aesKeyHex)
         images = [{ from: "bytes", data: 字节.toString("base64"), mimeType: 猜图片类型(字节) }]
       } catch (e) {
-        await this.回(`图片没下下来：${e instanceof Error ? e.message : String(e)}`)
-        return
+        // **图没下下来别把同条消息的文字也一起丢**(审查 debug D16):有文字就出声一句、继续把文字处理完;
+        // 只有图、没文字时才回一句就算了。此前无论有没有文字都直接 return,文字被静默吞掉。
+        const 因 = e instanceof Error ? e.message : String(e)
+        if (text) {
+          await this.回(`(附带的图片没下下来：${因},先按文字回你)`)
+        } else {
+          await this.回(`图片没下下来：${因}`)
+          return
+        }
       }
     } else if (入.media && !text) {
       await this.回(`收到一个${入.media.kind === "voice" ? "语音" : "文件"}，这一版只会看图片和文字。`)

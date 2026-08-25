@@ -44,7 +44,7 @@ import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writ
 import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
 import { FeishuChannel, type FeishuOps } from "../channels/feishu/channel.js"
-import { fakeFeishuSdk, realFeishuSdk } from "../channels/feishu/sdk.js"
+import { fakeFeishuSdk, realFeishuSdk, type FeishuSdk } from "../channels/feishu/sdk.js"
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
 import { 转录成markdown, 导出文件名 } from "../session/export.js"
@@ -1087,8 +1087,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * `DAWN_FAKE_FEISHU=<url>`：e2e / dev:mock 把飞书那头指到假服务器（与 DAWN_FAKE_ILINK 同惯例）。
    */
   const 假飞书 = process.env["DAWN_FAKE_FEISHU"]
+  // **同一个 sdk 实例复用**(审查 debug D8):real SDK 把 create 出的 reaction_id 记在实例内的
+  // Map 里,撤 OnIt 要用它。此前 `sdk()` 每调一次都新建实例,create 记在一个实例、delete 在另一个空 Map 里
+  // 找不到——线上 OnIt 一次都撤不掉(fake 因状态在假服务器上验不出)。记忆化成单实例。
+  let 飞书sdk实例: FeishuSdk | undefined
   const 飞书 = new FeishuChannel({
-    sdk: () => (假飞书 ? fakeFeishuSdk(假飞书) : realFeishuSdk()),
+    sdk: () => (飞书sdk实例 ??= 假飞书 ? fakeFeishuSdk(假飞书) : realFeishuSdk()),
     settings: {
       get: (k) => settings?.get(k),
       set: (k, v, now) => settings?.set(k, v, now),

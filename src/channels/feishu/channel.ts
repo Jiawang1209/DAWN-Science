@@ -101,13 +101,21 @@ export interface FeishuNotifySettings {
 export const FEISHU_NOTIFY_DEFAULT: FeishuNotifySettings = { done: true, error: true, permission: true, quietWhenFocused: true }
 export const FEISHU_DONE_MIN_MS = 60_000
 
-/** 飞书单条上限(dsh-feishu splitText 口径):9000 字,优先按换行切 */
+/**
+ * 飞书单条上限(dsh-feishu splitText 口径):9000 字,优先按换行切。
+ * **口径与微信 `切段` 对齐**(审查 debug D14):换行点落在前半段就退回硬切,不吐零碎小尾巴;
+ * 硬切点避开 UTF-16 代理对(审查 debug D13),别把 emoji 劈成两个非法码点。
+ */
 export function 切段9000(text: string, 上限 = 9000): string[] {
+  if (text.length <= 上限) return [text]
   const 出: string[] = []
   let 余 = text
   while (余.length > 上限) {
     let 切 = 余.lastIndexOf("\n", 上限)
-    if (切 <= 0) 切 = 上限
+    if (切 < 上限 / 2) 切 = 上限
+    // 代理对回退:切点前一位是高代理(0xD800-0xDBFF)就往前挪一位,整对留给下一段
+    const c = 余.charCodeAt(切 - 1)
+    if (切 > 0 && 切 < 余.length && c >= 0xd800 && c <= 0xdbff) 切 -= 1
     出.push(余.slice(0, 切))
     余 = 余.slice(切).replace(/^\n/, "")
   }
@@ -132,8 +140,13 @@ export class FeishuChannel {
     | undefined
   /** 内存去重(持久那份在 settings feishu.seenIds) */
   private readonly 已见 = new Set<string>()
-  /** 正在处理(打了 OnIt 还没收尾)的入站消息:回答送出后好换 DONE */
-  private 处理中消息: string | undefined
+  /**
+   * 正在处理(打了 OnIt 还没收尾)的入站消息:回答送出后好换 DONE。
+   * **是一个集合,不是单槽**(审查 debug D6):两条正经问题几乎同时进会话时,单槽会被后者覆盖——
+   * 前一条的 OnIt 永远撤不掉,而回合结束时又拿后一条去 DONE(它可能还没轮到)。回合结束时把
+   * 集合里所有在飞消息一并收尾(它们都喂进了这一轮),既不漏撤也不错撤。
+   */
+  private readonly 处理中集 = new Set<string>()
 
   constructor(private readonly deps: FeishuDeps) {}
 
@@ -241,6 +254,10 @@ export class FeishuChannel {
     }
     this.stale = false
     this.lastError = undefined
+    // 换账号前把内存态清干净:去重集与在飞的 OnIt 集都属于旧账号(审查 debug D6/D17 同源)
+    this.已见.clear()
+    this.处理中集.clear()
+    this.待答 = undefined
   }
 
   async bindSession(sessionId: string): Promise<void> {
@@ -314,8 +331,8 @@ export class FeishuChannel {
     if (!text) return
     // 收到即打「处理中」;礼貌失败不出声
     await this.表情(入.messageId, "OnIt", "create")
-    // **立即回复类(权限/斜杠)自己收尾,不占处理中单槽**(审查 debug D7):
-    // 它们不进会话,若占用 this.处理中消息 会干扰后续进会话消息的 DONE 收尾。
+    // **立即回复类(权限/斜杠)自己收尾,不进处理中集**(审查 debug D7):
+    // 它们不进会话,若混进 this.处理中集 会在别的消息回合结束时被误 DONE。
     const 答权限 = await this.回答权限(text)
     if (答权限 !== undefined) {
       await this.回(答权限)
@@ -330,14 +347,18 @@ export class FeishuChannel {
         return
       }
     }
-    // 进会话的消息:设单槽,会话最终回答回来时收尾(会话有动静)。
-    // 注:两条正经问题同时在飞时单槽仍会覆盖(审查 debug D6),彻底修需 per-会话串行队列,单列。
-    this.处理中消息 = 入.messageId
+    // 进会话的消息:记进处理中集,会话最终回答回来时把在飞的都收尾(审查 debug D6)
+    this.处理中集.add(入.messageId)
     try {
       const sessionId = await this.确保有会话()
       await this.deps.ops().acquireLease({ sessionId, holder: "user" })
       await this.deps.ops().writeToSession({ sessionId, data: text, as: "user" })
     } catch (e) {
+      // **写会话瞬时失败要能重投**(审查 debug D10):消息在上面已记进「已见」以挡在飞重投,
+      // 但若这里失败(租约抢不到、后端抽风),不撤销的话它就被永久去重丢了(at-most-once)——
+      // 撤回已见,让飞书 WS 的重投能再试一次(at-least-once)。这条也从处理中集里摘掉。
+      this.撤已见(入.messageId)
+      this.处理中集.delete(入.messageId)
       await this.收尾表情(入.messageId, "ERROR")
       throw e
     }
@@ -353,6 +374,12 @@ export class FeishuChannel {
       for (const x of 存) this.已见.add(x)
     }
     this.deps.settings.set("feishu.seenIds", JSON.stringify(存), new Date().toISOString())
+  }
+
+  /** 撤回一条已见(写会话失败时用,让重投可重试)。持久那份一并更新。 */
+  private 撤已见(id: string): void {
+    if (!this.已见.delete(id)) return
+    this.deps.settings.set("feishu.seenIds", JSON.stringify([...this.已见]), new Date().toISOString())
   }
 
   /** 认识的命令回一段话;不认识的回 `undefined`,原样进模型(与微信逐字同源) */
@@ -536,10 +563,11 @@ export class FeishuChannel {
     if (u.item.type !== "turn" || u.item.who !== "agent" || !u.item.final) return
     const text = u.item.text.trim()
     if (text) await this.回(text)
-    // 回答送出去了:把「处理中」换成「完成」
-    if (this.处理中消息) {
-      await this.收尾表情(this.处理中消息, "DONE")
-      this.处理中消息 = undefined
+    // 回答送出去了:把这一轮在飞的每一条都从「处理中」换成「完成」(审查 debug D6:不止最后一条)
+    if (this.处理中集.size) {
+      const 在飞 = [...this.处理中集]
+      this.处理中集.clear()
+      for (const id of 在飞) await this.收尾表情(id, "DONE")
     }
   }
 

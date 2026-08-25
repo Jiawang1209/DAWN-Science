@@ -197,6 +197,21 @@ describe("发消息", () => {
     for (const p of 段) expect(p.length).toBeLessThanOrEqual(4000)
     expect(段.join("\n")).toBe(长)
   })
+
+  it("硬切点不劈开 emoji 代理对(审查 debug D13)", () => {
+    // 无换行、纯 emoji(每个 😀 是一对 UTF-16 代理),硬切必落在 4000 处附近的某对中间
+    const 长 = "😀".repeat(3000) // 6000 个 UTF-16 码元
+    const 段 = 切段(长)
+    expect(段.length).toBeGreaterThan(1)
+    // 每段都不能以孤立的高代理结尾、或以孤立的低代理开头(那就是被劈坏了)
+    for (const p of 段) {
+      const 末 = p.charCodeAt(p.length - 1)
+      const 首 = p.charCodeAt(0)
+      expect(末 >= 0xd800 && 末 <= 0xdbff).toBe(false) // 结尾不是孤立高代理
+      expect(首 >= 0xdc00 && 首 <= 0xdfff).toBe(false) // 开头不是孤立低代理
+    }
+    expect(段.join("")).toBe(长) // 拼回去一字不差
+  })
 })
 
 describe("媒体：AES-128-ECB 往返", () => {

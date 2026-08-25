@@ -165,6 +165,33 @@ describe("飞书通道", () => {
     ch.stop()
   })
 
+  it("审查 debug D6:两条消息几乎同时在飞,回合结束时**两条的 OnIt 都换成 DONE**", async () => {
+    const w = 假世界()
+    const ch = new FeishuChannel(w.deps)
+    直接绑好(w)
+    ch.start()
+    await 等(100)
+    // 两条正经问题先后进来(都进会话),各自打上 OnIt
+    await s.发来("问题一", { messageId: "m-a" })
+    await s.发来("问题二", { messageId: "m-b" })
+    await 等(400)
+    const sid = w.设置.get("feishu.sessionId")!
+    // 会话给出一次最终回答
+    for (const cb of [...w.听众]) {
+      cb({ type: "item", sessionId: sid, item: { type: "turn", who: "agent", final: true, text: "答复" } } as unknown as SessionUpdate)
+    }
+    await 等(300)
+    const sent = await s.发出的()
+    const done了 = (id: string) =>
+      sent.some((x) => x.kind === "reaction" && x.messageId === id && x.emoji === "DONE" && x.action === "create")
+    const 撤OnIt = (id: string) =>
+      sent.some((x) => x.kind === "reaction" && x.messageId === id && x.emoji === "OnIt" && x.action === "delete")
+    // 旧单槽实现:m-a 的 OnIt 永远撤不掉。现在两条都收尾。
+    expect(done了("m-a") && 撤OnIt("m-a")).toBe(true)
+    expect(done了("m-b") && 撤OnIt("m-b")).toBe(true)
+    ch.stop()
+  })
+
   it("斜杠命令:/会话 /用 1 /停;「同意」答最近的权限询问", async () => {
     const w = 假世界()
     const ch = new FeishuChannel(w.deps)
@@ -295,5 +322,27 @@ describe("切段9000", () => {
     const 两段 = 切段9000("甲\n".repeat(5000)) // 10000 字
     expect(两段.length).toBe(2)
     expect(两段[0]!.endsWith("甲")).toBe(true) // 在换行处切,不把字切成两半
+  })
+
+  it("换行点落在前半段就硬切,不吐零碎小尾巴(审查 debug D14)", () => {
+    // 头部有个换行、之后一长段无换行:旧实现会在头部换行处切出一个极短首段
+    const 长 = "标题\n" + "字".repeat(12000)
+    const 段 = 切段9000(长)
+    // 首段不该只有「标题」那么短(硬切退回让首段接近上限)
+    expect(段[0]!.length).toBeGreaterThan(4500)
+    expect(段.join("")).toBe(长) // 硬切点不在换行上,没有换行被吃掉,一字不差
+  })
+
+  it("硬切点不劈开 emoji 代理对(审查 debug D13)", () => {
+    const 长 = "😀".repeat(6000) // 12000 UTF-16 码元,必然跨段硬切
+    const 段 = 切段9000(长)
+    expect(段.length).toBeGreaterThan(1)
+    for (const p of 段) {
+      const 末 = p.charCodeAt(p.length - 1)
+      const 首 = p.charCodeAt(0)
+      expect(末 >= 0xd800 && 末 <= 0xdbff).toBe(false)
+      expect(首 >= 0xdc00 && 首 <= 0xdfff).toBe(false)
+    }
+    expect(段.join("")).toBe(长)
   })
 })

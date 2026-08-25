@@ -90,6 +90,26 @@ describe("记忆存储核心", () => {
     expect(readFileSync(f, "utf8")).toContain("人手涂改")
   })
 
+  it("归档轨也有 drift guard:手改过归档文件后,再归档/转正拒绝并备份(审查 debug C9)", () => {
+    const 根 = 临时()
+    const s = new MemoryStore(根)
+    s.add("memory", "甲")
+    s.add("memory", "乙")
+    s.archive("memory", "甲") // 归档文件里现在有一条
+    const af = join(根, "MEMORY-archive.md")
+    writeFileSync(af, readFileSync(af, "utf8") + "人手在归档里加了注")
+    // 再归档一条 → 要重写归档文件,检测到漂移就拒并备份
+    const r = s.archive("memory", "乙")
+    expect(r.ok).toBe(false)
+    expect(String(r.message)).toContain(".bak.")
+    // 转正也一样
+    const p = s.promote("memory", "甲")
+    expect(p.ok).toBe(false)
+    expect(String(p.message)).toContain(".bak.")
+    // 手改内容原样还在,没被归一抹掉
+    expect(readFileSync(af, "utf8")).toContain("人手在归档里加了注")
+  })
+
   it("归档:先归档后删除;转正回主轨;归档文件不与主轨混", () => {
     const 根 = 临时()
     const s = new MemoryStore(根)

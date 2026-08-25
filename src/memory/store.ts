@@ -433,7 +433,14 @@ export class MemoryStore {
       const 命 = this.命中(r.entries, match)
       if ("error" in 命) return { ok: false, message: 命.error }
       const 原文 = r.entries[命.index]!
-      this.原子写(归loc, [...parseEntries(this.读(归loc).text), 原文])
+      // **归档轨也走 drift guard**(审查 debug C9):归档文件同样是全量重写,人若在归档页手工
+      // 整理过(加注、重排),旧实现直接 parseEntries→归一重写会把那些编辑抹掉。手改过就备份并拒。
+      const 归r = this.重载(归loc)
+      if (归r.kind === "drift") {
+        return { ok: false, message: `记忆:${归loc.file} 被手工改过,不敢动;原文已备份到 ${归r.backup}` }
+      }
+      if (归r.kind === "read-failed") return { ok: false, message: "记忆:归档文件读不出来,拒绝操作" }
+      this.原子写(归loc, [...归r.entries, 原文])
       const next = [...r.entries]
       next.splice(命.index, 1)
       this.原子写(loc, next)
@@ -450,7 +457,13 @@ export class MemoryStore {
       return { ok: false, message: e instanceof Error ? e.message : String(e) }
     }
     return withLock(归loc.dir, () => {
-      const 归条 = parseEntries(this.读(归loc).text)
+      // **归档轨也走 drift guard**(审查 debug C9):转正会重写归档文件,手改过就备份并拒,不悄悄归一
+      const 归r = this.重载(归loc)
+      if (归r.kind === "drift") {
+        return { ok: false, message: `记忆:${归loc.file} 被手工改过,不敢动;原文已备份到 ${归r.backup}` }
+      }
+      if (归r.kind === "read-failed") return { ok: false, message: "记忆:归档文件读不出来,拒绝操作" }
+      const 归条 = 归r.entries
       const 命 = this.命中(归条, match)
       if ("error" in 命) return { ok: false, message: 命.error }
       const 原文 = 归条[命.index]!

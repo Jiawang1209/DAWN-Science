@@ -462,6 +462,13 @@ const envelope = {
  */
 export const SessionUpdateSchema = z.discriminatedUnion("type", [
   z.object({ ...envelope, type: z.literal("item"), item: TranscriptItemSchema }).strict(),
+  /**
+   * **删掉一条 item**（审查 debug F3）。服务端有时会把一条已经推给订阅者的 item 摘掉——
+   * 典型是「只想了一下、还没说话」的那条被并进了新的一条(events.ts `吸收只想没说的`)。
+   * 没有这个事件时,实时流里那条孤立的思考还留在客户端,症状是作者报的「你出现了两次」。
+   * 客户端收到它就按 id 把那条从转录里删掉;快照那一路本来就不含它,所以只补实时流这一条。
+   */
+  z.object({ ...envelope, type: z.literal("dropItem"), id: z.string().min(1) }).strict(),
   z.object({ ...envelope, type: z.literal("bytes"), data: z.string() }).strict(),
   z
     .object({

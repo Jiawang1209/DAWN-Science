@@ -25,6 +25,7 @@ export {
   $terminalTrimmed,
   setItems,
   upsertItem,
+  dropItem,
   appendBytes,
   applySnapshot,
   $kernelInstanceId,

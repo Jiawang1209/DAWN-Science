@@ -638,6 +638,22 @@ describe("思考只出现一处", () => {
     expect(全部[0]!.text).toBe("当前路径下有…")
   })
 
+  it("**吸收时实时流推一条 dropItem 把旧的撤掉**（审查 debug F3：不然客户端「出现两次」）", () => {
+    const h = 定时([1000, 2000, 5000, 6000])
+    h.subscribe("a")
+    const seen = collector(h)
+    // 想 → 调工具 → 收尾（第一条只想没说的 turn 建好了、也推给订阅者了）
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "先看看目录。" })
+    const 首条id = seen.find((u) => u.type === "item")?.type === "item" ? (seen.find((u) => u.type === "item") as Extract<SessionUpdate, { type: "item" }>).item.id : undefined
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "bash", input: {} })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    // 再想 → 开新 turn → 把前面那条并进来 → 该推一条 dropItem
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "念给他。" })
+    const 撤 = seen.filter((u) => u.type === "dropItem") as Extract<SessionUpdate, { type: "dropItem" }>[]
+    expect(撤).toHaveLength(1)
+    expect(撤[0]!.id).toBe(首条id) // 撤的正是第一条(只想没说的)那条
+  })
+
   it("**已经说过话的那条不许被吞** —— 那是模型真的说过的一轮", () => {
     const h = 定时([1000, 2000, 5000])
     h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想" })

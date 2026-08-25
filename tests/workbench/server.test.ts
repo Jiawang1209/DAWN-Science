@@ -323,6 +323,14 @@ describe("WorkbenchServer · 只读模式", () => {
     expect((await s.handle("listProjects", {})).ok).toBe(true)
   })
 
+  it("只读模式下**有副作用的操作也拦**：subscribeSession 会拉起进程/SSH(审查 debug F2)", async () => {
+    const s = new WorkbenchServer(backend(), { readOnly: true })
+    // 它标 mutating:false(不改数据),但有副作用——readOnly 的本意是「只看不动」,该拦
+    const r = await s.handle("subscribeSession", { sessionId: "s1" })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error.code).toBe("invalid_request")
+  })
+
   /**
    * **判据是「标没标 mutating」，不是名字听起来像不像**（T4 换的主语）。
    *

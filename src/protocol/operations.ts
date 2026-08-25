@@ -179,8 +179,14 @@ export const ScheduleSummarySchema = z
 export interface OperationDef {
   request: z.ZodType
   response: z.ZodType
-  /** 是否改变状态。只读操作可在 `readOnly` 模式下放行。 */
+  /** 是否改变**数据状态**（账本、配置、会话记录）。只读操作可在 `readOnly` 模式下放行。 */
   mutating: boolean
+  /**
+   * **有没有数据之外的副作用**（审查 debug F2）：起进程、连 SSH、拉起外部应用。
+   * 它们 `mutating:false`（不改数据），但 readOnly 模式**同样该拦**——readOnly 的本意是
+   * 「只看不动」，一个会连上服务器、起一个进程的操作不该被放进来。缺省 = 无副作用。
+   */
+  sideEffects?: boolean
 }
 
 /**
@@ -377,6 +383,8 @@ export const OPERATIONS = {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
     response: SessionSnapshotSchema,
     mutating: false,
+    // 会拉起会话进程 + 远端 SSH 连接(审查 debug F2):不改数据,但有副作用,readOnly 该拦
+    sideEffects: true,
   },
   unsubscribeSession: {
     request: z.object({ sessionId: z.string().min(1) }),
@@ -589,6 +597,7 @@ export const OPERATIONS = {
       })
       .strict(),
     mutating: false,
+    sideEffects: true, // 起 MCP 服务器进程试连(审查 debug F2)
   },
 
   /**
@@ -2327,6 +2336,7 @@ export const OPERATIONS = {
     /** 系统拒绝时的说明。**打不开要出声**，不是静静地什么都不发生 */
     response: z.object({ problem: z.string().optional() }).strict(),
     mutating: false,
+    sideEffects: true, // 拉起外部应用打开文件(审查 debug F2)
   },
 
   /**
@@ -2618,6 +2628,7 @@ export const OPERATIONS = {
         .strict(),
     ]),
     mutating: false,
+    sideEffects: true, // 探环境要起内核 / 连远端(审查 debug F2)
   },
 
   /**
@@ -2742,4 +2753,15 @@ export function isMutating(name: string): boolean {
   const op = (OPERATIONS as Record<string, OperationDef>)[name]
   if (!op) throw new Error(`未知操作 "${name}"。已注册：${operationNames().join(", ")}`)
   return op.mutating
+}
+
+/**
+ * **readOnly 模式该不该拦这个操作**（审查 debug F2）。readOnly 的本意是「只看不动」——
+ * 不只是不改数据(`mutating`),也不该有起进程 / 连 SSH / 拉起外部应用这类副作用(`sideEffects`)。
+ * 此前只看 `mutating`,于是 subscribeSession 这类会拉起进程的操作在 readOnly 下照样溜过去。
+ */
+export function 只读模式该拦(name: string): boolean {
+  const op = (OPERATIONS as Record<string, OperationDef>)[name]
+  if (!op) throw new Error(`未知操作 "${name}"。已注册：${operationNames().join(", ")}`)
+  return op.mutating || op.sideEffects === true
 }

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修：UI 边角与 i18n（I/J 系列）收口，全表 ☐ 清零（debug 分支）
+
+- **Type**: fix
+- **Motivation**: 承接全库审查，清最后的 UI 竞态/边角（I/J 系列）与 i18n 漏译。先核实真实状态：J1/J2/J3/J7/J8/J10/J11、H3、I1 早批（`46ec926`/`49245eb`/`bfc24fa`/`25e96f0`）已修、表列没同步；其余逐条修完。至此上表全部 ☐ 清零。
+- **What**: **J6**（🔴）空态点开场卡 / 换 agent 时只把文本草稿交给 `onStart`，粘/拖进来还没发的图和文件被静默丢弃——抽出 `开场` helper，让打字发送、开场卡、换 agent 三条路都走同一出口（快照 → 乐观清空 → 失败还原）。**J16** 附件 `@令牌` 换写用 `.replace(串, 串)`，路径里的 `$&`/`$1` 被当替换模式展开——改用替换函数。**J17** 终端挂载 effect 只跑一次，其内异步 `import` 完成后调的 `flush()` 闭包捕获首帧（空）chunks——秒结束命令的输出全丢，终端一片白；改为从 ref 读最新 chunks。**J12/J13** 删 MCP 服务器 / 解绑微信飞书此前无确认（删技能/子 agent 都有）——接全局确认框。**J14** 定时 skipped/queued 行无 sessionId 却是按钮态、点了没反应——`disabled`。**J4** 主题色复制失败只 console——出声。**J5** 微信/飞书通知开关同屏两组一字不差——加 `role=group` + 平台名 aria。**J15** agent 浏览重访按钮只有 title——补 aria-label。**J9** loadNotify 失败吞成 undefined、通知区永停「正在问状态」——加 `通知出错` 态出声。**I6** 焦点在终端里时 Ctrl+P/Ctrl+K 被全局 handler 抢（shell 的上一条历史 / kill-line）——`.term-host` 内让开。**I8** 文件面板两栏判据用存储宽度而非有效宽度、且无 resize 监听——用 `min(存储宽, 坞的上界)` 判定 + 加窗口 resize 监听。**I7/Ji18n** 命令面板三元 title、删会话确认按钮、内核语言徽标 title 漏 `t()`——补齐并加英文文案。
+- **Impact**: 无破坏性变更；`EmptyConversation` 的三条起手路径统一经 `开场` helper；RemoteAssistantView/McpView 新增可选 `问` prop。上表 ☐ 全部清零，仅剩 10 条 ⏸ 待作者决策（A6/A8/A16/B2/E6/F2/F3/F5/G6/H1）。
+- **Verification**: 单测 2248 全绿；新增 en 文案经 i18n 扫描（含「按钮文案无子串关系」的设计契约）验证；typecheck 干净。累计约 105 条已修配回归测试。
+
 ### 2026-08-25 — 全库审查续修：workbench/协议（F）与 electron/存储（G）收口（debug 分支）
 
 - **Type**: fix

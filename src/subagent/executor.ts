@@ -44,7 +44,7 @@ import type { SubagentChildSpec } from "./protocol.js"
  *
  * **Windows 无进程组语义**:退回只杀直接子进程(与 pty.ts 同一条 BACKLOG)。
  */
-function 杀掉后代(child: ChildProcessWithoutNullStreams): void {
+export function 杀掉后代(child: ChildProcessWithoutNullStreams): void {
   const pid = child.pid
   if (pid === undefined) return
   try {

@@ -8,6 +8,7 @@
  * 这一层不认识团队状态——它只跑一轮、把 `call` 交给调用方给的 `onCall` 去答。状态机在 scheduler 里。
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
+import { 杀掉后代 } from "../subagent/executor.js"
 import type { SubagentDefinition } from "../subagent/definitions.js"
 import type { SubagentChildMessage, SubagentChildSpec, SubagentParentReply } from "../subagent/protocol.js"
 import type { ChildCommand, SubagentContext } from "../subagent/executor.js"
@@ -47,7 +48,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
     if (opts.signal?.aborted) return resolve({ ok: false, output: "", error: "开始前已被中止" })
     let child: ChildProcessWithoutNullStreams
     try {
-      child = spawn(cmd.command, cmd.args, { stdio: ["pipe", "pipe", "pipe"], ...(cmd.env ? { env: { ...process.env, ...cmd.env } } : {}) })
+      child = spawn(cmd.command, cmd.args, { stdio: ["pipe", "pipe", "pipe"], ...(process.platform !== "win32" ? { detached: true } : {}), ...(cmd.env ? { env: { ...process.env, ...cmd.env } } : {}) })
     } catch (err) {
       return resolve({ ok: false, output: "", error: `子进程起不来：${err instanceof Error ? err.message : String(err)}` })
     }
@@ -63,13 +64,13 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       resolve(r)
     }
     function onAbort() {
-      child.kill("SIGKILL")
+      杀掉后代(child) // 整组杀:成员起的孙进程(npm test/python)不成孤儿(H6)
       done({ ok: false, output: "", error: "已中止" })
     }
     opts.signal?.addEventListener("abort", onAbort, { once: true })
     const timer = opts.timeoutMs
       ? setTimeout(() => {
-          child.kill("SIGKILL")
+          杀掉后代(child)
           done({ ok: false, output: "", error: `这一轮超过 ${Math.round(opts.timeoutMs! / 60000)} 分钟没结束，已杀掉` })
         }, opts.timeoutMs)
       : undefined

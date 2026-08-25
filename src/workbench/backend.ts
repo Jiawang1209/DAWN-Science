@@ -588,6 +588,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     目标: string
   }
   const 传输们 = new Map<string, 传输记录>()
+  /**
+   * 传输到终态后延时回收(审查 debug F10)。此前 `传输们` 只增不减——每传一个文件留一条,
+   * 长时间跑一堆传输后内存里全是 done/failed 的僵尸记录。保留一小段(客户端还在轮 `transferStatus`,
+   * 要读到最终态),之后删掉。用 unref 定时器,不拦着进程退出。
+   */
+  const 传输保留MS = 60_000
+  const 终结传输 = (id: string) => {
+    const t = setTimeout(() => 传输们.delete(id), 传输保留MS)
+    t.unref?.()
+  }
 
   /**
    * 系统的下载目录。**由主进程注入**（`app.getPath("downloads")`）。
@@ -1130,7 +1140,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 不删的话侧栏上会挂着一行指向死会话的「新任务」，
        * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
        */
-      任务库().removeBySessions([sessionId])
+      // **tasks 未装配时不抛**(审查 debug F13):这一步在 sessions.remove 之后,若 `任务库()` 因未装配
+      // 抛出,会话已经删了、任务清理与目录进废纸篓却没做,留下半完成态。未装配 = 本就没有任务可删,跳过即可。
+      tasks?.removeBySessions([sessionId])
       设会话权限?.(sessionId, undefined)
       /**
        * **账本留着，并且把还剩多少说出来。**
@@ -2833,6 +2845,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           一条.状态 = ac.signal.aborted ? "cancelled" : "failed"
           一条.错 = err instanceof Error ? err.message : String(err)
         })
+        .finally(() => 终结传输(id)) // 终态后延时回收(F10)
       return { transferId: id, name, target: 目标 }
     },
 
@@ -3050,6 +3063,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           // **失败也记**：「它试过往一个只读目录传东西」本身就是事实
           记一次上传?.(connectionId, 目标, 本地大小, 一条.错)
         })
+        .finally(() => 终结传输(id)) // 终态后延时回收(F10)
       return { kind: "started" as const, transferId: id, target: 目标 }
     },
 
@@ -3519,7 +3533,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 而任务是按 sessionId 挂着的（T3-a）。
        */
       const 它的会话 = 全部会话.map((r) => r.id)
-      任务库().removeBySessions(它的会话)
+      tasks?.removeBySessions(它的会话) // tasks 未装配不抛(审查 debug F13):否则删项目半途而废
       const sessionsDeleted = sessions.deleteByProject(projectId)
       const runsDeleted = runs.deleteByProject(projectId)
       projectStore.delete(projectId)

@@ -504,6 +504,66 @@ export class NativeRuntime implements AgentRuntime {
     ]
   }
 
+  /**
+   * 给插件工具（office/browser）的写入路径套一层门（审查 debug B1）。
+   * 工具名 → 它的写路径参数名(按存在顺序取第一个非空)。加插件工具时补这张表。
+   */
+  private 插件门包装(spec: SessionSpec): (d: unknown) => unknown {
+    const gate = this.opts.gate
+    if (!gate) return (d) => d
+    const 写路径参数: Record<string, string[]> = {
+      xlsx_write: ["file_path"],
+      xlsx_edit: ["output_path", "file_path"],
+      xlsx_recalc: ["file_path"],
+      pdf_create: ["destination_path"],
+      pdf_merge: ["output_path"],
+      pdf_split: ["output_dir"],
+      pptx_create: ["destination_path"],
+      pptx_edit: ["output_path"],
+      docx_create: ["destination_path"],
+      docx_edit: ["output_path"],
+      browser_download: ["save_as"],
+    }
+    const 产物 = this.产物登记(spec.sessionId)
+    const 语境 = {
+      workspace: spec.workspace,
+      sessionId: spec.sessionId,
+      ...(spec.remote ? { remote: true as const } : {}),
+      本会话创建: (p: string) => 产物.是本会话创建(p),
+    }
+    const 问 = (title: string, reason: string, signal: AbortSignal | undefined) =>
+      this.问权限(spec.sessionId, title, reason, signal)
+    return (d) => {
+      const def = d as Record<string, unknown>
+      const 写参 = 写路径参数[String(def.name)]
+      if (!写参) return d
+      const original = (def.execute as (...a: unknown[]) => Promise<unknown>).bind(def)
+      return {
+        ...def,
+        async execute(toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) {
+          const p = 写参.map((k) => params[k]).find((v) => typeof v === "string" && v) as string | undefined
+          if (p) {
+            const 决定 = gate("write", { path: p }, 语境)
+            if (决定.kind === "deny") {
+              return { content: [{ type: "text", text: 决定.reason }], isError: true, details: undefined }
+            }
+            if (决定.kind === "ask") {
+              const 答 = await 问(`写入 ${p}`, 决定.reason, signal)
+              if (答 !== "allow") {
+                return {
+                  content: [{ type: "text", text: `${决定.reason}（${答 === "timeout" ? "等了 5 分钟没人回，按拒绝处理" : "人拒绝了这一次"}）` }],
+                  isError: true,
+                  details: undefined,
+                }
+              }
+            }
+          }
+          return original(toolCallId, params, signal, onUpdate, ctx)
+        },
+      }
+    }
+  }
+
   private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"]): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
@@ -783,8 +843,13 @@ export class NativeRuntime implements AgentRuntime {
      * Office 文档工具（2026-08-25 插件承载体 v1，学自 dsh-office）：按设置里的族开关装。
      * 与内核/视觉/MCP 同一组「外部」——同样要过 tool_files 观察与两条 return。
      */
-    const office工具组 = this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []
-    const browser工具组 = this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable()) : []
+    // 插件工具的写入路径也过门（审查 debug B1）:office/browser 不是 pi 内置的
+    // read/edit/write/bash,gate 的判据认不出它们,于是设置卡上「工作区外/原始数据/
+    // 系统目录 会拦」的承诺对这 32 个工具本来全部落空。这里按工具名提取它的写路径,
+    // 过同一道 write 判据补上——不存在的能力不该看起来存在。
+    const 门于插件 = this.插件门包装(spec)
+    const office工具组 = (this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []).map(门于插件)
+    const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable()) : []).map(门于插件)
     const memory工具组 =
       this.opts.memoryEnable && this.opts.memoryDeps
         ? memoryTools(spec.workspace, this.opts.memoryEnable(), this.opts.memoryDeps())

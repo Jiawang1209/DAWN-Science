@@ -75,3 +75,4 @@ dist/ui/
 # Playwright
 test-results/
 playwright-report/
+.superpowers/

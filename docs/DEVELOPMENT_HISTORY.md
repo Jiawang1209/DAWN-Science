@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-26 — 回归主线：开 `data-platform` 分支，定「产物」spec（对话产物条 + 坞产物格）
+
+- **Type**: docs
+- **Motivation**: 全库审查清零后作者要求回到「数据分析平台」主线。参考 Claude Science 与 wisp-science 的形态，经六问定案；作者两次收窄：坞里没有终端（我画错了）、这一格只要「实时看生成了什么」，版本 / 来源三页签 / 图上批注整体挪到下一轮。
+- **What**: `specs/2026-08-26-产物-design.md`：Run 加 `filesCreated`（`??` ∪ 产物登记，缺省=不知道 / 空=确认没新建）；产物 = 从 Run 推导不建表、不存内容；协议加 `listArtifacts` + `artifactsChanged`；对话里按 turn 派生 `GENERATED · N` 三态（正常 / 未知 / 混合，确认没新建不画）；坞新房客「产物」= 按目录分组的实时清单 + 共用预览。§9 记下一轮。
+- **Impact**: 无代码变更。下一步写实施计划。
+- **Verification**: 动手前核了账本 / 探针 / 坞房客的真实状态并写进 spec §1。
+
 ### 2026-08-25 — 全库审查续修：架构/协议批（H1/E6/F2/F3/F5，作者拍板后实现），审查全部清零
 
 - **Type**: fix

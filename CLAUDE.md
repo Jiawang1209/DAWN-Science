@@ -31,6 +31,7 @@
 | **agent 浏览器旁观**：坞「网页」格一格两子页签，旁观 agent 的 headless 浏览器 | `specs/2026-08-25-agent浏览器旁观-design.md` |
 | **记忆**：三轨确认制长期记忆 + 技能沉淀，插件第三卡（学自 dsh-memory-evolve） | `specs/2026-08-25-记忆-design.md` · 解读在 `ccb_hive_code_learn/dsh-memory-evolve-解读.md` |
 | **飞书通道**：远程助理第二格，设备流扫码建应用 + WS 长连接（学自 dsh-feishu/dsh-im） | `specs/2026-08-25-飞书通道-design.md` · 解读在 `ccb_hive_code_learn/dsh-feishu-im-解读.md` |
+| **产物**：对话里 `GENERATED · N` + 坞「产物」格实时清单（学自 wisp-science；`data-platform` 分支主线第一步） | `specs/2026-08-26-产物-design.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

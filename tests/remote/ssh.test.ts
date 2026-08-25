@@ -193,6 +193,59 @@ describe("跑命令", () => {
   })
 })
 
+describe("主机公钥校验 · TOFU（审查 debug A6）", () => {
+  /** connect 时真调 hostVerifier,拿它给出的键;返回 true → ready,false → error(模拟 ssh2 的握手失败) */
+  const 造带公钥的客户端 = (公钥: Buffer): SshClientLike => {
+    const handlers: Record<string, ((...a: never[]) => void)[]> = {}
+    return {
+      on(ev, cb) {
+        ;(handlers[ev] ??= []).push(cb)
+        return undefined as never
+      },
+      connect(cfg: { hostVerifier?: (key: Buffer) => boolean }) {
+        const 放行 = cfg.hostVerifier ? cfg.hostVerifier(公钥) : true
+        queueMicrotask(() => {
+          if (放行) for (const cb of handlers["ready"] ?? []) (cb as () => void)()
+          else for (const cb of handlers["error"] ?? []) (cb as (e: Error) => void)(new Error("握手失败"))
+        })
+        return undefined as never
+      },
+      // connect 成功后 RemoteExecutor 会捕获一次环境(走 exec)——回个空的即可,不然 connect() 一直等
+      exec(_cmd, cb) {
+        queueMicrotask(() => cb(undefined, 假channel("", "", 0) as never))
+        return undefined as never
+      },
+      sftp: () => undefined as never,
+      end: () => undefined as never,
+    }
+  }
+  const 记事本 = () => {
+    const m = new Map<string, string>()
+    return { get: (k: string) => m.get(k), set: (k: string, v: string) => void m.set(k, v), m }
+  }
+  const 连 = (client: SshClientLike, kh: ReturnType<typeof 记事本>) =>
+    new RemoteExecutor({ config: { host: "h", port: 22, username: "u" }, createClient: () => client, knownHosts: kh })
+
+  it("**首次自动信任(TOFU)**:第一次连就记下公钥,连得上", async () => {
+    const kh = 记事本()
+    await 连(造带公钥的客户端(Buffer.from("KEY-A")), kh).connect()
+    expect(kh.m.get("h:22")).toBeTruthy() // 记下了指纹
+  })
+
+  it("**同一把公钥再连,放行**", async () => {
+    const kh = 记事本()
+    await 连(造带公钥的客户端(Buffer.from("KEY-A")), kh).connect() // 首次记下
+    await expect(连(造带公钥的客户端(Buffer.from("KEY-A")), kh).connect()).resolves.toBeUndefined()
+  })
+
+  it("**公钥变了就拒,并说清是中间人风险**", async () => {
+    const kh = 记事本()
+    await 连(造带公钥的客户端(Buffer.from("KEY-A")), kh).connect() // 首次记下 KEY-A
+    // 再连,服务器给的是另一把公钥 → 拒
+    await expect(连(造带公钥的客户端(Buffer.from("KEY-B")), kh).connect()).rejects.toThrow(/中间人|不一样/)
+  })
+})
+
 describe("文件", () => {
   it("读 / 写 / 列目录走 SFTP", async () => {
     const f = 造一个假客户端()

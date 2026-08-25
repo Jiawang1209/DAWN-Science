@@ -711,6 +711,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **口令从钥匙串取，与模型 key 同一个库**，键上带 `ssh:` 前缀免得撞名
     secretFor: (id) => opts.credentials.get(`ssh:${id}`),
     ...(process.env["SSH_AUTH_SOCK"] ? { agentSock: process.env["SSH_AUTH_SOCK"] } : {}),
+    // **主机公钥记事本(审查 debug A6，TOFU)**:首次自动信任、之后比对,变了就拒。落本机设置库(公钥不是秘密)
+    knownHosts: {
+      get: (hostKey) => settingsStore.get(`ssh.hostkey.${hostKey}`) || undefined,
+      set: (hostKey, fp) => settingsStore.set(`ssh.hostkey.${hostKey}`, fp, new Date().toISOString()),
+    },
     onState: (connectionId, state) => {
       /**
        * **连上的那一刻盖一个时间戳**（2026-08-19）。

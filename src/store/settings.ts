@@ -98,6 +98,11 @@ export type SettingKey =
   | `plugin.memory.${string}`
   /** 远程助理 · 飞书（2026-08-25）：绑定/会话映射/通知/去重环形，与 `weixin.*` 同一家 */
   | `feishu.${string}`
+  /**
+   * SSH 主机公钥指纹（审查 debug A6，TOFU）。键是 `ssh.hostkey.<host:port>`,值是 sha256 base64。
+   * 与 `mcp.trusted.*` 同一个理由:它是「这台机器前的人认过这台服务器」的记录,落本机库、不进任何会被分享的文件。
+   */
+  | `ssh.hostkey.${string}`
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

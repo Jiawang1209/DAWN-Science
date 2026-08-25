@@ -39,6 +39,7 @@
 import { createReadStream, createWriteStream } from "node:fs"
 import { rename as 改名, rm as 删掉, stat as 本地stat } from "node:fs/promises"
 import { pipeline } from "node:stream/promises"
+import { createHash } from "node:crypto"
 import type { Client, ClientChannel, ConnectConfig, SFTPWrapper } from "ssh2"
 
 /** 一台远端机器怎么连。**密码不在这里**——它由上层从钥匙串取了再传进来 */
@@ -130,12 +131,25 @@ export interface SshClientLike {
   end(): unknown
 }
 
+/**
+ * 主机公钥的记事本（审查 debug A6）。**TOFU（首次自动信任）**:第一次连一台机器就把它的
+ * 公钥指纹记下,以后每次比对——变了就拒,那多半是中间人。存哪由上层决定(这一层不碰文件系统)。
+ * 不注入 = 退回旧行为(不校验),给测试与不需要的场景留口子。
+ */
+export interface KnownHosts {
+  /** `host:port` → 记过的公钥指纹(sha256 base64);没记过返回 undefined */
+  get(hostKey: string): string | undefined
+  set(hostKey: string, fingerprint: string): void
+}
+
 export interface RemoteExecutorOptions {
   config: RemoteHostConfig
   /** 造一个客户端。**测试注入假的**——真机那条走 `ssh2` 的 `Client` */
   createClient: () => SshClientLike
   /** 状态变了就喊一声。**断线要能被上层看见**，不是等下一次调用才发现 */
   onState?: (s: RemoteState) => void
+  /** 主机公钥记事本(A6)。给了才校验;不给退回旧行为 */
+  knownHosts?: KnownHosts
 }
 
 export class RemoteExecutor {
@@ -176,11 +190,38 @@ export class RemoteExecutor {
     const c = this.opts.createClient()
     const { config } = this.opts
 
+    /**
+     * **主机公钥校验(TOFU)**（审查 debug A6）。第一次见到一台机器就记下它的公钥指纹,
+     * 之后每次比对:一致放行,变了就拒——公钥变了几乎必然是中间人(或服务器重装,那也该由人确认)。
+     * `公钥不符` 记一笔,好在下面的 error 处理里把「握手失败」换成一句人话,而不是笼统的连不上。
+     */
+    const 主机键 = `${config.host}:${config.port ?? 22}`
+    const known = this.opts.knownHosts
+    let 公钥不符 = false
+    const hostVerifier = known
+      ? (key: Buffer): boolean => {
+          const fp = createHash("sha256").update(key).digest("base64")
+          const 记的 = known.get(主机键)
+          if (记的 === undefined) {
+            known.set(主机键, fp) // TOFU:首次见,记下,放行
+            return true
+          }
+          if (记的 === fp) return true
+          公钥不符 = true
+          return false
+        }
+      : undefined
+
     await new Promise<void>((resolve, reject) => {
       c.on("ready", (() => resolve()) as never)
       c.on("error", ((e: Error) => {
-        this.设状态({ kind: "disconnected", reason: e.message })
-        reject(e)
+        // 公钥对不上时把底层那句笼统的握手错误换成一句说得清风险的话(A6)
+        const reason = 公钥不符
+          ? `这台机器的 SSH 主机公钥与上次记下的不一样了——可能是中间人,也可能是服务器重装/换了密钥。` +
+            `确认安全后,把这台服务器删掉再重新添加即可重新信任(${主机键})。`
+          : e.message
+        this.设状态({ kind: "disconnected", reason })
+        reject(公钥不符 ? new Error(reason) : e)
       }) as never)
       /**
        * **断线要立刻喊出来。** 不喊的话，下一次工具调用会挂在那里等超时，
@@ -210,6 +251,7 @@ export class RemoteExecutor {
         ...(config.passphrase ? { passphrase: config.passphrase } : {}),
         ...(config.password ? { password: config.password } : {}),
         ...(config.agentSock ? { agent: config.agentSock } : {}),
+        ...(hostVerifier ? { hostVerifier } : {}),
         // 很多服务器的「密码」实际走 keyboard-interactive
         tryKeyboard: Boolean(config.password),
         readyTimeout: 20_000,

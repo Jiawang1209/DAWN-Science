@@ -2447,12 +2447,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     removeConnection: async ({ id }) => {
       const { store, manager } = 远端()
-      if (!store.get(id)) throw fault("not_found", `没有这台服务器：${id}`)
+      const rec = store.get(id)
+      if (!rec) throw fault("not_found", `没有这台服务器：${id}`)
       // 先断开：留着一条连着的连接，它的状态推送会指向一台已经不存在的机器
       manager.disconnect(id)
       store.remove(id)
       // **钥匙串里那份也删掉**——留着就是一份没人认领的秘密
       credentials.delete(密钥名(id))
+      // 记下的主机公钥也清掉(审查 debug A6):这是「合法换了密钥后怎么恢复」的路径——
+      // 删掉这台机器再重新添加,TOFU 会当新机器重新记一次,而不是卡在「公钥变了」拒连。
+      settings?.set(`ssh.hostkey.${rec.host}:${rec.port ?? 22}`, "", new Date().toISOString())
       return {}
     },
 

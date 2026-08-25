@@ -74,6 +74,13 @@ export class 对话内核 {
   private readonly 表 = new Map<string, 一台>()
   /** 反查：内核会话 id → 它是谁的、哪门语言 */
   private readonly 反查 = new Map<SessionId, 一台>()
+  /**
+   * 正在起的那一台(审查 debug H4)。**懒起是 TOCTOU**:两次并发 `拿(同一对话,同一语言)`
+   * 都看到表里没有,各 `await runtime.start` 起一台,后者覆盖 `表`、前者成了泄漏的孤儿内核
+   * (进程还活着、再没人 close)。把「正在起」的 promise 也记下来,第二个调用等同一个 promise,
+   * 而不是再起一台。起失败/起完都从这张表里摘掉。
+   */
+  private readonly 起中 = new Map<string, Promise<一台>>()
 
   constructor(private readonly opts: 挂载选项) {}
 
@@ -116,6 +123,21 @@ export class 对话内核 {
     const 已有 = this.表.get(键)
     if (已有) return 已有
 
+    // TOCTOU 收口(H4):已经有人在起同一台就等它,不再起第二台
+    const 起中的 = this.起中.get(键)
+    if (起中的) return 起中的
+
+    const p = this.起一台(对话, 语言, 键)
+    this.起中.set(键, p)
+    try {
+      return await p
+    } finally {
+      // 起完(已进表)或起失败,都从「正在起」里摘掉
+      this.起中.delete(键)
+    }
+  }
+
+  private async 起一台(对话: SessionId, 语言: 内核语言, 键: string): Promise<一台> {
     const workspace = this.opts.workspaceOf(对话)
     if (!workspace) {
       throw new Error(`这段对话没有工作目录，起不了 ${语言} 内核——代码总得有个地方跑`)

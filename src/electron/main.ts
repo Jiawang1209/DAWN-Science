@@ -219,6 +219,12 @@ function createWindow(): void {
        */
       (入) => workbench?.记一次网页下载(入),
     ))
+  // **先移除再注册**（审查 debug G1）:这个 handler 在 createWindow 内,而 macOS 上
+  // 关掉主窗口后点 Dock 图标会 `activate → createWindow()` 第二次——重复 `handle` 同一
+  // channel 会抛「second handler」,抛点在这里、后面的 setWindowOpenHandler / will-navigate /
+  // loadFile 全在它之后 → 新窗口既没内容也没导航守卫,主进程还吃一个未捕获异常。
+  // removeHandler 对未注册的 channel 是空操作,安全幂等。
+  ipcMain.removeHandler(IPC_WEB_CONTROL)
   ipcMain.handle(IPC_WEB_CONTROL, async (_e, cmd: 网页命令) => {
     刷下载目录()
     return 网页的().控制(cmd)

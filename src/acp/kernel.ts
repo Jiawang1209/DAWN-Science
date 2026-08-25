@@ -84,6 +84,12 @@ export function 建跑内核(装配: 内核装配) {
    */
   const 用过的 = new Map<string, string>()
   /**
+   * 正在开的那一段(审查 debug H4)。**懒起是 TOCTOU**:两次并发同一 `sessionId|language`
+   * 都看到没有活内核,各 `await 开一段` 起一台,后者覆盖 `用过的`、前者成了泄漏的孤儿内核。
+   * 记住「正在开」的 promise,第二个调用等同一个,而不是再开一台。
+   */
+  const 开中 = new Map<string, Promise<string>>()
+  /**
    * 上一次在这段内核上**等超时了**。
    *
    * 超时之后那一句还在内核里跑，而内核是**顺序执行**的：下一次写进去的代码
@@ -120,8 +126,14 @@ export function 建跑内核(装配: 内核装配) {
     let 内核 = 用过的.get(键)
     // **死了要重开**：写进一段死会话等于代码掉进地里，而且没有任何人会说话
     if (!内核 || !装配.还活着(内核)) {
-      内核 = await 装配.开一段(agentId, 归.workspace, 归.projectId)
-      用过的.set(键, 内核)
+      // TOCTOU 收口(H4):已经有人在开同一段就等它,不再开第二段(否则前一台泄漏成孤儿)
+      let p = 开中.get(键)
+      if (!p) {
+        p = 装配.开一段(agentId, 归.workspace, 归.projectId)
+        开中.set(键, p)
+        p.then((k) => 用过的.set(键, k)).catch(() => {}).finally(() => 开中.delete(键))
+      }
+      内核 = await p
     }
 
     const 收到: string[] = []

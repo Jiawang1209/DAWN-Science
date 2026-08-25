@@ -108,7 +108,9 @@ export const loadContextUsage = async (
   if (!sessionId) return setContextUsage(undefined)
   await c
     .get<import("../panels.js").ContextUsage>("getContextUsage", { sessionId })
-    .then(setContextUsage)
+    // 身份守卫(审查 debug I3):快点两会话时,A 的用量回来晚了不许写进 B 的面板。
+    // 与 resyncSession 同一道防线——比对这条响应属于的会话是否还是当前活跃的那个。
+    .then((v) => { if (sessionId === $activeSessionId.get()) setContextUsage(v) })
     .catch(fail)
 }
 
@@ -129,6 +131,9 @@ export const loadSessions = (c: WorkbenchClient, projectId: string): Promise<voi
  */
 export const loadRuns = (c: WorkbenchClient, projectId: string, sessionId?: string): Promise<void> =>
   c.get<RunSummary[]>("listRuns", { projectId, ...(sessionId ? { sessionId } : {}) }).then((v) => {
+      // 身份守卫(I3):按会话取的账本,回来晚了不许覆盖已切走的会话。
+      // sessionId 缺省 = 项目全量(审阅那格用),没有会话可比,照旧应用。
+      if (sessionId && sessionId !== $activeSessionId.get()) return
       setRuns(v)
     })
     .catch(fail)

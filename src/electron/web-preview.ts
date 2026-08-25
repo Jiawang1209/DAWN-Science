@@ -284,6 +284,12 @@ export function 造网页预览(
      * 那一格是作者 2026-08-18 定的②，已经做完了；这里只是把它接上。
      * 取不到就交给 Electron 自己的默认，**不猜一个路径**。
      */
+    // **先清再挂**（审查 debug G5）:`persist:dawn-web-preview` 是本预览专用分区,Electron
+    // 对同一 persist 分区返回**同一个 Session 对象**,它比视图活得久。视图每重建一次(close
+    // 后再 open)就再挂一份 will-download,一次下载因此被 N 个监听各记一条 `web_download:` Run,
+    // 账本宣称「下载了 N 次」而实际一次(违反不变式 5)。这个分区里 will-download 只此一处挂,
+    // removeAllListeners 安全幂等,保证只留最新一个。
+    v.webContents.session.removeAllListeners("will-download")
     v.webContents.session.on("will-download", (_e, item) => {
       const 目录 = 取下载目录?.()
       /**

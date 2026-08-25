@@ -131,6 +131,19 @@ describe("删一台", () => {
     expect(r.mcp ?? {}).toEqual({})
     expect(r.agents["ds-chat"]).toBeDefined()
   })
+
+  it("**带点的名字删对那一台,不误删相似名**(审查 debug G4)", () => {
+    // pg.dev 是手写进来的(addMcpServer 会拒带点名),同段还有 pgxdev
+    addMcpServer(文件, { 名: "pgxdev", command: "x" })
+    // 手动在 mcp: 段里插一台 pg.dev
+    const 原 = readFileSync(文件, "utf8")
+    writeFileSync(文件, 原.replace(/^mcp:\s*$/m, "mcp:\n  pg.dev:\n    command: p"))
+    const r = removeMcpServer(文件, "pg.dev")
+    // pg.dev 没了,pgxdev 还在(旧的坏正则会先撞上 pgxdev 删错)
+    expect(Object.keys(r.mcp ?? {})).toContain("pgxdev")
+    expect(Object.keys(r.mcp ?? {})).not.toContain("pg.dev")
+    expect(读()).toContain("pgxdev:")
+  })
 })
 
 describe("粘贴 Claude Desktop 的 JSON", () => {

@@ -293,4 +293,18 @@ describe("中止", () => {
     expect(r.results[0]!.ok).toBe(false)
     expect(r.results[0]!.error).toMatch(/中止|abort/i)
   })
+
+  it("**超过墙钟上界要自己中止** —— 一个哑掉的子 agent 不能让那一 lane 永挂(H7)", async () => {
+    const forever = () => ({
+      command: process.execPath,
+      // 既不吐结果也不退出：没有墙钟就永远占着
+      args: ["-e", "setInterval(()=>{},1000)"],
+    })
+    const r = await exec(forever, { maxWallMs: 120 }).run(
+      { mode: "single", agent: "scout", task: "t" },
+      DEFS,
+    )
+    expect(r.results[0]!.ok).toBe(false)
+    expect(r.results[0]!.error).toMatch(/超过|秒/)
+  })
 })

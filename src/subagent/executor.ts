@@ -34,6 +34,32 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import type { SubagentDefinition } from "./definitions.js"
 import type { SubagentChildSpec } from "./protocol.js"
 
+/**
+ * 杀掉一个子 agent 进程**连同它派生的后代**（审查 debug H6）。
+ *
+ * 子 agent 起的是一个 pi 进程,它自己会再 spawn（工具调用、`npm test`、`python`…）。
+ * 只 `child.kill()` 的话,那些孙进程会被 reparent 到 init(1) 变成孤儿,继续烧 CPU/显存——
+ * 与 pty.ts 早年那处「后台任务成孤儿」是同一个坑。子进程用 `detached` 起,自成进程组,
+ * 于是 `process.kill(-pid)` 一次覆盖整组。
+ *
+ * **Windows 无进程组语义**:退回只杀直接子进程(与 pty.ts 同一条 BACKLOG)。
+ */
+export function 杀掉后代(child: ChildProcessWithoutNullStreams): void {
+  const pid = child.pid
+  if (pid === undefined) return
+  try {
+    if (process.platform !== "win32") process.kill(-pid, "SIGKILL")
+    else child.kill("SIGKILL")
+  } catch {
+    // ESRCH:进程组已消失。补一发直接杀,失败也吞——它本来就是要没的
+    try {
+      child.kill("SIGKILL")
+    } catch {
+      /* 已经死了 */
+    }
+  }
+}
+
 export interface SubagentTask {
   agent: string
   task: string
@@ -81,6 +107,13 @@ export const SUBAGENT_LIMITS = {
   maxTasks: 8,
   maxConcurrent: 4,
   maxOutputBytes: 64 * 1024,
+  /**
+   * 单个子 agent 的墙钟上界（审查 debug H7）。**一个子 agent 卡死不该让整批永挂**——
+   * 子进程若既不吐结果也不退出（模型端 hang、死循环），没有这个上界那一 lane 就永远
+   * 占着，父侧的 `Promise.all` 永远不 resolve。10 分钟：够一次正常子任务跑完，
+   * 又不至于让一个哑掉的进程拖住半小时。到点按「中止」同一条路杀干净、报超时。
+   */
+  maxWallMs: 10 * 60 * 1000,
 } as const
 
 export type SubagentLimits = typeof SUBAGENT_LIMITS
@@ -251,6 +284,8 @@ export class SubagentExecutor {
       try {
         child = spawn(cmd.command, cmd.args, {
           stdio: ["pipe", "pipe", "pipe"],
+          // 自成进程组(H6):中止/超时时好整组杀,孙进程不成孤儿。Windows 无此语义,不传
+          ...(process.platform !== "win32" ? { detached: true } : {}),
           ...(cmd.env ? { env: { ...process.env, ...cmd.env } } : {}),
         })
       } catch (err) {
@@ -262,16 +297,23 @@ export class SubagentExecutor {
       let out = ""
       let err = ""
       let settled = false
+      // 墙钟(H7):到点按中止同一条路杀干净、报超时
+      const 墙钟 = setTimeout(() => {
+        if (child) 杀掉后代(child)
+        done(fail(task, `子 agent 超过 ${Math.round(this.limits.maxWallMs / 1000)} 秒还没结束，已中止`))
+      }, this.limits.maxWallMs)
+      墙钟.unref?.()
       const done = (r: SubagentResult) => {
         if (settled) return
         settled = true
+        clearTimeout(墙钟)
         signal?.removeEventListener("abort", onAbort)
         resolve(r)
       }
 
       function onAbort() {
-        // **真的杀掉它。** 父侧不看了而已的话，子进程会继续烧钱
-        child?.kill("SIGKILL")
+        // **真的杀掉它连同后代。** 父侧不看了而已的话，子进程会继续烧钱(H6)
+        if (child) 杀掉后代(child)
         done(fail(task, "已中止"))
       }
       signal?.addEventListener("abort", onAbort, { once: true })

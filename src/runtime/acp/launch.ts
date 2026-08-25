@@ -146,23 +146,42 @@ export function 起适配器(起: 起法): ChildProcess {
  * `npx → node → 适配器` 一棵树，只杀最上面那个会留下一个还占着
  * stdio 的孤儿——症状是「关了会话，CPU 还在转」。
  */
-export function 收进程(proc: ChildProcess, platform: NodeJS.Platform = process.platform): void {
+export function 收进程(
+  proc: ChildProcess,
+  platform: NodeJS.Platform = process.platform,
+  graceMs = 3000,
+): void {
   if (proc.pid === undefined || proc.exitCode !== null) return
+  const pid = proc.pid
   if (platform === "win32") {
     // `/T` 连子孙、`/F` 强制。**Windows 上没有别的可靠办法**
-    spawn("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { stdio: "ignore" })
+    spawn("taskkill", ["/pid", String(pid), "/T", "/F"], { stdio: "ignore" })
     return
   }
-  try {
-    // 负号 = 整个进程组（`detached: true` 让它自成一组）
-    process.kill(-proc.pid, "SIGTERM")
-  } catch {
-    // 组不在了（它自己已经退了）就退回单个进程，**再失败就算了**：
-    // 收不掉一个已经死了的进程不是错误
+  const 发 = (sig: NodeJS.Signals) => {
     try {
-      proc.kill("SIGTERM")
+      // 负号 = 整个进程组（`detached: true` 让它自成一组）
+      process.kill(-pid, sig)
     } catch {
-      /* 已经没了 */
+      // 组不在了（它自己已经退了）就退回单个进程，**再失败就算了**：
+      // 收不掉一个已经死了的进程不是错误
+      try {
+        proc.kill(sig)
+      } catch {
+        /* 已经没了 */
+      }
     }
   }
+  发("SIGTERM")
+  /**
+   * **升级到 SIGKILL**（审查 debug H5）。只发 SIGTERM 时,一个 `trap '' TERM` 的适配器
+   * 会把信号吞掉、永不退出——而任何 `await` 它退出的调用方(stop())就永久挂住。
+   * 宽限期给它体面退出的机会;到点还活着就强杀。**用 unref 的定时器**:它不该拦着进程退出。
+   */
+  const 补刀 = setTimeout(() => {
+    if (proc.exitCode === null && proc.signalCode === null) 发("SIGKILL")
+  }, graceMs)
+  补刀.unref?.()
+  // 它自己先退了就撤掉补刀,别留一个空等的定时器
+  proc.once?.("exit", () => clearTimeout(补刀))
 }

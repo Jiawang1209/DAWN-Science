@@ -454,6 +454,14 @@ export class AcpRuntime implements AgentRuntime {
     // stdin 那头关了还往里写（迟到的终端结果）会是一个没人听的 'error'——主进程直接崩
     proc.stdin?.on("error", () => {})
 
+    /**
+     * **握手/开会话这一段抛错,要把已经起活的适配器收掉**（审查 debug H9）。
+     * spawn 成功之后,`initialize` / `session/new` 任一步失败,start() 会 reject——
+     * 但 proc 还活着(它没退出,`proc.once("exit")` 那条收摊路走不到),而 manager 对一个
+     * 从没 started 的会话不会调 stop()。于是每点一次「新建会话」失败,就多一棵烧资源的孤儿进程树。
+     * 收进程会触发上面那条 exit 处理(释放手、发 exited);这里只补一手删段,别让死段留在表里。
+     */
+    try {
     await 起来了
 
     /**
@@ -590,6 +598,11 @@ export class AcpRuntime implements AgentRuntime {
     const pid = proc.pid ?? 0
     this.发(spec.sessionId, { kind: "started", sessionId: spec.sessionId, pid })
     return { sessionId: spec.sessionId, pid }
+    } catch (e) {
+      收进程(proc) // 收掉起活的适配器(及子孙),否则失败一次泄漏一棵进程树(H9)
+      this.段们.delete(spec.sessionId)
+      throw e
+    }
   }
 
   attach(sessionId: SessionId, sink: EventSink): () => void {

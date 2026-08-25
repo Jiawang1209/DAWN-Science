@@ -284,7 +284,29 @@ describe("WorkbenchServer · 后端异常", () => {
     if (!r.ok) {
       expect(r.error.code).toBe("not_found")
       expect(r.error.message).toContain("项目不存在")
+      expect(r.error.retryable).toBe(false) // not_found 不可重试(审查 debug F7)
     }
+  })
+
+  it("暂时性失败标 retryable:true —— conflict/project_unavailable 可重试(审查 debug F7)", async () => {
+    const 冲突 = backend({
+      listDirectory: async () => {
+        throw fault("conflict", "别人正拿着这段会话的租约")
+      },
+    })
+    const r = await new WorkbenchServer(冲突).handle("listDirectory", { projectId: "p", path: "." })
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.error.code).toBe("conflict")
+      expect(r.error.retryable).toBe(true) // 此前恒 false,协议纪律没实现
+    }
+    const 不可用 = backend({
+      listDirectory: async () => {
+        throw fault("project_unavailable", "远端重连中")
+      },
+    })
+    const r2 = await new WorkbenchServer(不可用).handle("listDirectory", { projectId: "p", path: "." })
+    if (!r2.ok) expect(r2.error.retryable).toBe(true)
   })
 })
 

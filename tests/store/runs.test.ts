@@ -224,6 +224,26 @@ describe("RunStore", () => {
     expect(runs.listByProject("p1", { limit: 2 })).toHaveLength(2)
   })
 
+  it("分页：after 游标翻到下一页,不再永远回第一页(审查 debug F9)", () => {
+    for (let i = 0; i < 5; i++) {
+      runs.insert({ ...baseRun, runId: `r${i}`, startedAt: `2026-08-08T00:0${i}:00Z` })
+    }
+    // 倒序:r4 r3 r2 r1 r0。第一页两条 = r4 r3
+    const 第一页 = runs.listByProject("p1", { limit: 2 })
+    expect(第一页.map((r) => r.runId)).toEqual(["r4", "r3"])
+    // 带上最后一条的 id 当游标 → 下一页从 r2 开始,不是又给 r4 r3
+    const 第二页 = runs.listByProject("p1", { limit: 2, after: 第一页[1]!.runId })
+    expect(第二页.map((r) => r.runId)).toEqual(["r2", "r1"])
+    // 再翻一页 → r0,然后到底
+    const 第三页 = runs.listByProject("p1", { limit: 2, after: 第二页[1]!.runId })
+    expect(第三页.map((r) => r.runId)).toEqual(["r0"])
+  })
+
+  it("分页：after 是不存在的 id 时退回首页,不抛(审查 debug F9)", () => {
+    runs.insert(baseRun)
+    expect(runs.listByProject("p1", { after: "根本没有这个" }).map((r) => r.runId)).toEqual(["r1"])
+  })
+
   it("parentRunId 表达重跑链", () => {
     runs.insert(baseRun)
     runs.insert({ ...baseRun, runId: "r2", parentRunId: "r1" })

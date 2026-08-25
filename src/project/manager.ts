@@ -220,7 +220,7 @@ export class ProjectManager {
   }
 
   /** 列出项目下的 Run，最近的在前——项目面板的历史栏要的就是这个顺序 */
-  runs(projectId: string, opts: { sessionId?: string; limit?: number } = {}): RunSummary[] {
+  runs(projectId: string, opts: { sessionId?: string; limit?: number; after?: string } = {}): RunSummary[] {
     return this.runStore.listByProject(projectId, opts)
   }
 }

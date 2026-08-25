@@ -210,6 +210,10 @@ export class SessionTranscripts {
     this.entries.clear()
     this.subscribed.clear()
     this.listeners.clear()
+    // pinned 与 全听 也要清(审查 debug F12):此前漏了这两个,微信/飞书注册的 onAnyUpdate 回调
+    // 在 dispose 后还挂着——退出/重装配时旧通道回调仍会被后续事件触发,pinned 集也残留。
+    this.pinned.clear()
+    this.全听.clear()
   }
 
   /**

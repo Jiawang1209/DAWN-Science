@@ -88,6 +88,8 @@ const child = spawn(
       DAWN_DB: join(dir, "dawn.db"),
       DAWN_MEMORIES_DIR: join(dir, "memories"),
       DAWN_MODELS_JSON: modelsPath,
+      // mock 模式跳过凭证守卫(审查 debug G7:现在是独立开关,不再搭在 DAWN_MODELS_JSON 上)
+      DAWN_SKIP_CREDENTIAL_GATE: "1",
       DAWN_FAKE_ILINK: weixin.url,
       DAWN_FAKE_FEISHU: feishu.url,
     },

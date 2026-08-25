@@ -588,6 +588,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     目标: string
   }
   const 传输们 = new Map<string, 传输记录>()
+  /**
+   * 传输到终态后延时回收(审查 debug F10)。此前 `传输们` 只增不减——每传一个文件留一条,
+   * 长时间跑一堆传输后内存里全是 done/failed 的僵尸记录。保留一小段(客户端还在轮 `transferStatus`,
+   * 要读到最终态),之后删掉。用 unref 定时器,不拦着进程退出。
+   */
+  const 传输保留MS = 60_000
+  const 终结传输 = (id: string) => {
+    const t = setTimeout(() => 传输们.delete(id), 传输保留MS)
+    t.unref?.()
+  }
 
   /**
    * 系统的下载目录。**由主进程注入**（`app.getPath("downloads")`）。
@@ -1130,7 +1140,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 不删的话侧栏上会挂着一行指向死会话的「新任务」，
        * 而且**那一行还会把整个项目撑在那儿**（项目是从任务的路径长出来的）。
        */
-      任务库().removeBySessions([sessionId])
+      // **tasks 未装配时不抛**(审查 debug F13):这一步在 sessions.remove 之后,若 `任务库()` 因未装配
+      // 抛出,会话已经删了、任务清理与目录进废纸篓却没做,留下半完成态。未装配 = 本就没有任务可删,跳过即可。
+      tasks?.removeBySessions([sessionId])
       设会话权限?.(sessionId, undefined)
       /**
        * **账本留着，并且把还剩多少说出来。**
@@ -1571,11 +1583,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return projects.sessions(projectId, 服务器名)
     },
 
-    listRuns: async ({ projectId, sessionId, pageSize }) => {
+    listRuns: async ({ projectId, sessionId, pageSize, after }) => {
       requireProject(projectId)
       return projects.runs(projectId, {
         ...(sessionId ? { sessionId } : {}),
         limit: pageSize,
+        // 游标透传(审查 debug F9):此前 after 被接收却丢弃,分页永远回第一页
+        ...(after ? { after } : {}),
       })
     },
 
@@ -2454,8 +2468,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          *
          * 认证失败、主机不通、私钥读不到——在界面上都长成「连不上」，
          * 但要人去改的东西完全不同。原样把底层的话带上去。
+         *
+         * **认证失败是 `invalid_request` 不是 `internal_error`**（审查 debug F8):
+         * 密码/私钥不对是**用户给错了输入**,不是系统内部故障。ssh2 的认证失败带
+         * `level: "client-authentication"`,消息是「All configured authentication methods failed」。
+         * 报成 internal_error 会让「密码错」显示成「系统出错了」,人不知道该去改密码。
          */
-        throw fault("internal_error", e instanceof Error ? e.message : String(e))
+        const 消息 = e instanceof Error ? e.message : String(e)
+        const level = (e as { level?: string })?.level
+        const 是认证失败 = level === "client-authentication" || /authentication method|auth.*fail/i.test(消息)
+        throw fault(是认证失败 ? "invalid_request" : "internal_error", 消息)
       }
       return 装配(rec)
     },
@@ -2561,8 +2583,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           runRecorder?.beginTurn(sessionId, 这一轮叫什么(sessionId))
         }
       } catch (err) {
-        // 写权被拒是业务性失败，不是内部错误——UI 要能分辨并提示用户去抢租约
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
+        /**
+         * **按原因分错误码,别一律压成 conflict**(审查 debug F6)。此前 `sessions.write` 抛的三类
+         * ——租约被别人拿着、会话未在本进程激活、这段会话收不下图片——全被报成 `conflict`,
+         * 而同样「会话不在」的状态 `subscribeSession` 报的是 `not_found`,两个操作对同一状态给两个码。
+         *   - 未持有租约 → `conflict`:去抢租约就能写(UI 据此提示);
+         *   - 会话未激活/不存在 → `not_found`:与 subscribeSession 一致,没有可写的对象;
+         *   - 其余(图片收不下等)→ `invalid_request`:是这次请求本身的问题。
+         */
+        const 消息 = err instanceof Error ? err.message : String(err)
+        if (/未持有|租约/.test(消息)) throw fault("conflict", 消息)
+        if (/未在本进程中活动|不存在|没有这个会话/.test(消息)) throw fault("not_found", 消息)
+        throw fault("invalid_request", 消息)
       }
       return {}
     },
@@ -2823,6 +2855,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           一条.状态 = ac.signal.aborted ? "cancelled" : "failed"
           一条.错 = err instanceof Error ? err.message : String(err)
         })
+        .finally(() => 终结传输(id)) // 终态后延时回收(F10)
       return { transferId: id, name, target: 目标 }
     },
 
@@ -3040,6 +3073,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           // **失败也记**：「它试过往一个只读目录传东西」本身就是事实
           记一次上传?.(connectionId, 目标, 本地大小, 一条.错)
         })
+        .finally(() => 终结传输(id)) // 终态后延时回收(F10)
       return { kind: "started" as const, transferId: id, target: 目标 }
     },
 
@@ -3509,7 +3543,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 而任务是按 sessionId 挂着的（T3-a）。
        */
       const 它的会话 = 全部会话.map((r) => r.id)
-      任务库().removeBySessions(它的会话)
+      tasks?.removeBySessions(它的会话) // tasks 未装配不抛(审查 debug F13):否则删项目半途而废
       const sessionsDeleted = sessions.deleteByProject(projectId)
       const runsDeleted = runs.deleteByProject(projectId)
       projectStore.delete(projectId)

@@ -58,6 +58,16 @@ function isFault(e: unknown): e is WorkbenchFault {
   return e instanceof Error && typeof (e as WorkbenchFault).workbenchCode === "string"
 }
 
+/**
+ * 哪些错误码值得客户端重试(审查 debug F7)。此前所有 `fail` 都硬写 `retryable:false`,
+ * 协议为它写的「客户端据此决定是否重试」形同虚设。判据:**暂时性、同一请求原样再发有可能成功的**才可重试——
+ *   - `conflict`:租约被别人占着,过一会儿可能就放了;
+ *   - `project_unavailable`:项目暂时连不上(远端重连中),稍后可能恢复。
+ * 其余一律不可重试:`invalid_request`/`not_found`/游标越界这些是请求本身的问题,重发只会再失败;
+ * `internal_error` 也不重试——它可能是一次已经改了状态的可写操作半途出错,盲目重试有双重执行的风险。
+ */
+const 可重试错误码 = new Set<ErrorCode>(["conflict", "project_unavailable"])
+
 export interface WorkbenchServerOptions {
   readOnly?: boolean
   /** 内部错误的落地点。默认吞掉——但**只在这里吞**，客户端拿到的是归一后的错误 */
@@ -144,8 +154,8 @@ export class WorkbenchServer {
           : await this.backend[operation as Exclude<Op, "getCapabilities">](parsedReq.data as never)
     } catch (err) {
       if (isFault(err)) {
-        // 业务性失败：保留后端指定的错误码与消息
-        return this.fail(err.workbenchCode, err.message, false, requestId)
+        // 业务性失败：保留后端指定的错误码与消息;retryable 按码判(审查 debug F7)
+        return this.fail(err.workbenchCode, err.message, 可重试错误码.has(err.workbenchCode), requestId)
       }
       // 守卫抛的「在工作区之外」「找不到」这类**本来就是写给人看的**（2026-08-23 审查抓的：此前一律压成「操作执行失败」，界面看不到原因）
       if (err instanceof UserFacingError) return this.fail("invalid_request", err.message, false, requestId)

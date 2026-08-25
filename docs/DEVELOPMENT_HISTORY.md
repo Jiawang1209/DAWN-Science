@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修：workbench/协议（F）与 electron/存储（G）收口（debug 分支）
+
+- **Type**: fix
+- **Motivation**: 承接全库审查，清 F/G 两域。先核实真实状态：F1/G1/G4/G5 早批（`bfc24fa`/`8b947d2`/`cbf7190`）已修、表列没同步；其余机械项逐条修完，四条触及协议契约/跨子系统设计的留给作者决策。
+- **What**: **G2** `close()` 里 `db.close()` 紧跟在 fire-and-forget 的 `stopAll()` 后同步执行，stopAll 稍后发的 `exited` 撞上已关的库 → 未捕获异常崩主进程——把 `db.close()` 延到会话/内核/MCP 收尾都 settle 之后。**G7** 凭证守卫的关闭搭在 `DAWN_MODELS_JSON` 上（生产用它覆盖端点就丢守卫）——拆成独立的 `DAWN_SKIP_CREDENTIAL_GATE`，dev-mock/e2e 显式带上。**F6** `writeToSession` 把租约冲突、会话未激活、图片收不下全压成 `conflict`——按因分码（conflict/not_found/invalid_request），与 `subscribeSession` 的 not_found 一致。**F7** 所有 `fail` 硬写 `retryable:false`——按错误码判（conflict/project_unavailable 可重试），协议纪律落地。**F8** connectRemote 认证失败报 `internal_error`——按 ssh2 的 `level: client-authentication` 判为 `invalid_request`（是用户给错输入，不是系统故障）。**F9** listRuns 的 `after` 游标被接收却丢弃、永远回第一页——实现 keyset 游标分页（started_at, id 双键）。**F10** 传输记录 `传输们` Map 只增不减——终态后延时（60s）回收，保留一小段供轮询读到最终态。**F12** `events.dispose()` 漏清 `pinned` 与 `全听`（微信/飞书 onAnyUpdate 回调）——补上。**F13** 删会话/删项目时 `任务库()` 在 tasks 未装配时抛，而会话已删 → 半完成态——改用可选链（未装配=本就没任务）。
+- **Impact**: 无破坏性 API 变更；新增 `DAWN_SKIP_CREDENTIAL_GATE` 环境变量（mock/e2e 用）；listRuns 现在真正分页。四条 ⏸ 待作者决策：F2（readOnly 语义/协议 sideEffects 字段）、F3（协议加删除-item 事件）、F5（archive↔通道耦合）、G6（MCP 信任身份依据，改动会让现有信任失效）。
+- **Verification**: 单测 2248 全绿；新增回归：F9 游标翻页+失效游标退首页、F8 认证失败码、F7 conflict 可重试、F6 未激活会话 not_found；typecheck 干净。累计约 92 条已修配回归测试。
+
 ### 2026-08-25 — 全库审查续修：IM 通道（D 系列）全部收口（debug 分支）
 
 - **Type**: fix

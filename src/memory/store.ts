@@ -322,6 +322,11 @@ export class MemoryStore {
   private 命中(entries: string[], match: string): { index: number } | { error: string } {
     const q = String(match ?? "").trim()
     if (!q) return { error: "记忆:匹配片段为空" }
+    // **整条精确优先**(审查 debug J11):UI 传的是完整条目文本,即使它是另一条更长条目的
+    // 子串(「喜欢 ggplot2」vs「喜欢 ggplot2 而不是 base」),也能精确命中自己那条——
+    // 否则短的那条永远删不掉,屏上只给一句它做不到的「换个更长的片段」。[id:] 免疫。
+    const 精确 = entries.filter((e) => e.trim() === q || stripEntryId(e).trim() === stripEntryId(q).trim())
+    if (精确.length === 1) return { index: entries.indexOf(精确[0]!) }
     const 命 = entries.filter((e) => e.includes(q))
     if (命.length === 0) return { error: `记忆:没有包含「${q}」的条目` }
     if (命.length > 1) return { error: `记忆:「${q}」命中 ${命.length} 条,换个更长的片段` }

@@ -1099,6 +1099,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // 子 agent、团队成员、MCP 服务器全成孤儿。这里 fire-and-forget：能收多少收多少，不让退出卡住
       for (const f of 收摊们) void Promise.resolve().then(f).catch(() => undefined)
       void sessions.stopAll().catch(() => undefined)
+      // 对话内核也要收（审查 debug H1）：run_code 用过的内核不在 SessionManager 里,
+      // 同步 close 分支此前完全漏掉它——zeromq socket 不关会 SIGABRT
+      void 对话的内核.收全部().catch(() => undefined)
       void mcp池.全关().catch(() => undefined)
       // **退出时把连接断干净**：留着的 SSH socket 会让进程不肯退
       remoteConnections.closeAll()
@@ -1115,9 +1118,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      *
      * **有上限**：一个停不下来的内核不该让「关掉应用」变成「关不掉」。
      */
-    /** 退出时**要不要等**：只有内核会话需要（见 `hasLiveKernelSessions`） */
+    /** 退出时**要不要等**：内核会话需要——含 run_code 用过的对话内核（审查 debug H1） */
     needsGracefulShutdown() {
-      return sessions.hasLiveKernelSessions()
+      return sessions.hasLiveKernelSessions() || 对话的内核.有活内核()
     },
 
     async closeAsync(timeoutMs = 1500) {
@@ -1128,7 +1131,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          * 不收就是一堆孤儿进程——而它们多半连着数据库。
          * 与会话一起进同一个超时竞赛：**收摊不能因为一台服务器不肯退而卡住**。
          */
-        Promise.all([sessions.stopAll(), mcp池.全关(), ...收摊们.map((f) => Promise.resolve().then(f))]),
+        Promise.all([sessions.stopAll(), 对话的内核.收全部(), mcp池.全关(), ...收摊们.map((f) => Promise.resolve().then(f))]),
         new Promise<void>((r) => setTimeout(r, timeoutMs)),
       ])
       this.close()

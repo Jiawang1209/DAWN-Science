@@ -137,6 +137,18 @@ describe("收内核", () => {
     expect(挂.语言(`${对话}::python` as SessionId), "反查也该跟着清掉").toBeUndefined()
   })
 
+  it("有活内核 / 收全部（审查 debug H1:退出时要认它,否则 SIGABRT）", async () => {
+    const { 挂 } = 造()
+    expect(挂.有活内核()).toBe(false)
+    await 挂.拿("c1" as SessionId, "python")
+    await 挂.拿("c2" as SessionId, "R")
+    expect(挂.有活内核()).toBe(true)
+    await 挂.收全部()
+    expect(挂.有活内核()).toBe(false)
+    expect(挂.列("c1" as SessionId)).toEqual([])
+    expect(挂.列("c2" as SessionId)).toEqual([])
+  })
+
   /**
    * **一台收不掉不该拦住其余的。**
    * 抛出去的话，第一个失败会把后面几台的清理整个吞掉，

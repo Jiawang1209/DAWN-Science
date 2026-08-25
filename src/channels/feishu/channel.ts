@@ -228,10 +228,15 @@ export class FeishuChannel {
   }
 
   async unbind(): Promise<void> {
+    // 先取消进行中的设备流(审查 debug D4):否则手机确认后凭证会被写回来、还 start()
+    this.cancelLogin()
     this.stop()
     this.deps.credentials.delete(FEISHU_SECRET_KEY)
     const now = new Date().toISOString()
-    for (const k of ["feishu.appId", "feishu.openId", "feishu.domain", "feishu.boundAt", "feishu.seenIds"] as const) {
+    // 清 sessionId 并 unpin(审查 debug D5):换人绑定不落进前一个人的会话
+    const 旧会话 = this.deps.settings.get("feishu.sessionId")
+    if (旧会话) this.deps.events.unpin(旧会话)
+    for (const k of ["feishu.appId", "feishu.openId", "feishu.domain", "feishu.boundAt", "feishu.seenIds", "feishu.sessionId"] as const) {
       this.deps.settings.set(k, "", now)
     }
     this.stale = false
@@ -474,8 +479,9 @@ export class FeishuChannel {
       }
       if (this.问过的.get(sid) === p.requestId) return
       this.问过的.set(sid, p.requestId)
-      this.待答 = { sessionId: sid, requestId: p.requestId, title: p.title, options: p.options }
+      // **不推 = 不设待答**(审查 debug D2):没在飞书里见过的询问,不该能被「同意」放行
       if (!n.permission) return
+      this.待答 = { sessionId: sid, requestId: p.requestId, title: p.title, options: p.options }
       // 等权限**永远推**,不看前台:它是在等你,不推就卡在那儿
       await this.回(`『${await this.标题(sid)}』想:${p.title}\n回「同意」放行,回「拒绝」不让。`)
     }

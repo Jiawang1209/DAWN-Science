@@ -291,12 +291,21 @@ export class WeixinChannel {
   }
 
   async unbind(): Promise<void> {
+    // **先取消进行中的扫码**(审查 debug D4):stop() 只停轮询,不碰登录循环。
+    // 人点了扫码、手机还没确认就先解绑,若不取消,登录循环成功分支会把凭证写回来、
+    // 还顺手 start()——解绑静默失效,应用被重新绑上。
+    this.cancelLogin()
     this.stop()
     const token = this.deps.credentials.get(WEIXIN_TOKEN_KEY)
     if (token) await this.deps.client(this.baseUrl()).notifyStop(token)
     this.deps.credentials.delete(WEIXIN_TOKEN_KEY)
     const now = new Date().toISOString()
-    for (const k of ["weixin.botId", "weixin.userId", "weixin.baseUrl", "weixin.cursor", "weixin.contextToken", "weixin.boundAt"] as const) {
+    // **清 sessionId 并 unpin**(审查 debug D5):不清的话,换个人扫码绑上后 start()
+    // 读到残留的 weixin.sessionId 就 bindSession 到前一个人的私密会话,新人的话进旧会话、
+    // 旧会话的回答送到新人微信。
+    const 旧会话 = this.deps.settings.get("weixin.sessionId")
+    if (旧会话) this.deps.events.unpin(旧会话)
+    for (const k of ["weixin.botId", "weixin.userId", "weixin.baseUrl", "weixin.cursor", "weixin.contextToken", "weixin.boundAt", "weixin.sessionId"] as const) {
       this.deps.settings.set(k, "", now)
     }
     this.stale = false
@@ -552,8 +561,11 @@ export class WeixinChannel {
       }
       if (this.问过的.get(sid) === p.requestId) return
       this.问过的.set(sid, p.requestId)
-      this.待答 = { sessionId: sid, requestId: p.requestId, title: p.title, options: p.options }
+      // **不推 = 不设待答**(审查 debug D2):`待答` 一旦设上,用户随口回「好」就会
+      // 被 `回答权限` 拿去放行——而关掉权限通知的人**从没在微信里见过这个询问**。
+      // 旧实现把 `待答` 设在这道判断之前,于是「关权限通知」变成了「静默自动放行」。
       if (!n.permission) return
+      this.待答 = { sessionId: sid, requestId: p.requestId, title: p.title, options: p.options }
       // 等权限**永远推**，不看前台：它是在等你，不推就卡在那儿
       await this.回(`『${await this.标题(sid)}』想：${p.title}\n回「同意」放行，回「拒绝」不让。`)
     }

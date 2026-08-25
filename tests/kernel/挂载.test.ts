@@ -41,6 +41,32 @@ describe("定案 1 · 懒起", () => {
   })
 
   /**
+   * **并发两次 `拿` 只起一台**（审查 debug H4）。懒起是 TOCTOU:两次几乎同时到,
+   * 都看到表里没有,若各起一台,后者覆盖表、前者的内核进程再没人 close,成了泄漏的孤儿。
+   */
+  it("**同时要两次同一台 —— 只起一台，不泄漏孤儿内核**", async () => {
+    let 起了几次 = 0
+    // start 慢一拍,逼出竞态窗口
+    const 慢runtime = {
+      start: async (spec: { sessionId: SessionId }) => {
+        起了几次++
+        await new Promise((r) => setTimeout(r, 10))
+        return { sessionId: spec.sessionId, pid: 起了几次 }
+      },
+      attach: () => () => {},
+    }
+    const 挂 = new 对话内核({
+      runtime: 慢runtime as never,
+      workspaceOf: () => "/w/proj",
+      sessionDirOf: (c, 语言) => `/w/proj/.dawn/${c}/kernels/${语言}`,
+      interpreterOf: () => "/usr/bin/python3",
+    })
+    const [a, b] = await Promise.all([挂.拿(对话, "python"), 挂.拿(对话, "python")])
+    expect(起了几次).toBe(1)
+    expect(a.内核会话).toBe(b.内核会话)
+  })
+
+  /**
    * **没有工作目录就起不了，而且要说清为什么。**
    * 代码总得有个地方跑；这时抛出去让调用方原样告诉模型，
    * 比返回 undefined 强——「没设工作目录」与「内核崩了」是两回事。

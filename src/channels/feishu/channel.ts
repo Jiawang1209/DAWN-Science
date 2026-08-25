@@ -296,22 +296,26 @@ export class FeishuChannel {
       this.log(`拒绝来自 ${遮(入.openId)} 的消息:不是绑定的那个人`)
       return
     }
+    // **去重最前**(审查 debug D12):任何回复/回信之前先挡重投,否则非 text/群消息在
+    // 去重之前就回信,WS 重连重投同一 messageId 会重复回复。
+    if (this.已见.has(入.messageId)) return
     if (入.chatType !== "p2p") {
+      this.记已见(入.messageId)
       this.log(`忽略非私聊消息(${入.chatType})——v1 只私聊`)
       return
     }
     if (入.messageType !== "text") {
+      this.记已见(入.messageId)
       await this.回(`收到一条${入.messageType}消息——这一版只看文字。`)
       return
     }
-    // 去重:WS 重投与重启重放都挡(dsh-im-bot 的飞书通道漏了这条)
-    if (this.已见.has(入.messageId)) return
     this.记已见(入.messageId)
     const text = 入.text.trim()
     if (!text) return
     // 收到即打「处理中」;礼貌失败不出声
-    this.处理中消息 = 入.messageId
     await this.表情(入.messageId, "OnIt", "create")
+    // **立即回复类(权限/斜杠)自己收尾,不占处理中单槽**(审查 debug D7):
+    // 它们不进会话,若占用 this.处理中消息 会干扰后续进会话消息的 DONE 收尾。
     const 答权限 = await this.回答权限(text)
     if (答权限 !== undefined) {
       await this.回(答权限)
@@ -326,6 +330,9 @@ export class FeishuChannel {
         return
       }
     }
+    // 进会话的消息:设单槽,会话最终回答回来时收尾(会话有动静)。
+    // 注:两条正经问题同时在飞时单槽仍会覆盖(审查 debug D6),彻底修需 per-会话串行队列,单列。
+    this.处理中消息 = 入.messageId
     try {
       const sessionId = await this.确保有会话()
       await this.deps.ops().acquireLease({ sessionId, holder: "user" })

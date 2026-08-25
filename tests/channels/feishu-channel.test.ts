@@ -256,6 +256,22 @@ describe("飞书通道", () => {
     ch2.stop()
   })
 
+  it("审查 debug D12:非 text 消息在去重前不回信,WS 重投同 messageId 只回一次", async () => {
+    const w = 假世界()
+    const ch = new FeishuChannel(w.deps)
+    直接绑好(w)
+    ch.start()
+    await 等(100)
+    await s.发来("", { messageId: "IMG-1", messageType: "image" })
+    await 等(300)
+    // WS 重连重投同一条
+    await s.发来("", { messageId: "IMG-1", messageType: "image" })
+    await 等(300)
+    const 提示条数 = (await s.发出的()).filter((x) => x.kind === "text" && String(x.text).includes("只看文字")).length
+    expect(提示条数).toBe(1)
+    ch.stop()
+  })
+
   it("非 text / 非 p2p 不进会话;解绑清 settings 与凭证", async () => {
     const w = 假世界()
     const ch = new FeishuChannel(w.deps)

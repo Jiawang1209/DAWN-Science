@@ -245,6 +245,9 @@ export class WeixinChannel {
               // 服务端说这台机器早就绑过：现有凭证继续有效
               this.login = { ...this.login!, step: "confirmed", message: "这台机器已经绑过了，不用重复绑" }
               this.stale = false
+              // **必须重启轮询**（审查 debug D9）:token 失效后重扫会走到这条分支,若不 start,
+              // 界面显示「已连上」而轮询没起来、机器人聋着,必须重启进程才恢复。confirmed 分支有 start,这条漏了。
+              this.start()
               return
             case "confirmed": {
               const now = new Date(this.deps.now?.() ?? Date.now()).toISOString()

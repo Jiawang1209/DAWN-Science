@@ -277,8 +277,9 @@ export class IlinkClient {
       },
       token,
       API_TIMEOUT_MS,
-    )) as { ret?: number; errmsg?: string }
-    if (r.ret && r.ret !== 0) throw new IlinkError(`sendmessage 失败：ret=${r.ret} ${r.errmsg ?? ""}`, r.ret)
+    )) as { ret?: number; errcode?: number; errmsg?: string }
+    // 两个字段都查(审查 debug D11):sendmessage 会用 errcode(含 -14 token 失效)报错而 ret 缺省,只查 ret 会把失败当成功吞掉
+    if ((r.ret && r.ret !== 0) || (r.errcode && r.errcode !== 0)) throw new IlinkError(`sendmessage 失败：ret=${r.ret} errcode=${r.errcode} ${r.errmsg ?? ""}`, r.ret ?? r.errcode)
     return clientId
   }
 
@@ -347,7 +348,8 @@ export class IlinkClient {
         ? `${this.cdnBaseUrl}/upload?encrypted_query_param=${encodeURIComponent(r.upload_param)}&filekey=${encodeURIComponent(filekey)}`
         : undefined)
     if (!url) throw new IlinkError("getuploadurl 没给上传地址")
-    const resp = await this.fetchImpl(url, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: new Uint8Array(cipher) })
+    // CDN 直连也要超时(审查 debug D1):半开/挂起的连接会卡住整条入站轮询,机器人彻底失聪
+    const resp = await this.fetchImpl(url, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: new Uint8Array(cipher), signal: 合并信号(60_000) })
     if (!resp.ok) throw new IlinkError(`CDN 上传失败 ${resp.status}：${resp.headers.get("x-error-message") ?? ""}`)
     const param = resp.headers.get("x-encrypted-param")
     if (!param) throw new IlinkError("CDN 上传成功却没回 x-encrypted-param")
@@ -368,7 +370,8 @@ export class IlinkClient {
         ? `${this.cdnBaseUrl}/download?encrypted_query_param=${encodeURIComponent(media.encrypt_query_param)}`
         : undefined)
     if (!url) throw new IlinkError("媒体没有下载地址")
-    const resp = await this.fetchImpl(url, { method: "GET" })
+    // CDN 下载也要超时(审查 debug D1)
+    const resp = await this.fetchImpl(url, { method: "GET", signal: 合并信号(60_000) })
     if (!resp.ok) throw new IlinkError(`CDN 下载失败 ${resp.status}`)
     const body = Buffer.from(await resp.arrayBuffer())
     const key = aesKeyOverrideHex ? Buffer.from(aesKeyOverrideHex, "hex") : media.aes_key ? parseAesKey(media.aes_key) : undefined

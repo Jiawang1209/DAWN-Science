@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 全库审查续修：安全边界批（A6/A8/A16/B2/G6，作者拍板后实现）
+
+- **Type**: fix
+- **Motivation**: 剩余 10 条 ⏸ 待决策项里,作者拍板「都修」。其中两条涉及会改变实际安全行为的选择,先经作者定:A6 选**首次自动信任(TOFU)**,G6 选**改指纹(接受现有信任失效需重授)**。本批做完 5 条安全边界项。
+- **What**: **A6** SSH 补主机公钥 TOFU 校验:首次连一台机器记下公钥指纹(sha256),之后每次比对——一致放行,变了就拒并说清中间人风险;删掉这台服务器会清掉记的公钥(合法换密钥后重新添加即可)。指纹记事本注入到 `RemoteExecutor`(ssh.ts 不碰文件系统),落本机设置库 `ssh.hostkey.<host:port>`。**G6** MCP 信任从「只按名字」改成「名字+命令指纹」:同名但命令不同的服务器(clone 进来的 `.dawn/mcp.yaml`)不再白继承信任;指纹随协议走(listMcpServers 带 `fingerprint`,界面拨信任时带回 `setMcpFlag`)。**A16** 联网命令正则的 `ssh` 加负向后瞻 `(?<!\.)`,`~/.ssh/` 这类路径不再被误判成「访问网络」、给模型撒谎的理由;真 ssh 命令仍判联网。**A8** MCP 门的取档从只读全局档改成带 `sessionId`(native 装配时绑 `spec.sessionId`),会话级/定时任务级权限档也管得住 MCP 工具。**B2** 插件(office/browser)生成的文件也登记成本会话产物——「清本会话产物」删得掉它们,不再与系统提示词「本会话文件可清」矛盾。
+- **Impact**: 新增设置键 `ssh.hostkey.*`;协议 setMcpFlag 加可选 `fingerprint`、listMcpServers 响应加可选 `fingerprint`;`造MCP门` 签名变(取档带 sessionId、门带 sessionId+指纹)。**G6 会让现有 MCP 信任全部失效,需各重新授信一次**(作者已同意)。
+- **Verification**: 单测 2255 全绿;新增回归:A6(TOFU 首次记下/同钥放行/换钥拒连)、G6(信任按指纹隔离,拨错指纹不点亮)、A16(.ssh 不误判/真 ssh 仍判联网)、A8(取档按 sessionId 走)、B2(插件写的文件删不被拦);typecheck 干净。
+
 ### 2026-08-25 — 全库审查续修：UI 边角与 i18n（I/J 系列）收口，全表 ☐ 清零（debug 分支）
 
 - **Type**: fix

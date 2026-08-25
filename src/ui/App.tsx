@@ -59,7 +59,7 @@ import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
-import { RemoteAssistantView, useSessionChoices, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
+import { RemoteAssistantView, useSessionChoices, type FeishuStatus, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
 import { 读记忆, 记记忆, type FilesMemory } from "./state/files-memory.js"
 import type { EnhanceMode, EnhanceOutcome } from "./enhance.js"
 import {
@@ -2171,6 +2171,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 载子agent = useCallback(() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {}), [client, projectId])
   const 载MCP = useCallback(() => client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {}), [client, projectId])
   const 载微信通知 = useCallback(() => client.get<NotifySettings>("weixinGetNotify", {}), [client])
+  const 载飞书状态 = useCallback(() => client.get<FeishuStatus>("feishuGetStatus", {}), [client])
+  const 载飞书通知 = useCallback(() => client.get<NotifySettings>("feishuGetNotify", {}), [client])
   const 微信可绑的 = useSessionChoices(tasks)
 
   const agentLabel = useCallback(
@@ -3729,6 +3731,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }}
               loadNotify={载微信通知}
               setNotify={(patch) => client.get("weixinSetNotify", patch)}
+              feishu={{
+                load: 载飞书状态,
+                startLogin: () => client.get("feishuStartLogin", {}),
+                cancelLogin: () => client.get("feishuCancelLogin", {}),
+                unbind: () => client.get("feishuUnbind", {}),
+                bindSession: (sessionId) => client.get("feishuBindSession", { sessionId }),
+                loadNotify: 载飞书通知,
+                setNotify: (patch) => client.get("feishuSetNotify", patch),
+              }}
             />
                   ),
                 },

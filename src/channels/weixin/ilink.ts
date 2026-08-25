@@ -258,8 +258,8 @@ export class IlinkClient {
    * 发一条带一个条目的消息。**`item_list` 永远只有一项**（插件的口径：文字与图片分两条发）。
    * 返回我们自己生成的 `client_id`——服务端不回消息 id。
    */
-  async sendItem(token: string, to: string, item: MessageItem, contextToken: string | undefined): Promise<string> {
-    const clientId = `dawn-weixin:${Date.now()}-${randomBytes(4).toString("hex")}`
+  async sendItem(token: string, to: string, item: MessageItem, contextToken: string | undefined, clientId?: string): Promise<string> {
+    clientId ??= `dawn-weixin:${Date.now()}-${randomBytes(4).toString("hex")}`
     const r = (await this.post(
       this.baseUrl,
       "ilink/bot/sendmessage",
@@ -440,6 +440,15 @@ export function parseAesKey(b64: string): Buffer {
 }
 
 /** 图片条目：`media.aes_key` 用 base64(16 字节)，另外还带 hex 的 `aeskey` */
+/**
+ * 出站媒体的**确定性 client_id**(2026-08-25,dsh-im 对账捎上的):同一份字节重传
+ * 得到同一个 id,服务端按 client_id 幂等——重试不重复发。**只用于媒体**:
+ * 文本消息保持随机 id(同一句话合法地发两次,不该被去重)。
+ */
+export function mediaClientId(bytes: Buffer): string {
+  return `dawn-weixin-media:${createHash("sha256").update(bytes).digest("hex").slice(0, 32)}`
+}
+
 export function imageItem(up: { media: CdnMedia; aesKeyHex: string; cipherSize: number }): MessageItem {
   return {
     type: ItemType.IMAGE,

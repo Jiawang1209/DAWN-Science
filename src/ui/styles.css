@@ -6299,3 +6299,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .memory-entry-text { flex: 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .memory-entry-ops { display: flex; gap: var(--dawn-space-1); flex: 0 0 auto; }
+
+/* ── 远程助理 · 飞书卡(2026-08-25) ── */
+.ra-feishu-qr { /* 与 .ra-qr 同款,类名只为 e2e 定位 */ }
+.ra-feishu-notify { margin-top: var(--dawn-space-3); }

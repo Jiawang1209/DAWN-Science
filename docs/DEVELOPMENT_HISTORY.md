@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-25 — 飞书通道：远程助理第二格（学自 dsh-feishu / dsh-im）
+
+- **Type**: feat
+- **Motivation**: 作者：「微信我接完了，飞书我没接，我们必须做」。研读 `xmanrui/dsh-feishu`（已停维护）、其继任者 `xmanrui/dsh-im`、对照 `ivorytower1026/dsh-im-bot`；核实「扫码即建应用」是飞书官方 SDK 设备流、无第三方中继，收消息走 WS 长连接零公网暴露。
+- **What**: `src/channels/feishu/`（`sdk.ts` 窄接口：real=`@larksuiteoapi/node-sdk@1.73.0` 锁版本、fake=HTTP 到假服务器；`channel.ts` 同构 `WeixinChannel`——斜杠命令/三种通知/只认扫码人/定时钩子整套平移；差异：设备流无配对码、WS 长连接、Reaction OnIt→DONE/ERROR、messageId 去重内存+持久环形 1000、9000 字切段）。协议七操作（125 个）；远程助理屏飞书卡换真（扫码/状态/解绑/飞书自己的通知开关）；`scripts/fake-feishu-server.mjs` dev:mock 与 e2e 共用（`DAWN_FAKE_FEISHU`）。**刻意不抽统一 Channel 接口**（dsh-im-bot 的教训：两通道的抽象税 = 能力被抹平成交集）。顺手捎上微信小修：出站媒体确定性 client_id（内容哈希，重试幂等；超时保游标经核对本就有，dsh-im 对账报告在此点有误）。
+- **Impact**: 远程助理从单通道变双通道；scopes 最小声明写死一处（CardKit 第二批）；新依赖 @larksuiteoapi/node-sdk（锁版本，WSClient 重连竞态风险已记录在 sdk.ts 头注）。
+- **Verification**: 单测 2210+ 全绿（假飞书×假 sdk 设备流/收发/表情 4 条；通道 7 条：绑定落位/只认扫码人/去重含重启重放/OnIt→DONE/斜杠/切段/解绑清净；协议清点 125；mediaClientId 幂等）；e2e 4 条全过（飞书整链路：设备流绑定→假飞书说话→会话出现→回答送回→Reaction 收尾→陌生人不回→通知开关持久；微信回归全绿）。
+
 ### 2026-08-25 — 记忆：三轨确认制长期记忆 + 技能沉淀（学自 dsh-memory-evolve）
 
 - **Type**: feat

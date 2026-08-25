@@ -43,6 +43,8 @@ import { loadSkills } from "@earendil-works/pi-coding-agent"
 import { addMcpServer, removeMcpServer, 从JSON解出 } from "../config/mcp-writer.js"
 import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
+import { FeishuChannel, type FeishuOps } from "../channels/feishu/channel.js"
+import { fakeFeishuSdk, realFeishuSdk } from "../channels/feishu/sdk.js"
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
 import { 转录成markdown, 导出文件名 } from "../session/export.js"
@@ -1080,6 +1082,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
     log: (line) => console.error(line),
   })
+  /**
+   * 飞书（2026-08-25，规格 2026-08-25-飞书通道-design.md）：与微信同构的第二格。
+   * `DAWN_FAKE_FEISHU=<url>`：e2e / dev:mock 把飞书那头指到假服务器（与 DAWN_FAKE_ILINK 同惯例）。
+   */
+  const 假飞书 = process.env["DAWN_FAKE_FEISHU"]
+  const 飞书 = new FeishuChannel({
+    sdk: () => (假飞书 ? fakeFeishuSdk(假飞书) : realFeishuSdk()),
+    settings: {
+      get: (k) => settings?.get(k),
+      set: (k, v, now) => settings?.set(k, v, now),
+    },
+    credentials,
+    events,
+    ops: () => backend as unknown as FeishuOps,
+    ...(isForeground ? { isForeground } : {}),
+    defaultAgentId: () => Object.entries(registry.agents).find(([, d]) => d.kind === "native")?.[0],
+    whereIs: (sessionId) => {
+      const rec = sessions.get(sessionId)
+      if (!rec?.connectionId) return undefined
+      const c = remote?.store.get(rec.connectionId)
+      return { ...(c?.label ? { label: c.label } : {}), ...(rec.remoteCwd ? { cwd: rec.remoteCwd } : {}) }
+    },
+    log: (line) => console.error(line),
+  })
   const 要设置 = () => {
     if (!settings) throw fault("invalid_request", "本次运行没有设置存储，接不了微信")
   }
@@ -1411,6 +1437,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           定时结束了?.(d, 结果)
           // 推微信：绑了才发；跟「跑完 / 出错」两个开关走
           void 微信.定时跑完了(d.name, 完.status, 完.summary ?? 完.error?.message, new Date().toLocaleString("zh-CN", { hour12: false })).catch(() => {})
+          void 飞书.定时跑完了(d.name, 完.status, 完.summary ?? 完.error?.message, new Date().toLocaleString("zh-CN", { hour12: false })).catch(() => {})
           return 完
         },
         补跑窗口毫秒: (定时设置?.补跑窗口分钟 ?? 15) * 60_000,
@@ -3602,13 +3629,56 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       要设置()
       return 微信.setNotifySettings(patch)
     },
+
+    /* ── 远程助理 · 飞书 ── */
+    feishuGetStatus: async () => {
+      const st = 飞书.status()
+      return {
+        state: st.state,
+        ...(st.login ? { login: st.login } : {}),
+        ...(st.openId ? { openId: st.openId } : {}),
+        ...(st.boundAt ? { boundAt: st.boundAt } : {}),
+        ...(st.sessionId ? { sessionId: st.sessionId } : {}),
+        ...(st.lastError ? { lastError: st.lastError } : {}),
+        contactName: st.contactName,
+      }
+    },
+    feishuStartLogin: async () => {
+      要设置()
+      try {
+        await 飞书.startLogin()
+      } catch (e) {
+        throw fault("internal_error", `设备流没起来：${e instanceof Error ? e.message : String(e)}`)
+      }
+      return { ok: true as const }
+    },
+    feishuCancelLogin: async () => {
+      飞书.cancelLogin()
+      return { ok: true as const }
+    },
+    feishuUnbind: async () => {
+      await 飞书.unbind()
+      return { ok: true as const }
+    },
+    feishuBindSession: async ({ sessionId }) => {
+      if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      await 飞书.bindSession(sessionId)
+      return { ok: true as const }
+    },
+    feishuGetNotify: async () => 飞书.notifySettings(),
+    feishuSetNotify: async (patch) => {
+      要设置()
+      return 飞书.setNotifySettings(patch)
+    },
   }
 
   // 上次绑过的话，启动就开始听
   微信.start()
+  飞书.start()
   // 定时：收拾上次没跑完的，然后按下一次到期设 timer
   调度器?.start()
   opts.注册收摊?.(() => 微信.stop())
+  opts.注册收摊?.(() => 飞书.stop())
   if (调度器) opts.注册收摊?.(() => 调度器.stop())
   return backend
 }

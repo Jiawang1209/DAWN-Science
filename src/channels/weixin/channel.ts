@@ -19,7 +19,7 @@
  * - token 失效（-14）：停轮询、状态变 `stale`，界面那张卡会说「重新扫码」。
  */
 import { readFile } from "node:fs/promises"
-import { IlinkClient, imageItem, type InboundText, type QrStatus, 切段, 读入站 } from "./ilink.js"
+import { IlinkClient, imageItem, mediaClientId, type InboundText, type QrStatus, 切段, 读入站 } from "./ilink.js"
 import type { SessionUpdate } from "../../protocol/events.js"
 import type { TaskSummary } from "../../protocol/entities.js"
 
@@ -637,7 +637,8 @@ export class WeixinChannel {
       try {
         const 字节 = await (this.deps.readFile ?? ((f: string) => readFile(f)))(p)
         const up = await client.uploadMedia(token, to, 1, 字节)
-        await client.sendItem(token, to, imageItem(up), this.ctx())
+        // 确定性 client_id:同一张图重发不重复(dsh-im 对账)
+        await client.sendItem(token, to, imageItem(up), this.ctx(), mediaClientId(字节))
       } catch (e) {
         this.log(`图片 ${p} 没传去微信：${e instanceof Error ? e.message : String(e)}`)
       }

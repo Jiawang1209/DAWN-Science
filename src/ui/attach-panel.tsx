@@ -29,7 +29,9 @@ export function AttachUsagePanel({ workspace, sessionId }: { workspace: string; 
     u(workspace, sessionId).then(设用量).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))
   }, [workspace, sessionId])
   useEffect(拉, [拉])
-  if (!用量) return null
+  // **错误要能上屏**（审查 debug J3）:旧代码 `if(!用量)return null` 在错误渲染之前,
+  // attachUsage reject 时 用量 恒 undefined → 整块消失,下面那句 caveat 永远走不到。
+  if (!用量) return 出错 ? <section className="panel"><p className="caveat">{出错}</p></section> : null
   return (
     <section className="panel">
       <h3 className="panel-title">{t("外部附件")}</h3>

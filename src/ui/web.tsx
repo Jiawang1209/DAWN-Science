@@ -87,7 +87,9 @@ export function WebPanel({
     canBack: false,
     canForward: false,
   })
-  const [草稿, 设草稿] = useState("")
+  // 草稿 undefined = 跟随地址栏当前 url;字符串(含空串)= 用户在编辑(审查 debug J10:
+  // 旧的 `草稿 || 状态.url` 让全选删空后字立刻长回来,没法清空重打)
+  const [草稿, 设草稿] = useState<string | undefined>(undefined)
   /** 上一次推给主进程的样子。**一样就不推**——否则 250ms 一次的 IPC 白烧 */
   const 上次 = useRef<string>("")
 
@@ -305,12 +307,12 @@ export function WebPanel({
           className="control webview-url"
           aria-label={t("网址")}
           placeholder={t("输一个网址，或工作目录里的 .html")}
-          value={草稿 || 状态.url}
+          value={草稿 ?? 状态.url}
           onChange={(e) => 设草稿(e.target.value)}
           onKeyDown={(e) => {
             if (e.key !== "Enter") return
-            去(草稿 || 状态.url)
-            设草稿("")
+            去(草稿 ?? 状态.url)
+            设草稿(undefined)
           }}
         />
       </div>

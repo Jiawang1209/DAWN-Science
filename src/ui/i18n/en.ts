@@ -1249,4 +1249,7 @@ export const EN: Readonly<Record<string, string>> = {
   "添加飞书机器人": "Add Feishu bot",
   "飞书通知": "Feishu notifications",
   "飞书绑定二维码": "Feishu binding QR code",
+
+  // 审查 debug 修复新增文案
+  "算不出差异：{0}": "Could not compute the diff: {0}",
 }

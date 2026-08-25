@@ -1304,6 +1304,8 @@ pre {
 }
 .banner-warn { background: var(--dawn-fill-4); color: var(--dawn-text-2); }
 .banner-stale { background: var(--dawn-fill-5); color: var(--dawn-text-3); }
+/* 连接断开横幅里的重试/检查配置按钮(审查 debug I1) */
+.banner-actions { margin-left: auto; display: flex; gap: var(--dawn-space-1); flex: 0 0 auto; }
 
 /* 多个出路并排。**每一态都要有出路**，有时不止一条 */
 .state-actions { display: flex; gap: 8px; align-items: center; }

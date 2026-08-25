@@ -59,12 +59,21 @@ export function ConnectionSurface({
   }
 
   if (c.phase === "reconnecting") {
+    // **必须给一个点得动的出口**（审查 debug I1）:没有自动重试定时器,`attempt` 会永远
+    // 停在 1,`exhausted`(唯一带「重试 / 检查配置」的全屏)在真机上不可达——旧实现只画一个
+    // 转圈横幅、零个按钮,后端没起时开 app 就是一个永远转不完、点不动的圈。给手动重试按钮:
+    // 点一次 connect,失败则 attempt 累加,到上限后自然进 exhausted。
     return (
       <div className="banner banner-warn" role="status">
-        <Loader
-          inline
-          label={tf("连接断开，正在重试（第 {0} / {1} 次）：{2}", c.attempt, MAX_CONNECT_ATTEMPTS, c.reason)}
-        />
+        <span>{tf("连接断开（第 {0} / {1} 次）：{2}", c.attempt, MAX_CONNECT_ATTEMPTS, c.reason)}</span>
+        <span className="banner-actions">
+          <Button variant="text" size="sm" onClick={onRetry}>
+            {t("重试")}
+          </Button>
+          <Button variant="text" size="sm" onClick={onOpenSettings}>
+            {t("检查配置")}
+          </Button>
+        </span>
       </div>
     )
   }

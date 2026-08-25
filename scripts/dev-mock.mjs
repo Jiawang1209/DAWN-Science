@@ -24,6 +24,7 @@ import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "./mock-inference-server.mjs"
 import { startFakeIlinkServer } from "./fake-ilink-server.mjs"
+import { startFakeFeishuServer } from "./fake-feishu-server.mjs"
 
 const ROOT = resolve(import.meta.dirname, "..")
 
@@ -39,6 +40,7 @@ const server = await startMockInferenceServer()
  *   curl -X POST <url>/__fake/inbound -d '{"text":"在吗"}'      curl <url>/__fake/sent
  */
 const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
+const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
 console.log(`假微信：${weixin.url}（/__fake/qr/scan · /__fake/qr/confirm · /__fake/inbound · /__fake/sent）`)
 
 const dir = mkdtempSync(join(tmpdir(), "dawn-mock-"))
@@ -87,6 +89,7 @@ const child = spawn(
       DAWN_MEMORIES_DIR: join(dir, "memories"),
       DAWN_MODELS_JSON: modelsPath,
       DAWN_FAKE_ILINK: weixin.url,
+      DAWN_FAKE_FEISHU: feishu.url,
     },
   },
 )
@@ -94,6 +97,7 @@ const child = spawn(
 const shutdown = async () => {
   await server.close()
   await weixin.close()
+  await feishu.close()
   process.exit(0)
 }
 child.on("exit", shutdown)

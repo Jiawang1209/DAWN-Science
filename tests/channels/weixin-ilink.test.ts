@@ -12,6 +12,7 @@ import {
   aesEcbEncrypt,
   fileItem,
   imageItem,
+  mediaClientId,
   parseAesKey,
   切段,
   读入站,
@@ -274,5 +275,14 @@ describe("读入站消息", () => {
     const v = 读入站({ from_user_id: "u", item_list: [{ type: 3, voice_item: { media: { encrypt_query_param: "v" } } }] })
     expect(v.media?.kind).toBe("voice")
     expect(v.text).toBe("")
+  })
+})
+
+describe("mediaClientId(2026-08-25,dsh-im 对账)", () => {
+  it("同字节同 id(重试幂等);不同字节不同 id;文本发送不受影响(仍随机)", () => {
+    const a = Buffer.from("同一张图")
+    expect(mediaClientId(a)).toBe(mediaClientId(Buffer.from("同一张图")))
+    expect(mediaClientId(a)).not.toBe(mediaClientId(Buffer.from("另一张图")))
+    expect(mediaClientId(a)).toMatch(/^dawn-weixin-media:[0-9a-f]{32}$/)
   })
 })

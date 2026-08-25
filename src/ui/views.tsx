@@ -5922,6 +5922,30 @@ export function EmptyConversation({
   /** 第一句话没发出去的原因。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [开场出错, 设开场出错] = useState<string | undefined>(undefined)
   const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
+  /**
+   * **开场卡 / 换 agent 也要带上排队的图和文件**（审查 debug J6）。此前这两条路只把文本草稿交给
+   * `onStart`,粘/拖进来还没发的图和文件被静默丢掉——与「打字发送」那条(上面 6028 一带)口径不一致。
+   * 抽成一处:快照 → 乐观清空 → 失败还回去,三条路(打字发送、开场卡、换 agent)从此同一个出口。
+   */
+  const 开场 = (agent: string, 文本: string | undefined) => {
+    const 这次的图 = 空态图
+    const 这次的文件 = 空态文件
+    设空态图([])
+    设空态文件([])
+    设空态附过(false)
+    设开场出错(undefined)
+    void Promise.resolve(
+      这次的文件.length > 0
+        ? onStart(agent, 文本, 工作目录, 这次的图.map(报给协议), 这次的文件)
+        : 这次的图.length > 0
+          ? onStart(agent, 文本, 工作目录, 这次的图.map(报给协议))
+          : onStart(agent, 文本, 工作目录),
+    ).catch((e: unknown) => {
+      设开场出错(e instanceof Error ? e.message : String(e))
+      设空态图(这次的图)
+      设空态文件(这次的文件)
+    })
+  }
   return (
     <div className="conversation empty-conv">
       {first ? (
@@ -5954,7 +5978,7 @@ export function EmptyConversation({
                 <Button
                   variant="outline"
                   size="card"
-                  onClick={() => void Promise.resolve(onStart(first, t(o.发出去的话), 工作目录)).catch((e: unknown) => 设开场出错(e instanceof Error ? e.message : String(e)))}
+                  onClick={() => 开场(first, t(o.发出去的话))}
                 >
                   <span className="opener-title">{t(o.标题)}</span>
                   <span className="opener-sub">{t(o.说明)}</span>
@@ -6244,12 +6268,7 @@ export function EmptyConversation({
                      * 走的是与「打字发送」同一个出口（`设开场出错`）——
                      * 一个失败一个家，不再多一处长得不一样的报错。
                      */
-                    onPick={(a) => {
-                      设开场出错(undefined)
-                      void Promise.resolve(onStart(a, 草稿.trim() || undefined, 工作目录)).catch(
-                        (e: unknown) => 设开场出错(e instanceof Error ? e.message : String(e)),
-                      )
-                    }}
+                    onPick={(a) => 开场(a, 草稿.trim() || undefined)}
                     {...(onOpenSettings ? { onConfigure: onOpenSettings } : {})}
                     triggerLabel={agentLabel ? agentLabel(first) : first}
                   />

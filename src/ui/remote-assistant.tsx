@@ -60,8 +60,13 @@ export function RemoteAssistantView({
   问?: ((req: { title: string; detail: React.ReactNode; confirmLabel: string }) => Promise<"confirm" | "alt" | "cancel">) | undefined
 }) {
   const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
+  // 加载失败要出声,不要永停「正在问状态」(审查 debug J9):此前 catch 吞成 undefined,而 undefined 在渲染里
+  // 与「还在加载」是同一个态——通知区就永远转圈,人以为一直在问、其实早就失败了
+  const [通知出错, 设通知出错] = useState<string | undefined>(undefined)
   useEffect(() => {
-    loadNotify().then(设通知).catch(() => 设通知(undefined))
+    loadNotify()
+      .then((n) => { 设通知(n); 设通知出错(undefined) })
+      .catch((e: unknown) => 设通知出错(e instanceof Error ? e.message : String(e)))
   }, [loadNotify])
   const [状态, 设状态] = useState<WeixinStatus | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
@@ -208,7 +213,9 @@ export function RemoteAssistantView({
       <section className="ra-card" aria-labelledby="ra-notify">
         <h2 id="ra-notify" className="ra-card-title">{t("通知")}</h2>
         <p className="hint">{t("这几件事发生时，推一条到微信（不只绑着的那段，所有会话都算）。")}</p>
-        {通知 ? (
+        {通知出错 ? (
+          <p className="caveat">{通知出错}</p>
+        ) : 通知 ? (
           // group + 平台名（审查 debug J5）：飞书卡有一组一字不差的开关，不区分的话读屏/自动化认不出哪组是哪个
           <ul className="ra-toggles" role="group" aria-label={t("微信通知")}>
             {(
@@ -279,9 +286,12 @@ function 飞书卡({
 }) {
   const [状态, 设状态] = useState<FeishuStatus | undefined>(undefined)
   const [通知, 设通知] = useState<NotifySettings | undefined>(undefined)
+  const [通知出错, 设通知出错] = useState<string | undefined>(undefined) // 审查 debug J9:加载失败要出声
   const [出错, 设出错] = useState<string | undefined>(undefined)
   useEffect(() => {
-    loadNotify().then(设通知).catch(() => 设通知(undefined))
+    loadNotify()
+      .then((n) => { 设通知(n); 设通知出错(undefined) })
+      .catch((e: unknown) => 设通知出错(e instanceof Error ? e.message : String(e)))
   }, [loadNotify])
   useEffect(() => {
     let 停 = false
@@ -403,7 +413,9 @@ function 飞书卡({
       )}
       <div className="ra-feishu-notify">
         <h3 className="panel-title">{t("飞书通知")}</h3>
-        {通知 ? (
+        {通知出错 ? (
+          <p className="caveat">{通知出错}</p>
+        ) : 通知 ? (
           <ul className="ra-toggles" role="group" aria-label={t("飞书通知")}>
             {(
               [

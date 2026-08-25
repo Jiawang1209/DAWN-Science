@@ -69,7 +69,17 @@ export async function 开标签(url?: string): Promise<标签> {
   page.on("load", () => {
     void page.title().then((title) => 记历史(page.url(), title)).catch(() => {})
   })
-  if (url) await page.goto(url, { waitUntil: "domcontentloaded" })
+  if (url) {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded" })
+    } catch (e) {
+      // **goto 失败别把这张空白页留成活跃标签**(审查 debug E10)。此前抛异常前 tab 已进表、已设活跃,
+      // 下一次操作就落在一张 about:blank 上,症状是「打开失败了,可后面的 snapshot/截图却对着空白页」。
+      // 关掉它(close 处理会摘表并重挑活跃),再把原因如实抛出去。
+      await page.close().catch(() => {})
+      throw e
+    }
+  }
   return t
 }
 

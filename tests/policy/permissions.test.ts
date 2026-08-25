@@ -90,6 +90,14 @@ describe("判据 · bash", () => {
    * 一条命令可能同时踩几样（`pip install` 也联网）。
    * **报最要紧的那个**——理由笼统的话，人和模型都不知道该改哪里。
    */
+  it("A16 `.ssh` 路径不被误判成联网:`cat ~/.ssh/config` 不报「访问网络」", () => {
+    // `\bssh\b` 曾命中 `.ssh` → 把纯读文件说成访问网络,理由撒谎(审查 debug A16)
+    expect(看风险("bash", { command: "cat ~/.ssh/config" }, 本地)?.类别).not.toBe("联网")
+    // 真的 ssh 命令仍判联网
+    expect(看风险("bash", { command: "ssh user@host" }, 本地)?.类别).toBe("联网")
+    expect(看风险("bash", { command: "/usr/bin/ssh user@host" }, 本地)?.类别).toBe("联网")
+  })
+
   it("同时踩几样时，报最要紧的那个", () => {
     expect(看风险("bash", { command: "pip install requests" }, 本地)?.类别).toBe("装包")
     expect(看风险("bash", { command: "git push && rm -rf x" }, 本地)?.类别).toBe("发布")

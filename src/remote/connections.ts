@@ -31,6 +31,8 @@ export interface ConnectionsOptions {
   onState?: (connectionId: string, state: RemoteState) => void
   /** 读私钥文件。可注入只为可测 */
   readKeyFile?: (path: string) => Promise<Buffer>
+  /** 主机公钥记事本(审查 debug A6):TOFU 校验用。不给退回旧行为(不校验) */
+  knownHosts?: import("./ssh.js").KnownHosts
 }
 
 export class RemoteConnections {
@@ -120,6 +122,7 @@ export class RemoteConnections {
       },
       createClient: this.opts.createClient,
       onState: (s) => this.记下(rec.id, s),
+      ...(this.opts.knownHosts ? { knownHosts: this.opts.knownHosts } : {}),
     })
     this.活着.set(rec.id, ex)
 

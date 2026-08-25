@@ -79,6 +79,15 @@ describe("MCP 工具 · 门", () => {
     () => false,
   )
 
+  it("**取档按 sessionId 走**：会话级档管得住 MCP 工具(审查 debug A8)", () => {
+    // 某段会话是 deny-risky,别的会话/全局是 allow-all —— 门要按传进来的 sessionId 挑
+    const 门 = 造MCP门((sid) => (sid === "严会话" ? "deny-risky" : "allow-all"), () => false)
+    // 没过目的那台(取信得过=false)在 deny-risky 会话里被拦
+    expect(门("testbox", "fp", "严会话").kind).toBe("deny")
+    // 同一台在别的会话(allow-all)放行
+    expect(门("testbox", "fp", "松会话").kind).not.toBe("deny")
+  })
+
   /**
    * **这一条是整层的要害。**
    * 拦不住的话，一个从网上装来的进程就能随便执行。

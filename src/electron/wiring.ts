@@ -327,13 +327,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   const mcp门 = 造MCP门(
-    读全局档,
+    // 与 native 那道门同一套取档(审查 debug A8):定时任务/会话级档也管得住 MCP 工具,不再只看全局
+    (sessionId) => (sessionId && 按会话的档.get(sessionId)) || 读全局档(),
     /**
      * **信任读本机的设置库，不读配置文件。**
      * 项目级名单住在 `.dawn/mcp.yaml`，会跟着仓库被 clone——
      * 让它声明自己可信，门就等于不存在。
      */
-    (服务器名) => settingsStore.get(`mcp.trusted.${服务器名}`) === "1",
+    // 信任按「名字 + 命令指纹」记(审查 debug G6):同名但命令不同 = 另一台,不继承信任
+    (服务器名, 指纹) => settingsStore.get(`mcp.trusted.${服务器名}:${指纹}`) === "1",
   )
 
   /**
@@ -711,6 +713,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // **口令从钥匙串取，与模型 key 同一个库**，键上带 `ssh:` 前缀免得撞名
     secretFor: (id) => opts.credentials.get(`ssh:${id}`),
     ...(process.env["SSH_AUTH_SOCK"] ? { agentSock: process.env["SSH_AUTH_SOCK"] } : {}),
+    // **主机公钥记事本(审查 debug A6，TOFU)**:首次自动信任、之后比对,变了就拒。落本机设置库(公钥不是秘密)
+    knownHosts: {
+      get: (hostKey) => settingsStore.get(`ssh.hostkey.${hostKey}`) || undefined,
+      set: (hostKey, fp) => settingsStore.set(`ssh.hostkey.${hostKey}`, fp, new Date().toISOString()),
+    },
     onState: (connectionId, state) => {
       /**
        * **连上的那一刻盖一个时间戳**（2026-08-19）。

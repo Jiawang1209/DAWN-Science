@@ -201,7 +201,7 @@ export interface NativeRuntimeOptions {
       问题: readonly string[]
     }>
     池: import("../mcp/客户端.js").MCP池
-    门?: (服务器名: string) => import("../policy/permissions.js").门的决定
+    门?: (服务器名: string, 指纹: string, sessionId?: string) => import("../policy/permissions.js").门的决定
   }
   /**
    * 对话的内核（②，2026-08-14）。**给了才有 `run_code` 这个工具。**
@@ -572,7 +572,17 @@ export class NativeRuntime implements AgentRuntime {
               }
             }
           }
-          return original(toolCallId, params, signal, onUpdate, ctx)
+          // **插件生成的文件也登记成本会话产物**(审查 debug B2):不登记的话「清本会话产物」删不掉它们,
+          // 而系统提示词说得清清楚楚「本会话文件可清」。写路径转绝对(相对的按工作区解析,与插件内部一致),
+          // 执行前记下此前在不在,成功后只登记此前不存在的(覆盖已有文件不算新建)。
+          const 写的 = 写参
+            .map((k) => params[k])
+            .filter((v): v is string => typeof v === "string" && !!v)
+            .map((rel) => (isAbsolute(rel) ? rel : spec.workspace ? join(spec.workspace, rel) : rel))
+          const 之前 = 写的.map((a) => [a, 产物登记.存在(a)] as const)
+          const r = await original(toolCallId, params, signal, onUpdate, ctx)
+          if (!(r as { isError?: boolean } | undefined)?.isError) for (const [a, 有] of 之前) 产物.登记新建(a, 有)
+          return r
         },
       }
     }
@@ -1043,7 +1053,8 @@ export class NativeRuntime implements AgentRuntime {
           名单: r.名单,
           工具: r.工具,
           ...(spec.workspace ? { 工作区: spec.workspace } : {}),
-          ...(门 ? { 门 } : {}),
+          // 把这段会话的 id 绑进门(审查 debug A8):好让会话级/定时级权限档也对 MCP 工具生效
+          ...(门 ? { 门: (名: string, 指纹: string) => 门(名, 指纹, spec.sessionId) } : {}),
           问: (title, reason) => this.问权限(spec.sessionId, title, reason, undefined),
         })
         for (const 问题 of r.问题) {

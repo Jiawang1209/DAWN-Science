@@ -30,6 +30,7 @@
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { realpathSync } from "node:fs"
 import { homedir } from "node:os"
+import { createHash } from "node:crypto"
 import { 原始数据目录 } from "./science-layout.js"
 
 /**
@@ -117,8 +118,13 @@ export interface 语境 {
 const 装包命令 =
   /\b(pip3?|uv|conda|mamba|npm|pnpm|yarn|apt|apt-get|brew)\s+(install|add|remove|uninstall)\b|\bR\s+-e\s+.*install\.packages|\binstall\.packages\s*\(|\brenv::(install|restore)\b/
 
-/** 联网。**不含 `git push`**——那个是「发布」，性质不同，理由也该说得不同 */
-const 联网命令 = /\b(curl|wget|scp|rsync|ssh|nc|ftp)\b/
+/**
+ * 联网。**不含 `git push`**——那个是「发布」，性质不同，理由也该说得不同。
+ * **`ssh` 前加负向后瞻 `(?<!\.)`**（审查 debug A16）:否则 `\bssh\b` 会命中 `~/.ssh/` 这类路径,
+ * 把一个纯读写 `.ssh` 目录的命令误判成「访问网络」,给模型一句撒谎的理由。`/usr/bin/ssh`、
+ * ` ssh ` 这类真命令仍匹配(前面不是点);`.ssh` 目录名不匹配(前面是点)。
+ */
+const 联网命令 = /\b(curl|wget|scp|rsync|(?<!\.)ssh|nc|ftp)\b/
 
 /** 删掉东西。`mv` 也算——它能悄悄覆盖掉一个已有文件 */
 const 删除命令 = /\brm\s|\brmdir\b|\bshred\b|\bmv\s|\btruncate\b|>\s*\/dev\/sd|\bfind\b.*-delete\b|\bxargs\b.*\brm\b/
@@ -302,8 +308,27 @@ export function 看MCP风险(服务器名: string, 信得过: boolean | undefine
  * `取信得过` 由装配注入（读本机的设置库）。**判据不读配置文件**——
  * 项目级名单会跟着仓库被 clone，让它声明自己可信等于没有门。
  */
-export function 造MCP门(取档: () => 权限档, 取信得过: (服务器名: string) => boolean) {
-  return (服务器名: string): 门的决定 => 照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名)))
+/**
+ * 一台 MCP 服务器的**身份指纹**（审查 debug G6）：命令 + 参数的短哈希。
+ * 信任按「名字 + 指纹」记,而不是只按名字——否则你信过的 `foo`(命令 X)删掉后,
+ * clone 进来的同名 `foo`(命令 Y,可能是恶意的)会白继承信任、不问就跑。
+ * 指纹一变就等于换了一台,信任不跟着走。
+ */
+export function mcp指纹(server: { command?: string; args?: readonly string[]; url?: string }): string {
+  const 料 =
+    server.command !== undefined
+      ? `cmd:${server.command} ${(server.args ?? []).join(" ")}`
+      : `url:${server.url ?? ""}`
+  return createHash("sha256").update(料).digest("base64url").slice(0, 16)
+}
+
+export function 造MCP门(
+  取档: (sessionId?: string) => 权限档,
+  取信得过: (服务器名: string, 指纹: string) => boolean,
+) {
+  // sessionId 让**会话级 / 定时任务级的权限档**也管得住 MCP 工具(审查 debug A8):此前只读全局档
+  return (服务器名: string, 指纹: string, sessionId?: string): 门的决定 =>
+    照这一档(取档(sessionId), 看MCP风险(服务器名, 取信得过(服务器名, 指纹)))
 }
 
 export function 造门(取档: (sessionId?: string) => 权限档) {

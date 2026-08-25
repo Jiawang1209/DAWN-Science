@@ -765,6 +765,8 @@ export interface MCP一台 {
   cwd?: string
   from: "global" | "project"
   trusted: boolean
+  /** 身份指纹（审查 debug G6）:拨信任时带回给 setMcpFlag,好按「名字+指纹」记 */
+  fingerprint?: string
   off: boolean
   state: "unknown" | "ready" | "failed"
   error?: string
@@ -811,7 +813,7 @@ export function McpView({
 }: {
   load?: (() => Promise<MCP装载>) | undefined
   onTest?: ((name: string) => Promise<{ ok: boolean; error?: string; tools: { name: string }[] }>) | undefined
-  onFlag?: ((name: string, flag: "trusted" | "off", value: boolean) => Promise<void>) | undefined
+  onFlag?: ((name: string, flag: "trusted" | "off", value: boolean, fingerprint?: string) => Promise<void>) | undefined
   onSecret?: ((name: string, varName: string, secret: string) => Promise<void>) | undefined
   /** 粘一段 JSON 加一台。**解析在服务端做**——密钥的值在那里就被丢掉了 */
   onAdd?: ((json: string) => Promise<{ name: string; needsSecrets: string[] }>) | undefined
@@ -1078,7 +1080,8 @@ export function McpView({
                     <input
                       type="checkbox"
                       checked={s.trusted}
-                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
+                      // 拨信任时带上这台的指纹(审查 debug G6):按「名字+指纹」记,同名不同命令不继承
+                      onChange={() => void onFlag?.(s.name, "trusted", !s.trusted, s.fingerprint).then(重取).catch((e: unknown) => 设出错(e instanceof Error ? e.message : String(e)))}
                     />
                     {t("这台我信得过")}
                   </label>

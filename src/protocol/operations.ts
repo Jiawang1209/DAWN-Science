@@ -549,6 +549,8 @@ export const OPERATIONS = {
               /** 本机的两个开关。**它们不在配置里**——见 `config/schema.ts` 的说明 */
               trusted: z.boolean(),
               off: z.boolean(),
+              /** 身份指纹(审查 debug G6):命令/地址的短哈希,拨信任时带回给 `setMcpFlag`,好按「名字+指纹」记 */
+              fingerprint: z.string().optional(),
               /**
                * 此刻的状态。**`unknown` 是「还没试过」**，
                * 与「试过、连不上」是两回事——后者一定带 `error`。
@@ -940,6 +942,12 @@ export const OPERATIONS = {
         name: z.string().min(1),
         flag: z.enum(["trusted", "off"]),
         value: z.boolean(),
+        /**
+         * 服务器的身份指纹（审查 debug G6）。**信任(trusted)按「名字+指纹」记**,由界面带上——
+         * 它是列表里那台服务器此刻的命令/地址算出来的,拨的就是这一台的信任,而不是随便一台同名的。
+         * `off` 用不到它(禁用按名字就够)。
+         */
+        fingerprint: z.string().min(1).optional(),
       })
       .strict(),
     response: z.object({ ok: z.literal(true) }).strict(),

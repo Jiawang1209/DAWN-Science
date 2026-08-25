@@ -18,6 +18,7 @@
  *    写着同一句话。
  */
 import type { McpServer } from "../config/schema.js"
+import { mcp指纹 } from "../policy/permissions.js"
 import type { MCP池, MCP工具 } from "../mcp/客户端.js"
 
 interface ToolResult {
@@ -46,7 +47,7 @@ export interface MCP工具装配 {
    * 不从配置里读：项目级名单会跟着仓库被 clone，
    * 让它声明自己可信等于没有门（见 `policy/permissions.ts`）。
    */
-  门?: ((服务器名: string) => import("../policy/permissions.js").门的决定) | undefined
+  门?: ((服务器名: string, 指纹: string) => import("../policy/permissions.js").门的决定) | undefined
   /** 「问一句」档时问人（2026-08-23）。不给就把 ask 当拒 */
   问?: ((title: string, reason: string) => Promise<"allow" | "deny" | "timeout">) | undefined
 }
@@ -79,7 +80,7 @@ export function createMcpTools(装配: MCP工具装配): unknown[] {
           // **名单里没有它**：配置改过而工具清单还是旧的。如实说，不猜
           return text(`「${t.服务器名}」已经不在名单里了，这个工具不能用。`, true)
         }
-        const 决定 = 装配.门?.(t.服务器名)
+        const 决定 = 装配.门?.(t.服务器名, mcp指纹(配 as { command?: string; args?: readonly string[]; url?: string }))
         if (决定?.kind === "deny") return text(决定.reason, true)
         if (决定?.kind === "ask") {
           const 答 = 装配.问 ? await 装配.问(`${t.服务器名} · ${t.工具名}`, 决定.reason) : "deny"

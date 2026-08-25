@@ -42,6 +42,7 @@ process.stdin.on("data", (d) => {
       say({ type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "t" + n, content: "文件内容", is_error: false }] } })
     }
     if (text.includes("崩")) { process.exit(7) }
+    if (text.includes("挂住")) { continue }  // 收到但不回——模拟一轮跑着没结束
     say({ type: "assistant", message: { role: "assistant", content: [{ type: "text", text: "第" + n + "轮：" + text + " argv=" + argv }] } })
     say({ type: "result", is_error: false, stop_reason: "end_turn", session_id: "sid-" + n, total_cost_usd: 0.001, usage: { input_tokens: 1, output_tokens: 2 } })
   }
@@ -188,5 +189,17 @@ describe("收摊", () => {
     const { d } = driver()
     await d.close()
     await d.close()
+  })
+
+  it("**中止在飞的一轮:close 要放掉那轮的 promise 并发 exited**(审查 debug H3)", async () => {
+    const { d, events } = driver()
+    // 起一轮但假 CLI 不回(挂住);startTurn 的 promise 会一直 pending
+    const 那轮 = d.startTurn("这一句挂住")
+    await new Promise((r) => setTimeout(r, 100)) // 让进程收到并挂住
+    await d.close()
+    // 关键:那轮 promise 必须结算(以前永挂 → 整条会话卡死)
+    await expect(那轮).resolves.toBeUndefined()
+    // 用户主动停:发的是 exited(exitCode 0),不是 error 噪声
+    expect(events.some((e) => e.kind === "exited" && (e as { exitCode?: number }).exitCode === 0)).toBe(true)
   })
 })

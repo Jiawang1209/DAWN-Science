@@ -92,6 +92,17 @@ describe("office 插件", () => {
     expect(坏.isError).toBe(true)
   })
 
+  it("pdf_create 落到还不存在的子目录:自动建目录,不崩进程(审查 debug E1)", async () => {
+    const ws = mkdtempSync(join(tmpdir(), "dawn-office-"))
+    // reports/ 还不存在——旧实现在 emitter 回调里 writeFileSync 抛 ENOENT → uncaughtException + Promise 永挂
+    const r = await 取(ws, "pdf_create").execute("t1", {
+      destination_path: "reports/2026/q1.pdf",
+      content: [{ type: "paragraph", text: "deep dir" }],
+    })
+    expect(r.isError).toBeUndefined()
+    expect(existsSync(join(ws, "reports", "2026", "q1.pdf"))).toBe(true)
+  })
+
   it("pptx：生成 → 读回 → 手术式改字 → 再读", async () => {
     const ws = mkdtempSync(join(tmpdir(), "dawn-office-"))
     const 造 = await 取(ws, "pptx_create").execute("t1", {

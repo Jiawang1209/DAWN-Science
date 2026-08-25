@@ -120,6 +120,19 @@ export class ClaudeDriver {
     this.dead = true
     if (!child) return
     child.kill("SIGKILL")
+    /**
+     * **杀完进程要亲手收口**（审查 debug H3）。SIGKILL 之后 `on("close")` 因
+     * `this.dead` 提前 return（那是对的——不该把用户主动的停当成坏消息报错），
+     * 于是 `settle()` 再没人调,`startTurn` 的 promise 永远挂着:
+     * `CliRuntime.write` 的 `finally` 不跑 → `inFlight` 永远 ≥1 → `setModel` 永抛
+     * 「这一轮还没说完」、`waitForIdle` 永挂、账本那条回合永远 running。
+     * codex driver 的 abort 走 fatal 收得干净,claude 这条一直空着。
+     * 发一条 idle(不是 error——用户自己停的),再 settle。
+     */
+    if (this.pending) {
+      this.opts.emit({ kind: "exited", sessionId: this.opts.sessionId, exitCode: 0 })
+      this.settle()
+    }
   }
 
   private spawnChild(): void {

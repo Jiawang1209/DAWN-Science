@@ -8,12 +8,39 @@
  * 产物纪律：截图落工作区 `.dawn/screenshots/` 并自动清理（7 天 / 200 张，只扫直属文件）；
  * 下载经页面上下文（带 Cookie）落工作区。复用 office 插件的定义 DSL（shape.ts）。
  */
-import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { mkdirSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { dirname, join, resolve as pathResolve, sep } from "node:path"
 import type { Office工具定义 } from "../office/shape.js"
 import { 开标签, 要页面, 列标签, 切标签, 关标签, 状态, 关浏览器 } from "./session.js"
 
 const 默认超时 = 10_000
+
+/**
+ * 解析一个**下载写入目标**,确保它落在工作区内(审查 debug E2)。
+ * 与 `files/access.ts` 的 `resolveInWorkspace` 同一道守卫,但那条要求目标已存在
+ * (它是读取用);下载写的是新文件,父目录还可能不存在,所以单列一个写入版:
+ *   ① 拒绝绝对路径(把守卫判断权交给调用方等于没守卫);
+ *   ② `resolve` 归一化后字符串前缀比对,挡 `../../x` 逃逸;
+ *   ③ `mkdir` 父目录后对**父目录** realpath 再验一次,挡符号链接逃逸
+ *      (工作区里若有个软链指向外面,字符串比对看不出来)。
+ * 浏览器工具不过权限门(见审查清单 B1),这道守卫是 browser_download 唯一的边界。
+ */
+export function 工作区内写入目标(workspace: string, 相对: string): string {
+  if (相对.startsWith("/") || /^[A-Za-z]:[\\/]/.test(相对)) {
+    throw new Error("只能下载到工作区内(不接受绝对路径)")
+  }
+  const root = realpathSync(workspace)
+  const 目标 = pathResolve(root, 相对)
+  if (目标 !== root && !目标.startsWith(root + sep)) {
+    throw new Error(`拒绝:「${相对}」在工作区之外`)
+  }
+  mkdirSync(dirname(目标), { recursive: true })
+  const 父 = realpathSync(dirname(目标))
+  if (父 !== root && !父.startsWith(root + sep)) {
+    throw new Error(`拒绝:「${相对}」的父目录经符号链接指到了工作区之外`)
+  }
+  return 目标
+}
 
 /** 截图清理（学 reef 的双阈值）：7 天 / 200 张，只清直属 .png——别人放进目录的活着 */
 export function 清截图(目录: string, 现在 = Date.now(), 最老天数 = 7, 最多张 = 200): number {
@@ -321,9 +348,11 @@ export function browser工具定义(workspace: string): { 族: string; 名: stri
         const resp = await page.request.get(url, { timeout: 30_000 })
         if (!resp.ok()) throw new Error(`下载失败：HTTP ${resp.status()} ${url}`)
         const body = await resp.body()
-        const 名 = String(args.save_as ?? url.split("/").pop()?.split("?")[0] ?? "下载文件")
-        const 目标 = join(workspace, 名)
-        mkdirSync(join(目标, ".."), { recursive: true })
+        // URL 尾段兜底:以 `/` 结尾或取到空串时退回默认名(审查 debug E10:空串不是 nullish,?? 不兜)
+        const 尾 = url.split("/").pop()?.split("?")[0]?.trim()
+        const 名 = String(args.save_as ?? (尾 || "下载文件"))
+        // 目录穿越守卫:save_as="../../x" 或经软链逃逸都在这里被拦下
+        const 目标 = 工作区内写入目标(workspace, 名)
         writeFileSync(目标, body)
         return { content: `已下载 ${body.byteLength} 字节 → ${名}` }
       },

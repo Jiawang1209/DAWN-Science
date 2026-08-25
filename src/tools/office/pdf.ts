@@ -1,8 +1,8 @@
 // pdf_create / pdf_read tools, ported from the Tianshu office-pdf plugin
 // (Apache-2.0 licensed upstream) to the DeepSeek Harness cordis tool model.
 
-import { writeFileSync, renameSync, readFileSync, existsSync } from 'node:fs'
-import { basename } from 'node:path'
+import { writeFileSync, renameSync, readFileSync, existsSync, mkdirSync } from 'node:fs'
+import { basename, dirname } from 'node:path'
 import PDFDocument from 'pdfkit'
 import { containsCjk, resolveCjkFont } from './fonts.js'
 import type { ResolvedCjkFont } from './fonts.js'
@@ -93,11 +93,20 @@ async function generatePdf(filePath: string, input: PdfInput): Promise<string[]>
   return new Promise<string[]>((resolve, reject) => {
     emitter.on('data', (chunk: Buffer) => buffers.push(Buffer.from(chunk)))
     emitter.on('end', () => {
-      // 原子替换：同目录临时文件 + rename（跨文件系统会 EXDEV，故不用 os.tmpdir）
-      const tmp = `${filePath}.${process.pid}.${Date.now()}.tmp`
-      writeFileSync(tmp, Buffer.concat(buffers))
-      renameSync(tmp, filePath)
-      resolve(warnings)
+      // **写盘的异常必须走 reject**(审查 debug E1):这个回调在 EventEmitter 上,
+      // 抛出去会变成 uncaughtException(Electron 主进程 = 整个应用挂),且这条
+      // Promise 既不 resolve 也不 reject,模型那次 tool call 永久挂着。
+      // 目录不存在是最常见的触发(destination_path="reports/2026.pdf" 而 reports/ 还没建)——
+      // 先 mkdir(与 pdf-split 同款),再原子替换(同目录临时文件 + rename,跨盘 EXDEV 故不用 os.tmpdir)。
+      try {
+        mkdirSync(dirname(filePath), { recursive: true })
+        const tmp = `${filePath}.${process.pid}.${Date.now()}.tmp`
+        writeFileSync(tmp, Buffer.concat(buffers))
+        renameSync(tmp, filePath)
+        resolve(warnings)
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error(String(e)))
+      }
     })
     emitter.on('error', reject)
     const { title, content } = input

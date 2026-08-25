@@ -6,7 +6,8 @@ import { mkdtempSync, writeFileSync, readdirSync, utimesSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
-import { browser工具定义, 清截图, 净化 } from "../../src/tools/browser/tools.js"
+import { browser工具定义, 清截图, 净化, 工作区内写入目标 } from "../../src/tools/browser/tools.js"
+import { symlinkSync, realpathSync } from "node:fs"
 import { browserTools } from "../../src/tools/browser/index.js"
 import { 插件册 } from "../../src/tools/plugins.js"
 import { 旁观, 截一帧 } from "../../src/tools/browser/session.js"
@@ -51,6 +52,30 @@ describe("浏览器插件", () => {
     it("没开时截帧响亮拒绝，不静默回空图，也不偷偷把浏览器拉起来", async () => {
       await expect(截一帧()).rejects.toThrow(/没开/)
       expect((await 旁观()).open).toBe(false)
+    })
+  })
+
+  describe("browser_download 写入目标守卫(审查 debug E2)", () => {
+    it("正常相对路径落工作区,建出父目录", () => {
+      const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
+      const 目标 = 工作区内写入目标(ws, "sub/dir/a.csv")
+      // macOS 上 /var → /private/var,守卫内部 realpath 过,这里用 realpath 后的 ws 比
+      expect(目标.startsWith(realpathSync(ws))).toBe(true)
+      expect(目标.endsWith("a.csv")).toBe(true)
+    })
+    it("绝对路径拒绝", () => {
+      const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
+      expect(() => 工作区内写入目标(ws, "/etc/passwd")).toThrow(/绝对路径|工作区内/)
+    })
+    it("`../` 逃逸拒绝", () => {
+      const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
+      expect(() => 工作区内写入目标(ws, "../../x")).toThrow(/工作区之外/)
+    })
+    it("经符号链接逃逸拒绝", () => {
+      const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
+      const 外 = mkdtempSync(join(tmpdir(), "dawn-outside-"))
+      symlinkSync(外, join(ws, "link"))
+      expect(() => 工作区内写入目标(ws, "link/x.csv")).toThrow(/符号链接|工作区之外/)
     })
   })
 

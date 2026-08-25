@@ -2,7 +2,7 @@
  * 建议队列(hits 去重)与待装技能(校验/批准/拒绝)——2026-08-25,
  * 学自 dsh-memory-evolve review.js(enqueueSuggestion)与 skills.js。
  */
-import { mkdtempSync, existsSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdtempSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
@@ -83,5 +83,28 @@ describe("待装技能", () => {
     const p = new 待装技能(join(mkdtempSync(join(tmpdir(), "ps-")), "pending-skills"), () => "/tmp")
     const 大 = 好技能("big-one") + "x".repeat(70_000)
     expect(p.propose("big-one", 大).ok).toBe(false)
+  })
+
+  it("**块标量 description 响亮拒,不静默丢成一个竖线**(C12)", () => {
+    const p = new 待装技能(join(mkdtempSync(join(tmpdir(), "ps-")), "pending-skills"), () => "/tmp")
+    // `description: |` 是 YAML 多行块开头,逐行正则读不了——旧实现会把描述存成 "|"
+    const 块 = "---\nname: blk-one\ndescription: |\n  第一行\n  第二行\n---\n正文\n"
+    expect(p.propose("blk-one", 块).ok).toBe(false)
+    const 块2 = "---\nname: blk-two\ndescription: >-\n  折叠\n---\n正文\n"
+    expect(p.propose("blk-two", 块2).ok).toBe(false)
+  })
+
+  it("**技能库里目录已在就拒,不 ENOTEMPTY 也不静默合并**(C11)", () => {
+    const 根 = mkdtempSync(join(tmpdir(), "ps-"))
+    const 库 = mkdtempSync(join(tmpdir(), "lib-"))
+    const p = new 待装技能(join(根, "pending-skills"), () => 库)
+    // 库里先放一个同名目录,但没有 SKILL.md(半完成残留 / 别的文件)
+    mkdirSync(join(库, "otu-net"), { recursive: true })
+    writeFileSync(join(库, "otu-net", "别的.txt"), "占位")
+    p.propose("otu-net", 好技能("otu-net"))
+    const r = p.approve("otu-net")
+    expect(r.ok).toBe(false) // 不覆盖,响亮拒
+    expect(existsSync(join(库, "otu-net", "别的.txt"))).toBe(true) // 原文件没被动
+    expect(existsSync(join(根, "pending-skills", "otu-net", "SKILL.md"))).toBe(true) // 待确认里还在
   })
 })

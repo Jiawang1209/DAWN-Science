@@ -27,6 +27,11 @@ export function parseFrontmatter(text: string): { name: string; description: str
     let v = f[2]!.trim()
     const quoted = (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))
     if (quoted) v = v.slice(1, -1)
+    // **块标量指示符不当字面量收**(审查 debug C12):`description: |` / `>`(可带 `-`/`+` 缩进标记)
+    // 是 YAML 多行块的开头,真正的内容在下面缩进行里。逐行正则读不了多行块,旧实现会把 `v="|"` 当成
+    // 描述、后面的缩进行又不匹配 `key:` 全被跳过——**描述静默变成一个竖线**。不支持就响亮拒掉,
+    // 让 skill_propose 回一句「frontmatter 不规范」,而不是收下一个描述是 "|" 的技能。
+    else if (/^[|>][+-]?\d*$/.test(v)) return undefined
     // 裸标量含 ": " 或行内注释在严格 YAML 里非法——这里接受的技能到了 pi 那边也要能解析
     else if (v.includes(": ") || v.includes(" #")) return undefined
     fields[f[1]!] = v
@@ -101,7 +106,10 @@ export class 待装技能 {
     const from = join(this.pendingDir, name)
     if (!existsSync(join(from, "SKILL.md"))) return { ok: false, message: `待确认队列里没有「${name}」` }
     const to = join(this.技能库(), name)
-    if (existsSync(join(to, "SKILL.md"))) return { ok: false, message: `技能库里已有同名「${name}」,不覆盖` }
+    // **目录存在就拒,不只看 SKILL.md**(审查 debug C11):若 `to` 目录已在(哪怕没有 SKILL.md,
+    // 比如一次半完成的残留、或别的文件),renameSync 会抛 ENOTEMPTY(未捕获直接冒泡);
+    // 而 EXDEV 回退的 cpSync 会静默合并进已有目录、覆盖同名文件。整目录存在即拒,让用户先清理。
+    if (existsSync(to)) return { ok: false, message: `技能库里已有「${name}」目录,不覆盖——先在技能管理里清掉它再批准` }
     mkdirSync(this.技能库(), { recursive: true })
     try {
       renameSync(from, to)

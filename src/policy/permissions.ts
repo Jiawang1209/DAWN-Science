@@ -27,7 +27,8 @@
  * （能拦得住的前提是 `noTools: "builtin"`：不关掉 pi 的内置工具，
  * 等于门旁边留着一扇没锁的侧门。那条已经在 `native.ts` 里守着了。）
  */
-import { isAbsolute, join, relative, resolve } from "node:path"
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path"
+import { realpathSync } from "node:fs"
 import { homedir } from "node:os"
 import { 原始数据目录 } from "./science-layout.js"
 
@@ -147,11 +148,29 @@ export function 看风险(
   if (工具名 === "write" || 工具名 === "edit") {
     const p = typeof 参数.path === "string" ? 参数.path : undefined
     if (!p) return undefined
-    const 绝对 = isAbsolute(p) ? p : resolve(语境.workspace, p)
-    const 相对 = relative(语境.workspace, 绝对)
+    let 绝对 = isAbsolute(p) ? resolve(p) : resolve(语境.workspace, p)
+    let root = 语境.workspace
+    // **符号链接逃逸**（审查 debug A4）:字符串归一化挡不住 `ln -s /etc ws/link` 后写
+    // `link/passwd`——`resolve` 的结果仍以 ws 开头。realpath 父目录把它还原成真实位置。
+    // 目标文件本身可能还不存在(write 是创建),所以只 realpath 父目录。
+    // **只对本地会话做**:远端路径在本机 realpath 毫无意义(远端的 /etc 与本机的不是一回事,
+    // 且 macOS 的 /etc→/private/etc 会把远端路径解错)——远端的符号链接要在远端解,我们做不到。
+    if (!语境.remote) {
+      try {
+        绝对 = join(realpathSync(dirname(绝对)), basename(绝对))
+      } catch {
+        /* 父目录还不存在:用字符串路径判 */
+      }
+      try {
+        root = realpathSync(语境.workspace)
+      } catch {
+        /* 工作区路径不存在(测试里常见):用字符串判 */
+      }
+    }
+    const 相对 = relative(root, 绝对)
     const 在工作区里 = !(相对.startsWith("..") || isAbsolute(相对))
     // 工作区里的东西不走硬拒（工作区可能就在 /var/folders 这类地方——那是它自己的地盘）
-    const 硬 = 在工作区里 ? undefined : 受保护路径理由(绝对)
+    const 硬 = 在工作区里 ? undefined : 受保护路径理由(绝对, 语境.remote)
     if (硬) return { 类别: "硬拒", 说明: 远端补一句(`拒绝写入 ${p}：${硬}`) }
 
     // **`..` 开头 = 逃出了工作区**；绝对路径不在工作区下时 relative 也会这样开头
@@ -182,6 +201,10 @@ export function 看风险(
     // ── 硬拒：任何档都拒，谁也盖不过（学自 dsh-auto-mode 的 hardDenyShellReason）──
     const 硬 = 硬拒理由(cmd)
     if (硬) return { 类别: "硬拒", 说明: 远端补一句(硬) }
+    // 写入 / 删除目标的路径风险（审查 debug A1/A2/A3/A5）：受保护 → 硬拒，工作区外 → 可问。
+    // 带语境(相对按 workspace 解析、认 cd、远端语义),补上 bash 这条最常用工具此前完全不看「写到哪」的洞。
+    const 路 = bash路径风险(cmd, 语境)
+    if (路) return { ...路, 说明: 远端补一句(路.说明) }
     /**
      * **顺序是有讲究的**：一条命令可能同时踩几样
      * （`pip install` 也会联网），报**最要紧的那个**——
@@ -300,9 +323,25 @@ const 受保护前缀 = [
   join(HOME, "Library"), join(HOME, "Desktop"), join(HOME, "Documents"),
 ]
 
-/** 路径本身（不含子项）就是受保护的根，或者在凭据目录底下 */
-export function 受保护路径理由(绝对: string): string | undefined {
+/** 路径本身（不含子项）就是受保护的根，或者在凭据目录底下。
+ *
+ * `remote`（审查 debug A5）:远端会话里路径是**远端**机器的,本机 HOME/`/Users` 的概念
+ * 不适用——旧实现把本机清单套到远端,导致远端用户自己的家目录 `/home/<user>` 被误判
+ * 「系统目录」写不进(任何档),而别人的 `/data` 反倒放行。远端改用**跨机器通用**的判据:
+ * 系统目录(/etc /usr /root …)+ 任意用户的凭据目录(`/home/<任意>/.ssh`、`/root/.ssh`),
+ * 不碰「家目录顶层点文件」这类依赖本机 HOME 的规则(那要知道远端是谁,我们不知道)。
+ */
+export function 受保护路径理由(绝对: string, remote?: boolean): string | undefined {
   const p = resolve(绝对).replace(/\/+$/, "") || "/"
+  if (remote) {
+    // 远端:系统目录(含 /home /Users 顶层本身,但不含其下的用户目录)
+    const 远端系统 = ["/etc", "/usr", "/bin", "/sbin", "/boot", "/sys", "/proc", "/dev", "/lib", "/lib64", "/root", "/var/lib", "/var/spool"]
+    if (p === "/") return `/ 是根目录,不碰。`
+    if (远端系统.some((r) => p === r || p.startsWith(`${r}/`))) return `${p} 是远端机器的系统目录,不碰。`
+    // 任意用户的凭据目录:/home/<user>/.ssh、/root/.ssh 等
+    if (/^\/(home\/[^/]+|root)\/\.(ssh|aws|gnupg|kube)(\/|$)/.test(p)) return `${p} 是凭据目录,不碰。`
+    return undefined
+  }
   if (受保护前缀.some((r) => (r.replace(/\/+$/, "") || "/") === p)) return `${p} 是系统目录、你的主目录或它的顶层目录，不碰。`
   // 系统目录**连里面的一起**（2026-08-23 审查抓的：此前只比根本身，`rm -rf /usr/lib`、`write ~/.zshrc` 只算「工作区外」）；主目录只拦顶层文件，子目录让给工作区判
   // `/var` 不整棵算（macOS 的临时目录在 /var/folders），只拦 /var 的顶层；`/Users` `/home` 拦到别人的主目录
@@ -314,6 +353,90 @@ export function 受保护路径理由(绝对: string): string | undefined {
   return undefined
 }
 
+/**
+ * 一条 bash 命令的**写入目标**（审查 debug A1/A2）:抓明确指向文件的写——
+ * 重定向 `> >> N> &>`、`tee [-a]`、`cp/mv/install/rsync 的目的地`、`dd of=`。
+ * **只抓字面目标**:含变量/glob/命令替换的目标不进清单(大量合法用法是 `echo x > $TMP`、
+ * `> out-*.log`,硬判会误伤;它们不指向明确的受保护路径,交给别处)。
+ */
+export function 写入目标(原cmd: string): string[] {
+  const cmd = 原cmd.replace(/\\\r?\n/g, " ")
+  const 出: string[] = []
+  const 干净 = (t: string) => t.replace(/^["']|["']$/g, "")
+  const 字面 = (t: string) => Boolean(t) && !/[|`$*?{}[\]]/.test(t) && !t.startsWith("-") && !/^\/dev\//.test(t)
+  // 重定向:>file >>file 1>file 2>file &>file(排除 >&1 这类 fd 复制)
+  for (const m of cmd.matchAll(/(?:^|[\s;&|(])(?:\d*|&)>>?\s*("[^"]+"|'[^']+'|[^\s;&|()<>]+)/g)) {
+    const t = 干净(m[1]!)
+    if (字面(t) && t !== "&1" && t !== "&2") 出.push(t)
+  }
+  // tee [-a] file
+  for (const m of cmd.matchAll(/\btee\s+(?:-a\s+)?("[^"]+"|'[^']+'|[^\s;&|()<>]+)/g)) {
+    const t = 干净(m[1]!)
+    if (字面(t)) 出.push(t)
+  }
+  const 段 = cmd.split(/&&|\|\||;|\n|\|/).map((x) => x.trim()).filter(Boolean)
+  for (const 句 of 段) {
+    const ddm = 句.match(/\bdd\b[^\n]*\bof=("[^"]+"|'[^']+'|[^\s;&|()]+)/)
+    if (ddm) {
+      const t = 干净(ddm[1]!)
+      if (字面(t)) 出.push(t)
+    }
+    if (/^(cp|mv|install|rsync)\b/.test(句) || /\s(cp|mv|install|rsync)\s/.test(句)) {
+      if (/[|`$*?{}[\]]/.test(句)) continue // 含变量/glob:看不清,跳过
+      const 词 = 句.split(/\s+/).filter(Boolean)
+      const i = 词.findIndex((w) => /^(cp|mv|install|rsync)$/.test(w))
+      if (i < 0) continue
+      const 参 = 词.slice(i + 1).filter((w) => !w.startsWith("-"))
+      if (参.length >= 2) {
+        const t = 干净(参[参.length - 1]!)
+        if (字面(t)) 出.push(t)
+      }
+    }
+  }
+  return 出
+}
+
+/**
+ * bash 命令里写入 / 删除目标的**路径风险**（审查 debug A1/A2/A3/A5）——带语境:
+ * 相对路径按 workspace 解析(不是 process.cwd,那是 A3 的洞);命令里若先 `cd` 到
+ * ~ / 绝对目录,后续相对路径以它为基准(`cd ~ && rm .ssh/id_rsa` 因此被正确解析成 `~/.ssh/id_rsa`);
+ * 远端会话用远端受保护判据。指向受保护路径 → 硬拒;明确写到工作区之外 → 工作区之外(可问)。
+ */
+function bash路径风险(cmd: string, 语境: 语境): 风险 | undefined {
+  const cd基准 = ((): string | undefined => {
+    const m = cmd.match(/\bcd\s+("[^"]+"|'[^']+'|[^\s;&|()]+)/)
+    if (!m) return undefined
+    const d = m[1]!.replace(/^["']|["']$/g, "")
+    if (d === "~" || d === "$HOME" || d === "${HOME}") return HOME
+    if (d.startsWith("~/")) return join(HOME, d.slice(2))
+    if (isAbsolute(d)) return resolve(d)
+    return undefined // 相对 cd 判不准,不特殊处理
+  })()
+  const 解析 = (t: string): string => {
+    if (t === "~") return HOME
+    if (t.startsWith("~/")) return join(HOME, t.slice(2))
+    if (isAbsolute(t)) return resolve(t)
+    return resolve(cd基准 ?? 语境.workspace, t)
+  }
+  const 写 = 写入目标(cmd)
+  const 删 = 删除目标(cmd)
+  const 删目标 = 删 === "看不清" ? [] : 删
+  // 受保护 → 硬拒(写与删都算)
+  for (const t of [...写, ...删目标]) {
+    const 理由 = 受保护路径理由(解析(t), 语境.remote)
+    if (理由) return { 类别: "硬拒", 说明: `拒绝执行 \`${cmd}\`：${理由}` }
+  }
+  // 明确写到工作区之外(非受保护) → 工作区之外(可问)
+  for (const t of 写) {
+    const abs = 解析(t)
+    const rel = relative(语境.workspace, abs)
+    if (rel.startsWith("..") || isAbsolute(rel)) {
+      return { 类别: "工作区之外", 说明: `拒绝执行 \`${cmd}\`：它写到 ${t}，在这段会话的工作区（${语境.workspace}）之外。请写到工作区里面。` }
+    }
+  }
+  return undefined
+}
+
 const 凭据形状 = /(BEGIN (RSA |OPENSSH )?PRIVATE KEY|\b(sk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{8,}\b|Bearer\s+[A-Za-z0-9._~+/-]{8,}|\.ssh\/(id_|config)|\.aws\/credentials|\$\{?[A-Z_]*(TOKEN|SECRET|API_KEY|PASSWORD)[A-Z_]*\}?)/i
 
 export function 硬拒理由(原cmd: string): string | undefined {
@@ -321,7 +444,7 @@ export function 硬拒理由(原cmd: string): string | undefined {
   const cmd = 原cmd.replace(/\\\r?\n/g, " ")
   if (/(^|[\s;&|(])(sudo|doas|su)(\s|$)/.test(cmd)) return `拒绝执行 \`${cmd}\`：提权（sudo / su）任何档都不放。`
   if (/\bgit\b.*\bpush\b.*(--force\b|\s-f\b|\s\+[^\s]+(:|\s|$))/.test(cmd)) return `拒绝执行 \`${cmd}\`：强推会覆盖远端历史，任何档都不放。`
-  if (/\b(curl|wget|nc|scp|rsync)\b/.test(cmd) && 凭据形状.test(cmd)) return `拒绝执行 \`${cmd}\`：命令里带着私钥 / token 形状的东西还要出网，这是凭据外传的形状，任何档都不放。`
+  if (/\b(curl|wget|nc|scp|rsync|ssh|ftp|sftp|telnet)\b/.test(cmd) && 凭据形状.test(cmd)) return `拒绝执行 \`${cmd}\`：命令里带着私钥 / token 形状的东西还要出网，这是凭据外传的形状，任何档都不放。`
   if (/\b(mkfs|diskutil\s+erase|dd\s+if=.*of=\/dev\/|shutdown|reboot|launchctl\s+unload|chmod\s+-R\s+777\s+\/)/.test(cmd)) return `拒绝执行 \`${cmd}\`：它会动系统或整块盘，任何档都不放。`
   // `find / -delete`、`find ~ -delete`：目标是算出来的，但起点已经说明了一切
   if (/\bfind\s+(\/(\s|$)|\/(Users|home|etc|usr|var|bin|System|Library)\b|\$\{?HOME\}?|~(\/|\s|$))[^\n]*-delete\b/.test(cmd)) return `拒绝执行 \`${cmd}\`：从根或主目录起 find -delete，任何档都不放。`

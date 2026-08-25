@@ -77,6 +77,40 @@ describe("NativeRuntime · 契约", () => {
   })
 })
 
+describe("NativeRuntime · 重入与启动期停止(审查 debug E4/E5)", () => {
+  const 活spec = () => specFor({ provider: "deepseek", model: "deepseek-v4-flash" })
+
+  it("**已在运行的会话不许重复 start** —— 否则旧会话被静默丢、事件翻倍(E4)", async () => {
+    const r = runtime()
+    const spec = 活spec()
+    await r.start(spec)
+    await expect(r.start(spec)).rejects.toThrow(/已经在运行/)
+    await r.stop(spec.sessionId)
+  })
+
+  it("**并发两次 start 同一会话 → 收敛成一个,不起两段**(E4)", async () => {
+    const r = runtime()
+    const spec = 活spec()
+    const [a, b] = await Promise.all([r.start(spec), r.start(spec)])
+    expect(a.sessionId).toBe(b.sessionId)
+    // 只登记了一段:再 start 一次会撞「已经在运行」
+    await expect(r.start(spec)).rejects.toThrow(/已经在运行/)
+    await r.stop(spec.sessionId)
+  })
+
+  it("**启动还没完成就 stop → 起来的那段被立刻停掉,不漏成孤儿**(E5)", async () => {
+    const r = runtime()
+    const spec = 活spec()
+    const startP = r.start(spec) // 不 await:让它在飞行中
+    const stopP = r.stop(spec.sessionId) // 启动期请求停
+    await stopP
+    await startP.catch(() => {}) // start 会以「启动过程中被停止」收尾
+    // 没有留下活会话:write 应抛(未启动),再 stop 是空操作
+    expect(() => r.write(spec.sessionId, "x")).toThrow()
+    await expect(r.stop(spec.sessionId)).resolves.toBeUndefined()
+  })
+})
+
 /**
  * 换模型（①-B″ · U2）。
  *

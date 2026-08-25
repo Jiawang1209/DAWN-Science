@@ -366,6 +366,29 @@ describe("工具权限门 · 接线", () => {
     expect(r.isError).toBe(true)
     expect(r.content?.[0]?.text).toMatch(/工作区/)
   })
+
+  it("**插件生成的文件也登记成本会话产物**：删它不拦(审查 debug B2)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-plugin-artifact-"))
+    cleanups.push(() => rmSync(dir, { recursive: true, force: true }))
+    const rt = 造运行时("deny-risky")
+    const spec = { sessionId: "s1", workspace: dir, sessionDir: join(dir, ".dawn") } as unknown as Parameters<NativeRuntime["start"]>[0]
+    // 拿插件门包装,包一个假的 xlsx_write(在写路径参数名单里,写 file_path)
+    const 包 = (rt as unknown as { 插件门包装(s: typeof spec): (d: unknown) => unknown }).插件门包装(spec)
+    const 假xlsx = 包({
+      name: "xlsx_write",
+      execute: async (_id: string, params: Record<string, unknown>) => {
+        writeFileSync(join(dir, String(params.file_path)), "插件写的")
+        return { content: [{ type: "text", text: "ok" }], details: undefined }
+      },
+    }) as Record<string, unknown>
+    await 跑(假xlsx, { file_path: "报表.xlsx" })
+    expect(existsSync(join(dir, "报表.xlsx"))).toBe(true)
+    // 同一会话的 bash 删它:是本会话产物,拦下档也不拦(此前插件文件没登记 → 会被当成「之前就有」拦下)
+    const bash = 工具们(rt, dir).find((t) => t.name === "bash")!
+    const 删 = await 跑(bash, { command: "rm 报表.xlsx" })
+    expect(删.isError, "删本会话插件写的文件被拦了(B2 没修好)").not.toBe(true)
+    expect(existsSync(join(dir, "报表.xlsx"))).toBe(false)
+  })
 })
 
 /**

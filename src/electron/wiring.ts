@@ -333,7 +333,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * 项目级名单住在 `.dawn/mcp.yaml`，会跟着仓库被 clone——
      * 让它声明自己可信，门就等于不存在。
      */
-    (服务器名) => settingsStore.get(`mcp.trusted.${服务器名}`) === "1",
+    // 信任按「名字 + 命令指纹」记(审查 debug G6):同名但命令不同 = 另一台,不继承信任
+    (服务器名, 指纹) => settingsStore.get(`mcp.trusted.${服务器名}:${指纹}`) === "1",
   )
 
   /**

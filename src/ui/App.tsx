@@ -3736,8 +3736,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   projectId ? { name, projectId } : { name },
                 )
               }
-              onFlag={async (name, flag, value) => {
-                await client.get("setMcpFlag", { name, flag, value })
+              onFlag={async (name, flag, value, fingerprint) => {
+                await client.get("setMcpFlag", { name, flag, value, ...(fingerprint ? { fingerprint } : {}) })
               }}
               onSecret={async (name, varName, secret) => {
                 await client.get("setMcpSecret", { name, varName, secret })

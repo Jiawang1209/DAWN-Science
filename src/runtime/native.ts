@@ -201,7 +201,7 @@ export interface NativeRuntimeOptions {
       问题: readonly string[]
     }>
     池: import("../mcp/客户端.js").MCP池
-    门?: (服务器名: string) => import("../policy/permissions.js").门的决定
+    门?: (服务器名: string, 指纹: string) => import("../policy/permissions.js").门的决定
   }
   /**
    * 对话的内核（②，2026-08-14）。**给了才有 `run_code` 这个工具。**

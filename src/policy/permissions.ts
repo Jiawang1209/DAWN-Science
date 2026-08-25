@@ -30,6 +30,7 @@
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { realpathSync } from "node:fs"
 import { homedir } from "node:os"
+import { createHash } from "node:crypto"
 import { 原始数据目录 } from "./science-layout.js"
 
 /**
@@ -302,8 +303,23 @@ export function 看MCP风险(服务器名: string, 信得过: boolean | undefine
  * `取信得过` 由装配注入（读本机的设置库）。**判据不读配置文件**——
  * 项目级名单会跟着仓库被 clone，让它声明自己可信等于没有门。
  */
-export function 造MCP门(取档: () => 权限档, 取信得过: (服务器名: string) => boolean) {
-  return (服务器名: string): 门的决定 => 照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名)))
+/**
+ * 一台 MCP 服务器的**身份指纹**（审查 debug G6）：命令 + 参数的短哈希。
+ * 信任按「名字 + 指纹」记,而不是只按名字——否则你信过的 `foo`(命令 X)删掉后,
+ * clone 进来的同名 `foo`(命令 Y,可能是恶意的)会白继承信任、不问就跑。
+ * 指纹一变就等于换了一台,信任不跟着走。
+ */
+export function mcp指纹(server: { command?: string; args?: readonly string[]; url?: string }): string {
+  const 料 =
+    server.command !== undefined
+      ? `cmd:${server.command} ${(server.args ?? []).join(" ")}`
+      : `url:${server.url ?? ""}`
+  return createHash("sha256").update(料).digest("base64url").slice(0, 16)
+}
+
+export function 造MCP门(取档: () => 权限档, 取信得过: (服务器名: string, 指纹: string) => boolean) {
+  return (服务器名: string, 指纹: string): 门的决定 =>
+    照这一档(取档(), 看MCP风险(服务器名, 取信得过(服务器名, 指纹)))
 }
 
 export function 造门(取档: (sessionId?: string) => 权限档) {

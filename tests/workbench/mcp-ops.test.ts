@@ -193,12 +193,22 @@ describe("setMcpSecret / setMcpFlag", () => {
     expect(凭证.get("mcp:needskey:PGURL")).toBeUndefined()
   })
 
-  it("信任开关拨得动，也读得回来", async () => {
+  it("信任开关拨得动，也读得回来（按名字+指纹，审查 debug G6）", async () => {
     const { wb } = 起一个(一台("testbox"))
+    const fp = (await 列(wb)).servers[0]!.fingerprint
+    expect(fp).toBeTruthy()
     expect((await 列(wb)).servers[0]!.trusted).toBe(false)
-    await 拨(wb, { name: "testbox", flag: "trusted", value: true })
+    await 拨(wb, { name: "testbox", flag: "trusted", value: true, fingerprint: fp })
     expect((await 列(wb)).servers[0]!.trusted).toBe(true)
-    await 拨(wb, { name: "testbox", flag: "trusted", value: false })
+    await 拨(wb, { name: "testbox", flag: "trusted", value: false, fingerprint: fp })
+    expect((await 列(wb)).servers[0]!.trusted).toBe(false)
+  })
+
+  it("**信任按指纹隔离**：拨的是别的指纹,这台(真实指纹)不被点亮(审查 debug G6)", async () => {
+    const { wb } = 起一个(一台("testbox"))
+    // 模拟「同名但不同命令的另一台」的信任——用一把不是这台真实指纹的指纹去拨
+    await 拨(wb, { name: "testbox", flag: "trusted", value: true, fingerprint: "别的一台的指纹" })
+    // 名单里这台的真实指纹与刚才那把不同 → 它不该被继承为 trusted
     expect((await 列(wb)).servers[0]!.trusted).toBe(false)
   })
 

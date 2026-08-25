@@ -36,7 +36,7 @@ import type { ImageAttachment } from "../runtime/types.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
-import type { SettingsStore } from "../store/settings.js"
+import type { SettingsStore, SettingKey } from "../store/settings.js"
 import { 本地日期 } from "../store/usage.js"
 import { 合名单 } from "../mcp/名单.js"
 import { loadSkills } from "@earendil-works/pi-coding-agent"
@@ -53,6 +53,7 @@ import { Scheduler, type 完成 as 定时完成 } from "../schedule/scheduler.js
 import { 下一次 as 计划下一次, 校验计划 } from "../schedule/recurrence.js"
 import type { 定义 as 定时定义, 运行 as 定时运行 } from "../schedule/domain.js"
 import type { 权限档 } from "../policy/permissions.js"
+import { mcp指纹 } from "../policy/permissions.js"
 import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invocation.js"
 import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
@@ -1895,6 +1896,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           // **先落到一个 `const` 上**：类型守卫窄不动属性链（`台.服务器`）
           const 服务器 = 台.服务器
           const 远端 = 是远端MCP(服务器)
+          const 指纹 = mcp指纹(服务器 as { command?: string; args?: readonly string[]; url?: string })
           const cwd = 远端 ? 工作区 : (服务器.cwd ?? 工作区)
           const 已连 = mcp?.池.查(台.名, cwd)
           const 要的 = 远端 ? (服务器.headers ?? []) : (服务器.env ?? [])
@@ -1909,7 +1911,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             missingSecrets: 缺,
             ...(!远端 && 服务器.cwd ? { cwd: 服务器.cwd } : {}),
             from: 台.来自 === "全局" ? ("global" as const) : ("project" as const),
-            trusted: settings?.get(`mcp.trusted.${台.名}`) === "1",
+            // 信任按「名字+指纹」查(审查 debug G6):同名换了命令/地址 = 另一台,不继承信任
+            trusted: settings?.get(`mcp.trusted.${台.名}:${指纹}`) === "1",
+            fingerprint: 指纹,
             off: settings?.get(`mcp.off.${台.名}`) === "1",
             state: 已连 ? ("ready" as const) : ("unknown" as const),
             tools: (已连?.工具 ?? []).map((t) => ({ name: t.工具名, description: t.描述 })),
@@ -2062,9 +2066,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /** 拨本机那两个开关。**它们不写进任何会被分享的文件**（见 schema 的说明） */
-    setMcpFlag: async ({ name, flag, value }) => {
+    setMcpFlag: async ({ name, flag, value, fingerprint }) => {
       if (!settings) throw fault("invalid_request", "本次运行没有设置存储")
-      const key = flag === "trusted" ? (`mcp.trusted.${name}` as const) : (`mcp.off.${name}` as const)
+      // **信任按「名字+指纹」记**(审查 debug G6):界面带上这台此刻的指纹,拨的就是这一台,
+      // 同名换了命令/地址不继承。指纹缺席(旧界面/远端无 command)时退回按名字,不硬拒——但那条会有 G6 的弱点。
+      const key: SettingKey =
+        flag === "trusted"
+          ? fingerprint
+            ? `mcp.trusted.${name}:${fingerprint}`
+            : `mcp.trusted.${name}`
+          : `mcp.off.${name}`
       settings.set(key, value ? "1" : "", new Date().toISOString())
       return { ok: true as const }
     },

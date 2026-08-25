@@ -253,6 +253,14 @@ describe("真实后端 · 经服务端端到端", () => {
     if (!s.ok) expect(s.error.code).toBe("not_found")
   })
 
+  it("writeToSession 对未激活会话报 not_found,与 subscribeSession 同码(审查 debug F6)", async () => {
+    // 先在这个 id 上拿到租约(越过租约检查),但它并不是一段活着的会话 → 该报 not_found 而非 conflict
+    await ctx.server.handle("acquireLease", { sessionId: "no-such-active", holder: "user" })
+    const w = await ctx.server.handle("writeToSession", { sessionId: "no-such-active", data: "hi", as: "user" })
+    expect(w.ok).toBe(false)
+    if (!w.ok) expect(w.error.code).toBe("not_found") // 此前一律 conflict
+  })
+
   it("getRun 带上 git 产出事实，且标注可能混入手动修改", async () => {
     const sid = await 开一段(repo)
     const pid = await 取项目(repo)

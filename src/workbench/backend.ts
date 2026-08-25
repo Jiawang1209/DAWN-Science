@@ -2583,8 +2583,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           runRecorder?.beginTurn(sessionId, 这一轮叫什么(sessionId))
         }
       } catch (err) {
-        // 写权被拒是业务性失败，不是内部错误——UI 要能分辨并提示用户去抢租约
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
+        /**
+         * **按原因分错误码,别一律压成 conflict**(审查 debug F6)。此前 `sessions.write` 抛的三类
+         * ——租约被别人拿着、会话未在本进程激活、这段会话收不下图片——全被报成 `conflict`,
+         * 而同样「会话不在」的状态 `subscribeSession` 报的是 `not_found`,两个操作对同一状态给两个码。
+         *   - 未持有租约 → `conflict`:去抢租约就能写(UI 据此提示);
+         *   - 会话未激活/不存在 → `not_found`:与 subscribeSession 一致,没有可写的对象;
+         *   - 其余(图片收不下等)→ `invalid_request`:是这次请求本身的问题。
+         */
+        const 消息 = err instanceof Error ? err.message : String(err)
+        if (/未持有|租约/.test(消息)) throw fault("conflict", 消息)
+        if (/未在本进程中活动|不存在|没有这个会话/.test(消息)) throw fault("not_found", 消息)
+        throw fault("invalid_request", 消息)
       }
       return {}
     },

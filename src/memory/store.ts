@@ -344,6 +344,42 @@ export class MemoryStore {
     })
   }
 
+  /**
+   * **直接往归档轨追加一条,一步到位、不经主轨**(审查 debug Cx)。
+   *
+   * 采纳建议时选「归档」用这个。此前 backend 是「add 到主轨 → archive 移过去」两步非原子:
+   * 若第二步(archive,按前 40 字匹配)因撞多条失败,条目就**留在主轨被注入**——与「归档=不注入」的
+   * 意图正好相反,而建议还被放回队列反复冒出来。归档本就是"落进归档文件",没有理由先污染主轨。
+   * 与 add 同样的校验 + 去重 + drift guard,只是落点是归档文件。
+   */
+  addArchived(target: 记忆轨, content: string, ctx?: 轨上下文): 写结果 {
+    let 归loc: { dir: string; file: string }
+    try {
+      归loc = this.定位(target, ctx, true)
+    } catch (e) {
+      return { ok: false, message: e instanceof Error ? e.message : String(e) }
+    }
+    const 正 = String(content ?? "").trim()
+    if (!正) return { ok: false, message: "记忆:内容为空,没有可写的" }
+    if (正.includes("§")) return { ok: false, message: "记忆:内容不能包含条目分隔符 §" }
+    const 险 = scanThreat(正)
+    if (险) return { ok: false, message: 险 }
+    const 戳好 = 盖戳(正, target === "key" ? ctx?.branches : undefined)
+    return withLock(归loc.dir, () => {
+      const r = this.重载(归loc)
+      if (r.kind === "drift") {
+        return { ok: false, message: `记忆:${归loc.file} 被手工改过,不敢整文件重写;原文已备份到 ${r.backup},请手动处理` }
+      }
+      if (r.kind === "read-failed") return { ok: false, message: "记忆:归档文件读不出来,拒绝写入以免抹掉历史" }
+      const 目标键 = 去重键(戳好)
+      if (r.entries.some((e) => 去重键(e) === 目标键)) {
+        return { ok: true, duplicate: true, message: "归档里已有一模一样的条目,没有重复添加" }
+      }
+      this.原子写(归loc, [...r.entries, 戳好])
+      return { ok: true, message: "已归档(不注入,可转正)" }
+    })
+  }
+
   /** 唯一子串命中一条;0 条 / 多条都拒绝(匹配是判据,歧义不动手)。 */
   private 命中(entries: string[], match: string): { index: number } | { error: string } {
     const q = String(match ?? "").trim()

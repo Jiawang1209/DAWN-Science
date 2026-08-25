@@ -110,6 +110,20 @@ describe("记忆存储核心", () => {
     expect(readFileSync(af, "utf8")).toContain("人手在归档里加了注")
   })
 
+  it("addArchived 一步直落归档、不碰主轨(审查 debug Cx)", () => {
+    const 根 = 临时()
+    const s = new MemoryStore(根)
+    // 主轨先放一条前 40 字相同的,证明旧的「add 主轨再 archive 按前 40 字匹配」会撞车;新路径不受影响
+    s.add("memory", "同一个开头的前四十个字用来撞匹配——主轨这条")
+    const r = s.addArchived("memory", "同一个开头的前四十个字用来撞匹配——归档这条")
+    expect(r.ok).toBe(true)
+    // 主轨仍只有原来那一条,归档条没污染主轨(不会被注入)
+    expect(s.entries("memory")).toHaveLength(1)
+    expect(s.archived("memory").some((e) => e.includes("归档这条"))).toBe(true)
+    // 去重:同句再归档一次不重复
+    expect(s.addArchived("memory", "同一个开头的前四十个字用来撞匹配——归档这条").duplicate).toBe(true)
+  })
+
   it("归档:先归档后删除;转正回主轨;归档文件不与主轨混", () => {
     const 根 = 临时()
     const s = new MemoryStore(根)

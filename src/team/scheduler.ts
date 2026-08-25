@@ -226,7 +226,8 @@ export class 团队调度器 {
       const to = typeof p.to === "string" ? p.to : ""
       const content = typeof p.content === "string" ? p.content : ""
       this.改(teamId, (t) => 发消息(t, { from: member, to, content }, this.now()))
-      if (to !== "captain") void this.踢一下(teamId)
+      // 后台踢一下:失败(如会话目录被外部删)只记一笔,不冒泡成 unhandledRejection 炸进程(审查 debug H12)
+      if (to !== "captain") void this.踢一下(teamId).catch((e) => console.error(`[团队] 踢一下失败 ${teamId}：${e instanceof Error ? e.message : String(e)}`))
       return `已送到「${to}」的邮箱。`
     }
     if (name === "team_status") return 状态文本(this.读(teamId), member)

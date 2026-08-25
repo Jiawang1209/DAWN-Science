@@ -1105,6 +1105,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       void mcp池.全关().catch(() => undefined)
       // **退出时把连接断干净**：留着的 SSH socket 会让进程不肯退
       remoteConnections.closeAll()
+      // 网关也要关(审查 debug H10):否则 server 不关、unix socket 文件留在 runtimeDir 里越积越多
+      网关?.关掉()
       db.close()
     },
 

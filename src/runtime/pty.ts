@@ -118,6 +118,9 @@ export class PtyRuntime implements AgentRuntime {
     proc.onExit(({ exitCode }) => {
       this.procs.delete(spec.sessionId)
       this.emit({ kind: "exited", sessionId: spec.sessionId, exitCode })
+      // 清掉这段会话的订阅表(审查 debug H11):否则每开一段终端就多一个永不回收的 Set,
+      // 长时间跑一堆终端后 sinks 只增不减。**在 emit 之后清**——exited 这条还要送到当前订阅者手里。
+      this.sinks.delete(spec.sessionId)
     })
 
     this.emit({ kind: "started", sessionId: spec.sessionId, pid: proc.pid })

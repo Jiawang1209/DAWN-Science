@@ -28,17 +28,25 @@ describe("浏览器插件", () => {
     expect(插件册[1]!.族们().reduce((n, f) => n + f.tools.length, 0)).toBe(15)
   })
 
-  it("清截图：过老的与超额的删掉，别人的文件与新截图活着", () => {
+  it("清截图：只清 DAWN 自己(时间戳命名)的过老截图；用户放的 png 与新截图都活着(审查 debug E9)", () => {
     const d = mkdtempSync(join(tmpdir(), "dawn-shot-"))
-    const 老 = join(d, "老.png")
-    writeFileSync(老, "x")
     const 老时 = (Date.now() - 8 * 24 * 3600 * 1000) / 1000
-    utimesSync(老, 老时, 老时)
-    writeFileSync(join(d, "新.png"), "x")
+    // DAWN 自己的截图(名字是时间戳形状),过老 → 该删
+    const 老截图 = join(d, "2026-08-10T00-00-00-000Z.png")
+    writeFileSync(老截图, "x")
+    utimesSync(老截图, 老时, 老时)
+    // DAWN 的新截图 → 活着
+    writeFileSync(join(d, "2026-08-25T12-00-00-000Z.png"), "x")
+    // **用户手放的 png,名字不是时间戳形状——哪怕也很老,也不该删**(这条正是旧实现的 bug)
+    const 用户图 = join(d, "重要.png")
+    writeFileSync(用户图, "x")
+    utimesSync(用户图, 老时, 老时)
     writeFileSync(join(d, "别人的.txt"), "留着")
     const 删了 = 清截图(d)
-    expect(删了).toBe(1)
-    expect(readdirSync(d).sort()).toEqual(["别人的.txt", "新.png"])
+    expect(删了).toBe(1) // 只删了那张过老的 DAWN 截图
+    expect(readdirSync(d).sort()).toEqual(
+      ["2026-08-25T12-00-00-000Z.png", "别人的.txt", "重要.png"].sort(),
+    )
   })
 
   describe("旁观面（2026-08-25，坞「网页」格的「agent 旁观」页签）", () => {

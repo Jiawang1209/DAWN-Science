@@ -42,11 +42,21 @@ export function 工作区内写入目标(workspace: string, 相对: string): str
   return 目标
 }
 
-/** 截图清理（学 reef 的双阈值）：7 天 / 200 张，只清直属 .png——别人放进目录的活着 */
+/**
+ * 我们自己截图的文件名形状:`browser_screenshot` 用 `new Date().toISOString().replace(/[:.]/g,"-")` + ".png",
+ * 例如 `2026-08-25T12-30-45-123Z.png`。**清理只认这个形状**(审查 debug E9)。
+ */
+const DAWN截图名 = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.png$/
+
+/**
+ * 截图清理（学 reef 的双阈值）：7 天 / 200 张。**只清我们自己按时间戳命名的截图**——
+ * 人手放进 `.dawn/screenshots/` 的别的 png(名字不是那个形状)一律不动(审查 debug E9:
+ * 旧实现清所有 .png,注释和测试都说「别人放进来的活着」,代码却会连人放的一起删)。
+ */
 export function 清截图(目录: string, 现在 = Date.now(), 最老天数 = 7, 最多张 = 200): number {
   let entries: string[]
   try {
-    entries = readdirSync(目录).filter((n) => n.endsWith(".png"))
+    entries = readdirSync(目录).filter((n) => DAWN截图名.test(n))
   } catch {
     return 0
   }

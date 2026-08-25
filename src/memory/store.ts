@@ -75,15 +75,39 @@ export function todayStamp(): string {
 }
 
 /**
- * 盖戳:剥掉模型手写的日期前缀(它不知道今天几号,只会猜——dsh 原话
- * "writers do not know the current date and guess"),拼 [branch:](有的话),
- * 盖上今天。已带今天格式戳的内容幂等。
+ * 盖戳:把正文冒充的**程序元数据前缀**先剥干净,再由程序盖上今天的日期与
+ * (可选的)分支作用域。元数据一律由程序掌控——正文以它们开头会劫持解析:
+ * 把讲解性内容误当成作用域(`[branch:]`)、身份(`[id:]`)或时间戳。
+ *
+ * 三条剥离,顺序即头文法顺序:
+ *   - `[id:8hex]`:身份证只有 sync 层生成,正文里的一律剥(审查 debug#14:否则
+ *     头顺序变成 `[date][id:][date]`,stripEntryId 剥不掉,[id:] 泄进模型上下文);
+ *   - **纯日期 / 日期+时分[:秒]**:剥模型手写的猜日期(它不知道今天几号)。
+ *     **只认纯时间戳**,不动 `[2024-03-05 组会]` 这类带文字的标签(审查 debug#3:
+ *     旧正则 `[^\]]*` 会把「组会」连方括号一起吞掉,静默丢内容);
+ *   - `[branch:…]`:分支作用域只能由 `branches` 参数设(审查 debug#4:否则
+ *     以 `[branch:dev]` 开头的讲解性正文会被当成 dev 专属,在别的分支整条消失;
+ *     且显式 branches 会被正文里的标记悄悄覆盖)。
  */
 export function 盖戳(content: string, branches?: string[]): string {
-  let 正 = String(content ?? "").trim().replace(/^\[\d{4}-\d{2}-\d{2}[^\]]*\]\s*/, "")
+  let 正 = String(content ?? "").trim()
+  正 = 正.replace(/^\[id:[0-9a-f]{8}\]\s*/, "")
+  正 = 正.replace(/^\[\d{4}-\d{2}-\d{2}(?: \d{1,2}:\d{2}(?::\d{2})?)?\]\s*/, "")
+  正 = 正.replace(/^\[branch:[^\]]*\]\s*/, "")
   const 支 = (branches ?? []).map((b) => String(b).trim()).filter(Boolean)
-  if (支.length > 0 && !/^\[branch:/.test(正)) 正 = `[branch:${支.join(",")}] ${正}`
+  if (支.length > 0) 正 = `[branch:${支.join(",")}] ${正}`
   return `[${todayStamp()}] ${正}`
+}
+
+/**
+ * 去重比较键(审查 debug#1):剥 `[id:]` 与日期戳,**保留 `[branch:]` 与正文**。
+ * 「同一句话昨天记过、今天换了日期戳」要判重(键相同);而 main 与 dev 上的
+ * 同一句话作用域不同(`[branch:main] X` ≠ `[branch:dev] X`),键不同,不误判——
+ * 旧实现只比正文(`splitEntryHead(e).body`),把两个分支的同句误判为重复,
+ * 采纳后什么都没写却报「已写入」,dev 分支的记忆永久丢失。
+ */
+export function 去重键(entry: string): string {
+  return stripEntryId(entry).replace(/^\[\d{4}-\d{2}-\d{2}(?: \d{1,2}:\d{2}(?::\d{2})?)?\]\s*/, "")
 }
 
 /** 提示注入扫描(dsh 五条原样)。命中回一句给人看的拒绝理由。 */
@@ -268,6 +292,9 @@ export class MemoryStore {
     }
     const 正 = String(content ?? "").trim()
     if (!正) return { ok: false, message: "记忆:内容为空,没有可写的" }
+    // § 是条目分隔符:正文里带它会把一条记忆劈成两条,后半截丢日期戳与分支作用域,
+    // 且 isCanonical 仍为 true(drift guard 永远不报)——审查 debug#2。与 updateBody 同一道校验。
+    if (正.includes("§")) return { ok: false, message: "记忆:内容不能包含条目分隔符 §" }
     const 险 = scanThreat(正)
     if (险) return { ok: false, message: 险 }
     const 戳好 = 盖戳(正, target === "key" ? ctx?.branches : undefined)
@@ -275,9 +302,10 @@ export class MemoryStore {
       const { text, size } = this.读(loc)
       if (text === "" && size > 0) return { ok: false, message: "记忆:文件读不出来,拒绝写入以免抹掉历史" }
       const entries = parseEntries(text)
-      // 去重按剥 [id:] 后的全文比;另按正文比一次——同一句话昨天记过,今天再记只是换了日期戳
-      const 新正文 = splitEntryHead(戳好).body
-      if (entries.some((e) => stripEntryId(e) === stripEntryId(戳好) || splitEntryHead(e).body === 新正文)) {
+      // 去重:剥 [id:] 与日期戳、**保留分支作用域**再比(审查 debug#1)——
+      // 同一句话跨日期判重,而 main/dev 上的同句不误判。
+      const 目标键 = 去重键(戳好)
+      if (entries.some((e) => 去重键(e) === 目标键)) {
         return { ok: true, duplicate: true, message: "已有一模一样的条目,没有重复添加" }
       }
       this.原子写(loc, [...entries, 戳好])

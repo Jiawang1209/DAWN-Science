@@ -8,7 +8,7 @@
  * 事件由测试主动 `发`。
  */
 import { describe, expect, it, vi } from "vitest"
-import { 对话内核, 执行超时 } from "../../src/kernel/挂载.js"
+import { 对话内核, 静默超时 } from "../../src/kernel/挂载.js"
 import type { SessionId } from "../../src/runtime/types.js"
 
 /** status 条目的最小合法 provenance（照 `src/kernel/outputs.ts` 的 `Provenance`） */
@@ -352,7 +352,7 @@ describe("对话内核 · 空代码 / 退出 / 换新（审查 2026-08-26）", (
  * 三层兜底，各测各的：
  *   ① 常驻监听叫醒在飞的执行（per-execute attach 没赶上时的唯一活耳朵）
  *   ② write 前的活死人预检 + per-execute attach 收到 exited 的快路
- *   ③ 5 分钟没回音的兜底超时（既不退出也不回 idle 的卡死）
+ *   ③ 5 分钟「完全静默」的兜底超时（既不退出也不回 idle、连输出都停了的卡死）
  */
 
 /**
@@ -422,7 +422,7 @@ describe("对话内核 · 内核起来就死 / 卡住不再让 cell 永远转（
     expect(收到).toEqual(["A"]) // B 的代码从没被写出去
   })
 
-  it("③ 兜底超时：既不退出也不回 idle，过了 执行超时 就拒「没有回音」", async () => {
+  it("③ 静默超时：既不退出也不回 idle、整段一条动静都没有，过了 静默超时 就拒「没有任何动静」", async () => {
     vi.useFakeTimers()
     try {
       const { runtime, 收到 } = 假内核()
@@ -431,9 +431,31 @@ describe("对话内核 · 内核起来就死 / 卡住不再让 cell 永远转（
       const 捕 = p.catch((e) => e) // 先接住，别让它成为 unhandled rejection
       await vi.advanceTimersByTimeAsync(0) // 放 start / write 这串微任务跑完
       expect(收到).toEqual(["while True: pass"])
-      await vi.advanceTimersByTimeAsync(执行超时) // 到点
+      await vi.advanceTimersByTimeAsync(静默超时) // 一路无输出，到点
       const e = await 捕
-      expect((e as Error).message).toMatch(/没有回音/)
+      expect((e as Error).message).toMatch(/没有任何动静/)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("③ 一路吐进度的长 cell 不被砍：每 4 分钟一条输出、连吐 12 分钟也不超时（静默才砍）", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime, 发 } = 假内核()
+      const k = 挂上(runtime)
+      const p = k.执行(c1, "python", "for i in range(3): train(); print(i)")
+      const 捕 = p.then(() => "resolved").catch((e) => (e as Error).message)
+      await vi.advanceTimersByTimeAsync(0) // start / write 跑完
+      // 每 4 分钟吐一条进度，连吐 12 分钟——每条都把静默表清零，永远到不了 5 分钟静默
+      for (let i = 0; i < 3; i++) {
+        await vi.advanceTimersByTimeAsync(4 * 60_000)
+        发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "stream", stream: "stdout", text: `i=${i}`, provenance } })
+      }
+      // 到这里已经过了 12 分钟总时长，远超 5 分钟——但从没有连续 5 分钟静默，所以没被拒
+      发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+      await vi.advanceTimersByTimeAsync(0)
+      expect(await 捕).toBe("resolved")
     } finally {
       vi.useRealTimers()
     }
@@ -445,10 +467,10 @@ describe("对话内核 · 内核起来就死 / 卡住不再让 cell 永远转（
       const { runtime, 发 } = 假内核()
       const k = 挂上(runtime)
       const p = k.执行(c1, "python", "1+1")
-      await vi.advanceTimersByTimeAsync(1000) // 才过 1 秒，远没到 执行超时
+      await vi.advanceTimersByTimeAsync(1000) // 才过 1 秒，远没到 静默超时
       发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
       await expect(p).resolves.toMatchObject({ 语言: "python" }) // 已经跑完
-      await vi.advanceTimersByTimeAsync(执行超时) // 再怎么推进，这段也不会被超时翻成拒绝
+      await vi.advanceTimersByTimeAsync(静默超时) // 再怎么推进，这段也不会被超时翻成拒绝
     } finally {
       vi.useRealTimers()
     }

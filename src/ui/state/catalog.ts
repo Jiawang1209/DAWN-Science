@@ -12,6 +12,7 @@ import type {
   Artifact,
   Cost,
   FileChangeFacts,
+  KernelState,
   ProjectSummary,
   ProvenanceLink,
   RemoteConnection,
@@ -73,6 +74,15 @@ export interface ArtifactList {
 /** 当前会话的产物（spec 2026-08-26-产物）。缺省 = 还没取到 / 没有会话 */
 export const $artifacts = atom<ArtifactList | undefined>(undefined)
 export const setArtifacts = (v: ArtifactList | undefined) => setValue($artifacts, v)
+
+/**
+ * 当前会话的内核状态列表（笔记本，2026-08-26）：starting/idle/busy/exited。
+ * 缺省 = 还没取到 / 没有会话——与 `$artifacts` 同一条理由。
+ * 快照到达时用 `u.snapshot.kernels` 灌一次，`kernels` 更新到时**整份换掉**
+ * （`version.ts` 7.26 写的纪律：合并只会多一种「合错了」）。
+ */
+export const $kernels = atom<readonly KernelState[] | undefined>(undefined)
+export const setKernels = (v: readonly KernelState[] | undefined) => setValue($kernels, v)
 
 export const $providers = atom<Providers>({ agents: [], providers: [] })
 export const $credentials = atom<CredentialState>({ configured: [], encrypted: false })

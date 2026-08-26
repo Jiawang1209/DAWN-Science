@@ -29,6 +29,7 @@ import {
   setConnections,
   setTasks,
   setCredentials,
+  setKernels,
   setProjects,
   setProvenance,
   setRunDetail,
@@ -194,6 +195,10 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
         pendingPermission: snap.pendingPermission,
         team: snap.team,
       })
+      // 内核状态（笔记本，2026-08-26）：重连也要带上「当前是什么」——
+      // 只在实时更新那一路灌的话，跳号自愈 / 切会话重订阅回来的这一刻，坞会先说「没有内核」，
+      // 等下一条 kernels 更新才补上，是与 A3 那条注释同一个洞
+      setKernels(snap.kernels)
       c.expectRevision(sessionId, snap.revision)
     })
     .catch(fail)

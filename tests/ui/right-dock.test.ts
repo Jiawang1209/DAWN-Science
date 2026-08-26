@@ -217,3 +217,10 @@ describe("坞房客「产物」（2026-08-26）", () => {
     expect(房客名("artifacts")).toBe("产物")
   })
 })
+
+describe("坞房客「笔记本」（2026-08-26）", () => {
+  it("在名单里，排在产物之后；有名字", () => {
+    expect(全部房客.indexOf("notebook")).toBe(全部房客.indexOf("artifacts") + 1)
+    expect(房客名("notebook")).toBe("笔记本")
+  })
+})

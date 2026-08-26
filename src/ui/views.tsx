@@ -1032,15 +1032,15 @@ export { SideSash }
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "team" ? t("团队") : t("文件")
+  return who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "team" ? t("团队") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
 const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent)
 export function 房客快捷键(who: 坞房客): string {
   if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
-  // **网页、概览、产物暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
-  if (who === "web" || who === "overview" || who === "artifacts") return ""
+  // **网页、概览、产物、笔记本暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
+  if (who === "web" || who === "overview" || who === "artifacts" || who === "notebook") return ""
   return 是Mac ? "⌘P" : "Ctrl+P"
 }
 
@@ -5383,8 +5383,15 @@ function TurnUsage({
  * 敲了什么、跑没跑完、错没错，一眼看到；完整的代码与富输出去笔记本那格看。
  */
 function CellNoteRow({ item }: { item: Extract<TranscriptItem, { type: "cell" }> }) {
-  const 首行 = item.code.split("\n")[0] ?? ""
-  const 有更多 = item.code.includes("\n")
+  /**
+   * **取第一条非空行，不是字面第一行**（2026-08-26 审查补）。
+   * 代码以空行开头很常见（比如从别处粘贴过来），字面第一行会是空的——
+   * 那一行痕迹本该「一眼看到敲了什么」，一个空 `<code>` 什么都没说。
+   */
+  const 代码行 = item.code.split("\n")
+  const 首行索引 = 代码行.findIndex((行) => 行.trim() !== "")
+  const 首行 = 首行索引 >= 0 ? 代码行[首行索引]!.trim() : ""
+  const 有更多 = 首行索引 >= 0 && 首行索引 < 代码行.length - 1
   const 语言名 = item.language === "R" ? "R" : "Python"
   return (
     <div className="turn-cellnote" data-cell-id={item.id}>
@@ -5406,7 +5413,7 @@ function CellNoteRow({ item }: { item: Extract<TranscriptItem, { type: "cell" }>
  * 在渲染层的样子——Rho 明令禁止后者，理由是
  * **ANSI 字节流里的输出不可查询、不可溯源、不可审计**。
  */
-function KernelOutputRow({
+export function KernelOutputRow({
   item,
   currentKernel,
 }: {

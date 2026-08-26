@@ -46,6 +46,8 @@ import { t, tf, msgid } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
 import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import { 按类分组 } from "./agent-groups.js"
+import { GeneratedStrip, 本轮产物, type 轮产物 } from "./generated-strip.js"
+import type { ArtifactList } from "./state/catalog.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
  *
@@ -3567,6 +3569,8 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
 
 export function ConversationView({
   onOpenWeb,
+  artifacts,
+  onOpenArtifact,
   onExport,
   权限,
   引用文件,
@@ -3602,6 +3606,9 @@ export function ConversationView({
   onOpenSettings,
 }: {
   session: SessionSummary
+  /** 这段会话的产物清单（2026-08-26）。**缺省 = 不画产物条**，两条一起给才画 */
+  artifacts?: ArtifactList | undefined
+  onOpenArtifact?: ((path: string) => void) | undefined
   /**
    * 这段对话的工作目录（T3-b）。**缺省 = 没设 = 这是一段普通对话**。
    *
@@ -4194,6 +4201,9 @@ export function ConversationView({
                 currentKernel={kernelInstanceId}
                 nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
+                {...(artifacts && onOpenArtifact && item.type === "turn" && item.who === "agent" && item.final
+                  ? { generated: 本轮产物(items, item.id, artifacts, session.kind), onOpenArtifact }
+                  : {})}
                 {...(disabled
                   ? {}
                   : {
@@ -4989,9 +4999,14 @@ export function TranscriptRow({
   currentKernel,
   onResend,
   onOpenWeb,
+  generated,
+  onOpenArtifact,
 }: {
   item: TranscriptItem
   agentId: string
+  /** 这一轮的产物（2026-08-26）：只有说完的 agent 轮才有；两个一起给才画产物条 */
+  generated?: 轮产物 | undefined
+  onOpenArtifact?: ((path: string) => void) | undefined
   /**
    * provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。
    * **缺省时用 id**——那不好看，但**是实话**。
@@ -5261,6 +5276,8 @@ export function TranscriptRow({
          * 显示成 0 是把「不知道」说成了「没花」。
          */}
       </div>
+      {/** **这一轮生成了什么**（2026-08-26）：紧贴气泡下面，点一条进坞的「产物」格 */}
+      {generated && onOpenArtifact ? <GeneratedStrip 产物={generated} onOpen={onOpenArtifact} /> : null}
 
       {/**
        * **操作在这一段的下面**（2026-08-11 挪下来，作者提，仿 Codex）。

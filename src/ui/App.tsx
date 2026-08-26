@@ -85,6 +85,9 @@ import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
+import { ArtifactsPanel } from "./artifacts.js"
+import { loadArtifacts } from "./state/sync.js"
+import { $artifacts } from "./state/catalog.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -217,6 +220,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 跑着的会话 = useStore($跑着的会话)
   const 未读的 = useStore($未读)
   const runs = useStore($runs)
+  const artifacts = useStore($artifacts)
   const runDetail = useStore($runDetail)
   const provenance = useStore($provenance)
   const providers = useStore($providers)
@@ -500,6 +504,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
         // 团队变了（team-board）：整份换掉
         if (u.type === "team") setTeam(u.team)
+        // 产物变了（2026-08-26）：只说变了，清单重拉
+        if (u.type === "artifactsChanged") void loadArtifacts(client, u.sessionId)
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
         if (u.type === "state" && u.state === "exited") {
           const pid = $activeProjectId.get()
@@ -956,6 +962,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     },
     [client, projectId, 文件所在],
   )
+
+  /**
+   * 坞「产物」格（spec 2026-08-26-产物）。
+   *
+   * **换会话就重拉，没会话就清空**——清单是按会话的，留着上一段的会在新会话里说谎。
+   * `产物焦点` 是「对话里产物条点了哪个」，也跟会话走。
+   */
+  const [产物焦点, 设产物焦点] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (!ready) return
+    设产物焦点(undefined)
+    void loadArtifacts(client, sessionId)
+  }, [client, ready, sessionId])
+  const openArtifact = useCallback((path: string) => {
+    设产物焦点(path)
+    setRightDockTenant("artifacts")
+    setRightDockOpen(true)
+  }, [])
+  /** 产物格自己的预览读文件：**身份要稳**（面板把它放进 effect 依赖），跟 `openFile` 同一条 readFile 路 */
+  const 读产物 = useCallback((path: string) => {
+    const 去哪读 = 文件所在 ? { connectionId: 文件所在.connectionId, path } : projectId ? { projectId, path } : undefined
+    if (!去哪读) return Promise.reject(new Error(t("还没有选中项目")))
+    return client.get<FileContent>("readFile", 去哪读)
+  }, [client, projectId, 文件所在])
 
   /**
    * `@` 引用的文件源（2026-08-23，学自 dsh-at-file）：就是坞里文件格那两条（`loadDir` / `searchFiles`），
@@ -3866,6 +3896,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onExport={() => client.get<{ path: string; turns: number }>("exportSession", { sessionId: session!.sessionId })}
                 引用文件={引用文件}
                 onOpenReference={打开引用}
+                artifacts={artifacts}
+                onOpenArtifact={openArtifact}
                 {...(() => {
                   // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
                   const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
@@ -4310,6 +4342,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </div>
             ) : rightDockTenant === "team" ? (
               <TeamPanel key={sessionId} />
+            ) : rightDockTenant === "artifacts" ? (
+              /** **产物那一格**（2026-08-26）：下载与文件格共用同一个 `下载`（远端才有；本机时它直接返回） */
+              <ArtifactsPanel
+                key={sessionId}
+                data={artifacts}
+                focus={产物焦点}
+                readFile={读产物}
+                onOpenInFiles={openFile}
+                onDownload={下载}
+                onOpenExternally={openExternally}
+              />
             ) : rightDockTenant === "web" ? (
               /**
                 * **网页那一格**（批 1，2026-08-18）。屏幕上这一块几乎是空的——

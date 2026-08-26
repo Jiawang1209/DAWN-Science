@@ -14,7 +14,7 @@ import type { SessionId } from "../../src/runtime/types.js"
 /** status 条目的最小合法 provenance（照 `src/kernel/outputs.ts` 的 `Provenance`） */
 const provenance = { msgId: "m1", parentMsgId: "p1", timestamp: "2026-08-26T00:00:00Z" }
 
-function 假内核(选: { 带abort?: boolean; 带variables?: boolean } = {}) {
+function 假内核(选: { 带abort?: boolean; 带variables?: boolean; write抛?: boolean } = {}) {
   const 收到: string[] = []
   const 中断过: string[] = []
   const 问过变量: string[] = []
@@ -28,9 +28,10 @@ function 假内核(选: { 带abort?: boolean; 带variables?: boolean } = {}) {
       return () => set.delete(sink)
     },
     write: (_id: string, code: string) => {
+      if (选.write抛) throw new Error("写不进去")
       收到.push(code)
     },
-    stop: async () => {},
+    stop: async (id: string) => 发(id, { kind: "exited", sessionId: id, exitCode: 0 }),
   }
   if (选.带abort) runtime.abort = async (id: string) => void 中断过.push(id)
   if (选.带variables)
@@ -123,14 +124,38 @@ describe("对话内核 · 状态（笔记本，2026-08-26）", () => {
     await expect(k.中断(c1, "python")).rejects.toThrow(/不支持中断/)
   })
 
-  it("收() 之后列表清空，并回调", async () => {
+  it("收() 之后列表清空；回调在表里删完之后才叫", async () => {
     const { runtime } = 假内核()
     const 变了: number[] = []
     const k = 挂上(runtime, (对话) => 变了.push(k.状态列表(对话).length))
     await k.拿(c1, "python")
+    变了.length = 0
     await k.收(c1)
     expect(k.状态列表(c1)).toEqual([])
-    expect(变了.at(-1)).toBe(0)
+    // stop 引出的 exited 不再推一遍（那时列表还有一项）；只有删完之后的那一次
+    expect(变了).toEqual([0])
+  })
+
+  it("收() 之后内部监听已注销：旧内核会话上的事件不再改状态、不再回调", async () => {
+    const { runtime, 发 } = 假内核()
+    let 叫了 = 0
+    const k = 挂上(runtime, () => void 叫了++)
+    await k.拿(c1, "python")
+    await k.收(c1)
+    const 之前 = 叫了
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "busy", provenance } })
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1 })
+    expect(叫了).toBe(之前)
+    expect(k.状态列表(c1)).toEqual([])
+  })
+
+  it("执行时 write 抛 → 不留 busy，回 idle 并回调", async () => {
+    const { runtime } = 假内核({ write抛: true })
+    const 变了: string[] = []
+    const k = 挂上(runtime, (对话) => 变了.push(k.状态列表(对话).map((s) => s.state).join(",")))
+    await expect(k.执行(c1, "python", "1")).rejects.toThrow(/写不进去/)
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "idle" }])
+    expect(变了.slice(-2)).toEqual(["busy", "idle"])
   })
 
   it("内核会话id() / 变量() 按对话+语言找到那台；没有就 undefined", async () => {

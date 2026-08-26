@@ -87,6 +87,8 @@ interface 一台 {
   对话: SessionId
   语言: 内核语言
   状态: 内核状态
+  /** 内部状态监听的注销。**收掉时要调**，别给停掉的内核留一只挂着的耳朵 */
+  解监听: () => void
 }
 
 export class 对话内核 {
@@ -157,8 +159,12 @@ export class 对话内核 {
   async 变量(对话: SessionId, 语言: 内核语言): Promise<unknown> {
     const 一 = this.表.get(对话内核.键(对话, 语言))
     if (!一) return undefined
-    const rt = this.opts.runtime as { variables?: (id: SessionId) => Promise<unknown> }
-    return rt.variables ? await rt.variables(一.内核会话) : undefined
+    // `variables` 不在 `AgentRuntime` 契约里（只有 KernelRuntime 有），所以按能力探测而不是硬转
+    const rt: unknown = this.opts.runtime
+    if (typeof rt === "object" && rt !== null && "variables" in rt && typeof rt.variables === "function") {
+      return await (rt.variables as (id: SessionId) => Promise<unknown>)(一.内核会话)
+    }
+    return undefined
   }
 
   /**
@@ -240,7 +246,7 @@ export class 对话内核 {
      * 所以这里不用再等一条 `started` 事件；`starting` 只存在于上面那个 await 期间，
      * 而那时它还不在表里，`状态列表` 看不到（起不起得来还没定，不该先显示一台）。
      */
-    const 一: 一台 = { 内核会话, handle, 对话, 语言, 状态: "idle" }
+    const 一: 一台 = { 内核会话, handle, 对话, 语言, 状态: "idle", 解监听: () => {} }
     this.表.set(键, 一)
     this.反查.set(内核会话, 一)
 
@@ -252,7 +258,7 @@ export class 对话内核 {
      * 其中就有真内核每轮开头吐的 `status: busy` 与收尾的 `status: idle`，
      * 所以这里两个都认；`starting` 那条不改状态（表里的台已经起来了）。
      */
-    this.opts.runtime.attach(内核会话, (e) => {
+    一.解监听 = this.opts.runtime.attach(内核会话, (e) => {
       const ev = e as { kind: string; entry?: { kind?: string; state?: string } }
       if (ev.kind === "kernel_output" && ev.entry?.kind === "status") {
         if (ev.entry.state === "busy" || ev.entry.state === "idle") this.置状态(一, ev.entry.state)
@@ -329,6 +335,12 @@ export class 对话内核 {
         this.opts.runtime.write(一.内核会话, 代码)
       } catch (e) {
         解开?.()
+        /**
+         * attach / write 当场抛（会话不在了、代码没送出去）：这一轮根本没开始，
+         * 不能把 busy 留在那里——那会让笔记本永远显示「运行中」而中断又没东西可中断。
+         * 已经是 exited 的（内核死了）不改回去，其余回 idle。
+         */
+        if (一.状态 === "busy") this.置状态(一, "idle")
         reject(e instanceof Error ? e : new Error(String(e)))
       }
     })
@@ -344,6 +356,8 @@ export class 对话内核 {
     const 收了: 内核语言[] = []
     const 没收掉: { 语言: 内核语言; 原因: string }[] = []
     for (const 一 of [...this.表.values()].filter((k) => k.对话 === 对话)) {
+      // 先摘耳朵再停：stop 引出的 exited 是我们自己要的，不该再当「状态变了」推一遍
+      一.解监听()
       try {
         // **`stop` 在运行时上，不在 handle 上**（tsc 当场抓住的想当然）
         await this.opts.runtime.stop(一.内核会话)
@@ -354,7 +368,7 @@ export class 对话内核 {
       this.表.delete(对话内核.键(对话, 一.语言))
       this.反查.delete(一.内核会话)
     }
-    // 列表少了几项，也是「状态变了」
+    // 列表少了几项，也是「状态变了」——**在表里删完之后叫**，回调里 `状态列表` 才看不到它
     this.opts.状态变了?.(对话)
     return { 收了, 没收掉 }
   }

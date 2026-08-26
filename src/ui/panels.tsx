@@ -469,8 +469,31 @@ function 机器环境({
   state: Extract<Exclude<EnvironmentState, undefined>, { kind: "shell" }>
 }) {
   const 工具 = Object.entries(state.tools ?? {})
+  // **解释器拎到最显眼**（2026-08-27，作者：有 R/Python 的版本就够了）：
+  // python3 / R 从「PATH 上的工具」里挑出来单列，剩下的（git 等）留在下面
+  // R 的 version 是一整条 banner（`R version 4.6.1 (2026-06-24) -- "Happy Hop"`），
+  // 只留到版本号；Python 本来就干净（`Python 3.9.6`），原样。完整串进 title
+  const 简化版本 = (名: string, v: string | undefined): string => {
+    if (!v) return ""
+    if (名 !== "R") return v
+    const m = /\d+\.\d+(?:\.\d+)?/.exec(v)
+    return m ? `R ${m[0]}` : v
+  }
+  const 解释器名 = new Set(["python3", "python", "R"])
+  const 解释器 = 工具.filter(([名, 它]) => 解释器名.has(名) && Boolean(它.version))
+  const 其它工具 = 工具.filter(([名]) => !解释器名.has(名))
   return (
     <Panel title={t("环境")}>
+      {解释器.length > 0 ? (
+        <ul className="env-interps">
+          {解释器.map(([名, 它]) => (
+            <li key={名} className="env-interp" title={`${它.version}${它.path ? ` — ${它.path}` : ""}`}>
+              <span className="lang">{名 === "R" ? "R" : "Python"}</span>
+              <span className="ver">{简化版本(名, 它.version)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <dl className="env-facts">
         <dt>{t("机器")}</dt>
         {/* **本地就说本地**，远端说清是哪一台——两台机器可以同名，所以用连接 id */}
@@ -506,11 +529,11 @@ function 机器环境({
           </>
         ) : null}
 
-        {工具.length > 0 ? (
+        {其它工具.length > 0 ? (
           <>
             <dt>{t("PATH 上的工具")}</dt>
             <dd>
-              {工具.map(([名, 它]) => (
+              {其它工具.map(([名, 它]) => (
                 <span key={名} className="env-path">
                   {名}
                   {它.version ? ` ${它.version}` : ""} — {它.path}

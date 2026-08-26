@@ -2914,6 +2914,8 @@ function ConfigPill({
   return (
     <div
       className="sess-config config-pill"
+      // 哪一类的 pill（`model` / `thought_level`）——两颗都在发送键左边那排，靠它区分
+      data-config={option.category}
       ref={盒}
       onKeyDown={(e) => e.key === "Escape" && 设开着(false)}
     >

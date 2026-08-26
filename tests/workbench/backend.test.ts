@@ -129,6 +129,28 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(r.unknown).toEqual([{ runId: "t2", toolCallId: "c2" }])
   })
 
+  it("listArtifacts：会话记录已删——产物还在，exists 缺省（不知道）（2026-08-26 产物·越界防护）", async () => {
+    const ws = newRepo()
+    const sid = await 开一段(ws)
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    ctx.runStore.insert({ runId: "t1", projectId: pid, sessionId: sid, origin: "agent", requestType: "tool_call:write", status: "completed", startedAt: "2026-08-26T10:00:00.000Z", finishedAt: "2026-08-26T10:00:01.000Z", hasError: false, toolCallId: "c1", filesCreated: ["a.csv"] })
+    // 会话记录没了（比如项目被清过），账本里的 Run 还在——产物清单不能跟着消失
+    ctx.sessionStore.delete(sid)
+    const r = (await ctx.backend.listArtifacts({ sessionId: sid })) as { artifacts: { path: string; exists?: boolean }[] }
+    expect(r.artifacts).toEqual([expect.objectContaining({ path: "a.csv" })])
+    expect(r.artifacts[0]!.exists).toBeUndefined()
+  })
+
+  it("listArtifacts：账本里的路径越界（`..`）——不上工作区之外查，exists 缺省（2026-08-26 产物·越界防护）", async () => {
+    const ws = newRepo()
+    const sid = await 开一段(ws)
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    ctx.runStore.insert({ runId: "t1", projectId: pid, sessionId: sid, origin: "agent", requestType: "tool_call:write", status: "completed", startedAt: "2026-08-26T10:00:00.000Z", finishedAt: "2026-08-26T10:00:01.000Z", hasError: false, toolCallId: "c1", filesCreated: ["../escape.txt"] })
+    const r = (await ctx.backend.listArtifacts({ sessionId: sid })) as { artifacts: { path: string; exists?: boolean }[] }
+    expect(r.artifacts).toEqual([expect.objectContaining({ path: "../escape.txt" })])
+    expect(r.artifacts[0]!.exists).toBeUndefined()
+  })
+
   /**
    * 开一段带工作路径的对话，返回它的 sessionId（T4，2026-08-13）。
    *

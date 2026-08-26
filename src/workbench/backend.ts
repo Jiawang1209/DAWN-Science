@@ -58,8 +58,8 @@ import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invo
 import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
 import { readdir, readFile as 读本地, writeFile, rename, rm, stat, copyFile } from "node:fs/promises"
-import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep } from "node:path"
-import { 文件类按名字 } from "../files/file-kind.js"
+import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep, isAbsolute } from "node:path"
+import { 文件类按名字, type 文件类 } from "../files/file-kind.js"
 import { IlinkClient } from "../channels/weixin/ilink.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
@@ -98,10 +98,22 @@ function 文件仍在(p: string): boolean {
   }
 }
 
-/** 产物按后缀分类（`listArtifacts`）——复用 `src/files/file-kind.ts`，`dir` 这里永远不会出现 */
-function 产物类型(path: string): Exclude<ReturnType<typeof 文件类按名字>, "dir"> {
-  const k = 文件类按名字(path.split("/").pop() ?? path, "file")
-  return k === "dir" ? "other" : k
+/**
+ * 产物按后缀分类（`listArtifacts`）——复用 `src/files/file-kind.ts`。
+ * `文件类按名字` 只有传 `kind === "dir"` 才会给 "dir"；这里恒传 "file"，
+ * 运行时不可能出现 "dir"——类型断言而非再判一次死分支。
+ */
+function 产物类型(path: string): Exclude<文件类, "dir"> {
+  return 文件类按名字(basename(path), "file") as Exclude<文件类, "dir">
+}
+
+/**
+ * `会话.workspace` 之外的路径不查（`listArtifacts`）：账本记的相对路径按理不会越界，
+ * 但账本可能是老版本写的、或被篡改过——查到工作区外**不算「不在」**，是「查不了」。
+ */
+function 越界(workspace: string, path: string): boolean {
+  const rel = 相对(workspace, resolve(workspace, path))
+  return rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)
 }
 
 /**
@@ -1654,7 +1666,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         artifacts: artifacts.map((a) => ({
           ...a,
           kind: 产物类型(a.path),
-          ...(远端 || !会话 ? {} : { exists: 文件仍在(拼路径(会话.workspace, a.path)) }),
+          // 越界（`..`、绝对路径）不查真机器之外的东西——如实说「查不了」而不是拿工作区外的结果冒充
+          ...(远端 || !会话 || 越界(会话.workspace, a.path)
+            ? {}
+            : { exists: 文件仍在(拼路径(会话.workspace, a.path)) }),
         })),
         unknown,
       }

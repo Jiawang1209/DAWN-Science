@@ -24,6 +24,14 @@
 - **Impact**: 自建端点上的视觉模型现在要在 yaml 里写 `vision: true` 才收图（此前默认收）。设置界面的 provider 写入器（`writer.ts`）还不认识 `vision`，重写该 provider 段会把手写的 `vision` 丢掉——待补。
 - **Verification**: 新增 `tests/config/models-json.test.ts` 7 例（先红后绿）；`tests/config` 84 例全绿；`npm run typecheck` 通过；全量 vitest 2341 例通过（1 个 unhandled error 是 `session-tabs.tsx` 在 jsdom 下的 `scrollIntoView`，与本次无关，改前已有）。
 
+### 2026-08-26 — 笔记本：坞里一格看 agent 的内核、同一台内核里自己敲、敲的记进对话（notebook 分支，主线第二轮）
+
+- **Type**: feat
+- **Motivation**: 作者第一天给的第二张参考图里还没做的那块。此前对话挂着的内核（Python / R 各一，懒起）只把文字摘要回给模型，图这类富输出已经路由进对话转录但 `run_code` 的代码只在工具项里，没有一处能按 cell 看；用户也没法在 agent 用的那台内核里自己敲一句。作者定：旁观 + 同一台内核里自己敲（B）、一条时间线混排两种语言（B）、敲的记进对话让 agent 知道（B）。
+- **What**: cell **从对话转录派生**（agent 的 = `tool` 项 `run_code` + 紧随的 `kernelOutput`；你的 = 新转录项 `cell`），不另存。`挂载.ts` 的 `对话内核` 跟踪 starting/idle/busy/exited（内部监听，`状态变了` 回调）、`中断()`、`状态列表()`、`变量()`，**同一台内核串行执行**（两段同时 attach 会在第一个 idle 上一起收尾），空代码不进队列（运行时对空白静默不执行，等 idle 等不到会永远 busy），退出的那台下次换新。协议 7.26 → 7.27：`cell` 项（含 `interrupted?`）、快照/更新 `kernels`、`runInKernel` / `interruptKernel`、`listVariables.language`。后端 `runInKernel` = beginCell → 执行 → 摘要 → 账本一条 `origin: user` 的 Run → finishCell → 攒进「不在场缓冲」（20 条 / 32 KB 封顶出声）；**你下一次发消息时**缓冲拼进模型看的那份（转录里仍只是你那句）；`listVariables` 对普通对话走对话内核；起 / 退出 / 中断都出声（notice、「（已中断）」、胶囊「正在中断…」）。界面：坞新房客「笔记本 (N)」；`cells()` 派生（按语言归位、孤儿输出不假装 Python）；`NotebookPanel`（胶囊头、cell 流复用 `KernelOutputRow`、输入框 ⌘↩、IME 组合中不触发、贴底滚动）；对话里每个你的 cell 留一行痕迹；`kernels` 走 `applySnapshot` / `resetTranscript` 同一条缝；`onRun` 收尾只认当时的会话。
+- **Impact**: 协议 minor ×2（7.26 cell/kernels/两操作；7.27 `interrupted`）；`ProviderConnectionSchema` 无变化；坞多一个房客，两张开坞视觉基线重存（diff 只是多一个标签）；独立 `kind: kernel` 会话不接笔记本（它已有 Console，面板如实说）。
+- **Verification**: 单测 2414 全绿（189 文件；新增：挂载状态 15、协议 6、中枢 4、后端 8、recorder 2、cells 6、面板 24、角标 2 等）；typecheck 干净；e2e 全量 453 过 / 1 跳过（修完终审五条后受影响的五个 spec 15/15 复跑）；新 `e2e/notebook.spec.ts` **真内核**链路 2/2（agent `run_code` 算 42 → 你敲 `print(x*2)` 得 84 证明同一台内核 → 下一条消息请求体带「[用户在 Python 内核里跑了]」前缀，转录只显示你那句；cli 会话说没有内核）；视觉基线 10/10。逐 Task 规格审查 + 代码审查，终审抓到并修掉：并发执行串台（Critical）、空代码挂死队列、kernel 会话假话、起/退出/中断没出声。
+
 ### 2026-08-26 — 首用回归②：产物条按提问分段；模型硬写「收图」导致 deepseek 400；git 缺失也走文件系统探针
 
 - **Type**: fix

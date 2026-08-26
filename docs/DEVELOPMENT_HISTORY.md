@@ -16,6 +16,14 @@
 - **Impact**: 自建端点上的视觉模型现在要在 yaml 里写 `vision: true` 才收图（此前默认收）。设置界面的 provider 写入器（`writer.ts`）还不认识 `vision`，重写该 provider 段会把手写的 `vision` 丢掉——待补。
 - **Verification**: 新增 `tests/config/models-json.test.ts` 7 例（先红后绿）；`tests/config` 84 例全绿；`npm run typecheck` 通过；全量 vitest 2341 例通过（1 个 unhandled error 是 `session-tabs.tsx` 在 jsdom 下的 `scrollIntoView`，与本次无关，改前已有）。
 
+### 2026-08-26 — 首用回归②：产物条按提问分段；模型硬写「收图」导致 deepseek 400；git 缺失也走文件系统探针
+
+- **Type**: fix
+- **Motivation**: 作者第二次真用（临时会话，非 git 已修）：坞里有了清单，**聊天窗口里没有**；同时报 `deepseek-v4-flash` 400 `This model does not support image`「我又没让它识别图片」。用真实中枢重放那段会话的事件顺序证实：chips 落在了中间那条 agent 消息上（规则按模型的每条消息分轮），最后一条空着；400 是因为 `models-json.ts` 把 `providers.yaml` 里列出的每个模型硬写成 `input: ["text","image"]`，pi 的 `read` 据此把 agent 自己去「检查」的 png 发给了模型——注册表里它明明是 `["text"]`。
+- **What**: `本轮产物()` 改按**提问**分段：上一句用户发言到下一句之间所有工具新建的文件，只挂在这段最后一条 agent 消息底下（模型报错后没再开口也落在最后那条文字上）。`models-json.ts` 新 `模型条目()`：注册表认识的模型继承它声明的 `input`（yaml 的 `baseUrl/api` 优先），不认识的缺省 `["text"]`；`providers.<id>.vision: true` 可声明自定义视觉端点。探针：git 不在或坏了也走文件系统探针，只有超限才是不知道。
+- **Impact**: 对话里每次提问只有一个 `GENERATED · N`；deepseek 等只收文字的模型不再被塞图（pi 的 read 自动改成「已省略」一句）。`ProviderConnectionSchema` 加可选 `vision`。
+- **Verification**: 重放脚本（真实 `SessionTranscripts` + 真实事件顺序）5 个文件全落在最后一条；`tests/ui/generated-strip.test.ts` 加作者会话原形状等 4 例；`tests/config/models-json.test.ts` 新 7 例（deepseek 继承 `["text"]`、未知缺省、`vision` 覆盖、yaml 优先）；探针 25 例；单测 2341 全绿；typecheck 干净；作者本机重启后待验。
+
 ### 2026-08-26 — 产物：对话里 `GENERATED · N` 产物条 + 坞「产物」格（data-platform 分支，主线第一步）
 
 - **Type**: feat

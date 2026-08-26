@@ -259,6 +259,27 @@ describe("文件事实（不变式 5）", () => {
     ).not.toThrow()
     expect(list().filter((r) => r.requestType.startsWith("tool_call"))).toHaveLength(0)
   })
+
+  it("tool_start 记下 toolCallId；tool_files 记下 filesCreated", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c9", toolName: "write", input: {} })
+    rec.ingest({
+      kind: "tool_files", sessionId: SESSION, toolCallId: "c9",
+      filesWritten: ["outputs/a.csv"], filesRead: [], mayIncludeUserEdits: true, filesCreated: ["outputs/a.csv"],
+    })
+    const tool = list().find((r) => r.requestType === "tool_call:write")!
+    expect(tool.toolCallId).toBe("c9")
+    expect(tool.filesCreated).toEqual(["outputs/a.csv"])
+  })
+
+  it("没收到 tool_files 的工具调用：filesCreated 缺省（不知道）", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c10", toolName: "bash", input: {} })
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c10", toolName: "bash", isError: false, text: "", truncated: false, bytes: 0 })
+    const tool = list().find((r) => r.requestType === "tool_call:bash")!
+    expect(tool.filesCreated).toBeUndefined()
+    expect(tool.toolCallId).toBe("c10")
+  })
 })
 
 /**

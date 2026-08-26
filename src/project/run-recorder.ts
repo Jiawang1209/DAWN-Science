@@ -193,6 +193,7 @@ export class RunRecorder {
     requestType: string,
     origin: "user" | "agent" | "system",
     parentRunId?: string,
+    toolCallId?: string,
   ): string | undefined {
     const projectId = this.projectOf(sessionId)
     if (!projectId) return undefined
@@ -209,6 +210,7 @@ export class RunRecorder {
       startedAt: this.now(),
       hasError: false,
       ...(parentRunId ? { parentRunId } : {}),
+      ...(toolCallId ? { toolCallId } : {}),
       ...(env ? { environmentSnapshotId: env } : {}),
     })
     return runId
@@ -322,7 +324,7 @@ export class RunRecorder {
        * **拿不到名字时退回裸 `tool_call`，不编一个**。
        */
       const kind = event.toolName ? `tool_call:${event.toolName}` : "tool_call"
-      const runId = this.begin(event.sessionId, kind, "agent", s?.turnRunId)
+      const runId = this.begin(event.sessionId, kind, "agent", s?.turnRunId, event.toolCallId)
       if (runId) this.slot(event.sessionId).tools.set(event.toolCallId, runId)
       return
     }
@@ -341,6 +343,7 @@ export class RunRecorder {
         filesWritten: event.filesWritten,
         filesRead: event.filesRead,
         mayIncludeUserEdits: event.mayIncludeUserEdits,
+        filesCreated: event.filesCreated,
       })
       return
     }

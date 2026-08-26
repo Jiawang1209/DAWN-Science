@@ -11,7 +11,20 @@ export interface Cell {
   n: number
   id: string
   who: "agent" | "you"
-  language: "python" | "R"
+  /**
+   * 语言。**孤儿 cell（没有 `kernelOutput.language`）可以没有这个字段**——
+   * 那时我们真的不知道，不能替它猜一个 `"python"` 出来（见 `languageKnown`）。
+   */
+  language?: "python" | "R"
+  /**
+   * 语言是不是真的记录下来的，还是我们兜底猜的。
+   *
+   * `run_code` 认不出语言时仍落 `language: "python"`（代码前加注「语言未记录」，
+   * 界面要有个语言可显示），但那是**猜的**——`languageKnown: false`。
+   * 孤儿 cell 没有 `language` 字段时同理为 `false`；`kernelOutput` 带了 `language`
+   * 或者是你自己敲的 `cell` 项时才是 `true`。
+   */
+  languageKnown: boolean
   code: string
   status: "running" | "ok" | "error"
   startedAt?: number
@@ -34,7 +47,8 @@ function 是已知语言(v: unknown): v is "python" | "R" {
 interface 待开cell {
   id: string
   who: "agent" | "you"
-  language: "python" | "R"
+  language?: "python" | "R" | undefined
+  languageKnown: boolean
   code: string
   status: "running" | "ok" | "error"
   startedAt?: number | undefined
@@ -46,16 +60,23 @@ interface 待开cell {
  * 把转录派生成一叠 cell。
  *
  * - `tool` 且 `name === "run_code"` → 开一个新 cell（who: agent）。
- *   语言认不出就落 `"python"`，代码前面加一行注明「语言未记录」——**别猜**。
- * - `cell` → 开一个新 cell（who: you），status/runId 原样带过去。
- * - `kernelOutput` → 挂到当前打开的 cell；没有打开的 cell 就先开一个孤儿 cell
- *   （`orphan: true`，code 为空），输出不丢。
- * - `turn`，或者不是 `run_code` 的 `tool` → 关掉当前 cell。
+ *   语言认不出就落 `"python"`（`languageKnown: false`），代码前面加一行
+ *   注明「语言未记录」——**别猜，但界面总得有个语言可显示**。
+ * - `cell` → 开一个新 cell（who: you），status/runId 原样带过去，语言已知。
+ * - `kernelOutput` → 挂到当前打开的 cell；但**两台内核并存**时（当前打开的 cell
+ *   语言已知，且这条输出自带的 `language` 跟它不一样），改成挂到「自上一条
+ *   `turn` 以来开过的 cell」里最近那个语言匹配的——不是硬塞进当前打开的那个。
+ *   找不到匹配、或者压根没有打开的 cell，就开一个孤儿 cell（`orphan: true`，
+ *   code 为空；`language` 取输出自带的那个，没带就没有这个字段），输出不丢。
+ * - `turn`，或者不是 `run_code` 的 `tool` → 关掉当前 cell；`turn` 还清空
+ *   「本轮开过的 cell」这个窗口。
  * - 别的条目类型（`notice`、`subagents`）既不开也不关。
  */
 export function cells(items: readonly TranscriptItem[]): Cell[] {
   const result: Cell[] = []
   let open: Cell | undefined
+  /** 自上一条 turn 以来开过的 cell，最旧的在前——两台内核并存时靠它找回正确的那个 */
+  let 本轮窗口: Cell[] = []
   let n = 0
 
   const push = (input: 待开cell) => {
@@ -64,15 +85,17 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
       n,
       id: input.id,
       who: input.who,
-      language: input.language,
+      languageKnown: input.languageKnown,
       code: input.code,
       status: input.status,
       outputs: [],
     }
+    if (input.language !== undefined) c.language = input.language
     if (input.startedAt !== undefined) c.startedAt = input.startedAt
     if (input.runId !== undefined) c.runId = input.runId
     if (input.orphan) c.orphan = true
     open = c
+    本轮窗口.push(c)
     result.push(c)
   }
   const close = () => {
@@ -90,6 +113,7 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
             id: item.id,
             who: "agent",
             language: 认得语言 ? (input!.language as "python" | "R") : "python",
+            languageKnown: 认得语言,
             code: 认得语言 ? 原始代码 : `# （语言未记录）\n${原始代码}`,
             status: item.status,
             startedAt: item.startedAt,
@@ -104,6 +128,7 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
           id: item.id,
           who: "you",
           language: item.language,
+          languageKnown: true,
           code: item.code,
           status: item.status,
           startedAt: item.startedAt,
@@ -112,11 +137,32 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
         break
       }
       case "kernelOutput": {
+        // 当前打开的 cell 语言已知、且跟这条输出自带的语言对不上 → 两台内核并存，
+        // 别硬塞给它——去本轮窗口里找最近那个语言匹配的
+        if (open && open.languageKnown && item.language !== undefined && open.language !== item.language) {
+          const 匹配 = [...本轮窗口].reverse().find((c) => c.languageKnown && c.language === item.language)
+          if (匹配) {
+            匹配.outputs.push(item)
+            break
+          }
+          push({
+            id: item.id,
+            who: "agent",
+            language: item.language,
+            languageKnown: true,
+            code: "",
+            status: "ok",
+            orphan: true,
+          })
+          open!.outputs.push(item)
+          break
+        }
         if (!open) {
           push({
             id: item.id,
             who: "agent",
-            language: item.language ?? "python",
+            language: item.language,
+            languageKnown: Boolean(item.language),
             code: "",
             status: "ok",
             orphan: true,
@@ -127,6 +173,7 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
       }
       case "turn": {
         close()
+        本轮窗口 = []
         break
       }
       default:

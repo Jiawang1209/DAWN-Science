@@ -1,8 +1,9 @@
 /**
- * `cells()` 派生（Task 6，2026-08-26）：转录 → 一叠 cell。
+ * `cells()` 派生（Task 6，2026-08-26；review 修补 2026-08-26）：转录 → 一叠 cell。
  *
  * 覆盖计划里列的四条：run_code 归并、你的 cell 归并（含透传）、
- * 别的工具不算 cell、孤儿输出兜底。
+ * 别的工具不算 cell、孤儿输出兜底；外加 review 加的两条：
+ * 孤儿输出没有 language 不假装是 python、两台内核并存时输出按 language 归位。
  */
 import { describe, expect, it } from "vitest"
 import type { TranscriptItem } from "../../src/protocol/index.js"
@@ -16,12 +17,13 @@ const tool = (id: string, language: string, code: string, status: "running" | "o
   status,
 })
 
-const kout = (id: string, language: "python" | "R", text: string) => ({
+/** language 缺省时不带这个字段——跟真实的 kernelOutput 一样，不是「language: undefined」 */
+const kout = (id: string, language: "python" | "R" | undefined, text: string) => ({
   type: "kernelOutput" as const,
   id,
   kernelInstanceId: "k",
   kernelRevision: 0,
-  language,
+  ...(language === undefined ? {} : { language }),
   output: { kind: "stream" as const, stream: "stdout" as const, text },
 })
 
@@ -94,5 +96,35 @@ describe("cells()", () => {
       orphan: true,
     })
     expect(r[0]?.outputs).toHaveLength(1)
+  })
+
+  it("孤儿输出没有 language → languageKnown false，不假装是 python", () => {
+    const items: TranscriptItem[] = [kout("k1", undefined, "1")]
+    const r = cells(items)
+    expect(r).toHaveLength(1)
+    expect(r[0]).toMatchObject({
+      who: "agent",
+      orphan: true,
+      languageKnown: false,
+    })
+    expect(r[0]?.language).toBeUndefined()
+  })
+
+  it("两台内核并存：输出按各自的 language 归位到匹配的 cell，不是硬塞给当前打开的那个", () => {
+    const items: TranscriptItem[] = [
+      { type: "turn", id: "u1", who: "user", text: "", final: true },
+      cell("c1", "python", "a=1"),
+      tool("c2", "R", "1+1"),
+      kout("k1", "python", "…"),
+      kout("k2", "R", "2"),
+    ]
+    const r = cells(items)
+    expect(r).toHaveLength(2)
+    const pythonCell = r.find((c) => c.language === "python")
+    const rCell = r.find((c) => c.language === "R")
+    expect(pythonCell?.outputs).toHaveLength(1)
+    expect(pythonCell?.outputs[0]?.output).toMatchObject({ text: "…" })
+    expect(rCell?.outputs).toHaveLength(1)
+    expect(rCell?.outputs[0]?.output).toMatchObject({ text: "2" })
   })
 })

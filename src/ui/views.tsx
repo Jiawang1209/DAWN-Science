@@ -1172,6 +1172,8 @@ export function RightDock({
               size="sm"
               role="tab"
               aria-selected={tenant === who}
+              /* 可访问名固定为房客名：日后按钮里再塞计数徽章，`getByRole("tab", { name, exact })` 也不动 */
+              aria-label={房客名(who)}
               className={`dock-tab-btn${tenant === who ? " current" : ""}`}
               onClick={() => onPick(who)}
             >

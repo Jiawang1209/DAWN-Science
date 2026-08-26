@@ -1174,7 +1174,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // 而空串会被记成「设了一个空路径」——那是第三种状态，没人想要
         ...(workspace ? { workspace } : {}),
       })
-      await loadTasks(client)
+      // **任务列表刷新挪出关键路径**（2026-08-27，作者报的「切会话慢」）：
+      // 它只喂侧栏的任务列表，不参与「主区找不找得到这段会话」——放后台跑，
+      // 别挡着开聊。会话列表那几拨（下面）是找会话用的，留在路上。
+      void loadTasks(client)
       /**
        * **给了路径就跟着切到它的项目**（2026-08-12）。
        *

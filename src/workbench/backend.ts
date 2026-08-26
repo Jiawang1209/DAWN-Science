@@ -900,21 +900,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **必须在抛出的一侧显式声明它是给用户看的**，而不是让下游去猜哪条安全。
      */
     /**
-     * **先探机器，再建会话**（②-B · R5）。见 `探一台机器` 的说明：
-     * 顺序反过来的话，PTY 那条在会话起来那一刻就产生的 Run 会缺环境。
-     * 内核会话不探——它报的是内核那份，探了也没有地方能诚实地摆。
+     * **探机器与建会话并行**（2026-08-27，作者报的「发送时切会话慢」实测：
+     * 探机器 ~120ms 是这条路上最大的一块，而它与 `sessions.create` 互不依赖）。
+     * 纪律不变：两者都 settle 之后才 `记下环境`，仍在 `attach` 之前——
+     * PTY 会话起来那一刻的 Run 照样拿得到环境。内核会话不探（它报内核那份）。
      */
-    const 机器的 =
+    const [机器的, rec] = await Promise.all([
       environments && registry.agents[agentId]?.kind !== "kernel"
-        ? await 探一台机器(workspace, remoteSpec?.connectionId)
-        : undefined
-
-    const rec = await sessions
-      .create(agentId, workspace, { projectId, ...(remoteSpec ? { remote: remoteSpec } : {}) })
-      .catch((err: unknown) => {
-      if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
-      throw err
-    })
+        ? 探一台机器(workspace, remoteSpec?.connectionId)
+        : Promise.resolve(undefined),
+      sessions
+        .create(agentId, workspace, { projectId, ...(remoteSpec ? { remote: remoteSpec } : {}) })
+        .catch((err: unknown) => {
+          if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+          throw err
+        }),
+    ])
 
     // **环境要在接线之前记好**：attach 之后随时可能来事件，而事件会造 Run
     记下环境(rec.id, 机器的)

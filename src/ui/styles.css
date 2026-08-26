@@ -6312,10 +6312,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .generated-strip { margin-top: var(--dawn-space-2); font-size: var(--dawn-fs-meta); }
 .generated-strip .label { display: block; color: var(--dawn-text-3); letter-spacing: .04em; font-weight: var(--dawn-weight-semibold); margin-bottom: var(--dawn-space-1); }
 .generated-strip.unknown .caveat { margin-left: var(--dawn-space-2); }
-.generated-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--dawn-space-1); }
-.generated-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-surface-panel); }
+/* 网格，不是流式换行（作者 2026-08-26：「每个元素要上下左右对齐」）：等宽格子、等高、徽标一列对齐、名字在格内截断 */
+.generated-chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--dawn-space-1); }
+.generated-chips > li { min-width: 0; }
+.generated-chips > li.caveat { grid-column: 1 / -1; }
+.generated-chip { display: flex; width: 100%; height: 32px; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 10px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-surface-panel); text-align: left; }
+.generated-chip .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.generated-chip .caveat { flex: none; }
 .generated-chip.gone .name { text-decoration: line-through; opacity: .6; }
-.kind-tag { font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
+.kind-tag { flex: none; min-width: 46px; text-align: center; font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
 
 /* ── 坞「产物」格（spec 2026-08-26-产物 §5，Task 11） ── */
 .artifacts-pane { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-2); }

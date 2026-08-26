@@ -104,6 +104,14 @@ describe("NotebookPanel · 空态与提示条", () => {
     expect(screen.queryByText(/内核已重起/)).toBeNull()
   })
 
+  it("kernels 为空表等同缺省：没 cell 时提示「还没有内核」，有 cell 时提示「内核已重起」", () => {
+    const { rerender } = render(<NotebookPanel {...基本} kernels={[]} cells={[]} />)
+    expect(screen.getByText("这段对话还没有内核")).toBeTruthy()
+    rerender(<NotebookPanel {...基本} kernels={[]} cells={[cell()]} />)
+    expect(screen.getByText(/内核已重起/)).toBeTruthy()
+    expect(screen.queryByText("这段对话还没有内核")).toBeNull()
+  })
+
   it("非 native 会话 → 整格一句「这种会话没有内核，笔记本不可用」，不画输入框", () => {
     render(<NotebookPanel {...基本} sessionKind="acp" kernels={undefined} cells={[cell()]} />)
     expect(screen.getByText("这种会话没有内核，笔记本不可用")).toBeTruthy()
@@ -134,6 +142,14 @@ describe("NotebookPanel · cell 流", () => {
     expect(screen.getByText("运行中")).toBeTruthy()
     expect(screen.getAllByText("Python").length).toBeGreaterThan(0)
     expect(screen.getAllByText("R").length).toBeGreaterThan(0)
+  })
+
+  it("cell 流套在贴底滚动容器里（.nb-cells > .nb-cells-inner）——滚动行为本身归库管", () => {
+    const { container } = render(<NotebookPanel {...基本} kernels={[]} cells={[cell()]} />)
+    const 外 = container.querySelector(".nb-cells")
+    expect(外).toBeTruthy()
+    expect(外!.querySelector(".nb-cells-inner")).toBeTruthy()
+    expect(外!.querySelector(".nb-cell")).toBeTruthy()
   })
 
   it("孤儿 cell 显示「（未记录代码）」；语言不明就写「语言未知」，不猜", () => {
@@ -176,6 +192,19 @@ describe("NotebookPanel · 输入框", () => {
     expect(onRun).toHaveBeenCalledWith("python", "y = 2")
     // 跑成功后草稿清空
     expect((box as HTMLTextAreaElement).value).toBe("")
+  })
+
+  it("输入法组合中（isComposing）的 ⌘↩ 不跑——那是在选字", () => {
+    const onRun = vi.fn(async () => {})
+    render(<NotebookPanel {...基本} kernels={[]} cells={[]} onRun={onRun} />)
+    const box = screen.getByRole("textbox")
+    fireEvent.change(box, { target: { value: "y = 2" } })
+    const ev = new KeyboardEvent("keydown", { key: "Enter", metaKey: true, bubbles: true, cancelable: true })
+    Object.defineProperty(ev, "isComposing", { value: true })
+    act(() => {
+      box.dispatchEvent(ev)
+    })
+    expect(onRun).not.toHaveBeenCalled()
   })
 
   it("点「跑」也行；空白不跑", async () => {

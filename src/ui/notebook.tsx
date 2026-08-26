@@ -5,6 +5,7 @@
  * 上半是纯函数派生（`cells()`），下半是坐在它上面的面板（`NotebookPanel`，Task 7）。
  */
 import { useState, type KeyboardEvent } from "react"
+import { StickToBottom } from "use-stick-to-bottom"
 import type { KernelState, TranscriptItem } from "../protocol/index.js"
 import { Button, EmptyState } from "./primitives.js"
 import { KernelOutputRow } from "./views.js"
@@ -269,8 +270,9 @@ export function NotebookPanel({
     )
   }
 
-  const 没内核 = kernels === undefined
-  const 全退了 = kernels !== undefined && kernels.every((k) => k.state === "exited")
+  // **空表等同缺省**：最后一台内核被回收之后，hub 发来的是 `[]` 而不是缺省
+  const 没内核 = kernels === undefined || kernels.length === 0
+  const 全退了 = !没内核 && kernels!.every((k) => k.state === "exited")
   const 内核重起过 = cells.length > 0 && (没内核 || 全退了)
 
   const run = async () => {
@@ -287,6 +289,8 @@ export function NotebookPanel({
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // 中文输入法组合中的回车是在选字，不是在下命令——放过去
+    if (e.nativeEvent.isComposing) return
     // ⌘↩ / Ctrl↩ 跑；Shift↩ 与裸回车都是换行，交给 textarea 自己
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
       e.preventDefault()
@@ -314,7 +318,9 @@ export function NotebookPanel({
 
       {内核重起过 ? <p className="nb-notice">{t("内核已重起，上面 cell 里的变量已经不在了；再跑一次即可")}</p> : null}
 
-      <div className="nb-cells">
+      {/* 贴底滚动与对话区同一个库：贴在底部时才跟随新 cell，用户上翻了就撒手（spec §5） */}
+      <StickToBottom className="nb-cells" resize="smooth" initial="instant">
+        <StickToBottom.Content className="nb-cells-inner">
         {cells.map((c) => (
           <div key={c.id} className={`nb-cell nb-cell-${c.status}`}>
             <span className="nb-gutter">{`[${c.n}]`}</span>
@@ -340,7 +346,8 @@ export function NotebookPanel({
             </div>
           </div>
         ))}
-      </div>
+        </StickToBottom.Content>
+      </StickToBottom>
 
       <div className="nb-input">
         {没内核 && cells.length === 0 ? <p className="nb-hint">{t("这段对话还没有内核")}</p> : null}

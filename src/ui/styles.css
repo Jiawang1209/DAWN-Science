@@ -6349,7 +6349,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-pill-busy, .nb-pill-starting { border-color: var(--dawn-live); color: var(--dawn-live); }
 .nb-pill-exited { border-color: var(--dawn-danger); color: var(--dawn-danger); }
 .nb-notice { margin: 0; padding: var(--dawn-space-2) var(--dawn-space-3); background: var(--dawn-fill-2); color: var(--dawn-warning); font-size: var(--dawn-fs-meta); border-bottom: 1px solid var(--dawn-stroke-3); }
-.nb-cells { flex: 1; min-height: 0; overflow: auto; padding: var(--dawn-space-2) var(--dawn-space-3); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
+.nb-cells { flex: 1; min-height: 0; overflow: auto; }
+.nb-cells-inner { padding: var(--dawn-space-2) var(--dawn-space-3); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .nb-cell { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: var(--dawn-space-1); }
 .nb-gutter { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); padding-top: 2px; }
 .nb-cell-running .nb-gutter { color: var(--dawn-live); }

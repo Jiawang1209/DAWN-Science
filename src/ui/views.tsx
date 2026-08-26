@@ -34,7 +34,7 @@ import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
-import { $跑着的会话, $未读, $artifacts } from "./state/catalog.js"
+import { $跑着的会话, $未读, $artifacts, $cellCount } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
@@ -1136,6 +1136,7 @@ export function RightDock({
   children: React.ReactNode
 }) {
   const 产物数 = useStore($artifacts)?.artifacts.length ?? 0
+  const cell数 = useStore($cellCount)
   return (
     /**
       * **宽度是那一列给的，不在这儿写死**（2026-08-21 作者截图抓到的：窗口没最大化时
@@ -1181,6 +1182,8 @@ export function RightDock({
               {房客名(who)}
               {/* 产物格的角标 `产物 (N)`（spec §5）：可访问名钉在 aria-label 上，角标只是看得见的计数 */}
               {who === "artifacts" && 产物数 > 0 ? <span className="dock-tab-badge">{产物数}</span> : null}
+              {/* 笔记本格的角标：本会话 cell 数，同一条路（App 灌 `$cellCount`） */}
+              {who === "notebook" && cell数 > 0 ? <span className="dock-tab-badge">{cell数}</span> : null}
             </Button>
           ))}
         </div>

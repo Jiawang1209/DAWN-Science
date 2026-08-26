@@ -87,8 +87,9 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts } from "./state/sync.js"
-import { $artifacts, setArtifacts } from "./state/catalog.js"
-import { setKernels as setKernelsAtom } from "./state/transcript.js"
+import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
+import { $kernels, setKernels as setKernelsAtom } from "./state/transcript.js"
+import { NotebookPanel, cells as 转录里的cells } from "./notebook.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -193,6 +194,9 @@ import {
 } from "./state/index.js"
 
 import { t, tf, $lang } from "./i18n/index.js"
+
+/** 笔记本能跑的语言——与 `notebook.tsx` 里未导出的 `语言` 同形（不改那个文件，它在审） */
+type 内核语言 = "python" | "R"
 /**
  * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
  *   默认参数每次渲染都求值，于是每次渲染都得到一个新的 client 身份，
@@ -779,6 +783,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const [variables, setVariables] = useState<VariablesState>(undefined)
   const 在看概览 = rightDockOpen && rightDockTenant === "overview"
+
+  /**
+   * 笔记本格的 cell 清单（plan 2026-08-26-笔记本 Task 8）：从当前会话转录里筛出来，`items` 一变就重算。
+   * 角标要的计数也在这儿灌进 `$cellCount`——RightDock 拿不到 `items`，走 `$artifacts` 同一条路。
+   */
+  const 笔记本cells = useMemo(() => 转录里的cells(items), [items])
+  useEffect(() => { setCellCount(笔记本cells.length) }, [笔记本cells])
+  /** 最近一个语言已知的 cell 的语言：概览格问变量时顺手带上，让它问对话里正在用的那个内核 */
+  const 最近cell语言 = useMemo(
+    () => [...笔记本cells].reverse().find((c) => c.languageKnown && c.language !== undefined)?.language,
+    [笔记本cells],
+  )
+  const 对话内核 = useStore($kernels)
+  const [笔记本在跑, 设笔记本在跑] = useState(false)
+  /** 中断失败之类**不经 `onRun`** 的错走这条；`onRun` 自己抛的错由面板记着（它要留住草稿），这里不重复记 */
+  const [笔记本错, 设笔记本错] = useState<string | undefined>(undefined)
+  useEffect(() => { 设笔记本在跑(false); 设笔记本错(undefined) }, [sessionId])
+
   useEffect(() => {
     if (!在看概览 || !sessionId) {
       setVariables(undefined)
@@ -787,11 +809,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 陈旧守卫(I4):快切两会话时,A 的变量回来晚了不许覆盖 B 的面板。切 sessionId → effect 重跑 → cleanup 作废上一发
     let 作废 = false
     client
-      .get<Exclude<VariablesState, undefined>>("listVariables", { sessionId })
+      .get<Exclude<VariablesState, undefined>>("listVariables", { sessionId, ...(最近cell语言 ? { language: 最近cell语言 } : {}) })
       .then((v) => { if (!作废) setVariables(v) })
       .catch(fail)
     return () => { 作废 = true }
-  }, [client, 在看概览, sessionId])
+  }, [client, 在看概览, sessionId, 最近cell语言])
 
   /**
    * 环境快照（S17）。与变量同一个手势：**开着面板时取一次**。
@@ -4380,6 +4402,37 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 {...(文件所在 ? { onDownload: 下载 } : {})}
                 onOpenExternally={openExternally}
                 onReload={重拉产物}
+              />
+            ) : rightDockTenant === "notebook" ? (
+              /**
+                * **笔记本那一格**（plan 2026-08-26-笔记本 Task 8）：cell 从转录里筛，内核状态读 `$kernels`；
+                * 按会话 key 重挂，草稿与语言不跨会话。`onRun` 失败**记完再抛**——面板据此留住草稿并出声。
+                */
+              <NotebookPanel
+                key={sessionId}
+                sessionKind={session?.kind}
+                kernels={对话内核}
+                cells={笔记本cells}
+                running={笔记本在跑}
+                error={笔记本错}
+                onRun={async (language: 内核语言, code: string) => {
+                  if (!sessionId) throw new Error("没有会话，跑不了")
+                  设笔记本在跑(true)
+                  设笔记本错(undefined)
+                  try {
+                    await client.get<{ cellId: string }>("runInKernel", { sessionId, language, code })
+                  } finally {
+                    设笔记本在跑(false)
+                  }
+                }}
+                onInterrupt={(language: 内核语言) => {
+                  if (!sessionId) return
+                  client.get("interruptKernel", { sessionId, language }).catch((e: unknown) => {
+                    设笔记本错(e instanceof Error ? e.message : String(e))
+                    fail(e)
+                  })
+                }}
+                onOpenVariables={() => setRightDockTenant("overview")}
               />
             ) : rightDockTenant === "web" ? (
               /**

@@ -74,6 +74,13 @@ export interface ArtifactList {
 export const $artifacts = atom<ArtifactList | undefined>(undefined)
 export const setArtifacts = (v: ArtifactList | undefined) => setValue($artifacts, v)
 
+/**
+ * 当前会话笔记本里的 cell 数（plan 2026-08-26-笔记本 Task 8）：坞标签「笔记本」的角标读它。
+ * 与 `$artifacts` 同一条路——RightDock 拿不到转录，App 在 `items` 变化时从 `cells(items).length` 灌进来。
+ */
+export const $cellCount = atom<number>(0)
+export const setCellCount = (v: number) => setValue($cellCount, v)
+
 export const $providers = atom<Providers>({ agents: [], providers: [] })
 export const $credentials = atom<CredentialState>({ configured: [], encrypted: false })
 

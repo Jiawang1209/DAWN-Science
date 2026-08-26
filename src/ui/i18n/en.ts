@@ -1294,4 +1294,20 @@ export const EN: Readonly<Record<string, string>> = {
   // 审查 debug Ji18n:内核输出的语言徽标 title 漏译
   "Python 内核": "Python kernel",
   "R 内核": "R kernel",
+  // 笔记本面板（Task 7，2026-08-26）
+  "这段对话还没有内核": "This chat has no kernel yet",
+  "这种会话没有内核，笔记本不可用": "This kind of session has no kernel; the notebook is unavailable",
+  "内核已重起，上面 cell 里的变量已经不在了；再跑一次即可": "The kernel was restarted; variables from the cells above are gone. Just run again.",
+  "正在起": "starting",
+  "已退出": "exited",
+  "中断": "Interrupt",
+  "跑": "Execute",
+  "运行中…": "Executing…",
+  "在 {0} 内核里跑一句…（⌘↩ 运行）": "Run a line in the {0} kernel… (⌘↩ to run)",
+  "会记进对话，agent 下一轮知道": "Recorded in the chat; the agent sees it next turn",
+  "变量 →": "Variables →",
+  "agent": "agent",
+  "语言未知": "language unknown",
+  "（未记录代码）": "(code not recorded)",
+  "要跑的代码": "Code to run",
 }

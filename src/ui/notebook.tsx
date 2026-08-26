@@ -2,9 +2,13 @@
  * 笔记本（Task 6，2026-08-26）：把转录里「你自己敲的」与「agent 跑的」代码执行，
  * 派生成一叠 cell。
  *
- * 这里只放纯函数派生——面板（Task 7）在这之上渲染，不在此文件。
+ * 上半是纯函数派生（`cells()`），下半是坐在它上面的面板（`NotebookPanel`，Task 7）。
  */
-import type { TranscriptItem } from "../protocol/index.js"
+import { useState, type KeyboardEvent } from "react"
+import type { KernelState, TranscriptItem } from "../protocol/index.js"
+import { Button, EmptyState } from "./primitives.js"
+import { KernelOutputRow } from "./views.js"
+import { t, tf } from "./i18n/index.js"
 
 /** 一格代码 + 它的输出。派生自转录，不是持久化状态 */
 export interface Cell {
@@ -140,7 +144,17 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
         // 当前打开的 cell 语言已知、且跟这条输出自带的语言对不上 → 两台内核并存，
         // 别硬塞给它——去本轮窗口里找最近那个语言匹配的
         if (open && open.languageKnown && item.language !== undefined && open.language !== item.language) {
-          const 匹配 = [...本轮窗口].reverse().find((c) => c.languageKnown && c.language === item.language)
+          // 从后往前找最近那个语言匹配的——不复制、不 reverse：
+          // 你自己敲的 `cell` 项不带 `turn`，两台内核并存的笔记本会话里这个窗口不会重置，
+          // 每条输出都拷一遍窗口就是 O(n²)
+          let 匹配: Cell | undefined
+          for (let i = 本轮窗口.length - 1; i >= 0; i--) {
+            const c = 本轮窗口[i]!
+            if (c.languageKnown && c.language === item.language) {
+              匹配 = c
+              break
+            }
+          }
           if (匹配) {
             匹配.outputs.push(item)
             break
@@ -183,4 +197,182 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
   }
 
   return result
+}
+
+// ───────────────────────── 面板（Task 7，spec §5/§6） ─────────────────────────
+
+type 语言 = "python" | "R"
+
+const 语言名: Record<语言, string> = { python: "Python", R: "R" }
+
+/** 胶囊上的状态词。**「未起」不是一个状态**——没挂的内核压根不画胶囊 */
+function 状态词(state: KernelState["state"]): string {
+  switch (state) {
+    case "starting":
+      return t("正在起")
+    case "idle":
+      return t("空闲")
+    case "busy":
+      return t("运行中")
+    case "exited":
+      return t("已退出")
+  }
+}
+
+function 时刻(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+}
+
+/**
+ * 坞「笔记本」格。
+ *
+ * - 头：每台**挂着的**内核一颗胶囊；只有 `busy` 的旁边才有「中断」；右边「变量 →」交给外面切面板。
+ * - 非 native 会话：整格一句「这种会话没有内核，笔记本不可用」，不画空清单也不画输入框。
+ * - 没内核也没 cell：输入框上方一句「这段对话还没有内核」——输入框照常可用，敲一句就会起内核。
+ * - 有 cell 但内核缺省 / 全退出：顶上提示条「内核已重起…」——上面 cell 的变量已经不在了，别让它们看起来像当前状态。
+ * - 输出复用 `KernelOutputRow`，**不传 `currentKernel`**：笔记本里不标陈旧，胶囊已经说明了状态。
+ * - 输入草稿与语言是本地状态，**按会话 key 重挂**（外面负责给 key），不持久化。
+ */
+export function NotebookPanel({
+  sessionKind,
+  kernels,
+  cells,
+  running,
+  error,
+  onRun,
+  onInterrupt,
+  onOpenVariables,
+}: {
+  sessionKind: string | undefined
+  kernels: readonly KernelState[] | undefined
+  cells: readonly Cell[]
+  running: boolean
+  error: string | undefined
+  onRun: (language: 语言, code: string) => Promise<void>
+  onInterrupt: (language: 语言) => void
+  onOpenVariables: () => void
+}) {
+  /** 语言缺省跟最近一个**语言已知**的 cell；没有就 Python。只在挂上时算一次 */
+  const [language, setLanguage] = useState<语言>(() => {
+    const 最近 = [...cells].reverse().find((c) => c.languageKnown && c.language !== undefined)
+    return 最近?.language ?? "python"
+  })
+  const [draft, setDraft] = useState("")
+  /** `onRun` 自己抛出来的错——跟外面传进来的 `error` 分开放，各说各的 */
+  const [runError, setRunError] = useState<string | undefined>(undefined)
+
+  if (sessionKind !== "native") {
+    return (
+      <div className="nb">
+        <EmptyState title={t("这种会话没有内核，笔记本不可用")} />
+      </div>
+    )
+  }
+
+  const 没内核 = kernels === undefined
+  const 全退了 = kernels !== undefined && kernels.every((k) => k.state === "exited")
+  const 内核重起过 = cells.length > 0 && (没内核 || 全退了)
+
+  const run = async () => {
+    const code = draft
+    if (running || code.trim() === "") return
+    setRunError(undefined)
+    try {
+      await onRun(language, code)
+      setDraft("")
+    } catch (e) {
+      // **失败必须出声，草稿不丢**（§6）：红字放在输入框上方，输入框里的字原样留着
+      setRunError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // ⌘↩ / Ctrl↩ 跑；Shift↩ 与裸回车都是换行，交给 textarea 自己
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+      e.preventDefault()
+      void run()
+    }
+  }
+
+  return (
+    <div className="nb">
+      <div className="nb-head">
+        {kernels?.map((k) => (
+          <span key={k.language} className={`nb-pill nb-pill-${k.state}`}>
+            <span className="nb-pill-label">{`${语言名[k.language]} · ${状态词(k.state)}`}</span>
+            {k.state === "busy" ? (
+              <Button size="sm" onClick={() => onInterrupt(k.language)}>
+                {t("中断")}
+              </Button>
+            ) : null}
+          </span>
+        ))}
+        <Button size="sm" variant="ghost" className="nb-vars" onClick={onOpenVariables}>
+          {t("变量 →")}
+        </Button>
+      </div>
+
+      {内核重起过 ? <p className="nb-notice">{t("内核已重起，上面 cell 里的变量已经不在了；再跑一次即可")}</p> : null}
+
+      <div className="nb-cells">
+        {cells.map((c) => (
+          <div key={c.id} className={`nb-cell nb-cell-${c.status}`}>
+            <span className="nb-gutter">{`[${c.n}]`}</span>
+            <div className="nb-body">
+              <div className="nb-meta">
+                {c.language !== undefined && c.languageKnown ? (
+                  <span className={`nb-lang nb-lang-${c.language}`}>{语言名[c.language]}</span>
+                ) : (
+                  <span className="nb-lang nb-lang-unknown">{t("语言未知")}</span>
+                )}
+                <span className="nb-who">{c.who === "you" ? t("你") : t("agent")}</span>
+                {c.startedAt !== undefined ? <span className="nb-time">{时刻(c.startedAt)}</span> : null}
+                {c.status === "running" ? <span className="nb-running">{t("运行中")}</span> : null}
+              </div>
+              {c.orphan ? (
+                <p className="nb-orphan">{t("（未记录代码）")}</p>
+              ) : (
+                <pre className="nb-code">{c.code}</pre>
+              )}
+              {c.outputs.map((o) => (
+                <KernelOutputRow key={o.id} item={o} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="nb-input">
+        {没内核 && cells.length === 0 ? <p className="nb-hint">{t("这段对话还没有内核")}</p> : null}
+        {error !== undefined ? <p className="field-error">{error}</p> : null}
+        {runError !== undefined ? <p className="field-error">{runError}</p> : null}
+        <div className="nb-input-row">
+          <select
+            className="control nb-lang-select"
+            value={language}
+            aria-label={t("语言")}
+            disabled={running}
+            onChange={(e) => setLanguage(e.target.value as 语言)}
+          >
+            <option value="python">Python</option>
+            <option value="R">R</option>
+          </select>
+          <Button size="sm" variant="primary" disabled={running || draft.trim() === ""} onClick={() => void run()}>
+            {running ? t("运行中…") : t("跑")}
+          </Button>
+        </div>
+        <textarea
+          className="control nb-textarea"
+          rows={4}
+          value={draft}
+          disabled={running}
+          placeholder={tf("在 {0} 内核里跑一句…（⌘↩ 运行）", 语言名[language])}
+          aria-label={t("要跑的代码")}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={onKeyDown}
+        />
+        <p className="nb-caption">{t("会记进对话，agent 下一轮知道")}</p>
+      </div>
+    </div>
+  )
 }

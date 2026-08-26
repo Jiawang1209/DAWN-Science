@@ -37,6 +37,13 @@ export interface RunInsert {
    */
   environmentSnapshotId?: string
   cost?: Cost
+  /**
+   * 这一次**新建**了哪些文件（产物，2026-08-26）。与 `filesWritten` 同一口径：
+   * 缺省 = 不知道，空数组 = 确认没新建。
+   */
+  filesCreated?: string[]
+  /** pi 的 toolCallId（只有 tool_call 类 Run 有）。界面按它对到转录里的 tool item */
+  toolCallId?: string
 }
 
 export interface RunFinish {
@@ -52,6 +59,8 @@ export interface RunFinish {
   cost?: Cost
   /** 这一轮实际是谁答的。**缺省 = 不知道**，不补默认值 */
   model?: string
+  /** 这一次新建了哪些文件。缺省 = 不知道，与 `filesWritten` 同一口径 */
+  filesCreated?: string[]
 }
 
 interface RunRow {
@@ -73,6 +82,8 @@ interface RunRow {
   files_read: string | null
   may_include_user_edits: number | null
   artifact_count: number | null
+  files_created: string | null
+  tool_call_id: string | null
   cost_visible: number | null
   cost_input_tokens: number | null
   cost_output_tokens: number | null
@@ -166,6 +177,10 @@ function toRun(r: RunRow): RunSummary {
      */
     ...(r.environment_snapshot_id ? { environmentSnapshotId: r.environment_snapshot_id } : {}),
     ...(cost === undefined ? {} : { cost }),
+    ...(r.files_created === null || r.files_created === undefined
+      ? {}
+      : { filesCreated: JSON.parse(r.files_created) as string[] }),
+    ...(r.tool_call_id ? { toolCallId: r.tool_call_id } : {}),
   }
 }
 
@@ -234,14 +249,16 @@ export class RunStore {
           files_written, files_read, may_include_user_edits, artifact_count,
           environment_snapshot_id,
           cost_visible, cost_input_tokens, cost_output_tokens, cost_cache_read_tokens,
-          cost_total_usd, cost_invisible_reason
+          cost_total_usd, cost_invisible_reason,
+          files_created, tool_call_id
         ) VALUES (
           @runId, @projectId, @sessionId, @parentRunId, @origin, @requestType, @status,
           @startedAt, @finishedAt, @terminalReason, @hasError, @exitCode,
           @filesWritten, @filesRead, @mayIncludeUserEdits, @artifactCount,
           @environmentSnapshotId,
           @cost_visible, @cost_input_tokens, @cost_output_tokens, @cost_cache_read_tokens,
-          @cost_total_usd, @cost_invisible_reason
+          @cost_total_usd, @cost_invisible_reason,
+          @filesCreated, @toolCallId
         )`)
       .run({
         ...rec,
@@ -256,6 +273,8 @@ export class RunStore {
           rec.mayIncludeUserEdits === undefined ? null : rec.mayIncludeUserEdits ? 1 : 0,
         artifactCount: rec.artifactCount ?? null,
         environmentSnapshotId: rec.environmentSnapshotId ?? null,
+        filesCreated: rec.filesCreated ? JSON.stringify(rec.filesCreated) : null,
+        toolCallId: rec.toolCallId ?? null,
         ...costColumns(rec.cost),
       })
   }
@@ -299,7 +318,8 @@ export class RunStore {
           cost_cache_read_tokens = COALESCE(@cost_cache_read_tokens, cost_cache_read_tokens),
           cost_total_usd = COALESCE(@cost_total_usd, cost_total_usd),
           cost_invisible_reason = COALESCE(@cost_invisible_reason, cost_invisible_reason),
-          model = COALESCE(@model, model)
+          model = COALESCE(@model, model),
+          files_created = COALESCE(@filesCreated, files_created)
         WHERE id = @runId`)
       .run({
         runId,
@@ -314,6 +334,7 @@ export class RunStore {
           fin.mayIncludeUserEdits === undefined ? null : fin.mayIncludeUserEdits ? 1 : 0,
         artifactCount: fin.artifactCount ?? null,
         model: fin.model ?? null,
+        filesCreated: fin.filesCreated ? JSON.stringify(fin.filesCreated) : null,
         ...costColumns(fin.cost),
       })
   }
@@ -338,6 +359,11 @@ export class RunStore {
        */
       filesRead?: string[]
       mayIncludeUserEdits: boolean
+      /**
+       * 这一次**新建**了哪些文件（产物，2026-08-26）。缺省 = 不给，那一列原样不动
+       * ——**不是**写成「不知道」。
+       */
+      filesCreated?: string[]
     },
   ): void {
     this.db
@@ -345,14 +371,53 @@ export class RunStore {
         UPDATE runs SET
           files_written = @filesWritten,
           files_read = COALESCE(@filesRead, files_read),
-          may_include_user_edits = @mayIncludeUserEdits
+          may_include_user_edits = @mayIncludeUserEdits,
+          files_created = COALESCE(@filesCreated, files_created)
         WHERE id = @runId`)
       .run({
         runId,
         filesWritten: JSON.stringify(files.filesWritten),
         filesRead: files.filesRead === undefined ? null : JSON.stringify(files.filesRead),
         mayIncludeUserEdits: files.mayIncludeUserEdits ? 1 : 0,
+        filesCreated: files.filesCreated === undefined ? null : JSON.stringify(files.filesCreated),
       })
+  }
+
+  /**
+   * 本会话的产物（spec 2026-08-26-产物 §2）：所有 tool_call Run 的 `filesCreated` 并集，
+   * 按**出生**（第一次出现的那条 Run 的 startedAt）排序。**不建表，一条查询。**
+   * `unknown` 是 `files_created` 为 NULL 的那几次——「不知道」必须能被数出来并显示。
+   */
+  artifactsOf(sessionId: string): {
+    artifacts: { path: string; bornRunId: string; bornToolCallId?: string; bornAt: string }[]
+    unknown: { runId: string; toolCallId?: string }[]
+  } {
+    const rows = this.db
+      .prepare(
+        `SELECT id, tool_call_id, started_at, files_created FROM runs
+          WHERE session_id = ? AND request_type LIKE 'tool_call%'
+          ORDER BY started_at ASC, id ASC`,
+      )
+      .all(sessionId) as { id: string; tool_call_id: string | null; started_at: string; files_created: string | null }[]
+    const seen = new Map<string, { path: string; bornRunId: string; bornToolCallId?: string; bornAt: string }>()
+    const unknown: { runId: string; toolCallId?: string }[] = []
+    for (const r of rows) {
+      if (r.files_created === null) {
+        unknown.push({ runId: r.id, ...(r.tool_call_id ? { toolCallId: r.tool_call_id } : {}) })
+        continue
+      }
+      let created: string[]
+      try {
+        created = JSON.parse(r.files_created) as string[]
+      } catch {
+        continue
+      }
+      for (const path of created) {
+        if (seen.has(path)) continue
+        seen.set(path, { path, bornRunId: r.id, bornAt: r.started_at, ...(r.tool_call_id ? { bornToolCallId: r.tool_call_id } : {}) })
+      }
+    }
+    return { artifacts: [...seen.values()], unknown }
   }
 
   get(runId: string): RunSummary | undefined {

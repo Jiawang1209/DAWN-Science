@@ -115,6 +115,13 @@ export const RunSummarySchema = z
      */
     environmentSnapshotId: z.string().min(1).optional(),
     cost: CostSchema.optional(),
+    /**
+     * 这一次**新建**了哪些文件（产物条，2026-08-26）。与 `filesWritten` 同一口径：
+     * 缺省 = 不知道，空数组 = 确认没新建。
+     */
+    filesCreated: z.array(z.string().min(1)).optional(),
+    /** pi 的 toolCallId（只有 tool_call 类 Run 有）——转录里 tool item 的 id 就是它 */
+    toolCallId: z.string().min(1).optional(),
   })
   .superRefine((v, ctx) => {
     // 进行中却带结束时间，或已结束却没有——都是自相矛盾的记录，

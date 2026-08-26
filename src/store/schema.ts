@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 15
+export const SCHEMA_VERSION = 16
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -694,6 +694,16 @@ function 迁移步骤(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_schedule_runs_schedule ON schedule_runs(schedule_id, scheduled_for DESC);
   `)
+
+  /**
+   * v16（2026-08-26，产物）：这一次**新建**了哪些文件（JSON 数组，NULL = 不知道），
+   * 以及这条 tool_call Run 对应 pi 的 toolCallId——界面靠它把产物挂到对话里的那一轮。
+   * 老 run 两列都留 NULL：它们产生时没记这件事（不变式 5：不用今天的事实冒充当时的）。
+   */
+  if (!hasColumn(db, "runs", "files_created")) {
+    db.exec(`ALTER TABLE runs ADD COLUMN files_created TEXT`)
+    db.exec(`ALTER TABLE runs ADD COLUMN tool_call_id TEXT`)
+  }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

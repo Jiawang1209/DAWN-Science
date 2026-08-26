@@ -45,12 +45,12 @@ const baseRun = {
 }
 
 describe("migrate v2", () => {
-  it("版本号升到 15 —— v14 记下每台服务器上一次连上是什么时候；v15 定时任务两张表", () => {
+  it("版本号升到 16 —— v14 记下每台服务器上一次连上是什么时候；v15 定时任务两张表；v16 产物 files_created/tool_call_id", () => {
     const db = makeDb()
     const row = db.prepare(`SELECT value FROM schema_meta WHERE key='version'`).get() as { value: string }
     // 库里写的与常量一致：**迁移跑了没有，靠这一条**
     expect(row.value).toBe(String(SCHEMA_VERSION))
-    expect(SCHEMA_VERSION).toBe(15)
+    expect(SCHEMA_VERSION).toBe(16)
   })
 
   it("可重复执行（幂等）", () => {
@@ -248,6 +248,46 @@ describe("RunStore", () => {
     runs.insert(baseRun)
     runs.insert({ ...baseRun, runId: "r2", parentRunId: "r1" })
     expect(runs.get("r2")!.parentRunId).toBe("r1")
+  })
+})
+
+describe("filesCreated 与 toolCallId（产物，2026-08-26）", () => {
+  it("缺省=不知道，空数组=确认没新建，两者分得开", () => {
+    const { runs } = seed(makeDb())
+    runs.insert({ ...baseRun, runId: "r-unknown" })
+    runs.insert({ ...baseRun, runId: "r-none", filesCreated: [] })
+    runs.insert({ ...baseRun, runId: "r-some", filesCreated: ["outputs/a.csv"], toolCallId: "c1" })
+    expect(runs.get("r-unknown")!.filesCreated).toBeUndefined()
+    expect(runs.get("r-none")!.filesCreated).toEqual([])
+    expect(runs.get("r-some")!.filesCreated).toEqual(["outputs/a.csv"])
+    expect(runs.get("r-some")!.toolCallId).toBe("c1")
+  })
+
+  it("patchFiles 能补 filesCreated；不给就不动", () => {
+    const { runs } = seed(makeDb())
+    runs.insert({ ...baseRun, runId: "r1" })
+    runs.patchFiles("r1", { filesWritten: ["a"], mayIncludeUserEdits: true, filesCreated: ["a"] })
+    expect(runs.get("r1")!.filesCreated).toEqual(["a"])
+    runs.patchFiles("r1", { filesWritten: ["a", "b"], mayIncludeUserEdits: true })
+    expect(runs.get("r1")!.filesCreated).toEqual(["a"])
+  })
+
+  it("artifactsOf：按出生顺序并集、跨会话不算、失败的也算、记不知道的那几次", () => {
+    const db = makeDb()
+    const { runs, sessions } = seed(db)
+    sessions.insert({ id: "s2", agentId: "ds-chat", workspace: "/w", sessionDir: "/w/.dawn/s2", state: "alive", createdAt: "2026-08-08T00:00:00Z", projectId: "p1" })
+    const tool = (id: string, startedAt: string, extra: Partial<Parameters<typeof runs.insert>[0]>) =>
+      runs.insert({ ...baseRun, runId: id, requestType: "tool_call:write", startedAt, ...extra })
+    tool("t1", "2026-08-26T10:00:00Z", { toolCallId: "c1", filesCreated: ["outputs/b.png", "outputs/a.csv"] })
+    tool("t2", "2026-08-26T10:01:00Z", { toolCallId: "c2" }) // 不知道
+    tool("t3", "2026-08-26T10:02:00Z", { toolCallId: "c3", filesCreated: ["outputs/a.csv", "outputs/c.pdf"], hasError: true, status: "failed", finishedAt: "2026-08-26T10:02:01Z" })
+    tool("t4", "2026-08-26T10:03:00Z", { sessionId: "s2", toolCallId: "c4", filesCreated: ["other.txt"] })
+    runs.insert({ ...baseRun, runId: "turn", requestType: "agent_turn", startedAt: "2026-08-26T09:59:00Z" })
+    const r = runs.artifactsOf("s1")
+    expect(r.artifacts.map((a) => a.path)).toEqual(["outputs/b.png", "outputs/a.csv", "outputs/c.pdf"])
+    expect(r.artifacts[0]).toMatchObject({ bornRunId: "t1", bornToolCallId: "c1", bornAt: "2026-08-26T10:00:00Z" })
+    expect(r.artifacts[2]).toMatchObject({ bornRunId: "t3", bornToolCallId: "c3" })
+    expect(r.unknown).toEqual([{ runId: "t2", toolCallId: "c2" }])
   })
 })
 

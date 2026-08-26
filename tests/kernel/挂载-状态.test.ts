@@ -158,6 +158,73 @@ describe("对话内核 · 状态（笔记本，2026-08-26）", () => {
     expect(变了.slice(-2)).toEqual(["busy", "idle"])
   })
 
+  it("同一台内核串行执行：第二段等第一段的 idle 才开始，各拿各的输出，中途一直 busy（审查 Critical）", async () => {
+    /**
+     * 异步假运行时：write 之后**隔几个 tick** 才回输出与 idle——真内核就是这样（要走一趟 ZMQ）。
+     * 同步回 idle 的假运行时测不出这个 bug：两段 attach 的窗口根本不存在。
+     */
+    const 收到: string[] = []
+    const 听众 = new Map<string, Set<(e: unknown) => void>>()
+    let 完成第一段!: () => void
+    const 第一段的门 = new Promise<void>((r) => (完成第一段 = r))
+    const 发 = (id: string, entry: unknown) => {
+      for (const s of [...(听众.get(id) ?? [])]) s({ kind: "kernel_output", sessionId: id, entry })
+    }
+    const runtime = {
+      start: async (spec: { sessionId: string }) => ({ sessionId: spec.sessionId, pid: 0 }),
+      attach: (id: string, sink: (e: unknown) => void) => {
+        const set = 听众.get(id) ?? new Set()
+        听众.set(id, set)
+        set.add(sink)
+        return () => set.delete(sink)
+      },
+      write: (id: string, code: string) => {
+        收到.push(code)
+        void (async () => {
+          // 第一段要等测试放行才吐输出；第二段立刻吐。若没串行，第二段的输出会先到、被第一段收走
+          if (code === "A") await 第一段的门
+          else await Promise.resolve()
+          发(id, { kind: "stream", stream: "stdout", text: `out-${code}`, provenance })
+          await Promise.resolve()
+          发(id, { kind: "status", state: "idle", provenance })
+        })()
+      },
+      stop: async () => {},
+    } as never
+    const 变了: string[] = []
+    const k = 挂上(runtime, (对话) => 变了.push(k.状态列表(对话).map((s) => s.state).join(",")))
+    const pA = k.执行(c1, "python", "A")
+    const pB = k.执行(c1, "python", "B")
+    // 第二段还没送进内核：它在排队
+    await new Promise((r) => setTimeout(r, 5))
+    expect(收到).toEqual(["A"])
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "busy" }])
+    完成第一段()
+    const a = await pA
+    expect(a.输出.map((e) => (e as { text?: string }).text)).toEqual(["out-A", undefined])
+    const b = await pB
+    expect(收到).toEqual(["A", "B"])
+    expect(b.输出.map((e) => (e as { text?: string }).text)).toEqual(["out-B", undefined])
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "idle" }])
+    // 两段之间不允许露出一个 idle：整个过程只有一次 busy、最后一次 idle
+    expect(变了.filter((v) => v !== "")).toEqual(["idle", "busy", "idle"])
+  })
+
+  it("前一段抛了（write 抛）不拖住后一段：队列吞掉失败继续", async () => {
+    let 抛 = true
+    const { runtime, 发 } = 假内核()
+    ;(runtime as { write: (id: string, code: string) => void }).write = (id, code) => {
+      if (抛) { 抛 = false; throw new Error("写不进去") }
+      queueMicrotask(() => 发(id, { kind: "kernel_output", sessionId: id, entry: { kind: "status", state: "idle", provenance } }))
+      void code
+    }
+    const k = 挂上(runtime)
+    const pA = k.执行(c1, "python", "A")
+    const pB = k.执行(c1, "python", "B")
+    await expect(pA).rejects.toThrow(/写不进去/)
+    await expect(pB).resolves.toMatchObject({ 语言: "python" })
+  })
+
   it("内核会话id() / 变量() 按对话+语言找到那台；没有就 undefined", async () => {
     const { runtime, 问过变量 } = 假内核({ 带variables: true })
     const k = 挂上(runtime)

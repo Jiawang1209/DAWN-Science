@@ -253,13 +253,14 @@ export class RunRecorder {
     sessionId: SessionId,
     language: "python" | "R",
     结果: { hasError: boolean; terminalReason?: string },
+    /** 代码送进内核的时刻。**调用方在执行前取**——不给就与 finishedAt 同刻，时长为零 */
+    startedAt?: string,
   ): string | undefined {
     const projectId = this.projectOf(sessionId)
     if (!projectId) return undefined
     const runId = randomUUID()
+    // 这段对话（不是内核会话）的环境快照——与 beginTurn 同一条约定
     const env = this.environmentOf(sessionId)
-    // 起止各取一次：与 begin/ingest 那条同一条「finishedAt 不早于 startedAt」的口径
-    const startedAt = this.now()
     const finishedAt = this.now()
     this.runs.insert({
       runId,
@@ -268,7 +269,7 @@ export class RunRecorder {
       origin: "user",
       requestType: language === "R" ? "execute_r" : "execute_python",
       status: 结果.hasError ? "failed" : "completed",
-      startedAt,
+      startedAt: startedAt ?? finishedAt,
       finishedAt,
       hasError: 结果.hasError,
       ...(结果.terminalReason ? { terminalReason: 结果.terminalReason } : {}),

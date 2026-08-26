@@ -517,6 +517,12 @@ describe("内核执行 · 你自己在笔记本里敲的（2026-08-26）", () =>
     const r = list().find((x) => x.runId === id)!
     expect(r).toMatchObject({ origin: "user", requestType: "execute_python", status: "completed", hasError: false })
     expect(r.finishedAt).toBeDefined()
+    // 给了 startedAt 就用它：Run 的时长是真的（代码送进去到 idle），不是零
+    const 早 = "2026-08-26T00:00:00.000Z"
+    const 长 = rec.记内核执行(SESSION, "python", { hasError: false }, 早)
+    const rl = list().find((x) => x.runId === 长)!
+    expect(rl.startedAt).toBe(早)
+    expect(rl.finishedAt! >= 早).toBe(true)
     const bad = rec.记内核执行(SESSION, "R", { hasError: true, terminalReason: "NameError: x" })
     expect(list().find((x) => x.runId === bad)).toMatchObject({ requestType: "execute_r", status: "failed", hasError: true, terminalReason: "NameError: x" })
     // 没项目的会话不记账，与 beginTurn 同一条纪律

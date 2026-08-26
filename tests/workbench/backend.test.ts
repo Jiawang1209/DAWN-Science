@@ -415,6 +415,7 @@ describe("真实后端 · 经服务端端到端", () => {
     const pid = ctx.sessionStore.get(sid)!.projectId!
     const run = ctx.runStore.listByProject(pid, {}).find((r) => r.requestType === "execute_python")
     expect(run).toMatchObject({ origin: "user", status: "completed", hasError: false })
+    expect(run!.finishedAt! >= run!.startedAt).toBe(true)
     expect(items.find((i) => i.id === cellId)).toMatchObject({ runId: run!.runId })
     await ctx.server.handle("acquireLease", { sessionId: sid, holder: "user" })
     await ctx.backend.writeToSession({ sessionId: sid, data: "继续", as: "user" })
@@ -423,6 +424,31 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(ctx.events.subscribe(sid).items.at(-1)).toMatchObject({ type: "turn", who: "user", text: "继续" })
     await ctx.backend.writeToSession({ sessionId: sid, data: "再来", as: "user" })
     expect(ctx.runtime.written.at(-1)).toBe("再来")
+  })
+
+  it("不在场缓冲封顶：超过 20 条丢最旧的，前缀开头说明省了几条（审查 Important）", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    for (let i = 1; i <= 23; i++) await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: `cell_${i}` })
+    await ctx.server.handle("acquireLease", { sessionId: sid, holder: "user" })
+    await ctx.backend.writeToSession({ sessionId: sid, data: "继续", as: "user" })
+    const 送 = ctx.runtime.written.at(-1)!
+    expect(送.startsWith("（更早的 3 条已省略）")).toBe(true)
+    expect(送).not.toContain("cell_3\n")
+    expect(送).toContain("cell_4\n")
+    expect(送).toContain("cell_23\n")
+    expect(送.endsWith("继续")).toBe(true)
+    // 按字节封顶：一段 40 KB 的输出把前面的全挤掉
+    ctx.fakeKernels.下一轮输出 = [{ kind: "stream", stream: "stdout", text: "x".repeat(40_000) }, { kind: "status", state: "idle" }]
+    await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "big" })
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "after" })
+    await ctx.backend.writeToSession({ sessionId: sid, data: "再来", as: "user" })
+    const 送2 = ctx.runtime.written.at(-1)!
+    expect(送2.startsWith("（更早的 1 条已省略）")).toBe(true)
+    expect(送2).not.toContain("big\n")
+    expect(送2).toContain("after\n")
   })
 
   it("runInKernel 报错的 cell：status error，Run failed 带原因；内核起不来 → invalid_request 且 cell 也标 error", async () => {

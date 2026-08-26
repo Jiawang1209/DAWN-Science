@@ -89,6 +89,14 @@ interface 一台 {
   状态: 内核状态
   /** 内部状态监听的注销。**收掉时要调**，别给停掉的内核留一只挂着的耳朵 */
   解监听: () => void
+  /**
+   * 同一台内核一次只跑一段（审查 Critical）：两段同时 attach 会在第一个 idle 上一起收尾，
+   * 把对方的输出认成自己的——你在笔记本里跑的那段会收走模型 run_code 的输出，
+   * cell、账本、不在场缓冲全说错，状态还会在还在跑的时候翻回 idle。后一段排在这条 promise 后面
+   */
+  队列: Promise<unknown>
+  /** 还在排队、没送进内核的段数。>0 时运行时回的 idle 不算数——下一段马上就写，中间不该露一个 idle */
+  排队中: number
 }
 
 export class 对话内核 {
@@ -246,7 +254,7 @@ export class 对话内核 {
      * 所以这里不用再等一条 `started` 事件；`starting` 只存在于上面那个 await 期间，
      * 而那时它还不在表里，`状态列表` 看不到（起不起得来还没定，不该先显示一台）。
      */
-    const 一: 一台 = { 内核会话, handle, 对话, 语言, 状态: "idle", 解监听: () => {} }
+    const 一: 一台 = { 内核会话, handle, 对话, 语言, 状态: "idle", 解监听: () => {}, 队列: Promise.resolve(), 排队中: 0 }
     this.表.set(键, 一)
     this.反查.set(内核会话, 一)
 
@@ -261,7 +269,9 @@ export class 对话内核 {
     一.解监听 = this.opts.runtime.attach(内核会话, (e) => {
       const ev = e as { kind: string; entry?: { kind?: string; state?: string } }
       if (ev.kind === "kernel_output" && ev.entry?.kind === "status") {
-        if (ev.entry.state === "busy" || ev.entry.state === "idle") this.置状态(一, ev.entry.state)
+        if (ev.entry.state === "busy") this.置状态(一, "busy")
+        // 后面还有排着的段：这个 idle 只是两段之间的缝，对笔记本来说它还在跑
+        else if (ev.entry.state === "idle" && 一.排队中 === 0) this.置状态(一, "idle")
       } else if (ev.kind === "exited") {
         this.置状态(一, "exited")
       }
@@ -300,6 +310,22 @@ export class 对话内核 {
     代码: string,
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     const 一 = await this.拿(对话, 语言)
+    // 排队（见 `一台.队列`）：前一段失败了也不拖住后一段——失败是它自己的，队列只管顺序
+    一.排队中++
+    const 跑 = 一.队列.then(() => {
+      一.排队中--
+      return this.真执行(一, 语言, 代码)
+    })
+    一.队列 = 跑.catch(() => {})
+    return 跑
+  }
+
+  /** 真把一段送进这台内核并等它的 idle。**只能经 `执行()` 的队列进来** */
+  private 真执行(
+    一: 一台,
+    语言: 内核语言,
+    代码: string,
+  ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     const 输出: unknown[] = []
 
     return new Promise((resolve, reject) => {

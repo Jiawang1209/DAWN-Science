@@ -779,7 +779,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * （代码 + 输出摘要），下一条用户消息发给模型时拼在前面，然后清空。
    * **转录里不带它**——转录记的是你说的话；这份只给模型，让它知道 `x` 从哪来。
    */
-  const 不在场缓冲 = new Map<string, string[]>()
+  const 不在场缓冲 = new Map<string, { 段: string[]; 省了: number }>()
+  /** 封顶（审查 Important）：最多 20 段、合计 32 KB；超了丢最旧的，并在前缀开头说省了几条——不静默截断 */
+  const 缓冲最多段 = 20
+  const 缓冲最多字节 = 32 * 1024
+  const 攒一段 = (sessionId: string, 一段: string) => {
+    const b = 不在场缓冲.get(sessionId) ?? { 段: [], 省了: 0 }
+    b.段.push(一段)
+    const 字节 = (x: string) => Buffer.byteLength(x, "utf8")
+    let 总 = b.段.reduce((n, x) => n + 字节(x), 0)
+    // 至少留最新那一段：它一段就超 32 KB 也整段带上（摘要本身已限过长度），只丢它前面的
+    while (b.段.length > 1 && (b.段.length > 缓冲最多段 || 总 > 缓冲最多字节)) {
+      总 -= 字节(b.段.shift()!)
+      b.省了++
+    }
+    不在场缓冲.set(sessionId, b)
+  }
+  const 缓冲前缀 = (sessionId: string): string | undefined => {
+    const b = 不在场缓冲.get(sessionId)
+    if (!b?.段.length) return undefined
+    return `${b.省了 ? `（更早的 ${b.省了} 条已省略）\n\n` : ""}${b.段.join("\n\n")}`
+  }
 
   const requireProject = (projectId: string) => {
     const s = projects.summary(projectId)
@@ -2652,8 +2672,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 发出去的 = 剥掉粘贴标记(as === "user" ? (await 附上引用(sessionId, data)).text : data)
       data = 剥掉粘贴标记(data)
       // 你不在场时在内核里跑过的（笔记本，spec §4）：拼进模型看的那份，转录里仍只是你那句话
-      const 攒的 = as === "user" ? 不在场缓冲.get(sessionId) : undefined
-      const 带前缀 = 攒的?.length ? `${攒的.join("\n\n")}\n\n${发出去的}` : 发出去的
+      const 攒的 = as === "user" ? 缓冲前缀(sessionId) : undefined
+      const 带前缀 = 攒的 ? `${攒的}\n\n${发出去的}` : 发出去的
       try {
         sessions.write(sessionId, 带前缀, as, 附图, behavior)
         // **写成功了才清**：写失败（没租约、会话不在）时那几段还得留着，下一次再带
@@ -2833,23 +2853,24 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         }
         events.finishCell(sessionId, cellId, 结果)
       }
+      // 执行前取一次：Run 的时长要是真的（送进去到 idle），不是记账那一刻的零
+      const startedAt = new Date().toISOString()
       try {
         const r = await k.执行(sessionId, language, code)
         const s = 输出摘要(r.输出)
         // 出错时 Run 的原因只取 `ename: evalue`——traceback 是给人看的，账本要的是一句能检索的话
         const 原因 = s.出错了 ? 首个错误(r.输出) : undefined
-        const runId = runRecorder?.记内核执行(sessionId, language, { hasError: s.出错了, ...(原因 ? { terminalReason: 原因 } : {}) })
+        const runId = runRecorder?.记内核执行(sessionId, language, { hasError: s.出错了, ...(原因 ? { terminalReason: 原因 } : {}) }, startedAt)
         收尾({ status: s.出错了 ? "error" : "ok", ...(runId ? { runId } : {}) })
-        const 列 = 不在场缓冲.get(sessionId) ?? []
-        列.push(
+        攒一段(
+          sessionId,
           `[用户在 ${language === "R" ? "R" : "Python"} 内核里跑了]\n\`\`\`${language === "R" ? "r" : "python"}\n${code}\n\`\`\`\n输出：${s.文字 || "（没有输出）"}`,
         )
-        不在场缓冲.set(sessionId, 列)
         return { cellId }
       } catch (err) {
         // 解释器没配、内核起不来、跑到一半退出——都是用户能处理的，如实说；cell 与账本都要收口
         const 消息 = err instanceof Error ? err.message : String(err)
-        runRecorder?.记内核执行(sessionId, language, { hasError: true, terminalReason: 消息 })
+        runRecorder?.记内核执行(sessionId, language, { hasError: true, terminalReason: 消息 }, startedAt)
         收尾({ status: "error" })
         throw fault("invalid_request", 消息)
       }

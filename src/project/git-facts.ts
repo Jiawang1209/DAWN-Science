@@ -112,7 +112,8 @@ function parsePorcelain(stdout: string): string[] {
 
 /**
  * porcelain 里**此前不存在、现在有**的：未跟踪（`??`）与索引里新增（XY 里有 `A`）。
- * 重命名（`R`）不算新建——它是同一个文件换了名字。产物条只认「新生的」（spec §0）。
+ * 重命名（索引里的 `R`）不算新建；未暂存的重命名 git 看成删 + 新增，会算进来。
+ * `xy[1] === "A"` 含 intent-to-add 与冲突态。
  */
 function parsePorcelainCreated(stdout: string): string[] {
   const files = new Set<string>()

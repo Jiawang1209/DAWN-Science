@@ -218,3 +218,50 @@ describe("中文文件名不能变成乱码", () => {
     rmSync(dir, { recursive: true, force: true })
   })
 })
+
+describe("filesCreated（产物条，2026-08-26）", () => {
+  it("write 新建一个文件：filesCreated 只有它；改旧文件只进 filesWritten", async () => {
+    const dir = repo()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write", { path: "outputs/a.csv" })
+    mkdirSync(join(dir, "outputs"), { recursive: true })
+    writeFileSync(join(dir, "outputs", "a.csv"), "1\n")
+    writeFileSync(join(dir, "seed.txt"), "changed\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual(["outputs/a.csv"])
+    expect(facts.filesWritten).toEqual(["outputs/a.csv", "seed.txt"])
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("被 .gitignore 忽略、但工具声明了要写且此前不在：仍算新建", async () => {
+    const dir = repo()
+    writeFileSync(join(dir, ".gitignore"), "figures/\n")
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write", { path: "figures/f.png" })
+    mkdirSync(join(dir, "figures"), { recursive: true })
+    writeFileSync(join(dir, "figures", "f.png"), "png")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual(["figures/f.png"])
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("声明了却没真写出来：不算", async () => {
+    const dir = repo()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write", { path: "never.txt" })
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual([])
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("覆盖此前就存在的声明路径：不算新建", async () => {
+    const dir = repo()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write", { path: "seed.txt" })
+    writeFileSync(join(dir, "seed.txt"), "v2\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual([])
+    expect(facts.filesWritten).toEqual(["seed.txt"])
+    rmSync(dir, { recursive: true, force: true })
+  })
+})

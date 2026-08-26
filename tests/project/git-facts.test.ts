@@ -230,4 +230,10 @@ describe("createdSince：基线之后新建的文件（产物条的事实来源�
     writeFileSync(join(repo, "outputs", "图.png"), "png")
     expect(await createdSince(repo, before)).toEqual(["outputs/图.png"])
   })
+
+  it("文件名带空格：不带外层引号地返回", async () => {
+    const before = await snapshot(repo)
+    writeFileSync(join(repo, "有 空格.csv"), "1\n")
+    expect(await createdSince(repo, before)).toEqual(["有 空格.csv"])
+  })
 })

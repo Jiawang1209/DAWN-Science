@@ -24,7 +24,7 @@
  */
 import { statSync } from "node:fs"
 import { resolve } from "node:path"
-import { diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
+import { createdSince, diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 
 /**
  * 会产出文件的工具。**白名单，不是黑名单。**
@@ -98,6 +98,12 @@ export interface ToolFileFacts {
    * **如实标注，不假装确定。**
    */
   mayIncludeUserEdits: boolean
+  /**
+   * 这一次**新建**的文件（产物条的事实来源，2026-08-26，spec `2026-08-26-产物`）。
+   * git 的 `??`/`A` ∪ 工具声明的「此前不在、现在有」。
+   * 与 `filesWritten` 同一口径：整份 facts 缺席 = 不知道；空数组 = 确认没新建。
+   */
+  filesCreated: string[]
 }
 
 export interface ProvenanceHandle {
@@ -173,6 +179,15 @@ export class ProvenanceProbe {
       return undefined
     }
     const workspace = this.workspace
+    const 在不在 = (rel: string) => {
+      try {
+        return statSync(resolve(workspace, rel)).isFile()
+      } catch {
+        return false
+      }
+    }
+    // **执行前**记下声明路径里哪些还不存在——执行后再看就分不清「新建」与「覆盖」
+    const 声明前不在 = 声明.filter((rel) => !在不在(rel))
     return {
       async finish(): Promise<ToolFileFacts | undefined> {
         try {
@@ -183,17 +198,13 @@ export class ProvenanceProbe {
            * 只并「存在」的：工具可能被拒、可能失败，那时它声称的路径
            * 不该出现在账本上——**说它写了一个不存在的文件，比不说更坏**。
            */
-          const 真在 = 声明.filter((rel) => {
-            try {
-              return statSync(resolve(workspace, rel)).isFile()
-            } catch {
-              return false
-            }
-          })
+          const 真在 = 声明.filter(在不在)
+          const created = await createdSince(workspace, before)
           return {
             filesWritten: [...new Set([...facts.files, ...真在])].sort(),
             filesRead: [],
             mayIncludeUserEdits: facts.mayIncludeUserEdits,
+            filesCreated: [...new Set([...created, ...声明前不在.filter(在不在)])].sort(),
           }
         } catch {
           /**

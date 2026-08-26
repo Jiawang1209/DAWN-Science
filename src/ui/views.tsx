@@ -2909,7 +2909,13 @@ function ConfigPill({
 
   // 触发器上写**当前那一项的短名**（去掉 `· 说明` 半截，顶行那一格容不下长字）
   const 当前项 = option.options.find((x) => x.value === option.current)
-  const 标 = 当前项?.name.split(" · ")[0] ?? option.current ?? option.name
+  // 模型那颗：扳机上写**具体模型**（claude 那台把角色名摆前面，拆模型名 会把它退到第二行）——
+  // 与 ModelPill / 老 SessionConfigMenu 同一副 `拆模型名`；别的（推理强度）取短名就够
+  const 标 = 当前项
+    ? option.category === "model"
+      ? 拆模型名(当前项.name, 当前项.description).主
+      : (当前项.name.split(" · ")[0] ?? 当前项.name)
+    : (option.current ?? option.name)
 
   return (
     <div

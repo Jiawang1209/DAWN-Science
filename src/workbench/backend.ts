@@ -875,7 +875,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     sessions.attach(rec.id, (e) => {
       // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
       // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
-      runRecorder?.ingest(e)
+      // 账本出错不许拖垮呈现（先记账是为了顺序，不是为了让它成为单点）
+      try {
+        runRecorder?.ingest(e)
+      } catch (err) {
+        console.error("[账本] 记事件失败，转录照常：", err)
+      }
       events.ingest(rec.id, e)
     })
     // 开关那份在 attach 之前就 emit 过了、没人听见——接好线再问一次（codex-polish 第二档）
@@ -1717,7 +1722,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           sessions.attach(sessionId, (e) => {
             // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
             // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
-            runRecorder?.ingest(e)
+            // 账本出错不许拖垮呈现（先记账是为了顺序，不是为了让它成为单点）
+            try {
+              runRecorder?.ingest(e)
+            } catch (err) {
+              console.error("[账本] 记事件失败，转录照常：", err)
+            }
             events.ingest(sessionId, e)
           })
           const 历史 = await sessions.history(sessionId)

@@ -13,6 +13,7 @@ import { TaskStore } from "../../src/store/tasks.js"
 import { SettingsStore } from "../../src/store/settings.js"
 import { EnvironmentStore } from "../../src/store/environments.js"
 import { ProjectManager } from "../../src/project/manager.js"
+import { RunRecorder } from "../../src/project/run-recorder.js"
 import { SessionManager } from "../../src/session/manager.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
 import { createWorkbenchBackend } from "../../src/workbench/backend.js"
@@ -60,14 +61,17 @@ function make() {
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
   const events = new SessionTranscripts({ terminalMaxChars: 10_000 })
+  // 真的记账员（不是 no-op）——2026-08-26 顺序回归要验「artifactsChanged 到达时账本已经落库」，
+  // 这条链路不接一份真的 RunRecorder 就测不出「先记账再呈现」这句话是不是真的
+  const runRecorder = new RunRecorder({ runs: runStore, projectOf: (s) => sessionStore.get(s)?.projectId })
   const 记忆根 = mkdtempSync(join(tmpdir(), "dawn-memories-"))
   const memory = {
     store: new MemoryStore(记忆根),
     queue: new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl")),
     pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
   }
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db) })
-  return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, server: new WorkbenchServer(backend) }
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder })
+  return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, runtime, runRecorder, server: new WorkbenchServer(backend) }
 }
 
 describe("真实后端 · 经服务端端到端", () => {
@@ -159,6 +163,34 @@ describe("真实后端 · 经服务端端到端", () => {
     const r = (await ctx.backend.listArtifacts({ sessionId: sid })) as { artifacts: { path: string; exists?: boolean }[] }
     expect(r.artifacts).toEqual([expect.objectContaining({ path: "/etc/hosts" })])
     expect(r.artifacts[0]!.exists).toBeUndefined()
+  })
+
+  /**
+   * 顺序回归（2026-08-26）：`sessions.attach` 回调里 `runRecorder.ingest(e)` 必须先于
+   * `events.ingest(...)` 跑——中枢推 `artifactsChanged` 那一刻，客户端会回头查 `listArtifacts`，
+   * 账本必须已经落库。**走的是 backend.ts 真正接的那条线**：不是直接调
+   * `runRecorder.ingest()`，是让事件从 `FakeRuntime` 走 `sessions.attach` 注册的那个回调。
+   *
+   * `FakeRuntime.emit` 是私有的——`schedule-ops.test.ts` 已经这么借过，这里抄同一条路。
+   */
+  it("顺序回归：artifactsChanged 一到，账本已经能查到那份 filesCreated（2026-08-26）", async () => {
+    const ws = newRepo()
+    const sid = await 开一段(ws)
+    ctx.events.subscribe(sid)
+    let 查到的路径: string[] = []
+    const 停听 = ctx.events.onUpdate((u) => {
+      if (u.type !== "artifactsChanged") return
+      // **就在这一拍里查**：如果记账真的排在呈现之后，这里已经能看到 a.csv
+      查到的路径 = ctx.runStore.artifactsOf(sid).artifacts.map((a) => a.path)
+    })
+    const 假运行时 = ctx.runtime as unknown as { emit: (e: unknown) => void }
+    假运行时.emit({ kind: "tool_start", sessionId: sid, toolCallId: "c1", toolName: "write", input: {} })
+    假运行时.emit({
+      kind: "tool_files", sessionId: sid, toolCallId: "c1",
+      filesWritten: ["a.csv"], filesRead: [], mayIncludeUserEdits: true, filesCreated: ["a.csv"],
+    })
+    停听()
+    expect(查到的路径).toContain("a.csv")
   })
 
   /**

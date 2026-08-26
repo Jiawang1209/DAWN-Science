@@ -27,6 +27,7 @@ import {
   ProvenanceProbe,
   isProducing,
   PRODUCING_TOOLS,
+  并进登记新建,
   type ProvenanceHandle,
   type ToolFileFacts,
 } from "../src/runtime/provenance.js"
@@ -273,6 +274,43 @@ describe("filesCreated（产物条，2026-08-26）", () => {
     const facts = await factsOf(h)
     expect(facts.filesCreated).toEqual(["abs.txt"])
     expect(facts.filesWritten.filter((p) => p === "abs.txt")).toHaveLength(1)
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  /**
+   * **`bash` 的重定向目标，探针单独看不见**（2026-08-26 code review）。
+   *
+   * `声明的路径` 只认 `write`/`edit`/`multiedit`/`apply_patch`——`bash` 不在
+   * `会报路径的` 里（本文件开头第 55 行注释：「它的参数是一条命令，写到哪儿
+   * 只有它自己知道」）。而 `out/` 又被 `.gitignore` 挡在 `git status` 外，
+   * 于是 `diffSince`/`createdSince` 也看不见。两条路都不通，
+   * **这不是缺陷，是探针这一层已知的能力边界**——`重定向目标` 解析 `>` 之后，
+   * 真正让这类文件进账的是产物登记那条路（`并进登记新建`），不是探针本身。
+   */
+  it("bash 的 `>` 重定向目标：探针单独看不见（不在 会报路径的 里，又被 .gitignore 挡住）", async () => {
+    const dir = repo()
+    writeFileSync(join(dir, ".gitignore"), "out/\n")
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("bash", { command: "echo hi > out/x.txt" })
+    mkdirSync(join(dir, "out"), { recursive: true })
+    writeFileSync(join(dir, "out", "x.txt"), "hi\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).not.toContain("out/x.txt")
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("……但产物登记看得见——并进 并进登记新建 之后，filesCreated 就有它了", async () => {
+    const dir = repo()
+    writeFileSync(join(dir, ".gitignore"), "out/\n")
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("bash", { command: "echo hi > out/x.txt" })
+    mkdirSync(join(dir, "out"), { recursive: true })
+    writeFileSync(join(dir, "out", "x.txt"), "hi\n")
+    const facts = await factsOf(h)
+    // 上一条已确认探针自己看不见它；这里模拟 native.ts 里那一步：
+    // 产物登记记的是绝对路径，`并进登记新建` 换算成相对工作区的再并进去
+    const merged = 并进登记新建(facts, [join(dir, "out", "x.txt")], dir)
+    expect(merged.filesCreated).toEqual(["out/x.txt"])
     rmSync(dir, { recursive: true, force: true })
   })
 })

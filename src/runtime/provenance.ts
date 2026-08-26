@@ -277,11 +277,14 @@ export function 套上溯源<T extends Record<string, unknown>>(
 
 /**
  * 把产物登记（按 inode 身份记的「此前不存在、现在有」）并进探针的 facts（2026-08-26）。
- * 两个来源互补：git 看不见被忽略的文件，登记看不见没声明路径的（bash 里的 `cp`）。
+ * 两个来源互补：登记看不见没声明路径的（bash 里 `cp` 出来的），看得见的是 `>` 重定向的目标
+ * （`重定向目标` 解析的就是这个）；git 则看不见被 `.gitignore` 忽略的文件。
  * `登记新建的` 是**绝对路径**，这里换算成相对工作区的。
  */
 export function 并进登记新建(facts: ToolFileFacts, 登记新建的: readonly string[], cwd: string): ToolFileFacts {
-  const rel = 登记新建的.map((p) => relative(cwd, p)).filter((p) => p && !p.startsWith(".."))
+  // 换算之后仍是绝对路径的（不同盘符/根目录）说明不在工作区里，丢掉——与 `观察()`
+  // 对声明路径的处理同一口径。
+  const rel = 登记新建的.map((p) => relative(cwd, p)).filter((p) => p && !p.startsWith("..") && !isAbsolute(p))
   return {
     ...facts,
     filesWritten: [...new Set([...facts.filesWritten, ...rel])].sort(),

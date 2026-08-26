@@ -56,15 +56,21 @@ test.describe("拿得到 git 事实时", () => {
   })
 })
 
-test.describe("拿不到 git 事实时", () => {
-  // **不 git init**：探针 `begin()` 直接返回 undefined，那条 Run 上没有文件事实
+test.describe("非 git 工作区", () => {
+  /**
+   * **不 git init**。2026-08-26 之前这里验的是「探针拿不到 git 事实 → 说无法确定」；
+   * 现在非 git 工作区走**文件系统探针**（作者首用时临时会话全是「不知道」，改的），
+   * 事实照样拿得到——所以这条改验「非 git 也如实记下写了什么」。
+   * 「不知道 ≠ 没改」那条纪律没丢：真拿不到（超过 2 万个文件）时探针返回 undefined，
+   * 由 `tests/project/fs-facts.test.ts` 与 `tests/provenance-probe.test.ts` 守着。
+   */
   test.use({
     dawnOptions: {
       toolCall: { toolName: "write", args: { path: 产出文件, content: "# 假模型写的\n" } },
     },
   })
 
-  test("**说「无法确定」，不说「没有改动文件」** —— 不知道不等于没改", async ({ dawn }) => {
+  test("**没有 git 也说得出改了哪个文件** —— 文件系统探针补上那一半", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     await 在项目里开会话(page)
@@ -75,8 +81,9 @@ test.describe("拿不到 git 事实时", () => {
     await 进审阅(page)
     const panel = page.locator(".panel", { hasText: "变更" })
     await expect(panel).toContainText("write")
-    await expect(panel).toContainText("无法确定改了什么")
-    // 这一条才是重点：**两种情况的措辞不得相同**
+    await expect(panel).toContainText(产出文件)
+    // 既不是「无法确定」，也不是「没有改动文件」——是真名字
+    await expect(panel).not.toContainText("无法确定改了什么")
     await expect(panel).not.toContainText("没有改动文件")
   })
 })

@@ -23,7 +23,8 @@
  * 返回空数组会被读成「确认没改任何文件」，那是编造（不变式 5 明令禁止）。
  */
 import { statSync } from "node:fs"
-import { isAbsolute, relative, resolve } from "node:path"
+import { resolve } from "node:path"
+import { 工作区内相对路径 } from "../files/paths.js"
 import { createdSince, diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 
 /**
@@ -46,6 +47,22 @@ export const PRODUCING_TOOLS: ReadonlySet<string> = new Set([
 export function isProducing(toolName: string): boolean {
   return PRODUCING_TOOLS.has(toolName)
 }
+
+/**
+ * 只读内置工具**按设计**不写文件（2026-08-26，审查 A）。
+ *
+ * 不在白名单的内置工具（`read`）此前从不发 `tool_files`，于是它的 Run 上
+ * `files_created` 一直是 NULL——被读成「不知道」，一段只 read 的普通对话
+ * 就被标成「本轮产出未知」。这是我们自己写的工具，白名单本身就是「它不写文件」
+ * 这条声明；发空数组是「确认没写」，不是猜（不变式 5）。
+ * **只给内置白名单外的那几个用**：外部工具（MCP、内核）一律观察 git，不走这条。
+ */
+export const 只读工具的空事实 = (): ToolFileFacts => ({
+  filesWritten: [],
+  filesRead: [],
+  mayIncludeUserEdits: false,
+  filesCreated: [],
+})
 
 /**
  * 这几个工具**自己就说得出写到哪儿**（2026-08-18）。
@@ -174,9 +191,10 @@ export class ProvenanceProbe {
     // **声明路径可能是绝对的**（`声明的路径` 从工具入参里原样捞出来，工具自己爱传哪种就传哪种）。
     // 统一换成相对工作区——后面所有比对、去重、落盘都按相对路径来，
     // 混着绝对/相对会让同一个文件被记成两条。工作区外的声明直接丢：那不该被算进这次调用。
-    const 声明 = 声明入参
-      .map((p) => relative(this.workspace, resolve(this.workspace, p)))
-      .filter((p) => p && !p.startsWith("..") && !isAbsolute(p))
+    const 声明 = 声明入参.flatMap((p) => {
+      const rel = 工作区内相对路径(this.workspace, p)
+      return rel ? [rel] : []
+    })
     let before: GitBaseline
     try {
       before = await snapshot(this.workspace)
@@ -284,7 +302,10 @@ export function 套上溯源<T extends Record<string, unknown>>(
 export function 并进登记新建(facts: ToolFileFacts, 登记新建的: readonly string[], cwd: string): ToolFileFacts {
   // 换算之后仍是绝对路径的（不同盘符/根目录）说明不在工作区里，丢掉——与 `观察()`
   // 对声明路径的处理同一口径。
-  const rel = 登记新建的.map((p) => relative(cwd, p)).filter((p) => p && !p.startsWith("..") && !isAbsolute(p))
+  const rel = 登记新建的.flatMap((p) => {
+    const r = 工作区内相对路径(cwd, p)
+    return r ? [r] : []
+  })
   return {
     ...facts,
     filesWritten: [...new Set([...facts.filesWritten, ...rel])].sort(),

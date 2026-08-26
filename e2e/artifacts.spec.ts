@@ -46,6 +46,40 @@ test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () 
   })
 })
 
+/**
+ * **只读的一轮不许标成「产出未知」**（2026-08-26，审查 A）。
+ *
+ * `read` 不在探针白名单里，此前从不发 `tool_files`——于是一段只 read 的普通对话
+ * 在 git 工作区里被画成「本轮产出未知 · 远端会话或非 git 工作区，探针没跑」，主路径上的一句假话。
+ * 现在只读内置工具按设计发空事实：确认没写，不画任何条。
+ */
+test.describe("只读的一轮：不画产物条，也不说「产出未知」", () => {
+  test.use({
+    dawnOptions: {
+      gitInit: true,
+      // 夹具工作区自带 README.md（fixtures.ts 里 seed 的），读它
+      toolCall: { toolName: "read", args: { path: "README.md" }, say: "我先看一眼。" },
+    },
+  })
+
+  test("read 一个文件 → 回复下面既没有 GENERATED 条，也没有「本轮产出未知」", async ({ dawn }) => {
+    const { page } = dawn
+    await 在项目里开会话(page)
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("看看 README 写了什么")
+    await 框.press("Enter")
+
+    // 等这一轮真的跑完：先说的那句、工具行、再开口的最终回复（假模型工具轮之后回「假模型已应答…」）
+    await expect(page.getByText("我先看一眼。")).toBeVisible({ timeout: 60_000 })
+    await expect(page.getByRole("main").getByText(/README\.md/).first()).toBeVisible({ timeout: 60_000 })
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 60_000 })
+    // 再等一拍，让 tool_files → 账本 → listArtifacts 这条链走完；断言的是「没有」，等一拍才不是空等
+    await page.waitForTimeout(1500)
+    await expect(page.getByText("本轮产出未知")).toHaveCount(0)
+    await expect(page.getByRole("group", { name: "本轮生成的文件" })).toHaveCount(0)
+  })
+})
+
 /** 与 e2e/cli-agent.spec.ts 同一份假 CLI */
 const FAKE = resolve(import.meta.dirname, "fixtures/claude")
 const PROVIDERS = `agents:

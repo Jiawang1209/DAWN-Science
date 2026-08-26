@@ -4867,6 +4867,8 @@ pre {
 .right-dock .dock-tabs-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; }
 .right-dock .dock-tab-btn:hover { color: var(--dawn-text-1); }
+/** 产物格的计数角标 `产物 (N)`（spec 2026-08-26-产物 §5）：只在有产物时画，可访问名不受它影响 */
+.right-dock .dock-tab-badge { margin-left: 4px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 /**
  * 选中那一格：**字变实 + 一条底线**。
  * 只靠颜色的话，色觉差异的人读不出「现在在哪一格」——

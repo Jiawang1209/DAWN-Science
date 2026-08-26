@@ -54,7 +54,7 @@ function 取文本(content: string | { type: string; text?: string }[]): string 
     .map((c) => (c.type === "text" ? (c.text ?? "") : c.type === "image" ? "（图片）" : ""))
     .join("")
 }
-import { ProvenanceProbe, 套上溯源, 并进登记新建 } from "./provenance.js"
+import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
@@ -638,7 +638,19 @@ export class NativeRuntime implements AgentRuntime {
           const handle = await probe?.begin(name, params)
           try {
             const r = await original(toolCallId, params, signal, onUpdate, ctx)
-            if (!(r as { isError?: boolean } | undefined)?.isError) for (const [p, 有] of 之前) 产物.登记新建(p, 有)
+            if (!(r as { isError?: boolean } | undefined)?.isError) {
+              for (const [p, 有] of 之前) 产物.登记新建(p, 有)
+              /**
+               * 只读工具**按设计**不写文件——这是我们自己写的工具，白名单本身就是这条声明；
+               * 发空数组是「确认没写」，不是猜（不变式 5）。（2026-08-26，审查 A）
+               *
+               * 不发的话这次调用的 Run 上 `files_created` 是 NULL，被读成「不知道」，
+               * 一段只 read 的普通对话就被标成「本轮产出未知」——主路径上的一句假话。
+               * 只在**成功**时发：被拒 / 失败的那次没执行，没什么可确认的。
+               * `subagent` 不经这条包装（见 `toolsFor`），不会被误发空事实。
+               */
+              if (probe && !isProducing(name)) emit({ kind: "tool_files", sessionId, toolCallId, ...只读工具的空事实() })
+            }
             return r
           } finally {
             if (handle) {

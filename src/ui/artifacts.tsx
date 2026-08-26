@@ -15,7 +15,6 @@ export function ArtifactsPanel({
   onOpenInFiles,
   onDownload,
   onOpenExternally,
-  onInsertReference,
   focus,
   onReload,
 }: {
@@ -28,7 +27,6 @@ export function ArtifactsPanel({
    */
   onDownload?: ((path: string) => void) | undefined
   onOpenExternally: (path: string) => void
-  onInsertReference?: ((path: string) => void) | undefined
   /**
    * 外面（产物条）点了某个产物：直接进它的预览。
    * `nonce` 每次点击都要变——同一个 path 从「回到清单」再点回来也得能重新打开，
@@ -176,16 +174,6 @@ export function ArtifactsPanel({
                     <Button variant="ghost" size="inline" aria-label={tf("在文件里定位 {0}", a.path)} onClick={() => onOpenInFiles(a.path)}>
                       ⌖
                     </Button>
-                    {onInsertReference ? (
-                      <Button
-                        variant="ghost"
-                        size="inline"
-                        aria-label={tf("把 {0} 插成引用", a.path)}
-                        onClick={() => onInsertReference(a.path)}
-                      >
-                        @
-                      </Button>
-                    ) : null}
                   </span>
                 </li>
               ))}

@@ -8,11 +8,12 @@
  * 随实现一起作废。
  */
 import { describe, expect, it } from "vitest"
-import { mkdtempSync } from "node:fs"
+import { mkdtempSync, writeFileSync } from "node:fs"
+import { execFileSync } from "node:child_process"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { NativeRuntime } from "../../src/runtime/native.js"
-import type { SessionSpec } from "../../src/runtime/types.js"
+import type { AgentEvent, SessionSpec } from "../../src/runtime/types.js"
 import type { Credential, CredentialInfo, CredentialStore } from "@earendil-works/pi-ai"
 
 /** 不落盘、不打网络的凭证替身 */
@@ -149,5 +150,67 @@ describe("NativeRuntime · 换模型", () => {
     const r = runtime()
     await r.start(specFor({ provider: "deepseek", model: "deepseek-v4-flash" }))
     await expect(r.setModel("n1", "没这个 provider", "x")).rejects.toThrow(/provider/)
+  })
+})
+
+/**
+ * **只读内置工具按设计发空事实**（2026-08-26，审查 A）。
+ *
+ * `read` 不在 `PRODUCING_TOOLS` 里，探针不观察它——此前它因此从不发 `tool_files`，
+ * 那次调用的 Run 上 `files_created` 是 NULL，被账本读成「不知道」，一段只 read 的普通对话
+ * 就被标成「本轮产出未知」。走的是 `gatedTools` 真实的包装路径（与 wiring.test 同一条缝）。
+ */
+describe("NativeRuntime · 只读工具的空事实(审查 A)", () => {
+  function 工具们(rt: NativeRuntime, workspace: string): Record<string, unknown>[] {
+    const 拿 = (rt as unknown as { gatedTools(cwd: string, sessionId: string): Record<string, unknown>[] | undefined }).gatedTools.bind(rt)
+    const out = 拿(workspace, "s1")
+    expect(out).toBeDefined()
+    return out!
+  }
+  const 跑 = (工具: Record<string, unknown>, id: string, params: Record<string, unknown>) =>
+    (工具.execute as (id: string, p: unknown, s: undefined, u: undefined, c: undefined) => Promise<{ isError?: boolean }>)(id, params, undefined, undefined, undefined)
+  const 文件事实 = (事件: AgentEvent[]) => 事件.filter((e): e is Extract<AgentEvent, { kind: "tool_files" }> => e.kind === "tool_files")
+
+  it("read 成功 → 发一条四个空数组的 tool_files(确认没写,不是猜);write 仍走探针", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-readonly-"))
+    execFileSync("git", ["init", "-q"], { cwd: dir })
+    writeFileSync(join(dir, "seed.txt"), "hi\n")
+    const rt = runtime()
+    const 事件: AgentEvent[] = []
+    rt.attach("s1" as never, (e) => 事件.push(e))
+    const 全部 = 工具们(rt, dir)
+    const read = 全部.find((t) => t.name === "read")!
+    const r = await 跑(read, "c-read", { path: "seed.txt" })
+    expect(r.isError ?? false).toBe(false)
+    expect(文件事实(事件)).toEqual([
+      { kind: "tool_files", sessionId: "s1", toolCallId: "c-read", filesWritten: [], filesRead: [], mayIncludeUserEdits: false, filesCreated: [] },
+    ])
+    // 对照:write 那条仍是探针观察出来的事实,不是空事实
+    const write = 全部.find((t) => t.name === "write")!
+    await 跑(write, "c-write", { path: "out.txt", content: "x" })
+    const w = 文件事实(事件).find((e) => e.toolCallId === "c-write")
+    expect(w?.filesCreated).toEqual(["out.txt"])
+  })
+
+  it("read 失败(文件不在)→ 不发:没执行成功就没什么可确认的", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-readonly-"))
+    execFileSync("git", ["init", "-q"], { cwd: dir })
+    const rt = runtime()
+    const 事件: AgentEvent[] = []
+    rt.attach("s1" as never, (e) => 事件.push(e))
+    const read = 工具们(rt, dir).find((t) => t.name === "read")!
+    await 跑(read, "c-miss", { path: "没有这个文件.txt" }).catch(() => undefined)
+    expect(文件事实(事件)).toEqual([])
+  })
+
+  it("关掉 provenance 时不发——那时整个探针都不在,发空事实就成了没有依据的声明", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-readonly-"))
+    writeFileSync(join(dir, "seed.txt"), "hi\n")
+    const rt = new NativeRuntime({ credentials: fakeCredentials(), provenance: false, gate: () => ({ kind: "allow" }) })
+    const 事件: AgentEvent[] = []
+    rt.attach("s1" as never, (e) => 事件.push(e))
+    const read = 工具们(rt, dir).find((t) => t.name === "read")!
+    await 跑(read, "c-read", { path: "seed.txt" })
+    expect(文件事实(事件)).toEqual([])
   })
 })

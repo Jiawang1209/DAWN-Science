@@ -23,6 +23,19 @@ describe("本轮产物", () => {
     expect(本轮产物(items, "a1", { artifacts: [], unknown: [] }, "native")).toEqual({ kind: "none" })
   })
 
+  it("只读工具发了空事实（read 的 filesCreated = []）→ 不在 unknown 里 → none，普通对话不画「产出未知」（审查 A）", () => {
+    const 只读 = [turn("u", "user"), { type: "tool", id: "r1", name: "read", input: {}, status: "ok" } as TranscriptItem, turn("a", "agent")]
+    expect(本轮产物(只读, "a", { artifacts: [], unknown: [] }, "native")).toEqual({ kind: "none" })
+  })
+
+  it("清单取失败 → unknown/load_failed 带原因，**不是 none**；pty/cli 仍优先说 invisible_agent（审查 B）", () => {
+    const 坏 = { artifacts: [], unknown: [], error: "ECONNRESET" }
+    expect(本轮产物(items, "a1", 坏, "native")).toEqual({ kind: "unknown", reason: "load_failed", error: "ECONNRESET" })
+    // 这一轮没有工具调用也一样：清单没取到，就不知道
+    expect(本轮产物([turn("u", "user"), turn("a", "agent")], "a", 坏, "native")).toEqual({ kind: "unknown", reason: "load_failed", error: "ECONNRESET" })
+    expect(本轮产物(items, "a1", 坏, "cli")).toEqual({ kind: "unknown", reason: "invisible_agent" })
+  })
+
   it("外部 CLI 会话：一律未知，原因 invisible_agent", () => {
     expect(本轮产物([turn("u", "user"), turn("a", "agent")], "a", { artifacts: [], unknown: [] }, "pty")).toEqual({ kind: "unknown", reason: "invisible_agent" })
     expect(本轮产物([turn("u", "user"), turn("a", "agent")], "a", { artifacts: [], unknown: [] }, "cli")).toEqual({ kind: "unknown", reason: "invisible_agent" })

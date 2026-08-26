@@ -74,6 +74,15 @@ describe("cells()", () => {
     expect(r[0]?.outputs).toHaveLength(1)
   })
 
+  it("cell 项的 interrupted 透传；没有就没有这个键（7.27）", () => {
+    const r = cells([
+      { type: "cell", id: "c1", language: "python", code: "loop", status: "error", startedAt: 0, endedAt: 1, interrupted: true },
+      { type: "cell", id: "c2", language: "python", code: "1", status: "ok", startedAt: 2 },
+    ])
+    expect(r[0]?.interrupted).toBe(true)
+    expect("interrupted" in r[1]!).toBe(false)
+  })
+
   it("别的工具（bash/write）不算 cell；没有 run_code 的对话 → []", () => {
     const items: TranscriptItem[] = [
       { type: "turn", id: "u1", who: "user", text: "hi", final: true },

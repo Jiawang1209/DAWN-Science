@@ -6365,6 +6365,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-running { color: var(--dawn-live); }
 .nb-code { margin: 0; padding: var(--dawn-space-2); background: var(--dawn-fill-2); border-radius: var(--dawn-radius-sm); font-family: var(--dawn-font-mono); font-size: var(--dawn-code-size); line-height: var(--dawn-code-leading); overflow-x: auto; white-space: pre; }
 .nb-orphan { margin: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-style: italic; }
+.nb-interrupted { margin: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-style: italic; }
 .nb-input { display: flex; flex-direction: column; gap: var(--dawn-space-1); padding: var(--dawn-space-2) var(--dawn-space-3); border-top: 1px solid var(--dawn-stroke-3); }
 .nb-input-row { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .nb-input-row .nb-lang-select { width: auto; }

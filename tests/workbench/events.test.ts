@@ -747,6 +747,18 @@ describe("笔记本（2026-08-26）", () => {
     expect(kernelUpdates[1]).toMatchObject({ kernels: [] })
   })
 
+  it("finishCell 带 interrupted: true 时 cell 项落上这个字段；不带就没有这个键", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    const id = h.beginCell("a", "python", "while True: pass")
+    h.finishCell("a", id!, { status: "error", interrupted: true })
+    expect(h.subscribe("a").items.at(-1)).toMatchObject({ type: "cell", status: "error", interrupted: true })
+    const id2 = h.beginCell("a", "python", "1")
+    h.finishCell("a", id2!, { status: "ok" })
+    expect("interrupted" in (h.subscribe("a").items.at(-1) as object)).toBe(false)
+  })
+
   it("pty 会话 beginCell 不做事、返回 undefined", () => {
     const h = hub()
     h.track("a", "pty")

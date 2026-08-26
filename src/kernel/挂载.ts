@@ -66,8 +66,21 @@ export interface 挂载选项 {
    * 起来了、开始跑、跑完了、退出了、被收掉了——每一步都叫一次，
    * 调用方拿 `状态列表(对话)` 取整份重发（与 `team_changed` 同一种「整份换掉」的推法）。
    * **可选**：不接的话状态只是记在这里，谁来问谁拿。
+   *
+   * 第二个参数是**这一次变的是哪台、变成了什么**（审查 2026-08-26）：转录要在起内核、
+   * 内核退出时出声，而 `状态列表` 只有「现在的样子」——`starting` 那一小段表里没有这台，
+   * 光看列表说不出「正在起」。退出时带 `reason`（运行时给了退出码才有）。
    */
-  状态变了?: (对话: SessionId) => void
+  状态变了?: (对话: SessionId, 变化: 内核状态变化) => void
+}
+
+/** 某一台内核这一次的状态变化。`state: "exited"` 时 `reason` 可有（非零退出码等） */
+export interface 内核状态变化 {
+  language: 内核语言
+  state: 内核状态
+  reason?: string
+  /** 是我们自己 `收()` 掉的，不是内核自己退出——转录不该为它喊「内核退出了」 */
+  收掉?: true
 }
 
 /**
@@ -76,6 +89,10 @@ export interface 挂载选项 {
  */
 export type 内核状态 = "starting" | "idle" | "busy" | "exited"
 
+/**
+ * 给界面看的一台内核。**故意与协议的 `KernelState` 同形**：内核层不 import 协议
+ * （方向是协议依赖运行时，不反过来），所以这里另写一份，`wiring.ts` 直接透传。
+ */
 export interface 内核状态项 {
   language: 内核语言
   state: 内核状态
@@ -189,10 +206,10 @@ export class 对话内核 {
   }
 
   /** 改一台的状态并出声。**相同不叫**：省得每条 busy 重复推一份一样的列表 */
-  private 置状态(一: 一台, 状态: 内核状态): void {
+  private 置状态(一: 一台, 状态: 内核状态, reason?: string): void {
     if (一.状态 === 状态) return
     一.状态 = 状态
-    this.opts.状态变了?.(一.对话)
+    this.opts.状态变了?.(一.对话, { language: 一.语言, state: 状态, ...(reason ? { reason } : {}) })
   }
 
   /**
@@ -204,7 +221,16 @@ export class 对话内核 {
   async 拿(对话: SessionId, 语言: 内核语言): Promise<一台> {
     const 键 = 对话内核.键(对话, 语言)
     const 已有 = this.表.get(键)
-    if (已有) return 已有
+    if (已有 && 已有.状态 !== "exited") return 已有
+    if (已有) {
+      /**
+       * 退出了的那台留在表里只会让下一次报「没有这个内核会话」（运行时早把它删了）——
+       * 摘掉，下面按「没有」起新的一台。变量自然没了，转录那边由退出通知说过了。
+       */
+      已有.解监听()
+      this.表.delete(键)
+      this.反查.delete(已有.内核会话)
+    }
 
     // TOCTOU 收口(H4):已经有人在起同一台就等它,不再起第二台
     const 起中的 = this.起中.get(键)
@@ -242,6 +268,8 @@ export class 对话内核 {
     }
 
     const 内核会话 = `${对话}::${语言}` as SessionId
+    // 起之前先说一声「正在起」：解释器有了、目录有了，剩下的就是等进程——这一段人得看得见
+    this.opts.状态变了?.(对话, { language: 语言, state: "starting" })
     const handle = await this.opts.runtime.start({
       sessionId: 内核会话,
       workspace,
@@ -273,10 +301,12 @@ export class 对话内核 {
         // 后面还有排着的段：这个 idle 只是两段之间的缝，对笔记本来说它还在跑
         else if (ev.entry.state === "idle" && 一.排队中 === 0) this.置状态(一, "idle")
       } else if (ev.kind === "exited") {
-        this.置状态(一, "exited")
+        // 运行时的 exited 只带退出码（`src/runtime/types.ts`），非零就是原因的全部线索
+        const code = (e as { exitCode?: number }).exitCode
+        this.置状态(一, "exited", typeof code === "number" && code !== 0 ? `退出码 ${code}` : undefined)
       }
     })
-    this.opts.状态变了?.(对话)
+    this.opts.状态变了?.(对话, { language: 语言, state: "idle" })
 
     /**
      * **一起来就把输出接到对话上**，而不是等第一次执行。
@@ -327,6 +357,9 @@ export class 对话内核 {
     代码: string,
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     const 输出: unknown[] = []
+    // 运行时对空代码静默不执行（`KernelRuntime.write` 直接 return），等 idle 等不到——
+    // 不收口的话这台永远 busy，后面排的段全卡住。空的就当跑完了，什么都没有
+    if (代码.trim() === "") return Promise.resolve({ 内核会话: 一.内核会话, 语言, 输出 })
 
     return new Promise((resolve, reject) => {
       let 解开: (() => void) | undefined
@@ -381,6 +414,7 @@ export class 对话内核 {
   async 收(对话: SessionId): Promise<{ 收了: 内核语言[]; 没收掉: { 语言: 内核语言; 原因: string }[] }> {
     const 收了: 内核语言[] = []
     const 没收掉: { 语言: 内核语言; 原因: string }[] = []
+    const 摘了: 内核语言[] = []
     for (const 一 of [...this.表.values()].filter((k) => k.对话 === 对话)) {
       // 先摘耳朵再停：stop 引出的 exited 是我们自己要的，不该再当「状态变了」推一遍
       一.解监听()
@@ -393,9 +427,11 @@ export class 对话内核 {
       }
       this.表.delete(对话内核.键(对话, 一.语言))
       this.反查.delete(一.内核会话)
+      摘了.push(一.语言)
     }
-    // 列表少了几项，也是「状态变了」——**在表里删完之后叫**，回调里 `状态列表` 才看不到它
-    this.opts.状态变了?.(对话)
+    // 列表少了几项，也是「状态变了」——**在表里删完之后叫**，回调里 `状态列表` 才看不到它。
+    // 收掉是我们自己要的，不是内核退出，所以每台一次 `exited`、不带原因
+    for (const 语言 of 摘了) this.opts.状态变了?.(对话, { language: 语言, state: "exited", 收掉: true })
     return { 收了, 没收掉 }
   }
 

@@ -32,7 +32,7 @@ import { CliRuntime } from "../runtime/cli/runtime.js"
 import { AcpRuntime } from "../runtime/acp/runtime.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { KernelRuntime } from "../runtime/kernel.js"
-import { 对话内核 } from "../kernel/挂载.js"
+import { 对话内核, type 内核状态变化 } from "../kernel/挂载.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
 import { SettingsStore } from "../store/settings.js"
@@ -45,6 +45,7 @@ import { ScheduleStore } from "../store/schedules.js"
 import { RemoteConnections } from "../remote/connections.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
 import type { RemoteState, SshClientLike } from "../remote/ssh.js"
+import type { SessionId } from "../runtime/types.js"
 import { WorkbenchServer } from "../workbench/server.js"
 import { MemoryStore, gitBranch } from "../memory/store.js"
 import { 渲染快照 } from "../memory/snapshot.js"
@@ -209,6 +210,20 @@ export interface Workbench {
   needsGracefulShutdown(): boolean
 }
 
+/**
+ * 内核起 / 退出在转录里出声（spec 笔记本 §3/§6，审查 2026-08-26）。
+ *
+ * 胶囊只在坞的笔记本格里，人多半在看对话区——第一次跑代码等好几秒没回音、
+ * 或者变量突然全没了，对话里得有一行说清发生了什么。`收掉` 的不喊：那是会话自己在收摊。
+ */
+export function 内核变化出声(events: SessionTranscripts, 对话: SessionId, 变化: 内核状态变化): void {
+  const 名 = 变化.language === "R" ? "R" : "Python"
+  if (变化.state === "starting") events.notice(对话, `正在起 ${名} 内核…`)
+  else if (变化.state === "exited" && !变化.收掉) {
+    events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
+  }
+}
+
 export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   // 缺配置就写一份带注释的默认模板，**不是抛 ENOENT**——见 loader.ts 的说明
   const registry = loadRegistryOrDefault(opts.configPath)
@@ -318,7 +333,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * `events` 在下面才建，但与上面的 `转发` 一样只在回调里引用——第一次有内核起来时它早就在了；
      * 不另加 setter、也不挪构造顺序，改动最小。
      */
-    状态变了: (对话) => events.setKernels(对话, 对话的内核.状态列表(对话)),
+    状态变了: (对话, 变化) => {
+      events.setKernels(对话, 对话的内核.状态列表(对话))
+      内核变化出声(events, 对话, 变化)
+    },
   })
 
   /**

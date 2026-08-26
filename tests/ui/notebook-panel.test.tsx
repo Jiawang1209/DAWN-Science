@@ -48,6 +48,18 @@ describe("NotebookPanel · 头部胶囊", () => {
     expect(onInterrupt).toHaveBeenCalledWith("R")
   })
 
+  it("按下「中断」后胶囊写「正在中断…」，直到内核状态下一次变化才换回", () => {
+    const { rerender } = render(<NotebookPanel {...基本} kernels={[{ language: "python", state: "busy" }]} cells={[]} />)
+    fireEvent.click(screen.getByRole("button", { name: "中断" }))
+    expect(screen.getByText("Python · 正在中断…")).toBeTruthy()
+    // 同一份状态再渲染：还在中断中
+    rerender(<NotebookPanel {...基本} kernels={[{ language: "python", state: "busy" }]} cells={[]} />)
+    expect(screen.getByText("Python · 正在中断…")).toBeTruthy()
+    rerender(<NotebookPanel {...基本} kernels={[{ language: "python", state: "idle" }]} cells={[]} />)
+    expect(screen.getByText("Python · 空闲")).toBeTruthy()
+    expect(screen.queryByText(/正在中断/)).toBeNull()
+  })
+
   it("正在起 / 已退出 也有各自的字", () => {
     render(
       <NotebookPanel
@@ -118,6 +130,13 @@ describe("NotebookPanel · 空态与提示条", () => {
     expect(screen.queryByRole("textbox")).toBeNull()
     expect(screen.queryByText("x = 1")).toBeNull()
   })
+
+  it("kind: kernel 的独立内核会话**有**内核——不说「没有内核」，说它的输出在对话区的 Console 里", () => {
+    render(<NotebookPanel {...基本} sessionKind="kernel" kernels={undefined} cells={[]} />)
+    expect(screen.getByText("独立内核会话的输出就在对话区的 Console 里；笔记本只管普通对话")).toBeTruthy()
+    expect(screen.queryByText(/这种会话没有内核/)).toBeNull()
+    expect(screen.queryByRole("textbox")).toBeNull()
+  })
 })
 
 describe("NotebookPanel · cell 流", () => {
@@ -142,6 +161,22 @@ describe("NotebookPanel · cell 流", () => {
     expect(screen.getByText("运行中")).toBeTruthy()
     expect(screen.getAllByText("Python").length).toBeGreaterThan(0)
     expect(screen.getAllByText("R").length).toBeGreaterThan(0)
+  })
+
+  it("被中断的 cell：输出后面跟一句「（已中断）」；普通报错的不带", () => {
+    render(
+      <NotebookPanel
+        {...基本}
+        kernels={[]}
+        cells={[
+          cell({ id: "a", n: 1, status: "error", interrupted: true, outputs: [输出("KeyboardInterrupt")] }),
+          cell({ id: "b", n: 2, status: "error" }),
+        ]}
+      />,
+    )
+    const 标 = screen.getAllByText("（已中断）")
+    expect(标).toHaveLength(1)
+    expect(标[0]!.closest(".nb-cell")!.textContent).toContain("KeyboardInterrupt")
   })
 
   it("cell 流套在贴底滚动容器里（.nb-cells > .nb-cells-inner）——滚动行为本身归库管", () => {

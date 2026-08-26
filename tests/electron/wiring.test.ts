@@ -8,7 +8,8 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createWorkbench } from "../../src/electron/wiring.js"
+import { createWorkbench, 内核变化出声 } from "../../src/electron/wiring.js"
+import { SessionTranscripts } from "../../src/workbench/events.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { NativeRuntime } from "../../src/runtime/native.js"
 import type { AgentEvent } from "../../src/runtime/types.js"
@@ -537,5 +538,40 @@ describe("run_code · 接线", () => {
     for (const t of ["read", "write", "edit", "bash"]) {
       expect(名, `内置工具 ${t} 没了`).toContain(t)
     }
+  })
+})
+
+/**
+ * 内核起 / 退出要在转录里出声（spec 笔记本 §3/§6，审查 2026-08-26）。
+ * `createWorkbench` 里那句 `状态变了` 把 `内核变化出声` 接在 `setKernels` 旁边；这里验的是它说的话。
+ */
+describe("内核变化出声 · 接线", () => {
+  const 收集 = () => {
+    const events = new SessionTranscripts({ terminalMaxChars: 1000 })
+    events.track("c1", "native")
+    events.subscribe("c1")
+    const 通知 = () => events.peekItems("c1").filter((i) => i.type === "notice").map((i) => (i as { text: string }).text)
+    return { events, 通知 }
+  }
+
+  it("starting → 「正在起 Python 内核…」", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "python", state: "starting" })
+    expect(通知()).toEqual(["正在起 Python 内核…"])
+  })
+
+  it("exited → 「R 内核退出了：<原因>；再跑一次会起新的一台」；没原因就不带冒号", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "R", state: "exited", reason: "退出码 137" })
+    内核变化出声(events, "c1", { language: "python", state: "exited" })
+    expect(通知()).toEqual(["R 内核退出了：退出码 137；再跑一次会起新的一台", "Python 内核退出了；再跑一次会起新的一台"])
+  })
+
+  it("idle / busy 不出声；我们自己收掉的也不出声", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "python", state: "idle" })
+    内核变化出声(events, "c1", { language: "python", state: "busy" })
+    内核变化出声(events, "c1", { language: "python", state: "exited", 收掉: true })
+    expect(通知()).toEqual([])
   })
 })

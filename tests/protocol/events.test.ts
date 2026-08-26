@@ -103,6 +103,12 @@ describe("transcript 条目", () => {
       }).success,
     ).toBe(false)
   })
+
+  it("cell 项可带 interrupted: true（7.27）——只认 true，不收 false", () => {
+    const base = { type: "cell", id: "c", language: "python", code: "1", status: "error", startedAt: 0, endedAt: 1 }
+    expect(TranscriptItemSchema.safeParse({ ...base, interrupted: true }).success).toBe(true)
+    expect(TranscriptItemSchema.safeParse({ ...base, interrupted: false }).success).toBe(false)
+  })
 })
 
 describe("会话快照", () => {
@@ -399,9 +405,12 @@ describe("协议版本 · 5.5", () => {
    *   快照/更新新增 `kernels`（内核状态列表，`kernels` 更新与 `team` 同一纪律：整份换掉）；
    *   新增操作 `runInKernel` / `interruptKernel`；`listVariables.request` 加可选 `language`。
    *   都是新增，仍是 minor。
+   *
+   * 7.27（2026-08-26）：`cell` 项加可选 `interrupted: true`（按「中断」停下的那段）。
+   *   纯新增可选字段，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.26")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.27")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

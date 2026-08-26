@@ -241,3 +241,71 @@ describe("对话内核 · 状态（笔记本，2026-08-26）", () => {
     expect(await k2.变量(c1, "python")).toBeUndefined()
   })
 })
+
+describe("对话内核 · 空代码 / 退出 / 换新（审查 2026-08-26）", () => {
+  it("空代码：立刻解析、输出为空、状态回 idle、不写进运行时；下一段照常跑", async () => {
+    const { runtime, 收到, 发 } = 假内核()
+    const k = 挂上(runtime)
+    // 运行时对空代码静默不执行（`KernelRuntime.write` 直接 return），等 idle 等不到——这里得自己收口
+    const r = await k.执行(c1, "python", "   \n")
+    expect(r.输出).toEqual([])
+    expect(收到).toEqual([])
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "idle" }])
+    const p = k.执行(c1, "python", "1")
+    await new Promise((r) => setTimeout(r, 0))
+    expect(收到).toEqual(["1"])
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await p
+  })
+
+  it("状态变了 带上是哪台、变成了什么：起之前 starting，退出带原因（非零退出码）", async () => {
+    const { runtime, 发 } = 假内核()
+    const 变化: unknown[] = []
+    const k = new 对话内核({
+      runtime,
+      workspaceOf: () => "/w",
+      sessionDirOf: () => "/d",
+      interpreterOf: () => "/py",
+      状态变了: (_对话, 变) => 变化.push(变),
+    })
+    await k.拿(c1, "python")
+    expect(变化[0]).toEqual({ language: "python", state: "starting" })
+    expect(变化[1]).toEqual({ language: "python", state: "idle" })
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 137 })
+    expect(变化.at(-1)).toEqual({ language: "python", state: "exited", reason: "退出码 137" })
+  })
+
+  it("收() 报的 exited 带 收掉 标记——那不是内核自己退出", async () => {
+    const { runtime } = 假内核()
+    const 变化: unknown[] = []
+    const k = new 对话内核({ runtime, workspaceOf: () => "/w", sessionDirOf: () => "/d", interpreterOf: () => "/py", 状态变了: (_o, 变) => 变化.push(变) })
+    await k.拿(c1, "R")
+    await k.收(c1)
+    expect(变化.at(-1)).toEqual({ language: "R", state: "exited", 收掉: true })
+  })
+
+  it("退出了的那台再 拿()：摘掉旧的、起新的一台，而不是回「没有这个内核会话」", async () => {
+    const { runtime, 发, 收到 } = 假内核()
+    let 起了 = 0
+    const rt = runtime as unknown as { start: (s: { sessionId: string }) => Promise<unknown> }
+    const 原start = rt.start
+    rt.start = async (s) => {
+      起了++
+      return 原start(s)
+    }
+    const k = 挂上(runtime)
+    await k.拿(c1, "python")
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1 })
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "exited" }])
+    const 新 = await k.拿(c1, "python")
+    expect(起了).toBe(2)
+    expect(新.状态).toBe("idle")
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "idle" }])
+    // 新的一台能跑
+    const p = k.执行(c1, "python", "2")
+    await new Promise((r) => setTimeout(r, 0))
+    expect(收到).toEqual(["2"])
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await p
+  })
+})

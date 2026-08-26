@@ -54,6 +54,8 @@ function 假对话内核(转发: (对话: string, 语言: "python" | "R", 事件
     中断过: [] as [string, "python" | "R"][],
     下一轮输出: [] as unknown[],
     下一轮抛: undefined as string | undefined,
+    /** 给了就把下一轮 `执行` 挂在这个 promise 上——让用例在「跑到一半」时按中断 */
+    下一轮等: undefined as Promise<void> | undefined,
     变量答复: undefined as unknown,
     有(对话: string, 语言: "python" | "R") { return 台.has(键(对话, 语言)) },
     列(对话: string): ("python" | "R")[] {
@@ -64,6 +66,11 @@ function 假对话内核(转发: (对话: string, 语言: "python" | "R", 事件
       this.执行过.push([对话, 语言, 代码])
       if (this.下一轮抛) throw new Error(this.下一轮抛)
       台.add(键(对话, 语言))
+      if (this.下一轮等) {
+        const 等 = this.下一轮等
+        this.下一轮等 = undefined
+        await 等
+      }
       // 真内核每条输出都带溯源（转录按它认是哪台、第几版）；假的统一盖一份
       const 输出 = this.下一轮输出.map((e) => ({
         ...(e as object),
@@ -469,6 +476,44 @@ describe("真实后端 · 经服务端端到端", () => {
     const cells = ctx.events.subscribe(sid).items.filter((i) => i.type === "cell")
     expect(cells.at(-1)).toMatchObject({ language: "python", status: "error" })
     expect(ctx.runStore.listByProject(pid, {}).filter((r) => r.requestType === "execute_python")).toHaveLength(1)
+  })
+
+  it("runInKernel 空代码 → invalid_request，不放 cell、不进内核（否则运行时静默不执行、cell 永远 running）", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    await expect(ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "  \n\t" })).rejects.toMatchObject({ workbenchCode: "invalid_request", message: /空的/ })
+    expect(ctx.events.peekItems(sid).filter((i) => i.type === "cell")).toHaveLength(0)
+    expect(ctx.fakeKernels.执行过).toHaveLength(0)
+  })
+
+  it("跑到一半按 interruptKernel：那段 cell 收成 error + interrupted；之后再跑的不带这个标", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "1" })
+    let 放行!: () => void
+    ctx.fakeKernels.下一轮等 = new Promise<void>((r) => (放行 = r))
+    ctx.fakeKernels.下一轮输出 = [{ kind: "error", ename: "KeyboardInterrupt", evalue: "", traceback: [] }, { kind: "status", state: "idle" }]
+    const p = ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "while True: pass" })
+    await new Promise((r) => setTimeout(r, 0))
+    await ctx.backend.interruptKernel({ sessionId: sid, language: "python" })
+    放行()
+    const { cellId } = (await p) as { cellId: string }
+    const cell = ctx.events.peekItems(sid).find((i) => i.id === cellId)
+    expect(cell).toMatchObject({ type: "cell", status: "error", interrupted: true })
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    const { cellId: c3 } = (await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "2" })) as { cellId: string }
+    expect("interrupted" in (ctx.events.peekItems(sid).find((i) => i.id === c3) as object)).toBe(false)
+  })
+
+  it("没有在跑的 cell 时按中断（比如是 agent 的 run_code 在跑）：不给下一段 cell 乱贴 interrupted", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "1" })
+    await ctx.backend.interruptKernel({ sessionId: sid, language: "python" })
+    const { cellId } = (await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "2" })) as { cellId: string }
+    expect("interrupted" in (ctx.events.peekItems(sid).find((i) => i.id === cellId) as object)).toBe(false)
   })
 
   it("interruptKernel 转到 对话内核.中断；没这台 → conflict", async () => {

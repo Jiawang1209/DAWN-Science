@@ -89,7 +89,7 @@ import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts } from "./state/sync.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom } from "./state/transcript.js"
-import { NotebookPanel, cells as 转录里的cells } from "./notebook.js"
+import { NotebookPanel, cells as 转录里的cells, type 语言 as 内核语言 } from "./notebook.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -195,8 +195,6 @@ import {
 
 import { t, tf, $lang } from "./i18n/index.js"
 
-/** 笔记本能跑的语言——与 `notebook.tsx` 里未导出的 `语言` 同形（不改那个文件，它在审） */
-type 内核语言 = "python" | "R"
 /**
  * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
  *   默认参数每次渲染都求值，于是每次渲染都得到一个新的 client 身份，

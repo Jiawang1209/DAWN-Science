@@ -1665,8 +1665,8 @@ export const OPERATIONS = {
    * 走**与 agent 的 `run_code` 同一台内核**（`对话内核.执行`）——同一台内核里
    * 敲的东西互相看得见彼此定义的变量，这正是「笔记本」这件事的意义所在。
    *
-   * 响应只回 `cellId`：这段代码跑完之前，产生的 `cell` 转录项与 `kernelOutput`
-   * 都走事件流推给订阅者，**不在这次调用的响应里等它跑完**。
+   * 响应只回 `cellId`，**但要等这段跑完（内核回 idle）才回**——后端在响应前收尾 cell、记账、
+   * 攒不在场缓冲。产生的 `cell` 转录项与 `kernelOutput` 走事件流推给订阅者，不装在响应里。
    */
   runInKernel: {
     request: z

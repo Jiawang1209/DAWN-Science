@@ -283,6 +283,11 @@ const CellItem = z
     endedAt: z.int().nonnegative().optional(),
     /** 账本上那条 run。**拿不到就没有这个字段**，不是空串 */
     runId: z.string().min(1).optional(),
+    /**
+     * 这段是被人按「中断」停下的（7.27）。**只有 true 一种取值**：没被中断就没有这个字段，
+     * 而不是 `false`——「跑完了」与「没记录」在这里是同一件事，不需要第三态。
+     */
+    interrupted: z.literal(true).optional(),
   })
   .strict()
 

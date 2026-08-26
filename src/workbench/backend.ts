@@ -783,6 +783,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   /** 封顶（审查 Important）：最多 20 段、合计 32 KB；超了丢最旧的，并在前缀开头说省了几条——不静默截断 */
   const 缓冲最多段 = 20
   const 缓冲最多字节 = 32 * 1024
+  /** 笔记本：这一轮里按过「中断」的 `<会话>:<语言>`——收尾时据此给 cell 标 `interrupted`（审查 2026-08-26） */
+  const 中断请求中 = new Set<string>()
   const 攒一段 = (sessionId: string, 一段: string) => {
     const b = 不在场缓冲.get(sessionId) ?? { 段: [], 省了: 0 }
     b.段.push(一段)
@@ -2840,6 +2842,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     runInKernel: async ({ sessionId, language, code }) => {
       const k = opts.kernels
       if (!k) throw fault("internal_error", "这台没有接对话内核")
+      // 空代码在 `beginCell` 之前拦：运行时对空白静默不执行，cell 会永远 running、后面的段全排在它后面
+      if (code.trim() === "") throw fault("invalid_request", "code 是空的，没有东西可以跑")
       const cellId = events.beginCell(sessionId, language, code)
       if (!cellId) throw fault("invalid_request", "这种会话没有内核，笔记本不可用")
       /**
@@ -2847,11 +2851,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 不吞：账本照记（Run 是事实），但出声说 cell 收不了尾，否则这条 running 的 cell 就凭空消失。
        */
       const 收尾 = (结果: { status: "ok" | "error"; runId?: string }) => {
+        // 这一轮里有人按过「中断」：不管内核最后回的是 KeyboardInterrupt 还是别的，这段都算被中断的
+        const 中断了 = 中断请求中.delete(`${sessionId}:${language}`)
         if (!events.peekItems(sessionId).some((i) => i.id === cellId && i.type === "cell")) {
           console.error("[笔记本] cell 收不了尾：会话已不在", sessionId, cellId)
           return
         }
-        events.finishCell(sessionId, cellId, 结果)
+        events.finishCell(sessionId, cellId, 中断了 ? { ...结果, status: "error", interrupted: true } : 结果)
       }
       // 执行前取一次：Run 的时长要是真的（送进去到 idle），不是记账那一刻的零
       const startedAt = new Date().toISOString()
@@ -2885,6 +2891,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         throw fault("conflict", err instanceof Error ? err.message : String(err))
       }
+      /**
+       * 只在**你自己的 cell 正在跑**时记下「这轮被中断」：中断的可能是 agent 的 run_code，
+       * 那时没有 cell 可标——记下来只会贴到下一段无辜的 cell 上。
+       */
+      const 在跑 = events.peekItems(sessionId).some((i) => i.type === "cell" && i.status === "running" && i.language === language)
+      if (在跑) 中断请求中.add(`${sessionId}:${language}`)
       return {}
     },
 

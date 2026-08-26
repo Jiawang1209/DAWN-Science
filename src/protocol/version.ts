@@ -494,7 +494,11 @@
  *   `listVariables.request` 加可选 `language`——一段对话可能同时挂两台内核，
  *   只给 `sessionId` 分不出问哪台。都是新增，仍是 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.26"
+/**
+ * 7.27（2026-08-26）：`cell` 项加可选 `interrupted: true`——按「中断」停下的那段，面板要标「（已中断）」，
+ *   而不是让它与普通报错长得一样。纯新增可选字段，故 minor（与 2.7 同一条）。
+ */
+export const WORKBENCH_PROTOCOL_VERSION = "7.27"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

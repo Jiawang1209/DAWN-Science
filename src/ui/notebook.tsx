@@ -4,7 +4,7 @@
  *
  * 上半是纯函数派生（`cells()`），下半是坐在它上面的面板（`NotebookPanel`，Task 7）。
  */
-import { useState, type KeyboardEvent } from "react"
+import { useEffect, useState, type KeyboardEvent } from "react"
 import { StickToBottom } from "use-stick-to-bottom"
 import type { KernelState, TranscriptItem } from "../protocol/index.js"
 import { Button, EmptyState } from "./primitives.js"
@@ -34,6 +34,8 @@ export interface Cell {
   status: "running" | "ok" | "error"
   startedAt?: number
   runId?: string
+  /** 被人按「中断」停下的（协议 7.27）。没被中断就没有这个键 */
+  interrupted?: true
   outputs: Extract<TranscriptItem, { type: "kernelOutput" }>[]
   /**
    * 孤儿输出兜底出来的 cell——没有对应的 `run_code` 或 `cell` 条目，
@@ -58,6 +60,7 @@ interface 待开cell {
   status: "running" | "ok" | "error"
   startedAt?: number | undefined
   runId?: string | undefined
+  interrupted?: true | undefined
   orphan?: true
 }
 
@@ -98,6 +101,7 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
     if (input.language !== undefined) c.language = input.language
     if (input.startedAt !== undefined) c.startedAt = input.startedAt
     if (input.runId !== undefined) c.runId = input.runId
+    if (input.interrupted) c.interrupted = true
     if (input.orphan) c.orphan = true
     open = c
     本轮窗口.push(c)
@@ -138,6 +142,7 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
           status: item.status,
           startedAt: item.startedAt,
           runId: item.runId,
+          interrupted: item.interrupted,
         })
         break
       }
@@ -202,7 +207,8 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
 
 // ───────────────────────── 面板（Task 7，spec §5/§6） ─────────────────────────
 
-type 语言 = "python" | "R"
+/** 笔记本能跑的语言。`App.tsx` 也用它——别再抄一份 */
+export type 语言 = "python" | "R"
 
 const 语言名: Record<语言, string> = { python: "Python", R: "R" }
 
@@ -261,7 +267,24 @@ export function NotebookPanel({
   const [draft, setDraft] = useState("")
   /** `onRun` 自己抛出来的错——跟外面传进来的 `error` 分开放，各说各的 */
   const [runError, setRunError] = useState<string | undefined>(undefined)
+  /**
+   * 按过「中断」、内核还没换状态的那几台（界面本地）。中断要走一趟运行时才见效，
+   * 这一小段里胶囊还写着「运行中」、按钮还在——人会再按一次。内核状态一变就清掉。
+   */
+  const [中断中, 设中断中] = useState<ReadonlySet<语言>>(() => new Set())
+  const 状态指纹 = kernels?.map((k) => `${k.language}:${k.state}`).join(",") ?? ""
+  useEffect(() => {
+    设中断中((旧) => (旧.size ? new Set() : 旧))
+  }, [状态指纹])
 
+  if (sessionKind === "kernel") {
+    // 独立内核会话**有**内核——说「没有内核」是假话；它的输出走对话区的 Console，笔记本不管它
+    return (
+      <div className="nb">
+        <EmptyState title={t("独立内核会话的输出就在对话区的 Console 里；笔记本只管普通对话")} />
+      </div>
+    )
+  }
   if (sessionKind !== "native") {
     return (
       <div className="nb">
@@ -303,9 +326,17 @@ export function NotebookPanel({
       <div className="nb-head">
         {kernels?.map((k) => (
           <span key={k.language} className={`nb-pill nb-pill-${k.state}`}>
-            <span className="nb-pill-label">{`${语言名[k.language]} · ${状态词(k.state)}`}</span>
-            {k.state === "busy" ? (
-              <Button size="sm" onClick={() => onInterrupt(k.language)}>
+            <span className="nb-pill-label">
+              {`${语言名[k.language]} · ${中断中.has(k.language) ? t("正在中断…") : 状态词(k.state)}`}
+            </span>
+            {k.state === "busy" && !中断中.has(k.language) ? (
+              <Button
+                size="sm"
+                onClick={() => {
+                  设中断中((旧) => new Set(旧).add(k.language))
+                  onInterrupt(k.language)
+                }}
+              >
                 {t("中断")}
               </Button>
             ) : null}
@@ -343,6 +374,7 @@ export function NotebookPanel({
               {c.outputs.map((o) => (
                 <KernelOutputRow key={o.id} item={o} />
               ))}
+              {c.interrupted ? <p className="nb-interrupted">{t("（已中断）")}</p> : null}
             </div>
           </div>
         ))}

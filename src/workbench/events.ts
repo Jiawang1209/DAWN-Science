@@ -647,8 +647,8 @@ export class SessionTranscripts {
     return id
   }
 
-  /** 那段 cell 跑完了：按 id 找到它，改状态、盖上跑完的时刻。 */
-  finishCell(sessionId: SessionId, id: string, 结果: { status: "ok" | "error"; runId?: string }): void {
+  /** 那段 cell 跑完了：按 id 找到它，改状态、盖上跑完的时刻。`interrupted` 是被人按「中断」停下的 */
+  finishCell(sessionId: SessionId, id: string, 结果: { status: "ok" | "error"; runId?: string; interrupted?: true }): void {
     const e = this.entries.get(sessionId)
     const it = e?.items.find((i) => i.id === id)
     if (!e || !it || it.type !== "cell") return
@@ -657,6 +657,7 @@ export class SessionTranscripts {
       status: 结果.status,
       endedAt: this.now(),
       ...(结果.runId ? { runId: 结果.runId } : {}),
+      ...(结果.interrupted ? { interrupted: true } : {}),
     })
   }
 

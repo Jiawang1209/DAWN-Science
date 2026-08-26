@@ -647,12 +647,38 @@ pre {
 .dock-overview {
   display: flex;
   flex-direction: column;
-  gap: var(--dawn-space-4);
+  gap: var(--dawn-space-3);
   padding: var(--dawn-space-3);
   overflow: auto;
   min-height: 0;
 }
-/* 扁平：面板不套边框盒子，只用一条发丝线分隔标题 */
+/**
+ * 概览里每块一张卡（2026-08-26，作者：五块挤在一起分不清）。
+ * **只在概览格套卡**——`.panel` 在审阅格、设置里也用，全局套盒子会波及它们。
+ */
+.dock-overview > .panel {
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-panel);
+  padding: var(--dawn-space-2) var(--dawn-space-3) var(--dawn-space-3);
+}
+.dock-overview > .panel > .panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: var(--dawn-space-2);
+}
+/* 标题前一颗小方块，让五张卡各有一个视觉抓手（统一色，形状一致） */
+.dock-overview > .panel > .panel-title::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: var(--dawn-radius-xs);
+  background: color-mix(in srgb, var(--dawn-accent) 55%, transparent);
+  flex: none;
+}
 .panel { min-width: 0; }
 .panel-title {
   margin: 0 0 8px;

@@ -24,6 +24,14 @@
 - **Impact**: 无代码变更。下一步写实施计划。
 - **Verification**: 动手前核了账本 / 探针 / 坞房客的真实状态并写进 spec §1。
 
+### 2026-08-26 — 产物：对话里 `GENERATED · N` 产物条 + 坞「产物」格（data-platform 分支，主线第一步）
+
+- **Type**: feat
+- **Motivation**: 回归「数据分析平台」主线第一步。「这一轮生成了什么」此前只有 agent 嘴上说；账本记了改动却不分新建，界面上没有任何一处能实时看到产出。参考 wisp-science 的 `GENERATED · 5` 与 Claude Science 的右栏，作者两次收窄：坞里没有终端（我画错了）、这一格只要「实时看生成了什么」，版本 / 来源 / 批注挪到下一轮。
+- **What**: 探针加 `filesCreated`（git `??`/`A` ∪ 声明路径此前不在，再并进产物登记按 inode 记的新建；声明路径统一成相对工作区）；`tool_files` 事件带 `filesCreated`；账本 v16 加 `runs.files_created` / `tool_call_id`，`RunStore.artifactsOf` 一条查询推导产物（不建表、不存内容；corrupt JSON 读作不知道）；协议 7.24 加 `Artifact`、`listArtifacts`、`artifactsChanged`（只说「变了」，数据走查询）；后端 `listArtifacts` 本机 `lstat` 查实 `exists`，远端 / 越界 / 会话记录已删一律缺省；中枢 `tool_files` 有新建就推事件，**attach 回调改成先记账再呈现**（客户端收到事件回头查账本时必须已落库）且账本异常不拖垮转录；界面：`本轮产物()` 按轮派生三态（正常 / 未知 / 混合；确认没新建不画；pty/cli 一律未知；轮的边界是任意一条 turn——一条 turn = 模型一条消息）、`GeneratedStrip` chips、坞新房客「产物」= 按目录分组的实时清单 + 共用 `FilePreview`、切会话先清清单、取失败出声可重试、焦点按会话作用域。`文件类按名字` 搬到 `src/files/`。顺手修了两条 `28a5bad` 遗漏的旧 e2e（删 MCP / 解绑现在要确认）。
+- **Impact**: 协议 minor 7.23 → 7.24；schema 15 → 16（老 run 两列 NULL = 不知道）；坞多一个房客「产物」，两张开坞的视觉基线重存（diff 只是多一个标签，已逐张看过）；`"产物"` 的英文由 `artifact` 改为 `Artifact`（审阅徽标 / 技能分类同键）。非 git 工作区这一版仍是「不知道」（spec §2 已改口径）。
+- **Verification**: 单测 2308 全绿（181 文件；新增：createdSince 5、探针 6、合并 3、store 5、recorder 2、协议 2、中枢 1、后端 4、本轮产物 7、面板 6、sync 守卫 1、坞房客 1）；e2e 全量 447 + 修完两条旧用例后 10/10 复跑，新 `artifacts.spec.ts` 2 条真链路（write 新建 → 产物条 → 坞预览 → 回到清单；cli 会话画未知且不列声称的文件）；视觉基线 10/10 连验三轮；typecheck、build 干净。每个 Task 各过一次规格审查 + 一次代码审查，约 20 条审查意见全部修完。
+
 ### 2026-08-25 — 全库审查续修：架构/协议批（H1/E6/F2/F3/F5，作者拍板后实现），审查全部清零
 
 - **Type**: fix

@@ -371,6 +371,27 @@ describe("非 git 工作区走文件系统探针（2026-08-26 首用回归）", 
     rmSync(dir, { recursive: true, force: true })
   })
 
+  it("**git 不在（PATH 里找不到）也走文件系统探针**——只有超限才是真的不知道", async () => {
+    // git-facts 的 exec 只带 process.env.PATH：指到一个空目录，spawn 就 ENOENT，不是 NotAGitRepoError
+    const dir = repo()
+    const 空 = mkdtempSync(join(tmpdir(), "dawn-empty-path-"))
+    const 原PATH = process.env.PATH
+    process.env.PATH = 空
+    try {
+      const probe = new ProvenanceProbe(dir)
+      const h = await probe.begin("bash")
+      expect(h, "git 起不来不等于没有事实").toBeDefined()
+      writeFileSync(join(dir, "out.png"), "png\n")
+      const facts = await factsOf(h)
+      expect(facts.filesCreated).toEqual(["out.png"])
+      expect(facts.mayIncludeUserEdits).toBe(true)
+    } finally {
+      process.env.PATH = 原PATH
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(空, { recursive: true, force: true })
+    }
+  })
+
   it("超过上限 → begin 返回 undefined，并且**每个工作区只出一次声**", async () => {
     const dir = plainDir()
     for (let i = 0; i < 30; i++) writeFileSync(join(dir, `f${i}.txt`), "x")

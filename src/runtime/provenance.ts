@@ -32,7 +32,7 @@
 import { statSync } from "node:fs"
 import { resolve } from "node:path"
 import { 工作区内相对路径 } from "../files/paths.js"
-import { createdSince, diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { createdSince, diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 import { fsDiff, fsSnapshot, FS_SNAPSHOT_CAP, type FsSnapshot } from "../project/fs-facts.js"
 
 /**
@@ -200,7 +200,7 @@ export class ProvenanceProbe {
     return this.观察(声明的路径(toolName, params))
   }
 
-  /** 拍下 before，交回一个算差集的句柄。**拍不到就不观察**（git 崩了、文件系统超上限） */
+  /** 拍下 before，交回一个算差集的句柄。**拍不到就不观察**（只剩一种：文件系统超上限） */
   private async 观察(声明入参: string[]): Promise<ProvenanceHandle | undefined> {
     // **声明路径可能是绝对的**（`声明的路径` 从工具入参里原样捞出来，工具自己爱传哪种就传哪种）。
     // 统一换成相对工作区——后面所有比对、去重、落盘都按相对路径来，
@@ -223,12 +223,10 @@ export class ProvenanceProbe {
     let before: GitBaseline
     try {
       before = await snapshot(this.workspace)
-    } catch (e) {
-      if (e instanceof NotAGitRepoError) {
-        return this.走文件系统(声明, 声明前不在, 在不在)
-      }
-      // git 在却不可用。**不是错误**，是「这里没有可依据的事实」
-      return undefined
+    } catch {
+      // git 不在（spawn ENOENT）、git 坏了、不是仓库——三种情况文件系统探针都答得出，
+      // 只有超限才是真的不知道。此前只认 NotAGitRepoError，没装 git 的机器上就白白记成「不知道」。
+      return this.走文件系统(声明, 声明前不在, 在不在)
     }
     return {
       async finish(): Promise<ToolFileFacts | undefined> {

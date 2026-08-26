@@ -39,7 +39,10 @@ test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () 
     await page.getByRole("button", { name: "回到清单" }).click()
     // `exact`：对话里的工具行「✓ write outputs/volcano_data.csv」也含这个子串（按名字找东西是子串匹配）
     await expect(page.getByText("outputs/", { exact: true })).toBeVisible()
-    await expect(page.getByRole("button", { name: /volcano_data\.csv/ }).first()).toBeVisible()
+    // 限在坞里、精确整条相对路径（清单行按钮的 aria-label 就是 a.path）：对话里的 chip 同名，不能靠 first() 蒙混
+    await expect(
+      page.locator(".right-dock").getByRole("button", { name: "outputs/volcano_data.csv", exact: true }),
+    ).toBeVisible()
   })
 })
 

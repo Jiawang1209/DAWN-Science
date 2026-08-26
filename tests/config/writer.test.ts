@@ -203,6 +203,50 @@ describe("provider 的连接设置", () => {
     setProviderConnection(f, "azure", { baseUrl: "https://a" })
     expect(readFileSync(f, "utf8").split("agents:")[1]).toBe(前)
   })
+
+  /**
+   * **手写的 `headers` / `vision` 不会被『改 models』顺带丢掉**（2026-08-26）。
+   *
+   * 设置界面这张表单只认 baseUrl / api / models 三样，它交出来的从来
+   * 不带 headers / vision——但旧的「三样全量替换」写法是**拿这三样重新
+   * 拼一整个块**，没提到的字段（用户手写的 `headers`、新加的 `vision`）
+   * 就随着这次全量替换一起没了。**旧块得先展开，再拿这次要设置的
+   * 字段去覆盖**，没设置的字段原样留着。
+   */
+  it("**改 models 不会顺带丢掉手写的 headers / vision**", () => {
+    const f = 配置()
+    writeFileSync(
+      f,
+      原始 +
+        `\nproviders:\n  x:\n    baseUrl: "https://a"\n    api: "openai-completions"\n    models: ["m1"]\n    headers:\n      A: "1"\n    vision: true\n`,
+    )
+    const reg = setProviderConnection(f, "x", {
+      baseUrl: "https://a",
+      api: "openai-completions",
+      models: ["m2"],
+    })
+    expect(reg.providers?.["x"]).toEqual({
+      baseUrl: "https://a",
+      api: "openai-completions",
+      models: ["m2"],
+      headers: { A: "1" },
+      vision: true,
+    })
+  })
+
+  /**
+   * **没有回归**：既有字段里如果确实什么都没剩（没有 headers/vision 这类
+   * 手写字段），三样全空仍然要把整个块连同 `providers:` 一起收干净——
+   * 这是上面那条「旧块先展开」新加的字段（headers/vision）
+   * 不该改变这条早就存在的行为。
+   */
+  it("**三样全空、且没有 headers/vision 兜底时，仍然整块删除（回归检查）**", () => {
+    const f = 配置()
+    setProviderConnection(f, "y", { baseUrl: "https://a", models: ["m"] })
+    const reg = setProviderConnection(f, "y", {})
+    expect(reg.providers).toBeUndefined()
+    expect(readFileSync(f, "utf8")).not.toContain("providers:")
+  })
 })
 
 /**

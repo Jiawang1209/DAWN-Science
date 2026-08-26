@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-26 — 设置里改 provider 连接不再顺带丢掉手写的 headers / vision
+
+- **Type**: fix
+- **Motivation**: 上一条留的债：`setProviderConnection`／`写连接` 一直是拿 `baseUrl` / `api` / `models` 三样重新拼一整个 `providers.<id>` 块。`headers`（早就在 `ProviderConnectionSchema` 里）和刚加的 `vision: boolean`（`452143e`）都不在这三样里——用户手写的这两个字段，只要设置界面保存过一次该 provider，就在这次「全量替换」里悄悄没了。静默丢数据。
+- **What**: `src/config/writer.ts` 的 `写连接` 改成**旧块先展开，再拿这次要设置的字段去覆盖**：用 `parseDocument` 读出旧块的完整对象（`.toJSON()`），`{...旧值, baseUrl, api, models}`——`baseUrl`/`api`/`models` 仍然全量替换（这三样是表单管的，没给就是「清空」，理由不变），`headers`/`vision` 以及以后任何表单不认识的字段不在覆盖列表里，原样继承。新增通用的 `连接块正文()` 序列化字符串/布尔/字符串数组/字符串到字符串映射四种形状，不认字段名。
+- **Impact**: 设置界面改某个 provider 的 `baseUrl`/`api`/`models`（那 8 个自建端点、或声明了 `headers`/`vision` 的自建端点）不会再丢掉手写的 `headers`/`vision`。三样全空且没有 headers/vision 兜底时仍整块删除，行为不变。
+- **Verification**: `tests/config/writer.test.ts` 新增 2 例（先红后绿）：改 `models` 后 `headers`/`vision` 还在且 `models` 已更新；三样全空、没有 headers/vision 时仍整块连 `providers:` 一起删干净。`npx vitest run tests/config` 86 例全绿；`npm run typecheck` 通过。
+
 ### 2026-08-26 — models.json 不再把列出的模型硬写成收图（deepseek-v4-flash 的 400）
 
 - **Type**: fix

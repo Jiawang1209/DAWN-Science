@@ -231,6 +231,38 @@ function 段范围(lines: string[], key: string): [number, number] | undefined {
  */
 const 引 = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
 
+/**
+ * 把合并后的 provider 连接对象序列化成缩进块的正文（不含 `  ${id}:` 那一行）。
+ *
+ * **通用、不认字段名**：除了这里认识的几种形状（字符串、布尔、
+ * 字符串数组、字符串到字符串的映射），别的值一概跳过——
+ * 但那不会发生，因为 `ProviderConnectionSchema` 目前只有这四种。
+ * 新加一个字段时，只要它落在这四种形状里，这里不用改一行。
+ */
+function 连接块正文(v: Record<string, unknown>): string[] {
+  const 行: string[] = []
+  for (const [k, val] of Object.entries(v)) {
+    if (val === undefined) continue
+    if (typeof val === "string") {
+      if (val.trim() === "") continue
+      行.push(`    ${k}: ${引(val)}`)
+    } else if (typeof val === "boolean") {
+      行.push(`    ${k}: ${val}`)
+    } else if (Array.isArray(val)) {
+      const arr = val.map(String).map((s) => s.trim()).filter(Boolean)
+      if (arr.length === 0) continue
+      行.push(`    ${k}: [${arr.map(引).join(", ")}]`)
+    } else if (val && typeof val === "object") {
+      const 项 = Object.entries(val as Record<string, unknown>).filter(
+        ([, v2]) => v2 !== undefined && String(v2).trim() !== "",
+      )
+      if (项.length === 0) continue
+      行.push(`    ${k}:`, ...项.map(([k2, v2]) => `      ${k2}: ${引(String(v2))}`))
+    }
+  }
+  return 行
+}
+
 function 写连接(原文: string, id: string, conn: ProviderConnectionInput): string {
   const lines = 原文.split("\n")
   const 段 = 段范围(lines, "providers")
@@ -244,16 +276,34 @@ function 写连接(原文: string, id: string, conn: ProviderConnectionInput): s
     return [i, j]
   }
 
-  /** 有内容才写这一条；三样全空 = 取消覆盖 */
-  const 有内容 = Boolean(conn.baseUrl || conn.api || (conn.models && conn.models.length > 0))
-  const 块 = [
-    `  ${id}:`,
-    ...(conn.baseUrl ? [`    baseUrl: ${引(conn.baseUrl)}`] : []),
-    ...(conn.api ? [`    api: ${引(conn.api)}`] : []),
-    ...(conn.models && conn.models.length > 0
-      ? [`    models: [${conn.models.map(引).join(", ")}]`]
-      : []),
-  ]
+  /**
+   * **旧块先展开，再拿这次要设置的字段去覆盖**（2026-08-26 修）。
+   *
+   * `baseUrl` / `api` / `models` 是这张表单管的三样，**这三样仍然全量替换**：
+   * 这次没给就是「清空」，理由见函数头注释。但 `headers`、`vision`，
+   * 以及未来任何这张表单不认识的字段，这里没资格覆盖它们——
+   * 表单从来没交出过这几样，所以「没给」不该被读成「清空」，
+   * 而是**原样从旧块继承**。
+   *
+   * 旧块的值从解析结果里取（`parseDocument` 只用来读，不用来写回，
+   * 与文件头第 1 条同一套纪律），拿不到就当作空对象。
+   */
+  const 旧解析 = parseDocument(原文).get("providers") as
+    | { get?: (k: string) => { toJSON?: () => unknown } | undefined }
+    | undefined
+  const 旧值: Record<string, unknown> =
+    (旧解析?.get?.(id)?.toJSON?.() as Record<string, unknown> | undefined) ?? {}
+
+  const 合并: Record<string, unknown> = {
+    ...旧值,
+    baseUrl: conn.baseUrl,
+    api: conn.api,
+    models: conn.models,
+  }
+
+  const 块正文 = 连接块正文(合并)
+  const 有内容 = 块正文.length > 0
+  const 块 = [`  ${id}:`, ...块正文]
 
   if (!段) {
     // **还没有这一段**：加在文件最前面，紧挨着已有注释之后

@@ -8,7 +8,7 @@
  * 并由 `guard()` 保证飞行中的旧请求不会把内容倒灌回来。
  */
 import { atom } from "nanostores"
-import type { TranscriptItem, TeamSnapshot } from "../../protocol/index.js"
+import type { TranscriptItem, TeamSnapshot, KernelState } from "../../protocol/index.js"
 import { sameList, setList, setValue, shallowEqual } from "./identity.js"
 import { invalidate } from "./guard.js"
 
@@ -75,6 +75,14 @@ export function applySnapshot(snap: {
   configOptions?: readonly 会话开关[] | undefined
   /** 这段会话的团队（team-board）。缺省 = 没建过 */
   team?: TeamSnapshot | undefined
+  /**
+   * 这段会话挂着的内核状态列表（笔记本，2026-08-26）：starting/idle/busy/exited。
+   * 缺省 = 还没有内核，不是「不陈旧」——与 `kernelInstanceId` 同一条理由。
+   * **走这一条缝，不是零散地在各个调用点自己灌**：`applySnapshot` 有几处调用点
+   * （实时更新的 `snapshot`、跳号自愈 / 重订阅的 `resyncSession`），
+   * 都在这里收口才不会有第三条路忘了带。
+   */
+  kernels?: readonly KernelState[] | undefined
 }): void {
   setItems(snap.items)
   const term = snap.terminal ? [snap.terminal] : []
@@ -84,6 +92,7 @@ export function applySnapshot(snap: {
   $待答权限.set(snap.pendingPermission)
   $会话开关.set(snap.configOptions)
   $团队.set(snap.team)
+  setValue($kernels, snap.kernels)
 }
 
 /** 一次还没结果的权限询问（A2）。**选项原样来自 agent** */
@@ -138,6 +147,21 @@ export function setTeam(t: TeamSnapshot | undefined): void {
 export const $kernelInstanceId = atom<string | undefined>(undefined)
 
 /**
+ * 这段会话挂着的内核状态列表（笔记本，2026-08-26）：starting/idle/busy/exited。
+ * 缺省 = 还没取到 / 没有会话——与 `$kernelInstanceId` 同一条理由。
+ *
+ * **只从 `applySnapshot()` 与实时的 `kernels` 更新两处写**：前者走这条缝
+ * （快照有几条到达路径——实时更新的 `snapshot`、跳号自愈 / 重订阅的
+ * `resyncSession`——都在 `applySnapshot` 里收口，不许各调用点自己零散地灌一次，
+ * 那样多一条路就多一处忘记的机会）；后者是 `kernels` 更新**整份换掉**，
+ * 与 `团队` 同一条纪律。
+ */
+export const $kernels = atom<readonly KernelState[] | undefined>(undefined)
+export function setKernels(v: readonly KernelState[] | undefined): void {
+  setValue($kernels, v)
+}
+
+/**
  * 切会话时清空。
  *
  * **它同时作废所有飞行中的请求**（`invalidate()`），
@@ -158,5 +182,7 @@ export function resetTranscript(): void {
   // 开关也跟着走：切到另一段会话，那颗菜单里的选项本来就不是它的
   $会话开关.set(undefined)
   $团队.set(undefined)
+  // 内核状态也跟着走：它没有单独的取清单操作，靠下一次快照重新灌（笔记本，2026-08-26）
+  setValue($kernels, undefined)
   invalidate()
 }

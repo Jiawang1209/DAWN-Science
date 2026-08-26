@@ -87,7 +87,8 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts } from "./state/sync.js"
-import { $artifacts, setArtifacts, setKernels as setKernelsAtom } from "./state/catalog.js"
+import { $artifacts, setArtifacts } from "./state/catalog.js"
+import { setKernels as setKernelsAtom } from "./state/transcript.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -500,9 +501,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             // 这一段可以调的开关（A3）。**缺省 = 没有这回事**
             configOptions: u.snapshot.configOptions,
             team: u.snapshot.team,
+            // 内核状态（笔记本，2026-08-26）。缺省 = 还没有内核，不是「不陈旧」——与 kernelInstanceId 同一条理由
+            kernels: u.snapshot.kernels,
           })
-          // 内核状态（笔记本，2026-08-26）：缺省 = 还没有内核，不是「不陈旧」——与 kernelInstanceId 同一条理由
-          setKernelsAtom(u.snapshot.kernels)
         }
         // 团队变了（team-board）：整份换掉
         if (u.type === "team") setTeam(u.team)
@@ -985,8 +986,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     设产物焦点(undefined)
     // **先清再拉**：不清的话，新会话的清单回来之前，坞里顶着的是上一段会话的产物
     setArtifacts(undefined)
-    // 切会话也清内核状态（笔记本，2026-08-26）：它没有单独的取清单操作，靠下一次快照重新灌
-    setKernelsAtom(undefined)
     void loadArtifacts(client, sessionId)
   }, [client, ready, sessionId])
   const 重拉产物 = useCallback(() => void loadArtifacts(client, sessionId), [client, sessionId])

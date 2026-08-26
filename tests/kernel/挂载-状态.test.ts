@@ -7,8 +7,8 @@
  * 假内核照 `挂载.test.ts` 里「执行」那组的写法：能 start / attach / write / abort / stop，
  * 事件由测试主动 `发`。
  */
-import { describe, expect, it } from "vitest"
-import { 对话内核 } from "../../src/kernel/挂载.js"
+import { describe, expect, it, vi } from "vitest"
+import { 对话内核, 执行超时 } from "../../src/kernel/挂载.js"
 import type { SessionId } from "../../src/runtime/types.js"
 
 /** status 条目的最小合法 provenance（照 `src/kernel/outputs.ts` 的 `Provenance`） */
@@ -339,5 +339,118 @@ describe("对话内核 · 空代码 / 退出 / 换新（审查 2026-08-26）", (
     expect(收到).toEqual(["2"])
     发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
     await p
+  })
+})
+
+/**
+ * 内核起来就死 / 卡住，别让 cell 永远转（笔记本，2026-08-26）。
+ *
+ * 真实会话账本里逮到的：起 Python（好）→ 起 R，R 的 IRkernel 进程一起来就死。
+ * per-execute attach 还没注册进去，那条 `exited` 就发了、运行时把会话删了——
+ * 那只临时耳朵一条死讯都收不到，Promise 永不解，cell 永远「运行中」，它后面排的段全堵死。
+ *
+ * 三层兜底，各测各的：
+ *   ① 常驻监听叫醒在飞的执行（per-execute attach 没赶上时的唯一活耳朵）
+ *   ② write 前的活死人预检 + per-execute attach 收到 exited 的快路
+ *   ③ 5 分钟没回音的兜底超时（既不退出也不回 idle 的卡死）
+ */
+
+/**
+ * 只把事件喂给某一次 attach 的假内核：`目标序号 0` = 常驻内部监听（`起一台` 里第一只），
+ * `1` = per-execute attach（`真执行` 里那只）。没被选中的那只 attach 返回一个永远收不到事件的耳朵——
+ * 这样才能把「只有常驻听得见」和「只有 per-execute 听得见」两条路各自单独测出来。
+ */
+function 假内核_只喂(目标序号: number) {
+  const 计数 = new Map<string, number>()
+  const 听众 = new Map<string, (e: unknown) => void>()
+  const 收到: string[] = []
+  const runtime = {
+    start: async (s: { sessionId: string }) => ({ sessionId: s.sessionId, pid: 0 }),
+    attach: (id: string, sink: (e: unknown) => void) => {
+      const n = 计数.get(id) ?? 0
+      计数.set(id, n + 1)
+      if (n === 目标序号) {
+        听众.set(id, sink)
+        return () => 听众.delete(id)
+      }
+      return () => {}
+    },
+    write: (_id: string, code: string) => void 收到.push(code),
+    stop: async () => {},
+  } as never
+  const 发 = (id: string, e: unknown) => 听众.get(id)?.(e)
+  return { runtime, 发, 收到 }
+}
+
+describe("对话内核 · 内核起来就死 / 卡住不再让 cell 永远转（笔记本，2026-08-26）", () => {
+  it("① 常驻监听叫醒在飞的执行：per-execute attach 被绕过（只有常驻听得见）也拒得掉", async () => {
+    // 目标序号 0：只有常驻内部监听收得到事件；per-execute attach 是一只死耳朵——正是账本里那个场景
+    const { runtime, 发, 收到 } = 假内核_只喂(0)
+    const k = 挂上(runtime)
+    const p = k.执行(c1, "python", "x")
+    await new Promise((r) => setTimeout(r, 0)) // start 解析、代码写进去、per-execute attach（死耳朵）注册完
+    expect(收到).toEqual(["x"])
+    // 只有常驻监听收到这条 exited——它必须替在飞的这段执行喊出来
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1 })
+    await expect(p).rejects.toThrow(/内核这一段没跑完就退出了/)
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "exited" }])
+  })
+
+  it("② 快路：per-execute attach 收到 exited（常驻被绕过）也拒得掉", async () => {
+    // 目标序号 1：只有 per-execute attach 收得到；常驻是死耳朵——单测快路那条自己也站得住
+    const { runtime, 发, 收到 } = 假内核_只喂(1)
+    const k = 挂上(runtime)
+    const p = k.执行(c1, "python", "x")
+    await new Promise((r) => setTimeout(r, 0))
+    expect(收到).toEqual(["x"])
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1 })
+    await expect(p).rejects.toThrow(/内核这一段没跑完就退出了/)
+  })
+
+  it("② 预检：这台已经 exited 时，排在后面的段直接拒、连 write 都不发", async () => {
+    const { runtime, 收到, 发 } = 假内核()
+    const k = 挂上(runtime)
+    const pA = k.执行(c1, "python", "A")
+    const pB = k.执行(c1, "python", "B") // 排在 A 后面，拿的是同一台
+    await new Promise((r) => setTimeout(r, 0))
+    expect(收到).toEqual(["A"]) // 只有 A 送进去了，B 还在排队
+    // A 在飞时内核退出：A 被拒，这台状态翻 exited
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1 })
+    await expect(pA).rejects.toThrow(/内核这一段没跑完就退出了/)
+    // B 轮到自己时，真执行里的预检看到这台已经 exited → 直接拒，绝不再 write 一次撞「没有这个内核会话」
+    await expect(pB).rejects.toThrow(/内核这一段没跑完就退出了/)
+    expect(收到).toEqual(["A"]) // B 的代码从没被写出去
+  })
+
+  it("③ 兜底超时：既不退出也不回 idle，过了 执行超时 就拒「没有回音」", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime, 收到 } = 假内核()
+      const k = 挂上(runtime)
+      const p = k.执行(c1, "python", "while True: pass")
+      const 捕 = p.catch((e) => e) // 先接住，别让它成为 unhandled rejection
+      await vi.advanceTimersByTimeAsync(0) // 放 start / write 这串微任务跑完
+      expect(收到).toEqual(["while True: pass"])
+      await vi.advanceTimersByTimeAsync(执行超时) // 到点
+      const e = await 捕
+      expect((e as Error).message).toMatch(/没有回音/)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("③ 正常在 1s 回 idle 的段不会被超时误杀", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime, 发 } = 假内核()
+      const k = 挂上(runtime)
+      const p = k.执行(c1, "python", "1+1")
+      await vi.advanceTimersByTimeAsync(1000) // 才过 1 秒，远没到 执行超时
+      发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+      await expect(p).resolves.toMatchObject({ 语言: "python" }) // 已经跑完
+      await vi.advanceTimersByTimeAsync(执行超时) // 再怎么推进，这段也不会被超时翻成拒绝
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

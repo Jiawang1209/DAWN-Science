@@ -24,6 +24,15 @@
  */
 import type { AgentRuntime, SessionHandle, SessionId } from "../runtime/types.js"
 
+/**
+ * 一段执行等 idle 等到这么久还没回音，就当它卡住/死了、兜底拒掉（笔记本，2026-08-26）。
+ *
+ * **故意给得很宽**（5 分钟）：一段真跑二十分钟的分析和「卡死了」在协议上长得一样，
+ * 这个超时只是最后一道兜底，防「永远转」，不是用来砍正常的长任务的——
+ * 砍长任务的活交给「中断」按钮和「已经跑了多久」的显示（见 `执行` 的注释）。
+ */
+export const 执行超时 = 5 * 60_000
+
 /** 目前支持的两门。**与 `kind: kernel` 那条用的是同一套内核** */
 export type 内核语言 = "python" | "R"
 
@@ -116,6 +125,16 @@ interface 一台 {
   队列: Promise<unknown>
   /** 还在排队、没送进内核的段数。>0 时运行时回的 idle 不算数——下一段马上就写，中间不该露一个 idle */
   排队中: number
+  /**
+   * 此刻真在内核上跑、还没等到 idle 的那一段的「拒绝钩子」（笔记本，2026-08-26）。
+   *
+   * **常驻监听才是判死的权威，不是每段执行自己那只临时耳朵。** 内核起来就死时，
+   * 进程退出、运行时删掉会话、`exited` 事件发出——都可能发生在 `真执行` 里那只
+   * per-execute attach 注册进去**之前**：那只耳朵一条 `exited` 都收不到，Promise 永远不解，
+   * cell 永远转，它后面排队的段也全堵死。常驻监听（`起一台` 里那只）从内核一起来就在听，
+   * 它把 `exited` 认出来时若 `在飞` 还挂着，就替这段执行喊出「没跑完就退了」。
+   */
+  在飞?: { reject: (e: Error) => void } | undefined
 }
 
 export class 对话内核 {
@@ -313,6 +332,16 @@ export class 对话内核 {
         // 运行时的 exited 只带退出码（`src/runtime/types.ts`），非零就是原因的全部线索
         const code = (e as { exitCode?: number }).exitCode
         this.置状态(一, "exited", typeof code === "number" && code !== 0 ? `退出码 ${code}` : undefined)
+        /**
+         * **常驻监听叫醒在飞的执行**（内核起来就死的那条路）。per-execute attach 可能压根
+         * 没赶上这条 `exited`（进程退得比它注册还快），那这里就是唯一还听得见死讯的耳朵——
+         * 有在飞就替它拒掉，别让 cell 永远转。`真执行` 拒完自己会把 `在飞` 清掉，这里再清一次兜底。
+         */
+        const 飞 = 一.在飞
+        if (飞) {
+          一.在飞 = undefined
+          飞.reject(new Error(`${一.语言} 内核这一段没跑完就退出了`))
+        }
       }
     })
     this.opts.状态变了?.(对话, { language: 语言, state: "idle" })
@@ -378,10 +407,34 @@ export class 对话内核 {
     // 不收口的话这台永远 busy，后面排的段全卡住。空的就当跑完了，什么都没有
     if (代码.trim() === "") return Promise.resolve({ 内核会话: 一.内核会话, 语言, 输出 })
 
+    /**
+     * **写之前先看这台还活着没有**（内核起来就死的兜底之一）。前一段已经把它拖成 exited，
+     * 或常驻监听已经认定它退出了：这时再 `write` 只会撞上「没有这个内核会话」，
+     * 或者更糟——静默不写、然后永远等不到 idle。活死人不写，直接拒。
+     */
+    if (一.状态 === "exited") {
+      return Promise.reject(new Error(`${语言} 内核这一段没跑完就退出了`))
+    }
+
     return new Promise((resolve, reject) => {
       let 解开: (() => void) | undefined
-      const 收尾 = () => {
+      let 定时: ReturnType<typeof setTimeout> | undefined
+      /** resolve / reject 任一条路都要走：摘耳朵、停表、清掉「在飞」，别给这台留悬着的钩子 */
+      const 清理 = () => {
         解开?.()
+        if (定时) clearTimeout(定时)
+        if (一.在飞 === 飞) 一.在飞 = undefined
+      }
+      // 常驻监听靠它叫醒这段执行（见 `一台.在飞`）：per-execute attach 没赶上死讯时的另一条路
+      const 飞 = {
+        reject: (e: Error) => {
+          清理()
+          reject(e)
+        },
+      }
+      一.在飞 = 飞
+      const 收尾 = () => {
+        清理()
         resolve({ 内核会话: 一.内核会话, 语言, 输出 })
       }
       try {
@@ -396,10 +449,11 @@ export class 对话内核 {
           /**
            * **内核死了要出声，不能就这么挂着**（定案 4：不静默重起）。
            * 挂着的表现是「发过去了，永远没有回音」——本项目最难查的那种。
+           * 这是快路：per-execute attach 赶上了死讯就当场拒（常驻监听是没赶上时的兜底）。
            */
           if (ev.kind === "exited") {
-            解开?.()
-            reject(new Error(`${语言} 内核在这一轮里退出了`))
+            清理()
+            reject(new Error(`${语言} 内核这一段没跑完就退出了`))
           }
         })
         /**
@@ -409,9 +463,19 @@ export class 对话内核 {
          */
         this.置状态(一, "busy")
         开始了?.()
+        /**
+         * **最后一道兜底超时**（笔记本，2026-08-26）。常驻监听 + 快路管的是「内核真的退出了」；
+         * 但内核也可能既不退出也不回 idle（卡死在某个 C 扩展里、ZMQ 丢了消息）——那时上面两条都不响，
+         * 只有这只表能把 cell 从「永远转」里救出来。给得很宽（`执行超时`），别砍正常的长任务。
+         */
+        定时 = setTimeout(() => {
+          解开?.()
+          if (一.在飞 === 飞) 一.在飞 = undefined
+          reject(new Error("内核 5 分钟没有回音——它可能卡住或死了；可以中断后再试"))
+        }, 执行超时)
         this.opts.runtime.write(一.内核会话, 代码)
       } catch (e) {
-        解开?.()
+        清理()
         /**
          * attach / write 当场抛（会话不在了、代码没送出去）：这一轮根本没开始，
          * 不能把 busy 留在那里——那会让笔记本永远显示「运行中」而中断又没东西可中断。

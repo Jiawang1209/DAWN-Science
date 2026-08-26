@@ -219,6 +219,7 @@ export interface Workbench {
 export function 内核变化出声(events: SessionTranscripts, 对话: SessionId, 变化: 内核状态变化): void {
   const 名 = 变化.language === "R" ? "R" : "Python"
   if (变化.state === "starting") events.notice(对话, `正在起 ${名} 内核…`)
+  else if (变化.起失败) events.notice(对话, `${名} 内核起不来：${变化.reason ?? "原因不明"}`)
   else if (变化.state === "exited" && !变化.收掉) {
     events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
   }

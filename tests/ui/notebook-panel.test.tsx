@@ -60,6 +60,22 @@ describe("NotebookPanel · 头部胶囊", () => {
     expect(screen.queryByText(/正在中断/)).toBeNull()
   })
 
+  it("按下「中断」时在跑的那个 cell 收尾了 → 「正在中断…」换回，哪怕内核还 busy（后面还排着段）", () => {
+    const busy: KernelState[] = [{ language: "python", state: "busy" }]
+    const 在跑 = cell({ id: "a", n: 1, status: "running" })
+    const 排着 = cell({ id: "b", n: 2, status: "running" })
+    const { rerender } = render(<NotebookPanel {...基本} kernels={busy} cells={[在跑, 排着]} />)
+    fireEvent.click(screen.getByRole("button", { name: "中断" }))
+    expect(screen.getByText("Python · 正在中断…")).toBeTruthy()
+    // 排着的那段没变，只是重新渲染：还在中断中
+    rerender(<NotebookPanel {...基本} kernels={busy} cells={[在跑, 排着]} />)
+    expect(screen.getByText("Python · 正在中断…")).toBeTruthy()
+    // 在跑的那个收成 error，内核仍 busy（b 接着跑）
+    rerender(<NotebookPanel {...基本} kernels={busy} cells={[cell({ id: "a", n: 1, status: "error", interrupted: true }), 排着]} />)
+    expect(screen.getByText("Python · 运行中")).toBeTruthy()
+    expect(screen.queryByText(/正在中断/)).toBeNull()
+  })
+
   it("正在起 / 已退出 也有各自的字", () => {
     render(
       <NotebookPanel

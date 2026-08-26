@@ -271,11 +271,24 @@ export function NotebookPanel({
    * 按过「中断」、内核还没换状态的那几台（界面本地）。中断要走一趟运行时才见效，
    * 这一小段里胶囊还写着「运行中」、按钮还在——人会再按一次。内核状态一变就清掉。
    */
-  const [中断中, 设中断中] = useState<ReadonlySet<语言>>(() => new Set())
+  const [中断中, 设中断中] = useState<ReadonlyMap<语言, string | undefined>>(() => new Map())
   const 状态指纹 = kernels?.map((k) => `${k.language}:${k.state}`).join(",") ?? ""
   useEffect(() => {
-    设中断中((旧) => (旧.size ? new Set() : 旧))
+    设中断中((旧) => (旧.size ? new Map() : 旧))
   }, [状态指纹])
+  // 按下时在跑的那个 cell 收尾了（ok/error）也算见效——后面还排着段时内核状态一直是 busy，光等状态变永远等不到
+  useEffect(() => {
+    设中断中((旧) => {
+      let 新: Map<语言, string | undefined> | undefined
+      for (const [lang, id] of 旧) {
+        if (id !== undefined && cells.some((c) => c.id === id && c.status !== "running")) {
+          新 ??= new Map(旧)
+          新.delete(lang)
+        }
+      }
+      return 新 ?? 旧
+    })
+  }, [cells])
 
   if (sessionKind === "kernel") {
     // 独立内核会话**有**内核——说「没有内核」是假话；它的输出走对话区的 Console，笔记本不管它
@@ -333,7 +346,9 @@ export function NotebookPanel({
               <Button
                 size="sm"
                 onClick={() => {
-                  设中断中((旧) => new Set(旧).add(k.language))
+                  // 记下此刻这门语言在内核上跑的那个 cell——同一台串行，是**最早**那个 running 的；它收尾就换回状态词
+                  const 在跑 = cells.find((c) => c.status === "running" && c.language === k.language)?.id
+                  设中断中((旧) => new Map(旧).set(k.language, 在跑))
                   onInterrupt(k.language)
                 }}
               >

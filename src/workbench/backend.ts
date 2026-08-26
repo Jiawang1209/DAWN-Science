@@ -783,8 +783,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   /** 封顶（审查 Important）：最多 20 段、合计 32 KB；超了丢最旧的，并在前缀开头说省了几条——不静默截断 */
   const 缓冲最多段 = 20
   const 缓冲最多字节 = 32 * 1024
-  /** 笔记本：这一轮里按过「中断」的 `<会话>:<语言>`——收尾时据此给 cell 标 `interrupted`（审查 2026-08-26） */
-  const 中断请求中 = new Set<string>()
+  /**
+   * 笔记本（审查 2026-08-26）：按 `<会话>:<语言>` 记**此刻真在内核上跑的**你的 cell id（由 `执行` 的 `开始了`
+   * 回调置上）。排着队的 cell 在转录里也是 `running`，光看状态分不出谁在内核上——
+   * 中断 agent 的 `run_code` 时排在后面的用户 cell 会被误标 `interrupted`。
+   */
+  const 真在跑 = new Map<string, string>()
+  /** 按「中断」那一刻 `真在跑` 的是哪个 cell（agent 的段在跑就是 undefined）；那段收尾时若 id 对得上才标 */
+  const 中断请求 = new Map<string, string | undefined>()
   const 攒一段 = (sessionId: string, 一段: string) => {
     const b = 不在场缓冲.get(sessionId) ?? { 段: [], 省了: 0 }
     b.段.push(一段)
@@ -2850,9 +2856,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * `finishCell` 对「会话已不在 / 那个 id 不是 cell」是静默 no-op——跑到一半会话被删了就会这样。
        * 不吞：账本照记（Run 是事实），但出声说 cell 收不了尾，否则这条 running 的 cell 就凭空消失。
        */
+      const 键 = `${sessionId}:${language}`
       const 收尾 = (结果: { status: "ok" | "error"; runId?: string }) => {
-        // 这一轮里有人按过「中断」：不管内核最后回的是 KeyboardInterrupt 还是别的，这段都算被中断的
-        const 中断了 = 中断请求中.delete(`${sessionId}:${language}`)
+        // 按「中断」时在内核上跑的正是这段：不管内核最后回的是 KeyboardInterrupt 还是别的，这段都算被中断的
+        const 中断了 = 中断请求.has(键) && 中断请求.get(键) === cellId
+        if (中断了) 中断请求.delete(键)
         if (!events.peekItems(sessionId).some((i) => i.id === cellId && i.type === "cell")) {
           console.error("[笔记本] cell 收不了尾：会话已不在", sessionId, cellId)
           return
@@ -2862,7 +2870,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 执行前取一次：Run 的时长要是真的（送进去到 idle），不是记账那一刻的零
       const startedAt = new Date().toISOString()
       try {
-        const r = await k.执行(sessionId, language, code)
+        const r = await k.执行(sessionId, language, code, { 开始了: () => 真在跑.set(键, cellId) })
         const s = 输出摘要(r.输出)
         // 出错时 Run 的原因只取 `ename: evalue`——traceback 是给人看的，账本要的是一句能检索的话
         const 原因 = s.出错了 ? 首个错误(r.输出) : undefined
@@ -2879,6 +2887,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         runRecorder?.记内核执行(sessionId, language, { hasError: true, terminalReason: 消息 }, startedAt)
         收尾({ status: "error" })
         throw fault("invalid_request", 消息)
+      } finally {
+        if (真在跑.get(键) === cellId) 真在跑.delete(键)
       }
     },
 
@@ -2886,17 +2896,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     interruptKernel: async ({ sessionId, language }) => {
       const k = opts.kernels
       if (!k) throw fault("internal_error", "这台没有接对话内核")
+      const 键 = `${sessionId}:${language}`
+      /**
+       * **await 之前**记下此刻在内核上跑的是谁：中断走一趟运行时，回来时那段可能已经收尾——晚记就丢了。
+       * agent 的 run_code 在跑时这里是 undefined：没有 cell 可标，排在后面的用户 cell 更不该被贴上。
+       */
+      中断请求.set(键, 真在跑.get(键))
       try {
         await k.中断(sessionId, language)
       } catch (err) {
+        中断请求.delete(键)
         throw fault("conflict", err instanceof Error ? err.message : String(err))
       }
-      /**
-       * 只在**你自己的 cell 正在跑**时记下「这轮被中断」：中断的可能是 agent 的 run_code，
-       * 那时没有 cell 可标——记下来只会贴到下一段无辜的 cell 上。
-       */
-      const 在跑 = events.peekItems(sessionId).some((i) => i.type === "cell" && i.status === "running" && i.language === language)
-      if (在跑) 中断请求中.add(`${sessionId}:${language}`)
       return {}
     },
 

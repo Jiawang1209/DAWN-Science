@@ -62,15 +62,21 @@ function 假对话内核(转发: (对话: string, 语言: "python" | "R", 事件
       return (["python", "R"] as const).filter((l) => 台.has(键(对话, l)))
     },
     状态列表(对话: string) { return this.列(对话).map((language) => ({ language, state: "idle" as const })) },
-    async 执行(对话: string, 语言: "python" | "R", 代码: string) {
+    /** 像真的那样同一台串行；`开始了` 在真送进内核那一刻叫 */
+    队列: Promise.resolve() as Promise<unknown>,
+    async 执行(对话: string, 语言: "python" | "R", 代码: string, opts?: { 开始了?: () => void }) {
       this.执行过.push([对话, 语言, 代码])
       if (this.下一轮抛) throw new Error(this.下一轮抛)
       台.add(键(对话, 语言))
-      if (this.下一轮等) {
-        const 等 = this.下一轮等
-        this.下一轮等 = undefined
-        await 等
-      }
+      // 排队时就取走「下一轮等」：这段真开始时才等它
+      const 等 = this.下一轮等
+      this.下一轮等 = undefined
+      const 跑 = this.队列.then(async () => {
+        opts?.开始了?.()
+        if (等) await 等
+      })
+      this.队列 = 跑.catch(() => {})
+      await 跑
       // 真内核每条输出都带溯源（转录按它认是哪台、第几版）；假的统一盖一份
       const 输出 = this.下一轮输出.map((e) => ({
         ...(e as object),
@@ -504,6 +510,26 @@ describe("真实后端 · 经服务端端到端", () => {
     ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
     const { cellId: c3 } = (await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "2" })) as { cellId: string }
     expect("interrupted" in (ctx.events.peekItems(sid).find((i) => i.id === c3) as object)).toBe(false)
+  })
+
+  it("agent 的段在内核上跑、你的 cell 排在后面时按中断：排着的那段照常收尾，不贴 interrupted", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    let 放行!: () => void
+    ctx.fakeKernels.下一轮等 = new Promise<void>((r) => (放行 = r))
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    // agent 的 run_code 走的是同一个 `执行`，这里直接调它模拟「agent 的段在内核上」
+    const agent的 = ctx.fakeKernels.执行(sid, "python", "agent loop")
+    await new Promise((r) => setTimeout(r, 0))
+    const p = ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "mine" })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(ctx.events.peekItems(sid).filter((i) => i.type === "cell" && i.status === "running")).toHaveLength(1)
+    await ctx.backend.interruptKernel({ sessionId: sid, language: "python" })
+    放行()
+    await agent的
+    const { cellId } = (await p) as { cellId: string }
+    expect(ctx.events.peekItems(sid).find((i) => i.id === cellId)).toMatchObject({ type: "cell", status: "ok" })
+    expect("interrupted" in (ctx.events.peekItems(sid).find((i) => i.id === cellId) as object)).toBe(false)
   })
 
   it("没有在跑的 cell 时按中断（比如是 agent 的 run_code 在跑）：不给下一段 cell 乱贴 interrupted", async () => {

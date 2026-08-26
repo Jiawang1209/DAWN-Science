@@ -567,6 +567,12 @@ describe("内核变化出声 · 接线", () => {
     expect(通知()).toEqual(["R 内核退出了：退出码 137；再跑一次会起新的一台", "Python 内核退出了；再跑一次会起新的一台"])
   })
 
+  it("起失败 → 「Python 内核起不来：<原因>」，不说「退出了」", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "python", state: "exited", reason: "python 进程起不来", 起失败: true })
+    expect(通知()).toEqual(["Python 内核起不来：python 进程起不来"])
+  })
+
   it("idle / busy 不出声；我们自己收掉的也不出声", () => {
     const { events, 通知 } = 收集()
     内核变化出声(events, "c1", { language: "python", state: "idle" })

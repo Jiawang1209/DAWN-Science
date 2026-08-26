@@ -81,6 +81,8 @@ export interface 内核状态变化 {
   reason?: string
   /** 是我们自己 `收()` 掉的，不是内核自己退出——转录不该为它喊「内核退出了」 */
   收掉?: true
+  /** 「正在起」之后起失败了（`runtime.start` 抛）：`reason` 是原因。转录要接一句，否则「正在起…」永远没有下文 */
+  起失败?: true
 }
 
 /**
@@ -270,13 +272,20 @@ export class 对话内核 {
     const 内核会话 = `${对话}::${语言}` as SessionId
     // 起之前先说一声「正在起」：解释器有了、目录有了，剩下的就是等进程——这一段人得看得见
     this.opts.状态变了?.(对话, { language: 语言, state: "starting" })
-    const handle = await this.opts.runtime.start({
-      sessionId: 内核会话,
-      workspace,
-      sessionDir: this.opts.sessionDirOf(对话, 语言),
-      // **这一项是内核运行时用来起进程的**，漏了它就起不来（第一版就漏了）
-      kernel: { language: 语言, interpreterPath },
-    })
+    let handle: SessionHandle
+    try {
+      handle = await this.opts.runtime.start({
+        sessionId: 内核会话,
+        workspace,
+        sessionDir: this.opts.sessionDirOf(对话, 语言),
+        // **这一项是内核运行时用来起进程的**，漏了它就起不来（第一版就漏了）
+        kernel: { language: 语言, interpreterPath },
+      })
+    } catch (e) {
+      // 说过「正在起」就得说「起不来」：这台从没进表，`状态列表` 里看不出它来过
+      this.opts.状态变了?.(对话, { language: 语言, state: "exited", reason: e instanceof Error ? e.message : String(e), 起失败: true })
+      throw e
+    }
     /**
      * `runtime.start` 解析即算起来了——`KernelRuntime.start` 要等到 kernel_info 应答才返回，
      * 所以这里不用再等一条 `started` 事件；`starting` 只存在于上面那个 await 期间，
@@ -338,13 +347,20 @@ export class 对话内核 {
     对话: SessionId,
     语言: 内核语言,
     代码: string,
+    opts?: {
+      /**
+       * 这段**真送进内核**的那一刻叫一次（排队的段在这之前只是排着）。
+       * 「中断」要知道此刻在内核上跑的是哪一段——排着的那些不该被它标上。
+       */
+      开始了?: () => void
+    },
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     const 一 = await this.拿(对话, 语言)
     // 排队（见 `一台.队列`）：前一段失败了也不拖住后一段——失败是它自己的，队列只管顺序
     一.排队中++
     const 跑 = 一.队列.then(() => {
       一.排队中--
-      return this.真执行(一, 语言, 代码)
+      return this.真执行(一, 语言, 代码, opts?.开始了)
     })
     一.队列 = 跑.catch(() => {})
     return 跑
@@ -355,6 +371,7 @@ export class 对话内核 {
     一: 一台,
     语言: 内核语言,
     代码: string,
+    开始了?: () => void,
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     const 输出: unknown[] = []
     // 运行时对空代码静默不执行（`KernelRuntime.write` 直接 return），等 idle 等不到——
@@ -391,6 +408,7 @@ export class 对话内核 {
          * 而假运行时（测试）根本不发。先置、后写，回来的 busy 因「相同不叫」不会重复推。
          */
         this.置状态(一, "busy")
+        开始了?.()
         this.opts.runtime.write(一.内核会话, 代码)
       } catch (e) {
         解开?.()

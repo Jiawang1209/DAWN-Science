@@ -275,6 +275,38 @@ describe("对话内核 · 空代码 / 退出 / 换新（审查 2026-08-26）", (
     expect(变化.at(-1)).toEqual({ language: "python", state: "exited", reason: "退出码 137" })
   })
 
+  it("说了「正在起」之后 start 抛 → 再报一次 起失败 + 原因；没配解释器的不说「正在起」也不说起失败", async () => {
+    const 变化: unknown[] = []
+    const 坏 = { start: async () => { throw new Error("python 进程起不来") }, attach: () => () => {}, write: () => {}, stop: async () => {} } as never
+    const k = new 对话内核({ runtime: 坏, workspaceOf: () => "/w", sessionDirOf: () => "/d", interpreterOf: () => "/py", 状态变了: (_o, 变) => 变化.push(变) })
+    await expect(k.拿(c1, "python")).rejects.toThrow(/起不来/)
+    expect(变化).toEqual([
+      { language: "python", state: "starting" },
+      { language: "python", state: "exited", reason: "python 进程起不来", 起失败: true },
+    ])
+    expect(k.状态列表(c1)).toEqual([])
+    变化.length = 0
+    const 没配 = new 对话内核({ runtime: 坏, workspaceOf: () => "/w", sessionDirOf: () => "/d", interpreterOf: () => undefined, 状态变了: (_o, 变) => 变化.push(变) })
+    await expect(没配.拿(c1, "python")).rejects.toThrow(/还没配/)
+    expect(变化).toEqual([])
+  })
+
+  it("执行(…, { 开始了 })：排着的段要等前一段 idle 才叫 开始了", async () => {
+    const { runtime, 发 } = 假内核()
+    const k = 挂上(runtime)
+    const 叫了: string[] = []
+    const pA = k.执行(c1, "python", "A", { 开始了: () => 叫了.push("A") })
+    const pB = k.执行(c1, "python", "B", { 开始了: () => 叫了.push("B") })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(叫了).toEqual(["A"])
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await pA
+    await new Promise((r) => setTimeout(r, 0))
+    expect(叫了).toEqual(["A", "B"])
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await pB
+  })
+
   it("收() 报的 exited 带 收掉 标记——那不是内核自己退出", async () => {
     const { runtime } = 假内核()
     const 变化: unknown[] = []

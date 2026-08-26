@@ -873,9 +873,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const kind = registry.agents[agentId]?.kind ?? "native"
     events.track(rec.id, kind)
     sessions.attach(rec.id, (e) => {
-      events.ingest(rec.id, e)
-      // **记账与呈现是两件事，各走各的。**
+      // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
+      // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
       runRecorder?.ingest(e)
+      events.ingest(rec.id, e)
     })
     // 开关那份在 attach 之前就 emit 过了、没人听见——接好线再问一次（codex-polish 第二档）
     const 开关 = sessions.configOptions(rec.id)
@@ -1714,8 +1715,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           远端参数?.认领(sessionId)
           events.track(sessionId, "native")
           sessions.attach(sessionId, (e) => {
-            events.ingest(sessionId, e)
+            // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
+            // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
             runRecorder?.ingest(e)
+            events.ingest(sessionId, e)
           })
           const 历史 = await sessions.history(sessionId)
           if (历史.length > 0) events.restore(sessionId, 历史.map(还原成条目))

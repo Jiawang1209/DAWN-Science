@@ -151,6 +151,16 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(r.artifacts[0]!.exists).toBeUndefined()
   })
 
+  it("listArtifacts：账本里的路径是绝对路径——同样当越界，不上真机器的根查，exists 缺省（2026-08-26 产物·越界防护）", async () => {
+    const ws = newRepo()
+    const sid = await 开一段(ws)
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    ctx.runStore.insert({ runId: "t1", projectId: pid, sessionId: sid, origin: "agent", requestType: "tool_call:write", status: "completed", startedAt: "2026-08-26T10:00:00.000Z", finishedAt: "2026-08-26T10:00:01.000Z", hasError: false, toolCallId: "c1", filesCreated: ["/etc/hosts"] })
+    const r = (await ctx.backend.listArtifacts({ sessionId: sid })) as { artifacts: { path: string; exists?: boolean }[] }
+    expect(r.artifacts).toEqual([expect.objectContaining({ path: "/etc/hosts" })])
+    expect(r.artifacts[0]!.exists).toBeUndefined()
+  })
+
   /**
    * 开一段带工作路径的对话，返回它的 sessionId（T4，2026-08-13）。
    *

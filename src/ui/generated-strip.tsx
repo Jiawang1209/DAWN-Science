@@ -17,6 +17,7 @@
  * 一次工具调用，也就没法挂到某一条 agent 回复上——本组件对它们保持沉默，
  * 是设计如此，不是遗漏。它们只在坞「产物」格的会话级清单里露面（Task 11/12）。
  */
+import { useEffect, useState } from "react"
 import type { Artifact, TranscriptItem } from "../protocol/index.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button } from "./primitives.js"
@@ -93,7 +94,41 @@ const 徽标 = (kind: Artifact["kind"]) =>
 
 const 折叠阈值 = 8
 
-export function GeneratedStrip({ 产物, onOpen }: { 产物: 轮产物; onOpen: (path: string) => void }) {
+/**
+ * 单个 chip（2026-08-27）。图片产物在类型徽标那一格换成一张小缩略图——
+ * `loadThumb` 缺省、返回 undefined、或产物已不在（`exists === false`）时退回「IMAGE」徽标，
+ * **永远不画一张断掉的 img**。缩略图按 path 缓在本组件 state 里（组件按 path key，一张图只加载一次），
+ * 卸载时用 `活` 挡掉迟到的 setState。非图片一律走徽标那一支，不发请求。
+ */
+function GeneratedChip({ a, onOpen, loadThumb }: { a: Artifact; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
+  const 可缩略 = a.kind === "image" && a.exists !== false && !!loadThumb
+  const [缩略, 设缩略] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (!可缩略 || !loadThumb) return
+    let 活 = true
+    loadThumb(a.path)
+      .then((u) => {
+        if (活 && u) 设缩略(u)
+      })
+      .catch(() => {
+        // 失败就退回徽标——不出声也不画断图
+      })
+    return () => {
+      活 = false
+    }
+  }, [可缩略, a.path, loadThumb])
+  return (
+    <li>
+      <Button variant="ghost" size="inline" className={`generated-chip${a.exists === false ? " gone" : ""}`} aria-label={tf("打开产物 {0}", a.path)} onClick={() => onOpen(a.path)}>
+        {缩略 ? <img src={缩略} alt="" /> : <span className="kind-tag">{徽标(a.kind)}</span>}
+        <span className="name">{a.path.split("/").pop()}</span>
+        {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
+      </Button>
+    </li>
+  )
+}
+
+export function GeneratedStrip({ 产物, onOpen, loadThumb }: { 产物: 轮产物; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
   if (产物.kind === "none") return null
   if (产物.kind === "unknown") {
     return (
@@ -119,13 +154,7 @@ export function GeneratedStrip({ 产物, onOpen }: { 产物: 轮产物; onOpen: 
       </span>
       <ul className="generated-chips">
         {显示.map((a) => (
-          <li key={a.path}>
-            <Button variant="ghost" size="inline" className={`generated-chip${a.exists === false ? " gone" : ""}`} aria-label={tf("打开产物 {0}", a.path)} onClick={() => onOpen(a.path)}>
-              <span className="kind-tag">{徽标(a.kind)}</span>
-              <span className="name">{a.path.split("/").pop()}</span>
-              {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
-            </Button>
-          </li>
+          <GeneratedChip key={a.path} a={a} onOpen={onOpen} loadThumb={loadThumb} />
         ))}
         {还有 > 0 ? <li className="caveat">{tf("还有 {0} 个，在坞的「产物」里看全部", 还有)}</li> : null}
       </ul>

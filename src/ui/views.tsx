@@ -3579,6 +3579,7 @@ export function ConversationView({
   onOpenWeb,
   artifacts,
   onOpenArtifact,
+  loadThumb,
   onExport,
   权限,
   引用文件,
@@ -3617,6 +3618,8 @@ export function ConversationView({
   /** 这段会话的产物清单（2026-08-26）。**缺省 = 不画产物条**，两条一起给才画 */
   artifacts?: ArtifactList | undefined
   onOpenArtifact?: ((path: string) => void) | undefined
+  /** 图片产物的缩略图源（2026-08-27）：透传给产物条，让图片 chip 显示小图；缺省就退回「IMAGE」徽标 */
+  loadThumb?: ((path: string) => Promise<string | undefined>) | undefined
   /**
    * 这段对话的工作目录（T3-b）。**缺省 = 没设 = 这是一段普通对话**。
    *
@@ -4210,7 +4213,7 @@ export function ConversationView({
                 nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
                 {...(artifacts && onOpenArtifact && item.type === "turn" && item.who === "agent" && item.final
-                  ? { generated: 本轮产物(items, item.id, artifacts, session.kind, 下标), onOpenArtifact }
+                  ? { generated: 本轮产物(items, item.id, artifacts, session.kind, 下标), onOpenArtifact, ...(loadThumb ? { loadThumb } : {}) }
                   : {})}
                 {...(disabled
                   ? {}
@@ -5009,12 +5012,15 @@ export function TranscriptRow({
   onOpenWeb,
   generated,
   onOpenArtifact,
+  loadThumb,
 }: {
   item: TranscriptItem
   agentId: string
   /** 这一轮的产物（2026-08-26）：只有说完的 agent 轮才有；两个一起给才画产物条 */
   generated?: 轮产物 | undefined
   onOpenArtifact?: ((path: string) => void) | undefined
+  /** 图片产物的缩略图源（2026-08-27）：透传给产物条里的图片 chip */
+  loadThumb?: ((path: string) => Promise<string | undefined>) | undefined
   /**
    * provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。
    * **缺省时用 id**——那不好看，但**是实话**。
@@ -5289,7 +5295,7 @@ export function TranscriptRow({
          */}
       </div>
       {/** **这一轮生成了什么**（2026-08-26）：紧贴气泡下面，点一条进坞的「产物」格 */}
-      {generated && onOpenArtifact ? <GeneratedStrip 产物={generated} onOpen={onOpenArtifact} /> : null}
+      {generated && onOpenArtifact ? <GeneratedStrip 产物={generated} onOpen={onOpenArtifact} loadThumb={loadThumb} /> : null}
 
       {/**
        * **操作在这一段的下面**（2026-08-11 挪下来，作者提，仿 Codex）。

@@ -9,9 +9,43 @@ import { Button, EmptyState, Loader } from "./primitives.js"
 import { FilePreview, type FileContent } from "./files.js"
 import { t, tf } from "./i18n/index.js"
 
+/**
+ * 坞清单里的一个图片格子（2026-08-27）：缩略图 + 文件名，点开走与文本行同一条预览。
+ * `loadThumb` 缺省 / 返回 undefined / 图片已不在时，格子里是一个占位方块（**不画断图**），
+ * 已不存在的还要划掉文件名。缩略图按 path 缓在本组件 state，卸载时用 `活` 挡迟到的 setState。
+ */
+function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: Artifact; dir: string; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
+  const 可缩略 = a.exists !== false && !!loadThumb
+  const [缩略, 设缩略] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (!可缩略 || !loadThumb) return
+    let 活 = true
+    loadThumb(a.path)
+      .then((u) => {
+        if (活 && u) 设缩略(u)
+      })
+      .catch(() => {
+        // 失败就留占位——不画断图
+      })
+    return () => {
+      活 = false
+    }
+  }, [可缩略, a.path, loadThumb])
+  return (
+    <li className={`artifact-thumb${a.exists === false ? " gone" : ""}`}>
+      <Button variant="ghost" size="inline" className="artifact-thumb-open" aria-label={a.path} disabled={a.exists === false} onClick={() => onOpen(a.path)}>
+        <span className="artifact-thumb-img">{缩略 ? <img src={缩略} alt="" /> : null}</span>
+        <span className="name">{a.path.slice(dir.length)}</span>
+        {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
+      </Button>
+    </li>
+  )
+}
+
 export function ArtifactsPanel({
   data,
   readFile,
+  loadThumb,
   onOpenInFiles,
   onDownload,
   onOpenExternally,
@@ -20,6 +54,8 @@ export function ArtifactsPanel({
 }: {
   data: ArtifactList | undefined
   readFile: (path: string) => Promise<FileContent>
+  /** 图片产物的缩略图源（2026-08-27）：给它返回 data URL 才画格子里的小图，缺省就都退回占位方块 */
+  loadThumb?: ((path: string) => Promise<string | undefined>) | undefined
   onOpenInFiles: (path: string) => void
   /**
    * 下载 = 远端拉到本机，本地文件没有这一说（与文件格同一契约）。
@@ -138,14 +174,29 @@ export function ArtifactsPanel({
       {data.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", data.unknown.length)}</p> : null}
       {[...组.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([dir, list]) => (
+        .map(([dir, list]) => {
+          /**
+           * 图片格子化、其余留文本行（2026-08-27）。两支各自**保留生成先后**（`list` 已是 bornAt 序），
+           * 不重排。格子在上、文本行在下。
+           */
+          const 图片 = list.filter((a) => a.kind === "image")
+          const 其它 = list.filter((a) => a.kind !== "image")
+          return (
           <section key={dir || "."} className="artifacts-group">
             <h4 className="artifacts-group-title">
               <span>{dir || t("（工作区根）")}</span>
               <span className="count">{list.length}</span>
             </h4>
+            {图片.length > 0 ? (
+              <ul className="artifact-thumb-grid">
+                {图片.map((a) => (
+                  <ArtifactThumb key={a.path} a={a} dir={dir} onOpen={设看的} loadThumb={loadThumb} />
+                ))}
+              </ul>
+            ) : null}
+            {其它.length > 0 ? (
             <ul className="artifacts-list">
-              {list.map((a) => (
+              {其它.map((a) => (
                 <li key={a.path} className={`artifact-row${a.exists === false ? " gone" : ""}`}>
                   <Button
                     variant="ghost"
@@ -178,8 +229,10 @@ export function ArtifactsPanel({
                 </li>
               ))}
             </ul>
+            ) : null}
           </section>
-        ))}
+          )
+        })}
     </div>
   )
 }

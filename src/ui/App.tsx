@@ -1035,6 +1035,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [client, projectId, sessionId, 文件所在])
 
   /**
+   * 图片产物的缩略图源（2026-08-27）：走 `读产物` 同一条 readFile，图片响应回 data URL，其余回 undefined。
+   * **失败一律回 undefined**（chip / 格子据此退回徽标 / 占位方块，绝不画断图）。身份跟着 `读产物` 稳定。
+   */
+  const 读产物缩略 = useCallback(
+    async (path: string): Promise<string | undefined> => {
+      try {
+        const c = await 读产物(path)
+        return c.kind === "image" ? `data:${c.mediaType};base64,${c.base64}` : undefined
+      } catch {
+        return undefined
+      }
+    },
+    [读产物],
+  )
+
+  /**
    * `@` 引用的文件源（2026-08-23，学自 dsh-at-file）：就是坞里文件格那两条（`loadDir` / `searchFiles`），
    * 远端会话跟着那台机器、令牌相对它的当前目录。**没有项目 / 没有远端 = 没有源**——菜单里要说清。
    */
@@ -3945,6 +3961,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onOpenReference={打开引用}
                 artifacts={artifacts}
                 onOpenArtifact={openArtifact}
+                loadThumb={读产物缩略}
                 {...(() => {
                   // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
                   const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
@@ -4396,6 +4413,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 data={artifacts}
                 focus={产物焦点 && 产物焦点.sessionId === sessionId ? { path: 产物焦点.path, nonce: 产物焦点.nonce } : undefined}
                 readFile={读产物}
+                loadThumb={读产物缩略}
                 onOpenInFiles={openFile}
                 {...(文件所在 ? { onDownload: 下载 } : {})}
                 onOpenExternally={openExternally}

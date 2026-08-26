@@ -6377,6 +6377,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .generated-chip .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .generated-chip .caveat { flex: none; }
 .generated-chip.gone .name { text-decoration: line-through; opacity: .6; }
+/* 图片 chip：徽标那一格换成一张 20px 小图（2026-08-27） */
+.generated-chip img { flex: none; width: 20px; height: 20px; object-fit: cover; border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); }
 .kind-tag { flex: none; min-width: 46px; text-align: center; font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
 
 /* ── 坞「产物」格（spec 2026-08-26-产物 §5，Task 11） ── */
@@ -6392,6 +6394,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .artifact-open { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .artifact-open .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .artifact-actions { display: inline-flex; gap: 2px; }
+/* 图片产物格子化（2026-08-27）：缩略图 + 文件名，点开走同一条预览；已不在的是占位方块 + 划掉名字，绝不画断图 */
+.artifact-thumb-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--dawn-space-2); }
+.artifact-thumb { min-width: 0; }
+.artifact-thumb-open { display: flex; flex-direction: column; align-items: stretch; width: 100%; gap: 4px; padding: 4px; }
+.artifact-thumb-img { display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-surface-panel); }
+.artifact-thumb-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.artifact-thumb .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: var(--dawn-fs-meta); }
+.artifact-thumb .caveat { text-align: center; }
+.artifact-thumb.gone .name { text-decoration: line-through; opacity: .6; }
+.artifact-thumb.gone .artifact-thumb-img { opacity: .5; }
 
 /* ── 坞「笔记本」格（spec 2026-08-26-笔记本 §5，Task 7） ── */
 .nb { display: flex; flex-direction: column; min-height: 0; height: 100%; }

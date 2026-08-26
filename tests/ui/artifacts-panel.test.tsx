@@ -6,12 +6,17 @@
  * 而且回清单之后，读到一半的迟到内容不许再把人拽回预览。
  */
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, fireEvent, act } from "@testing-library/react"
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react"
 import { ArtifactsPanel } from "../../src/ui/artifacts.js"
 import type { FileContent } from "../../src/ui/files.js"
 
 const art = (path: string, exists = true) =>
   ({ path, kind: "table" as const, bornRunId: "r", bornToolCallId: "c", bornAt: "2026-08-26T10:00:00.000Z", exists })
+
+const imgArt = (path: string, exists = true) =>
+  ({ path, kind: "image" as const, bornRunId: "r", bornToolCallId: "c", bornAt: "2026-08-26T10:00:00.000Z", exists })
+
+const 图片内容 = (): FileContent => ({ kind: "image", mediaType: "image/png", base64: "ZZ", bytes: 2 })
 
 const noop = { readFile: vi.fn(), onOpenInFiles: vi.fn(), onDownload: vi.fn(), onOpenExternally: vi.fn() }
 
@@ -39,6 +44,44 @@ describe("ArtifactsPanel", () => {
     expect(screen.getByText("outputs/")).toBeTruthy()
     expect(screen.getByText(/另有 1 次运行产出未知/)).toBeTruthy()
     expect(screen.getByText("已不存在")).toBeTruthy()
+  })
+
+  it("同目录多个产物：行按生成先后，不按字母序（b 先建就 b 在前）", () => {
+    render(<ArtifactsPanel data={{ artifacts: [art("out/b.csv"), art("out/a.csv")], unknown: [] }} {...noop} />)
+    // open 按钮的可达名恰是路径本身（下载 / 定位那两颗带前缀，不会撞进来）
+    const 行 = screen
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("aria-label"))
+      .filter((n): n is string => n === "out/b.csv" || n === "out/a.csv")
+    expect(行).toEqual(["out/b.csv", "out/a.csv"])
+  })
+
+  it("图片产物格子化：缩略图 + 文件名；非图片仍是文本行；点格子走同一条预览", async () => {
+    const loadThumb = vi.fn().mockResolvedValue("data:image/png;base64,ZZ")
+    const readFile = vi.fn().mockResolvedValue(图片内容())
+    const { container } = render(
+      <ArtifactsPanel data={{ artifacts: [imgArt("out/p.png"), art("out/a.csv")], unknown: [] }} {...noop} readFile={readFile} loadThumb={loadThumb} />,
+    )
+    // 图片进了格子，画出 <img>，src 是 data URL
+    await waitFor(() => expect(container.querySelector(".artifact-thumb-grid img")).toBeTruthy())
+    expect(container.querySelector(".artifact-thumb-grid img")!.getAttribute("src")).toBe("data:image/png;base64,ZZ")
+    expect(loadThumb).toHaveBeenCalledWith("out/p.png")
+    // 非图片仍是文本行（图片不在文本行里）
+    expect(container.querySelector(".artifacts-list")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "out/a.csv" })).toBeTruthy()
+    // 点格子进预览，走的还是 readFile 那条路
+    fireEvent.click(screen.getByRole("button", { name: "out/p.png" }))
+    expect(readFile).toHaveBeenCalledWith("out/p.png")
+  })
+
+  it("已不存在的图片：占位格子（划掉名字、按钮禁用），不加载、不画断图", () => {
+    const loadThumb = vi.fn().mockResolvedValue("data:image/png;base64,ZZ")
+    const { container } = render(<ArtifactsPanel data={{ artifacts: [imgArt("out/gone.png", false)], unknown: [] }} {...noop} loadThumb={loadThumb} />)
+    expect(loadThumb).not.toHaveBeenCalled()
+    expect(container.querySelector(".artifact-thumb.gone")).toBeTruthy()
+    expect(container.querySelector(".artifact-thumb img")).toBeNull()
+    expect(screen.getByText("已不存在")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "out/gone.png" }).hasAttribute("disabled")).toBe(true)
   })
 
   it("空态与「还没取到」分得开", () => {

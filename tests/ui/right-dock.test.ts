@@ -21,7 +21,9 @@ import {
   setRightDockTenant,
   setRightDockWidth,
   点开房客,
+  全部房客,
 } from "../../src/ui/state/right-dock.js"
+import { 房客名 } from "../../src/ui/views.js"
 
 beforeEach(() => {
   /**
@@ -206,5 +208,12 @@ describe("**坞的上界跟着窗口走**", () => {
   it("两栏起点落在 `[MIN, MAX]` 之间", () => {
     expect(RIGHT_DOCK_两栏起点).toBeGreaterThan(RIGHT_DOCK_MIN)
     expect(RIGHT_DOCK_两栏起点).toBeLessThan(RIGHT_DOCK_MAX)
+  })
+})
+
+describe("坞房客「产物」（2026-08-26）", () => {
+  it("在名单里，排在文件之后；有名字", () => {
+    expect(全部房客.indexOf("artifacts")).toBe(全部房客.indexOf("files") + 1)
+    expect(房客名("artifacts")).toBe("产物")
   })
 })

@@ -25,6 +25,7 @@ import { note } from "./connection.js"
 import { guard } from "./guard.js"
 import { applySnapshot } from "./transcript.js"
 import {
+  setArtifacts,
   setConnections,
   setTasks,
   setCredentials,
@@ -36,6 +37,7 @@ import {
   setTempSessions,
   setProviders,
   setContextUsage,
+  type ArtifactList,
   type CredentialState,
   type Providers,
   type RunDetail,
@@ -137,6 +139,24 @@ export const loadRuns = (c: WorkbenchClient, projectId: string, sessionId?: stri
       setRuns(v)
     })
     .catch(fail)
+
+/**
+ * 当前会话的产物（spec 2026-08-26-产物）。没有会话就清空，不发请求。
+ */
+export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined): Promise<void> => {
+  if (!sessionId) {
+    setArtifacts(undefined)
+    return Promise.resolve()
+  }
+  return c
+    .get<ArtifactList>("listArtifacts", { sessionId })
+    .then((v) => {
+      // 身份守卫：回来晚了不许覆盖已切走的会话
+      if (sessionId !== $activeSessionId.get()) return
+      setArtifacts(v)
+    })
+    .catch(fail)
+}
 
 /**
  * 取一次全量快照并同步 revision。跳号自愈与切会话都走这里。

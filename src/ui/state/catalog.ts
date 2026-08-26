@@ -9,6 +9,7 @@ import { atom } from "nanostores"
 import { z } from "zod"
 import { OPERATIONS } from "../../protocol/index.js"
 import type {
+  Artifact,
   Cost,
   FileChangeFacts,
   ProjectSummary,
@@ -60,6 +61,16 @@ export const $runDetail = atom<RunDetail | undefined>(undefined)
  * 静静地留空即可，面板自己会说「无溯源记录」。
  */
 export const $provenance = atom<ProvenanceLink | undefined>(undefined)
+
+/** `listArtifacts` 的返回：本会话的产物清单，外加认不出的那几次工具调用 */
+export interface ArtifactList {
+  artifacts: readonly Artifact[]
+  unknown: readonly { runId: string; toolCallId?: string }[]
+}
+
+/** 当前会话的产物（spec 2026-08-26-产物）。缺省 = 还没取到 / 没有会话 */
+export const $artifacts = atom<ArtifactList | undefined>(undefined)
+export const setArtifacts = (v: ArtifactList | undefined) => setValue($artifacts, v)
 
 export const $providers = atom<Providers>({ agents: [], providers: [] })
 export const $credentials = atom<CredentialState>({ configured: [], encrypted: false })

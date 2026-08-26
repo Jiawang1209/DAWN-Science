@@ -37,15 +37,17 @@ import { setValue } from "./identity.js"
  * **`browser` 现在不在这个联合里**——它一点都还没有（全项目 0 处 `webview`），
  * 摆一个点开是空的房客，比不摆更坏。它单开一轮，那时再加进来。
  */
-export type 坞房客 = "review" | "files" | "overview" | "web" | "team"
+export type 坞房客 = "review" | "files" | "artifacts" | "overview" | "web" | "team"
 
 /**
  * **「概览」2026-08-20 从整屏搬进坞**（作者定的：「换个入口……
  * 审阅、文件、概览、网页」）。侧栏底部那一行同轮摘掉——
  * 概览答的是「这个项目发生过什么」，而看事实的时候人多半正在对话，
  * 坞正是「对话旁边看事实」的位置；原来那一整屏还会把对话顶掉。
+ *
+ * 「产物」2026-08-26 加（spec 2026-08-26-产物 §5）。
  */
-export const 全部房客: readonly 坞房客[] = ["review", "files", "overview", "web", "team"]
+export const 全部房客: readonly 坞房客[] = ["review", "files", "artifacts", "overview", "web", "team"]
 
 export const RIGHT_DOCK_TENANT_KEY = "dawn.global.right-dock-tenant"
 export const RIGHT_DOCK_WIDTH_KEY = "dawn.global.right-dock-width"

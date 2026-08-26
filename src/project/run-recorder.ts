@@ -242,6 +242,42 @@ export class RunRecorder {
   }
 
   /**
+   * 你在内核里敲的一段（笔记本，2026-08-26）：一次插入一条**已完成**的 Run。
+   *
+   * 它不经 `turn_end`——对话的回合是模型的，这段是你的：代码从笔记本送进内核、
+   * 等到 `status: idle` 就结束，没有「运行中」需要账本跟着看的那一段。
+   * `origin: "user"` 与 `execute_python` / `execute_r` 与内核会话那条同一口径，
+   * 账本上一段你亲手跑的代码，能与模型用 run_code 跑的分开数。
+   */
+  记内核执行(
+    sessionId: SessionId,
+    language: "python" | "R",
+    结果: { hasError: boolean; terminalReason?: string },
+  ): string | undefined {
+    const projectId = this.projectOf(sessionId)
+    if (!projectId) return undefined
+    const runId = randomUUID()
+    const env = this.environmentOf(sessionId)
+    // 起止各取一次：与 begin/ingest 那条同一条「finishedAt 不早于 startedAt」的口径
+    const startedAt = this.now()
+    const finishedAt = this.now()
+    this.runs.insert({
+      runId,
+      projectId,
+      sessionId,
+      origin: "user",
+      requestType: language === "R" ? "execute_r" : "execute_python",
+      status: 结果.hasError ? "failed" : "completed",
+      startedAt,
+      finishedAt,
+      hasError: 结果.hasError,
+      ...(结果.terminalReason ? { terminalReason: 结果.terminalReason } : {}),
+      ...(env ? { environmentSnapshotId: env } : {}),
+    })
+    return runId
+  }
+
+  /**
    * PTY 会话开始。
    *
    * **按实测修正了计划。** 计划写的是「PTY 命令」一条 Run，但 PTY 只给字节流——

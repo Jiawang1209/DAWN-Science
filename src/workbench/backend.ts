@@ -71,6 +71,8 @@ import {
   resolveInWorkspace,
 } from "../files/access.js"
 import type { RunRecorder } from "../project/run-recorder.js"
+import type { 对话内核 } from "../kernel/挂载.js"
+import { 摘要 as 输出摘要 } from "../tools/run-code.js"
 import type { ProjectStore } from "../store/projects.js"
 import { diffSince, snapshot, changesAgainstHead, fileDiffAgainstHead, ignoredArtifacts, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
 import { 表格摘要 } from "../project/table-review.js"
@@ -312,6 +314,12 @@ export interface WorkbenchBackendOptions {
    * 只有不关心历史的测试才该省略它（不变式 3）。
    */
   runRecorder?: RunRecorder
+  /**
+   * 对话挂的内核（笔记本，2026-08-26）。`runInKernel` / `interruptKernel` / 普通对话的
+   * `listVariables` 都走它——与 run_code 工具**同一台**，你在笔记本里定义的 `df` 模型就能看到。
+   * **不给则笔记本不可用**（那几个操作报 internal_error），只有不关心内核的测试才该省略。
+   */
+  kernels?: 对话内核
 }
 
 /**
@@ -320,6 +328,14 @@ export interface WorkbenchBackendOptions {
  * **不去嗅探文件头**：那是另一件事，而且嗅错了的代价是把一个 PDF 当成图送出去。
  * 认不出来就报错——**「我们不知道这是什么」比「猜一个」诚实**。
  */
+/** 一轮内核输出里第一条报错的 `ename: evalue`——账本 `terminalReason` 用它，不带 traceback */
+function 首个错误(输出: readonly unknown[]): string | undefined {
+  for (const one of 输出 as { kind?: string; ename?: string; evalue?: string }[]) {
+    if (one.kind === "error") return `${one.ename ?? "错误"}: ${one.evalue ?? ""}`.trim()
+  }
+  return undefined
+}
+
 const 图片类型: Readonly<Record<string, string>> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
@@ -758,6 +774,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
   /** 会话开始时的 git 基线，用于算「这次会话改了什么」。进程重启后丢失——见下方注释。 */
   const baselines = new Map<string, GitBaseline>()
+  /**
+   * 「你不在场时内核里发生的事」（笔记本 spec §4）：按会话攒你在笔记本里跑过的 cell
+   * （代码 + 输出摘要），下一条用户消息发给模型时拼在前面，然后清空。
+   * **转录里不带它**——转录记的是你说的话；这份只给模型，让它知道 `x` 从哪来。
+   */
+  const 不在场缓冲 = new Map<string, string[]>()
 
   const requireProject = (projectId: string) => {
     const s = projects.summary(projectId)
@@ -1169,6 +1191,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 转录只活在内存里，跟着走
       events.forget(sessionId)
       baselines.delete(sessionId)
+      不在场缓冲.delete(sessionId)
       /**
        * **任务跟着走**（T3-a，2026-08-12）。
        *
@@ -2628,8 +2651,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 粘贴标记只活在草稿里：引用扫完（带标记的不算）就剥掉，模型与转录都不该见到它
       const 发出去的 = 剥掉粘贴标记(as === "user" ? (await 附上引用(sessionId, data)).text : data)
       data = 剥掉粘贴标记(data)
+      // 你不在场时在内核里跑过的（笔记本，spec §4）：拼进模型看的那份，转录里仍只是你那句话
+      const 攒的 = as === "user" ? 不在场缓冲.get(sessionId) : undefined
+      const 带前缀 = 攒的?.length ? `${攒的.join("\n\n")}\n\n${发出去的}` : 发出去的
       try {
-        sessions.write(sessionId, 发出去的, as, 附图, behavior)
+        sessions.write(sessionId, 带前缀, as, 附图, behavior)
+        // **写成功了才清**：写失败（没租约、会话不在）时那几段还得留着，下一次再带
+        不在场缓冲.delete(sessionId)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。
@@ -2683,6 +2711,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     stopSession: async ({ sessionId }) => {
       await sessions.stop(sessionId)
       baselines.delete(sessionId)
+      // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
+      不在场缓冲.delete(sessionId)
       return {}
     },
 
@@ -2757,25 +2787,84 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 后者是「问了，确实一个都没有」。混成一个空列表，
      * 用户会以为自己的变量丢了。
      */
-    listVariables: async ({ sessionId }) => {
-      const v = (await sessions.variables(sessionId)) as
-        | { supported: false; reason: string }
-        | { supported: true; variables: unknown[] }
-        | undefined
-      if (!v) {
-        // 不是内核会话，或会话不在。**如实说，不返回空列表**
-        return { supported: false as const, reason: "这个会话没有内核，看不到变量" }
+    listVariables: async ({ sessionId, language }) => {
+      type 变量答复 = { supported: false; reason: string } | { supported: true; variables: unknown[] } | undefined
+      const v = (await sessions.variables(sessionId)) as 变量答复
+      if (v) return v as never
+      /**
+       * 不是内核会话——那看它是不是**挂了内核的普通对话**（笔记本，2026-08-26）。
+       * `language` 缺省取第一台（协议里写明的约定，不是随便选一台）；指名了一台没起过的，
+       * 要说清是「这台没起」而不是「这个会话没内核」——两句话让人做的事不一样。
+       */
+      const 列 = opts.kernels?.列(sessionId) ?? []
+      if (列.length) {
+        const lang = language ?? 列[0]!
+        if (!列.includes(lang)) {
+          return { supported: false as const, reason: `这段对话没起过 ${lang} 内核，看不到它的变量` }
+        }
+        const kv = (await opts.kernels!.变量(sessionId, lang)) as 变量答复
+        if (kv) return kv as never
+        return { supported: false as const, reason: `${lang} 内核的运行时不支持列变量` }
       }
-      return v as never
+      // 不是内核会话，也没挂过内核，或会话不在。**如实说，不返回空列表**
+      return { supported: false as const, reason: "这个会话没有内核，看不到变量" }
     },
 
-    // Task 4 替换：占位——runInKernel / interruptKernel 的真实现（走 `对话内核`）在 Task 3/4 才接线
-    runInKernel: async () => {
-      throw fault("internal_error", "笔记本尚未接线")
+    /**
+     * 你在笔记本里跑一段（笔记本，2026-08-26）。
+     *
+     * 走的是与 run_code 工具**同一台**对话内核：先在转录上放一条 `running` 的 cell，
+     * 等内核这一轮吐完（内核输出经 `转发` 自己进转录），再把 cell 收成 ok / error、
+     * 账本记一条 user 的 Run、把「代码 + 输出摘要」攒进不在场缓冲——下一条你发给模型的话会带上它。
+     */
+    runInKernel: async ({ sessionId, language, code }) => {
+      const k = opts.kernels
+      if (!k) throw fault("internal_error", "这台没有接对话内核")
+      const cellId = events.beginCell(sessionId, language, code)
+      if (!cellId) throw fault("invalid_request", "这种会话没有内核，笔记本不可用")
+      /**
+       * `finishCell` 对「会话已不在 / 那个 id 不是 cell」是静默 no-op——跑到一半会话被删了就会这样。
+       * 不吞：账本照记（Run 是事实），但出声说 cell 收不了尾，否则这条 running 的 cell 就凭空消失。
+       */
+      const 收尾 = (结果: { status: "ok" | "error"; runId?: string }) => {
+        if (!events.peekItems(sessionId).some((i) => i.id === cellId && i.type === "cell")) {
+          console.error("[笔记本] cell 收不了尾：会话已不在", sessionId, cellId)
+          return
+        }
+        events.finishCell(sessionId, cellId, 结果)
+      }
+      try {
+        const r = await k.执行(sessionId, language, code)
+        const s = 输出摘要(r.输出)
+        // 出错时 Run 的原因只取 `ename: evalue`——traceback 是给人看的，账本要的是一句能检索的话
+        const 原因 = s.出错了 ? 首个错误(r.输出) : undefined
+        const runId = runRecorder?.记内核执行(sessionId, language, { hasError: s.出错了, ...(原因 ? { terminalReason: 原因 } : {}) })
+        收尾({ status: s.出错了 ? "error" : "ok", ...(runId ? { runId } : {}) })
+        const 列 = 不在场缓冲.get(sessionId) ?? []
+        列.push(
+          `[用户在 ${language === "R" ? "R" : "Python"} 内核里跑了]\n\`\`\`${language === "R" ? "r" : "python"}\n${code}\n\`\`\`\n输出：${s.文字 || "（没有输出）"}`,
+        )
+        不在场缓冲.set(sessionId, 列)
+        return { cellId }
+      } catch (err) {
+        // 解释器没配、内核起不来、跑到一半退出——都是用户能处理的，如实说；cell 与账本都要收口
+        const 消息 = err instanceof Error ? err.message : String(err)
+        runRecorder?.记内核执行(sessionId, language, { hasError: true, terminalReason: 消息 })
+        收尾({ status: "error" })
+        throw fault("invalid_request", 消息)
+      }
     },
-    // Task 4 替换
-    interruptKernel: async () => {
-      throw fault("internal_error", "笔记本尚未接线")
+
+    /** 中断这台内核这一轮（不杀内核）。「没起过」与「运行时不会中断」都是业务性失败 → conflict */
+    interruptKernel: async ({ sessionId, language }) => {
+      const k = opts.kernels
+      if (!k) throw fault("internal_error", "这台没有接对话内核")
+      try {
+        await k.中断(sessionId, language)
+      } catch (err) {
+        throw fault("conflict", err instanceof Error ? err.message : String(err))
+      }
+      return {}
     },
 
     /**

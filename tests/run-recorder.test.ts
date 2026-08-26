@@ -511,6 +511,19 @@ describe("内核执行", () => {
   })
 })
 
+describe("内核执行 · 你自己在笔记本里敲的（2026-08-26）", () => {
+  it("记内核执行：一次插入一条已完成的 user-origin Run（笔记本）", () => {
+    const id = rec.记内核执行(SESSION, "python", { hasError: false })
+    const r = list().find((x) => x.runId === id)!
+    expect(r).toMatchObject({ origin: "user", requestType: "execute_python", status: "completed", hasError: false })
+    expect(r.finishedAt).toBeDefined()
+    const bad = rec.记内核执行(SESSION, "R", { hasError: true, terminalReason: "NameError: x" })
+    expect(list().find((x) => x.runId === bad)).toMatchObject({ requestType: "execute_r", status: "failed", hasError: true, terminalReason: "NameError: x" })
+    // 没项目的会话不记账，与 beginTurn 同一条纪律
+    expect(rec.记内核执行("nobody", "python", { hasError: false })).toBeUndefined()
+  })
+})
+
 /**
  * **每条 Run 都记得住它跑在哪个环境**（②-B · R5，2026-08-13）。
  *

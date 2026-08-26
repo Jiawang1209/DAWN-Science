@@ -313,6 +313,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       if (e.kind !== "kernel_output") return
       events.ingest(对话, { ...(事件 as object), sessionId: 对话, language: 语言 } as never)
     },
+    /**
+     * 内核状态变了 → 整份重发给订阅者（笔记本，2026-08-26）。
+     * `events` 在下面才建，但与上面的 `转发` 一样只在回调里引用——第一次有内核起来时它早就在了；
+     * 不另加 setter、也不挪构造顺序，改动最小。
+     */
+    状态变了: (对话) => events.setKernels(对话, 对话的内核.状态列表(对话)),
   })
 
   /**
@@ -752,6 +758,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   /** 退出时要收的：定时调度器、微信轮询（backend 登记进来） */
   const 收摊们: Array<() => Promise<void> | void> = []
   const backend = createWorkbenchBackend({
+    // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）
+    kernels: 对话的内核,
     注册收摊: (f) => 收摊们.push(f),
     onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },

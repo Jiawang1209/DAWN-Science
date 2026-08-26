@@ -23,11 +23,63 @@ import { 待装技能 } from "../../src/memory/pending-skills.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { WorkbenchServer } from "../../src/workbench/server.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
+import type { 对话内核 } from "../../src/kernel/挂载.js"
 
 const registry: ProviderRegistry = {
   agents: {
     "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
+    // 笔记本回归要一段 pty 会话：它没有内核，runInKernel 得如实拒
+    "claude-code": { kind: "pty", command: "claude", args: [], capabilities: [] },
   },
+}
+
+/** 记下每次 write 收到的文本——「模型看的那份」与转录不同，得能量到它 */
+class 记写入的Runtime extends FakeRuntime {
+  readonly written: string[] = []
+  override write(sessionId: string, data: string): void {
+    this.written.push(data)
+    super.write(sessionId, data)
+  }
+}
+
+/**
+ * 假的 `对话内核`：只实现后端会碰的几个方法。`执行` 的输出可编程，并像真的那样经 `转发`
+ * 把每条 kernel_output 送进转录；`执行过` 记下（对话, 语言, 代码），让用例断言「走的是同一台」。
+ */
+function 假对话内核(转发: (对话: string, 语言: "python" | "R", 事件: unknown) => void) {
+  const 台 = new Set<string>()
+  const 键 = (对话: string, 语言: string) => `${对话}:${语言}`
+  return {
+    执行过: [] as [string, "python" | "R", string][],
+    中断过: [] as [string, "python" | "R"][],
+    下一轮输出: [] as unknown[],
+    下一轮抛: undefined as string | undefined,
+    变量答复: undefined as unknown,
+    有(对话: string, 语言: "python" | "R") { return 台.has(键(对话, 语言)) },
+    列(对话: string): ("python" | "R")[] {
+      return (["python", "R"] as const).filter((l) => 台.has(键(对话, l)))
+    },
+    状态列表(对话: string) { return this.列(对话).map((language) => ({ language, state: "idle" as const })) },
+    async 执行(对话: string, 语言: "python" | "R", 代码: string) {
+      this.执行过.push([对话, 语言, 代码])
+      if (this.下一轮抛) throw new Error(this.下一轮抛)
+      台.add(键(对话, 语言))
+      // 真内核每条输出都带溯源（转录按它认是哪台、第几版）；假的统一盖一份
+      const 输出 = this.下一轮输出.map((e) => ({
+        ...(e as object),
+        provenance: { kernelInstanceId: `k-${语言}`, kernelRevision: 1, at: "2026-08-26T00:00:00.000Z" },
+      }))
+      for (const entry of 输出) 转发(对话, 语言, { kind: "kernel_output", sessionId: `${对话}::${语言}`, entry })
+      return { 内核会话: `${对话}::${语言}`, 语言, 输出 }
+    },
+    async 中断(对话: string, 语言: "python" | "R") {
+      if (!this.有(对话, 语言)) throw new Error(`没有这台内核：${语言}`)
+      this.中断过.push([对话, 语言])
+    },
+    async 变量(对话: string, 语言: "python" | "R") {
+      return this.有(对话, 语言) ? this.变量答复 : undefined
+    },
+  }
 }
 
 function newRepo(): string {
@@ -50,7 +102,7 @@ function make() {
   const projectStore = new ProjectStore(db)
   const sessionStore = new SessionStore(db)
   const runStore = new RunStore(db)
-  const runtime = new FakeRuntime()
+  const runtime = new 记写入的Runtime()
   const sessions = new SessionManager({
     store: sessionStore,
     registry,
@@ -61,6 +113,10 @@ function make() {
     projects: projectStore, sessions: sessionStore, runs: runStore, registry,
   })
   const events = new SessionTranscripts({ terminalMaxChars: 10_000 })
+  // 与 wiring.ts 的 `转发` 同一写法：内核输出换成对话的 id、带上语言，注入转录
+  const fakeKernels = 假对话内核((对话, 语言, 事件) => {
+    events.ingest(对话, { ...(事件 as object), sessionId: 对话, language: 语言 } as never)
+  })
   // 真的记账员（不是 no-op）——2026-08-26 顺序回归要验「artifactsChanged 到达时账本已经落库」，
   // 这条链路不接一份真的 RunRecorder 就测不出「先记账再呈现」这句话是不是真的
   const runRecorder = new RunRecorder({ runs: runStore, projectOf: (s) => sessionStore.get(s)?.projectId })
@@ -70,8 +126,8 @@ function make() {
     queue: new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl")),
     pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
   }
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder })
-  return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, runtime, runRecorder, server: new WorkbenchServer(backend) }
+  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder, kernels: fakeKernels as unknown as 对话内核 })
+  return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, runtime, runRecorder, fakeKernels, server: new WorkbenchServer(backend) }
 }
 
 describe("真实后端 · 经服务端端到端", () => {
@@ -341,6 +397,83 @@ describe("真实后端 · 经服务端端到端", () => {
     const s = await ctx.server.handle("subscribeSession", { sessionId: "no-such" })
     expect(s.ok).toBe(false)
     if (!s.ok) expect(s.error.code).toBe("not_found")
+  })
+
+  it("runInKernel：cell 进转录、走同一台内核、账本一条 user Run、缓冲攒上；下一条 writeToSession 把缓冲拼进模型看的那份（笔记本 2026-08-26）", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    ctx.fakeKernels.下一轮输出 = [
+      { kind: "stream", stream: "stdout", text: "hi\n" },
+      { kind: "status", state: "idle" },
+    ]
+    const { cellId } = (await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "x = 42" })) as { cellId: string }
+    const items = ctx.events.subscribe(sid).items
+    expect(items.find((i) => i.id === cellId)).toMatchObject({ type: "cell", status: "ok", language: "python", code: "x = 42" })
+    // 内核输出也经 转发 进了转录，带着语言
+    expect(items.some((i) => i.type === "kernelOutput" && (i as { language?: string }).language === "python")).toBe(true)
+    expect(ctx.fakeKernels.执行过).toEqual([[sid, "python", "x = 42"]])
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    const run = ctx.runStore.listByProject(pid, {}).find((r) => r.requestType === "execute_python")
+    expect(run).toMatchObject({ origin: "user", status: "completed", hasError: false })
+    expect(items.find((i) => i.id === cellId)).toMatchObject({ runId: run!.runId })
+    await ctx.server.handle("acquireLease", { sessionId: sid, holder: "user" })
+    await ctx.backend.writeToSession({ sessionId: sid, data: "继续", as: "user" })
+    expect(ctx.runtime.written.at(-1)).toMatch(/^\[用户在 Python 内核里跑了\][\s\S]*x = 42[\s\S]*hi[\s\S]*继续$/)
+    // 转录里仍只是你那句话，不带前缀
+    expect(ctx.events.subscribe(sid).items.at(-1)).toMatchObject({ type: "turn", who: "user", text: "继续" })
+    await ctx.backend.writeToSession({ sessionId: sid, data: "再来", as: "user" })
+    expect(ctx.runtime.written.at(-1)).toBe("再来")
+  })
+
+  it("runInKernel 报错的 cell：status error，Run failed 带原因；内核起不来 → invalid_request 且 cell 也标 error", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    ctx.fakeKernels.下一轮输出 = [
+      { kind: "error", ename: "NameError", evalue: "name 'y' is not defined", traceback: [] },
+      { kind: "status", state: "idle" },
+    ]
+    const { cellId } = (await ctx.backend.runInKernel({ sessionId: sid, language: "R", code: "y" })) as { cellId: string }
+    expect(ctx.events.subscribe(sid).items.find((i) => i.id === cellId)).toMatchObject({ type: "cell", status: "error", language: "R" })
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    expect(ctx.runStore.listByProject(pid, {}).find((r) => r.requestType === "execute_r")).toMatchObject({
+      origin: "user", status: "failed", hasError: true, terminalReason: "NameError: name 'y' is not defined",
+    })
+    ctx.fakeKernels.下一轮抛 = "python 解释器还没配"
+    await expect(ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "1" })).rejects.toMatchObject({ workbenchCode: "invalid_request", message: /还没配/ })
+    const cells = ctx.events.subscribe(sid).items.filter((i) => i.type === "cell")
+    expect(cells.at(-1)).toMatchObject({ language: "python", status: "error" })
+    expect(ctx.runStore.listByProject(pid, {}).filter((r) => r.requestType === "execute_python")).toHaveLength(1)
+  })
+
+  it("interruptKernel 转到 对话内核.中断；没这台 → conflict", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    await expect(ctx.backend.interruptKernel({ sessionId: sid, language: "python" })).rejects.toMatchObject({ workbenchCode: "conflict", message: /没有这台内核/ })
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    await ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "1" })
+    await ctx.backend.interruptKernel({ sessionId: sid, language: "python" })
+    expect(ctx.fakeKernels.中断过).toEqual([[sid, "python"]])
+  })
+
+  it("listVariables 对普通对话：走对话内核那台（language 缺省第一台）；没内核如实说", async () => {
+    const sid = await 开一段(repo)
+    ctx.events.subscribe(sid)
+    expect(await ctx.backend.listVariables({ sessionId: sid })).toMatchObject({ supported: false, reason: /没有内核/ })
+    ctx.fakeKernels.下一轮输出 = [{ kind: "status", state: "idle" }]
+    await ctx.backend.runInKernel({ sessionId: sid, language: "R", code: "1" })
+    ctx.fakeKernels.变量答复 = { supported: true, variables: [{ name: "df", type: "data.frame", summary: "3×2" }] }
+    expect(await ctx.backend.listVariables({ sessionId: sid })).toMatchObject({ supported: true, variables: [{ name: "df" }] })
+    // 指名一台没起过的：不是「没内核」，是「这台没起」
+    expect(await ctx.backend.listVariables({ sessionId: sid, language: "python" })).toMatchObject({ supported: false, reason: /python/i })
+  })
+
+  it("pty 会话 runInKernel → invalid_request「这种会话没有内核」", async () => {
+    const t = await ctx.server.handle("createTask", { agentId: "claude-code", workspace: repo })
+    expect(t.ok, JSON.stringify(t)).toBe(true)
+    const sid = (t as { data: { sessionId: string } }).data.sessionId
+    ctx.events.subscribe(sid)
+    await expect(ctx.backend.runInKernel({ sessionId: sid, language: "python", code: "1" })).rejects.toMatchObject({ workbenchCode: "invalid_request", message: /这种会话没有内核/ })
+    expect(ctx.fakeKernels.执行过).toEqual([])
   })
 
   it("writeToSession 对未激活会话报 not_found,与 subscribeSession 同码(审查 debug F6)", async () => {

@@ -1,15 +1,18 @@
 /**
  * 对话里的产物条 `GENERATED · N`（spec 2026-08-26-产物 §4）。
  *
- * **按轮派生，不是转录项**：这一轮 = 上一句用户发言之后、这条 agent 回复之前的所有工具调用；
+ * **按轮派生，不是转录项**：这一轮 = 从这条 agent 回复往前，直到（不含）上一条 turn 为止的所有工具调用；
  * 产物按 `bornToolCallId` 对到这些工具调用（转录里 tool item 的 id 就是 pi 的 toolCallId）。
  * 三态分得开：正常 / 未知 / 混合；确认没新建**不画**。
+ *
+ * **老 run 没有 `toolCallId`**（v16 之前，账本还没记这一列）：这类产物既对不到任何
+ * 一次工具调用，也就没法挂到某一条 agent 回复上——本组件对它们保持沉默，
+ * 是设计如此，不是遗漏。它们只在坞「产物」格的会话级清单里露面（Task 11/12）。
  */
 import type { Artifact, TranscriptItem } from "../protocol/index.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
-import { 文件类按名字 } from "./file-kind.js"
 
 export type 轮产物 =
   | { kind: "none" }
@@ -22,23 +25,35 @@ export function 本轮产物(items: readonly TranscriptItem[], agentTurnId: stri
   const end = items.findIndex((i) => i.id === agentTurnId)
   if (end < 0) return { kind: "none" }
   const 本轮工具 = new Set<string>()
+  /**
+   * **边界是任意一条 turn，不分 user/agent。**
+   * 转录里一条 turn = 模型的一条消息；工具调用之后模型再开口是新的一条，
+   * 产物挂在工具之后那条上，前一条不再重复认领——否则同一批工具调用会被
+   * 两条相邻的 agent 回复各画一次。
+   */
   for (let i = end - 1; i >= 0; i--) {
     const it = items[i]!
-    if (it.type === "turn" && it.who === "user") break
+    if (it.type === "turn") break
     if (it.type === "tool") 本轮工具.add(it.id)
   }
   if (本轮工具.size === 0) return { kind: "none" }
   const artifacts = list.artifacts.filter((a) => a.bornToolCallId && 本轮工具.has(a.bornToolCallId))
   const unknownCount = list.unknown.filter((u) => u.toolCallId && 本轮工具.has(u.toolCallId)).length
   if (artifacts.length === 0 && unknownCount === 0) return { kind: "none" }
-  if (artifacts.length === 0 && unknownCount === 本轮工具.size) return { kind: "unknown", reason: "not_observed" }
+  /**
+   * **没有产物但有「不知道」，就是 unknown**——不再要求 `unknownCount === 本轮工具.size`。
+   * `list.unknown` 里的 `toolCallId` 有时是探针取不到真实 id 时的兜底占位
+   * （形如 `tool<N>`），它对不上转录里任何一个真实 toolCallId，于是
+   * `本轮工具.size` 与匹配上的 unknownCount 永远凑不齐——用旧判据会漏判，
+   * 把「其实不知道」误判成 `some` 里的 `unknownCount`，最坏还会画出 `GENERATED · 0`。
+   */
+  if (artifacts.length === 0) return { kind: "unknown", reason: "not_observed" }
   return { kind: "some", artifacts, unknownCount }
 }
 
-const 徽标 = (path: string) => {
-  const k = 文件类按名字(path.split("/").pop() ?? path, "file")
-  return k === "image" ? "IMAGE" : k === "table" ? "CSV" : k === "pdf" ? "PDF" : k === "markdown" ? "MD" : k === "code" || k === "shell" ? "CODE" : k === "notebook" ? "NB" : k.toUpperCase()
-}
+/** **从协议已经分好的 `kind` 派生**，不再对着路径重跑一遍判类——那是重复劳动，两边分类逻辑还可能悄悄分岔 */
+const 徽标 = (kind: Artifact["kind"]) =>
+  kind === "image" ? "IMAGE" : kind === "table" ? "CSV" : kind === "pdf" ? "PDF" : kind === "markdown" ? "MD" : kind === "code" || kind === "shell" ? "CODE" : kind === "notebook" ? "NB" : kind.toUpperCase()
 
 const 折叠阈值 = 8
 
@@ -66,7 +81,7 @@ export function GeneratedStrip({ 产物, onOpen }: { 产物: 轮产物; onOpen: 
         {显示.map((a) => (
           <li key={a.path}>
             <Button variant="ghost" size="inline" className={`generated-chip${a.exists === false ? " gone" : ""}`} aria-label={a.path} onClick={() => onOpen(a.path)}>
-              <span className="kind-tag">{徽标(a.path)}</span>
+              <span className="kind-tag">{徽标(a.kind)}</span>
               <span className="name">{a.path.split("/").pop()}</span>
               {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
             </Button>

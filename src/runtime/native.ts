@@ -54,7 +54,7 @@ function 取文本(content: string | { type: string; text?: string }[]): string 
     .map((c) => (c.type === "text" ? (c.text ?? "") : c.type === "image" ? "（图片）" : ""))
     .join("")
 }
-import { ProvenanceProbe, 套上溯源 } from "./provenance.js"
+import { ProvenanceProbe, 套上溯源, 并进登记新建 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool } from "../tools/run-code.js"
@@ -646,7 +646,12 @@ export class NativeRuntime implements AgentRuntime {
               // **算不出来就不发。** 发一个空的 `filesWritten` 会让那条 Run
               // 说出「确认没改任何文件」，而实情是「不知道」——两者不得混为一谈
               // （`types.ts` 的 `tool_files` 注释：只在拿得到事实时发）
-              if (facts) emit({ kind: "tool_files", sessionId, toolCallId, ...facts })
+              if (facts) {
+                // 产物登记按 inode 记下的「此前不在、现在有」并进来（spec 2026-08-26-产物 §2）：
+                // git 看不见被忽略的文件，登记看不见没声明路径的（bash 里的 `cp`）
+                const 登记到的 = 之前.filter(([p, 有]) => !有 && 产物登记.存在(p)).map(([p]) => p)
+                emit({ kind: "tool_files", sessionId, toolCallId, ...并进登记新建(facts, 登记到的, cwd) })
+              }
             }
           }
         },

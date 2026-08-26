@@ -264,4 +264,15 @@ describe("filesCreated（产物条，2026-08-26）", () => {
     expect(facts.filesWritten).toEqual(["seed.txt"])
     rmSync(dir, { recursive: true, force: true })
   })
+
+  it("声明路径是绝对的：换算成相对路径，不重复出现", async () => {
+    const dir = repo()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write", { path: join(dir, "abs.txt") })
+    writeFileSync(join(dir, "abs.txt"), "1\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual(["abs.txt"])
+    expect(facts.filesWritten.filter((p) => p === "abs.txt")).toHaveLength(1)
+    rmSync(dir, { recursive: true, force: true })
+  })
 })

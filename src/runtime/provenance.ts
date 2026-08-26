@@ -23,7 +23,7 @@
  * 返回空数组会被读成「确认没改任何文件」，那是编造（不变式 5 明令禁止）。
  */
 import { statSync } from "node:fs"
-import { resolve } from "node:path"
+import { isAbsolute, relative, resolve } from "node:path"
 import { createdSince, diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 
 /**
@@ -170,7 +170,13 @@ export class ProvenanceProbe {
   }
 
   /** 拍下 before，交回一个算差集的句柄。**拍不到就不观察**（非 git 仓库） */
-  private async 观察(声明: string[]): Promise<ProvenanceHandle | undefined> {
+  private async 观察(声明入参: string[]): Promise<ProvenanceHandle | undefined> {
+    // **声明路径可能是绝对的**（`声明的路径` 从工具入参里原样捞出来，工具自己爱传哪种就传哪种）。
+    // 统一换成相对工作区——后面所有比对、去重、落盘都按相对路径来，
+    // 混着绝对/相对会让同一个文件被记成两条。工作区外的声明直接丢：那不该被算进这次调用。
+    const 声明 = 声明入参
+      .map((p) => relative(this.workspace, resolve(this.workspace, p)))
+      .filter((p) => p && !p.startsWith("..") && !isAbsolute(p))
     let before: GitBaseline
     try {
       before = await snapshot(this.workspace)
@@ -267,4 +273,18 @@ export function 套上溯源<T extends Record<string, unknown>>(
       }
     },
   } as unknown as T
+}
+
+/**
+ * 把产物登记（按 inode 身份记的「此前不存在、现在有」）并进探针的 facts（2026-08-26）。
+ * 两个来源互补：git 看不见被忽略的文件，登记看不见没声明路径的（bash 里的 `cp`）。
+ * `登记新建的` 是**绝对路径**，这里换算成相对工作区的。
+ */
+export function 并进登记新建(facts: ToolFileFacts, 登记新建的: readonly string[], cwd: string): ToolFileFacts {
+  const rel = 登记新建的.map((p) => relative(cwd, p)).filter((p) => p && !p.startsWith(".."))
+  return {
+    ...facts,
+    filesWritten: [...new Set([...facts.filesWritten, ...rel])].sort(),
+    filesCreated: [...new Set([...facts.filesCreated, ...rel])].sort(),
+  }
 }

@@ -221,7 +221,7 @@ describe("文件事实（不变式 5）", () => {
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "write", input: {} })
     rec.ingest({
       kind: "tool_files", sessionId: SESSION, toolCallId: "c1",
-      filesWritten: ["src/a.ts", "src/b.ts"], filesRead: [], mayIncludeUserEdits: true,
+      filesWritten: ["src/a.ts", "src/b.ts"], filesRead: [], mayIncludeUserEdits: true, filesCreated: [],
     })
     rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "c1", toolName: "write", isError: false, text: "", truncated: false, bytes: 0 })
     const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
@@ -242,7 +242,7 @@ describe("文件事实（不变式 5）", () => {
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "c1", toolName: "bash", input: {} })
     rec.ingest({
       kind: "tool_files", sessionId: SESSION, toolCallId: "c1",
-      filesWritten: [], filesRead: [], mayIncludeUserEdits: false,
+      filesWritten: [], filesRead: [], mayIncludeUserEdits: false, filesCreated: [],
     })
     const tool = list().find((r) => r.requestType.startsWith("tool_call"))!
     expect(tool.filesWritten).toEqual([])
@@ -254,7 +254,7 @@ describe("文件事实（不变式 5）", () => {
     expect(() =>
       rec.ingest({
         kind: "tool_files", sessionId: SESSION, toolCallId: "从没见过",
-        filesWritten: ["x"], filesRead: [], mayIncludeUserEdits: false,
+        filesWritten: ["x"], filesRead: [], mayIncludeUserEdits: false, filesCreated: [],
       }),
     ).not.toThrow()
     expect(list().filter((r) => r.requestType.startsWith("tool_call"))).toHaveLength(0)

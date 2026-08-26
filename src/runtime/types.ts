@@ -258,6 +258,8 @@ export type AgentEvent =
       filesWritten: string[]
       filesRead: string[]
       mayIncludeUserEdits: boolean
+      /** 这一次新建的（产物条）。整条事件缺席 = 不知道；空数组 = 确认没新建 */
+      filesCreated: string[]
     }
   /**
    * 一个子 agent 开始 / 结束（①-B″ · S1）。

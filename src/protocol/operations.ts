@@ -14,6 +14,7 @@
  */
 import { z } from "zod"
 import {
+  ArtifactSchema,
   CostSchema,
   FileChangeFactsSchema,
   ProjectSummarySchema,
@@ -267,6 +268,21 @@ export const OPERATIONS = {
   getProvenance: {
     request: z.object({ resourceId: z.string().min(1) }),
     response: ProvenanceLinkSchema,
+    mutating: false,
+  },
+  /**
+   * 本会话的产物清单（spec 2026-08-26-产物 §3）。**只读、无副作用**。
+   * `unknown` 是 `filesCreated` 缺省的那几次工具调用——界面必须把它数出来说
+   * 「另有 N 次运行产出未知」，不许把「不知道」画成「没有」。
+   */
+  listArtifacts: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: z
+      .object({
+        artifacts: z.array(ArtifactSchema),
+        unknown: z.array(z.object({ runId: z.string().min(1), toolCallId: z.string().min(1).optional() }).strict()),
+      })
+      .strict(),
     mutating: false,
   },
   /**

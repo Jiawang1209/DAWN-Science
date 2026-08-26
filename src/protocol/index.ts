@@ -11,6 +11,7 @@ export { WORKBENCH_PROTOCOL_VERSION, isCompatible } from "./version.js"
 export { 能上服务器 } from "./remote-capable.js"
 
 export {
+  ArtifactSchema,
   CostSchema,
   FileChangeFactsSchema,
   ProjectSummarySchema,
@@ -26,6 +27,7 @@ export {
 } from "./entities.js"
 
 export type {
+  Artifact,
   Cost,
   FileChangeFacts,
   ProjectSummary,

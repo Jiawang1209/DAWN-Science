@@ -413,3 +413,23 @@ export const TaskSummarySchema = z
   })
   .strict()
 export type TaskSummary = z.infer<typeof TaskSummarySchema>
+
+/**
+ * 一个产物（spec 2026-08-26-产物 §3）：本会话某次 tool_call **新建**的文件。
+ * 不是表，是从 Run 推导的视图；不存内容（S18 作者否决）。
+ */
+export const ArtifactSchema = z
+  .object({
+    /** 相对工作区 */
+    path: z.string().min(1),
+    /** 按后缀判（`src/files/file-kind.ts`），认不出 = other，不猜 */
+    kind: z.enum(["markdown", "text", "table", "image", "code", "shell", "notebook", "archive", "pdf", "other"]),
+    bornRunId: z.string().min(1),
+    /** 转录里 tool item 的 id；界面靠它把产物挂到那一轮。老 run 没有 */
+    bornToolCallId: z.string().min(1).optional(),
+    bornAt: Iso,
+    /** 现在还在不在。**缺省 = 查不了**（远端会话），不是「不在」 */
+    exists: z.boolean().optional(),
+  })
+  .strict()
+export type Artifact = z.infer<typeof ArtifactSchema>

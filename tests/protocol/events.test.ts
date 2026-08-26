@@ -130,6 +130,12 @@ describe("增量更新", () => {
     ).toBe(true)
   })
 
+  it("artifactsChanged 只带信封——数据走 listArtifacts", () => {
+    const u = { workbenchProtocolVersion: "7.24", sessionId: "s", revision: 3, type: "artifactsChanged" }
+    expect(SessionUpdateSchema.safeParse(u).success).toBe(true)
+    expect(SessionUpdateSchema.safeParse({ ...u, artifacts: [] }).success).toBe(false)
+  })
+
   it("revision 从 1 起 —— 0 是「还没有任何更新」的快照初值，不会作为增量出现", () => {
     expect(
       SessionUpdateSchema.safeParse({ ...base, type: "item", revision: 0, item: turn() }).success,
@@ -328,7 +334,7 @@ describe("协议版本 · 5.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.23")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.24")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

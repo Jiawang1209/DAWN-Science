@@ -469,6 +469,11 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
    * 客户端收到它就按 id 把那条从转录里删掉;快照那一路本来就不含它,所以只补实时流这一条。
    */
   z.object({ ...envelope, type: z.literal("dropItem"), id: z.string().min(1) }).strict(),
+  /**
+   * 本会话的产物变了（2026-08-26）：某次工具调用新建了文件。
+   * **只说「变了」，数据走 `listArtifacts`**——与 `dropItem` 同一纪律，事件里不塞清单。
+   */
+  z.object({ ...envelope, type: z.literal("artifactsChanged") }).strict(),
   z.object({ ...envelope, type: z.literal("bytes"), data: z.string() }).strict(),
   z
     .object({

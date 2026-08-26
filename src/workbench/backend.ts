@@ -59,6 +59,7 @@ import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import
 import { 忽略目录 } from "../enhance/retrieve.js"
 import { readdir, readFile as 读本地, writeFile, rename, rm, stat, copyFile } from "node:fs/promises"
 import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep } from "node:path"
+import { 文件类按名字 } from "../files/file-kind.js"
 import { IlinkClient } from "../channels/weixin/ilink.js"
 import { diagnoseInterpreter } from "../kernel/specs.js"
 import {
@@ -85,7 +86,23 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync, lstatSync } from "node:fs"
+
+/** 产物存不存在（`listArtifacts`）。本机 `lstat`——查不到就是不在，不抛错 */
+function 文件仍在(p: string): boolean {
+  try {
+    lstatSync(p)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 产物按后缀分类（`listArtifacts`）——复用 `src/files/file-kind.ts`，`dir` 这里永远不会出现 */
+function 产物类型(path: string): Exclude<ReturnType<typeof 文件类按名字>, "dir"> {
+  const k = 文件类按名字(path.split("/").pop() ?? path, "file")
+  return k === "dir" ? "other" : k
+}
 
 /**
  * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
@@ -1620,6 +1637,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const link = runs.getProvenance(resourceId)
       if (!link) throw fault("not_found", `资源 "${resourceId}" 没有溯源记录`)
       return link
+    },
+
+    /**
+     * 本会话的产物清单（spec 2026-08-26-产物 §3）。**只读、从账本推导，不建表**。
+     *
+     * `会话` 已经退出也答得出（记录还在，历史会话打开时清单照样要画）；
+     * `远端` 时本机 `lstat` 查不了那台机器的文件系统，**不给 `exists`**（缺省 = 不知道），
+     * 不许静默说「不在了」。
+     */
+    listArtifacts: async ({ sessionId }) => {
+      const 会话 = sessions.get(sessionId)
+      const { artifacts, unknown } = runs.artifactsOf(sessionId)
+      const 远端 = Boolean(会话?.connectionId)
+      return {
+        artifacts: artifacts.map((a) => ({
+          ...a,
+          kind: 产物类型(a.path),
+          ...(远端 || !会话 ? {} : { exists: 文件仍在(拼路径(会话.workspace, a.path)) }),
+        })),
+        unknown,
+      }
     },
 
     subscribeSession: async ({ sessionId }) => {

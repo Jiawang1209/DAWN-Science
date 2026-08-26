@@ -37,6 +37,7 @@ function backend(): WorkbenchBackend {
       startedAt: "2026-08-08T00:00:00Z", hasError: false,
     }),
     getProvenance: async () => ({ resourceId: "a", provenanceComplete: true }),
+    listArtifacts: async () => ({ artifacts: [], unknown: [] }),
     subscribeSession: async () => ({
       sessionId: "s1", kind: "native" as const, revision: 0, items: [],
       terminal: "", terminalTrimmed: false, state: "alive" as const,

@@ -17,15 +17,23 @@
  * 包装器的 `execute` 是 before/after 的**精确**位置，而且对并行执行同样成立
  * ——每次调用各有一个包装器实例，互不干扰。
  *
+ * ## 两条路：git 有就走 git，没有就走文件系统（2026-08-26）
+ *
+ * git 工作区走 `git-facts.ts`（能剔除基线时就脏的文件）；**不是 git 仓库**——临时会话
+ * `~/DAWN/scratch/<ts>/`、用户自己的非 git 目录——走 `fs-facts.ts`：前后各扫一遍文件系统，
+ * 按 inode / mtime / size 对比。作者第一次真用「产物」就撞上临时会话满屏「本轮产出未知」，
+ * 根因就是此前非 git 一律不观察。**两条路口径一致：缺省 = 不知道、空 = 确认没有。**
+ *
  * ## 拿不到事实时留空，不编
  *
- * 非 git 仓库、git 调用失败——一律返回 `undefined`，让那条 Run 上**没有**这个字段。
+ * git 调用失败、文件系统扫描超上限——一律返回 `undefined`，让那条 Run 上**没有**这个字段。
  * 返回空数组会被读成「确认没改任何文件」，那是编造（不变式 5 明令禁止）。
  */
 import { statSync } from "node:fs"
 import { resolve } from "node:path"
 import { 工作区内相对路径 } from "../files/paths.js"
-import { createdSince, diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
+import { createdSince, diffSince, snapshot, NotAGitRepoError, type GitBaseline } from "../project/git-facts.js"
+import { fsDiff, fsSnapshot, FS_SNAPSHOT_CAP, type FsSnapshot } from "../project/fs-facts.js"
 
 /**
  * 会产出文件的工具。**白名单，不是黑名单。**
@@ -133,8 +141,14 @@ export interface ProvenanceHandle {
   finish(): Promise<ToolFileFacts | undefined>
 }
 
+/** 超上限已经出过声的工作区：每个只喊一次，不然一轮几十次工具调用就刷几十条 */
+const 已警告超限的工作区 = new Set<string>()
+
 export class ProvenanceProbe {
-  constructor(private readonly workspace: string) {}
+  constructor(
+    private readonly workspace: string,
+    private readonly 选项: { fsCap?: number } = {},
+  ) {}
 
   /**
    * **外部工具即将执行**（2026-08-18）。「外部」指 MCP 服务器的工具，
@@ -186,7 +200,7 @@ export class ProvenanceProbe {
     return this.观察(声明的路径(toolName, params))
   }
 
-  /** 拍下 before，交回一个算差集的句柄。**拍不到就不观察**（非 git 仓库） */
+  /** 拍下 before，交回一个算差集的句柄。**拍不到就不观察**（git 崩了、文件系统超上限） */
   private async 观察(声明入参: string[]): Promise<ProvenanceHandle | undefined> {
     // **声明路径可能是绝对的**（`声明的路径` 从工具入参里原样捞出来，工具自己爱传哪种就传哪种）。
     // 统一换成相对工作区——后面所有比对、去重、落盘都按相对路径来，
@@ -195,13 +209,6 @@ export class ProvenanceProbe {
       const rel = 工作区内相对路径(this.workspace, p)
       return rel ? [rel] : []
     })
-    let before: GitBaseline
-    try {
-      before = await snapshot(this.workspace)
-    } catch {
-      // 非 git 仓库或 git 不可用。**不是错误**，是「这里没有可依据的事实」
-      return undefined
-    }
     const workspace = this.workspace
     const 在不在 = (rel: string) => {
       try {
@@ -212,6 +219,17 @@ export class ProvenanceProbe {
     }
     // **执行前**记下声明路径里哪些还不存在——执行后再看就分不清「新建」与「覆盖」
     const 声明前不在 = 声明.filter((rel) => !在不在(rel))
+
+    let before: GitBaseline
+    try {
+      before = await snapshot(this.workspace)
+    } catch (e) {
+      if (e instanceof NotAGitRepoError) {
+        return this.走文件系统(声明, 声明前不在, 在不在)
+      }
+      // git 在却不可用。**不是错误**，是「这里没有可依据的事实」
+      return undefined
+    }
     return {
       async finish(): Promise<ToolFileFacts | undefined> {
         try {
@@ -236,13 +254,50 @@ export class ProvenanceProbe {
            *
            * **2026-08-09 修**：此前这里返回 `{ filesWritten: [], … }`。
            * 注释说的是「不知道」，返回的却是空数组，而空数组在变更 pane 上
-           * 被渲染成**「没有改动文件」**——恰好是本文件开头第 20-23 行
-           * 自己写下的禁令：*「返回空数组会被读成『确认没改任何文件』，那是编造」*。
+           * 被渲染成**「没有改动文件」**——恰好是本文件开头自己写下的禁令：
+           * *「返回空数组会被读成『确认没改任何文件』，那是编造」*。
            *
            * 它只在 diff 失败这条罕见路径上触发（仓库中途消失、git 崩了），
            * 所以带着这个缺陷活了一整个 Task。**「不知道」的唯一诚实表达是不发这个事实。**
            */
           return undefined
+        }
+      },
+    }
+  }
+
+  /**
+   * 非 git 工作区那一支（2026-08-26）：前后各扫一遍文件系统。
+   *
+   * 没有 git 就没有「基线时就脏」的概念，所以剔不掉作者手改的——`mayIncludeUserEdits`
+   * 如实为 true。超上限 = 不知道，**每个工作区只出一次声**。
+   */
+  private 走文件系统(
+    声明: string[],
+    声明前不在: string[],
+    在不在: (rel: string) => boolean,
+  ): ProvenanceHandle | undefined {
+    const workspace = this.workspace
+    const cap = this.选项.fsCap ?? FS_SNAPSHOT_CAP
+    const before: FsSnapshot | undefined = fsSnapshot(workspace, cap)
+    if (!before) {
+      if (!已警告超限的工作区.has(workspace)) {
+        已警告超限的工作区.add(workspace)
+        console.error(`[溯源] 工作区不是 git 仓库且文件超过 ${cap} 个，这次的文件事实记为不知道：${workspace}`)
+      }
+      return undefined
+    }
+    return {
+      async finish(): Promise<ToolFileFacts | undefined> {
+        const after = fsSnapshot(workspace, cap)
+        if (!after) return undefined
+        const { created, written } = fsDiff(before, after)
+        const 真在 = 声明.filter(在不在)
+        return {
+          filesWritten: [...new Set([...written, ...真在])].sort(),
+          filesRead: [],
+          mayIncludeUserEdits: true,
+          filesCreated: [...new Set([...created, ...声明前不在.filter(在不在)])].sort(),
         }
       },
     }

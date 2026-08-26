@@ -18,7 +18,7 @@
  * 包装器的 `execute` 恰好是 before/after 的**精确**位置，
  * 而且对并行执行的工具同样成立（每次调用各有一个包装器实例）。
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -140,13 +140,20 @@ describe("单次调用的文件事实", () => {
 })
 
 describe("不是 git 仓库时", () => {
-  it("**不报错，也不假装知道** —— 返回 undefined，让 Run 上没有这个事实", async () => {
+  /**
+   * **2026-08-26 改口径**：此前这里断言「非 git 一律返回 undefined」。作者第一次真用「产物」
+   * 就撞上临时会话（`~/DAWN/scratch/<ts>/`，不是仓库）满屏「本轮产出未知」。
+   * 现在非 git 走文件系统探针——什么都没改就是**确认没改**（空数组），不再是「不知道」。
+   */
+  it("**走文件系统探针**：什么都没改 → 空数组（确认没改），mayIncludeUserEdits 如实为 true", async () => {
     const dir = mkdtempSync(join(tmpdir(), "dawn-nogit-"))
     mkdirSync(join(dir, "sub"), { recursive: true })
     const probe = new ProvenanceProbe(dir)
     const h = await probe.begin("write")
-    // 拿不到事实时留空，比编一个空数组诚实——空数组会被读成「确认没改任何文件」
-    expect(h).toBeUndefined()
+    const facts = await factsOf(h)
+    expect(facts.filesWritten).toEqual([])
+    expect(facts.filesCreated).toEqual([])
+    expect(facts.mayIncludeUserEdits).toBe(true)
     rmSync(dir, { recursive: true, force: true })
   })
 })
@@ -312,5 +319,72 @@ describe("filesCreated（产物条，2026-08-26）", () => {
     const merged = 并进登记新建(facts, [join(dir, "out", "x.txt")], dir)
     expect(merged.filesCreated).toEqual(["out/x.txt"])
     rmSync(dir, { recursive: true, force: true })
+  })
+})
+
+describe("非 git 工作区走文件系统探针（2026-08-26 首用回归）", () => {
+  /**
+   * 临时会话住在 `~/DAWN/scratch/<ts>/`，不是 git 仓库。此前探针在这里一律「不知道」，
+   * 作者第一次真用就撞上满屏「本轮产出未知」。没有 git 就前后各扫一遍文件系统。
+   */
+  function plainDir(): string {
+    const dir = mkdtempSync(join(tmpdir(), "dawn-prov-nogit-"))
+    writeFileSync(join(dir, "seed.txt"), "seed\n")
+    return dir
+  }
+
+  it("bash 写图 + 改已有文件 → created / written 都有，mayIncludeUserEdits 如实为 true", async () => {
+    const dir = plainDir()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("bash", { command: "Rscript x.R" })
+    expect(h).toBeDefined()
+    writeFileSync(join(dir, "volcano.png"), "png\n")
+    writeFileSync(join(dir, "seed.txt"), "seed changed\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual(["volcano.png"])
+    expect(facts.filesWritten).toEqual(["seed.txt", "volcano.png"])
+    expect(facts.mayIncludeUserEdits).toBe(true)
+    expect(facts.filesRead).toEqual([])
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("beginExternal（内核 run_code 那条）在非 git 目录同样有事实", async () => {
+    const dir = plainDir()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.beginExternal()
+    expect(h).toBeDefined()
+    mkdirSync(join(dir, "outputs"))
+    writeFileSync(join(dir, "outputs", "a.csv"), "x\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual(["outputs/a.csv"])
+    expect(facts.filesWritten).toEqual(["outputs/a.csv"])
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("write 声明的路径也并进去（声明前不在 → created）", async () => {
+    const dir = plainDir()
+    const probe = new ProvenanceProbe(dir)
+    const h = await probe.begin("write", { path: join(dir, "out.md") })
+    writeFileSync(join(dir, "out.md"), "hi\n")
+    const facts = await factsOf(h)
+    expect(facts.filesCreated).toEqual(["out.md"])
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("超过上限 → begin 返回 undefined，并且**每个工作区只出一次声**", async () => {
+    const dir = plainDir()
+    for (let i = 0; i < 30; i++) writeFileSync(join(dir, `f${i}.txt`), "x")
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+    try {
+      const probe = new ProvenanceProbe(dir, { fsCap: 10 })
+      expect(await probe.begin("bash")).toBeUndefined()
+      expect(await probe.begin("bash")).toBeUndefined()
+      const 相关 = spy.mock.calls.filter((c) => String(c[0]).includes("[溯源]") && String(c[0]).includes(dir))
+      expect(相关).toHaveLength(1)
+      expect(String(相关[0]?.[0])).toContain("不是 git 仓库")
+    } finally {
+      spy.mockRestore()
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })

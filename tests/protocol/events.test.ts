@@ -332,9 +332,11 @@ describe("协议版本 · 5.5", () => {
    *
    * 2.4（2026-08-09）：cli 的模型清单 + `provider` 放宽为可选。
    * 放宽必填字段是兼容的方向，仍是 minor。
+   *
+   * 7.25（2026-08-26）：`readFile` 多一种寻址 `sessionId`。纯新增，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.24")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.25")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

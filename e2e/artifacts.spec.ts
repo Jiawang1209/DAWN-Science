@@ -8,7 +8,7 @@
  *      （不变式 5：不知道不等于没改，也不等于改了）。
  */
 import { resolve } from "node:path"
-import { test, expect, 在项目里开会话, 用某个agent开一段, 等进了对话 } from "./fixtures.js"
+import { test, expect, 在项目里开会话, 开一段临时会话, 用某个agent开一段, 等进了对话 } from "./fixtures.js"
 
 test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () => {
   test.use({
@@ -43,6 +43,42 @@ test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () 
     await expect(
       page.locator(".right-dock").getByRole("button", { name: "outputs/volcano_data.csv", exact: true }),
     ).toBeVisible()
+  })
+})
+
+/**
+ * **临时会话也要有产物**（2026-08-26 首用回归——作者的原话场景）。
+ *
+ * 临时会话住在 `scratch/<ts>/`，不是 git 仓库。此前探针在非 git 一律不观察，
+ * 于是作者第一次真用就撞上满屏「本轮产出未知」。现在非 git 走文件系统探针（前后各扫一遍）。
+ * 这条**不 `gitInit`**，走的就是那条临时会话。
+ */
+test.describe("临时会话（非 git）：同样出 GENERATED 条", () => {
+  test.use({
+    dawnOptions: {
+      toolCall: {
+        toolName: "write",
+        args: { path: "outputs/volcano_data.csv", content: "gene,log2FC,padj\nTP53,2.1,0.001\n" },
+        say: "我先把数据写出来。",
+      },
+    },
+  })
+
+  test("临时会话里 write 新建一个 csv → 产物条 → 点 chip 进坞预览", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill("生成一份火山图数据")
+    await 框.press("Enter")
+
+    const 条 = page.getByRole("group", { name: "本轮生成的文件" })
+    await expect(条).toBeVisible({ timeout: 60_000 })
+    await expect(条.getByText("GENERATED · 1")).toBeVisible()
+    await expect(page.getByText("本轮产出未知")).toHaveCount(0)
+    await 条.getByRole("button", { name: /volcano_data\.csv/ }).click()
+
+    await expect(page.getByRole("tab", { name: "产物", exact: true })).toHaveAttribute("aria-selected", "true")
+    await expect(page.locator(".preview")).toBeVisible()
   })
 })
 

@@ -3281,8 +3281,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /** 读一个文件供预览。**只读**，且路径守卫在 `files/access.ts` 里 */
-    readFile: async ({ projectId, connectionId, path }) => {
+    readFile: async ({ projectId, connectionId, sessionId, path }) => {
       if (connectionId) return 远端读文件(connectionId, path)
+      if (sessionId) {
+        // 按会话读（7.25）：相对这段会话自己的工作区——与 `listArtifacts` 同一个根，产物预览才对得上
+        const 会话 = sessions.get(sessionId)
+        if (!会话) throw fault("not_found", `没有这段会话：${sessionId}`)
+        if (会话.connectionId) throw fault("invalid_request", "远端会话请按 connectionId 读（路径是那台机器上的绝对路径）")
+        return readWorkspaceFile(会话.workspace, path)
+      }
       const p = projectStore.get(projectId!)
       if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
       return readWorkspaceFile(p.workspace, path)

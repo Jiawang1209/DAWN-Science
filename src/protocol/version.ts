@@ -481,8 +481,11 @@
  *   事件只说「变了」，数据永远走 `listArtifacts` 现查，两条路径不许分叉。
  *   `listArtifacts` 的 `unknown` 是「`filesCreated` 缺省的那几次工具调用」，
  *   **必须能被数出来**，不许把「不知道」并进「确认没有」。
+ *
+ * 7.25（2026-08-26）：`readFile` 多一种寻址 `sessionId`——相对会话自己的工作区读。临时会话的产物住在
+ *   scratch 根下一层，按 projectId 读差一层（作者首用撞上的）。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.24"
+export const WORKBENCH_PROTOCOL_VERSION = "7.25"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

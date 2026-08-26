@@ -2255,11 +2255,16 @@ export const OPERATIONS = {
         projectId: z.string().min(1).optional(),
         /** 远端：这台服务器（7.5 起）。**给了它，`path` 是绝对路径** */
         connectionId: z.string().min(1).optional(),
+        /**
+         * 按会话读（7.25）：`path` 相对**这段会话自己的工作区**。临时「项目」的 workspace 是 scratch 根，
+         * 会话住在根下一层——产物清单（`listArtifacts`）的相对路径是按会话工作区记的，按 projectId 读会差一层。
+         */
+        sessionId: z.string().min(1).optional(),
         path: z.string().min(1),
       })
       .strict()
-      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
-        message: "projectId 与 connectionId 要给且只给一个",
+      .refine((r) => [r.projectId, r.connectionId, r.sessionId].filter(Boolean).length === 1, {
+        message: "projectId、connectionId、sessionId 要给且只给一个",
       }),
     response: z.discriminatedUnion("kind", [
       /**

@@ -357,6 +357,15 @@ describe("分页信息", () => {
   })
 })
 
+describe("readFile 按 sessionId（7.25）", () => {
+  const S = OPERATIONS.readFile.request
+  it("projectId / connectionId / sessionId 三选一", () => {
+    expect(S.safeParse({ sessionId: "s", path: "a.csv" }).success).toBe(true)
+    expect(S.safeParse({ sessionId: "s", projectId: "p", path: "a.csv" }).success).toBe(false)
+    expect(S.safeParse({ path: "a.csv" }).success).toBe(false)
+  })
+})
+
 describe("listArtifacts（产物，7.24）", () => {
   it("请求只要 sessionId；响应带 artifacts 与 unknown", () => {
     const op = OPERATIONS.listArtifacts

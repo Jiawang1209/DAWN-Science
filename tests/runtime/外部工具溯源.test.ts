@@ -100,15 +100,19 @@ describe("外部工具的溯源", () => {
     expect(收到[0]!.facts.filesWritten).toEqual([])
   })
 
-  it("**非 git 仓库一个字都不报** —— 「不知道」不等于「没改」", async () => {
+  it("**非 git 仓库走文件系统探针**（2026-08-26 改口径）—— MCP 偷偷写的照样看得见", async () => {
+    // 此前这里断言「非 git 一个字都不报」。临时会话不是仓库，作者首用就撞上满屏「产出未知」；
+    // 现在非 git 前后各扫一遍文件系统，事实同样是观察来的，不是转述。
     const 不是仓库 = mkdtempSync(join(tmpdir(), "dawn-非仓库-"))
     try {
       await 跑一次(
         会写文件的工具("某服务器__写", () => writeFileSync(join(不是仓库, "a.txt"), "x")),
         不是仓库,
       )
-      // **不是发一条 `filesWritten: []`**：那会被读成「确认没改任何文件」
-      expect(收到).toEqual([])
+      expect(收到).toHaveLength(1)
+      expect(收到[0]!.facts.filesWritten).toEqual(["a.txt"])
+      expect(收到[0]!.facts.filesCreated).toEqual(["a.txt"])
+      expect(收到[0]!.facts.mayIncludeUserEdits).toBe(true)
     } finally {
       rmSync(不是仓库, { recursive: true, force: true })
     }

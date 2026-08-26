@@ -992,11 +992,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setRightDockOpen(true)
   }, [])
   /** 产物格自己的预览读文件：**身份要稳**（面板把它放进 effect 依赖），跟 `openFile` 同一条 readFile 路 */
+  /**
+   * **按会话读，不按项目**（2026-08-26 首用回归）：临时「项目」的 workspace 是 scratch 根，
+   * 而会话（探针、账本里的相对路径）住在 `根/<时间戳>-xxxx/`。按 projectId 读就差这一层——
+   * 作者第一次点开临时会话的产物 chip，坞里说「找不到」。`listArtifacts` 按会话工作区记路径，读也按它。
+   */
   const 读产物 = useCallback((path: string) => {
-    const 去哪读 = 文件所在 ? { connectionId: 文件所在.connectionId, path } : projectId ? { projectId, path } : undefined
+    const 去哪读 = 文件所在
+      ? { connectionId: 文件所在.connectionId, path }
+      : sessionId
+        ? { sessionId, path }
+        : projectId
+          ? { projectId, path }
+          : undefined
     if (!去哪读) return Promise.reject(new Error(t("还没有选中项目")))
     return client.get<FileContent>("readFile", 去哪读)
-  }, [client, projectId, 文件所在])
+  }, [client, projectId, sessionId, 文件所在])
 
   /**
    * `@` 引用的文件源（2026-08-23，学自 dsh-at-file）：就是坞里文件格那两条（`loadDir` / `searchFiles`），

@@ -133,6 +133,17 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(r.unknown).toEqual([{ runId: "t2", toolCallId: "c2" }])
   })
 
+  it("readFile 按 sessionId 读：从会话自己的工作区读，不经项目根（2026-08-26 首用回归）", async () => {
+    // 临时「项目」的 workspace 是 scratch 根，会话住在根下一层；产物预览按 projectId 读会差这一层
+    const ws = newRepo()
+    const sid = await 开一段(ws)
+    writeFileSync(join(ws, "note.txt"), "a,b\n")
+    const r = (await ctx.backend.readFile({ sessionId: sid, path: "note.txt" })) as { kind: string; text?: string }
+    expect(r.kind).toBe("text")
+    expect(r.text).toBe("a,b\n")
+    await expect(ctx.backend.readFile({ sessionId: "没有这段", path: "note.txt" })).rejects.toThrow(/没有这段会话/)
+  })
+
   it("listArtifacts：会话记录已删——产物还在，exists 缺省（不知道）（2026-08-26 产物·越界防护）", async () => {
     const ws = newRepo()
     const sid = await 开一段(ws)

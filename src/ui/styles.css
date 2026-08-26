@@ -3347,6 +3347,9 @@ pre {
  * 眼睛得跨过一整行空白才找得到它属于谁。
  */
 .turn-body { display: flex; flex-direction: column; min-width: 0; }
+
+/* 笔记本（2026-08-26）：对话里那一行 cell 痕迹 */
+.turn-cellnote { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); margin: var(--dawn-space-1) 0; }
 /**
  * 自己说的话靠右：盒子缩到气泡那么宽，于是操作行从气泡左缘排起。
  *

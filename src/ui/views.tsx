@@ -5045,6 +5045,10 @@ export function TranscriptRow({
   if (item.type === "kernelOutput") {
     return <KernelOutputRow item={item} currentKernel={currentKernel} />
   }
+  // 笔记本（2026-08-26）：笔记本里有完整 cell，对话里只留一行痕迹（没有不可见的行动）
+  if (item.type === "cell") {
+    return <CellNoteRow item={item} />
+  }
   const mine = item.who === "user"
 
   /**
@@ -5370,6 +5374,28 @@ function TurnUsage({
   if (段.length === 0) return null
 
   return <p className="turn-usage">{段.join(" · ")} token</p>
+}
+
+/**
+ * 你在内核里自己敲的一段，在对话里留下的一行痕迹（笔记本，2026-08-26）。
+ *
+ * 笔记本里有完整 cell（代码 + 输出），对话里只留一行痕迹（没有不可见的行动）——
+ * 敲了什么、跑没跑完、错没错，一眼看到；完整的代码与富输出去笔记本那格看。
+ */
+function CellNoteRow({ item }: { item: Extract<TranscriptItem, { type: "cell" }> }) {
+  const 首行 = item.code.split("\n")[0] ?? ""
+  const 有更多 = item.code.includes("\n")
+  const 语言名 = item.language === "R" ? "R" : "Python"
+  return (
+    <div className="turn-cellnote" data-cell-id={item.id}>
+      {tf("你在 {0} 内核里跑了", 语言名)}{" "}
+      <code>
+        {首行}
+        {有更多 ? "…" : ""}
+      </code>
+      {item.status === "error" ? " · " + t("报错") : item.status === "running" ? " · " + t("运行中") : ""}
+    </div>
+  )
 }
 
 /**

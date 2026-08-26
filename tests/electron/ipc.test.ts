@@ -50,6 +50,9 @@ function backend(): WorkbenchBackend {
     stopSession: async () => ({}),
     listKernels: async () => ({ kernels: [], problems: [], shadowed: [] }),
     listVariables: async () => ({ supported: false as const, reason: "测试替身不提供变量" }),
+    // 笔记本（2026-08-26）：这份桩要覆盖全协议，少一个就编译不过
+    runInKernel: async () => ({ cellId: "cell-1" }),
+    interruptKernel: async () => ({}),
     getInterpreters: async () => ({}),
     setInterpreter: async () => ({}),
     listDirectory: async () => ({ path: "", entries: [], ignored: 0, omitted: 0 }),

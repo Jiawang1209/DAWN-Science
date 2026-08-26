@@ -443,6 +443,9 @@ export const EN: Readonly<Record<string, string>> = {
   "这是一段终端会话。终端现在在对话区下面那一条里——":
     "This is a terminal session. The terminal now lives in the strip below the chat — ",
   "内核": "Kernel",
+  /* 笔记本（2026-08-26）：对话里那一行 cell 痕迹 */
+  "你在 {0} 内核里跑了": "You ran this in the {0} kernel",
+  "报错": "error",
 
   /* ── 确认框 ─────────────────────────────────────────────────── */
   "取消": "Cancel",

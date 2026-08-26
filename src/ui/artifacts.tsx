@@ -17,8 +17,35 @@ import { t, tf } from "./i18n/index.js"
 function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: Artifact; dir: string; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
   const 可缩略 = a.exists !== false && !!loadThumb
   const [缩略, 设缩略] = useState<string | undefined>(undefined)
+  /** 解码失败（读得到但不是一张能画的图，比如生成到一半的文件）→ 留占位方块，绝不画断图 */
+  const [失败, 设失败] = useState(false)
+  const [进视野, 设进视野] = useState(false)
+  const 格子 = useRef<HTMLLIElement | null>(null)
+  /**
+   * **大图不预读——只有滚进视野的格子才去读，别让一坞图把内存吃穿。**
+   * 一坞 50 张大 PNG 若全预读，就是 50 份满分辨率 data URL + 50 张解码位图同时压在内存里，
+   * 外加打开面板那一刻 50 个并发 `readFile`。用 IntersectionObserver 只在格子滚进视野时才读，读到就断开。
+   * 环境没有 IO（jsdom / 老壳）时不吞功能：直接当作已在视野。
+   */
   useEffect(() => {
-    if (!可缩略 || !loadThumb) return
+    if (!可缩略 || 进视野) return
+    const el = 格子.current
+    if (!el) return
+    if (typeof IntersectionObserver === "undefined") {
+      设进视野(true)
+      return
+    }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        设进视野(true)
+        io.disconnect()
+      }
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [可缩略, 进视野])
+  useEffect(() => {
+    if (!可缩略 || !进视野 || !loadThumb) return
     let 活 = true
     loadThumb(a.path)
       .then((u) => {
@@ -30,11 +57,13 @@ function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: Artifact; dir: string
     return () => {
       活 = false
     }
-  }, [可缩略, a.path, loadThumb])
+  }, [可缩略, 进视野, a.path, loadThumb])
+  // **在渲染这一刻再判 exists**：读完之后又被删的图要立刻退回占位方块，不留一张划掉名字的旧图
+  const 显缩略 = 缩略 && !失败 && a.exists !== false
   return (
-    <li className={`artifact-thumb${a.exists === false ? " gone" : ""}`}>
+    <li ref={格子} className={`artifact-thumb${a.exists === false ? " gone" : ""}`}>
       <Button variant="ghost" size="inline" className="artifact-thumb-open" aria-label={a.path} disabled={a.exists === false} onClick={() => onOpen(a.path)}>
-        <span className="artifact-thumb-img">{缩略 ? <img src={缩略} alt="" /> : null}</span>
+        <span className="artifact-thumb-img">{显缩略 ? <img src={缩略} alt="" onError={() => 设失败(true)} /> : null}</span>
         <span className="name">{a.path.slice(dir.length)}</span>
         {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
       </Button>

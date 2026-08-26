@@ -103,6 +103,8 @@ const 折叠阈值 = 8
 function GeneratedChip({ a, onOpen, loadThumb }: { a: Artifact; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
   const 可缩略 = a.kind === "image" && a.exists !== false && !!loadThumb
   const [缩略, 设缩略] = useState<string | undefined>(undefined)
+  /** 解码失败（读得到但不是一张能画的图，比如生成到一半的文件）也算不画——退回徽标，绝不画断图 */
+  const [失败, 设失败] = useState(false)
   useEffect(() => {
     if (!可缩略 || !loadThumb) return
     let 活 = true
@@ -117,10 +119,12 @@ function GeneratedChip({ a, onOpen, loadThumb }: { a: Artifact; onOpen: (path: s
       活 = false
     }
   }, [可缩略, a.path, loadThumb])
+  // **在渲染这一刻再判 exists**：读完之后这一段又把它删了，也要立刻退回徽标（不留一张划掉名字的旧图）
+  const 显缩略 = 缩略 && !失败 && a.exists !== false
   return (
     <li>
       <Button variant="ghost" size="inline" className={`generated-chip${a.exists === false ? " gone" : ""}`} aria-label={tf("打开产物 {0}", a.path)} onClick={() => onOpen(a.path)}>
-        {缩略 ? <img src={缩略} alt="" /> : <span className="kind-tag">{徽标(a.kind)}</span>}
+        {显缩略 ? <img src={缩略} alt="" onError={() => 设失败(true)} /> : <span className="kind-tag">{徽标(a.kind)}</span>}
         <span className="name">{a.path.split("/").pop()}</span>
         {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
       </Button>

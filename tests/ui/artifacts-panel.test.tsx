@@ -74,6 +74,50 @@ describe("ArtifactsPanel", () => {
     expect(readFile).toHaveBeenCalledWith("out/p.png")
   })
 
+  it("图片格子：img 触发 error（解码失败）→ 回退占位方块，不画断图", async () => {
+    const loadThumb = vi.fn().mockResolvedValue("data:image/png;base64,ZZ")
+    const { container } = render(<ArtifactsPanel data={{ artifacts: [imgArt("out/p.png")], unknown: [] }} {...noop} loadThumb={loadThumb} />)
+    const img = await waitFor(() => {
+      const el = container.querySelector(".artifact-thumb-grid img")
+      if (!el) throw new Error("还没画出 img")
+      return el as HTMLImageElement
+    })
+    fireEvent.error(img)
+    expect(container.querySelector(".artifact-thumb-grid img")).toBeNull()
+    // 占位方块还在（格子没塌）
+    expect(container.querySelector(".artifact-thumb-img")).toBeTruthy()
+  })
+
+  it("格子懒加载：没滚进视野不读缩略图，滚进来才读一次（大图不吃内存）", () => {
+    const 观察者: { cb: (e: { isIntersecting: boolean }[]) => void; disconnected: boolean }[] = []
+    class FakeIO {
+      cb: (e: { isIntersecting: boolean }[]) => void
+      constructor(cb: (e: { isIntersecting: boolean }[]) => void) {
+        this.cb = cb
+        观察者.push({ cb, disconnected: false })
+      }
+      observe(): void {}
+      disconnect(): void {
+        const 我 = 观察者.find((o) => o.cb === this.cb)
+        if (我) 我.disconnected = true
+      }
+    }
+    const 原 = (globalThis as unknown as { IntersectionObserver?: unknown }).IntersectionObserver
+    ;(globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = FakeIO
+    try {
+      const loadThumb = vi.fn().mockResolvedValue("data:image/png;base64,ZZ")
+      render(<ArtifactsPanel data={{ artifacts: [imgArt("out/p.png")], unknown: [] }} {...noop} loadThumb={loadThumb} />)
+      // 还没滚进视野：一次都没读
+      expect(loadThumb).not.toHaveBeenCalled()
+      // 滚进视野：读一次，然后断开观察
+      act(() => 观察者.forEach((o) => o.cb([{ isIntersecting: true }])))
+      expect(loadThumb).toHaveBeenCalledWith("out/p.png")
+      expect(观察者.every((o) => o.disconnected)).toBe(true)
+    } finally {
+      ;(globalThis as unknown as { IntersectionObserver?: unknown }).IntersectionObserver = 原
+    }
+  })
+
   it("已不存在的图片：占位格子（划掉名字、按钮禁用），不加载、不画断图", () => {
     const loadThumb = vi.fn().mockResolvedValue("data:image/png;base64,ZZ")
     const { container } = render(<ArtifactsPanel data={{ artifacts: [imgArt("out/gone.png", false)], unknown: [] }} {...noop} loadThumb={loadThumb} />)

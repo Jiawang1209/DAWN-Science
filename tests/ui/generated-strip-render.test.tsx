@@ -2,7 +2,7 @@
  * 产物条的渲染（2026-08-26，审查 B / D）：取失败要出声、chip 的可达名不与坞里清单行同名。
  */
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { GeneratedStrip } from "../../src/ui/generated-strip.js"
 
 const art = (path: string, kind: "table" | "image" = "table", exists = true) =>
@@ -60,6 +60,20 @@ describe("GeneratedStrip", () => {
     rerender(<GeneratedStrip 产物={{ kind: "some", unknownCount: 0, artifacts: [art("figures/p.png", "image")] }} onOpen={vi.fn()} />)
     expect(screen.getByText("IMAGE")).toBeTruthy()
     expect(container.querySelector(".generated-chip img")).toBeNull()
+  })
+
+  it("图片 chip：img 触发 error（读得到但解码不出）→ 退回 IMAGE 徽标，不留断图", async () => {
+    const { container } = render(
+      <GeneratedStrip 产物={{ kind: "some", unknownCount: 0, artifacts: [art("figures/p.png", "image")] }} onOpen={vi.fn()} loadThumb={() => Promise.resolve("data:image/png;base64,AAAA")} />,
+    )
+    const img = await waitFor(() => {
+      const el = container.querySelector(".generated-chip img")
+      if (!el) throw new Error("还没画出 img")
+      return el as HTMLImageElement
+    })
+    fireEvent.error(img)
+    expect(container.querySelector(".generated-chip img")).toBeNull()
+    expect(screen.getByText("IMAGE")).toBeTruthy()
   })
 
   it("已不存在的图片 chip：即便给了 loadThumb 也不加载、退回徽标 + 「已不存在」，不画断图", () => {

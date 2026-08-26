@@ -111,6 +111,37 @@ function parsePorcelain(stdout: string): string[] {
 }
 
 /**
+ * porcelain 里**此前不存在、现在有**的：未跟踪（`??`）与索引里新增（XY 里有 `A`）。
+ * 重命名（`R`）不算新建——它是同一个文件换了名字。产物条只认「新生的」（spec §0）。
+ */
+function parsePorcelainCreated(stdout: string): string[] {
+  const files = new Set<string>()
+  for (const line of stdout.split("\n")) {
+    if (line.length < 4) continue
+    const xy = line.slice(0, 2)
+    if (!(xy === "??" || xy[0] === "A" || xy[1] === "A")) continue
+    files.add(unquotePath(line.slice(3)))
+  }
+  return [...files]
+}
+
+/**
+ * 基线之后**新建**的文件（产物条的事实来源，2026-08-26）。
+ *
+ * 与 `diffSince` 分开：那条答「改了什么」，这条答「新生了什么」。
+ * 基线时就已经脏（含未跟踪）的文件一律剔除——它在这次工具调用之前就存在。
+ * **被 `.gitignore` 忽略的看不见**，与 `diffSince` 同一条已知边界，
+ * 由 `provenance.ts` 用工具声明的路径兜底。
+ */
+export async function createdSince(workspace: string, baseline: GitBaseline): Promise<string[]> {
+  const now = parsePorcelainCreated(
+    await git(workspace, ["status", "--porcelain", "--untracked-files=all"]),
+  )
+  const before = new Set(baseline.dirtyFiles)
+  return now.filter((f) => !before.has(f)).sort()
+}
+
+/**
  * 逐个算内容哈希。文件不存在（已删除）时跳过——`git hash-object` 会对缺失路径报错，
  * 一次性批量调用会因为一个缺失文件而全军覆没，故逐个来并容错。
  */

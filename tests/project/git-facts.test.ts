@@ -4,10 +4,10 @@
  */
 import { beforeEach, describe, expect, it } from "vitest"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs"
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { NotAGitRepoError, changesAgainstHead, diffSince, fileDiffAgainstHead, snapshot } from "../../src/project/git-facts.js"
+import { NotAGitRepoError, changesAgainstHead, createdSince, diffSince, fileDiffAgainstHead, snapshot } from "../../src/project/git-facts.js"
 
 function git(cwd: string, ...args: string[]): string {
   return execFileSync("git", args, {
@@ -193,5 +193,41 @@ describe("空仓库（还没有第一次 commit）", () => {
     const d = await fileDiffAgainstHead(dir, "刚写的.csv")
     expect(d).toContain("+a,b")
     rmSync(dir, { recursive: true, force: true })
+  })
+})
+
+describe("createdSince：基线之后新建的文件（产物条的事实来源）", () => {
+  let repo: string
+  beforeEach(() => {
+    repo = newRepo()
+  })
+
+  it("新写的未跟踪文件算新建；改已有文件不算", async () => {
+    const before = await snapshot(repo)
+    writeFileSync(join(repo, "seed.txt"), "changed\n")
+    writeFileSync(join(repo, "out.csv"), "a,b\n")
+    expect(await createdSince(repo, before)).toEqual(["out.csv"])
+  })
+
+  it("基线时就已经在的未跟踪文件，不算这次新建", async () => {
+    writeFileSync(join(repo, "old.csv"), "x\n")
+    const before = await snapshot(repo)
+    writeFileSync(join(repo, "old.csv"), "y\n")
+    writeFileSync(join(repo, "new.csv"), "z\n")
+    expect(await createdSince(repo, before)).toEqual(["new.csv"])
+  })
+
+  it("git add 过的新文件（索引里 A）也算新建", async () => {
+    const before = await snapshot(repo)
+    writeFileSync(join(repo, "added.txt"), "1\n")
+    git(repo, "add", "added.txt")
+    expect(await createdSince(repo, before)).toEqual(["added.txt"])
+  })
+
+  it("子目录里的文件带相对路径", async () => {
+    const before = await snapshot(repo)
+    mkdirSync(join(repo, "outputs"), { recursive: true })
+    writeFileSync(join(repo, "outputs", "图.png"), "png")
+    expect(await createdSince(repo, before)).toEqual(["outputs/图.png"])
   })
 })

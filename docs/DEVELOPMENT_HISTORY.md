@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-26 — `createdSince`：porcelain 里的「新建」（产物条 Task 1）
+
+- **Type**: feat
+- **Motivation**: 「产物」spec 定的 `filesCreated` 需要一个事实来源——`diffSince` 只答「改了什么」，答不出「新生了什么」；重命名也不该算新建。
+- **What**: `src/project/git-facts.ts` 新增 `parsePorcelainCreated`（只认 porcelain 里的 `??` 与索引 `A`，排除 `R`）与导出函数 `createdSince(workspace, baseline)`：现在的「新建候选」减去基线时已脏（含未跟踪）的文件。已知边界与 `diffSince` 一致：被 `.gitignore` 忽略的看不见，留给 `provenance.ts` 用工具声明路径兜底。
+- **Impact**: 新增导出，无行为变更；`diffSince` 等既有函数不动。
+- **Verification**: `tests/project/git-facts.test.ts` 新增 4 条（改已有文件不算新建 / 基线时已在场的未跟踪文件不算 / `git add` 过的新文件算 / 子目录非 ASCII 文件名带相对路径），先跑确认 `createdSince is not a function` 失败，实现后 `npx vitest run tests/project/git-facts.test.ts` 23/23 全绿；`npm run typecheck` 干净。
+
 ### 2026-08-26 — 回归主线：开 `data-platform` 分支，定「产物」spec（对话产物条 + 坞产物格）
 
 - **Type**: docs

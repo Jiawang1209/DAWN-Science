@@ -86,7 +86,9 @@ test("**斜杠命令**：/会话 /在哪 /帮助 有回音；解绑后卡回未�
   await expect.poll(async () => (await weixin.发出的()).length, { timeout: 20_000 }).toBe(2)
   expect(await 文()).toContain("还没绑会话")
 
+  // 解绑是不可逆动作，先要过一次确认框（审查批 J13）
   await 卡.getByRole("button", { name: "解绑微信" }).click()
+  await page.locator(".confirm").getByRole("button", { name: "确认解绑" }).click()
   await expect(卡.locator(".ra-state")).toHaveText("未绑定", { timeout: 10_000 })
 })
 

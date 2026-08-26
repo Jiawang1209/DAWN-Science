@@ -133,8 +133,9 @@ test("**粘一段 JSON 就加进来了，而且立刻能用**", async ({ dawn })
   const 名字 = await page.locator(".skill-name").allTextContents()
   expect(名字.join("|")).toContain("pasted")
 
-  /** 加得进就该删得掉 */
+  /** 加得进就该删得掉——删是不可逆动作，先要过一次确认框（审查批 J12） */
   await page.getByRole("button", { name: "删掉 pasted" }).click()
+  await page.locator(".confirm").getByRole("button", { name: "确认删掉" }).click()
   await expect
     .poll(async () => (await page.locator(".skill-name").allTextContents()).join("|"))
     .not.toContain("pasted")

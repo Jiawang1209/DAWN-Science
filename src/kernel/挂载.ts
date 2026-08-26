@@ -60,6 +60,25 @@ export interface 挂载选项 {
    * 屏幕上看不见——那正是接上它之前的状态。
    */
   转发?: (对话: SessionId, 语言: 内核语言, 事件: unknown) => void
+  /**
+   * 某段对话名下的内核状态变了（笔记本，2026-08-26）。
+   *
+   * 起来了、开始跑、跑完了、退出了、被收掉了——每一步都叫一次，
+   * 调用方拿 `状态列表(对话)` 取整份重发（与 `team_changed` 同一种「整份换掉」的推法）。
+   * **可选**：不接的话状态只是记在这里，谁来问谁拿。
+   */
+  状态变了?: (对话: SessionId) => void
+}
+
+/**
+ * 一台内核的生命周期（笔记本，2026-08-26）。
+ * `starting` 只存在于 `runtime.start` 还没解析的那一小段；表里能查到的台起码是 `idle`。
+ */
+export type 内核状态 = "starting" | "idle" | "busy" | "exited"
+
+export interface 内核状态项 {
+  language: 内核语言
+  state: 内核状态
 }
 
 interface 一台 {
@@ -67,6 +86,7 @@ interface 一台 {
   handle: SessionHandle
   对话: SessionId
   语言: 内核语言
+  状态: 内核状态
 }
 
 export class 对话内核 {
@@ -110,6 +130,55 @@ export class 对话内核 {
 
   归属(内核会话: SessionId): SessionId | undefined {
     return this.反查.get(内核会话)?.对话
+  }
+
+  /** 这个对话名下每台内核现在的状态，**按起的先后**。没起过的不算 */
+  状态列表(对话: SessionId): 内核状态项[] {
+    return [...this.表.values()]
+      .filter((k) => k.对话 === 对话)
+      .map((k) => ({ language: k.语言, state: k.状态 }))
+  }
+
+  /**
+   * 这台内核的会话 id（`<对话>::<语言>`）。**没起过就是 undefined**——
+   * 后端按对话 + 语言问变量、中断时要拿这个去找运行时。
+   */
+  内核会话id(对话: SessionId, 语言: 内核语言): SessionId | undefined {
+    return this.表.get(对话内核.键(对话, 语言))?.内核会话
+  }
+
+  /**
+   * 问这台内核现在有哪些变量。
+   *
+   * 两种 undefined 都原样返回：**没这台内核**，或**这个运行时不认识变量**
+   * （`variables` 不在 `AgentRuntime` 契约里，只有内核运行时有——
+   * 与 `SessionManager.variables` 同一副透传写法）。
+   */
+  async 变量(对话: SessionId, 语言: 内核语言): Promise<unknown> {
+    const 一 = this.表.get(对话内核.键(对话, 语言))
+    if (!一) return undefined
+    const rt = this.opts.runtime as { variables?: (id: SessionId) => Promise<unknown> }
+    return rt.variables ? await rt.variables(一.内核会话) : undefined
+  }
+
+  /**
+   * 中断这门语言的内核**这一轮**（不杀内核，变量都还在）。
+   *
+   * 抛而不吞：「没起过」与「这个运行时根本不会中断」是两回事，
+   * 都要让按按钮的人看得见。
+   */
+  async 中断(对话: SessionId, 语言: 内核语言): Promise<void> {
+    const 一 = this.表.get(对话内核.键(对话, 语言))
+    if (!一) throw new Error(`没有这台内核：${语言}`)
+    if (!this.opts.runtime.abort) throw new Error("这个运行时不支持中断")
+    await this.opts.runtime.abort(一.内核会话)
+  }
+
+  /** 改一台的状态并出声。**相同不叫**：省得每条 busy 重复推一份一样的列表 */
+  private 置状态(一: 一台, 状态: 内核状态): void {
+    if (一.状态 === 状态) return
+    一.状态 = 状态
+    this.opts.状态变了?.(一.对话)
   }
 
   /**
@@ -166,9 +235,32 @@ export class 对话内核 {
       // **这一项是内核运行时用来起进程的**，漏了它就起不来（第一版就漏了）
       kernel: { language: 语言, interpreterPath },
     })
-    const 一 = { 内核会话, handle, 对话, 语言 }
+    /**
+     * `runtime.start` 解析即算起来了——`KernelRuntime.start` 要等到 kernel_info 应答才返回，
+     * 所以这里不用再等一条 `started` 事件；`starting` 只存在于上面那个 await 期间，
+     * 而那时它还不在表里，`状态列表` 看不到（起不起得来还没定，不该先显示一台）。
+     */
+    const 一: 一台 = { 内核会话, handle, 对话, 语言, 状态: "idle" }
     this.表.set(键, 一)
     this.反查.set(内核会话, 一)
+
+    /**
+     * **无条件**接一个内部监听跟踪状态，与 `转发` 分开：转发是给转录看的、可以不接，
+     * 而状态是这一层自己的账。
+     *
+     * 内核运行时把每条 `translateOutput` 结果原样发出（`src/runtime/kernel.ts` :113），
+     * 其中就有真内核每轮开头吐的 `status: busy` 与收尾的 `status: idle`，
+     * 所以这里两个都认；`starting` 那条不改状态（表里的台已经起来了）。
+     */
+    this.opts.runtime.attach(内核会话, (e) => {
+      const ev = e as { kind: string; entry?: { kind?: string; state?: string } }
+      if (ev.kind === "kernel_output" && ev.entry?.kind === "status") {
+        if (ev.entry.state === "busy" || ev.entry.state === "idle") this.置状态(一, ev.entry.state)
+      } else if (ev.kind === "exited") {
+        this.置状态(一, "exited")
+      }
+    })
+    this.opts.状态变了?.(对话)
 
     /**
      * **一起来就把输出接到对话上**，而不是等第一次执行。
@@ -228,6 +320,12 @@ export class 对话内核 {
             reject(new Error(`${语言} 内核在这一轮里退出了`))
           }
         })
+        /**
+         * 写代码前就置 busy，不等内核那条 `status: busy` 回来：
+         * 真内核会发它，但要走一趟 ZMQ 才到，这一小段里笔记本看到的仍是 idle；
+         * 而假运行时（测试）根本不发。先置、后写，回来的 busy 因「相同不叫」不会重复推。
+         */
+        this.置状态(一, "busy")
         this.opts.runtime.write(一.内核会话, 代码)
       } catch (e) {
         解开?.()
@@ -256,6 +354,8 @@ export class 对话内核 {
       this.表.delete(对话内核.键(对话, 一.语言))
       this.反查.delete(一.内核会话)
     }
+    // 列表少了几项，也是「状态变了」
+    this.opts.状态变了?.(对话)
     return { 收了, 没收掉 }
   }
 

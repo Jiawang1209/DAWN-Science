@@ -667,7 +667,10 @@ export class SessionTranscripts {
   setKernels(sessionId: SessionId, kernels: KernelState[]): void {
     const e = this.entries.get(sessionId)
     if (!e) return
-    e.kernels = kernels
+    // **空表不进快照**：与协议注释同一纪律——缺省 = 没有内核，
+    // 空数组会被读成「起过、但一台都没有」，那不是「没有内核」这件事本身。
+    // 更新照样推空表：客户端要知道内核收掉了，得清掉自己那份状态。
+    e.kernels = kernels.length ? kernels : undefined
     this.bump(sessionId, e, { type: "kernels", kernels })
   }
 

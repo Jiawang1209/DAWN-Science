@@ -731,7 +731,7 @@ describe("笔记本（2026-08-26）", () => {
     expect(seen.filter((u) => u.type === "item")).toHaveLength(2)
   })
 
-  it("setKernels 整份换掉并推 kernels 更新；快照带 kernels；空数组也推（内核收掉了）", () => {
+  it("setKernels 整份换掉并推 kernels 更新；快照带 kernels；空数组不进快照（缺省=没有内核），更新仍推空表（内核收掉了）", () => {
     const h = hub()
     h.track("a", "native")
     h.subscribe("a")
@@ -741,8 +741,10 @@ describe("笔记本（2026-08-26）", () => {
     expect(seen.filter((u) => u.type === "kernels")).toHaveLength(1)
 
     h.setKernels("a", [])
-    expect(h.subscribe("a").kernels).toEqual([])
-    expect(seen.filter((u) => u.type === "kernels")).toHaveLength(2)
+    expect(h.subscribe("a").kernels).toBeUndefined()
+    const kernelUpdates = seen.filter((u) => u.type === "kernels")
+    expect(kernelUpdates).toHaveLength(2)
+    expect(kernelUpdates[1]).toMatchObject({ kernels: [] })
   })
 
   it("pty 会话 beginCell 不做事、返回 undefined", () => {

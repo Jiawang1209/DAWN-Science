@@ -1625,7 +1625,17 @@ export const OPERATIONS = {
    * 把前两者混成一个空列表，就是把「我们没去问」说成「这里什么都没有」。
    */
   listVariables: {
-    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        /**
+         * 看哪台内核的变量（笔记本，2026-08-26）。普通对话可以同时挂 Python 与 R 两台，
+         * 只给 `sessionId` 分不出问哪台。**缺省由界面决定取最近有 cell 的那台，
+         * 后端缺省取第一台**——不是「随便选一台」，是「没说就按约定的规则来」。
+         */
+        language: z.enum(["python", "R"]).optional(),
+      })
+      .strict(),
     response: z.discriminatedUnion("supported", [
       z.object({ supported: z.literal(false), reason: z.string().min(1) }).strict(),
       z
@@ -1648,6 +1658,37 @@ export const OPERATIONS = {
         .strict(),
     ]),
     mutating: false,
+  },
+
+  /**
+   * 你在这段对话挂着的内核里自己敲一段（笔记本，2026-08-26）。
+   * 走**与 agent 的 `run_code` 同一台内核**（`对话内核.执行`）——同一台内核里
+   * 敲的东西互相看得见彼此定义的变量，这正是「笔记本」这件事的意义所在。
+   *
+   * 响应只回 `cellId`：这段代码跑完之前，产生的 `cell` 转录项与 `kernelOutput`
+   * 都走事件流推给订阅者，**不在这次调用的响应里等它跑完**。
+   */
+  runInKernel: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        language: z.enum(["python", "R"]),
+        code: z.string().min(1),
+      })
+      .strict(),
+    response: z.object({ cellId: z.string().min(1) }).strict(),
+    mutating: true,
+  },
+
+  /**
+   * 掐掉这台内核正在跑的那一段（笔记本，2026-08-26）。
+   * 走内核运行时的 `abort(<对话>::<语言>)`——**按（对话, 语言）这一对定位**，
+   * 因为一段对话可能同时挂着两台内核，中断必须指明是哪一台。
+   */
+  interruptKernel: {
+    request: z.object({ sessionId: z.string().min(1), language: z.enum(["python", "R"]) }).strict(),
+    response: z.object({}).strict(),
+    mutating: true,
   },
 
   /**

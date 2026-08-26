@@ -43,12 +43,20 @@ export type {
 } from "./entities.js"
 
 export {
+  KernelStateSchema,
   RemoteUpdateSchema,
   SessionSnapshotSchema,
   SessionUpdateSchema,
   TranscriptItemSchema,
 } from "./events.js"
-export type { RemoteUpdate, SessionSnapshot, SessionUpdate, TranscriptItem, TeamSnapshot } from "./events.js"
+export type {
+  KernelState,
+  RemoteUpdate,
+  SessionSnapshot,
+  SessionUpdate,
+  TranscriptItem,
+  TeamSnapshot,
+} from "./events.js"
 
 export {
   DEFAULT_PAGE_SIZE,

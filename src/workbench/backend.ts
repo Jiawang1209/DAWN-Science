@@ -2769,6 +2769,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return v as never
     },
 
+    // Task 4 替换：占位——runInKernel / interruptKernel 的真实现（走 `对话内核`）在 Task 3/4 才接线
+    runInKernel: async () => {
+      throw fault("internal_error", "笔记本尚未接线")
+    },
+    // Task 4 替换
+    interruptKernel: async () => {
+      throw fault("internal_error", "笔记本尚未接线")
+    },
+
     /**
      * 准入时刻的环境快照（②-B · S17）。
      *

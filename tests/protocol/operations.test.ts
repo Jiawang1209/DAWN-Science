@@ -14,11 +14,13 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("126 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1）", () => {
+  it("128 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "acquireLease",
         "listArtifacts",
+        "runInKernel",
+        "interruptKernel",
         "openProject",
         "addAcpAgent",
         "removeAgent",
@@ -159,7 +161,8 @@ describe("操作注册表", () => {
       expect(isMutating(name), `${name} 应为只读`).toBe(false)
     }
     for (const name of ["createTask", "setTaskWorkspace", "deleteTask", "setPermissionMode", "initScienceLayout",
-        "createTerminalSession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential"]) {
+        "createTerminalSession", "writeToSession", "stopSession", "acquireLease", "setCredential", "deleteCredential",
+        "runInKernel", "interruptKernel"]) {
       expect(isMutating(name), `${name} 应为可写`).toBe(true)
     }
   })
@@ -379,5 +382,44 @@ describe("listArtifacts（产物，7.24）", () => {
     expect(ok.success).toBe(true)
     // exists 缺省 = 不知道（远端查不了），允许
     expect(op.response.safeParse({ artifacts: [{ path: "x", kind: "other", bornRunId: "r", bornAt: "2026-08-26T10:00:00.000Z" }], unknown: [] }).success).toBe(true)
+  })
+})
+
+/**
+ * `runInKernel` / `interruptKernel`（笔记本，2026-08-26）：你在对话挂着的内核里
+ * 自己敲一段、或掐掉正在跑的那一段。两个都是可写操作。
+ *
+ * `listVariables.request` 顺带加一个可选 `language`——普通对话挂着多台内核时
+ * 指定看哪台；缺省由后端取第一台。
+ */
+describe("runInKernel / interruptKernel（笔记本，7.26）", () => {
+  it("runInKernel：sessionId + language + 非空 code；mutating", () => {
+    expect(
+      OPERATIONS.runInKernel.request.safeParse({ sessionId: "s", language: "python", code: "x" }).success,
+    ).toBe(true)
+    expect(
+      OPERATIONS.runInKernel.request.safeParse({ sessionId: "s", language: "python", code: "" }).success,
+    ).toBe(false)
+    expect(OPERATIONS.runInKernel.mutating).toBe(true)
+    expect(OPERATIONS.runInKernel.response.safeParse({ cellId: "cell-1" }).success).toBe(true)
+    expect(OPERATIONS.runInKernel.response.safeParse({}).success).toBe(false)
+  })
+
+  it("interruptKernel：sessionId + language；mutating；响应为空对象", () => {
+    expect(OPERATIONS.interruptKernel.request.safeParse({ sessionId: "s", language: "R" }).success).toBe(
+      true,
+    )
+    expect(OPERATIONS.interruptKernel.mutating).toBe(true)
+    expect(OPERATIONS.interruptKernel.response.safeParse({}).success).toBe(true)
+  })
+
+  it("listVariables.request 可带可选 language", () => {
+    expect(OPERATIONS.listVariables.request.safeParse({ sessionId: "s" }).success).toBe(true)
+    expect(OPERATIONS.listVariables.request.safeParse({ sessionId: "s", language: "R" }).success).toBe(
+      true,
+    )
+    expect(
+      OPERATIONS.listVariables.request.safeParse({ sessionId: "s", language: "julia" }).success,
+    ).toBe(false)
   })
 })

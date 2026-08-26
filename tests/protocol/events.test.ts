@@ -11,6 +11,7 @@
  */
 import { describe, expect, it } from "vitest"
 import {
+  KernelStateSchema,
   SessionSnapshotSchema,
   SessionUpdateSchema,
   TranscriptItemSchema,
@@ -75,6 +76,33 @@ describe("transcript 条目", () => {
       TranscriptItemSchema.safeParse({ type: "notice", id: "n1", text: "会话已退出" }).success,
     ).toBe(true)
   })
+
+  /**
+   * `cell` 项：你在对话挂着的内核里自己敲的一段（笔记本，2026-08-26）。
+   * **agent 跑的不用它**——那是 `tool` 项 `run_code` + 紧随其后的 `kernelOutput`。
+   */
+  it("cell 项：你在内核里敲的一段", () => {
+    const ok = TranscriptItemSchema.safeParse({
+      type: "cell",
+      id: "cell-3",
+      language: "R",
+      code: "1+1",
+      status: "running",
+      startedAt: 1_800_000_000_000,
+    })
+    expect(ok.success, JSON.stringify(!ok.success && ok.error.issues)).toBe(true)
+    // 语言只认 python / R —— 不收编出来的语言名
+    expect(
+      TranscriptItemSchema.safeParse({
+        type: "cell",
+        id: "x",
+        language: "julia",
+        code: "",
+        status: "ok",
+        startedAt: 0,
+      }).success,
+    ).toBe(false)
+  })
 })
 
 describe("会话快照", () => {
@@ -98,6 +126,20 @@ describe("会话快照", () => {
       snapshot({ kind: "pty", terminal: "…", terminalTrimmed: true }),
     )
     expect(r.success).toBe(true)
+  })
+
+  /**
+   * 快照带 `kernels`（笔记本，2026-08-26）。**缺省 = 这段会话没有内核**——
+   * 不是「没内核在跑」这种更弱的说法，而是「不是 native 会话」都行。
+   */
+  it("快照能带 kernels；缺省 = 没有内核", () => {
+    expect(KernelStateSchema.safeParse({ language: "python", state: "busy" }).success).toBe(true)
+    expect(
+      SessionSnapshotSchema.safeParse(snapshot({ kernels: [{ language: "python", state: "busy" }] }))
+        .success,
+    ).toBe(true)
+    const r = SessionSnapshotSchema.safeParse(snapshot())
+    expect(r.success && !("kernels" in r.data), "没填就不该有这个键").toBe(true)
   })
 })
 
@@ -134,6 +176,24 @@ describe("增量更新", () => {
     const u = { workbenchProtocolVersion: "7.24", sessionId: "s", revision: 3, type: "artifactsChanged" }
     expect(SessionUpdateSchema.safeParse(u).success).toBe(true)
     expect(SessionUpdateSchema.safeParse({ ...u, artifacts: [] }).success).toBe(false)
+  })
+
+  /**
+   * `kernels` 更新（笔记本，2026-08-26）：**整份换掉**，与 `team` 同一纪律——
+   * 服务端给的就是当前完整的一份，合并只会多一种「合错了」。
+   */
+  it("kernels 更新：整份换掉", () => {
+    expect(
+      SessionUpdateSchema.safeParse({ ...base, type: "kernels", revision: 4, kernels: [] }).success,
+    ).toBe(true)
+    expect(
+      SessionUpdateSchema.safeParse({
+        ...base,
+        type: "kernels",
+        revision: 4,
+        kernels: [{ language: "R", state: "idle" }],
+      }).success,
+    ).toBe(true)
   })
 
   it("revision 从 1 起 —— 0 是「还没有任何更新」的快照初值，不会作为增量出现", () => {
@@ -334,9 +394,14 @@ describe("协议版本 · 5.5", () => {
    * 放宽必填字段是兼容的方向，仍是 minor。
    *
    * 7.25（2026-08-26）：`readFile` 多一种寻址 `sessionId`。纯新增，minor。
+   *
+   * 7.26（2026-08-26）：笔记本——transcript 新增 `cell` 项（你在内核里自己敲的一段）；
+   *   快照/更新新增 `kernels`（内核状态列表，`kernels` 更新与 `team` 同一纪律：整份换掉）；
+   *   新增操作 `runInKernel` / `interruptKernel`；`listVariables.request` 加可选 `language`。
+   *   都是新增，仍是 minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.25")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.26")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

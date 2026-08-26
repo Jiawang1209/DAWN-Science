@@ -484,8 +484,17 @@
  *
  * 7.25（2026-08-26）：`readFile` 多一种寻址 `sessionId`——相对会话自己的工作区读。临时会话的产物住在
  *   scratch 根下一层，按 projectId 读差一层（作者首用撞上的）。纯新增。
+ *
+ * 7.26（2026-08-26）：笔记本（spec `2026-08-26-笔记本`）。transcript 新增 `cell` 项——
+ *   你在对话挂着的内核里自己敲的一段，与 agent 跑的 `tool` 项 `run_code` 是两回事。
+ *   快照与更新新增 `kernels`（内核状态列表：starting/idle/busy/exited）；
+ *   `kernels` 更新与 `team` 同一纪律——**整份换掉**，合并只会多一种「合错了」。
+ *   新增操作 `runInKernel`（走与 `run_code` 同一台内核）/ `interruptKernel`
+ *   （按 `sessionId` + `language` 这一对定位要中断哪台）。
+ *   `listVariables.request` 加可选 `language`——一段对话可能同时挂两台内核，
+ *   只给 `sessionId` 分不出问哪台。都是新增，仍是 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.25"
+export const WORKBENCH_PROTOCOL_VERSION = "7.26"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

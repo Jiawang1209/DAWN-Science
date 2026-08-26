@@ -267,12 +267,41 @@ const KernelOutputItem = z
   })
   .strict()
 
+/**
+ * 你在对话挂着的内核里自己敲的一段（笔记本，2026-08-26）。
+ * **agent 跑的不用它**——那是 `tool` 项 `run_code` + 紧随其后的 `kernelOutput`。
+ */
+const CellItem = z
+  .object({
+    type: z.literal("cell"),
+    id: z.string().min(1),
+    language: z.enum(["python", "R"]),
+    code: z.string(),
+    status: z.enum(["running", "ok", "error"]),
+    startedAt: z.int().nonnegative(),
+    /** 跑完的时刻。running 时没有 */
+    endedAt: z.int().nonnegative().optional(),
+    /** 账本上那条 run。**拿不到就没有这个字段**，不是空串 */
+    runId: z.string().min(1).optional(),
+  })
+  .strict()
+
+/** 一台内核的状态（笔记本，2026-08-26）。由 `挂载.ts` 从内核事件里跟踪 */
+export const KernelStateSchema = z
+  .object({
+    language: z.enum(["python", "R"]),
+    state: z.enum(["starting", "idle", "busy", "exited"]),
+  })
+  .strict()
+export type KernelState = z.infer<typeof KernelStateSchema>
+
 export const TranscriptItemSchema = z.discriminatedUnion("type", [
   TurnItem,
   ToolItem,
   NoticeItem,
   SubagentsItem,
   KernelOutputItem,
+  CellItem,
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 
@@ -441,6 +470,14 @@ export const SessionSnapshotSchema = z
      * 成员、任务（含依赖、attempt、结果）、邮箱。缺省 = 这段会话没建过团队。
      */
     team: TeamSnapshotSchema.optional(),
+    /**
+     * 这段对话挂着的内核状态列表（笔记本，2026-08-26）。**一段普通对话可以同时挂
+     * Python 与 R 两台**，各自的 starting/idle/busy/exited 由 `挂载.ts` 从内核事件里跟踪。
+     *
+     * **缺省 = 这段会话没有内核**（不是 native 会话，或还没起过内核）；
+     * 不给一份空数组——空数组会被读成「起过、但一台都没有」，那不是实情。
+     */
+    kernels: z.array(KernelStateSchema).optional(),
   })
   .strict()
 export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>
@@ -493,6 +530,11 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
   z.object({ ...envelope, type: z.literal("cwd"), cwd: z.string().min(1) }).strict(),
   /** 团队变了（team-board，7.22）：整份换掉——它给的就是整份新的，合并只会多一种「合错了」 */
   z.object({ ...envelope, type: z.literal("team"), team: TeamSnapshotSchema }).strict(),
+  /**
+   * 这段对话挂着的内核状态变了（笔记本，2026-08-26）：**整份换掉**，与 `team` 同一纪律——
+   * 服务端给的就是当前完整的一份，合并只会多一种「合错了」。
+   */
+  z.object({ ...envelope, type: z.literal("kernels"), kernels: z.array(KernelStateSchema) }).strict(),
   /** 全量重放。客户端发现 revision 跳号后由服务端补发，或订阅时的首帧 */
   z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])

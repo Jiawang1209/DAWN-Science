@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-26 — 产物终审收口：只读工具按设计发空事实；取失败出声；坞标签角标；可达名去重；路径守卫合一；spec 如实收窄
+
+- **Type**: fix
+- **Motivation**: 终审五条。最重的一条是主路径假话：`read` 不在探针白名单里从不发 `tool_files`，那次调用的 Run 上 `files_created` 是 NULL，被读成「不知道」——一段只 read 的普通对话在 git 工作区里被画成「本轮产出未知 · 远端会话或非 git 工作区，探针没跑」。其余：清单取失败被 `本轮产物` 算成「没有」；spec §5 的 `产物 (N)` 角标没做；chip 与清单行同名（可达名子串冲突）；`onInsertReference` 死 prop；三处越界判定口径不一（`startsWith("..")` 会把 `..foo` 当越界）；spec 写的与做的有四处不一致。
+- **What**: `runtime/provenance.ts` 导出 `只读工具的空事实`，`native.ts` 的 `wrap` 在非白名单内置工具**成功**时发四个空数组（这是我们自己写的工具，白名单本身就是「它不写文件」的声明——是确认，不是猜；`subagent` 不经这条包装所以不受影响；`provenance: false` 时不发）。`generated-strip.tsx` 加 `load_failed` 变体（带 error），渲染「产物清单没取到：<原因>」；chip 可达名改「打开产物 <路径>」；删掉那条说 `tool<N>` 占位的错注释。`views.tsx` 的 `RightDock` 给产物标签加 `.dock-tab-badge`（N > 0 才画，aria-label 仍是房客名）。`artifacts.tsx` 去掉 `onInsertReference`。新 `files/paths.ts` 的 `工作区内相对路径`，探针两处与 `backend.ts` 的 `越界` 都改用它。spec §0 加「实施时的三处收窄」（状态不持久化 / 远端 `exists` 缺省 / 没有 ⋮ 菜单），§2/§3/§4/§5/§8/§9 按实际改。
+- **Impact**: `read` 的 Run 现在 `files_created = []`，`listArtifacts.unknown` 不再列它；普通对话不再出「产出未知」。协议形状不变。视觉基线不动（基线屏里没有产物，角标不画）。
+- **Verification**: `tests/runtime/native.test.ts` 走真实 `gatedTools` 包装：read 成功发空事实、失败不发、`provenance:false` 不发、write 仍走探针；`tests/ui/generated-strip.test.ts` 只读轮 → none、取失败 → `load_failed`（pty/cli 仍优先 `invisible_agent`）；新 `generated-strip-render.test.tsx`、`tests/files/paths.test.ts`（含 `..foo`）。e2e `artifacts.spec.ts` 第三个 describe：假模型 `read README.md` → 无产物条也无「产出未知」。`npm run typecheck` / `npm test` / `test:e2e:only`（artifacts / files / mcp）/ `test:e2e:visual` 结果见提交信息。
+
 ### 2026-08-26 — `createdSince`：porcelain 里的「新建」（产物条 Task 1）
 
 - **Type**: feat

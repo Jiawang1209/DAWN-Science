@@ -86,6 +86,7 @@ export const EN: Readonly<Record<string, string>> = {
   "在「{0}」里开一段新对话": "Start a new chat in “{0}”",
   "删除项目：{0}": "Delete project: {0}",
   "当前模型：{0}。点击切换": "Current model: {0}. Click to switch",
+  "{0}：当前 {1}，点击切换": "{0}: currently {1}, click to switch",
   "展开全部（还有 {0} 行）": "Show all ({0} more lines)",
   "已跑 {0}": "running {0}",
   "{0} 字节": "{0} bytes",

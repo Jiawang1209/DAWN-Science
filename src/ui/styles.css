@@ -4818,6 +4818,18 @@ pre {
  */
 .sess-config { position: relative; flex: 0 0 auto; }
 .sess-config-trigger { color: var(--dawn-text-2); white-space: nowrap; }
+/**
+ * 顶行那两颗（模型 / 推理强度，2026-08-27，作者 #3/#4）：**与左边那颗
+ * `ModelPill` 一个高矮**。它们复用 `.sess-config` 的定位与那副向上弹的菜单，
+ * 只是触发器走的是 `size="inline"`（零内边距、无圆角）——这里把 `.btn-sm`
+ * 那份内边距、圆角、间距补回来，才和 `.model-trigger` 对齐在同一条基线上。
+ */
+.composer-controls .config-pill .sess-config-trigger {
+  gap: var(--dawn-space-1);
+  padding: 4px 9px;
+  border-radius: var(--dawn-radius-md);
+  font-size: var(--dawn-fs-meta);
+}
 /** 向上弹：输入卡贴着窗口底部，向下会被切掉（与 `＋` 那个菜单同理） */
 .sess-config-menu {
   position: absolute;

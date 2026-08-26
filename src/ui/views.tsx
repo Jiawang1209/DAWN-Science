@@ -2876,6 +2876,97 @@ function SessionConfigMenu({
 }
 
 /**
+ * 单条会话开关的一颗 pill（2026-08-27，作者 #3/#4）。
+ *
+ * **模型与推理强度要钉在发送键左边**，不能掉进底部那颗 `SessionConfigMenu`
+ * ——那颗挨着权限，作者只认权限待在下面，模型和推理强度不该在那儿。
+ * 那颗菜单画的是**一串**开关；这颗只画**一条**：同一副菜单长相，
+ * 触发器上写的是这一条当前选了谁。
+ *
+ * ACP 会话没有「换模型」这个操作（`models` 为空、`ModelPill` 自己不画），
+ * 模型只是这串开关里 `category: "model"` 的一条——于是它也走这颗，
+ * 摆进顶行同一个槽位，让 ACP 的模型和内置对话的模型落在一处。
+ */
+function ConfigPill({
+  option,
+  onSet,
+}: {
+  option: 会话开关
+  onSet: (configId: string, value: string) => void
+}) {
+  const [开着, 设开着] = useState(false)
+  const 盒 = useRef<HTMLDivElement>(null)
+
+  // 点别处收起来（与 `SessionConfigMenu` 同一副 `盒`/`设开着`）
+  useEffect(() => {
+    if (!开着) return
+    const 关 = (e: MouseEvent) => {
+      if (!盒.current?.contains(e.target as Node)) 设开着(false)
+    }
+    document.addEventListener("mousedown", 关)
+    return () => document.removeEventListener("mousedown", 关)
+  }, [开着])
+
+  // 触发器上写**当前那一项的短名**（去掉 `· 说明` 半截，顶行那一格容不下长字）
+  const 当前项 = option.options.find((x) => x.value === option.current)
+  const 标 = 当前项?.name.split(" · ")[0] ?? option.current ?? option.name
+
+  return (
+    <div
+      className="sess-config config-pill"
+      ref={盒}
+      onKeyDown={(e) => e.key === "Escape" && 设开着(false)}
+    >
+      <Button
+        variant="ghost"
+        size="inline"
+        className="sess-config-trigger"
+        aria-haspopup="menu"
+        aria-expanded={开着}
+        aria-label={tf("{0}：当前 {1}，点击切换", option.name, 标)}
+        onClick={() => 设开着((v) => !v)}
+      >
+        {标}
+        <下拉图标 />
+      </Button>
+      {开着 ? (
+        <div className="menu sess-config-menu" role="menu" aria-label={option.name}>
+          <div className="sess-config-group">
+            <p className="sess-config-name">{option.name}</p>
+            {option.description ? <p className="sess-config-desc">{option.description}</p> : null}
+            {option.options.map((x) => (
+              <Button
+                key={x.value}
+                variant="ghost"
+                size="inline"
+                role="menuitemradio"
+                aria-checked={x.value === option.current}
+                {...(x.value === option.current ? { className: "current" } : {})}
+                onClick={() => onSet(option.id, x.value)}
+              >
+                {/* 勾不进名字（状态在 `aria-checked` 上），走图标不走符号——同 `SessionConfigMenu` */}
+                <span className="sess-config-mark" aria-hidden="true">
+                  {x.value === option.current ? <勾图标 /> : null}
+                </span>
+                {(() => {
+                  const { 主, 次 } = 拆模型名(x.name, x.description)
+                  return (
+                    <span className="sess-config-opt">
+                      <span className="sess-config-opt-name">{主}</span>
+                      {次 ? <span className="sess-config-opt-desc">{次}</span> : null}
+                    </span>
+                  )
+                })()}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
  * agent pill。**长在 composer 右下角，不在侧栏。**
  *
  * 学自 Hermes `app/chat/composer/model-pill.tsx`，它自己的注释就是这次搬家的理由：
@@ -4069,6 +4160,13 @@ export function ConversationView({
   const [导出中, 设导出中] = useState(false)
   const [导出说, 设导出说] = useState<string | undefined>(undefined)
 
+  /**
+   * **模型与推理强度从会话开关里挑出来，钉到顶行**（2026-08-27，作者 #3/#4）。
+   * 它们不再随其余 ACP 开关掉进底部那颗菜单（那颗挨着权限）。
+   */
+  const 模型选项 = 会话开关们?.find((o) => o.category === "model")
+  const 推理选项 = 会话开关们?.find((o) => o.category === "thought_level")
+
   return (
     <div className="conversation">
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
@@ -4758,6 +4856,26 @@ export function ConversationView({
               />
             ) : null}
             {/**
+              * **模型固定钉在发送键左边**（2026-08-27，作者 #4）。
+              *
+              * 内置 / cli 会话走上面那颗 `ModelPill`。**ACP 会话 `models` 为空**
+              * （`ModelPill` 自己不画），它的模型只是会话开关里 `category: "model"`
+              * 的一条——此前它掉进底部那颗 `SessionConfigMenu`，摆在了权限旁边。
+              * 现在把它捞回顶行同一个槽位：**不论哪类会话，模型都在这儿。**
+              */}
+            {(!models || models.length === 0) && 模型选项 && onSetConfigOption ? (
+              <ConfigPill option={模型选项} onSet={onSetConfigOption} />
+            ) : null}
+            {/**
+              * **推理强度紧跟模型、在发送键之前**（2026-08-27，作者 #3）。
+              *
+              * `thought_level` 此前也在底部那颗菜单里、挨着权限。它与模型是同一类
+              * 「这一轮怎么想」的旋钮，归到模型后面这一处，不散在附栏里。
+              */}
+            {推理选项 && onSetConfigOption ? (
+              <ConfigPill option={推理选项} onSet={onSetConfigOption} />
+            ) : null}
+            {/**
              * **圆形填充的发送键**（2026-08-12，学自 WorkBuddy）。
              *
              * 作者：*「对话框也完全不像啊。」* 最显眼的就是这颗——
@@ -4985,9 +5103,19 @@ export function ConversationView({
                 onNote={设增强说明}
               />
             ) : null}
-            {/* 前三样说「带什么、在哪跑」，右边两颗说「怎么改」：权限那颗是唯一入口（2026-08-23，替掉设置里的「工具权限」） */}
-            {会话开关们 && 会话开关们.some((o) => o.category !== "mode") && onSetConfigOption ? (
-              <SessionConfigMenu options={会话开关们.filter((o) => o.category !== "mode")} onSet={onSetConfigOption} />
+            {/**
+              * 前三样说「带什么、在哪跑」，右边说「怎么改」：权限那颗是唯一入口（2026-08-23）。
+              * **模型（含 ACP 的）与推理强度已钉到顶行**（2026-08-27，作者 #3/#4），
+              * 权限那颗走 `PermissionPill`——这颗底部菜单只收剩下的 ACP 开关，
+              * 一条都不剩时不画（不摆一个点开是空的菜单）。
+              */}
+            {会话开关们 &&
+            会话开关们.some((o) => !["mode", "model", "thought_level"].includes(o.category ?? "")) &&
+            onSetConfigOption ? (
+              <SessionConfigMenu
+                options={会话开关们.filter((o) => !["mode", "model", "thought_level"].includes(o.category ?? ""))}
+                onSet={onSetConfigOption}
+              />
             ) : null}
             {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}
           </div>

@@ -9,7 +9,7 @@ const art = (path: string, c: string) => ({ path, kind: "table" as const, bornRu
 describe("本轮产物", () => {
   const items = [turn("u1", "user"), tool("c1"), tool("c2"), turn("a1", "agent"), turn("u2", "user"), tool("c3"), turn("a2", "agent")]
 
-  it("只挑上一句用户发言之后、这一轮 agent 之前的工具调用", () => {
+  it("按提问分段：只挑这一段（上一句 user 到下一句 user 之间）里的工具调用", () => {
     const r = 本轮产物(items, "a2", { artifacts: [art("a.csv", "c1"), art("b.csv", "c3")], unknown: [] }, "native")
     expect(r).toEqual({ kind: "some", artifacts: [expect.objectContaining({ path: "b.csv" })], unknownCount: 0 })
   })
@@ -45,7 +45,7 @@ describe("本轮产物", () => {
     expect(本轮产物([turn("u", "user"), turn("a", "agent")], "a", { artifacts: [], unknown: [] }, "native")).toEqual({ kind: "none" })
   })
 
-  it("边界是任意一条 turn（不分 user/agent）——工具调用之后模型再开口是新的一条，前一条不重复认领", () => {
+  it("同一段里连续两条 agent 消息——产物条只挂最后一条，前一条不重复认领", () => {
     const 序列 = [turn("u1", "user"), turn("a1", "agent"), tool("c1"), turn("a2", "agent")]
     const list = { artifacts: [art("out.csv", "c1")], unknown: [] }
     expect(本轮产物(序列, "a2", list, "native")).toEqual({ kind: "some", artifacts: [expect.objectContaining({ path: "out.csv" })], unknownCount: 0 })
@@ -56,5 +56,43 @@ describe("本轮产物", () => {
     // 两次工具调用，只有一次被记成「不知道」（另一次的 toolCallId 是探针兜底占位，对不上）——不该被当成「有 1 个不知道」拼进 some
     const r = 本轮产物(items, "a1", { artifacts: [], unknown: [{ runId: "r", toolCallId: "c1" }] }, "native")
     expect(r).toEqual({ kind: "unknown", reason: "not_observed" })
+  })
+
+  it("作者 2026-08-26 首用的真实会话形状：想→写→跑命令→回话→再改→再回话，chips 只落在最后一条底下", () => {
+    const 序列 = [
+      turn("u1", "user"),
+      turn("a1", "agent"), // 中间：写之前先说了一句
+      tool("c1"), // write → A
+      tool("c2"), // bash → B,C,D,E
+      turn("a2", "agent"), // 中间：又说了一句
+      tool("c3"), // edit，不产出新文件
+      turn("a3", "agent"), // 这一段最后一条
+      tool("c4"), // read，不产出新文件
+    ]
+    const list = {
+      artifacts: [art("a.csv", "c1"), art("b.csv", "c2"), art("c.csv", "c2"), art("d.csv", "c2"), art("e.csv", "c2")],
+      unknown: [],
+    }
+    expect(本轮产物(序列, "a1", list, "native")).toEqual({ kind: "none" })
+    expect(本轮产物(序列, "a2", list, "native")).toEqual({ kind: "none" })
+    const r = 本轮产物(序列, "a3", list, "native")
+    expect(r.kind).toBe("some")
+    if (r.kind === "some") {
+      expect(r.artifacts.map((a) => a.path).sort()).toEqual(["a.csv", "b.csv", "c.csv", "d.csv", "e.csv"])
+      expect(r.unknownCount).toBe(0)
+    }
+  })
+
+  it("工具调用在任何文字之前（模型先动手再说话）→ 唯一一条 agent 消息照样认领", () => {
+    const 序列 = [turn("u1", "user"), tool("c1"), turn("a1", "agent")]
+    const list = { artifacts: [art("out.csv", "c1")], unknown: [] }
+    expect(本轮产物(序列, "a1", list, "native")).toEqual({ kind: "some", artifacts: [expect.objectContaining({ path: "out.csv" })], unknownCount: 0 })
+  })
+
+  it("段边界按下一句 user 划开，不是按下一条 turn——上一段的产物不会渗进下一段", () => {
+    const 序列 = [turn("u1", "user"), turn("a1", "agent"), tool("c1"), turn("u2", "user"), turn("a2", "agent")]
+    const list = { artifacts: [art("out.csv", "c1")], unknown: [] }
+    expect(本轮产物(序列, "a1", list, "native")).toEqual({ kind: "some", artifacts: [expect.objectContaining({ path: "out.csv" })], unknownCount: 0 })
+    expect(本轮产物(序列, "a2", list, "native")).toEqual({ kind: "none" })
   })
 })

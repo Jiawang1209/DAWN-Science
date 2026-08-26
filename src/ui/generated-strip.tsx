@@ -1,9 +1,17 @@
 /**
  * 对话里的产物条 `GENERATED · N`（spec 2026-08-26-产物 §4）。
  *
- * **按轮派生，不是转录项**：这一轮 = 从这条 agent 回复往前，直到（不含）上一条 turn 为止的所有工具调用；
+ * **按提问分段，不按模型消息**：一段 = 上一条 user turn（不含）到下一条 user turn（不含）
+ * 或转录末尾。一次提问往往是「想→写→跑命令→回话→再改→再回话」好几条模型消息——转录里
+ * 一条模型消息就是一条 agent turn item。产物条只挂在**这一段里最后一条 agent turn**底下，
+ * 段内其余 agent 消息一律 `{kind:"none"}`：中间那条消息不画。
+ * 最后一条 agent turn 名下要认领的，是**整段**里的所有工具调用（在它之前的、也包括在它
+ * 之后的——工具在后面出现，是模型调完工具就出错、再没开口，这些工具仍然属于这次提问）。
  * 产物按 `bornToolCallId` 对到这些工具调用（转录里 tool item 的 id 就是 pi 的 toolCallId）。
  * 三态分得开：正常 / 未知 / 混合；确认没新建**不画**。
+ *
+ * 2026-08-26 首用踩过：按「轮」（上一条 turn 到这条 agent turn 之间）分反而会把 chips
+ * 画在一段问答中间那条消息上，最后一条回复空着——「聊天窗口里面没有」。
  *
  * **老 run 没有 `toolCallId`**（v16 之前，账本还没记这一列）：这类产物既对不到任何
  * 一次工具调用，也就没法挂到某一条 agent 回复上——本组件对它们保持沉默，
@@ -26,18 +34,42 @@ export function 本轮产物(items: readonly TranscriptItem[], agentTurnId: stri
   if (sessionKind === "pty" || sessionKind === "cli") return { kind: "unknown", reason: "invisible_agent" }
   // 清单取失败时 `sync.ts` 落的是空清单 + error：空清单是「确认没有」，这里不能照它算成 none
   if (list.error !== undefined) return { kind: "unknown", reason: "load_failed", error: list.error }
-  const end = endIndex !== undefined && items[endIndex]?.id === agentTurnId ? endIndex : items.findIndex((i) => i.id === agentTurnId)
-  if (end < 0) return { kind: "none" }
-  const 本轮工具 = new Set<string>()
-  /**
-   * **边界是任意一条 turn，不分 user/agent。**
-   * 转录里一条 turn = 模型的一条消息；工具调用之后模型再开口是新的一条，
-   * 产物挂在工具之后那条上，前一条不再重复认领——否则同一批工具调用会被
-   * 两条相邻的 agent 回复各画一次。
-   */
-  for (let i = end - 1; i >= 0; i--) {
+  // `endIndex` 只用来省一次 findIndex 定位这条 agent turn；段的扫描本来就是线性的，没有对应的优化可省
+  const idx = endIndex !== undefined && items[endIndex]?.id === agentTurnId ? endIndex : items.findIndex((i) => i.id === agentTurnId)
+  if (idx < 0) return { kind: "none" }
+
+  // 段边界：上一条 user turn（不含）到下一条 user turn（不含）或数组末尾
+  let segStart = -1
+  for (let i = idx - 1; i >= 0; i--) {
     const it = items[i]!
-    if (it.type === "turn") break
+    if (it.type === "turn" && it.who === "user") {
+      segStart = i
+      break
+    }
+  }
+  let segEnd = items.length
+  for (let i = idx + 1; i < items.length; i++) {
+    const it = items[i]!
+    if (it.type === "turn" && it.who === "user") {
+      segEnd = i
+      break
+    }
+  }
+
+  // 段内只有最后一条 agent turn 挂产物条；其余 agent 消息（哪怕自己也叫了工具）一律 none，工具算给最后一条
+  let lastAgentIdx = -1
+  for (let i = segEnd - 1; i > segStart; i--) {
+    const it = items[i]!
+    if (it.type === "turn" && it.who === "agent") {
+      lastAgentIdx = i
+      break
+    }
+  }
+  if (lastAgentIdx !== idx) return { kind: "none" }
+
+  const 本轮工具 = new Set<string>()
+  for (let i = segStart + 1; i < segEnd; i++) {
+    const it = items[i]!
     if (it.type === "tool") 本轮工具.add(it.id)
   }
   if (本轮工具.size === 0) return { kind: "none" }

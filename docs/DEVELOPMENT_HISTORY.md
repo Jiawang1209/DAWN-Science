@@ -8,21 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-08-26 — 产物终审收口：只读工具按设计发空事实；取失败出声；坞标签角标；可达名去重；路径守卫合一；spec 如实收窄
-
-- **Type**: fix
-- **Motivation**: 终审五条。最重的一条是主路径假话：`read` 不在探针白名单里从不发 `tool_files`，那次调用的 Run 上 `files_created` 是 NULL，被读成「不知道」——一段只 read 的普通对话在 git 工作区里被画成「本轮产出未知 · 远端会话或非 git 工作区，探针没跑」。其余：清单取失败被 `本轮产物` 算成「没有」；spec §5 的 `产物 (N)` 角标没做；chip 与清单行同名（可达名子串冲突）；`onInsertReference` 死 prop；三处越界判定口径不一（`startsWith("..")` 会把 `..foo` 当越界）；spec 写的与做的有四处不一致。
-- **What**: `runtime/provenance.ts` 导出 `只读工具的空事实`，`native.ts` 的 `wrap` 在非白名单内置工具**成功**时发四个空数组（这是我们自己写的工具，白名单本身就是「它不写文件」的声明——是确认，不是猜；`subagent` 不经这条包装所以不受影响；`provenance: false` 时不发）。`generated-strip.tsx` 加 `load_failed` 变体（带 error），渲染「产物清单没取到：<原因>」；chip 可达名改「打开产物 <路径>」；删掉那条说 `tool<N>` 占位的错注释。`views.tsx` 的 `RightDock` 给产物标签加 `.dock-tab-badge`（N > 0 才画，aria-label 仍是房客名）。`artifacts.tsx` 去掉 `onInsertReference`。新 `files/paths.ts` 的 `工作区内相对路径`，探针两处与 `backend.ts` 的 `越界` 都改用它。spec §0 加「实施时的三处收窄」（状态不持久化 / 远端 `exists` 缺省 / 没有 ⋮ 菜单），§2/§3/§4/§5/§8/§9 按实际改。
-- **Impact**: `read` 的 Run 现在 `files_created = []`，`listArtifacts.unknown` 不再列它；普通对话不再出「产出未知」。协议形状不变。视觉基线不动（基线屏里没有产物，角标不画）。
-- **Verification**: `tests/runtime/native.test.ts` 走真实 `gatedTools` 包装：read 成功发空事实、失败不发、`provenance:false` 不发、write 仍走探针；`tests/ui/generated-strip.test.ts` 只读轮 → none、取失败 → `load_failed`（pty/cli 仍优先 `invisible_agent`）；新 `generated-strip-render.test.tsx`、`tests/files/paths.test.ts`（含 `..foo`）。e2e `artifacts.spec.ts` 第三个 describe：假模型 `read README.md` → 无产物条也无「产出未知」。`npm run typecheck` / `npm test` / `test:e2e:only`（artifacts / files / mcp）/ `test:e2e:visual` 结果见提交信息。
-
-### 2026-08-26 — `createdSince`：porcelain 里的「新建」（产物条 Task 1）
+### 2026-08-26 — 产物：对话里 `GENERATED · N` 产物条 + 坞「产物」格（data-platform 分支，主线第一步）
 
 - **Type**: feat
-- **Motivation**: 「产物」spec 定的 `filesCreated` 需要一个事实来源——`diffSince` 只答「改了什么」，答不出「新生了什么」；重命名也不该算新建。
-- **What**: `src/project/git-facts.ts` 新增 `parsePorcelainCreated`（只认 porcelain 里的 `??` 与索引 `A`，排除 `R`）与导出函数 `createdSince(workspace, baseline)`：现在的「新建候选」减去基线时已脏（含未跟踪）的文件。已知边界与 `diffSince` 一致：被 `.gitignore` 忽略的看不见，留给 `provenance.ts` 用工具声明路径兜底。
-- **Impact**: 新增导出，无行为变更；`diffSince` 等既有函数不动。
-- **Verification**: `tests/project/git-facts.test.ts` 新增 4 条（改已有文件不算新建 / 基线时已在场的未跟踪文件不算 / `git add` 过的新文件算 / 子目录非 ASCII 文件名带相对路径），先跑确认 `createdSince is not a function` 失败，实现后 `npx vitest run tests/project/git-facts.test.ts` 23/23 全绿；`npm run typecheck` 干净。
+- **Motivation**: 回归「数据分析平台」主线第一步。「这一轮生成了什么」此前只有 agent 嘴上说；账本记了改动却不分新建，界面上没有任何一处能实时看到产出。参考 wisp-science 的 `GENERATED · 5` 与 Claude Science 的右栏，作者两次收窄：坞里没有终端（我画错了）、这一格只要「实时看生成了什么」，版本 / 来源 / 批注挪到下一轮。
+- **What**: 探针加 `filesCreated`（git `??`/`A` ∪ 声明路径此前不在，再并进产物登记按 inode 记的新建；声明路径统一成相对工作区）；`tool_files` 事件带 `filesCreated`；账本 v16 加 `runs.files_created` / `tool_call_id`，`RunStore.artifactsOf` 一条查询推导产物（不建表、不存内容；corrupt JSON 读作不知道）；协议 7.24 加 `Artifact`、`listArtifacts`、`artifactsChanged`（只说「变了」，数据走查询）；后端 `listArtifacts` 本机 `lstat` 查实 `exists`，远端 / 越界 / 会话记录已删一律缺省；中枢 `tool_files` 有新建就推事件，**attach 回调改成先记账再呈现**（客户端收到事件回头查账本时必须已落库）且账本异常不拖垮转录；界面：`本轮产物()` 按轮派生三态（正常 / 未知 / 混合；确认没新建不画；pty/cli 一律未知；轮的边界是任意一条 turn——一条 turn = 模型一条消息）、`GeneratedStrip` chips、坞新房客「产物」= 按目录分组的实时清单 + 共用 `FilePreview`、切会话先清清单、取失败出声可重试、焦点按会话作用域。`文件类按名字` 搬到 `src/files/`。顺手修了两条 `28a5bad` 遗漏的旧 e2e（删 MCP / 解绑现在要确认）。
+- **Impact**: 协议 minor 7.23 → 7.24；schema 15 → 16（老 run 两列 NULL = 不知道）；坞多一个房客「产物」，两张开坞的视觉基线重存（diff 只是多一个标签，已逐张看过）；`"产物"` 的英文由 `artifact` 改为 `Artifact`（审阅徽标 / 技能分类同键）。非 git 工作区这一版仍是「不知道」（spec §2 已改口径）。
+- **Verification**: 单测 2308 全绿（181 文件；新增：createdSince 5、探针 6、合并 3、store 5、recorder 2、协议 2、中枢 1、后端 4、本轮产物 7、面板 6、sync 守卫 1、坞房客 1）；e2e 全量 447 + 修完两条旧用例后 10/10 复跑，新 `artifacts.spec.ts` 2 条真链路（write 新建 → 产物条 → 坞预览 → 回到清单；cli 会话画未知且不列声称的文件）；视觉基线 10/10 连验三轮；typecheck、build 干净。每个 Task 各过一次规格审查 + 一次代码审查，约 20 条审查意见全部修完。
+- **终审收口 · Motivation**: 终审五条。最重的一条是主路径假话：`read` 不在探针白名单里从不发 `tool_files`，那次调用的 Run 上 `files_created` 是 NULL，被读成「不知道」——一段只 read 的普通对话在 git 工作区里被画成「本轮产出未知 · 远端会话或非 git 工作区，探针没跑」。其余：清单取失败被 `本轮产物` 算成「没有」；spec §5 的 `产物 (N)` 角标没做；chip 与清单行同名（可达名子串冲突）；`onInsertReference` 死 prop；三处越界判定口径不一（`startsWith("..")` 会把 `..foo` 当越界）；spec 写的与做的有四处不一致。
+- **终审收口 · What**: `runtime/provenance.ts` 导出 `只读工具的空事实`，`native.ts` 的 `wrap` 在非白名单内置工具**成功**时发四个空数组（这是我们自己写的工具，白名单本身就是「它不写文件」的声明——是确认，不是猜；`subagent` 不经这条包装所以不受影响；`provenance: false` 时不发）。`generated-strip.tsx` 加 `load_failed` 变体（带 error），渲染「产物清单没取到：<原因>」；chip 可达名改「打开产物 <路径>」；删掉那条说 `tool<N>` 占位的错注释。`views.tsx` 的 `RightDock` 给产物标签加 `.dock-tab-badge`（N > 0 才画，aria-label 仍是房客名）。`artifacts.tsx` 去掉 `onInsertReference`。新 `files/paths.ts` 的 `工作区内相对路径`，探针两处与 `backend.ts` 的 `越界` 都改用它。spec §0 加「实施时的三处收窄」（状态不持久化 / 远端 `exists` 缺省 / 没有 ⋮ 菜单），§2/§3/§4/§5/§8/§9 按实际改。
+- **终审收口 · Impact**: `read` 的 Run 现在 `files_created = []`，`listArtifacts.unknown` 不再列它；普通对话不再出「产出未知」。协议形状不变。视觉基线不动（基线屏里没有产物，角标不画）。
+- **终审收口 · Verification**: `tests/runtime/native.test.ts` 走真实 `gatedTools` 包装：read 成功发空事实、失败不发、`provenance:false` 不发、write 仍走探针；`tests/ui/generated-strip.test.ts` 只读轮 → none、取失败 → `load_failed`（pty/cli 仍优先 `invisible_agent`）；新 `generated-strip-render.test.tsx`、`tests/files/paths.test.ts`（含 `..foo`）。e2e `artifacts.spec.ts` 第三个 describe：假模型 `read README.md` → 无产物条也无「产出未知」。`npm run typecheck` / `npm test` / `test:e2e:only`（artifacts / files / mcp）/ `test:e2e:visual` 结果见提交信息。
 
 ### 2026-08-26 — 回归主线：开 `data-platform` 分支，定「产物」spec（对话产物条 + 坞产物格）
 
@@ -31,14 +27,6 @@
 - **What**: `specs/2026-08-26-产物-design.md`：Run 加 `filesCreated`（`??` ∪ 产物登记，缺省=不知道 / 空=确认没新建）；产物 = 从 Run 推导不建表、不存内容；协议加 `listArtifacts` + `artifactsChanged`；对话里按 turn 派生 `GENERATED · N` 三态（正常 / 未知 / 混合，确认没新建不画）；坞新房客「产物」= 按目录分组的实时清单 + 共用预览。§9 记下一轮。
 - **Impact**: 无代码变更。下一步写实施计划。
 - **Verification**: 动手前核了账本 / 探针 / 坞房客的真实状态并写进 spec §1。
-
-### 2026-08-26 — 产物：对话里 `GENERATED · N` 产物条 + 坞「产物」格（data-platform 分支，主线第一步）
-
-- **Type**: feat
-- **Motivation**: 回归「数据分析平台」主线第一步。「这一轮生成了什么」此前只有 agent 嘴上说；账本记了改动却不分新建，界面上没有任何一处能实时看到产出。参考 wisp-science 的 `GENERATED · 5` 与 Claude Science 的右栏，作者两次收窄：坞里没有终端（我画错了）、这一格只要「实时看生成了什么」，版本 / 来源 / 批注挪到下一轮。
-- **What**: 探针加 `filesCreated`（git `??`/`A` ∪ 声明路径此前不在，再并进产物登记按 inode 记的新建；声明路径统一成相对工作区）；`tool_files` 事件带 `filesCreated`；账本 v16 加 `runs.files_created` / `tool_call_id`，`RunStore.artifactsOf` 一条查询推导产物（不建表、不存内容；corrupt JSON 读作不知道）；协议 7.24 加 `Artifact`、`listArtifacts`、`artifactsChanged`（只说「变了」，数据走查询）；后端 `listArtifacts` 本机 `lstat` 查实 `exists`，远端 / 越界 / 会话记录已删一律缺省；中枢 `tool_files` 有新建就推事件，**attach 回调改成先记账再呈现**（客户端收到事件回头查账本时必须已落库）且账本异常不拖垮转录；界面：`本轮产物()` 按轮派生三态（正常 / 未知 / 混合；确认没新建不画；pty/cli 一律未知；轮的边界是任意一条 turn——一条 turn = 模型一条消息）、`GeneratedStrip` chips、坞新房客「产物」= 按目录分组的实时清单 + 共用 `FilePreview`、切会话先清清单、取失败出声可重试、焦点按会话作用域。`文件类按名字` 搬到 `src/files/`。顺手修了两条 `28a5bad` 遗漏的旧 e2e（删 MCP / 解绑现在要确认）。
-- **Impact**: 协议 minor 7.23 → 7.24；schema 15 → 16（老 run 两列 NULL = 不知道）；坞多一个房客「产物」，两张开坞的视觉基线重存（diff 只是多一个标签，已逐张看过）；`"产物"` 的英文由 `artifact` 改为 `Artifact`（审阅徽标 / 技能分类同键）。非 git 工作区这一版仍是「不知道」（spec §2 已改口径）。
-- **Verification**: 单测 2308 全绿（181 文件；新增：createdSince 5、探针 6、合并 3、store 5、recorder 2、协议 2、中枢 1、后端 4、本轮产物 7、面板 6、sync 守卫 1、坞房客 1）；e2e 全量 447 + 修完两条旧用例后 10/10 复跑，新 `artifacts.spec.ts` 2 条真链路（write 新建 → 产物条 → 坞预览 → 回到清单；cli 会话画未知且不列声称的文件）；视觉基线 10/10 连验三轮；typecheck、build 干净。每个 Task 各过一次规格审查 + 一次代码审查，约 20 条审查意见全部修完。
 
 ### 2026-08-25 — 全库审查续修：架构/协议批（H1/E6/F2/F3/F5，作者拍板后实现），审查全部清零
 

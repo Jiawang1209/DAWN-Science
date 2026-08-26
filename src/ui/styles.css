@@ -6305,3 +6305,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 /* ── 远程助理 · 飞书卡(2026-08-25) ── */
 .ra-feishu-qr { /* 与 .ra-qr 同款,类名只为 e2e 定位 */ }
 .ra-feishu-notify { margin-top: var(--dawn-space-3); }
+
+/* ── 产物条（对话里，spec 2026-08-26-产物 §4） ── */
+.generated-strip { margin-top: var(--dawn-space-2); font-size: var(--dawn-fs-meta); }
+.generated-strip .label { display: block; color: var(--dawn-text-3); letter-spacing: .04em; font-weight: var(--dawn-weight-semibold); margin-bottom: var(--dawn-space-1); }
+.generated-strip.unknown .caveat { margin-left: var(--dawn-space-2); }
+.generated-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--dawn-space-1); }
+.generated-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-surface-panel); }
+.generated-chip.gone .name { text-decoration: line-through; opacity: .6; }
+.kind-tag { font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }

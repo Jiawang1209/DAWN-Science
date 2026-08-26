@@ -319,7 +319,7 @@ export function NotebookPanel({
       {内核重起过 ? <p className="nb-notice">{t("内核已重起，上面 cell 里的变量已经不在了；再跑一次即可")}</p> : null}
 
       {/* 贴底滚动与对话区同一个库：贴在底部时才跟随新 cell，用户上翻了就撒手（spec §5） */}
-      <StickToBottom className="nb-cells" resize="smooth" initial="instant">
+      <StickToBottom className="nb-cells" resize="smooth" initial="smooth">
         <StickToBottom.Content className="nb-cells-inner">
         {cells.map((c) => (
           <div key={c.id} className={`nb-cell nb-cell-${c.status}`}>

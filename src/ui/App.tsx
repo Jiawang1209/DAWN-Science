@@ -4417,18 +4417,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 error={笔记本错}
                 onRun={async (language: 内核语言, code: string) => {
                   if (!sessionId) throw new Error("没有会话，跑不了")
+                  /**
+                   * **收尾只认当时的会话**（审查 2026-08-26）：`await` 期间人可能已切到别的会话，
+                   * 那时 `running`/`error` 已经是新会话的了——A 跑完不许把 B 的「在跑」清掉，
+                   * B 一进来那条按 `sessionId` 清零的 effect 也会被这里的晚到覆盖。
+                   */
+                  const 当时 = sessionId
                   设笔记本在跑(true)
                   设笔记本错(undefined)
                   try {
                     await client.get<{ cellId: string }>("runInKernel", { sessionId, language, code })
                   } finally {
-                    设笔记本在跑(false)
+                    if ($activeSessionId.get() === 当时) 设笔记本在跑(false)
                   }
                 }}
                 onInterrupt={(language: 内核语言) => {
                   if (!sessionId) return
+                  const 当时 = sessionId
                   client.get("interruptKernel", { sessionId, language }).catch((e: unknown) => {
-                    设笔记本错(e instanceof Error ? e.message : String(e))
+                    // 同上：错误只落在它所属的会话里
+                    if ($activeSessionId.get() === 当时) 设笔记本错(e instanceof Error ? e.message : String(e))
                     fail(e)
                   })
                 }}

@@ -26,6 +26,8 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
+import type { Model } from "@earendil-works/pi-ai"
+import { getBuiltinModel, getBuiltinProviders } from "@earendil-works/pi-ai/providers/all"
 import type { ProviderConnection } from "./schema.js"
 
 /** `models.json` 里一个 provider 的形状（只用我们会写的那几个字段） */
@@ -33,7 +35,72 @@ interface ModelsJsonProvider {
   baseUrl?: string
   api?: string
   headers?: Record<string, string>
-  models?: { id: string; name: string; api?: string }[]
+  models?: ModelsJsonModel[]
+}
+
+/** `models.json` 里一个模型的形状（pi 的 `ModelDefinitionSchema` 认的那几个字段） */
+export interface ModelsJsonModel {
+  id: string
+  name: string
+  api?: string
+  input?: ("text" | "image")[]
+  reasoning?: boolean
+  thinkingLevelMap?: Model<string>["thinkingLevelMap"]
+  cost?: Model<string>["cost"]
+  contextWindow?: number
+  maxTokens?: number
+  compat?: Model<string>["compat"]
+}
+
+/**
+ * 把 yaml 里列出的一个模型 id 变成 `models.json` 的一条。
+ *
+ * **2026-08-26 作者撞的 400**——这里曾把所有列出的模型硬写成收图
+ * （`input: ["text","image"]`），deepseek-v4-flash 于是把 `read` 到的 png
+ * 发了出去，DeepSeek 答「This model does not support image」。他从没要过图。
+ *
+ * 当时的理由是「声明支持错了会出声，声明不支持错了会静默丢图」。
+ * 但那只对**粘图进对话**成立；agent 自己 `read` 一张图时，
+ * 声明错了的代价是**整轮对话被 400 打断**，而正确答案 pi 本来就知道。
+ *
+ * 所以现在分三档：
+ * 1. pi 的注册表（`@earendil-works/pi-ai/providers/all` 的 `getBuiltinModel`）
+ *    认识这个 provider 下的这个 id → **继承它的声明**（input / reasoning /
+ *    cost / contextWindow / maxTokens / compat / thinkingLevelMap）。
+ *    必须整条抄：pi 读 `models.json` 里列出的模型时**不会回填内置条目**，
+ *    只写 id 的话 reasoning、上下文窗口全会退成默认值。
+ * 2. 不认识（自建端点上的模型）→ 缺省只收文字。**缺失不等于支持。**
+ * 3. yaml 写了 `vision: true` → 那个 provider 列出的模型都收图。
+ *    用户明说的才算，注册表认不认识都一样。
+ *
+ * yaml 写了的字段（目前只有 `api`）优先于注册表。
+ */
+function 模型条目(provider: string, id: string, conn: ProviderConnection): ModelsJsonModel {
+  // 注册表的签名是按字面量收窄的；我们手里是 yaml 里的字符串，放宽一次
+  const 内置: Model<string> | undefined = (getBuiltinProviders() as string[]).includes(provider)
+    ? (getBuiltinModel(provider as never, id as never) as Model<string> | undefined)
+    : undefined
+  const 继承: Partial<ModelsJsonModel> = 内置
+    ? {
+        ...(内置.api === undefined ? {} : { api: 内置.api }),
+        ...(内置.reasoning === undefined ? {} : { reasoning: 内置.reasoning }),
+        ...(内置.thinkingLevelMap === undefined ? {} : { thinkingLevelMap: 内置.thinkingLevelMap }),
+        ...(内置.cost === undefined ? {} : { cost: 内置.cost }),
+        ...(内置.contextWindow === undefined ? {} : { contextWindow: 内置.contextWindow }),
+        ...(内置.maxTokens === undefined ? {} : { maxTokens: 内置.maxTokens }),
+        ...(内置.compat === undefined ? {} : { compat: 内置.compat }),
+      }
+    : {}
+  const input: ("text" | "image")[] = conn.vision
+    ? ["text", "image"]
+    : [...(内置?.input ?? ["text"])]
+  return {
+    id,
+    name: id,
+    ...继承,
+    ...(conn.api === undefined ? {} : { api: conn.api }),
+    input,
+  }
 }
 
 export interface ModelsJson {
@@ -71,32 +138,7 @@ export function buildModelsJson(
       ...(conn.models === undefined
         ? {}
         : {
-            models: conn.models.map((id) => ({
-              id,
-              name: id,
-              ...(conn.api === undefined ? {} : { api: conn.api }),
-              /**
-               * **声明收图**（2026-08-13，作者报的那个「粘了图没反应」）。
-               *
-               * pi-ai 拼请求时看 `model.input.includes("image")`——
-               * **不声明，图就在它那儿被丢掉，请求照发、回复照回**。
-               * 而我们这一侧生成的条目**一个 `input` 都没写**，
-               * 于是作者自己加的 `kimi-k3` 一张图也送不出去。
-               *
-               * ## 为什么是「声明支持」而不是「声明不支持」
-               *
-               * 作者的原话：*「是否识别图片，那是 LLM 的事情，
-               * 而不是我们工具的事情。」* 他是对的——我们凭一个模型 id
-               * 猜不出对面能不能看图。
-               *
-               * 那么两种猜法里挑**错了也说得出话**的那一种：
-               * - 声明支持而对面不支持 → **端点会返回一个错误**，看得见、查得到；
-               * - 声明不支持而对面支持 → **图被静默丢掉**，人只会觉得模型很笨。
-               *
-               * 前者是可以被纠正的失败，后者不是。
-               */
-              input: ["text", "image"],
-            })),
+            models: conn.models.map((mid) => 模型条目(id, mid, conn)),
           }),
     }
     /**

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-26 — models.json 不再把列出的模型硬写成收图（deepseek-v4-flash 的 400）
+
+- **Type**: fix
+- **Motivation**: 作者的 `providers.yaml` 里 deepseek 列了 `deepseek-v4-flash`；`models-json.ts` 把每个列出的模型都写成 `input: ["text","image"]`，pi 的 `read` 工具于是把读到的 png 字节附进请求，DeepSeek 回 `400 This model does not support image`。作者从没要过图。**缺失不等于支持。**
+- **What**: `src/config/models-json.ts` 新增 `模型条目()`：pi 注册表（`@earendil-works/pi-ai/providers/all` 的 `getBuiltinModel`/`getBuiltinProviders`）认识的模型**整条继承**它的 input / reasoning / cost / contextWindow / maxTokens / compat / thinkingLevelMap（pi 读 `models.json` 里列出的模型时不回填内置条目，只写 id 会退成默认值）；不认识的缺省 `input: ["text"]`；yaml 的 `api` 优先于注册表。`src/config/schema.ts` 的 `ProviderConnectionSchema` 加 `vision?: boolean`——声明后该 provider 列出的模型收图。
+- **Impact**: 自建端点上的视觉模型现在要在 yaml 里写 `vision: true` 才收图（此前默认收）。设置界面的 provider 写入器（`writer.ts`）还不认识 `vision`，重写该 provider 段会把手写的 `vision` 丢掉——待补。
+- **Verification**: 新增 `tests/config/models-json.test.ts` 7 例（先红后绿）；`tests/config` 84 例全绿；`npm run typecheck` 通过；全量 vitest 2341 例通过（1 个 unhandled error 是 `session-tabs.tsx` 在 jsdom 下的 `scrollIntoView`，与本次无关，改前已有）。
+
 ### 2026-08-26 — 产物：对话里 `GENERATED · N` 产物条 + 坞「产物」格（data-platform 分支，主线第一步）
 
 - **Type**: feat

@@ -279,6 +279,15 @@ const ProviderConnectionSchema = z
      * 而不写的话模型选择器会是空的，且没有任何一句话解释为什么。
      */
     models: z.array(z.string().min(1)).optional(),
+    /**
+     * 这个端点上列出的模型**收图**（2026-08-26）。
+     *
+     * 缺省不收：pi 的注册表认识的模型继承它自己的声明，不认识的只收文字。
+     * **缺失不等于支持**——上一版把所有列出的模型硬写成收图，
+     * 作者的 deepseek-v4-flash 于是把 `read` 到的 png 发了出去，对面 400。
+     * 自建端点上跑着视觉模型时，在这里明说。
+     */
+    vision: z.boolean().optional(),
   })
   .strict()
 export type ProviderConnection = z.infer<typeof ProviderConnectionSchema>

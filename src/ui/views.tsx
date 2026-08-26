@@ -4195,7 +4195,7 @@ export function ConversationView({
           {items.length === 0 ? (
             <p className="empty">{t("还没有对话")}</p>
           ) : (
-            items.map((item) => (
+            items.map((item, 下标) => (
               <TranscriptRow
                 key={item.id}
                 item={item}
@@ -4204,7 +4204,7 @@ export function ConversationView({
                 nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
                 {...(artifacts && onOpenArtifact && item.type === "turn" && item.who === "agent" && item.final
-                  ? { generated: 本轮产物(items, item.id, artifacts, session.kind), onOpenArtifact }
+                  ? { generated: 本轮产物(items, item.id, artifacts, session.kind, 下标), onOpenArtifact }
                   : {})}
                 {...(disabled
                   ? {}

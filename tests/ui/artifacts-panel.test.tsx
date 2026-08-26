@@ -104,3 +104,15 @@ describe("ArtifactsPanel", () => {
     expect(screen.getByRole("button", { name: "c.txt" })).toBeTruthy()
   })
 })
+
+describe("ArtifactsPanel —— 取失败要出声", () => {
+  it("**带 error 的清单画成「取不到」+ 重试，不是转圈也不是空态**", () => {
+    const onReload = vi.fn()
+    render(<ArtifactsPanel data={{ artifacts: [], unknown: [], error: "账本没开" }} {...noop} onReload={onReload} />)
+    expect(screen.getByText("取不到产物清单")).toBeTruthy()
+    expect(screen.getByText("账本没开")).toBeTruthy()
+    expect(screen.queryByText("这段会话还没有生成文件")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "重试" }))
+    expect(onReload).toHaveBeenCalledTimes(1)
+  })
+})

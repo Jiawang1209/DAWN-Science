@@ -66,6 +66,8 @@ export const $provenance = atom<ProvenanceLink | undefined>(undefined)
 export interface ArtifactList {
   artifacts: readonly Artifact[]
   unknown: readonly { runId: string; toolCallId?: string }[]
+  /** 取清单失败时带上原因（审查 2026-08-26）：不带的话面板永远转圈，「没取到」与「取不到」分不开 */
+  error?: string
 }
 
 /** 当前会话的产物（spec 2026-08-26-产物）。缺省 = 还没取到 / 没有会话 */

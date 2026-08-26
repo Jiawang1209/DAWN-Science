@@ -87,3 +87,25 @@ describe("loadContextUsage —— 会话身份守卫", () => {
     expect($contextUsage.get()).toMatchObject({ used: 111 })
   })
 })
+
+describe("loadArtifacts —— 失败要落成状态", () => {
+  it("**取清单失败：atom 变成带 error 的空清单，不留 undefined 转圈**", async () => {
+    const { setArtifacts, $artifacts } = await import("../../src/ui/state/catalog.js")
+    const { loadArtifacts } = await import("../../src/ui/state/sync.js")
+    setArtifacts(undefined)
+    $activeSessionId.set("A")
+    const client = { get: async () => { throw new Error("账本没开") } } as never
+    await loadArtifacts(client, "A")
+    expect($artifacts.get()).toEqual({ artifacts: [], unknown: [], error: "账本没开" })
+  })
+  it("**失败回来时人已切走 —— 不许把 B 的清单换成 A 的错误**", async () => {
+    const { setArtifacts, $artifacts } = await import("../../src/ui/state/catalog.js")
+    const { loadArtifacts } = await import("../../src/ui/state/sync.js")
+    const B清单 = { artifacts: [], unknown: [] }
+    setArtifacts(B清单)
+    $activeSessionId.set("B")
+    const client = { get: async () => { throw new Error("A 的错") } } as never
+    await loadArtifacts(client, "A")
+    expect($artifacts.get()).toBe(B清单)
+  })
+})

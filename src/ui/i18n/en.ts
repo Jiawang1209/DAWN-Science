@@ -765,6 +765,7 @@ export const EN: Readonly<Record<string, string>> = {
   "还有 {0} 个，在坞的「产物」里看全部": "{0} more — see all in the Artifacts pane",
   // 坞「产物」格（Task 11）
   "正在取产物清单": "Loading artifacts",
+  "取不到产物清单": "Cannot load artifacts",
   "回到清单": "Show list",
   "在文件里定位": "Locate in Files",
   "读不到这个文件": "Cannot read this file",

@@ -17,6 +17,7 @@ export function ArtifactsPanel({
   onOpenExternally,
   onInsertReference,
   focus,
+  onReload,
 }: {
   data: ArtifactList | undefined
   readFile: (path: string) => Promise<FileContent>
@@ -34,6 +35,8 @@ export function ArtifactsPanel({
    * 光看 `path` 没变不会触发（effect 只挂在 `nonce` 上）。
    */
   focus?: { path: string; nonce: number } | undefined
+  /** 清单取失败时「重试」按这个；缺省就不给那颗 */
+  onReload?: (() => void) | undefined
 }) {
   const [看的, 设看的] = useState<string | undefined>(undefined)
   const [内容, 设内容] = useState<FileContent | undefined>(undefined)
@@ -76,6 +79,16 @@ export function ArtifactsPanel({
   }, [看的, 重试次数])
 
   if (!data) return <Loader label={t("正在取产物清单")} />
+  // **取失败要出声**（规格 7.5）：与「还在取」分开，否则转圈转到天荒地老
+  if (data.error) {
+    return (
+      <EmptyState
+        title={t("取不到产物清单")}
+        description={data.error}
+        {...(onReload ? { action: <Button size="sm" onClick={onReload}>{t("重试")}</Button> } : {})}
+      />
+    )
+  }
 
   if (看的) {
     return (

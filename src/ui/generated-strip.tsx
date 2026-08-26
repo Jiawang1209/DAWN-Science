@@ -19,10 +19,11 @@ export type 轮产物 =
   | { kind: "unknown"; reason: "invisible_agent" | "not_observed" }
   | { kind: "some"; artifacts: Artifact[]; unknownCount: number }
 
-export function 本轮产物(items: readonly TranscriptItem[], agentTurnId: string, list: ArtifactList, sessionKind: string): 轮产物 {
+/** `endIndex`：调用方在 `items.map` 里已经知道下标时传进来，省一次 `findIndex`；给错了（那一格不是这条 turn）就回退去找 */
+export function 本轮产物(items: readonly TranscriptItem[], agentTurnId: string, list: ArtifactList, sessionKind: string, endIndex?: number): 轮产物 {
   // pty / cli 的工具不经我们的包装器，看不见；acp 借手时走我们的工具，按账本算
   if (sessionKind === "pty" || sessionKind === "cli") return { kind: "unknown", reason: "invisible_agent" }
-  const end = items.findIndex((i) => i.id === agentTurnId)
+  const end = endIndex !== undefined && items[endIndex]?.id === agentTurnId ? endIndex : items.findIndex((i) => i.id === agentTurnId)
   if (end < 0) return { kind: "none" }
   const 本轮工具 = new Set<string>()
   /**

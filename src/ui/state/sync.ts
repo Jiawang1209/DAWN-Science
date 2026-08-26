@@ -155,7 +155,12 @@ export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined)
       if (sessionId !== $activeSessionId.get()) return
       setArtifacts(v)
     })
-    .catch(fail)
+    .catch((e: unknown) => {
+      fail(e)
+      // **失败也要落成一个状态**：留着 undefined 面板会一直转圈，那是把「取不到」说成「还在取」
+      if (sessionId !== $activeSessionId.get()) return
+      setArtifacts({ artifacts: [], unknown: [], error: e instanceof Error ? e.message : String(e) })
+    })
 }
 
 /**

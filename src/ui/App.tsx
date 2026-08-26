@@ -87,7 +87,7 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts } from "./state/sync.js"
-import { $artifacts } from "./state/catalog.js"
+import { $artifacts, setArtifacts } from "./state/catalog.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -505,7 +505,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // 团队变了（team-board）：整份换掉
         if (u.type === "team") setTeam(u.team)
         // 产物变了（2026-08-26）：只说变了，清单重拉
-        if (u.type === "artifactsChanged") void loadArtifacts(client, u.sessionId)
+        // 只认当前会话的：别的会话变了不拉——拉回来也会被身份守卫丢掉，白打一次 IPC
+        if (u.type === "artifactsChanged" && u.sessionId === $activeSessionId.get()) void loadArtifacts(client, u.sessionId)
         // 会话退出要立刻反映到侧栏与输入框，否则还能继续打字却写不进去
         if (u.type === "state" && u.state === "exited") {
           const pid = $activeProjectId.get()
@@ -967,18 +968,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 坞「产物」格（spec 2026-08-26-产物）。
    *
    * **换会话就重拉，没会话就清空**——清单是按会话的，留着上一段的会在新会话里说谎。
-   * `产物焦点` 是「对话里产物条点了哪个」，也跟会话走。
+   * `产物焦点` 是「对话里产物条点了哪个」，**带着它所属的 sessionId**：
+   * 面板挂着 `key={sessionId}`，切会话时它会重挂，而 state 的清零是在 effect 里、
+   * 晚于那次重挂的首次渲染——光靠「切会话时清零」，上一段的焦点会在新会话的
+   * 面板上重放一次（打开一个新会话根本没有的路径）。传下去之前先对一遍会话。
    */
-  const [产物焦点, 设产物焦点] = useState<{ path: string; nonce: number } | undefined>(undefined)
+  const [产物焦点, 设产物焦点] = useState<{ sessionId: string; path: string; nonce: number } | undefined>(undefined)
   /** 焦点带一个递增计数：同一条产物再点一次也要重新进预览（同 path 的 state 不会触发更新） */
   const 产物焦点计数 = useRef(0)
   useEffect(() => {
     if (!ready) return
     设产物焦点(undefined)
+    // **先清再拉**：不清的话，新会话的清单回来之前，坞里顶着的是上一段会话的产物
+    setArtifacts(undefined)
     void loadArtifacts(client, sessionId)
   }, [client, ready, sessionId])
+  const 重拉产物 = useCallback(() => void loadArtifacts(client, sessionId), [client, sessionId])
   const openArtifact = useCallback((path: string) => {
-    设产物焦点({ path, nonce: ++产物焦点计数.current })
+    const sid = $activeSessionId.get()
+    if (!sid) return
+    设产物焦点({ sessionId: sid, path, nonce: ++产物焦点计数.current })
     setRightDockTenant("artifacts")
     setRightDockOpen(true)
   }, [])
@@ -4349,11 +4358,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ArtifactsPanel
                 key={sessionId}
                 data={artifacts}
-                focus={产物焦点}
+                focus={产物焦点 && 产物焦点.sessionId === sessionId ? { path: 产物焦点.path, nonce: 产物焦点.nonce } : undefined}
                 readFile={读产物}
                 onOpenInFiles={openFile}
                 {...(文件所在 ? { onDownload: 下载 } : {})}
                 onOpenExternally={openExternally}
+                onReload={重拉产物}
               />
             ) : rightDockTenant === "web" ? (
               /**

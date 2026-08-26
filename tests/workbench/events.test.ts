@@ -705,3 +705,15 @@ describe("只说了个换行，也该并走", () => {
     expect(发言[0]!.text).toBe("目录下有…")
   })
 })
+
+describe("产物变了（2026-08-26）", () => {
+  it("tool_files 带新建 → 推一条 artifactsChanged；没新建不推", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    const seen = collector(h)
+    h.ingest("a", { kind: "tool_files", sessionId: "a", toolCallId: "c1", filesWritten: ["x"], filesRead: [], mayIncludeUserEdits: true, filesCreated: ["x"] })
+    h.ingest("a", { kind: "tool_files", sessionId: "a", toolCallId: "c2", filesWritten: ["y"], filesRead: [], mayIncludeUserEdits: true, filesCreated: [] })
+    expect(seen.filter((u) => u.type === "artifactsChanged")).toHaveLength(1)
+  })
+})

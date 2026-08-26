@@ -67,7 +67,7 @@ function make() {
     pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
   }
   const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db) })
-  return { db, projectStore, runStore, sessions, projects, backend, events, memory, server: new WorkbenchServer(backend) }
+  return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, server: new WorkbenchServer(backend) }
 }
 
 describe("真实后端 · 经服务端端到端", () => {
@@ -112,6 +112,21 @@ describe("真实后端 · 经服务端端到端", () => {
     await ctx.backend.memoryWrite({ action: "add", target: "user", content: "偏好设计讨论" })
     const u = (await ctx.backend.memoryEntries({ target: "user" })) as { entries: string[] }
     expect(u.entries.join("\n")).toContain("偏好设计讨论")
+  })
+
+  it("listArtifacts：从账本推导，exists 查实，unknown 数得出（2026-08-26 产物）", async () => {
+    const ws = newRepo()
+    const sid = await 开一段(ws)
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    writeFileSync(join(ws, "a.csv"), "1\n")
+    ctx.runStore.insert({ runId: "t1", projectId: pid, sessionId: sid, origin: "agent", requestType: "tool_call:write", status: "completed", startedAt: "2026-08-26T10:00:00.000Z", finishedAt: "2026-08-26T10:00:01.000Z", hasError: false, toolCallId: "c1", filesCreated: ["a.csv", "gone.png"] })
+    ctx.runStore.insert({ runId: "t2", projectId: pid, sessionId: sid, origin: "agent", requestType: "tool_call:bash", status: "completed", startedAt: "2026-08-26T10:01:00.000Z", finishedAt: "2026-08-26T10:01:01.000Z", hasError: false, toolCallId: "c2" })
+    const r = (await ctx.backend.listArtifacts({ sessionId: sid })) as { artifacts: { path: string; kind: string; exists?: boolean }[]; unknown: { runId: string }[] }
+    expect(r.artifacts).toEqual([
+      expect.objectContaining({ path: "a.csv", kind: "table", exists: true }),
+      expect.objectContaining({ path: "gone.png", kind: "image", exists: false }),
+    ])
+    expect(r.unknown).toEqual([{ runId: "t2", toolCallId: "c2" }])
   })
 
   /**

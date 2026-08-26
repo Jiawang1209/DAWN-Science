@@ -528,6 +528,11 @@ export class SessionTranscripts {
         })
         return
 
+      case "tool_files":
+        // 有新建才推（spec 2026-08-26-产物 §3）：清单本身走 listArtifacts 查，这里只说「变了」
+        if (event.filesCreated.length > 0) this.bump(sessionId, e, { type: "artifactsChanged" })
+        return
+
       case "tool_end": {
         const id = event.toolCallId || `tool${e.revision + 1}`
         const 先前 = e.items.find((i) => i.id === id)

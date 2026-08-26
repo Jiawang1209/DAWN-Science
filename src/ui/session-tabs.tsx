@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef } from "react"
 import { Button } from "./primitives.js"
-import { t } from "./i18n/index.js"
+import { t, tf } from "./i18n/index.js"
 import { 加号描边图标 } from "./icons.js"
 
 export interface 分栏项 {
@@ -22,14 +22,17 @@ export function SessionTabs({
   current,
   onPick,
   onNew,
+  onClose,
 }: {
   tabs: readonly 分栏项[]
   current: string
   onPick: (sessionId: string) => void
   /** 在同一处再开一段；没有就不画「＋」 */
   onNew?: (() => void) | undefined
+  /** 关掉一段 = 收进归档（藏，不是删；侧栏「已归档」能找回）。不给就不画那颗 × */
+  onClose?: ((sessionId: string) => void) | undefined
 }) {
-  const 当前 = useRef<HTMLButtonElement>(null)
+  const 当前 = useRef<HTMLDivElement>(null)
   // 切到哪个就把哪个滚进视野——分栏多了会横向滚
   useEffect(() => {
     当前.current?.scrollIntoView({ inline: "nearest", block: "nearest" })
@@ -40,22 +43,38 @@ export function SessionTabs({
       {tabs.map((x) => {
         const 选中 = x.sessionId === current
         return (
-          <Button
+          // **一格 = 标签 + 一颗 ×**：× 不能嵌在标签按钮里（按钮不许套按钮），做成兄弟
+          <div
             key={x.sessionId}
             {...(选中 ? { ref: 当前 } : {})}
-            variant="ghost"
-            size="inline"
-            role="tab"
-            aria-selected={选中}
-            className={`session-tab${选中 ? " current" : ""}`}
-            data-session={x.sessionId}
+            className={`session-tab-wrap${选中 ? " current" : ""}`}
             data-running={x.running ? "1" : undefined}
             data-unread={x.unread ? "1" : undefined}
-            onClick={() => onPick(x.sessionId)}
           >
-            <span className="session-tab-dot" aria-hidden="true" />
-            <span className="session-tab-title" data-authored="1">{x.title}</span>
-          </Button>
+            <Button
+              variant="ghost"
+              size="inline"
+              role="tab"
+              aria-selected={选中}
+              className="session-tab"
+              data-session={x.sessionId}
+              onClick={() => onPick(x.sessionId)}
+            >
+              <span className="session-tab-dot" aria-hidden="true" />
+              {/* 全名给悬浮看——顶格里只留截断后的那截。title 摆在这个 span（不是按钮）上，设计契约禁按钮用原生 title */}
+              <span className="session-tab-title" data-authored="1" title={x.title}>{x.title}</span>
+            </Button>
+            {onClose ? (
+              <button
+                type="button"
+                className="session-tab-close"
+                aria-label={tf("关掉「{0}」（收进归档）", x.title)}
+                onClick={() => onClose(x.sessionId)}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
         )
       })}
       {onNew ? (

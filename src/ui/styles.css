@@ -6055,24 +6055,55 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
 .session-tabs::-webkit-scrollbar { display: none; }
-/* 每个分栏等宽（2026-08-23 作者：「长度不应该跟着 title 变化，太长了就用 … 展示」） */
+/* 每个分栏等宽（2026-08-23 作者：「长度不应该跟着 title 变化，太长了就用 … 展示」）；
+   2026-08-27 加：一格 = 标签 + 一颗 ×（收进归档），× 在选中/悬停时露出 */
+.session-tab-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 11rem;
+  border-bottom: 2px solid transparent;
+}
+.session-tab-wrap.current { border-bottom-color: var(--dawn-accent); }
 .session-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  flex: 0 0 auto;
-  width: 11rem;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 6px var(--dawn-space-2) 8px;
-  border-bottom: 2px solid transparent;
+  border-bottom: 0;
   border-radius: 0;
   color: var(--dawn-text-3);
 }
 .session-tab:hover { color: var(--dawn-text-2); background: transparent; }
-.session-tab.current { color: var(--dawn-text-1); border-bottom-color: var(--dawn-accent); }
+.session-tab-wrap.current .session-tab { color: var(--dawn-text-1); }
 .session-tab-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); flex: 0 0 auto; }
-.session-tab[data-running="1"] .session-tab-dot { background: var(--dawn-live); }
-.session-tab[data-unread="1"] .session-tab-dot { background: var(--dawn-accent); }
+.session-tab-wrap[data-running="1"] .session-tab-dot { background: var(--dawn-live); }
+.session-tab-wrap[data-unread="1"] .session-tab-dot { background: var(--dawn-accent); }
 .session-tab-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-ui-size); text-align: left; }
+.session-tab-close {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-right: var(--dawn-space-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--dawn-radius-sm);
+  background: transparent;
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-sub);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+/* 悬停这一格、或它是当前格时露出 ×——非悬停入口在侧栏「⋯ → 收进归档」（不违反「悬停才出现要另有入口」） */
+.session-tab-wrap:hover .session-tab-close,
+.session-tab-wrap.current .session-tab-close { opacity: 1; }
+.session-tab-close:hover { color: var(--dawn-text-1); background: var(--dawn-surface-input); }
 .session-tab-new { flex: 0 0 auto; margin-bottom: 4px; color: var(--dawn-text-3); }
 
 /* ── 滚动条（2026-08-23 审查抓的：此前一处都没管，Windows / Linux 或「始终显示」时是 15px 的灰白槽）── */

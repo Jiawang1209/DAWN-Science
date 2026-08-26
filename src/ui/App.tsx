@@ -3935,6 +3935,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       标未读(id, false)
                       setActiveSessionId(id)
                     }}
+                    onClose={(id) => {
+                      // 关掉当前这段之前，先跳到相邻的一段，别把人晾在空屏上
+                      if (id === session.sessionId) {
+                        const 兄弟 = 同处.find((x) => x.sessionId !== id)
+                        if (兄弟) setActiveSessionId(兄弟.sessionId)
+                      }
+                      void 归档几段([id]).catch(fail)
+                    }}
                     onNew={
                       远端
                         ? () => {

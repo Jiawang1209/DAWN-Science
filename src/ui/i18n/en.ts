@@ -855,6 +855,7 @@ export const EN: Readonly<Record<string, string>> = {
   "技能清单": "Skill list",
   // 归档（session-archive，2026-08-22）
   "收进归档": "Archive",
+  "关掉「{0}」（收进归档）": "Close “{0}” (archive)",
   "已归档": "Archived",
   "有 {0} 段没归档成": "{0} could not be archived",
   "已归档 {0} 段；在侧栏「已归档」里能找回来": "Archived {0}; find them under \"Archived\" in the sidebar",

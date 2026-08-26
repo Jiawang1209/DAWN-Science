@@ -6314,3 +6314,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .generated-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-surface-panel); }
 .generated-chip.gone .name { text-decoration: line-through; opacity: .6; }
 .kind-tag { font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
+
+/* ── 坞「产物」格（spec 2026-08-26-产物 §5，Task 11） ── */
+.artifacts-pane { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-2); }
+.artifacts-head { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.artifacts-head .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artifacts-group { display: flex; flex-direction: column; gap: 4px; }
+.artifacts-group-title { display: flex; justify-content: space-between; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); letter-spacing: .04em; margin: var(--dawn-space-1) 0; }
+.artifacts-group-title .count { color: var(--dawn-text-3); }
+.artifacts-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.artifact-row { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); padding: 4px 8px; }
+.artifact-row.gone .name { text-decoration: line-through; opacity: .6; }
+.artifact-open { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.artifact-open .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-actions { display: inline-flex; gap: 2px; }

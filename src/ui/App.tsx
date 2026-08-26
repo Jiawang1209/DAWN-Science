@@ -969,14 +969,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **换会话就重拉，没会话就清空**——清单是按会话的，留着上一段的会在新会话里说谎。
    * `产物焦点` 是「对话里产物条点了哪个」，也跟会话走。
    */
-  const [产物焦点, 设产物焦点] = useState<string | undefined>(undefined)
+  const [产物焦点, 设产物焦点] = useState<{ path: string; nonce: number } | undefined>(undefined)
+  /** 焦点带一个递增计数：同一条产物再点一次也要重新进预览（同 path 的 state 不会触发更新） */
+  const 产物焦点计数 = useRef(0)
   useEffect(() => {
     if (!ready) return
     设产物焦点(undefined)
     void loadArtifacts(client, sessionId)
   }, [client, ready, sessionId])
   const openArtifact = useCallback((path: string) => {
-    设产物焦点(path)
+    设产物焦点({ path, nonce: ++产物焦点计数.current })
     setRightDockTenant("artifacts")
     setRightDockOpen(true)
   }, [])
@@ -4343,14 +4345,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             ) : rightDockTenant === "team" ? (
               <TeamPanel key={sessionId} />
             ) : rightDockTenant === "artifacts" ? (
-              /** **产物那一格**（2026-08-26）：下载与文件格共用同一个 `下载`（远端才有；本机时它直接返回） */
+              /** **产物那一格**（2026-08-26）：下载与文件格同一契约——只有远端会话才给（本地文件没有「下载」这一说） */
               <ArtifactsPanel
                 key={sessionId}
                 data={artifacts}
                 focus={产物焦点}
                 readFile={读产物}
                 onOpenInFiles={openFile}
-                onDownload={下载}
+                {...(文件所在 ? { onDownload: 下载 } : {})}
                 onOpenExternally={openExternally}
               />
             ) : rightDockTenant === "web" ? (

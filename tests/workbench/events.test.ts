@@ -717,3 +717,41 @@ describe("产物变了（2026-08-26）", () => {
     expect(seen.filter((u) => u.type === "artifactsChanged")).toHaveLength(1)
   })
 })
+
+describe("笔记本（2026-08-26）", () => {
+  it("beginCell 推一条 running 的 cell；finishCell 按 id 改状态；快照里都在", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    const seen = collector(h)
+    const id = h.beginCell("a", "python", "x = 1")
+    expect(h.subscribe("a").items.at(-1)).toMatchObject({ type: "cell", id, language: "python", status: "running" })
+    h.finishCell("a", id!, { status: "ok", runId: "r1" })
+    expect(h.subscribe("a").items.at(-1)).toMatchObject({ type: "cell", id, status: "ok", runId: "r1" })
+    expect(seen.filter((u) => u.type === "item")).toHaveLength(2)
+  })
+
+  it("setKernels 整份换掉并推 kernels 更新；快照带 kernels；空数组也推（内核收掉了）", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    const seen = collector(h)
+    h.setKernels("a", [{ language: "python", state: "idle" }])
+    expect(h.subscribe("a").kernels).toEqual([{ language: "python", state: "idle" }])
+    expect(seen.filter((u) => u.type === "kernels")).toHaveLength(1)
+
+    h.setKernels("a", [])
+    expect(h.subscribe("a").kernels).toEqual([])
+    expect(seen.filter((u) => u.type === "kernels")).toHaveLength(2)
+  })
+
+  it("pty 会话 beginCell 不做事、返回 undefined", () => {
+    const h = hub()
+    h.track("a", "pty")
+    h.subscribe("a")
+    const seen = collector(h)
+    const id = h.beginCell("a", "python", "x = 1")
+    expect(id).toBeUndefined()
+    expect(seen).toHaveLength(0)
+  })
+})

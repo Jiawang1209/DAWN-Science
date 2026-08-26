@@ -12,7 +12,14 @@
  *
  * **本文件不认识 Electron**，只提供 `onUpdate(cb)`，由 `electron/main.ts` 接到 webContents。
  */
-import { 没说话, SessionUpdateSchema, type SessionSnapshot, type SessionUpdate, type TranscriptItem } from "../protocol/events.js"
+import {
+  没说话,
+  SessionUpdateSchema,
+  type KernelState,
+  type SessionSnapshot,
+  type SessionUpdate,
+  type TranscriptItem,
+} from "../protocol/events.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/version.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
 
@@ -82,6 +89,11 @@ interface Entry {
    */
   /** 这段会话的团队（team-board）。缺省 = 没建过 */
   team?: import("../protocol/events.js").TeamSnapshot | undefined
+  /**
+   * 这段对话挂着的内核状态列表（笔记本，2026-08-26）。缺省 = 没有内核——
+   * 不是 native 会话，或还没起过内核。与 `team` 同一纪律：整份换掉。
+   */
+  kernels?: KernelState[] | undefined
   configOptions:
     | {
         id: string
@@ -616,6 +628,49 @@ export class SessionTranscripts {
     this.bump(sessionId, e, { type: "cwd", cwd })
   }
 
+  /**
+   * 你在内核里自己敲了一段（笔记本，2026-08-26）。返回 cell id；
+   * **只有 native 会话有内核**——pty/cli 没有，返回 undefined。
+   */
+  beginCell(sessionId: SessionId, language: "python" | "R", code: string): string | undefined {
+    const e = this.entries.get(sessionId)
+    if (!e || e.kind !== "native") return undefined
+    const id = `cell-${++e.turnSeq}`
+    this.putItem(sessionId, e, {
+      type: "cell",
+      id,
+      language,
+      code,
+      status: "running",
+      startedAt: this.now(),
+    })
+    return id
+  }
+
+  /** 那段 cell 跑完了：按 id 找到它，改状态、盖上跑完的时刻。 */
+  finishCell(sessionId: SessionId, id: string, 结果: { status: "ok" | "error"; runId?: string }): void {
+    const e = this.entries.get(sessionId)
+    const it = e?.items.find((i) => i.id === id)
+    if (!e || !it || it.type !== "cell") return
+    this.putItem(sessionId, e, {
+      ...it,
+      status: 结果.status,
+      endedAt: this.now(),
+      ...(结果.runId ? { runId: 结果.runId } : {}),
+    })
+  }
+
+  /**
+   * 对话挂着的内核变了（笔记本，2026-08-26）。**整份换掉**——与 `team` 同一纪律，
+   * 服务端给的就是当前完整的一份，合并只会多一种「合错了」的失效方式。
+   */
+  setKernels(sessionId: SessionId, kernels: KernelState[]): void {
+    const e = this.entries.get(sessionId)
+    if (!e) return
+    e.kernels = kernels
+    this.bump(sessionId, e, { type: "kernels", kernels })
+  }
+
   /** agent 的文本增量：累积进当前发言，推送**累积后的整条**。 */
   private appendAgentText(sessionId: SessionId, e: Entry, delta: string): void {
     if (!e.openTurnId) {
@@ -801,6 +856,7 @@ export class SessionTranscripts {
       ...(e.configOptions?.length ? { configOptions: e.configOptions } : {}),
       ...(e.pendingPermission ? { pendingPermission: e.pendingPermission } : {}),
       ...(e.team ? { team: e.team } : {}),
+      ...(e.kernels ? { kernels: e.kernels } : {}),
     }
   }
 }

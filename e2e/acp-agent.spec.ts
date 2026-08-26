@@ -79,8 +79,10 @@ test.describe("ACP", () => {
       page.locator(".composer-card .model-pill"),
       "ACP 会话上不该有模型 pill——它列的是各家 provider 的模型，而 ACP 换不了模型",
     ).toHaveCount(0)
-    // **但模型这件事没有消失**：它在会话开关那颗上（假 agent 报的是 `Sonnet`）
-    await expect(page.locator(".composer-card .sess-config-trigger")).toContainText("Sonnet")
+    // **但模型这件事没有消失**：它移到了发送键左边那颗模型 pill 上（假 agent 报的是 `Sonnet`）
+    await expect(
+      page.locator('.config-pill[data-config="model"] .sess-config-trigger'),
+    ).toContainText("Sonnet")
 
     // ② 一句话进去，回话出来——**整条链通了**
     await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
@@ -257,47 +259,60 @@ test.describe("ACP 会话开关", () => {
     await 等进了对话(page)
 
     /**
-     * ① 按钮上写的是**当前那个模型**，不是「会话设置」四个字——
-     * 一个只写「设置」的按钮，要点开才知道现在用的是谁。
+     * ① 模型移到了**发送键左边**那颗专用 pill 上（51455f4 把模型/推理强度
+     * 从底部单菜单拆了出来）。按钮上写的是**当前那个模型**，不是「会话设置」
+     * 四个字——一个只写「设置」的按钮，要点开才知道现在用的是谁。
      */
-    const 触发 = page.locator(".sess-config-trigger")
-    await expect(触发).toBeVisible({ timeout: 30_000 })
-    await expect(触发).toContainText("Sonnet")
+    const 模型触发 = page.locator('.config-pill[data-config="model"] .sess-config-trigger')
+    await expect(模型触发).toBeVisible({ timeout: 30_000 })
+    await expect(模型触发).toContainText("Sonnet")
 
-    await 触发.click()
-    const 菜单 = page.locator(".sess-config-menu")
+    await 模型触发.click()
+    const 模型菜单 = page.locator('.config-pill[data-config="model"] .sess-config-menu')
 
-    // ② 三条都在，**名字是它给的**
-    for (const 名 of ["模型", "推理强度", "不再逐个确认"]) {
-      await expect(菜单).toContainText(名)
-    }
-    // ③ **带分组的那一条要被摊平**：不摊的话它是个没有选项的空组
-    for (const 名 of ["低", "高"]) {
-      await expect(菜单.getByRole("menuitemradio", { name: 名, exact: true })).toBeVisible()
-    }
     /**
-     * ③′ **每一项底下那句说明要画出来**（2026-08-19 作者报的）。
+     * ② **每一项底下那句说明要画出来**（2026-08-19 作者报的）。
      *
      * 作者：*「我竟然看到了 Default(recommended) 而不是 Opus 呢？」*
      * 量过真适配器：那一项它自己就叫 `Default (recommended)`，
      * **而它到底是谁写在 `description` 里**（`Opus 4.6 · Most capable…`）。
      * 我们一路把它收到了界面，然后没画——**答案就在载荷里，我们没显示**。
+     * 假 agent 里 `更贵更强` 正是 `Opus` 那个模型选项的 `description`，所以它落在**模型**这颗菜单里。
      */
-    await expect(菜单, "选项底下那句说明没画出来").toContainText("更贵更强")
-
-    // ④ boolean 画成可勾选的那种，不是两个单选
-    await expect(菜单.getByRole("menuitemcheckbox")).toHaveCount(1)
+    await expect(模型菜单, "选项底下那句说明没画出来").toContainText("更贵更强")
 
     /**
-     * ⑤ 选一个，**它真的换了**（按钮上的字跟着变）。
+     * ③ 选一个，**它真的换了**（按钮上的字跟着变）——这就证明选择经
+     * `onSetConfigOption` 送了过去。
      *
      * **名字前缀锚定，不再 `exact`**（2026-08-19）：说明进了按钮里面，
      * 于是可访问名字成了「Opus 更贵更强」——**那是有意的**，
      * 读屏正要据此决定点不点。`^` 保住了精确性：
      * 这一列里没有第二个以 Opus 开头的。
      */
-    await 菜单.getByRole("menuitemradio", { name: /^Opus/ }).click()
-    await expect(触发).toContainText("Opus", { timeout: 20_000 })
+    await 模型菜单.getByRole("menuitemradio", { name: /^Opus/ }).click()
+    await expect(模型触发).toContainText("Opus", { timeout: 20_000 })
+
+    /**
+     * ④ **推理强度是发送键左边第二颗 pill**。**带分组的那一条要被摊平**：
+     * 不摊的话它是个没有选项的空组。
+     */
+    const 强度触发 = page.locator('.config-pill[data-config="thought_level"] .sess-config-trigger')
+    await 强度触发.click()
+    const 强度菜单 = page.locator('.config-pill[data-config="thought_level"] .sess-config-menu')
+    for (const 名 of ["低", "高"]) {
+      await expect(强度菜单.getByRole("menuitemradio", { name: 名, exact: true })).toBeVisible()
+    }
+
+    /**
+     * ⑤ 剩下那个 boolean 开关还留在**底部**那颗 `SessionConfigMenu` 里
+     *（那颗 `.sess-config` 不带 `config-pill`），**画成可勾选的那种，不是两个单选**。
+     */
+    const 底部触发 = page.locator(".sess-config:not(.config-pill) .sess-config-trigger")
+    await 底部触发.click()
+    const 底部菜单 = page.locator(".sess-config:not(.config-pill) .sess-config-menu")
+    await expect(底部菜单).toContainText("不再逐个确认")
+    await expect(底部菜单.getByRole("menuitemcheckbox")).toHaveCount(1)
   })
 
 
@@ -327,12 +342,15 @@ test.describe("ACP 会话开关", () => {
       await 用某个agent开一段(page, /claude-acp/)
       await 等进了对话(page)
 
-      const 触发 = page.locator(".sess-config-trigger")
+      const 触发 = page.locator('.config-pill[data-config="model"] .sess-config-trigger')
       // 按钮上也是具体模型，不是角色名
       await expect(触发, "按钮上写的还是那个角色名").toHaveText(/Opus 4\.6/, { timeout: 30_000 })
 
       await 触发.click()
-      const 头一项 = page.locator(".sess-config-menu").getByRole("menuitemradio").first()
+      const 头一项 = page
+        .locator('.config-pill[data-config="model"] .sess-config-menu')
+        .getByRole("menuitemradio")
+        .first()
       await expect(头一项.locator(".sess-config-opt-name")).toHaveText("Opus 4.6")
       // 角色名与说明都还在，只是退到第二行——**不是把它们扔掉**
       await expect(头一项.locator(".sess-config-opt-desc")).toHaveText(

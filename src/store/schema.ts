@@ -699,9 +699,15 @@ function 迁移步骤(db: Database.Database): void {
    * v16（2026-08-26，产物）：这一次**新建**了哪些文件（JSON 数组，NULL = 不知道），
    * 以及这条 tool_call Run 对应 pi 的 toolCallId——界面靠它把产物挂到对话里的那一轮。
    * 老 run 两列都留 NULL：它们产生时没记这件事（不变式 5：不用今天的事实冒充当时的）。
+   *
+   * **两列各自判等**（审查修，2026-08-26）：半升级过的库——比如上一次
+   * 加列加到一半就崩了——只补缺的那一列，而不是靠一个联合判据整体跳过，
+   * 那样会让 `tool_call_id` 永远补不回来。
    */
   if (!hasColumn(db, "runs", "files_created")) {
     db.exec(`ALTER TABLE runs ADD COLUMN files_created TEXT`)
+  }
+  if (!hasColumn(db, "runs", "tool_call_id")) {
     db.exec(`ALTER TABLE runs ADD COLUMN tool_call_id TEXT`)
   }
 

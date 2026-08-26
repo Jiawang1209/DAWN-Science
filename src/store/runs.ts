@@ -177,9 +177,7 @@ function toRun(r: RunRow): RunSummary {
      */
     ...(r.environment_snapshot_id ? { environmentSnapshotId: r.environment_snapshot_id } : {}),
     ...(cost === undefined ? {} : { cost }),
-    ...(r.files_created === null || r.files_created === undefined
-      ? {}
-      : { filesCreated: JSON.parse(r.files_created) as string[] }),
+    ...parseFilesCreated(r),
     ...(r.tool_call_id ? { toolCallId: r.tool_call_id } : {}),
   }
 }
@@ -232,6 +230,24 @@ function parseFiles(r: RunRow): Partial<RunSummary> {
         ? {}
         : { mayIncludeUserEdits: r.may_include_user_edits === 1 }),
     }
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * 解析「这次新建了哪些文件」列——与 `parseFiles` 同一条纪律（2026-08-26 审查修）。
+ *
+ * **解析失败、或解出来的不是数组，都读作「不知道」（整个字段省略）**，
+ * 而不是让 `toRun` 抛出去、也不是当成「确认没新建」。存坏的一行不该让
+ * 整条 run 都读不出来——那比「省略一个字段」坏得多。
+ */
+function parseFilesCreated(r: RunRow): Partial<RunSummary> {
+  if (r.files_created === null || r.files_created === undefined) return {}
+  try {
+    const created: unknown = JSON.parse(r.files_created)
+    if (!Array.isArray(created)) return {}
+    return { filesCreated: created as string[] }
   } catch {
     return {}
   }
@@ -394,25 +410,40 @@ export class RunStore {
   } {
     const rows = this.db
       .prepare(
+        /**
+         * **两种写法都要认**（审查修，2026-08-26）：录制器在工具名缺失时写的是
+         * 裸 `tool_call`，正常情况写 `tool_call:<工具名>`（与 `usage.ts` 的
+         * `'tool_call:%'` 同一批口径）。子 agent 的 `tool_call` 变体这一轮不追。
+         */
         `SELECT id, tool_call_id, started_at, files_created FROM runs
-          WHERE session_id = ? AND request_type LIKE 'tool_call%'
+          WHERE session_id = ?
+            AND (request_type = 'tool_call' OR request_type LIKE 'tool_call:%')
           ORDER BY started_at ASC, id ASC`,
       )
-      .all(sessionId) as { id: string; tool_call_id: string | null; started_at: string; files_created: string | null }[]
+      .all(sessionId) as Pick<RunRow, "id" | "tool_call_id" | "started_at" | "files_created">[]
     const seen = new Map<string, { path: string; bornRunId: string; bornToolCallId?: string; bornAt: string }>()
     const unknown: { runId: string; toolCallId?: string }[] = []
+    const 记不知道 = (r: Pick<RunRow, "id" | "tool_call_id">) =>
+      unknown.push({ runId: r.id, ...(r.tool_call_id ? { toolCallId: r.tool_call_id } : {}) })
     for (const r of rows) {
       if (r.files_created === null) {
-        unknown.push({ runId: r.id, ...(r.tool_call_id ? { toolCallId: r.tool_call_id } : {}) })
+        记不知道(r)
         continue
       }
-      let created: string[]
+      let created: unknown
       try {
-        created = JSON.parse(r.files_created) as string[]
+        created = JSON.parse(r.files_created)
       } catch {
+        // **存坏的 JSON 也是「不知道」，不是「没有」**——静默跳过会把它算成零产物
+        记不知道(r)
         continue
       }
-      for (const path of created) {
+      if (!Array.isArray(created)) {
+        // 解出来了，但不是数组——同样读作「不知道」，不假装能当文件列表用
+        记不知道(r)
+        continue
+      }
+      for (const path of created as string[]) {
         if (seen.has(path)) continue
         seen.set(path, { path, bornRunId: r.id, bornAt: r.started_at, ...(r.tool_call_id ? { bornToolCallId: r.tool_call_id } : {}) })
       }

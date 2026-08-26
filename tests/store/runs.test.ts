@@ -289,6 +289,35 @@ describe("filesCreated 与 toolCallId（产物，2026-08-26）", () => {
     expect(r.artifacts[2]).toMatchObject({ bornRunId: "t3", bornToolCallId: "c3" })
     expect(r.unknown).toEqual([{ runId: "t2", toolCallId: "c2" }])
   })
+
+  it("artifactsOf：files_created 存坏了（非法 JSON）算不知道，不是静默丢掉", () => {
+    const db = makeDb()
+    const { runs } = seed(db)
+    runs.insert({ ...baseRun, runId: "t1", requestType: "tool_call:write", toolCallId: "c1" })
+    db.prepare(`UPDATE runs SET files_created = 'not json' WHERE id = ?`).run("t1")
+    const r = runs.artifactsOf("s1")
+    expect(r.artifacts).toEqual([])
+    expect(r.unknown).toEqual([{ runId: "t1", toolCallId: "c1" }])
+  })
+
+  it("get()：files_created 存坏了不抛，filesCreated 读作不知道（省略）", () => {
+    const db = makeDb()
+    const { runs } = seed(db)
+    runs.insert({ ...baseRun, runId: "r1" })
+    db.prepare(`UPDATE runs SET files_created = 'not json' WHERE id = ?`).run("r1")
+    expect(() => runs.get("r1")).not.toThrow()
+    const got = runs.get("r1")!
+    expect(got.filesCreated).toBeUndefined()
+    expect("filesCreated" in got).toBe(false)
+  })
+
+  it("artifactsOf：bare 'tool_call'（工具名缺失时的写法）也算数，不止 'tool_call:xxx'", () => {
+    const db = makeDb()
+    const { runs } = seed(db)
+    runs.insert({ ...baseRun, runId: "t1", requestType: "tool_call", toolCallId: "c1", filesCreated: ["a.csv"] })
+    const r = runs.artifactsOf("s1")
+    expect(r.artifacts.map((a) => a.path)).toEqual(["a.csv"])
+  })
 })
 
 describe("ProvenanceStore（在 RunStore 内）", () => {

@@ -90,7 +90,7 @@ describe("远端连接 · 增删改查", () => {
       label: "实验室",
       group: "集群",
       host: "gs191.example",
-      username: "ug2478",
+      username: "user",
     })
     expect(c.id).toMatch(/^conn-/)
     expect(c.label).toBe("实验室")

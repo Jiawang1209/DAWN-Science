@@ -1274,7 +1274,7 @@ test("**服务器收纳里的机器名（短的）贴着三角，不漂到中间
 test("**服务器收纳里的机器名：一行截断，悬停弹全名**", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
-  await 加一台(page, { host: "gs191.genek.cn.very.long.hostname.example", user: "ug2478" })
+  await 加一台(page, { host: "example.org.very.long.hostname.example", user: "user" })
   await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
   await expect(page.locator(".side-server")).toHaveCount(1)
   const 名 = page.locator(".side-subhead .name")
@@ -1293,7 +1293,7 @@ test("**服务器收纳里的机器名：一行截断，悬停弹全名**", asyn
   const 时间右 = await page.locator(".sess-when").first().evaluate((el) => Math.round(el.getBoundingClientRect().right))
   expect(数右).toBe(时间右)
   await 名.hover()
-  await expect(page.locator(".sess-hover-card")).toContainText("ug2478@gs191.genek.cn.very.long.hostname.example")
+  await expect(page.locator(".sess-hover-card")).toContainText("user@example.org.very.long.hostname.example")
 })
 
 /** **多选时，机器那一行的勾选框与底下会话的时间同一条右缘**（2026-08-22 作者要的） */

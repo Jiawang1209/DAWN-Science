@@ -45,7 +45,7 @@ function 假客户端(): SshClientLike {
     ch.stderr = new EventEmitter()
     cb(undefined, ch)
     setTimeout(() => {
-      ch.emit("data", Buffer.from("DAWNENV_HOME=/home/ug2478\nDAWNENV_PATH=/usr/bin\n"))
+      ch.emit("data", Buffer.from("DAWNENV_HOME=/home/user\nDAWNENV_PATH=/usr/bin\n"))
       ch.emit("close", 0, undefined)
     }, 1)
   }) as SshClientLike["exec"]

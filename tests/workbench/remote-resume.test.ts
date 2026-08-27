@@ -48,7 +48,7 @@ function 假客户端(): SshClientLike {
     ch.stderr = new EventEmitter()
     cb(undefined, ch)
     setTimeout(() => {
-      ch.emit("data", Buffer.from("DAWNENV_HOME=/home/ug2478\nDAWNENV_PATH=/usr/bin\n"))
+      ch.emit("data", Buffer.from("DAWNENV_HOME=/home/user\nDAWNENV_PATH=/usr/bin\n"))
       ch.emit("close", 0, undefined)
     }, 1)
   }) as SshClientLike["exec"]
@@ -72,9 +72,9 @@ function 起一套(opts: { 续接失败?: string } = {}) {
   const 会话记录: Record<string, unknown> = {
     id: "sess-1",
     agentId: "claude",
-    workspace: "/home/ug2478/项目",
+    workspace: "/home/user/项目",
     connectionId: "",
-    remoteCwd: "/home/ug2478/项目/子目录",
+    remoteCwd: "/home/user/项目/子目录",
     state: "exited",
   }
 
@@ -124,7 +124,7 @@ function 起一套(opts: { 续接失败?: string } = {}) {
 describe("续接一段长在服务器上的旧对话", () => {
   it("**要连回那台机器**，不是在本机悄悄起一个同名的", async () => {
     const { backend, 存, 会话记录, 续接了 } = 起一套()
-    const c = await 存({ label: "gs191", host: "gs191.example", username: "ug2478" })
+    const c = await 存({ label: "gs191", host: "gs191.example", username: "user" })
     会话记录["connectionId"] = c.id
 
     await backend.subscribeSession({ sessionId: "sess-1" })
@@ -139,7 +139,7 @@ describe("续接一段长在服务器上的旧对话", () => {
      * 界面上那条路径与 agent 实际所在的目录会对不上——
      * 「以为在 A 目录、其实在 B 目录」这类错本项目已经写进过注释。
      */
-    expect(续接了[0]!.remote!.cwd.get()).toBe("/home/ug2478/项目/子目录")
+    expect(续接了[0]!.remote!.cwd.get()).toBe("/home/user/项目/子目录")
   })
 
   it("本机那些照旧**不带远端参数**——别给本地会话塞一个执行器", async () => {
@@ -152,7 +152,7 @@ describe("续接一段长在服务器上的旧对话", () => {
 
   it("**续不上要说真话**：不能只回一句「不在本进程中活动」", async () => {
     const { backend, 存, 会话记录 } = 起一套({ 续接失败: "gs191 上的 pi 起不来：没有这个命令" })
-    const c = await 存({ label: "gs191", host: "gs191.example", username: "ug2478" })
+    const c = await 存({ label: "gs191", host: "gs191.example", username: "user" })
     会话记录["connectionId"] = c.id
 
     await expect(backend.subscribeSession({ sessionId: "sess-1" })).rejects.toThrow(

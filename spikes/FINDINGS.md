@@ -909,7 +909,7 @@ auto-memory、后台预取、keychain 读取，以及 **CLAUDE.md 自动发现**
 
 ## Spike F · 远端内核（②-B · S15）—— 实测 2026-08-11
 
-**机器**：`gs191.genek.cn`（共享教学集群，Ubuntu / Python 3.10.12 / ipykernel 6.26.0），密码认证。
+**机器**：`example.org`（共享教学集群，Ubuntu / Python 3.10.12 / ipykernel 6.26.0），密码认证。
 
 ### 结论：**路线 A 通过 —— `kernel/channel.ts` 原样复用，协议不变**
 

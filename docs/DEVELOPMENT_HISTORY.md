@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-27 — 仓库里的真实服务器地址与账号换成占位（为上 GitHub 做准备）
+
+- **Type**: chore
+- **Motivation**: 准备把仓库推上 GitHub 出 Release。扫了整段历史：`.env`、`providers.yaml`、口令从未入库；但作者做真机验证时把共享集群的主机名与账号（`user@example.org` 现在的位置）写进了 11 个文件 21 行——文档、spike 笔记、测试假数据、一条 css 注释。没必要展示给任何人。
+- **What**: 主机名 → `example.org`，账号 → `user`；e2e 那个故意造的超长假域名也顺手把真实子串换掉。全是文档与测试数据，不碰功能代码。
+- **Impact**: 无功能影响。历史提交里仍有旧字符串——私仓无所谓；转 public 前若在意，要 `git filter-repo` 重写。
+- **Verification**: `git grep` 零命中；受影响的 4 个单测文件 24/24；e2e `remote-connections` 相关用例通过。
+
 ### 2026-08-27 — 首启向导与本机解释器检测（开箱即用第二轮）
 
 - **Type**: feat
@@ -2470,7 +2478,7 @@
 - **Commit**: `21153e8`
 - **Motivation**: 批 0–5 的远端那一片，对面**全是我们自己写的假 SFTP**。
   ACP 那一轮的教训是决定性的：假 agent 全绿，真适配器一接当场露三个问题。
-- **What（真机结果，`ug2478@gs191.genek.cn`）**: 应用由人正常启动并连接，
+- **What（真机结果，`user@example.org`）**: 应用由人正常启动并连接，
   探针从 `--remote-debugging-port` 接管驱动界面——**口令全程不经我手**
   （safeStorage 存的那份，自动化启动解不开：macOS 钥匙串按应用身份授权）。
 
@@ -6799,7 +6807,7 @@
 - **Commit**: `e9148a0`
 - **Motivation**: ②-B · S15 的技术核心——远端执行是「隧道 zeromq」还是「另开一套
   HTTP/WebSocket 协议」，决定了这一阶段的形状。
-- **What**: 在作者的共享集群（`gs191.genek.cn`）上跑通五问。
+- **What**: 在作者的共享集群（`example.org`）上跑通五问。
   **Q4 是要害：五个 zeromq 端口隧道回本地之后，现有那套通道原样算出了 `DAWN_REMOTE_OK 42`。**
   → **路线 A 成立，`kernel/channel.ts` 不用动**；备选路线 B（远端 Jupyter Server）不必启用。
 - **Impact**: 只有 spike 与 FINDINGS，产品代码零改动。`ssh2` 仍在 devDependencies——

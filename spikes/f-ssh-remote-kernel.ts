@@ -104,7 +104,7 @@ function 私钥(): Buffer | undefined {
  *
  * ## 为什么密码这条必须有
  *
- * 第一版只试了前两种，作者在 `gs191.genek.cn` 上直接
+ * 第一版只试了前两种，作者在 `example.org` 上直接
  * `All configured authentication methods failed`——**共享集群与教学机
  * 绝大多数是密码认证**，而那正是「远端跑一段代码」最常见的场景。
  * 少了它，spike 问不到它真正想问的那个问题（隧道通不通），

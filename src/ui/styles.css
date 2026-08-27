@@ -3739,7 +3739,7 @@ pre {
 /* 行本身右外距 12 + 右内距 12 = 24；要三角到侧栏右边 10，就把这一行的右内距收成 0、右外距收成 10 */
 .remote-head { width: calc(100% - var(--dawn-space-3) - 11px); margin-right: 11px; padding-right: 0; } /* 同上，量出来 9 才是 10 */
 .remote-head .side-count + .caret { margin-right: 0; }
-/* 服务器收纳里那台机器的标题行（`ug2478@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
+/* 服务器收纳里那台机器的标题行（`user@… 18`）：作者 2026-08-22 给图指出它比别的数靠右 27px——量出来的，补回去 */
 .side-subhead .side-count { margin-right: 12px; } /* 2026-08-23 行去掉 1px 边框后补 1 */
 
 /* 输入区文字：实测 WorkBuddy 是 15px / 26.25px（1.75）。

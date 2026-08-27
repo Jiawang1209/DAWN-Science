@@ -81,11 +81,11 @@ describe("look_at_image", () => {
           },
           writeFile: async () => {},
         },
-        cwd: { get: () => "/home/ug2478/项目" },
+        cwd: { get: () => "/home/user/项目" },
       },
     })
     // 端点连不上所以最终报错，但**读的是远端那条路**——这一步先发生
     await 跑(tool, { path: "figures/fig.png" })
-    expect(读过).toEqual(["/home/ug2478/项目/figures/fig.png"])
+    expect(读过).toEqual(["/home/user/项目/figures/fig.png"])
   })
 })

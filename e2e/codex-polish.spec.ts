@@ -29,7 +29,10 @@ test("**③ 统计条**：头部写轮数；**④ 导出**：下载目录里多�
 
   const 下载 = join(dir, "downloads")
   await 头.getByRole("button", { name: "导出对话" }).click()
-  await expect(头.locator(".conv-export-note")).toContainText("已导出 2 轮")
+  // 提示是浮出来的（2026-08-27 作者改的：别钉在按钮后面），显示一会儿再淡去、然后从 DOM 里消失
+  const 提示 = 头.locator(".export-toast")
+  await expect(提示).toContainText("已导出 2 轮")
+  await expect(提示).toHaveCount(0, { timeout: 15_000 })
   await expect.poll(() => existsSync(下载) && readdirSync(下载).some((f) => f.endsWith(".md"))).toBe(true)
   const 文件 = readdirSync(下载).find((f) => f.endsWith(".md"))!
   const 内容 = readFileSync(join(下载, 文件), "utf8")

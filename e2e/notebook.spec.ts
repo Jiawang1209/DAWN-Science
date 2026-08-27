@@ -18,7 +18,7 @@
  * **describe 名字里刻意不含「内核会话」或「解释器路径」**：`test:e2e:only`
  * 用这两个词把机器相关的 spec 排除在外，本文件靠 `test.skip` 自己把关。
  */
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
 import { test, expect, 开一段临时会话, 等进了对话, 进设置, 进坞, 用某个agent开一段 } from "./fixtures.js"
@@ -110,6 +110,33 @@ test.describe("笔记本 · 真内核链路", () => {
     await expect(最后turn).toContainText("继续")
     await expect(最后turn).not.toContainText("内核里跑了")
     await expect(最后turn).not.toContainText("print(x * 2)")
+
+    // ⑥ 导出（2026-08-27）：两颗按钮在笔记本头上；临时会话 → 下载目录；.ipynb 里两格、第二格输出 84；.md 也能导
+    await 进坞(page, "笔记本")
+    const 下载 = join(dawn.dir, "downloads")
+    await page.getByRole("button", { name: "导出 .ipynb" }).click()
+    const 提示 = page.locator(".nb-head .export-toast")
+    await expect(提示).toContainText("已导出 2 个 cell")
+    await expect(提示).toContainText(下载)
+    await expect.poll(() => existsSync(下载) && readdirSync(下载).some((f) => f.endsWith(".ipynb"))).toBe(true)
+    const nb = JSON.parse(readFileSync(join(下载, readdirSync(下载).find((f) => f.endsWith(".ipynb"))!), "utf8")) as {
+      nbformat: number
+      metadata: { kernelspec: { name: string } }
+      cells: { cell_type: string; source: string[]; outputs: { output_type: string; text?: string[] }[]; metadata: { dawn: { who: string } } }[]
+    }
+    expect(nb.nbformat).toBe(4)
+    expect(nb.metadata.kernelspec.name).toBe("python3")
+    expect(nb.cells).toHaveLength(2)
+    expect(nb.cells[0]!.metadata.dawn.who).toBe("agent")
+    expect(nb.cells[1]!.metadata.dawn.who).toBe("you")
+    expect(nb.cells[1]!.source.join("")).toBe("print(x * 2)")
+    expect(nb.cells[1]!.outputs.some((o) => o.output_type === "stream" && (o.text ?? []).join("").includes("84"))).toBe(true)
+
+    await page.getByRole("button", { name: "导出 .md" }).click()
+    await expect.poll(() => readdirSync(下载).some((f) => f.startsWith("笔记本-") && f.endsWith(".md"))).toBe(true)
+    const md = readFileSync(join(下载, readdirSync(下载).find((f) => f.startsWith("笔记本-") && f.endsWith(".md"))!), "utf8")
+    expect(md).toContain("### [2] Python · 你")
+    expect(md).toContain("print(x * 2)")
   })
 })
 

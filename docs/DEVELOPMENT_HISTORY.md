@@ -8,6 +8,20 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-27 — 笔记本修缮：项目会话真用笔记本、远端会话说实话、导出落到工作目录；`/` 菜单跟滚
+
+- **Type**: feat / fix
+- **Motivation**: 作者报的四件事（分支 `fix-notebook`）：①项目会话里 agent 不用笔记本；②笔记本要能导出 .ipynb / .md；③「导出对话」的提示别钉在按钮后面，且导出要落到工作目录；④ `/`、`@` 菜单上下键超出可视区不跟着滚。
+- **What**:
+  - ①查明根因是提示词：项目 `AGENTS.md` 的科研目录约定把 agent 引向写脚本，且它不知道「笔记本」= `run_code`（作者 `tmp_20260819` 转录里它去装 jupyter）。修在每段会话都带的两处：`run_code` 描述 + `appendSystemPromptOverride` 追加 `内核指引`（只在装配给了 `kernels` 时）。不动作者原话的 `约定正文`。
+  - 远端会话：内核只会在本机起（spawnteract + ZMQ），此前远端会话也挂着 `run_code`——代码在本机跑、文件在服务器上，静默错位。现在 `spec.remote` 不挂 `run_code`；笔记本格明说「远端会话的内核还没做…文件在 <服务器> 上」；`runInKernel` / `interruptKernel` 同一句拦。远端内核另起 spec（作者定：本轮不做）。
+  - `cells()` 派生搬到 `src/protocol/notebook-cells.ts`（UI 只许跨到 `protocol/`，后端也要用）；新纯函数 `src/session/export-notebook.ts`（`cells成ipynb` / `cells成markdown` / `笔记本文件名`）：nbformat 4.5，kernelspec 按多数语言，混排如实标注，截断/太大说清省了多少，图内嵌 base64。
+  - 协议 7.28：`exportNotebook { sessionId, format, dir? }`。目录规则一个函数 `src/workbench/export-dir.ts`：项目会话 → `<项目>/docs/`，普通（临时项目）与远端会话 → 下载路径；`exportSession` 与 `exportNotebook` 共用（`备导出`）。
+  - 界面：`导出提示` 浮层组件（`.export-toast`，4.5 s 淡去、失败 8.5 s、`role="status"`，动画结束卸载），对话头与笔记本格共用；笔记本头部「导出 .ipynb」「导出 .md」两颗按钮（有 cell 才画）。
+  - ④ `用选中项跟滚`：`selected` 变了对 `aria-selected` 那项 `scrollIntoView({block:"nearest"})`；悬停从 `mouseenter` 改 `mousemove`——程序滚动让鼠标底下换了一项时不再抢高亮。
+- **Impact**: 协议 minor 7.27 → 7.28（纯新增）；`exportSession` 的落点变了（项目会话不再进下载目录）；`.conv-export-note` 删了（e2e 判据改成 `.export-toast`）；远端会话的模型看不到 `run_code` 了。
+- **Verification**: 单元 2453+ 全绿（含新的 `run-code` 提示词扫描、`export-notebook` 7 条、`export-dir` 4 条、`notebook-panel` 远端/导出 4 条、`slash-menu-scroll` 2 条）；e2e：`codex-polish`（浮层出现并消失）、新 `export-dir.spec`（项目会话落 `<ws>/docs/`、下载目录为空）、`notebook.spec` 真内核链路末尾导 .ipynb（两格、第二格输出 84）与 .md。
+
 ### 2026-08-26 — 设置里改 provider 连接不再顺带丢掉手写的 headers / vision
 
 - **Type**: fix

@@ -57,7 +57,7 @@ function 取文本(content: string | { type: string; text?: string }[]): string 
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
-import { createRunCodeTool } from "../tools/run-code.js"
+import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
 import { memoryTools, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
@@ -1214,6 +1214,8 @@ export class NativeRuntime implements AgentRuntime {
         ...(this.opts.subagentChildEntry ? [队长协议] : []),
         // 删除指引（2026-08-23，学自 dsh-auto-mode）：帮规划的，不是安全边界——边界在门上
         删除指引,
+        // 内核指引（2026-08-27）：有 run_code 才说；不给 kernels 的装配（CLI、测试替身）一个字不受影响
+        ...(this.opts.kernels ? [内核指引] : []),
         `You are currently running on the model "${当前模型}". ` +
           `If the user asks which model you are, answer with exactly this. ` +
           `Do not guess from environment variables or from earlier turns — ` +

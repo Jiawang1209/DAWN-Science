@@ -1,0 +1,5 @@
+#!/bin/sh
+# 假 python（首启向导 e2e）：没装 ipykernel 的那台——版本照样打印在 import 之前
+echo "3.14.7"
+echo "ModuleNotFoundError: No module named 'ipykernel'" >&2
+exit 1

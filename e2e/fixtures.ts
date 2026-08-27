@@ -406,6 +406,13 @@ export interface DawnOptions {
    * 非常常见，而「失败必须出声」是本项目的硬规矩。
    */
   failStatus?: number
+  /**
+   * 让首启向导出现（2026-08-27）。
+   *
+   * 夹具默认把 `dawn.global.setupSkipped` 预置成已跳过：e2e 全走 `DAWN_SKIP_CREDENTIAL_GATE` 且没有凭证，
+   * 不预置的话**每条用例的第一屏都是向导**——本项目 2026-08-12 那种「十几条同时红」。只有向导自己的用例开它。
+   */
+  showSetup?: boolean
 }
 
 /** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
@@ -689,13 +696,15 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
      * 这里钉中文，是为了让「别的东西坏没坏」这个问题仍然答得出来。
      */
     const 钉住中文 = async (p: Page) => {
-      await p.addInitScript(() => {
+      await p.addInitScript((showSetup: boolean) => {
         try {
           localStorage.setItem("dawn.global.lang", "zh")
+          // 首启向导默认按「已跳过」（理由见 `showSetup` 的注释）
+          if (!showSetup) localStorage.setItem("dawn.global.setupSkipped", "1")
         } catch {
           /* 存不进去就算了：那时整个应用都会退回默认，用例自然会红 */
         }
-      })
+      }, Boolean(dawnOptions.showSetup))
       // `addInitScript` 只对之后的导航生效，首帧已经画过了，所以要重来一次
       await p.reload()
     }

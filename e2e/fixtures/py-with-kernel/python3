@@ -1,0 +1,4 @@
+#!/bin/sh
+# 假 python（首启向导 e2e）：装了 ipykernel 的那台。只应答探测用的 `-c "...import ipykernel"`
+echo "3.11.9"
+exit 0

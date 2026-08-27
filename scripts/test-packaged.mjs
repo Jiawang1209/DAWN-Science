@@ -106,6 +106,11 @@ try {
     await page.keyboard.type("echo DAWN_PTY_OK\n")
     await page.locator(".dock .term-host").getByText(/DAWN_PTY_OK/).first().waitFor({ timeout: 30_000 })
   })
+  await 查("探测本机解释器不炸（首启向导用；走登录 shell 的 which）", async () => {
+    const r = await page.evaluate(async () => (await window.dawn.invoke("probeInterpreters", {})).data)
+    if (!r || !Array.isArray(r.python)) throw new Error(`回的不是候选清单：${JSON.stringify(r).slice(0, 200)}`)
+    console.log(`    python 候选 ${r.python.length} 条，R 候选 ${r.r.length} 条`)
+  })
   await 查("设置 → 内核 列得出来（zeromq / kernelspec 扫描不炸）", async () => {
     await page.getByRole("button", { name: "设置", exact: true }).click()
     await page.locator(".settings-nav").getByRole("button", { name: "内核", exact: true }).click()

@@ -759,6 +759,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * `providers.providers.length > 0` 与底部红字同一条判据——目录还没到手时别先弹向导。
    */
   const [跳过向导, 设跳过向导] = useState(读跳过)
+  /**
+   * 向导一旦因「没凭证」亮起，就留到人按「开始使用」或「先跳过」——key 保存成功那一瞬不能把它抽走
+   * （e2e 抓的：第 ② 段解释器还没来得及选，屏幕就换了）。
+   */
+  const [向导中, 设向导中] = useState(false)
+  useEffect(() => {
+    if (creds.configured.length === 0 && providers.providers.length > 0 && !跳过向导) 设向导中(true)
+  }, [creds.configured.length, providers.providers.length, 跳过向导])
   const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
   const saveInterpreter = useCallback(
     (language: "python" | "R", path: string) => {
@@ -4184,7 +4192,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }
               />
             </>
-          ) : creds.configured.length === 0 && providers.providers.length > 0 && !跳过向导 ? (
+          ) : 向导中 && !跳过向导 ? (
             <SetupWizard
               providers={knownProviders.providers}
               configured={creds.configured}
@@ -4201,10 +4209,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onSkip={() => {
                 记跳过(true)
                 设跳过向导(true)
+                设向导中(false)
               }}
               onStart={() => {
                 记跳过(true)
                 设跳过向导(true)
+                设向导中(false)
               }}
             />
           ) : (

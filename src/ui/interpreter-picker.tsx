@@ -4,7 +4,7 @@
  * 三态：还没探（一颗「检测本机解释器」）/ 探过为空（说清 + 手动填）/ 有候选（单选，选中即回调）。
  * 缺内核包的选中项下面一句现成的装法（`KERNEL_PACKAGE.how`）——**只引导，不执行**（作者定的）。
  */
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { KERNEL_PACKAGE, type InterpreterCandidate } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
@@ -34,8 +34,18 @@ export function InterpreterPicker({
 }) {
   const [手动, 设手动] = useState(false)
   const [草稿, 设草稿] = useState("")
+  /**
+   * 选中项本地先亮（2026-08-27 e2e 抓的）：`current` 是设置里回写的值，`onPick` 走一趟后端才回来——
+   * 纯受控的话点完那一瞬又弹回未选，人（和 Playwright）都会以为「点了没反应」。设置回写后以它为准。
+   */
+  const [选了, 设选了] = useState(current)
+  useEffect(() => 设选了(current), [current])
   const 名 = 语言名[language]
-  const 选中 = candidates?.find((c) => c.path === current)
+  const 选中 = candidates?.find((c) => c.path === 选了)
+  const 挑 = (path: string) => {
+    设选了(path)
+    onPick(path)
+  }
 
   return (
     <div className={`ip-picker ip-${language}`}>
@@ -52,9 +62,9 @@ export function InterpreterPicker({
       {candidates && candidates.length > 0 ? (
         <ul className="ip-list" role="radiogroup" aria-label={tf("{0} 解释器候选", 名)}>
           {candidates.map((c) => (
-            <li key={c.path} className={`ip-item${c.path === current ? " active" : ""}`}>
+            <li key={c.path} className={`ip-item${c.path === 选了 ? " active" : ""}`}>
               <label>
-                <input type="radio" name={`ip-${language}`} value={c.path} checked={c.path === current} onChange={() => onPick(c.path)} />
+                <input type="radio" name={`ip-${language}`} value={c.path} checked={c.path === 选了} onChange={() => 挑(c.path)} />
                 <code className="ip-path">{c.path}</code>
                 <span className="ip-ver">{c.version ?? "?"}</span>
                 <span className={`ip-pkg ip-pkg-${c.kernelPackage}`}>
@@ -74,7 +84,7 @@ export function InterpreterPicker({
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              if (草稿.trim()) onPick(草稿.trim())
+              if (草稿.trim()) 挑(草稿.trim())
               设手动(false)
             }}
           >
@@ -82,7 +92,7 @@ export function InterpreterPicker({
             <Button size="sm" type="submit">{t("用这个")}</Button>
           </form>
         ) : (
-          <Button size="sm" variant="text" onClick={() => { 设草稿(current ?? ""); 设手动(true) }}>
+          <Button size="sm" variant="text" onClick={() => { 设草稿(选了 ?? ""); 设手动(true) }}>
             {t("手动填…")}
           </Button>
         )}

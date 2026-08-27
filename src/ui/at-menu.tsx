@@ -17,6 +17,7 @@ import { 文件类按名字 } from "./file-kind.js"
 import { 类型图标, type Listing, type SearchResult } from "./files.js"
 import { 成候选行, 排路径, type 候选行, type 路径条目 } from "./at-file.js"
 import { 扫引用, 护住粘贴的艾特 } from "../files/mentions.js"
+import { 用选中项跟滚 } from "./slash-menu.js"
 import { 关闭图标 } from "./icons.js"
 
 /** 菜单最多摆多少条（dsh-at-file 也是 50：可滚的视口） */
@@ -136,6 +137,7 @@ export function AtMenu({
   onHover: (i: number) => void
 }) {
   const 列 = useMemo(() => 态.行, [态.行])
+  const 跟滚 = 用选中项跟滚(selected)
   if (!有源) {
     return (
       <div className="slash-menu at-menu" role="listbox" aria-label={t("引用工作区文件")}>
@@ -144,7 +146,7 @@ export function AtMenu({
     )
   }
   return (
-    <div className="slash-menu at-menu" role="listbox" aria-label={t("引用工作区文件")}>
+    <div ref={跟滚} className="slash-menu at-menu" role="listbox" aria-label={t("引用工作区文件")}>
       {列.length === 0 ? (
         <p className="hint slash-empty">{态.忙 ? t("正在找…") : (态.说明 ?? t("没有对上的文件"))}</p>
       ) : (
@@ -156,7 +158,7 @@ export function AtMenu({
             role="option"
             aria-selected={i === selected}
             className={`slash-item at-item${i === selected ? " active" : ""}`}
-            onMouseEnter={() => onHover(i)}
+            onMouseMove={() => { if (i !== selected) onHover(i) }}
             onClick={() => onPick(x)}
           >
             <span className="at-icon"><类型图标 类={文件类按名字(x.path.split("/").at(-1)!, x.kind)} /></span>

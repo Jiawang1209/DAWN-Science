@@ -66,3 +66,19 @@ describe("记忆插件", () => {
     expect(好.content).toContain("待确认")
   })
 })
+
+
+/** 技能沉淀指引（2026-08-27）：模型得知道**什么时候**问；只在装了 skill_propose 时追加进系统提示 */
+describe("技能沉淀指引", () => {
+  it("说清触发条件、先问再提、小事不问", async () => {
+    const { 技能沉淀指引 } = await import("../../src/tools/memory/index.js")
+    expect(技能沉淀指引).toContain("skill_propose")
+    expect(技能沉淀指引).toContain("问用户")
+    expect(技能沉淀指引).toContain("不要不问就提")
+  })
+  it("native 运行时只在 skill 族开着时追加（源码扫描）", async () => {
+    const { readFileSync } = await import("node:fs")
+    const src = readFileSync(new URL("../../src/runtime/native.ts", import.meta.url), "utf8")
+    expect(src).toContain("this.opts.memoryEnable?.().skill && !this.opts.memoryEnable().off ? [技能沉淀指引] : []")
+  })
+})

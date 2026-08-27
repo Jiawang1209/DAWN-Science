@@ -60,7 +60,7 @@ import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
-import { memoryTools, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
+import { memoryTools, 技能沉淀指引, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
 import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器 } from "../team/scheduler.js"
@@ -1221,6 +1221,8 @@ export class NativeRuntime implements AgentRuntime {
         删除指引,
         // 内核指引（2026-08-27）：有 run_code 才说；不给 kernels 的装配（CLI、测试替身）一个字不受影响
         ...(this.opts.kernels ? [内核指引] : []),
+        // 技能沉淀指引（2026-08-27，作者点的）：装了 skill_propose 才说——收尾问一句要不要沉淀成技能
+        ...(this.opts.memoryEnable?.().skill && !this.opts.memoryEnable().off ? [技能沉淀指引] : []),
         `You are currently running on the model "${当前模型}". ` +
           `If the user asks which model you are, answer with exactly this. ` +
           `Do not guess from environment variables or from earlier turns — ` +

@@ -1,0 +1,35 @@
+# 三平台打包矩阵（打包 spec §8）。仓库现在没有 remote——推上 GitHub 后就能用。
+# 触发：打 tag `v*`，或手动。产物挂在 Actions 的 artifacts 上（不自动发 release，没有签名之前不该自动发）。
+name: package
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14, script: dist:mac }
+          - { os: ubuntu-22.04, script: dist:linux }
+          - { os: windows-2022, script: dist:win }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run ${{ matrix.script }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dawn-science-${{ matrix.os }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error

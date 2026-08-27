@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-27 — 打包：三平台独立安装包（electron-builder）
+
+- **Type**: feat
+- **Motivation**: 作者要「给一个新电脑上搞，打包成独立软件」，mac / linux / win 三个系统。此前只有 `npm run app`。
+- **What**: `electron-builder.yml`（asar 关、`npmRebuild: false`、不签名、mac dmg+zip ×2 arch / win nsis+portable / linux AppImage+deb）；`packaging/`（entitlements、占位图标，`npm run make-icon` 生成）；`package.json` 加 `main` 与 `dist*` / `pack` / `test:packaged` 脚本；`src/electron/migrate-userdata.ts`——打包版 userData 从 `Electron/` 换成 `DAWN Science/`，首启一次性把旧数据拷过来（只在真打包且没有 `DAWN_*` 环境变量时）；`scripts/test-packaged.mjs`——起打包产物真点一遍，四个原生模块各碰一次；`.github/workflows/release.yml` 三平台矩阵样板；`docs/打包与发布.md`。spec：`docs/superpowers/specs/2026-08-27-打包-design.md`（§7.5 记了第一次真打踩的三个坑）。
+- **Impact**: 不影响 `npm run app` / e2e（它们仍走环境变量那条）。`build/` 在 .gitignore 里，所以资源目录用 `packaging/`。产物 699 MB，下一轮再剪。跨平台交叉打包不承诺——各平台在各自机器上打。
+- **Verification**: 单测（`migrate-userdata` 3 条）；`npm run pack` + `npm run test:packaged` 在 mac arm64 上 5/5 通过（开库、发一句收假回复、`/` 菜单读到 22 份自带子 agent、终端里 `echo DAWN_PTY_OK` 回显、设置→内核列表）；`npm run dist:mac` 出 dmg。win / linux 的包**没在真机上验过**。
+
 ### 2026-08-27 — 笔记本修缮：项目会话真用笔记本、远端会话说实话、导出落到工作目录；`/` 菜单跟滚
 
 - **Type**: feat / fix

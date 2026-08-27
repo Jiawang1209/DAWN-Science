@@ -1,0 +1,51 @@
+# 打包配置（2026-08-27，spec `docs/superpowers/specs/2026-08-27-打包-design.md`）。
+# 三条定下的：v1 不用 asar（§2）、不签名（有证书时删 identity: null 并设 CSC_LINK）、各平台在各自机器上打。
+appId: science.dawn.app
+productName: DAWN Science
+executableName: DAWN Science
+artifactName: DAWN-Science-${version}-${os}-${arch}.${ext}
+directories:
+  output: release
+  buildResources: packaging
+# 原生 .node、spawn-helper、被 spawn 的 subagent-child.js / dawn-mcp-server.mjs、pi 按目录扫的 skills/ agents/
+# ——全都要在真实磁盘上；asar 里能不能被 ELECTRON_RUN_AS_NODE 的子进程读到没验过，不验的不进 v1
+asar: false
+# 四个原生模块全是 N-API 预编译件（按平台目录自选），不需要按 Electron ABI 重编；
+# 开着的话 electron-builder 会去编 ssh2 的可选依赖 cpu-features（没有预编译件）——第一次打包就死在这（2026-08-27）
+npmRebuild: false
+files:
+  - dist/**
+  - skills/**
+  - agents/**
+  - package.json
+  - "!**/*.map"
+  - "!node_modules/playwright-core/.local-browsers/**"
+  # 别想着按目录名剪 node_modules（2026-08-27 踩的）：`yaml` 包的代码就在 `dist/doc/` 里，剪掉它主进程起不来
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - { target: dmg, arch: [arm64, x64] }
+    - { target: zip, arch: [arm64, x64] }
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: packaging/entitlements.mac.plist
+  entitlementsInherit: packaging/entitlements.mac.plist
+  # 不签名。有 Apple Developer ID 时：删掉这一行，设 CSC_LINK / CSC_KEY_PASSWORD，再加 notarize
+  identity: null
+dmg:
+  title: DAWN Science
+  contents:
+    - { x: 160, y: 170, type: file }
+    - { x: 400, y: 170, type: link, path: /Applications }
+win:
+  target: [nsis, portable]
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+linux:
+  category: Science
+  maintainer: DAWN Science
+  synopsis: Multi-agent data-science workbench
+  target: [AppImage, deb]

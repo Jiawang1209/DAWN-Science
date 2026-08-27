@@ -7,7 +7,8 @@
  */
 import { app, clipboard, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
 import { fileURLToPath } from "node:url"
-import { extname, join } from "node:path"
+import { extname, join, dirname } from "node:path"
+import { 迁旧数据 } from "./migrate-userdata.js"
 import { readFile } from "node:fs/promises"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_ATTACH_SAVE, IPC_ATTACH_USAGE, IPC_ATTACH_CLEAN, IPC_CLIPBOARD_FILES, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
@@ -369,7 +370,26 @@ function 接上事件流(win: BrowserWindow): void {
   })
 }
 
+/**
+ * 打包版首启迁旧数据（打包 spec §4）：开发版的 `userData` 叫 `Electron/`，打包版叫 `DAWN Science/`。
+ * 只在**真打包**且**没有任何 `DAWN_*` 指定路径**时做——e2e / dev:mock 全走环境变量那条，不会碰到。
+ */
+function 打包版首启迁移(): void {
+  if (!app.isPackaged) return
+  if (process.env.DAWN_DB || process.env.DAWN_CONFIG) return
+  const 新 = app.getPath("userData")
+  const 旧 = join(dirname(新), "Electron")
+  try {
+    const r = 迁旧数据(旧, 新)
+    if (r.做了) console.log(`[首启] 已从旧目录迁入：${r.拷了.join("、")}（${旧} → ${新}）`)
+  } catch (e) {
+    // 迁不动不许拦启动：说一声，用户至少能开一个空的
+    console.error(`[首启] 旧数据迁不过来（${旧} → ${新}）：${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
 app.whenReady().then(() => {
+  打包版首启迁移()
   /**
    * **连 Dock 图标也不要跳**（e2e 用，2026-08-11）。
    *

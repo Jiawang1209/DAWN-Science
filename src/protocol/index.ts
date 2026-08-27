@@ -63,6 +63,7 @@ export {
   ErrorCodeSchema,
   MAX_PAGE_SIZE,
   OPERATIONS,
+  InterpreterCandidateSchema,
   PageInfoSchema,
   WorkbenchErrorSchema,
   WorkbenchSuccessSchema,
@@ -73,9 +74,12 @@ export {
 
 export type {
   ErrorCode,
+  InterpreterCandidate,
   OperationDef,
   OperationName,
   PageInfo,
   ResponseOf,
   WorkbenchError,
 } from "./operations.js"
+
+export { KERNEL_PACKAGE } from "./kernel-package.js"

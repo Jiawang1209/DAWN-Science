@@ -90,6 +90,7 @@ import { loadArtifacts } from "./state/sync.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom } from "./state/transcript.js"
 import { NotebookPanel, cells as 转录里的cells, type 语言 as 内核语言 } from "./notebook.js"
+import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -753,6 +754,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const refreshInterpreters = useCallback(() => {
     client.get<{ python?: string; r?: string }>("getInterpreters", {}).then(setInterpreters).catch(fail)
   }, [client])
+  /**
+   * 首启向导（2026-08-27）：没有任何凭证、且没点过「先跳过」时替换主区。
+   * `providers.providers.length > 0` 与底部红字同一条判据——目录还没到手时别先弹向导。
+   */
+  const [跳过向导, 设跳过向导] = useState(读跳过)
+  const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
   const saveInterpreter = useCallback(
     (language: "python" | "R", path: string) => {
       client
@@ -1574,12 +1581,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     problem?: string
   }>({ providers: [] })
   useEffect(() => {
-    if (view !== "settings") return
+    // 设置屏要它；首启向导（没凭证、没跳过时）也要它——服务商下拉从这儿来
+    if (view !== "settings" && !(creds.configured.length === 0 && !跳过向导)) return
     client
       .get<typeof knownProviders>("listKnownProviders", {})
       .then(setKnownProviders)
       .catch(fail)
-  }, [view, client])
+  }, [view, client, creds.configured.length, 跳过向导])
 
   /**
    * 删会话。**账本不动**——那句话要在按下之前就在屏幕上，
@@ -3734,6 +3742,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 interpreters={interpreters}
                 onRefresh={refreshKernels}
                 onSetInterpreter={saveInterpreter}
+                onProbe={探测解释器}
               />
 
                     </>
@@ -4175,6 +4184,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }
               />
             </>
+          ) : creds.configured.length === 0 && providers.providers.length > 0 && !跳过向导 ? (
+            <SetupWizard
+              providers={knownProviders.providers}
+              configured={creds.configured}
+              interpreters={interpreters}
+              onSaveKey={(id, secret) =>
+                client
+                  .get("setCredential", { providerId: id, secret })
+                  // 与设置里那条同一个理由：填了 key 那个 provider 才有 agent，要重取
+                  .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+                  .then(() => undefined)
+              }
+              onSetInterpreter={saveInterpreter}
+              onProbe={探测解释器}
+              onSkip={() => {
+                记跳过(true)
+                设跳过向导(true)
+              }}
+              onStart={() => {
+                记跳过(true)
+                设跳过向导(true)
+              }}
+            />
           ) : (
             <EmptyConversation
               agents={agentIds}
@@ -4517,7 +4549,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * （*「为什么还会多一个新建 agent 这种奇怪的东西呢？」*）。
            * 这一行要说的是他关心的事实：还没有钥匙，所以还不能对话。
            */
-          <span className="caveat">{t("还没有填任何 API key，暂时不能对话——去「设置 → 模型服务」加一个")}</span>
+          <Button
+            variant="text"
+            size="inline"
+            className="caveat statusbar-setup"
+            onClick={() => {
+              // 回到向导（2026-08-27）：跳过了的人从这里回来；也把主区切回对话那一侧
+              记跳过(false)
+              设跳过向导(false)
+              setView("conversation")
+            }}
+          >
+            {t("还没有填任何 API key，暂时不能对话——点这里填一个")}
+          </Button>
         ) : null}
         {notes.map((n, i) => (
           <span key={i} className="hint">

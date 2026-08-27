@@ -1,0 +1,51 @@
+/** 解释器候选列表（首启向导，2026-08-27）：三态、选中即回调、缺包只给一句装法（不执行） */
+import { describe, expect, it, vi } from "vitest"
+import { render, screen, fireEvent } from "@testing-library/react"
+import { InterpreterPicker } from "../../src/ui/interpreter-picker.js"
+import type { InterpreterCandidate } from "../../src/protocol/index.js"
+
+const 候选: InterpreterCandidate[] = [
+  { path: "/opt/homebrew/bin/python3", source: "PATH", version: "3.14.7", kernelPackage: "missing" },
+  { path: "/Users/me/.pyenv/versions/3.11.9/bin/python", source: "common", version: "3.11.9", kernelPackage: "present" },
+  { path: "/broken/python", source: "common", kernelPackage: "unknown", problem: "dyld: image not found" },
+]
+const noop = { onPick: () => {}, onProbe: () => {} }
+
+describe("InterpreterPicker", () => {
+  it("还没探过 → 只有一颗「检测本机解释器」；探过为空 → 说清没找到 + 手动填", () => {
+    const { rerender } = render(<InterpreterPicker language="python" candidates={undefined} probing={false} current={undefined} {...noop} />)
+    expect(screen.getByRole("button", { name: "检测本机解释器" })).toBeTruthy()
+    expect(screen.queryByRole("radiogroup")).toBeNull()
+    rerender(<InterpreterPicker language="python" candidates={[]} probing={false} current={undefined} {...noop} />)
+    expect(screen.getByText(/这台电脑上没找到 Python/)).toBeTruthy()
+    expect(screen.getByRole("button", { name: "手动填…" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "重新检测" })).toBeTruthy()
+  })
+
+  it("有候选 → 单选列表带版本与内核包状态；起不来的那条把原因摆出来；选中即 onPick", () => {
+    const onPick = vi.fn()
+    render(<InterpreterPicker language="python" candidates={候选} probing={false} current={undefined} onPick={onPick} onProbe={() => {}} />)
+    expect(screen.getAllByRole("radio")).toHaveLength(3)
+    expect(screen.getByText("ipykernel ✗")).toBeTruthy()
+    expect(screen.getByText("ipykernel ✓")).toBeTruthy()
+    expect(screen.getByText("ipykernel ?")).toBeTruthy()
+    expect(screen.getByText("dyld: image not found")).toBeTruthy()
+    fireEvent.click(screen.getAllByRole("radio")[1]!)
+    expect(onPick).toHaveBeenCalledWith("/Users/me/.pyenv/versions/3.11.9/bin/python")
+  })
+
+  it("选中的那条缺包 → 一句现成的装法；不执行任何东西", () => {
+    render(<InterpreterPicker language="python" candidates={候选} probing={false} current="/opt/homebrew/bin/python3" {...noop} />)
+    expect(screen.getByText(/没装 ipykernel：.*pip install ipykernel/)).toBeTruthy()
+    expect(screen.queryByRole("button", { name: /帮我跑|安装/ })).toBeNull()
+  })
+
+  it("手动填 → 提交调 onPick", () => {
+    const onPick = vi.fn()
+    render(<InterpreterPicker language="R" candidates={[]} probing={false} current={undefined} onPick={onPick} onProbe={() => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "手动填…" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "R 解释器路径" }), { target: { value: "/usr/local/bin/R" } })
+    fireEvent.click(screen.getByRole("button", { name: "用这个" }))
+    expect(onPick).toHaveBeenCalledWith("/usr/local/bin/R")
+  })
+})

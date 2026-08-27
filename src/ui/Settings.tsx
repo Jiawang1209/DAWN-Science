@@ -30,6 +30,8 @@
 import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
+import { InterpreterPicker } from "./interpreter-picker.js"
+import type { InterpreterCandidate } from "../protocol/index.js"
 import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
@@ -148,6 +150,7 @@ export function KernelsPanel({
   interpreters,
   onRefresh,
   onSetInterpreter,
+  onProbe,
 }: {
   kernels: readonly KernelRow[]
   problems: readonly { dir: string; reason: string }[]
@@ -156,7 +159,21 @@ export function KernelsPanel({
   interpreters: { python?: string; r?: string }
   onRefresh: () => void
   onSetInterpreter: (language: "python" | "R", path: string) => void
+  /** 探测本机解释器（首启向导同款列表，2026-08-27）。不给就没有那两块 */
+  onProbe?: (() => Promise<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] }>) | undefined
 }) {
+  const [探到, 设探到] = useState<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] } | undefined>(undefined)
+  const [探测中, 设探测中] = useState(false)
+  const [探测错, 设探测错] = useState<string | undefined>(undefined)
+  const 探 = () => {
+    if (!onProbe) return
+    设探测中(true)
+    设探测错(undefined)
+    onProbe()
+      .then(设探到)
+      .catch((e: unknown) => 设探测错(e instanceof Error ? e.message : String(e)))
+      .finally(() => 设探测中(false))
+  }
   return (
     <Section
       desc={
@@ -175,6 +192,13 @@ export function KernelsPanel({
         </>
       }
     >
+      {onProbe ? (
+        /* 不确定填什么？先看这台电脑上有哪些（2026-08-27）。选中即填进下面的框 */
+        <div className="kernel-probe">
+          <InterpreterPicker language="python" candidates={探到?.python} probing={探测中} error={探测错} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={探} />
+          <InterpreterPicker language="R" candidates={探到?.r} probing={探测中} current={interpreters.r} onPick={(p) => onSetInterpreter("R", p)} onProbe={探} />
+        </div>
+      ) : null}
       <InterpreterField
         id="interp-python"
         label={t("Python 解释器")}

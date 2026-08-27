@@ -6516,3 +6516,44 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-textarea { font-family: var(--dawn-font-mono); font-size: var(--dawn-code-size); line-height: var(--dawn-code-leading); resize: vertical; }
 .nb-hint { margin: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .nb-caption { margin: 0; color: var(--dawn-text-4); font-size: var(--dawn-fs-meta); }
+
+/* ── 首启向导与解释器检测（2026-08-27）──────────────────────────────── */
+.setup-wizard {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--dawn-space-6) var(--dawn-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-6);
+  overflow: auto;
+}
+.sw-head { display: flex; align-items: baseline; justify-content: space-between; }
+.sw-head h1 { font-size: var(--dawn-fs-title); font-weight: var(--dawn-weight-semibold); margin: 0; }
+.sw-section { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.sw-section h2 { font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); margin: 0; display: flex; gap: var(--dawn-space-2); align-items: baseline; }
+.sw-req { color: var(--dawn-danger); font-weight: 400; font-size: var(--dawn-ui-size); }
+.sw-opt { color: var(--dawn-text-3); font-weight: 400; font-size: var(--dawn-ui-size); }
+.sw-ok { color: var(--dawn-success); font-weight: 400; font-size: var(--dawn-ui-size); }
+.sw-key { display: flex; gap: var(--dawn-space-2); align-items: end; flex-wrap: wrap; }
+.sw-key label { display: flex; flex-direction: column; gap: 2px; font-size: var(--dawn-ui-size); color: var(--dawn-text-2); }
+.sw-key-field { flex: 1; min-width: 16rem; }
+.sw-foot { display: flex; justify-content: flex-end; align-items: center; gap: var(--dawn-space-2); }
+
+.ip-picker { display: flex; flex-direction: column; gap: var(--dawn-space-1); padding: var(--dawn-space-2) 0; }
+.ip-head { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.ip-lang { font-weight: var(--dawn-weight-semibold); min-width: 4rem; }
+.ip-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.ip-item label { display: flex; gap: var(--dawn-space-2); align-items: center; padding: 2px var(--dawn-space-1); border-radius: var(--dawn-radius-sm); cursor: pointer; }
+.ip-item.active label { background: var(--dawn-surface-elevated); }
+.ip-path { font-size: var(--dawn-ui-size); overflow-wrap: anywhere; }
+.ip-ver { color: var(--dawn-text-3); font-size: var(--dawn-ui-size); }
+.ip-pkg { font-size: var(--dawn-ui-size); }
+.ip-pkg-present { color: var(--dawn-success); }
+.ip-pkg-missing { color: var(--dawn-danger); }
+.ip-pkg-unknown { color: var(--dawn-text-3); }
+.ip-problem { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); margin: 0 0 0 1.8rem; white-space: pre-wrap; }
+.ip-manual form { display: flex; gap: var(--dawn-space-2); }
+.ip-manual .control { flex: 1; }
+.kernel-probe { margin-bottom: var(--dawn-space-3); }
+.ip-how { color: var(--dawn-text-2); }
+.statusbar-setup { color: var(--dawn-danger); }

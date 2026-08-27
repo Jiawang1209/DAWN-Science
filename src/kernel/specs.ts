@@ -300,10 +300,7 @@ export function argvForInterpreter(language: KernelLanguage, path: string): stri
 }
 
 /** 这个语言的内核包叫什么、怎么装。**报错要能直接照着做** */
-export const KERNEL_PACKAGE: Record<KernelLanguage, { pkg: string; how: string }> = {
-  python: { pkg: "ipykernel", how: "<你的 python> -m pip install ipykernel" },
-  R: { pkg: "IRkernel", how: 'R 里跑 install.packages("IRkernel")' },
-}
+export { KERNEL_PACKAGE } from "../protocol/kernel-package.js"
 
 /**
  * 由路径起不来时说人话。**三种实情仍然要分清**，只是第二种换了形状：

@@ -141,7 +141,13 @@ export function NotebookPanel({
   // **空表等同缺省**：最后一台内核被回收之后，hub 发来的是 `[]` 而不是缺省
   const 没内核 = kernels === undefined || kernels.length === 0
   const 全退了 = !没内核 && kernels!.every((k) => k.state === "exited")
-  const 内核重起过 = cells.length > 0 && (没内核 || 全退了)
+  /**
+   * 「内核已重起」只在**内核真起来过**时才说（2026-08-27 探针抓到的）：解释器没配时一敲就有一条 error cell、
+   * `kernels` 又是缺省——按「有 cell 且没内核」判会冒出「上面 cell 里的变量已经不在了」，可内核压根没起过。
+   * 跑成过（status ok）或有过输出，才说明曾经有一台。
+   */
+  const 起来过 = cells.some((c) => c.status === "ok" || c.outputs.length > 0)
+  const 内核重起过 = 起来过 && (没内核 || 全退了)
 
   const run = async () => {
     const code = draft

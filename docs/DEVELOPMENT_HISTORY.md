@@ -18,6 +18,7 @@
   - `cells()` 派生搬到 `src/protocol/notebook-cells.ts`（UI 只许跨到 `protocol/`，后端也要用）；新纯函数 `src/session/export-notebook.ts`（`cells成ipynb` / `cells成markdown` / `笔记本文件名`）：nbformat 4.5，kernelspec 按多数语言，混排如实标注，截断/太大说清省了多少，图内嵌 base64。
   - 协议 7.28：`exportNotebook { sessionId, format, dir? }`。目录规则一个函数 `src/workbench/export-dir.ts`：项目会话 → `<项目>/docs/`，普通（临时项目）与远端会话 → 下载路径；`exportSession` 与 `exportNotebook` 共用（`备导出`）。
   - 界面：`导出提示` 浮层组件（`.export-toast`，4.5 s 淡去、失败 8.5 s、`role="status"`，动画结束卸载），对话头与笔记本格共用；笔记本头部「导出 .ipynb」「导出 .md」两颗按钮（有 cell 才画）。
+  - ⑥ 探针抓到的：解释器没配、内核起失败后面板冒出「内核已重起，上面 cell 里的变量已经不在了」——内核压根没起过。判据改为「有跑成过的 cell（ok 或有输出）」才算重起过。
   - ⑤ 技能沉淀指引（作者点的，学 Hermes）：`skill_propose` 早就有，但系统提示里没说什么时候用，模型从没主动提过。现在装了 `skill` 族就追加一句：完成一套可复用的多步流程后，收尾**先在对话里问一句**要不要沉淀成技能，用户说要再调 `skill_propose`；小事不问。
   - ④ `用选中项跟滚`：`selected` 变了对 `aria-selected` 那项 `scrollIntoView({block:"nearest"})`；悬停从 `mouseenter` 改 `mousemove`——程序滚动让鼠标底下换了一项时不再抢高亮。
 - **Impact**: 协议 minor 7.27 → 7.28（纯新增）；`exportSession` 的落点变了（项目会话不再进下载目录）；`.conv-export-note` 删了（e2e 判据改成 `.export-toast`）；远端会话的模型看不到 `run_code` 了。

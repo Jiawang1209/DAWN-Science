@@ -114,6 +114,11 @@ describe("NotebookPanel · 空态与提示条", () => {
     expect(screen.queryByText("这段对话还没有内核")).toBeNull()
   })
 
+  it("只有起失败的 error cell（没输出）、没内核 → **不**说「内核已重起」：它压根没起过（2026-08-27 探针抓到的）", () => {
+    render(<NotebookPanel {...基本} kernels={undefined} cells={[{ ...cell(), status: "error", outputs: [] }]} />)
+    expect(screen.queryByText(/内核已重起/)).toBeNull()
+  })
+
   it("有 cell 且内核全退出 → 同样提示；还有一台活着就不提", () => {
     const { rerender } = render(
       <NotebookPanel {...基本} kernels={[{ language: "python", state: "exited" }]} cells={[cell()]} />,

@@ -14,7 +14,7 @@
 - **Motivation**: 作者定的口径：核心是配 API、调 pi；Python / R / ACP 都是锦上添花。装上之后第一屏就该能填 key 开聊；解释器只做「检测本机有哪些、选一个」，不打包、不替人装。
 - **What**: `src/kernel/probe.ts`（纯函数：枚举候选 settings > kernelspec > PATH > 常见目录，每个真起一次拿版本 + ipykernel/IRkernel 在不在，并发 4、8 s 超时）；协议 7.29 `probeInterpreters`（PATH 走登录 shell `which -a`，Windows `where`）；`KERNEL_PACKAGE` 搬到 `src/protocol/kernel-package.ts`（UI 要说那句装法，`specs.ts` 带 `node:fs` 进不了渲染进程）；`src/ui/interpreter-picker.tsx`（三态列表、本地即时选中、缺包只给一句装法）；`src/ui/setup-wizard.tsx`（没凭证时替换主区：key 必需、解释器可选、「先跳过」记 `dawn.global.setupSkipped`，向导留到按「开始使用」）；底部红字改成按钮回向导；设置「内核」屏多一颗「检测本机解释器」（同一个列表）；e2e 夹具默认预置「已跳过」（`showSetup` 打开），两枚假 `python3` 在 `e2e/fixtures/py-*`。
 - **Impact**: 协议 7.28 → 7.29；`listKnownProviders` 在没凭证时也取一次（启动取数预算 16 → 17，如实上调）；`e2e/first-run-default` 语义不变（夹具预置跳过）。ACP 适配器不打包、不要求 Node（作者定：用户自己装好 codex / claude CLI）。
-- **Verification**: 单测：`probe` 11 条、`interpreter-picker` 4 条、`setup-wizard` 4 条、设计契约与 i18n 扫描全绿（抓出 8 条并逐一改掉）；e2e `setup-wizard.spec`（两枚假 python 列出且状态对、选中即写进设置、填 key 后开始使用、跳过后红字回向导）2/2；全量 e2e 见下一条记录的核对。`test:packaged` 加一项 `probeInterpreters`。
+- **Verification**: 单测：`probe` 11 条、`interpreter-picker` 4 条、`setup-wizard` 4 条、设计契约与 i18n 扫描全绿（抓出 8 条并逐一改掉）；e2e `setup-wizard.spec`（两枚假 python 列出且状态对、选中即写进设置、填 key 后开始使用、跳过后红字回向导）2/2；全量 e2e 446 过 / 1 跳过，10 张视觉基线因状态栏那行改动而重存（先看了 diff，只有底部那一行）并复验两次；`test:packaged` 加一项 `probeInterpreters`，mac arm64 打包产物 6/6。打包版里真看了一眼向导：作者机器上探到 22 个 Python——据此补了三处：kernelspec 指向已删环境的死路径不列、内核包在的浮到前面、服务商默认优先 deepseek 而不是字母序第一个。
 
 ### 2026-08-27 — 打包：三平台独立安装包（electron-builder）
 

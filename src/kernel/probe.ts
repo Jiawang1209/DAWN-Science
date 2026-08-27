@@ -92,7 +92,8 @@ export function 枚举候选(语言: 语言, d: 枚举依赖): { path: string; s
   for (const k of d.kernelspecs) {
     if (!k.executable) continue
     const lang = (k.language ?? "").toLowerCase()
-    if (语言 === "python" ? lang === "python" : lang === "r") 收(k.executable, "kernelspec")
+    // kernelspec 指向的环境常常已经删了（作者机器上三条 miniconda 的就是）——死路径不列；设置里那条例外，人得看见自己配的没了
+    if ((语言 === "python" ? lang === "python" : lang === "r") && d.exists(k.executable)) 收(k.executable, "kernelspec")
   }
   if (语言 === "python") {
     for (const n of ["python3", "python"]) for (const p of d.pathLookup(n)) 收(p, "PATH")
@@ -157,5 +158,7 @@ export async function 探测解释器(语言: 语言, d: 枚举依赖, run: 执�
     }
   }
   await Promise.all(Array.from({ length: Math.min(4, 列.length) }, 工人))
-  return 出
+  // 内核包在的浮到前面（稳定排序，组内仍按枚举顺序）：二十多条候选里人要找的是能直接用的那几条
+  const 序 = { present: 0, missing: 1, unknown: 2 } as const
+  return 出.slice().sort((a, b) => 序[a.kernelPackage] - 序[b.kernelPackage])
 }

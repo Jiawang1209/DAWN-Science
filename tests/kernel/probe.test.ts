@@ -21,7 +21,7 @@ describe("枚举候选", () => {
       settings: { python: "/opt/py/bin/python" },
       kernelspecs: [{ language: "python", executable: "/opt/py/bin/python" }, { language: "python", executable: "/venv/bin/python" }, { language: "R", executable: "/usr/local/bin/R" }],
       pathLookup: (n) => (n === "python3" ? ["/opt/homebrew/bin/python3"] : []),
-      exists: (p) => p === "/opt/homebrew/bin/python3" || p === "/usr/bin/python3",
+      exists: (p) => ["/opt/homebrew/bin/python3", "/usr/bin/python3", "/venv/bin/python", "/opt/py/bin/python"].includes(p),
     })
     expect(枚举候选("python", d)).toEqual([
       { path: "/opt/py/bin/python", source: "settings" },
@@ -38,10 +38,20 @@ describe("枚举候选", () => {
     expect(枚举候选("python", d).map((c) => c.path)).toEqual(["/Users/me/.pyenv/versions/3.11.9/bin/python", "/Users/me/miniconda3/envs/sci/bin/python"])
   })
 
+  it("kernelspec 指向的路径已经不存在 → 不列（作者机器上三条删掉的 miniconda 环境）；设置里那条照列", () => {
+    const d = 依赖({
+      settings: { python: "/gone/settings/python" },
+      kernelspecs: [{ language: "python", executable: "/gone/env/bin/python" }, { language: "python", executable: "/live/bin/python" }],
+      exists: (p) => p === "/live/bin/python",
+    })
+    expect(枚举候选("python", d).map((c) => c.path)).toEqual(["/gone/settings/python", "/live/bin/python"])
+  })
+
   it("R：kernelspec 里 language 为 R 的才算；PATH 上找 Rscript 但列出的是同目录的 R", () => {
     const d = 依赖({
       kernelspecs: [{ language: "python", executable: "/x/python" }, { language: "R", executable: "/usr/local/bin/R" }],
       pathLookup: (n) => (n === "Rscript" ? ["/opt/homebrew/bin/Rscript"] : []),
+      exists: (p) => p === "/usr/local/bin/R",
     })
     expect(枚举候选("R", d)).toEqual([
       { path: "/usr/local/bin/R", source: "kernelspec" },
@@ -92,12 +102,14 @@ describe("探测命令 / R的Rscript", () => {
 })
 
 describe("探测解释器（并发跑、结果按枚举顺序）", () => {
-  it("每个候选跑一次，结果合并进候选", async () => {
-    const d = 依赖({ settings: { python: "/a/python" }, pathLookup: () => ["/b/python3"] })
-    const run = async (cmd: string) => (cmd === "/a/python" ? { code: 0, stdout: "3.12.0\n", stderr: "" } : { code: 1, stdout: "3.9.1\n", stderr: "No module named 'ipykernel'" })
+  it("每个候选跑一次，结果合并进候选；内核包在的浮到前面（稳定）", async () => {
+    const d = 依赖({ settings: { python: "/a/python" }, pathLookup: () => ["/b/python3", "/c/python3"] })
+    const run = async (cmd: string) =>
+      cmd === "/c/python3" ? { code: 0, stdout: "3.12.0\n", stderr: "" } : { code: 1, stdout: "3.9.1\n", stderr: "No module named 'ipykernel'" }
     const r = await 探测解释器("python", d, run)
     expect(r).toEqual([
-      { path: "/a/python", source: "settings", version: "3.12.0", kernelPackage: "present" },
+      { path: "/c/python3", source: "PATH", version: "3.12.0", kernelPackage: "present" },
+      { path: "/a/python", source: "settings", version: "3.9.1", kernelPackage: "missing" },
       { path: "/b/python3", source: "PATH", version: "3.9.1", kernelPackage: "missing" },
     ])
   })

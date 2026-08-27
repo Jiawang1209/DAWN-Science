@@ -2,6 +2,7 @@
   "name": "dawn-science",
   "version": "0.0.1",
   "main": "dist/electron/main.js",
+  "homepage": "https://dawn-science.invalid/TODO-换成真实主页",
   "private": true,
   "description": "Data Agent Workbench with Notebooks — for science.",
   "license": "AGPL-3.0-or-later",

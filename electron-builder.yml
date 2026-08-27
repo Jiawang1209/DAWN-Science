@@ -40,10 +40,15 @@ dmg:
 win:
   target: [nsis, portable]
   signAndEditExecutable: false
+# 便携版单独起名——与安装器同名时后打的会把先打的盖掉（2026-08-27 在 mac 上交叉打 win 时发现）
+portable:
+  artifactName: DAWN-Science-${version}-${os}-${arch}-portable.${ext}
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
+# Linux 只能在 Linux 上打：node-pty 的 npm 包不带 linux 预编译件（`npm ci` 时现场编译，要 build-essential + python3）；
+# 从 mac 交叉出来的 AppImage 终端会哑。`.deb` 还要求 package.json 有 homepage（现在是占位，发布前换真的）。
 linux:
   category: Science
   maintainer: DAWN Science

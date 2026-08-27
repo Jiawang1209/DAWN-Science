@@ -653,6 +653,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 那类东西会坏在别人机器上（ACP 那条 `launch.ts` 刚栽过同一类）。
    */
   const 默认下载目录 = () => opts.downloadsDir ?? join(homedir(), "Downloads")
+  /**
+   * 远端会话没有内核（2026-08-27）：内核只会在本机起，文件却在服务器上。界面拦了，协议也要拦——两处判据一致。
+   */
+  const 拒远端 = (sessionId: Parameters<typeof sessions.get>[0]) => {
+    if (sessions.get(sessionId)?.connectionId) {
+      throw fault("invalid_request", "远端会话还没有内核：代码只能在本机起内核，而这段对话的文件在服务器上")
+    }
+  }
 
   /**
    * 重名就加一个序号。**批 4a 只做「另存一份」这一支**——
@@ -2849,6 +2857,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     runInKernel: async ({ sessionId, language, code }) => {
       const k = opts.kernels
       if (!k) throw fault("internal_error", "这台没有接对话内核")
+      拒远端(sessionId)
       // 空代码在 `beginCell` 之前拦：运行时对空白静默不执行，cell 会永远 running、后面的段全排在它后面
       if (code.trim() === "") throw fault("invalid_request", "code 是空的，没有东西可以跑")
       const cellId = events.beginCell(sessionId, language, code)
@@ -2897,6 +2906,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     interruptKernel: async ({ sessionId, language }) => {
       const k = opts.kernels
       if (!k) throw fault("internal_error", "这台没有接对话内核")
+      拒远端(sessionId)
       const 键 = `${sessionId}:${language}`
       /**
        * **await 之前**记下此刻在内核上跑的是谁：中断走一趟运行时，回来时那段可能已经收尾——晚记就丢了。

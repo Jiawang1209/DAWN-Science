@@ -140,6 +140,13 @@ describe("NotebookPanel · 空态与提示条", () => {
     expect(screen.queryByText("这段对话还没有内核")).toBeNull()
   })
 
+  it("远端会话 → 整格一句「远端会话的内核还没做」，带服务器名，不画输入框（2026-08-27）", () => {
+    // 内核只会在本机起（spawnteract + ZMQ），远端会话的文件在服务器上——给它笔记本等于让代码在错误的机器上跑
+    render(<NotebookPanel {...基本} sessionKind="native" remoteLabel="gs191" kernels={undefined} cells={[cell()]} />)
+    expect(screen.getByText(/远端会话的内核还没做/).textContent).toContain("gs191")
+    expect(screen.queryByRole("textbox")).toBeNull()
+  })
+
   it("非 native 会话 → 整格一句「这种会话没有内核，笔记本不可用」，不画输入框", () => {
     render(<NotebookPanel {...基本} sessionKind="acp" kernels={undefined} cells={[cell()]} />)
     expect(screen.getByText("这种会话没有内核，笔记本不可用")).toBeTruthy()

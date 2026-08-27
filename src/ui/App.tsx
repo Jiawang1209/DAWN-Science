@@ -4438,6 +4438,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <NotebookPanel
                 key={sessionId}
                 sessionKind={session?.kind}
+                remoteLabel={session?.remote?.label}
                 kernels={对话内核}
                 cells={笔记本cells}
                 running={笔记本在跑}

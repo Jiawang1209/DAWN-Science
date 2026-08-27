@@ -242,6 +242,7 @@ function 时刻(ms: number): string {
  */
 export function NotebookPanel({
   sessionKind,
+  remoteLabel,
   kernels,
   cells,
   running,
@@ -251,6 +252,8 @@ export function NotebookPanel({
   onOpenVariables,
 }: {
   sessionKind: string | undefined
+  /** 远端会话时是服务器名。有值就整格说「还没做」——内核只会在本机起，见 `native.ts` 的 `内核工具` */
+  remoteLabel?: string | undefined
   kernels: readonly KernelState[] | undefined
   cells: readonly Cell[]
   running: boolean
@@ -290,6 +293,14 @@ export function NotebookPanel({
     })
   }, [cells])
 
+  if (remoteLabel) {
+    // 远端会话（2026-08-27）：内核只会在本机起，而这段对话的文件在服务器上。说清楚，不画输入框
+    return (
+      <div className="nb">
+        <EmptyState title={tf("远端会话的内核还没做：代码只能在本机起内核，而这段对话的文件在 {0} 上。先用对话里的 bash", remoteLabel)} />
+      </div>
+    )
+  }
   if (sessionKind === "kernel") {
     // 独立内核会话**有**内核——说「没有内核」是假话；它的输出走对话区的 Console，笔记本不管它
     return (

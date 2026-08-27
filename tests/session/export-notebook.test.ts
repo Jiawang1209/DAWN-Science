@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { cells成ipynb, cells成markdown, 笔记本文件名 } from "../../src/session/export-notebook.js"
-import type { Cell } from "../../src/session/notebook-cells.js"
+import type { Cell } from "../../src/protocol/notebook-cells.js"
 import type { TranscriptItem } from "../../src/protocol/index.js"
 
 type 输出 = Extract<TranscriptItem, { type: "kernelOutput" }>

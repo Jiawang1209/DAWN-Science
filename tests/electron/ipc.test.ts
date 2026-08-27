@@ -126,6 +126,7 @@ function backend(): WorkbenchBackend {
     importSubagents: async () => ({ pending: [], conflicts: [], imported: [], skipped: [], failed: [] }),
     deleteSubagent: async () => ({ trashed: true as const }),
     exportSession: async () => ({ path: "/x.md", turns: 0 }),
+    exportNotebook: async () => ({ path: "/x.ipynb", cells: 0 }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

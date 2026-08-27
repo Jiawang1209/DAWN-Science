@@ -1,10 +1,10 @@
 /**
- * 笔记本的 cell 派生（2026-08-26 Task 6；2026-08-27 从 `src/ui/notebook.tsx` 搬来）：
+ * 笔记本的 cell 派生（2026-08-26 Task 6；2026-08-27 从 `src/ui/notebook.tsx` 搬来；坐在 `protocol/` 是因为 UI 只许跨到这一层，而后端也要用）：
  * 把转录里「你自己敲的」与「agent 跑的」代码执行，派生成一叠 cell。
  *
  * **纯函数、不碰 React**——界面的笔记本格与后端的 `exportNotebook`（.ipynb / .md）共用这一份。
  */
-import type { TranscriptItem } from "../protocol/index.js"
+import type { TranscriptItem } from "./index.js"
 
 /** 笔记本能跑的语言。`App.tsx` 也用它——别再抄一份 */
 export type 语言 = "python" | "R"

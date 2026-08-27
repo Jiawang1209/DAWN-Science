@@ -2,7 +2,7 @@
  * 笔记本（Task 6，2026-08-26）：把转录里「你自己敲的」与「agent 跑的」代码执行，
  * 派生成一叠 cell。
  *
- * 纯函数派生（`cells()`）2026-08-27 搬去了 `src/session/notebook-cells.ts`（后端导出 .ipynb 也要用它），
+ * 纯函数派生（`cells()`）2026-08-27 搬去了 `src/protocol/notebook-cells.ts`（后端导出 .ipynb 也要用它），
  * 这里只剩坐在它上面的面板（`NotebookPanel`，Task 7）；`cells` / `Cell` 从这里 re-export，调用点不动。
  */
 import { useEffect, useState, type KeyboardEvent } from "react"
@@ -12,8 +12,8 @@ import { Button, EmptyState } from "./primitives.js"
 import { KernelOutputRow } from "./views.js"
 import { t, tf } from "./i18n/index.js"
 
-export { cells, type Cell, type 语言 } from "../session/notebook-cells.js"
-import type { Cell, 语言 } from "../session/notebook-cells.js"
+export { cells, type Cell, type 语言 } from "../protocol/notebook-cells.js"
+import type { Cell, 语言 } from "../protocol/notebook-cells.js"
 
 // ───────────────────────── 面板（Task 7，spec §5/§6） ─────────────────────────
 

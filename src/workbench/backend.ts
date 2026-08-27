@@ -48,6 +48,9 @@ import { fakeFeishuSdk, realFeishuSdk, type FeishuSdk } from "../channels/feishu
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
 import { 转录成markdown, 导出文件名 } from "../session/export.js"
+import { cells as 转录里的cells } from "../protocol/notebook-cells.js"
+import { cells成ipynb, cells成markdown, 笔记本文件名 } from "../session/export-notebook.js"
+import { 导出目录 } from "./export-dir.js"
 import { ScheduleStore } from "../store/schedules.js"
 import { Scheduler, type 完成 as 定时完成 } from "../schedule/scheduler.js"
 import { 下一次 as 计划下一次, 校验计划 } from "../schedule/recurrence.js"
@@ -656,6 +659,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   /**
    * 远端会话没有内核（2026-08-27）：内核只会在本机起，文件却在服务器上。界面拦了，协议也要拦——两处判据一致。
    */
+  /**
+   * 导出前的三件事（`exportSession` / `exportNotebook` 共用）：会话在、本次运行里有转录、目录按作者定的规则算好并建好。
+   * 目录规则见 `export-dir.ts`：项目会话 → `<项目>/docs/`；普通（临时项目）与远端会话 → 下载路径。
+   */
+  const 备导出 = (sessionId: Parameters<typeof sessions.get>[0], dir: string | undefined) => {
+    const rec = sessions.get(sessionId)
+    if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+    const items = events.peekItems(sessionId)
+    if (items.length === 0) throw fault("invalid_request", "这段对话在本次运行里没有转录可导（重启之前的对话要先点开、让它重新加载）")
+    const 目录 = 导出目录({
+      workspace: rec.workspace,
+      temporary: (rec.projectId ? projectStore.get(rec.projectId)?.temporary : undefined) === true,
+      remote: Boolean(rec.connectionId),
+      downloadDir: settings?.get("download.dir") || 默认下载目录(),
+      dir,
+    })
+    mkdirSync(目录, { recursive: true })
+    return { rec, items, 目录 }
+  }
   const 拒远端 = (sessionId: Parameters<typeof sessions.get>[0]) => {
     if (sessions.get(sessionId)?.connectionId) {
       throw fault("invalid_request", "远端会话还没有内核：代码只能在本机起内核，而这段对话的文件在服务器上")
@@ -3704,17 +3726,23 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     listScheduleRuns: async ({ id, limit }) => ({ runs: 要定时().runs(id, limit).map(运行摘要) }),
 
     exportSession: async ({ sessionId, dir }) => {
-      const rec = sessions.get(sessionId)
-      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
-      const items = events.peekItems(sessionId)
-      if (items.length === 0) throw fault("invalid_request", "这段对话在本次运行里没有转录可导（重启之前的对话要先点开、让它重新加载）")
-      const 目录 = dir ?? (settings?.get("download.dir") || 默认下载目录())
-      mkdirSync(目录, { recursive: true })
+      const { rec, items, 目录 } = 备导出(sessionId, dir)
       const 名 = 导出文件名(rec.title ?? "新对话", rec.id)
       const 路径 = join(目录, 名)
       const 文 = 转录成markdown({ title: rec.title ?? "新对话", agentId: rec.agentId, createdAt: rec.createdAt, workspace: rec.workspace }, items)
       await writeFile(路径, 文, "utf8")
       return { path: 路径, turns: items.filter((x) => x.type === "turn" && x.who === "user").length }
+    },
+
+    /** 笔记本导出（7.28）：cell 从转录派生（与坞里那一格同一份 `cells()`），没有 cell 不写空文件 */
+    exportNotebook: async ({ sessionId, format, dir }) => {
+      const { rec, items, 目录 } = 备导出(sessionId, dir)
+      const cs = 转录里的cells(items)
+      if (cs.length === 0) throw fault("invalid_request", "这段对话还没有 cell，没有东西可导")
+      const 头 = { title: rec.title ?? "新对话", agentId: rec.agentId, createdAt: rec.createdAt, workspace: rec.workspace }
+      const 路径 = join(目录, 笔记本文件名(头.title, rec.id, format))
+      await writeFile(路径, format === "ipynb" ? cells成ipynb(头, cs) : cells成markdown(头, cs), "utf8")
+      return { path: 路径, cells: cs.length }
     },
 
     /* ── 归档（7.18） ── */

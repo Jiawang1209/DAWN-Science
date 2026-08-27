@@ -410,7 +410,7 @@ describe("协议版本 · 5.5", () => {
    *   纯新增可选字段，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.27")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.28")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

@@ -8,7 +8,7 @@
  * - 图内嵌 base64：单文件带走，代价是文件大——作者定的。
  */
 import type { TranscriptItem } from "../protocol/index.js"
-import type { Cell, 语言 } from "./notebook-cells.js"
+import type { Cell, 语言 } from "../protocol/notebook-cells.js"
 import { 导出文件名 } from "./export.js"
 
 export interface 笔记本头 {

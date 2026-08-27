@@ -8,7 +8,7 @@
 import { useEffect, useState, type KeyboardEvent } from "react"
 import { StickToBottom } from "use-stick-to-bottom"
 import type { KernelState } from "../protocol/index.js"
-import { Button, EmptyState } from "./primitives.js"
+import { Button, EmptyState, 导出提示, type 导出提示态 } from "./primitives.js"
 import { KernelOutputRow } from "./views.js"
 import { t, tf } from "./i18n/index.js"
 
@@ -57,6 +57,7 @@ export function NotebookPanel({
   onRun,
   onInterrupt,
   onOpenVariables,
+  onExport,
 }: {
   sessionKind: string | undefined
   /** 远端会话时是服务器名。有值就整格说「还没做」——内核只会在本机起，见 `native.ts` 的 `内核工具` */
@@ -68,6 +69,8 @@ export function NotebookPanel({
   onRun: (language: 语言, code: string) => Promise<void>
   onInterrupt: (language: 语言) => void
   onOpenVariables: () => void
+  /** 导出 .ipynb / .md（2026-08-27）。不给就没有那两颗按钮 */
+  onExport?: ((format: "ipynb" | "md") => Promise<{ path: string; cells: number }>) | undefined
 }) {
   /** 语言缺省跟最近一个**语言已知**的 cell；没有就 Python。只在挂上时算一次 */
   const [language, setLanguage] = useState<语言>(() => {
@@ -82,6 +85,17 @@ export function NotebookPanel({
    * 这一小段里胶囊还写着「运行中」、按钮还在——人会再按一次。内核状态一变就清掉。
    */
   const [中断中, 设中断中] = useState<ReadonlyMap<语言, string | undefined>>(() => new Map())
+  /** 导出的浮出提示（成功带路径、失败红字）；`undefined` = 没在显示 */
+  const [导出说, 设导出说] = useState<导出提示态 | undefined>(undefined)
+  const [导出中, 设导出中] = useState(false)
+  const 导出 = (format: "ipynb" | "md") => {
+    if (!onExport) return
+    设导出中(true)
+    onExport(format)
+      .then((r) => 设导出说((旧) => ({ text: tf("已导出 {0} 个 cell 到 {1}", r.cells, r.path), bad: false, nonce: (旧?.nonce ?? 0) + 1 })))
+      .catch((e: unknown) => 设导出说((旧) => ({ text: tf("导不了：{0}", e instanceof Error ? e.message : String(e)), bad: true, nonce: (旧?.nonce ?? 0) + 1 })))
+      .finally(() => 设导出中(false))
+  }
   const 状态指纹 = kernels?.map((k) => `${k.language}:${k.state}`).join(",") ?? ""
   useEffect(() => {
     设中断中((旧) => (旧.size ? new Map() : 旧))
@@ -178,6 +192,18 @@ export function NotebookPanel({
         <Button size="sm" variant="ghost" className="nb-vars" onClick={onOpenVariables}>
           {t("变量 →")}
         </Button>
+        {onExport && cells.length > 0 ? (
+          /* 导出（2026-08-27，作者要的）：两种格式各一颗；没有 cell 时不画——没东西可导的按钮只会让人点了失望 */
+          <span className="export-anchor nb-export">
+            <Button size="sm" variant="ghost" disabled={导出中} onClick={() => 导出("ipynb")}>
+              {t("导出 .ipynb")}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={导出中} onClick={() => 导出("md")}>
+              {t("导出 .md")}
+            </Button>
+            {导出说 ? <导出提示 {...导出说} onDone={() => 设导出说(undefined)} /> : null}
+          </span>
+        ) : null}
       </div>
 
       {内核重起过 ? <p className="nb-notice">{t("内核已重起，上面 cell 里的变量已经不在了；再跑一次即可")}</p> : null}

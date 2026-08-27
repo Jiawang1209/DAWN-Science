@@ -304,3 +304,41 @@ describe("NotebookPanel · 输入框", () => {
     expect(screen.getByText("会记进对话，agent 下一轮知道")).toBeTruthy()
   })
 })
+
+/**
+ * 导出（2026-08-27，fix-notebook）：两颗按钮只在有 cell 且给了 `onExport` 时才画；
+ * 结果是浮出提示（`role="status"`），成功带路径、失败红边。
+ */
+describe("NotebookPanel · 导出", () => {
+  it("没有 cell → 没有导出按钮；有 cell → 「导出 .ipynb」「导出 .md」两颗", () => {
+    const onExport = vi.fn(async () => ({ path: "/w/docs/x.ipynb", cells: 1 }))
+    const { rerender } = render(<NotebookPanel {...基本} kernels={undefined} cells={[]} onExport={onExport} />)
+    expect(screen.queryByRole("button", { name: "导出 .ipynb" })).toBeNull()
+    rerender(<NotebookPanel {...基本} kernels={undefined} cells={[cell()]} onExport={onExport} />)
+    expect(screen.getByRole("button", { name: "导出 .ipynb" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "导出 .md" })).toBeTruthy()
+  })
+
+  it("点「导出 .md」→ onExport('md')；成功后浮出「已导出 N 个 cell 到 路径」", async () => {
+    const onExport = vi.fn(async () => ({ path: "/w/docs/笔记本-x.md", cells: 3 }))
+    render(<NotebookPanel {...基本} kernels={undefined} cells={[cell()]} onExport={onExport} />)
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "导出 .md" }))
+    })
+    expect(onExport).toHaveBeenCalledWith("md")
+    const 提示 = await screen.findByRole("status")
+    expect(提示.textContent).toBe("已导出 3 个 cell 到 /w/docs/笔记本-x.md")
+    expect(提示.className).not.toContain("bad")
+  })
+
+  it("失败 → 红边提示「导不了：…」", async () => {
+    const onExport = vi.fn(async () => { throw new Error("EACCES") })
+    render(<NotebookPanel {...基本} kernels={undefined} cells={[cell()]} onExport={onExport} />)
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "导出 .ipynb" }))
+    })
+    const 提示 = await screen.findByRole("status")
+    expect(提示.textContent).toBe("导不了：EACCES")
+    expect(提示.className).toContain("bad")
+  })
+})

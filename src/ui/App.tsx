@@ -4469,6 +4469,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   })
                 }}
                 onOpenVariables={() => setRightDockTenant("overview")}
+                onExport={(format: "ipynb" | "md") => {
+                  if (!sessionId) return Promise.reject(new Error("没有会话，导不了"))
+                  return client.get<{ path: string; cells: number }>("exportNotebook", { sessionId, format })
+                }}
               />
             ) : rightDockTenant === "web" ? (
               /**

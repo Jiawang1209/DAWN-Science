@@ -24,7 +24,7 @@ import {
 import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
-import { Button, EmptyState, Loader, Row } from "./primitives.js"
+import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
 import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
@@ -4166,7 +4166,7 @@ export function ConversationView({
    */
   const 有东西要发 = draft.trim().length > 0 || 待发图.length > 0
   const [导出中, 设导出中] = useState(false)
-  const [导出说, 设导出说] = useState<string | undefined>(undefined)
+  const [导出说, 设导出说] = useState<导出提示态 | undefined>(undefined)
 
   /**
    * **模型与推理强度从会话开关里挑出来，钉到顶行**（2026-08-27，作者 #3/#4）。
@@ -4228,23 +4228,28 @@ export function ConversationView({
          * **一个口径不明的合计，比没有合计更容易让人算错账。**
          */}
         {onExport && items.some((x) => x.type === "turn") ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="conv-export"
-            disabled={导出中}
-            onClick={() => {
-              设导出中(true)
-              onExport()
-                .then((r) => 设导出说(tf("已导出 {0} 轮到 {1}", r.turns, r.path)))
-                .catch((e: unknown) => 设导出说(tf("导不了：{0}", e instanceof Error ? e.message : String(e))))
-                .finally(() => 设导出中(false))
-            }}
-          >
-            {t("导出对话")}
-          </Button>
+          /* 浮出提示锚在按钮上（2026-08-27）：此前是一个 span 钉在按钮后面，作者要它浮出来、显示一会儿再淡去 */
+          <span className="export-anchor">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="conv-export"
+              disabled={导出中}
+              onClick={() => {
+                设导出中(true)
+                onExport()
+                  .then((r) => 设导出说((旧) => ({ text: tf("已导出 {0} 轮到 {1}", r.turns, r.path), bad: false, nonce: (旧?.nonce ?? 0) + 1 })))
+                  .catch((e: unknown) =>
+                    设导出说((旧) => ({ text: tf("导不了：{0}", e instanceof Error ? e.message : String(e)), bad: true, nonce: (旧?.nonce ?? 0) + 1 })),
+                  )
+                  .finally(() => 设导出中(false))
+              }}
+            >
+              {t("导出对话")}
+            </Button>
+            {导出说 ? <导出提示 {...导出说} onDone={() => 设导出说(undefined)} /> : null}
+          </span>
         ) : null}
-        {导出说 ? <span className="hint conv-export-note">{导出说}</span> : null}
         {/**
          * **这段对话的手在哪台机器的哪个目录**（②-B · R4′）。
          *

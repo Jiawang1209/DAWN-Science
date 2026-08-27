@@ -254,3 +254,26 @@ export function Field({
     </div>
   )
 }
+
+/**
+ * 导出结果的浮出提示（2026-08-27，作者定的：别钉在按钮后面，浮出来、停一会儿、淡去）。
+ *
+ * 形态沿用 `.copied-toast`（复制按钮那颗），只是允许换行、宽一些——它要放得下一条路径。
+ * 动画结束（`onAnimationEnd`）由外面卸载；`nonce` 变一次就重挂、重播——连点两次不会「第二次没反应」。
+ * **失败也要出声**：`bad` 红边，停得更久（8 s），路径错了得看得清。
+ * 读屏走 `role="status"`——它不是装饰，是这次操作唯一的结果。
+ */
+export function 导出提示({ text, bad, nonce, onDone }: { text: string; bad?: boolean; nonce: number; onDone: () => void }) {
+  return (
+    <span key={nonce} className={`export-toast${bad ? " bad" : ""}`} role="status" onAnimationEnd={onDone}>
+      {text}
+    </span>
+  )
+}
+
+/** `导出提示` 的状态：文字 + 好坏 + 让动画重播的计数。`undefined` = 没在显示 */
+export interface 导出提示态 {
+  text: string
+  bad: boolean
+  nonce: number
+}

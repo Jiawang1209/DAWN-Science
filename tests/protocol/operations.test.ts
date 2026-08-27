@@ -91,6 +91,7 @@ describe("操作注册表", () => {
         "deleteSubagent",
         "exportSession",
         "exportNotebook",
+        "probeInterpreters",
         "getAtFileSettings",
         "setAtFileSettings",
         "updateSchedule",

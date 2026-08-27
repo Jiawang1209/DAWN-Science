@@ -174,6 +174,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     deleteSubagent: async () => ({ trashed: true as const }),
     exportSession: async () => ({ path: "/x.md", turns: 0 }),
     exportNotebook: async () => ({ path: "/x.ipynb", cells: 0 }),
+    probeInterpreters: async () => ({ python: [], r: [] }),
 
     testMcpServer: async () => ({ ok: false, error: "替身不连真服务器", tools: [] }),
     setMcpFlag: async () => ({ ok: true as const }),

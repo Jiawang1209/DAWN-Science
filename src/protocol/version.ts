@@ -500,8 +500,10 @@
  *
  * 7.28（2026-08-27）：`exportNotebook`——笔记本导成 `.ipynb` / `.md`；`exportSession` 的落点改为
  *   项目会话 → `<项目>/docs/`（契约没变，只是目录规则）。纯新增。
+ *
+ * 7.29（2026-08-27）：`probeInterpreters`——首启向导列本机 Python / R 候选。只读、纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.28"
+export const WORKBENCH_PROTOCOL_VERSION = "7.29"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

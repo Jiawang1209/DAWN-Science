@@ -200,6 +200,18 @@ export interface OperationDef {
 /** 非负整数。与 entities.ts 里那个同一个意思——token 计数一律走它 */
 const NonNegInt = z.int().min(0)
 
+/** 首启向导：一条本机解释器候选（7.29）。`problem` 只在起不来时有；超时写「8 秒没应答」 */
+export const InterpreterCandidateSchema = z
+  .object({
+    path: z.string().min(1),
+    source: z.enum(["settings", "PATH", "kernelspec", "common"]),
+    version: z.string().optional(),
+    kernelPackage: z.enum(["present", "missing", "unknown"]),
+    problem: z.string().optional(),
+  })
+  .strict()
+export type InterpreterCandidate = z.infer<typeof InterpreterCandidateSchema>
+
 export const OPERATIONS = {
   // ── 只读 ──
   getCapabilities: {
@@ -1911,6 +1923,21 @@ export const OPERATIONS = {
       .object({
         python: z.string().optional(),
         r: z.string().optional(),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
+   * 探测本机的 Python / R 解释器（首启向导，7.29）。只读、不存：每次点「检测」重探。
+   * 候选来自设置 / kernelspec / PATH / 常见目录，每个真起一次拿版本与内核包在不在（`src/kernel/probe.ts`）。
+   */
+  probeInterpreters: {
+    request: Empty,
+    response: z
+      .object({
+        python: z.array(InterpreterCandidateSchema),
+        r: z.array(InterpreterCandidateSchema),
       })
       .strict(),
     mutating: false,

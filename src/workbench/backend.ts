@@ -21,6 +21,7 @@ import {
 } from "../config/writer.js"
 import { 描述图片 } from "../runtime/vision.js"
 import { homedir } from "node:os"
+import { execFile, execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
@@ -51,6 +52,7 @@ import { 转录成markdown, 导出文件名 } from "../session/export.js"
 import { cells as 转录里的cells } from "../protocol/notebook-cells.js"
 import { cells成ipynb, cells成markdown, 笔记本文件名 } from "../session/export-notebook.js"
 import { 导出目录 } from "./export-dir.js"
+import { 探测解释器, 超时毫秒, type 枚举依赖, type 执行 } from "../kernel/probe.js"
 import { ScheduleStore } from "../store/schedules.js"
 import { Scheduler, type 完成 as 定时完成 } from "../schedule/scheduler.js"
 import { 下一次 as 计划下一次, 校验计划 } from "../schedule/recurrence.js"
@@ -92,7 +94,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
-import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync, lstatSync } from "node:fs"
+import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync, lstatSync, globSync } from "node:fs"
 
 /** 产物存不存在（`listArtifacts`）。本机 `lstat`——查不到就是不在，不抛错 */
 function 文件仍在(p: string): boolean {
@@ -656,6 +658,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 那类东西会坏在别人机器上（ACP 那条 `launch.ts` 刚栽过同一类）。
    */
   const 默认下载目录 = () => opts.downloadsDir ?? join(homedir(), "Downloads")
+  /** PATH 上所有同名可执行文件。POSIX 走登录 shell 的 `which -a`（拿用户终端里那套 PATH）；Windows `where` */
+  const 查PATH = (name: string): string[] => {
+    if (!/^[A-Za-z0-9_.-]+$/.test(name)) return []
+    try {
+      const out =
+        process.platform === "win32"
+          ? execFileSync("where", [name], { encoding: "utf8", timeout: 5_000, stdio: ["ignore", "pipe", "ignore"] })
+          : execFileSync("bash", ["-lc", `which -a ${name} 2>/dev/null || true`], { encoding: "utf8", timeout: 10_000, stdio: ["ignore", "pipe", "ignore"] })
+      return out.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && (l.startsWith("/") || /^[A-Za-z]:\\/.test(l)))
+    } catch {
+      return []
+    }
+  }
   /**
    * 远端会话没有内核（2026-08-27）：内核只会在本机起，文件却在服务器上。界面拦了，协议也要拦——两处判据一致。
    */
@@ -3388,6 +3403,41 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     getInterpreters: async () => settings?.interpreters() ?? {},
+
+    /**
+     * 探测本机解释器（首启向导，7.29）。PATH 查找走**登录 shell**（`bash -lc which -a`）——
+     * GUI 里起来的 Electron 拿到的 PATH 常常不是用户终端里那套（`src/env/probe.ts` 同一条理由）；Windows 用 `where`。
+     * 每个候选起一次、8 秒超时；起不来的如实列出 `problem`，不静默少一条。
+     */
+    probeInterpreters: async () => {
+      const 现有 = settings?.interpreters() ?? {}
+      const specs = discoverKernelSpecs().specs
+      const d: 枚举依赖 = {
+        platform: process.platform,
+        home: homedir(),
+        exists: existsSync,
+        glob: (pattern) => {
+          try {
+            return globSync(pattern)
+          } catch {
+            return []
+          }
+        },
+        pathLookup: (name) => 查PATH(name),
+        settings: 现有,
+        kernelspecs: specs,
+      }
+      const run: 执行 = (cmd, args) =>
+        new Promise((resolve) => {
+          execFile(cmd, args, { timeout: 超时毫秒, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+            const e = err as (Error & { code?: number | string; killed?: boolean; signal?: string }) | null
+            if (e && (e.killed || e.signal === "SIGTERM")) resolve({ code: null, stdout: String(stdout), stderr: String(stderr), timedOut: true })
+            else resolve({ code: e ? (typeof e.code === "number" ? e.code : null) : 0, stdout: String(stdout), stderr: e && typeof e.code !== "number" ? `${e.message}\n${stderr}` : String(stderr) })
+          })
+        })
+      const [python, r] = await Promise.all([探测解释器("python", d, run), 探测解释器("R", d, run)])
+      return { python, r }
+    },
 
     setInterpreter: async ({ language, path }) => {
       if (!settings) throw fault("internal_error", "本次运行没有装配设置存储")

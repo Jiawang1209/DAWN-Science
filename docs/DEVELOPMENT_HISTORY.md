@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-27 — 补 LICENSE 文件（AGPL-3.0 原文）
+
+- **Type**: chore
+- **Motivation**: `package.json` 与 README「许可」一节都说是 AGPL-3.0-or-later，README 还链接到 `LICENSE`——但那个文件从没存在过。仓库公开后没有 LICENSE 文件在法律上等于「保留所有权利」，与声明自相矛盾。作者确认保留 AGPL。
+- **What**: 从 gnu.org 取 AGPL-3.0 原文放到仓库根目录 `LICENSE`，一字不改。
+- **Impact**: 无代码影响；GitHub 会识别为 AGPL-3.0。
+- **Verification**: 661 行，首尾与官方文本一致。
+
 ### 2026-08-27 — 仓库里的真实服务器地址与账号换成占位（为上 GitHub 做准备）
 
 - **Type**: chore

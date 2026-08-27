@@ -6,7 +6,8 @@
  * 在工具结果里看不到图）、而**不说清楚图去哪了，模型会以为没画出来反复重画**。
  */
 import { describe, expect, it } from "vitest"
-import { createRunCodeTool, 摘要 } from "../../src/tools/run-code.js"
+import { readFileSync } from "node:fs"
+import { createRunCodeTool, 内核指引, 摘要 } from "../../src/tools/run-code.js"
 import { 对话内核 } from "../../src/kernel/挂载.js"
 import type { SessionId } from "../../src/runtime/types.js"
 
@@ -148,5 +149,31 @@ describe("run_code · 工具本身", () => {
       "code",
       "language",
     ])
+  })
+})
+
+/**
+ * 「笔记本」就是 `run_code`（2026-08-27，fix-notebook）。
+ *
+ * 作者 `tmp_20260819` 那段项目会话：agent 一直 write 脚本再 bash 跑，作者说「在笔记本里面显示一下」，
+ * 它去 pip install nbformat 了——**它不知道笔记本指的是坞里那一格**。这两段文字锁住引导。
+ */
+describe("提示词：笔记本就是 run_code", () => {
+  it("工具描述告诉模型「笔记本」= 这个工具，别去装 jupyter", () => {
+    const tool = 挂上([])
+    expect(tool.description).toContain("笔记本")
+    expect(tool.description).toContain("不要去装 jupyter")
+    expect(tool.description).toContain(".ipynb")
+  })
+
+  it("系统提示那句：探索用 run_code，只有要可复用文件才写 analysis/scripts/", () => {
+    expect(内核指引).toContain("run_code")
+    expect(内核指引).toContain("analysis/scripts/")
+    expect(内核指引).toContain("笔记本")
+  })
+
+  it("native 运行时只在装配给了 kernels 时才追加这句（源码扫描——装配整份运行时太重）", () => {
+    const src = readFileSync(new URL("../../src/runtime/native.ts", import.meta.url), "utf8")
+    expect(src).toContain("this.opts.kernels ? [内核指引] : []")
   })
 })

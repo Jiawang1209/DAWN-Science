@@ -95,6 +95,17 @@ export function 摘要(输出: readonly unknown[]): { 文字: string; 出错了:
   }
 }
 
+/**
+ * 追加进系统提示的那一句（只在装配给了 `kernels` 时，见 `native.ts` 的 `appendSystemPromptOverride`）。
+ *
+ * **为什么不写进项目的 `AGENTS.md`**：那段「脚本与 notebook → analysis/scripts/」是作者原话、
+ * 初始化时写进每个项目，改它管不到已有的项目；而正是那段把项目会话的 agent 引向了写脚本——
+ * 2026-08-27 翻作者 `tmp_20260819` 的转录：五次 bash、一次 write，直到作者自己在笔记本里敲了一格。
+ */
+export const 内核指引 =
+  "探索、看数据、画图、验证一段逻辑：用 run_code（内核活着，变量保留，用户在右侧的笔记本面板里看得见）。" +
+  "只有用户明确要一个可复用的文件时才把脚本写到 analysis/scripts/——写完也可以在 run_code 里跑一遍给用户看。"
+
 export function createRunCodeTool(opts: {
   /** 这一轮属于哪个对话。**由调用方绑死**，不让模型自己指定 */
   对话: SessionId
@@ -107,7 +118,10 @@ export function createRunCodeTool(opts: {
       "在这段对话自己的内核里跑一段 Python 或 R 代码。**内核是活的**：" +
       "上一次读进来的 DataFrame、拟合好的模型都还在，下一次可以直接用——" +
       "所以做数据分析用这个，不要用 bash 每次重跑一遍。" +
-      "两门语言可以同时挂着，各有各的变量。图会显示在对话里。",
+      "两门语言可以同时挂着，各有各的变量。图会显示在对话里。" +
+      // 2026-08-27（fix-notebook）：作者的项目会话里 agent 把「在笔记本里显示」理解成了装 jupyter
+      "用户说的「笔记本」「notebook」「在笔记本里跑/显示」指的就是这个工具——" +
+      "代码和输出会显示在界面右侧的笔记本面板里。不要去装 jupyter / nbformat，也不要生成 .ipynb 文件来代替。",
     parameters,
 
     async execute(_toolCallId: string, params: Params): Promise<ToolResult> {

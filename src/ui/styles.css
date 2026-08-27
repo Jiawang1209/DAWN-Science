@@ -5808,8 +5808,42 @@ pre {
   background: var(--dawn-accent);
   margin-right: var(--dawn-space-1);
 }
-.conv-export-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 28rem; }
 .conv-export { flex: none; }
+
+/**
+ * 导出结果的浮出提示（2026-08-27）：锚在按钮上、往上浮、停一会儿、淡去。
+ * 形态沿用 `.copied-toast`，差别是允许换行（放得下一条路径）、时长更长（路径得看得清）。
+ * 动画一结束组件就卸载（`onAnimationEnd`）——淡完正好消失，不留一个看不见的 DOM。
+ */
+.export-anchor { position: relative; display: inline-flex; align-items: center; gap: var(--dawn-space-1); flex: none; }
+.export-toast {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: var(--z-inline-toast);
+  margin-top: var(--dawn-space-1);
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  min-width: 16rem;
+  max-width: 32rem;
+  border: 1px solid var(--dawn-success);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-elevated);
+  color: var(--dawn-text-1);
+  font-size: var(--dawn-ui-size);
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  animation: export-fade 4.5s ease-out forwards;
+}
+.export-toast.bad { border-color: var(--dawn-danger); animation-duration: 8.5s; }
+@keyframes export-fade {
+  0% { opacity: 0; transform: translateY(-4px); }
+  6% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.nb-export { margin-left: auto; }
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
 .recent-list { margin-bottom: var(--dawn-space-2); }
 

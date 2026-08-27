@@ -114,6 +114,11 @@ describe("NotebookPanel · 空态与提示条", () => {
     expect(screen.queryByText("这段对话还没有内核")).toBeNull()
   })
 
+  it("只有起失败的 error cell（没输出）、没内核 → **不**说「内核已重起」：它压根没起过（2026-08-27 探针抓到的）", () => {
+    render(<NotebookPanel {...基本} kernels={undefined} cells={[{ ...cell(), status: "error", outputs: [] }]} />)
+    expect(screen.queryByText(/内核已重起/)).toBeNull()
+  })
+
   it("有 cell 且内核全退出 → 同样提示；还有一台活着就不提", () => {
     const { rerender } = render(
       <NotebookPanel {...基本} kernels={[{ language: "python", state: "exited" }]} cells={[cell()]} />,
@@ -138,6 +143,13 @@ describe("NotebookPanel · 空态与提示条", () => {
     rerender(<NotebookPanel {...基本} kernels={[]} cells={[cell()]} />)
     expect(screen.getByText(/内核已重起/)).toBeTruthy()
     expect(screen.queryByText("这段对话还没有内核")).toBeNull()
+  })
+
+  it("远端会话 → 整格一句「远端会话的内核还没做」，带服务器名，不画输入框（2026-08-27）", () => {
+    // 内核只会在本机起（spawnteract + ZMQ），远端会话的文件在服务器上——给它笔记本等于让代码在错误的机器上跑
+    render(<NotebookPanel {...基本} sessionKind="native" remoteLabel="gs191" kernels={undefined} cells={[cell()]} />)
+    expect(screen.getByText(/远端会话的内核还没做/).textContent).toContain("gs191")
+    expect(screen.queryByRole("textbox")).toBeNull()
   })
 
   it("非 native 会话 → 整格一句「这种会话没有内核，笔记本不可用」，不画输入框", () => {
@@ -295,5 +307,43 @@ describe("NotebookPanel · 输入框", () => {
   it("常驻小字「会记进对话，agent 下一轮知道」", () => {
     render(<NotebookPanel {...基本} kernels={[]} cells={[]} />)
     expect(screen.getByText("会记进对话，agent 下一轮知道")).toBeTruthy()
+  })
+})
+
+/**
+ * 导出（2026-08-27，fix-notebook）：两颗按钮只在有 cell 且给了 `onExport` 时才画；
+ * 结果是浮出提示（`role="status"`），成功带路径、失败红边。
+ */
+describe("NotebookPanel · 导出", () => {
+  it("没有 cell → 没有导出按钮；有 cell → 「导出 .ipynb」「导出 .md」两颗", () => {
+    const onExport = vi.fn(async () => ({ path: "/w/docs/x.ipynb", cells: 1 }))
+    const { rerender } = render(<NotebookPanel {...基本} kernels={undefined} cells={[]} onExport={onExport} />)
+    expect(screen.queryByRole("button", { name: "导出 .ipynb" })).toBeNull()
+    rerender(<NotebookPanel {...基本} kernels={undefined} cells={[cell()]} onExport={onExport} />)
+    expect(screen.getByRole("button", { name: "导出 .ipynb" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "导出 .md" })).toBeTruthy()
+  })
+
+  it("点「导出 .md」→ onExport('md')；成功后浮出「已导出 N 个 cell 到 路径」", async () => {
+    const onExport = vi.fn(async () => ({ path: "/w/docs/笔记本-x.md", cells: 3 }))
+    render(<NotebookPanel {...基本} kernels={undefined} cells={[cell()]} onExport={onExport} />)
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "导出 .md" }))
+    })
+    expect(onExport).toHaveBeenCalledWith("md")
+    const 提示 = await screen.findByRole("status")
+    expect(提示.textContent).toBe("已导出 3 个 cell 到 /w/docs/笔记本-x.md")
+    expect(提示.className).not.toContain("bad")
+  })
+
+  it("失败 → 红边提示「导不了：…」", async () => {
+    const onExport = vi.fn(async () => { throw new Error("EACCES") })
+    render(<NotebookPanel {...基本} kernels={undefined} cells={[cell()]} onExport={onExport} />)
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "导出 .ipynb" }))
+    })
+    const 提示 = await screen.findByRole("status")
+    expect(提示.textContent).toBe("导不了：EACCES")
+    expect(提示.className).toContain("bad")
   })
 })

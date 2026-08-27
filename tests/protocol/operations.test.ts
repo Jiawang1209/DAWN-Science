@@ -90,6 +90,7 @@ describe("操作注册表", () => {
         "importSubagents",
         "deleteSubagent",
         "exportSession",
+        "exportNotebook",
         "getAtFileSettings",
         "setAtFileSettings",
         "updateSchedule",

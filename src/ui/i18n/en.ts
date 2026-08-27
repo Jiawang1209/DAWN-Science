@@ -1299,6 +1299,7 @@ export const EN: Readonly<Record<string, string>> = {
   // 笔记本面板（Task 7，2026-08-26）
   "这段对话还没有内核": "This chat has no kernel yet",
   "这种会话没有内核，笔记本不可用": "This kind of session has no kernel; the notebook is unavailable",
+  "远端会话的内核还没做：代码只能在本机起内核，而这段对话的文件在 {0} 上。先用对话里的 bash": "Remote sessions have no kernel yet: kernels only start on this machine, but this conversation's files live on {0}. Use bash in the conversation for now",
   "独立内核会话的输出就在对话区的 Console 里；笔记本只管普通对话": "A standalone kernel session shows its output in the chat's Console; the notebook is only for regular chats",
   "正在中断…": "interrupting…",
   "（已中断）": "(interrupted)",
@@ -1311,6 +1312,9 @@ export const EN: Readonly<Record<string, string>> = {
   "在 {0} 内核里跑一句…（⌘↩ 运行）": "Run a line in the {0} kernel… (⌘↩ to run)",
   "会记进对话，agent 下一轮知道": "Recorded in the chat; the agent sees it next turn",
   "变量 →": "Variables →",
+  "导出 .ipynb": "Export .ipynb",
+  "导出 .md": "Export .md",
+  "已导出 {0} 个 cell 到 {1}": "Exported {0} cells to {1}",
   "agent": "agent",
   "语言未知": "language unknown",
   "（未记录代码）": "(code not recorded)",

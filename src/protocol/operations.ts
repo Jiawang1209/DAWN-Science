@@ -2498,6 +2498,17 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  /**
+   * 把笔记本（转录里派生的 cell：agent 的 `run_code` + 你敲的 `cell`，含输出）导成 `.ipynb` 或 `.md`（7.28）。
+   * 目录规则与 `exportSession` 同一条（`export-dir.ts`）：项目会话 → `<项目>/docs/`，普通会话 → 下载路径。
+   * 没有 cell → `invalid_request`，不写空文件。
+   */
+  exportNotebook: {
+    request: z.object({ sessionId: z.string().min(1), format: z.enum(["ipynb", "md"]), dir: z.string().min(1).optional() }).strict(),
+    response: z.object({ path: z.string().min(1), cells: z.int().min(0) }).strict(),
+    mutating: true,
+  },
+
   /* ── 归档（7.18，session-archive，学自 dsh-archive-manager）：藏，不是删 ── */
 
   /** 归档 / 取消归档。记账位不动——取消归档回原来的位置。运行中的会话照样可以归档（只是从侧栏藏起来） */

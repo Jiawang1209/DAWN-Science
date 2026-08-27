@@ -29,6 +29,18 @@ export interface Memory依赖 {
   skillsDir: string
 }
 
+/**
+ * 追加进系统提示的那一句（只在 `skill_propose` 装上了时，见 `native.ts` 的 `appendSystemPromptOverride`）。
+ *
+ * **为什么要这一句**（2026-08-27，作者点的）：`skill_propose` 上线两天，模型一次都没主动用过——工具描述只说
+ * 「能做什么」，没说「什么时候做」。Hermes 的差别不在能力，在它每次收尾都在对话里问一句。
+ * 纪律：**问了再提**——不问就提，待确认队列里会堆一堆用户没想要的技能。
+ */
+export const 技能沉淀指引 =
+  "当你在这段对话里完成了一套可复用的多步流程（同类任务下次还会再做的，比如读数据→清洗→画图→出表），" +
+  "收尾时用一句话问用户：要不要把这套流程沉淀成技能？用户说要，再调 skill_propose 写成完整 SKILL.md；不要不问就提。" +
+  "一次性的小事（改一行、查一个值）不问。"
+
 export function memory工具定义(
   workspace: string,
   deps: Memory依赖,

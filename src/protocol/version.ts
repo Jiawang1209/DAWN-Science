@@ -497,8 +497,11 @@
 /**
  * 7.27（2026-08-26）：`cell` 项加可选 `interrupted: true`——按「中断」停下的那段，面板要标「（已中断）」，
  *   而不是让它与普通报错长得一样。纯新增可选字段，故 minor（与 2.7 同一条）。
+ *
+ * 7.28（2026-08-27）：`exportNotebook`——笔记本导成 `.ipynb` / `.md`；`exportSession` 的落点改为
+ *   项目会话 → `<项目>/docs/`（契约没变，只是目录规则）。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.27"
+export const WORKBENCH_PROTOCOL_VERSION = "7.28"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

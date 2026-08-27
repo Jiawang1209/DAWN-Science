@@ -6,7 +6,7 @@
  * 上下键挪、回车选、Esc 关；选了技能把草稿换成 `/skill:名 `，选了子 agent 换成「用子 agent「名」来做：」。
  * **选什么就写什么进草稿**，不替人发——他还要写任务。
  */
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import type { SlashItem } from "./state/view.js"
@@ -32,6 +32,21 @@ export function 筛斜杠(items: readonly SlashItem[], draft: string): SlashItem
   return items.filter((x) => `${x.name} ${x.title ?? ""} ${x.description} ${x.group ?? ""}`.toLowerCase().includes(q))
 }
 
+/**
+ * 键盘选中的那项要跟着滚进可视区（2026-08-27，作者报的：上下键超过界限就不动了，得用鼠标）。
+ *
+ * 只在 `selected` 变了时滚，`block: "nearest"` 不把列表甩来甩去。`@` 菜单同用。
+ * jsdom 没有 `scrollIntoView`，所以要判一下——测试里 spy 到原型上。
+ */
+export function 用选中项跟滚(selected: number) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]')
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "nearest" })
+  }, [selected])
+  return ref
+}
+
 export function SlashMenu({
   items,
   draft,
@@ -47,8 +62,7 @@ export function SlashMenu({
   onHover: (i: number) => void
 }) {
   const 列 = useMemo(() => 筛斜杠(items, draft), [items, draft])
-  const [, 重画] = useState(0)
-  useEffect(() => 重画((n) => n + 1), [selected])
+  const ref = 用选中项跟滚(selected)
   if (列.length === 0) {
     return (
       <div className="slash-menu" role="listbox" aria-label={t("技能与子 agent")}>
@@ -57,7 +71,7 @@ export function SlashMenu({
     )
   }
   return (
-    <div className="slash-menu" role="listbox" aria-label={t("技能与子 agent")}>
+    <div ref={ref} className="slash-menu" role="listbox" aria-label={t("技能与子 agent")}>
       {列.map((x, i) => (
         <Button
           key={`${x.kind}:${x.name}`}
@@ -66,7 +80,8 @@ export function SlashMenu({
           role="option"
           aria-selected={i === selected}
           className={`slash-item${i === selected ? " active" : ""}`}
-          onMouseEnter={() => onHover(i)}
+          // **mousemove 不是 mouseenter**：键盘滚动让鼠标底下换了一项时 mouseenter 也会触发，高亮就被抢回去了——那正是「得用鼠标辅助」的另一半
+          onMouseMove={() => { if (i !== selected) onHover(i) }}
           onClick={() => onPick(x)}
         >
           <span className="slash-kind tag">{x.kind === "skill" ? t("技能") : x.kind === "team" ? t("团队") : t("子 agent")}</span>

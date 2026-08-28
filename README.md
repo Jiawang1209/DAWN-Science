@@ -206,9 +206,6 @@ These projects were studied during design. **Except `pi`, which is a dependency,
 |---|---|
 | [pi](https://github.com/earendil-works/pi) | agent loop and provider layer (used as a dependency) |
 | [Buzz](https://github.com/block/buzz) | process-group termination, context-recovery ladder, unified event stream, dual-protocol decoupling |
-| [Rho](https://github.com/xuzhougeng/Rho) | Ark + Jupyter protocol route, protocol layering between front-end and transport |
-| [wisp-science](https://github.com/xuzhougeng/wisp-science) | runtimes, run management, capability grants, worktree isolation |
-| [wispterm](https://github.com/xuzhougeng/wispterm) | terminal input leases, split-pane interaction |
 | [pi-crew](https://github.com/baphuongna/pi-crew) | GreenLevel grading, verification-environment hygiene, worktree practice |
 | [ccb](https://github.com/SeemSeam/claude_codex_bridge) | provider adapter contract, completion contract |
 | hive | team panel interaction (visual reference only) |
@@ -228,7 +225,7 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 ```
 
-**Why AGPL**: this is an open-source tool for research, and we want improved versions to stay open for everyone — including versions offered as a network service. Peers such as [wisp-science](https://github.com/xuzhougeng/wisp-science) and [ccb](https://github.com/SeemSeam/claude_codex_bridge) chose AGPL too.
+**Why AGPL**: this is an open-source tool for research, and we want improved versions to stay open for everyone — including versions offered as a network service. 
 
 Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 

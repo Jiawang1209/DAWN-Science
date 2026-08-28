@@ -99,7 +99,7 @@ const 隐藏窗口 = process.env.DAWN_HIDE_WINDOW === "1"
  *
  * 一个桌面应用打不开时，用户能给的全部信息就是「没反应」。要让这句话变成证据，
  * 应用得在窗口出现之前就留下脚印：文件在 userData 下的 `startup.log`
- * （mac `~/Library/Application Support/DAWN Science/`、Windows `%APPDATA%\DAWN Science\`、Linux `~/.config/DAWN Science/`）。
+ * （mac `~/Library/Application Support/dawn-science/`、Windows `%APPDATA%\dawn-science\`、Linux `~/.config/dawn-science/`）。
  * 写不进去就算了——日志绝不能成为新的打不开的理由。
  */
 const 启动日志路径 = join(app.getPath("userData"), "startup.log")

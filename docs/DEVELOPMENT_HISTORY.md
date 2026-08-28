@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — 仓库上 GitHub：homepage 填真、CI 改成打 tag 自动出 Release 草稿、加 Linux arm64
+
+- **Type**: chore
+- **Motivation**: 仓库推到 `github.com/Jiawang1209/DAWN-Science`。目标是 wisp-science 那样的 Release 页：三平台安装包挂在一个版本下，用户自己下载。
+- **What**: ① `package.json` `homepage` 从占位换成仓库地址（`.deb` 要用）。② `release.yml`：矩阵从三台改四台（mac / win / linux-x64 / linux-arm64，Linux 两种架构各在各的 runner 上打——node-pty 只能现场编本机架构），Linux runner 先装 `build-essential python3 libfuse2`；打 `v*` 标签时多一个 `release` job 把四份产物汇成一个 **Release 草稿**（`softprops/action-gh-release`，人看一眼再发）；手动触发只出 artifacts，artifacts 保留 7 天（私仓存储额度 500 MB，一次产物 ~1 GB）。③ 打包文档与 `electron-builder.yml` 注释对齐。
+- **Impact**: 首个 `v0.0.1` 用本机产物手发；从 `v0.0.2` 起走 CI。Windows 版由此第一次在真 Windows 上构建。
+- **Verification**: yaml 能解析；CI 本身还没跑过——第一次打 tag 就是验证，预期要修一两轮。
+
 ### 2026-08-28 — README 重写：从「设计阶段、尚无代码」改成现在的样子
 
 - **Type**: docs

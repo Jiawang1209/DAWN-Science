@@ -48,7 +48,8 @@ nsis:
   allowToChangeInstallationDirectory: true
   perMachine: false
 # Linux 只能在 Linux 上打：node-pty 的 npm 包不带 linux 预编译件（`npm ci` 时现场编译，要 build-essential + python3）；
-# 从 mac 交叉出来的 AppImage 终端会哑。`.deb` 还要求 package.json 有 homepage（现在是占位，发布前换真的）。
+# 从 mac 交叉出来的 AppImage 终端会哑。x64 与 arm64 各在各的 runner 上打（CI 用 --x64 / --arm64 选），
+# 因为 node-pty 只能编出本机那一种架构。`.deb` 要求 package.json 有 homepage（已填仓库地址）。
 linux:
   category: Science
   maintainer: DAWN Science

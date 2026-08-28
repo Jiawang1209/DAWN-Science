@@ -1,5 +1,7 @@
-# 三平台打包矩阵（打包 spec §8）。仓库现在没有 remote——推上 GitHub 后就能用。
-# 触发：打 tag `v*`，或手动。产物挂在 Actions 的 artifacts 上（不自动发 release，没有签名之前不该自动发）。
+# 三平台四份打包矩阵（打包 spec §8）。
+# 触发：打 tag `v*` 自动打包并发 GitHub Release（草稿，人看一眼再点发布）；手动触发只出 artifacts 不发。
+# 不签名（作者定的：先不花那 99 美元，用户右键打开）；有证书时在 electron-builder.yml 删 identity: null 并设 CSC_* secrets。
+# Linux 两种架构各在各自的 runner 上打——node-pty 没有 linux 预编译件，只能现场编本机那一种。
 name: package
 on:
   push:
@@ -11,21 +13,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: macos-14, script: dist:mac }
-          - { os: ubuntu-22.04, script: dist:linux }
-          - { os: windows-2022, script: dist:win }
+          - { os: macos-14, name: mac, cmd: "npx electron-builder --mac --publish never" }
+          - { os: windows-2022, name: win, cmd: "npx electron-builder --win --publish never" }
+          - { os: ubuntu-22.04, name: linux-x64, cmd: "npx electron-builder --linux --x64 --publish never" }
+          - { os: ubuntu-22.04-arm, name: linux-arm64, cmd: "npx electron-builder --linux --arm64 --publish never" }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
+      - name: Linux 打包机依赖（node-pty 现场编译 + AppImage 工具）
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 libfuse2
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run ${{ matrix.script }}
+      - run: npm run build
+      - run: ${{ matrix.cmd }}
       - uses: actions/upload-artifact@v4
         with:
-          name: dawn-science-${{ matrix.os }}
+          name: dawn-science-${{ matrix.name }}
           path: |
             release/*.dmg
             release/*.zip
@@ -33,3 +40,23 @@ jobs:
             release/*.AppImage
             release/*.deb
           if-no-files-found: error
+          retention-days: 7
+  release:
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    permissions: { contents: write }
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: artifacts, merge-multiple: true }
+      - run: ls -lh artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            artifacts/*.dmg
+            artifacts/*.zip
+            artifacts/*.exe
+            artifacts/*.AppImage
+            artifacts/*.deb

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — 「优化输入」常驻：没 key 灰着说理由；cli / ACP 会话先借 API 模型
+
+- **Type**: feat
+- **Motivation**: 作者定的：「优化输入」一打开就该在——没 key 时没用而已，但界面里要有；有 key 时用当前会话在用的那条路去优化（native 的模型，或 cli / ACP 的流量）。此前它只给 native 会话、没 native agent 时整颗消失——看不见的能力等于不存在。
+- **What**: `EnhanceControl` 的 `disabled`（整颗不画）改成 `reason`（灰着、`aria-label` 写理由，不用原生 `title`——设计契约禁的）；`views.tsx` 两处挂载改成常驻；`App.tsx` 两处常传回调，理由按「有没有 API 模型」给；后端 `enhancePrompt` 对 cli / ACP 会话不再拒绝，借配置里第一个 API 模型；英文条目；e2e「先跳过」那条加断言：按钮在、灰着、名字是理由。测试侧：向导判据修好后每个 App 单测的第一屏都成了向导（假桥接没凭证），`tests/ui/setup.ts` 预置「已跳过」——与 e2e 夹具同一个理由；向导对假 `listKnownProviders` 容错。
+- **Impact**: **走 cli / ACP 自己流量去优化的那条路还没造**——两条运行时都没有「一次问答」原语，只会开一段会话对着聊；要么一次性 `claude -p` / `codex exec`，要么开一段用完即弃的 ACP 会话，各有代价（工具权限、成本、账本）——要单独设计，作者定形状。眼下 cli / ACP 会话的优化走的是配置里的 API 模型。
+- **Verification**: typecheck；UI + backend 单测 54 文件 651 过；全量 e2e 见下一条核对。
+
 ### 2026-08-28 — 全新安装的机器上首启向导从来没亮过：判据从「服务商列表非空」改成「目录与凭证都到手」；e2e 按产品原样默认配置锁死首启
 
 - **Type**: fix

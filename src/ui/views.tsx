@@ -3699,6 +3699,7 @@ export function ConversationView({
   onToggleDock,
   onEnhance,
   onCancelEnhance,
+  enhanceReason,
   dockOpen,
   models,
   model,
@@ -3781,6 +3782,8 @@ export function ConversationView({
   /** 提示词增强（2026-08-21）。不给 = 这段会话做不了（ACP / CLI），那颗按钮不画 */
   onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
   onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
+  /** 做不了增强时的理由（没 key 等）；给了就灰着显示，按钮本身常驻 */
+  enhanceReason?: string | undefined
   dockOpen?: boolean | undefined
   /**
    * 这个会话的 agent 该怎么称呼（`ds-chat` → `DeepSeek`）。
@@ -5106,16 +5109,16 @@ export function ConversationView({
                 {t("终端")}
               </Button>
             ) : null}
-                        {onEnhance && onCancelEnhance ? (
-              <EnhanceControl
-                draft={draft}
-                setDraft={(text) => setDraft(session.sessionId, text)}
-                enhance={onEnhance}
-                cancel={onCancelEnhance}
-                onProblem={设发送出错}
-                onNote={设增强说明}
-              />
-            ) : null}
+            {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
+            <EnhanceControl
+              draft={draft}
+              setDraft={(text) => setDraft(session.sessionId, text)}
+              enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
+              cancel={onCancelEnhance ?? (async () => undefined)}
+              reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+              onProblem={设发送出错}
+              onNote={设增强说明}
+            />
             {/**
               * 前三样说「带什么、在哪跑」，右边说「怎么改」：权限那颗是唯一入口（2026-08-23）。
               * **模型（含 ACP 的）与推理强度已钉到顶行**（2026-08-27，作者 #3/#4），
@@ -5955,6 +5958,7 @@ export function EmptyConversation({
   onOpenReference,
   onEnhance,
   onCancelEnhance,
+  enhanceReason,
   onOpenSettings,
   onPickDirectory,
 }: {
@@ -5978,6 +5982,8 @@ export function EmptyConversation({
   /** 提示词增强（2026-08-21）。空态屏用配置里第一个 API 模型 */
   onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
   onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
+  /** 做不了增强时的理由（没 key 等）；给了就灰着显示，按钮本身常驻 */
+  enhanceReason?: string | undefined
   /**
    * 第二个参数给了的话，**建完之后把这句话真的发出去**。
    * 第三个是工作目录（2026-08-12）——**给了就归「项目」，不给就归「会话」**。
@@ -6555,9 +6561,16 @@ export function EmptyConversation({
                     {t("终端")}
                   </Button>
                 ) : null}
-                                {onEnhance && onCancelEnhance ? (
-                  <EnhanceControl draft={草稿} setDraft={设草稿} enhance={onEnhance} cancel={onCancelEnhance} onProblem={设开场出错} onNote={设增强说明} />
-                ) : null}
+                {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
+                <EnhanceControl
+                  draft={草稿}
+                  setDraft={设草稿}
+                  enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
+                  cancel={onCancelEnhance ?? (async () => undefined)}
+                  reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+                  onProblem={设开场出错}
+                  onNote={设增强说明}
+                />
                 {/* 空态屏上那颗改的是**默认**（还没有会话） */}
                 {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}
               </div>

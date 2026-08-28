@@ -16,6 +16,7 @@ import { cleanup } from "@testing-library/react"
 import { afterEach, beforeEach } from "vitest"
 import { resetAllState } from "../../src/ui/state/index.js"
 import { $lang } from "../../src/ui/i18n/index.js"
+import { 记跳过 } from "../../src/ui/setup-wizard.js"
 
 /**
  * jsdom 没有实现 `ResizeObserver`，但真实 Chromium 有。
@@ -81,5 +82,11 @@ if (typeof globalThis.matchMedia === "undefined") {
 beforeEach(() => {
   resetAllState()
   $lang.set("zh")
+  /**
+   * 预置「首启向导已跳过」（2026-08-28）。向导的判据修成「目录与凭证都到手且没凭证」之后，
+   * 这里每个 App 测试的假桥接都没凭证——不预置的话每条用例的第一屏都是向导，
+   * 与 e2e 夹具 `dawn.global.setupSkipped` 同一个理由。向导自己的测试直接渲染组件，不受它影响。
+   */
+  记跳过(true)
 })
 afterEach(cleanup)

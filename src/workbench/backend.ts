@@ -3893,15 +3893,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const rec = sessionId ? sessions.get(sessionId) : undefined
       if (sessionId && !rec) throw fault("not_found", `没有这个会话：${sessionId}`)
       const kind = rec ? registry.agents[rec.agentId]?.kind : undefined
-      if (rec && kind !== "native") throw fault("invalid_request", "这段会话的模型不在我们手里（ACP / CLI），增强只对 API 会话可用")
-      // 没会话（空态屏）：用配置里第一个 native agent 的模型
-      const 目标 = rec
-        ? { sessionId: rec.id }
-        : (() => {
-            const first = Object.values(registry.agents).find((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
-            if (!first) throw fault("invalid_request", "配置里没有 API 模型，做不了增强")
-            return { provider: first.provider, model: first.model }
-          })()
+      // 没会话（空态屏）或会话不是 native（cli / ACP，它们的模型不在我们手里）：借配置里第一个 API 模型。
+      // 2026-08-28 作者定的：按钮常驻、有 key 就能用；走 cli / ACP 自己流量的那条路等一次问答原语造出来再接。
+      const 目标 =
+        rec && kind === "native"
+          ? { sessionId: rec.id }
+          : (() => {
+              const first = Object.values(registry.agents).find((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
+              if (!first) throw fault("invalid_request", "还没有 API key——填一个就能用")
+              return { provider: first.provider, model: first.model }
+            })()
       const 控 = new AbortController()
       增强中.set(requestId, 控)
       const 超时 = setTimeout(() => 控.abort(), mode === "basic" ? 30_000 : mode === "standard" ? 60_000 : 90_000)

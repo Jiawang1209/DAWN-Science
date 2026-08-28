@@ -57,6 +57,10 @@ test.describe("首启向导", () => {
     await expect(page.locator(".setup-wizard")).toBeVisible()
     await page.getByRole("button", { name: "先跳过" }).click()
     await expect(page.locator(".setup-wizard")).toHaveCount(0)
+    // 「优化输入」常驻（2026-08-28 作者定的）：没 key 时灰着、说理由，不是消失
+    const 优化 = page.getByRole("button", { name: /还没有 API key/ })
+    await expect(优化).toBeVisible()
+    await expect(优化).toBeDisabled()
     const 红字 = page.locator(".statusbar").getByRole("button", { name: /还没有填任何 API key/ })
     await expect(红字).toBeVisible()
     await 红字.click()

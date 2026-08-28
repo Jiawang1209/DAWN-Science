@@ -904,6 +904,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 留在这个清单里，人就会在「新建会话，用哪个 LLM」的菜单里看见 `shell`——
    * 而它既不是 LLM，点了也不会开出一段对话。
    */
+  /**
+   * 有没有一个 API 模型可用（native agent）——「优化输入」灰不灰看它。
+   * 常传（2026-08-28 作者定的：按钮常驻）：native 会话走自己的模型；cli / ACP 会话先借配置里的 API 模型——
+   * 走它们自己流量的那条路等一次问答原语造出来再接（见 DEVELOPMENT_HISTORY）。
+   */
+  const 有API模型 = useMemo(() => providers.agents.some((a) => a.kind === "native"), [providers])
   /** 顺序的理由见 `agent-order.ts`（2026-08-28：打包版首启一开口走了 claude CLI） */
   const agentIds = useMemo(() => 对话agent顺序(providers.agents), [providers])
 
@@ -4087,7 +4093,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 {...(switchProblem ? { switchProblem } : {})}
                 onToggleDock={toggleDock}
                 dockOpen={dockOpen}
-                {...(session.kind === "native" ? { onEnhance: 去增强(session.sessionId), onCancelEnhance: 取消增强 } : {})}
+                onEnhance={去增强(session.sessionId)}
+                onCancelEnhance={取消增强}
+                enhanceReason={有API模型 ? undefined : t("还没有 API key——填一个就能用")}
                 /**
                  * **换服务 = 换到那家的第一个模型**。
                  *
@@ -4238,7 +4246,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               引用文件={引用文件}
               onOpenReference={打开引用}
               onToggleDock={toggleDock}
-              {...(providers.agents.some((a) => a.kind === "native") ? { onEnhance: 去增强(undefined), onCancelEnhance: 取消增强 } : {})}
+              onEnhance={去增强(undefined)}
+              onCancelEnhance={取消增强}
+              enhanceReason={有API模型 ? undefined : t("还没有 API key——填一个就能用")}
               /**
                * **首页开出来的是临时会话**（2026-08-11）。
                *

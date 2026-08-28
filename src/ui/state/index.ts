@@ -202,6 +202,8 @@ import {
   $credentials,
   $projects,
   $providers,
+  $providersLoaded,
+  $credentialsLoaded,
   $provenance,
   $sessionModels,
   $runDetail,
@@ -243,6 +245,8 @@ export function resetAllState(): void {
   $runDetail.set(undefined)
   $provenance.set(undefined)
   $providers.set({ agents: [], providers: [] })
+  $providersLoaded.set(false)
+  $credentialsLoaded.set(false)
   $sessionModels.set({})
   $contextUsage.set(undefined)
   $credentials.set({ configured: [], encrypted: false })

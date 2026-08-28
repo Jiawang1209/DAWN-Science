@@ -56,7 +56,7 @@ export function SetupWizard({
   onStart: () => void
 }) {
   // 默认服务商：常用的优先，别落到字母序第一个 amazon-bedrock（打包版里看到的）
-  const 默认服务商 = (列: readonly string[]) => ["deepseek", "openai", "anthropic", "kimi", "moonshot"].find((p) => 列.includes(p)) ?? 列[0] ?? ""
+  const 默认服务商 = (列: readonly string[] = []) => ["deepseek", "openai", "anthropic", "kimi", "moonshot"].find((p) => 列.includes(p)) ?? 列[0] ?? ""
   const [provider, setProvider] = useState(() => 默认服务商(providers))
   useEffect(() => {
     if (!provider && providers.length) setProvider(默认服务商(providers))

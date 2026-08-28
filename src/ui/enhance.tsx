@@ -48,7 +48,7 @@ export function EnhanceControl({
   setDraft,
   enhance,
   cancel,
-  disabled,
+  reason,
   onProblem,
   onNote,
 }: {
@@ -57,8 +57,11 @@ export function EnhanceControl({
   /** 真去改写。`requestId` 给取消用 */
   enhance: (req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>
   cancel: (requestId: string) => Promise<unknown>
-  /** 这段会话做不了增强（ACP / CLI）时整颗不画——由调用方决定 */
-  disabled?: boolean | undefined
+  /**
+   * **做不了时灰着、说理由，不再整颗消失**（2026-08-28 作者定的：「界面里面还是要有的」）。
+   * 看不见的能力等于不存在——没 key 的人本来就该在这里看到「填一个就能用」。
+   */
+  reason?: string | undefined
   /** 出错往 composer 下那条说 */
   onProblem: (msg: string | undefined) => void
   /** 「带上了什么 / 为什么没带」也往 composer 下面说——行内放不下 */
@@ -146,7 +149,15 @@ export function EnhanceControl({
     return () => window.removeEventListener("keydown", h)
   })
 
-  if (disabled) return null
+  if (reason) {
+    return (
+      <div className="enhance-control">
+        <Button variant="ghost" size="sm" className="enhance-main" disabled aria-label={reason}>
+          <星图标 className="row-icon" /> {t("优化输入")}
+        </Button>
+      </div>
+    )
+  }
   const 空 = !draft.trim()
 
   return (

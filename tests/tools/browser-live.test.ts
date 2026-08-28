@@ -10,7 +10,10 @@ import { afterAll, describe, expect, it } from "vitest"
 import { browserTools } from "../../src/tools/browser/index.js"
 import { 关浏览器, 旁观, 截一帧 } from "../../src/tools/browser/session.js"
 
+// CI 上不跑：GitHub 的 Linux runner 有 Chrome，但沙箱里 headless 开一个 file:// 都 30 秒超时（2026-08-28 首轮 CI）——
+// 测的是 runner 的浏览器环境，不是我们的代码。本机有 Chrome/Edge 照跑。
 const 有浏览器 = await (async () => {
+  if (process.env.CI) return false
   try {
     const { chromium } = await import("playwright-core")
     const b = await chromium.launch({ channel: "chrome", headless: true }).catch(() => chromium.launch({ channel: "msedge", headless: true }))

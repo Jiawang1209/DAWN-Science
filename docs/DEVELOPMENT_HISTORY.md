@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — CI 第一轮（Linux）：挂在等内核的那条上 20 分钟；浏览器真链路在 CI 跳过；测试步骤 15 分钟兜底
+
+- **Type**: fix
+- **Motivation**: 两台 Linux runner 都停在 `npm test` 里 20 分钟以上不动。取消后看日志：189/197 个文件跑完，卡住的是内核集成那组——`launch.integration` 的「坏解释器」测试在 Ubuntu 上同样等死（mac 那轮已让它 CI 跳过）。另外 `browser-live` 两条 30 秒超时：runner 有 Chrome，但沙箱里 headless 开 `file://` 都开不出来。
+- **What**: `browser-live.test.ts` 在 `CI` 下跳过（本机有浏览器照跑）；`release.yml` 测试步骤 `timeout-minutes: 15`，再挂就红不占机器。
+- **Impact**: 无功能变化。
+- **Verification**: 这两处只在 CI 生效；下一轮 CI 是判据。
+
 ### 2026-08-28 — CI 第一轮（Windows）：这份代码从没在 Windows 上跑过——修两个必撞的，其余记账
 
 - **Type**: fix

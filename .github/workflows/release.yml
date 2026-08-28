@@ -29,10 +29,20 @@ jobs:
       - run: npm run typecheck
       # Windows 上暂不跑测试：这份代码还没在 Windows 上跑过——2026-08-28 首轮 CI 红了 25 个文件（绝对路径判断、
       # 分隔符、文件权限、命名管道、时区、bash……）。Windows 这台只构建打包，产物标「未经验证」；移植是下一项工作。
-      # 15 分钟兜底：首轮 CI 里 Linux 的 npm test 被一条等不到内核的测试挂住 20 分钟以上，不设上限它会占到 6 小时
+      # 只跑 node + ui 两组。内核集成组（tests/kernel/*.integration）全靠本机 kernelspec 跳过，CI 上没东西可测，
+      # 而它在 Linux runner 上一行不打就挂死（两轮各 15/20 分钟，2026-08-28）——先取证，见下面两个诊断步。
+      # 15 分钟兜底：不设上限它会占到 6 小时
       - if: runner.os != 'Windows'
-        run: npm test
+        run: npx vitest run --project node --project ui
         timeout-minutes: 15
+      - name: 诊断 · zeromq 在这台 Linux 上能不能加载（3 分钟，不阻塞）
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        run: timeout 180 node --input-type=module -e "const t=Date.now(); await import('zeromq'); console.log('zeromq ok', Date.now()-t, 'ms')" || echo "::warning::zeromq 加载没在 3 分钟内结束，退出码 $?"
+      - name: 诊断 · 内核集成组单独跑（3 分钟，不阻塞）
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        run: timeout 180 npx vitest run --project kernel --reporter=verbose || echo "::warning::内核组没在 3 分钟内结束，退出码 $?"
       - run: npm run build
       - run: ${{ matrix.cmd }}
       - uses: actions/upload-artifact@v4

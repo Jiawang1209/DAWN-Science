@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — CI 第二轮：mac、Windows 绿；Linux 仍挂在内核组——正式步只跑 node+ui，另加两个取证步
+
+- **Type**: chore
+- **Motivation**: 第二轮 mac 全绿、Windows 打包成功；两台 Linux 又在 `npm test` 里挂满 15 分钟。日志：189/197 文件跑完，内核集成那 7 个文件**一行都没打**（连「跳过」都没有）——卡在文件加载，不在用例里。顶层 import 会拉进 `zeromq` 原生模块，怀疑它在 Linux 上一加载就挂，但本机是 mac、没有 Docker，验不了。
+- **What**: `release.yml` 正式测试步改成 `vitest run --project node --project ui`（内核组本来全靠本机 kernelspec 跳过，CI 上没东西可测）；加两个 `continue-on-error` 的诊断步各 3 分钟超时：单独 `import("zeromq")`、单独跑内核组——下一轮日志会说挂在哪。本地 `npm test` 不变。
+- **Impact**: CI 上内核组暂不作为门禁；取到证据后再决定是修 zeromq 加载还是内核组在 CI 明确跳过。
+- **Verification**: yaml 能解析；下一轮 CI 是判据。
+
 ### 2026-08-28 — CI 第一轮（Linux）：挂在等内核的那条上 20 分钟；浏览器真链路在 CI 跳过；测试步骤 15 分钟兜底
 
 - **Type**: fix

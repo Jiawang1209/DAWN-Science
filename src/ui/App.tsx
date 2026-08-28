@@ -91,6 +91,7 @@ import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom } from "./state/transcript.js"
 import { NotebookPanel, cells as 转录里的cells, type 语言 as 内核语言 } from "./notebook.js"
 import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
+import { 对话agent顺序 } from "./agent-order.js"
 import { MemoryPanel } from "./memory-panel.js"
 import { buildCommands, type Actions } from "./commands.js"
 import { createClient, type WorkbenchClient } from "./client.js"
@@ -895,10 +896,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 留在这个清单里，人就会在「新建会话，用哪个 LLM」的菜单里看见 `shell`——
    * 而它既不是 LLM，点了也不会开出一段对话。
    */
-  const agentIds = useMemo(
-    () => providers.agents.filter((a) => a.kind !== "pty").map((a) => a.agentId),
-    [providers],
-  )
+  /** 顺序的理由见 `agent-order.ts`（2026-08-28：打包版首启一开口走了 claude CLI） */
+  const agentIds = useMemo(() => 对话agent顺序(providers.agents), [providers])
 
   /**
    * **在服务器上干活时能用的**（T3，2026-08-21）：native，加标了 `remoteCapable` 的 ACP。

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — 打包版首启一开口走的是 claude CLI：对话 agent 顺序改成 native 优先
+
+- **Type**: fix
+- **Motivation**: 作者在打包的 mac 版里发现输入框下少了「优化输入」。追下去：那颗只给 `native` 会话；全新安装的默认配置**刻意不放 native**（只有 claude / codex 两个 cli + shell），向导里填 key 之后自动合成的 native agent **追加在注册表末尾**，而空态屏开第一段对话取的是 `agents[0]`——于是走的是 claude CLI。开发版看不出来：`providers.yaml` 里 ds-chat 本来就在第一个。后果比少个按钮重：没装 claude 的新用户填完 deepseek 的 key 一开口就报错。
+- **What**: 新增 `src/ui/agent-order.ts` 的 `对话agent顺序`：native 排前面，同类之内保持配置次序，pty 照旧不进清单；`App.tsx` 的 `agentIds` 改用它。`tests/ui/agent-order.test.ts` 三条锁住。
+- **Impact**: 只调默认顺序，不动 pill 里能选到的集合；配置里明确把 cli 写在前面且没有任何 native 的人不受影响。
+- **Verification**: typecheck；`agent-order` + `app-default-client` + `setup-wizard` 11/11；e2e 向导与主链路用例见下一条核对。
+
 ### 2026-08-28 — 启动日志 + 未接住异常兜底框：让「双击没反应」变成能读的证据
 
 - **Type**: fix

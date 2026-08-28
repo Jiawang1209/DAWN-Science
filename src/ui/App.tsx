@@ -4211,6 +4211,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             <SetupWizard
               providers={knownProviders.providers}
               configured={creds.configured}
+              problem={knownProviders.problem}
+              plaintext={creds.encrypted === false}
               interpreters={interpreters}
               onSaveKey={(id, secret) =>
                 client

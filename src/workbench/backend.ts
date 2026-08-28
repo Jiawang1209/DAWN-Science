@@ -154,7 +154,7 @@ export interface CredentialsPort {
   set(providerId: string, secret: string): void
   delete(providerId: string): void
   configured(): string[]
-  isEncrypted(): boolean
+  isEncrypted(): boolean | undefined
 }
 
 export interface WorkbenchBackendOptions {
@@ -990,7 +990,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     try {
       baselines.set(rec.id, await snapshot(workspace))
     } catch (err) {
-      if (!(err instanceof NotAGitRepoError)) throw err
+      // **任何异常都只是「没有基线」**（2026-08-28 全新机器审出的）：此前只放行 NotAGitRepoError，
+      // 没装 git 的机器（`spawn git ENOENT`）、只有 Xcode CLT 桩的 mac（`xcrun: error`）会把整个建会话炸掉——
+      // 用户填完 key 发第一句就报一个看不懂的错。provenance.ts:227 早为同一件事栽过。
+      if (!(err instanceof NotAGitRepoError)) console.error(`[git 基线] 拿不到，这段会话不记基线：${err instanceof Error ? err.message : String(err)}`)
     }
 
     /**
@@ -1692,10 +1695,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /** **只回报配没配，绝不回报凭证本身**——界面不需要知道值 */
-    listCredentials: async () => ({
-      configured: credentials.configured(),
-      encrypted: credentials.isEncrypted(),
-    }),
+    listCredentials: async () => {
+      const encrypted = credentials.isEncrypted()
+      return { configured: credentials.configured(), ...(encrypted === undefined ? {} : { encrypted }) }
+    },
 
     setCredential: async ({ providerId, secret }) => {
       credentials.set(providerId, secret)

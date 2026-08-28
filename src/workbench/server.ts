@@ -162,7 +162,8 @@ export class WorkbenchServer {
       // 意外异常：归一为 internal_error。**原始信息只进日志，不进响应**——
       // 它可能含路径、连接串、密钥片段。Rho 的注释同此：details are not exposed publicly。
       this.onInternalError?.(operation, err)
-      return this.fail("internal_error", `操作 "${operation}" 执行失败`, false, requestId)
+      // 原因不进响应（上面那条规则有测试守着），但**必须落在用户找得到的地方**：主进程把它写进 startup.log（2026-08-28）
+      return this.fail("internal_error", `操作 "${operation}" 执行失败——原因记在 startup.log 里`, false, requestId)
     }
 
     // 5. 响应校验（双向校验的后一半）

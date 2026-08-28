@@ -8,6 +8,40 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — 全新机器上第一句话必失败：默认项目与临时会话根同路径撞 UNIQUE
+
+- **Type**: fix
+- **Motivation**: 演练加了「真实 HOME、只换 userData」模式（临时 HOME 会让 macOS 找不到登录钥匙串，把钥匙串那步量得比真机慢十几倍；真机 22 ms）——这一跑，第一句话就红：界面「操作 createTask 执行失败」，主进程 `UNIQUE constraint failed: projects.workspace`。根因：`DEFAULT_WORKSPACE` 与 `scratchRoot` 都是 `~/DAWN/scratch`；默认项目先占了它，第一段临时会话再插同一个 workspace。**这大概率就是发出去的版本里别人撞到的那条**——首启审查（B14）点到过，当时以为只是多出一个项目。临时 HOME 之前没抓到，是因为 Electron 的 `app.getPath("home")` 不认 `$HOME`，两条路碰巧岔开了。
+- **What**: 默认项目改到 `~/DAWN/workspace`（已装过的人不受影响：`ensureDefault` 见到任何非临时项目就不建）；`wiring.ts` 装配时两条路径相同直接抛清楚的错；`onInternalError` 除 stderr 外写进 `startup.log`（打包版没人看得到 stderr），界面文案改成「执行失败——原因记在 startup.log 里」——原因本身不进响应，那条规则有测试守着；`rehearse:fresh` 加 `REHEARSE_REAL_HOME=1`。`tests/electron/wiring.test.ts` 两条：同路径装配即拦；不同路径默认项目 + 第一段临时会话都开得出。
+- **Impact**: 全新机器第一句话能发出去。
+- **Verification**: 单测；真实 HOME 演练见下一条。
+
+### 2026-08-28 — 默认界面语言跟系统：中文系统中文、其它英文
+
+- **Type**: feat
+- **Motivation**: 全新机器上默认英文（此前作者定的），中文用户第一眼是英文界面——演练时看到的。作者改定：跟系统语言。
+- **What**: `i18n/index.ts` 新增 `系统语言(navigator.language)`：`zh*` → zh，其它 → en；`loadLang` 没存过就用它，存了不认识的值也回落到它。设置里选过的永远优先。演练脚本中英文文案都认。
+- **Impact**: 只影响从没选过语言的人。
+- **Verification**: `tests/ui/i18n.test.ts` 加一条 6 个断言；e2e 夹具自设语言，不受影响。
+
+### 2026-08-28 — 全新电脑演练 + 首启审查：钥匙串卡主进程、没 git 建不了会话、GUI 的 PATH、向导死路
+
+- **Type**: fix
+- **Motivation**: 打包版发出去，「很多人有意见」。用临时 HOME + 干净 userData + 真 key、不带任何 `DAWN_*` 变量把打包版当全新机器跑（`scripts/rehearse-fresh-install.mjs`），外加两份只读审查（首启路径 / Windows 假设）。
+- **What**:
+  1. **钥匙串不进启动路径**（演练抓的头号问题）：`listCredentials` 每次调 `safeStorage.isEncryptionAvailable()`——macOS 上主线程同步进钥匙串，未签名的 700 MB 包每次被 securityd 重核身份，实测 1–5 秒、冷机 10–60 秒，期间主进程整个卡死、窗口空白。现在 `CredentialStore.isEncrypted()` 问过一次就记住；没问过时有存盘文件按文件答，什么都没有答「不知道」（协议 `encrypted` 改 optional，界面缺省当加密、只在明确 false 时警告）；第一次真问钥匙串是人按「保存」那一刻。演练里曾观察到向导里敲的 key「被清空、还被提交了」——追到最后不是应用的 bug：演练窗口弹在作者桌面上抢了焦点，作者这时在别处敲的字（含回车）全进了 key 框。演练脚本改为 `DAWN_HIDE_WINDOW=1` 隐藏窗口。
+  2. **没装 git 也能建会话**：`起一个会话` 只放行 `NotAGitRepoError`，`spawn git ENOENT`（没 git）与 `xcrun: error`（mac 只有 CLT 桩）原样抛出，用户填完 key 第一句就报错。改成任何异常都只是「没有基线」。
+  3. **GUI 起来的 PATH 补成登录 shell 的**：Finder/Dock 起的 Electron 只有 launchd 的 PATH，homebrew / nvm / npm 全局 bin 全不在，`claude` / `codex` / `git` 一律 ENOENT。启动时异步问一次 `$SHELL -lc 'echo $PATH'`（5 秒超时），并进 `process.env.PATH`；演练里并入 32 段。
+  4. **向导拿不到服务商目录时说出来**：此前 `listKnownProviders.problem` 在向导这条路被丢掉，下拉空、两个按钮全灰、一个字解释都没有。加 `problem`、`plaintext`（系统没安全存储时首启就警告）两个入参。
+  5. `startup.log`：后端装配开始/完成耗时、第一次 IPC 到达与等后端多久、启动阶段 >200 ms 的 IPC 逐条记、后端装配失败也记；超过 1 MB 从头来。
+  6. 默认终端跟用户的登录 shell（`$SHELL`，macOS 是 zsh），不再写死 bash。
+  7. `npm run rehearse:fresh` 进打包流程，文档写明两个验证都要绿；演练窗口隐藏（`DAWN_HIDE_WINDOW=1`），会挑带 ipykernel 的解释器。
+  8. **钥匙串预热**：把钥匙串挪出启动路径之后，那几十秒落在了人按「保存」那一下（演练里 Save 用了 ~40 s）。首帧之后 2 秒——人还在读向导——悄悄问一次并记住，耗时写进 startup.log。
+  9. 视觉基线 `命令面板-暗色` 稳定红（单跑也红，diff 只是面板底边差几像素，亮色照过）：按纪律把验证那轮的 actual 拷成基线，复验两遍。
+- **Impact**: 全新机器：窗口 1 秒出内容、向导即刻亮、填 key 后走 deepseek、没 git 也能聊。协议 `listCredentials.encrypted` 变为可缺省。
+- **Verification**: typecheck；全量单测绿；演练三次：app-shell 1.4 s、向导 1.4 s、真 API 回话、run_code 走通、终端、设置内核全过；startup.log 里再没有 >200 ms 的启动 IPC。全量 e2e 见下一条核对。
+- **审查里记下、这轮没做的**（按严重程度）：Windows 一整批（cli 的 `.cmd`、环境探测走 bash、商店 python 存根、`permissions.ts` 受保护路径在 Windows 全部失效、`file://` 与拖拽路径、进程树清理、明文凭证的 ACL）；凭证解不开时界面仍显示「已配置」（B5）；填了 key 但目录里挑不出模型时静默跳过（B8）；key 不做任何验证（B9）；默认工作区与 scratch 根同一路径造出两个项目（B14）；英文界面下后端错误文案是中文（B15）；`KERNEL_PACKAGE.R.how` 混中文（B16）；未捕获异常弹框后不退出（C20）；mac 常见 Python 目录漏 uv/pixi（C22）。另：**全新机器默认英文界面**是作者定的，中文用户第一眼是英文——要不要按系统语言定，作者定。
+
 ### 2026-08-28 — 「优化输入」常驻：没 key 灰着说理由；cli / ACP 会话先借 API 模型
 
 - **Type**: feat

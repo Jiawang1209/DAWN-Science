@@ -10,7 +10,8 @@ import { fileURLToPath } from "node:url"
 import { extname, join, dirname } from "node:path"
 import { 迁旧数据 } from "./migrate-userdata.js"
 import { readFile } from "node:fs/promises"
-import { appendFileSync, mkdirSync } from "node:fs"
+import { appendFileSync, mkdirSync, statSync } from "node:fs"
+import { execFile } from "node:child_process"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_ATTACH_SAVE, IPC_ATTACH_USAGE, IPC_ATTACH_CLEAN, IPC_CLIPBOARD_FILES, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
 import { 存附件, 附件用量of, 清附件 } from "../files/attachments.js"
@@ -35,8 +36,15 @@ const DB = process.env.DAWN_DB ?? join(app.getPath("userData"), "dawn.db")
  * **不要求先选文件夹**——claude code 与 codex 上来都不要求，DAWN 也不该要求。
  * 用户随时可以在侧栏打开自己的项目；这只是保证「打开就能说话」。
  */
+/**
+ * 默认项目的文件夹是 `~/DAWN/workspace`，**不是** `~/DAWN/scratch`（2026-08-28 真实 HOME 的全新演练抓的）：
+ * scratch 是临时会话的根（wiring 里的 `scratchRoot`），两者同一条路径时，默认项目先占了它，
+ * 第一段临时会话再往 `projects` 表插同一个 workspace → `UNIQUE constraint failed` → **全新机器上第一句话就失败**，
+ * 界面只看到「操作 createTask 执行失败」。之前用临时 HOME 演练没抓到，是因为 Electron 的 home 不认 `$HOME`，两条路碰巧岔开了。
+ * 已经装过的人不受影响：`ensureDefault` 见到任何非临时项目就不再建。
+ */
 const DEFAULT_WORKSPACE =
-  process.env.DAWN_DEFAULT_WORKSPACE ?? join(app.getPath("home"), "DAWN", "scratch")
+  process.env.DAWN_DEFAULT_WORKSPACE ?? join(app.getPath("home"), "DAWN", "workspace")
 const DEV_URL = process.env.DAWN_DEV_SERVER
 /**
  * mock 模式：pi 的 provider 被 models.json 重定向到本地假推理服务器。
@@ -98,6 +106,12 @@ const 启动日志路径 = join(app.getPath("userData"), "startup.log")
 function 启动日志(行: string): void {
   try {
     mkdirSync(dirname(启动日志路径), { recursive: true })
+    // 只增不删会一直长：超过 1 MB 就从头来（上一份没人会再看）
+    try {
+      if (statSync(启动日志路径).size > 1024 * 1024) appendFileSync(启动日志路径, "", { flag: "w" })
+    } catch {
+      /* 还没有这个文件 */
+    }
     appendFileSync(启动日志路径, `${new Date().toISOString()} ${行}\n`)
   } catch {
     /* 见上 */
@@ -419,8 +433,33 @@ function 打包版首启迁移(): void {
   }
 }
 
+/**
+ * **把用户终端里的 PATH 补进来**（2026-08-28 全新机器审出的）。
+ *
+ * 从 Finder / Dock 起的 Electron 拿到的是 launchd 的 PATH（`/usr/bin:/bin:/usr/sbin:/sbin`），
+ * homebrew / nvm / npm 全局 bin / conda 全不在——于是用户终端里能跑的 `claude`、`codex`、`git`
+ * 在这里一律 ENOENT，而默认配置里恰好只有 claude / codex 两个 agent。
+ * 问登录 shell 一次（异步、5 秒超时、失败就算了），把结果并进 `process.env.PATH`；后面所有 spawn 都继承它。
+ * Windows 不需要：GUI 与终端拿的是同一份系统 PATH。
+ */
+function 补登录shell的PATH(): void {
+  if (process.platform === "win32") return
+  const shell = process.env.SHELL || "/bin/bash"
+  execFile(shell, ["-lc", "echo __DAWN_PATH__$PATH"], { timeout: 5_000, encoding: "utf8" }, (err, stdout) => {
+    if (err) return 启动日志(`登录 shell 的 PATH 没拿到（${shell}）：${err.message.split("\n")[0]}`)
+    const line = stdout.split("\n").find((l) => l.startsWith("__DAWN_PATH__"))
+    const 终端PATH = line?.slice("__DAWN_PATH__".length).trim()
+    if (!终端PATH) return 启动日志(`登录 shell 没回 PATH（${shell}）`)
+    const 现有 = (process.env.PATH ?? "").split(":").filter(Boolean)
+    const 合并 = [...new Set([...终端PATH.split(":").filter(Boolean), ...现有])]
+    process.env.PATH = 合并.join(":")
+    启动日志(`PATH 已并入登录 shell 的：${终端PATH.split(":").length} 段（${shell}）`)
+  })
+}
+
 app.whenReady().then(() => {
   启动日志("app ready")
+  补登录shell的PATH()
   打包版首启迁移()
   /**
    * **连 Dock 图标也不要跳**（e2e 用，2026-08-11）。
@@ -448,21 +487,62 @@ app.whenReady().then(() => {
    * 失败会让它进「重试三次然后放弃」的状态机，
    * 而那个状态机是为「后端真的挂了」准备的，不是为「后端还在启动」。
    */
+  let 第一次IPC = true
+  let 记耗时的调用 = 20
   ipcMain.handle(IPC_CHANNEL, async (_e, operation: unknown, request: unknown, requestId?: string) => {
-    await 后端建好了
+    if (第一次IPC) {
+      第一次IPC = false
+      const t = Date.now()
+      启动日志(`第一次 IPC 到达（${String(operation)}）`)
+      await 后端建好了
+      启动日志(`第一次 IPC 等后端 ${Date.now() - t} ms`)
+    } else await 后端建好了
     if (启动失败) throw new Error(启动失败)
+    // 启动阶段前 20 次调用记耗时——首启慢在哪一步，日志要能说出来（2026-08-28）
+    if (记耗时的调用 > 0) {
+      记耗时的调用--
+      const t = Date.now()
+      const done = (r: unknown) => {
+        const ms = Date.now() - t
+        if (ms > 200) 启动日志(`IPC ${String(operation)} 用了 ${ms} ms`)
+        return r
+      }
+      return ipcDispatch!(operation, request, requestId ? { requestId } : {}).then(done, (e) => { done(undefined); throw e })
+    }
     return ipcDispatch!(operation, request, requestId ? { requestId } : {})
   })
 
+  // 凭证由 app 管：加密交给 OS（macOS Keychain / DPAPI / libsecret）
+  const 凭证库 = new CredentialStore({ file: defaultCredentialFile(app.getPath("userData")), safeStorage })
+  /**
+   * **钥匙串预热**（2026-08-28 全新机器演练）：第一次进钥匙串在未签名包上要 5–60 秒（securityd 重核 700 MB 的身份），
+   * 主线程同步。已经把它从启动路径挪走了；但完全不预热的话这几十秒会落在人按「保存」那一下。
+   * 首帧之后 2 秒——人还在读向导——悄悄问一次并记住，之后的「保存」就是瞬时的。写进 startup.log，慢了能看见。
+   */
+  // 时机：页面加载完再等 5 秒——界面的启动请求在头 2 秒内发完；2 秒就预热的话那 7 秒正好压在这批请求上，
+  // 窗口又空白到 8 秒（第一版就是这样）。挂在 ready 后的下一次 did-finish-load 上。
+  // 挂在主窗口自己的 did-finish-load 上（app 级的 web-contents-created 在这之前早就发过了——第一版挂那儿，从没触发过）
+  BrowserWindow.getAllWindows()[0]?.webContents.once("did-finish-load", () => {
+    {
+      setTimeout(() => {
+        const t = Date.now()
+        try {
+          const ok = 凭证库.warm()
+          启动日志(`钥匙串预热 · 加密${ok ? "可用" : "不可用"} · ${Date.now() - t} ms`)
+        } catch (e) {
+          启动日志(`钥匙串预热失败 · ${Date.now() - t} ms · ${e instanceof Error ? e.message : String(e)}`)
+        }
+      }, 5_000).unref?.()
+    }
+  })
+  const 装配起点 = Date.now()
+  启动日志("后端装配开始")
   try {
     workbench = createWorkbench({
       configPath: CONFIG,
       dbPath: DB,
       // 凭证由 app 管：加密交给 OS（macOS Keychain / DPAPI / libsecret）
-      credentials: new CredentialStore({
-        file: defaultCredentialFile(app.getPath("userData")),
-        safeStorage,
-      }),
+      credentials: 凭证库,
       defaultWorkspace: DEFAULT_WORKSPACE,
       // **只有主进程碰得到 shell**。路径的合法性在后端已经校验过了
       openPath: (p: string) => shell.openPath(p),
@@ -518,8 +598,13 @@ app.whenReady().then(() => {
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       ...(FAKE_SSH ? { fakeSsh: true } : {}),
       ...(LEASE_TTL ? { leaseTtlSeconds: LEASE_TTL } : {}),
-      onInternalError: (op, err) => console.error(`[workbench] ${op} 失败:`, err),
+      onInternalError: (op, err) => {
+        console.error(`[workbench] ${op} 失败:`, err)
+        // 打包版没有终端，stderr 谁也看不到；界面上只有「执行失败」四个字——原因要落在 startup.log（2026-08-28 全新演练抓的）
+        启动日志(`操作 ${op} 失败：${err instanceof Error ? (err.stack ?? err.message).split("\n").slice(0, 3).join(" | ") : String(err)}`)
+      },
     })
+    启动日志(`后端装配完成 · ${Date.now() - 装配起点} ms`)
     if (workbench.reconciled > 0) {
       console.error(`[启动对账] 修正了 ${workbench.reconciled} 条残留会话记录`)
     }
@@ -536,6 +621,7 @@ app.whenReady().then(() => {
      */
     const message = err instanceof Error ? err.message : String(err)
     启动失败 = message
+    启动日志(`后端装配失败：${message}（配置文件：${CONFIG}）`)
     console.error(`[启动失败] ${message}（配置文件：${CONFIG}）`)
     后端就绪()
     dialog.showErrorBox("DAWN 启动失败", `${message}\n\n配置文件：${CONFIG}`)
@@ -722,6 +808,7 @@ app.whenReady().then(() => {
   for (const win of 待接的窗口) 接上事件流(win)
   待接的窗口.clear()
   后端就绪()
+  启动日志("whenReady 处理完，后端就绪")
 })
 
 app.on("window-all-closed", () => {

@@ -249,7 +249,7 @@ export function resetAllState(): void {
   $credentialsLoaded.set(false)
   $sessionModels.set({})
   $contextUsage.set(undefined)
-  $credentials.set({ configured: [], encrypted: false })
+  $credentials.set({ configured: [] })
   $activeProjectId.set(undefined)
   $activeSessionId.set(undefined)
   $view.set("conversation")

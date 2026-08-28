@@ -702,7 +702,7 @@ export function SettingsShell({
 
 export interface CredentialState {
   configured: string[]
-  encrypted: boolean
+  encrypted?: boolean | undefined
 }
 
 /** 一个 provider 的连接设置。**密钥不在里面**——它在钥匙串里 */
@@ -789,7 +789,7 @@ export function SettingsPanel({
     <Section
       className="set-section-bare"
       desc={
-        credentials.encrypted ? (
+        credentials.encrypted !== false ? (
           t("密钥保存在系统安全存储中，不回显。")
         ) : (
           /* **加密状态如实告知。** 没有 keychain 时它是明文，这必须是警告而不是说明 */

@@ -11,7 +11,7 @@ import Database from "better-sqlite3"
 import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
 import { mkdirSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { dirname, join, resolve } from "node:path"
 import { loadRegistryOrDefault } from "../config/loader.js"
 import { migrate } from "../store/schema.js"
 import { ProjectStore } from "../store/projects.js"
@@ -630,7 +630,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   // **打开就能说话**：一个项目都没有时建一个默认工作区。
   // 已经有项目时什么都不做，也不创建那个目录
-  if (opts.defaultWorkspace) projects.ensureDefault(opts.defaultWorkspace)
+  if (opts.defaultWorkspace) {
+    // 默认项目与临时会话根**不许同路径**（2026-08-28）：同路径 = 第一段临时会话撞 UNIQUE、第一句话就失败。装配时就拦，不等到有人开口
+    const 临时根 = opts.scratchRoot ?? join(homedir(), "DAWN", "scratch")
+    if (resolve(opts.defaultWorkspace) === resolve(临时根)) {
+      throw new Error(`默认项目目录与临时会话目录不能是同一个：${opts.defaultWorkspace}（改 DAWN_DEFAULT_WORKSPACE 或 DAWN_SCRATCH_ROOT 其中一个）`)
+    }
+    projects.ensureDefault(opts.defaultWorkspace)
+  }
 
   /**
    * Run 记账员。**不变式 3 的落地点**——每条执行路径在诞生时就记账。

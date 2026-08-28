@@ -89,10 +89,8 @@ async function 回到默认语言(page: import("@playwright/test").Page): Promis
   })
 }
 
-test("**默认就是英文，且每一屏上都没有汉字**", async ({ dawn }) => {
+test("**没选过语言时跟系统**（2026-08-28 作者定的：中文系统中文、其它英文）", async ({ dawn }) => {
   const { page } = dawn
-
-  // 夹具钉的是中文，这里要看的是「谁都没选过」那一档
   await page.addInitScript(() => {
     try {
       localStorage.removeItem("dawn.global.lang")
@@ -101,6 +99,28 @@ test("**默认就是英文，且每一屏上都没有汉字**", async ({ dawn })
     }
   })
   await 回到默认语言(page)
+  await page.waitForLoadState("domcontentloaded")
+  await page.locator(".app-shell").waitFor({ timeout: 30_000 })
+  const 系统 = await page.evaluate(() => navigator.language)
+  const 期望中文 = /^zh\b/i.test(系统)
+  await expect(page.getByRole("button", { name: 期望中文 ? "新建任务" : "New task" })).toBeVisible({ timeout: 30_000 })
+})
+
+test("**英文界面上每一屏都没有汉字**", async ({ dawn }) => {
+  const { page } = dawn
+
+  // 夹具钉的是中文；这里明确选英文（默认已改成跟系统语言，本机是中文系统）
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("dawn.global.lang", "en")
+    } catch {
+      /* 写不进就让下面的断言去红 */
+    }
+  })
+  await page.evaluate(() => {
+    localStorage.setItem("dawn.global.lang", "en")
+    location.reload()
+  })
 
   await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 30_000 })
   await expect(page.getByText("Start a chat")).toBeVisible()

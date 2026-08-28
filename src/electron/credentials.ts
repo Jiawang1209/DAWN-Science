@@ -74,9 +74,28 @@ export class CredentialStore {
     this.cache = data
   }
 
-  /** 本次会以加密还是明文存盘。UI 据此提示用户。 */
-  isEncrypted(): boolean {
-    return this.safe.isEncryptionAvailable()
+  /**
+   * 本次会以加密还是明文存盘。UI 据此提示用户。
+   *
+   * **不在启动路径上碰钥匙串**（2026-08-28 全新机器演练抓的）：`safeStorage.isEncryptionAvailable()` 在 macOS 上
+   * 是主线程同步进钥匙串，未签名的 700 MB 包每次都要被 securityd 重新核一遍身份——实测 1–5 秒，冷机 10–60 秒，
+   * 期间主进程整个卡死、窗口一片空白。此前 `listCredentials` 每次都调它，而它正是界面启动的第一批请求。
+   * 现在：问过一次就记住；没问过时，有存盘文件就按文件里记的答，什么都没有就答「不知道」——
+   * 第一次真去问钥匙串是在人按「保存」的那一刻（那是人主动的动作，等一下说得过去）。
+   */
+  private 加密可用?: boolean
+  isEncrypted(): boolean | undefined {
+    if (this.加密可用 !== undefined) return this.加密可用
+    if (existsSync(this.file)) return this.read().encrypted
+    return undefined
+  }
+  /** 主动问一次钥匙串并记住——放在首帧之后的空档里做，别等到人按「保存」那一下再卡几十秒（2026-08-28） */
+  warm(): boolean {
+    return this.问钥匙串()
+  }
+  private 问钥匙串(): boolean {
+    if (this.加密可用 === undefined) this.加密可用 = this.safe.isEncryptionAvailable()
+    return this.加密可用
   }
 
   get(endpointId: string): string | undefined {
@@ -94,7 +113,7 @@ export class CredentialStore {
   }
 
   set(endpointId: string, secret: string): void {
-    const encrypted = this.safe.isEncryptionAvailable()
+    const encrypted = this.问钥匙串()
     if (!encrypted) {
       this.onInsecure(
         `系统未提供安全存储（缺少 keychain / libsecret），凭证将以明文存于 ${this.file}`,

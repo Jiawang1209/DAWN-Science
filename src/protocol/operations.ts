@@ -391,8 +391,8 @@ export const OPERATIONS = {
     request: Empty,
     response: z.object({
       configured: z.array(z.string()),
-      /** 当前是否由系统安全存储加密。false 时界面须提示用户 */
-      encrypted: z.boolean(),
+      /** 当前是否由系统安全存储加密。false 时界面须提示用户；缺省 = 还没问过钥匙串（2026-08-28：问它会卡主线程，只在存 key 时问） */
+      encrypted: z.boolean().optional(),
     }),
     mutating: false,
   },

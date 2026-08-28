@@ -10,6 +10,7 @@
  * 扫描把这件事提前到提交之前。
  */
 import { describe, it, expect } from "vitest"
+import { 系统语言 } from "../../src/ui/i18n/index.js"
 import { readFileSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 import { EN } from "../../src/ui/i18n/en.js"
@@ -186,3 +187,15 @@ describe("双语 · 英文那一面也要守中文那边的规矩", () => {
   })
 })
 
+
+
+describe("默认语言跟系统（2026-08-28 作者定的）", () => {
+  it("中文系统 → 中文；其它 → 英文；没有系统语言 → 英文", () => {
+    expect(系统语言("zh-CN")).toBe("zh")
+    expect(系统语言("zh-TW")).toBe("zh")
+    expect(系统语言("zh")).toBe("zh")
+    expect(系统语言("en-US")).toBe("en")
+    expect(系统语言("ja-JP")).toBe("en")
+    expect(系统语言(undefined)).toBe("en")
+  })
+})

@@ -622,6 +622,7 @@ export const EN: Readonly<Record<string, string>> = {
   "增强失败：{0}": "Enhance failed: {0}",
   "{0}…放弃": "{0}… give up",
   "优化输入": "Polish input",
+  "服务商目录取不到：{0}": "Could not load the provider list: {0}",
   "还没有 API key——填一个就能用": "No API key yet — add one and this works",
   "先写点什么再优化": "Write something first, then polish",
   "档位：{0}": "Level: {0}",

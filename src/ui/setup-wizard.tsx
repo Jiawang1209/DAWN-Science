@@ -43,11 +43,17 @@ export function SetupWizard({
   onProbe,
   onSkip,
   onStart,
+  problem,
+  plaintext,
 }: {
   /** 可填 key 的服务商 id 清单（`listKnownProviders`） */
   providers: readonly string[]
   /** 已经有 key 的服务商 */
   configured: readonly string[]
+  /** 服务商目录取不到时后端给的原因（`listKnownProviders.problem`）——没有它，下拉是空的、两个按钮全灰、一个字的解释都没有（2026-08-28） */
+  problem?: string | undefined
+  /** `listCredentials.encrypted === false`：系统没有安全存储，key 会明文落盘——首启的人还没进过设置屏，得在这里说 */
+  plaintext?: boolean | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void
@@ -110,6 +116,8 @@ export function SetupWizard({
           {t("模型 key")} <span className="sw-req">{t("（必需）")}</span>
           {有key ? <span className="sw-ok">✓ {tf("已填 {0}", configured.join("、"))}</span> : null}
         </h2>
+        {problem && providers.length === 0 ? <p className="caveat">{tf("服务商目录取不到：{0}", problem)}</p> : null}
+        {plaintext ? <p className="caveat">{t("⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录")}</p> : null}
         <form
           className="sw-key"
           onSubmit={(e) => {

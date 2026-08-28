@@ -46,7 +46,8 @@ export type Providers = z.infer<(typeof OPERATIONS)["getProviders"]["response"]>
 
 export interface CredentialState {
   configured: string[]
-  encrypted: boolean
+  /** 缺省 = 还没问过钥匙串（2026-08-28） */
+  encrypted?: boolean | undefined
 }
 
 export const $projects = atom<readonly ProjectSummary[]>([])
@@ -82,7 +83,7 @@ export const $cellCount = atom<number>(0)
 export const setCellCount = (v: number) => setValue($cellCount, v)
 
 export const $providers = atom<Providers>({ agents: [], providers: [] })
-export const $credentials = atom<CredentialState>({ configured: [], encrypted: false })
+export const $credentials = atom<CredentialState>({ configured: [] })
 /**
  * **目录与凭证「到手了没有」**（2026-08-28，打包版首启抓的）。
  *

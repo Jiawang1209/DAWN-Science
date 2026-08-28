@@ -139,7 +139,8 @@ describe("默认配置的形状（①-C · C5）", () => {
   })
 
   it("**有一个通用终端** —— 判据 ③：能跑任意命令，也能手动起那两个 CLI 的 TUI", () => {
-    expect(parsed().agents["shell"]).toMatchObject({ kind: "pty", command: "bash" })
+    // 跟用户的登录 shell（2026-08-28）；没有 SHELL 时才是 bash
+    expect(parsed().agents["shell"]).toMatchObject({ kind: "pty", command: process.env.SHELL || "bash" })
   })
 
   /**
@@ -221,8 +222,10 @@ describe("默认配置的形状（①-C · C5）", () => {
  */
 describe("默认终端按平台给", () => {
   it("类 Unix 上是交互式 bash", () => {
-    expect(默认终端("darwin")).toEqual({ command: "bash", args: ["-i"] })
-    expect(默认终端("linux")).toEqual({ command: "bash", args: ["-i"] })
+    expect(默认终端("darwin", "")).toEqual({ command: "bash", args: ["-i"] })
+    expect(默认终端("linux", "")).toEqual({ command: "bash", args: ["-i"] })
+    // 有登录 shell 就用它：macOS 自 Catalina 起是 zsh，写死 bash 的话提示符、conda、nvm 全不是用户那套（2026-08-28）
+    expect(默认终端("darwin", "/bin/zsh")).toEqual({ command: "/bin/zsh", args: ["-i"] })
   })
 
   /** **不是 `pwsh`**：那个要自己装；`powershell.exe` 随系统 */

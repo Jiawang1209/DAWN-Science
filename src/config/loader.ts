@@ -80,12 +80,13 @@ export function loadRegistry(file: string): ProviderRegistry {
  * **写进模板一次，此后归用户**：配置文件生成之后我们绝不覆盖它
  * （见下面那段），所以这里选错了就是选错了，改回来也不会追溯。
  */
-export function 默认终端(平台: NodeJS.Platform = process.platform): {
+export function 默认终端(平台: NodeJS.Platform = process.platform, shell: string | undefined = process.env.SHELL): {
   command: string
   args: readonly string[]
 } {
-  // `-i` 是交互式：没有它，`.bashrc` 不加载，PATH 与别名都跟人手敲的不一样
-  return 平台 === "win32" ? { command: "powershell.exe", args: [] } : { command: "bash", args: ["-i"] }
+  // `-i` 是交互式：没有它，rc 文件不加载，PATH 与别名都跟人手敲的不一样。
+  // 跟用户自己的登录 shell（macOS 自 Catalina 起是 zsh；2026-08-28 之前写死 bash，提示符、conda、nvm 全不是他那套）
+  return 平台 === "win32" ? { command: "powershell.exe", args: [] } : { command: shell || "bash", args: ["-i"] }
 }
 
 /**

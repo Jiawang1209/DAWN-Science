@@ -581,3 +581,25 @@ describe("内核变化出声 · 接线", () => {
     expect(通知()).toEqual([])
   })
 })
+
+describe("默认项目与临时会话根（2026-08-28 真实 HOME 全新演练抓的）", () => {
+  it("**同一条路径在装配时就拦下**——否则第一段临时会话撞 UNIQUE，全新机器上第一句话就失败", () => {
+    const root = mkdtempSync(join(tmpdir(), "dawn-same-root-"))
+    cleanups.push(() => rmSync(root, { recursive: true, force: true }))
+    expect(() =>
+      createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials(), defaultWorkspace: root, scratchRoot: root }),
+    ).toThrow(/不能是同一个/)
+  })
+
+  it("路径不同：默认项目建得出，第一段临时会话也开得出（此前就是这两步互相撞）", async () => {
+    const base = mkdtempSync(join(tmpdir(), "dawn-two-roots-"))
+    cleanups.push(() => rmSync(base, { recursive: true, force: true }))
+    const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials(), defaultWorkspace: join(base, "workspace"), scratchRoot: join(base, "scratch"), skipCredentialGate: true })
+    cleanups.push(() => wb.close())
+    const p = await wb.server.handle("getProviders", {})
+    const agentId = (p as { data: { agents: { agentId: string; kind: string }[] } }).data.agents.find((a) => a.kind === "native")?.agentId
+    expect(agentId).toBeDefined()
+    const r = await wb.server.handle("createTask", { agentId })
+    expect(r.ok, JSON.stringify(r)).toBe(true)
+  })
+})

@@ -134,19 +134,24 @@ export function setLang(lang: Lang): void {
 /**
  * 启动时读回。**在第一帧之前调**——晚一步就会先按英文画一帧再跳成中文。
  *
- * 没存过 → 英文（作者定的默认）。**存了不认识的值也回落到英文，并且出声**。
+ * 没存过 → **跟系统语言**（2026-08-28 作者定的：中文系统中文、其它英文——此前默认英文，中文用户第一眼是英文界面）。
+ * 人在设置里选过的永远优先。**存了不认识的值也回落到系统语言，并且出声**。
  */
+export function 系统语言(navLang: string | undefined = typeof navigator !== "undefined" ? navigator.language : undefined): Lang {
+  return /^zh\b/i.test(navLang ?? "") ? "zh" : "en"
+}
+
 export function loadLang(): Lang {
   let stored: string | null = null
   try {
     stored = localStorage.getItem(LANG_KEY)
   } catch (e) {
-    console.error("[i18n] 读不到已保存的语言，回落到英文：", e)
+    console.error("[i18n] 读不到已保存的语言，回落到系统语言：", e)
   }
-  let lang: Lang = "en"
+  let lang: Lang = 系统语言()
   if (stored === "en" || stored === "zh") lang = stored
   else if (stored !== null) {
-    console.error(`[i18n] 存储里的语言无法识别：${JSON.stringify(stored)}，回落到英文`)
+    console.error(`[i18n] 存储里的语言无法识别：${JSON.stringify(stored)}，回落到系统语言 ${lang}`)
   }
   $lang.set(lang)
   return lang

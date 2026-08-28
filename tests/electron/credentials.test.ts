@@ -107,9 +107,14 @@ describe("凭证库 · 安全存储不可用时明确降级", () => {
     expect(s.get("ds")).toBe("sk-1")
   })
 
-  it("isEncrypted 如实反映当前状态，供 UI 提示用户", () => {
-    expect(new CredentialStore({ file: newFile(), safeStorage: working }).isEncrypted()).toBe(true)
-    expect(new CredentialStore({ file: newFile(), safeStorage: unavailable }).isEncrypted()).toBe(false)
+  it("isEncrypted 如实反映当前状态，供 UI 提示用户——但没存过、没问过之前是「不知道」，不去碰钥匙串（2026-08-28：问它会卡主线程）", () => {
+    const a = new CredentialStore({ file: newFile(), safeStorage: working })
+    expect(a.isEncrypted()).toBeUndefined()
+    a.set("ds", "k")
+    expect(a.isEncrypted()).toBe(true)
+    const b = new CredentialStore({ file: newFile(), safeStorage: unavailable })
+    b.set("ds", "k")
+    expect(b.isEncrypted()).toBe(false)
   })
 })
 

@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url"
 import { extname, join, dirname } from "node:path"
 import { 迁旧数据 } from "./migrate-userdata.js"
 import { readFile } from "node:fs/promises"
+import { appendFileSync, mkdirSync } from "node:fs"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
 import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, IPC_ATTACH_SAVE, IPC_ATTACH_USAGE, IPC_ATTACH_CLEAN, IPC_CLIPBOARD_FILES, IPC_WEB_CONTROL, IPC_WEB_STATE, createIpcHandler } from "./ipc.js"
 import { 存附件, 附件用量of, 清附件 } from "../files/attachments.js"
@@ -86,6 +87,35 @@ const FAKE_SSH = process.env.DAWN_FAKE_SSH === "1"
 const 隐藏窗口 = process.env.DAWN_HIDE_WINDOW === "1"
 
 /**
+ * **启动日志**（2026-08-28，Windows 上「双击完全没反应」之后加的）。
+ *
+ * 一个桌面应用打不开时，用户能给的全部信息就是「没反应」。要让这句话变成证据，
+ * 应用得在窗口出现之前就留下脚印：文件在 userData 下的 `startup.log`
+ * （mac `~/Library/Application Support/DAWN Science/`、Windows `%APPDATA%\DAWN Science\`、Linux `~/.config/DAWN Science/`）。
+ * 写不进去就算了——日志绝不能成为新的打不开的理由。
+ */
+const 启动日志路径 = join(app.getPath("userData"), "startup.log")
+function 启动日志(行: string): void {
+  try {
+    mkdirSync(dirname(启动日志路径), { recursive: true })
+    appendFileSync(启动日志路径, `${new Date().toISOString()} ${行}\n`)
+  } catch {
+    /* 见上 */
+  }
+}
+启动日志(`主进程模块已加载 · ${process.platform}/${process.arch} · electron ${process.versions.electron} · packaged=${app.isPackaged} · exe=${process.execPath}`)
+// 主进程没接住的异常：Electron 默认会弹框，但 ESM 里 whenReady 之前抛的不一定弹——自己兜一层，先写日志再弹
+process.on("uncaughtException", (e) => {
+  const msg = e instanceof Error ? (e.stack ?? e.message) : String(e)
+  启动日志(`未接住的异常：${msg}`)
+  try {
+    dialog.showErrorBox("DAWN 启动失败", `${msg}\n\n日志：${启动日志路径}`)
+  } catch {
+    /* dialog 在 ready 之前可能不可用 */
+  }
+})
+
+/**
  * 写权租约的 TTL（秒）。**默认 300**，e2e 调小它来验过期那条路——
  * 按默认值验一次要等五分钟，那种测试没人会跑。
  */
@@ -94,6 +124,7 @@ const LEASE_TTL = Number(process.env.DAWN_LEASE_TTL ?? "") || undefined
 let workbench: Workbench | undefined
 
 function createWindow(): void {
+  启动日志("开窗口")
   const win = new BrowserWindow({
     width: 1280,
     height: 840,
@@ -389,6 +420,7 @@ function 打包版首启迁移(): void {
 }
 
 app.whenReady().then(() => {
+  启动日志("app ready")
   打包版首启迁移()
   /**
    * **连 Dock 图标也不要跳**（e2e 用，2026-08-11）。

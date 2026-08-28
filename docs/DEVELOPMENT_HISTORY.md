@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — 启动日志 + 未接住异常兜底框：让「双击没反应」变成能读的证据
+
+- **Type**: fix
+- **Motivation**: 交叉打的 Windows 便携版在真机上「双击完全没反应」——没窗口、没弹框。静态查了一遍：三个原生模块的 win32-x64 件都在包里，主进程没有平台分支、没有顶层 await；查不出。根本问题是**应用打不开时什么都不留**，用户能给的全部信息就是那四个字。
+- **What**: `main.ts` 在模块加载、`app ready`、开窗口三处写 `startup.log`（userData 下；写不进去就算，绝不成为新的打不开的理由）；`process.on("uncaughtException")` 先写日志再弹框。打包文档加「打不开时先看这里」：文件不存在 / 只到加载 / 有异常，三种读法各指向什么，并提示便携版每次启动先解压 700 MB。
+- **Impact**: 每次启动多写三行文件。
+- **Verification**: 本机打包版 `test:packaged` 后 `startup.log` 三行齐；Windows 上的效果等真机反馈。
+
 ### 2026-08-28 — CI 第二轮：mac、Windows 绿；Linux 仍挂在内核组——正式步只跑 node+ui，另加两个取证步
 
 - **Type**: chore

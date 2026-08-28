@@ -4,9 +4,243 @@
 
 **Data Agent Workbench with Notebooks — for science.**
 
-开源的本地 AI 工作台：R 与 Python 数据科学，多智能体协作，面向科研。
+An open-source, local-first AI workbench where multiple agents collaborate with you on R and Python data science.
 
-[下载安装包](#安装) · [从源码运行](#从源码运行) · [文档](#文档) · [English](#english)
+[Download](#install) · [Run from source](#run-from-source) · [Docs](#documentation) · [中文](#中文)
+
+</div>
+
+---
+
+## What it is
+
+An **open-source, local-first desktop environment for research work**. You talk to a model; the model runs Python / R in a **persistent kernel** — variables survive across conversations and restarts — and you can keep typing into the same kernel from a notebook pane, with your cells recorded in the conversation. A project is a folder; a server becomes a remote workspace with nothing installed on it but `sshd`.
+
+**The idea:**
+
+```
+question  →  plan  →  call tools  →  run  →  traceable result
+```
+
+The last step is what sets it apart from other AI tools — **not faster, but more trustworthy**.
+
+**Domains:** data science · ecology · environmental science · bioinformatics
+
+<!-- TODO: real screenshot at docs/screenshot.png -->
+
+---
+
+## The name
+
+| | |
+|---|---|
+| **D** | **Data** |
+| **A** | **Agent** |
+| **W** | **Workbench** |
+| **N** | **Notebook** |
+
+*Data* (inside the acronym) + *Science* (the product name) spell **data science**; *Science* also covers ecology, environmental science and bioinformatics.
+
+---
+
+## Install
+
+Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). **This is an early build (0.0.x) and the installers are unsigned**, so the first launch takes one extra click:
+
+| Platform | Install | First launch |
+|---|---|---|
+| macOS | Open the `.dmg`, drag to Applications | Right-click → Open. On macOS 15+, also go to *System Settings → Privacy & Security* and click *Open Anyway* |
+| Windows | Run `…-setup.exe`, or just run `…-portable.exe` | SmartScreen: *More info → Run anyway* |
+| Linux | `chmod +x *.AppImage && ./DAWN-Science-*.AppImage`, or `sudo dpkg -i *.deb` | AppImage needs `sudo apt install libfuse2` |
+
+**First launch** is a wizard: pick a provider (DeepSeek / Kimi / Qwen / Anthropic / OpenAI …), paste an API key, start chatting. The same screen can *detect local interpreters* and hook an existing Python / R up as a kernel — optional; chat works without it.
+
+**The app itself does not need Node.js.** External tools are only needed for the features that use them, and the UI says so when one is missing:
+
+| To do this | You need |
+|---|---|
+| Notebook / run Python | Python 3 + `pip install ipykernel` |
+| R kernel | R + `IRkernel` |
+| Git facts about a project | git |
+| Remote workspace | `sshd` on the server — **nothing else is placed on the server** |
+| Hand work to Claude Code / Codex | The respective CLI installed locally (nice-to-have; chat works without it) |
+
+---
+
+## Features
+
+| | |
+|---|---|
+| **Kernel in the conversation** | The model calls `run_code`; you watch every cell stream by in the dock's *Notebook* pane, type into the same kernel yourself, and your cells land in the conversation |
+| **Persistent kernels** | Variables survive across conversations and restarts, and can be interrupted; close the chat and `df` is still there |
+| **Remote workspaces** | Add a server over SSH — sessions, kernels, files and terminals run there; zero dependencies on the server |
+| **Right dock** | Files (local / remote), transfers, notebook, generated artifacts, web preview, watching the agent's browser |
+| **`@` references** | `@` a workspace file in the input box — path and type are passed, not contents |
+| **Multi-agent** | 22 bundled sub-agents; team mode with a lead, resumable members and a task board with dependencies |
+| **Three permission levels** | Allow all / ask / block, plus a hard-deny list |
+| **Skills & plugins** | Skills with three-level toggles and import; Office (Word/Excel/PowerPoint/PDF, 14 tools), browser (15 tools) and long-term memory (three-track confirmation) plugins |
+| **Remote assistant** | WeChat / Feishu channels — scan a QR code, keep asking from your phone |
+| **Scheduled tasks** | At the set time, open a fresh session and run the task description |
+| **Artifacts** | `GENERATED · N` in the conversation, live list in the dock |
+| **Any provider** | 40+ via `pi`'s provider layer; or switch to a locally installed Claude Code / Codex (ACP) |
+| **Appearance** | Light / dark, one-click accent color, Chinese / English UI |
+
+---
+
+## Four pillars
+
+### D · Data
+
+Persistent Python and R kernels (variables kept across cells, sessions and restarts; interruptible) · database connections and schema browsing · standardized artifact schemas (tables carry structure, charts carry data source and metric meaning, models carry hyper-parameters and evaluation metrics).
+
+### A · Agent
+
+An agent that plans, calls tools, executes and reports — not just chats. By default a local agent loop drives any API endpoint (DeepSeek / Kimi / Qwen …); it can also hand off to a locally installed Claude Code or Codex. MCP tool gateway · progressive skill loading · **optional multi-agent orchestration**.
+
+### W · Workbench
+
+A project is bound to a folder; configuration, knowledge and kernels hang off the project · local / WSL / SSH / GPU runtimes · run management for long jobs (pre-flight checks, heartbeats, bounded logs, environment snapshots).
+
+**Key structure: the kernel outlives the session.** Close a conversation and `df` is still in Python.
+
+### N · Notebook
+
+Conversation, notebook and side-by-side view are **three projections of one append-only entry sequence, not three implementations**. `code_cell` is a first-class citizen: re-runnable, editable, exportable to `.ipynb`, and cells written by a human are structurally identical to cells written by the agent.
+
+---
+
+## Core claim: traceability
+
+Two kinds of information are **modeled separately**:
+
+| Layer | Content | Trust |
+|---|---|---|
+| **Agent claims** | what the agent says it did | to be verified |
+| **Repo facts** | git diff, test exit codes, lint / build results | authoritative |
+
+**State advances only when both agree**; a claim alone is never enough:
+
+```
+agent says "implemented", tests fail            → cannot enter DONE
+agent says "reviewed", no review artifact       → cannot hand off
+agent says "mergeable", diff ≠ plan             → back to REWORKING
+```
+
+---
+
+## Status
+
+**Early release: usable day to day, interfaces still moving.** The local and remote main paths work and have been verified on real machines. Packaged for three platforms; signing and auto-update are not done yet.
+
+| | |
+|---|---|
+| Source | ~77k lines of TypeScript |
+| Tests | 197 unit/integration test files (vitest) + 107 e2e cases (Playwright, against the real build) + 10 pixel-exact visual baselines |
+| Changelog | [485 entries](docs/DEVELOPMENT_HISTORY.md), each with motivation and verification |
+| Next | signing & auto-update · artifact provenance / versions / annotations |
+
+---
+
+## Run from source
+
+Node.js ≥ 22.
+
+```bash
+git clone https://github.com/Jiawang1209/DAWN-Science.git
+cd DAWN-Science
+npm ci
+cp .env.example .env        # add your API key (or do it in the first-run wizard)
+npm run app                 # build and launch
+```
+
+Development:
+
+```bash
+npm run dev:mock            # real pipeline + fake model, isolated dir, never touches real credentials
+npm test                    # unit + integration
+npm run test:e2e            # build, then Playwright against the real build
+npm run dist                # package for the current platform → release/
+```
+
+Cross-compiling and Linux build deps: [打包与发布](docs/打包与发布.md).
+
+---
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Core | TypeScript / Node |
+| LLM providers | `@earendil-works/pi-ai` (40+ providers, DeepSeek / Kimi / Qwen native) |
+| Agent loop | `@earendil-works/pi-agent-core` |
+| Kernels | `enchannel-zmq-backend` + `@nteract/messaging` + `spawnteract` (Jupyter protocol — one stack for R and Python) |
+| Terminal | `node-pty` + `xterm.js` |
+| Tool protocol | `@modelcontextprotocol/sdk` (server + client) |
+| Persistence | SQLite (`better-sqlite3`, WAL) |
+| Shell | Electron |
+| Front-end | React + Vite · CodeMirror 6 · Plotly.js · TanStack Table |
+
+---
+
+## Documentation
+
+Most docs are in Chinese.
+
+| Doc | Answers |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) | Where each feature's spec lives, the three admission rules, known pitfalls — **start here** |
+| [Design specs](docs/superpowers/specs/) | What to build, why, and what never to build |
+| [Master roadmap](docs/superpowers/plans/2026-08-08-master-roadmap.md) | Order of work, decision gates, risks |
+| [Design contract](docs/DESIGN.md) | How the UI looks and why |
+| [Reference map](docs/REFERENCES.md) | Which project to read for which component |
+| [Packaging & release](docs/打包与发布.md) | How to package and install on a fresh machine |
+| [Development history](docs/DEVELOPMENT_HISTORY.md) | Every change and its reason |
+
+---
+
+## Acknowledgements
+
+These projects were studied during design. **Except `pi`, which is a dependency, all are read-only references — design was learned, code was not copied.**
+
+| Project | What we learned |
+|---|---|
+| [pi](https://github.com/earendil-works/pi) | agent loop and provider layer (used as a dependency) |
+| [Buzz](https://github.com/block/buzz) | process-group termination, context-recovery ladder, unified event stream, dual-protocol decoupling |
+| [Rho](https://github.com/xuzhougeng/Rho) | Ark + Jupyter protocol route, protocol layering between front-end and transport |
+| [wisp-science](https://github.com/xuzhougeng/wisp-science) | runtimes, run management, capability grants, worktree isolation |
+| [wispterm](https://github.com/xuzhougeng/wispterm) | terminal input leases, split-pane interaction |
+| [pi-crew](https://github.com/baphuongna/pi-crew) | GreenLevel grading, verification-environment hygiene, worktree practice |
+| [ccb](https://github.com/SeemSeam/claude_codex_bridge) | provider adapter contract, completion contract |
+| hive | team panel interaction (visual reference only) |
+
+---
+
+## License
+
+[GNU Affero General Public License v3.0 or later](LICENSE)
+
+```
+Copyright (C) 2026  DAWN Science contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+```
+
+**Why AGPL**: this is an open-source tool for research, and we want improved versions to stay open for everyone — including versions offered as a network service. Peers such as [wisp-science](https://github.com/xuzhougeng/wisp-science) and [ccb](https://github.com/SeemSeam/claude_codex_bridge) chose AGPL too.
+
+Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
+
+---
+
+<div align="center">
+
+# 中文
+
+**Data Agent Workbench with Notebooks — for science.**
+
+开源的本地 AI 工作台：R 与 Python 数据科学，多智能体协作，面向科研。
 
 </div>
 
@@ -45,7 +279,7 @@
 
 ## 安装
 
-去 [Releases](../../releases) 下载对应平台的包。**当前是早期版本（0.0.x），安装包未签名**，第一次打开要多点一步：
+去 [Releases](https://github.com/Jiawang1209/DAWN-Science/releases) 下载对应平台的包。**当前是早期版本（0.0.x），安装包未签名**，第一次打开要多点一步：
 
 | 平台 | 安装 | 第一次打开 |
 |---|---|---|
@@ -146,8 +380,8 @@ agent 说「可合并」，但 diff 与计划不一致     → 回到 REWORKING
 需要 Node.js ≥ 22。
 
 ```bash
-git clone <本仓库>
-cd dawn-science
+git clone https://github.com/Jiawang1209/DAWN-Science.git
+cd DAWN-Science
 npm ci
 cp .env.example .env        # 填你的 API key（也可以不填，首启向导里填）
 npm run app                 # 构建并启动
@@ -204,9 +438,6 @@ npm run dist                # 打当前平台的安装包，产物在 release/
 |---|---|
 | [pi](https://github.com/earendil-works/pi) | agent loop 与 provider 层（作为依赖使用） |
 | [Buzz](https://github.com/block/buzz) | 进程组终止、上下文恢复阶梯、统一事件流、双协议解耦 |
-| [Rho](https://github.com/xuzhougeng/Rho) | Ark + Jupyter 协议路线、前端与传输解耦的协议分层 |
-| [wisp-science](https://github.com/xuzhougeng/wisp-science) | 执行环境、Run 管理、capability 授权、worktree 隔离 |
-| [wispterm](https://github.com/xuzhougeng/wispterm) | 终端输入租约、分屏交互 |
 | [pi-crew](https://github.com/baphuongna/pi-crew) | GreenLevel 分级、验证环境净化、worktree 实战细节 |
 | [ccb](https://github.com/SeemSeam/claude_codex_bridge) | provider 适配契约、completion contract |
 | hive | team 面板交互（仅视觉参考） |
@@ -226,21 +457,6 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 ```
 
-**选择 AGPL 的理由**：这是一个面向科研的开源工具，我们希望它的改进版本同样对所有人开放——包括以网络服务形式提供的版本。同类的 [wisp-science](https://github.com/xuzhougeng/wisp-science) 与 [ccb](https://github.com/SeemSeam/claude_codex_bridge) 也采用 AGPL。
+**选择 AGPL 的理由**：这是一个面向科研的开源工具，我们希望它的改进版本同样对所有人开放——包括以网络服务形式提供的版本。
 
 依赖的第三方库（`pi` 等）为 MIT / Apache-2.0，与 AGPL 兼容。
-
----
-
-## English
-
-**DAWN Science** — *Data Agent Workbench with Notebooks* — is an open-source AI workbench that runs on your own machine, where multiple agents do R & Python data science together with you. Built for research: data science, ecology, environmental science, bioinformatics.
-
-- **Persistent Python / R kernels** shared between the agent and you: the model runs `run_code` in the same kernel you type into; variables survive across conversations and restarts.
-- **Remote workspaces over SSH** — sessions, kernels, files and terminals run on the server; the server needs nothing but `sshd`.
-- **Multi-agent**: 22 bundled sub-agents, team mode with a task board.
-- **Traceable results**: what the agent *claims* and what the repo *shows* (git diff, test exit codes) are modeled separately; state only advances when both agree.
-- Any LLM provider via `pi` (DeepSeek, Kimi, Qwen, Anthropic, OpenAI, 40+), or hand off to a locally installed Claude Code / Codex.
-- Plugins: Office (Word/Excel/PowerPoint/PDF), browser automation, long-term memory; WeChat / Feishu channels; scheduled tasks.
-
-Early release (0.0.x), unsigned installers — see [Releases](../../releases). Run from source with Node ≥ 22: `npm ci && npm run app`. The UI is bilingual (中文 / English). Licensed under AGPL-3.0-or-later.

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — README 改成英文为主，中文全文在后
+
+- **Type**: docs
+- **Motivation**: 仓库已公开，作者要英文优先。
+- **What**: 英文部分按中文结构逐节完整翻译（安装、功能、支柱、可追溯、状态、源码运行、技术栈、文档、致谢、许可），不是只挪结尾那段；中文全文保留在 `# 中文` 之后；clone 地址填真实仓库。
+- **Impact**: 仅文档。
+- **Verification**: 章节表两套各 13 节一一对应。
+
 ### 2026-08-28 — 仓库上 GitHub：homepage 填真、CI 改成打 tag 自动出 Release 草稿、加 Linux arm64
 
 - **Type**: chore

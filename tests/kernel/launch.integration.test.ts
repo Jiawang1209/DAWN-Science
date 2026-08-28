@@ -54,7 +54,9 @@ function pythonWithoutIpykernel(): string | undefined {
 describe("起不来时的诊断（真的起一次，不是手写 stderr）", () => {
   const 坏解释器 = pythonWithoutIpykernel()
 
-  it.skipIf(!坏解释器)("**解释器在、ipykernel 没装 → 说的是「装包」**", async () => {
+  // CI 上跳过：这条靠的是本机某个具体解释器的真实行为；GitHub 的 mac runner 上 /usr/bin/python3 起来什么都不吐，
+  // 8 秒握手超时后 stderr 是空的——测的是环境不是代码（2026-08-28 首次跑 CI 抓到）
+  it.skipIf(!坏解释器 || !!process.env.CI)("**解释器在、ipykernel 没装 → 说的是「装包」**", async () => {
     only("broken", [坏解释器!, "-m", "ipykernel_launcher", "-f", "{connection_file}"])
 
     const err = await launchKernelChannel({ kernelName: "broken", handshakeTimeoutMs: 8000 })

@@ -27,7 +27,7 @@
  * （能拦得住的前提是 `noTools: "builtin"`：不关掉 pi 的内置工具，
  * 等于门旁边留着一扇没锁的侧门。那条已经在 `native.ts` 里守着了。）
  */
-import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path"
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { realpathSync } from "node:fs"
 import { homedir } from "node:os"
 import { createHash } from "node:crypto"
@@ -172,7 +172,8 @@ export function 看风险(
     // realpath **目标存在的最长前缀**,拼上还不存在的尾段。这样目标与 root 用同一套真实路径基准,
     // 既挡住软链逃逸,又不会因 macOS 的 /var 软链把工作区内的路径误判成外面(A4 回归的根因)。
     if (!语境.remote) 绝对 = realpath存在前缀(绝对)
-    const 相对 = relative(root, 绝对)
+    // Windows 上 relative 回的是反斜杠；下面按 `data/raw/` 比对，统一成 "/"（2026-08-28）
+    const 相对 = relative(root, 绝对).split(sep).join("/")
     const 在工作区里 = !(相对.startsWith("..") || isAbsolute(相对))
     // 工作区里的东西不走硬拒（工作区可能就在 /var/folders 这类地方——那是它自己的地盘）
     const 硬 = 在工作区里 ? undefined : 受保护路径理由(绝对, 语境.remote)

@@ -112,6 +112,11 @@ function toRecord(r: Row): SessionRecord {
 export class SessionStore {
   constructor(private readonly db: Database.Database) {}
 
+  /** 库还开着没有——收摊之后 pty 仍可能吐一个 exited，那时不该再写（2026-08-28 CI 慢机器上抓到的竞态） */
+  isOpen(): boolean {
+    return this.db.open
+  }
+
   insert(rec: NewSessionRecord): void {
     this.db
       .prepare(`

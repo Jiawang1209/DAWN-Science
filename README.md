@@ -50,7 +50,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 | Platform | Install | First launch |
 |---|---|---|
 | macOS | Open the `.dmg`, drag to Applications | Right-click → Open. On macOS 15+, also go to *System Settings → Privacy & Security* and click *Open Anyway* |
-| Windows | Run `…-setup.exe`, or just run `…-portable.exe` | SmartScreen: *More info → Run anyway* |
+| Windows | Run `…-setup.exe`, or just run `…-portable.exe` | SmartScreen: *More info → Run anyway*. **Windows builds are not yet verified on a real machine** — please report what breaks |
 | Linux | `chmod +x *.AppImage && ./DAWN-Science-*.AppImage`, or `sudo dpkg -i *.deb` | AppImage needs `sudo apt install libfuse2` |
 
 **First launch** is a wizard: pick a provider (DeepSeek / Kimi / Qwen / Anthropic / OpenAI …), paste an API key, start chatting. The same screen can *detect local interpreters* and hook an existing Python / R up as a kernel — optional; chat works without it.
@@ -281,7 +281,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 | 平台 | 安装 | 第一次打开 |
 |---|---|---|
 | macOS | 打开 `.dmg`，拖进 Applications | 右键 → 打开；macOS 15 起要去「系统设置 → 隐私与安全性」底部点「仍要打开」 |
-| Windows | 运行 `…-setup.exe`；或直接跑 `…-portable.exe` | SmartScreen：「更多信息 → 仍要运行」 |
+| Windows | 运行 `…-setup.exe`；或直接跑 `…-portable.exe` | SmartScreen：「更多信息 → 仍要运行」。**Windows 版尚未在真机上验证过**——哪里不对请反馈 |
 | Linux | `chmod +x *.AppImage && ./DAWN-Science-*.AppImage`；或 `sudo dpkg -i *.deb` | AppImage 需要 `sudo apt install libfuse2` |
 
 **第一次打开**是一个向导：选服务商（DeepSeek / Kimi / Qwen / Anthropic / OpenAI …）、填 API key，就能聊。同一屏可以「检测本机解释器」，从已有的 Python / R 里选一个接成内核——可选，不配也能聊。

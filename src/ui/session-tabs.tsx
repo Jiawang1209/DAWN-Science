@@ -35,7 +35,9 @@ export function SessionTabs({
   const 当前 = useRef<HTMLDivElement>(null)
   // 切到哪个就把哪个滚进视野——分栏多了会横向滚
   useEffect(() => {
-    当前.current?.scrollIntoView({ inline: "nearest", block: "nearest" })
+    // jsdom 没有 scrollIntoView（同 slash-menu 那处）——CI 的 mac runner 上它以未处理异常的形式把整轮测试打红过（2026-08-28）
+    const el = 当前.current
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ inline: "nearest", block: "nearest" })
   }, [current])
   if (tabs.length === 0) return null
   return (

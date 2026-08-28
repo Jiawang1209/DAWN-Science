@@ -6,7 +6,7 @@
  */
 import { randomUUID } from "node:crypto"
 import { mkdirSync } from "node:fs"
-import { basename, join, resolve } from "node:path"
+import { basename, join, resolve, isAbsolute } from "node:path"
 import type { ProviderRegistry } from "../config/schema.js"
 import type { ProjectRecord, ProjectStore } from "../store/projects.js"
 import type { RunStore } from "../store/runs.js"
@@ -42,7 +42,7 @@ export class ProjectManager {
    * 路径先规范化再比对：`/w` 与 `/w/` 必须命中同一项目。
    */
   open(workspace: string): ProjectRecord {
-    if (!workspace.startsWith("/")) {
+    if (!isAbsolute(workspace)) {  // 不是 startsWith("/")：Windows 的 C:\ 过不了那个判断，建任务直接失败（2026-08-28 CI 抓的）
       throw new Error(`项目路径必须是绝对路径，收到 "${workspace}"——相对路径在多窗口下会指向不同位置`)
     }
     const normalized = resolve(workspace)

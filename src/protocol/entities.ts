@@ -191,7 +191,8 @@ export const ProjectSummarySchema = z
     projectId: z.string().min(1),
     name: z.string().min(1),
     /** 绝对路径。相对路径在多进程/多窗口下会指向不同位置 */
-    workspace: z.string().startsWith("/"),
+    // 不能只认 "/"：Windows 是 `C:\…`。这份 schema 在渲染进程也跑，用不了 node:path，所以是正则（2026-08-28）
+    workspace: z.string().regex(/^(\/|[A-Za-z]:[\\/])/, "必须是绝对路径"),
     createdAt: Iso,
     totalRunCount: NonNegInt,
     totalSessionCount: NonNegInt,

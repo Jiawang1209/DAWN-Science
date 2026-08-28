@@ -8,6 +8,22 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — CI 第一轮（Windows）：这份代码从没在 Windows 上跑过——修两个必撞的，其余记账
+
+- **Type**: fix
+- **Motivation**: windows-2022 runner 上 `npm test` 25 个文件红。归类之后不是「几处」：绝对路径判断、路径分隔符、文件权限 0600、命名管道、时区、CRLF、spawn `bash`……二十多个独立的兼容问题。没有 Windows 机器，靠 CI 一轮 15 分钟地迭代今天发不出去。
+- **What**: ① `project/manager.ts` 与 `protocol/entities.ts` 判绝对路径不再 `startsWith("/")`——`C:\…` 过不了，建任务直接失败，24 个测试跟着倒（schema 那份在渲染进程也跑，用正则）。② `policy/permissions.ts` 里 `relative()` 的结果统一成 `/` 再比 `data/raw/`——Windows 上原始数据保护本来是失效的。③ `.gitattributes` 强制 LF。④ `release.yml`：Windows runner 只构建不测试，写明原因。⑤ 打包文档、README 两处安装表标「Windows 未经验证」。
+- **Impact**: ①② 是产品 bug 修复，mac/Linux 行为不变。Windows 包能出，但没有测试背书——Release 说明里明说。**Windows 移植是下一项工作**（硬拒清单也全是 Unix 路径，要设计）。
+- **Verification**: typecheck 干净；`tests/project`、`tests/policy`、`tests/protocol` 本机全过；Windows 上的效果只能等下一轮 CI 与真机反馈。
+
+### 2026-08-28 — CI 第一轮（mac）红了三处：慢机器上才露头的两个竞态 + 一条靠本机 Python 的集成测试
+
+- **Type**: fix
+- **Motivation**: `v0.0.1` 标签触发的第一次 CI，macos-14 runner 死在 `npm test`：2486 个测试 1 红 + 2 个未处理异常。本机从没红过——都是慢机器把时序拉开才露出来的。
+- **What**: ① `session-tabs.tsx` 的 `scrollIntoView` 加存在判断（jsdom 没这个方法；`slash-menu` 早就这么写了）。② `SessionStore.isOpen()`；`manager.ts` 里 pty 报 `exited` 时库已关就不写——测试收摊先关库、pty 随后才吐 exited。③ `launch.integration.test.ts` 那条「解释器在、ipykernel 没装」在 `CI` 环境变量下跳过：它靠的是本机某个具体解释器的真实行为，runner 上 `/usr/bin/python3` 什么都不吐、8 秒超时后 stderr 为空——测的是环境不是代码。
+- **Impact**: 无功能变化。③ 在本机照跑，只是 CI 不跑。
+- **Verification**: typecheck 干净；相关 54 个文件 637 过；全量 `npm test` 见下一轮 CI。
+
 ### 2026-08-28 — README 改成英文为主，中文全文在后
 
 - **Type**: docs

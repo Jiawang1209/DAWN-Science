@@ -1,0 +1,5 @@
+# 行尾一律 LF——Windows 上 git 默认 autocrlf 会把仓库文件换成 CRLF，逐字比对的测试与 shell 脚本都会因此红（2026-08-28 CI 抓的）
+* text=auto eol=lf
+*.png binary
+*.icns binary
+*.ico binary

@@ -87,6 +87,8 @@ export {
   $runDetail,
   $provenance,
   $providers,
+  $providersLoaded,
+  $credentialsLoaded,
   $sessionModels,
   $contextUsage,
   $credentials,

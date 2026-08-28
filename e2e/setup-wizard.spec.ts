@@ -7,6 +7,7 @@
  */
 import { test, expect } from "./fixtures.js"
 import { resolve } from "node:path"
+import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
 
 const 有内核 = resolve(import.meta.dirname, "fixtures", "py-with-kernel")
 const 没内核 = resolve(import.meta.dirname, "fixtures", "py-without-kernel")
@@ -60,5 +61,48 @@ test.describe("首启向导", () => {
     await expect(红字).toBeVisible()
     await 红字.click()
     await expect(page.locator(".setup-wizard")).toBeVisible()
+  })
+})
+
+/**
+ * **按产品原样的默认配置跑一遍全新安装**（2026-08-28，打包版抓的）。
+ *
+ * 夹具默认会把 `ds-chat` 插到 `agents:` 第一个——注释里写得明白：「追加在末尾会让默认 agent
+ * 从 ds-chat 变成 claude」。**测试早知道这个坑，却绕开了它而不是锁住它**：真实首启走的正是被绕开的那条路——
+ * 默认配置只有 claude / codex（cli），填 key 合成的 native 追加在末尾，一开口走的是 claude CLI。
+ * 这条用发布出去的那份 `DEFAULT_CONFIG_YAML`，一个字不改。
+ */
+test.describe("首启向导 · 产品原样的默认配置", () => {
+  test.use({ dawnOptions: { showSetup: true, providersYaml: DEFAULT_CONFIG_YAML } })
+
+  test("**填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在", async ({ dawn }) => {
+    const { page } = dawn
+    const 向导 = page.locator(".setup-wizard")
+    await expect(向导).toBeVisible()
+    await 向导.getByLabel("API key").fill("sk-e2e-test")
+    await 向导.getByRole("button", { name: "保存", exact: true }).click()
+    await expect(向导).toContainText(/已填/)
+    await 向导.getByRole("button", { name: "开始使用 →" }).click()
+    await expect(向导).toHaveCount(0)
+
+    // 空态屏就该有「优化输入」——它只给 native（草稿为空时它的无障碍名是「先写点什么再优化」）
+    await expect(page.getByRole("button", { name: /优化/ })).toBeVisible()
+
+    const 输入 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 输入.fill("请说一句话")
+    await 输入.press("Enter")
+    // 等的是只有对话态才有的东西（不是输入框）
+    await expect(page.locator(".conv-title")).toBeVisible()
+    // 假模型回了话 = 这段会话走的是 native 链路；走 claude CLI 的话这里是「找不到 claude」
+    await expect(page.locator(".conversation")).toContainText("假模型已应答", { timeout: 30_000 })
+    await expect(page.getByRole("button", { name: /优化/ })).toBeVisible()
+
+    const agentId = await page.evaluate(async () => {
+      const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: Array<{ projectId: string }> }> } }
+      const projects = (await w.dawn.invoke("listProjects", {})).data ?? []
+      const sessions = (await w.dawn.invoke("listSessions", { projectId: projects[0]!.projectId })).data as unknown as Array<{ agentId: string }>
+      return sessions[0]?.agentId
+    })
+    expect(agentId).toBe("deepseek")
   })
 })

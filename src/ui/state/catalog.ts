@@ -83,6 +83,17 @@ export const setCellCount = (v: number) => setValue($cellCount, v)
 
 export const $providers = atom<Providers>({ agents: [], providers: [] })
 export const $credentials = atom<CredentialState>({ configured: [], encrypted: false })
+/**
+ * **目录与凭证「到手了没有」**（2026-08-28，打包版首启抓的）。
+ *
+ * 此前首启向导与底部红字拿 `providers.providers.length > 0` 当「目录到手」的信号。
+ * 可 `getProviders` 回的 `providers` 只包含**被 native agent 用到的服务商**——发布出去的默认配置
+ * 刻意不放 native，于是全新安装的机器上那个列表永远是空的，**向导永远不亮、红字也不亮**，
+ * 用户看到的是一个空白首页，一开口走 claude CLI。作者机器上看得到向导，是因为打包版把开发版的旧配置迁了过去。
+ * 「到手」就该是「回复来了」这件事本身，与内容多少无关。
+ */
+export const $providersLoaded = atom<boolean>(false)
+export const $credentialsLoaded = atom<boolean>(false)
 
 export const setProjects = (v: readonly ProjectSummary[]) => setList($projects, v)
 export const setSessions = (v: readonly SessionSummary[]) => setList($sessions, v)
@@ -104,6 +115,7 @@ export const setRunDetail = (v: RunDetail | undefined) => setValue($runDetail, v
 export const setProvenance = (v: ProvenanceLink | undefined) => setValue($provenance, v)
 
 export function setProviders(v: Providers): void {
+  if (!$providersLoaded.get()) $providersLoaded.set(true)
   const prev = $providers.get()
   /**
    * **按内容比，不只按 id**（2026-08-21 修）。
@@ -118,6 +130,7 @@ export function setProviders(v: Providers): void {
 }
 
 export function setCredentials(v: CredentialState): void {
+  if (!$credentialsLoaded.get()) $credentialsLoaded.set(true)
   const prev = $credentials.get()
   if (
     prev.encrypted === v.encrypted &&

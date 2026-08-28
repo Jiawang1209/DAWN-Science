@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-28 — 全新安装的机器上首启向导从来没亮过：判据从「服务商列表非空」改成「目录与凭证都到手」；e2e 按产品原样默认配置锁死首启
+
+- **Type**: fix
+- **Motivation**: 给「一开口走 claude CLI」补 e2e 时，用发布出去的那份 `DEFAULT_CONFIG_YAML` 一个字不改地起应用——**向导没亮**。追下去：向导与底部红字拿 `providers.providers.length > 0` 当「目录到手」，可 `getProviders` 回的 `providers` 只含被 native agent 用到的服务商；默认配置刻意不放 native → 那个列表永远为空 → 全新安装的机器上向导永远不亮、红字也不亮，用户看到一个空白首页。作者在打包版里看得到向导，是因为它把开发版的旧配置迁了过去。夹具早知道相关的坑（注释：「追加在末尾会让默认 agent 从 ds-chat 变成 claude」）却绕开了它而不是锁住它。
+- **What**: `catalog.ts` 加 `$providersLoaded` / `$credentialsLoaded`（各自的 setter 首次被调即置真）；`App.tsx` 的向导与红字判据改成 `没有钥匙 = 两份都到手 && 没凭证`——顺带堵住凭证还没回来时向导就先亮的隐患。`e2e/setup-wizard.spec.ts` 新增「产品原样的默认配置」一组：向导填 key → 开口 → 假模型回话（= native 链路）、`listSessions` 的 agentId 是 `deepseek`、「优化输入」在（草稿为空时它的无障碍名是「先写点什么再优化」）。
+- **Impact**: 全新安装：向导会亮；填 key 后第一段会话走刚填的那家。
+- **Verification**: typecheck；UI 单测全量绿；`setup-wizard.spec.ts` 3/3（新用例第一次跑就抓到了这个 bug）。
+
 ### 2026-08-28 — 打包版首启一开口走的是 claude CLI：对话 agent 顺序改成 native 优先
 
 - **Type**: fix

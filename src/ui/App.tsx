@@ -105,6 +105,8 @@ import {
   $notes,
   $projects,
   $providers,
+  $providersLoaded,
+  $credentialsLoaded,
   $provenance,
   $connection,
   $ready,
@@ -230,6 +232,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const provenance = useStore($provenance)
   const providers = useStore($providers)
   const creds = useStore($credentials)
+  const 目录到手 = useStore($providersLoaded)
+  const 凭证到手 = useStore($credentialsLoaded)
+  /** 「还没有钥匙」——两份都回来了才算数；理由见 catalog.ts 的 `$providersLoaded` */
+  const 没有钥匙 = 目录到手 && 凭证到手 && creds.configured.length === 0
   const sessionModels = useStore($sessionModels)
   const contextUsage = useStore($contextUsage)
   const projectId = useStore($activeProjectId)
@@ -757,7 +763,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [client])
   /**
    * 首启向导（2026-08-27）：没有任何凭证、且没点过「先跳过」时替换主区。
-   * `providers.providers.length > 0` 与底部红字同一条判据——目录还没到手时别先弹向导。
+   * 判据与底部红字同一条（`没有钥匙`）：目录与凭证**都回来了**且没有凭证。
+   * 2026-08-28 之前这里看的是 `providers.providers.length > 0`——那个列表在发布出去的默认配置下永远为空，
+   * 全新安装的机器上向导从来没亮过。
    */
   const [跳过向导, 设跳过向导] = useState(读跳过)
   /**
@@ -766,8 +774,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const [向导中, 设向导中] = useState(false)
   useEffect(() => {
-    if (creds.configured.length === 0 && providers.providers.length > 0 && !跳过向导) 设向导中(true)
-  }, [creds.configured.length, providers.providers.length, 跳过向导])
+    if (没有钥匙 && !跳过向导) 设向导中(true)
+  }, [没有钥匙, 跳过向导])
   const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
   const saveInterpreter = useCallback(
     (language: "python" | "R", path: string) => {
@@ -4552,7 +4560,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
       <div className="statusbar">
         <span>{ready ? t("已连接") : t("未连接")}</span>
-        {creds.configured.length === 0 && providers.providers.length > 0 ? (
+        {没有钥匙 ? (
           /**
            * **不说「native agent」。** 那是我们内部的词，作者已经为它抱怨过一次
            * （*「为什么还会多一个新建 agent 这种奇怪的东西呢？」*）。

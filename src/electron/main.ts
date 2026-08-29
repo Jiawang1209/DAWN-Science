@@ -513,7 +513,15 @@ app.whenReady().then(() => {
   })
 
   // 凭证由 app 管：加密交给 OS（macOS Keychain / DPAPI / libsecret）
-  const 凭证库 = new CredentialStore({ file: defaultCredentialFile(app.getPath("userData")), safeStorage })
+  const 凭证库 = new CredentialStore({
+    file: defaultCredentialFile(app.getPath("userData")),
+    safeStorage,
+    // 解不开 / 明文落盘这类事，stderr 在打包版里没人看得到——进 startup.log（2026-08-28）
+    onInsecure: (m) => {
+      console.error(`[credentials] ${m}`)
+      启动日志(`凭证：${m}`)
+    },
+  })
   /**
    * **钥匙串预热**（2026-08-28 全新机器演练）：第一次进钥匙串在未签名包上要 5–60 秒（securityd 重核 700 MB 的身份），
    * 主线程同步。已经把它从启动路径挪走了；但完全不预热的话这几十秒会落在人按「保存」那一下。

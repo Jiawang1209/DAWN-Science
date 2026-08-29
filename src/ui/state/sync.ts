@@ -95,9 +95,22 @@ export const loadProjects = (c: WorkbenchClient): Promise<void> =>
     })
     .catch(fail)
 
+/**
+ * **`verified: false` 就过几秒再问。** 有加密文件时，后端在钥匙串预热（首帧后 5 秒）之前答不出哪些 key 解得开——
+ * 那时 `configured` 是按文件里有没有键答的，`broken` 是空的。预热完没有人来推（凭证没有事件流），所以这边追问；
+ * 有界：最多追 10 次（30 秒），之后就当它核验不了了，别无限打 IPC。
+ */
+const 核验追问 = { 次数: 0, 上限: 10, 间隔ms: 3_000 }
 export const loadCredentials = (c: WorkbenchClient): Promise<void> =>
   c.get<CredentialState>("listCredentials").then((v) => {
       setCredentials(v)
+      if (v.verified !== false) {
+        核验追问.次数 = 0
+        return
+      }
+      if (核验追问.次数 >= 核验追问.上限) return
+      核验追问.次数 += 1
+      setTimeout(() => void loadCredentials(c), 核验追问.间隔ms)
     })
     .catch(fail)
 

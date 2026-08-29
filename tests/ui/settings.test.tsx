@@ -151,6 +151,15 @@ describe("模型服务 · 编辑器", () => {
     expect(onDelete).toHaveBeenCalledWith("deepseek")
     expect(onSaveConnection).toHaveBeenCalledWith("deepseek", {})
   })
+
+  it("**解不开的 key 有自己的一行、能移除**（审查 2026-08-29）——不然那句「需要重新填写」指着空处，旧密文也永远删不掉", () => {
+    const onDelete = vi.fn()
+    render(面板({ providers: [], known: ["kimi"], onDelete, credentials: { configured: [], broken: ["kimi"], encrypted: true } }))
+    expect(screen.getByText(/解不开了，需要重新填写：kimi/)).toBeDefined()
+    点开(/kimi/)
+    fireEvent.click(screen.getByRole("button", { name: "移除这个服务" }))
+    expect(onDelete).toHaveBeenCalledWith("kimi")
+  })
 })
 
 describe("模型服务 · 添加", () => {

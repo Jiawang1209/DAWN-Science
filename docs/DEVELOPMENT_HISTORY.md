@@ -8,6 +8,27 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-08-29 — 「解不开的 key」那条改动审查出四个问题，全修：核验挪到预热之后、失败不缓存、解不开的有行能删、切换存储方式不丢其它凭证；新增更新演练
+
+- **Type**: fix
+- **Motivation**: 下面那条（08-28）提交前跑了一轮代码审查（`/code-review`），四个真问题：①`configured()` 改成逐条解密——解密就是进钥匙串，`listCredentials` 是启动第一批请求，前一条提交刚把钥匙串挪出启动路径，这一条又塞了回去，每个更新过的用户首屏又要空白几十秒（单测与 e2e 看不出：假 safeStorage 零耗时；`rehearse:fresh` 也看不出：它没有旧文件）；②解密失败按 id 永久缓存——钥匙串锁着、点一次「拒绝」就把好好的 key 判成「解不开」；③解不开的 provider 在设置里没有行、「移除」只对解得开的生效，旧密文永远删不掉、那句提示永远在；④`set()` 在加密可用性翻转时把其它条目整份丢掉（旧问题，但这条改动主动叫人去重填）。我第一轮只跑了测试就说「代码层面可以」，作者：「你怎么现在才发现问题呢？」——先审 diff 再跑测试再下结论，顺序反了。
+- **What**:
+  - `CredentialStore`：新增 `verified()`——没文件或明文文件即核验过；加密文件在 `warm()` 之前不解密，`configured()` 按文件答、`broken()` 答空、`verified()` 答 false。只缓存解得开的，失败不记；「无法解密」每个 id 只报一次。`set()` 切换存储方式时其它条目能解开的搬过去，解不开的才丢、丢了点名。
+  - 协议 `listCredentials` 加 `verified?`；后端始终回 `broken: []`。`sync.ts` 的 `loadCredentials` 见 `verified: false` 每 3 秒再问，最多 10 次（凭证没有事件流，预热完没人来推）。
+  - **更新演练抓到第二处**：pi 建模型目录（`ModelRuntime.create → refresh`）会把每家 provider 的凭证读一遍，由启动的 `listKnownProviders` / `getProviders` 触发——这条在 08-28 之前就在，只是那次演练没旧文件。`credential-store.ts` 的适配器在 `verified() === false` 时答「没有」且不缓存；`wiring.ts` 的 `hasCredential`（开口那一刻）先 `warm()`，人主动的动作等一下说得过去。
+  - 设置：解不开的 provider 有自己的一行，「移除」也删它的密文。`CredentialState` 只在 `state/catalog.ts` 声明一份；比较用 `sameList`。
+  - `scripts/rehearse-update.mjs`（`npm run rehearse:update`）：真实 HOME、干净 userData、预放一份上一版钥匙加密的 `credentials.json`；判据里有「『无法解密』必须在『钥匙串预热』之后」。
+- **Impact**: 更新过的用户：窗口即刻有内容，预热后（首帧 +5 s）向导亮起说「解不开，请重新填」，重填即可聊。启动 5 秒内开口的人会在那一刻等一次钥匙串。
+- **Verification**: typecheck；单测 199 文件 2498 过（新增：预热前不解密、失败不缓存、切换存储方式搬运、适配器没核验不穿透、设置里解不开的有行能删、`loadCredentials` 追问有界）；`rehearse:update` 7/7，startup.log 里第一条「无法解密」在「钥匙串预热」之后 1 秒、启动阶段无慢 IPC；全量 e2e 见下。
+
+### 2026-08-28 — 解不开的 key 不再算「已配置」：未签名包更新后上一版的 key 全废，界面此前一无所知
+
+- **Type**: fix
+- **Motivation**: 作者在打包版里选 claude-code-acp 会话按「优化输入」，报 `增强失败：Provider is not configured: deepseek`。用他数据的副本复现：`credentials.json` 里有 deepseek，但新包**解不开**（27 号那个包建的钥匙串项，新的未签名二进制不被信任），六条凭证全部「无法解密」——而 `configured()` 只看文件里有没有键，界面显示已配置、向导不亮、优化按钮亮着，pi 一句黑话。审查 B5 说的就是它，当时以为是「换机器」才会有。**每次更新都会撞，签名之前每个用户都会撞。**
+- **What**: `CredentialStore.configured()` 只算解得开的，新增 `broken()`；`listCredentials` 回 `broken`（协议可选字段）；设置屏与向导明说「解不开，需要重新填写，更新后钥匙串换了身份」；`onInsecure` 进 startup.log；`enhancePrompt` 把 pi 的 `Provider is not configured: X` 翻成人话。解密结果按 id 缓存，写盘即清。
+- **Impact**: 更新后用户看到的是向导/提示「请重新填 key」，而不是一个亮着却处处报错的界面。根治是签名。
+- **Verification**: `tests/electron/credentials.test.ts` 新增一条（换钥匙后 configured 空、broken 列全、重填后挪回）；其余见下一条核对。
+
 ### 2026-08-28 — 全新机器上第一句话必失败：默认项目与临时会话根同路径撞 UNIQUE
 
 - **Type**: fix

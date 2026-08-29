@@ -68,6 +68,8 @@ export class CredentialStore {
   }
 
   private write(data: StoredFile): void {
+    this.解得开的.clear()
+    this.已报过解不开.clear()
     mkdirSync(dirname(this.file), { recursive: true })
     // 0600：即便是密文，也不该让同机其它用户读到
     writeFileSync(this.file, JSON.stringify(data, null, 2), { mode: 0o600 })
@@ -104,10 +106,16 @@ export class CredentialStore {
     if (raw === undefined) return undefined
     if (!data.encrypted) return raw
     try {
-      return this.safe.decryptString(Buffer.from(raw, "base64"))
+      const plain = this.safe.decryptString(Buffer.from(raw, "base64"))
+      this.解得开的.add(endpointId)
+      return plain
     } catch {
-      // 换了机器、或 keychain 项被删：解不开就是没有，不要返回乱码去当 key 用
-      this.onInsecure(`endpoint "${endpointId}" 的凭证无法解密，需要重新填写`)
+      // 换了机器、或 keychain 项被删：解不开就是没有，不要返回乱码去当 key 用。
+      // 每个 id 只报一次——listCredentials 每次刷新都会来问，不然 startup.log 全是这一句
+      if (!this.已报过解不开.has(endpointId)) {
+        this.已报过解不开.add(endpointId)
+        this.onInsecure(`endpoint "${endpointId}" 的凭证无法解密，需要重新填写`)
+      }
       return undefined
     }
   }
@@ -120,11 +128,26 @@ export class CredentialStore {
       )
     }
     const data = this.read()
-    // 加密状态变了就整份重写，避免同一文件里混着两种编码
-    const entries = data.encrypted === encrypted ? { ...data.entries } : {}
-    entries[endpointId] = encrypted
-      ? this.safe.encryptString(secret).toString("base64")
-      : secret
+    const 编码 = (plain: string) => (encrypted ? this.safe.encryptString(plain).toString("base64") : plain)
+    let entries: Record<string, string>
+    if (data.encrypted === encrypted) {
+      entries = { ...data.entries }
+    } else {
+      /**
+       * 加密状态变了就整份重写，避免同一文件里混着两种编码。**其它条目能解开的搬过去，解不开的才丢，丢了要说。**
+       * 此前是直接丢空：keyring 掉了之后界面让人重填一个模型 key，SSH 口令、飞书密钥、MCP 变量就跟着没了，一声不吭。
+       */
+      entries = {}
+      const 丢了: string[] = []
+      for (const id of Object.keys(data.entries)) {
+        if (id === endpointId) continue
+        const plain = this.get(id)
+        if (plain === undefined) 丢了.push(id)
+        else entries[id] = 编码(plain)
+      }
+      if (丢了.length) this.onInsecure(`存储方式切换（${data.encrypted ? "加密→明文" : "明文→加密"}），这些解不开的凭证已丢弃，需要重新填写：${丢了.join("、")}`)
+    }
+    entries[endpointId] = 编码(secret)
     this.write({ encrypted, entries })
   }
 
@@ -149,7 +172,49 @@ export class CredentialStore {
    * 不用记得回这里补名单。
    */
   configured(): string[] {
+    const ids = this.模型服务ids()
+    return this.verified() ? ids.filter((k) => this.解得开(k)) : ids
+  }
+
+  /**
+   * **文件里有、但解不开的**（2026-08-28 作者打包版抓的）：未签名的 app 每换一个二进制，macOS 钥匙串就不认
+   * 上一版建的那把钥匙，上一版存的 key 全部解不开——而此前 `configured()` 只看文件里有没有这个键，
+   * 界面照样显示「已配置」、向导不亮、一开口 pi 报 `Provider is not configured`。解不开的必须单独列出来，
+   * 让界面说「需要重新填写」。签名之后这个问题消失，签名之前它每次更新都会来。
+   *
+   * **没核验之前答空**——核验要解密，解密要进钥匙串，见 `verified()`。
+   */
+  broken(): string[] {
+    return this.verified() ? this.模型服务ids().filter((k) => !this.解得开(k)) : []
+  }
+
+  /**
+   * `configured()` / `broken()` 的答案是不是核验过的。**核验 = 逐条解密，解密 = 进钥匙串**——
+   * 而钥匙串不能在启动路径上碰（见 `isEncrypted`）。所以在 `warm()` 之前，有加密文件时
+   * `configured()` 按文件里有没有键答（可能把解不开的也算上）、`broken()` 答空、这里答 false；
+   * 界面看到 false 就过几秒再问一次。没有文件、或文件是明文的，不用钥匙串就能核验。
+   *
+   * 审查（2026-08-29）抓的：第一版把解密放进了 `configured()`，`listCredentials` 一到就进钥匙串——
+   * 前一条提交刚把它从启动路径挪出去，这一条又塞了回来，每个更新过的用户首屏又要空白几十秒。
+   */
+  verified(): boolean {
+    if (!existsSync(this.file)) return true
+    if (!this.read().encrypted) return true
+    return this.加密可用 !== undefined
+  }
+
+  private 模型服务ids(): string[] {
     return Object.keys(this.read().entries).filter((k) => !k.includes(":"))
+  }
+
+  /**
+   * **只记解得开的，失败不记**：钥匙串锁着、用户点了一次「拒绝」、securityd 超时，都是一次性的——
+   * 记成「解不开」会让向导叫人重填其实好好的 key。成功的记住是因为 listCredentials 每次刷新都来问。
+   */
+  private 解得开的 = new Set<string>()
+  private 已报过解不开 = new Set<string>()
+  private 解得开(id: string): boolean {
+    return this.解得开的.has(id) || this.get(id) !== undefined
   }
 }
 

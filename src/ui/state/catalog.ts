@@ -48,6 +48,10 @@ export interface CredentialState {
   configured: string[]
   /** 缺省 = 还没问过钥匙串（2026-08-28） */
   encrypted?: boolean | undefined
+  /** 解不开的（见协议） */
+  broken?: string[] | undefined
+  /** false = 还没核验，过几秒再取一次（见协议） */
+  verified?: boolean | undefined
 }
 
 export const $projects = atom<readonly ProjectSummary[]>([])
@@ -135,8 +139,9 @@ export function setCredentials(v: CredentialState): void {
   const prev = $credentials.get()
   if (
     prev.encrypted === v.encrypted &&
-    prev.configured.length === v.configured.length &&
-    prev.configured.every((c, i) => c === v.configured[i])
+    prev.verified === v.verified &&
+    sameList(prev.configured, v.configured) &&
+    sameList(prev.broken ?? [], v.broken ?? [])
   ) {
     return
   }

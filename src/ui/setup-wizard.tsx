@@ -45,6 +45,7 @@ export function SetupWizard({
   onStart,
   problem,
   plaintext,
+  broken,
 }: {
   /** 可填 key 的服务商 id 清单（`listKnownProviders`） */
   providers: readonly string[]
@@ -54,6 +55,8 @@ export function SetupWizard({
   problem?: string | undefined
   /** `listCredentials.encrypted === false`：系统没有安全存储，key 会明文落盘——首启的人还没进过设置屏，得在这里说 */
   plaintext?: boolean | undefined
+  /** 上一版存的、这版解不开的 key（未签名包更新后）——向导亮起的原因之一，要说清楚不是他没填过 */
+  broken?: readonly string[] | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void
@@ -118,6 +121,7 @@ export function SetupWizard({
         </h2>
         {problem && providers.length === 0 ? <p className="caveat">{tf("服务商目录取不到：{0}", problem)}</p> : null}
         {plaintext ? <p className="caveat">{t("⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录")}</p> : null}
+        {broken?.length ? <p className="caveat">{tf("上一版保存的 key 解不开了（{0}）——应用更新后系统钥匙串换了身份，请重新填一次", broken.join("、"))}</p> : null}
         <form
           className="sw-key"
           onSubmit={(e) => {

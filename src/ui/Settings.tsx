@@ -700,10 +700,8 @@ export function SettingsShell({
   )
 }
 
-export interface CredentialState {
-  configured: string[]
-  encrypted?: boolean | undefined
-}
+import type { CredentialState } from "./state/catalog.js"
+export type { CredentialState }
 
 /** 一个 provider 的连接设置。**密钥不在里面**——它在钥匙串里 */
 export interface Connection {
@@ -780,8 +778,10 @@ export function SettingsPanel({
    * 少任何一个来源都会漏掉一类：只看配置漏掉「填了 key 就能用」的那些，
    * 只看凭证漏掉不要 key 的自建端点。
    */
+  const broken = credentials.broken ?? []
+  // 解不开的也要有一行——不然那句「需要重新填写」指着一个不存在的地方，也没处按「移除」
   const 已配置 = [
-    ...new Set([...providers, ...credentials.configured, ...Object.keys(connections ?? {})]),
+    ...new Set([...providers, ...credentials.configured, ...broken, ...Object.keys(connections ?? {})]),
   ].sort()
   const [展开的, set展开] = useState<string | undefined>(undefined)
 
@@ -797,6 +797,9 @@ export function SettingsPanel({
         )
       }
     >
+      {broken.length ? (
+        <p className="caveat">{tf("这些服务的 key 解不开了，需要重新填写：{0}（应用更新后系统钥匙串换了身份，上一版存的 key 就读不出来了——签名发布后不会再有）", broken.join("、"))}</p>
+      ) : null}
       {已配置.length === 0 ? (
         /**
          * **空的时候要说清下一步在哪。**
@@ -825,8 +828,8 @@ export function SettingsPanel({
             onDeleteKey={() => onDelete(id)}
             onSaveConn={(c) => onSaveConnection(id, c)}
             onRemove={() => {
-              // **两处都要清**：钥匙串里的 key，和配置里的那一段
-              if (credentials.configured.includes(id)) onDelete(id)
+              // **两处都要清**：钥匙串里的 key（解不开的那份密文也是 key，不删它就永远列在「解不开」里），和配置里的那一段
+              if (credentials.configured.includes(id) || broken.includes(id)) onDelete(id)
               if (connections?.[id]) onSaveConnection(id, {})
               set展开(undefined)
             }}

@@ -393,6 +393,10 @@ export const OPERATIONS = {
       configured: z.array(z.string()),
       /** 当前是否由系统安全存储加密。false 时界面须提示用户；缺省 = 还没问过钥匙串（2026-08-28：问它会卡主线程，只在存 key 时问） */
       encrypted: z.boolean().optional(),
+      /** 文件里有、但解不开的 provider——界面要说「需要重新填写」（2026-08-28：未签名包每次更新都会让上一版的 key 解不开） */
+      broken: z.array(z.string()).optional(),
+      /** false = 还没进过钥匙串核验，`configured` 里可能混着解不开的、`broken` 是空的——界面过几秒再问；缺省当 true */
+      verified: z.boolean().optional(),
     }),
     mutating: false,
   },

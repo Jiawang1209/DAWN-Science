@@ -608,10 +608,16 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         ...(family ? { family } : {}),
       })
     },
-    // 只问有无，取值由 pi 内部经 piCredentials 完成
+    // 只问有无，取值由 pi 内部经 piCredentials 完成。
+    // 开口说话是人主动的动作——这一刻先核验（进钥匙串），免得启动 5 秒内开口撞上「还没核验」被 pi 说 not configured
     ...(opts.skipCredentialGate
       ? {}
-      : { hasCredential: (providerId: string) => opts.credentials.configured().includes(providerId) }),
+      : {
+          hasCredential: (providerId: string) => {
+            opts.credentials.warm?.()
+            return opts.credentials.configured().includes(providerId)
+          },
+        }),
     workspaceRoot: process.cwd(),
   })
 

@@ -155,6 +155,12 @@ export interface CredentialsPort {
   delete(providerId: string): void
   configured(): string[]
   isEncrypted(): boolean | undefined
+  /** 文件里有、但解不开的 provider（未签名包更新后常见）；可选，老的实现可以不给 */
+  broken?(): string[]
+  /** `configured` / `broken` 是不是核验过的（核验要进钥匙串，启动路径上不做）；不给 = 一直是核验过的 */
+  verified?(): boolean
+  /** 现在就去核验（进钥匙串）。只在人主动的动作上调——比如开口说话那一刻——那时等一下说得过去 */
+  warm?(): void
 }
 
 export interface WorkbenchBackendOptions {
@@ -1697,7 +1703,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     /** **只回报配没配，绝不回报凭证本身**——界面不需要知道值 */
     listCredentials: async () => {
       const encrypted = credentials.isEncrypted()
-      return { configured: credentials.configured(), ...(encrypted === undefined ? {} : { encrypted }) }
+      return {
+        configured: credentials.configured(),
+        broken: credentials.broken?.() ?? [],
+        verified: credentials.verified?.() ?? true,
+        ...(encrypted === undefined ? {} : { encrypted }),
+      }
     },
 
     setCredential: async ({ providerId, secret }) => {
@@ -3931,7 +3942,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         return { text: r.text, usedContext: r.usedContext, ...(r.note ? { note: r.note } : {}), model: 用的模型 }
       } catch (e) {
         if (控.signal.aborted) throw fault("invalid_request", 增强中.has(requestId) ? "增强超时了，这次没改" : "已取消")
-        throw fault("internal_error", e instanceof Error ? e.message : String(e))
+        const msg = e instanceof Error ? e.message : String(e)
+        // pi 的「Provider is not configured: deepseek」对用户是一句黑话（2026-08-28 作者打包版撞的：key 其实在，只是新包解不开）
+        const 没配 = /Provider is not configured:\s*(\S+)/.exec(msg)
+        if (没配) throw fault("invalid_request", `「${没配[1]}」还没有可用的 API key——到设置里填一个（应用更新后，上一版存的 key 可能解不开，要重新填）`)
+        throw fault("internal_error", msg)
       } finally {
         clearTimeout(超时)
         增强中.delete(requestId)

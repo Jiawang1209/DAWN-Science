@@ -36,6 +36,13 @@ export function createPiCredentialStore(port: CredentialsPort): PiCredentialStor
   const load = (providerId: string): Credential | undefined => {
     const hit = cache.get(providerId)
     if (hit) return hit.value
+    /**
+     * **没核验之前答「没有」，且不缓存**（2026-08-29 更新演练抓的）：pi 建模型目录时会把每家 provider 的凭证读一遍，
+     * 而那发生在启动的第一批请求里（`listKnownProviders` / `getProviders`）——读就是解密，解密就是进钥匙串，
+     * 未签名包上要卡几十秒。没有凭证时 pi 只是不去拉远端目录，内置目录照旧；预热完再读就是真的了。
+     * 人开口说话那一刻由 `hasCredential` 先 `warm()`，所以对话路径上到这里已经核验过。
+     */
+    if (port.verified?.() === false) return undefined
     // **抛错不缓存**——一次瞬时故障（keychain 暂时不可用）不该被永久记住
     const secret = port.get(providerId)
     const value: Credential | undefined = secret ? { type: "api_key", key: secret } : undefined

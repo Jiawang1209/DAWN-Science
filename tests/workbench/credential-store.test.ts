@@ -69,6 +69,19 @@ describe("pi 凭证适配器 · 基本语义", () => {
   })
 })
 
+describe("pi 凭证适配器 · 没核验之前不碰底层（2026-08-29 更新演练：pi 建目录时读每家凭证，读就是进钥匙串）", () => {
+  it("**verified 为 false 时答「没有」、不穿透、不缓存**；核验过之后照常读", async () => {
+    const p = port({ deepseek: "sk-x" })
+    let verified = false
+    const s = createPiCredentialStore({ ...p, verified: () => verified })
+    expect(await s.read("deepseek")).toBeUndefined()
+    expect(p.getCalls).toEqual([])
+    verified = true
+    expect(await s.read("deepseek")).toEqual({ type: "api_key", key: "sk-x" })
+    expect(p.getCalls).toEqual(["deepseek"])
+  })
+})
+
 describe("pi 凭证适配器 · 缓存（Spike A-2 的 202 次发现）", () => {
   it("重复 read 只穿透一次 —— 否则一次会话会触发上百次 keychain 解密", async () => {
     // Spike A-2 实测：pi 会遍历全部 39 个内置 provider 探测可用性，且不止一轮，

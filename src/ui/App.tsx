@@ -4213,6 +4213,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               configured={creds.configured}
               problem={knownProviders.problem}
               plaintext={creds.encrypted === false}
+              broken={creds.broken}
               interpreters={interpreters}
               onSaveKey={(id, secret) =>
                 client

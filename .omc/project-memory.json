@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1787794874928,
+  "lastScanned": 1788004909644,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nsed -i '' 's#\"homepage\": \"https://dawn-science.invalid/TODO-换成真实主页\"#\"homepage\": \"https://github.com/Jiawang1209/DAWN-Science\"#' package.json && grep homepage package.json\npython3 - <<'EOF'\np=\"electron-builder.yml\"; s=open(p).read()\ns=s.replace(\"# Linux 只能在 Linux 上打：node-pty 的 npm 包不带 linux 预编译件（`npm ci` 时现场编译，要 build-essential + python3）；\\n# 从 mac 交叉出来的 AppImage 终端会哑。`.deb` 还要求 package.json 有 homepage（现在是占位，发布前换真的）。\",\n\"# Linux 只能在 Linux 上打：node-pty 的 npm 包不带 linux 预编译件（`npm ci` 时现场编译，要 build-essential + python3）；\\n# 从 mac 交叉出来的 AppImage 终端会哑。x64 与 arm64 各在各的 runner 上打（CI 用 --x64 / --arm64 选），\\n# 因为 node-pty 只能编出本机那一种架构。`.deb` 要求 package.json 有 homepage（已填仓库地址）。\")\nopen(p,\"w\").write(s)\nEOF\ncat > .github/workflows/release.yml <<'EOF'\n# 三平台四份打包矩阵（打包 spec §8）。\n# 触发：打 tag `v*` 自动打包并发 GitHub Release（草稿，人看一眼再点发布）；手动触发只出 artifacts 不发。\n# 不签名（作者定的：先不花那 99 美元，用户右键打开）；有证书时在 electron-builder.yml 删 identity: null 并设 CSC_* secrets。\n# Linux 两种架构各在各自的 runner 上打——node-pty 没有 linux 预编译件，只能现场编本机那一种。\nname: package\non:\n  push:\n    tags: [\"v*\"]\n  workflow_dispatch:\njobs:\n  package:\n    strategy:\n      fail-fast: false\n      matrix:\n        include:\n          - { os: macos-14, name: mac, cmd: \"npx electron-builder --mac --publish never\" }\n          - { os: windows-2022, name: win, cmd: \"npx electron-builder --win --publish never\" }\n          - { os: ubuntu-22.04, name: linux-x64, cmd: \"npx electron-builder --linux --x64 --publish never\" }\n          - { os: ubuntu-22.04-arm, name: linux-arm64, cmd: \"npx electron-builder --linux --arm64 --publish never\" }\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 22, cache: npm }\n      - name: Linux 打包机依赖（node-pty 现场编译 + AppImage 工具）\n        if: runner.os == 'Linux'\n        run: sudo apt-get update && sudo apt-get install -y build-essential python3 libfuse2\n      - run: npm ci\n      - run: npm run typecheck\n      - run: npm test\n      - run: npm run build\n      - run: ${{ matrix.cmd }}\n      - uses: actions/upload-artifact@v4\n        with:\n          name: dawn-science-${{ matrix.name }}\n          path: |\n            release/*.dmg\n            release/*.zip\n            release/*.exe\n            release/*.AppImage\n            release/*.deb\n          if-no-files-found: error\n          retention-days: 7\n  release:\n    needs: package\n    if: startsWith(github.ref, 'refs/tags/v')\n    runs-on: ubuntu-22.04\n    permissions: { contents: write }\n    steps:\n      - uses: actions/download-artifact@v4\n        with: { path: artifacts, merge-multiple: true }\n      - run: ls -lh artifacts\n      - uses: softprops/action-gh-release@v2\n        with:\n          draft: true\n          generate_release_notes: true\n          files: |\n            artifacts/*.dmg\n            artifacts/*.zip\n            artifacts/*.exe\n            artifacts/*.AppImage\n            artifacts/*.deb\nEOF\nsed -i '' 's#\\*\\*不自动发 release\\*\\*——没签名之前不该自动发。#打 `v*` 标签时四台 runner（mac / win / linux-x64 / linux-arm64）各自打包，然后汇总成一个 **Release 草稿**——去 Releases 页看一眼再点发布。手动触发只出 artifacts。#' docs/打包与发布.md\ngrep -n \"Release 草稿\" docs/打包与发布.md | head -2\nnpx js-yaml .github/workflows/release.yml >/dev/null 2>&1 && echo \"yaml ok\" || python3 -c \"import yaml,sys;yaml.safe_load(open('.github/workflows/release.yml'));print('yaml ok')\"",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PYEOF'\ns=open(\"README.md\").read()\n# 取现有中文正文（去掉 <div> 头与结尾 English 段）\nzh_start=s.index(\"## 这是什么\"); zh_end=s.index(\"\\n---\\n\\n## English\")\nzh=s[zh_start:zh_end].rstrip()+\"\\n\"\nzh=zh.replace(\"[Releases](../../releases)\",\"[Releases](https://github.com/Jiawang1209/DAWN-Science/releases)\")\n\nen='''<div align=\"center\">\n\n# DAWN Science\n\n**Data Agent Workbench with Notebooks — for science.**\n\nAn open-source, local-first AI workbench where multiple agents collaborate with you on R and Python data science.\n\n[Download](#install) · [Run from source](#run-from-source) · [Docs](#documentation) · [中文](#中文)\n\n</div>\n\n---\n\n## What it is\n\nAn **open-source, local-first desktop environment for research work**. You talk to a model; the model runs Python / R in a **persistent kernel** — variables survive across conversations and restarts — and you can keep typing into the same kernel from a notebook pane, with your cells recorded in the conversation. A project is a folder; a server becomes a remote workspace with nothing installed on it but `sshd`.\n\n**The idea:**\n\n```\nquestion  →  plan  →  call tools  →  run  →  traceable result\n```\n\nThe last step is what sets it apart from other AI tools — **not faster, but more trustworthy**.\n\n**Domains:** data science · ecology · environmental science · bioinformatics\n\n<!-- TODO: real screenshot at docs/screenshot.png -->\n\n---\n\n## The name\n\n| | |\n|---|---|\n| **D** | **Data** |\n| **A** | **Agent** |\n| **W** | **Workbench** |\n| **N** | **Notebook** |\n\n*Data* (inside the acronym) + *Science* (the product name) spell **data science**; *Science* also covers ecology, environmental science and bioinformatics.\n\n---\n\n## Install\n\nDownload from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). **This is an early build (0.0.x) and the installers are unsigned**, so the first launch takes one extra click:\n\n| Platform | Install | First launch |\n|---|---|---|\n| macOS | Open the `.dmg`, drag to Applications | Right-click → Open. On macOS 15+, also go to *System Settings → Privacy & Security* and click *Open Anyway* |\n| Windows | Run `…-setup.exe`, or just run `…-portable.exe` | SmartScreen: *More info → Run anyway* |\n| Linux | `chmod +x *.AppImage && ./DAWN-Science-*.AppImage`, or `sudo dpkg -i *.deb` | AppImage needs `sudo apt install libfuse2` |\n\n**First launch** is a wizard: pick a provider (DeepSeek / Kimi / Qwen / Anthropic / OpenAI …), paste an API key, start chatting. The same screen can *detect local interpreters* and hook an existing Python / R up as a kernel — optional; chat works without it.\n\n**The app itself does not need Node.js.** External tools are only needed for the features that use them, and the UI says so when one is missing:\n\n| To do this | You need |\n|---|---|\n| Notebook / run Python | Python 3 + `pip install ipykernel` |\n| R kernel | R + `IRkernel` |\n| Git facts about a project | git |\n| Remote workspace | `sshd` on the server — **nothing else is placed on the server** |\n| Hand work to Claude Code / Codex | The respective CLI installed locally (nice-to-have; chat works without it) |\n\n---\n\n## Features\n\n| | |\n|---|---|\n| **Kernel in the conversation** | The model calls `run_code`; you watch every cell stream by in the dock's *Notebook* pane, type into the same kernel yourself, and your cells land in the conversation |\n| **Persistent kernels** | Variables survive across conversations and restarts, and can be interrupted; close the chat and `df` is still there |\n| **Remote workspaces** | Add a server over SSH — sessions, kernels, files and terminals run there; zero dependencies on the server |\n| **Right dock** | Files (local / remote), transfers, notebook, generated artifacts, web preview, watching the agent's browser |\n| **`@` references** | `@` a workspace file in the input box — path and type are passed, not contents |\n| **Multi-agent** | 22 bundled sub-agents; team mode with a lead, resumable members and a task board with dependencies |\n| **Three permission levels** | Allow all / ask / block, plus a hard-deny list |\n| **Skills & plugins** | Skills with three-level toggles and import; Office (Word/Excel/PowerPoint/PDF, 14 tools), browser (15 tools) and long-term memory (three-track confirmation) plugins |\n| **Remote assistant** | WeChat / Feishu channels — scan a QR code, keep asking from your phone |\n| **Scheduled tasks** | At the set time, open a fresh session and run the task description |\n| **Artifacts** | `GENERATED · N` in the conversation, live list in the dock |\n| **Any provider** | 40+ via `pi`'s provider layer; or switch to a locally installed Claude Code / Codex (ACP) |\n| **Appearance** | Light / dark, one-click accent color, Chinese / English UI |\n\n---\n\n## Four pillars\n\n### D · Data\n\nPersistent Python and R kernels (variables kept across cells, sessions and restarts; interruptible) · database connections and schema browsing · standardized artifact schemas (tables carry structure, charts carry data source and metric meaning, models carry hyper-parameters and evaluation metrics).\n\n### A · Agent\n\nAn agent that plans, calls tools, executes and reports — not just chats. By default a local agent loop drives any API endpoint (DeepSeek / Kimi / Qwen …); it can also hand off to a locally installed Claude Code or Codex. MCP tool gateway · progressive skill loading · **optional multi-agent orchestration**.\n\n### W · Workbench\n\nA project is bound to a folder; configuration, knowledge and kernels hang off the project · local / WSL / SSH / GPU runtimes · run management for long jobs (pre-flight checks, heartbeats, bounded logs, environment snapshots).\n\n**Key structure: the kernel outlives the session.** Close a conversation and `df` is still in Python.\n\n### N · Notebook\n\nConversation, notebook and side-by-side view are **three projections of one append-only entry sequence, not three implementations**. `code_cell` is a first-class citizen: re-runnable, editable, exportable to `.ipynb`, and cells written by a human are structurally identical to cells written by the agent.\n\n---\n\n## Core claim: traceability\n\nTwo kinds of information are **modeled separately**:\n\n| Layer | Content | Trust |\n|---|---|---|\n| **Agent claims** | what the agent says it did | to be verified |\n| **Repo facts** | git diff, test exit codes, lint / build results | authoritative |\n\n**State advances only when both agree**; a claim alone is never enough:\n\n```\nagent says \"implemented\", tests fail            → cannot enter DONE\nagent says \"reviewed\", no review artifact       → cannot hand off\nagent says \"mergeable\", diff ≠ plan             → back to REWORKING\n```\n\n---\n\n## Status\n\n**Early release: usable day to day, interfaces still moving.** The local and remote main paths work and have been verified on real machines. Packaged for three platforms; signing and auto-update are not done yet.\n\n| | |\n|---|---|\n| Source | ~77k lines of TypeScript |\n| Tests | 197 unit/integration test files (vitest) + 107 e2e cases (Playwright, against the real build) + 10 pixel-exact visual baselines |\n| Changelog | [485 entries](docs/DEVELOPMENT_HISTORY.md), each with motivation and verification |\n| Next | signing & auto-update · artifact provenance / versions / annotations |\n\n---\n\n## Run from source\n\nNode.js ≥ 22.\n\n```bash\ngit clone https://github.com/Jiawang1209/DAWN-Science.git\ncd DAWN-Science\nnpm ci\ncp .env.example .env        # add your API key (or do it in the first-run wizard)\nnpm run app                 # build and launch\n```\n\nDevelopment:\n\n```bash\nnpm run dev:mock            # real pipeline + fake model, isolated dir, never touches real credentials\nnpm test                    # unit + integration\nnpm run test:e2e            # build, then Playwright against the real build\nnpm run dist                # package for the current platform → release/\n```\n\nCross-compiling and Linux build deps: [打包与发布](docs/打包与发布.md).\n\n---\n\n## Stack\n\n| Layer | Choice |\n|---|---|\n| Core | TypeScript / Node |\n| LLM providers | `@earendil-works/pi-ai` (40+ providers, DeepSeek / Kimi / Qwen native) |\n| Agent loop | `@earendil-works/pi-agent-core` |\n| Kernels | `enchannel-zmq-backend` + `@nteract/messaging` + `spawnteract` (Jupyter protocol — one stack for R and Python) |\n| Terminal | `node-pty` + `xterm.js` |\n| Tool protocol | `@modelcontextprotocol/sdk` (server + client) |\n| Persistence | SQLite (`better-sqlite3`, WAL) |\n| Shell | Electron |\n| Front-end | React + Vite · CodeMirror 6 · Plotly.js · TanStack Table |\n\n---\n\n## Documentation\n\nMost docs are in Chinese.\n\n| Doc | Answers |\n|---|---|\n| [CLAUDE.md](CLAUDE.md) | Where each feature's spec lives, the three admission rules, known pitfalls — **start here** |\n| [Design specs](docs/superpowers/specs/) | What to build, why, and what never to build |\n| [Master roadmap](docs/superpowers/plans/2026-08-08-master-roadmap.md) | Order of work, decision gates, risks |\n| [Design contract](docs/DESIGN.md) | How the UI looks and why |\n| [Reference map](docs/REFERENCES.md) | Which project to read for which component |\n| [Packaging & release](docs/打包与发布.md) | How to package and install on a fresh machine |\n| [Development history](docs/DEVELOPMENT_HISTORY.md) | Every change and its reason |\n\n---\n\n## Acknowledgements\n\nThese projects were studied during design. **Except `pi`, which is a dependency, all are read-only references — design was learned, code was not copied.**\n\n| Project | What we learned |\n|---|---|\n| [pi](https://github.com/earendil-works/pi) | agent loop and provider layer (used as a dependency) |\n| [Buzz](https://github.com/block/buzz) | process-group termination, context-recovery ladder, unified event stream, dual-protocol decoupling |\n| [Rho](https://github.com/xuzhougeng/Rho) | Ark + Jupyter protocol route, protocol layering between front-end and transport |\n| [wisp-science](https://github.com/xuzhougeng/wisp-science) | runtimes, run management, capability grants, worktree isolation |\n| [wispterm](https://github.com/xuzhougeng/wispterm) | terminal input leases, split-pane interaction |\n| [pi-crew](https://github.com/baphuongna/pi-crew) | GreenLevel grading, verification-environment hygiene, worktree practice |\n| [ccb](https://github.com/SeemSeam/claude_codex_bridge) | provider adapter contract, completion contract |\n| hive | team panel interaction (visual reference only) |\n\n---\n\n## License\n\n[GNU Affero General Public License v3.0 or later](LICENSE)\n\n```\nCopyright (C) 2026  DAWN Science contributors\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU Affero General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n```\n\n**Why AGPL**: this is an open-source tool for research, and we want improved versions to stay open for everyone — including versions offered as a network service. Peers such as [wisp-science](https://github.com/xuzhougeng/wisp-science) and [ccb](https://github.com/SeemSeam/claude_codex_bridge) chose AGPL too.\n\nThird-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.\n\n---\n\n<div align=\"center\">\n\n# 中文\n\n**Data Agent Workbench with Notebooks — for science.**\n\n开源的本地 AI 工作台：R 与 Python 数据科学，多智能体协作，面向科研。\n\n</div>\n\n---\n\n'''\nopen(\"README.md\",\"w\").write(en+zh)\nPYEOF\ngrep -n \"^## \\|^# \" README.md | head -40; grep -c \"\" README.md",
+    "buildCommand": "cp src/electron/credentials.ts /tmp/credentials.ts.bak && python3 - <<'EOF'\np='src/electron/credentials.ts'; s=open(p).read()\ns=s.replace('    if (!data.encrypted) return raw\\n','    if (!data.encrypted) return raw\\n    console.error(\"[PROBE get]\", endpointId, new Error().stack?.split(\"\\\\n\").slice(2,14).join(\"\\\\n\"))\\n',1)\nopen(p,'w').write(s)\nEOF\nnpm run build:electron 2>&1 | tail -2 && cat > /tmp/probe.mjs <<'EOF'\nimport { _electron } from \"@playwright/test\"\nimport { mkdtempSync, mkdirSync, writeFileSync } from \"node:fs\"; import { tmpdir } from \"node:os\"; import { join } from \"node:path\"\nconst tmp=mkdtempSync(join(tmpdir(),\"dawn-probe-\")); const ud=join(tmp,\"ud\"); mkdirSync(ud)\nwriteFileSync(join(ud,\"credentials.json\"),JSON.stringify({encrypted:true,entries:{deepseek:Buffer.from(\"x\").toString(\"base64\")}}))\nconst env={...process.env}; for(const k of Object.keys(env)) if(k.startsWith(\"DAWN_\")||k.endsWith(\"_API_KEY\")) delete env[k]\nenv.DAWN_HIDE_WINDOW=\"1\"\nconst app=await _electron.launch({args:[\"dist/electron/main.js\",`--user-data-dir=${ud}`],env})\napp.process().stderr.on(\"data\",d=>{const t=d.toString(); if(t.includes(\"PROBE\")) process.stdout.write(t)})\nconst page=await app.firstWindow(); await page.locator(\".app-shell\").waitFor({timeout:30000}); await page.waitForTimeout(3000)\nawait app.close()\nEOF\nnode /tmp/probe.mjs 2>&1 | head -40; cp /tmp/credentials.ts.bak src/electron/credentials.ts && git diff --stat src/electron/credentials.ts | tail -1",
+    "testCommand": "npm test 2>&1 | tail -6; echo \"=== FRESH ===\"; REHEARSE_REAL_HOME=1 node scripts/rehearse-fresh-install.mjs 2>&1 | grep -E \"✓|✗|慢|渲染错误|钥匙串|凭证\" | head -30",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -70,6 +70,13 @@
       "build:ui": "vite build",
       "build": "npm run build:electron && npm run build:ui",
       "app": "npm run build && electron dist/electron/main.js",
+      "dist": "npm run build && electron-builder --publish never",
+      "dist:mac": "npm run build && electron-builder --mac --publish never",
+      "dist:win": "npm run build && electron-builder --win --publish never",
+      "dist:linux": "npm run build && electron-builder --linux --publish never",
+      "pack": "npm run build && electron-builder --dir",
+      "test:packaged": "node scripts/test-packaged.mjs",
+      "make-icon": "electron scripts/make-icon.mjs",
       "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
       "ui:dev": "vite",
       "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts",
@@ -82,7 +89,8 @@
       "test:e2e:visual:update": "npm run build && playwright test e2e/visual.spec.ts --update-snapshots=all",
       "spike:e": "tsx spikes/e-model-switch.ts",
       "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts",
-      "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts"
+      "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts",
+      "rehearse:fresh": "node scripts/rehearse-fresh-install.mjs"
     }
   },
   "conventions": {
@@ -109,7 +117,7 @@
       "path": "agents",
       "purpose": null,
       "fileCount": 22,
-      "lastAccessed": 1787794874896,
+      "lastAccessed": 1788004909608,
       "keyFiles": [
         "bayesian-modeler.md",
         "bioinformatician.md",
@@ -122,14 +130,14 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1787794874897,
+      "lastAccessed": 1788004909610,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 6,
-      "lastAccessed": 1787794874902,
+      "fileCount": 7,
+      "lastAccessed": 1788004909618,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -141,8 +149,8 @@
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 107,
-      "lastAccessed": 1787794874903,
+      "fileCount": 109,
+      "lastAccessed": 1788004909619,
       "keyFiles": [
         "accent.spec.ts",
         "acp-agent.spec.ts",
@@ -155,14 +163,37 @@
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1787794874903,
+      "lastAccessed": 1788004909620,
       "keyFiles": []
+    },
+    "packaging": {
+      "path": "packaging",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1788004909623,
+      "keyFiles": [
+        "entitlements.mac.plist",
+        "icon.png"
+      ]
+    },
+    "release": {
+      "path": "release",
+      "purpose": null,
+      "fileCount": 11,
+      "lastAccessed": 1788004909624,
+      "keyFiles": [
+        "DAWN-Science-0.0.1-linux-x86_64.AppImage",
+        "DAWN-Science-0.0.1-mac-arm64.dmg",
+        "DAWN-Science-0.0.1-mac-arm64.dmg.blockmap",
+        "DAWN-Science-0.0.1-mac-arm64.zip",
+        "DAWN-Science-0.0.1-mac-x64.dmg"
+      ]
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 12,
-      "lastAccessed": 1787794874904,
+      "fileCount": 15,
+      "lastAccessed": 1788004909626,
       "keyFiles": [
         "build-electron.mjs",
         "dawn-mcp-server.mjs",
@@ -175,14 +206,14 @@
       "path": "skills",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1787794874904,
+      "lastAccessed": 1788004909627,
       "keyFiles": []
     },
     "spikes": {
       "path": "spikes",
       "purpose": null,
       "fileCount": 11,
-      "lastAccessed": 1787794874904,
+      "lastAccessed": 1788004909629,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -195,7 +226,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1787794874904,
+      "lastAccessed": 1788004909629,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -204,15 +235,15 @@
     "test-results": {
       "path": "test-results",
       "purpose": null,
-      "fileCount": 1,
-      "lastAccessed": 1787794874905,
+      "fileCount": 0,
+      "lastAccessed": 1788004909629,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 9,
-      "lastAccessed": 1787794874905,
+      "lastAccessed": 1788004909630,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
@@ -225,7 +256,7 @@
       "path": "src/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1787794874907,
+      "lastAccessed": 1788004909631,
       "keyFiles": [
         "loader.ts",
         "mcp-writer.ts",
@@ -236,7 +267,7 @@
       "path": "tests/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1787794874907,
+      "lastAccessed": 1788004909632,
       "keyFiles": [
         "mcp-writer.test.ts",
         "models-json.test.ts",
@@ -307,8 +338,8 @@
     },
     {
       "path": "src/ui/i18n/index.ts",
-      "accessCount": 2,
-      "lastAccessed": 1786840432269,
+      "accessCount": 3,
+      "lastAccessed": 1787900063924,
       "type": "file"
     },
     {

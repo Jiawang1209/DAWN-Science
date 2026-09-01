@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-01 — 全平台重新打包：三天修复第一次进包；mac 上交叉打 win/linux 默认出 arm64，要 `--x64`
+
+- **Type**: chore
+- **Motivation**: 作者要看打包是否成功。`release/` 里的 `.dmg` / `.exe` / `.AppImage` 全是 08-27/28 的，fixbug-0901 与 B15/B9 两轮修复（凭证、首启、错误文案、key 验证）一个都不在里面。
+- **What**: `npm run dist:mac`（arm64 + x64 各出 dmg/zip）；Windows 与 Linux 先按文档外的 `npm run dist:win` / `dist:linux` 跑了一次——**这台 Apple 芯片的 mac 上 electron-builder 缺省按宿主架构出 win-arm64 / linux-arm64**，Windows 用户几乎全是 x64；按文档改 `npx electron-builder --win --x64` / `--linux --x64` 重打。win-arm64 两个没人用，删；linux-arm64 留（CI 矩阵里有）。产物：mac arm64/x64 dmg+zip、win-x64 安装器+免安装、linux x86_64 AppImage + amd64 deb、linux arm64 AppImage + deb，均未签名。
+- **Impact**: `release/` 里是当前 main（93e1585）的一整套包。老用户装 mac 新包后要重填 key（未签名包的已知限制，向导会说）。
+- **Verification**: mac arm64 真验过：dmg 挂载后 app 可执行文件 SHA-256 与跑过 `test:packaged` 6/6、`rehearse:fresh` 12/12、`rehearse:update` 9/9 的那份一致，包内有 B9 的验证代码。**win-x64 / linux 只算打出来了**：查了包里 `better-sqlite3` 的 `win32-x64.node`（PE 格式）在，但本机跑不了，沿用「未经验证」标注——拿到真机先 `test:packaged`。
+
 ### 2026-09-01 — B15 / B9：后端错误按界面语言显示；填 key 当场验一次
 
 - **Type**: fix

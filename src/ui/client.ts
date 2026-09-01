@@ -6,7 +6,7 @@
  *   2. **拆信封**——`ok:false` 转成异常，调用方不必每次判断
  *   3. **保住 `warnings`**——非致命问题要有地方去，不能吞掉
  *
- * 本文件只 import `src/protocol`，不碰 runtime / session / store。
+ * 本文件只 import `src/protocol`（和同层的 `i18n`——错误要按当前语言显示），不碰 runtime / session / store。
  */
 import {
   RemoteUpdateSchema,
@@ -17,7 +17,9 @@ import {
   type OperationName,
   type RemoteUpdate,
   type SessionUpdate,
+  取错误i18n,
 } from "../protocol/index.js"
+import { tf } from "./i18n/index.js"
 
 export interface RawResponse {
   ok: boolean
@@ -57,13 +59,22 @@ declare global {
 }
 
 export class WorkbenchClientError extends Error {
+  /**
+   * 后端渲染好的那句中文，**不管界面是什么语言**——日志、bug 报告拿它对得上后端的日志。
+   * `message` 才是给人看的：`details.i18n` 在的话按当前语言 `tf` 过（B15，2026-09-01）。
+   */
+  readonly 原文: string
   constructor(
     public readonly code: ErrorCode | "no_bridge" | "version_mismatch",
     message: string,
     public readonly retryable = false,
     public readonly details?: unknown,
   ) {
-    super(message)
+    // 在这里翻而不是在每个 catch 里翻：所有读 `e.message` 的地方（几十处）就都免费拿到当前语言。
+    // 中文界面下 `tf` 原样返回中文，与后端渲染的那句逐字节相同
+    const i18n = 取错误i18n(details)
+    super(i18n ? tf(i18n.msgid, ...i18n.args) : message)
+    this.原文 = message
     this.name = "WorkbenchClientError"
   }
 }

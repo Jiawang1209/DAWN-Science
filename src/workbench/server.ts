@@ -23,7 +23,10 @@ import {
   MAX_PAGE_SIZE,
   只读模式该拦,
   operationNames,
+  i18n消息,
+  渲染i18n,
   type ErrorCode,
+  type FaultI18n,
 } from "../protocol/index.js"
 
 type Op = keyof typeof OPERATIONS
@@ -48,10 +51,33 @@ export type WorkbenchBackend = {
  */
 export interface WorkbenchFault extends Error {
   workbenchCode: ErrorCode
+  /** 这句话的 msgid 与 args（B15）。`fault原样` 抛的没有——那是别人的话，不在英文表里 */
+  i18n?: FaultI18n
 }
 
-export function fault(code: ErrorCode, message: string): WorkbenchFault {
-  return Object.assign(new Error(message), { workbenchCode: code })
+/**
+ * 业务性失败。**`msgid` 是带 `{0}` `{1}` 的中文原文**，插值一律走 `args`，不要自己拼模板串——
+ * 拼进去的那句话译不了（B15，2026-09-01：英文界面上每一条后端错误都是中文）。
+ *
+ * `message` 照旧是渲染好的中文（日志、测试、旧读者看不出差别）；
+ * 另外挂一份 `{ msgid, args }`，服务端放进 `error.details.i18n`，客户端按当前语言再 `tf` 一遍。
+ * 两个实参的老写法照常：没有占位符的 msgid 就是它自己。
+ *
+ * `tests/workbench/fault-i18n.test.ts` 盯着：第二个实参必须是字面串、每个 msgid 在英文表里都有。
+ */
+export function fault(code: ErrorCode, msgid: string, ...args: (string | number)[]): WorkbenchFault {
+  return Object.assign(new Error(渲染i18n(msgid, args)), { workbenchCode: code, i18n: i18n消息(msgid, ...args) })
+}
+
+/**
+ * **原样透传别人的话**：ssh2 的认证失败、内核的报错、守卫的 `UserFacingError`、
+ * 技能导入预检给的理由……它们不在英文表里，也不该硬塞进去。不带 i18n——
+ * 带了客户端会为一句永远查不到的话白吼一声「英文里没有这一句」。
+ *
+ * 每一处用它的地方都登记在 `tests/workbench/fault-i18n.test.ts` 的名单里：多一处是一次有意识的决定。
+ */
+export function fault原样(code: ErrorCode, 原文: string): WorkbenchFault {
+  return Object.assign(new Error(原文), { workbenchCode: code })
 }
 
 function isFault(e: unknown): e is WorkbenchFault {
@@ -155,7 +181,15 @@ export class WorkbenchServer {
     } catch (err) {
       if (isFault(err)) {
         // 业务性失败：保留后端指定的错误码与消息;retryable 按码判(审查 debug F7)
-        return this.fail(err.workbenchCode, err.message, 可重试错误码.has(err.workbenchCode), requestId)
+        // msgid 与 args 随 details 出去，界面按当前语言再翻一遍（B15）。**只有这条路带**：
+        // 下面 internal_error 那条的 details 永远不给——原因见那里
+        return this.fail(
+          err.workbenchCode,
+          err.message,
+          可重试错误码.has(err.workbenchCode),
+          requestId,
+          err.i18n ? { i18n: err.i18n } : undefined,
+        )
       }
       // 守卫抛的「在工作区之外」「找不到」这类**本来就是写给人看的**（2026-08-23 审查抓的：此前一律压成「操作执行失败」，界面看不到原因）
       if (err instanceof UserFacingError) return this.fail("invalid_request", err.message, false, requestId)

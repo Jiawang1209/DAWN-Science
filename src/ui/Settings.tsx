@@ -31,7 +31,7 @@ import { useEffect, useState, Fragment } from "react"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { InterpreterPicker } from "./interpreter-picker.js"
-import type { InterpreterCandidate } from "../protocol/index.js"
+import type { FaultI18n, InterpreterCandidate } from "../protocol/index.js"
 import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
@@ -772,7 +772,7 @@ export function SettingsPanel({
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
   /** 配了却建不出 agent 的那些及其理由（`getProviders.unusable`，B8）——摘要上的「⚠ 没有模型」只说了现象 */
-  unusable?: readonly { providerId: string; reason: string }[] | undefined
+  unusable?: readonly { providerId: string; reason: string; i18n?: FaultI18n | undefined }[] | undefined
 }) {
   /**
    * **这台机器上「配过」的服务。** 三个来源合一：
@@ -827,7 +827,11 @@ export function SettingsPanel({
             conn={connections?.[id] ?? {}}
             必须填地址={Boolean(needsBaseUrl?.includes(id))}
             pi认识={known.includes(id)}
-            problem={unusable?.find((u) => u.providerId === id)?.reason}
+            problem={(() => {
+              // 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示
+              const u = unusable?.find((x) => x.providerId === id)
+              return u ? (u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason) : undefined
+            })()}
             onSaveKey={(secret) => onSet(id, secret)}
             onDeleteKey={() => onDelete(id)}
             onSaveConn={(c) => onSaveConnection(id, c)}

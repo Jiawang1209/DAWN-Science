@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { render, screen, fireEvent, act } from "@testing-library/react"
 import { SetupWizard, 读跳过, 记跳过 } from "../../src/ui/setup-wizard.js"
+import { $lang } from "../../src/ui/i18n/index.js"
 
 const 基本 = {
   providers: ["deepseek", "kimi"],
@@ -77,6 +78,28 @@ describe("SetupWizard", () => {
     // 文字要看得见——不是 title、不是悬停
     expect(screen.getByText(/deepseek 的 key 已保存，但还建不出可用的模型：模型目录里没有 deepseek 的模型/)).toBeTruthy()
     expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it("理由带 i18n 时按当前语言显示（B15）：英文界面上不再是一句中文；没带的（老后端）照旧显示 reason", () => {
+    $lang.set("en")
+    try {
+      render(
+        <SetupWizard
+          {...基本}
+          configured={["deepseek", "kimi"]}
+          onSaveKey={async () => {}}
+          unusable={[
+            { providerId: "deepseek", reason: "模型目录里没有 deepseek 的模型，挑不出一个来建 agent", i18n: { msgid: "模型目录里没有 {0} 的模型，挑不出一个来建 agent", args: ["deepseek"] } },
+            { providerId: "kimi", reason: "目录读不出来：boom" },
+          ]}
+        />,
+      )
+      expect(screen.getByText(/The model catalogue has no models for deepseek/)).toBeTruthy()
+      expect(screen.queryByText(/模型目录里没有 deepseek/)).toBeNull()
+      expect(screen.getByText(/目录读不出来：boom/)).toBeTruthy()
+    } finally {
+      $lang.set("zh")
+    }
   })
 
   it("两家里有一家能用 → 「开始使用」亮着，用不了的那家照样说原因", () => {

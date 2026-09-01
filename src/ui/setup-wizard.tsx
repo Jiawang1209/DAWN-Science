@@ -6,7 +6,7 @@
  * 「先跳过」记 `dawn.global.setupSkipped`（作用域 global，写在 key 里）；跳过后底部红字仍在，点它回来。
  */
 import { useEffect, useState } from "react"
-import type { InterpreterCandidate } from "../protocol/index.js"
+import type { FaultI18n, InterpreterCandidate } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 import { InterpreterPicker } from "./interpreter-picker.js"
 import { t, tf } from "./i18n/index.js"
@@ -62,7 +62,7 @@ export function SetupWizard({
    * key 存进去了、却建不出 agent 的那些（`getProviders.unusable`，B8）。
    * 没有它，「已填 deepseek ✓」下面一点「开始使用」，进去是个没有 agent 的空应用——原因得在人正看着的这一屏说。
    */
-  unusable?: readonly { providerId: string; reason: string }[] | undefined
+  unusable?: readonly { providerId: string; reason: string; i18n?: FaultI18n | undefined }[] | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void
@@ -132,7 +132,8 @@ export function SetupWizard({
         {broken?.length ? <p className="caveat">{tf("上一版保存的 key 解不开了（{0}）——应用更新后系统钥匙串换了身份，请重新填一次", broken.join("、"))}</p> : null}
         {用不了的.map((u) => (
           <p key={u.providerId} className="caveat">
-            {tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, u.reason)}
+            {/* 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示 */}
+            {tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason)}
           </p>
         ))}
         <form

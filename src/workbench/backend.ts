@@ -5,8 +5,10 @@
  * 把 ①-A 的 `SessionManager` / `LeaseManager` 与 ①-B 的 `ProjectManager` /
  * `RunStore` / git 事实拼起来。
  *
- * **业务性失败一律抛 `fault(code, message)`**，而不是让它变成 `internal_error`——
+ * **业务性失败一律抛 `fault(code, msgid, ...args)`**，而不是让它变成 `internal_error`——
  * 否则「项目不存在」与「数据库炸了」在 UI 上会长得一模一样。
+ * msgid 是带 `{0}` 的中文原文，**插值走 args、不拼模板串**——拼进去的译不了（B15，2026-09-01）；
+ * 原样透传别人的话用 `fault原样`，每一处登记在 `tests/workbench/fault-i18n.test.ts` 的名单里。
  */
 import type { ProviderRegistry } from "../config/schema.js"
 import { 插件册 } from "../tools/plugins.js"
@@ -84,10 +86,11 @@ import { 表格摘要 } from "../project/table-review.js"
 import { discoverCliModels } from "../runtime/cli/models.js"
 import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
-import { fault, type WorkbenchBackend } from "./server.js"
+import { fault, fault原样, type WorkbenchBackend } from "./server.js"
 import type { SessionTranscripts } from "./events.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
+import { i18n消息, 渲染i18n, type FaultI18n } from "../protocol/fault-i18n.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
@@ -421,10 +424,7 @@ async function 读成附件(
     if (one.from === "bytes") {
       const 原始字节 = Math.floor((one.data.length * 3) / 4)
       if (原始字节 > 免缩上限) {
-        throw fault(
-          "invalid_request",
-          `粘贴的这张图太大了（约 ${Math.round(原始字节 / 1024 / 1024)}MB，上限 3.5MB）`,
-        )
+        throw fault("invalid_request", "粘贴的这张图太大了（约 {0}MB，上限 3.5MB）", Math.round(原始字节 / 1024 / 1024))
       }
       出.push({ data: one.data, mimeType: one.mimeType })
       continue
@@ -432,19 +432,13 @@ async function 读成附件(
     const p = one.path
     const mime = 图片类型[extname(p).toLowerCase()]
     if (!mime) {
-      throw fault(
-        "invalid_request",
-        `不认识这个图片格式：${p}（认得 png / jpg / gif / webp / bmp / tiff）`,
-      )
+      throw fault("invalid_request", "不认识这个图片格式：{0}（认得 png / jpg / gif / webp / bmp / tiff）", p)
     }
     let bytes: Buffer
     try {
       bytes = await readFile(p)
     } catch (e) {
-      throw fault(
-        "invalid_request",
-        `读不了这张图：${p}——${e instanceof Error ? e.message : String(e)}`,
-      )
+      throw fault("invalid_request", "读不了这张图：{0}——{1}", p, e instanceof Error ? e.message : String(e))
     }
     if (bytes.byteLength <= 免缩上限) {
       出.push({ data: bytes.toString("base64"), mimeType: mime })
@@ -452,10 +446,7 @@ async function 读成附件(
     }
     const r = await resizeImage(bytes, mime, { maxBytes: 免缩上限 })
     if (!r) {
-      throw fault(
-        "invalid_request",
-        `这张图太大且缩不下来：${p}（${Math.round(bytes.byteLength / 1024 / 1024)}MB）`,
-      )
+      throw fault("invalid_request", "这张图太大且缩不下来：{0}（{1}MB）", p, Math.round(bytes.byteLength / 1024 / 1024))
     }
     出.push({ data: r.data, mimeType: r.mimeType })
   }
@@ -529,7 +520,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const 目录 = path || "."
     const 条目 = await 连着的(connectionId).readdir(目录).catch((e: unknown) => {
       // **原样说清楚是哪个路径、什么错**，不笼统地说「读不了」
-      throw fault("invalid_request", `读不了 ${目录}：${e instanceof Error ? e.message : String(e)}`)
+      throw fault("invalid_request", "读不了 {0}：{1}", 目录, e instanceof Error ? e.message : String(e))
     })
     return {
       path: 目录,
@@ -555,9 +546,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   const 远端读文件 = async (connectionId: string, path: string) => {
     const e = 连着的(connectionId)
     const st = await e.stat(path).catch((err: unknown) => {
-      throw fault("invalid_request", `读不了 ${path}：${err instanceof Error ? err.message : String(err)}`)
+      throw fault("invalid_request", "读不了 {0}：{1}", path, err instanceof Error ? err.message : String(err))
     })
-    if (st.directory) throw fault("invalid_request", `${path} 是目录，不是文件`)
+    if (st.directory) throw fault("invalid_request", "{0} 是目录，不是文件", path)
     /**
      * **超过上界就不传**（批 3）。
      *
@@ -686,7 +677,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    */
   const 备导出 = (sessionId: Parameters<typeof sessions.get>[0], dir: string | undefined) => {
     const rec = sessions.get(sessionId)
-    if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+    if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
     const items = events.peekItems(sessionId)
     if (items.length === 0) throw fault("invalid_request", "这段对话在本次运行里没有转录可导（重启之前的对话要先点开、让它重新加载）")
     const 目录 = 导出目录({
@@ -720,7 +711,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 试 = `${主} (${i})${尾}`
       if (!existsSync(试)) return 试
     }
-    throw fault("invalid_request", `${p} 这个名字已经有上千份了，换个下载目录吧`)
+    throw fault("invalid_request", "{0} 这个名字已经有上千份了，换个下载目录吧", p)
   }
 
   /**
@@ -862,7 +853,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
   const requireProject = (projectId: string) => {
     const s = projects.summary(projectId)
-    if (!s) throw fault("not_found", `项目 "${projectId}" 不存在`)
+    if (!s) throw fault("not_found", "项目 \"{0}\" 不存在", projectId)
     return s
   }
 
@@ -894,8 +885,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 先起的那次记完理由等着显示名，后起的那次进来一清，先起的那次醒来端出去的就是 `unusable: []`——
    * 它要是最后一个落地，向导的门就开了、也没人再问——B8 又回来了，只是变成偶发。
    */
-  async function 确保配过key的都能用(): Promise<Map<string, string>> {
-    const 建不出agent的理由 = new Map<string, string>()
+  async function 确保配过key的都能用(): Promise<Map<string, FaultI18n>> {
+    // 存 msgid 与 args 而不是渲染好的句子：界面按当前语言 `tf`，端出去时再渲染一份中文 `reason` 给旧读者（B15）
+    const 建不出agent的理由 = new Map<string, FaultI18n>()
     if (!models?.available) return 建不出agent的理由
     const 已被用 = new Set(
       Object.values(registry.agents)
@@ -927,13 +919,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         list = await models.available(providerId)
       } catch (err) {
         const 原话 = err instanceof Error ? err.message : String(err)
-        建不出agent的理由.set(providerId, `模型目录读不出来：${原话}`)
+        建不出agent的理由.set(providerId, i18n消息("模型目录读不出来：{0}", 原话))
         console.error(`[凭证] ${providerId} 填了 key 但模型目录读不出来，建不出 agent：${原话}`)
         continue
       }
       const model = list[0]
       if (!model) {
-        建不出agent的理由.set(providerId, `模型目录里没有 ${providerId} 的模型，挑不出一个来建 agent`)
+        建不出agent的理由.set(providerId, i18n消息("模型目录里没有 {0} 的模型，挑不出一个来建 agent", providerId))
         continue
       }
       registry.agents[providerId] = {
@@ -990,7 +982,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       sessions
         .create(agentId, workspace, { projectId, ...(remoteSpec ? { remote: remoteSpec } : {}) })
         .catch((err: unknown) => {
-          if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+          if (err instanceof UserFacingError) throw fault原样("invalid_request", err.message)
           throw err
         }),
     ])
@@ -1130,14 +1122,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   async function 造远端参数(connectionId: string, 起点?: string) {
     const { store, manager } = 远端()
     const rec = store.get(connectionId)
-    if (!rec) throw fault("not_found", `没有这台服务器：${connectionId}`)
+    if (!rec) throw fault("not_found", "没有这台服务器：{0}", connectionId)
     try {
       await manager.connect(rec)
     } catch (e) {
-      throw fault("internal_error", e instanceof Error ? e.message : String(e))
+      throw fault原样("internal_error", e instanceof Error ? e.message : String(e))
     }
     const ex = manager.executorOf(connectionId)
-    if (!ex) throw fault("internal_error", `刚连上就没了：${rec.label}`)
+    if (!ex) throw fault("internal_error", "刚连上就没了：{0}", rec.label)
 
     /**
      * **起点是那台机器的家目录。**
@@ -1147,7 +1139,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * `rm -rf *` 在那儿的后果与在家目录完全是两件事。
      */
     const 家 = ex.loginEnv()["HOME"]
-    if (!家) throw fault("internal_error", `问不出 ${rec.label} 上的家目录，没法决定从哪儿开始`)
+    if (!家) throw fault("internal_error", "问不出 {0} 上的家目录，没法决定从哪儿开始", rec.label)
 
     let 现在在 = 起点 ?? 家
     let 会话id: string | undefined
@@ -1295,9 +1287,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   /** 删一个会话：停进程 → 删记录 → 删任务 → **最后**会话目录进废纸篓（顺序见里面）。`deleteSession` 与「删掉全部归档」共用 */
   const 删一个会话 = async (sessionId: string): Promise<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }> => {
       const rec = sessions.get(sessionId)
-      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
       const removed = await sessions.remove(sessionId)
-      if (!removed) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!removed) throw fault("not_found", "没有这个会话：{0}", sessionId)
       // 转录只活在内存里，跟着走
       events.forget(sessionId)
       baselines.delete(sessionId)
@@ -1350,7 +1342,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     }
     if (!projectId) throw fault("invalid_request", "导进项目要先说是哪个项目")
     const p = projectStore.get(projectId)
-    if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+    if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
     if (!位置.项目目录名) throw fault("internal_error", "本次运行没有装配项目技能目录")
     return join(p.workspace, 位置.项目目录名)
   }
@@ -1382,7 +1374,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const 根 = 可改根.find((r) => dirname(dirname(文件)) === r)
     if (!根) {
       if (位置.自带目录 && 文件.startsWith(resolve(位置.自带目录) + sep)) throw fault("invalid_request", "自带的技能在应用包里，只读；想改就复制一份到你自己的目录")
-      throw fault("invalid_request", `${文件} 不在任何一个可改的技能目录里`)
+      throw fault("invalid_request", "{0} 不在任何一个可改的技能目录里", 文件)
     }
     return 文件
   }
@@ -1411,7 +1403,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     }
     if (!projectId) throw fault("invalid_request", "导进项目要先说是哪个项目")
     const p = projectStore.get(projectId)
-    if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+    if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
     return join(p.workspace, AGENTS_DIR)
   }
   /** 路径必须是「你写的」或某个项目 `.dawn/agents` 下一层的 `.md`；自带的拒 */
@@ -1424,7 +1416,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     ]
     if (!可改根.includes(dirname(文件))) {
       if (子agent位置?.自带目录 && 文件.startsWith(resolve(子agent位置.自带目录) + sep)) throw fault("invalid_request", "自带的子 agent 在应用包里，只读；想改就复制一份到你自己的目录")
-      throw fault("invalid_request", `${文件} 不在任何一个可改的子 agent 目录里`)
+      throw fault("invalid_request", "{0} 不在任何一个可改的子 agent 目录里", 文件)
     }
     return 文件
   }
@@ -1652,10 +1644,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         rec = projects.open(workspace)
       } catch (e) {
         // 相对路径这类是**请求本身不合法**，不是内部故障——两者在界面上不该长得一样
-        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+        throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
       }
       const 摘要 = projectStore.summary(rec.projectId)
-      if (!摘要) throw fault("internal_error", `刚打开的项目取不到摘要：${rec.projectId}`)
+      if (!摘要) throw fault("internal_error", "刚打开的项目取不到摘要：{0}", rec.projectId)
       return 摘要
     },
 
@@ -1726,7 +1718,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         ),
         // 填了 key 却建不出 agent 的那些，连理由一起（B8）。**有目录端口就一定给**——空数组是「都能用」
         ...(models?.available
-          ? { unusable: [...建不出agent的理由].map(([providerId, reason]) => ({ providerId, reason })) }
+          ? { unusable: [...建不出agent的理由].map(([providerId, i18n]) => ({ providerId, reason: 渲染i18n(i18n.msgid, i18n.args), i18n })) }
           : {}),
       }
     },
@@ -1773,7 +1765,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     getRun: async ({ runId }) => {
       const run = runs.get(runId)
-      if (!run) throw fault("not_found", `Run "${runId}" 不存在`)
+      if (!run) throw fault("not_found", "Run \"{0}\" 不存在", runId)
 
       // 产出：只有拿得到基线才算得出。基线在进程重启后丢失——
       // 那时**不返回 fileChanges 字段**，而不是返回一个空数组。
@@ -1795,7 +1787,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     getProvenance: async ({ resourceId }) => {
       const link = runs.getProvenance(resourceId)
-      if (!link) throw fault("not_found", `资源 "${resourceId}" 没有溯源记录`)
+      if (!link) throw fault("not_found", "资源 \"{0}\" 没有溯源记录", resourceId)
       return link
     },
 
@@ -1899,7 +1891,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // 界面要能分辨它和「数据库炸了」
         //
         // **知道真原因就说真原因**：那一句泛泛的话留给「确实只是没活着」。
-        throw fault("not_found", 没续上因为 ?? (err instanceof Error ? err.message : String(err)))
+        throw fault原样("not_found", 没续上因为 ?? (err instanceof Error ? err.message : String(err)))
       }
     },
 
@@ -1967,12 +1959,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (connectionId) {
         const def = registry.agents[agentId]
         // **不认识的 agentId 也在这儿拒**：放它过去，要先连一次服务器才失败
-        if (!def) throw fault("invalid_request", `配置里没有叫「${agentId}」的 agent`)
+        if (!def) throw fault("invalid_request", "配置里没有叫「{0}」的 agent", agentId)
         if (!能上服务器(def)) {
           throw fault(
             "invalid_request",
-            `「${agentId}」的手到不了服务器——它自己读写文件、跑命令，都在本机。` +
-              `远端会话请用 API 模型，或标了「能上服务器」的 ACP 适配器（如 claude-code-acp）。`,
+            "「{0}」的手到不了服务器——它自己读写文件、跑命令，都在本机。远端会话请用 API 模型，或标了「能上服务器」的 ACP 适配器（如 claude-code-acp）。",
+            agentId,
           )
         }
       }
@@ -2054,7 +2046,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     setTaskWorkspace: async ({ taskId, workspace }) => {
       const store = 任务库()
       const t = store.get(taskId)
-      if (!t) throw fault("not_found", `没有这个任务：${taskId}`)
+      if (!t) throw fault("not_found", "没有这个任务：{0}", taskId)
 
       if (t.sessionId) {
         /**
@@ -2067,7 +2059,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         try {
           await sessions.rehome(t.sessionId, 去处, 归属.projectId)
         } catch (e) {
-          throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+          throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
         }
         events.notice(
           t.sessionId,
@@ -2080,7 +2072,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         store.setWorkspace(taskId, workspace)
       } catch (e) {
-        throw fault("not_found", e instanceof Error ? e.message : String(e))
+        throw fault原样("not_found", e instanceof Error ? e.message : String(e))
       }
       return store.get(taskId)!
     },
@@ -2155,7 +2147,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 工作区 = projectId ? projects.summary(projectId)?.workspace : undefined
       const 名单 = 合名单(registry.mcp, 工作区)
       const 台 = 名单.服务器.find((x) => x.名 === name)
-      if (!台) throw fault("not_found", `名单里没有这台：${name}`)
+      if (!台) throw fault("not_found", "名单里没有这台：{0}", name)
       /**
        * **先断开再连**：改完配置按「试一次」，要试的是新配置而不是旧连接。
        *
@@ -2185,7 +2177,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         解出 = 从JSON解出(json)
       } catch (e) {
-        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+        throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
       }
       const 名 = name ?? 解出.台.名
       if (!名) {
@@ -2198,7 +2190,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         新的 = addMcpServer(configPath, { ...解出.台, 名 })
       } catch (e) {
-        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        if (e instanceof UserFacingError) throw fault原样("invalid_request", e.message)
         throw e
       }
       registry.mcp = 新的.mcp
@@ -2211,7 +2203,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         registry.mcp = removeMcpServer(configPath, name).mcp
       } catch (e) {
-        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        if (e instanceof UserFacingError) throw fault原样("invalid_request", e.message)
         throw e
       }
       // **连接也要断掉**：不断的话，删掉的那台还在池子里活着、工具还挂着
@@ -2239,7 +2231,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         新的 = addAcpAgent(configPath, { agentId, command, args, ...(remoteCapable ? { remoteCapable } : {}) })
       } catch (e) {
-        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        if (e instanceof UserFacingError) throw fault原样("invalid_request", e.message)
         throw e
       }
       for (const k of Object.keys(registry.agents)) delete registry.agents[k]
@@ -2263,7 +2255,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         新的 = removeAgent(configPath, agentId)
       } catch (e) {
-        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        if (e instanceof UserFacingError) throw fault原样("invalid_request", e.message)
         throw e
       }
       for (const k of Object.keys(registry.agents)) delete registry.agents[k]
@@ -2278,7 +2270,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         新的 = setAcpRemoteCapable(configPath, agentId, remoteCapable)
       } catch (e) {
-        if (e instanceof UserFacingError) throw fault("invalid_request", e.message)
+        if (e instanceof UserFacingError) throw fault原样("invalid_request", e.message)
         throw e
       }
       for (const k of Object.keys(registry.agents)) delete registry.agents[k]
@@ -2396,7 +2388,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     setPluginFlag: async ({ pluginId, family, on }) => {
       const p = 插件册.find((x) => x.id === pluginId)
-      if (!p) throw fault("invalid_request", `没有叫「${pluginId}」的插件。有的是：${插件册.map((x) => x.id).join("、")}`)
+      if (!p) throw fault("invalid_request", "没有叫「{0}」的插件。有的是：{1}", pluginId, 插件册.map((x) => x.id).join("、"))
       if (!settings) throw fault("internal_error", "本次运行没有装配设置")
       const now = new Date().toISOString()
       if (!family) {
@@ -2406,7 +2398,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       const 族们 = p.族们()
       if (!族们.some((f) => f.key === family)) {
-        throw fault("invalid_request", `「${p.名}」插件没有「${family}」这一族。有的是：${族们.map((f) => f.key).join("、")}`)
+        throw fault("invalid_request", "「{0}」插件没有「{1}」这一族。有的是：{2}", p.名, family, 族们.map((f) => f.key).join("、"))
       }
       settings.set(`${p.键}.${family}` as never, on ? "" : "0", now)
       return { on }
@@ -2422,7 +2414,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         return { png: await 截一帧() }
       } catch (e) {
-        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+        throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
       }
     },
 
@@ -2503,7 +2495,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         return { entries: archived === true ? m.store.archived(target, ctx) : m.store.entries(target, ctx) }
       } catch (e) {
-        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+        throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
       }
     },
 
@@ -2539,7 +2531,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 文件 = 技能文件必须可改(filePath)
       const 原 = await 读本地(文件, "utf8")
       const 新 = 写调用策略(原, mode)
-      if (新 === undefined) throw fault("invalid_request", `${文件} 没有完整的 frontmatter（开头结尾各一行 ---），不敢改`)
+      if (新 === undefined) throw fault("invalid_request", "{0} 没有完整的 frontmatter（开头结尾各一行 ---），不敢改", 文件)
       if (新 !== 原) await 原子写(文件, 新)
       记一次技能?.("invocation", 文件, mode)
       return { mode }
@@ -2549,11 +2541,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 根 = 技能目标根(to, projectId)
       if (dryRun) {
         const r = await 预检技能(source, 根)
-        if ("why" in r) throw fault("invalid_request", r.why)
+        if ("why" in r) throw fault原样("invalid_request", r.why)
         return { kind: r.kind, pending: r.待导, conflicts: r.冲突, imported: [], skipped: [], failed: r.失败 }
       }
       const r = await 导入技能(source, 根, overwrite === true)
-      if ("why" in r) throw fault("invalid_request", r.why)
+      if ("why" in r) throw fault原样("invalid_request", r.why)
       for (const x of r.导了) 记一次技能?.(x.覆盖了 ? "import-overwrite" : "import", x.dest, source)
       return {
         kind: r.kind,
@@ -2570,7 +2562,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 目录 = dirname(文件)
       if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
       await trashItem(目录).catch((err: unknown) => {
-        throw fault("invalid_request", `删不掉 ${目录}：${err instanceof Error ? err.message : String(err)}`)
+        throw fault("invalid_request", "删不掉 {0}：{1}", 目录, err instanceof Error ? err.message : String(err))
       })
       记一次删除?.(undefined, 目录, true)
       记一次技能?.("delete", 目录)
@@ -2579,7 +2571,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     listSubagents: async ({ projectId }) => {
       const p = projectId ? projectStore.get(projectId) : undefined
-      if (projectId && !p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (projectId && !p) throw fault("not_found", "没有这个项目：{0}", projectId)
       const 层 = 子agent层(p?.workspace)
       const 读到的 = loadSubagentsFrom(层, { 自带停用: 自带子agent停用 })
       return {
@@ -2619,7 +2611,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 文件 = 子agent文件必须可改(filePath)
       const 原 = await 读本地(文件, "utf8")
       const 新 = 写停用(原, !enabled)
-      if (新 === undefined) throw fault("invalid_request", `${文件} 没有完整的 frontmatter，不敢改`)
+      if (新 === undefined) throw fault("invalid_request", "{0} 没有完整的 frontmatter，不敢改", 文件)
       if (新 !== 原) await 原子写(文件, 新)
       return { enabled }
     },
@@ -2627,7 +2619,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     importSubagents: async ({ source, to, projectId, overwrite, dryRun }) => {
       const 根 = 子agent目标根(to, projectId)
       const r = await 导入定义文件(source, 根, overwrite === true, dryRun === true)
-      if ("why" in r) throw fault("invalid_request", r.why)
+      if ("why" in r) throw fault原样("invalid_request", r.why)
       return r
     },
 
@@ -2635,7 +2627,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 文件 = 子agent文件必须可改(filePath)
       if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
       await trashItem(文件).catch((err: unknown) => {
-        throw fault("invalid_request", `删不掉 ${文件}：${err instanceof Error ? err.message : String(err)}`)
+        throw fault("invalid_request", "删不掉 {0}：{1}", 文件, err instanceof Error ? err.message : String(err))
       })
       记一次删除?.(undefined, 文件, true)
       return { trashed: true as const }
@@ -2647,7 +2639,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const { store } = 远端()
       const 端口 = req.port ?? 22
       const 旧的 = req.id ? store.get(req.id) : undefined
-      if (req.id && !旧的) throw fault("not_found", `没有这台服务器：${req.id}`)
+      if (req.id && !旧的) throw fault("not_found", "没有这台服务器：{0}", req.id)
 
       const rec: ConnectionRecord = {
         id: 旧的?.id ?? `conn-${randomUUID()}`,
@@ -2680,7 +2672,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     removeConnection: async ({ id }) => {
       const { store, manager } = 远端()
       const rec = store.get(id)
-      if (!rec) throw fault("not_found", `没有这台服务器：${id}`)
+      if (!rec) throw fault("not_found", "没有这台服务器：{0}", id)
       // 先断开：留着一条连着的连接，它的状态推送会指向一台已经不存在的机器
       manager.disconnect(id)
       store.remove(id)
@@ -2695,7 +2687,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     connectRemote: async ({ id }) => {
       const { store, manager } = 远端()
       const rec = store.get(id)
-      if (!rec) throw fault("not_found", `没有这台服务器：${id}`)
+      if (!rec) throw fault("not_found", "没有这台服务器：{0}", id)
       try {
         await manager.connect(rec)
       } catch (e) {
@@ -2713,7 +2705,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const 消息 = e instanceof Error ? e.message : String(e)
         const level = (e as { level?: string })?.level
         const 是认证失败 = level === "client-authentication" || /authentication method|auth.*fail/i.test(消息)
-        throw fault(是认证失败 ? "invalid_request" : "internal_error", 消息)
+        throw fault原样(是认证失败 ? "invalid_request" : "internal_error", 消息)
       }
       return 装配(rec)
     },
@@ -2755,7 +2747,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     disconnectRemote: async ({ id }) => {
       const { store, manager } = 远端()
       const rec = store.get(id)
-      if (!rec) throw fault("not_found", `没有这台服务器：${id}`)
+      if (!rec) throw fault("not_found", "没有这台服务器：{0}", id)
       manager.disconnect(id)
       return 装配(rec)
     },
@@ -2833,9 +2825,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          *   - 其余(图片收不下等)→ `invalid_request`:是这次请求本身的问题。
          */
         const 消息 = err instanceof Error ? err.message : String(err)
-        if (/未持有|租约/.test(消息)) throw fault("conflict", 消息)
-        if (/未在本进程中活动|不存在|没有这个会话/.test(消息)) throw fault("not_found", 消息)
-        throw fault("invalid_request", 消息)
+        if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
+        if (/未在本进程中活动|不存在|没有这个会话/.test(消息)) throw fault原样("not_found", 消息)
+        throw fault原样("invalid_request", 消息)
       }
       return {}
     },
@@ -2853,7 +2845,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         await sessions.abort(sessionId)
       } catch (err) {
         // 「运行时不支持中止」是业务性失败，界面要能分辨并提示去终端按 Ctrl-C
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
+        throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
       return {}
     },
@@ -2892,7 +2884,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         // **全是业务性失败**：模型不存在、没配 key、这一轮还没说完。
         // 界面要原样把理由说给人听，所以不能吞成一句「操作失败」
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
+        throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
       return {}
     },
@@ -2991,7 +2983,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const 消息 = err instanceof Error ? err.message : String(err)
         runRecorder?.记内核执行(sessionId, language, { hasError: true, terminalReason: 消息 }, startedAt)
         收尾({ status: "error" })
-        throw fault("invalid_request", 消息)
+        throw fault原样("invalid_request", 消息)
       } finally {
         if (真在跑.get(键) === cellId) 真在跑.delete(键)
       }
@@ -3012,7 +3004,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         await k.中断(sessionId, language)
       } catch (err) {
         中断请求.delete(键)
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
+        throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
       return {}
     },
@@ -3025,7 +3017,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      */
     getEnvironment: async ({ sessionId }) => {
       const rec = sessions.get(sessionId)
-      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
       const snap = sessions.environment(sessionId) as EnvironmentSnapshot | undefined
       if (!snap) {
         /**
@@ -3115,7 +3107,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const now = new Date().toISOString()
       for (const r of [...(globalRules ?? []), ...(workspaceRules ?? [])]) {
         const 病 = 规则的毛病(r)
-        if (病) throw fault("invalid_request", `这条规则不成立（${r.pattern}）：${病}`)
+        if (病) throw fault("invalid_request", "这条规则不成立（{0}）：{1}", r.pattern, 病)
       }
       if (ignorePasted !== undefined) settings.set("atfile.ignorePasted", ignorePasted ? "1" : "0", now)
       if (globalRules) settings.set("atfile.rules", JSON.stringify(globalRules), now)
@@ -3143,7 +3135,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const p = path.trim()
       // **空串 = 恢复系统默认**，与工作目录那两条同一条规矩
       if (p && !p.startsWith("/") && !/^[A-Za-z]:[\\/]/.test(p)) {
-        throw fault("invalid_request", `下载目录要写绝对路径，收到「${p}」`)
+        throw fault("invalid_request", "下载目录要写绝对路径，收到「{0}」", p)
       }
       settings.set("download.dir", p, new Date().toISOString())
       /** **建出来**：设了一个不存在的目录，第一次下载才炸就太晚了 */
@@ -3190,7 +3182,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     reviewChanges: async ({ projectId }) => {
       const p = projectStore.get(projectId)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
 
       let tracked: Awaited<ReturnType<typeof changesAgainstHead>> = []
       let baseline: "head" | "none" = "head"
@@ -3243,11 +3235,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     fileDiff: async ({ projectId, path }) => {
       const p = projectStore.get(projectId)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
       // **先过守卫**（2026-08-23 审查抓的）：此前直接交给 `git diff --no-index`，`../x` 或绝对路径能把工作区外的文件当 diff 读回来
       resolveInWorkspace(p.workspace, path)
       const 原文 = await fileDiffAgainstHead(p.workspace, path).catch((e: unknown) => {
-        throw fault("invalid_request", `算不出 ${path} 的差异：${e instanceof Error ? e.message : String(e)}`)
+        throw fault("invalid_request", "算不出 {0} 的差异：{1}", path, e instanceof Error ? e.message : String(e))
       })
       /**
        * **表格文件在 diff 上方多一句结构化的话**（2026-08-18，作者选的甲）。
@@ -3273,20 +3265,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (connectionId) {
         const e = 连着的(connectionId)
         const st = await e.stat(path).catch((err: unknown) => {
-          throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+          throw fault("invalid_request", "找不到 {0}：{1}", path, err instanceof Error ? err.message : String(err))
         })
         if (!st.directory) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
         const 数 = await 数一个远端目录(e, path)
         return { directory: true, ...数 }
       }
       const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
       const 全 = resolveInWorkspace(p.workspace, path)
       let st: ReturnType<typeof statSync>
       try {
         st = statSync(全)
       } catch (err) {
-        throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+        throw fault("invalid_request", "找不到 {0}：{1}", path, err instanceof Error ? err.message : String(err))
       }
       if (!st.isDirectory()) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
       return { directory: true, ...数一个本地目录(全) }
@@ -3302,7 +3294,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (connectionId) {
         const e = 连着的(connectionId)
         const st = await e.stat(path).catch((err: unknown) => {
-          throw fault("invalid_request", `找不到 ${path}：${err instanceof Error ? err.message : String(err)}`)
+          throw fault("invalid_request", "找不到 {0}：{1}", path, err instanceof Error ? err.message : String(err))
         })
         /**
          * **目录要自己递归**：SFTP 的 `rmdir` 只删空目录。
@@ -3312,14 +3304,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          */
         await (st.directory ? 递归删远端(e, path) : e.unlink(path)).catch((err: unknown) => {
           // **权限不够要说得出是权限不够**，不笼统地说「删不掉」
-          throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
+          throw fault("invalid_request", "删不掉 {0}：{1}", path, err instanceof Error ? err.message : String(err))
         })
         记一次删除?.(connectionId, path, false)
         return { trashed: false }
       }
 
       const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
       /**
        * **守卫照旧**：本地这条守的不是用户，是**渲染进程**——
        * 一旦开了这个口子，它就能要求删任意路径。远端没有对应物
@@ -3330,7 +3322,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (全 === realpathSync(p.workspace)) throw fault("invalid_request", "不能删工作区本身——要删就删里面的东西")
       if (!trashItem) throw fault("internal_error", "本次运行没有装配废纸篓")
       await trashItem(全).catch((err: unknown) => {
-        throw fault("invalid_request", `删不掉 ${path}：${err instanceof Error ? err.message : String(err)}`)
+        throw fault("invalid_request", "删不掉 {0}：{1}", path, err instanceof Error ? err.message : String(err))
       })
       记一次删除?.(undefined, 全, true)
       return { trashed: true }
@@ -3368,7 +3360,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
               找到 = true
             }
           }
-          if (!找到) throw fault("invalid_request", `${name} 这个名字在那台机器上已经有上千份了`)
+          if (!找到) throw fault("invalid_request", "{0} 这个名字在那台机器上已经有上千份了", name)
         }
       }
 
@@ -3409,7 +3401,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     transferStatus: async ({ transferId }) => {
       const 一条 = 传输们.get(transferId)
       // **查不到就说查不到**，不回一个「跑着呢」——那会让进度条永远转下去
-      if (!一条) throw fault("not_found", `没有这次传输：${transferId}`)
+      if (!一条) throw fault("not_found", "没有这次传输：{0}", transferId)
       return {
         transferred: 一条.已传,
         // **取不到就缺席**，不拿 0 冒充：0 会让进度条一直是满的
@@ -3437,7 +3429,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 与解释器那两条同一条规矩。
        */
       if (p && !p.startsWith("/") && !/^[A-Za-z]:[\\/]/.test(p)) {
-        throw fault("invalid_request", `工作目录要写绝对路径，收到「${p}」`)
+        throw fault("invalid_request", "工作目录要写绝对路径，收到「{0}」", p)
       }
       settings.set("workspace.default", p, new Date().toISOString())
       /** **建出来**：设了一个不存在的目录，第一段对话才炸就太晚了 */
@@ -3524,7 +3516,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     listDirectory: async ({ projectId, connectionId, path, includeIgnored }) => {
       if (connectionId) return 远端列目录(connectionId, path)
       const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
       return listWorkspaceDirectory(p.workspace, path, {
         ...(includeIgnored === undefined ? {} : { includeIgnored }),
       })
@@ -3541,7 +3533,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         )
       }
       const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
       // 起点也要过守卫：越界的 path 在这里就抛。
       // **根用人给的相对路径，不用守卫回来的绝对路径**——那是 realpath，
       // macOS 上 `/var` 会变成 `/private/var`，再 `relative()` 回去就是一串 `..`
@@ -3569,18 +3561,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (sessionId) {
         // 按会话读（7.25）：相对这段会话自己的工作区——与 `listArtifacts` 同一个根，产物预览才对得上
         const 会话 = sessions.get(sessionId)
-        if (!会话) throw fault("not_found", `没有这段会话：${sessionId}`)
+        if (!会话) throw fault("not_found", "没有这段会话：{0}", sessionId)
         if (会话.connectionId) throw fault("invalid_request", "远端会话请按 connectionId 读（路径是那台机器上的绝对路径）")
         return readWorkspaceFile(会话.workspace, path)
       }
       const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
       return readWorkspaceFile(p.workspace, path)
     },
 
     openExternally: async ({ projectId, path }) => {
       const p = projectStore.get(projectId)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
       // **守卫在这里，不在调用方**：解析失败会抛，越界也会抛
       const abs = resolveInWorkspace(p.workspace, path)
       if (!openPath) return { problem: "本次运行没有装配「用系统程序打开」的能力" }
@@ -3651,7 +3643,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           ...(模型 === undefined ? {} : { models: 模型 }),
         })
       } catch (err) {
-        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+        if (err instanceof UserFacingError) throw fault原样("invalid_request", err.message)
         throw err
       }
       // 原地更新那一个被多处持有的对象（同 createAgent 的理由）
@@ -3688,7 +3680,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           ...(model === undefined ? {} : { model }),
         })
       } catch (err) {
-        if (err instanceof UserFacingError) throw fault("invalid_request", err.message)
+        if (err instanceof UserFacingError) throw fault原样("invalid_request", err.message)
         throw err
       }
       // 原地更新那一个被多处持有的对象（同 saveProviderConnection 的理由）
@@ -3716,19 +3708,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     renameSession: async ({ sessionId, title }) => {
       // **空串等于清掉**，回到自动标题——不是存一个空标题
-      if (!sessions.rename(sessionId, title)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!sessions.rename(sessionId, title)) throw fault("not_found", "没有这个会话：{0}", sessionId)
       return {}
     },
 
     setSessionPinned: async ({ sessionId, pinned }) => {
       if (!sessions.setPinned(sessionId, pinned)) {
-        throw fault("not_found", `没有这个会话：${sessionId}`)
+        throw fault("not_found", "没有这个会话：{0}", sessionId)
       }
       return {}
     },
 
     moveSession: async ({ sessionId, direction }) => {
-      if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!sessions.get(sessionId)) throw fault("not_found", "没有这个会话：{0}", sessionId)
       /**
        * **已经在头/尾就如实回 `false`**，不抛也不假装成功。
        * 「没得动了」是一个正常结果，界面据此什么都不做即可。
@@ -3751,7 +3743,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     deleteTask: async ({ taskId }) => {
       const store = 任务库()
       const t = store.get(taskId)
-      if (!t) throw fault("not_found", `没有这个任务：${taskId}`)
+      if (!t) throw fault("not_found", "没有这个任务：{0}", taskId)
 
       let kept = 0
       if (t.sessionId && sessions.get(t.sessionId)) {
@@ -3784,9 +3776,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     createSchedule: async ({ name, prompt, schedule, agentId, workspace, connectionId, permission }) => {
       const 库 = 要定时()
       const 毛病 = 校验计划(schedule)
-      if (毛病) throw fault("invalid_request", 毛病)
-      if (!registry.agents[agentId]) throw fault("invalid_request", `配置里没有叫「${agentId}」的 agent`)
-      if (connectionId && !远端().store.get(connectionId)) throw fault("not_found", `没有这台服务器：${connectionId}`)
+      if (毛病) throw fault原样("invalid_request", 毛病)
+      if (!registry.agents[agentId]) throw fault("invalid_request", "配置里没有叫「{0}」的 agent", agentId)
+      if (connectionId && !远端().store.get(connectionId)) throw fault("not_found", "没有这台服务器：{0}", connectionId)
       const now = new Date().toISOString()
       const d: 定时定义 = {
         id: `sch-${randomUUID()}`, revision: 1, name: name.trim(), prompt: prompt.trim(), status: "active", schedule, agentId,
@@ -3801,10 +3793,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     updateSchedule: async ({ id, name, prompt, schedule, status, permission }) => {
       const 库 = 要定时()
       const 旧 = 库.get(id)
-      if (!旧) throw fault("not_found", `没有这条定时任务：${id}`)
+      if (!旧) throw fault("not_found", "没有这条定时任务：{0}", id)
       if (schedule) {
         const 毛病 = 校验计划(schedule)
-        if (毛病) throw fault("invalid_request", 毛病)
+        if (毛病) throw fault原样("invalid_request", 毛病)
       }
       // **版本号 +1、updatedAt 往前**：已排队的那次按旧的跑；改之前的到期也不再认领
       const d: 定时定义 = {
@@ -3819,7 +3811,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     deleteSchedule: async ({ id }) => {
       const 库 = 要定时()
-      if (!库.delete(id)) throw fault("not_found", `没有这条定时任务：${id}`)
+      if (!库.delete(id)) throw fault("not_found", "没有这条定时任务：{0}", id)
       void 调度器?.requestPump()
       return {}
     },
@@ -3827,7 +3819,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     runScheduleNow: async ({ id }) => {
       要定时()
       if (!调度器) throw fault("internal_error", "本次运行没有装配调度器")
-      const r = await 调度器.立即运行(id).catch((e: unknown) => { throw fault("not_found", e instanceof Error ? e.message : String(e)) })
+      const r = await 调度器.立即运行(id).catch((e: unknown) => { throw fault原样("not_found", e instanceof Error ? e.message : String(e)) })
       return 运行摘要(r)
     },
 
@@ -3857,7 +3849,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     setSessionArchived: async ({ sessionId, archived }) => {
       const rec = sessions.get(sessionId)
-      if (!rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
       sessions.setArchived(sessionId, archived)
       记一次会话?.(archived ? "archive" : "unarchive", rec.projectId, sessionId)
       // **归档了绑着它的 IM 通道要出声 + 解会话绑定**(审查 debug F5):否则下一条微信/飞书消息
@@ -3897,7 +3889,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     deletionImpact: async ({ projectId }) => {
       const p = projectStore.get(projectId)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
       // **摆真数字**：界面手里的会话列表与账本都是分页/局部的，猜不出来
       return {
         sessions: sessions.countByProject(projectId),
@@ -3908,7 +3900,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     deleteProject: async ({ projectId }) => {
       const p = projectStore.get(projectId)
-      if (!p) throw fault("not_found", `没有这个项目：${projectId}`)
+      if (!p) throw fault("not_found", "没有这个项目：{0}", projectId)
 
       /**
        * **先把活着的会话停掉**，再删记录。反过来的话进程还活着
@@ -3941,7 +3933,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         return sessions.leases.acquire(sessionId, holder)
       } catch (err) {
-        throw fault("conflict", err instanceof Error ? err.message : String(err))
+        throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
     },
 
@@ -3949,7 +3941,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     enhancePrompt: async ({ text, mode, sessionId, requestId }) => {
       if (!askOnce) throw fault("invalid_request", "这次运行没有 native 运行时，做不了提示词增强")
       const rec = sessionId ? sessions.get(sessionId) : undefined
-      if (sessionId && !rec) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (sessionId && !rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
       const kind = rec ? registry.agents[rec.agentId]?.kind : undefined
       // 没会话（空态屏）或会话不是 native（cli / ACP，它们的模型不在我们手里）：借配置里第一个 API 模型。
       // 2026-08-28 作者定的：按钮常驻、有 key 就能用；走 cli / ACP 自己流量的那条路等一次问答原语造出来再接。
@@ -3989,8 +3981,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const msg = e instanceof Error ? e.message : String(e)
         // pi 的「Provider is not configured: deepseek」对用户是一句黑话（2026-08-28 作者打包版撞的：key 其实在，只是新包解不开）
         const 没配 = /Provider is not configured:\s*(\S+)/.exec(msg)
-        if (没配) throw fault("invalid_request", `「${没配[1]}」还没有可用的 API key——到设置里填一个（应用更新后，上一版存的 key 可能解不开，要重新填）`)
-        throw fault("internal_error", msg)
+        if (没配) throw fault("invalid_request", "「{0}」还没有可用的 API key——到设置里填一个（应用更新后，上一版存的 key 可能解不开，要重新填）", 没配[1]!)
+        throw fault原样("internal_error", msg)
       } finally {
         clearTimeout(超时)
         增强中.delete(requestId)
@@ -4022,7 +4014,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         await 微信.startLogin()
       } catch (e) {
-        throw fault("internal_error", `要不到二维码：${e instanceof Error ? e.message : String(e)}`)
+        throw fault("internal_error", "要不到二维码：{0}", e instanceof Error ? e.message : String(e))
       }
       return { ok: true as const }
     },
@@ -4030,7 +4022,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         微信.submitVerifyCode(code)
       } catch (e) {
-        throw fault("invalid_request", e instanceof Error ? e.message : String(e))
+        throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
       }
       return { ok: true as const }
     },
@@ -4043,7 +4035,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { ok: true as const }
     },
     weixinBindSession: async ({ sessionId }) => {
-      if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!sessions.get(sessionId)) throw fault("not_found", "没有这个会话：{0}", sessionId)
       await 微信.bindSession(sessionId)
       return { ok: true as const }
     },
@@ -4071,7 +4063,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         await 飞书.startLogin()
       } catch (e) {
-        throw fault("internal_error", `设备流没起来：${e instanceof Error ? e.message : String(e)}`)
+        throw fault("internal_error", "设备流没起来：{0}", e instanceof Error ? e.message : String(e))
       }
       return { ok: true as const }
     },
@@ -4084,7 +4076,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { ok: true as const }
     },
     feishuBindSession: async ({ sessionId }) => {
-      if (!sessions.get(sessionId)) throw fault("not_found", `没有这个会话：${sessionId}`)
+      if (!sessions.get(sessionId)) throw fault("not_found", "没有这个会话：{0}", sessionId)
       await 飞书.bindSession(sessionId)
       return { ok: true as const }
     },

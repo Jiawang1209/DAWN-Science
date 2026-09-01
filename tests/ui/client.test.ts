@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 import { WorkbenchClientError, createClient, type RawResponse } from "../../src/ui/client.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
+import { $lang } from "../../src/ui/i18n/index.js"
 
 const ok = (data: unknown, warnings?: string[]): RawResponse => ({
   ok: true,
@@ -39,6 +40,63 @@ describe("客户端 · 拆信封", () => {
   it("缺 warnings 字段时给空数组，调用方不必判空", async () => {
     const c = createClient(async () => ok([]))
     expect((await c.raw("listProjects")).warnings).toEqual([])
+  })
+})
+
+/**
+ * 后端错误的双语（B15，2026-09-01）。翻译在 `WorkbenchClientError` 的构造里做，
+ * 于是几十处读 `e.message` 的 catch 一处不改就都拿到当前语言。
+ */
+describe("客户端 · 错误按当前语言显示", () => {
+  const 抓 = async (p: Promise<unknown>): Promise<WorkbenchClientError> => {
+    try {
+      await p
+    } catch (e) {
+      return e as WorkbenchClientError
+    }
+    throw new Error("没抛")
+  }
+  const 带i18n = (): RawResponse => ({
+    ok: false,
+    workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+    error: { code: "not_found", message: "没有这个项目：p9", retryable: false, details: { i18n: { msgid: "没有这个项目：{0}", args: ["p9"] } } },
+  })
+  afterEach(() => $lang.set("zh"))
+
+  it("英文界面：message 是英文，原文保留后端那句中文（日志要对得上后端）", async () => {
+    $lang.set("en")
+    const c = createClient(async () => 带i18n())
+    const e = await 抓(c.get("getProject", { projectId: "p9" }))
+    expect(e).toBeInstanceOf(WorkbenchClientError)
+    expect(e.message).toBe("No such project: p9")
+    expect(e.原文).toBe("没有这个项目：p9")
+    expect(e.code).toBe("not_found")
+  })
+
+  it("中文界面：message 与后端渲染的那句逐字节相同", async () => {
+    $lang.set("zh")
+    const c = createClient(async () => 带i18n())
+    const e = await 抓(c.get("getProject", { projectId: "p9" }))
+    expect(e.message).toBe("没有这个项目：p9")
+    expect(e.原文).toBe("没有这个项目：p9")
+  })
+
+  it("没有 details.i18n（原样透传的、internal_error 的、老后端的）→ message 原样，哪种语言都一样", async () => {
+    $lang.set("en")
+    const c = createClient(async () => err("conflict", "All configured authentication methods failed"))
+    const e = await 抓(c.get("getProject", { projectId: "x" }))
+    expect(e.message).toBe("All configured authentication methods failed")
+  })
+
+  it("details 长得不像 i18n（比如请求校验的 issues 数组）→ 不炸，message 原样", async () => {
+    $lang.set("en")
+    const c = createClient(async () => ({
+      ok: false,
+      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+      error: { code: "invalid_request", message: "请求不合契约", retryable: false, details: [{ path: ["agentId"] }] },
+    }))
+    const e = await 抓(c.get("getProject", { projectId: "x" }))
+    expect(e.message).toBe("请求不合契约")
   })
 })
 

@@ -8,6 +8,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { SettingsPanel } from "../../src/ui/Settings.js"
+import { $lang } from "../../src/ui/i18n/index.js"
 
 const noop = () => {}
 
@@ -256,6 +257,22 @@ describe("模型服务 · 添加", () => {
     fireEvent.change(screen.getByLabelText("新服务的名字"), { target: { value: "我的 端点" } })
     fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     expect(screen.getByText(/只能用小写字母、数字和连字符/)).toBeDefined()
+  })
+
+  it("那一行的理由带 i18n 时按当前语言显示（B15）——英文设置屏上不再是一句中文", () => {
+    $lang.set("en")
+    try {
+      render(
+        面板({
+          modelsOf: () => [],
+          unusable: [{ providerId: "deepseek", reason: "模型目录读不出来：boom", i18n: { msgid: "模型目录读不出来：{0}", args: ["boom"] } }],
+        }),
+      )
+      expect(screen.getByText(/The model catalogue could not be read: boom/)).toBeDefined()
+      expect(screen.queryByText(/模型目录读不出来/)).toBeNull()
+    } finally {
+      $lang.set("zh")
+    }
   })
 
   it("**填了 key 却建不出 agent 的那一行，收起时就写着为什么**（B8）——「⚠ 没有模型」只说了现象，原因在后端手里", () => {

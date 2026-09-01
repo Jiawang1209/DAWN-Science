@@ -68,6 +68,31 @@ describe("英文表 · 不重复", () => {
   })
 })
 
+/**
+ * 后端错误的 msgid（B15，2026-09-01）：`fault(code, "msgid", ...args)` 与 `i18n消息("msgid", ...)`
+ * 也查同一张英文表，所以「孤儿」那条得把它们算进「用到的」。
+ * 精确的那份扫描（切实参、认三元、对占位符）在 `tests/workbench/fault-i18n.test.ts`；
+ * 这里只需要「用到了哪些键」，一条正则够了。
+ */
+const 后端 = [join(UI, "..", "workbench"), join(UI, "..", "protocol")]
+function 后端错误的msgid(): string[] {
+  const out: string[] = []
+  const 走 = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name)
+      if (e.isDirectory()) 走(p)
+      else if (/\.tsx?$/.test(e.name)) {
+        const src = readFileSync(p, "utf8")
+        for (const m of src.matchAll(/\bfault\(\s*(?:"[a-z_]+"|[^,]+?),\s*"((?:[^"\\]|\\.)*)"/g)) out.push(JSON.parse(`"${m[1]}"`) as string)
+        for (const m of src.matchAll(/\bfault\([^\n]*?\?\s*"((?:[^"\\]|\\.)*)"\s*:\s*"((?:[^"\\]|\\.)*)"/g)) out.push(JSON.parse(`"${m[1]}"`) as string, JSON.parse(`"${m[2]}"`) as string)
+        for (const m of src.matchAll(/\bi18n消息\(\s*"((?:[^"\\]|\\.)*)"/g)) out.push(JSON.parse(`"${m[1]}"`) as string)
+      }
+    }
+  }
+  for (const d of 后端) 走(d)
+  return out
+}
+
 describe("双语 · 目录不许与调用点脱节", () => {
   it("**每一个 `t()` 的 msgid 在英文表里都有**", () => {
     const 缺的: string[] = []
@@ -89,6 +114,7 @@ describe("双语 · 目录不许与调用点脱节", () => {
   it("**英文表里没有谁也不用的孤儿**", () => {
     const 用到的 = new Set<string>()
     for (const f of 界面文件()) for (const id of 调用点的msgid(readFileSync(f, "utf8"))) 用到的.add(id)
+    for (const id of 后端错误的msgid()) 用到的.add(id)
     const 孤儿 = Object.keys(EN).filter((k) => !用到的.has(k))
     expect(孤儿, "没有任何调用点用它们——要么是原文改过了，要么该删").toEqual([])
   })

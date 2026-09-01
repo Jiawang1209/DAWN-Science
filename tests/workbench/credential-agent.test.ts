@@ -21,7 +21,7 @@ function 假钥匙串(...有的: string[]): CredentialsPort {
 
 type 返回 = {
   agents: { agentId: string; kind: string }[]
-  unusable?: { providerId: string; reason: string }[]
+  unusable?: { providerId: string; reason: string; i18n?: { msgid: string; args: (string | number)[] } }[]
 }
 
 function 起一套(available: (providerId: string) => Promise<string[]>, names?: () => Promise<Record<string, string>>) {
@@ -59,7 +59,14 @@ describe("填了 key 但目录里挑不出模型（B8）", () => {
       })
       const r = await 取()
       expect(r.agents).toEqual([])
-      expect(r.unusable).toEqual([{ providerId: "deepseek", reason: expect.stringContaining("models.json 解析失败") }])
+      // reason 是渲染好的中文；i18n 是同一句话的 msgid 与 args，界面按当前语言翻（B15）
+      expect(r.unusable).toEqual([
+        {
+          providerId: "deepseek",
+          reason: expect.stringContaining("models.json 解析失败"),
+          i18n: { msgid: "模型目录读不出来：{0}", args: [expect.stringContaining("models.json 解析失败")] },
+        },
+      ])
       expect(吼.mock.calls.some((c) => String(c[0]).includes("models.json 解析失败"))).toBe(true)
     } finally {
       吼.mockRestore()
@@ -124,7 +131,8 @@ describe("两次 getProviders 叠着跑（B8 的偶发版）", () => {
     await 喘口气()
     显示名闸.放行(1, {})
     const b = await B
-    expect(a.unusable, "先起的那次").toEqual([{ providerId: "deepseek", reason: expect.stringContaining("deepseek") }])
-    expect(b.unusable, "后起的那次").toEqual([{ providerId: "deepseek", reason: expect.stringContaining("deepseek") }])
+    const 一条 = { providerId: "deepseek", reason: expect.stringContaining("deepseek"), i18n: { msgid: expect.any(String), args: ["deepseek"] } }
+    expect(a.unusable, "先起的那次").toEqual([一条])
+    expect(b.unusable, "后起的那次").toEqual([一条])
   })
 })

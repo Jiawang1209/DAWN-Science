@@ -13,6 +13,7 @@
  * `getCapabilities` / `listProjects` 这类不属于任何单一项目的操作，故改为可选。
  */
 import { z } from "zod"
+import { FaultI18nSchema } from "./fault-i18n.js"
 import {
   ArtifactSchema,
   CostSchema,
@@ -390,7 +391,17 @@ export const OPERATIONS = {
        * 缺省 = 后端没算过（没接模型目录端口那种装配）；空数组 = 算过了，都能用。
        */
       unusable: z
-        .array(z.object({ providerId: z.string().min(1), reason: z.string().min(1) }).strict())
+        .array(
+          z
+            .object({
+              providerId: z.string().min(1),
+              /** 渲染好的中文——旧读者、日志、测试看这个 */
+              reason: z.string().min(1),
+              /** 同一句话的 msgid 与 args，界面按当前语言 `tf` 一遍（B15，2026-09-01）。可选：老后端不给也解析得了 */
+              i18n: FaultI18nSchema.optional(),
+            })
+            .strict(),
+        )
         .optional(),
     }),
     mutating: false,

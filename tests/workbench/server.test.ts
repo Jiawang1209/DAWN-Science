@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { WorkbenchServer, fault, type WorkbenchBackend } from "../../src/workbench/server.js"
+import { WorkbenchServer, fault, fault原样, type WorkbenchBackend } from "../../src/workbench/server.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 
 /** 一段够用的假会话 */
@@ -313,6 +313,52 @@ describe("WorkbenchServer · 后端异常", () => {
     })
     const r2 = await new WorkbenchServer(不可用).handle("listDirectory", { projectId: "p", path: "." })
     if (!r2.ok) expect(r2.error.retryable).toBe(true)
+  })
+})
+
+/**
+ * 后端错误的双语（B15，2026-09-01）：msgid 与 args 随 `details.i18n` 出去，界面按当前语言再翻。
+ * **只有 `fault()` 那条路带**——internal_error 的 details 永远不给（可能含密钥片段）。
+ */
+describe("WorkbenchServer · 错误的 msgid 随 details 出去", () => {
+  it("fault(code, msgid, ...args) → message 是渲染好的中文，details.i18n 是原样的 msgid 与 args", async () => {
+    const bad = backend({
+      listDirectory: async () => {
+        throw fault("not_found", "没有这个项目：{0}", "p9")
+      },
+    })
+    const r = await new WorkbenchServer(bad).handle("listDirectory", { projectId: "p9", path: "." })
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.error.message).toBe("没有这个项目：p9")
+      expect(r.error.details).toEqual({ i18n: { msgid: "没有这个项目：{0}", args: ["p9"] } })
+    }
+  })
+
+  it("fault原样 抛的别人的话：没有 details——那句话不在英文表里，带上只会让客户端白吼", async () => {
+    const bad = backend({
+      listDirectory: async () => {
+        throw fault原样("conflict", "All configured authentication methods failed")
+      },
+    })
+    const r = await new WorkbenchServer(bad).handle("listDirectory", { projectId: "p", path: "." })
+    if (!r.ok) {
+      expect(r.error.message).toBe("All configured authentication methods failed")
+      expect(r.error.details).toBeUndefined()
+    }
+  })
+
+  it("internal_error 那条路**不带** i18n，也不带任何 details——归一化的意义就是什么都不漏", async () => {
+    const bad = backend({
+      listProjects: async () => {
+        throw new Error("数据库密码是 hunter2")
+      },
+    })
+    const r = await new WorkbenchServer(bad).handle("listProjects", {})
+    if (!r.ok) {
+      expect(r.error.code).toBe("internal_error")
+      expect(r.error.details).toBeUndefined()
+    }
   })
 })
 

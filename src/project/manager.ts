@@ -106,7 +106,11 @@ export class ProjectManager {
    *
    * 选复用而不是换个目录或报错：**会话必须开得出**，而目录是用户的。
    * **不把它改成临时的**——那是用户的项目，侧栏里突然搬到「会话」那一列、从项目列表消失，等于替他删了一个项目。
-   * 代价是这些临时会话挂在那个项目名下、混进它的会话列表；比起第一句话就失败，这是能接受的。
+   *
+   * 代价要说清楚（2026-09-01 终审抓的）：这些临时会话挂在那个普通项目名下。
+   * 只按 `temporary` 列临时会话的话它们**哪一列都不在**——「会话」列不认这个项目，
+   * 项目列又只在它恰好是当前项目时才列它的会话。所以列临时会话得走 `temporaryHosts`，
+   * 把占着根的那个项目一起算上；它的会话可能两列都出现，看得见的重复比看不见强。
    */
   ensureTemporary(root: string): ProjectRecord {
     const 已有 = this.projectStore.list().find((p) => p.temporary)
@@ -124,6 +128,20 @@ export class ProjectManager {
     }
     this.projectStore.insert(rec)
     return rec
+  }
+
+  /**
+   * 装着临时会话的那些项目——`ensureTemporary` 的只读镜像，**不建任何东西**。
+   *
+   * 标了 `temporary` 的全部算（第一版是每段临时会话一个项目，老库里可能有好几个），
+   * 再加上**占着某个临时根的普通项目**：`ensureTemporary` 见根被占就复用它、不改标记，
+   * 落在它名下的临时会话只有从这里才列得出来。判据与 `ensureTemporary` 同一处维护，
+   * 两边才不会各说各话。
+   */
+  temporaryHosts(roots: readonly string[]): ProjectRecord[] {
+    const 全部 = this.projectStore.list()
+    const 根 = new Set(roots.map((r) => resolve(r)))
+    return 全部.filter((p) => p.temporary || 根.has(p.workspace))
   }
 
   /**

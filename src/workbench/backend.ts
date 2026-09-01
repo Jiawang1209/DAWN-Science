@@ -885,13 +885,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    *     否则用户精心写的 model 会被我们挑的那个顶掉。
    */
   /**
-   * 建不出 agent 的 provider 各自的理由（B8，2026-09-01）。**每次重算都先清**，
+   * 回传建不出 agent 的 provider 各自的理由（B8，2026-09-01）。**每次重算都是一张新表**，
    * 否则目录后来有了，红字还挂着。`getProviders` 把它端出去。
+   *
+   * **表是本次调用自己的，不是模块级共用的**（2026-09-01 终审抓的）。两次 `getProviders`
+   * 叠着跑是常态（挂载问一次、填完 key `Promise.all` 又问一次），前一次往往还卡在
+   * `models.available` / `models.names` 上。共用一张表、每次先 `clear()` 的话：
+   * 先起的那次记完理由等着显示名，后起的那次进来一清，先起的那次醒来端出去的就是 `unusable: []`——
+   * 它要是最后一个落地，向导的门就开了、也没人再问——B8 又回来了，只是变成偶发。
    */
-  const 建不出agent的理由 = new Map<string, string>()
-  async function 确保配过key的都能用(): Promise<void> {
-    建不出agent的理由.clear()
-    if (!models?.available) return
+  async function 确保配过key的都能用(): Promise<Map<string, string>> {
+    const 建不出agent的理由 = new Map<string, string>()
+    if (!models?.available) return 建不出agent的理由
     const 已被用 = new Set(
       Object.values(registry.agents)
         .filter((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
@@ -938,6 +943,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         capabilities: ["chat", "exec"],
       }
     }
+    return 建不出agent的理由
   }
 
   /**
@@ -1663,7 +1669,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **不回传任何凭证**。
      */
     getProviders: async () => {
-      await 确保配过key的都能用()
+      const 建不出agent的理由 = await 确保配过key的都能用()
       /**
        * 显示名一次问全，不在循环里一家一家问。
        * **拿不到就整份缺省**，界面退回用 id——见 `models.names` 的注释。
@@ -1912,12 +1918,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     /**
      * 全部临时会话。**跨项目**——每个临时会话自带一个项目，
      * 按项目一个个问会变成 N 次调用。
+     *
+     * **占着临时根的那个普通项目也算**（2026-09-01 终审抓的）：`ensureTemporary` 在根被普通项目
+     * 占着时复用它、不改它的标记（那是用户的项目）。只按 `temporary` 过滤，落在它名下的临时会话
+     * 「会话」那一列看不到、项目列表又只在它恰好是当前项目时才列——看不见的会话等于没建成。
+     * 它的会话因此可能在两列都出现；看得见的重复比看不见强。
+     * 根有两处来源（装配时的 `scratchRoot`、设置里的 `workspace.default`/scratch），
+     * `createTask` 与 `createTerminalSession` 各用其一，两处都问。
      */
-    listTemporarySessions: async () =>
-      projects
-        .list()
-        .filter((p) => p.temporary)
-        .flatMap((p) => projects.sessions(p.projectId, 服务器名)),
+    listTemporarySessions: async () => {
+      const 根们 = [scratchRoot]
+      try {
+        根们.push(要有临时根())
+      } catch {
+        // 没装配临时根：那就只有标了 temporary 的
+      }
+      return projects
+        .temporaryHosts(根们.filter((r): r is string => r !== undefined))
+        .flatMap((p) => projects.sessions(p.projectId, 服务器名))
+    },
 
     /**
      * ── 远端连接（②-B · R3/R4）─────────────────────────────────────────

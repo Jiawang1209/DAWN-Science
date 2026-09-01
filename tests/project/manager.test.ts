@@ -166,6 +166,31 @@ describe("ProjectManager · 临时项目根已经被普通项目占着（2026-09
     }
   })
 
+  /**
+   * 复用的代价（2026-09-01 终审抓的）：落在那个普通项目名下的临时会话，只按 `temporary`
+   * 列是列不出来的。`temporaryHosts` 是 `ensureTemporary` 的只读镜像——判据同一处维护。
+   */
+  it("temporaryHosts：占着根的普通项目算数、别的普通项目不算、标了 temporary 的照旧算，且不建任何东西", () => {
+    const ctx = make()
+    const root = mkdtempSync(join(tmpdir(), "dawn-scratch-hosts-"))
+    try {
+      const 旧默认 = ctx.mgr.ensureDefault(root)
+      const 别的 = ctx.mgr.open(join(root, "other-project"))
+      // 只读：问过之后项目数不变，也没有多出一个临时项目
+      expect(ctx.mgr.temporaryHosts([root + "/"]).map((p) => p.projectId)).toEqual([旧默认.projectId])
+      expect(ctx.projects.list()).toHaveLength(2)
+      expect(ctx.mgr.temporaryHosts([join(root, "nowhere")])).toEqual([])
+      // 根不止一处来源时都问；标了 temporary 的与占着根的一起回
+      const 临时 = ctx.mgr.ensureTemporary(join(root, "scratch2"))
+      expect(临时.temporary).toBe(true)
+      const ids = ctx.mgr.temporaryHosts([root, join(root, "nowhere")]).map((p) => p.projectId).sort()
+      expect(ids).toEqual([旧默认.projectId, 临时.projectId].sort())
+      expect(ids).not.toContain(别的.projectId)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it("已有临时项目时仍优先复用它（原有行为不变）", () => {
     const ctx = make()
     const root = mkdtempSync(join(tmpdir(), "dawn-scratch-temp-"))

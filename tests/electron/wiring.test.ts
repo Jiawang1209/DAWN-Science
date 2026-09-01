@@ -633,4 +633,29 @@ describe("更新之后：上一版的默认项目就坐在这一版的临时会�
     expect(占着的).toHaveLength(1)
     expect(占着的[0]!.temporary).toBeUndefined()
   })
+
+  /**
+   * 复用普通项目的代价（2026-09-01 终审抓的）：`listTemporarySessions` 只认 `p.temporary`，
+   * 界面的项目列表只认 `!p.temporary`——落在那个普通项目名下的临时会话，
+   * 「会话」那一列看不到、`listSessions(activeProjectId)` 也只在它恰好是当前项目时才有。
+   * 看不见的会话等于没建成。**不把项目翻成临时的**（那等于替用户删一个项目）；
+   * 让「占着临时根的那个项目」在列临时会话时也算数。
+   */
+  it("落在那个旧项目名下的临时会话，listTemporarySessions 列得出来", async () => {
+    const base = mkdtempSync(join(tmpdir(), "dawn-updated-"))
+    cleanups.push(() => rmSync(base, { recursive: true, force: true }))
+    const db = newDbPath()
+    const scratch = join(base, "scratch")
+    const 旧版 = createWorkbench({ configPath: configFile(), dbPath: db, credentials: memoryCredentials(), defaultWorkspace: scratch, scratchRoot: join(base, "unused"), skipCredentialGate: true })
+    旧版.close()
+    const wb = createWorkbench({ configPath: configFile(), dbPath: db, credentials: memoryCredentials(), defaultWorkspace: join(base, "workspace"), scratchRoot: scratch, skipCredentialGate: true })
+    cleanups.push(() => wb.close())
+    const p = await wb.server.handle("getProviders", {})
+    const agentId = (p as { data: { agents: { agentId: string; kind: string }[] } }).data.agents.find((a) => a.kind === "native")?.agentId
+    const r = (await wb.server.handle("createTask", { agentId })) as { ok: boolean; data: { sessionId?: string } }
+    expect(r.ok, JSON.stringify(r)).toBe(true)
+    expect(r.data.sessionId).toBeDefined()
+    const 临时 = (await wb.server.handle("listTemporarySessions", {})) as { data: { sessionId: string }[] }
+    expect(临时.data.map((s) => s.sessionId)).toContain(r.data.sessionId)
+  })
 })

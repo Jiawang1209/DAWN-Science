@@ -24,7 +24,7 @@ type 返回 = {
   unusable?: { providerId: string; reason: string }[]
 }
 
-function 起一套(available: (providerId: string) => Promise<string[]>) {
+function 起一套(available: (providerId: string) => Promise<string[]>, names?: () => Promise<Record<string, string>>) {
   const registry = { agents: {}, providers: {} }
   const backend = createWorkbenchBackend({
     // 只碰 getProviders，其余端口给到能构造出来即可（与 connections.test 同一做法）
@@ -35,7 +35,7 @@ function 起一套(available: (providerId: string) => Promise<string[]>) {
     registry: registry as never,
     events: {} as never,
     credentials: 假钥匙串("deepseek"),
-    models: { available },
+    models: { available, ...(names ? { names } : {}) },
   })
   return { backend, registry, 取: () => backend.getProviders({}) as Promise<返回> }
 }
@@ -74,5 +74,57 @@ describe("填了 key 但目录里挑不出模型（B8）", () => {
     const r = await 取()
     expect(r.agents.map((a) => a.agentId)).toEqual(["deepseek"])
     expect(r.unusable).toEqual([])
+  })
+})
+
+/**
+ * 两次 `getProviders` 叠着跑（2026-09-01 终审抓的）。
+ *
+ * 界面里这是常态：挂载时问一次（`App.tsx` 的 `loadProviders`），填完 key
+ * `Promise.all([loadCredentials, loadProviders])` 又问一次，前一次往往还卡在
+ * `models.available` 上。此前理由存在一张**共用的** Map 里、每次重算先 `clear()`：
+ * 先起的那次记完理由、正等着显示名，后起的那次进来一清——先起的那次醒来端出去的是
+ * `unusable: []`。它要是最后一个落地，向导的门就开了、也没人再问一次——B8 又回来了，只是变成偶发。
+ */
+describe("两次 getProviders 叠着跑（B8 的偶发版）", () => {
+  /** 每次调用挂一个 deferred，测试按自己定的顺序一个个放行 */
+  function 闸() {
+    const 等着的: ((v: never) => void)[] = []
+    return {
+      开: <T,>() => new Promise<T>((r) => 等着的.push(r as (v: never) => void)),
+      放行: (第几个: number, v: unknown) => 等着的[第几个]!(v as never),
+      个数: () => 等着的.length,
+    }
+  }
+  const 喘口气 = () => new Promise((r) => setTimeout(r, 0))
+
+  it("先起的那次卡在显示名上时后起的那次进来了 ⇒ 两次端出去的都带理由，没有一次是空的", async () => {
+    const 目录闸 = 闸()
+    const 显示名闸 = 闸()
+    const { 取 } = 起一套(
+      () => 目录闸.开<string[]>(),
+      () => 显示名闸.开<Record<string, string>>(),
+    )
+    // A：记完理由，停在「等显示名」
+    const A = 取()
+    await 喘口气()
+    expect(目录闸.个数()).toBe(1)
+    目录闸.放行(0, [])
+    await 喘口气()
+    expect(显示名闸.个数()).toBe(1)
+    // B 进来：此前这一步会把 A 刚记的理由清掉
+    const B = 取()
+    await 喘口气()
+    expect(目录闸.个数()).toBe(2)
+    // A 先落地
+    显示名闸.放行(0, {})
+    const a = await A
+    // 再放 B
+    目录闸.放行(1, [])
+    await 喘口气()
+    显示名闸.放行(1, {})
+    const b = await B
+    expect(a.unusable, "先起的那次").toEqual([{ providerId: "deepseek", reason: expect.stringContaining("deepseek") }])
+    expect(b.unusable, "后起的那次").toEqual([{ providerId: "deepseek", reason: expect.stringContaining("deepseek") }])
   })
 })

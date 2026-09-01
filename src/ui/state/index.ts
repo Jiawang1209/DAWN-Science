@@ -219,6 +219,7 @@ import {
   $view,
 } from "./view.js"
 import { invalidate as invalidateGeneration } from "./guard.js"
+import { 停掉核验追问 } from "./sync.js"
 
 /**
  * 把全部状态清回初始值。
@@ -260,4 +261,6 @@ export function resetAllState(): void {
   $terminal.set([])
   $terminalTrimmed.set(false)
   invalidateGeneration()
+  // 凭证核验追问的定时器与世代是 sync.ts 里的模块态：不清的话上一条用例挂着的追问会打进下一条用例的假后端
+  停掉核验追问()
 }

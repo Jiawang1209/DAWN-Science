@@ -99,20 +99,55 @@ export const loadProjects = (c: WorkbenchClient): Promise<void> =>
  * **`verified: false` 就过几秒再问。** 有加密文件时，后端在钥匙串预热（首帧后 5 秒）之前答不出哪些 key 解得开——
  * 那时 `configured` 是按文件里有没有键答的，`broken` 是空的。预热完没有人来推（凭证没有事件流），所以这边追问；
  * 有界：最多追 10 次（30 秒），之后就当它核验不了了，别无限打 IPC。
+ *
+ * **预算按轮算，不按整个进程算**（审查 2026-09-01）。四处调用点（启动、存 key、删 key、打开设置）各自是新的一轮：
+ * 之前的计数器是进程级一份，启动那轮把 10 次用光之后，用户再打开设置看到的永远是预热前的答案——
+ * 界面看着完全正常，那是最难查的一种坏。同一个理由下的另外两条：
+ * - **同时只留一条链**：两问同时在飞时各排各的定时器，两条链分一份预算，30 秒窗口塌成 15 秒。
+ *   新的一轮开始就把旧轮的定时器清掉，旧轮迟到的答案也不再排追问（世代比对）。
+ * - **追问途中抖一次不死**：`.catch(fail)` 一句就把整轮杀了，而屏上还是预热前的答案。失败照样出声，
+ *   但吃着这一轮的预算接着追。**第一问就失败的不重试**——屏上没有临时答案要换，出声就够了，再试就是反复报错。
  */
-const 核验追问 = { 次数: 0, 上限: 10, 间隔ms: 3_000 }
-export const loadCredentials = (c: WorkbenchClient): Promise<void> =>
-  c.get<CredentialState>("listCredentials").then((v) => {
+const 核验追问 = { 上限: 10, 间隔ms: 3_000 }
+const 追问状态: { 世代: number; 次数: number; 定时器: ReturnType<typeof setTimeout> | undefined } = {
+  世代: 0,
+  次数: 0,
+  定时器: undefined,
+}
+export const loadCredentials = (c: WorkbenchClient): Promise<void> => {
+  停掉核验追问()
+  return 问一次凭证(c, ++追问状态.世代)
+}
+/** 测试与 `resetAllState` 用：清掉挂着的定时器，让在飞的答案作废，下一问从零起算 */
+export function 停掉核验追问(): void {
+  clearTimeout(追问状态.定时器)
+  追问状态.定时器 = undefined
+  追问状态.次数 = 0
+  追问状态.世代 += 1
+}
+function 问一次凭证(c: WorkbenchClient, 世代: number): Promise<void> {
+  return c
+    .get<CredentialState>("listCredentials")
+    .then((v) => {
       setCredentials(v)
-      if (v.verified !== false) {
-        核验追问.次数 = 0
-        return
-      }
-      if (核验追问.次数 >= 核验追问.上限) return
-      核验追问.次数 += 1
-      setTimeout(() => void loadCredentials(c), 核验追问.间隔ms)
+      if (v.verified === false) 再问凭证(c, 世代)
     })
-    .catch(fail)
+    .catch((e: unknown) => {
+      fail(e)
+      if (追问状态.次数 > 0) 再问凭证(c, 世代)
+    })
+}
+function 再问凭证(c: WorkbenchClient, 世代: number): void {
+  // 更新的一轮已经开始：旧轮的答案用着，但追问由新轮排
+  if (世代 !== 追问状态.世代) return
+  if (追问状态.次数 >= 核验追问.上限) return
+  追问状态.次数 += 1
+  clearTimeout(追问状态.定时器)
+  追问状态.定时器 = setTimeout(() => {
+    追问状态.定时器 = undefined
+    void 问一次凭证(c, 世代)
+  }, 核验追问.间隔ms)
+}
 
 export const loadContextUsage = async (
   c: WorkbenchClient,

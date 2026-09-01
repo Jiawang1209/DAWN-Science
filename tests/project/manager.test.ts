@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest"
+import { mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import Database from "better-sqlite3"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
@@ -126,5 +129,52 @@ describe("ProjectManager · 查询", () => {
     expect(ctx.mgr.summary("nope")).toBeUndefined()
     expect(ctx.mgr.sessions("nope")).toEqual([])
     expect(ctx.mgr.runs("nope")).toEqual([])
+  })
+})
+
+describe("ProjectManager · 临时项目根已经被普通项目占着（2026-09-01 更新路径抓的）", () => {
+  /**
+   * 上一版的默认工作区就是 `~/DAWN/scratch`，`ensureDefault` 在那儿建过一个**非临时**项目；
+   * 这一版把默认挪到了 `~/DAWN/workspace`，临时根留在 scratch。更新之后 `ensureDefault` 看到已有项目就返回，
+   * 装配处那道「默认 ≠ 临时根」的闸也过了——第一段临时会话 `ensureTemporary(scratch)` 才撞 `projects.workspace UNIQUE`，
+   * 用户看到的是「操作 createTask 执行失败」。手动把 scratch 当项目打开的人同样中招。
+   */
+  it("非临时项目已占着 scratch 根 ⇒ 复用它，不撞 UNIQUE，也不改它的临时标记", () => {
+    const ctx = make()
+    const root = mkdtempSync(join(tmpdir(), "dawn-scratch-owned-"))
+    try {
+      const 旧默认 = ctx.mgr.ensureDefault(root)
+      expect(旧默认.temporary).toBeUndefined()
+      const p = ctx.mgr.ensureTemporary(root)
+      expect(p.projectId).toBe(旧默认.projectId)
+      expect(ctx.projects.list()).toHaveLength(1)
+      // 不动用户的项目：它仍然是普通项目，侧栏里不会突然搬到「会话」那一列
+      expect(ctx.projects.get(旧默认.projectId)?.temporary).toBeUndefined()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it("末尾斜杠 / 未规范化的路径同样命中已有项目", () => {
+    const ctx = make()
+    const root = mkdtempSync(join(tmpdir(), "dawn-scratch-slash-"))
+    try {
+      const 旧默认 = ctx.mgr.ensureDefault(root)
+      expect(ctx.mgr.ensureTemporary(root + "/").projectId).toBe(旧默认.projectId)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it("已有临时项目时仍优先复用它（原有行为不变）", () => {
+    const ctx = make()
+    const root = mkdtempSync(join(tmpdir(), "dawn-scratch-temp-"))
+    try {
+      const a = ctx.mgr.ensureTemporary(root)
+      expect(a.temporary).toBe(true)
+      expect(ctx.mgr.ensureTemporary(join(root, "other")).projectId).toBe(a.projectId)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 })

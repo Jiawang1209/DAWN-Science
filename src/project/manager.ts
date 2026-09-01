@@ -96,15 +96,29 @@ export class ProjectManager {
    * e2e 当场抓到了这一点（「置顶：排到最前面」红了，列表纹丝不动）。
    *
    * 所以：**一个临时项目装所有临时会话，而每条会话仍然有自己的目录。**
+   *
+   * ## 根目录已经被一个**普通**项目占着时，复用它（2026-09-01 更新路径抓的）
+   *
+   * `projects.workspace` 是 UNIQUE。上一版的默认工作区就是 `~/DAWN/scratch`，`ensureDefault` 在那儿建过一个非临时项目；
+   * 这一版把默认挪到 `~/DAWN/workspace`、临时根留在 scratch。更新之后 `ensureDefault` 见到已有项目就返回，
+   * 装配处「默认 ≠ 临时根」那道闸比的是两个字符串、也过了——直到第一段临时会话来这里 insert 同一条 workspace，
+   * 用户只看到「操作 createTask 执行失败」。手动把 scratch 打开成项目的人同样中招。
+   *
+   * 选复用而不是换个目录或报错：**会话必须开得出**，而目录是用户的。
+   * **不把它改成临时的**——那是用户的项目，侧栏里突然搬到「会话」那一列、从项目列表消失，等于替他删了一个项目。
+   * 代价是这些临时会话挂在那个项目名下、混进它的会话列表；比起第一句话就失败，这是能接受的。
    */
   ensureTemporary(root: string): ProjectRecord {
     const 已有 = this.projectStore.list().find((p) => p.temporary)
     if (已有) return 已有
+    const workspace = resolve(root)
+    const 占着的 = this.projectStore.findByWorkspace(workspace)
+    if (占着的) return 占着的
     mkdirSync(root, { recursive: true })
     const rec: ProjectRecord = {
       projectId: randomUUID(),
       name: "临时会话",
-      workspace: resolve(root),
+      workspace,
       createdAt: new Date().toISOString(),
       temporary: true,
     }

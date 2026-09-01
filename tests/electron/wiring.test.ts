@@ -603,3 +603,34 @@ describe("默认项目与临时会话根（2026-08-28 真实 HOME 全新演练�
     expect(r.ok, JSON.stringify(r)).toBe(true)
   })
 })
+
+describe("更新之后：上一版的默认项目就坐在这一版的临时会话根上（2026-09-01）", () => {
+  /**
+   * 上一版 `DEFAULT_WORKSPACE = ~/DAWN/scratch`，`ensureDefault` 在那儿建了一个**非临时**项目。
+   * 这一版把默认挪到 `~/DAWN/workspace`、临时根仍是 scratch：`ensureDefault` 见到已有项目就返回，
+   * 装配处「默认 ≠ 临时根」那道闸比的是两个字符串、也过了——直到第一段临时会话去 insert 同一条 workspace，
+   * 撞 UNIQUE，用户只看到「操作 createTask 执行失败」。手动把 scratch 打开成项目的人同样中招。
+   */
+  it("上一版在 scratch 建过普通项目 ⇒ 这一版第一段临时会话仍开得出", async () => {
+    const base = mkdtempSync(join(tmpdir(), "dawn-updated-"))
+    cleanups.push(() => rmSync(base, { recursive: true, force: true }))
+    const db = newDbPath()
+    const scratch = join(base, "scratch")
+    // 上一版：默认工作区就是 scratch
+    const 旧版 = createWorkbench({ configPath: configFile(), dbPath: db, credentials: memoryCredentials(), defaultWorkspace: scratch, scratchRoot: join(base, "unused"), skipCredentialGate: true })
+    旧版.close()
+    // 这一版：默认挪到 workspace，临时根还是 scratch——同一个 db
+    const wb = createWorkbench({ configPath: configFile(), dbPath: db, credentials: memoryCredentials(), defaultWorkspace: join(base, "workspace"), scratchRoot: scratch, skipCredentialGate: true })
+    cleanups.push(() => wb.close())
+    const p = await wb.server.handle("getProviders", {})
+    const agentId = (p as { data: { agents: { agentId: string; kind: string }[] } }).data.agents.find((a) => a.kind === "native")?.agentId
+    expect(agentId).toBeDefined()
+    const r = await wb.server.handle("createTask", { agentId })
+    expect(r.ok, JSON.stringify(r)).toBe(true)
+    // 复用的是那个旧项目：不新建、也不把它改成临时的（那是用户的项目）
+    const projects = (await wb.server.handle("listProjects", {})) as { data: { workspace: string; temporary?: boolean }[] }
+    const 占着的 = projects.data.filter((x) => x.workspace === scratch)
+    expect(占着的).toHaveLength(1)
+    expect(占着的[0]!.temporary).toBeUndefined()
+  })
+})

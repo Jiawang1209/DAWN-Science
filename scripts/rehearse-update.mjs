@@ -23,7 +23,10 @@ const t0=Date.now(); let n=0; const shots=[]
 const app=await _electron.launch({executablePath:join(ROOT,"release/mac-arm64/DAWN Science.app/Contents/MacOS/DAWN Science"),args:[`--user-data-dir=${ud}`],env})
 const page=await app.firstWindow(); const errs=[]; page.on("pageerror",e=>errs.push(e.message.slice(0,200))); page.on("console",m=>{ if(m.type()==="error") errs.push(m.text().slice(0,200)) })
 const shot=async(名)=>{ const p=join(tmp,`${++n}-${名}.png`); await page.screenshot({path:p}); shots.push(p) }
-const 查=async(名,fn)=>{ try{ await fn(); console.log(`  ✓ ${名}  (${Date.now()-t0}ms)`) }catch(e){ console.log(`  ✗ ${名}：${String(e.message??e).split("\n")[0]}`); await shot("fail-"+名.slice(0,10)).catch(()=>{}) } }
+// 失败要记下来、最后让进程退 1——此前 ✗ 只是打印，`npm run rehearse:update` 永远退 0，什么都门禁不了（2026-09-01 审查抓的）
+const 失败=[]
+const 查=async(名,fn)=>{ try{ await fn(); console.log(`  ✓ ${名}  (${Date.now()-t0}ms)`) }catch(e){ 失败.push(名); console.log(`  ✗ ${名}：${String(e.message??e).split("\n")[0]}`); await shot("fail-"+名.slice(0,10)).catch(()=>{}) } }
+const 判=(名,ok,详)=>{ if(!ok) 失败.push(名); console.log(`  ${ok?"✓":"✗"} ${名}${详?"："+详:""}`) }
 try{
   await 查("窗口 3 秒内有内容（没进钥匙串）", ()=>page.locator(".app-shell").waitFor({timeout:3_000}))
   await shot("shell")
@@ -39,10 +42,17 @@ try{
 } finally { await app.close().catch(()=>{}) }
 const log=readFileSync(join(ud,"startup.log"),"utf8")
 console.log("[startup.log]\n"+log.split("\n").map(l=>"  "+l.slice(11,23)+" "+l.slice(25)).join("\n"))
-const 慢=log.split("\n").filter(l=>/启动阶段.*ms/.test(l)); console.log("[启动阶段慢 IPC]",慢.length?慢.join("\n"):"无")
+// main.ts 写的是 `IPC <操作> 用了 <ms> ms`（超过 200 ms 才写）——此前这里匹配的「启动阶段」从没出现在日志里，这一栏永远印「无」
+const 慢=log.split("\n").filter(l=>/IPC .* 用了 \d+ ms/.test(l)); console.log("[启动阶段慢 IPC]",慢.length?慢.join("\n"):"无")
 console.log("[凭证行数]",log.split("\n").filter(l=>l.includes("凭证：")).length)
-// 判据：第一条「凭证：…无法解密」必须在「钥匙串预热」之后——在它之前出现就是启动路径上又有人解密了
+// 判据：预热与「无法解密」**都得出现**，且预热在前。
+//   种下的 credentials.json 密文就是解不开的，所以「无法解密」必须出现——它不出现不是好事，是解密根本没发生（`broken()` 退化）。
+//   此前的判据「首次解密===-1 就算 ✓」正是这样给过假绿；缺预热那一行同样是假绿（没预热就没法说「在预热之后」）。
 { const lines=log.split("\n"); const 预热=lines.findIndex(l=>l.includes("钥匙串预热")); const 首次解密=lines.findIndex(l=>l.includes("无法解密"))
-  console.log(首次解密!==-1&&(预热===-1||首次解密<预热) ? "  ✗ 启动路径上有解密：「无法解密」出现在「钥匙串预热」之前" : "  ✓ 预热之前没有解密") }
+  const 位置=`预热=第 ${预热+1} 行，首次解密=第 ${首次解密+1} 行（0 = 没出现）`
+  判("钥匙串预热出现在日志里", 预热!==-1, 位置)
+  判("预热后核验到「无法解密」（种下的密文本来就解不开）", 首次解密!==-1, 位置)
+  判("解密在预热之后（启动路径上没人解密）", 预热!==-1&&首次解密!==-1&&预热<首次解密, 位置) }
 console.log("[渲染错误]", errs.length? "\n  "+[...new Set(errs)].slice(0,8).join("\n  "):"无")
 console.log("[截图]\n  "+shots.join("\n  "))
+if(失败.length){ console.log(`\n${失败.length} 项没过：${失败.join("；")}`); process.exitCode=1 } else console.log("\n全部通过")

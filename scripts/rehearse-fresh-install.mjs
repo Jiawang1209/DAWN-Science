@@ -31,7 +31,9 @@ const t0=Date.now(); let n=0; const shots=[]
 const app=await _electron.launch({executablePath:join(ROOT,"release/mac-arm64/DAWN Science.app/Contents/MacOS/DAWN Science"),args:[`--user-data-dir=${ud}`],env})
 const page=await app.firstWindow(); const errs=[];  page.on("pageerror",e=>errs.push(e.message.slice(0,200))); page.on("console",m=>{ if(m.type()==="error") errs.push(m.text().slice(0,200)) })
 const shot=async(名)=>{ const p=join(home,`${++n}-${名}.png`); await page.screenshot({path:p}); shots.push(p) }
-const 查=async(名,fn)=>{ try{ await fn(); console.log(`  ✓ ${名}  (${Date.now()-t0}ms)`) }catch(e){ console.log(`  ✗ ${名}：${String(e.message??e).split("\n")[0]}`); await shot("fail-"+名.slice(0,10)).catch(()=>{}) } }
+// 失败要记下来、最后让进程退 1——此前 ✗ 只是打印，`npm run rehearse:fresh` 永远退 0，什么都门禁不了（2026-09-01 审查抓的）
+const 失败=[]
+const 查=async(名,fn)=>{ try{ await fn(); console.log(`  ✓ ${名}  (${Date.now()-t0}ms)`) }catch(e){ 失败.push(名); console.log(`  ✗ ${名}：${String(e.message??e).split("\n")[0]}`); await shot("fail-"+名.slice(0,10)).catch(()=>{}) } }
 try{
   await 查("窗口有内容（app-shell）", ()=>page.locator(".app-shell").waitFor({timeout:30_000}))
   await 查("向导 5 秒内出现", ()=>page.locator(".setup-wizard").waitFor({timeout:5_000}))
@@ -58,3 +60,4 @@ console.log("[startup.log]\n"+readFileSync(join(ud,"startup.log"),"utf8").split(
 console.log("[渲染错误]", errs.length? "\n  "+[...new Set(errs)].slice(0,8).join("\n  "):"无")
 console.log("[~/DAWN]", existsSync(join(home,"DAWN"))?readdirSync(join(home,"DAWN")).join(", "):"(没有)")
 console.log("[截图]\n  "+shots.join("\n  "))
+if(失败.length){ console.log(`\n${失败.length} 项没过：${失败.join("；")}`); process.exitCode=1 } else console.log("\n全部通过")

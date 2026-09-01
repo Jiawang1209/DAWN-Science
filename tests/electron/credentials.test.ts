@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, statSync } from "node:fs"
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { CredentialStore, type SafeStorageLike } from "../../src/electron/credentials.js"
@@ -355,5 +355,55 @@ describe("审查 2026-09-01：钥匙串一次性掉线 · 预热出错 · 核验
     expect(s.configured()).toEqual(["deepseek"])
     expect(s.broken()).toEqual([])
     expect(解密次数).toBe(2)
+  })
+})
+
+describe("终审 2026-09-01：删「解不开」的那一行 · 写盘失败不许先改缓存", () => {
+  /** 明文文件里留着一条解不开的密文——正是 dcdb559 之后界面上那行「解不开、需要重新填写」 */
+  function 留着一条解不开的(): string {
+    const file = newFile()
+    writeFileSync(file, JSON.stringify({ encrypted: false, entries: { ok: "x" }, undecrypted: { deepseek: "Q0lQSEVS" } }))
+    return file
+  }
+  /** 钥匙串说可用但解不开任何旧密文：换过二进制之后就是这样 */
+  const 解不开的钥匙串: SafeStorageLike = {
+    ...working,
+    decryptString: () => { throw new Error("decrypt failed") },
+  }
+
+  it("G1 **delete 掉 undecrypted 里唯一的一条，文件里的 undecrypted 要真的没了**——此前 `...data` 把原来的整张表又铺了回去，那行「需要重新填写」怎么点「移除」都还在", () => {
+    const file = 留着一条解不开的()
+    const s = new CredentialStore({ file, safeStorage: 解不开的钥匙串, onInsecure: () => {} })
+    s.delete("deepseek")
+    const disk = JSON.parse(readFileSync(file, "utf8")) as { entries: Record<string, string>; undecrypted?: Record<string, string> }
+    expect(disk.undecrypted).toBeUndefined()
+    expect(Object.keys(disk.entries)).toEqual(["ok"])
+    // 同一个实例：预热之后 broken 也不再列它
+    s.warm()
+    expect(s.broken()).toEqual([])
+    expect(s.get("deepseek")).toBeUndefined()
+    // 重启 app 再看：跨实例也真的没了
+    const 重启 = new CredentialStore({ file, safeStorage: 解不开的钥匙串, onInsecure: () => {} })
+    重启.warm()
+    expect(重启.broken()).toEqual([])
+    expect(重启.configured()).toEqual(["ok"])
+  })
+
+  it("G2 **set 写盘失败时不许已经改掉了内存里的 undecrypted**——`read()` 是有缓存的，同模式分支直接拿缓存对象来 delete，写盘一抛（EPERM/ENOSPC），那条密文在内存里先没了，下一次成功的写盘就把它从盘上也抹掉", () => {
+    const file = 留着一条解不开的()
+    const s = new CredentialStore({ file, safeStorage: unavailable, onInsecure: () => {} })
+    expect(s.verified()).toBe(false) // 有解不开的密文在，得等预热
+    // 把文件锁成只读：writeFileSync 真的抛 EACCES，不是替身（锁目录没用——改已有文件的内容不看目录权限）
+    chmodSync(file, 0o400)
+    try {
+      expect(() => s.set("deepseek", "k-new")).toThrow()
+    } finally {
+      chmodSync(file, 0o600)
+    }
+    // 写盘失败之后再存一个别的：deepseek 那条密文必须还在盘上
+    s.set("kimi", "k2")
+    const disk = JSON.parse(readFileSync(file, "utf8")) as { entries: Record<string, string>; undecrypted?: Record<string, string> }
+    expect(disk.undecrypted).toEqual({ deepseek: "Q0lQSEVS" })
+    expect(Object.keys(disk.entries).sort()).toEqual(["kimi", "ok"])
   })
 })

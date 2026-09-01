@@ -129,10 +129,16 @@ function 问一次凭证(c: WorkbenchClient, 世代: number): Promise<void> {
   return c
     .get<CredentialState>("listCredentials")
     .then((v) => {
+      // 旧轮迟到的答案整个作废，不只是不排追问（2026-09-01 终审抓的）：启动那轮（预热前）还在飞、用户打开设置，
+      // 新轮先答回核验过的并画对了，旧轮慢半拍的 `verified:false` 落地一盖，而它排追问时世代对不上直接返回——
+      // 屏上就永远停在预热前的答案。`resetAllState` 里的 `停掉核验追问()` 也靠这一句才真的停得住
+      if (世代 !== 追问状态.世代) return
       setCredentials(v)
       if (v.verified === false) 再问凭证(c, 世代)
     })
     .catch((e: unknown) => {
+      // 作废的一轮失败了也不出声：新的一轮在飞，它会自己说
+      if (世代 !== 追问状态.世代) return
       fail(e)
       if (追问状态.次数 > 0) 再问凭证(c, 世代)
     })

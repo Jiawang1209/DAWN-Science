@@ -155,7 +155,9 @@ export class CredentialStore {
     let undecrypted: Record<string, string> | undefined
     if (data.encrypted === encrypted) {
       entries = { ...data.entries }
-      undecrypted = data.undecrypted
+      // 拷一份，别拿缓存对象直接 delete（2026-09-01 终审抓的）：`read()` 是有缓存的，下面那句 `delete undecrypted[id]`
+      // 会在 `writeFileSync` 之前就改掉内存——写盘一抛（EPERM/ENOSPC），那条密文内存里先没了，下一次成功的写盘把它从盘上也抹掉
+      undecrypted = data.undecrypted ? { ...data.undecrypted } : undefined
     } else if (encrypted) {
       /**
        * 明文→加密：整份重写，避免同一文件里混着两种编码。明文条目加密；上次留下的密文本来就是这种编码，原样收回——
@@ -192,7 +194,9 @@ export class CredentialStore {
     delete entries[endpointId]
     const undecrypted = { ...data.undecrypted }
     delete undecrypted[endpointId]
-    this.write({ ...data, entries, ...(Object.keys(undecrypted).length ? { undecrypted } : {}) })
+    // 逐字段重组，不 `...data`（2026-09-01 终审抓的）：铺开 `data` 会把原来的 `undecrypted` 整张表又带回去，
+    // 删的正好是它唯一的一条时后面那个条件展开是空的、原表就活了下来——那行「解不开、需要重新填写」怎么点「移除」都删不掉
+    this.write({ encrypted: data.encrypted, entries, ...(Object.keys(undecrypted).length ? { undecrypted } : {}) })
   }
 
   /**

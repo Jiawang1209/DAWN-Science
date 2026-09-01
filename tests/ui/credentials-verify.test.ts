@@ -6,7 +6,7 @@
  * 追问有界，别无限打 IPC。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { loadCredentials } from "../../src/ui/state/sync.js"
+import { loadCredentials, 停掉核验追问 } from "../../src/ui/state/sync.js"
 import { $credentials, setCredentials } from "../../src/ui/state/catalog.js"
 
 beforeEach(() => {
@@ -131,5 +131,68 @@ describe("loadCredentials —— 追问预算按轮算、同时只有一条链�
     await loadCredentials({ get } as never)
     await vi.advanceTimersByTimeAsync(120_000)
     expect(get).toHaveBeenCalledTimes(11)
+  })
+})
+
+/**
+ * 终审 2026-09-01：**旧轮迟到的答案不许覆盖新轮**。
+ *
+ * 此前只有「再排追问」受世代守卫，`setCredentials(v)` 无条件写。启动那轮（预热前）还在飞，用户打开设置，
+ * 新轮先答回 `verified:true, broken:["deepseek"]` 并画对了；旧轮慢半拍的 `verified:false, broken:[]` 落地就把它盖掉——
+ * 而旧轮排追问时世代对不上直接返回，于是屏上永远停在预热前的答案。`resetAllState` 里的 `停掉核验追问()` 也是同一个洞：
+ * 作废了的一轮在飞的 `.then` 照样往状态里灌。
+ */
+describe("loadCredentials —— 旧轮迟到的答案作废，不盖新轮、不动已停掉的状态", () => {
+  function 挂着的<T>() {
+    let resolve!: (v: T) => void
+    let reject!: (e: unknown) => void
+    const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej })
+    return { promise, resolve, reject }
+  }
+
+  it("(d1) 两轮同飞，新轮先答核验过的、旧轮后答预热前的：**状态是新轮的**，且没有定时器挂着", async () => {
+    const 旧 = 挂着的<unknown>()
+    const 新 = 挂着的<unknown>()
+    let 第几次 = 0
+    const get = vi.fn(() => (++第几次 === 1 ? 旧.promise : 新.promise))
+    const p1 = loadCredentials({ get } as never)
+    const p2 = loadCredentials({ get } as never)
+    新.resolve({ configured: [], broken: ["deepseek"], verified: true, encrypted: true })
+    await p2
+    expect($credentials.get().broken).toEqual(["deepseek"])
+    旧.resolve({ configured: ["deepseek"], broken: [], verified: false, encrypted: true })
+    await p1
+    expect($credentials.get().broken).toEqual(["deepseek"])
+    expect($credentials.get().configured).toEqual([])
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(get).toHaveBeenCalledTimes(2)
+  })
+
+  it("(d2) `停掉核验追问()` 之后迟到的答案**不改状态**——resetAllState 清空之后不许被在飞的一问填回去", async () => {
+    const 旧 = 挂着的<unknown>()
+    const get = vi.fn(() => 旧.promise)
+    const p = loadCredentials({ get } as never)
+    停掉核验追问()
+    setCredentials({ configured: [] })
+    旧.resolve({ configured: ["deepseek"], broken: [], verified: false, encrypted: true })
+    await p // 调用方仍在 await 它，必须照常 resolve
+    expect($credentials.get()).toEqual({ configured: [] })
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it("(d3) 作废的一轮失败了也不许再排追问", async () => {
+    const 旧 = 挂着的<unknown>()
+    let 第几次 = 0
+    const get = vi.fn(() => (++第几次 === 1 ? 旧.promise : Promise.resolve({ configured: ["deepseek"], broken: [], verified: false })))
+    const p1 = loadCredentials({ get } as never)
+    // 第二问先答（预热前），它自己排上追问 → 次数 1
+    await loadCredentials({ get } as never)
+    expect(vi.getTimerCount()).toBe(1)
+    旧.reject(new Error("ipc 抖了一下"))
+    await p1
+    // 旧轮的失败不能替新轮多排一次、也不能把新轮的预算吃掉
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(get).toHaveBeenCalledTimes(12)
   })
 })

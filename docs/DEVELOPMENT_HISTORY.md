@@ -8,6 +8,28 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-01 — fixbug-0901：全量从头跑一遍全绿之后，两轮审查抓出 14 条，全修；四条旧账（B8 / C20 / C22 / B16）一并清掉
+
+- **Type**: fix
+- **Motivation**: 作者：「继续修 bug，开一个 fixbug 分支，从头跑一遍、做好测试」。main 上 typecheck、单测（199 文件 2499）、e2e（458 过 1 跳过 + 内核 6）、视觉基线 10 张**全绿**——自动化说没事。于是换两种手段找：①对最近三次提交（`a2d2dce..dcdb559`，全在「首启 / 更新 / 凭证」那条路上）做一次只读代码审查；②把历史里「审查里记下、这轮没做的」清单重新翻出来，逐条对着代码核实还开着没有。第一轮审查 2 HIGH / 4 MEDIUM / 2 LOW；修完再审整条分支，又 2 HIGH / 3 MEDIUM / 2 LOW——**两条 HIGH 都是刚修的东西把上一版修好的又打坏**（见下）。每一条都先写复现的失败测试、再改；复现不了的不改（一条：追问链首问失败后再问，本来就好）。
+- **What**（按提交）:
+  1. **凭证存储 `CredentialStore`**（`src/electron/credentials.ts`）：
+     - `set()` 在钥匙串**暂时**不可用（锁着 / 点了一次「拒绝」/ libsecret 还没起）时把加密→明文，其它解不开的条目此前直接丢——SSH 口令、飞书密钥一次 `set` 就永久没了。现在解不开的密文原样留在文件的 `undecrypted` 字段里，`get()` 会去那里解、`broken()` 列它、钥匙串回来就能用、下次回到加密时收回 `entries`。文件格式向后兼容（旧版本本来就看不见它解不开的密文）。
+     - `isEncryptionAvailable()` 抛错（某些 Linux/libsecret 组合）时 `warm()` 不再抛：记成不可用、出声一次。此前 `加密可用` 永远 undefined → `verified()` 永远 false → 解不开的 key 照样算「已配置」，而 `hasCredential` 里那次裸调把异常砸进 pi，第一句话就失败。
+     - `configured()` / `broken()` 一轮只解一遍（`分类()`，结果只活到本轮同步调用结束）——此前每个解不开的 id 每次 `listCredentials` 被主线程同步解两次，而界面每 3 秒问一次。
+     - 终审抓的两条：`delete()` 用 `...data` 重组把原来的 `undecrypted` 整张表又带回去，删的正好是唯一一条时那行「解不开、需要重新填写」永远删不掉（把 08-29 修的「解不开的有行能删」又打坏了）；`set()` 同模式分支直接 `delete` 缓存对象，写盘一抛内存先丢、下一次成功写盘从盘上抹掉。
+  2. **凭证核验追问**（`src/ui/state/sync.ts`）：预算改成**按轮算**（每次 `loadCredentials` 是新的一轮，世代比对），同时只留一条定时器链，追问途中 IPC 抖一次不死（首问失败不重试——屏上没有临时答案要换）。此前进程级计数器 10 次用光后，用户打开设置看到的永远是预热前的答案，界面看着完全正常。终审补的：旧轮迟到的答案整个作废——否则新轮核验过的答案被旧轮 `verified:false` 一盖、而它排追问时世代对不上直接返回，屏上永远停在预热前。`resetAllState` 清追问。
+  3. **临时会话撞 UNIQUE（更新路径）**（`src/project/manager.ts`）：上一版默认项目建在 `~/DAWN/scratch`，这一版默认挪到 `~/DAWN/workspace`、临时根仍是 scratch——`ensureDefault` 见有项目就返回，装配处那道「默认 ≠ 临时根」的闸比的是两个字符串也过了，第一段临时会话 insert 同一条 workspace → `UNIQUE constraint failed`，用户只看到「操作 createTask 执行失败」。**08-28 修的只对全新安装成立。** 现在临时根被普通项目占着就复用它、不改它的性质（改成临时的等于替他删一个项目）。终审抓的后果：只按 `temporary` 列临时会话时它们哪一列都不在——新增 `temporaryHosts(roots)`，`listTemporarySessions` 把占着临时根的普通项目一起算上（它的会话可能两列都出现，看得见的重复比看不见强）。
+  4. **两个演练脚本的假绿**（`scripts/rehearse-update.mjs`、`rehearse-fresh-install.mjs`）：✗ 只打印、进程永远退 0，什么都门禁不了——现在失败退 1 并汇总；`rehearse:update` 的「启动阶段慢 IPC」匹配的字串从没出现在日志里（真实行是 `IPC <操作> 用了 <ms> ms`）；判据「首次解密 === -1 就算 ✓」正是假绿——种下的密文本来就解不开，「无法解密」**必须**出现，现在要求「预热」与「无法解密」都出现且预热在前，并打印行号。
+  5. **登录 shell 的 PATH**（新 `src/electron/login-shell-path.ts`，纯函数）：fish 的 `$PATH` 是列表，老命令 `echo 前缀$PATH` 把前缀分发到每个元素，旧解析把那一整行当成「1 段」并进 PATH 还写日志说成功。现在按 shell 选命令（fish 走 `string join :`），`printf` 两枚各占一行的哨兵夹一行，逐段验（以 `/` 开头、不含换行、不含哨兵文本；**空格允许**——mac 上 `/Applications/VMware Fusion.app/…` 是合法的，第一版把它弃了，我按回），弃了什么、一段都没有为什么，都进 startup.log。
+  6. **未接住的异常弹完框退出（C20）**（`src/electron/main.ts`）：装了 `uncaughtException` 监听器之后 Node 不再替我们结束进程，此前弹完框主进程半死不活留着——「双击没反应」。终审改成**只在主窗口 `did-finish-load` 之前退**：之后工作台就在主进程里跑，任何没挂 `error` 监听器的 EventEmitter（pty/ssh/内核子进程）都会落到这里，无条件 `app.exit(1)` 会把人聊到一半的应用杀掉、还绕过 `will-quit` 的 zeromq 收摊。分界线挂在窗口自己的 webContents 上，`DAWN_HIDE_WINDOW` 下也触发。`unhandledRejection` 实测不进这个监听器，没动。
+  7. **填了 key 但目录里挑不出模型时静默跳过（B8）**（`src/workbench/backend.ts`、协议 `getProviders.unusable`、向导、设置屏）：此前 `.catch(() => [])` 再 `continue`，目录读炸了与目录里没这家一个样、都一声不吭——全新用户填了个好 key，向导写「已填 ✓」，进去是个没有 agent 的空应用。现在理由随 `getProviders` 端出去（缺省 = 没接目录端口；空数组 = 都能用），向导在人正看着的那一屏可见地说、全都用不了时「开始使用」不放行（「先跳过」不受影响），设置屏收起时也显示。`catalog.ts` 的变更判定加比 `unusable`——不比它永远端不到屏上。终审抓的：理由表是模块级共用、每次先 `clear()`，两次 `getProviders` 叠着跑（挂载一次、填完 key `Promise.all` 又一次）时先起的那次端出去空表——改成每次调用自己的一张表、`return` 出去。mock 不用改：`mock-inference-server.mjs` 只假推理，e2e 跑真后端（查过 `e2e/fixtures.ts`）。
+  8. **`KERNEL_PACKAGE.how` 混中文（B16）**：改成光秃秃的命令；解释器列表把程序名换成选中的那条路径，带空格加引号（盘符开头用双引号，其余单引号）。
+  9. **uv / pixi 的 Python（C22）**（`src/kernel/probe.ts`）：常见目录补 `$UV_PYTHON_INSTALL_DIR` / `$XDG_DATA_HOME/uv/python` / `~/.local/share/uv/python` / mac 的 `~/Library/Application Support/uv/python`，以及 `$PIXI_HOME|~/.pixi/envs/*`；`枚举依赖` 加可注入的 `env`。项目内的 `.venv` / `.pixi` 要知道工作区在哪，这里没有，不猜。
+- **Impact**: 更新过的用户：第一段临时会话开得出、临时会话看得见；钥匙串短暂不可用时重填一个 key 不再抹掉其它凭证；解不开的行能删；设置屏不再停在预热前的答案。全新用户：填了 key 建不出 agent 时看得到原因；fish 用户的 PATH 真的并进来了；启动期崩溃会退出而不是僵着，运行期崩溃不再杀应用。协议 `getProviders` 新增可选 `unusable`；`credentials.json` 新增可选 `undecrypted`（只在明文文件里）。两个演练脚本从「永远退 0」变成真门禁。
+- **没做、记下**：B15（英文界面下后端错误文案是中文——`unusable` 的理由也是中文，同一件事）、B9（key 不验证）、08-21 那三条（`disallowedTools` 挂在通用运行时、`ssh.ts` 无上限不流式、换 ACP 不带远端 cwd）、上下文面板 token 假绿——都需要作者定形状；Windows 一整批（`.cmd`、bash 探测、商店 python 存根、受保护路径、`file://`、进程树、明文 ACL）mac 上验不了，没动。另：`createTask` 用装配时的 `scratchRoot`、恢复路径用 `要有临时根()`，同一概念两个根，`listTemporarySessions` 两处都问了但没统一。
+- **Verification**: typecheck 干净；单测 201 文件 **2549** 过（main 上 199/2499，新增 50 条，每条修复至少一条先红后绿的用例）；e2e 全量 **458 过 1 跳过** + 内核 6 过；视觉基线 10/10（未重存）；`npm run pack` → `test:packaged` 6/6；`REHEARSE_REAL_HOME=1 rehearse:fresh` 12/12（app-shell 1.3 s、向导 1.3 s、真 API 回话、run_code 42、终端、内核设置；startup.log：PATH 并入 39 段无弃段、钥匙串预热 20 ms）；`rehearse:update` 9/9（预热第 10 行、首次「无法解密」第 11 行，启动阶段无慢 IPC）。两个演练脚本现在失败会退 1，这是第一次它们的绿有意义。
+
 ### 2026-08-29 — 「解不开的 key」那条改动审查出四个问题，全修：核验挪到预热之后、失败不缓存、解不开的有行能删、切换存储方式不丢其它凭证；新增更新演练
 
 - **Type**: fix

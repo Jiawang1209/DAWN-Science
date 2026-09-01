@@ -28,6 +28,13 @@ interface StoredFile {
   encrypted: boolean
   /** endpointId → base64(密文) 或 明文 */
   entries: Record<string, string>
+  /**
+   * 加密→明文切换那一刻解不开的密文，原样留着（endpointId → base64 密文）。
+   * 2026-09-01 审查抓的：钥匙串锁着 / 点了一次「拒绝」是一次性的，读路径早就按「一次失败不算坏」处理，
+   * 写路径却把解不开的整个丢掉——重填一个模型 key，SSH 口令、飞书密钥就永久没了。留着，钥匙串回来照样解。
+   * 只在 `encrypted: false` 的文件里出现；下次整份回到加密时收回 `entries`。
+   */
+  undecrypted?: Record<string, string>
 }
 
 export interface CredentialStoreOptions {
@@ -70,6 +77,7 @@ export class CredentialStore {
   private write(data: StoredFile): void {
     this.解得开的.clear()
     this.已报过解不开.clear()
+    this.分类结果 = undefined
     mkdirSync(dirname(this.file), { recursive: true })
     // 0600：即便是密文，也不该让同机其它用户读到
     writeFileSync(this.file, JSON.stringify(data, null, 2), { mode: 0o600 })
@@ -96,17 +104,31 @@ export class CredentialStore {
     return this.问钥匙串()
   }
   private 问钥匙串(): boolean {
-    if (this.加密可用 === undefined) this.加密可用 = this.safe.isEncryptionAvailable()
+    if (this.加密可用 === undefined) {
+      try {
+        this.加密可用 = this.safe.isEncryptionAvailable()
+      } catch (e) {
+        // 某些 Linux/libsecret 组合下这一句直接抛（2026-09-01 审查抓的）。不接住的话 `加密可用` 永远是 undefined：
+        // `verified()` 永远 false、解不开的 key 照样算「已配置」；`hasCredential` 里那次裸调更是把异常砸进 pi，
+        // 第一句话就失败且看不出为什么。记成不可用，出声一次
+        this.加密可用 = false
+        this.onInsecure(`问不到系统安全存储（${e instanceof Error ? e.message : String(e)}），按不可用处理：凭证将以明文存于 ${this.file}`)
+      }
+    }
     return this.加密可用
   }
 
   get(endpointId: string): string | undefined {
     const data = this.read()
     const raw = data.entries[endpointId]
-    if (raw === undefined) return undefined
-    if (!data.encrypted) return raw
+    if (raw !== undefined) return data.encrypted ? this.解密(endpointId, raw) : raw
+    const cipher = data.undecrypted?.[endpointId]
+    return cipher === undefined ? undefined : this.解密(endpointId, cipher)
+  }
+
+  private 解密(endpointId: string, cipher: string): string | undefined {
     try {
-      const plain = this.safe.decryptString(Buffer.from(raw, "base64"))
+      const plain = this.safe.decryptString(Buffer.from(cipher, "base64"))
       this.解得开的.add(endpointId)
       return plain
     } catch {
@@ -130,32 +152,47 @@ export class CredentialStore {
     const data = this.read()
     const 编码 = (plain: string) => (encrypted ? this.safe.encryptString(plain).toString("base64") : plain)
     let entries: Record<string, string>
+    let undecrypted: Record<string, string> | undefined
     if (data.encrypted === encrypted) {
       entries = { ...data.entries }
+      undecrypted = data.undecrypted
+    } else if (encrypted) {
+      /**
+       * 明文→加密：整份重写，避免同一文件里混着两种编码。明文条目加密；上次留下的密文本来就是这种编码，原样收回——
+       * 解不解得开由 `broken()` 说，跟换了二进制之后的旧密文一个待遇。
+       */
+      entries = { ...data.undecrypted }
+      for (const id of Object.keys(data.entries)) if (id !== endpointId) entries[id] = 编码(data.entries[id]!)
     } else {
       /**
-       * 加密状态变了就整份重写，避免同一文件里混着两种编码。**其它条目能解开的搬过去，解不开的才丢，丢了要说。**
-       * 此前是直接丢空：keyring 掉了之后界面让人重填一个模型 key，SSH 口令、飞书密钥、MCP 变量就跟着没了，一声不吭。
+       * 加密→明文：解得开的搬成明文，**解不开的密文原样留在 `undecrypted`，一条都不丢**（2026-09-01）。
+       * 此前解不开就丢：钥匙串只是暂时锁着，一次 `set` 就把 SSH 口令、飞书密钥永久抹掉了，一分钟后钥匙串好了也回不来。
        */
       entries = {}
-      const 丢了: string[] = []
+      const 留着的: Record<string, string> = { ...data.undecrypted }
       for (const id of Object.keys(data.entries)) {
         if (id === endpointId) continue
         const plain = this.get(id)
-        if (plain === undefined) 丢了.push(id)
-        else entries[id] = 编码(plain)
+        if (plain === undefined) 留着的[id] = data.entries[id]!
+        else entries[id] = plain
       }
-      if (丢了.length) this.onInsecure(`存储方式切换（${data.encrypted ? "加密→明文" : "明文→加密"}），这些解不开的凭证已丢弃，需要重新填写：${丢了.join("、")}`)
+      if (Object.keys(留着的).length) {
+        undecrypted = 留着的
+        this.onInsecure(`存储方式切换（加密→明文），这些凭证现在解不开，密文原样保留、钥匙串恢复后自动可用：${Object.keys(留着的).join("、")}`)
+      }
     }
+    delete undecrypted?.[endpointId]
     entries[endpointId] = 编码(secret)
-    this.write({ encrypted, entries })
+    this.write({ encrypted, entries, ...(undecrypted && Object.keys(undecrypted).length ? { undecrypted } : {}) })
   }
 
   delete(endpointId: string): void {
     const data = this.read()
     const entries = { ...data.entries }
     delete entries[endpointId]
-    this.write({ ...data, entries })
+    const undecrypted = { ...data.undecrypted }
+    delete undecrypted[endpointId]
+    this.write({ ...data, entries, ...(Object.keys(undecrypted).length ? { undecrypted } : {}) })
   }
 
   /**
@@ -172,8 +209,7 @@ export class CredentialStore {
    * 不用记得回这里补名单。
    */
   configured(): string[] {
-    const ids = this.模型服务ids()
-    return this.verified() ? ids.filter((k) => this.解得开(k)) : ids
+    return this.verified() ? this.分类().ok : this.模型服务ids()
   }
 
   /**
@@ -185,7 +221,7 @@ export class CredentialStore {
    * **没核验之前答空**——核验要解密，解密要进钥匙串，见 `verified()`。
    */
   broken(): string[] {
-    return this.verified() ? this.模型服务ids().filter((k) => !this.解得开(k)) : []
+    return this.verified() ? this.分类().bad : []
   }
 
   /**
@@ -199,12 +235,15 @@ export class CredentialStore {
    */
   verified(): boolean {
     if (!existsSync(this.file)) return true
-    if (!this.read().encrypted) return true
+    const data = this.read()
+    // 明文文件里留着的密文也要解密才知道好坏，一样不能在启动路径上碰
+    if (!data.encrypted && !Object.keys(data.undecrypted ?? {}).length) return true
     return this.加密可用 !== undefined
   }
 
   private 模型服务ids(): string[] {
-    return Object.keys(this.read().entries).filter((k) => !k.includes(":"))
+    const data = this.read()
+    return [...Object.keys(data.entries), ...Object.keys(data.undecrypted ?? {})].filter((k) => !k.includes(":"))
   }
 
   /**
@@ -215,6 +254,22 @@ export class CredentialStore {
   private 已报过解不开 = new Set<string>()
   private 解得开(id: string): boolean {
     return this.解得开的.has(id) || this.get(id) !== undefined
+  }
+
+  /**
+   * 解得开 / 解不开一次分完，`configured()` 与 `broken()` 共用。此前两个各自过一遍全表，`listCredentials` 一到，
+   * 每个解不开的 id 被主线程同步解两次——而界面每 3 秒问一次、解不开正是最慢的那种（2026-09-01 审查抓的）。
+   * 结果只活到本轮同步调用结束（下一个微任务就清），所以失败仍然不跨轮记住。
+   */
+  private 分类结果: { ok: string[]; bad: string[] } | undefined
+  private 分类(): { ok: string[]; bad: string[] } {
+    if (this.分类结果) return this.分类结果
+    const ok: string[] = []
+    const bad: string[] = []
+    for (const id of this.模型服务ids()) (this.解得开(id) ? ok : bad).push(id)
+    this.分类结果 = { ok, bad }
+    queueMicrotask(() => { this.分类结果 = undefined })
+    return this.分类结果
   }
 }
 

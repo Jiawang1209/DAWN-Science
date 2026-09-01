@@ -205,7 +205,7 @@ describe("解不开的凭证（2026-08-28 作者打包版抓的：未签名包�
     expect(new CredentialStore({ file: 明文, safeStorage: working }).verified()).toBe(true)
   })
 
-  it("**一次解密失败不记成「解不开」**——钥匙串锁着 / 点了一次拒绝是一次性的；解得开的才记住；每个 id 只报一次", () => {
+  it("**一次解密失败不记成「解不开」**——钥匙串锁着 / 点了一次拒绝是一次性的；解得开的才记住；每个 id 只报一次", async () => {
     const file = newFile()
     new CredentialStore({ file, safeStorage: working }).set("deepseek", "k1")
     let 失败 = true
@@ -220,6 +220,7 @@ describe("解不开的凭证（2026-08-28 作者打包版抓的：未签名包�
     expect(s.broken()).toEqual(["deepseek"])
     expect(s.broken()).toEqual(["deepseek"])
     expect(warnings.filter((w) => w.includes("无法解密"))).toHaveLength(1)
+    await Promise.resolve() // 下一轮（同一轮同步调用共用一份核验结果，见 F3）
     失败 = false
     expect(s.configured()).toEqual(["deepseek"])
     expect(s.broken()).toEqual([])
@@ -228,7 +229,7 @@ describe("解不开的凭证（2026-08-28 作者打包版抓的：未签名包�
     expect(解密次数).toBe(n) // 解得开的记住了，不再进钥匙串
   })
 
-  it("**存储方式切换时其它凭证搬过去，不是丢掉**——解不开的才丢，丢了要点名（此前重填一个模型 key，SSH 口令就一声不吭地没了）", () => {
+  it("**存储方式切换时其它凭证搬过去，不是丢掉**——解不开的密文留着并点名（此前重填一个模型 key，SSH 口令就一声不吭地没了；2026-09-01 起连「点名后丢掉」也不许，见下一组）", () => {
     const file = newFile()
     const a = new CredentialStore({ file, safeStorage: working })
     a.set("deepseek", "k1")
@@ -246,13 +247,113 @@ describe("解不开的凭证（2026-08-28 作者打包版抓的：未签名包�
     expect(q.get("deepseek")).toBe("k1")
     expect(JSON.parse(readFileSync(明文库, "utf8")).encrypted).toBe(true)
     expect(warnings.filter((w) => w.includes("丢弃"))).toHaveLength(0)
-    // 加密 → 明文（keyring 掉了）：密文解不开，只能丢，但要点名
+    // 加密 → 明文（keyring 掉了）：密文解不开，原样留着，但要点名
     void 转加密
     const w2: string[] = []
     const r = new CredentialStore({ file, safeStorage: unavailable, onInsecure: (m) => w2.push(m) })
     r.set("kimi", "k2")
     expect(r.get("kimi")).toBe("k2")
-    expect(w2.join("\n")).toMatch(/丢弃.*deepseek/)
+    expect(w2.join("\n")).toMatch(/保留.*deepseek/)
     expect(w2.join("\n")).toMatch(/ssh:srv/)
+    expect(w2.join("\n")).not.toMatch(/丢弃/)
+  })
+})
+
+describe("审查 2026-09-01：钥匙串一次性掉线 · 预热出错 · 核验只解一遍", () => {
+  /** 钥匙串暂时锁着：问它说不可用，解也解不开——过一会儿就好了 */
+  function 暂时锁着的(): SafeStorageLike & { 恢复(): void } {
+    let 锁着 = true
+    return {
+      isEncryptionAvailable: () => !锁着,
+      encryptString: (p) => { if (锁着) throw new Error("locked"); return working.encryptString(p) },
+      decryptString: (b) => { if (锁着) throw new Error("locked"); return working.decryptString(b) },
+      恢复: () => { 锁着 = false },
+    }
+  }
+
+  it("F1 **钥匙串暂时掉线时 set 不许把其它凭证永久丢掉**——密文原样留着，钥匙串回来了照样解得开；读路径说「一次失败不算坏」，写路径不能反着来", async () => {
+    const file = newFile()
+    const a = new CredentialStore({ file, safeStorage: working })
+    a.set("deepseek", "k1")
+    a.set("ssh:srv", "pw")
+    a.set("feishu:appSecret", "sec")
+    const 钥匙串 = 暂时锁着的()
+    const warnings: string[] = []
+    const b = new CredentialStore({ file, safeStorage: 钥匙串, onInsecure: (m) => warnings.push(m) })
+    b.set("kimi", "k2")               // 钥匙串锁着：新 key 只能明文存
+    expect(b.get("kimi")).toBe("k2")
+    expect(warnings.join("\n")).toMatch(/deepseek/)   // 解不开的要点名，但不是「丢弃」
+    expect(warnings.join("\n")).toMatch(/ssh:srv/)
+    // 密文不能进明文表（旧密文当明文用等于把乱码当 key），但也不能没了
+    const disk = JSON.parse(readFileSync(file, "utf8")) as { encrypted: boolean; entries: Record<string, string> }
+    expect(disk.encrypted).toBe(false)
+    expect(Object.keys(disk.entries)).toEqual(["kimi"])
+    expect(JSON.stringify(disk)).toContain(Buffer.from("enc:pw").toString("base64"))
+    // 解不开的模型 key 在 broken 里、不在 configured 里，界面才能说「需要重新填写」
+    b.warm()
+    expect(b.configured()).toEqual(["kimi"])
+    expect(b.broken()).toEqual(["deepseek"])
+    // 钥匙串回来（下一轮）：不用重填，全都还在
+    await Promise.resolve()
+    钥匙串.恢复()
+    expect(b.get("ssh:srv")).toBe("pw")
+    expect(b.get("feishu:appSecret")).toBe("sec")
+    expect(b.get("deepseek")).toBe("k1")
+    expect(b.configured()).toEqual(["kimi", "deepseek"])
+    expect(b.broken()).toEqual([])
+    // 重启 app 再看一遍：留在盘上的密文跨实例也解得开
+    const c = new CredentialStore({ file, safeStorage: working })
+    expect(c.get("ssh:srv")).toBe("pw")
+    expect(c.get("kimi")).toBe("k2")
+    // 钥匙串好了之后再存一次：整份回到加密，留着的密文一起收回 entries，文件里不再有明文
+    c.set("openai", "k3")
+    const disk2 = JSON.parse(readFileSync(file, "utf8")) as { encrypted: boolean; entries: Record<string, string> }
+    expect(disk2.encrypted).toBe(true)
+    expect(Object.keys(disk2.entries).sort()).toEqual(["deepseek", "feishu:appSecret", "kimi", "openai", "ssh:srv"])
+    expect(readFileSync(file, "utf8")).not.toContain("k2")
+    expect(new CredentialStore({ file, safeStorage: working }).get("ssh:srv")).toBe("pw")
+  })
+
+  it("F2 **isEncryptionAvailable 抛错时 warm 不许抛**（某些 Linux/libsecret 会抛）——记成不可用、出声一次；否则 verified 永远 false、hasCredential 把异常直接砸进 pi", () => {
+    const file = newFile()
+    new CredentialStore({ file, safeStorage: working }).set("deepseek", "k1")
+    let 问了 = 0
+    const 会抛的: SafeStorageLike = {
+      ...working,
+      isEncryptionAvailable: () => { 问了 += 1; throw new Error("org.freedesktop.secrets not available") },
+    }
+    const warnings: string[] = []
+    const s = new CredentialStore({ file, safeStorage: 会抛的, onInsecure: (m) => warnings.push(m) })
+    expect(s.verified()).toBe(false)
+    expect(s.warm()).toBe(false)
+    expect(s.verified()).toBe(true)
+    expect(s.isEncrypted()).toBe(false)
+    expect(warnings.filter((w) => w.includes("secrets not available"))).toHaveLength(1)
+    // 记住了：再 warm 不再去问、不再报
+    expect(s.warm()).toBe(false)
+    expect(问了).toBe(1)
+    expect(warnings.filter((w) => w.includes("secrets not available"))).toHaveLength(1)
+  })
+
+  it("F3 **一轮 listCredentials 只解一遍**——configured()+broken() 背靠背各自解一遍，解不开的每 3 秒被同步解两次、正是最慢的那种场景；失败仍然不跨轮记住", async () => {
+    const file = newFile()
+    new CredentialStore({ file, safeStorage: working }).set("deepseek", "k1")
+    let 失败 = true
+    let 解密次数 = 0
+    const 时好时坏: SafeStorageLike = {
+      ...working,
+      decryptString: (b) => { 解密次数 += 1; if (失败) throw new Error("locked"); return working.decryptString(b) },
+    }
+    const s = new CredentialStore({ file, safeStorage: 时好时坏, onInsecure: () => {} })
+    s.warm()
+    expect(s.configured()).toEqual([])
+    expect(s.broken()).toEqual(["deepseek"])
+    expect(解密次数).toBe(1)
+    // 下一轮（另一次 IPC）：失败没被记住，再解一遍——钥匙串好了就立刻是好的
+    await Promise.resolve()
+    失败 = false
+    expect(s.configured()).toEqual(["deepseek"])
+    expect(s.broken()).toEqual([])
+    expect(解密次数).toBe(2)
   })
 })

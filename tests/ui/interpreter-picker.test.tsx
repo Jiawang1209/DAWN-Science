@@ -1,7 +1,7 @@
 /** 解释器候选列表（首启向导，2026-08-27）：三态、选中即回调、缺包只给一句装法（不执行） */
 import { describe, expect, it, vi } from "vitest"
 import { render, screen, fireEvent, cleanup } from "@testing-library/react"
-import { InterpreterPicker } from "../../src/ui/interpreter-picker.js"
+import { InterpreterPicker, 引起路径 } from "../../src/ui/interpreter-picker.js"
 import type { InterpreterCandidate } from "../../src/protocol/index.js"
 import { $lang } from "../../src/ui/i18n/index.js"
 
@@ -48,6 +48,20 @@ describe("InterpreterPicker", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "R 解释器路径" }), { target: { value: "/usr/local/bin/R" } })
     fireEvent.click(screen.getByRole("button", { name: "用这个" }))
     expect(onPick).toHaveBeenCalledWith("/usr/local/bin/R")
+  })
+
+  it("路径带空格 → 装法里的程序名引起来（2026-09-01 终审）——不引的话贴进终端是一条跑不动的命令", () => {
+    const 带空格: InterpreterCandidate[] = [{ path: "/Users/x/My Env/bin/python", source: "common", version: "3.12.1", kernelPackage: "missing" }]
+    const { container } = render(<InterpreterPicker language="python" candidates={带空格} probing={false} current="/Users/x/My Env/bin/python" {...noop} />)
+    expect(container.querySelector(".ip-how")!.textContent).toContain("'/Users/x/My Env/bin/python' -m pip install ipykernel")
+    cleanup()
+    // Windows 只能从路径认（组件没有平台信息）：盘符开头用双引号，cmd 不认单引号
+    const win: InterpreterCandidate[] = [{ path: "C:\\Program Files\\Python312\\python.exe", source: "PATH", version: "3.12.1", kernelPackage: "missing" }]
+    const w = render(<InterpreterPicker language="python" candidates={win} probing={false} current={win[0]!.path} {...noop} />)
+    expect(w.container.querySelector(".ip-how")!.textContent).toContain('"C:\\Program Files\\Python312\\python.exe" -m pip install ipykernel')
+    cleanup()
+    // 没空格的一个字符都不动
+    expect(引起路径("/opt/homebrew/bin/python3")).toBe("/opt/homebrew/bin/python3")
   })
 
   it("英文界面下 R 那句装法里没有汉字（B16）——`KERNEL_PACKAGE.R.how` 曾是一句中文散文，绕过了 i18n", () => {

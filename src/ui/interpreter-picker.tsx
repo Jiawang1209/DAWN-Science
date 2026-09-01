@@ -13,6 +13,18 @@ export type 语言 = "python" | "R"
 const 语言名: Record<语言, string> = { python: "Python", R: "R" }
 const 包名: Record<语言, string> = { python: "ipykernel", R: "IRkernel" }
 
+/**
+ * 装法那句里的程序名是一条真实路径，**带空格就得引起来**（2026-09-01 终审）：`/Users/x/My Env/bin/python -m pip …`
+ * 原样贴进终端会把 `Env/bin/python` 当成第二个参数。这个组件拿不到运行平台（候选项里只有路径），
+ * 只能从路径本身认：盘符开头（`C:\…`）是 Windows，cmd 不认单引号、双引号 cmd/PowerShell 都收；
+ * 其余按 POSIX 用单引号（路径里的 `$`、反引号都不会被展开）。没空格的一个字符都不动——那是绝大多数情况。
+ */
+export function 引起路径(path: string): string {
+  if (!/\s/.test(path)) return path
+  if (/^[A-Za-z]:[\\/]/.test(path)) return `"${path}"`
+  return `'${path.replaceAll("'", "'\\''")}'`
+}
+
 export function InterpreterPicker({
   language,
   candidates,
@@ -77,8 +89,9 @@ export function InterpreterPicker({
         </ul>
       ) : null}
       {选中?.kernelPackage === "missing" ? (
-        /* 装法里的程序名换成选中的那条路径：「<你的 python>」这种占位词过不了 i18n（B16），而这里恰恰知道是哪个 */
-        <p className="hint ip-how">{tf("这个 {0} 没装 {1}：{2}。装完回来点重新检测。", 名, 包名[language], KERNEL_PACKAGE[language].how.replace(/^\S+/, 选中.path))}</p>
+        /* 装法里的程序名换成选中的那条路径：「<你的 python>」这种占位词过不了 i18n（B16），而这里恰恰知道是哪个。
+           `replace` 第二参用函数：路径里的 `$&`/`$1` 会被字符串形式当成替换模式 */
+        <p className="hint ip-how">{tf("这个 {0} 没装 {1}：{2}。装完回来点重新检测。", 名, 包名[language], KERNEL_PACKAGE[language].how.replace(/^\S+/, () => 引起路径(选中.path)))}</p>
       ) : null}
       <div className="ip-manual">
         {手动 ? (

@@ -122,24 +122,36 @@ function 启动日志(行: string): void {
 /**
  * 主进程没接住的异常：Electron 默认会弹框，但 ESM 里 whenReady 之前抛的不一定弹——自己兜一层，先写日志再弹。
  *
- * **弹完必须退出**（2026-09-01，首启审计的 C20）：装了这个监听器之后 Node 就不再替我们结束进程，
+ * **窗口出来之前弹完必须退出**（2026-09-01，首启审计的 C20）：装了这个监听器之后 Node 就不再替我们结束进程，
  * 之前的版本弹完框就掉了下去——主进程半死不活地留在那里（窗口没出、Dock 图标在、下次双击「没反应」），
  * 用户看到的正是我们最怕的那句「双击没反应」。写日志排第一，弹框在其后：弹框抛了日志也已经在了。
+ *
+ * **窗口出来之后只弹不退**（2026-09-01 终审改的）：C20 的第一版无条件 `app.exit(1)`，而工作台就在主进程里跑——
+ * 任何一个没挂 `error` 监听器的 EventEmitter（pty、ssh、内核子进程）都会落到这里，一次就把人聊到一半的应用杀掉；
+ * 而且 `app.exit` 绕过 `will-quit`，zeromq 收不了摊，下一次启动会因为那次 SIGABRT 变慢。
+ * 分界线是主窗口 `did-finish-load`（不是 `show`：`DAWN_HIDE_WINDOW` 下窗口永远不 show，但页面照样加载）——
+ * 在此之前没有什么值得体面收摊的东西，退掉才是对的；在此之后应用是活的，和 C20 之前一样记日志、弹框、继续活。
  * `unhandledRejection` 不在这里：Electron 主进程对它只警告不抛（2026-09-01 实测），不会进这个监听器。
  */
+let 主窗口已加载 = false
 let 正在处理未接住的异常 = false
 process.on("uncaughtException", (e) => {
-  // 处理过程中再抛一次（比如 dialog 本身炸了）会重入：第二次直接退，别再弹第二个框、别再进死循环
-  if (正在处理未接住的异常) return app.exit(1)
-  正在处理未接住的异常 = true
   const msg = e instanceof Error ? (e.stack ?? e.message) : String(e)
-  启动日志(`未接住的异常：${msg}`)
+  启动日志(`未接住的异常${主窗口已加载 ? "（窗口已出，继续运行）" : "（窗口未出，退出）"}：${msg}`)
+  // 处理过程中再抛一次（比如 dialog 本身炸了，或模态框开着时另一个 emitter 也炸了）会重入：
+  // 启动期第二次直接退，别再弹第二个框、别再进死循环；运行期只记日志——第二个框叠在第一个上没人看得懂
+  if (正在处理未接住的异常) {
+    if (!主窗口已加载) app.exit(1)
+    return
+  }
+  正在处理未接住的异常 = true
   try {
-    dialog.showErrorBox("DAWN 启动失败", `${msg}\n\n日志：${启动日志路径}`)
+    dialog.showErrorBox(主窗口已加载 ? "DAWN 内部错误" : "DAWN 启动失败", `${msg}\n\n日志：${启动日志路径}`)
   } catch {
     /* dialog 在 ready 之前可能不可用 */
   }
-  app.exit(1)
+  if (!主窗口已加载) return app.exit(1)
+  正在处理未接住的异常 = false
 })
 
 /**
@@ -180,6 +192,15 @@ function createWindow(): void {
       // 隐藏窗口不该被降频——见上面 `show` 那段
       backgroundThrottling: false,
     },
+  })
+
+  /**
+   * 页面加载完 = 启动期结束（见 `uncaughtException` 那段）。挂在窗口自己的 webContents 上而不是 app 级事件：
+   * app 级的 `web-contents-created` 在这之前早就发过了（钥匙串预热第一版就挂错过那儿，从没触发过）。
+   * `activate` 再开的窗口也会走到这里——那时早已是 true，再置一次无害。
+   */
+  win.webContents.once("did-finish-load", () => {
+    主窗口已加载 = true
   })
 
   /**

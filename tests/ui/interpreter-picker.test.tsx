@@ -19,7 +19,7 @@ describe("InterpreterPicker", () => {
     expect(screen.queryByRole("radiogroup")).toBeNull()
     rerender(<InterpreterPicker language="python" candidates={[]} probing={false} current={undefined} {...noop} />)
     expect(screen.getByText(/这台电脑上没找到 Python/)).toBeTruthy()
-    expect(screen.getByRole("button", { name: "手动填…" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "手动填写路径" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "重新检测" })).toBeTruthy()
   })
 
@@ -44,7 +44,7 @@ describe("InterpreterPicker", () => {
   it("手动填 → 提交调 onPick", () => {
     const onPick = vi.fn()
     render(<InterpreterPicker language="R" candidates={[]} probing={false} current={undefined} onPick={onPick} onProbe={() => {}} />)
-    fireEvent.click(screen.getByRole("button", { name: "手动填…" }))
+    fireEvent.click(screen.getByRole("button", { name: "手动填写路径" }))
     fireEvent.change(screen.getByRole("textbox", { name: "R 解释器路径" }), { target: { value: "/usr/local/bin/R" } })
     fireEvent.click(screen.getByRole("button", { name: "用这个" }))
     expect(onPick).toHaveBeenCalledWith("/usr/local/bin/R")

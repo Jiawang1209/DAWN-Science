@@ -6529,7 +6529,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .sw-head { display: flex; align-items: baseline; justify-content: space-between; }
 .sw-head h1 { font-size: var(--dawn-fs-title); font-weight: var(--dawn-weight-semibold); margin: 0; }
-.sw-section { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+/* 与设置屏的 .set-rows 同一副骨架（2026-09-02 作者点的）：模型 key 一类、解释器一类，各自框起来 */
+.sw-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  background: var(--dawn-surface-elevated);
+  border: 1px solid var(--dawn-stroke-accent);
+  border-radius: var(--dawn-radius-lg);
+  padding: var(--dawn-space-4);
+}
 .sw-section h2 { font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); margin: 0; display: flex; gap: var(--dawn-space-2); align-items: baseline; }
 .sw-req { color: var(--dawn-danger); font-weight: 400; font-size: var(--dawn-ui-size); }
 .sw-opt { color: var(--dawn-text-3); font-weight: 400; font-size: var(--dawn-ui-size); }

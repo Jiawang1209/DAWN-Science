@@ -107,7 +107,7 @@ export function InterpreterPicker({
           </form>
         ) : (
           <Button size="sm" variant="text" onClick={() => { 设草稿(选了 ?? ""); 设手动(true) }}>
-            {t("手动填…")}
+            {t("手动填写路径")}
           </Button>
         )}
       </div>

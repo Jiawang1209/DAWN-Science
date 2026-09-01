@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm run build 2>&1 | tail -6",
-    "testCommand": "S=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/a8ada2ac-9fb6-44ea-ac88-462ac38fd636/scratchpad && rm -f $S/*5.log; (npm run typecheck > $S/tc5.log 2>&1; echo \"TC_EXIT=$?\" >> $S/tc5.log; npm test > $S/unit5.log 2>&1; echo \"UNIT_EXIT=$?\" >> $S/unit5.log; npm run test:e2e > $S/e2e5.log 2>&1; echo \"E2E_EXIT=$?\" >> $S/e2e5.log; npm run test:e2e:visual:only > $S/visual5.log 2>&1; echo \"VIS_EXIT=$?\" >> $S/visual5.log; npm run pack > $S/pack5.log 2>&1; echo \"PACK_EXIT=$?\" >> $S/pack5.log; npm run test:packaged > $S/packaged5.log 2>&1; echo \"TP_EXIT=$?\" >> $S/packaged5.log; REHEARSE_REAL_HOME=1 npm run rehearse:fresh > $S/fresh5.log 2>&1; echo \"FRESH_EXIT=$?\" >> $S/fresh5.log; npm run rehearse:update > $S/update5.log 2>&1; echo \"UPD_EXIT=$?\" >> $S/update5.log); for f in tc5 unit5 e2e5 visual5 pack5 packaged5 fresh5 update5; do echo \"$f: $(grep -E '_EXIT=' $S/$f.log | tail -1)\"; done; grep -E \"Test Files|Tests \" $S/unit5.log; grep -E \"passed|failed|flaky|skipped\" $S/e2e5.log | tail -4; grep -E \"passed|failed\" $S/visual5.log | tail -2; grep -E \"✓|✗|没过|全部通过\" $S/packaged5.log $S/fresh5.log $S/update5.log",
+    "buildCommand": "npx vitest run tests/ui/interpreter-picker.test.tsx tests/ui/setup-wizard.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts 2>&1 | tail -5 && npm run typecheck 2>&1 | tail -1 && npm run build:ui 2>&1 | tail -2",
+    "testCommand": "npx vitest run tests/ui/interpreter-picker.test.tsx tests/ui/setup-wizard.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts 2>&1 | tail -5 && npm run typecheck 2>&1 | tail -1 && npm run build:ui 2>&1 | tail -2",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

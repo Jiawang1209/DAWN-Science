@@ -525,7 +525,7 @@ export const EN: Readonly<Record<string, string>> = {
   "服务商": "Provider",
   "API key": "API key",
   "填完立刻可以对话。key 只存在本机。": "Once saved you can chat right away. The key stays on this machine.",
-  "（可选，笔记本用；不配也能聊）": "(optional, for the notebook; chatting works without it)",
+  "（可选）": "(optional)",
   "开始使用 →": "Get started →",
   "先填一个 key": "Add a key first",
   "正在检测…": "Detecting…",
@@ -537,7 +537,7 @@ export const EN: Readonly<Record<string, string>> = {
   "这个 {0} 没装 {1}：{2}。装完回来点重新检测。": "This {0} has no {1}: {2}. Come back and detect again once installed.",
   "{0} 解释器路径": "{0} interpreter path",
   "用这个": "Use this",
-  "手动填…": "Enter by hand…",
+  "手动填写路径": "Enter a path by hand",
 
   /* ── 技能 / 文件 / 概览 ─────────────────────────────────────── */
   "会一并移除它们名下的 {0} 段对话与相应的账本记录。": "This also removes the {0} chats under them, along with their ledger entries.",

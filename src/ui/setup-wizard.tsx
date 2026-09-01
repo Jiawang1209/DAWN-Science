@@ -175,7 +175,7 @@ export function SetupWizard({
 
       <section className="sw-section">
         <h2>
-          {t("解释器")} <span className="sw-opt">{t("（可选，笔记本用；不配也能聊）")}</span>
+          {t("解释器")} <span className="sw-opt">{t("（可选）")}</span>
         </h2>
         <InterpreterPicker language="python" candidates={probed?.python} probing={probing} error={probeError} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={() => void 探()} />
         <InterpreterPicker language="R" candidates={probed?.r} probing={probing} current={interpreters.r} onPick={(p) => onSetInterpreter("R", p)} onProbe={() => void 探()} />

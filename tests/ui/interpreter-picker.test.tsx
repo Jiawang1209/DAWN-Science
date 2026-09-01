@@ -1,8 +1,9 @@
 /** 解释器候选列表（首启向导，2026-08-27）：三态、选中即回调、缺包只给一句装法（不执行） */
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render, screen, fireEvent, cleanup } from "@testing-library/react"
 import { InterpreterPicker } from "../../src/ui/interpreter-picker.js"
 import type { InterpreterCandidate } from "../../src/protocol/index.js"
+import { $lang } from "../../src/ui/i18n/index.js"
 
 const 候选: InterpreterCandidate[] = [
   { path: "/opt/homebrew/bin/python3", source: "PATH", version: "3.14.7", kernelPackage: "missing" },
@@ -47,5 +48,25 @@ describe("InterpreterPicker", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "R 解释器路径" }), { target: { value: "/usr/local/bin/R" } })
     fireEvent.click(screen.getByRole("button", { name: "用这个" }))
     expect(onPick).toHaveBeenCalledWith("/usr/local/bin/R")
+  })
+
+  it("英文界面下 R 那句装法里没有汉字（B16）——`KERNEL_PACKAGE.R.how` 曾是一句中文散文，绕过了 i18n", () => {
+    const R候选: InterpreterCandidate[] = [{ path: "/usr/local/bin/R", source: "PATH", version: "4.3.2", kernelPackage: "missing" }]
+    $lang.set("en")
+    try {
+      const { container } = render(<InterpreterPicker language="R" candidates={R候选} probing={false} current="/usr/local/bin/R" {...noop} />)
+      const 那句 = container.querySelector(".ip-how")!.textContent!
+      expect(那句).toMatch(/IRkernel/)
+      expect(那句).not.toMatch(/[一-鿿]/)
+      // 程序名换成了选中的那条——原先的「<你的 python>」占位词就是为了说这个，现在直接说
+      expect(那句).toMatch(/\/usr\/local\/bin\/R -e /)
+      cleanup()
+      const py = render(<InterpreterPicker language="python" candidates={候选} probing={false} current="/opt/homebrew/bin/python3" {...noop} />)
+      const py句 = py.container.querySelector(".ip-how")!.textContent!
+      expect(py句).not.toMatch(/[一-鿿]/)
+      expect(py句).toMatch(/\/opt\/homebrew\/bin\/python3 -m pip install ipykernel/)
+    } finally {
+      $lang.set("zh")
+    }
   })
 })

@@ -3676,6 +3676,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     .catch(fail)
                 }}
                 {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
+                unusable={providers.unusable}
                 credentials={creds}
                 onSet={(id, secret) =>
                   client
@@ -4214,6 +4215,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               problem={knownProviders.problem}
               plaintext={creds.encrypted === false}
               broken={creds.broken}
+              unusable={providers.unusable}
               interpreters={interpreters}
               onSaveKey={(id, secret) =>
                 client

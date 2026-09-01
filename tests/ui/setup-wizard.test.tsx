@@ -64,4 +64,31 @@ describe("SetupWizard", () => {
     记跳过(false)
     expect(读跳过()).toBe(false)
   })
+
+  it("key 存进去了、但目录里挑不出这家的模型（B8）→ 原因就在「已填」旁边，「开始使用」不亮：一个没 agent 的空应用比向导更糟", () => {
+    render(
+      <SetupWizard
+        {...基本}
+        configured={["deepseek"]}
+        onSaveKey={async () => {}}
+        unusable={[{ providerId: "deepseek", reason: "模型目录里没有 deepseek 的模型" }]}
+      />,
+    )
+    // 文字要看得见——不是 title、不是悬停
+    expect(screen.getByText(/deepseek 的 key 已保存，但还建不出可用的模型：模型目录里没有 deepseek 的模型/)).toBeTruthy()
+    expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it("两家里有一家能用 → 「开始使用」亮着，用不了的那家照样说原因", () => {
+    render(
+      <SetupWizard
+        {...基本}
+        configured={["deepseek", "kimi"]}
+        onSaveKey={async () => {}}
+        unusable={[{ providerId: "kimi", reason: "目录读不出来：boom" }]}
+      />,
+    )
+    expect(screen.getByText(/kimi 的 key 已保存，但还建不出可用的模型：目录读不出来：boom/)).toBeTruthy()
+    expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(false)
+  })
 })

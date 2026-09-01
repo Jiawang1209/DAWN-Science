@@ -884,7 +884,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    *   - **绝不覆盖已声明的**：某个 provider 已经有 agent 在用就不再自动加，
    *     否则用户精心写的 model 会被我们挑的那个顶掉。
    */
+  /**
+   * 建不出 agent 的 provider 各自的理由（B8，2026-09-01）。**每次重算都先清**，
+   * 否则目录后来有了，红字还挂着。`getProviders` 把它端出去。
+   */
+  const 建不出agent的理由 = new Map<string, string>()
   async function 确保配过key的都能用(): Promise<void> {
+    建不出agent的理由.clear()
     if (!models?.available) return
     const 已被用 = new Set(
       Object.values(registry.agents)
@@ -904,12 +910,27 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     for (const providerId of 该有的) {
       if (已被用.has(providerId) || registry.agents[providerId]) continue
       /**
-       * **挑不出模型就不造这个 agent。** 一个模型是空串的 agent
+       * **挑不出模型就不造这个 agent，但要说为什么。** 一个模型是空串的 agent
        * 会在建会话时才炸，而那时错误与「你填了个 key」毫无关系。
+       *
+       * 此前这里 `.catch(() => [])` 再 `continue`：目录读炸了与目录里没这家长得一模一样，
+       * 而且两种都一声不吭——全新用户填了个好 key，进去就是一个没有 agent 的空应用（B8）。
+       * 理由记进 `建不出agent的理由`，`getProviders` 端出去；读炸了的原话也进日志。
        */
-      const list = await models.available(providerId).catch(() => [] as string[])
+      let list: string[]
+      try {
+        list = await models.available(providerId)
+      } catch (err) {
+        const 原话 = err instanceof Error ? err.message : String(err)
+        建不出agent的理由.set(providerId, `模型目录读不出来：${原话}`)
+        console.error(`[凭证] ${providerId} 填了 key 但模型目录读不出来，建不出 agent：${原话}`)
+        continue
+      }
       const model = list[0]
-      if (!model) continue
+      if (!model) {
+        建不出agent的理由.set(providerId, `模型目录里没有 ${providerId} 的模型，挑不出一个来建 agent`)
+        continue
+      }
       registry.agents[providerId] = {
         kind: "native",
         provider: providerId,
@@ -1697,6 +1718,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             ...(显示名[providerId] ? { name: 显示名[providerId]! } : {}),
           })),
         ),
+        // 填了 key 却建不出 agent 的那些，连理由一起（B8）。**有目录端口就一定给**——空数组是「都能用」
+        ...(models?.available
+          ? { unusable: [...建不出agent的理由].map(([providerId, reason]) => ({ providerId, reason })) }
+          : {}),
       }
     },
 

@@ -46,6 +46,7 @@ export function SetupWizard({
   problem,
   plaintext,
   broken,
+  unusable,
 }: {
   /** 可填 key 的服务商 id 清单（`listKnownProviders`） */
   providers: readonly string[]
@@ -57,6 +58,11 @@ export function SetupWizard({
   plaintext?: boolean | undefined
   /** 上一版存的、这版解不开的 key（未签名包更新后）——向导亮起的原因之一，要说清楚不是他没填过 */
   broken?: readonly string[] | undefined
+  /**
+   * key 存进去了、却建不出 agent 的那些（`getProviders.unusable`，B8）。
+   * 没有它，「已填 deepseek ✓」下面一点「开始使用」，进去是个没有 agent 的空应用——原因得在人正看着的这一屏说。
+   */
+  unusable?: readonly { providerId: string; reason: string }[] | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void
@@ -77,7 +83,9 @@ export function SetupWizard({
   const [probing, setProbing] = useState(false)
   const [probeError, setProbeError] = useState<string | undefined>(undefined)
 
-  const 有key = configured.length > 0
+  /** 「开始使用」的门槛是**至少一家能用**：全都建不出 agent 时放人进去，等于把他锁在一个空屏里 */
+  const 用不了的 = (unusable ?? []).filter((u) => configured.includes(u.providerId))
+  const 有key = configured.length > 0 && configured.some((id) => !用不了的.some((u) => u.providerId === id))
 
   const 保存 = async () => {
     if (!provider || !secret.trim()) return
@@ -122,6 +130,11 @@ export function SetupWizard({
         {problem && providers.length === 0 ? <p className="caveat">{tf("服务商目录取不到：{0}", problem)}</p> : null}
         {plaintext ? <p className="caveat">{t("⚠ 系统未提供安全存储，凭证将以明文保存在用户数据目录")}</p> : null}
         {broken?.length ? <p className="caveat">{tf("上一版保存的 key 解不开了（{0}）——应用更新后系统钥匙串换了身份，请重新填一次", broken.join("、"))}</p> : null}
+        {用不了的.map((u) => (
+          <p key={u.providerId} className="caveat">
+            {tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, u.reason)}
+          </p>
+        ))}
         <form
           className="sw-key"
           onSubmit={(e) => {
@@ -160,7 +173,7 @@ export function SetupWizard({
       </section>
 
       <div className="sw-foot">
-        {有key ? null : <span className="hint">{t("先填一个 key")}</span>}
+        {有key ? null : <span className="hint">{configured.length > 0 ? t("填的 key 还用不了，原因在上面") : t("先填一个 key")}</span>}
         <Button variant="primary" disabled={!有key} onClick={onStart}>
           {t("开始使用 →")}
         </Button>

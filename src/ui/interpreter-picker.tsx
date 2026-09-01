@@ -77,7 +77,8 @@ export function InterpreterPicker({
         </ul>
       ) : null}
       {选中?.kernelPackage === "missing" ? (
-        <p className="hint ip-how">{tf("这个 {0} 没装 {1}：{2}。装完回来点重新检测。", 名, 包名[language], KERNEL_PACKAGE[language].how)}</p>
+        /* 装法里的程序名换成选中的那条路径：「<你的 python>」这种占位词过不了 i18n（B16），而这里恰恰知道是哪个 */
+        <p className="hint ip-how">{tf("这个 {0} 没装 {1}：{2}。装完回来点重新检测。", 名, 包名[language], KERNEL_PACKAGE[language].how.replace(/^\S+/, 选中.path))}</p>
       ) : null}
       <div className="ip-manual">
         {手动 ? (

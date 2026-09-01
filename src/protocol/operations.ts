@@ -379,6 +379,19 @@ export const OPERATIONS = {
           name: z.string().optional(),
         }),
       ),
+      /**
+       * **填了 key / 写了连接、却建不出 agent 的那些**（B8，2026-09-01）。
+       *
+       * 「配了凭证的 provider 自动就有一个同名 agent」有一个前提：目录里挑得出它的模型。
+       * 挑不出（目录里没这家 / 目录读炸了）时此前是静默跳过——全新用户填了个好 key，
+       * 向导写着「已填」，进去却空空如也，哪儿都没一句话。理由必须从这里端出去：
+       * 向导与设置屏保存 key 之后重取的正是这一份。
+       *
+       * 缺省 = 后端没算过（没接模型目录端口那种装配）；空数组 = 算过了，都能用。
+       */
+      unusable: z
+        .array(z.object({ providerId: z.string().min(1), reason: z.string().min(1) }).strict())
+        .optional(),
     }),
     mutating: false,
   },

@@ -257,4 +257,9 @@ describe("模型服务 · 添加", () => {
     fireEvent.click(screen.getByRole("button", { name: "加进来" }))
     expect(screen.getByText(/只能用小写字母、数字和连字符/)).toBeDefined()
   })
+
+  it("**填了 key 却建不出 agent 的那一行，收起时就写着为什么**（B8）——「⚠ 没有模型」只说了现象，原因在后端手里", () => {
+    render(面板({ modelsOf: () => [], unusable: [{ providerId: "deepseek", reason: "模型目录里没有 deepseek 的模型" }] }))
+    expect(screen.getByText(/模型目录里没有 deepseek 的模型/)).toBeDefined()
+  })
 })

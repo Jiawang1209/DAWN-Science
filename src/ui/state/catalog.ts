@@ -130,7 +130,8 @@ export function setProviders(v: Providers): void {
    * 按钮按了没反应。同一个洞也咬得到 provider 的模型清单。
    * `sameList` 是全站那条「内容没变就不换引用」的实现，嵌套字段走序列化比较。
    */
-  if (sameList(prev.agents, v.agents) && sameList(prev.providers, v.providers)) return
+  // `unusable` 也要比（B8）：填了 key 建不出 agent 时，agents 与 providers 都没变，变的只有它——不比就永远端不到屏上
+  if (sameList(prev.agents, v.agents) && sameList(prev.providers, v.providers) && sameList(prev.unusable ?? [], v.unusable ?? [])) return
   $providers.set(v)
 }
 

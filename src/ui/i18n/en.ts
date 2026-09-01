@@ -625,6 +625,8 @@ export const EN: Readonly<Record<string, string>> = {
   "这些服务的 key 解不开了，需要重新填写：{0}（应用更新后系统钥匙串换了身份，上一版存的 key 就读不出来了——签名发布后不会再有）": "These keys can no longer be decrypted and must be re-entered: {0} (after an app update the system keychain no longer trusts the previous build; this goes away once releases are signed)",
   "上一版保存的 key 解不开了（{0}）——应用更新后系统钥匙串换了身份，请重新填一次": "Keys saved by the previous version can't be decrypted ({0}) — the system keychain no longer trusts the old build after an update; please enter them again",
   "服务商目录取不到：{0}": "Could not load the provider list: {0}",
+  "{0} 的 key 已保存，但还建不出可用的模型：{1}": "The key for {0} is saved, but no usable model could be set up: {1}",
+  "填的 key 还用不了，原因在上面": "The key you entered cannot be used yet — see the reason above",
   "还没有 API key——填一个就能用": "No API key yet — add one and this works",
   "先写点什么再优化": "Write something first, then polish",
   "档位：{0}": "Level: {0}",

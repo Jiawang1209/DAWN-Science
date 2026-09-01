@@ -745,6 +745,7 @@ export function SettingsPanel({
   credentials,
   onSet,
   onDelete,
+  unusable,
 }: {
   /** 本配置实际用到的 provider id（pi 的 provider，如 deepseek / anthropic） */
   providers: string[]
@@ -770,6 +771,8 @@ export function SettingsPanel({
   credentials: CredentialState
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
+  /** 配了却建不出 agent 的那些及其理由（`getProviders.unusable`，B8）——摘要上的「⚠ 没有模型」只说了现象 */
+  unusable?: readonly { providerId: string; reason: string }[] | undefined
 }) {
   /**
    * **这台机器上「配过」的服务。** 三个来源合一：
@@ -824,6 +827,7 @@ export function SettingsPanel({
             conn={connections?.[id] ?? {}}
             必须填地址={Boolean(needsBaseUrl?.includes(id))}
             pi认识={known.includes(id)}
+            problem={unusable?.find((u) => u.providerId === id)?.reason}
             onSaveKey={(secret) => onSet(id, secret)}
             onDeleteKey={() => onDelete(id)}
             onSaveConn={(c) => onSaveConnection(id, c)}
@@ -874,6 +878,7 @@ function 服务({
   conn,
   必须填地址,
   pi认识,
+  problem,
   onSaveKey,
   onDeleteKey,
   onSaveConn,
@@ -887,6 +892,8 @@ function 服务({
   conn: Connection
   必须填地址: boolean
   pi认识: boolean
+  /** 后端说的「为什么建不出 agent」。**收起时也要在**——点开才看见等于没有 */
+  problem?: string | undefined
   onSaveKey: (secret: string) => void
   onDeleteKey: () => void
   onSaveConn: (conn: Connection) => void
@@ -910,6 +917,7 @@ function 服务({
         <span className="svc-sum">{摘要({ conn, models, isSet, 必须填地址 })}</span>
         <span className="svc-toggle">{展开 ? t("收起") : t("配置它")}</span>
       </Button>
+      {problem ? <p className="caveat">⚠ {problem}</p> : null}
       {展开 ? (
         <服务编辑器
           id={id}

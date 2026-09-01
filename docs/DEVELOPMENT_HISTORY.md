@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-01 — B15 / B9：后端错误按界面语言显示；填 key 当场验一次
+
+- **Type**: fix
+- **Motivation**: 首启审查（08-28）记下、上一轮（同日）留给作者定形状的两条，作者定了：「就按你倾向的做」。B15：英文界面下每一条后端错误都是中文——`fault(code, message)` 163 处全是中文字面量，`client.ts` 把 `e.message` 原样给界面，i18n 从没见过它；今天新加的 `unusable` 理由也走这条路。B9：`setCredential` 只存不验，随便一串字符都是「已填 deepseek ✓」，错要到第一句话才露、露的还是 pi 的 401 原话；而 pi 的模型目录是**本地的**，靠它验不了 key。
+- **What**:
+  - **B15**（`src/protocol/fault-i18n.ts` 新、`server.ts`、`client.ts`、`backend.ts`、`en.ts`）：`fault(code, msgid, ...args)`——msgid 是带 `{0}` 的中文原文（与界面 `tf` 同一套约定、同一张 `EN` 表），`message` 仍是渲染好的中文（日志、测试、旧读者逐字节不变），另挂 `{msgid,args}` 随 `error.details.i18n` 出去；**只有业务性失败带**，`internal_error` 那条路的 details 永远不给（可能含路径、密钥片段）。客户端 `WorkbenchClientError` 在构造函数里 `tf` 一次，几十处读 `e.message` 的地方免费得到当前语言，原文留在 `原文`。75 处插值站点转成 msgid+args（脚本转 70、手转 5，机械核对过渲染不变）；33 处透传别人的话（ssh2、内核、`UserFacingError`、技能预检）改名 `fault原样`、不带 i18n、逐条登记在 `tests/workbench/fault-i18n.test.ts` 的名单里——多一处是一次有意识的决定。英文表 74 条。扫描测试守三条：msgid 不许带 `${}`、每句在英文表里、占位符数与 args 数相符（规则 2：能判定的规则配扫描）。`getProviders.unusable[]` 加可选 `i18n`，向导与设置屏按语言显示。
+  - **B9**（`src/workbench/key-validate.ts` 新、`backend.ts`、协议、向导、设置屏、mock）：存完 key 当场用对话真会发的那条请求问一句（`askOnce`，`user: "DAWN key check"`，1 token，temperature 0），8 秒到点（abort + race 两手，不听信号的实现也吊不住「保存」）。**三档不是两档**：`hard` = 对方说 401/403 或话里有鉴权字样（key 错了）；`soft` = 超时、连不上、5xx、**以及一切认不出的**——认不出的绝不归 hard（把断网说成 key 错，人会去改一把好 key）。错误形状读的是装着的 pi（`pi-ai/dist/utils/error-body.js` 的 `formatProviderError`、openai / anthropic SDK 的 `makeMessage`），不是猜的。结果只在内存、不落盘（重启 = 没验过，这是对的）；`deleteCredential` 清；随 `getProviders.unusable` 出去，新增可选 `soft`——向导只拦 hard，soft 可见但不拦；B8 有话的那家以 B8 为准（目录空着根本发不出请求）。没接 `askOnce` 或目录挑不出模型就不验、不留结果。保存按钮文案改成「正在保存并验证 key…」。顺手抓的：设置屏「加自定义服务」把存连接与存 key 并发发出，验证会打到还没写进去的地址——现在先等连接存完。
+  - **mock 与 e2e**（规则 1）：`mock-inference-server.mjs` 把 `DAWN key check` 的请求单独记进 `keyChecks[]`、答 `ok`，`requests[]` 计数不受影响；`failStatus` 照样拒它（e2e 里坏 key 就该长这样）；mock 也讲 Anthropic Messages 协议。`e2e/fixtures.ts` 的 `models.json` 把 `kimi-coding` 指到 mock——`key-is-enough` 那条此前会带着 `sk-fake` 真打外网。`setup-wizard` 默认配置那条断言 `keyChecks.length === 1` 且保存后没有红字。
+- **Impact**: 英文界面下后端错误是英文；填错 key 当场知道（向导不放行、设置屏红字带原话），断网时只是一句「没能验证、可能是网络」。协议：`error.details.i18n`、`unusable[].i18n`、`unusable[].soft` 均可选。每次填 key 多一次 1 token 的请求。**新写 `fault()` 的人**：插值走 args，别拼模板串，扫描会拦；透传别人的话用 `fault原样` 并进名单。
+- **没做、记下**：`server.ts` 自己那五句（未知操作、只读、请求/响应不合协议、内部错误）没有 i18n，其中「内部错误」英文界面下仍是中文；B9 的 `hard` 判定认的是开头的状态码与鉴权字样，网关把 401 包成 5xx 的情况会落到 soft——故意的，宁可少拦。
+- **Verification**: 三次提交（B15、B9、终审修补），中间一轮只读审查抓出 2 HIGH / 3 MEDIUM / 3 LOW 全修（设置屏编辑行先存 key 后存地址→验证打到旧地址把好 key 判坏；e2e 的 `base-url.spec` 给 groq 填 key 会真打外网；设置屏存 key 没有等待态；向导把 key 错误包成「建不出模型」；`unauthorized` 认到 URL 片段里；mock 用子串认 key check；soft 标红；Anthropic 分支不带工具——记注释）。最终：typecheck 干净；单测 203 文件 **2600** 过（+51：`fault()` 渲染与 i18n 挂载、server 只在 fault 路带 details.i18n、client 按语言翻、扫描三条、分类器 11 条含 URL 与整词、后端 10 条含超时注入与不听信号的挂起、向导/设置屏 hard/soft/顺序/等待态、mock 走真 HTTP 的整句相等）；e2e 全量 **458 过 1 跳过** + 内核 6，验证请求全落在 mock 的 `keyChecks`（groq 1、azure 0、向导 1）、无红字；视觉 10/10 未重存；`pack` → `test:packaged` 6/6 → `REHEARSE_REAL_HOME=1 rehearse:fresh` 12/12（「Save → Saved」4 秒——那 4 秒就是真发去 DeepSeek 的 1 token 验证，此前 0.03 秒）→ `rehearse:update` 9/9。
+
 ### 2026-09-01 — fixbug-0901：全量从头跑一遍全绿之后，两轮审查抓出 14 条，全修；四条旧账（B8 / C20 / C22 / B16）一并清掉
 
 - **Type**: fix

@@ -9,6 +9,7 @@ import { app, clipboard, BrowserWindow, dialog, ipcMain, safeStorage, shell } fr
 import { fileURLToPath } from "node:url"
 import { extname, join, dirname } from "node:path"
 import { 迁旧数据 } from "./migrate-userdata.js"
+import { 合并PATH, 问PATH的命令 } from "./login-shell-path.js"
 import { readFile } from "node:fs/promises"
 import { appendFileSync, mkdirSync, statSync } from "node:fs"
 import { execFile } from "node:child_process"
@@ -118,8 +119,19 @@ function 启动日志(行: string): void {
   }
 }
 启动日志(`主进程模块已加载 · ${process.platform}/${process.arch} · electron ${process.versions.electron} · packaged=${app.isPackaged} · exe=${process.execPath}`)
-// 主进程没接住的异常：Electron 默认会弹框，但 ESM 里 whenReady 之前抛的不一定弹——自己兜一层，先写日志再弹
+/**
+ * 主进程没接住的异常：Electron 默认会弹框，但 ESM 里 whenReady 之前抛的不一定弹——自己兜一层，先写日志再弹。
+ *
+ * **弹完必须退出**（2026-09-01，首启审计的 C20）：装了这个监听器之后 Node 就不再替我们结束进程，
+ * 之前的版本弹完框就掉了下去——主进程半死不活地留在那里（窗口没出、Dock 图标在、下次双击「没反应」），
+ * 用户看到的正是我们最怕的那句「双击没反应」。写日志排第一，弹框在其后：弹框抛了日志也已经在了。
+ * `unhandledRejection` 不在这里：Electron 主进程对它只警告不抛（2026-09-01 实测），不会进这个监听器。
+ */
+let 正在处理未接住的异常 = false
 process.on("uncaughtException", (e) => {
+  // 处理过程中再抛一次（比如 dialog 本身炸了）会重入：第二次直接退，别再弹第二个框、别再进死循环
+  if (正在处理未接住的异常) return app.exit(1)
+  正在处理未接住的异常 = true
   const msg = e instanceof Error ? (e.stack ?? e.message) : String(e)
   启动日志(`未接住的异常：${msg}`)
   try {
@@ -127,6 +139,7 @@ process.on("uncaughtException", (e) => {
   } catch {
     /* dialog 在 ready 之前可能不可用 */
   }
+  app.exit(1)
 })
 
 /**
@@ -445,15 +458,16 @@ function 打包版首启迁移(): void {
 function 补登录shell的PATH(): void {
   if (process.platform === "win32") return
   const shell = process.env.SHELL || "/bin/bash"
-  execFile(shell, ["-lc", "echo __DAWN_PATH__$PATH"], { timeout: 5_000, encoding: "utf8" }, (err, stdout) => {
+  // 命令与解析都在 login-shell-path.ts（2026-09-01）：fish 的 $PATH 是列表，老的 `echo 前缀$PATH` 会把前缀
+  // 分发到每个元素，旧解析把那一整行当成「1 段」并进了 PATH 还写日志说成功。现在两枚哨兵夹一行、逐段验。
+  execFile(shell, ["-lc", 问PATH的命令(shell)], { timeout: 5_000, encoding: "utf8" }, (err, stdout) => {
+    // csh/tcsh 不收 `-lc`、shell 不存在、5 秒没回——都走这里；日志里能看到是哪个 shell 怎么拒的
     if (err) return 启动日志(`登录 shell 的 PATH 没拿到（${shell}）：${err.message.split("\n")[0]}`)
-    const line = stdout.split("\n").find((l) => l.startsWith("__DAWN_PATH__"))
-    const 终端PATH = line?.slice("__DAWN_PATH__".length).trim()
-    if (!终端PATH) return 启动日志(`登录 shell 没回 PATH（${shell}）`)
-    const 现有 = (process.env.PATH ?? "").split(":").filter(Boolean)
-    const 合并 = [...new Set([...终端PATH.split(":").filter(Boolean), ...现有])]
-    process.env.PATH = 合并.join(":")
-    启动日志(`PATH 已并入登录 shell 的：${终端PATH.split(":").length} 段（${shell}）`)
+    const r = 合并PATH(stdout, process.env.PATH ?? "")
+    if (r.段.length === 0) return 启动日志(`登录 shell 的 PATH 没并进来（${shell}）：${r.问题}`)
+    process.env.PATH = r.合并后
+    // 弃掉了几段也要说：少并的那一段正好是用户装 claude 的地方时，这行就是线索
+    启动日志(`PATH 已并入登录 shell 的：${r.段.length} 段（${shell}）${r.问题 ? `；${r.问题}` : ""}`)
   })
 }
 

@@ -6,7 +6,7 @@
  * 入口得看得见、点得着。
  */
 import { describe, expect, it, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import { SettingsPanel } from "../../src/ui/Settings.js"
 import { $lang } from "../../src/ui/i18n/index.js"
 
@@ -225,6 +225,24 @@ describe("模型服务 · 添加", () => {
     })
   })
 
+  it("**自定义端点：先落连接，落完再存 key**（B9，2026-09-01）——存 key 会当场去端点验一句，端点还没写下就验到空处", async () => {
+    let 连接落地!: () => void
+    const onSaveConnection = vi.fn(() => new Promise<void>((r) => (连接落地 = r)))
+    const onSet = vi.fn()
+    render(面板({ onSaveConnection, onSet }))
+    fireEvent.click(screen.getByRole("button", { name: /添加模型服务/ }))
+    fireEvent.click(screen.getByRole("radio", { name: "自定义端点" }))
+    fireEvent.change(screen.getByLabelText("新服务的名字"), { target: { value: "my-vllm" } })
+    fireEvent.change(screen.getByLabelText("新服务的端点地址"), { target: { value: "http://localhost:8000/v1" } })
+    fireEvent.change(screen.getByLabelText("新服务的模型清单"), { target: { value: "local-7b" } })
+    fireEvent.change(screen.getByLabelText("新服务的 API key"), { target: { value: "local" } })
+    fireEvent.click(screen.getByRole("button", { name: "加进来" }))
+    expect(onSaveConnection).toHaveBeenCalledTimes(1)
+    expect(onSet).not.toHaveBeenCalled()
+    await act(async () => 连接落地())
+    expect(onSet).toHaveBeenCalledWith("my-vllm", "local")
+  })
+
   it("**key 是必填的，哪怕你的端点不要** —— 这条是在真实产物上验出来的", () => {
     const onSaveConnection = vi.fn()
     render(面板({ onSaveConnection }))
@@ -278,5 +296,26 @@ describe("模型服务 · 添加", () => {
   it("**填了 key 却建不出 agent 的那一行，收起时就写着为什么**（B8）——「⚠ 没有模型」只说了现象，原因在后端手里", () => {
     render(面板({ modelsOf: () => [], unusable: [{ providerId: "deepseek", reason: "模型目录里没有 deepseek 的模型" }] }))
     expect(screen.getByText(/模型目录里没有 deepseek 的模型/)).toBeDefined()
+  })
+
+  it("key 没能验证（soft，B9）的那一行也写着那句话——不拦人，但得让人知道还没验过", () => {
+    render(
+      面板({
+        unusable: [
+          {
+            providerId: "deepseek",
+            reason: "没能验证 deepseek 的 key（Connection error.）——可能是网络；发一句试试就知道",
+            soft: true,
+            i18n: { msgid: "没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道", args: ["deepseek", "Connection error."] },
+          },
+        ],
+      }),
+    )
+    expect(screen.getByText(/没能验证 deepseek 的 key（Connection error.）/)).toBeDefined()
+  })
+
+  it("key 验证失败（hard，B9）的那一行写着对方的原话", () => {
+    render(面板({ unusable: [{ providerId: "deepseek", reason: "deepseek 的 key 验证失败：invalid api key", i18n: { msgid: "{0} 的 key 验证失败：{1}", args: ["deepseek", "invalid api key"] } }] }))
+    expect(screen.getByText(/deepseek 的 key 验证失败：invalid api key/)).toBeDefined()
   })
 })

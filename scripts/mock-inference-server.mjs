@@ -91,12 +91,20 @@ export const MARKDOWN_REPLY = [
  * @param {string} [opts.thinking] 假模型「想」的内容。**给了才发**——
  *   大多数用例不需要它，平白多一段思考会把别的断言的上下文搅乱
  *   返回值非空时，改为让模型「调用一个工具」——用来在 e2e 里确定性地触发工具路径
- * @returns {Promise<{url: string, port: number, requests: any[], close: () => Promise<void>}>}
+ * @returns {Promise<{url: string, port: number, requests: any[], keyChecks: any[], close: () => Promise<void>}>}
  */
 export function startMockInferenceServer(opts = {}) {
   const 默认回复 = opts.reply ?? CANNED_REPLY
   /** 收到的请求原样留存，供测试断言「我们到底发了什么给模型」 */
   const requests = []
+  /**
+   * 填 key 时那一次验证（B9，2026-09-01）**另记一本**，不进 `requests`。
+   *
+   * 后端存完 key 会用对话真会发的那条请求问一句（user 是 `DAWN key check`，1 个 token）。
+   * 它要是混进 `requests`，「第一次请求用的是哪个模型」「请求数没变」这类断言全会挪一位——
+   * 而那些用例验的不是它。分开记，两边都还是真的：验证发没发看 `keyChecks`，对话发了什么看 `requests`。
+   */
+  const keyChecks = []
 
   const server = http.createServer((req, res) => {
     let raw = ""
@@ -120,7 +128,10 @@ export function startMockInferenceServer(opts = {}) {
         res.end(JSON.stringify({ error: { message: "mock server 收到了非 JSON 的请求体" } }))
         return
       }
-      requests.push({ url: req.url, body })
+      const 文本 = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : "")
+      const 最后一句 = 文本([...(body.messages ?? [])].reverse().find((m) => m.role === "user")?.content)
+      const 是key验证 = 最后一句.includes("DAWN key check")
+      ;(是key验证 ? keyChecks : requests).push({ url: req.url, body })
 
       /**
        * **说了「markdown」就给那一大段。** 排版这件事看不见就没法改，
@@ -174,12 +185,13 @@ export function startMockInferenceServer(opts = {}) {
        * （原文前还带着什么参考块，原样复述在前面，e2e 据此断言带没带上下文）；
        * user 里带「只回一个 JSON 对象」= 一次判定，按正文里有没有「相关」「开发」「README」回 JSON。
        */
-      const 文本 = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : "")
       const 系统原文 = 文本(body.messages?.find?.((m) => m.role === "system")?.content)
-      const 最后一句 = 文本([...(body.messages ?? [])].reverse().find((m) => m.role === "user")?.content)
       const 增强 = 系统原文.includes("只输出改写后的提示词")
       const 判定 = 最后一句.includes("只回一个 JSON 对象")
-      const reply = 判定
+      // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
+      const reply = 是key验证
+        ? "ok"
+        : 判定
         ? 最后一句.includes('"related"')
           ? JSON.stringify({ related: /相关/.test(最后一句.split("当前输入")[0] ?? ""), reason: "假判定" })
           : 最后一句.includes("isDevIntent")
@@ -196,6 +208,35 @@ export function startMockInferenceServer(opts = {}) {
 
       const tool = opts.toolCall?.(body)
       const stream = body.stream !== false
+
+      /**
+       * **Anthropic Messages 协议的端点也答**（B9，2026-09-01，规则 ①）。
+       *
+       * pi 认识的 provider 里有说 Anthropic 协议的（`kimi-coding` 的 `k3` 就是），e2e 把它们的地址盖到
+       * 这台假服务器上之后，填 key 那一次验证打到的是 `…/v1/messages`。此前这里只会吐 OpenAI 的 SSE，
+       * pi 的 Anthropic 解析器读完说「stream ended without a stop reason」——验证被记成「没能判定」，
+       * 而那不是 key 的事，是假服务器不会说这门话。事件形状照 pi 的解析器要的最小集
+       * （`@earendil-works/pi-ai/dist/api/anthropic-messages.js`：message_start 带 usage、
+       * content_block_*、message_delta 带 stop_reason、message_stop）。只答文字，不答工具调用。
+       */
+      if (req.url?.endsWith("/messages")) {
+        const usage = { input_tokens: 1, output_tokens: 1 }
+        if (!stream) {
+          res.writeHead(200, { "content-type": "application/json" })
+          res.end(JSON.stringify({ id: "msg-mock", type: "message", role: "assistant", model: body.model, content: [{ type: "text", text: reply }], stop_reason: "end_turn", stop_sequence: null, usage }))
+          return
+        }
+        res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" })
+        const ev = (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`)
+        ev("message_start", { message: { id: "msg-mock", type: "message", role: "assistant", model: body.model, content: [], stop_reason: null, usage } })
+        ev("content_block_start", { index: 0, content_block: { type: "text", text: "" } })
+        ev("content_block_delta", { index: 0, delta: { type: "text_delta", text: reply } })
+        ev("content_block_stop", { index: 0 })
+        ev("message_delta", { delta: { stop_reason: "end_turn", stop_sequence: null }, usage })
+        ev("message_stop", {})
+        res.end()
+        return
+      }
 
       if (!stream) {
         res.writeHead(200, { "content-type": "application/json" })
@@ -244,6 +285,7 @@ export function startMockInferenceServer(opts = {}) {
         url: `http://127.0.0.1:${port}/v1`,
         port,
         requests,
+        keyChecks,
         close: () => new Promise((r) => server.close(() => r())),
       })
     })

@@ -91,6 +91,7 @@ import type { SessionTranscripts } from "./events.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
 import { i18n消息, 渲染i18n, type FaultI18n } from "../protocol/fault-i18n.js"
+import { 验一次key, type Key验证结果 } from "./key-validate.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
@@ -264,8 +265,13 @@ export interface WorkbenchBackendOptions {
    */
   askOnce?: (
     目标: { sessionId: string } | { provider: string; model: string },
-    req: { system?: string; user: string; maxTokens: number; signal?: AbortSignal },
+    req: { system?: string; user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
   ) => Promise<{ text: string; model: string }>
+  /**
+   * 填 key 时那一次验证最多等多久（B9，2026-09-01）。缺省 8 秒；测试注入一个小的。
+   * 到点归 `soft`（没能判定），保存本身早已成功。
+   */
+  keyCheckTimeoutMs?: number
   /**
    * 交给系统打开一个**绝对路径**（②-A′ · F3）。
    *
@@ -485,7 +491,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, memory } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, memory, keyCheckTimeoutMs = 8_000 } = opts
 
   /** 记忆没装配就如实拒（与 scratchRoot 同一条：不猜路径、不静默降级） */
   const 要记忆 = () => {
@@ -875,6 +881,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    *   - **绝不覆盖已声明的**：某个 provider 已经有 agent 在用就不再自动加，
    *     否则用户精心写的 model 会被我们挑的那个顶掉。
    */
+  /**
+   * 填 key 时那一次验证的结果，按 provider 记（B9，2026-09-01）。
+   *
+   * **只在内存里、不落盘**：重启之后没有结果 = 没验过，这是对的——上次验过对，
+   * 说明不了这次还对；红字要么来自这一次运行里真发过的请求，要么没有。
+   * `setCredential` 写、`deleteCredential` 清；`getProviders` 端出去时 B8 的理由压过它
+   * （目录空了就发不出请求，旧的验证话再挂着就是过期的）。
+   */
+  const key验证结果 = new Map<string, Key验证结果 | { kind: "timeout"; seconds: number }>()
+
+  /** 把一条验证结果翻成 `unusable[]` 里的那种条目；`ok` 不出现 */
+  function 验证结果条目(providerId: string, r: Key验证结果 | { kind: "timeout"; seconds: number }): { i18n: FaultI18n; soft: boolean } | undefined {
+    switch (r.kind) {
+      case "ok":
+        return undefined
+      case "hard":
+        return { i18n: i18n消息("{0} 的 key 验证失败：{1}", providerId, r.detail), soft: false }
+      case "timeout":
+        return { i18n: i18n消息("没能验证 {0} 的 key：等了 {1} 秒没回话——可能是网络；发一句试试就知道", providerId, r.seconds), soft: true }
+      case "soft":
+        return { i18n: i18n消息("没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道", providerId, r.detail), soft: true }
+    }
+  }
+
   /**
    * 回传建不出 agent 的 provider 各自的理由（B8，2026-09-01）。**每次重算都是一张新表**，
    * 否则目录后来有了，红字还挂着。`getProviders` 把它端出去。
@@ -1717,8 +1747,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           })),
         ),
         // 填了 key 却建不出 agent 的那些，连理由一起（B8）。**有目录端口就一定给**——空数组是「都能用」
+        // 再并上填 key 时验出来的（B9）：B8 有话的那家以 B8 为准（目录空着根本发不出请求）；`soft` 是「没能判定」，界面不拦
         ...(models?.available
-          ? { unusable: [...建不出agent的理由].map(([providerId, i18n]) => ({ providerId, reason: 渲染i18n(i18n.msgid, i18n.args), i18n })) }
+          ? {
+              unusable: [
+                ...[...建不出agent的理由].map(([providerId, i18n]) => ({ providerId, reason: 渲染i18n(i18n.msgid, i18n.args), i18n })),
+                ...[...key验证结果]
+                  .filter(([providerId]) => !建不出agent的理由.has(providerId))
+                  .flatMap(([providerId, r]) => {
+                    const 条 = 验证结果条目(providerId, r)
+                    return 条 ? [{ providerId, reason: 渲染i18n(条.i18n.msgid, 条.i18n.args), i18n: 条.i18n, ...(条.soft ? { soft: true } : {}) }] : []
+                  }),
+              ],
+            }
           : {}),
       }
     },
@@ -1739,12 +1780,32 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 凭证变了必须让 pi 侧的缓存失效，否则刚填的 key 不会生效
       // （缓存的存在理由见 credential-store.ts：一次会话 202 次 read）
       invalidateCredentials?.(providerId)
+      /**
+       * 存完当场验一次（B9，2026-09-01）：用对话真会发的那条请求问一句、1 个 token。
+       *
+       * **存在前、验在后，验的结果从不让保存失败**——key 已经在钥匙串里了，验证只产出一条话。
+       * 没接 `askOnce`（这次运行没有 native 运行时）或目录里挑不出模型（B8 会说这件事）就不验、
+       * 也不留结果：「没验」与「验过是好的」在 `key验证结果` 里都是「没有这一条」，界面上都是不出现。
+       * 模型挑目录里第一个——与 `确保配过key的都能用` 造 agent 时挑的是同一个，验的就是要用的。
+       */
+      key验证结果.delete(providerId)
+      if (askOnce && models?.available) {
+        const model = (await models.available(providerId).catch(() => []))[0]
+        if (model) {
+          const r = await 验一次key(askOnce, { provider: providerId, model }, keyCheckTimeoutMs)
+          if (r.kind !== "ok") {
+            key验证结果.set(providerId, r)
+            console.error(`[凭证] ${providerId} 的 key 验证${r.kind === "hard" ? "失败" : "没能判定"}：${"detail" in r ? r.detail : `等了 ${r.seconds} 秒没回话`}`)
+          }
+        }
+      }
       return {}
     },
 
     deleteCredential: async ({ providerId }) => {
       credentials.delete(providerId)
       invalidateCredentials?.(providerId)
+      key验证结果.delete(providerId)
       return {}
     },
 

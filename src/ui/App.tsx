@@ -3657,7 +3657,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 {...(knownProviders.connections
                   ? { connections: knownProviders.connections }
                   : {})}
-                onSaveConnection={(providerId, conn) => {
+                onSaveConnection={(providerId, conn) =>
                   client
                     .get("setProviderConnection", { providerId, ...conn })
                     /**
@@ -3674,7 +3674,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       ]),
                     )
                     .catch(fail)
-                }}
+                }
                 {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
                 unusable={providers.unusable}
                 credentials={creds}

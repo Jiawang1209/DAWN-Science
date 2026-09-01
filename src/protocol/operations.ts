@@ -399,6 +399,11 @@ export const OPERATIONS = {
               reason: z.string().min(1),
               /** 同一句话的 msgid 与 args，界面按当前语言 `tf` 一遍（B15，2026-09-01）。可选：老后端不给也解析得了 */
               i18n: FaultI18nSchema.optional(),
+              /**
+               * 「没能判定」而不是「用不了」（B9，2026-09-01）：填 key 时那一次验证超时、连不上、5xx 或认不出。
+               * 界面照样把话摆出来，但**不拦**「开始使用」——拦了等于把断网的人锁在门外。不给 = 拦。
+               */
+              soft: z.boolean().optional(),
             })
             .strict(),
         )

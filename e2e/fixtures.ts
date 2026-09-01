@@ -239,6 +239,8 @@ export interface DawnFixture {
   workspace: string
   /** 假服务器收到的请求。用来证明测试**不是空转通过** */
   requests: unknown[]
+  /** 填 key 时那一次验证（B9）——另记一本，不混进 `requests`（理由见 mock 里 `keyChecks` 的注释） */
+  keyChecks: unknown[]
   /** 假微信（开了 `fakeIlink` 才有）：推进扫码、塞消息、读发出的、让 token 失效 */
   weixin?: FakeIlinkServer
   feishu?: FakeFeishuServer
@@ -527,14 +529,15 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
 
     const modelsPath = join(dir, "models.json")
     if (!dawnOptions.noModelsBase) {
-      writeFileSync(
-        modelsPath,
-        JSON.stringify(
-          mockModelsJson(server.url, "deepseek", undefined, !dawnOptions.modelsWithoutImages),
-          null,
-          2,
-        ),
-      )
+      const 目录 = mockModelsJson(server.url, "deepseek", undefined, !dawnOptions.modelsWithoutImages)
+      /**
+       * **`kimi-coding` 也指到假服务器**（B9，2026-09-01）。
+       *
+       * `key-is-enough.spec` 给 pi 认识的这家填 `sk-fake`；填 key 现在会当场往它的端点问一句——
+       * 不盖住地址，e2e 就往真的 api.kimi.com 发请求。e2e 不碰外网。
+       */
+      目录.providers["kimi-coding"] = mockModelsJson(server.url, "kimi-coding", ["kimi-mock"]).providers["kimi-coding"]!
+      writeFileSync(modelsPath, JSON.stringify(目录, null, 2))
     }
     const dbPath = join(dir, "dawn.db")
 
@@ -737,6 +740,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       dbPath,
       workspace,
       requests: server.requests,
+      keyChecks: server.keyChecks,
       mockUrl: server.url,
       ...(weixin ? { weixin } : {}),
       ...(feishu ? { feishu } : {}),

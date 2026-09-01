@@ -767,12 +767,13 @@ export function SettingsPanel({
   /** 已经写下的连接设置。**只装写过的**，没写过的没有键 */
   connections?: Record<string, Connection> | undefined
   /** 全量替换一个 provider 的连接设置。**三样全空 = 取消覆盖** */
-  onSaveConnection: (providerId: string, conn: Connection) => void
+  /** 回传 promise 的话，「添加自定义端点」会等它落地再存 key（B9：存 key 当场去端点验一句，端点得先写下） */
+  onSaveConnection: (providerId: string, conn: Connection) => void | Promise<unknown>
   credentials: CredentialState
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
   /** 配了却建不出 agent 的那些及其理由（`getProviders.unusable`，B8）——摘要上的「⚠ 没有模型」只说了现象 */
-  unusable?: readonly { providerId: string; reason: string; i18n?: FaultI18n | undefined }[] | undefined
+  unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; i18n?: FaultI18n | undefined }[] | undefined
 }) {
   /**
    * **这台机器上「配过」的服务。** 三个来源合一：
@@ -857,8 +858,10 @@ export function SettingsPanel({
           set展开(id)
         }}
         onAddCustom={(id, conn, secret) => {
-          onSaveConnection(id, conn)
-          if (secret) onSet(id, secret)
+          // 先落连接、后存 key：存 key 会当场去端点验一句（B9），连接还没写下就验到空处
+          void Promise.resolve(onSaveConnection(id, conn)).then(() => {
+            if (secret) onSet(id, secret)
+          })
           set展开(id)
         }}
       />

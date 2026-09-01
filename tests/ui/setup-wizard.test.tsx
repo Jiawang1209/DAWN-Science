@@ -114,4 +114,49 @@ describe("SetupWizard", () => {
     expect(screen.getByText(/kimi 的 key 已保存，但还建不出可用的模型：目录读不出来：boom/)).toBeTruthy()
     expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(false)
   })
+
+  it("key 验证失败（hard，B9）→ 与 B8 一样拦住「开始使用」，理由看得见", () => {
+    render(
+      <SetupWizard
+        {...基本}
+        configured={["deepseek"]}
+        onSaveKey={async () => {}}
+        unusable={[{ providerId: "deepseek", reason: "deepseek 的 key 验证失败：invalid api key", i18n: { msgid: "{0} 的 key 验证失败：{1}", args: ["deepseek", "invalid api key"] } }]}
+      />,
+    )
+    expect(screen.getByText(/deepseek 的 key 验证失败：invalid api key/)).toBeTruthy()
+    expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it("没能验证（soft，B9：可能是网络）→ 那句话照样看得见，但**不拦**「开始使用」——拦了等于把断网的人锁在门外", () => {
+    render(
+      <SetupWizard
+        {...基本}
+        configured={["deepseek"]}
+        onSaveKey={async () => {}}
+        unusable={[
+          {
+            providerId: "deepseek",
+            reason: "没能验证 deepseek 的 key（Connection error.）——可能是网络；发一句试试就知道",
+            soft: true,
+            i18n: { msgid: "没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道", args: ["deepseek", "Connection error."] },
+          },
+        ]}
+      />,
+    )
+    const 话 = screen.getByText(/没能验证 deepseek 的 key（Connection error.）/)
+    expect(话.className).toBe("caveat")
+    expect(screen.getByText(/✓ 已填 deepseek/)).toBeTruthy()
+    expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it("保存时按钮的字要说明**正在验证**——验证要等对方回话，几秒的「保存」看着像卡死", async () => {
+    let 放行!: () => void
+    const onSaveKey = vi.fn(() => new Promise<void>((r) => (放行 = r)))
+    render(<SetupWizard {...基本} configured={[]} onSaveKey={onSaveKey} />)
+    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "sk-1" } })
+    fireEvent.click(screen.getByRole("button", { name: "保存" }))
+    expect(screen.getByRole("button", { name: /验证/ })).toBeTruthy()
+    await act(async () => 放行())
+  })
 })

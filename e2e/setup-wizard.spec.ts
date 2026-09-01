@@ -84,6 +84,9 @@ test.describe("首启向导 · 产品原样的默认配置", () => {
     await 向导.getByLabel("API key").fill("sk-e2e-test")
     await 向导.getByRole("button", { name: "保存", exact: true }).click()
     await expect(向导).toContainText(/已填/)
+    // 存完当场验了一次（B9）：假服务器另一本账上有它，且验过是好的——向导上没有红字
+    expect(dawn.keyChecks.length).toBe(1)
+    await expect(向导.locator(".caveat")).toHaveCount(0)
     await 向导.getByRole("button", { name: "开始使用 →" }).click()
     await expect(向导).toHaveCount(0)
 

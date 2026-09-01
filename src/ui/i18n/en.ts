@@ -524,7 +524,6 @@ export const EN: Readonly<Record<string, string>> = {
   "已填 {0}": "Saved for {0}",
   "服务商": "Provider",
   "API key": "API key",
-  "正在保存…": "Saving…",
   "填完立刻可以对话。key 只存在本机。": "Once saved you can chat right away. The key stays on this machine.",
   "（可选，笔记本用；不配也能聊）": "(optional, for the notebook; chatting works without it)",
   "开始使用 →": "Get started →",
@@ -1427,4 +1426,8 @@ export const EN: Readonly<Record<string, string>> = {
   "设备流没起来：{0}": "The device flow did not start: {0}",
   "模型目录读不出来：{0}": "The model catalogue could not be read: {0}",
   "模型目录里没有 {0} 的模型，挑不出一个来建 agent": "The model catalogue has no models for {0}, so there is none to build an agent from",
+  "{0} 的 key 验证失败：{1}": "The key for {0} failed verification: {1}",
+  "没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道": "Could not verify the key for {0} ({1}) — possibly the network; send a message and you will know",
+  "没能验证 {0} 的 key：等了 {1} 秒没回话——可能是网络；发一句试试就知道": "Could not verify the key for {0}: no reply after {1} s — possibly the network; send a message and you will know",
+  "正在保存并验证 key…": "Saving and verifying key…",
 }

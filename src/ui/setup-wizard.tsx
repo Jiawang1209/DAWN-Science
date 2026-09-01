@@ -62,7 +62,7 @@ export function SetupWizard({
    * key 存进去了、却建不出 agent 的那些（`getProviders.unusable`，B8）。
    * 没有它，「已填 deepseek ✓」下面一点「开始使用」，进去是个没有 agent 的空应用——原因得在人正看着的这一屏说。
    */
-  unusable?: readonly { providerId: string; reason: string; i18n?: FaultI18n | undefined }[] | undefined
+  unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; i18n?: FaultI18n | undefined }[] | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void
@@ -85,7 +85,8 @@ export function SetupWizard({
 
   /** 「开始使用」的门槛是**至少一家能用**：全都建不出 agent 时放人进去，等于把他锁在一个空屏里 */
   const 用不了的 = (unusable ?? []).filter((u) => configured.includes(u.providerId))
-  const 有key = configured.length > 0 && configured.some((id) => !用不了的.some((u) => u.providerId === id))
+  /** `soft` 是「没能验证」（B9）——话要摆出来，但**不算用不了**：断网时填的 key 可能是好的，拦了就是把人锁在门外 */
+  const 有key = configured.length > 0 && configured.some((id) => !用不了的.some((u) => u.providerId === id && !u.soft))
 
   const 保存 = async () => {
     if (!provider || !secret.trim()) return
@@ -132,8 +133,11 @@ export function SetupWizard({
         {broken?.length ? <p className="caveat">{tf("上一版保存的 key 解不开了（{0}）——应用更新后系统钥匙串换了身份，请重新填一次", broken.join("、"))}</p> : null}
         {用不了的.map((u) => (
           <p key={u.providerId} className="caveat">
-            {/* 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示 */}
-            {tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason)}
+            {/* 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示。
+                `soft`（B9）那句本身就是整句话（「没能验证 deepseek 的 key…」），不再套「建不出可用的模型」 */}
+            {u.soft
+              ? u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason
+              : tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason)}
           </p>
         ))}
         <form
@@ -158,7 +162,8 @@ export function SetupWizard({
             <input className="control" type="password" value={secret} onChange={(e) => setSecret(e.target.value)} aria-label={t("API key")} autoComplete="off" />
           </label>
           <Button type="submit" variant="primary" size="sm" disabled={saving || !provider || !secret.trim()}>
-            {saving ? t("正在保存…") : t("保存")}
+            {/* 保存要等对方回一句（B9 的验证，最多 8 秒）——只写「正在保存」看着像卡死 */}
+            {saving ? t("正在保存并验证 key…") : t("保存")}
           </Button>
         </form>
         {keyError ? <p className="field-error">{keyError}</p> : null}

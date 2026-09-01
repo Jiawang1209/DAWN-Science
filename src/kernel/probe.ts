@@ -35,6 +35,8 @@ export interface 枚举依赖 {
   pathLookup(name: string): string[]
   settings: { python?: string | undefined; r?: string | undefined }
   kernelspecs: readonly { language?: string | undefined; executable?: string | undefined }[]
+  /** uv / pixi 的目录能用环境变量挪走（`UV_PYTHON_INSTALL_DIR`、`PIXI_HOME`）；不给就读 `process.env`，单测传 `{}` 隔开真机 */
+  env?: NodeJS.ProcessEnv | undefined
 }
 
 export const 超时毫秒 = 8_000
@@ -67,11 +69,25 @@ function 常见目录(语言: 语言, d: 枚举依赖): string[] {
   if (语言 === "python") {
     const 固定 = ["/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/usr/bin/python3"].filter((p) => d.exists(p))
     const conda = ["miniconda3", "anaconda3", "miniforge3"]
+    const env = d.env ?? process.env
+    // C22（2026-09-01）：只用 uv / pixi 装 Python 的人，向导里一条都看不见——这两家的目录以前没看。
+    // uv 托管的 Python 在 `$UV_PYTHON_INSTALL_DIR`，缺省 `$XDG_DATA_HOME/uv/python` → `~/.local/share/uv/python`；
+    // mac 上老版本落过 `~/Library/Application Support/uv`，两处都看，多问一次 glob 不花钱。
+    const uv根 = env.UV_PYTHON_INSTALL_DIR
+      ? [env.UV_PYTHON_INSTALL_DIR]
+      : [
+          join(env.XDG_DATA_HOME || join(h, ".local", "share"), "uv", "python"),
+          ...(d.platform === "darwin" ? [join(h, "Library", "Application Support", "uv", "python")] : []),
+        ]
+    // pixi 全局环境在 `$PIXI_HOME/envs/<名字>`，缺省 `~/.pixi`；项目里的 `.pixi/envs` 与 uv 的 `.venv` 要知道工作区在哪，这里没有，不猜
+    const pixi根 = env.PIXI_HOME || join(h, ".pixi")
     return [
       ...固定,
       ...d.glob(join(h, ".pyenv", "versions", "*", "bin", "python")),
       ...conda.map((c) => join(h, c, "bin", "python")).filter((p) => d.exists(p)),
       ...conda.flatMap((c) => d.glob(join(h, c, "envs", "*", "bin", "python"))),
+      ...uv根.flatMap((r) => d.glob(join(r, "*", "bin", "python3"))),
+      ...d.glob(join(pixi根, "envs", "*", "bin", "python")),
     ]
   }
   return ["/opt/homebrew/bin/Rscript", "/usr/local/bin/Rscript", "/Library/Frameworks/R.framework/Resources/bin/Rscript"]

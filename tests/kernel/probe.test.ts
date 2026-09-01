@@ -38,6 +38,55 @@ describe("枚举候选", () => {
     expect(枚举候选("python", d).map((c) => c.path)).toEqual(["/Users/me/.pyenv/versions/3.11.9/bin/python", "/Users/me/miniconda3/envs/sci/bin/python"])
   })
 
+  // C22（2026-09-01）：只用 uv / pixi 装 Python 的人，向导里一条都看不见——常见目录漏了这两家
+  it("uv 托管的 Python 与 pixi 全局环境列进来（source 仍是 common）；顺序在 pyenv / conda 之后", () => {
+    const d = 依赖({
+      env: {},
+      glob: (pat) =>
+        pat.includes(".pyenv")
+          ? ["/Users/me/.pyenv/versions/3.11.9/bin/python"]
+          : pat.includes(".local/share/uv/python")
+            ? ["/Users/me/.local/share/uv/python/cpython-3.12.4-macos-aarch64-none/bin/python3"]
+            : pat.includes(".pixi/envs")
+              ? ["/Users/me/.pixi/envs/sci/bin/python"]
+              : [],
+    })
+    expect(枚举候选("python", d)).toEqual([
+      { path: "/Users/me/.pyenv/versions/3.11.9/bin/python", source: "common" },
+      { path: "/Users/me/.local/share/uv/python/cpython-3.12.4-macos-aarch64-none/bin/python3", source: "common" },
+      { path: "/Users/me/.pixi/envs/sci/bin/python", source: "common" },
+    ])
+  })
+
+  it("mac 上 uv 的两处目录都看（~/.local/share 与 ~/Library/Application Support）；Linux 只看前者", () => {
+    const 问过: string[] = []
+    const d = 依赖({ env: {}, glob: (pat) => (问过.push(pat), []) })
+    枚举候选("python", d)
+    expect(问过).toContain("/Users/me/.local/share/uv/python/*/bin/python3")
+    expect(问过).toContain("/Users/me/Library/Application Support/uv/python/*/bin/python3")
+    问过.length = 0
+    枚举候选("python", 依赖({ env: {}, platform: "linux", glob: (pat) => (问过.push(pat), []) }))
+    expect(问过).toContain("/Users/me/.local/share/uv/python/*/bin/python3")
+    expect(问过.some((p) => p.includes("Application Support"))).toBe(false)
+  })
+
+  it("$UV_PYTHON_INSTALL_DIR / $PIXI_HOME 设了就按它们找；同一路径不重复", () => {
+    const d = 依赖({
+      env: { UV_PYTHON_INSTALL_DIR: "/vol/uv-py", PIXI_HOME: "/vol/pixi" },
+      glob: (pat) =>
+        pat.startsWith("/vol/uv-py/")
+          ? ["/vol/uv-py/cpython-3.13.0-linux-x86_64-gnu/bin/python3"]
+          : pat.startsWith("/vol/pixi/envs/")
+            ? ["/vol/pixi/envs/lab/bin/python", "/vol/pixi/envs/lab/bin/python"]
+            : [],
+    })
+    expect(枚举候选("python", d).map((c) => c.path)).toEqual(["/vol/uv-py/cpython-3.13.0-linux-x86_64-gnu/bin/python3", "/vol/pixi/envs/lab/bin/python"])
+  })
+
+  it("uv / pixi 的目录不在 → 什么都不多列", () => {
+    expect(枚举候选("python", 依赖({ env: {} }))).toEqual([])
+  })
+
   it("kernelspec 指向的路径已经不存在 → 不列（作者机器上三条删掉的 miniconda 环境）；设置里那条照列", () => {
     const d = 依赖({
       settings: { python: "/gone/settings/python" },

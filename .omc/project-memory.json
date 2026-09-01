@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1788004909644,
+  "lastScanned": 1788262789440,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cp src/electron/credentials.ts /tmp/credentials.ts.bak && python3 - <<'EOF'\np='src/electron/credentials.ts'; s=open(p).read()\ns=s.replace('    if (!data.encrypted) return raw\\n','    if (!data.encrypted) return raw\\n    console.error(\"[PROBE get]\", endpointId, new Error().stack?.split(\"\\\\n\").slice(2,14).join(\"\\\\n\"))\\n',1)\nopen(p,'w').write(s)\nEOF\nnpm run build:electron 2>&1 | tail -2 && cat > /tmp/probe.mjs <<'EOF'\nimport { _electron } from \"@playwright/test\"\nimport { mkdtempSync, mkdirSync, writeFileSync } from \"node:fs\"; import { tmpdir } from \"node:os\"; import { join } from \"node:path\"\nconst tmp=mkdtempSync(join(tmpdir(),\"dawn-probe-\")); const ud=join(tmp,\"ud\"); mkdirSync(ud)\nwriteFileSync(join(ud,\"credentials.json\"),JSON.stringify({encrypted:true,entries:{deepseek:Buffer.from(\"x\").toString(\"base64\")}}))\nconst env={...process.env}; for(const k of Object.keys(env)) if(k.startsWith(\"DAWN_\")||k.endsWith(\"_API_KEY\")) delete env[k]\nenv.DAWN_HIDE_WINDOW=\"1\"\nconst app=await _electron.launch({args:[\"dist/electron/main.js\",`--user-data-dir=${ud}`],env})\napp.process().stderr.on(\"data\",d=>{const t=d.toString(); if(t.includes(\"PROBE\")) process.stdout.write(t)})\nconst page=await app.firstWindow(); await page.locator(\".app-shell\").waitFor({timeout:30000}); await page.waitForTimeout(3000)\nawait app.close()\nEOF\nnode /tmp/probe.mjs 2>&1 | head -40; cp /tmp/credentials.ts.bak src/electron/credentials.ts && git diff --stat src/electron/credentials.ts | tail -1",
-    "testCommand": "npm test 2>&1 | tail -6; echo \"=== FRESH ===\"; REHEARSE_REAL_HOME=1 node scripts/rehearse-fresh-install.mjs 2>&1 | grep -E \"✓|✗|慢|渲染错误|钥匙串|凭证\" | head -30",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; npm run build 2>&1 | tail -6",
+    "testCommand": "S=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/a8ada2ac-9fb6-44ea-ac88-462ac38fd636/scratchpad && rm -f $S/*5.log; (npm run typecheck > $S/tc5.log 2>&1; echo \"TC_EXIT=$?\" >> $S/tc5.log; npm test > $S/unit5.log 2>&1; echo \"UNIT_EXIT=$?\" >> $S/unit5.log; npm run test:e2e > $S/e2e5.log 2>&1; echo \"E2E_EXIT=$?\" >> $S/e2e5.log; npm run test:e2e:visual:only > $S/visual5.log 2>&1; echo \"VIS_EXIT=$?\" >> $S/visual5.log; npm run pack > $S/pack5.log 2>&1; echo \"PACK_EXIT=$?\" >> $S/pack5.log; npm run test:packaged > $S/packaged5.log 2>&1; echo \"TP_EXIT=$?\" >> $S/packaged5.log; REHEARSE_REAL_HOME=1 npm run rehearse:fresh > $S/fresh5.log 2>&1; echo \"FRESH_EXIT=$?\" >> $S/fresh5.log; npm run rehearse:update > $S/update5.log 2>&1; echo \"UPD_EXIT=$?\" >> $S/update5.log); for f in tc5 unit5 e2e5 visual5 pack5 packaged5 fresh5 update5; do echo \"$f: $(grep -E '_EXIT=' $S/$f.log | tail -1)\"; done; grep -E \"Test Files|Tests \" $S/unit5.log; grep -E \"passed|failed|flaky|skipped\" $S/e2e5.log | tail -4; grep -E \"passed|failed\" $S/visual5.log | tail -2; grep -E \"✓|✗|没过|全部通过\" $S/packaged5.log $S/fresh5.log $S/update5.log",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -90,7 +90,8 @@
       "spike:e": "tsx spikes/e-model-switch.ts",
       "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts",
       "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts",
-      "rehearse:fresh": "node scripts/rehearse-fresh-install.mjs"
+      "rehearse:fresh": "node scripts/rehearse-fresh-install.mjs",
+      "rehearse:update": "node scripts/rehearse-update.mjs"
     }
   },
   "conventions": {
@@ -117,7 +118,7 @@
       "path": "agents",
       "purpose": null,
       "fileCount": 22,
-      "lastAccessed": 1788004909608,
+      "lastAccessed": 1788262789415,
       "keyFiles": [
         "bayesian-modeler.md",
         "bioinformatician.md",
@@ -130,14 +131,14 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1788004909610,
+      "lastAccessed": 1788262789416,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 7,
-      "lastAccessed": 1788004909618,
+      "lastAccessed": 1788262789418,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -150,7 +151,7 @@
       "path": "e2e",
       "purpose": null,
       "fileCount": 109,
-      "lastAccessed": 1788004909619,
+      "lastAccessed": 1788262789419,
       "keyFiles": [
         "accent.spec.ts",
         "acp-agent.spec.ts",
@@ -163,14 +164,14 @@
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1788004909620,
+      "lastAccessed": 1788262789419,
       "keyFiles": []
     },
     "packaging": {
       "path": "packaging",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1788004909623,
+      "lastAccessed": 1788262789419,
       "keyFiles": [
         "entitlements.mac.plist",
         "icon.png"
@@ -180,7 +181,7 @@
       "path": "release",
       "purpose": null,
       "fileCount": 11,
-      "lastAccessed": 1788004909624,
+      "lastAccessed": 1788262789419,
       "keyFiles": [
         "DAWN-Science-0.0.1-linux-x86_64.AppImage",
         "DAWN-Science-0.0.1-mac-arm64.dmg",
@@ -192,8 +193,8 @@
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 15,
-      "lastAccessed": 1788004909626,
+      "fileCount": 16,
+      "lastAccessed": 1788262789420,
       "keyFiles": [
         "build-electron.mjs",
         "dawn-mcp-server.mjs",
@@ -206,14 +207,14 @@
       "path": "skills",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1788004909627,
+      "lastAccessed": 1788262789420,
       "keyFiles": []
     },
     "spikes": {
       "path": "spikes",
       "purpose": null,
       "fileCount": 11,
-      "lastAccessed": 1788004909629,
+      "lastAccessed": 1788262789420,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -226,7 +227,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1788004909629,
+      "lastAccessed": 1788262789420,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -235,15 +236,15 @@
     "test-results": {
       "path": "test-results",
       "purpose": null,
-      "fileCount": 0,
-      "lastAccessed": 1788004909629,
+      "fileCount": 1,
+      "lastAccessed": 1788262789420,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 9,
-      "lastAccessed": 1788004909630,
+      "lastAccessed": 1788262789420,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
@@ -256,7 +257,7 @@
       "path": "src/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1788004909631,
+      "lastAccessed": 1788262789421,
       "keyFiles": [
         "loader.ts",
         "mcp-writer.ts",
@@ -267,7 +268,7 @@
       "path": "tests/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1788004909632,
+      "lastAccessed": 1788262789421,
       "keyFiles": [
         "mcp-writer.test.ts",
         "models-json.test.ts",

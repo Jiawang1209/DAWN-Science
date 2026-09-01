@@ -16,6 +16,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createWorkbenchBackend, type CredentialsPort } from "../../src/workbench/backend.js"
 import { 归类key错误, KEY_CHECK_PROMPT } from "../../src/workbench/key-validate.js"
+// @ts-expect-error -- .mjs 脚本，无类型声明
+import { startMockInferenceServer } from "../../scripts/mock-inference-server.mjs"
 
 /* ── 归类 ──────────────────────────────────────────────────────────────── */
 
@@ -78,6 +80,14 @@ describe("归类key错误 · 按 pi 真抛的形状", () => {
     expect(归类key错误(new Error("500: upstream returned 401")).kind).toBe("soft")
   })
 
+  it("`unauthorized` 只出现在一个链接的锚点里 → soft（2026-09-01 终审：限流那句话尾巴上挂着 `…/errors#unauthorized`，它不是在说 key）", () => {
+    expect(归类key错误(new Error("Rate limit exceeded — see https://docs.example.com/errors#unauthorized")).kind).toBe("soft")
+    expect(归类key错误(new Error("see https://x.io/unauthorized for details")).kind).toBe("soft")
+    // 整句就是那个词、或它是话的主语时照旧 hard
+    expect(归类key错误(new Error("Unauthorized")).kind).toBe("hard")
+    expect(归类key错误(new Error("Error: unauthorized: invalid token")).kind).toBe("hard")
+  })
+
   it("太长的原话要截、并说清省了多少（规格 7.5：截断要出声）", () => {
     const r = 归类key错误(new Error("x".repeat(1000)))
     expect(r.detail.length).toBeLessThan(400)
@@ -100,11 +110,11 @@ function 假钥匙串(...有的: string[]): CredentialsPort {
 
 type 返回 = {
   agents: { agentId: string; kind: string }[]
-  unusable?: { providerId: string; reason: string; soft?: boolean; i18n?: { msgid: string; args: (string | number)[] } }[]
+  unusable?: { providerId: string; reason: string; soft?: boolean; kind?: "catalog" | "key"; i18n?: { msgid: string; args: (string | number)[] } }[]
 }
 type 问 = NonNullable<Parameters<typeof createWorkbenchBackend>[0]["askOnce"]>
 
-function 起一套(opts: { askOnce?: 问; available?: (id: string) => Promise<string[]>; timeoutMs?: number } = {}) {
+function 起一套(opts: { askOnce?: 问; available?: (id: string) => Promise<string[]>; needsBaseUrl?: () => Promise<string[]>; timeoutMs?: number } = {}) {
   const registry = { agents: {}, providers: {} }
   const invalidate = vi.fn()
   const backend = createWorkbenchBackend({
@@ -116,7 +126,7 @@ function 起一套(opts: { askOnce?: 问; available?: (id: string) => Promise<st
     events: {} as never,
     credentials: 假钥匙串(),
     invalidateCredentials: invalidate,
-    models: { available: opts.available ?? (async () => ["deepseek-chat"]) },
+    models: { available: opts.available ?? (async () => ["deepseek-chat"]), ...(opts.needsBaseUrl ? { needsBaseUrl: opts.needsBaseUrl } : {}) },
     ...(opts.askOnce ? { askOnce: opts.askOnce } : {}),
     ...(opts.timeoutMs !== undefined ? { keyCheckTimeoutMs: opts.timeoutMs } : {}),
   })
@@ -162,6 +172,8 @@ describe("setCredential 当场验一次（B9）", () => {
         providerId: "deepseek",
         reason: "deepseek 的 key 验证失败：Authentication Fails, Your api key: ****abcd is invalid",
         i18n: { msgid: "{0} 的 key 验证失败：{1}", args: ["deepseek", "Authentication Fails, Your api key: ****abcd is invalid"] },
+        // 「是 key 的事」还是「是目录的事」要说清（2026-09-01 终审）：向导据此决定套不套「建不出可用的模型」那层话
+        kind: "key",
       },
     ])
   })
@@ -175,7 +187,7 @@ describe("setCredential 当场验一次（B9）", () => {
     await 填()
     const u = (await 取()).unusable
     expect(u).toHaveLength(1)
-    expect(u![0]).toMatchObject({ providerId: "deepseek", soft: true })
+    expect(u![0]).toMatchObject({ providerId: "deepseek", soft: true, kind: "key" })
     expect(u![0]!.reason).toContain("Connection error.")
     expect(u![0]!.reason).toMatch(/网络/)
     expect(u![0]!.i18n!.args).toEqual(["deepseek", "Connection error."])
@@ -220,6 +232,18 @@ describe("setCredential 当场验一次（B9）", () => {
     const u = (await 取()).unusable
     expect(u).toHaveLength(1)
     expect(u![0]!.i18n!.msgid).toBe("模型目录里没有 {0} 的模型，挑不出一个来建 agent")
+    expect(u![0]!.kind).toBe("catalog")
+  })
+
+  it("地址要自己填的 provider（Azure / Bedrock 那 8 家）还没填地址 → 不验、不记：请求根本没处发，验出来的只会是「地址呢」，而摘要上已经在催了", async () => {
+    const askOnce = vi.fn<问>(async () => ({ text: "ok", model: "x" }))
+    const { 填, 取 } = 起一套({ askOnce, needsBaseUrl: async () => ["azure-openai-responses"] })
+    await 填("azure-openai-responses")
+    expect(askOnce).not.toHaveBeenCalled()
+    expect((await 取()).unusable).toEqual([])
+    // 别家不受影响
+    await 填("deepseek")
+    expect(askOnce).toHaveBeenCalledTimes(1)
   })
 
   it("B8 的理由压过验证结果：验时目录读得到、造 agent 时读炸了 → 端出去的是「目录读不出来」，不是验证那句（目录都没有，请求就发不出去）", async () => {
@@ -271,5 +295,33 @@ describe("setCredential 当场验一次（B9）", () => {
     })
     await expect(填()).resolves.toEqual({})
     expect(((await backend.listCredentials({})) as { configured: string[] }).configured).toEqual(["deepseek"])
+  })
+})
+
+/* ── 假后端怎么认出那一句 ────────────────────────────────────────────── */
+
+describe("mock 服务器认 key check（2026-09-01 终审 F6）", () => {
+  /** 往假服务器发一句 OpenAI 协议的对话，`user` 是给定的那句 */
+  async function 发(url: string, user: string) {
+    const r = await fetch(`${url}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "m", stream: false, messages: [{ role: "user", content: user }] }),
+    })
+    await r.text()
+  }
+
+  it("**整句就是暗号**才算验证；用户话里提到「DAWN key check」四个字的，是对话，记进 requests", async () => {
+    const server: { url: string; requests: unknown[]; keyChecks: unknown[]; close: () => Promise<void> } = await startMockInferenceServer()
+    try {
+      await 发(server.url, KEY_CHECK_PROMPT)
+      expect(server.keyChecks).toHaveLength(1)
+      expect(server.requests).toHaveLength(0)
+      await 发(server.url, `请解释一下 ${KEY_CHECK_PROMPT} 是什么意思`)
+      expect(server.keyChecks).toHaveLength(1)
+      expect(server.requests).toHaveLength(1)
+    } finally {
+      await server.close()
+    }
   })
 })

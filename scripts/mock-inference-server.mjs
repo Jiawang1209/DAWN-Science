@@ -105,6 +105,8 @@ export function startMockInferenceServer(opts = {}) {
    * 而那些用例验的不是它。分开记，两边都还是真的：验证发没发看 `keyChecks`，对话发了什么看 `requests`。
    */
   const keyChecks = []
+  /** 与 `src/workbench/key-validate.ts` 的 `KEY_CHECK_PROMPT` 是同一句——这是 .mjs 脚本，抄了一份字面量，改要两边一起改 */
+  const KEY_CHECK_PROMPT = "DAWN key check"
 
   const server = http.createServer((req, res) => {
     let raw = ""
@@ -130,7 +132,8 @@ export function startMockInferenceServer(opts = {}) {
       }
       const 文本 = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : "")
       const 最后一句 = 文本([...(body.messages ?? [])].reverse().find((m) => m.role === "user")?.content)
-      const 是key验证 = 最后一句.includes("DAWN key check")
+      // **整句相等**才是验证（2026-09-01 终审 F6）：`includes` 会把一句提到「DAWN key check」的对话也劫走
+      const 是key验证 = 最后一句.trim() === KEY_CHECK_PROMPT
       ;(是key验证 ? keyChecks : requests).push({ url: req.url, body })
 
       /**
@@ -218,6 +221,10 @@ export function startMockInferenceServer(opts = {}) {
        * 而那不是 key 的事，是假服务器不会说这门话。事件形状照 pi 的解析器要的最小集
        * （`@earendil-works/pi-ai/dist/api/anthropic-messages.js`：message_start 带 usage、
        * content_block_*、message_delta 带 stop_reason、message_stop）。只答文字，不答工具调用。
+       *
+       * **这一支到此为止，不走下面 OpenAI 那一支的 `tool` / `图片数` / `增强` 处理**（2026-09-01 终审 F8）：
+       * 今天只有填 key 那一次验证会打到这里，它要的只是一句话。哪天有用例要在 Anthropic 协议上
+       * 验工具调用或收图，得在这里补，不能指望下面那些分支——它们在这条 return 之后。
        */
       if (req.url?.endsWith("/messages")) {
         const usage = { input_tokens: 1, output_tokens: 1 }

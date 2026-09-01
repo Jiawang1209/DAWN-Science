@@ -531,12 +531,21 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     if (!dawnOptions.noModelsBase) {
       const 目录 = mockModelsJson(server.url, "deepseek", undefined, !dawnOptions.modelsWithoutImages)
       /**
-       * **`kimi-coding` 也指到假服务器**（B9，2026-09-01）。
+       * **每一家 e2e 会给它填 key 的 pi 自带 provider，地址都盖到假服务器上**（B9，2026-09-01；终审 F2 补全）。
        *
-       * `key-is-enough.spec` 给 pi 认识的这家填 `sk-fake`；填 key 现在会当场往它的端点问一句——
-       * 不盖住地址，e2e 就往真的 api.kimi.com 发请求。e2e 不碰外网。
+       * 填 key 现在会当场往那家的端点问一句（`setCredential` → `askOnce`，1 个 token）——
+       * pi 自带的地址不盖住，e2e 就往真的 api.kimi.com / api.groq.com 发请求。**e2e 不碰外网。**
+       *
+       * 规则：某条 spec 要给 pi 认识的一家填 key，就在这里加一行。今天用到的：
+       *   - `kimi-coding`：`key-is-enough.spec`（它的 `k3` 说 Anthropic 协议，验证打到 `…/messages`，假服务器答得上）
+       *   - `groq`：`base-url.spec` 的「自带地址的也能改」
+       * 不必列的：自定义端点（`mine` / `late` / `other` / `selfhost`…）地址本来就是 `mockUrl`；
+       * `deepseek` 是基底目录那家；`azure-openai-responses` 这种**地址要自己填、还没填**的，后端根本不验
+       * （`setCredential` 看 `needsBaseUrl`），请求没处发。
        */
-      目录.providers["kimi-coding"] = mockModelsJson(server.url, "kimi-coding", ["kimi-mock"]).providers["kimi-coding"]!
+      for (const [id, 模型] of [["kimi-coding", "kimi-mock"], ["groq", "groq-mock"]] as const) {
+        目录.providers[id] = mockModelsJson(server.url, id, [模型]).providers[id]!
+      }
       writeFileSync(modelsPath, JSON.stringify(目录, null, 2))
     }
     const dbPath = join(dir, "dawn.db")

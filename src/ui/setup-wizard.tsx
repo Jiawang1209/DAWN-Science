@@ -62,7 +62,7 @@ export function SetupWizard({
    * key 存进去了、却建不出 agent 的那些（`getProviders.unusable`，B8）。
    * 没有它，「已填 deepseek ✓」下面一点「开始使用」，进去是个没有 agent 的空应用——原因得在人正看着的这一屏说。
    */
-  unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; i18n?: FaultI18n | undefined }[] | undefined
+  unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; kind?: "catalog" | "key" | undefined; i18n?: FaultI18n | undefined }[] | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void
@@ -134,10 +134,13 @@ export function SetupWizard({
         {用不了的.map((u) => (
           <p key={u.providerId} className="caveat">
             {/* 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示。
-                `soft`（B9）那句本身就是整句话（「没能验证 deepseek 的 key…」），不再套「建不出可用的模型」 */}
-            {u.soft
-              ? u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason
-              : tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason)}
+                B9 那几句（`kind: "key"`，soft 也是它）本身就是整句话（「deepseek 的 key 验证失败：…」），
+                套上「建不出可用的模型」就是 provider 名出现两次、还把「key 错了」说成「目录没模型」（2026-09-01 终审 F4）。
+                只有目录那层（B8）要套：它的原话是「模型目录读不出来：boom」，不带主语 */}
+            {(() => {
+              const 话 = u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason
+              return u.kind === "key" || u.soft ? 话 : tf("{0} 的 key 已保存，但还建不出可用的模型：{1}", u.providerId, 话)
+            })()}
           </p>
         ))}
         <form

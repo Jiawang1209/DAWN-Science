@@ -90,7 +90,7 @@ describe("模型服务 · 编辑器", () => {
     expect(screen.getByLabelText(/deepseek 的模型清单/)).toBeDefined()
   })
 
-  it("**一次保存两处都落地** —— 「存在哪」是我们的实现细节", () => {
+  it("**一次保存两处都落地** —— 「存在哪」是我们的实现细节", async () => {
     const onSet = vi.fn()
     const onSaveConnection = vi.fn()
     render(面板({ onSet, onSaveConnection }))
@@ -99,7 +99,10 @@ describe("模型服务 · 编辑器", () => {
     fireEvent.change(screen.getByLabelText(/deepseek 的端点地址/), {
       target: { value: "https://按量.example.com" },
     })
-    fireEvent.click(screen.getByRole("button", { name: "保存" }))
+    // key 在连接落地之后才存（F1），所以要等一拍
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "保存" }))
+    })
 
     expect(onSet).toHaveBeenCalledWith("deepseek", "sk-new")
     expect(onSaveConnection).toHaveBeenCalledWith("deepseek", {
@@ -243,6 +246,40 @@ describe("模型服务 · 添加", () => {
     expect(onSet).toHaveBeenCalledWith("my-vllm", "local")
   })
 
+  it("**点开那一行改：也是先落连接，落完再存 key**（2026-09-01 终审 F1）——kimi 换成按量线那次，地址和 key 一起填，先存 key 就验到 pi 自带的订阅线上，好 key 被说成「验证失败」", async () => {
+    let 连接落地!: () => void
+    const onSaveConnection = vi.fn(() => new Promise<void>((r) => (连接落地 = r)))
+    const onSet = vi.fn()
+    render(面板({ onSaveConnection, onSet }))
+    点开()
+    fireEvent.change(screen.getByLabelText("deepseek 的端点地址"), { target: { value: "https://api.moonshot.cn/v1" } })
+    fireEvent.change(screen.getByLabelText("deepseek 的 API key"), { target: { value: "sk-good" } })
+    fireEvent.click(screen.getByRole("button", { name: /^保存/ }))
+    expect(onSaveConnection).toHaveBeenCalledWith("deepseek", { baseUrl: "https://api.moonshot.cn/v1" })
+    expect(onSet).not.toHaveBeenCalled()
+    await act(async () => 连接落地())
+    expect(onSet).toHaveBeenCalledWith("deepseek", "sk-good")
+  })
+
+  it("**存 key 那几秒有反馈**（2026-09-01 终审 F3）：按钮灰着、写着「正在保存并验证 key…」，key 框等存完才清空；完了按钮回来", async () => {
+    let 存完!: () => void
+    const onSet = vi.fn(() => new Promise<void>((r) => (存完 = r)))
+    render(面板({ onSet }))
+    点开()
+    const 框 = screen.getByLabelText("deepseek 的 API key") as HTMLInputElement
+    fireEvent.change(框, { target: { value: "sk-new" } })
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^保存/ }))
+    })
+    const 按钮 = screen.getByRole("button", { name: "正在保存并验证 key…" }) as HTMLButtonElement
+    expect(按钮.disabled).toBe(true)
+    // 还没存完，框里的字不能先没了——没了就等于「已经好了」
+    expect(框.value).toBe("sk-new")
+    await act(async () => 存完())
+    expect((screen.getByRole("button", { name: "保存" }) as HTMLButtonElement).disabled).toBe(false)
+    expect(框.value).toBe("")
+  })
+
   it("**key 是必填的，哪怕你的端点不要** —— 这条是在真实产物上验出来的", () => {
     const onSaveConnection = vi.fn()
     render(面板({ onSaveConnection }))
@@ -311,11 +348,16 @@ describe("模型服务 · 添加", () => {
         ],
       }),
     )
-    expect(screen.getByText(/没能验证 deepseek 的 key（Connection error.）/)).toBeDefined()
+    const 话 = screen.getByText(/没能验证 deepseek 的 key（Connection error.）/)
+    // 「没能判定」不是错误（2026-09-01 终审 F7）：中性的 `.hint`，不带 ⚠、不上红
+    expect(话.className).toBe("hint")
+    expect(话.textContent).not.toContain("⚠")
+    expect(document.querySelector(".svc .caveat")).toBeNull()
   })
 
   it("key 验证失败（hard，B9）的那一行写着对方的原话", () => {
     render(面板({ unusable: [{ providerId: "deepseek", reason: "deepseek 的 key 验证失败：invalid api key", i18n: { msgid: "{0} 的 key 验证失败：{1}", args: ["deepseek", "invalid api key"] } }] }))
-    expect(screen.getByText(/deepseek 的 key 验证失败：invalid api key/)).toBeDefined()
+    const 话 = screen.getByText(/deepseek 的 key 验证失败：invalid api key/)
+    expect(话.className).toBe("caveat")
   })
 })

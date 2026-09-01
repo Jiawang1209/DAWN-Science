@@ -43,6 +43,10 @@ test("**没填地址的那几个，摘要上就在催** —— 填了 key 也连
   await expect(行.locator(".svc-sum")).toContainText("还没填地址")
   // 那句话要说清为什么要填
   await expect(行).toContainText("跟你的账号")
+  // 地址还没填，填 key 那一次验证（B9）**没处发、也就不发**：假服务器那本账上没有它，行上也没有红字
+  // （2026-09-01 终审 F2：否则 pi 抛「base URL is required」，端出来是一句莫名的「可能是网络」）
+  expect(dawn.keyChecks.length).toBe(0)
+  await expect(行.locator(".caveat")).toHaveCount(0)
 })
 
 test("**自带地址的也能改** —— 「pi 自带地址」不等于「地址对你也对」", async ({ dawn }) => {
@@ -52,6 +56,9 @@ test("**自带地址的也能改** —— 「pi 自带地址」不等于「地�
   await expect(行.locator(".svc-sum")).toContainText("pi 自带地址")
   // 说的话也不同：这一档是「可以改」，不是「必须填」
   await expect(行).toContainText("留空就用 pi 自带的地址")
+  // 填 key 那一次验证（B9）打到的是假服务器，不是真的 api.groq.com（2026-09-01 终审 F2：夹具把 groq 的地址盖到了 mock 上；e2e 不碰外网）
+  await expect.poll(() => dawn.keyChecks.length).toBe(1)
+  await expect(行.locator(".caveat")).toHaveCount(0)
 })
 
 test("填进去**真的落到配置文件里**，而且原有内容没被动", async ({ dawn }) => {

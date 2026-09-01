@@ -1751,12 +1751,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         ...(models?.available
           ? {
               unusable: [
-                ...[...建不出agent的理由].map(([providerId, i18n]) => ({ providerId, reason: 渲染i18n(i18n.msgid, i18n.args), i18n })),
+                ...[...建不出agent的理由].map(([providerId, i18n]) => ({ providerId, reason: 渲染i18n(i18n.msgid, i18n.args), i18n, kind: "catalog" as const })),
                 ...[...key验证结果]
                   .filter(([providerId]) => !建不出agent的理由.has(providerId))
                   .flatMap(([providerId, r]) => {
                     const 条 = 验证结果条目(providerId, r)
-                    return 条 ? [{ providerId, reason: 渲染i18n(条.i18n.msgid, 条.i18n.args), i18n: 条.i18n, ...(条.soft ? { soft: true } : {}) }] : []
+                    return 条 ? [{ providerId, reason: 渲染i18n(条.i18n.msgid, 条.i18n.args), i18n: 条.i18n, kind: "key" as const, ...(条.soft ? { soft: true } : {}) }] : []
                   }),
               ],
             }
@@ -1787,10 +1787,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 没接 `askOnce`（这次运行没有 native 运行时）或目录里挑不出模型（B8 会说这件事）就不验、
        * 也不留结果：「没验」与「验过是好的」在 `key验证结果` 里都是「没有这一条」，界面上都是不出现。
        * 模型挑目录里第一个——与 `确保配过key的都能用` 造 agent 时挑的是同一个，验的就是要用的。
+       *
+       * **地址要自己填的那几家（Azure / Bedrock…）还没填地址也不验**（2026-09-01 终审）：请求没处发，
+       * pi 当场抛「base URL is required」，归 soft 端出去就是一句「可能是网络」——而摘要上已经写着「还没填地址」。
+       * 填了地址之后 pi 的 provider 表上就有 baseUrl 了，`needsBaseUrl` 不再列它，那时再填 key 照验。
        */
       key验证结果.delete(providerId)
       if (askOnce && models?.available) {
-        const model = (await models.available(providerId).catch(() => []))[0]
+        const 还没地址 = (await models.needsBaseUrl?.().catch((): string[] => []))?.includes(providerId) ?? false
+        const model = 还没地址 ? undefined : (await models.available(providerId).catch(() => []))[0]
         if (model) {
           const r = await 验一次key(askOnce, { provider: providerId, model }, keyCheckTimeoutMs)
           if (r.kind !== "ok") {

@@ -111,7 +111,7 @@ describe("SetupWizard", () => {
         unusable={[{ providerId: "kimi", reason: "目录读不出来：boom" }]}
       />,
     )
-    expect(screen.getByText(/kimi 的 key 已保存，但还建不出可用的模型：目录读不出来：boom/)).toBeTruthy()
+    expect(screen.getByText("kimi 的 key 已保存，但还建不出可用的模型：目录读不出来：boom")).toBeTruthy()
     expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(false)
   })
 
@@ -121,10 +121,12 @@ describe("SetupWizard", () => {
         {...基本}
         configured={["deepseek"]}
         onSaveKey={async () => {}}
-        unusable={[{ providerId: "deepseek", reason: "deepseek 的 key 验证失败：invalid api key", i18n: { msgid: "{0} 的 key 验证失败：{1}", args: ["deepseek", "invalid api key"] } }]}
+        unusable={[{ providerId: "deepseek", reason: "deepseek 的 key 验证失败：invalid api key", kind: "key", i18n: { msgid: "{0} 的 key 验证失败：{1}", args: ["deepseek", "invalid api key"] } }]}
       />,
     )
-    expect(screen.getByText(/deepseek 的 key 验证失败：invalid api key/)).toBeTruthy()
+    // 整句原样，**不套** B8 那层「已保存，但还建不出可用的模型」（2026-09-01 终审 F4：套了就是 provider 名出现两次、还把「key 错了」说成「目录没模型」）
+    expect(screen.getByText("deepseek 的 key 验证失败：invalid api key").className).toBe("caveat")
+    expect(screen.queryByText(/建不出可用的模型/)).toBeNull()
     expect((screen.getByRole("button", { name: "开始使用 →" }) as HTMLButtonElement).disabled).toBe(true)
   })
 

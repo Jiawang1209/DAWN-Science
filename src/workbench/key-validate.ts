@@ -30,6 +30,10 @@
  * 所以**只认开头的状态码**：`"500: upstream returned 401"` 是网关的事，不算 key 错。
  */
 
+/**
+ * 那一句暗号。**`scripts/mock-inference-server.mjs` 里抄了一份字面量**（它是 .mjs 脚本，不 import 这里）——
+ * 改这句要两边一起改，假后端认的是整句相等。
+ */
 export const KEY_CHECK_PROMPT = "DAWN key check"
 
 export type Key验证结果 = { kind: "ok" } | { kind: "hard"; detail: string } | { kind: "soft"; detail: string }
@@ -37,8 +41,14 @@ export type Key验证结果 = { kind: "ok" } | { kind: "hard"; detail: string } 
 /** 超过这个长度的原话截掉、说清省了多少（规格 7.5：不静默截断） */
 const 原话上限 = 240
 
-/** 话里有这些就是鉴权被拒——各家的原话（deepseek / openai / anthropic / 常见网关） */
-const 鉴权字样 = /invalid[ _-]?api[ _-]?key|incorrect api key|authentication[_ ]?(?:error|fail)|invalid x-api-key|unauthorized|invalid_api_key|api key[^.]{0,40}invalid/i
+/**
+ * 话里有这些就是鉴权被拒——各家的原话（deepseek / openai / anthropic / 常见网关）。
+ *
+ * `unauthorized` 只认**独立的一个词**，且前面不是链接里的字符（`#` `/` `?` `=` `-` `_`）：
+ * 限流那句话常在尾巴上挂一个 `…/errors#unauthorized` 的链接（2026-09-01 终审抓的），
+ * 那不是在说 key。认不出的归 soft，比把一把好 key 说成错了便宜。
+ */
+const 鉴权字样 = /invalid[ _-]?api[ _-]?key|incorrect api key|authentication[_ ]?(?:error|fail)|invalid x-api-key|(?<![#/?=_&-])\bunauthorized\b|invalid_api_key|api key[^.]{0,40}invalid/i
 
 /** 归类一次失败。**永远不抛**——它是给 catch 用的 */
 export function 归类key错误(err: unknown): Exclude<Key验证结果, { kind: "ok" }> {

@@ -21,7 +21,7 @@ function 假钥匙串(...有的: string[]): CredentialsPort {
 
 type 返回 = {
   agents: { agentId: string; kind: string }[]
-  unusable?: { providerId: string; reason: string; i18n?: { msgid: string; args: (string | number)[] } }[]
+  unusable?: { providerId: string; reason: string; kind?: "catalog" | "key"; i18n?: { msgid: string; args: (string | number)[] } }[]
 }
 
 function 起一套(available: (providerId: string) => Promise<string[]>, names?: () => Promise<Record<string, string>>) {
@@ -65,6 +65,8 @@ describe("填了 key 但目录里挑不出模型（B8）", () => {
           providerId: "deepseek",
           reason: expect.stringContaining("models.json 解析失败"),
           i18n: { msgid: "模型目录读不出来：{0}", args: [expect.stringContaining("models.json 解析失败")] },
+          // 这是目录的事（B8），不是 key 的事（B9）——向导据此套不套「建不出可用的模型」（2026-09-01 终审）
+          kind: "catalog",
         },
       ])
       expect(吼.mock.calls.some((c) => String(c[0]).includes("models.json 解析失败"))).toBe(true)
@@ -131,7 +133,7 @@ describe("两次 getProviders 叠着跑（B8 的偶发版）", () => {
     await 喘口气()
     显示名闸.放行(1, {})
     const b = await B
-    const 一条 = { providerId: "deepseek", reason: expect.stringContaining("deepseek"), i18n: { msgid: expect.any(String), args: ["deepseek"] } }
+    const 一条 = { providerId: "deepseek", reason: expect.stringContaining("deepseek"), i18n: { msgid: expect.any(String), args: ["deepseek"] }, kind: "catalog" }
     expect(a.unusable, "先起的那次").toEqual([一条])
     expect(b.unusable, "后起的那次").toEqual([一条])
   })

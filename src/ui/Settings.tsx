@@ -773,7 +773,7 @@ export function SettingsPanel({
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
   /** 配了却建不出 agent 的那些及其理由（`getProviders.unusable`，B8）——摘要上的「⚠ 没有模型」只说了现象 */
-  unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; i18n?: FaultI18n | undefined }[] | undefined
+  unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; kind?: "catalog" | "key" | undefined; i18n?: FaultI18n | undefined }[] | undefined
 }) {
   /**
    * **这台机器上「配过」的服务。** 三个来源合一：
@@ -831,7 +831,7 @@ export function SettingsPanel({
             problem={(() => {
               // 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示
               const u = unusable?.find((x) => x.providerId === id)
-              return u ? (u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason) : undefined
+              return u ? { 话: u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason, soft: Boolean(u.soft) } : undefined
             })()}
             onSaveKey={(secret) => onSet(id, secret)}
             onDeleteKey={() => onDelete(id)}
@@ -899,11 +899,14 @@ function 服务({
   conn: Connection
   必须填地址: boolean
   pi认识: boolean
-  /** 后端说的「为什么建不出 agent」。**收起时也要在**——点开才看见等于没有 */
-  problem?: string | undefined
-  onSaveKey: (secret: string) => void
+  /**
+   * 后端说的「为什么建不出 agent」。**收起时也要在**——点开才看见等于没有。
+   * `soft` = 「没能判定」（B9：超时、连不上），不是错误。
+   */
+  problem?: { 话: string; soft: boolean } | undefined
+  onSaveKey: (secret: string) => void | Promise<unknown>
   onDeleteKey: () => void
-  onSaveConn: (conn: Connection) => void
+  onSaveConn: (conn: Connection) => void | Promise<unknown>
   onRemove: () => void
 }) {
   return (
@@ -924,7 +927,8 @@ function 服务({
         <span className="svc-sum">{摘要({ conn, models, isSet, 必须填地址 })}</span>
         <span className="svc-toggle">{展开 ? t("收起") : t("配置它")}</span>
       </Button>
-      {problem ? <p className="caveat">⚠ {problem}</p> : null}
+      {/* hard 是红的 `.caveat`；soft 是中性的 `.hint`、不带 ⚠（2026-09-01 终审 F7）——「没能判定」说成错误，人会去改一把好 key */}
+      {problem ? (problem.soft ? <p className="hint">{problem.话}</p> : <p className="caveat">⚠ {problem.话}</p>) : null}
       {展开 ? (
         <服务编辑器
           id={id}
@@ -1021,27 +1025,41 @@ function 服务编辑器({
   conn: Connection
   必须填地址: boolean
   pi认识: boolean
-  onSaveKey: (secret: string) => void
+  onSaveKey: (secret: string) => void | Promise<unknown>
   onDeleteKey: () => void
-  onSaveConn: (conn: Connection) => void
+  onSaveConn: (conn: Connection) => void | Promise<unknown>
   onRemove: () => void
 }) {
   const [key, setKey] = useState("")
   const [baseUrl, setBaseUrl] = useState(conn.baseUrl ?? "")
   const [api, setApi] = useState(conn.api ?? "")
   const [models, setModels] = useState((conn.models ?? []).join(", "))
+  const [saving, setSaving] = useState(false)
 
   return (
     <form
       className="svc-body"
       onSubmit={(e) => {
         e.preventDefault()
-        // key 与连接设置分两处存，但**一次保存两处都落地**
-        if (key.trim()) {
-          onSaveKey(key.trim())
-          setKey("")
-        }
-        onSaveConn(连接({ baseUrl, api, models }))
+        if (saving) return
+        /**
+         * key 与连接设置分两处存，但**一次保存两处都落地**。
+         *
+         * **先落连接，落完再存 key**（2026-09-01 终审 F1，与「添加自定义端点」同一条理由）：存 key 会当场
+         * 往端点问一句（B9），连接还没写下就问到 pi 自带的那个地址上——kimi 换按量线那次，
+         * 好 key 会被订阅线的 401 说成「验证失败」，向导里还会把人拦住。
+         *
+         * 存 key 要等对方回一句（最多 8 秒），这几秒按钮灰着、框里的字留着（F3）：
+         * 字一清空就等于在说「好了」，而那时什么都还没好。
+         */
+        const k = key.trim()
+        setSaving(true)
+        void Promise.resolve(onSaveConn(连接({ baseUrl, api, models })))
+          .then(() => (k ? onSaveKey(k) : undefined))
+          .then(() => {
+            if (k) setKey("")
+          })
+          .finally(() => setSaving(false))
       }}
     >
       <字段
@@ -1141,8 +1159,9 @@ function 服务编辑器({
       </字段>
 
       <div className="svc-actions">
-        <Button type="submit" variant="primary" size="sm">
-          {t("保存")}
+        <Button type="submit" variant="primary" size="sm" disabled={saving}>
+          {/* 与向导同一句：只写「正在保存」看着像卡死 */}
+          {saving ? t("正在保存并验证 key…") : t("保存")}
         </Button>
         <Button variant="text" size="sm" onClick={onRemove}>
           {t("移除这个服务")}

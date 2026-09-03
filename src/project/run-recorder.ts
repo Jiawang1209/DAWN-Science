@@ -497,7 +497,7 @@ export class RunRecorder {
     }
 
     if (event.kind === "exited") {
-      this.closeAll(event.sessionId, event.exitCode)
+      this.closeAll(event.sessionId, event.exitCode, event.reason)
       return
     }
   }
@@ -509,7 +509,7 @@ export class RunRecorder {
    * 它会让「有没有跑完」这个问题得到一个错误答案，而错误答案比"不知道"危险。
    * 被动收尾的记 `terminalReason`，如实说明它们不是自己跑完的。
    */
-  private closeAll(sessionId: SessionId, exitCode: number): void {
+  private closeAll(sessionId: SessionId, exitCode: number, reason?: string): void {
     const s = this.open.get(sessionId)
     if (!s) return
     const finishedAt = this.now()
@@ -541,7 +541,9 @@ export class RunRecorder {
         status: "cancelled",
         finishedAt,
         hasError: true,
-        terminalReason: "会话结束时该回合仍未收尾",
+        // 有 reason（例如远程内核断线的 "disconnected"）就记它——
+        // 比泛泛的「仍未收尾」更接近真相；没有就还是那句老话
+        terminalReason: reason ?? "会话结束时该回合仍未收尾",
       })
       s.turnRunId = undefined
     }

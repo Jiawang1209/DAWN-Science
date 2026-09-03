@@ -48,6 +48,12 @@ export interface EnvironmentSnapshot {
   packages: PackageRecord[]
   /** 实际装了多少个。**与 `packages.length` 不同即为被截断** */
   packagesTotal: number
+  /**
+   * 在哪台机器上（远程内核，2026-09-03）。**本机内核不带这个字段**——指纹的规范化里只在有它时
+   * 才出现 `where` 键，所以老快照的 id 一个字节不变；远端内核带它：同一个 conda env
+   * 搬到另一台机器，是另一份快照（与 shell 快照的 `where` 同一条理由）。
+   */
+  where?: { connectionId: string }
 }
 
 /**
@@ -201,6 +207,7 @@ export function fingerprintOf(snap: EnvironmentSnapshot): string {
     libraryPaths: snap.libraryPaths,
     packages: snap.packages.map((p) => [p.name, p.version]),
     packagesTotal: snap.packagesTotal,
+    ...(snap.where ? { where: snap.where.connectionId } : {}),
   })
   return createHash("sha256").update(canonical).digest("hex")
 }

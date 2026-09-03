@@ -204,6 +204,16 @@ describe("PTY 会话", () => {
   })
 })
 
+describe("exited 带 reason（远程内核，2026-09-03）", () => {
+  it("exited 带 reason 时，未收尾的回合记那个理由（远程内核断线用）", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1, reason: "disconnected" })
+    const run = list()[0]!
+    expect(run.terminalReason).toBe("disconnected")
+    expect(run.status).toBe("cancelled")
+  })
+})
+
 describe("时间戳", () => {
   it("单调递增 —— 冻结点要求「可重建事件序列」", () => {
     rec.beginTurn(SESSION)

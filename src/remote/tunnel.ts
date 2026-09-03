@@ -54,7 +54,11 @@ export async function 隧道(c: 可转发, 远端端口: number): Promise<一条
       // 远端拒了（sshd 关了 AllowTcpForwarding 之类）：本地这条连接也拒，别挂着。
       // 用 resetAndDestroy 显式发 RST——普通 destroy() 在没有待读字节时只是干净地
       // FIN，对端只收到 close 收不到 error，永远等不到「拒绝」这个信号。
-      () => sock.resetAndDestroy(),
+      (e: unknown) => {
+        // 出声：远端为什么拒，人要能在日志里看到（AllowTcpForwarding 关了与断线是两回事）
+        console.error(`[隧道] 远端端口 ${远端端口} 的 forwardOut 被拒：${e instanceof Error ? e.message : String(e)}`)
+        sock.resetAndDestroy()
+      },
     )
   })
 

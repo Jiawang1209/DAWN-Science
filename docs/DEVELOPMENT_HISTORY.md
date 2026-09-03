@@ -8,6 +8,25 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-04 — 远程内核（C 档）：远端会话里 `run_code` 在服务器自己的 ipykernel 里跑，五个端口隧道回本地（分支 `remote-kernel`，未合并）
+
+- **Type**: feat
+- **Motivation**: 08-27 起远端会话不挂 `run_code`，笔记本格写「还没做」——作者最常用的场景（连集群分析数据）里「产物」「笔记本」两轮全是灰的。②-B 改成 B 档时明写 C 档「等真需要时是纯增量」；Spike F（08-11）已在真集群验过隧道路线。作者 09-03 定：主线下一轮做它；解释器 = 设置接口 + 探测（唯一则用并出声写进配置、多个则在笔记本格问一次、零个则说清），agent 不参与选；断线 = 内核死，不重连不接回；**开分支做，别把 main 搞乱**。规格 `specs/2026-09-03-远程内核-design.md`，计划 `plans/2026-09-03-远程内核.md`（12 任务，subagent 逐任务 + 规格/质量双审，主线程把关）。
+- **What**（按层）:
+  - **隧道** `src/remote/tunnel.ts`：一个远端端口一个本地 `net.Server`，**每个入站 socket 各开一条 `forwardOut`**（一条通道 = 一条 TCP，重连要新的）；五条一起开、一条失败全收。`RemoteExecutor.forwardOut` / 句柄 `RemoteLike.forwardOut?`。
+  - **远端起停** `src/remote/kernel-launch.ts`：`setsid nohup <py> -m ipykernel_launcher -f "$f" </dev/null >"$f.log" 2>&1 &`（`setsid` 有才用，没有就出声；`</dev/null` 免得抱着 SSH 通道的 stdin）；内核自己写 connection.json 到 `$TMPDIR`，**读回来走 base64 `键=值`**（不按花括号位置解析——MOTD 里有 `{` 就炸）；停 = TERM → 等（`ps -o stat=` 僵尸不算活着）→ KILL → 删文件与日志；扫残留 `[d]awn-<装机id>-*.json` + `pkill -9 -f '[d]awn-<id>-.*\.json'`——**glob 与 pkill 都要方括号**（执行器把脚本包在 `bash -c` 里，for 循环的 glob 文本也在那条命令行上，不括就把自己杀了、永远报 0）；装机 id 只许 `[A-Za-z0-9]+` 且不许是 `run`（撞执行器自己的 `/tmp/dawn-run-*.pid`）。
+  - **通道** `channel.ts` 拆出 `attachKernelChannel(连接信息, 进程)`，`launchKernelChannel` = spawn → attach；enchannel/nteract 仍只此一文件碰，卫生扫描连动态 `import()` 也认。
+  - **运行时** `KernelRuntime.start` 见 `spec.remote`：起内核 → 五条隧道 → attach，每步失败反向收；`stop` = 停内核 → 关通道 → 关隧道（`finally` 保证隧道必关）；`服务器要断了`（人按断开 / 删除：连接还活着，**先把远端内核停干净**）与 `连接断了`（断线：只收本地这半，远端进程留给下次连上的扫残留），在飞的 `start` 的隧道也收。内核快照多可选 `where`（**本机指纹一个字节不变**，用改动前算好的哈希钉死）。
+  - **挂载** `interpreterOf(语言, 对话)` 可异步、`remoteOf` 每次现取句柄；`能起远端()`——`native.ts` 与后端 `runInKernel` / `interruptKernel` 都按它判，装配层没接远端时远端会话不给 `run_code`（宁可没有工具也不给跑错机器的工具）；08-27 那道无差别「拒远端」闸拆了。
+  - **探测** `src/remote/interpreters.ts` 复用 `kernel/probe.ts`，一段事实脚本一次吐 HOME / uname / `which -a` / 常见目录；`选定` 把「没探明白」（超时、怪退出码）与「没装」分开报；事实脚本失败出声。装配层三条路：唯一 → `setInterpreter` + 转录一句 + 推名单变了；多个 → 工具回「请用户在右侧笔记本面板里选一个」；零个 → 带 `KERNEL_PACKAGE` 的装法。**起内核前 `await` 这台服务器的扫残留**（`扫过` 表，否则同一秒起的内核会被自己扫掉）。
+  - **存储与协议 7.30**：`remote_connections` 加 `python_path` / `r_path`（两列各自守迁移）；`probeInterpreters{connectionId?}`、`setRemoteInterpreter`、连接记录 `interpreters`、`getEnvironment` kernel 分支 `where`、推送 `remoteList: "changed"`；`install.id` 设置项（首次 8 位十六进制）。
+  - **账本**：`exited` 事件可带 `reason`；断线时 `RunRecorder.远端断了` **只把在飞的 `run_code` 记成「与服务器断开，这段没跑完」**，同一轮的本机 bash 不动，回合由自己的 idle 收口。
+  - **界面**：笔记本格远端会话——两门都没配整格是选择器（挂上自动探一次，只在两门都没配时），配了一门是正常面板 + 另一门折叠的选择器，胶囊 `Python · <服务器> · <状态>`；服务器编辑对话框加 Python / R 两格（点了才探）；转录「正在在 <服务器> 上起 Python 内核…」→「内核已在 <服务器> 的 <cwd> 起来（<解释器>）」，断线「Python 内核退出了：与服务器断开，内核里的变量已经不在了；重新连接后再跑会起新的一台」；权限灰字补「`run_code` 里的代码在远端同样不拦」。
+  - **mock**（准入规则 1）：`fake-ssh-kernel.ts` 让假服务器**真起本机 ipykernel**（路径来自 `DAWN_FAKE_SSH_PYTHON`）、真写 connection.json、`forwardOut` 直连本机端口、扫残留真扫真杀；`dev:mock` 缺省 `DAWN_FAKE_SSH=1`（此前从没设过，`DAWN_FAKE_SSH=0` 关）并自动找一条带 ipykernel 的本机 python。
+- **Impact**: 远端会话有内核、笔记本、变量面板、带 `where` 的内核型环境快照；协议 7.30 纯新增；**服务器上不装不传任何东西**，内核自己写的文件收摊即删，只杀带自己装机 id 的残留。`run_code` 与本机一样不过权限门（不是沙箱那条边界）。
+- **没做、记下**: 断线接回（pid 与文件路径已在内核状态里）；远端内核猝死（OOM、被集群杀）本地察觉不到，只有静默 5 分钟兜底（规格定案 10）；**R 远端路径没真机验过**（Spike F 只测了 Python，假服务器也只起 python）；Slurm 作业里起内核不做；`for p in $(which -a …)` 带空格的路径会被词分割。**真机验证待作者**：集群上 Python 跑一次（起、出图、变量面板、断开后 `pgrep` 为空）。
+- **Verification**: 38 次提交，64 文件 +6200/−117，每个任务至少一条先红后绿的用例、每个任务两轮只读审查（抓到并修掉的真坑：pkill 自杀、nohup 同进程组、花括号解析、unknown 并进 none、扫残留竞态、人按断开进 idle 收不到、运行时 notice 到不了转录、假服务器扫残留说谎藏住了测试收摊不等导致的真内核泄漏、断线把本机 bash 也记成断线）。typecheck 干净；单测 210 文件 **2679 过 2 跳过**（带 `DAWN_FAKE_SSH_PYTHON`，假服务器真起内核的几条也跑了；`channel.integration` 的 R 那条在全量并行下 IRkernel 冷启动握手超时闪红一次、单跑即过，main 上就有）；e2e 全量分三片 **461 过 1 跳过** + 内核 spec 6（其中「ACP 借内核」在负载下闪红一次、单跑 13 秒过）+ 新 `remote-kernel.spec` 4 条（真 ipykernel + 假 SSH：探测→选→`run_code` 出 42、出图、胶囊带服务器名、断开收内核再连再起、对话框选定重开后仍在）；视觉基线 10/10 未重存；跑完 tmpdir 与进程表无 `dawn-*` 残留。
+
 ### 2026-09-02 — 首启向导美化：两类各自框起来、废话删掉、按钮把话说全
 
 - **Type**: fix

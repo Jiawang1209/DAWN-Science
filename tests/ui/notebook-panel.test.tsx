@@ -6,7 +6,7 @@
  * ⌘↩ 跑一次、跑着时禁用、失败红字但草稿不丢。
  */
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, fireEvent, act } from "@testing-library/react"
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react"
 import { NotebookPanel } from "../../src/ui/notebook.js"
 import type { Cell } from "../../src/ui/notebook.js"
 import type { KernelState } from "../../src/protocol/index.js"
@@ -145,10 +145,21 @@ describe("NotebookPanel · 空态与提示条", () => {
     expect(screen.queryByText("这段对话还没有内核")).toBeNull()
   })
 
-  it("远端会话 → 整格一句「远端会话的内核还没做」，带服务器名，不画输入框（2026-08-27）", () => {
-    // 内核只会在本机起（spawnteract + ZMQ），远端会话的文件在服务器上——给它笔记本等于让代码在错误的机器上跑
-    render(<NotebookPanel {...基本} sessionKind="native" remoteLabel="gs191" kernels={undefined} cells={[cell()]} />)
-    expect(screen.getByText(/远端会话的内核还没做/).textContent).toContain("gs191")
+  it("远端会话且两门都没配 → 整格是解释器选择器，带服务器名，不画输入框（远程内核，2026-09-03）", () => {
+    // 「远端会话的内核还没做」那句 2026-09-03 作废了：内核现在**在服务器上**起，缺的只是解释器路径
+    render(
+      <NotebookPanel
+        {...基本}
+        sessionKind="native"
+        remoteLabel="gs191"
+        remoteInterpreters={{}}
+        remoteProbe={async () => ({ python: [], r: [] })}
+        onPickRemoteInterpreter={() => {}}
+        kernels={undefined}
+        cells={[cell()]}
+      />,
+    )
+    expect(screen.getByText(/gs191 上还没选解释器/).textContent).toContain("gs191")
     expect(screen.queryByRole("textbox")).toBeNull()
   })
 
@@ -345,5 +356,53 @@ describe("NotebookPanel · 导出", () => {
     const 提示 = await screen.findByRole("status")
     expect(提示.textContent).toBe("导不了：EACCES")
     expect(提示.className).toContain("bad")
+  })
+})
+
+describe("NotebookPanel · 远端（远程内核，2026-09-03）", () => {
+  it("两门都没配：整格是选择器，没有输入框；挂上时自动探一次", async () => {
+    const 探 = vi.fn(async () => ({
+      python: [{ path: "/srv/bio/bin/python", source: "PATH" as const, version: "3.11.9", kernelPackage: "present" as const }],
+      r: [],
+    }))
+    render(
+      <NotebookPanel
+        {...基本}
+        sessionKind="native"
+        remoteLabel="genek"
+        remoteInterpreters={{}}
+        remoteProbe={探}
+        onPickRemoteInterpreter={() => {}}
+        kernels={undefined}
+        cells={[]}
+      />,
+    )
+    expect(screen.getByText(/genek 上还没选/)).toBeTruthy()
+    expect(screen.queryByRole("textbox")).toBeNull()
+    await waitFor(() => expect(探).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText("/srv/bio/bin/python")).toBeTruthy()
+  })
+
+  it("配了 Python：正常面板，胶囊带服务器名；R 那格只是一行提示 + 探测", () => {
+    render(
+      <NotebookPanel
+        {...基本}
+        sessionKind="native"
+        remoteLabel="genek"
+        remoteInterpreters={{ python: "/srv/python" }}
+        remoteProbe={async () => ({ python: [], r: [] })}
+        onPickRemoteInterpreter={() => {}}
+        kernels={[{ language: "python", state: "idle" }]}
+        cells={[]}
+      />,
+    )
+    expect(screen.getByText("Python · genek · 空闲")).toBeTruthy()
+    expect(screen.getByRole("textbox")).toBeTruthy()
+    expect(screen.getByText(/R 还没在 genek 上选/)).toBeTruthy()
+  })
+
+  it("本机会话一切如旧：胶囊不带服务器名", () => {
+    render(<NotebookPanel {...基本} sessionKind="native" kernels={[{ language: "python", state: "idle" }]} cells={[]} />)
+    expect(screen.getByText("Python · 空闲")).toBeTruthy()
   })
 })

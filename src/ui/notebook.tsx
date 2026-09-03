@@ -5,12 +5,18 @@
  * 纯函数派生（`cells()`）2026-08-27 搬去了 `src/protocol/notebook-cells.ts`（后端导出 .ipynb 也要用它），
  * 这里只剩坐在它上面的面板（`NotebookPanel`，Task 7）；`cells` / `Cell` 从这里 re-export，调用点不动。
  */
-import { useEffect, useState, type KeyboardEvent } from "react"
+import { useCallback, useEffect, useState, type KeyboardEvent } from "react"
 import { StickToBottom } from "use-stick-to-bottom"
 import type { KernelState } from "../protocol/index.js"
 import { Button, EmptyState, 导出提示, type 导出提示态 } from "./primitives.js"
+import { InterpreterPicker } from "./interpreter-picker.js"
 import { KernelOutputRow } from "./views.js"
 import { t, tf } from "./i18n/index.js"
+/**
+ * 探测结果的形状**只有一份**，住在首启向导里（它先有的）。这里是 `import type`——
+ * 编译期就擦掉，笔记本格不会因此把向导拖进来。再抄一份结构一样的类型只会让两边慢慢走散。
+ */
+import type { 探测结果 } from "./setup-wizard.js"
 
 export { cells, type Cell, type 语言 } from "../protocol/notebook-cells.js"
 import type { Cell, 语言 } from "../protocol/notebook-cells.js"
@@ -50,6 +56,9 @@ function 时刻(ms: number): string {
 export function NotebookPanel({
   sessionKind,
   remoteLabel,
+  remoteInterpreters,
+  remoteProbe,
+  onPickRemoteInterpreter,
   kernels,
   cells,
   running,
@@ -60,8 +69,15 @@ export function NotebookPanel({
   onExport,
 }: {
   sessionKind: string | undefined
-  /** 远端会话时是服务器名。有值就整格说「还没做」——内核只会在本机起，见 `native.ts` 的 `内核工具` */
+  /**
+   * 远端会话时是服务器名（远程内核，2026-09-03）。内核**在那台服务器上**起，
+   * 所以有值时胶囊要带上它——「Python · 空闲」在一台不是本机的机器上是句含糊话。
+   */
   remoteLabel?: string | undefined
+  /** 远端会话：这台服务器上配好的解释器路径（远程内核）。缺省当作都没配 */
+  remoteInterpreters?: { python?: string | undefined; r?: string | undefined } | undefined
+  remoteProbe?: (() => Promise<探测结果>) | undefined
+  onPickRemoteInterpreter?: ((language: 语言, path: string) => void) | undefined
   kernels: readonly KernelState[] | undefined
   cells: readonly Cell[]
   running: boolean
@@ -114,11 +130,57 @@ export function NotebookPanel({
     })
   }, [cells])
 
-  if (remoteLabel) {
-    // 远端会话（2026-08-27）：内核只会在本机起，而这段对话的文件在服务器上。说清楚，不画输入框
+  // ── 远端会话的解释器（远程内核，2026-09-03） ──
+  /** 这台服务器上**还没选**的那几门语言。本机会话恒为空表 */
+  const 未配: 语言[] = remoteLabel
+    ? (["python", "R"] as const).filter((l) => !(l === "python" ? remoteInterpreters?.python : remoteInterpreters?.r))
+    : []
+  const [探到, 设探到] = useState<探测结果 | undefined>(undefined)
+  const [探测中, 设探测中] = useState(false)
+  const [探测错, 设探测错] = useState<string | undefined>(undefined)
+  const 探 = useCallback(() => {
+    if (!remoteProbe) return
+    设探测中(true)
+    设探测错(undefined)
+    remoteProbe()
+      .then(设探到)
+      .catch((e: unknown) => 设探测错(e instanceof Error ? e.message : String(e)))
+      .finally(() => 设探测中(false))
+  }, [remoteProbe])
+  /**
+   * 远端且有没配的：挂上时自动探一次（定案 1：不设就探测）。
+   * 让人先按一颗「检测」才看得见候选，等于把一件本可以自己做的事变成一道题。
+   */
+  useEffect(() => {
+    if (remoteLabel && 未配.length > 0 && 探到 === undefined && !探测中) 探()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteLabel, 未配.length])
+  const 远端选择器 = (l: 语言) => (
+    <InterpreterPicker
+      key={l}
+      language={l}
+      where={remoteLabel}
+      candidates={l === "python" ? 探到?.python : 探到?.r}
+      probing={探测中}
+      error={探测错}
+      current={undefined}
+      onPick={(p) => onPickRemoteInterpreter?.(l, p)}
+      onProbe={探}
+    />
+  )
+
+  if (remoteLabel && 未配.length === 2) {
+    /**
+     * 远端会话、两门都没选（远程内核，2026-09-03）：整格就是选择器，**不画输入框**。
+     * 画了也跑不了——一敲就是一条红字，而红字不告诉人该去哪配。
+     */
     return (
-      <div className="nb">
-        <EmptyState title={tf("远端会话的内核还没做：代码只能在本机起内核，而这段对话的文件在 {0} 上。先用对话里的 bash", remoteLabel)} />
+      <div className="nb nb-remote-setup">
+        <p className="nb-notice">
+          {tf("{0} 上还没选解释器。找到的列在下面，选一个就能在那台服务器上跑代码（内核在服务器上起，什么都不会装到那边）。", remoteLabel)}
+        </p>
+        {远端选择器("python")}
+        {远端选择器("R")}
       </div>
     )
   }
@@ -178,7 +240,7 @@ export function NotebookPanel({
         {kernels?.map((k) => (
           <span key={k.language} className={`nb-pill nb-pill-${k.state}`}>
             <span className="nb-pill-label">
-              {`${语言名[k.language]} · ${中断中.has(k.language) ? t("正在中断…") : 状态词(k.state)}`}
+              {`${语言名[k.language]}${remoteLabel ? ` · ${remoteLabel}` : ""} · ${中断中.has(k.language) ? t("正在中断…") : 状态词(k.state)}`}
             </span>
             {k.state === "busy" && !中断中.has(k.language) ? (
               <Button
@@ -213,6 +275,18 @@ export function NotebookPanel({
       </div>
 
       {内核重起过 ? <p className="nb-notice">{t("内核已重起，上面 cell 里的变量已经不在了；再跑一次即可")}</p> : null}
+
+      {/**
+        * 另一门语言还没在这台服务器上选（远程内核，2026-09-03）：**收起来，但看得见**。
+        * 只配了 Python 的人不该每次都被 R 的选择器占掉半格；而完全不提，
+        * 「R 在这台上怎么开」就成了一个没有入口的功能。
+        */}
+      {remoteLabel && 未配.length === 1 ? (
+        <details className="nb-remote-other">
+          <summary>{tf("{0} 还没在 {1} 上选；要用它就点开选一个", 语言名[未配[0]!], remoteLabel)}</summary>
+          {远端选择器(未配[0]!)}
+        </details>
+      ) : null}
 
       {/* 贴底滚动与对话区同一个库：贴在底部时才跟随新 cell，用户上翻了就撒手（spec §5） */}
       <StickToBottom className="nb-cells" resize="smooth" initial="smooth">

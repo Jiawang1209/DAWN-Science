@@ -3229,6 +3229,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onSave={(d) => void saveConnection(d)}
           {...(connDraft.id
             ? {
+                /**
+                  * 这台服务器上的解释器（远程内核，2026-09-03）。只有编辑已有的那台才给——
+                  * 新建时还没有 id，探不了也存不了。存完重拉名单，回显以库里的为准。
+                  */
+                interpreters: connections.find((c) => c.id === connDraft.id)?.interpreters,
+                onProbeInterpreters: () => client.get<探测结果>("probeInterpreters", { connectionId: connDraft.id }),
+                onPickInterpreter: (language: "python" | "R", path: string) =>
+                  void client
+                    .get("setRemoteInterpreter", { connectionId: connDraft.id, language, path })
+                    .then(() => loadConnections(client))
+                    .catch(fail),
                 onRemove: () => {
                   const id = connDraft.id!
                   const 名字 = connDraft.label
@@ -4511,6 +4522,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 key={sessionId}
                 sessionKind={session?.kind}
                 remoteLabel={session?.remote?.label}
+                {...(session?.remote
+                  ? {
+                      /**
+                        * 远端会话的解释器（远程内核，2026-09-03）：路径按**服务器**存，
+                        * 所以从连接名单里取，而不是会话里。选完重拉名单——面板据此换回正常视图。
+                        */
+                      remoteInterpreters: connections.find((c) => c.id === session.remote!.connectionId)?.interpreters ?? {},
+                      remoteProbe: () =>
+                        client.get<探测结果>("probeInterpreters", { connectionId: session.remote!.connectionId }),
+                      onPickRemoteInterpreter: (language: 内核语言, path: string) =>
+                        void client
+                          .get("setRemoteInterpreter", { connectionId: session.remote!.connectionId, language, path })
+                          .then(() => loadConnections(client))
+                          .catch(fail),
+                    }
+                  : {})}
                 kernels={对话内核}
                 cells={笔记本cells}
                 running={笔记本在跑}

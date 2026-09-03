@@ -3235,6 +3235,8 @@ pre {
 /* 表单比确认框高，给它自己的滚动，别把按钮顶出屏幕 */
 .conn-dialog { max-height: 80vh; overflow-y: auto; text-align: left; }
 .conn-dialog .confirm-actions { position: sticky; bottom: 0; background: inherit; }
+/* 服务器对话框里的两格解释器（远程内核，2026-09-03）：与上面的 Field 拉开，别粘成一坨 */
+.conn-interpreters { margin-top: var(--dawn-space-3); padding-top: var(--dawn-space-2); border-top: 1px solid var(--dawn-stroke-3); }
 .conn-remove { margin-right: auto; }
 
 /* 这台机器上的对话（②-B · R4′）。
@@ -6492,6 +6494,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-pill-busy, .nb-pill-starting { border-color: var(--dawn-live); color: var(--dawn-live); }
 .nb-pill-exited { border-color: var(--dawn-danger); color: var(--dawn-danger); }
 .nb-notice { margin: 0; padding: var(--dawn-space-2) var(--dawn-space-3); background: var(--dawn-fill-2); color: var(--dawn-warning); font-size: var(--dawn-fs-meta); border-bottom: 1px solid var(--dawn-stroke-3); }
+/* 远端会话还没选解释器时，整格就是选择器（远程内核，2026-09-03） */
+.nb-remote-setup { padding: var(--dawn-space-3); overflow-y: auto; }
+.nb-remote-other { padding: var(--dawn-space-2) var(--dawn-space-3); border-bottom: 1px solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.nb-remote-other > summary { cursor: pointer; }
 .nb-cells { flex: 1; min-height: 0; overflow: auto; }
 .nb-cells-inner { padding: var(--dawn-space-2) var(--dawn-space-3); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .nb-cell { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: var(--dawn-space-1); }

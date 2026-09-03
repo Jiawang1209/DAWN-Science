@@ -15,9 +15,12 @@
  *    而实情可能是口令错了、主机不通、或者对端把连接掐了——
  *    三种要人去改的东西完全不同。
  */
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import type { RemoteConnection, RemoteState, SessionSummary } from "../protocol/index.js"
 import { Button, Field, Row } from "./primitives.js"
+import { InterpreterPicker } from "./interpreter-picker.js"
+/** 形状只有一份，住在首启向导里（它先有的）；`import type` 编译期就擦掉 */
+import type { 探测结果 } from "./setup-wizard.js"
 import { SessionRow, use现在 } from "./views.js"
 import { 多久之前, 短路径 } from "./format.js"
 import { 服务器描边图标, 三角图标 } from "./icons.js"
@@ -342,6 +345,9 @@ export function ConnectionDialog({
   onRemove,
   saving,
   problem,
+  interpreters,
+  onProbeInterpreters,
+  onPickInterpreter,
 }: {
   draft: ConnectionDraft & { hasSecret?: boolean }
   onCancel: () => void
@@ -350,12 +356,33 @@ export function ConnectionDialog({
   onRemove?: (() => void) | undefined
   saving?: boolean | undefined
   problem?: string | undefined
+  /** 这台服务器上配好的解释器（远程内核）。只在编辑已有的那台时给 */
+  interpreters?: { python?: string | undefined; r?: string | undefined } | undefined
+  onProbeInterpreters?: (() => Promise<探测结果>) | undefined
+  onPickInterpreter?: ((language: "python" | "R", path: string) => void) | undefined
 }) {
   const [d, setD] = useState<ConnectionDraft>(draft)
   const 改 = (k: keyof ConnectionDraft, v: string) =>
     setD((x) => ({ ...x, [k]: v === "" ? undefined : v }))
 
   const 能存 = Boolean(d.host?.trim() && d.username?.trim())
+
+  /**
+   * 解释器探测（远程内核，2026-09-03）。**这里不自动探**：对话框是编辑连接信息的地方，
+   * 一打开就去连一台服务器不是人要的；点了才探。（笔记本格那边相反——那里人已经想跑代码了。）
+   */
+  const [探到, 设探到] = useState<探测结果 | undefined>(undefined)
+  const [探测中, 设探测中] = useState(false)
+  const [探测错, 设探测错] = useState<string | undefined>(undefined)
+  const 探 = useCallback(() => {
+    if (!onProbeInterpreters) return
+    设探测中(true)
+    设探测错(undefined)
+    onProbeInterpreters()
+      .then(设探到)
+      .catch((e: unknown) => 设探测错(e instanceof Error ? e.message : String(e)))
+      .finally(() => 设探测中(false))
+  }, [onProbeInterpreters])
 
   return (
     <div
@@ -456,6 +483,35 @@ export function ConnectionDialog({
             placeholder={draft.hasSecret ? t("已配置 · 留空则不改") : ""}
           />
         </Field>
+
+        {/**
+          * 这台服务器上的解释器（远程内核，2026-09-03）。**只在编辑已有的那台时才有**——
+          * 还没存下来的连接没有 id，探不了也存不了。
+          */}
+        {draft.id && onProbeInterpreters ? (
+          <div className="conn-interpreters">
+            <p className="hint">{t("这台服务器上的解释器（远程内核用；没配就在第一次跑代码时探测，唯一则自动记下）")}</p>
+            <InterpreterPicker
+              language="python"
+              where={d.label || d.host}
+              candidates={探到?.python}
+              probing={探测中}
+              error={探测错}
+              current={interpreters?.python}
+              onPick={(p) => onPickInterpreter?.("python", p)}
+              onProbe={探}
+            />
+            <InterpreterPicker
+              language="R"
+              where={d.label || d.host}
+              candidates={探到?.r}
+              probing={探测中}
+              current={interpreters?.r}
+              onPick={(p) => onPickInterpreter?.("R", p)}
+              onProbe={探}
+            />
+          </div>
+        ) : null}
 
         <div className="confirm-actions">
           {onRemove ? (

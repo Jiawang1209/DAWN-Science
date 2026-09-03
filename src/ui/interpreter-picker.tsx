@@ -2,6 +2,7 @@
  * 本机解释器候选列表（首启向导，2026-08-27，spec §3）。向导与设置「内核」屏共用这一个。
  *
  * 三态：还没探（一颗「检测本机解释器」）/ 探过为空（说清 + 手动填）/ 有候选（单选，选中即回调）。
+ * 2026-09-03 起它也用在**服务器**上（远程内核）：`where` 一给，那三句话里的「这台电脑」就换成服务器名。
  * 缺内核包的选中项下面一句现成的装法（`KERNEL_PACKAGE.how`）——**只引导，不执行**（作者定的）。
  */
 import { useEffect, useState } from "react"
@@ -27,6 +28,7 @@ export function 引起路径(path: string): string {
 
 export function InterpreterPicker({
   language,
+  where,
   candidates,
   probing,
   error,
@@ -35,6 +37,12 @@ export function InterpreterPicker({
   onProbe,
 }: {
   language: 语言
+  /**
+   * 探的是**哪台机器**（远程内核，2026-09-03）：给了服务器名就说「{名} 上」，
+   * 不给就是本机。**必须说清**——同一个组件现在出现在两处，
+   * 一句「这台电脑上没找到 Python」出现在远端会话里就是一句假话。
+   */
+  where?: string | undefined
   /** `undefined` = 还没探过 */
   candidates: readonly InterpreterCandidate[] | undefined
   probing: boolean
@@ -64,12 +72,22 @@ export function InterpreterPicker({
       <div className="ip-head">
         <span className="ip-lang">{名}</span>
         <Button size="sm" variant="ghost" disabled={probing} onClick={onProbe}>
-          {probing ? t("正在检测…") : candidates === undefined ? t("检测本机解释器") : t("重新检测")}
+          {probing
+            ? t("正在检测…")
+            : candidates === undefined
+              ? where
+                ? tf("检测 {0} 上的解释器", where)
+                : t("检测本机解释器")
+              : t("重新检测")}
         </Button>
       </div>
       {error ? <p className="field-error">{tf("检测失败：{0}", error)}</p> : null}
       {candidates !== undefined && candidates.length === 0 ? (
-        <p className="hint">{tf("这台电脑上没找到 {0}；装了之后点重新检测，或手动填。", 名)}</p>
+        <p className="hint">
+          {where
+            ? tf("{0} 上没找到 {1}；装了之后点重新检测，或手动填。", where, 名)
+            : tf("这台电脑上没找到 {0}；装了之后点重新检测，或手动填。", 名)}
+        </p>
       ) : null}
       {candidates && candidates.length > 0 ? (
         <ul className="ip-list" role="radiogroup" aria-label={tf("{0} 解释器候选", 名)}>

@@ -533,6 +533,14 @@ export const EN: Readonly<Record<string, string>> = {
   "重新检测": "Detect again",
   "检测失败：{0}": "Detection failed: {0}",
   "这台电脑上没找到 {0}；装了之后点重新检测，或手动填。": "No {0} found on this machine; install one and detect again, or enter a path by hand.",
+  // 远程内核（2026-09-03）：同一个选择器也用在服务器上，那三句话里的「这台电脑」换成服务器名
+  "检测 {0} 上的解释器": "Detect interpreters on {0}",
+  "{0} 上没找到 {1}；装了之后点重新检测，或手动填。": "No {1} found on {0}; install it and re-detect, or type a path.",
+  "{0} 上还没选解释器。找到的列在下面，选一个就能在那台服务器上跑代码（内核在服务器上起，什么都不会装到那边）。":
+    "No interpreter chosen on {0} yet. Pick one below to run code on that server (the kernel starts there; nothing is installed).",
+  "{0} 还没在 {1} 上选；要用它就点开选一个": "{0} not chosen on {1} yet — expand to pick one",
+  "这台服务器上的解释器（远程内核用；没配就在第一次跑代码时探测，唯一则自动记下）":
+    "Interpreters on this server (for remote kernels; probed on first run if unset, auto-saved when unique)",
   "{0} 解释器候选": "{0} interpreter candidates",
   "这个 {0} 没装 {1}：{2}。装完回来点重新检测。": "This {0} has no {1}: {2}. Come back and detect again once installed.",
   "{0} 解释器路径": "{0} interpreter path",
@@ -1326,7 +1334,6 @@ export const EN: Readonly<Record<string, string>> = {
   // 笔记本面板（Task 7，2026-08-26）
   "这段对话还没有内核": "This chat has no kernel yet",
   "这种会话没有内核，笔记本不可用": "This kind of session has no kernel; the notebook is unavailable",
-  "远端会话的内核还没做：代码只能在本机起内核，而这段对话的文件在 {0} 上。先用对话里的 bash": "Remote sessions have no kernel yet: kernels only start on this machine, but this conversation's files live on {0}. Use bash in the conversation for now",
   "独立内核会话的输出就在对话区的 Console 里；笔记本只管普通对话": "A standalone kernel session shows its output in the chat's Console; the notebook is only for regular chats",
   "正在中断…": "interrupting…",
   "（已中断）": "(interrupted)",

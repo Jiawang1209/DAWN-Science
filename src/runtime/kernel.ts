@@ -368,13 +368,8 @@ export class KernelRuntime implements AgentRuntime {
     for (const [id, live] of [...this.sessions]) {
       if (live.远端?.connectionId !== connectionId) continue
       this.sessions.delete(id)
-      this.emit({
-        kind: "notice",
-        sessionId: id,
-        text: `与 ${live.远端.label} 断开了，${
-          live.language === "R" ? "R" : "Python"
-        } 内核里的变量已经不在了；重新连接后再跑会起新的一台`,
-      })
+      // 不在这里 emit notice：普通对话那条路的 `转发` 只放 `kernel_output`，这句到不了转录（e2e 2026-09-04 抓的）；
+      // 「变量没了」由挂载层收到带 reason 的 exited 后在转录里说（`内核变化出声`）
       if (先停远端) {
         await 远.停远端内核(live.远端.executor.exec.bind(live.远端.executor), live.远端.起的).catch((e) =>
           console.error(`[远端内核] 断开前停不掉 ${live.远端!.label} 上的内核：${e instanceof Error ? e.message : String(e)}`),

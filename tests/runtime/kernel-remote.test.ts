@@ -120,8 +120,8 @@ describe("KernelRuntime · 远端", () => {
     await rt.服务器要断了("conn-1")
     expect(日志).toContain("停:7")
     expect(日志.indexOf("停:7")).toBeLessThan(日志.indexOf("隧道.关"))
-    expect(收到.map((e) => e.kind)).toEqual(["notice", "exited"])
-    expect(收到[1]).toMatchObject({ kind: "exited", reason: "disconnected" })
+    expect(收到.map((e) => e.kind)).toEqual(["exited"])
+    expect(收到[0]).toMatchObject({ kind: "exited", reason: "disconnected" })
     expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
   })
 
@@ -137,9 +137,8 @@ describe("KernelRuntime · 远端", () => {
     const 收到: AgentEvent[] = []
     rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
     await rt.连接断了("conn-1")
-    expect(收到.map((e) => e.kind)).toEqual(["notice", "exited"])
-    expect(收到[1]).toMatchObject({ kind: "exited", reason: "disconnected" })
-    expect((收到[0] as { text: string }).text).toMatch(/genek/)
+    expect(收到.map((e) => e.kind)).toEqual(["exited"])
+    expect(收到[0]).toMatchObject({ kind: "exited", reason: "disconnected" })
     expect(日志).toContain("隧道.关")
     expect(日志).not.toContain("停:7") // 连接没了，杀不了；留给下次连上的扫残留
     /**

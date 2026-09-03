@@ -111,7 +111,8 @@ describe("rxjs 不许渗出内核适配器", () => {
       const text = readFileSync(file, "utf8")
       for (const [i, line] of text.split("\n").entries()) {
         if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue // 注释里可以提它
-        if (/from\s+["'](rxjs|@nteract\/|enchannel-zmq-backend)/.test(line)) {
+        // 静态 `from "..."` 与动态 `import("...")` 都要抓——ALLOWED 那份文件两种都在用
+        if (/(from\s+|import\()\s*["'](rxjs|@nteract\/|enchannel-zmq-backend)/.test(line)) {
           违规.push(`${rel}:${i + 1}: ${line.trim()}`)
         }
       }

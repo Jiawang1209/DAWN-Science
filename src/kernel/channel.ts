@@ -530,6 +530,19 @@ export interface AttachOptions {
   label: string
   runIdOf?: () => string | undefined
   handshakeTimeoutMs?: number
+  /**
+   * 内核实例 id 的前缀。**不给就用 `language`**——本机 kernelspec 那条路
+   * 一直用的是 spec 名（比如 `dawn-spike`），与拆出 `attachKernelChannel`
+   * 之前的可观测格式一致；换成语言名会让下游按 `k-dawn-spike-` 前缀
+   * 匹配实例 id 的地方（比如账本）突然认不出来。
+   */
+  instanceLabel?: string
+  /**
+   * 怎么中断。**缺省 `signal`**——与 `launchKernelChannel` 一致。
+   * 远端调用方可能想走 `message`（control 通道）：隧道那头的进程桩
+   * 未必能发系统信号，这条口子留给它们。
+   */
+  interruptMode?: "signal" | "message"
   /** 握手失败时拿证据做三种实情的诊断；证据由 `evidence()` 现取（stderr 尾巴 / 远端日志尾巴） */
   diagnose?: (evidence: string) => LaunchDiagnosis | undefined
   evidence?: () => string
@@ -550,8 +563,8 @@ export async function attachKernelChannel(
   const channel = createKernelChannel({
     channel: (await createMainChannel(opts.连接信息 as never)) as unknown as RawChannel,
     process: opts.process,
-    kernelInstanceId: newInstanceId(opts.language ?? "kernel"),
-    interruptMode: "signal",
+    kernelInstanceId: newInstanceId(opts.instanceLabel ?? opts.language ?? "kernel"),
+    interruptMode: opts.interruptMode ?? "signal",
     ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
     handshake: kernelInfoRequest() as unknown as JupyterMessage,
     makeExecute: (code, o) =>
@@ -696,6 +709,8 @@ export async function launchKernelChannel(
     process: kernel.spawn,
     language,
     label,
+    // **本机路径的实例 id 前缀是 kernelspec 名，不是语言名**——拆出 attachKernelChannel 之前就是这样
+    instanceLabel: byPath ? byPath.language : (opts.kernelName ?? "kernel"),
     ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
     ...(opts.handshakeTimeoutMs ? { handshakeTimeoutMs: opts.handshakeTimeoutMs } : {}),
     diagnose,

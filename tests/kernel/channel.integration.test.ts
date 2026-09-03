@@ -111,8 +111,7 @@ describe("attachKernelChannel（远程内核，2026-09-03）", () => {
   const KERNEL = "dawn-spike"
   const 有 = hasKernel(KERNEL)
 
-  it("拿一份现成的 connection.json 接通道：与 launch 同一套握手与执行", async () => {
-    if (!有) return // 与本文件其它用例同一条跳过口径
+  it.skipIf(!有)("拿一份现成的 connection.json 接通道：与 launch 同一套握手与执行", async () => {
     // 用 launch 起一台，从它的 config 抄一份连接信息，再用 attach 接第二条通道到同一台内核
     const a = await launchKernelChannel({ kernelName: KERNEL })
     const info = (a as unknown as { 连接信息?: KernelConnectionInfo }).连接信息
@@ -123,12 +122,26 @@ describe("attachKernelChannel（远程内核，2026-09-03）", () => {
       language: "python",
       label: "attach 测试",
     })
-    const out: string[] = []
-    b.on("stream", (m) => out.push(String((m.message.content as { text?: string }).text ?? "")))
-    b.execute("print('DAWN_ATTACH_OK')")
-    await new Promise((r) => setTimeout(r, 1500))
-    expect(out.join("")).toContain("DAWN_ATTACH_OK")
-    await b.close()
-    await a.close()
+    try {
+      const out: string[] = []
+      b.on("stream", (m) => out.push(String((m.message.content as { text?: string }).text ?? "")))
+      b.execute("print('DAWN_ATTACH_OK')")
+      // **轮询而不是死等固定时长**：内核多快回话不该决定这条用例跑多久
+      const 到 = Date.now() + 15000
+      while (!out.join("").includes("DAWN_ATTACH_OK") && Date.now() < 到) {
+        await new Promise((r) => setTimeout(r, 50))
+      }
+      expect(out.join("")).toContain("DAWN_ATTACH_OK")
+    } finally {
+      // **断言失败也不能漏关**——否则一条红的用例会在机器上留一个活的 Python 进程
+      await b.close()
+      await a.close()
+    }
   })
+
+  if (!有) {
+    it(`（跳过：本机没有 ${KERNEL} kernelspec）`, () => {
+      expect(有).toBe(false)
+    })
+  }
 })

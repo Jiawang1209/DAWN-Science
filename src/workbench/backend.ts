@@ -95,7 +95,7 @@ import { 验一次key, type Key验证结果 } from "./key-validate.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
-import { 探测远端解释器 } from "../remote/interpreters.js"
+import { 探测远端解释器, 读远端事实 } from "../remote/interpreters.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
@@ -3576,10 +3576,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const ex = manager.executorOf(req.connectionId)
         if (!ex) throw fault("internal_error", "刚连上就没了：{0}", rec.label)
         const 已配 = rec.interpreters ?? {}
-        const [python, r] = await Promise.all([
-          探测远端解释器(ex.exec.bind(ex), "python", 已配),
-          探测远端解释器(ex.exec.bind(ex), "R", 已配),
-        ])
+        /**
+         * **事实读一次、两门语言排队跑**（审查，2026-09-04）。
+         *
+         * 每条 exec 是一条 SSH channel，而 OpenSSH 的 `MaxSessions` 默认就是 10：
+         * 两门语言并发、各自 4 个探测工人，再加两次事实脚本，峰值贴着上限——
+         * 超了之后 ssh2 报的是一句含糊的 channel open failure，
+         * 看起来像「这台机器上没有 Python」。排队慢几秒，但它是对的。
+         */
+        const 事实 = await 读远端事实(ex.exec.bind(ex))
+        const python = await 探测远端解释器(ex.exec.bind(ex), "python", 已配, 事实)
+        const r = await 探测远端解释器(ex.exec.bind(ex), "R", 已配, 事实)
         return { python, r }
       }
       const 现有 = settings?.interpreters() ?? {}

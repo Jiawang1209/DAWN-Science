@@ -43,7 +43,7 @@ import { ConnectionStore } from "../store/connections.js"
 import { TaskStore } from "../store/tasks.js"
 import { ScheduleStore } from "../store/schedules.js"
 import { RemoteConnections } from "../remote/connections.js"
-import { 探测远端解释器, 选定 } from "../remote/interpreters.js"
+import { 没探明白后缀, 探测远端解释器, 选定 } from "../remote/interpreters.js"
 import { 扫残留 } from "../remote/kernel-launch.js"
 import { KERNEL_PACKAGE } from "../protocol/kernel-package.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
@@ -273,6 +273,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     return id
   }
 
+  /**
+   * 每台服务器这一轮的「扫残留」（远程内核，审查 2026-09-04）。**连上时开始，起内核前要等它。**
+   *
+   * 扫的动作是 `pkill -9 -f '[d]awn-<装机id>-.*\.json'`，它**认不出刚起的那一台**——
+   * 不等的话，「连上就跑一段代码」会稳定地把自己刚起的内核杀掉。
+   * 值是一条**永不 reject** 的 promise：这是一道闸，不是一件要人处理的事。
+   */
+  const 扫过 = new Map<string, Promise<void>>()
+
   // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
   const piCredentials = createPiCredentialStore(opts.credentials)
 
@@ -361,6 +370,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       if (!cid) return settingsStore.get(语言 === "python" ? "interpreter.python" : "interpreter.r")
       const conn = connectionStore.get(cid)
       if (!conn) throw new Error(`没有这台服务器：${cid}`)
+      /**
+       * **先等这台的扫残留跑完**（审查，2026-09-04）。`扫残留` 的 `pkill -9 -f '[d]awn-<装机id>-.*\.json'`
+       * 按装机 id 匹配，**分不出「上次留下的」与「这一秒刚起的」**——连上之后立刻跑一段代码，
+       * 内核起来的那一刻正撞在扫的窗口里，它会被自己人杀掉，症状是「第一次跑必挂、再跑就好」。
+       *
+       * `interpreterOf` 是每一次起内核的必经之路，闸设在这里最省：
+       * 扫完了就是一个已经 settle 的 promise，`await` 不花时间。扫失败也不拦（那条链自己吞了错）。
+       */
+      await 扫过.get(cid)
       const 已配 = 语言 === "python" ? conn.interpreters?.python : conn.interpreters?.r
       if (已配) return 已配
       const ex = remoteConnections.executorOf(cid)
@@ -381,7 +399,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       if (定.kind === "many") {
         throw new Error(`${conn.label} 上找到 ${定.n} 个装了 ${包} 的 ${名}，请用户在右侧笔记本面板里选一个；选定后再试`)
       }
-      throw new Error(`${conn.label} 上没有装了 ${包} 的 ${名}。装法：${KERNEL_PACKAGE[语言].how}。装好后再试`)
+      /**
+       * **「没有」与「没探明白」要分开说**（审查，2026-09-04）。后者是起了它一次但判不出包在不在
+       * （八秒没应答、退出码怪、报了句不认识的错）——那时一句干脆的「没有装 ipykernel」
+       * 会把人支去装一个**可能早就装好了**的包，而真正坏掉的是那条路径本身。
+       */
+      throw new Error(
+        `${conn.label} 上没有装了 ${包} 的 ${名}。装法：${KERNEL_PACKAGE[语言].how}。装好后再试${没探明白后缀(定.unknown)}`,
+      )
     },
     /**
      * 这段对话的内核起在哪台服务器上（远程内核）。**给的是句柄不是执行器**：
@@ -867,18 +892,32 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          */
         const ex = remoteConnections.executorOf(connectionId)
         if (ex) {
-          void 扫残留(ex.exec.bind(ex), 装机id())
-            .then((r) => {
-              if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
-            })
-            .catch(() => {})
+          // **记下这一轮**：起内核前要等它（见 `interpreterOf` 里那句 `await 扫过.get(cid)`）。
+          // 这条 promise **永不 reject**——它是一道闸，不是一件要人处理的事
+          扫过.set(
+            connectionId,
+            扫残留(ex.exec.bind(ex), 装机id())
+              .then((r) => {
+                if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
+              })
+              .catch(() => {}),
+          )
         }
       }
       /**
        * **断线 = 内核死**（定案 3）。不重连、不接回：隧道那头的五个端口早就没了，
        * 而「看起来还连着的内核」比「明说死了」难查得多。
+       *
+       * **收摊失败要出声**：这条链里关的是本地 socket 与五条隧道，静默失败的形状是
+       * 「端口一直占着，而屏上一切正常」。
        */
-      if (state.kind === "disconnected") void 内核运行时.连接断了(connectionId)
+      if (state.kind === "disconnected") {
+        void 内核运行时
+          .连接断了(connectionId)
+          .catch((e) =>
+            console.error(`[远端内核] ${connectionId} 断线后收不干净：${e instanceof Error ? e.message : String(e)}`),
+          )
+      }
       远端状态变了?.({ connectionId, state })
     },
   })

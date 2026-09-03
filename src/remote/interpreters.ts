@@ -16,7 +16,14 @@ const 常见 = [
   "/opt/homebrew/bin/Rscript", "/usr/local/bin/Rscript", "/usr/bin/Rscript",
 ]
 
-/** 一次吐完所有事实。**登录环境由执行器保证**（它捕获过一次 PATH），这里只管问 */
+/**
+ * 一次吐完所有事实。**登录环境由执行器保证**（它捕获过一次 PATH），这里只管问。
+ *
+ * **已知的一处不精确**：`for p in $(which -a $n)` 会按空白切词，PATH 上那条可执行文件
+ * 的路径里若真带空格就会被切成两段（服务器上极少见，而且带空格的 PATH 目录本身就会
+ * 让一大堆脚本出事）。`[ -x "$d" ]` 那条不受影响——它比对的是我们自己写死的路径。
+ * 真要治得换 `which -a` 为逐行读，那要多起一个进程，暂不值得；记在这儿免得下次当成新 bug 查。
+ */
 export const 事实脚本 =
   `echo "DAWNFACT_HOME=$HOME"; echo "DAWNFACT_OS=$(uname -s)"; ` +
   `for n in python3 python Rscript; do for p in $(which -a $n 2>/dev/null); do echo "DAWNFACT_PATH_$n=$p"; done; done; ` +
@@ -55,19 +62,43 @@ export type 远端exec = (
   options?: { timeoutSec?: number },
 ) => Promise<{ code: number | undefined; signal?: string | undefined; stdout: string; stderr: string }>
 
+/**
+ * 跑一次事实脚本。**探不出来要响亮地说**（规格 7.5：失败必须出声）。
+ *
+ * 没有这道闸的话，一次失败的 exec（shell 起不来、`bash` 不在、被 ForceCommand 拦掉、
+ * 连接刚好断在这一刻）返回的是空 stdout，`解析事实` 会老老实实给出
+ * `home:"/"`、零个候选——于是用户看到的是**「这台机器上没有装了 ipykernel 的 Python」**。
+ * 那句话是假的，而且它指向的是完全错误的补救（去装包），排查会从这里绕很远。
+ *
+ * 判据用 `DAWNFACT_HOME` 在不在，不用退出码：脚本最后有个 `true`，
+ * 而 MOTD / rc 文件里随便一句话都可能弄脏退出码。
+ */
+export async function 读远端事实(exec: 远端exec): Promise<远端事实> {
+  const r = await exec(事实脚本, { timeoutSec: 20 })
+  if (取值(r.stdout, "DAWNFACT_HOME") === undefined) {
+    throw new Error(`探不了那台机器（退出码 ${r.code ?? "无"}）：${r.stderr.trim().slice(0, 200)}`)
+  }
+  return 解析事实(r.stdout)
+}
+
+/**
+ * @param 事实 已经读过就传进来。**两门语言共用一次**——`读远端事实` 要起一条 SSH 通道，
+ *   一次探测（python + R）没有理由问同一台机器两遍同样的问题。
+ */
 export async function 探测远端解释器(
   exec: 远端exec,
   语言: 语言,
   已配: { python?: string | undefined; r?: string | undefined },
+  事实?: 远端事实,
 ): Promise<候选[]> {
-  const 事实 = 解析事实((await exec(事实脚本, { timeoutSec: 20 })).stdout)
-  const 全部 = new Set([...事实.exe, ...Object.values(事实.path).flat()])
+  const 用的事实 = 事实 ?? (await 读远端事实(exec))
+  const 全部 = new Set([...用的事实.exe, ...Object.values(用的事实.path).flat()])
   const d: 枚举依赖 = {
-    platform: 事实.platform,
-    home: 事实.home,
+    platform: 用的事实.platform,
+    home: 用的事实.home,
     exists: (p) => 全部.has(p),
     glob: (pattern) => [...全部].filter((p) => 匹配(pattern, p)),
-    pathLookup: (name) => 事实.path[name] ?? [],
+    pathLookup: (name) => 用的事实.path[name] ?? [],
     settings: 已配,
     kernelspecs: [],
     // **不给 `process.env`**：那是我们这台电脑的环境，与那台服务器无关
@@ -83,12 +114,33 @@ export async function 探测远端解释器(
   return 探测解释器(语言, d, run)
 }
 
-/** 定案 1 的三条路 */
-export function 选定(
-  候选: readonly Pick<候选, "path" | "kernelPackage">[],
-): { kind: "one"; path: string } | { kind: "many"; n: number } | { kind: "none" } {
+/**
+ * 「零个」那句话后面要不要接一段「另有几条没探明白」。**空串 = 没有要补的**。
+ *
+ * 抽成函数是为了让这句话有地方被测：它长在 `wiring.ts` 的 `interpreterOf` 里，
+ * 而那条路要一台真服务器 + 一台真内核才走得到（见 `tests/electron/remote-kernel.test.ts`）。
+ */
+export function 没探明白后缀(unknown: readonly Pick<候选, "path" | "problem">[]): string {
+  if (unknown.length === 0) return ""
+  return `；另有 ${unknown.length} 条没探明白：${unknown.map((c) => `${c.path}（${c.problem ?? "原因不明"}）`).join("、")}`
+}
+
+/**
+ * 定案 1 的三条路。
+ *
+ * **`none` 要带上「没探明白的那几条」**（审查，2026-09-04）。`unknown` 的含义是
+ * *「起了它一次，但没能判断包在不在」*——超时、退出码怪、报了个不认识的错。
+ * 把它折进 `none` 之后，界面说的是**「这台机器上没有装了 ipykernel 的 Python」**，
+ * 而事实可能是「有，只是那条 python 起不来 / 八秒没应答」。
+ * **缺失不等于相同**：「没有」与「没探明白」要人做的事完全不同（去装包 vs 去看那条路径怎么了）。
+ *
+ * 泛型是为了让调用方拿回**自己那份**候选（带 `problem`），而不是被截成两个字段。
+ */
+export function 选定<T extends Pick<候选, "path" | "kernelPackage">>(
+  候选: readonly T[],
+): { kind: "one"; path: string } | { kind: "many"; n: number } | { kind: "none"; unknown: T[] } {
   const 能用 = 候选.filter((c) => c.kernelPackage === "present")
   if (能用.length === 1) return { kind: "one", path: 能用[0]!.path }
   if (能用.length > 1) return { kind: "many", n: 能用.length }
-  return { kind: "none" }
+  return { kind: "none", unknown: 候选.filter((c) => c.kernelPackage === "unknown") }
 }

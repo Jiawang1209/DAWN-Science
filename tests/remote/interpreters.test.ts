@@ -3,7 +3,7 @@
  * 只换了「事实从哪来」——一段登录 shell 脚本一次吐完，再逐个候选起一次。
  */
 import { describe, expect, it } from "vitest"
-import { 事实脚本, 解析事实, 探测远端解释器, 选定 } from "../../src/remote/interpreters.js"
+import { 事实脚本, 解析事实, 读远端事实, 探测远端解释器, 选定 } from "../../src/remote/interpreters.js"
 
 const 事实 = [
   "*** 欢迎横幅 ***",
@@ -66,12 +66,51 @@ describe("探测远端解释器", () => {
   })
 })
 
+describe("读远端事实", () => {
+  /**
+   * **探不出来要响亮地说**（规格 7.5）。此前一次失败的 exec 返回空 stdout，
+   * 解析出 `home:"/"`、零个候选，用户看到的是一句斩钉截铁的
+   * 「这台机器上没有装了 ipykernel 的 Python」——那是假话，而且指向完全错误的补救。
+   */
+  it("事实脚本没吐出 DAWNFACT_HOME → 抛，带上退出码与 stderr，不悄悄当成「一条都没有」", async () => {
+    const exec = async () => ({ code: 127, stdout: "", stderr: "bash: command not found\n" })
+    await expect(读远端事实(exec)).rejects.toThrow(/探不了那台机器（退出码 127）：bash: command not found/)
+  })
+
+  it("同样的空输出，探测那条也一路抛出来", async () => {
+    const exec = async () => ({ code: undefined, stdout: "*** 只有横幅 ***\n", stderr: "" })
+    await expect(探测远端解释器(exec, "python", {})).rejects.toThrow(/退出码 无/)
+  })
+
+  it("事实传进来就不再问那台机器一遍（两门语言共用一次）", async () => {
+    const 跑过: string[] = []
+    const exec = async (cmd: string) => {
+      跑过.push(cmd)
+      return { code: 0, stdout: 事实, stderr: "" }
+    }
+    const 事 = await 读远端事实(exec)
+    await 探测远端解释器(exec, "python", {}, 事)
+    await 探测远端解释器(exec, "R", {}, 事)
+    expect(跑过.filter((c) => c === 事实脚本)).toHaveLength(1)
+  })
+})
+
 describe("选定", () => {
-  const c = (path: string, kernelPackage: "present" | "missing" | "unknown") => ({ path, source: "PATH" as const, kernelPackage })
+  const c = (path: string, kernelPackage: "present" | "missing" | "unknown", problem?: string) => ({
+    path, source: "PATH" as const, kernelPackage, ...(problem ? { problem } : {}),
+  })
   it("唯一装了包的 → one；多个 → many；零个 → none（missing / unknown 都不算）", () => {
     expect(选定([c("/a", "present"), c("/b", "missing")])).toEqual({ kind: "one", path: "/a" })
     expect(选定([c("/a", "present"), c("/b", "present")])).toEqual({ kind: "many", n: 2 })
-    expect(选定([c("/b", "missing"), c("/c", "unknown")])).toEqual({ kind: "none" })
-    expect(选定([])).toEqual({ kind: "none" })
+    expect(选定([])).toEqual({ kind: "none", unknown: [] })
+  })
+
+  /**
+   * **「没有」与「没探明白」不是一回事**（审查，2026-09-04）：前者要人去装包，
+   * 后者要人去看那条路径怎么了。折成一句话就等于把第二种人支上一条死路。
+   */
+  it("none 要把「没探明白」的那几条原样带出来（含 problem）", () => {
+    const 定 = 选定([c("/b", "missing"), c("/c", "unknown", "8 秒没应答")])
+    expect(定).toEqual({ kind: "none", unknown: [c("/c", "unknown", "8 秒没应答")] })
   })
 })

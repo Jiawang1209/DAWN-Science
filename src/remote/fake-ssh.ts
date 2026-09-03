@@ -168,6 +168,18 @@ export function 造一台假服务器(): SshClientLike {
     }, 5)
   }) as SshClientLike["exec"]
 
+  /**
+   * **先占个位。** 真实现要靠假机器自己起一个能听 zeromq 的 socket，
+   * 那是任务 9 的事——这里先如实说「还不会」，好让 typecheck 干净、
+   * 也不让「转发看起来能用但其实什么都没发生」这种假象溜进 mock 模式。
+   */
+  c.forwardOut = ((
+    _srcIP: string, _srcPort: number, _dstIP: string, _dstPort: number,
+    cb: (e: Error | undefined, ch: unknown) => void,
+  ) => {
+    cb(new Error("假服务器还不会转发"), undefined as never)
+  }) as SshClientLike["forwardOut"]
+
   c.sftp = ((cb: (e: Error | undefined, sftp: unknown) => void) => {
     cb(undefined, {
       readFile: (p: string, f: (e: Error | undefined, b?: Buffer) => void) => {

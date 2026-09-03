@@ -1175,6 +1175,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     let 会话id: string | undefined
     const spec = {
       connectionId,
+      label: rec.label,
       // **句柄，不是实例**：断线重连之后这段会话还要能接着用（`handleOf` 的说明）
       executor: manager.handleOf(connectionId, rec.label),
       cwd: {

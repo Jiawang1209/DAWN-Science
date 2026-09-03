@@ -69,6 +69,11 @@ function 造一个假客户端(环境输出 = "DAWNENV_PATH=/opt/conda/bin:/usr/
       queueMicrotask(() => cb(undefined, 假channel(r.out, r.err, r.code)))
       return undefined as never
     },
+    // 这条测试不用隧道——给个占位，真正的行为由下面「forwardOut」那组用例单独覆盖
+    forwardOut(_srcIP, _srcPort, _dstIP, _dstPort, cb) {
+      cb(new Error("这份假客户端没配 forwardOut"), undefined as never)
+      return undefined as never
+    },
     sftp(cb) {
       cb(undefined, {
         readFile: (_p: string, f: (e: undefined, d: Buffer) => void) => f(undefined, Buffer.from("内容")),
@@ -215,6 +220,7 @@ describe("主机公钥校验 · TOFU（审查 debug A6）", () => {
         queueMicrotask(() => cb(undefined, 假channel("", "", 0) as never))
         return undefined as never
       },
+      forwardOut: () => undefined as never,
       sftp: () => undefined as never,
       end: () => undefined as never,
     }
@@ -283,5 +289,25 @@ describe("状态", () => {
     r.close()
     expect(spy).toHaveBeenCalled()
     expect(r.current().kind).toBe("idle")
+  })
+})
+
+describe("forwardOut（远程内核）", () => {
+  it("连着时把远端端口的通道交出来；没连就说没连", async () => {
+    const 假 = 造一个假客户端()
+    const 要过: unknown[] = []
+    ;(假.client as unknown as { forwardOut: unknown }).forwardOut = (
+      srcIP: string, srcPort: number, dstIP: string, dstPort: number,
+      cb: (e: Error | undefined, ch: unknown) => void,
+    ) => {
+      要过.push([srcIP, srcPort, dstIP, dstPort])
+      cb(undefined, { 我是通道: dstPort })
+    }
+    const ex = new RemoteExecutor({ config: { host: "h", username: "u" }, createClient: () => 假.client })
+    await expect(ex.forwardOut(5555)).rejects.toThrow(/还没连上|不可用/)
+    await ex.connect()
+    const ch = await ex.forwardOut(5555)
+    expect(ch).toEqual({ 我是通道: 5555 })
+    expect(要过).toEqual([["127.0.0.1", 0, "127.0.0.1", 5555]])
   })
 })

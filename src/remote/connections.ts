@@ -70,6 +70,7 @@ export class RemoteConnections {
       exec: (command, options) => Promise.resolve().then(() => 拿().exec(command, options)),
       readFile: (path) => Promise.resolve().then(() => 拿().readFile(path)),
       writeFile: (path, data) => Promise.resolve().then(() => 拿().writeFile(path, data)),
+      forwardOut: (端口) => Promise.resolve().then(() => 拿().forwardOut(端口)),
     }
   }
 

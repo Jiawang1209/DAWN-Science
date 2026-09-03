@@ -127,6 +127,10 @@ export interface SshClientLike {
   on(event: "ready" | "error" | "close" | "end", cb: (...a: never[]) => void): unknown
   connect(cfg: ConnectConfig): unknown
   exec(cmd: string, cb: (err: Error | undefined, ch: ClientChannel) => void): unknown
+  forwardOut(
+    srcIP: string, srcPort: number, dstIP: string, dstPort: number,
+    cb: (err: Error | undefined, ch: ClientChannel) => void,
+  ): unknown
   sftp(cb: (err: Error | undefined, sftp: SFTPWrapper) => void): unknown
   end(): unknown
 }
@@ -322,6 +326,24 @@ export class RemoteExecutor {
       // 清掉那个 pid 文件。**失败不出声**：它只是块草稿纸
       void this.原始执行(`rm -f ${pid文件}`).catch(() => {})
     }
+  }
+
+  /**
+   * 到远端 `127.0.0.1:<端口>` 的一条通道（远程内核，2026-09-03）。
+   * 隧道那一层拿它对接本地 socket；zeromq 在上面跑的是原样 TCP。
+   * 没连着就抛——与 `exec` 同一口径，不在这里顺手连。
+   */
+  forwardOut(远端端口: number): Promise<import("node:stream").Duplex> {
+    const c = this.client
+    if (this.state.kind !== "ready" || !c) {
+      return Promise.reject(new Error(`远端不可用（${this.state.kind}）：${this.说明() || "还没连上"}`))
+    }
+    return new Promise((resolve, reject) => {
+      c.forwardOut("127.0.0.1", 0, "127.0.0.1", 远端端口, (err, ch) => {
+        if (err) return reject(err)
+        resolve(ch as unknown as import("node:stream").Duplex)
+      })
+    })
   }
 
   /**

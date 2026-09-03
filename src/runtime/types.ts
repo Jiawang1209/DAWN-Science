@@ -34,6 +34,8 @@ export interface RemoteLike {
   ): Promise<{ code: number | undefined; signal?: string | undefined; stdout: string; stderr: string }>
   readFile(path: string): Promise<Buffer>
   writeFile(path: string, data: string | Buffer): Promise<void>
+  /** 到远端某端口的通道（远程内核）。**可选**：测试替身与旧句柄可以不给，运行时会如实说「这个执行器不支持隧道」 */
+  forwardOut?(远端端口: number): Promise<import("node:stream").Duplex>
 }
 
 /** 会话此刻在远端的哪个目录。**可变**——模型 `cd` 之后它跟着变 */
@@ -87,6 +89,9 @@ export interface SessionSpec {
   resume?: boolean
   remote?: {
     executor: RemoteLike
+    /** 是哪台服务器、叫什么（远程内核要在转录里说「在 genek 上起内核」，快照要记 `where`）。老调用方可以不给 */
+    connectionId?: string
+    label?: string
     /**
      * 会话此刻在哪个目录（②-B · R4′）。
      *
@@ -388,7 +393,7 @@ export type AgentEvent =
       /** 全文落盘位置。写盘失败时缺省 */
       fullOutputPath?: string
     }
-  | { kind: "exited"; sessionId: SessionId; exitCode: number }
+  | { kind: "exited"; sessionId: SessionId; exitCode: number; reason?: string }
 
 export type EventSink = (event: AgentEvent) => void
 

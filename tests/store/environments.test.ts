@@ -94,6 +94,21 @@ describe("内容寻址", () => {
     expect(store().get("并不存在")).toBeUndefined()
   })
 
+  it("**带 where 的与不带的是两行**（远程内核，2026-09-03）：同一个 conda env 在两台机器上不是同一个环境", () => {
+    const s = store()
+    const local = s.put(样本(), "t")
+    const remote = s.put(样本({ where: { connectionId: "conn-1" } }), "t")
+    expect(s.count()).toBe(2)
+
+    const gotRemote = s.get(remote)!
+    if (gotRemote.kind !== "kernel") throw new Error("存的是内核快照，取回来却不是")
+    expect(gotRemote.where).toEqual({ connectionId: "conn-1" })
+
+    const gotLocal = s.get(local)!
+    if (gotLocal.kind !== "kernel") throw new Error("存的是内核快照，取回来却不是")
+    expect(gotLocal.where).toBeUndefined()
+  })
+
   it("**库里那一行坏了也不炸** —— 界面说取不到，而不是整个面板消失", () => {
     const db = new Database(":memory:")
     dbs.push(db)

@@ -212,6 +212,13 @@ describe("exited 带 reason（远程内核，2026-09-03）", () => {
     expect(run.terminalReason).toBe("disconnected")
     expect(run.status).toBe("cancelled")
   })
+
+  it("reason 是空串时不生效——不能让空串悄悄顶掉那句老话", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1, reason: "" })
+    const run = list()[0]!
+    expect(run.terminalReason).toBe("会话结束时该回合仍未收尾")
+  })
 })
 
 describe("时间戳", () => {

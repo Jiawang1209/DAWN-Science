@@ -542,8 +542,9 @@ export class RunRecorder {
         finishedAt,
         hasError: true,
         // 有 reason（例如远程内核断线的 "disconnected"）就记它——
-        // 比泛泛的「仍未收尾」更接近真相；没有就还是那句老话
-        terminalReason: reason ?? "会话结束时该回合仍未收尾",
+        // 比泛泛的「仍未收尾」更接近真相；没有、或是空串，就还是那句老话
+        // （规格 7.5：失败必须出声——空串不该悄悄把这句话顶掉）
+        terminalReason: reason || "会话结束时该回合仍未收尾",
       })
       s.turnRunId = undefined
     }

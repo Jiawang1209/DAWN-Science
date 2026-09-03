@@ -24,15 +24,31 @@ export interface 一条隧道 {
 
 export async function 隧道(c: 可转发, 远端端口: number): Promise<一条隧道> {
   const 在途 = new Set<Socket>()
+  // sock 对应的通道——只有等 forwardOut 落地、真正开始 pipe 之后才登记，
+  // 好让 关() 能在销毁 socket 的同时顺手把通道也结束掉，不用等 'close' 事件绕一圈
+  const 通道映射 = new Map<Socket, Duplex>()
   const server = createServer((sock) => {
     在途.add(sock)
-    sock.on("close", () => 在途.delete(sock))
+    sock.on("close", () => {
+      在途.delete(sock)
+      const ch = 通道映射.get(sock)
+      if (ch) {
+        通道映射.delete(sock)
+        ch.end()
+      }
+    })
     sock.on("error", () => sock.destroy())
     c.forwardOut(远端端口).then(
       (ch) => {
+        if (sock.destroyed) {
+          // 通道落地的时候本地这头已经断了（客户端秒断之类）：不能再 pipe 到一个死 socket 上，
+          // 把通道自己结束掉，别让它悬着
+          ch.end()
+          return
+        }
+        通道映射.set(sock, ch)
         ch.on("error", () => sock.destroy())
         ch.on("close", () => sock.destroy())
-        sock.on("close", () => ch.end())
         sock.pipe(ch).pipe(sock)
       },
       // 远端拒了（sshd 关了 AllowTcpForwarding 之类）：本地这条连接也拒，别挂着。
@@ -41,20 +57,49 @@ export async function 隧道(c: 可转发, 远端端口: number): Promise<一条
       () => sock.resetAndDestroy(),
     )
   })
+
+  let 本地端口 = 0
+  let 监听中 = false
   await new Promise<void>((resolve, reject) => {
-    server.once("error", reject)
-    server.listen(0, "127.0.0.1", () => resolve())
+    // 持久监听，不用 once：listen 阶段的错误经这条 reject 出去；listen 成功之后
+    // 这个监听器还留着——那时候早没人在等这个 Promise 了，错误不能悄悄消失进一个
+    // 已经 settle 的 Promise 里（规格 7.5：失败必须出声）
+    server.on("error", (e) => {
+      if (!监听中) {
+        reject(e)
+        return
+      }
+      console.error(`[隧道] 本地端口 ${本地端口} 出错：${(e as Error).message}`)
+    })
+    server.listen(0, "127.0.0.1", () => {
+      监听中 = true
+      resolve()
+    })
   })
+
   const addr = server.address()
-  if (!addr || typeof addr === "string") throw new Error("本地隧道端口拿不到")
+  if (!addr || typeof addr === "string") {
+    // 走到这一步 listen 已经成功了，不能把监听中的 server 留在那——先关掉再抛
+    await new Promise<void>((r) => server.close(() => r()))
+    throw new Error("本地隧道端口拿不到")
+  }
+  本地端口 = addr.port
+
   let 关了 = false
   return {
-    本地端口: addr.port,
+    本地端口,
     关: () =>
       new Promise<void>((r) => {
         if (关了) return r()
         关了 = true
-        for (const s of 在途) s.destroy()
+        for (const s of 在途) {
+          const ch = 通道映射.get(s)
+          if (ch) {
+            通道映射.delete(s)
+            ch.end()
+          }
+          s.destroy()
+        }
         server.close(() => r())
       }),
   }

@@ -70,4 +70,64 @@ describe("隧道", () => {
     // 关了就连不上
     await expect(收一段(五.本地.shell_port, "x")).rejects.toThrow()
   })
+
+  it("并发：同一个本地端口两个连接，各自一条 forwardOut 通道，回声互不串", async () => {
+    const 远 = 假远端()
+    const t = await 隧道(远, 7777)
+    const [a, b] = await Promise.all([收一段(t.本地端口, "A"), 收一段(t.本地端口, "B")])
+    expect(a).toBe("A")
+    expect(b).toBe("B")
+    expect(远.要过).toEqual([7777, 7777])
+    expect(远.通道们.length).toBe(2)
+    await t.关()
+  })
+
+  it("forwardOut 迟到：客户端已经秒断，通道落地时直接结束，不抛也不留 unhandled rejection", async () => {
+    let 漏了: unknown
+    const 抓 = (e: unknown) => { 漏了 = e }
+    process.on("unhandledRejection", 抓)
+    try {
+      let 通道: PassThrough | undefined
+      const 慢远端 = {
+        forwardOut: (): Promise<Duplex> =>
+          new Promise((resolve) => {
+            setTimeout(() => {
+              通道 = new PassThrough()
+              resolve(通道)
+            }, 30)
+          }),
+      }
+      const t = await 隧道(慢远端, 9999)
+      await new Promise<void>((resolve, reject) => {
+        const s = connect(t.本地端口, "127.0.0.1", () => {
+          s.destroy() // 秒断：forwardOut 30ms 后才落地时，本地这头早没了
+          resolve()
+        })
+        s.once("error", reject)
+      })
+      await new Promise((r) => setTimeout(r, 60)) // 等迟到的 forwardOut 真正落地
+      expect(通道).toBeDefined()
+      expect(通道!.writableEnded).toBe(true)
+      expect(漏了).toBeUndefined()
+      await t.关()
+    } finally {
+      process.off("unhandledRejection", 抓)
+    }
+  })
+
+  it("关() 顺手把还开着的连接对应的通道也结束掉", async () => {
+    const 远 = 假远端()
+    const t = await 隧道(远, 8888)
+    await new Promise<void>((resolve, reject) => {
+      const s = connect(t.本地端口, "127.0.0.1", () => resolve())
+      s.once("error", reject)
+      // 不写数据、不主动关——模拟内核连着不撒手的状态
+    })
+    // 客户端的 connect 回调跟服务端的 connection 事件（进而触发 forwardOut）不是同一个 tick，
+    // 一次 setImmediate 赌不赢——等 forwardOut 真的落地
+    while (远.通道们.length < 1) await new Promise((r) => setTimeout(r, 5))
+    await t.关()
+    expect(远.通道们.length).toBe(1)
+    expect((远.通道们[0] as PassThrough).writableEnded).toBe(true)
+  })
 })

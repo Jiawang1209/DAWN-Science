@@ -220,7 +220,8 @@ describe("主机公钥校验 · TOFU（审查 debug A6）", () => {
         queueMicrotask(() => cb(undefined, 假channel("", "", 0) as never))
         return undefined as never
       },
-      forwardOut: () => undefined as never,
+      // 不会被调到；万一被调到也要拒而不是永远不回——挂着的 promise 比失败更难查
+      forwardOut: (_a, _b, _c, _d, cb) => void cb(new Error("这份假客户端没配 forwardOut"), undefined as never),
       sftp: () => undefined as never,
       end: () => undefined as never,
     }

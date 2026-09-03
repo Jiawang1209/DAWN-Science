@@ -11,12 +11,13 @@ import {
   operationNames,
 } from "../../src/protocol/operations.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
-import { ProjectSummarySchema } from "../../src/protocol/entities.js"
+import { ProjectSummarySchema, RemoteConnectionSchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("128 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2）", () => {
+  it("129 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
+        "setRemoteInterpreter",
         "acquireLease",
         "listArtifacts",
         "runInKernel",
@@ -423,5 +424,57 @@ describe("runInKernel / interruptKernel（笔记本，7.26）", () => {
     expect(
       OPERATIONS.listVariables.request.safeParse({ sessionId: "s", language: "julia" }).success,
     ).toBe(false)
+  })
+})
+
+/**
+ * 远程内核（7.30，2026-09-03）：每台服务器各配一份解释器路径。
+ * `probeInterpreters` 多一个可选 `connectionId`——给了就探那台服务器；
+ * `setRemoteInterpreter` 是新操作；连接记录多一个可选 `interpreters`。
+ */
+describe("远程内核 · 解释器路径（7.30）", () => {
+  const 一条合法连接 = {
+    id: "conn-1",
+    label: "实验室",
+    host: "h.example",
+    port: 22,
+    username: "u",
+    hasSecret: false,
+    sortOrder: 1,
+    createdAt: new Date().toISOString(),
+    state: { kind: "idle" as const },
+  }
+
+  it("probeInterpreters 可带 connectionId；setRemoteInterpreter 存在且 mutating；连接记录可带 interpreters（7.30）", () => {
+    expect(OPERATIONS.probeInterpreters.request.safeParse({}).success).toBe(true)
+    expect(OPERATIONS.probeInterpreters.request.safeParse({ connectionId: "c1" }).success).toBe(true)
+    expect(OPERATIONS.setRemoteInterpreter.mutating).toBe(true)
+    expect(
+      OPERATIONS.setRemoteInterpreter.request.safeParse({ connectionId: "c1", language: "R", path: "" })
+        .success,
+    ).toBe(true)
+    expect(
+      RemoteConnectionSchema.safeParse({ ...一条合法连接, interpreters: { python: "/x/python" } }).success,
+    ).toBe(true)
+  })
+
+  const 一份内核快照 = {
+    captured: true as const,
+    kind: "kernel" as const,
+    id: "env-1",
+    language: "python" as const,
+    version: "3.11.0",
+    executable: "/usr/bin/python3",
+    platform: "darwin",
+    libraryPaths: [] as string[],
+    packages: [] as { name: string; version: string }[],
+    packagesTotal: 0,
+  }
+
+  it("getEnvironment 的 kernel 分支可带 where（远端内核记它在哪台机器）；未知字段仍被拒（7.30）", () => {
+    const S = OPERATIONS.getEnvironment.response
+    expect(S.safeParse(一份内核快照).success).toBe(true)
+    expect(S.safeParse({ ...一份内核快照, where: { connectionId: "conn-1" } }).success).toBe(true)
+    expect(S.safeParse({ ...一份内核快照, where: { connectionId: "conn-1" }, extra: 1 }).success).toBe(false)
   })
 })

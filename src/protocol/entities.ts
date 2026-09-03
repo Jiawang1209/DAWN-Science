@@ -366,6 +366,8 @@ export const RemoteConnectionSchema = z
      * 界面据此退回显示「加进来多久了」。
      */
     lastConnectedAt: Iso.optional(),
+    /** 这台服务器上的解释器路径（远程内核，7.30）。没配的不给字段 */
+    interpreters: z.object({ python: z.string().min(1).optional(), r: z.string().min(1).optional() }).strict().optional(),
     /** 此刻的连接状态。**服务端说了算**——界面自己猜会猜成「以为连着」 */
     state: RemoteStateSchema,
   })

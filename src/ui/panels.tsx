@@ -358,6 +358,11 @@ export type EnvironmentState =
       libraryPaths: string[]
       packages: { name: string; version: string }[]
       packagesTotal: number
+      /**
+       * 远程内核（7.30）：这台内核在哪台机器上。与 `shell` 分支的 `where` 同形——
+       * **本机内核不带这个字段**，缺席就是本机。
+       */
+      where?: { connectionId: string }
     }
   /**
    * 机器快照（②-B · R5，2026-08-13）。

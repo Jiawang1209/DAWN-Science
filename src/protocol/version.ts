@@ -502,8 +502,10 @@
  *   项目会话 → `<项目>/docs/`（契约没变，只是目录规则）。纯新增。
  *
  * 7.29（2026-08-27）：`probeInterpreters`——首启向导列本机 Python / R 候选。只读、纯新增。
+ *
+ * 7.30（2026-09-03）：远程内核——probeInterpreters 可带 connectionId、setRemoteInterpreter、连接记录 interpreters。纯新增可选字段。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.29"
+export const WORKBENCH_PROTOCOL_VERSION = "7.30"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

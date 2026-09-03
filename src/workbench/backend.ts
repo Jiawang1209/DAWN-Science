@@ -2819,6 +2819,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 装配(rec)
     },
 
+    /**
+     * 设一台服务器某门语言的解释器路径（远程内核，7.30）。**空串 = 清除**。
+     * 只是存下来、回显——真去那台服务器上验它能不能用是任务 8 的事。
+     */
+    setRemoteInterpreter: async ({ connectionId, language, path }) => {
+      const { store } = 远端()
+      const rec = store.get(connectionId)
+      if (!rec) throw fault("not_found", "没有这台服务器：{0}", connectionId)
+      store.setInterpreter(connectionId, language, path ? path : null)
+      return 装配(store.get(connectionId)!)
+    },
+
     writeToSession: async ({ sessionId, data, as, images, behavior }) => {
       /**
        * **图片在这一层读盘、缩放、转 base64**（协议 4.12，2026-08-13）。
@@ -3526,7 +3538,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * GUI 里起来的 Electron 拿到的 PATH 常常不是用户终端里那套（`src/env/probe.ts` 同一条理由）；Windows 用 `where`。
      * 每个候选起一次、8 秒超时；起不来的如实列出 `problem`，不静默少一条。
      */
-    probeInterpreters: async () => {
+    // `_req` 的 `connectionId`（远程内核，7.30）真用在任务 8——这里先接住让类型对得上
+    probeInterpreters: async (_req) => {
       const 现有 = settings?.interpreters() ?? {}
       const specs = discoverKernelSpecs().specs
       const d: 枚举依赖 = {

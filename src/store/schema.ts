@@ -656,6 +656,15 @@ function 迁移步骤(db: Database.Database): void {
   )
 
   /**
+   * **每台服务器各配一份解释器路径**（远程内核，2026-09-03）。本机的路径在服务器上没有意义；
+   * 只配一门是常态，所以两列都可空。路径不是秘密，回显是必须的（与本机两条同一理由）。
+   */
+  if (!hasColumn(db, "remote_connections", "python_path")) {
+    db.exec(`ALTER TABLE remote_connections ADD COLUMN python_path TEXT`)
+    db.exec(`ALTER TABLE remote_connections ADD COLUMN r_path TEXT`)
+  }
+
+  /**
    * **v15（2026-08-22）：定时任务**（学自 dsh-automation）。两张表：定义与运行。
    * `schedule` 是 JSON（四种计划，见 `schedule/recurrence.ts`）；定义改一次 `revision` +1，
    * 运行记录带着当时的 revision 与任务说明快照——**计划只表达未来意图**，改了定义不动已排队的那次。

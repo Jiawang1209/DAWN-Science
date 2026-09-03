@@ -42,6 +42,11 @@ export interface ConnectionRecord {
    * 界面据此退回显示「加进来多久了」，但那个决定在界面那一层。
    */
   lastConnectedAt?: string
+  /**
+   * **这台服务器上的解释器路径**（远程内核，2026-09-03）。本机配的两条在服务器上没有意义——
+   * 只配一门是常态，所以缺席不是「都没配」，是「这一门没配」。
+   */
+  interpreters?: { python?: string; r?: string }
 }
 
 interface Row {
@@ -55,6 +60,8 @@ interface Row {
   sort_order: number
   created_at: string
   last_connected_at: string | null
+  python_path: string | null
+  r_path: string | null
 }
 
 const toRecord = (r: Row): ConnectionRecord => ({
@@ -70,6 +77,9 @@ const toRecord = (r: Row): ConnectionRecord => ({
   createdAt: r.created_at,
   // **只在真有值时给这个字段**：缺席的意思是「从没连上过」，不是零时刻
   ...(r.last_connected_at ? { lastConnectedAt: r.last_connected_at } : {}),
+  ...(r.python_path || r.r_path
+    ? { interpreters: { ...(r.python_path ? { python: r.python_path } : {}), ...(r.r_path ? { r: r.r_path } : {}) } }
+    : {}),
 })
 
 export class ConnectionStore {
@@ -148,6 +158,13 @@ export class ConnectionStore {
    */
   记下连上(id: string, iso: string): void {
     this.db.prepare(`UPDATE remote_connections SET last_connected_at = ? WHERE id = ?`).run(iso, id)
+  }
+
+  /** 设这台服务器某门语言的解释器路径。**`null` = 清除**。`update()` 故意不碰这两列——它改的是连接信息 */
+  setInterpreter(id: string, language: "python" | "R", path: string | null): void {
+    const col = language === "python" ? "python_path" : "r_path"
+    const r = this.db.prepare(`UPDATE remote_connections SET ${col} = ? WHERE id = ?`).run(path, id)
+    if (r.changes === 0) throw new Error(`没有这台服务器：${id}`)
   }
 
   remove(id: string): void {

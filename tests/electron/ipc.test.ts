@@ -146,6 +146,7 @@ function backend(): WorkbenchBackend {
     removeConnection: async () => ({}),
     connectRemote: async () => 假连接,
     disconnectRemote: async () => 假连接,
+    setRemoteInterpreter: async () => 假连接,
     acquireLease: async () => ({
       sessionId: "s1", holder: "user" as const,
       expiresAt: "2026-08-08T00:05:00Z", fingerprint: "abc",

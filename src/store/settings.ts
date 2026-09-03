@@ -103,6 +103,12 @@ export type SettingKey =
    * 与 `mcp.trusted.*` 同一个理由:它是「这台机器前的人认过这台服务器」的记录,落本机库、不进任何会被分享的文件。
    */
   | `ssh.hostkey.${string}`
+  /**
+   * 这台电脑的安装 id（远程内核，2026-09-03）。远端服务器上留的临时文件名里带它——
+   * 同一个账号在两台电脑上分别连同一台服务器时，靠它认出「这不是我留的」，不互相误杀。
+   * 第一次要用时生成，8 位十六进制。
+   */
+  | "install.id"
 
 export class SettingsStore {
   constructor(private readonly db: Database.Database) {}

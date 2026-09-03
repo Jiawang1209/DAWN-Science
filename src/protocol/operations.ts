@@ -1972,7 +1972,11 @@ export const OPERATIONS = {
    * 候选来自设置 / kernelspec / PATH / 常见目录，每个真起一次拿版本与内核包在不在（`src/kernel/probe.ts`）。
    */
   probeInterpreters: {
-    request: Empty,
+    /**
+     * 远程内核（7.30）：给了 `connectionId` 就探那台服务器（走登录 shell），
+     * 没连着会先连；不给就探本机——与此前的行为一致。
+     */
+    request: z.object({ connectionId: z.string().min(1).optional() }).strict(),
     response: z
       .object({
         python: z.array(InterpreterCandidateSchema),
@@ -2003,6 +2007,13 @@ export const OPERATIONS = {
         problem: z.string().optional(),
       })
       .strict(),
+    mutating: true,
+  },
+
+  /** 设一台服务器某门语言的解释器路径（远程内核，7.30）。**空串 = 清除**。回显整条连接记录 */
+  setRemoteInterpreter: {
+    request: z.object({ connectionId: z.string().min(1), language: z.enum(["python", "R"]), path: z.string() }).strict(),
+    response: RemoteConnectionSchema,
     mutating: true,
   },
 
@@ -2731,6 +2742,11 @@ export const OPERATIONS = {
           packages: z.array(z.object({ name: z.string(), version: z.string() }).strict()),
           /** 实际装了多少。**与 `packages.length` 不同即为被截断**（规格 7.5） */
           packagesTotal: z.int().min(0),
+          /**
+           * 远程内核（7.30）：这台内核在哪台机器上。与 `shell` 分支的 `where` 同形——
+           * **本机内核不带这个字段**，缺席就是本机，不是「远程但不知道是哪台」。
+           */
+          where: z.object({ connectionId: z.string().min(1) }).strict().optional(),
         })
         .strict(),
       z

@@ -193,6 +193,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     removeConnection: async () => ({}),
     connectRemote: async () => 假连接,
     disconnectRemote: async () => 假连接,
+    setRemoteInterpreter: async () => 假连接,
     acquireLease: async () => ({
       sessionId: "s1",
       holder: "user" as const,

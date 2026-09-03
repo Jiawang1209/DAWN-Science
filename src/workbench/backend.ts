@@ -706,9 +706,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     mkdirSync(目录, { recursive: true })
     return { rec, items, 目录 }
   }
+  /**
+   * 远端会话的内核（远程内核，2026-09-03）：挂载层接了远端就放行——内核在那台服务器上起。
+   * 没接（`能起远端()` 为 false）才拒，与 `native.ts` 决定挂不挂 `run_code` 同一条判据；
+   * 08-27 那句「代码只能在本机起内核」已不成立，删了。
+   */
   const 拒远端 = (sessionId: Parameters<typeof sessions.get>[0]) => {
-    if (sessions.get(sessionId)?.connectionId) {
-      throw fault("invalid_request", "远端会话还没有内核：代码只能在本机起内核，而这段对话的文件在服务器上")
+    if (sessions.get(sessionId)?.connectionId && !opts.kernels?.能起远端()) {
+      throw fault("invalid_request", "这段对话在服务器上，而这台装配没有接远端内核")
     }
   }
 

@@ -1371,7 +1371,7 @@ export const EN: Readonly<Record<string, string>> = {
   "本次运行没有装配临时会话的目录根": "The scratch-chat root is not wired up in this run",
   "没有这个会话：{0}": "No such chat: {0}",
   "这段对话在本次运行里没有转录可导（重启之前的对话要先点开、让它重新加载）": "This chat has no transcript to export in this run (chats from before a restart must be opened first so they reload)",
-  "远端会话还没有内核：代码只能在本机起内核，而这段对话的文件在服务器上": "Remote chats have no kernel yet: kernels only start on this machine, and this chat's files live on the server",
+  "这段对话在服务器上，而这台装配没有接远端内核": "This chat lives on a server, but this build is not wired for remote kernels",
   "{0} 这个名字已经有上千份了，换个下载目录吧": "There are already over a thousand files named {0} — pick another download folder",
   "项目 \"{0}\" 不存在": "Project \"{0}\" does not exist",
   "没有这台服务器：{0}": "No such server: {0}",

@@ -118,3 +118,20 @@ export interface KernelChannel {
    */
   onExit?(cb: () => void): Unsubscribe
 }
+
+/**
+ * connection.json 的形状（远程内核，2026-09-03）。ipykernel / IRkernel 起来时自己写的那份，
+ * 五个端口 + HMAC key。远端那份的端口是服务器上的；隧道之后换成本地端口再交给 enchannel。
+ */
+export interface KernelConnectionInfo {
+  ip: string
+  transport: string
+  key: string
+  signature_scheme: string
+  kernel_name?: string
+  shell_port: number
+  iopub_port: number
+  stdin_port: number
+  control_port: number
+  hb_port: number
+}

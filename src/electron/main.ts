@@ -443,9 +443,22 @@ function 接上事件流(win: BrowserWindow): void {
       ...u,
     })
   })
+  /**
+   * 服务器名单变了（远程内核，2026-09-03）。**同一条通道，第三种载荷**——
+   * 理由与上面那条一样：再挖一条单向通道就多一处要守的边界。
+   * 载荷里不带记录本身，只是一句「去重拉一次 `listConnections`」。
+   */
+  const offRemoteList = workbench.onRemoteListChanged(() => {
+    if (win.isDestroyed()) return
+    win.webContents.send(IPC_EVENT_CHANNEL, {
+      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+      remoteList: "changed",
+    })
+  })
   win.on("closed", () => {
     off()
     offRemote()
+    offRemoteList()
   })
 }
 

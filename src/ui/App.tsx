@@ -542,6 +542,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 而列表回来之前界面显示的仍是旧的。
        */
       onRemote: (u) => setConnectionState(u.connectionId, u.state),
+      /**
+       * 名单里那行字变了（远程内核，2026-09-03）：**整份重取。**
+       *
+       * 与上面那条相反——这里改的不是状态而是记录本身（解释器路径），
+       * 而改它的可能是 `run_code`（在服务器上探到唯一一条就自己写进去）。
+       * 界面这边没有别的办法知道，不重取就会一直显示「还没选」。
+       */
+      onRemoteListChanged: () => void loadConnections(client),
       onProblem: note,
     })
     // **依赖里刻意不放 projectId**：它变化时不该退订重订，

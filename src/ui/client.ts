@@ -9,6 +9,7 @@
  * 本文件只 import `src/protocol`（和同层的 `i18n`——错误要按当前语言显示），不碰 runtime / session / store。
  */
 import {
+  RemoteListChangedSchema,
   RemoteUpdateSchema,
   SessionUpdateSchema,
   WORKBENCH_PROTOCOL_VERSION,
@@ -109,6 +110,14 @@ export interface UpdateSubscription {
    * 轮询的界面显示的是「连着」——**那是一个看起来很确定的谎**。
    */
   onRemote?: (u: RemoteUpdate) => void
+  /**
+   * 服务器名单里那行字变了（远程内核，2026-09-03）：**去重拉一次 `listConnections`。**
+   *
+   * 与 `onRemote` 分开：那条只换一台的连接状态，这条要整份重取——
+   * 改它的可能是 `run_code`（探到唯一一条解释器就自己写进去），
+   * 界面这边没有任何别的办法知道。
+   */
+  onRemoteListChanged?: () => void
 }
 
 /**
@@ -183,7 +192,7 @@ export function createClient(
      *   - 畸形 / 版本不符 ⇒ 丢弃并出声
      *   - 处理者抛错 ⇒ 出声并继续（一个渲染错误不该让整条流断掉）
      */
-    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote }: UpdateSubscription): () => void {
+    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote, onRemoteListChanged }: UpdateSubscription): () => void {
       const problem = (m: string) => onProblem?.(m)
       const src = eventSource ?? window.dawn?.onEvent
       if (!src) {
@@ -201,6 +210,11 @@ export function createClient(
         const remote = RemoteUpdateSchema.safeParse(raw)
         if (remote.success) {
           onRemote?.(remote.data)
+          return
+        }
+        // 名单变了（远程内核）：同一条通道的第三种载荷，同样要在会话那句判据之前认掉
+        if (RemoteListChangedSchema.safeParse(raw).success) {
+          onRemoteListChanged?.()
           return
         }
         const parsed = SessionUpdateSchema.safeParse(raw)

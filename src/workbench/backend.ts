@@ -95,6 +95,7 @@ import { 验一次key, type Key验证结果 } from "./key-validate.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
 import type { TaskStore } from "../store/tasks.js"
 import type { RemoteConnections } from "../remote/connections.js"
+import { 探测远端解释器 } from "../remote/interpreters.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { join } from "node:path"
@@ -248,6 +249,15 @@ export interface WorkbenchBackendOptions {
     store: ConnectionStore
     manager: RemoteConnections
   }
+  /**
+   * 服务器名单里某条记录变了（远程内核，2026-09-03）。**推给界面去重拉 `listConnections`。**
+   *
+   * 与 `onRemoteState` 分开的理由：那条推的是「连着没有」，一台一条、附带状态；
+   * 这条推的是「库里那行字变了」（解释器路径），而**改它的人可能根本不是界面**——
+   * `run_code` 探到唯一那条时会自己写进去。不推的话，屏上一直显示「还没选」，
+   * 而内核已经在用了，那是一个看起来很确定的谎。
+   */
+  remoteListChanged?: () => void
   /** 环境快照的落库处（S17）。**没装配也能用**，只是快照不持久 */
   environments?: EnvironmentStore
   /**
@@ -2822,7 +2832,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     /**
      * 设一台服务器某门语言的解释器路径（远程内核，7.30）。**空串 = 清除**。
-     * 只是存下来、回显——真去那台服务器上验它能不能用是任务 8 的事。
+     * 只是存下来、回显——它能不能用在起内核那一刻见分晓。
+     *
+     * **改完要推一声**（任务 8）：这条记录也可能被**别处**改（`run_code` 探到唯一那条时
+     * 自己写进来），界面不重拉就会一直显示「还没选」，而内核已经在用了。
      */
     setRemoteInterpreter: async ({ connectionId, language, path }) => {
       const { store } = 远端()
@@ -2831,6 +2844,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 空白也算清除：`"   "` 存进去会被 `min(1)` 当成一条配好的路径回显出来
       const p = path.trim()
       store.setInterpreter(connectionId, language, p ? p : null)
+      opts.remoteListChanged?.()
       return 装配(store.get(connectionId)!)
     },
 
@@ -3541,8 +3555,33 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * GUI 里起来的 Electron 拿到的 PATH 常常不是用户终端里那套（`src/env/probe.ts` 同一条理由）；Windows 用 `where`。
      * 每个候选起一次、8 秒超时；起不来的如实列出 `problem`，不静默少一条。
      */
-    // `_req` 的 `connectionId`（远程内核，7.30）真用在任务 8——这里先接住让类型对得上
-    probeInterpreters: async (_req) => {
+    probeInterpreters: async (req) => {
+      /**
+       * 给了 `connectionId` 就探那台服务器（远程内核，7.30）。
+       *
+       * **没连着先连**：界面上那颗「探测」按钮按下去的时候，人心里想的是
+       * 「去那台机器上看看」，而不是「先回侧栏点连接再回来」。
+       * 探测本身走登录 shell（执行器保证），与本机那条走 `bash -lc` 同一条理由。
+       */
+      if (req.connectionId) {
+        const { store, manager } = 远端()
+        const rec = store.get(req.connectionId)
+        if (!rec) throw fault("not_found", "没有这台服务器：{0}", req.connectionId)
+        try {
+          await manager.connect(rec)
+        } catch (e) {
+          // 连不上的原因是那台机器说的（口令错、超时、公钥变了）——原样转述，别包成一句「探测失败」
+          throw fault原样("internal_error", e instanceof Error ? e.message : String(e))
+        }
+        const ex = manager.executorOf(req.connectionId)
+        if (!ex) throw fault("internal_error", "刚连上就没了：{0}", rec.label)
+        const 已配 = rec.interpreters ?? {}
+        const [python, r] = await Promise.all([
+          探测远端解释器(ex.exec.bind(ex), "python", 已配),
+          探测远端解释器(ex.exec.bind(ex), "R", 已配),
+        ])
+        return { python, r }
+      }
       const 现有 = settings?.interpreters() ?? {}
       const specs = discoverKernelSpecs().specs
       const d: 枚举依赖 = {

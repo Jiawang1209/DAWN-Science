@@ -573,6 +573,17 @@ describe("内核变化出声 · 接线", () => {
     expect(通知()).toEqual(["Python 内核起不来：python 进程起不来"])
   })
 
+  /**
+   * 远程内核（2026-09-03）：断线那条**不带**「再跑一次会起新的一台」的尾巴——
+   * 运行时的 `连接断了` 已经在转录里说过同样意思的一句，而且这时候「再跑一次」并不成立
+   * （得先把那台服务器连回来）。
+   */
+  it("远端断线 → 「Python 内核退出了：与服务器断开」，不接「再跑一次」那半句", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "python", state: "exited", reason: "disconnected" })
+    expect(通知()).toEqual(["Python 内核退出了：与服务器断开"])
+  })
+
   it("idle / busy 不出声；我们自己收掉的也不出声", () => {
     const { events, 通知 } = 收集()
     内核变化出声(events, "c1", { language: "python", state: "idle" })
@@ -658,4 +669,19 @@ describe("更新之后：上一版的默认项目就坐在这一版的临时会�
     const 临时 = (await wb.server.handle("listTemporarySessions", {})) as { data: { sessionId: string }[] }
     expect(临时.data.map((s) => s.sessionId)).toContain(r.data.sessionId)
   })
+})
+
+/**
+ * 远端会话第一次要内核（远程内核，2026-09-03，spec 定案 1）。
+ *
+ * **等任务 9 的假服务器**：这条要的是一台会真起本机内核的假 SSH（`fake-ssh-kernel.ts`），
+ * 现在还没有。留成 `it.todo` 而不是删掉——写下来的判据比记在脑子里的多活一天。
+ */
+describe("远端会话的解释器（远程内核）", () => {
+  // 1. 用假 SSH 加一台、连上、开一段远端会话（照既有用例的 createWorkbench + fakeSsh 起法）
+  // 2. 把 DAWN_FAKE_SSH_PYTHON 指向一条本机真 python（没有就 skip）
+  // 3. 调 wb.backend.runInKernel({ sessionId, language: "python", code: "print(1)" })
+  // 4. 断言：connectionStore.get(id).interpreters.python === 那条 python；
+  //    转录里有一条 notice 含「已记进这台服务器」
+  it.todo("没配 → 探测；唯一 → 写进这台服务器的配置并出声")
 })

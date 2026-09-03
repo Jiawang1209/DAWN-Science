@@ -6,7 +6,7 @@
  * `main.ts` 只剩窗口与 IPC 注册两件事。
  */
 import { homedir } from "node:os"
-import { randomUUID } from "node:crypto"
+import { randomBytes, randomUUID } from "node:crypto"
 import Database from "better-sqlite3"
 import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
@@ -43,6 +43,9 @@ import { ConnectionStore } from "../store/connections.js"
 import { TaskStore } from "../store/tasks.js"
 import { ScheduleStore } from "../store/schedules.js"
 import { RemoteConnections } from "../remote/connections.js"
+import { 探测远端解释器, 选定 } from "../remote/interpreters.js"
+import { 扫残留 } from "../remote/kernel-launch.js"
+import { KERNEL_PACKAGE } from "../protocol/kernel-package.js"
 import { 造一台假服务器 } from "../remote/fake-ssh.js"
 import type { RemoteState, SshClientLike } from "../remote/ssh.js"
 import type { SessionId } from "../runtime/types.js"
@@ -181,6 +184,14 @@ export interface Workbench {
    */
   onRemoteState(cb: (u: { connectionId: string; state: RemoteState }) => void): () => void
   /**
+   * 服务器名单里某条记录变了（远程内核，2026-09-03）。**同一个听众、同一条 IPC 通道，另一种载荷。**
+   *
+   * 与 `onRemoteState` 分开：那条推的是「连着没有」，这条推的是「库里那行字变了」
+   * （目前只有解释器路径）。**改它的人可能根本不是界面**——`run_code` 探到唯一那条时
+   * 会自己写进去；不推的话屏上一直显示「还没选」而内核已经在用了。
+   */
+  onRemoteListChanged(cb: () => void): () => void
+  /**
    * **网页那一格里的下载落一条 Run**（批 4，2026-08-18，作者选的乙）。
    *
    * ## 为什么下载在这里要记，而 SFTP 那条不记
@@ -221,7 +232,15 @@ export function 内核变化出声(events: SessionTranscripts, 对话: SessionId
   if (变化.state === "starting") events.notice(对话, `正在起 ${名} 内核…`)
   else if (变化.起失败) events.notice(对话, `${名} 内核起不来：${变化.reason ?? "原因不明"}`)
   else if (变化.state === "exited" && !变化.收掉) {
-    events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
+    /**
+     * **断线那一条不带「再跑一次会起新的一台」的尾巴**（远程内核，2026-09-03）。
+     *
+     * 服务器断开时运行时自己已经在转录里说过一句了；这里再补一句同样意思的话，
+     * 人看到的是两条几乎一样的通知——而且这时候「再跑一次」并不成立：
+     * 得先把那台服务器连回来。
+     */
+    if (变化.reason === "disconnected") events.notice(对话, `${名} 内核退出了：与服务器断开`)
+    else events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
   }
 }
 
@@ -238,6 +257,21 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const runStore = new RunStore(db)
   // 应用级设置：两个解释器路径住在这里（②-A 后续）
   const settingsStore = new SettingsStore(db)
+
+  /**
+   * 装机 id（远程内核，2026-09-03）：远端 connection.json 的文件名里带它，
+   * **两台电脑共用一个服务器账号时互不误杀**——「扫残留」按这个 id 匹配，
+   * 少了它，我这台一连上就把同事那台正在用的内核清了。
+   *
+   * **第一次要用时才生成**：没用过远端内核的人库里就不该多这一行。
+   */
+  const 装机id = (): string => {
+    const 有 = settingsStore.get("install.id")
+    if (有) return 有
+    const id = randomBytes(4).toString("hex")
+    settingsStore.set("install.id", id, new Date().toISOString())
+    return id
+  }
 
   // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
   const piCredentials = createPiCredentialStore(opts.credentials)
@@ -292,7 +326,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * `kind: kernel` 那条既有的会话类型，以及**普通对话挂的内核**。
    * 各造一个的话，两边会各起各的进程，而「这段对话的 df 在哪台里」就说不清了。
    */
-  const 内核运行时 = new KernelRuntime()
+  const 内核运行时 = new KernelRuntime({ installId: 装机id })
 
   /**
    * 对话的内核（②）。**每种语言一台、各自懒起**——
@@ -312,8 +346,63 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * **只配一门是常态**（作者点出来的：有人只用 R，有人只用 Python），
      * 所以另一门返回 undefined 不是异常——挂载层会如实说「还没配」。
      */
-    interpreterOf: (语言) =>
-      settingsStore.get(语言 === "python" ? "interpreter.python" : "interpreter.r"),
+    /**
+     * **远端会话走那台服务器自己的那一份**（远程内核，定案 1）。本机的路径在这台电脑上有意义，
+     * 送到服务器上就是一条不存在的路径——那时报的错会是「起不来」，而真正的原因是「配错了地方」。
+     *
+     * 没配就现探一次，三条路（定案 1）：
+     *   - 唯一装了内核包的 → 用它，**并写进这台服务器的配置**、在转录里说一声；
+     *   - 多个 → **不替人挑**（挑错了变量都在另一台里），让用户去笔记本格选；
+     *   - 零个 → 说清装法，不猜一条路径去试。
+     */
+    interpreterOf: async (语言, 对话) => {
+      const rec = sessionStore.get(对话)
+      const cid = rec?.connectionId
+      if (!cid) return settingsStore.get(语言 === "python" ? "interpreter.python" : "interpreter.r")
+      const conn = connectionStore.get(cid)
+      if (!conn) throw new Error(`没有这台服务器：${cid}`)
+      const 已配 = 语言 === "python" ? conn.interpreters?.python : conn.interpreters?.r
+      if (已配) return 已配
+      const ex = remoteConnections.executorOf(cid)
+      // **不在这里顺手连**：起内核是一次很具体的动作，替人拨一条要输口令的连接会把它变成一件说不清的事
+      if (!ex) throw new Error(`服务器「${conn.label}」没连着——在侧栏按「连接」再试`)
+      const 名 = 语言 === "R" ? "R" : "Python"
+      const 包 = 语言 === "R" ? "IRkernel" : "ipykernel"
+      // 探测要跑十几条命令、好几秒——**不出声的话，人看到的是「按了没反应」**
+      events.notice(对话, `${conn.label} 上还没选 ${名}，正在探测…`)
+      const 候选 = await 探测远端解释器(ex.exec.bind(ex), 语言, conn.interpreters ?? {})
+      const 定 = 选定(候选)
+      if (定.kind === "one") {
+        connectionStore.setInterpreter(cid, 语言, 定.path)
+        events.notice(对话, `${conn.label} 上用的是 ${定.path}（唯一装了 ${包} 的 ${名}），已记进这台服务器的设置`)
+        远端名单变了?.()
+        return 定.path
+      }
+      if (定.kind === "many") {
+        throw new Error(`${conn.label} 上找到 ${定.n} 个装了 ${包} 的 ${名}，请用户在右侧笔记本面板里选一个；选定后再试`)
+      }
+      throw new Error(`${conn.label} 上没有装了 ${包} 的 ${名}。装法：${KERNEL_PACKAGE[语言].how}。装好后再试`)
+    },
+    /**
+     * 这段对话的内核起在哪台服务器上（远程内核）。**给的是句柄不是执行器**：
+     * 断线重连之后这段会话还要能接着用（`handleOf` 的说明）。
+     *
+     * 工作目录取会话此刻在的那个目录——会话表里存的是绝对路径；
+     * 取不到才退回家目录（`~` 送到远端会被当成字面目录名）。
+     */
+    remoteOf: (对话) => {
+      const rec = sessionStore.get(对话)
+      if (!rec?.connectionId) return undefined
+      const conn = connectionStore.get(rec.connectionId)
+      if (!conn) return undefined
+      const 家 = remoteConnections.executorOf(rec.connectionId)?.loginEnv()["HOME"]
+      return {
+        executor: remoteConnections.handleOf(rec.connectionId, conn.label),
+        cwd: rec.remoteCwd ?? 家 ?? "~",
+        connectionId: rec.connectionId,
+        label: conn.label,
+      }
+    },
     /**
      * **把内核的输出送进对话的转录**（②，2026-08-14）。
      *
@@ -769,12 +858,38 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
        */
       if (state.kind === "ready") {
         connectionStore.记下连上(connectionId, new Date().toISOString())
+        /**
+         * **连上就扫一次残留**（远程内核，定案 3）。断线时那台服务器上的内核进程杀不掉
+         * （连接没了），它会一直占着内存等下去——下一次连上是我们唯一还能收拾它的时机。
+         *
+         * fire-and-forget：扫不动不该拦住「连上了」。**真清掉东西才出声**——
+         * 每次连接都打一行「清了 0 份」等于把这条日志训练成噪声。
+         */
+        const ex = remoteConnections.executorOf(connectionId)
+        if (ex) {
+          void 扫残留(ex.exec.bind(ex), 装机id())
+            .then((r) => {
+              if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
+            })
+            .catch(() => {})
+        }
       }
+      /**
+       * **断线 = 内核死**（定案 3）。不重连、不接回：隧道那头的五个端口早就没了，
+       * 而「看起来还连着的内核」比「明说死了」难查得多。
+       */
+      if (state.kind === "disconnected") void 内核运行时.连接断了(connectionId)
       远端状态变了?.({ connectionId, state })
     },
   })
   /** 状态推给界面的出口。**装配层接上之后才有值**——接不上就只是没人听 */
   let 远端状态变了: ((u: { connectionId: string; state: RemoteState }) => void) | undefined
+  /**
+   * 服务器名单里那行字变了（解释器路径）的出口，与 `远端状态变了` 同一个模式。
+   * **两条分开**：一条说「连着没有」，一条说「库里那行变了」，界面对它们的反应不一样
+   * （前者只换一台的状态，后者要重拉名单）。
+   */
+  let 远端名单变了: (() => void) | undefined
 
   /**
    * DAWN 工具网关（B1 路线 B，2026-08-17）。**每次运行一台。**
@@ -795,6 +910,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     注册收摊: (f) => 收摊们.push(f),
     onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },
+    // 后端改了某台服务器的解释器路径 → 让界面重拉名单（与 `远端状态变了` 同一条出口的两个用途）
+    remoteListChanged: () => 远端名单变了?.(),
     // MCP 那一屏要能问「这台连上了没有、有哪些工具」——**问的是同一个池子**，
     // 另开一个的话，设置屏说「连着」而对话里用的是另一条连接
     mcp: { 池: mcp池 },
@@ -1135,6 +1252,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       远端状态变了 = cb
       return () => {
         远端状态变了 = undefined
+      }
+    },
+    onRemoteListChanged(cb) {
+      远端名单变了 = cb
+      return () => {
+        远端名单变了 = undefined
       }
     },
     close() {

@@ -566,6 +566,25 @@ export const RemoteUpdateSchema = z
 export type RemoteUpdate = z.infer<typeof RemoteUpdateSchema>
 
 /**
+ * 服务器名单里某条记录变了（远程内核，2026-09-03）。**同一条 IPC 通道，第三种载荷。**
+ *
+ * 与 `RemoteUpdate` 分开而不是给它加个可选字段：那条的语义是「这一台此刻连着没有」，
+ * 而这条说的是「库里那行字被改了，去重拉一次名单」——**改它的人可能根本不是界面**
+ * （`run_code` 在服务器上探到唯一一条解释器时会自己写进去）。
+ * 混成一条的话，界面就得靠「哪个字段在」去猜是哪件事，而那是没有判据的。
+ *
+ * 载荷里**不带那条记录本身**：名单是后端说了算的东西，推一份可能已经过期的副本
+ * 只会让屏上那份与库里那份分家。这条推送只是一句「去问一次」。
+ */
+export const RemoteListChangedSchema = z
+  .object({
+    workbenchProtocolVersion: z.string().regex(/^\d+\.\d+$/),
+    remoteList: z.literal("changed"),
+  })
+  .strict()
+export type RemoteListChanged = z.infer<typeof RemoteListChangedSchema>
+
+/**
  * **这条发言等于没说话**（2026-08-12）。
  *
  * 模型「想一下就去调工具」会留下一条没有正文的发言。判断它的规则

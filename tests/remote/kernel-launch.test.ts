@@ -3,9 +3,9 @@
  * Spike F 的四条纪律在这里各有一条用例：登录 shell 由执行器保证（不在此层）；
  * `键=值` 与 base64 整段回读（MOTD 里带花括号也不影响）；pgrep 模式带方括号（glob 与 pkill 都要）；僵尸不算活着。
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
-  内核文件名, 远端启动命令, 取花括号, 起远端内核, 停远端内核, 扫残留, 远端启动失败,
+  内核文件名, 远端启动命令, 起远端内核, 停远端内核, 扫残留, 远端启动失败,
 } from "../../src/remote/kernel-launch.js"
 
 const 连接 = `{"shell_port": 5001, "iopub_port": 5002, "stdin_port": 5003, "control_port": 5004, "hb_port": 5005, "ip": "127.0.0.1", "key": "abc", "transport": "tcp", "signature_scheme": "hmac-sha256", "kernel_name": ""}`
@@ -44,50 +44,55 @@ describe("文件名与命令", () => {
     expect(py).toContain("</dev/null")
     expect(py).toContain("command -v setsid")
   })
+  it("setsid 探测结果自己回声：DAWNSETSID=1/0，供起内核那层判断要不要出声警告", () => {
+    const py = 远端启动命令("python", "/opt/conda/bin/python", "dawn-x-python-1.json")
+    expect(py).toMatch(/DAWNSETSID=1/)
+    expect(py).toMatch(/DAWNSETSID=0/)
+  })
 })
 
 describe("装机 id 校验", () => {
   it("装机 id 带非字母数字字符就直接抛，不许拼进脚本", () => {
     expect(() => 内核文件名("ab;rm -rf /", "python")).toThrow(/装机 id/)
   })
+  it("装机 id 是 run 也要拒绝——执行器给每条脚本都包了一层 dawn-run-*.pid 的 wrapper，扫残留会连它一起命中", () => {
+    expect(() => 内核文件名("run", "python")).toThrow(/run/)
+  })
   it("扫残留 也校验装机 id，坏 id 一条 exec 都不跑", async () => {
     const 假 = 假exec([{ out: "DAWNSWEPT=0\n" }])
     await expect(扫残留(假.exec, "a b")).rejects.toThrow(/装机 id/)
     expect(假.跑过.length).toBe(0)
   })
-})
-
-describe("取花括号", () => {
-  it("MOTD 在前、在后、夹在中间都取得到最外层那对", () => {
-    expect(取花括号(`*** 欢迎 ***\n${连接}\n`)).toBe(连接)
-    expect(取花括号(`${连接}\n再见`)).toBe(连接)
-    expect(取花括号(`{"shell_port": 1,\n*** 横幅 ***\n "hb_port": 2}`)).toBe(`{"shell_port": 1,\n*** 横幅 ***\n "hb_port": 2}`)
-    expect(取花括号("没有")).toBeUndefined()
+  it("扫残留 也拒绝 run", async () => {
+    const 假 = 假exec([{ out: "DAWNSWEPT=0\n" }])
+    await expect(扫残留(假.exec, "run")).rejects.toThrow(/run/)
+    expect(假.跑过.length).toBe(0)
   })
 })
 
 describe("起远端内核", () => {
   it("拿到 pid 与文件、轮询到 connection.json 就返回连接信息", async () => {
     const 假 = 假exec([
-      { out: "*** MOTD ***\nDAWNPID=4242\nDAWNFILE=/tmp/dawn-x-python-1.json\n" },
+      { out: "*** MOTD ***\nDAWNPID=4242\nDAWNFILE=/tmp/dawn-x-python-1.json\nDAWNSETSID=1\n" },
       { out: "DAWNALIVE=1\n" },                          // 第一轮：活着
       { out: "DAWNRC=1\n" },                              // 第一轮：文件还没写出来
       { out: "DAWNALIVE=1\n" },
-      { out: `DAWNJSON=${连接base64()}\nDAWNRC=0\n` },    // 第二轮：有了（整段 base64 带回，`键=值` 取出来再解码）
+      { out: `DAWNRC=0\nDAWNJSON=${连接base64()}\n` },    // 第二轮：有了（DAWNRC 先于 DAWNJSON，`键=值` 取出来再解码）
     ])
     const r = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/opt/conda/bin/python", cwd: "/data/p", 文件名: "dawn-x-python-1.json", sleep: 不睡 })
     expect(r.pid).toBe(4242)
     expect(r.文件).toBe("/tmp/dawn-x-python-1.json")
     expect(r.连接信息.shell_port).toBe(5001)
     expect(r.连接信息.key).toBe("abc")
+    expect(r.setsid).toBe(true)
     expect(假.跑过[0]).toContain("ipykernel_launcher")
   })
 
   it("MOTD 里本身带花括号也不影响：整段 base64 回读，不按花括号配对解析", async () => {
     const 假 = 假exec([
-      { out: "DAWNPID=99\nDAWNFILE=/tmp/f.json\n" },
+      { out: "DAWNPID=99\nDAWNFILE=/tmp/f.json\nDAWNSETSID=1\n" },
       { out: "DAWNALIVE=1\n" },
-      { out: `*** 欢迎回来 {这不是 JSON} ***\nDAWNJSON=${连接base64()}\nDAWNRC=0\n` },
+      { out: `*** 欢迎回来 {这不是 JSON} ***\nDAWNRC=0\nDAWNJSON=${连接base64()}\n` },
     ])
     const r = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡 })
     expect(r.连接信息.key).toBe("abc")
@@ -102,7 +107,7 @@ describe("起远端内核", () => {
 
   it("进程起来就死（包没装）→ 抛 `远端启动失败`，日志尾巴在上面", async () => {
     const 假 = 假exec([
-      { out: "DAWNPID=7\nDAWNFILE=/tmp/f.json\n" },
+      { out: "DAWNPID=7\nDAWNFILE=/tmp/f.json\nDAWNSETSID=1\n" },
       { out: "DAWNALIVE=0\n" },
       { out: "/x/python: No module named ipykernel_launcher\n" }, // tail 日志
     ])
@@ -117,7 +122,7 @@ describe("起远端内核", () => {
     // 假 exec 耗尽后会一直重放最后一条，若只给 3 条会在第 2 轮把"没有文件"的
     // 输出错当成"活着检查"的输出解析，提前触发「远端启动失败」而不是轮询耗尽。
     const 假 = 假exec([
-      { out: "DAWNPID=7\nDAWNFILE=/tmp/f.json\n" },
+      { out: "DAWNPID=7\nDAWNFILE=/tmp/f.json\nDAWNSETSID=1\n" },
       { out: "DAWNALIVE=1\n" }, { out: "DAWNRC=1\n" },
       { out: "DAWNALIVE=1\n" }, { out: "DAWNRC=1\n" },
       { out: "DAWNALIVE=1\n" }, { out: "DAWNRC=1\n" },
@@ -128,6 +133,46 @@ describe("起远端内核", () => {
     expect((e as Error).message).toMatch(/3 次/)
     expect(e).not.toBeInstanceOf(远端启动失败)
     expect(假.跑过.some((c) => /kill -KILL 7/.test(c))).toBe(true)
+  })
+
+  it("connection.json 存在但读不出来（DAWNRC=2，base64 失败）→ 立刻抛，不等到轮询上限", async () => {
+    const 假 = 假exec([
+      { out: "DAWNPID=7\nDAWNFILE=/tmp/f.json\nDAWNSETSID=1\n" },
+      { out: "DAWNALIVE=1\n" },
+      { out: "DAWNRC=2\n" },
+    ])
+    const e = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡, 最多轮询: 60 })
+      .catch((x: unknown) => x)
+    expect(e).toBeInstanceOf(Error)
+    expect((e as Error).message).toMatch(/读不出来|base64/)
+    expect(假.跑过.length).toBe(3) // 没有继续轮询到上限
+  })
+
+  it("这台机器没有 setsid（DAWNSETSID=0）→ 仍能起内核，但出声警告；返回 setsid:false", async () => {
+    const 假 = 假exec([
+      { out: "DAWNPID=8\nDAWNFILE=/tmp/f.json\nDAWNSETSID=0\n" },
+      { out: "DAWNALIVE=1\n" },
+      { out: `DAWNRC=0\nDAWNJSON=${连接base64()}\n` },
+    ])
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const r = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡 })
+    expect(r.setsid).toBe(false)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy.mock.calls[0]![0]).toContain("没有 setsid")
+    spy.mockRestore()
+  })
+
+  it("这台机器有 setsid（DAWNSETSID=1）→ 不出声，返回 setsid:true", async () => {
+    const 假 = 假exec([
+      { out: "DAWNPID=9\nDAWNFILE=/tmp/f.json\nDAWNSETSID=1\n" },
+      { out: "DAWNALIVE=1\n" },
+      { out: `DAWNRC=0\nDAWNJSON=${连接base64()}\n` },
+    ])
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const r = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡 })
+    expect(r.setsid).toBe(true)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
   })
 })
 

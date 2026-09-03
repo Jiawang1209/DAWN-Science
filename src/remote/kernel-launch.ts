@@ -7,12 +7,16 @@
  * ## 四条纪律的落点（`spikes/FINDINGS.md` Spike F）
  * ② 远端 stdout 混着 MOTD 且顺序没保证：单值一律 `键=值`（`取值`）。
  *    读 connection.json 走 base64 整段编码再 `键=值` 取出来解码（`起远端内核` 里的「读文件脚本」）——
- *    按花括号配对解析在 MOTD 随手带一个 `{` 时就会被带偏；`取花括号` 还留着导出给别处按花括号取值用，
- *    但起内核这条路已经不走它了。
+ *    按花括号配对解析在 MOTD 随手带一个 `{` 时就会被带偏，删掉了。`DAWNRC=0` 要**先于** `DAWNJSON=`
+ *    回声：`取值` 是不带锚点的首次匹配，万一 base64 载荷里凑巧出现字面 `DAWNRC=` 这几个字符
+ *    （字母表允许，虽然概率极低），先回声的那个 `DAWNRC=0` 才是真正会被取到的那个。
  * ③ `pgrep`/`pkill` 会匹配到自己：模式写成 `[d]awn-<id>-`。**`扫残留` 里连 for 循环的 glob 也要同样处理**——
  *    exec 把整条脚本喂给 `bash -c '...'` 跑，那个 wrapper 自己的 cmdline 里原样带着脚本文本（含 glob 那句），
  *    只给 pkill 的正则套方括号不够：wrapper 自己的 cmdline 里那句没转义的 `dawn-<id>-*.json` glob 一样会被
  *    `pkill -f` 命中，脚本还没来得及 `echo DAWNSWEPT` 就把自己杀了，症状是「每次都悄悄报 0」。
+ *    同一个坑还有个变种：执行器给每条脚本都包了一层 `echo $$ > /tmp/dawn-run-XXXX.pid` 的 wrapper
+ *    （见 `ssh.ts`），装机 id 恰好是 `"run"` 的话，`[d]awn-run-.*\.json` 又会绕回去命中那层 wrapper——
+ *    `校验装机id` 索性把这个值也拒了。
  * ④ 杀进程要等它真的没了，僵尸不算活着：`ps -o stat=` 首字母是 `Z` 就当没了。
  *
  * ## 文件是内核自己写的
@@ -41,6 +45,9 @@ export interface 远端执行 {
 /** 装机 id 会原样拼进 shell 脚本（文件名、glob、pkill 正则）；不校验就是命令注入口子 */
 function 校验装机id(装机id: string): void {
   if (!/^[A-Za-z0-9]+$/.test(装机id)) throw new Error(`装机 id 只能是字母数字，收到：${JSON.stringify(装机id)}`)
+  // 执行器给每条脚本都包了一层 `echo $$ > /tmp/dawn-run-XXXX.pid` 的 wrapper；装机 id 是
+  // "run" 的话，`扫残留` 的 `[d]awn-run-.*\.json` pkill 正则会连那层 wrapper 一起命中。
+  if (装机id === "run") throw new Error(`装机 id 不能是 "run"——会撞上执行器自己的 wrapper 脚本`)
 }
 
 /** `dawn-<装机id>-<语言>-<时间戳 36 进制>.json`。装机 id 让两台电脑共用一个服务器账号时互不误杀 */
@@ -58,16 +65,9 @@ export function 远端启动命令(语言: 内核语言, 解释器路径: string
   return (
     `f="\${TMPDIR:-/tmp}/"${单引号(文件名)}; ` +
     `s=; command -v setsid >/dev/null 2>&1 && s=setsid; ` +
+    `if [ -n "$s" ]; then echo DAWNSETSID=1; else echo DAWNSETSID=0; fi; ` +
     `nohup $s ${起} </dev/null >"$f.log" 2>&1 & echo DAWNPID=$!; echo "DAWNFILE=$f"`
   )
-}
-
-/** 最外层那对花括号之间的东西。MOTD 在前在后在中间都不管——只要它不含花括号。起内核这条路不再用它，见文件头 */
-export function 取花括号(out: string): string | undefined {
-  const a = out.indexOf("{")
-  const b = out.lastIndexOf("}")
-  if (a < 0 || b <= a) return undefined
-  return out.slice(a, b + 1)
 }
 
 /** 起来了、但握手之前就死了：日志尾巴是诊断的全部线索 */
@@ -83,14 +83,23 @@ export interface 已起的 {
   /** 远端 connection.json 的绝对路径 */
   文件: string
   连接信息: KernelConnectionInfo
+  /** 这台机器有没有 `setsid`；没有的话内核跟启动它的 shell 挂在同一进程组，执行器超时/中止会连累它 */
+  setsid: boolean
 }
 
 const 活着脚本 = (pid: number) =>
   `if kill -0 ${pid} 2>/dev/null && [ "$(ps -o stat= -p ${pid} 2>/dev/null | cut -c1)" != "Z" ]; then echo DAWNALIVE=1; else echo DAWNALIVE=0; fi`
 
-/** 整段 base64 编码把 connection.json 带回来，`键=值` 一取一解码——MOTD 混进来的花括号不会污染 JSON.parse */
+/**
+ * 整段 base64 编码把 connection.json 带回来，`键=值` 一取一解码——MOTD 混进来的花括号不会污染 JSON.parse。
+ * `DAWNRC=0` 写在 `DAWNJSON=` 之前（纪律②）；`base64` 本身失败（权限、命令缺失……）就回 `DAWNRC=2`，
+ * 让调用方立刻报错，而不是把它当成「文件还没写出来」等到轮询耗尽。
+ */
 const 读文件脚本 = (文件: string) =>
-  `if [ -f ${单引号(文件)} ]; then echo "DAWNJSON=$(base64 < ${单引号(文件)} | tr -d '\\n')"; echo DAWNRC=0; else echo DAWNRC=1; fi`
+  `if [ -f ${单引号(文件)} ]; then ` +
+  `b=$(base64 < ${单引号(文件)} | tr -d '\\n') || { echo DAWNRC=2; exit 0; }; ` +
+  `echo DAWNRC=0; echo "DAWNJSON=$b"; ` +
+  `else echo DAWNRC=1; fi`
 
 function 解析连接(json: string): KernelConnectionInfo {
   const o = JSON.parse(json) as Record<string, unknown>
@@ -132,6 +141,10 @@ export async function 起远端内核(
   if (!Number.isInteger(pid) || pid <= 0 || !文件) {
     throw new Error(`远端起内核的命令没跑起来（退出码 ${r.code ?? "无"}）：${(r.stderr || r.stdout).trim().split("\n").slice(-5).join("\n")}`)
   }
+  const setsid = 取值(r.stdout, "DAWNSETSID") === "1"
+  if (!setsid) {
+    console.error("[远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀")
+  }
   let 最后解析错误: unknown
   for (let i = 0; i < 最多; i++) {
     const 活 = await exec(活着脚本(pid), { timeoutSec: 10 })
@@ -140,12 +153,16 @@ export async function 起远端内核(
       throw new 远端启动失败(`远端 ${o.语言} 内核起来就退出了`, 日志.stdout)
     }
     const c = await exec(读文件脚本(文件), { timeoutSec: 10 })
-    if (取值(c.stdout, "DAWNRC") === "0") {
+    const rc = 取值(c.stdout, "DAWNRC")
+    if (rc === "2") {
+      throw new Error(`远端 connection.json 存在但读不出来（base64 失败）：${文件}`)
+    }
+    if (rc === "0") {
       const b64 = 取值(c.stdout, "DAWNJSON")
       if (b64) {
         try {
           const json = Buffer.from(b64, "base64").toString("utf8")
-          return { pid, 文件, 连接信息: 解析连接(json) }
+          return { pid, 文件, 连接信息: 解析连接(json), setsid }
         } catch (e) {
           // 文件可能只写了一半：记下最后一次解析失败，轮询耗尽时带出去；这一轮继续等
           最后解析错误 = e

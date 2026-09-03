@@ -137,6 +137,8 @@ interface Open {
   turnError?: string | undefined
   /** 正在执行的工具，按 pi 的 toolCallId 索引 */
   tools: Map<string, string>
+  /** toolCallId → 工具名。`远端断了` 只收 `run_code`：断的是内核，本机在飞的 bash 与它无关 */
+  工具名: Map<string, string>
   /**
    * 正在跑的子 agent，按 `<toolCallId>#<index>` 索引。
    *
@@ -195,7 +197,7 @@ export class RunRecorder {
   private slot(sessionId: SessionId): Open {
     let s = this.open.get(sessionId)
     if (!s) {
-      s = { tools: new Map(), subagents: new Map() }
+      s = { tools: new Map(), 工具名: new Map(), subagents: new Map() }
       this.open.set(sessionId, s)
     }
     return s
@@ -375,7 +377,11 @@ export class RunRecorder {
        */
       const kind = event.toolName ? `tool_call:${event.toolName}` : "tool_call"
       const runId = this.begin(event.sessionId, kind, "agent", s?.turnRunId, event.toolCallId)
-      if (runId) this.slot(event.sessionId).tools.set(event.toolCallId, runId)
+      if (runId) {
+        const slot = this.slot(event.sessionId)
+        slot.tools.set(event.toolCallId, runId)
+        if (event.toolName) slot.工具名.set(event.toolCallId, event.toolName)
+      }
       return
     }
 
@@ -536,15 +542,19 @@ export class RunRecorder {
     const s = this.open.get(sessionId)
     if (!s) return
     const finishedAt = this.now()
-    for (const runId of s.tools.values()) {
+    // **只收 run_code**：断的是内核。同一刻在飞的本机 bash / 读文件与服务器无关，
+    // 给它们也记「与服务器断开」是在账本里写一件没发生的事（不变式 5）
+    for (const [callId, runId] of [...s.tools]) {
+      if (s.工具名.get(callId) !== "run_code") continue
       this.runs.finish(runId, {
         status: "cancelled",
         finishedAt,
         hasError: true,
-        terminalReason: 落账理由(reason) || "远端断开，这段没跑完",
+        terminalReason: 落账理由(reason) ?? reason,
       })
+      s.tools.delete(callId)
+      s.工具名.delete(callId)
     }
-    s.tools.clear()
   }
 
   /**
@@ -568,6 +578,7 @@ export class RunRecorder {
       })
     }
     s.tools.clear()
+    s.工具名.clear()
 
     // 子 agent 在另一个进程里，**它比父会话活得久也是可能的**——
     // 但账本这边必须收口，理由与上面同一条：永久 running 比没有记录更坏

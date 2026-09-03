@@ -261,6 +261,17 @@ describe("远端断了（远程内核，审查 2026-09-04）", () => {
     expect(list().find((r) => r.requestType === "tool_call:run_code")!.terminalReason).toBe("与服务器断开，这段没跑完")
   })
 
+  it("同一刻在飞的本机 bash 不动——断的是内核，不是这段对话的其它工具", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", input: {} })
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t2", toolName: "bash", input: {} })
+    rec.远端断了(SESSION, "disconnected")
+    expect(list().find((r) => r.requestType === "tool_call:run_code")!.status).toBe("cancelled")
+    expect(list().find((r) => r.requestType === "tool_call:bash")!.status).toBe("running")
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "t2", toolName: "bash", isError: false, text: "", truncated: false, bytes: 0 })
+    expect(list().find((r) => r.requestType === "tool_call:bash")!.status).toBe("completed")
+  })
+
   it("这段对话什么都没开着 → 什么都不记，不凭空造一条", () => {
     rec.远端断了(SESSION, "disconnected")
     expect(list()).toEqual([])

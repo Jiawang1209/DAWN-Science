@@ -1,7 +1,7 @@
 /**
  * 远端起内核 / 停内核 / 扫残留（远程内核，2026-09-03）。全是脚本拼接 + 输出解析，`exec` 注入。
  * Spike F 的四条纪律在这里各有一条用例：登录 shell 由执行器保证（不在此层）；
- * `键=值` 与最外层花括号解析（MOTD 夹在前 / 中 / 后）；pgrep 模式带方括号；僵尸不算活着。
+ * `键=值` 与 base64 整段回读（MOTD 里带花括号也不影响）；pgrep 模式带方括号（glob 与 pkill 都要）；僵尸不算活着。
  */
 import { describe, expect, it } from "vitest"
 import {
@@ -9,6 +9,7 @@ import {
 } from "../../src/remote/kernel-launch.js"
 
 const 连接 = `{"shell_port": 5001, "iopub_port": 5002, "stdin_port": 5003, "control_port": 5004, "hb_port": 5005, "ip": "127.0.0.1", "key": "abc", "transport": "tcp", "signature_scheme": "hmac-sha256", "kernel_name": ""}`
+const 连接base64 = (json = 连接) => Buffer.from(json, "utf8").toString("base64")
 
 /** 一个脚本化的假执行器：按顺序回答，记下跑过什么 */
 function 假exec(回答: { out: string; code?: number; err?: string }[]) {
@@ -30,13 +31,29 @@ describe("文件名与命令", () => {
   it("Python 走 ipykernel_launcher，R 走 IRkernel::main；nohup、日志同名 .log、回 DAWNPID 与 DAWNFILE", () => {
     const py = 远端启动命令("python", "/opt/conda/bin/python", "dawn-x-python-1.json")
     expect(py).toContain(`'/opt/conda/bin/python' -m ipykernel_launcher -f "$f"`)
-    expect(py).toContain(`f="\${TMPDIR:-/tmp}/dawn-x-python-1.json"`)
+    expect(py).toContain(`f="\${TMPDIR:-/tmp}/"'dawn-x-python-1.json'`)
     expect(py).toContain("nohup")
     expect(py).toContain(`>"$f.log" 2>&1 &`)
     expect(py).toContain("echo DAWNPID=$!")
     expect(py).toContain('echo "DAWNFILE=$f"')
     const r = 远端启动命令("R", "/usr/bin/R", "dawn-x-R-1.json")
     expect(r).toContain(`'/usr/bin/R' --slave -e 'IRkernel::main()' --args "$f"`)
+  })
+  it("内核不挂在 ssh 通道的 stdin / 进程组上：setsid（探测不到就退化）+ 关掉继承的标准输入", () => {
+    const py = 远端启动命令("python", "/opt/conda/bin/python", "dawn-x-python-1.json")
+    expect(py).toContain("</dev/null")
+    expect(py).toContain("command -v setsid")
+  })
+})
+
+describe("装机 id 校验", () => {
+  it("装机 id 带非字母数字字符就直接抛，不许拼进脚本", () => {
+    expect(() => 内核文件名("ab;rm -rf /", "python")).toThrow(/装机 id/)
+  })
+  it("扫残留 也校验装机 id，坏 id 一条 exec 都不跑", async () => {
+    const 假 = 假exec([{ out: "DAWNSWEPT=0\n" }])
+    await expect(扫残留(假.exec, "a b")).rejects.toThrow(/装机 id/)
+    expect(假.跑过.length).toBe(0)
   })
 })
 
@@ -53,10 +70,10 @@ describe("起远端内核", () => {
   it("拿到 pid 与文件、轮询到 connection.json 就返回连接信息", async () => {
     const 假 = 假exec([
       { out: "*** MOTD ***\nDAWNPID=4242\nDAWNFILE=/tmp/dawn-x-python-1.json\n" },
-      { out: "DAWNALIVE=1\n" },           // 第一轮：活着
-      { out: "DAWNRC=1\n" },              // 第一轮：文件还没写出来
+      { out: "DAWNALIVE=1\n" },                          // 第一轮：活着
+      { out: "DAWNRC=1\n" },                              // 第一轮：文件还没写出来
       { out: "DAWNALIVE=1\n" },
-      { out: `${连接}\nDAWNRC=0\n` },     // 第二轮：有了
+      { out: `DAWNJSON=${连接base64()}\nDAWNRC=0\n` },    // 第二轮：有了（整段 base64 带回，`键=值` 取出来再解码）
     ])
     const r = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/opt/conda/bin/python", cwd: "/data/p", 文件名: "dawn-x-python-1.json", sleep: 不睡 })
     expect(r.pid).toBe(4242)
@@ -64,6 +81,17 @@ describe("起远端内核", () => {
     expect(r.连接信息.shell_port).toBe(5001)
     expect(r.连接信息.key).toBe("abc")
     expect(假.跑过[0]).toContain("ipykernel_launcher")
+  })
+
+  it("MOTD 里本身带花括号也不影响：整段 base64 回读，不按花括号配对解析", async () => {
+    const 假 = 假exec([
+      { out: "DAWNPID=99\nDAWNFILE=/tmp/f.json\n" },
+      { out: "DAWNALIVE=1\n" },
+      { out: `*** 欢迎回来 {这不是 JSON} ***\nDAWNJSON=${连接base64()}\nDAWNRC=0\n` },
+    ])
+    const r = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡 })
+    expect(r.连接信息.key).toBe("abc")
+    expect(r.连接信息.shell_port).toBe(5001)
   })
 
   it("拿不到 DAWNPID（命令根本没跑起来）→ 抛，带 stderr", async () => {
@@ -81,9 +109,10 @@ describe("起远端内核", () => {
     const e = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡 }).catch((x: unknown) => x)
     expect(e).toBeInstanceOf(远端启动失败)
     expect((e as 远端启动失败).日志尾).toContain("No module named ipykernel_launcher")
+    expect((e as 远端启动失败).name).toBe("远端启动失败")
   })
 
-  it("轮询到上限还没有文件 → 抛，并说明轮询了多少次", async () => {
+  it("轮询到上限还没有文件 → 抛（不是「远端启动失败」），说明轮询了多少次，并已经 KILL 兜底", async () => {
     // 每轮两次 exec（活着检查 + cat 检查），3 轮就要 6 条 + 启动那条 = 7 条；
     // 假 exec 耗尽后会一直重放最后一条，若只给 3 条会在第 2 轮把"没有文件"的
     // 输出错当成"活着检查"的输出解析，提前触发「远端启动失败」而不是轮询耗尽。
@@ -93,8 +122,12 @@ describe("起远端内核", () => {
       { out: "DAWNALIVE=1\n" }, { out: "DAWNRC=1\n" },
       { out: "DAWNALIVE=1\n" }, { out: "DAWNRC=1\n" },
     ])
-    await expect(起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡, 最多轮询: 3 }))
-      .rejects.toThrow(/3 次/)
+    const e = await 起远端内核(假.exec, { 语言: "python", 解释器路径: "/x/python", cwd: "/", 文件名: "f.json", sleep: 不睡, 最多轮询: 3 })
+      .catch((x: unknown) => x)
+    expect(e).toBeInstanceOf(Error)
+    expect((e as Error).message).toMatch(/3 次/)
+    expect(e).not.toBeInstanceOf(远端启动失败)
+    expect(假.跑过.some((c) => /kill -KILL 7/.test(c))).toBe(true)
   })
 })
 
@@ -123,12 +156,12 @@ describe("停远端内核", () => {
 })
 
 describe("扫残留", () => {
-  it("只认自己装机 id 的文件与进程，pgrep 模式带方括号", async () => {
+  it("只认自己装机 id 的文件与进程，glob 与 pkill 模式都带方括号防自噬", async () => {
     const 假 = 假exec([{ out: "DAWNSWEPT=2\n" }])
     const r = await 扫残留(假.exec, "ab12")
     expect(r.清了).toBe(2)
-    expect(假.跑过[0]).toContain(`dawn-ab12-*.json`)
-    expect(假.跑过[0]).toContain(`pkill -9 -f '[d]awn-ab12-'`)
+    expect(假.跑过[0]).toContain(`[d]awn-ab12-*.json`)
+    expect(假.跑过[0]).toContain(`pkill -9 -f '[d]awn-ab12-.*\\.json'`)
     expect(假.跑过[0]).not.toContain("dawn-*")
   })
 })

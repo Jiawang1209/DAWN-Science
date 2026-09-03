@@ -399,3 +399,75 @@ describe("只配了一门语言", () => {
     })
   })
 })
+
+/**
+ * 远端（远程内核，2026-09-03）。这一层不认识 SSH——它只负责**把「这段对话长在哪台服务器上」
+ * 原样交给运行时**，并让解释器路径这一问可以是异步的（远端探测要出去问一趟）。
+ */
+describe("远端（远程内核，2026-09-03）", () => {
+  it("interpreterOf 可以是异步的、拿得到对话；remoteOf 有值时原样进 spec.remote", async () => {
+    const 见过: unknown[] = []
+    const runtime = {
+      start: async (s: unknown) => {
+        见过.push(s)
+        return { sessionId: (s as { sessionId: string }).sessionId, pid: 0 }
+      },
+      attach: () => () => {},
+      write: () => {},
+      stop: async () => {},
+    }
+    const 挂 = new 对话内核({
+      runtime: runtime as never,
+      workspaceOf: () => "/w",
+      sessionDirOf: (c, l) => `/sd/${c}/${l}`,
+      interpreterOf: async (语言, 对话id) => (对话id === 对话 && 语言 === "python" ? "/srv/python" : undefined),
+      remoteOf: () => ({ executor: {} as never, cwd: "/data/p", connectionId: "conn-1", label: "genek" }),
+    })
+    await 挂.拿(对话, "python")
+    expect(见过[0]).toMatchObject({
+      kernel: { interpreterPath: "/srv/python" },
+      remote: { connectionId: "conn-1", label: "genek" },
+    })
+    expect((见过[0] as { remote: { cwd: { get(): string } } }).remote.cwd.get()).toBe("/data/p")
+  })
+
+  it("interpreterOf 抛出来的话原样往上抛（探测「多个 / 零个」那两条路靠它说话）", async () => {
+    const 挂 = new 对话内核({
+      runtime: new FakeRuntime(),
+      workspaceOf: () => "/w",
+      sessionDirOf: () => "/sd",
+      interpreterOf: async () => {
+        throw new Error("找到 3 个候选，请用户选")
+      },
+    })
+    await expect(挂.拿(对话, "python")).rejects.toThrow(/3 个候选/)
+  })
+
+  it("exited 带 reason 时状态变化带同一个 reason", async () => {
+    /**
+     * `FakeRuntime` 没有公开的「发一条事件」，而这条要验的正是运行时发上来的那条 `exited`——
+     * 所以用一个握着 sink 的手写替身（与本文件 `假内核` 同一种做法）。
+     */
+    let 发: ((e: unknown) => void) | undefined
+    const runtime = {
+      start: async (s: { sessionId: string }) => ({ sessionId: s.sessionId, pid: 0 }),
+      attach: (_id: string, sink: (e: unknown) => void) => {
+        发 = sink
+        return () => {}
+      },
+      write: () => {},
+      stop: async () => {},
+    } as never
+    const 变化: unknown[] = []
+    const 挂 = new 对话内核({
+      runtime,
+      workspaceOf: () => "/w",
+      sessionDirOf: () => "/sd",
+      interpreterOf: () => "/x",
+      状态变了: (_c, v) => void 变化.push(v),
+    })
+    const 一 = await 挂.拿(对话, "python")
+    发?.({ kind: "exited", sessionId: 一.内核会话, exitCode: 1, reason: "disconnected" })
+    expect(变化.at(-1)).toMatchObject({ state: "exited", reason: "disconnected" })
+  })
+})

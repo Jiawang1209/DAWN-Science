@@ -22,7 +22,7 @@
  *    事件从内核回来时只带着它自己的 sessionId，
  *    **不能反查的话，两个内核的输出混在转录里就没有判据**了。
  */
-import type { AgentRuntime, SessionHandle, SessionId } from "../runtime/types.js"
+import type { AgentRuntime, RemoteLike, SessionHandle, SessionId } from "../runtime/types.js"
 
 /**
  * **静默**超时（笔记本，2026-08-26）：这段执行连着这么久一点动静都没有，才当它卡住/死了、兜底拒掉。
@@ -58,7 +58,14 @@ export interface 挂载选项 {
    * 于是那套东西起不了真内核，而单元测试全绿（假内核不需要解释器）。
    * 这正是「测试绿了不等于能用」的又一例。
    */
-  interpreterOf: (语言: 内核语言) => string | undefined
+  interpreterOf: (语言: 内核语言, 对话: SessionId) => string | undefined | Promise<string | undefined>
+  /**
+   * 这段对话长在哪台服务器上（远程内核，2026-09-03）。缺省 = 本机。
+   *
+   * **每次现取**——句柄握的是「这台机器」，断线重连后仍成立；
+   * 缓存下来的话，重连换了一条 SSH 连接，内核就起在一个已经死掉的执行器上。
+   */
+  remoteOf?: (对话: SessionId) => { executor: RemoteLike; cwd: string; connectionId: string; label: string } | undefined
   /**
    * 把内核的事件转发进**对话的**转录（②，2026-08-14）。
    *
@@ -274,7 +281,7 @@ export class 对话内核 {
       throw new Error(`这段对话没有工作目录，起不了 ${语言} 内核——代码总得有个地方跑`)
     }
 
-    const interpreterPath = this.opts.interpreterOf(语言)
+    const interpreterPath = await this.opts.interpreterOf(语言, 对话)
     if (!interpreterPath) {
       /**
        * **没配就明说没配，并说清去哪儿配。**
@@ -290,6 +297,8 @@ export class 对话内核 {
     }
 
     const 内核会话 = `${对话}::${语言}` as SessionId
+    // 这段对话在哪台机器上，内核就在哪台起（远程内核）。**现取**，不缓存
+    const 远 = this.opts.remoteOf?.(对话)
     // 起之前先说一声「正在起」：解释器有了、目录有了，剩下的就是等进程——这一段人得看得见
     this.opts.状态变了?.(对话, { language: 语言, state: "starting" })
     let handle: SessionHandle
@@ -300,6 +309,21 @@ export class 对话内核 {
         sessionDir: this.opts.sessionDirOf(对话, 语言),
         // **这一项是内核运行时用来起进程的**，漏了它就起不来（第一版就漏了）
         kernel: { language: 语言, interpreterPath },
+        /**
+         * 远端会话：把「哪台服务器、哪个目录」交给运行时（远程内核，2026-09-03）。
+         * `cwd` 定死在起内核那一刻的目录（定案 2）——内核的工作目录进程起来就不再变了，
+         * 给一个会跟着模型 `cd` 漂的 getter 只会让「图存到哪了」说不清。
+         */
+        ...(远
+          ? {
+              remote: {
+                executor: 远.executor,
+                cwd: { get: () => 远.cwd, set: () => {} },
+                connectionId: 远.connectionId,
+                label: 远.label,
+              },
+            }
+          : {}),
       })
     } catch (e) {
       // 说过「正在起」就得说「起不来」：这台从没进表，`状态列表` 里看不出它来过
@@ -330,9 +354,10 @@ export class 对话内核 {
         // 后面还有排着的段：这个 idle 只是两段之间的缝，对笔记本来说它还在跑
         else if (ev.entry.state === "idle" && 一.排队中 === 0) this.置状态(一, "idle")
       } else if (ev.kind === "exited") {
-        // 运行时的 exited 只带退出码（`src/runtime/types.ts`），非零就是原因的全部线索
         const code = (e as { exitCode?: number }).exitCode
-        this.置状态(一, "exited", typeof code === "number" && code !== 0 ? `退出码 ${code}` : undefined)
+        // 运行时说得出原因就用它的（远端断线 = `disconnected`），说不出才退回退出码
+        const reason = (e as { reason?: string }).reason
+        this.置状态(一, "exited", reason ?? (typeof code === "number" && code !== 0 ? `退出码 ${code}` : undefined))
         /**
          * **常驻监听叫醒在飞的执行**（内核起来就死的那条路）。per-execute attach 可能压根
          * 没赶上这条 `exited`（进程退得比它注册还快），那这里就是唯一还听得见死讯的耳朵——

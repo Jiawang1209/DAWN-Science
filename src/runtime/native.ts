@@ -846,11 +846,10 @@ export class NativeRuntime implements AgentRuntime {
      * **不给 `kernels` 就完全是原来的样子**：CLI 与测试替身一个字不受影响。
      */
     /**
-     * **远端会话不给**（2026-08-27，fix-notebook）：内核走 spawnteract + ZMQ，**只会在本机起**；
-     * 远端会话的文件在服务器上——给它这个工具等于让代码在错误的机器上跑，而且不出声。
-     * 模型看不到这个工具就不会去猜它；笔记本格那边同一句话（`NotebookPanel` 的 `remoteLabel`）。
+     * **远端会话也挂**（远程内核，2026-09-03）：内核在那台服务器上起（远端 ipykernel + 五条 SSH 隧道），
+     * 文件与代码在同一台机器——2026-08-27 那条「只会在本机起」的禁令随之作废。
      */
-    const 内核工具 = this.opts.kernels && !spec.remote
+    const 内核工具 = this.opts.kernels
       ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
       : []
 

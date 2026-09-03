@@ -22,9 +22,11 @@
  * **内核的粒度是会话，而会话属于项目**——人在 Console 里定义的变量，
  * agent 下一次执行必须读得到。做成「每次对话一个内核」就不成立了。
  */
-import { launchKernelChannel } from "../kernel/channel.js"
+import { attachKernelChannel, launchKernelChannel, type KernelProcess } from "../kernel/channel.js"
 import { translateOutput } from "../kernel/outputs.js"
-import { discoverKernelSpecs } from "../kernel/specs.js"
+import { discoverKernelSpecs, diagnoseInterpreter } from "../kernel/specs.js"
+import { 起远端内核, 停远端内核, 内核文件名, 远端启动失败 } from "../remote/kernel-launch.js"
+import { 五条隧道 } from "../remote/tunnel.js"
 import { parseVariablesFor, probeExpressionFor, type VariableSummary } from "../kernel/variables.js"
 import {
   environmentProbeFor,
@@ -47,6 +49,14 @@ interface Live {
    * 它记的是「这个会话是在什么环境里起来的」。
    */
   environment?: EnvironmentSnapshot | undefined
+  /** 远端那台（远程内核，2026-09-03）：停与断线要用 */
+  远端?: {
+    connectionId: string | undefined
+    label: string
+    executor: NonNullable<SessionSpec["remote"]>["executor"]
+    起的: { pid: number; 文件: string }
+    关隧道: () => Promise<void>
+  }
 }
 
 export interface KernelRuntimeOptions {
@@ -58,6 +68,15 @@ export interface KernelRuntimeOptions {
    * **端口注入**：这一层不认识数据库。谁存、存哪，由装配它的人决定。
    */
   onEnvironment?: (sessionId: SessionId, snapshot: EnvironmentSnapshot) => void
+  /** 装机 id（远端文件名里带它）。不给就 `noid`——那时两台电脑共用一个账号会互相扫掉 */
+  installId?: () => string
+  /** 远端起停 / 隧道 / 接通道。**注入只为可测**，缺省是真的 */
+  远端?: {
+    起远端内核: typeof 起远端内核
+    停远端内核: typeof 停远端内核
+    五条隧道: typeof 五条隧道
+    attach: typeof attachKernelChannel
+  }
 }
 
 export class KernelRuntime implements AgentRuntime {
@@ -74,13 +93,104 @@ export class KernelRuntime implements AgentRuntime {
     }
     const byPath = "interpreterPath" in k
 
-    const channel = await launchKernelChannel({
-      ...(byPath
-        ? { interpreter: { language: k.language, path: k.interpreterPath } }
-        : { kernelName: k.kernelName }),
-      cwd: spec.workspace,
-      ...(this.opts.runIdOf ? { runIdOf: () => this.opts.runIdOf!(spec.sessionId) } : {}),
-    })
+    /**
+     * **这段对话长在哪台机器上，内核就在哪台起**（远程内核，2026-09-03）。
+     *
+     * 远端那条的顺序是定死的：**起内核 → 五条隧道 → attach**。
+     * 每一步失败都要把前一步收摊掉——半路留一个跑着的远端内核，
+     * 用户既看不见它、也停不掉它，只能等下次连上时被「扫残留」清走。
+     */
+    const remote = spec.remote
+    let channel: KernelChannel
+    let 远端记: Live["远端"]
+    if (remote) {
+      if (!byPath) {
+        throw new UserFacingError("远端内核只能按解释器路径起——kernelspec 是本机的概念")
+      }
+      const 远 = this.opts.远端 ?? { 起远端内核, 停远端内核, 五条隧道, attach: attachKernelChannel }
+      const label = remote.label ?? remote.connectionId ?? "远端"
+      const ex = remote.executor
+      // **响亮失败**：没有 forwardOut 就没有隧道，而没有隧道 zeromq 那五个端口一个都连不上
+      if (typeof ex.forwardOut !== "function") {
+        throw new UserFacingError(`到 ${label} 的执行器不支持端口隧道，起不了远端内核`)
+      }
+      const forwardOut = ex.forwardOut.bind(ex)
+      const exec = ex.exec.bind(ex)
+      let 起的: Awaited<ReturnType<typeof 起远端内核>>
+      try {
+        起的 = await 远.起远端内核(exec, {
+          语言: k.language,
+          解释器路径: k.interpreterPath,
+          cwd: remote.cwd.get(),
+          文件名: 内核文件名(this.opts.installId?.() ?? "noid", k.language),
+        })
+      } catch (e) {
+        // 三种实情同一套诊断；路径存不存在这里判不了（在远端），所以 exists 注入成永远在
+        const d = diagnoseInterpreter(
+          k.language,
+          k.interpreterPath,
+          e instanceof 远端启动失败 ? e.日志尾 : "",
+          () => true,
+        )
+        throw new UserFacingError(
+          `${label}：${
+            d
+              ? d.message + ("evidence" in d && d.evidence ? `\n${d.evidence}` : "")
+              : e instanceof Error
+                ? e.message
+                : String(e)
+          }`,
+        )
+      }
+      let 隧: Awaited<ReturnType<typeof 五条隧道>>
+      try {
+        隧 = await 远.五条隧道({ forwardOut }, 起的.连接信息)
+      } catch (e) {
+        await 远.停远端内核(exec, 起的).catch(() => {})
+        throw new UserFacingError(
+          `到 ${label} 的端口隧道建不起来（sshd 可能关了 AllowTcpForwarding）：${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        )
+      }
+      const 信号 = (s?: NodeJS.Signals) => (s === "SIGINT" ? "INT" : s === "SIGKILL" ? "KILL" : "TERM")
+      const process: KernelProcess = {
+        pid: 起的.pid,
+        // 走 SSH，fire-and-forget：`kill(signal)` 的契约是同步的
+        kill: (s) => void exec(`kill -${信号(s)} ${起的.pid} 2>/dev/null; true`).catch(() => {}),
+      }
+      try {
+        channel = await 远.attach({
+          连接信息: 隧.本地,
+          process,
+          language: k.language,
+          label: `${k.interpreterPath} @ ${label}`,
+          // 远端也走信号（上面那个 `kill` 会 `kill -INT` 过去），不用 control 通道
+          interruptMode: "signal",
+          ...(this.opts.runIdOf ? { runIdOf: () => this.opts.runIdOf!(spec.sessionId) } : {}),
+          diagnose: (ev) => diagnoseInterpreter(k.language, k.interpreterPath, ev, () => true),
+        })
+      } catch (e) {
+        await 隧.关().catch(() => {})
+        await 远.停远端内核(exec, 起的).catch(() => {})
+        throw e
+      }
+      远端记 = {
+        connectionId: remote.connectionId,
+        label,
+        executor: ex,
+        起的: { pid: 起的.pid, 文件: 起的.文件 },
+        关隧道: 隧.关,
+      }
+    } else {
+      channel = await launchKernelChannel({
+        ...(byPath
+          ? { interpreter: { language: k.language, path: k.interpreterPath } }
+          : { kernelName: k.kernelName }),
+        cwd: spec.workspace,
+        ...(this.opts.runIdOf ? { runIdOf: () => this.opts.runIdOf!(spec.sessionId) } : {}),
+      })
+    }
 
     /**
      * 语言。**按路径起时它是明确的**（用户自己选的）；
@@ -90,7 +200,7 @@ export class KernelRuntime implements AgentRuntime {
     const language = byPath
       ? k.language
       : discoverKernelSpecs().specs.find((x) => x.name === k.kernelName)?.language
-    this.sessions.set(spec.sessionId, { channel, language })
+    this.sessions.set(spec.sessionId, { channel, language, ...(远端记 ? { 远端: 远端记 } : {}) })
 
     /**
      * **准入时刻冻结环境**（S17）。
@@ -185,9 +295,39 @@ export class KernelRuntime implements AgentRuntime {
     const live = this.sessions.get(sessionId)
     if (!live) return
     this.sessions.delete(sessionId)
+    const 远 = this.opts.远端 ?? { 停远端内核 }
+    // 远端：先让内核自己收尾（TERM → 等 → KILL → 删文件），再关本地 socket，最后关隧道
+    if (live.远端) {
+      await 远
+        .停远端内核(live.远端.executor.exec.bind(live.远端.executor), live.远端.起的)
+        .catch((e) => console.error(`[远端内核] 停不掉：${e instanceof Error ? e.message : String(e)}`))
+    }
     await live.channel.close()
+    if (live.远端) await live.远端.关隧道().catch(() => {})
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
     this.sinks.delete(sessionId)
+  }
+
+  /**
+   * 一台服务器断了（定案 3：断线 = 内核死）。连接没了，杀不了远端进程——留给下次连上的扫残留；
+   * 这里只把本地这半收掉：关隧道、关 socket、出声、发一条带 reason 的 exited 让挂载层与账本收口。
+   */
+  async 连接断了(connectionId: string): Promise<void> {
+    for (const [id, live] of [...this.sessions]) {
+      if (live.远端?.connectionId !== connectionId) continue
+      this.sessions.delete(id)
+      this.emit({
+        kind: "notice",
+        sessionId: id,
+        text: `与 ${live.远端.label} 断开了，${
+          live.language === "R" ? "R" : "Python"
+        } 内核里的变量已经不在了；重新连接后再跑会起新的一台`,
+      })
+      await live.channel.close().catch(() => {})
+      await live.远端.关隧道().catch(() => {})
+      this.emit({ kind: "exited", sessionId: id, exitCode: 1, reason: "disconnected" })
+      this.sinks.delete(id)
+    }
   }
 
   /**
@@ -221,6 +361,8 @@ export class KernelRuntime implements AgentRuntime {
       // 会话可能在探测期间就没了——**别把快照挂到一个已经死掉的会话上**
       const still = this.sessions.get(sessionId)
       if (!still) return
+      // 远端内核：同一个 conda env 搬到另一台服务器，是另一份快照（指纹里带上是哪台）
+      if (still.远端?.connectionId) snap.where = { connectionId: still.远端.connectionId }
       still.environment = snap
       this.opts.onEnvironment?.(sessionId, snap)
     } catch (err) {

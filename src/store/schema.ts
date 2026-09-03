@@ -659,8 +659,11 @@ function 迁移步骤(db: Database.Database): void {
    * **每台服务器各配一份解释器路径**（远程内核，2026-09-03）。本机的路径在服务器上没有意义；
    * 只配一门是常态，所以两列都可空。路径不是秘密，回显是必须的（与本机两条同一理由）。
    */
+  // 两列各自守：两条 ALTER 之间崩一次，只守第一列的话第二列就永远补不上了
   if (!hasColumn(db, "remote_connections", "python_path")) {
     db.exec(`ALTER TABLE remote_connections ADD COLUMN python_path TEXT`)
+  }
+  if (!hasColumn(db, "remote_connections", "r_path")) {
     db.exec(`ALTER TABLE remote_connections ADD COLUMN r_path TEXT`)
   }
 

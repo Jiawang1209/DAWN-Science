@@ -126,6 +126,10 @@ export class ConnectionStore {
   /**
    * 覆盖式更新。**改完之后那条记录就是传进来的样子**——
    * 「不传的字段保持原样」那种半更新语义，会让「清掉私钥路径」无从表达。
+   *
+   * **例外：`interpreters` 与 `lastConnectedAt` 这里不动**（远程内核，2026-09-03）。
+   * 它们不是连接信息，各有自己的写入口（`setInterpreter` / `记下连上`）；
+   * 传进来也会被忽略——别指望靠这里改它们。
    */
   update(rec: ConnectionRecord): void {
     const r = this.db

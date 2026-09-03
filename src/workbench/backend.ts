@@ -2733,7 +2733,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         if (req.secret) credentials.set(密钥名(rec.id), req.secret)
         else credentials.delete(密钥名(rec.id))
       }
-      return 装配(rec)
+      // 回显库里那条，不回显请求拼出来的：`interpreters` / `lastConnectedAt` 不在请求里，拼的那份会把它们悄悄丢掉
+      return 装配(store.get(rec.id) ?? rec)
     },
 
     removeConnection: async ({ id }) => {
@@ -2827,7 +2828,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const { store } = 远端()
       const rec = store.get(connectionId)
       if (!rec) throw fault("not_found", "没有这台服务器：{0}", connectionId)
-      store.setInterpreter(connectionId, language, path ? path : null)
+      // 空白也算清除：`"   "` 存进去会被 `min(1)` 当成一条配好的路径回显出来
+      const p = path.trim()
+      store.setInterpreter(connectionId, language, p ? p : null)
       return 装配(store.get(connectionId)!)
     },
 

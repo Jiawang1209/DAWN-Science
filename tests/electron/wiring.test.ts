@@ -16,6 +16,7 @@ import type { AgentEvent } from "../../src/runtime/types.js"
 import { 对话内核 } from "../../src/kernel/挂载.js"
 import { SettingsStore } from "../../src/store/settings.js"
 import { 造门 } from "../../src/policy/permissions.js"
+import { 假口令 } from "../../src/remote/fake-ssh.js"
 
 const cleanups: (() => void)[] = []
 afterEach(() => {
@@ -674,14 +675,82 @@ describe("更新之后：上一版的默认项目就坐在这一版的临时会�
 /**
  * 远端会话第一次要内核（远程内核，2026-09-03，spec 定案 1）。
  *
- * **等任务 9 的假服务器**：这条要的是一台会真起本机内核的假 SSH（`fake-ssh-kernel.ts`），
- * 现在还没有。留成 `it.todo` 而不是删掉——写下来的判据比记在脑子里的多活一天。
+ * 任务 9 补上了假服务器那半（`fake-ssh-kernel.ts` 真起本机 ipykernel），这条终于能跑了。
+ *
+ * **与写下这条 `it.todo` 时设想的稍有不同**：`backend.ts` 的 `runInKernel` 眼下仍然
+ * 无差别地拒远端会话（`拒远端`，2026-08-27 那次「远端还没有内核」留下的旧闸门，
+ * 这次远程内核计划的任务清单里没有排到把它松开——`backend.ts` 不在任务 9 允许碰的文件里）。
+ * 真正会在远端会话上起内核的路径此刻是 agent 的 `run_code` 工具（任务 7 已经把它接回远端会话），
+ * 所以这里改走 `wb.nativeRuntime` 装配出来的那个工具，直接调它的 `execute`——
+ * 走的仍是与 `interpreterOf` 同一条真代码（`wb.nativeRuntime` 与 `runInKernel` 共用同一个
+ * `对话的内核` 实例，见 `wiring.ts` 里那两处 `kernels: 对话的内核`），只是换了个免过 `拒远端` 的入口。
  */
 describe("远端会话的解释器（远程内核）", () => {
-  // 1. 用假 SSH 加一台、连上、开一段远端会话（照既有用例的 createWorkbench + fakeSsh 起法）
-  // 2. 把 DAWN_FAKE_SSH_PYTHON 指向一条本机真 python（没有就 skip）
-  // 3. 调 wb.backend.runInKernel({ sessionId, language: "python", code: "print(1)" })
-  // 4. 断言：connectionStore.get(id).interpreters.python === 那条 python；
-  //    转录里有一条 notice 含「已记进这台服务器」
-  it.todo("没配 → 探测；唯一 → 写进这台服务器的配置并出声")
+  it("没配 → 探测；唯一 → 写进这台服务器的配置并出声", async () => {
+    const PY = process.env.DAWN_FAKE_SSH_PYTHON
+    if (!PY) {
+      // **不静默跳过**：没设这条环境变量时如实说一声，而不是安静地什么都没验证
+      console.error("[跳过] 没设 DAWN_FAKE_SSH_PYTHON，跳过「远端会话第一次要内核」这条真起内核的用例")
+      return
+    }
+
+    const scratch = mkdtempSync(join(tmpdir(), "dawn-remote-kernel-"))
+    cleanups.push(() => rmSync(scratch, { recursive: true, force: true }))
+    const wb = createWorkbench({
+      configPath: configFile(),
+      dbPath: newDbPath(),
+      credentials: memoryCredentials({ deepseek: "sk-test" }),
+      fakeSsh: true,
+      scratchRoot: scratch,
+    })
+    cleanups.push(() => wb.close())
+
+    // 1. 加一台假服务器、连上
+    const saved = (await wb.server.handle("saveConnection", {
+      label: "fake-genek", host: "h", username: "u", secret: 假口令,
+    })) as { ok: boolean; data: { id: string } }
+    expect(saved.ok, JSON.stringify(saved)).toBe(true)
+    const connectionId = saved.data.id
+    const connected = await wb.server.handle("connectRemote", { id: connectionId })
+    expect(connected.ok, JSON.stringify(connected)).toBe(true)
+
+    // 开一段远端会话
+    const p = await wb.server.handle("getProviders", {})
+    const agentId = (p as { data: { agents: { agentId: string; kind: string }[] } }).data.agents
+      .find((a) => a.kind === "native")?.agentId
+    expect(agentId).toBeDefined()
+    const rs = (await wb.server.handle("createRemoteSession", { connectionId, agentId })) as {
+      ok: boolean
+      data: { sessionId: string }
+    }
+    expect(rs.ok, JSON.stringify(rs)).toBe(true)
+    const sessionId = rs.data.sessionId
+
+    // 3. run_code：这段会话没配过解释器，第一次跑代码要触发探测（挂在 wiring.ts 的 interpreterOf 里）
+    const spec = {
+      sessionId, workspace: "/w", sessionDir: "/w/.dawn",
+      native: { provider: "deepseek", model: "deepseek-v4-flash" },
+    } as never
+    const 取工具 = (wb.nativeRuntime as unknown as {
+      toolsFor(
+        s: never,
+        n: { provider: string; model: string },
+      ): { name: string; execute: (id: string, p: unknown) => Promise<{ content: { text: string }[]; isError?: boolean }> }[] | undefined
+    }).toolsFor.bind(wb.nativeRuntime)
+    const runCode = (取工具(spec, { provider: "deepseek", model: "deepseek-v4-flash" }) ?? []).find(
+      (t) => t.name === "run_code",
+    )
+    expect(runCode, "装配里没把远端会话的 run_code 接上去").toBeDefined()
+    const r = await runCode!.execute("call-1", { language: "python", code: "print(1)" })
+    expect(r.isError, JSON.stringify(r)).not.toBe(true)
+
+    // 4. 断言：connectionStore 记下了这条解释器路径；转录里有一条 notice 说「已记进这台服务器」
+    const list = (await wb.server.handle("listConnections", {})) as {
+      data: { id: string; interpreters?: { python?: string } }[]
+    }
+    const rec = list.data.find((c) => c.id === connectionId)
+    expect(rec?.interpreters?.python).toBe(PY)
+    const 通知 = wb.events.peekItems(sessionId).filter((i) => i.type === "notice").map((i) => (i as { text: string }).text)
+    expect(通知.some((t) => t.includes("已记进这台服务器"))).toBe(true)
+  }, 30_000)
 })

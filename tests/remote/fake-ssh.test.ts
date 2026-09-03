@@ -16,6 +16,8 @@
 import { describe, expect, it } from "vitest"
 import { RemoteExecutor } from "../../src/remote/ssh.js"
 import { 假口令, 造一台假服务器 } from "../../src/remote/fake-ssh.js"
+import { 内核文件名, 起远端内核, 停远端内核, 扫残留 } from "../../src/remote/kernel-launch.js"
+import { 事实脚本 } from "../../src/remote/interpreters.js"
 
 const 起 = (password = 假口令) =>
   new RemoteExecutor({
@@ -67,4 +69,57 @@ describe("假服务器", () => {
     expect((await r.readFile("/home/dawn/新的.txt")).toString()).toBe("写进去了\n")
     r.close()
   })
+})
+
+/**
+ * 假服务器上「真起本机内核」的那几条命令（任务 9，2026-09-03）。
+ *
+ * 这几条走的不是本文件上面那套小假文件系统 + 127 的老规矩——`fake-ssh-kernel.ts`
+ * 认得它们，真的在本机 spawn 一台 ipykernel。`DAWN_FAKE_SSH_PYTHON` 没设时，
+ * 探测事实那条仍然答得出来（写死答 `/usr/bin/python3`，多半打不开），
+ * 只有真起一台内核那条 `skipIf`。
+ */
+describe("假服务器 · 内核那几条（远程内核，2026-09-03）", () => {
+  const PY = process.env.DAWN_FAKE_SSH_PYTHON
+
+  it("探测事实：列出 DAWN_FAKE_SSH_PYTHON（没设就只有一条起不来的 /usr/bin/python3）", async () => {
+    const r = 起()
+    await r.connect()
+    const out = (await r.exec(事实脚本)).stdout
+    expect(out).toContain("DAWNFACT_HOME=/home/dawn")
+    expect(out).toContain(PY ? `DAWNFACT_PATH_python3=${PY}` : "DAWNFACT_PATH_python3=/usr/bin/python3")
+    r.close()
+  })
+
+  it("扫残留答 0；kill/rm 对不存在的 pid 与文件不报错", async () => {
+    const r = 起()
+    await r.connect()
+    expect((await 扫残留(r.exec.bind(r), "x")).清了).toBe(0)
+    expect((await r.exec("kill -TERM 999999 2>/dev/null; true")).code).toBe(0)
+    r.close()
+  })
+
+  it.skipIf(!PY)("真起一台本机 ipykernel：拿到 connection.json、forwardOut 直连、停掉后进程没了", async () => {
+    const r = 起()
+    await r.connect()
+    const 起的 = await 起远端内核(r.exec.bind(r), {
+      语言: "python",
+      解释器路径: PY!,
+      cwd: "/home/dawn",
+      文件名: 内核文件名("t", "python"),
+    })
+    expect(起的.pid).toBeGreaterThan(0)
+    const ch = await r.forwardOut(起的.连接信息.shell_port)
+    expect(typeof ch.write).toBe("function")
+    ch.destroy()
+    await 停远端内核(r.exec.bind(r), 起的)
+    expect(
+      (
+        await r.exec(
+          `if kill -0 ${起的.pid} 2>/dev/null; then echo DAWNALIVE=1; else echo DAWNALIVE=0; fi`,
+        )
+      ).stdout,
+    ).toContain("DAWNALIVE=0")
+    r.close()
+  }, 30_000)
 })

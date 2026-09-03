@@ -19,10 +19,20 @@
  *
  * **认证也是真判的**：口令不对就拒。否则 mock 模式会把
  * 「口令根本没传到」这类错误全部吞掉——那正是最需要被发现的一类。
+ *
+ * ## 内核那几条命令是真的（任务 9，2026-09-03）
+ *
+ * `跑()` 把远程内核相关的那几条命令（探测解释器、起/停内核、扫残留）转手给
+ * `fake-ssh-kernel.ts` 的 `假内核命令`——那边**真的在本机 spawn 一台 ipykernel**
+ * （路径来自 `DAWN_FAKE_SSH_PYTHON`），`forwardOut` 也真的 `connect` 到本机端口。
+ * 这台假机器上「假」的只剩「另一端是谁」；其余认不出的命令仍按本文件下方那套
+ * 小假文件系统 + 127 的老规矩来。
  */
 import { EventEmitter } from "node:events"
+import { connect } from "node:net"
 import { Readable, Writable } from "node:stream"
 import type { SshClientLike } from "./ssh.js"
+import { 假内核命令 } from "./fake-ssh-kernel.js"
 
 /** 假机器上认的口令。**写死一个**——mock 模式的意义就是确定性 */
 export const 假口令 = "dawn"
@@ -169,15 +179,21 @@ export function 造一台假服务器(): SshClientLike {
   }) as SshClientLike["exec"]
 
   /**
-   * **先占个位。** 真实现要靠假机器自己起一个能听 zeromq 的 socket，
-   * 那是任务 9 的事——这里先如实说「还不会」，好让 typecheck 干净、
-   * 也不让「转发看起来能用但其实什么都没发生」这种假象溜进 mock 模式。
+   * **假服务器 = 本机**：直连那个端口（任务 9）。内核是真在本机 spawn 出来的
+   * （见 `fake-ssh-kernel.ts`），它自己在 `127.0.0.1:<端口>` 上监听 zeromq——
+   * 这条隧道因此不用假造任何协议内容，`connect` 到那个端口就是「转发」本身。
    */
   c.forwardOut = ((
-    _srcIP: string, _srcPort: number, _dstIP: string, _dstPort: number,
+    _srcIP: string, _srcPort: number, dstIP: string, dstPort: number,
     cb: (e: Error | undefined, ch: unknown) => void,
   ) => {
-    cb(new Error("假服务器还不会转发"), undefined as never)
+    if (!已连) {
+      cb(new Error("Not connected"), undefined)
+      return
+    }
+    const s = connect(dstPort, dstIP === "127.0.0.1" ? "127.0.0.1" : dstIP)
+    s.once("connect", () => cb(undefined, s))
+    s.once("error", (e) => cb(e, undefined))
   }) as SshClientLike["forwardOut"]
 
   c.sftp = ((cb: (e: Error | undefined, sftp: unknown) => void) => {
@@ -327,6 +343,12 @@ function 跑(整条: string): { out: string; err: string; code: number } {
     /^(echo \$\$ > \S+; )?(export [^;]+; )*(cd '[^']*' \|\| exit 127; )?/,
     "",
   )
+
+  // 远程内核那几条（真起本机 ipykernel）——它们带 `;`，要在切分之前整条认。
+  // `; true` / `; true;` 这种尾巴（`kernel-launch.ts` 那边为了不让 `kill`/`rm` 的非零退出码
+  // 冒充命令失败而加的）两边都试一遍，去不去掉都认得，保险起见。
+  const 内核 = 假内核命令(去掉前缀.replace(/; true$/, "").replace(/; true;$/, ";"))
+  if (内核) return 内核
 
   /**
    * **认得那层「记住当前目录」的包装**（②-B · R4′）。

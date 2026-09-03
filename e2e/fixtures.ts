@@ -342,6 +342,14 @@ export interface DawnOptions {
    * 假的只有「另一端是谁」——认证仍是真判的，口令不对照样拒。
    */
   fakeSsh?: boolean
+  /**
+   * 指给假服务器一条**本机真实的** python（远程内核，2026-09-03）。
+   *
+   * 给了才会真起一台 ipykernel——`DAWN_FAKE_SSH_PYTHON` 指过去，
+   * `fake-ssh-kernel.ts` 认这个环境变量。不给的话假服务器上探测解释器
+   * 那条命令仍答得出来（写死答一条起不来的路径），只是起不了内核。
+   */
+  fakeSshPython?: string
   /** 起一个假微信（远程助理），`DAWN_FAKE_ILINK` 指过去；夹具上多一个 `weixin` 把手 */
   fakeIlink?: boolean
   /** 起一个假飞书（远程助理第二格），`DAWN_FAKE_FEISHU` 指过去；夹具上多一个 `feishu` 把手 */
@@ -632,6 +640,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           ? {}
           : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
         ...(dawnOptions.fakeSsh ? { DAWN_FAKE_SSH: "1" } : {}),
+        ...(dawnOptions.fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: dawnOptions.fakeSshPython } : {}),
         ...(weixin ? { DAWN_FAKE_ILINK: weixin.url } : {}),
         ...(feishu ? { DAWN_FAKE_FEISHU: feishu.url } : {}),
         /**

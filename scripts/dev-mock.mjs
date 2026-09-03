@@ -18,13 +18,29 @@
  * 隔离：配置、models.json、数据库、工作区全部写在临时目录，
  * **不碰你的真实项目、真实凭证、真实数据库**。
  */
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import { mkdtempSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "./mock-inference-server.mjs"
 import { startFakeIlinkServer } from "./fake-ilink-server.mjs"
 import { startFakeFeishuServer } from "./fake-feishu-server.mjs"
+
+/**
+ * 挑一条本机真的、装了 ipykernel 的 python（远程内核，2026-09-03）。
+ *
+ * `DAWN_FAKE_SSH_PYTHON` 没手动设时用它兜底——**给了才会真起一台内核**，
+ * 找不到就返回 undefined（假服务器上探测解释器那条仍答得出来，只是起不了内核，
+ * 这在 dev:mock 里是可接受的：不是每台开发机都装了 ipykernel）。
+ */
+function 找本机python() {
+  for (const p of ["python3", "python"]) {
+    const r = spawnSync("bash", ["-lc", `which ${p}`], { encoding: "utf8" })
+    const path = (r.stdout || "").trim().split("\n")[0]
+    if (path && spawnSync(path, ["-c", "import ipykernel"], { encoding: "utf8" }).status === 0) return path
+  }
+  return undefined
+}
 
 const ROOT = resolve(import.meta.dirname, "..")
 
@@ -42,6 +58,8 @@ const server = await startMockInferenceServer()
 const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
 const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
 console.log(`假微信：${weixin.url}（/__fake/qr/scan · /__fake/qr/confirm · /__fake/inbound · /__fake/sent）`)
+
+const fakeSshPython = process.env.DAWN_FAKE_SSH_PYTHON ?? 找本机python()
 
 const dir = mkdtempSync(join(tmpdir(), "dawn-mock-"))
 const workspace = join(dir, "workspace")
@@ -72,6 +90,9 @@ console.log(`  假推理服务器  ${server.url}`)
 console.log(`  固定回复      ${CANNED_REPLY}`)
 console.log(`  隔离目录      ${dir}`)
 console.log(`  演示工作区    ${workspace}`)
+// 口令是 `src/remote/fake-ssh.ts` 里那个写死的 `假口令`——两边都是 "dawn"，改一边要记得改另一边
+console.log(`  假服务器      开（添加服务器时口令填 "dawn"）`)
+console.log(`  远端内核      ${fakeSshPython ? `${fakeSshPython}（真起）` : "没找到装了 ipykernel 的本机 python，只能探测，起不了"}`)
 console.log("─".repeat(64))
 console.log("提示：在 app 里「打开文件夹」时选上面那个演示工作区。")
 console.log()
@@ -92,6 +113,13 @@ const child = spawn(
       DAWN_SKIP_CREDENTIAL_GATE: "1",
       DAWN_FAKE_ILINK: weixin.url,
       DAWN_FAKE_FEISHU: feishu.url,
+      /**
+       * 假服务器（②-B · R3）：dev:mock 此前一直没开它——「添加服务器 → 连接」这条主路径
+       * 因此在 dev:mock 里根本走不通（只有 e2e 按需打开过）。补上，与 e2e 共用同一份假的（准入规则 1）。
+       */
+      DAWN_FAKE_SSH: "1",
+      // 给了才会真起一台内核；找不到装了 ipykernel 的本机 python 就不给，假服务器上探测解释器仍答得出来
+      ...(fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: fakeSshPython } : {}),
     },
   },
 )

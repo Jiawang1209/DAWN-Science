@@ -5,7 +5,7 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs"
+import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createWorkbench, 内核变化出声 } from "../../src/electron/wiring.js"
@@ -677,23 +677,21 @@ describe("更新之后：上一版的默认项目就坐在这一版的临时会�
  *
  * 任务 9 补上了假服务器那半（`fake-ssh-kernel.ts` 真起本机 ipykernel），这条终于能跑了。
  *
- * **与写下这条 `it.todo` 时设想的稍有不同**：`backend.ts` 的 `runInKernel` 眼下仍然
- * 无差别地拒远端会话（`拒远端`，2026-08-27 那次「远端还没有内核」留下的旧闸门，
- * 这次远程内核计划的任务清单里没有排到把它松开——`backend.ts` 不在任务 9 允许碰的文件里）。
- * 真正会在远端会话上起内核的路径此刻是 agent 的 `run_code` 工具（任务 7 已经把它接回远端会话），
- * 所以这里改走 `wb.nativeRuntime` 装配出来的那个工具，直接调它的 `execute`——
- * 走的仍是与 `interpreterOf` 同一条真代码（`wb.nativeRuntime` 与 `runInKernel` 共用同一个
- * `对话的内核` 实例，见 `wiring.ts` 里那两处 `kernels: 对话的内核`），只是换了个免过 `拒远端` 的入口。
+ * **走的入口换过一次**：`backend.ts` 的 `runInKernel` 曾经无差别拒远端会话（`拒远端`，
+ * 2026-08-27 那次「远端还没有内核」留下的旧闸门）。审查 2026-09-04（commit a2a5cea）把它
+ * 松开了——`拒远端` 现在只在挂载层**没接**远端内核时才拦（`!opts.kernels?.能起远端()`），
+ * `wiring.ts` 一直都接着，所以远端会话不会被拦。这里因此照计划原来的写法，直接走
+ * `runInKernel`，不用再绕 `wb.nativeRuntime` 的 `run_code` 工具。
  */
 describe("远端会话的解释器（远程内核）", () => {
-  it("没配 → 探测；唯一 → 写进这台服务器的配置并出声", async () => {
-    const PY = process.env.DAWN_FAKE_SSH_PYTHON
-    if (!PY) {
-      // **不静默跳过**：没设这条环境变量时如实说一声，而不是安静地什么都没验证
-      console.error("[跳过] 没设 DAWN_FAKE_SSH_PYTHON，跳过「远端会话第一次要内核」这条真起内核的用例")
-      return
-    }
+  const PY = process.env.DAWN_FAKE_SSH_PYTHON
 
+  // **不静默跳过**：没设这条环境变量时如实说一声，而不是安静地什么都没验证
+  it.runIf(!PY)("跳过：没设 DAWN_FAKE_SSH_PYTHON", () => {
+    console.error("[跳过] 没设 DAWN_FAKE_SSH_PYTHON，跳过「远端会话第一次要内核」这条真起内核的用例")
+  })
+
+  it.skipIf(!PY)("没配 → 探测；唯一 → 写进这台服务器的配置并出声", async () => {
     const scratch = mkdtempSync(join(tmpdir(), "dawn-remote-kernel-"))
     cleanups.push(() => rmSync(scratch, { recursive: true, force: true }))
     const wb = createWorkbench({
@@ -703,54 +701,69 @@ describe("远端会话的解释器（远程内核）", () => {
       fakeSsh: true,
       scratchRoot: scratch,
     })
-    cleanups.push(() => wb.close())
+    /**
+     * **兜底**：正常路径走 `closeAsync()`（见下面的 try/finally）。这里不能用 `wb.close()`——
+     * 那条是 fire-and-forget，`对话的内核.收全部()` 只是「发出去」不等它跑完，`afterEach`
+     * 也不 await 这个回调的返回值，于是真起的那台 ipykernel 可能在进程退出前根本没被
+     * `stop()` 到（审查抓到过一次真实泄漏：两台 kernel 进程在测试跑完后还活着）。
+     */
+    cleanups.push(async () => {
+      await wb.closeAsync(15_000)
+    })
 
-    // 1. 加一台假服务器、连上
-    const saved = (await wb.server.handle("saveConnection", {
-      label: "fake-genek", host: "h", username: "u", secret: 假口令,
-    })) as { ok: boolean; data: { id: string } }
-    expect(saved.ok, JSON.stringify(saved)).toBe(true)
-    const connectionId = saved.data.id
-    const connected = await wb.server.handle("connectRemote", { id: connectionId })
-    expect(connected.ok, JSON.stringify(connected)).toBe(true)
+    // **起内核之前先拍一张 `/tmp/dawn-*` 快照**——事后只查「这条用例自己新增的那些」是不是没了，
+    // 不整目录 diff：并发跑的其它用例（真起内核那几条 `.integration.test.ts`）也在同一个 tmpdir 里写字，
+    // 整目录 diff 会把它们的文件也算成「这条用例的残留」，那是误判不是真相。
+    const 之前 = new Set(readdirSync(tmpdir()).filter((f) => f.startsWith("dawn-")))
 
-    // 开一段远端会话
-    const p = await wb.server.handle("getProviders", {})
-    const agentId = (p as { data: { agents: { agentId: string; kind: string }[] } }).data.agents
-      .find((a) => a.kind === "native")?.agentId
-    expect(agentId).toBeDefined()
-    const rs = (await wb.server.handle("createRemoteSession", { connectionId, agentId })) as {
-      ok: boolean
-      data: { sessionId: string }
+    try {
+      // 1. 加一台假服务器、连上
+      const saved = (await wb.server.handle("saveConnection", {
+        label: "fake-genek", host: "h", username: "u", secret: 假口令,
+      })) as { ok: boolean; data: { id: string } }
+      expect(saved.ok, JSON.stringify(saved)).toBe(true)
+      const connectionId = saved.data.id
+      const connected = await wb.server.handle("connectRemote", { id: connectionId })
+      expect(connected.ok, JSON.stringify(connected)).toBe(true)
+
+      // 开一段远端会话
+      const p = await wb.server.handle("getProviders", {})
+      const agentId = (p as { data: { agents: { agentId: string; kind: string }[] } }).data.agents
+        .find((a) => a.kind === "native")?.agentId
+      expect(agentId).toBeDefined()
+      const rs = (await wb.server.handle("createRemoteSession", { connectionId, agentId })) as {
+        ok: boolean
+        data: { sessionId: string }
+      }
+      expect(rs.ok, JSON.stringify(rs)).toBe(true)
+      const sessionId = rs.data.sessionId
+
+      // 2. runInKernel：这段会话没配过解释器，第一次跑代码要触发探测（挂在 wiring.ts 的 interpreterOf 里）
+      const r = await wb.server.handle("runInKernel", { sessionId, language: "python", code: "print(1)" })
+      expect(r.ok, JSON.stringify(r)).toBe(true)
+
+      // 3. 断言：connectionStore 记下了这条解释器路径；转录里有一条 notice 说「已记进这台服务器」
+      const list = (await wb.server.handle("listConnections", {})) as {
+        data: { id: string; interpreters?: { python?: string } }[]
+      }
+      const rec = list.data.find((c) => c.id === connectionId)
+      expect(rec?.interpreters?.python).toBe(PY)
+      const 通知 = wb.events.peekItems(sessionId).filter((i) => i.type === "notice").map((i) => (i as { text: string }).text)
+      expect(通知.some((t) => t.includes("已记进这台服务器"))).toBe(true)
+
+      // 4. 这条用例真起过内核，才值得断言「停完不留字」——起不来的话下面那条断言毫无意义
+      const 新增的 = readdirSync(tmpdir()).filter((f) => f.startsWith("dawn-") && !之前.has(f))
+      expect(新增的.length, "这条用例应该真起过一台内核，tmp 里理应多出 connection.json / .log").toBeGreaterThan(0)
+
+      // 5. 停掉——`closeAsync` 会等 `对话的内核.收全部()`，那条会走 `停远端内核`（真 kill + 真 rm）。
+      // 默认的 1500ms 超时是给「正常退出」用的；`停远端内核` 的存活轮询最多 20 × 500ms，给够时间再查残留
+      await wb.closeAsync(15_000)
+      for (const f of 新增的) {
+        expect(existsSync(join(tmpdir(), f)), `残留没清干净：${f}`).toBe(false)
+      }
+    } finally {
+      // `closeAsync` 已经关过就是幂等的 no-op；提前抛出时这一句仍会尽力收摊
+      await wb.closeAsync(15_000).catch(() => {})
     }
-    expect(rs.ok, JSON.stringify(rs)).toBe(true)
-    const sessionId = rs.data.sessionId
-
-    // 3. run_code：这段会话没配过解释器，第一次跑代码要触发探测（挂在 wiring.ts 的 interpreterOf 里）
-    const spec = {
-      sessionId, workspace: "/w", sessionDir: "/w/.dawn",
-      native: { provider: "deepseek", model: "deepseek-v4-flash" },
-    } as never
-    const 取工具 = (wb.nativeRuntime as unknown as {
-      toolsFor(
-        s: never,
-        n: { provider: string; model: string },
-      ): { name: string; execute: (id: string, p: unknown) => Promise<{ content: { text: string }[]; isError?: boolean }> }[] | undefined
-    }).toolsFor.bind(wb.nativeRuntime)
-    const runCode = (取工具(spec, { provider: "deepseek", model: "deepseek-v4-flash" }) ?? []).find(
-      (t) => t.name === "run_code",
-    )
-    expect(runCode, "装配里没把远端会话的 run_code 接上去").toBeDefined()
-    const r = await runCode!.execute("call-1", { language: "python", code: "print(1)" })
-    expect(r.isError, JSON.stringify(r)).not.toBe(true)
-
-    // 4. 断言：connectionStore 记下了这条解释器路径；转录里有一条 notice 说「已记进这台服务器」
-    const list = (await wb.server.handle("listConnections", {})) as {
-      data: { id: string; interpreters?: { python?: string } }[]
-    }
-    const rec = list.data.find((c) => c.id === connectionId)
-    expect(rec?.interpreters?.python).toBe(PY)
-    const 通知 = wb.events.peekItems(sessionId).filter((i) => i.type === "notice").map((i) => (i as { text: string }).text)
-    expect(通知.some((t) => t.includes("已记进这台服务器"))).toBe(true)
   }, 30_000)
 })

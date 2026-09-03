@@ -191,9 +191,19 @@ export function 造一台假服务器(): SshClientLike {
       cb(new Error("Not connected"), undefined)
       return
     }
-    const s = connect(dstPort, dstIP === "127.0.0.1" ? "127.0.0.1" : dstIP)
-    s.once("connect", () => cb(undefined, s))
-    s.once("error", (e) => cb(e, undefined))
+    const s = connect(dstPort, dstIP)
+    /**
+     * **回调只能叫一次**（审查反馈）：`once` 只保证各自的监听器只触发一次，
+     * 不保证两边不会都触发——`connect` 之后 socket 依然可能 `error`（比如对端半路挂了），
+     * 那时 `connect` 与 `error` 的监听器都还挂着，`cb` 就会被叫两次，真 ssh2 的回调约定不允许这样。
+     * 先记下错误监听器，`connect` 成功后把它摘掉，再报「连上了」。
+     */
+    const 出错了 = (e: Error) => cb(e, undefined)
+    s.once("error", 出错了)
+    s.once("connect", () => {
+      s.off("error", 出错了)
+      cb(undefined, s)
+    })
   }) as SshClientLike["forwardOut"]
 
   c.sftp = ((cb: (e: Error | undefined, sftp: unknown) => void) => {
@@ -317,8 +327,25 @@ export function 造一台假服务器(): SshClientLike {
   return c
 }
 
+/**
+ * **测试专用**：这台假机器收到过的命令，按到达顺序。
+ *
+ * 只为验「谁先谁后」这类判据（扫残留要先于起内核完成，见
+ * `tests/electron/remote-kernel.test.ts`）——没有别的用途，
+ * 生产代码不该、也不会读它。记的是 `exec` 收到的原样字符串
+ * （`bash -c '…'` 那一整层，没剥壳），子串匹配（`DAWNSWEPT` / `ipykernel_launcher`）够用。
+ */
+const 命令记录: string[] = []
+export function 跑过的命令(): string[] {
+  return [...命令记录]
+}
+export function 清空记录(): void {
+  命令记录.length = 0
+}
+
 /** 这台假机器认得的几条命令。**认不得的如实回 127**，不假装成功 */
 function 跑(整条: string): { out: string; err: string; code: number } {
+  命令记录.push(整条)
   // 我们发过去的是 `bash -c '…'` 或 `bash -lc '…'`，把里面那层剥出来
   const m = /^bash -l?c '(.*)'$/s.exec(整条)
   const 里面 = m ? m[1]!.replace(/'\\''/g, "'") : 整条
@@ -347,7 +374,8 @@ function 跑(整条: string): { out: string; err: string; code: number } {
   // 远程内核那几条（真起本机 ipykernel）——它们带 `;`，要在切分之前整条认。
   // `; true` / `; true;` 这种尾巴（`kernel-launch.ts` 那边为了不让 `kill`/`rm` 的非零退出码
   // 冒充命令失败而加的）两边都试一遍，去不去掉都认得，保险起见。
-  const 内核 = 假内核命令(去掉前缀.replace(/; true$/, "").replace(/; true;$/, ";"))
+  // `当前` 带过去——起内核要用它当 `spawn` 的 `cwd`（定案 2），假机器的虚构家目录会被那边自己滤掉
+  const 内核 = 假内核命令(去掉前缀.replace(/; true$/, "").replace(/; true;$/, ";"), 当前)
   if (内核) return 内核
 
   /**

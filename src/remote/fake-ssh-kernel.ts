@@ -15,18 +15,45 @@
  * （加了 `setsid`、`</dev/null`；读文件从 `cat` 换成整段 base64；探测命令连 `-c`/`-e` 那个 flag
  * 本身也被单引号包住了）。这里的每一条正则都是照 `kernel-launch.ts`/`interpreters.ts` 里
  * 真正拼出来的字符串反推的，不是照旧版计划文档抄的。
+ *
+ * ## 探测那条会挡住这个进程一小会（审查反馈）
+ *
+ * `探` 分支的 `spawnSync` 最多等 8 秒（`kernel/probe.ts` 的 `超时毫秒`）——这台「假机器」
+ * 是同一个 Node 进程，`spawnSync` 是**同步阻塞**的，所以每探一个候选，这个进程连同它上面
+ * 跑着的所有别的假连接都会卡住到 8 秒。mock 模式下候选通常只有一个（`DAWN_FAKE_SSH_PYTHON`
+ * 指的那条），可以接受；真要探好几个候选、又赶上它们真的卡住不应答，这条尾巴才会显出来。
  */
 import { spawn, spawnSync } from "node:child_process"
-import { existsSync, openSync, readFileSync, unlinkSync } from "node:fs"
+import { basename, join } from "node:path"
+import { closeSync, existsSync, openSync, readdirSync, readFileSync, unlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
 
 export interface 结果 { out: string; err: string; code: number }
 
 const 真python = (): string | undefined => process.env["DAWN_FAKE_SSH_PYTHON"] || undefined
 
-/** 认得就答，认不得返回 undefined 让假机器走它自己那套（127） */
-export function 假内核命令(整条: string): 结果 | undefined {
+/**
+ * 这台假机器上真为它 spawn 过的 pid，按 connection.json 的**文件名**（不含目录）记。
+ * `扫残留` 与「起内核失败自己清理」都要靠它才能真的杀对进程——**不记的话扫残留只能删文件、
+ * 杀不到进程**，那与「说自己扫过了」不是一回事（准入规则 1：mock 不能说谎）。
+ */
+const 内核进程 = new Map<string, number>()
+
+/**
+ * `command -v setsid` 探一次就够——**这台机器有没有装 util-linux 不会在一次测试运行期间变**。
+ * 每次起内核都真 `spawnSync` 一次纯属浪费。
+ */
+let setsid缓存: boolean | undefined
+
+/**
+ * 认得就答，认不得返回 undefined 让假机器走它自己那套（127）。
+ *
+ * @param cwd 这条命令的当前目录（`fake-ssh.ts` 的 `跑()` 早于这次改动就已经从 `cd '<路径>'`
+ *   前缀里解出来了，见 `当前` 那个变量）。**起内核要用它**：定案 2 说内核的工作目录是
+ *   起它那一刻会话所在的目录，真 SSH 是靠先 `cd` 再 `nohup` 做到的；这台假机器不走 shell，
+ *   不把它转成 `spawn` 的 `cwd` 的话，内核会长在这个测试进程自己的 cwd 上——不是同一件事。
+ */
+export function 假内核命令(整条: string, cwd?: string): 结果 | undefined {
   // 探测事实（interpreters.ts 的 `事实脚本`）：一律用写死的事实作答，不真的探测这台电脑
   if (整条.includes("DAWNFACT_HOME")) {
     const py = 真python() ?? "/usr/bin/python3"
@@ -60,12 +87,43 @@ export function 假内核命令(整条: string): 结果 | undefined {
     if (path !== 真python()) return { out: "", err: `${path}: No such file or directory\n`, code: 127 }
     const f = join(tmpdir(), 名!)
     const log = openSync(`${f}.log`, "a")
-    // detached + unref：这台「假服务器」是同一个 Node 进程，内核不能挂在测试进程的生死上
-    const child = spawn(path!, ["-m", "ipykernel_launcher", "-f", f], { detached: true, stdio: ["ignore", log, log] })
+    /**
+     * 定案 2：内核的工作目录是起它那一刻会话所在的目录。真 SSH 靠 shell 先 `cd` 做到；
+     * 这台假机器不走 shell，接上 `spawn` 的 `cwd` 才不会让内核长在测试进程自己的目录上。
+     *
+     * **但只在那条路径这台机器上真的存在时才用**——假服务器的「家目录」是虚构的
+     * `/home/dawn`（`fake-ssh.ts` 里那个常量），这台真机器上通常没有这个目录，
+     * `spawn` 收到一个不存在的 `cwd` 会直接 ENOENT，内核连起都起不来。
+     * 落到本机文件系统上真实存在的路径（e2e/mock 传的 scratch 目录、真实工作区）就用它；
+     * 落在虚构路径上就不给 `cwd`，退回这个测试进程自己的当前目录——那不完全对，
+     * 但总比让内核压根起不来要诚实。
+     */
+    const 真cwd = cwd && existsSync(cwd) ? cwd : undefined
+    const child = spawn(path!, ["-m", "ipykernel_launcher", "-f", f], {
+      detached: true,
+      stdio: ["ignore", log, log],
+      ...(真cwd ? { cwd: 真cwd } : {}),
+    })
+    // 子进程已经把这个 fd 复制过去了，父进程这边的句柄留着不关就是一个真的 fd 泄漏（审查反馈）
+    closeSync(log)
     child.unref()
-    // `DAWNSETSID` 照这台机器上真有没有 `setsid`答，不硬编成 0 或 1——这条本来就是「这台机器上有没有装 util-linux」
-    const 有setsid = spawnSync("sh", ["-c", "command -v setsid"], { encoding: "utf8" }).status === 0
-    return { out: `DAWNSETSID=${有setsid ? 1 : 0}\nDAWNPID=${child.pid}\nDAWNFILE=${f}\n`, err: "", code: 0 }
+    内核进程.set(名!, child.pid!)
+    child.once("exit", () => {
+      if (内核进程.get(名!) === child.pid) 内核进程.delete(名!)
+    })
+    setsid缓存 ??= spawnSync("sh", ["-c", "command -v setsid"], { encoding: "utf8" }).status === 0
+    return { out: `DAWNSETSID=${setsid缓存 ? 1 : 0}\nDAWNPID=${child.pid}\nDAWNFILE=${f}\n`, err: "", code: 0 }
+  }
+
+  /**
+   * R 那条（`kernel-launch.ts` 的 `远端启动命令`，R 分支：`'<Rscript>' --slave -e 'IRkernel::main()' --args "$f"`）。
+   * **这台假机器只会真起 python 内核**——`DAWN_FAKE_SSH_PYTHON` 是唯一接进来的真解释器。
+   * 认不出这条就静默落到最后 `return undefined`、外层假机器再回一个笼统的 127，
+   * 那和「这台机器没装 R」长得一模一样，会把「R 内核压根没接」的坑晾在那儿没人发现——
+   * 所以这里单独认出这个形状，回一句能一眼看出「不是没装 R，是这台假机器压根不支持」的话。
+   */
+  if (/^f="\$\{TMPDIR:-\/tmp\}\/"'[^']+'; s=; command -v setsid .*--slave -e 'IRkernel::main\(\)' --args "\$f"/.test(整条)) {
+    return { out: "", err: "假服务器只会起 python 内核\n", code: 127 }
   }
 
   // 活着？（`kernel-launch.ts` 的 `活着脚本`：`kill -0 … && [ "$(ps -o stat= …)" != "Z" ]`）
@@ -125,6 +183,7 @@ export function 假内核命令(整条: string): 结果 | undefined {
           // 本来就没有
         }
       }
+      内核进程.delete(basename(删[1]!))
     }
     return { out: "", err: "", code: 0 }
   }
@@ -133,8 +192,42 @@ export function 假内核命令(整条: string): 结果 | undefined {
   const 杀0 = /^if kill -0 (\d+) 2>\/dev\/null; then echo DAWNALIVE=1; else echo DAWNALIVE=0; fi$/.exec(整条.trim())
   if (杀0) return { out: `DAWNALIVE=${活着(Number(杀0[1])) ? 1 : 0}\n`, err: "", code: 0 }
 
-  // 扫残留（`kernel-launch.ts` 的 `扫残留`）：这台假机器上从来没有真正的残留可扫，答 0 就够诚实
-  if (整条.includes("DAWNSWEPT")) return { out: "DAWNSWEPT=0\n", err: "", code: 0 }
+  /**
+   * 扫残留（`kernel-launch.ts` 的 `扫残留`）：`DAWNSWEPT=0` 一律写死曾经是这里的实现，
+   * **那是一句谎**——它让「扫残留先于起内核完成」这类判据即使真的失效也测不出来
+   * （审查反馈：假的要是连自己该干的活都不干，就不配叫「假的」，是「空的」）。
+   * 这里真扫：从脚本里认出装机 id，`readdirSync` 找同一个 id 的 `dawn-<id>-*.json`，
+   * 有记着 pid 的真 `SIGKILL`（`pkill -9` 那半），文件真删（`rm -f` 那半），数真数出来。
+   */
+  if (整条.includes("DAWNSWEPT")) {
+    const id = /\[d\]awn-([A-Za-z0-9]+)-\*\.json/.exec(整条)?.[1]
+    let n = 0
+    if (id) {
+      const 前缀 = `dawn-${id}-`
+      const 目录 = tmpdir()
+      for (const 名 of readdirSync(目录)) {
+        if (!名.startsWith(前缀) || !名.endsWith(".json")) continue
+        n++
+        const pid = 内核进程.get(名)
+        if (pid !== undefined) {
+          try {
+            process.kill(pid, "SIGKILL")
+          } catch {
+            // 没了就算了
+          }
+          内核进程.delete(名)
+        }
+        for (const p of [join(目录, 名), join(目录, `${名}.log`)]) {
+          try {
+            unlinkSync(p)
+          } catch {
+            // 本来就没有
+          }
+        }
+      }
+    }
+    return { out: `DAWNSWEPT=${n}\n`, err: "", code: 0 }
+  }
 
   return undefined
 }

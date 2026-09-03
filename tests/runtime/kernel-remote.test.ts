@@ -111,6 +111,20 @@ describe("KernelRuntime · 远端", () => {
     await expect(rt.start(spec(没隧道) as never)).rejects.toThrow(/隧道/)
   })
 
+  it("人主动断开：连接还活着，先在服务器上停掉内核（TERM→等→删文件），再本地收摊、出声", async () => {
+    const { 日志, 远端, executor } = 假件()
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.服务器要断了("conn-1")
+    expect(日志).toContain("停:7")
+    expect(日志.indexOf("停:7")).toBeLessThan(日志.indexOf("隧道.关"))
+    expect(收到.map((e) => e.kind)).toEqual(["notice", "exited"])
+    expect(收到[1]).toMatchObject({ kind: "exited", reason: "disconnected" })
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
+  })
+
   it("断线：这台服务器名下的内核全部标死，exited 带 reason=disconnected，隧道关掉；别的服务器不受影响", async () => {
     const { 日志, 远端, executor } = 假件()
     const rt = new KernelRuntime({ 远端: 远端 as never })

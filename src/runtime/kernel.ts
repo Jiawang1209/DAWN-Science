@@ -345,6 +345,21 @@ export class KernelRuntime implements AgentRuntime {
    * 走它自己的 catch 往上抛，用户看见的是「起不来」而不是一个静默泄漏的端口。
    */
   async 连接断了(connectionId: string): Promise<void> {
+    await this.收远端(connectionId, false)
+  }
+
+  /**
+   * 人**主动**断开一台服务器（e2e 2026-09-04 抓的：按「断开」进的是 `idle` 不是 `disconnected`，
+   * 内核原样留着）。与断线只差一件事：**此刻连接还活着**，所以先把远端内核停干净
+   * （TERM → 等 → KILL → 删文件），不留给下次连上的扫残留；然后与断线同一套本地收摊。
+   * 停不掉也不拦着断开——出声，剩下的扫残留兜。
+   */
+  async 服务器要断了(connectionId: string): Promise<void> {
+    await this.收远端(connectionId, true)
+  }
+
+  private async 收远端(connectionId: string, 先停远端: boolean): Promise<void> {
+    const 远 = this.opts.远端 ?? { 停远端内核 }
     for (const [id, 在飞] of [...this.起中隧道]) {
       if (在飞.connectionId !== connectionId) continue
       this.起中隧道.delete(id)
@@ -360,6 +375,11 @@ export class KernelRuntime implements AgentRuntime {
           live.language === "R" ? "R" : "Python"
         } 内核里的变量已经不在了；重新连接后再跑会起新的一台`,
       })
+      if (先停远端) {
+        await 远.停远端内核(live.远端.executor.exec.bind(live.远端.executor), live.远端.起的).catch((e) =>
+          console.error(`[远端内核] 断开前停不掉 ${live.远端!.label} 上的内核：${e instanceof Error ? e.message : String(e)}`),
+        )
+      }
       await live.channel.close().catch(() => {})
       await live.远端.关隧道().catch(() => {})
       this.emit({ kind: "exited", sessionId: id, exitCode: 1, reason: "disconnected" })

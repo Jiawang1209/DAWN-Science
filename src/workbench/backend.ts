@@ -258,6 +258,11 @@ export interface WorkbenchBackendOptions {
    * 而内核已经在用了，那是一个看起来很确定的谎。
    */
   remoteListChanged?: () => void
+  /**
+   * 人要断开 / 删掉一台服务器之前叫一声（远程内核，2026-09-04）：这时连接还活着，
+   * 装配层拿它先把那台服务器上的内核停干净。不给就只有断线那条路（留给扫残留）。
+   */
+  beforeRemoteDisconnect?: (connectionId: string) => Promise<void>
   /** 环境快照的落库处（S17）。**没装配也能用**，只是快照不持久 */
   environments?: EnvironmentStore
   /**
@@ -2757,6 +2762,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const rec = store.get(id)
       if (!rec) throw fault("not_found", "没有这台服务器：{0}", id)
       // 先断开：留着一条连着的连接，它的状态推送会指向一台已经不存在的机器
+      await opts.beforeRemoteDisconnect?.(id)
       manager.disconnect(id)
       store.remove(id)
       // **钥匙串里那份也删掉**——留着就是一份没人认领的秘密
@@ -2831,6 +2837,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const { store, manager } = 远端()
       const rec = store.get(id)
       if (!rec) throw fault("not_found", "没有这台服务器：{0}", id)
+      // 连接还活着的这一刻先把它上面的内核停干净（定案 3：断开 = 内核死），再断
+      await opts.beforeRemoteDisconnect?.(id)
       manager.disconnect(id)
       return 装配(rec)
     },

@@ -911,7 +911,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
        * **收摊失败要出声**：这条链里关的是本地 socket 与五条隧道，静默失败的形状是
        * 「端口一直占着，而屏上一切正常」。
        */
-      if (state.kind === "disconnected") {
+      // `idle` 也算：人主动断开进的是 idle（`RemoteConnections.disconnect`）；正常路径 `beforeRemoteDisconnect`
+      // 已经停过了，这里是兜底——没剩内核时它什么都不做
+      if (state.kind === "disconnected" || state.kind === "idle") {
         void 内核运行时
           .连接断了(connectionId)
           .catch((e) =>
@@ -951,6 +953,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     remote: { store: connectionStore, manager: remoteConnections },
     // 后端改了某台服务器的解释器路径 → 让界面重拉名单（与 `远端状态变了` 同一条出口的两个用途）
     remoteListChanged: () => 远端名单变了?.(),
+    // 人按「断开」/「删除」：连接还活着，先停那台上的内核（e2e 2026-09-04 抓的缺口）
+    beforeRemoteDisconnect: (id) => 内核运行时.服务器要断了(id),
     // MCP 那一屏要能问「这台连上了没有、有哪些工具」——**问的是同一个池子**，
     // 另开一个的话，设置屏说「连着」而对话里用的是另一条连接
     mcp: { 池: mcp池 },

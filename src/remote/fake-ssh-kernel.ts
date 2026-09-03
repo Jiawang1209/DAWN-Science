@@ -46,6 +46,26 @@ const 内核进程 = new Map<string, number>()
 let setsid缓存: boolean | undefined
 
 /**
+ * **测试专用**：`DAWNSWEPT` 那条回声前刻意等这么多毫秒。默认 0（不等）。
+ *
+ * 单是「扫残留先于起内核」这条判据本身**证不了什么**——`跑()` 里内核那几条的分发顺序
+ * 天生就是先认扫残留、`interpreterOf` 也天生先发扫残留的 exec 请求，所以不管
+ * `wiring.ts` 里那句 `await 扫过.get(cid)` 在不在，两条命令抵达假服务器的**先后**都不会变，
+ * 命令记录里的顺序永远是「扫在前」——判据测的是「谁先被发出去」，不是「谁先跑完」。
+ * 只有让扫残留的**响应**明显滞后，才能让「没等它跑完就发了下一条」这件事在记录顺序里露出来
+ * （`fake-ssh.ts` 的 `c.exec` 用它决定这条命令的 `setTimeout` 延迟）。见
+ * `tests/electron/remote-kernel.test.ts`：那条用例把它调到几百毫秒，
+ * 靠这个把「删掉 `await` 会不会真的红」这件事变得可验证。
+ */
+let 扫延迟ms = 0
+export function 设扫残留延迟(ms: number): void {
+  扫延迟ms = ms
+}
+export function 扫残留延迟(): number {
+  return 扫延迟ms
+}
+
+/**
  * 认得就答，认不得返回 undefined 让假机器走它自己那套（127）。
  *
  * @param cwd 这条命令的当前目录（`fake-ssh.ts` 的 `跑()` 早于这次改动就已经从 `cd '<路径>'`

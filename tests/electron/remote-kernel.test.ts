@@ -12,8 +12,10 @@ import { KERNEL_PACKAGE } from "../../src/protocol/kernel-package.js"
 import { createWorkbench } from "../../src/electron/wiring.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { 假口令, 跑过的命令, 清空记录 } from "../../src/remote/fake-ssh.js"
+import { 设扫残留延迟 } from "../../src/remote/fake-ssh-kernel.js"
 
-function configFile(): string {
+/** @returns 配置文件路径**与它所在的临时目录**——调用方要在用完之后自己删掉那个目录（审查反馈） */
+function configFile(): { file: string; dir: string } {
   const dir = mkdtempSync(join(tmpdir(), "dawn-cfg-"))
   const file = join(dir, "providers.yaml")
   writeFileSync(
@@ -26,12 +28,13 @@ function configFile(): string {
     capabilities: [chat]
 `,
   )
-  return file
+  return { file, dir }
 }
 
-function newDbPath(): string {
+/** @returns db 路径与它所在的临时目录——同上 */
+function newDbPath(): { file: string; dir: string } {
   const dir = mkdtempSync(join(tmpdir(), "dawn-db-"))
-  return join(dir, "dawn.db")
+  return { file: join(dir, "dawn.db"), dir }
 }
 
 /**
@@ -92,24 +95,33 @@ describe("连上就跑：扫残留不该杀掉刚起的那一台", () => {
   /**
    * 1. 假 SSH 加一台、连上——`onState` 的 ready 分支同步把 `扫残留(...)` 挂进 `扫过`
    *    （`RemoteExecutor.connect()` 里 `this.设状态({kind:"ready"})` 先于 `await 捕获环境()`）。
-   * 2. `interpreterOf` 是起内核的必经之路，第一句就是 `await 扫过.get(cid)`——
-   *    所以不用刻意让 `扫残留` 那条 exec 挂住：只要它是一条真的、要走一次假服务器往返的
-   *    异步命令，`runInKernel` 触发的探测/起内核就绝不可能在它之前被**发送**。
+   * 2. `interpreterOf` 是起内核的必经之路，第一句就是 `await 扫过.get(cid)`。
+   *
+   *    **只看「谁先被发出去」证明不了这一句在生效**（审查反馈）：`跑()` 认命令的顺序、
+   *    `interpreterOf` 发命令的顺序都是写死的，不管这句 `await` 在不在，两条命令抵达
+   *    假服务器的先后都不会变——命令记录里永远是「扫在前」。真正要测的是**没等扫残留
+   *    跑完就把下一条发出去了**，那只有让扫残留的**响应**明显滞后才会露出来：
+   *    `设扫残留延迟(400)` 把 `DAWNSWEPT` 那条回声拖后约 400ms；这句 `await` 在的话，
+   *    `interpreterOf` 会老老实实等它，起内核那条自然排在后面；`await` 没了的话，
+   *    起内核那条会在扫残留还没応答时就被送出去，抢在它前面进命令记录——**这条我已经
+   *    临时删过一次 `wiring.ts` 里那句 `await 扫过.get(cid)` 验证过会红，验完照原样恢复**
+   *    （见任务报告）。
    * 3. 立刻 `runInKernel`：断言假服务器收到命令的顺序里，那条带 `DAWNSWEPT` 的
    *    （`扫残留`）排在带 `ipykernel_launcher` 的（起内核）前面。
    */
   it.skipIf(!PY)("扫完了才起内核，起来的那一台不会被自己人杀掉", async () => {
-    const dbDir = newDbPath()
+    const cfg = configFile()
+    const db = newDbPath()
     const scratch = mkdtempSync(join(tmpdir(), "dawn-remote-kernel-sweep-"))
     清空记录()
+    设扫残留延迟(400)
     const wb = createWorkbench({
-      configPath: configFile(),
-      dbPath: dbDir,
+      configPath: cfg.file,
+      dbPath: db.file,
       credentials: memoryCredentials({ deepseek: "sk-test" }),
       fakeSsh: true,
       scratchRoot: scratch,
     })
-    const 之前 = new Set(readdirSync(tmpdir()).filter((f) => f.startsWith("dawn-")))
 
     try {
       const saved = (await wb.server.handle("saveConnection", {
@@ -145,7 +157,18 @@ describe("连上就跑：扫残留不该杀掉刚起的那一台", () => {
       expect(起的位置, `没见到起内核那条命令：${JSON.stringify(命令)}`).toBeGreaterThanOrEqual(0)
       expect(起的位置, "起内核必须排在扫残留之后——否则刚起的那台会被自己人的 pkill 误杀").toBeGreaterThan(扫的位置)
 
-      const 新增的 = readdirSync(tmpdir()).filter((f) => f.startsWith("dawn-") && !之前.has(f))
+      /**
+       * **只认这次装配自己的装机 id**（审查反馈）：整个 tmpdir 前后 diff 会把并发跑的
+       * 别的 worker 也在写的 `dawn-<别的id>-python-*.json` 算成「这条用例的残留」，
+       * 或者把 `configFile()`/`newDbPath()` 自己那些 `dawn-cfg-*`/`dawn-db-*` 临时目录
+       * 也算进去——那是误判不是真相。装机 id 落在 `settings` 表的 `install.id` 键。
+       */
+      const id = (wb.db.prepare("SELECT value FROM settings WHERE key = 'install.id'").get() as
+        | { value: string }
+        | undefined)?.value
+      expect(id, "起过内核就该有装机 id 了").toBeDefined()
+      const 内核文件模式 = new RegExp(`^dawn-${id}-(python|R)-[a-z0-9]+\\.json(\\.log)?$`)
+      const 新增的 = readdirSync(tmpdir()).filter((f) => 内核文件模式.test(f))
       expect(新增的.length, "这条用例应该真起过一台内核，tmp 里理应多出 connection.json / .log").toBeGreaterThan(0)
 
       // 停掉——`closeAsync` 等 `对话的内核.收全部()`，那条走 `停远端内核`（真 kill + 真 rm）
@@ -155,7 +178,10 @@ describe("连上就跑：扫残留不该杀掉刚起的那一台", () => {
       }
     } finally {
       await wb.closeAsync(15_000).catch(() => {})
+      设扫残留延迟(0) // 不留给下一条用例——它是模块级的开关
       rmSync(scratch, { recursive: true, force: true })
+      rmSync(cfg.dir, { recursive: true, force: true })
+      rmSync(db.dir, { recursive: true, force: true })
     }
   }, 30_000)
 })

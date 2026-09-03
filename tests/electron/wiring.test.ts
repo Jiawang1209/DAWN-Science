@@ -711,11 +711,6 @@ describe("远端会话的解释器（远程内核）", () => {
       await wb.closeAsync(15_000)
     })
 
-    // **起内核之前先拍一张 `/tmp/dawn-*` 快照**——事后只查「这条用例自己新增的那些」是不是没了，
-    // 不整目录 diff：并发跑的其它用例（真起内核那几条 `.integration.test.ts`）也在同一个 tmpdir 里写字，
-    // 整目录 diff 会把它们的文件也算成「这条用例的残留」，那是误判不是真相。
-    const 之前 = new Set(readdirSync(tmpdir()).filter((f) => f.startsWith("dawn-")))
-
     try {
       // 1. 加一台假服务器、连上
       const saved = (await wb.server.handle("saveConnection", {
@@ -751,8 +746,21 @@ describe("远端会话的解释器（远程内核）", () => {
       const 通知 = wb.events.peekItems(sessionId).filter((i) => i.type === "notice").map((i) => (i as { text: string }).text)
       expect(通知.some((t) => t.includes("已记进这台服务器"))).toBe(true)
 
-      // 4. 这条用例真起过内核，才值得断言「停完不留字」——起不来的话下面那条断言毫无意义
-      const 新增的 = readdirSync(tmpdir()).filter((f) => f.startsWith("dawn-") && !之前.has(f))
+      /**
+       * 4. 这条用例真起过内核，才值得断言「停完不留字」——起不来的话下面那条断言毫无意义。
+       *
+       * **只认这次装配自己的装机 id**（审查反馈）：整个 tmpdir 前后 diff 会把并发跑的
+       * 别的 worker 也在写的 `dawn-<别的id>-python-*.json` 算成「这条用例的残留」——
+       * 那是误判不是真相（`tests/workbench/backend.test.ts` 那批 `dawn-memories-*`
+       * 临时目录同样带 `dawn-` 前缀，同一个理由）。装机 id 落在 `settings` 表的
+       * `install.id` 键（`wiring.ts` 的 `装机id()`），起内核那一刻早就生成好了。
+       */
+      const id = (wb.db.prepare("SELECT value FROM settings WHERE key = 'install.id'").get() as
+        | { value: string }
+        | undefined)?.value
+      expect(id, "起过内核就该有装机 id 了").toBeDefined()
+      const 内核文件模式 = new RegExp(`^dawn-${id}-(python|R)-[a-z0-9]+\\.json(\\.log)?$`)
+      const 新增的 = readdirSync(tmpdir()).filter((f) => 内核文件模式.test(f))
       expect(新增的.length, "这条用例应该真起过一台内核，tmp 里理应多出 connection.json / .log").toBeGreaterThan(0)
 
       // 5. 停掉——`closeAsync` 会等 `对话的内核.收全部()`，那条会走 `停远端内核`（真 kill + 真 rm）。

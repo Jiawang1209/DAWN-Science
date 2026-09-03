@@ -32,7 +32,7 @@ import { EventEmitter } from "node:events"
 import { connect } from "node:net"
 import { Readable, Writable } from "node:stream"
 import type { SshClientLike } from "./ssh.js"
-import { 假内核命令 } from "./fake-ssh-kernel.js"
+import { 假内核命令, 扫残留延迟 } from "./fake-ssh-kernel.js"
 
 /** 假机器上认的口令。**写死一个**——mock 模式的意义就是确定性 */
 export const 假口令 = "dawn"
@@ -151,6 +151,15 @@ export function 造一台假服务器(): SshClientLike {
     const ch = new EventEmitter() as 通道
     ch.stderr = new EventEmitter()
     cb(undefined, ch)
+    /**
+     * **扫残留那条可以被测试故意拖住**（`设扫残留延迟`，审查反馈）。
+     *
+     * 单看「哪条命令先被送到假服务器」证不了「起内核等过扫残留」——`跑()` 认命令的顺序
+     * 与 `interpreterOf` 发命令的顺序都是天生固定的，不管 `await 扫过.get(cid)` 在不在，
+     * 两条命令抵达的先后都不会变。只有让扫残留的**响应**明显晚于它平时的样子，
+     * 「没等它跑完就把下一条发出去了」这件事才会在命令记录的顺序里露出来。
+     */
+    const 延迟 = cmd.includes("DAWNSWEPT") ? 5 + 扫残留延迟() : 5
     setTimeout(() => {
       const { out, err, code } = 跑(cmd)
       /**
@@ -175,7 +184,7 @@ export function 造一台假服务器(): SshClientLike {
        */
       ch.emit("exit", code, null)
       ch.emit("close")
-    }, 5)
+    }, 延迟)
   }) as SshClientLike["exec"]
 
   /**
@@ -334,8 +343,12 @@ export function 造一台假服务器(): SshClientLike {
  * `tests/electron/remote-kernel.test.ts`）——没有别的用途，
  * 生产代码不该、也不会读它。记的是 `exec` 收到的原样字符串
  * （`bash -c '…'` 那一整层，没剥壳），子串匹配（`DAWNSWEPT` / `ipykernel_launcher`）够用。
+ *
+ * **封顶 500 条，超了扔最老的那些**（审查反馈）：这台假机器也背着 `dev:mock`——
+ * 那是一个不会自己退出的长跑进程，没有上限的话这张表会跟着它一起无限长大。
  */
 const 命令记录: string[] = []
+const 命令记录上限 = 500
 export function 跑过的命令(): string[] {
   return [...命令记录]
 }
@@ -346,6 +359,7 @@ export function 清空记录(): void {
 /** 这台假机器认得的几条命令。**认不得的如实回 127**，不假装成功 */
 function 跑(整条: string): { out: string; err: string; code: number } {
   命令记录.push(整条)
+  if (命令记录.length > 命令记录上限) 命令记录.splice(0, 命令记录.length - 命令记录上限)
   // 我们发过去的是 `bash -c '…'` 或 `bash -lc '…'`，把里面那层剥出来
   const m = /^bash -l?c '(.*)'$/s.exec(整条)
   const 里面 = m ? m[1]!.replace(/'\\''/g, "'") : 整条

@@ -506,6 +506,8 @@ export function ConnectionDialog({
               where={d.label || d.host}
               candidates={探到?.r}
               probing={探测中}
+              /* 一次探测同时填两栏——失败也就同时是两栏的失败，只在 Python 底下说等于对 R 撒谎 */
+              error={探测错}
               current={interpreters?.r}
               onPick={(p) => onPickInterpreter?.("R", p)}
               onProbe={探}

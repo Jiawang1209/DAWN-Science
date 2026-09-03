@@ -401,6 +401,25 @@ describe("NotebookPanel · 远端（远程内核，2026-09-03）", () => {
     expect(screen.getByText(/R 还没在 genek 上选/)).toBeTruthy()
   })
 
+  it("非 native 的远端会话：说「这种会话没有内核」，不画选择器、**也不去探**（探测要走一趟 SSH）", () => {
+    const 探 = vi.fn(async () => ({ python: [], r: [] }))
+    render(
+      <NotebookPanel
+        {...基本}
+        sessionKind="kernel"
+        remoteLabel="genek"
+        remoteInterpreters={{}}
+        remoteProbe={探}
+        onPickRemoteInterpreter={() => {}}
+        kernels={undefined}
+        cells={[]}
+      />,
+    )
+    expect(screen.getByText("独立内核会话的输出就在对话区的 Console 里；笔记本只管普通对话")).toBeTruthy()
+    expect(screen.queryByText(/genek 上还没选/)).toBeNull()
+    expect(探).not.toHaveBeenCalled()
+  })
+
   it("本机会话一切如旧：胶囊不带服务器名", () => {
     render(<NotebookPanel {...基本} sessionKind="native" kernels={[{ language: "python", state: "idle" }]} cells={[]} />)
     expect(screen.getByText("Python · 空闲")).toBeTruthy()

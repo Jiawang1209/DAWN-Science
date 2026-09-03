@@ -5,7 +5,7 @@
  * 纯函数派生（`cells()`）2026-08-27 搬去了 `src/protocol/notebook-cells.ts`（后端导出 .ipynb 也要用它），
  * 这里只剩坐在它上面的面板（`NotebookPanel`，Task 7）；`cells` / `Cell` 从这里 re-export，调用点不动。
  */
-import { useCallback, useEffect, useState, type KeyboardEvent } from "react"
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { StickToBottom } from "use-stick-to-bottom"
 import type { KernelState } from "../protocol/index.js"
 import { Button, EmptyState, 导出提示, type 导出提示态 } from "./primitives.js"
@@ -131,21 +131,43 @@ export function NotebookPanel({
   }, [cells])
 
   // ── 远端会话的解释器（远程内核，2026-09-03） ──
-  /** 这台服务器上**还没选**的那几门语言。本机会话恒为空表 */
-  const 未配: 语言[] = remoteLabel
-    ? (["python", "R"] as const).filter((l) => !(l === "python" ? remoteInterpreters?.python : remoteInterpreters?.r))
-    : []
+  /**
+   * 这台服务器上**还没选**的那几门语言。本机会话、以及**非 native 的远端会话**恒为空表——
+   * 后者压根没有笔记本内核（独立内核会话的输出在对话区，acp/pty 没有内核），
+   * 给它画选择器就等于为一个用不上的功能去连一趟 SSH。
+   */
+  const 未配: 语言[] =
+    remoteLabel && sessionKind === "native"
+      ? (["python", "R"] as const).filter((l) => !(l === "python" ? remoteInterpreters?.python : remoteInterpreters?.r))
+      : []
   const [探到, 设探到] = useState<探测结果 | undefined>(undefined)
   const [探测中, 设探测中] = useState(false)
   const [探测错, 设探测错] = useState<string | undefined>(undefined)
+  /**
+   * 探测要走一趟 SSH，回来时这一格可能已经被拆了（换会话、切走坞）。
+   * **卸载之后不许再 setState**：那一条 React 警告底下藏着的是「已经没人看的请求还在改状态」。
+   */
+  const 还挂着 = useRef(true)
+  useEffect(() => {
+    还挂着.current = true
+    return () => {
+      还挂着.current = false
+    }
+  }, [])
   const 探 = useCallback(() => {
     if (!remoteProbe) return
     设探测中(true)
     设探测错(undefined)
     remoteProbe()
-      .then(设探到)
-      .catch((e: unknown) => 设探测错(e instanceof Error ? e.message : String(e)))
-      .finally(() => 设探测中(false))
+      .then((r) => {
+        if (还挂着.current) 设探到(r)
+      })
+      .catch((e: unknown) => {
+        if (还挂着.current) 设探测错(e instanceof Error ? e.message : String(e))
+      })
+      .finally(() => {
+        if (还挂着.current) 设探测中(false)
+      })
   }, [remoteProbe])
   /**
    * 远端且有没配的：挂上时自动探一次（定案 1：不设就探测）。
@@ -163,27 +185,17 @@ export function NotebookPanel({
       candidates={l === "python" ? 探到?.python : 探到?.r}
       probing={探测中}
       error={探测错}
-      current={undefined}
+      /**
+       * **以库里存着的那条为准**，不是恒 `undefined`：存失败时重拉回来的名单里没有它，
+       * 那一行就该弹回未选——否则屏幕上一边是红字「没存上」，一边是选中的圆点。
+       * （选完那一瞬的亮起由 picker 自己的 `选了` 兜着，不会闪。）
+       */
+      current={l === "python" ? remoteInterpreters?.python : remoteInterpreters?.r}
       onPick={(p) => onPickRemoteInterpreter?.(l, p)}
       onProbe={探}
     />
   )
 
-  if (remoteLabel && 未配.length === 2) {
-    /**
-     * 远端会话、两门都没选（远程内核，2026-09-03）：整格就是选择器，**不画输入框**。
-     * 画了也跑不了——一敲就是一条红字，而红字不告诉人该去哪配。
-     */
-    return (
-      <div className="nb nb-remote-setup">
-        <p className="nb-notice">
-          {tf("{0} 上还没选解释器。找到的列在下面，选一个就能在那台服务器上跑代码（内核在服务器上起，什么都不会装到那边）。", remoteLabel)}
-        </p>
-        {远端选择器("python")}
-        {远端选择器("R")}
-      </div>
-    )
-  }
   if (sessionKind === "kernel") {
     // 独立内核会话**有**内核——说「没有内核」是假话；它的输出走对话区的 Console，笔记本不管它
     return (
@@ -196,6 +208,25 @@ export function NotebookPanel({
     return (
       <div className="nb">
         <EmptyState title={t("这种会话没有内核，笔记本不可用")} />
+      </div>
+    )
+  }
+
+  if (remoteLabel && 未配.length === 2) {
+    /**
+     * 远端会话、两门都没选（远程内核，2026-09-03）：整格就是选择器，**不画输入框**。
+     * 画了也跑不了——一敲就是一条红字，而红字不告诉人该去哪配。
+     *
+     * **排在两条 `sessionKind` 之后**：非 native 的远端会话没有笔记本内核，
+     * 那时该说的是「这种会话没有内核」，不是让人去选一个用不上的解释器。
+     */
+    return (
+      <div className="nb nb-remote-setup">
+        <p className="nb-notice">
+          {tf("{0} 上还没选解释器。找到的列在下面，选一个就能在那台服务器上跑代码（内核在服务器上起，什么都不会装到那边）。", remoteLabel)}
+        </p>
+        {远端选择器("python")}
+        {远端选择器("R")}
       </div>
     )
   }

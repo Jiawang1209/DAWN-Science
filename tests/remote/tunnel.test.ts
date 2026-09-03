@@ -57,11 +57,15 @@ describe("隧道", () => {
       shell_port: 1, iopub_port: 2, stdin_port: 3, control_port: 4, hb_port: 5,
     }
     const 五 = await 五条隧道(远, 远端)
-    expect(远.要过).toEqual([1, 2, 3, 4, 5])
     const 端口 = [五.本地.shell_port, 五.本地.iopub_port, 五.本地.stdin_port, 五.本地.control_port, 五.本地.hb_port]
+    for (const p of 端口) expect(await 收一段(p, "ping")).toBe("ping")
+    expect(远.要过).toEqual([1, 2, 3, 4, 5])
     expect(new Set(端口).size).toBe(5)
     expect(五.本地.key).toBe("k")
     expect(五.本地.ip).toBe("127.0.0.1")
+    // 一条隧道 = 一条 forwardOut：同一个本地端口连两次，得两条各自的通道
+    await 收一段(五.本地.shell_port, "again")
+    expect(远.要过.filter((x) => x === 1).length).toBe(2)
     await 五.关()
     // 关了就连不上
     await expect(收一段(五.本地.shell_port, "x")).rejects.toThrow()

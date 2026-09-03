@@ -1,10 +1,10 @@
 /**
  * SSH 端口隧道（远程内核，2026-09-03，spec `2026-09-03-远程内核-design.md`）。
  *
- * 一条隧道 = 本地一个 `net.Server`（`127.0.0.1:0`），建隧道时就立刻发起那一条 `forwardOut`
- * （不等它），入站 socket 来了再接上这条通道——这样 `五条隧道()` 建完当场就能看出哪个端口通、
- * 哪个不通，不用真连一次才知道。zeromq 在上面跑的是原样 TCP，`enchannel` 不知道中间隔着 SSH
- * （Spike F Q4 实测）。
+ * 一条隧道 = 本地一个 `net.Server`（`127.0.0.1:0`），每个入站 socket 开一条 `forwardOut`
+ * 通道对接——一条 `forwardOut` 就是一条 TCP 连接，不能共享：断了重连（zeromq 的行为）得要
+ * 一条全新的通道，接到一条已经用过或已经死掉的通道上没有意义。zeromq 在上面跑的是原样 TCP，
+ * `enchannel` 不知道中间隔着 SSH（Spike F Q4 实测）。
  * 这一层**只认识 `forwardOut`**，不认识 ssh2 的 Client——注入进来，单测塞回声通道。
  */
 import { createServer, type Socket } from "node:net"
@@ -24,16 +24,11 @@ export interface 一条隧道 {
 
 export async function 隧道(c: 可转发, 远端端口: number): Promise<一条隧道> {
   const 在途 = new Set<Socket>()
-  // 立即发起 forwardOut（不等它），而不是等第一个入站 socket 才叫——
-  // 这样 五条隧道() 建完就能看出哪几个端口通、哪几个不通，不用真连一次才知道。
-  const 通道承诺 = c.forwardOut(远端端口)
-  // 没有入站连接时也不能挂成 unhandled rejection；真正的处理在下面每个 socket 的 .then 里
-  通道承诺.catch(() => {})
   const server = createServer((sock) => {
     在途.add(sock)
     sock.on("close", () => 在途.delete(sock))
     sock.on("error", () => sock.destroy())
-    通道承诺.then(
+    c.forwardOut(远端端口).then(
       (ch) => {
         ch.on("error", () => sock.destroy())
         ch.on("close", () => sock.destroy())

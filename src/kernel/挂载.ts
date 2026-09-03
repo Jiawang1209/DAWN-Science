@@ -561,6 +561,15 @@ export class 对话内核 {
    * 要认它——run_code 用过的内核不进 SessionManager.bound,旧的存活判断看不见它,
    * 于是退出走同步 close 分支,zeromq socket 一次没关 → `Napi::Error` + SIGABRT。
    */
+  /**
+   * 这一层接没接远端（远程内核，2026-09-03）。`native.ts` 决定远端会话挂不挂 `run_code` 前先问它：
+   * 装配层漏了 `remoteOf`，远端会话的代码就会在**本机**起内核、对着服务器上的文件跑——
+   * 而且不出声（审查 2026-09-04 抓的）。宁可那时不给工具，也不给一个跑错机器的工具。
+   */
+  能起远端(): boolean {
+    return typeof this.opts.remoteOf === "function"
+  }
+
   有活内核(): boolean {
     return this.表.size > 0
   }

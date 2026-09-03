@@ -848,10 +848,14 @@ export class NativeRuntime implements AgentRuntime {
     /**
      * **远端会话也挂**（远程内核，2026-09-03）：内核在那台服务器上起（远端 ipykernel + 五条 SSH 隧道），
      * 文件与代码在同一台机器——2026-08-27 那条「只会在本机起」的禁令随之作废。
+     *
+     * **远端会话只在挂载层真接了远端时才挂**：没接（`能起远端()` 为 false）等于内核只会在本机起，
+     * 那正是 08-27 禁掉的那种静默错位——这时不给工具，模型看不到就不会去猜。
      */
-    const 内核工具 = this.opts.kernels
-      ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
-      : []
+    const 内核工具 =
+      this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
+        ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
+        : []
 
     /**
      * `look_at_image`：视觉服务的缝二（2026-08-20）。

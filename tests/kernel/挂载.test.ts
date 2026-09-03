@@ -431,6 +431,13 @@ describe("远端（远程内核，2026-09-03）", () => {
     expect((见过[0] as { remote: { cwd: { get(): string } } }).remote.cwd.get()).toBe("/data/p")
   })
 
+  it("能起远端() 只在给了 remoteOf 时为真——native 据此决定远端会话挂不挂 run_code", () => {
+    const 没接 = new 对话内核({ runtime: new FakeRuntime(), workspaceOf: () => "/w", sessionDirOf: () => "/sd", interpreterOf: () => "/x" })
+    expect(没接.能起远端()).toBe(false)
+    const 接了 = new 对话内核({ runtime: new FakeRuntime(), workspaceOf: () => "/w", sessionDirOf: () => "/sd", interpreterOf: () => "/x", remoteOf: () => undefined })
+    expect(接了.能起远端()).toBe(true)
+  })
+
   it("interpreterOf 抛出来的话原样往上抛（探测「多个 / 零个」那两条路靠它说话）", async () => {
     const 挂 = new 对话内核({
       runtime: new FakeRuntime(),

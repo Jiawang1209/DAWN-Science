@@ -82,6 +82,13 @@ export interface KernelRuntimeOptions {
 export class KernelRuntime implements AgentRuntime {
   private readonly sessions = new Map<SessionId, Live>()
   private readonly sinks = new Map<SessionId, Set<EventSink>>()
+  /**
+   * 隧道已经建起来、但 attach 还没落地的那些（远程内核，2026-09-03）。
+   *
+   * **`sessions` 还看不见它们**，而握手要等到 kernel_info 应答——正好是最容易撞上断线的
+   * 那几秒。不记一笔的话，`连接断了` 扫不到它，五个本地监听端口就此泄漏（进程活多久漏多久）。
+   */
+  private readonly 起中隧道 = new Map<SessionId, { connectionId: string | undefined; 关隧道: () => Promise<void> }>()
 
   constructor(private readonly opts: KernelRuntimeOptions = {}) {}
 
@@ -154,11 +161,22 @@ export class KernelRuntime implements AgentRuntime {
         )
       }
       const 信号 = (s?: NodeJS.Signals) => (s === "SIGINT" ? "INT" : s === "SIGKILL" ? "KILL" : "TERM")
+      /**
+       * 远端没有 exit 事件：内核猝死只有 挂载 的静默超时接得住（spec 定案 10）。
+       *
+       * 本机那条路的 `process` 是个真 `ChildProcess`，`once("exit")` 一响，下面那个
+       * `channel.onExit` 就把「内核崩了」转成一条 `exited`。**这里没有那只耳朵**——
+       * SSH 那头的进程死了我们不会收到任何通知（连接还活着，只是内核没了）。
+       * 所以下面 `channel.onExit` 那段注释**不覆盖远端**：远端内核猝死的唯一兜底是
+       * `挂载.ts` 的 `静默超时`（5 分钟一条输出都没有才拒），断线那条另有 `连接断了`。
+       */
       const process: KernelProcess = {
         pid: 起的.pid,
         // 走 SSH，fire-and-forget：`kill(signal)` 的契约是同步的
         kill: (s) => void exec(`kill -${信号(s)} ${起的.pid} 2>/dev/null; true`).catch(() => {}),
       }
+      // 登记在案，好让握手期间断线时 `连接断了` 也能把这五条关掉
+      this.起中隧道.set(spec.sessionId, { connectionId: remote.connectionId, 关隧道: 隧.关 })
       try {
         channel = await 远.attach({
           连接信息: 隧.本地,
@@ -171,10 +189,12 @@ export class KernelRuntime implements AgentRuntime {
           diagnose: (ev) => diagnoseInterpreter(k.language, k.interpreterPath, ev, () => true),
         })
       } catch (e) {
+        this.起中隧道.delete(spec.sessionId)
         await 隧.关().catch(() => {})
         await 远.停远端内核(exec, 起的).catch(() => {})
         throw e
       }
+      this.起中隧道.delete(spec.sessionId)
       远端记 = {
         connectionId: remote.connectionId,
         label,
@@ -302,8 +322,15 @@ export class KernelRuntime implements AgentRuntime {
         .停远端内核(live.远端.executor.exec.bind(live.远端.executor), live.远端.起的)
         .catch((e) => console.error(`[远端内核] 停不掉：${e instanceof Error ? e.message : String(e)}`))
     }
-    await live.channel.close()
-    if (live.远端) await live.远端.关隧道().catch(() => {})
+    /**
+     * **关 socket 抛了也要关隧道**（审查 2026-09-04）：不然那五个本地监听端口留一辈子。
+     * `连接断了` 那条本来就每步 `.catch`，这里不对称就是个洞。
+     */
+    try {
+      await live.channel.close()
+    } finally {
+      if (live.远端) await live.远端.关隧道().catch(() => {})
+    }
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
     this.sinks.delete(sessionId)
   }
@@ -311,8 +338,18 @@ export class KernelRuntime implements AgentRuntime {
   /**
    * 一台服务器断了（定案 3：断线 = 内核死）。连接没了，杀不了远端进程——留给下次连上的扫残留；
    * 这里只把本地这半收掉：关隧道、关 socket、出声、发一条带 reason 的 exited 让挂载层与账本收口。
+   *
+   * **`start` 还在飞的那些也算**：隧道建好、握手还没回来时断线，那段 `start` 不在 `sessions` 里，
+   * 只按表扫的话它的五条隧道永远不关。所以先收 `起中隧道`——远端那个内核进程仍旧杀不了
+   * （连接没了），和表里的一样留给下次连上的「扫残留」。隧道一关，那段 `start` 的握手会失败、
+   * 走它自己的 catch 往上抛，用户看见的是「起不来」而不是一个静默泄漏的端口。
    */
   async 连接断了(connectionId: string): Promise<void> {
+    for (const [id, 在飞] of [...this.起中隧道]) {
+      if (在飞.connectionId !== connectionId) continue
+      this.起中隧道.delete(id)
+      await 在飞.关隧道().catch(() => {})
+    }
     for (const [id, live] of [...this.sessions]) {
       if (live.远端?.connectionId !== connectionId) continue
       this.sessions.delete(id)

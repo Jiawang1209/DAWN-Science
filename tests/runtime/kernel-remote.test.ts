@@ -9,6 +9,8 @@ import type { AgentEvent, SessionId } from "../../src/runtime/types.js"
 
 function 假件() {
   const 日志: string[] = []
+  /** attach 收到的那个「远端进程」句柄。真 `channel.close()` 会 `kill("SIGKILL")` 它，假的也照做 */
+  let 进程: { kill(s?: NodeJS.Signals): void } | undefined
   const 假通道 = {
     kernelInstanceId: "k-1",
     kernelRevision: 0,
@@ -18,7 +20,11 @@ function 假件() {
     probe: async () =>
       Buffer.from(JSON.stringify({ version: "3.12.0", executable: "/opt/conda/bin/python" })).toString("base64"),
     interrupt: () => {},
-    close: async () => void 日志.push("channel.close"),
+    close: async () => {
+      // 与真 `close()` 同一个顺序：先杀进程（远端那条会走 SSH），再关 socket
+      进程?.kill("SIGKILL")
+      日志.push("channel.close")
+    },
     ready: async () => {},
     send: () => {},
     request: async () => ({}),
@@ -49,13 +55,18 @@ function 假件() {
       本地: { ...远, ip: "127.0.0.1", shell_port: 11, iopub_port: 12, stdin_port: 13, control_port: 14, hb_port: 15 },
       关: async () => void 日志.push("隧道.关"),
     }),
-    attach: async (o: { 连接信息: { shell_port: number } }) => {
+    attach: async (o: { 连接信息: { shell_port: number }; process: { kill(s?: NodeJS.Signals): void } }) => {
       日志.push(`attach:${o.连接信息.shell_port}`)
+      进程 = o.process
       return 假通道 as never
     },
   }
   const executor = {
-    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    // 每一条走到服务器上的命令都记一笔：断线那条要证明**一条都没发**（连接已经没了）
+    exec: async (cmd: string) => {
+      日志.push(`exec:${cmd}`)
+      return { code: 0, stdout: "", stderr: "" }
+    },
     readFile: async () => Buffer.alloc(0),
     writeFile: async () => {},
     forwardOut: async () => {
@@ -85,7 +96,12 @@ describe("KernelRuntime · 远端", () => {
     await rt.start(spec(executor) as never)
     expect(日志).toEqual(["起:python@/data/p", "attach:11"])
     await rt.stop("c1::python" as SessionId)
-    expect(日志.slice(2)).toEqual(["停:7", "channel.close", "隧道.关"])
+    expect(日志.slice(2)).toEqual([
+      "停:7",
+      "exec:kill -KILL 7 2>/dev/null; true", // `channel.close()` 自己那一下，走 SSH
+      "channel.close",
+      "隧道.关",
+    ])
   })
 
   it("执行器不支持 forwardOut → 响亮失败，不起内核", async () => {
@@ -112,7 +128,41 @@ describe("KernelRuntime · 远端", () => {
     expect((收到[0] as { text: string }).text).toMatch(/genek/)
     expect(日志).toContain("隧道.关")
     expect(日志).not.toContain("停:7") // 连接没了，杀不了；留给下次连上的扫残留
+    /**
+     * **连接已经断了，这时候还往它上面发命令是没有意义的**——每一条都要卡到超时，
+     * 而「断线」这件事本身要求界面立刻收口。所以到服务器上的流量只允许有
+     * `channel.close()` 自己那一下 fire-and-forget 的 KILL（发不出去也无所谓，不等回音）：
+     * 没有 `停远端内核` 的那串 TERM/轮询/rm，没有扫残留，没有别的。
+     */
+    expect(日志.filter((x) => x.startsWith("exec:"))).toEqual(["exec:kill -KILL 7 2>/dev/null; true"])
     expect(rt.kernelInstanceId("c2::python" as SessionId)).toBe("k-1") // 另一台还活着
+  })
+
+  it("握手还没回来就断线 → 在飞那段的五条隧道也关掉（不然端口漏一辈子）", async () => {
+    const { 日志, 远端, executor } = 假件()
+    let 放行: ((e: unknown) => void) | undefined
+    const 卡住的 = {
+      ...远端,
+      attach: (o: { 连接信息: { shell_port: number } }) => {
+        日志.push(`attach:${o.连接信息.shell_port}`)
+        // 隧道已经建好、kernel_info 还没回来——正是最容易撞上断线的那几秒
+        return new Promise((_res, rej) => {
+          放行 = rej
+        }) as never
+      },
+    }
+    const rt = new KernelRuntime({ 远端: 卡住的 as never })
+    const 起着 = rt.start(spec(executor) as never)
+    起着.catch(() => {}) // 下面会让它失败，先接住免得成 unhandled
+    // 等到 attach 那一步（隧道已经建起来了）
+    while (!日志.includes("attach:11")) await new Promise((r) => setTimeout(r, 0))
+    expect(日志).not.toContain("隧道.关")
+
+    await rt.连接断了("conn-1")
+    expect(日志, "在飞的那段隧道没人关").toContain("隧道.关")
+
+    放行?.(new Error("握手没回音"))
+    await expect(起着).rejects.toThrow()
   })
 
   it("环境快照带 where.connectionId —— 同一个 conda env 搬到另一台是另一份快照", async () => {

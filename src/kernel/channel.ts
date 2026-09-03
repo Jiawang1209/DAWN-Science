@@ -40,6 +40,7 @@ import {
 import type {
   JupyterMessage,
   KernelChannel,
+  KernelConnectionInfo,
   Provenance,
   TaggedMessage,
   Unsubscribe,
@@ -520,6 +521,57 @@ function newInstanceId(kernelName: string): string {
 /** stderr 只留末尾这么多字节。**留尾不留头**：报错信息在最后 */
 const STDERR_TAIL = 4000
 
+export interface AttachOptions {
+  /** 端口是**本地**能连的（本机内核：进程自己写的；远端：隧道那头） */
+  连接信息: KernelConnectionInfo
+  process: KernelProcess
+  language: KernelLanguage | undefined
+  /** 报错时怎么称呼这台内核 */
+  label: string
+  runIdOf?: () => string | undefined
+  handshakeTimeoutMs?: number
+  /** 握手失败时拿证据做三种实情的诊断；证据由 `evidence()` 现取（stderr 尾巴 / 远端日志尾巴） */
+  diagnose?: (evidence: string) => LaunchDiagnosis | undefined
+  evidence?: () => string
+}
+
+/**
+ * 拿一份 connection.json 接通道 + 握手（远程内核，2026-09-03）。
+ * `launchKernelChannel` = spawn 一个进程拿到它写的连接信息 → 调这里；远端 = 隧道之后调这里。
+ * enchannel 仍只在本文件出现。
+ */
+export async function attachKernelChannel(
+  opts: AttachOptions,
+): Promise<KernelChannel & { ready(): Promise<void>; 连接信息: KernelConnectionInfo }> {
+  const [{ createMainChannel }, { executeRequest, kernelInfoRequest }] = await Promise.all([
+    import("enchannel-zmq-backend"),
+    import("@nteract/messaging"),
+  ])
+  const channel = createKernelChannel({
+    channel: (await createMainChannel(opts.连接信息 as never)) as unknown as RawChannel,
+    process: opts.process,
+    kernelInstanceId: newInstanceId(opts.language ?? "kernel"),
+    interruptMode: "signal",
+    ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
+    handshake: kernelInfoRequest() as unknown as JupyterMessage,
+    makeExecute: (code, o) =>
+      (o ? executeRequest(code, o as never) : executeRequest(code)) as unknown as JupyterMessage,
+    ...(opts.handshakeTimeoutMs ? { handshakeTimeoutMs: opts.handshakeTimeoutMs } : {}),
+  })
+  try {
+    await channel.ready()
+  } catch (err) {
+    await channel.close()
+    const d = opts.diagnose?.(opts.evidence?.() ?? "")
+    throw new UserFacingError(
+      d
+        ? `${d.message}${"evidence" in d && d.evidence ? `\n${d.evidence}` : ""}`
+        : `内核「${opts.label}」起来了，但握手没有回音：${message(err)}`,
+    )
+  }
+  return Object.assign(channel, { 连接信息: opts.连接信息 })
+}
+
 /**
  * 起内核 + 建通道 + 握手，**一步到位或响亮失败**。
  *
@@ -541,18 +593,17 @@ const STDERR_TAIL = 4000
  */
 export async function launchKernelChannel(
   opts: LaunchOptions,
-): Promise<KernelChannel & { ready(): Promise<void> }> {
+): Promise<KernelChannel & { ready(): Promise<void>; 连接信息: KernelConnectionInfo }> {
   /**
    * **重依赖只在真要起内核时才加载。**
    * 见 `KernelChannelOptions.makeExecute` 那段——静态 import 会把 rxjs
    * 打进 Electron 主进程包，让每次启动都为一个多数会话用不到的功能买单。
+   *
+   * `attachKernelChannel` 自己也会再 import 一次 `enchannel-zmq-backend` /
+   * `@nteract/messaging`——这里其实用不上它俩，但 `spawnteract` 得留在这份
+   * `Promise.all` 里：`launchSpec` 只有这一处用得到。
    */
-  const [{ launchSpec }, { createMainChannel }, { executeRequest, kernelInfoRequest }] =
-    await Promise.all([
-      import("spawnteract"),
-      import("enchannel-zmq-backend"),
-      import("@nteract/messaging"),
-    ])
+  const [{ launchSpec }] = await Promise.all([import("spawnteract")])
 
   /**
    * 两条起法。**给了解释器路径就走那条**，不再查 kernelspec。
@@ -640,37 +691,17 @@ export async function launchKernelChannel(
     stdoutTail = (stdoutTail + d).slice(-STDERR_TAIL)
   })
 
-  const channel = createKernelChannel({
-    channel: (await createMainChannel(kernel.config as never)) as unknown as RawChannel,
+  return attachKernelChannel({
+    连接信息: kernel.config as KernelConnectionInfo,
     process: kernel.spawn,
-    kernelInstanceId: newInstanceId(byPath ? byPath.language : (opts.kernelName ?? "kernel")),
-    // **由 kernelspec 说了算**，不猜——走错路的症状是「点了停止什么也没发生」
-    /**
-     * **默认 signal**：ipykernel 与 IRkernel 实测都是它，
-     * 而由路径起时根本没有 kernelspec 可问。走错的症状是「点了停止什么也没发生」，
-     * 所以这里取的是**实测过的那个默认**，不是猜。
-     */
-    interruptMode: "signal",
+    language,
+    label,
     ...(opts.runIdOf ? { runIdOf: opts.runIdOf } : {}),
-    handshake: kernelInfoRequest() as unknown as JupyterMessage,
-    makeExecute: (code, o) =>
-      (o ? executeRequest(code, o as never) : executeRequest(code)) as unknown as JupyterMessage,
     ...(opts.handshakeTimeoutMs ? { handshakeTimeoutMs: opts.handshakeTimeoutMs } : {}),
-  })
-
-  try {
-    await channel.ready()
-  } catch (err) {
+    diagnose,
     // **握手超时的真正原因往往在 stderr 里**，只报「超时」等于把线索扔了
-    await channel.close()
-    const d = diagnose(stderrTail || stdoutTail)
-    throw new UserFacingError(
-      d
-        ? `${d.message}${"evidence" in d && d.evidence ? `\n${d.evidence}` : ""}`
-        : `内核「${label}」起来了，但握手没有回音：${message(err)}`,
-    )
-  }
-  return channel
+    evidence: () => stderrTail || stdoutTail,
+  })
 }
 
 const message = (err: unknown): string => (err instanceof Error ? err.message : String(err))

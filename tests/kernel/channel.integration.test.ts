@@ -20,6 +20,8 @@ import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
+import { attachKernelChannel, launchKernelChannel } from "../../src/kernel/channel.js"
+import type { KernelConnectionInfo } from "../../src/kernel/types.js"
 
 /** 本机有没有这个 kernelspec。没有就跳过——**跳过要出声，不能假装跑过** */
 function hasKernel(name: string): boolean {
@@ -103,3 +105,30 @@ for (const k of KERNELS) {
     }
   })
 }
+
+describe("attachKernelChannel（远程内核，2026-09-03）", () => {
+  // 与本文件其它用例同一条判据：dawn-spike 这台 kernelspec 本机装没装
+  const KERNEL = "dawn-spike"
+  const 有 = hasKernel(KERNEL)
+
+  it("拿一份现成的 connection.json 接通道：与 launch 同一套握手与执行", async () => {
+    if (!有) return // 与本文件其它用例同一条跳过口径
+    // 用 launch 起一台，从它的 config 抄一份连接信息，再用 attach 接第二条通道到同一台内核
+    const a = await launchKernelChannel({ kernelName: KERNEL })
+    const info = (a as unknown as { 连接信息?: KernelConnectionInfo }).连接信息
+    expect(info, "launch 之后要能拿到连接信息（attach 要用）").toBeDefined()
+    const b = await attachKernelChannel({
+      连接信息: info!,
+      process: { pid: undefined, kill: () => {} },
+      language: "python",
+      label: "attach 测试",
+    })
+    const out: string[] = []
+    b.on("stream", (m) => out.push(String((m.message.content as { text?: string }).text ?? "")))
+    b.execute("print('DAWN_ATTACH_OK')")
+    await new Promise((r) => setTimeout(r, 1500))
+    expect(out.join("")).toContain("DAWN_ATTACH_OK")
+    await b.close()
+    await a.close()
+  })
+})

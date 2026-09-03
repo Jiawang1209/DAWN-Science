@@ -117,7 +117,8 @@ const child = spawn(
        * 假服务器（②-B · R3）：dev:mock 此前一直没开它——「添加服务器 → 连接」这条主路径
        * 因此在 dev:mock 里根本走不通（只有 e2e 按需打开过）。补上，与 e2e 共用同一份假的（准入规则 1）。
        */
-      DAWN_FAKE_SSH: "1",
+      // 缺省假服务器（准入规则 1：与 e2e 共用一份 mock）；要对着真机器调时 `DAWN_FAKE_SSH=0 npm run dev:mock`
+      DAWN_FAKE_SSH: process.env.DAWN_FAKE_SSH ?? "1",
       // 给了才会真起一台内核；找不到装了 ipykernel 的本机 python 就不给，假服务器上探测解释器仍答得出来
       ...(fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: fakeSshPython } : {}),
     },

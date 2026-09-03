@@ -114,15 +114,17 @@ describe("attachKernelChannel（远程内核，2026-09-03）", () => {
   it.skipIf(!有)("拿一份现成的 connection.json 接通道：与 launch 同一套握手与执行", async () => {
     // 用 launch 起一台，从它的 config 抄一份连接信息，再用 attach 接第二条通道到同一台内核
     const a = await launchKernelChannel({ kernelName: KERNEL })
-    const info = (a as unknown as { 连接信息?: KernelConnectionInfo }).连接信息
-    expect(info, "launch 之后要能拿到连接信息（attach 要用）").toBeDefined()
-    const b = await attachKernelChannel({
-      连接信息: info!,
-      process: { pid: undefined, kill: () => {} },
-      language: "python",
-      label: "attach 测试",
-    })
+    // `b` 在 try 外声明、在 try 里接：attach 自己抛的话 a 也要在 finally 里关掉
+    let b: Awaited<ReturnType<typeof attachKernelChannel>> | undefined
     try {
+      const info = (a as unknown as { 连接信息?: KernelConnectionInfo }).连接信息
+      expect(info, "launch 之后要能拿到连接信息（attach 要用）").toBeDefined()
+      b = await attachKernelChannel({
+        连接信息: info!,
+        process: { pid: undefined, kill: () => {} },
+        language: "python",
+        label: "attach 测试",
+      })
       const out: string[] = []
       b.on("stream", (m) => out.push(String((m.message.content as { text?: string }).text ?? "")))
       b.execute("print('DAWN_ATTACH_OK')")
@@ -134,7 +136,7 @@ describe("attachKernelChannel（远程内核，2026-09-03）", () => {
       expect(out.join("")).toContain("DAWN_ATTACH_OK")
     } finally {
       // **断言失败也不能漏关**——否则一条红的用例会在机器上留一个活的 Python 进程
-      await b.close()
+      await b?.close()
       await a.close()
     }
   })

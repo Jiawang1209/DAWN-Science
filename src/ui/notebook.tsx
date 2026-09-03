@@ -170,11 +170,16 @@ export function NotebookPanel({
       })
   }, [remoteProbe])
   /**
-   * 远端且有没配的：挂上时自动探一次（定案 1：不设就探测）。
+   * 远端且**两门都没配**：挂上时自动探一次（定案 1：不设就探测）。
    * 让人先按一颗「检测」才看得见候选，等于把一件本可以自己做的事变成一道题。
+   *
+   * **只在两门都没配时自动探**（审查 2026-09-04 #6）：已经配好 Python、只差 R 的人
+   * 多半根本不用 R，而这一格每次挂上（换会话、切回坞）都会去连一趟 SSH 跑十几条命令——
+   * 那是为一个没人要的答案反复花几秒。那种情况下下面那个折叠起来的 `<details>`
+   * 里留着「检测」按钮：要用它的人点开就有，不用的人不为它付钱。
    */
   useEffect(() => {
-    if (remoteLabel && 未配.length > 0 && 探到 === undefined && !探测中) 探()
+    if (remoteLabel && 未配.length === 2 && 探到 === undefined && !探测中) 探()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remoteLabel, 未配.length])
   const 远端选择器 = (l: 语言) => (

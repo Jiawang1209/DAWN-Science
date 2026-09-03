@@ -229,8 +229,24 @@ export interface Workbench {
  */
 export function 内核变化出声(events: SessionTranscripts, 对话: SessionId, 变化: 内核状态变化): void {
   const 名 = 变化.language === "R" ? "R" : "Python"
-  if (变化.state === "starting") events.notice(对话, `正在起 ${名} 内核…`)
-  else if (变化.起失败) events.notice(对话, `${名} 内核起不来：${变化.reason ?? "原因不明"}`)
+  if (变化.state === "starting") {
+    // 远端要点名是哪台（定案 2，审查 2026-09-04）：一句「正在起 Python 内核…」
+    // 在一段远端会话里读起来像是在本机起——而这两件事的等待时长、失败原因完全不同
+    events.notice(对话, 变化.服务器 ? `正在在 ${变化.服务器} 上起 ${名} 内核…` : `正在起 ${名} 内核…`)
+  } else if (变化.起来了) {
+    /**
+     * **起来了要有下文**（定案 2，审查 2026-09-04）。只说「正在起…」而不说「起来了」，
+     * 那句话就永远悬着；而这一句同时是**唯一**说清「代码到底在哪台机器、哪个目录、
+     * 用哪个解释器跑」的地方——远端会话里这三件事全都不是默认值。
+     */
+    const 起 = 变化.起来了
+    events.notice(
+      对话,
+      起.服务器
+        ? `内核已在 ${起.服务器} 的 ${起.cwd ?? "工作目录"} 起来（${起.解释器}）`
+        : `内核已起来（${起.解释器}）`,
+    )
+  } else if (变化.起失败) events.notice(对话, `${名} 内核起不来：${变化.reason ?? "原因不明"}`)
   else if (变化.state === "exited" && !变化.收掉) {
     /**
      * **断线那一条要把「变量没了」说全**（远程内核，2026-09-04 e2e 抓的）：运行时自己的那条 notice
@@ -240,6 +256,24 @@ export function 内核变化出声(events: SessionTranscripts, 对话: SessionId
     if (变化.reason === "disconnected") events.notice(对话, `${名} 内核退出了：与服务器断开，内核里的变量已经不在了；重新连接后再跑会起新的一台`)
     else events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
   }
+}
+
+/**
+ * 内核这一次的变化要不要落进账本（远程内核，审查 2026-09-04 · 定案 3 的另一半）。
+ *
+ * **断线要在账本上留下名字。** 运行时发的那条 `exited` 带的是内核会话 id（`c1::python`），
+ * 而 `runRecorder.ingest` 只挂在对话会话上——它一辈子收不到那条事件，
+ * 于是正在飞的 `run_code` 在历史栏里收成一次「失败的工具调用」，**为什么失败没了**。
+ *
+ * 这里是唯一一处**已经做过 id 映射**的缝：`挂载.ts` 用 `反查` 把内核会话换回了对话。
+ * 与 `内核变化出声` 并排、同样导出，理由也一样——装配层那一行接线本身要能被盯住。
+ */
+export function 内核变化记账(
+  recorder: { 远端断了(sessionId: SessionId, reason: string): void },
+  对话: SessionId,
+  变化: 内核状态变化,
+): void {
+  if (变化.state === "exited" && 变化.reason === "disconnected") recorder.远端断了(对话, 变化.reason)
 }
 
 export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
@@ -448,6 +482,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      */
     状态变了: (对话, 变化) => {
       events.setKernels(对话, 对话的内核.状态列表(对话))
+      内核变化记账(runRecorder, 对话, 变化)
       内核变化出声(events, 对话, 变化)
     },
   })
@@ -889,18 +924,26 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          * 每次连接都打一行「清了 0 份」等于把这条日志训练成噪声。
          */
         const ex = remoteConnections.executorOf(connectionId)
-        if (ex) {
-          // **记下这一轮**：起内核前要等它（见 `interpreterOf` 里那句 `await 扫过.get(cid)`）。
-          // 这条 promise **永不 reject**——它是一道闸，不是一件要人处理的事
-          扫过.set(
-            connectionId,
-            扫残留(ex.exec.bind(ex), 装机id())
-              .then((r) => {
-                if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
-              })
-              .catch(() => {}),
-          )
-        }
+        /**
+         * **这一格无条件登记**（审查 2026-09-04 #10）。起内核前那句 `await 扫过.get(cid)`
+         * 是一道闸；只在 `ex` 拿得到时才登记的话，拿不到的那次会让闸**根本不存在**——
+         * `get` 回 undefined，`await undefined` 立刻过，于是「连上就跑」又撞回扫的窗口里。
+         * 拿不到执行器（理论上不该发生：`ready` 就意味着连上了）要**响亮**：
+         * 记一条已解析的 promise 让闸仍然成立，同时把这件事喊出来。
+         */
+        扫过.set(
+          connectionId,
+          ex
+            ? // **记下这一轮**：起内核前要等它（见 `interpreterOf` 里那句 `await 扫过.get(cid)`）。
+              // 这条 promise **永不 reject**——它是一道闸，不是一件要人处理的事
+              扫残留(ex.exec.bind(ex), 装机id())
+                .then((r) => {
+                  if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
+                })
+                .catch(() => {})
+            : Promise.resolve(),
+        )
+        if (!ex) console.error(`[远端内核] ${connectionId} 说连上了却取不到执行器，这一轮没能扫残留`)
       }
       /**
        * **断线 = 内核死**（定案 3）。不重连、不接回：隧道那头的五个端口早就没了，
@@ -912,6 +955,14 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // `idle` 也算：人主动断开进的是 idle（`RemoteConnections.disconnect`）；正常路径 `beforeRemoteDisconnect`
       // 已经停过了，这里是兜底——没剩内核时它什么都不做
       if (state.kind === "disconnected" || state.kind === "idle") {
+        /**
+         * **这一轮的闸也跟着断线作废**（审查 2026-09-04 #10）：`扫过` 是「这一次连接
+         * 扫过了没有」，不是「这台服务器这辈子扫过了没有」。留着它，重连之后
+         * `await 扫过.get(cid)` 等到的是上一条连接的旧 promise（早就 settle 了），
+         * 于是新连接那一轮的扫残留形同虚设。删掉这台的服务器（`removeConnection`）
+         * 也从这里过——`manager.disconnect` 一定会推一次状态。
+         */
+        扫过.delete(connectionId)
         void 内核运行时
           .连接断了(connectionId)
           .catch((e) =>
@@ -1317,6 +1368,16 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // 对话内核也要收（审查 debug H1）：run_code 用过的内核不在 SessionManager 里,
       // 同步 close 分支此前完全漏掉它——zeromq socket 不关会 SIGABRT
       const 内核done = 对话的内核.收全部().catch(() => undefined)
+      /**
+       * **这条路上不停远端内核**（远程内核，审查 2026-09-04 #9）。故意的：
+       * `收全部()` 与 `closeAll()` 都是 fire-and-forget，而后者会**先**把执行器关掉——
+       * 远端那条「TERM → 等 → 删文件」还没发出去，SSH 通道就没了。
+       * 在这里 `await` 它，代价是「关掉应用」要等一趟往返网络。
+       *
+       * 服务器上那台内核**不会因此永远留着**：①正常退出走的是 `closeAsync`
+       * （`needsGracefulShutdown()` 在有活内核时为真，主进程会等）；
+       * ②真被强杀了，下次连上时的「扫残留」按装机 id 把它清掉。
+       */
       const mcpdone = mcp池.全关().catch(() => undefined)
       // **退出时把连接断干净**：留着的 SSH socket 会让进程不肯退
       remoteConnections.closeAll()

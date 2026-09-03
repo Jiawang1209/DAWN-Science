@@ -104,11 +104,20 @@ describe("KernelRuntime · 远端", () => {
     ])
   })
 
-  it("执行器不支持 forwardOut → 响亮失败，不起内核", async () => {
-    const { 远端, executor } = 假件()
+  /**
+   * `RemoteLike.forwardOut` 在契约里就是**可选的**（`runtime/types.ts` 写着「测试替身与
+   * 旧句柄可以不给」），所以这条不是防御性冗余，是那个可选性的唯一出口。
+   *
+   * 判据加严（审查 2026-09-04 #11）：**光看得见「隧道」两个字不够**——
+   * 这句话要说得出是**哪台机器**，而且必须在**碰服务器之前**就拦下来
+   * （已经起了一个连不上的内核，那台进程就只能等下次「扫残留」了）。
+   */
+  it("执行器不支持 forwardOut → 响亮失败：点名是哪台，且一条命令都没发出去", async () => {
+    const { 日志, 远端, executor } = 假件()
     const rt = new KernelRuntime({ 远端: 远端 as never })
     const 没隧道 = { ...executor, forwardOut: undefined }
-    await expect(rt.start(spec(没隧道) as never)).rejects.toThrow(/隧道/)
+    await expect(rt.start(spec(没隧道) as never)).rejects.toThrow(/genek.*隧道/)
+    expect(日志).toEqual([])
   })
 
   it("人主动断开：连接还活着，先在服务器上停掉内核（TERM→等→删文件），再本地收摊、出声", async () => {

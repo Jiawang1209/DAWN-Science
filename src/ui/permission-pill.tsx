@@ -5,7 +5,7 @@
  * 它是权限档的**唯一入口**：
  * - 有会话时改的是**这一段**（走会话开关 `dawn.permission`），空态屏改的是**默认**；
  * - 菜单底下一行「也作为以后新会话的默认」——默认值的入口留在这里，不另开一屏；
- * - 最底下一行灰字说边界：不是沙箱；硬拒清单任何档都拒。
+ * - 最底下一行灰字说边界：不是沙箱；硬拒清单任何档都拒；run_code 里的代码在远端一样不经这道门。
  */
 import { useEffect, useRef, useState } from "react"
 import { Button } from "./primitives.js"
@@ -100,7 +100,7 @@ export function PermissionPill({
               {跟随默认 ? <span className="hint"> {t("（这一段现在跟着默认）")}</span> : null}
             </label>
           ) : null}
-          <p className="hint perm-pill-note">{t("这是一道工具门，不是沙箱。硬拒清单（sudo、删到主目录 / 系统目录、带凭据出网、强推）任何档都拒。")}</p>
+          <p className="hint perm-pill-note">{t("这是一道工具门，不是沙箱。硬拒清单（sudo、删到主目录 / 系统目录、带凭据出网、强推）任何档都拒；run_code 里的代码在远端同样不拦。")}</p>
         </div>
       ) : null}
     </div>

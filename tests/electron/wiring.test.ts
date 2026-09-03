@@ -8,7 +8,11 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createWorkbench, 内核变化出声 } from "../../src/electron/wiring.js"
+import Database from "better-sqlite3"
+import { createWorkbench, 内核变化出声, 内核变化记账 } from "../../src/electron/wiring.js"
+import { migrate } from "../../src/store/schema.js"
+import { RunStore } from "../../src/store/runs.js"
+import { RunRecorder } from "../../src/project/run-recorder.js"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { NativeRuntime } from "../../src/runtime/native.js"
@@ -591,6 +595,108 @@ describe("内核变化出声 · 接线", () => {
     内核变化出声(events, "c1", { language: "python", state: "busy" })
     内核变化出声(events, "c1", { language: "python", state: "exited", 收掉: true })
     expect(通知()).toEqual([])
+  })
+
+  /**
+   * 定案 2 的另一半（审查 2026-09-04 #2）：**「正在起…」必须有下文**，
+   * 而那句下文同时是唯一说清「代码在哪台机器、哪个目录、用哪个解释器跑」的地方。
+   */
+  it("远端 starting 点名是哪台；起来了那条把机器、目录、解释器三件都说出来", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "python", state: "starting", 服务器: "genek" })
+    内核变化出声(events, "c1", {
+      language: "python",
+      state: "idle",
+      起来了: { 解释器: "/srv/bio/bin/python", cwd: "/data/p", 服务器: "genek" },
+    })
+    expect(通知()).toEqual([
+      "正在在 genek 上起 Python 内核…",
+      "内核已在 genek 的 /data/p 起来（/srv/bio/bin/python）",
+    ])
+  })
+
+  it("本机起来了那条只说解释器——本机的「哪台机器」不是信息", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "R", state: "starting" })
+    内核变化出声(events, "c1", { language: "R", state: "idle", 起来了: { 解释器: "/usr/local/bin/R" } })
+    expect(通知()).toEqual(["正在起 R 内核…", "内核已起来（/usr/local/bin/R）"])
+  })
+
+  it("后面每一轮跑完回到的 idle 不带 `起来了`，所以不再重复出声", () => {
+    const { events, 通知 } = 收集()
+    内核变化出声(events, "c1", { language: "python", state: "idle" })
+    expect(通知()).toEqual([])
+  })
+})
+
+/**
+ * 定案 3 的运行那一半（审查 2026-09-04 #1）：**断线要在账本上留下名字。**
+ *
+ * 走的是真路径——一台假内核在**内核会话** id 上发 `exited{reason:"disconnected"}`，
+ * `挂载.ts` 的内部监听把它换成对话 id 交给 `状态变了`，装配层那一行再交给记账员。
+ * 直接叫 `closeAll` 什么都证明不了：这条缺陷的全部内容就是**那条事件到不了记账员**。
+ */
+describe("远端断线落进这段对话的账本 · 接线", () => {
+  const PROJECT = "p1"
+  const 对话 = "c1"
+
+  function 摊子() {
+    const db = new Database(":memory:")
+    cleanups.push(() => db.close())
+    migrate(db)
+    db.prepare(`INSERT INTO projects (id, name, workspace, created_at) VALUES (?,?,?,?)`).run(
+      PROJECT, "demo", "/w", "2026-09-04T00:00:00.000Z",
+    )
+    const runs = new RunStore(db)
+    const rec = new RunRecorder({ runs, projectOf: (s) => (s === 对话 ? PROJECT : undefined) })
+
+    // 假内核：能起、能被订阅，事件由用例自己发（照 `挂载-状态.test.ts` 的写法）
+    const 听众 = new Map<string, Set<(e: unknown) => void>>()
+    const 发 = (id: string, e: unknown) => {
+      for (const s of [...(听众.get(id) ?? [])]) s(e)
+    }
+    const runtime = {
+      start: async (spec: { sessionId: string }) => ({ sessionId: spec.sessionId, pid: 0 }),
+      attach: (id: string, sink: (e: unknown) => void) => {
+        const set = 听众.get(id) ?? new Set()
+        听众.set(id, set)
+        set.add(sink)
+        return () => set.delete(sink)
+      },
+      write: () => {},
+    }
+    const 挂 = new 对话内核({
+      runtime: runtime as never,
+      workspaceOf: () => "/w",
+      sessionDirOf: () => "/d",
+      interpreterOf: () => "/srv/py",
+      // **装配层那一行原样搬过来**：这条用例盯的就是它
+      状态变了: (会话, 变化) => 内核变化记账(rec, 会话, 变化),
+    })
+    return { rec, 挂, 发, list: () => runs.listByProject(PROJECT, {}) }
+  }
+
+  it("内核会话上的 exited{disconnected} → 这段对话在飞的 run_code 记下「与服务器断开」", async () => {
+    const { rec, 挂, 发, list } = 摊子()
+    rec.beginTurn(对话)
+    rec.ingest({ kind: "tool_start", sessionId: 对话, toolCallId: "t1", toolName: "run_code", input: {} } as never)
+    await 挂.拿(对话 as never, "python")
+
+    // 内核**自己**的 id——记账员挂在对话上，这条它自己是收不到的
+    发(`${对话}::python`, { kind: "exited", sessionId: `${对话}::python`, exitCode: 1, reason: "disconnected" })
+
+    const 工具 = list().find((r) => r.requestType === "tool_call:run_code")!
+    expect(工具.status).toBe("cancelled")
+    expect(工具.terminalReason).toBe("与服务器断开，这段没跑完")
+  })
+
+  it("正常退出（退出码）不走这条路——只有断线才改写在飞的那一条", async () => {
+    const { rec, 挂, 发, list } = 摊子()
+    rec.beginTurn(对话)
+    rec.ingest({ kind: "tool_start", sessionId: 对话, toolCallId: "t1", toolName: "run_code", input: {} } as never)
+    await 挂.拿(对话 as never, "python")
+    发(`${对话}::python`, { kind: "exited", sessionId: `${对话}::python`, exitCode: 137 })
+    expect(list().find((r) => r.requestType === "tool_call:run_code")!.status).toBe("running")
   })
 })
 

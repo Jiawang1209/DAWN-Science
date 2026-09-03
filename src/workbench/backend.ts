@@ -690,9 +690,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     }
   }
   /**
-   * 远端会话没有内核（2026-08-27）：内核只会在本机起，文件却在服务器上。界面拦了，协议也要拦——两处判据一致。
-   */
-  /**
    * 导出前的三件事（`exportSession` / `exportNotebook` 共用）：会话在、本次运行里有转录、目录按作者定的规则算好并建好。
    * 目录规则见 `export-dir.ts`：项目会话 → `<项目>/docs/`；普通（临时项目）与远端会话 → 下载路径。
    */

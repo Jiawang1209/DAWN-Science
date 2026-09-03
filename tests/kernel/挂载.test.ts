@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { FakeRuntime } from "../../src/runtime/fake.js"
-import { 对话内核 } from "../../src/kernel/挂载.js"
+import { 对话内核, type 内核状态变化 } from "../../src/kernel/挂载.js"
 import type { SessionId } from "../../src/runtime/types.js"
 
 const 对话 = "c1" as SessionId
@@ -429,6 +429,43 @@ describe("远端（远程内核，2026-09-03）", () => {
       remote: { connectionId: "conn-1", label: "genek" },
     })
     expect((见过[0] as { remote: { cwd: { get(): string } } }).remote.cwd.get()).toBe("/data/p")
+  })
+
+  /**
+   * 定案 2（审查 2026-09-04 #2）：转录要说得出「代码在哪台机器、哪个目录、用哪个解释器跑」，
+   * 而只有 `起一台` 这一刻同时握着这三件事——**它不说，别处再也拼不出来**。
+   */
+  it("状态变了：starting 带服务器名，起来的那条 idle 带 `起来了`（解释器 + cwd + 服务器）", async () => {
+    const 变化: unknown[] = []
+    const 挂 = new 对话内核({
+      runtime: new FakeRuntime(),
+      workspaceOf: () => "/w",
+      sessionDirOf: () => "/sd",
+      interpreterOf: () => "/srv/python",
+      remoteOf: () => ({ executor: {} as never, cwd: "/data/p", connectionId: "conn-1", label: "genek" }),
+      状态变了: (_c, 变) => void 变化.push(变),
+    })
+    await 挂.拿(对话, "python")
+    expect(变化[0]).toEqual({ language: "python", state: "starting", 服务器: "genek" })
+    expect(变化[1]).toEqual({
+      language: "python",
+      state: "idle",
+      起来了: { 解释器: "/srv/python", cwd: "/data/p", 服务器: "genek" },
+    })
+  })
+
+  it("本机：starting 不带服务器名，`起来了` 只有解释器——没有的东西不编一个出来", async () => {
+    const 变化: 内核状态变化[] = []
+    const 挂 = new 对话内核({
+      runtime: new FakeRuntime(),
+      workspaceOf: () => "/w",
+      sessionDirOf: () => "/sd",
+      interpreterOf: () => "/usr/bin/python3",
+      状态变了: (_c, 变) => void 变化.push(变),
+    })
+    await 挂.拿(对话, "python")
+    expect(变化[0]).toEqual({ language: "python", state: "starting" })
+    expect(变化[1]).toEqual({ language: "python", state: "idle", 起来了: { 解释器: "/usr/bin/python3" } })
   })
 
   it("能起远端() 只在给了 remoteOf 时为真——native 据此决定远端会话挂不挂 run_code", () => {

@@ -270,7 +270,8 @@ describe("对话内核 · 空代码 / 退出 / 换新（审查 2026-08-26）", (
     })
     await k.拿(c1, "python")
     expect(变化[0]).toEqual({ language: "python", state: "starting" })
-    expect(变化[1]).toEqual({ language: "python", state: "idle" })
+    // 起来的那一条带着「代码在哪儿跑」（定案 2，审查 2026-09-04）；本机只有解释器一件
+    expect(变化[1]).toEqual({ language: "python", state: "idle", 起来了: { 解释器: "/py" } })
     发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 137 })
     expect(变化.at(-1)).toEqual({ language: "python", state: "exited", reason: "退出码 137" })
   })

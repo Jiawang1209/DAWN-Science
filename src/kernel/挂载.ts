@@ -98,6 +98,19 @@ export interface 内核状态变化 {
   reason?: string
   /** 是我们自己 `收()` 掉的，不是内核自己退出——转录不该为它喊「内核退出了」 */
   收掉?: true
+  /**
+   * 这台在哪台服务器上（远程内核，定案 2）。**只在 `starting` 那条上带**——
+   * 那一刻内核还没起来，`起来了` 里什么都还不知道，而「正在起」这句话已经要点名了。
+   */
+  服务器?: string
+  /**
+   * **刚起来的那一下**（定案 2，审查 2026-09-04）：`starting` 之后第一条 `idle` 才有，
+   * 后面每一轮跑完回到 idle 都没有。
+   *
+   * 带的是「代码到底在哪儿跑」这三件事——远端会话里它们全不是默认值，
+   * 不说的话，一句「内核已起来」等于什么都没说。
+   */
+  起来了?: { 解释器: string; cwd?: string; 服务器?: string }
   /** 「正在起」之后起失败了（`runtime.start` 抛）：`reason` 是原因。转录要接一句，否则「正在起…」永远没有下文 */
   起失败?: true
 }
@@ -300,7 +313,8 @@ export class 对话内核 {
     // 这段对话在哪台机器上，内核就在哪台起（远程内核）。**现取**，不缓存
     const 远 = this.opts.remoteOf?.(对话)
     // 起之前先说一声「正在起」：解释器有了、目录有了，剩下的就是等进程——这一段人得看得见
-    this.opts.状态变了?.(对话, { language: 语言, state: "starting" })
+    // 远端要带上是哪台：远端起内核比本机慢得多，而「在等谁」是这段等待里唯一有用的信息
+    this.opts.状态变了?.(对话, { language: 语言, state: "starting", ...(远 ? { 服务器: 远.label } : {}) })
     let handle: SessionHandle
     try {
       handle = await this.opts.runtime.start({
@@ -370,7 +384,13 @@ export class 对话内核 {
         }
       }
     })
-    this.opts.状态变了?.(对话, { language: 语言, state: "idle" })
+    // **「起来了」这一条要带上三件事**（定案 2）：解释器、（远端的）机器与目录。
+    // 只有这一刻说得出它们——后面每一轮跑完也回 idle，那些 idle 不该再重复一遍
+    this.opts.状态变了?.(对话, {
+      language: 语言,
+      state: "idle",
+      起来了: { 解释器: interpreterPath, ...(远 ? { cwd: 远.cwd, 服务器: 远.label } : {}) },
+    })
 
     /**
      * **一起来就把输出接到对话上**，而不是等第一次执行。

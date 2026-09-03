@@ -205,12 +205,23 @@ describe("PTY 会话", () => {
 })
 
 describe("exited 带 reason（远程内核，2026-09-03）", () => {
-  it("exited 带 reason 时，未收尾的回合记那个理由（远程内核断线用）", () => {
+  /**
+   * **账本上写的是话，不是 token**（审查 2026-09-04 #8）。`disconnected` 是协议上的记号，
+   * 而 `terminal_reason` 这一列别处装的全是中文句子；把 token 原样落进去，
+   * 历史栏上会冒出一个只有代码看得懂的英文单词。token 一路不变，只在这道边界上换。
+   */
+  it("exited 带 reason 时，未收尾的回合记那个理由——`disconnected` 落成人话", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1, reason: "disconnected" })
     const run = list()[0]!
-    expect(run.terminalReason).toBe("disconnected")
+    expect(run.terminalReason).toBe("与服务器断开，这段没跑完")
     expect(run.status).toBe("cancelled")
+  })
+
+  it("不认识的 reason 原样记——不编造，也不吞掉", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1, reason: "退出码 137" })
+    expect(list()[0]!.terminalReason).toBe("退出码 137")
   })
 
   it("reason 是空串时不生效——不能让空串悄悄顶掉那句老话", () => {
@@ -218,6 +229,41 @@ describe("exited 带 reason（远程内核，2026-09-03）", () => {
     rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1, reason: "" })
     const run = list()[0]!
     expect(run.terminalReason).toBe("会话结束时该回合仍未收尾")
+  })
+})
+
+/**
+ * 远端内核断了（定案 3 的另一半，审查 2026-09-04 #1）。
+ *
+ * 那条 `exited` 带的是**内核会话** id，记账员只挂在对话上——它收不到。
+ * 所以装配层换好 id 之后单叫这一声。**只收工具，不收回合**：死的是内核不是对话，
+ * 模型拿到工具报错还会把话说完，那一轮该由它自己的 `idle` 收口。
+ */
+describe("远端断了（远程内核，审查 2026-09-04）", () => {
+  it("在飞的 run_code 记「与服务器断开，这段没跑完」，而这一轮仍然开着、照旧由 idle 收口", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", input: {} })
+    rec.远端断了(SESSION, "disconnected")
+    const 工具 = list().find((r) => r.requestType === "tool_call:run_code")!
+    expect(工具.status).toBe("cancelled")
+    expect(工具.terminalReason).toBe("与服务器断开，这段没跑完")
+    // 回合还开着：断的是内核，不是这段对话
+    expect(rec.当前回合(SESSION)).toBeTruthy()
+    rec.ingest({ kind: "idle", sessionId: SESSION })
+    expect(list().find((r) => r.requestType === "agent_turn")!.status).toBe("completed")
+  })
+
+  it("迟到的 tool_end 不再改写它——理由已经写死了，别被一句泛泛的「失败」顶掉", () => {
+    rec.beginTurn(SESSION)
+    rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", input: {} })
+    rec.远端断了(SESSION, "disconnected")
+    rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", isError: true, text: "", truncated: false, bytes: 0 })
+    expect(list().find((r) => r.requestType === "tool_call:run_code")!.terminalReason).toBe("与服务器断开，这段没跑完")
+  })
+
+  it("这段对话什么都没开着 → 什么都不记，不凭空造一条", () => {
+    rec.远端断了(SESSION, "disconnected")
+    expect(list()).toEqual([])
   })
 })
 

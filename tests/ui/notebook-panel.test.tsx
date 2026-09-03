@@ -383,14 +383,20 @@ describe("NotebookPanel · 远端（远程内核，2026-09-03）", () => {
     expect(await screen.findByText("/srv/bio/bin/python")).toBeTruthy()
   })
 
-  it("配了 Python：正常面板，胶囊带服务器名；R 那格只是一行提示 + 探测", () => {
+  /**
+   * **只差一门时不自动探**（审查 2026-09-04 #6）。已经配好 Python、只差 R 的人多半
+   * 根本不用 R，而这一格每次挂上（换会话、切回坞）都会去连一趟 SSH 跑十几条命令——
+   * 那是为一个没人要的答案反复花几秒。折叠起来那格里的「检测」按钮留着，要的人点开就有。
+   */
+  it("配了 Python：正常面板，胶囊带服务器名；R 那格只是一行提示 + 探测，**挂上时不自动探**", async () => {
+    const 探 = vi.fn(async () => ({ python: [], r: [] }))
     render(
       <NotebookPanel
         {...基本}
         sessionKind="native"
         remoteLabel="genek"
         remoteInterpreters={{ python: "/srv/python" }}
-        remoteProbe={async () => ({ python: [], r: [] })}
+        remoteProbe={探}
         onPickRemoteInterpreter={() => {}}
         kernels={[{ language: "python", state: "idle" }]}
         cells={[]}
@@ -399,6 +405,11 @@ describe("NotebookPanel · 远端（远程内核，2026-09-03）", () => {
     expect(screen.getByText("Python · genek · 空闲")).toBeTruthy()
     expect(screen.getByRole("textbox")).toBeTruthy()
     expect(screen.getByText(/R 还没在 genek 上选/)).toBeTruthy()
+    // 挂上之后让 effect 都跑完，再看它有没有偷偷出去问一趟
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(探).not.toHaveBeenCalled()
   })
 
   it("非 native 的远端会话：说「这种会话没有内核」，不画选择器、**也不去探**（探测要走一趟 SSH）", () => {

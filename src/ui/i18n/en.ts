@@ -1104,7 +1104,7 @@ export const EN: Readonly<Record<string, string>> = {
   "检测到的风险操作直接拒绝，把理由回给模型让它改道": "Detected risky operations are refused outright; the reason goes back to the model",
   "也作为以后新会话的默认": "Also make it the default for new sessions",
   "（这一段现在跟着默认）": "(this session currently follows the default)",
-  "这是一道工具门，不是沙箱。硬拒清单（sudo、删到主目录 / 系统目录、带凭据出网、强推）任何档都拒。": "This is a tool gate, not a sandbox. The hard-deny list (sudo, deleting home / system dirs, sending credentials out, force push) is refused in every tier.",
+  "这是一道工具门，不是沙箱。硬拒清单（sudo、删到主目录 / 系统目录、带凭据出网、强推）任何档都拒；run_code 里的代码在远端同样不拦。": "This is a tool gate, not a sandbox. The hard-deny list (sudo, deleting home / system dirs, sending credentials out, force push) is refused in every tier; code inside run_code is not gated on a remote server either.",
 
   // `@` 引用工作区文件（2026-08-23）
   "还有 {0} 条没列出来——再打几个字": "{0} more not shown — type a few more characters",

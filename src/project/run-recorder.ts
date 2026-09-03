@@ -149,6 +149,19 @@ interface Open {
   sessionRunId?: string | undefined
 }
 
+/**
+ * 事件里的那个 token → 账本上的一句人话（远程内核，审查 2026-09-04）。
+ *
+ * `disconnected` 是**协议上的记号**，判断用；而 `terminal_reason` 这一列
+ * 别处装的全是中文句子（「会话结束时该工具调用仍在执行」）。
+ * 把 token 原样写进去，历史栏上就会冒出一个英文单词，
+ * 而**「这一列到底是给人看的还是给代码看的」从此说不清**。
+ * 所以 token 一路不变，只在账本这道边界上换成话。
+ */
+function 落账理由(reason: string | undefined): string | undefined {
+  return reason === "disconnected" ? "与服务器断开，这段没跑完" : reason
+}
+
 export class RunRecorder {
   private readonly runs: RunStore
   private readonly projectOf: (sessionId: SessionId) => string | undefined
@@ -503,6 +516,38 @@ export class RunRecorder {
   }
 
   /**
+   * 远端断了：**这段对话此刻在飞的工具调用按「断线」收尾**（远程内核，审查 2026-09-04）。
+   *
+   * ## 它为什么不能等 `ingest` 里那条 `exited`
+   *
+   * 内核死掉时运行时发的 `exited` 带的是**内核会话** id（`c1::python`），
+   * 而记账员只被挂在**对话会话**上——那条事件它一辈子看不到。
+   * 于是断线时正在飞的 `run_code` 在账本上收成一次普通的失败工具调用，
+   * 「为什么失败」这件唯一值得记的事丢了。调用方（`wiring.ts` 的 `状态变了`）
+   * 是唯一已经把 id 换回对话的地方，所以由它来叫这一声。
+   *
+   * ## 只收工具，不收这一轮
+   *
+   * 死的是内核，不是这段对话：模型会拿到工具的报错、接着把话说完，
+   * 那一轮该由它自己的 `idle` 收口。把回合也一起判成 cancelled，
+   * 记的就是一件没发生的事（不变式 5：账本是事实层）。
+   */
+  远端断了(sessionId: SessionId, reason: string): void {
+    const s = this.open.get(sessionId)
+    if (!s) return
+    const finishedAt = this.now()
+    for (const runId of s.tools.values()) {
+      this.runs.finish(runId, {
+        status: "cancelled",
+        finishedAt,
+        hasError: true,
+        terminalReason: 落账理由(reason) || "远端断开，这段没跑完",
+      })
+    }
+    s.tools.clear()
+  }
+
+  /**
    * 会话结束：把所有还开着的账目收尾。
    *
    * **不留永久 running 的孤儿。** 一条永远 running 的 Run 比没有这条记录更坏——
@@ -544,7 +589,7 @@ export class RunRecorder {
         // 有 reason（例如远程内核断线的 "disconnected"）就记它——
         // 比泛泛的「仍未收尾」更接近真相；没有、或是空串，就还是那句老话
         // （规格 7.5：失败必须出声——空串不该悄悄把这句话顶掉）
-        terminalReason: reason || "会话结束时该回合仍未收尾",
+        terminalReason: 落账理由(reason) || "会话结束时该回合仍未收尾",
       })
       s.turnRunId = undefined
     }

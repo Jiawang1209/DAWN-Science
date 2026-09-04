@@ -118,6 +118,16 @@ interface 通道 extends EventEmitter {
 }
 
 /**
+ * 这个进程里**还连着**的每一条假链路各留一个「掐」。`掐断所有假连接()` 靠它。
+ *
+ * 为什么是一张表而不是一个全局标志：`dev:mock` 与 e2e 里同一个进程可以有好几条假连接
+ * （几台服务器、几个会话），而那个测试操作说的是「这台装配上所有假连接」（规格 §4）。
+ * 进出都要对：连上才登记，掐过与人按了断开都要注销——**已经断了的链路不能被再掐一次**，
+ * 否则「掐断了几条」这个回执就成了一句凑数的话。
+ */
+const 掐们 = new Set<() => void>()
+
+/**
  * 造一个假的 `ssh2.Client`。
  *
  * @param 口令对不对 上层从钥匙串取到的口令；不对就在 `connect` 时抛认证失败
@@ -125,6 +135,23 @@ interface 通道 extends EventEmitter {
 export function 造一台假服务器(): SshClientLike {
   const c = new EventEmitter() as EventEmitter & SshClientLike
   let 已连 = false
+
+  /**
+   * 掐断这一条（`掐断所有假连接()` 调它）。
+   *
+   * **只发 `close`，和真 ssh2 被对端掐掉时一样**——不碰 `end`、不立任何「自己关的」旗。
+   * `RemoteExecutor` 的 `c.on("close")` 于是走进 `disconnected`（带原因），
+   * 而不是 `close()` 那条路的 `idle`：接回整条路（定案 6）只挂在 `disconnected` 上，
+   * 假机器要是让它落成 `idle`，e2e 里「掉线 → 接回」永远演不出来。
+   *
+   * **不碰内核子进程**：演的是「网断了、服务器上那台还活着」。
+   */
+  const 掐 = () => {
+    if (!已连) return
+    已连 = false
+    掐们.delete(掐)
+    c.emit("close")
+  }
 
   c.connect = ((cfg: { password?: string; privateKey?: unknown }) => {
     setTimeout(() => {
@@ -139,6 +166,7 @@ export function 造一台假服务器(): SshClientLike {
         return
       }
       已连 = true
+      掐们.add(掐)
       c.emit("ready")
     }, 10)
   }) as SshClientLike["connect"]
@@ -329,6 +357,8 @@ export function 造一台假服务器(): SshClientLike {
 
   c.end = (() => {
     已连 = false
+    // 人按了断开，这条就不在「还连着」的名册上了——不注销的话下一次掐线会把它算进回执里
+    掐们.delete(掐)
     // **主动断开也要出声**：`RemoteExecutor` 靠 `close` 事件收尾
     setTimeout(() => c.emit("close"), 1)
   }) as SshClientLike["end"]
@@ -484,11 +514,17 @@ function 一条(命令: string, 当前: string): { out: string; err: string; cod
 }
 
 /**
- * **测试开关**（`fakeSshControl{do:"dropLink"}`，接回 7.31）：把这台进程里所有假 SSH 链路掐断，
- * 只断链路、不碰内核子进程——模拟「网断了、服务器上那台还活着」。返回掐断了几条。
+ * **测试专用开关**（`fakeSshControl{do:"dropLink"}`，接回 7.31）——与 `重置假机器()`、`跑过的命令()`
+ * 同一个性质：生产代码不叫它，只有 e2e / mock 用来把一件真实世界里的事演一遍。
  *
- * **占位：任务 8 里真正实现**（要动 `假客户端` 的连接登记表）。现在回 0，好让 typecheck 与协议先成立。
+ * 演的是**意外掉线**：把这个进程里还连着的每一条假链路掐断，只发 `close`
+ * （`RemoteExecutor` 于是进 `disconnected`，不是 `idle`——见上面 `掐` 那里），
+ * **不碰任何内核子进程**：服务器上那台还活着，这正是接回要认领的那一台。
+ *
+ * 返回真掐断了几条（已经断了的不算）。
  */
 export function 掐断所有假连接(): number {
-  return 0
+  const 些 = [...掐们]
+  for (const 掐 of 些) 掐()
+  return 些.length
 }

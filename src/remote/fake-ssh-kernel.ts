@@ -146,8 +146,35 @@ export function 假内核命令(整条: string, cwd?: string): 结果 | undefine
     return { out: "", err: "假服务器只会起 python 内核\n", code: 127 }
   }
 
-  // 活着？（`kernel-launch.ts` 的 `活着脚本`：`kill -0 … && [ "$(ps -o stat= …)" != "Z" ]`）
-  const 活 = /kill -0 (\d+) 2>\/dev\/null && \[ "\$\(ps -o stat=/.exec(整条)
+  /**
+   * 活着 + 文件在（`kernel-launch.ts` 的 `远端内核还在`，接回前的认领，定案 10）：
+   * `<活着脚本>; if [ -f '<文件>' ]; then echo DAWNFILE=1; else echo DAWNFILE=0; fi` 是**一条**命令，
+   * 两个键都要答。
+   *
+   * **必须排在下面那条「活着？」之前**：那条的正则只认前半句，先撞上它就只答 `DAWNALIVE`，
+   * 调用方取不到 `DAWNFILE` 于是一律断定「内核没了」——mock 模式下接回永远失败，
+   * 而且失败得悄无声息（看起来就像内核真的死了）。
+   */
+  const 在 =
+    /kill -0 (\d+) 2>\/dev\/null && \[ "\$\(ps -o stat=.*; if \[ -f '([^']+)' \]; then echo DAWNFILE=1; else echo DAWNFILE=0; fi$/.exec(
+      整条.trim(),
+    )
+  if (在) {
+    return {
+      out: `DAWNALIVE=${活着(Number(在[1])) ? 1 : 0}\nDAWNFILE=${existsSync(在[2]!) ? 1 : 0}\n`,
+      err: "",
+      code: 0,
+    }
+  }
+
+  /**
+   * 活着？（`kernel-launch.ts` 的 `活着脚本`：`kill -0 … && [ "$(ps -o stat= …)" != "Z" ]`）
+   *
+   * **问了 `DAWNFILE` 的不走这条**：那是上面那条合并脚本，只是形状对不上（比如文件名里有引号，
+   * `单引号()` 转成 `'\''` 把 `[^']+` 拆散了）。那时宁可整条认不得、如实落到 127 让调用方报错，
+   * 也不能只答一半——少答一个键，调用方会把它读成「内核没了」，而那是一句悄无声息的谎。
+   */
+  const 活 = 整条.includes("DAWNFILE=") ? null : /kill -0 (\d+) 2>\/dev\/null && \[ "\$\(ps -o stat=/.exec(整条)
   if (活) return { out: `DAWNALIVE=${活着(Number(活[1])) ? 1 : 0}\n`, err: "", code: 0 }
 
   /**
@@ -221,12 +248,24 @@ export function 假内核命令(整条: string, cwd?: string): 结果 | undefine
    */
   if (整条.includes("DAWNSWEPT")) {
     const id = /\[d\]awn-([A-Za-z0-9]+)-\*\.json/.exec(整条)?.[1]
+    /**
+     * 「别动」名单（接回，定案 11）：脚本里是 `case "$(basename "$f")" in 'a'|'b') continue;; esac`。
+     * **真跳过**——不杀、不删、也不计数。只把它从计数里减掉而照样删文件，是同一句谎的新版本：
+     * 「接回时把等着被认领的内核扫掉了」这个真 bug 会在一片绿里活下来。
+     */
+    const 名单 = new Set(
+      (/case "\$\(basename "\$f"\)" in ((?:'[^']+'\|?)+)\) continue;; esac/.exec(整条)?.[1] ?? "")
+        .split("|")
+        .map((s) => s.replace(/^'|'$/g, ""))
+        .filter(Boolean),
+    )
     let n = 0
     if (id) {
       const 前缀 = `dawn-${id}-`
       const 目录 = tmpdir()
       for (const 名 of readdirSync(目录)) {
         if (!名.startsWith(前缀) || !名.endsWith(".json")) continue
+        if (名单.has(名)) continue
         n++
         const pid = 内核进程.get(名)
         if (pid !== undefined) {
@@ -265,11 +304,27 @@ function 活着(pid: number): boolean {
 export { existsSync as 文件在 }
 
 /**
- * **测试开关**（`fakeSshControl{do:"killKernels"}`，接回 7.31）：对假机器起的所有内核子进程 `SIGKILL`，
- * 模拟集群 OOM——DAWN 这边什么都不知道，只能靠心跳察觉。返回杀了几台。
+ * **测试专用开关**（`fakeSshControl{do:"killKernels"}`，接回 7.31）——与 `重置假机器()`、`跑过的命令()`
+ * 同一个性质：生产代码不叫它，只有 e2e / mock 用来把一件真实世界里的事演一遍。
  *
- * **占位：任务 8 里真正实现**（要动这台假机器的子进程登记表）。现在回 0，好让 typecheck 与协议先成立。
+ * 演的是**集群 OOM**：对这台假机器起过的所有内核子进程真发 `SIGKILL`，
+ * DAWN 这边什么都不会被告知（没有 exit 事件、链路照旧好着），只能靠心跳察觉——这正是定案 1 要验的那条路。
+ *
+ * **connection.json 不删**：真被 OOM 杀掉的内核不会顺手清理自己的文件，
+ * 那些文件是判死收摊（定案 4）或下一次扫残留的活。这里替它删掉，就等于替被测代码把活干了。
+ *
+ * 返回真杀掉了几台（`process.kill` 抛了的不算——那台本来就已经没了）。
  */
 export function 杀掉所有假内核(): number {
-  return 0
+  let n = 0
+  for (const [名, pid] of [...内核进程]) {
+    try {
+      process.kill(pid, "SIGKILL")
+      n++
+    } catch {
+      // 已经没了
+    }
+    内核进程.delete(名)
+  }
+  return n
 }

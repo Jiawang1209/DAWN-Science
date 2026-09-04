@@ -15,7 +15,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { RemoteExecutor } from "../../src/remote/ssh.js"
-import { 假口令, 造一台假服务器 } from "../../src/remote/fake-ssh.js"
+import { 假口令, 掐断所有假连接, 造一台假服务器 } from "../../src/remote/fake-ssh.js"
 import { 内核文件名, 起远端内核, 停远端内核, 扫残留 } from "../../src/remote/kernel-launch.js"
 import { 事实脚本 } from "../../src/remote/interpreters.js"
 
@@ -122,4 +122,32 @@ describe("假服务器 · 内核那几条（远程内核，2026-09-03）", () =>
     ).toContain("DAWNALIVE=0")
     r.close()
   }, 30_000)
+})
+
+/**
+ * 掐线（`fakeSshControl{do:"dropLink"}`，接回 2026-09-04 定案 6）。
+ *
+ * **要紧的是它进的是 `disconnected` 而不是 `idle`**：那正是「意外掉线」与
+ * 「人按了断开」的分界线，接回那条路只挂在前者上。假机器要是发 `end` 之类的、
+ * 或者把 `自己关的` 旗立起来，执行器就会走成「未连」，而界面上「断了 + 原因」
+ * 那半永远不出现——mock 悄悄偏离契约的老形状。
+ */
+describe("假服务器 · 掐线（测试开关）", () => {
+  it("掐了就进 disconnected（不是 idle），登记表进出正确", async () => {
+    const r = 起()
+    await r.connect()
+    expect(r.current().kind).toBe("ready")
+    expect(掐断所有假连接()).toBe(1)
+    expect(r.current().kind).toBe("disconnected")
+    // 掐过的不再算一条：断了的链路不能被「再掐一次」
+    expect(掐断所有假连接()).toBe(0)
+  })
+
+  it("人按了断开之后就不在登记表里了", async () => {
+    const r = 起()
+    await r.connect()
+    r.close()
+    expect(掐断所有假连接()).toBe(0)
+    expect(r.current().kind).toBe("idle")
+  })
 })

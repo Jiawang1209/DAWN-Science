@@ -343,13 +343,22 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   }
 
   /**
-   * 每台服务器这一轮的「扫残留」（远程内核，审查 2026-09-04）。**连上时开始，起内核前要等它。**
+   * 每台服务器这一轮的「扫残留 + 接回」（远程内核，审查 2026-09-04）。**连上时开始，起内核前要等它。**
    *
    * 扫的动作是对每个 `dawn-<装机id>-*.json` 逐文件 `pkill -9 -f "[d]${b#d}"` 再 `rm`，它**认不出刚起的那一台**——
    * 不等的话，「连上就跑一段代码」会稳定地把自己刚起的内核杀掉。
-   * 值是一条**永不 reject** 的 promise：这是一道闸，不是一件要人处理的事。
+   * 两个字段都是**永不 reject** 的 promise：这是一道闸，不是一件要人处理的事。
+   *
+   * - `等`：起内核前要等的那道闸。**断线/断开时置空**——它是「这一次连接扫过且接回过了没有」，
+   *   不是「这台服务器这辈子」。留着的话，重连之后等到的是上一条连接那条早就 settle 的 promise。
+   * - `链`：这台服务器上最后一条链（不管还在不在飞）。新一轮**接在它后面跑**。
+   *
+   * 为什么要串起来（审查 2026-09-04）：「断→连→断→连」快来一遍时，`ready` 会写下第二条链，
+   * 而第一条还在飞——于是同一台服务器上两次扫残留、两次 `接回远端` 互相踩（一条正在重建隧道，
+   * 另一条看到同一条 `分离的` 记录也去认领同一个 pid）。**串比发代号小**：给每条链发个代号只能让
+   * 过期那条的接回变成空操作，挡不住「上一条的接回还在飞、新一条就开跑」。
    */
-  const 扫过 = new Map<string, Promise<void>>()
+  const 扫过 = new Map<string, { 等: Promise<void> | undefined; 链: Promise<void> }>()
 
   // pi 的凭证接口。加密仍由我们负责，**缓存是必需的**——见 credential-store.ts
   const piCredentials = createPiCredentialStore(opts.credentials)
@@ -447,7 +456,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
        * `interpreterOf` 是每一次起内核的必经之路，闸设在这里最省：
        * 扫完了就是一个已经 settle 的 promise，`await` 不花时间。扫失败也不拦（那条链自己吞了错）。
        */
-      await 扫过.get(cid)
+      await 扫过.get(cid)?.等
       const 已配 = 语言 === "python" ? conn.interpreters?.python : conn.interpreters?.r
       if (已配) return 已配
       const ex = remoteConnections.executorOf(cid)
@@ -512,10 +521,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       if (e.kind !== "kernel_output") return
       events.ingest(对话, { ...(事件 as object), sessionId: 对话, language: 语言 } as never)
     },
-    // 执行前的接回门（定案 9）：与 `interpreterOf` 里那句 `await 扫过.get(cid)` 同一道闸——扫残留 + 接回都在这条 promise 里
+    // 执行前的接回门（定案 9）：与 `interpreterOf` 里那句 `await 扫过.get(cid)?.等` 同一道闸——扫残留 + 接回都在这条 promise 里
     接回门: (对话) => {
       const cid = sessionStore.get(对话)?.connectionId
-      return cid ? 扫过.get(cid) : undefined
+      return cid ? 扫过.get(cid)?.等 : undefined
     },
     /**
      * 内核状态变了 → 整份重发给订阅者（笔记本，2026-08-26）。
@@ -968,29 +977,43 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          */
         const ex = remoteConnections.executorOf(connectionId)
         /**
-         * **这一格无条件登记**（审查 2026-09-04 #10）。起内核前那句 `await 扫过.get(cid)`
+         * **这一格无条件登记**（审查 2026-09-04 #10）。起内核前那句 `await 扫过.get(cid)?.等`
          * 是一道闸；只在 `ex` 拿得到时才登记的话，拿不到的那次会让闸**根本不存在**——
          * `get` 回 undefined，`await undefined` 立刻过，于是「连上就跑」又撞回扫的窗口里。
          * 拿不到执行器（理论上不该发生：`ready` 就意味着连上了）要**响亮**：
-         * 记一条已解析的 promise 让闸仍然成立，同时把这件事喊出来。
+         * 记一条仍然成立的闸，同时把这件事喊出来。
+         *
+         * **接在上一条链后面**（审查 2026-09-04）：上一条可能还在飞（扫残留几百毫秒、接回的握手
+         * 最长 20 秒），而「断→连→断→连」只要几秒。串起来之后，同一台服务器上永远只有一条链在跑。
          */
-        扫过.set(
-          connectionId,
-          ex
-            ? // **记下这一轮**：起内核前要等它（见 `interpreterOf` 里那句 `await 扫过.get(cid)`）。
-              // 这条 promise **永不 reject**——它是一道闸，不是一件要人处理的事
-              扫残留(ex.exec.bind(ex), 装机id(), 内核运行时.等着接回的文件(connectionId))
-                .then((r) => {
-                  if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
-                })
-                .catch(() => {})
-                // 扫完才接回（定案 9）：扫残留认不出「等着接回的」以外的任何东西，名单已经把它们护住；接回失败也不拦这道闸
-                .then(() => 内核运行时.接回远端(connectionId))
-                .catch((e) =>
-                  console.error(`[远端内核] ${connectionId} 接回时出错：${e instanceof Error ? e.message : String(e)}`),
-                )
-            : Promise.resolve(),
-        )
+        const 上一条 = 扫过.get(connectionId)?.链 ?? Promise.resolve()
+        /** 这条链还是这台服务器当前那条吗——又断了（`等` 被置空）或又连上一次（换了新链）都算不是 */
+        const 还算数 = () => 扫过.get(connectionId)?.等 === 这一轮
+        // **记下这一轮**：起内核前要等它。这条 promise **永不 reject**——它是一道闸，不是一件要人处理的事
+        const 这一轮: Promise<void> = 上一条.then(async () => {
+          // 轮到我们时已经过期了：名单、执行器都属于那一条连接，扫与接回都不该再拿它们去做
+          if (!还算数() || !ex) return
+          try {
+            // 名单**这时候才取**：上一条链可能刚接回了几台，早取会把已经回来的那几台也护住
+            const r = await 扫残留(ex.exec.bind(ex), 装机id(), 内核运行时.等着接回的文件(connectionId))
+            if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
+          } catch {
+            // 扫不动不拦着接回，更不拦这道闸
+          }
+          /**
+           * 扫的那几秒里又断了 → **不接**。接回要走 SSH 认领（`kill -0`），链路没了那一问只会失败，
+           * 而 `接回远端` 把「问不到」当「没了」——一台还活着的内核会被判成 `lost` 并被停掉。
+           * 下一次 `ready` 自然会再来一条链接它。
+           */
+          if (!还算数()) return
+          // 扫完才接回（定案 9）：扫残留认不出「等着接回的」以外的任何东西，名单已经把它们护住；接回失败也不拦这道闸
+          await 内核运行时
+            .接回远端(connectionId)
+            .catch((e) =>
+              console.error(`[远端内核] ${connectionId} 接回时出错：${e instanceof Error ? e.message : String(e)}`),
+            )
+        })
+        扫过.set(connectionId, { 等: 这一轮, 链: 这一轮 })
         if (!ex) console.error(`[远端内核] ${connectionId} 说连上了却取不到执行器，这一轮没能扫残留`)
       }
       /**
@@ -1004,12 +1027,19 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       /**
        * **这一轮的闸跟着连接作废**（审查 2026-09-04 #10）：`扫过` 是「这一次连接
        * 扫过了没有」，不是「这台服务器这辈子扫过了没有」。留着它，重连之后
-       * `await 扫过.get(cid)` 等到的是上一条连接的旧 promise（早就 settle 了），
+       * `await 扫过.get(cid)?.等` 等到的是上一条连接的旧 promise（早就 settle 了），
        * 于是新连接那一轮的扫残留 + 接回形同虚设。删掉这台的服务器（`removeConnection`）
        * 也从这里过——`manager.disconnect` 一定会推一次状态。
+       *
+       * **只作废闸，`链` 留着**（审查 2026-09-04）：那条链可能还在飞，下一次 `ready` 要接在它后面，
+       * 才不会有两条链对着同一台服务器跑。链自己看见 `等` 空了就知道自己过期了，剩下的步骤不做。
        */
+      const 作废这一轮的闸 = () => {
+        const 现 = 扫过.get(connectionId)
+        if (现) 现.等 = undefined
+      }
       if (state.kind === "disconnected") {
-        扫过.delete(connectionId)
+        作废这一轮的闸()
         // 掉线 = 分离（定案 6）：本地收摊、记录留着等接回
         void 内核运行时
           .连接断了(connectionId)
@@ -1017,7 +1047,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
             console.error(`[远端内核] ${connectionId} 掉线后收不干净：${e instanceof Error ? e.message : String(e)}`),
           )
       } else if (state.kind === "idle") {
-        扫过.delete(connectionId)
+        作废这一轮的闸()
         // 人主动断开（定案 7/14）：`beforeRemoteDisconnect` 已经停过远端；这里兜底把停不掉的标死、等着接回的放弃
         void 内核运行时
           .断开了(connectionId)

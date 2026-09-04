@@ -341,6 +341,36 @@ describe("KernelRuntime · 分离与接回", () => {
     expect(await rt.variables("c1::python" as SessionId)).toMatchObject({ supported: false, reason: expect.stringContaining("等接回") })
   })
 
+  /**
+   * **「分离了」在链路断的那一瞬间就是事实**（审查 2026-09-04）。装配层是 fire-and-forget 调这个方法的
+   * （`void 内核运行时.连接断了(cid)`），而重连的 `ready` 一到就**同步**取 `等着接回的文件(cid)`
+   * 去当扫残留的「别动」名单。记录落在 `await channel.close()` / `await 关隧道()` 后面的话，
+   * 一次快的「断→连」会撞出两个洞：
+   * ① 名单是空的 → 扫残留一枪 `pkill` 掉正是我们要接回的那台；
+   * ② 就算侥幸没扫着，`接回远端` 也会看到空的 `分离的` 直接返回——那台内核卡在 `detached`，
+   *    **再没有第二次接回的触发点**，人只能自己断开再连一次。
+   *
+   * 判据只能这么写：**不 await**，下一行就问。
+   */
+  it("掉线那一瞬间记录就在了：不 await `连接断了`，下一行就拿得到「别动」名单", async () => {
+    const { 远端, executor } = 假件()
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+
+    const 收着 = rt.连接断了("conn-1") // 故意不 await：装配层就是这么调的
+    expect(rt.等着接回的文件("conn-1"), "断线的下一行就得有名单，不然重连时扫残留会打死正要接回的那台").toEqual([
+      "f.json",
+    ])
+    expect(收到.map((e) => e.kind)).toEqual(["detached"])
+    // 也不许有「既不在 sessions、也不在 分离的」的那一段窗口
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
+
+    await 收着
+    expect(rt.等着接回的文件("conn-1")).toEqual(["f.json"])
+  })
+
   it("接回：进程在 → 扫残留之后重建隧道、重握手，发 reattached；同一个会话 id 又能用", async () => {
     const { 日志, 远端, executor } = 假件({ 远端活着: () => true })
     const rt = new KernelRuntime({ 远端: 远端 as never })

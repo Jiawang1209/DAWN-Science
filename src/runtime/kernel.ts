@@ -510,17 +510,31 @@ export class KernelRuntime implements AgentRuntime {
    *
    * 不在这里 emit notice：普通对话那条路的 `转发` 只放 `kernel_output`，这句到不了转录（e2e 2026-09-04 抓的）；
    * 「可能还活着、等接回」由挂载层收到 `detached` 后在转录里说（`内核变化出声`）。
+   *
+   * ## 记录先落，本地后收（审查 2026-09-04）
+   *
+   * 「分离了」是**关于链路的事实**——链路断的那一瞬间它就成立，与我们关 socket、关隧道的快慢无关。
+   * 所以这个方法分两趟：第一趟纯同步，把该分离的都挪进 `分离的` 并发 `detached`；第二趟才收本地那半。
+   *
+   * 装配层是 fire-and-forget 调它的（`void 内核运行时.连接断了(cid)`），而重连的 `ready` 一到就
+   * **同步**取 `等着接回的文件(cid)` 当扫残留的「别动」名单。记录落在第二趟那些 `await` 后面的话，
+   * 一次快的「断→连」会撞出两个洞：① 名单是空的，扫残留一枪 `pkill` 掉的正是我们要接回的那台；
+   * ② 就算侥幸没扫着，`接回远端` 看到空的 `分离的` 直接返回——那台内核卡在 `detached`，
+   * **再没有第二次接回的触发点**。顺带补上一个更小的洞：以前记录有一小段既不在 `sessions`、也不在 `分离的`。
    */
   async 连接断了(connectionId: string): Promise<void> {
+    /** 第二趟要做的收摊。每件事自己吞错——这道收摊不许抛给调用方（它多半是 fire-and-forget 调的） */
+    const 收本地: Array<() => Promise<void>> = []
     for (const [id, 在飞] of [...this.起中隧道]) {
       if (在飞.connectionId !== connectionId) continue
       this.起中隧道.delete(id)
-      await 在飞.关隧道().catch(() => {})
+      收本地.push(() => 在飞.关隧道())
     }
     for (const [id, live] of [...this.sessions]) {
       if (live.远端?.connectionId !== connectionId) continue
+      const 远 = live.远端
       this.sessions.delete(id)
-      live.远端.心跳?.停()
+      远.心跳?.停()
       /**
        * **关通道之前把这个句柄的枪下了**（审查 2026-09-04）。`channel.close()` 的第一步是
        * `kill("SIGKILL")`，远端句柄会把它变成 SSH 上的 `kill -KILL <pid>`——而这台内核
@@ -533,10 +547,8 @@ export class KernelRuntime implements AgentRuntime {
        *
        * `猝死` / `丢了` / `stop` / `收远端` 照旧杀：那几条路要么内核已经死了，要么人就是要它停。
        */
-      live.远端.句柄.杀得了 = false
-      await live.channel.close().catch(() => {})
-      await live.远端.关隧道().catch(() => {})
-      const { 心跳: _心, 关隧道: _关, 句柄: _句, ...留 } = live.远端
+      远.句柄.杀得了 = false
+      const { 心跳: _心, 关隧道: 关隧道, 句柄: _句, ...留 } = 远
       this.分离的.set(id, {
         ...留,
         language: live.language,
@@ -545,7 +557,13 @@ export class KernelRuntime implements AgentRuntime {
         掉线时在飞: live.current !== undefined,
       })
       this.emit({ kind: "detached", sessionId: id, reason: "disconnected" })
+      收本地.push(async () => {
+        // 关 socket 抛了也要关隧道——不然那五个本地监听端口留一辈子（与 `收远端` 同一条）
+        await live.channel.close().catch(() => {})
+        await 关隧道()
+      })
     }
+    for (const 收 of 收本地) await 收().catch(() => {})
   }
 
   /**

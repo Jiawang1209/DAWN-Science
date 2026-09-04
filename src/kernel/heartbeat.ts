@@ -49,7 +49,15 @@ export function 起心跳(o: 心跳选项): 心跳 {
     if (停了) return
     定时 = setTimeout(() => void 跳(), 等ms)
   }
+  /** 定时器里是 `void 跳()`：这里面任何一处抛（连注入的 `忙着` 也算）都不能变成 unhandled rejection */
   const 跳 = async () => {
+    try {
+      await 跳一次()
+    } catch {
+      排下一次()
+    }
+  }
+  const 跳一次 = async () => {
     if (停了) return
     const 间隔 = o.忙着() ? 忙 : 空闲
     const 过了 = now() - 上次ping
@@ -102,6 +110,9 @@ export function 起心跳(o: 心跳选项): 心跳 {
  * `relaxed` + `correlate`：REQ 默认「发一次必须等到回一次」，超时之后整只 socket 就废了；
  * 这两个选项让它超时后还能再发，并按序号丢掉迟到的旧回音。
  * `import("zeromq")` 是动态的，与 `channel.ts` 一样——不让主进程包为它买单。
+ *
+ * 状态机的 `停()` 只停排程：在飞的那次 `receive()` 会把事件循环拖住直到 `超时ms`，
+ * 要靠 `关()` 才真正断掉——所以调用方 `停()` 之后要紧接着 `关()`（运行时把 `停` 包一层做这件事）。
  */
 export async function 开心跳口(
   端口: number,

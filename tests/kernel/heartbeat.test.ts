@@ -2,12 +2,21 @@
  * 心跳状态机（远端内核猝死察觉，2026-09-04，规格定案 1/2）。
  * ping 与时钟都注入：这里不碰 zmq，只验「什么时候 ping、沉默之后做什么」。
  */
-import { describe, expect, it, vi } from "vitest"
-import { 起心跳 } from "../../src/kernel/heartbeat.js"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { 起心跳, type 心跳 } from "../../src/kernel/heartbeat.js"
+
+/** 当前用例起的那颗心：断言半路红了也要停掉它、还回真时钟，别把下一条用例拖下水 */
+let 心: 心跳 | undefined
+
+afterEach(() => {
+  心?.停()
+  心 = undefined
+  vi.useRealTimers()
+})
 
 function 造(o: { ping: () => Promise<boolean>; 忙着?: () => boolean; 沉默: () => Promise<"活着" | "死了" | "不知道"> }) {
   vi.useFakeTimers()
-  const 心 = 起心跳({
+  心 = 起心跳({
     ping: o.ping,
     忙着: o.忙着 ?? (() => false),
     沉默: o.沉默,
@@ -22,7 +31,7 @@ describe("心跳 · 间隔", () => {
   it("空闲每 10 秒 ping 一次；忙着每 60 秒一次", async () => {
     const ping = vi.fn(async () => true)
     let 忙 = false
-    const 心 = 造({ ping, 忙着: () => 忙, 沉默: async () => "活着" })
+    造({ ping, 忙着: () => 忙, 沉默: async () => "活着" })
     await vi.advanceTimersByTimeAsync(10_000)
     expect(ping).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(10_000)
@@ -32,8 +41,6 @@ describe("心跳 · 间隔", () => {
     expect(ping).toHaveBeenCalledTimes(2) // 忙着：第三次要等到 60 秒
     await vi.advanceTimersByTimeAsync(50_000)
     expect(ping).toHaveBeenCalledTimes(3)
-    心.停()
-    vi.useRealTimers()
   })
 })
 
@@ -51,8 +58,6 @@ describe("心跳 · 沉默", () => {
     await vi.advanceTimersByTimeAsync(50_000)
     expect(沉默).toHaveBeenCalledTimes(2)
     expect(心.停了()).toBe(false)
-    心.停()
-    vi.useRealTimers()
   })
 
   it("确认「死了」→ 停下，不再 ping", async () => {
@@ -62,15 +67,12 @@ describe("心跳 · 沉默", () => {
     expect(心.停了()).toBe(true)
     await vi.advanceTimersByTimeAsync(60_000)
     expect(ping).toHaveBeenCalledTimes(1)
-    vi.useRealTimers()
   })
 
   it("确认「不知道」（链路不通）→ 不判死、不停，下次再说", async () => {
     const 心 = 造({ ping: async () => false, 沉默: async () => "不知道" })
     await vi.advanceTimersByTimeAsync(10_000)
     expect(心.停了()).toBe(false)
-    心.停()
-    vi.useRealTimers()
   })
 
   it("停了之后 ping 的回音再晚到也不做任何事", async () => {
@@ -82,6 +84,20 @@ describe("心跳 · 沉默", () => {
     放行(false)
     await vi.advanceTimersByTimeAsync(0)
     expect(沉默).not.toHaveBeenCalled()
-    vi.useRealTimers()
+  })
+
+  it("停了之后确认的结论再晚到也不做任何事", async () => {
+    let 放行: (v: "活着" | "死了" | "不知道") => void = () => {}
+    const ping = vi.fn(async () => false)
+    const 沉默 = vi.fn(() => new Promise<"活着" | "死了" | "不知道">((r) => (放行 = r)))
+    const 心 = 造({ ping, 沉默 })
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(沉默).toHaveBeenCalledTimes(1)
+    心.停()
+    放行("死了")
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(心.停了()).toBe(true)
+    expect(ping).toHaveBeenCalledTimes(1) // 没再排下一次
+    expect(沉默).toHaveBeenCalledTimes(1)
   })
 })

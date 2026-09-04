@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-05 — 合并 `kernel-reattach` 进 main 并重新打包（mac arm64/x64 + win-x64；Linux 沿用 09-01 的包）
+
+- **Type**: chore
+- **Motivation**: 作者要合并并出包。`release/` 里的四个 mac/win 件是 09-01 的，远程内核（C 档）与这一轮的猝死察觉 / 断线接回一个都不在里面。
+- **What**: `kernel-reattach` 快进合进 main（`ae4f8d2` → `3f69776`，20 个提交；main 自分支开出后没动过，无冲突、无合并提交）。按 `docs/打包与发布.md` 的口径重打：`npm run dist:mac`（arm64 + x64 各出 dmg + zip）、`npx electron-builder --win --x64`（安装器 + 免安装）。**Linux 没重打**——node-pty 的 npm 包不带 linux 预编译件，从 mac 打出来的包终端会哑（文档里那条实测口径），`release/` 里那四个 Linux 件仍是 09-01 的，**不含远程内核与本轮改动**；要出新的只能在 Linux 机器上打，或走 CI 矩阵。全部未签名。
+- **Impact**: `release/` 里 mac 与 Windows 是当前 main 的一整套包；Linux 那四个已经落后两轮，别当成同一版发出去。老用户装 mac 新包后要重填 key（未签名包的已知限制，向导会说清）。
+- **Verification**: 打包前 `npm run pack` + `test:packaged` 6 项全过（开库、技能与子 agent、发一句收回复、终端、解释器探测、内核列表）；`rehearse:fresh`（全新电脑：临时 HOME、干净 userData，走完首启→对话→Python→终端，渲染无报错）与 `rehearse:update`（种一份解不开的密文：钥匙串预热在解密之前、界面说清要重填、重填能聊）**都全过**。打完核对 **dmg 里的可执行文件与跑过 `test:packaged` 的那份 SHA-256 逐字节一致**（`3446567664…0cfef6`），且包内 renderer 里找得到本轮的「等接回」、主进程里找得到 `detached` / 接回相关代码——**包里装的确实是这一版**。合并前全量：typecheck 干净、单测 2731 过（1 条老 flake，单跑两次全过）、`remote-kernel` e2e 7 条全过、`test:e2e:only` 464 过。**win-x64 仍未在真 Windows 上验过**（老规矩：拿到 Windows 机器先跑 `test:packaged`）。
+
 ### 2026-09-05 — 远端内核：猝死察觉（心跳报警 + `kill -0` 下结论）与意外掉线后的接回（分支 `kernel-reattach`，未合并）
 
 - **Type**: feat

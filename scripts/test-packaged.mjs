@@ -16,7 +16,15 @@ const NAME = "DAWN Science"
 function 找可执行() {
   const 候选 = {
     darwin: [join(ROOT, "release", "mac-arm64", `${NAME}.app`, "Contents", "MacOS", NAME), join(ROOT, "release", "mac", `${NAME}.app`, "Contents", "MacOS", NAME)],
-    linux: [join(ROOT, "release", "linux-unpacked", NAME), join(ROOT, "release", "linux-unpacked", "dawn-science")],
+    // electron-builder 的目录名带架构后缀：本机架构那份叫 `linux-unpacked`，另一种叫 `linux-<arch>-unpacked`
+    // （与 mac 那行同一个形状）。只列前者的话，在 arm64 上打的包**自测根本找不到它**，
+    // 于是「这个平台的包能不能用」永远没人验——2026-09-05 在容器里验 arm64 时撞到的。
+    linux: [
+      join(ROOT, "release", "linux-unpacked", NAME),
+      join(ROOT, "release", "linux-unpacked", "dawn-science"),
+      join(ROOT, "release", `linux-${process.arch}-unpacked`, NAME),
+      join(ROOT, "release", `linux-${process.arch}-unpacked`, "dawn-science"),
+    ],
     win32: [join(ROOT, "release", "win-unpacked", `${NAME}.exe`)],
   }[process.platform] ?? []
   const 有 = 候选.find(existsSync)

@@ -6,6 +6,7 @@
 import { describe, expect, it, vi } from "vitest"
 import {
   内核文件名, 远端启动命令, 起远端内核, 停远端内核, 扫残留, 远端启动失败,
+  远端活着, 远端内核还在, 删远端文件,
 } from "../../src/remote/kernel-launch.js"
 
 const 连接 = `{"shell_port": 5001, "iopub_port": 5002, "stdin_port": 5003, "control_port": 5004, "hb_port": 5005, "ip": "127.0.0.1", "key": "abc", "transport": "tcp", "signature_scheme": "hmac-sha256", "kernel_name": ""}`
@@ -206,7 +207,50 @@ describe("扫残留", () => {
     const r = await 扫残留(假.exec, "ab12")
     expect(r.清了).toBe(2)
     expect(假.跑过[0]).toContain(`[d]awn-ab12-*.json`)
-    expect(假.跑过[0]).toContain(`pkill -9 -f '[d]awn-ab12-.*\\.json'`)
+    expect(假.跑过[0]).toContain(`pkill -9 -f "[d]\${b#d}"`)
     expect(假.跑过[0]).not.toContain("dawn-*")
+  })
+})
+
+describe("远端活着 / 远端内核还在 / 删远端文件", () => {
+  it("远端活着：DAWNALIVE=1 才算活", async () => {
+    expect(await 远端活着(假exec([{ out: "DAWNALIVE=1\n" }]).exec, 7)).toBe(true)
+    expect(await 远端活着(假exec([{ out: "MOTD {\nDAWNALIVE=0\n" }]).exec, 7)).toBe(false)
+  })
+  it("远端内核还在：进程活着且文件在才算在；一条脚本问两件事", async () => {
+    const 假 = 假exec([{ out: "DAWNALIVE=1\nDAWNFILE=1\n" }])
+    expect(await 远端内核还在(假.exec, { pid: 7, 文件: "/tmp/dawn-ab12-python-x.json" })).toBe(true)
+    expect(假.跑过).toHaveLength(1)
+    expect(假.跑过[0]).toContain("kill -0 7")
+    expect(假.跑过[0]).toContain(`[ -f '/tmp/dawn-ab12-python-x.json' ]`)
+    expect(await 远端内核还在(假exec([{ out: "DAWNALIVE=1\nDAWNFILE=0\n" }]).exec, { pid: 7, 文件: "/tmp/f.json" })).toBe(false)
+    expect(await 远端内核还在(假exec([{ out: "DAWNALIVE=0\nDAWNFILE=1\n" }]).exec, { pid: 7, 文件: "/tmp/f.json" })).toBe(false)
+  })
+  it("删远端文件：json 与 .log 一起删，失败不抛", async () => {
+    const 假 = 假exec([{ out: "", code: 1 }])
+    await 删远端文件(假.exec, "/tmp/dawn-ab12-python-x.json")
+    expect(假.跑过[0]).toBe(`rm -f '/tmp/dawn-ab12-python-x.json' '/tmp/dawn-ab12-python-x.json.log'; true`)
+  })
+})
+
+describe("扫残留 · 名单", () => {
+  it("名单为空：逐文件杀，pkill 按 basename 精确到那一台，glob 与模式都带方括号", async () => {
+    const 假 = 假exec([{ out: "DAWNSWEPT=2\n" }])
+    const r = await 扫残留(假.exec, "ab12")
+    expect(r.清了).toBe(2)
+    expect(假.跑过[0]).toContain(`[d]awn-ab12-*.json`)
+    expect(假.跑过[0]).toContain(`b=$(basename "$f"); pkill -9 -f "[d]\${b#d}"`)
+    expect(假.跑过[0]).not.toContain("case ")
+    expect(假.跑过[0]).not.toContain("dawn-*")
+  })
+  it("名单上的文件跳过、不计数、不杀", async () => {
+    const 假 = 假exec([{ out: "DAWNSWEPT=1\n" }])
+    await 扫残留(假.exec, "ab12", ["dawn-ab12-python-abc.json"])
+    expect(假.跑过[0]).toContain(`case "$(basename "$f")" in 'dawn-ab12-python-abc.json') continue;; esac;`)
+  })
+  it("名单里的名字不合法就一条都不跑——它要原样进 shell", async () => {
+    const 假 = 假exec([])
+    await expect(扫残留(假.exec, "ab12", ["x'; rm -rf /"])).rejects.toThrow(/名单/)
+    expect(假.跑过).toHaveLength(0)
   })
 })

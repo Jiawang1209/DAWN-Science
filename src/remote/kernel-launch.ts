@@ -87,7 +87,7 @@ export interface 已起的 {
   setsid: boolean
 }
 
-const 活着脚本 = (pid: number) =>
+export const 活着脚本 = (pid: number) =>
   `if kill -0 ${pid} 2>/dev/null && [ "$(ps -o stat= -p ${pid} 2>/dev/null | cut -c1)" != "Z" ]; then echo DAWNALIVE=1; else echo DAWNALIVE=0; fi`
 
 /**
@@ -177,6 +177,26 @@ export async function 起远端内核(
   throw new Error(`远端 ${o.语言} 内核 ${最多} 次轮询内没写出 connection.json——已把它杀掉${附加}`)
 }
 
+/** 进程还在不在（SSH `kill -0`，僵尸不算）。**这是心跳的结论**（规格定案 1）：链路不通时抛，调用方当「不知道」 */
+export async function 远端活着(exec: 远端执行["exec"], pid: number): Promise<boolean> {
+  const r = await exec(活着脚本(pid), { timeoutSec: 10 })
+  return 取值(r.stdout, "DAWNALIVE") === "1"
+}
+
+/** 接回前的认领（定案 10）：进程活着 **且** connection.json 还在。一条脚本问两件事，少一趟 SSH */
+export async function 远端内核还在(exec: 远端执行["exec"], k: { pid: number; 文件: string }): Promise<boolean> {
+  const r = await exec(
+    `${活着脚本(k.pid)}; if [ -f ${单引号(k.文件)} ]; then echo DAWNFILE=1; else echo DAWNFILE=0; fi`,
+    { timeoutSec: 10 },
+  )
+  return 取值(r.stdout, "DAWNALIVE") === "1" && 取值(r.stdout, "DAWNFILE") === "1"
+}
+
+/** 判死之后的收摊（定案 4）：删 json 与 .log。**失败不抛**——文件留给下次扫残留，调用方自己出声 */
+export async function 删远端文件(exec: 远端执行["exec"], 文件: string): Promise<void> {
+  await exec(`rm -f ${单引号(文件)} ${单引号(`${文件}.log`)}; true`, { timeoutSec: 10 })
+}
+
 /** TERM → 等它真没了（僵尸不算活着）→ 等不到就 KILL → 删文件与日志 */
 export async function 停远端内核(
   exec: 远端执行["exec"],
@@ -199,17 +219,29 @@ export async function 停远端内核(
   await exec(`rm -f ${单引号(k.文件)} ${单引号(`${k.文件}.log`)}; true`, { timeoutSec: 10 })
 }
 
-/** 每次连上先扫：`$TMPDIR/dawn-<装机id>-*.json` 与命令行带它的进程。**只认自己装机 id 的**（定案 4） */
-export async function 扫残留(exec: 远端执行["exec"], 装机id: string): Promise<{ 清了: number }> {
+/**
+ * 每次连上先扫：`$TMPDIR/dawn-<装机id>-*.json` 与命令行带它的进程。**只认自己装机 id 的**（定案 4）。
+ *
+ * **逐文件杀，不再全局 `pkill`**（接回，2026-09-04 定案 11）：`别动` 是这台服务器上等着接回的那几台的文件名，
+ * 它们要留着。全局 `pkill -f '[d]awn-<id>-.*\.json'` 分不出「上次留下的」与「等着接回的」，
+ * 所以改成对每个不在名单上的 json 按 `basename` 精确 `pkill`。glob 与模式都带 `[d]`（自噬那条坑，见文件头 ③）；
+ * `"[d]${b#d}"` 在 wrapper 的 cmdline 里是这七个字面字符，不会被自己命中。
+ */
+export async function 扫残留(
+  exec: 远端执行["exec"],
+  装机id: string,
+  别动: readonly string[] = [],
+): Promise<{ 清了: number }> {
   校验装机id(装机id)
-  // glob 与 pkill 的正则都要带 `[d]`：这条脚本整体是 exec 喂给 `bash -c '...'` 跑的，
-  // wrapper 自己的 cmdline 里原样带着这段脚本文本（含 for 循环那句 glob）——不给两处都套方括号，
-  // `pkill -f` 连 wrapper 自己都会当成命中，脚本还没跑到 `echo DAWNSWEPT` 就把自己杀了，
-  // 症状是每次都悄悄报 0。pkill 正则再收窄到 `.json` 结尾，顺带防装机 id 撞上执行器自己的
-  // `/tmp/dawn-run-*.pid` 之类文件。
+  for (const f of 别动) {
+    if (!/^dawn-[A-Za-z0-9]+-(python|R)-[a-z0-9]+\.json$/.test(f)) {
+      throw new Error(`「别动」名单里的文件名不合法：${JSON.stringify(f)}`)
+    }
+  }
+  const 跳过 = 别动.length ? `case "$(basename "$f")" in ${别动.map(单引号).join("|")}) continue;; esac; ` : ""
   const 脚本 =
-    `n=0; for f in "\${TMPDIR:-/tmp}"/[d]awn-${装机id}-*.json; do [ -e "$f" ] || continue; n=$((n+1)); rm -f "$f" "$f.log"; done; ` +
-    `pkill -9 -f '[d]awn-${装机id}-.*\\.json' 2>/dev/null; echo DAWNSWEPT=$n`
+    `n=0; for f in "\${TMPDIR:-/tmp}"/[d]awn-${装机id}-*.json; do [ -e "$f" ] || continue; ${跳过}` +
+    `n=$((n+1)); b=$(basename "$f"); pkill -9 -f "[d]\${b#d}" 2>/dev/null; rm -f "$f" "$f.log"; done; echo DAWNSWEPT=$n`
   const r = await exec(脚本, { timeoutSec: 10 })
   return { 清了: Number(取值(r.stdout, "DAWNSWEPT")) || 0 }
 }

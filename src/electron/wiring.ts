@@ -308,7 +308,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   /**
    * 每台服务器这一轮的「扫残留」（远程内核，审查 2026-09-04）。**连上时开始，起内核前要等它。**
    *
-   * 扫的动作是 `pkill -9 -f '[d]awn-<装机id>-.*\.json'`，它**认不出刚起的那一台**——
+   * 扫的动作是对每个 `dawn-<装机id>-*.json` 逐文件 `pkill -9 -f "[d]${b#d}"` 再 `rm`，它**认不出刚起的那一台**——
    * 不等的话，「连上就跑一段代码」会稳定地把自己刚起的内核杀掉。
    * 值是一条**永不 reject** 的 promise：这是一道闸，不是一件要人处理的事。
    */
@@ -403,8 +403,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       const conn = connectionStore.get(cid)
       if (!conn) throw new Error(`没有这台服务器：${cid}`)
       /**
-       * **先等这台的扫残留跑完**（审查，2026-09-04）。`扫残留` 的 `pkill -9 -f '[d]awn-<装机id>-.*\.json'`
-       * 按装机 id 匹配，**分不出「上次留下的」与「这一秒刚起的」**——连上之后立刻跑一段代码，
+       * **先等这台的扫残留跑完**（审查，2026-09-04）。`扫残留` 对每个 `dawn-<装机id>-*.json` 逐文件
+       * `pkill -9 -f "[d]${b#d}"`，只放过「别动」名单上的，**分不出「上次留下的」与「这一秒刚起的」**——连上之后立刻跑一段代码，
        * 内核起来的那一刻正撞在扫的窗口里，它会被自己人杀掉，症状是「第一次跑必挂、再跑就好」。
        *
        * `interpreterOf` 是每一次起内核的必经之路，闸设在这里最省：

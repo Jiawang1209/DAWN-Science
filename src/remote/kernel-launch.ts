@@ -10,13 +10,21 @@
  *    按花括号配对解析在 MOTD 随手带一个 `{` 时就会被带偏，删掉了。`DAWNRC=0` 要**先于** `DAWNJSON=`
  *    回声：`取值` 是不带锚点的首次匹配，万一 base64 载荷里凑巧出现字面 `DAWNRC=` 这几个字符
  *    （字母表允许，虽然概率极低），先回声的那个 `DAWNRC=0` 才是真正会被取到的那个。
- * ③ `pgrep`/`pkill` 会匹配到自己：模式写成 `[d]awn-<id>-`。**`扫残留` 里连 for 循环的 glob 也要同样处理**——
- *    exec 把整条脚本喂给 `bash -c '...'` 跑，那个 wrapper 自己的 cmdline 里原样带着脚本文本（含 glob 那句），
- *    只给 pkill 的正则套方括号不够：wrapper 自己的 cmdline 里那句没转义的 `dawn-<id>-*.json` glob 一样会被
- *    `pkill -f` 命中，脚本还没来得及 `echo DAWNSWEPT` 就把自己杀了，症状是「每次都悄悄报 0」。
- *    同一个坑还有个变种：执行器给每条脚本都包了一层 `echo $$ > /tmp/dawn-run-XXXX.pid` 的 wrapper
- *    （见 `ssh.ts`），装机 id 恰好是 `"run"` 的话，`[d]awn-run-.*\.json` 又会绕回去命中那层 wrapper——
- *    `校验装机id` 索性把这个值也拒了。
+ * ③ `pgrep`/`pkill` 会匹配到自己。`扫残留` 现在是**逐文件**杀（2026-09-04 定案 11）：对每个不在「别动」名单上的
+ *    json 取 `b=$(basename "$f")`，跑 `pkill -9 -f "[d]${b#d}"`——展开后是 `[d]awn-<id>-<语言>-<时间戳>.json`，
+ *    精确到那一台。方括号要留在**两处**：
+ *    · glob 那句 `[d]awn-<id>-*.json`：exec 把整条脚本喂给 `bash -c '...'` 跑，wrapper 自己的 cmdline 里原样带着
+ *      脚本文本（含 glob）。glob 若写成裸的 `dawn-<id>-*.json`，展开后的 pkill 正则 `dawn-<id>-python-xyz.json`
+ *      在 wrapper 的 cmdline 里找不到它（那儿是 `dawn-<id>-*.json`，`*` 不是 `python-xyz`），所以**单靠 glob
+ *      并不会自噬**——但 `[d]` 仍然留着：它让「这条脚本文本自己永远不含 `dawn-<id>-` 这个前缀」成为一条
+ *      不依赖别处巧合的保证，pkill 的模式再怎么改也不会绕回来。
+ *    · pkill 那句 `"[d]${b#d}"`：wrapper 的 cmdline 里它就是这七个字面字符 `[d]${b#d}`（bash 展开发生在
+ *      wrapper 之内，cmdline 记的是展开前的文本），任何真实文件名都匹配不上它；而展开后的 `[d]` 在正则里
+ *      只匹配一个 `d`，对真内核的 `-f /tmp/dawn-<id>-….json` 参数照样命中。
+ *    旧的全局 `pkill -f '[d]awn-<id>-.*\.json'` 还有个变种坑：执行器给每条脚本都包了一层
+ *    `echo $$ > /tmp/dawn-run-XXXX.pid` 的 wrapper（见 `ssh.ts`），装机 id 恰好是 `"run"` 时 `.*` 会吞掉
+ *    `XXXX.pid` 后面的东西绕回去命中那层 wrapper。逐文件模式没有 `.*`，`dawn-run-python-xyz.json` 对不上
+ *    `dawn-run-XXXX.pid`，**这条理由已经不成立**；`校验装机id` 仍然拒 `"run"`，理由见那里。
  * ④ 杀进程要等它真的没了，僵尸不算活着：`ps -o stat=` 首字母是 `Z` 就当没了。
  *
  * ## 文件是内核自己写的
@@ -45,9 +53,13 @@ export interface 远端执行 {
 /** 装机 id 会原样拼进 shell 脚本（文件名、glob、pkill 正则）；不校验就是命令注入口子 */
 function 校验装机id(装机id: string): void {
   if (!/^[A-Za-z0-9]+$/.test(装机id)) throw new Error(`装机 id 只能是字母数字，收到：${JSON.stringify(装机id)}`)
-  // 执行器给每条脚本都包了一层 `echo $$ > /tmp/dawn-run-XXXX.pid` 的 wrapper；装机 id 是
-  // "run" 的话，`扫残留` 的 `[d]awn-run-.*\.json` pkill 正则会连那层 wrapper 一起命中。
-  if (装机id === "run") throw new Error(`装机 id 不能是 "run"——会撞上执行器自己的 wrapper 脚本`)
+  // 执行器给每条脚本都包了一层 `echo $$ > /tmp/dawn-run-XXXX.pid` 的 wrapper。旧的全局
+  // `pkill -f '[d]awn-run-.*\.json'` 会连那层 wrapper 一起命中，所以当初拒了 "run"。
+  // 现在 `扫残留` 是逐文件 `pkill -9 -f "[d]${b#d}"`（正则里没有 `.*`，`dawn-run-python-xyz.json`
+  // 对不上 `dawn-run-XXXX.pid`），**那条理由已经不成立**。仍然拒：`内核文件名` 的调用方靠这条
+  // 「run 不是合法装机 id」的契约（测试里有它），而 `dawn-run-` 与执行器自己的文件同前缀，
+  // 留一道墙比省一个词值——将来谁改回按前缀匹配，这里就是最后一道保险。
+  if (装机id === "run") throw new Error(`装机 id 不能是 "run"——与执行器自己的 dawn-run-*.pid 同前缀`)
 }
 
 /** `dawn-<装机id>-<语言>-<时间戳 36 进制>.json`。装机 id 让两台电脑共用一个服务器账号时互不误杀 */

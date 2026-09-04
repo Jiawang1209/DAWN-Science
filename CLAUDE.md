@@ -34,7 +34,7 @@
 | **产物**：对话里 `GENERATED · N` + 坞「产物」格实时清单（学自 wisp-science；`data-platform` 分支主线第一步） | `specs/2026-08-26-产物-design.md` |
 | **笔记本**：坞里一格，看 agent 的内核 cell 流、在同一台内核里自己敲、敲的记进对话（主线第二轮） | `specs/2026-08-26-笔记本-design.md` |
 | **远程内核**：远端会话里 `run_code` 在服务器上你自己装的 ipykernel 里跑，五个端口隧道回本地，通道原样复用（主线第三轮，分支 `remote-kernel`） | `specs/2026-09-03-远程内核-design.md` |
-| **远端内核猝死与接回**：心跳报警 + `kill -0` 结论；意外掉线进 `detached`、重连认领回来，按「断开」照旧停干净（分支 `kernel-reattach`） | `specs/2026-09-04-远端内核猝死与接回-design.md` |
+| **远端内核猝死与接回**：心跳报警 + `kill -0` 结论；意外掉线进 `detached`、重连认领回来，按「断开」照旧停干净（分支 `kernel-reattach`，勾全打完） | `specs/2026-09-04-远端内核猝死与接回-design.md` + `plans/2026-09-04-远端内核猝死与接回.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

@@ -99,28 +99,55 @@ describe("假服务器 · 内核那几条（远程内核，2026-09-03）", () =>
     r.close()
   })
 
+  /**
+   * **失败路径也要收尸**（审查反馈 2026-09-05）：这条真 spawn 一台 detached 的 ipykernel，
+   * 中间任何一个断言红了，`停远端内核` 与 `r.close()` 就都不会跑——
+   * 那台内核会活到测试进程之后，`$TMPDIR` 里也留一份 connection.json。
+   * 一次跑测试留一台，是**看不见**的泄漏：下次「扫残留」还会把它算进数里。
+   */
   it.skipIf(!PY)("真起一台本机 ipykernel：拿到 connection.json、forwardOut 直连、停掉后进程没了", async () => {
+    const { unlinkSync } = await import("node:fs")
+    const { join } = await import("node:path")
+    const { tmpdir } = await import("node:os")
+    const 名 = 内核文件名("t", "python")
     const r = 起()
-    await r.connect()
-    const 起的 = await 起远端内核(r.exec.bind(r), {
-      语言: "python",
-      解释器路径: PY!,
-      cwd: "/home/dawn",
-      文件名: 内核文件名("t", "python"),
-    })
-    expect(起的.pid).toBeGreaterThan(0)
-    const ch = await r.forwardOut(起的.连接信息.shell_port)
-    expect(typeof ch.write).toBe("function")
-    ch.destroy()
-    await 停远端内核(r.exec.bind(r), 起的)
-    expect(
-      (
-        await r.exec(
-          `if kill -0 ${起的.pid} 2>/dev/null; then echo DAWNALIVE=1; else echo DAWNALIVE=0; fi`,
-        )
-      ).stdout,
-    ).toContain("DAWNALIVE=0")
-    r.close()
+    let 起的: Awaited<ReturnType<typeof 起远端内核>> | undefined
+    try {
+      await r.connect()
+      起的 = await 起远端内核(r.exec.bind(r), {
+        语言: "python",
+        解释器路径: PY!,
+        cwd: "/home/dawn",
+        文件名: 名,
+      })
+      const pid = 起的.pid
+      expect(pid).toBeGreaterThan(0)
+      const ch = await r.forwardOut(起的.连接信息.shell_port)
+      expect(typeof ch.write).toBe("function")
+      ch.destroy()
+      await 停远端内核(r.exec.bind(r), 起的)
+      // 停掉了就不用再收尸了；下面那条断言红了也不该去杀一个已经不属于我们的 pid
+      起的 = undefined
+      expect(
+        (await r.exec(`if kill -0 ${pid} 2>/dev/null; then echo DAWNALIVE=1; else echo DAWNALIVE=0; fi`)).stdout,
+      ).toContain("DAWNALIVE=0")
+    } finally {
+      if (起的) {
+        try {
+          process.kill(起的.pid, "SIGKILL")
+        } catch {
+          // 已经没了
+        }
+      }
+      for (const p of [join(tmpdir(), 名), join(tmpdir(), `${名}.log`)]) {
+        try {
+          unlinkSync(p)
+        } catch {
+          // 本来就没有
+        }
+      }
+      r.close()
+    }
   }, 30_000)
 })
 

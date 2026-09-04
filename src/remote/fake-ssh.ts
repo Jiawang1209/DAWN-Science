@@ -72,10 +72,17 @@ const 只读目录 = new Set<string>([`${家}/只读`])
  * 把假机器恢复原状。**测试之间必须叫一次**——
  * 这张表是模块级的，上一条用例传上去的文件会漏给下一条
  * （`FAKE_ACP_*` 那张手打清单漏过两次，同一个形状）。
+ *
+ * **`掐们` 也要清**（审查反馈 2026-09-05）：那张「还连着的链路」表同样是模块级的，
+ * 上一条用例没 `close()` 的连接会活到下一条，于是 `掐断所有假连接()` 要么去掐一条
+ * 早就作废的链路，要么把它算进回执里——「掐断了几条」这个数就不再说明任何事。
+ * 这里只**除名**、不发 `close`：重置说的是「这台机器回到原样」，
+ * 不是「给上一条用例的连接补一个掉线事件」（补了反而会往别处发信号）。
  */
 export function 重置假机器(): void {
   for (const k of Object.keys(文件)) delete 文件[k]
   Object.assign(文件, 初始文件)
+  掐们.clear()
 }
 
 /** 这台假机器的家目录。测试与 mock 都要能指得出来 */
@@ -125,7 +132,7 @@ interface 通道 extends EventEmitter {
  * 进出都要对：连上才登记，掐过与人按了断开都要注销——**已经断了的链路不能被再掐一次**，
  * 否则「掐断了几条」这个回执就成了一句凑数的话。
  */
-const 掐们 = new Set<() => void>()
+const 掐们 = new Set<() => boolean>()
 
 /**
  * 造一个假的 `ssh2.Client`。
@@ -146,11 +153,13 @@ export function 造一台假服务器(): SshClientLike {
    *
    * **不碰内核子进程**：演的是「网断了、服务器上那台还活着」。
    */
-  const 掐 = () => {
-    if (!已连) return
+  const 掐 = (): boolean => {
+    // 已经断了的**不算掐断了一条**——回执里的那个数是这么数出来的（审查反馈 2026-09-05）
+    if (!已连) return false
     已连 = false
     掐们.delete(掐)
     c.emit("close")
+    return true
   }
 
   c.connect = ((cfg: { password?: string; privateKey?: unknown }) => {
@@ -521,10 +530,17 @@ function 一条(命令: string, 当前: string): { out: string; err: string; cod
  * （`RemoteExecutor` 于是进 `disconnected`，不是 `idle`——见上面 `掐` 那里），
  * **不碰任何内核子进程**：服务器上那台还活着，这正是接回要认领的那一台。
  *
+ * **作用域是整个进程**：掐的是这个 Node/Electron 主进程里所有还连着的假链路，
+ * 不是「某一台服务器的」。`dev:mock` 与 e2e 里同一个进程可以连着好几台假服务器，
+ * 写多服务器的用例时它会顺手把别的也掐了（`e2e/remote-kernel.spec.ts` 的 `假服务器开关`
+ * 那段注释说的是同一件事，那三条用例各自只有一台，所以「所有」= 「那一台」）。
+ *
  * 返回真掐断了几条（已经断了的不算）。
  */
 export function 掐断所有假连接(): number {
-  const 些 = [...掐们]
-  for (const 掐 of 些) 掐()
-  return 些.length
+  let n = 0
+  // **数真掐断的那几条**，不是名册的长度（审查反馈 2026-09-05）：名册理应只装还连着的链路，
+  // 但「理应」不是判据——真按名册长度作答，哪天名册漏了注销，这个回执就会替它圆谎。
+  for (const 掐 of [...掐们]) if (掐()) n++
+  return n
 }

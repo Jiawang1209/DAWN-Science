@@ -249,39 +249,60 @@ export function 假内核命令(整条: string, cwd?: string): 结果 | undefine
   if (整条.includes("DAWNSWEPT")) {
     const id = /\[d\]awn-([A-Za-z0-9]+)-\*\.json/.exec(整条)?.[1]
     /**
+     * 装机 id 认不出来就**不扫**（审查反馈 2026-09-05）。
+     * 从前这里落到 `DAWNSWEPT=0`：那是又一句没人验过的写死答案——脚本的 glob 改一个字，
+     * 「每次连上先扫」这条路在 mock 下就整条空转，而回执还说「扫过了，一台残留都没有」。
+     * 认不得就如实回 127，让不匹配当场出声。
+     */
+    if (!id) {
+      return { out: "", err: `假服务器：扫残留脚本里认不出装机 id，不敢扫——${整条}\n`, code: 127 }
+    }
+    /**
      * 「别动」名单（接回，定案 11）：脚本里是 `case "$(basename "$f")" in 'a'|'b') continue;; esac`。
      * **真跳过**——不杀、不删、也不计数。只把它从计数里减掉而照样删文件，是同一句谎的新版本：
      * 「接回时把等着被认领的内核扫掉了」这个真 bug 会在一片绿里活下来。
+     *
+     * **认得出名单在那儿、却读不出来，就一个都不动**（审查反馈 2026-09-05，与合并探测脚本那条同一个规矩）：
+     * 措辞归 `kernel-launch.ts` 管，只差一对引号这条正则就匹配不上，于是名单被读成空的——
+     * 等着接回的那台内核的 connection.json 被删、进程被 SIGKILL，回执却是 `DAWNSWEPT=1` 加退出码 0。
+     * 那是一句**会毁状态**的谎，正是这台假机器存在的理由要挡的那一类。
+     * 判据：命令里有 `case` 就说明真脚本拼了名单（不带名单的那条只有 `b=$(basename "$f")`，没有 `case`）。
      */
+    const 名单原文 = /case "\$\(basename "\$f"\)" in ((?:'[^']+'\|?)+)\) continue;; esac/.exec(整条)?.[1]
+    if (名单原文 === undefined && /\bcase\b/.test(整条)) {
+      return {
+        out: "",
+        err: `假服务器：扫残留脚本里有「别动」名单但读不出来，不敢扫（扫了就会把等着接回的内核删掉）——${整条}\n`,
+        code: 127,
+      }
+    }
     const 名单 = new Set(
-      (/case "\$\(basename "\$f"\)" in ((?:'[^']+'\|?)+)\) continue;; esac/.exec(整条)?.[1] ?? "")
+      (名单原文 ?? "")
         .split("|")
         .map((s) => s.replace(/^'|'$/g, ""))
         .filter(Boolean),
     )
     let n = 0
-    if (id) {
-      const 前缀 = `dawn-${id}-`
-      const 目录 = tmpdir()
-      for (const 名 of readdirSync(目录)) {
-        if (!名.startsWith(前缀) || !名.endsWith(".json")) continue
-        if (名单.has(名)) continue
-        n++
-        const pid = 内核进程.get(名)
-        if (pid !== undefined) {
-          try {
-            process.kill(pid, "SIGKILL")
-          } catch {
-            // 没了就算了
-          }
-          内核进程.delete(名)
+    const 前缀 = `dawn-${id}-`
+    const 目录 = tmpdir()
+    for (const 名 of readdirSync(目录)) {
+      if (!名.startsWith(前缀) || !名.endsWith(".json")) continue
+      if (名单.has(名)) continue
+      n++
+      const pid = 内核进程.get(名)
+      if (pid !== undefined) {
+        try {
+          process.kill(pid, "SIGKILL")
+        } catch {
+          // 没了就算了
         }
-        for (const p of [join(目录, 名), join(目录, `${名}.log`)]) {
-          try {
-            unlinkSync(p)
-          } catch {
-            // 本来就没有
-          }
+        内核进程.delete(名)
+      }
+      for (const p of [join(目录, 名), join(目录, `${名}.log`)]) {
+        try {
+          unlinkSync(p)
+        } catch {
+          // 本来就没有
         }
       }
     }
@@ -312,6 +333,11 @@ export { existsSync as 文件在 }
  *
  * **connection.json 不删**：真被 OOM 杀掉的内核不会顺手清理自己的文件，
  * 那些文件是判死收摊（定案 4）或下一次扫残留的活。这里替它删掉，就等于替被测代码把活干了。
+ *
+ * **作用域是整个进程**：杀的是这台假机器（模块级的 `内核进程` 那张表）起过的所有内核，
+ * 不是「某一条连接的」——`dev:mock` 与 e2e 里同一个进程可以连着好几台假服务器，
+ * 它们的内核全记在同一张表上。写多服务器的用例别照单用它
+ * （`e2e/remote-kernel.spec.ts` 的 `假服务器开关` 那段注释说的是同一件事）。
  *
  * 返回真杀掉了几台（`process.kill` 抛了的不算——那台本来就已经没了）。
  */

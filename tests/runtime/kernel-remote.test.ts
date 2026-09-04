@@ -3,15 +3,25 @@
  * **顺序与收摊**——起内核 → 五条隧道 → attach；停 = 停内核 → 关通道 → 关隧道；
  * 断线 = 这台服务器名下的全部标死、发一条带 reason 的 exited、隧道关掉。
  */
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { KernelRuntime } from "../../src/runtime/kernel.js"
 import type { AgentEvent, SessionId } from "../../src/runtime/types.js"
 
-function 假件(选: { 远端活着?: () => boolean } = {}) {
+/**
+ * 假时钟一旦漏到下一条用例，`setTimeout` 就永远不响——症状是**别的用例超时**，
+ * 而它们与时间毫无关系（2026-09-04 踩的：一条断言先抛了，那条用例末尾的
+ * `useRealTimers()` 就再也没执行到）。收在这里，别再指望每条用例自己收尾。
+ */
+afterEach(() => void vi.useRealTimers())
+
+function 假件(选: { 远端活着?: () => boolean; 心跳口慢?: boolean } = {}) {
   const 日志: string[] = []
-  /** attach 收到的那个「远端进程」句柄。真 `channel.close()` 会 `kill("SIGKILL")` 它，假的也照做 */
-  let 进程: { kill(s?: NodeJS.Signals): void } | undefined
-  const 假通道 = {
+  /**
+   * 一次 `attach` 一条通道，**各自记住自己那个「远端进程」句柄**。
+   * 共用一个的话，两台会话的 close 会去杀同一个句柄——「分离不发信号」这条判据
+   * 就被另一台的句柄骗过去了（2026-09-04 踩的）。真 `close()` 会 `kill("SIGKILL")`，假的也照做。
+   */
+  const 造通道 = (进程: { kill(s?: NodeJS.Signals): void }) => ({
     kernelInstanceId: "k-1",
     kernelRevision: 0,
     on: () => () => {},
@@ -22,19 +32,36 @@ function 假件(选: { 远端活着?: () => boolean } = {}) {
     interrupt: () => {},
     close: async () => {
       // 与真 `close()` 同一个顺序：先杀进程（远端那条会走 SSH），再关 socket
-      进程?.kill("SIGKILL")
+      进程.kill("SIGKILL")
       日志.push("channel.close")
     },
     ready: async () => {},
     send: () => {},
     request: async () => ({}),
     onExit: () => () => {},
-  }
-  /** 假的 zmq 心跳口：`回音` 是可控的——测试把它拨成 false 来演「心跳沉默」 */
+  })
+  /**
+   * 假的 zmq 心跳口：`回音` 是可控的——测试把它拨成 false 来演「心跳沉默」。
+   * `心跳口慢` 把开口那一步卡住，用来演「开口的那几十毫秒里会话被收掉了」。
+   */
   let 回音 = true
+  let ping次 = 0
+  let 放行: (() => void) | undefined
   const 心跳口 = {
-    开心跳口: async () => ({ ping: async () => 回音, 关: () => void 日志.push("心跳.关") }),
+    开心跳口: async () => {
+      if (选.心跳口慢) await new Promise<void>((r) => (放行 = r))
+      return {
+        ping: async () => {
+          ping次++
+          return 回音
+        },
+        关: () => void 日志.push("心跳.关"),
+      }
+    },
     设回音: (v: boolean) => (回音 = v),
+    ping次数: () => ping次,
+    开口卡住了: () => 放行 !== undefined,
+    放行开口: () => 放行?.(),
   }
   const 远端 = {
     起远端内核: async (_e: unknown, o: { 语言: string; cwd: string }) => {
@@ -63,8 +90,7 @@ function 假件(选: { 远端活着?: () => boolean } = {}) {
     }),
     attach: async (o: { 连接信息: { shell_port: number }; process: { kill(s?: NodeJS.Signals): void } }) => {
       日志.push(`attach:${o.连接信息.shell_port}`)
-      进程 = o.process
-      return 假通道 as never
+      return 造通道(o.process) as never
     },
     开心跳口: 心跳口.开心跳口,
   }
@@ -166,12 +192,18 @@ describe("KernelRuntime · 远端", () => {
     expect(日志).toContain("隧道.关")
     expect(日志).not.toContain("停:7") // 连接没了，杀不了；留给下次连上的扫残留
     /**
-     * **连接已经断了，这时候还往它上面发命令是没有意义的**——每一条都要卡到超时，
-     * 而「断线」这件事本身要求界面立刻收口。所以到服务器上的流量只允许有
-     * `channel.close()` 自己那一下 fire-and-forget 的 KILL（发不出去也无所谓，不等回音）：
-     * 没有 `停远端内核` 的那串 TERM/轮询/rm，没有扫残留，没有别的。
+     * **一条命令都不许发出去**（审查 2026-09-04）。两个理由，第二个是要命的：
+     *
+     * ① 连接已经断了，往它上面发命令没有意义——每一条都要卡到超时，
+     *    而「断线」这件事本身要求界面立刻收口。
+     * ② `channel.close()` 会 `kill("SIGKILL")` 那个句柄，而远端句柄把它翻成
+     *    SSH 上的 `kill -KILL <pid>`——**那是我们正打算接回的那台内核**。
+     *    杀掉它，`分离的` 里留下的记录就指向一具尸体。以前这条侥幸没杀成，
+     *    只因为 `RemoteConnections.记下` 先把执行器丢了；那是别处的实现顺序，
+     *    不是这里的保证（假 SSH 的 `dropLink` 一来链路还是通的）。所以由
+     *    `连接断了` 把这个句柄的枪下了再关通道。
      */
-    expect(日志.filter((x) => x.startsWith("exec:"))).toEqual(["exec:kill -KILL 7 2>/dev/null; true"])
+    expect(日志.filter((x) => x.startsWith("exec:"))).toEqual([])
     expect(rt.kernelInstanceId("c2::python" as SessionId)).toBe("k-1") // 另一台还活着
   })
 
@@ -264,6 +296,32 @@ describe("KernelRuntime · 猝死察觉", () => {
     expect(await rt.确认活着("c1::python" as SessionId)).toBe(false)
     expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
     expect(await rt.确认活着("nope" as SessionId)).toBeUndefined()
+  })
+
+  /**
+   * 审查 2026-09-04：`起心跳给` 在 `await 开心跳口(...)` 前后是两个世界。
+   * 开口要连一个 socket，那几十毫秒里会话完全可能已经被收掉（掉线、`stop`、猝死）。
+   * 把心跳挂到一条不在 `sessions` 里的记录上，它会一直 ping 下去、那个 zmq 口永远没人关——
+   * 没有任何一条路会再碰它，因为所有 `停()` 都是从 `sessions` / `分离的` 里找出来调的。
+   */
+  it("开心跳口那几十毫秒里会话被收掉 → 当场关口，不留一个 ping 到天荒地老的心跳", async () => {
+    vi.useFakeTimers()
+    const { 日志, 远端, executor, 心跳口 } = 假件({ 心跳口慢: true })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    const 起着 = rt.start(spec(executor) as never)
+    // 微任务推到「开心跳口」那一步：隧道、attach 都过了，会话已经在 sessions 里
+    await vi.advanceTimersByTimeAsync(0)
+    expect(心跳口.开口卡住了()).toBe(true)
+
+    await rt.连接断了("conn-1") // 就在这一刻掉线：会话被挪出 sessions
+    心跳口.放行开口()
+    await 起着
+
+    expect(日志, "开出来的那个口没人关").toContain("心跳.关")
+    const 之前 = 心跳口.ping次数()
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(心跳口.ping次数(), "心跳挂在一条已经不在的记录上，还在 ping").toBe(之前)
+    vi.useRealTimers()
   })
 })
 
@@ -362,6 +420,87 @@ describe("KernelRuntime · 分离与接回", () => {
     expect(收到[1]).toMatchObject({ reason: "abandoned" })
     expect(日志.filter((l) => l.startsWith("exec:"))).toEqual([])
     expect(rt.等着接回的文件("conn-1")).toEqual([])
+  })
+
+  /**
+   * 审查 2026-09-04：接回途中那台内核**必须一直在 `分离的` 里**。
+   * 原来的写法在循环顶上就把记录删了，于是这几秒里它谁都不属于：
+   * 人按「断开」时 `放弃接回` 找不到它（一声不吭，`exited` 永远不来），
+   * 而循环那头照样把会话装回 `sessions`——一台人已经说了不要的内核又活了。
+   */
+  it("接回途中人按「断开」→ abandoned 照样发一次，会话不复活，半建的隧道收掉", async () => {
+    const { 日志, 远端, executor } = 假件({ 远端活着: () => true })
+    let 第几次 = 0
+    let 放行隧道: (() => void) | undefined
+    const 慢隧道 = {
+      ...远端,
+      // 只卡接回那一次（第一次是 `start` 建的那五条，卡住它测试连起都起不来）
+      五条隧道: async (c: never, 远: never) => {
+        if (++第几次 > 1) await new Promise<void>((r) => (放行隧道 = r))
+        return 远端.五条隧道(c, 远)
+      },
+    }
+    const rt = new KernelRuntime({ 远端: 慢隧道 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    日志.length = 0
+
+    const 接着 = rt.接回远端("conn-1")
+    while (!放行隧道) await new Promise((r) => setTimeout(r, 0))
+    await rt.断开了("conn-1") // 人在这一刻按「断开」
+    放行隧道!()
+    await 接着
+
+    expect(收到.map((e) => e.kind)).toEqual(["detached", "exited"])
+    expect(收到[1]).toMatchObject({ reason: "abandoned" })
+    expect(rt.kernelInstanceId("c1::python" as SessionId), "被放弃的会话又活回来了").toBeUndefined()
+    expect(rt.等着接回的文件("conn-1")).toEqual([])
+    expect(日志, "半建的那条隧道没人关").toContain("隧道.关")
+  })
+
+  /**
+   * 审查 2026-09-04：接回途中**又断一次**。原来那几秒里记录不在 `分离的`、隧道也没登记，
+   * 于是 `连接断了` 两处都扫不到它——五个本地监听端口就此漏掉。
+   * 登记进 `起中隧道`（`start` 用的同一张表）之后，它归 `连接断了` 管；
+   * 而内核仍留在 `分离的` 里等下一次接回——**又断一次不是「丢了」**。
+   */
+  it("接回途中又断了一次 → 半建的隧道被 `连接断了` 关掉，内核仍等着下次接回", async () => {
+    const { 日志, 远端, executor } = 假件({ 远端活着: () => true })
+    let 第几次 = 0
+    let 放行握手: ((e: unknown) => void) | undefined
+    const 卡住的 = {
+      ...远端,
+      attach: async (o: never) => {
+        第几次++
+        if (第几次 === 1) return 远端.attach(o)
+        日志.push("attach:卡住")
+        return new Promise((_res, rej) => {
+          放行握手 = rej
+        }) as never
+      },
+    }
+    const rt = new KernelRuntime({ 远端: 卡住的 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    日志.length = 0
+
+    const 接着 = rt.接回远端("conn-1")
+    // 隧道已经重建、握手还没回来——正是最容易再撞上一次断线的那几秒
+    while (!放行握手) await new Promise((r) => setTimeout(r, 0))
+    expect(日志).not.toContain("隧道.关")
+    await rt.连接断了("conn-1")
+    expect(日志, "接回途中那条隧道没人关，端口漏一辈子").toContain("隧道.关")
+
+    放行握手!(new Error("握手没回音"))
+    await 接着
+    // 又断一次 ≠ 死：那台内核多半还在服务器上，留着等下一次连上再接
+    expect(收到.map((e) => e.kind)).toEqual(["detached"])
+    expect(rt.等着接回的文件("conn-1")).toEqual(["f.json"])
+    expect(日志).not.toContain("停:7")
   })
 
   it("别的服务器的内核不受这台掉线 / 接回影响", async () => {

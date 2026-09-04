@@ -75,10 +75,18 @@ interface Live {
     语言: "python" | "R"
     解释器路径: string
     关隧道: () => Promise<void>
+    /**
+     * 交给 `attach` 的那个进程句柄。留一份是为了**分离前把它的枪下了**——
+     * `channel.close()` 会 `kill("SIGKILL")`，远端那一下是 SSH 上真的 `kill -KILL`。
+     */
+    句柄: 远端句柄
     /** 猝死察觉（定案 1/2）。开不了心跳口时缺省——那时猝死只靠 5 分钟兜底 */
     心跳?: 心跳
   }
 }
+
+/** 远端内核的进程句柄。`杀得了` 拨掉之后 `kill` 是个空动作（见 `远端进程句柄`） */
+type 远端句柄 = KernelProcess & { 杀得了: boolean }
 
 /** 掉线后等着接回的那台（定案 6）。**只在内存里**：DAWN 这一次运行内才接回（定案 12） */
 interface 分离记录 {
@@ -238,6 +246,7 @@ export class KernelRuntime implements AgentRuntime {
         语言: k.language,
         解释器路径: k.interpreterPath,
         关隧道: 隧.关,
+        句柄: process,
       }
     } else {
       channel = await launchKernelChannel({
@@ -283,14 +292,30 @@ export class KernelRuntime implements AgentRuntime {
     return { sessionId: spec.sessionId, pid: 0 }
   }
 
-  /** 远端内核的进程句柄：`kill` 走 SSH。起与接回共用 */
-  private 远端进程句柄(exec: NonNullable<SessionSpec["remote"]>["executor"]["exec"], pid: number): KernelProcess {
+  /**
+   * 远端内核的进程句柄：`kill` 走 SSH。起与接回共用。
+   *
+   * **`杀得了` 是一个可以拨掉的保险**（审查 2026-09-04）。`KernelChannel.close()` 的契约里
+   * 就带着一下 `kill("SIGKILL")`——本机那条路对着自己的子进程发，天经地义；远端这条路
+   * 把它翻成 SSH 上的 `kill -KILL <pid>`。而**分离（等接回）时我们正要关的就是这条通道**，
+   * 那一下会打死我们打算接回的那台内核，`分离的` 里留下的记录从此指向一具尸体。
+   *
+   * 保险装在句柄上而不是 `close` 上：给 `close` 加一个「只关 socket」模式会动到本机那条路，
+   * 而那里 kill 与 socket 的先后是 zeromq native 层的一条硬约束（先杀、等死、再关，
+   * 不然 `Napi::Error` 从 C++ 回调里抛出来直接 SIGABRT）。这里只让远端的枪空一次膛。
+   */
+  private 远端进程句柄(exec: NonNullable<SessionSpec["remote"]>["executor"]["exec"], pid: number): 远端句柄 {
     const 信号 = (s?: NodeJS.Signals) => (s === "SIGINT" ? "INT" : s === "SIGKILL" ? "KILL" : "TERM")
-    return {
+    const 句柄: 远端句柄 = {
       pid,
+      杀得了: true,
       // 走 SSH，fire-and-forget：`kill(signal)` 的契约是同步的
-      kill: (s) => void exec(`kill -${信号(s)} ${pid} 2>/dev/null; true`).catch(() => {}),
+      kill: (s) => {
+        if (!句柄.杀得了) return
+        void exec(`kill -${信号(s)} ${pid} 2>/dev/null; true`).catch(() => {})
+      },
     }
+    return 句柄
   }
 
   /**
@@ -392,6 +417,17 @@ export class KernelRuntime implements AgentRuntime {
       this.emit({ kind: "notice", sessionId, text: "心跳通道没打开，内核猝死只能靠 5 分钟静默兜底" })
       return
     }
+    /**
+     * **开口是异步的，`live` 是开口之前那一刻的**（审查 2026-09-04）。连一个 socket 要几十毫秒，
+     * 这期间会话完全可能已经被收掉（掉线分离、`stop`、猝死），甚至已经接回成另一条记录了。
+     * 把心跳挂到那条旧记录上，它会一直 ping 下去、这个 zmq 口永远没人关——
+     * **所有 `停()` 都是从 `sessions` / `分离的` 里找出来调的**，找不到就再也碰不到它。
+     * 按对象身份认，不只按 id：接回换的是同一个 id 的另一条记录。
+     */
+    if (this.sessions.get(sessionId) !== live) {
+      口.关()
+      return
+    }
     const 心 = 起心跳({
       ping: 口.ping,
       忙着: () => this.sessions.get(sessionId)?.current !== undefined,
@@ -485,9 +521,22 @@ export class KernelRuntime implements AgentRuntime {
       if (live.远端?.connectionId !== connectionId) continue
       this.sessions.delete(id)
       live.远端.心跳?.停()
+      /**
+       * **关通道之前把这个句柄的枪下了**（审查 2026-09-04）。`channel.close()` 的第一步是
+       * `kill("SIGKILL")`，远端句柄会把它变成 SSH 上的 `kill -KILL <pid>`——而这台内核
+       * 正是我们下面要留在 `分离的` 里、等重连时接回的那台。杀掉它，记录就指向一具尸体。
+       *
+       * 至今没出事只是运气：`RemoteConnections.记下` 在发 `onState` 之前就把执行器丢了，
+       * 那个 `exec` 直接 reject。那是**别的文件**的实现顺序，不是这里的保证——
+       * ssh2 的 `close` 换个次序、假 SSH 的 `dropLink`（链路标断但进程还在）、
+       * 或者哪天有人把执行器留久一点，这一枪就打实了。
+       *
+       * `猝死` / `丢了` / `stop` / `收远端` 照旧杀：那几条路要么内核已经死了，要么人就是要它停。
+       */
+      live.远端.句柄.杀得了 = false
       await live.channel.close().catch(() => {})
       await live.远端.关隧道().catch(() => {})
-      const { 心跳: _心, 关隧道: _关, ...留 } = live.远端
+      const { 心跳: _心, 关隧道: _关, 句柄: _句, ...留 } = live.远端
       this.分离的.set(id, {
         ...留,
         language: live.language,
@@ -537,14 +586,28 @@ export class KernelRuntime implements AgentRuntime {
    * 重连后认领（定案 10）：进程在且文件在 → 重建五条隧道 → 重握手 → 同一个会话 id 恢复。
    * 任一步不通 → `丢了`。**逐台、不并发**：一台失败不影响下一台。
    * 执行器用留下的句柄——它重连后仍指向这台机器。
+   *
+   * ## 认领的这几秒里，这台内核必须一直有人管（审查 2026-09-04）
+   *
+   * 认领要走一次 SSH、建五条隧道、等一次 20 秒的握手——**足够人按一下「断开」，
+   * 也足够再断一次线**。所以：
+   *
+   * - 记录**留在 `分离的` 里**直到尘埃落定（成功时紧挨着 `sessions.set` 才删，失败时在 `丢了` 里删）。
+   *   顶上就删的话，`放弃接回` 这几秒里找不到它：`exited{abandoned}` 永远不发，
+   *   而这边照样把会话装回 `sessions`——一台人已经说了不要的内核又活了。
+   * - 建好的隧道立刻登记进 `起中隧道`（`start` 用的同一张表），这几秒里的 `连接断了` / `收远端`
+   *   才关得掉它，不然五个本地监听端口漏一辈子。
+   * - **每个 await 之后重新认一次**：记录还是出发时那条吗（没被放弃）？隧道还归我们管吗
+   *   （没被 `连接断了` 抽走）？任一条不成立就不再往下走，也不下任何结论。
    */
   async 接回远端(connectionId: string): Promise<void> {
     const 远 = this.opts.远端 ?? { 起远端内核, 停远端内核, 五条隧道, attach: attachKernelChannel, 开心跳口 }
     for (const [id, 记] of [...this.分离的]) {
       if (记.connectionId !== connectionId) continue
-      this.分离的.delete(id)
       const ex = 记.executor
       const exec = ex.exec.bind(ex)
+      /** 这条记录还是我们出发时那条吗。`放弃接回` 已经替它收过尾了的话，这里什么都不该再做 */
+      const 还等着接回 = () => this.分离的.get(id) === 记
       let 在 = false
       try {
         在 = await 远端内核还在(exec, 记.起的)
@@ -552,6 +615,7 @@ export class KernelRuntime implements AgentRuntime {
         // 问不到 = 不知道；接回这一步不知道就当没了（下面尽力停，停不掉的留给扫残留）
         console.error(`[远端内核] 接回 ${记.label} 时问不到进程：${e instanceof Error ? e.message : String(e)}`)
       }
+      if (!还等着接回()) continue
       if (!在) {
         await this.丢了(id, 记, "进程或文件不在了")
         continue
@@ -568,7 +632,19 @@ export class KernelRuntime implements AgentRuntime {
         console.error(
           `[远端内核] 接回 ${记.label} 时端口隧道建不起来（sshd 可能关了 AllowTcpForwarding）：${e instanceof Error ? e.message : String(e)}`,
         )
+        if (!还等着接回()) continue
         await this.丢了(id, 记, "隧道建不起来")
+        continue
+      }
+      // 与 `start` 同一个登记处：握手那几秒里断线，`连接断了` 靠它把这五条关掉
+      const 登记 = { connectionId, 关隧道: 隧.关 }
+      this.起中隧道.set(id, 登记)
+      /** 这条隧道还归我们管吗——`连接断了` 抽走它时会连着从 `起中隧道` 里删掉 */
+      const 还归我们 = () => this.起中隧道.get(id) === 登记
+      if (!还等着接回()) {
+        // 建隧道那几秒里人按了「断开」：收掉刚建好的这条，别的什么都不做（`放弃接回` 已经发过 exited）
+        this.起中隧道.delete(id)
+        await 隧.关().catch(() => {})
         continue
       }
       const process = this.远端进程句柄(exec, 记.起的.pid)
@@ -585,11 +661,30 @@ export class KernelRuntime implements AgentRuntime {
           ...(this.opts.runIdOf ? { runIdOf: () => this.opts.runIdOf!(id) } : {}),
         })
       } catch (e) {
+        const 我们的 = 还归我们()
+        this.起中隧道.delete(id)
+        if (我们的) await 隧.关().catch(() => {})
+        /**
+         * 隧道在我们脚下被 `连接断了` 抽走了 → **握手不通是断线的后果，不是内核的死讯**：
+         * 那台内核多半还在服务器上，留在 `分离的` 里等下一次连上再接。
+         * 记录已经被人放弃了 → 也不下结论（`放弃接回` 收过尾了）。
+         */
+        if (!我们的 || !还等着接回()) continue
         console.error(`[远端内核] 接回 ${记.label} 时握手没回音：${e instanceof Error ? e.message : String(e)}`)
-        await 隧.关().catch(() => {})
         await this.丢了(id, 记, "握手没回音")
         continue
       }
+      const 我们的 = 还归我们()
+      this.起中隧道.delete(id)
+      if (!我们的 || !还等着接回()) {
+        // 握手期间被放弃 / 又断了一次：**不复活**，把刚接上的这条收掉。
+        // 先下枪：这台内核要么人已经不要（定案 14：不碰服务器），要么还等着下一次接回。
+        process.杀得了 = false
+        await channel.close().catch(() => {})
+        await 隧.关().catch(() => {})
+        continue
+      }
+      this.分离的.delete(id)
       // 定案 13：接回不生成新快照——同一个进程，S17 那份照旧挂着
       this.sessions.set(id, {
         channel,
@@ -605,6 +700,7 @@ export class KernelRuntime implements AgentRuntime {
           语言: 记.语言,
           解释器路径: 记.解释器路径,
           关隧道: 隧.关,
+          句柄: process,
         },
       })
       this.接线(id, channel)
@@ -613,9 +709,13 @@ export class KernelRuntime implements AgentRuntime {
     }
   }
 
-  /** 接回失败（定案 10 后半）：尽力停干净，发 exited{lost}。原因只进 console——转录那句是固定的 */
+  /**
+   * 接回失败（定案 10 后半）：尽力停干净，发 exited{lost}。原因只进 console——转录那句是固定的。
+   * **记录在这里才离开 `分离的`**：进来之前它一直在表里，好让这期间的「断开」找得到它。
+   */
   private async 丢了(id: SessionId, 记: 分离记录, 原因: string): Promise<void> {
     const 远 = this.opts.远端 ?? { 停远端内核 }
+    this.分离的.delete(id)
     console.error(`[远端内核] ${记.label} 上的 ${记.语言} 内核没接回来：${原因}`)
     await 远.停远端内核(记.executor.exec.bind(记.executor), 记.起的).catch(() => {})
     this.emit({ kind: "exited", sessionId: id, exitCode: 1, reason: "lost" })

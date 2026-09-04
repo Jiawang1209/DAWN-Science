@@ -89,6 +89,12 @@ export interface 挂载选项 {
    * 光看列表说不出「正在起」。退出时带 `reason`（运行时给了退出码才有）。
    */
   状态变了?: (对话: SessionId, 变化: 内核状态变化) => void
+  /**
+   * 执行前的「接回门」（接回，2026-09-04 定案 9）：这段对话的服务器刚连上时，扫残留 + 接回还在路上，
+   * `detached` 的那台此刻既不能写、也不该被当成死了起新的。装配层给一条 promise，等它 settle 再看状态。
+   * 不给 / 给 undefined = 没门，直接看状态。
+   */
+  接回门?: (对话: SessionId) => Promise<void> | undefined
 }
 
 /** 某一台内核这一次的状态变化。`state: "exited"` 时 `reason` 可有（非零退出码等） */
@@ -99,8 +105,9 @@ export interface 内核状态变化 {
   /** 是我们自己 `收()` 掉的，不是内核自己退出——转录不该为它喊「内核退出了」 */
   收掉?: true
   /**
-   * 这台在哪台服务器上（远程内核，定案 2）。**只在 `starting` 那条上带**——
-   * 那一刻内核还没起来，`起来了` 里什么都还不知道，而「正在起」这句话已经要点名了。
+   * 这台在哪台服务器上（远程内核，定案 2）。`starting` / `detached` / `exited` / 静默 / 接回那几条上带——
+   * 转录点名要用：「正在起」那一刻内核还没起来，`起来了` 里什么都还不知道；「断开」「没了」「还活着」
+   * 不说是哪台，等于什么都没说（接回，2026-09-04）。
    */
   服务器?: string
   /**
@@ -113,13 +120,22 @@ export interface 内核状态变化 {
   起来了?: { 解释器: string; cwd?: string; 服务器?: string }
   /** 「正在起」之后起失败了（`runtime.start` 抛）：`reason` 是原因。转录要接一句，否则「正在起…」永远没有下文 */
   起失败?: true
+  /**
+   * 接回来了（接回，2026-09-04 定案 10）：`detached` 之后回到 `idle` 的那一条才有。
+   * `掉线时在飞` 为真时转录要补一句「掉线时正在跑的那段可能已经跑完，输出没收到」。
+   */
+  接回了?: { 服务器?: string; 掉线时在飞: boolean }
 }
 
 /**
  * 一台内核的生命周期（笔记本，2026-08-26）。
  * `starting` 只存在于 `runtime.start` 还没解析的那一小段；表里能查到的台起码是 `idle`。
+ *
+ * `detached`（接回，2026-09-04 定案 6）：与服务器掉线了，进程多半还在服务器上活着——**不是死**。
+ * 表里留着这台（变量在服务器上没动），`拿` 不摘它也不起新的；等运行时 `reattached` 回 `idle`，
+ * 或 `exited{lost}` 才算没撑过去。
  */
-export type 内核状态 = "starting" | "idle" | "busy" | "exited"
+export type 内核状态 = "starting" | "idle" | "busy" | "exited" | "detached"
 
 /**
  * 给界面看的一台内核。**故意与协议的 `KernelState` 同形**：内核层不 import 协议
@@ -247,11 +263,20 @@ export class 对话内核 {
     await this.opts.runtime.abort(一.内核会话)
   }
 
-  /** 改一台的状态并出声。**相同不叫**：省得每条 busy 重复推一份一样的列表 */
+  /**
+   * 改一台的状态并出声。**相同不叫**：省得每条 busy 重复推一份一样的列表。
+   * 远端的每条都点名服务器（**现取**，与 `起一台` 同一条纪律）：`exited{died}` 那句「在 `<服务器>` 上没了」要用。
+   */
   private 置状态(一: 一台, 状态: 内核状态, reason?: string): void {
     if (一.状态 === 状态) return
     一.状态 = 状态
-    this.opts.状态变了?.(一.对话, { language: 一.语言, state: 状态, ...(reason ? { reason } : {}) })
+    const 远 = this.opts.remoteOf?.(一.对话)
+    this.opts.状态变了?.(一.对话, {
+      language: 一.语言,
+      state: 状态,
+      ...(reason ? { reason } : {}),
+      ...(远 ? { 服务器: 远.label } : {}),
+    })
   }
 
   /**
@@ -367,6 +392,34 @@ export class 对话内核 {
         if (ev.entry.state === "busy") this.置状态(一, "busy")
         // 后面还有排着的段：这个 idle 只是两段之间的缝，对笔记本来说它还在跑
         else if (ev.entry.state === "idle" && 一.排队中 === 0) this.置状态(一, "idle")
+      } else if (ev.kind === "detached") {
+        /**
+         * **掉线 = 分离，不是死**（接回，定案 6）。运行时已把它挪出 `sessions`、留着连接信息等接回；
+         * 这里只换状态、拒掉在飞的那段——它多半在服务器上跑完了，只是我们不在场，所以措辞是「没收到」不是「没跑完」。
+         * 表里不摘：变量在服务器上没动，`拿` 见到 `detached` 也不起新的（定案 9）。
+         */
+        const 远 = this.opts.remoteOf?.(对话)
+        一.状态 = "detached"
+        this.opts.状态变了?.(对话, {
+          language: 语言,
+          state: "detached",
+          reason: (e as { reason?: string }).reason ?? "disconnected",
+          ...(远 ? { 服务器: 远.label } : {}),
+        })
+        const 飞 = 一.在飞
+        if (飞) {
+          一.在飞 = undefined
+          飞.reject(new Error("与服务器断开，这段的结果没收到"))
+        }
+      } else if (ev.kind === "reattached") {
+        // 认领回来了（定案 10）：同一个会话 id、同一个进程、变量都在。这条 idle 带 `接回了`，转录据此出声
+        const 远 = this.opts.remoteOf?.(对话)
+        一.状态 = "idle"
+        this.opts.状态变了?.(对话, {
+          language: 语言,
+          state: "idle",
+          接回了: { 掉线时在飞: (e as { 掉线时在飞?: boolean }).掉线时在飞 === true, ...(远 ? { 服务器: 远.label } : {}) },
+        })
       } else if (ev.kind === "exited") {
         const code = (e as { exitCode?: number }).exitCode
         // 运行时说得出原因就用它的（远端断线 = `disconnected`），说不出才退回退出码
@@ -432,7 +485,15 @@ export class 对话内核 {
       开始了?: () => void
     },
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
-    const 一 = await this.拿(对话, 语言)
+    let 一 = await this.拿(对话, 语言)
+    if (一.状态 === "detached") {
+      /**
+       * 服务器可能刚连上、接回还在路上（接回，定案 9）：等门。门后重新 `拿`——要么 `idle`（接回了）、
+       * 要么 `exited`（没撑过去，`拿` 会摘掉它起新的一台）、要么仍 `detached`（还没连上，`真执行` 会回错）。
+       */
+      await this.opts.接回门?.(对话)
+      一 = await this.拿(对话, 语言)
+    }
     // 排队（见 `一台.队列`）：前一段失败了也不拖住后一段——失败是它自己的，队列只管顺序
     一.排队中++
     const 跑 = 一.队列.then(() => {
@@ -463,12 +524,19 @@ export class 对话内核 {
     if (一.状态 === "exited") {
       return Promise.reject(new Error(`${语言} 内核这一段没跑完就退出了`))
     }
+    // 掉线期间不写、也不起新的（定案 9）：那台在服务器上等着被认领，写进去只会撞上「没有这个内核会话」
+    if (一.状态 === "detached") {
+      return Promise.reject(new Error("与服务器断开，内核等着接回；连上后再试"))
+    }
 
     return new Promise((resolve, reject) => {
       let 解开: (() => void) | undefined
       let 定时: ReturnType<typeof setTimeout> | undefined
+      /** 这段已经有结果了。常驻监听先于 per-execute 那只耳朵拒掉它时，同一条事件还会再到这里——到了也不能再武装表 */
+      let 已结束 = false
       /** resolve / reject 任一条路都要走：摘耳朵、停表、清掉「在飞」，别给这台留悬着的钩子 */
       const 清理 = () => {
+        已结束 = true
         解开?.()
         if (定时) clearTimeout(定时)
         if (一.在飞 === 飞) 一.在飞 = undefined
@@ -490,16 +558,41 @@ export class 对话内核 {
        * 每收到这台的一条事件就 `clearTimeout` + 重新起一个——所以一路吐进度的长 cell
        * 永远不会到点；只有真的**整段沉默**才会。重置只是一次清表 + 一次 `setTimeout`，很便宜。
        */
+      let 说过静默 = false
       const 武装超时 = () => {
         if (定时) clearTimeout(定时)
         定时 = setTimeout(() => {
-          解开?.()
-          if (一.在飞 === 飞) 一.在飞 = undefined
-          reject(new Error("内核 5 分钟没有任何动静——它可能卡住或死了；可以中断后再试"))
+          void (async () => {
+            /**
+             * **远端先确认**（接回，2026-09-04 定案 5）：远端没有 exit 事件，静默既可能是「死了」也可能是
+             * 「R 算得正忙」（IRkernel 单线程，长计算期间连心跳都不答）。`确认活着` 只有内核运行时有：
+             * `true` = 进程在、继续等、**每段只出声一次**（`reason: "silent"`，状态仍 busy）；
+             * `false` = 运行时已按猝死收摊并发了 `exited{died}`，常驻监听那只耳朵会拒，这里不再拒第二次；
+             * `undefined` = 本机或问不了 → 照旧 5 分钟拒（本机有 exit 事件，静默就是卡住）。
+             * 问的期间这段可能已经有结果了（`在飞` 换了人）——那就什么都不做。
+             */
+            const rt = this.opts.runtime as { 确认活着?: (id: SessionId) => Promise<boolean | undefined> }
+            const r = typeof rt.确认活着 === "function" ? await rt.确认活着(一.内核会话).catch(() => undefined) : undefined
+            if (一.在飞 !== 飞) return
+            if (r === true) {
+              if (!说过静默) {
+                说过静默 = true
+                const 远 = this.opts.remoteOf?.(一.对话)
+                this.opts.状态变了?.(一.对话, { language: 语言, state: "busy", reason: "silent", ...(远 ? { 服务器: 远.label } : {}) })
+              }
+              武装超时()
+              return
+            }
+            if (r === false) return
+            清理()
+            reject(new Error("内核 5 分钟没有任何动静——它可能卡住或死了；可以中断后再试"))
+          })()
         }, 静默超时)
       }
       try {
         解开 = this.opts.runtime.attach(一.内核会话, (e) => {
+          // 常驻监听已经替这段拒过了（detached / exited 先到它那儿）：同一条事件再到这里不能把表重新武装起来
+          if (已结束) return
           // 收到这台的任何一条事件都把静默表清零：有动静就不算「卡住或死了」
           武装超时()
           const ev = e as { kind: string; entry?: { kind?: string; state?: string } }
@@ -517,6 +610,10 @@ export class 对话内核 {
           if (ev.kind === "exited") {
             清理()
             reject(new Error(`${语言} 内核这一段没跑完就退出了`))
+          } else if (ev.kind === "detached") {
+            // 掉线的快路（定案 6），与 exited 同一副写法；常驻监听是没赶上时的兜底
+            清理()
+            reject(new Error("与服务器断开，这段的结果没收到"))
           }
         })
         /**

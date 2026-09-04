@@ -9,6 +9,7 @@
  */
 import { describe, expect, it, vi } from "vitest"
 import { 对话内核, 静默超时 } from "../../src/kernel/挂载.js"
+import type { 内核状态变化 } from "../../src/kernel/挂载.js"
 import type { SessionId } from "../../src/runtime/types.js"
 
 /** status 条目的最小合法 provenance（照 `src/kernel/outputs.ts` 的 `Provenance`） */
@@ -44,6 +45,28 @@ function 假内核(选: { 带abort?: boolean; 带variables?: boolean; write抛?:
   }
   return { runtime: runtime as never, 收到, 中断过, 问过变量, 发 }
 }
+
+/** 接回那组要数「起了几台」：`拿` 在 detached 期间不许起新的、exited 之后必须起新的 */
+function 假内核带计数() {
+  const 基 = 假内核()
+  let n = 0
+  const rt = 基.runtime as unknown as { start: (spec: { sessionId: string }) => Promise<unknown> }
+  const 原start = rt.start
+  rt.start = async (spec) => {
+    n++
+    return 原start(spec)
+  }
+  return { ...基, 起了几次: () => n }
+}
+
+/** 远端会话的一份基本挂载选项（带 `remoteOf`，转录点名要服务器名） */
+const 基本 = (runtime: unknown) => ({
+  runtime: runtime as never,
+  workspaceOf: () => "/w",
+  sessionDirOf: () => "/w/.dawn",
+  interpreterOf: () => "/usr/bin/python3",
+  remoteOf: () => ({ executor: {} as never, cwd: "/w", connectionId: "conn-1", label: "genek" }),
+})
 
 function 挂上(runtime: never, 状态变了?: (对话: SessionId) => void) {
   return new 对话内核({
@@ -472,6 +495,157 @@ describe("对话内核 · 内核起来就死 / 卡住不再让 cell 永远转（
       发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
       await expect(p).resolves.toMatchObject({ 语言: "python" }) // 已经跑完
       await vi.advanceTimersByTimeAsync(静默超时) // 再怎么推进，这段也不会被超时翻成拒绝
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe("detached · 接回（2026-09-04）", () => {
+  const 对话 = c1
+
+  it("运行时发 detached → 状态 detached、在飞的那段拒掉并说清；执行直接回错、不起新台", async () => {
+    const { runtime, 发, 起了几次 } = 假内核带计数()
+    const 变化: 内核状态变化[] = []
+    const 挂 = new 对话内核({ ...基本(runtime), 状态变了: (_c, v) => void 变化.push(v) })
+    const p = 挂.执行(对话, "python", "x = 1")
+    await new Promise((r) => setTimeout(r, 0))
+    发("c1::python", { kind: "detached", sessionId: "c1::python", reason: "disconnected" })
+    await expect(p).rejects.toThrow(/与服务器断开，这段的结果没收到/)
+    expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "detached" }])
+    expect(变化.at(-1)).toMatchObject({ state: "detached", reason: "disconnected", 服务器: "genek" })
+    await expect(挂.执行(对话, "python", "y = 2")).rejects.toThrow(/等着接回/)
+    expect(起了几次()).toBe(1)
+  })
+
+  it("执行时先过接回门：门开了且已 reattached → 照常执行", async () => {
+    const { runtime, 发, 收到 } = 假内核带计数()
+    let 放行: () => void = () => {}
+    const 门 = new Promise<void>((r) => (放行 = r))
+    const 变化: 内核状态变化[] = []
+    const 挂 = new 对话内核({ ...基本(runtime), 接回门: () => 门, 状态变了: (_c, v) => void 变化.push(v) })
+    await 挂.拿(对话, "python")
+    发("c1::python", { kind: "detached", sessionId: "c1::python", reason: "disconnected" })
+    const p = 挂.执行(对话, "python", "z = 3")
+    await new Promise((r) => setTimeout(r, 0))
+    // 门没开：代码不能写进去
+    expect(收到).toEqual([])
+    发("c1::python", { kind: "reattached", sessionId: "c1::python", 掉线时在飞: true })
+    // 接回那条 idle 带 `接回了`（定案 10），之后这段真送进去时才翻 busy
+    expect(变化.at(-1)).toMatchObject({ state: "idle", 接回了: { 服务器: "genek", 掉线时在飞: true } })
+    放行()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(收到).toContain("z = 3")
+    expect(变化.at(-1)).toMatchObject({ state: "busy" })
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await p
+  })
+
+  it("门开了但那台 lost → 拿会摘掉 exited 的、起新的一台", async () => {
+    const { runtime, 发, 起了几次 } = 假内核带计数()
+    const 变化: 内核状态变化[] = []
+    const 挂 = new 对话内核({ ...基本(runtime), 接回门: () => Promise.resolve(), 状态变了: (_c, v) => void 变化.push(v) })
+    await 挂.拿(对话, "python")
+    发("c1::python", { kind: "detached", sessionId: "c1::python", reason: "disconnected" })
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1, reason: "lost" })
+    // exited 那条也点名服务器：转录「没撑过这次断线」要说是哪台
+    expect(变化.at(-1)).toMatchObject({ state: "exited", reason: "lost", 服务器: "genek" })
+    const p = 挂.执行(对话, "python", "w = 4")
+    await new Promise((r) => setTimeout(r, 0))
+    expect(起了几次()).toBe(2)
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await p
+  })
+
+  it("detached 期间 拿() 既不摘它也不起新的：等门的那一次也只有一台", async () => {
+    const { runtime, 发, 起了几次 } = 假内核带计数()
+    const 挂 = new 对话内核(基本(runtime))
+    await 挂.拿(对话, "python")
+    发("c1::python", { kind: "detached", sessionId: "c1::python", reason: "disconnected" })
+    const 一 = await 挂.拿(对话, "python")
+    expect(一.状态).toBe("detached")
+    expect(起了几次()).toBe(1)
+    expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "detached" }])
+  })
+})
+
+describe("静默兜底 · 远端先确认（定案 5）", () => {
+  const 对话 = c1
+
+  it("确认活着 → 不拒、重新武装、只出声一次", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime } = 假内核带计数()
+      let 问了 = 0
+      ;(runtime as Record<string, unknown>).确认活着 = async () => {
+        问了++
+        return true
+      }
+      const 变化: 内核状态变化[] = []
+      const 挂 = new 对话内核({ ...基本(runtime), 状态变了: (_c, v) => void 变化.push(v) })
+      const p = 挂.执行(对话, "python", "slow()")
+      let 拒了 = false
+      p.catch(() => (拒了 = true))
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      expect(问了).toBe(1)
+      expect(拒了).toBe(false)
+      expect(变化.filter((v) => v.reason === "silent")).toHaveLength(1)
+      expect(变化.filter((v) => v.reason === "silent")[0]).toMatchObject({ state: "busy", 服务器: "genek" })
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      expect(问了).toBe(2)
+      expect(变化.filter((v) => v.reason === "silent")).toHaveLength(1)
+      expect(拒了).toBe(false)
+      expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "busy" }])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("确认死了 → 运行时那边发 exited，这段被拒", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime, 发 } = 假内核带计数()
+      ;(runtime as Record<string, unknown>).确认活着 = async () => {
+        发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1, reason: "died" })
+        return false
+      }
+      const 挂 = new 对话内核(基本(runtime))
+      const p = 挂.执行(对话, "python", "slow()")
+      const 捕 = p.catch((e) => e) // 先接住，别让它成为 unhandled rejection
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      expect(((await 捕) as Error).message).toMatch(/没跑完就退出了/)
+      expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "exited" }])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("本机（没有 确认活着）→ 照旧 5 分钟拒", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime } = 假内核带计数()
+      const 挂 = new 对话内核(基本(runtime))
+      const p = 挂.执行(对话, "python", "slow()")
+      const 捕 = p.catch((e) => e) // 先接住，别让它成为 unhandled rejection
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      expect(((await 捕) as Error).message).toMatch(/5 分钟没有任何动静/)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("确认活着 抛了 → 当问不了，照旧拒（失败不静默吞成「活着」）", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime } = 假内核带计数()
+      ;(runtime as Record<string, unknown>).确认活着 = async () => {
+        throw new Error("ssh 挂了")
+      }
+      const 挂 = new 对话内核(基本(runtime))
+      const p = 挂.执行(对话, "python", "slow()")
+      const 捕 = p.catch((e) => e) // 先接住，别让它成为 unhandled rejection
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      expect(((await 捕) as Error).message).toMatch(/5 分钟没有任何动静/)
     } finally {
       vi.useRealTimers()
     }

@@ -394,6 +394,13 @@ export type AgentEvent =
       fullOutputPath?: string
     }
   | { kind: "exited"; sessionId: SessionId; exitCode: number; reason?: string }
+  /**
+   * 远端内核与它的服务器**掉线**了（接回，2026-09-04 定案 6）——不是死：进程多半还在服务器上。
+   * 运行时把它挪出 `sessions`、留下连接信息等接回。挂载层据此进 `detached`。
+   */
+  | { kind: "detached"; sessionId: SessionId; reason: string }
+  /** 重连后认领回来了（定案 10）：同一个会话 id、同一个进程、变量都在。`掉线时在飞` = 掉线那一刻有段代码在跑 */
+  | { kind: "reattached"; sessionId: SessionId; 掉线时在飞: boolean }
 
 export type EventSink = (event: AgentEvent) => void
 

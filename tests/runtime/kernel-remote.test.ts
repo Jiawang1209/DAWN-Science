@@ -3,11 +3,11 @@
  * **顺序与收摊**——起内核 → 五条隧道 → attach；停 = 停内核 → 关通道 → 关隧道；
  * 断线 = 这台服务器名下的全部标死、发一条带 reason 的 exited、隧道关掉。
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { KernelRuntime } from "../../src/runtime/kernel.js"
 import type { AgentEvent, SessionId } from "../../src/runtime/types.js"
 
-function 假件() {
+function 假件(选: { 远端活着?: () => boolean } = {}) {
   const 日志: string[] = []
   /** attach 收到的那个「远端进程」句柄。真 `channel.close()` 会 `kill("SIGKILL")` 它，假的也照做 */
   let 进程: { kill(s?: NodeJS.Signals): void } | undefined
@@ -29,6 +29,12 @@ function 假件() {
     send: () => {},
     request: async () => ({}),
     onExit: () => () => {},
+  }
+  /** 假的 zmq 心跳口：`回音` 是可控的——测试把它拨成 false 来演「心跳沉默」 */
+  let 回音 = true
+  const 心跳口 = {
+    开心跳口: async () => ({ ping: async () => 回音, 关: () => void 日志.push("心跳.关") }),
+    设回音: (v: boolean) => (回音 = v),
   }
   const 远端 = {
     起远端内核: async (_e: unknown, o: { 语言: string; cwd: string }) => {
@@ -60,11 +66,17 @@ function 假件() {
       进程 = o.process
       return 假通道 as never
     },
+    开心跳口: 心跳口.开心跳口,
   }
   const executor = {
     // 每一条走到服务器上的命令都记一笔：断线那条要证明**一条都没发**（连接已经没了）
     exec: async (cmd: string) => {
       日志.push(`exec:${cmd}`)
+      // `kill -0` 那条是心跳的结论 / 接回的认领：`DAWNALIVE` 与 `DAWNFILE` 同一份答案（假机器上文件跟着进程走）
+      if (cmd.includes("kill -0")) {
+        const 活 = 选.远端活着?.() ?? true
+        return { code: 0, stdout: `DAWNALIVE=${活 ? 1 : 0}\nDAWNFILE=${活 ? 1 : 0}\n`, stderr: "" }
+      }
       return { code: 0, stdout: "", stderr: "" }
     },
     readFile: async () => Buffer.alloc(0),
@@ -73,7 +85,7 @@ function 假件() {
       throw new Error("不该直接调")
     },
   }
-  return { 日志, 远端, executor }
+  return { 日志, 远端, executor, 心跳口 }
 }
 
 const spec = (executor: unknown) => ({
@@ -97,6 +109,7 @@ describe("KernelRuntime · 远端", () => {
     expect(日志).toEqual(["起:python@/data/p", "attach:11"])
     await rt.stop("c1::python" as SessionId)
     expect(日志.slice(2)).toEqual([
+      "心跳.关", // 先停心跳：不然停到一半它去确认、判死、再收一遍
       "停:7",
       "exec:kill -KILL 7 2>/dev/null; true", // `channel.close()` 自己那一下，走 SSH
       "channel.close",
@@ -134,7 +147,7 @@ describe("KernelRuntime · 远端", () => {
     expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
   })
 
-  it("断线：这台服务器名下的内核全部标死，exited 带 reason=disconnected，隧道关掉；别的服务器不受影响", async () => {
+  it("断线：这台服务器名下的内核全部分离，detached 带 reason=disconnected，隧道关掉；别的服务器不受影响", async () => {
     const { 日志, 远端, executor } = 假件()
     const rt = new KernelRuntime({ 远端: 远端 as never })
     await rt.start(spec(executor) as never)
@@ -146,8 +159,10 @@ describe("KernelRuntime · 远端", () => {
     const 收到: AgentEvent[] = []
     rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
     await rt.连接断了("conn-1")
-    expect(收到.map((e) => e.kind)).toEqual(["exited"])
-    expect(收到[0]).toMatchObject({ kind: "exited", reason: "disconnected" })
+    // 掉线 = 分离，不是死（接回，2026-09-04 定案 6）：记录留着等接回，但已经不在 `sessions` 里
+    expect(收到.map((e) => e.kind)).toEqual(["detached"])
+    expect(收到[0]).toMatchObject({ kind: "detached", reason: "disconnected" })
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
     expect(日志).toContain("隧道.关")
     expect(日志).not.toContain("停:7") // 连接没了，杀不了；留给下次连上的扫残留
     /**
@@ -199,5 +214,167 @@ describe("KernelRuntime · 远端", () => {
     await new Promise((r) => setTimeout(r, 0))
     expect(收[0]).toMatchObject({ where: { connectionId: "conn-1" } })
     expect(rt.environmentOf("c1::python" as SessionId)).toMatchObject({ where: { connectionId: "conn-1" } })
+  })
+})
+
+describe("KernelRuntime · 猝死察觉", () => {
+  it("心跳沉默 → SSH 确认 → 进程没了 → 收摊、删远端文件、exited{reason:died}", async () => {
+    vi.useFakeTimers()
+    let 活 = true
+    const { 日志, 远端, executor, 心跳口 } = 假件({ 远端活着: () => 活 })
+    const rt = new KernelRuntime({ 远端: 远端 as never, installId: () => "ab12" })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    心跳口.设回音(false)
+    活 = false
+    await vi.advanceTimersByTimeAsync(10_500)
+    await vi.runOnlyPendingTimersAsync()
+    expect(收到.map((e) => e.kind)).toContain("exited")
+    expect(收到.find((e) => e.kind === "exited")).toMatchObject({ reason: "died" })
+    expect(日志).toContain("心跳.关")
+    expect(日志).toContain("隧道.关")
+    expect(日志.some((l) => l.startsWith("exec:rm -f '/tmp/f.json' '/tmp/f.json.log'"))).toBe(true)
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
+    vi.useRealTimers()
+  })
+
+  it("心跳沉默但进程在（R 忙着）→ 不判死", async () => {
+    vi.useFakeTimers()
+    const { 远端, executor, 心跳口 } = 假件({ 远端活着: () => true })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    心跳口.设回音(false)
+    await vi.advanceTimersByTimeAsync(10_500)
+    await vi.runOnlyPendingTimersAsync()
+    expect(收到.map((e) => e.kind)).not.toContain("exited")
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBe("k-1")
+    vi.useRealTimers()
+  })
+
+  it("确认活着(id)：远端答 0 → 猝死收摊并回 false；本机会话回 undefined", async () => {
+    let 活 = true
+    const { 远端, executor } = 假件({ 远端活着: () => 活 })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    expect(await rt.确认活着("c1::python" as SessionId)).toBe(true)
+    活 = false
+    expect(await rt.确认活着("c1::python" as SessionId)).toBe(false)
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBeUndefined()
+    expect(await rt.确认活着("nope" as SessionId)).toBeUndefined()
+  })
+})
+
+describe("KernelRuntime · 分离与接回", () => {
+  it("掉线：关通道、关隧道、停心跳，发 detached（不是 exited）；记录留着，变量面板答「等接回」", async () => {
+    const { 日志, 远端, executor } = 假件()
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    expect(收到.map((e) => e.kind)).toEqual(["detached"])
+    expect(日志).toContain("channel.close")
+    expect(日志).toContain("隧道.关")
+    expect(日志).toContain("心跳.关")
+    expect(rt.等着接回的文件("conn-1")).toEqual(["f.json"])
+    expect(await rt.variables("c1::python" as SessionId)).toMatchObject({ supported: false, reason: expect.stringContaining("等接回") })
+  })
+
+  it("接回：进程在 → 扫残留之后重建隧道、重握手，发 reattached；同一个会话 id 又能用", async () => {
+    const { 日志, 远端, executor } = 假件({ 远端活着: () => true })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    日志.length = 0
+    await rt.接回远端("conn-1")
+    expect(收到.map((e) => e.kind)).toEqual(["detached", "reattached"])
+    expect(收到[1]).toMatchObject({ kind: "reattached", 掉线时在飞: false })
+    expect(日志.some((l) => l.startsWith("exec:") && l.includes("kill -0 7"))).toBe(true)
+    expect(日志).toContain("attach:11")
+    expect(rt.等着接回的文件("conn-1")).toEqual([])
+    expect(rt.kernelInstanceId("c1::python" as SessionId)).toBe("k-1")
+  })
+
+  it("掉线时有段在飞 → reattached 带 掉线时在飞:true", async () => {
+    const { 远端, executor } = 假件({ 远端活着: () => true })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    rt.write("c1::python" as SessionId, "x = 1")
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    await rt.接回远端("conn-1")
+    expect(收到[1]).toMatchObject({ kind: "reattached", 掉线时在飞: true })
+  })
+
+  it("接回：进程没了 → 尽力停、发 exited{reason:lost}，记录清掉", async () => {
+    const { 日志, 远端, executor } = 假件({ 远端活着: () => false })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    await rt.接回远端("conn-1")
+    expect(收到.map((e) => e.kind)).toEqual(["detached", "exited"])
+    expect(收到[1]).toMatchObject({ reason: "lost" })
+    expect(日志).toContain("停:7")
+    expect(rt.等着接回的文件("conn-1")).toEqual([])
+  })
+
+  it("接回：握手不通 → 关隧道、停远端、exited{reason:lost}", async () => {
+    const { 日志, 远端, executor } = 假件({ 远端活着: () => true })
+    let 第几次 = 0
+    const 坏attach = {
+      ...远端,
+      attach: async (o: never) => {
+        第几次++
+        if (第几次 === 1) return 远端.attach(o)
+        throw new Error("握手超时")
+      },
+    }
+    const rt = new KernelRuntime({ 远端: 坏attach as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    await rt.接回远端("conn-1")
+    expect(收到.map((e) => e.kind)).toEqual(["detached", "exited"])
+    expect(收到[1]).toMatchObject({ reason: "lost" })
+    expect(日志.filter((l) => l === "隧道.关")).toHaveLength(2)
+    expect(日志).toContain("停:7")
+  })
+
+  it("人按「断开」时那台在 detached → 放弃接回：exited{reason:abandoned}，不碰服务器", async () => {
+    const { 日志, 远端, executor } = 假件()
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    const 收到: AgentEvent[] = []
+    rt.attach("c1::python" as SessionId, (e) => void 收到.push(e))
+    await rt.连接断了("conn-1")
+    日志.length = 0
+    await rt.断开了("conn-1")
+    expect(收到.map((e) => e.kind)).toEqual(["detached", "exited"])
+    expect(收到[1]).toMatchObject({ reason: "abandoned" })
+    expect(日志.filter((l) => l.startsWith("exec:"))).toEqual([])
+    expect(rt.等着接回的文件("conn-1")).toEqual([])
+  })
+
+  it("别的服务器的内核不受这台掉线 / 接回影响", async () => {
+    const { 远端, executor } = 假件({ 远端活着: () => true })
+    const rt = new KernelRuntime({ 远端: 远端 as never })
+    await rt.start(spec(executor) as never)
+    await rt.start({
+      ...spec(executor),
+      sessionId: "c2::python",
+      remote: { ...spec(executor).remote, connectionId: "conn-2" },
+    } as never)
+    await rt.连接断了("conn-1")
+    expect(rt.等着接回的文件("conn-2")).toEqual([])
+    expect(rt.kernelInstanceId("c2::python" as SessionId)).toBe("k-1")
   })
 })

@@ -161,7 +161,8 @@ interface Open {
  * 所以 token 一路不变，只在账本这道边界上换成话。
  */
 function 落账理由(reason: string | undefined): string | undefined {
-  return reason === "disconnected" ? "与服务器断开，这段没跑完" : reason
+  // 掉线时那段多半已经在服务器上跑完了，只是我们不在（定案 6）——「没跑完」是猜，「没收到」是事实
+  return reason === "disconnected" ? "与服务器断开，这段的结果没收到" : reason
 }
 
 export class RunRecorder {

@@ -482,3 +482,13 @@ function 一条(命令: string, 当前: string): { out: string; err: string; cod
     code: 127,
   }
 }
+
+/**
+ * **测试开关**（`fakeSshControl{do:"dropLink"}`，接回 7.31）：把这台进程里所有假 SSH 链路掐断，
+ * 只断链路、不碰内核子进程——模拟「网断了、服务器上那台还活着」。返回掐断了几条。
+ *
+ * **占位：任务 8 里真正实现**（要动 `假客户端` 的连接登记表）。现在回 0，好让 typecheck 与协议先成立。
+ */
+export function 掐断所有假连接(): number {
+  return 0
+}

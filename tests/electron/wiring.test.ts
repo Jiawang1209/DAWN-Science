@@ -16,8 +16,8 @@ import { RunRecorder } from "../../src/project/run-recorder.js"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import { NativeRuntime } from "../../src/runtime/native.js"
-import type { AgentEvent } from "../../src/runtime/types.js"
-import { 对话内核 } from "../../src/kernel/挂载.js"
+import type { AgentEvent, SessionId } from "../../src/runtime/types.js"
+import { 对话内核, type 内核状态变化 } from "../../src/kernel/挂载.js"
 import { SettingsStore } from "../../src/store/settings.js"
 import { 造门 } from "../../src/policy/permissions.js"
 import { 假口令 } from "../../src/remote/fake-ssh.js"
@@ -627,6 +627,59 @@ describe("内核变化出声 · 接线", () => {
     内核变化出声(events, "c1", { language: "python", state: "idle" })
     expect(通知()).toEqual([])
   })
+
+  /**
+   * 接回那一族（接回，7.31 定案 6/10/14）：**每一条都得点名是哪台服务器**——
+   * 一段会话可能同时挂着两台机器上的内核，「断开了」不说是谁断了，人只能去猜。
+   * 更要紧的是这四句说的是四件不同的事（还活着 / 认领回来了 / 被杀了 / 没撑过 / 人不要了），
+   * 长得一样就等于没有判据。
+   */
+  it("detached / 接回 / died / lost / abandoned / silent 各有各的话，都点名服务器", () => {
+    const 说 = (变化: 内核状态变化) => {
+      const 收: string[] = []
+      内核变化出声({ notice: (_s: SessionId, t: string) => void 收.push(t) } as never, "c1" as SessionId, 变化)
+      return 收
+    }
+    expect(说({ language: "python", state: "detached", reason: "disconnected", 服务器: "genek" })).toEqual([
+      "与 genek 断开；Python 内核可能还在服务器上活着，重新连上后会试着接回",
+    ])
+    expect(说({ language: "python", state: "idle", 接回了: { 服务器: "genek", 掉线时在飞: false } })).toEqual([
+      "重新连上 genek，Python 内核还活着，变量都在",
+    ])
+    expect(说({ language: "R", state: "idle", 接回了: { 服务器: "genek", 掉线时在飞: true } })).toEqual([
+      "重新连上 genek，R 内核还活着，变量都在；掉线时正在跑的那段可能已经跑完，输出没收到",
+    ])
+    expect(说({ language: "python", state: "exited", reason: "died", 服务器: "genek" })).toEqual([
+      "Python 内核在 genek 上没了（可能是内存耗尽或被集群杀掉）；这一段没跑完，变量已经不在了；再跑会起新的一台",
+    ])
+    expect(说({ language: "python", state: "exited", reason: "lost" })).toEqual([
+      "Python 内核没撑过这次断线，变量已经不在了；再跑会起新的一台",
+    ])
+    expect(说({ language: "python", state: "exited", reason: "abandoned" })).toEqual([
+      "Python 内核退出了：已放弃接回；服务器上那台由下次连上时清掉",
+    ])
+    expect(说({ language: "R", state: "busy", reason: "silent" })).toEqual([
+      "R 内核 5 分钟没有动静，进程还在，继续等；可以中断",
+    ])
+    // 接回后普通的 idle 不出声
+    expect(说({ language: "python", state: "idle" })).toEqual([])
+  })
+
+  /**
+   * 记账（定案 6）：**分离与断线退出都要在账本上留下名字**——账本上那一笔的意思是
+   * 「这段 run_code 的结果我们没收到」，分离和退出对它是同一件事。
+   * 猝死（`died`）/ 没撑过（`lost`）/ 放弃（`abandoned`）不叫这一声：那几条另有自己的落账路径。
+   */
+  it("记账：detached 与 exited{disconnected} 都叫 远端断了", () => {
+    const 叫了: string[] = []
+    const rec = { 远端断了: (_s: SessionId, r: string) => void 叫了.push(r) }
+    内核变化记账(rec, "c1" as SessionId, { language: "python", state: "detached", reason: "disconnected" })
+    内核变化记账(rec, "c1" as SessionId, { language: "python", state: "exited", reason: "disconnected" })
+    内核变化记账(rec, "c1" as SessionId, { language: "python", state: "exited", reason: "died" })
+    内核变化记账(rec, "c1" as SessionId, { language: "python", state: "exited", reason: "lost" })
+    内核变化记账(rec, "c1" as SessionId, { language: "python", state: "exited", reason: "abandoned" })
+    expect(叫了).toEqual(["disconnected", "disconnected"])
+  })
 })
 
 /**
@@ -687,7 +740,7 @@ describe("远端断线落进这段对话的账本 · 接线", () => {
 
     const 工具 = list().find((r) => r.requestType === "tool_call:run_code")!
     expect(工具.status).toBe("cancelled")
-    expect(工具.terminalReason).toBe("与服务器断开，这段没跑完")
+    expect(工具.terminalReason).toBe("与服务器断开，这段的结果没收到")
   })
 
   it("正常退出（退出码）不走这条路——只有断线才改写在飞的那一条", async () => {

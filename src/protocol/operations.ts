@@ -1743,6 +1743,17 @@ export const OPERATIONS = {
   },
 
   /**
+   * **测试专用**（远端内核猝死与接回，7.31）：对这台装配上所有假 SSH 连接掐线（`dropLink`，只断链路、不碰内核进程），
+   * 或在 DAWN 背后杀掉假机器起的所有内核（`killKernels`，模拟 OOM）。只在 `DAWN_FAKE_SSH=1` 时放行，
+   * 否则回 `invalid_request`。e2e 与 `dev:mock` 用；生产界面没有入口。
+   */
+  fakeSshControl: {
+    request: z.object({ do: z.enum(["dropLink", "killKernels"]) }).strict(),
+    response: z.object({ count: z.number().int().nonnegative() }).strict(),
+    mutating: true,
+  },
+
+  /**
    * 两个解释器路径（2026-08-10，作者定的机制）。
    *
    * *「我不是要求你扫描整个电脑，而是直接提供一个 R 解释器和 Python 解释器的

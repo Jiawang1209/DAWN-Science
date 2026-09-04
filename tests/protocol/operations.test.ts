@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema, RemoteConnectionSchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("129 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1）", () => {
+  it("130 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "setRemoteInterpreter",
@@ -22,6 +22,7 @@ describe("操作注册表", () => {
         "listArtifacts",
         "runInKernel",
         "interruptKernel",
+        "fakeSshControl",
         "openProject",
         "addAcpAgent",
         "removeAgent",
@@ -476,5 +477,20 @@ describe("远程内核 · 解释器路径（7.30）", () => {
     expect(S.safeParse(一份内核快照).success).toBe(true)
     expect(S.safeParse({ ...一份内核快照, where: { connectionId: "conn-1" } }).success).toBe(true)
     expect(S.safeParse({ ...一份内核快照, where: { connectionId: "conn-1" }, extra: 1 }).success).toBe(false)
+  })
+})
+
+/**
+ * `fakeSshControl`（远端内核猝死与接回，7.31）：**测试专用**——对这台装配上所有假 SSH 连接掐线，
+ * 或杀掉假机器起的所有内核（模拟 OOM）。只在 `DAWN_FAKE_SSH=1` 时放行，生产界面没有入口。
+ */
+describe("fakeSshControl（测试专用，7.31）", () => {
+  it("do ∈ dropLink | killKernels；mutating；响应 count", () => {
+    const op = OPERATIONS.fakeSshControl
+    expect(op.mutating).toBe(true)
+    expect(op.request.safeParse({ do: "dropLink" }).success).toBe(true)
+    expect(op.request.safeParse({ do: "killKernels" }).success).toBe(true)
+    expect(op.request.safeParse({ do: "reboot" }).success).toBe(false)
+    expect(op.response.safeParse({ count: 1 }).success).toBe(true)
   })
 })

@@ -247,14 +247,48 @@ export function 内核变化出声(events: SessionTranscripts, 对话: SessionId
         : `内核已起来（${起.解释器}）`,
     )
   } else if (变化.起失败) events.notice(对话, `${名} 内核起不来：${变化.reason ?? "原因不明"}`)
-  else if (变化.state === "exited" && !变化.收掉) {
+  else if (变化.state === "detached") {
+    // 掉线 = 分离（定案 6）：进程多半还在服务器上，别说「变量没了」
+    events.notice(对话, `与 ${变化.服务器 ?? "服务器"} 断开；${名} 内核可能还在服务器上活着，重新连上后会试着接回`)
+  } else if (变化.接回了) {
     /**
-     * **断线那一条要把「变量没了」说全**（远程内核，2026-09-04 e2e 抓的）：运行时自己的那条 notice
-     * 在这条路上到不了转录——`转发` 只放 `kernel_output`——所以这里是唯一能说话的地方。
-     * 不接「再跑一次」：得先把那台服务器连回来。
+     * 认领回来了（定案 10）：同一个进程、变量都在。**「掉线时在飞」那半句必须说**——
+     * 那段代码多半在服务器上跑完了，只是输出发给了一条已经不在的通道；
+     * 不说的话，人看到的是「命令消失了」，然后会再跑一遍（副作用做两次）。
      */
-    if (变化.reason === "disconnected") events.notice(对话, `${名} 内核退出了：与服务器断开，内核里的变量已经不在了；重新连接后再跑会起新的一台`)
-    else events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
+    const 接 = 变化.接回了
+    events.notice(
+      对话,
+      `重新连上 ${接.服务器 ?? "服务器"}，${名} 内核还活着，变量都在${接.掉线时在飞 ? "；掉线时正在跑的那段可能已经跑完，输出没收到" : ""}`,
+    )
+  } else if (变化.reason === "silent") {
+    // 5 分钟静默兜底改成先确认（定案 5）：进程还在就不 reject，只说一声——每段执行只说一次
+    events.notice(对话, `${名} 内核 5 分钟没有动静，进程还在，继续等；可以中断`)
+  } else if (变化.state === "exited" && !变化.收掉) {
+    /**
+     * **退出的四种理由要说成四句不同的话**（定案 4/6/10/14）。
+     * 运行时自己的那条 notice 在这条路上到不了转录——`转发` 只放 `kernel_output`——
+     * 所以这里是唯一能说话的地方。断线那条不接「再跑一次」：得先把那台服务器连回来。
+     */
+    switch (变化.reason) {
+      case "disconnected":
+        events.notice(对话, `${名} 内核退出了：与服务器断开，内核里的变量已经不在了；重新连接后再跑会起新的一台`)
+        break
+      case "died":
+        events.notice(
+          对话,
+          `${名} 内核在 ${变化.服务器 ?? "服务器"} 上没了（可能是内存耗尽或被集群杀掉）；这一段没跑完，变量已经不在了；再跑会起新的一台`,
+        )
+        break
+      case "lost":
+        events.notice(对话, `${名} 内核没撑过这次断线，变量已经不在了；再跑会起新的一台`)
+        break
+      case "abandoned":
+        events.notice(对话, `${名} 内核退出了：已放弃接回；服务器上那台由下次连上时清掉`)
+        break
+      default:
+        events.notice(对话, `${名} 内核退出了${变化.reason ? "：" + 变化.reason : ""}；再跑一次会起新的一台`)
+    }
   }
 }
 
@@ -273,7 +307,10 @@ export function 内核变化记账(
   对话: SessionId,
   变化: 内核状态变化,
 ): void {
-  if (变化.state === "exited" && 变化.reason === "disconnected") recorder.远端断了(对话, 变化.reason)
+  // 分离也算（定案 6）：账本上那一笔说的是「这段 run_code 的结果我们没收到」——
+  // 对它来说「进程还在等接回」与「进程没了」是同一件事，而 `detached` 才是掉线的第一现场
+  if (变化.state === "detached" || (变化.state === "exited" && 变化.reason === "disconnected"))
+    recorder.远端断了(对话, "disconnected")
 }
 
 export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
@@ -474,6 +511,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       const e = 事件 as { kind?: string }
       if (e.kind !== "kernel_output") return
       events.ingest(对话, { ...(事件 as object), sessionId: 对话, language: 语言 } as never)
+    },
+    // 执行前的接回门（定案 9）：与 `interpreterOf` 里那句 `await 扫过.get(cid)` 同一道闸——扫残留 + 接回都在这条 promise 里
+    接回门: (对话) => {
+      const cid = sessionStore.get(对话)?.connectionId
+      return cid ? 扫过.get(cid) : undefined
     },
     /**
      * 内核状态变了 → 整份重发给订阅者（笔记本，2026-08-26）。
@@ -917,8 +959,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       if (state.kind === "ready") {
         connectionStore.记下连上(connectionId, new Date().toISOString())
         /**
-         * **连上就扫一次残留**（远程内核，定案 3）。断线时那台服务器上的内核进程杀不掉
+         * **连上就扫一次残留、再接回**（远程内核定案 3 · 接回定案 9）。上次留下的内核进程杀不掉
          * （连接没了），它会一直占着内存等下去——下一次连上是我们唯一还能收拾它的时机。
+         * 而这一轮**等着接回的那几台不能被扫掉**：名单从运行时来，扫残留照名单跳过。
          *
          * fire-and-forget：扫不动不该拦住「连上了」。**真清掉东西才出声**——
          * 每次连接都打一行「清了 0 份」等于把这条日志训练成噪声。
@@ -936,37 +979,50 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           ex
             ? // **记下这一轮**：起内核前要等它（见 `interpreterOf` 里那句 `await 扫过.get(cid)`）。
               // 这条 promise **永不 reject**——它是一道闸，不是一件要人处理的事
-              扫残留(ex.exec.bind(ex), 装机id())
+              扫残留(ex.exec.bind(ex), 装机id(), 内核运行时.等着接回的文件(connectionId))
                 .then((r) => {
                   if (r.清了) console.error(`[远端内核] ${connectionId} 上清掉了 ${r.清了} 份上次留下的内核`)
                 })
                 .catch(() => {})
+                // 扫完才接回（定案 9）：扫残留认不出「等着接回的」以外的任何东西，名单已经把它们护住；接回失败也不拦这道闸
+                .then(() => 内核运行时.接回远端(connectionId))
+                .catch((e) =>
+                  console.error(`[远端内核] ${connectionId} 接回时出错：${e instanceof Error ? e.message : String(e)}`),
+                )
             : Promise.resolve(),
         )
         if (!ex) console.error(`[远端内核] ${connectionId} 说连上了却取不到执行器，这一轮没能扫残留`)
       }
       /**
-       * **断线 = 内核死**（定案 3）。不重连、不接回：隧道那头的五个端口早就没了，
-       * 而「看起来还连着的内核」比「明说死了」难查得多。
+       * **意外掉线 = 分离，人按断开 = 收掉**（接回，定案 6/7/14）。这两件事从此分两条路：
+       * 掉线时远端进程多半还活着（隧道那头没了，进程没有），记录留着等重连来接；
+       * 而人已经说了「不要这台服务器」，那就不替他留。
        *
        * **收摊失败要出声**：这条链里关的是本地 socket 与五条隧道，静默失败的形状是
        * 「端口一直占着，而屏上一切正常」。
        */
-      // `idle` 也算：人主动断开进的是 idle（`RemoteConnections.disconnect`）；正常路径 `beforeRemoteDisconnect`
-      // 已经停过了，这里是兜底——没剩内核时它什么都不做
-      if (state.kind === "disconnected" || state.kind === "idle") {
-        /**
-         * **这一轮的闸也跟着断线作废**（审查 2026-09-04 #10）：`扫过` 是「这一次连接
-         * 扫过了没有」，不是「这台服务器这辈子扫过了没有」。留着它，重连之后
-         * `await 扫过.get(cid)` 等到的是上一条连接的旧 promise（早就 settle 了），
-         * 于是新连接那一轮的扫残留形同虚设。删掉这台的服务器（`removeConnection`）
-         * 也从这里过——`manager.disconnect` 一定会推一次状态。
-         */
+      /**
+       * **这一轮的闸跟着连接作废**（审查 2026-09-04 #10）：`扫过` 是「这一次连接
+       * 扫过了没有」，不是「这台服务器这辈子扫过了没有」。留着它，重连之后
+       * `await 扫过.get(cid)` 等到的是上一条连接的旧 promise（早就 settle 了），
+       * 于是新连接那一轮的扫残留 + 接回形同虚设。删掉这台的服务器（`removeConnection`）
+       * 也从这里过——`manager.disconnect` 一定会推一次状态。
+       */
+      if (state.kind === "disconnected") {
         扫过.delete(connectionId)
+        // 掉线 = 分离（定案 6）：本地收摊、记录留着等接回
         void 内核运行时
           .连接断了(connectionId)
           .catch((e) =>
-            console.error(`[远端内核] ${connectionId} 断线后收不干净：${e instanceof Error ? e.message : String(e)}`),
+            console.error(`[远端内核] ${connectionId} 掉线后收不干净：${e instanceof Error ? e.message : String(e)}`),
+          )
+      } else if (state.kind === "idle") {
+        扫过.delete(connectionId)
+        // 人主动断开（定案 7/14）：`beforeRemoteDisconnect` 已经停过远端；这里兜底把停不掉的标死、等着接回的放弃
+        void 内核运行时
+          .断开了(connectionId)
+          .catch((e) =>
+            console.error(`[远端内核] ${connectionId} 断开后收不干净：${e instanceof Error ? e.message : String(e)}`),
           )
       }
       远端状态变了?.({ connectionId, state })
@@ -1004,6 +1060,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     remoteListChanged: () => 远端名单变了?.(),
     // 人按「断开」/「删除」：连接还活着，先停那台上的内核（e2e 2026-09-04 抓的缺口）
     beforeRemoteDisconnect: (id) => 内核运行时.服务器要断了(id),
+    // 测试开关 `fakeSshControl` 只在假 SSH 那条路上存在（7.31）——真机上它不该是一个能调的操作
+    ...(opts.fakeSsh ? { fakeSsh: true } : {}),
     // MCP 那一屏要能问「这台连上了没有、有哪些工具」——**问的是同一个池子**，
     // 另开一个的话，设置屏说「连着」而对话里用的是另一条连接
     mcp: { 池: mcp池 },

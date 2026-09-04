@@ -295,7 +295,11 @@ const CellItem = z
 export const KernelStateSchema = z
   .object({
     language: z.enum(["python", "R"]),
-    state: z.enum(["starting", "idle", "busy", "exited"]),
+    /**
+     * `detached`（接回，7.31 定案 6）：链路断了、**进程多半还在服务器上**，等着重连后接回。
+     * 它不是 `exited` 的一个变体——`exited` 在界面上说的是「变量已经不在了」，而这里正相反。
+     */
+    state: z.enum(["starting", "idle", "busy", "exited", "detached"]),
   })
   .strict()
 export type KernelState = z.infer<typeof KernelStateSchema>

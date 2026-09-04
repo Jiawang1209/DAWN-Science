@@ -214,7 +214,7 @@ describe("exited 带 reason（远程内核，2026-09-03）", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "exited", sessionId: SESSION, exitCode: 1, reason: "disconnected" })
     const run = list()[0]!
-    expect(run.terminalReason).toBe("与服务器断开，这段没跑完")
+    expect(run.terminalReason).toBe("与服务器断开，这段的结果没收到")
     expect(run.status).toBe("cancelled")
   })
 
@@ -240,13 +240,13 @@ describe("exited 带 reason（远程内核，2026-09-03）", () => {
  * 模型拿到工具报错还会把话说完，那一轮该由它自己的 `idle` 收口。
  */
 describe("远端断了（远程内核，审查 2026-09-04）", () => {
-  it("在飞的 run_code 记「与服务器断开，这段没跑完」，而这一轮仍然开着、照旧由 idle 收口", () => {
+  it("在飞的 run_code 记「与服务器断开，这段的结果没收到」，而这一轮仍然开着、照旧由 idle 收口", () => {
     rec.beginTurn(SESSION)
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", input: {} })
     rec.远端断了(SESSION, "disconnected")
     const 工具 = list().find((r) => r.requestType === "tool_call:run_code")!
     expect(工具.status).toBe("cancelled")
-    expect(工具.terminalReason).toBe("与服务器断开，这段没跑完")
+    expect(工具.terminalReason).toBe("与服务器断开，这段的结果没收到")
     // 回合还开着：断的是内核，不是这段对话
     expect(rec.当前回合(SESSION)).toBeTruthy()
     rec.ingest({ kind: "idle", sessionId: SESSION })
@@ -258,7 +258,7 @@ describe("远端断了（远程内核，审查 2026-09-04）", () => {
     rec.ingest({ kind: "tool_start", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", input: {} })
     rec.远端断了(SESSION, "disconnected")
     rec.ingest({ kind: "tool_end", sessionId: SESSION, toolCallId: "t1", toolName: "run_code", isError: true, text: "", truncated: false, bytes: 0 })
-    expect(list().find((r) => r.requestType === "tool_call:run_code")!.terminalReason).toBe("与服务器断开，这段没跑完")
+    expect(list().find((r) => r.requestType === "tool_call:run_code")!.terminalReason).toBe("与服务器断开，这段的结果没收到")
   })
 
   it("同一刻在飞的本机 bash 不动——断的是内核，不是这段对话的其它工具", () => {

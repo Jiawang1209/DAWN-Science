@@ -263,3 +263,13 @@ function 活着(pid: number): boolean {
 }
 
 export { existsSync as 文件在 }
+
+/**
+ * **测试开关**（`fakeSshControl{do:"killKernels"}`，接回 7.31）：对假机器起的所有内核子进程 `SIGKILL`，
+ * 模拟集群 OOM——DAWN 这边什么都不知道，只能靠心跳察觉。返回杀了几台。
+ *
+ * **占位：任务 8 里真正实现**（要动这台假机器的子进程登记表）。现在回 0，好让 typecheck 与协议先成立。
+ */
+export function 杀掉所有假内核(): number {
+  return 0
+}

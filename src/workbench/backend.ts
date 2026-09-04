@@ -169,6 +169,11 @@ export interface CredentialsPort {
 }
 
 export interface WorkbenchBackendOptions {
+  /**
+   * 这台跑在假 SSH 上（`DAWN_FAKE_SSH=1`，7.31）。**只为 `fakeSshControl` 放不放行**——
+   * 别的地方一律不看它：真假之分应当只体现在「造哪种客户端」那一处。
+   */
+  fakeSsh?: boolean
   projects: ProjectManager
   projectStore: ProjectStore
   runs: RunStore
@@ -3113,6 +3118,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
       return {}
+    },
+
+    /** 测试专用（7.31）：只在 mock 模式下放行。真机上这个操作不存在——回 invalid_request，不是静默 0 */
+    fakeSshControl: async ({ do: 动作 }) => {
+      if (!opts.fakeSsh) throw fault("invalid_request", "fakeSshControl 只在 mock 模式（DAWN_FAKE_SSH=1）下存在")
+      const [{ 掐断所有假连接 }, { 杀掉所有假内核 }] = await Promise.all([
+        import("../remote/fake-ssh.js"),
+        import("../remote/fake-ssh-kernel.js"),
+      ])
+      return { count: 动作 === "dropLink" ? 掐断所有假连接() : 杀掉所有假内核() }
     },
 
     /**

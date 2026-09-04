@@ -53,6 +53,7 @@ function backend(): WorkbenchBackend {
     // 笔记本（2026-08-26）：这份桩要覆盖全协议，少一个就编译不过
     runInKernel: async () => ({ cellId: "cell-1" }),
     interruptKernel: async () => ({}),
+    fakeSshControl: async () => ({ count: 0 }),
     getInterpreters: async () => ({}),
     setInterpreter: async () => ({}),
     listDirectory: async () => ({ path: "", entries: [], ignored: 0, omitted: 0 }),

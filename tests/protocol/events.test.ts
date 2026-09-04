@@ -140,6 +140,8 @@ describe("会话快照", () => {
    */
   it("快照能带 kernels；缺省 = 没有内核", () => {
     expect(KernelStateSchema.safeParse({ language: "python", state: "busy" }).success).toBe(true)
+    // 掉线 = 分离（接回，7.31 定案 6）：进程多半还在服务器上，`exited` 会把它说成「变量没了」
+    expect(KernelStateSchema.safeParse({ language: "python", state: "detached" }).success).toBe(true)
     expect(
       SessionSnapshotSchema.safeParse(snapshot({ kernels: [{ language: "python", state: "busy" }] }))
         .success,
@@ -410,7 +412,7 @@ describe("协议版本 · 5.5", () => {
    *   纯新增可选字段，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.30")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.31")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

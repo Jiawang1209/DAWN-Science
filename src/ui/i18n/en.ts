@@ -1409,6 +1409,7 @@ export const EN: Readonly<Record<string, string>> = {
   "删不掉 {0}：{1}": "Could not delete {0}: {1}",
   "{0} 没有完整的 frontmatter，不敢改": "{0} has no complete frontmatter, so it was left alone",
   "这台没有接对话内核": "No chat kernel is attached here",
+  "fakeSshControl 只在 mock 模式（DAWN_FAKE_SSH=1）下存在": "fakeSshControl only exists in mock mode (DAWN_FAKE_SSH=1)",
   "code 是空的，没有东西可以跑": "The code is empty — there is nothing to run",
   "这条规则不成立（{0}）：{1}": "This rule is invalid ({0}): {1}",
   "下载目录要写绝对路径，收到「{0}」": "The download folder must be an absolute path; got “{0}”",

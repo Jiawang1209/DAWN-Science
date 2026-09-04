@@ -504,8 +504,11 @@
  * 7.29（2026-08-27）：`probeInterpreters`——首启向导列本机 Python / R 候选。只读、纯新增。
  *
  * 7.30（2026-09-03）：远程内核——probeInterpreters 可带 connectionId、setRemoteInterpreter、连接记录 interpreters。纯新增可选字段。
+ *
+ * 7.31（2026-09-04）：远端内核猝死与接回——`KernelState.state` 多 `detached`；`fakeSshControl`（测试专用，
+ *   只在 `DAWN_FAKE_SSH=1` 时放行）。纯新增。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.30"
+export const WORKBENCH_PROTOCOL_VERSION = "7.31"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

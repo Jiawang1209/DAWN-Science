@@ -96,6 +96,45 @@ async function 选中唯一的python(page: import("@playwright/test").Page) {
   await page.locator(".ip-python").getByRole("radio").first().click()
 }
 
+/**
+ * 按下假服务器的测试开关（`fakeSshControl`，7.31）。
+ *
+ * **走应用自己那条 IPC**（`window.dawn.invoke`，与 `attach.spec.ts` / `permission.spec.ts` 同一写法），
+ * 不另开后门：那条操作只在 `DAWN_FAKE_SSH=1` 时才被注册（`wiring.ts`），真机上它压根不存在。
+ *
+ * **两个开关都是进程级的**：`dropLink` 掐断这个 Electron 主进程里**所有**假链路，
+ * `killKernels` 杀掉这台假机器起过的**所有**内核子进程。下面三条用例各自只有一台服务器，
+ * 所以「所有」= 「那一台」；**要写多服务器的用例，别照这个 helper 抄**——
+ * 它会顺手把另一台也掐了，而那时断言绿不绿跟被测的那台已经没关系了。
+ *
+ * 回真动了几条 / 几台。
+ */
+async function 假服务器开关(page: import("@playwright/test").Page, 动作: "dropLink" | "killKernels"): Promise<number> {
+  return page.evaluate(async (d) => {
+    const w = window as unknown as {
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { count: number } }> }
+    }
+    const r = await w.dawn.invoke("fakeSshControl", { do: d })
+    return r.data?.count ?? -1
+  }, 动作)
+}
+
+/**
+ * 起一台假服务器、开对话、选解释器、让 agent 在上面跑出 42。三条新用例的共同起点。
+ *
+ * 跑的那段是夹具里的 `x = 40 + 2\nprint(x)`——**`x` 是掐线之前定义的**，
+ * 第一条用例回头就靠它分辨「同一台内核」与「新起的一台」。
+ */
+async function 起到42(page: import("@playwright/test").Page) {
+  await 加一台并开对话(page)
+  await 进坞(page, "笔记本")
+  await 选中唯一的python(page)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("算一下")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器", { timeout: 90_000 })
+  await expect(page.locator(".nb-cell").first().locator(".kout-text")).toContainText("42", { timeout: 60_000 })
+}
+
 test.describe("远程内核 · 真内核 + 假 SSH", () => {
   test.skip(!有, `本机没有 ${KERNEL} kernelspec`)
 
@@ -169,6 +208,93 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器 · ", { timeout: 90_000 })
     await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
     await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 60_000 })
+  })
+
+  /**
+   * **意外掉线 ≠ 按「断开」**（定案 6/10）。上一条按的是「断开」——人自己说了不要了，内核跟着收摊。
+   * 这一条是网线被拔：远端那台 ipykernel 什么事都没有，只是通往它的隧道没了。
+   *
+   * 这条用例是这一轮的命根子：末尾那个 43 **只可能**来自掐线之前那台进程里的 `x`。
+   * 换成新起的一台，`print(x + 1)` 会是 `NameError`——所以它分得开「接回了」与「假装接回了」。
+   */
+  test("意外掉线 → 等接回；再连上 → 内核还活着，掐线前的变量还在", async ({ dawn }) => {
+    const { page } = dawn
+    await 起到42(page)
+
+    expect(await 假服务器开关(page, "dropLink"), "没有一条假链路被掐断，后面验的就不是掉线").toBeGreaterThan(0)
+    const row = page.locator(".remote-row").first()
+    await expect(row).toHaveAttribute("data-state", "disconnected", { timeout: 15_000 })
+    // 转录那句由 `内核变化出声` 的 `detached` 分支说：别说「变量没了」——它多半还在
+    await expect(page.getByText(/Python 内核可能还在服务器上活着/)).toBeVisible({ timeout: 15_000 })
+    /**
+     * 胶囊**先验类名再验字**：`.nb-pill-detached` 是这一态独有的（灰，不是红），
+     * 而「等接回」是它独有的那个词。只验字的话，哪天 `状态词` 与类名对不上也不会有人知道。
+     */
+    await expect(page.locator(".nb-pill.nb-pill-detached")).toHaveCount(1, { timeout: 15_000 })
+    await expect(page.locator(".nb-pill-label")).toContainText("等接回")
+
+    await row.getByRole("button", { name: "连接", exact: true }).click()
+    await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
+    await expect(page.getByText(/Python 内核还活着，变量都在/)).toBeVisible({ timeout: 60_000 })
+    await expect(page.locator(".nb-pill-label")).toContainText("空闲", { timeout: 15_000 })
+    await expect(page.locator(".nb-pill.nb-pill-detached")).toHaveCount(0)
+
+    // 在同一台内核里自己敲：`x` 是掐线**前** agent 定义的，43 只能来自那个还活着的进程
+    const 代码框 = page.getByRole("textbox", { name: "要跑的代码" })
+    await 代码框.fill("print(x + 1)")
+    await 代码框.press(process.platform === "darwin" ? "Meta+Enter" : "Control+Enter")
+    const 第二格 = page.locator(".nb-cell").nth(1)
+    await expect(第二格.locator(".nb-code")).toContainText("print(x + 1)", { timeout: 60_000 })
+    await expect(第二格.locator(".kout-text")).toContainText("43", { timeout: 60_000 })
+  })
+
+  /**
+   * 集群把内核 OOM 掉了（定案 1/4）。链路一切正常，**没有任何人告诉 DAWN**——
+   * 心跳是唯一能察觉的东西，所以这里量的是「多久出声」，不只是「出没出声」：
+   * 5 分钟静默兜底那条路也会说话，但那时人已经对着一个死掉的内核干等了五分钟。
+   */
+  test("内核在 DAWN 背后被杀 → 30 秒内出声；再跑起新的一台", async ({ dawn }) => {
+    const { page } = dawn
+    await 起到42(page)
+
+    const t0 = Date.now()
+    expect(await 假服务器开关(page, "killKernels"), "一台内核都没杀掉，后面验的就不是猝死").toBeGreaterThan(0)
+    await expect(page.getByText(/Python 内核在 假机器 上没了/)).toBeVisible({ timeout: 30_000 })
+    // **时限本身就是要验的东西**：上面那个 timeout 已经卡住了 30 秒，这一行是把它写成断言让失败时说得清
+    expect(Date.now() - t0, "察觉猝死用了 30 秒以上——多半是走了 5 分钟静默兜底那条路").toBeLessThan(30_000)
+    // 状态词("exited") = 「已退出」
+    await expect(page.locator(".nb-pill-label")).toContainText("退出")
+
+    // 再跑一句：起新的一台（`perTurn` 让第二轮也调 run_code）
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("再算")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 90_000 })
+    await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
+  })
+
+  /**
+   * 掉线期间那台没撑住（定案 10 的另一支）。接回是**试着**接回，不是保证——
+   * 分不开「还活着」与「已经没了」的话，人会以为变量还在，然后照着一个空进程往下写。
+   */
+  test("掐线后内核死了 → 再连上说没撑过；再跑起新的一台", async ({ dawn }) => {
+    const { page } = dawn
+    await 起到42(page)
+
+    expect(await 假服务器开关(page, "dropLink")).toBeGreaterThan(0)
+    const row = page.locator(".remote-row").first()
+    await expect(row).toHaveAttribute("data-state", "disconnected", { timeout: 15_000 })
+    await expect(page.locator(".nb-pill.nb-pill-detached")).toHaveCount(1, { timeout: 15_000 })
+    // 断着的这段时间里它死了。**链路已经断了，所以这一下 DAWN 更加无从知道**
+    expect(await 假服务器开关(page, "killKernels"), "一台内核都没杀掉，接回时它还活着，验的就不是这件事").toBeGreaterThan(0)
+
+    await row.getByRole("button", { name: "连接", exact: true }).click()
+    await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
+    await expect(page.getByText(/Python 内核没撑过这次断线/)).toBeVisible({ timeout: 60_000 })
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("再算")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 90_000 })
+    await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
   })
 
   test("设置里那台服务器的对话框有两格，探测后能选；关掉再打开，选中的还是它", async ({ dawn }) => {

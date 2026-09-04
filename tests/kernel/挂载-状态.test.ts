@@ -557,6 +557,34 @@ describe("detached · 接回（2026-09-04）", () => {
     await p
   })
 
+  /**
+   * 审查 2026-09-04 抓的：`拿` 只摘 `exited` 的那一台。一条晚到的 `detached`（或 `reattached`）
+   * 把 `exited` 翻成别的，这台就**既摘不掉也起不了新的**——这段对话从此再也跑不了代码。
+   * 死了的内核不会再分离，也接不回来。
+   */
+  it("已经 exited 的那台：晚到的 detached / reattached 一律不认，状态仍 exited，下一次执行起新的一台", async () => {
+    const { runtime, 发, 起了几次 } = 假内核带计数()
+    const 变化: 内核状态变化[] = []
+    const 挂 = new 对话内核({ ...基本(runtime), 状态变了: (_c, v) => void 变化.push(v) })
+    await 挂.拿(对话, "python")
+    发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1, reason: "died" })
+    expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "exited" }])
+
+    发("c1::python", { kind: "detached", sessionId: "c1::python", reason: "disconnected" })
+    发("c1::python", { kind: "reattached", sessionId: "c1::python", 掉线时在飞: false })
+    expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "exited" }])
+    // 不出声也是判据的一部分：转录不该在「没了」之后再说一句「断开了」「还活着」
+    expect(变化.filter((v) => v.state === "detached")).toEqual([])
+    expect(变化.filter((v) => v.接回了)).toEqual([])
+
+    // 真正的判据：还能不能再跑代码
+    const p = 挂.执行(对话, "python", "x = 1")
+    await new Promise((r) => setTimeout(r, 0))
+    expect(起了几次()).toBe(2)
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await p
+  })
+
   it("detached 期间 拿() 既不摘它也不起新的：等门的那一次也只有一台", async () => {
     const { runtime, 发, 起了几次 } = 假内核带计数()
     const 挂 = new 对话内核(基本(runtime))
@@ -615,6 +643,66 @@ describe("静默兜底 · 远端先确认（定案 5）", () => {
       await vi.advanceTimersByTimeAsync(静默超时 + 10)
       expect(((await 捕) as Error).message).toMatch(/没跑完就退出了/)
       expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "exited" }])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  /**
+   * 审查 2026-09-04：上一条走的是「运行时先发 exited、再回 false」——那时 `在飞` 已经被常驻监听清了，
+   * `false` 那一支根本走不到。这里是另一种次序：运行时确认了死，`exited` 还没传过来。
+   * 这只表刚被停掉，是这段执行最后一根线；只 `return` 的话 cell 就永远转下去了。
+   */
+  it("确认死了但 exited 还没传过来 → 这段照 exited 的原话拒掉，不挂在那儿转", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime, 发 } = 假内核带计数()
+      ;(runtime as Record<string, unknown>).确认活着 = async () => false
+      const 挂 = new 对话内核(基本(runtime))
+      const p = 挂.执行(对话, "python", "slow()")
+      const 捕 = p.catch((e) => e) // 先接住，别让它成为 unhandled rejection
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      expect(((await 捕) as Error).message).toMatch(/python 内核这一段没跑完就退出了/)
+      // 迟到的 exited 再拒一次是空操作（promise 已经 settle 了），状态照样落到 exited
+      发("c1::python", { kind: "exited", sessionId: "c1::python", exitCode: 1, reason: "died" })
+      expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "exited" }])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  /**
+   * 审查 2026-09-04：探针要走一趟 SSH，那期间内核完全可能吐一条输出。监听那边重新武装了表，
+   * 但**已经在跑的这个回调停不下来**——不看代的话它照样能拒掉一段十毫秒前才说过话的执行。
+   */
+  it("问的期间内核说话了 → 这一响作废，不许拒（哪怕探针回来说「问不了」）", async () => {
+    vi.useFakeTimers()
+    try {
+      const { runtime, 发 } = 假内核带计数()
+      let 放行探针: (v: boolean | undefined) => void = () => {}
+      ;(runtime as Record<string, unknown>).确认活着 = () => new Promise((r) => (放行探针 = r))
+      const 挂 = new 对话内核(基本(runtime))
+      const p = 挂.执行(对话, "python", "slow()")
+      let 拒了: unknown
+      const 捕 = p.then(
+        () => "跑完了",
+        (e) => {
+          拒了 = e
+          return "拒了"
+        },
+      )
+      // 到点了：探针发出去，还没回来
+      await vi.advanceTimersByTimeAsync(静默超时 + 10)
+      // 就在这时候内核说话了
+      发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "stream", name: "stdout", text: "还活着\n", provenance } })
+      // 探针这才回来，而且是「问不了」——旧写法到这里就会拒
+      放行探针(undefined)
+      await vi.advanceTimersByTimeAsync(0)
+      expect(拒了).toBeUndefined()
+      expect(挂.状态列表(对话)).toEqual([{ language: "python", state: "busy" }])
+      // 这段照常跑完
+      发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+      await expect(捕).resolves.toBe("跑完了")
     } finally {
       vi.useRealTimers()
     }

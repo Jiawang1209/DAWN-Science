@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-05 — Linux 包第一次真被验过：在容器里打、在容器里起，六项自测全过（x64 与 arm64 各一份）
+
+- **Type**: chore
+- **Motivation**: 作者要 Linux 包。文档写着「Linux 只能在 Linux 上打」（node-pty 的 npm 包不带 linux 预编译件，从 mac 交叉出来的包**终端会哑**），而 08-27 起 `release/` 里那几个 Linux 件其实一直是从 mac 交叉打的，**从来没有人起过它们**——「打出来了」被当成了「能用」。这台机器上有 Docker Desktop，那就在真 Linux 里打，并且把它起起来。
+- **What**:
+  - x64 走 `--platform linux/amd64` 容器（Apple 芯片上是模拟执行），arm64 走原生 arm64 容器。各自 `npm ci` → `npm run build` → `electron-builder --linux --<arch>`。**node-pty 在容器里现场编译**：产物核过是 ELF x86-64 / ARM aarch64，不是 Mach-O。
+  - **源码用 `git archive` 通过 stdin 喂进容器、全程在容器自己的文件系统里构建**，只把成品拷出来。先前挂载宿主目录的做法两次被咬：一个零字节且权限成 `--w-------` 的残留文件让 `npm run build` 报 EACCES；`dist/skills` 只复制到一半（少了 `SKILL.md`），electron-builder 才报 ENOENT。**Docker Desktop 的共享目录在模拟架构下复制不可靠**，别在上面构建。
+  - `scripts/test-packaged.mjs` 补一条候选路径：electron-builder 给非本机架构的解包目录带架构后缀（`linux-arm64-unpacked`），脚本只列 `linux-unpacked`，于是**在 arm64 上打的包自测根本找不到它**——这正是「这个平台的包能不能用永远没人验」的机制。mac 那行本来就列了两个候选，Linux 这行漏了。
+- **Impact**: `release/` 里四个 Linux 件（x86_64 AppImage + amd64 deb、arm64 AppImage + arm64 deb）现在与 mac / win 同版，且**是这个项目第一批被真正起过的 Linux 包**。均未签名。
+- **Verification**: 两个架构各在 `xvfb` 下真起了打出来的产物跑 `test:packaged`，**六项全过**（窗口 + 开库、自带技能与子 agent、发一句收假回复、**终端起得来**、解释器探测、内核列表）——终端那项正是交叉打包会哑掉的地方。deb 解包核对：界面里有本轮的「等接回」、主进程里 22 处接回相关代码、四份技能齐全、`pty.node` 与 `better-sqlite3` 的架构与包名相符。踩到并记下的两条环境坑：容器里缺 GTK 时 Electron 报的是 `libgtk-3.so.0` 找不到（不是沙箱问题，别被 `Process failed to launch!` 带偏）；以 root 直接起要 `--no-sandbox`，而 Playwright 的 `_electron.launch` 自己会带上，所以自测那条路不用管。
+
 ### 2026-09-05 — 合并 `kernel-reattach` 进 main 并重新打包（mac arm64/x64 + win-x64；Linux 沿用 09-01 的包）
 
 - **Type**: chore

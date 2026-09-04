@@ -1340,6 +1340,7 @@ export const EN: Readonly<Record<string, string>> = {
   "内核已重起，上面 cell 里的变量已经不在了；再跑一次即可": "The kernel was restarted; variables from the cells above are gone. Just run again.",
   "正在起": "starting",
   "已退出": "exited",
+  "等接回": "awaiting reattach",
   "中断": "Interrupt",
   "跑": "Execute",
   "运行中…": "Executing…",

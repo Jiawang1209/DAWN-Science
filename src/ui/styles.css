@@ -6493,6 +6493,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-time { font-family: var(--dawn-font-mono); }
 .nb-pill-busy, .nb-pill-starting { border-color: var(--dawn-live); color: var(--dawn-live); }
 .nb-pill-exited { border-color: var(--dawn-danger); color: var(--dawn-danger); }
+/**
+ * 掉线等接回（2026-09-04）：灰，不是红——它没错，只是不在。
+ * 取 `--dawn-text-3`（次要文字那档，前景兑 50%）：比 `idle` 那颗（文字 `--dawn-text-2` 70%、
+ * 描边 `--dawn-stroke-3` 8%）**两处都不一样**——字更淡、描边反而更实，
+ * 所以「等接回」不会被看成又一颗普通胶囊（看不见的状态等于不存在）。
+ */
+.nb-pill-detached { border-color: var(--dawn-text-3); color: var(--dawn-text-3); }
 .nb-notice { margin: 0; padding: var(--dawn-space-2) var(--dawn-space-3); background: var(--dawn-fill-2); color: var(--dawn-warning); font-size: var(--dawn-fs-meta); border-bottom: 1px solid var(--dawn-stroke-3); }
 /* 远端会话还没选解释器时，整格就是选择器（远程内核，2026-09-03） */
 .nb-remote-setup { padding: var(--dawn-space-3); overflow-y: auto; }

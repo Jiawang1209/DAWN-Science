@@ -36,6 +36,10 @@ function 状态词(state: KernelState["state"]): string {
       return t("运行中")
     case "exited":
       return t("已退出")
+    // 掉线等接回（2026-09-04）：远端内核还在那台机器上活着，只是隧道断了。
+    // **不是 exited**——变量没丢，重连之后认领回来就接着用
+    case "detached":
+      return t("等接回")
   }
 }
 

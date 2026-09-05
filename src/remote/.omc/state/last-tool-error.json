@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd src/remote && echo \\\"=== interpreters.ts ===\\\" && sed -n '1,60p' interpreters.ts\"}",
+  "error": "Exit code 1\n(eval):cd:1: no such file or directory: src/remote",
+  "timestamp": "2026-09-05T02:56:28.104Z",
+  "retry_count": 1
+}

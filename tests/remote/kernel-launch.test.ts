@@ -6,7 +6,7 @@
 import { describe, expect, it, vi } from "vitest"
 import {
   内核文件名, 远端启动命令, 起远端内核, 停远端内核, 扫残留, 远端启动失败,
-  远端活着, 远端内核还在, 删远端文件,
+  远端活着, 远端内核还在, 删远端文件, 挑端口并写文件脚本, 解析端口, 挑端口并写文件,
 } from "../../src/remote/kernel-launch.js"
 
 const 连接 = `{"shell_port": 5001, "iopub_port": 5002, "stdin_port": 5003, "control_port": 5004, "hb_port": 5005, "ip": "127.0.0.1", "key": "abc", "transport": "tcp", "signature_scheme": "hmac-sha256", "kernel_name": ""}`
@@ -252,5 +252,85 @@ describe("扫残留 · 名单", () => {
     const 假 = 假exec([])
     await expect(扫残留(假.exec, "ab12", ["x'; rm -rf /"])).rejects.toThrow(/名单/)
     expect(假.跑过).toHaveLength(0)
+  })
+})
+
+/**
+ * 远端 R：连接文件是**我们**写的（2026-09-05，规格 R1/R3）。
+ * IRkernel 只读不写——`IRkernel::main(connection_file="")` 从 `commandArgs(TRUE)[[1]]` 取文件名，
+ * 文件不在就报 `cannot open the connection` 立刻退出（本机 R 4.6.1 实测）。
+ * 所以端口要在**那台服务器上**挑（本机的空闲端口与服务器无关），再把 connection.json 写过去。
+ */
+describe("R · 挑端口并写连接文件", () => {
+  const 脚本 = () => 挑端口并写文件脚本("/usr/local/bin/R", "dawn-ab-R-1.json", "k-1")
+
+  it("走那台机器上的 R；文件名与 key 都单引号包死，且整条命令只有一行", () => {
+    const c = 脚本()
+    expect(c).toContain("'/usr/local/bin/R' --slave -e ")
+    expect(c).toContain(`--args "$f" 'k-1'`)
+    // 假服务器与执行器都按「一条命令一行」处理，R 代码里混进换行会把它们全带偏
+    expect(c).not.toContain("\n")
+  })
+
+  it("$TMPDIR 的展开留在远端，并把落点回声成 DAWNFILE——否则本地不知道文件在哪，得多花一趟 SSH 去问", () => {
+    const c = 脚本()
+    expect(c).toContain(`f="\${TMPDIR:-/tmp}/"'dawn-ab-R-1.json'`)
+    expect(c).toContain(`echo "DAWNFILE=$f"`)
+  })
+
+  it("umask 077 在写文件之前——connection.json 里有 HMAC key，集群的 /tmp 是所有人可读的（R3）", () => {
+    const c = 脚本()
+    const u = c.indexOf("Sys.umask")
+    const w = c.indexOf("writeLines")
+    expect(u).toBeGreaterThan(-1)
+    expect(w).toBeGreaterThan(-1)
+    expect(u).toBeLessThan(w)
+    expect(c).toContain('Sys.umask("077")')
+  })
+
+  it("五个 socket 一起开着挑完再关——一个个开关会挑到同一个端口", () => {
+    const c = 脚本()
+    expect(c).toContain("serverSocket")
+    // 收集到 5 个之后才 close：close 出现在循环之后
+    expect(c.indexOf("while(")).toBeLessThan(c.indexOf("close(con)"))
+  })
+
+  it("R 代码里不许出现单引号——整段是被 shell 单引号包着的", () => {
+    const c = 脚本()
+    const 里面 = c.slice(c.indexOf("-e '") + 4, c.lastIndexOf("' --args"))
+    expect(里面).not.toContain("'")
+  })
+
+  it("解析端口：五个都在才算数", () => {
+    const out = "*** MOTD {不是 JSON} ***\nDAWNRC=0\nDAWNPORT_shell=21001\nDAWNPORT_iopub=21002\nDAWNPORT_stdin=21003\nDAWNPORT_control=21004\nDAWNPORT_hb=21005\n"
+    expect(解析端口(out)).toEqual({ shell_port: 21001, iopub_port: 21002, stdin_port: 21003, control_port: 21004, hb_port: 21005 })
+  })
+
+  it("少一个端口就抛——缺失不许当成 0（那会起一台连不上的内核，症状伪装成「R 装得不对」）", () => {
+    const out = "DAWNRC=0\nDAWNPORT_shell=21001\nDAWNPORT_iopub=21002\nDAWNPORT_stdin=21003\nDAWNPORT_control=21004\n"
+    expect(() => 解析端口(out)).toThrow(/hb/)
+  })
+
+  it("DAWNRC=3（200 次都没挑到空闲端口）→ 抛，说的是端口的事", () => {
+    expect(() => 解析端口("DAWNRC=3\n")).toThrow(/空闲端口/)
+  })
+
+  it("DAWNRC=4（文件写不出来：目录只读、磁盘满）→ 抛，带上那台机器说的话", () => {
+    expect(() => 解析端口("DAWNRC=4\nDAWNERR=cannot open file\n")).toThrow(/cannot open file/)
+  })
+
+  it("R 根本没跑起来（127、什么都没回）→ 抛，带 stderr，不要沉默地当成没端口", async () => {
+    const 假 = 假exec([{ out: "", err: "R: command not found", code: 127 }])
+    await expect(挑端口并写文件(假.exec, { 解释器路径: "/no/R", 文件名: "f.json", key: "k" }))
+      .rejects.toThrow(/command not found/)
+  })
+
+  it("挑端口并写文件：一条 exec，回五个端口与文件落点", async () => {
+    const 假 = 假exec([{ out: "DAWNRC=0\nDAWNPORT_shell=1\nDAWNPORT_iopub=2\nDAWNPORT_stdin=3\nDAWNPORT_control=4\nDAWNPORT_hb=5\nDAWNFILE=/scratch/f.json\n" }])
+    const p = await 挑端口并写文件(假.exec, { 解释器路径: "/usr/local/bin/R", 文件名: "f.json", key: "kk" })
+    expect(p.文件).toBe("/scratch/f.json")
+    expect(p.端口).toEqual({ shell_port: 1, iopub_port: 2, stdin_port: 3, control_port: 4, hb_port: 5 })
+    expect(假.跑过).toHaveLength(1)
+    expect(假.跑过[0]).toContain("'kk'")
   })
 })

@@ -68,6 +68,114 @@ export function 内核文件名(装机id: string, 语言: 内核语言, now = Da
   return `dawn-${装机id}-${语言}-${now.toString(36)}.json`
 }
 
+/**
+ * 远端 R 的第一步：**在那台机器上挑五个空闲端口，并把 connection.json 写过去**（2026-09-05，规格 R1/R3）。
+ *
+ * ## 为什么 R 需要这一步而 Python 不需要
+ * `IRkernel::main(connection_file = "")` 的全部实现就是「文件名从 `commandArgs(TRUE)[[1]]` 取，
+ * 然后 `Kernel$new(connection_file = …)`」——**它只读，不写**。给一个不存在的路径，它报
+ * `Error in open.connection(con, "rb") : cannot open the connection` 之后立刻退出（R 4.6.1 实测）。
+ * ipykernel 恰恰相反（不存在就自己挑端口、生成 key、写出来），本文件顶上那段
+ * 「文件是内核自己写的」因此**只对 python 成立**。
+ *
+ * ## 为什么端口要在远端挑
+ * 本地的空闲端口与那台服务器毫无关系。共享登录节点上跑着别人的 jupyter 是常态，
+ * 撞上的后果是内核起来就死，而症状会伪装成「R 装得不对」——最难查的那一类。
+ * 挑端口的活交给**那台机器上的 R 自己**（`serverSocket`，base R ≥ 4.0），
+ * 于是不必假设服务器上有 python，也不必往服务器上传任何脚本（作者硬约束）。
+ *
+ * ## 几条写法上的讲究
+ * - **五个 socket 一起开着挑完再一起关**：一个个开了又关会挑到同一个端口。
+ * - **`umask 077` 在写之前**：文件里有 HMAC key，而集群的 `$TMPDIR` 常常就是所有人可读的 `/tmp`。
+ * - **整段 R 代码里一个单引号都不许有**：它是被 shell 单引号包着送过去的。
+ * - 挑不满 / 写不出来都有各自的 `DAWNRC`，**不许退化成「随便写五个数」**——那会把
+ *   「内核起不来」变成一件没有线索的事。
+ */
+const 挑端口R代码 =
+  "a<-commandArgs(TRUE);f<-a[[1]];k<-a[[2]];" +
+  "p<-integer(0);s<-list();n<-0;" +
+  "while(length(p)<5&&n<200){n<-n+1;c0<-sample(20000:60000,1);" +
+  "if(!(c0 %in% p)){cn<-tryCatch(serverSocket(c0),error=function(e) NULL);" +
+  "if(!is.null(cn)){p<-c(p,c0);s[[length(s)+1]]<-cn}}};" +
+  "for(con in s) close(con);" +
+  'if(length(p)<5){cat("DAWNRC=3\\n");quit(status=0)};' +
+  'o<-Sys.umask("077");' +
+  'r<-tryCatch({writeLines(sprintf("{\\"transport\\":\\"tcp\\",\\"ip\\":\\"127.0.0.1\\",\\"signature_scheme\\":\\"hmac-sha256\\",\\"kernel_name\\":\\"ir\\",\\"key\\":\\"%s\\",\\"shell_port\\":%d,\\"iopub_port\\":%d,\\"stdin_port\\":%d,\\"control_port\\":%d,\\"hb_port\\":%d}",k,p[1],p[2],p[3],p[4],p[5]),f);""},error=function(e) conditionMessage(e));' +
+  "Sys.umask(o);" +
+  'if(nzchar(r)){cat("DAWNRC=4\\n");cat(paste0("DAWNERR=",r,"\\n"));quit(status=0)};' +
+  'cat("DAWNRC=0\\n");' +
+  'cat(sprintf("DAWNPORT_shell=%d\\nDAWNPORT_iopub=%d\\nDAWNPORT_stdin=%d\\nDAWNPORT_control=%d\\nDAWNPORT_hb=%d\\n",p[1],p[2],p[3],p[4],p[5]))'
+
+/**
+ * 挑端口 + 写连接文件那一条命令（R 专有）。文件名与 key 原样进 shell，一律单引号包死。
+ *
+ * **`$TMPDIR` 的展开留在远端**（与 `远端启动命令` 同一个形状），并把结果回声成 `DAWNFILE=`——
+ * 否则本地不知道文件到底落在哪，就得先花一趟 SSH 去问 `$TMPDIR` 是什么。
+ */
+export function 挑端口并写文件脚本(解释器路径: string, 文件名: string, key: string): string {
+  return (
+    `f="\${TMPDIR:-/tmp}/"${单引号(文件名)}; ` +
+    `${单引号(解释器路径)} --slave -e ${单引号(挑端口R代码)} --args "$f" ${单引号(key)}; ` +
+    `echo "DAWNFILE=$f"`
+  )
+}
+
+export interface 端口五 {
+  shell_port: number
+  iopub_port: number
+  stdin_port: number
+  control_port: number
+  hb_port: number
+}
+
+const 端口名 = [
+  ["shell", "shell_port"],
+  ["iopub", "iopub_port"],
+  ["stdin", "stdin_port"],
+  ["control", "control_port"],
+  ["hb", "hb_port"],
+] as const
+
+/**
+ * `DAWNPORT_<名>=<数>` ×5。**少一个就抛**——把缺的当 0 会起一台连不上的内核，
+ * 而那副症状与「R 装得不对」长得一模一样（缺失不等于相同）。
+ */
+export function 解析端口(stdout: string): 端口五 {
+  const rc = 取值(stdout, "DAWNRC")
+  if (rc === "3") throw new Error("那台机器上 200 次都没挑到空闲端口（20000..60000）")
+  if (rc === "4") throw new Error(`connection.json 写不到那台机器上：${取值(stdout, "DAWNERR") ?? "原因不明"}`)
+  const out: Partial<端口五> = {}
+  for (const [短, 键] of 端口名) {
+    const v = 取值(stdout, `DAWNPORT_${短}`)
+    const n = Number(v)
+    if (v === undefined || !Number.isInteger(n) || n <= 0) {
+      throw new Error(`挑端口没回 ${短}（${键}）：${stdout.trim().split("\n").slice(-3).join(" / ")}`)
+    }
+    out[键] = n
+  }
+  return out as 端口五
+}
+
+/** 跑一次挑端口 + 写文件。回不出 `DAWNRC` 就是命令根本没跑起来，带 stderr 响亮地抛（规格 7.5） */
+export async function 挑端口并写文件(
+  exec: 远端执行["exec"],
+  o: { 解释器路径: string; 文件名: string; key: string; cwd?: string },
+): Promise<{ 端口: 端口五; 文件: string }> {
+  const r = await exec(挑端口并写文件脚本(o.解释器路径, o.文件名, o.key), {
+    ...(o.cwd === undefined ? {} : { cwd: o.cwd }),
+    timeoutSec: 30,
+  })
+  if (取值(r.stdout, "DAWNRC") === undefined) {
+    throw new Error(
+      `远端挑端口 / 写 connection.json 的命令没跑起来（退出码 ${r.code ?? "无"}）：` +
+        `${(r.stderr || r.stdout).trim().split("\n").slice(-5).join("\n")}`,
+    )
+  }
+  const 文件 = 取值(r.stdout, "DAWNFILE")
+  if (!文件) throw new Error(`远端挑端口那条没回 DAWNFILE：${r.stdout.trim().split("\n").slice(-3).join(" / ")}`)
+  return { 端口: 解析端口(r.stdout), 文件 }
+}
+
 /** 起内核那一条。文件落 `$TMPDIR`（缺省 /tmp）；日志同名 `.log`；回 `DAWNPID` 与 `DAWNFILE` */
 export function 远端启动命令(语言: 内核语言, 解释器路径: string, 文件名: string): string {
   const 起 =

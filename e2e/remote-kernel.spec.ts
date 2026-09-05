@@ -380,3 +380,68 @@ test.describe("远程内核 · 图从服务器回来", () => {
     await expect(工具.locator(".tool-result")).toContainText("image/png")
   })
 })
+
+/**
+ * 远端 **R**（2026-09-05，规格 R1–R4）。与上面那几条同一条路，换成 IRkernel。
+ *
+ * 这条用例是这一轮唯一证明「远端 R 真的能用」的地方（准入规则 3）。它盯的正是
+ * 单测盯不到的那件事：**IRkernel 不自己写 connection.json**，端口是 DAWN 让服务器上的 R
+ * 挑的、文件是 DAWN 写过去的。写错一个字，这里就会红在「内核起不来」上。
+ *
+ * 机器相关：要本机一条装了 IRkernel 的 R，没有就整块跳过（跳过的理由写在名字里，
+ * 别让它变成一条「永远绿着但什么也没跑」的用例）。
+ */
+const RSCRIPT = spawnSync("bash", ["-lc", "which Rscript"], { encoding: "utf8" }).stdout?.trim().split("\n")[0] ?? ""
+const 有IRkernel =
+  RSCRIPT !== "" &&
+  spawnSync(RSCRIPT, ["-e", 'quit(status=if(requireNamespace("IRkernel",quietly=TRUE))0 else 3)'], { timeout: 60_000 })
+    .status === 0
+/** 传给假服务器的是 **R 本尊**，不是 Rscript（`远端启动命令` 用的是 R） */
+const R = 有IRkernel ? join(RSCRIPT, "..", "R") : ""
+
+test.describe("远程内核 · R（IRkernel）", () => {
+  test.skip(!有IRkernel, "本机没有装了 IRkernel 的 R")
+
+  test.use({
+    dawnOptions: {
+      fakeSsh: true,
+      fakeSshPython: PY,
+      fakeSshR: R,
+      realKernels: true,
+      toolCall: {
+        toolName: "run_code",
+        args: { language: "R", code: 'x <- 40 + 2\ncat(x, "\\n")\nplot(1:3)' },
+        say: "我在服务器上用 R 算。",
+        perTurn: true,
+      },
+    },
+  })
+
+  test("选 R → agent 的 run_code 在「服务器」的 IRkernel 里算出 42、画出一张图，胶囊写 R", async ({ dawn }) => {
+    const { page } = dawn
+    await 加一台并开对话(page)
+    await 进坞(page, "笔记本")
+
+    // 两门都没配：整格是选择器，两门各列各的。R 那条要真被列出来——**列不出来就说明事实脚本没报它**
+    await expect(page.getByText(/假机器 上还没选解释器/)).toBeVisible()
+    await expect(page.locator(".ip-R .ip-path", { hasText: R })).toBeVisible({ timeout: 30_000 })
+    // IRkernel 探得到才算数：探不到的话这里是 `IRkernel ✗`，而内核根本起不来
+    await expect(page.locator(".ip-R .ip-pkg-present")).toBeVisible()
+    await page.locator(".ip-R").getByRole("radio").first().click()
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("用 R 算一下")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    // 42 从**服务器上那台 IRkernel** 回来（连接文件是 DAWN 写过去的，端口是那台机器自己挑的）
+    const cells = page.locator(".nb-cell")
+    await expect(cells.first().locator(".kout-text")).toContainText("42", { timeout: 120_000 })
+    // 图也回得来：走的是 display_data{image/png} → 隧道 → KernelOutputRow 那条真链路
+    await expect(cells.first().locator(".kout-img, img").first()).toBeVisible({ timeout: 60_000 })
+    // 胶囊点名语言与机器：「R · 空闲」在一台不是本机的机器上是句含糊话
+    await expect(page.locator(".nb-pill-label")).toContainText("R · 假机器")
+
+    const 起来了 = page.getByText(/内核已在 假机器 的 .+ 起来（/)
+    await expect(起来了).toBeVisible({ timeout: 60_000 })
+    await expect(起来了).toContainText(R)
+  })
+})

@@ -350,6 +350,13 @@ export interface DawnOptions {
    * 那条命令仍答得出来（写死答一条起不来的路径），只是起不了内核。
    */
   fakeSshPython?: string
+  /**
+   * 同一件事的 R 那半（远端 R，2026-09-05）：指给假服务器一条**本机真实的 R**（R 本尊，不是 Rscript）。
+   *
+   * 给了才会真起一台 IRkernel。R 与 python 不同的地方在这里也要记一句：
+   * IRkernel **不自己写 connection.json**，那份文件是 DAWN 先挑好端口写过去的（规格 R1）。
+   */
+  fakeSshR?: string
   /** 起一个假微信（远程助理），`DAWN_FAKE_ILINK` 指过去；夹具上多一个 `weixin` 把手 */
   fakeIlink?: boolean
   /** 起一个假飞书（远程助理第二格），`DAWN_FAKE_FEISHU` 指过去；夹具上多一个 `feishu` 把手 */
@@ -641,6 +648,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           : { DAWN_JUPYTER_ROOTS: join(dir, "jupyter", "kernels") }),
         ...(dawnOptions.fakeSsh ? { DAWN_FAKE_SSH: "1" } : {}),
         ...(dawnOptions.fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: dawnOptions.fakeSshPython } : {}),
+        ...(dawnOptions.fakeSshR ? { DAWN_FAKE_SSH_R: dawnOptions.fakeSshR } : {}),
         ...(weixin ? { DAWN_FAKE_ILINK: weixin.url } : {}),
         ...(feishu ? { DAWN_FAKE_FEISHU: feishu.url } : {}),
         /**

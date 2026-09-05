@@ -42,6 +42,28 @@ function 找本机python() {
   return undefined
 }
 
+/**
+ * 同一件事的 R 那半（远端 R，2026-09-05）：挑一条本机真的、装了 IRkernel 的 R。
+ *
+ * **返回的是 R 本尊**（`/usr/local/bin/R`），不是 Rscript——`kernel/probe.ts` 的候选、
+ * 设置里填的、`远端启动命令` 用的都是 R；只有探测那一下才换成同目录的 Rscript。
+ * 找不到就返回 undefined 并说一句：**不出声地少一门语言，等于让「远端 R 起不来」
+ * 看起来像是代码的毛病**，而实情只是这台开发机没装 IRkernel。
+ */
+function 找本机R() {
+  const r = spawnSync("bash", ["-lc", "which Rscript"], { encoding: "utf8" })
+  const rscript = (r.stdout || "").trim().split("\n")[0]
+  if (!rscript) return undefined
+  const 有包 = spawnSync(rscript, ["-e", "quit(status=if(requireNamespace(\"IRkernel\",quietly=TRUE))0 else 3)"], {
+    encoding: "utf8",
+  })
+  if (有包.status !== 0) {
+    console.log("本机有 Rscript 但没装 IRkernel——假服务器上探得出这条 R，但起不了 R 内核")
+    return undefined
+  }
+  return join(rscript, "..", "R")
+}
+
 const ROOT = resolve(import.meta.dirname, "..")
 
 if (!existsSync(join(ROOT, "dist", "electron", "main.js"))) {
@@ -60,6 +82,10 @@ const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
 console.log(`假微信：${weixin.url}（/__fake/qr/scan · /__fake/qr/confirm · /__fake/inbound · /__fake/sent）`)
 
 const fakeSshPython = process.env.DAWN_FAKE_SSH_PYTHON ?? 找本机python()
+const fakeSshR = process.env.DAWN_FAKE_SSH_R ?? 找本机R()
+console.log(
+  `假服务器的内核：python=${fakeSshPython ?? "（没有，起不了 python 内核）"} · R=${fakeSshR ?? "（没有，起不了 R 内核）"}`,
+)
 
 const dir = mkdtempSync(join(tmpdir(), "dawn-mock-"))
 const workspace = join(dir, "workspace")
@@ -121,6 +147,8 @@ const child = spawn(
       DAWN_FAKE_SSH: process.env.DAWN_FAKE_SSH ?? "1",
       // 给了才会真起一台内核；找不到装了 ipykernel 的本机 python 就不给，假服务器上探测解释器仍答得出来
       ...(fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: fakeSshPython } : {}),
+      // R 那半同理（2026-09-05）：给了才真起 IRkernel
+      ...(fakeSshR ? { DAWN_FAKE_SSH_R: fakeSshR } : {}),
     },
   },
 )

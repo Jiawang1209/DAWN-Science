@@ -72,30 +72,41 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with: { path: artifacts, merge-multiple: true }
+      # 步骤 id 与 shell 变量名只能是 ASCII（actionlint / shellcheck 都会拒中文标识符）；
+      # 注释与给人看的话照旧中文。
       - name: 收到哪些包、缺哪些
-        id: 清点
+        id: inventory
         shell: bash
         run: |
           ls -lh artifacts || true
-          缺=""
-          for 件 in "*.dmg:macOS" "*.exe:Windows" "*.AppImage:Linux AppImage" "*.deb:Linux deb"; do
-            模式="${件%%:*}"; 名="${件##*:}"
-            # shellcheck disable=SC2086
-            if ! compgen -G "artifacts/$模式" > /dev/null; then 缺="$缺 $名"; fi
-          done
-          if [ -n "$缺" ]; then
-            echo "::warning::这次发布缺这些平台的包：$缺"
-            { echo "note<<EOF"; echo "> ⚠️ 这次发布**缺**这些平台的包：$缺 —— 对应的打包 job 失败了，去 Actions 看。"; echo "EOF"; } >> "$GITHUB_OUTPUT"
-          else
-            { echo "note<<EOF"; echo "四个平台的包都在。"; echo "EOF"; } >> "$GITHUB_OUTPUT"
-          fi
+          missing=""
+          check() {
+            if ! compgen -G "artifacts/$1" > /dev/null; then missing="$missing $2"; fi
+          }
+          check "*.dmg" "macOS"
+          check "*.exe" "Windows"
+          check "*.AppImage" "Linux AppImage"
+          check "*.deb" "Linux deb"
           # 一个都没有就没什么可发的，如实红
-          compgen -G "artifacts/*" > /dev/null || { echo "::error::一个产物都没收到，四个平台全失败了"; exit 1; }
+          if ! compgen -G "artifacts/*" > /dev/null; then
+            echo "::error::一个产物都没收到，四个平台全失败了"
+            exit 1
+          fi
+          {
+            echo "note<<EOF"
+            if [ -n "$missing" ]; then
+              echo "> ⚠️ 这次发布**缺**这些平台的包：$missing —— 对应的打包 job 失败了，去 Actions 看。"
+            else
+              echo "四个平台的包都在。"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "$missing" ]; then echo "::warning::这次发布缺这些平台的包：$missing"; fi
       - uses: softprops/action-gh-release@v2
         with:
           draft: true
           generate_release_notes: true
-          body: ${{ steps.清点.outputs.note }}
+          body: ${{ steps.inventory.outputs.note }}
           files: |
             artifacts/*.dmg
             artifacts/*.zip

@@ -1,7 +1,12 @@
 # 三平台四份打包矩阵（打包 spec §8）。
-# 触发：打 tag `v*` 自动打包并发 GitHub Release（草稿，人看一眼再点发布）；手动触发只出 artifacts 不发。
+# 触发：打 tag `v*` 自动打包并发 GitHub Release（草稿，人看一眼再点「发布」）；手动触发只出 artifacts 不发。
 # 不签名（作者定的：先不花那 99 美元，用户右键打开）；有证书时在 electron-builder.yml 删 identity: null 并设 CSC_* secrets。
 # Linux 两种架构各在各自的 runner 上打——node-pty 没有 linux 预编译件，只能现场编本机那一种。
+#
+# **这条工作流不跑测试**（2026-09-05 拆的）。测试在 `ci.yml`，红了归它红。
+# 理由是踩出来的：测试与打包同在一个 job 时，Linux 那两台在测试步骤超时，
+# `release` 的 `needs: package` 于是永不满足——**mac 与 Windows 明明打成功了，产物却只留在
+# artifacts 里七天后自动删除，Release 一个都没出过**。验不该有权否决发。
 name: package
 on:
   push:
@@ -26,23 +31,23 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y build-essential python3 libfuse2
       - run: npm ci
+      # 打包前只做这一道静态检查：它几秒钟，且能挡住「构建产物根本编译不过」这类事。
+      # 完整测试在 ci.yml，不在这里——见文件头。
       - run: npm run typecheck
-      # Windows 上暂不跑测试：这份代码还没在 Windows 上跑过——2026-08-28 首轮 CI 红了 25 个文件（绝对路径判断、
-      # 分隔符、文件权限、命名管道、时区、bash……）。Windows 这台只构建打包，产物标「未经验证」；移植是下一项工作。
-      # 只跑 node + ui 两组。内核集成组（tests/kernel/*.integration）全靠本机 kernelspec 跳过，CI 上没东西可测，
-      # 而它在 Linux runner 上一行不打就挂死（两轮各 15/20 分钟，2026-08-28）——先取证，见下面两个诊断步。
-      # 15 分钟兜底：不设上限它会占到 6 小时
-      - if: runner.os != 'Windows'
-        run: npx vitest run --project node --project ui
-        timeout-minutes: 15
-      - name: 诊断 · zeromq 在这台 Linux 上能不能加载（3 分钟，不阻塞）
-        if: runner.os == 'Linux'
-        continue-on-error: true
-        run: timeout 180 node --input-type=module -e "const t=Date.now(); await import('zeromq'); console.log('zeromq ok', Date.now()-t, 'ms')" || echo "::warning::zeromq 加载没在 3 分钟内结束，退出码 $?"
-      - name: 诊断 · 内核集成组单独跑（3 分钟，不阻塞）
-        if: runner.os == 'Linux'
-        continue-on-error: true
-        run: timeout 180 npx vitest run --project kernel --reporter=verbose || echo "::warning::内核组没在 3 分钟内结束，退出码 $?"
+      # **tag 与 package.json 的版本必须一致**：不一致时打出来的文件名是旧版本号
+      # （`DAWN-Science-<version>-…`），而 Release 的标题是 tag——发出去的包与它的名字对不上，
+      # 装到用户机器上「关于」里显示的还是旧版本。宁可在这里红，也不要发一套名字撒谎的包。
+      - name: tag 与 package.json 的版本要对得上
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag 是 v$TAG，而 package.json 里是 $PKG。先改 package.json 的 version 再打 tag。"
+            exit 1
+          fi
+          echo "版本一致：$PKG"
       - run: npm run build
       - run: ${{ matrix.cmd }}
       - uses: actions/upload-artifact@v4
@@ -58,17 +63,39 @@ jobs:
           retention-days: 7
   release:
     needs: package
-    if: startsWith(github.ref, 'refs/tags/v')
+    # **有一个平台没打出来也要发**（2026-09-05）：`needs` 只保证 package 全部结束，
+    # `always()` 让这一步在其中某个失败时照样跑。少一个平台的包，好过一个平台都没有——
+    # 下面「数一数收到几个」会把缺谁写在 Release 说明里，不蒙人。
+    if: always() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
     permissions: { contents: write }
     steps:
       - uses: actions/download-artifact@v4
         with: { path: artifacts, merge-multiple: true }
-      - run: ls -lh artifacts
+      - name: 收到哪些包、缺哪些
+        id: 清点
+        shell: bash
+        run: |
+          ls -lh artifacts || true
+          缺=""
+          for 件 in "*.dmg:macOS" "*.exe:Windows" "*.AppImage:Linux AppImage" "*.deb:Linux deb"; do
+            模式="${件%%:*}"; 名="${件##*:}"
+            # shellcheck disable=SC2086
+            if ! compgen -G "artifacts/$模式" > /dev/null; then 缺="$缺 $名"; fi
+          done
+          if [ -n "$缺" ]; then
+            echo "::warning::这次发布缺这些平台的包：$缺"
+            { echo "note<<EOF"; echo "> ⚠️ 这次发布**缺**这些平台的包：$缺 —— 对应的打包 job 失败了，去 Actions 看。"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+          else
+            { echo "note<<EOF"; echo "四个平台的包都在。"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+          fi
+          # 一个都没有就没什么可发的，如实红
+          compgen -G "artifacts/*" > /dev/null || { echo "::error::一个产物都没收到，四个平台全失败了"; exit 1; }
       - uses: softprops/action-gh-release@v2
         with:
           draft: true
           generate_release_notes: true
+          body: ${{ steps.清点.outputs.note }}
           files: |
             artifacts/*.dmg
             artifacts/*.zip

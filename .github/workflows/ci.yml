@@ -1,0 +1,39 @@
+# 测试。**它不挡发布**——这是 2026-09-05 拆出来的那一刀。
+#
+# 之前测试与打包在同一个 job 里，`release` 又写着 `needs: package`：
+# Linux 那两台在测试步骤上超时（15 分钟砍掉），于是**已经打成功的 mac 与 Windows 产物一起作废**，
+# Release 永远不出。一个测试挂死不该让四个平台的包发不出去——验是验，发是发。
+#
+# 红了要有人看见，但看见的方式是这条工作流红着，不是「包发不出来」。
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - name: Linux 依赖（node-pty 现场编译）
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3
+      - run: npm ci
+      - run: npm run typecheck
+      # **Windows 不在矩阵里**：这份代码还没在 Windows 上跑过（2026-08-28 首轮 25 个文件红：
+      # 绝对路径判断、分隔符、文件权限、命名管道、时区、bash……）。移植是另一项工作，
+      # 在那之前把它挂在这里只会让这条工作流长期红着，然后没人再看它。
+      #
+      # 内核集成组（tests/kernel/*.integration）靠本机 kernelspec 跳过，CI 上没东西可测。
+      #
+      # 20 分钟兜底：**Linux 上这一步 2026-08-28 起就会挂死**（测试跑完不退出，或某个文件卡住），
+      # 根因还没定；先让它红在这条工作流里，别再连累发布。
+      - run: npx vitest run --project node --project ui
+        timeout-minutes: 20

@@ -30,6 +30,7 @@
     "dist:linux": "npm run build && electron-builder --linux --publish never",
     "pack": "npm run build && electron-builder --dir",
     "test:packaged": "node scripts/test-packaged.mjs",
+    "release:tag": "node scripts/release-tag.mjs",
     "make-icon": "electron scripts/make-icon.mjs",
     "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
     "ui:dev": "vite",

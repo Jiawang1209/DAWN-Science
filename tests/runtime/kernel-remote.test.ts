@@ -414,6 +414,35 @@ describe("KernelRuntime · 分离与接回", () => {
     expect(rt.等着接回的文件("conn-1")).toEqual([])
   })
 
+  /**
+   * 远端 R 的就绪判据是握手（规格 R2，2026-09-05）：文件是我们自己写的，「文件出现了」证不了内核活着。
+   * 于是握手失败成了「内核其实没起来」的**唯一**出口——那句话必须带上远端 `.log` 的尾巴，
+   * 否则用户看到的是「握手超时」，而日志里写着的是 `there is no package called 'IRkernel'`。
+   */
+  it("起：握手失败 → 先把远端 .log 捞出来再收摊，错误里带着它", async () => {
+    const { 日志, 远端, executor } = 假件()
+    const 坏attach = { ...远端, attach: async () => { throw new Error("握手超时") } }
+    const ex = {
+      ...executor,
+      exec: async (cmd: string) => {
+        日志.push(`exec:${cmd}`)
+        if (cmd.includes("tail -n")) {
+          return { code: 0, stdout: "Error in loadNamespace: there is no package called 'IRkernel'\n", stderr: "" }
+        }
+        return { code: 0, stdout: "", stderr: "" }
+      },
+    }
+    const rt = new KernelRuntime({ 远端: 坏attach as never })
+    const e = await rt.start(spec(ex) as never).catch((x) => x)
+    expect(String(e)).toContain("握手超时")
+    expect(String(e)).toContain("no package called")
+    // **捞日志必须早于停内核**——`停远端内核` 会把 .json 与 .log 一起删掉
+    const 捞 = 日志.findIndex((l) => l.includes("tail -n"))
+    const 停 = 日志.findIndex((l) => l === "停:7")
+    expect(捞).toBeGreaterThan(-1)
+    expect(捞).toBeLessThan(停)
+  })
+
   it("接回：握手不通 → 关隧道、停远端、exited{reason:lost}", async () => {
     const { 日志, 远端, executor } = 假件({ 远端活着: () => true })
     let 第几次 = 0

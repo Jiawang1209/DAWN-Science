@@ -334,3 +334,77 @@ describe("R · 挑端口并写连接文件", () => {
     expect(假.跑过[0]).toContain("'kk'")
   })
 })
+
+/**
+ * R 的就绪判据（规格 R2）。Python 靠「connection.json 出现了」判断内核起来了；
+ * **R 的那份文件是我们自己先写的**，那条判据对 R 恒真、什么也证明不了。
+ * R 改成：轮询进程还在不在，起来就死当场抓住；真正的就绪由后面的握手证明。
+ */
+describe("起远端内核 · R", () => {
+  const 端口回声 = "DAWNRC=0\nDAWNPORT_shell=21001\nDAWNPORT_iopub=21002\nDAWNPORT_stdin=21003\nDAWNPORT_control=21004\nDAWNPORT_hb=21005\nDAWNFILE=/scratch/dawn-ab-R-1.json\n"
+
+  it("先挑端口写文件、再起内核；连接信息就是我们写下的那五个端口与 key", async () => {
+    const 假 = 假exec([
+      { out: 端口回声 },
+      { out: "DAWNPID=777\nDAWNFILE=/scratch/dawn-ab-R-1.json\nDAWNSETSID=1\n" },
+      { out: "DAWNALIVE=1\n" },
+      { out: "DAWNALIVE=1\n" },
+      { out: "DAWNALIVE=1\n" },
+    ])
+    const r = await 起远端内核(假.exec, {
+      语言: "R", 解释器路径: "/usr/local/bin/R", cwd: "/data/p", 文件名: "dawn-ab-R-1.json", sleep: 不睡, key: "K-1",
+    })
+    expect(假.跑过[0]).toContain("serverSocket")
+    expect(假.跑过[1]).toContain("IRkernel::main()")
+    expect(r.pid).toBe(777)
+    expect(r.文件).toBe("/scratch/dawn-ab-R-1.json")
+    expect(r.连接信息).toMatchObject({
+      key: "K-1", shell_port: 21001, iopub_port: 21002, stdin_port: 21003, control_port: 21004, hb_port: 21005,
+      ip: "127.0.0.1", transport: "tcp", signature_scheme: "hmac-sha256",
+    })
+    expect(r.setsid).toBe(true)
+  })
+
+  it("**一次都不去读 connection.json**——那份是我们写的，读回来只是在读自己的手迹", async () => {
+    const 假 = 假exec([
+      { out: 端口回声 },
+      { out: "DAWNPID=777\nDAWNFILE=/scratch/f.json\nDAWNSETSID=1\n" },
+      { out: "DAWNALIVE=1\n" }, { out: "DAWNALIVE=1\n" }, { out: "DAWNALIVE=1\n" },
+    ])
+    await 起远端内核(假.exec, { 语言: "R", 解释器路径: "/usr/local/bin/R", cwd: "/", 文件名: "f.json", sleep: 不睡, key: "K" })
+    expect(假.跑过.some((c) => c.includes("base64"))).toBe(false)
+  })
+
+  it("起来就死（IRkernel 没装）→ 抛 `远端启动失败`，`.log` 的尾巴带上来——那是唯一的线索", async () => {
+    const 假 = 假exec([
+      { out: 端口回声 },
+      { out: "DAWNPID=778\nDAWNFILE=/scratch/f.json\nDAWNSETSID=1\n" },
+      { out: "DAWNALIVE=0\n" },
+      { out: "Error in loadNamespace: there is no package called 'IRkernel'\n" },
+    ])
+    const e = await 起远端内核(假.exec, { 语言: "R", 解释器路径: "/usr/local/bin/R", cwd: "/", 文件名: "f.json", sleep: 不睡, key: "K" })
+      .catch((x) => x)
+    expect(e).toBeInstanceOf(远端启动失败)
+    expect((e as 远端启动失败).日志尾).toContain("no package called")
+  })
+
+  it("挑端口那步就失败（端口挑不到 / 文件写不出）→ 内核那条压根不发", async () => {
+    const 假 = 假exec([{ out: "DAWNRC=3\n" }])
+    await expect(起远端内核(假.exec, { 语言: "R", 解释器路径: "/usr/local/bin/R", cwd: "/", 文件名: "f.json", sleep: 不睡, key: "K" }))
+      .rejects.toThrow(/空闲端口/)
+    expect(假.跑过).toHaveLength(1)
+  })
+
+  it("不给 key 就自己生成一个——两台内核不许共用同一把 HMAC key", async () => {
+    const 造 = () => 假exec([
+      { out: 端口回声 },
+      { out: "DAWNPID=1\nDAWNFILE=/f.json\nDAWNSETSID=1\n" },
+      { out: "DAWNALIVE=1\n" }, { out: "DAWNALIVE=1\n" }, { out: "DAWNALIVE=1\n" },
+    ])
+    const a = 造(), b = 造()
+    const r1 = await 起远端内核(a.exec, { 语言: "R", 解释器路径: "/R", cwd: "/", 文件名: "f.json", sleep: 不睡 })
+    const r2 = await 起远端内核(b.exec, { 语言: "R", 解释器路径: "/R", cwd: "/", 文件名: "f.json", sleep: 不睡 })
+    expect(r1.连接信息.key).not.toBe(r2.连接信息.key)
+    expect(r1.连接信息.key.length).toBeGreaterThan(8)
+  })
+})

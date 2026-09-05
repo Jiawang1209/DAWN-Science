@@ -38,6 +38,7 @@
  * （探测不到就退化成不用，覆盖没装 util-linux 的宿主，比如 macOS），`</dev/null` 断开继承的标准输入。
  * 关掉 job control 时 `$s <cmd> &` 里的 `setsid` 是就地 exec，`$!` 拿到的仍是内核自己的 pid。
  */
+import { randomUUID } from "node:crypto"
 import type { KernelConnectionInfo } from "../kernel/types.js"
 import { 单引号, 取值 } from "./ssh.js"
 
@@ -171,9 +172,12 @@ export async function 挑端口并写文件(
         `${(r.stderr || r.stdout).trim().split("\n").slice(-5).join("\n")}`,
     )
   }
+  // **先解析 DAWNRC / 端口，再看 DAWNFILE**：挑不到端口、文件写不出去都是有名有姓的原因，
+  // 反过来先查 DAWNFILE 的话，那些真因会被一句「没回 DAWNFILE」盖掉（本条是测试逼出来的）。
+  const 端口 = 解析端口(r.stdout)
   const 文件 = 取值(r.stdout, "DAWNFILE")
   if (!文件) throw new Error(`远端挑端口那条没回 DAWNFILE：${r.stdout.trim().split("\n").slice(-3).join(" / ")}`)
-  return { 端口: 解析端口(r.stdout), 文件 }
+  return { 端口, 文件 }
 }
 
 /** 起内核那一条。文件落 `$TMPDIR`（缺省 /tmp）；日志同名 `.log`；回 `DAWNPID` 与 `DAWNFILE` */
@@ -240,6 +244,64 @@ function 解析连接(json: string): KernelConnectionInfo {
   }
 }
 
+/**
+ * R 那条（规格 R1/R2）。三步：**挑端口 + 写 connection.json → 起 → 确认没有起来就死**。
+ *
+ * **就绪判据与 Python 不是同一条**：Python 轮询「connection.json 出现了没有」，
+ * 那既是内核初始化完成的信号、也是端口的来源；R 的那份文件是我们自己先写的，
+ * 读回来只是在读自己的手迹——恒真的判据等于没有判据。
+ * 所以这里只确认进程**没有起来就死**（Rscript 路径不对、IRkernel 没装、文件权限不对都在这一步现形），
+ * 真正的就绪交给后面 `attachKernelChannel` 的 `kernel_info` 握手。
+ * 本机实测：给了合法的 connection.json，IRkernel 0.4 秒内把五个端口都听上了。
+ */
+async function 起远端R内核(
+  exec: 远端执行["exec"],
+  o: { 解释器路径: string; cwd: string; 文件名: string; 最多轮询?: number; key?: string },
+  sleep: (ms: number) => Promise<void>,
+): Promise<已起的> {
+  const key = o.key ?? randomUUID()
+  const { 端口, 文件 } = await 挑端口并写文件(exec, {
+    解释器路径: o.解释器路径,
+    文件名: o.文件名,
+    key,
+    cwd: o.cwd,
+  })
+  const 连接信息: KernelConnectionInfo = {
+    ip: "127.0.0.1",
+    transport: "tcp",
+    signature_scheme: "hmac-sha256",
+    kernel_name: "ir",
+    key,
+    ...端口,
+  }
+  const r = await exec(远端启动命令("R", o.解释器路径, o.文件名), { cwd: o.cwd, timeoutSec: 20 })
+  const pid = Number(取值(r.stdout, "DAWNPID"))
+  if (!Number.isInteger(pid) || pid <= 0) {
+    // 文件已经写出去了，起不来就把它带走——留着它只会被下一次「扫残留」当成别人的东西
+    await exec(`rm -f ${单引号(文件)} ${单引号(`${文件}.log`)}; true`, { timeoutSec: 10 }).catch(() => {})
+    throw new Error(
+      `远端起 R 内核的命令没跑起来（退出码 ${r.code ?? "无"}）：` +
+        `${(r.stderr || r.stdout).trim().split("\n").slice(-5).join("\n")}`,
+    )
+  }
+  const setsid = 取值(r.stdout, "DAWNSETSID") === "1"
+  if (!setsid) {
+    console.error("[远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀")
+  }
+  // 三次 × 500ms：起来就死的那些（IRkernel 没装、R 路径不对）在第一次就被抓到。
+  // 活过这一小段不等于握手能成——那是握手自己要证的事，失败时它会把同一份 .log 捞出来。
+  for (let i = 0; i < (o.最多轮询 ?? 3); i++) {
+    const 活 = await exec(活着脚本(pid), { timeoutSec: 10 })
+    if (取值(活.stdout, "DAWNALIVE") !== "1") {
+      const 日志 = await exec(`tail -n 40 ${单引号(`${文件}.log`)} 2>/dev/null; true`, { timeoutSec: 10 })
+      await exec(`rm -f ${单引号(文件)} ${单引号(`${文件}.log`)}; true`, { timeoutSec: 10 }).catch(() => {})
+      throw new 远端启动失败("远端 R 内核起来就退出了", 日志.stdout)
+    }
+    await sleep(500)
+  }
+  return { pid, 文件, 连接信息, setsid }
+}
+
 export async function 起远端内核(
   exec: 远端执行["exec"],
   o: {
@@ -250,9 +312,12 @@ export async function 起远端内核(
     文件名: string
     sleep?: (ms: number) => Promise<void>
     最多轮询?: number
+    /** R 专有：connection.json 里的 HMAC key。不给就生成一把（测试才会传） */
+    key?: string
   },
 ): Promise<已起的> {
   const sleep = o.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)))
+  if (o.语言 === "R") return 起远端R内核(exec, o, sleep)
   // 30 次 × 500ms = 15s 在 IRkernel 冷启动（首次编译/加载包）上偏紧；60 次给到 30s 的上限。
   const 最多 = o.最多轮询 ?? 60
   const r = await exec(远端启动命令(o.语言, o.解释器路径, o.文件名), { cwd: o.cwd, timeoutSec: 20 })

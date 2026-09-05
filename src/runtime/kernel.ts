@@ -34,6 +34,7 @@ import {
   远端内核还在,
   删远端文件,
 } from "../remote/kernel-launch.js"
+import { 单引号 } from "../remote/ssh.js"
 import { 五条隧道 } from "../remote/tunnel.js"
 import { 起心跳, 开心跳口, type 心跳 } from "../kernel/heartbeat.js"
 import type { KernelConnectionInfo } from "../kernel/types.js"
@@ -231,8 +232,22 @@ export class KernelRuntime implements AgentRuntime {
         })
       } catch (e) {
         this.起中隧道.delete(spec.sessionId)
+        /**
+         * **先把远端 `.log` 捞出来，再收摊**——`停远端内核` 会把 `.json` 与 `.log` 一起删掉。
+         *
+         * R 尤其需要这一条（规格 R2，2026-09-05）：R 的 connection.json 是我们自己写的，
+         * 「文件出现了」证不了内核活着，于是握手失败是「其实没起来」的**唯一**出口。
+         * 不带日志的话，用户看到的是「握手超时」，而服务器上那份日志里写着的是
+         * `there is no package called 'IRkernel'`——一句指向完全不同补救的话。
+         */
+        const 日志尾 = await exec(`tail -n 40 ${单引号(`${起的.文件}.log`)} 2>/dev/null; true`, { timeoutSec: 10 })
+          .then((r) => r.stdout.trim())
+          .catch(() => "")
         await 隧.关().catch(() => {})
         await 远.停远端内核(exec, 起的).catch(() => {})
+        if (日志尾 && e instanceof Error) {
+          throw new UserFacingError(`${label}：${e.message}\n${日志尾}`)
+        }
         throw e
       }
       this.起中隧道.delete(spec.sessionId)

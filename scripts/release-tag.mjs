@@ -63,4 +63,5 @@ console.log(`已打 tag ${tag}（指向 ${sh("git", ["rev-parse", "--short", "HE
     git push origin main
     git push origin ${tag}
 
-之后去 Actions 看 package 那条；跑完在 Releases 里是一份**草稿**，看一眼再点「发布」。`)
+之后去 Actions 看 package 那条。跑完 Releases 里**直接就是正式的一版**（release.yml 里 draft: false）；
+某个平台打挂了照发其余的，缺谁会写在 Release 说明第一行。`)

@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-05 — 远端 R 内核：IRkernel 不自己写 connection.json，我们写（分支 `remote-r`，未合并）
+
+- **Type**: feat
+- **Motivation**: 仓库的公开描述与 README 都写着 *"multiple agents collaborate with you on **R and Python** data science"*，而 v0.0.2 已经发到 GitHub Releases。**远端 R 这条路一次都没跑过**：Spike F 只测 Python，假服务器只接 `DAWN_FAKE_SSH_PYTHON`（R 的起内核命令被认出来后直接回 127），作者 09-04 在真集群上验的也是 Python。上线之前这叫「没验」，上线之后是**对外承诺了但没有任何判据兜着**。规格 `specs/2026-09-05-R远端-design.md`（定案 R1–R5），计划 `plans/2026-09-05-R远端.md`。
+- **What**（一跑就发现生产代码里那条 R 分支根本起不来）:
+  - **`IRkernel::main(connection_file = "")` 只读不写**（本机 R 4.6.1 实测）：它从 `commandArgs(TRUE)[[1]]` 取文件名去 `open.connection(con, "rb")`，文件不在就报 `cannot open the connection` 当场退出。09-03 规格里「`-f "$f"` 指向一个不存在的路径时 ipykernel / IRkernel 会自己挑端口、生成 key、把 connection.json 写在那儿」——**这句话里的 IRkernel 是错的**，而这个错足以让远端 R 在真集群上完全起不来。那条规格已就地更正并指向新规格。
+  - **端口在远端挑、文件由我们写**（`挑端口并写文件脚本`）：一段只用 base R 的单行脚本，在 `20000..60000` 里随机取候选 `tryCatch(serverSocket(p))`，**五个 socket 一起开着挑完再一起关**（一个个开关会挑到同一个端口），`umask 077` 之后写 connection.json（里面有 HMAC key，集群的 `$TMPDIR` 常常就是所有人可读的 `/tmp`），`$TMPDIR` 的展开留在远端并回声 `DAWNFILE=`。**为什么不在本地挑**：本机的空闲端口与那台服务器无关，共享登录节点上跑着别人的 jupyter 是常态，撞了的后果是内核起来就死、而症状伪装成「R 装得不对」。挑不满（`DAWNRC=3`）与写不出（`DAWNRC=4`）各有各的报法，**不许退化成「随便写五个数」**。
+  - **R 的就绪判据换掉**（定案 R2）：Python 靠「connection.json 出现了」判断内核起来了；R 的那份文件是我们自己先写的，那条判据对 R **恒真**、等于没有判据。R 改成确认进程没有起来就死（IRkernel 没装、R 路径不对都在这一步现形，带 `.log` 尾巴抛），真正的就绪交给后面的 `kernel_info` 握手。相应地，**握手失败时先把远端 `.log` 捞出来再收摊**（`停远端内核` 会把它删掉）——否则用户看到的是「握手超时」，而日志里写着的是 `there is no package called 'IRkernel'`，两句话指向完全不同的补救。
+  - **假服务器真起 IRkernel**（准入规则 1，`DAWN_FAKE_SSH_R`）：事实脚本里报这条 R（**不设就一条都不报**——报一条打不开的 Rscript 会让界面说「有 R，只是没装 IRkernel」，那是假话）、探测命令真 spawn、挑端口那段真跑（真端口、真文件、真 0600）、起内核真 spawn 一台 IRkernel、扫残留真杀。`dev:mock` 照 python 那半自动找一条装了 IRkernel 的 R，找不到出声。
+- **Impact**: 远端 R 从「代码写着但没人跑过」变成「mock 与 e2e 都兜着」。Python 那条一个字节没改（老用例全绿是它的判据）。协议没动。**真集群仍待作者验一次**（清单在计划 Task 6）。
+- **Verification**: 每个任务先红后绿。`tests/remote/` 154 过（带 `DAWN_FAKE_SSH_R` 与一条真有 ipykernel 的 python，真起内核的那几条都跑了）；typecheck 干净。**e2e 一条新用例是这一轮唯一证明「真的能用」的地方**（准入规则 3）：选 R → agent 的 `run_code` 在假服务器的真 IRkernel 里算出 42 → `plot(1:3)` 的图回到笔记本 → 胶囊写「R · 假机器」。**做了证伪检验**：把写进连接文件的 key 与我们记下的故意改成不一致，用例如期变红——这正是「IRkernel 真的在用我们放上去的那份文件」的判据。`remote-kernel.spec.ts` 16 条 `--repeat-each=2` 全过无抖动，跑完 `$TMPDIR` 与进程表都没有残留。两条量出来的事实顺带记下：给了合法的连接文件，**IRkernel 0.4 秒**就把五个端口听上了（「IRkernel 冷启动慢」这条旧印象站不住）；`serverSocket` 是 base R ≥ 4.0 的东西，够用。
+
 ### 2026-09-05 — v0.0.2 真的发上了 GitHub：四平台十个包，且线上那份 mac 包被起过一次
 
 - **Type**: chore

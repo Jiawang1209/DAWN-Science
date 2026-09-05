@@ -33,6 +33,16 @@ export interface 结果 { out: string; err: string; code: number }
 const 真python = (): string | undefined => process.env["DAWN_FAKE_SSH_PYTHON"] || undefined
 
 /**
+ * `DAWN_FAKE_SSH_R` 指的是 **R 本尊**（`/usr/local/bin/R`），不是 Rscript——
+ * `kernel/probe.ts` 的候选、设置里填的、`远端启动命令` 用的都是 R；探测那一下才换成同目录的 Rscript。
+ */
+const 真R = (): string | undefined => process.env["DAWN_FAKE_SSH_R"] || undefined
+const 真Rscript = (): string | undefined => {
+  const r = 真R()
+  return r ? join(r, "..", "Rscript") : undefined
+}
+
+/**
  * 这台假机器上真为它 spawn 过的 pid，按 connection.json 的**文件名**（不含目录）记。
  * `扫残留` 与「起内核失败自己清理」都要靠它才能真的杀对进程——**不记的话扫残留只能删文件、
  * 杀不到进程**，那与「说自己扫过了」不是一回事（准入规则 1：mock 不能说谎）。
@@ -77,7 +87,17 @@ export function 假内核命令(整条: string, cwd?: string): 结果 | undefine
   // 探测事实（interpreters.ts 的 `事实脚本`）：一律用写死的事实作答，不真的探测这台电脑
   if (整条.includes("DAWNFACT_HOME")) {
     const py = 真python() ?? "/usr/bin/python3"
-    return { out: `*** 假服务器 ***\nDAWNFACT_HOME=/home/dawn\nDAWNFACT_OS=Linux\nDAWNFACT_PATH_python3=${py}\nDAWNFACT_EXE=${py}\n`, err: "", code: 0 }
+    // R 只在真接了一条时才报。**不设就一条都不报**：报一条打不开的 Rscript 会让界面说
+    // 「有 R，只是没装 IRkernel」，而实情是这台假机器压根没接 R——两句话指向的补救完全不同。
+    const rs = 真Rscript()
+    return {
+      out:
+        `*** 假服务器 ***\nDAWNFACT_HOME=/home/dawn\nDAWNFACT_OS=Linux\n` +
+        `DAWNFACT_PATH_python3=${py}\nDAWNFACT_EXE=${py}\n` +
+        (rs ? `DAWNFACT_PATH_Rscript=${rs}\nDAWNFACT_EXE=${rs}\n` : ""),
+      err: "",
+      code: 0,
+    }
   }
 
   /**
@@ -88,7 +108,10 @@ export function 假内核命令(整条: string, cwd?: string): 结果 | undefine
   const 探 = /^'([^']+)' '(-c|-e)' '((?:[^']|'\\'')*)'$/.exec(整条.trim())
   if (探) {
     const [, path, flag, code] = 探
-    if (path !== 真python()) return { out: "", err: `${path}: command not found（这是一台假服务器）\n`, code: 127 }
+    // python 与 R 各自那条真解释器都认；别的一律 127（这是一台假服务器，不假装认识别人的路径）
+    if (path !== 真python() && path !== 真Rscript()) {
+      return { out: "", err: `${path}: command not found（这是一台假服务器）\n`, code: 127 }
+    }
     const r = spawnSync(path!, [flag!, code!.replace(/'\\''/g, "'")], { encoding: "utf8", timeout: 8000 })
     return { out: r.stdout ?? "", err: r.stderr ?? "", code: r.status ?? 1 }
   }
@@ -142,8 +165,54 @@ export function 假内核命令(整条: string, cwd?: string): 结果 | undefine
    * 那和「这台机器没装 R」长得一模一样，会把「R 内核压根没接」的坑晾在那儿没人发现——
    * 所以这里单独认出这个形状，回一句能一眼看出「不是没装 R，是这台假机器压根不支持」的话。
    */
-  if (/^f="\$\{TMPDIR:-\/tmp\}\/"'[^']+'; s=; command -v setsid .*--slave -e 'IRkernel::main\(\)' --args "\$f"/.test(整条)) {
-    return { out: "", err: "假服务器只会起 python 内核\n", code: 127 }
+  const 起R =
+    /^f="\$\{TMPDIR:-\/tmp\}\/"'([^']+)'; s=; command -v setsid >\/dev\/null 2>&1 && s=setsid; if \[ -n "\$s" \]; then echo DAWNSETSID=1; else echo DAWNSETSID=0; fi; nohup \$s '([^']+)' --slave -e 'IRkernel::main\(\)' --args "\$f" <\/dev\/null >"\$f\.log" 2>&1 & echo DAWNPID=\$!; echo "DAWNFILE=\$f"$/.exec(
+      整条,
+    )
+  if (起R) {
+    const [, 名, path] = 起R
+    if (!真R()) return { out: "", err: "假服务器没接 R（要真起 R 内核，设 DAWN_FAKE_SSH_R）\n", code: 127 }
+    if (path !== 真R()) return { out: "", err: `${path}: No such file or directory\n`, code: 127 }
+    const f = join(tmpdir(), 名!)
+    // **connection.json 必须已经在那儿**——IRkernel 只读不写（规格 R1）。不在就如实照它的样子失败，
+    // 假装能起才是这台假机器最该避免的事。
+    const log = openSync(`${f}.log`, "a")
+    const 真cwd = cwd && existsSync(cwd) ? cwd : undefined
+    const child = spawn(path!, ["--slave", "-e", "IRkernel::main()", "--args", f], {
+      detached: true,
+      stdio: ["ignore", log, log],
+      ...(真cwd ? { cwd: 真cwd } : {}),
+    })
+    closeSync(log)
+    child.unref()
+    内核进程.set(名!, child.pid!)
+    child.once("exit", () => {
+      if (内核进程.get(名!) === child.pid) 内核进程.delete(名!)
+    })
+    setsid缓存 ??= spawnSync("sh", ["-c", "command -v setsid"], { encoding: "utf8" }).status === 0
+    return { out: `DAWNSETSID=${setsid缓存 ? 1 : 0}\nDAWNPID=${child.pid}\nDAWNFILE=${f}\n`, err: "", code: 0 }
+  }
+
+  /**
+   * R 的第一步：挑端口 + 写 connection.json（`kernel-launch.ts` 的 `挑端口并写文件脚本`）。
+   * **真跑那段 R**——端口是那台机器上真挑的、文件是真写出来的、`umask 077` 也真生效。
+   * 造一份假的端口回声在这里毫无意义：接下来 IRkernel 要真去绑它们。
+   */
+  const 挑 =
+    /^f="\$\{TMPDIR:-\/tmp\}\/"'([^']+)'; '([^']+)' --slave -e '((?:[^']|'\\'')*)' --args "\$f" '((?:[^']|'\\'')*)'; echo "DAWNFILE=\$f"$/.exec(
+      整条.trim(),
+    )
+  if (挑) {
+    const [, 名, path, code, key] = 挑
+    if (!真R()) return { out: "", err: "假服务器没接 R（要真起 R 内核，设 DAWN_FAKE_SSH_R）\n", code: 127 }
+    if (path !== 真R()) return { out: "", err: `${path}: No such file or directory\n`, code: 127 }
+    const f = join(tmpdir(), 名!)
+    const 还原 = (x: string) => x.replace(/'\\''/g, "'")
+    const r = spawnSync(path!, ["--slave", "-e", 还原(code!), "--args", f, 还原(key!)], {
+      encoding: "utf8",
+      timeout: 30_000,
+    })
+    return { out: `${r.stdout ?? ""}DAWNFILE=${f}\n`, err: r.stderr ?? "", code: r.status ?? 1 }
   }
 
   /**

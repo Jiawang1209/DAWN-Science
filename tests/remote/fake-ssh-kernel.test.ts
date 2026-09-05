@@ -13,9 +13,16 @@
  * 假机器旧的「活着？」正则匹配得上它的前半句，只答 `DAWNALIVE`，
  * 调用方取不到 `DAWNFILE` 就一律断定内核没了——mock 模式下接回永远失败，而且不出声。
  */
+import { existsSync, readFileSync, statSync, unlinkSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { 假内核命令, 杀掉所有假内核 } from "../../src/remote/fake-ssh-kernel.js"
-import { 内核文件名, 扫残留, 活着脚本, 远端内核还在, 远端启动命令 } from "../../src/remote/kernel-launch.js"
+import {
+  内核文件名, 扫残留, 活着脚本, 远端内核还在, 远端启动命令, 挑端口并写文件脚本, 解析端口,
+} from "../../src/remote/kernel-launch.js"
+import { 探测命令 } from "../../src/kernel/probe.js"
+import { 单引号, 取值 } from "../../src/remote/ssh.js"
 
 describe("假机器 · 接回要认的几条", () => {
   const PY = process.env.DAWN_FAKE_SSH_PYTHON
@@ -312,4 +319,103 @@ describe("假机器 · 名单读不出来就不扫", () => {
     expect(r?.code).toBe(127)
     expect(r?.err).toContain("装机 id")
   })
+})
+
+/**
+ * 假机器上的 **R**（远端 R，2026-09-05 · 规格 R4）。
+ *
+ * 在这一轮之前，假服务器只接了 `DAWN_FAKE_SSH_PYTHON`，R 的起内核命令被认出来后直接回 127。
+ * 于是「远端 R」这条路在 mock 与 e2e 下**整条是空的**——而生产代码里 R 的分支一直写着，
+ * 谁也没跑过它。真跑一次就会发现 IRkernel 根本不自己写 connection.json（规格 R1）。
+ *
+ * 这里的每一条命令都**由真脚本拼出来**再交给假机器，不手打形状：手打只能证明
+ * 「假机器认得我手打的东西」，而两边一起漂走时这种用例是全绿的。
+ */
+describe("假机器 · R", () => {
+  const R = process.env["DAWN_FAKE_SSH_R"]
+  const 名 = () => 内核文件名("fakeR", "R")
+
+  it.skipIf(!!R)("没设 DAWN_FAKE_SSH_R 时：回 127，且话里说得出「不是没装 R」", () => {
+    const r = 假内核命令(远端启动命令("R", "/usr/local/bin/R", 名()))
+    expect(r?.code).toBe(127)
+    expect(r?.err).toMatch(/假服务器/)
+  })
+
+  it.skipIf(!R)("事实脚本里报得出这条 R——否则界面会说「这台机器上没装 R」，而那是假的", () => {
+    const r = 假内核命令("echo \"DAWNFACT_HOME=$HOME\"; …DAWNFACT_OS…")
+    expect(r?.out).toContain("DAWNFACT_PATH_Rscript=")
+    expect(r?.out).toContain("Rscript")
+  })
+
+  it.skipIf(!R)("探测那条真去 spawn 它：拿得到版本，且 IRkernel 判成 present（退出码 0）", () => {
+    const { cmd, args } = 探测命令.R(R!)
+    const r = 假内核命令(`${单引号(cmd)} ${args.map(单引号).join(" ")}`)
+    expect(r?.code).toBe(0)
+    expect(r?.out).toMatch(/^\d+\.\d+/)
+  })
+
+  it.skipIf(!R)("挑端口 + 写连接文件：真写出来了，五个端口回得来，权限是 0600", () => {
+    const 文件名 = 名()
+    const r = 假内核命令(挑端口并写文件脚本(R!, 文件名, "k-测试"))
+    expect(r?.code).toBe(0)
+    const 端口 = 解析端口(r!.out)
+    expect(端口.shell_port).toBeGreaterThan(1024)
+    const f = 取值(r!.out, "DAWNFILE")!
+    expect(f).toBe(join(tmpdir(), 文件名))
+    try {
+      const j = JSON.parse(readFileSync(f, "utf8")) as Record<string, unknown>
+      expect(j["key"]).toBe("k-测试")
+      expect(j["shell_port"]).toBe(端口.shell_port)
+      // 里面是 HMAC key，集群的 /tmp 是所有人可读的（规格 R3）
+      expect(statSync(f).mode & 0o077).toBe(0)
+    } finally {
+      try { unlinkSync(f) } catch { /* 已经没了 */ }
+    }
+  })
+
+  it.skipIf(!R)("起内核：真 spawn 一台 IRkernel，进程真活着，收摊之后文件与进程都没了", async () => {
+    const 文件名 = 名()
+    const 端 = 假内核命令(挑端口并写文件脚本(R!, 文件名, "k-1"))
+    const f = 取值(端!.out, "DAWNFILE")!
+    const 起 = 假内核命令(远端启动命令("R", R!, 文件名))
+    expect(起?.code).toBe(0)
+    const pid = Number(取值(起!.out, "DAWNPID"))
+    expect(Number.isInteger(pid)).toBe(true)
+    try {
+      expect(假内核命令(活着脚本(pid))?.out).toContain("DAWNALIVE=1")
+      // 起来就死的话日志里会有话；这里要的是「没死」
+      const 记 = 假内核命令(`tail -n 40 '${f}.log' 2>/dev/null; true`)
+      expect(记?.out ?? "").not.toContain("no package called")
+    } finally {
+      假内核命令(`kill -KILL ${pid} 2>/dev/null; rm -f '${f}' '${f}.log'; true`)
+    }
+    expect(existsSync(f)).toBe(false)
+  })
+
+  it.skipIf(!R)("扫残留：R 的那台也真被杀、文件真被删（装机 id 认得出来）", async () => {
+    const 文件名 = 内核文件名("sweepR", "R")
+    const 端 = 假内核命令(挑端口并写文件脚本(R!, 文件名, "k-2"))
+    const f = 取值(端!.out, "DAWNFILE")!
+    const pid = Number(取值(假内核命令(远端启动命令("R", R!, 文件名))!.out, "DAWNPID"))
+    const 假exec = async (cmd: string) => {
+      const r = 假内核命令(cmd)
+      return { code: r?.code ?? 127, stdout: r?.out ?? "", stderr: r?.err ?? "" }
+    }
+    try {
+      const r = await 扫残留(假exec, "sweepR")
+      expect(r.清了).toBe(1)
+      expect(existsSync(f)).toBe(false)
+      // SIGKILL 之后收尸要一小会（与上面 python 那条同一个轮询）
+      let 活 = true
+      for (let i = 0; i < 100 && 活; i++) {
+        await new Promise((r2) => setTimeout(r2, 50))
+        try { process.kill(pid, 0) } catch { 活 = false }
+      }
+      expect(活).toBe(false)
+    } finally {
+      // 断言红了也别在 $TMPDIR 里留一台 R 内核（2026-09-05 的测试卫生）
+      try { process.kill(pid, "SIGKILL") } catch { /* 已经没了 */ }
+      for (const p of [f, `${f}.log`]) { try { unlinkSync(p) } catch { /* 没有就算了 */ } }
+    }
+  }, 30_000)
 })

@@ -14,6 +14,18 @@ import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "./mock-i
 const ROOT = resolve(import.meta.dirname, "..")
 const NAME = "DAWN Science"
 function 找可执行() {
+  // **验的应该是发出去的那一份**：`DAWN_PACKAGED_BIN` 指到任意一份解开的产物上
+  // （比如从 Release 下回来的 dmg 里的 `…/Contents/MacOS/DAWN Science`），
+  // 就能对 CI 打的包跑同一套自测——否则「上线的那十个文件有没有人起过」永远没有答案。
+  // 2026-09-05 发 v0.0.2 时加的：本地包与 CI 包是两批文件，验了前者不等于验了后者。
+  const 指定 = process.env.DAWN_PACKAGED_BIN
+  if (指定) {
+    if (!existsSync(指定)) {
+      console.error(`DAWN_PACKAGED_BIN 指的东西不存在：${指定}`)
+      process.exit(2)
+    }
+    return 指定
+  }
   const 候选 = {
     darwin: [join(ROOT, "release", "mac-arm64", `${NAME}.app`, "Contents", "MacOS", NAME), join(ROOT, "release", "mac", `${NAME}.app`, "Contents", "MacOS", NAME)],
     // electron-builder 的目录名带架构后缀：本机架构那份叫 `linux-unpacked`，另一种叫 `linux-<arch>-unpacked`

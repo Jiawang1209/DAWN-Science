@@ -8,6 +8,16 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-05 — v0.0.2 真的发上了 GitHub：四平台十个包，且线上那份 mac 包被起过一次
+
+- **Type**: chore
+- **Motivation**: 作者说「我在 GitHub 上面没有看到任何我打包好的产品」。查下来不是打包坏了，是**三件事叠在一起，没有一次发出去过**：①本地 `main` 超前 `origin/main` 6 个提交、`v0.0.2` 标签只在本地——而**修 CI 的那批提交恰恰在里面**，所以修好的工作流从没运行过；②`v0.0.1` 那几次（08-28）测试与打包同在一个 job，Linux 两台在 `vitest` 上挂死被砍，`release` 的 `needs: package` 于是永不满足，**mac 与 Windows 明明打成功了，产物只躺在 artifacts 里七天后自动删掉**；③旧工作流发的是草稿，不点那一下等于没发。②③ 在 `bc02ea9` / `65c852f` 里已拆干净（测试搬去 `ci.yml`、`release` 加 `always()`、`draft: false`），只差 ① 那一步。
+- **What**:
+  - 作者推了 `main` 与 `v0.0.2`。`package` 工作流五个 job 全绿，**包括以前从没走到过的 Linux 打包**（x64 4m24s、arm64 2m55s——从前每次都死在测试步骤上，构建根本没开始过）。Release `v0.0.2` 自动建成、公开、标 Latest，挂上十个文件（mac arm64/x64 各 dmg+zip、win 安装器+免安装、Linux x86_64/arm64 各 AppImage+deb）。
+  - `scripts/test-packaged.mjs` 加 `DAWN_PACKAGED_BIN`：指到任意一份解开的产物上就能跑同一套自测。**动机是这一轮才看清的**——本地打的包与 CI 打的包是两批文件，脚本此前只认 `release/` 下的固定路径，于是「上线的那十个文件有没有人起过」这个问题在结构上无法回答。
+- **Impact**: 发布链路第一次真正走通：打 tag → 四平台 → 公开 Release。全部未签名（mac 右键打开、Windows 过 SmartScreen）。`ci.yml` 在 Linux 上仍会红（`vitest` 挂死，根因未定），**这是有意为之的分工**：验是验、发是发，它红不挡发。
+- **Verification**: 把 Release 里的 `DAWN-Science-0.0.2-mac-arm64.dmg` **下回来挂载、拷出 .app、跑 `test-packaged` 六项全过**（开库、技能与子 agent、发一句收假回复、终端、解释器探测 21 条 python / 2 条 R、内核列表）——验的是线上那个文件，不是本地那批。Windows 由作者在真机上验过（同一份源码：这 6 个提交一行 `src/` 都没动，只有 workflows、`package.json`、`scripts/`、文档）。**顺带更正一条旧记录**：09-05 那条打包记录里「dmg 里的可执行文件与跑过自测的那份 SHA-256 逐字节一致」被当成了「包里装的是这一版」的证据——`Contents/MacOS/DAWN Science` 只是未改动的 Electron 启动器，同版本同架构谁打都一样，那条哈希什么也证明不了。真正算数的是把它起起来。**mac x64 与 Linux 的线上包仍没人起过**（这台机器验不了 x64；Linux 那两个只在容器里验过本地构建的同代码版本）。
+
 ### 2026-09-05 — Linux 包第一次真被验过：在容器里打、在容器里起，六项自测全过（x64 与 arm64 各一份）
 
 - **Type**: chore

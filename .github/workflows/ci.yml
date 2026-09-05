@@ -35,5 +35,12 @@ jobs:
       #
       # 20 分钟兜底：**Linux 上这一步 2026-08-28 起就会挂死**（测试跑完不退出，或某个文件卡住），
       # 根因还没定；先让它红在这条工作流里，别再连累发布。
+      #
+      # **2026-09-05 量到的症状**（run 33939797954，第一次看它的日志）：开跑约 2 分半之后
+      # 输出**彻底停住**——最后一行是 `tests/ui/slash-menu.test.ts` 通过，此后 18 分半一个字都没有，
+      # 没有下一个文件开始，也没有汇总，直到超时被砍；收尾时 runner 报还剩两个孤儿 `node`。
+      # 也就是说不是「某条测试很慢」，而是 **ui 那组跑到一半整个 runner 不动了**。
+      # 同一份代码在 macOS runner 上 2 分 34 秒跑完全绿。下一步：把 ui 那个 project 单独跑、
+      # 或 `--pool=forks --poolOptions.forks.singleFork` 看是不是 worker 池死锁。
       - run: npx vitest run --project node --project ui
         timeout-minutes: 20

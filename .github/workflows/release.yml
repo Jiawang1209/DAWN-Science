@@ -104,7 +104,9 @@ jobs:
           if [ -n "$missing" ]; then echo "::warning::这次发布缺这些平台的包：$missing"; fi
       - uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          # 推完即公开（作者 2026-09-05 定）：之前是草稿，而**不点那一下就等于没发**——
+          # 这正是「包为什么没自动上 GitHub」的三条原因之一。要改回人工过目，把它设回 true。
+          draft: false
           generate_release_notes: true
           body: ${{ steps.inventory.outputs.note }}
           files: |

@@ -143,7 +143,12 @@ const 端口名 = [
  */
 export function 解析端口(stdout: string): 端口五 {
   const rc = 取值(stdout, "DAWNRC")
-  if (rc === "3") throw new Error("那台机器上 200 次都没挑到空闲端口（20000..60000）")
+  // **把「R 太老」这条线索带上**：`serverSocket` 是 base R ≥ 4.0 的东西，更老的 R 上
+  // 每一次 `tryCatch` 都落 NULL，于是 200 次全败——症状与「端口真的被占满了」一模一样，
+  // 而两者要人做的事完全不同（升级 R vs 去看谁占着端口）。
+  if (rc === "3") {
+    throw new Error("那台机器上 200 次都没挑到空闲端口（20000..60000）——也可能是那条 R 太老，serverSocket 要 R ≥ 4.0")
+  }
   if (rc === "4") throw new Error(`connection.json 写不到那台机器上：${取值(stdout, "DAWNERR") ?? "原因不明"}`)
   const out: Partial<端口五> = {}
   for (const [短, 键] of 端口名) {

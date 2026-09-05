@@ -23,6 +23,7 @@
  * 跑着的所有别的假连接都会卡住到 8 秒。mock 模式下候选通常只有一个（`DAWN_FAKE_SSH_PYTHON`
  * 指的那条），可以接受；真要探好几个候选、又赶上它们真的卡住不应答，这条尾巴才会显出来。
  */
+import { R的Rscript } from "../kernel/probe.js"
 import { spawn, spawnSync } from "node:child_process"
 import { basename, join } from "node:path"
 import { closeSync, existsSync, openSync, readdirSync, readFileSync, unlinkSync } from "node:fs"
@@ -37,9 +38,10 @@ const 真python = (): string | undefined => process.env["DAWN_FAKE_SSH_PYTHON"] 
  * `kernel/probe.ts` 的候选、设置里填的、`远端启动命令` 用的都是 R；探测那一下才换成同目录的 Rscript。
  */
 const 真R = (): string | undefined => process.env["DAWN_FAKE_SSH_R"] || undefined
+/** 换算成同目录的 Rscript 用 `probe.ts` 那一份（它还管着 Windows 的 `.exe`），别在这里手拼第二套 */
 const 真Rscript = (): string | undefined => {
   const r = 真R()
-  return r ? join(r, "..", "Rscript") : undefined
+  return r ? R的Rscript(r) : undefined
 }
 
 /**

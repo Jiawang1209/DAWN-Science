@@ -36,7 +36,8 @@ describe("更新服务", () => {
     expect(服务.设偏好({ auto: false }).自动检查).toBe(false)
     expect(服务.状态().自动检查).toBe(false)
   })
-  it("下载与安装还没接上时**说的是这一步没接**，不是「更新失败」", async () => {
-    await expect(起().下载()).rejects.toThrow(/还没接上/)
+  it("这台机器上装不了时**说的是装不了**，不是「更新失败」", async () => {
+    // 没打包 / 无头：下下来也没用。**这句话要能让人自己走下一步**（去发布页）
+    await expect(起().下载()).rejects.toThrow(/装不了.*发布页/)
   })
 })

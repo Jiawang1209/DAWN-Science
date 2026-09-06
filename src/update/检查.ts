@@ -23,6 +23,14 @@ export interface 管家选项 {
   读状态: () => 更新盘面
   写状态: (下一个: 更新盘面) => void
   现在?: () => number
+  /**
+   * 上次下好的那个包还在不在（2026-09-06）。
+   *
+   * **不查这一下的后果很具体**：下好了、没重启、关掉应用，再打开时
+   * 我们会说「有新版本」并让人**再下一遍 223 MB**——而那个包就躺在
+   * `userData/update/` 里。
+   */
+  包还在?: (路径: string) => boolean
 }
 
 export class 更新管家 {
@@ -69,6 +77,49 @@ export class 更新管家 {
     return this.状态
   }
 
+  /**
+   * 下载那一段的状态迁移。**都由管家改**——状态只有一份，
+   * 服务层自己拼一份出来的话，推给界面的与这里算的迟早不一样。
+   */
+  开始下载(共: number): 更新状态 {
+    const s = this.状态
+    if (s.阶段 !== "available" && s.阶段 !== "ignored") return s
+    const { 阶段: _丢, ...其余 } = s
+    this.状态 = { 阶段: "downloading", ...其余, 已下: 0, 共 }
+    return this.状态
+  }
+
+  下载进度(已下: number, 共: number): 更新状态 {
+    if (this.状态.阶段 !== "downloading") return this.状态
+    this.状态 = { ...this.状态, 已下, 共 }
+    return this.状态
+  }
+
+  下好了(包路径: string): 更新状态 {
+    const s = this.状态
+    if (s.阶段 !== "downloading") return s
+    const { 阶段: _丢, 已下: _丢2, 共: _丢3, ...其余 } = s
+    this.状态 = { 阶段: "ready", ...其余, 包路径 }
+    const 盘 = this.盘()
+    this.o.写状态({ ...盘, ready: { 版本: 其余.版本, 包路径 } })
+    return this.状态
+  }
+
+  /** 下载被取消：**退回「有新版」**，不是退回「什么都没发生」 */
+  取消了(): 更新状态 {
+    const s = this.状态
+    if (s.阶段 !== "downloading") return s
+    const { 阶段: _丢, 已下: _丢2, 共: _丢3, ...其余 } = s
+    this.状态 = { 阶段: "available", ...其余 }
+    return this.状态
+  }
+
+  /** 出事了。**原话带着**（规格 7.5） */
+  出错(原话: string): 更新状态 {
+    this.状态 = { 阶段: "failed", 当前: this.o.当前版本, 原话 }
+    return this.状态
+  }
+
   /** 「这一版不再提醒」/「启动时自动检查」。就地重算，不联网 */
   设偏好(改: { auto?: boolean | undefined; ignore?: string | undefined }): 更新状态 {
     const 盘 = this.盘()
@@ -102,6 +153,24 @@ export class 更新管家 {
       ? { 能: true, 资源: 结论.资源, 方式: 结论.方式 }
       : { 能: false, 因为: 结论.原因 }
     const 被忽略 = 忽略的 !== undefined && 同一版(忽略的, 一条.版本)
+    // 上一次已经下好、还没装的那个包：**直接进 ready，不让人再下一遍**
+    const 已下好 = this.盘().ready
+    if (
+      已下好 &&
+      同一版(已下好.版本, 一条.版本) &&
+      (this.o.包还在?.(已下好.包路径) ?? false)
+    ) {
+      return {
+        阶段: "ready",
+        当前,
+        版本: 一条.版本,
+        页面: 一条.页面,
+        ...(一条.发布于 ? { 发布于: 一条.发布于 } : {}),
+        查于,
+        安装,
+        包路径: 已下好.包路径,
+      }
+    }
     return {
       阶段: 被忽略 ? "ignored" : "available",
       当前,

@@ -472,6 +472,19 @@ function 接上事件流(win: BrowserWindow): void {
    * 理由与上面那条一样：再挖一条单向通道就多一处要守的边界。
    * 载荷里不带记录本身，只是一句「去重拉一次 `listConnections`」。
    */
+  /**
+   * 更新的进度（2026-09-06）。**同一条通道，第四种载荷**——
+   * 理由与上面两条一样：再挖一条单向通道就多一处要守的边界。
+   */
+  const offUpdate = workbench.onUpdatePush((回执) => {
+    if (win.isDestroyed()) return
+    win.webContents.send(IPC_EVENT_CHANNEL, {
+      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+      update: 回执.状态,
+      自动检查: 回执.自动检查,
+    })
+  })
+
   const offRemoteList = workbench.onRemoteListChanged(() => {
     if (win.isDestroyed()) return
     win.webContents.send(IPC_EVENT_CHANNEL, {
@@ -483,6 +496,7 @@ function 接上事件流(win: BrowserWindow): void {
     off()
     offRemote()
     offRemoteList()
+    offUpdate()
   })
 }
 
@@ -661,6 +675,15 @@ app.whenReady().then(() => {
       更新: {
         当前版本: 我们的版本(),
         状态文件: join(app.getPath("userData"), "update.json"),
+        下载目录: join(app.getPath("userData"), "update"),
+        /**
+         * 换完包重启。**`relaunch` 要在 `exit` 之前**——它只是登记一句
+         * 「退出后再起一个我」，真正的退出还得自己做。
+         */
+        重启: () => {
+          app.relaunch()
+          app.exit(0)
+        },
         ...(() => {
           const p = process.platform === "darwin" ? mac的app路径() : undefined
           return p ? { 应用路径: p } : {}

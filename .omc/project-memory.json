@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpx vitest run --project node --project ui 2>&1 | tail -4\nnpx tsc --noEmit 2>&1 | grep -v \"npm notice\" | head -3; echo \"--- typecheck 完 ---\"",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpx vitest run --project node --project ui 2>&1 | tail -4\nnpx tsc --noEmit 2>&1 | grep -v \"npm notice\" | head -3; echo \"--- typecheck 完 ---\"",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\npython3 - <<'PY'\n处 = {\n 'src/ui/Settings.tsx': [497],\n 'src/ui/files.tsx': [1092],\n 'src/ui/memory-panel.tsx': [244],\n 'src/ui/palette.tsx': [105],\n 'src/ui/web.tsx': [312],\n}\nfor p, 行们 in 处.items():\n    lines = open(p, encoding='utf8').read().split('\\n')\n    for ln in sorted(行们, reverse=True):\n        i = ln - 1\n        assert 'onKeyDown' in lines[i], (p, ln, lines[i])\n        缩 = ' ' * (len(lines[i+1]) - len(lines[i+1].lstrip()))\n        lines[i+1:i+1] = [\n            缩 + '// 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）',\n            缩 + 'if (在组词(e)) return',\n        ]\n    s = '\\n'.join(lines)\n    # import：插在第一句 import 之后\n    if '在组词' in s and 'from \"./ime.js\"' not in s:\n        i = s.index('\\n', s.index('import '))\n        s = s[:i+1] + 'import { 在组词 } from \"./ime.js\"\\n' + s[i+1:]\n    open(p, 'w', encoding='utf8').write(s)\nPY\nnpx tsc --noEmit 2>&1 | grep -v \"npm notice\" | head -5\nnpx vitest run tests/ui/design-contract.test.ts 2>&1 | grep -E \"Tests|FAIL|^\\+ \" | head -6",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpx vitest run --project node --project ui 2>&1 | tail -4\nnpm run test:e2e 2>&1 | tail -25",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

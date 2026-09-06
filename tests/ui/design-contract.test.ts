@@ -999,3 +999,64 @@ describe("设计契约 · 工具名要过得了模型 API", () => {
     expect(坏的, "这个名字送进模型会让整轮请求 400，而报错里不会提到它").toEqual([])
   })
 })
+
+/**
+ * **输入法组词途中那一下回车不许被当成确认**（2026-09-06 作者报的）。
+ *
+ * 他在输入卡里打了 `woyaoyigewenjian`，候选词还没上屏就按了回车——
+ * 那一串拼音被当成话发给了模型。CDP 量到的事实是
+ * `keydown · key=Enter · keyCode=13 · isComposing=true`，
+ * 而当时全项目只有笔记本的 cell 看了这一位。
+ *
+ * 这是一条**可判定**的规则，所以它在这里而不是在谁的记性里（准入规则 2）：
+ * **任何按 `Enter` 做事的键盘处理器，都必须先问一句 `在组词(e)`。**
+ *
+ * 覆盖两种写法：`onKeyDown={(e) => { … }}` 与 `onKeyDown={名字}`（另处定义的函数）。
+ */
+describe("设计契约 · 输入法", () => {
+  /** 从 `起` 处那个 `{` 开始，取到配平的 `}` 为止 */
+  function 取块(text: string, 起: number): string {
+    const 开 = text.indexOf("{", 起)
+    if (开 === -1) return ""
+    let 深 = 0
+    for (let i = 开; i < text.length; i += 1) {
+      if (text[i] === "{") 深 += 1
+      else if (text[i] === "}") {
+        深 -= 1
+        if (深 === 0) return text.slice(开, i + 1)
+      }
+    }
+    return text.slice(开)
+  }
+
+  /** 一个文件里所有键盘处理器的函数体 */
+  function 键盘处理器们(text: string): { 名: string; 体: string }[] {
+    const 出: { 名: string; 体: string }[] = []
+    for (const m of text.matchAll(/onKeyDown=\{/g)) {
+      const 后 = text.slice(m.index + m[0].length, m.index + m[0].length + 80)
+      const 引用 = /^([A-Za-z一-龥_$][\w一-龥$]*)\}/.exec(后.trimStart())
+      if (引用) {
+        // `onKeyDown={onKeyDown}`：去找那个函数自己
+        const 定义 = new RegExp(`(?:const|function)\\s+${引用[1]}\\s*[=(]`).exec(text)
+        if (定义) 出.push({ 名: 引用[1]!, 体: 取块(text, 定义.index) })
+        continue
+      }
+      出.push({ 名: `onKeyDown@${text.slice(0, m.index).split("\n").length}`, 体: 取块(text, m.index) })
+    }
+    return 出
+  }
+
+  it("**按 Enter 做事的键盘处理器，都先问一句 `在组词(e)`**", () => {
+    const 漏的: string[] = []
+    for (const f of tsxFiles()) {
+      const text = read(f)
+      for (const { 名, 体 } of 键盘处理器们(text)) {
+        if (!体.includes('"Enter"')) continue
+        // `isComposing` 直接写也算（笔记本那处早就这么写的）
+        if (体.includes("在组词") || 体.includes("isComposing")) continue
+        漏的.push(`${f}：${名}`)
+      }
+    }
+    expect(漏的, "组词途中那一下回车会被当成确认——先 `if (在组词(e)) return`").toEqual([])
+  })
+})

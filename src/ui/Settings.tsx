@@ -28,6 +28,7 @@
  * 颜色与类名同样不取（那是它的表达，不是事实）。
  */
 import { useEffect, useState, Fragment } from "react"
+import { 在组词 } from "./ime.js"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { InterpreterPicker } from "./interpreter-picker.js"
@@ -495,6 +496,8 @@ export function AppearancePanel() {
                 提交色()
               }}
               onKeyDown={(e) => {
+                // 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）
+                if (在组词(e)) return
                 if (e.key === "Enter") 提交色()
                 if (e.key === "Escape") 设色草稿(undefined)
               }}

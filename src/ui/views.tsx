@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
+import { 在组词 } from "./ime.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { 会话开关 } from "./state/transcript.js"
@@ -362,6 +363,8 @@ export function SessionRow({
           aria-label={tf("重命名会话：{0}", 名字)}
           onChange={(e) => setEditing(e.target.value)}
           onKeyDown={(e) => {
+            // 输入法组词途中那一下回车属于输入法（2026-09-06）
+            if (在组词(e)) return
             if (e.key === "Enter") 提交()
             // **Esc 是取消，不是提交** —— 改到一半按 Esc 却被存下来最气人
             else if (e.key === "Escape") setEditing(undefined)
@@ -4652,6 +4655,13 @@ export function ConversationView({
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
+              /**
+               * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
+               * 打了一半的拼音按回车，本意是「就用这个候选词」；发出去的话，
+               * 屏幕上出现的就是 `woyaoyigewenjian` 这一串字母。
+               * **必须在最前面**：`@` 菜单与 `/` 菜单的回车同样不许抢这一下。
+               */
+              if (在组词(e)) return
               // `@` 菜单开着：上下挑、回车引用、→ 钻目录、Esc 关
               if (艾特位) {
                 const 列 = 艾特态.行
@@ -5262,6 +5272,13 @@ export function TranscriptRow({
             aria-label={t("修改这段话")}
             onChange={(e) => 设编辑(e.target.value)}
             onKeyDown={(e) => {
+              /**
+               * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
+               * 打了一半的拼音按回车，本意是「就用这个候选词」；发出去的话，
+               * 屏幕上出现的就是 `woyaoyigewenjian` 这一串字母。
+               * **必须在最前面**：`@` 菜单与 `/` 菜单的回车同样不许抢这一下。
+               */
+              if (在组词(e)) return
               // Esc 是取消——**改到一半按 Esc 却被发出去**是最气人的那种
               if (e.key === "Escape") 设编辑(undefined)
               if (e.key === "Enter" && !e.shiftKey) {
@@ -6377,6 +6394,13 @@ export function EmptyConversation({
                 }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {
+                  /**
+                   * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
+                   * 打了一半的拼音按回车，本意是「就用这个候选词」；发出去的话，
+                   * 屏幕上出现的就是 `woyaoyigewenjian` 这一串字母。
+                   * **必须在最前面**：`@` 菜单与 `/` 菜单的回车同样不许抢这一下。
+                   */
+                  if (在组词(e)) return
                   if (艾特位) {
                     const 列 = 艾特态.行
                     if (e.key === "ArrowDown" || e.key === "ArrowUp") {

@@ -29,6 +29,7 @@
  * 变了就把新矩形推给主进程。
  */
 import { useCallback, useEffect, useRef, useState } from "react"
+import { 在组词 } from "./ime.js"
 import { Button } from "./primitives.js"
 import { 网页图标 } from "./icons.js"
 import { useStore } from "@nanostores/react"
@@ -310,6 +311,8 @@ export function WebPanel({
           value={草稿 ?? 状态.url}
           onChange={(e) => 设草稿(e.target.value)}
           onKeyDown={(e) => {
+            // 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）
+            if (在组词(e)) return
             if (e.key !== "Enter") return
             去(草稿 ?? 状态.url)
             设草稿(undefined)

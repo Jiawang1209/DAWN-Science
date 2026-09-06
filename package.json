@@ -46,7 +46,8 @@
     "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts",
     "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts",
     "rehearse:fresh": "node scripts/rehearse-fresh-install.mjs",
-    "rehearse:update": "node scripts/rehearse-update.mjs"
+    "rehearse:update": "node scripts/rehearse-update.mjs",
+    "rehearse:handoff": "node scripts/rehearse-handoff.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.84.1",

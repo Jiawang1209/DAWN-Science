@@ -212,6 +212,31 @@ export class CredentialStore {
    * 所以判据反过来更稳:**带 `:` 前缀的一律不是模型服务**——将来再加带前缀的秘密自动排除,
    * 不用记得回这里补名单。
    */
+  /**
+   * **交接用**（2026-09-06，规格 U5）：把此刻解得开的凭证全给出来。
+   *
+   * 只有一个调用点——换包之前把它们交给下一个二进制。
+   * 解不开的那些不在里面（它们本来就已经丢了），**不会因此少说一句**：
+   * `broken()` 照旧列着它们。
+   */
+  导出明文(): Record<string, string> {
+    const data = this.read()
+    const 出: Record<string, string> = {}
+    for (const id of Object.keys(data.entries)) {
+      const v = this.get(id)
+      if (v !== undefined) 出[id] = v
+    }
+    return 出
+  }
+
+  /**
+   * **交接用**：一次写入多条，**用这个二进制自己的钥匙加密**。
+   * 新版首启接到上一版交来的东西时走这里。
+   */
+  导入明文(条目: Record<string, string>): void {
+    for (const [id, v] of Object.entries(条目)) this.set(id, v)
+  }
+
   configured(): string[] {
     return this.verified() ? this.分类().ok : this.模型服务ids()
   }

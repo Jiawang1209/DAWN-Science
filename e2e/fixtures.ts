@@ -19,6 +19,8 @@ import { join, resolve } from "node:path"
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "../scripts/mock-inference-server.mjs"
 import { startFakeIlinkServer, type FakeIlinkServer } from "../scripts/fake-ilink-server.mjs"
 import { startFakeFeishuServer, type FakeFeishuServer } from "../scripts/fake-feishu-server.mjs"
+// @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 npm run dev:mock
+import { startFakeReleaseFeed } from "../scripts/fake-release-feed.mjs"
 
 const ROOT = resolve(import.meta.dirname, "..")
 
@@ -244,6 +246,8 @@ export interface DawnFixture {
   /** 假微信（开了 `fakeIlink` 才有）：推进扫码、塞消息、读发出的、让 token 失效 */
   weixin?: FakeIlinkServer
   feishu?: FakeFeishuServer
+  /** 假发布源（开了 `fakeUpdate` 才有）：可以中途换一个版本号 */
+  发布源?: { url: string; 设版本(v: string): void }
   /**
    * 关掉应用再打开（同一套目录）。返回新窗口。
    *
@@ -354,6 +358,11 @@ export interface DawnOptions {
   fakeIlink?: boolean
   /** 起一个假飞书（远程助理第二格），`DAWN_FAKE_FEISHU` 指过去；夹具上多一个 `feishu` 把手 */
   fakeFeishu?: boolean
+  /**
+   * 假发布源 + 假安装器（2026-09-06，规格 U6）。
+   * **真的下、假装换**——e2e 里不能真去换开发者机器上那个 `.app`。
+   */
+  fakeUpdate?: { version?: string; packageBytes?: number }
   /**
    * 假模型「想」的内容（2026-08-12）。**给了才发。**
    *
@@ -481,6 +490,12 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawn: async ({ dawnOptions }, use) => {
     const weixin = dawnOptions.fakeIlink ? await startFakeIlinkServer({ longPollMs: 1_000 }) : undefined
     const feishu = dawnOptions.fakeFeishu ? await startFakeFeishuServer({ longPollMs: 1_000 }) : undefined
+    const 发布源 = dawnOptions.fakeUpdate
+      ? startFakeReleaseFeed({
+          version: dawnOptions.fakeUpdate.version ?? "9.9.9",
+          packageBytes: dawnOptions.fakeUpdate.packageBytes ?? 256 * 1024,
+        })
+      : undefined
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
@@ -643,6 +658,8 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         ...(dawnOptions.fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: dawnOptions.fakeSshPython } : {}),
         ...(weixin ? { DAWN_FAKE_ILINK: weixin.url } : {}),
         ...(feishu ? { DAWN_FAKE_FEISHU: feishu.url } : {}),
+        // 假发布源 + 假安装器（准入规则 1：与 dev:mock 共用同一份假的）
+        ...(发布源 ? { DAWN_UPDATE_FEED: 发布源.url, DAWN_FAKE_UPDATE_INSTALL: "1" } : {}),
         /**
          * **测试不把窗口弹出来**（2026-08-11，作者提）。
          *
@@ -762,6 +779,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       mockUrl: server.url,
       ...(weixin ? { weixin } : {}),
       ...(feishu ? { feishu } : {}),
+      ...(发布源 ? { 发布源 } : {}),
       重开,
     })
 
@@ -777,6 +795,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     await server.close()
     await weixin?.close()
     await feishu?.close()
+    await 发布源?.close()
     rmSync(dir, { recursive: true, force: true })
   },
 })

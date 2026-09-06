@@ -20,6 +20,8 @@ import { 造网页预览, type 网页命令, type 网页预览 } from "./web-pre
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
+import { 交接箱 } from "../update/交接.js"
+import { 本机机器id } from "../update/机器id.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
 
 /**
@@ -120,6 +122,34 @@ const 启动日志路径 = join(app.getPath("userData"), "startup.log")
 declare const __APP_VERSION__: string
 function 我们的版本(): string {
   return typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : app.getVersion()
+}
+
+/**
+ * 接上一版交来的凭证（规格 U5）。
+ *
+ * **先看自己解不解得开**：解得开就说明钥匙串认这个二进制（签过名、或者根本没换过包），
+ * 那份交接文件用不上，直接删掉——留着它等于让一份能解开的密文在盘上多待一天。
+ */
+function 收交接(凭证库: CredentialStore, 交接: 交接箱): void {
+  const 条目 = 交接.读()
+  if (!条目) {
+    交接.清()
+    return
+  }
+  try {
+    if (凭证库.broken().length === 0 && 凭证库.verified()) {
+      启动日志("更新交接：自己解得开，交接文件用不上，删了")
+    } else {
+      凭证库.导入明文(条目)
+      启动日志(`更新交接：${Object.keys(条目).length} 条凭证已用这一版的钥匙重新加密`)
+    }
+  } catch (e) {
+    // **不许静默**：人会以为 key 还在，到发第一句话时才发现不在
+    启动日志(`更新交接失败，需要重新填写 key：${e instanceof Error ? e.message : String(e)}`)
+  } finally {
+    // 成功与失败两条路都删
+    交接.清()
+  }
 }
 
 function mac的app路径(): string | undefined {
@@ -616,6 +646,16 @@ app.whenReady().then(() => {
   // 时机：页面加载完再等 5 秒——界面的启动请求在头 2 秒内发完；2 秒就预热的话那 7 秒正好压在这批请求上，
   // 窗口又空白到 8 秒（第一版就是这样）。挂在 ready 后的下一次 did-finish-load 上。
   // 挂在主窗口自己的 did-finish-load 上（app 级的 web-contents-created 在这之前早就发过了——第一版挂那儿，从没触发过）
+  /**
+   * 上一版交过来的凭证（规格 U5）。**接在钥匙串预热之后，不在启动路径上**——
+   * 重新加密要进钥匙串，而钥匙串在未签名包上第一次进要 5–60 秒（2026-08-28 那次空白）。
+   */
+  const 交接 = new 交接箱({
+    文件: join(app.getPath("userData"), "handoff.json"),
+    盐文件: join(app.getPath("userData"), ".handoff-salt"),
+    机器id: 本机机器id,
+    出声: (m) => 启动日志(`更新交接：${m}`),
+  })
   BrowserWindow.getAllWindows()[0]?.webContents.once("did-finish-load", () => {
     {
       setTimeout(() => {
@@ -626,6 +666,7 @@ app.whenReady().then(() => {
         } catch (e) {
           启动日志(`钥匙串预热失败 · ${Date.now() - t} ms · ${e instanceof Error ? e.message : String(e)}`)
         }
+        收交接(凭证库, 交接)
       }, 5_000).unref?.()
     }
   })
@@ -676,6 +717,17 @@ app.whenReady().then(() => {
         当前版本: 我们的版本(),
         状态文件: join(app.getPath("userData"), "update.json"),
         下载目录: join(app.getPath("userData"), "update"),
+        /**
+         * 换包前把凭证交给下一版（规格 U5）。**这是最后一个还解得开的瞬间。**
+         */
+        交接: (到版本) => {
+          const 条目 = 凭证库.导出明文()
+          if (!Object.keys(条目).length) {
+            启动日志("更新交接：没有解得开的凭证，不用交接")
+            return
+          }
+          交接.写({ 条目, 从: 我们的版本(), 到: 到版本 })
+        },
         /**
          * 换完包重启。**`relaunch` 要在 `exit` 之前**——它只是登记一句
          * 「退出后再起一个我」，真正的退出还得自己做。

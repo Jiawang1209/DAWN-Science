@@ -133,6 +133,11 @@ export interface CreateWorkbenchOptions {
      * wiring 是纯逻辑，不 import electron。
      */
     重启?: () => void
+    /**
+     * 换包**之前**把凭证交给下一版（规格 U5）。主进程给——
+     * 它手里才有 `CredentialStore` 与钥匙串。
+     */
+    交接?: (到版本: string) => void
   }
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
@@ -1185,6 +1190,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       管家,
       读盘: () => 存储.读(),
       ...(安装器 ? { 安装器 } : {}),
+      ...(opts.更新.交接 ? { 交接: opts.更新.交接 } : {}),
       推: (回执) => 更新推送?.(回执),
     })
   })()

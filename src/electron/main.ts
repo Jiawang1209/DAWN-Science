@@ -104,6 +104,30 @@ const 隐藏窗口 = process.env.DAWN_HIDE_WINDOW === "1"
  * 写不进去就算了——日志绝不能成为新的打不开的理由。
  */
 const 启动日志路径 = join(app.getPath("userData"), "startup.log")
+
+/**
+ * 这个 `.app` 在哪儿（macOS）。`exe` 是 `X.app/Contents/MacOS/X`，上溯三级。
+ * **开发时（没打包）没有 `.app`**，返回 undefined——那时本来也换不了包。
+ */
+/**
+ * 我们自己的版本号。
+ *
+ * **不能用 `app.getVersion()`**：打包版里它读的是包内 `package.json`（对），
+ * 但 `electron dist/electron/main.js` 这么跑时它回的是 **Electron 自己的版本**
+ * （2026-09-06 实测 `43.3.0`）——「有没有新版」在开发与 e2e 里会全判反，
+ * 而且是安静地判反。构建时钉进来的那份两种跑法都对（`build-electron.mjs` 的 define）。
+ */
+declare const __APP_VERSION__: string
+function 我们的版本(): string {
+  return typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : app.getVersion()
+}
+
+function mac的app路径(): string | undefined {
+  if (!app.isPackaged) return undefined
+  const exe = app.getPath("exe")
+  const i = exe.indexOf(".app/")
+  return i === -1 ? undefined : exe.slice(0, i + 4)
+}
 function 启动日志(行: string): void {
   try {
     mkdirSync(dirname(启动日志路径), { recursive: true })
@@ -624,6 +648,24 @@ app.whenReady().then(() => {
        * 与 `DAWN_DEFAULT_WORKSPACE` 那几条同一个机制。
        */
       downloadsDir: process.env.DAWN_DOWNLOADS ?? app.getPath("downloads"),
+      /**
+       * 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）。
+       *
+       * **版本号从 `app.getVersion()` 来**——它读的是包里的
+       * `Contents/Resources/app/package.json`（2026-09-06 在真的 0.0.2 包上量过），
+       * 所以不需要在构建时另注入一份。
+       *
+       * `.app` 的路径由 `exe` 上溯三级（`X.app/Contents/MacOS/X`）：
+       * **应用在哪儿就换哪儿**，不假定 `/Applications`（规格 U3 纪律 2）。
+       */
+      更新: {
+        当前版本: 我们的版本(),
+        状态文件: join(app.getPath("userData"), "update.json"),
+        ...(() => {
+          const p = process.platform === "darwin" ? mac的app路径() : undefined
+          return p ? { 应用路径: p } : {}
+        })(),
+      },
       /**
        * 子 agent 入口就打在主进程 bundle 旁边（`dist/electron/`）。
        *

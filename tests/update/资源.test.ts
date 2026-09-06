@@ -40,6 +40,12 @@ describe("mac", () => {
     const r = 挑资源(十个, 事实({ platform: "darwin", arch: "x64" }))
     expect(r.能自装 && r.资源.name).toBe("DAWN-Science-0.0.3-mac-x64.zip")
   })
+  it("开发模式（没有 .app）→ 说的是开发模式，不是「没有权限」", () => {
+    // 报成「没有写权限」会把人送去 chmod 一个不存在的东西（2026-09-06 探针里真看到过这句）
+    const r = 挑资源(十个, { platform: "darwin", arch: "arm64", 可写: () => true })
+    expect(r.能自装).toBe(false)
+    expect(!r.能自装 && r.原因).toMatch(/开发模式/)
+  })
   it("装在写不进去的地方 → 装不了，而且原因说的是权限", () => {
     // 报成「更新失败」会把人送去查网络。这条纪律写在规格 U3
     const r = 挑资源(十个, 事实({ 可写: () => false }))

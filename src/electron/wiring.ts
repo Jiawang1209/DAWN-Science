@@ -10,7 +10,7 @@ import { randomBytes, randomUUID } from "node:crypto"
 import Database from "better-sqlite3"
 import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
-import { mkdirSync } from "node:fs"
+import { accessSync, constants, mkdirSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { loadRegistryOrDefault } from "../config/loader.js"
 import { migrate } from "../store/schema.js"
@@ -51,6 +51,10 @@ import type { RemoteState, SshClientLike } from "../remote/ssh.js"
 import type { SessionId } from "../runtime/types.js"
 import { WorkbenchServer } from "../workbench/server.js"
 import { MemoryStore, gitBranch } from "../memory/store.js"
+import { GITHUB_LATEST, github发布源 } from "../update/发布源.js"
+import { 更新状态存储 } from "../update/状态存储.js"
+import { 更新管家 } from "../update/检查.js"
+import { 建更新服务 } from "../update/服务.js"
 import { 渲染快照 } from "../memory/snapshot.js"
 import { SuggestionQueue } from "../memory/queue.js"
 import { 待装技能 } from "../memory/pending-skills.js"
@@ -106,6 +110,22 @@ export interface CreateWorkbenchOptions {
   trashItem?: (absolutePath: string) => Promise<void>
   /** 系统的下载目录。**只有主进程问得到 `app.getPath("downloads")`** */
   downloadsDir?: string
+  /**
+   * 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）。
+   *
+   * **不给就是这套壳里没有更新这件事**（无头、测试）：六个操作如实拒，
+   * 界面上少一行——**不假装「已是最新」**，那句话是假的。
+   *
+   * 版本与路径都由主进程给：`app.getVersion()` 读的是包里的 `package.json`
+   * （2026-09-06 在真的 0.0.2 包上量过），wiring 这一层不 import electron。
+   */
+  更新?: {
+    当前版本: string
+    /** `userData/update.json` */
+    状态文件: string
+    /** macOS：`.app` 的路径；换包动的是它的父目录 */
+    应用路径?: string
+  }
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
   /** 写权租约的 TTL（秒）。**默认 300**；e2e 调小它来验过期那条路 */
@@ -1080,7 +1100,40 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   /** 退出时要收的：定时调度器、微信轮询（backend 登记进来） */
   const 收摊们: Array<() => Promise<void> | void> = []
+  /**
+   * 更新那一套（2026-09-06）。**假 feed 与真 GitHub 只差一个端点**：
+   * `DAWN_UPDATE_FEED` 一给，`dev:mock` 与 e2e 走的就是同一份解析器（准入规则 1）。
+   */
+  const 更新服务 = (() => {
+    if (!opts.更新) return undefined
+    const 存储 = new 更新状态存储(opts.更新.状态文件)
+    const 管家 = new 更新管家({
+      当前版本: opts.更新.当前版本,
+      源: github发布源({ 端点: process.env.DAWN_UPDATE_FEED ?? GITHUB_LATEST }),
+      事实: {
+        platform: process.platform,
+        arch: process.arch,
+        // 这两个都是 electron-builder 自己设的：**「能不能自装」由环境说了算，不由猜测**
+        ...(process.env.APPIMAGE ? { appImage: process.env.APPIMAGE } : {}),
+        ...(process.env.PORTABLE_EXECUTABLE_FILE ? { portableExe: process.env.PORTABLE_EXECUTABLE_FILE } : {}),
+        ...(opts.更新.应用路径 ? { appPath: opts.更新.应用路径 } : {}),
+        可写: (路径) => {
+          try {
+            accessSync(路径, constants.W_OK)
+            return true
+          } catch {
+            return false
+          }
+        },
+      },
+      读状态: () => 存储.读(),
+      写状态: (下) => 存储.写(下),
+    })
+    return 建更新服务({ 管家, 读盘: () => 存储.读() })
+  })()
+
   const backend = createWorkbenchBackend({
+    ...(更新服务 ? { 更新: 更新服务 } : {}),
     // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）
     kernels: 对话的内核,
     注册收摊: (f) => 收摊们.push(f),

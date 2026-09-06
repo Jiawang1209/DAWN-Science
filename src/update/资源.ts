@@ -50,8 +50,13 @@ export function 挑资源(资源们: readonly 资源一个[], 事实: 平台事�
     const 后缀 = `-mac-${事实.arch}.zip`
     const 它 = 找(资源们, 后缀)
     if (!它) return 缺(后缀)
+    // **没有 `.app` = 开发模式**（`electron dist/electron/main.js` 这么跑的）。
+    // 说清楚是这个，别报成「没有写权限」——那句话会把人送去 chmod 一个不存在的东西
+    if (!事实.appPath) {
+      return { 能自装: false, 原因: "开发模式下跑的（不是一个 .app），换不了包——打包版里才有这条路" }
+    }
     // 换 `.app` 是在它的父目录里做 rename，所以要写的是父目录，不是 `.app` 本身
-    const 父 = (事实.appPath ?? "").replace(/\/[^/]+$/, "")
+    const 父 = 事实.appPath.replace(/\/[^/]+$/, "")
     if (!事实.可写(父 || "/")) {
       return { 能自装: false, 原因: `没有写 ${父 || "应用所在目录"} 的权限，装不上——权限问题，不是网络问题` }
     }

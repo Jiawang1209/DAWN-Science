@@ -53,9 +53,10 @@ import {
   type KernelRow,
 } from "./Settings.js"
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
+import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则 } from "../files/mentions.js"
-import { 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标 } from "./icons.js"
+import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
@@ -412,6 +413,70 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return () => document.removeEventListener("keydown", onKey)
   }, [])
 
+  /* ── 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）── */
+
+  const [更新回执, 设更新回执] = useState<更新回执 | undefined>(undefined)
+  const [更新查着, 设更新查着] = useState(false)
+  /**
+   * **开应用先读缓存**（不联网），侧栏那一行立刻画得出来；
+   * **5 秒后才去查**——查更新不许挤在启动路径上，那条路上已经有钥匙串与后端装配了。
+   *
+   * 节流（24 小时）与「启动时自动检查」那个开关都由后端说了算：
+   * 界面只负责在这里敲一下门，policy 只有一份（规格 U2）。
+   */
+  useEffect(() => {
+    if (!ready) return
+    let 还在 = true
+    client
+      .get<更新回执>("getUpdateState", {})
+      .then((r) => {
+        if (还在) 设更新回执(r)
+      })
+      .catch(() => {
+        // 这套壳里没装更新（无头 / 测试替身）——**不出声**：
+        // 它不是用户要求的动作，界面上少一行而已
+      })
+    const 定时 = setTimeout(() => {
+      client
+        .get<更新回执>("checkUpdate", {})
+        .then((r) => {
+          if (还在) 设更新回执(r)
+        })
+        .catch(() => {})
+    }, 5_000)
+    return () => {
+      还在 = false
+      clearTimeout(定时)
+    }
+  }, [ready, client])
+
+  const 更新动作 = useMemo<更新动作>(() => {
+    const 收 = (p: Promise<更新回执>) => {
+      p.then(设更新回执).catch((e) => note(e instanceof Error ? e.message : String(e)))
+    }
+    return {
+      // 人亲手点的那次：**无视 24 小时节流**，失败也**必须出声**（规格 7.5）
+      检查: () => {
+        设更新查着(true)
+        client
+          .get<更新回执>("checkUpdate", { force: true })
+          .then(设更新回执)
+          .catch((e) => note(e instanceof Error ? e.message : String(e)))
+          .finally(() => 设更新查着(false))
+      },
+      下载: () => 收(client.get<更新回执>("downloadUpdate", {})),
+      取消: () => 收(client.get<更新回执>("cancelUpdate", {})),
+      装: () => 收(client.get<更新回执>("applyUpdate", {})),
+      忽略: (版本) => 收(client.get<更新回执>("setUpdatePrefs", { ignore: 版本 })),
+      设自动: (开) => 收(client.get<更新回执>("setUpdatePrefs", { auto: 开 })),
+      // 外链走 `window.open` → 主进程的 `setWindowOpenHandler` → `放外面开`
+      // （只放 http(s)，e2e 里 `DAWN_NO_EXTERNAL` 只记账不弹浏览器）
+      开链接: (url) => {
+        window.open(url, "_blank", "noopener")
+      },
+    }
+  }, [client])
+
   /**
    * 推送流。**只订阅一次**，进来的更新按当前正在看的会话过滤——
    * 每次切会话都退订重订会在切换的空隙里漏掉更新。
@@ -550,6 +615,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 界面这边没有别的办法知道，不重取就会一直显示「还没选」。
        */
       onRemoteListChanged: () => void loadConnections(client),
+      // 更新的进度（2026-09-06）：**推来的整份状态直接换掉手里那份**，界面不自己算
+      onUpdatePush: (u) => 设更新回执(u),
       onProblem: note,
     })
     // **依赖里刻意不放 projectId**：它变化时不该退订重订，
@@ -3303,6 +3370,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
       >
         <SessionSidebar
+          更新入口={<更新侧栏行 回执={更新回执} 动作={更新动作} />}
           /**
            * 服务器那一列的名字（2026-08-14）。
            * **取不到就让侧栏显示连接 id**——不在这里编一个占位名字。
@@ -3931,6 +3999,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }}
             />
                   ),
+                },
+                {
+                  id: "about",
+                  group: t("扩展"),
+                  title: t("关于"),
+                  icon: <概览图标 className="row-icon" />,
+                  /**
+                   * **没有新版时它也在**：这是「我装的是哪一版」唯一说得出口的地方。
+                   * 只在有新版时才出现的话，人想核对版本号时会找不到任何东西。
+                   */
+                  body: <关于一格 回执={更新回执} 动作={更新动作} 查着={更新查着} />,
                 },
               ]}
               selected={设置分类}

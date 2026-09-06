@@ -6579,3 +6579,44 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .kernel-probe { margin-bottom: var(--dawn-space-3); }
 .ip-how { color: var(--dawn-text-2); }
 .statusbar-setup { color: var(--dawn-danger); }
+
+/* ── 应用内更新（2026-09-06，规格 2026-09-06-应用内更新-design.md）────── */
+
+/**
+ * 侧栏底部那一行。**常驻、带文字、不靠悬停**——
+ * 这个项目在 2026-08-10 一天里栽过两次「看不见的能力等于不存在」。
+ */
+.update-entry { flex-shrink: 0; }
+
+/** 图标与文字挨着、一起靠左——与上面那些入口行同一个读法 */
+.update-row { width: 100%; justify-content: flex-start; gap: var(--dawn-space-2); }
+.update-dot { width: 14px; height: 14px; color: var(--dawn-accent); flex-shrink: 0; }
+.update-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/** 点开之后就地展开，不浮在别处——侧栏本来就窄，浮层会盖住会话列表 */
+.update-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  margin: var(--dawn-space-1) var(--dawn-space-2) var(--dawn-space-2);
+  padding: var(--dawn-space-3);
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-panel);
+}
+.update-head { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-1); }
+.update-sub { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+/** 装不了的原因。**与正文同一档可读性**：它不是脚注，它是这张卡此刻唯一有用的信息 */
+.update-why { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.update-bar { width: 100%; height: 4px; }
+.update-link { justify-content: flex-start; color: var(--dawn-text-3); }
+
+/* ── 设置 → 关于 ─────────────────────────────────────────────────── */
+
+.about-pane { display: flex; flex-direction: column; gap: var(--dawn-space-3); }
+.about-row { display: flex; align-items: center; gap: var(--dawn-space-3); }
+.about-name { color: var(--dawn-text-2); }
+/** 版本号用等宽：它是一串要被人念给别人听的字符 */
+.about-ver { font-family: var(--dawn-font-mono); color: var(--dawn-text-1); }
+.about-say { margin: 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
+.about-auto { display: flex; align-items: center; gap: var(--dawn-space-2); color: var(--dawn-text-2); }

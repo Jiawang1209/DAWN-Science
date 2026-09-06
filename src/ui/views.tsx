@@ -1247,7 +1247,14 @@ export function SessionSidebar({
   search,
   onDeleteTask,
   onNewTaskIn,
+  更新入口,
 }: {
+  /**
+   * 「有新版本」那一行（2026-09-06）。**侧栏只负责给它一个位置**——
+   * 更新那件事的判断一点都不在这里，传进来的是一个已经算好的节点。
+   * 没有新版时它自己渲染成 `null`，这一行就不占地方。
+   */
+  更新入口?: React.ReactNode
   projects: readonly ProjectSummary[]
   /**
    * **拖拽排序算新次序时的那个全集**（2026-08-19 从 `sessions` 改名）。
@@ -2584,6 +2591,11 @@ export function SessionSidebar({
         */}
       </div>
       <div className="side-bottom">
+        {/**
+          * 「有新版本」那一行（2026-09-06）：**在「设置」上面、常驻可见**。
+          * 没有新版时它渲染成 null，这里一行都不占。
+          */}
+        {更新入口}
         {/**
           * **「项目概览」那一行 2026-08-20 摘掉了**（作者定的：
           * *「左边侧边栏的项目概览，对于整个 DAWN 来说应该没有任何意义了。」*）。

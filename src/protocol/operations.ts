@@ -25,8 +25,18 @@ import {
   RunSummarySchema,
   SessionSummarySchema,
   WorkbenchCapabilitiesSchema,
+  更新状态Schema,
 } from "./entities.js"
 import { SessionSnapshotSchema } from "./events.js"
+
+/**
+ * 更新那六个操作共用的信封（规格 U1）：**完整状态 + 那个开关**。
+ * 每个操作只回自己那一小片的话，界面得自己拼出「现在到底怎么了」，
+ * 而那份拼法会与后端的算法慢慢分家。
+ */
+const 更新回执Schema = z
+  .object({ 状态: 更新状态Schema, 自动检查: z.boolean() })
+  .strict()
 
 /** 客户端不能请求无限结果——上限由服务端定，不由调用方定。 */
 export const DEFAULT_PAGE_SIZE = 50
@@ -2893,6 +2903,62 @@ export const OPERATIONS = {
       fingerprint: z.string(),
     }),
     mutating: true,
+  },
+
+  /* ── 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）────── */
+
+  /**
+   * 六个操作**回同一个信封**：完整状态 + 那个开关。
+   *
+   * 让每个操作只回自己那一小片，界面就得自己把几片拼成「现在到底怎么了」——
+   * 而那份拼法会与后端的算法慢慢分家。**回一整份，界面就没有可以算错的东西。**
+   */
+  checkUpdate: {
+    /** `force` = 人在「关于」里亲手点的：无视 24 小时节流（规格 U2） */
+    request: z.object({ force: z.boolean().optional() }).strict(),
+    // 要联网，所以 readOnly 模式该拦（`只读模式该拦` 看的就是这个）
+    mutating: false,
+    sideEffects: true,
+    response: 更新回执Schema,
+  },
+
+  /** 只读缓存，**不联网**。开应用时界面拿它把侧栏那一行画出来 */
+  getUpdateState: {
+    request: z.object({}).strict(),
+    mutating: false,
+    response: 更新回执Schema,
+  },
+
+  /** 「启动时自动检查」与「这一版不再提醒」。就地重算，不联网 */
+  setUpdatePrefs: {
+    request: z.object({ auto: z.boolean().optional(), ignore: z.string().min(1).optional() }).strict(),
+    mutating: true,
+    response: 更新回执Schema,
+  },
+
+  /** 开始下载。进度走事件通道推（第四种载荷），不在这条响应里 */
+  downloadUpdate: {
+    request: z.object({}).strict(),
+    mutating: true,
+    sideEffects: true,
+    response: 更新回执Schema,
+  },
+
+  cancelUpdate: {
+    request: z.object({}).strict(),
+    mutating: true,
+    response: 更新回执Schema,
+  },
+
+  /**
+   * 换包并重启（规格 U3 / U4）。**只有人点了「重启并更新」才会走到这里**——
+   * 这台机器上随时有内核跑着、有远端会话连着，替人决定重启是不可接受的。
+   */
+  applyUpdate: {
+    request: z.object({}).strict(),
+    mutating: true,
+    sideEffects: true,
+    response: 更新回执Schema,
   },
 } as const satisfies Record<string, OperationDef>
 

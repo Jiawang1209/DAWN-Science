@@ -90,7 +90,7 @@ describe("结论", () => {
     const s = await 管家.检查({ 自动: false })
     expect(s.阶段).toBe("available")
     expect(s.阶段 === "available" && s.版本).toBe("0.0.3")
-    expect(s.阶段 === "available" && s.可装 && s.资源.name).toContain("mac-arm64.zip")
+    expect(s.阶段 === "available" && s.安装.能 && s.安装.资源.name).toContain("mac-arm64.zip")
   })
   it("线上还是 0.0.2 → latest", async () => {
     const { 源 } = 假源(async () => 一条("0.0.2"))
@@ -121,8 +121,8 @@ describe("结论", () => {
     })
     const s = await 管家.检查({ 自动: false })
     expect(s.阶段).toBe("available")
-    expect(s.阶段 === "available" && s.可装).toBe(false)
-    expect(s.阶段 === "available" && !s.可装 && s.装不了因为).toMatch(/root|dpkg/)
+    expect(s.阶段 === "available" && s.安装.能).toBe(false)
+    expect(s.阶段 === "available" && !s.安装.能 && s.安装.因为).toMatch(/root|dpkg/)
   })
 })
 

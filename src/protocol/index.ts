@@ -26,6 +26,10 @@ export {
   RunSummarySchema,
   SessionSummarySchema,
   WorkbenchCapabilitiesSchema,
+  可装性Schema,
+  换包方式Schema,
+  更新状态Schema,
+  更新资源Schema,
 } from "./entities.js"
 
 export type {
@@ -42,12 +46,17 @@ export type {
   RunSummary,
   SessionSummary,
   WorkbenchCapabilities,
+  可装性,
+  换包方式,
+  更新状态,
+  更新资源,
 } from "./entities.js"
 
 export {
   KernelStateSchema,
   RemoteListChangedSchema,
   RemoteUpdateSchema,
+  UpdatePushSchema,
   SessionSnapshotSchema,
   SessionUpdateSchema,
   TranscriptItemSchema,

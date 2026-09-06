@@ -507,8 +507,13 @@
  *
  * 7.31（2026-09-04）：远端内核猝死与接回——`KernelState.state` 多 `detached`；`fakeSshControl`（测试专用，
  *   只在 `DAWN_FAKE_SSH=1` 时放行）。纯新增。
+ *
+ * 7.32（2026-09-06）：应用内更新（规格 `2026-09-06-应用内更新-design.md`）——六个操作
+ *   `checkUpdate` / `getUpdateState` / `setUpdatePrefs` / `downloadUpdate` / `cancelUpdate` / `applyUpdate`，
+ *   **回同一个信封**（完整状态 + 那个开关）；事件通道多**第四种载荷** `UpdatePush`（推整份状态，
+ *   与 `RemoteUpdate`、`remoteList` 同一个模式，在会话那句判据之前按形状分派）。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.31"
+export const WORKBENCH_PROTOCOL_VERSION = "7.32"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

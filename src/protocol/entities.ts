@@ -436,3 +436,55 @@ export const ArtifactSchema = z
   })
   .strict()
 export type Artifact = z.infer<typeof ArtifactSchema>
+
+/* ── 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）───────── */
+
+/** 换包的三种方式。每一种对应一条实际验过（或明说没验过）的路 */
+export const 换包方式Schema = z.enum(["mac-zip", "win-nsis", "appimage"])
+export type 换包方式 = z.infer<typeof 换包方式Schema>
+
+export const 更新资源Schema = z
+  .object({ name: z.string().min(1), size: NonNegInt, url: z.string().min(1) })
+  .strict()
+export type 更新资源 = z.infer<typeof 更新资源Schema>
+
+/**
+ * 有新版时，**能不能由我们自己装上**（规格 U3）。
+ *
+ * 判别式而不是两个可选字段：`能: false` 时**一定**有一句原因。
+ * 「装不了」和「装不了但不知道为什么」在界面上是两种完全不同的东西——
+ * 后者会被人读成「更新坏了」，然后去查网络。
+ */
+export const 可装性Schema = z.discriminatedUnion("能", [
+  z.object({ 能: z.literal(true), 资源: 更新资源Schema, 方式: 换包方式Schema }).strict(),
+  z.object({ 能: z.literal(false), 因为: z.string().min(1) }).strict(),
+])
+export type 可装性 = z.infer<typeof 可装性Schema>
+
+const 新版字段 = {
+  当前: z.string().min(1),
+  /** 原样的 tag（`v0.0.3`） */
+  版本: z.string().min(1),
+  页面: z.string().min(1),
+  发布于: Iso.optional(),
+  查于: NonNegInt,
+  安装: 可装性Schema,
+}
+
+/**
+ * 更新这件事的**唯一一份真相**（规格 U1）。侧栏那一行与设置里的「关于」都读它。
+ * 两处各自算一遍，迟早出现「侧栏说有新版、关于说已是最新」这种谁也不敢信的画面。
+ */
+export const 更新状态Schema = z.discriminatedUnion("阶段", [
+  z.object({ 阶段: z.literal("idle"), 当前: z.string().min(1) }).strict(),
+  z.object({ 阶段: z.literal("checking"), 当前: z.string().min(1) }).strict(),
+  z.object({ 阶段: z.literal("latest"), 当前: z.string().min(1), 查于: NonNegInt }).strict(),
+  z.object({ 阶段: z.literal("available"), ...新版字段 }).strict(),
+  /** 人说了「这一版不再提醒」。**信息一个不少**——关于那一格照样画得出来 */
+  z.object({ 阶段: z.literal("ignored"), ...新版字段 }).strict(),
+  z.object({ 阶段: z.literal("downloading"), ...新版字段, 已下: NonNegInt, 共: NonNegInt }).strict(),
+  z.object({ 阶段: z.literal("ready"), ...新版字段, 包路径: z.string().min(1) }).strict(),
+  /** 查或下失败。**原话必须在里面**（规格 7.5） */
+  z.object({ 阶段: z.literal("failed"), 当前: z.string().min(1), 原话: z.string().min(1) }).strict(),
+])
+export type 更新状态 = z.infer<typeof 更新状态Schema>

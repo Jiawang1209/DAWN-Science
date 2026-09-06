@@ -1439,4 +1439,5 @@ export const EN: Readonly<Record<string, string>> = {
   "没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道": "Could not verify the key for {0} ({1}) — possibly the network; send a message and you will know",
   "没能验证 {0} 的 key：等了 {1} 秒没回话——可能是网络；发一句试试就知道": "Could not verify the key for {0}: no reply after {1} s — possibly the network; send a message and you will know",
   "正在保存并验证 key…": "Saving and verifying key…",
+  "这套壳里没有装应用内更新（无头模式或测试替身）": "This shell has no in-app updater wired in (headless mode or a test double)",
 }

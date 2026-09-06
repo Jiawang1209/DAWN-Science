@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest"
 import { IPC_CHANNEL, createIpcHandler } from "../../src/electron/ipc.js"
 import { WorkbenchServer, type WorkbenchBackend } from "../../src/workbench/server.js"
 
+/** 更新那六个操作的桩回执（2026-09-06） */
+const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动检查: true }
+
 function backend(): WorkbenchBackend {
   const project = {
     projectId: "p1", name: "x", workspace: "/w", createdAt: "2026-08-08T00:00:00Z",
@@ -9,6 +12,13 @@ function backend(): WorkbenchBackend {
   }
   return {
     listProjects: async () => [project],
+    // 应用内更新的六个（2026-09-06）：**桩要覆盖全协议，少一个就编译不过**
+    getUpdateState: async () => 更新桩,
+    checkUpdate: async () => 更新桩,
+    setUpdatePrefs: async () => 更新桩,
+    downloadUpdate: async () => 更新桩,
+    cancelUpdate: async () => 更新桩,
+    applyUpdate: async () => 更新桩,
     openProject: async () => project,
     // 批 4a 新增的五个（这份桩要覆盖全协议，少一个就编译不过）
     // 视觉服务的三个（协议 7.12）

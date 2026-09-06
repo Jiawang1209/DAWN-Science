@@ -70,7 +70,7 @@ export class 更新管家 {
   }
 
   /** 「这一版不再提醒」/「启动时自动检查」。就地重算，不联网 */
-  设偏好(改: { auto?: boolean; ignore?: string }): 更新状态 {
+  设偏好(改: { auto?: boolean | undefined; ignore?: string | undefined }): 更新状态 {
     const 盘 = this.盘()
     const 下一个: 更新盘面 = {
       ...盘,
@@ -98,9 +98,9 @@ export class 更新管家 {
     if (!新) return { 阶段: "latest", 当前, 查于 }
 
     const 结论 = 挑资源(一条.资源, this.o.事实)
-    const 可装: 可装性 = 结论.能自装
-      ? { 可装: true, 资源: 结论.资源, 方式: 结论.方式 }
-      : { 可装: false, 装不了因为: 结论.原因 }
+    const 安装: 可装性 = 结论.能自装
+      ? { 能: true, 资源: 结论.资源, 方式: 结论.方式 }
+      : { 能: false, 因为: 结论.原因 }
     const 被忽略 = 忽略的 !== undefined && 同一版(忽略的, 一条.版本)
     return {
       阶段: 被忽略 ? "ignored" : "available",
@@ -109,7 +109,7 @@ export class 更新管家 {
       页面: 一条.页面,
       ...(一条.发布于 ? { 发布于: 一条.发布于 } : {}),
       查于,
-      ...可装,
+      安装,
     }
   }
 }

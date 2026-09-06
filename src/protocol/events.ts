@@ -25,7 +25,7 @@
  * **不发事件、不要求界面道歉**：把正常契约当成故障来播报，是把噪音当成诚实。
  */
 import { z } from "zod"
-import { RemoteStateSchema } from "./entities.js"
+import { RemoteStateSchema, 更新状态Schema } from "./entities.js"
 
 /** 一条对话发言。native 会话由 pi 的文本增量累积而成 */
 const TurnItem = z
@@ -587,6 +587,22 @@ export const RemoteListChangedSchema = z
   })
   .strict()
 export type RemoteListChanged = z.infer<typeof RemoteListChangedSchema>
+
+/**
+ * 更新的进度（2026-09-06）。**同一条 IPC 通道，第四种载荷**——
+ * 理由与上面两条一样：再挖一条单向通道就多一处要守的边界。
+ *
+ * **推的是整份状态，不是「已下多少字节」**：界面照它画就完了，
+ * 不必自己维护一份「现在是哪个阶段」——那份副本与后端分家只是时间问题。
+ */
+export const UpdatePushSchema = z
+  .object({
+    workbenchProtocolVersion: z.string().regex(/^\d+\.\d+$/),
+    update: 更新状态Schema,
+    自动检查: z.boolean(),
+  })
+  .strict()
+export type UpdatePush = z.infer<typeof UpdatePushSchema>
 
 /**
  * **这条发言等于没说话**（2026-08-12）。

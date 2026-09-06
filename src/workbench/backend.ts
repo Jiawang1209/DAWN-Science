@@ -197,6 +197,12 @@ export interface WorkbenchBackendOptions {
    * **不在这里按平台拼**：那类硬编码会坏在别人机器上，
    * 而且跟不上用户改过的系统设置。没给就退回家目录下的 `Downloads`。
    */
+  /**
+   * 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）。
+   * **不给就是这套壳里没有更新这件事**（无头模式、测试替身），六个操作如实拒——
+   * 不假装「已是最新」：那句话是假的，而且假得看不出来。
+   */
+  更新?: import("../update/服务.js").更新服务
   downloadsDir?: string
   /**
    * 记一次上传（批 4b，2026-08-17）。**不变式 5**：
@@ -681,6 +687,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 那类东西会坏在别人机器上（ACP 那条 `launch.ts` 刚栽过同一类）。
    */
   const 默认下载目录 = () => opts.downloadsDir ?? join(homedir(), "Downloads")
+  /** 更新没装配时的那句话。**说清楚是这套壳里没有，不是「没有新版」** */
+  const 要更新 = () => {
+    if (!opts.更新) {
+      throw fault("invalid_request", "这套壳里没有装应用内更新（无头模式或测试替身）")
+    }
+    return opts.更新
+  }
   /** PATH 上所有同名可执行文件。POSIX 走登录 shell 的 `which -a`（拿用户终端里那套 PATH）；Windows `where` */
   const 查PATH = (name: string): string[] => {
     if (!/^[A-Za-z0-9_.-]+$/.test(name)) return []
@@ -2460,6 +2473,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     /* ── 技能管理（7.17，skills-manage） ── */
 
     /* ── 插件（2026-08-25，承载体 v1，学自 dsh-office） ── */
+
+    /* ── 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）── */
+
+    /**
+     * 六个操作**回同一个信封**（完整状态 + 那个开关），而且都走同一个把关：
+     * 没装配就如实拒。**不许在没装配时回一句「已是最新」**——
+     * 那是假话，而且假得看不出来（规格 7.5）。
+     */
+    getUpdateState: async () => 要更新().状态(),
+    checkUpdate: async ({ force }) => 要更新().检查(force === true),
+    setUpdatePrefs: async (改) => 要更新().设偏好(改),
+    downloadUpdate: async () => 要更新().下载(),
+    cancelUpdate: async () => 要更新().取消(),
+    applyUpdate: async () => 要更新().装(),
 
     listPlugins: async () => ({
       plugins: 插件册.map((p) => ({

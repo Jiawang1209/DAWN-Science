@@ -14,6 +14,7 @@
  *   POST /__fake/fail           { status } 下一次查回这个状态码
  */
 import http from "node:http"
+import { createReadStream, statSync } from "node:fs"
 
 /** 十个资源的名字与真 v0.0.2 完全同构（只是内容是假的） */
 const 资源名 = (版本) => [
@@ -31,8 +32,12 @@ const 资源名 = (版本) => [
 
 export function startFakeReleaseFeed(opts = {}) {
   let 版本 = opts.version ?? "9.9.9"
-  /** 假包多大（字节）。默认小一点，e2e 下得快 */
-  const 包大小 = opts.packageBytes ?? 64 * 1024
+  /**
+   * 假包多大（字节）。默认小一点，e2e 下得快。
+   * **给了 `packageFile` 就吐那个真文件**——真机演练要下的是一个真能装上的包。
+   */
+  const 真包 = opts.packageFile
+  const 包大小 = 真包 ? statSync(真包).size : (opts.packageBytes ?? 64 * 1024)
   let 没有Release = false
   let 下次状态码 = 0
 
@@ -94,6 +99,10 @@ export function startFakeReleaseFeed(opts = {}) {
     if (u.pathname.startsWith("/pkg/")) {
       // 真的把字节吐出来：下载那条路（进度、大小核对）要真的走一遍
       res.writeHead(200, { "content-type": "application/octet-stream", "content-length": String(包大小) })
+      if (真包) {
+        createReadStream(真包).pipe(res)
+        return
+      }
       res.end(Buffer.alloc(包大小, 7))
       return
     }

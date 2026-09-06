@@ -50,7 +50,37 @@ const 好读的大小 = (字节: number) => `${(字节 / 1e6).toFixed(0)} MB`
 export function 更新侧栏行({ 回执, 动作 }: { 回执: 更新回执 | undefined; 动作: 更新动作 }) {
   const [开着, 设开着] = useState(false)
   const s = 回执?.状态
-  if (!s || (s.阶段 !== "available" && s.阶段 !== "downloading" && s.阶段 !== "ready")) return null
+  /**
+   * **人自己按过的那两步失败了，侧栏必须看得见**（2026-09-06 真机演练逼出来的）：
+   * 那一次换包失败，而 `failed` 不在侧栏出现，于是屏幕上什么都没剩下——
+   * 症状是「点了没反应」，这个项目最不该再犯的一种。
+   *
+   * 自动查失败照旧不出现（规格 U2）：没人要求过它，不该打扰。
+   */
+  const 人按过的失败 = s?.阶段 === "failed" && s.失败于 !== "检查"
+  if (
+    !s ||
+    (s.阶段 !== "available" && s.阶段 !== "downloading" && s.阶段 !== "ready" && !人按过的失败)
+  ) {
+    return null
+  }
+
+  if (s.阶段 === "failed") {
+    return (
+      <div className="update-entry">
+        <Button
+          variant="ghost"
+          size="inline"
+          className="row update-row"
+          onClick={动作.检查}
+        >
+          <上箭头图标 className="update-dot" />
+          <span className="update-title">{tf("{0}没成，点这里重来", s.失败于)}</span>
+        </Button>
+        <p className="update-why">{s.原话}</p>
+      </div>
+    )
+  }
 
   const 标题 =
     s.阶段 === "downloading"
@@ -92,15 +122,7 @@ function 更新卡片({ 状态, 动作 }: { 状态: 更新状态; 动作: 更新
     )
   }
   if (状态.阶段 === "ready") {
-    return (
-      <div className="update-card">
-        <p className="update-head">{tf("{0} 已下好，装上要重启一次", 号(状态.版本))}</p>
-        {/* **不自动重启**（规格 U4）：这台机器上随时有内核跑着、有远端会话连着 */}
-        <Button variant="primary" onClick={动作.装}>
-          {t("重启并更新")}
-        </Button>
-      </div>
-    )
+    return <就绪卡 状态={状态} 动作={动作} />
   }
   if (状态.阶段 !== "available" && 状态.阶段 !== "ignored") return null
   return (
@@ -128,6 +150,34 @@ function 更新卡片({ 状态, 动作 }: { 状态: 更新状态; 动作: 更新
           {t("这一版不再提醒")}
         </Button>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * 下好了那张卡。
+ *
+ * **点过之后按钮要当场变样**：解一个 223 MB 的 zip 要十几秒，
+ * 这期间界面一动不动的话，人会以为没点上而再点一次——而两次换包同时跑，
+ * 第二次的「备份旧的」会把刚换上去的新版挪走。后端也挡着这一下（服务里的 `装着`），
+ * 但**让人看见正在发生什么**比挡住更重要。
+ */
+function 就绪卡({ 状态, 动作 }: { 状态: 更新状态 & { 阶段: "ready" }; 动作: 更新动作 }) {
+  const [装着, 设装着] = useState(false)
+  return (
+    <div className="update-card">
+      <p className="update-head">{tf("{0} 已下好，装上要重启一次", 号(状态.版本))}</p>
+      {/* **不自动重启**（规格 U4）：这台机器上随时有内核跑着、有远端会话连着 */}
+      <Button
+        variant="primary"
+        disabled={装着}
+        onClick={() => {
+          设装着(true)
+          动作.装()
+        }}
+      >
+        {装着 ? t("正在装，装完会自己重开…") : t("重启并更新")}
+      </Button>
     </div>
   )
 }

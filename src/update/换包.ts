@@ -31,15 +31,26 @@ export interface 换包依赖 {
   读包版本(app路径: string): string | undefined
 }
 
-export interface 换包参数 {
+/** 服务层给得出的那些（它不知道这个 app 装在哪儿——那是安装器的事） */
+export interface 装参数 {
   方式: 换包方式
   /** 下下来的那个文件 */
   包路径: string
   期望版本: string
   当前版本: string
-  /** mac：`.app`；AppImage：`$APPIMAGE` 那个文件。win 不需要 */
-  应用路径?: string
 }
+
+/**
+ * 换包真正要的参数。
+ *
+ * **`应用路径` 用判别式变成必填**（2026-09-06 真机演练逼出来的）：
+ * 它原先是可选的，于是服务层拼参数时漏了它，**编译器一个字都没说**，
+ * 十个单测全绿——因为每个用例都自己把它写进去了。
+ * 真机上的表现是「点了重启并更新，什么都没发生」。
+ */
+export type 换包参数 =
+  | (装参数 & { 方式: "win-nsis" })
+  | (装参数 & { 方式: "mac-zip" | "appimage"; 应用路径: string })
 
 export async function 换包(p: 换包参数, 依赖: 换包依赖): Promise<void> {
   if (p.方式 === "win-nsis") {
@@ -49,7 +60,6 @@ export async function 换包(p: 换包参数, 依赖: 换包依赖): Promise<voi
   }
 
   if (p.方式 === "appimage") {
-    if (!p.应用路径) throw new Error("不知道当前这个 AppImage 在哪儿（没有 $APPIMAGE），换不了")
     await 依赖.拷贝(p.包路径, p.应用路径)
     // **执行位不能少**：少了它下一次根本起不来，而那时应用已经退了，
     // 人看到的只是「点了没反应」
@@ -58,7 +68,6 @@ export async function 换包(p: 换包参数, 依赖: 换包依赖): Promise<voi
   }
 
   // ── mac：zip ──────────────────────────────────────────────────
-  if (!p.应用路径) throw new Error("不知道这个 .app 在哪儿，换不了包")
   const 解到 = join(dirname(p.包路径), "staged")
   await 依赖.删(解到)
   // `ditto -x -k` 是 macOS 自带的解 zip 方式，**会保留 .app 里的符号链接与权限**

@@ -1449,6 +1449,7 @@ export const EN: Readonly<Record<string, string>> = {
   "中止更新": "Abort the update",
   "{0} 已下好，装上要重启一次": "{0} is downloaded; installing it restarts the app once",
   "重启并更新": "Restart and update",
+  "正在装，装完会自己重开…": "Installing; it will reopen itself when done…",
   "{0} 已发布 · 你在 {1}": "{0} is out · you are on {1}",
   "更新到 {0}": "Update to {0}",
   "打开发布页": "Open the release page",
@@ -1465,4 +1466,5 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 已发布（你选择了这一版不再提醒）": "{0} is out (you chose not to be reminded about it)",
   "{0} 已下好，等着重启": "{0} is downloaded, waiting for a restart",
   "查不到：{0}": "Could not check: {0}",
+  "{0}没成，点这里重来": "{0} did not go through — click to try again",
 }

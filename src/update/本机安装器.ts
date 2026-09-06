@@ -10,7 +10,7 @@ import { chmod, copyFile, rename, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { promisify } from "node:util"
 import { 下载到 } from "./下载.js"
-import { 换包, type 换包依赖, type 换包参数 } from "./换包.js"
+import { 换包, type 换包依赖, type 装参数 } from "./换包.js"
 import type { 安装器 } from "./服务.js"
 
 const 跑 = promisify(execFile)
@@ -41,10 +41,26 @@ export const 本机换包依赖: 换包依赖 = {
   },
 }
 
-export function 本机安装器(o: { 下载目录: string; 重启: () => void }): 安装器 {
+export function 本机安装器(o: {
+  下载目录: string
+  /**
+   * 这个 app 装在哪儿（mac 的 `.app`、Linux 的 `$APPIMAGE`）。
+   * **知道它的是安装器，不是服务层**——服务层漏传过一次，而当时编译器不会说话。
+   */
+  应用路径?: string
+  重启: () => void
+}): 安装器 {
   return {
     下载: (资源, 进度, signal) => 下载到({ 资源, 目录: o.下载目录, 进度, signal }),
-    换包: (p: 换包参数) => 换包(p, 本机换包依赖),
+    // **async**：同步 throw 会绕过调用方的 `.catch`，那时失败连日志都不会有
+    换包: async (p: 装参数) => {
+      if (p.方式 === "win-nsis") return 换包({ ...p, 方式: "win-nsis" }, 本机换包依赖)
+      if (!o.应用路径) {
+        // 走不到这一步才对（「能不能自装」判过一次）；真走到了要说清楚是这件事
+        throw new Error(`不知道这个应用装在哪儿，换不了包（${p.方式}）`)
+      }
+      return 换包({ ...p, 方式: p.方式, 应用路径: o.应用路径 }, 本机换包依赖)
+    },
     重启: o.重启,
   }
 }

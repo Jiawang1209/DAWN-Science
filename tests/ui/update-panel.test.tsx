@@ -49,12 +49,26 @@ describe("侧栏那一行", () => {
   it("查失败时侧栏不出现——自动那次失败不打扰人（规格 U2）", () => {
     render(
       <更新侧栏行
-        回执={{ 自动检查: true, 状态: { 阶段: "failed", 当前: "0.0.2", 原话: "GitHub 回了 403" } }}
+        回执={{ 自动检查: true, 状态: { 阶段: "failed", 当前: "0.0.2", 原话: "GitHub 回了 403", 失败于: "检查" } }}
         动作={空动作()}
       />,
     )
     expect(screen.queryByRole("button")).toBeNull()
   })
+  it("**换包失败时侧栏要看得见**（人刚按过，不能只留一句「点了没反应」）", () => {
+    render(
+      <更新侧栏行
+        回执={{
+          自动检查: true,
+          状态: { 阶段: "failed", 当前: "0.0.2", 原话: "包里没有 .app", 失败于: "安装" },
+        }}
+        动作={空动作()}
+      />,
+    )
+    expect(screen.getByText(/安装没成/)).toBeTruthy()
+    expect(screen.getByText("包里没有 .app")).toBeTruthy()
+  })
+
   it("说了「不再提醒」之后侧栏没有它了", () => {
     render(<更新侧栏行 回执={有新版({ 阶段: "ignored" })} 动作={空动作()} />)
     expect(screen.queryByRole("button")).toBeNull()
@@ -79,6 +93,18 @@ describe("侧栏那一行", () => {
     expect(screen.getByRole("button", { name: "打开发布页" })).toBeTruthy()
     expect(screen.queryByRole("button", { name: "更新到 0.0.3" })).toBeNull()
     expect(screen.getByText(/sudo dpkg -i/)).toBeTruthy()
+  })
+
+  it("点过「重启并更新」之后按钮当场变样并禁用——**再点一次会换两遍包**", () => {
+    const 动作 = 空动作()
+    render(<更新侧栏行 回执={有新版({ 阶段: "ready", 包路径: "/tmp/x.zip" })} 动作={动作} />)
+    fireEvent.click(screen.getByRole("button", { name: /已就绪/ }))
+    const 按钮 = screen.getByRole("button", { name: "重启并更新" })
+    fireEvent.click(按钮)
+    const 装着 = screen.getByRole("button", { name: "正在装，装完会自己重开…" })
+    expect((装着 as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(装着)
+    expect(动作.装).toHaveBeenCalledTimes(1)
   })
 
   it("下好了：按钮是「重启并更新」，**不会自己重启**", () => {
@@ -106,7 +132,7 @@ describe("设置 → 关于", () => {
   it("**手动那次失败的原话在屏幕上**（规格 7.5）", () => {
     render(
       <关于一格
-        回执={{ 自动检查: true, 状态: { 阶段: "failed", 当前: "0.0.2", 原话: "GitHub 没应：超时 10 秒" } }}
+        回执={{ 自动检查: true, 状态: { 阶段: "failed", 当前: "0.0.2", 原话: "GitHub 没应：超时 10 秒", 失败于: "检查" } }}
         动作={空动作()}
       />,
     )

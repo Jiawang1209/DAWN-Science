@@ -484,7 +484,20 @@ export const 更新状态Schema = z.discriminatedUnion("阶段", [
   z.object({ 阶段: z.literal("ignored"), ...新版字段 }).strict(),
   z.object({ 阶段: z.literal("downloading"), ...新版字段, 已下: NonNegInt, 共: NonNegInt }).strict(),
   z.object({ 阶段: z.literal("ready"), ...新版字段, 包路径: z.string().min(1) }).strict(),
-  /** 查或下失败。**原话必须在里面**（规格 7.5） */
-  z.object({ 阶段: z.literal("failed"), 当前: z.string().min(1), 原话: z.string().min(1) }).strict(),
+  /**
+   * 查、下或装失败。**原话必须在里面**（规格 7.5）。
+   *
+   * `失败于` 是必填的：**自动查失败不打扰人，而人刚点的下载/安装失败必须看得见**——
+   * 界面靠它区分这两件。2026-09-06 真机演练里换包失败过一次，
+   * 那次屏幕上什么都没剩下，症状是「点了没反应」。
+   */
+  z
+    .object({
+      阶段: z.literal("failed"),
+      当前: z.string().min(1),
+      原话: z.string().min(1),
+      失败于: z.enum(["检查", "下载", "安装"]),
+    })
+    .strict(),
 ])
 export type 更新状态 = z.infer<typeof 更新状态Schema>

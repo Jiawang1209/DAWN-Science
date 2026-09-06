@@ -717,6 +717,7 @@ app.whenReady().then(() => {
         当前版本: 我们的版本(),
         状态文件: join(app.getPath("userData"), "update.json"),
         下载目录: join(app.getPath("userData"), "update"),
+        记: (话) => 启动日志(`更新：${话}`),
         /**
          * 换包前把凭证交给下一版（规格 U5）。**这是最后一个还解得开的瞬间。**
          */

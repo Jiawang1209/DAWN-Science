@@ -67,7 +67,12 @@ export class 更新管家 {
       一条 = await this.o.源.查最新()
     } catch (e) {
       // 原话原样带出去。**这里不写盘**——失败不许前移 lastCheckedAt
-      this.状态 = { 阶段: "failed", 当前: this.o.当前版本, 原话: e instanceof Error ? e.message : String(e) }
+      this.状态 = {
+        阶段: "failed",
+        当前: this.o.当前版本,
+        原话: e instanceof Error ? e.message : String(e),
+        失败于: "检查",
+      }
       return this.状态
     }
     const 查于 = this.现在()
@@ -114,9 +119,9 @@ export class 更新管家 {
     return this.状态
   }
 
-  /** 出事了。**原话带着**（规格 7.5） */
-  出错(原话: string): 更新状态 {
-    this.状态 = { 阶段: "failed", 当前: this.o.当前版本, 原话 }
+  /** 出事了。**原话带着**（规格 7.5），并且说清是哪一步 */
+  出错(原话: string, 失败于: "检查" | "下载" | "安装"): 更新状态 {
+    this.状态 = { 阶段: "failed", 当前: this.o.当前版本, 原话, 失败于 }
     return this.状态
   }
 
@@ -144,7 +149,7 @@ export class 更新管家 {
       新 = 是更新的(一条.版本, 当前)
     } catch (e) {
       // tag 认不出来时说清楚是 tag 的问题，不要伪装成「已是最新」
-      return { 阶段: "failed", 当前, 原话: e instanceof Error ? e.message : String(e) }
+      return { 阶段: "failed", 当前, 原话: e instanceof Error ? e.message : String(e), 失败于: "检查" }
     }
     if (!新) return { 阶段: "latest", 当前, 查于 }
 

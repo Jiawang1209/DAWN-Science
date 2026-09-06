@@ -138,6 +138,8 @@ export interface CreateWorkbenchOptions {
      * 它手里才有 `CredentialStore` 与钥匙串。
      */
     交接?: (到版本: string) => void
+    /** 更新出事时记一行（主进程写进 `startup.log`） */
+    记?: (话: string) => void
   }
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
@@ -1184,13 +1186,22 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
             记: (话) => console.log(`[更新] ${话}`),
           })
         : opts.更新.重启
-          ? 本机安装器({ 下载目录, 重启: opts.更新.重启 })
+          ? 本机安装器({
+              下载目录,
+              // **这一行漏过一次**：漏了它，真机上点「重启并更新」什么都不会发生
+              ...(opts.更新.应用路径 ? { 应用路径: opts.更新.应用路径 } : {}),
+              重启: opts.更新.重启,
+            })
           : undefined
     return 建更新服务({
       管家,
       读盘: () => 存储.读(),
       ...(安装器 ? { 安装器 } : {}),
       ...(opts.更新.交接 ? { 交接: opts.更新.交接 } : {}),
+      记: (话) => {
+        opts.更新?.记?.(话)
+        console.error(`[更新] ${话}`)
+      },
       推: (回执) => 更新推送?.(回执),
     })
   })()

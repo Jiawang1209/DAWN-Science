@@ -4029,6 +4029,14 @@ export function ConversationView({
   /** 增强带了什么 / 为什么没带（不是错误，灰字） */
   const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
   /**
+   * **发出去过几次**——「优化输入」那颗按钮的撤回栈拿它当作用域（2026-09-08 作者报的）。
+   *
+   * 撤回栈属于**框里这一版草稿**：那句话发走之后，「撤回」不该还立在那儿，
+   * 更不该把已经发走的那句话的上一版填回空框。作者的话：
+   * *「对话提交上去了，竟然还[能]撤销，我撤销之后竟然还是原来的对话。」*
+   */
+  const [发过几次, 设发过几次] = useState(0)
+  /**
    * 这一次提交要的是**排队**还是**插队**（2026-08-15）。
    *
    * **用 ref 不用 state**：`requestSubmit()` 是同步的，提交处理器紧接着就跑，
@@ -4471,6 +4479,9 @@ export function ConversationView({
           设待发文件([])
           设附过文件(false)
           clearDraft(session.sessionId)
+          // 这一版草稿的一生到此为止：撤回栈与「带上了什么」跟着它一起没（2026-09-08）
+          设发过几次((n) => n + 1)
+          设增强说明(undefined)
           设位置(-1)
           设发送出错(undefined)
           // **从这一刻起显示「在等它」**，直到有新东西冒出来（见 `等回话` 的注）
@@ -5138,6 +5149,7 @@ export function ConversationView({
               enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
               cancel={onCancelEnhance ?? (async () => undefined)}
               reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+              重置记号={发过几次}
               onProblem={设发送出错}
               onNote={设增强说明}
             />
@@ -6162,6 +6174,8 @@ export function EmptyConversation({
   /** 第一句话没发出去的原因。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [开场出错, 设开场出错] = useState<string | undefined>(undefined)
   const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
+  /** 与对话屏同一条（2026-09-08）：撤回栈属于框里这一版草稿，发出去就作废 */
+  const [发过几次, 设发过几次] = useState(0)
   /**
    * **开场卡 / 换 agent 也要带上排队的图和文件**（审查 debug J6）。此前这两条路只把文本草稿交给
    * `onStart`,粘/拖进来还没发的图和文件被静默丢掉——与「打字发送」那条(上面 6028 一带)口径不一致。
@@ -6286,6 +6300,9 @@ export function EmptyConversation({
               设空态文件([])
               设空态附过(false)
               设草稿("")
+              // 这一版草稿的一生到此为止（2026-09-08）
+              设发过几次((n) => n + 1)
+              设增强说明(undefined)
               设开场出错(undefined)
               void Promise.resolve(
                 这次的文件.length > 0
@@ -6604,6 +6621,7 @@ export function EmptyConversation({
                   enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
                   cancel={onCancelEnhance ?? (async () => undefined)}
                   reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+                  重置记号={发过几次}
                   onProblem={设开场出错}
                   onNote={设增强说明}
                 />

@@ -8,6 +8,12 @@
  *
  * 草稿的读写由调用方给（`draft` / `setDraft`）：对话屏的草稿住在 `$drafts`，空态屏住在 useState，
  * 这颗按钮不关心住哪儿。
+ *
+ * **撤回栈的作用域是「框里这一版草稿」**（2026-09-08 作者报的）：
+ * 那句话发出去之后，栈必须跟着它一起没。上一版没有这条，于是
+ * *「对话提交上去了，竟然还[能]撤销，我撤销之后竟然还是原来的对话」*——
+ * 按下「撤回」，已经发走的那句话的**上一版**被填回了空框。
+ * 作用域由调用方用 `重置记号` 声明（学 `$drafts` 那条：持久化状态必须在 key 里声明作用域）。
  */
 import { useEffect, useRef, useState } from "react"
 import { Button, Row } from "./primitives.js"
@@ -49,6 +55,7 @@ export function EnhanceControl({
   enhance,
   cancel,
   reason,
+  重置记号,
   onProblem,
   onNote,
 }: {
@@ -62,6 +69,13 @@ export function EnhanceControl({
    * 看不见的能力等于不存在——没 key 的人本来就该在这里看到「填一个就能用」。
    */
   reason?: string | undefined
+  /**
+   * **框里这一版草稿的身份**。它一变，撤回栈就清空。
+   *
+   * 调用方在「这句话已经发出去了」那一刻换一个值——撤回栈的寿命到此为止。
+   * 不给的话栈就一直留着，那正是 2026-09-08 那条缺陷。
+   */
+  重置记号?: string | number | undefined
   /** 出错往 composer 下那条说 */
   onProblem: (msg: string | undefined) => void
   /** 「带上了什么 / 为什么没带」也往 composer 下面说——行内放不下 */
@@ -83,6 +97,32 @@ export function EnhanceControl({
     document.addEventListener("pointerdown", away)
     return () => document.removeEventListener("pointerdown", away)
   }, [菜单])
+
+  /**
+   * **草稿换了一版（多半是发出去了）→ 这一颗按钮身上的一切都作废。**
+   *
+   * 两样一起收，因为它们描述的是同一件事——「框里这一版草稿」：
+   *
+   *   - **撤回栈**：留着的话，按下「撤回」会把**已经发走的那句话的上一版**
+   *     填回空框（2026-09-08 作者报的那一条）。
+   *   - **还在飞的那一次改写**：不作废的话，它回来时会 `setDraft(r.text)`——
+   *     把**已经发出去的那句话的改写版**灌进刚清空的框里，并且顺手立起一颗
+   *     「撤回」。这是同一条缺陷的另一半：点了「优化输入」紧接着按回车就能撞上。
+   *     （上一版特意写了「只清栈、不碰改写中」，理由是那件事有自己的终点——
+   *     但那个终点会把结果写进**下一版**草稿里，所以它并不独立。）
+   *
+   * `cancel` 只在真有在飞的请求时才叫：挂载那一次也会跑这个 effect。
+   */
+  useEffect(() => {
+    设栈([])
+    const 在飞的 = 当前请求.current
+    if (!在飞的) return
+    当前请求.current = undefined
+    设忙(undefined)
+    void cancel(在飞的).catch(() => {})
+    // cancel 是调用方给的，身份每次渲染都可能变；这里只该跟着「哪一版草稿」跑
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [重置记号])
 
   const 换档 = (m: EnhanceMode) => {
     设mode(m)

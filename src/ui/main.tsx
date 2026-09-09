@@ -7,6 +7,8 @@ import { loadAccent } from "./state/accent.js"
 import { loadSidebar } from "./state/sidebar.js"
 import { loadFileTree, loadRightDock } from "./state/right-dock.js"
 import { loadLang } from "./i18n/index.js"
+import { 装上补丢掉的抬起 } from "./mouse-stuck.js"
+import { 装上输入诊断, 输入诊断开着吗 } from "./ime-trace.js"
 import "./styles.css"
 
 /**
@@ -44,6 +46,20 @@ loadFileTree()
  * 再整屏跳成中文。
  */
 loadLang()
+
+/**
+ * **补上丢掉的那一下 `mouseup`**（2026-09-08，见 `mouse-stuck.ts` 的文件头）。
+ *
+ * 装在这儿而不是某个组件里：它修的是一个**模块级全局**（贴底跟随那个库的），
+ * 生命周期是「这个窗口活着」，不是「某个组件挂着」。
+ */
+装上补丢掉的抬起()
+
+/**
+ * 输入法诊断（2026-09-08）——**默认不装**，见 `ime-trace.ts` 的文件头。
+ * 开：控制台里 `localStorage.setItem("dawn.debug.ime","1")` 再刷新。
+ */
+if (输入诊断开着吗()) 装上输入诊断()
 
 const root = document.getElementById("root")
 if (!root) throw new Error("找不到 #root —— index.html 与入口不匹配")

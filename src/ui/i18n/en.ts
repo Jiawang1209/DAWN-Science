@@ -380,6 +380,8 @@ export const EN: Readonly<Record<string, string>> = {
   "想了一下": "thought for a moment",
   "这一整段对话累计": "across this whole chat",
   "还没有对话": "No messages yet",
+  "回到底部": "Jump to latest",
+  "有新内容": "New messages",
   "你": "You",
   "复制我说的这段": "Copy my message",
   "复制这段回答": "Copy this reply",

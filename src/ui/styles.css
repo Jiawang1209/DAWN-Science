@@ -76,6 +76,20 @@ pre {
 /* 嵌在句子或标题里的按钮：零盒子，不要再写 padding:0 */
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
+/**
+ * 浮在转录上的那颗药丸（「回到底部」浮标，2026-09-08；2026-09-09 换成方案一的形状）。
+ *
+ * 一支箭头 + 一句话，全圆角。左边比右边窄一点（10 / 14）：
+ * 箭头本身带内白，两边给一样的内距时看上去反而是偏的。
+ * **几何在这里，不在调用点**——同 `card` 那一档的理由。
+ */
+.btn-pill {
+  height: 30px;
+  padding: 0 14px 0 10px;
+  border-radius: var(--dawn-radius-full);
+  justify-content: center;
+  font-size: var(--dawn-fs-meta);
+}
 /* 一整张可点的卡（空态的开场建议）。**几何在这里，不在调用点** */
 .btn-card {
   flex-direction: column;
@@ -779,6 +793,7 @@ pre {
  * 外壳让位给内容，这是那一档的全部意思。
  */
 .turns {
+  position: relative; /* 「回到底部」浮标的定位参照（2026-09-08）。这一层不滚 */
   flex: 1;
   overflow: auto;
   padding: var(--dawn-space-3) var(--dawn-page-inset-x);
@@ -6505,7 +6520,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-remote-setup { padding: var(--dawn-space-3); overflow-y: auto; }
 .nb-remote-other { padding: var(--dawn-space-2) var(--dawn-space-3); border-bottom: 1px solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
 .nb-remote-other > summary { cursor: pointer; }
-.nb-cells { flex: 1; min-height: 0; overflow: auto; }
+/* position: relative 是「回到底部」浮标的定位参照（2026-09-08）。这一层不滚 */
+.nb-cells { position: relative; flex: 1; min-height: 0; overflow: auto; }
 .nb-cells-inner { padding: var(--dawn-space-2) var(--dawn-space-3); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .nb-cell { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: var(--dawn-space-1); }
 .nb-gutter { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); padding-top: 2px; }
@@ -6620,3 +6636,32 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .about-ver { font-family: var(--dawn-font-mono); color: var(--dawn-text-1); }
 .about-say { margin: 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
 .about-auto { display: flex; align-items: center; gap: var(--dawn-space-2); color: var(--dawn-text-2); }
+
+/**
+ * 「回到底部」浮标（2026-09-08，规格 `2026-09-08-回到底部浮标-design.md`）。
+ *
+ * **这里只有两件事：浮在哪儿、浮起来的那层面。**
+ * 尺寸、内距、圆角全部住在 `size="pill"`（`.btn-pill`）里——
+ * primitive 的几何不许从调用点改写，那是 `primitives.tsx` 顶上明令禁止的。
+ *
+ * 浮起来的面照 `.agent-menu` 那一套：阴影 + 发丝线，不是粗边框。
+ */
+.stick-pill {
+  position: absolute;
+  /**
+   * **底部居中**（2026-09-09 作者定的方案一）。上一版在右下角，
+   * 他的话是「这个按钮太丑了」。居中还有一条实在理由：转录本身就是居中的一栏，
+   * 靠右那颗离正文很远，视线要横着走一趟才够得着。
+   */
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: var(--dawn-space-3);
+  z-index: var(--z-modal-popover);
+  border-color: var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+}
+/**
+ * `has-new` **不带任何几何**：撑开是 `.btn-pill` 里那段字自己撑的。
+ * 它留在这儿只做一件事——给 e2e 一个「此刻是带字那一种」的判据。
+ */
+.stick-pill-say { white-space: nowrap; }

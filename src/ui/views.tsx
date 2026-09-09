@@ -42,6 +42,7 @@ import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
 import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
+import { 回到底部 } from "./back-to-bottom.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
@@ -4385,6 +4386,12 @@ export function ConversationView({
             */}
           {等回话 !== undefined ? <等着 从={等回话时刻} 在想={正在想} /> : null}
         </StickToBottom.Content>
+        {/**
+          * **跟随撒手之后的出路**（2026-09-08，作者：*「分析的内容不更新，
+          * 需要我手动往下挪动。」*）。放在 `.Content` 外面：那一层不滚，
+          * 浮标因此不会跟着内容滚走。见 `back-to-bottom.tsx` 的文件头。
+          */}
+        <回到底部 />
       </StickToBottom>
 
       <form

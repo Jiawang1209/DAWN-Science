@@ -9,6 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { TranscriptItem } from "../protocol/index.js"
+import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 
 const 摘要上限 = 48
@@ -89,9 +90,11 @@ export function TurnNavigator({ items }: { items: readonly TranscriptItem[] }) {
       {轮.map((x, i) => {
         const 近 = 悬在 !== null && Math.abs(i - 悬在) < 0.5
         return (
-          <button
+          /* 走 primitive，几何仍归 `.turn-tick`（2026-09-08：那条扫描修好后露出来的） */
+          <Button
             key={x.id}
-            type="button"
+            variant="ghost"
+            size="inline"
             className={`turn-tick${x.id === 当前 ? " current" : ""}${近 ? " near" : ""}`}
             style={{ ["--tick-w" as string]: `${刻度宽(i, 悬在)}px` }}
             aria-label={tf("第 {0} 轮：{1}", i + 1, x.摘要 || t("（空）"))}
@@ -99,7 +102,7 @@ export function TurnNavigator({ items }: { items: readonly TranscriptItem[] }) {
             onClick={() => 跳(x.id)}
           >
             {近 ? <span className="turn-tick-summary">{x.摘要 || t("（空）")}</span> : null}
-          </button>
+          </Button>
         )
       })}
     </div>

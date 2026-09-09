@@ -225,6 +225,15 @@ export function 上箭头图标({ className }: 图标属性 = {}) {
   )
 }
 
+/** 回到底部。一支朝下的箭头 */
+export function 下箭头图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path d="M8.6 13.4a.9.9 0 0 1-1.2 0l-4.5-4.4a.9.9 0 0 1 1.2-1.3l2.8 2.7V2.9a.9.9 0 0 1 1.8 0v7.5l2.8-2.7a.9.9 0 1 1 1.2 1.3l-4.5 4.4Z" />
+    </壳>
+  )
+}
+
 /** 终端。一个提示符 */
 export function 终端图标({ className }: 图标属性 = {}) {
   return (

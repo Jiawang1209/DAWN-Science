@@ -147,8 +147,45 @@ describe("设计契约 · primitive 不被调用点覆写", () => {
     const exempt = new Set(["primitives.tsx", "ErrorBoundary.tsx", "pane-boundary.tsx"])
     for (const f of tsxFiles()) {
       if (exempt.has(f)) continue
-      const hits = findLines(read(f), (l) => /<button[\s>]/.test(l))
-      expect(hits, `${f}：用 <Button> 而不是裸 <button>`).toEqual([])
+      /**
+       * **`<button` 后面那一下可以是换行**（2026-09-08 修）。
+       *
+       * 上一版是 `/<button[\s>]/` 逐行匹配。属性一多，JSX 就被格式化成
+       * 每行一个属性，于是那一行的内容正好是 `      <button`——**行尾**，
+       * 后面既没有空白也没有 `>`，这条扫描当场瞎掉。
+       * 「回到底部」浮标就是这么大摇大摆走过去的。
+       *
+       * 这是本文件第三次栽在「逐行扫描抓不住跨行 JSX」上
+       * （emoji 那条、按钮子串那条，现在是这条）。改成**整篇匹配**：
+       * `<button` 后面只要不是标识符字符（字母/数字/`-`），就是一个真的原生按钮——
+       * 这样 `<button\n`、`<button>`、`<button className=…>` 全都抓得住，
+       * 而 `<buttonish>` 这种（并不存在的）自定义标签不会误伤。
+       */
+      /**
+       * **先把注释抹平再扫**（2026-09-08）。
+       *
+       * 不抹的话，一条解释「为什么不许写裸 `<button>`」的注释本身就会被算成违规——
+       * 改完这条扫描的第一分钟就撞上了。抹成等长的空格，**行号因此不变**。
+       */
+      const src = read(f).replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, (c) => c.replace(/[^\n]/g, " "))
+      const 违规: string[] = []
+      for (const m of src.matchAll(/<button(?![\w-])[\s\S]*?\/?>/g)) {
+        /**
+         * **色块是唯一一条窄豁免**（2026-09-08 这条扫描修好之后才浮出来的两处）。
+         *
+         * `Settings.tsx` 主题色那两个 `accent-swatch` 是**一整块纯色**
+         * （`role="radio"` + `style={{ background }}`，里面一个字都没有）。
+         * 套上 Button primitive 就得从调用点改写它的内距、圆角与背景——
+         * 那正是 `primitives.tsx` 顶上明令禁止的另一条。两条规则在这里指向相反，
+         * 取「几何只有一个家」那条。
+         *
+         * **豁免按类名给，不按文件给**：整个文件挖掉的话，
+         * `Settings.tsx` 里以后新写的裸按钮就再也没人看着了。
+         */
+        if (/accent-swatch/.test(m[0])) continue
+        违规.push(`${src.slice(0, m.index).split("\n").length}: <button`)
+      }
+      expect(违规, `${f}：用 <Button> 而不是裸 <button>`).toEqual([])
     }
   })
 })

@@ -37,6 +37,7 @@
 | **远端内核猝死与接回**：心跳报警 + `kill -0` 结论；意外掉线进 `detached`、重连认领回来，按「断开」照旧停干净（分支 `kernel-reattach`，勾全打完） | `specs/2026-09-04-远端内核猝死与接回-design.md` + `plans/2026-09-04-远端内核猝死与接回.md` |
 | **应用内更新**：侧栏一行 + 设置「关于」；自己下、自己换、自己重启；key 由旧版交接给新版（分支 `self-update`） | `specs/2026-09-06-应用内更新-design.md` + `plans/2026-09-06-应用内更新.md` |
 | **照着文献画图**：粘一张图 → 认图型 → 从 MLAI-science 的案例库拿「怎么画」→ 在你的数据上画（分支 `paper-figure`） | `specs/2026-09-07-照着文献画图-design.md` · 装法在 `docs/照着文献画图-怎么装.md` |
+| **回到底部浮标**：贴底跟随撒手之后，右下角一颗看得见的出路；有新内容时撑开带字（分支 `fixbug-0908-input`） | `specs/2026-09-08-回到底部浮标-design.md` + `plans/2026-09-08-回到底部浮标.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

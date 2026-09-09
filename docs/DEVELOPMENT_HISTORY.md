@@ -8,6 +8,54 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-09 — 第一次运行代码没有输出：shell 通了不等于 iopub 通了
+
+- **Type**: fix
+- **Motivation**: `tests/kernel/outputs.integration.test.ts` 的第一条稳定红
+  （「30s 内没等到 idle，**已收到 0 条**」），而**同一个内核上后面四条全绿**。
+  在干净的 `1a1cbb7` 上 A/B 过，同样红——不是刚合进来那三笔带的。
+- **What（根因，不是症状）**: `ready()` 只等 **shell 上的 `kernel_info_reply`**，
+  而输出走 iopub（PUB/SUB，**订阅生效之前发布的东西 ZMQ 直接丢**）。
+  一次性探针在真内核上量到的原话：
+
+  ```
+  [+275ms] 握手完成（kernel_info_reply 已到）
+  [+276ms] ① 发 execute_request
+  [+280ms]   收到 execute_reply      ← shell 通，于是「跑成功了」
+  [+407ms]   收到 iopub_welcome      ← iopub 这时候才活，比我们发出去晚 130ms
+           ① 这一轮共收到 2 条        ← status / execute_input / stream 全丢
+  [+3282ms] ② 第二次执行 → 5 条齐
+  ```
+
+  **这 130ms 正是产品里最要命的一段**：`start()` 里 `launchKernelChannel` 一回来
+  就 `emit started`，agent 的第一条 `run_code` 紧跟着就发。用户看到的是
+  **「第一次运行代码没有输出，胶囊一直转」**——`execute_reply` 说成功了，
+  可 idle 永远不来，账本停在 `running`。
+  （08:08 那一轮 `kernel-session` 的「跑得通的代码是 completed」拿到 `running`、
+  重跑又绿，多半就是同一条；这类"内核用例偶发超时"的旧笔记也该按这条重读。）
+
+  修法：`ready()` 再等一件事——**iopub 自己出过一声**。认两种证据，先到先算：
+  `iopub_welcome`（协议 5.5 就是为这件事加的），或**握手的 `status`**
+  （`kernel_info_request` 也会在 iopub 上留下 busy/idle）。
+  **重问是必须的，不是加固**：iopub 上没有心跳，没人请求时它一片安静——
+  干等的话，不发 welcome 的内核（IRkernel、老 ipykernel）会一直等到超时，
+  所以每 250ms 重发一次握手。等不到就**响亮失败**（规格 7.5），
+  错误里连「不等会怎样」一起说清：**这时候执行，输出会被 ZMQ 静默丢掉**。
+- **Impact**: 起内核多花约 130ms（握手 275ms → 408ms）——买的是
+  「第一次执行的输出不会丢」。本机与远端（`connectKernelChannel`）同一条路，一起修好。
+  这条约束已写进 `channel.ts` 文件头那三条实测约束的第 1 条里：
+  **「握手完成」有两半，只做前一半更难查。**
+- **Verification**:
+  - **先红后绿**：`tests/kernel/channel.test.ts` 新增 4 条（只回 reply 不算就绪 /
+    就绪前排队的执行一条都不许发 / 不发 welcome 的内核靠重问的 status /
+    等不到要响亮失败），实现之前 4 条全红、其余 25 条绿。
+  - 真内核：先前**稳定红**（连跑 4 次）的那条现在连跑 3 次全绿（5 passed × 3）。
+  - 同一支探针在修复后重跑：第一次执行 **5 条齐**，握手 408ms。
+  - 单元 **2845 passed**（此前 2840 + 新增 5 条判据里的 4 条与更新的 shake），typecheck 静默。
+  - `kernel-session` e2e 连跑两次各 6 passed；全量 e2e 另跑。
+
+---
+
 ### 2026-09-09 — `fixbug-0908-input` 合并进 main（快进，未推）；顺带查实一条 main 上先有的红
 
 - **Type**: chore

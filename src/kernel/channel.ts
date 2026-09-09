@@ -18,6 +18,15 @@
  *    **入队**，而不是发出去。这条不能靠调用方记得先握手：
  *    忘了的症状是「发过去了，永远没有回音」，最难查。
  *
+ *    **而「握手完成」有两半，只做前一半更难查**（2026-09-09 补的）：
+ *    `kernel_info_reply` 走 shell（REQ/REP，连上就通），输出走 iopub
+ *    （PUB/SUB，**订阅生效之前发布的东西 ZMQ 直接丢**）。本机实测：
+ *    shell 回复到手之后 **130ms** 才收到 `iopub_welcome`，而这 130ms 里
+ *    发出去的执行——shell 照常回 `execute_reply`（于是"跑成功了"），
+ *    它的 `status` / `execute_input` / `stream` **一条都没有**。
+ *    症状：**第一次运行代码没有输出，胶囊一直转**（idle 永远不来）。
+ *    所以 `ready()` 还要等 iopub 自己出过一声，见 `等iopub出过一声`。
+ *
  * 2. **关停顺序是正式代码。** `先停内核进程 → 关 socket → 留时间给 native 层`。
  *    顺序错了 native 层会抛 `Napi::Error` + **SIGABRT**，
  *    而且**结论会先打印、崩溃在后**——只看日志末尾会以为成功。
@@ -114,6 +123,13 @@ export interface KernelChannelOptions {
 
 const DEFAULT_HANDSHAKE_TIMEOUT = 20_000
 const DEFAULT_NATIVE_DRAIN = 300
+/**
+ * 多久重问一次 `kernel_info`，好让 iopub 有机会出声（见 `等iopub出过一声`）。
+ *
+ * **干等是等不来的**：不发 `iopub_welcome` 的内核（IRkernel、老 ipykernel）
+ * 在没人请求时 iopub 上一片安静，等到天亮也不会有第一条消息。
+ */
+const IOPUB_REPROBE_MS = 250
 
 /** 哪些消息类型算「发出去会让版本号 +1」——即一次真正的执行 */
 const BUMPS_REVISION = new Set(["execute_request"])
@@ -248,6 +264,70 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     return waiting
   }
 
+  /** iopub 还没证明活着时那根重问的定时器。**关通道要清掉它** */
+  let 重问iopub: ReturnType<typeof setInterval> | undefined
+
+  /**
+   * **等 iopub 自己出过一声**，再认为握手完成（2026-09-09）。
+   *
+   * 为什么不能只等 `kernel_info_reply`：见文件头第 1 条的后半。
+   * 一句话——**shell 通了不等于 iopub 通了**，而这中间发出去的执行，
+   * 输出会被 ZMQ 悄悄丢掉，且 shell 那边照常回 `execute_reply`，
+   * 所以从调用方看它「成功了」，只是永远等不到 idle。
+   *
+   * 认两种证据，先到先算：
+   *
+   *   - **`iopub_welcome`**：内核自己说「你的订阅活了」（协议 5.5 就是为这件事加的）。
+   *   - **握手的 `status`**：`kernel_info_request` 一样会在 iopub 上留下 busy/idle。
+   *     不发 welcome 的内核（IRkernel、老 ipykernel）靠这条。
+   *
+   * **重问是必须的，不是加固**：iopub 上没有心跳，没人请求时它一片安静——
+   * 干等的话，不发 welcome 的内核会一直等到超时。
+   */
+  const 等iopub出过一声 = (timeoutMs: number): Promise<void> =>
+    new Promise<void>((resolve, reject) => {
+      let 完了 = false
+      const 收摊 = () => {
+        完了 = true
+        offWelcome()
+        offStatus()
+        clearInterval(重问iopub)
+        重问iopub = undefined
+        clearTimeout(闹钟)
+      }
+      const offWelcome = on("iopub_welcome", () => {
+        if (完了) return
+        收摊()
+        resolve()
+      })
+      const offStatus = on("status", (m) => {
+        if (完了) return
+        if (m.message.parent_header?.msg_id !== opts.handshake.header.msg_id) return
+        收摊()
+        resolve()
+      })
+      /**
+       * 重发的是**同一条** `kernel_info_request`（同一个 msg_id）。
+       * 内核会照常再回一次，而我们要的只是「iopub 上出现一条以它为父的消息」——
+       * 造一条新的就得把 `@nteract/messaging` 拖进这个文件，
+       * 而那正是 `makeExecute` 注入要躲开的事（见上面那段说明）。
+       */
+      重问iopub = setInterval(() => {
+        if (!完了) rawSend(opts.handshake)
+      }, IOPUB_REPROBE_MS)
+      const 闹钟 = setTimeout(() => {
+        if (完了) return
+        收摊()
+        // **超时要说清等的是什么，以及不等会怎样**——「超时」两个字帮不上任何人
+        reject(
+          new Error(
+            `等 iopub 的第一声（iopub_welcome 或握手的 status）超过 ${timeoutMs}ms 没有回音——` +
+              `这时候执行，输出会被 ZMQ 静默丢掉`,
+          ),
+        )
+      }, timeoutMs)
+    })
+
   /**
    * 握手。
    *
@@ -259,9 +339,14 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
       if (started) return started
       const timeoutMs = opts.handshakeTimeoutMs ?? DEFAULT_HANDSHAKE_TIMEOUT
       started = (async () => {
+        // **两只耳朵都在发之前挂好**：握手自己的 status 也算证据，它可能比 reply 还早到
+        const iopub活着 = 等iopub出过一声(timeoutMs)
+        // **先兜一下**：shell 那边先失败时下面的 `await` 走不到，它就成了没人接的 rejection
+        void iopub活着.catch(() => {})
         const waiting = waitFor(opts.handshake.header.msg_id, "kernel_info_reply", timeoutMs)
         rawSend(opts.handshake)
         await waiting
+        await iopub活着
         handshaked = true
         // **补发攒下的**，顺序保持不变
         while (queued.length > 0) rawSend(queued.shift()!)
@@ -412,6 +497,9 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
   }
 
   const close = async (): Promise<void> => {
+    // 还在等 iopub 出声就被关掉了：那根定时器得跟着走，不然它会一直往死掉的通道上发
+    clearInterval(重问iopub)
+    重问iopub = undefined
     if (closed) return
     closed = true
     /**

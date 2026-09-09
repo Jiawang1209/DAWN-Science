@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "S=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad && rm -rf test-results && npm run build > $S/build.log 2>&1 && echo \"BUILD OK\" && npx playwright test e2e/remote-assistant.spec.ts e2e/sidebar-size.spec.ts e2e/visual.spec.ts --reporter=line > $S/rerun-a.log 2>&1; echo \"A exit=$?\"; npx playwright test e2e/kernel-session.spec.ts --reporter=line > $S/rerun-b.log 2>&1; echo \"B exit=$?\"",
-    "testCommand": "for i in 1 2; do npx vitest run tests/kernel/outputs.integration.test.ts 2>&1 | LC_ALL=C grep -aE \"^ +Tests +\" ; done",
+    "buildCommand": "S=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad; npm run build > $S/build2.log 2>&1 && echo BUILD_OK && for i in 1 2; do npx playwright test e2e/kernel-session.spec.ts --reporter=line 2>&1 | LC_ALL=C grep -aE \"passed|failed\" | tail -2; done",
+    "testCommand": "rm -f tests/kernel/probe-slowjoiner.integration.test.ts && npm run typecheck 2>&1 | tail -2 && echo TYPECHECK_OK && npm test > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad/unit-fix.log 2>&1; tail -5 /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad/unit-fix.log",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {

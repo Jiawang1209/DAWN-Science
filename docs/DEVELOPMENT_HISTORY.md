@@ -8,6 +8,32 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-09 — `fixbug-0908-input` 合并进 main（快进，未推）；顺带查实一条 main 上先有的红
+
+- **Type**: chore
+- **Motivation**: 09-08 那一轮的三条报告 + 由它们长出来的两条（浮标、协议 7.33）
+  全部做完并验过，作者说「没问题的话，我们就合并入 main」。
+- **What**: 工作区那一大团按**三条历史条目**切成三笔提交（`bcb479e` / `ccbb2a1` / `fcb65ca`），
+  共享文件（`enhance.tsx`、`views.tsx`、`en.ts`、`enhance.spec.ts`、本文件）按段回削。
+  切之前先把整个工作区做成一个兜底提交，切完**断言 `git diff 兜底 HEAD` 为空**——
+  拆分不许悄悄丢东西，这是唯一能证明它没丢的办法。
+  `main` 快进到 `fcb65ca`。**未推**。
+- **Impact**: 三笔提交每一笔都单独 typecheck 过（中间态也能编译，`git bisect` 落在哪一笔都站得住）。
+- **Verification**:
+  - 全量 e2e **479 passed / 0 failed**（21.4m），`kernel-session` 另跑 6 passed。
+  - 单元 2841 绿那一版之后只动过文档。typecheck 三次静默。
+  - **08:08 那一轮的 4 条红全部查清**：`kernel-session`、`remote-assistant`、`sidebar-size`
+    单跑全绿（等待超时，满负载下的抖动）；`视觉 · 命令面板暗色` 那 2509 像素在
+    单跑、整份 visual 单跑、以及重来一遍的全量里**都没再出现**——基线一张都没重存。
+- **另记一条与本轮无关的红**：`tests/kernel/outputs.integration.test.ts` 的第一条
+  （HTML 富输出）现在**稳定红**，症状是「30s 内没等到 idle，已收到 0 条」——
+  刚起的内核，**第一次执行一条 iopub 都收不到**（同一个内核上后面四条全绿）。
+  07:31 那一轮它还是绿的，中间没动过 `src/kernel/*`。
+  **已在干净的 `1a1cbb7` 上 A/B 过：同样红**，所以它是 main 上先有的，不是这三笔带的。
+  若为真，它对应的产品症状是「第一次运行代码没有输出」，够格单开一轮查。
+
+---
+
 ### 2026-09-09 — 借了别人的模型改写，就要说出来（协议 7.33）
 
 - **Type**: fix

@@ -512,8 +512,15 @@
  *   `checkUpdate` / `getUpdateState` / `setUpdatePrefs` / `downloadUpdate` / `cancelUpdate` / `applyUpdate`，
  *   **回同一个信封**（完整状态 + 那个开关）；事件通道多**第四种载荷** `UpdatePush`（推整份状态，
  *   与 `RemoteUpdate`、`remoteList` 同一个模式，在会话那句判据之前按形状分派）。纯新增，故 minor。
+ *
+ * 7.33（2026-09-09）：`enhancePrompt` 的响应多一个 `borrowed`——**这次改写是不是借了别人的模型**。
+ *   起因是作者问「优化输入是不是锁死在某一个 LLM」。答案是没锁死（native 会话用的就是
+ *   会话此刻那个模型），**但 cli / ACP 会话和空态屏够不着自己的模型，只能借配置里第一个 native**，
+ *   而界面此前对此一个字都不说——响应里早就带着 `model`，界面把它扔了。
+ *   「失败/差异必须出声」（规格 7.5）管的正是这一类：不静默降级，也不静默换人。
+ *   **只在借了的时候说**：没借时说一遍「用的是你屏幕上那个模型」是纯噪音。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.32"
+export const WORKBENCH_PROTOCOL_VERSION = "7.33"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

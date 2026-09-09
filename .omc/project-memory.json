@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1788680470326,
+  "lastScanned": 1788835569109,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpx vitest run --project node --project ui 2>&1 | tail -4\nnpx tsc --noEmit 2>&1 | grep -v \"npm notice\" | head -3; echo \"--- typecheck 完 ---\"",
-    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science\nnpx vitest run --project node --project ui 2>&1 | tail -4\nnpx tsc --noEmit 2>&1 | grep -v \"npm notice\" | head -3; echo \"--- typecheck 完 ---\"",
+    "buildCommand": "S=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad && rm -rf test-results && npm run build > $S/build.log 2>&1 && echo \"BUILD OK\" && npx playwright test e2e/remote-assistant.spec.ts e2e/sidebar-size.spec.ts e2e/visual.spec.ts --reporter=line > $S/rerun-a.log 2>&1; echo \"A exit=$?\"; npx playwright test e2e/kernel-session.spec.ts --reporter=line > $S/rerun-b.log 2>&1; echo \"B exit=$?\"",
+    "testCommand": "for i in 1 2; do npx vitest run tests/kernel/outputs.integration.test.ts 2>&1 | LC_ALL=C grep -aE \"^ +Tests +\" ; done",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -92,7 +92,9 @@
       "spike:f": "tsx --env-file-if-exists=.env spikes/f-ssh-remote-kernel.ts",
       "smoke:remote": "tsx --env-file-if-exists=.env spikes/g-remote-executor.ts",
       "rehearse:fresh": "node scripts/rehearse-fresh-install.mjs",
-      "rehearse:update": "node scripts/rehearse-update.mjs"
+      "rehearse:update": "node scripts/rehearse-update.mjs",
+      "rehearse:handoff": "node scripts/rehearse-handoff.mjs",
+      "rehearse:real-update": "node scripts/rehearse-real-update.mjs"
     }
   },
   "conventions": {
@@ -122,7 +124,7 @@
       "path": "agents",
       "purpose": null,
       "fileCount": 22,
-      "lastAccessed": 1788680470277,
+      "lastAccessed": 1788835569075,
       "keyFiles": [
         "bayesian-modeler.md",
         "bioinformatician.md",
@@ -135,14 +137,14 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1788680470282,
+      "lastAccessed": 1788835569076,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 7,
-      "lastAccessed": 1788680470283,
+      "fileCount": 8,
+      "lastAccessed": 1788835569081,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -154,8 +156,8 @@
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 110,
-      "lastAccessed": 1788680470301,
+      "fileCount": 112,
+      "lastAccessed": 1788835569083,
       "keyFiles": [
         "accent.spec.ts",
         "acp-agent.spec.ts",
@@ -168,14 +170,14 @@
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1788680470303,
+      "lastAccessed": 1788835569085,
       "keyFiles": []
     },
     "packaging": {
       "path": "packaging",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1788680470303,
+      "lastAccessed": 1788835569085,
       "keyFiles": [
         "entitlements.mac.plist",
         "icon.png"
@@ -184,8 +186,8 @@
     "release": {
       "path": "release",
       "purpose": null,
-      "fileCount": 20,
-      "lastAccessed": 1788680470303,
+      "fileCount": 22,
+      "lastAccessed": 1788835569086,
       "keyFiles": [
         "DAWN-Science-0.0.1-linux-amd64.deb",
         "DAWN-Science-0.0.1-linux-arm64.AppImage",
@@ -197,8 +199,8 @@
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 17,
-      "lastAccessed": 1788680470304,
+      "fileCount": 20,
+      "lastAccessed": 1788835569087,
       "keyFiles": [
         "build-electron.mjs",
         "dawn-mcp-server.mjs",
@@ -211,14 +213,14 @@
       "path": "skills",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1788680470305,
+      "lastAccessed": 1788835569088,
       "keyFiles": []
     },
     "spikes": {
       "path": "spikes",
       "purpose": null,
       "fileCount": 11,
-      "lastAccessed": 1788680470305,
+      "lastAccessed": 1788835569089,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -231,7 +233,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1788680470305,
+      "lastAccessed": 1788835569090,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -241,14 +243,14 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1788680470308,
+      "lastAccessed": 1788835569091,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 9,
-      "lastAccessed": 1788680470309,
+      "lastAccessed": 1788835569093,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
@@ -261,7 +263,7 @@
       "path": "src/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1788680470326,
+      "lastAccessed": 1788835569101,
       "keyFiles": [
         "loader.ts",
         "mcp-writer.ts",
@@ -272,7 +274,7 @@
       "path": "tests/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1788680470326,
+      "lastAccessed": 1788835569102,
       "keyFiles": [
         "mcp-writer.test.ts",
         "models-json.test.ts",
@@ -282,303 +284,165 @@
   },
   "hotPaths": [
     {
-      "path": "src/electron/wiring.ts",
-      "accessCount": 36,
-      "lastAccessed": 1788536533583,
+      "path": "e2e/_probe.spec.ts",
+      "accessCount": 9,
+      "lastAccessed": 1788877267159,
       "type": "file"
     },
     {
-      "path": "src/runtime/kernel.ts",
-      "accessCount": 30,
-      "lastAccessed": 1788536344229,
+      "path": "docs/DEVELOPMENT_HISTORY.md",
+      "accessCount": 9,
+      "lastAccessed": 1788880872143,
       "type": "file"
     },
     {
-      "path": "src/remote/fake-ssh.ts",
-      "accessCount": 26,
-      "lastAccessed": 1788538754708,
+      "path": "src/ui/back-to-bottom.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1788879867364,
       "type": "file"
     },
     {
-      "path": "tests/electron/wiring.test.ts",
-      "accessCount": 20,
-      "lastAccessed": 1788460042337,
+      "path": "src/ui/styles.css",
+      "accessCount": 5,
+      "lastAccessed": 1788879361446,
       "type": "file"
     },
     {
-      "path": "tests/runtime/kernel-remote.test.ts",
-      "accessCount": 17,
-      "lastAccessed": 1788536310180,
+      "path": "tests/ui/back-to-bottom.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1788879115991,
       "type": "file"
     },
     {
-      "path": "src/kernel/channel.ts",
-      "accessCount": 13,
-      "lastAccessed": 1788453370141,
+      "path": "docs/superpowers/plans/2026-09-08-回到底部浮标.md",
+      "accessCount": 3,
+      "lastAccessed": 1788879122919,
       "type": "file"
     },
     {
-      "path": "src/workbench/backend.ts",
-      "accessCount": 12,
-      "lastAccessed": 1788456241746,
+      "path": "src/ui/views.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1788879185371,
       "type": "file"
     },
     {
       "path": "src/ui/notebook.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1788535152399,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/kernel-launch.ts",
-      "accessCount": 10,
-      "lastAccessed": 1788528689406,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/tunnel.ts",
-      "accessCount": 10,
-      "lastAccessed": 1788528689459,
-      "type": "file"
-    },
-    {
-      "path": "tests/electron/remote-kernel.test.ts",
-      "accessCount": 8,
-      "lastAccessed": 1788458638154,
-      "type": "file"
-    },
-    {
-      "path": "src/project/run-recorder.ts",
-      "accessCount": 8,
-      "lastAccessed": 1788459846224,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/interpreters.ts",
-      "accessCount": 7,
-      "lastAccessed": 1788456300170,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/types.ts",
-      "accessCount": 7,
-      "lastAccessed": 1788533286075,
-      "type": "file"
-    },
-    {
-      "path": "tests/remote/tunnel.test.ts",
-      "accessCount": 6,
-      "lastAccessed": 1788452190708,
-      "type": "file"
-    },
-    {
-      "path": "tests/run-recorder.test.ts",
-      "accessCount": 6,
-      "lastAccessed": 1788459999701,
-      "type": "file"
-    },
-    {
-      "path": "tests/kernel/channel.integration.test.ts",
-      "accessCount": 5,
-      "lastAccessed": 1788453297428,
-      "type": "file"
-    },
-    {
-      "path": "tests/remote/kernel-launch.test.ts",
-      "accessCount": 5,
-      "lastAccessed": 1788453724316,
-      "type": "file"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-09-03-远程内核.md",
-      "accessCount": 5,
-      "lastAccessed": 1788455900065,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/interpreter-picker.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1788456030305,
-      "type": "file"
-    },
-    {
-      "path": "tests/remote/ssh.test.ts",
-      "accessCount": 4,
-      "lastAccessed": 1788452403703,
-      "type": "file"
-    },
-    {
-      "path": "tests/protocol/operations.test.ts",
-      "accessCount": 4,
-      "lastAccessed": 1788453545283,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/client.ts",
-      "accessCount": 4,
-      "lastAccessed": 1788454767774,
-      "type": "file"
-    },
-    {
-      "path": "src/remote/ssh.ts",
-      "accessCount": 4,
-      "lastAccessed": 1788455903978,
-      "type": "file"
-    },
-    {
-      "path": "src/protocol/operations.ts",
-      "accessCount": 4,
-      "lastAccessed": 1788456142138,
-      "type": "file"
-    },
-    {
-      "path": "tests/remote/fake-ssh.test.ts",
-      "accessCount": 4,
-      "lastAccessed": 1788456597860,
-      "type": "file"
-    },
-    {
-      "path": "src/kernel/environment.ts",
       "accessCount": 3,
-      "lastAccessed": 1788453131747,
+      "lastAccessed": 1788879206241,
       "type": "file"
     },
     {
-      "path": "src/store/connections.ts",
+      "path": "tests/ui/design-contract.test.ts",
       "accessCount": 3,
-      "lastAccessed": 1788453579205,
+      "lastAccessed": 1788880101439,
       "type": "file"
     },
     {
-      "path": "tests/remote/interpreters.test.ts",
+      "path": "e2e/stick-to-bottom.spec.ts",
       "accessCount": 3,
-      "lastAccessed": 1788456264668,
+      "lastAccessed": 1788880290833,
       "type": "file"
     },
     {
-      "path": "src/remote/connections.ts",
-      "accessCount": 3,
-      "lastAccessed": 1788457124208,
-      "type": "file"
-    },
-    {
-      "path": "src/kernel/types.ts",
+      "path": "src/ui/enhance.tsx",
       "accessCount": 2,
-      "lastAccessed": 1788451443319,
+      "lastAccessed": 1788874848541,
       "type": "file"
     },
     {
-      "path": "tests/source-hygiene.test.ts",
+      "path": "docs/superpowers/specs/2026-09-08-回到底部浮标-design.md",
       "accessCount": 2,
-      "lastAccessed": 1788453304765,
+      "lastAccessed": 1788879122344,
       "type": "file"
     },
     {
-      "path": "src/ui/panels.tsx",
+      "path": "src/ui/i18n/en.ts",
       "accessCount": 2,
-      "lastAccessed": 1788453535949,
+      "lastAccessed": 1788879219710,
       "type": "file"
     },
     {
-      "path": "src/store/settings.ts",
+      "path": "src/ui/session-tabs.tsx",
       "accessCount": 2,
-      "lastAccessed": 1788453588800,
+      "lastAccessed": 1788880203130,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/specs/2026-09-03-远程内核-design.md",
+      "path": "test-results/visual-命令面板-·-暗色/命令面板-暗色-diff.png",
       "accessCount": 2,
-      "lastAccessed": 1788459083075,
+      "lastAccessed": 1788916812438,
       "type": "file"
     },
     {
-      "path": "tests/kernel/environment.test.ts",
+      "path": "src/ui/mouse-stuck.ts",
       "accessCount": 1,
-      "lastAccessed": 1788453111263,
+      "lastAccessed": 1788839502902,
       "type": "file"
     },
     {
-      "path": "tests/store/connections.test.ts",
+      "path": "tests/ui/mouse-stuck.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1788453482810,
+      "lastAccessed": 1788839616285,
       "type": "file"
     },
     {
-      "path": "tests/protocol/events.test.ts",
+      "path": "test-results/visual-设置-·-亮色/设置-亮色-diff.png",
       "accessCount": 1,
-      "lastAccessed": 1788453485792,
+      "lastAccessed": 1788841531632,
       "type": "file"
     },
     {
-      "path": "vitest.config.ts",
+      "path": "test-results/visual-设置-·-亮色/设置-亮色-expected.png",
       "accessCount": 1,
-      "lastAccessed": 1788453512938,
+      "lastAccessed": 1788841550007,
       "type": "file"
     },
     {
-      "path": "tests/store/environments.test.ts",
+      "path": "test-results/visual-设置-·-亮色/设置-亮色-actual.png",
       "accessCount": 1,
-      "lastAccessed": 1788453547795,
+      "lastAccessed": 1788841550059,
       "type": "file"
     },
     {
-      "path": "src/store/schema.ts",
+      "path": "src/ui/ime-trace.ts",
       "accessCount": 1,
-      "lastAccessed": 1788453565785,
+      "lastAccessed": 1788841847037,
       "type": "file"
     },
     {
-      "path": "src/protocol/entities.ts",
+      "path": "src/ui/ime.ts",
       "accessCount": 1,
-      "lastAccessed": 1788453594612,
+      "lastAccessed": 1788874994284,
       "type": "file"
     },
     {
-      "path": "src/protocol/version.ts",
+      "path": "tests/ui/ime.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1788453610980,
+      "lastAccessed": 1788875012862,
       "type": "file"
     },
     {
-      "path": "tests/electron/ipc.test.ts",
+      "path": "src/ui/icons.tsx",
       "accessCount": 1,
-      "lastAccessed": 1788453676278,
+      "lastAccessed": 1788878871965,
       "type": "file"
     },
     {
-      "path": "tests/workbench/server.test.ts",
+      "path": "src/ui/agent-browser.tsx",
       "accessCount": 1,
-      "lastAccessed": 1788453678663,
+      "lastAccessed": 1788880063701,
       "type": "file"
     },
     {
-      "path": "src/protocol/events.ts",
+      "path": "src/ui/turn-navigator.tsx",
       "accessCount": 1,
-      "lastAccessed": 1788454738200,
+      "lastAccessed": 1788880174912,
       "type": "file"
     },
     {
-      "path": "src/electron/main.ts",
+      "path": "tests/ui/enhance-note.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1788454750651,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/App.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1788454776463,
-      "type": "file"
-    },
-    {
-      "path": "src/tools/run-code.ts",
-      "accessCount": 1,
-      "lastAccessed": 1788454785806,
-      "type": "file"
-    },
-    {
-      "path": "src/runtime/native.ts",
-      "accessCount": 1,
-      "lastAccessed": 1788456213355,
+      "lastAccessed": 1788909882346,
       "type": "file"
     }
   ],

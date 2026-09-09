@@ -4126,10 +4126,30 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const kind = rec ? registry.agents[rec.agentId]?.kind : undefined
       // 没会话（空态屏）或会话不是 native（cli / ACP，它们的模型不在我们手里）：借配置里第一个 API 模型。
       // 2026-08-28 作者定的：按钮常驻、有 key 就能用；走 cli / ACP 自己流量的那条路等一次问答原语造出来再接。
+      /**
+       * **借没借，要如实回给界面**（7.33，2026-09-09）。
+       *
+       * 作者问「优化输入是不是锁死在某一个 LLM」——没锁死，native 会话用的就是它此刻那个模型。
+       * 但在 cli / ACP 会话里它确实换了一个人改写，而**界面此前一个字都不说**：
+       * `model` 早就回过去了，界面把它扔了。「不静默降级」（规格 7.5）管的正是这一类。
+       */
+      const 借的 = !(rec && kind === "native")
       const 目标 =
         rec && kind === "native"
           ? { sessionId: rec.id }
           : (() => {
+              /**
+               * **「第一个」= 配置里的先后顺序，这是作者 2026-09-09 定的，不是碰巧。**
+               *
+               * 他问过一次「优化输入是不是锁死在某一个 LLM」，答案是没有——但这条路
+               * （cli / ACP / 空态屏）确实每次都挑同一家。摆过两条别的路给他选
+               * （「你上次用过的那个 native」、设置里单独指定一个），
+               * 他的话是*「按照配置的先后顺序吧。不用继续往前了」*。
+               *
+               * 所以**这行 `find` 不是待修的 bug**：它是一条被记下来的决定。
+               * 挑到哪一家现在会如实说出来（`borrowed` + `model`，协议 7.33），
+               * 而「说出来」正是让这个简单规则可以一直简单下去的那件事。
+               */
               const first = Object.values(registry.agents).find((d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native")
               if (!first) throw fault("invalid_request", "还没有 API key——填一个就能用")
               return { provider: first.provider, model: first.model }
@@ -4156,7 +4176,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           读文件: async (p) => (rec ? 读工作区(rec, p) : ""),
           signal: 控.signal,
         })
-        return { text: r.text, usedContext: r.usedContext, ...(r.note ? { note: r.note } : {}), model: 用的模型 }
+        return { text: r.text, usedContext: r.usedContext, ...(r.note ? { note: r.note } : {}), model: 用的模型, borrowed: 借的 }
       } catch (e) {
         if (控.signal.aborted) throw fault("invalid_request", 增强中.has(requestId) ? "增强超时了，这次没改" : "已取消")
         const msg = e instanceof Error ? e.message : String(e)

@@ -27,6 +27,15 @@ export interface EnhanceOutcome {
   text: string
   note?: string | undefined
   usedContext: { rounds?: [number, number]; docs?: string[]; code?: string[] } | null
+  /** 这次改写用的是哪个模型（`deepseek/deepseek-chat` 这种）。7.33 起 */
+  model: string
+  /**
+   * **这次是不是借了别人的模型**（7.33，2026-09-09 作者问出来的）。
+   *
+   * native 会话用的就是它此刻那个模型（= 你屏幕上那颗 pill），`false`；
+   * cli / ACP 会话与空态屏够不着自己的模型，借配置里第一个 native，`true`。
+   */
+  borrowed: boolean
 }
 
 const 档名: Record<EnhanceMode, () => string> = {
@@ -148,7 +157,7 @@ export function EnhanceControl({
       if (当前请求.current !== requestId) return // 已取消
       设栈((前) => [...前, 之前].slice(-5))
       setDraft(r.text)
-      onNote(r.note ? tf("这次没带上下文：{0}", r.note) : r.usedContext ? 说参考(r.usedContext) : undefined)
+      onNote(说这一次(r))
     } catch (e) {
       if (当前请求.current !== requestId) return
       onProblem(tf("增强失败：{0}", e instanceof Error ? e.message : String(e)))
@@ -258,6 +267,26 @@ export function EnhanceControl({
       ) : null}
     </div>
   )
+}
+
+/**
+ * 那行灰字最终说什么（2026-09-09）。
+ *
+ * 两件事拼一行：**这次谁改的**、**带了什么上下文**。
+ *
+ * **「谁改的」只在借了别人的模型时才说。** 没借的时候那就是你屏幕上那颗 pill，
+ * 再说一遍是纯噪音——而噪音多了，真正该被看见的那一句就沉下去了。
+ * 借了的时候必须说：作者 2026-09-09 问「优化输入是不是锁死在某一个 LLM」，
+ * 根子就在这儿——**在 claude / codex 那种会话里它确实换了一个人改写，而界面一个字都不说。**
+ *
+ * 抽成纯函数是因为它是一条**可判定的规则**，不该只能靠打开界面去看。
+ */
+export function 说这一次(r: Pick<EnhanceOutcome, "note" | "usedContext" | "model" | "borrowed">): string | undefined {
+  const 段: string[] = []
+  if (r.borrowed) 段.push(tf("这段对话的 agent 没有可直接调用的模型，用「{0}」改的", r.model))
+  if (r.note) 段.push(tf("这次没带上下文：{0}", r.note))
+  else if (r.usedContext) 段.push(说参考(r.usedContext))
+  return 段.length > 0 ? 段.join("；") : undefined
 }
 
 function 说参考(u: NonNullable<EnhanceOutcome["usedContext"]>): string {

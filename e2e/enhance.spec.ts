@@ -137,3 +137,42 @@ test.describe("发出去之后，还在飞的那一次改写也要作废", () =>
   })
 })
 
+/**
+ * **借了别人的模型，就要说出来**（2026-09-09，协议 7.33）。
+ *
+ * 作者问：*「优化输入……是不是锁死在某一个 LLM 的吧？」* 没锁死——native 会话用的
+ * 就是它此刻那颗 pill 上的模型。**但空态屏与 cli / ACP 会话够不着自己的模型，
+ * 只能借配置里第一个 native**，而界面此前对此一个字都不说。
+ *
+ * 两条一起验，缺一条这个功能就会变成另一种坏：
+ *   ① 借了要说（不静默换人，规格 7.5）；
+ *   ② **没借不许说**（说了是噪音，而噪音多了真正该看见的那句就沉下去）。
+ */
+test("**空态屏借了模型：那行灰字要说清是谁改的**", async ({ dawn }) => {
+  const { page } = dawn
+  // 这一屏还没有会话——后端只能借配置里第一个 native
+  await 输入框(page).fill("把图画好看点")
+  await page.getByRole("button", { name: /档位：/ }).click()
+  await page.getByRole("menuitemradio", { name: /基础/ }).click()
+  await 增强键(page).click()
+  await expect(输入框(page)).toHaveValue("改写：把图画好看点", { timeout: 30_000 })
+  await expect(page.getByText(/这段对话的 agent 没有可直接调用的模型，用「.+」改的/)).toBeVisible()
+})
+
+test("**native 会话没借：那行灰字一个字都不提模型**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await 输入框(page).fill("先做一张相关的图")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+  await 输入框(page).fill("再画一张")
+  await page.getByRole("button", { name: /档位：/ }).click()
+  await page.getByRole("menuitemradio", { name: /标准/ }).click()
+  await 增强键(page).click()
+  await expect(输入框(page)).toHaveValue("（参考了：对话背景）改写：再画一张", { timeout: 30_000 })
+  // 上下文那句照旧在；**「用……改的」那句不许出现**——这段会话用的就是屏幕上那个模型
+  await expect(page.getByText(/带上了：对话第 1–2 轮/)).toBeVisible()
+  await expect(page.getByText(/没有可直接调用的模型/)).toHaveCount(0)
+})

@@ -846,6 +846,14 @@ export const OPERATIONS = {
           .nullable(),
         note: z.string().optional(),
         model: z.string(),
+        /**
+         * **这次是不是借了别人的模型**（7.33，2026-09-09 作者问出来的）。
+         *
+         * native 会话用的就是它此刻那个模型，`borrowed` 为 false；
+         * **cli / ACP 会话与空态屏够不着自己的模型**，借配置里第一个 native，此时为 true。
+         * 界面只在 true 时出声——没借时说一遍「用的是你屏幕上那个」是纯噪音。
+         */
+        borrowed: z.boolean(),
       })
       .strict(),
     mutating: false,

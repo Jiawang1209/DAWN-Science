@@ -1429,10 +1429,10 @@ pre {
 /** 外层容器。streamdown 的 Tailwind 类在这里全都不生效，所以自己画 */
 .md [data-streamdown="code-block"] {
   margin: 0 0 12px;
-  border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-panel);
+  box-shadow: var(--dawn-shadow-md);
   overflow: hidden;
 }
 

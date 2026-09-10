@@ -461,9 +461,20 @@
   --dawn-shadow-md:
     0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent),
     0 6px 16px -4px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
+  /**
+   * **lg 必须留在 float 之下。** 第一版把它写成 `0 14px 32px -8px / 9%`，
+   * 那比 float 的远层（`0 12px 28px -8px / 10%`）**还散**——
+   * 浮层开在输入卡上面时，上面那层的阴影反而比下面那层大，它就不像浮在上面。
+   * 梯子搭反了不是口味问题。四档现在模糊与浓度都单调：
+   *
+   * ```
+   * blur   2  →  16  →  24  →  28        sm / md / lg / float
+   * alpha  6% →  6%  →  8%  →  10%
+   * ```
+   */
   --dawn-shadow-lg:
     0 2px 4px color-mix(in srgb, var(--theme-gray-1000) 5%, transparent),
-    0 14px 32px -8px color-mix(in srgb, var(--theme-gray-1000) 9%, transparent);
+    0 10px 24px -6px color-mix(in srgb, var(--theme-gray-1000) 8%, transparent);
 
   /**
    * z-index 是**梯子，不是数字**。
@@ -584,10 +595,16 @@
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 7.5%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 7%, transparent),
     0 8px 22px -6px color-mix(in srgb, #000000 45%, transparent);
+  /**
+   * 同样压到 float 之下（float 的远层是 `0 12px 32px -8px / 55%`）。
+   * 暗色这边"高一档"由**两件事**一起说：投影更小更淡，而**那圈内描边更亮**
+   * （7.5% → 9%，float 那圈由 `--dawn-stroke-float` 承担，14%）。
+   * 亮描边才是暗色里表达高度的主力，投影只负责落地。
+   */
   --dawn-shadow-lg:
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 9%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 8%, transparent),
-    0 14px 34px -8px color-mix(in srgb, #000000 55%, transparent);
+    0 10px 26px -6px color-mix(in srgb, #000000 50%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
 }

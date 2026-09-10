@@ -447,6 +447,36 @@ describe("设计契约 · 几何只从令牌来", () => {
     expect(offenders, "字号请归到 --dawn-fs-title / -sub / --dawn-ui-size / --dawn-fs-meta").toEqual([])
   })
 
+  /**
+   * **用了 `--dawn-shadow-md/lg` 的规则不许再有 `border:`。**
+   *
+   * 暗色下这两档的一圈描边是**阴影里的 `inset 0 0 0 1px`**；元素上再来一条
+   * border 就是两圈，差 1px 的双线，在深色底上看得很清楚。
+   * `tokens.css` 里 2026-08-23 已经为 float 写过同一句话
+   * （*「不再往阴影里塞 inset —— 两者会叠成两圈」*），只是那时没有东西强制它。
+   *
+   * **这条规则先于它的第一个调用点落地**（2026-09-10，第一轮）：
+   * `tokens.css` 的暗色注释里写着「有扫描拦着」，而第一轮是能单独合并的——
+   * 扫描留到第二轮再加，中间就存在一个"注释在说假话"的版本。
+   * **这个仓库为这种事付过代价**：「不要用 `window.prompt`」是自己写下、
+   * 又自己违反的规则，直到作者打开发现白屏。所以它现在是空真的，这没关系。
+   *
+   * 扫的是**声明块**不是行：`border` 与 `box-shadow` 通常不在同一行上。
+   */
+  it("**用了 --dawn-shadow-md/lg 的规则里没有 `border:`** —— 暗色的 inset 会和 border 叠成两圈", () => {
+    const css = read("styles.css")
+    const 违规: string[] = []
+    for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
+      const 块 = m[2]!
+      if (!/--dawn-shadow-(md|lg)\b/.test(块)) continue
+      if (/^\s*border:\s/m.test(块)) {
+        违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器}`)
+      }
+    }
+    expect(违规, "改用 md/lg 的面要一并删掉那条 border —— 见 tokens.css 暗色块的注释").toEqual([])
+  })
+
   it("font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家", () => {
     const offenders = findLines(read("styles.css"), (l) => /font-weight:\s*(500|600|700)\b/.test(l))
     expect(offenders).toEqual([])

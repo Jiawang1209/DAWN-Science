@@ -165,7 +165,7 @@ pre {
 .logview-label { margin: 0 0 4px; color: var(--dawn-text-3); font-size: 11px; }
 .logview-body {
   padding: 6px 8px;
-  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md);
   border-radius: var(--dawn-radius-sm);
   color: var(--dawn-text-2);
   font-size: var(--dawn-fs-meta);
@@ -671,7 +671,7 @@ pre {
  * **只在概览格套卡**——`.panel` 在审阅格、设置里也用，全局套盒子会波及它们。
  */
 .dock-overview > .panel {
-  border: 1px solid var(--dawn-stroke-3);
+  box-shadow: var(--dawn-shadow-lg);
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-panel);
   padding: var(--dawn-space-2) var(--dawn-space-3) var(--dawn-space-3);
@@ -2107,7 +2107,7 @@ pre {
 /* **横向滚动关在自己这一层**：一张宽表不该把整个界面推得左右晃 */
 .table-scroll {
   overflow-x: auto;
-  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md);
   border-radius: var(--dawn-radius-md);
 }
 
@@ -2674,7 +2674,7 @@ pre {
 .preview-pdf {
   width: 100%;
   height: min(72vh, 900px);
-  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md);
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-elevated);
 }
@@ -2695,7 +2695,7 @@ pre {
   align-items: baseline;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid var(--dawn-stroke-3);
+  box-shadow: var(--dawn-shadow-md);
   border-radius: var(--dawn-radius-sm);
   background: var(--dawn-surface-input);
 }

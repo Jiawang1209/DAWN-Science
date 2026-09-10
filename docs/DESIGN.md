@@ -137,7 +137,7 @@
 | `--dawn-fs-display` + `-display-tracking` | 会话标题 22px。**跨度的上端**，字距收 -.021em |
 | `--dawn-fs-title / -sub / -meta` | 18 / 14 / 12 |
 | `--dawn-fs-badge` | 11px，徽章与胶囊。**旧角色，2026-09-10 才有名字** |
-| `--dawn-fs-label` + `-label-tracking` | 10px 分组小标，大写 + .12em。**跨度的下端** |
+| `--dawn-fs-label` + `-label-tracking` | 10px 分组小标，大写 + .12em，**不加粗**。**跨度的下端**。加粗会把 10px 中文的字腔填死——小、灰、宽三个信号已经够把它和正文分开 |
 | `--dawn-ease` | **全仓唯一一条缓动曲线** `cubic-bezier(.22, 1, .36, 1)`。两条曲线的界面会显得不是一个人做的 |
 | `--dawn-dur-fast / -base / -slow` | 120 / 180 / 260ms。fast 给控件三态（仍配 `ease`），后两个才配 `--dawn-ease` |
 | `--mix-diff` | diff 里加行／删行那层底色的浓度。**量自 Codex**：亮 15% / 暗 23%。**唯一按主题分两档的混合比例**——它兑的是语义色而不是前景，而语义色本身两个主题就是两种颜色 |

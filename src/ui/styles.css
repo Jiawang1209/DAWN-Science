@@ -6375,8 +6375,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   max-height: 88vh;
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
+  /**
+   * **这里不加 `backdrop-filter`。** 它是一张 `<img>`，不是壳。
+   *
+   * 那个属性模糊的是**图片背后**的东西，而这行 `background` 是不透明的，
+   * 所以它在屏幕上什么也不做——却要为一张占满屏的图开一个合成层。
+   * 更要紧的是这个 `background` 本来的用途：**给带透明通道的图垫一层底**。
+   * 这个应用天天在看 matplotlib 出的图，透明底是常态；在它上面叠一层模糊背景，
+   * 等于让科研图的透底区域透出一团糊的东西。
+   */
   background: var(--dawn-surface-elevated);
-  backdrop-filter: var(--dawn-blur-overlay);
   cursor: default;
 }
 /* 缩略图那颗按钮：零内距，别把 96px 的方块再垫大 */

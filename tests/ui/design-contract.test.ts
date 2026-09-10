@@ -454,6 +454,23 @@ describe("设计契约 · 几何只从令牌来", () => {
     }
   })
 
+  /**
+   * 动效令牌（2026-09-10 视觉重做）。
+   *
+   * 全仓 `transition` 只有 10 条，**清一色 `ease` / `ease-out`**——
+   * 没有一条自定义缓动，也没有任何进场动画。`ease` 是浏览器的缺省，
+   * 用它等于"没做过动效决定"。
+   *
+   * **只立一条曲线**：`cubic-bezier(.22, 1, .36, 1)`（快出慢入）。
+   * 两条曲线的界面会立刻显得不是一个人做的。
+   */
+  it("**动效令牌都有定义** —— 一条曲线，三个时长", () => {
+    const text = read("tokens.css")
+    for (const t of ["--dawn-ease", "--dawn-dur-fast", "--dawn-dur-base", "--dawn-dur-slow"]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
+    }
+  })
+
   it("文字字号只有四档（2026-08-23 美化 ②）—— 14/15/16/20px 全是「标题」的不同写法，不许再长回来", () => {
     // 放行：四档令牌、聊天/代码字号令牌、11px 徽章、≤10px 的图表刻度与字形记号、em 相对值（markdown 内嵌）、
     // 侧栏行 14px（量自 WorkBuddy，`.sidebar .row` 那一处专门注释过）

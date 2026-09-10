@@ -260,7 +260,7 @@ pre {
    */
   position: relative;
   /* 实测 WorkBuddy 的收合是 `width .25s ease-out`；这里动的是列宽，同一个时长曲线 */
-  transition: grid-template-columns 0.25s ease-out;
+  transition: grid-template-columns var(--dawn-dur-base) var(--dawn-ease);
 }
 /**
  * 折叠（2026-08-13，作者要的）。**宽度收到 0，不是 `display: none`**——
@@ -856,6 +856,39 @@ pre {
    * 作者定的原则：*「基于我们现在有的内容去贴近。」*
    */
   margin: 0 auto var(--dawn-space-10);
+  /**
+   * 新消息进场（2026-09-11 视觉重做）。
+   *
+   * **动效跟随状态，永不延迟状态**（DESIGN.md）：这条动画只作用在元素
+   * *出现之后*，不推迟任何内容的可见时刻。位移只有 4px——
+   * 大位移在流式输出时会变成持续抖动，那是最容易惹人烦的一种动效。
+   */
+  animation: dawn-turn-in var(--dawn-dur-slow) var(--dawn-ease);
+}
+@keyframes dawn-turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/**
+ * **关掉的是位移，不是全部。** 淡入留着——它不引起不适，
+ * 而且它承担着「有新东西来了」这个信息；一起关掉等于让人少知道一件事。
+ * 这与本文件里其它几处的做法一致：思考中的点换成更平缓的一条，
+ * 菜单换成淡入，都不是简单地 `animation: none`。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .turn {
+    animation: dawn-turn-fade var(--dawn-dur-slow) ease-out;
+  }
+}
+@keyframes dawn-turn-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 /* 说话人名（学自 WorkBuddy）：**它是这段话的归属，不是一个标签**——与正文同色、半粗；图标与名字并排 */
 .turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); margin-bottom: var(--dawn-space-2); }
@@ -5106,7 +5139,7 @@ pre {
   height: 100%;
   border-radius: var(--dawn-radius-full);
   background: var(--dawn-accent);
-  transition: width 160ms ease-out;
+  transition: width var(--dawn-dur-base) var(--dawn-ease);
 }
 /* 总量未知：一段 40% 的亮条来回走，**说的是「在动」，不是「到了哪」** */
 .xfer-bar.indeterminate .xfer-fill {
@@ -5837,7 +5870,7 @@ pre {
   width: var(--tick-w);
   border-radius: var(--dawn-radius-xs);
   background: var(--dawn-text-4);
-  transition: width 120ms ease, background-color 120ms ease;
+  transition: width var(--dawn-dur-fast) var(--dawn-ease), background-color var(--dawn-dur-fast) ease;
 }
 .turn-tick.current::before { background: var(--dawn-text-1); }
 .turn-tick.near::before { background: var(--dawn-accent); }
@@ -5904,6 +5937,10 @@ pre {
   6% { opacity: 1; transform: translateY(0); }
   85% { opacity: 1; }
   100% { opacity: 0; }
+}
+/* 位移要能关（先有的缺口，2026-09-11 由新加的扫描抓到）。淡入留着：它不引起不适 */
+@media (prefers-reduced-motion: reduce) {
+  .export-toast { animation: dawn-turn-fade 300ms ease-out forwards; }
 }
 .nb-export { margin-left: auto; }
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */

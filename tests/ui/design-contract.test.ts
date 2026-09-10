@@ -43,6 +43,16 @@ function findLines(text: string, pred: (line: string) => boolean): string[] {
     .map(({ line, n }) => `${n}: ${line.trim()}`)
 }
 
+/** 从 `{` 的位置起，取到配对的 `}` 为止（不含两端）。`@keyframes` 里有嵌套花括号，正则数不清 */
+function 取块(text: string, open: number): string {
+  let depth = 0
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === "{") depth++
+    else if (text[i] === "}" && --depth === 0) return text.slice(open + 1, i)
+  }
+  return ""
+}
+
 describe("设计契约 · 颜色只从令牌来", () => {
   it("组件里没有裸色值", () => {
     for (const f of tsxFiles()) {
@@ -615,6 +625,46 @@ describe("设计契约 · 几何只从令牌来", () => {
     )
     const missing = [...used].filter((t) => !new RegExp(`^\\s*${t}:`, "m").test(tokens))
     expect(missing).toEqual([])
+  })
+
+  /**
+   * **带位移的动画必须有 `prefers-reduced-motion` 的出路；纯淡入淡出豁免。**
+   *
+   * 这是 DESIGN.md 那句话的自动化形式：*「超出淡入淡出的一律尊重
+   * `prefers-reduced-motion`」*。**位移会让前庭功能敏感的人难受**，
+   * 这不是装饰性动画的可选项。
+   *
+   * 本仓库现有的做法比"一刀 `animation: none`"讲究：思考中的点换成一条更平缓的，
+   * 菜单换成淡入。所以规则只要求**被提到**，不规定减弱成什么样——
+   * 减成什么样是每个动画自己的事。
+   *
+   * 加它的时候当场抓到一条先有的：`.export-toast`（`export-fade` 里有
+   * `translateY(-4px)`，却没有任何出路）。`.copied-toast` 是纯 opacity，正确豁免。
+   */
+  it("**带位移的动画必须能关** —— 纯淡入淡出豁免", () => {
+    const css = read("styles.css")
+    const 减弱块 = [...css.matchAll(/@media[^{]*prefers-reduced-motion[^{]*\{/g)]
+      .map((m) => 取块(css, m.index! + m[0].length - 1))
+      .join("\n")
+    const 关键帧 = new Map<string, string>()
+    for (const m of css.matchAll(/@keyframes\s+([\w-]+)\s*\{/g)) {
+      关键帧.set(m[1]!, 取块(css, m.index! + m[0].length - 1))
+    }
+    const 违规: string[] = []
+    for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const 名 = /^\s*animation:\s*([\w-]+)/m.exec(m[2]!)?.[1]
+      if (!名) continue
+      const 帧 = 关键帧.get(名)
+      if (!帧 || !/transform:/.test(帧)) continue // 纯淡入淡出豁免
+      const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
+      const 末段 = 选择器.split(/\s+/).pop()!.split(":")[0]!
+      if (末段 && 减弱块.includes(末段)) continue
+      违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器} → ${名}`)
+    }
+    expect(
+      违规,
+      "位移会让前庭功能敏感的人难受 —— 给它一个 prefers-reduced-motion 的出路（减成什么样由你定）",
+    ).toEqual([])
   })
 })
 

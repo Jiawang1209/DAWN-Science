@@ -105,6 +105,22 @@ describe("设计契约 · 主题体系不许退化成两套颜色表", () => {
     ).toEqual([])
   })
 
+  /**
+   * 深度四档必须在两个主题里都存在（2026-09-10 视觉重做）。
+   *
+   * **只在亮色里加一档，暗色就会静悄悄掉回描边**——黑影压在黑底上是看不见的，
+   * 而 CSS 不会为此报错。这正是「缺失不等于相同」的形状。
+   */
+  it("**深度四档在两个主题里都有定义** —— 只加亮色那一支，暗色会掉回描边", () => {
+    const text = tokens()
+    const lightBlock = text.slice(0, text.indexOf(":root.dawn-dark"))
+    const dark = darkBlockTokens()
+    for (const t of ["--dawn-shadow-sm", "--dawn-shadow-md", "--dawn-shadow-lg", "--dawn-shadow-float"]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(lightBlock), `亮色块缺 ${t}`).toBe(true)
+      expect(dark, `暗色块缺 ${t}`).toContain(t)
+    }
+  })
+
   it("**暗色不靠 prefers-color-scheme** —— 那样人就没法强制切换了", () => {
     // 媒体查询版与强制类版没法共用一个声明块，两份种子一定会漂移。
     // 「跟随系统」在 state/theme.ts 里解析成明确的类，这里只留一个入口

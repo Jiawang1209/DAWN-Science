@@ -448,6 +448,22 @@
   /** 与 float 配对的发丝线。currentColor 逐元素解析，自动跟随主题 */
   --dawn-stroke-float: color-mix(in srgb, currentColor 8%, transparent);
   --dawn-shadow-sm: 0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
+  /**
+   * 中间两档（2026-09-10 视觉重做）。
+   *
+   * float 之外原先是空的：`--dawn-shadow-sm` 全仓只被调用 **1 处**，
+   * 日常的面全靠一根 `border` 分层——`box-shadow` 25 处对 `border:` 62 处。
+   * **「面与面之间只有一根线」就是那份简陋感的机制**，不是配色的问题。
+   *
+   * 形状沿用 float 已确立的规则：**单一顶部光源，x=0，负扩散随模糊增大**，
+   * 于是阴影聚在面的下方，而不是四面渗出。
+   */
+  --dawn-shadow-md:
+    0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent),
+    0 6px 16px -4px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
+  --dawn-shadow-lg:
+    0 2px 4px color-mix(in srgb, var(--theme-gray-1000) 5%, transparent),
+    0 14px 32px -8px color-mix(in srgb, var(--theme-gray-1000) 9%, transparent);
 
   /**
    * z-index 是**梯子，不是数字**。
@@ -554,6 +570,24 @@
   --dawn-shadow-sm:
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 5%, transparent),
     0 1px 2px color-mix(in srgb, #000000 35%, transparent);
+  /**
+   * md / lg 走的是 `--dawn-shadow-sm` 那条路（**一圈 inset 在阴影里**），
+   * **不是 float 那条**（float 的一圈由 `--dawn-stroke-float` 上一条真 border 承担）。
+   * 两条路不能混：元素同时有 `border` 和 `inset` 就是两圈。
+   * **凡是用了 md/lg 的规则必须没有 `border:`** —— design-contract 里有扫描拦着。
+   *
+   * 多出来的那道 `inset 0 1px 0` 是**方向性顶边高光**（2026-09-10 新增）：
+   * 真实的顶部光源只照亮上边缘。一整圈一样亮读起来是「有边框」，
+   * **只有上边亮才是「有厚度」**——这是 macOS 一直在做的事，也是贵与不贵的分界。
+   */
+  --dawn-shadow-md:
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 7.5%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 7%, transparent),
+    0 8px 22px -6px color-mix(in srgb, #000000 45%, transparent);
+  --dawn-shadow-lg:
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 9%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 8%, transparent),
+    0 14px 34px -8px color-mix(in srgb, #000000 55%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
 }

@@ -97,7 +97,19 @@
    * 而后者算出来是一个**不透明**色，`backdrop-filter` 就什么也没得模糊。
    * 不支持模糊时由本文件末尾的 `@supports not` 块换回 `-opaque` 那一支。
    */
-  --theme-surface-glass: rgba(255, 255, 255, 0.5);
+  /**
+   * **往暗里兑，不是往亮里兑**（2026-09-11 改的，e2e 抓出来的）。
+   *
+   * 第一版写的是 `rgba(255,255,255,.5)`——照着 macOS 那种"侧栏更亮"的样子。
+   * 但本文件下面那句「**侧栏最深、内容区抬起**」是这套配色的层次骨架，
+   * `e2e/theme.spec.ts` 有一条专门守它的用例（*「层次靠的是这个，不是装饰」*），
+   * 往亮里兑当场把这个关系翻了过来。
+   *
+   * **玻璃靠的是"透 + 糊"，不是往哪边兑。** 改成兑黑，材质感一点不少，
+   * 层次也保住了。2.8% 是量出来的：兑在 `gray-50` 上正好落回 `gray-75`
+   * ——也就是侧栏原本的那一档，只是现在它是半透明的了。
+   */
+  --theme-surface-glass: rgba(0, 0, 0, 0.028);
   --theme-surface-glass-opaque: var(--theme-gray-75);
   --theme-surface-panel: var(--theme-gray-0);
   --theme-surface-elevated: var(--theme-gray-0);
@@ -638,7 +650,9 @@
   /* 侧栏最深、内容区抬起——四个相邻档位做出四层高度 */
   --theme-surface-app: linear-gradient(158deg, var(--theme-gray-900) 0%, var(--theme-gray-1000) 100%);
   --theme-surface-sidebar: var(--theme-gray-1000);
-  --theme-surface-glass: rgba(255, 255, 255, 0.028);
+  /* 同样兑黑（见亮色那段的理由）。35% 兑在应用底的两档上都落到 `gray-1000` 之下——
+     侧栏仍然是全屏最深的那一面，这是暗色层次的骨架 */
+  --theme-surface-glass: rgba(0, 0, 0, 0.35);
   --theme-surface-glass-opaque: var(--theme-gray-1000);
   --theme-surface-panel: var(--theme-gray-800);
   --theme-surface-elevated: var(--theme-gray-750);

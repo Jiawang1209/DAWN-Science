@@ -43,10 +43,23 @@ function contrast(a: [number, number, number], b: [number, number, number]): num
   return (hi! + 0.05) / (lo! + 0.05)
 }
 
+/**
+ * 量一个元素的「底色」。
+ *
+ * **不能只读 `backgroundColor`**（2026-09-11 视觉重做踩的）：应用底从 2026-09-10
+ * 起是一条极淡的 `linear-gradient`，而渐变落在 **`background-image`** 上——
+ * `backgroundColor` 这时返回 `rgba(0, 0, 0, 0)`，于是"界面是亮的"这条用例
+ * 量到一片透明，断言当场失效。**它失效的方式是静默的**：拿到的不是错值，是空值。
+ *
+ * 所以按 CSS 实际的绘制顺序来：**有渐变就取渐变的第一个色标**（那是靠上、
+ * 也就是视觉重心那一端），否则用 `backgroundColor`。断言本身一个字没改。
+ */
 async function styleOf(page: Page, sel: string) {
   return page.locator(sel).first().evaluate((el) => {
     const s = getComputedStyle(el)
-    return { bg: s.backgroundColor, fg: s.color }
+    const 渐变首色 = /rgba?\([^)]*\)/.exec(s.backgroundImage)?.[0]
+    const 透明 = /^rgba\(0,\s*0,\s*0,\s*0\)$/.test(s.backgroundColor)
+    return { bg: 透明 && 渐变首色 ? 渐变首色 : s.backgroundColor, fg: s.color }
   })
 }
 

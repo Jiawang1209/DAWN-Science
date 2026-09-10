@@ -720,9 +720,21 @@
    * 两个都留就是**两圈**：一圈绿、一圈白，差 1px，深色底上看得很清楚。
    * 留下的两层各司其职：`inset 0 1px 0` 是顶边受光，最后一层负责落地。
    */
+  /**
+   * **顶边那道要给足**（2026-09-11 改的，看图看出来的）。
+   *
+   * 第一版照抄 `md` 的 `inset 0 1px 0 / 7%`，然后把 3 倍放大的前后对照摆在一起
+   * ——**分不出来**。道理本文件上面就写着：*「黑上加黑是看不见的」*。
+   * 去掉那圈 inset 是为了躲开双线，可那一圈**正是暗色里唯一在做深度的东西**；
+   * 拿掉它却不补偿，等于这 16 张卡在暗色下什么也没得到。
+   *
+   * 补偿只能落在还剩的那一个机制上：**顶边受光**。7% → 16%，
+   * 到这个浓度它才真的读得出"上面有光"。投影同时收紧一档
+   * （22px → 14px、45% → 55%）：散得越开越像脏，收紧才像"贴着面浮起来"。
+   */
   --dawn-shadow-md-bordered:
-    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 7%, transparent),
-    0 8px 22px -6px color-mix(in srgb, #000000 45%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 16%, transparent),
+    0 6px 14px -4px color-mix(in srgb, #000000 55%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
 }

@@ -108,13 +108,35 @@ export function startFakeReleaseFeed(opts = {}) {
     }
     res.writeHead(404).end()
   })
+  /**
+   * **`listen()` 是异步的，`address()` 在 `listening` 之前一直是 `null`**
+   * （2026-09-11 修：`dev:mock` 在满负载下崩在 `Cannot read properties of null`）。
+   *
+   * 这个竞态**平时会赢**，所以它长期没被当回事：四个调用点里有两个
+   * （`rehearse-real-update` / `rehearse-handoff`）写着 `await setTimeout(200)`
+   * 把它盖过去，另外两个（`dev-mock`、`e2e/fixtures`）连这个都没有。
+   * **睡 200ms 不是修好，是赌赢的概率高一点**——机器一忙照样输，
+   * 而输的时候症状是一句读不懂的 `null.port`。
+   *
+   * 现在给一个真的就绪信号，并且**让误用当场说人话**而不是解引用 null。
+   */
+  const 已就绪 = new Promise((resolve, reject) => {
+    server.once("listening", resolve)
+    server.once("error", reject)
+  })
+  const 端口 = () => {
+    const a = server.address()
+    if (!a) throw new Error("假发布源还没 listen 完就被读端口了 —— 先 `await feed.已就绪`")
+    return a.port
+  }
   server.listen(opts.port ?? 0, "127.0.0.1")
   return {
+    已就绪,
     get url() {
-      return `http://127.0.0.1:${server.address().port}/releases/latest`
+      return `http://127.0.0.1:${端口()}/releases/latest`
     },
     get 根() {
-      return `http://127.0.0.1:${server.address().port}`
+      return `http://127.0.0.1:${端口()}`
     },
     设版本(v) {
       版本 = v

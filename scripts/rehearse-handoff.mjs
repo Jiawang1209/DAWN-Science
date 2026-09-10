@@ -29,7 +29,8 @@ if (!existsSync(EXE)) { console.error(`没有打包产物：${EXE}\n先跑 npm r
 const tmp = mkdtempSync(join(tmpdir(), "dawn-handoff-"))
 const ud = join(tmp, "ud"); mkdirSync(ud)
 const feed = startFakeReleaseFeed({ version: "9.9.9", packageBytes: 512 * 1024 })
-await new Promise((r) => setTimeout(r, 200))
+// 等真的 listening —— 这里原本睡 200ms，那是赌赢的概率高一点，不是修好
+await feed.已就绪
 
 const 失败 = []
 const 判 = (名, ok, 详) => { if (!ok) 失败.push(名); console.log(`  ${ok ? "✓" : "✗"} ${名}${详 ? "：" + 详 : ""}`) }

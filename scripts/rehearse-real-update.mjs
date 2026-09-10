@@ -47,7 +47,8 @@ const 包内版本 = (app) => JSON.parse(readFileSync(join(app, "Contents/Resour
 判(`装上的是 ${旧版}`, 包内版本(APP) === 旧版, 包内版本(APP))
 
 const feed = startFakeReleaseFeed({ version: 新版, packageFile: 新包 })
-await new Promise((r) => setTimeout(r, 200))
+// 等真的 listening —— 这里原本睡 200ms，那是赌赢的概率高一点，不是修好
+await feed.已就绪
 
 const 起 = async () => {
   const env = { ...process.env }

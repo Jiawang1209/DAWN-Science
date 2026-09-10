@@ -64,6 +64,9 @@ const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
  * 想对着真 GitHub 看时：`DAWN_UPDATE_FEED= npm run dev:mock`（给空值即用真端点）。
  */
 const 发布源 = startFakeReleaseFeed({ version: "9.9.9" })
+// `listen()` 是异步的：不等它，下面读 `发布源.url` 会拿到 null 的端口。
+// 平时抢得赢，机器一忙就崩——2026-09-11 真崩过一次
+await 发布源.已就绪
 console.log(`假微信：${weixin.url}（/__fake/qr/scan · /__fake/qr/confirm · /__fake/inbound · /__fake/sent）`)
 
 const fakeSshPython = process.env.DAWN_FAKE_SSH_PYTHON ?? 找本机python()

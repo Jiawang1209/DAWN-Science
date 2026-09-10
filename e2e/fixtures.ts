@@ -496,6 +496,10 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
           packageBytes: dawnOptions.fakeUpdate.packageBytes ?? 256 * 1024,
         })
       : undefined
+    // `listen()` 是异步的，`address()` 在 `listening` 之前是 null。
+    // 这里原先什么都没等——夹具全靠后面几个 `await` 碰巧腾出的时间赢下这个竞态，
+    // 满负载时就不一定赢了（2026-09-11 `dev:mock` 上真崩过）
+    await 发布源?.已就绪
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),

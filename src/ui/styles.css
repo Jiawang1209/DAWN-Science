@@ -3573,10 +3573,23 @@ pre {
    **常态不占位**：活着的时候不写「alive」，那是给开发者看的 */
 .conv-title {
   margin: 0;
-  /* 实测 WorkBuddy 的 `workbuddy-topbar-title`：**16px / 24px / 600**。
-     它比正文还大半档——顶栏那一行是「你在哪段对话里」，值得占这半档 */
-  font-size: var(--dawn-fs-sub);
-  line-height: 24px;
+  /**
+   * **22px（2026-09-11 视觉重做，跨度的上端）。**
+   *
+   * 上一版是 `--dawn-fs-sub`（14px），注释里记着实测 WorkBuddy 的
+   * `workbuddy-topbar-title` 是 **16 / 24 / 600**，理由是「比正文大半档」。
+   * **那个理由现在不够了**：整套字号最大 18、最小 12，跨度只有 1.5 倍，
+   * 一屏之内所有字几乎一样大——那正是作者说「简陋」时看到的东西。
+   *
+   * 提到 22 之后跨度是 22/10 = **2.2 倍**，而且它是**全仓唯一用 display 这一档的地方**：
+   * 一个定义了却没人用的档位，等于没拉开。
+   *
+   * 字距收 `-.021em` 是 display 独有的——22px 以上不收会显散。
+   * 行高跟着从 24 放到 28（1.27），24 在 22px 上已经压住了。
+   */
+  font-size: var(--dawn-fs-display);
+  letter-spacing: var(--dawn-fs-display-tracking);
+  line-height: 28px;
   font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-1);
   overflow: hidden;

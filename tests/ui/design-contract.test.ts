@@ -430,6 +430,30 @@ describe("设计契约 · 几何只从令牌来", () => {
     expect(offenders).toEqual([])
   })
 
+  /**
+   * 字号七档（2026-09-10 视觉重做）。
+   *
+   * 原来是四档 18/14/13/12，加上游离的 chat 15 与 code 13——
+   * **最大与最小差 1.5 倍**，而用得最多的一档是 12px（116 处）。
+   * 整屏的字几乎一样大，眼睛就找不到主次；这是那份简陋感的第二个机制。
+   *
+   * 新增的三档分别补两头：display 是会话标题（跨度拉到 2.2×），
+   * label 是分组小标（新角色），badge 收编那 53 处写死的 11px（旧角色，一直没有名字）。
+   */
+  it("**字号七档都有定义** —— 跨度从 1.5× 拉到 2.2×", () => {
+    const text = read("tokens.css")
+    for (const t of [
+      "--dawn-fs-display",
+      "--dawn-fs-title",
+      "--dawn-fs-sub",
+      "--dawn-fs-meta",
+      "--dawn-fs-badge",
+      "--dawn-fs-label",
+    ]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
+    }
+  })
+
   it("文字字号只有四档（2026-08-23 美化 ②）—— 14/15/16/20px 全是「标题」的不同写法，不许再长回来", () => {
     // 放行：四档令牌、聊天/代码字号令牌、11px 徽章、≤10px 的图表刻度与字形记号、em 相对值（markdown 内嵌）、
     // 侧栏行 14px（量自 WorkBuddy，`.sidebar .row` 那一处专门注释过）

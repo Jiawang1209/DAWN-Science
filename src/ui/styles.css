@@ -465,8 +465,26 @@ pre {
    * 线是「这里有个边界」的最重的说法，而侧栏与正文本来就不需要那么重——
    * 一屏里线越多越碎。
    */
+  /**
+   * **半透明，但不加 `backdrop-filter`**（2026-09-11，e2e 抓出来的）。
+   *
+   * 两个理由，第二个是硬的：
+   *
+   * ① **它在这里什么也不做。** 侧栏是布局容器，背后只有 body 那层渐变——
+   *    模糊一个平滑渐变，得到的还是同一个平滑渐变。透出底色的是 `glass` 那点
+   *    半透明，不是模糊。
+   *
+   * ② **`backdrop-filter` 会让元素成为它 `position: fixed` 后代的包含块**
+   *    （和 `filter` / `transform` 一样）。而下面那张悬停卡就在这个 `<aside>` 里，
+   *    它的 `fixed` 是**硬要求**（见 `views.tsx` 那段注释：绝对定位会跟着列表滚走，
+   *    本仓库栽过一次）。加上模糊之后，它的坐标改按侧栏解释，卡当场掉出窗口底——
+   *    `e2e/sess-title.spec.ts` 那条「窗口矮的时候…」红了，只有它红。
+   *
+   * **模糊只给浮层**（压在内容上、透过玻璃能看见东西的那些）。
+   * 这条由 design-contract 扫描强制：带 `backdrop-filter` 的规则必须同时有
+   * `--dawn-shadow-float`。
+   */
   background: var(--dawn-surface-glass);
-  backdrop-filter: var(--dawn-blur-panel);
   /**
    * 竖向照旧可滚；**横向一律裁掉**——收合与展开的两段动画里，
    * 内容都比容器宽（那正是「不被压扁」的做法），
@@ -1209,8 +1227,9 @@ pre {
   max-height: 280px;
   overflow: auto;
   padding: 8px 12px;
+  /* 同侧栏：半透明留着，模糊去掉。它也是布局容器，背后没有会动的东西可糊，
+     而 `backdrop-filter` 会把里面所有 `position: fixed` 的东西钉到它身上 */
   background: var(--dawn-surface-glass);
-  backdrop-filter: var(--dawn-blur-panel);
 }
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**

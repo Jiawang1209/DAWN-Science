@@ -542,6 +542,39 @@ describe("设计契约 · 几何只从令牌来", () => {
     expect(用了 && !有降级, "半透明的面在不支持模糊的地方会漏底，必须给回不透明的实色").toBe(false)
   })
 
+  /**
+   * **`backdrop-filter` 只准出现在浮层上，不准出现在布局容器上。**
+   *
+   * 2026-09-11 踩的，只有一条 e2e 抓到（`sess-title.spec.ts`「窗口矮的时候…」）。
+   *
+   * `backdrop-filter` 和 `filter` / `transform` 一样，**会让元素成为它
+   * `position: fixed` 后代的包含块**。给 `.sidebar` 加上之后，长在里面的悬停卡
+   * 的 `fixed` 坐标改按侧栏解释——夹住它的代码算的是视口坐标，卡当场掉出窗口底。
+   * 那张卡用 `fixed` 是**硬要求**（侧栏 `overflow: auto`，绝对定位会跟着列表滚走，
+   * 本仓库栽过一次）。**一个纯视觉属性废掉了一条有注释、有前科的定位契约。**
+   *
+   * 而它在那儿**本来就没做事**：布局容器背后只有 body 的渐变，
+   * 模糊一个平滑渐变得到的还是同一个渐变。透出底色的是半透明，不是模糊。
+   *
+   * 判据用 `--dawn-shadow-float` 代理「这是不是浮层」：浮层都成对用它 + `stroke-float`
+   * （见 tokens.css）。**不精确，但可判定**——而且它恰好能抓住踩过的那一次。
+   */
+  it("**`backdrop-filter` 只准长在浮层上** —— 布局容器带上它，里面的 fixed 会被钉到它身上", () => {
+    const css = read("styles.css")
+    const 违规: string[] = []
+    for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const 块 = m[2]!
+      if (!/backdrop-filter:/.test(块)) continue
+      if (/--dawn-shadow-float/.test(块)) continue
+      const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
+      违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器}`)
+    }
+    expect(
+      违规,
+      "模糊只给浮层。容器要材质感用半透明底就够了 —— 背后没有会动的东西可糊",
+    ).toEqual([])
+  })
+
   it("**`backdrop-filter` 只走 --dawn-blur-***", () => {
     const offenders = findLines(
       read("styles.css"),

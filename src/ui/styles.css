@@ -72,7 +72,7 @@ pre {
 
 .btn-default { padding: 6px 12px; }
 .btn-sm { padding: 4px 9px; font-size: var(--dawn-fs-meta); }
-.btn-xs { padding: 2px 7px; font-size: 11px; }
+.btn-xs { padding: 2px 7px; font-size: var(--dawn-fs-badge); }
 /* 嵌在句子或标题里的按钮：零盒子，不要再写 padding:0 */
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
@@ -162,7 +162,7 @@ pre {
 /* ── primitive：LogView ─────────────────────────────────────────── */
 
 .logview { margin: 6px 0; }
-.logview-label { margin: 0 0 4px; color: var(--dawn-text-3); font-size: 11px; }
+.logview-label { margin: 0 0 4px; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .logview-body {
   padding: 6px 8px;
   box-shadow: var(--dawn-shadow-md);
@@ -179,8 +179,8 @@ pre {
 
 .field { margin-bottom: 10px; }
 .field-label { display: block; margin-bottom: 4px; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
-.field-hint { margin: 4px 0 0; color: var(--dawn-text-3); font-size: 11px; }
-.field-error { margin: 4px 0 0; color: var(--dawn-danger); font-size: 11px; }
+.field-hint { margin: 4px 0 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.field-error { margin: 4px 0 0; color: var(--dawn-danger); font-size: var(--dawn-fs-badge); }
 
 /* 文本输入的共享形状。新的文本控件组合它，不要各写一套 */
 .control {
@@ -448,7 +448,7 @@ pre {
   padding: 0 var(--dawn-space-4);
   border-top: 1px solid var(--dawn-stroke-4);
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .sidebar {
@@ -514,7 +514,7 @@ pre {
   align-items: center;
   padding: var(--dawn-space-2) var(--dawn-space-3);
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   text-transform: uppercase;
 }
 .project-list, .session-list { list-style: none; margin: 0; padding: 0; }
@@ -716,7 +716,7 @@ pre {
 .panel-title {
   margin: 0 0 8px;
   padding-bottom: 6px;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
   border-bottom: 1px solid var(--dawn-stroke-4);
   text-transform: uppercase;
@@ -743,7 +743,7 @@ pre {
    而且会在 `7.5` 和 `KB` 之间断行——**那不是不好看，那是坏了** */
 .ctx-rows { flex-wrap: wrap; gap: var(--dawn-space-4); }
 .ctx-row { display: flex; flex-direction: column; gap: 2px; }
-.ctx-row .name { color: var(--dawn-text-3); font-size: 11px; }
+.ctx-row .name { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .ctx-value { display: flex; align-items: baseline; gap: var(--dawn-space-1); }
 
 /* 三档占比的堆叠条。宽度是数据（行内样式），颜色仍只从令牌来 */
@@ -769,7 +769,7 @@ pre {
 .caveat { margin: 0 0 8px; color: var(--dawn-warning); }
 .unknown { margin: 0 0 4px; font-size: var(--dawn-fs-sub); }
 .amount { margin: 0 0 4px; font-size: var(--dawn-fs-title); }
-.tokens, .hint { color: var(--dawn-text-3); font-size: 11px; }
+.tokens, .hint { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .hint.pad { padding: 0 12px 8px; margin: 0; }
 .stat-row, .file-list, .run-list { list-style: none; margin: 0; padding: 0; }
 .stat-row { display: flex; gap: 14px; }
@@ -784,13 +784,13 @@ pre {
   border-radius: var(--dawn-radius-xs);
   background: var(--dawn-fill-4);
   color: var(--dawn-text-2);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   text-align: center;
 }
 .run-list .req, .run-list .status, .run-list .dur {
   color: var(--dawn-text-3);
   margin-right: 8px;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 .run.err .status { color: var(--dawn-danger); }
 .prov.ok { color: var(--dawn-live); }
@@ -806,7 +806,7 @@ pre {
   /* 顶栏也不划线：与侧栏同一条理由——**留白已经把它分开了** */
   padding: var(--dawn-space-3) var(--dawn-space-8);
 }
-.conv-head .kind { color: var(--dawn-text-3); font-size: 11px; }
+.conv-head .kind { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 /**
  * 对话区用**聊天字号 14px / 行高 20px**（规范 §4），比界面外壳的 13px 大一档。
  * 外壳让位给内容，这是那一档的全部意思。
@@ -1068,7 +1068,7 @@ pre {
   white-space: nowrap;
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .tool-body { padding-left: calc(0.8em + 6px); }
@@ -1123,14 +1123,14 @@ pre {
    **两者曾经共用同一个类名，于是 `.composer .agent-pill` 一下子匹配到两个元素**，
    agent pill 的几何断言量到了模型 pill 上 */
 .pill { position: relative; display: inline-flex; }
-.pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: 11px; }
+.pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .agent-menu ul { list-style: none; margin: 0; padding: 0; }
 .agent-menu .name { flex: 1; }
 .agent-menu-head {
   margin: 0;
   padding: 6px 8px 4px;
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 /**
  * 厂家菜单的两组（2026-08-11）：**就地换服务** / **新建会话**。
@@ -1217,7 +1217,7 @@ pre {
 .dock-cwd {
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   max-width: 40ch;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1471,7 +1471,7 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /** 动作组浮到头部那一行的右端 */
@@ -1639,13 +1639,13 @@ pre {
   margin: 0;
   padding: 4px 8px 2px;
   color: var(--dawn-text-4);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 .palette-item .name { flex: 1; }
 /* 不可用的原因跟在后面。**不是隐藏，是摆出来** */
-.palette-item .why { color: var(--dawn-text-4); font-size: 11px; }
+.palette-item .why { color: var(--dawn-text-4); font-size: var(--dawn-fs-badge); }
 .palette-item[aria-disabled="true"] { opacity: 0.55; cursor: default; }
-.palette-item .keys { color: var(--dawn-text-4); font-size: 11px; }
+.palette-item .keys { color: var(--dawn-text-4); font-size: var(--dawn-fs-badge); }
 
 /* ── 子 agent 的 chip 组（①-B″ · S1）───────────────────────────────
    形态学自 Codex 桌面版的 subagent-activity-chip-group：
@@ -1858,7 +1858,7 @@ pre {
 }
 
 /* 「截断了多少」「有别的形态」这类说明。**它们是出声本身，不是装饰** */
-.kout-note { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: 11px; }
+.kout-note { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 
 /* ── 陈旧标记（②-A · K5 · S13）──────────────────────────────────────
    **notebook 最经典的谎言**：单元格显示的结果，可能来自三次重启之前的状态。
@@ -1867,7 +1867,7 @@ pre {
 .kout-stale {
   margin: 0 0 var(--dawn-space-1);
   color: var(--dawn-warning);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /* ── 变量面板（②-A · K5 · S14）─────────────────────────────────────── */
@@ -2285,7 +2285,7 @@ pre {
 .proj-session-list .sess .sub,
 .proj-list .sess .sub {
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2334,7 +2334,7 @@ pre {
 
 .set-section-desc code {
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /**
@@ -2399,7 +2399,7 @@ pre {
 .set-desc {
   margin: 0;
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   line-height: 1.4;
 }
 
@@ -2744,7 +2744,7 @@ pre {
 
 .env-facts dt {
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .env-facts dd {
@@ -2758,7 +2758,7 @@ pre {
   display: block;
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   word-break: break-all;
 }
 
@@ -2790,7 +2790,7 @@ pre {
   justify-content: space-between;
   gap: var(--dawn-space-2);
   padding: 1px 0;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .env-pkg-list .name {
@@ -2931,7 +2931,7 @@ pre {
 .pin-mark {
   margin-right: 4px;
   color: var(--dawn-text-3);
-  font-size: 9px;
+  font-size: var(--dawn-fs-label);
   vertical-align: 1px;
 }
 
@@ -3019,7 +3019,7 @@ pre {
 .turn-usage {
   margin: var(--dawn-space-1) 0 0;
   color: var(--dawn-text-4);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3912,7 +3912,7 @@ pre {
 /** 与侧栏那些行同一副长相：**同一种东西不该有两种样子** */
 .settings-nav-item { justify-content: flex-start; width: 100%; margin: 0; }
 /* 分组标题（「扩展」，2026-08-23）：比条目淡一档、上面留一口气——它是分类，不是可点的东西 */
-.settings-nav-group { margin: var(--dawn-space-3) 0 var(--dawn-space-1); padding: 0 var(--dawn-space-3); font-size: 11px; color: var(--dawn-text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.settings-nav-group { margin: var(--dawn-space-3) 0 var(--dawn-space-1); padding: 0 var(--dawn-space-3); font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); text-transform: uppercase; letter-spacing: 0.04em; }
 /**
  * 选中态：**实底**（实测 WorkBuddy 的选中项就是一块浅灰底 + 加粗），
  * 而不是一条竖线——竖线是「这一条被标记了」，实底才是「你在这里」。
@@ -4135,7 +4135,7 @@ pre {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
 }
 /**
@@ -4900,7 +4900,7 @@ pre {
 }
 /** 组名比选项淡一档：**它是分类，不是可点的东西** */
 .sess-config-name { margin: 0 0 2px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
-.sess-config-desc { margin: 0 0 4px; font-size: 11px; color: var(--dawn-text-3); }
+.sess-config-desc { margin: 0 0 4px; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 /**
  * **整行是一条 flex，勾和内容并排**（2026-08-19）。
  *
@@ -4944,7 +4944,7 @@ pre {
   min-width: 0;
 }
 .sess-config-opt-name { min-width: 0; }
-.sess-config-opt-desc { font-size: 11px; color: var(--dawn-text-3); }
+.sess-config-opt-desc { font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 
 
 
@@ -5037,7 +5037,7 @@ pre {
 /** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
 .dock-mark { display: inline-flex; width: 16px; justify-content: center; }
 /** 快捷键靠右。**比正文淡一档**——它是提示，不是这一行的主语 */
-.dock-key { margin-left: auto; color: var(--dawn-text-3); font-size: 11px; }
+.dock-key { margin-left: auto; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 
 
 /* ── 传输条（批 4a，2026-08-17）────────────────────────────────
@@ -5202,7 +5202,7 @@ pre {
 }
 .review-item.current { background: var(--dawn-row-hover); border-radius: var(--dawn-radius-sm); }
 /** 状态用**词**，不用颜色单独表达——只用颜色的话，色觉差异的人读不出来 */
-.review-status { flex: 0 0 auto; font-size: 11px; color: var(--dawn-text-3); }
+.review-status { flex: 0 0 auto; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 .review-status.added { color: var(--dawn-success); }
 .review-status.deleted { color: var(--dawn-danger); }
 .review-path {
@@ -5214,7 +5214,7 @@ pre {
   font-family: var(--dawn-font-mono);
   font-size: var(--dawn-fs-meta);
 }
-.review-num { flex: 0 0 auto; font-size: 11px; color: var(--dawn-text-3); white-space: nowrap; }
+.review-num { flex: 0 0 auto; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); white-space: nowrap; }
 
 /* ── diff 的排版：**量自 Codex 的构建产物**（2026-08-18）────────────
  *
@@ -5481,7 +5481,7 @@ pre {
 .weblink-title { font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); }
 .weblink-url {
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5600,7 +5600,7 @@ pre {
 .files-search { flex: 1; }
 .files-search-results .search-hit .sub {
   display: block;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5608,14 +5608,14 @@ pre {
 }
 .files-search-note {
   margin: var(--dawn-space-2) var(--dawn-space-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /* ── 文件面板 · 行菜单（dock-polish ⑤）。「⋯」的样式沿用上面 2026-08-18 那组 `.tree-node > .row-actions` ── */
 .tree-row-menu { min-width: 180px; }
 .files-row-note {
   margin: var(--dawn-space-1) var(--dawn-space-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5699,7 +5699,7 @@ pre {
   border: 1px solid var(--dawn-stroke-3);
   border-radius: var(--dawn-radius-xs);
   color: var(--dawn-text-2);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   line-height: 16px;
   font-weight: normal;
 }
@@ -5909,7 +5909,7 @@ pre {
 .team-empty { padding: var(--dawn-space-3); }
 .team-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); }
 .team-name { margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); min-width: 0; }
-.team-pill { font-size: 11px; padding: 1px var(--dawn-space-2); border-radius: var(--dawn-radius-full); background: var(--dawn-row-hover); color: var(--dawn-text-2); }
+.team-pill { font-size: var(--dawn-fs-badge); padding: 1px var(--dawn-space-2); border-radius: var(--dawn-radius-full); background: var(--dawn-row-hover); color: var(--dawn-text-2); }
 .team-stats { margin-left: auto; display: inline-flex; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); white-space: nowrap; }
 .team-goal { margin: calc(-1 * var(--dawn-space-2)) 0 0; color: var(--dawn-text-2); }
 
@@ -5943,7 +5943,7 @@ pre {
 .team-segments > span[data-state="blocked"] { background: var(--dawn-warning); }
 .team-segments > span[data-state="completed"] { background: var(--dawn-success); }
 .team-segments > span[data-state="dead"] { background: var(--dawn-text-4); }
-.team-legend { display: flex; gap: var(--dawn-space-3); font-size: 11px; color: var(--dawn-text-3); }
+.team-legend { display: flex; gap: var(--dawn-space-3); font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 .team-legend > span::before, .team-summary-dot { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: var(--dawn-radius-full); margin-right: 4px; vertical-align: 1px; background: var(--dawn-stroke-3); }
 .team-legend > span[data-state="running"]::before { background: var(--dawn-accent); }
 .team-legend > span[data-state="blocked"]::before { background: var(--dawn-warning); }
@@ -5973,8 +5973,8 @@ pre {
 .team-member-status { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; max-width: 40%; overflow: hidden; }
 .team-member-status.working { color: var(--dawn-accent); }
 .team-member-count { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); }
-.team-assign { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-1); padding-left: calc(28px + var(--dawn-space-2)); font-size: 11px; }
-.team-chip { font-family: var(--dawn-font-mono); font-size: 11px; padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-2); }
+.team-assign { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-1); padding-left: calc(28px + var(--dawn-space-2)); font-size: var(--dawn-fs-badge); }
+.team-chip { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-badge); padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-2); }
 .team-chip[data-state="running"] { border-color: var(--dawn-accent); color: var(--dawn-accent); }
 .team-chip[data-state="blocked"] { border-color: var(--dawn-warning); color: var(--dawn-warning); }
 .team-chip[data-state="completed"] { border-color: var(--dawn-success); color: var(--dawn-success); }
@@ -6029,17 +6029,17 @@ pre {
 .team-dag-node[data-focused="1"] { border-color: var(--dawn-accent); }
 .team-dag-node[data-dimmed="1"] { opacity: 0.35; }
 .team-dag-node[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--dawn-accent); }
-.team-dag-node-head { display: inline-flex; align-items: center; gap: 4px; font-family: var(--dawn-font-mono); font-size: 11px; font-weight: var(--dawn-weight-semibold); }
+.team-dag-node-head { display: inline-flex; align-items: center; gap: 4px; font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-badge); font-weight: var(--dawn-weight-semibold); }
 .team-dag-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); }
 .team-dag-node[data-state="running"] .team-dag-dot { background: var(--dawn-accent); }
 .team-dag-node[data-state="blocked"] .team-dag-dot { background: var(--dawn-warning); }
 .team-dag-node[data-state="completed"] .team-dag-dot { background: var(--dawn-success); }
 .team-dag-node[data-state="completed"] { border-color: color-mix(in srgb, var(--dawn-success) 40%, transparent); }
-.team-dag-node-label { font-size: 10px; color: var(--dawn-text-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-dag-node-label { font-size: var(--dawn-fs-label); color: var(--dawn-text-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .team-task-detail { display: flex; flex-direction: column; gap: 2px; padding: var(--dawn-space-1) var(--dawn-space-2); border-radius: var(--dawn-radius-sm); background: var(--dawn-row-hover); font-size: var(--dawn-fs-meta); }
 .team-task-detail-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; }
 .team-task-detail-subject { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.team-badge { font-size: 11px; padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-3); white-space: nowrap; }
+.team-badge { font-size: var(--dawn-fs-badge); padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-3); white-space: nowrap; }
 .team-badge[data-state="running"] { border-color: var(--dawn-accent); color: var(--dawn-accent); }
 .team-badge[data-state="blocked"] { border-color: var(--dawn-warning); color: var(--dawn-warning); }
 .team-badge[data-state="completed"] { border-color: var(--dawn-success); color: var(--dawn-success); }
@@ -6091,7 +6091,7 @@ pre {
   cursor: pointer;
 }
 .perm-pill-default input { margin: 0; }
-.perm-pill-note { margin: var(--dawn-space-2) var(--dawn-space-3) 0; font-size: 11px; line-height: 1.4; }
+.perm-pill-note { margin: var(--dawn-space-2) var(--dawn-space-3) 0; font-size: var(--dawn-fs-badge); line-height: 1.4; }
 
 /* ============ `@` 引用工作区文件（2026-08-23，学自 dsh-at-file） ============ */
 /** 菜单借 `.slash-menu` 的壳；一行是 图标 | 文件名 | 父目录 */
@@ -6303,7 +6303,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   z-index: var(--z-tooltip);
   white-space: nowrap;
   padding: var(--dawn-space-1) var(--dawn-space-2);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-2);
   background: var(--dawn-surface-elevated);
   backdrop-filter: var(--dawn-blur-overlay);
@@ -6348,7 +6348,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .dropper-val { margin: 0; display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); }
 .dropper-val code { font-family: var(--dawn-font-mono); }
 .dropper-swatch { width: 12px; height: 12px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
-.dropper-hint { margin: 0; font-size: 11px; color: var(--dawn-text-2); }
+.dropper-hint { margin: 0; font-size: var(--dawn-fs-badge); color: var(--dawn-text-2); }
 .dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); backdrop-filter: var(--dawn-blur-overlay); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
 .dropper-err { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); }
 
@@ -6372,8 +6372,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   background: var(--dawn-surface-elevated);
 }
 .attached-file .attached-name { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-fs-meta); }
-.attached-file .attached-size { color: var(--dawn-text-3); font-size: 11px; white-space: nowrap; }
-.attached-file .attached-path { color: var(--dawn-text-3); font-size: 11px; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.attached-file .attached-size { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); white-space: nowrap; }
+.attached-file .attached-path { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
 .attached-file .attached-x { position: static; opacity: 1; width: 20px; height: 20px; }
 .attach-usage { display: flex; flex-direction: column; gap: var(--dawn-space-2); align-items: flex-start; }
 .attach-usage-line { margin: 0; font-variant-numeric: tabular-nums; }
@@ -6447,7 +6447,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .plugin-family-tools { flex: 1 1 auto; min-width: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-family: var(--dawn-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
 .plugin-family[data-on] .plugin-family-name { color: var(--dawn-text-1); }
 .plugin-card[data-state="off"] .plugin-family-list { opacity: 0.55; }
-.badge-on { color: var(--dawn-live); border: 1px solid var(--dawn-live); border-radius: var(--dawn-radius-sm); padding: 0 4px; font-size: 11px; }
+.badge-on { color: var(--dawn-live); border: 1px solid var(--dawn-live); border-radius: var(--dawn-radius-sm); padding: 0 4px; font-size: var(--dawn-fs-badge); }
 
 /* ── 设置「记忆」屏(2026-08-25,学自 dsh-memory-evolve)──────────────── */
 .memory-panel { display: flex; flex-direction: column; gap: var(--dawn-space-4); }
@@ -6523,7 +6523,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .generated-chip.gone .name { text-decoration: line-through; opacity: .6; }
 /* 图片 chip：徽标那一格换成一张 20px 小图（2026-08-27） */
 .generated-chip img { flex: none; width: 20px; height: 20px; object-fit: cover; border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); }
-.kind-tag { flex: none; min-width: 46px; text-align: center; font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
+.kind-tag { flex: none; min-width: 46px; text-align: center; font-size: var(--dawn-fs-label); font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
 
 /* ── 坞「产物」格（spec 2026-08-26-产物 §5，Task 11） ── */
 .artifacts-pane { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-2); }

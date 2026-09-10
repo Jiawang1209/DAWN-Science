@@ -536,9 +536,9 @@ describe("设计契约 · 几何只从令牌来", () => {
    * 这条是「失败必须出声」（规格 7.5）在样式表里的形状。
    */
   it("**用了 backdrop-filter 就必须有 @supports not 降级块**", () => {
-    const css = read("styles.css")
-    const 用了 = /backdrop-filter:/.test(css)
-    const 有降级 = /@supports\s+not\s*\(\s*backdrop-filter:/.test(css)
+    // 用在 styles.css，降级归 tokens.css —— 种子层令牌只有一个家
+    const 用了 = /backdrop-filter:/.test(read("styles.css"))
+    const 有降级 = /@supports\s+not\s*\(\s*backdrop-filter:/.test(read("tokens.css"))
     expect(用了 && !有降级, "半透明的面在不支持模糊的地方会漏底，必须给回不透明的实色").toBe(false)
   })
 

@@ -80,6 +80,20 @@
   /* 面。亮色下内容区是纯白，浮在略深的应用底之上 */
   --theme-surface-app: var(--theme-gray-50);
   --theme-surface-sidebar: var(--theme-gray-75);
+  /**
+   * **玻璃面**（2026-09-10 视觉重做）：侧栏与右侧坞是玻璃，不是纸。
+   *
+   * **它是独立的一档，不是 `--theme-surface-sidebar` 改出来的。**
+   * 那个令牌还被 `.composer-footer` 和 `.turn.user .bubble` 用着，
+   * 而气泡在对话区里——正文底下透出东西会直接影响可读性。
+   * 复用它就是让一个名字担两种相反的要求。
+   *
+   * 必须写实际的 rgba 而不是 `color-mix(… transparent)`：要的是"透出背后"，
+   * 而后者算出来是一个**不透明**色，`backdrop-filter` 就什么也没得模糊。
+   * 不支持模糊时由本文件末尾的 `@supports not` 块换回 `-opaque` 那一支。
+   */
+  --theme-surface-glass: rgba(255, 255, 255, 0.5);
+  --theme-surface-glass-opaque: var(--theme-gray-75);
   --theme-surface-panel: var(--theme-gray-0);
   --theme-surface-elevated: var(--theme-gray-0);
   --theme-surface-input: var(--theme-gray-0);
@@ -150,6 +164,7 @@
   /* ── 面：直接取种子。派生层保持存在，是为了让 .dawn-dark 只需覆盖种子 ── */
   --dawn-surface-app: var(--theme-surface-app);
   --dawn-surface-sidebar: var(--theme-surface-sidebar);
+  --dawn-surface-glass: var(--theme-surface-glass);
   --dawn-surface-panel: var(--theme-surface-panel);
   --dawn-surface-elevated: var(--theme-surface-elevated);
   --dawn-surface-input: var(--theme-surface-input);
@@ -618,6 +633,8 @@
   /* 侧栏最深、内容区抬起——四个相邻档位做出四层高度 */
   --theme-surface-app: var(--theme-gray-900);
   --theme-surface-sidebar: var(--theme-gray-1000);
+  --theme-surface-glass: rgba(255, 255, 255, 0.028);
+  --theme-surface-glass-opaque: var(--theme-gray-1000);
   --theme-surface-panel: var(--theme-gray-800);
   --theme-surface-elevated: var(--theme-gray-750);
   --theme-surface-input: var(--theme-gray-800);
@@ -689,4 +706,20 @@
     0 8px 22px -6px color-mix(in srgb, #000000 45%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
+}
+
+/**
+ * 毛玻璃的降级（2026-09-10 视觉重做）。
+ *
+ * **半透明的面在不支持模糊的地方会直接漏出底下的东西**——不是"没那么好看"，
+ * 是读不了。CSS 对此不会出声，所以这个块是必须的，有扫描测试拦着。
+ *
+ * **它写在这里而不是 `styles.css`**：改的是种子层令牌，而种子只有一个家。
+ * 降级只换回不透明的面，**不改任何几何**——布局不许因为浏览器能力而变。
+ */
+@supports not (backdrop-filter: blur(1px)) {
+  :root,
+  :root.dawn-dark {
+    --theme-surface-glass: var(--theme-surface-glass-opaque);
+  }
 }

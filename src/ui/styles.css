@@ -465,7 +465,8 @@ pre {
    * 线是「这里有个边界」的最重的说法，而侧栏与正文本来就不需要那么重——
    * 一屏里线越多越碎。
    */
-  background: var(--dawn-surface-sidebar);
+  background: var(--dawn-surface-glass);
+  backdrop-filter: var(--dawn-blur-panel);
   /**
    * 竖向照旧可滚；**横向一律裁掉**——收合与展开的两段动画里，
    * 内容都比容器宽（那正是「不被压扁」的做法），
@@ -1208,7 +1209,8 @@ pre {
   max-height: 280px;
   overflow: auto;
   padding: 8px 12px;
-  background: var(--dawn-surface-sidebar);
+  background: var(--dawn-surface-glass);
+  backdrop-filter: var(--dawn-blur-panel);
 }
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**
@@ -1607,6 +1609,7 @@ pre {
   padding: 8px;
   border-radius: var(--dawn-radius-lg);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   box-shadow: var(--dawn-shadow-float);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
 }
@@ -2549,6 +2552,7 @@ pre {
   border-radius: var(--dawn-radius-lg);
   corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
 }
@@ -2852,6 +2856,7 @@ pre {
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
 }
@@ -5819,6 +5824,7 @@ pre {
   padding: 3px var(--dawn-space-2);
   border-radius: var(--dawn-radius-sm);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
   color: var(--dawn-text-1);
@@ -6238,6 +6244,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   width: 240px;
   padding: var(--dawn-space-2);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
@@ -6280,6 +6287,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   font-size: 11px;
   color: var(--dawn-text-2);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
@@ -6322,7 +6330,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .dropper-val code { font-family: var(--dawn-font-mono); }
 .dropper-swatch { width: 12px; height: 12px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
 .dropper-hint { margin: 0; font-size: 11px; color: var(--dawn-text-2); }
-.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
+.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); backdrop-filter: var(--dawn-blur-overlay); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
 .dropper-err { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); }
 
 /* 附栏三颗的静默态：与「优化输入」同一档淡（终端此前常黑，作者报的） */
@@ -6368,6 +6376,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
   background: var(--dawn-surface-elevated);
+  backdrop-filter: var(--dawn-blur-overlay);
   cursor: default;
 }
 /* 缩略图那颗按钮：零内距，别把 96px 的方块再垫大 */

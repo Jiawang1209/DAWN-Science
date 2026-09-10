@@ -477,6 +477,35 @@ describe("设计契约 · 几何只从令牌来", () => {
     expect(违规, "改用 md/lg 的面要一并删掉那条 border —— 见 tokens.css 暗色块的注释").toEqual([])
   })
 
+  it("**毛玻璃两档都定义过** —— 模糊半径散在调用点上，就没人知道两块玻璃是不是同一块", () => {
+    const text = read("tokens.css")
+    for (const t of ["--dawn-blur-panel", "--dawn-blur-overlay"]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
+    }
+  })
+
+  /**
+   * **`backdrop-filter` 必须配一个 `@supports not` 降级块。**
+   *
+   * 毛玻璃的面是半透明的。不做模糊时那层半透明会**直接漏出底下的东西**——
+   * 不是"没那么好看"，是读不了。而 CSS 对此完全不会出声。
+   * 这条是「失败必须出声」（规格 7.5）在样式表里的形状。
+   */
+  it("**用了 backdrop-filter 就必须有 @supports not 降级块**", () => {
+    const css = read("styles.css")
+    const 用了 = /backdrop-filter:/.test(css)
+    const 有降级 = /@supports\s+not\s*\(\s*backdrop-filter:/.test(css)
+    expect(用了 && !有降级, "半透明的面在不支持模糊的地方会漏底，必须给回不透明的实色").toBe(false)
+  })
+
+  it("**`backdrop-filter` 只走 --dawn-blur-***", () => {
+    const offenders = findLines(
+      read("styles.css"),
+      (l) => /backdrop-filter:/.test(l) && !/--dawn-blur-/.test(l) && !/@supports/.test(l),
+    )
+    expect(offenders).toEqual([])
+  })
+
   it("font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家", () => {
     const offenders = findLines(read("styles.css"), (l) => /font-weight:\s*(500|600|700)\b/.test(l))
     expect(offenders).toEqual([])

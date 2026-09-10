@@ -510,7 +510,10 @@ describe("设计契约 · 几何只从令牌来", () => {
     for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
       const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
       const 块 = m[2]!
-      if (!/--dawn-shadow-(md|lg)\b/.test(块)) continue
+      // `(?!-)` 把 `--dawn-shadow-md-bordered` 排除在外 —— 那一档**就是**给
+      // "自己带描边"的面用的，它省掉了 inset 那一圈，正好不会叠成两圈。
+      // 没有这个否定先行断言，`\b` 会在 `md` 与 `-` 之间匹配，新令牌被自己的规则误伤。
+      if (!/--dawn-shadow-(md|lg)(?!-)/.test(块)) continue
       if (/^\s*border:\s/m.test(块)) {
         违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器}`)
       }

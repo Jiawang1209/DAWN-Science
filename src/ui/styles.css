@@ -2021,6 +2021,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   padding: var(--dawn-space-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .vision-card .set-section { margin-bottom: 0; }
 
@@ -2350,6 +2351,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   border-radius: var(--dawn-radius-lg);
   padding: 0 var(--dawn-space-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 /* 右边那一格里的按钮不许折行（卡有了内距之后那一列窄了 30px，「保存」曾被掰成两行） */
 .set-control .btn { white-space: nowrap; }
@@ -2429,6 +2431,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 
 .acp-add {
@@ -3008,6 +3011,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   margin-bottom: var(--dawn-space-2);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 
 .svc.open { border-color: var(--dawn-stroke-2); }
@@ -4093,6 +4097,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   overflow: hidden;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 /**
  * `cover` 而不是 `contain`：**方块里不留白边**。
@@ -4549,6 +4554,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   overflow: hidden;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .usage-stat {
   padding: var(--dawn-space-3) var(--dawn-space-2);
@@ -4563,7 +4569,7 @@ pre {
    给自己设一个超了也不会拦的上限，只是一个让人焦虑的装饰 */
 
 /* 用量那几块也装进卡（2026-08-23 作者：设置里成组的内容都用卡） */
-.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-3) var(--dawn-space-4); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); }
+.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-3) var(--dawn-space-4); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); box-shadow: var(--dawn-shadow-md-bordered); }
 .usage-block-title { margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); }
 /** 标题旁边那个总数：**同一行、淡一档**——它是分母，不是第二个标题 */
 .usage-block-sum { margin-left: var(--dawn-space-2); color: var(--dawn-text-3); font-weight: 400; font-variant-numeric: tabular-nums; }
@@ -4742,6 +4748,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   cursor: pointer;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .perm-choice + .perm-choice { margin-top: var(--dawn-space-2); }
 .perm-choice.current { border-color: var(--dawn-accent); background: var(--dawn-accent-soft); }
@@ -4784,6 +4791,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .skill-name { margin: 0; font-weight: var(--dawn-weight-medium); }
 .skill-desc { margin: 0; color: var(--dawn-text-2); max-width: 72ch; }
@@ -4820,6 +4828,7 @@ pre {
   border: 1px solid var(--dawn-accent);
   border-radius: var(--dawn-radius-lg);
   background: var(--dawn-accent-soft);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .perm-card-title { white-space: pre-wrap; margin: 0; font-weight: var(--dawn-weight-medium); }
 /** **不换行**：与侧栏那条同一副纪律，放不下就裁，不折成两层 */
@@ -5430,6 +5439,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .weblink-icon {
   flex: 0 0 auto;
@@ -5477,6 +5487,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 /* 卡里的按钮不拉满（flex 列里 stretch 会把它扯成一整条） */
 .ra-card .btn { align-self: flex-start; }
@@ -5641,6 +5652,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   overflow: hidden;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .skill-row {
   display: flex;
@@ -5703,6 +5715,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   max-width: 48rem;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .schedule-field { display: grid; gap: var(--dawn-space-1); }
 .schedule-field > span:first-child { font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
@@ -5888,7 +5901,7 @@ pre {
 
 /* ② 队长卡 */
 .team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent);
-  background: var(--dawn-surface-elevated); }
+  background: var(--dawn-surface-elevated); box-shadow: var(--dawn-shadow-md-bordered); }
 .team-captain-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 .team-captain-line { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
 .team-captain-name { font-weight: var(--dawn-weight-semibold); }
@@ -6084,6 +6097,7 @@ pre {
   border-radius: var(--dawn-radius-sm);
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .at-rail-path { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--dawn-text-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
 .at-rail-path:disabled { opacity: 1; cursor: default; }

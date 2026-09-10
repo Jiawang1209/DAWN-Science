@@ -519,6 +519,19 @@
   --dawn-shadow-lg:
     0 2px 4px color-mix(in srgb, var(--theme-gray-1000) 5%, transparent),
     0 10px 24px -6px color-mix(in srgb, var(--theme-gray-1000) 8%, transparent);
+  /**
+   * **给"自己已经有一条描边"的面用的 md**（2026-09-10，作者定的 C′）。
+   *
+   * 那 16 张卡片的描边是**主题色**，2026-08-23 作者要的：
+   * *「卡片里面应该是白色背景，然后边框使用绿色的线」*。绿线要留着，卡片也要浮起来。
+   *
+   * **亮色下它和 `--dawn-shadow-md` 一模一样**——亮色的 md 本来就没有 inset。
+   * 分成两个名字是为了让**暗色**那一支有地方安放差异，
+   * 也为了让调用点自己说清楚"我这条 border 是故意的"。
+   */
+  --dawn-shadow-md-bordered:
+    0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent),
+    0 6px 16px -4px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
 
   /**
    * ── 毛玻璃（2026-09-10 视觉重做）──────────────────────────
@@ -664,6 +677,16 @@
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 9%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 8%, transparent),
     0 10px 26px -6px color-mix(in srgb, #000000 50%, transparent);
+  /**
+   * **少了 `inset 0 0 0 1px`**，这就是它与 `--dawn-shadow-md` 的全部差别。
+   *
+   * 那一圈的作用是"勾出形状"，而这些面自己的绿描边已经在勾了。
+   * 两个都留就是**两圈**：一圈绿、一圈白，差 1px，深色底上看得很清楚。
+   * 留下的两层各司其职：`inset 0 1px 0` 是顶边受光，最后一层负责落地。
+   */
+  --dawn-shadow-md-bordered:
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 7%, transparent),
+    0 8px 22px -6px color-mix(in srgb, #000000 45%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
 }

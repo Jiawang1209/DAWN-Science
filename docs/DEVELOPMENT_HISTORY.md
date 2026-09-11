@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-11 — `visual-refresh` 合并进 main（快进，未推）
+
+- **Type**: chore
+- **Motivation**: 三轮 + 终审全部做完并验过，作者说「合并入 main」。
+- **What**: main 自分叉点 `8b5a617` 起一笔没动，**快进**到 `fa97270`，没有合并提交。
+  项目 `CLAUDE.md` 文档入口表登记了规格与计划。**未推**（作者自己推）。
+- **Impact**: 纯视觉层；`src/protocol/`、`src/main/`、`src/ui/state/` 未动。
+- **Verification**: main 上单元 **2854 全绿**、typecheck 干净；合并前那一版全套 e2e **479 / 0**、
+  `kernel-session` 6 passed、视觉基线整份 5/5——快进后 main 与那一版是**同一个提交**。
+
+---
+
 ### 2026-09-11 — 视觉重做终审：15 条全部核实，毛玻璃第一次真正生效
 
 - **Type**: fix

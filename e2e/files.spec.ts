@@ -566,9 +566,23 @@ test("**坞宽过了窗口能给的：坞被压进窗口里，按钮都看得见
       return Math.round(b.x + b.width)
     })
     .toBeLessThanOrEqual(1000)
+  /**
+   * **等按钮本身，不是等坞**（2026-09-11，视觉重做后在全套里红过一次）。
+   *
+   * 窗口缩窄时坞的上界跨过 `RIGHT_DOCK_两栏起点`，文件面板会**重新造一次**
+   * ——那一帧里按钮不在 DOM 上，`boundingBox()` 是 `null`。上面那个 poll 只证明
+   * 「坞缩进来了」，不证明「面板已经重建完」。列宽过渡从 250ms 改成 180ms +
+   * 快出曲线之后，坞更早到位，用例更早来读，就撞上了那一帧。
+   * **产品没坏，是等待条件挑错了**：要等只有目标状态才有的东西。
+   */
   for (const 名 of ["搜文件名", "刷新当前文件夹"]) {
-    const 框 = (await 面板.getByRole("button", { name: 名, exact: true }).boundingBox())!
-    expect(框.x + 框.width, `${名} 在窗口外面`).toBeLessThanOrEqual(1000)
+    const 键 = 面板.getByRole("button", { name: 名, exact: true })
+    await expect
+      .poll(async () => {
+        const 框 = await 键.boundingBox()
+        return 框 ? Math.round(框.x + 框.width) : Number.POSITIVE_INFINITY
+      }, { message: `${名} 在窗口外面（或一直没出现）` })
+      .toBeLessThanOrEqual(1000)
   }
   // 缝贴着坞此刻的左缘（不是按 720 算出来的位置）
   const 缝框 = (await page.getByRole("separator", { name: "调整面板宽度" }).boundingBox())!

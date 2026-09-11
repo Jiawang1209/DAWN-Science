@@ -528,16 +528,19 @@ describe("设计契约 · 几何只从令牌来", () => {
       // "自己带描边"的面用的，它省掉了 inset 那一圈，正好不会叠成两圈。
       // 没有这个否定先行断言，`\b` 会在 `md` 与 `-` 之间匹配，新令牌被自己的规则误伤。
       if (!/--dawn-shadow-(md|lg)(?!-)/.test(块)) continue
-      if (/^\s*border:\s/m.test(块)) {
+      // 不锚行首（终审抓的）：`.usage-block { …; border: … }` 这种一行写完的规则原先会漏过去；
+      // 单边长写法同样算——一边双线也是双线
+      if (/(^|[;{\s])border(-(top|right|bottom|left))?:\s/.test(块)) {
         违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器}`)
       }
     }
     expect(违规, "改用 md/lg 的面要一并删掉那条 border —— 见 tokens.css 暗色块的注释").toEqual([])
   })
 
-  it("**毛玻璃两档都定义过** —— 模糊半径散在调用点上，就没人知道两块玻璃是不是同一块", () => {
+  it("**浮层的玻璃令牌都定义过** —— 模糊与透明度散在调用点上，就没人知道两块玻璃是不是同一块", () => {
+    // 原本还有一档 --dawn-blur-panel 给侧栏，2026-09-11 撤了（容器上的模糊什么也不做，还会钉住 fixed 后代）
     const text = read("tokens.css")
-    for (const t of ["--dawn-blur-panel", "--dawn-blur-overlay"]) {
+    for (const t of ["--dawn-blur-overlay", "--dawn-surface-overlay"]) {
       expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
     }
   })
@@ -652,13 +655,20 @@ describe("设计契约 · 几何只从令牌来", () => {
     }
     const 违规: string[] = []
     for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
-      const 名 = /^\s*animation:\s*([\w-]+)/m.exec(m[2]!)?.[1]
+      // `animation-name:` 长写法、一行写完的规则都要认（终审抓的）
+      const 名 = /(?:^|[;{\s])animation(?:-name)?:\s*([\w-]+)/.exec(m[2]!)?.[1]
       if (!名) continue
       const 帧 = 关键帧.get(名)
-      if (!帧 || !/transform:/.test(帧)) continue // 纯淡入淡出豁免
+      // 独立的 translate / scale / rotate 属性也是位移（终审抓的：原先只认 transform）
+      if (!帧 || !/(^|[;{\s])(transform|translate|scale|rotate):/.test(帧)) continue // 纯淡入淡出豁免
       const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
-      const 末段 = 选择器.split(/\s+/).pop()!.split(":")[0]!
-      if (末段 && 减弱块.includes(末段)) continue
+      // 先剥掉括号里的东西（`:not(:has(~ .turn))` 里也有空格），再取最后一段的类名。
+      // **整段匹配，不是子串**（终审抓的）：原先 `.menu` 会因为减弱块里提到 `.menu-scrim` 而被放过
+      let 剥 = 选择器
+      while (/\([^()]*\)/.test(剥)) 剥 = 剥.replace(/\([^()]*\)/g, "")
+      const 末段 = 剥.trim().split(/\s+/).pop()!.split(":")[0]!
+      const 转义 = 末段.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      if (末段 && new RegExp(`(^|[^\\w-])${转义}(?![\\w-])`).test(减弱块)) continue
       违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器} → ${名}`)
     }
     expect(

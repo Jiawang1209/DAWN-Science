@@ -92,34 +92,24 @@
    */
   --theme-surface-app: var(--theme-gray-50);
   --theme-surface-sidebar: var(--theme-gray-75);
-  /**
-   * **玻璃面**（2026-09-10 视觉重做）：侧栏与右侧坞是玻璃，不是纸。
-   *
-   * **它是独立的一档，不是 `--theme-surface-sidebar` 改出来的。**
-   * 那个令牌还被 `.composer-footer` 和 `.turn.user .bubble` 用着，
-   * 而气泡在对话区里——正文底下透出东西会直接影响可读性。
-   * 复用它就是让一个名字担两种相反的要求。
-   *
-   * 必须写实际的 rgba 而不是 `color-mix(… transparent)`：要的是"透出背后"，
-   * 而后者算出来是一个**不透明**色，`backdrop-filter` 就什么也没得模糊。
-   * 不支持模糊时由本文件末尾的 `@supports not` 块换回 `-opaque` 那一支。
-   */
-  /**
-   * **往暗里兑，不是往亮里兑**（2026-09-11 改的，e2e 抓出来的）。
-   *
-   * 第一版写的是 `rgba(255,255,255,.5)`——照着 macOS 那种"侧栏更亮"的样子。
-   * 但本文件下面那句「**侧栏最深、内容区抬起**」是这套配色的层次骨架，
-   * `e2e/theme.spec.ts` 有一条专门守它的用例（*「层次靠的是这个，不是装饰」*），
-   * 往亮里兑当场把这个关系翻了过来。
-   *
-   * **玻璃靠的是"透 + 糊"，不是往哪边兑。** 改成兑黑，材质感一点不少，
-   * 层次也保住了。2.8% 是量出来的：兑在 `gray-50` 上正好落回 `gray-75`
-   * ——也就是侧栏原本的那一档，只是现在它是半透明的了。
-   */
-  --theme-surface-glass: rgba(0, 0, 0, 0.028);
-  --theme-surface-glass-opaque: var(--theme-gray-75);
   --theme-surface-panel: var(--theme-gray-0);
   --theme-surface-elevated: var(--theme-gray-0);
+  /**
+   * **浮层的玻璃底**（2026-09-11，终审抓的）。
+   *
+   * 视觉重做给 7 个浮层加了 `backdrop-filter`，但它们的底仍是不透明的 `elevated`——
+   * **模糊压在一块实心板后面，屏幕上什么也看不见**，却每个都多开一个合成层。
+   * 作者选 B 时看到的「透过玻璃看见后面」，那一刻整条分支上**一处都没有生效**。
+   *
+   * 兑 `transparent` 得到的是**带 alpha 的同一个色**（`--dawn-fill-*` 就是这么叠在任何面上的），
+   * 所以这里用 `color-mix`。84%：透得出后面的轮廓，压得住前面的字。
+   * 它引用 `--theme-surface-elevated`，暗色覆盖了那一个，这一个自动跟着变——**不必在暗色块里再写一遍**。
+   * 不支持模糊时由本文件末尾的 `@supports not` 块换回不透明的 `elevated`。
+   *
+   * 容器（侧栏、终端坞）**不用这个**：背后是平的底色，透了也看不见东西，
+   * 而 `backdrop-filter` 会把里面 `position: fixed` 的后代钉到容器身上（本分支踩过）。
+   */
+  --theme-surface-overlay: color-mix(in srgb, var(--theme-surface-elevated) 84%, transparent);
   --theme-surface-input: var(--theme-gray-0);
 
   /* ── 混合比例。**这一组是整套配色的调节旋钮，两个主题共用** ──── */
@@ -188,9 +178,9 @@
   /* ── 面：直接取种子。派生层保持存在，是为了让 .dawn-dark 只需覆盖种子 ── */
   --dawn-surface-app: var(--theme-surface-app);
   --dawn-surface-sidebar: var(--theme-surface-sidebar);
-  --dawn-surface-glass: var(--theme-surface-glass);
   --dawn-surface-panel: var(--theme-surface-panel);
   --dawn-surface-elevated: var(--theme-surface-elevated);
+  --dawn-surface-overlay: var(--theme-surface-overlay);
   --dawn-surface-input: var(--theme-surface-input);
 
   /* ── 描边：前景兑透明，四档。**3 是面板内的默认发丝线** ──────── */
@@ -578,13 +568,12 @@
    * 全仓此前 `backdrop-filter` **0 处**。半透明 + 模糊是「厚度」的另一半：
    * 阴影说明面浮着，透出底色说明面是**一层材质**而不是一块贴纸。
    *
-   * **只准用在三种地方**：侧栏、右侧坞、浮层。对话区里的内容面用实色
-   * ——正文底下透出东西会直接影响可读性。
+   * **只准用在浮层上**（2026-09-11 收窄：侧栏与坞撤掉了，见 styles.css `.sidebar` 那段）。
+   * 对话区里的内容面用实色——正文底下透出东西会直接影响可读性。
    *
    * `saturate()` 是配套的：模糊会把颜色摊平，补一点饱和度回来才像玻璃而不像磨砂。
-   * 两个主题共用这两个数（模糊半径与色相无关）。
+   * 两个主题共用（模糊半径与色相无关）。原本还有一档 `--dawn-blur-panel` 给侧栏，撤了。
    */
-  --dawn-blur-panel: blur(14px) saturate(150%);
   --dawn-blur-overlay: blur(20px) saturate(180%);
 
   /**
@@ -657,10 +646,6 @@
   /* 侧栏最深、内容区抬起——四个相邻档位做出四层高度 */
   --theme-surface-app: var(--theme-gray-900);
   --theme-surface-sidebar: var(--theme-gray-1000);
-  /* 同样兑黑（见亮色那段的理由）。35% 兑在应用底的两档上都落到 `gray-1000` 之下——
-     侧栏仍然是全屏最深的那一面，这是暗色层次的骨架 */
-  --theme-surface-glass: rgba(0, 0, 0, 0.35);
-  --theme-surface-glass-opaque: var(--theme-gray-1000);
   --theme-surface-panel: var(--theme-gray-800);
   --theme-surface-elevated: var(--theme-gray-750);
   --theme-surface-input: var(--theme-gray-800);
@@ -758,6 +743,6 @@
 @supports not (backdrop-filter: blur(1px)) {
   :root,
   :root.dawn-dark {
-    --theme-surface-glass: var(--theme-surface-glass-opaque);
+    --theme-surface-overlay: var(--theme-surface-elevated);
   }
 }

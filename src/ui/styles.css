@@ -466,13 +466,12 @@ pre {
    * 一屏里线越多越碎。
    */
   /**
-   * **半透明，但不加 `backdrop-filter`**（2026-09-11，e2e 抓出来的）。
+   * **这里不加 `backdrop-filter`，也不做半透明**（2026-09-11，e2e 与终审各抓一次）。
    *
-   * 两个理由，第二个是硬的：
+   * 视觉重做时侧栏试过"玻璃"，撤回了。两个理由，第二个是硬的：
    *
-   * ① **它在这里什么也不做。** 侧栏是布局容器，背后只有 body 那层渐变——
-   *    模糊一个平滑渐变，得到的还是同一个平滑渐变。透出底色的是 `glass` 那点
-   *    半透明，不是模糊。
+   * ① **它在这里什么也不做。** 侧栏是布局容器，背后只有平的应用底——
+   *    没有会动的东西可透、可糊。半透明兑出来的颜色和原来那档一样。
    *
    * ② **`backdrop-filter` 会让元素成为它 `position: fixed` 后代的包含块**
    *    （和 `filter` / `transform` 一样）。而下面那张悬停卡就在这个 `<aside>` 里，
@@ -480,11 +479,11 @@ pre {
    *    本仓库栽过一次）。加上模糊之后，它的坐标改按侧栏解释，卡当场掉出窗口底——
    *    `e2e/sess-title.spec.ts` 那条「窗口矮的时候…」红了，只有它红。
    *
-   * **模糊只给浮层**（压在内容上、透过玻璃能看见东西的那些）。
+   * **玻璃只给浮层**（压在内容上、透过去真能看见东西的那些）。
    * 这条由 design-contract 扫描强制：带 `backdrop-filter` 的规则必须同时有
    * `--dawn-shadow-float`。
    */
-  background: var(--dawn-surface-glass);
+  background: var(--dawn-surface-sidebar);
   /**
    * 竖向照旧可滚；**横向一律裁掉**——收合与展开的两段动画里，
    * 内容都比容器宽（那正是「不被压扁」的做法），
@@ -854,13 +853,21 @@ pre {
    * 作者定的原则：*「基于我们现在有的内容去贴近。」*
    */
   margin: 0 auto var(--dawn-space-10);
-  /**
-   * 新消息进场（2026-09-11 视觉重做）。
-   *
-   * **动效跟随状态，永不延迟状态**（DESIGN.md）：这条动画只作用在元素
-   * *出现之后*，不推迟任何内容的可见时刻。位移只有 4px——
-   * 大位移在流式输出时会变成持续抖动，那是最容易惹人烦的一种动效。
-   */
+}
+/**
+ * 新消息进场（2026-09-11 视觉重做）。
+ *
+ * **只给最后一条**（终审抓的）。第一版挂在 `.turn` 上，而对话视图按会话 id 挂载——
+ * 打开一段 200 条的旧会话，200 条一起淡入上滑。规格写的是「新消息进场」，不是「所有消息」。
+ *
+ * `:not(:has(~ .turn))` = 后面没有兄弟 `.turn` 的那一条。新的一条追加进来，
+ * 上一条不再匹配、动画随之撤掉（还没播完就直接落定，不回退）；流式输出时同一条元素
+ * 一直是最后一条，**不会重播**。打开旧会话时只有最新那条动一下——"最新的东西到了"。
+ *
+ * **动效跟随状态，永不延迟状态**（DESIGN.md）：只作用在元素出现之后，不推迟可见时刻。
+ * 位移只有 4px——大位移在流式输出时会变成持续抖动。
+ */
+.turn:not(:has(~ .turn)) {
   animation: dawn-turn-in var(--dawn-dur-slow) var(--dawn-ease);
 }
 @keyframes dawn-turn-in {
@@ -880,7 +887,7 @@ pre {
  * 菜单换成淡入，都不是简单地 `animation: none`。
  */
 @media (prefers-reduced-motion: reduce) {
-  .turn {
+  .turn:not(:has(~ .turn)) {
     animation: dawn-turn-fade var(--dawn-dur-slow) ease-out;
   }
 }
@@ -1262,9 +1269,9 @@ pre {
   max-height: 280px;
   overflow: auto;
   padding: 8px 12px;
-  /* 同侧栏：半透明留着，模糊去掉。它也是布局容器，背后没有会动的东西可糊，
-     而 `backdrop-filter` 会把里面所有 `position: fixed` 的东西钉到它身上 */
-  background: var(--dawn-surface-glass);
+  /* **这是底部终端坞，不是右侧坞**（2026-09-11 终审抓的：视觉重做时认错了元素）。
+     xterm 自己涂的是 `--dawn-surface-sidebar`，这里必须同色，否则终端四周围出一圈色带 */
+  background: var(--dawn-surface-sidebar);
 }
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**
@@ -1662,7 +1669,7 @@ pre {
   gap: 6px;
   padding: 8px;
   border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
   backdrop-filter: var(--dawn-blur-overlay);
   box-shadow: var(--dawn-shadow-float);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
@@ -2167,7 +2174,10 @@ pre {
 /* **横向滚动关在自己这一层**：一张宽表不该把整个界面推得左右晃 */
 .table-scroll {
   overflow-x: auto;
-  box-shadow: var(--dawn-shadow-md);
+  /* **真描边 + md-bordered，不是 md**（2026-09-11 终审抓的）：暗色 md 的那圈是 inset 阴影，
+     画在子元素底色**下面**——粘性表头 / 悬停的格子 / PDF 的 <embed> 一盖就没了，旧的 border 不会 */
+  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
   border-radius: var(--dawn-radius-md);
 }
 
@@ -2414,7 +2424,7 @@ pre {
 }
 /* 右边那一格里的按钮不许折行（卡有了内距之后那一列窄了 30px，「保存」曾被掰成两行） */
 .set-control .btn { white-space: nowrap; }
-.set-section-bare .set-rows { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.set-section-bare .set-rows { background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
 .set-rows > .set-row:last-child,
 .set-rows > .set-row:has(+ .kernel-ref) {
   border-bottom: none;
@@ -2607,7 +2617,7 @@ pre {
   padding: var(--dawn-space-4);
   border-radius: var(--dawn-radius-lg);
   corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
   backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
@@ -2737,7 +2747,10 @@ pre {
 .preview-pdf {
   width: 100%;
   height: min(72vh, 900px);
-  box-shadow: var(--dawn-shadow-md);
+  /* **真描边 + md-bordered，不是 md**（2026-09-11 终审抓的）：暗色 md 的那圈是 inset 阴影，
+     画在子元素底色**下面**——粘性表头 / 悬停的格子 / PDF 的 <embed> 一盖就没了，旧的 border 不会 */
+  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-elevated);
 }
@@ -2911,7 +2924,7 @@ pre {
 .turn-tick-summary {
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
   backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
@@ -5880,7 +5893,7 @@ pre {
   width: var(--tick-w);
   border-radius: var(--dawn-radius-xs);
   background: var(--dawn-text-4);
-  transition: width var(--dawn-dur-fast) var(--dawn-ease), background-color var(--dawn-dur-fast) ease;
+  transition: width var(--dawn-dur-fast) ease, background-color var(--dawn-dur-fast) ease;
 }
 .turn-tick.current::before { background: var(--dawn-text-1); }
 .turn-tick.near::before { background: var(--dawn-accent); }
@@ -5892,7 +5905,7 @@ pre {
   max-width: 18rem;
   padding: 3px var(--dawn-space-2);
   border-radius: var(--dawn-radius-sm);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
   backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
@@ -5948,9 +5961,22 @@ pre {
   85% { opacity: 1; }
   100% { opacity: 0; }
 }
-/* 位移要能关（先有的缺口，2026-09-11 由新加的扫描抓到）。淡入留着：它不引起不适 */
+/**
+ * 位移要能关（先有的缺口，2026-09-11 由新加的扫描抓到）。
+ *
+ * **只换 `animation-name`，时长一个字不碰**（终审抓的）：这颗提示由 `onAnimationEnd`
+ * 卸载，**动画时长就是它在屏幕上停留多久**——4.5s，失败时 `.bad` 拉到 8.5s。
+ * 第一版写成了 `animation: … 300ms`，减弱动效的人就只看得见 0.3 秒，
+ * 而那是这次导出**唯一**的结果。换成同样节奏、只是不位移的那一条。
+ */
 @media (prefers-reduced-motion: reduce) {
-  .export-toast { animation: dawn-turn-fade 300ms ease-out forwards; }
+  .export-toast { animation-name: export-fade-calm; }
+}
+@keyframes export-fade-calm {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
 }
 .nb-export { margin-left: auto; }
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
@@ -6316,7 +6342,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   gap: var(--dawn-space-2);
   width: 240px;
   padding: var(--dawn-space-2);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
   backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
@@ -6359,7 +6385,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   padding: var(--dawn-space-1) var(--dawn-space-2);
   font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-2);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
   backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
@@ -6403,7 +6429,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .dropper-val code { font-family: var(--dawn-font-mono); }
 .dropper-swatch { width: 12px; height: 12px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
 .dropper-hint { margin: 0; font-size: var(--dawn-fs-badge); color: var(--dawn-text-2); }
-.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); backdrop-filter: var(--dawn-blur-overlay); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
+.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-overlay); backdrop-filter: var(--dawn-blur-overlay); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
 .dropper-err { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); }
 
 /* 附栏三颗的静默态：与「优化输入」同一档淡（终端此前常黑，作者报的） */

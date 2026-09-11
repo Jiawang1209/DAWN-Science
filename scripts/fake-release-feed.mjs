@@ -121,8 +121,14 @@ export function startFakeReleaseFeed(opts = {}) {
    * 现在给一个真的就绪信号，并且**让误用当场说人话**而不是解引用 null。
    */
   const 已就绪 = new Promise((resolve, reject) => {
-    server.once("listening", resolve)
-    server.once("error", reject)
+    // listening 之后必须把这个 error 监听摘掉（终审抓的）：留着的话，启动之后的第一个
+    // 服务器错误会被一个早已 settle 的 promise 静悄悄吞掉——此前那种错误会让进程直接崩出来
+    const 启动失败 = (e) => reject(e)
+    server.once("error", 启动失败)
+    server.once("listening", () => {
+      server.off("error", 启动失败)
+      resolve()
+    })
   })
   const 端口 = () => {
     const a = server.address()

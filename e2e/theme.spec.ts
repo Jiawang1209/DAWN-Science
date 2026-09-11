@@ -91,7 +91,14 @@ test("暗色下侧栏比内容区更深 —— 层次靠的是这个，不是装
   await switchTo(page, "暗色")
   const body = parseColor((await styleOf(page, "body")).bg)
   const side = parseColor((await styleOf(page, ".sidebar")).bg)
-  expect(luminance(side.rgb)).toBeLessThan(luminance(body.rgb))
+  /**
+   * **按 alpha 合成到 body 上再比**（2026-09-11 终审抓的）。侧栏试过半透明，
+   * `parseColor` 丢掉 alpha 只读 rgb——`rgba(0,0,0,.35)` 读成纯黑，
+   * 于是任何一丝黑色的染色都能让这条过，**它守的那个退化它再也抓不住**。
+   * 侧栏现在又是不透明的（alpha=1 时这一步是空操作），但下一次有人把它改透明时这里不能再瞎。
+   */
+  const 合成 = side.rgb.map((c, i) => c * side.alpha + body.rgb[i]! * (1 - side.alpha)) as [number, number, number]
+  expect(luminance(合成)).toBeLessThan(luminance(body.rgb))
 })
 
 test("选择被记住 —— 重载之后还是暗色", async ({ dawn }) => {

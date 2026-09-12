@@ -39,6 +39,21 @@
     10 个构建产物按 release id `386778124` 独立存储，与 git 对象无关。
   - 旧 SHA 的直链（如 `/commit/4c95323`）在 GitHub 上仍返回 200——悬空对象不会立即回收，
     但已不在任何 ref 上，不进列表页也不计入统计。
+- **收尾（关键，2026-09-12 01:57 UTC）**：改完历史强推后，侧栏**仍显示 claude 长达约 3 小时**。
+  根因是 **GitHub 的贡献者缓存独立于 git 历史存在，改历史不会让它自己刷新**。
+  解法是主动爆破缓存——**把默认分支改个名再改回来**：
+
+  ```
+  gh api -X POST repos/<owner>/<repo>/branches/main/rename     -f new_name=main-tmp
+  gh api -X POST repos/<owner>/<repo>/branches/main-tmp/rename -f new_name=main
+  ```
+
+  改完约 **10 分钟内** 侧栏变回 Contributors 1，作者确认。
+  动手前确认过：无分支保护、0 rulesets、0 开着的 PR、未启用 Pages，故无副作用；
+  本地克隆不需要任何操作。**没有删库**——删库要赔上 10 stars、4 个 Release /
+  40 个产物 / 7.3 GB / 68 次下载记录与创建日期，而这招零代价。
+  （备用牌，没用上：临时 block 掉 `claude` 账号；仓库转出再转回——后者会清掉 Actions secrets。）
+
 - **Verification**:
   - 切换前七项：`git diff main main-clean` 空；顶端 tree 同为 `e873200`；commit 总数同为 937；
     残留 trailer 0 条；32 个 commit 的 tree / 作者 / 作者时间 / 提交时间 / 标题**逐字段一致**；
@@ -55,6 +70,9 @@
   - 仓库侧栏的贡献者名单**计入 co-author**，而 REST `/contributors` 与 Insights 图表
     （`/graphs/contributors-data`）**都不计**——后两者从头到尾只有作者一人，
     对本问题**零信息量**。唯一判据是登录后的侧栏，助手无法读取。
+  - 改名脚本的自检也写砸过一次：用 `gh api` 读默认分支，**吃到缓存**，
+    打出「第 1 步后仍是 main、最后却是 main-tmp」的矛盾值。
+    **查远端 ref 状态要用 `git ls-remote`**（走 git 协议，不吃 API 缓存）。
 
 ---
 

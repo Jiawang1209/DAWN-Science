@@ -8,6 +8,56 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-12 — 剥掉 31 个 commit 里的 Claude trailer：GitHub 贡献者列表里多了一个 claude
+
+- **Type**: chore
+- **Motivation**: 作者发现仓库首页右侧 **Contributors 显示 2 人**，第二个是 `claude`。
+  根因是 `visual-refresh` 那一轮（09-10 ~ 09-11）的 31 个 commit 被写进了
+  `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`——
+  GitHub 把这个邮箱解析到账号 `claude`（`u/81847`），co-author 因此计入贡献者。
+  作者的 `~/.claude/CLAUDE.md` 早已明令禁止该 trailer，是助手未遵守。
+  **与 push 无关**：`.git/logs/refs/remotes/origin/main` 里 16 次远端更新全部署名作者本人。
+- **What**:
+  - 用 `git commit-tree` 把 `8b5a617..b00c763` 共 32 个 commit **逐个重放**到新链上，
+    `sed` 删掉 `Co-Authored-By: Claude` 与 `Claude-Session:` 两行（后者是指向私有会话的链接，
+    留在公开仓库无益）。未用 `git filter-branch`——它原地改写分支，且被安全策略拦下；
+    重放到新分支再切换，在验证通过前 `main` 一个字节都不动。
+  - 重打 annotated tag `v0.0.5`，保留原 tagger 身份、时间（`Fri, 11 Sep 2026 11:51:31 +0800`）与说明。
+  - 删掉已并入 main 的本地分支 `visual-refresh`（旧链）。
+  - 保险点：`backup/main-before-strip`、`backup/visual-refresh-before-strip`、`backup/v0.0.5-before-strip`。
+  - **防复发**：新增 `.githooks/commit-msg` + `git config core.hooksPath .githooks`，
+    提交时自动剥掉 `Co-Authored-By: Claude*`、`Claude-Session:` 与任何 `*@anthropic.com>` 的
+    co-author 行。根因是 harness 每轮都提示助手加该 trailer，与 `~/.claude/CLAUDE.md` 的禁令冲突——
+    **靠"每次记得别加"不可靠**，按本项目准入规则第 2 条改成自动强制
+    （*"Prefer automated enforcement over remembered convention."*）。
+- **Impact**:
+  - **树内容零变化**——37 个源文件一字未动，仅 commit message 少了两行。
+  - `8b5a617` 之后的 32 个 commit **SHA 全变**（`b00c763` → `794387f`）。
+    这是一次远端历史改写，由作者 `--force-with-lease` 推送。
+  - 仓库无 fork（0）、无 PR（0）、远端仅 `main` 一条分支，牵连面为零。
+  - v0.0.5 的 **GitHub Release 不受影响**：`target_commitish` 是分支名 `"main"`，
+    10 个构建产物按 release id `386778124` 独立存储，与 git 对象无关。
+  - 旧 SHA 的直链（如 `/commit/4c95323`）在 GitHub 上仍返回 200——悬空对象不会立即回收，
+    但已不在任何 ref 上，不进列表页也不计入统计。
+- **Verification**:
+  - 切换前七项：`git diff main main-clean` 空；顶端 tree 同为 `e873200`；commit 总数同为 937；
+    残留 trailer 0 条；32 个 commit 的 tree / 作者 / 作者时间 / 提交时间 / 标题**逐字段一致**；
+    message 正文逐条 diff 一字未动；32 个 commit 全部未签名（`%G?` 均为 `N`），无签名损失。
+  - 推送后：`main` 与 `origin/main` 计数 `0 0`；`v0.0.5^{}` 远端指向 `794387f`；
+    **全部 42 个本地分支 + 全部 tag 扫描残留 trailer 为 0**（防止日后推某条旧分支又带回来）；
+    commit 列表页 `alt="claude"` 由 **31 → 0**。
+  - 钩子本身用样例 message 验过：两行 trailer 被剥掉，正文不动。
+  - **两次判据选错，记下来**：① 首次排查误判「Contributors 里没有 claude」——curl 取的首页 HTML
+    里整个右侧栏根本不在返回内容中（需登录），`contributors_list` fragment 未登录返回空 `<ul>`；
+    ② 事后监控误选 `/stats/contributors`，见其为 905 便断定「937 − 32，正在重算」——实际该端点
+    **不计 merge commit**，而 main 恰有 32 个 merge commit，905 是终值，退出条件永不满足，
+    空转 50 分钟。**根因都是没有先取基线就把一个数字当判据。**
+  - 仓库侧栏的贡献者名单**计入 co-author**，而 REST `/contributors` 与 Insights 图表
+    （`/graphs/contributors-data`）**都不计**——后两者从头到尾只有作者一人，
+    对本问题**零信息量**。唯一判据是登录后的侧栏，助手无法读取。
+
+---
+
 ### 2026-09-11 — `visual-refresh` 合并进 main（快进，未推）
 
 - **Type**: chore

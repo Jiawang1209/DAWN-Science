@@ -66,15 +66,17 @@ export function SessionTabs({
               {/* 全名给悬浮看——顶格里只留截断后的那截。title 摆在这个 span（不是按钮）上，设计契约禁按钮用原生 title */}
               <span className="session-tab-title" data-authored="1" title={x.title}>{x.title}</span>
             </Button>
+            {/* 走 primitive，几何仍归 `.session-tab-close`（2026-09-08：那条扫描修好后露出来的） */}
             {onClose ? (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="inline"
                 className="session-tab-close"
                 aria-label={tf("关掉「{0}」（收进归档）", x.title)}
                 onClick={() => onClose(x.sessionId)}
               >
                 ×
-              </button>
+              </Button>
             ) : null}
           </div>
         )

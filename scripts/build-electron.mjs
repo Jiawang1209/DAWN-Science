@@ -9,7 +9,7 @@
  * 打进 bundle 只会得到一个坏掉的文件。
  */
 import { build } from "esbuild"
-import { chmodSync, cpSync, existsSync, statSync } from "node:fs"
+import { chmodSync, cpSync, existsSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
 /**
@@ -82,6 +82,17 @@ const external = [
   "cpu-features",
 ]
 
+/**
+ * **我们自己的版本号，构建时钉进去**（2026-09-06）。
+ *
+ * `app.getVersion()` 在**打包版**里读的是包内的 `package.json`（对），
+ * 但 `electron dist/electron/main.js` 这样跑时它回的是 **Electron 自己的版本**
+ * （实测 `43.3.0`）——于是「有没有新版」这件事在开发与 e2e 里全判反了，
+ * 而且判反的方向是**安静的**：线上 9.9.9 会被算成比 43.3.0 旧，什么都不显示。
+ * 钉一份进来，两种跑法就是同一个答案。
+ */
+const 我们的版本 = JSON.parse(readFileSync("package.json", "utf8")).version
+
 await build({
   entryPoints: ["src/electron/main.ts"],
   bundle: true,
@@ -89,6 +100,7 @@ await build({
   format: "esm",
   target: "node22",
   outfile: "dist/electron/main.js",
+  define: { __APP_VERSION__: JSON.stringify(我们的版本) },
   external,
   banner: {
     // bundle 后的 ESM 里 require 不存在，但被 external 的包仍会用到它

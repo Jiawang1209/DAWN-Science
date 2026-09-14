@@ -7,6 +7,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { StickToBottom } from "use-stick-to-bottom"
+import { 回到底部 } from "./back-to-bottom.js"
 import type { KernelState } from "../protocol/index.js"
 import { Button, EmptyState, 导出提示, type 导出提示态 } from "./primitives.js"
 import { InterpreterPicker } from "./interpreter-picker.js"
@@ -358,6 +359,8 @@ export function NotebookPanel({
           </div>
         ))}
         </StickToBottom.Content>
+        {/* 与对话区同一颗、同一套文案（2026-09-08）：同一条规则不许只套一半 */}
+        <回到底部 />
       </StickToBottom>
 
       <div className="nb-input">

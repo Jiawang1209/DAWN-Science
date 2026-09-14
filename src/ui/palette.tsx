@@ -8,6 +8,7 @@
  * 那条纪律才是这个 Task 的实质，面板只是它的一个出口。
  */
 import { useEffect, useMemo, useRef, useState } from "react"
+import { 在组词 } from "./ime.js"
 import { useStore } from "@nanostores/react"
 import { Row } from "./primitives.js"
 import type { Command } from "./commands.js"
@@ -103,6 +104,8 @@ export function CommandPalette({ commands }: { commands: readonly Command[] }) {
       aria-modal="true"
       aria-label={t("命令面板")}
       onKeyDown={(e) => {
+        // 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）
+        if (在组词(e)) return
         if (e.key === "Escape") closePalette()
         else if (e.key === "ArrowDown") {
           e.preventDefault()

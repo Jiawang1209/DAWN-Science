@@ -99,18 +99,30 @@ export function AgentBrowserPane({
                   * 重新访问是**你自己的会话**——不同登录态下同一 URL 内容可以不同，
                   * 措辞不许让两个东西长得一样（title 里说清）。
                   */}
-                <button
-                  type="button"
+                {/**
+                  * **走 Button primitive，几何仍归 `.agent-visit`**（2026-09-08 修）。
+                  *
+                  * 这里此前是一个裸 `<button>`，而设计契约明写「功能组件不直接写
+                  * `<button>`」。它躲过扫描是因为那条扫描逐行匹配 `<button[\s>]`——
+                  * 属性一多，`<button` 就落在行尾，后面既没有空白也没有 `>`。
+                  * 那条扫描 2026-09-08 改成整篇匹配之后，这一处当场露出来。
+                  *
+                  * `size="inline"` 把 primitive 的盒子清零，内距/圆角/底色全部由
+                  * `.agent-visit` 拥有——与 `Row` 那条同一个办法（见 `primitives.tsx`）。
+                  * 原生 `title` 一并去掉：契约禁止（无样式、约 500ms 延迟、与主题不符），
+                  * 而这颗按钮的可访问名本来就由 `aria-label` 给。
+                  */}
+                <Button
+                  variant="ghost"
+                  size="inline"
                   className="agent-visit"
-                  // aria-label 而不是只靠 title（审查 debug J15）:title 读屏念不可靠,这颗按钮的可名此前只有子里那串时间
                   aria-label={t("重新访问（你自己的会话，不是 agent 看到的那份）")}
-                  title={t("重新访问（你自己的会话，不是 agent 看到的那份）")}
                   onClick={() => onRevisit(h.url)}
                 >
                   <span className="agent-visit-at">{h.at.slice(11, 19)}</span>
                   <span className="agent-visit-title">{h.title || h.url}</span>
                   <span className="agent-visit-url">{h.url}</span>
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

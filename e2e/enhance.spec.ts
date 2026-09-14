@@ -25,6 +25,32 @@ test("**基础：点一下草稿被改写；撤回回到原样；空草稿按钮
   await expect(page.getByRole("button", { name: "撤回", exact: true })).toHaveCount(0)
 })
 
+test("**发出去之后，「撤回」跟着那句话一起没**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+
+  await 输入框(page).fill("把图画好看点")
+  await page.getByRole("button", { name: /档位：/ }).click()
+  await page.getByRole("menuitemradio", { name: /基础/ }).click()
+  await 增强键(page).click()
+  await expect(输入框(page)).toHaveValue("改写：把图画好看点", { timeout: 30_000 })
+  await expect(page.getByRole("button", { name: "撤回", exact: true })).toBeVisible()
+
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+  /**
+   * 2026-09-08 作者报的：*「对话提交上去了，竟然还[能]撤销，
+   * 我撤销之后竟然还是原来的对话。」*
+   *
+   * 撤回栈的作用域是**框里这一版草稿**——发出去了，它就该跟着一起没。
+   * 留着的后果不是多一颗按钮：按下去会把**已经发走的那句话的上一版**填回空框。
+   */
+  await expect(page.getByRole("button", { name: "撤回", exact: true })).toHaveCount(0)
+  await expect(输入框(page)).toHaveValue("")
+})
+
 test("**标准：带上本会话里相关的那几轮**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
@@ -77,4 +103,76 @@ test.describe("取消", () => {
     await page.waitForTimeout(1_500)
     await expect(输入框(page)).toHaveValue("慢慢来")
   })
+})
+
+test.describe("发出去之后，还在飞的那一次改写也要作废", () => {
+  test.use({ dawnOptions: { firstChunkDelayMs: 8_000 } })
+  /**
+   * 2026-09-08 第二半：作者报的那条缺陷不止「撤回还立着」。
+   *
+   * **点了「优化输入」紧接着按回车**——话发出去了、框清空了，而那一次改写还在飞。
+   * 它回来时会 `setDraft(改写版)`：把**已经发出去的那句话的改写版**灌进空框，
+   * 并顺手立起一颗「撤回」。人下一句话就打在这段话上面了。
+   *
+   * 作用域仍然是那一条：撤回栈也好、在飞的请求也好，都属于**框里这一版草稿**。
+   */
+  test("**点了优化紧接着回车：改写的结果不许再落进空框**", async ({ dawn }) => {
+    test.setTimeout(90_000)
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    await 输入框(page).fill("把图画好看点")
+    await 增强键(page).click()
+    await expect(page.getByRole("button", { name: /放弃/ })).toBeVisible()
+
+    // 不等它回来，直接发
+    await 输入框(page).press("Enter")
+    await expect(输入框(page)).toHaveValue("")
+
+    // 熬过那 8 秒——改写要是没作废，就在这段时间里落回框里
+    await page.waitForTimeout(12_000)
+    await expect(输入框(page)).toHaveValue("")
+    await expect(page.getByRole("button", { name: "撤回", exact: true })).toHaveCount(0)
+  })
+})
+
+/**
+ * **借了别人的模型，就要说出来**（2026-09-09，协议 7.33）。
+ *
+ * 作者问：*「优化输入……是不是锁死在某一个 LLM 的吧？」* 没锁死——native 会话用的
+ * 就是它此刻那颗 pill 上的模型。**但空态屏与 cli / ACP 会话够不着自己的模型，
+ * 只能借配置里第一个 native**，而界面此前对此一个字都不说。
+ *
+ * 两条一起验，缺一条这个功能就会变成另一种坏：
+ *   ① 借了要说（不静默换人，规格 7.5）；
+ *   ② **没借不许说**（说了是噪音，而噪音多了真正该看见的那句就沉下去）。
+ */
+test("**空态屏借了模型：那行灰字要说清是谁改的**", async ({ dawn }) => {
+  const { page } = dawn
+  // 这一屏还没有会话——后端只能借配置里第一个 native
+  await 输入框(page).fill("把图画好看点")
+  await page.getByRole("button", { name: /档位：/ }).click()
+  await page.getByRole("menuitemradio", { name: /基础/ }).click()
+  await 增强键(page).click()
+  await expect(输入框(page)).toHaveValue("改写：把图画好看点", { timeout: 30_000 })
+  await expect(page.getByText(/这段对话的 agent 没有可直接调用的模型，用「.+」改的/)).toBeVisible()
+})
+
+test("**native 会话没借：那行灰字一个字都不提模型**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await 输入框(page).fill("先做一张相关的图")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+  await 输入框(page).fill("再画一张")
+  await page.getByRole("button", { name: /档位：/ }).click()
+  await page.getByRole("menuitemradio", { name: /标准/ }).click()
+  await 增强键(page).click()
+  await expect(输入框(page)).toHaveValue("（参考了：对话背景）改写：再画一张", { timeout: 30_000 })
+  // 上下文那句照旧在；**「用……改的」那句不许出现**——这段会话用的就是屏幕上那个模型
+  await expect(page.getByText(/带上了：对话第 1–2 轮/)).toBeVisible()
+  await expect(page.getByText(/没有可直接调用的模型/)).toHaveCount(0)
 })

@@ -10,7 +10,7 @@ import { randomBytes, randomUUID } from "node:crypto"
 import Database from "better-sqlite3"
 import { writeModelsJson } from "../config/models-json.js"
 import { EnvironmentStore } from "../store/environments.js"
-import { mkdirSync } from "node:fs"
+import { accessSync, constants, existsSync, mkdirSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { loadRegistryOrDefault } from "../config/loader.js"
 import { migrate } from "../store/schema.js"
@@ -51,6 +51,11 @@ import type { RemoteState, SshClientLike } from "../remote/ssh.js"
 import type { SessionId } from "../runtime/types.js"
 import { WorkbenchServer } from "../workbench/server.js"
 import { MemoryStore, gitBranch } from "../memory/store.js"
+import { GITHUB_LATEST, github发布源 } from "../update/发布源.js"
+import { 更新状态存储 } from "../update/状态存储.js"
+import { 更新管家 } from "../update/检查.js"
+import { 建更新服务 } from "../update/服务.js"
+import { 假安装器, 本机安装器 } from "../update/本机安装器.js"
 import { 渲染快照 } from "../memory/snapshot.js"
 import { SuggestionQueue } from "../memory/queue.js"
 import { 待装技能 } from "../memory/pending-skills.js"
@@ -106,6 +111,36 @@ export interface CreateWorkbenchOptions {
   trashItem?: (absolutePath: string) => Promise<void>
   /** 系统的下载目录。**只有主进程问得到 `app.getPath("downloads")`** */
   downloadsDir?: string
+  /**
+   * 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）。
+   *
+   * **不给就是这套壳里没有更新这件事**（无头、测试）：六个操作如实拒，
+   * 界面上少一行——**不假装「已是最新」**，那句话是假的。
+   *
+   * 版本与路径都由主进程给：`app.getVersion()` 读的是包里的 `package.json`
+   * （2026-09-06 在真的 0.0.2 包上量过），wiring 这一层不 import electron。
+   */
+  更新?: {
+    当前版本: string
+    /** `userData/update.json` */
+    状态文件: string
+    /** macOS：`.app` 的路径；换包动的是它的父目录。AppImage：`$APPIMAGE` 那个文件 */
+    应用路径?: string
+    /** 下下来的包放哪儿（`userData/update/`） */
+    下载目录: string
+    /**
+     * 换完包重启。**只有主进程做得到**（`app.relaunch()` + `app.exit()`）——
+     * wiring 是纯逻辑，不 import electron。
+     */
+    重启?: () => void
+    /**
+     * 换包**之前**把凭证交给下一版（规格 U5）。主进程给——
+     * 它手里才有 `CredentialStore` 与钥匙串。
+     */
+    交接?: (到版本: string) => void
+    /** 更新出事时记一行（主进程写进 `startup.log`） */
+    记?: (话: string) => void
+  }
   /** 每会话事件缓冲上限（字符）。默认 `DEFAULT_TERMINAL_SCROLLBACK_CHARS` */
   terminalScrollbackChars?: number
   /** 写权租约的 TTL（秒）。**默认 300**；e2e 调小它来验过期那条路 */
@@ -191,6 +226,13 @@ export interface Workbench {
    * 会自己写进去；不推的话屏上一直显示「还没选」而内核已经在用了。
    */
   onRemoteListChanged(cb: () => void): () => void
+  /**
+   * 更新状态变了（2026-09-06）：**推的是整份状态**，界面照它画。
+   * 下载进度靠它，不靠界面轮询——轮询会在两次之间显示一个停住的进度条。
+   */
+  onUpdatePush(
+    cb: (回执: { 状态: import("../protocol/entities.js").更新状态; 自动检查: boolean }) => void,
+  ): () => void
   /**
    * **网页那一格里的下载落一条 Run**（批 4，2026-08-18，作者选的乙）。
    *
@@ -1066,6 +1108,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    * （前者只换一台的状态，后者要重拉名单）。
    */
   let 远端名单变了: (() => void) | undefined
+  /**
+   * 更新状态推给界面的出口（2026-09-06）。与 `远端状态变了` 同一个模式：
+   * **装配层接上之后才有值**——接不上就只是没人听。
+   */
+  let 更新推送: ((回执: { 状态: import("../protocol/entities.js").更新状态; 自动检查: boolean }) => void) | undefined
 
   /**
    * DAWN 工具网关（B1 路线 B，2026-08-17）。**每次运行一台。**
@@ -1080,7 +1127,87 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   /** 退出时要收的：定时调度器、微信轮询（backend 登记进来） */
   const 收摊们: Array<() => Promise<void> | void> = []
+  /**
+   * 更新那一套（2026-09-06）。**假 feed 与真 GitHub 只差一个端点**：
+   * `DAWN_UPDATE_FEED` 一给，`dev:mock` 与 e2e 走的就是同一份解析器（准入规则 1）。
+   */
+  const 更新服务 = (() => {
+    if (!opts.更新) return undefined
+    /** e2e / dev:mock：真的下、假装换（不能真去换开发者机器上那个 `.app`） */
+    const 假装换包 = process.env.DAWN_FAKE_UPDATE_INSTALL === "1"
+    // 假装模式下那个 `.app` 的父目录得真的存在——「能不能自装」是拿它的写权限判的
+    if (假装换包) mkdirSync(opts.更新.下载目录, { recursive: true })
+    const 存储 = new 更新状态存储(opts.更新.状态文件)
+    const 管家 = new 更新管家({
+      当前版本: opts.更新.当前版本,
+      源: github发布源({ 端点: process.env.DAWN_UPDATE_FEED ?? GITHUB_LATEST }),
+      事实: {
+        platform: process.platform,
+        arch: process.arch,
+        // 这两个都是 electron-builder 自己设的：**「能不能自装」由环境说了算，不由猜测**
+        ...(process.env.APPIMAGE ? { appImage: process.env.APPIMAGE } : {}),
+        ...(process.env.PORTABLE_EXECUTABLE_FILE ? { portableExe: process.env.PORTABLE_EXECUTABLE_FILE } : {}),
+        /**
+         * **假装模式下也要有一个 `.app` 路径**（`DAWN_FAKE_UPDATE_INSTALL=1`）：
+         * 没有它，「能不能自装」会答「开发模式下换不了包」，于是
+         * 下载那条路在 e2e 里根本走不到——而那正是要验的东西。
+         * 指向下载目录里一个不存在的名字：假安装器不碰它。
+         */
+        ...(opts.更新.应用路径
+          ? { appPath: opts.更新.应用路径 }
+          : 假装换包
+            ? { appPath: join(opts.更新.下载目录, "DAWN Science.app") }
+            : {}),
+        可写: (路径) => {
+          try {
+            accessSync(路径, constants.W_OK)
+            return true
+          } catch {
+            return false
+          }
+        },
+      },
+      读状态: () => 存储.读(),
+      写状态: (下) => 存储.写(下),
+      // 上次下好的那个包还在的话，直接进 ready——别让人再下一遍 200 MB
+      包还在: (路径) => existsSync(路径),
+    })
+    /**
+     * **能不能装，由环境说了算**：没打包（没有 `.app`）时 `安装器` 不给，
+     * 下载与安装如实拒。`DAWN_FAKE_UPDATE_INSTALL=1` 走假的那份——
+     * e2e 里不能真换掉开发者机器上的 `.app`。
+     */
+    const 下载目录 = opts.更新.下载目录
+    const 安装器 =
+      假装换包
+        ? 假安装器({
+            下载目录,
+            标记文件: join(下载目录, "假装换包了.json"),
+            记: (话) => console.log(`[更新] ${话}`),
+          })
+        : opts.更新.重启
+          ? 本机安装器({
+              下载目录,
+              // **这一行漏过一次**：漏了它，真机上点「重启并更新」什么都不会发生
+              ...(opts.更新.应用路径 ? { 应用路径: opts.更新.应用路径 } : {}),
+              重启: opts.更新.重启,
+            })
+          : undefined
+    return 建更新服务({
+      管家,
+      读盘: () => 存储.读(),
+      ...(安装器 ? { 安装器 } : {}),
+      ...(opts.更新.交接 ? { 交接: opts.更新.交接 } : {}),
+      记: (话) => {
+        opts.更新?.记?.(话)
+        console.error(`[更新] ${话}`)
+      },
+      推: (回执) => 更新推送?.(回执),
+    })
+  })()
+
   const backend = createWorkbenchBackend({
+    ...(更新服务 ? { 更新: 更新服务 } : {}),
     // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）
     kernels: 对话的内核,
     注册收摊: (f) => 收摊们.push(f),
@@ -1438,6 +1565,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       远端名单变了 = cb
       return () => {
         远端名单变了 = undefined
+      }
+    },
+    onUpdatePush(cb) {
+      更新推送 = cb
+      return () => {
+        更新推送 = undefined
       }
     },
     close() {

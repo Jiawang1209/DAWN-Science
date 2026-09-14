@@ -78,10 +78,38 @@
   --theme-accent: var(--theme-user-accent);
 
   /* 面。亮色下内容区是纯白，浮在略深的应用底之上 */
+  /**
+   * **平色，不是渐变**（2026-09-11 作者定的）。
+   *
+   * 2026-09-10 这里试过一条极淡的 `linear-gradient(158deg, gray-50, #e7ebf3)`，
+   * 理由是"面要浮起来，底下得有东西可浮"。它和逐像素视觉基线**不能共存**：
+   * 渐变的抖动相位会在两种确定的状态之间跳，「命令面板·亮色」因此
+   * **6 次里红 5 次、每次恰好 59558 像素**；换回平色，同一屏 6/6 稳定。
+   *
+   * 作者在「留渐变」与「留基线」之间选了基线。损失的是一个按设计就该
+   * **小到说不出它是渐变**的效果；「面浮起来」这件事由玻璃的半透明与四档阴影在做。
+   * **别再把渐变加回这一层**——想加，先拿出一个在基线上稳定的做法。
+   */
   --theme-surface-app: var(--theme-gray-50);
   --theme-surface-sidebar: var(--theme-gray-75);
   --theme-surface-panel: var(--theme-gray-0);
   --theme-surface-elevated: var(--theme-gray-0);
+  /**
+   * **浮层的玻璃底**（2026-09-11，终审抓的）。
+   *
+   * 视觉重做给 7 个浮层加了 `backdrop-filter`，但它们的底仍是不透明的 `elevated`——
+   * **模糊压在一块实心板后面，屏幕上什么也看不见**，却每个都多开一个合成层。
+   * 作者选 B 时看到的「透过玻璃看见后面」，那一刻整条分支上**一处都没有生效**。
+   *
+   * 兑 `transparent` 得到的是**带 alpha 的同一个色**（`--dawn-fill-*` 就是这么叠在任何面上的），
+   * 所以这里用 `color-mix`。84%：透得出后面的轮廓，压得住前面的字。
+   * 它引用 `--theme-surface-elevated`，暗色覆盖了那一个，这一个自动跟着变——**不必在暗色块里再写一遍**。
+   * 不支持模糊时由本文件末尾的 `@supports not` 块换回不透明的 `elevated`。
+   *
+   * 容器（侧栏、终端坞）**不用这个**：背后是平的底色，透了也看不见东西，
+   * 而 `backdrop-filter` 会把里面 `position: fixed` 的后代钉到容器身上（本分支踩过）。
+   */
+  --theme-surface-overlay: color-mix(in srgb, var(--theme-surface-elevated) 84%, transparent);
   --theme-surface-input: var(--theme-gray-0);
 
   /* ── 混合比例。**这一组是整套配色的调节旋钮，两个主题共用** ──── */
@@ -152,6 +180,7 @@
   --dawn-surface-sidebar: var(--theme-surface-sidebar);
   --dawn-surface-panel: var(--theme-surface-panel);
   --dawn-surface-elevated: var(--theme-surface-elevated);
+  --dawn-surface-overlay: var(--theme-surface-overlay);
   --dawn-surface-input: var(--theme-surface-input);
 
   /* ── 描边：前景兑透明，四档。**3 是面板内的默认发丝线** ──────── */
@@ -384,13 +413,57 @@
   --dawn-weight-semibold: 600;
 
   /**
-   * **文字只有四档**（2026-08-23 美化 ②）：标题 18 / 小标题 14 / 正文 13（`--dawn-ui-size`）/ 次要 12。
-   * 11px 只给徽章与胶囊（mono 小标），图标尺寸与图表刻度不算文字。
-   * 此前 27 种字号——其中 14/15/16/20/1rem/1.25rem 全是「标题」的不同写法。
+   * ── 动效（2026-09-10 视觉重做）────────────────────────────
+   *
+   * 此前全仓 `transition` 只有 10 条，**清一色 `ease` / `ease-out`**。
+   * `ease` 是浏览器缺省——用它等于没做过动效决定。
+   *
+   * **只立一条曲线。** 两条曲线的界面会立刻显得不是一个人做的。
+   * `cubic-bezier(.22, 1, .36, 1)` 是"快出慢入"：一开始就走掉大半距离，
+   * 尾巴很长地停下来。它让动作**看起来比实际快**，因为眼睛只记开头。
+   *
+   * **DESIGN.md「动效」那一节优先于这里**，三条都还有效：
+   *   - 控件上的功能性过渡约 100ms（→ `--dawn-dur-fast`，沿用现值 120ms）
+   *   - **动效跟随状态，永不延迟状态**
+   *   - 热交互上不要 `transition-all` 动布局几何
+   *
+   * 所以新曲线**只用在非热路径**：浮层进场、坞的开合、新消息进场。
+   * 控件三态继续用 `ease`——那里要的是"没有感觉"，不是"有性格"。
    */
+  --dawn-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dawn-dur-fast: 120ms;
+  --dawn-dur-base: 180ms;
+  --dawn-dur-slow: 260ms;
+
+  /**
+   * **文字七档**（2026-08-23 立的四档，2026-09-10 视觉重做补到七档）。
+   *
+   * 四档那一版是对的方向——此前 27 种字号，其中 14/15/16/20/1rem/1.25rem
+   * 全是「标题」的不同写法。但**收得太紧了**：18 到 12 只差 1.5 倍，
+   * 而实际用得最多的是 12px（116 处）。一屏之内所有字几乎一样大，
+   * **眼睛就找不到主次**，界面因此读起来"简陋"。
+   *
+   * 补的三档，两头各一点：
+   *
+   * - `display` 22px —— 会话标题。跨度 22/10 = **2.2×**
+   * - `label`   10px —— 分组小标（「会话」「服务器」「DAWN」），大写 + 宽字距。
+   *              **这是新角色**：小、灰、宽，让它离正文足够远，才不用靠加粗去分层
+   * - `badge`   11px —— **旧角色，一直没有名字**。四档那版的注释写着
+   *              「11px 只给徽章与胶囊」，于是它在 styles.css 里被写死了 53 次，
+   *              连既有的字号扫描都得为它开一个 `(11|10|9)px` 的口子。
+   *              **给它一个名字，那个口子就能关上**（第三轮 Task 11）
+   *
+   * 字距是 display 独有的：22px 以上不收紧字距会显得散。**12px 及以下不要收**，
+   * 小字收字距会掉可读性，中日文尤其。
+   */
+  --dawn-fs-display: 22px;
+  --dawn-fs-display-tracking: -0.021em;
   --dawn-fs-title: 18px;
   --dawn-fs-sub: 14px;
   --dawn-fs-meta: 12px;
+  --dawn-fs-badge: 11px;
+  --dawn-fs-label: 10px;
+  --dawn-fs-label-tracking: 0.12em;
 
   /**
    * ── 圆角：一个标量统管，方便整体调"软硬" ────────────────────
@@ -448,6 +521,60 @@
   /** 与 float 配对的发丝线。currentColor 逐元素解析，自动跟随主题 */
   --dawn-stroke-float: color-mix(in srgb, currentColor 8%, transparent);
   --dawn-shadow-sm: 0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
+  /**
+   * 中间两档（2026-09-10 视觉重做）。
+   *
+   * float 之外原先是空的：`--dawn-shadow-sm` 全仓只被调用 **1 处**，
+   * 日常的面全靠一根 `border` 分层——`box-shadow` 25 处对 `border:` 62 处。
+   * **「面与面之间只有一根线」就是那份简陋感的机制**，不是配色的问题。
+   *
+   * 形状沿用 float 已确立的规则：**单一顶部光源，x=0，负扩散随模糊增大**，
+   * 于是阴影聚在面的下方，而不是四面渗出。
+   */
+  --dawn-shadow-md:
+    0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent),
+    0 6px 16px -4px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
+  /**
+   * **lg 必须留在 float 之下。** 第一版把它写成 `0 14px 32px -8px / 9%`，
+   * 那比 float 的远层（`0 12px 28px -8px / 10%`）**还散**——
+   * 浮层开在输入卡上面时，上面那层的阴影反而比下面那层大，它就不像浮在上面。
+   * 梯子搭反了不是口味问题。四档现在模糊与浓度都单调：
+   *
+   * ```
+   * blur   2  →  16  →  24  →  28        sm / md / lg / float
+   * alpha  6% →  6%  →  8%  →  10%
+   * ```
+   */
+  --dawn-shadow-lg:
+    0 2px 4px color-mix(in srgb, var(--theme-gray-1000) 5%, transparent),
+    0 10px 24px -6px color-mix(in srgb, var(--theme-gray-1000) 8%, transparent);
+  /**
+   * **给"自己已经有一条描边"的面用的 md**（2026-09-10，作者定的 C′）。
+   *
+   * 那 16 张卡片的描边是**主题色**，2026-08-23 作者要的：
+   * *「卡片里面应该是白色背景，然后边框使用绿色的线」*。绿线要留着，卡片也要浮起来。
+   *
+   * **亮色下它和 `--dawn-shadow-md` 一模一样**——亮色的 md 本来就没有 inset。
+   * 分成两个名字是为了让**暗色**那一支有地方安放差异，
+   * 也为了让调用点自己说清楚"我这条 border 是故意的"。
+   */
+  --dawn-shadow-md-bordered:
+    0 1px 2px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent),
+    0 6px 16px -4px color-mix(in srgb, var(--theme-gray-1000) 6%, transparent);
+
+  /**
+   * ── 毛玻璃（2026-09-10 视觉重做）──────────────────────────
+   *
+   * 全仓此前 `backdrop-filter` **0 处**。半透明 + 模糊是「厚度」的另一半：
+   * 阴影说明面浮着，透出底色说明面是**一层材质**而不是一块贴纸。
+   *
+   * **只准用在浮层上**（2026-09-11 收窄：侧栏与坞撤掉了，见 styles.css `.sidebar` 那段）。
+   * 对话区里的内容面用实色——正文底下透出东西会直接影响可读性。
+   *
+   * `saturate()` 是配套的：模糊会把颜色摊平，补一点饱和度回来才像玻璃而不像磨砂。
+   * 两个主题共用（模糊半径与色相无关）。原本还有一档 `--dawn-blur-panel` 给侧栏，撤了。
+   */
+  --dawn-blur-overlay: blur(20px) saturate(180%);
 
   /**
    * z-index 是**梯子，不是数字**。
@@ -554,6 +681,68 @@
   --dawn-shadow-sm:
     inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 5%, transparent),
     0 1px 2px color-mix(in srgb, #000000 35%, transparent);
+  /**
+   * md / lg 走的是 `--dawn-shadow-sm` 那条路（**一圈 inset 在阴影里**），
+   * **不是 float 那条**（float 的一圈由 `--dawn-stroke-float` 上一条真 border 承担）。
+   * 两条路不能混：元素同时有 `border` 和 `inset` 就是两圈。
+   * **凡是用了 md/lg 的规则必须没有 `border:`** —— design-contract 里有扫描拦着。
+   *
+   * 多出来的那道 `inset 0 1px 0` 是**方向性顶边高光**（2026-09-10 新增）：
+   * 真实的顶部光源只照亮上边缘。一整圈一样亮读起来是「有边框」，
+   * **只有上边亮才是「有厚度」**——这是 macOS 一直在做的事，也是贵与不贵的分界。
+   */
+  --dawn-shadow-md:
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 7.5%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 7%, transparent),
+    0 8px 22px -6px color-mix(in srgb, #000000 45%, transparent);
+  /**
+   * 同样压到 float 之下（float 的远层是 `0 12px 32px -8px / 55%`）。
+   * 暗色这边"高一档"由**两件事**一起说：投影更小更淡，而**那圈内描边更亮**
+   * （7.5% → 9%，float 那圈由 `--dawn-stroke-float` 承担，14%）。
+   * 亮描边才是暗色里表达高度的主力，投影只负责落地。
+   */
+  --dawn-shadow-lg:
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-gray-0) 9%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 8%, transparent),
+    0 10px 26px -6px color-mix(in srgb, #000000 50%, transparent);
+  /**
+   * **少了 `inset 0 0 0 1px`**，这就是它与 `--dawn-shadow-md` 的全部差别。
+   *
+   * 那一圈的作用是"勾出形状"，而这些面自己的绿描边已经在勾了。
+   * 两个都留就是**两圈**：一圈绿、一圈白，差 1px，深色底上看得很清楚。
+   * 留下的两层各司其职：`inset 0 1px 0` 是顶边受光，最后一层负责落地。
+   */
+  /**
+   * **顶边那道要给足**（2026-09-11 改的，看图看出来的）。
+   *
+   * 第一版照抄 `md` 的 `inset 0 1px 0 / 7%`，然后把 3 倍放大的前后对照摆在一起
+   * ——**分不出来**。道理本文件上面就写着：*「黑上加黑是看不见的」*。
+   * 去掉那圈 inset 是为了躲开双线，可那一圈**正是暗色里唯一在做深度的东西**；
+   * 拿掉它却不补偿，等于这 16 张卡在暗色下什么也没得到。
+   *
+   * 补偿只能落在还剩的那一个机制上：**顶边受光**。7% → 16%，
+   * 到这个浓度它才真的读得出"上面有光"。投影同时收紧一档
+   * （22px → 14px、45% → 55%）：散得越开越像脏，收紧才像"贴着面浮起来"。
+   */
+  --dawn-shadow-md-bordered:
+    inset 0 1px 0 color-mix(in srgb, var(--theme-gray-0) 16%, transparent),
+    0 6px 14px -4px color-mix(in srgb, #000000 55%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
+}
+
+/**
+ * 毛玻璃的降级（2026-09-10 视觉重做）。
+ *
+ * **半透明的面在不支持模糊的地方会直接漏出底下的东西**——不是"没那么好看"，
+ * 是读不了。CSS 对此不会出声，所以这个块是必须的，有扫描测试拦着。
+ *
+ * **它写在这里而不是 `styles.css`**：改的是种子层令牌，而种子只有一个家。
+ * 降级只换回不透明的面，**不改任何几何**——布局不许因为浏览器能力而变。
+ */
+@supports not (backdrop-filter: blur(1px)) {
+  :root,
+  :root.dawn-dark {
+    --theme-surface-overlay: var(--theme-surface-elevated);
+  }
 }

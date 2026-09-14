@@ -25,6 +25,7 @@ import { join, resolve } from "node:path"
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "./mock-inference-server.mjs"
 import { startFakeIlinkServer } from "./fake-ilink-server.mjs"
 import { startFakeFeishuServer } from "./fake-feishu-server.mjs"
+import { startFakeReleaseFeed } from "./fake-release-feed.mjs"
 
 /**
  * 挑一条本机真的、装了 ipykernel 的 python（远程内核，2026-09-03）。
@@ -79,6 +80,15 @@ const server = await startMockInferenceServer()
  */
 const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
 const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
+/**
+ * 假发布源（2026-09-06）：**没有它，「有新版本」这条路在 dev:mock 里根本走不通**——
+ * 线上最新的就是你手上这一版。与 e2e 共用同一份（准入规则 1）。
+ * 想对着真 GitHub 看时：`DAWN_UPDATE_FEED= npm run dev:mock`（给空值即用真端点）。
+ */
+const 发布源 = startFakeReleaseFeed({ version: "9.9.9" })
+// `listen()` 是异步的：不等它，下面读 `发布源.url` 会拿到 null 的端口。
+// 平时抢得赢，机器一忙就崩——2026-09-11 真崩过一次
+await 发布源.已就绪
 console.log(`假微信：${weixin.url}（/__fake/qr/scan · /__fake/qr/confirm · /__fake/inbound · /__fake/sent）`)
 
 const fakeSshPython = process.env.DAWN_FAKE_SSH_PYTHON ?? 找本机python()
@@ -120,6 +130,7 @@ console.log(`  演示工作区    ${workspace}`)
 console.log(`  假服务器      开（添加服务器时口令填 "dawn"）`)
 console.log(`  远端内核      ${fakeSshPython ? `${fakeSshPython}（真起）` : "没找到装了 ipykernel 的本机 python，只能探测，起不了"}`)
 console.log("─".repeat(64))
+console.log(`  假发布源      ${发布源.url}（线上「最新」是 9.9.9，侧栏底部会长出「有新版本」）`)
 console.log("提示：在 app 里「打开文件夹」时选上面那个演示工作区。")
 console.log()
 
@@ -149,6 +160,7 @@ const child = spawn(
       ...(fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: fakeSshPython } : {}),
       // R 那半同理（2026-09-05）：给了才真起 IRkernel
       ...(fakeSshR ? { DAWN_FAKE_SSH_R: fakeSshR } : {}),
+      DAWN_UPDATE_FEED: process.env.DAWN_UPDATE_FEED ?? 发布源.url,
     },
   },
 )
@@ -157,6 +169,7 @@ const shutdown = async () => {
   await server.close()
   await weixin.close()
   await feishu.close()
+  await 发布源.close()
   process.exit(0)
 }
 child.on("exit", shutdown)

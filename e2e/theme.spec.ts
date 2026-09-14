@@ -43,10 +43,24 @@ function contrast(a: [number, number, number], b: [number, number, number]): num
   return (hi! + 0.05) / (lo! + 0.05)
 }
 
+/**
+ * 量一个元素的「底色」。
+ *
+ * **不只读 `backgroundColor`**（2026-09-11 视觉重做踩的）：应用底曾经短暂地是一条
+ * `linear-gradient`（09-10 加、09-11 为了视觉基线的稳定又撤回了），而渐变落在
+ * **`background-image`** 上——`backgroundColor` 那时返回 `rgba(0, 0, 0, 0)`，
+ * "界面是亮的"这条用例量到一片透明。**它失效的方式是静默的**：拿到的不是错值，是空值。
+ *
+ * 现在底色又是平的，这段兜底**对平色是空操作**；留着它是因为下一个往某个面上
+ * 加渐变的人不会想到这里——而那时它会静默地量到透明。
+ * 按 CSS 的绘制顺序：底色透明且有渐变时取渐变的第一个色标，否则用 `backgroundColor`。
+ */
 async function styleOf(page: Page, sel: string) {
   return page.locator(sel).first().evaluate((el) => {
     const s = getComputedStyle(el)
-    return { bg: s.backgroundColor, fg: s.color }
+    const 渐变首色 = /rgba?\([^)]*\)/.exec(s.backgroundImage)?.[0]
+    const 透明 = /^rgba\(0,\s*0,\s*0,\s*0\)$/.test(s.backgroundColor)
+    return { bg: 透明 && 渐变首色 ? 渐变首色 : s.backgroundColor, fg: s.color }
   })
 }
 
@@ -77,7 +91,14 @@ test("暗色下侧栏比内容区更深 —— 层次靠的是这个，不是装
   await switchTo(page, "暗色")
   const body = parseColor((await styleOf(page, "body")).bg)
   const side = parseColor((await styleOf(page, ".sidebar")).bg)
-  expect(luminance(side.rgb)).toBeLessThan(luminance(body.rgb))
+  /**
+   * **按 alpha 合成到 body 上再比**（2026-09-11 终审抓的）。侧栏试过半透明，
+   * `parseColor` 丢掉 alpha 只读 rgb——`rgba(0,0,0,.35)` 读成纯黑，
+   * 于是任何一丝黑色的染色都能让这条过，**它守的那个退化它再也抓不住**。
+   * 侧栏现在又是不透明的（alpha=1 时这一步是空操作），但下一次有人把它改透明时这里不能再瞎。
+   */
+  const 合成 = side.rgb.map((c, i) => c * side.alpha + body.rgb[i]! * (1 - side.alpha)) as [number, number, number]
+  expect(luminance(合成)).toBeLessThan(luminance(body.rgb))
 })
 
 test("选择被记住 —— 重载之后还是暗色", async ({ dawn }) => {

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
+import { 在组词 } from "./ime.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { 会话开关 } from "./state/transcript.js"
@@ -41,6 +42,7 @@ import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
 import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
+import { 回到底部 } from "./back-to-bottom.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
@@ -362,6 +364,8 @@ export function SessionRow({
           aria-label={tf("重命名会话：{0}", 名字)}
           onChange={(e) => setEditing(e.target.value)}
           onKeyDown={(e) => {
+            // 输入法组词途中那一下回车属于输入法（2026-09-06）
+            if (在组词(e)) return
             if (e.key === "Enter") 提交()
             // **Esc 是取消，不是提交** —— 改到一半按 Esc 却被存下来最气人
             else if (e.key === "Escape") setEditing(undefined)
@@ -1247,7 +1251,14 @@ export function SessionSidebar({
   search,
   onDeleteTask,
   onNewTaskIn,
+  更新入口,
 }: {
+  /**
+   * 「有新版本」那一行（2026-09-06）。**侧栏只负责给它一个位置**——
+   * 更新那件事的判断一点都不在这里，传进来的是一个已经算好的节点。
+   * 没有新版时它自己渲染成 `null`，这一行就不占地方。
+   */
+  更新入口?: React.ReactNode
   projects: readonly ProjectSummary[]
   /**
    * **拖拽排序算新次序时的那个全集**（2026-08-19 从 `sessions` 改名）。
@@ -2584,6 +2595,11 @@ export function SessionSidebar({
         */}
       </div>
       <div className="side-bottom">
+        {/**
+          * 「有新版本」那一行（2026-09-06）：**在「设置」上面、常驻可见**。
+          * 没有新版时它渲染成 null，这里一行都不占。
+          */}
+        {更新入口}
         {/**
           * **「项目概览」那一行 2026-08-20 摘掉了**（作者定的：
           * *「左边侧边栏的项目概览，对于整个 DAWN 来说应该没有任何意义了。」*）。
@@ -4014,6 +4030,14 @@ export function ConversationView({
   /** 增强带了什么 / 为什么没带（不是错误，灰字） */
   const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
   /**
+   * **发出去过几次**——「优化输入」那颗按钮的撤回栈拿它当作用域（2026-09-08 作者报的）。
+   *
+   * 撤回栈属于**框里这一版草稿**：那句话发走之后，「撤回」不该还立在那儿，
+   * 更不该把已经发走的那句话的上一版填回空框。作者的话：
+   * *「对话提交上去了，竟然还[能]撤销，我撤销之后竟然还是原来的对话。」*
+   */
+  const [发过几次, 设发过几次] = useState(0)
+  /**
    * 这一次提交要的是**排队**还是**插队**（2026-08-15）。
    *
    * **用 ref 不用 state**：`requestSubmit()` 是同步的，提交处理器紧接着就跑，
@@ -4362,6 +4386,12 @@ export function ConversationView({
             */}
           {等回话 !== undefined ? <等着 从={等回话时刻} 在想={正在想} /> : null}
         </StickToBottom.Content>
+        {/**
+          * **跟随撒手之后的出路**（2026-09-08，作者：*「分析的内容不更新，
+          * 需要我手动往下挪动。」*）。放在 `.Content` 外面：那一层不滚，
+          * 浮标因此不会跟着内容滚走。见 `back-to-bottom.tsx` 的文件头。
+          */}
+        <回到底部 />
       </StickToBottom>
 
       <form
@@ -4456,6 +4486,9 @@ export function ConversationView({
           设待发文件([])
           设附过文件(false)
           clearDraft(session.sessionId)
+          // 这一版草稿的一生到此为止：撤回栈与「带上了什么」跟着它一起没（2026-09-08）
+          设发过几次((n) => n + 1)
+          设增强说明(undefined)
           设位置(-1)
           设发送出错(undefined)
           // **从这一刻起显示「在等它」**，直到有新东西冒出来（见 `等回话` 的注）
@@ -4640,6 +4673,13 @@ export function ConversationView({
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
+              /**
+               * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
+               * 打了一半的拼音按回车，本意是「就用这个候选词」；发出去的话，
+               * 屏幕上出现的就是 `woyaoyigewenjian` 这一串字母。
+               * **必须在最前面**：`@` 菜单与 `/` 菜单的回车同样不许抢这一下。
+               */
+              if (在组词(e)) return
               // `@` 菜单开着：上下挑、回车引用、→ 钻目录、Esc 关
               if (艾特位) {
                 const 列 = 艾特态.行
@@ -5116,6 +5156,7 @@ export function ConversationView({
               enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
               cancel={onCancelEnhance ?? (async () => undefined)}
               reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+              重置记号={发过几次}
               onProblem={设发送出错}
               onNote={设增强说明}
             />
@@ -5250,6 +5291,13 @@ export function TranscriptRow({
             aria-label={t("修改这段话")}
             onChange={(e) => 设编辑(e.target.value)}
             onKeyDown={(e) => {
+              /**
+               * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
+               * 打了一半的拼音按回车，本意是「就用这个候选词」；发出去的话，
+               * 屏幕上出现的就是 `woyaoyigewenjian` 这一串字母。
+               * **必须在最前面**：`@` 菜单与 `/` 菜单的回车同样不许抢这一下。
+               */
+              if (在组词(e)) return
               // Esc 是取消——**改到一半按 Esc 却被发出去**是最气人的那种
               if (e.key === "Escape") 设编辑(undefined)
               if (e.key === "Enter" && !e.shiftKey) {
@@ -6133,6 +6181,8 @@ export function EmptyConversation({
   /** 第一句话没发出去的原因。**摆在输入卡旁边**，不是丢进某个角落的提示 */
   const [开场出错, 设开场出错] = useState<string | undefined>(undefined)
   const [增强说明, 设增强说明] = useState<string | undefined>(undefined)
+  /** 与对话屏同一条（2026-09-08）：撤回栈属于框里这一版草稿，发出去就作废 */
+  const [发过几次, 设发过几次] = useState(0)
   /**
    * **开场卡 / 换 agent 也要带上排队的图和文件**（审查 debug J6）。此前这两条路只把文本草稿交给
    * `onStart`,粘/拖进来还没发的图和文件被静默丢掉——与「打字发送」那条(上面 6028 一带)口径不一致。
@@ -6257,6 +6307,9 @@ export function EmptyConversation({
               设空态文件([])
               设空态附过(false)
               设草稿("")
+              // 这一版草稿的一生到此为止（2026-09-08）
+              设发过几次((n) => n + 1)
+              设增强说明(undefined)
               设开场出错(undefined)
               void Promise.resolve(
                 这次的文件.length > 0
@@ -6365,6 +6418,13 @@ export function EmptyConversation({
                 }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {
+                  /**
+                   * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
+                   * 打了一半的拼音按回车，本意是「就用这个候选词」；发出去的话，
+                   * 屏幕上出现的就是 `woyaoyigewenjian` 这一串字母。
+                   * **必须在最前面**：`@` 菜单与 `/` 菜单的回车同样不许抢这一下。
+                   */
+                  if (在组词(e)) return
                   if (艾特位) {
                     const 列 = 艾特态.行
                     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -6568,6 +6628,7 @@ export function EmptyConversation({
                   enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
                   cancel={onCancelEnhance ?? (async () => undefined)}
                   reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+                  重置记号={发过几次}
                   onProblem={设开场出错}
                   onNote={设增强说明}
                 />

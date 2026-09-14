@@ -12,12 +12,14 @@ import {
   RemoteListChangedSchema,
   RemoteUpdateSchema,
   SessionUpdateSchema,
+  UpdatePushSchema,
   WORKBENCH_PROTOCOL_VERSION,
   isCompatible,
   type ErrorCode,
   type OperationName,
   type RemoteUpdate,
   type SessionUpdate,
+  type 更新状态,
   取错误i18n,
 } from "../protocol/index.js"
 import { tf } from "./i18n/index.js"
@@ -118,6 +120,13 @@ export interface UpdateSubscription {
    * 界面这边没有任何别的办法知道。
    */
   onRemoteListChanged?: () => void
+  /**
+   * 更新的进度（2026-09-06）：**同一条通道的第四种载荷，推的是整份状态**。
+   *
+   * 界面照它画就完了，不必自己维护「现在下到哪了」——
+   * 那份副本与后端分家只是时间问题。
+   */
+  onUpdatePush?: (u: { 状态: 更新状态; 自动检查: boolean }) => void
 }
 
 /**
@@ -192,7 +201,7 @@ export function createClient(
      *   - 畸形 / 版本不符 ⇒ 丢弃并出声
      *   - 处理者抛错 ⇒ 出声并继续（一个渲染错误不该让整条流断掉）
      */
-    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote, onRemoteListChanged }: UpdateSubscription): () => void {
+    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote, onRemoteListChanged, onUpdatePush }: UpdateSubscription): () => void {
       const problem = (m: string) => onProblem?.(m)
       const src = eventSource ?? window.dawn?.onEvent
       if (!src) {
@@ -215,6 +224,12 @@ export function createClient(
         // 名单变了（远程内核）：同一条通道的第三种载荷，同样要在会话那句判据之前认掉
         if (RemoteListChangedSchema.safeParse(raw).success) {
           onRemoteListChanged?.()
+          return
+        }
+        // 更新进度：第四种载荷，同理要在会话那句判据之前认掉
+        const 更新 = UpdatePushSchema.safeParse(raw)
+        if (更新.success) {
+          onUpdatePush?.({ 状态: 更新.data.update, 自动检查: 更新.data.自动检查 })
           return
         }
         const parsed = SessionUpdateSchema.safeParse(raw)

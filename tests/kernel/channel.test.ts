@@ -70,10 +70,14 @@ function make(over: Partial<Parameters<typeof createKernelChannel>[0]> = {}) {
   return { f, ch, handshake }
 }
 
-/** 把握手做完 */
+/**
+ * 把握手做完。**两件事都要**（2026-09-09）：shell 的回复 + iopub 自己出过一声。
+ * 只喂前一件的话 `ready()` 不会 resolve——那正是下面新增的那条规则。
+ */
 async function shake(m: ReturnType<typeof make>) {
   const p = m.ch.ready()
   m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+  m.f.incoming(msg("iopub_welcome"))
   await p
 }
 
@@ -102,6 +106,7 @@ describe("握手：就绪之前不许发出去", () => {
     // 还没收到 reply，但握手消息必须已经发出去了
     expect(m.f.sent.map((x) => x.header.msg_type)).toEqual(["kernel_info_request"])
     m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+    m.f.incoming(msg("iopub_welcome"))
     await p
   })
 
@@ -110,6 +115,7 @@ describe("握手：就绪之前不许发出去", () => {
     const p1 = m.ch.ready()
     const p2 = m.ch.ready()
     m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+    m.f.incoming(msg("iopub_welcome"))
     await Promise.all([p1, p2])
     expect(m.f.sent.filter((x) => x.header.msg_type === "kernel_info_request")).toHaveLength(1)
   })
@@ -120,6 +126,75 @@ describe("握手：就绪之前不许发出去", () => {
     const p = m.ch.ready()
     const assertion = expect(p).rejects.toThrow(/kernel_info_reply/)
     await vi.advanceTimersByTimeAsync(200)
+    await assertion
+    vi.useRealTimers()
+  })
+})
+
+/**
+ * **shell 通了不等于 iopub 通了**（2026-09-09 在真内核上量出来的）。
+ *
+ * `kernel_info_reply` 走 shell（REQ/REP，连上就通）；输出走 iopub（PUB/SUB，
+ * **订阅生效之前发布的东西 ZMQ 直接丢**）。实测：握手完成后 130ms 才收到
+ * `iopub_welcome`，而那 130ms 里发出去的 `execute_request` —— shell 照常回
+ * `execute_reply`（于是"跑成功了"），它的 `status` / `execute_input` / `stream`
+ * **一条都没有**。用户看到的是「第一次运行代码没有输出，胶囊一直转」。
+ */
+describe("握手：iopub 也要自己出过一声", () => {
+  it("**只回 kernel_info_reply 不算就绪** —— 那一刻发出去的执行，输出会被 ZMQ 静默丢掉", async () => {
+    const m = make()
+    let 就绪 = false
+    const p = m.ch.ready().then(() => {
+      就绪 = true
+    })
+    m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(就绪, "iopub 一声都还没出过，不该算就绪").toBe(false)
+    m.f.incoming(msg("iopub_welcome"))
+    await p
+    expect(就绪).toBe(true)
+  })
+
+  it("**就绪之前排队的执行一条都不许发出去** —— 发出去就等于把它的输出扔了", async () => {
+    const m = make()
+    const p = m.ch.ready()
+    m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+    await Promise.resolve()
+    await Promise.resolve()
+    const e = msg("execute_request")
+    m.ch.send(e)
+    expect(m.f.sent.map((x) => x.header.msg_id)).not.toContain(e.header.msg_id)
+    m.f.incoming(msg("iopub_welcome"))
+    await p
+    expect(m.f.sent.map((x) => x.header.msg_id)).toContain(e.header.msg_id)
+  })
+
+  it("**不发 welcome 的内核**（IRkernel、老 ipykernel）：重问一次 kernel_info，它的 status 一样能证明", async () => {
+    vi.useFakeTimers()
+    const m = make()
+    let 就绪 = false
+    const p = m.ch.ready().then(() => {
+      就绪 = true
+    })
+    m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+    await vi.advanceTimersByTimeAsync(600)
+    expect(就绪, "没人证明 iopub 活着").toBe(false)
+    // **重问过**：干等是等不来的，iopub 上此时一条消息都不会有
+    expect(m.f.sent.filter((x) => x.header.msg_type === "kernel_info_request").length).toBeGreaterThan(1)
+    m.f.incoming(msg("status", m.handshake.header.msg_id))
+    await p
+    expect(就绪).toBe(true)
+    vi.useRealTimers()
+  })
+
+  it("**iopub 一直不出声要响亮失败** —— 悄悄当成就绪的话，之后每一次执行的输出都在丢", async () => {
+    vi.useFakeTimers()
+    const m = make({ handshakeTimeoutMs: 100 })
+    const p = m.ch.ready()
+    const assertion = expect(p).rejects.toThrow(/iopub/)
+    m.f.incoming(msg("kernel_info_reply", m.handshake.header.msg_id))
+    await vi.advanceTimersByTimeAsync(300)
     await assertion
     vi.useRealTimers()
   })

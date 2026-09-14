@@ -1,0 +1,18 @@
+#!/bin/sh
+# 剥掉 AI 工具自动塞进来的 trailer。
+#
+# 2026-09-12 的事故：visual-refresh 那一轮 31 个 commit 带上了
+# Co-Authored-By: Claude ... <noreply@anthropic.com>，GitHub 把该邮箱
+# 解析到账号 claude，于是它进了仓库的 Contributors 列表。
+# 清理需要改写历史 + 强推。
+#
+# 根因是 harness 每轮都会提示助手加这行，与 ~/.claude/CLAUDE.md 的禁令冲突。
+# 靠"每次记得别加"不可靠——按本项目准入规则第 2 条，改成自动强制。
+#
+# 停用：git config --unset core.hooksPath
+set -e
+tmp="$1.tmp"
+sed -e '/^Co-Authored-By: Claude/d' \
+    -e '/^Claude-Session: /d' \
+    -e '/^Co-Authored-By: .*@anthropic\.com>/d' "$1" > "$tmp"
+mv "$tmp" "$1"

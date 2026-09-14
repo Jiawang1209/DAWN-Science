@@ -72,10 +72,24 @@ pre {
 
 .btn-default { padding: 6px 12px; }
 .btn-sm { padding: 4px 9px; font-size: var(--dawn-fs-meta); }
-.btn-xs { padding: 2px 7px; font-size: 11px; }
+.btn-xs { padding: 2px 7px; font-size: var(--dawn-fs-badge); }
 /* 嵌在句子或标题里的按钮：零盒子，不要再写 padding:0 */
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
+/**
+ * 浮在转录上的那颗药丸（「回到底部」浮标，2026-09-08；2026-09-09 换成方案一的形状）。
+ *
+ * 一支箭头 + 一句话，全圆角。左边比右边窄一点（10 / 14）：
+ * 箭头本身带内白，两边给一样的内距时看上去反而是偏的。
+ * **几何在这里，不在调用点**——同 `card` 那一档的理由。
+ */
+.btn-pill {
+  height: 30px;
+  padding: 0 14px 0 10px;
+  border-radius: var(--dawn-radius-full);
+  justify-content: center;
+  font-size: var(--dawn-fs-meta);
+}
 /* 一整张可点的卡（空态的开场建议）。**几何在这里，不在调用点** */
 .btn-card {
   flex-direction: column;
@@ -148,10 +162,10 @@ pre {
 /* ── primitive：LogView ─────────────────────────────────────────── */
 
 .logview { margin: 6px 0; }
-.logview-label { margin: 0 0 4px; color: var(--dawn-text-3); font-size: 11px; }
+.logview-label { margin: 0 0 4px; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .logview-body {
   padding: 6px 8px;
-  border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md);
   border-radius: var(--dawn-radius-sm);
   color: var(--dawn-text-2);
   font-size: var(--dawn-fs-meta);
@@ -165,8 +179,8 @@ pre {
 
 .field { margin-bottom: 10px; }
 .field-label { display: block; margin-bottom: 4px; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
-.field-hint { margin: 4px 0 0; color: var(--dawn-text-3); font-size: 11px; }
-.field-error { margin: 4px 0 0; color: var(--dawn-danger); font-size: 11px; }
+.field-hint { margin: 4px 0 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.field-error { margin: 4px 0 0; color: var(--dawn-danger); font-size: var(--dawn-fs-badge); }
 
 /* 文本输入的共享形状。新的文本控件组合它，不要各写一套 */
 .control {
@@ -246,7 +260,7 @@ pre {
    */
   position: relative;
   /* 实测 WorkBuddy 的收合是 `width .25s ease-out`；这里动的是列宽，同一个时长曲线 */
-  transition: grid-template-columns 0.25s ease-out;
+  transition: grid-template-columns var(--dawn-dur-base) var(--dawn-ease);
 }
 /**
  * 折叠（2026-08-13，作者要的）。**宽度收到 0，不是 `display: none`**——
@@ -434,7 +448,7 @@ pre {
   padding: 0 var(--dawn-space-4);
   border-top: 1px solid var(--dawn-stroke-4);
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .sidebar {
@@ -450,6 +464,24 @@ pre {
    * WorkBuddy 的侧栏与主区之间**一条线都没有**，全靠浅灰底与白底的落差。
    * 线是「这里有个边界」的最重的说法，而侧栏与正文本来就不需要那么重——
    * 一屏里线越多越碎。
+   */
+  /**
+   * **这里不加 `backdrop-filter`，也不做半透明**（2026-09-11，e2e 与终审各抓一次）。
+   *
+   * 视觉重做时侧栏试过"玻璃"，撤回了。两个理由，第二个是硬的：
+   *
+   * ① **它在这里什么也不做。** 侧栏是布局容器，背后只有平的应用底——
+   *    没有会动的东西可透、可糊。半透明兑出来的颜色和原来那档一样。
+   *
+   * ② **`backdrop-filter` 会让元素成为它 `position: fixed` 后代的包含块**
+   *    （和 `filter` / `transform` 一样）。而下面那张悬停卡就在这个 `<aside>` 里，
+   *    它的 `fixed` 是**硬要求**（见 `views.tsx` 那段注释：绝对定位会跟着列表滚走，
+   *    本仓库栽过一次）。加上模糊之后，它的坐标改按侧栏解释，卡当场掉出窗口底——
+   *    `e2e/sess-title.spec.ts` 那条「窗口矮的时候…」红了，只有它红。
+   *
+   * **玻璃只给浮层**（压在内容上、透过去真能看见东西的那些）。
+   * 这条由 design-contract 扫描强制：带 `backdrop-filter` 的规则必须同时有
+   * `--dawn-shadow-float`。
    */
   background: var(--dawn-surface-sidebar);
   /**
@@ -481,7 +513,8 @@ pre {
   align-items: center;
   padding: var(--dawn-space-2) var(--dawn-space-3);
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-label);
+  letter-spacing: var(--dawn-fs-label-tracking);
   text-transform: uppercase;
 }
 .project-list, .session-list { list-style: none; margin: 0; padding: 0; }
@@ -657,7 +690,7 @@ pre {
  * **只在概览格套卡**——`.panel` 在审阅格、设置里也用，全局套盒子会波及它们。
  */
 .dock-overview > .panel {
-  border: 1px solid var(--dawn-stroke-3);
+  box-shadow: var(--dawn-shadow-lg);
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-panel);
   padding: var(--dawn-space-2) var(--dawn-space-3) var(--dawn-space-3);
@@ -683,7 +716,8 @@ pre {
 .panel-title {
   margin: 0 0 8px;
   padding-bottom: 6px;
-  font-size: 11px;
+  font-size: var(--dawn-fs-label);
+  letter-spacing: var(--dawn-fs-label-tracking);
   color: var(--dawn-text-3);
   border-bottom: 1px solid var(--dawn-stroke-4);
   text-transform: uppercase;
@@ -710,7 +744,7 @@ pre {
    而且会在 `7.5` 和 `KB` 之间断行——**那不是不好看，那是坏了** */
 .ctx-rows { flex-wrap: wrap; gap: var(--dawn-space-4); }
 .ctx-row { display: flex; flex-direction: column; gap: 2px; }
-.ctx-row .name { color: var(--dawn-text-3); font-size: 11px; }
+.ctx-row .name { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .ctx-value { display: flex; align-items: baseline; gap: var(--dawn-space-1); }
 
 /* 三档占比的堆叠条。宽度是数据（行内样式），颜色仍只从令牌来 */
@@ -736,7 +770,7 @@ pre {
 .caveat { margin: 0 0 8px; color: var(--dawn-warning); }
 .unknown { margin: 0 0 4px; font-size: var(--dawn-fs-sub); }
 .amount { margin: 0 0 4px; font-size: var(--dawn-fs-title); }
-.tokens, .hint { color: var(--dawn-text-3); font-size: 11px; }
+.tokens, .hint { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .hint.pad { padding: 0 12px 8px; margin: 0; }
 .stat-row, .file-list, .run-list { list-style: none; margin: 0; padding: 0; }
 .stat-row { display: flex; gap: 14px; }
@@ -751,13 +785,13 @@ pre {
   border-radius: var(--dawn-radius-xs);
   background: var(--dawn-fill-4);
   color: var(--dawn-text-2);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   text-align: center;
 }
 .run-list .req, .run-list .status, .run-list .dur {
   color: var(--dawn-text-3);
   margin-right: 8px;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 .run.err .status { color: var(--dawn-danger); }
 .prov.ok { color: var(--dawn-live); }
@@ -773,12 +807,13 @@ pre {
   /* 顶栏也不划线：与侧栏同一条理由——**留白已经把它分开了** */
   padding: var(--dawn-space-3) var(--dawn-space-8);
 }
-.conv-head .kind { color: var(--dawn-text-3); font-size: 11px; }
+.conv-head .kind { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 /**
  * 对话区用**聊天字号 14px / 行高 20px**（规范 §4），比界面外壳的 13px 大一档。
  * 外壳让位给内容，这是那一档的全部意思。
  */
 .turns {
+  position: relative; /* 「回到底部」浮标的定位参照（2026-09-08）。这一层不滚 */
   flex: 1;
   overflow: auto;
   padding: var(--dawn-space-3) var(--dawn-page-inset-x);
@@ -818,6 +853,47 @@ pre {
    * 作者定的原则：*「基于我们现在有的内容去贴近。」*
    */
   margin: 0 auto var(--dawn-space-10);
+}
+/**
+ * 新消息进场（2026-09-11 视觉重做）。
+ *
+ * **只给最后一条**（终审抓的）。第一版挂在 `.turn` 上，而对话视图按会话 id 挂载——
+ * 打开一段 200 条的旧会话，200 条一起淡入上滑。规格写的是「新消息进场」，不是「所有消息」。
+ *
+ * `:not(:has(~ .turn))` = 后面没有兄弟 `.turn` 的那一条。新的一条追加进来，
+ * 上一条不再匹配、动画随之撤掉（还没播完就直接落定，不回退）；流式输出时同一条元素
+ * 一直是最后一条，**不会重播**。打开旧会话时只有最新那条动一下——"最新的东西到了"。
+ *
+ * **动效跟随状态，永不延迟状态**（DESIGN.md）：只作用在元素出现之后，不推迟可见时刻。
+ * 位移只有 4px——大位移在流式输出时会变成持续抖动。
+ */
+.turn:not(:has(~ .turn)) {
+  animation: dawn-turn-in var(--dawn-dur-slow) var(--dawn-ease);
+}
+@keyframes dawn-turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/**
+ * **关掉的是位移，不是全部。** 淡入留着——它不引起不适，
+ * 而且它承担着「有新东西来了」这个信息；一起关掉等于让人少知道一件事。
+ * 这与本文件里其它几处的做法一致：思考中的点换成更平缓的一条，
+ * 菜单换成淡入，都不是简单地 `animation: none`。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .turn:not(:has(~ .turn)) {
+    animation: dawn-turn-fade var(--dawn-dur-slow) ease-out;
+  }
+}
+@keyframes dawn-turn-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 /* 说话人名（学自 WorkBuddy）：**它是这段话的归属，不是一个标签**——与正文同色、半粗；图标与名字并排 */
 .turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); margin-bottom: var(--dawn-space-2); }
@@ -1034,7 +1110,7 @@ pre {
   white-space: nowrap;
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .tool-body { padding-left: calc(0.8em + 6px); }
@@ -1089,14 +1165,14 @@ pre {
    **两者曾经共用同一个类名，于是 `.composer .agent-pill` 一下子匹配到两个元素**，
    agent pill 的几何断言量到了模型 pill 上 */
 .pill { position: relative; display: inline-flex; }
-.pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: 11px; }
+.pill .kind { margin-left: 6px; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .agent-menu ul { list-style: none; margin: 0; padding: 0; }
 .agent-menu .name { flex: 1; }
 .agent-menu-head {
   margin: 0;
   padding: 6px 8px 4px;
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 /**
  * 厂家菜单的两组（2026-08-11）：**就地换服务** / **新建会话**。
@@ -1183,7 +1259,7 @@ pre {
 .dock-cwd {
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   max-width: 40ch;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1193,6 +1269,8 @@ pre {
   max-height: 280px;
   overflow: auto;
   padding: 8px 12px;
+  /* **这是底部终端坞，不是右侧坞**（2026-09-11 终审抓的：视觉重做时认错了元素）。
+     xterm 自己涂的是 `--dawn-surface-sidebar`，这里必须同色，否则终端四周围出一圈色带 */
   background: var(--dawn-surface-sidebar);
 }
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
@@ -1414,10 +1492,10 @@ pre {
 /** 外层容器。streamdown 的 Tailwind 类在这里全都不生效，所以自己画 */
 .md [data-streamdown="code-block"] {
   margin: 0 0 12px;
-  border: 1px solid var(--dawn-stroke-4);
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-surface-panel);
+  box-shadow: var(--dawn-shadow-md);
   overflow: hidden;
 }
 
@@ -1435,7 +1513,7 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /** 动作组浮到头部那一行的右端 */
@@ -1591,7 +1669,8 @@ pre {
   gap: 6px;
   padding: 8px;
   border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
   box-shadow: var(--dawn-shadow-float);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
 }
@@ -1602,13 +1681,15 @@ pre {
   margin: 0;
   padding: 4px 8px 2px;
   color: var(--dawn-text-4);
-  font-size: 11px;
+  font-size: var(--dawn-fs-label);
+  letter-spacing: var(--dawn-fs-label-tracking);
+  text-transform: uppercase;
 }
 .palette-item .name { flex: 1; }
 /* 不可用的原因跟在后面。**不是隐藏，是摆出来** */
-.palette-item .why { color: var(--dawn-text-4); font-size: 11px; }
+.palette-item .why { color: var(--dawn-text-4); font-size: var(--dawn-fs-badge); }
 .palette-item[aria-disabled="true"] { opacity: 0.55; cursor: default; }
-.palette-item .keys { color: var(--dawn-text-4); font-size: 11px; }
+.palette-item .keys { color: var(--dawn-text-4); font-size: var(--dawn-fs-badge); }
 
 /* ── 子 agent 的 chip 组（①-B″ · S1）───────────────────────────────
    形态学自 Codex 桌面版的 subagent-activity-chip-group：
@@ -1821,7 +1902,7 @@ pre {
 }
 
 /* 「截断了多少」「有别的形态」这类说明。**它们是出声本身，不是装饰** */
-.kout-note { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: 11px; }
+.kout-note { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 
 /* ── 陈旧标记（②-A · K5 · S13）──────────────────────────────────────
    **notebook 最经典的谎言**：单元格显示的结果，可能来自三次重启之前的状态。
@@ -1830,7 +1911,7 @@ pre {
 .kout-stale {
   margin: 0 0 var(--dawn-space-1);
   color: var(--dawn-warning);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /* ── 变量面板（②-A · K5 · S14）─────────────────────────────────────── */
@@ -2006,6 +2087,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   padding: var(--dawn-space-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .vision-card .set-section { margin-bottom: 0; }
 
@@ -2092,7 +2174,10 @@ pre {
 /* **横向滚动关在自己这一层**：一张宽表不该把整个界面推得左右晃 */
 .table-scroll {
   overflow-x: auto;
+  /* **真描边 + md-bordered，不是 md**（2026-09-11 终审抓的）：暗色 md 的那圈是 inset 阴影，
+     画在子元素底色**下面**——粘性表头 / 悬停的格子 / PDF 的 <embed> 一盖就没了，旧的 border 不会 */
   border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
   border-radius: var(--dawn-radius-md);
 }
 
@@ -2247,7 +2332,7 @@ pre {
 .proj-session-list .sess .sub,
 .proj-list .sess .sub {
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2296,7 +2381,7 @@ pre {
 
 .set-section-desc code {
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /**
@@ -2335,10 +2420,11 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   border-radius: var(--dawn-radius-lg);
   padding: 0 var(--dawn-space-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 /* 右边那一格里的按钮不许折行（卡有了内距之后那一列窄了 30px，「保存」曾被掰成两行） */
 .set-control .btn { white-space: nowrap; }
-.set-section-bare .set-rows { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.set-section-bare .set-rows { background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
 .set-rows > .set-row:last-child,
 .set-rows > .set-row:has(+ .kernel-ref) {
   border-bottom: none;
@@ -2360,7 +2446,7 @@ pre {
 .set-desc {
   margin: 0;
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   line-height: 1.4;
 }
 
@@ -2414,6 +2500,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 
 .acp-add {
@@ -2530,7 +2617,8 @@ pre {
   padding: var(--dawn-space-4);
   border-radius: var(--dawn-radius-lg);
   corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
 }
@@ -2659,7 +2747,10 @@ pre {
 .preview-pdf {
   width: 100%;
   height: min(72vh, 900px);
+  /* **真描边 + md-bordered，不是 md**（2026-09-11 终审抓的）：暗色 md 的那圈是 inset 阴影，
+     画在子元素底色**下面**——粘性表头 / 悬停的格子 / PDF 的 <embed> 一盖就没了，旧的 border 不会 */
   border: 1px solid var(--dawn-stroke-4);
+  box-shadow: var(--dawn-shadow-md-bordered);
   border-radius: var(--dawn-radius-md);
   background: var(--dawn-surface-elevated);
 }
@@ -2680,7 +2771,7 @@ pre {
   align-items: baseline;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid var(--dawn-stroke-3);
+  box-shadow: var(--dawn-shadow-md);
   border-radius: var(--dawn-radius-sm);
   background: var(--dawn-surface-input);
 }
@@ -2703,7 +2794,7 @@ pre {
 
 .env-facts dt {
   color: var(--dawn-text-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .env-facts dd {
@@ -2717,7 +2808,7 @@ pre {
   display: block;
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   word-break: break-all;
 }
 
@@ -2749,7 +2840,7 @@ pre {
   justify-content: space-between;
   gap: var(--dawn-space-2);
   padding: 1px 0;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 .env-pkg-list .name {
@@ -2833,7 +2924,8 @@ pre {
 .turn-tick-summary {
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
 }
@@ -2889,7 +2981,7 @@ pre {
 .pin-mark {
   margin-right: 4px;
   color: var(--dawn-text-3);
-  font-size: 9px;
+  font-size: var(--dawn-fs-label);
   vertical-align: 1px;
 }
 
@@ -2977,7 +3069,7 @@ pre {
 .turn-usage {
   margin: var(--dawn-space-1) 0 0;
   color: var(--dawn-text-4);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2993,6 +3085,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   margin-bottom: var(--dawn-space-2);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 
 .svc.open { border-color: var(--dawn-stroke-2); }
@@ -3490,10 +3583,23 @@ pre {
    **常态不占位**：活着的时候不写「alive」，那是给开发者看的 */
 .conv-title {
   margin: 0;
-  /* 实测 WorkBuddy 的 `workbuddy-topbar-title`：**16px / 24px / 600**。
-     它比正文还大半档——顶栏那一行是「你在哪段对话里」，值得占这半档 */
-  font-size: var(--dawn-fs-sub);
-  line-height: 24px;
+  /**
+   * **22px（2026-09-11 视觉重做，跨度的上端）。**
+   *
+   * 上一版是 `--dawn-fs-sub`（14px），注释里记着实测 WorkBuddy 的
+   * `workbuddy-topbar-title` 是 **16 / 24 / 600**，理由是「比正文大半档」。
+   * **那个理由现在不够了**：整套字号最大 18、最小 12，跨度只有 1.5 倍，
+   * 一屏之内所有字几乎一样大——那正是作者说「简陋」时看到的东西。
+   *
+   * 提到 22 之后跨度是 22/10 = **2.2 倍**，而且它是**全仓唯一用 display 这一档的地方**：
+   * 一个定义了却没人用的档位，等于没拉开。
+   *
+   * 字距收 `-.021em` 是 display 独有的——22px 以上不收会显散。
+   * 行高跟着从 24 放到 28（1.27），24 在 22px 上已经压住了。
+   */
+  font-size: var(--dawn-fs-display);
+  letter-spacing: var(--dawn-fs-display-tracking);
+  line-height: 28px;
   font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-1);
   overflow: hidden;
@@ -3869,7 +3975,7 @@ pre {
 /** 与侧栏那些行同一副长相：**同一种东西不该有两种样子** */
 .settings-nav-item { justify-content: flex-start; width: 100%; margin: 0; }
 /* 分组标题（「扩展」，2026-08-23）：比条目淡一档、上面留一口气——它是分类，不是可点的东西 */
-.settings-nav-group { margin: var(--dawn-space-3) 0 var(--dawn-space-1); padding: 0 var(--dawn-space-3); font-size: 11px; color: var(--dawn-text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.settings-nav-group { margin: var(--dawn-space-3) 0 var(--dawn-space-1); padding: 0 var(--dawn-space-3); font-size: var(--dawn-fs-label); color: var(--dawn-text-3); text-transform: uppercase; letter-spacing: var(--dawn-fs-label-tracking); }
 /**
  * 选中态：**实底**（实测 WorkBuddy 的选中项就是一块浅灰底 + 加粗），
  * 而不是一条竖线——竖线是「这一条被标记了」，实底才是「你在这里」。
@@ -4078,6 +4184,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   overflow: hidden;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 /**
  * `cover` 而不是 `contain`：**方块里不留白边**。
@@ -4091,7 +4198,7 @@ pre {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
 }
 /**
@@ -4534,6 +4641,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   overflow: hidden;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .usage-stat {
   padding: var(--dawn-space-3) var(--dawn-space-2);
@@ -4548,7 +4656,7 @@ pre {
    给自己设一个超了也不会拦的上限，只是一个让人焦虑的装饰 */
 
 /* 用量那几块也装进卡（2026-08-23 作者：设置里成组的内容都用卡） */
-.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-3) var(--dawn-space-4); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); }
+.usage-block { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-3) var(--dawn-space-4); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); box-shadow: var(--dawn-shadow-md-bordered); }
 .usage-block-title { margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); }
 /** 标题旁边那个总数：**同一行、淡一档**——它是分母，不是第二个标题 */
 .usage-block-sum { margin-left: var(--dawn-space-2); color: var(--dawn-text-3); font-weight: 400; font-variant-numeric: tabular-nums; }
@@ -4727,6 +4835,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   cursor: pointer;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .perm-choice + .perm-choice { margin-top: var(--dawn-space-2); }
 .perm-choice.current { border-color: var(--dawn-accent); background: var(--dawn-accent-soft); }
@@ -4769,6 +4878,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .skill-name { margin: 0; font-weight: var(--dawn-weight-medium); }
 .skill-desc { margin: 0; color: var(--dawn-text-2); max-width: 72ch; }
@@ -4805,6 +4915,7 @@ pre {
   border: 1px solid var(--dawn-accent);
   border-radius: var(--dawn-radius-lg);
   background: var(--dawn-accent-soft);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .perm-card-title { white-space: pre-wrap; margin: 0; font-weight: var(--dawn-weight-medium); }
 /** **不换行**：与侧栏那条同一副纪律，放不下就裁，不折成两层 */
@@ -4852,7 +4963,7 @@ pre {
 }
 /** 组名比选项淡一档：**它是分类，不是可点的东西** */
 .sess-config-name { margin: 0 0 2px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
-.sess-config-desc { margin: 0 0 4px; font-size: 11px; color: var(--dawn-text-3); }
+.sess-config-desc { margin: 0 0 4px; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 /**
  * **整行是一条 flex，勾和内容并排**（2026-08-19）。
  *
@@ -4896,7 +5007,7 @@ pre {
   min-width: 0;
 }
 .sess-config-opt-name { min-width: 0; }
-.sess-config-opt-desc { font-size: 11px; color: var(--dawn-text-3); }
+.sess-config-opt-desc { font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 
 
 
@@ -4989,7 +5100,7 @@ pre {
 /** 勾那一格**恒定占位**：不占的话，选中与未选中的文字会差半个字宽，一列看着在抖 */
 .dock-mark { display: inline-flex; width: 16px; justify-content: center; }
 /** 快捷键靠右。**比正文淡一档**——它是提示，不是这一行的主语 */
-.dock-key { margin-left: auto; color: var(--dawn-text-3); font-size: 11px; }
+.dock-key { margin-left: auto; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 
 
 /* ── 传输条（批 4a，2026-08-17）────────────────────────────────
@@ -5051,7 +5162,7 @@ pre {
   height: 100%;
   border-radius: var(--dawn-radius-full);
   background: var(--dawn-accent);
-  transition: width 160ms ease-out;
+  transition: width var(--dawn-dur-base) var(--dawn-ease);
 }
 /* 总量未知：一段 40% 的亮条来回走，**说的是「在动」，不是「到了哪」** */
 .xfer-bar.indeterminate .xfer-fill {
@@ -5154,7 +5265,7 @@ pre {
 }
 .review-item.current { background: var(--dawn-row-hover); border-radius: var(--dawn-radius-sm); }
 /** 状态用**词**，不用颜色单独表达——只用颜色的话，色觉差异的人读不出来 */
-.review-status { flex: 0 0 auto; font-size: 11px; color: var(--dawn-text-3); }
+.review-status { flex: 0 0 auto; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 .review-status.added { color: var(--dawn-success); }
 .review-status.deleted { color: var(--dawn-danger); }
 .review-path {
@@ -5166,7 +5277,7 @@ pre {
   font-family: var(--dawn-font-mono);
   font-size: var(--dawn-fs-meta);
 }
-.review-num { flex: 0 0 auto; font-size: 11px; color: var(--dawn-text-3); white-space: nowrap; }
+.review-num { flex: 0 0 auto; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); white-space: nowrap; }
 
 /* ── diff 的排版：**量自 Codex 的构建产物**（2026-08-18）────────────
  *
@@ -5415,6 +5526,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .weblink-icon {
   flex: 0 0 auto;
@@ -5432,7 +5544,7 @@ pre {
 .weblink-title { font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); }
 .weblink-url {
   font-family: var(--dawn-font-mono);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5462,6 +5574,7 @@ pre {
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 /* 卡里的按钮不拉满（flex 列里 stretch 会把它扯成一整条） */
 .ra-card .btn { align-self: flex-start; }
@@ -5550,7 +5663,7 @@ pre {
 .files-search { flex: 1; }
 .files-search-results .search-hit .sub {
   display: block;
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5558,14 +5671,14 @@ pre {
 }
 .files-search-note {
   margin: var(--dawn-space-2) var(--dawn-space-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
 }
 
 /* ── 文件面板 · 行菜单（dock-polish ⑤）。「⋯」的样式沿用上面 2026-08-18 那组 `.tree-node > .row-actions` ── */
 .tree-row-menu { min-width: 180px; }
 .files-row-note {
   margin: var(--dawn-space-1) var(--dawn-space-3);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5626,6 +5739,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   overflow: hidden;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .skill-row {
   display: flex;
@@ -5648,7 +5762,7 @@ pre {
   border: 1px solid var(--dawn-stroke-3);
   border-radius: var(--dawn-radius-xs);
   color: var(--dawn-text-2);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   line-height: 16px;
   font-weight: normal;
 }
@@ -5688,6 +5802,7 @@ pre {
   background: var(--dawn-surface-elevated);
   border-radius: var(--dawn-radius-lg);
   max-width: 48rem;
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .schedule-field { display: grid; gap: var(--dawn-space-1); }
 .schedule-field > span:first-child { font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
@@ -5778,7 +5893,7 @@ pre {
   width: var(--tick-w);
   border-radius: var(--dawn-radius-xs);
   background: var(--dawn-text-4);
-  transition: width 120ms ease, background-color 120ms ease;
+  transition: width var(--dawn-dur-fast) ease, background-color var(--dawn-dur-fast) ease;
 }
 .turn-tick.current::before { background: var(--dawn-text-1); }
 .turn-tick.near::before { background: var(--dawn-accent); }
@@ -5790,7 +5905,8 @@ pre {
   max-width: 18rem;
   padding: 3px var(--dawn-space-2);
   border-radius: var(--dawn-radius-sm);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   box-shadow: var(--dawn-shadow-float);
   color: var(--dawn-text-1);
@@ -5845,6 +5961,23 @@ pre {
   85% { opacity: 1; }
   100% { opacity: 0; }
 }
+/**
+ * 位移要能关（先有的缺口，2026-09-11 由新加的扫描抓到）。
+ *
+ * **只换 `animation-name`，时长一个字不碰**（终审抓的）：这颗提示由 `onAnimationEnd`
+ * 卸载，**动画时长就是它在屏幕上停留多久**——4.5s，失败时 `.bad` 拉到 8.5s。
+ * 第一版写成了 `animation: … 300ms`，减弱动效的人就只看得见 0.3 秒，
+ * 而那是这次导出**唯一**的结果。换成同样节奏、只是不位移的那一条。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .export-toast { animation-name: export-fade-calm; }
+}
+@keyframes export-fade-calm {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
 .nb-export { margin-left: auto; }
 /* 「最近」段（codex-polish 第二档）：与下面各列同一种行，只是没有勾选与拖拽 */
 .recent-list { margin-bottom: var(--dawn-space-2); }
@@ -5856,7 +5989,7 @@ pre {
 .team-empty { padding: var(--dawn-space-3); }
 .team-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); }
 .team-name { margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); min-width: 0; }
-.team-pill { font-size: 11px; padding: 1px var(--dawn-space-2); border-radius: var(--dawn-radius-full); background: var(--dawn-row-hover); color: var(--dawn-text-2); }
+.team-pill { font-size: var(--dawn-fs-badge); padding: 1px var(--dawn-space-2); border-radius: var(--dawn-radius-full); background: var(--dawn-row-hover); color: var(--dawn-text-2); }
 .team-stats { margin-left: auto; display: inline-flex; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); white-space: nowrap; }
 .team-goal { margin: calc(-1 * var(--dawn-space-2)) 0 0; color: var(--dawn-text-2); }
 
@@ -5873,7 +6006,7 @@ pre {
 
 /* ② 队长卡 */
 .team-captain { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-2) var(--dawn-space-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-elevated); border: 1px solid var(--dawn-stroke-accent);
-  background: var(--dawn-surface-elevated); }
+  background: var(--dawn-surface-elevated); box-shadow: var(--dawn-shadow-md-bordered); }
 .team-captain-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 .team-captain-line { display: flex; align-items: baseline; gap: var(--dawn-space-2); }
 .team-captain-name { font-weight: var(--dawn-weight-semibold); }
@@ -5890,7 +6023,7 @@ pre {
 .team-segments > span[data-state="blocked"] { background: var(--dawn-warning); }
 .team-segments > span[data-state="completed"] { background: var(--dawn-success); }
 .team-segments > span[data-state="dead"] { background: var(--dawn-text-4); }
-.team-legend { display: flex; gap: var(--dawn-space-3); font-size: 11px; color: var(--dawn-text-3); }
+.team-legend { display: flex; gap: var(--dawn-space-3); font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
 .team-legend > span::before, .team-summary-dot { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: var(--dawn-radius-full); margin-right: 4px; vertical-align: 1px; background: var(--dawn-stroke-3); }
 .team-legend > span[data-state="running"]::before { background: var(--dawn-accent); }
 .team-legend > span[data-state="blocked"]::before { background: var(--dawn-warning); }
@@ -5920,8 +6053,8 @@ pre {
 .team-member-status { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; max-width: 40%; overflow: hidden; }
 .team-member-status.working { color: var(--dawn-accent); }
 .team-member-count { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); }
-.team-assign { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-1); padding-left: calc(28px + var(--dawn-space-2)); font-size: 11px; }
-.team-chip { font-family: var(--dawn-font-mono); font-size: 11px; padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-2); }
+.team-assign { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-1); padding-left: calc(28px + var(--dawn-space-2)); font-size: var(--dawn-fs-badge); }
+.team-chip { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-badge); padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-2); }
 .team-chip[data-state="running"] { border-color: var(--dawn-accent); color: var(--dawn-accent); }
 .team-chip[data-state="blocked"] { border-color: var(--dawn-warning); color: var(--dawn-warning); }
 .team-chip[data-state="completed"] { border-color: var(--dawn-success); color: var(--dawn-success); }
@@ -5976,17 +6109,17 @@ pre {
 .team-dag-node[data-focused="1"] { border-color: var(--dawn-accent); }
 .team-dag-node[data-dimmed="1"] { opacity: 0.35; }
 .team-dag-node[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--dawn-accent); }
-.team-dag-node-head { display: inline-flex; align-items: center; gap: 4px; font-family: var(--dawn-font-mono); font-size: 11px; font-weight: var(--dawn-weight-semibold); }
+.team-dag-node-head { display: inline-flex; align-items: center; gap: 4px; font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-badge); font-weight: var(--dawn-weight-semibold); }
 .team-dag-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); }
 .team-dag-node[data-state="running"] .team-dag-dot { background: var(--dawn-accent); }
 .team-dag-node[data-state="blocked"] .team-dag-dot { background: var(--dawn-warning); }
 .team-dag-node[data-state="completed"] .team-dag-dot { background: var(--dawn-success); }
 .team-dag-node[data-state="completed"] { border-color: color-mix(in srgb, var(--dawn-success) 40%, transparent); }
-.team-dag-node-label { font-size: 10px; color: var(--dawn-text-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-dag-node-label { font-size: var(--dawn-fs-label); color: var(--dawn-text-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .team-task-detail { display: flex; flex-direction: column; gap: 2px; padding: var(--dawn-space-1) var(--dawn-space-2); border-radius: var(--dawn-radius-sm); background: var(--dawn-row-hover); font-size: var(--dawn-fs-meta); }
 .team-task-detail-head { display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; }
 .team-task-detail-subject { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.team-badge { font-size: 11px; padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-3); white-space: nowrap; }
+.team-badge { font-size: var(--dawn-fs-badge); padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-3); white-space: nowrap; }
 .team-badge[data-state="running"] { border-color: var(--dawn-accent); color: var(--dawn-accent); }
 .team-badge[data-state="blocked"] { border-color: var(--dawn-warning); color: var(--dawn-warning); }
 .team-badge[data-state="completed"] { border-color: var(--dawn-success); color: var(--dawn-success); }
@@ -6038,7 +6171,7 @@ pre {
   cursor: pointer;
 }
 .perm-pill-default input { margin: 0; }
-.perm-pill-note { margin: var(--dawn-space-2) var(--dawn-space-3) 0; font-size: 11px; line-height: 1.4; }
+.perm-pill-note { margin: var(--dawn-space-2) var(--dawn-space-3) 0; font-size: var(--dawn-fs-badge); line-height: 1.4; }
 
 /* ============ `@` 引用工作区文件（2026-08-23，学自 dsh-at-file） ============ */
 /** 菜单借 `.slash-menu` 的壳；一行是 图标 | 文件名 | 父目录 */
@@ -6069,6 +6202,7 @@ pre {
   border-radius: var(--dawn-radius-sm);
   border: 1px solid var(--dawn-stroke-accent);
   background: var(--dawn-surface-elevated);
+  box-shadow: var(--dawn-shadow-md-bordered);
 }
 .at-rail-path { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--dawn-text-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
 .at-rail-path:disabled { opacity: 1; cursor: default; }
@@ -6208,7 +6342,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   gap: var(--dawn-space-2);
   width: 240px;
   padding: var(--dawn-space-2);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
@@ -6248,9 +6383,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   z-index: var(--z-tooltip);
   white-space: nowrap;
   padding: var(--dawn-space-1) var(--dawn-space-2);
-  font-size: 11px;
+  font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-2);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
   border: var(--dawn-hairline) solid var(--dawn-stroke-float);
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
@@ -6292,8 +6428,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .dropper-val { margin: 0; display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); }
 .dropper-val code { font-family: var(--dawn-font-mono); }
 .dropper-swatch { width: 12px; height: 12px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); }
-.dropper-hint { margin: 0; font-size: 11px; color: var(--dawn-text-2); }
-.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-elevated); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
+.dropper-hint { margin: 0; font-size: var(--dawn-fs-badge); color: var(--dawn-text-2); }
+.dropper-start { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); padding: var(--dawn-space-1) var(--dawn-space-2); background: var(--dawn-surface-overlay); backdrop-filter: var(--dawn-blur-overlay); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-float); }
 .dropper-err { position: absolute; top: var(--dawn-space-4); left: 50%; transform: translateX(-50%); }
 
 /* 附栏三颗的静默态：与「优化输入」同一档淡（终端此前常黑，作者报的） */
@@ -6316,8 +6452,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   background: var(--dawn-surface-elevated);
 }
 .attached-file .attached-name { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-fs-meta); }
-.attached-file .attached-size { color: var(--dawn-text-3); font-size: 11px; white-space: nowrap; }
-.attached-file .attached-path { color: var(--dawn-text-3); font-size: 11px; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.attached-file .attached-size { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); white-space: nowrap; }
+.attached-file .attached-path { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
 .attached-file .attached-x { position: static; opacity: 1; width: 20px; height: 20px; }
 .attach-usage { display: flex; flex-direction: column; gap: var(--dawn-space-2); align-items: flex-start; }
 .attach-usage-line { margin: 0; font-variant-numeric: tabular-nums; }
@@ -6338,6 +6474,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   max-height: 88vh;
   border-radius: var(--dawn-radius-md);
   box-shadow: var(--dawn-shadow-float);
+  /**
+   * **这里不加 `backdrop-filter`。** 它是一张 `<img>`，不是壳。
+   *
+   * 那个属性模糊的是**图片背后**的东西，而这行 `background` 是不透明的，
+   * 所以它在屏幕上什么也不做——却要为一张占满屏的图开一个合成层。
+   * 更要紧的是这个 `background` 本来的用途：**给带透明通道的图垫一层底**。
+   * 这个应用天天在看 matplotlib 出的图，透明底是常态；在它上面叠一层模糊背景，
+   * 等于让科研图的透底区域透出一团糊的东西。
+   */
   background: var(--dawn-surface-elevated);
   cursor: default;
 }
@@ -6382,7 +6527,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .plugin-family-tools { flex: 1 1 auto; min-width: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-family: var(--dawn-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
 .plugin-family[data-on] .plugin-family-name { color: var(--dawn-text-1); }
 .plugin-card[data-state="off"] .plugin-family-list { opacity: 0.55; }
-.badge-on { color: var(--dawn-live); border: 1px solid var(--dawn-live); border-radius: var(--dawn-radius-sm); padding: 0 4px; font-size: 11px; }
+.badge-on { color: var(--dawn-live); border: 1px solid var(--dawn-live); border-radius: var(--dawn-radius-sm); padding: 0 4px; font-size: var(--dawn-fs-badge); }
 
 /* ── 设置「记忆」屏(2026-08-25,学自 dsh-memory-evolve)──────────────── */
 .memory-panel { display: flex; flex-direction: column; gap: var(--dawn-space-4); }
@@ -6458,14 +6603,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .generated-chip.gone .name { text-decoration: line-through; opacity: .6; }
 /* 图片 chip：徽标那一格换成一张 20px 小图（2026-08-27） */
 .generated-chip img { flex: none; width: 20px; height: 20px; object-fit: cover; border-radius: var(--dawn-radius-xs); border: 1px solid var(--dawn-stroke-3); }
-.kind-tag { flex: none; min-width: 46px; text-align: center; font-size: 10px; font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
+.kind-tag { flex: none; min-width: 46px; text-align: center; font-size: var(--dawn-fs-label); font-weight: var(--dawn-weight-semibold); padding: 1px 5px; border-radius: var(--dawn-radius-xs); background: color-mix(in srgb, var(--dawn-success) 15%, transparent); color: var(--dawn-success); }
 
 /* ── 坞「产物」格（spec 2026-08-26-产物 §5，Task 11） ── */
 .artifacts-pane { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-2); }
 .artifacts-head { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .artifacts-head .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .artifacts-group { display: flex; flex-direction: column; gap: 4px; }
-.artifacts-group-title { display: flex; justify-content: space-between; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); letter-spacing: .04em; margin: var(--dawn-space-1) 0; }
+.artifacts-group-title { display: flex; justify-content: space-between; font-size: var(--dawn-fs-label); color: var(--dawn-text-3); letter-spacing: var(--dawn-fs-label-tracking); text-transform: uppercase; margin: var(--dawn-space-1) 0; }
 .artifacts-group-title .count { color: var(--dawn-text-3); }
 .artifacts-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .artifact-row { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); padding: 4px 8px; }
@@ -6505,7 +6650,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-remote-setup { padding: var(--dawn-space-3); overflow-y: auto; }
 .nb-remote-other { padding: var(--dawn-space-2) var(--dawn-space-3); border-bottom: 1px solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
 .nb-remote-other > summary { cursor: pointer; }
-.nb-cells { flex: 1; min-height: 0; overflow: auto; }
+/* position: relative 是「回到底部」浮标的定位参照（2026-09-08）。这一层不滚 */
+.nb-cells { position: relative; flex: 1; min-height: 0; overflow: auto; }
 .nb-cells-inner { padding: var(--dawn-space-2) var(--dawn-space-3); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .nb-cell { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: var(--dawn-space-1); }
 .nb-gutter { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); padding-top: 2px; }
@@ -6579,3 +6725,73 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .kernel-probe { margin-bottom: var(--dawn-space-3); }
 .ip-how { color: var(--dawn-text-2); }
 .statusbar-setup { color: var(--dawn-danger); }
+
+/* ── 应用内更新（2026-09-06，规格 2026-09-06-应用内更新-design.md）────── */
+
+/**
+ * 侧栏底部那一行。**常驻、带文字、不靠悬停**——
+ * 这个项目在 2026-08-10 一天里栽过两次「看不见的能力等于不存在」。
+ */
+.update-entry { flex-shrink: 0; }
+
+/** 图标与文字挨着、一起靠左——与上面那些入口行同一个读法 */
+.update-row { width: 100%; justify-content: flex-start; gap: var(--dawn-space-2); }
+.update-dot { width: 14px; height: 14px; color: var(--dawn-accent); flex-shrink: 0; }
+.update-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/** 点开之后就地展开，不浮在别处——侧栏本来就窄，浮层会盖住会话列表 */
+.update-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  margin: var(--dawn-space-1) var(--dawn-space-2) var(--dawn-space-2);
+  padding: var(--dawn-space-3);
+  border: 1px solid var(--dawn-stroke-3);
+  border-radius: var(--dawn-radius-md);
+  background: var(--dawn-surface-panel);
+}
+.update-head { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-1); }
+.update-sub { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+/** 装不了的原因。**与正文同一档可读性**：它不是脚注，它是这张卡此刻唯一有用的信息 */
+.update-why { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.update-bar { width: 100%; height: 4px; }
+.update-link { justify-content: flex-start; color: var(--dawn-text-3); }
+
+/* ── 设置 → 关于 ─────────────────────────────────────────────────── */
+
+.about-pane { display: flex; flex-direction: column; gap: var(--dawn-space-3); }
+.about-row { display: flex; align-items: center; gap: var(--dawn-space-3); }
+.about-name { color: var(--dawn-text-2); }
+/** 版本号用等宽：它是一串要被人念给别人听的字符 */
+.about-ver { font-family: var(--dawn-font-mono); color: var(--dawn-text-1); }
+.about-say { margin: 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
+.about-auto { display: flex; align-items: center; gap: var(--dawn-space-2); color: var(--dawn-text-2); }
+
+/**
+ * 「回到底部」浮标（2026-09-08，规格 `2026-09-08-回到底部浮标-design.md`）。
+ *
+ * **这里只有两件事：浮在哪儿、浮起来的那层面。**
+ * 尺寸、内距、圆角全部住在 `size="pill"`（`.btn-pill`）里——
+ * primitive 的几何不许从调用点改写，那是 `primitives.tsx` 顶上明令禁止的。
+ *
+ * 浮起来的面照 `.agent-menu` 那一套：阴影 + 发丝线，不是粗边框。
+ */
+.stick-pill {
+  position: absolute;
+  /**
+   * **底部居中**（2026-09-09 作者定的方案一）。上一版在右下角，
+   * 他的话是「这个按钮太丑了」。居中还有一条实在理由：转录本身就是居中的一栏，
+   * 靠右那颗离正文很远，视线要横着走一趟才够得着。
+   */
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: var(--dawn-space-3);
+  z-index: var(--z-modal-popover);
+  border-color: var(--dawn-stroke-float);
+  box-shadow: var(--dawn-shadow-float);
+}
+/**
+ * `has-new` **不带任何几何**：撑开是 `.btn-pill` 里那段字自己撑的。
+ * 它留在这儿只做一件事——给 e2e 一个「此刻是带字那一种」的判据。
+ */
+.stick-pill-say { white-space: nowrap; }

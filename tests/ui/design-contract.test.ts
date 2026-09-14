@@ -43,6 +43,16 @@ function findLines(text: string, pred: (line: string) => boolean): string[] {
     .map(({ line, n }) => `${n}: ${line.trim()}`)
 }
 
+/** 从 `{` 的位置起，取到配对的 `}` 为止（不含两端）。`@keyframes` 里有嵌套花括号，正则数不清 */
+function 取块(text: string, open: number): string {
+  let depth = 0
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === "{") depth++
+    else if (text[i] === "}" && --depth === 0) return text.slice(open + 1, i)
+  }
+  return ""
+}
+
 describe("设计契约 · 颜色只从令牌来", () => {
   it("组件里没有裸色值", () => {
     for (const f of tsxFiles()) {
@@ -105,6 +115,22 @@ describe("设计契约 · 主题体系不许退化成两套颜色表", () => {
     ).toEqual([])
   })
 
+  /**
+   * 深度四档必须在两个主题里都存在（2026-09-10 视觉重做）。
+   *
+   * **只在亮色里加一档，暗色就会静悄悄掉回描边**——黑影压在黑底上是看不见的，
+   * 而 CSS 不会为此报错。这正是「缺失不等于相同」的形状。
+   */
+  it("**深度四档在两个主题里都有定义** —— 只加亮色那一支，暗色会掉回描边", () => {
+    const text = tokens()
+    const lightBlock = text.slice(0, text.indexOf(":root.dawn-dark"))
+    const dark = darkBlockTokens()
+    for (const t of ["--dawn-shadow-sm", "--dawn-shadow-md", "--dawn-shadow-lg", "--dawn-shadow-float"]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(lightBlock), `亮色块缺 ${t}`).toBe(true)
+      expect(dark, `暗色块缺 ${t}`).toContain(t)
+    }
+  })
+
   it("**暗色不靠 prefers-color-scheme** —— 那样人就没法强制切换了", () => {
     // 媒体查询版与强制类版没法共用一个声明块，两份种子一定会漂移。
     // 「跟随系统」在 state/theme.ts 里解析成明确的类，这里只留一个入口
@@ -147,8 +173,45 @@ describe("设计契约 · primitive 不被调用点覆写", () => {
     const exempt = new Set(["primitives.tsx", "ErrorBoundary.tsx", "pane-boundary.tsx"])
     for (const f of tsxFiles()) {
       if (exempt.has(f)) continue
-      const hits = findLines(read(f), (l) => /<button[\s>]/.test(l))
-      expect(hits, `${f}：用 <Button> 而不是裸 <button>`).toEqual([])
+      /**
+       * **`<button` 后面那一下可以是换行**（2026-09-08 修）。
+       *
+       * 上一版是 `/<button[\s>]/` 逐行匹配。属性一多，JSX 就被格式化成
+       * 每行一个属性，于是那一行的内容正好是 `      <button`——**行尾**，
+       * 后面既没有空白也没有 `>`，这条扫描当场瞎掉。
+       * 「回到底部」浮标就是这么大摇大摆走过去的。
+       *
+       * 这是本文件第三次栽在「逐行扫描抓不住跨行 JSX」上
+       * （emoji 那条、按钮子串那条，现在是这条）。改成**整篇匹配**：
+       * `<button` 后面只要不是标识符字符（字母/数字/`-`），就是一个真的原生按钮——
+       * 这样 `<button\n`、`<button>`、`<button className=…>` 全都抓得住，
+       * 而 `<buttonish>` 这种（并不存在的）自定义标签不会误伤。
+       */
+      /**
+       * **先把注释抹平再扫**（2026-09-08）。
+       *
+       * 不抹的话，一条解释「为什么不许写裸 `<button>`」的注释本身就会被算成违规——
+       * 改完这条扫描的第一分钟就撞上了。抹成等长的空格，**行号因此不变**。
+       */
+      const src = read(f).replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, (c) => c.replace(/[^\n]/g, " "))
+      const 违规: string[] = []
+      for (const m of src.matchAll(/<button(?![\w-])[\s\S]*?\/?>/g)) {
+        /**
+         * **色块是唯一一条窄豁免**（2026-09-08 这条扫描修好之后才浮出来的两处）。
+         *
+         * `Settings.tsx` 主题色那两个 `accent-swatch` 是**一整块纯色**
+         * （`role="radio"` + `style={{ background }}`，里面一个字都没有）。
+         * 套上 Button primitive 就得从调用点改写它的内距、圆角与背景——
+         * 那正是 `primitives.tsx` 顶上明令禁止的另一条。两条规则在这里指向相反，
+         * 取「几何只有一个家」那条。
+         *
+         * **豁免按类名给，不按文件给**：整个文件挖掉的话，
+         * `Settings.tsx` 里以后新写的裸按钮就再也没人看着了。
+         */
+        if (/accent-swatch/.test(m[0])) continue
+        违规.push(`${src.slice(0, m.index).split("\n").length}: <button`)
+      }
+      expect(违规, `${f}：用 <Button> 而不是裸 <button>`).toEqual([])
     }
   })
 })
@@ -377,21 +440,164 @@ describe("设计契约 · 几何只从令牌来", () => {
     expect(offenders).toEqual([])
   })
 
-  it("文字字号只有四档（2026-08-23 美化 ②）—— 14/15/16/20px 全是「标题」的不同写法，不许再长回来", () => {
-    // 放行：四档令牌、聊天/代码字号令牌、11px 徽章、≤10px 的图表刻度与字形记号、em 相对值（markdown 内嵌）、
-    // 侧栏行 14px（量自 WorkBuddy，`.sidebar .row` 那一处专门注释过）
+  /**
+   * 字号七档（2026-09-10 视觉重做）。
+   *
+   * 原来是四档 18/14/13/12，加上游离的 chat 15 与 code 13——
+   * **最大与最小差 1.5 倍**，而用得最多的一档是 12px（116 处）。
+   * 整屏的字几乎一样大，眼睛就找不到主次；这是那份简陋感的第二个机制。
+   *
+   * 新增的三档分别补两头：display 是会话标题（跨度拉到 2.2×），
+   * label 是分组小标（新角色），badge 收编那 53 处写死的 11px（旧角色，一直没有名字）。
+   */
+  it("**字号七档都有定义** —— 跨度从 1.5× 拉到 2.2×", () => {
+    const text = read("tokens.css")
+    for (const t of [
+      "--dawn-fs-display",
+      "--dawn-fs-title",
+      "--dawn-fs-sub",
+      "--dawn-fs-meta",
+      "--dawn-fs-badge",
+      "--dawn-fs-label",
+    ]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
+    }
+  })
+
+  /**
+   * 动效令牌（2026-09-10 视觉重做）。
+   *
+   * 全仓 `transition` 只有 10 条，**清一色 `ease` / `ease-out`**——
+   * 没有一条自定义缓动，也没有任何进场动画。`ease` 是浏览器的缺省，
+   * 用它等于"没做过动效决定"。
+   *
+   * **只立一条曲线**：`cubic-bezier(.22, 1, .36, 1)`（快出慢入）。
+   * 两条曲线的界面会立刻显得不是一个人做的。
+   */
+  it("**动效令牌都有定义** —— 一条曲线，三个时长", () => {
+    const text = read("tokens.css")
+    for (const t of ["--dawn-ease", "--dawn-dur-fast", "--dawn-dur-base", "--dawn-dur-slow"]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
+    }
+  })
+
+  it("文字字号只走令牌（2026-08-23 立四档，2026-09-11 补到七档并关掉 11/10/9px 的口子）", () => {
+    // 放行：七档令牌、聊天/代码字号令牌、em 相对值（markdown 内嵌）、
+    // 侧栏行 14px（量自 WorkBuddy，`.sidebar .row` 那一处专门注释过）、
+    // ≤10px 的图表刻度与字形记号（**不是文字**）
     const offenders = findLines(
       read("styles.css"),
       (l) =>
         /font-size:/.test(l) &&
-        !/--dawn-(fs-(title|sub|meta)|ui-size|chat-size|code-size)/.test(l) &&
-        !/font-size:\s*(11|10|9)px/.test(l) &&
+        !/--dawn-(fs-(display|title|sub|meta|badge|label)|ui-size|chat-size|code-size)/.test(l) &&
         !/font-size:\s*[0-9.]+em\b/.test(l) &&
         !/\.sidebar \.row \{/.test(l) &&
         !/font-size:\s*0\.(6|68|72|95)rem/.test(l) && // 单字母记号与图标尺寸，不是文字
+        !/\.usage-month/.test(l) && // 图表刻度
         !/font-size:\s*28px/.test(l), // 欢迎页那颗「D」字形
     )
-    expect(offenders, "字号请归到 --dawn-fs-title / -sub / --dawn-ui-size / --dawn-fs-meta").toEqual([])
+    expect(
+      offenders,
+      "字号请归到 --dawn-fs-display / -title / -sub / -meta / -badge / -label 或 --dawn-ui-size",
+    ).toEqual([])
+  })
+
+  /**
+   * **用了 `--dawn-shadow-md/lg` 的规则不许再有 `border:`。**
+   *
+   * 暗色下这两档的一圈描边是**阴影里的 `inset 0 0 0 1px`**；元素上再来一条
+   * border 就是两圈，差 1px 的双线，在深色底上看得很清楚。
+   * `tokens.css` 里 2026-08-23 已经为 float 写过同一句话
+   * （*「不再往阴影里塞 inset —— 两者会叠成两圈」*），只是那时没有东西强制它。
+   *
+   * **这条规则先于它的第一个调用点落地**（2026-09-10，第一轮）：
+   * `tokens.css` 的暗色注释里写着「有扫描拦着」，而第一轮是能单独合并的——
+   * 扫描留到第二轮再加，中间就存在一个"注释在说假话"的版本。
+   * **这个仓库为这种事付过代价**：「不要用 `window.prompt`」是自己写下、
+   * 又自己违反的规则，直到作者打开发现白屏。所以它现在是空真的，这没关系。
+   *
+   * 扫的是**声明块**不是行：`border` 与 `box-shadow` 通常不在同一行上。
+   */
+  it("**用了 --dawn-shadow-md/lg 的规则里没有 `border:`** —— 暗色的 inset 会和 border 叠成两圈", () => {
+    const css = read("styles.css")
+    const 违规: string[] = []
+    for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
+      const 块 = m[2]!
+      // `(?!-)` 把 `--dawn-shadow-md-bordered` 排除在外 —— 那一档**就是**给
+      // "自己带描边"的面用的，它省掉了 inset 那一圈，正好不会叠成两圈。
+      // 没有这个否定先行断言，`\b` 会在 `md` 与 `-` 之间匹配，新令牌被自己的规则误伤。
+      if (!/--dawn-shadow-(md|lg)(?!-)/.test(块)) continue
+      // 不锚行首（终审抓的）：`.usage-block { …; border: … }` 这种一行写完的规则原先会漏过去；
+      // 单边长写法同样算——一边双线也是双线
+      if (/(^|[;{\s])border(-(top|right|bottom|left))?:\s/.test(块)) {
+        违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器}`)
+      }
+    }
+    expect(违规, "改用 md/lg 的面要一并删掉那条 border —— 见 tokens.css 暗色块的注释").toEqual([])
+  })
+
+  it("**浮层的玻璃令牌都定义过** —— 模糊与透明度散在调用点上，就没人知道两块玻璃是不是同一块", () => {
+    // 原本还有一档 --dawn-blur-panel 给侧栏，2026-09-11 撤了（容器上的模糊什么也不做，还会钉住 fixed 后代）
+    const text = read("tokens.css")
+    for (const t of ["--dawn-blur-overlay", "--dawn-surface-overlay"]) {
+      expect(new RegExp(`^\\s*${t}:`, "m").test(text), `tokens.css 缺 ${t}`).toBe(true)
+    }
+  })
+
+  /**
+   * **`backdrop-filter` 必须配一个 `@supports not` 降级块。**
+   *
+   * 毛玻璃的面是半透明的。不做模糊时那层半透明会**直接漏出底下的东西**——
+   * 不是"没那么好看"，是读不了。而 CSS 对此完全不会出声。
+   * 这条是「失败必须出声」（规格 7.5）在样式表里的形状。
+   */
+  it("**用了 backdrop-filter 就必须有 @supports not 降级块**", () => {
+    // 用在 styles.css，降级归 tokens.css —— 种子层令牌只有一个家
+    const 用了 = /backdrop-filter:/.test(read("styles.css"))
+    const 有降级 = /@supports\s+not\s*\(\s*backdrop-filter:/.test(read("tokens.css"))
+    expect(用了 && !有降级, "半透明的面在不支持模糊的地方会漏底，必须给回不透明的实色").toBe(false)
+  })
+
+  /**
+   * **`backdrop-filter` 只准出现在浮层上，不准出现在布局容器上。**
+   *
+   * 2026-09-11 踩的，只有一条 e2e 抓到（`sess-title.spec.ts`「窗口矮的时候…」）。
+   *
+   * `backdrop-filter` 和 `filter` / `transform` 一样，**会让元素成为它
+   * `position: fixed` 后代的包含块**。给 `.sidebar` 加上之后，长在里面的悬停卡
+   * 的 `fixed` 坐标改按侧栏解释——夹住它的代码算的是视口坐标，卡当场掉出窗口底。
+   * 那张卡用 `fixed` 是**硬要求**（侧栏 `overflow: auto`，绝对定位会跟着列表滚走，
+   * 本仓库栽过一次）。**一个纯视觉属性废掉了一条有注释、有前科的定位契约。**
+   *
+   * 而它在那儿**本来就没做事**：布局容器背后只有 body 的渐变，
+   * 模糊一个平滑渐变得到的还是同一个渐变。透出底色的是半透明，不是模糊。
+   *
+   * 判据用 `--dawn-shadow-float` 代理「这是不是浮层」：浮层都成对用它 + `stroke-float`
+   * （见 tokens.css）。**不精确，但可判定**——而且它恰好能抓住踩过的那一次。
+   */
+  it("**`backdrop-filter` 只准长在浮层上** —— 布局容器带上它，里面的 fixed 会被钉到它身上", () => {
+    const css = read("styles.css")
+    const 违规: string[] = []
+    for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const 块 = m[2]!
+      if (!/backdrop-filter:/.test(块)) continue
+      if (/--dawn-shadow-float/.test(块)) continue
+      const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
+      违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器}`)
+    }
+    expect(
+      违规,
+      "模糊只给浮层。容器要材质感用半透明底就够了 —— 背后没有会动的东西可糊",
+    ).toEqual([])
+  })
+
+  it("**`backdrop-filter` 只走 --dawn-blur-***", () => {
+    const offenders = findLines(
+      read("styles.css"),
+      (l) => /backdrop-filter:/.test(l) && !/--dawn-blur-/.test(l) && !/@supports/.test(l),
+    )
+    expect(offenders).toEqual([])
   })
 
   it("font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家", () => {
@@ -422,6 +628,53 @@ describe("设计契约 · 几何只从令牌来", () => {
     )
     const missing = [...used].filter((t) => !new RegExp(`^\\s*${t}:`, "m").test(tokens))
     expect(missing).toEqual([])
+  })
+
+  /**
+   * **带位移的动画必须有 `prefers-reduced-motion` 的出路；纯淡入淡出豁免。**
+   *
+   * 这是 DESIGN.md 那句话的自动化形式：*「超出淡入淡出的一律尊重
+   * `prefers-reduced-motion`」*。**位移会让前庭功能敏感的人难受**，
+   * 这不是装饰性动画的可选项。
+   *
+   * 本仓库现有的做法比"一刀 `animation: none`"讲究：思考中的点换成一条更平缓的，
+   * 菜单换成淡入。所以规则只要求**被提到**，不规定减弱成什么样——
+   * 减成什么样是每个动画自己的事。
+   *
+   * 加它的时候当场抓到一条先有的：`.export-toast`（`export-fade` 里有
+   * `translateY(-4px)`，却没有任何出路）。`.copied-toast` 是纯 opacity，正确豁免。
+   */
+  it("**带位移的动画必须能关** —— 纯淡入淡出豁免", () => {
+    const css = read("styles.css")
+    const 减弱块 = [...css.matchAll(/@media[^{]*prefers-reduced-motion[^{]*\{/g)]
+      .map((m) => 取块(css, m.index! + m[0].length - 1))
+      .join("\n")
+    const 关键帧 = new Map<string, string>()
+    for (const m of css.matchAll(/@keyframes\s+([\w-]+)\s*\{/g)) {
+      关键帧.set(m[1]!, 取块(css, m.index! + m[0].length - 1))
+    }
+    const 违规: string[] = []
+    for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      // `animation-name:` 长写法、一行写完的规则都要认（终审抓的）
+      const 名 = /(?:^|[;{\s])animation(?:-name)?:\s*([\w-]+)/.exec(m[2]!)?.[1]
+      if (!名) continue
+      const 帧 = 关键帧.get(名)
+      // 独立的 translate / scale / rotate 属性也是位移（终审抓的：原先只认 transform）
+      if (!帧 || !/(^|[;{\s])(transform|translate|scale|rotate):/.test(帧)) continue // 纯淡入淡出豁免
+      const 选择器 = m[1]!.trim().split("\n").pop()!.trim()
+      // 先剥掉括号里的东西（`:not(:has(~ .turn))` 里也有空格），再取最后一段的类名。
+      // **整段匹配，不是子串**（终审抓的）：原先 `.menu` 会因为减弱块里提到 `.menu-scrim` 而被放过
+      let 剥 = 选择器
+      while (/\([^()]*\)/.test(剥)) 剥 = 剥.replace(/\([^()]*\)/g, "")
+      const 末段 = 剥.trim().split(/\s+/).pop()!.split(":")[0]!
+      const 转义 = 末段.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      if (末段 && new RegExp(`(^|[^\\w-])${转义}(?![\\w-])`).test(减弱块)) continue
+      违规.push(`${css.slice(0, m.index).split("\n").length}: ${选择器} → ${名}`)
+    }
+    expect(
+      违规,
+      "位移会让前庭功能敏感的人难受 —— 给它一个 prefers-reduced-motion 的出路（减成什么样由你定）",
+    ).toEqual([])
   })
 })
 
@@ -997,5 +1250,66 @@ describe("设计契约 · 工具名要过得了模型 API", () => {
       }
     }
     expect(坏的, "这个名字送进模型会让整轮请求 400，而报错里不会提到它").toEqual([])
+  })
+})
+
+/**
+ * **输入法组词途中那一下回车不许被当成确认**（2026-09-06 作者报的）。
+ *
+ * 他在输入卡里打了 `woyaoyigewenjian`，候选词还没上屏就按了回车——
+ * 那一串拼音被当成话发给了模型。CDP 量到的事实是
+ * `keydown · key=Enter · keyCode=13 · isComposing=true`，
+ * 而当时全项目只有笔记本的 cell 看了这一位。
+ *
+ * 这是一条**可判定**的规则，所以它在这里而不是在谁的记性里（准入规则 2）：
+ * **任何按 `Enter` 做事的键盘处理器，都必须先问一句 `在组词(e)`。**
+ *
+ * 覆盖两种写法：`onKeyDown={(e) => { … }}` 与 `onKeyDown={名字}`（另处定义的函数）。
+ */
+describe("设计契约 · 输入法", () => {
+  /** 从 `起` 处那个 `{` 开始，取到配平的 `}` 为止 */
+  function 取块(text: string, 起: number): string {
+    const 开 = text.indexOf("{", 起)
+    if (开 === -1) return ""
+    let 深 = 0
+    for (let i = 开; i < text.length; i += 1) {
+      if (text[i] === "{") 深 += 1
+      else if (text[i] === "}") {
+        深 -= 1
+        if (深 === 0) return text.slice(开, i + 1)
+      }
+    }
+    return text.slice(开)
+  }
+
+  /** 一个文件里所有键盘处理器的函数体 */
+  function 键盘处理器们(text: string): { 名: string; 体: string }[] {
+    const 出: { 名: string; 体: string }[] = []
+    for (const m of text.matchAll(/onKeyDown=\{/g)) {
+      const 后 = text.slice(m.index + m[0].length, m.index + m[0].length + 80)
+      const 引用 = /^([A-Za-z一-龥_$][\w一-龥$]*)\}/.exec(后.trimStart())
+      if (引用) {
+        // `onKeyDown={onKeyDown}`：去找那个函数自己
+        const 定义 = new RegExp(`(?:const|function)\\s+${引用[1]}\\s*[=(]`).exec(text)
+        if (定义) 出.push({ 名: 引用[1]!, 体: 取块(text, 定义.index) })
+        continue
+      }
+      出.push({ 名: `onKeyDown@${text.slice(0, m.index).split("\n").length}`, 体: 取块(text, m.index) })
+    }
+    return 出
+  }
+
+  it("**按 Enter 做事的键盘处理器，都先问一句 `在组词(e)`**", () => {
+    const 漏的: string[] = []
+    for (const f of tsxFiles()) {
+      const text = read(f)
+      for (const { 名, 体 } of 键盘处理器们(text)) {
+        if (!体.includes('"Enter"')) continue
+        // `isComposing` 直接写也算（笔记本那处早就这么写的）
+        if (体.includes("在组词") || 体.includes("isComposing")) continue
+        漏的.push(`${f}：${名}`)
+      }
+    }
+    expect(漏的, "组词途中那一下回车会被当成确认——先 `if (在组词(e)) return`").toEqual([])
   })
 })

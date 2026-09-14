@@ -9,6 +9,7 @@
  * 所有确认动作的生效时点如实写在屏上:**下一段会话生效**。
  */
 import { useCallback, useEffect, useState } from "react"
+import { 在组词 } from "./ime.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 
@@ -242,6 +243,8 @@ export function MemoryPanel({
                   value={新条}
                   onChange={(e) => 设新条(e.target.value)}
                   onKeyDown={(e) => {
+                    // 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）
+                    if (在组词(e)) return
                     if (e.key !== "Enter" || !新条.trim()) return
                     直写("add", { content: 新条.trim() })
                     设新条("")

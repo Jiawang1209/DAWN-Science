@@ -13,6 +13,7 @@
  * agent 没碰过的数据文件、上一次会话留下的东西，那些只能靠翻。
  */
 import { useEffect, useMemo, useRef, useState } from "react"
+import { 在组词 } from "./ime.js"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { AgentMarkdown } from "./markdown.js"
@@ -1090,6 +1091,8 @@ export function FilesView({
             placeholder={t("输一个目录路径，回车跳过去")}
             onChange={(e) => 设跳到(e.target.value)}
             onKeyDown={(e) => {
+              // 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）
+              if (在组词(e)) return
               if (e.key !== "Enter") return
               const p = 跳到.trim()
               // **空的就不跳**：那不是「回到根目录」，那是「什么都没输」

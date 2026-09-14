@@ -49,7 +49,16 @@ export type ButtonVariant =
  * **而那正是本文件第 16 行明令禁止的事**。扫描抓不到语义类名，
  * 但规则不是给扫描看的。多一档尺寸，几何就仍然只有一个家。
  */
-export type ButtonSize = "default" | "sm" | "xs" | "inline" | "icon" | "card"
+/**
+ * `pill` 是 2026-09-08 加的一档：**浮在转录上的那颗药丸**（「回到底部」浮标）。
+ *
+ * 一支箭头加一句话，全圆角。2026-09-09 作者把形状从「右下角一颗圆点」换成
+ * 「底部居中的带字药丸」之后，这一档就只剩这一种样子了。
+ * 与 `card` 同一条理由：它本可以写成调用点的一个 className 再在 CSS 里改
+ * 内距/高度/圆角——**而那正是本文件顶上明令禁止的事**。多一档尺寸，
+ * 几何就仍然只有一个家。
+ */
+export type ButtonSize = "default" | "sm" | "xs" | "inline" | "icon" | "card" | "pill"
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
   variant?: ButtonVariant

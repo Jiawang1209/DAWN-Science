@@ -26,7 +26,7 @@ const 取 = (文本: string, 键: string): string | undefined => {
 
 describe("自带技能", () => {
   it("有几份就扫几份（别把新加的漏在扫描之外）", () => {
-    expect(每一份().length).toBeGreaterThanOrEqual(4)
+    expect(每一份().length).toBeGreaterThanOrEqual(6)
   })
 
   it("**每份都有 frontmatter，且 name 与目录名一致**", () => {

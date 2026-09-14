@@ -89,6 +89,31 @@
 
 ---
 
+### 2026-09-14 — 照着案例分析：说一个需求，先给真实案例，挑定后照着它分析你的数据（分支 `case-analysis`）
+
+- **Type**: feat
+- **Motivation**: 作者要的大功能的两半：*「我要进行转录组分析，可以给我什么案例？……返回真实的案例」*，以及
+  *「基于案例内容，直接对数据进行分析和可视化（把案例当作真实的代码库）」*。与 09-07「照着文献画图」是同一个
+  MLAI-science 案例库的另一半。作者当场定两条：**读代码当参照、直接写他的**（不搬示例数据、不先复现）；**他挑，agent 等**。
+  形状选了「只加一份技能」，不做对话里的案例卡片。
+- **What**（规格 `specs/2026-09-14-照着案例分析-design.md`，定案 C1–C5）：
+  - 新技能 `skills/analyze-like-case/SKILL.md`：第一段对上受控词表（任务/算法/语言，语言缺省跟内核）→
+    `search_cases` 带过滤 → 列 3–5 条（标题、语言、一句人话、图廊链接）→ **停**；第二段 `get_case(figure_limit=0)` 只取一次 →
+    先看他的数据 → 说清差距（差太远就说不适用）→ 在他的仓库里**新写**脚本并 `run_code` 真跑。
+  - **修 `figure-like-this` 一处真错**：`list_taxonomy(dimension="figure_type")` 实测回 `unknown dimension`，维度名是复数
+    `figure_types`（09-07 规格同句就地更正）；「七成是 draft」改成「09-11 起已清零，增量入库的新案例仍可能是 draft」。
+  - 装法文档补「连本机常驻 HTTP 服务」一节（带图廊、token 进钥匙串、401 先查 token）。
+  - `tests/skills/自带技能.test.ts` 份数下限 4 → 6。
+- **Impact**: 零生产代码、零协议变更。需要作者在设置里把 `mlai-science` 配上才生效；没配时技能第 0 步停下说清楚。
+- **Verification**:
+  - **对着真库量的七条事实**写进规格：任务过滤前混进两篇画火山图的教程、过滤后五条全是真差异分析；`algorithm=random_forest`
+    + `language=r` 三条全中；`list_taxonomy` 维度复数而 `search_cases` 过滤参数单数；一条命中约 500 字、有标题叫 `20221223`；
+    `get_case` 从 6.6k 到 12 万字（395 个数据文件的清单，`figure_limit=0` 缩不下来）；本机 HTTP 服务在跑但 `local-data/mcp_token` 回 401。
+  - `vitest tests/skills` 27 过；`npm run build` 后 `dist/skills` 里有新技能；`e2e/skills.spec.ts` + `subagent-roster.spec.ts` 9 过。
+  - **没验的**：模型真的照技能走两段（要作者配好 MCP 后在 DAWN 里说那两句）。
+
+---
+
 ### 2026-09-14 — 远端 R 真集群验过；main 快进到 `remote-r`（未推）
 
 - **Type**: chore

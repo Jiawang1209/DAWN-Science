@@ -8,6 +8,19 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-14 — 把 main 合进 `remote-r`：先合后验，作者拿合完的那一版上集群验 R
+
+- **Type**: chore
+- **Motivation**: `remote-r` 09-05 开出后 main 又走了 54 个提交（应用内更新、照着文献画图、回到底部浮标、视觉重做、剥 trailer），已不能快进。作者选「先合后验」：冲突趁早解，集群上验的就是将来要进 main 的那一版。
+- **What**: `git merge main` 进 `remote-r`（`83cd203`），三处冲突全是两边各加各的：
+  - `CLAUDE.md` 文档入口表：R 远端那一行与 main 新增的四行都留，按日期排。
+  - `docs/DEVELOPMENT_HISTORY.md`：09-05 那条 R 远端条目放回 09-05 那一段里（新的在顶的顺序不乱）。
+  - `scripts/dev-mock.mjs`：子进程环境里 `DAWN_FAKE_SSH_R` 与 `DAWN_UPDATE_FEED` 两条都给。
+- **Impact**: `remote-r` 现在是 main + R 远端；**仍未合进 main、未推**。真集群验 R（`plans/2026-09-05-R远端.md` Task 6）通过后，main 可直接快进到这条分支。
+- **Verification**: typecheck 干净；单元 **2872 过 / 10 跳过**（229 文件）；全套 e2e **480 passed / 1 skipped / 0 failed**（21.0m，跳过的是 `sidebar-collapse` 那条按取舍放弃的），`kernel-session` 另跑 6 passed；本机 R 4.6.1 装着 IRkernel，`remote-kernel.spec.ts`「选 R → 在服务器的 IRkernel 里算出 42、画出一张图」真跑并通过。
+
+---
+
 ### 2026-09-12 — 剥掉 31 个 commit 里的 Claude trailer：GitHub 贡献者列表里多了一个 claude
 
 - **Type**: chore

@@ -125,7 +125,8 @@ test.describe("成员指了一个目录里没有的模型", () => {
     await page.keyboard.press("Enter")
     const 工具 = page.locator(".tool").filter({ hasText: "team_create" }).first()
     await expect(工具).toHaveAttribute("data-status", "error", { timeout: 60_000 })
-    await 工具.locator(".tool-head").click()
+    // 失败的那条**自己会展开**（2026-09-15 修好的；此前从没展开过，这里靠点一下才看得到）——不再去点，点了反而收起
+    await expect(工具.locator(".tool-head")).toHaveAttribute("aria-expanded", "true")
     await expect(工具.locator(".tool-result")).toContainText("没有模型「不存在的模型」")
     await expect(工具.locator(".tool-result")).toContainText("deepseek-v4-flash")
   })

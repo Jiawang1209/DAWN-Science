@@ -1625,8 +1625,12 @@ export class NativeRuntime implements AgentRuntime {
           sessionId,
           toolCallId: String(e.toolCallId ?? ""),
           toolName,
-          // 顶层那个才是 pi 的判定；结果对象上的留作兜底（我们自己的工具——远端 bash、权限拒绝——写在那里）
-          isError: Boolean(e.isError ?? e.result?.isError),
+          /**
+           * **两处任一说失败就是失败。** 顶层是 pi 的判定（它自带的工具抛异常时只有这里是 true）；
+           * 结果对象上的是我们自己的工具写的（远端 bash、权限拒绝、硬拒、建队失败）——那时 pi 的顶层是**明确的 false**。
+           * 第一版写成 `??`，false 不是空值、不往后看，那四类失败全变回「成功」（全套 e2e 红了 4 条才抓到）。
+           */
+          isError: Boolean(e.isError || e.result?.isError),
           text: out.text,
           truncated: out.truncated,
           bytes: out.bytes,

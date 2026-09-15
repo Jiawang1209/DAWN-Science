@@ -116,7 +116,8 @@ test.describe("问一句", () => {
     await expect(卡).toHaveCount(0)
     const 工具2 = page.locator(".tool").filter({ hasText: "bash" }).nth(1)
     await expect(工具2).toHaveAttribute("data-status", "error", { timeout: 30_000 })
-    await 工具2.locator(".tool-head").click()
+    // 失败的那条**自己会展开**（2026-09-15 修好的；此前从没展开过，这里靠点一下才看得到）——不再去点，点了反而收起
+    await expect(工具2.locator(".tool-head")).toHaveAttribute("aria-expanded", "true")
     await expect(工具2.locator(".tool-result")).toContainText("人拒绝了")
     expect(existsSync(join(workspace, "old.txt"))).toBe(true)
   })
@@ -132,7 +133,8 @@ test.describe("硬拒", () => {
     await page.keyboard.press("Enter")
     const 工具 = page.locator(".tool").filter({ hasText: "bash" }).first()
     await expect(工具).toHaveAttribute("data-status", "error", { timeout: 30_000 })
-    await 工具.locator(".tool-head").click()
+    // 失败的那条**自己会展开**（2026-09-15 修好的；此前从没展开过，这里靠点一下才看得到）——不再去点，点了反而收起
+    await expect(工具.locator(".tool-head")).toHaveAttribute("aria-expanded", "true")
     await expect(工具.locator(".tool-result")).toContainText("提权")
     await expect(page.locator(".perm-card")).toHaveCount(0)
   })

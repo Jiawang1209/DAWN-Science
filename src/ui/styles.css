@@ -5550,6 +5550,59 @@ pre {
 }
 
 /* 消息底下那张「网页预览」卡（批 2，2026-08-18，形状照作者的截图） */
+/**
+ * 对话里的 MLAI 案例卡片（2026-09-15）。两列网格，窄了收成一列。
+ * 面照 `.dock-overview > .panel`：阴影 + 圆角，不划边框（视觉重做那条：深度靠影子，不靠线）。
+ */
+.case-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--dawn-space-3);
+  margin-top: var(--dawn-space-3);
+}
+.case-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  padding-bottom: var(--dawn-space-3);
+  background: var(--dawn-surface-panel);
+  border-radius: var(--dawn-radius-lg);
+  box-shadow: var(--dawn-shadow-md);
+  overflow: hidden;
+}
+/* 卡片主体就是「看详情」那颗按钮：几何由 `size="card"` 给，这里只让它吃满宽、封面贴顶 */
+.case-open { flex: 1 1 auto; }
+.case-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: contain;
+  background: var(--dawn-surface-elevated);
+  border-radius: var(--dawn-radius-md);
+  image-rendering: auto;
+}
+/* 没有封面 / 没取到：同一块地方写出来，不留一块空白假装正常 */
+.case-cover-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-meta);
+}
+.case-cover-loading { display: flex; align-items: center; justify-content: center; }
+.case-meta { margin-top: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.case-title {
+  color: var(--dawn-text-1);
+  font-weight: var(--dawn-weight-semibold);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.case-summary { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
+/* 「照这篇做」：常驻、左对齐在卡片底边内侧 */
+.case-pick { align-self: flex-start; margin-left: var(--dawn-space-3); }
+
 .weblink-card {
   display: flex;
   align-items: center;

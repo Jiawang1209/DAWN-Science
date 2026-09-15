@@ -410,9 +410,11 @@ describe("协议版本 · 5.5", () => {
    *
    * 7.27（2026-08-26）：`cell` 项加可选 `interrupted: true`（按「中断」停下的那段）。
    *   纯新增可选字段，minor。
+   *
+   * 7.34（2026-09-15）：新增只读操作 `fetchLocalImage`（案例卡片的封面从本机地址取）。纯新增，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.33")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.34")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

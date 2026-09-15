@@ -87,6 +87,7 @@ import { discoverCliModels } from "../runtime/cli/models.js"
 import { familyOf } from "../runtime/family.js"
 import { UserFacingError } from "../errors.js"
 import { fault, fault原样, type WorkbenchBackend } from "./server.js"
+import { 取本机图片 } from "./本机图片.js"
 import type { SessionTranscripts } from "./events.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
@@ -2487,6 +2488,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     downloadUpdate: async () => 要更新().下载(),
     cancelUpdate: async () => 要更新().取消(),
     applyUpdate: async () => 要更新().装(),
+
+    /** 案例卡片的封面（7.34）：守卫全在 `本机图片.ts` 里——只认本机、只收图片、2MB、5 秒 */
+    fetchLocalImage: async ({ url }) => 取本机图片(url),
 
     listPlugins: async () => ({
       plugins: 插件册.map((p) => ({

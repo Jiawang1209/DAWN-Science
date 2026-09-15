@@ -50,6 +50,8 @@ import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance
 import { 按类分组 } from "./agent-groups.js"
 import { GeneratedStrip, 本轮产物, type 轮产物 } from "./generated-strip.js"
 import { 分组转录, 汇总工具组 } from "./tool-group.js"
+import { 从工具结果收案例, 本轮提到的案例, type 本轮案例 } from "./case-cards.js"
+import { 案例卡片们 } from "./case-cards-view.js"
 import type { ArtifactList } from "./state/catalog.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
@@ -3696,6 +3698,8 @@ export function ConversationView({
   artifacts,
   onOpenArtifact,
   loadThumb,
+  loadLocalImage,
+  loadGalleryRoots,
   onExport,
   权限,
   引用文件,
@@ -3737,6 +3741,10 @@ export function ConversationView({
   onOpenArtifact?: ((path: string) => void) | undefined
   /** 图片产物的缩略图源（2026-08-27）：透传给产物条，让图片 chip 显示小图；缺省就退回「IMAGE」徽标 */
   loadThumb?: ((path: string) => Promise<string | undefined>) | undefined
+  /** 案例卡片的封面源（7.34）：主进程从本机地址取图 → data URL；失败回 undefined */
+  loadLocalImage?: ((url: string) => Promise<string | undefined>) | undefined
+  /** 问一次「MCP 服务器名 → 图廊根地址」（案例卡片出现时才问）。只有 HTTP 接的那种有 */
+  loadGalleryRoots?: (() => Promise<Record<string, string>>) | undefined
   /**
    * 这段对话的工作目录（T3-b）。**缺省 = 没设 = 这是一段普通对话**。
    *
@@ -4189,6 +4197,19 @@ export function ConversationView({
 
   const busy = 说着 || 等回话 !== undefined
   /**
+   * 每条说完的 agent 发言提到的案例（2026-09-15）。**只随条目变**：流式时每个 token 都重渲染，
+   * 而收案例要解析工具返回的 JSON——不记住的话一段长对话每个字都重解析一遍。
+   */
+  const 案例表 = useMemo(() => {
+    const 表 = new Map<string, 本轮案例[]>()
+    items.forEach((x, k) => {
+      if (x.type !== "turn" || x.who !== "agent" || !x.final) return
+      const 有 = 本轮案例(items, k, x.text)
+      if (有.length > 0) 表.set(x.id, 有)
+    })
+    return 表
+  }, [items])
+  /**
    * 框里有没有东西可发。**只有图也算**（协议 4.12）：
    * 「看看这张图」这种意图人常常懒得打字。
    */
@@ -4357,6 +4378,17 @@ export function ConversationView({
                 currentKernel={kernelInstanceId}
                 nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
+                {...(loadLocalImage ? { loadLocalImage } : {})}
+                {...(案例表.has(item.id) ? { cases: 案例表.get(item.id), loadGalleryRoots } : {})}
+                {...(disabled || busy
+                  ? {}
+                  : {
+                      /** 「照这篇做」：与 `onResend` 同一条发送路；忙着时不给 → 卡片上的按钮灰着 */
+                      onPickCase: (text: string) => {
+                        void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+                        设位置(-1)
+                      },
+                    })}
                 {...(artifacts && onOpenArtifact && item.type === "turn" && item.who === "agent" && item.final
                   ? { generated: 本轮产物(items, item.id, artifacts, session.kind, 下标), onOpenArtifact, ...(loadThumb ? { loadThumb } : {}) }
                   : {})}
@@ -5205,9 +5237,21 @@ export function TranscriptRow({
   generated,
   onOpenArtifact,
   loadThumb,
+  loadLocalImage,
+  onPickCase,
+  cases,
+  loadGalleryRoots,
 }: {
   item: TranscriptItem
   agentId: string
+  /** 这条回复提到的、这一轮 MLAI 工具查到的案例（2026-09-15）。只有说完的 agent 发言才有 */
+  cases?: readonly 本轮案例[] | undefined
+  /** 问一次「MCP 服务器名 → 图廊根地址」（只有 HTTP 接的那种有） */
+  loadGalleryRoots?: (() => Promise<Record<string, string>>) | undefined
+  /** 案例卡片的封面源（7.34，`fetchLocalImage`）。不给就不取图，卡片封面位置说没取到 */
+  loadLocalImage?: ((url: string) => Promise<string | undefined>) | undefined
+  /** 「照这篇做」替人发的那句话。**不给 = 此刻不能发**（agent 在忙 / 只读）——按钮照画、灰着 */
+  onPickCase?: ((text: string) => void) | undefined
   /** 这一轮的产物（2026-08-26）：只有说完的 agent 轮才有；两个一起给才画产物条 */
   generated?: 轮产物 | undefined
   onOpenArtifact?: ((path: string) => void) | undefined
@@ -5455,6 +5499,13 @@ export function TranscriptRow({
           * 那是长年的默认，改它是另一个决定。要在坞里开外网，
           * 走这张卡上的「在这儿打开」。
           */}
+        {/**
+          * **案例卡片**（2026-09-15）：这条回复提到了这一轮 MLAI 工具查到的案例，就画成卡片。
+          * 数据由对话层从工具返回里收好传进来（`cases`），这里只管画。
+          */}
+        {cases && cases.length > 0 && onOpenWeb ? (
+          <案例卡片们 案例们={cases} 载图廊根们={loadGalleryRoots} 取图={loadLocalImage} onOpen={onOpenWeb} onPick={onPickCase} />
+        ) : null}
         {!mine && item.final && onOpenWeb && 头一条网址(item.text) ? (
           <网页卡
             url={头一条网址(item.text)!}
@@ -5973,6 +6024,23 @@ function ToolRow({
       ) : null}
     </div>
   )
+}
+
+/**
+ * 这条 agent 发言提到的、**这一轮**（上一句用户发言之后）MLAI 工具查到的案例（2026-09-15）。
+ * 这一轮没调过 MLAI 工具、或正文一篇都没提 → 空数组，不出卡。
+ */
+function 本轮案例(items: readonly TranscriptItem[], 下标: number, 正文: string): 本轮案例[] {
+  let i = 下标 - 1
+  const tools: { name: string; result?: string | undefined }[] = []
+  while (i >= 0) {
+    const x = items[i]!
+    if (x.type === "turn" && x.who === "user") break
+    if (x.type === "tool") tools.push({ name: x.name, result: x.result })
+    i--
+  }
+  if (tools.length === 0) return []
+  return 本轮提到的案例(正文, 从工具结果收案例(tools.reverse()))
 }
 
 /**

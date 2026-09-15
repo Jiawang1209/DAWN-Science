@@ -44,6 +44,13 @@ function 假改写(最后一句) {
  * 这里把标题层级、有序/无序/嵌套列表、行内与块代码、表格、引用、分隔线
  * 一次摆齐，改样式时对着它看，e2e 也拿它当靶子。
  */
+/**
+ * **案例卡片的靶子**（2026-09-15，规则 ①）：用户说的话里带「案例卡片」时，最终回复**提到**两篇案例。
+ * 卡片的数据来自这一轮 `mlai-science__search_cases` 的工具返回（`scripts/mcp-test-server.mjs` 里那台假的），
+ * 这里只负责「正文里提到了哪几篇」——第二篇故意写成截短的 id，真机上模型就是这么写的。
+ */
+export const 案例卡片回复 = "库里找到两篇：`e2e-deseq2-full-id` 做差异表达；`20251019-xacaaee` 画 Mantel 热图。你想照哪一篇做？"
+
 export const MARKDOWN_REPLY = [
   "# 一级标题",
   "",
@@ -207,7 +214,9 @@ export function startMockInferenceServer(opts = {}) {
             ? `假模型已应答：我收到了 ${图片数} 张图。`
             : 用户说的.includes("markdown")
               ? MARKDOWN_REPLY
-              : 默认回复
+              : 用户说的.includes("案例卡片")
+                ? 案例卡片回复
+                : 默认回复
 
       const tool = opts.toolCall?.(body)
       const stream = body.stream !== false

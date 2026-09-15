@@ -2968,6 +2968,22 @@ export const OPERATIONS = {
     sideEffects: true,
     response: 更新回执Schema,
   },
+
+  /**
+   * **从本机地址取一张图**（7.34，2026-09-15，案例卡片）。
+   *
+   * 对话里的案例卡片要显示 MLAI 图廊的封面，而界面的 CSP 是 `img-src 'self' data:`——
+   * 不许直接加载 `http://127.0.0.1:8765/…`。**不放宽 CSP**（那会让任何一段 markdown 都能从本机服务拉图），
+   * 改由主进程去取、回 base64，界面拼成 data URL。
+   *
+   * 守卫：**只取本机地址**（`127.0.0.1` / `localhost` / `::1`，http/https）；只收 `image/*`；
+   * 上限 2MB；5 秒超时。任一条不满足都**抛出、说清是哪条**——卡片据此在封面位置写「没取到」，不画断图。
+   */
+  fetchLocalImage: {
+    request: z.object({ url: z.string().url() }).strict(),
+    mutating: false,
+    response: z.object({ mediaType: z.string().min(1), base64: z.string() }).strict(),
+  },
 } as const satisfies Record<string, OperationDef>
 
 export type OperationName = keyof typeof OPERATIONS

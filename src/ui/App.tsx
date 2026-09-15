@@ -16,6 +16,7 @@
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { 图廊根 } from "./case-cards.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import { 能上服务器 } from "../protocol/index.js"
@@ -1151,6 +1152,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       }
     },
     [读产物],
+  )
+
+  /**
+   * 案例卡片的封面（7.34，2026-09-15）：主进程从本机地址取图 → data URL。
+   * **失败一律回 undefined**，卡片据此在封面位置写「封面没取到」，不画断图。
+   */
+  const 读本机图 = useCallback(
+    async (url: string): Promise<string | undefined> => {
+      try {
+        const r = await client.get<{ mediaType: string; base64: string }>("fetchLocalImage", { url })
+        return `data:${r.mediaType};base64,${r.base64}`
+      } catch {
+        return undefined
+      }
+    },
+    [client],
   )
 
   /**
@@ -2406,6 +2423,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 载技能 = useCallback(() => client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {}), [client, projectId])
   const 载子agent = useCallback(() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {}), [client, projectId])
   const 载MCP = useCallback(() => client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {}), [client, projectId])
+  /**
+   * MCP 服务器名 → 图廊根地址（2026-09-15，案例卡片）。**卡片真出现时才问**，不在启动时取：
+   * 启动请求有预算（`app-default-client.test.tsx`），而且在设置里后加的那台要立刻认得。
+   * 只有连过去的那种（有 `url`）才有图廊；stdio 起的那台没有——卡片照出，不给封面、不能点开详情。
+   */
+  const 载图廊根们 = useCallback(async (): Promise<Record<string, string>> => {
+    const r = await 载MCP()
+    const 表: Record<string, string> = {}
+    for (const s of r.servers) if (s.url) 表[s.name] = 图廊根(s.url)
+    return 表
+  }, [载MCP])
   const 载微信通知 = useCallback(() => client.get<NotifySettings>("weixinGetNotify", {}), [client])
   const 载飞书状态 = useCallback(() => client.get<FeishuStatus>("feishuGetStatus", {}), [client])
   const 载飞书通知 = useCallback(() => client.get<NotifySettings>("feishuGetNotify", {}), [client])
@@ -4102,6 +4130,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 artifacts={artifacts}
                 onOpenArtifact={openArtifact}
                 loadThumb={读产物缩略}
+                loadLocalImage={读本机图}
+                loadGalleryRoots={载图廊根们}
                 {...(() => {
                   // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
                   const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")

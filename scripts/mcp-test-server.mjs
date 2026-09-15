@@ -27,6 +27,12 @@ import http from "node:http"
 import { appendFileSync } from "node:fs"
 import { z } from "zod"
 
+/** 一张 2×2 的红色 png——够小，又不是透明的，截图里看得出「真的有图」 */
+const 假封面 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg==",
+  "base64",
+)
+
 /**
  * 需要一个环境变量才肯起来的那一档。
  *
@@ -50,6 +56,23 @@ if (process.env.DAWN_MCP_TEST_REQUIRE === "1" && !process.env.DAWN_MCP_TEST_SECR
 function 装上工具(server) {
 server.tool("echo", "把收到的话原样回给你。测试用。", { message: z.string() }, async ({ message }) => ({
   content: [{ type: "text", text: `echo: ${message}` }],
+}))
+
+/**
+ * **假 MLAI 的 `search_cases`**（2026-09-15，案例卡片）。回的形状照真 MLAI：一组带 case_id / title / language / cover 的命中。
+ * 第三篇没有 cover；第二篇 id 很长，假模型的回复里会把它截短——那正是卡片要认出来的情形。
+ */
+server.tool("search_cases", "假的案例检索。测试用。", { query: z.string().optional() }, async () => ({
+  content: [
+    {
+      type: "text",
+      text: JSON.stringify([
+        { case_id: "e2e-deseq2-full-id", title: "R包DESeq2作差异基因分析", language: "r", cover: "figures/1.preview.png", task: ["differential_expression"] },
+        { case_id: "20251019-xacaaee-python-mantel-butterfly", title: "Python Mantel 蝴蝶状热图", language: "python", cover: "figures/2.preview.png", figure_types: ["mantel_heatmap"] },
+        { case_id: "e2e-nocover", title: "没有被提到的那一篇", language: "r" },
+      ]),
+    },
+  ],
 }))
 
 server.tool("boom", "总是报错。测试用。", {}, async () => ({
@@ -109,6 +132,21 @@ if (Number.isFinite(端口) && 端口 > 0) {
    */
   http
     .createServer((req, res) => {
+      /**
+       * **假 MLAI 图廊**（2026-09-15，案例卡片）：MCP 地址去掉 `/mcp` 就是图廊根——与真 MLAI 同一台服务。
+       * `/gallery/asset/<id>/<path>` 回一张 2×2 的红 png；`/gallery/case/<id>` 回一页最小的 HTML。
+       */
+      if (req.url?.startsWith("/gallery/asset/")) {
+        res.writeHead(200, { "content-type": "image/png" })
+        res.end(假封面)
+        return
+      }
+      if (req.url?.startsWith("/gallery/case/")) {
+        const id = decodeURIComponent(req.url.split("/").pop() ?? "")
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" })
+        res.end(`<!doctype html><title>${id}</title><h1>${id}</h1>`)
+        return
+      }
       if (!req.url?.startsWith("/mcp")) {
         res.writeHead(404).end("只认 /mcp")
         return

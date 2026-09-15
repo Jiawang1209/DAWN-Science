@@ -8,6 +8,33 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-15 — 案例卡片：对话里查到的 MLAI 案例画成带封面的卡片，「照这篇做」由你来选（协议 7.34）
+
+- **Type**: feat
+- **Motivation**: 「照着案例分析」真机好用之后，作者：*「能否每一个案例，不要显示是链接形式的，而是……一个一个真实内容的效果呢？」*
+  以及 *「后续让 agent 学习和模仿哪个具体案例，其实也应该是我们来进行选取的。」* 作者还问过这属于哪一边——**DAWN**：
+  MLAI 是不管界面的知识库，卡片、右侧打开、替人发话、图不进上下文都是工作台的事；**MLAI 一行不改**。
+- **What**（分支 `case-cards`，规格 `specs/2026-09-15-案例卡片-design.md`）：
+  - **数据从这一轮 MLAI 工具的返回里取**（`src/ui/case-cards.ts`，纯函数）：递归找带 `case_id` 的对象、按 id 合并；
+    **出哪几张 = agent 正文里提到的 case_id**，按首次出现排，截短的 id 若是唯一前缀也认。
+    **第一版是让 agent 附一段 ```mlai-cases 清单**——作者真机第二次试，会话原始记录显示模型根本没读技能、直接调了 8 次 MLAI 工具，
+    清单没有、卡片就没出。「模型记得按格式写」不可靠，作者同意改成读工具返回。技能里对应那段也撤了，改成「写完整 case_id」。
+  - **封面：协议 7.34 `fetchLocalImage`**（`src/workbench/本机图片.ts`）。界面 CSP 是 `img-src 'self' data:`，**不放宽**；
+    主进程只取本机 http(s)、只收 `image/*`、2MB、5 秒，任一条不过都抛出说清。图廊根 = MCP 地址去掉 `/mcp`，**卡片出现时才读 `listMcpServers`**
+    （启动请求有预算，`app-default-client.test.tsx` 当场红过一次；也让设置里后加的那台立刻认得）。stdio 那台没有图廊，卡片写明。
+  - **卡片**（`src/ui/case-cards-view.tsx`）：封面 · `n · 语言` · 标题（两行截断）· 一句话。**点卡片**右侧开图廊详情，不触发选择；
+    **「照这篇做」**常驻、替人发 `照这篇做：《标题》（case_id: …）`，与 `onResend` 同一条发送路，agent 忙着（`busy`）或只读时灰着。
+    封面四态都说话：图 / 没有封面 / 封面没取到 / 这台 MCP 没有图廊（取着时 `Loader`「正在取封面」）。
+  - 对话层按条目 `useMemo` 收一次案例（流式时每个 token 都重渲染）。
+  - 测试替身：`scripts/mcp-test-server.mjs` 加假 `search_cases`，HTTP 模式兼当图廊；假模型在「案例卡片」时的回复只是平常地提到两篇。
+- **Impact**: 协议 minor（7.33 → 7.34，纯新增只读操作）。只在这一轮调过 MLAI 案例工具、且回复提到了 case_id 时出卡；其余对话不变。
+- **Verification**: 单元 `tests/ui/case-cards.test.ts` 9 条、`tests/workbench/local-image.test.ts` 6 条（起真 HTTP 服务）；协议注册表 137、版本 7.34。
+  e2e `case-cards.spec.ts`：HTTP 起一台假 `mlai-science`、**不给模型任何格式**，断言 2 张卡且顺序对、没提到的那篇不出、封面是真加载的 data URL、
+  点卡片右侧开详情、「照这篇做」opacity 1 并发出带完整 case_id 的话；`mcp.spec.ts` 同跑 8 passed。设计契约抓到三处（字面「加载中」、
+  `font-weight: 600`、英文按钮 `Use this` ⊂ `Use this case`）已改。截图亲眼看过卡片（第一版数据源时）。全套 e2e 见合并那条。
+
+---
+
 ### 2026-09-15 — `tool-group`、`fixbug-0915-column`、`case-analysis` 三条合进 main（线性，未推）
 
 - **Type**: chore

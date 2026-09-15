@@ -519,8 +519,11 @@
  *   而界面此前对此一个字都不说——响应里早就带着 `model`，界面把它扔了。
  *   「失败/差异必须出声」（规格 7.5）管的正是这一类：不静默降级，也不静默换人。
  *   **只在借了的时候说**：没借时说一遍「用的是你屏幕上那个模型」是纯噪音。纯新增，故 minor。
+ *
+ * 7.34（2026-09-15）：新增只读操作 `fetchLocalImage`——主进程从**本机地址**取一张图回 base64。
+ *   给对话里的 MLAI 案例卡片显示封面用：界面 CSP 不许直接加载 127.0.0.1 的图，也不打算放宽。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.33"
+export const WORKBENCH_PROTOCOL_VERSION = "7.34"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

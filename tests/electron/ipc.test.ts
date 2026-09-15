@@ -19,6 +19,7 @@ function backend(): WorkbenchBackend {
     downloadUpdate: async () => 更新桩,
     cancelUpdate: async () => 更新桩,
     applyUpdate: async () => 更新桩,
+    fetchLocalImage: async () => ({ mediaType: "image/png", base64: "" }),
     openProject: async () => project,
     // 批 4a 新增的五个（这份桩要覆盖全协议，少一个就编译不过）
     // 视觉服务的三个（协议 7.12）

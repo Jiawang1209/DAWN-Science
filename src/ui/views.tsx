@@ -49,6 +49,7 @@ import { SideSash } from "./sash.js"
 import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import { 按类分组 } from "./agent-groups.js"
 import { GeneratedStrip, 本轮产物, type 轮产物 } from "./generated-strip.js"
+import { 分组转录, 汇总工具组 } from "./tool-group.js"
 import type { ArtifactList } from "./state/catalog.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
@@ -4342,9 +4343,15 @@ export function ConversationView({
           {items.length === 0 ? (
             <p className="empty">{t("还没有对话")}</p>
           ) : (
-            items.map((item, 下标) => (
+            /**
+             * **连续两条以上的工具调用折成一行**（2026-09-15，`tool-group.ts`）。
+             * 分组只在渲染这一层做：条目本身、产物下标、事件流一概不动。
+             */
+            分组转录(items).map((块) => 块.kind === "group" ? (
+              <ToolGroupRow key={块.key} tools={块.tools} />
+            ) : ((item, 下标) => (
               <TranscriptRow
-                key={item.id}
+                key={块.key}
                 item={item}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
@@ -4369,7 +4376,7 @@ export function ConversationView({
                       },
                     })}
               />
-            ))
+            ))(块.item, 块.下标))
           )}
           {/**
             * **发出去了、还没回音时的那个动记号**（2026-08-13，作者要的）。
@@ -5845,7 +5852,18 @@ function useTick(active: boolean): number {
  * 折叠状态是**每一条自己的**，不做全局「全部展开」——那会让人一按之后
  * 对话瞬间变成几千行，而他想看的只是其中一条。
  */
-function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) {
+function ToolRow({
+  item,
+  在组里 = false,
+}: {
+  item: Extract<TranscriptItem, { type: "tool" }>
+  /**
+   * 在「连续几条折成一行」的那一组里（2026-09-15）。**组里的一律先收着，失败的也不自己弹开**：
+   * 作者选的是「失败只在汇总行里红字出声、点开才看是哪条」——点开组看到的该是逐条一行，
+   * 而不是三段报错输出一起摊开。哪条失败由它自己那道红线和「失败」二字说。
+   */
+  在组里?: boolean
+}) {
   const { mark, label: 状态msgid } = TOOL_STATUS[item.status]
   // **表是模块级常量**：在那里 `t()` 会在 `loadLang()` 之前跑，取到的是默认语言
   const label = t(状态msgid)
@@ -5855,7 +5873,7 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
    * **报错的默认展开。** 用 `item.status` 做初值而不是在 effect 里改——
    * 后者会让错误先折叠一帧再弹开，那一帧的闪动比不折叠更难受。
    */
-  const [open, setOpen] = useState(item.status === "error")
+  const [open, setOpen] = useState(item.status === "error" && !在组里)
   /**
    * **跑着跑着才失败的，也要弹开**（2026-09-15 查到）。真实的一条工具调用总是先以 `running` 挂载、
    * 结束时才变 `error`——上面那个初值只管得了「挂载时就已经是错」的那种（打开旧会话），
@@ -5864,9 +5882,9 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
    */
   const 上次状态 = useRef(item.status)
   useEffect(() => {
-    if (item.status === "error" && 上次状态.current !== "error") setOpen(true)
+    if (item.status === "error" && 上次状态.current !== "error" && !在组里) setOpen(true)
     上次状态.current = item.status
-  }, [item.status])
+  }, [item.status, 在组里])
   const [expanded, setExpanded] = useState(false)
   const result = foldResult(item.result, expanded)
 
@@ -5951,6 +5969,60 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
             // 失败且无正文。**这一支是本次修复的重点**：此前它渲染成空白
             <p className="caveat">{t("这次调用失败了，但没有给出原因")}</p>
           ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * 连续几条工具调用折成的那一行（2026-09-15，作者选的形状）。
+ *
+ * ```
+ * › ✓ 运行了 9 条命令 · 1 条失败(红)          共 26 秒
+ * › … 正在运行第 6 条：quota -s …             ⠋
+ * ```
+ *
+ * - **失败只在这一行里红字出声**，点开才看是哪条（作者定的；单独一条报错仍默认展开，见 `ToolRow`）。
+ * - **收着的时候组里一条都不画**：整组只占一行，这是折叠的全部意义。
+ * - 展开后就是原来的逐条 `ToolRow`，每条还能再点开看输出。
+ * - 在跑的时候说「第几条、在跑什么」：只写「运行了 N 条」会让人以为已经跑完了。
+ */
+function ToolGroupRow({ tools }: { tools: Extract<TranscriptItem, { type: "tool" }>[] }) {
+  const [open, setOpen] = useState(false)
+  const 汇 = 汇总工具组(tools)
+  const 在跑 = 汇.在跑
+  return (
+    <div className={`tool-group${open ? " open" : ""}`} data-running={在跑 ? "true" : "false"}>
+      <Button
+        variant="ghost"
+        size="inline"
+        className="tool-group-head"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <三角图标 className={`caret${open ? " open" : ""}`} />
+        <span className="tool-name">{在跑 ? TOOL_STATUS.running.mark : TOOL_STATUS.ok.mark}</span>
+        {在跑 ? (
+          <span className="tool-peek">
+            {tf("正在运行第 {0} 条：{1}", 在跑.第几条, summarize(在跑.条.input).text || 在跑.条.name)}
+          </span>
+        ) : (
+          <span className="tool-group-say">
+            {汇.全是命令 ? tf("运行了 {0} 条命令", 汇.条数) : tf("调用了 {0} 次工具", 汇.条数)}
+          </span>
+        )}
+        {汇.失败 > 0 ? <span className="tool-group-failed">{tf("· {0} 条失败", 汇.失败)}</span> : null}
+        {汇.总毫秒 !== undefined && 汇.总毫秒 >= 1000 ? (
+          <span className="tool-elapsed" title={t("耗时")}>{tf("共 {0}", formatDuration(汇.总毫秒))}</span>
+        ) : null}
+        {在跑 ? <Thinking /> : null}
+      </Button>
+      {open ? (
+        <div className="tool-group-body">
+          {tools.map((x) => (
+            <ToolRow key={x.id} item={x} 在组里 />
+          ))}
         </div>
       ) : null}
     </div>

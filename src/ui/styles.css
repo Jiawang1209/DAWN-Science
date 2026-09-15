@@ -1076,6 +1076,35 @@ pre {
 }
 .tool.error { border-left-color: var(--dawn-danger); }
 /**
+ * 连续几条工具调用折成的一行（2026-09-15）。**与单条 `.tool` 同一副骨架**——它们是同一类东西，
+ * 长得不一样会让人以为是两种。组里有失败时左边那道线**不变红**：作者选的是「只在汇总里标红」，
+ * 红线会把这一行整个说成「失败了」，而它多半是九条里错了一条。
+ */
+.tool-group {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-left: 2px solid var(--dawn-stroke-3);
+  font-size: var(--dawn-fs-meta);
+}
+.tool-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  font-size: var(--dawn-fs-meta);
+}
+.tool-group-head .caret { flex: 0 0 auto; width: 0.8em; color: var(--dawn-text-3); }
+.tool-group-head .thinking { margin-left: var(--dawn-space-2); }
+.tool-group-say { flex: 0 1 auto; min-width: 0; color: var(--dawn-text-2); }
+/* 失败数：与单条失败的状态字同一个红 */
+.tool-group-failed { flex: 0 0 auto; color: var(--dawn-danger); }
+/* 展开后的逐条收进来一格，与单条的 `.tool-body` 同一个缩进；各条自己的左线仍在 */
+.tool-group-body { padding-left: calc(0.8em + 6px); }
+/* 组里的逐条：成功的不再画自己的灰线（外面那道已经是这一组的线，两道灰线叠着只是噪音）；失败的红线留着——它说「是这一条」 */
+.tool-group-body > .tool { margin: 4px 0; padding-left: 8px; border-left-color: transparent; }
+.tool-group-body > .tool.error { border-left-color: var(--dawn-danger); }
+/**
  * 折叠开关就是整行（2026-08-10）。**整行可点**——只让那个小三角可点，
  * 等于给了一个 8×8 的靶子。
  */

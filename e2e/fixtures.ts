@@ -296,6 +296,12 @@ export interface MockToolCallSpec {
    * 给「断开再连上，第二句还能打到远端」这类要验第二轮的用例用。
    */
   perTurn?: boolean
+  /**
+   * **连着调 N 次**（2026-09-15，工具组折叠）：前 N 次请求各回一次工具调用，之后不再调——
+   * 于是转录里是 N 条相邻的工具行，中间没有一句话。给了它就不看 `once`。
+   * 与 `once` 同一个状态机、同一份假服务器（准入规则 1）。
+   */
+  repeat?: number
 }
 
 export interface DawnOptions {
@@ -445,12 +451,18 @@ export interface DawnOptions {
 function toolCallHook(spec: MockToolCallSpec | undefined) {
   if (!spec) return undefined
   let fired = false
+  let 次数 = 0
   return (body: { messages?: Array<{ role?: string }> }) => {
     if (spec.perTurn) {
       const 最后 = body.messages?.at(-1)
       return 最后?.role === "user"
         ? { toolName: spec.toolName, args: spec.args, ...(spec.say ? { say: spec.say } : {}) }
         : undefined
+    }
+    if (spec.repeat !== undefined) {
+      if (次数 >= spec.repeat) return undefined
+      次数++
+      return { toolName: spec.toolName, args: spec.args }
     }
     if (fired && (spec.once ?? true)) return undefined
     fired = true

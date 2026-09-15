@@ -31,7 +31,7 @@
 - **Verification**: 单元 `tests/ui/case-cards.test.ts` 9 条、`tests/workbench/local-image.test.ts` 6 条（起真 HTTP 服务）；协议注册表 137、版本 7.34。
   e2e `case-cards.spec.ts`：HTTP 起一台假 `mlai-science`、**不给模型任何格式**，断言 2 张卡且顺序对、没提到的那篇不出、封面是真加载的 data URL、
   点卡片右侧开详情、「照这篇做」opacity 1 并发出带完整 case_id 的话；`mcp.spec.ts` 同跑 8 passed。设计契约抓到三处（字面「加载中」、
-  `font-weight: 600`、英文按钮 `Use this` ⊂ `Use this case`）已改。截图亲眼看过卡片（第一版数据源时）。全套 e2e 见合并那条。
+  `font-weight: 600`、英文按钮 `Use this` ⊂ `Use this case`）已改。截图亲眼看过卡片（第一版数据源时）。**全套 e2e 484 passed / 1 skipped / 0 failed**（21.1m）、视觉基线 10/10。
 
 ---
 

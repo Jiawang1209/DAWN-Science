@@ -29,7 +29,7 @@
 - **Verification**: 单元 `tests/ui/tool-group.test.ts` 8 条（先红后绿）；`e2e/tool-group.spec.ts`（`repeat: 3`，一条「第一次成功、之后退出码 3」的命令）：
   一个 `.tool-group`、「运行了 3 条命令」、「2 条失败」颜色等于 `--dawn-danger`、收着时 `.tool` 为 0、点开 3 条且 2 条 error 都收着、再点收起。
   **写这条用例时撞出前两条修复的那两个真 bug**（本机失败显示成功、失败从不自己展开）。截图亲眼看过收起/展开两态。
-  单元 2880 过、typecheck 干净。全套 e2e 见提交后那次重跑。
+  单元 2880 过、typecheck 干净。**提交后重跑全套 e2e：482 passed / 1 skipped / 0 failed**（21.1m），`kernel-session` 另 6 passed——含上一条回归修复在内。
 
 ---
 

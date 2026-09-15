@@ -8,6 +8,20 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-15 — `tool-group`、`fixbug-0915-column`、`case-analysis` 三条合进 main（线性，未推）
+
+- **Type**: chore
+- **Motivation**: 作者：「如果没问题的话，就都合并入 main 吧」。
+- **What**: 三条都从 `7e1af28` 开出。依次变基接成一条直线（`fixbug-0915-column` 接到 `tool-group` 上，`case-analysis` 再接上去），
+  main **快进**到 `a74ab7a`，没有合并提交。冲突只在本文件顶部（三条各自加了条目），按时间新的在上排好；
+  `CLAUDE.md` 与样式表没有冲突。插件自写的 `.omc/project-memory.json` 另存 stash，未混进提交。三条分支保留未删。
+- **Impact**: main 上多了：连续工具调用折叠、本机工具失败显示为失败（含回归修复）、对话列按比例放大、`analyze-like-case` 技能。
+  **`case-analysis` 仍待作者配好 `mlai-science` MCP 后真机说两句**（合并前唯一没验的）。
+- **Verification**: 三者**合在一起**这个组合此前没测过，在合并后的 main 上重跑：typecheck 干净；单元 **2880 过**；
+  全套 e2e **483 passed / 1 skipped / 0 failed**（20.5m）；`kernel-session` 6 passed；视觉基线 **10/10**。提交里无 Claude trailer。
+
+---
+
 ### 2026-09-15 — 连续的工具调用折成一行：「运行了 9 条命令 · 1 条失败」
 
 - **Type**: feat

@@ -5856,6 +5856,17 @@ function ToolRow({ item }: { item: Extract<TranscriptItem, { type: "tool" }> }) 
    * 后者会让错误先折叠一帧再弹开，那一帧的闪动比不折叠更难受。
    */
   const [open, setOpen] = useState(item.status === "error")
+  /**
+   * **跑着跑着才失败的，也要弹开**（2026-09-15 查到）。真实的一条工具调用总是先以 `running` 挂载、
+   * 结束时才变 `error`——上面那个初值只管得了「挂载时就已经是错」的那种（打开旧会话），
+   * 于是正在看的这一轮里失败的那条**从来没有自己展开过**。单元测试只喂了初值为 error 的条目，没抓到。
+   * 这里只在「变成 error」的那一刻展开一次，人之后手动收起不会被再弹开。
+   */
+  const 上次状态 = useRef(item.status)
+  useEffect(() => {
+    if (item.status === "error" && 上次状态.current !== "error") setOpen(true)
+    上次状态.current = item.status
+  }, [item.status])
   const [expanded, setExpanded] = useState(false)
   const result = foldResult(item.result, expanded)
 

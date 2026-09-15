@@ -294,6 +294,12 @@ interface PiEvent {
   args?: unknown
   input?: unknown
   result?: { isError?: boolean; content?: { type?: string; text?: string }[] }
+  /**
+   * **pi 把「这次失败了」放在事件顶层**（`tool_execution_end.isError`，`pi-agent-core/dist/agent-loop.js`）。
+   * 它自带的工具失败时是**抛异常**，pi 接住后造的结果对象里根本没有 `isError`——
+   * 只读 `result.isError` 的话，本机 bash 非零退出、read 读不到文件都显示成「成功」（2026-09-15 查到）。
+   */
+  isError?: boolean
   assistantMessageEvent?: { type?: string; delta?: string }
   /**
    * 完整的一条消息。**助手消息上带 `usage`，那是模型真实的 token 用量**。
@@ -1619,7 +1625,8 @@ export class NativeRuntime implements AgentRuntime {
           sessionId,
           toolCallId: String(e.toolCallId ?? ""),
           toolName,
-          isError: Boolean(e.result?.isError),
+          // 顶层那个才是 pi 的判定；结果对象上的留作兜底（我们自己的工具——远端 bash、权限拒绝——写在那里）
+          isError: Boolean(e.isError ?? e.result?.isError),
           text: out.text,
           truncated: out.truncated,
           bytes: out.bytes,

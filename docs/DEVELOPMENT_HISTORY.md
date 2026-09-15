@@ -8,6 +8,27 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-15 — 本机工具失败一律显示「成功」；失败那条也从没自己展开过（两个真 bug，做工具组折叠时撞出来的）
+
+- **Type**: fix
+- **Motivation**: 给「连续工具调用折成一行」写 e2e 时，造了一条 `exit 3` 的 bash——界面三条全是「✓ 成功」。
+  作者在服务器上看到的失败是对的（截图里 `dmidecode` 那条红了），**只有本机那条路漏**。「失败必须出声」（规格 7.5）。
+- **What**（分支 `tool-group`）：
+  - **根因一**（`src/runtime/native.ts`）：pi 把失败放在 `tool_execution_end` 的**顶层** `isError`
+    （`pi-agent-core/dist/agent-loop.js` 的 `emitToolExecutionEnd`）；它自带的工具失败是抛异常，接住后造的结果对象
+    （`createErrorToolResult`）里**没有** `isError`。我们只读 `e.result?.isError` → 本机 bash 非零退出、read 读不到文件、
+    edit 失败全算成功。远端 bash 与权限拒绝是我们自己的工具、把 `isError` 写在结果里，所以一直是对的。
+    改成 `e.isError ?? e.result?.isError`。
+  - **根因二**（`src/ui/views.tsx` `ToolRow`）：「报错的默认展开」用的是 `useState(item.status === "error")` 初值——
+    真实的一条调用总是以 `running` 挂载、结束才变 `error`，初值管不到，**正在看的这一轮里失败的那条从来没自己展开过**。
+    单元测试喂的是挂载时就是 error 的条目，抓不到。加一个只在「变成 error」那一刻展开一次的 effect，人收起后不再弹开。
+- **Impact**: 本机会话里所有 pi 自带工具的失败从此显示为失败并展开。之前被当成成功的失败，界面上的历史会话不会回改（事件已落库）。
+- **Verification**: `e2e/tool-collapse.spec.ts` 新增「本机命令退出码非零：那一行是失败、默认展开、看得见 exited with code 3」。
+  **两个修复各自证伪过**：去掉 native.ts 的修复 → `data-status` 收到 `ok`；只有它、没有 effect → `aria-expanded` 收到 `false`；两个都在 → 3 passed。
+  单元（`tests/ui/tool-collapse.test.tsx` + `tests/runtime`）过；typecheck 干净。
+
+---
+
 ### 2026-09-14 — 远端 R 真集群验过；main 快进到 `remote-r`（未推）
 
 - **Type**: chore

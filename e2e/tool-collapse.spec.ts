@@ -67,3 +67,33 @@ test.describe("成功的工具调用", () => {
  * 而在 e2e 里造一次真实失败要嘛依赖某个工具的具体报错行为，
  * 要嘛给假后端加一条只为测试存在的分支，两样都比规则本身脆。
  */
+
+/**
+ * **本机工具真的失败时，界面要说失败**（2026-09-15 查到的真 bug）。
+ *
+ * 上面那段说「规则在单元测试里钉，不必真把工具跑挂」——规则确实钉住了，**但喂给规则的那个
+ * `status` 是错的**：pi 把失败放在 `tool_execution_end` 的顶层 `isError`，而 `native.ts` 只读
+ * `result.isError`。pi 自带的工具失败是抛异常，结果对象里没有那个字段——于是本机 bash 退出码 3、
+ * read 一个不存在的文件，**界面上全是「✓ 成功」**。远端 bash 是我们自己写的工具、把 `isError`
+ * 放在结果里，所以作者在服务器上看到的失败是对的，这条只在本机那条路上漏。
+ *
+ * 单元测试读不出这件事——它得真跑一次 pi 的 bash。
+ */
+test.describe("本机命令退出码非零", () => {
+  test.use({
+    dawnOptions: { toolCall: { toolName: "bash", args: { command: "echo 要失败了; exit 3" } } },
+  })
+
+  test("**那一行是失败，默认展开，看得见退出码**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一条会失败的")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+
+    const tool = page.locator(".tool").first()
+    await expect(tool).toHaveAttribute("data-status", "error", { timeout: 60_000 })
+    await expect(tool.locator(".tool-status")).toHaveText("失败")
+    await expect(tool.locator(".tool-head")).toHaveAttribute("aria-expanded", "true")
+    await expect(tool.locator(".tool-result")).toContainText("exited with code 3")
+  })
+})

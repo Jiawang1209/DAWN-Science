@@ -57,6 +57,45 @@ test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn })
 })
 
 /**
+ * **窗口放大，这一栏跟着放大；到上限封顶**（2026-09-15，作者把窗口最大化后报的）。
+ *
+ * 08-12 量 WorkBuddy 量到的其实是一个比例：内容区 1113 里对话列 784，**占七成**。
+ * 那个比例被写成了死数 784——普通窗口里没区别，最大化之后对话缩在中间一窄条，两边空一大片。
+ *
+ * 三个窗口宽度各验一次，每次都连带验「三条边仍然对齐」：
+ * 列宽变成算出来的之后，对话与输入卡是**两个不同的包含块**，最容易在这里错开。
+ */
+test("**窗口放大时这一栏跟着放大，封顶，三条边仍对齐**", async ({ dawn }) => {
+  const { app, page } = dawn
+  await 开一段临时会话(page)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下宽窗口")
+  await page.getByRole("button", { name: "发送", exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+
+  const 量 = async (窗宽: number) => {
+    await app.evaluate(({ BrowserWindow }, w) => BrowserWindow.getAllWindows()[0]?.setSize(w, 900), 窗宽)
+    await page.waitForTimeout(500)
+    return page.evaluate(() => {
+      const r = (sel: string) => document.querySelector(sel)!.getBoundingClientRect()
+      return { 列: r(".turn.agent"), 输入: r(".composer-box"), 内容区: r(".conversation").width }
+    })
+  }
+
+  const 宽度们: number[] = []
+  for (const 窗宽 of [1400, 2000, 3000]) {
+    const m = await 量(窗宽)
+    expect(Math.abs(m.列.left - m.输入.left), `窗宽 ${窗宽}：左缘`).toBeLessThanOrEqual(2)
+    expect(Math.abs(m.列.right - m.输入.right), `窗宽 ${窗宽}：右缘`).toBeLessThanOrEqual(2)
+    expect(m.列.width, `窗宽 ${窗宽}：不低于 784`).toBeGreaterThanOrEqual(783)
+    expect(m.列.width, `窗宽 ${窗宽}：封顶 1200`).toBeLessThanOrEqual(1201)
+    宽度们.push(Math.round(m.列.width))
+  }
+  // 内容区足够宽时要真的变宽——不是一直停在 784
+  expect(宽度们[2]!, `三个窗宽下的列宽：${宽度们.join(" / ")}`).toBeGreaterThan(1000)
+  expect(宽度们[1]!).toBeGreaterThan(宽度们[0]!)
+})
+
+/**
  * **自己说的那句话，右下角是尖的**（CDP 实测 `_userMessageBubble_`：
  * `border-radius: 16px 16px 0px`）。
  *

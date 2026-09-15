@@ -799,7 +799,11 @@ pre {
 
 /* ── 对话 ───────────────────────────────────────────────────────── */
 
-.conversation { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+/**
+ * `container-type`：对话列宽度 `--dawn-thread-max-w` 按这一层的宽度算（`cqi`，2026-09-15）。
+ * 对话层、输入卡、欢迎区都在它里面，三者量的是同一个宽度，左右缘才对得齐。
+ */
+.conversation { display: flex; flex-direction: column; min-height: 0; flex: 1; container-type: inline-size; }
 .conv-head {
   display: flex;
   gap: 10px;

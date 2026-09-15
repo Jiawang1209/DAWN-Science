@@ -8,6 +8,22 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-15 — mac 包改成 ad-hoc 签名：Release 上的包装完报「已损坏」
+
+- **Type**: fix
+- **Motivation**: 作者从 GitHub Release 下 0.0.6 的 mac 包，安装后系统说文件已损坏。
+- **What**: 下载 `DAWN-Science-0.0.6-mac-arm64.zip` 实测：`codesign --verify` 失败——*code has no resources but signature indicates they must be present*，
+  可执行文件只剩链接器留的 ad-hoc 签名、整个 bundle 没有封签（`Sealed Resources=none`）。根因是 `electron-builder.yml` 的 `mac.identity: null`：
+  electron-builder 完全跳过签名，但它改过 Info.plist 与可执行文件名，Electron 原本的签名就碎了；Apple Silicon 上带下载标记的碎签名 App
+  一律报「已损坏」，右键打开也不给开。改成 `identity: "-"`（electron-builder 26 原生支持的 ad-hoc 签名），entitlements 已有
+  hardenedRuntime + ad-hoc 所需的 `disable-library-validation`。新增 `tests/packaging-config.test.ts` 守住这两条；`docs/打包与发布.md` 的安装说明
+  把「无法验证开发者」与「已损坏」两种症状分开写，旧包给 `xattr -cr` 的救法。
+- **Impact**: 下一次打 tag 发的 mac 包从「已损坏」退化成「无法验证开发者」，用户可右键打开 / 「仍要打开」。**已发布的 0.0.6 mac 包仍是坏的**，要重发或让用户 `xattr -cr`。
+  不解决钥匙串 key 随更新失效（那要 Developer ID）。Windows / Linux 不受影响。
+- **Verification**: 本机 `electron-builder --mac zip --arm64` 打包后解压：`codesign --verify --deep --strict` → valid on disk、satisfies its Designated Requirement，
+  `flags=adhoc,runtime`、封签 35617 个文件；加上 `com.apple.quarantine` 后 `spctl` 为 rejected（ad-hoc 本来就过不了公证评估，对应「无法验证开发者」而非「已损坏」）；
+  直接启动可执行文件 15 秒无崩溃、无库校验报错。新测试 2/2 绿，把 identity 改回 null 时当场红。**没做**：没在真 Finder 里双击走一遍 Gatekeeper 弹窗（要作者点）。
+
 ### 2026-09-15 — 案例卡片：对话里查到的 MLAI 案例画成带封面的卡片，「照这篇做」由你来选（协议 7.34）
 
 - **Type**: feat

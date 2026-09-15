@@ -30,8 +30,12 @@ mac:
   gatekeeperAssess: false
   entitlements: packaging/entitlements.mac.plist
   entitlementsInherit: packaging/entitlements.mac.plist
-  # 不签名。有 Apple Developer ID 时：删掉这一行，设 CSC_LINK / CSC_KEY_PASSWORD，再加 notarize
-  identity: null
+  # ad-hoc 签名（`-`），不是不签名。**别改回 null**（2026-09-15 抓的）：null 时 electron-builder 完全跳过签名，
+  # 而它改过 Info.plist、改过可执行文件名，Electron 自带的签名就碎了——Apple Silicon 上带下载标记的
+  # 碎签名 App，Finder 直接报「已损坏，应移到废纸篓」，右键打开也不给开。ad-hoc 签名之后退化成
+  # 「无法验证开发者」，右键打开 / 隐私与安全性里「仍要打开」能过。hardenedRuntime + ad-hoc 要求
+  # entitlements 里有 disable-library-validation（已有）。有 Developer ID 时：改成证书名，设 CSC_LINK / CSC_KEY_PASSWORD，再加 notarize
+  identity: "-"
 dmg:
   title: DAWN Science
   contents:

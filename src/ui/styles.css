@@ -5148,6 +5148,58 @@ pre {
   padding: var(--dawn-space-3);
 }
 
+/* ── 设置那一栏（2026-09-16，规格 `2026-09-16-设置右栏`） ── */
+/**
+ * **它与 `.right-dock` 共用同一列、同一条缝**，所以外形也照抄那一套：
+ * 一条发丝线、面板底色、占满网格给它的那一列。
+ * 抄的是长相不是规则——开合与互斥住在 `state/settings-column.ts`。
+ */
+.settings-column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-left: var(--dawn-hairline) solid var(--dawn-stroke-2);
+  background: var(--dawn-surface-panel);
+  position: relative;
+}
+/**
+ * `.dock-head` / `.dock-close` / `.dock-body` 目前只在 `.right-dock` 下有
+ * 布局（flex、内距、发丝线、滚动）——`.dock-title` 是唯一一个有全局基座的
+ * （见上面独立的 `.dock-title { … }`）。这里补齐前三个缺的那份基座，
+ * 组件那边才不是几个裸摆着、没有 flex 的子元素（Task 5 审查时补的）。
+ */
+.settings-column .dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dawn-space-1);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  white-space: nowrap;
+}
+.settings-column .dock-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.settings-column-tools { display: flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; }
+.settings-column-back { color: var(--dawn-text-3); flex: 0 0 auto; }
+.settings-column-back:hover { color: var(--dawn-text-1); }
+.settings-column-expand { flex: 0 0 auto; }
+.settings-column .dock-close { color: var(--dawn-text-3); flex: 0 0 auto; }
+.settings-column .dock-close:hover { color: var(--dawn-text-1); }
+.settings-column .dock-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--dawn-space-3);
+}
+.settings-column-list { display: flex; flex-direction: column; gap: 2px; }
+/* 行尾那个 `›`：**它是「点进去还有东西」的记号**，不是装饰——
+   没有它，带计数的行和不带的行看起来像两种控件 */
+.settings-column-arrow { margin-left: var(--dawn-space-1); color: var(--dawn-text-4); flex: 0 0 auto; }
+/* 窄栏里那些内容页本来是照整页宽度做的：解开它们的宽度上限与外距，
+   让它们老老实实铺满这一列（真装不下的那几块由 Task 7 量出来再单独修） */
+.settings-column .dock-body > * { max-width: none; }
+
 /* 顶栏最右那颗切换按钮。**开着关着都在同一个位置** */
 .dock-switch { position: relative; margin-left: auto; }
 .dock-switch-trigger { color: var(--dawn-text-2); white-space: nowrap; }

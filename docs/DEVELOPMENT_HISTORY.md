@@ -8,6 +8,47 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — `SettingsColumn` 组件与样式（设置右栏 Task 5）
+
+- **Type**: feat
+- **Motivation**: 设置右栏计划要在窄栏里画出 14 个设置分类的名单，并能钻进单个分类的正文——
+  与整页 `SettingsShell` 共用同一份 `sections`（Task 4 刚提出来的那个变量），只是一次只画一格。
+  这个任务只画组件，不接线：`App.tsx` 还不会渲染它（留给 Task 6）。
+- **What**: 新增 `src/ui/settings-column.tsx`——`SettingsColumn` 组件，纯呈现，不读写任何 store
+  （开合/互斥/回程住在已落地的 `state/settings-column.ts`）；`selected` 落在一个不存在的 id 上会
+  `find` 不到、`?? undefined` 兜底退回名单，标题回落成「设置」。`src/ui/styles.css` 在
+  `.right-dock .dock-body` 之后加了一段 `.settings-column` 及其子选择器。`src/ui/i18n/en.ts`
+  最终**没有新增任何键**——见下面两条对计划原文的偏离。
+  计划原文（`docs/superpowers/plans/2026-09-16-设置右栏.md` Task 5）与实际实现有三处不同，
+  都是审查阶段被 `design-contract.test.ts` / `i18n.test.ts` 现场抓到后改的：
+  1. 关闭按钮从裸字符 `✕` 改成 `<关闭图标 />`（`icons.js`）——`RightDock` 的 `.dock-close`
+     已经是这么画的，这个组件明确要当它的同类。
+  2. 关闭按钮与返回按钮的 `aria-label` 没有按计划新造「关闭设置」「返回设置名单」，而是
+     直接借用了两句已经存在、已经过测试的文案：`t("关闭面板")`（`RightDock` 自己在用）与
+     `t("回到清单")`（`artifacts.tsx` 详情页回名单那颗）。原因是子串扫描：「设置」已经是
+     侧栏那颗 `Row` 的名字，「返回」已经是 `App.tsx` 里一颗按钮的名字，新文案一旦包含它们，
+     `getByRole` 按名字找元素就会连着别处一起撞上（`tests/ui/design-contract.test.ts` 的
+     「`aria-label` 与按钮文案之间也没有子串关系」与 `tests/ui/i18n.test.ts` 的
+     「按钮文案之间没有子串关系」两条各抓了一次）。因此 `en.ts` 净变更为零——计划要加的
+     「展开」「收起」两条本来就已经存在（分别在 `en.ts` 第 1203、414 行一带），另外两条
+     被上述复用替掉，不再需要。
+  3. 补了计划 CSS 缺的一块基座：`.dock-head` / `.dock-close` / `.dock-body` 此前只在
+     `.right-dock` 下有布局（flex、内距、发丝线、滚动），计划里 `.settings-column .dock-head`
+     等规则只写了增量（如 `gap`），没有意识到这三个类没有全局基座（只有 `.dock-title` 有）。
+     照抄字面 CSS 会得到一个没有 flex、没有滚动、没有内距的头部与内容区。本次为
+     `.settings-column` 下的这三个类补齐了与 `.right-dock` 对应规则相同的结构属性
+     （`.settings-column .dock-head` 的 `gap` 仍按计划用更窄的 `--dawn-space-1`）。
+  另外补了计划遗漏的 `.settings-column-expand { flex: 0 0 auto; }`——组件用了这个类名，
+  计划的 CSS 清单里没写，`design-contract.test.ts` 的「JSX 里的类名，styles.css 里都定义过」
+  当场报了这一条。
+- **Impact**: 新文件，未被任何地方引用（Task 6 才接线），不影响现有行为。`en.ts` 无变更。
+  三处偏离均已在组件顶部注释里写明原因，供 Task 6/7 与后续审查参考。
+- **Verification**: `npm run typecheck` 无输出；`npx vitest run tests/ui/i18n.test.ts
+  tests/ui/design-contract.test.ts` → `62 passed`（改之前踩了三条：按钮文案子串两条、
+  `aria-label` 子串一条、类名缺样式一条，改完全绿）；`npm test` → `235 files passed / 2921
+  passed | 10 skipped`（与改动前一致，无回归）；`npm run build` 通过。未跑 e2e——组件尚未接线，
+  没有可驱动的入口，留给 Task 6 之后再验。
+
 ### 2026-09-16 — 把 `sections` 提成一个变量（设置右栏 Task 4）
 
 - **Type**: refactor

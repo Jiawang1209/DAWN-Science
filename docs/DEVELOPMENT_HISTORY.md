@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置里「MCP 服务器」「插件」两行也有了行尾计数（设置右栏 Task 1）
+
+- **Type**: feat
+- **Motivation**: 作者：*「设置里面的 MCP 服务器，我其实希望你能在后面增加上数字，类似我们的 skills 后面增加配置好的数字。」*
+  「扩展」那一组里「Agent Skills」早就有行尾计数，「MCP 服务器」「插件」两行却没有，是这个位置上的一处不一致。
+- **What**: `src/ui/App.tsx` 新增两个 state（`MCP开着数`、`插件开着数`），挂进已有的启动期取数 `useEffect`（与 `技能数`、`记忆待确认数` 同一个 effect），
+  分别调 `listMcpServers`（按 `projectId`，与既有 `载MCP` 同口径）与 `listPlugins`，**口径与 `技能数` 一致：数「开着的」而不是「配了几个」**——
+  三种候选口径里「连上的几台」被否掉，因为 MCP 的 `state` 在手动点过「测试」之前一律是 `unknown`，那个数多数时候会骗人显示 0。
+  两处 section 定义（`id: "mcp"` / `id: "plugins"`）各挂上 `count:`，复用现成的 `SettingsSection.count` / `.side-count`，未改 `Settings.tsx`。
+- **Impact**: 启动期取数 effect 从原来的调用多了 2 发，`tests/ui/app-default-client.test.tsx` 里「取数次数必须收敛」的预算随之从 `<17` 如实上调到 `<19`（同一条测试自己的规矩：新增合理调用要如实上调，不是放松阈值）。无接口破坏性变化；界面上只多两个数字。
+- **Verification**: 新增 `e2e/settings-counts.spec.ts` 两条用例（TDD：先跑到 `.side-count` 找不到的红，实现后转绿）。`npm run typecheck` 无输出；单元 `npm test` 233 files / 2899 passed / 10 skipped 全绿（含上调后的预算用例）。
+
 ### 2026-09-16 — 对话区那两层容器：一颗隐藏的「正在思考」把外层撑成了第二条滚动条
 
 - **Type**: fix

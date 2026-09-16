@@ -8,6 +8,30 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置里那两个新数会掉线：审查抓到 MCP/插件计数不跟着开关走（设置右栏 Task 1 · 第二轮）
+
+- **Type**: fix
+- **Motivation**: 审查在真实构建产物上复现：在 MCP 面板把一台服务器关掉，行尾的数还停在 `2`；离开设置再回来才掉到 `1`。
+  规格 §5 的验收条件是「关掉一台，数字掉一个」——这半句当时不成立。根因：新写的两发 `listMcpServers` / `listPlugins`
+  躺在启动期那份 `useEffect` 里，依赖数组只有 `名册代`（由 `名册变了` 驱动），而 MCP / 插件两屏各自的 `onFlag` / `onAdd` /
+  `onRemove` 全是内联箭头函数，从没调用过 `名册变了`——它们只会刷新各自那一屏，从不通知外面这一发。
+  审查还指出 `toHaveText("2")` 在两台都开着时对「数开着的」与「数配了几个」两种口径长得一样，钉不住这次真正要守的语义；
+  以及 `插件` 那一行用整行子串匹配定位，仓库里已有「浏览器插件」「Office 插件」这类名字，迟早会撞车。
+- **What**: `src/ui/App.tsx`——① MCP 屏的 `onFlag`/`onAdd`/`onRemove`、插件屏的 `onFlag` 在各自 `await` 之后都补一句
+  `名册变了()`，接进技能/子agent/记忆早就在用的那条「名册动过了」频道，不新开一条独立刷新路；② 启动期效果里的
+  `listMcpServers`/`listPlugins` 改成复用既有 `载MCP` 与新增的 `载插件`（此前各写一份 `client.get`，与 `McpView`/
+  `PluginsView` 自己的 `load` 已经是同一接口的第二份拷贝）；③ 状态声明处补一句注释：一台都没配时数字就该显示 `0`，
+  不写成 `|| undefined` 藏起来（与 `技能数` 同一种判断；`记忆待确认数` 用 `|| undefined` 是因为那边 0 的意思不同）。
+  `e2e/settings-counts.spec.ts`——MCP 那条用例改成先断言 `2`、点开「先别连它」、再断言掉到 `1`（不是单独断言一次「2」，
+  那样会连已经被否掉的 `servers.length` 口径也放过去）；插件那条改成按 `.name` 精确匹配定位那一行，不再整行子串比对。
+- **Impact**: 无接口破坏性变化；两处 section 的行尾计数现在跟着增删/开关实时走，不再需要离开设置再回来才刷新。
+  启动期效果多依赖 `载MCP`/`载插件` 两个 `useCallback`（各自依赖仍是 `client`/`projectId`），行为不变。
+- **Verification**: 新增的 e2e 用例先在**未修复**的代码上跑了一遍（`git stash` 掉 `App.tsx` 的修复部分，只留新用例），
+  复现出了预期的失败：`Expected: "1"` / `Received: "2"`，证明它真的在验「掉了没」而不是别的。修复后
+  `npm run build && npx playwright test e2e/settings-counts.spec.ts --reporter=line` → `2 passed`；
+  `npm run typecheck` 无输出；`npm test` → `233 files passed / 2899 passed / 10 skipped`；
+  `npx playwright test e2e/mcp.spec.ts --reporter=line`（触碰了 MCP 的 `onFlag`/`onAdd`/`onRemove`，验没有连带弄坏）→ `7 passed`。
+
 ### 2026-09-16 — 设置里「MCP 服务器」「插件」两行也有了行尾计数（设置右栏 Task 1）
 
 - **Type**: feat

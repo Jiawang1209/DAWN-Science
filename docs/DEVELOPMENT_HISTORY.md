@@ -8,6 +8,50 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置右栏 Task 6 · 点「设置」开的是右边那一栏（并把碰设置的 e2e 全护住）
+
+- **Type**: feat
+- **Motivation**: 作者：*「我们点击设置的时候，其实设置页面整体就弹出来了，其实我想要的是
+  初始是类似于点击面板后的效果，然后也有一个按钮，可以展开。」* Task 3/4/5 把状态、分区、
+  组件都做好了却**没有人渲染它**——这一步把它接进 `App.tsx`，顺带把 27 支碰设置的 e2e 护住。
+- **What**:
+  - **十个接线点**（计划 Task 6 的 ①–⑩）：`useStore($settingsColumnOpen)` / `useStore($设置在场)`；
+    侧栏那颗改成 `$设置在场.get() ? 关掉设置() : 开设置栏()`；`actions.openSettings(Section)`
+    改走 `开设置栏`；`--dawn-dock-w` 改成 `rightDockOpen || 设置栏开着`（**漏了这一条，
+    那一栏就画进一条 0 宽的轨道，点了什么都看不见**）；右边那一格改成
+    `设置栏开着 ? <SettingsColumn> : rightDockOpen ? <RightDock> : null`；整页
+    `SettingsShell` 加 `onCollapse`；两处 `ConnectionSurface` 显式走 `打开设置整页()`；
+    `设置分区` 从常量数组改成 thunk；`打开设置整页` 从 `view.ts` 搬进 `state/settings-column.ts`。
+  - **开坞的地方是 7 处，不是计划说的 8 处**（逐个 grep 数过）：⌘P / ⌃⇧G 两条快捷键的
+    `点开房客`、`openArtifact`、`点开文件面板`、`actions.showProjectPanel`、`onOpenWeb`，
+    **外加计划没点到的顶栏那颗 `DockSwitch` 的 `onToggle`**——而那一颗正是 e2e 里
+    `getByRole("button", { name: "面板" })` 点的那一颗。每一处开坞之前先 `坞上位()`，
+    且**必须在 `点开房客` 之前**（后者有一支「已经是它 → 收起」，会去关一个看不见的坞）。
+  - **计划之外补的一处**：顶栏那颗「返回」原本是裸的 `setView("conversation")`——
+    从整页退出时不还房客，被设置顶掉的坞就永久回不来。改走 `关掉设置()`。
+  - **文案「收回」不是「收起」**：`design-contract` 当场抓到「收起」是「收起面板」与
+    「收起添加模型服务」的子串。新增 msgid `收回`（en: `Collapse`）。
+  - **返回键改画 `返回图标`**（作者：*「图标也要保持我原来图标的样式才行」*）：
+    `icons.tsx` 把下拉那条路径提成模块级常量 `雪佛龙`，`返回图标` 是它转 90°，
+    两颗天生同一种描边与圆角；`settings-column.tsx` 的裸 `‹` 换成图标组件，
+    文件头里那段「照旧用裸字符」的旧理由同步改掉（**不留一条现在时下为假的注释**）。
+  - **e2e**：新增 `e2e/settings-column.spec.ts`（8 条，先跑红过）；`fixtures.ts` 的 `进设置`
+    开完栏立刻「展开」，27 支老用例一个字没改；`visual.spec.ts` 两处动线补「展开」；
+    `csp` / `i18n` / `palette` / `remote-connections` 四支不走夹具、自己点「设置」的用例
+    各自跟着改（`palette` 那条改成比「那一栏」——两个入口此刻落在同一处的就是它）。
+  - **顺带修掉一条一直都在的视觉竞态**：`visual.spec.ts` 的「设置」那一屏此前不等
+    分类列上那四个计数（Skills / 子 Agent / 插件 / MCP 各走一发 IPC），基线里存着
+    「插件与 MCP 都没有数字、Skills 是 5」的一帧。多了「展开」这一下之后窗口翻过去了，
+    补上等待才谈重存基线——否则存进去的还是一张碰运气的图。
+- **Impact**: 点「设置」不再顶掉对话。右边那一列同时只有一位房客（窄栏 or 坞），
+  互斥仍然只住在 `state/settings-column.ts` 一个文件里。`打开设置整页` 换了家，
+  从 `state/index.ts` 导出的名字不变。**两张视觉基线（设置-亮色 / 设置-暗色）待重存**：
+  整页多了一颗「收回」，标题那一行随之高了 4px——看过 diff 图，改的正是这两样。
+- **Verification**: 八条新 e2e 先跑红（`8 failed`，全是 `.settings-column` 找不到）再跑绿
+  （`8 passed`）；`npm run typecheck` 干净；`npm test` 235 文件 / 2921 条全绿；
+  全量 `npx playwright test` 见下一条记录/报告里的数字；两张设置基线的 diff 图逐一看过，
+  未 `--update-snapshots`（按项目纪律，红了先看图、由作者定重存）。
+
 ### 2026-09-16 — 设置右栏 Task 5 · code review 二轮修（三条注释是假的）
 
 - **Type**: docs

@@ -3135,6 +3135,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
   /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
   const [技能数, 设技能数] = useState<number | undefined>(undefined)
+  /**
+   * 「扩展」那一组的行尾计数（2026-09-16，作者要的）。
+   *
+   * **口径与 `技能数` 一致：数「开着的」**，不是「配了几个」。同一个位置上的
+   * 两个数用两种口径，正是这个项目吃过亏的那类「没有判据」。
+   *
+   * MCP **按项目问**（项目级 `.dawn/mcp.yaml` 会追加几台），所以它跟着
+   * `projectId` 走——换项目时这个数会变，那是实情不是抖动。
+   */
+  const [MCP开着数, 设MCP开着数] = useState<number | undefined>(undefined)
+  const [插件开着数, 设插件开着数] = useState<number | undefined>(undefined)
   /** 设置「记忆」入口的待确认角标(建议 + 待装技能;0 = 不显示) */
   const [记忆待确认数, 设记忆待确认数] = useState<number | undefined>(undefined)
   const [技能单, 设技能单] = useState<SlashItem[]>([])
@@ -3172,6 +3183,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .get<{ pending: number }>("memoryOverview", 当前工作区路径 ? { workspace: 当前工作区路径 } : {})
       .then((r) => 还在 && 设记忆待确认数(r.pending))
       .catch(() => {})
+    client
+      .get<MCP装载>("listMcpServers", projectId ? { projectId } : {})
+      .then((r) => 还在 && 设MCP开着数(r.servers.filter((s) => !s.off).length))
+      .catch((e: unknown) => console.error("[设置] MCP 台数读不到，那一行就不显示数字：", e))
+    client
+      .get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {})
+      .then((r) => 还在 && 设插件开着数(r.plugins.filter((p) => p.on).length))
+      .catch((e: unknown) => console.error("[设置] 插件数读不到，那一行就不显示数字：", e))
     return () => {
       还在 = false
     }
@@ -3952,6 +3971,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   group: t("扩展"),
                   title: t("插件"),
                   icon: <插件图标 className="row-icon" />,
+                  count: 插件开着数,
                   body: (
             <PluginsView
               load={() => client.get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {})}
@@ -3964,6 +3984,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   group: t("扩展"),
                   title: t("MCP 服务器"),
                   icon: <设置图标 className="row-icon" />,
+                  count: MCP开着数,
                   body: (
             /**
              * MCP 那一屏（2026-08-15）。

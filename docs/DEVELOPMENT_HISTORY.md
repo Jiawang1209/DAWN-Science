@@ -8,6 +8,27 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置分类跨重启活着（设置右栏 Task 2）
+
+- **Type**: feat
+- **Motivation**: 窄栏与整页要共用「当前选中的设置分类」这同一份状态（规格 `2026-09-16-设置右栏`），
+  而这份状态要跨重启活着——此前 `$settingsSection` 只是一个内存 atom，重开应用永远回落到第一项。
+- **What**: `src/ui/state/view.ts`——新增 `SETTINGS_SECTION_KEY`（`dawn.global.settings-section`，
+  key 里的 `global` 是作用域声明：不属于某段会话、也不属于某个项目）、`选设置分类()`（先生效再尝试落盘，
+  写不进去不拦住这一次选择，只出声）、`loadSettingsSection()`（没存过就是 `undefined`，缺失不是某个具体值）；
+  `openSettingsSection` 改名为 `打开设置整页`（=`选设置分类` + 切到整页视图，2026-09-16 之后按计划只剩
+  `ConnectionSurface` 打开设置一个调用点，别处改走 Task 3 才会有的 `开设置栏`）。`src/ui/state/index.ts`、
+  `src/ui/App.tsx` 的两个调用点（`actions.openSettingsSection` 与设置屏的 `onSelect`）同步改名；
+  `Actions` 接口的方法名 `openSettingsSection` 不变，只是实现换了。`src/ui/main.tsx` 在 `loadRightDock()`
+  旁边加了 `loadSettingsSection()`，与主题/侧栏/坞同一条理由：第一帧之前读回，否则会先落在第一项再跳。
+- **Impact**: 行为变化——重开应用后设置分类会停在上次选的那一类，而不是永远回落到第一项。
+  为 Task 3（窄栏）铺路：两处界面从此共用同一份持久化状态，不会各自维护一份而彼此漂移。
+- **Verification**: 新增 `tests/ui/settings-section-persist.test.ts`（4 条：存得下来、读得回来、没存过是
+  `undefined`、写入失败不拦住这次选择且出声）——先红（`SETTINGS_SECTION_KEY`/`loadSettingsSection`/`选设置分类`
+  均不存在）后绿（`4 passed`）。`npm run typecheck` 无输出。`npm test` → `234 files passed / 2903 passed | 10 skipped`。
+  `npm run build` 成功后 `npx playwright test e2e/settings-counts.spec.ts e2e/mcp.spec.ts e2e/skills.spec.ts
+  --reporter=line` → `16 passed`。
+
 ### 2026-09-16 — 插件那条计数用例补上「关一个就掉一个」，MCP 行也按精确名字取（设置右栏 Task 1 · 第三轮）
 
 - **Type**: test

@@ -102,6 +102,17 @@ describe("设置栏与坞互斥", () => {
     expect($settingsColumnOpen.get()).toBe(true)
     expect($settingsSection.get()).toBe("models")
   })
+
+  it("**整页设置开着、坞也开着时跳分类，坞照样要回得来**（R2-1：`$设置在场` 在整页时已经是 true，" +
+    "只问「在不在场」会让这一下的顶掉悄悄溜过记账）", () => {
+    $view.set("settings")
+    $rightDockOpen.set(true)
+    $rightDockTenant.set("notebook")
+    开设置栏("mcp")
+    关掉设置()
+    expect($rightDockOpen.get()).toBe(true)
+    expect($rightDockTenant.get()).toBe("notebook")
+  })
 })
 
 describe("展开与收起", () => {

@@ -5179,7 +5179,13 @@ pre {
   border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
   white-space: nowrap;
 }
-.settings-column .dock-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/**
+ * 补 `margin: 0` 与 `color`（Round 2 code review 抓的 I1）：无样式 `h2` 的
+ * UA 默认外距（`0.83em` 上下）比 `.right-dock .dock-title`（`:5138` 那条，
+ * 早就写了 `margin: 0; color: …`）多出来的那截，整页两栏在 300px 窄栏与
+ * 坞并排切换时头高会跳一下——「同一类东西」的头必须一样高。
+ */
+.settings-column .dock-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; margin: 0; color: var(--dawn-text-1); }
 .settings-column-tools { display: flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; }
 .settings-column-back { color: var(--dawn-text-3); flex: 0 0 auto; }
 .settings-column-back:hover { color: var(--dawn-text-1); }
@@ -5194,9 +5200,17 @@ pre {
 }
 .settings-column-list { display: flex; flex-direction: column; gap: 2px; }
 /* 行尾那个 `›`：**它是「点进去还有东西」的记号**，不是装饰——
-   没有它，带计数的行和不带的行看起来像两种控件 */
-.settings-column-arrow { margin-left: var(--dawn-space-1); color: var(--dawn-text-4); flex: 0 0 auto; }
-/* 窄栏里那些内容页本来是照整页宽度做的：解开它们的宽度上限与外距，
+   没有它，带计数的行和不带的行看起来像两种控件。
+   **`margin-left: auto`，不是固定令牌**（Round 2 code review 抓的 I2）：
+   `.settings-nav-item` 是 `justify-content: flex-start`，真正把东西推到
+   行尾的是 `.side-count` 的 `margin-left: auto`——十四项里有七项没有计数，
+   那七行的 `›` 此前贴着标题走，跟另外七行的位置对不上，
+   正是这条注释自己说要避免的「两种控件」。 */
+.settings-column-arrow { margin-left: auto; color: var(--dawn-text-4); flex: 0 0 auto; }
+/* 计数与箭头都在场时，箭头不能贴着数字——`.side-count` 已经把 `auto`
+   那份外距吃掉了，这里补一条固定间距，两个记号才不会挤在一起 */
+.side-count + .settings-column-arrow { margin-left: var(--dawn-space-1); }
+/* 窄栏里那些内容页本来是照整页宽度做的：解开它们的宽度上限，
    让它们老老实实铺满这一列（真装不下的那几块由 Task 7 量出来再单独修） */
 .settings-column .dock-body > * { max-width: none; }
 

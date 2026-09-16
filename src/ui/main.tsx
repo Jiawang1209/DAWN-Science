@@ -41,9 +41,13 @@ loadRightDock()
 loadFileTree()
 
 /**
- * 设置分类**同样在第一帧之前**（Task 2，2026-09-16）：
- * 窄栏与整页共用 `$settingsSection`，晚一步就会先落在第一项、
- * 再跳成上次选的那一类。
+ * 设置分类跟其它持久化偏好放在一起读（Task 2，2026-09-16）。
+ *
+ * 它不是「第一帧就看得见」那一类——`$view` 默认就是 `"conversation"`
+ * 且不落盘，设置屏压根不在首帧上。放在这儿是因为**这里就是
+ * 「渲染前读回持久化偏好」这件事唯一的家**，跟 `loadTheme` /
+ * `loadSidebar` / `loadRightDock` 同一个理由：摆进某个组件的
+ * `useEffect` 里就会跟首次渲染赛跑，谁先谁后不是我们说了算。
  */
 loadSettingsSection()
 

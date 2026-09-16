@@ -67,9 +67,13 @@ export function loadSettingsSection(): void {
 }
 
 /**
- * **打开整页设置**。2026-09-16 之后这条只剩一个调用点：连不上时
- * `ConnectionSurface` 那颗「打开设置」——那时主区本来就没有对话，
- * 挤出一条栏来挤谁？别处一律走 `开设置栏`（`state/settings-column.ts`，Task 3 才会有）。
+ * **打开整页设置。**
+ *
+ * 今天的调用点只有一处：命令面板里那五条 `settings.*`（`commands.ts`）。
+ *
+ * **Task 6 之后会再多一处、且只多一处**：连不上时 `ConnectionSurface` 那颗
+ * 「打开设置」——那时主区本来就没有对话，挤出一条栏来挤谁？
+ * 别处一律走 `开设置栏`（`state/settings-column.ts`，Task 3 建）。
  */
 export const 打开设置整页 = (id?: string) => {
   选设置分类(id)

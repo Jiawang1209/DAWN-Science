@@ -8,6 +8,51 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置右栏 Task 5 · code review 一轮修（I1/I2/M3 + 三处清理）
+
+- **Type**: fix
+- **Motivation**: Task 5 的 spec compliance 过了，三处对计划原文的偏离都被判定为「确实被迫」，
+  但 code quality 判了 CHANGES REQUESTED——两条真的 CSS 缺陷，加几处清理。逐条修。
+- **What**:
+  - **I1（头高不一致）**：`.settings-column .dock-title`（`styles.css`）原来只写了
+    `flex/min-width/overflow/text-overflow`，没抄到 `.right-dock .dock-title` 早就有的
+    `margin: 0; color: …`——无样式 `h2` 的 UA 默认外距（`0.83em` 上下，13px 字号下约 21px）
+    让这一栏的头比坞的头高一截。补上 `margin: 0` 与 `color: var(--dawn-text-1)`。
+  - **I2（`›` 落点两处）**：`.settings-nav-item` 是 `justify-content: flex-start`，真正把
+    东西推到行尾的是 `.side-count` 自己的 `margin-left: auto`（`styles.css:3906`，早就有）。
+    十四个分类里有七个没有 `count`，没有它时 `.settings-column-arrow` 原来的固定
+    `margin-left` 让箭头贴着标题走，跟另外七行（箭头贴行尾）长得不一样——正是它自己的
+    注释说要避免的「两种控件」。改成箭头 `margin-left: auto`（没有计数时独自吃掉全部余量，
+    贴到行尾）；新增 `.side-count + .settings-column-arrow { margin-left: var(--dawn-space-1) }`
+    （比 `.settings-column-arrow` 单类选择器更具体，赢过它）：有计数时改吃固定间距，让
+    `.side-count` 自己的 `auto` 外边距独自吃掉余量——两个元素同时 `auto` 会把余量对半分，
+    数字停在半路而不是贴边，所以不能两个都留 `auto`。
+  - **M3（缝该长在哪）**：`SettingsColumn` 新增 `width` / `onWidth` 两个 prop，组件内部渲染
+    `<SideSash attach="edge" side="right" min={RIGHT_DOCK_MIN} max={RIGHT_DOCK_MAX} …>`，
+    与 `RightDock`（`views.tsx`）逐字段对齐。`attach="edge"` 按**自己的**偏移父元素定位，
+    挪成 `<SettingsColumn>` 的兄弟（原计划 Task 6 的方案）会贴错东西——所以缝必须长在
+    这个组件自己身上，宽度与拖拽是它的 props，不是 Task 6 拼层级时才决定的外层布局。
+  - **M1**：`.dock-body > *` 上面那句注释原来说解开「宽度上限与外距」，规则其实只碰了
+    `max-width`——改成只说 `max-width`，注释与规则对齐。
+  - **M2**：`sections.find(...) ?? undefined` 里的 `?? undefined`是空操作（`find` 本身
+    找不到就是 `undefined`），删掉；`selected` 的属性文档原来指着这一行当判据，改成指向
+    `.find()` 本身。
+  - **M5**：`<nav aria-label={t("设置分类")}>` 与 `Settings.tsx:676` 的 `.settings-nav`
+    撞了同一句可访问名——补注释说明这是有意为之且安全：`state/settings-column.ts` 的
+    不变式保证窄栏与整页设置不会同屏，任一时刻最多一个 `nav` 叫这个名字。
+  - M4（wireframe 写「⤢ 展开」而组件是纯文字「展开」）按协调者的决定**不改代码**——
+    改的是规格文档本身，改成图标会换掉 Task 6 e2e 拿 `exact: true` 匹配的可访问名，
+    而 `icons.tsx` 目前也没有一颗展开图标。
+- **Impact**: 仍是新文件、未被引用（Task 6 才接线），本轮修改不改变现有行为。
+- **Verification**: `npm run typecheck` 无输出；`npx vitest run tests/ui/i18n.test.ts
+  tests/ui/design-contract.test.ts` → `62 passed`；`npm test` → `235 files passed / 2921
+  passed | 10 skipped`（无回归）；`npm run build` 通过。**I1/I2 本轮无法被任何测试证明**——
+  组件仍未接线，没有可渲染、可截图的入口；预期效果留字面记录：I1 应让窄栏头部与
+  `RightDock` 头部同高（`.dock-title` 不再带 UA 默认外距）；I2 应让十四行里
+  「有计数」与「没计数」两种行的 `›` 都贴在行的最右端、彼此对齐，有计数时数字与箭头之间
+  留一条 `--dawn-space-1` 的固定缝。留给 Task 6（接线）与 Task 8（视觉基线，含开坞对照）
+  去判定。
+
 ### 2026-09-16 — `SettingsColumn` 组件与样式（设置右栏 Task 5）
 
 - **Type**: feat

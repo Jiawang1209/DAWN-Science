@@ -66,6 +66,8 @@ async function styleOf(page: Page, sel: string) {
 
 async function switchTo(page: Page, label: string) {
   await page.getByRole("button", { name: "设置", exact: true }).click()
+  // **2026-09-16 起那颗按钮开的是右边那一栏**，停在名单上；主题那一组在整页的「外观」里
+  await page.getByRole("button", { name: "展开", exact: true }).click()
   await page.getByRole("radio", { name: label }).click()
   // 越过 100ms 的背景过渡，否则量到的是动画中间帧
   await page.waitForTimeout(200)

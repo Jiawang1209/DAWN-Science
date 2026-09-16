@@ -596,7 +596,12 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
   /**
    * **2026-08-20 换了演员，缺陷不变**：这条原来用「项目概览」演——
    * 概览搬进坞之后它不再顶掉对话，「被拽回对话」对它不再成立。
-   * 迟到回调那个缺陷仍然真实，改用「设置」演：它还是一整屏。
+   * 迟到回调那个缺陷仍然真实，改用「设置」演。
+   *
+   * **2026-09-16 起「设置」自己也不再是一整屏**（它开的是右边那一栏，对话照旧在），
+   * 所以这里点完还要点一下「展开」——**要演的是「一整屏被迟到的回调顶掉」，
+   * 就得先真的站在一整屏上**。只点「设置」的话这条用例会退化成空转：
+   * 那时对话本来就在，`queryByPlaceholderText` 找得到，断言的意思全变了。
    */
   it("会话建好之前切到设置 —— 回调到达后**仍然停在设置**", async () => {
     const h = harness({ projects: [proj("/w/proj")], deferCreateSession: true })
@@ -609,6 +614,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
 
     // 会话还没建好，用户已经切走了
     fireEvent.click(screen.getByRole("button", { name: "设置" }))
+    fireEvent.click(screen.getByRole("button", { name: "展开" }))
     await waitFor(() => expect(screen.getByRole("radiogroup", { name: "主题" })).toBeDefined())
 
     // 迟到的回调到了

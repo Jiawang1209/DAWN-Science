@@ -657,11 +657,18 @@ export function SettingsShell({
   sections,
   selected,
   onSelect,
+  onCollapse,
 }: {
   sections: SettingsSection[]
   /** 受控：外面（命令面板、侧栏）要能直接指到某一类 */
   selected?: string | undefined
   onSelect?: ((id: string) => void) | undefined
+  /**
+   * 收回那一栏（2026-09-16）。**可选**——整页在「连不上」那条路上也会出现，
+   * 那时没有栏可以收回去，就不画这颗。
+   * 「看不见的能力等于不存在」的反面同样成立：**没有的能力不许画一颗按钮**。
+   */
+  onCollapse?: (() => void) | undefined
 }) {
   const [自己的, 设自己的] = useState(sections[0]?.id)
   const 选中 = selected ?? 自己的
@@ -696,7 +703,20 @@ export function SettingsShell({
         * 后者会让「我在哪一块」这件事重新变得说不清。
         */}
       <div className="settings-body">
-        <h1 className="settings-body-title">{当前.title}</h1>
+        <div className="settings-body-head">
+          <h1 className="settings-body-title">{当前.title}</h1>
+          {/**
+            * **文案是「收回」不是「收起」**（2026-09-16，`design-contract` 当场抓的）：
+            * 「收起」是「收起面板」（底部终端那颗）与「收起添加模型服务」的子串，
+            * 而 `getByRole(name)` 按名字找是子串匹配——一个名字指向三个按钮。
+            * 那两处都在用各自最准的说法，该让的是这个新来的。
+            */}
+          {onCollapse ? (
+            <Button variant="ghost" size="sm" className="settings-collapse" onClick={onCollapse}>
+              {t("收回")}
+            </Button>
+          ) : null}
+        </div>
         {当前.body}
       </div>
     </div>

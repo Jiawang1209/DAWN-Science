@@ -33,6 +33,8 @@ test("四个屏走一遍，**一条 CSP 违规都没有**", async ({ dawn }) => 
   await expect(page.locator(".app-shell")).toBeVisible()
 
   await page.getByRole("button", { name: "设置", exact: true }).click()
+  // **2026-09-16 起那颗按钮开的是右边那一栏**；整页（连同主题那一组）要展开才有
+  await page.getByRole("button", { name: "展开", exact: true }).click()
   await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
 
   await page.getByRole("button", { name: "返回" }).click()

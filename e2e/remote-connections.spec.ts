@@ -490,6 +490,15 @@ test("**服务器那三颗动作不换行、不被裁**：英文 + 最窄侧栏"
   await page.getByRole("radio", { name: "English" }).click()
   await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 10_000 })
   await page.keyboard.press("Escape")
+  /**
+   * **2026-09-16 起「设置」开的是右边那一栏**，而这条用例量的是侧栏。
+   * 不关掉它，屏幕上就有两条 `.side-sash`（侧栏那条 + 那一栏那条），
+   * 下面 `page.locator(".side-sash")` 当场撞 strict mode。
+   * 关掉而不是把定位器写窄：这条用例本来就该在「只有侧栏」的那一屏上量——
+   * 右边多一列 380px 会改变整个网格，而它验的是最窄侧栏下那三颗按钮的排布。
+   * 走 `.dock-close` 而不是再点一次「设置」：这时界面已经切成英文了。
+   */
+  await page.locator(".settings-column .dock-close").click()
   await 展开远端英文(page)
 
   /**

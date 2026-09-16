@@ -60,6 +60,10 @@ test("概览在坞里打开，侧栏底部没有那一行", async ({ dawn }) => 
 test("设置可达且可返回", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "设置", exact: true }).click()
+  // **2026-09-16 起那颗按钮开的是右边那一栏**；顶栏那颗「返回」只在整页上才有，
+  // 所以先展开——这条用例验的是「进得去、回得来」，两种形状都要走到
+  await expect(page.locator(".settings-column")).toBeVisible()
+  await page.getByRole("button", { name: "展开", exact: true }).click()
   await expect(page.getByRole("button", { name: "返回" })).toBeVisible()
   await page.getByRole("button", { name: "返回" }).click()
   await expect(page.locator(".conversation")).toBeVisible()
@@ -99,8 +103,16 @@ for (const 名 of ["设置"]) {
     const { page } = dawn
     const 入口 = page.locator(".sidebar").getByRole("button", { name: 名, exact: true })
     await 入口.click()
-    await expect(page.locator(".conversation, .empty-conv")).toHaveCount(0)
+    /**
+     * **2026-09-16 起设置不再顶掉对话**——它开的是右边那一栏，对话全程都在
+     * （那正是这一轮的全部意义）。所以「进去了没有」不能再靠「对话没了」来量，
+     * 换成量那一栏本身；顺手把「对话还在」也断言上，免得哪天它又被顶掉。
+     * 这条要守的那句话一个字没变：**再点一次就回去**。
+     */
+    await expect(page.locator(".settings-column")).toBeVisible()
+    await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
     await 入口.click()
+    await expect(page.locator(".settings-column")).toHaveCount(0)
     await expect(page.locator(".conversation, .empty-conv").first()).toBeVisible()
   })
 }

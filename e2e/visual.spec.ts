@@ -60,6 +60,8 @@ import type { Page } from "@playwright/test"
  */
 async function setTheme(page: Page, label: "亮色" | "暗色") {
   await page.getByRole("button", { name: "设置", exact: true }).click()
+  // **2026-09-16 起那颗按钮开的是右边那一栏**，主题那组单选在整页里——先展开
+  await page.getByRole("button", { name: "展开", exact: true }).click()
   await page.getByRole("radio", { name: label }).click()
   await expect(page.locator(label === "暗色" ? "html.dawn-dark" : "html.dawn-light")).toHaveCount(1)
   await page.getByRole("button", { name: "返回" }).click()
@@ -117,6 +119,8 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
     // 面板 + 表单控件 + radiogroup
     go: async (page) => {
       await page.getByRole("button", { name: "设置", exact: true }).click()
+      // **2026-09-16 起那颗按钮开的是右边那一栏**；这一屏截的是整页，所以要展开
+      await page.getByRole("button", { name: "展开", exact: true }).click()
       await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
       // **等数据本身，不是等骨架。** radiogroup 是同步渲染的，凭证列表不是；
       // 只等前者会在数据到达之前截图 —— 这条正是第一次跑出来的假报警
@@ -133,6 +137,25 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
       // 2026-08-10 重做成「一行摘要 + 添加入口」：等的还是同一件事——
       // **数据到了没有**（摘要那一行要等模型目录回来才画得出来）
       await expect(page.locator(".svc .svc-sum").first()).toBeVisible()
+      /**
+       * **分类那一列上的四个数也要等**（2026-09-16 抓到的）。
+       *
+       * 「Skills / 子 Agent / 插件 / MCP 服务器」行尾那几个计数各走一发 IPC
+       * （`App.tsx` 那个 `名册代` effect），**最慢的两发是插件与 MCP**。
+       * 不等它们，这一屏截到的是「有时有、有时无」的一帧——那正是本项目
+       * 反复栽过的那种假报警：看着像图片对比不稳定，其实是一场普通的竞态。
+       *
+       * 它一直都在，只是此前那条动线快到总在数字到达之前截完，于是基线里
+       * 存着「插件与 MCP 都没有数字」的样子。2026-09-16 那条动线多了一下
+       * 「展开」，窗口就翻过去了——**先补上等待再谈重存基线**，
+       * 否则存进去的还是一张碰运气的图。
+       */
+      for (const 行 of ["Skills", "子 Agent", "插件", "MCP 服务器"]) {
+        await expect(
+          page.locator(".settings-nav-item", { hasText: 行 }).locator(".side-count"),
+          `「${行}」那一行的计数还没到`,
+        ).toBeVisible()
+      }
     },
   },
   {
@@ -197,7 +220,7 @@ for (const theme of ["亮色", "暗色"] as const) {
        * 整个跟着列表的高度变。等 `document.fonts.ready` 比猜一个延时诚实。
        */
       await page.evaluate(() => document.fonts.ready)
-      // 技能 / 子 agent 的计数 2026-08-23 起在设置里，不在侧栏上了——这一屏没有要等的数
+      // 技能 / 子 agent 的计数 2026-08-23 起在设置里，不在侧栏上了——要等的数挪进了「设置」那一屏自己的 `go()`
 
       /**
        * **把指针挪到一个不会悬停任何东西的角落。**

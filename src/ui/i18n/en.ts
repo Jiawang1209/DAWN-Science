@@ -412,6 +412,7 @@ export const EN: Readonly<Record<string, string>> = {
   "已经跑了": "running for",
   "耗时": "took",
   "收起": "Collapse",
+  "收回": "Collapse",
   "入参已截断": "Arguments truncated",
   "这次调用失败了，但没有给出原因": "This call failed, with no reason given",
   "失败了，但没有给出原因": "Failed, with no reason given",

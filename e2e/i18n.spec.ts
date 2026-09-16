@@ -141,7 +141,12 @@ test("**英文界面上每一屏都没有汉字**", async ({ dawn }) => {
 
   await 屏("首页", async () => {})
   // 2026-08-23 起这四屏住在设置的「Extensions」一组里
-  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  /**
+   * **2026-09-16 起「设置」开的是右边那一栏**——那一栏本身也是一屏，
+   * 一样得没有汉字，所以它也过一遍 `屏`；底下那几块在整页里，要先「Expand」。
+   */
+  await 屏("设置那一栏", () => page.getByRole("button", { name: "Settings", exact: true }).click())
+  await page.getByRole("button", { name: "Expand", exact: true }).click()
   await 屏("Skills", () => page.getByRole("button", { name: "Skills" }).click())
   await 屏("子 Agent", () => page.getByRole("button", { name: "Subagents" }).click())
   await 屏("插件", () => page.getByRole("button", { name: "Plugins" }).click())

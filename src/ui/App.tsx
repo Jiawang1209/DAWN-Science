@@ -54,6 +54,7 @@ import {
   type KernelRow,
   type SettingsSection,
 } from "./Settings.js"
+import { SettingsColumn } from "./settings-column.js"
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
@@ -172,7 +173,6 @@ import {
   setTheme,
   setView,
   $settingsSection,
-  打开设置整页,
   选设置分类,
   upsertItem,
   dropItem,
@@ -199,6 +199,14 @@ import {
   RIGHT_DOCK_两栏起点,
   坞的上界,
   点开房客,
+  $settingsColumnOpen,
+  $设置在场,
+  开设置栏,
+  关掉设置,
+  展开设置,
+  收起设置,
+  坞上位,
+  打开设置整页,
 } from "./state/index.js"
 
 import { t, tf, $lang } from "./i18n/index.js"
@@ -244,6 +252,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const contextUsage = useStore($contextUsage)
   const projectId = useStore($activeProjectId)
   const 设置分类 = useStore($settingsSection)
+  const 设置栏开着 = useStore($settingsColumnOpen)
+  /**
+   * 设置在不在场（窄栏或整页）。**走 `useStore($设置在场)`，不在这里写
+   * `设置栏开着 || view === "settings"`**（2026-09-16 审查定的）：那是把互斥规则
+   * 复制到第二个地方，而 `state/settings-column.ts` 存在的全部理由就是它只住在一处。
+   */
+  const 设置在场 = useStore($设置在场)
   const sessionId = useStore($activeSessionId)
   const view = useStore($view)
   const items = useStore($items)
@@ -404,11 +419,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       // **焦点在终端里就让开**（审查 debug I6）：终端是一整块键盘面,Ctrl+P/Ctrl+K 是 shell 的绑定
       // (上一条历史 / kill-line)。此前全局 handler 照抢,结果 shell 收到 ^P 的同时右坞还弹出来抢焦点。
       if ((e.target as Element | null)?.closest?.(".term-host")) return
+      /**
+       * **开坞之前先让设置让开**（2026-09-16）。右边那一列只有一个位置：
+       * 设置栏开着的时候坞必定是关着的，不顶掉设置就只是把一个看不见的状态
+       * 翻成 `true`，**屏幕上什么都不变**——本项目 2026-08-10/08-11 栽过两次的那种
+       * 「代码是好的，作者说没有这个功能」。
+       *
+       * **`坞上位()` 必须在 `点开房客` 之前**：后者有一支「开着且已经是它 → 收起」，
+       * 先让设置让开才保证这一下走的是「打开」。
+       */
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "p") {
         e.preventDefault()
+        坞上位()
         点开房客("files")
       } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
         e.preventDefault()
+        坞上位()
         点开房客("review")
       }
     }
@@ -1119,6 +1145,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const sid = $activeSessionId.get()
     if (!sid) return
     设产物焦点({ sessionId: sid, path, nonce: ++产物焦点计数.current })
+    // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
+    坞上位()
     setRightDockTenant("artifacts")
     setRightDockOpen(true)
   }, [])
@@ -2569,6 +2597,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 从产出栏点一个文件名，人的意图是「给我看这个」，绝不会是「把面板关掉」。
    */
   const 点开文件面板 = useCallback(() => {
+    // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
+    坞上位()
     setRightDockTenant("files")
     setRightDockOpen(true)
   }, [])
@@ -3101,13 +3131,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const actions = useMemo<Actions>(
     () => ({
-      openSettings: () => setView("settings"),
-      openSettingsSection: (id) => 打开设置整页(id),
+      openSettings: () => 开设置栏(),
+      openSettingsSection: (id) => 开设置栏(id),
       /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
       toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
       /** 概览住在坞里了（2026-08-20）。命令面板这条打开坞的那一格 */
       showProjectPanel: () => {
+        // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
+        坞上位()
         setRightDockTenant("overview")
         setRightDockOpen(true)
       },
@@ -3227,7 +3259,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         <div className="topbar">
           <span className="brand">DAWN Science</span>
         </div>
-        <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />
+        {/**
+          * **这一处走整页，不是窄栏**（2026-09-16）。这是一条**早退分支**：
+          * 连不上时整个屏幕只有顶栏 + `ConnectionSurface` + 状态栏，
+          * `.body` 那个网格根本没渲染，**那条窄栏在这里不存在**。
+          * 接 `actions.openSettings`（已经是 `开设置栏`）的话，点下去只会把一个
+          * 看不见的状态翻成 `true`，屏幕上什么都不发生。
+          */}
+        <ConnectionSurface onRetry={connect} onOpenSettings={() => 打开设置整页()} />
         <div className="statusbar" />
       </div>
     )
@@ -3243,7 +3282,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 而这正是「两处长得一样的东西，等于没有判据」那条的反面：
    * **同一件事只有一个来源**。
    */
-  const 设置分区: SettingsSection[] = [
+  /**
+   * **它是一个 thunk，不是一个数组**（2026-09-16，Task 4 实现时量出来的）。
+   *
+   * 写成 `const 设置分区: SettingsSection[] = [...]` 的话它**每次 App 渲染都构造一遍**，
+   * 而里面几处 section 的 props 带着即时执行的 `.filter()/.map()`。
+   * 要害是 App 在流式回复时每个 token 都重渲染——这些变换于是从「进设置时跑一次」
+   * 变成「每个字跑一遍」。
+   *
+   * **没用 `useMemo`**：这个数组依赖十几样 state，依赖数组漏一个就是
+   * 「设置里改了东西界面不更新」，而那种缺陷不会报错。
+   * **也没用 `设置在场 ? [...] : []`**：它失败时是静默的——将来多一个消费者忘了加
+   * 那道判据，拿到的是一个空名单。
+   * 写成 thunk 让「按需构造」成为结构上的事实：调用点天然只为自己付这份构造。
+   */
+  const 设置分区 = (): SettingsSection[] => [
     {
       id: "appearance",
       title: t("外观"),
@@ -3698,7 +3751,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           * 后者跟「项目概览 / 文件」是同一类，所以它们排在一起。
           */}
         {view === "settings" ? (
-          <Button variant="ghost" size="sm" onClick={() => setView("conversation")}>
+          /**
+           * **走 `关掉设置()`，不是裸的 `setView("conversation")`**（2026-09-16）。
+           * 开设置那一下可能顶掉了坞里的一位房客；只翻 `$view` 的话设置没了、
+           * 那位房客也回不来——右边那一列从此空着，而屏幕上没有任何东西说明为什么。
+           * 「窄栏和整页都由 `关掉设置` 收场」是 `state/settings-column.ts` 立的规矩。
+           */
+          <Button variant="ghost" size="sm" onClick={关掉设置}>
             {t("返回")}
           </Button>
         ) : null}
@@ -3712,7 +3771,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         <DockSwitch
           open={rightDockOpen}
           tenant={rightDockTenant}
-          onToggle={() => setRightDockOpen(!rightDockOpen)}
+          onToggle={() => {
+            // 这一下要是「开」，设置栏就得先让开（2026-09-16）——右边那一列只有一个位置，
+            // 不顶掉它坞只会在状态里开着，屏幕上还是设置栏
+            if (!rightDockOpen) 坞上位()
+            setRightDockOpen(!rightDockOpen)
+          }}
         />
       </div>
 
@@ -3795,7 +3859,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 坞那一列的宽度。**关着时是 0，不是 `display: none`**——
              * 与折叠同一条：后者没有中间态，一下就没了，人看不出「它去哪了」。
              */
-            "--dawn-dock-w": rightDockOpen ? `${rightDockWidth}px` : "0px",
+            /**
+             * **两种房客有一个在就得给宽度**（2026-09-16）：设置栏与坞共用这一条轨道，
+             * 而那条不变式保证设置栏开着时 `rightDockOpen` 必定是 `false`——
+             * 只看后者的话设置栏会画进一条 0 宽的轨道里，点「设置」什么都看不见。
+             */
+            "--dawn-dock-w": rightDockOpen || 设置栏开着 ? `${rightDockWidth}px` : "0px",
             /**
              * **内容的宽度不跟着收**（2026-08-15 作者报的）。
              *
@@ -4032,8 +4101,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 毫无反应，人会以为它坏了**。设置搬进侧栏时漏了这一条——
            * 它原来在顶栏，那颗按钮本来就是「设置 ⇄ 返回」两态的。
            */
-          onOpenSettings={() => setView(view === "settings" ? "conversation" : "settings")}
-          settingsActive={view === "settings"}
+          /**
+           * **2026-09-16 起它开的是右边那一栏，不再换整屏。**
+           * 「再点一次就回去」那条保留——一个亮着的入口点下去毫无反应，
+           * 人会以为它坏了（2026-08-11 作者提的）。
+           *
+           * 关掉走 `关掉设置()` 而不是 `setView("conversation")`：整页那条路上
+           * 也要由它收场，否则被设置顶掉的那位房客回不来。
+           */
+          onOpenSettings={() => ($设置在场.get() ? 关掉设置() : 开设置栏())}
+          settingsActive={设置在场}
         />
 
         {/**
@@ -4093,7 +4170,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               * （账户管理 / 记忆 / 安全中心 …），我们没有那些，
               * 照抄一个点进去是空的入口比没有更坏。
               */}
-            <SettingsShell sections={设置分区} selected={设置分类} onSelect={选设置分类} />
+            <SettingsShell sections={设置分区()} selected={设置分类} onSelect={选设置分类} onCollapse={收起设置} />
             </div>
           ) : session && session.kind === "pty" ? (
             /**
@@ -4201,6 +4278,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   }
                 })()}
                 onOpenWeb={(url) => {
+                  // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
+                  坞上位()
                   setRightDockTenant("web")
                   setRightDockOpen(true)
                   请打开网址(url)
@@ -4570,7 +4649,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           * 本批只有「审阅」一个房客真的有内容；「文件」这一格现在如实说
           * 「还没搬过来」——**不画一个空面板**，空白会被读成「这里什么都没有」。
           */}
-        {rightDockOpen ? (
+        {设置栏开着 ? (
+          /**
+            * **窄栏与坞共用这一格，一次只有一位**（2026-09-16）。
+            * 那条不变式（`state/settings-column.ts`）保证两者不会同时为真，
+            * 这里的先后只是把它写成一条读得出来的三元链。
+            *
+            * **`SideSash` 长在 `SettingsColumn` 内部**（Task 5 审查纠正的）：
+            * 它 `attach="edge"`，按自己的 offset parent 定位，而 `RightDock` 里那根
+            * 就长在 `<aside>` 里面（那个 `position: relative` 就是给它的）。
+            * 摆成兄弟节点，缝会贴到别的祖先上去——而且 `.settings-column` 的
+            * `position: relative` 就成了一条死规则。
+            */
+          <SettingsColumn
+            sections={设置分区()}
+            selected={设置分类}
+            width={rightDockWidth}
+            onWidth={(px: number, 记住: boolean) => setRightDockWidth(px, 侧栏此刻多宽, 记住)}
+            onSelect={选设置分类}
+            onBack={() => 选设置分类(undefined)}
+            onExpand={展开设置}
+            onClose={关掉设置}
+          />
+        ) : rightDockOpen ? (
           <RightDock
             tenant={rightDockTenant}
             width={rightDockWidth}
@@ -4763,7 +4864,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ) : null}
       </div>
 
-      <ConnectionSurface onRetry={connect} onOpenSettings={actions.openSettings} />
+      {/**
+        * **这一处也走整页**（2026-09-16）：重连横幅上那颗「打开设置」。
+        * 连接没就绪时人要找的是模型服务那一屏，而不是在一条正在重连的横幅底下
+        * 挤出一条窄栏——与上面那条早退分支同一个理由。
+        */}
+      <ConnectionSurface onRetry={connect} onOpenSettings={() => 打开设置整页()} />
 
       {/* 命令面板。**放在最外层**——它盖住整个窗口，且要在任何视图下都能叫出来 */}
       <CommandPalette commands={commands} />

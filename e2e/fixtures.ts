@@ -225,10 +225,19 @@ export async function 进审阅(page: Page): Promise<void> {
  * 设置改成了「左分类 / 右内容」（作者：*「看不出太大的层次」*），
  * 默认停在「外观」。**进来就找某个控件的用例都要先点到它那一块**——
  * 不点的话找不到，而那与「这个控件坏了」在报错上长得一模一样。
+ *
+ * **2026-09-16 起「设置」开的是右边那一栏**，而这二十几支用例验的都是整页里
+ * 那些面板，所以这里开完栏立刻 `展开`，让它们一个字都不用改。
+ * 要验窄栏本身的用例走 `e2e/settings-column.spec.ts`，不走这条。
  */
 export async function 进设置(page: Page, 分类: string): Promise<void> {
   // 侧栏那颗「设置」是开关（再点一次回对话）——已经在设置里就别再点它，直接换分类（2026-08-23 扩展五屏并进设置后连着切的用例多了）
-  if ((await page.locator(".settings-nav").count()) === 0) await page.getByRole("button", { name: "设置", exact: true }).click()
+  if ((await page.locator(".settings-nav").count()) === 0) {
+    if ((await page.locator(".settings-column").count()) === 0) {
+      await page.getByRole("button", { name: "设置", exact: true }).click()
+    }
+    await page.getByRole("button", { name: "展开", exact: true }).click()
+  }
   await page.locator(".settings-nav").getByRole("button", { name: 分类, exact: true }).click()
 }
 

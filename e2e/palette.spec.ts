@@ -98,11 +98,13 @@ test("**面板与按钮到达同一个状态** —— 一个动作一个家", as
      * 设置改成「左分类 / 右内容」之后，默认只画「外观」那一块——
      * 内核列表**根本不在这一屏上**，那个异步到达的 flake 源随之消失了。
      *
-     * 现在等两样：分类列表（外壳画出来了）+ 主题那一组（内容画出来了）。
+     * **2026-09-16：两条路开的都是右边那一栏**，不再是整页，所以等的东西
+     * 跟着换成那一栏与它停在名单上的样子。**比的也从 `.main` 换成那一栏**——
+     * 这一条要证的始终是「两个入口落在同一处」，而那一处此刻就是它。
      * 两样都是同步渲染的，没有「等它落定」这回事。
      */
-    await expect(page.locator(".settings-nav")).toBeVisible()
-    await expect(page.getByRole("radiogroup", { name: "主题" })).toBeVisible()
+    await expect(page.locator(".settings-column")).toBeVisible()
+    await expect(page.locator(".settings-column-list")).toBeVisible()
   }
 
   // ① 从命令面板走
@@ -110,14 +112,15 @@ test("**面板与按钮到达同一个状态** —— 一个动作一个家", as
   await box(page).fill("打开设置")
   await page.keyboard.press("Enter")
   await 画完了()
-  const viaPalette = await page.locator(".main").innerHTML()
+  const viaPalette = await page.locator(".settings-column").innerHTML()
 
-  await page.getByRole("button", { name: "返回" }).click()
+  // 那颗「返回」只在整页上才有；窄栏这边收场的是它自己那颗 ✕
+  await page.locator(".settings-column .dock-close").click()
 
   // ② 从按钮走
   await page.getByRole("button", { name: "设置", exact: true }).click()
   await 画完了()
-  const viaButton = await page.locator(".main").innerHTML()
+  const viaButton = await page.locator(".settings-column").innerHTML()
 
   // 两条路必须落在同一处。不同 = 行为按入口分叉了
   expect(viaPalette).toBe(viaButton)

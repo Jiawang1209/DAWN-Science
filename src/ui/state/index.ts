@@ -183,11 +183,12 @@ export {
 export {
   $settingsColumnOpen,
   $被顶掉的房客,
-  设置在场,
+  $设置在场,
   开设置栏,
   关掉设置,
   展开设置,
   收起设置,
+  坞上位,
 } from "./settings-column.js"
 
 export { guard, currentGeneration, invalidate } from "./guard.js"

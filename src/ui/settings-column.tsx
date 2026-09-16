@@ -25,9 +25,13 @@
  *   `t("关闭面板")`**（同一颗 `RightDock` 已经在用）——新造一句「关闭设置」
  *   会把「设置」这个已经在用的按钮名塞进另一个按钮的名字里，`getByRole` 一按
  *   名字找就会连着「设置」那条侧栏入口一起撞上。
- * - `‹`：`web.tsx` 里前进/后退那两颗按钮本来就是裸 `‹` `›` 配 `aria-label`，
- *   这是本项目对「纯符号方向键」已经在用的写法，这里照旧。**`aria-label`
- *   借用 `t("回到清单")`**（`artifacts.tsx` 详情页回名单那颗的原话）——
+ * - 返回：**画成 `返回图标`，不是裸 `‹`**（2026-09-16 作者定的：*「图标也要保持
+ *   我原来图标的样式才行」*）。头上这两颗于是都是图标组件，与全 app 一致。
+ *   此前它是裸字符，理由是 `web.tsx` 前进/后退那两颗也这么写——那是真的先例，
+ *   但作者已经说了他要哪一种，**先例让位于他的偏好**。
+ *   `返回图标` 与 `下拉图标` 共用 `icons.tsx` 里那一条 `雪佛龙`（差 90°），
+ *   所以描边粗细与圆角天生一样。**`aria-label` 仍然要留**（这颗没有可见文字），
+ *   借用 `t("回到清单")`（`artifacts.tsx` 详情页回名单那颗的原话）——
  *   同一个动作（从详情退回名单），不必新造一句还带着「返回」两个字的文案，
  *   「返回」已经是 `App.tsx` 里另一颗按钮的名字，子串照样会撞。
  *
@@ -53,7 +57,7 @@
 import { Fragment } from "react"
 import { Button } from "./primitives.js"
 import type { SettingsSection } from "./Settings.js"
-import { 关闭图标 } from "./icons.js"
+import { 关闭图标, 返回图标 } from "./icons.js"
 import { t } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
 import { RIGHT_DOCK_MAX, RIGHT_DOCK_MIN } from "./state/right-dock.js"
@@ -103,7 +107,7 @@ export function SettingsColumn({
       <header className="dock-head">
         {当前 ? (
           <Button variant="ghost" size="icon" className="settings-column-back" onClick={onBack} aria-label={t("回到清单")}>
-            ‹
+            <返回图标 />
           </Button>
         ) : null}
         <h2 className="dock-title">{当前 ? 当前.title : t("设置")}</h2>

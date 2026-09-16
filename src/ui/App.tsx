@@ -52,6 +52,7 @@ import {
   SettingsShell,
   WorkspacePanel,
   type KernelRow,
+  type SettingsSection,
 } from "./Settings.js"
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
@@ -3234,6 +3235,384 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const latestRun = runs[0]
 
+  /**
+   * 设置的十四块。**一份两用**（2026-09-16）：整页 `SettingsShell` 与窄栏
+   * `SettingsColumn` 读同一份、同一个「当前选中」。
+   *
+   * 复制成两份的那一刻，「窄栏里少了一项」就会变成一个没人发现的缺陷——
+   * 而这正是「两处长得一样的东西，等于没有判据」那条的反面：
+   * **同一件事只有一个来源**。
+   */
+  const 设置分区: SettingsSection[] = [
+    {
+      id: "appearance",
+      title: t("外观"),
+      icon: <外观图标 className="row-icon" />,
+      body: <AppearancePanel />,
+    },
+    {
+      id: "atfile",
+      title: t("文件引用"),
+      icon: <文件图标 className="row-icon" />,
+      body: <AtFilePanel 设置={艾特设置} workspace={当前工作区路径} onChange={改艾特设置} />,
+    },
+    {
+      /**
+       * 用量（S21，2026-08-16 作者要的）。
+       *
+       * **摆在「外观」后面、「工具权限」前面**：它是"看"，
+       * 后面几块是"配"——一屏里先看后配，比按字母排更像人的顺序。
+       */
+      id: "usage",
+      title: t("用量"),
+      icon: <用量图标 className="row-icon" />,
+      body: (
+        <UsagePanel data={用量} onReload={拉用量} />
+      ),
+    },
+    ...(默认工作区
+      ? [
+          {
+            id: "workspace",
+            title: t("工作目录"),
+            icon: <文件夹图标 className="row-icon" />,
+            body: (
+              <WorkspacePanel
+                path={默认工作区.path}
+                isDefault={默认工作区.isDefault}
+                onPick={() => {
+                  void client.pickDirectory(默认工作区?.path).then((d) => {
+                    // **取消就什么都不做**：改主意不是错误
+                    if (d) void 设默认工作区(d)
+                  })
+                }}
+                onReset={() => void 设默认工作区("")}
+                {...(下载目录
+                  ? {
+                      download: {
+                        path: 下载目录.path,
+                        isDefault: 下载目录.isDefault,
+                        onPick: () => {
+                          void client.pickDirectory(下载目录.path).then((d) => {
+                            // **取消就什么都不做**：改主意不是错误
+                            if (d) void 设下载目录(d)
+                          })
+                        },
+                        // **空串 = 回到系统那个下载文件夹**（`store/settings.ts`）
+                        onReset: () => void 设下载目录(""),
+                      },
+                    }
+                  : {})}
+              />
+            ),
+          },
+        ]
+      : []),
+    {
+      id: "models",
+      title: t("模型服务"),
+      icon: <模型图标 className="row-icon" />,
+      body: (
+        <>
+  <SettingsPanel
+    providers={providers.providers.map((p) => p.providerId)}
+    known={knownProviders.providers}
+    /** 该 provider 在模型目录里有哪些。**没有就是空**，摘要据此说「没有模型」 */
+    modelsOf={(pid) =>
+      /**
+       * **先问 pi 的目录，再退回配置里那份。**
+       * 前者覆盖全部 39 个 provider，后者只覆盖配置用到的——
+       * 而「刚加进来的那个」恰恰还没被配置用到。
+       */
+      knownProviders.models?.[pid] ??
+      providers.providers.find((p) => p.providerId === pid)?.available ??
+      []
+    }
+    {...(knownProviders.needsBaseUrl
+      ? { needsBaseUrl: knownProviders.needsBaseUrl }
+      : {})}
+    {...(knownProviders.connections
+      ? { connections: knownProviders.connections }
+      : {})}
+    onSaveConnection={(providerId, conn) =>
+      client
+        .get("setProviderConnection", { providerId, ...conn })
+        /**
+         * **三份都要重取。** 连接一变，可选 provider（自定义端点会
+         * 出现在目录里）、agent 列表（配了就自动有一个）、
+         * 以及这一行自己要显示的值，全都变了。
+         */
+        .then(() =>
+          Promise.all([
+            client
+              .get<typeof knownProviders>("listKnownProviders", {})
+              .then(setKnownProviders),
+            loadProviders(client),
+          ]),
+        )
+        .catch(fail)
+    }
+    {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
+    unusable={providers.unusable}
+    credentials={creds}
+    onSet={(id, secret) =>
+      client
+        .get("setCredential", { providerId: id, secret })
+        /**
+         * **也要重取 agent 列表。**
+         * 填了 key 之后那个 provider 自动就有 agent 了
+         * （见 backend 的「填了 key 就够了」），
+         * 不重取的话选择器还是旧的——而那正是作者说的
+         * 「设置完还是看不到 kimi」。
+         */
+        .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+        .catch(fail)
+    }
+    onDelete={(id) =>
+      client
+        .get("deleteCredential", { providerId: id })
+        .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+        .catch(fail)
+    }
+  />
+        </>
+      ),
+    },
+    {
+      /**
+       * **ACP 适配器**（2026-08-19，作者要的）。
+       *
+       * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
+       * 否则岂不是白开发了。」*
+       *
+       * 那一整套 2026-08-16 就做完了（runtime、权限卡、
+       * 模型旁边那个 ACP 标记），**缺的只是「怎么把一个加进来」**——
+       * 此前只能自己打开 `providers.yaml` 手写一段。
+       *
+       * **排在「模型服务」后面**：两者是同一类事（这个应用能跟谁说话），
+       * 而这一类里 native 那条是绝大多数人唯一会用到的。
+       */
+      id: "acp",
+      title: t("ACP 适配器"),
+      icon: <模型图标 className="row-icon" />,
+      body: (
+        <AcpPanel
+          agents={providers.agents
+            .filter((a) => a.kind === "acp")
+            .map((a) => ({ agentId: a.agentId, remoteCapable: 能上服务器(a) }))}
+          onSetRemoteCapable={(agentId, on) =>
+            client
+              .get("setAcpRemoteCapable", { agentId, remoteCapable: on })
+              // 与加／删同一条：改完立刻重取，不说半真的话
+              .then(() => loadProviders(client))
+              .catch(fail)
+          }
+          onAdd={(a) =>
+            client
+              .get("addAcpAgent", a)
+              /**
+               * **加完立刻重取 agent 列表**：不重取的话，
+               * 界面说「已添加」而模型选择器还是旧的——
+               * 而那正是作者当初在 kimi 那件事上撞到的同一种半真的话。
+               */
+              .then(() => loadProviders(client))
+              .catch(fail)
+          }
+          onRemove={(agentId) =>
+            client
+              .get("removeAgent", { agentId })
+              .then(() => loadProviders(client))
+              .catch(fail)
+          }
+        />
+      ),
+    },
+    {
+      id: "kernels",
+      title: t("内核"),
+      icon: <终端图标 className="row-icon" />,
+      body: (
+        <>
+  {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
+  <KernelsPanel
+    kernels={kernels.kernels}
+    problems={kernels.problems}
+    shadowed={kernels.shadowed}
+    interpreters={interpreters}
+    onRefresh={refreshKernels}
+    onSetInterpreter={saveInterpreter}
+    onProbe={探测解释器}
+  />
+
+        </>
+      ),
+    },
+    /* ── 扩展（2026-08-23）：从侧栏并进来的五屏，原样挂在这儿——作者：「前 4 个内容保留，剩下的都并入设置」 ── */
+    {
+      id: "skills",
+      group: t("扩展"),
+      title: t("Skills"),
+      icon: <技能图标 className="row-icon" />,
+      count: 技能数,
+      body: (
+/**
+ * **Agent Skills**（S20，2026-08-15）。
+ * 按项目问：项目级 `.dawn/skills/` 会追加几个；没有当前项目时
+ * 只有自带与全局那些——**那不是错误，是实情**。
+ */
+<AgentSkillsView
+  load={载技能}
+  actions={{
+    setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
+    onChanged: 名册变了,
+    importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+    deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
+    pickDirectory: () => client.pickDirectory(默认工作区?.path),
+    hasProject: Boolean(projectId),
+    问: 问一句,
+  }}
+/>
+      ),
+    },
+    {
+      /**
+       * 记忆(2026-08-25,学自 dsh-memory-evolve):三轨确认制长期记忆。
+       * 角标 = 待确认数(0 不显示)——0 也挂数字就成了噪音。
+       */
+      id: "memory",
+      group: t("扩展"),
+      title: t("记忆"),
+      icon: <记忆图标 className="row-icon" />,
+      count: 记忆待确认数 || undefined,
+      body: (
+<MemoryPanel client={client} workspace={当前工作区路径} onChanged={名册变了} />
+      ),
+    },
+    {
+      id: "subagents",
+      group: t("扩展"),
+      title: t("子 Agent"),
+      icon: <对话图标 className="row-icon" />,
+      count: 子agent名册.length,
+      body: (
+<SubagentsView
+  load={载子agent}
+  actions={{
+    setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
+    importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+    deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
+    pickDirectory: () => client.pickDirectory(默认工作区?.path),
+    问: 问一句,
+    hasProject: Boolean(projectId),
+    onChanged: 名册变了,
+  }}
+/>
+      ),
+    },
+    {
+      id: "plugins",
+      group: t("扩展"),
+      title: t("插件"),
+      icon: <插件图标 className="row-icon" />,
+      count: 插件开着数,
+      body: (
+<PluginsView
+  load={载插件}
+  onFlag={async (pluginId, family, on) => {
+    await client.get("setPluginFlag", { pluginId, ...(family ? { family } : {}), on })
+    // 「扩展」那一行的数靠这一条报给启动期那份 effect——同一条「名册动过了」频道
+    名册变了()
+  }}
+/>
+      ),
+    },
+    {
+      id: "mcp",
+      group: t("扩展"),
+      title: t("MCP 服务器"),
+      icon: <设置图标 className="row-icon" />,
+      count: MCP开着数,
+      body: (
+/**
+ * MCP 那一屏（2026-08-15）。
+ *
+ * **按项目问**：项目级 `.dawn/mcp.yaml` 会追加几台，
+ * 没有当前项目时就只有全局那些——那不是错误，是实情。
+ */
+<McpView
+  load={载MCP}
+  问={问一句}
+  onTest={(name) =>
+    client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
+      "testMcpServer",
+      projectId ? { name, projectId } : { name },
+    )
+  }
+  onFlag={async (name, flag, value, fingerprint) => {
+    await client.get("setMcpFlag", { name, flag, value, ...(fingerprint ? { fingerprint } : {}) })
+    // 「先别连它」拨完这一行的数就该跟着掉——同一条「名册动过了」频道
+    名册变了()
+  }}
+  onSecret={async (name, varName, secret) => {
+    await client.get("setMcpSecret", { name, varName, secret })
+  }}
+  onAdd={async (json) => {
+    const r = await client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
+    名册变了()
+    return r
+  }}
+  onRemove={async (name) => {
+    await client.get("removeMcpServer", { name })
+    名册变了()
+  }}
+/>
+      ),
+    },
+    {
+      id: "assistant",
+      group: t("扩展"),
+      title: t("远程助理"),
+      icon: <手机图标 className="row-icon" />,
+      body: (
+<RemoteAssistantView
+  load={载微信状态}
+  问={问一句}
+  startLogin={() => client.get("weixinStartLogin", {})}
+  submitCode={(code) => client.get("weixinSubmitCode", { code })}
+  cancelLogin={() => client.get("weixinCancelLogin", {})}
+  unbind={() => client.get("weixinUnbind", {})}
+  sessions={微信可绑的}
+  bindSession={(sessionId) => client.get("weixinBindSession", { sessionId })}
+  openSession={(id) => {
+    setActiveSessionId(id)
+    setView("conversation")
+  }}
+  loadNotify={载微信通知}
+  setNotify={(patch) => client.get("weixinSetNotify", patch)}
+  feishu={{
+    load: 载飞书状态,
+    startLogin: () => client.get("feishuStartLogin", {}),
+    cancelLogin: () => client.get("feishuCancelLogin", {}),
+    unbind: () => client.get("feishuUnbind", {}),
+    bindSession: (sessionId) => client.get("feishuBindSession", { sessionId }),
+    loadNotify: 载飞书通知,
+    setNotify: (patch) => client.get("feishuSetNotify", patch),
+  }}
+/>
+      ),
+    },
+    {
+      id: "about",
+      group: t("扩展"),
+      title: t("关于"),
+      icon: <概览图标 className="row-icon" />,
+      /**
+       * **没有新版时它也在**：这是「我装的是哪一版」唯一说得出口的地方。
+       * 只在有新版时才出现的话，人想核对版本号时会找不到任何东西。
+       */
+      body: <关于一格 回执={更新回执} 动作={更新动作} 查着={更新查着} />,
+    },
+  ]
   return (
     <div className="app-shell" key={lang}>
       <div className="topbar">
@@ -3714,380 +4093,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               * （账户管理 / 记忆 / 安全中心 …），我们没有那些，
               * 照抄一个点进去是空的入口比没有更坏。
               */}
-            <SettingsShell
-              sections={[
-                {
-                  id: "appearance",
-                  title: t("外观"),
-                  icon: <外观图标 className="row-icon" />,
-                  body: <AppearancePanel />,
-                },
-                {
-                  id: "atfile",
-                  title: t("文件引用"),
-                  icon: <文件图标 className="row-icon" />,
-                  body: <AtFilePanel 设置={艾特设置} workspace={当前工作区路径} onChange={改艾特设置} />,
-                },
-                {
-                  /**
-                   * 用量（S21，2026-08-16 作者要的）。
-                   *
-                   * **摆在「外观」后面、「工具权限」前面**：它是"看"，
-                   * 后面几块是"配"——一屏里先看后配，比按字母排更像人的顺序。
-                   */
-                  id: "usage",
-                  title: t("用量"),
-                  icon: <用量图标 className="row-icon" />,
-                  body: (
-                    <UsagePanel data={用量} onReload={拉用量} />
-                  ),
-                },
-                ...(默认工作区
-                  ? [
-                      {
-                        id: "workspace",
-                        title: t("工作目录"),
-                        icon: <文件夹图标 className="row-icon" />,
-                        body: (
-                          <WorkspacePanel
-                            path={默认工作区.path}
-                            isDefault={默认工作区.isDefault}
-                            onPick={() => {
-                              void client.pickDirectory(默认工作区?.path).then((d) => {
-                                // **取消就什么都不做**：改主意不是错误
-                                if (d) void 设默认工作区(d)
-                              })
-                            }}
-                            onReset={() => void 设默认工作区("")}
-                            {...(下载目录
-                              ? {
-                                  download: {
-                                    path: 下载目录.path,
-                                    isDefault: 下载目录.isDefault,
-                                    onPick: () => {
-                                      void client.pickDirectory(下载目录.path).then((d) => {
-                                        // **取消就什么都不做**：改主意不是错误
-                                        if (d) void 设下载目录(d)
-                                      })
-                                    },
-                                    // **空串 = 回到系统那个下载文件夹**（`store/settings.ts`）
-                                    onReset: () => void 设下载目录(""),
-                                  },
-                                }
-                              : {})}
-                          />
-                        ),
-                      },
-                    ]
-                  : []),
-                {
-                  id: "models",
-                  title: t("模型服务"),
-                  icon: <模型图标 className="row-icon" />,
-                  body: (
-                    <>
-              <SettingsPanel
-                providers={providers.providers.map((p) => p.providerId)}
-                known={knownProviders.providers}
-                /** 该 provider 在模型目录里有哪些。**没有就是空**，摘要据此说「没有模型」 */
-                modelsOf={(pid) =>
-                  /**
-                   * **先问 pi 的目录，再退回配置里那份。**
-                   * 前者覆盖全部 39 个 provider，后者只覆盖配置用到的——
-                   * 而「刚加进来的那个」恰恰还没被配置用到。
-                   */
-                  knownProviders.models?.[pid] ??
-                  providers.providers.find((p) => p.providerId === pid)?.available ??
-                  []
-                }
-                {...(knownProviders.needsBaseUrl
-                  ? { needsBaseUrl: knownProviders.needsBaseUrl }
-                  : {})}
-                {...(knownProviders.connections
-                  ? { connections: knownProviders.connections }
-                  : {})}
-                onSaveConnection={(providerId, conn) =>
-                  client
-                    .get("setProviderConnection", { providerId, ...conn })
-                    /**
-                     * **三份都要重取。** 连接一变，可选 provider（自定义端点会
-                     * 出现在目录里）、agent 列表（配了就自动有一个）、
-                     * 以及这一行自己要显示的值，全都变了。
-                     */
-                    .then(() =>
-                      Promise.all([
-                        client
-                          .get<typeof knownProviders>("listKnownProviders", {})
-                          .then(setKnownProviders),
-                        loadProviders(client),
-                      ]),
-                    )
-                    .catch(fail)
-                }
-                {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
-                unusable={providers.unusable}
-                credentials={creds}
-                onSet={(id, secret) =>
-                  client
-                    .get("setCredential", { providerId: id, secret })
-                    /**
-                     * **也要重取 agent 列表。**
-                     * 填了 key 之后那个 provider 自动就有 agent 了
-                     * （见 backend 的「填了 key 就够了」），
-                     * 不重取的话选择器还是旧的——而那正是作者说的
-                     * 「设置完还是看不到 kimi」。
-                     */
-                    .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
-                    .catch(fail)
-                }
-                onDelete={(id) =>
-                  client
-                    .get("deleteCredential", { providerId: id })
-                    .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
-                    .catch(fail)
-                }
-              />
-                    </>
-                  ),
-                },
-                {
-                  /**
-                   * **ACP 适配器**（2026-08-19，作者要的）。
-                   *
-                   * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，
-                   * 否则岂不是白开发了。」*
-                   *
-                   * 那一整套 2026-08-16 就做完了（runtime、权限卡、
-                   * 模型旁边那个 ACP 标记），**缺的只是「怎么把一个加进来」**——
-                   * 此前只能自己打开 `providers.yaml` 手写一段。
-                   *
-                   * **排在「模型服务」后面**：两者是同一类事（这个应用能跟谁说话），
-                   * 而这一类里 native 那条是绝大多数人唯一会用到的。
-                   */
-                  id: "acp",
-                  title: t("ACP 适配器"),
-                  icon: <模型图标 className="row-icon" />,
-                  body: (
-                    <AcpPanel
-                      agents={providers.agents
-                        .filter((a) => a.kind === "acp")
-                        .map((a) => ({ agentId: a.agentId, remoteCapable: 能上服务器(a) }))}
-                      onSetRemoteCapable={(agentId, on) =>
-                        client
-                          .get("setAcpRemoteCapable", { agentId, remoteCapable: on })
-                          // 与加／删同一条：改完立刻重取，不说半真的话
-                          .then(() => loadProviders(client))
-                          .catch(fail)
-                      }
-                      onAdd={(a) =>
-                        client
-                          .get("addAcpAgent", a)
-                          /**
-                           * **加完立刻重取 agent 列表**：不重取的话，
-                           * 界面说「已添加」而模型选择器还是旧的——
-                           * 而那正是作者当初在 kimi 那件事上撞到的同一种半真的话。
-                           */
-                          .then(() => loadProviders(client))
-                          .catch(fail)
-                      }
-                      onRemove={(agentId) =>
-                        client
-                          .get("removeAgent", { agentId })
-                          .then(() => loadProviders(client))
-                          .catch(fail)
-                      }
-                    />
-                  ),
-                },
-                {
-                  id: "kernels",
-                  title: t("内核"),
-                  icon: <终端图标 className="row-icon" />,
-                  body: (
-                    <>
-              {/* 内核：**带解释器路径**。不显示它，选内核就是蒙（作者 2026-08-10） */}
-              <KernelsPanel
-                kernels={kernels.kernels}
-                problems={kernels.problems}
-                shadowed={kernels.shadowed}
-                interpreters={interpreters}
-                onRefresh={refreshKernels}
-                onSetInterpreter={saveInterpreter}
-                onProbe={探测解释器}
-              />
-
-                    </>
-                  ),
-                },
-                /* ── 扩展（2026-08-23）：从侧栏并进来的五屏，原样挂在这儿——作者：「前 4 个内容保留，剩下的都并入设置」 ── */
-                {
-                  id: "skills",
-                  group: t("扩展"),
-                  title: t("Skills"),
-                  icon: <技能图标 className="row-icon" />,
-                  count: 技能数,
-                  body: (
-            /**
-             * **Agent Skills**（S20，2026-08-15）。
-             * 按项目问：项目级 `.dawn/skills/` 会追加几个；没有当前项目时
-             * 只有自带与全局那些——**那不是错误，是实情**。
-             */
-            <AgentSkillsView
-              load={载技能}
-              actions={{
-                setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
-                onChanged: 名册变了,
-                importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
-                deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
-                pickDirectory: () => client.pickDirectory(默认工作区?.path),
-                hasProject: Boolean(projectId),
-                问: 问一句,
-              }}
-            />
-                  ),
-                },
-                {
-                  /**
-                   * 记忆(2026-08-25,学自 dsh-memory-evolve):三轨确认制长期记忆。
-                   * 角标 = 待确认数(0 不显示)——0 也挂数字就成了噪音。
-                   */
-                  id: "memory",
-                  group: t("扩展"),
-                  title: t("记忆"),
-                  icon: <记忆图标 className="row-icon" />,
-                  count: 记忆待确认数 || undefined,
-                  body: (
-            <MemoryPanel client={client} workspace={当前工作区路径} onChanged={名册变了} />
-                  ),
-                },
-                {
-                  id: "subagents",
-                  group: t("扩展"),
-                  title: t("子 Agent"),
-                  icon: <对话图标 className="row-icon" />,
-                  count: 子agent名册.length,
-                  body: (
-            <SubagentsView
-              load={载子agent}
-              actions={{
-                setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
-                importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
-                deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
-                pickDirectory: () => client.pickDirectory(默认工作区?.path),
-                问: 问一句,
-                hasProject: Boolean(projectId),
-                onChanged: 名册变了,
-              }}
-            />
-                  ),
-                },
-                {
-                  id: "plugins",
-                  group: t("扩展"),
-                  title: t("插件"),
-                  icon: <插件图标 className="row-icon" />,
-                  count: 插件开着数,
-                  body: (
-            <PluginsView
-              load={载插件}
-              onFlag={async (pluginId, family, on) => {
-                await client.get("setPluginFlag", { pluginId, ...(family ? { family } : {}), on })
-                // 「扩展」那一行的数靠这一条报给启动期那份 effect——同一条「名册动过了」频道
-                名册变了()
-              }}
-            />
-                  ),
-                },
-                {
-                  id: "mcp",
-                  group: t("扩展"),
-                  title: t("MCP 服务器"),
-                  icon: <设置图标 className="row-icon" />,
-                  count: MCP开着数,
-                  body: (
-            /**
-             * MCP 那一屏（2026-08-15）。
-             *
-             * **按项目问**：项目级 `.dawn/mcp.yaml` 会追加几台，
-             * 没有当前项目时就只有全局那些——那不是错误，是实情。
-             */
-            <McpView
-              load={载MCP}
-              问={问一句}
-              onTest={(name) =>
-                client.get<{ ok: boolean; error?: string; tools: { name: string }[] }>(
-                  "testMcpServer",
-                  projectId ? { name, projectId } : { name },
-                )
-              }
-              onFlag={async (name, flag, value, fingerprint) => {
-                await client.get("setMcpFlag", { name, flag, value, ...(fingerprint ? { fingerprint } : {}) })
-                // 「先别连它」拨完这一行的数就该跟着掉——同一条「名册动过了」频道
-                名册变了()
-              }}
-              onSecret={async (name, varName, secret) => {
-                await client.get("setMcpSecret", { name, varName, secret })
-              }}
-              onAdd={async (json) => {
-                const r = await client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
-                名册变了()
-                return r
-              }}
-              onRemove={async (name) => {
-                await client.get("removeMcpServer", { name })
-                名册变了()
-              }}
-            />
-                  ),
-                },
-                {
-                  id: "assistant",
-                  group: t("扩展"),
-                  title: t("远程助理"),
-                  icon: <手机图标 className="row-icon" />,
-                  body: (
-            <RemoteAssistantView
-              load={载微信状态}
-              问={问一句}
-              startLogin={() => client.get("weixinStartLogin", {})}
-              submitCode={(code) => client.get("weixinSubmitCode", { code })}
-              cancelLogin={() => client.get("weixinCancelLogin", {})}
-              unbind={() => client.get("weixinUnbind", {})}
-              sessions={微信可绑的}
-              bindSession={(sessionId) => client.get("weixinBindSession", { sessionId })}
-              openSession={(id) => {
-                setActiveSessionId(id)
-                setView("conversation")
-              }}
-              loadNotify={载微信通知}
-              setNotify={(patch) => client.get("weixinSetNotify", patch)}
-              feishu={{
-                load: 载飞书状态,
-                startLogin: () => client.get("feishuStartLogin", {}),
-                cancelLogin: () => client.get("feishuCancelLogin", {}),
-                unbind: () => client.get("feishuUnbind", {}),
-                bindSession: (sessionId) => client.get("feishuBindSession", { sessionId }),
-                loadNotify: 载飞书通知,
-                setNotify: (patch) => client.get("feishuSetNotify", patch),
-              }}
-            />
-                  ),
-                },
-                {
-                  id: "about",
-                  group: t("扩展"),
-                  title: t("关于"),
-                  icon: <概览图标 className="row-icon" />,
-                  /**
-                   * **没有新版时它也在**：这是「我装的是哪一版」唯一说得出口的地方。
-                   * 只在有新版时才出现的话，人想核对版本号时会找不到任何东西。
-                   */
-                  body: <关于一格 回执={更新回执} 动作={更新动作} 查着={更新查着} />,
-                },
-              ]}
-              selected={设置分类}
-              onSelect={选设置分类}
-            />
+            <SettingsShell sections={设置分区} selected={设置分类} onSelect={选设置分类} />
             </div>
           ) : session && session.kind === "pty" ? (
             /**

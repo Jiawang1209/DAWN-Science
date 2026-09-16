@@ -13,7 +13,11 @@ import { join } from "node:path"
 
 const 脚本 = join(process.cwd(), "scripts", "mcp-test-server.mjs")
 
-/** 两台，都不关 —— 所以期望的数字是 2 */
+/**
+ * 两台，起手都开着——**故意不写死数字，而是靠这条用例自己把一台关掉**：
+ * 两台都开着时「数开着的」（`!off`）与「数配了几台」（`servers.length`）长得
+ * 一模一样，都是 2；只有关掉一台之后再看，这两种口径才会分岔。
+ */
 const 配置 = `mcp:
   testbox:
     command: ${JSON.stringify(process.execPath)}
@@ -35,7 +39,9 @@ test.use({ dawnOptions: { providersYaml: 配置 } })
 test("**MCP 服务器那一行，关掉一台数字就掉一个**", async ({ dawn }) => {
   const { page } = dawn
   await 进设置(page, "MCP 服务器")
-  const 行 = page.locator(".settings-nav-item").filter({ hasText: "MCP 服务器" })
+  // **按 `.name` 精确取行**，不是整行的子串——道理与插件那条一样（见下面那条用例的注释），
+  // 这条自己也不能违反同一条规矩
+  const 行 = page.locator(".settings-nav-item").filter({ has: page.locator(".name", { hasText: /^MCP 服务器$/ }) })
   await expect(行.locator(".side-count")).toHaveText("2")
 
   /**
@@ -54,12 +60,26 @@ test("**MCP 服务器那一行，关掉一台数字就掉一个**", async ({ daw
 
 test("**插件那一行也有一个同口径的数**", async ({ dawn }) => {
   const { page } = dawn
-  await 进设置(page, "外观")
+  await 进设置(page, "插件")
   // **按 `.name` 精确取行**，不是整行的子串——`.settings-nav-item` 整行的文本会带上
   // 行尾计数（「插件」+ 数字连在一起，不能整行做子串比对），而且仓库里已经有
   // 「浏览器插件」「Office 插件」这类名字，子串匹配迟早会撞上第二行
   const 行 = page.locator(".settings-nav-item").filter({ has: page.locator(".name", { hasText: /^插件$/ }) })
-  // 内置插件至少一个（Office 那张卡），默认开着。**只断言「有个数且不是空」**——
-  // 钉死具体几个会在加插件那天无辜变红，而这条要守的是「这一行有数」
-  await expect(行.locator(".side-count")).toHaveText(/^\d+$/)
+  const 起手文本 = await 行.locator(".side-count").textContent()
+  const 起手数 = Number(起手文本)
+  // **只断言「是个数」，不钉死具体几个**——钉死会在加插件那天无辜变红，
+  // 而这条要守的是「这一行有数，而且它跟着开关走」
+  expect(Number.isInteger(起手数)).toBe(true)
+
+  /**
+   * **关掉一个插件的主开关，数字要跟着掉一个**——与 MCP 那条用例同一个道理：
+   * 起手就断言一个写死的数镇不住「口径对不对」，只有让它自己变一下才镇得住。
+   * 相对上一步读到的数断言（`起手数 - 1`），不写死绝对值——这样以后再加一个
+   * 内置插件，这条用例不会无辜变红。
+   */
+  const 开关 = page.getByRole("checkbox", { name: "启用这个插件" }).first()
+  await expect(开关).toBeChecked()
+  await 开关.click()
+  await expect(开关).not.toBeChecked()
+  await expect(行.locator(".side-count")).toHaveText(String(起手数 - 1))
 })

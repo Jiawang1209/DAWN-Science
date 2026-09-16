@@ -8,6 +8,26 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置栏与右侧坞的互斥、回程规则（设置右栏 Task 3）
+
+- **Type**: feat
+- **Motivation**: 设置住进右侧坞那一列（Task 5/6 才会接界面），互斥与回程的规则必须先落在一个能单独验的
+  纯逻辑模块里——作者原话：*「如果右边有面板的话，那么恢复之后是有面板的；如果右边没有面板的话，
+  那么恢复之后就没面板。」* 规则散在组件里就没法这样验。
+- **What**: 新增 `src/ui/state/settings-column.ts`——`$settingsColumnOpen`（窄栏开没开，不持久化，
+  与 `$rightDockOpen` 同一条理由）、`$被顶掉的房客`（`undefined` 明确表示「来的时候右边本来就空着」，
+  不是「不知道」）、`设置在场()`、`开设置栏(section?)`（顶掉坞当前房客，坞本来关着就记 `undefined`）、
+  `关掉设置()`（窄栏与整页共用同一份收场逻辑，读回被顶掉的房客并复原）、`展开设置()`（那一列空着，
+  是这一轮明确改掉 `right-dock.ts` 里「坞不随左半屏切换而收起」的地方，不是要修回去的 bug）、
+  `收起设置()`（选中项走 `view.ts` 的 `$settingsSection`，两个形状共用同一份事实）。`state/index.ts`
+  转出这一组符号。**未接入 `App.tsx`**：目前没有任何调用点，属于按计划的中间状态。
+- **Impact**: 新增的状态与函数纯为下一步（Task 5 组件、Task 6 接线）铺路，本次不改变任何可见行为。
+  `settings-column.ts` 依赖 `view.ts` 与 `right-dock.ts`，反向没有引用，无循环依赖。
+- **Verification**: 新增 `tests/ui/settings-column.test.ts`（7 条：坞让位、关掉设置回程、来去都空、
+  直达某一项、展开后列空着、收起后选中项不变、整页直接关掉照样回程）——先红（`settings-column.js`
+  不存在）后绿（`7 passed`）。`npm run typecheck` 无输出。`npm test` → `235 files passed / 2910 passed
+  | 10 skipped`。
+
 ### 2026-09-16 — 设置分类跨重启活着（设置右栏 Task 2）
 
 - **Type**: feat

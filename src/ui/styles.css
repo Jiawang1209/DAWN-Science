@@ -5180,10 +5180,16 @@ pre {
   white-space: nowrap;
 }
 /**
- * 补 `margin: 0` 与 `color`（Round 2 code review 抓的 I1）：无样式 `h2` 的
- * UA 默认外距（`0.83em` 上下）比 `.right-dock .dock-title`（`:5138` 那条，
- * 早就写了 `margin: 0; color: …`）多出来的那截，整页两栏在 300px 窄栏与
- * 坞并排切换时头高会跳一下——「同一类东西」的头必须一样高。
+ * 补 `margin: 0` 与 `color`（Round 2 code review 抓的 I1；Round 3 更正了
+ * 这条注释自己指错的对象——`.right-dock .dock-title`（`:5138`）没有任何
+ * 调用点在用：`RightDock` 的头部是 `.dock-tabs-row` + `.dock-close`
+ * （`views.tsx:1175-1208`），从不渲染 `.dock-title`）。
+ *
+ * 真正的原因是**项目里没有一条全局的标题重置**：无样式的 `<h2>` 带着 UA
+ * 默认外距（`0.83em` 上下），把它算进 flex 行的高度，`.dock-head` 这一行的
+ * 高度就会被这颗 `<h2>` 撑得比 `.settings-column-tools`（按钮那一排）还高，
+ * 与 `.right-dock` 的头部（没有 `<h2>`，高度只由按钮撑）比就矮了一截。
+ * 清掉外距后头部高度改由按钮那一排定，两边就一致了。
  */
 .settings-column .dock-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; margin: 0; color: var(--dawn-text-1); }
 .settings-column-tools { display: flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; }
@@ -5203,8 +5209,11 @@ pre {
    没有它，带计数的行和不带的行看起来像两种控件。
    **`margin-left: auto`，不是固定令牌**（Round 2 code review 抓的 I2）：
    `.settings-nav-item` 是 `justify-content: flex-start`，真正把东西推到
-   行尾的是 `.side-count` 的 `margin-left: auto`——十四项里有七项没有计数，
-   那七行的 `›` 此前贴着标题走，跟另外七行的位置对不上，
+   行尾的是 `.side-count` 的 `margin-left: auto`——`App.tsx` 的 `设置分区`
+   十四项里只有五项声明 `count`（技能、记忆、子 agent、插件、MCP；记忆那项
+   `记忆待确认数 || undefined`，数字是 0 时也退成没有），也就是**九到十项**
+   没有计数（Round 3 更正：此前这里错写成「七项」，没数过就抄了一遍）。
+   没有计数的那些行，`›` 此前贴着标题走，跟带计数的那几行位置对不上，
    正是这条注释自己说要避免的「两种控件」。 */
 .settings-column-arrow { margin-left: auto; color: var(--dawn-text-4); flex: 0 0 auto; }
 /* 计数与箭头都在场时，箭头不能贴着数字——`.side-count` 已经把 `auto`

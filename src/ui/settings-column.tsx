@@ -8,7 +8,8 @@
  * ## 「我在哪一块」由谁回答
  *
  * 整页里那一列分类一直亮着，这个问题不用想。窄栏里由**标题 + 返回箭头**扛。
- * 300px 宽的栏里这是标准取舍：一次只答一个问题。
+ * 这一列宽 280–720px（`RIGHT_DOCK_MIN/MAX`，默认 380，与 `RightDock` 同一套上下界）：
+ * 再宽也容不下「分类列 | 内容」并排，所以一次只答一个问题是标准取舍，不是将就。
  *
  * ## 这个文件只管画
  *
@@ -32,10 +33,22 @@
  *
  * ## Round 2（code review）：那条能拖的缝长在这儿，不是 Task 6
  *
- * `RightDock` 的宽度可拖（`SideSash`，`attach="edge"` 贴自己的尾边）。
+ * `RightDock` 的宽度可拖（`SideSash`，`side="right"` + `attach="edge"` 贴自己的
+ * 真实左缘——与下面 JSX 里那条 `SideSash` 自己的注释一致，也是 `views.tsx:1162`
+ * 那条的同一个理由）。
  * 这条缝**只能长在被拖的元素自己身上**——`attach="edge"` 按父元素的样式定位，
  * 挪成 `<SettingsColumn>` 的兄弟就会贴错东西。所以宽度与拖拽跟 `RightDock`
  * 一样是这个组件自己的 props，不是 Task 6 拼出来的外层布局。
+ *
+ * ## Round 3（code review）：I1 的注释指错了对象
+ *
+ * `.settings-column .dock-title` 的 `margin: 0` 不是在对齐 `.right-dock
+ * .dock-title`——**那条规则没有任何东西在用**：`RightDock` 的头部是
+ * `.dock-tabs-row` + `.dock-close`（`views.tsx:1175-1208`），从不渲染
+ * `.dock-title`；这个类名今天只有两处调用点，`dock.tsx:61`（底部终端 dock 头上
+ * 一个 `<span>`，没有 UA 外距可言）与这个文件自己的 `<h2>`。真正的原因是
+ * **项目里没有一条全局的标题重置**——`<h2>` 天生带着 UA 的 `margin: 0.83em 0`，
+ * 不清掉它，头部高度就会被这段外距撑大。
  */
 import { Fragment } from "react"
 import { Button } from "./primitives.js"
@@ -113,10 +126,19 @@ export function SettingsColumn({
            * 名单。**沿用 `settings-nav-item` 现成的长相与 `side-count`**——
            * 同一种东西不该有两种样子，而且整页那边改了这边自动跟上。
            *
-           * `aria-label` 与 `Settings.tsx:676` 的 `.settings-nav` 撞了同一句
-           * 「设置分类」——**想过是不是「没有判据」**，结论是安全的：
-           * `state/settings-column.ts` 那条不变式保证窄栏与整页不会同屏
-           * （只有一个位置），所以任一时刻最多一个 `nav` 叫这个名字。
+           * 这个组件有两处可访问名与别处重了：这个 `nav` 的 `aria-label`
+           * 跟 `Settings.tsx:676` 的 `.settings-nav` 撞了同一句「设置分类」；
+           * 上面那条 `SideSash` 的 `label` 跟 `RightDock`（`views.tsx:1164`）
+           * 撞了同一句「调整面板宽度」。**想过是不是「没有判据」**，结论都
+           * 是安全的，但理由不是同一条不变式：
+           * - 这个 `nav` 对整页 `SettingsShell`：由 `state/settings-column.ts`
+           *   的 `开设置栏` / `展开设置` / `收起设置` 保证——三个函数都在
+           *   切进窄栏或整页之前先把另一个的 `$view`/`$settingsColumnOpen`
+           *   状态收掉，两种形状不会同屏（**不是**「那一列只有一个位置」
+           *   那条——那条管的是窄栏 vs. 坞，不是窄栏 vs. 整页）。
+           * - `SideSash` 对 `RightDock` 的那条：由「那一列只有一个位置」
+           *   这条不变式保证——`$settingsColumnOpen && $rightDockOpen` 不能
+           *   同时为真，两条缝天生不会同屏。
            */
           <nav className="settings-column-list" aria-label={t("设置分类")}>
             {sections.map((s, i) => (

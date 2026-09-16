@@ -8,6 +8,34 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 把 `sections` 提成一个变量（设置右栏 Task 4）
+
+- **Type**: refactor
+- **Motivation**: 设置右栏计划里 Task 5 要建一个窄栏 `SettingsColumn`，Task 6 要在整页 `SettingsShell`
+  与窄栏之间二选一渲染。两个形状必须读**同一份** section 数组——复制成两份的那一刻，「窄栏里少了
+  一项」就会变成一个没人发现的缺陷（`两处长得一样的东西，等于没有判据` 的反面）。本次先把这份
+  数组单独搬出来占位，纯搬移，一行逻辑都不改，好让后面 Task 5/6 真出问题时能靠这一个提交二分。
+- **What**: `src/ui/App.tsx`——把 `view === "settings"` 分支里 `<SettingsShell sections={[…]}>`
+  的那个数组字面量原样搬到组件体内、`return` 之前，变成 `const 设置分区: SettingsSection[] = [...]`
+  （新增 `SettingsSection` 类型的具名导入，来自 `./Settings.js`）；该处 JSX 改写成
+  `<SettingsShell sections={设置分区} selected={设置分类} onSelect={选设置分类} />`。数组内容逐字节
+  核对与原文件一致（仅缩进因搬出 JSX 属性上下文而整体减少 12 格）。
+- **Impact**: 无行为变化。有一处已知但不算回归的细节：这段数组里有几处非纯 JSX 构造的即时求值
+  （`providers.providers.map(...)`、`providers.agents.filter(...).map(...)` 等），原来只在
+  `view === "settings"` 这条三元分支被选中时才会执行；提到组件体内、`return` 之前后，只要没有落进
+  更早的 `connection.phase === "exhausted"` 提前 return，这些表达式会在**每次渲染**（不论当前是哪个
+  view）都重新求值一次。所有相关 state 的初值都是空数组/空对象（`$providers` 默认
+  `{ agents: [], providers: [] }`、`knownProviders` 默认 `{ providers: [] }` 等），不会在挂载早期因
+  `undefined` 而报错；这些表达式本身也是纯函数、无副作用，只是多做了几次几十项以内的 `filter/map`，
+  不影响正确性，只是计算频率变高了——按计划要求如实记在这里，不在这次「纯搬移」里顺手加
+  `useMemo` 去抵消它。数组体内没有任何 hook 调用，搬到条件 return 之后、无条件 return 之前不构成
+  hook 顺序问题。
+- **Verification**: `npm run typecheck` 无输出；`npm test` → `235 files passed / 2921 passed | 10
+  skipped`（与搬移前一致，无回归）；`npm run build` 通过；
+  `npx playwright test e2e/mcp.spec.ts e2e/skills.spec.ts e2e/memory.spec.ts
+  e2e/subagent-roster.spec.ts e2e/settings-counts.spec.ts` → `20 passed`。另外把搬移前后的数组体
+  分别落盘、统一按 12 格反缩进后 `diff` 逐字节比对，确认完全一致（`diff` 无输出）。
+
 ### 2026-09-16 — 补一条不变式：那一列只有一个位置；`展开设置`/`收起设置` 两处漏顶（设置右栏 Task 3 · Round 4）
 
 - **Type**: fix

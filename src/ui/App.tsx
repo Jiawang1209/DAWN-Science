@@ -171,7 +171,8 @@ import {
   setTheme,
   setView,
   $settingsSection,
-  openSettingsSection,
+  打开设置整页,
+  选设置分类,
   upsertItem,
   dropItem,
   $sidebarWidth,
@@ -3100,7 +3101,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => setView("settings"),
-      openSettingsSection: (id) => openSettingsSection(id),
+      openSettingsSection: (id) => 打开设置整页(id),
       /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
       toggleDock: () => toggleDock(),
       showConversation: () => setView("conversation"),
@@ -4085,7 +4086,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 },
               ]}
               selected={设置分类}
-              onSelect={(id) => $settingsSection.set(id)}
+              onSelect={选设置分类}
             />
             </div>
           ) : session && session.kind === "pty" ? (

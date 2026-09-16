@@ -6,6 +6,7 @@ import { loadTheme } from "./state/theme.js"
 import { loadAccent } from "./state/accent.js"
 import { loadSidebar } from "./state/sidebar.js"
 import { loadFileTree, loadRightDock } from "./state/right-dock.js"
+import { loadSettingsSection } from "./state/view.js"
 import { loadLang } from "./i18n/index.js"
 import { 装上补丢掉的抬起 } from "./mouse-stuck.js"
 import { 装上输入诊断, 输入诊断开着吗 } from "./ime-trace.js"
@@ -38,6 +39,13 @@ loadSidebar()
  */
 loadRightDock()
 loadFileTree()
+
+/**
+ * 设置分类**同样在第一帧之前**（Task 2，2026-09-16）：
+ * 窄栏与整页共用 `$settingsSection`，晚一步就会先落在第一项、
+ * 再跳成上次选的那一类。
+ */
+loadSettingsSection()
 
 /**
  * **语言也在第一帧之前读回**（2026-08-13）。

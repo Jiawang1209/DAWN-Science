@@ -35,8 +35,44 @@ export const $view = atom<View>("conversation")
  * 所以「去技能那一屏」= `setView("settings")` + 这一把。`undefined` = 设置屏自己的默认（第一项）。
  */
 export const $settingsSection = atom<string | undefined>(undefined)
-export const openSettingsSection = (id?: string) => {
+
+/** key 里的 `global` 是**作用域声明**：它不属于某段会话、也不属于某个项目 */
+export const SETTINGS_SECTION_KEY = "dawn.global.settings-section"
+
+/**
+ * 选一类。**先生效，再尝试记住**——存储写不进去不该连这一次选择都不给选
+ * （与 `setRightDockWidth` 同一条）。
+ */
+export function 选设置分类(id: string | undefined): void {
   $settingsSection.set(id)
+  try {
+    if (id === undefined) localStorage.removeItem(SETTINGS_SECTION_KEY)
+    else localStorage.setItem(SETTINGS_SECTION_KEY, id)
+  } catch (e) {
+    console.error("[设置] 分类保存失败，本次切换仍然生效，但重启后不会被记住：", e)
+  }
+}
+
+/**
+ * 启动时读回。**没存过就是 `undefined`**——缺失不等于某个具体值，
+ * 这里的缺失就是「没表达过偏好」，由设置屏自己回落到第一项。
+ */
+export function loadSettingsSection(): void {
+  try {
+    const v = localStorage.getItem(SETTINGS_SECTION_KEY)
+    if (v !== null) $settingsSection.set(v)
+  } catch (e) {
+    console.error("[设置] 读不到已保存的分类，回落到默认：", e)
+  }
+}
+
+/**
+ * **打开整页设置**。2026-09-16 之后这条只剩一个调用点：连不上时
+ * `ConnectionSurface` 那颗「打开设置」——那时主区本来就没有对话，
+ * 挤出一条栏来挤谁？别处一律走 `开设置栏`（`state/settings-column.ts`，Task 3 才会有）。
+ */
+export const 打开设置整页 = (id?: string) => {
+  选设置分类(id)
   $view.set("settings")
 }
 

@@ -2423,6 +2423,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 载技能 = useCallback(() => client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {}), [client, projectId])
   const 载子agent = useCallback(() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {}), [client, projectId])
   const 载MCP = useCallback(() => client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {}), [client, projectId])
+  /** 插件屏与「扩展」行尾计数共用同一发（2026-09-16 审查抓的：两处各写一份 `client.get` 会各自漂移） */
+  const 载插件 = useCallback(() => client.get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {}), [client])
   /**
    * MCP 服务器名 → 图廊根地址（2026-09-15，案例卡片）。**卡片真出现时才问**，不在启动时取：
    * 启动请求有预算（`app-default-client.test.tsx`），而且在设置里后加的那台要立刻认得。
@@ -3143,6 +3145,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    *
    * MCP **按项目问**（项目级 `.dawn/mcp.yaml` 会追加几台），所以它跟着
    * `projectId` 走——换项目时这个数会变，那是实情不是抖动。
+   *
+   * **一台都没配也显示 `0`，不写成 `|| undefined` 藏起来**——这与 `技能数` 同一种
+   * 判断：0 是「确实一台都没有」，是实情，不是「还没取到」。`记忆待确认数` 用
+   * `|| undefined` 是因为那边 0 的意思是「没有待确认」，是另一个问题，两处口径
+   * 不同不是疏漏。
    */
   const [MCP开着数, 设MCP开着数] = useState<number | undefined>(undefined)
   const [插件开着数, 设插件开着数] = useState<number | undefined>(undefined)
@@ -3183,18 +3190,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .get<{ pending: number }>("memoryOverview", 当前工作区路径 ? { workspace: 当前工作区路径 } : {})
       .then((r) => 还在 && 设记忆待确认数(r.pending))
       .catch(() => {})
-    client
-      .get<MCP装载>("listMcpServers", projectId ? { projectId } : {})
+    // MCP / 插件这两发**读的是 `载MCP` / `载插件`**（不是各自另写一份 `client.get`）——
+    // MCP 屏、插件屏与这一发是同一个接口的三处调用点，各写各的迟早会漂移（2026-09-16 审查抓的）。
+    // 这两发失败要出声（`console.error`），跟旁边三发的静默 `.catch(() => {})` 不一样：
+    // 数字读不到时那一行就干脆不显示（`count` 传 `undefined`），界面上看不出异常，
+    // 不出声就真的没人知道——这是评审过的取舍，不是疏漏。
+    载MCP()
       .then((r) => 还在 && 设MCP开着数(r.servers.filter((s) => !s.off).length))
       .catch((e: unknown) => console.error("[设置] MCP 台数读不到，那一行就不显示数字：", e))
-    client
-      .get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {})
+    载插件()
       .then((r) => 还在 && 设插件开着数(r.plugins.filter((p) => p.on).length))
       .catch((e: unknown) => console.error("[设置] 插件数读不到，那一行就不显示数字：", e))
+    // **`名册代` 也覆盖 MCP / 插件**：拨信任、拨「先别连它」、增删服务器、开关插件都
+    // 走 `名册变了()`（同一条「名册动过了」频道，技能/子agent/记忆早就在用）。
+    // 代价是那三个也会跟着重取一遍——`MemoryPanel` 已经在付这个代价，不是新债，
+    // 好过为 MCP / 插件另开一条独立的刷新频道。
     return () => {
       还在 = false
     }
-  }, [client, projectId, view, 名册代, 当前工作区路径])
+  }, [client, projectId, view, 名册代, 当前工作区路径, 载MCP, 载插件])
   const commands = useMemo(
     () =>
       buildCommands({
@@ -3974,8 +3988,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   count: 插件开着数,
                   body: (
             <PluginsView
-              load={() => client.get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {})}
-              onFlag={(pluginId, family, on) => client.get("setPluginFlag", { pluginId, ...(family ? { family } : {}), on })}
+              load={载插件}
+              onFlag={async (pluginId, family, on) => {
+                await client.get("setPluginFlag", { pluginId, ...(family ? { family } : {}), on })
+                // 「扩展」那一行的数靠这一条报给启动期那份 effect——同一条「名册动过了」频道
+                名册变了()
+              }}
             />
                   ),
                 },
@@ -4003,15 +4021,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }
               onFlag={async (name, flag, value, fingerprint) => {
                 await client.get("setMcpFlag", { name, flag, value, ...(fingerprint ? { fingerprint } : {}) })
+                // 「先别连它」拨完这一行的数就该跟着掉——同一条「名册动过了」频道
+                名册变了()
               }}
               onSecret={async (name, varName, secret) => {
                 await client.get("setMcpSecret", { name, varName, secret })
               }}
-              onAdd={(json) =>
-                client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
-              }
+              onAdd={async (json) => {
+                const r = await client.get<{ name: string; needsSecrets: string[] }>("saveMcpServer", { json })
+                名册变了()
+                return r
+              }}
               onRemove={async (name) => {
                 await client.get("removeMcpServer", { name })
+                名册变了()
               }}
             />
                   ),

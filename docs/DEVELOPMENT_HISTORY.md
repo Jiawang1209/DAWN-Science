@@ -8,6 +8,47 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-16 — 设置右栏 Task 5 · code review 二轮修（三条注释是假的）
+
+- **Type**: docs
+- **Motivation**: Task 5 的两条 CSS 缺陷修复（I1/I2）被真浏览器探针在 280/380/720 三个
+  宽度下量过，确认修对了。但陪着那两条修复写的注释里有三处断言是假的——都是「顺手
+  写一句听起来对的解释，没有真的去查」的产物，这条分支这一路已经抓到六处这类问题。
+  代码不改，只改注释与历史记录本身，把断言换成核实过的事实。
+- **What**:
+  1. **计数搞错**：`styles.css` 与上一条历史记录都说「十四项里有七项没有计数」。
+     实际去 `App.tsx` 的 `设置分区` 数了一遍：只有五项声明 `count`（技能、记忆、
+     子 agent、插件、MCP），14 − 5 = **九项**没有计数（记忆那项是 `记忆待确认数 ||
+     undefined`，数字为 0 时也退成没有，那时是十项）。「七 + 七 = 十四」两半都错——
+     这条本身是 review 提出、经协调者转述、我原样抄了一遍进注释，没人数过。
+  2. **I1 的注释指错了对象**：`settings-column.tsx` 与 `styles.css` 原来都说
+     `.dock-title` 是在跟 `.right-dock .dock-title`（`styles.css:5138`）对齐。
+     那条规则**没有任何调用点在用**——`RightDock` 的头部是 `.dock-tabs-row` +
+     `.dock-close`（`views.tsx:1175-1208`），从不渲染 `.dock-title`；这个类名今天
+     只有两处调用点，`dock.tsx:61`（底部终端 dock 头上的 `<span>`，没有 UA 外距）
+     与这个文件自己的 `<h2>`。真正的原因是项目里没有一条全局标题重置，改成指向
+     这一条。
+  3. **`SideSash` 贴哪一边说反了**：Round 2 的注释写「`attach="edge"` 贴自己的尾边」，
+     实际 `side="right"` + `attach="edge"` 得到的 class 是 `lead`，贴的是**左缘**
+     （`sash.tsx:115` 那行三元），JSX 里另一条注释、`views.tsx:1162`、以及这次的
+     实测（sash x 18.5，column x 20）都说的是左缘——同一个文件两句话互相矛盾。
+  4. 顺带两处收紧：`aria-label` 撞名那条注释此前只提了 `<nav>`，其实 `SideSash` 的
+     `label` 也撞了 `RightDock` 同一句「调整面板宽度」，且两处撞名各自的安全理由
+     不是同一条不变式（`<nav>` 靠 `开设置栏`/`展开设置`/`收起设置` 三个函数互斥，
+     `SideSash` 靠「那一列只有一个位置」那条，管的是窄栏 vs. 坞）——Round 2 把两者
+     混成了一条。「300px 宽的栏」改成真实的 280–720（默认 380）。
+  上一条历史记录（Task 5 · code review 一轮修）里重复了 1、2 两处断言，一并改在
+  原地——它还没推送，不是已发布的记录。
+- **Impact**: 无代码变更，`npm test` / `typecheck` / `build` 结果与上一轮完全一致，
+  这里不重复贴。
+- **Verification**: 逐条对照源码重新核实：`grep count: src/ui/App.tsx` → 5 处；
+  `grep dock-title src/ui/*.tsx` → 只有 `dock.tsx:61` 与 `settings-column.tsx` 自己；
+  `sash.tsx:115` 的三元表达式确认 `side="right" && attach="edge"` → `lead`；
+  `state/settings-column.ts` 里 `开设置栏`/`展开设置`/`收起设置` 三处都显式互斥
+  `$view`/`$settingsColumnOpen`，与「那一列只有一个位置」（管 `$rightDockOpen`）
+  是两条不同的不变式。`npm run typecheck` 与 `npm test` 重跑确认注释改动没有
+  引入代码变化（详见下方 Round 3 verification）。
+
 ### 2026-09-16 — 设置右栏 Task 5 · code review 一轮修（I1/I2/M3 + 三处清理）
 
 - **Type**: fix
@@ -15,13 +56,17 @@
   但 code quality 判了 CHANGES REQUESTED——两条真的 CSS 缺陷，加几处清理。逐条修。
 - **What**:
   - **I1（头高不一致）**：`.settings-column .dock-title`（`styles.css`）原来只写了
-    `flex/min-width/overflow/text-overflow`，没抄到 `.right-dock .dock-title` 早就有的
-    `margin: 0; color: …`——无样式 `h2` 的 UA 默认外距（`0.83em` 上下，13px 字号下约 21px）
-    让这一栏的头比坞的头高一截。补上 `margin: 0` 与 `color: var(--dawn-text-1)`。
+    `flex/min-width/overflow/text-overflow`，没有 `margin: 0; color: …`——无样式 `<h2>`
+    带着 UA 默认外距（`0.83em` 上下），把它算进 `.dock-head` 这条 flex 行的高度，
+    header 就被这颗 `<h2>` 撑得比 `.settings-column-tools`（按钮那一排）还高，比
+    `.right-dock`（它的头部没有 `<h2>`，只有 `.dock-tabs-row` + `.dock-close`，高度
+    只由按钮撑）就矮了一截。补上 `margin: 0` 与 `color: var(--dawn-text-1)`。
   - **I2（`›` 落点两处）**：`.settings-nav-item` 是 `justify-content: flex-start`，真正把
     东西推到行尾的是 `.side-count` 自己的 `margin-left: auto`（`styles.css:3906`，早就有）。
-    十四个分类里有七个没有 `count`，没有它时 `.settings-column-arrow` 原来的固定
-    `margin-left` 让箭头贴着标题走，跟另外七行（箭头贴行尾）长得不一样——正是它自己的
+    `App.tsx` 的 `设置分区` 十四项里只有五项声明 `count`（技能、记忆、子 agent、插件、MCP），
+    也就是九项（记忆那项 `记忆待确认数 || undefined`，数字是 0 时是十项）没有 `count`，
+    没有它时 `.settings-column-arrow` 原来的固定
+    `margin-left` 让箭头贴着标题走，跟带计数的那五行（箭头贴行尾）长得不一样——正是它自己的
     注释说要避免的「两种控件」。改成箭头 `margin-left: auto`（没有计数时独自吃掉全部余量，
     贴到行尾）；新增 `.side-count + .settings-column-arrow { margin-left: var(--dawn-space-1) }`
     （比 `.settings-column-arrow` 单类选择器更具体，赢过它）：有计数时改吃固定间距，让
@@ -37,21 +82,28 @@
   - **M2**：`sections.find(...) ?? undefined` 里的 `?? undefined`是空操作（`find` 本身
     找不到就是 `undefined`），删掉；`selected` 的属性文档原来指着这一行当判据，改成指向
     `.find()` 本身。
-  - **M5**：`<nav aria-label={t("设置分类")}>` 与 `Settings.tsx:676` 的 `.settings-nav`
-    撞了同一句可访问名——补注释说明这是有意为之且安全：`state/settings-column.ts` 的
-    不变式保证窄栏与整页设置不会同屏，任一时刻最多一个 `nav` 叫这个名字。
+  - **M5**：两处可访问名都撞了别处——`<nav aria-label={t("设置分类")}>` 与
+    `Settings.tsx:676` 的 `.settings-nav`；`SideSash` 的 `label={t("调整面板宽度")}`
+    与 `RightDock`（`views.tsx:1164`）。补注释说明都是有意为之且安全，但理由不是
+    同一条：前者由 `state/settings-column.ts` 的 `开设置栏`/`展开设置`/`收起设置`
+    保证窄栏与整页设置不会同屏；后者由「那一列只有一个位置」这条不变式
+    （窄栏 vs. 坞）保证——**不是同一条不变式**，Round 2 的注释把两者混成了一条。
   - M4（wireframe 写「⤢ 展开」而组件是纯文字「展开」）按协调者的决定**不改代码**——
     改的是规格文档本身，改成图标会换掉 Task 6 e2e 拿 `exact: true` 匹配的可访问名，
     而 `icons.tsx` 目前也没有一颗展开图标。
 - **Impact**: 仍是新文件、未被引用（Task 6 才接线），本轮修改不改变现有行为。
 - **Verification**: `npm run typecheck` 无输出；`npx vitest run tests/ui/i18n.test.ts
   tests/ui/design-contract.test.ts` → `62 passed`；`npm test` → `235 files passed / 2921
-  passed | 10 skipped`（无回归）；`npm run build` 通过。**I1/I2 本轮无法被任何测试证明**——
-  组件仍未接线，没有可渲染、可截图的入口；预期效果留字面记录：I1 应让窄栏头部与
-  `RightDock` 头部同高（`.dock-title` 不再带 UA 默认外距）；I2 应让十四行里
-  「有计数」与「没计数」两种行的 `›` 都贴在行的最右端、彼此对齐，有计数时数字与箭头之间
-  留一条 `--dawn-space-1` 的固定缝。留给 Task 6（接线）与 Task 8（视觉基线，含开坞对照）
-  去判定。
+  passed | 10 skipped`（无回归）；`npm run build` 通过。**这三条本仓库的测试都证明不了
+  I1/I2**——组件仍未接线，没有可渲染、可截图的入口；review 那边另外拿一个真浏览器探针，
+  在 280/380/720 三个宽度上量了实际渲染结果并确认两条都修对了：`.settings-column`
+  头部高度与 `.right-dock` 头部完全相同（45.09px，两者一致）；十四行里 `›` 的右缘在
+  三个宽度下 `distinct = 1, spread = 0`（都对齐在同一条线上），`记忆` 那一行有计数与
+  没计数两种取值时箭头位置相同；**关掉 I2 那条覆盖规则**做对照实验证实了「两个
+  同时 `auto` 会把余量对半分」的推理——数字停在行中间、离右缘 111px，不是贴边。
+  I1 实测的高度差是 **13.14px**，不是 margin box 本身增长的 21.6px（`0.83em` 换算）——
+  这条 flex 行的高度由最高的子元素定，按钮那一排本来就有 28.59px，`<h2>` 带着外距时
+  比它更高，去掉外距后矮过它，高度改由按钮定，两边因此对齐。
 
 ### 2026-09-16 — `SettingsColumn` 组件与样式（设置右栏 Task 5）
 

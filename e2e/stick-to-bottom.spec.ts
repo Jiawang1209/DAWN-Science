@@ -211,3 +211,120 @@ test.describe("回到底部浮标", () => {
     await expect(page.getByRole("button", { name: "有新内容", exact: true })).toBeVisible()
   })
 })
+
+/**
+ * 对话区只许有一层能滚的容器（2026-09-16）。
+ *
+ * 作者 2026-08-14 报、2026-09-16 再报的同一条：
+ * *「整个对话的容器好像是两层的容器……你看『回到底部』现在位于哪里了？」*
+ * 截图里那颗浮标浮在半空中，离 `.turns` 的底 183px（逐像素量的）。
+ *
+ * ## 根因（量出来的）
+ *
+ * `Thinking()` 里那颗 `<span class="sr-only">正在思考</span>` 是
+ * `position: absolute` 而**四个偏移量一个都不写** → 落在静态位置上。
+ * 静态位置在**包含块**的坐标系里算，**不吃中间那层滚动容器的 scrollTop**；
+ * 而 `.tool` / `.tool-head`（`.btn`）/ `.turn-body` / `.turns-inner`
+ * **没有一个是定位的**，包含块一路逃到 `.turns`（09-08 为浮标加的 `position: relative`）。
+ *
+ * 正在跑的那一行长在转录末尾，于是这颗 1×1 的隐藏 span 把 `.turns` 的滚动区
+ * **撑出去 4117px**（探针实测）。`.turns` 当时还带着 `overflow: auto`，
+ * 于是它成了真能滚的第二层：滚轮只要没落在里层就去滚它，
+ * 把同样绝对定位的浮标一起拽上去，底下露出大片空白。
+ *
+ * 09-08 之前 `.turns` 还不是定位祖先，那时包含块是**文档**——
+ * 白出来的是整个 App 页面，正是作者最早那句话的形状。**同一个 bug，两个受害者。**
+ *
+ * 这条用例盯的是修完之后的不变式：**外层永远滚不动，浮标永远贴着外层的底。**
+ */
+test.describe("对话区只许有一层能滚的容器", () => {
+  /**
+   * `Thinking()` 渲染出来的那一段，**逐字照抄**（`views.tsx` 的 `function Thinking`）。
+   *
+   * 为什么要注进去而不是等真的出现：`.thinking` 只在「还在跑 / 还在说」那一瞬存在，
+   * 假模型答得太快，密集采样 150 次一次都没抓到。而这条要验的是**布局机理**
+   * （绝对定位元素的包含块跑到哪儿去了），标记一模一样就够。
+   */
+  const 正在跑的工具行 =
+    '<div class="tool"><button class="btn btn-ghost btn-inline tool-head">' +
+    '<span class="tool-status">run_code</span>' +
+    '<span class="thinking" role="status"><span class="sr-only">正在思考</span>' +
+    '<span class="dot"></span><span class="dot"></span><span class="dot"></span></span>' +
+    "</button></div>"
+
+  test("**转录末尾正在跑的那一行，撑不出第二条滚动条**", async ({ dawn }) => {
+    const { app, page } = dawn
+    await 开一段临时会话(page, "开始")
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1000, 700))
+    await page.waitForTimeout(400)
+
+    // 一段够长的转录：静态位置逃逸要长转录才看得出来（末尾离 .turns 顶好几千像素）
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill(Array.from({ length: 300 }, (_, i) => `第 ${i} 行：把转录撑高一点点。`).join("\n"))
+    await 框.press("Enter")
+    await page.locator(".turns").getByText("第 299 行：把转录撑高一点点。").waitFor({ timeout: 30_000 })
+    await page.waitForTimeout(1_500)
+
+    const 量 = await page.evaluate((标记) => {
+      const turns = document.querySelector(".turns") as HTMLElement
+      const 之前 = turns.scrollHeight - turns.clientHeight
+      const 行 = document.createElement("div")
+      行.innerHTML = 标记
+      const 节点 = 行.firstElementChild!
+      ;(document.querySelector(".turns-inner") as HTMLElement).appendChild(节点)
+      const 之后 = turns.scrollHeight - turns.clientHeight
+      const sr = 节点.querySelector(".sr-only") as HTMLElement
+      // 推一下：`clip` 之下这一下必须毫无作用
+      turns.scrollTop = 500
+      const 推完 = Math.round(turns.scrollTop)
+      const 结 = { 之前, 之后, 推完, overflowY: getComputedStyle(turns).overflowY, srTop: Math.round(sr.getBoundingClientRect().top) }
+      节点.remove()
+      return 结
+    }, 正在跑的工具行)
+
+    // 这一行不许把外层的滚动区撑出去一个像素
+    expect(量.之前, "基线：什么都没注入时外层就不该有溢出").toBe(0)
+    expect(量.之后, "「正在思考」那颗 .sr-only 把外层撑出去了——它得钉住一个角").toBe(0)
+    // 外层根本不是滚动容器，推也推不动
+    expect(量.overflowY).toBe("clip")
+    expect(量.推完, "外层被滚动过，浮标会跟着被拽上去").toBe(0)
+  })
+
+  test("**浮标永远贴着对话区的底，不许浮在半空中**", async ({ dawn }) => {
+    const { app, page } = dawn
+    await 开一段临时会话(page, "开始")
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1000, 700))
+    await page.waitForTimeout(400)
+    await 灌几轮(page, ["第一句话", "第二句话", "第三句话"])
+
+    // 翻上去把浮标叫出来
+    await page.evaluate((sel) => {
+      const el = document.querySelector(sel) as HTMLElement
+      el.scrollTop = 0
+      el.dispatchEvent(new Event("scroll"))
+    }, 滚的是)
+    await expect(page.locator(".stick-pill")).toHaveCount(1, { timeout: 10_000 })
+
+    const 差 = await page.evaluate((标记) => {
+      const 量一次 = () => {
+        const turns = document.querySelector(".turns") as HTMLElement
+        const 药 = document.querySelector(".stick-pill") as HTMLElement
+        return Math.round(turns.getBoundingClientRect().bottom - 药.getBoundingClientRect().bottom)
+      }
+      const 干净 = 量一次()
+      // 末尾挂一行正在跑的，再推外层——作者截图里的那个状态
+      const 行 = document.createElement("div")
+      行.innerHTML = 标记
+      const 节点 = 行.firstElementChild!
+      ;(document.querySelector(".turns-inner") as HTMLElement).appendChild(节点)
+      ;(document.querySelector(".turns") as HTMLElement).scrollTop = 500
+      const 挨过推 = 量一次()
+      节点.remove()
+      return { 干净, 挨过推 }
+    }, 正在跑的工具行)
+
+    // `bottom: var(--dawn-space-3)` = 12px。截图里这个数是 183。
+    expect(差.干净).toBe(12)
+    expect(差.挨过推, "外层被滚下去之后浮标跟着跑了——这正是作者截图里的样子").toBe(12)
+  })
+})

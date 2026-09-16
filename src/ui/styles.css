@@ -819,7 +819,23 @@ pre {
 .turns {
   position: relative; /* 「回到底部」浮标的定位参照（2026-09-08）。这一层不滚 */
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  /**
+   * **`clip` 而不是 `auto`**（2026-09-16）。注释里一直写着「这一层不滚」，
+   * 但 `overflow: auto` 让它**随时可以滚**——真正在滚的是 `StickToBottom.Content`
+   * 自己造的那层 `height:100%` 的 div，这一层的 `auto` 纯属多余。
+   *
+   * 多余到有代价：只要有任何东西把它的滚动区撑出去（`.sr-only` 那条就是），
+   * 对话区立刻变成**两层能滚的容器**——两条滚动条，而滚轮落在哪一层由
+   * 鼠标在不在里层决定。作者看到的「药丸跑到半空中」就是外层被滚下去之后，
+   * 同样绝对定位的浮标被一起拽上去。
+   *
+   * `clip` 与 `hidden` 的差别是要害：`hidden` 仍然是一个滚动容器，
+   * 代码（或者浏览器的聚焦滚动）照样能设它的 `scrollTop`；
+   * **`clip` 根本不是滚动容器，永远回不到这个状态**。
+   * 这一层名义上只有一个 `height:100%` 的孩子，本来就没有该滚的东西。
+   */
+  overflow: clip;
   padding: var(--dawn-space-3) var(--dawn-page-inset-x);
   font-size: var(--dawn-chat-size);
   line-height: var(--dawn-chat-leading);
@@ -1779,6 +1795,30 @@ pre {
 /** 视觉上藏起来，读屏仍然读得到。**不是 `display:none`**——那样读屏也读不到 */
 .sr-only {
   position: absolute;
+  /**
+   * **必须钉住一个角**（2026-09-16，量出来的）。
+   *
+   * 不写 `top`/`left` 时，绝对定位元素落在**静态位置**上——而静态位置是
+   * 在**包含块**的坐标系里算的，**不吃中间那层滚动容器的 scrollTop**。
+   *
+   * `Thinking()` 里有一颗 `.sr-only`（「正在思考」），它的祖先
+   * `.tool` / `.tool-head`（`.btn`）/ `.turn-body` / `.turns-inner`
+   * **一个都没有定位**，于是包含块一路逃到 `.turns`——09-08 为了那颗
+   * 「回到底部」浮标刚给它加的 `position: relative`。
+   * 正在跑的那一行长在一段几千像素的转录末尾，于是这颗 1×1 的隐藏 span
+   * 把 `.turns` 的滚动区**撑出去四千多像素**（探针实测：0 → 4117）。
+   *
+   * 后果是作者从 2026-08-14 报到今天的那一条：**对话区变成两层能滚的容器**，
+   * 滚轮只要没落在里层（落在 32px 内距上、或落在对话区以外）就会去滚 `.turns`，
+   * 把同样绝对定位的浮标一起拽上去，底下露出大片空白。
+   * 09-08 之前 `.turns` 还不是定位祖先，那时包含块是**文档**——
+   * 白出来的就是整个 App 页面，正是作者最早那句话的形状。
+   *
+   * 钉在左上角之后静态位置永远用不上，1×1 又被 `clip-path` 裁掉，
+   * 读屏读的是 DOM 顺序、与坐标无关——**三处都不受影响**。
+   */
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   margin: -1px;
@@ -6737,7 +6777,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-remote-other { padding: var(--dawn-space-2) var(--dawn-space-3); border-bottom: 1px solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
 .nb-remote-other > summary { cursor: pointer; }
 /* position: relative 是「回到底部」浮标的定位参照（2026-09-08）。这一层不滚 */
-.nb-cells { position: relative; flex: 1; min-height: 0; overflow: auto; }
+/* 与 `.turns` 同一条（2026-09-16）：真正在滚的是贴底库自己造的那层，
+   这一层留着 `auto` 只会多出一条能被滚的容器。理由写在 `.turns` 那儿 */
+.nb-cells { position: relative; flex: 1; min-height: 0; overflow: clip; }
 .nb-cells-inner { padding: var(--dawn-space-2) var(--dawn-space-3); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .nb-cell { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: var(--dawn-space-1); }
 .nb-gutter { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); padding-top: 2px; }

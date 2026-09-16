@@ -1313,3 +1313,57 @@ describe("设计契约 · 输入法", () => {
     expect(漏的, "组词途中那一下回车会被当成确认——先 `if (在组词(e)) return`").toEqual([])
   })
 })
+
+/**
+ * 转录区的滚动（2026-09-16，作者从 2026-08-14 报到今天的那一条的自动化形式）。
+ *
+ * 两条规则，都是量出来之后才写下来的，不是设计偏好：
+ *
+ * ① **贴底库那两处，外层不许是能滚的容器。** 真正在滚的是
+ *    `StickToBottom.Content` 自己造的那层 `height:100%` 的 div。外层再带 `auto`，
+ *    对话区就是两层能滚的容器——滚轮落在哪一层取决于鼠标在不在里层，
+ *    而外层一滚，同样绝对定位的「回到底部」浮标就被一起拽上去。
+ *
+ * ② **`.sr-only` 必须钉住一个角。** 不钉就落在静态位置上，而静态位置是在
+ *    **包含块**的坐标系里算的、不吃中间那层滚动容器的 scrollTop：
+ *    转录末尾那颗「正在思考」因此把 `.turns` 的滚动区撑出去四千多像素
+ *    （探针实测 0 → 4117）。①、② 各修一半，缺一条这个 bug 就还在。
+ */
+describe("设计契约 · 转录区只许有一层滚动", () => {
+  const css = () => readFileSync(join(UI_DIR, "styles.css"), "utf8")
+
+  /**
+   * 取某条规则的声明块，**并把块里的注释抹掉**。
+   *
+   * 不抹的话这条扫描会被自己的解释绊倒：`.turns` 块里那段注释要引用
+   * 它禁止的 `overflow: auto` 才说得清楚为什么禁。与本文件顶上
+   * `isComment` 同一条理由——**文档要能提到它禁止的东西**。
+   */
+  function 规则块(text: string, 选择器: string): string {
+    const i = text.indexOf(`\n${选择器} {`)
+    if (i < 0) throw new Error(`找不到规则 ${选择器}`)
+    const j = text.indexOf("}", i)
+    return text.slice(i, j).replace(/\/\*[\s\S]*?\*\//g, "")
+  }
+
+  it("**`.turns` 与 `.nb-cells` 都不是滚动容器**", () => {
+    const text = css()
+    for (const 选择器 of [".turns", ".nb-cells"]) {
+      const 块 = 规则块(text, 选择器)
+      expect(块, `${选择器}：外层带 auto/scroll 就多出一条能被滚的容器`).not.toMatch(
+        /overflow(-y)?: *(auto|scroll)/,
+      )
+      expect(块, `${选择器}：要 clip——hidden 仍然是滚动容器，代码与聚焦滚动照样能设 scrollTop`).toMatch(
+        /overflow: *clip/,
+      )
+    }
+  })
+
+  it("**`.sr-only` 钉住了一个角**", () => {
+    const 块 = 规则块(css(), ".sr-only")
+    expect(块).toMatch(/position: *absolute/)
+    expect(块, "不钉角就用静态位置，转录末尾那颗会把祖先的滚动区撑出去几千像素").toMatch(
+      /(^|\n)\s*(top|left|inset): /,
+    )
+  })
+})

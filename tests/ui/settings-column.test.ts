@@ -113,9 +113,30 @@ describe("设置栏与坞互斥", () => {
     expect($rightDockOpen.get()).toBe(true)
     expect($rightDockTenant.get()).toBe("notebook")
   })
+
+  it("**上一轮的记忆不会渗进这一轮**：设置不在场、右边空着时再开，记忆必须被清成「空着」（R3-2：" +
+    "`resetAllState()` 只清 `$view`，不清 `$被顶掉的房客`，脏记忆能活到下一次打开）", () => {
+    $被顶掉的房客.set("notebook") // resetAllState 只清 $view，不清这个
+    开设置栏()
+    关掉设置()
+    expect($rightDockOpen.get()).toBe(false)
+  })
 })
 
 describe("展开与收起", () => {
+  it("**窄栏与坞万一同时开着，展开时坞照样被顶掉且记下来**（R3-1：`展开设置` 此前完全不碰坞，" +
+    "「那一列空着」全靠 `开设置栏` 提前顶过——这一下没有）", () => {
+    $settingsColumnOpen.set(true)
+    $rightDockOpen.set(true)
+    $rightDockTenant.set("notebook")
+    展开设置()
+    expect($view.get()).toBe("settings")
+    expect($rightDockOpen.get()).toBe(false)
+    关掉设置()
+    expect($rightDockOpen.get()).toBe(true)
+    expect($rightDockTenant.get()).toBe("notebook")
+  })
+
   it("展开 → 整页，而那一列**空着**（作者选的）", () => {
     $rightDockOpen.set(true)
     $rightDockTenant.set("files")
@@ -186,5 +207,68 @@ describe("设置在场", () => {
     expect($设置在场.get()).toBe(true)
     收起设置()
     expect($设置在场.get()).toBe(true)
+  })
+})
+
+describe("不变式：那一列只有一个位置", () => {
+  /**
+   * **窄栏开着的时候，坞不可能开着。**`$settingsColumnOpen && $rightDockOpen`
+   * 不能同时为真——Task 6 的每一次渲染都假定这一点，而这个模块出过的每一个
+   * bug（C1 的同类、R2-1、`展开设置`/`收起设置` 两处漏顶）都是某条路径悄悄
+   * 破了它。表驱动跑遍「五个起点 × 六个动作」，比任何一条单独的场景用例
+   * 都更值钱——它是会抓住*下一个*同类漏洞的那一条，不只是这一批。
+   */
+  it("五个起点、六个动作，做完之后窄栏与坞永远不同时开着", () => {
+    const 重置到初始 = () => {
+      localStorage.clear()
+      $view.set("conversation")
+      $rightDockOpen.set(false)
+      $rightDockTenant.set("files")
+      $settingsColumnOpen.set(false)
+      $settingsSection.set(undefined)
+      $被顶掉的房客.set(undefined)
+    }
+
+    const 起点表: ReadonlyArray<[string, () => void]> = [
+      ["一切都关着", () => {}],
+      ["只有坞开着", () => {
+        $rightDockOpen.set(true)
+        $rightDockTenant.set("notebook")
+      }],
+      ["只有窄栏开着", () => {
+        $settingsColumnOpen.set(true)
+      }],
+      ["整页开着、坞也开着（「一边看设置一边看图」，坞上位() 之后的合法状态）", () => {
+        $view.set("settings")
+        $rightDockOpen.set(true)
+        $rightDockTenant.set("notebook")
+      }],
+      ["窄栏与坞都开着（不该出现，但要防）", () => {
+        $settingsColumnOpen.set(true)
+        $rightDockOpen.set(true)
+        $rightDockTenant.set("notebook")
+      }],
+    ]
+
+    const 动作表: ReadonlyArray<[string, () => void]> = [
+      ["开设置栏()", () => 开设置栏()],
+      ['开设置栏("mcp")', () => 开设置栏("mcp")],
+      ["展开设置()", () => 展开设置()],
+      ["收起设置()", () => 收起设置()],
+      ["关掉设置()", () => 关掉设置()],
+      ["坞上位()", () => 坞上位()],
+    ]
+
+    for (const [起点名, 布起点] of 起点表) {
+      for (const [动作名, 做] of 动作表) {
+        重置到初始()
+        布起点()
+        做()
+        expect(
+          $settingsColumnOpen.get() && $rightDockOpen.get(),
+          `起点「${起点名}」→ ${动作名} 之后，窄栏与坞不该同时开着`,
+        ).toBe(false)
+      }
+    }
   })
 })

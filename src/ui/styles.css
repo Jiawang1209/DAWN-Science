@@ -4059,12 +4059,13 @@ pre {
 }
 .settings-nav-item.current .row-icon { color: var(--dawn-text-1); }
 .settings-body { min-width: 0; display: flex; flex-direction: column; gap: var(--dawn-space-4); }
-/** 右边那一块的标题：它回答「我现在在哪一块」，所以比里面的小标题大一档 */
-/* 整页设置标题那一行：标题在左，「收起」在右（2026-09-16） */
+/* 整页设置标题那一行：标题在左，「收回」在右（2026-09-16） */
 .settings-body-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--dawn-space-3); }
-/* 标题让位，「收起」不让位（与 `.ws-setting` 那两条同一个理由）：
-   弹性子项默认 `flex-shrink: 1`，长标题会把这颗按钮挤成竖着的一列字 */
+/* 标题让位，「收回」不让位（与 `.ws-setting` 那两条同一个理由）：
+   弹性子项默认 `flex-shrink: 1`，长标题会把这颗按钮挤成竖着的一列字。
+   **文案是「收回」不是「收起」**——后者是「收起面板」「收起添加模型服务」的子串 */
 .settings-collapse { flex: none; }
+/** 右边那一块的标题：它回答「我现在在哪一块」，所以比里面的小标题大一档 */
 .settings-body-title {
   margin: 0;
   font-size: var(--dawn-fs-title);

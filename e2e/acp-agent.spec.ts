@@ -393,6 +393,12 @@ test.describe("ACP 用量", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible({ timeout: 30_000 })
 
+    /**
+     * **这一条刻意留在窄栏里**（2026-09-17）：2026-09-16 之后「设置」开的是
+     * 380px 那一栏，这里不点「展开」。它断的是「累计不是 0」——与宽度无关，
+     * 于是用量面板在窄栏里也有一份真实覆盖。
+     * 版面那一半由 `usage.spec.ts` 在整页上守着，**两种宽度各有一条**。
+     */
     await page.getByRole("button", { name: "设置", exact: true }).click()
     await page.getByRole("button", { name: "用量", exact: true }).click()
     await expect(page.locator(".usage-heat")).toBeVisible({ timeout: 15_000 })

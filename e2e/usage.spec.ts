@@ -11,6 +11,19 @@ import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures
 
 async function 进用量(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "设置", exact: true }).click()
+  /**
+   * **展开成整页再看**（2026-09-17 审查定的）。
+   *
+   * 2026-09-16 之后「设置」开的是 380px 的窄栏，这个文件**没改也照样绿**——
+   * 于是它悄悄从整页漂进了窄栏，而它验的偏偏是版面：
+   * 「饼图与图例左右并排」「日历铺满、带月份」这些在两种宽度下不是一回事。
+   * 绿着却量错了地方，比红更难发现。
+   *
+   * **两种宽度各留一条**：这个文件走整页；`acp-agent.spec.ts:396` 那条
+   * 保持不动、继续在窄栏里跑（它只断「数不是 0」，与宽度无关，
+   * 于是窄栏里的用量面板白捡一份覆盖）。
+   */
+  await page.getByRole("button", { name: "展开", exact: true }).click()
   await page.getByRole("button", { name: "用量", exact: true }).click()
   /**
    * **等数据到了再往下走。**

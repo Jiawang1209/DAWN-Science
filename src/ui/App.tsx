@@ -3261,10 +3261,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         </div>
         {/**
           * **这一处走整页，不是窄栏**（2026-09-16）。这是一条**早退分支**：
-          * 连不上时整个屏幕只有顶栏 + `ConnectionSurface` + 状态栏，
+          * `exhausted` 时整个屏幕只有顶栏 + `ConnectionSurface` + 状态栏，
           * `.body` 那个网格根本没渲染，**那条窄栏在这里不存在**。
-          * 接 `actions.openSettings`（已经是 `开设置栏`）的话，点下去只会把一个
-          * 看不见的状态翻成 `true`，屏幕上什么都不发生。
+          * 接 `actions.openSettings`（已经是 `开设置栏`）的话，点那颗
+          * 「检查配置」（`connection.tsx:52`）只会把一个看不见的状态翻成 `true`，
+          * 屏幕上什么都不发生。
           */}
         <ConnectionSurface onRetry={connect} onOpenSettings={() => 打开设置整页()} />
         <div className="statusbar" />
@@ -4865,9 +4866,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       </div>
 
       {/**
-        * **这一处也走整页**（2026-09-16）：重连横幅上那颗「打开设置」。
-        * 连接没就绪时人要找的是模型服务那一屏，而不是在一条正在重连的横幅底下
-        * 挤出一条窄栏——与上面那条早退分支同一个理由。
+        * **这一处也走整页**（2026-09-16；理由 2026-09-17 改写，上一版说错了两件事）。
+        *
+        * 它负责 `reconnecting` / `degraded` 两态那条**横幅**上的「检查配置」
+        * （`connection.tsx:74`、`:87`）。**整个 app 就在横幅后面照常渲染着**——
+        * 上一版注释写的「整屏被那层盖着」是错的，`connection.tsx` 的文件头
+        * 自己就写着 `reconnecting → 横幅（还能看已有内容）`。所以这里**画得出**
+        * 那条窄栏，不是「画不出」。
+        *
+        * 仍然走整页的真正理由：**`ConnectionSurface` 只有一个 `onOpenSettings`**，
+        * 而上面那条 `exhausted` 早退分支**没得选**（那时 `.body` 不存在）。
+        * 两处给同一颗按钮配两种形状，就是让「检查配置」的结果取决于
+        * 此刻是哪一种连接状态——同一个可见入口两种行为，正是本项目
+        * 反复栽过的那类「没有判据」。宁可两处都是整页。
         */}
       <ConnectionSurface onRetry={connect} onOpenSettings={() => 打开设置整页()} />
 

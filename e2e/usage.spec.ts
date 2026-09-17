@@ -19,9 +19,12 @@ async function 进用量(page: import("@playwright/test").Page) {
    * 「饼图与图例左右并排」「日历铺满、带月份」这些在两种宽度下不是一回事。
    * 绿着却量错了地方，比红更难发现。
    *
-   * **两种宽度各留一条**：这个文件走整页；`acp-agent.spec.ts:396` 那条
-   * 保持不动、继续在窄栏里跑（它只断「数不是 0」，与宽度无关，
-   * 于是窄栏里的用量面板白捡一份覆盖）。
+   * **两种宽度各留一条**：这个文件走整页；`acp-agent.spec.ts` 的
+   * `describe("ACP 用量")` 那条保持不动、继续在窄栏里跑（它只断「数不是 0」，
+   * 与宽度无关，于是窄栏里的用量面板白捡一份覆盖）。
+   * **指的是那个 `describe` 而不是行号**：上一版写的 `:396` 在同一笔提交里
+   * 就被自己插进去的注释推成了 `:402`——**跨文件引用钉在会动的行号上，
+   * 写下的那一刻就开始腐烂**。
    */
   await page.getByRole("button", { name: "展开", exact: true }).click()
   await page.getByRole("button", { name: "用量", exact: true }).click()

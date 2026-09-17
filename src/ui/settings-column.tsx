@@ -16,8 +16,10 @@
  * 开合、互斥、回程全在 `state/settings-column.ts`。**这里一个 store 都不写**——
  * 状态散进组件之后，「关掉设置为什么没把面板还回来」就没有唯一的地方可查。
  *
- * ## 三处没有照抄计划原文（Task 5 审查时定的，都被 `design-contract.test.ts` /
+ * ## 两处没有照抄计划原文（Task 5 审查时定的，都被 `design-contract.test.ts` /
  * `i18n.test.ts` 现场抓到过一次）
+ *
+ * **数一数再写数字**（2026-09-17）：这里原本写的是「三处」，底下从来只有两条。
  *
  * - `✕`：`RightDock`（`views.tsx`）的 `.dock-close` 已经用 `关闭图标` 而不是
  *   裸字符——这个组件明确要当 `.dock-close` 的同类，就该用同一个图标，
@@ -131,7 +133,10 @@ export function SettingsColumn({
            * 同一种东西不该有两种样子，而且整页那边改了这边自动跟上。
            *
            * 这个组件有两处可访问名与别处重了：这个 `nav` 的 `aria-label`
-           * 跟 `Settings.tsx:676` 的 `.settings-nav` 撞了同一句「设置分类」；
+           * 跟 `Settings.tsx` 里 `SettingsShell` 的 `.settings-nav` 撞了同一句
+           * 「设置分类」（**指的是那个选择器，不是行号**：原来写的 `:676`
+           * 被 Task 6 给 `SettingsShell` 加 `onCollapse` 那几行推成了 `:683`，
+           * 行号钉不住会动的东西）；
            * 上面那条 `SideSash` 的 `label` 跟 `RightDock`（`views.tsx:1164`）
            * 撞了同一句「调整面板宽度」。**想过是不是「没有判据」**，结论都
            * 是安全的，但理由不是同一条不变式：

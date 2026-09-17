@@ -4868,8 +4868,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       {/**
         * **这一处也走整页**（2026-09-16；理由 2026-09-17 改写，上一版说错了两件事）。
         *
-        * 它负责 `reconnecting` / `degraded` 两态那条**横幅**上的「检查配置」
-        * （`connection.tsx:74`、`:87`）。**整个 app 就在横幅后面照常渲染着**——
+        * 它负责 `reconnecting` 那条**横幅**上的「检查配置」（`connection.tsx:74`）。
+        * **这个文件里 `onOpenSettings` 只出现两次**：`:51`（`exhausted` 全屏）
+        * 与 `:73`（这一条）；`degraded` 那一支只有一颗 `onRetry` 的「重新获取」，
+        * 上一版把它也算进来是错的。**整个 app 就在横幅后面照常渲染着**——
         * 上一版注释写的「整屏被那层盖着」是错的，`connection.tsx` 的文件头
         * 自己就写着 `reconnecting → 横幅（还能看已有内容）`。所以这里**画得出**
         * 那条窄栏，不是「画不出」。

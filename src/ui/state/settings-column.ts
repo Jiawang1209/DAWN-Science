@@ -199,7 +199,19 @@ export function 展开设置(): void {
  * 而那条不变式管的是窄栏 vs. 坞——这里已经把窄栏收掉了。
  */
 export function 打开设置整页(id?: string): void {
-  选设置分类(id)
+  /**
+   * **没给 id 就一个字都别动**（2026-09-17 审查抓的真回归）——不能无脑
+   * `选设置分类(id)`：`选设置分类(undefined)` 的语义是「把偏好清掉」
+   * （`view.ts` 那行 `localStorage.removeItem(SETTINGS_SECTION_KEY)`），
+   * 于是连不上时点一下那颗按钮，就把 `8b37470` 刚加的「记住上次看的是哪一块」
+   * **删了**。改动之前那两处走的是裸 `setView("settings")`，从不碰这份偏好。
+   *
+   * 顺带它也砸了自己的目的：清掉之后 `SettingsShell` 回落到 `sections[0]`＝外观，
+   * 而连不上时人要找的恰恰是「模型服务」。
+   *
+   * 与 `开设置栏` 同一个形状——那边一开始就是 `if (section !== undefined)`。
+   */
+  if (id !== undefined) 选设置分类(id)
   setValue($settingsColumnOpen, false)
   setView("settings")
 }

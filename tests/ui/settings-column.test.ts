@@ -20,7 +20,7 @@
  * C1、C2，以及「关掉设置读的是记忆、不是坞此刻的值」与 `坞上位()`。
  */
 import { beforeEach, describe, expect, it } from "vitest"
-import { $view, $settingsSection } from "../../src/ui/state/view.js"
+import { $view, $settingsSection, SETTINGS_SECTION_KEY, 选设置分类 } from "../../src/ui/state/view.js"
 import { $rightDockOpen, $rightDockTenant, setRightDockOpen, setRightDockTenant } from "../../src/ui/state/right-dock.js"
 import {
   $settingsColumnOpen,
@@ -31,6 +31,7 @@ import {
   展开设置,
   收起设置,
   坞上位,
+  打开设置整页,
 } from "../../src/ui/state/settings-column.js"
 
 beforeEach(() => {
@@ -210,15 +211,54 @@ describe("设置在场", () => {
   })
 })
 
+describe("打开设置整页（2026-09-16 从 view.ts 搬进来的那一个）", () => {
+  /**
+   * **步骤 ⑩ 的搬家理由，到这里才真的有判据。**
+   *
+   * 它此前住在 `view.ts`，而 `view.ts` 不能反过来 import 这个模块（成环），
+   * 于是 `开设置栏()` → `打开设置整页()` 两步就能造出「整页与窄栏同时为真」。
+   * 搬过来之后它顺手收掉那一列——**而在这条用例出现之前，那个修复一处都没被断言过**。
+   */
+  it("从窄栏直接开整页：窄栏被收掉，两种形状不同屏", () => {
+    开设置栏()
+    expect($settingsColumnOpen.get()).toBe(true)
+    打开设置整页()
+    expect($view.get()).toBe("settings")
+    expect($settingsColumnOpen.get(), "整页与窄栏同时为真——这正是步骤 ⑩ 要修的那个状态").toBe(false)
+  })
+
+  /**
+   * **不给 id 就不许动那份偏好**（2026-09-17 审查抓到的真回归）。
+   *
+   * `选设置分类(undefined)` 的语义是「把偏好清掉」（`view.ts` 里那行
+   * `localStorage.removeItem`）。无脑转调它，等于连不上时点一下「检查配置」
+   * 就把 `8b37470` 刚加的「记住上次看的是哪一块」删掉了。
+   */
+  it("没给 id 时不碰已经记住的那一块（既不改内存里的，也不删存储里的）", () => {
+    选设置分类("providers")
+    expect(localStorage.getItem(SETTINGS_SECTION_KEY)).toBe("providers")
+    打开设置整页()
+    expect($settingsSection.get(), "没给 id 却把选中项清掉了").toBe("providers")
+    expect(localStorage.getItem(SETTINGS_SECTION_KEY), "没给 id 却把存下来的偏好删了").toBe("providers")
+  })
+
+  it("给了 id 就切过去，并记住它", () => {
+    选设置分类("providers")
+    打开设置整页("mcp")
+    expect($settingsSection.get()).toBe("mcp")
+    expect(localStorage.getItem(SETTINGS_SECTION_KEY)).toBe("mcp")
+  })
+})
+
 describe("不变式：那一列只有一个位置", () => {
   /**
    * **窄栏开着的时候，坞不可能开着。**`$settingsColumnOpen && $rightDockOpen`
    * 不能同时为真——Task 6 的每一次渲染都假定这一点，而这个模块出过的每一个
    * bug（C1 的同类、R2-1、`展开设置`/`收起设置` 两处漏顶）都是某条路径悄悄
-   * 破了它。表驱动跑遍「五个起点 × 六个动作」，比任何一条单独的场景用例
+   * 破了它。表驱动跑遍「五个起点 × 七个动作」，比任何一条单独的场景用例
    * 都更值钱——它是会抓住*下一个*同类漏洞的那一条，不只是这一批。
    */
-  it("五个起点、六个动作，做完之后窄栏与坞永远不同时开着", () => {
+  it("五个起点、七个动作，做完之后窄栏与坞永远不同时开着", () => {
     const 重置到初始 = () => {
       localStorage.clear()
       $view.set("conversation")
@@ -257,6 +297,15 @@ describe("不变式：那一列只有一个位置", () => {
       ["收起设置()", () => 收起设置()],
       ["关掉设置()", () => 关掉设置()],
       ["坞上位()", () => 坞上位()],
+      /**
+       * **第七个动作，2026-09-17 补的**（Task 6 步骤 ⑩ 把 `打开设置整页` 从
+       * `view.ts` 搬进了这个模块）。搬家的全部理由就是它在旧地方绕开了这条
+       * 不变式——**多一个导出的 mutator 而不进这张表，这张表就开始名不副实**：
+       * 它自称「会抓住*下一个*同类漏洞的那一条」，而下一个漏洞恰恰可能长在
+       * 没被它扫到的那个函数上。
+       */
+      ["打开设置整页()", () => 打开设置整页()],
+      ['打开设置整页("mcp")', () => 打开设置整页("mcp")],
     ]
 
     for (const [起点名, 布起点] of 起点表) {

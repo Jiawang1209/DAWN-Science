@@ -83,6 +83,28 @@ async function startSession(page: Page, 首句 = "开始") {
   await expect(page.locator('.session-list .sess-item[data-state="alive"]')).toBeVisible()
 }
 
+/**
+ * 分类列上那四个计数的**当前值**。整页和窄栏都要等它们，**而这张表只有一份**——
+ * 两处各抄一份的话，哪天数据变了只改一处，另一处会绿着说谎（本项目那条
+ * 「两处长得一样的东西等于没有判据」的另一面）。
+ */
+const 分类计数: ReadonlyArray<[string, string]> = [
+  ["Skills", "6"],
+  ["子 Agent", "22"],
+  ["插件", "3"],
+  ["MCP 服务器", "0"],
+]
+
+/** 断值而不是断「有没有」，理由写在「设置」那一屏的 `go()` 里 */
+async function 等四个计数(page: Page, 作用域 = ""): Promise<void> {
+  for (const [行, 值] of 分类计数) {
+    await expect(
+      page.locator(`${作用域}.settings-nav-item`, { hasText: 行 }).locator(".side-count"),
+      `「${行}」那一行的计数不是 ${值}——要么数据变了（那就连基线一起更新，并说清为什么），要么它还没到`,
+    ).toHaveText(值)
+  }
+}
+
 /** 四个屏。每个负责把界面开到那个状态，然后返回 */
 const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
   {
@@ -163,18 +185,7 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
        *    一句话说清发生了什么，而不是一张没人看得懂的像素 diff。
        *    **上面那次被吞掉的变更，正是这一条要抓的东西。**
        */
-      const 计数们: ReadonlyArray<[string, string]> = [
-        ["Skills", "6"],
-        ["子 Agent", "22"],
-        ["插件", "3"],
-        ["MCP 服务器", "0"],
-      ]
-      for (const [行, 值] of 计数们) {
-        await expect(
-          page.locator(".settings-nav-item", { hasText: 行 }).locator(".side-count"),
-          `「${行}」那一行的计数不是 ${值}——要么数据变了（那就连基线一起更新，并说清为什么），要么它还没到`,
-        ).toHaveText(值)
-      }
+      await 等四个计数(page)
     },
   },
   {
@@ -204,6 +215,25 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
       await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
       await 进坞(page, "概览")
       await expect(page.getByText(/还没有选中会话/)).toBeVisible()
+    },
+  },
+  {
+    /**
+     * **设置那一栏**（2026-09-16 的 Task 8）。截的是**名单那一屏**：
+     * 它是点「设置」第一眼看到的样子，而上面那张「设置」截的是展开之后的整页——
+     * 两张图钉的是同一套内容的两种版面，缺一张就等于那一种没有人看着。
+     */
+    name: "设置栏",
+    go: async (page) => {
+      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+      await page.getByRole("button", { name: "设置", exact: true }).click()
+      await expect(page.locator(".settings-column-list")).toBeVisible()
+      /**
+       * **等那四个数真的到了再截**（与「设置」那一屏同一条理由，同一张表）。
+       * 只等名单画出来会截到「数字还没来」的那一帧——而那一帧和
+       * 「这行本来就没数」长得一模一样，于是基线里钉住的是一个错的事实。
+       */
+      await 等四个计数(page, ".settings-column-list ")
     },
   },
 ]

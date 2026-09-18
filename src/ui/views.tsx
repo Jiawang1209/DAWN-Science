@@ -4467,7 +4467,15 @@ export function ConversationView({
         }}
         onSubmit={(e) => {
           e.preventDefault()
-          const text = draft.trim()
+          /**
+           * **发送这一刻从 DOM 读，不读渲染闭包里的那份草稿**（2026-09-18）。
+           *
+           * 组词期间输入框不再往外同步（照 Hermes 的做法），所以「组完词紧接着回车」
+           * 那一瞬，`draft` 有可能还停在组词之前——那时发出去的是**上一句**或者干脆是空的。
+           * 框里的字才是人真正打的那句话，**而这条路上文字的真身本来就归 DOM**。
+           * `?? ` 那一侧只是兜底：框还没挂上时退回草稿。
+           */
+          const text = (输入框.current?.value ?? draft).trim()
           /**
            * **只有图、没有字也算一句话**（协议 4.12）。
            * 「看看这张图」这种意图，人常常懒得打字——
@@ -6438,7 +6446,8 @@ export function EmptyConversation({
             }}
             onSubmit={(e) => {
               e.preventDefault()
-              const t = 草稿.trim()
+              // **与对话里那一份同一条**：组词期间不同步，发送就只能信 DOM（2026-09-18）
+              const t = (输入框.current?.value ?? 草稿).trim()
               // **只有图、没有字也算一句话**（与对话里那一份同一条）
               if (!t && 空态图.length === 0 && 空态文件.length === 0) return
               /**

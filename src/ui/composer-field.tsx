@@ -91,7 +91,20 @@ export const 草稿输入框 = forwardRef<HTMLTextAreaElement, 草稿输入框�
       {...透传}
       className={类名}
       defaultValue={值}
-      onChange={(e) => on值变(e.currentTarget.value, e.currentTarget.selectionStart)}
+      onChange={(e) => {
+        /**
+         * **组词期间连往外同步都不做**（2026-09-18，作者定的：*「完全按照他们的做法去做」*）。
+         *
+         * Hermes 的 composer 就是这一句：`onInput(e) { if (composing) return }`。
+         * 往外同步本身不会弄坏组词（危险的一直是反方向），但把半截拼音当成正在输入的内容
+         * 会有副作用——`/` 与 `@` 菜单可能被 `zhe` 这种半成品触发、发送键提前亮。
+         * **他们三家都不这么干。**
+         *
+         * 代价是组词期间外面不知道框里有字，所以 `compositionend` 必须冲一次（见下）。
+         */
+        if (组词中.current) return
+        on值变(e.currentTarget.value, e.currentTarget.selectionStart)
+      }}
       onCompositionEnd={(e) => {
         组词中.current = false
         /**
@@ -100,6 +113,10 @@ export const 草稿输入框 = forwardRef<HTMLTextAreaElement, 草稿输入框�
          */
         const 此刻 = e.currentTarget.value
         if (此刻 !== 值) on值变(此刻, e.currentTarget.selectionStart)
+        /**
+         * **这一次冲不出去，外面就一直不知道框里有字**——组词期间我们什么都没报。
+         * 所以这里不是「顺手补一下」，而是这条路唯一的出口。
+         */
         onCompositionEnd?.(e)
       }}
       onCompositionStart={(e) => {

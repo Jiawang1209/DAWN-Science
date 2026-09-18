@@ -114,6 +114,28 @@ describe("草稿输入框", () => {
     expect(框.value, "组词途中的文本被一次无关的重渲染抹掉了——这正是那条 bug").toBe("zh")
   })
 
+  it("**组词期间一个字都不往外报**——照 Hermes 的 `if (composing) return`", () => {
+    const 看见 = vi.fn()
+    const { getByTestId } = render(<台架 on值变={看见} />)
+    const 框 = getByTestId("composer") as HTMLTextAreaElement
+
+    fireEvent.compositionStart(框)
+    // 输入法一边组词一边发 `input`，带的是半截拼音
+    fireEvent.change(框, { target: { value: "z" } })
+    fireEvent.change(框, { target: { value: "zh" } })
+
+    expect(
+      看见,
+      "半截拼音报出去，`/` 与 `@` 菜单会被 `zhe` 这种半成品触发、发送键提前亮——他们三家都不这么干",
+    ).not.toHaveBeenCalled()
+
+    // 组完才交出去，而且只交一次终值
+    框.value = "这样"
+    fireEvent.compositionEnd(框)
+    expect(看见).toHaveBeenCalledTimes(1)
+    expect(看见).toHaveBeenCalledWith("这样", expect.any(Number))
+  })
+
   it("**组词结束时把框里的字冲出去**——有些输入法组完词不再补一次 `input`", () => {
     const 看见 = vi.fn()
     const { getByTestId } = render(<台架 on值变={看见} />)

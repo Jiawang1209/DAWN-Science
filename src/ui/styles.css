@@ -5229,6 +5229,70 @@ pre {
    让它们老老实实铺满这一列（真装不下的那几块由 Task 7 量出来再单独修） */
 .settings-column .dock-body > * { max-width: none; }
 
+/**
+ * ── Task 7 量出来的那六块（2026-09-17）──
+ *
+ * 判据是 `e2e/settings-column.spec.ts` 里那条「每一块在默认宽度下都不横向溢出」。
+ * 它在 `RIGHT_DOCK_DEFAULT`（380px）宽的栏里逐块量 `.dock-body` 的
+ * `scrollWidth - clientWidth`，外加一遍「谁自己带了内层横向滚动条」。
+ * **下面每一条都对着那次量测点到的名字**，一条都不是预先猜出来的；
+ * 十四块里另外八块量下来是 0，所以这里也没有它们的份。
+ *
+ * 一条纪律：**不许用 `overflow-x: auto` 让哪一块「通过」**。
+ * 那是把「装不下」改写成「你自己去找」，与规格 7.5「失败必须出声」正面冲突——
+ * 上面那条判据的第二把尺子就是专门抓这个的。
+ */
+
+/**
+ * 长路径的 `<code>` 撑破了三块：文件引用 +7px、MCP 服务器 +29px、子 agent +107px
+ * （量的都是 `/var/folders/…` 那种一个空格都没有的绝对路径）。
+ *
+ * **`anywhere` 而不是 `break-word`**：只有前者会把断点算进 min-content 宽度，
+ * 也就是说只有它能让外面那些 flex / grid 容器真的缩下来；后者只在已经溢出之后才断，
+ * 容器该多宽还是多宽。整页那边路径有的是地方，所以这条只在这一栏里生效。
+ */
+.settings-column .dock-body code { overflow-wrap: anywhere; }
+
+/**
+ * 一行设置：窄栏里**上下排，别左右挤**。
+ *
+ * 整页是 `标签 | 控件` 两列（`.set-row`，右列 `auto` 按内容定宽），
+ * 而控件里那个路径输入框写死 `22rem`（`.set-control .control.path`）——
+ * 一个 380px 的栏根本放不下「标签 + 22rem」。量出来：内核 +69px、工作目录 +320px。
+ *
+ * 这不是新发明的做法：`@media (max-width: 900px)` 那一段早就写下了同一句理由
+ * （*「窄了就上下排——控件宁可换行也不该被挤扁」*）。它按**视口**宽度判，
+ * 而这一栏窄不窄与视口无关，所以在这儿按作用域再写一次。
+ *
+ * `min-width: 0` 是必需的：网格项默认 `min-width: auto`，不清掉的话
+ * 单列的 `minmax(0, 1fr)` 也拦不住里面那个 22rem 的输入框（工作目录那一行的
+ * `.ws-setting-path` 省略号也是被这一条卡住才没生效的）。
+ */
+.settings-column .set-row { grid-template-columns: minmax(0, 1fr); gap: var(--dawn-space-2); }
+.settings-column .set-control { min-width: 0; }
+.settings-column .set-control .control,
+.settings-column .set-control .control.path { width: 100%; }
+
+/**
+ * 一排筛选键与一行标签：窄栏里**折行**。
+ *
+ * `.theme-choices` 与 `.skill-name` 都是不折行的 flex 行。子 agent 那一块
+ * 六颗分组键横着排出去 74px，行里那几颗 `.tag` 最多探出 60px——
+ * 而它们被 `.skills-page` 自己的滚动条吃掉了（`overflow-y: auto` 会把
+ * `overflow-x` 一并算成 `auto`），屏幕上一声不吭。
+ */
+.settings-column .theme-choices,
+.settings-column .skill-name { flex-wrap: wrap; }
+
+/**
+ * 用量那张饼：窄栏里**饼在上、图例在下**。
+ *
+ * `.usage-pie-col` 是 `flex-direction: row`，饼封在 225px，图例跟在右边。
+ * 380px 的栏里减掉内距只剩三百出头，图例最后那两列（占比、回合数）被挤出去
+ * ——量出来 +52px。竖过来之后图例独占整行，五列自己就够站了。
+ */
+.settings-column .usage-pie-col { flex-direction: column; align-items: center; gap: var(--dawn-space-3); }
+
 /* 顶栏最右那颗切换按钮。**开着关着都在同一个位置** */
 .dock-switch { position: relative; margin-left: auto; }
 .dock-switch-trigger { color: var(--dawn-text-2); white-space: nowrap; }

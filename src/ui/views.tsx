@@ -13,6 +13,7 @@ import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
 import { 在组词 } from "./ime.js"
+import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import type { 会话开关 } from "./state/transcript.js"
@@ -4652,11 +4653,11 @@ export function ConversationView({
           <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => setDraft(session.sessionId, 抠掉引用(draft, p))} />
           <div className="composer-input-wrap">
           <引用高亮层 text={draft} 滚={高亮滚} />
-          <textarea
+          <草稿输入框
             ref={输入框}
             className="control composer-field"
-            value={draft}
-            onChange={(e) => { setDraft(session.sessionId, e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
+            值={draft}
+            on值变={(v, 光标位) => { setDraft(session.sessionId, v); 设光标(光标位); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
             onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
             onScroll={(e) => 设高亮滚(e.currentTarget.scrollTop)}
             /**
@@ -5335,12 +5336,12 @@ export function TranscriptRow({
       <div className={`turn ${item.who} editing`} data-turn-id={item.id}>
         <span className="sr-only">{t("正在修改你说过的一段话")}</span>
         <div className="bubble">
-          <textarea
+          <草稿输入框
             className="control turn-edit"
             autoFocus
-            value={编辑}
+            值={编辑}
             aria-label={t("修改这段话")}
-            onChange={(e) => 设编辑(e.target.value)}
+            on值变={(v) => 设编辑(v)}
             onKeyDown={(e) => {
               /**
                * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
@@ -6516,12 +6517,12 @@ export function EmptyConversation({
               <AtRail draft={草稿} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => 设草稿(抠掉引用(草稿, p))} />
               <div className="composer-input-wrap">
               <引用高亮层 text={草稿} 滚={空高亮滚} />
-              <textarea
+              <草稿输入框
                 ref={输入框}
                 className="control composer-field"
-                value={草稿}
+                值={草稿}
                 autoFocus
-                onChange={(e) => { 设草稿(e.target.value); 设光标(e.target.selectionStart); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
+                on值变={(v, 光标位) => { 设草稿(v); 设光标(光标位); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
                 onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
                 onScroll={(e) => 设空高亮滚(e.currentTarget.scrollTop)}
                 /**

@@ -325,7 +325,17 @@ describe("设计契约 · 表单控件一律走 .control", () => {
      * 在这里不存在——它本来就该用系统那一套。
      */
     const 非文本录入 = /type=["'](checkbox|radio|color)["']/ // color：原生取色器，自己画不了聚焦环（2026-08-23）
+    /**
+     * **`composer-field.tsx` 自己保证 `.control`**（2026-09-18）。
+     *
+     * 它是那个非受控的草稿输入框，类名由调用点传进来、在组件里与 `control` 并起来——
+     * 这条扫描读的是源码文本，看不见这种写法。**放行它不是降低要求，是换了一把更硬的尺子**：
+     * `tests/ui/composer-field.test.tsx` 里那条「永远带 control」直接量渲染出来的
+     * `classList`，连「调用点忘了写」这种情况都一起挡住了，而这条扫描挡不住那个。
+     */
+    const 自己保证的 = new Set(["composer-field.tsx"])
     for (const f of tsxFiles()) {
+      if (自己保证的.has(f)) continue
       const lines = read(f).split("\n")
       const bad: string[] = []
       lines.forEach((line, i) => {

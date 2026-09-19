@@ -63,6 +63,11 @@
   （`web-link` 这次过了——占着 58232 的那条 `xray` 连接断了，反过来印证了它红的原因：
   端口写死在 macOS 临时端口范围里，跑不跑得过要看那一刻谁占着。）
   **还差最后一关：作者在真机上打一遍 `zheyang`。**
+  **合并前重跑一遍**（2026-09-19）：typecheck 干净、单元 **2931 passed**（236 文件）、
+  整套 e2e **498 passed / 1 failed**——红的那条仍是 `remote-kernel` 要一张真图的用例，
+  根因是本机 `python3` 没装 matplotlib（`import matplotlib` 直接 ImportError），
+  与这一轮无关。**已快进合并进 `main`（2abeaf5），未推。**
+  真机那一句还没画勾——合进来是因为 main 本身也还没推，回退的代价只有一句 `git reset`。
 
 ---
 

@@ -108,7 +108,7 @@ test.describe("权限：微信里回同意", () => {
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
   问权限的-acp:
     kind: acp

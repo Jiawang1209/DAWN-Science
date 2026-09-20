@@ -31,7 +31,7 @@ import type { SshClientLike } from "../../src/remote/ssh.js"
 const registry: ProviderRegistry = {
   agents: {
     "codex-acp": { kind: "acp", command: "npx", args: [], capabilities: ["chat"], remoteCapable: false },
-    "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
+    "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["chat"] },
     "claude-acp": { kind: "acp", command: "npx", args: [], capabilities: ["chat"], remoteCapable: true },
   },
 }

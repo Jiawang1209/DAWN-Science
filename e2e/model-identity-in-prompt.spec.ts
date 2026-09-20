@@ -25,7 +25,7 @@ test("**提示词里写着当前模型**", async ({ dawn }) => {
   const 第一次 = JSON.stringify(requests)
   expect(第一次).toContain("You are currently running on the model")
   // 夹具那家的模型 id
-  expect(第一次).toContain("deepseek-v4-flash")
+  expect(第一次).toContain("deepseek-flash")
 
   /**
    * **「换模型之后跟着变」这一半在这儿验不了。**

@@ -235,7 +235,15 @@ export function startMockInferenceServer(opts = {}) {
        * 今天只有填 key 那一次验证会打到这里，它要的只是一句话。哪天有用例要在 Anthropic 协议上
        * 验工具调用或收图，得在这里补，不能指望下面那些分支——它们在这条 return 之后。
        */
-      if (req.url?.endsWith("/messages")) {
+      /**
+       * **按路径判，不按整串判**（2026-09-20，pi 升 0.86.0 时撞的）。
+       *
+       * 0.84 打的是 `<baseUrl>/messages`；0.86 打的是 `<baseUrl>/v1/messages?beta=true`。
+       * 原先这里 `endsWith("/messages")`，带上 `?beta=true` 之后当场不认，
+       * 于是这一支不接、掉进下面 OpenAI 那支，pi 的 Anthropic 解析器读完报
+       * 「stream ended without a stop reason」——**症状离原因很远**。
+       */
+      if ((req.url ?? "").split("?")[0].endsWith("/messages")) {
         const usage = { input_tokens: 1, output_tokens: 1 }
         if (!stream) {
           res.writeHead(200, { "content-type": "application/json" })
@@ -445,7 +453,7 @@ function splitIntoParts(text) {
 export function mockModelsJson(
   baseUrl,
   providerId = "deepseek",
-  modelIds = ["deepseek-v4-flash", "deepseek-v4-deep"],
+  modelIds = ["deepseek-flash", "deepseek-v4-deep"],
   收图 = true,
 ) {
   const ids = Array.isArray(modelIds) ? modelIds : [modelIds]

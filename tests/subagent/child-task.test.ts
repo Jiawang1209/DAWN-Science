@@ -18,7 +18,7 @@ const SPEC: SubagentChildSpec = {
   task: "找认证代码",
   systemPrompt: "你是踏勘员。",
   provider: "deepseek",
-  model: "deepseek-v4-flash",
+  model: "deepseek-flash",
   cwd: "/tmp/w",
   agentDir: "/tmp/w/.dawn/x/pi",
 }

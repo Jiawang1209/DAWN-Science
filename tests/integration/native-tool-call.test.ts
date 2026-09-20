@@ -64,7 +64,7 @@ describe("R5 · 工具调用真的会走到 transcript", () => {
         sessionId,
         workspace,
         sessionDir: join(dir, "session"),
-        native: { provider: "deepseek", model: "deepseek-v4-flash" },
+        native: { provider: "deepseek", model: "deepseek-flash" },
       })
 
       transcripts.userTurn(sessionId, "跑一下那条命令")

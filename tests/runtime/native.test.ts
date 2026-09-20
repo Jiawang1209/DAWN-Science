@@ -79,7 +79,7 @@ describe("NativeRuntime · 契约", () => {
 })
 
 describe("NativeRuntime · 重入与启动期停止(审查 debug E4/E5)", () => {
-  const 活spec = () => specFor({ provider: "deepseek", model: "deepseek-v4-flash" })
+  const 活spec = () => specFor({ provider: "deepseek", model: "deepseek-flash" })
 
   it("**已在运行的会话不许重复 start** —— 否则旧会话被静默丢、事件翻倍(E4)", async () => {
     const r = runtime()
@@ -142,13 +142,13 @@ describe("NativeRuntime · 换模型", () => {
 
   it("模型不存在时**列出可用的**，而不是只说一句失败", async () => {
     const r = runtime()
-    await r.start(specFor({ provider: "deepseek", model: "deepseek-v4-flash" }))
+    await r.start(specFor({ provider: "deepseek", model: "deepseek-flash" }))
     await expect(r.setModel("n1", "deepseek", "根本没有这个模型")).rejects.toThrow(/没有模型/)
   })
 
   it("provider 不存在时同样说清楚", async () => {
     const r = runtime()
-    await r.start(specFor({ provider: "deepseek", model: "deepseek-v4-flash" }))
+    await r.start(specFor({ provider: "deepseek", model: "deepseek-flash" }))
     await expect(r.setModel("n1", "没这个 provider", "x")).rejects.toThrow(/provider/)
   })
 })

@@ -34,7 +34,7 @@ const SCOUT = `---
 name: scout
 description: 快速踏勘代码库，返回压缩后的上下文
 tools: read, grep, find, ls
-model: deepseek-v4-flash
+model: deepseek-flash
 ---
 
 你是踏勘员。只读不写，返回要点。
@@ -49,7 +49,7 @@ describe("读得出定义", () => {
     expect(agents[0]!.name).toBe("scout")
     expect(agents[0]!.description).toContain("踏勘")
     expect(agents[0]!.systemPrompt.trim()).toBe("你是踏勘员。只读不写，返回要点。")
-    expect(agents[0]!.model).toBe("deepseek-v4-flash")
+    expect(agents[0]!.model).toBe("deepseek-flash")
     rmSync(root, { recursive: true, force: true })
   })
 

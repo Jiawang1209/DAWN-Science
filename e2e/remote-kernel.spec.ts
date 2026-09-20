@@ -29,20 +29,33 @@ function 能import(名: string): boolean {
 /**
  * 画一张图的那段代码（定案 6：图从远端内核回来，人在笔记本里看得见）。
  *
- * **优先 matplotlib**，它才是人真会写的那一句；这台机器上的 `dawn-spike` python 里
- * 没装它，就退到 `IPython.display`——**要验的东西一个字都没少**：
- * 走的仍是内核吐 `display_data{image/png}` → 隧道 → `KernelOutputRow` 那条真链路，
- * 变的只是这一张 png 是谁生成的。
+ * **优先 matplotlib**，它才是人真会写的那一句；`dawn-spike` 那个 python 里没装它，
+ * 就退到 `IPython.display`——**要验的东西一个字都没少**：走的仍是内核吐
+ * `display_data{image/png}` → 隧道 → `KernelOutputRow` 那条真链路，变的只是 png 是谁生成的。
  *
  * **不为此跳过整条用例**：一条在这台机器上永远跳过的用例什么都不证明，
  * 而 `IPython` 是 ipykernel 的依赖——有内核就一定有它。
+ *
+ * ## 2026-09-20：matplotlib 那支一直是错的，而且错法很隐蔽
+ *
+ * 原先写的是 `matplotlib.use("Agg")` + `plt.gcf()`。放进真内核量过——
+ * **它只吐 `text/plain`，一张图都没有**（`display_data` 里根本没有 `image/png`）：
+ * 现在的 ipykernel + matplotlib 3.11 不会自动挂上 inline 的格式化器，
+ * 要么写 `%matplotlib inline`，要么显式把后端设成 `matplotlib_inline`。
+ *
+ * 后果是这条判据的**绿红跟本机装没装 matplotlib 恰好相反**：没装的机器走
+ * `IPython.display` 那条退路，绿；装了的机器（作者这台）走进 matplotlib 分支，
+ * **永远红**——而 09-18 把这条红记成了「本机 matplotlib 环境」，方向记反了。
+ *
+ * 现在用的是人在 Jupyter 里真会敲的那两句：`%matplotlib inline` + `plt.show()`。
+ * 三种写法都量过出 png（`inline+gcf` / `inline+show` / 显式后端 + `display`）。
  */
 const 有matplotlib = 能import("matplotlib")
 /** 1×1 的透明 png，`IPython.display` 那条路用它；内容不重要，是不是 `image/png` 才重要 */
 const 一像素 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 const 画图代码 = 有matplotlib
-  ? 'import matplotlib\nmatplotlib.use("Agg")\nimport matplotlib.pyplot as plt\nplt.plot([1, 2, 3])\nplt.gcf()'
+  ? "%matplotlib inline\nimport matplotlib.pyplot as plt\nplt.plot([1, 2, 3])\nplt.show()"
   : `from IPython.display import display, Image\nimport base64\ndisplay(Image(data=base64.b64decode("${一像素}")))`
 
 test.use({

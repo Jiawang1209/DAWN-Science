@@ -27,7 +27,7 @@ import type { 对话内核 } from "../../src/kernel/挂载.js"
 
 const registry: ProviderRegistry = {
   agents: {
-    "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
+    "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["chat"] },
     // 笔记本回归要一段 pty 会话：它没有内核，runInKernel 得如实拒
     "claude-code": { kind: "pty", command: "claude", args: [], capabilities: [] },
   },

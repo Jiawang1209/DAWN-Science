@@ -18,7 +18,7 @@
  */
 import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话 , 进设置 } from "./fixtures.js"
 
-const 本来的 = "deepseek-v4-flash"
+const 本来的 = "deepseek-flash"
 const 另一家的 = "other-9b"
 
 const modelsUsed = (requests: { body?: { model?: string } }[]) =>

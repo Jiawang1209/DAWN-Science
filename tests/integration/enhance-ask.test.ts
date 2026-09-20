@@ -29,18 +29,18 @@ describe("问一句", () => {
   it("没会话：给 provider + model，拿到整段回答与模型名", { timeout: 30_000 }, async () => {
     const rt = new NativeRuntime({ modelsPath })
     const r = await rt.问一句(
-      { provider: "deepseek", model: "deepseek-v4-flash" },
+      { provider: "deepseek", model: "deepseek-flash" },
       { system: 拼system(false), user: 拼user("把图画好看点", []), maxTokens: 500 },
     )
     expect(r.text).toBe("改写：把图画好看点")
-    expect(r.model).toBe("deepseek/deepseek-v4-flash")
+    expect(r.model).toBe("deepseek/deepseek-flash")
     // 不进转录、不进账本：这儿没有会话，自然也没有
   })
 
   it("有会话：用会话此刻的模型；带参考块时假模型复述它带了什么", { timeout: 30_000 }, async () => {
     const rt = new NativeRuntime({ modelsPath })
     const sessionId = "s-enh"
-    await rt.start({ sessionId, workspace: join(dir, "workspace"), sessionDir: join(dir, "session"), native: { provider: "deepseek", model: "deepseek-v4-flash" } })
+    await rt.start({ sessionId, workspace: join(dir, "workspace"), sessionDir: join(dir, "session"), native: { provider: "deepseek", model: "deepseek-flash" } })
     const r = await rt.问一句({ sessionId }, { system: 拼system(true), user: 拼user("再画一张", ["【对话背景（只吸收明确的需求与约束，不复述）】\n[用户] 上一张"]), maxTokens: 500 })
     expect(r.text).toBe("（参考了：对话背景）改写：再画一张")
     await rt.stop(sessionId)

@@ -22,7 +22,7 @@ const registry: ProviderRegistry = {
     "sh-a": { kind: "pty", command: "bash", args: ["--norc", "--noprofile"], capabilities: ["exec"] },
     "sh-b": { kind: "pty", command: "bash", args: ["--norc", "--noprofile"], capabilities: ["exec"] },
     "sh-c": { kind: "pty", command: "sh", args: [], capabilities: ["exec"] },
-    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
+    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["chat"] },
   },
 }
 

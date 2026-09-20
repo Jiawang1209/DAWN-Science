@@ -20,7 +20,7 @@ const 原始 = `agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
 `
 
@@ -39,7 +39,7 @@ describe("setVision", () => {
     expect(r.vision).toEqual({ enabled: true, api: "openai-completions", baseUrl: "https://v.example/v1", model: "qwen-vl" })
     expect(r.agents["ds-chat"]).toBeDefined()
     // 原有内容原样还在
-    expect(readFileSync(f, "utf8")).toContain("deepseek-v4-flash")
+    expect(readFileSync(f, "utf8")).toContain("deepseek-flash")
   })
 
   it("**整段重写**：再写一次不会留下上一次的残余", () => {

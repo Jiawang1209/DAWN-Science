@@ -55,7 +55,7 @@ function configFile(mcp?: string): string {
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat]
   shell:
     kind: pty

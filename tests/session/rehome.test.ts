@@ -31,7 +31,7 @@ import type { AgentRuntime, SessionSpec } from "../../src/runtime/types.js"
 
 const registry: ProviderRegistry = {
   agents: {
-    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["exec"] },
+    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["exec"] },
   },
 }
 

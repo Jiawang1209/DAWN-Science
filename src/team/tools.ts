@@ -32,7 +32,7 @@ const 成员项 = Type.Object({
   name: Type.String({ description: "团队里叫什么（唯一；字母数字下划线连字符）" }),
   agent: Type.String({ description: "用名册里哪个子 agent 当人设" }),
   role: Type.Optional(Type.String({ description: "一句话说它负责什么" })),
-  model: Type.Optional(Type.String({ description: "可选，写成 provider/model（如 deepseek/deepseek-v4-flash）。**缺省跟你当前的模型**；只在人明确要求不同分工用不同模型时才给" })),
+  model: Type.Optional(Type.String({ description: "可选，写成 provider/model（如 deepseek/deepseek-flash）。**缺省跟你当前的模型**；只在人明确要求不同分工用不同模型时才给" })),
 })
 const 任务项 = Type.Object({
   id: Type.Optional(Type.String({ description: "可选；不给就 t1、t2…。给了就能在后面的任务里引用" })),

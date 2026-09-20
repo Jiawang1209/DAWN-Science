@@ -50,7 +50,7 @@ const echoChild = () => ({
  */
 const CTX = {
   provider: "deepseek",
-  model: "deepseek-v4-flash",
+  model: "deepseek-flash",
   cwd: "/tmp/w",
   agentDirOf: (i: number) => `/tmp/w/.dawn/sub-${i}`,
 }

@@ -12,7 +12,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { ModelPill, type ModelChoice } from "../../src/ui/views.js"
 
 const 一家的: ModelChoice[] = [
-  { provider: "deepseek", model: "deepseek-v4-flash" },
+  { provider: "deepseek", model: "deepseek-flash" },
   { provider: "deepseek", model: "deepseek-v4-pro" },
 ]
 
@@ -20,7 +20,7 @@ function 开(over: Partial<Parameters<typeof ModelPill>[0]> = {}) {
   render(
     <ModelPill
       choices={一家的}
-      current={{ provider: "deepseek", model: "deepseek-v4-flash" }}
+      current={{ provider: "deepseek", model: "deepseek-flash" }}
       onPick={() => {}}
       {...over}
     />,
@@ -33,12 +33,12 @@ describe("模型选择器", () => {
     render(
       <ModelPill
         choices={一家的}
-        current={{ provider: "deepseek", model: "deepseek-v4-flash" }}
+        current={{ provider: "deepseek", model: "deepseek-flash" }}
         onPick={() => {}}
       />,
     )
     const 触发 = screen.getByRole("button")
-    expect(触发.textContent).toContain("deepseek-v4-flash")
+    expect(触发.textContent).toContain("deepseek-flash")
     expect(触发.textContent).not.toContain("DeepSeek ·")
   })
 

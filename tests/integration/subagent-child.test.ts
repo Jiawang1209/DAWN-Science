@@ -59,7 +59,7 @@ function specFor(over: Partial<SubagentChildSpec> = {}): SubagentChildSpec {
     task: "说句话",
     systemPrompt: "你是踏勘员。",
     provider: "deepseek",
-    model: "deepseek-v4-flash",
+    model: "deepseek-flash",
     cwd,
     agentDir: join(dir, `pi-${Math.round(performance.now() * 1000)}`),
     modelsPath,

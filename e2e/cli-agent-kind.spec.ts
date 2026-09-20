@@ -18,7 +18,7 @@ const PROVIDERS = `agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
   某个没听说过的:
     kind: cli

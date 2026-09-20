@@ -54,7 +54,7 @@ describe("门槛一 · 配置文件不存在时也要能起来", () => {
     const dir = tmp()
     const path = join(dir, "providers.yaml")
     loadRegistryOrDefault(path)
-    const mine = "agents:\n  mine:\n    kind: native\n    provider: deepseek\n    model: deepseek-v4-flash\n    capabilities: [chat]\n"
+    const mine = "agents:\n  mine:\n    kind: native\n    provider: deepseek\n    model: deepseek-flash\n    capabilities: [chat]\n"
     require("node:fs").writeFileSync(path, mine)
     const reg = loadRegistryOrDefault(path)
     expect(Object.keys(reg.agents)).toEqual(["mine"])

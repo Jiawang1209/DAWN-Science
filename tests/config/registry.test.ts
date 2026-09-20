@@ -23,7 +23,7 @@ describe("配置 schema · native agent 直接指 provider", () => {
   it("native agent 声明 provider + model，不再需要 endpoint", () => {
     const r = ProviderRegistrySchema.safeParse({
       agents: {
-        "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
+        "ds-chat": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["chat"] },
       },
     })
     expect(r.success).toBe(true)
@@ -59,7 +59,7 @@ agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat]
 `)
     const reg = loadRegistry(file)

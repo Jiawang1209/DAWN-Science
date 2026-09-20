@@ -18,7 +18,7 @@ function 面板(over: Partial<Parameters<typeof SettingsPanel>[0]> = {}) {
     <SettingsPanel
       providers={["deepseek"]}
       known={["deepseek"]}
-      modelsOf={() => ["deepseek-v4-flash", "deepseek-v4-pro"]}
+      modelsOf={() => ["deepseek-flash", "deepseek-v4-pro"]}
       connections={{}}
       onSaveConnection={noop}
       credentials={{ configured: ["deepseek"], encrypted: true }}

@@ -28,7 +28,7 @@ agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
 `
 

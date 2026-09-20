@@ -571,7 +571,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
 
 `,
@@ -592,14 +592,25 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
        * pi 自带的地址不盖住，e2e 就往真的 api.kimi.com / api.groq.com 发请求。**e2e 不碰外网。**
        *
        * 规则：某条 spec 要给 pi 认识的一家填 key，就在这里加一行。今天用到的：
-       *   - `kimi-coding`：`key-is-enough.spec`（它的 `k3` 说 Anthropic 协议，验证打到 `…/messages`，假服务器答得上）
+       *   - `kimi-coding`：`key-is-enough.spec`（它的 `k3` 说 Anthropic 协议，验证打到 `…/v1/messages`，假服务器答得上）
        *   - `groq`：`base-url.spec` 的「自带地址的也能改」
        * 不必列的：自定义端点（`mine` / `late` / `other` / `selfhost`…）地址本来就是 `mockUrl`；
        * `deepseek` 是基底目录那家；`azure-openai-responses` 这种**地址要自己填、还没填**的，后端根本不验
        * （`setCredential` 看 `needsBaseUrl`），请求没处发。
        */
-      for (const [id, 模型] of [["kimi-coding", "kimi-mock"], ["groq", "groq-mock"]] as const) {
-        目录.providers[id] = mockModelsJson(server.url, id, [模型]).providers[id]!
+      /**
+       * **Anthropic 协议那家的地址不带 `/v1`**（2026-09-20，pi 升 0.86.0 时量出来的）。
+       *
+       * 0.84 往 `<baseUrl>/messages` 发；**0.86 往 `<baseUrl>/v1/messages?beta=true` 发**
+       * （`beta=true` 这个串在 0.84 的包里一次都搜不到）。地址仍写成 `…/v1` 的话，
+       * 真实端点上会变成 `/v1/v1/messages` —— 404。假服务器路径宽松，但**夹具照真实契约写**，
+       * 否则 e2e 绿着的那条路在真机上是断的（CLAUDE.md 规则 ①）。
+       *
+       * `groq` 说的是 OpenAI 兼容协议，`/v1` 是它的正确写法，所以两家分开给地址。
+       */
+      const 无v1 = server.url.replace(/\/v1$/, "")
+      for (const [id, 模型, 地址] of [["kimi-coding", "kimi-mock", 无v1], ["groq", "groq-mock", server.url]] as const) {
+        目录.providers[id] = mockModelsJson(地址, id, [模型]).providers[id]!
       }
       writeFileSync(modelsPath, JSON.stringify(目录, null, 2))
     }

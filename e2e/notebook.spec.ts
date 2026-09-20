@@ -147,7 +147,7 @@ const CLI_PROVIDERS = `agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
   claude:
     kind: cli

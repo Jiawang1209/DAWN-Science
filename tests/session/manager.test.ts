@@ -14,7 +14,7 @@ import type { AgentRuntime, SessionSpec } from "../../src/runtime/types.js"
 
 const registry: ProviderRegistry = {
   agents: {
-    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["exec"] },
+    "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["exec"] },
     "claude-code": { kind: "pty", command: "claude", args: [], capabilities: ["mcp", "hooks"] },
   },
 }
@@ -85,7 +85,7 @@ describe("SessionManager · 创建与销毁", () => {
     })
     await mgr.create("ds-agent", "/tmp/w")
     // 连接细节与凭证都交给 pi，上层只说「哪个 provider 的哪个模型」
-    expect(seen?.native).toEqual({ provider: "deepseek", model: "deepseek-v4-flash" })
+    expect(seen?.native).toEqual({ provider: "deepseek", model: "deepseek-flash" })
   })
 
   it("pty agent 的 spec 不带 native", async () => {
@@ -313,7 +313,7 @@ describe("SessionManager · 凭证在建会话时解析", () => {
   // 失败推迟到这里——这才是真正需要凭证的时刻，报错也才有可操作性。
   const noKeyRegistry: ProviderRegistry = {
     agents: {
-      "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-v4-flash", capabilities: ["chat"] },
+      "ds-agent": { kind: "native", provider: "deepseek", model: "deepseek-flash", capabilities: ["chat"] },
       "claude-code": { kind: "pty", command: "claude", args: [], capabilities: [] },
     },
   }

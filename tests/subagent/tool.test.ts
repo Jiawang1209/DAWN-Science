@@ -49,7 +49,7 @@ function make(root: string, childOf = echoChild) {
     childOf,
     context: {
       provider: "deepseek",
-      model: "deepseek-v4-flash",
+      model: "deepseek-flash",
       cwd: root,
       agentDirOf: (i) => join(root, ".dawn", `sub-${i}`),
     },

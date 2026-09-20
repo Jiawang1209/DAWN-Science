@@ -29,7 +29,7 @@ const PROVIDERS = `agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
   claude-acp:
     kind: acp
@@ -55,7 +55,7 @@ const 老配置 = `agents:
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [chat, exec]
 
   # 由 DAWN 在设置里添加
@@ -90,7 +90,7 @@ test("**服务器上的新对话：模型选择器里有 claude-acp、没有 cod
 
   // ① 页面不变，还是那段新对话；pill 上先是 DeepSeek（配置里第一个）
   const pill = page.locator(".composer .model-pill")
-  await expect(pill.locator(".model-name")).toHaveText("deepseek-v4-flash")
+  await expect(pill.locator(".model-name")).toHaveText("deepseek-flash")
 
   // ② 打开选择器：ACP 单独一组，能上服务器的在、不能的不在
   await pill.locator(".model-trigger").click()

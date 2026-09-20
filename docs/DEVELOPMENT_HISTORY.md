@@ -8,6 +8,48 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-20 — pi 升到 0.86.0：DeepSeek 这才真的收得了图（分支 `pi-086`）
+
+- **Type**: chore
+- **Motivation**: 作者问「DeepSeek 最近已经有视觉和多模态的模型了吧？」——有，
+  而我们拿不到。pi 的模型目录**按版本冻在包里**：装着的 0.84.1 里 deepseek 只有
+  `deepseek-v4-flash` / `deepseek-v4-pro`，两个都 `input:['text']`；0.86.0 里
+  `deepseek-flash`（V4.1 Flash）是 `input:['text','image']`。
+  **旧 id 是 DeepSeek 自己退休的**（pi changelog：*"instead of retired Flash aliases"*）。
+- **What**:
+  - **在 worktree 里做**（`../dawn-science-pi086`，自己的 `node_modules`）：作者当时正用
+    开发版跑真活，而 `node_modules` 不进 git、切分支不会跟着换——在原目录升等于
+    **在他脚下换地基**（`subagent-child.js` 会现拉子进程加载新版）。
+  - **要升的是三个包**：`package.json` 里还钉着 `pi-agent-core: ^0.84.1`，
+    只升另外两个的话它把 `pi-ai@0.84.4` 一起拖进来，**两份 pi-ai 并存**，
+    typecheck 当场红在 `spikes/a-pi-embed.ts:72`（`MistralConversationsCompat` 一版有一版没有）。
+  - **0.86.0 的三条破坏性变更逐条核对过，我们一条都不沾**：不写自定义 provider
+    （`Context` → `TranscriptContext` 与我们无关）、`JsonValue` 是我们自己的、不用 `user_bash`。
+    我们只从 pi 进口 10 个符号。**这是核对出来的，不是假设出来的。**
+  - **退休 id 扫过整个仓库**：夹具 40 多处换成 `deepseek-flash`；`src/` 里只改两处**示例**
+    （`team/tools.ts` 给模型看的描述、`subagent/definitions.ts` 的示例 frontmatter），
+    **叙述历史的注释一律不动**——那些记的是当时发生过的事。
+  - **`models-json.test.ts` 两条判据重新分工**（这处不能机械替换）：
+    ①「继承注册表的 input」原先两个模型都只收文字，**只验了一个方向**；现在一边一个。
+    ②「`vision: true` 对注册表认识的模型也生效」**必须挂在只收文字的模型上**——
+    挂在 `deepseek-flash` 上的话，代码把这个开关整个忽略也是绿的。
+  - **不用改一行生产代码就能收图**：`src/runtime/native.ts:868` 早就写着
+    「目录里声明收图的模型，不走视觉端点转述、也不给 `look_at_image`」。
+    升级之后 DeepSeek 自动从「借别的端点把图转述成文字」变成「自己看原图」。
+- **Impact**: DeepSeek 在 DAWN 里第一次能直接看图。**升级还有一条会打到用户的副作用**：
+  Anthropic 协议的端点，0.84 打 `<baseUrl>/messages`，0.86 打 `<baseUrl>/v1/messages?beta=true`——
+  按老习惯把地址填成 `https://x/v1` 的人，升级后是 404。**待作者定**（出声 vs 替他削掉 `/v1`）。
+- **Verification**: typecheck 干净；单元 **2931 passed / 10 skipped**；
+  整套 e2e **497 passed / 0 failed**（第一轮 489/8，八条红分三类：六条是我自己把 mock
+  漂开了——改了 yaml 的 id 没改假目录，模型于是落到真注册表上；一条是 pi 真换了路径；
+  一条是**早就错着的判据**：`remote-kernel` 那段画图代码 `matplotlib.use("Agg")` + `plt.gcf()`
+  放进真内核**只吐 `text/plain`**，绿红跟本机装没装 matplotlib 恰好相反，09-18 把方向记反了，
+  现在换成 `%matplotlib inline` + `plt.show()`，4.5 秒出图）。
+  视觉基线两张「对话」重存（diff 图只在模型名那串上有红），连验两遍 12 passed。
+  **尚缺作者真机验收**：他两份配置里都没有 native 的 deepseek，配上 + 填 key + 粘图才算完。
+
+---
+
 ### 2026-09-20 — `web-link` 那两条判据的端口让内核挑：写死的 58232 落在 macOS 临时端口范围里
 
 - **Type**: fix

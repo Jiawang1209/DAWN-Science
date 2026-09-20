@@ -32,7 +32,7 @@ import type { Page } from "@playwright/test"
  *
  * 用 `fixme` 而不是删掉：**缺口要出声。**
  */
-const A = "deepseek-v4-flash"
+const A = "deepseek-flash"
 const B = "deepseek-v4-deep"
 
 async function start(page: Page) {

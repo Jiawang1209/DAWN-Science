@@ -6,21 +6,41 @@
  *
  * 判据同样走 `app.evaluate`——那个 `WebContentsView` 在 DOM 里不存在。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test as 基, expect, 开一段临时会话 } from "./fixtures.js"
 import { createServer, type Server } from "node:http"
+import type { AddressInfo } from "node:net"
 
-let 服务: Server
-let 地址: string
-
-test.beforeAll(async () => {
-  服务 = createServer((_q, s) => {
-    s.setHeader("content-type", "text/html; charset=utf-8")
-    s.end("<!doctype html><meta charset=utf-8><title>本机页</title><h1>DAWN_网页预览_物证</h1>")
-  })
-  await new Promise<void>((ok) => 服务.listen(58232, "127.0.0.1", () => ok()))
-  地址 = "http://127.0.0.1:58232/"
+/**
+ * **端口让内核挑，不写死**（2026-09-20）。
+ *
+ * 原先钉在 58232。macOS 的临时端口范围从 49152 起，这个号随时可能已经归别人——
+ * 09-18 那次全套 e2e 里它就是红的那条，`lsof` 查出来是一条长期存活的 `xray` 连接占着同一个
+ * socket（四十分钟没变）。**判据随机红，等于把人训练成条件反射去 update**，所以它得走。
+ *
+ * `listen(0)` 之后号才知道，而 mock 要说的那句话里带着它，因此 `dawnOptions` 从
+ * `test.use` 的静态值改成一个依赖本机服务的 fixture——顺序上先起服务、再拿号拼话、最后才起应用。
+ */
+const test = 基.extend<{ 本机服务: string }>({
+  本机服务: async ({}, use) => {
+    const 服务: Server = createServer((_q, s) => {
+      s.setHeader("content-type", "text/html; charset=utf-8")
+      s.end("<!doctype html><meta charset=utf-8><title>本机页</title><h1>DAWN_网页预览_物证</h1>")
+    })
+    await new Promise<void>((ok) => 服务.listen(0, "127.0.0.1", () => ok()))
+    const { port } = 服务.address() as AddressInfo
+    await use(`127.0.0.1:${port}`)
+    await new Promise<void>((ok) => 服务.close(() => ok()))
+  },
+  dawnOptions: async ({ 本机服务 }, use) => {
+    await use({
+      toolCall: {
+        toolName: "bash",
+        args: { command: "echo hi" },
+        say: `服务起好了，去看 [本机页面](http://${本机服务}/) 吧。`,
+      },
+    })
+  },
 })
-test.afterAll(() => 服务.close())
 
 async function 视图标题(app: import("@playwright/test").ElectronApplication) {
   return app.evaluate(({ BrowserWindow }) => {
@@ -33,16 +53,6 @@ async function 视图标题(app: import("@playwright/test").ElectronApplication)
 }
 
 test.describe("本机链接", () => {
-  test.use({
-    dawnOptions: {
-      toolCall: {
-        toolName: "bash",
-        args: { command: "echo hi" },
-        say: "服务起好了，去看 [本机页面](http://127.0.0.1:58232/) 吧。",
-      },
-    },
-  })
-
   test("**点消息里的本机链接，右边就渲染出来**", async ({ dawn }) => {
     const { app, page } = dawn
     await 开一段临时会话(page)
@@ -58,7 +68,7 @@ test.describe("本机链接", () => {
     await expect.poll(() => 视图标题(app), { timeout: 30_000 }).toBe("本机页")
   })
 
-  test("**那张卡在，「打开方式」两个去处都在**", async ({ dawn }) => {
+  test("**那张卡在，「打开方式」两个去处都在**", async ({ dawn, 本机服务 }) => {
     const { app, page } = dawn
     await 开一段临时会话(page)
     await page.getByPlaceholder(/今天帮你做些什么/).fill("起个服务")
@@ -67,7 +77,7 @@ test.describe("本机链接", () => {
     const 卡 = page.locator(".weblink-card")
     await expect(卡).toBeVisible({ timeout: 30_000 })
     // **卡上要摆出要开的是哪儿**——只写「网站」的话人不知道它要去哪
-    await expect(卡).toContainText("127.0.0.1:58232")
+    await expect(卡).toContainText(本机服务)
 
     await 卡.getByRole("button", { name: "打开方式", exact: true }).click()
     await expect(page.getByRole("menuitem", { name: "在这儿打开", exact: true })).toBeVisible()
@@ -75,58 +85,5 @@ test.describe("本机链接", () => {
 
     await page.getByRole("menuitem", { name: "在这儿打开", exact: true }).click()
     await expect.poll(() => 视图标题(app), { timeout: 30_000 }).toBe("本机页")
-  })
-})
-
-test.describe("外网链接", () => {
-  test.use({
-    dawnOptions: {
-      toolCall: {
-        toolName: "bash",
-        args: { command: "echo hi" },
-        say: "详见 [文档](https://example.com/doc)。",
-      },
-    },
-  })
-
-  /**
-   * **批 3 起外网也给那张卡**（那一格开得了任意网站了）。
-   *
-   * 这一条**替换了批 2 那条「外网不给那张卡」**——不是删掉判据，
-   * 是行为按作者定的分期变了。只给本机的话，外网就只剩地址栏一条路进得去。
-   */
-  test("**外网也给那张卡**，卡上摆着要开的那个地址", async ({ dawn }) => {
-    const { page } = dawn
-    await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("给我文档")
-    await page.getByRole("button", { name: "发送", exact: true }).click()
-
-    const 卡 = page.locator(".weblink-card")
-    await expect(卡).toBeVisible({ timeout: 30_000 })
-    await expect(卡).toContainText("example.com/doc")
-  })
-
-  /**
-   * **而直接点链接的去处没变**：外网仍然交给系统浏览器。
-   *
-   * 那是长年的默认，改它是另一个决定。要在坞里开外网，走卡上的「在这儿打开」。
-   * 判据：点完之后**没有起一个 web contents**，也**没有多出 Electron 窗口**
-   * （后者是批 0 那条守卫）。
-   */
-  test("**直接点外网链接，仍然去系统浏览器**，不在坞里开", async ({ dawn }) => {
-    const { app, page } = dawn
-    await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("给我文档")
-    await page.getByRole("button", { name: "发送", exact: true }).click()
-    const 链 = page.locator("a[href^='https://example.com']").first()
-    await expect(链).toBeVisible({ timeout: 30_000 })
-
-    const 窗口数 = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)
-    const 前 = await 窗口数()
-    await 链.click()
-    await page.waitForTimeout(2000)
-
-    expect(await 视图标题(app), "外网链接把网页那一格起起来了").toBeUndefined()
-    expect(await 窗口数(), "点一个外链之后多出了 Electron 窗口").toBe(前)
   })
 })

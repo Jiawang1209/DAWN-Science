@@ -56,6 +56,72 @@ describe("模型服务 · 一行摘要", () => {
   })
 })
 
+describe("模型服务 · Anthropic 协议的地址别带 /v1（2026-09-21，pi 0.86）", () => {
+  /** kimi-coding：pi 目录里整家都走 Anthropic 协议，也正是最常被改地址的那家 */
+  const kimi = (baseUrl: string, api?: string) =>
+    面板({
+      providers: ["kimi-coding"],
+      known: ["kimi-coding"],
+      anthropicProtocol: ["kimi-coding"],
+      credentials: { configured: ["kimi-coding"], encrypted: true },
+      connections: { "kimi-coding": { baseUrl, ...(api ? { api } : {}) } },
+    })
+
+  it("**收起时就在**，并给出改成什么——升级前存的 `…/v1` 不会自己跳出来，人只会看见一个 404", () => {
+    render(kimi("https://api.moonshot.cn/anthropic/v1"))
+    expect(screen.getByText(/地址末尾不要带 \/v1.*改成 https:\/\/api\.moonshot\.cn\/anthropic$/)).toBeDefined()
+  })
+
+  it("结尾斜杠也算：`…/v1/` 同样 404", () => {
+    render(kimi("https://x.example.com/v1/"))
+    expect(screen.getByText(/改成 https:\/\/x\.example\.com$/)).toBeDefined()
+  })
+
+  it("不带 /v1 的不说——路径中间有 v1 的也不说", () => {
+    render(kimi("https://gw.example.com/v1/anthropic"))
+    expect(screen.queryByText(/不要带 \/v1/)).toBeNull()
+  })
+
+  it("**不在名单上的不说**：OpenAI 协议的地址本来就带 /v1", () => {
+    render(面板({ connections: { deepseek: { baseUrl: "https://api.deepseek.com/v1" } } }))
+    expect(screen.queryByText(/不要带 \/v1/)).toBeNull()
+  })
+
+  it("**协议以填了的为准**：名单上的那家改走 openai-completions 就不说，名单外的写了 anthropic-messages 就说", () => {
+    const { unmount } = render(kimi("https://x.example.com/v1", "openai-completions"))
+    expect(screen.queryByText(/不要带 \/v1/)).toBeNull()
+    unmount()
+    render(面板({ connections: { deepseek: { baseUrl: "https://x.example.com/v1", api: "anthropic-messages" } } }))
+    expect(screen.getByText(/不要带 \/v1/)).toBeDefined()
+  })
+
+  it("点开之后**只说一遍**，并跟着输入框走——改掉 /v1 的那一下就消失，不用先保存", () => {
+    render(kimi("https://x.example.com/v1"))
+    点开(/kimi-coding/)
+    expect(screen.getAllByText(/不要带 \/v1/)).toHaveLength(1)
+    fireEvent.change(screen.getByLabelText("kimi-coding 的端点地址"), { target: { value: "https://x.example.com" } })
+    expect(screen.queryByText(/不要带 \/v1/)).toBeNull()
+  })
+
+  it("**只提醒，不替人改**：照原样保存", () => {
+    const onSaveConnection = vi.fn()
+    render(面板({ ...kimi("https://x.example.com/v1").props, onSaveConnection }))
+    点开(/kimi-coding/)
+    fireEvent.click(screen.getByRole("button", { name: "保存" }))
+    expect(onSaveConnection).toHaveBeenCalledWith("kimi-coding", { baseUrl: "https://x.example.com/v1" })
+  })
+
+  it("自定义端点：协议框写 anthropic-messages 时同样提醒", () => {
+    render(面板())
+    fireEvent.click(screen.getByRole("button", { name: /添加模型服务/ }))
+    fireEvent.click(screen.getByRole("radio", { name: "自定义端点" }))
+    fireEvent.change(screen.getByLabelText("新服务的端点地址"), { target: { value: "https://gw.example.com/v1" } })
+    expect(screen.queryByText(/不要带 \/v1/)).toBeNull()
+    fireEvent.change(screen.getByLabelText("新服务的协议"), { target: { value: "anthropic-messages" } })
+    expect(screen.getByText(/改成 https:\/\/gw\.example\.com$/)).toBeDefined()
+  })
+})
+
 describe("模型服务 · 绝不回显已存的凭证", () => {
   it("点开之后 key 输入框里没有原值", () => {
     const { container } = render(面板())

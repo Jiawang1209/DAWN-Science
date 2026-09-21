@@ -734,6 +734,36 @@ export interface Connection {
 }
 
 /**
+ * **Anthropic 协议的地址多带了 `/v1`**（2026-09-21）。有就回去掉之后的地址，没有回 `undefined`。
+ *
+ * pi 0.86 起这条协议交给 `@anthropic-ai/sdk`，它自己拼 `/v1/messages`：
+ * 按 OpenAI 的老习惯填成 `https://x/v1`，请求就打到 `/v1/v1/messages`、404。
+ * 作者定的是**提醒，不替他削**——削掉等于替人猜他的网关长什么样。
+ *
+ * 协议以**填了的为准**；没填（留空＝自动）才看 pi 的目录说这家是不是整家都走它。
+ */
+export function anthropic地址多了v1(
+  baseUrl: string | undefined,
+  api: string | undefined,
+  整家走Anthropic: boolean,
+): string | undefined {
+  const 地址 = baseUrl?.trim()
+  if (!地址) return undefined
+  const 走 = api?.trim() ? api.trim() === "anthropic-messages" : 整家走Anthropic
+  if (!走) return undefined
+  return /^(.*?)\/v1\/?$/.exec(地址)?.[1]
+}
+
+/** 上面那条的一句话。**收起的摘要下、编辑器里、自定义端点里说的是同一句** */
+function V1提醒({ 改成 }: { 改成: string }) {
+  return (
+    <p className="caveat">
+      ⚠ {tf("这个服务走 Anthropic 协议，地址末尾不要带 /v1——请求会打到 /v1/v1/messages、报 404。改成 {0}", 改成)}
+    </p>
+  )
+}
+
+/**
  * 模型服务（2026-08-10 重做）。
  *
  * ## 上一版乱在哪
@@ -763,6 +793,7 @@ export function SettingsPanel({
   knownProblem,
   modelsOf,
   needsBaseUrl,
+  anthropicProtocol,
   connections,
   onSaveConnection,
   credentials,
@@ -787,6 +818,8 @@ export function SettingsPanel({
    * 摘要上因此要显眼地写「还没填地址」，而不是装作一切正常。
    */
   needsBaseUrl?: readonly string[] | undefined
+  /** 整家都走 Anthropic 协议的那几个（7.35）。地址带 `/v1` 时据此提醒 */
+  anthropicProtocol?: readonly string[] | undefined
   /** 已经写下的连接设置。**只装写过的**，没写过的没有键 */
   connections?: Record<string, Connection> | undefined
   /** 全量替换一个 provider 的连接设置。**三样全空 = 取消覆盖** */
@@ -850,6 +883,7 @@ export function SettingsPanel({
             models={modelsOf(id)}
             conn={connections?.[id] ?? {}}
             必须填地址={Boolean(needsBaseUrl?.includes(id))}
+            整家走Anthropic={Boolean(anthropicProtocol?.includes(id))}
             pi认识={known.includes(id)}
             problem={(() => {
               // 理由按当前语言（B15）：带 msgid 的翻一遍；老后端只给 reason 的照旧显示
@@ -907,6 +941,7 @@ function 服务({
   models,
   conn,
   必须填地址,
+  整家走Anthropic,
   pi认识,
   problem,
   onSaveKey,
@@ -921,6 +956,7 @@ function 服务({
   models: readonly string[]
   conn: Connection
   必须填地址: boolean
+  整家走Anthropic: boolean
   pi认识: boolean
   /**
    * 后端说的「为什么建不出 agent」。**收起时也要在**——点开才看见等于没有。
@@ -952,12 +988,21 @@ function 服务({
       </Button>
       {/* hard 是红的 `.caveat`；soft 是中性的 `.hint`、不带 ⚠（2026-09-01 终审 F7）——「没能判定」说成错误，人会去改一把好 key */}
       {problem ? (problem.soft ? <p className="hint">{problem.话}</p> : <p className="caveat">⚠ {problem.话}</p>) : null}
+      {/**
+        * **收起时也要在**：升级前存下的 `…/v1` 不会自己跳出来，人只会看见对话里一个 404。
+        * 点开之后换编辑器里那句（跟着输入框走），这里不再重复——两句一样的话等于没有判据。
+        */}
+      {(() => {
+        const 改成 = 展开 ? undefined : anthropic地址多了v1(conn.baseUrl, conn.api, 整家走Anthropic)
+        return 改成 === undefined ? null : <V1提醒 改成={改成} />
+      })()}
       {展开 ? (
         <服务编辑器
           id={id}
           isSet={isSet}
           conn={conn}
           必须填地址={必须填地址}
+          整家走Anthropic={整家走Anthropic}
           pi认识={pi认识}
           onSaveKey={onSaveKey}
           onDeleteKey={onDeleteKey}
@@ -1037,6 +1082,7 @@ function 服务编辑器({
   isSet,
   conn,
   必须填地址,
+  整家走Anthropic,
   pi认识,
   onSaveKey,
   onDeleteKey,
@@ -1047,6 +1093,7 @@ function 服务编辑器({
   isSet: boolean
   conn: Connection
   必须填地址: boolean
+  整家走Anthropic: boolean
   pi认识: boolean
   onSaveKey: (secret: string) => void | Promise<unknown>
   onDeleteKey: () => void
@@ -1058,6 +1105,8 @@ function 服务编辑器({
   const [api, setApi] = useState(conn.api ?? "")
   const [models, setModels] = useState((conn.models ?? []).join(", "))
   const [saving, setSaving] = useState(false)
+  // 跟着输入框走：改掉 `/v1` 的那一下它就消失，不用先保存才知道改对了没
+  const 改成 = anthropic地址多了v1(baseUrl, api, 整家走Anthropic)
 
   return (
     <form
@@ -1140,6 +1189,7 @@ function 服务编辑器({
           placeholder={t("例如 https://api.example.com/v1")}
           onChange={(e) => setBaseUrl(e.target.value)}
         />
+        {改成 === undefined ? null : <V1提醒 改成={改成} />}
       </字段>
 
       <字段
@@ -1438,6 +1488,8 @@ function 自定义端点({
   const [models, setModels] = useState("")
   const [key, setKey] = useState("")
   const [问题, set问题] = useState<string | undefined>(undefined)
+  // 自定义端点没有目录可查，只认协议框里写的
+  const 改成 = anthropic地址多了v1(baseUrl, api, false)
 
   return (
     <form
@@ -1498,6 +1550,7 @@ function 自定义端点({
           placeholder="https://api.example.com/v1"
           onChange={(e) => setBaseUrl(e.target.value)}
         />
+        {改成 === undefined ? null : <V1提醒 改成={改成} />}
       </字段>
       <字段
         label={t("协议")}

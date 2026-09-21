@@ -2006,6 +2006,29 @@ ${描述}`
   }
 
   /**
+   * **整家都走 Anthropic 协议**的 provider（2026-09-21）。
+   *
+   * pi 0.86 起这条协议由 `@anthropic-ai/sdk` 自己拼 `/v1/messages`，
+   * 所以地址填成 `https://x/v1` 会打到 `/v1/v1/messages`、404。设置页据此提醒。
+   *
+   * **只收「每个模型都走它」的那几家**（实测 anthropic / kimi-coding / minimax×2 /
+   * vercel-ai-gateway）：openrouter、opencode 这类混着走的，大半模型走 OpenAI 协议，
+   * 地址本来就该带 `/v1`——对它们喊一句是假警报。
+   */
+  async providersSpeakingAnthropic(): Promise<string[]> {
+    const 协议 = new Map<string, Set<string>>()
+    for (const m of (await this.runtime()).getModels()) {
+      const s = 协议.get(m.provider) ?? new Set<string>()
+      s.add(m.api)
+      协议.set(m.provider, s)
+    }
+    return [...协议]
+      .filter(([, s]) => s.size === 1 && s.has("anthropic-messages"))
+      .map(([id]) => id)
+      .sort()
+  }
+
+  /**
    * provider 的**显示名**：`deepseek` → `DeepSeek`（2026-08-11）。
    *
    * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」* 他是对的——

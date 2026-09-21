@@ -76,3 +76,27 @@ test("**点开能改任何一项**，包括 pi 自带地址的那些的地址", 
     await expect(page.getByLabel(标签)).toBeVisible()
   }
 })
+
+/**
+ * **Anthropic 协议的地址带了 `/v1`，收起的那一行就要说**（2026-09-21，pi 0.86）。
+ *
+ * 串起来的是整条：pi 的真目录 → `providersSpeakingAnthropic` → `listKnownProviders.anthropicProtocol`
+ * → 设置页。单测里名单是手递的，只有这里证明后端真的把它送到了。
+ * 连接走协议直接写（不走「加一个」那张表）：填 key 会当场去真端点验一句，e2e 里不打外网。
+ *
+ * **挑 minimax 而不是 kimi-coding**：夹具往 kimi-coding 里塞了一个走 OpenAI 协议的 `kimi-mock`，
+ * 那家在 e2e 里是「混着走」的——不提醒才是对的。
+ */
+test("**Anthropic 协议的地址带了 /v1，不点开就看得见**，并说清改成什么", async ({ dawn }) => {
+  const { page } = dawn
+  await page.evaluate(async () => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<unknown> } }
+    await w.dawn.invoke("setProviderConnection", { providerId: "minimax", baseUrl: "https://api.minimax.io/anthropic/v1" })
+  })
+  await 进设置(page, "模型服务")
+
+  const 行 = page.locator(".svc").filter({ hasText: "minimax" })
+  await expect(行.locator(".caveat")).toContainText("改成 https://api.minimax.io/anthropic")
+  // 走 OpenAI 协议的那家地址本来就带 /v1——不许跟着喊
+  await expect(page.locator(".svc").filter({ hasText: "deepseek" }).locator(".caveat")).toHaveCount(0)
+})

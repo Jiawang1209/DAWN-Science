@@ -233,6 +233,8 @@ export const EN: Readonly<Record<string, string>> = {
   "未设置，使用系统默认。新对话的默认目录。": "Not set — using the system default. Default folder for new sessions.",
   "密钥保存在系统安全存储中，不回显。": "Keys are stored in the system keychain and never shown.",
   "⚠ 还没填地址": "⚠ no URL yet",
+  "这个服务走 Anthropic 协议，地址末尾不要带 /v1——请求会打到 /v1/v1/messages、报 404。改成 {0}":
+    "This service speaks the Anthropic protocol, so the URL must not end in /v1 — requests would go to /v1/v1/messages and fail with 404. Change it to {0}",
   "pi 自带地址": "URL from pi",
   "⚠ 没有模型": "⚠ no models",
   "{0} 个模型": "{0} models",

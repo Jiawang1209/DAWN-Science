@@ -214,3 +214,17 @@ describe("NativeRuntime · 只读工具的空事实(审查 A)", () => {
     expect(文件事实(事件)).toEqual([])
   })
 })
+
+describe("NativeRuntime · 整家都走 Anthropic 协议的 provider（2026-09-21）", () => {
+  /**
+   * 设置页据此提醒「地址别带 `/v1`」。判据挂在 pi 的**真目录**上——
+   * 手打一份清单的话，pi 哪天改了哪家的协议，这里不会有任何迹象。
+   */
+  it("收整家都走它的，混着走的不收——openrouter 大半走 OpenAI 协议，地址本来就该带 /v1", async () => {
+    const 名单 = await runtime().providersSpeakingAnthropic()
+    expect(名单).toContain("anthropic")
+    expect(名单).toContain("kimi-coding")
+    expect(名单).not.toContain("openrouter")
+    expect(名单).not.toContain("deepseek")
+  })
+})

@@ -8,6 +8,36 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-21 — 设置页提醒：Anthropic 协议的地址别带 `/v1`（分支 `anthropic-v1-hint`）
+
+- **Type**: fix
+- **Motivation**: 09-20 升 pi 0.86 留下的那条账，v0.0.9 已经发出去了：Anthropic 协议交给
+  `@anthropic-ai/sdk` 之后，它自己拼 `/v1/messages`（`resources/messages/messages.js:36` 核过），
+  按 OpenAI 老习惯把地址填成 `https://x/v1` 的人会打到 `/v1/v1/messages`、**404**。
+  作者定的是**在设置里提醒，不替他削**。
+- **What**:
+  - 后端从 pi 的**真目录**算出「整家都走 Anthropic 协议」的 provider
+    （`NativeRuntime.providersSpeakingAnthropic`），经 `listKnownProviders.anthropicProtocol`
+    送到设置页（协议 **7.35**，纯新增）。实测是 anthropic / kimi-coding / minimax×2 / vercel-ai-gateway。
+  - **混着走的不收**：openrouter、opencode、fireworks、github-copilot 大半模型走 OpenAI 协议，
+    地址本来就该带 `/v1`，对它们喊是假警报。
+  - 协议**以填了的为准**：协议框写了就按它（名单外的写 `anthropic-messages` 也提醒、
+    名单上的改成 `openai-completions` 就不提醒），留空才看目录。
+  - 三处说同一句、给出改成什么：**收起的摘要下**（升级前存下的 `…/v1` 不会自己跳出来）、
+    编辑器地址框下（跟着输入走，改掉的那一下就消失）、自定义端点表单。
+    **点开后摘要下那句不再显示**——两句一样的话同时在屏上等于没有判据。
+  - 只提醒，保存照原样存。
+- **Impact**: 已发出去的 v0.0.9 用户打开设置就能看见哪一家要改、改成什么。不改任何已存配置。
+  mock 不用补分支：`listKnownProviders` 在 mock 模式下走的就是真后端 + pi 真目录。
+- **Verification**: typecheck 干净；单元 **2940 passed / 10 skipped**（新增设置页 8 条、运行时 1 条挂 pi 真目录）；
+  取过基线——去掉「点开后不重复」那道门，「只说一遍」那条当场红。
+  e2e 新增一条走全链（协议写连接 → 进设置 → 收起的行上有提醒、deepseek 行上没有）。
+  **第一版挑 kimi-coding 红了**：夹具往它目录里塞了一个 `openai-completions` 的 `kimi-mock`，
+  那家在 e2e 里是混着走的，不提醒才对——换成夹具没碰的 minimax。
+  整套 e2e **503 passed / 1 failed**：红的是 `remote-kernel`「内核在背后被杀」那条的**夹具收尾**超过 60 秒
+  （用例本体已过），单跑连两遍都绿（各 20 秒）——全套负载下的收尾超时，与本改动无关，照实记下。
+  视觉基线 12 张全绿（改的地方只在 Anthropic 那几家的行上出现，基线里没有）。
+
 ### 2026-09-20 — pi 升到 0.86.0：DeepSeek 这才真的收得了图（分支 `pi-086`）
 
 - **Type**: chore

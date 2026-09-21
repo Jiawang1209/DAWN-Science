@@ -522,8 +522,11 @@
  *
  * 7.34（2026-09-15）：新增只读操作 `fetchLocalImage`——主进程从**本机地址**取一张图回 base64。
  *   给对话里的 MLAI 案例卡片显示封面用：界面 CSP 不许直接加载 127.0.0.1 的图，也不打算放宽。纯新增，故 minor。
+ *
+ * 7.35（2026-09-21）：`listKnownProviders` 新增可选 `anthropicProtocol`——整家都走 Anthropic 协议的 provider。
+ *   pi 0.86 起这条协议的地址不能带 `/v1`（SDK 自己拼 `/v1/messages`），设置页据此提醒。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.34"
+export const WORKBENCH_PROTOCOL_VERSION = "7.35"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

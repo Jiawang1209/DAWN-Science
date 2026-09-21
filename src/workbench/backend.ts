@@ -337,6 +337,8 @@ export interface WorkbenchBackendOptions {
     known?(): Promise<string[]>
     /** 地址 pi 不自带的那几个。**界面据此给输入框** */
     needsBaseUrl?(): Promise<string[]>
+    /** 整家都走 Anthropic 协议的那几个。**界面据此提醒地址别带 `/v1`** */
+    anthropicProtocol?(): Promise<string[]>
     /**
      * provider 的显示名（`deepseek` → `DeepSeek`）。
      *
@@ -3798,6 +3800,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           models: table,
           // **地址 pi 不自带的那几个**：界面据此给输入框
           ...(models.needsBaseUrl ? { needsBaseUrl: await models.needsBaseUrl() } : {}),
+          ...(models.anthropicProtocol ? { anthropicProtocol: await models.anthropicProtocol() } : {}),
           ...写过的,
         }
       } catch (err) {

@@ -1720,6 +1720,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     providers: string[]
     models?: Record<string, string[]>
     needsBaseUrl?: string[]
+    anthropicProtocol?: string[]
     connections?: Record<string, { baseUrl?: string; api?: string; models?: string[] }>
     problem?: string
   }>({ providers: [] })
@@ -3384,6 +3385,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     }
     {...(knownProviders.needsBaseUrl
       ? { needsBaseUrl: knownProviders.needsBaseUrl }
+      : {})}
+    {...(knownProviders.anthropicProtocol
+      ? { anthropicProtocol: knownProviders.anthropicProtocol }
       : {})}
     {...(knownProviders.connections
       ? { connections: knownProviders.connections }

@@ -1271,6 +1271,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // **「我能配谁」的来源是 pi 的模型目录**，不是一份手打的清单
       known: () => nativeRuntime.knownProviders(),
       needsBaseUrl: () => nativeRuntime.providersNeedingBaseUrl(),
+      anthropicProtocol: () => nativeRuntime.providersSpeakingAnthropic(),
       // 显示名同样**来自 pi 的表**，不是一份我们手打的对照表
       names: () => nativeRuntime.providerNames(),
     },

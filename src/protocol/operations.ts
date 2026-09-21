@@ -2702,6 +2702,11 @@ export const OPERATIONS = {
          */
         needsBaseUrl: z.array(z.string()).optional(),
         /**
+         * **整家都走 Anthropic 协议**的那几个（7.35）。这条协议的地址不带 `/v1`——
+         * SDK 自己拼 `/v1/messages`，填了 `https://x/v1` 就是 404。界面据此提醒。
+         */
+        anthropicProtocol: z.array(z.string()).optional(),
+        /**
          * 已经写下的连接设置（2026-08-10 由 `baseUrls` 扩成这个）。
          *
          * **只回写过的**，没写过的不给键——空对象会被读成「写过，但都是空的」，

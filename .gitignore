@@ -76,3 +76,6 @@ dist/ui/
 test-results/
 playwright-report/
 .superpowers/
+
+# npm run perf:streaming 的输出（2026-09-22）
+perf-results/

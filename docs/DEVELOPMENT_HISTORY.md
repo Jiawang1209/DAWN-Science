@@ -8,6 +8,26 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-22 — 回复时不卡：攒一攒、壳不订阅、行 memo（分支 `perf-render`）
+
+- **Type**: perf
+- **Motivation**: 基线（下一条）坐实了回复时整棵树跟着每段字重算；作者要求参考 Codex / Claude / Hermes 去做。
+- **What**（设计与参考见 `specs/2026-09-22-回复时不卡-design.md`）：
+  - **参考**：Hermes（MIT、同栈）读了源码设计；Codex / Claude 闭源，按 `REFERENCES.md` 第七条**只读依赖表与 CSS、不读 JS**——
+    Codex 的解包目录已不在本机；Claude 读到 markdown 块上的 `content-visibility: auto`。
+  - 第 1 步：`upsertItem` 对「已在列表、还没说完」的 agent 发言至多 33ms 落一次；其余更新先冲掉攒着的再立即落（`flushTranscript`）。
+  - 第 2 步：`App` 不再订阅 `$items`，改读派生的 `$回合进行中` / `$笔记本cells`；`ConversationView` 自己订阅。
+    `design-contract` 新增扫描：`App.tsx` 不许 `useStore($items)`。
+  - 第 3 步：`TranscriptRow` / `ToolGroupRow` 包 `memo`（只做身份比；`generated` / `cases` 按内容比），行回调给稳定引用。
+  - 测量：计数改看 React 的 `PerformedWork`（第一版把 memo 拦下的也算成重跑，数字偏大，基线已在旧代码上重量并更正）；
+    输出挪到 `perf-results/`（`test-results/` 每跑一次被清空）。
+  - **试过没上**：Claude 式 `content-visibility`——31 轮时帮忙（29→50 帧/秒）、11 轮时反伤（83→62），且行里浮层没走 portal，有被关进包含块的风险。
+- **Impact**: 30 轮历史时每次提交重跑 **425 → 44**，一次回复共重跑 33.4 万 → 1.8 万；
+  CPU 降速 4× 时帧率 1 轮 19→116、11 轮 11→83、31 轮 10→29（中位数，31 轮三遍之间 28–78 飘）。
+  界面行为不变；无协议变更。
+- **Verification**: 单元 2947 passed / 10 skipped（新增攒一攒 6 条、设计扫描 1 条；两条核心判据在旧代码上当场红过）；
+  e2e **498 + 4 passed / 0 failed**；视觉基线 12/12；性能剧本改前改后同一份、帧数据各跑 3 遍。
+
 ### 2026-09-22 — 量「回复时卡不卡」：基线（分支 `perf-streaming`）
 
 - **Type**: perf

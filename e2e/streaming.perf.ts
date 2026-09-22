@@ -16,7 +16,7 @@
  * 历史每轮都是 `LONG_REPLY`（约 2000 字，5 个代码块、5 张表），量的那一轮用「慢慢说」
  * 按真模型的节奏吐（6 字一段、15ms 一段，约 340 次更新）。
  *
- * 结果打在控制台，同时写进 `test-results/perf/<轮>.json`。
+ * 结果打在控制台，同时写进 `perf-results/<PERF_LABEL>-<轮>.json`（已 gitignore）。
  */
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
@@ -206,7 +206,8 @@ async function 跑剧本(page: Page, 模式: "重画" | "时间"): Promise<一�
 }
 
 function 记下(名: string, 结果: 一次测量[]): void {
-  const 目录 = join("test-results", "perf")
+  // 不放 `test-results/`：Playwright 每跑一次就清空它，上一轮的数字会没
+  const 目录 = "perf-results"
   mkdirSync(目录, { recursive: true })
   const 标签 = process.env["PERF_LABEL"] ?? "当前"
   writeFileSync(join(目录, `${标签}-${名}.json`), JSON.stringify(结果, null, 2))

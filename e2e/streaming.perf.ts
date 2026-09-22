@@ -59,8 +59,7 @@ function 装重画计数(): void {
     child: Fiber | null
     sibling: Fiber | null
     alternate: Fiber | null
-    memoizedProps: unknown
-    memoizedState: unknown
+    flags: number
   }
   const 组件标签 = new Set([0, 1, 11, 14, 15]) // Function / Class / ForwardRef / Memo / SimpleMemo
   const 名字 = (f: Fiber): string => {
@@ -80,8 +79,9 @@ function 装重画计数(): void {
     onCommitFiberUnmount: () => {},
     onPostCommitFiberRoot: () => {},
     onCommitFiberRoot: (_id: number, root: { current: Fiber }) => {
-      // **没被碰过的子树里还是上一次那批对象**；克隆过（重跑或 bailout）的才是新对象。
-      // 新对象里 props/state 引用都没变的是 bailout，不算重跑。
+      // **没被碰过的子树里还是上一次那批对象**；克隆过的才是新对象，克隆时 flags 被清空。
+      // 新对象上带着 `PerformedWork`（= 1）的，组件函数这一次真的跑了。
+      // 第一版按「props 引用变没变」判，把 memo 拦下的那些也算成了重跑（memo 外壳的 props 每次都是新对象）。
       const 这一棵 = new WeakSet<object>()
       const 栈: Fiber[] = [root.current]
       let 重跑 = 0
@@ -91,12 +91,9 @@ function 装重画计数(): void {
         这一棵.add(f)
         if (组件标签.has(f.tag)) {
           组件++
-          if (!上一棵.has(f)) {
-            const a = f.alternate
-            if (!a || f.memoizedProps !== a.memoizedProps || f.memoizedState !== a.memoizedState) {
-              重跑++
-              if (统计.在量) 统计.按名字[名字(f)] = (统计.按名字[名字(f)] ?? 0) + 1
-            }
+          if (!上一棵.has(f) && (f.flags & 1) !== 0) {
+            重跑++
+            if (统计.在量) 统计.按名字[名字(f)] = (统计.按名字[名字(f)] ?? 0) + 1
           }
         }
         if (f.sibling) 栈.push(f.sibling)

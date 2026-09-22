@@ -8,7 +8,7 @@
  * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
  * 打开 app 时要做的事是跟 agent 说话。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
@@ -4218,6 +4218,38 @@ export function ConversationView({
     return 表
   }, [items])
   /**
+   * **给行的回调，身份永远不变**（2026-09-22，`perf-render`）。
+   *
+   * 行包了 `memo`（写完的消息在流式期间不重渲染），而这里原先每次渲染都造新的箭头函数——
+   * memo 等于没包。稳定的壳子调「此刻最新的那个」，所以不会拿着旧闭包去发旧会话的话。
+   * 给不给（`undefined` 与否）照旧由调用点按当时的条件决定，那是行上按钮灰不灰的判据。
+   */
+  const 行回调最新 = useRef({
+    nameOf: (_id: string): string | undefined => undefined,
+    onPickCase: (_text: string) => {},
+    onResend: (_text: string) => {},
+  })
+  行回调最新.current = {
+    nameOf: (id) => services?.find((sv) => sv.providerId === id)?.name,
+    onPickCase: (text) => {
+      void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+      设位置(-1)
+    },
+    onResend: (text) => {
+      // 失败要出声（2026-08-23 审查抓的：此前不接 promise，发失败就什么都没发生）
+      void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+      设位置(-1)
+    },
+  }
+  const 行回调 = useMemo(
+    () => ({
+      nameOf: (id: string) => 行回调最新.current.nameOf(id),
+      onPickCase: (text: string) => 行回调最新.current.onPickCase(text),
+      onResend: (text: string) => 行回调最新.current.onResend(text),
+    }),
+    [],
+  )
+  /**
    * 框里有没有东西可发。**只有图也算**（协议 4.12）：
    * 「看看这张图」这种意图人常常懒得打字。
    */
@@ -4384,7 +4416,7 @@ export function ConversationView({
                 item={item}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
-                nameOf={(id) => services?.find((sv) => sv.providerId === id)?.name}
+                nameOf={行回调.nameOf}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
                 {...(loadLocalImage ? { loadLocalImage } : {})}
                 {...(案例表.has(item.id) ? { cases: 案例表.get(item.id), loadGalleryRoots } : {})}
@@ -4392,10 +4424,7 @@ export function ConversationView({
                   ? {}
                   : {
                       /** 「照这篇做」：与 `onResend` 同一条发送路；忙着时不给 → 卡片上的按钮灰着 */
-                      onPickCase: (text: string) => {
-                        void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
-                        设位置(-1)
-                      },
+                      onPickCase: 行回调.onPickCase,
                     })}
                 {...(artifacts && onOpenArtifact && item.type === "turn" && item.who === "agent" && item.final
                   ? { generated: 本轮产物(items, item.id, artifacts, session.kind, 下标), onOpenArtifact, ...(loadThumb ? { loadThumb } : {}) }
@@ -4409,11 +4438,7 @@ export function ConversationView({
                        * 不另开一条：两条路各写一半，迟早有一条忘了清草稿、
                        * 忘了取写权、或者忘了把话回灌进事件流。
                        */
-                      onResend: (text: string) => {
-                        // 失败要出声（2026-08-23 审查抓的：此前不接 promise，发失败就什么都没发生）
-                        void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
-                        设位置(-1)
-                      },
+                      onResend: 行回调.onResend,
                     })}
               />
             ))(块.item, 块.下标))
@@ -5243,7 +5268,53 @@ export function ConversationView({
  * **工具调用要显示出来**——①-B 的界面「看不见 agent 在干什么」，
  * 根因之一就是工具调用在 runtime 层就被丢掉了，界面连数据都拿不到。
  */
-export function TranscriptRow({
+/**
+ * **一行转录，写完了就不再重渲染**（2026-09-22，`perf-render`）。
+ *
+ * 基线：30 轮历史时，模型每吐一段字，每条写完的历史消息的 markdown 都重渲染一次
+ * （每次提交约 27 个 `Streamdown`）。学自 Hermes：行包 `memo`、只让正在写的那一条跟着字走。
+ *
+ * 比较器**只做身份比**，不做聪明的判断：`item` 是后端推来的整条，其余身份在
+ * `state/transcript.ts` 里已经保证「没变就同一个对象」。两个例外按内容比，因为调用点每次都现算：
+ * `generated`（产物条，元素是清单里的同一批对象）与 `cases`（案例卡片，小对象）。
+ * 回调由 `ConversationView` 给稳定引用。
+ */
+export const TranscriptRow = memo(TranscriptRowImpl, 行props相同)
+
+function 行props相同(a: 行Props, b: 行Props): boolean {
+  const 键 = new Set([...Object.keys(a), ...Object.keys(b)] as (keyof 行Props)[])
+  for (const k of 键) {
+    if (k === "generated") {
+      if (!同产物(a.generated, b.generated)) return false
+    } else if (k === "cases") {
+      if (!同案例(a.cases, b.cases)) return false
+    } else if (a[k] !== b[k]) return false
+  }
+  return true
+}
+
+function 同产物(a: 轮产物 | undefined, b: 轮产物 | undefined): boolean {
+  if (a === b) return true
+  if (!a || !b || a.kind !== b.kind) return false
+  if (a.kind === "none") return true
+  if (a.kind === "unknown") return b.kind === "unknown" && a.reason === b.reason && a.error === b.error
+  return (
+    b.kind === "some" &&
+    a.unknownCount === b.unknownCount &&
+    a.artifacts.length === b.artifacts.length &&
+    a.artifacts.every((x, i) => x === b.artifacts[i])
+  )
+}
+
+function 同案例(a: readonly 本轮案例[] | undefined, b: readonly 本轮案例[] | undefined): boolean {
+  if (a === b) return true
+  if (!a || !b || a.length !== b.length) return false
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+type 行Props = Parameters<typeof TranscriptRowImpl>[0]
+
+function TranscriptRowImpl({
   item,
   agentId,
   nameOf,
@@ -6072,7 +6143,13 @@ function 本轮案例(items: readonly TranscriptItem[], 下标: number, 正文: 
  * - 展开后就是原来的逐条 `ToolRow`，每条还能再点开看输出。
  * - 在跑的时候说「第几条、在跑什么」：只写「运行了 N 条」会让人以为已经跑完了。
  */
-function ToolGroupRow({ tools }: { tools: Extract<TranscriptItem, { type: "tool" }>[] }) {
+/** 工具组也 memo：`分组转录` 每次都 `slice` 出新数组，按元素身份比（2026-09-22） */
+const ToolGroupRow = memo(
+  ToolGroupRowImpl,
+  (a, b) => a.tools.length === b.tools.length && a.tools.every((x, i) => x === b.tools[i]),
+)
+
+function ToolGroupRowImpl({ tools }: { tools: Extract<TranscriptItem, { type: "tool" }>[] }) {
   const [open, setOpen] = useState(false)
   const 汇 = 汇总工具组(tools)
   const 在跑 = 汇.在跑

@@ -93,7 +93,7 @@ import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts } from "./state/sync.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom } from "./state/transcript.js"
-import { NotebookPanel, cells as 转录里的cells, type 语言 as 内核语言 } from "./notebook.js"
+import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
 import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
 import { 对话agent顺序 } from "./agent-order.js"
 import { MemoryPanel } from "./memory-panel.js"
@@ -106,6 +106,8 @@ import {
   $sessionModels,
   $contextUsage,
   $items,
+  $回合进行中,
+  $笔记本cells,
   $notes,
   $projects,
   $providers,
@@ -261,7 +263,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 设置在场 = useStore($设置在场)
   const sessionId = useStore($activeSessionId)
   const view = useStore($view)
-  const items = useStore($items)
+  /**
+   * **这里不订阅 `$items`**（2026-09-22，`perf-render`）：它每 33ms 换一次，订阅了整个壳
+   * （侧栏、坞、顶栏）就跟着每一段字重渲染——基线里空对话也有 111 个组件陪跑。
+   * 要的派生值读 `$回合进行中` / `$笔记本cells`；事件处理里要读就 `$items.get()`。
+   * 由 `design-contract` 扫描强制。
+   */
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
   const kernelInstanceId = useStore($kernelInstanceId)
@@ -657,7 +664,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * （false→true→false），不像 `items` 每来一个 token 就变一次——
    * 所以它可以进 effect 依赖，`items` 不行。下面那个 effect 依赖的就是这个区别。
    */
-  const busy = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+  const busy = useStore($回合进行中)
 
   /**
    * 重取账本：列表 + 最新那条的详情 + 上下文用量。
@@ -914,7 +921,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 笔记本格的 cell 清单（plan 2026-08-26-笔记本 Task 8）：从当前会话转录里筛出来，`items` 一变就重算。
    * 角标要的计数也在这儿灌进 `$cellCount`——RightDock 拿不到 `items`，走 `$artifacts` 同一条路。
    */
-  const 笔记本cells = useMemo(() => 转录里的cells(items), [items])
+  const 笔记本cells = useStore($笔记本cells)
   useEffect(() => { setCellCount(笔记本cells.length) }, [笔记本cells])
   /** 最近一个语言已知的 cell 的语言：概览格问变量时顺手带上，让它问对话里正在用的那个内核 */
   const 最近cell语言 = useMemo(
@@ -1613,7 +1620,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * `title` 的定义就是「还没说过话」（协议 2.12），而且它跟着会话摘要走、不会被清。
      * 两个都空才算空：宁可多留一条空会话，不冒删掉历史的险。
      */
-    const 是空的 = !session.title && items.length === 0
+    const 是空的 = !session.title && $items.get().length === 0
     const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
       agentId,
       ...(session.remote
@@ -4249,7 +4256,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 key={session.sessionId}
                 session={session}
-                items={items}
                 /**
                  * **消息里点了一条本机地址**（批 2，2026-08-18）。
                  *

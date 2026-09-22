@@ -1377,3 +1377,18 @@ describe("设计契约 · 转录区只许有一层滚动", () => {
     )
   })
 })
+
+/**
+ * **壳不订阅整份转录**（2026-09-22，`perf-render`）。
+ *
+ * 基线：`App` 顶层 `useStore($items)` 时，模型每吐一段字，侧栏、坞、顶栏整壳重渲染，
+ * 30 轮历史时每段字 470 个组件陪跑，慢机器上掉到 10 帧/秒。壳要的只是派生值
+ * （`$回合进行中`、`$笔记本cells`），事件处理里读 `$items.get()`。
+ * 学自 Hermes 同一条注释：*"ChatView must not subscribe to $messages"*。
+ */
+describe("设计契约 · 回复时不卡", () => {
+  it("**`App.tsx` 不订阅 `$items`**", () => {
+    const 代码 = read("App.tsx").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "")
+    expect(代码).not.toMatch(/useStore\(\s*\$items\s*\)/)
+  })
+})

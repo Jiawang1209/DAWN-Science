@@ -7,13 +7,42 @@
  * 作用域是**当前正在看的那个会话**。切会话时由 `resetTranscript()` 清空，
  * 并由 `guard()` 保证飞行中的旧请求不会把内容倒灌回来。
  */
-import { atom } from "nanostores"
+import { atom, computed } from "nanostores"
 import type { TranscriptItem, TeamSnapshot, KernelState } from "../../protocol/index.js"
 import { sameList, setList, setValue, shallowEqual } from "./identity.js"
 import { invalidate } from "./guard.js"
+import { cells as 转录里的cells, type Cell } from "../../protocol/notebook-cells.js"
 
 /** 对话、工具调用、系统提示。**按顺序渲染，不重排** */
 export const $items = atom<readonly TranscriptItem[]>([])
+
+/**
+ * **一整轮是不是还开着**（2026-09-22 从 `App.tsx` 挪来，`perf-render`）。
+ *
+ * 布尔值，一轮只翻两次；`computed` 值没变就不通知——所以读它的组件
+ * 不会跟着每一段字重渲染。**壳（`App`）只许读这种派生值，不许订阅整份 `$items`**
+ * （学自 Hermes `chat/index.tsx:299`：*"ChatView must not subscribe to $messages"*）。
+ */
+export const $回合进行中 = computed($items, (items) =>
+  items.some((i) => i.type === "turn" && i.who === "agent" && !i.final),
+)
+
+/**
+ * 笔记本格的 cell 清单，**cell 没变时保持同一个数组**（2026-09-22 从 `App.tsx` 挪来）。
+ *
+ * `cells()` 每次都造新对象，而正在写的那段话每 33ms 换一次 `$items`——
+ * 不拦的话笔记本格与角标会跟着每一段字重算。`cells()` 不读发言的正文
+ * （`turn` 只用来切窗口），所以比「结构」：发言按 id、其余按对象身份，一样就沿用上一份。
+ */
+let 上次结构: readonly unknown[] = []
+let 上次cells: Cell[] = []
+export const $笔记本cells = computed($items, (items) => {
+  const 结构 = items.map((i) => (i.type === "turn" ? `turn:${i.id}` : i))
+  if (结构.length === 上次结构.length && 结构.every((x, k) => x === 上次结构[k])) return 上次cells
+  上次结构 = 结构
+  上次cells = 转录里的cells(items)
+  return 上次cells
+})
 
 /** 终端字节片段。首帧是快照里的整段，之后是增量 */
 export const $terminal = atom<readonly string[]>([])
@@ -22,6 +51,7 @@ export const $terminal = atom<readonly string[]>([])
 export const $terminalTrimmed = atom(false)
 
 export function setItems(next: readonly TranscriptItem[]): void {
+  丢掉攒着的()
   setList($items, next)
 }
 
@@ -30,8 +60,54 @@ export function setItems(next: readonly TranscriptItem[]): void {
  *
  * 服务端推的是**累积后的整条**，界面不必自己拼增量——那是流式渲染里
  * 最容易出错的一段（少一片、多一片、顺序错都很难查）。
+ *
+ * **正在写的那一条，至多 33ms 落一次**（2026-09-22，分支 `perf-render`）。
+ * 基线量出来：约 340 段字产生 800–1150 次提交，每次整棵树跟着算，慢机器上掉到 10 帧/秒。
+ * 学自 Hermes（`use-message-stream/utils.ts:59-67`：16ms 时「每个 token 一次提交」，改 33ms 让两个 token 并一次）。
+ *
+ * 只攒**一种**更新：已经在列表里、还没说完（`final: false`）的 agent 发言。
+ * 其余一律**先把攒着的冲掉、再立即落**——新条目、说完的那一下、工具、删除，
+ * 所以顺序不会乱，最后一个字也不会晚到。
  */
+const 攒的间隔毫秒 = 33
+const 攒着的 = new Map<string, TranscriptItem>()
+let 攒的定时器: ReturnType<typeof setTimeout> | undefined
+
+/** 把攒着的更新落进 `$items`。**同步**：谁要按顺序落下一条，先调它 */
+export function flushTranscript(): void {
+  if (攒的定时器 !== undefined) {
+    clearTimeout(攒的定时器)
+    攒的定时器 = undefined
+  }
+  if (攒着的.size === 0) return
+  const prev = $items.get()
+  let next: TranscriptItem[] | undefined
+  for (const [id, item] of 攒着的) {
+    const i = prev.findIndex((x) => x.id === id)
+    // 攒的时候在、落的时候没了（被删了）：不复活它
+    if (i < 0 || shallowEqual(prev[i], item)) continue
+    next ??= [...prev]
+    next[i] = item
+  }
+  攒着的.clear()
+  if (next) $items.set(next)
+}
+
+/** 换会话 / 快照整份替换时：攒着的是旧的，**丢掉**，不落 */
+function 丢掉攒着的(): void {
+  if (攒的定时器 !== undefined) clearTimeout(攒的定时器)
+  攒的定时器 = undefined
+  攒着的.clear()
+}
+
 export function upsertItem(item: TranscriptItem): void {
+  const 可攒 = item.type === "turn" && !item.final && $items.get().some((x) => x.id === item.id)
+  if (可攒) {
+    攒着的.set(item.id, item)
+    攒的定时器 ??= setTimeout(flushTranscript, 攒的间隔毫秒)
+    return
+  }
+  flushTranscript()
   const prev = $items.get()
   const i = prev.findIndex((x) => x.id === item.id)
   if (i < 0) {
@@ -47,6 +123,7 @@ export function upsertItem(item: TranscriptItem): void {
 
 /** 按 id 从转录里删掉一条（审查 debug F3）：服务端把「只想没说」并进新的一条时,实时流靠它把旧的那条撤掉 */
 export function dropItem(id: string): void {
+  flushTranscript()
   const prev = $items.get()
   const i = prev.findIndex((x) => x.id === id)
   if (i < 0) return

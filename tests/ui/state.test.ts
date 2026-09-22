@@ -15,7 +15,7 @@
  *   6. **无变化时保持引用同一** —— 把内容相同的新数组交给 React
  *      会让昂贵的树白重渲染一遍
  */
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { $providers, setProviders } from "../../src/ui/state/catalog.js"
 import type { TranscriptItem } from "../../src/protocol/index.js"
 import {
@@ -29,7 +29,9 @@ import {
   resetTranscript,
   setItems,
   upsertItem,
+  dropItem,
   appendBytes,
+  flushTranscript,
 } from "../../src/ui/state/index.js"
 
 const turn = (id: string, text: string, final = true): TranscriptItem => ({
@@ -91,6 +93,72 @@ describe("规则 1 · 合并，不要覆盖", () => {
     const first = $items.get()
     upsertItem(turn("t1", "一"))
     expect($items.get()).toBe(first)
+  })
+})
+
+/**
+ * **正在写的那一条至多 33ms 落一次**（2026-09-22，`perf-render`）。
+ * 攒的只有「已在列表里、还没说完」的 agent 发言；其余先冲掉攒着的再立即落。
+ */
+describe("流式更新攒一攒", () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it("没说完的连续更新 33ms 内只落一次，落的是最新那版", () => {
+    upsertItem(turn("t1", "一", false))
+    const 开头 = $items.get()
+    let 落了几次 = 0
+    const 退订 = $items.listen(() => 落了几次++)
+    upsertItem(turn("t1", "一二", false))
+    upsertItem(turn("t1", "一二三", false))
+    expect($items.get()).toBe(开头)
+    vi.advanceTimersByTime(33)
+    expect(落了几次).toBe(1)
+    const only = $items.get()[0]!
+    expect(only.type === "turn" && only.text).toBe("一二三")
+    退订()
+  })
+
+  it("说完的那一下立即落，不等定时器", () => {
+    upsertItem(turn("t1", "一", false))
+    upsertItem(turn("t1", "一二", false))
+    upsertItem(turn("t1", "一二三。", true))
+    const only = $items.get()[0]!
+    expect(only.type === "turn" && only.text).toBe("一二三。")
+    expect(only.type === "turn" && only.final).toBe(true)
+  })
+
+  it("新条目进来之前，先把攒着的冲掉——顺序不乱", () => {
+    upsertItem(turn("t1", "一", false))
+    upsertItem(turn("t1", "一二", false))
+    upsertItem(turn("t2", "工具之后", false))
+    const [a, b] = $items.get()
+    expect(a!.type === "turn" && a!.text).toBe("一二")
+    expect(b!.id).toBe("t2")
+  })
+
+  it("第一次出现的条目不攒（否则第一个字要晚 33ms 才露面）", () => {
+    upsertItem(turn("t1", "一", false))
+    expect($items.get()).toHaveLength(1)
+  })
+
+  it("删掉的条目不会被攒着的更新复活", () => {
+    upsertItem(turn("t1", "一", false))
+    upsertItem(turn("t1", "一二", false))
+    dropItem("t1")
+    flushTranscript()
+    vi.advanceTimersByTime(100)
+    expect($items.get()).toHaveLength(0)
+  })
+
+  it("换会话时攒着的丢掉，不落进新会话", () => {
+    upsertItem(turn("t1", "旧会话", false))
+    upsertItem(turn("t1", "旧会话还在写", false))
+    resetTranscript()
+    setItems([turn("t1", "新会话里恰好同 id", true)])
+    vi.advanceTimersByTime(100)
+    const only = $items.get()[0]!
+    expect(only.type === "turn" && only.text).toBe("新会话里恰好同 id")
   })
 })
 

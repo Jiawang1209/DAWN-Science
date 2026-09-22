@@ -16,7 +16,7 @@ import { 在组词 } from "./ime.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
-import type { 会话开关 } from "./state/transcript.js"
+import { $items, type 会话开关 } from "./state/transcript.js"
 import {
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_MIN,
@@ -3706,7 +3706,7 @@ export function ConversationView({
   引用文件,
   onOpenReference,
   session,
-  items,
+  items: 传进来的items,
   acpAgents,
   onPickAgent,
   agentLabel,
@@ -3819,8 +3819,13 @@ export function ConversationView({
    * 缺省时退回 id——那至少是实话。
    */
   agentLabel?: ((agentId: string) => string) | undefined
-  /** transcript：对话、工具调用、系统提示。**按顺序渲染，不重排** */
-  items: readonly TranscriptItem[]
+  /**
+   * transcript：对话、工具调用、系统提示。**按顺序渲染，不重排**。
+   *
+   * **不传就自己订阅 `$items`**（2026-09-22，`perf-render`）：应用里就是这么接的——
+   * 订阅挪到这一层，壳（`App`）才不会跟着每一段字重渲染。组件测试可以直接传一份。
+   */
+  items?: readonly TranscriptItem[] | undefined
   /**
    * @param images 随这一轮送进模型的图片（协议 4.13）。
    *   两个来源：从磁盘挑的给 `path`，粘贴板里的给 `bytes`。
@@ -3865,6 +3870,8 @@ export function ConversationView({
   /** 消息里点到本机地址时交给它（批 2）。**动作的家在 `App.tsx`** */
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
+  const 订阅的items = useStore($items)
+  const items = 传进来的items ?? 订阅的items
   /**
    * 草稿按**会话**取，不是按组件。
    *

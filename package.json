@@ -38,6 +38,7 @@
     "dev:mock": "node scripts/dev-mock.mjs",
     "test:e2e": "npm run build && playwright test --grep-invert \"内核会话|解释器路径\" && playwright test e2e/kernel-session.spec.ts",
     "test:e2e:only": "playwright test --grep-invert \"内核会话|解释器路径\"",
+    "perf:streaming": "playwright test -c playwright.perf.config.ts",
     "test:e2e:kernel": "playwright test e2e/kernel-session.spec.ts",
     "test:e2e:visual": "npm run build && playwright test e2e/visual.spec.ts",
     "test:e2e:visual:only": "playwright test e2e/visual.spec.ts",

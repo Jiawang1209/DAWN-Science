@@ -87,6 +87,29 @@ export const MARKDOWN_REPLY = [
 ].join("\n")
 
 /**
+ * **一段长回复**（2026-09-22，分支 `perf-streaming`）：用户这一句里带「长回复」时给它。
+ *
+ * 量「回复时卡不卡」要一段像样的回复：真模型一轮常是几千字、带几个代码块和表格，
+ * 而默认那句暗号只有二十来个字——在它身上量不出「对话越长越卡」。
+ * 用**这一句**（不是整段历史）判：历史里说过「长回复」不该让之后每一轮都变长。
+ */
+export const LONG_REPLY = Array.from({ length: 5 }, (_, i) =>
+  MARKDOWN_REPLY.replace("# 一级标题", `# 第 ${i + 1} 节`).replace(
+    "print(df.describe())",
+    `print(df.describe())\nfor col in df.columns:\n    print(col, df[col].isna().sum())  # 第 ${i + 1} 段`,
+  ),
+).join("\n\n")
+
+/**
+ * **「慢慢说」= 按真模型的节奏吐字**（2026-09-22，分支 `perf-streaming`）。
+ *
+ * 默认把回复切成三段背靠背发，流式路径是走到了，但**界面每一轮只更新三次**——
+ * 真模型是几百次（一次几个字、几十毫秒一次），卡顿正是在那几百次里攒出来的。
+ * 只在这一句带「慢慢说」时生效，旧用例一个字节不变。
+ */
+const 慢速 = { 每段字数: 6, 间隔毫秒: 15 }
+
+/**
  * 起一个假推理服务器。
  *
  * @param {object} [opts]
@@ -212,6 +235,8 @@ export function startMockInferenceServer(opts = {}) {
           ? 假改写(最后一句)
           : 图片数 > 0
             ? `假模型已应答：我收到了 ${图片数} 张图。`
+            : 最后一句.includes("长回复")
+              ? LONG_REPLY
             : 用户说的.includes("markdown")
               ? MARKDOWN_REPLY
               : 用户说的.includes("案例卡片")
@@ -281,7 +306,8 @@ export function startMockInferenceServer(opts = {}) {
        * 用例只能软断言，等于没验。
        */
       if (opts.firstChunkDelayMs) await new Promise((r) => setTimeout(r, opts.firstChunkDelayMs))
-      for (const chunk of streamChunks(reply, tool, opts.thinking)) {
+      const 慢 = !tool && 最后一句.includes("慢慢说")
+      for (const chunk of streamChunks(reply, tool, opts.thinking, 慢 ? 慢速.每段字数 : undefined)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
         /**
          * **想完之后停一会儿再说话**（2026-08-14，准入规则 1）。
@@ -294,6 +320,7 @@ export function startMockInferenceServer(opts = {}) {
         if (opts.thinkingHoldMs && chunk.choices?.[0]?.delta?.reasoning_content) {
           await new Promise((r) => setTimeout(r, opts.thinkingHoldMs))
         }
+        if (慢 && chunk.choices?.[0]?.delta?.content) await new Promise((r) => setTimeout(r, 慢速.间隔毫秒))
       }
       res.write("data: [DONE]\n\n")
       res.end()
@@ -326,7 +353,7 @@ const 下一个调用id = () => `call_mock_${++调用序号}`
 const MODEL_ID = "mock-model"
 
 /** 把回复切成几段发，**让流式路径真的被走到**——一次性发完等于没测流式 */
-function streamChunks(reply, tool, thinking) {
+function streamChunks(reply, tool, thinking, 每段字数) {
   const id = "chatcmpl-mock"
   const head = { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] }
 
@@ -367,7 +394,7 @@ function streamChunks(reply, tool, thinking) {
     ]
   }
 
-  const parts = splitIntoParts(reply)
+  const parts = 每段字数 ? 按字数切(reply, 每段字数) : splitIntoParts(reply)
   /**
    * **假模型也要会「思考」**（2026-08-12，准入规则 1）。
    *
@@ -423,6 +450,13 @@ function splitIntoParts(text) {
   if (text.length < 3) return [text]
   const n = Math.ceil(text.length / 3)
   return [text.slice(0, n), text.slice(n, n * 2), text.slice(n * 2)].filter(Boolean)
+}
+
+/** 「慢慢说」用：每段 n 个字，像真模型一次吐几个 token */
+function 按字数切(text, n) {
+  const out = []
+  for (let i = 0; i < text.length; i += n) out.push(text.slice(i, i + n))
+  return out
 }
 
 /**

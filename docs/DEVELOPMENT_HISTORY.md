@@ -8,6 +8,15 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-22 — 合并 `anthropic-v1-hint`，真跑一遍记下第一轮：零条
+
+- **Type**: docs
+- **Motivation**: 按 09-04 定案，内核线下一轮的清单来自作者真用时想切回 RStudio / Jupyter 的瞬间。
+- **What**: `anthropic-v1-hint` 快进合进 `main`（`fc530a6`）；用最新 `main` 的开发构建开跑，
+  观察清单记下作者原话「现在已经就是好用了，完全没有问题」——零条想切走的时刻。
+- **Impact**: 内核线目前没有从真用里长出来的新候选；清单保持开着，之后撞见再记。
+- **Verification**: 开发构建启动正常（pi 三个包均为 0.86.0）；作者当面确认。
+
 ### 2026-09-21 — 设置页提醒：Anthropic 协议的地址别带 `/v1`（分支 `anthropic-v1-hint`）
 
 - **Type**: fix

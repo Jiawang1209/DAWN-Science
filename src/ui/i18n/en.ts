@@ -398,6 +398,10 @@ export const EN: Readonly<Record<string, string>> = {
   "想了一下": "thought for a moment",
   "这一整段对话累计": "across this whole chat",
   "还没有对话": "No messages yet",
+  // 只渲染最近若干条（2026-09-22）：更早的没进 DOM，屏幕上要说清
+  "更早的 {0} 条没有显示": "{0} earlier messages are not shown",
+  "显示更早的 {0} 条": "Show {0} earlier",
+  "全部显示": "Show all",
   "回到底部": "Jump to latest",
   "这段对话的 agent 没有可直接调用的模型，用「{0}」改的": "This conversation's agent has no directly callable model; rewritten with \"{0}\"",
   "有新内容": "New messages",

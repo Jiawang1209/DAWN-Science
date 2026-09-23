@@ -34,6 +34,7 @@ import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } f
 import { 扫引用 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
+import { 默认转录预算 } from "./transcript-budget.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
 import { $跑着的会话, $未读, $artifacts, $cellCount } from "./state/catalog.js"
@@ -3649,7 +3650,26 @@ function 等着({ 从, 在想 }: { 从: number; 在想: boolean }) {
  * 数据就在手上——每一轮的 `usage` 都在 transcript 里，**不必另外去问后端**。
  * 少一次请求，也少一处会与对话对不上的数。
  */
-function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
+/**
+ * **这条账只在「有新条目 / 用量落定」时变**（2026-09-22，`perf-render`）：
+ * 轮数、工具次数与耗时、token 三项——一个字都不看正文，而正文正是流式时唯一在变的东西。
+ * 比较器比这几样，别的不管。
+ */
+const SessionUsage = memo(SessionUsageImpl, (a, b) => 同账(a.items, b.items))
+
+function 同账(a: readonly TranscriptItem[], b: readonly TranscriptItem[]): boolean {
+  if (a === b) return true
+  if (a.length !== b.length) return false
+  return a.every((it, i) => {
+    const o = b[i]!
+    if (it.type !== o.type || it.id !== o.id) return false
+    if (it.type === "turn" && o.type === "turn") return it.who === o.who && it.usage === o.usage
+    if (it.type === "tool" && o.type === "tool") return it.startedAt === o.startedAt && it.endedAt === o.endedAt
+    return true
+  })
+}
+
+function SessionUsageImpl({ items }: { items: readonly TranscriptItem[] }) {
   /**
    * **整段会话的账**（codex-polish ③，2026-08-22，学自 dsh-codex-ui 底部那条）：
    * 轮数、工具调用次数与耗时、token 三项、缓存命中率。此前只有 token 三项。
@@ -3691,6 +3711,7 @@ function SessionUsage({ items }: { items: readonly TranscriptItem[] }) {
     </span>
   )
 }
+
 
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
@@ -4228,6 +4249,7 @@ export function ConversationView({
     nameOf: (_id: string): string | undefined => undefined,
     onPickCase: (_text: string) => {},
     onResend: (_text: string) => {},
+    确保可见: (_id: string) => {},
   })
   行回调最新.current = {
     nameOf: (id) => services?.find((sv) => sv.providerId === id)?.name,
@@ -4240,15 +4262,38 @@ export function ConversationView({
       void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
       设位置(-1)
     },
+    /** 刻度尺点了预算之外的那一轮：把预算放大到刚好含住它（多留 4 条余量），它才有得滚 */
+    确保可见: (id) => {
+      const 块序 = 块们.findIndex((块) => (块.kind === "group" ? 块.tools.some((t) => t.id === id) : 块.item.id === id))
+      if (块序 < 0) return
+      设预算((旧) => Math.max(旧, 块们.length - 块序 + 4))
+    },
   }
   const 行回调 = useMemo(
     () => ({
       nameOf: (id: string) => 行回调最新.current.nameOf(id),
       onPickCase: (text: string) => 行回调最新.current.onPickCase(text),
       onResend: (text: string) => 行回调最新.current.onResend(text),
+      确保可见: (id: string) => 行回调最新.current.确保可见(id),
     }),
     [],
   )
+  /**
+   * **只渲染最近这些条，更早的点一下才出来**（2026-09-22，`perf-render`，学自 Hermes
+   * `thread/list.tsx:36-43` 的 render budget——它明说不用虚拟列表，理由是虚拟列表会跟贴底滚动打架，
+   * 而我们 09-16 刚在贴底上踩过坑）。
+   *
+   * 量出来的账：改完重渲染之后，剩下的卡顿是浏览器给整页长文重算样式与布局，
+   * 那部分只随**在 DOM 里的条数**涨。少放一点进 DOM 是最直接的一刀。
+   *
+   * 单位是「转录块」（一条发言 / 一次工具调用 / 一组折叠起来的工具），不是轮。
+   */
+  const [预算, 设预算] = useState(默认转录预算)
+  // 换会话就回到默认：上一段翻开过多少，与这一段无关
+  useEffect(() => 设预算(默认转录预算), [session.sessionId])
+  const 块们 = useMemo(() => 分组转录(items), [items])
+  const 起点 = Math.max(0, 块们.length - 预算)
+  const 可见块 = 起点 > 0 ? 块们.slice(起点) : 块们
   /**
    * 框里有没有东西可发。**只有图也算**（协议 4.12）：
    * 「看看这张图」这种意图人常常懒得打字。
@@ -4385,7 +4430,7 @@ export function ConversationView({
        * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
        */}
       {/* 轮次导航（2026-08-22，学自 dsh-codex-ui）：左缘一条刻度尺，一刻一轮你说的话 */}
-      <TurnNavigator items={items} />
+      <TurnNavigator items={items} 确保可见={行回调.确保可见} />
       <StickToBottom className="turns" resize="smooth" initial="smooth">
         {/**
           * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：
@@ -4401,6 +4446,24 @@ export function ConversationView({
           */}
         <StickToBottom.Content className="turns-inner">
           {terminalTrimmed ? <p className="hint">{t("终端只保留最近的输出，更早的已滚出缓冲")}</p> : null}
+          {/**
+            * **更早的那些没有渲染，这件事必须写在屏幕上**（2026-09-22）。
+            * 看不见的能力等于不存在，看不见的**缺席**更糟：人会以为前面的话丢了。
+            * 常驻一行，不是悬停才出现。
+            */}
+          {起点 > 0 ? (
+            <div className="earlier-bar">
+              <span className="hint">{tf("更早的 {0} 条没有显示", 起点)}</span>
+              <Button variant="ghost" size="sm" onClick={() => 设预算((旧) => 旧 + 默认转录预算)}>
+                {tf("显示更早的 {0} 条", Math.min(起点, 默认转录预算))}
+              </Button>
+              {起点 > 默认转录预算 ? (
+                <Button variant="ghost" size="sm" onClick={() => 设预算(块们.length)}>
+                  {t("全部显示")}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
           {items.length === 0 ? (
             <p className="empty">{t("还没有对话")}</p>
           ) : (
@@ -4408,7 +4471,7 @@ export function ConversationView({
              * **连续两条以上的工具调用折成一行**（2026-09-15，`tool-group.ts`）。
              * 分组只在渲染这一层做：条目本身、产物下标、事件流一概不动。
              */
-            分组转录(items).map((块) => 块.kind === "group" ? (
+            可见块.map((块) => 块.kind === "group" ? (
               <ToolGroupRow key={块.key} tools={块.tools} />
             ) : ((item, 下标) => (
               <TranscriptRow

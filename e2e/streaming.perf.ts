@@ -23,32 +23,33 @@ import { join } from "node:path"
 import type { Page } from "@playwright/test"
 import { test, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
-/** 每段 LONG_REPLY 里「最后一段。」出现 5 次——数它就知道完成了几段回复，且不用读整页 innerText */
-const 每段回复的标记数 = 5
+/**
+ * 一段 `LONG_REPLY` 的最后一句。**判「这一轮答完了」，不数总数**——
+ * 2026-09-22 加了「只渲染最近若干条」之后，更早的回复根本不在 DOM 里，
+ * 按总数判会永远等不到（第一版就是这么挂的）。这里改成看**最后一条**：
+ * 它是 agent 说的，而且已经说到最后一句。
+ */
 const 标记 = "最后一段。"
 
 const 输入框 = (page: Page) => page.getByPlaceholder(/今天帮你做些什么/)
 
-async function 已完成回复数(page: Page): Promise<number> {
-  return page.evaluate(
-    ([m, k]) => Math.floor(((document.querySelector(".turns")?.textContent ?? "").split(m as string).length - 1) / (k as number)),
-    [标记, 每段回复的标记数] as const,
-  )
-}
-
-async function 说一句并等完(page: Page, 话: string, 之前: number): Promise<void> {
+async function 说一句并等完(page: Page, 话: string): Promise<void> {
   await 输入框(page).fill(话)
   await 输入框(page).press("Enter")
   await page.waitForFunction(
-    ([m, k, n]) =>
-      ((document.querySelector(".turns")?.textContent ?? "").split(m as string).length - 1) >= (k as number) * (n as number),
-    [标记, 每段回复的标记数, 之前 + 1] as const,
+    (m) => {
+      const 末 = [...document.querySelectorAll(".turns .turn")].pop()
+      return !!末 && 末.classList.contains("agent") && (末.textContent ?? "").includes(m as string)
+    },
+    标记,
     { polling: 500, timeout: 120_000 },
   )
 }
 
-async function 攒历史到(page: Page, 目标: number): Promise<void> {
-  for (let n = await 已完成回复数(page); n < 目标; n++) await 说一句并等完(page, `长回复 第${n + 1}轮`, n)
+/** 已经说过几轮由调用方自己记——DOM 里数不出来（更早的不在里面） */
+async function 攒历史到(page: Page, 已有: number, 目标: number): Promise<number> {
+  for (let n = 已有; n < 目标; n++) await 说一句并等完(page, `长回复 第${n + 1}轮`)
+  return Math.max(已有, 目标)
 }
 
 /** 注入在 React 加载之前：假装自己是 DevTools，拿到每一次提交的根 */
@@ -67,7 +68,15 @@ function 装重画计数(): void {
     return t?.displayName || t?.name || t?.render?.name || t?.type?.name || "(匿名)"
   }
   let 上一棵 = new WeakSet<object>()
-  const 统计 = { 在量: false, 提交: 0, 重跑: 0, 组件总数: 0, 按名字: {} as Record<string, number> }
+  const 统计 = {
+    在量: false,
+    提交: 0,
+    重跑: 0,
+    组件总数: 0,
+    按名字: {} as Record<string, number>,
+    /** 每次提交重跑了哪几个（去重排序后当花样）→ 这种花样出现几次。**用来回答「多出来的提交是谁打的」** */
+    按花样: {} as Record<string, number>,
+  }
   ;(window as unknown as { __重画: typeof 统计 }).__重画 = 统计
   ;(window as unknown as { __REACT_DEVTOOLS_GLOBAL_HOOK__: unknown }).__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
     supportsFiber: true,
@@ -86,6 +95,7 @@ function 装重画计数(): void {
       const 栈: Fiber[] = [root.current]
       let 重跑 = 0
       let 组件 = 0
+      const 这次的名字: string[] = []
       while (栈.length) {
         const f = 栈.pop()!
         这一棵.add(f)
@@ -93,7 +103,11 @@ function 装重画计数(): void {
           组件++
           if (!上一棵.has(f) && (f.flags & 1) !== 0) {
             重跑++
-            if (统计.在量) 统计.按名字[名字(f)] = (统计.按名字[名字(f)] ?? 0) + 1
+            if (统计.在量) {
+              const n = 名字(f)
+              统计.按名字[n] = (统计.按名字[n] ?? 0) + 1
+              if (这次的名字.length < 40) 这次的名字.push(n)
+            }
           }
         }
         if (f.sibling) 栈.push(f.sibling)
@@ -104,6 +118,8 @@ function 装重画计数(): void {
         统计.提交++
         统计.重跑 += 重跑
         统计.组件总数 = 组件
+        const 花样 = [...new Set(这次的名字)].sort().slice(0, 8).join("+") || "(空提交)"
+        统计.按花样[花样] = (统计.按花样[花样] ?? 0) + 1
       }
     },
   }
@@ -111,8 +127,7 @@ function 装重画计数(): void {
 
 type 一次测量 = Record<string, unknown>
 
-async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降速: number): Promise<一次测量> {
-  const 历史 = await 已完成回复数(page)
+async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降速: number, 历史: number): Promise<一次测量> {
   const cdp = await page.context().newCDPSession(page)
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpu降速 })
 
@@ -120,7 +135,7 @@ async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降�
     const w = window as unknown as Record<string, unknown>
     if (模式 === "重画") {
       const s = w["__重画"] as { 在量: boolean; 提交: number; 重跑: number; 按名字: Record<string, number> }
-      Object.assign(s, { 在量: true, 提交: 0, 重跑: 0, 按名字: {} })
+      Object.assign(s, { 在量: true, 提交: 0, 重跑: 0, 按名字: {}, 按花样: {} })
       return
     }
     const p = { 长任务: [] as number[], 帧: [] as number[], 停: false, 起: performance.now() }
@@ -140,15 +155,22 @@ async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降�
   }, 模式)
 
   const t0 = Date.now()
-  await 说一句并等完(page, `慢慢说 长回复 第${历史 + 1}轮`, 历史)
+  await 说一句并等完(page, `慢慢说 长回复 第${历史 + 1}轮`)
   const 墙钟 = Date.now() - t0
 
   const 原始 = await page.evaluate((模式) => {
     const w = window as unknown as Record<string, unknown>
     if (模式 === "重画") {
-      const s = w["__重画"] as { 在量: boolean; 提交: number; 重跑: number; 组件总数: number; 按名字: Record<string, number> }
+      const s = w["__重画"] as {
+        在量: boolean
+        提交: number
+        重跑: number
+        组件总数: number
+        按名字: Record<string, number>
+        按花样: Record<string, number>
+      }
       s.在量 = false
-      return { ...s, 按名字: { ...s.按名字 } }
+      return { ...s, 按名字: { ...s.按名字 }, 按花样: { ...s.按花样 } }
     }
     const p = w["__时间"] as { 长任务: number[]; 帧: number[]; 停: boolean }
     p.停 = true
@@ -160,8 +182,15 @@ async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降�
 
   const 基本 = { 历史轮数: 历史, cpu降速: `${cpu降速}x`, 墙钟毫秒: 墙钟 }
   if (模式 === "重画") {
-    const r = 原始 as { 提交: number; 重跑: number; 组件总数: number; 按名字: Record<string, number> }
+    const r = 原始 as {
+      提交: number
+      重跑: number
+      组件总数: number
+      按名字: Record<string, number>
+      按花样: Record<string, number>
+    }
     const 前几 = Object.entries(r.按名字).sort((a, b) => b[1] - a[1]).slice(0, 12)
+    const 花样前几 = Object.entries(r.按花样).sort((a, b) => b[1] - a[1]).slice(0, 8)
     return {
       ...基本,
       提交次数: r.提交,
@@ -169,6 +198,7 @@ async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降�
       每次提交平均重跑: r.提交 ? Math.round(r.重跑 / r.提交) : 0,
       重跑总数: r.重跑,
       重跑最多的组件: Object.fromEntries(前几),
+      提交的花样: Object.fromEntries(花样前几),
     }
   }
   const r = 原始 as { 长任务: number[]; 帧: number[] }
@@ -193,15 +223,16 @@ async function 跑剧本(page: Page, 模式: "重画" | "时间"): Promise<一�
   await 开一段临时会话(page)
   await 等进了对话(page)
   const 结果: 一次测量[] = []
-  结果.push(await 量一轮回复(page, 模式, 1))
+  let n = 0
+  结果.push(await 量一轮回复(page, 模式, 1, n++))
   // 对照：没有历史时降速 4 倍是什么样——分清「降速本身的代价」与「历史越长越卡」
-  结果.push(await 量一轮回复(page, 模式, 4))
-  await 攒历史到(page, 10)
-  结果.push(await 量一轮回复(page, 模式, 1))
-  结果.push(await 量一轮回复(page, 模式, 4))
-  await 攒历史到(page, 30)
-  结果.push(await 量一轮回复(page, 模式, 1))
-  结果.push(await 量一轮回复(page, 模式, 4))
+  结果.push(await 量一轮回复(page, 模式, 4, n++))
+  n = await 攒历史到(page, n, 10)
+  结果.push(await 量一轮回复(page, 模式, 1, n++))
+  结果.push(await 量一轮回复(page, 模式, 4, n++))
+  n = await 攒历史到(page, n, 30)
+  结果.push(await 量一轮回复(page, 模式, 1, n++))
+  结果.push(await 量一轮回复(page, 模式, 4, n++))
   return 结果
 }
 

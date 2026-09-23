@@ -7,7 +7,7 @@
  * 只画用户那一方的轮——「我问过什么」才是人找位置的锚；agent 的回答跟在后面。
  * 少于 3 轮不画：两刻的尺子没有信息。
  */
-import { useEffect, useMemo, useRef, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 import type { TranscriptItem } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
@@ -21,7 +21,38 @@ export function 刻度宽(i: number, 悬在: number | null): number {
   return Math.round(6 + 14 * Math.exp(-(d * d) / 2.2))
 }
 
-export function TurnNavigator({ items }: { items: readonly TranscriptItem[] }) {
+/**
+ * **它只认你说过的话，所以模型在写的时候它不该动**（2026-09-22，`perf-render`）。
+ *
+ * 它吃的是整份 `items`，而那份每 33ms 换一次——诊断里它在 30 轮历史时
+ * 每次落字重画一整列刻度（每刻一颗 `Button`，每次提交约 14 个）。
+ * 比较器只看**用户那几轮的 id 与文字**：模型在写的是 agent 那一条，两边一样就不重画。
+ */
+export const TurnNavigator = memo(TurnNavigatorImpl, (a, b) => 同用户轮(a.items, b.items))
+
+function 同用户轮(a: readonly TranscriptItem[], b: readonly TranscriptItem[]): boolean {
+  if (a === b) return true
+  const 取 = (xs: readonly TranscriptItem[]) => xs.filter((x) => x.type === "turn" && x.who === "user")
+  const x = 取(a)
+  const y = 取(b)
+  if (x.length !== y.length) return false
+  return x.every((it, i) => {
+    const o = y[i]!
+    return it.id === o.id && it.type === "turn" && o.type === "turn" && it.text === o.text
+  })
+}
+
+function TurnNavigatorImpl({
+  items,
+  确保可见,
+}: {
+  items: readonly TranscriptItem[]
+  /**
+   * 那一轮还没渲染出来时（在「只渲染最近若干条」的预算之外）先把它放出来。
+   * **必须是稳定引用**：这个组件是 `memo` 的，比较器只看用户那几轮。
+   */
+  确保可见?: ((id: string) => void) | undefined
+}) {
   const 轮 = useMemo(
     () => items.filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user").map((x) => ({ id: x.id, 摘要: x.text.replace(/\s+/g, " ").trim().slice(0, 摘要上限) })),
     [items],
@@ -69,9 +100,19 @@ export function TurnNavigator({ items }: { items: readonly TranscriptItem[] }) {
   if (轮.length < 3) return null
 
   const 跳 = (id: string) => {
-    const 容器 = 找滚动层()
-    const el = 容器?.querySelector<HTMLElement>(`[data-turn-id="${CSS.escape(id)}"]`)
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+    const 找 = () => 找滚动层()?.querySelector<HTMLElement>(`[data-turn-id="${CSS.escape(id)}"]`)
+    const el = 找()
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+      return
+    }
+    /**
+     * **点了没反应是最坏的一种**（2026-09-22）：那一轮在「只渲染最近若干条」的预算之外时，
+     * DOM 里根本没有它。先请调用方把它放出来，渲染完再滚——这时不用 smooth，
+     * 平滑滚动的起点是刚插进来的一大段内容，看起来像乱跳。
+     */
+    确保可见?.(id)
+    requestAnimationFrame(() => requestAnimationFrame(() => 找()?.scrollIntoView({ block: "start" })))
   }
 
   return (

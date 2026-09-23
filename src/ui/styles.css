@@ -857,6 +857,19 @@ pre {
  * 挂在这一层，**每一种行都自动被管住，包括还没写出来的那些**。
  * 滚动条仍然贴窗口右缘：上限在内容层，不在 `.turns` 那个滚动容器上。
  */
+/*
+ * 「更早的没显示」那一行（2026-09-22，`perf-render`）。
+ * 常驻在转录最上面，不是悬停才出现——看不见的缺席比看不见的功能更糟。
+ */
+.earlier-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dawn-space-2);
+  flex-wrap: wrap;
+  padding: var(--dawn-space-2) 0 var(--dawn-space-3);
+}
+
 .turns-inner {
   max-width: var(--dawn-thread-max-w);
   margin: 0 auto;

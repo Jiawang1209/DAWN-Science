@@ -314,6 +314,21 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 
+/**
+ * 一条待发消息（2026-09-23）。`behavior` 是它此刻在 pi 哪张单子上：
+ * `followUp` 排队（这一轮彻底完了才送）、`steer` 插队（当前工具跑完、下次调模型前送）。
+ */
+export const QueuedMessageSchema = z
+  .object({
+    id: z.string().min(1),
+    text: z.string(),
+    behavior: z.enum(["steer", "followUp"]),
+    /** 附图的缩略图 `data:` URL，与转录里那份同形 */
+    images: z.array(z.string()).optional(),
+  })
+  .strict()
+export type QueuedMessage = z.infer<typeof QueuedMessageSchema>
+
 /** 团队快照（team-board，7.22）。字段照 `src/team/types.ts`；协议这一侧只管形状 */
 export const TeamSnapshotSchema = z
   .object({
@@ -487,9 +502,15 @@ export const SessionSnapshotSchema = z
      * 不给一份空数组——空数组会被读成「起过、但一台都没有」，那不是实情。
      */
     kernels: z.array(KernelStateSchema).optional(),
+    /**
+     * 还排着、没送进模型的话（2026-09-23，学自 Codex）。**缺省 = 没有待发**。
+     * 不进转录：转录是「发生过什么」，这是「还没发生的」——送到那一刻它才作为一条用户发言出现。
+     */
+    queued: z.array(QueuedMessageSchema).optional(),
   })
   .strict()
 export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>
+
 
 /** 更新信封的公共字段 */
 const envelope = {
@@ -544,6 +565,8 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
    * 服务端给的就是当前完整的一份，合并只会多一种「合错了」。
    */
   z.object({ ...envelope, type: z.literal("kernels"), kernels: z.array(KernelStateSchema) }).strict(),
+  /** 待发单变了（2026-09-23）：整份换掉，与 `team` / `kernels` 同一纪律 */
+  z.object({ ...envelope, type: z.literal("queued"), queued: z.array(QueuedMessageSchema) }).strict(),
   /** 全量重放。客户端发现 revision 跳号后由服务端补发，或订阅时的首帧 */
   z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])

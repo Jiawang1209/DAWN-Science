@@ -251,6 +251,8 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
         // 与上面 kernelInstanceId 那条注释是同一个洞：只在实时更新那一路灌的话，
         // 跳号自愈 / 切会话重订阅回来的这一刻，坞会先说「没有内核」，等下一条 kernels 更新才补上
         kernels: snap.kernels,
+        // 待发单（2026-09-23）：切回来 / 跳号自愈时，还排着的那几句也要在
+        queued: snap.queued,
       })
       c.expectRevision(sessionId, snap.revision)
     })

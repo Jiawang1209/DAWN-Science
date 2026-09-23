@@ -16,6 +16,7 @@ import {
   没说话,
   SessionUpdateSchema,
   type KernelState,
+  type QueuedMessage,
   type SessionSnapshot,
   type SessionUpdate,
   type TranscriptItem,
@@ -94,6 +95,8 @@ interface Entry {
    * 不是 native 会话，或还没起过内核。与 `team` 同一纪律：整份换掉。
    */
   kernels?: KernelState[] | undefined
+  /** 待发单（2026-09-23）。缺省 = 没有待发；整份换掉 */
+  queued?: QueuedMessage[] | undefined
   configOptions:
     | {
         id: string
@@ -675,6 +678,17 @@ export class SessionTranscripts {
     this.bump(sessionId, e, { type: "kernels", kernels })
   }
 
+  /**
+   * 待发单变了（2026-09-23）。**整份换掉**；空单不进快照（缺省 = 没有待发），但照样推一条——
+   * 客户端要知道单子空了，得把自己那份清掉。
+   */
+  setQueued(sessionId: SessionId, queued: QueuedMessage[]): void {
+    const e = this.entries.get(sessionId)
+    if (!e) return
+    e.queued = queued.length ? queued : undefined
+    this.bump(sessionId, e, { type: "queued", queued })
+  }
+
   /** agent 的文本增量：累积进当前发言，推送**累积后的整条**。 */
   private appendAgentText(sessionId: SessionId, e: Entry, delta: string): void {
     if (!e.openTurnId) {
@@ -861,6 +875,7 @@ export class SessionTranscripts {
       ...(e.pendingPermission ? { pendingPermission: e.pendingPermission } : {}),
       ...(e.team ? { team: e.team } : {}),
       ...(e.kernels ? { kernels: e.kernels } : {}),
+      ...(e.queued ? { queued: e.queued } : {}),
     }
   }
 }

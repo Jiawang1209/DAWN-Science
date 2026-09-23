@@ -8,6 +8,31 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-23 — 待发消息：排着的话看得见、取得回、能改插队（学自 Codex；分支 `queued-messages`）
+
+- **Type**: feat
+- **Motivation**: 作者看 Codex 时想要的：回复还在跑时发的下一条先挂着排队，能强行插进正在跑的那一轮。
+  我们 08-15 已经有「回车插队 / Cmd+回车排队」（pi 原生 `streamingBehavior`），缺的是：①排着的话写的一刻就进转录，
+  落在 agent 这一轮中间、看着像已经送到了；②撤不回、不能改插队；③回车默认打断。作者定了「回车默认排队」（选项 A）。
+- **What**（spec `specs/2026-09-23-待发消息-design.md`）：
+  - **运行时**（`native.ts`）：每段会话一份待发镜像（id、原文、原图、送法），**先后与「送到没有」只认 pi 的 `queue_update`**
+    ——哪张单子变短就从镜像同一张的头上摘（变长不管：镜像先进、pi 异步后到）。`editQueue` 走 `clearQueue()` + 按原先后重送；
+    中止先撤单再中止。新事件 `queue` / `queue_delivered` / `queue_failed`，新方法 `editQueue?` / `clearQueue?`（只有 native 有，有无即判据）。
+  - **后端**：忙着写的那句进「待发存根」（人写的原文、原图路径、缩略图），**送到那一刻才 `userTurn`**；
+    新操作 `editQueue`；`abortSession` 响应带 `withdrawn`（停下时排着的话交回来）。
+  - **协议 7.36**：`editQueue`、快照 / 更新 `queued`、`abortSession.withdrawn`，全是新增。
+  - **界面**：输入框上方的待发条（`queued-strip.tsx`）：`排队中` / `插队中` + 常驻「插队」「取回」；
+    回车 = 排队、Cmd/Ctrl+回车 = 插队（与 08-15 对调），忙着且有字时发送键叫「排到后面」；取回与停止都把原文原图放回输入框
+    （图经 `$退回的图` 由那段会话的输入框领走）。
+- **Impact**: native 会话忙时发的话在转录里的位置变了——从「写的那一刻」挪到「模型读到的那一刻」。
+  acp / cli / 内核 / pty 行为不变（没有待发单，照旧写的一刻进转录）。**按键语义对调**：习惯了回车插队的人现在要按 Cmd/Ctrl+回车。
+  不含侧边并行会话（另一轮）。
+- **Verification**: 新增单元 `tests/runtime/queue-mirror.test.ts` 10 条（只认变短、两张单子各自从头摘、改插队与取回的重排、
+  以为在忙其实刚跑完、中止时排着的要出声）；e2e `busy-gap.spec.ts` 重写为 6 条，真 pi + 假模型全过
+  （排队时转录只有一条、送到后两条；取回后字回框且始终一条；改插队；停止时回框；按钮 opacity 为 1）；
+  `waiting.spec.ts` 的 Esc 用例跟着改名。全套单元 2957 passed；全套 e2e（含视觉基线）509 passed / 1 skipped。
+  截图核过明暗两版；截图时发现待发条按写入先后排、与 pi 实际送出的先后不符，已改成插队在前并补断言。
+
 ### 2026-09-23 — 回复时不卡（二）：刻度尺与账不跟着字走，只渲染最近 40 块（分支 `perf-render`）
 
 - **Type**: perf

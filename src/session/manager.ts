@@ -451,6 +451,8 @@ export class SessionManager {
     as: Holder,
     images?: readonly ImageAttachment[],
     behavior?: 送法,
+    /** 进待发单时的 id（2026-09-23）。只在 `supportsQueue` 为真时给 */
+    queueId?: string,
   ): void {
     const lease = this.leases.current(sessionId)
     if (!lease || lease.holder !== as) {
@@ -461,7 +463,7 @@ export class SessionManager {
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     if (!images || images.length === 0) {
-      rt.write(sessionId, data, behavior)
+      rt.write(sessionId, data, behavior, queueId)
       return
     }
     /**
@@ -475,7 +477,7 @@ export class SessionManager {
     if (typeof rt.writeWithImages !== "function") {
       throw new Error(`这类会话不能附图片（${images.length} 张已被拒绝，一张都没有送出去）`)
     }
-    rt.writeWithImages(sessionId, data, images, behavior)
+    rt.writeWithImages(sessionId, data, images, behavior, queueId)
   }
 
   /**
@@ -542,6 +544,28 @@ export class SessionManager {
    */
   async setConfigOption(sessionId: SessionId, configId: string, value: string): Promise<void> {
     await this.bound.get(sessionId)?.setConfigOption?.(sessionId, configId, value)
+  }
+
+  /** 这段会话有没有待发单（2026-09-23）。**只有 native 有**；其余照旧在写的那一刻进转录 */
+  supportsQueue(sessionId: SessionId): boolean {
+    return typeof this.bound.get(sessionId)?.editQueue === "function"
+  }
+
+  /** 撤回一条 / 改插队。写权规则与 `write` 相同：动待发单就是在改「接下来要说什么」 */
+  editQueue(sessionId: SessionId, id: string, action: "remove" | "steer", as: Holder): void {
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) {
+      throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)
+    }
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.editQueue) throw new Error("这类会话没有待发单")
+    rt.editQueue(sessionId, id, action)
+  }
+
+  /** 撤下全部待发，返回 id（原先后）。没有这回事的会话返回空 */
+  clearQueue(sessionId: SessionId): string[] {
+    return this.bound.get(sessionId)?.clearQueue?.(sessionId) ?? []
   }
 
   async abort(sessionId: SessionId): Promise<void> {

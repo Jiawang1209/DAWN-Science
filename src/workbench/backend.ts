@@ -35,7 +35,7 @@ import { readFile } from "node:fs/promises"
 import { 展开引用, 剥掉粘贴标记, 规则的毛病, type 文件规则 } from "../files/mentions.js"
 import { extname } from "node:path"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
-import type { ImageAttachment } from "../runtime/types.js"
+import type { AgentEvent, ImageAttachment } from "../runtime/types.js"
 import type { SessionManager } from "../session/manager.js"
 import type { ProjectManager } from "../project/manager.js"
 import type { RunStore } from "../store/runs.js"
@@ -866,6 +866,61 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * **转录里不带它**——转录记的是你说的话；这份只给模型，让它知道 `x` 从哪来。
    */
   const 不在场缓冲 = new Map<string, { 段: string[]; 省了: number }>()
+  /**
+   * **待发存根**（2026-09-23，学自 Codex）：按会话、按 queueId 记人写的原文、原图（路径 / 字节）与缩略图。
+   * 运行时只认得送给模型的那份；转录要的是人写的原文，撤回要还给界面的是原图——这两样只有这儿有。
+   * 送到（`queue_delivered`）时取出来进转录；撤回、失败、中止时取出来交回去。
+   */
+  type 存根 = {
+    text: string
+    images: NonNullable<Parameters<WorkbenchBackend["writeToSession"]>[0]["images"]>
+    预览: string[]
+    behavior: "steer" | "followUp"
+  }
+  const 待发存根 = new Map<string, Map<string, 存根>>()
+  const 取存根 = (sessionId: string, id: string): 存根 | undefined => {
+    const 单 = 待发存根.get(sessionId)
+    const 它 = 单?.get(id)
+    if (它) 单!.delete(id)
+    return 它
+  }
+  /**
+   * 运行时的三种队列事件在这里翻成转录与待发单。**不交给中枢原样吃**——中枢不认得存根。
+   * 返回 true = 已处理，调用方别再 `events.ingest`。
+   */
+  function 接队列事件(sessionId: string, e: AgentEvent): boolean {
+    if (e.kind === "queue") {
+      const 单 = 待发存根.get(sessionId)
+      events.setQueued(
+        sessionId,
+        e.items.flatMap((x) => {
+          const 它 = 单?.get(x.id)
+          if (!它) return []
+          它.behavior = x.behavior
+          return [{ id: x.id, text: 它.text, behavior: x.behavior, ...(它.预览.length ? { images: 它.预览 } : {}) }]
+        }),
+      )
+      return true
+    }
+    if (e.kind === "queue_delivered") {
+      const 它 = 取存根(sessionId, e.id)
+      if (!它) return true
+      events.userTurn(sessionId, 它.text, 它.预览)
+      // 开了新一轮才记一轮；在进行中的那一轮里被取走的，是这一轮的一部分
+      if (e.newTurn) runRecorder?.beginTurn(sessionId, 这一轮叫什么(sessionId))
+      return true
+    }
+    if (e.kind === "queue_failed") {
+      const 它 = 取存根(sessionId, e.id)
+      events.ingest(sessionId, {
+        kind: "notice",
+        sessionId,
+        text: `这句没有送出去（${e.message}）：${它?.text ?? ""}`,
+      })
+      return true
+    }
+    return false
+  }
   /** 封顶（审查 Important）：最多 20 段、合计 32 KB；超了丢最旧的，并在前缀开头说省了几条——不静默截断 */
   const 缓冲最多段 = 20
   const 缓冲最多字节 = 32 * 1024
@@ -1070,6 +1125,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         console.error("[账本] 记事件失败，转录照常：", err)
       }
+      if (接队列事件(rec.id, e)) return
       events.ingest(rec.id, e)
     })
     // 开关那份在 attach 之前就 emit 过了、没人听见——接好线再问一次（codex-polish 第二档）
@@ -1967,6 +2023,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             } catch (err) {
               console.error("[账本] 记事件失败，转录照常：", err)
             }
+            if (接队列事件(sessionId, e)) return
             events.ingest(sessionId, e)
           })
           const 历史 = await sessions.history(sessionId)
@@ -2922,14 +2979,29 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 你不在场时在内核里跑过的（笔记本，spec §4）：拼进模型看的那份，转录里仍只是你那句话
       const 攒的 = as === "user" ? 缓冲前缀(sessionId) : undefined
       const 带前缀 = 攒的 ? `${攒的}\n\n${发出去的}` : 发出去的
+      /**
+       * **忙着发的话先进待发单，送到那一刻才进转录**（2026-09-23，学自 Codex）。
+       * 此前写的这一刻就 `userTurn`——转录里那句话落在 agent 这一轮的中间，看着像已经送到了，
+       * 而模型要几分钟后才读到它。只有有待发单的会话（native）走这条路；其余照旧。
+       */
+      const queueId = as === "user" && behavior && sessions.supportsQueue(sessionId) ? `q-${randomUUID()}` : undefined
+      if (queueId) {
+        const 单 = 待发存根.get(sessionId) ?? new Map<string, 存根>()
+        待发存根.set(sessionId, 单)
+        单.set(queueId, { text: data, images: [...(images ?? [])], 预览: await 缩成预览(附图), behavior: behavior! })
+      }
       try {
-        sessions.write(sessionId, 带前缀, as, 附图, behavior)
+        sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)
         // **写成功了才清**：写失败（没租约、会话不在）时那几段还得留着，下一次再带
         不在场缓冲.delete(sessionId)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
         // 事件流是对话的唯一事实来源，两条路各写一半迟早对不上。
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。
-        if (as === "user") {
+        if (as === "user" && queueId) {
+          // 转录与记账都等 `queue_delivered`；名字照定（会话一般早有名字，这里只是不漏）
+          const title = deriveSessionTitle(data)
+          if (title) projects.setSessionTitle(sessionId, title)
+        } else if (as === "user") {
           /**
            * **第一句话定名字**（2026-08-10）。写在这里而不是运行时里：
            * 这是「会话」这个记录的属性，与哪种运行时无关——
@@ -2960,6 +3032,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           runRecorder?.beginTurn(sessionId, 这一轮叫什么(sessionId))
         }
       } catch (err) {
+        if (queueId) 取存根(sessionId, queueId)
         /**
          * **按原因分错误码,别一律压成 conflict**(审查 debug F6)。此前 `sessions.write` 抛的三类
          * ——租约被别人拿着、会话未在本进程激活、这段会话收不下图片——全被报成 `conflict`,
@@ -2981,17 +3054,45 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       baselines.delete(sessionId)
       // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
       不在场缓冲.delete(sessionId)
+      待发存根.delete(sessionId)
       return {}
     },
 
     abortSession: async ({ sessionId }) => {
+      /**
+       * **先把排着的撤下来交回界面，再中止**（2026-09-23）。停止是「这一轮不做了」——
+       * 排在后面的不该在停下之后自己开一轮；也不能丢，界面把原文与原图放回输入框。
+       */
+      const withdrawn = sessions.clearQueue(sessionId).flatMap((id) => {
+        const 它 = 取存根(sessionId, id)
+        return 它 ? [{ text: 它.text, ...(它.images.length ? { images: 它.images } : {}) }] : []
+      })
       try {
         await sessions.abort(sessionId)
       } catch (err) {
         // 「运行时不支持中止」是业务性失败，界面要能分辨并提示去终端按 Ctrl-C
         throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
-      return {}
+      return withdrawn.length ? { withdrawn } : {}
+    },
+
+    /**
+     * 撤回一条待发 / 改插队（2026-09-23）。那条已经不在单上 → `not_found`（多半刚好送出去了），界面要说出来。
+     */
+    editQueue: async ({ sessionId, id, action }) => {
+      const 它 = 待发存根.get(sessionId)?.get(id)
+      if (!它) throw fault("not_found", "这条已经不在待发单上了——多半刚好送出去了")
+      try {
+        sessions.editQueue(sessionId, id, action, "user")
+      } catch (err) {
+        const 消息 = err instanceof Error ? err.message : String(err)
+        if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
+        if (/不在待发单|未在本进程|未启动/.test(消息)) throw fault原样("not_found", 消息)
+        throw fault原样("invalid_request", 消息)
+      }
+      if (action !== "remove") return {}
+      取存根(sessionId, id)
+      return { withdrawn: { text: 它.text, ...(它.images.length ? { images: 它.images } : {}) } }
     },
 
     /**

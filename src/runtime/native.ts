@@ -284,11 +284,26 @@ interface NativeSession {
    * pi 自己不管这件事，模型退化时会一路烧到迭代上限。
    */
   stuck: StuckGuard
+  /**
+   * **待发单的镜像**（2026-09-23，学自 Codex）。
+   *
+   * 真正的队列在 pi 那儿（模型读的是那份），镜像只记 pi 没记的：我们的 id、原图、送进去时的原文——
+   * 撤回或改插队要 `clearQueue()` 之后按原样重送，而 pi 的单子里只剩展开过的文字、没有图。
+   * **先后与「送到了没有」一律以 pi 的 `queue_update` 为准**（见 `对账待发`）。
+   */
+  待发: { id: string; 文: string; 图: readonly ImageAttachment[] | undefined; 送法: 送法 }[]
+  /** pi 上一次报的两张单子各有几条。**只认变短**——变短才是「送走了」 */
+  pi待发: { steer: number; followUp: number }
+  /** 我们自己在 `clearQueue()`：那次变短不是送到，别当成送到 */
+  清队中: boolean
 }
 
 /** pi 的会话事件（结构化程度足够，但类型不从包里导出，故在此收窄） */
 interface PiEvent {
   type?: string
+  /** `queue_update` 的两张单子（展开过的文字，按 pi 送出的先后） */
+  steering?: readonly string[]
+  followUp?: readonly string[]
   toolCallId?: string
   toolName?: string
   args?: unknown
@@ -1359,6 +1374,9 @@ export class NativeRuntime implements AgentRuntime {
       usageIndexReported: undefined,
       sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
+      待发: [],
+      pi待发: { steer: 0, followUp: 0 },
+      清队中: false,
     })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     this.发会话开关(spec.sessionId)
@@ -1534,6 +1552,11 @@ export class NativeRuntime implements AgentRuntime {
      */
     this.emitUsageIfNew(sessionId)
 
+    if (e.type === "queue_update") {
+      this.对账待发(sessionId, e.steering?.length ?? 0, e.followUp?.length ?? 0)
+      return
+    }
+
     /**
      * **模型调用失败要出声**（规格 7.5，2026-08-10）。
      *
@@ -1676,8 +1699,8 @@ export class NativeRuntime implements AgentRuntime {
    * 是同步的——调用方是租约守卫，它只负责「准不准写」，不该被一轮对话阻塞。
    * 失败经事件流出声，不静默吞。
    */
-  write(sessionId: SessionId, data: string, behavior?: 送法): void {
-    this.送一轮(sessionId, data, undefined, behavior)
+  write(sessionId: SessionId, data: string, behavior?: 送法, queueId?: string): void {
+    this.送一轮(sessionId, data, undefined, behavior, queueId)
   }
 
   /**
@@ -1692,6 +1715,7 @@ export class NativeRuntime implements AgentRuntime {
     data: string,
     images: readonly ImageAttachment[],
     behavior?: 送法,
+    queueId?: string,
   ): void {
     /**
      * **模型收不了图就当场说，不许让 pi 把它悄悄丢掉**（协议 4.12，2026-08-13）。
@@ -1722,7 +1746,7 @@ export class NativeRuntime implements AgentRuntime {
      */
     const 明确不收 = Array.isArray(model?.input) && !model.input.includes("image")
     if (!明确不收) {
-      this.送一轮(sessionId, data, images, behavior)
+      this.送一轮(sessionId, data, images, behavior, queueId)
       return
     }
 
@@ -1744,7 +1768,7 @@ export class NativeRuntime implements AgentRuntime {
         sessionId,
         text: `模型 ${model.id} 的目录里没有声明支持图片，这 ${images.length} 张可能不会被它看到。`,
       })
-      this.送一轮(sessionId, data, images, behavior)
+      this.送一轮(sessionId, data, images, behavior, queueId)
       return
     }
     void 描述图片(端点, images)
@@ -1759,7 +1783,7 @@ export class NativeRuntime implements AgentRuntime {
 [以下是随消息附上的 ${images.length} 张图片，由视觉模型 ${端点.model} 转述]
 ${描述}`
         // **图仍然带着**：转录里人要看得见原图；pi 那边不收就丢，无所谓
-        this.送一轮(sessionId, 并入, images, behavior)
+        this.送一轮(sessionId, 并入, images, behavior, queueId)
       })
       .catch((e: unknown) => {
         this.emit({
@@ -1767,7 +1791,7 @@ ${描述}`
           sessionId,
           text: `视觉转述失败（${e instanceof Error ? e.message : String(e)}），这一轮按原样发出，模型 ${model.id} 可能看不到那 ${images.length} 张图。`,
         })
-        this.送一轮(sessionId, data, images, behavior)
+        this.送一轮(sessionId, data, images, behavior, queueId)
       })
   }
 
@@ -1776,6 +1800,8 @@ ${描述}`
     data: string,
     images?: readonly ImageAttachment[],
     behavior?: 送法,
+    /** 有它才进待发单（2026-09-23）：后端据此把这句话的转录推迟到真送到的那一刻 */
+    queueId?: string,
   ): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
@@ -1802,14 +1828,29 @@ ${描述}`
      * 会直接抛错——那时人打的那句话就没了。
      */
     if (s.inFlight > 0) {
+      const 送法 = behavior ?? "followUp"
+      if (queueId) {
+        s.待发.push({ id: queueId, 文: data, 图: images, 送法 })
+        this.发待发单(sessionId)
+      }
       void s.session
-        .prompt(data, { ...(图 ? { images: 图 } : {}), streamingBehavior: behavior ?? "followUp" })
+        .prompt(data, { ...(图 ? { images: 图 } : {}), streamingBehavior: 送法 })
         .catch((err: unknown) => {
           const msg = err instanceof Error ? err.message : String(err)
           this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
+          // 没排进去：从镜像拿掉并出声，**不许让它在待发单上挂一辈子**
+          if (queueId && this.摘待发(s, queueId)) {
+            this.emit({ kind: "queue_failed", sessionId, id: queueId, message: msg })
+            this.发待发单(sessionId)
+          }
         })
       return
     }
+    /**
+     * **以为在忙、其实刚跑完**（人按下时还在跑，到这儿那一轮收了尾；或撤回重送时已经空闲）：
+     * 它就是新一轮的开头。先报「送到了」再开跑——转录里人那句话要排在回复前面。
+     */
+    if (queueId) this.emit({ kind: "queue_delivered", sessionId, id: queueId, newTurn: true })
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
     s.stuck.reset()
     s.inFlight += 1
@@ -2249,7 +2290,99 @@ ${描述}`
   }
 
   async abort(sessionId: SessionId): Promise<void> {
+    /**
+     * **先撤待发单，再中止**（2026-09-23）。反过来的话，中止与撤单之间 pi 可能把一条插队送进去、
+     * 又开一段；而且 pi 中止之后不再续跑，排着的那几条就永远卡在它的队列里。
+     * 界面的「停止」会先走 `clearQueue` 把原文要回去；走到这里还剩的（卡死守卫的自动中止）要出声。
+     */
+    for (const id of this.clearQueue(sessionId)) {
+      this.emit({ kind: "queue_failed", sessionId, id, message: "这一轮被中止了，这句还排着、没有送出去" })
+    }
     await this.sessions.get(sessionId)?.session.abort()
+  }
+
+  /**
+   * pi 报了一次待发单（`queue_update`）。**变短了才是送走了**：
+   * pi 从头送、按文字摘第一条，所以从镜像同一张单子的头上摘掉相应条数。
+   * 变长不管——镜像先进、pi 的输入处理异步后到，那一瞬 pi 比镜像短不代表送到了。
+   */
+  private 对账待发(sessionId: SessionId, steer: number, followUp: number): void {
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    const 之前 = s.pi待发
+    s.pi待发 = { steer, followUp }
+    if (s.清队中) return
+    let 变了 = false
+    for (const [送法, 少了] of [
+      ["steer", 之前.steer - steer],
+      ["followUp", 之前.followUp - followUp],
+    ] as const) {
+      for (let k = 0; k < 少了; k++) {
+        const i = s.待发.findIndex((x) => x.送法 === 送法)
+        if (i < 0) break
+        const [送走的] = s.待发.splice(i, 1)
+        this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })
+        变了 = true
+      }
+    }
+    if (变了) this.发待发单(sessionId)
+  }
+
+  private 发待发单(sessionId: SessionId): void {
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    // **按 pi 真正送出的先后排**：插队的那张单子总在排队的前面送
+    const 先后 = [...s.待发.filter((x) => x.送法 === "steer"), ...s.待发.filter((x) => x.送法 === "followUp")]
+    this.emit({ kind: "queue", sessionId, items: 先后.map((x) => ({ id: x.id, behavior: x.送法 })) })
+  }
+
+  private 摘待发(s: NativeSession, id: string): boolean {
+    const i = s.待发.findIndex((x) => x.id === id)
+    if (i < 0) return false
+    s.待发.splice(i, 1)
+    return true
+  }
+
+  /** 清掉 pi 那份与镜像，返回镜像（原先后）。`清队中` 挡住这次变短被当成「送到」 */
+  private 清空待发(s: NativeSession): NativeSession["待发"] {
+    const 原来 = s.待发
+    s.待发 = []
+    s.清队中 = true
+    try {
+      s.session.clearQueue()
+    } finally {
+      s.清队中 = false
+    }
+    s.pi待发 = { steer: 0, followUp: 0 }
+    return 原来
+  }
+
+  /**
+   * 撤回一条 / 把一条排队改成插队（2026-09-23）。
+   *
+   * pi 只有「全部清掉」，没有「动其中一条」——所以清掉之后**按原先后重送一遍**。
+   * 先插队后排队（pi 本来就是两张单子，插队的总在排队的前面送）。
+   * 重送走 `送一轮` 同一条路：此刻已经空闲的话，第一条开新一轮、其余排在它后面。
+   */
+  editQueue(sessionId: SessionId, id: string, action: "remove" | "steer"): void {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    if (!s.待发.some((x) => x.id === id)) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
+    const 原来 = this.清空待发(s)
+    const 留下 = 原来
+      .filter((x) => !(action === "remove" && x.id === id))
+      .map((x) => (x.id === id ? { ...x, 送法: "steer" as const } : x))
+    const 重送 = [...留下.filter((x) => x.送法 === "steer"), ...留下.filter((x) => x.送法 === "followUp")]
+    this.发待发单(sessionId)
+    for (const x of 重送) this.送一轮(sessionId, x.文, x.图, x.送法, x.id)
+  }
+
+  clearQueue(sessionId: SessionId): string[] {
+    const s = this.sessions.get(sessionId)
+    if (!s || s.待发.length === 0) return []
+    const 原来 = this.清空待发(s)
+    this.发待发单(sessionId)
+    return 原来.map((x) => x.id)
   }
 
   /**

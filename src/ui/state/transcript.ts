@@ -8,7 +8,7 @@
  * 并由 `guard()` 保证飞行中的旧请求不会把内容倒灌回来。
  */
 import { atom, computed } from "nanostores"
-import type { TranscriptItem, TeamSnapshot, KernelState } from "../../protocol/index.js"
+import type { TranscriptItem, TeamSnapshot, KernelState, QueuedMessage } from "../../protocol/index.js"
 import { sameList, setList, setValue, shallowEqual } from "./identity.js"
 import { invalidate } from "./guard.js"
 import { cells as 转录里的cells, type Cell } from "../../protocol/notebook-cells.js"
@@ -160,6 +160,8 @@ export function applySnapshot(snap: {
    * 都在这里收口才不会有第三条路忘了带。
    */
   kernels?: readonly KernelState[] | undefined
+  /** 待发单（2026-09-23）。缺省 = 没有待发 */
+  queued?: readonly QueuedMessage[] | undefined
 }): void {
   setItems(snap.items)
   const term = snap.terminal ? [snap.terminal] : []
@@ -170,6 +172,7 @@ export function applySnapshot(snap: {
   $会话开关.set(snap.configOptions)
   $团队.set(snap.team)
   setValue($kernels, snap.kernels)
+  setQueued(snap.queued)
 }
 
 /** 一次还没结果的权限询问（A2）。**选项原样来自 agent** */
@@ -209,6 +212,15 @@ export const $会话开关 = atom<readonly 会话开关[] | undefined>(undefined
 export const $团队 = atom<TeamSnapshot | undefined>(undefined)
 export function setTeam(t: TeamSnapshot | undefined): void {
   $团队.set(t)
+}
+
+/**
+ * 当前会话还排着、没送进模型的话（2026-09-23，学自 Codex）。作用域 = 正在看的那一段；切会话清掉。
+ * 空单与缺省同义（都画不出东西）——统一存成空数组，读的人少一种情形。
+ */
+export const $待发 = atom<readonly QueuedMessage[]>([])
+export function setQueued(q: readonly QueuedMessage[] | undefined): void {
+  setList($待发, q ?? [])
 }
 
 /**
@@ -261,5 +273,7 @@ export function resetTranscript(): void {
   $团队.set(undefined)
   // 内核状态也跟着走：它没有单独的取清单操作，靠下一次快照重新灌（笔记本，2026-08-26）
   setValue($kernels, undefined)
+  // 待发单也跟着走：那几句话是那一段的，挂在别的会话上面点「撤回」会撤错地方
+  setQueued(undefined)
   invalidate()
 }

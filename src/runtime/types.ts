@@ -297,6 +297,18 @@ export type AgentEvent =
   /** 这段会话的团队变了（team-board，2026-08-22）。整份快照；真相在磁盘，这只是搬一份给界面 */
   | { kind: "team_changed"; sessionId: SessionId; team: import("../protocol/events.js").TeamSnapshot }
   /**
+   * **待发单变了**（2026-09-23，学自 Codex）：整份换掉，按 pi 真正送进模型的先后排。
+   * 只带 id 与送法——原文与预览在后端的存根里（运行时只认得送给模型的那份）。
+   */
+  | { kind: "queue"; sessionId: SessionId; items: readonly { id: string; behavior: 送法 }[] }
+  /**
+   * **这一条真送到模型了**。`newTurn` 为真 = 它开了新的一轮（写的时候以为在忙、到这儿已经跑完了，
+   * 或者撤回/改插队重送时刚好空闲）；为假 = 在进行中的这一轮里被 pi 取走。
+   */
+  | { kind: "queue_delivered"; sessionId: SessionId; id: string; newTurn: boolean }
+  /** 这一条没能送出去（重送时 pi 抛错、或这一轮被中止时它还排着）。**不许悄悄丢**——后端据此出声 */
+  | { kind: "queue_failed"; sessionId: SessionId; id: string; message: string }
+  /**
    * **一整轮真正结束**（用户发话 → 若干次模型响应与工具执行 → 收工）。
    *
    * 与 `turn_end` 不是一回事，这是 2026-08-09 真机实测才看清的：
@@ -462,7 +474,7 @@ export interface AgentRuntime {
    *   **不忙时这个参数没有意义**，忙时缺席读作 `followUp`——
    *   排队不会丢消息，而 pi 在流式中没有 behavior 会直接抛错。
    */
-  write(sessionId: SessionId, data: string, behavior?: 送法): void
+  write(sessionId: SessionId, data: string, behavior?: 送法, queueId?: string): void
   /**
    * 带图片的一轮（协议 4.12，2026-08-13）。
    *
@@ -481,7 +493,19 @@ export interface AgentRuntime {
     data: string,
     images: readonly ImageAttachment[],
     behavior?: 送法,
+    queueId?: string,
   ): void
+  /**
+   * 动一条还在排着的消息（2026-09-23）。**只有 native 有**——有没有它就是「这类会话有没有待发单」的判据。
+   *
+   * 带了 `queueId` 的 `write` 才进待发单：忙着就排进 pi，emit `queue`；不忙就当场开一轮并 emit
+   * `queue_delivered newTurn: true`。送到时 emit `queue_delivered`。
+   *
+   * @throws 那条已经不在单上（多半是刚好被 pi 送走了）
+   */
+  editQueue?(sessionId: SessionId, id: string, action: "remove" | "steer"): void
+  /** 把排着的全部撤下来，返回它们的 id（按原先后）。中止之前先调它：停下之后排着的话不该自己冒出来 */
+  clearQueue?(sessionId: SessionId): string[]
   /**
    * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。

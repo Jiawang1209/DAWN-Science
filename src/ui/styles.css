@@ -4502,6 +4502,59 @@ pre {
 }
 
 /**
+ * **待发条**（2026-09-23，学自 Codex）：还排着、没送进模型的话，贴在输入卡正上方。
+ * 用附栏那一档灰：它是「准备中」的东西，不是已经发生的对话，也不是正在写的这一句。
+ * 按钮常驻、带字——悬停才出现的东西等于不存在。
+ */
+.queued-strip {
+  margin: 0 var(--dawn-space-3) var(--dawn-space-1);
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  border-radius: var(--dawn-radius-md);
+  corner-shape: var(--dawn-corner-shape);
+  background: var(--dawn-surface-sidebar);
+  border: 1px solid var(--dawn-stroke-1);
+}
+.queued-head {
+  margin: 0 0 var(--dawn-space-1);
+  font-size: var(--dawn-fs-meta);
+  color: var(--dawn-text-3);
+}
+.queued-strip ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.queued-one {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  min-width: 0;
+}
+.queued-tag {
+  flex: 0 0 auto;
+  font-size: var(--dawn-fs-badge);
+  color: var(--dawn-text-3);
+}
+/* 插队中的那条：它下一步就会进去——跟主题色走（活着的状态跟主题色，主题色 spec） */
+.queued-one.steer .queued-tag { color: var(--dawn-accent); }
+.queued-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dawn-text-1);
+}
+.queued-imgs {
+  flex: 0 0 auto;
+  font-size: var(--dawn-fs-meta);
+  color: var(--dawn-text-3);
+}
+
+/**
  * MCP 那一屏的几样（2026-08-15）。
  *
  * 复用技能屏的 `.skill-list` / `.skill` 骨架——**两屏说的是同一类事**

@@ -54,6 +54,7 @@ export type {
 
 export {
   KernelStateSchema,
+  QueuedMessageSchema,
   RemoteListChangedSchema,
   RemoteUpdateSchema,
   UpdatePushSchema,
@@ -63,6 +64,7 @@ export {
 } from "./events.js"
 export type {
   KernelState,
+  QueuedMessage,
   RemoteListChanged,
   RemoteUpdate,
   SessionSnapshot,

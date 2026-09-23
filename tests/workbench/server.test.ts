@@ -58,6 +58,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     setUpdatePrefs: async () => 更新桩,
     downloadUpdate: async () => 更新桩,
     cancelUpdate: async () => 更新桩,
+    editQueue: async () => ({}),
     applyUpdate: async () => 更新桩,
     fetchLocalImage: async () => ({ mediaType: "image/png", base64: "" }),
     openProject: async () => project,

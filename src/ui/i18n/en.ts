@@ -375,8 +375,16 @@ export const EN: Readonly<Record<string, string>> = {
   "读不到子 agent": "Cannot read subagents",
   "会话已结束": "This chat has ended",
   "插队": "Interject",
-  "回车插队 · Cmd/Ctrl+回车排到这一轮后面":
-    "Enter interjects · Cmd/Ctrl+Enter queues it after this turn",
+  "回车排到这一轮后面 · Cmd/Ctrl+回车插队":
+    "Enter queues it after this turn · Cmd/Ctrl+Enter interjects",
+  "排到后面": "Queue after this turn",
+  "这条已经不在待发单上了——多半刚好送出去了": "That message is no longer queued — it was most likely just sent",
+  "取回": "Take back",
+  "待发": "Queued",
+  "待发 · {0}": "Queued · {0}",
+  "插队中": "next step",
+  "排队中": "after this turn",
+  "{0} 张图": "{0} image(s)",
   "配置里还没有可用的 agent": "No usable agent in the config yet",
   "还没有可用的 agent": "No usable agent yet",
   "配置文件里没有 agent，或它需要的 API key 还没填。":

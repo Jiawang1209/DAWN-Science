@@ -145,6 +145,41 @@ export function carryDraft(
 }
 
 /** 发出去之后清掉。**只清这一个会话的** */
+/** 待发单上撤下来的一张图（2026-09-23）：与 `writeToSession` 收的同形——原路径或原字节 */
+export type 退回的图 = { from: "path"; path: string } | { from: "bytes"; data: string; mimeType: string }
+
+/**
+ * 撤下来的图，按会话暂放，等那段会话的输入框来领（2026-09-23）。**key 就是作用域**，与 `$drafts` 同一条。
+ * 图是输入框自己的本地状态（带名字与预览），外面够不着——所以放在这儿、由它领走。
+ */
+export const $退回的图 = atom<Readonly<Record<string, readonly 退回的图[]>>>({})
+
+/**
+ * **撤回 / 停止时排着的话放回输入框**（2026-09-23，学自 Codex）。
+ * 框里已经有字就接在后面、中间空一行——人刚打的那句不能被盖掉。
+ */
+export function 退回输入框(sessionId: string, 话们: readonly { text: string; images?: readonly 退回的图[] | undefined }[]): void {
+  if (话们.length === 0) return
+  const 原有 = draftOf(sessionId)
+  const 文 = [原有, ...话们.map((x) => x.text)].filter((x) => x.trim()).join("\n\n")
+  setDraft(sessionId, 文)
+  const 图 = 话们.flatMap((x) => x.images ?? [])
+  if (图.length === 0) return
+  const prev = $退回的图.get()
+  $退回的图.set({ ...prev, [sessionId]: [...(prev[sessionId] ?? []), ...图] })
+}
+
+/** 输入框领走退回的图。领了就没了 */
+export function 领退回的图(sessionId: string): readonly 退回的图[] {
+  const prev = $退回的图.get()
+  const 它 = prev[sessionId]
+  if (!它) return []
+  const next = { ...prev }
+  delete next[sessionId]
+  $退回的图.set(next)
+  return 它
+}
+
 export function clearDraft(sessionId: string): void {
   const prev = $drafts.get()
   if (!(sessionId in prev)) return

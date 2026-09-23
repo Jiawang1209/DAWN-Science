@@ -16,7 +16,8 @@ import { 在组词 } from "./ime.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
-import { $items, type 会话开关 } from "./state/transcript.js"
+import { $items, $待发, type 会话开关 } from "./state/transcript.js"
+import { 待发条 } from "./queued-strip.js"
 import {
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_MIN,
@@ -27,7 +28,7 @@ import type { TranscriptItem } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
-import { $drafts, $slashItems, clearDraft, setDraft, togglePalette } from "./state/view.js"
+import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 领退回的图 } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
@@ -3749,6 +3750,7 @@ export function ConversationView({
   onSend,
   onPickModel,
   onAbort,
+  onEditQueue,
   disabled,
   terminalTrimmed,
   kernelInstanceId,
@@ -3872,6 +3874,8 @@ export function ConversationView({
   ) => void | Promise<void>
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
+  /** 待发单上那两颗：取回 / 改插队（2026-09-23）。只有 native 有待发单 */
+  onEditQueue?: ((id: string, action: "remove" | "steer") => Promise<void>) | undefined
   /** 导出这段对话为 markdown（codex-polish ④）。回落到哪了，好说给人 */
   onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
   /** 输入卡上那颗权限（2026-08-23）：这一段的档、是否跟着默认、选了怎么办 */
@@ -4076,13 +4080,33 @@ export function ConversationView({
    */
   const [发过几次, 设发过几次] = useState(0)
   /**
-   * 这一次提交要的是**排队**还是**插队**（2026-08-15）。
+   * 这一次提交要的是**插队**还是**排队**（2026-08-15；2026-09-23 对调）。
    *
    * **用 ref 不用 state**：`requestSubmit()` 是同步的，提交处理器紧接着就跑，
    * 而 state 要等下一次渲染才更新——那时这一条早就发出去了。
-   * 每次提交后清回 false：默认是插队（回车），排队要按住 Cmd/Ctrl。
+   * 每次提交后清回 false：**默认是排队（回车），插队要按住 Cmd/Ctrl**——
+   * 作者 09-23 选的（学自 Codex）：回车只是把话挂上去，打断 agent 要是看清之后的主动选择。
    */
-  const 排队ref = useRef(false)
+  const 插队ref = useRef(false)
+  const 待发 = useStore($待发)
+  /**
+   * **取回 / 停止时撤下来的图，这个框来领**（2026-09-23）。字走 `$drafts`（外面够得着），
+   * 图是这里的本地状态（带名字与预览），只能由这里领走。
+   */
+  const 退回的图 = useStore($退回的图)[session.sessionId]
+  useEffect(() => {
+    if (!退回的图) return
+    const 图 = 领退回的图(session.sessionId)
+    if (图.length === 0) return
+    设待发图((前) => [
+      ...前,
+      ...图.map((x): 待发的图 =>
+        x.from === "path"
+          ? { ...x, 名: 基名(x.path) }
+          : { ...x, 名: "粘贴的图片", 预览: `data:${x.mimeType};base64,${x.data}` },
+      ),
+    ])
+  }, [退回的图, session.sessionId])
   const 斜杠单 = useStore($slashItems)
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
@@ -4610,10 +4634,10 @@ export function ConversationView({
            * 而不是内部那个布尔值：内核会话的 `busy` 恒为真却从不显示「停止」，
            * 上一版只写 `busy` 当场误伤了它，两条内核 e2e 全红。
            */
-          const 要排队 = 排队ref.current
-          排队ref.current = false
+          const 要插队 = 插队ref.current
+          插队ref.current = false
           const 忙着 = busy && !!onAbort
-          const 送法 = 忙着 ? (要排队 ? ("followUp" as const) : ("steer" as const)) : undefined
+          const 送法 = 忙着 ? (要插队 ? ("steer" as const) : ("followUp" as const)) : undefined
 
           /**
            * **乐观清空，失败还回去。**
@@ -4698,6 +4722,9 @@ export function ConversationView({
          * 聚焦环因此挂在**卡**上（`:focus-within`）而不是 textarea 上：
          * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
+        {onEditQueue ? (
+          <待发条 items={待发} onEdit={onEditQueue} onError={设发送出错} />
+        ) : null}
         <div className="composer-card">
         <div className="composer-box">
           {/**
@@ -4871,12 +4898,13 @@ export function ConversationView({
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
                 /**
-                 * **Cmd/Ctrl+回车 = 排队，光回车 = 插队**（2026-08-15，学自 Hermes）。
+                 * **光回车 = 排队，Cmd/Ctrl+回车 = 插队**（2026-08-15 学自 Hermes 时是反的；
+                 * 2026-09-23 作者照 Codex 对调：回车不该一手快就打断 agent 正在做的事）。
                  *
                  * 记在 ref 上而不是靠事件传下去：这里走的是 `requestSubmit()`，
                  * 提交处理器收到的是 `SubmitEvent`，**按了什么键在那儿已经问不出来了**。
                  */
-                排队ref.current = e.metaKey || e.ctrlKey
+                插队ref.current = e.metaKey || e.ctrlKey
                 e.currentTarget.form?.requestSubmit()
                 return
               }
@@ -5033,7 +5061,7 @@ export function ConversationView({
             * 所以忙着、且框里有东西时，就在这儿明写一行。
             */}
           {busy && onAbort && 有东西要发 ? (
-            <p className="caveat composer-hint">{t("回车插队 · Cmd/Ctrl+回车排到这一轮后面")}</p>
+            <p className="caveat composer-hint">{t("回车排到这一轮后面 · Cmd/Ctrl+回车插队")}</p>
           ) : null}
           <div className="composer-controls">
             <span className="composer-gap" aria-hidden="true" />
@@ -5115,7 +5143,7 @@ export function ConversationView({
                 type="submit"
                 variant="primary"
                 className="send-btn"
-                aria-label={t("插队")}
+                aria-label={t("排到后面")}
                 disabled={disabled ?? false}
               >
                 <上箭头图标 />

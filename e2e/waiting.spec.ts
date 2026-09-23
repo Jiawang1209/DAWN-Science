@@ -344,7 +344,7 @@ test("**复制之后旁边弹出提示，而按钮宽度不变**", async ({ dawn
  *
  * ## 为什么不是「按钮已经够了」
  *
- * 那颗按钮**框里一有字就变成「插队」了**（2026-08-15 学 Hermes 定的，
+ * 那颗按钮**框里一有字就变成「插队」了**（2026-08-15 学 Hermes 定的；09-23 起叫「排到后面」，
  * 理由是打了字的人按下去不该把自己的话丢掉）。代价当时就写清楚了：
  * **想停下来的人得先把自己打的字删干净。** Esc 补的正是这条路——
  * 它不看框里有没有东西。
@@ -375,10 +375,10 @@ test.describe("Esc 中断", () => {
       timeout: 5_000,
     })
 
-    // 打第二句：那颗按钮此刻是「插队」，**没有「停止」可按了**
+    // 打第二句：那颗按钮此刻是「排到后面」（09-23 前叫「插队」），**没有「停止」可按了**
     await 框.fill("这半句还没发")
     await expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
-    await expect(page.getByRole("button", { name: "插队", exact: true })).toBeVisible()
+    await expect(page.getByRole("button", { name: "排到后面", exact: true })).toBeVisible()
 
     await 框.press("Escape")
 

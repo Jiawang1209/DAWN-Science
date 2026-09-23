@@ -81,7 +81,7 @@ import { AttachUsagePanel } from "./attach-panel.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import type { 会话额外动作 } from "./views.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
-import { setSlashItems, type SlashItem } from "./state/view.js"
+import { setSlashItems, 退回输入框, type SlashItem, type 退回的图 } from "./state/view.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -92,7 +92,7 @@ import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts } from "./state/sync.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
-import { $kernels, setKernels as setKernelsAtom } from "./state/transcript.js"
+import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
 import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
 import { 对话agent顺序 } from "./agent-order.js"
@@ -212,6 +212,9 @@ import {
 } from "./state/index.js"
 
 import { t, tf, $lang } from "./i18n/index.js"
+
+/** 从待发单上撤下来的一句话（协议 `abortSession` / `editQueue` 的 `withdrawn`） */
+type 撤回的话 = { text: string; images?: 退回的图[] }
 
 /**
  * @param injected 测试注入点。**不要写成默认参数** `client = createClient()`——
@@ -614,12 +617,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             team: u.snapshot.team,
             // 内核状态（笔记本，2026-08-26）。缺省 = 还没有内核，不是「不陈旧」——与 kernelInstanceId 同一条理由
             kernels: u.snapshot.kernels,
+            queued: u.snapshot.queued,
           })
         }
         // 团队变了（team-board）：整份换掉
         if (u.type === "team") setTeam(u.team)
         // 内核状态变了（笔记本，2026-08-26）：与 team 同一条纪律，整份换掉
         if (u.type === "kernels") setKernelsAtom(u.kernels)
+        // 待发单变了（2026-09-23）：同一条纪律，整份换掉
+        if (u.type === "queued") setQueued(u.queued)
         // 产物变了（2026-08-26）：只说变了，清单重拉
         // 只认当前会话的：别的会话变了不拉——拉回来也会被身份守卫丢掉，白打一次 IPC
         if (u.type === "artifactsChanged" && u.sessionId === $activeSessionId.get()) void loadArtifacts(client, u.sessionId)
@@ -3168,7 +3174,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       },
       abort: () => {
         if (!session) return
-        client.get("abortSession", { sessionId: session.sessionId }).catch(fail)
+        const id = session.sessionId
+        // 停下时还排着的话交回来，放回输入框（2026-09-23）：停止是「这一轮不做了」，不是「把我排着的话扔了」
+        client
+          .get<{ withdrawn?: 撤回的话[] }>("abortSession", { sessionId: id })
+          .then((r) => 退回输入框(id, r.withdrawn ?? []))
+          .catch(fail)
       },
       setTheme,
     }),
@@ -4447,6 +4458,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  */
                 onAbort={
                   session.kind === "native" || session.kind === "acp" ? actions.abort : undefined
+                }
+                /** 待发单上那两颗（2026-09-23）：撤回的原文与原图放回这段会话的输入框 */
+                onEditQueue={(id, action) =>
+                  client
+                    .get<{ withdrawn?: 撤回的话 }>("editQueue", { sessionId: session.sessionId, id, action })
+                    .then((r) => {
+                      if (r.withdrawn) 退回输入框(session.sessionId, [r.withdrawn])
+                    })
                 }
                 onSend={(text, images, behavior) =>
                   // **不做本地乐观追加**：事件流是对话的唯一事实来源。

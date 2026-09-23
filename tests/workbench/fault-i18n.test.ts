@@ -224,7 +224,8 @@ const 原样透传名单: Record<string, number> = {
   "err.message": 3,
   "e.message": 5,
   "r.why": 3,
-  "消息": 5,
+  // 5 → 8（待发，2026-09-23）：`editQueue` 与 `writeToSession` 同一副分码——运行时的话原样转述
+  "消息": 8,
   "毛病": 2,
   "msg": 1,
 }

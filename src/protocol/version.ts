@@ -525,8 +525,13 @@
  *
  * 7.35（2026-09-21）：`listKnownProviders` 新增可选 `anthropicProtocol`——整家都走 Anthropic 协议的 provider。
  *   pi 0.86 起这条协议的地址不能带 `/v1`（SDK 自己拼 `/v1/messages`），设置页据此提醒。纯新增，故 minor。
+ *
+ * 7.36（2026-09-23）：待发单（学自 Codex，spec `2026-09-23-待发消息-design.md`）。新增操作 `editQueue`（取回 / 改插队）、
+ *   会话快照可选 `queued` 与更新 `queued`、`abortSession` 响应可选 `withdrawn`（停下时排着的话交回界面）。
+ *   **语义有一处变了**：native 会话忙着时 `writeToSession` 带 `behavior` 的那句话，不再在写的一刻进转录，
+ *   而是真送到模型时才进。线上形状全是新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.35"
+export const WORKBENCH_PROTOCOL_VERSION = "7.36"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

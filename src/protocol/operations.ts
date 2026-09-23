@@ -138,6 +138,21 @@ const ByProject = z.object({ projectId: z.string().min(1) })
 /** 写权持有者。与 ①-A 的 `Holder` 同构。 */
 const HolderSchema = z.enum(["engine", "user"])
 
+/** 从待发单上撤下来的一句话（2026-09-23）：交回界面的是**原文与原图**，与 `writeToSession` 收的同形 */
+const 撤回的话 = z
+  .object({
+    text: z.string(),
+    images: z
+      .array(
+        z.discriminatedUnion("from", [
+          z.object({ from: z.literal("path"), path: z.string().min(1) }).strict(),
+          z.object({ from: z.literal("bytes"), data: z.string().min(1), mimeType: z.string().min(1) }).strict(),
+        ]),
+      )
+      .optional(),
+  })
+  .strict()
+
 /* ── 定时任务的形状（7.19） ── */
 const 时间HHmm = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
 export const ScheduleSpecSchema = z.discriminatedUnion("kind", [
@@ -1517,8 +1532,11 @@ export const OPERATIONS = {
        * - `followUp` **排队**：等这一轮再没有工具调用与插队消息了才送。
        *
        * 我们**不自己造队列**——pi 原生就有这两条，重写一份是
-       * 「学会了，自己写一个」。放弃的是「排队中那条可以编辑/撤回」：
-       * 交给 pi 之后要不回来。
+       * 「学会了，自己写一个」。取回与改插队（7.36）也是坐在 pi 上的：
+       * `clearQueue()` 之后按原样重送，见 `editQueue`。
+       *
+       * **native 会话忙着时，这一句不在写的一刻进转录**（7.36）：它先进待发单（快照的 `queued`），
+       * 真送到模型那一刻才作为一条用户发言出现——位置就是模型读到它的位置。
        *
        * **不忙时这个字段没有意义**（照常起新的一轮）；忙时**缺席读作
        * `followUp`**——排队不丢消息，而 pi 在流式中没有 behavior 会直接抛错，
@@ -1587,7 +1605,27 @@ export const OPERATIONS = {
    */
   abortSession: {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
-    response: Empty,
+    /**
+     * `withdrawn`（2026-09-23）：停下时还排着的话，**原文与原图**按原先后交回——
+     * 停止是「这一轮不做了」，排在后面的不该自己冒出来开新一轮；也不能丢，界面把它们放回输入框。
+     * 缺省 = 没有排着的。
+     */
+    response: z.object({ withdrawn: z.array(撤回的话).optional() }).strict(),
+    mutating: true,
+  },
+  /**
+   * 动一条还排着的话（2026-09-23，学自 Codex）。**只有 native 会话有待发单**。
+   *
+   * - `remove` 撤回：从 pi 的单子上拿掉，原文与原图交回来（界面放回输入框，人改完再发）。
+   * - `steer` 改插队：这一条不等这一轮彻底完，当前工具跑完、下次调模型前就送进去。
+   *
+   * 那条已经不在单上（人按下那一刻 pi 刚好把它送走了）→ `not_found`，界面要说出来。
+   */
+  editQueue: {
+    request: z
+      .object({ sessionId: z.string().min(1), id: z.string().min(1), action: z.enum(["remove", "steer"]) })
+      .strict(),
+    response: z.object({ withdrawn: 撤回的话.optional() }).strict(),
     mutating: true,
   },
 

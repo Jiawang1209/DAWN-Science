@@ -2,7 +2,7 @@
  * 坞里那段对话挂的是谁，按「地方」记住（2026-09-24，侧边对话）。
  */
 import { describe, it, expect, beforeEach } from "vitest"
-import { $侧边会话id, $侧边地方, $侧边能读主, 侧槽, 挂进坞, 从坞拿下, 载入侧边, 侧边地方键, SIDE_SESSION_KEY } from "../../../src/ui/state/side-chat.js"
+import { $侧边会话id, $侧边地方, $侧边能读主, 侧槽, 挂进坞, 从坞拿下, 载入侧边, 侧边地方键, 能进坞, SIDE_SESSION_KEY } from "../../../src/ui/state/side-chat.js"
 
 describe("侧边会话按地方记住", () => {
   beforeEach(() => localStorage.clear())
@@ -66,5 +66,14 @@ describe("侧边会话按地方记住", () => {
     // 表没动（不知道是哪一格），换回去仍在——这是「不知道地方」唯一能诚实做到的
     载入侧边("p:1")
     expect($侧边会话id.get()).toBe("s1")
+  })
+})
+
+describe("能进坞：终端不是对话", () => {
+  it("pty 不进；原生 / acp / 没写 kind 的都进", () => {
+    expect(能进坞({ kind: "pty" })).toBe(false)
+    expect(能进坞({ kind: "native" })).toBe(true)
+    expect(能进坞({ kind: "acp" })).toBe(true)
+    expect(能进坞({})).toBe(true)
   })
 })

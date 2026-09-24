@@ -8,6 +8,20 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-24 — 侧边对话 Task 6 审查修补：「另开一段」像按钮、没地方时出声、终端不进坞、坞里 `@` 按自己的目录（分支 `side-session`）
+
+- **Type**: fix
+- **Motivation**: Task 6（dccaf24）审查抓到四条：I1 空态「另开一段」是 ghost，与下面那排会话行长得一样；
+  M1 页签右键「放进坞里」在地方未定时静默 return（违反规格 7.5）；M2 终端（pty）能经右键或「换到主区」挂进坞；
+  M3 坞里那段的 `@` 根绑在主区会话的 `文件所在` 上，远端两段目录不同时按主区的找。
+- **What**: `side-chat.tsx` 改 `variant="outline"` + `加号描边图标`；`state/side-chat.ts` 新增 `能进坞`（坞格清单、
+  页签右键、换到主区三处共用）；`session-tabs.tsx` 加 `canDock`，终端那格不开右键菜单；`App.tsx` 的 `onPutInDock`
+  没地方时 `note`、再守一道终端；`onSwap` 原主是终端时照样把坞里那段换上主区、坞空出来并说一句；
+  新增 `坞引用文件` / `坞打开引用`（同连接只换根，连接对不上不给源），`对话回调` 按槽取。en.ts 补三句。
+- **Impact**: 仅界面行为；主区的引用源不变。
+- **Verification**: 新增 `tests/ui/side-chat-view.test.tsx`（按钮样式、终端页签无右键菜单）与 `能进坞` 用例；
+  `npm run typecheck` 通过；`npx vitest run` 244 文件 3016 通过 / 10 跳过。
+
 ### 2026-09-24 — 侧边对话 Task 1：对照表与主对话摘要（纯逻辑；分支 `side-session`）
 
 - **Type**: feat

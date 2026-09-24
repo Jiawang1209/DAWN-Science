@@ -18,6 +18,8 @@ export interface 分栏项 {
   unread?: boolean | undefined
   /** 挂在坞里（侧边对话，2026-09-24）：标题后画一个「坞」——同一段只在一处，人得看得出它此刻在哪 */
   inDock?: boolean | undefined
+  /** 能不能放进坞里（终端不能，见 `能进坞`）。缺省 = 能；不能的那格不开右键菜单——菜单里只有那一项，开出来是个点了没用的菜单 */
+  canDock?: boolean | undefined
 }
 
 export function SessionTabs({
@@ -64,7 +66,7 @@ export function SessionTabs({
             data-running={x.running ? "1" : undefined}
             data-unread={x.unread ? "1" : undefined}
             data-in-dock={x.inDock ? "1" : undefined}
-            {...(onPutInDock
+            {...(onPutInDock && x.canDock !== false
               ? {
                   onContextMenu: (e: MouseEvent) => {
                     e.preventDefault()

@@ -31,6 +31,15 @@ export function 侧边地方键(s: { projectId?: string | undefined; remote?: { 
   return s.projectId ? `p:${s.projectId}` : undefined
 }
 
+/**
+ * 这一段进不进得了坞。**终端（pty）不是对话**：坞格画的是 `ConversationView`，把一段终端挂进来
+ * 只会得到一个假装能聊的空转录。坞格的「同处」清单、页签右键「放进坞里」、「换到主区」换下来的那段，
+ * 三处都认这一条——各写一遍的话，迟早一处漏了（Task 6 审查抓的：后两处就漏了）。
+ */
+export function 能进坞(s: { kind?: string | undefined }): boolean {
+  return s.kind !== "pty"
+}
+
 function 读表(): Record<string, string> {
   try {
     const v: unknown = JSON.parse(localStorage.getItem(SIDE_SESSION_KEY) ?? "{}")

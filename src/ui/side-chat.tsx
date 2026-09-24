@@ -12,6 +12,7 @@ import { useStore } from "@nanostores/react"
 import type { ComponentProps } from "react"
 import type { SessionSummary } from "../protocol/index.js"
 import { Button, Loader } from "./primitives.js"
+import { 加号描边图标 } from "./icons.js"
 import { t } from "./i18n/index.js"
 import { ConversationView } from "./views.js"
 import { 侧槽 } from "./state/side-chat.js"
@@ -55,7 +56,11 @@ export function SideChat(p: {
         ) : (
           <>
             {p.onNew ? (
-              <Button variant="ghost" size="sm" className="side-chat-new" onClick={p.onNew}>
+              /* 描边 + ＋：它下面那排会话也是按钮（ghost、静止时无底无框），「新建」若也用 ghost，
+                 看上去就是又一行标题，悬停前认不出能点（「看不见的能力等于不存在」）。
+                 ＋ 与标签栏那颗「在这里再开一段」、侧栏「新建任务」同一个图标 */
+              <Button variant="outline" size="sm" className="side-chat-new" onClick={p.onNew}>
+                <加号描边图标 className="row-icon" />
                 {t("另开一段")}
               </Button>
             ) : null}

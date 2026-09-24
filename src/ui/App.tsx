@@ -91,7 +91,7 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
-import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下 } from "./state/side-chat.js"
+import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞 } from "./state/side-chat.js"
 import { 主槽 } from "./state/transcript.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调 } from "./side-chat.js"
@@ -1913,6 +1913,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 侧边能读主 = useStore($侧边能读主)
 
   /**
+   * 坞里那段的 `@` 根（Task 6 审查 M3）。上面那对 `引用文件` / `打开引用` 绑的是**主区那段**的
+   * `文件所在`——本机项目两段共用一个工作区，没差；远端两段可以各在各的目录，坞里 `@` 就按主区的目录找了。
+   *
+   * 连接不另起一套：坞按「地方」挂，远端的地方就是那条连接，两段必在同一台机器上，`loadDir` / `searchFiles` /
+   * `openFile` 走主区那条连接是对的，只换根。**连接对不上**（切地方那一拍，坞还没跟上）：不给源——
+   * 菜单会说「没有可引用的文件」，好过拿另一台机器上的目录冒充。
+   */
+  const 坞里那段所在 = (侧边id ? [...sessions, ...tempSessions].find((x) => x.sessionId === 侧边id) : undefined)?.remote
+  const 坞的根 = 坞里那段所在?.cwd
+  const 坞连接对得上 = !坞里那段所在 || 坞里那段所在.connectionId === 文件所在?.connectionId
+  const 坞引用文件 = useMemo(
+    () => (!坞连接对得上 ? undefined : 引用文件 && 坞的根 !== undefined ? { ...引用文件, 根: 坞的根 } : 引用文件),
+    [坞连接对得上, 引用文件, 坞的根],
+  )
+  const 坞打开引用 = useCallback(
+    (path: string) => openFile(坞的根 !== undefined ? `${坞的根.replace(/\/+$/, "")}/${path}` : path),
+    [openFile, 坞的根],
+  )
+
+  /**
    * 告诉后端谁是谁的侧边（协议 7.37 `setSideSession`）。
    * **主区换会话也要重发**——「主对话」指的是此刻主区里那段（spec §2.5）。
    *
@@ -3539,8 +3559,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const currentServiceLabel = currentServiceLabelOf(s)
     const switchProblem = 换模型问题[s.sessionId]
     return {
-      引用文件,
-      onOpenReference: 打开引用,
+      // 主区那段用主区的根；坞里那段用它自己的（见 `坞引用文件`）
+      ...(槽 === 主槽 ? { 引用文件, onOpenReference: 打开引用 } : { 引用文件: 坞引用文件, onOpenReference: 坞打开引用 }),
       loadLocalImage: 读本机图,
       loadGalleryRoots: 载图廊根们,
       ...(() => {
@@ -4709,7 +4729,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
                 return (
                   <SessionTabs
-                    tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), inDock: x.sessionId === 侧边id }))}
+                    tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), inDock: x.sessionId === 侧边id, canDock: 能进坞(x) }))}
                     current={session.sessionId}
                     onPick={(id) => {
                       标未读(id, false)
@@ -4731,7 +4751,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                      */
                     onPutInDock={(id) => {
                       const 地方 = $侧边地方.get()
-                      if (!地方) return
+                      // 地方还没定（摘要没到手那一拍）：不做，但**说一句**（规格 7.5）——菜单一收什么都没发生，人只会以为没点上
+                      if (!地方) {
+                        note(坞没处说 ?? t("还没弄清这段在哪一处，稍后再放进坞里"))
+                        return
+                      }
+                      // 终端页签不开这份菜单（`canDock`）；这里再守一道，别的入口将来接进来也挂不进去
+                      const 这段 = 同处.find((x) => x.sessionId === id)
+                      if (这段 && !能进坞(这段)) {
+                        note(t("终端不是对话，放不进坞里"))
+                        return
+                      }
                       if (id === session.sessionId) {
                         const 在坞 = $侧边会话id.get()
                         const 兄弟 = 同处.find((x) => x.sessionId !== id && x.sessionId !== 在坞) ?? 同处.find((x) => x.sessionId === 在坞)
@@ -5183,7 +5213,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       ? tempSessions.filter((x) => x.remote?.connectionId === 坞的地方.slice(2))
                       : sessions.filter((x) => !x.remote && x.projectId === 坞的地方.slice(2))
                     )
-                      .filter((x) => !x.archivedAt && x.kind !== "pty" && x.sessionId !== sessionId && x.sessionId !== 侧边id)
+                      .filter((x) => !x.archivedAt && 能进坞(x) && x.sessionId !== sessionId && x.sessionId !== 侧边id)
                       .map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId) }))
                 return (
                   <SideChat
@@ -5206,8 +5236,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       const 侧 = $侧边会话id.get()
                       if (!地方 || !侧) return
                       const 原主 = $activeSessionId.get()
-                      if (原主) 挂进坞(地方, 原主)
-                      else 从坞拿下(地方)
+                      /**
+                       * 主区那段是终端（旧的铺满主区的 pty 会话）：**不挂进坞**——坞格画的是对话，挂进去是一张假转录。
+                       * 选的是「照样把坞里那段换上主区、坞空出来」而不是让按钮失灵：人按「换到主区」要的是坞里这段上主区，
+                       * 这一半照办；另一半办不到就说一句（规格 7.5），终端仍在侧栏 / 底部那条里，丢不了。
+                       */
+                      const 原主那段 = 原主 ? [...sessions, ...tempSessions].find((x) => x.sessionId === 原主) : undefined
+                      if (原主 && (!原主那段 || 能进坞(原主那段))) 挂进坞(地方, 原主)
+                      else {
+                        从坞拿下(地方)
+                        if (原主那段) note(t("主区那段是终端，终端不进坞，坞里空出来了"))
+                      }
                       标未读(侧, false)
                       setActiveSessionId(侧)
                       setView("conversation")

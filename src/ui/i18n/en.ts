@@ -1049,6 +1049,7 @@ export const EN: Readonly<Record<string, string>> = {
   "最近": "Recent",
   // team-board（2026-08-22，学自 NanmiCoder/dsh-agent-teams）
   "团队": "Team",
+  "对话": "Chat",
   "组一支团队": "Form a team",
   "让模型当队长：拉几个子 agent 当成员、拆成带依赖的任务、自动派活；进度在坞里「团队」那一格": "Let the model captain: pick subagents as members, split the goal into tasks with dependencies, dispatch automatically; progress lives in the dock’s Team pane",
   "待领": "pending",

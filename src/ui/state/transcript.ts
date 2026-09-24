@@ -9,12 +9,26 @@
  */
 import { atom, computed } from "nanostores"
 import type { TranscriptItem, TeamSnapshot, KernelState, QueuedMessage } from "../../protocol/index.js"
-import { sameList, setList, setValue, shallowEqual } from "./identity.js"
+import { sameList, setValue } from "./identity.js"
 import { invalidate } from "./guard.js"
 import { cells as 转录里的cells, type Cell } from "../../protocol/notebook-cells.js"
+import { 创建转录槽, type 待答的权限, type 会话开关 } from "./transcript-slot.js"
 
-/** 对话、工具调用、系统提示。**按顺序渲染，不重排** */
-export const $items = atom<readonly TranscriptItem[]>([])
+/** 两个 interface 搬去了 `transcript-slot.ts`（2026-09-24）；这里转发，旧 import 路径一个字不改 */
+export type { 待答的权限, 会话开关 } from "./transcript-slot.js"
+
+/**
+ * 主区那一槽（2026-09-24，侧边对话）。**旧导出名一个不改**——全仓库按这些名字 import。
+ *
+ * `$items`（对话、工具调用、系统提示，**按顺序渲染，不重排**）、攒的逻辑（正在写的那一条
+ * 至多 33ms 落一次）、`upsertItem` / `dropItem` / `setItems`、`$待答权限`、`$会话开关`、
+ * `$待发` / `setQueued` 都住在槽里；函数体与它们的注释见 `transcript-slot.ts`。
+ * 坞里那段对话是同一个工厂的第二个实例（`side-chat.ts`）——**攒的逻辑只此一份**。
+ */
+export const 主槽 = 创建转录槽()
+export const { $items, $待答权限, $会话开关, $待发, upsertItem, dropItem, setItems, setQueued } = 主槽
+/** 把攒着的更新落进 `$items`。**同步**：谁要按顺序落下一条，先调它 */
+export const flushTranscript = 主槽.flush
 
 /**
  * **一整轮是不是还开着**（2026-09-22 从 `App.tsx` 挪来，`perf-render`）。
@@ -50,86 +64,6 @@ export const $terminal = atom<readonly string[]>([])
 /** 终端 scrollback 被裁过。**如实标注，但这不是故障**——终端本就有限回滚 */
 export const $terminalTrimmed = atom(false)
 
-export function setItems(next: readonly TranscriptItem[]): void {
-  丢掉攒着的()
-  setList($items, next)
-}
-
-/**
- * 按 id 覆盖或追加。
- *
- * 服务端推的是**累积后的整条**，界面不必自己拼增量——那是流式渲染里
- * 最容易出错的一段（少一片、多一片、顺序错都很难查）。
- *
- * **正在写的那一条，至多 33ms 落一次**（2026-09-22，分支 `perf-render`）。
- * 基线量出来：约 340 段字产生 800–1150 次提交，每次整棵树跟着算，慢机器上掉到 10 帧/秒。
- * 学自 Hermes（`use-message-stream/utils.ts:59-67`：16ms 时「每个 token 一次提交」，改 33ms 让两个 token 并一次）。
- *
- * 只攒**一种**更新：已经在列表里、还没说完（`final: false`）的 agent 发言。
- * 其余一律**先把攒着的冲掉、再立即落**——新条目、说完的那一下、工具、删除，
- * 所以顺序不会乱，最后一个字也不会晚到。
- */
-const 攒的间隔毫秒 = 33
-const 攒着的 = new Map<string, TranscriptItem>()
-let 攒的定时器: ReturnType<typeof setTimeout> | undefined
-
-/** 把攒着的更新落进 `$items`。**同步**：谁要按顺序落下一条，先调它 */
-export function flushTranscript(): void {
-  if (攒的定时器 !== undefined) {
-    clearTimeout(攒的定时器)
-    攒的定时器 = undefined
-  }
-  if (攒着的.size === 0) return
-  const prev = $items.get()
-  let next: TranscriptItem[] | undefined
-  for (const [id, item] of 攒着的) {
-    const i = prev.findIndex((x) => x.id === id)
-    // 攒的时候在、落的时候没了（被删了）：不复活它
-    if (i < 0 || shallowEqual(prev[i], item)) continue
-    next ??= [...prev]
-    next[i] = item
-  }
-  攒着的.clear()
-  if (next) $items.set(next)
-}
-
-/** 换会话 / 快照整份替换时：攒着的是旧的，**丢掉**，不落 */
-function 丢掉攒着的(): void {
-  if (攒的定时器 !== undefined) clearTimeout(攒的定时器)
-  攒的定时器 = undefined
-  攒着的.clear()
-}
-
-export function upsertItem(item: TranscriptItem): void {
-  const 可攒 = item.type === "turn" && !item.final && $items.get().some((x) => x.id === item.id)
-  if (可攒) {
-    攒着的.set(item.id, item)
-    攒的定时器 ??= setTimeout(flushTranscript, 攒的间隔毫秒)
-    return
-  }
-  flushTranscript()
-  const prev = $items.get()
-  const i = prev.findIndex((x) => x.id === item.id)
-  if (i < 0) {
-    $items.set([...prev, item])
-    return
-  }
-  // 内容一模一样就什么都不做——规则 6
-  if (shallowEqual(prev[i], item)) return
-  const next = [...prev]
-  next[i] = item
-  $items.set(next)
-}
-
-/** 按 id 从转录里删掉一条（审查 debug F3）：服务端把「只想没说」并进新的一条时,实时流靠它把旧的那条撤掉 */
-export function dropItem(id: string): void {
-  flushTranscript()
-  const prev = $items.get()
-  const i = prev.findIndex((x) => x.id === id)
-  if (i < 0) return
-  $items.set(prev.filter((x) => x.id !== id))
-}
-
 export function appendBytes(data: string): void {
   $terminal.set([...$terminal.get(), data])
 }
@@ -163,64 +97,19 @@ export function applySnapshot(snap: {
   /** 待发单（2026-09-23）。缺省 = 没有待发 */
   queued?: readonly QueuedMessage[] | undefined
 }): void {
-  setItems(snap.items)
+  主槽.applySnapshot(snap)
   const term = snap.terminal ? [snap.terminal] : []
   if (!sameList($terminal.get(), term)) $terminal.set(term)
   setValue($terminalTrimmed, snap.trimmed)
   setValue($kernelInstanceId, snap.kernelInstanceId)
-  $待答权限.set(snap.pendingPermission)
-  $会话开关.set(snap.configOptions)
   $团队.set(snap.team)
   setValue($kernels, snap.kernels)
-  setQueued(snap.queued)
 }
 
-/** 一次还没结果的权限询问（A2）。**选项原样来自 agent** */
-export interface 待答的权限 {
-  requestId: string
-  title: string
-  options: readonly { optionId: string; name: string; kind: string }[]
-}
-
-/**
- * agent 正在问「能不能」（A2，只有 acp 会有）。
- *
- * **它跟着当前会话走**，与转录同一条路：并排开两段对话时，
- * 各自显示各自的那张卡（切走再切回来，它还在——因为它住在快照上，
- * 而不是某个组件的局部状态里）。
- */
-export const $待答权限 = atom<待答的权限 | undefined>(undefined)
-
-/** 一个会话开关（A3）。**形状照抄 agent 给的**，我们不挑也不改名 */
-export interface 会话开关 {
-  id: string
-  name: string
-  /** `exactOptionalPropertyTypes` 下要显式带上 undefined——协议那边这两格是可缺的 */
-  description?: string | undefined
-  category?: string | undefined
-  kind: "select" | "boolean"
-  current: string
-  options: readonly { value: string; name: string; description?: string | undefined }[]
-}
-
-/**
- * 这一段会话可以调的开关（A3，只有 acp 有）。
- * **缺省 = 这条运行时没有这回事**，界面据此不画那个菜单。
- */
-export const $会话开关 = atom<readonly 会话开关[] | undefined>(undefined)
 /** 当前会话的团队快照（team-board，2026-08-22）。作用域 = 正在看的那一段；切会话清掉 */
 export const $团队 = atom<TeamSnapshot | undefined>(undefined)
 export function setTeam(t: TeamSnapshot | undefined): void {
   $团队.set(t)
-}
-
-/**
- * 当前会话还排着、没送进模型的话（2026-09-23，学自 Codex）。作用域 = 正在看的那一段；切会话清掉。
- * 空单与缺省同义（都画不出东西）——统一存成空数组，读的人少一种情形。
- */
-export const $待发 = atom<readonly QueuedMessage[]>([])
-export function setQueued(q: readonly QueuedMessage[] | undefined): void {
-  setList($待发, q ?? [])
 }
 
 /**
@@ -257,23 +146,22 @@ export function setKernels(v: readonly KernelState[] | undefined): void {
  * 所以旧会话的响应回来时会被判为过期，不会把内容倒灌进新会话。
  */
 export function resetTranscript(): void {
-  setItems([])
-  if ($terminal.get().length > 0) $terminal.set([])
-  setValue($terminalTrimmed, false)
   /**
+   * 转录、权限卡、开关、待发单：主槽一并清掉（`transcript-slot.ts` 的 `reset`）。
+   *
    * **切会话时那张权限卡必须跟着走。**
    *
    * 留着的话，你切到另一段对话，屏幕上还挂着上一段的询问——
    * 点下去答的是别人的问题。这与整个文件头那句
    * 「作用域是当前正在看的那个会话」是同一条。
+   * 开关也跟着走：切到另一段会话，那颗菜单里的选项本来就不是它的。
+   * 待发单也跟着走：那几句话是那一段的，挂在别的会话上面点「撤回」会撤错地方。
    */
-  $待答权限.set(undefined)
-  // 开关也跟着走：切到另一段会话，那颗菜单里的选项本来就不是它的
-  $会话开关.set(undefined)
+  主槽.reset()
+  if ($terminal.get().length > 0) $terminal.set([])
+  setValue($terminalTrimmed, false)
   $团队.set(undefined)
   // 内核状态也跟着走：它没有单独的取清单操作，靠下一次快照重新灌（笔记本，2026-08-26）
   setValue($kernels, undefined)
-  // 待发单也跟着走：那几句话是那一段的，挂在别的会话上面点「撤回」会撤错地方
-  setQueued(undefined)
   invalidate()
 }

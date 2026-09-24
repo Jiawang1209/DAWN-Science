@@ -21,6 +21,7 @@ import { SessionTranscripts } from "../../src/workbench/events.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
 import type { SessionId } from "../../src/runtime/types.js"
 import { createWorkbenchBackend } from "../../src/workbench/backend.js"
+import { WorkbenchServer, fault原样 } from "../../src/workbench/server.js"
 import { memoryCredentials } from "../helpers/credentials.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
 
@@ -230,4 +231,36 @@ it("读主对话带上待发单、产物与没记下的次数", async () => {
   expect(字).toContain("顺便画个火山图")
   expect(字).toContain("outputs/volcano.png")
   expect(字).toContain("另有 1 次工具调用没有记下它写了哪些文件")
+})
+
+/**
+ * 坞里那段「真没了」的结构化信号（Task 6 复审 F1）：界面不再认错误文本，看 `details.gone`。
+ * 走真 `WorkbenchServer`——要证的是这个标记**过得了协议那一层**，不只是后端抛出来的对象上有。
+ */
+describe("subscribeSession 的 gone 标记", () => {
+  it("压根没有这段记录 → not_found 且 details.gone === true", async () => {
+    const ctx = make()
+    const server = new WorkbenchServer(ctx.backend)
+    const r = await server.handle("subscribeSession", { sessionId: "从来没有这段" })
+    expect(r.ok).toBe(false)
+    if (r.ok) return
+    expect(r.error.code).toBe("not_found")
+    expect((r.error.details as { gone?: boolean } | undefined)?.gone).toBe(true)
+  })
+
+  it("有记录的那段订阅得上，不会被误判成没了", async () => {
+    const ctx = make()
+    const server = new WorkbenchServer(ctx.backend)
+    const s = await ctx.开一段()
+    expect((await server.handle("subscribeSession", { sessionId: s })).ok).toBe(true)
+  })
+
+  it("fault原样 挂的 detail 与 i18n 并存；不挂时 details 照旧不出现", async () => {
+    const 挂了 = new WorkbenchServer({ ...make().backend, listProjects: async () => { throw fault原样("not_found", "x", { gone: true }) } })
+    const r1 = await 挂了.handle("listProjects", {})
+    expect(!r1.ok && r1.error.details).toEqual({ gone: true })
+    const 没挂 = new WorkbenchServer({ ...make().backend, listProjects: async () => { throw fault原样("not_found", "x") } })
+    const r2 = await 没挂.handle("listProjects", {})
+    expect(!r2.ok && r2.error.details).toBeUndefined()
+  })
 })

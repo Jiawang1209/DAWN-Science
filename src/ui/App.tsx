@@ -1958,10 +1958,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     }
     /**
      * **地方未定时不报**（Task 6 审查 M5）：主区刚换到另一个项目的一段、摘要还没到手，坞里还是上一个项目的那段——
-     * 此刻报出去，后端就让 A 项目的坞去读 B 项目的主对话。等地方定了（依赖里有它）再报。
+     * 此刻报出去，后端就让 A 项目的坞去读 B 项目的主对话。等地方定了（依赖里有它）再报坞里那段。
      */
-    if (侧边地方未定) return
-    const side = 侧 && 侧 !== sessionId ? 侧 : undefined
+    /**
+     * **但要先拆开旧的那一对**（Task 6 复审 F2）：不报的话后端一直拿着上一个主区当坞的「主对话」——
+     * 主区那段的摘要若一直不来（`activeSessionId` 指着一段刚删的、远端会话单取失败），坞里那段就一直读着一段过时的主对话。
+     * 以前界面照发 `mainSessionId`、后端把查无此会话的主区丢成「没有」，这一拍是断开的；M5 那次改成不报，就把它丢了。
+     *
+     * 报的是 `sideSessionId: null`——**只拆不配**，所以不会把 M5 那个错请回来：没有侧边就没有「A 项目的坞读 B 项目的主区」。
+     * 后端照常把原来那段的工具停掉；地方定下来依赖一变、这个 effect 再跑一次，按新地方的坞重新配上。
+     * 回话落在下面的 `.then` 守卫上：`side` 是 undefined 而坞里还挂着那段，两边对不上就不写 `$侧边能读主`，坞格的字不会闪。
+     */
+    const side = !侧边地方未定 && 侧 && 侧 !== sessionId ? 侧 : undefined
     client
       .get<{ canReadMain?: boolean; sideGone?: boolean }>("setSideSession", {
         sideSessionId: side ?? null,

@@ -53,6 +53,11 @@ export interface WorkbenchFault extends Error {
   workbenchCode: ErrorCode
   /** 这句话的 msgid 与 args（B15）。`fault原样` 抛的没有——那是别人的话，不在英文表里 */
   i18n?: FaultI18n
+  /**
+   * 给界面判的结构化信号，随 `error.details` 原样出去（与 `i18n` 并列）。**界面别去认错误文本**——
+   * 措辞一改，认字的那处就悄悄失效（Task 6 复审 F1：坞里那段「真没了」此前靠认「没有记录可订阅」）
+   */
+  detail?: Record<string, unknown>
 }
 
 /**
@@ -76,8 +81,8 @@ export function fault(code: ErrorCode, msgid: string, ...args: (string | number)
  *
  * 每一处用它的地方都登记在 `tests/workbench/fault-i18n.test.ts` 的名单里：多一处是一次有意识的决定。
  */
-export function fault原样(code: ErrorCode, 原文: string): WorkbenchFault {
-  return Object.assign(new Error(原文), { workbenchCode: code })
+export function fault原样(code: ErrorCode, 原文: string, detail?: Record<string, unknown>): WorkbenchFault {
+  return Object.assign(new Error(原文), { workbenchCode: code }, detail ? { detail } : {})
 }
 
 function isFault(e: unknown): e is WorkbenchFault {
@@ -188,7 +193,7 @@ export class WorkbenchServer {
           err.message,
           可重试错误码.has(err.workbenchCode),
           requestId,
-          err.i18n ? { i18n: err.i18n } : undefined,
+          err.i18n || err.detail ? { ...(err.detail ?? {}), ...(err.i18n ? { i18n: err.i18n } : {}) } : undefined,
         )
       }
       // 守卫抛的「在工作区之外」「找不到」这类**本来就是写给人看的**（2026-08-23 审查抓的：此前一律压成「操作执行失败」，界面看不到原因）

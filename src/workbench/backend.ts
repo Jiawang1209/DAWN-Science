@@ -2089,7 +2089,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // 界面要能分辨它和「数据库炸了」
         //
         // **知道真原因就说真原因**：那一句泛泛的话留给「确实只是没活着」。
-        throw fault原样("not_found", 没续上因为 ?? (err instanceof Error ? err.message : String(err)))
+        //
+        // **压根没有这段记录时挂 `gone: true`**（Task 6 复审 F1）：与 `setSideSession` 判 `sideGone` 同一个判据
+        // （`!sessions.get(id)`），界面据此判「坞里那段真没了、交给 sideGone 说」，不再去认错误文本
+        throw fault原样(
+          "not_found",
+          没续上因为 ?? (err instanceof Error ? err.message : String(err)),
+          记录 ? undefined : { gone: true },
+        )
       }
     },
 

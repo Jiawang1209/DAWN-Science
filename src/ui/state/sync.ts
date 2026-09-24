@@ -41,8 +41,6 @@ import {
   type CredentialState,
   type Providers,
   type RunDetail,
-  $sessions,
-  $tempSessions,
 } from "./catalog.js"
 import { $activeSessionId } from "./view.js"
 import { $侧边会话id, 侧槽 } from "./side-chat.js"
@@ -293,7 +291,7 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
       // 已经不是坞里那段了（例如后端答了 `sideGone`、界面刚把它拿下）：那是一次作废的请求，不出声——
       // 拿下那边已经说过一句了，这里再报一条「没有这个会话」只是噪音
       if (sessionId !== $侧边会话id.get()) return
-      if (真没了(sessionId, e)) return
+      if (真没了(e)) return
       fail(e)
     })
 }
@@ -305,15 +303,14 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
  * `not_found`，消息里写真原因——而那时会话记录还在，`setSideSession` 不会回 `sideGone`。
  * 上一版在这里把两者一起吞了，坞里就是一段头在、转录空白、一句话都没有；同一段放到主区会照实报。
  *
- * 判据是两条同时成立：
- * - 后端那句是「没有记录可订阅」（`events.ts` 的原话，只在它压根没有这段时出现；续接失败时说的是真原因）；
- * - 界面手上的会话单里也没有它。单里还有却说没有记录，那是两边对不上，照样出声。
+ * 判据是后端挂的结构化信号 `details.gone === true`（Task 6 复审 F1）：`subscribeSession` 只在**压根没有这段记录**时挂它，
+ * 与 `setSideSession` 判 `sideGone` 用同一个判据（`!sessions.get(id)`）。此前认的是错误文本「没有记录可订阅」
+ * 加界面会话单——措辞一改就悄悄失效，会话单在启动时又可能还是空的。
  */
-function 真没了(sessionId: string, e: unknown): boolean {
-  const 原话 = e instanceof WorkbenchClientError ? e.原文 : e instanceof Error ? e.message : ""
-  if (e instanceof WorkbenchClientError && e.code !== "not_found") return false
-  if (!/没有记录可订阅/.test(原话)) return false
-  return ![...$sessions.get(), ...$tempSessions.get()].some((x) => x.sessionId === sessionId)
+function 真没了(e: unknown): boolean {
+  if (!(e instanceof WorkbenchClientError) || e.code !== "not_found") return false
+  const d = e.details
+  return typeof d === "object" && d !== null && (d as { gone?: unknown }).gone === true
 }
 let 侧边世代 = 0
 

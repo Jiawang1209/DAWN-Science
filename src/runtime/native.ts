@@ -1382,12 +1382,12 @@ export class NativeRuntime implements AgentRuntime {
 
     /**
      * 默认停用：只有挂进坞的那段才启用（`setSideTool`）。启动前就配好对的（`侧边工具开` 里有）直接开着。
-     * pi 建会话时把 `customTools` **全部启用**（`includeAllExtensionTools`），所以这里要主动摘一次。
+     * **按标记明着设一次**，开与关都不靠 pi 的缺省（它建会话时把 `customTools` 全部启用，那是它的事，不是我们的约定）。
+     *
+     * 注意：pi 的 `session.reload()`（`includeAllExtensionTools: true`）与 `navigateTree`（`_restoreToolsFromTranscript`）
+     * 都会重建工具集——以后谁接这两条，之后必须按 `侧边工具开` 再设一次。
      */
-    if (!this.侧边工具开.has(spec.sessionId)) {
-      const 名 = session.getActiveToolNames()
-      if (名.includes(READ_MAIN_SESSION)) session.setActiveToolsByName(名.filter((n) => n !== READ_MAIN_SESSION))
-    }
+    this.按标记设侧边工具(session, this.侧边工具开.has(spec.sessionId))
 
     const unsubscribe = session.subscribe((raw) => this.translate(spec.sessionId, raw as PiEvent))
 
@@ -2485,16 +2485,27 @@ ${描述}`
    * 侧边对话的工具启停（2026-09-24）。**会话还没起也要记下**：重启后界面先配对、会话后起，
    * 起的时候按这张表决定开不开（见建会话处）。
    *
-   * pi 的 `setActiveToolsByName` 只认注册表里有的名字（没装 `读主对话` 时加进去也会被它丢掉），
-   * 并当场重建系统提示词；下一轮生效——正在跑的这一轮不受影响。
+   * pi 的 `setActiveToolsByName` 当场重建系统提示词；pi 每次调模型前都重读一遍启用的工具
+   * （`prepareNextTurnWithContext`），所以**从下一次调模型起生效，同一轮 run 里也是**——只有正在流式的那一次回复不受影响。
    */
   setSideTool(sessionId: SessionId, on: boolean): void {
     if (on) this.侧边工具开.add(sessionId)
     else this.侧边工具开.delete(sessionId)
     const s = this.sessions.get(sessionId)?.session
-    if (!s) return
-    const 名 = s.getActiveToolNames().filter((n) => n !== READ_MAIN_SESSION)
-    s.setActiveToolsByName(on ? [...名, READ_MAIN_SESSION] : 名)
+    if (s) this.按标记设侧边工具(s, on)
+  }
+
+  /**
+   * 建会话处与 `setSideTool` 共用：启用的工具 = 别的照旧 + （开着时）`read_main_session`。
+   * 没装这件工具（没给 `读主对话`）→ 什么都不做，不凭空多一个名字。
+   */
+  private 按标记设侧边工具(
+    s: { getActiveToolNames(): string[]; getToolDefinition(name: string): unknown; setActiveToolsByName(names: string[]): void },
+    on: boolean,
+  ): void {
+    if (!s.getToolDefinition(READ_MAIN_SESSION)) return
+    const 别的 = s.getActiveToolNames().filter((n) => n !== READ_MAIN_SESSION)
+    s.setActiveToolsByName(on ? [...别的, READ_MAIN_SESSION] : 别的)
   }
 
   /**

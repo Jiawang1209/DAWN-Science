@@ -112,6 +112,18 @@ describe("setSideSession", () => {
   })
 })
 
+it("主区那段被关闭 → 配对留着：它的转录还在，侧边照样读得到；坞里那段的工具不动", async () => {
+  const ctx = make()
+  const rt = ctx.runtime as 带侧边工具的
+  const s = await ctx.开一段()
+  const m = await ctx.开一段()
+  ctx.events.userTurn(m, "先跑一遍差异分析")
+  await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: m })
+  await ctx.backend.stopSession({ sessionId: m })
+  expect(rt.开关).toEqual([`${s}:true`])
+  expect(ctx.读(s)).toContain("先跑一遍差异分析")
+})
+
 describe("读主对话", () => {
   it("配对后读得到主对话的发言；拿下后 undefined；不是侧边的那段读不到", async () => {
     const ctx = make()

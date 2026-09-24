@@ -3106,7 +3106,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       events.setQueued(sessionId, [])
       await sessions.stop(sessionId)
-      侧边忘掉(sessionId)
+      /**
+       * 只在停的是**坞里那段**时摘。停的是主区那段不摘：它的转录还在，侧边照样读得到（停下之前做到哪了）
+       */
+      if (侧边.当前侧边() === sessionId) 侧边忘掉(sessionId)
       baselines.delete(sessionId)
       // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
       不在场缓冲.delete(sessionId)

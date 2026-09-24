@@ -91,7 +91,7 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
-import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法 } from "./state/side-chat.js"
+import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话 } from "./state/side-chat.js"
 import { 主槽 } from "./state/transcript.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
@@ -1893,16 +1893,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [ready, sessionId, 取写权])
 
   /**
-   * 坞里那段（侧边对话，2026-09-24）挂的是谁：**按「地方」记**（项目 / 远端连接，见 `side-chat.ts`）。
+   * 坞里那段（侧边对话，2026-09-24）挂的是谁：**按「地方」记**（项目 / 远端连接 / 本机临时会话那一组，见 `side-chat.ts`）。
    *
    * 地方从当前会话来；没选会话时退到当前项目。**选了会话、而它的摘要还没取回来时不下结论**——
    * 那一拍算出来的地方是错的，按错的地方挂一次就是把侧槽清空再重订一遍。
    */
-  // 临时会话 / 临时宿主项目没有地方（Task 6 审查 I2）：带上项目单，让 `侧边地方键` 查 `temporary`
+  // 临时会话 / 临时宿主项目落在「会话」那一组那个共用的地方（2026-09-25 作者定的）：带上项目单，让 `侧边地方键` 查 `temporary`
   const 侧边地方 = session ? 侧边地方键(session, projects) : sessionId ? undefined : projectId ? 侧边地方键({ projectId }, projects) : undefined
   const 侧边地方未定 = !!sessionId && !session
   /**
-   * **主区那段不属于任何地方（临时会话）时也要载一次**——载的是「没有地方」，坞格变空并说明为什么
+   * **主区没有地方（什么都没选、也没选项目）时也要载一次**——载的是「没有地方」，坞格变空并说明为什么
    * （Task 5 审查抓的：上一版只在有地方时才载，于是上一个项目的侧边还挂着、配给了一段临时会话；
    * spec §2.4 说的是**按地方**记，没有地方就没有那一段）。
    */
@@ -2033,6 +2033,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /**
    * 坞此刻为什么没处另开（`undefined` = 有地方）。**直说，不画一个点不出东西的空格子**（规格 7.5）。
    * 地方未定（摘要还没到手）那一拍不下结论。
+   *
+   * 临时会话有了地方（2026-09-25）之后，「选了会话却没有地方」几乎走不到了（摘要的 projectId 必填）；
+   * 那一句留着当兜底。**什么都没选、也没选项目**仍说「还没选项目」：那是新建任务那一屏，
+   * 人在那儿要先挑去处（项目或不挑），坞不替他猜——不挑就建临时会话的那条路在那张卡上，不在坞里。
    */
   const 坞没处说 = 侧边地方未定
     ? undefined
@@ -2045,6 +2049,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /**
    * 坞里「另开一段」（侧边对话，2026-09-24）：与会话页签的 ＋ 同一条路（项目走 `新建任务`，远端走
    * `startRemoteSession`），只是**建好了不切过去**——主区不动，新那段直接挂进坞。
+   * 本机临时会话那一处（`t:`，2026-09-25）走**不给路径的 `新建任务`**——与侧栏新建、空态那张卡不挑去处时同一条，
+   * 建出来的就是一段临时会话，落进侧栏「会话」那一组。
    * 回来时地方已经换了（人在等的那一下切了项目）：不挂到别处去，它照常留在它自己那一处的会话里——
    * **但要说一句**（Task 6 审查 M4）：人点了「另开一段」，坞里却什么都没挂上。
    *
@@ -2078,6 +2084,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         return
       }
       id = await startRemoteSession({ id: c.id, label: c.label }, { 不切过去: true })
+    } else if (地方 === 临时地方) {
+      id = await 新建任务({ 不切过去: true })
     } else {
       const 项目 = projects.find((x) => x.projectId === 地方.slice(2))
       if (!项目 || 项目.temporary) {
@@ -2475,8 +2483,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 if (g.projectId && g.整个 !== false) {
                   await client.get("deleteProject", { projectId: g.projectId })
                   // 整个项目没了：坞里挂的若是这个项目的，它也没了（任务清单未必列全这个项目的会话）
-                  if ($侧边地方.get() === `p:${g.projectId}`) 删掉的.push($侧边会话id.get())
-                  删掉的地方.push(`p:${g.projectId}`)
+                  // 临时宿主被整个移除：它的会话在「会话」那一组那一处（`t:`），按那一处算（2026-09-25）
+                  const 那处 = 侧边地方键({ projectId: g.projectId }, $projects.get()) ?? `p:${g.projectId}`
+                  if ($侧边地方.get() === 那处) 删掉的.push($侧边会话id.get())
+                  删掉的地方.push(那处)
                 } else {
                   // **没有 projectId 也要删得掉**：按 taskId 走（协议 4.9）
                   for (const t of g.tasks) {
@@ -5245,12 +5255,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               (() => {
                 const 挂着的 = 侧边id ? [...sessions, ...tempSessions].find((x) => x.sessionId === 侧边id) : undefined
                 // 同一个地方的其他会话：不含主区那段、不含已挂着的、不含已归档；终端不是对话，不列
+                // 本机临时会话那一处（`t:`）列的是侧栏「会话」那一组（2026-09-25），挑哪拨见 `同处的会话`
                 const 同处 = !坞的地方
                   ? []
-                  : (坞的地方.startsWith("r:")
-                      ? tempSessions.filter((x) => x.remote?.connectionId === 坞的地方.slice(2))
-                      : sessions.filter((x) => !x.remote && x.projectId === 坞的地方.slice(2))
-                    )
+                  : 同处的会话(坞的地方, { sessions, tempSessions })
                       .filter((x) => !x.archivedAt && 能进坞(x) && x.sessionId !== sessionId && x.sessionId !== 侧边id)
                       .map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId) }))
                 return (

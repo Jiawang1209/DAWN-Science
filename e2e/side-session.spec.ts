@@ -2,9 +2,10 @@
  * 侧边对话（2026-09-24，spec `2026-09-24-侧边对话-design.md`）。**跑真实构建产物。**
  * 要证的是：两段真的同时跑、互不串台；坞里那段问进度时真调到 read_main_session、读到的是主对话此刻的。
  *
- * ## 为什么走项目会话
+ * ## 为什么大多走项目会话
  *
- * 临时会话没有「同一个地方」（Task 6：坞格对它直说「没处挂」），「另开一段」只在项目会话下有。
+ * 项目会话有分栏（「换到主区 / 拿下」之后能在页签里找到那段）。临时会话 2026-09-25 起也有地方
+ * （侧栏「会话」那一组，`t:`）——作者的对话几乎全是临时会话，那条单独一个用例盯着（最后那个 describe）。
  *
  * ## 两处长得一样
  *
@@ -13,7 +14,7 @@
  */
 import type { Page } from "@playwright/test"
 import { resolve } from "node:path"
-import { test, expect, CANNED_REPLY, 在项目里开会话, 进坞 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 在项目里开会话, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 const 主区 = (page: Page) => page.locator("main.main")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
@@ -124,6 +125,40 @@ test.describe("侧边对话 · native", () => {
       await expect(坞(page).locator(".side-chat-head")).toHaveCount(0)
       await expect(主区(page).locator(".session-tabs .session-tab-title").filter({ hasText: "跑个长的" })).toHaveCount(1)
     })
+  })
+})
+
+/**
+ * **临时会话也有地方**（2026-09-25，作者真机上撞的：他的对话几乎全是临时会话，上一版坞里只剩一行灰字）。
+ * 主区是一段临时会话时，坞里「另开一段」建的是**又一段临时会话**，主区不动，新那段落进侧栏「会话」那一组。
+ */
+test.describe("侧边对话 · 临时会话", () => {
+  test("主区是临时会话：坞里「另开一段」看得见、建出一段临时会话，主区不动", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page, "起个头")
+    /** 前提：主区真是一段临时会话——散的会话没有分栏，「会话」那一组里只有它 */
+    await expect(主区(page).locator(".conv-title")).toContainText("起个头")
+    await expect(主区(page).locator(".session-tabs")).toHaveCount(0)
+    await expect(page.locator(".session-list > li")).toHaveCount(1)
+
+    await 进坞(page, "对话")
+    const 另开 = 坞(page).getByRole("button", { name: "另开一段", exact: true })
+    await expect(另开).toBeVisible()
+    expect(await 另开.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+    await expect(坞(page).getByText("这段对话不属于任何项目，坞里没法另开", { exact: true })).toHaveCount(0)
+
+    await 另开.click()
+    await 坞(page).locator(".side-chat-head").waitFor({ timeout: 30_000 })
+    await 框(坞(page)).waitFor({ timeout: 30_000 })
+
+    await 说(坞(page), "坞里开的头")
+    await expect(坞(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
+    /** 主区还是原来那段：标题没换、坞里那句没串过去 */
+    await expect(主区(page).locator(".conv-title")).toContainText("起个头")
+    await expect(主区(page).locator(".turns")).not.toContainText("坞里开的头")
+    /** 新那段是一段临时会话：落进侧栏「会话」那一组，不是哪个项目底下 */
+    await expect(page.locator(".session-list > li")).toHaveCount(2, { timeout: 30_000 })
+    await expect(page.locator(".session-list .sess .name").filter({ hasText: "坞里开的头" })).toBeVisible({ timeout: 30_000 })
   })
 })
 

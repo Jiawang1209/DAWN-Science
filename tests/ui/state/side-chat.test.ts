@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach } from "vitest"
 import {
   $侧边会话id, $侧边地方, $侧边能读主, 侧槽, 挂进坞, 从坞拿下, 载入侧边, 侧边地方键, 能进坞, SIDE_SESSION_KEY,
-  从坞表抹掉, 放进坞的做法, 换到主区的做法,
+  从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话,
 } from "../../../src/ui/state/side-chat.js"
 
 /** 模块级 atom 不随用例清：不重置的话，用例的结果取决于排在它前面的是谁（Task 6 审查 M7） */
@@ -56,25 +56,30 @@ describe("侧边会话按地方记住", () => {
     载入侧边("p:1")
     expect($侧边会话id.get()).toBeUndefined()
   })
-  it("临时会话算不出地方：它挂在临时宿主项目名下，projectId 照样有（审查 I2）", () => {
+  it("临时会话落在「会话」那一组那个共用的地方（2026-09-25 作者定的，推翻审查 I2）", () => {
     // 与界面手上的形状一致：SessionSummary.projectId 必填，临时会话的是它那个临时宿主
-    const 项目们 = [{ projectId: "P" }, { projectId: "TMP", temporary: true as const }]
-    expect(侧边地方键({ projectId: "TMP" }, 项目们)).toBeUndefined()
+    const 项目们 = [{ projectId: "P" }, { projectId: "TMP", temporary: true as const }, { projectId: "TMP2", temporary: true as const }]
+    expect(临时地方).toBe("t:")
+    expect(侧边地方键({ projectId: "TMP" }, 项目们)).toBe("t:")
+    // 宿主不止一个也是同一处：「会话」那一组不按宿主劈开
+    expect(侧边地方键({ projectId: "TMP2" }, 项目们)).toBe("t:")
     expect(侧边地方键({ projectId: "P" }, 项目们)).toBe("p:P")
     // 远端的临时会话仍按连接算——远端的地方是那台机器，不是那个宿主项目
     expect(侧边地方键({ projectId: "TMP", remote: { connectionId: "C" } }, 项目们)).toBe("r:C")
     // 项目单还没到手：先按正式项目算，单到手后界面会再算一次
     expect(侧边地方键({ projectId: "TMP" }, [])).toBe("p:TMP")
+    // 什么都没有：仍然没有地方（坞格说「还没选项目」）
+    expect(侧边地方键({}, 项目们)).toBeUndefined()
   })
-  it("此刻没有地方（临时会话）：坞空着，地方也记成没有", () => {
+  it("临时会话那一处挂的那段，换到项目再换回来还在；与项目那一处互不相干", () => {
     挂进坞("p:1", "s1")
-    const 临时 = 侧边地方键({ projectId: "TMP" }, [{ projectId: "TMP", temporary: true }])
-    载入侧边(临时)
-    expect($侧边会话id.get()).toBeUndefined()
-    expect($侧边地方.get()).toBeUndefined()
-    // 换回项目，那一段还在
+    挂进坞(临时地方, "t1")
+    expect($侧边会话id.get()).toBe("t1")
+    expect($侧边地方.get()).toBe("t:")
     载入侧边("p:1")
     expect($侧边会话id.get()).toBe("s1")
+    载入侧边(侧边地方键({ projectId: "TMP" }, [{ projectId: "TMP", temporary: true }]))
+    expect($侧边会话id.get()).toBe("t1")
   })
   it("不知道地方也照清槽与两个 atom", () => {
     挂进坞("p:1", "s1")
@@ -113,6 +118,13 @@ describe("删掉 / 归档：表里所有指向它的都抹掉（审查 M6）", (
     载入侧边("p:1")
     expect($侧边会话id.get()).toBeUndefined()
   })
+  it("临时会话那一处也按 id 抹（归档 / 删了坞里那段临时会话）", () => {
+    挂进坞(临时地方, "t1")
+    挂进坞("p:1", "s1")
+    从坞表抹掉(["t1"])
+    const 表 = JSON.parse(localStorage.getItem(SIDE_SESSION_KEY) ?? "{}") as Record<string, string>
+    expect(表).toEqual({ "p:1": "s1" })
+  })
 })
 
 describe("放进坞的做法（从 App 拆出来的判定，审查 M7）", () => {
@@ -133,6 +145,42 @@ describe("放进坞的做法（从 App 拆出来的判定，审查 M7）", () =>
   })
   it("只有这一段：说一句，不做", () => {
     expect(放进坞的做法({ id: "a", 地方: "p:1", 主区: "a", 在坞: undefined, 同处: [{ sessionId: "a" }] })).toEqual({ 做: "说", 因为: "只有这一段" })
+  })
+})
+
+describe("同处的会话：按地方从哪拨里挑", () => {
+  const sessions = [
+    { sessionId: "p1", projectId: "P" },
+    { sessionId: "q1", projectId: "Q" },
+  ]
+  const tempSessions = [
+    { sessionId: "t1", projectId: "TMP" },
+    { sessionId: "t2", projectId: "TMP2" },
+    { sessionId: "r1", projectId: "TMP", remote: { connectionId: "C" } },
+    { sessionId: "r2", projectId: "TMP", remote: { connectionId: "D" } },
+  ]
+  const ids = (地方: string) => 同处的会话(地方, { sessions, tempSessions }).map((x) => x.sessionId)
+  it("项目：只要这个项目的；远端：只要这条连接的", () => {
+    expect(ids("p:P")).toEqual(["p1"])
+    expect(ids("r:C")).toEqual(["r1"])
+  })
+  it("临时会话那一处：本机的临时会话全列（不分宿主），远端的一段不列", () => {
+    expect(ids(临时地方)).toEqual(["t1", "t2"])
+  })
+})
+
+describe("临时会话那一处：放进坞 / 换到主区与项目一样走", () => {
+  it("放进坞：别的临时会话直接挂；放主区这段先切到另一段", () => {
+    const 同处 = [{ sessionId: "t1" }, { sessionId: "t2" }]
+    expect(放进坞的做法({ id: "t2", 地方: 临时地方, 主区: "t1", 在坞: undefined, 同处 })).toEqual({ 做: "挂", 地方: "t:", id: "t2" })
+    expect(放进坞的做法({ id: "t1", 地方: 临时地方, 主区: "t1", 在坞: undefined, 同处 })).toEqual({
+      做: "挂", 地方: "t:", id: "t1", 然后主区切到: "t2",
+    })
+  })
+  it("换到主区：两段临时会话对调", () => {
+    expect(换到主区的做法({ 地方: 临时地方, 在坞: "t2", 原主: "t1", 原主那段: { kind: "native" } })).toEqual({
+      做: "对调", 地方: "t:", 上主区: "t2", 进坞: "t1", 说终端: false,
+    })
   })
 })
 

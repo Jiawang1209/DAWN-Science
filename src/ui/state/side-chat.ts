@@ -1,6 +1,6 @@
 /**
  * 坞里那段对话（2026-09-24，侧边对话）。**渲染进程自有**：挂的是哪段按「地方」记住
- * （项目 = `p:<projectId>`，远端 = `r:<connectionId>`），key 里写明作用域。
+ * （项目 = `p:<projectId>`，远端 = `r:<connectionId>`，本机临时会话 = `t:`），key 里写明作用域。
  * 它的转录是第二个槽——后端权威，这里是缓存，与主槽同一条纪律。
  */
 import { atom } from "nanostores"
@@ -12,25 +12,41 @@ export const $侧边会话id = atom<string | undefined>(undefined)
 export const $侧边能读主 = atom<boolean | undefined>(undefined)
 /**
  * 坞此刻按哪个「地方」挂（`载入侧边` / `挂进坞` 记下的）。**缺省 = 此刻没有地方**
- * （没选项目、或主区是一段不属于任何项目的临时会话）——坞格据此说「没法另开」，不是空白。
+ * （什么都没选、也没选项目）——坞格据此说「没处另开」，不是空白。
  *
- * 拿下时缺省用它（Task 5 审查抓的）：界面那边算「地方」要等会话摘要到手，临时会话压根算不出来——
+ * 拿下时缺省用它（Task 5 审查抓的）：界面那边算「地方」要等会话摘要到手（项目单没到手时临时会话还会先算成 `p:`）——
  * 拿那个现算的值去拿下，拿不下来又不出声；这里记的是**挂上去那一刻**的地方，必定在。
  */
 export const $侧边地方 = atom<string | undefined>(undefined)
 
 /**
- * **作用域是「地方」**：一个项目（`p:<projectId>`）或一台远端连接（`r:<connectionId>`）各记一段——
+ * **作用域是「地方」**：一个项目（`p:<projectId>`）、一台远端连接（`r:<connectionId>`）、
+ * 本机的临时会话那一组（`t:`，见 `临时地方`）各记一段——
  * 同一个地方挂的那段，换走再换回来还在；换到别处不会把这里的那段带过去。
  * 整张表（地方 → sessionId）存在**这一个键**里，不是一个地方一个键。
  */
 export const SIDE_SESSION_KEY = "dawn.project.side-session"
 
 /**
- * 一段会话（或此刻选中的项目）落在哪个「地方」。**临时会话没有地方**（Task 6 审查 I2）：
+ * 本机临时会话的「地方」（2026-09-25，作者在真机上跑过之后定的：临时会话**也有地方**）。
+ *
+ * 作者几乎所有对话都是临时会话（侧栏「会话」那一组）。上一版（Task 6 审查 I2）说临时会话没有地方，
+ * 坞格只剩一行灰字、没有「另开一段」——这个功能在他的主路上根本用不上。
+ *
+ * **一个共用的地方，就是「会话」那一组**，所以 `t:` 后面不带 id：
+ * - 不写 `p:<临时宿主>`：「会话」那一组不是一个项目——`listTemporarySessions` 问的是两处临时根，
+ *   宿主可以不止一个（还可能是占着临时根的普通项目）；按宿主记，同一组会话就被劈成几个地方；
+ * - 另开一段时要走「不给路径的新建任务」（与侧栏那颗新建同一条路），不能拿宿主的目录当项目去建——
+ *   那样建出来的就不是临时会话了。前缀一看就知道走哪条，不必再回头查项目单。
+ * 远端的临时会话照旧按连接（`r:`）：远端的地方是那台机器。
+ */
+export const 临时地方 = "t:"
+
+/**
+ * 一段会话（或此刻选中的项目）落在哪个「地方」。**临时会话落在 `临时地方`**（2026-09-25 改，见那边）：
  * `SessionSummary.projectId` 是必填的——临时会话挂在它那个临时宿主项目名下，只看 projectId
- * 就会算出一个 `p:<临时宿主>`，于是「没处另开」那句永远说不出来，坞里画一颗点了只报错的「另开一段」。
- * 所以要带上项目清单查 `temporary`。**清单里查不到那个项目**（项目单还没取回）：照旧按 projectId 算——
+ * 就会算出一个 `p:<临时宿主>`，另开一段就去那个宿主目录建了一段「项目会话」。所以要带上项目清单查 `temporary`。
+ * **清单里查不到那个项目**（项目单还没取回）：照旧按 projectId 算——
  * 与分栏那条同一个取舍的反面：那边缺了就不画，这里缺了就先按正式项目挂，清单到手后自会再算一次。
  */
 export function 侧边地方键(
@@ -39,7 +55,20 @@ export function 侧边地方键(
 ): string | undefined {
   if (s.remote) return `r:${s.remote.connectionId}`
   if (!s.projectId) return undefined
-  return projects.find((p) => p.projectId === s.projectId)?.temporary ? undefined : `p:${s.projectId}`
+  return projects.find((p) => p.projectId === s.projectId)?.temporary ? 临时地方 : `p:${s.projectId}`
+}
+
+/**
+ * 坞格「同处」清单按地方从哪拨会话里挑（只管「是不是这一处」，归档 / 终端 / 主区 / 已挂着由调用点再筛）。
+ * 远端与本机临时会话都住在 `tempSessions`，项目的住在 `sessions`（只有当前项目的）。
+ */
+export function 同处的会话<T extends { projectId?: string | undefined; remote?: { connectionId: string } | undefined }>(
+  地方: string,
+  lists: { sessions: readonly T[]; tempSessions: readonly T[] },
+): T[] {
+  if (地方.startsWith("r:")) return lists.tempSessions.filter((x) => x.remote?.connectionId === 地方.slice(2))
+  if (地方 === 临时地方) return lists.tempSessions.filter((x) => !x.remote)
+  return lists.sessions.filter((x) => !x.remote && x.projectId === 地方.slice(2))
 }
 
 /**
@@ -118,7 +147,7 @@ export function 从坞表抹掉(ids: readonly (string | undefined)[], 地方们:
  * 分栏右键「放进坞里」怎么做（Task 6 审查 M7：从 App 的 JSX 里拆出来好测）。**只算，不动手**——
  * App 照着结果同步做完（挂进坞与切主区之间不许有 await，理由见那一处）。
  *
- * - 没有地方（摘要没到手 / 临时会话）：说一句，不做；
+ * - 没有地方（摘要没到手 / 什么都没选）：说一句，不做；
  * - 终端：不是对话，不进坞；
  * - 放的是主区这段：主区得先切到同处另一段——**优先切到不在坞里的那段**，同处只剩坞里那段就与它对调；
  *   一段别的都没有：说一句，不做（放进去主区就空了）；

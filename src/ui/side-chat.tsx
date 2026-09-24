@@ -9,7 +9,7 @@
  * **叶子组件只发回调**：挂谁、拿下、对调都由 `App.tsx` 做——与坞里别的格同一条纪律。
  */
 import { useStore } from "@nanostores/react"
-import type { ComponentProps } from "react"
+import type { ComponentProps, DragEvent, ClipboardEvent } from "react"
 import type { SessionSummary } from "../protocol/index.js"
 import { Button, Loader } from "./primitives.js"
 import { 加号描边图标 } from "./icons.js"
@@ -18,6 +18,11 @@ import { ConversationView } from "./views.js"
 import { 侧槽 } from "./state/side-chat.js"
 
 export type 坞格对话回调 = Omit<ComponentProps<typeof ConversationView>, "session" | "items" | "待发" | "紧凑">
+/** 侧槽里那两样「当前是什么」：权限卡、会话开关。坞格自己订，渲染时交给 App 那份 `对话回调` */
+export type 槽现值 = {
+  待答权限: ComponentProps<typeof ConversationView>["待答权限"]
+  会话开关们: ComponentProps<typeof ConversationView>["会话开关们"]
+}
 
 export function SideChat(p: {
   /** 坞里挂的那段；undefined = 空态 */
@@ -34,22 +39,49 @@ export function SideChat(p: {
   running: boolean
   canReadMain: boolean | undefined
   onNew: (() => void) | undefined
+  /** 「另开一段」正在建（Task 6 审查 M4）：按钮置灰，双击不会建出两段 */
+  newBusy?: boolean | undefined
+  /**
+   * 空态 / 打开中时有文件拖进来、粘进来（Task 6 审查 M2）。这时坞里没有输入框收，主区又按「落在坞格里的
+   * 不归我」让开了——不接住的话文件就静静没了。接住（`preventDefault`，主区那条页面级监听就不再收）并出声
+   */
+  onStrayFiles?: (() => void) | undefined
   onPick: (id: string) => void
   onSwap: () => void
   onTakeOut: () => void
-  /** 主区那套 ConversationView 的回调，按坞里这段的 id 绑好了。空态时没有那一段，给不出来 */
-  conversation: 坞格对话回调 | undefined
+  /**
+   * 主区那套 ConversationView 的回调，按坞里这段的 id 绑好了。空态时没有那一段，给不出来。
+   * **是个函数**：侧槽的权限卡与开关由坞格自己订（审查 M1），渲染时把当下的值交回去取那一份回调
+   */
+  conversation: ((现: 槽现值) => 坞格对话回调) | undefined
 }) {
   if (!p.session) {
+    // 空态 / 打开中没有输入框：拖进来、粘进来的文件接住并出声，不许静静没了（审查 M2）
+    const 有文件 = (dt: DataTransfer | null) => !!dt && [...dt.items].some((it) => it.kind === "file")
+    const 接住 = {
+      onDragOver: (e: DragEvent) => {
+        if (有文件(e.dataTransfer)) e.preventDefault()
+      },
+      onDrop: (e: DragEvent) => {
+        if (e.dataTransfer.files.length === 0) return
+        e.preventDefault()
+        p.onStrayFiles?.()
+      },
+      onPaste: (e: ClipboardEvent) => {
+        if (e.clipboardData.files.length === 0) return
+        e.preventDefault()
+        p.onStrayFiles?.()
+      },
+    }
     if (p.opening) {
       return (
-        <div className="side-chat side-chat-empty">
+        <div className="side-chat side-chat-empty" {...接住}>
           <Loader label={t("正在打开这段对话")} />
         </div>
       )
     }
     return (
-      <div className="side-chat side-chat-empty">
+      <div className="side-chat side-chat-empty" {...接住}>
         <h2 className="side-chat-heading">{t("坞里的对话")}</h2>
         {p.noPlace ? (
           <p className="side-chat-note">{p.noPlace}</p>
@@ -59,7 +91,7 @@ export function SideChat(p: {
               /* 描边 + ＋：它下面那排会话也是按钮（ghost、静止时无底无框），「新建」若也用 ghost，
                  看上去就是又一行标题，悬停前认不出能点（「看不见的能力等于不存在」）。
                  ＋ 与标签栏那颗「在这里再开一段」、侧栏「新建任务」同一个图标 */
-              <Button variant="outline" size="sm" className="side-chat-new" onClick={p.onNew}>
+              <Button variant="outline" size="sm" className="side-chat-new" onClick={p.onNew} disabled={!!p.newBusy} aria-busy={p.newBusy ? true : undefined}>
                 <加号描边图标 className="row-icon" />
                 {t("另开一段")}
               </Button>
@@ -96,6 +128,9 @@ export function SideChat(p: {
 function 挂着(p: Parameters<typeof SideChat>[0] & { session: SessionSummary }) {
   const items = useStore(侧槽.$items)
   const 待发 = useStore(侧槽.$待发)
+  // 权限卡与开关也订在这儿、不订在 App 上（审查 M1）：坞里弹一张卡只重渲染坞格，不拖着主区那份转录陪跑
+  const 待答权限 = useStore(侧槽.$待答权限)
+  const 会话开关们 = useStore(侧槽.$会话开关)
   return (
     <div className="side-chat" data-running={p.running ? "1" : undefined}>
       <header className="side-chat-head">
@@ -114,7 +149,7 @@ function 挂着(p: Parameters<typeof SideChat>[0] & { session: SessionSummary })
       {/* 不假装能看（§2.5）：ACP / CLI 的 agent 没有 read_main_session，这句一直摆着 */}
       {p.canReadMain === false ? <p className="side-chat-caveat">{t("这个 agent 看不见主对话")}</p> : null}
       {p.conversation ? (
-        <ConversationView key={p.session.sessionId} session={p.session} items={items} 待发={待发} 紧凑 {...p.conversation} />
+        <ConversationView key={p.session.sessionId} session={p.session} items={items} 待发={待发} 紧凑 {...p.conversation({ 待答权限, 会话开关们 })} />
       ) : null}
     </div>
   )

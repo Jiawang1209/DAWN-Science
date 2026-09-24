@@ -46,6 +46,28 @@ export function SessionTabs({
   const 当前 = useRef<HTMLDivElement>(null)
   /** 右键开着的那格菜单：哪一段、开在哪 */
   const [菜单, 设菜单] = useState<{ sessionId: string; title: string; top: number; left: number } | undefined>(undefined)
+  const 菜单项 = useRef<HTMLButtonElement>(null)
+  /**
+   * 菜单的键盘这一半（Task 6 审查 M3）：开了就把焦点放进第一项（键盘开的菜单才按得到），Esc 收起并把焦点还给那格页签。
+   * 不这样的话，用键盘（Shift+F10 / 菜单键）开出来的菜单离了鼠标就关不掉。
+   */
+  useEffect(() => {
+    if (!菜单) return
+    菜单项.current?.focus()
+    const 那格 = 菜单.sessionId
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      e.preventDefault()
+      设菜单(undefined)
+      // 不拼选择器：会话 id 里有什么字符不归这里管（jsdom 也没有 CSS.escape）
+      ;[...document.querySelectorAll<HTMLElement>(".session-tab")].find((el) => el.dataset.session === 那格)?.focus()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [菜单])
+  /** 在 (x, y) 给那一格开菜单：下面、右边放不下就往里收（与文件树那份菜单同一个算法，高度只有一项） */
+  const 开菜单 = (x: 分栏项, clientX: number, clientY: number) =>
+    设菜单({ sessionId: x.sessionId, title: x.title, top: Math.min(clientY, window.innerHeight - 48), left: Math.min(clientX, window.innerWidth - 160) })
   // 切到哪个就把哪个滚进视野——分栏多了会横向滚
   useEffect(() => {
     // jsdom 没有 scrollIntoView（同 slash-menu 那处）——CI 的 mac runner 上它以未处理异常的形式把整轮测试打红过（2026-08-28）
@@ -70,8 +92,7 @@ export function SessionTabs({
               ? {
                   onContextMenu: (e: MouseEvent) => {
                     e.preventDefault()
-                    // 下面、右边放不下就往里收（与文件树那份菜单同一个算法，高度只有一项）
-                    设菜单({ sessionId: x.sessionId, title: x.title, top: Math.min(e.clientY, window.innerHeight - 48), left: Math.min(e.clientX, window.innerWidth - 160) })
+                    开菜单(x, e.clientX, e.clientY)
                   },
                 }
               : {})}
@@ -81,6 +102,7 @@ export function SessionTabs({
               size="inline"
               role="tab"
               aria-selected={选中}
+              {...(onPutInDock && x.canDock !== false ? { "aria-haspopup": "menu" as const } : {})}
               className="session-tab"
               data-session={x.sessionId}
               onClick={() => onPick(x.sessionId)}
@@ -114,9 +136,24 @@ export function SessionTabs({
           挂到 body 上：分栏那一条会横向滚，`fixed` 的菜单留在里面会被它的裁切与叠放层级管住 */}
       {菜单 && onPutInDock ? createPortal(
         <>
-          <div className="menu-scrim" onClick={() => 设菜单(undefined)} onContextMenu={(e) => { e.preventDefault(); 设菜单(undefined) }} />
+          {/* 菜单开着时在**另一格**上右键：落在遮罩上。只收起的话要再右键一次（审查 M3）——
+              看遮罩底下是哪一格，是能进坞的那格就直接给它开；jsdom 没有 elementsFromPoint，没有就只收起 */}
+          <div
+            className="menu-scrim"
+            onClick={() => 设菜单(undefined)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              const 底下 = typeof document.elementsFromPoint === "function"
+                ? document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.classList.contains("session-tab"))
+                : undefined
+              const 那格 = 底下 ? tabs.find((x) => x.sessionId === (底下 as HTMLElement).dataset.session) : undefined
+              if (那格 && 那格.canDock !== false) 开菜单(那格, e.clientX, e.clientY)
+              else 设菜单(undefined)
+            }}
+          />
           <div className="row-menu" role="menu" aria-label={tf("分栏操作：{0}", 菜单.title)} style={{ top: 菜单.top, left: 菜单.left }}>
             <Button
+              ref={菜单项}
               variant="ghost"
               size="inline"
               role="menuitem"

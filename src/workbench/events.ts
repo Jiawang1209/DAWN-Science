@@ -197,6 +197,7 @@ export class SessionTranscripts {
    */
   subscribe(sessionId: SessionId): SessionSnapshot {
     const e = this.entries.get(sessionId)
+    // 「没有记录可订阅」这几个字界面在认（`sync.ts` 的 `真没了`：坞里那段真没了才不出声）——改措辞要一起改
     if (!e) throw new Error(`会话 "${sessionId}" 未在本进程中活动，没有记录可订阅`)
     this.subscribed.add(sessionId)
     return this.snapshot(sessionId, e)

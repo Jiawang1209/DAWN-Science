@@ -26,9 +26,20 @@ export const $侧边地方 = atom<string | undefined>(undefined)
  */
 export const SIDE_SESSION_KEY = "dawn.project.side-session"
 
-export function 侧边地方键(s: { projectId?: string | undefined; remote?: { connectionId: string } | undefined }): string | undefined {
+/**
+ * 一段会话（或此刻选中的项目）落在哪个「地方」。**临时会话没有地方**（Task 6 审查 I2）：
+ * `SessionSummary.projectId` 是必填的——临时会话挂在它那个临时宿主项目名下，只看 projectId
+ * 就会算出一个 `p:<临时宿主>`，于是「没处另开」那句永远说不出来，坞里画一颗点了只报错的「另开一段」。
+ * 所以要带上项目清单查 `temporary`。**清单里查不到那个项目**（项目单还没取回）：照旧按 projectId 算——
+ * 与分栏那条同一个取舍的反面：那边缺了就不画，这里缺了就先按正式项目挂，清单到手后自会再算一次。
+ */
+export function 侧边地方键(
+  s: { projectId?: string | undefined; remote?: { connectionId: string } | undefined },
+  projects: readonly { projectId: string; temporary?: true | undefined }[] = [],
+): string | undefined {
   if (s.remote) return `r:${s.remote.connectionId}`
-  return s.projectId ? `p:${s.projectId}` : undefined
+  if (!s.projectId) return undefined
+  return projects.find((p) => p.projectId === s.projectId)?.temporary ? undefined : `p:${s.projectId}`
 }
 
 /**
@@ -84,4 +95,78 @@ export function 从坞拿下(地方: string | undefined = $侧边地方.get()): 
   侧槽.reset()
   $侧边能读主.set(undefined)
   $侧边会话id.set(undefined)
+}
+
+/**
+ * 删掉 / 归档了几段（或删了整个项目）：表里**所有**指向它们的那几格一并抹掉（Task 6 审查 M6）。
+ * 只清此刻载着的那一处不够——别处挂着的那段留在表里，下次回到那一处就会被 `sideGone` 报成「已经不在了」，
+ * 而那是人亲手删的。`地方们` 是整个没了的地方（删项目），那一格不论挂着谁都抹。
+ */
+export function 从坞表抹掉(ids: readonly (string | undefined)[], 地方们: readonly string[] = []): void {
+  const t = 读表()
+  let 动了 = false
+  for (const [k, v] of Object.entries(t)) {
+    if (ids.includes(v) || 地方们.includes(k)) {
+      delete t[k]
+      动了 = true
+    }
+  }
+  if (动了) 写表(t)
+}
+
+/**
+ * 分栏右键「放进坞里」怎么做（Task 6 审查 M7：从 App 的 JSX 里拆出来好测）。**只算，不动手**——
+ * App 照着结果同步做完（挂进坞与切主区之间不许有 await，理由见那一处）。
+ *
+ * - 没有地方（摘要没到手 / 临时会话）：说一句，不做；
+ * - 终端：不是对话，不进坞；
+ * - 放的是主区这段：主区得先切到同处另一段——**优先切到不在坞里的那段**，同处只剩坞里那段就与它对调；
+ *   一段别的都没有：说一句，不做（放进去主区就空了）；
+ * - 放的是别的页签：直接挂。
+ */
+export type 放进坞做法 =
+  | { 做: "说"; 因为: "没地方" | "终端" | "只有这一段" }
+  | { 做: "挂"; 地方: string; id: string; 然后主区切到?: string | undefined }
+export function 放进坞的做法(a: {
+  id: string
+  地方: string | undefined
+  主区: string
+  在坞: string | undefined
+  同处: readonly { sessionId: string; kind?: string | undefined }[]
+}): 放进坞做法 {
+  if (!a.地方) return { 做: "说", 因为: "没地方" }
+  const 这段 = a.同处.find((x) => x.sessionId === a.id)
+  if (这段 && !能进坞(这段)) return { 做: "说", 因为: "终端" }
+  if (a.id !== a.主区) return { 做: "挂", 地方: a.地方, id: a.id }
+  const 兄弟 =
+    a.同处.find((x) => x.sessionId !== a.id && x.sessionId !== a.在坞) ?? a.同处.find((x) => x.sessionId === a.在坞 && x.sessionId !== a.id)
+  if (!兄弟) return { 做: "说", 因为: "只有这一段" }
+  return { 做: "挂", 地方: a.地方, id: a.id, 然后主区切到: 兄弟.sessionId }
+}
+
+/**
+ * 坞头「换到主区」怎么做（同上，拆出来好测）。坞里那段总是上主区；主区原来那段：
+ * - 是对话 → 挂进坞（两段对调）；
+ * - 是终端 → 不进坞，坞空出来，并说一句（`说终端`）；
+ * - 主区原来什么都没有 / 那段的摘要找不到 → 坞空出来；找不到摘要时不知道它是什么，**按对话挂**（旧行为：
+ *   后端才是权威，它若真不在了 `sideGone` 会报）。
+ */
+export type 对调做法 =
+  | { 做: "不做" }
+  | { 做: "对调"; 地方: string; 上主区: string; 进坞: string | undefined; 说终端: boolean }
+export function 换到主区的做法(a: {
+  地方: string | undefined
+  在坞: string | undefined
+  原主: string | undefined
+  原主那段: { kind?: string | undefined } | undefined
+}): 对调做法 {
+  if (!a.地方 || !a.在坞) return { 做: "不做" }
+  const 原主进得了坞 = !!a.原主 && (!a.原主那段 || 能进坞(a.原主那段))
+  return {
+    做: "对调",
+    地方: a.地方,
+    上主区: a.在坞,
+    进坞: 原主进得了坞 ? a.原主 : undefined,
+    说终端: !!a.原主那段 && !能进坞(a.原主那段),
+  }
 }

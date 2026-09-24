@@ -41,6 +41,8 @@ import {
   type CredentialState,
   type Providers,
   type RunDetail,
+  $sessions,
+  $tempSessions,
 } from "./catalog.js"
 import { $activeSessionId } from "./view.js"
 import { $侧边会话id, 侧槽 } from "./side-chat.js"
@@ -291,14 +293,27 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
       // 已经不是坞里那段了（例如后端答了 `sideGone`、界面刚把它拿下）：那是一次作废的请求，不出声——
       // 拿下那边已经说过一句了，这里再报一条「没有这个会话」只是噪音
       if (sessionId !== $侧边会话id.get()) return
-      /**
-       * **「没有这段会话」不在这里报**（Task 5 审查抓的）：那是 `sideGone` 的形状——界面记住的那段已经没了，
-       * 配对那一发（`setSideSession`）会回 `sideGone`，由它拿下并说一句。这里再报就是同一件事说两遍。
-       */
-      if (e instanceof WorkbenchClientError && e.code === "not_found") return
-      if (e instanceof Error && /未在本进程|不存在|没有这个会话/.test(e.message)) return
+      if (真没了(sessionId, e)) return
       fail(e)
     })
+}
+/**
+ * 坞里那段订阅失败时，**只有「这段会话真的没了」才不出声**（Task 6 审查 I1）——那是 `sideGone` 的形状：
+ * 配对那一发（`setSideSession`）会回 `sideGone`，由它拿下并说一句，这里再报就是同一件事说两遍。
+ *
+ * **不能凭 `not_found` 一个码就不出声**：后端把**续接失败**（服务器连不上、这类会话续不了）也报成
+ * `not_found`，消息里写真原因——而那时会话记录还在，`setSideSession` 不会回 `sideGone`。
+ * 上一版在这里把两者一起吞了，坞里就是一段头在、转录空白、一句话都没有；同一段放到主区会照实报。
+ *
+ * 判据是两条同时成立：
+ * - 后端那句是「没有记录可订阅」（`events.ts` 的原话，只在它压根没有这段时出现；续接失败时说的是真原因）；
+ * - 界面手上的会话单里也没有它。单里还有却说没有记录，那是两边对不上，照样出声。
+ */
+function 真没了(sessionId: string, e: unknown): boolean {
+  const 原话 = e instanceof WorkbenchClientError ? e.原文 : e instanceof Error ? e.message : ""
+  if (e instanceof WorkbenchClientError && e.code !== "not_found") return false
+  if (!/没有记录可订阅/.test(原话)) return false
+  return ![...$sessions.get(), ...$tempSessions.get()].some((x) => x.sessionId === sessionId)
 }
 let 侧边世代 = 0
 

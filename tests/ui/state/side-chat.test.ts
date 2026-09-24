@@ -2,10 +2,21 @@
  * 坞里那段对话挂的是谁，按「地方」记住（2026-09-24，侧边对话）。
  */
 import { describe, it, expect, beforeEach } from "vitest"
-import { $侧边会话id, $侧边地方, $侧边能读主, 侧槽, 挂进坞, 从坞拿下, 载入侧边, 侧边地方键, 能进坞, SIDE_SESSION_KEY } from "../../../src/ui/state/side-chat.js"
+import {
+  $侧边会话id, $侧边地方, $侧边能读主, 侧槽, 挂进坞, 从坞拿下, 载入侧边, 侧边地方键, 能进坞, SIDE_SESSION_KEY,
+  从坞表抹掉, 放进坞的做法, 换到主区的做法,
+} from "../../../src/ui/state/side-chat.js"
+
+/** 模块级 atom 不随用例清：不重置的话，用例的结果取决于排在它前面的是谁（Task 6 审查 M7） */
+beforeEach(() => {
+  localStorage.clear()
+  $侧边会话id.set(undefined)
+  $侧边地方.set(undefined)
+  $侧边能读主.set(undefined)
+  侧槽.reset()
+})
 
 describe("侧边会话按地方记住", () => {
-  beforeEach(() => localStorage.clear())
   it("挂上、换地方、回来还在", () => {
     挂进坞("p:1", "s1")
     expect($侧边会话id.get()).toBe("s1")
@@ -45,9 +56,20 @@ describe("侧边会话按地方记住", () => {
     载入侧边("p:1")
     expect($侧边会话id.get()).toBeUndefined()
   })
+  it("临时会话算不出地方：它挂在临时宿主项目名下，projectId 照样有（审查 I2）", () => {
+    // 与界面手上的形状一致：SessionSummary.projectId 必填，临时会话的是它那个临时宿主
+    const 项目们 = [{ projectId: "P" }, { projectId: "TMP", temporary: true as const }]
+    expect(侧边地方键({ projectId: "TMP" }, 项目们)).toBeUndefined()
+    expect(侧边地方键({ projectId: "P" }, 项目们)).toBe("p:P")
+    // 远端的临时会话仍按连接算——远端的地方是那台机器，不是那个宿主项目
+    expect(侧边地方键({ projectId: "TMP", remote: { connectionId: "C" } }, 项目们)).toBe("r:C")
+    // 项目单还没到手：先按正式项目算，单到手后界面会再算一次
+    expect(侧边地方键({ projectId: "TMP" }, [])).toBe("p:TMP")
+  })
   it("此刻没有地方（临时会话）：坞空着，地方也记成没有", () => {
     挂进坞("p:1", "s1")
-    载入侧边(undefined)
+    const 临时 = 侧边地方键({ projectId: "TMP" }, [{ projectId: "TMP", temporary: true }])
+    载入侧边(临时)
     expect($侧边会话id.get()).toBeUndefined()
     expect($侧边地方.get()).toBeUndefined()
     // 换回项目，那一段还在
@@ -75,5 +97,63 @@ describe("能进坞：终端不是对话", () => {
     expect(能进坞({ kind: "native" })).toBe(true)
     expect(能进坞({ kind: "acp" })).toBe(true)
     expect(能进坞({})).toBe(true)
+  })
+})
+
+describe("删掉 / 归档：表里所有指向它的都抹掉（审查 M6）", () => {
+  it("别处挂着的那段也抹；整个删掉的地方不论挂着谁都抹；别的不动", () => {
+    挂进坞("p:1", "s1")
+    挂进坞("p:2", "s2")
+    挂进坞("r:C", "s3")
+    挂进坞("p:9", "s9")
+    // 此刻载着的是 p:9；删 s1（挂在 p:1）、删掉整个项目 p:2
+    从坞表抹掉(["s1", undefined], ["p:2"])
+    const 表 = JSON.parse(localStorage.getItem(SIDE_SESSION_KEY) ?? "{}") as Record<string, string>
+    expect(表).toEqual({ "r:C": "s3", "p:9": "s9" })
+    载入侧边("p:1")
+    expect($侧边会话id.get()).toBeUndefined()
+  })
+})
+
+describe("放进坞的做法（从 App 拆出来的判定，审查 M7）", () => {
+  const 同处 = [{ sessionId: "a" }, { sessionId: "b" }, { sessionId: "t", kind: "pty" }]
+  it("没地方 / 终端：说一句，不做", () => {
+    expect(放进坞的做法({ id: "b", 地方: undefined, 主区: "a", 在坞: undefined, 同处 })).toEqual({ 做: "说", 因为: "没地方" })
+    expect(放进坞的做法({ id: "t", 地方: "p:1", 主区: "a", 在坞: undefined, 同处 })).toEqual({ 做: "说", 因为: "终端" })
+  })
+  it("放别的页签：直接挂，主区不动", () => {
+    expect(放进坞的做法({ id: "b", 地方: "p:1", 主区: "a", 在坞: undefined, 同处 })).toEqual({ 做: "挂", 地方: "p:1", id: "b" })
+  })
+  it("放主区这段：主区先切到同处另一段，优先不在坞里的那段", () => {
+    expect(放进坞的做法({ id: "a", 地方: "p:1", 主区: "a", 在坞: "b", 同处 })).toEqual({ 做: "挂", 地方: "p:1", id: "a", 然后主区切到: "t" })
+    // 同处只剩坞里那段：两段对调
+    expect(放进坞的做法({ id: "a", 地方: "p:1", 主区: "a", 在坞: "b", 同处: [{ sessionId: "a" }, { sessionId: "b" }] })).toEqual({
+      做: "挂", 地方: "p:1", id: "a", 然后主区切到: "b",
+    })
+  })
+  it("只有这一段：说一句，不做", () => {
+    expect(放进坞的做法({ id: "a", 地方: "p:1", 主区: "a", 在坞: undefined, 同处: [{ sessionId: "a" }] })).toEqual({ 做: "说", 因为: "只有这一段" })
+  })
+})
+
+describe("换到主区的做法（审查 M7）", () => {
+  it("没挂着 / 没地方：不做", () => {
+    expect(换到主区的做法({ 地方: "p:1", 在坞: undefined, 原主: "a", 原主那段: {} })).toEqual({ 做: "不做" })
+    expect(换到主区的做法({ 地方: undefined, 在坞: "b", 原主: "a", 原主那段: {} })).toEqual({ 做: "不做" })
+  })
+  it("原主是对话：对调", () => {
+    expect(换到主区的做法({ 地方: "p:1", 在坞: "b", 原主: "a", 原主那段: { kind: "native" } })).toEqual({
+      做: "对调", 地方: "p:1", 上主区: "b", 进坞: "a", 说终端: false,
+    })
+  })
+  it("原主是终端：不进坞，坞空出来并说一句", () => {
+    expect(换到主区的做法({ 地方: "p:1", 在坞: "b", 原主: "t", 原主那段: { kind: "pty" } })).toEqual({
+      做: "对调", 地方: "p:1", 上主区: "b", 进坞: undefined, 说终端: true,
+    })
+  })
+  it("主区原来空着：坞空出来，不说终端", () => {
+    expect(换到主区的做法({ 地方: "p:1", 在坞: "b", 原主: undefined, 原主那段: undefined })).toEqual({
+      做: "对调", 地方: "p:1", 上主区: "b", 进坞: undefined, 说终端: false,
+    })
   })
 })

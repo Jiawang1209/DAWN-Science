@@ -1524,4 +1524,7 @@ export const EN: Readonly<Record<string, string>> = {
   "在坞里另开一段对话": "New chat in the dock",
   "打开坞里的对话": "Open the chat in the dock",
   "从坞里拿下": "Take out of dock",
+  "坞里正在另开一段": "The dock is already opening a new chat",
+  "新的一段已在原来那一处建好；这边已换了地方，没挂进坞里": "The new chat was created in the previous place; you've since moved elsewhere, so it wasn't put in the dock",
+  "坞里还没有对话，拖进来的文件没收下——先另开一段或挑一段": "There's no chat in the dock yet, so the files weren't taken — open or pick a chat first",
 }

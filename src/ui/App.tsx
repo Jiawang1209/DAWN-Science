@@ -91,10 +91,10 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
-import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞 } from "./state/side-chat.js"
+import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法 } from "./state/side-chat.js"
 import { 主槽 } from "./state/transcript.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
-import { SideChat, type 坞格对话回调 } from "./side-chat.js"
+import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
@@ -281,13 +281,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const kernelInstanceId = useStore($kernelInstanceId)
   /**
    * agent 正在问「能不能」（A2）、这一段可以调的开关（A3）。**跟着各自那一槽走**：
-   * 主区读主槽、坞里那段读侧槽（侧边对话，2026-09-24）。这里只订着好让壳重渲染——
+   * 主区读主槽、坞里那段读侧槽（侧边对话，2026-09-24）。这里只订**主槽**好让壳重渲染——
    * 值由 `对话回调` 从槽里取，两处不各存一份。
+   *
+   * **侧槽那两样不在这儿订**（Task 6 审查 M1）：订在 App 上的话，坞里每弹一张权限卡、每推一次开关，
+   * 整个 App 连同主区那份（没 memo 的）`ConversationView` 都陪着重渲染。它们订在坞格 `挂着` 里，
+   * 由它把当下的值交给 `对话回调`。
    */
   useStore($待答权限)
   useStore($会话开关)
-  useStore(侧槽.$待答权限)
-  useStore(侧槽.$会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
   const rightDockOpen = useStore($rightDockOpen)
@@ -1896,7 +1898,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 地方从当前会话来；没选会话时退到当前项目。**选了会话、而它的摘要还没取回来时不下结论**——
    * 那一拍算出来的地方是错的，按错的地方挂一次就是把侧槽清空再重订一遍。
    */
-  const 侧边地方 = session ? 侧边地方键(session) : sessionId ? undefined : projectId ? `p:${projectId}` : undefined
+  // 临时会话 / 临时宿主项目没有地方（Task 6 审查 I2）：带上项目单，让 `侧边地方键` 查 `temporary`
+  const 侧边地方 = session ? 侧边地方键(session, projects) : sessionId ? undefined : projectId ? 侧边地方键({ projectId }, projects) : undefined
   const 侧边地方未定 = !!sessionId && !session
   /**
    * **主区那段不属于任何地方（临时会话）时也要载一次**——载的是「没有地方」，坞格变空并说明为什么
@@ -1943,12 +1946,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   useEffect(() => {
     if (!ready) return
-    if (侧边id && 侧边id === sessionId) {
+    /**
+     * 读 atom，不读这一拍渲染时的 `侧边id`：地方刚定下来的那一拍，上面那个 effect 先跑、已经同步换好了坞里那段，
+     * 闭包里那个还是上一处的——拿它去报，就是把上一处的坞配给这一处的主区（Task 6 审查 M5）。
+     */
+    const 侧 = $侧边会话id.get()
+    if (侧 && 侧 === sessionId) {
       // 地方用挂上去那一刻记下的（`$侧边地方`）：现算的那个在临时会话 / 摘要没到手时是空的，拿不下来又不出声
       从坞拿下()
       return
     }
-    const side = 侧边id && 侧边id !== sessionId ? 侧边id : undefined
+    /**
+     * **地方未定时不报**（Task 6 审查 M5）：主区刚换到另一个项目的一段、摘要还没到手，坞里还是上一个项目的那段——
+     * 此刻报出去，后端就让 A 项目的坞去读 B 项目的主对话。等地方定了（依赖里有它）再报。
+     */
+    if (侧边地方未定) return
+    const side = 侧 && 侧 !== sessionId ? 侧 : undefined
     client
       .get<{ canReadMain?: boolean; sideGone?: boolean }>("setSideSession", {
         sideSessionId: side ?? null,
@@ -1965,7 +1978,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         $侧边能读主.set(side ? r.canReadMain ?? false : undefined)
       })
       .catch(fail)
-  }, [ready, client, sessionId, 侧边id])
+  }, [ready, client, sessionId, 侧边id, 侧边地方未定])
 
   /**
    * 坞里那段：订阅（取快照灌进侧槽）、持写权并续着。与主区那一对 effect 同一套做法，只是槽不同。
@@ -2024,14 +2037,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /**
    * 坞里「另开一段」（侧边对话，2026-09-24）：与会话页签的 ＋ 同一条路（项目走 `新建任务`，远端走
    * `startRemoteSession`），只是**建好了不切过去**——主区不动，新那段直接挂进坞。
-   * 回来时地方已经换了（人在等的那一下切了项目）：不挂到别处去，它照常留在它自己那一处的会话里。
+   * 回来时地方已经换了（人在等的那一下切了项目）：不挂到别处去，它照常留在它自己那一处的会话里——
+   * **但要说一句**（Task 6 审查 M4）：人点了「另开一段」，坞里却什么都没挂上。
+   *
+   * **一次只开一段**（同上）：双击、或按钮与命令面板各点一下，会建出两段，第二段挂上去把第一段顶掉，
+   * 第一段就成了列表里一段谁也没要的空会话。建着的时候按钮置灰，面板那条也挡在这里。
    */
+  const [另开中, 设另开中] = useState(false)
+  const 另开中Ref = useRef(false)
   const 另开到坞 = async () => {
+    if (另开中Ref.current) return
     const 地方 = $侧边地方.get()
     if (!地方) {
       note(坞没处说 ?? t("这段对话不属于任何项目，坞里没法另开"))
       return
     }
+    另开中Ref.current = true
+    设另开中(true)
+    try {
+      await 另开到坞里(地方)
+    } finally {
+      另开中Ref.current = false
+      设另开中(false)
+    }
+  }
+  const 另开到坞里 = async (地方: string) => {
     let id: string | undefined
     if (地方.startsWith("r:")) {
       const c = connections.find((x) => x.id === 地方.slice(2))
@@ -2048,7 +2078,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       }
       id = await 新建任务({ workspace: 项目.workspace, 不切过去: true })
     }
-    if (id && $侧边地方.get() === 地方) 挂进坞(地方, id)
+    if (!id) return
+    if ($侧边地方.get() === 地方) 挂进坞(地方, id)
+    else note(t("新的一段已在原来那一处建好；这边已换了地方，没挂进坞里"))
   }
   // 命令面板那条走 ref：`actions` 是记住的，而这个函数每次渲染都换
   const 另开到坞Ref = useRef(另开到坞)
@@ -2058,7 +2090,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 归档 / 删除的那几段里有坞里那段：从坞里拿下，并且**说一句**（spec §2.4）——
    * 静静清掉的话，人只会看到坞里那段凭空没了。
    */
-  const 坞里那段没了 = useCallback((ids: readonly (string | undefined)[], 说: string) => {
+  const 坞里那段没了 = useCallback((ids: readonly (string | undefined)[], 说: string, 地方们: readonly string[] = []) => {
+    // 别处挂着的也要从表里抹掉（Task 6 审查 M6）：不然回到那一处，`sideGone` 会把人亲手删的报成「已经不在了」
+    从坞表抹掉(ids, 地方们)
     const id = $侧边会话id.get()
     if (!id || !ids.includes(id)) return
     从坞拿下()
@@ -2426,12 +2460,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             const 没删掉: string[] = []
             /** 真删掉了的会话（坞里那段在里面就得拿下并说一句，侧边对话 2026-09-24） */
             const 删掉的: (string | undefined)[] = []
+            /** 整个删掉的项目：坞表里那一格不论挂着谁都抹（它的会话清单未必列全） */
+            const 删掉的地方: string[] = []
             for (const g of groups) {
               try {
                 if (g.projectId && g.整个 !== false) {
                   await client.get("deleteProject", { projectId: g.projectId })
                   // 整个项目没了：坞里挂的若是这个项目的，它也没了（任务清单未必列全这个项目的会话）
                   if ($侧边地方.get() === `p:${g.projectId}`) 删掉的.push($侧边会话id.get())
+                  删掉的地方.push(`p:${g.projectId}`)
                 } else {
                   // **没有 projectId 也要删得掉**：按 taskId 走（协议 4.9）
                   for (const t of g.tasks) {
@@ -2443,7 +2480,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 没删掉.push(g.workspace)
               }
             }
-            坞里那段没了(删掉的, t("坞里那段对话已删除，已从坞里拿下"))
+            坞里那段没了(删掉的, t("坞里那段对话已删除，已从坞里拿下"), 删掉的地方)
             const pid = $activeProjectId.get()
             if (pid && groups.some((g) => g.projectId === pid)) {
               setActiveProjectId(undefined)
@@ -3536,9 +3573,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const commands = useMemo(
     () =>
       buildCommands({
-        actions, agents: agentIds, session, busy, view, dockOpen, sideNewUnavailable: 坞没处说,
+        actions, agents: agentIds, session, busy, view, dockOpen,
+        // 正在另开的那一下也标出来（Task 6 审查 M4）：面板那条与坞里那颗同一个闸
+        sideNewUnavailable: 坞没处说 ?? (另开中 ? t("坞里正在另开一段") : undefined),
       }),
-    [actions, agentIds, session, busy, view, dockOpen, 坞没处说],
+    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中],
   )
 
   /**
@@ -3549,11 +3588,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 只给「这一段自己的事」：导出、底部终端开合、选工作目录、产物条、换 ACP 另起一段、
    * 终端裁剪与内核实例只归主区，由主区那处另给（spec §2.3：坞里其他格仍跟着主对话）。
    *
-   * 读 `槽.$待答权限` / `槽.$会话开关` 用 `.get()`：两个槽的这两样 App 都订着（`useStore`），变了就重渲染。
+   * `槽.$待答权限` / `槽.$会话开关` 的当下值由**订着它们的那一处**交进来（`现`）：主槽 App 自己订着，缺省
+   * `.get()` 就是新的；侧槽订在坞格 `挂着` 里（Task 6 审查 M1），由它渲染时带着值来调。
    */
-  const 对话回调 = (s: SessionSummary, 槽: 转录槽): 坞格对话回调 => {
-    const 待答权限 = 槽.$待答权限.get()
-    const 会话开关们 = 槽.$会话开关.get()
+  const 对话回调 = (s: SessionSummary, 槽: 转录槽, 现: 槽现值 = { 待答权限: 槽.$待答权限.get(), 会话开关们: 槽.$会话开关.get() }): 坞格对话回调 => {
+    const { 待答权限, 会话开关们 } = 现
     const 这段任务 = tasks.find((x) => x.sessionId === s.sessionId)
     const services = servicesOf(s)
     const currentServiceLabel = currentServiceLabelOf(s)
@@ -4750,30 +4789,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                      * 同处没有别的可切：说一句，不做（放进去主区就空了，而且远端那边连「地方」都跟着没了）。
                      */
                     onPutInDock={(id) => {
-                      const 地方 = $侧边地方.get()
-                      // 地方还没定（摘要没到手那一拍）：不做，但**说一句**（规格 7.5）——菜单一收什么都没发生，人只会以为没点上
-                      if (!地方) {
-                        note(坞没处说 ?? t("还没弄清这段在哪一处，稍后再放进坞里"))
+                      const 做法 = 放进坞的做法({ id, 地方: $侧边地方.get(), 主区: session.sessionId, 在坞: $侧边会话id.get(), 同处 })
+                      if (做法.做 === "说") {
+                        // 每条不做的路都**说一句**（规格 7.5）——菜单一收什么都没发生，人只会以为没点上
+                        note(
+                          做法.因为 === "没地方"
+                            ? 坞没处说 ?? t("还没弄清这段在哪一处，稍后再放进坞里")
+                            : 做法.因为 === "终端"
+                              ? t("终端不是对话，放不进坞里")
+                              : t("这里只有这一段，放进坞里主区就空了"),
+                        )
                         return
                       }
-                      // 终端页签不开这份菜单（`canDock`）；这里再守一道，别的入口将来接进来也挂不进去
-                      const 这段 = 同处.find((x) => x.sessionId === id)
-                      if (这段 && !能进坞(这段)) {
-                        note(t("终端不是对话，放不进坞里"))
-                        return
-                      }
-                      if (id === session.sessionId) {
-                        const 在坞 = $侧边会话id.get()
-                        const 兄弟 = 同处.find((x) => x.sessionId !== id && x.sessionId !== 在坞) ?? 同处.find((x) => x.sessionId === 在坞)
-                        if (!兄弟) {
-                          note(t("这里只有这一段，放进坞里主区就空了"))
-                          return
-                        }
-                        挂进坞(地方, id)
-                        setActiveSessionId(兄弟.sessionId)
-                      } else {
-                        挂进坞(地方, id)
-                      }
+                      // 挂进坞与切主区**同步做完、中间不许有 await**——否则「主区赢」那一拍会把刚挂上的又拿下来
+                      挂进坞(做法.地方, 做法.id)
+                      if (做法.然后主区切到) setActiveSessionId(做法.然后主区切到)
                       打开坞里的对话()
                     }}
                     onNew={
@@ -5224,6 +5254,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     running={!!侧边id && 跑着的会话.has(侧边id)}
                     canReadMain={侧边能读主}
                     onNew={坞的地方 ? () => void 另开到坞().catch(fail) : undefined}
+                    newBusy={另开中}
+                    onStrayFiles={() => note(t("坞里还没有对话，拖进来的文件没收下——先另开一段或挑一段"))}
                     onPick={(id) => {
                       if (坞的地方) 挂进坞(坞的地方, id)
                     }}
@@ -5231,28 +5263,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       /**
                        * 两段对调。**同步做完、中间不许有 await**：「主区赢」那个 effect 看到坞里那段 = 主区那段
                        * 就会把它拿下——先挂原主、再切主区，两件事落在同一次渲染里才不会被它误判。
+                       * 怎么换由 `换到主区的做法` 算（终端不进坞、坞空出来并说一句，理由写在那边）。
                        */
-                      const 地方 = $侧边地方.get()
-                      const 侧 = $侧边会话id.get()
-                      if (!地方 || !侧) return
                       const 原主 = $activeSessionId.get()
-                      /**
-                       * 主区那段是终端（旧的铺满主区的 pty 会话）：**不挂进坞**——坞格画的是对话，挂进去是一张假转录。
-                       * 选的是「照样把坞里那段换上主区、坞空出来」而不是让按钮失灵：人按「换到主区」要的是坞里这段上主区，
-                       * 这一半照办；另一半办不到就说一句（规格 7.5），终端仍在侧栏 / 底部那条里，丢不了。
-                       */
-                      const 原主那段 = 原主 ? [...sessions, ...tempSessions].find((x) => x.sessionId === 原主) : undefined
-                      if (原主 && (!原主那段 || 能进坞(原主那段))) 挂进坞(地方, 原主)
-                      else {
-                        从坞拿下(地方)
-                        if (原主那段) note(t("主区那段是终端，终端不进坞，坞里空出来了"))
-                      }
-                      标未读(侧, false)
-                      setActiveSessionId(侧)
+                      const 做法 = 换到主区的做法({
+                        地方: $侧边地方.get(),
+                        在坞: $侧边会话id.get(),
+                        原主,
+                        原主那段: 原主 ? [...sessions, ...tempSessions].find((x) => x.sessionId === 原主) : undefined,
+                      })
+                      if (做法.做 === "不做") return
+                      if (做法.进坞) 挂进坞(做法.地方, 做法.进坞)
+                      else 从坞拿下(做法.地方)
+                      if (做法.说终端) note(t("主区那段是终端，终端不进坞，坞里空出来了"))
+                      标未读(做法.上主区, false)
+                      setActiveSessionId(做法.上主区)
                       setView("conversation")
                     }}
                     onTakeOut={() => 从坞拿下()}
-                    conversation={挂着的 ? 对话回调(挂着的, 侧槽) : undefined}
+                    conversation={挂着的 ? (现) => 对话回调(挂着的, 侧槽, 现) : undefined}
                   />
                 )
               })()

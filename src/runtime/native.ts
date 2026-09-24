@@ -62,6 +62,7 @@ import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
 import { memoryTools, 技能沉淀指引, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
 import { createLookAtImageTool } from "../tools/look-at-image.js"
+import { createReadMainSessionTool, READ_MAIN_SESSION } from "../tools/read-main-session.js"
 import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器 } from "../team/scheduler.js"
 import { createTeamTools, 队长协议 } from "../team/tools.js"
@@ -234,6 +235,11 @@ export interface NativeRuntimeOptions {
    * 没有那个文件就没有子进程可起，注册一个必然失败的工具比不注册更坏。
    */
   subagentChildEntry?: string
+  /**
+   * 侧边对话读主对话（2026-09-24）。给了才装 `read_main_session`；**晚绑定**——
+   * wiring 里转录表建在运行时之后，所以这里收的是回调，调用时才去找。
+   */
+  读主对话?: (sideId: SessionId) => string | undefined
 }
 
 interface NativeSession {
@@ -368,6 +374,12 @@ interface PiEvent {
 export class NativeRuntime implements AgentRuntime {
   private readonly sessions = new Map<SessionId, NativeSession>()
   private readonly sinks = new Map<SessionId, Set<EventSink>>()
+  /**
+   * 此刻挂在坞里的那几段（2026-09-24，侧边对话）：`read_main_session` 只对它们启用。
+   * **按会话 id 记，不跟着 pi 会话走**——重启后界面先配对、会话后起；停了再起（仍在坞里）也照样开着。
+   * 所以 `stop` 不摘它：配对的生死归后端对照表，拿下 / 归档 / 删除时由后端 `setSideTool(id, false)`。
+   */
+  private readonly 侧边工具开 = new Set<SessionId>()
   /**
    * 正在启动的那一段(审查 debug E4)。`start()` 有一长串 await(解析模型、起 MCP、建 pi 会话),
    * 重复对同一 sessionId 调 start——双击、resubscribe 竞态——会各跑一遍,第二遍的 `sessions.set`
@@ -952,7 +964,15 @@ export class NativeRuntime implements AgentRuntime {
       this.opts.memoryEnable && this.opts.memoryDeps
         ? memoryTools(spec.workspace, this.opts.memoryEnable(), this.opts.memoryDeps())
         : []
-    const 外部 = [...内核工具, ...视觉工具, ...office工具组, ...browser工具组, ...memory工具组, ...mcp工具]
+    /**
+     * `read_main_session`（2026-09-24，侧边对话）：**每段都装、默认停用**，挂进坞才启用（`setSideTool`）。
+     * 只在建会话时装得上（pi 的 `customTools`），所以不能「挂进坞时再装」——那样已有的会话得重建。
+     * 同属「外部」：两条 return 都经过 `观察过的外部`。
+     */
+    const 侧边工具 = this.opts.读主对话
+      ? [createReadMainSessionTool({ 对话: spec.sessionId, 读: this.opts.读主对话 })]
+      : []
+    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...mcp工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部
@@ -1359,6 +1379,15 @@ export class NativeRuntime implements AgentRuntime {
       // 有门时必须关掉内置工具，**否则模型会绕过门去用原始的 bash**（Spike A-2 实测）
       ...(customTools ? { noTools: "builtin" as const, customTools: customTools as never } : {}),
     })
+
+    /**
+     * 默认停用：只有挂进坞的那段才启用（`setSideTool`）。启动前就配好对的（`侧边工具开` 里有）直接开着。
+     * pi 建会话时把 `customTools` **全部启用**（`includeAllExtensionTools`），所以这里要主动摘一次。
+     */
+    if (!this.侧边工具开.has(spec.sessionId)) {
+      const 名 = session.getActiveToolNames()
+      if (名.includes(READ_MAIN_SESSION)) session.setActiveToolsByName(名.filter((n) => n !== READ_MAIN_SESSION))
+    }
 
     const unsubscribe = session.subscribe((raw) => this.translate(spec.sessionId, raw as PiEvent))
 
@@ -2450,6 +2479,22 @@ ${描述}`
     const 重送 = [...留下.filter((x) => x.送法 === "steer"), ...留下.filter((x) => x.送法 === "followUp")]
     this.发待发单(sessionId)
     for (const x of 重送) this.送一轮(sessionId, x.文, x.图, x.送法, x.id)
+  }
+
+  /**
+   * 侧边对话的工具启停（2026-09-24）。**会话还没起也要记下**：重启后界面先配对、会话后起，
+   * 起的时候按这张表决定开不开（见建会话处）。
+   *
+   * pi 的 `setActiveToolsByName` 只认注册表里有的名字（没装 `读主对话` 时加进去也会被它丢掉），
+   * 并当场重建系统提示词；下一轮生效——正在跑的这一轮不受影响。
+   */
+  setSideTool(sessionId: SessionId, on: boolean): void {
+    if (on) this.侧边工具开.add(sessionId)
+    else this.侧边工具开.delete(sessionId)
+    const s = this.sessions.get(sessionId)?.session
+    if (!s) return
+    const 名 = s.getActiveToolNames().filter((n) => n !== READ_MAIN_SESSION)
+    s.setActiveToolsByName(on ? [...名, READ_MAIN_SESSION] : 名)
   }
 
   /**

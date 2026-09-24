@@ -506,6 +506,8 @@ export interface AgentRuntime {
   editQueue?(sessionId: SessionId, id: string, action: "remove" | "steer"): void
   /** 把排着的全部撤下来，返回它们的 id（按原先后）。中止之前先调它：停下之后排着的话不该自己冒出来 */
   clearQueue?(sessionId: SessionId): string[]
+  /** 侧边对话：启用 / 停用 `read_main_session`（2026-09-24）。**只有 native 有，有无即判据** */
+  setSideTool?(sessionId: SessionId, on: boolean): void
   /**
    * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。

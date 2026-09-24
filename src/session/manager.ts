@@ -563,6 +563,35 @@ export class SessionManager {
     rt.editQueue(sessionId, id, action)
   }
 
+  /**
+   * 这段会话看不看得见主对话（2026-09-24，侧边对话）。**有无即判据**：acp / cli / pty 没有 `setSideTool`，
+   * 坞格据此写「这个 agent 看不见主对话」。还没绑运行时的 native 会话也算有——它一起来就装着。
+   */
+  canReadMain(sessionId: SessionId): boolean {
+    return typeof this.runtimeForSession(sessionId)?.setSideTool === "function"
+  }
+
+  /**
+   * 侧边对话的工具启停。**不要求租约**——这是界面布局的后果，不是写入。
+   * 会话还没绑运行时也要能记下（重启后界面先配对、会话后起）：native 运行时自己按 id 记着。
+   */
+  setSideTool(sessionId: SessionId, on: boolean): void {
+    this.runtimeForSession(sessionId)?.setSideTool?.(sessionId, on)
+  }
+
+  /**
+   * 这段会话归哪个运行时：绑着的就是绑着的那个；没绑的只认 native——
+   * 与 `resume` 同一条口径（只有 native 续得上，起来时走的就是 `runtimes.native`）。
+   * 其余 kind 没绑就是没活着，没有「那一份」可找。
+   */
+  private runtimeForSession(sessionId: SessionId): AgentRuntime | undefined {
+    const rt = this.bound.get(sessionId)
+    if (rt) return rt
+    const rec = this.store.get(sessionId)
+    if (!rec) return undefined
+    return this.registry.agents[rec.agentId]?.kind === "native" ? this.runtimes.native : undefined
+  }
+
   /** 撤下全部待发，返回 id（原先后）。没有这回事的会话返回空 */
   clearQueue(sessionId: SessionId): string[] {
     return this.bound.get(sessionId)?.clearQueue?.(sessionId) ?? []

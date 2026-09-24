@@ -8,6 +8,23 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-24 — 侧边对话 Task 1：对照表与主对话摘要（纯逻辑；分支 `side-session`）
+
+- **Type**: feat
+- **Motivation**: 「侧边对话」要给坞里第二段会话配一只只读工具 `read_main_session`，看主对话此刻的进展。
+  这是整个功能的第一块纯逻辑地基：谁在坞里、主对话摘要怎么拼，先不碰运行时与界面。
+- **What**（plan `docs/superpowers/plans/2026-09-24-侧边对话.md` Task 1；spec `specs/2026-09-24-侧边对话-design.md`）：
+  新增 `src/workbench/side-session.ts`：类 `侧边对照`（`设` / `主对话of` / `当前侧边` / `忘掉`，同一段只在一处、
+  换主区只改主、会话没了按「是侧边/是主」分别处理）+ 纯函数 `主对话摘要`（按用户发言切轮、只留最近 6 轮、
+  单条超 600 字截断且报「省了 N 字」、列正在跑的工具与已跑秒数、待发条、产出文件；空转录/没有工具在跑都如实说）。
+  TDD：先写 `tests/workbench/side-session.test.ts`（plan 原样代码）确认因模块不存在而失败，再实现。
+  **偏离计划一处**：plan 里实现文件从 `../protocol/index.js` import `SessionId`，但该符号实际导出自
+  `src/runtime/types.ts`（`src/protocol/index.ts` 不导出它，`src/workbench/events.ts` 等既有代码也是从
+  `runtime/types.js` 取它）——按任务指示「不改变行为，只调导入路径」改为 `import type { SessionId } from "../runtime/types.js"`；
+  测试文件本身不直接引用 `SessionId`（只用字符串字面量），无需改动。
+- **Impact**: 纯新增，不改任何既有模块；后续 Task（工具接入 native、界面坞格）在此基础上继续。
+- **Verification**: `npx vitest run tests/workbench/side-session.test.ts` 8/8 通过；`npm run typecheck` 无错误。
+
 ### 2026-09-23 — 待发消息：排着的话看得见、取得回、能改插队（学自 Codex；分支 `queued-messages`）
 
 - **Type**: feat

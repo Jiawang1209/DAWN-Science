@@ -1502,4 +1502,5 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 已下好，等着重启": "{0} is downloaded, waiting for a restart",
   "查不到：{0}": "Could not check: {0}",
   "{0}没成，点这里重来": "{0} did not go through — click to try again",
+  "坞里那段对话已经不在了，已从坞里拿下": "The chat in the dock no longer exists; removed from the dock",
 }

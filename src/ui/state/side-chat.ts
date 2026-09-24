@@ -11,7 +11,11 @@ export const $侧边会话id = atom<string | undefined>(undefined)
 /** 坞里那段的运行时读不读得到主对话（`setSideSession` 回的）。缺省 = 还不知道 */
 export const $侧边能读主 = atom<boolean | undefined>(undefined)
 
-/** 作用域是「项目」一级：同一个项目（或同一台服务器）挂的那段，换回来还在 */
+/**
+ * **作用域是「地方」**：一个项目（`p:<projectId>`）或一台远端连接（`r:<connectionId>`）各记一段——
+ * 同一个地方挂的那段，换走再换回来还在；换到别处不会把这里的那段带过去。
+ * 整张表（地方 → sessionId）存在**这一个键**里，不是一个地方一个键。
+ */
 export const SIDE_SESSION_KEY = "dawn.project.side-session"
 
 export function 侧边地方键(s: { projectId?: string | undefined; remote?: { connectionId: string } | undefined }): string | undefined {
@@ -22,7 +26,9 @@ export function 侧边地方键(s: { projectId?: string | undefined; remote?: { 
 function 读表(): Record<string, string> {
   try {
     const v: unknown = JSON.parse(localStorage.getItem(SIDE_SESSION_KEY) ?? "{}")
-    return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, string>) : {}
+    if (!v || typeof v !== "object" || Array.isArray(v)) return {}
+    // **只留值是字符串的那几格**：手改坏的、旧版本写的别的形状，挂上去就是拿一个非 id 去订阅
+    return Object.fromEntries(Object.entries(v).filter((e): e is [string, string] => typeof e[1] === "string"))
   } catch {
     return {}
   }

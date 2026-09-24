@@ -90,7 +90,8 @@ import { CommandPalette } from "./palette.js"
 import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
-import { loadArtifacts } from "./state/sync.js"
+import { loadArtifacts, resyncSide } from "./state/sync.js"
+import { $侧边会话id, $侧边能读主, 侧槽, 侧边地方键, 载入侧边, 从坞拿下 } from "./state/side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
@@ -567,8 +568,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 不取的话它会停在上一次的数上，而一个不动的相对时间**比没有更骗人**。
            */
           if (u.item.final) {
-            // 不是正看着的那段说完了 → 未读点（codex-polish ⑤）
-            if (u.sessionId !== $activeSessionId.get()) 标未读(u.sessionId, true)
+            // 不是正看着的那段说完了 → 未读点（codex-polish ⑤）。坞里那段不标：它就摆在眼前（侧边对话，2026-09-24）
+            if (u.sessionId !== $activeSessionId.get() && u.sessionId !== $侧边会话id.get()) 标未读(u.sessionId, true)
             void loadTempSessions(client)
             const pid = $activeProjectId.get()
             if (pid) void loadSessions(client, pid)
@@ -580,7 +581,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 不还的话，每切走一段跑着的对话就永久多留一份订阅，
              * **而那种泄漏不出声**。
              */
-            if (u.sessionId !== $activeSessionId.get()) {
+            // **坞里那段答完了不退订**：它一直挂在人眼前，退订了它的下一句就再也到不了侧槽
+            if (u.sessionId !== $activeSessionId.get() && u.sessionId !== $侧边会话id.get()) {
               client.forgetRevision(u.sessionId)
               client.get("unsubscribeSession", { sessionId: u.sessionId }).catch(fail)
             }
@@ -593,6 +595,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           if (u.type === "bytes") appendDockBytes(u.data)
           // 快照里的终端是**一整段字符串**（不是片段数组）
           if (u.type === "snapshot") setDockChunks(u.snapshot.terminal ? [u.snapshot.terminal] : [])
+          if (u.type === "state" && u.state === "exited") {
+            const pid = $activeProjectId.get()
+            if (pid) void loadSessions(client, pid)
+          }
+          return
+        }
+        /**
+         * **坞里那段是第三条线**（侧边对话，2026-09-24）。与底部终端同一个道理：它与主对话同时活着，
+         * 按 sessionId 写进自己的槽；混进主槽的话两段的字会流进同一张转录。
+         * 它恰好也是主区那段时（人刚在侧栏点了它，下一拍才从坞里拿下）让给主区——同一段只在一处，主区赢。
+         */
+        if (u.sessionId === $侧边会话id.get() && u.sessionId !== $activeSessionId.get()) {
+          if (u.type === "item") 侧槽.upsertItem(u.item)
+          if (u.type === "dropItem") 侧槽.dropItem(u.id)
+          if (u.type === "snapshot") 侧槽.applySnapshot(u.snapshot)
+          if (u.type === "queued") 侧槽.setQueued(u.queued)
+          // 退出了要立刻反映到列表：坞里那格的输入框靠它判断还能不能写（与主区同一句）
           if (u.type === "state" && u.state === "exited") {
             const pid = $activeProjectId.get()
             if (pid) void loadSessions(client, pid)
@@ -824,6 +843,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * （见下面那个订阅里 `busy → false` 那一支）。
        */
       if ($跑着的会话.get().has(sessionId)) return
+      // 切走的那段正挂在坞里（侧边对话，2026-09-24）：订阅归坞那边管，这里退订就把坞里那段掐断了
+      if (sessionId === $侧边会话id.get()) return
       client.forgetRevision(sessionId)
       client.get("unsubscribeSession", { sessionId }).catch(fail)
     }
@@ -1826,6 +1847,90 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const t = setInterval(() => void 取写权(sessionId), 150_000)
     return () => clearInterval(t)
   }, [ready, sessionId, 取写权])
+
+  /**
+   * 坞里那段（侧边对话，2026-09-24）挂的是谁：**按「地方」记**（项目 / 远端连接，见 `side-chat.ts`）。
+   *
+   * 地方从当前会话来；没选会话时退到当前项目。**选了会话、而它的摘要还没取回来时不下结论**——
+   * 那一拍算出来的地方是错的，按错的地方挂一次就是把侧槽清空再重订一遍。
+   */
+  const 侧边地方 = session ? 侧边地方键(session) : sessionId ? undefined : projectId ? `p:${projectId}` : undefined
+  const 侧边地方Ref = useRef(侧边地方)
+  侧边地方Ref.current = 侧边地方
+  useEffect(() => {
+    if (侧边地方) 载入侧边(侧边地方)
+  }, [侧边地方])
+
+  const 侧边id = useStore($侧边会话id)
+
+  /**
+   * 告诉后端谁是谁的侧边（协议 7.37 `setSideSession`）。
+   * **主区换会话也要重发**——「主对话」指的是此刻主区里那段（spec §2.5）。
+   *
+   * 两种回话要照办：
+   * - 坞里那段就是主区那段（人在侧栏 / 页签里点了它）：**同一段只在一处，主区赢**——从坞里拿下，下一拍再报。
+   * - `sideGone`：界面记住的那段在 DAWN 关着时被删了，后端已经丢掉——界面也拿下，并且**说一句**（规格 7.5）；
+   *   静静清掉的话，人只会看到坞里那段凭空没了。
+   */
+  useEffect(() => {
+    if (!ready) return
+    if (侧边id && 侧边id === sessionId) {
+      const 地方 = 侧边地方Ref.current
+      if (地方) {
+        从坞拿下(地方)
+        return
+      }
+    }
+    const side = 侧边id && 侧边id !== sessionId ? 侧边id : undefined
+    client
+      .get<{ canReadMain?: boolean; sideGone?: boolean }>("setSideSession", {
+        sideSessionId: side ?? null,
+        mainSessionId: sessionId ?? null,
+      })
+      .then((r) => {
+        // 回来时坞里已经换了一段：这句答的是上一段，不许写到这一段头上
+        if (side !== $侧边会话id.get()) return
+        if (r.sideGone && side) {
+          const 地方 = 侧边地方Ref.current
+          if (地方) 从坞拿下(地方)
+          note(t("坞里那段对话已经不在了，已从坞里拿下"))
+          return
+        }
+        $侧边能读主.set(side ? r.canReadMain ?? false : undefined)
+      })
+      .catch(fail)
+  }, [ready, client, sessionId, 侧边id])
+
+  /**
+   * 坞里那段：订阅（取快照灌进侧槽）、持写权并续着。与主区那一对 effect 同一套做法，只是槽不同。
+   *
+   * **依赖里不放主区的 `sessionId`**：主区换会话不该让坞里那段退订重订——那会在空隙里漏掉它的更新。
+   * 它恰好成了主区那段的那一拍，交给主区（上面那个 effect 会把它从坞里拿下）。
+   */
+  useEffect(() => {
+    if (!ready || !侧边id) return
+    if (侧边id === $activeSessionId.get()) return
+    const id = 侧边id
+    // 它就摆在眼前：挂上来就不算未读
+    标未读(id, false)
+    /**
+     * 与主区切会话同一个理由：订阅会把一段已退出的对话**续起来**，列表要重取，否则它仍写着「已退出」、输入框仍禁用
+     */
+    void resyncSide(client, id).then(() => {
+      const pid = $activeProjectId.get()
+      if (pid) void loadSessions(client, pid)
+      void loadTempSessions(client)
+    })
+    void 取写权(id)
+    const t = setInterval(() => void 取写权(id), 150_000)
+    return () => {
+      clearInterval(t)
+      // 在跑的交给「答完了」那段去还（与主区切走同一条规矩）；它成了主区那段就归主区管，更不能退订
+      if ($跑着的会话.get().has(id) || id === $activeSessionId.get()) return
+      client.forgetRevision(id)
+      client.get("unsubscribeSession", { sessionId: id }).catch(fail)
+    }
+  }, [ready, client, 侧边id, 取写权])
 
   /** 走全局那个确认框，包成一个 Promise：确认 / 第三个选项 / 取消三条路各回一个词（技能屏、已归档屏共用） */
   const 问一句 = useCallback(

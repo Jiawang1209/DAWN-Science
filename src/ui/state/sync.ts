@@ -43,6 +43,7 @@ import {
   type RunDetail,
 } from "./catalog.js"
 import { $activeSessionId } from "./view.js"
+import { $侧边会话id, 侧槽 } from "./side-chat.js"
 
 /**
  * 失败一律出声（规格 7.5）。
@@ -224,6 +225,8 @@ export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined)
  * 「这条响应属于另一个会话」。少任何一道都会让旧内容倒灌进新会话。
  */
 export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<void> {
+  // 坞里那段跳了号（侧边对话，2026-09-24）：快照灌进侧槽，**不领 `guard()` 的号**——理由见 `resyncSide`
+  if (sessionId === $侧边会话id.get() && sessionId !== $activeSessionId.get()) return resyncSide(c, sessionId)
   const g = guard()
   return c
     .get<SessionSnapshot>("subscribeSession", { sessionId })
@@ -258,6 +261,40 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
     })
     .catch(fail)
 }
+
+/**
+ * 坞里那段（侧边对话，2026-09-24）取一次全量快照灌进侧槽，并同步 revision。挂上与跳号自愈都走这里。
+ *
+ * **自己的世代，不借 `guard()` 那个**——与 `loadRunDetail` 同一个理由：`guard()` 是全局一份，
+ * 这里领一个号就把主区正在飞的 `resyncSession` 判成了过时，主区那整份快照会被静静丢掉。
+ *
+ * **两道防线**，与主区那条同构：世代挡住「后来又问过一次」，id 比对挡住「坞里已经换了一段 / 拿下了 /
+ * 它已经成了主区那段」——换过之后上一段的快照晚到，灌进侧槽就是一段对话顶着另一段的位置。
+ */
+export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void> {
+  const 我的 = ++侧边世代
+  const 作废 = () => 我的 !== 侧边世代 || sessionId !== $侧边会话id.get() || sessionId === $activeSessionId.get()
+  return c
+    .get<SessionSnapshot>("subscribeSession", { sessionId })
+    .then((snap) => {
+      if (作废() || snap.sessionId !== sessionId) return
+      // 「当前是什么」的那几样（权限卡、开关、待发单）同样要带上——理由见 `resyncSession` 里 A3 那段
+      侧槽.applySnapshot({
+        items: snap.items,
+        pendingPermission: snap.pendingPermission,
+        configOptions: snap.configOptions,
+        queued: snap.queued,
+      })
+      c.expectRevision(sessionId, snap.revision)
+    })
+    .catch((e: unknown) => {
+      // 已经不是坞里那段了（例如后端答了 `sideGone`、界面刚把它拿下）：那是一次作废的请求，不出声——
+      // 拿下那边已经说过一句了，这里再报一条「没有这个会话」只是噪音
+      if (sessionId !== $侧边会话id.get()) return
+      fail(e)
+    })
+}
+let 侧边世代 = 0
 
 /**
  * 最新 Run 的详情与溯源。**产出与成本只有 `getRun` 带得来**——`listRuns` 只给摘要。

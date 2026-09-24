@@ -314,7 +314,8 @@ export interface MockToolCallSpec {
   /**
    * **只在最后一句用户话含这串时触发**（2026-09-24，侧边对话）：两段会话共用一台假服务器，
    * 主区那段要 `sleep` 拖住、坞里那段要调 `read_main_session`——按话分开，不按次数猜。
-   * 不给 = 原样（旧用例一个字节不变）。
+   * 不给 = 原样（旧用例一个字节不变）。**空串直接报错**：`"".includes("")` 恒真，
+   * 它会连工具结果之后那一问也对上，看着像「按话分开」、其实什么都没分。
    */
   when?: string
 }
@@ -500,6 +501,7 @@ function 最后一句用户话(body: 请求体): string | undefined {
 }
 
 function 一条的状态机(spec: MockToolCallSpec) {
+  if (spec.when === "") throw new Error(`toolCall.when 不许是空串（${spec.toolName}）：它对每一问都成立，等于没写`)
   let fired = false
   let 次数 = 0
   return (body: 请求体) => {

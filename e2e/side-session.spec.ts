@@ -43,8 +43,12 @@ test.describe("侧边对话 · native", () => {
   test.use({
     dawnOptions: {
       toolCall: [
-        /** 主区那段：拖住这一轮。15 秒够坞里走完两轮问答（busy-gap 用 5 秒拖一轮，这里要拖三轮） */
-        { toolName: "bash", args: { command: "sleep 15" }, when: "跑个长的", say: "我去跑一下。" },
+        /**
+         * 主区那段：拖住这一轮。**这是给坞里的时间预算，用例从不等它跑完**——收尾时整个应用被关掉。
+         * 所以放得远远的（120 秒）：满负荷的全量 e2e 里坞那段起得慢，也不会因为主区先跑完
+         * 而红在「正在跑：bash」上、看起来像产品 bug。
+         */
+        { toolName: "bash", args: { command: "sleep 120" }, when: "跑个长的", say: "我去跑一下。" },
         { toolName: "read_main_session", args: {}, when: "主对话跑到哪了" },
       ],
     },
@@ -59,8 +63,12 @@ test.describe("侧边对话 · native", () => {
       await 说(坞(page), "你好")
       await expect(坞(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
       await expect(主区(page).locator(".turns")).not.toContainText("你好")
+      /** 回复那一侧也不许串：主区自己的罐头回复要等 sleep 跑完才来，此刻出现只可能是坞里漏过来的 */
+      await expect(主区(page).locator(".turns")).not.toContainText(CANNED_REPLY)
       await expect(坞(page).locator(".turns")).not.toContainText("跑个长的")
       await expect(主区(page).getByRole("button", { name: "停止", exact: true })).toBeVisible()
+      /** native 那段看得见主对话：「看不见」的提示这里不许出现（ACP 那条只证了它会出现） */
+      await expect(坞(page).locator(".side-chat-caveat")).toHaveCount(0)
     })
 
     await test.step("坞里问进度：调到 read_main_session，结果里是主对话此刻的", async () => {
@@ -104,12 +112,15 @@ test.describe("侧边对话 · native", () => {
       await expect(主区(page).locator(".conv-title")).toContainText("你好")
       await expect(坞(page).locator(".side-chat-title")).toContainText("跑个长的")
       await expect(坞(page).locator(".turns")).toContainText("我去跑一下。")
+      /** 先等主区真换成坞里那段的内容，再断言原主那段不在——否则否定句可能赶在重渲染之前成立 */
+      await expect(主区(page).locator(".turns")).toContainText(CANNED_REPLY)
       await expect(主区(page).locator(".turns")).not.toContainText("跑个长的")
     })
 
     await test.step("从坞里拿下：坞格回空态，那段仍在会话页签里", async () => {
       await 坞(page).getByRole("button", { name: "从坞里拿下", exact: true }).click()
-      await expect(坞(page).locator(".side-chat-empty")).toBeVisible()
+      /** 等标题而不是 `.side-chat-empty`：后者「正在打开」的加载态也有 */
+      await expect(坞(page).getByRole("heading", { name: "坞里的对话", exact: true })).toBeVisible()
       await expect(坞(page).locator(".side-chat-head")).toHaveCount(0)
       await expect(主区(page).locator(".session-tabs .session-tab-title").filter({ hasText: "跑个长的" })).toHaveCount(1)
     })

@@ -1634,12 +1634,20 @@ export const OPERATIONS = {
    *
    * 响应里的 `canReadMain`：坞里那段的运行时有没有这件工具（只有 native 有）。
    * 没有侧边 → 缺省。界面据此在坞格头上写「这个 agent 看不见主对话」。
+   *
+   * 查无此会话的 `sideSessionId` 不记（当作 null、回 `sideGone: true`）；查无此会话的 `mainSessionId` 当作 null。
    */
   setSideSession: {
     request: z
       .object({ sideSessionId: z.string().min(1).nullable(), mainSessionId: z.string().min(1).nullable() })
       .strict(),
-    response: z.object({ canReadMain: z.boolean().optional() }).strict(),
+    response: z
+      .object({
+        canReadMain: z.boolean().optional(),
+        /** 界面记住的那段已经不在了（关着 DAWN 时被删了）——界面据此清坞并出声，spec §2.4 */
+        sideGone: z.boolean().optional(),
+      })
+      .strict(),
     mutating: true,
   },
 

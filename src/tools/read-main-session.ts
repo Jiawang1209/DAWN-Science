@@ -30,7 +30,17 @@ export function createReadMainSessionTool(opts: {
     parameters: Type.Object({}),
     async execute(_toolCallId: string, _params: unknown): Promise<ToolResult> {
       // 每次调用都现查：配对是后端对照表的事，这里不缓存「我是谁的侧边」
-      const s = opts.读(opts.对话)
+      let s: string | undefined
+      try {
+        s = opts.读(opts.对话)
+      } catch (err) {
+        // 失败必须出声（规格 7.5）：读的时候炸了与「不在坞里」是两回事，别混成一句
+        return {
+          content: [{ type: "text", text: `读主对话时出错：${err instanceof Error ? err.message : String(err)}` }],
+          isError: true,
+          details: undefined,
+        }
+      }
       if (s === undefined) {
         return {
           content: [{ type: "text", text: "你现在不在坞里（或者主区此刻没有对话），没有主对话可看。" }],

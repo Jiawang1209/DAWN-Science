@@ -1774,11 +1774,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     // 主对话不在本进程（没起过 / 已停）→ undefined，工具那头如实说「读不到」
     const snap = events.peek(main)
     if (!snap) return undefined
+    const { artifacts, unknown } = runs.artifactsOf(main)
     return 主对话摘要({
       title: sessions.get(main)?.title,
       items: snap.items,
       queued: snap.queued ?? [],
-      产出: runs.artifactsOf(main).artifacts.map((a) => a.path),
+      产出: artifacts.map((a) => a.path),
+      未记录: unknown.length,
       现在: Date.now(),
     })
   })
@@ -3167,9 +3169,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * `canReadMain` 如实回：acp / cli 那类运行时没有这件工具，界面要写出来，不许假装它看得见。
      */
     setSideSession: async ({ sideSessionId, mainSessionId }) => {
-      const { 进, 出 } = 侧边.设({ side: sideSessionId ?? undefined, main: mainSessionId ?? undefined })
+      /**
+       * **查无此会话的不记**（审查 09-24）：界面记住的那段可能在关着 DAWN 时被删了。记下它的话
+       * 对照表里挂着一段死 id，界面还以为坞里有东西。当作没有侧边、把原来那段照常停掉，回 `sideGone` 让界面清坞并出声。
+       */
+      const 侧边不在 = sideSessionId !== null && !sessions.get(sideSessionId)
+      const side = sideSessionId !== null && !侧边不在 ? sideSessionId : undefined
+      const main = mainSessionId !== null && sessions.get(mainSessionId) ? mainSessionId : undefined
+      const { 进, 出 } = 侧边.设({ side, main })
       if (出) sessions.setSideTool(出, false)
       if (进) sessions.setSideTool(进, true)
+      if (侧边不在) return { sideGone: true }
       const 侧 = 侧边.当前侧边()
       return 侧 ? { canReadMain: sessions.canReadMain(侧) } : {}
     },

@@ -57,8 +57,9 @@ function make(runtime: FakeRuntime = new 带侧边工具的()) {
   })
   const repo = mkdtempSync(join(tmpdir(), "dawn-side-"))
   dirs.push(repo)
-  const 开一段 = async () => ((await backend.createTask({ agentId: "ds-chat", workspace: repo })) as { sessionId: string }).sessionId
-  return { backend, events, runtime, 开一段, 读: (sid: string) => 读主对话?.(sid) }
+  const 开任务 = async () => (await backend.createTask({ agentId: "ds-chat", workspace: repo })) as { sessionId: string; taskId: string }
+  const 开一段 = async () => (await 开任务()).sessionId
+  return { backend, events, runtime, sessions, runStore, 开一段, 开任务, 读: (sid: string) => 读主对话?.(sid) }
 }
 
 describe("setSideSession", () => {
@@ -142,4 +143,91 @@ describe("读主对话", () => {
     await ctx.backend.setSideSession({ sideSessionId: null, mainSessionId: m })
     expect(ctx.读(s)).toBeUndefined()
   })
+})
+
+describe("查无此会话（审查 09-24）", () => {
+  it("side 不存在：不记、原来那段照常停用、回 sideGone", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 带侧边工具的
+    const s = await ctx.开一段()
+    const m = await ctx.开一段()
+    await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: m })
+    expect(await ctx.backend.setSideSession({ sideSessionId: "关着时被删了", mainSessionId: m })).toEqual({ sideGone: true })
+    expect(rt.开关).toEqual([`${s}:true`, `${s}:false`])
+    expect(ctx.读("关着时被删了")).toBeUndefined()
+    // 真没记：再说一次「没有侧边」不会多停一次，也不会去停那段死 id
+    await ctx.backend.setSideSession({ sideSessionId: null, mainSessionId: m })
+    expect(rt.开关).toEqual([`${s}:true`, `${s}:false`])
+  })
+
+  it("main 不存在：当作没有主区——侧边照挂，但读不到主对话", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 带侧边工具的
+    const s = await ctx.开一段()
+    expect(await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: "没这段" })).toEqual({ canReadMain: true })
+    expect(rt.开关).toEqual([`${s}:true`])
+    expect(ctx.读(s)).toBeUndefined()
+  })
+
+  it("side 与 main 是同一段 → 当作没有侧边", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 带侧边工具的
+    const s = await ctx.开一段()
+    expect(await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: s })).toEqual({})
+    expect(rt.开关).toEqual([])
+    expect(ctx.读(s)).toBeUndefined()
+  })
+})
+
+describe("别的删法也摘坞", () => {
+  it("deleteProject / deleteArchivedSessions / deleteTask 各自把坞里那段停掉、对照表摘掉", async () => {
+    for (const 怎么删 of ["project", "archived", "task"] as const) {
+      const ctx = make()
+      const rt = ctx.runtime as 带侧边工具的
+      const 侧任务 = await ctx.开任务()
+      const s = 侧任务.sessionId
+      const m = await ctx.开一段()
+      await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: m })
+      if (怎么删 === "project") {
+        await ctx.backend.deleteProject({ projectId: ctx.sessions.get(s)!.projectId! })
+      } else if (怎么删 === "archived") {
+        // 归档那一下已经摘了；这里要证的是「删全部归档」自己也摘——所以先绕过后端直接归档
+        ctx.sessions.setArchived(s, true)
+        await ctx.backend.deleteArchivedSessions({})
+      } else {
+        await ctx.backend.deleteTask({ taskId: 侧任务.taskId })
+      }
+      expect(rt.开关, 怎么删).toEqual([`${s}:true`, `${s}:false`])
+      await ctx.backend.setSideSession({ sideSessionId: null, mainSessionId: null })
+      expect(rt.开关, 怎么删).toEqual([`${s}:true`, `${s}:false`])
+    }
+  })
+
+  it("归档的是主区那段 → 只清主，坞里那段的工具不动", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 带侧边工具的
+    const s = await ctx.开一段()
+    const m = await ctx.开一段()
+    ctx.events.userTurn(m, "主区的话")
+    await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: m })
+    await ctx.backend.setSessionArchived({ sessionId: m, archived: true })
+    expect(rt.开关).toEqual([`${s}:true`])
+    expect(ctx.读(s)).toBeUndefined()
+  })
+})
+
+it("读主对话带上待发单、产物与没记下的次数", async () => {
+  const ctx = make()
+  const s = await ctx.开一段()
+  const m = await ctx.开一段()
+  ctx.events.userTurn(m, "跑一下")
+  ctx.events.setQueued(m, [{ id: "q1", text: "顺便画个火山图", behavior: "followUp" }])
+  const 基 = { projectId: ctx.sessions.get(m)!.projectId!, sessionId: m, origin: "agent" as const, status: "completed" as const, startedAt: "2026-09-24T00:00:00Z", finishedAt: "2026-09-24T00:00:01Z", hasError: false }
+  ctx.runStore.insert({ ...基, runId: "r1", requestType: "tool_call:bash", filesCreated: ["outputs/volcano.png"], toolCallId: "c1" })
+  ctx.runStore.insert({ ...基, runId: "r2", requestType: "tool_call:bash", toolCallId: "c2" })
+  await ctx.backend.setSideSession({ sideSessionId: s, mainSessionId: m })
+  const 字 = ctx.读(s)!
+  expect(字).toContain("顺便画个火山图")
+  expect(字).toContain("outputs/volcano.png")
+  expect(字).toContain("另有 1 次工具调用没有记下它写了哪些文件")
 })

@@ -44,12 +44,15 @@ export class 侧边对照 {
 
 const 最多轮 = 6
 const 每条最多字 = 600
+const 最多产出 = 30
 
 export function 主对话摘要(v: {
   title?: string | undefined
   items: readonly TranscriptItem[]
   queued: readonly QueuedMessage[]
   产出: readonly string[]
+  /** 有几次工具调用没记下写了哪些文件（`artifactsOf().unknown` 的条数）。缺省 = 0 */
+  未记录?: number
   /** 毫秒时间戳；测试里给定值 */
   现在: number
 }): string {
@@ -94,6 +97,12 @@ export function 主对话摘要(v: {
     行.push(`待发条上还排着 ${v.queued.length} 句：`)
     for (const q of v.queued) 行.push(`- [${q.behavior === "steer" ? "插队" : "排队"}] ${q.text}`)
   }
-  if (v.产出.length) 行.push(`这一段生成过的文件：${v.产出.join("、")}`)
+  if (v.产出.length) {
+    // 截断要说清省了多少（规格 7.5）
+    const 省 = Math.max(0, v.产出.length - 最多产出)
+    行.push(`这一段生成过的文件：${v.产出.slice(0, 最多产出).join("、")}${省 ? `（另有 ${省} 个没有列出）` : ""}`)
+  }
+  // 「没列出来」不等于「没写过」：记不下的那几次如实说
+  if (v.未记录) 行.push(`另有 ${v.未记录} 次工具调用没有记下它写了哪些文件`)
   return 行.join("\n")
 }

@@ -67,6 +67,17 @@ describe("主对话摘要", () => {
     expect(s).toMatch(/省了 \d+ 字/)
     expect(s).not.toContain("第0问")
   })
+  it("产出最多列 30 个，多的说清省了几个；没记下的次数单独一行", () => {
+    const 产出 = Array.from({ length: 35 }, (_, i) => `out/f${i}.csv`)
+    const s = 主对话摘要({ items: [], queued: [], 产出, 未记录: 2, 现在: 0 })
+    expect(s).toContain("out/f29.csv")
+    expect(s).not.toContain("out/f30.csv")
+    expect(s).toContain("（另有 5 个没有列出）")
+    expect(s).toContain("另有 2 次工具调用没有记下它写了哪些文件")
+    const 少 = 主对话摘要({ items: [], queued: [], 产出: ["a.csv"], 未记录: 0, 现在: 0 })
+    expect(少).not.toContain("没有列出")
+    expect(少).not.toContain("没有记下")
+  })
   it("空转录如实说", () => {
     expect(主对话摘要({ items: [], queued: [], 产出: [], 现在: 0 })).toContain("主对话还没有任何发言")
   })

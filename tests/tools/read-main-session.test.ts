@@ -19,6 +19,12 @@ describe("read_main_session", () => {
     expect(r.isError).toBe(true)
     expect(r.content[0]!.text).toContain("不在坞里")
   })
+  it("读的时候抛错 → 出声报错，不混成「不在坞里」", async () => {
+    const t = createReadMainSessionTool({ 对话: "s", 读: () => { throw new Error("数据库锁住了") } })
+    const r = await t.execute("c1", {})
+    expect(r.isError).toBe(true)
+    expect(r.content[0]!.text).toBe("读主对话时出错：数据库锁住了")
+  })
   it("每次现读：回调变了，下一次读到的就是新的", async () => {
     let 此刻 = "第一轮"
     const t = createReadMainSessionTool({ 对话: "s", 读: () => 此刻 })

@@ -89,6 +89,7 @@ import { UserFacingError } from "../errors.js"
 import { fault, fault原样, type WorkbenchBackend } from "./server.js"
 import { 取本机图片 } from "./本机图片.js"
 import type { SessionTranscripts } from "./events.js"
+import { 侧边对照, 主对话摘要 } from "./side-session.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
 import { i18n消息, 渲染i18n, type FaultI18n } from "../protocol/fault-i18n.js"
@@ -243,6 +244,11 @@ export interface WorkbenchBackendOptions {
   subagents?: { 全局目录?: string; 自带目录?: string; 自带停用?: ((name: string) => boolean) | undefined }
   /** 退出时要收的东西在这儿登记（2026-08-23 审查抓的：此前定时调度器的 timer、微信轮询没人停，每次退出都留孤儿） */
   注册收摊?: (f: () => Promise<void> | void) => void
+  /**
+   * 侧边对话（2026-09-24）：后端把「读主对话」交出去。运行时在后端之前就建好了，
+   * 只能由 wiring 晚绑定——与 `注册收摊` 同一种「后端往外登记」的形状。不给 = 没人读得到
+   */
+  挂上读主对话?: (读: (sideId: string) => string | undefined) => void
   /** 定时任务的两张表（7.19）。**不给就没有定时**——界面如实说「本次运行没有装配」 */
   schedules?: ScheduleStore
   /** 定时任务的设置；不给用默认 */
@@ -1414,6 +1420,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   const 删一个会话 = async (sessionId: string): Promise<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }> => {
       const rec = sessions.get(sessionId)
       if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
+      // **在删记录之前**摘坞：记录一没，`setSideTool` 就找不到它归哪个运行时，native 那边的开关会一直留着
+      侧边忘掉(sessionId)
       const removed = await sessions.remove(sessionId)
       if (!removed) throw fault("not_found", "没有这个会话：{0}", sessionId)
       // 转录只活在内存里，跟着走
@@ -1749,6 +1757,31 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         log: (m) => console.error(`[定时] ${m}`),
       })
     : undefined
+
+  /**
+   * 侧边对话的对照表（2026-09-24）。**只存内存、权威在界面**：界面启动时重发一次 `setSideSession`，
+   * 所以后端重启丢了它不要紧。
+   */
+  const 侧边 = new 侧边对照()
+  /** 一段会话没了（归档 / 删除 / 关闭）：它若挂在坞里，把它的工具停掉——`stop` 不摘那个开关，见 native.ts */
+  const 侧边忘掉 = (id: string) => {
+    const { 出 } = 侧边.忘掉(id)
+    if (出) sessions.setSideTool(出, false)
+  }
+  opts.挂上读主对话?.((sideId) => {
+    const main = 侧边.主对话of(sideId)
+    if (!main) return undefined
+    // 主对话不在本进程（没起过 / 已停）→ undefined，工具那头如实说「读不到」
+    const snap = events.peek(main)
+    if (!snap) return undefined
+    return 主对话摘要({
+      title: sessions.get(main)?.title,
+      items: snap.items,
+      queued: snap.queued ?? [],
+      产出: runs.artifactsOf(main).artifacts.map((a) => a.path),
+      现在: Date.now(),
+    })
+  })
 
   const backend: WorkbenchBackend = {
     listProjects: async () => projects.list(),
@@ -3073,6 +3106,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       events.setQueued(sessionId, [])
       await sessions.stop(sessionId)
+      侧边忘掉(sessionId)
       baselines.delete(sessionId)
       // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
       不在场缓冲.delete(sessionId)
@@ -3123,6 +3157,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (action !== "remove") return {}
       取存根(sessionId, id)
       return { withdrawn: { text: 它.text, ...(它.images.length ? { images: 它.images } : {}) } }
+    },
+
+    /**
+     * 坞里挂的是哪段、主区是哪段（7.37，侧边对话）。进坞的那段启用 `read_main_session`，出坞的停用。
+     * `canReadMain` 如实回：acp / cli 那类运行时没有这件工具，界面要写出来，不许假装它看得见。
+     */
+    setSideSession: async ({ sideSessionId, mainSessionId }) => {
+      const { 进, 出 } = 侧边.设({ side: sideSessionId ?? undefined, main: mainSessionId ?? undefined })
+      if (出) sessions.setSideTool(出, false)
+      if (进) sessions.setSideTool(进, true)
+      const 侧 = 侧边.当前侧边()
+      return 侧 ? { canReadMain: sessions.canReadMain(侧) } : {}
     },
 
     /**
@@ -4170,6 +4216,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const rec = sessions.get(sessionId)
       if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
       sessions.setArchived(sessionId, archived)
+      // 归档了的不再挂在坞里（它从侧栏里藏起来了，工具也跟着停）
+      if (archived) 侧边忘掉(sessionId)
       记一次会话?.(archived ? "archive" : "unarchive", rec.projectId, sessionId)
       // **归档了绑着它的 IM 通道要出声 + 解会话绑定**(审查 debug F5):否则下一条微信/飞书消息
       // 静默落进新会话,上下文断了却没人说一声。只处理归档(不是取消归档);通道各自判「是不是绑的这一段」。
@@ -4230,6 +4278,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       for (const rec of 全部会话) {
         if (rec.state !== "exited") await sessions.stop(rec.id).catch(() => {})
         events.forget(rec.id)
+        侧边忘掉(rec.id)
         baselines.delete(rec.id)
       }
       /**

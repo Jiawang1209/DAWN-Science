@@ -530,8 +530,11 @@
  *   会话快照可选 `queued` 与更新 `queued`、`abortSession` 响应可选 `withdrawn`（停下时排着的话交回界面）。
  *   **语义有一处变了**：native 会话忙着时 `writeToSession` 带 `behavior` 的那句话，不再在写的一刻进转录，
  *   而是真送到模型时才进。线上形状全是新增，故 minor。
+ *
+ * 7.37（2026-09-24）：侧边对话（spec `2026-09-24-侧边对话-design.md`）。新增操作 `setSideSession`——
+ *   界面告诉后端坞里挂的是哪段、主区是哪段，后端据此给坞里那段开关只读工具 `read_main_session`。全是新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.36"
+export const WORKBENCH_PROTOCOL_VERSION = "7.37"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

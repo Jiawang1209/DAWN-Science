@@ -202,6 +202,12 @@ export class SessionTranscripts {
     return this.snapshot(sessionId, e)
   }
 
+  /** 只看一眼，不订阅（侧边读主对话用）。不在本进程 → undefined，由调用方如实说 */
+  peek(sessionId: SessionId): SessionSnapshot | undefined {
+    const e = this.entries.get(sessionId)
+    return e ? this.snapshot(sessionId, e) : undefined
+  }
+
   unsubscribe(sessionId: SessionId): void {
     this.subscribed.delete(sessionId)
   }

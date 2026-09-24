@@ -668,8 +668,12 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     自带停用: (name: string) => settingsStore.get(`subagent.off.${name}`) === "1",
   }
 
+  /** 侧边对话（2026-09-24）：「读主对话」在后端里，后端在下面才建——先留个位子，建好后由它登记进来 */
+  let 读主对话: ((sid: string) => string | undefined) | undefined
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
+    /** 侧边对话（2026-09-24）：后端在下面才建，这里晚绑定。**总是给**——给了运行时才装 `read_main_session` */
+    读主对话: (sid) => 读主对话?.(sid),
     /** 输入卡上的权限档（codex-polish 第二档）：与上面那道门**读同一张表**，两处不会分家 */
     permissionTier: {
       取: (sid) => 按会话的档.get(sid),
@@ -1211,6 +1215,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）
     kernels: 对话的内核,
     注册收摊: (f) => 收摊们.push(f),
+    挂上读主对话: (读) => {
+      读主对话 = 读
+    },
     onEnvironmentFrozen: (sessionId, snapshotId) => 会话环境.set(sessionId, snapshotId),
     remote: { store: connectionStore, manager: remoteConnections },
     // 后端改了某台服务器的解释器路径 → 让界面重拉名单（与 `远端状态变了` 同一条出口的两个用途）

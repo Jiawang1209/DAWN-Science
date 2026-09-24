@@ -416,9 +416,11 @@ describe("协议版本 · 5.5", () => {
    * 7.35（2026-09-21）：`listKnownProviders` 新增可选 `anthropicProtocol`（设置页据此提醒地址别带 `/v1`）。纯新增，minor。
    *
    * 7.36（2026-09-23）：待发单——`editQueue`、快照 / 更新 `queued`、`abortSession.withdrawn`。纯新增，minor。
+   *
+   * 7.37（2026-09-24）：侧边对话——`setSideSession`（坞里那段开关 `read_main_session`）。纯新增，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.36")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.37")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

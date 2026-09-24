@@ -19,6 +19,7 @@ function backend(): WorkbenchBackend {
     downloadUpdate: async () => 更新桩,
     cancelUpdate: async () => 更新桩,
     editQueue: async () => ({}),
+    setSideSession: async () => ({}),
     applyUpdate: async () => 更新桩,
     fetchLocalImage: async () => ({ mediaType: "image/png", base64: "" }),
     openProject: async () => project,

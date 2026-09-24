@@ -1628,6 +1628,20 @@ export const OPERATIONS = {
     response: z.object({ withdrawn: 撤回的话.optional() }).strict(),
     mutating: true,
   },
+  /**
+   * 坞里挂的是哪段、主区是哪段（2026-09-24，侧边对话）。**权威在界面**：挂上 / 拿下 / 主区换了会话时发，
+   * 启动时重发一次。后端据此给挂进坞的那段启用 `read_main_session`、给离开的那段停用。
+   *
+   * 响应里的 `canReadMain`：坞里那段的运行时有没有这件工具（只有 native 有）。
+   * 没有侧边 → 缺省。界面据此在坞格头上写「这个 agent 看不见主对话」。
+   */
+  setSideSession: {
+    request: z
+      .object({ sideSessionId: z.string().min(1).nullable(), mainSessionId: z.string().min(1).nullable() })
+      .strict(),
+    response: z.object({ canReadMain: z.boolean().optional() }).strict(),
+    mutating: true,
+  },
 
   /**
    * 上下文用量（①-B″ · U3）。

@@ -8,36 +8,38 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-24 — 侧边对话 Task 6 审查修补：「另开一段」像按钮、没地方时出声、终端不进坞、坞里 `@` 按自己的目录（分支 `side-session`）
-
-- **Type**: fix
-- **Motivation**: Task 6（dccaf24）审查抓到四条：I1 空态「另开一段」是 ghost，与下面那排会话行长得一样；
-  M1 页签右键「放进坞里」在地方未定时静默 return（违反规格 7.5）；M2 终端（pty）能经右键或「换到主区」挂进坞；
-  M3 坞里那段的 `@` 根绑在主区会话的 `文件所在` 上，远端两段目录不同时按主区的找。
-- **What**: `side-chat.tsx` 改 `variant="outline"` + `加号描边图标`；`state/side-chat.ts` 新增 `能进坞`（坞格清单、
-  页签右键、换到主区三处共用）；`session-tabs.tsx` 加 `canDock`，终端那格不开右键菜单；`App.tsx` 的 `onPutInDock`
-  没地方时 `note`、再守一道终端；`onSwap` 原主是终端时照样把坞里那段换上主区、坞空出来并说一句；
-  新增 `坞引用文件` / `坞打开引用`（同连接只换根，连接对不上不给源），`对话回调` 按槽取。en.ts 补三句。
-- **Impact**: 仅界面行为；主区的引用源不变。
-- **Verification**: 新增 `tests/ui/side-chat-view.test.tsx`（按钮样式、终端页签无右键菜单）与 `能进坞` 用例；
-  `npm run typecheck` 通过；`npx vitest run` 244 文件 3016 通过 / 10 跳过。
-
-### 2026-09-24 — 侧边对话 Task 1：对照表与主对话摘要（纯逻辑；分支 `side-session`）
+### 2026-09-24 — 侧边对话：坞里第八格挂第二段会话，同时跑，只读看主对话（学自 Codex；分支 `side-session`）
 
 - **Type**: feat
-- **Motivation**: 「侧边对话」要给坞里第二段会话配一只只读工具 `read_main_session`，看主对话此刻的进展。
-  这是整个功能的第一块纯逻辑地基：谁在坞里、主对话摘要怎么拼，先不碰运行时与界面。
-- **What**（plan `docs/superpowers/plans/2026-09-24-侧边对话.md` Task 1；spec `specs/2026-09-24-侧边对话-design.md`）：
-  新增 `src/workbench/side-session.ts`：类 `侧边对照`（`设` / `主对话of` / `当前侧边` / `忘掉`，同一段只在一处、
-  换主区只改主、会话没了按「是侧边/是主」分别处理）+ 纯函数 `主对话摘要`（按用户发言切轮、只留最近 6 轮、
-  单条超 600 字截断且报「省了 N 字」、列正在跑的工具与已跑秒数、待发条、产出文件；空转录/没有工具在跑都如实说）。
-  TDD：先写 `tests/workbench/side-session.test.ts`（plan 原样代码）确认因模块不存在而失败，再实现。
-  **偏离计划一处**：plan 里实现文件从 `../protocol/index.js` import `SessionId`，但该符号实际导出自
-  `src/runtime/types.ts`（`src/protocol/index.ts` 不导出它，`src/workbench/events.ts` 等既有代码也是从
-  `runtime/types.js` 取它）——按任务指示「不改变行为，只调导入路径」改为 `import type { SessionId } from "../runtime/types.js"`；
-  测试文件本身不直接引用 `SessionId`（只用字符串字面量），无需改动。
-- **Impact**: 纯新增，不改任何既有模块；后续 Task（工具接入 native、界面坞格）在此基础上继续。
-- **Verification**: `npx vitest run tests/workbench/side-session.test.ts` 8/8 通过；`npm run typecheck` 无错误。
+- **Motivation**: 主对话在跑一段长活时，人想另开一段问别的、或问一句「主对话跑到哪了」，又不想打断它、也不想来回切页签。
+  学 Codex：右侧坞里挂一段独立会话同时跑；它的 agent 有一只只读工具看主对话**此刻**的进展。插话（向主对话下指令）是下一轮。
+- **What**（spec `specs/2026-09-24-侧边对话-design.md`；plan `plans/2026-09-24-侧边对话.md` Task 1–8；提交 `08d23d1`..HEAD）：
+  - **后端**：`src/workbench/side-session.ts` 对照表 `侧边 → 主对话`（同一段只在一处；换主区只改主；主对话**停下不拆配对**，
+    归档 / 删除才拆）+ 纯函数 `主对话摘要`（最近 6 轮、单条超 600 字截断并报「省了 N 字」、正在跑的工具与已跑秒数、待发条、
+    产出文件有上限且报省了几个、没记录的工具调用如实说）。
+  - **工具**：`src/tools/read-main-session.ts`——每段 native 会话建会话时就装上、默认停用，挂进坞才经
+    `NativeRuntime.setSideTool`（`setActiveToolsByName`）启用；每次调用现查对照表，不在坞里 / 主对话没了如实报错，读炸了单独出声。
+    ACP / CLI 没有 `setSideTool`（有无即判据），坞头明写「这个 agent 看不见主对话」。
+  - **协议 7.37** `setSideSession({ sideSessionId, mainSessionId })`；未知 id 丢掉并带结构化的 `sideGone` 回话（不靠匹配报错文字）；
+    mock 同一次补分支（准入规则 1）。
+  - **界面**：转录状态收成工厂 `创建会话槽()`（`state/transcript-slot.ts`），主槽保留全部旧导出、侧槽是第二个实例；
+    推送按会话 id 分进侧槽，租约覆盖两段；`side-chat.tsx` 坞格（空态「另开一段」描边按钮 + 同处会话清单；挂着态头上常驻
+    「换到主区」与 ×；紧凑版 `ConversationView`，权限卡 / 开关订在坞格自己身上、不拖 App 重渲染）；
+    会话页签「坞」标记与右键「放进坞里」（键盘可达）；命令面板两条；坞里 `@` 按那段自己的目录解析。
+    坞挂哪段按项目记在 `dawn.project.side-session`；归档 / 删除清掉指向它的记录并出声。
+  - **审查修补（Task 2–7 各轮）**：临时会话**没有地方**——坞格直说没处挂、面板那条置灰；终端（pty）不进坞；
+    「另开一段」加在途守卫、等待中地方变了会说；坞里恢复失败照主区的口径出声；地方未定时不发 `setSideSession` 并先拆配对；
+    拖进 / 粘贴到空坞的文件接住并说一句；换主区 / 放进坞两个决定抽成纯函数单测。
+  - **e2e 夹具**：`MockToolCallSpec.when`（只在最后一句用户话含这串时触发；空串直接报错）+ `toolCall` 收数组（每条一个状态机）。
+  - **视觉基线**：新增「坞里的对话」明暗两张（主区一问一答 + 坞里挂着另开的一段）；按屏加遮罩（工作目录 chip 的临时路径、
+    项目列表的「刚刚」）。命令面板（多两条命令）与概览（坞多一格）明暗四张重存——diff 图核过：面板只有列表下移两行与滚动条，
+    框外 30 个像素 ΔRGB=1（阴影舍入）；概览只有坞的页签条。
+- **Impact**: 新增能力，主区行为不变。每段 native 会话多带一份（停用的）工具定义。坞里其他格（文件、笔记本、产物…）仍跟主对话。
+  **未自动化覆盖**：坞里那段弹权限确认；× 之后后台跑完侧栏显示未读（spec §4 已注明，真机那一遍要看）。未合并、未推。
+- **Verification**: `npx vitest run` 245 文件 3042 passed / 10 skipped；`npm run typecheck` 通过；
+  `e2e/side-session.spec.ts` 三条（两段同时跑且回复两侧都不串、坞里真调到 `read_main_session` 并读到主对话「正在跑：bash」、
+  换到主区 / 拿下、三颗按钮 opacity 为 1、native 不显示「看不见」、ACP 显示）`--repeat-each=3` 9/9；
+  视觉基线 14/14 连跑两遍；全套 `npm run test:e2e` **514 passed / 1 skipped / 0 failed**（508 + 内核那段 6；此前基线 509 / 1，多出的是侧边对话 3 条与视觉 2 张）。
 
 ### 2026-09-23 — 待发消息：排着的话看得见、取得回、能改插队（学自 Codex；分支 `queued-messages`）
 

@@ -47,8 +47,8 @@
  *    那不是回归，是没有那个平台的基线。将来上 CI 必须在 macOS 上跑，或者补一套。
  * 2. 基线**只覆盖这四个屏 × 两个主题**。别的屏改坏了它不会说话。
  */
-import { test, expect, CANNED_REPLY, 开一段临时会话, 进坞 } from "./fixtures.js"
-import type { Page } from "@playwright/test"
+import { test, expect, CANNED_REPLY, 开一段临时会话, 在项目里开会话, 进坞 } from "./fixtures.js"
+import type { Locator, Page } from "@playwright/test"
 
 /**
  * 切主题，**并且回到对话页**。
@@ -106,7 +106,12 @@ async function 等四个计数(page: Page, 作用域 = ""): Promise<void> {
 }
 
 /** 四个屏。每个负责把界面开到那个状态，然后返回 */
-const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
+const SCREENS: {
+  name: string
+  go: (page: Page) => Promise<void>
+  /** 只这一屏才有的「外面世界的东西」。**按屏加、不进公共那份**：公共那份一加，旧基线上就平白多一块遮罩 */
+  mask?: (page: Page) => Locator[]
+}[] = [
   {
     name: "空态",
     /**
@@ -236,6 +241,41 @@ const SCREENS: { name: string; go: (page: Page) => Promise<void> }[] = [
       await 等四个计数(page, ".settings-column-list ")
     },
   },
+  {
+    /**
+     * **坞里的对话**（侧边对话，2026-09-24 的 Task 8）。主区一问一答，坞开在「对话」格、
+     * 挂着另开的一段、也是一问一答——钉住的是「一屏两段 ConversationView」的版面：
+     * 坞头那颗「换到主区」与 ×、紧凑版的转录与输入卡。
+     *
+     * **走项目会话**：临时会话没有「同一个地方」，坞格对它只说「没处挂」（Task 6）。
+     * 夹具的 workspace 名恒为 `workspace`，项目名不会随每次的临时目录变。
+     */
+    name: "坞里的对话",
+    go: async (page) => {
+      await 在项目里开会话(page)
+      const 主区 = page.locator("main.main")
+      const 坞 = page.locator("aside.right-dock")
+      await 主区.getByPlaceholder(/今天帮你做些什么/).fill("请说一句话")
+      await 主区.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+      await expect(主区.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
+      await 进坞(page, "对话")
+      await 坞.getByRole("button", { name: "另开一段", exact: true }).click()
+      await 坞.locator(".side-chat-head").waitFor({ timeout: 30_000 })
+      await 坞.getByPlaceholder(/今天帮你做些什么/).fill("你好")
+      await 坞.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+      await expect(坞.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
+      /** 标题要等「你好」落上去——先是「新对话」，首句回来之后才改名；截在中间那一帧就是一场竞态 */
+      await expect(坞.locator(".side-chat-title")).toHaveText("你好")
+      /** 两段都停下：停止键消失、发送键回来，截的是静止态 */
+      await expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
+    },
+    mask: (page) => [
+      /** 工作目录那颗 chip 写的是夹具的临时目录（`/var/folders/…/dawn-e2e-XXXX/workspace`）：换台机器、换一次跑就不同 */
+      page.locator(".ws-chip-label"),
+      /** 项目底下那两行的「刚刚」：与 `.session-list .sess-when` 同一条理由，只是住在项目列表里 */
+      page.locator(".proj-session-list .sess-when"),
+    ],
+  },
 ]
 
 /** 哪几张的侧栏是收起的（那时两行不在屏上，不用等数字） */
@@ -330,6 +370,7 @@ for (const theme of ["亮色", "暗色"] as const) {
            * **外面世界的东西不进逐像素基线**，否则它会把人训练成条件反射按 update。
            */
           page.locator(".tool-elapsed"),
+          ...(screen.mask?.(page) ?? []),
         ],
         /**
          * **逐像素必须完全一致**（默认是 0.2 的色距容差）。

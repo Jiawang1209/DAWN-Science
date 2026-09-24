@@ -912,10 +912,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     }
     if (e.kind === "queue_failed") {
       const 它 = 取存根(sessionId, e.id)
+      const 图 = 它?.images.length ? `（附的 ${它.images.length} 张图也没有送出去）` : ""
       events.ingest(sessionId, {
         kind: "notice",
         sessionId,
-        text: `这句没有送出去（${e.message}）：${它?.text ?? ""}`,
+        text: `这句没有送出去（${e.message}）：${它?.text ?? ""}${图}`,
       })
       return true
     }
@@ -2984,11 +2985,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 此前写的这一刻就 `userTurn`——转录里那句话落在 agent 这一轮的中间，看着像已经送到了，
        * 而模型要几分钟后才读到它。只有有待发单的会话（native）走这条路；其余照旧。
        */
-      const queueId = as === "user" && behavior && sessions.supportsQueue(sessionId) ? `q-${randomUUID()}` : undefined
+      /**
+       * **有待发单的会话，人说的每一句都带身份**（审查 09-24 #1），不只是界面以为在忙的那些：
+       * 飞书 / 微信不带 `behavior`，界面的「忙」也可能比运行时晚一拍——没身份的话进了 pi 的单子却不上待发条。
+       * 不忙时运行时当场报「送到了、开了新一轮」，转录与记账照旧在这一刻发生，只是换了一条路。
+       */
+      const queueId = as === "user" && sessions.supportsQueue(sessionId) ? `q-${randomUUID()}` : undefined
       if (queueId) {
         const 单 = 待发存根.get(sessionId) ?? new Map<string, 存根>()
         待发存根.set(sessionId, 单)
-        单.set(queueId, { text: data, images: [...(images ?? [])], 预览: await 缩成预览(附图), behavior: behavior! })
+        单.set(queueId, { text: data, images: [...(images ?? [])], 预览: await 缩成预览(附图), behavior: behavior ?? "followUp" })
       }
       try {
         sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)
@@ -3050,6 +3056,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     stopSession: async ({ sessionId }) => {
+      /**
+       * **关会话时还排着的话要出声**（审查 09-24 #4）：此前存根一删了事，待发条还挂在快照上，
+       * 按「取回」只得到 not_found，字就此没了。撤下来、在转录里留一句、把待发条清掉。
+       */
+      const 撤下 = sessions.clearQueue(sessionId).flatMap((id) => {
+        const 它 = 取存根(sessionId, id)
+        return 它 ? [它.text] : []
+      })
+      if (撤下.length > 0) {
+        events.ingest(sessionId, {
+          kind: "notice",
+          sessionId,
+          text: `会话停了，这 ${撤下.length} 句还排着、没有送出去：${撤下.join(" / ")}`,
+        })
+      }
+      events.setQueued(sessionId, [])
       await sessions.stop(sessionId)
       baselines.delete(sessionId)
       // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
@@ -3070,6 +3092,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         await sessions.abort(sessionId)
       } catch (err) {
+        // 撤下来的已经不在 pi 那儿了：中止失败也不能让它们跟着这个错误一起没了（审查 09-24 #7）
+        if (withdrawn.length > 0) {
+          events.ingest(sessionId, {
+            kind: "notice",
+            sessionId,
+            text: `停止没成功，这 ${withdrawn.length} 句排着的已经撤下、没有送出去：${withdrawn.map((x) => x.text).join(" / ")}`,
+          })
+        }
         // 「运行时不支持中止」是业务性失败，界面要能分辨并提示去终端按 Ctrl-C
         throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }

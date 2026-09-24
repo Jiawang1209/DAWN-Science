@@ -6,12 +6,14 @@
  * `送出(单)` 从头上摘一条并报（pi 在 `message_start` 时就是这么做的）。
  * 真 pi 收不收、真送没送到，归 e2e `busy-gap.spec.ts`。
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { NativeRuntime } from "../../src/runtime/native.js"
 import type { AgentEvent } from "../../src/runtime/types.js"
 
-function 摆一段(opts: { inFlight?: number; 慢收?: Promise<void> } = {}) {
-  const rt = new NativeRuntime({})
+function 摆一段(opts: { inFlight?: number; 慢收?: Promise<void>; pi在跑?: boolean; 要转述?: boolean } = {}) {
+  const rt = new NativeRuntime(
+    opts.要转述 ? { vision: () => ({ baseUrl: "https://v.example/v1", model: "qwen-vl", apiKey: "k" }) } : {},
+  )
   const 内部 = rt as unknown as {
     sessions: Map<string, Record<string, unknown>>
     sinks: Map<string, ((e: AgentEvent) => void)[]>
@@ -21,9 +23,11 @@ function 摆一段(opts: { inFlight?: number; 慢收?: Promise<void> } = {}) {
   const 报 = () => 内部.translate("s1", { type: "queue_update", steering: [...单.steer], followUp: [...单.followUp] })
   const 开过的轮: string[] = []
   const pi = {
-    model: { id: "m", input: ["text", "image"] },
+    model: { id: "m", input: opts.要转述 ? ["text"] : ["text", "image"] },
     state: { messages: [] },
-    async prompt(text: string, o?: { streamingBehavior?: "steer" | "followUp" }) {
+    /** pi 自己的「在跑」（`_isAgentRunActive`）。缺省与我们的 inFlight 一致 */
+    isStreaming: opts.pi在跑 ?? (opts.inFlight ?? 1) > 0,
+    async prompt(text: string, o?: { streamingBehavior?: "steer" | "followUp"; images?: unknown }) {
       if (o?.streamingBehavior) {
         // pi 的输入处理是异步的：`慢收` 演「镜像先进、pi 后到」
         if (opts.慢收) await opts.慢收
@@ -62,7 +66,12 @@ function 摆一段(opts: { inFlight?: number; 慢收?: Promise<void> } = {}) {
     return 最后 && 最后.kind === "queue" ? 最后.items.map((x) => `${x.id}:${x.behavior}`) : undefined
   }
   const 送到 = () => 事件.flatMap((e) => (e.kind === "queue_delivered" ? [`${e.id}${e.newTurn ? "+新轮" : ""}`] : []))
-  return { rt, 单, 送出, 事件, 待发单, 送到, 开过的轮, 内部 }
+  const 放下 = () => {
+    pi.isStreaming = false
+    ;(内部.sessions.get("s1") as { inFlight: number }).inFlight = 0
+  }
+  const 说了 = () => 事件.flatMap((e) => (e.kind === "notice" ? [e.text] : []))
+  return { rt, 单, 送出, 事件, 待发单, 送到, 开过的轮, 内部, pi, 放下, 说了 }
 }
 
 const 等一拍 = () => new Promise((r) => setTimeout(r, 0))
@@ -175,5 +184,106 @@ describe("待发单镜像", () => {
     await 等一拍()
     expect(单.steer).toEqual(["老路"])
     expect(待发单()).toBeUndefined()
+  })
+
+  describe("审查 09-24 补的", () => {
+    it("#1 没身份的写（飞书 / 微信）也进镜像：pi 送走它时不会把有身份的那条错当成送到", async () => {
+      const { rt, 送出, 送到, 待发单 } = 摆一段()
+      rt.write("s1" as never, "飞书来的", undefined) // 没 queueId、没 behavior
+      rt.write("s1" as never, "界面发的", "followUp", "t")
+      await 等一拍()
+      expect(待发单()).toEqual(["t:followUp"])
+      送出("followUp") // pi 送走的是飞书那条
+      expect(送到()).toEqual([])
+      送出("followUp")
+      expect(送到()).toEqual(["t"])
+    })
+
+    it("#1 改插队重送时，没身份的那条也跟着重送，不被 clearQueue 吞掉", async () => {
+      const { rt, 单 } = 摆一段()
+      rt.write("s1" as never, "飞书来的", undefined)
+      rt.write("s1" as never, "界面发的", "followUp", "t")
+      await 等一拍()
+      rt.editQueue("s1" as never, "t", "steer")
+      await 等一拍()
+      expect(单.followUp).toEqual(["飞书来的"])
+      expect(单.steer).toEqual(["界面发的"])
+    })
+
+    it("#1 全部撤下时，没身份的那条就地出声", async () => {
+      const { rt, 说了 } = 摆一段()
+      rt.write("s1" as never, "飞书来的", undefined)
+      await 等一拍()
+      expect(rt.clearQueue("s1" as never)).toEqual([])
+      expect(说了().join("")).toContain("飞书来的")
+    })
+
+    it("#2 只有图没有字：交给 pi 时补一句字（pi 按文字摘，空文字永远摘不掉）", async () => {
+      const { rt, 单, 待发单 } = 摆一段()
+      rt.writeWithImages("s1" as never, "", [{ data: "aGk=", mimeType: "image/png" }], "followUp", "img")
+      await 等一拍()
+      expect(单.followUp).toEqual(["（见附图）"])
+      expect(待发单()).toEqual(["img:followUp"])
+    })
+
+    it("#3 转述那几秒：忙着时先上待发条；这期间被停止撤下，转述回来也不再发", async () => {
+      let 回话!: (r: Response) => void
+      vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => (回话 = r))))
+      try {
+        const { rt, 单, 待发单, 开过的轮 } = 摆一段({ 要转述: true })
+        rt.writeWithImages("s1" as never, "看这张", [{ data: "aGk=", mimeType: "image/png" }], "followUp", "v")
+        expect(待发单()).toEqual(["v:followUp"]) // 转述还没回来，已经看得见
+        expect(rt.clearQueue("s1" as never)).toEqual(["v"])
+        回话(new Response(JSON.stringify({ choices: [{ message: { content: "一块红色方块" } }] })))
+        await vi.waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled())
+        await 等一拍()
+        await 等一拍()
+        expect(单).toEqual({ steer: [], followUp: [] })
+        expect(开过的轮).toEqual([])
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    })
+
+    it("#3 转述回来、还在单上：带着转述交给 pi", async () => {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: "一块红色方块" } }] }))))
+      try {
+        const { rt, 单, 待发单 } = 摆一段({ 要转述: true })
+        rt.writeWithImages("s1" as never, "看这张", [{ data: "aGk=", mimeType: "image/png" }], "followUp", "v")
+        await vi.waitFor(() => expect(单.followUp).toHaveLength(1))
+        expect(单.followUp[0]).toContain("一块红色方块")
+        expect(待发单()).toEqual(["v:followUp"])
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    })
+
+    it("#5 我们以为在跑、pi 说没在跑：先挂着（上待发条），这一轮收尾后按新一轮送", async () => {
+      let 收尾!: () => void
+      const { rt, 内部, 单, 待发单, 送到, 开过的轮, 放下 } = 摆一段({ pi在跑: false })
+      ;(内部.sessions.get("s1") as { pending: Promise<void> }).pending = new Promise<void>((r) => (收尾 = r))
+      rt.write("s1" as never, "撞在缝里", "steer", "a")
+      await 等一拍()
+      expect(单).toEqual({ steer: [], followUp: [] }) // 没交给 pi
+      expect(待发单()).toEqual(["a:steer"])
+      放下()
+      收尾()
+      await 等一拍()
+      expect(开过的轮).toEqual(["撞在缝里"])
+      expect(送到()).toEqual(["a+新轮"])
+      expect(待发单()).toEqual([])
+    })
+
+    it("#5 挂着的那条被取回：收尾后不再送", async () => {
+      let 收尾!: () => void
+      const { rt, 内部, 开过的轮, 放下 } = 摆一段({ pi在跑: false })
+      ;(内部.sessions.get("s1") as { pending: Promise<void> }).pending = new Promise<void>((r) => (收尾 = r))
+      rt.write("s1" as never, "撞在缝里", "followUp", "a")
+      rt.editQueue("s1" as never, "a", "remove")
+      放下()
+      收尾()
+      await 等一拍()
+      expect(开过的轮).toEqual([])
+    })
   })
 })

@@ -291,11 +291,28 @@ interface NativeSession {
    * 撤回或改插队要 `clearQueue()` 之后按原样重送，而 pi 的单子里只剩展开过的文字、没有图。
    * **先后与「送到了没有」一律以 pi 的 `queue_update` 为准**（见 `对账待发`）。
    */
-  待发: { id: string; 文: string; 图: readonly ImageAttachment[] | undefined; 送法: 送法 }[]
+  待发: 待发条目[]
   /** pi 上一次报的两张单子各有几条。**只认变短**——变短才是「送走了」 */
   pi待发: { steer: number; followUp: number }
   /** 我们自己在 `clearQueue()`：那次变短不是送到，别当成送到 */
   清队中: boolean
+}
+
+/**
+ * 待发镜像里的一条（2026-09-23；审查后 09-24 改）。
+ *
+ * - `id` **可缺**：飞书 / 微信 / 定时这些不经界面的写没有待发单上的身份，但它们照样进了 pi 的单子——
+ *   **镜像不收它们，数数就对不上**（pi 送走一条不认识的，镜像会把一条认识的错当成送到了），
+ *   撤回重送时 `clearQueue()` 也会把它们一并清掉、再也回不来。所以一律进镜像，只是不上待发条。
+ * - `未进pi`：还没交给 pi 的——在等图片转述，或者撞上「我们以为在跑、pi 说没在跑」的缝、在等这一轮收尾。
+ *   对账时跳过它们（pi 的单子里没有），撤回重送时不碰它们（它们自己会去）。
+ */
+interface 待发条目 {
+  id: string | undefined
+  文: string
+  图: readonly ImageAttachment[] | undefined
+  送法: 送法
+  未进pi: boolean
 }
 
 /** pi 的会话事件（结构化程度足够，但类型不从包里导出，故在此收窄） */
@@ -1771,6 +1788,27 @@ export class NativeRuntime implements AgentRuntime {
       this.送一轮(sessionId, data, images, behavior, queueId)
       return
     }
+    /**
+     * **转述要几秒，这几秒里这句话不能凭空消失**（审查 09-24 #3）。
+     * 忙着：先进镜像、上待发条（标着「未进 pi」），转述完还在单上才交给 pi——被撤回或被停止拿走了就不发。
+     * 不忙：人那句话现在就进转录（送到了、开新一轮），转述完再开跑。
+     */
+    const s忙 = (s?.inFlight ?? 0) > 0
+    const 条: 待发条目 | undefined = s && s忙
+      ? { id: queueId, 文: data, 图: images, 送法: behavior ?? "followUp", 未进pi: true }
+      : undefined
+    if (条) {
+      s!.待发.push(条)
+      if (queueId) this.发待发单(sessionId)
+    } else if (queueId) {
+      this.emit({ kind: "queue_delivered", sessionId, id: queueId, newTurn: true })
+    }
+    const 发 = (文: string) => {
+      if (!条) return this.送一轮(sessionId, 文, images, behavior)
+      if (!this.摘条(s!, 条)) return
+      if (条.id) this.发待发单(sessionId)
+      this.送一轮(sessionId, 文, images, 条.送法, 条.id)
+    }
     void 描述图片(端点, images)
       .then((描述) => {
         this.emit({
@@ -1783,7 +1821,7 @@ export class NativeRuntime implements AgentRuntime {
 [以下是随消息附上的 ${images.length} 张图片，由视觉模型 ${端点.model} 转述]
 ${描述}`
         // **图仍然带着**：转录里人要看得见原图；pi 那边不收就丢，无所谓
-        this.送一轮(sessionId, 并入, images, behavior, queueId)
+        发(并入)
       })
       .catch((e: unknown) => {
         this.emit({
@@ -1791,7 +1829,7 @@ ${描述}`
           sessionId,
           text: `视觉转述失败（${e instanceof Error ? e.message : String(e)}），这一轮按原样发出，模型 ${model.id} 可能看不到那 ${images.length} 张图。`,
         })
-        this.送一轮(sessionId, data, images, behavior, queueId)
+        发(data)
       })
   }
 
@@ -1829,18 +1867,40 @@ ${描述}`
      */
     if (s.inFlight > 0) {
       const 送法 = behavior ?? "followUp"
-      if (queueId) {
-        s.待发.push({ id: queueId, 文: data, 图: images, 送法 })
-        this.发待发单(sessionId)
+      /**
+       * **我们以为在跑、pi 说没在跑**（审查 09-24 #5）：pi 看的是它自己的 `isStreaming`，
+       * 它在 `prompt()` 开头要先过几道 await 才立起来、收尾时又比我们的 `.finally` 先放下。
+       * 落在这两条缝里的话 pi 会当成新的一轮直接跑——不进单子、对账永远等不到它。
+       * 那就先挂在镜像上（未进 pi），等这一轮收尾再按新一轮送。插队在这里退化成排队：宁可晚，不可乱。
+       */
+      if (!s.session.isStreaming) {
+        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 送法, 未进pi: true }
+        s.待发.push(条)
+        if (queueId) this.发待发单(sessionId)
+        void (s.pending ?? Promise.resolve()).then(() => {
+          if (!this.摘条(s, 条)) return // 撤回或停止已经把它拿走了
+          if (条.id) this.发待发单(sessionId)
+          this.送一轮(sessionId, 条.文, 条.图, 条.送法, 条.id)
+        })
+        return
       }
+      /**
+       * **只有图、没有字的一条要补一句字**（审查 09-24 #2）：pi 在送到时按文字去单子里摘，
+       * 文字为空它就不摘——那条永远挂在它的单子上，此后每一次数数都差一。
+       */
+      const 文 = data.trim() || !图 ? data : "（见附图）"
+      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 送法, 未进pi: false }
+      // **不带 id 的也进镜像**（飞书 / 微信 / 定时的写）：pi 的单子里有它，镜像里就得有它
+      s.待发.push(条)
+      if (queueId) this.发待发单(sessionId)
       void s.session
-        .prompt(data, { ...(图 ? { images: 图 } : {}), streamingBehavior: 送法 })
+        .prompt(文, { ...(图 ? { images: 图 } : {}), streamingBehavior: 送法 })
         .catch((err: unknown) => {
           const msg = err instanceof Error ? err.message : String(err)
           this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
           // 没排进去：从镜像拿掉并出声，**不许让它在待发单上挂一辈子**
-          if (queueId && this.摘待发(s, queueId)) {
-            this.emit({ kind: "queue_failed", sessionId, id: queueId, message: msg })
+          if (this.摘条(s, 条) && 条.id) {
+            this.emit({ kind: "queue_failed", sessionId, id: 条.id, message: msg })
             this.发待发单(sessionId)
           }
         })
@@ -2318,9 +2378,11 @@ ${描述}`
       ["followUp", 之前.followUp - followUp],
     ] as const) {
       for (let k = 0; k < 少了; k++) {
-        const i = s.待发.findIndex((x) => x.送法 === 送法)
+        // pi 的单子里只有交给了它的那些：还在等转述 / 等收尾的不算
+        const i = s.待发.findIndex((x) => x.送法 === 送法 && !x.未进pi)
         if (i < 0) break
         const [送走的] = s.待发.splice(i, 1)
+        if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
         this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })
         变了 = true
       }
@@ -2332,21 +2394,26 @@ ${描述}`
     const s = this.sessions.get(sessionId)
     if (!s) return
     // **按 pi 真正送出的先后排**：插队的那张单子总在排队的前面送
-    const 先后 = [...s.待发.filter((x) => x.送法 === "steer"), ...s.待发.filter((x) => x.送法 === "followUp")]
+    const 有身份 = s.待发.filter((x): x is 待发条目 & { id: string } => x.id !== undefined)
+    const 先后 = [...有身份.filter((x) => x.送法 === "steer"), ...有身份.filter((x) => x.送法 === "followUp")]
     this.emit({ kind: "queue", sessionId, items: 先后.map((x) => ({ id: x.id, behavior: x.送法 })) })
   }
 
-  private 摘待发(s: NativeSession, id: string): boolean {
-    const i = s.待发.findIndex((x) => x.id === id)
+  /** 按引用摘（同一句话可能没有 id）。摘到了才返回 true——摘不到说明撤回或停止先拿走了 */
+  private 摘条(s: NativeSession, 条: 待发条目): boolean {
+    const i = s.待发.indexOf(条)
     if (i < 0) return false
     s.待发.splice(i, 1)
     return true
   }
 
-  /** 清掉 pi 那份与镜像，返回镜像（原先后）。`清队中` 挡住这次变短被当成「送到」 */
-  private 清空待发(s: NativeSession): NativeSession["待发"] {
-    const 原来 = s.待发
-    s.待发 = []
+  /**
+   * 清掉 pi 那份，返回镜像里**交给了 pi 的**那些（原先后）；还没交给 pi 的留在镜像上——它们自己会去。
+   * `清队中` 挡住这次变短被当成「送到」。
+   */
+  private 清空待发(s: NativeSession): 待发条目[] {
+    const 原来 = s.待发.filter((x) => !x.未进pi)
+    s.待发 = s.待发.filter((x) => x.未进pi)
     s.清队中 = true
     try {
       s.session.clearQueue()
@@ -2367,7 +2434,15 @@ ${描述}`
   editQueue(sessionId: SessionId, id: string, action: "remove" | "steer"): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
-    if (!s.待发.some((x) => x.id === id)) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
+    const 它 = s.待发.find((x) => x.id === id)
+    if (!它) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
+    // 还没交给 pi 的（等转述 / 等收尾）：就地改，不碰 pi 的单子
+    if (它.未进pi) {
+      if (action === "remove") this.摘条(s, 它)
+      else 它.送法 = "steer"
+      this.发待发单(sessionId)
+      return
+    }
     const 原来 = this.清空待发(s)
     const 留下 = 原来
       .filter((x) => !(action === "remove" && x.id === id))
@@ -2377,12 +2452,22 @@ ${描述}`
     for (const x of 重送) this.送一轮(sessionId, x.文, x.图, x.送法, x.id)
   }
 
+  /**
+   * 全部撤下（停止 / 关会话用）：pi 那份与镜像全清，**还没交给 pi 的也一起拿走**（它们的回调摘不到就不发了）。
+   * 返回有身份的 id；没身份的（飞书 / 微信 / 定时）后端没有存根，在这里就地出声——不许悄悄丢。
+   */
   clearQueue(sessionId: SessionId): string[] {
     const s = this.sessions.get(sessionId)
     if (!s || s.待发.length === 0) return []
+    const 未交 = s.待发.filter((x) => x.未进pi)
     const 原来 = this.清空待发(s)
+    s.待发 = []
+    const 全部 = [...原来, ...未交]
     this.发待发单(sessionId)
-    return 原来.map((x) => x.id)
+    for (const x of 全部) {
+      if (!x.id) this.emit({ kind: "notice", sessionId, text: `这句还排着、没有送出去：${x.文}` })
+    }
+    return 全部.flatMap((x) => (x.id ? [x.id] : []))
   }
 
   /**

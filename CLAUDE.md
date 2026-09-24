@@ -42,6 +42,7 @@
 | **视觉重做 · 材质与深度**：缺的不是配色是深度；阴影五档、浮层真玻璃、字号跨度 2.2×、一条缓动曲线（分支 `visual-refresh`，已并入 main） | `specs/2026-09-10-视觉重做-design.md` + `plans/2026-09-10-视觉重做.md` |
 | **照着案例分析**：说一个分析需求 → MLAI-science 里按任务/算法/语言找 3–5 个真实案例并停下 → 你挑一个 → 读代码当参照、在你的数据上写新脚本跑（分支 `case-analysis`） | `specs/2026-09-14-照着案例分析-design.md` · 装法在 `docs/照着文献画图-怎么装.md` |
 | **案例卡片**：这一轮 MLAI 工具查到、回复里提到的案例画成带封面的卡片，点卡片右侧开详情，「照这篇做」由你来选；封面走 7.34 `fetchLocalImage`（分支 `case-cards`） | `specs/2026-09-15-案例卡片-design.md` |
+| **侧边对话**：坞里第八格「对话」挂一段独立会话同时跑，只读工具 `read_main_session` 看主对话此刻进展；岔出去问、插话是下一轮（分支 `side-session`） | `specs/2026-09-24-侧边对话-design.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

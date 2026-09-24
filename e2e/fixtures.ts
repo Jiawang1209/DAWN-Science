@@ -311,6 +311,12 @@ export interface MockToolCallSpec {
    * 与 `once` 同一个状态机、同一份假服务器（准入规则 1）。
    */
   repeat?: number
+  /**
+   * **只在最后一句用户话含这串时触发**（2026-09-24，侧边对话）：两段会话共用一台假服务器，
+   * 主区那段要 `sleep` 拖住、坞里那段要调 `read_main_session`——按话分开，不按次数猜。
+   * 不给 = 原样（旧用例一个字节不变）。
+   */
+  when?: string
 }
 
 export interface DawnOptions {
@@ -319,7 +325,8 @@ export interface DawnOptions {
    * 目前用来打开假 ACP agent 的几种行为（问权限、报用量）。
    */
   env?: Record<string, string>
-  toolCall?: MockToolCallSpec
+  /** 给数组 = 每条各一个状态机，按顺序取第一条说「调」的（2026-09-24，侧边对话） */
+  toolCall?: MockToolCallSpec | readonly MockToolCallSpec[]
   /**
    * **不给基底 `models.json`**（2026-08-11）。
    *
@@ -457,11 +464,47 @@ export interface DawnOptions {
 }
 
 /** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
-function toolCallHook(spec: MockToolCallSpec | undefined) {
+function toolCallHook(spec: MockToolCallSpec | readonly MockToolCallSpec[] | undefined) {
   if (!spec) return undefined
+  /** 数组：每条各建一个状态机，按顺序取第一个不是 undefined 的（2026-09-24） */
+  if (isSpecList(spec)) {
+    const 各条 = spec.map(一条的状态机)
+    return (body: 请求体) => {
+      for (const f of 各条) {
+        const r = f(body)
+        if (r !== undefined) return r
+      }
+      return undefined
+    }
+  }
+  return 一条的状态机(spec)
+}
+
+type 请求体 = { messages?: Array<{ role?: string; content?: unknown }> }
+
+function isSpecList(spec: MockToolCallSpec | readonly MockToolCallSpec[]): spec is readonly MockToolCallSpec[] {
+  return Array.isArray(spec)
+}
+
+/**
+ * 最后一条消息**是用户话**时取它的文本；最后一条是 `tool`（拿到工具结果后的那次追问）就是 undefined——
+ * 所以带 `when` 的天然不循环。
+ */
+function 最后一句用户话(body: 请求体): string | undefined {
+  const 最后 = body.messages?.at(-1)
+  if (最后?.role !== "user") return undefined
+  const c = 最后.content
+  if (typeof c === "string") return c
+  if (Array.isArray(c)) return c.map((x: { text?: unknown }) => (typeof x?.text === "string" ? x.text : "")).join("")
+  return ""
+}
+
+function 一条的状态机(spec: MockToolCallSpec) {
   let fired = false
   let 次数 = 0
-  return (body: { messages?: Array<{ role?: string }> }) => {
+  return (body: 请求体) => {
+    // **先判 `when`、再动状态机**：没对上的请求不许吃掉 `once` 那一次
+    if (spec.when !== undefined && !(最后一句用户话(body) ?? "").includes(spec.when)) return undefined
     if (spec.perTurn) {
       const 最后 = body.messages?.at(-1)
       return 最后?.role === "user"

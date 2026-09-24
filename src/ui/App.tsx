@@ -91,7 +91,10 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
-import { $侧边会话id, $侧边能读主, 侧槽, 侧边地方键, 载入侧边, 从坞拿下 } from "./state/side-chat.js"
+import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下 } from "./state/side-chat.js"
+import { 主槽 } from "./state/transcript.js"
+import type { 转录槽 } from "./state/transcript-slot.js"
+import { SideChat, type 坞格对话回调 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
@@ -276,10 +279,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const termChunks = useStore($terminal)
   const termTrimmed = useStore($terminalTrimmed)
   const kernelInstanceId = useStore($kernelInstanceId)
-  /** agent 正在问「能不能」（A2）。**跟着当前会话走** */
-  const 待答权限 = useStore($待答权限)
-  /** 这一段可以调的开关（A3，只有 acp 有） */
-  const 会话开关们 = useStore($会话开关)
+  /**
+   * agent 正在问「能不能」（A2）、这一段可以调的开关（A3）。**跟着各自那一槽走**：
+   * 主区读主槽、坞里那段读侧槽（侧边对话，2026-09-24）。这里只订着好让壳重渲染——
+   * 值由 `对话回调` 从槽里取，两处不各存一份。
+   */
+  useStore($待答权限)
+  useStore($会话开关)
+  useStore(侧槽.$待答权限)
+  useStore(侧槽.$会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
   const rightDockOpen = useStore($rightDockOpen)
@@ -1331,8 +1339,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       images?: readonly import("./views.js").图片来源[] | undefined
       /** 空态排队的外部文件（2026-08-25）：会话建出来之后在这里落盘、拼 `@`——空态自己没有 sessionId */
       files?: readonly import("./views.js").排队的外部文件[] | undefined
+      /**
+       * 建好了**不切过去**（侧边对话，2026-09-24）：坞里「另开一段」建的是坞里那段，主区不动。
+       * 不切项目、不切会话、不切屏；新会话的 id 回给调用点，由它挂进坞。缺省 = 原样切过去
+       */
+      不切过去?: boolean | undefined
     } = {},
-  ) => {
+  ): Promise<string | undefined> => {
     const { workspace, firstMessage, images, files } = opts
     const agentId = opts.agentId ?? agentIds[0]
     if (!agentId) {
@@ -1376,7 +1389,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         await loadProjects(client)
         const 新家 = $projects.get().find((p) => p.workspace === workspace)?.projectId
         if (新家) {
-          setActiveProjectId(新家)
+          if (!opts.不切过去) setActiveProjectId(新家)
           await loadSessions(client, 新家)
         }
       } else {
@@ -1462,9 +1475,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          *
          * 「人还在原地才进对话」那条守卫保留：**他自己切走了就尊重他的选择**。
          */
+        if (opts.不切过去) return t.sessionId
         setActiveSessionId(t.sessionId)
         if ($view.get() === from) setView("conversation")
       }
+      return t.sessionId
     } catch (e) {
       /**
        * **这里不报，往上抛**（2026-08-13 修，一次自伤）。
@@ -1674,7 +1689,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **没连上就先连**（服务端负责），起点是那台机器的家目录。
    * 人点的是「在这台机器上干活」，不该让他先按一次连接再按一次新建。
    */
-  const startRemoteSession = async (c: { id: string; label: string }) => {
+  const startRemoteSession = async (
+    c: { id: string; label: string },
+    /** 建好了不切过去（坞里「另开一段」用，2026-09-24）：主区不动，id 回给调用点 */
+    opts: { 不切过去?: boolean } = {},
+  ): Promise<string | undefined> => {
     // **只从手能到服务器的里面挑**（T3）；codex-acp / cli / kernel 会在本机跑，不算
     const agentId = 远端能用的agentIds[0]
     if (!agentId) {
@@ -1702,13 +1721,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       })
       await Promise.all([loadConnections(client), loadTasks(client), loadTempSessions(client)])
       if (!t.sessionId) throw new Error("任务建好了却没有会话——这一步不该悄悄过去")
-      setActiveSessionId(t.sessionId)
-      setView("conversation")
+      if (!opts.不切过去) {
+        setActiveSessionId(t.sessionId)
+        setView("conversation")
+      }
       // 写权由上面那个 effect 统一持有（选中即取、到点即续）——**这里不再抄一遍**
       await 取写权(t.sessionId)
+      return t.sessionId
     } catch (e) {
       // **开不起来要说清为什么**，就在那一区里
       setConnProblem(e instanceof Error ? e.message : String(e))
+      // 从坞里点的：人盯着的是坞，侧栏那一区他未必看得见——状态栏也说一句（规格 7.5）
+      if (opts.不切过去) note(e instanceof Error ? e.message : String(e))
+      return undefined
     } finally {
       setConnBusy(undefined)
     }
@@ -1739,11 +1764,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **摆在 composer 上**，不是只丢进状态栏那一行小字——
    * 作者报的「点了没反应」，实情多半是「点了，失败了，但那句话在屏幕另一头」。
    */
-  const [switchProblem, setSwitchProblem] = useState<string | undefined>(undefined)
+  /**
+   * **按会话记**（侧边对话，2026-09-24）：主区与坞里各有一个输入框，A 那句 ⚠ 不许挂到 B 上。
+   */
+  const [换模型问题, 设换模型问题] = useState<Readonly<Record<string, string>>>({})
+  const setSwitchProblem = useCallback((id: string, v: string | undefined) => {
+    设换模型问题((前) => {
+      if (v === undefined && !(id in 前)) return 前
+      const n = { ...前 }
+      if (v === undefined) delete n[id]
+      else n[id] = v
+      return n
+    })
+  }, [])
   // 换会话就清掉上一段的换模型报错(审查 debug I5):它语义上属于某个会话,
   // 但摆在 composer 上是全局的——不清的话,A 换模型失败的那句 ⚠ 会挂到 B 的输入框上。
+  // 坞里那段的留着：它的输入框一直摆在那儿，主区换会话与它无关
   useEffect(() => {
-    setSwitchProblem(undefined)
+    设换模型问题((前) => {
+      const 侧 = $侧边会话id.get()
+      if (Object.keys(前).length === 0) return 前
+      return 侧 && 前[侧] !== undefined ? { [侧]: 前[侧] } : {}
+    })
   }, [sessionId])
 
   /**
@@ -1855,13 +1897,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 那一拍算出来的地方是错的，按错的地方挂一次就是把侧槽清空再重订一遍。
    */
   const 侧边地方 = session ? 侧边地方键(session) : sessionId ? undefined : projectId ? `p:${projectId}` : undefined
-  const 侧边地方Ref = useRef(侧边地方)
-  侧边地方Ref.current = 侧边地方
+  const 侧边地方未定 = !!sessionId && !session
+  /**
+   * **主区那段不属于任何地方（临时会话）时也要载一次**——载的是「没有地方」，坞格变空并说明为什么
+   * （Task 5 审查抓的：上一版只在有地方时才载，于是上一个项目的侧边还挂着、配给了一段临时会话；
+   * spec §2.4 说的是**按地方**记，没有地方就没有那一段）。
+   */
   useEffect(() => {
-    if (侧边地方) 载入侧边(侧边地方)
-  }, [侧边地方])
+    if (!侧边地方未定) 载入侧边(侧边地方)
+  }, [侧边地方, 侧边地方未定])
 
   const 侧边id = useStore($侧边会话id)
+  /** 坞此刻按哪个地方挂（`载入侧边` 记下的）；坞格的「同处」清单与「另开一段」都认它 */
+  const 坞的地方 = useStore($侧边地方)
+  const 侧边能读主 = useStore($侧边能读主)
 
   /**
    * 告诉后端谁是谁的侧边（协议 7.37 `setSideSession`）。
@@ -1875,11 +1924,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     if (!ready) return
     if (侧边id && 侧边id === sessionId) {
-      const 地方 = 侧边地方Ref.current
-      if (地方) {
-        从坞拿下(地方)
-        return
-      }
+      // 地方用挂上去那一刻记下的（`$侧边地方`）：现算的那个在临时会话 / 摘要没到手时是空的，拿不下来又不出声
+      从坞拿下()
+      return
     }
     const side = 侧边id && 侧边id !== sessionId ? 侧边id : undefined
     client
@@ -1888,11 +1935,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         mainSessionId: sessionId ?? null,
       })
       .then((r) => {
-        // 回来时坞里已经换了一段：这句答的是上一段，不许写到这一段头上
-        if (side !== $侧边会话id.get()) return
+        // 回来时坞里已经换了一段、或主区已经换了一段：这句答的是上一对，不许写到这一对头上
+        if (side !== $侧边会话id.get() || (sessionId ?? undefined) !== $activeSessionId.get()) return
         if (r.sideGone && side) {
-          const 地方 = 侧边地方Ref.current
-          if (地方) 从坞拿下(地方)
+          从坞拿下()
           note(t("坞里那段对话已经不在了，已从坞里拿下"))
           return
         }
@@ -1931,6 +1977,73 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       client.get("unsubscribeSession", { sessionId: id }).catch(fail)
     }
   }, [ready, client, 侧边id, 取写权])
+
+  /**
+   * 开坞并切到「对话」那一格（侧边对话，2026-09-24）。**永远是「开」**——与 `点开文件面板` 同一个理由：
+   * 从命令面板 / 右键点过来，人的意图是「给我看坞里那段」，不会是「把面板关掉」。
+   */
+  const 打开坞里的对话 = useCallback(() => {
+    // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
+    坞上位()
+    setRightDockTenant("chat")
+    setRightDockOpen(true)
+  }, [])
+
+  /**
+   * 坞此刻为什么没处另开（`undefined` = 有地方）。**直说，不画一个点不出东西的空格子**（规格 7.5）。
+   * 地方未定（摘要还没到手）那一拍不下结论。
+   */
+  const 坞没处说 = 侧边地方未定
+    ? undefined
+    : 侧边地方
+      ? undefined
+      : session
+        ? t("这段对话不属于任何项目，坞里没法另开")
+        : t("还没选项目，坞里没处另开")
+
+  /**
+   * 坞里「另开一段」（侧边对话，2026-09-24）：与会话页签的 ＋ 同一条路（项目走 `新建任务`，远端走
+   * `startRemoteSession`），只是**建好了不切过去**——主区不动，新那段直接挂进坞。
+   * 回来时地方已经换了（人在等的那一下切了项目）：不挂到别处去，它照常留在它自己那一处的会话里。
+   */
+  const 另开到坞 = async () => {
+    const 地方 = $侧边地方.get()
+    if (!地方) {
+      note(坞没处说 ?? t("这段对话不属于任何项目，坞里没法另开"))
+      return
+    }
+    let id: string | undefined
+    if (地方.startsWith("r:")) {
+      const c = connections.find((x) => x.id === 地方.slice(2))
+      if (!c) {
+        note(t("这台服务器已经不在连接列表里了，坞里没法另开"))
+        return
+      }
+      id = await startRemoteSession({ id: c.id, label: c.label }, { 不切过去: true })
+    } else {
+      const 项目 = projects.find((x) => x.projectId === 地方.slice(2))
+      if (!项目 || 项目.temporary) {
+        note(t("这段对话不属于任何项目，坞里没法另开"))
+        return
+      }
+      id = await 新建任务({ workspace: 项目.workspace, 不切过去: true })
+    }
+    if (id && $侧边地方.get() === 地方) 挂进坞(地方, id)
+  }
+  // 命令面板那条走 ref：`actions` 是记住的，而这个函数每次渲染都换
+  const 另开到坞Ref = useRef(另开到坞)
+  另开到坞Ref.current = 另开到坞
+
+  /**
+   * 归档 / 删除的那几段里有坞里那段：从坞里拿下，并且**说一句**（spec §2.4）——
+   * 静静清掉的话，人只会看到坞里那段凭空没了。
+   */
+  const 坞里那段没了 = useCallback((ids: readonly (string | undefined)[], 说: string) => {
+    const id = $侧边会话id.get()
+    if (!id || !ids.includes(id)) return
+    从坞拿下()
+    note(说)
+  }, [])
 
   /** 走全局那个确认框，包成一个 Promise：确认 / 第三个选项 / 取消三条路各回一个词（技能屏、已归档屏共用） */
   const 问一句 = useCallback(
@@ -1994,6 +2107,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             .then((r) => {
               // **目录没进废纸篓要出声**（2026-08-22）：确认框说了「删掉对话记录」，没做到就得说
               if (!r.transcriptTrashed && r.problem) note(r.problem)
+              坞里那段没了([s.sessionId], t("坞里那段对话已删除，已从坞里拿下"))
               // 删的正好是当前这个，就把选中清掉——**不要留一个指向空的选中**
               if ($activeSessionId.get() === s.sessionId) {
                 setActiveSessionId(undefined)
@@ -2074,13 +2188,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         setActiveSessionId(undefined)
         setView("conversation")
       }
+      坞里那段没了(ids.filter((id) => !没成.includes(id)), t("坞里那段对话已归档，已从坞里拿下"))
       await 重取会话()
       await loadTasks(client)
       await 重取归档数()
       if (没成.length > 0) note(tf("有 {0} 段没归档成", 没成.length))
       else note(tf("已归档 {0} 段；在侧栏「已归档」里能找回来", ids.length))
     },
-    [client, 重取会话, 重取归档数, note],
+    [client, 重取会话, 重取归档数, note, 坞里那段没了],
   )
   const archiveSession = useCallback((s: SessionSummary) => void 归档几段([s.sessionId]), [归档几段])
   /**
@@ -2203,6 +2318,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            */
           void (async () => {
             const 没删掉: string[] = []
+            const 删掉的: (string | undefined)[] = []
             for (const t of targets) {
               try {
                 /**
@@ -2210,10 +2326,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 迁移过来的那些一条都删不掉——界面手上没有它们的会话摘要。
                  */
                 await client.get("deleteTask", { taskId: t.taskId })
+                删掉的.push(t.sessionId)
               } catch {
                 没删掉.push(t.title ?? t.taskId)
               }
             }
+            坞里那段没了(删掉的, t("坞里那段对话已删除，已从坞里拿下"))
             if ($activeSessionId.get() && targets.some((t) => t.sessionId === $activeSessionId.get())) {
               setActiveSessionId(undefined)
               setView("conversation")
@@ -2286,18 +2404,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onConfirm: () => {
           void (async () => {
             const 没删掉: string[] = []
+            /** 真删掉了的会话（坞里那段在里面就得拿下并说一句，侧边对话 2026-09-24） */
+            const 删掉的: (string | undefined)[] = []
             for (const g of groups) {
               try {
                 if (g.projectId && g.整个 !== false) {
                   await client.get("deleteProject", { projectId: g.projectId })
+                  // 整个项目没了：坞里挂的若是这个项目的，它也没了（任务清单未必列全这个项目的会话）
+                  if ($侧边地方.get() === `p:${g.projectId}`) 删掉的.push($侧边会话id.get())
                 } else {
                   // **没有 projectId 也要删得掉**：按 taskId 走（协议 4.9）
-                  for (const t of g.tasks) await client.get("deleteTask", { taskId: t.taskId })
+                  for (const t of g.tasks) {
+                    await client.get("deleteTask", { taskId: t.taskId })
+                    删掉的.push(t.sessionId)
+                  }
                 }
               } catch {
                 没删掉.push(g.workspace)
               }
             }
+            坞里那段没了(删掉的, t("坞里那段对话已删除，已从坞里拿下"))
             const pid = $activeProjectId.get()
             if (pid && groups.some((g) => g.projectId === pid)) {
               setActiveProjectId(undefined)
@@ -2531,7 +2657,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * （那份缓存只在 `setSessionModel` **成功返回**后才更新，不做乐观更新——
    * 没配 key 或这一轮还没说完时，不能显示成换过了）。
    */
-  const agentCfg = providers.agents.find((a) => a.agentId === session?.agentId)
+  /**
+   * **按会话算，不按「主区那段」算**（侧边对话，2026-09-24）：坞里那段也要一颗照实的模型 pill——
+   * 下面这几样原先是主区那段的常量，现在是「给一段会话，算它的」。主区传的就是主区那段，结果一个字不变。
+   */
+  const agentCfgOf = (s: SessionSummary) => providers.agents.find((a) => a.agentId === s.agentId)
   // **看 `available` 不是 `models`。** 后者是「配置里声明用到的」，
   // 前者才是「这个 provider 能用哪些」。缺省时给空数组 → pill 不显示，
   // 那正是「不知道」该有的表现：不假装有得选
@@ -2610,15 +2740,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    *
    * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
    */
-  const currentModel: { provider?: string; model: string } | undefined = sessionId
-    ? (sessionModels[sessionId] ??
+  const currentModelOf = (s: SessionSummary): { provider?: string; model: string } | undefined => {
+    const agentCfg = agentCfgOf(s)
+    return (
+      sessionModels[s.sessionId] ??
       (agentCfg?.model
         ? {
             ...(agentCfg.provider ? { provider: agentCfg.provider } : {}),
             model: agentCfg.model,
           }
-        : undefined))
-    : undefined
+        : undefined)
+    )
+  }
 
   /**
    * **当前这段对话正在用哪家**。
@@ -2627,11 +2760,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 而配置里那个 agent 一个字都没变。作者：*「我选择 kimi-k3 的时候，
    * 后面的模型厂家能否帮我自动设置为 kimi？」*——就是这一行在管。
    */
-  const currentProvider = currentModel?.provider ?? agentCfg?.provider
+  const currentProviderOf = (s: SessionSummary) => currentModelOf(s)?.provider ?? agentCfgOf(s)?.provider
 
   /** 能就地换过去的服务。**只有 native 会话有** */
-  const services: ServiceChoice[] | undefined =
-    agentCfg?.kind === "native"
+  const servicesOf = (s: SessionSummary): ServiceChoice[] | undefined =>
+    agentCfgOf(s)?.kind === "native"
       ? providers.providers.map((p) => ({
           providerId: p.providerId,
           name: p.name ?? p.providerId,
@@ -2643,7 +2776,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const serviceLabel = (id: string) =>
     providers.providers.find((p) => p.providerId === id)?.name ?? id
-  const currentServiceLabel = currentProvider ? serviceLabel(currentProvider) : undefined
+  const currentServiceLabelOf = (s: SessionSummary) => {
+    const currentProvider = currentProviderOf(s)
+    return currentProvider ? serviceLabel(currentProvider) : undefined
+  }
 
   /**
    * 能选哪些模型。**所有配好的服务 × 各自的模型**（2026-08-12 放开）。
@@ -2664,7 +2800,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    *
    * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
    */
-  const modelChoices: ModelChoice[] =
+  const modelChoicesOf = (s: SessionSummary): ModelChoice[] => {
+    const agentCfg = agentCfgOf(s)
+    return (
     /**
      * **ACP 那条没有这颗 pill**（2026-08-19，作者报的）。
      *
@@ -2689,6 +2827,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         : providers.providers.flatMap((p) =>
             (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),
           )
+    )
+  }
 
   /**
    * **界面上所有动作的唯一定义处**（①-B″ · U1）。
@@ -3287,6 +3427,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           .catch(fail)
       },
       setTheme,
+      /** 与坞格里那颗「另开一段」同一个动作（走 ref：它每次渲染都换，`actions` 是记住的） */
+      newSideChat: () => {
+        打开坞里的对话()
+        void 另开到坞Ref.current().catch(fail)
+      },
+      openSideChat: 打开坞里的对话,
     }),
     [client, session, sessions, askDeleteSession, 回到初始画面],
   )
@@ -3370,10 +3516,231 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const commands = useMemo(
     () =>
       buildCommands({
-        actions, agents: agentIds, session, busy, view, dockOpen,
+        actions, agents: agentIds, session, busy, view, dockOpen, sideNewUnavailable: 坞没处说,
       }),
-    [actions, agentIds, session, busy, view, dockOpen],
+    [actions, agentIds, session, busy, view, dockOpen, 坞没处说],
   )
+
+  /**
+   * 一段会话在 `ConversationView` 上要的那套回调（侧边对话，2026-09-24）。**主区与坞格共用这一份**——
+   * 两处各写一遍的话，迟早一处改了、一处没改（发送、中止、权限卡、换模型都是会跟着长的东西）。
+   *
+   * 全部按 `s` 的 id 绑好；乐观摘卡摘的是 **`槽`** 的 `$待答权限`，不是主槽的。
+   * 只给「这一段自己的事」：导出、底部终端开合、选工作目录、产物条、换 ACP 另起一段、
+   * 终端裁剪与内核实例只归主区，由主区那处另给（spec §2.3：坞里其他格仍跟着主对话）。
+   *
+   * 读 `槽.$待答权限` / `槽.$会话开关` 用 `.get()`：两个槽的这两样 App 都订着（`useStore`），变了就重渲染。
+   */
+  const 对话回调 = (s: SessionSummary, 槽: 转录槽): 坞格对话回调 => {
+    const 待答权限 = 槽.$待答权限.get()
+    const 会话开关们 = 槽.$会话开关.get()
+    const 这段任务 = tasks.find((x) => x.sessionId === s.sessionId)
+    const services = servicesOf(s)
+    const currentServiceLabel = currentServiceLabelOf(s)
+    const switchProblem = 换模型问题[s.sessionId]
+    return {
+      引用文件,
+      onOpenReference: 打开引用,
+      loadLocalImage: 读本机图,
+      loadGalleryRoots: 载图廊根们,
+      ...(() => {
+        // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
+        const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
+        if (!开) return {}
+        const 跟随 = 开.current === "inherit"
+        const 当前 = (跟随 ? 权限档 : (开.current as "allow-all" | "ask-risky" | "deny-risky"))
+        return {
+          权限: {
+            当前,
+            跟随默认: 跟随,
+            onPick: (档: "allow-all" | "ask-risky" | "deny-risky", 也作为默认: boolean) => {
+              client.get("setSessionConfigOption", { sessionId: s.sessionId, configId: "dawn.permission", value: 档 }).catch(fail)
+              if (也作为默认) 设默认档(档)
+            },
+          },
+        }
+      })(),
+      /**
+       * **消息里点了一条本机地址**（批 2，2026-08-18）。
+       *
+       * 动作的家在这儿：切房客、把坞打开、把地址放进那个请求。
+       * 叶子组件只发回调——设计契约那一条：叶子自己改导航状态的话，
+       * 同一个跳转就有两个来源，而「谁先谁后」取决于渲染顺序。
+       */
+      onOpenWeb: (url: string) => {
+        // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
+        坞上位()
+        setRightDockTenant("web")
+        setRightDockOpen(true)
+        请打开网址(url)
+      },
+      ...(待答权限 ? { 待答权限 } : {}),
+      ...(会话开关们 ? { 会话开关们 } : {}),
+      onSetConfigOption: (configId: string, value: string) => {
+        client
+          .get("setSessionConfigOption", { sessionId: s.sessionId, configId, value })
+          .catch(fail)
+      },
+      onAnswerPermission: (requestId: string, optionId?: string) => {
+        /**
+         * **乐观先摘卡**：点了之后卡立刻消失，人才知道自己点中了。
+         * 服务端那边也会摘一次（快照推回来），两次是幂等的。
+         * 失败时出声——**不出声的表现是「点了没反应」**。
+         * 摘的是**这一槽**的卡：坞里点了，主区那张不许跟着没了。
+         */
+        槽.$待答权限.set(undefined)
+        client
+          .get("answerPermission", {
+            sessionId: s.sessionId,
+            requestId,
+            ...(optionId ? { optionId } : {}),
+          })
+          .catch(fail)
+      },
+      ...(这段任务?.workspace ? { workspace: 这段任务.workspace } : {}),
+      serviceLabel,
+      onOpenSettings: actions.openSettings,
+      /**
+       * 模型 pill 里那一组 ACP 适配器（2026-08-21）。
+       * 远端会话只列手能到服务器的（T3）——此前这条过滤挂在一个
+       * 早就没人读的 `agents` 参数上，等于没做。
+       */
+      acpAgents: (s.remote ? 远端能用的agentIds : agentIds)
+        .filter((id) => providers.agents.find((a) => a.agentId === id)?.kind === "acp")
+        .map((id) => ({ agentId: id, label: agentLabel(id) })),
+      models: modelChoicesOf(s),
+      model: currentModelOf(s),
+      agentLabel,
+      ...(services ? { services } : {}),
+      ...(currentServiceLabel ? { currentServiceLabel } : {}),
+      ...(switchProblem ? { switchProblem } : {}),
+      onEnhance: 去增强(s.sessionId),
+      onCancelEnhance: 取消增强,
+      enhanceReason: 有API模型 ? undefined : t("还没有 API key——填一个就能用"),
+      /**
+       * **换服务 = 换到那家的第一个模型**。
+       *
+       * 不问「换到它的哪个模型」再点一次：换家的人多半只想换家，
+       * 具体哪个模型旁边那颗 pill 随时能改。
+       * **挑不出模型就不发请求**——那家目录是空的，
+       * 发出去只会换来一句与「我想换家」无关的报错。
+       */
+      onSwitchService: (providerId: string) => {
+        const 第一个 = providers.providers.find((p) => p.providerId === providerId)
+          ?.available?.[0]
+        if (!第一个) {
+          note(tf("「{0}」在模型目录里一个模型都没有，没法换过去", providerId))
+          return
+        }
+        client
+          .get("setSessionModel", {
+            sessionId: s.sessionId,
+            provider: providerId,
+            model: 第一个,
+          })
+          .then(() => {
+            setSwitchProblem(s.sessionId, undefined)
+            setSessionModel(s.sessionId, 第一个, providerId)
+          })
+          .catch((e: unknown) => {
+            setSwitchProblem(s.sessionId, e instanceof Error ? e.message : String(e))
+            fail(e)
+          })
+      },
+      onPickModel: (c: ModelChoice) => {
+        /**
+         * **`provider` 只有 native 有。**
+         *
+         * 此前这里写的是 `if (!session || !agentCfg?.provider) return`——
+         * 加了 cli 之后，那个卫语句会让**换模型静静地什么都不做**：
+         * 点了没反应，而用户无从知道为什么。协议已把它放宽为可选（2.4）。
+         */
+        /**
+         * **provider 跟着这一条选项走，不跟着 agent 配置走**
+         * （2026-08-11）。此前这里永远传 `agentCfg.provider`——
+         * 那时菜单里也只有那一家，所以看不出问题；
+         * 现在菜单跨服务，传旧的那个就等于**换了个寂寞**：
+         * 界面显示换了，请求还打在原来那家。
+         */
+        client
+          .get("setSessionModel", {
+            sessionId: s.sessionId,
+            ...(c.provider ? { provider: c.provider } : {}),
+            model: c.model,
+          })
+          // **成功之后才更新缓存。** 失败时把后端给的理由
+          // （没配 key / 这一轮还没说完）**摆到 composer 上**
+          .then(() => {
+            setSwitchProblem(s.sessionId, undefined)
+            setSessionModel(s.sessionId, c.model, c.provider)
+          })
+          .catch((e: unknown) => {
+            setSwitchProblem(s.sessionId, e instanceof Error ? e.message : String(e))
+            fail(e)
+          })
+      },
+      disabled: s.state === "exited",
+      /**
+       * **哪些会话停得下来**（A3，2026-08-16 加了 acp）。
+       *
+       * 这里是一张**白名单，不是「排除 pty」**：
+       *   - `native`：pi 支持中止；
+       *   - `acp`：发一条 `session/cancel`，agent 认它；
+       *   - `cli`：headless 进程没有中止入口，只能杀——那是另一件事；
+       *   - `pty` / `kernel`：中止是往终端送 Ctrl-C，语义完全不同。
+       *
+       * 给一颗按不下去的停止键，比没有更坏——
+       * 而 `undefined` 时那颗键根本不画。
+       *
+       * 主区那段走 `actions.abort`（命令面板那条是同一个动作）；坞里那段按它自己的 id 停，
+       * 排着的话同样退回**它自己**的输入框。
+       */
+      onAbort:
+        s.kind === "native" || s.kind === "acp"
+          ? 槽 === 主槽
+            ? actions.abort
+            : () => {
+                client
+                  .get<{ withdrawn?: 撤回的话[] }>("abortSession", { sessionId: s.sessionId })
+                  .then((r) => 退回输入框(s.sessionId, r.withdrawn ?? []))
+                  .catch(fail)
+              }
+          : undefined,
+      /** 待发单上那两颗（2026-09-23）：撤回的原文与原图放回这段会话的输入框 */
+      onEditQueue: (id: string, action: "remove" | "steer") =>
+        client
+          .get<{ withdrawn?: 撤回的话 }>("editQueue", { sessionId: s.sessionId, id, action })
+          .then((r) => {
+            if (r.withdrawn) 退回输入框(s.sessionId, [r.withdrawn])
+          }),
+      onSend: (text, images, behavior) =>
+        // **不做本地乐观追加**：事件流是对话的唯一事实来源。
+        // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
+        写进去(s.sessionId, text, images, behavior)
+          .then(() => {
+            /**
+             * 标题是第一句话定的，而**它落在后端**——不重取一次，
+             * 侧栏会一直显示「新会话」直到下次因为别的原因刷新。
+             *
+             * **只在还没有标题时取**：之后每句话都取一遍纯属白打 IPC，
+             * 而标题一旦定了就不会再变（`setTitleIfAbsent`）。
+             */
+            if (!s.title) {
+              const pid = $activeProjectId.get()
+              if (pid) void loadSessions(client, pid)
+              /**
+               * **临时会话也要重取**（2026-08-11）。
+               *
+               * 它不属于当前项目，所以上面那一句取不到它——
+               * 症状是侧栏上那一行永远停在「新会话」，
+               * 而这正是标题这个功能存在的理由（作者：*「会话的 ID
+               * 怎么都是一个呢？我很难辨别具体是哪个会话」*）。
+               */
+              void loadTempSessions(client)
+            }
+          }),
+    }
+  }
 
   // **只有 exhausted 才配得上占满全屏。** connecting/reconnecting/degraded
   // 各有各的呈现，由 ConnectionSurface 决定——见它的文件头
@@ -4342,7 +4709,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
                 return (
                   <SessionTabs
-                    tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId) }))}
+                    tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), inDock: x.sessionId === 侧边id }))}
                     current={session.sessionId}
                     onPick={(id) => {
                       标未读(id, false)
@@ -4355,6 +4722,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                         if (兄弟) setActiveSessionId(兄弟.sessionId)
                       }
                       void 归档几段([id]).catch(fail)
+                    }}
+                    /**
+                     * 右键「放进坞里」（侧边对话，2026-09-24）。**同一段只在一处、主区赢**（Task 5 那个 effect）：
+                     * 放的是主区这段，就得先把主区切到同处另一段——与上面 `onClose` 同一条——
+                     * 而且**与挂进坞同步做完、中间不许有 await**，否则「主区赢」那一拍会把刚挂上的又拿下来。
+                     * 同处没有别的可切：说一句，不做（放进去主区就空了，而且远端那边连「地方」都跟着没了）。
+                     */
+                    onPutInDock={(id) => {
+                      const 地方 = $侧边地方.get()
+                      if (!地方) return
+                      if (id === session.sessionId) {
+                        const 在坞 = $侧边会话id.get()
+                        const 兄弟 = 同处.find((x) => x.sessionId !== id && x.sessionId !== 在坞) ?? 同处.find((x) => x.sessionId === 在坞)
+                        if (!兄弟) {
+                          note(t("这里只有这一段，放进坞里主区就空了"))
+                          return
+                        }
+                        挂进坞(地方, id)
+                        setActiveSessionId(兄弟.sessionId)
+                      } else {
+                        挂进坞(地方, id)
+                      }
+                      打开坞里的对话()
                     }}
                     onNew={
                       远端
@@ -4372,70 +4762,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 key={session.sessionId}
                 session={session}
-                /**
-                 * **消息里点了一条本机地址**（批 2，2026-08-18）。
-                 *
-                 * 动作的家在这儿：切房客、把坞打开、把地址放进那个请求。
-                 * 叶子组件只发回调——设计契约那一条：叶子自己改导航状态的话，
-                 * 同一个跳转就有两个来源，而「谁先谁后」取决于渲染顺序。
-                 */
+                /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
+                {...对话回调(session, 主槽)}
                 onExport={() => client.get<{ path: string; turns: number }>("exportSession", { sessionId: session!.sessionId })}
-                引用文件={引用文件}
-                onOpenReference={打开引用}
                 artifacts={artifacts}
                 onOpenArtifact={openArtifact}
                 loadThumb={读产物缩略}
-                loadLocalImage={读本机图}
-                loadGalleryRoots={载图廊根们}
-                {...(() => {
-                  // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
-                  const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
-                  if (!开) return {}
-                  const 跟随 = 开.current === "inherit"
-                  const 当前 = (跟随 ? 权限档 : (开.current as "allow-all" | "ask-risky" | "deny-risky"))
-                  return {
-                    权限: {
-                      当前,
-                      跟随默认: 跟随,
-                      onPick: (档: "allow-all" | "ask-risky" | "deny-risky", 也作为默认: boolean) => {
-                        client.get("setSessionConfigOption", { sessionId: session.sessionId, configId: "dawn.permission", value: 档 }).catch(fail)
-                        if (也作为默认) 设默认档(档)
-                      },
-                    },
-                  }
-                })()}
-                onOpenWeb={(url) => {
-                  // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
-                  坞上位()
-                  setRightDockTenant("web")
-                  setRightDockOpen(true)
-                  请打开网址(url)
-                }}
-                {...(待答权限 ? { 待答权限 } : {})}
-                {...(会话开关们 ? { 会话开关们 } : {})}
-                onSetConfigOption={(configId, value) => {
-                  client
-                    .get("setSessionConfigOption", { sessionId: session.sessionId, configId, value })
-                    .catch(fail)
-                }}
-                onAnswerPermission={(requestId, optionId) => {
-                  /**
-                   * **乐观先摘卡**：点了之后卡立刻消失，人才知道自己点中了。
-                   * 服务端那边也会摘一次（快照推回来），两次是幂等的。
-                   * 失败时出声——**不出声的表现是「点了没反应」**。
-                   */
-                  $待答权限.set(undefined)
-                  client
-                    .get("answerPermission", {
-                      sessionId: session.sessionId,
-                      requestId,
-                      ...(optionId ? { optionId } : {}),
-                    })
-                    .catch(fail)
-                }}
-                {...(当前任务?.workspace ? { workspace: 当前任务.workspace } : {})}
-                serviceLabel={serviceLabel}
-                onOpenSettings={actions.openSettings}
                 {...(当前任务 && !session.remote
                   ? /**
                      * **只给「选 / 换」，不给「改回普通对话」**（2026-08-13，
@@ -4460,145 +4792,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                      */
                     { onPickWorkspace: () => void 选工作目录(当前任务.taskId) }
                   : {})}
-                /**
-                 * 模型 pill 里那一组 ACP 适配器（2026-08-21）。
-                 * 远端会话只列手能到服务器的（T3）——此前这条过滤挂在一个
-                 * 早就没人读的 `agents` 参数上，等于没做。
-                 */
-                acpAgents={(session.remote ? 远端能用的agentIds : agentIds)
-                  .filter((id) => providers.agents.find((a) => a.agentId === id)?.kind === "acp")
-                  .map((id) => ({ agentId: id, label: agentLabel(id) }))}
                 onPickAgent={(id) => {
                   void 用ACP另起一段(id).catch(fail)
                 }}
-                models={modelChoices}
-                model={currentModel}
-                agentLabel={agentLabel}
-                {...(services ? { services } : {})}
-                {...(currentServiceLabel ? { currentServiceLabel } : {})}
-                {...(switchProblem ? { switchProblem } : {})}
                 onToggleDock={toggleDock}
                 dockOpen={dockOpen}
-                onEnhance={去增强(session.sessionId)}
-                onCancelEnhance={取消增强}
-                enhanceReason={有API模型 ? undefined : t("还没有 API key——填一个就能用")}
-                /**
-                 * **换服务 = 换到那家的第一个模型**。
-                 *
-                 * 不问「换到它的哪个模型」再点一次：换家的人多半只想换家，
-                 * 具体哪个模型旁边那颗 pill 随时能改。
-                 * **挑不出模型就不发请求**——那家目录是空的，
-                 * 发出去只会换来一句与「我想换家」无关的报错。
-                 */
-                onSwitchService={(providerId) => {
-                  if (!session) return
-                  const 第一个 = providers.providers.find((p) => p.providerId === providerId)
-                    ?.available?.[0]
-                  if (!第一个) {
-                    note(tf("「{0}」在模型目录里一个模型都没有，没法换过去", providerId))
-                    return
-                  }
-                  client
-                    .get("setSessionModel", {
-                      sessionId: session.sessionId,
-                      provider: providerId,
-                      model: 第一个,
-                    })
-                    .then(() => {
-                      setSwitchProblem(undefined)
-                      setSessionModel(session.sessionId, 第一个, providerId)
-                    })
-                    .catch((e: unknown) => {
-                      setSwitchProblem(e instanceof Error ? e.message : String(e))
-                      fail(e)
-                    })
-                }}
-                onPickModel={(c) => {
-                  if (!session) return
-                  /**
-                   * **`provider` 只有 native 有。**
-                   *
-                   * 此前这里写的是 `if (!session || !agentCfg?.provider) return`——
-                   * 加了 cli 之后，那个卫语句会让**换模型静静地什么都不做**：
-                   * 点了没反应，而用户无从知道为什么。协议已把它放宽为可选（2.4）。
-                   */
-                  /**
-                   * **provider 跟着这一条选项走，不跟着 agent 配置走**
-                   * （2026-08-11）。此前这里永远传 `agentCfg.provider`——
-                   * 那时菜单里也只有那一家，所以看不出问题；
-                   * 现在菜单跨服务，传旧的那个就等于**换了个寂寞**：
-                   * 界面显示换了，请求还打在原来那家。
-                   */
-                  client
-                    .get("setSessionModel", {
-                      sessionId: session.sessionId,
-                      ...(c.provider ? { provider: c.provider } : {}),
-                      model: c.model,
-                    })
-                    // **成功之后才更新缓存。** 失败时把后端给的理由
-                    // （没配 key / 这一轮还没说完）**摆到 composer 上**
-                    .then(() => {
-                      setSwitchProblem(undefined)
-                      setSessionModel(session.sessionId, c.model, c.provider)
-                    })
-                    .catch((e: unknown) => {
-                      setSwitchProblem(e instanceof Error ? e.message : String(e))
-                      fail(e)
-                    })
-                }}
                 terminalTrimmed={termTrimmed}
                 kernelInstanceId={kernelInstanceId}
-                disabled={session.state === "exited"}
-                /**
-                 * **哪些会话停得下来**（A3，2026-08-16 加了 acp）。
-                 *
-                 * 这里是一张**白名单，不是「排除 pty」**：
-                 *   - `native`：pi 支持中止；
-                 *   - `acp`：发一条 `session/cancel`，agent 认它；
-                 *   - `cli`：headless 进程没有中止入口，只能杀——那是另一件事；
-                 *   - `pty` / `kernel`：中止是往终端送 Ctrl-C，语义完全不同。
-                 *
-                 * 给一颗按不下去的停止键，比没有更坏——
-                 * 而 `undefined` 时那颗键根本不画。
-                 */
-                onAbort={
-                  session.kind === "native" || session.kind === "acp" ? actions.abort : undefined
-                }
-                /** 待发单上那两颗（2026-09-23）：撤回的原文与原图放回这段会话的输入框 */
-                onEditQueue={(id, action) =>
-                  client
-                    .get<{ withdrawn?: 撤回的话 }>("editQueue", { sessionId: session.sessionId, id, action })
-                    .then((r) => {
-                      if (r.withdrawn) 退回输入框(session.sessionId, [r.withdrawn])
-                    })
-                }
-                onSend={(text, images, behavior) =>
-                  // **不做本地乐观追加**：事件流是对话的唯一事实来源。
-                  // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
-                  写进去(session.sessionId, text, images, behavior)
-                    .then(() => {
-                      /**
-                       * 标题是第一句话定的，而**它落在后端**——不重取一次，
-                       * 侧栏会一直显示「新会话」直到下次因为别的原因刷新。
-                       *
-                       * **只在还没有标题时取**：之后每句话都取一遍纯属白打 IPC，
-                       * 而标题一旦定了就不会再变（`setTitleIfAbsent`）。
-                       */
-                      if (!session.title) {
-                        const pid = $activeProjectId.get()
-                        if (pid) void loadSessions(client, pid)
-                        /**
-                         * **临时会话也要重取**（2026-08-11）。
-                         *
-                         * 它不属于当前项目，所以上面那一句取不到它——
-                         * 症状是侧栏上那一行永远停在「新会话」，
-                         * 而这正是标题这个功能存在的理由（作者：*「会话的 ID
-                         * 怎么都是一个呢？我很难辨别具体是哪个会话」*）。
-                         */
-                        void loadTempSessions(client)
-                      }
-                    })
-                }
               />
             </>
           ) : 向导中 && !跳过向导 ? (
@@ -4666,7 +4866,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               onStart={(agentId, firstMessage, workspace, images, files) =>
                 // **返回 promise**：空态那张卡要据此在失败时把字、图、文件还回去
-                新建任务({ agentId, firstMessage, workspace, images, files })
+                新建任务({ agentId, firstMessage, workspace, images, files }).then(() => undefined)
               }
               /**
                * **选完立刻进项目，文件树跟着换**（2026-08-19 作者定的）。
@@ -4969,6 +5169,54 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   return client.get<{ path: string; cells: number }>("exportNotebook", { sessionId, format })
                 }}
               />
+            ) : rightDockTenant === "chat" ? (
+              /**
+                * **坞里的对话**（侧边对话，2026-09-24，spec §2）。与主区同时跑的第二段；
+                * 挂谁、拿下、对调都在这儿做，叶子只发回调。
+                */
+              (() => {
+                const 挂着的 = 侧边id ? [...sessions, ...tempSessions].find((x) => x.sessionId === 侧边id) : undefined
+                // 同一个地方的其他会话：不含主区那段、不含已挂着的、不含已归档；终端不是对话，不列
+                const 同处 = !坞的地方
+                  ? []
+                  : (坞的地方.startsWith("r:")
+                      ? tempSessions.filter((x) => x.remote?.connectionId === 坞的地方.slice(2))
+                      : sessions.filter((x) => !x.remote && x.projectId === 坞的地方.slice(2))
+                    )
+                      .filter((x) => !x.archivedAt && x.kind !== "pty" && x.sessionId !== sessionId && x.sessionId !== 侧边id)
+                      .map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId) }))
+                return (
+                  <SideChat
+                    session={挂着的}
+                    opening={!!侧边id && !挂着的}
+                    noPlace={坞没处说}
+                    同处={同处}
+                    running={!!侧边id && 跑着的会话.has(侧边id)}
+                    canReadMain={侧边能读主}
+                    onNew={坞的地方 ? () => void 另开到坞().catch(fail) : undefined}
+                    onPick={(id) => {
+                      if (坞的地方) 挂进坞(坞的地方, id)
+                    }}
+                    onSwap={() => {
+                      /**
+                       * 两段对调。**同步做完、中间不许有 await**：「主区赢」那个 effect 看到坞里那段 = 主区那段
+                       * 就会把它拿下——先挂原主、再切主区，两件事落在同一次渲染里才不会被它误判。
+                       */
+                      const 地方 = $侧边地方.get()
+                      const 侧 = $侧边会话id.get()
+                      if (!地方 || !侧) return
+                      const 原主 = $activeSessionId.get()
+                      if (原主) 挂进坞(地方, 原主)
+                      else 从坞拿下(地方)
+                      标未读(侧, false)
+                      setActiveSessionId(侧)
+                      setView("conversation")
+                    }}
+                    onTakeOut={() => 从坞拿下()}
+                    conversation={挂着的 ? 对话回调(挂着的, 侧槽) : undefined}
+                  />
+                )
+              })()
             ) : rightDockTenant === "web" ? (
               /**
                 * **网页那一格**（批 1，2026-08-18）。屏幕上这一块几乎是空的——

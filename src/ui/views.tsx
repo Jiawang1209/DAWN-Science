@@ -24,7 +24,7 @@ import {
   全部房客,
   type 坞房客,
 } from "./state/right-dock.js"
-import type { TranscriptItem } from "../protocol/index.js"
+import type { TranscriptItem, QueuedMessage } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
@@ -3758,8 +3758,17 @@ export function ConversationView({
   onPickWorkspace,
   serviceLabel,
   onOpenSettings,
+  待发: 传进来的待发,
+  紧凑,
 }: {
   session: SessionSummary
+  /** 待发单（侧边对话，2026-09-24）。**缺省 = 读主槽 `$待发`**——与 `items` 同一个套路 */
+  待发?: readonly QueuedMessage[] | undefined
+  /**
+   * 窄处（坞里，侧边对话 2026-09-24）：不画右侧轮次刻度尺，也不画标题（坞格自己的头上已经写着）——
+   * 同一个标题一格里写两遍，读屏与 `.conv-title` 判据都会指向两处。缺省 = 都画
+   */
+  紧凑?: boolean | undefined
   /** 这段会话的产物清单（2026-08-26）。**缺省 = 不画产物条**，两条一起给才画 */
   artifacts?: ArtifactList | undefined
   onOpenArtifact?: ((path: string) => void) | undefined
@@ -4004,9 +4013,15 @@ export function ConversationView({
     const onDragover = (e: DragEvent) => {
       if ([...(e.dataTransfer?.items ?? [])].some((it) => it.kind === "file")) e.preventDefault()
     }
+    /**
+     * **两段对话同时在屏上时，页面级的拖放 / 粘贴只归一段**（侧边对话，2026-09-24）：
+     * 落在坞格（`.side-chat`）里的归坞里那段，其余归主区那段。不分的话一次拖放进两个输入框。
+     */
+    const 归我 = (e: Event) => (e.target instanceof Element && !!e.target.closest(".side-chat")) === !!紧凑
     const onDrop = (e: DragEvent) => {
       // 卡上已有自己的 onDrop（拖图那条老路）：它接住的（preventDefault 过）这里不再收，收两次 = 两个 chip
       if (e.defaultPrevented) return
+      if (!归我(e)) return
       const files = [...(e.dataTransfer?.files ?? [])]
       if (files.length === 0) return
       e.preventDefault()
@@ -4033,6 +4048,7 @@ export function ConversationView({
       // 测试造的事件常忘了 cancelable，preventDefault 会静默失效）
       if (e.defaultPrevented) return
       if (e.target instanceof Element && e.target.closest(".composer-box")) return
+      if (!归我(e)) return
       const files = [...(e.clipboardData?.files ?? [])]
       if (files.length === 0) {
         if (从uri单收(e.clipboardData)) {
@@ -4064,7 +4080,7 @@ export function ConversationView({
       document.removeEventListener("drop", onDrop)
       document.removeEventListener("paste", onPaste)
     }
-  }, [收外部文件, session.kind])
+  }, [收外部文件, session.kind, 紧凑])
   /** 有东西正拖在这张卡上。**看得见才知道松手会发生什么** */
   const [拖着, 设拖着] = useState(false)
   /** 上一次发送为什么没成。**摆在输入卡旁边**，不是丢进某个角落的提示 */
@@ -4088,7 +4104,9 @@ export function ConversationView({
    * 作者 09-23 选的（学自 Codex）：回车只是把话挂上去，打断 agent 要是看清之后的主动选择。
    */
   const 插队ref = useRef(false)
-  const 待发 = useStore($待发)
+  // hooks 不许条件调用：主槽照订，传了就用传进来的（坞里那段）
+  const 主槽待发 = useStore($待发)
+  const 待发 = 传进来的待发 ?? 主槽待发
   /**
    * **取回 / 停止时撤下来的图，这个框来领**（2026-09-23）。字走 `$drafts`（外面够得着），
    * 图是这里的本地状态（带名字与预览），只能由这里领走。
@@ -4341,7 +4359,7 @@ export function ConversationView({
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
         {/* 标题一行、用量第二行（2026-08-23 作者：「title 应该是换行之后，才是 token 的消耗」） */}
         <div className="conv-head-text">
-          <h1 className="conv-title">{session.title ?? t("新对话")}</h1>
+          {紧凑 ? null : <h1 className="conv-title">{session.title ?? t("新对话")}</h1>}
           <SessionUsage items={items} />
         </div>
         {/**
@@ -4454,7 +4472,7 @@ export function ConversationView({
        * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
        */}
       {/* 轮次导航（2026-08-22，学自 dsh-codex-ui）：左缘一条刻度尺，一刻一轮你说的话 */}
-      <TurnNavigator items={items} 确保可见={行回调.确保可见} />
+      {紧凑 ? null : <TurnNavigator items={items} 确保可见={行回调.确保可见} />}
       <StickToBottom className="turns" resize="smooth" initial="smooth">
         {/**
           * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：
@@ -6473,6 +6491,8 @@ export function EmptyConversation({
     }
     const onDrop = (e: DragEvent) => {
       if (e.defaultPrevented) return
+      // 落在坞里那段对话上的归它（侧边对话，2026-09-24）
+      if (e.target instanceof Element && e.target.closest(".side-chat")) return
       const files = [...(e.dataTransfer?.files ?? [])]
       if (files.length === 0) return
       e.preventDefault()
@@ -6486,6 +6506,8 @@ export function EmptyConversation({
     const onPaste = (e: ClipboardEvent) => {
       if (e.defaultPrevented) return
       if (e.target instanceof Element && e.target.closest(".composer-box")) return
+      // 落在坞里那段对话上的归它（侧边对话，2026-09-24）
+      if (e.target instanceof Element && e.target.closest(".side-chat")) return
       const files = [...(e.clipboardData?.files ?? [])]
       if (files.length === 0) {
         if (空uri收(e.clipboardData)) {

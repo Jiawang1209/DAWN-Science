@@ -291,6 +291,12 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
       // 已经不是坞里那段了（例如后端答了 `sideGone`、界面刚把它拿下）：那是一次作废的请求，不出声——
       // 拿下那边已经说过一句了，这里再报一条「没有这个会话」只是噪音
       if (sessionId !== $侧边会话id.get()) return
+      /**
+       * **「没有这段会话」不在这里报**（Task 5 审查抓的）：那是 `sideGone` 的形状——界面记住的那段已经没了，
+       * 配对那一发（`setSideSession`）会回 `sideGone`，由它拿下并说一句。这里再报就是同一件事说两遍。
+       */
+      if (e instanceof WorkbenchClientError && e.code === "not_found") return
+      if (e instanceof Error && /未在本进程|不存在|没有这个会话/.test(e.message)) return
       fail(e)
     })
 }

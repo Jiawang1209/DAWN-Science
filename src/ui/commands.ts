@@ -97,6 +97,10 @@ export interface Actions {
   /** 掀开／收起底部终端。**与 composer 上那颗是同一个动作** */
   toggleDock(): void
   setTheme(choice: ThemeChoice): void
+  /** 在坞里另开一段对话（侧边对话，2026-09-24）。**与坞格里那颗「另开一段」是同一个动作**，并把坞打开到那一格 */
+  newSideChat(): void
+  /** 开坞并切到「对话」那一格。永远是开，不是切换 */
+  openSideChat(): void
 }
 
 export interface CommandContext {
@@ -108,6 +112,8 @@ export interface CommandContext {
   view: View
   /** 底部终端开着没有。**决定那条命令说「打开」还是「收起」** */
   dockOpen?: boolean
+  /** 坞里为什么没处另开（没有「地方」）。缺省 = 能开 */
+  sideNewUnavailable?: string | undefined
 }
 
 const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
@@ -196,6 +202,26 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "delete remove 删除 移除",
     run: () => actions.deleteSession(),
     ...(ctx.session ? {} : { unavailable: t("还没有选中会话") }),
+  })
+
+  /**
+   * 坞里的对话（侧边对话，2026-09-24）。坞的「对话」页签是常驻入口，这两条是它在面板里的另一条路——
+   * 右键「放进坞里」是看不见的，不能是唯一的入口。**不可用照样列出来**，写明为什么（没有「地方」）。
+   */
+  out.push({
+    id: "side.new",
+    title: t("在坞里另开一段对话"),
+    group: "会话",
+    keywords: "side dock chat 侧边 坞 对话 并行",
+    run: () => actions.newSideChat(),
+    ...(ctx.sideNewUnavailable ? { unavailable: ctx.sideNewUnavailable } : {}),
+  })
+  out.push({
+    id: "side.open",
+    title: t("打开坞里的对话"),
+    group: "会话",
+    keywords: "side dock chat 侧边 坞 对话",
+    run: () => actions.openSideChat(),
   })
 
   // ── 项目 ─────────────────────────────────────────────────────────

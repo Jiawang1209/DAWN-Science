@@ -40,6 +40,8 @@ function actions(): Actions {
   deleteSession: vi.fn(),
     toggleDock: vi.fn(),
     setTheme: vi.fn(),
+    newSideChat: vi.fn(),
+    openSideChat: vi.fn(),
   }
 }
 

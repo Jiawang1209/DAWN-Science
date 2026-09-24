@@ -5193,6 +5193,14 @@ pre {
  */
 .right-dock .dock-tabs-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; }
+/**
+ * 第八格「对话」进来之后（2026-09-24）八个名字在默认宽度 380 下放不下，末一格压到了关闭那颗上。
+ * 两件事：左右内边距收一点（默认宽度下八格正好放得下）；再窄（最窄 280）时这一条**自己横着滚**，
+ * 关闭那颗不许被挤走——它是收起坞的出路。
+ */
+.right-dock .dock-tabs-row { flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+.right-dock .dock-tabs-row::-webkit-scrollbar { display: none; }
+.right-dock .dock-tab-btn { flex: 0 0 auto; padding-left: 5px; padding-right: 5px; }
 .right-dock .dock-tab-btn:hover { color: var(--dawn-text-1); }
 /** 产物格的计数角标 `产物 (N)`（spec 2026-08-26-产物 §5）：只在有产物时画，可访问名不受它影响 */
 .right-dock .dock-tab-badge { margin-left: 4px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
@@ -7134,3 +7142,61 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
  * 它留在这儿只做一件事——给 e2e 一个「此刻是带字那一种」的判据。
  */
 .stick-pill-say { white-space: nowrap; }
+
+/* ── 坞里的对话（侧边对话，2026-09-24，spec `2026-09-24-侧边对话-design.md` §2）──
+   外形照抄坞的 `.dock-head`：一条发丝线、同一套令牌，不新造颜色。
+   挂着一段时整格让给对话：坞体的内边距与滚动归还给 `ConversationView` 自己（它自己贴底滚）。 */
+.right-dock .dock-body:has(> .side-chat:not(.side-chat-empty)) {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.side-chat { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
+.side-chat-head {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  white-space: nowrap;
+}
+.side-chat-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--dawn-ui-size);
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-1);
+}
+.side-chat-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); flex: 0 0 auto; }
+.side-chat[data-running="1"] > .side-chat-head .side-chat-dot,
+.side-chat-pick[data-running="1"] .side-chat-dot { background: var(--dawn-live); }
+/* 头上两颗**常驻**（悬停才出现的东西必须另有入口，而这两件事别处没有入口） */
+.side-chat-swap, .side-chat-out { flex: 0 0 auto; color: var(--dawn-text-3); }
+.side-chat-swap:hover, .side-chat-out:hover { color: var(--dawn-text-1); }
+.side-chat-caveat { margin: 0; padding: var(--dawn-space-1) var(--dawn-space-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+/* 坞窄（最窄 280）：主区那几档 32px 的左右留白在这里吃掉太多行宽，收成 12 */
+.side-chat .conversation { flex: 1; min-height: 0; }
+.side-chat .conv-head,
+.side-chat .turns,
+.side-chat .composer { padding-left: var(--dawn-space-3); padding-right: var(--dawn-space-3); }
+/* 空态：标题、「另开一段」、同处清单，一列摞下来 */
+.side-chat-empty { gap: var(--dawn-space-3); }
+.side-chat-heading { margin: 0; font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); }
+.side-chat-note { margin: 0; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+.side-chat-new { align-self: flex-start; }
+.side-chat-list { display: flex; flex-direction: column; gap: 2px; }
+.side-chat-pick { width: 100%; justify-content: flex-start; gap: var(--dawn-space-2); }
+.side-chat-pick-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 会话页签上的「坞」标记：它此刻在坞里，不在主区（同一段只在一处） */
+.session-tab-dock {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  border: var(--dawn-hairline) solid var(--dawn-stroke-2);
+  border-radius: var(--dawn-radius-sm);
+  font-size: var(--dawn-fs-label);
+  line-height: 1.5;
+  color: var(--dawn-text-3);
+}

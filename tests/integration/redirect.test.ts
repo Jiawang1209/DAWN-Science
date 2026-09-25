@@ -90,6 +90,13 @@ describe("调整方向 · 真 pi", () => {
       // 新一轮完了，排着的那句才送到——在那句之后；模型也是先收到那句、再收到这句
       await vi.waitFor(() => expect(送到()).toContain("q-rest"), { timeout: 30_000 })
       expect(送到().indexOf("q-now")).toBeLessThan(送到().indexOf("q-rest"))
+      /**
+       * q-rest 是**从 pi 的 followUp 单子上**送到的（`newTurn: false`），不是挂在 #5 那条缝里、等收尾再各开一轮（审查 09-25 I-1）：
+       * 调整方向等 pi 真起跑（`preflightResult`）才把其余交出去。
+       */
+      expect(事件.find((e) => e.kind === "queue_delivered" && e.id === "q-rest")).toMatchObject({ newTurn: false })
+      // 中止时 pi 那一声「模型调用失败：This operation was aborted」不出声（审查 09-25 M-1）
+      expect(事件.filter((e) => e.kind === "notice" && e.text.includes("模型调用失败"))).toEqual([])
       await vi.waitFor(() => expect(最后一句们()).toContain("顺便画个图"), { timeout: 20_000 })
       expect(最后一句们().indexOf("改成只打偶数")).toBeLessThan(最后一句们().indexOf("顺便画个图"))
     } finally {

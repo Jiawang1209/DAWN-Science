@@ -306,8 +306,19 @@ interface NativeSession {
   /**
    * 正在中止（停止 / 调整方向，2026-09-25）。这期间结束的工具一律标 `interrupted`——
    * bash 与 `run_code` 同一个判据，不靠认结果文字（pi 的 bash 回 `Command aborted`，`run_code` 回「已中断」，各说各的）。
+   * 这期间 pi 报的「模型调用失败：This operation was aborted」也不出声（那是中止本身，不是失败）。
+   *
+   * **是计数不是开关**（审查 09-25 I-2）：调整方向停着的时候又按了停止，两边各进各出——
+   * 开关的话停止先做完、它的 `finally` 会把调整方向那一段一并放下，此后结束的工具就漏标了。
    */
-  中止中: boolean
+  中止中: number
+  /**
+   * 按过几次「停止」（`abort()` 每次加一；2026-09-25 审查 I-2）。调整方向在按下时记一个数，
+   * 停下那一步、等新一轮起跑之后各对一次：变了就是人在这期间按了停止——**停止赢**，不再起新一轮、不再重排。
+   */
+  停止代: number
+  /** 调整方向正在重排其余几条：这期间不逐条发 `queue`，排完发一次整份（审查 09-25 M-4：不先发半份） */
+  重排中: boolean
   /** 调整方向一个接一个做（2026-09-25）：两次挨得太近时，后一次等前一次停稳再动 */
   调整链: Promise<void> | undefined
 }
@@ -318,14 +329,19 @@ interface NativeSession {
  * - `id` **可缺**：飞书 / 微信 / 定时这些不经界面的写没有待发单上的身份，但它们照样进了 pi 的单子——
  *   **镜像不收它们，数数就对不上**（pi 送走一条不认识的，镜像会把一条认识的错当成送到了），
  *   撤回重送时 `clearQueue()` 也会把它们一并清掉、再也回不来。所以一律进镜像，只是不上待发条。
- * - `未进pi`：还没交给 pi 的——在等图片转述，或者撞上「我们以为在跑、pi 说没在跑」的缝、在等这一轮收尾。
- *   对账时跳过它们（pi 的单子里没有），撤回重送时不碰它们（它们自己会去）。
+ * - `在`：这条此刻在哪儿。
+ *   - `"pi"`：交给了 pi，在它的 followUp 单子上；
+ *   - `"缝"`：撞上「我们以为在跑、pi 说没在跑」的缝（`送一轮` 的 #5 分支），挂在这一轮的 `pending` 上、等收尾按新一轮送；
+ *   - `"转述"`：在等视觉模型转述图片，转述完才交给 pi。
+ *   后两种 pi 的单子里没有：对账时跳过，撤单（`clearQueue()`）拿不回它们。
+ *   **两种要分开**（审查 09-25 I-1）：转述中的那条文字还没定（要并进转述），不能拿去起新一轮；
+ *   缝里的那条文字是定的，调整方向可以把它摘下来（它挂着的回调摘不到就不送了）当这句、或算进其余。
  */
 interface 待发条目 {
   id: string | undefined
   文: string
   图: readonly ImageAttachment[] | undefined
-  未进pi: boolean
+  在: "pi" | "缝" | "转述"
 }
 
 /** pi 的会话事件（结构化程度足够，但类型不从包里导出，故在此收窄） */
@@ -1430,7 +1446,9 @@ export class NativeRuntime implements AgentRuntime {
       待发: [],
       pi待发: 0,
       清队中: false,
-      中止中: false,
+      中止中: 0,
+      停止代: 0,
+      重排中: false,
       调整链: undefined,
     })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
@@ -1624,7 +1642,12 @@ export class NativeRuntime implements AgentRuntime {
      * 走 `notice` 而不是 `output`：**它不是模型说的话**，
      * 混进回复里会让人以为模型在讲这段错误。
      */
-    if (e.type === "message_end" && e.message?.stopReason === "error") {
+    /**
+     * **中止时那一声不算**（审查 09-25 M-1）：bash 被停下之后 pi 的循环还会拿着已中止的信号再调一次模型，
+     * pi-ai 的 `lazyStream` 在建流时就失败、写死 `stopReason: "error"`——于是每按一次停止 / 调整方向，
+     * 转录里就多一条「模型调用失败：This operation was aborted」。人是故意停的，那不是失败。
+     */
+    if (e.type === "message_end" && e.message?.stopReason === "error" && !((this.sessions.get(sessionId)?.中止中 ?? 0) > 0)) {
       const 原因 = e.message.errorMessage?.trim()
       this.emit({
         kind: "notice",
@@ -1715,7 +1738,7 @@ export class NativeRuntime implements AgentRuntime {
           bytes: out.bytes,
           ...(out.fullOutputPath ? { fullOutputPath: out.fullOutputPath } : {}),
           // 停止 / 调整方向期间结束的：它是被停下的，不是自己做完或自己出错（2026-09-25）
-          ...(this.sessions.get(sessionId)?.中止中 ? { interrupted: true as const } : {}),
+          ...((this.sessions.get(sessionId)?.中止中 ?? 0) > 0 ? { interrupted: true as const } : {}),
         })
         return
       }
@@ -1787,7 +1810,6 @@ export class NativeRuntime implements AgentRuntime {
      * （会话中途换过服务之后，配置里那个值已经不算数了）。
      */
     const s = this.sessions.get(sessionId)
-    const model = s?.session.model
     /**
      * **不因为「模型可能不收图」就拦住这一轮**（2026-08-13 撤掉那道防线，
      * 作者定的）。
@@ -1800,43 +1822,24 @@ export class NativeRuntime implements AgentRuntime {
      *
      * **判断能不能看图是模型的事**（作者早先就说过这句）。我们要做的只是
      * **如实说出发生了什么**：pi-ai 在 `model.input` 不含 `image` 时会把图丢掉，
-     * 那就在对话里留一句话，然后**照常把这一轮发出去**。
-     */
-    const 明确不收 = Array.isArray(model?.input) && !model.input.includes("image")
-    if (!明确不收) {
-      this.送一轮(sessionId, data, images, behavior, queueId)
-      return
-    }
-
-    /**
-     * **视觉服务的缝一：贴图转述**（2026-08-20，做法 A；设计定案见
-     * `specs/2026-08-20-视觉服务-design.md`）。
-     *
-     * 视觉可用 → 先把图交给视觉端点要一份描述，把描述并进这一轮文字发出去；
-     * 没配 → 上面那句原话照说；**调用失败 → 说清原因，这一轮照发**
-     * （作者 2026-08-13 定过：对话是要有的）。
+     * 那就在对话里留一句话，然后**照常把这一轮发出去**。（判定与那句话在 `转述端点`。）
      *
      * 这个方法是同步签名（`void`），转述是异步的——所以走「先收下、后送出」：
      * pi 的 `prompt()` 本来就允许晚一拍。失败经 notice 出声，不静默吞。
      */
-    const 端点 = this.opts.vision?.()
+    const 端点 = this.转述端点(sessionId, images)
     if (!端点) {
-      this.emit({
-        kind: "notice",
-        sessionId,
-        text: `模型 ${model.id} 的目录里没有声明支持图片，这 ${images.length} 张可能不会被它看到。`,
-      })
       this.送一轮(sessionId, data, images, behavior, queueId)
       return
     }
     /**
      * **转述要几秒，这几秒里这句话不能凭空消失**（审查 09-24 #3）。
-     * 忙着：先进镜像、上待发条（标着「未进 pi」），转述完还在单上才交给 pi——被撤回或被停止拿走了就不发。
+     * 忙着：先进镜像、上待发条（标着「转述」），转述完还在单上才交给 pi——被撤回或被停止拿走了就不发。
      * 不忙：人那句话现在就进转录（送到了、开新一轮），转述完再开跑。
      */
     const s忙 = (s?.inFlight ?? 0) > 0
     const 条: 待发条目 | undefined = s && s忙
-      ? { id: queueId, 文: data, 图: images, 未进pi: true }
+      ? { id: queueId, 文: data, 图: images, 在: "转述" }
       : undefined
     if (条) {
       s!.待发.push(条)
@@ -1845,33 +1848,84 @@ export class NativeRuntime implements AgentRuntime {
       this.emit({ kind: "queue_delivered", sessionId, id: queueId, newTurn: true })
     }
     const 发 = (文: string) => {
-      if (!条) return this.送一轮(sessionId, 文, images, behavior)
+      if (!条) return void this.送一轮(sessionId, 文, images, behavior)
       if (!this.摘条(s!, 条)) return
       if (条.id) this.发待发单(sessionId)
       this.送一轮(sessionId, 文, images, "followUp", 条.id)
     }
-    void 描述图片(端点, images)
-      .then((描述) => {
-        this.emit({
-          kind: "notice",
-          sessionId,
-          text: `模型 ${model.id} 收不了图，这 ${images.length} 张已由 ${端点.model} 转述给它。`,
-        })
-        const 并入 = `${data}
+    void this.转述(sessionId, 端点, data, images).then((文) => {
+      /**
+       * 转述期间会话被关了：`送一轮` 抛「未启动」。这是 `void` 的链——不接住就是未处理的 rejection、
+       * 这句也无声无息没了（审查 09-25 M-2）。忙着那条还在待发单上 → `queue_failed`；不忙那条已经报过「送到」→ 就地出声。
+       */
+      try {
+        发(文)
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (条?.id) this.emit({ kind: "queue_failed", sessionId, id: 条.id, message: msg })
+        else this.emit({ kind: "notice", sessionId, text: `这句没能送出去（${msg}）：${data}` })
+      }
+    })
+  }
+
+  /**
+   * 这几张图要不要先转述（从 `writeWithImages` 拆出来，调整方向也用，2026-09-25）。
+   * 模型收图 → 不用；模型明确不收、没配视觉 → 当场说一句（图照带，pi 会丢）、不用；明确不收、配了视觉 → 返回端点。
+   */
+  private 转述端点(sessionId: SessionId, images: readonly ImageAttachment[]): import("./vision.js").视觉端点 | undefined {
+    const model = this.sessions.get(sessionId)?.session.model
+    const 明确不收 = Array.isArray(model?.input) && !model.input.includes("image")
+    if (!明确不收) return undefined
+    /**
+     * **视觉服务的缝一：贴图转述**（2026-08-20，做法 A；设计定案见
+     * `specs/2026-08-20-视觉服务-design.md`）。
+     *
+     * 视觉可用 → 先把图交给视觉端点要一份描述，把描述并进这一轮文字发出去；
+     * 没配 → 上面那句原话照说；**调用失败 → 说清原因，这一轮照发**
+     * （作者 2026-08-13 定过：对话是要有的）。
+     */
+    const 端点 = this.opts.vision?.()
+    if (!端点) {
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: `模型 ${model.id} 的目录里没有声明支持图片，这 ${images.length} 张可能不会被它看到。`,
+      })
+    }
+    return 端点
+  }
+
+  /**
+   * 交给视觉端点要一份描述，并进文字返回。**永不 reject**：失败就出声、返回原文（这一轮照发）。
+   * 这个过程是异步的（几秒）——调用方要么「先收下、后送出」（`writeWithImages`），要么等它（调整方向）。
+   */
+  private async 转述(
+    sessionId: SessionId,
+    端点: import("./vision.js").视觉端点,
+    data: string,
+    images: readonly ImageAttachment[],
+  ): Promise<string> {
+    const 模型 = this.sessions.get(sessionId)?.session.model?.id ?? "当前模型"
+    try {
+      const 描述 = await 描述图片(端点, images)
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: `模型 ${模型} 收不了图，这 ${images.length} 张已由 ${端点.model} 转述给它。`,
+      })
+      // **图仍然带着**：转录里人要看得见原图；pi 那边不收就丢，无所谓
+      return `${data}
 
 [以下是随消息附上的 ${images.length} 张图片，由视觉模型 ${端点.model} 转述]
 ${描述}`
-        // **图仍然带着**：转录里人要看得见原图；pi 那边不收就丢，无所谓
-        发(并入)
+    } catch (e: unknown) {
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: `视觉转述失败（${e instanceof Error ? e.message : String(e)}），这一轮按原样发出，模型 ${模型} 可能看不到那 ${images.length} 张图。`,
       })
-      .catch((e: unknown) => {
-        this.emit({
-          kind: "notice",
-          sessionId,
-          text: `视觉转述失败（${e instanceof Error ? e.message : String(e)}），这一轮按原样发出，模型 ${model.id} 可能看不到那 ${images.length} 张图。`,
-        })
-        发(data)
-      })
+      return data
+    }
   }
 
   private 送一轮(
@@ -1881,7 +1935,7 @@ ${描述}`
     behavior?: 送法,
     /** 有它才进待发单（2026-09-23）：后端据此把这句话的转录推迟到真送到的那一刻 */
     queueId?: string,
-  ): void {
+  ): Promise<void> | undefined {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     const 图 =
@@ -1909,7 +1963,7 @@ ${描述}`
        * 那就先挂在镜像上（未进 pi），等这一轮收尾再按新一轮送。
        */
       if (!s.session.isStreaming) {
-        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 未进pi: true }
+        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 在: "缝" }
         s.待发.push(条)
         if (queueId) this.发待发单(sessionId)
         void (s.pending ?? Promise.resolve()).then(() => {
@@ -1934,7 +1988,7 @@ ${描述}`
        * 文字为空它就不摘——那条永远挂在它的单子上，此后每一次数数都差一。
        */
       const 文 = data.trim() || !图 ? data : "（见附图）"
-      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 未进pi: false }
+      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 在: "pi" }
       // **不带 id 的也进镜像**（飞书 / 微信 / 定时的写）：pi 的单子里有它，镜像里就得有它
       s.待发.push(条)
       if (queueId) this.发待发单(sessionId)
@@ -1959,14 +2013,25 @@ ${描述}`
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
     s.stuck.reset()
     s.inFlight += 1
+    /**
+     * **起跑**：pi 真立起 `isStreaming` 的那一刻（审查 09-25 I-1）。返回给调用方——调整方向要等它，
+     * 再把其余几条交给 pi：早一步交，它们会落进 #5 那条缝、这一整轮都挂在镜像上（调整不了、还会抢在下一句前面）。
+     *
+     * 坐在 pi 的 `PromptOptions.preflightResult`（`agent-session.d.ts`）：`prompt()` 过完输入处理、查 key、查压缩那几道 await，
+     * 调 `preflightResult(true)` 之后**同步**进 `_runAgentPrompt` 立起 `_isAgentRunActive`——所以我们的回调一拍之后看到的一定是「在跑」。
+     * 预检失败（`false`）或 `prompt()` 直接 reject 也算「起跑结束」（`.finally` 兜底），调用方不会一直等。
+     */
+    let 起跑了!: () => void
+    const 起跑 = new Promise<void>((r) => (起跑了 = r))
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
     const run = s.session
-      .prompt(data, 图 ? { images: 图 } : undefined)
+      .prompt(data, { ...(图 ? { images: 图 } : {}), preflightResult: () => 起跑了() })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
         this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
       })
       .finally(() => {
+        起跑了()
         s.inFlight -= 1
         /**
          * **这一轮到此为止——不管是好是坏**（2026-08-11 修）。
@@ -2005,6 +2070,7 @@ ${描述}`
     // 串起来而不是覆盖：连发两轮时，等待必须覆盖两轮，不能只等最后一轮
     s.pending = s.pending ? s.pending.then(() => run) : run
     void s.pending
+    return 起跑
   }
 
   /**
@@ -2400,17 +2466,19 @@ ${描述}`
      * 又开一段；而且 pi 中止之后不再续跑，排着的那几条就永远卡在它的队列里。
      * 界面的「停止」会先走 `clearQueue` 把原文要回去；走到这里还剩的（卡死守卫的自动中止）要出声。
      */
+    const s = this.sessions.get(sessionId)
+    // 记一笔「按过停止」：正在停下那一步的调整方向据此让路（见 `停止代`）。同步记——在任何 await 之前
+    if (s) s.停止代 += 1
     for (const id of this.clearQueue(sessionId)) {
       this.emit({ kind: "queue_failed", sessionId, id, message: "这一轮被中止了，这句还排着、没有送出去" })
     }
-    const s = this.sessions.get(sessionId)
     if (!s) return
     // 中止期间结束的工具标「已中断」（2026-09-25）；`run_code` 收到中止信号会给内核发中断
-    s.中止中 = true
+    s.中止中 += 1
     try {
       await s.session.abort()
     } finally {
-      s.中止中 = false
+      s.中止中 -= 1
     }
   }
 
@@ -2428,7 +2496,7 @@ ${描述}`
     let 变了 = false
     for (let k = 0; k < 少了; k++) {
       // pi 的单子里只有交给了它的那些：还在等转述 / 等收尾的不算
-      const i = s.待发.findIndex((x) => !x.未进pi)
+      const i = s.待发.findIndex((x) => x.在 === "pi")
       if (i < 0) break
       const [送走的] = s.待发.splice(i, 1)
       if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
@@ -2442,6 +2510,7 @@ ${描述}`
     const s = this.sessions.get(sessionId)
     if (!s) return
     // 镜像的先后就是 pi 送出的先后（只剩一张单子）
+    if (s.重排中) return // 调整方向重排完发一次整份
     const 有身份 = s.待发.filter((x): x is 待发条目 & { id: string } => x.id !== undefined)
     this.emit({ kind: "queue", sessionId, items: 有身份.map((x) => ({ id: x.id, behavior: "followUp" as const })) })
   }
@@ -2459,8 +2528,8 @@ ${描述}`
    * `清队中` 挡住这次变短被当成「送到」。
    */
   private 清空待发(s: NativeSession): 待发条目[] {
-    const 原来 = s.待发.filter((x) => !x.未进pi)
-    s.待发 = s.待发.filter((x) => x.未进pi)
+    const 原来 = s.待发.filter((x) => x.在 === "pi")
+    s.待发 = s.待发.filter((x) => x.在 !== "pi")
     s.清队中 = true
     try {
       s.session.clearQueue()
@@ -2483,7 +2552,7 @@ ${描述}`
     const 它 = s.待发.find((x) => x.id === id)
     if (!它) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
     // 还没交给 pi 的（等转述 / 等收尾）：就地摘，不碰 pi 的单子
-    if (它.未进pi) {
+    if (它.在 !== "pi") {
       this.摘条(s, 它)
       this.发待发单(sessionId)
       return
@@ -2513,7 +2582,9 @@ ${描述}`
   redirect(sessionId: SessionId, 那句: 调整的那句): Promise<string[]> {
     const s = this.sessions.get(sessionId)
     if (!s) return Promise.reject(new Error(`会话 "${sessionId}" 未启动`))
-    const 这次 = (s.调整链 ?? Promise.resolve()).then(() => this.真调整(sessionId, 那句))
+    // 按下这一刻的「停止」计数：排在前一次调整方向后面等的时候按了停止，也算停止赢
+    const 按下时 = s.停止代
+    const 这次 = (s.调整链 ?? Promise.resolve()).then(() => this.真调整(sessionId, 那句, 按下时))
     s.调整链 = 这次.then(
       () => undefined,
       () => undefined,
@@ -2521,49 +2592,54 @@ ${描述}`
     return 这次
   }
 
-  private async 真调整(sessionId: SessionId, 那句: 调整的那句): Promise<string[]> {
+  private async 真调整(sessionId: SessionId, 那句: 调整的那句, 按下时: number): Promise<string[]> {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     /** 单上那条（按 id）；Cmd/Ctrl+回车来的不在单上，带着原文 */
     const 单上的 = 那句.data === undefined ? s.待发.find((x) => x.id === 那句.queueId) : undefined
     if (那句.data === undefined) {
       if (!单上的) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
-      // 等转述 / 等收尾的那条还没交给 pi：它的文字可能还要并进转述，现在拿去起新一轮会丢掉转述
-      if (单上的.未进pi) throw new Error("这句还在准备（转述图片或等这一轮收尾），稍等再调整方向")
+      // 等转述的那条文字还没定（转述要并进来），现在拿去起新一轮会丢掉转述。**缝里那条可以**（审查 09-25 I-1）
+      if (单上的.在 === "转述") throw new Error("这句还在转述图片，稍等再调整方向")
     }
+    /**
+     * **停止赢**（审查 09-25 I-2）。人按了调整方向、没看见动静、又按了停止：停止的 `clearQueue` 只拿得回镜像里的，
+     * 这句和其余几条此刻在我们手里——不交回去，停止之后它们会自己冒出来、agent 又开始干活。所以交回 id（后端放回输入框，与普通停止一样）。
+     */
+    const 停了 = () => s.停止代 !== 按下时
+    if (停了()) return 单上的 ? [] : [那句.queueId]
     const 这句 = {
       id: 那句.queueId as string | undefined,
       文: 单上的 ? 单上的.文 : (那句.data ?? ""),
       图: 单上的 ? 单上的.图 : 那句.images,
     }
-    const 没排回: string[] = []
-    /**
-     * 送一句：失败（会话在这期间没了）记下 id 交回，不许丢。
-     * 新来的带图走 `writeWithImages`（模型不收图时要转述）；单上的已经转述过、原样走 `送一轮`。
-     */
-    const 送 = (x: { id: string | undefined; 文: string; 图: readonly ImageAttachment[] | undefined }, 新来的: boolean) => {
-      try {
-        if (新来的 && x.图?.length) this.writeWithImages(sessionId, x.文, x.图, "followUp", x.id)
-        else this.送一轮(sessionId, x.文, x.图, "followUp", x.id)
-      } catch (e) {
-        if (x.id) 没排回.push(x.id)
-        else this.emit({ kind: "notice", sessionId, text: `这句没能重新排上（${e instanceof Error ? e.message : String(e)}）：${x.文}` })
-      }
-    }
-    // ① 不忙：就是新的一句
+    // ① 不忙：就是新的一句（没有其余要排，带图的照普通一句走 `writeWithImages`）
     if (s.inFlight === 0) {
       if (单上的) {
         this.摘条(s, 单上的)
         this.发待发单(sessionId)
       }
-      送(这句, !单上的)
-      return 没排回
+      try {
+        if (!单上的 && 这句.图?.length) this.writeWithImages(sessionId, 这句.文, 这句.图, "followUp", 这句.id)
+        else this.送一轮(sessionId, 这句.文, 这句.图, "followUp", 这句.id)
+      } catch (e) {
+        if (这句.id) return [这句.id]
+        this.emit({ kind: "notice", sessionId, text: `这句没能发出去（${e instanceof Error ? e.message : String(e)}）：${这句.文}` })
+      }
+      return []
     }
+    /**
+     * 新来的带图、模型要转述（审查 09-25 M-2）：**现在就开始转述，与停下那一步同时进行**，到 ④ 等它回来再起新一轮。
+     * 不能交给 `writeWithImages` 的「先收下、后送出」——那样其余第一条会先起新一轮、这句反倒排在它后面，
+     * 转述期间会话关了它也只能在 `void` 的链上出声；在这里等，失败就能交回 id。`转述` 永不 reject。
+     */
+    const 端点 = !单上的 && 这句.图?.length ? this.转述端点(sessionId, 这句.图) : undefined
+    const 转述好 = 端点 && 这句.图 ? this.转述(sessionId, 端点, 这句.文, 这句.图) : undefined
     // ② 撤单。**先不发 `queue`**：界面上的待发条这时不该闪空，重排完再发一次整份
-    const 其余 = this.清空待发(s).filter((x) => x !== 单上的)
+    const 其余 = this.收回其余(s, 单上的)
     // ③ 停下这一步
     let 没停住: string | undefined
-    s.中止中 = true
+    s.中止中 += 1
     try {
       await s.session.abort()
       // 我们自己那一轮的收尾（inFlight 归零、idle 发出）挂在 `pending` 上：等它走完，④ 才是「新的一轮」
@@ -2571,16 +2647,67 @@ ${描述}`
     } catch (e) {
       没停住 = e instanceof Error ? e.message : String(e)
     } finally {
-      s.中止中 = false
+      s.中止中 -= 1
     }
+    if (转述好) 这句.文 = await 转述好
+    if (停了()) return this.交回(sessionId, [这句, ...其余])
     if (没停住 !== undefined) {
       this.emit({ kind: "notice", sessionId, text: `没能停下这一步（${没停住}），这句改为排队，排在最前` })
     }
-    // ④ 这句起新的一轮（没停住就排在最前）；其余按原先后排到它后面
-    送(这句, !单上的)
-    for (const x of 其余) 送(x, false)
+    // ④ 这句起新的一轮（没停住就排在最前）
+    let 起跑: Promise<void> | undefined
+    try {
+      起跑 = this.送一轮(sessionId, 这句.文, 这句.图, "followUp", 这句.id)
+    } catch {
+      // 会话在这期间没了：这句与其余全部交回，不许丢
+      return this.交回(sessionId, [这句, ...其余])
+    }
+    /**
+     * **等 pi 真起跑，再排其余**（审查 09-25 I-1(b)）。`prompt()` 开头有几道 await，这期间 pi 的 `isStreaming` 还是假的——
+     * 这时交出去的会落进 #5 那条缝：这一整轮挂在镜像上，pi 不数它们、调整不了它们；
+     * 下一次 Cmd/Ctrl+回车停下这一轮时，它们挂在旧 `pending` 上的回调还会**抢在那句前面**起新一轮。
+     * 等到起跑，它们就进了 pi 真正的 followUp 单子。上一次调整方向刚起的一轮还没起跑时（M-3），
+     * 这里也保证了：锁放开时那一轮已经在跑，下一次 `abort()` 停得住它。
+     */
+    if (起跑) await 起跑
+    // 等起跑的这一拍里按了停止：这句已经进了转录、被停下了；其余还在我们手里，交回
+    if (停了()) return this.交回(sessionId, 其余)
+    const 没排回: string[] = []
+    s.重排中 = true
+    try {
+      for (const x of 其余) {
+        try {
+          this.送一轮(sessionId, x.文, x.图, "followUp", x.id)
+        } catch (e) {
+          if (x.id) 没排回.push(x.id)
+          else this.emit({ kind: "notice", sessionId, text: `这句没能重新排上（${e instanceof Error ? e.message : String(e)}）：${x.文}` })
+        }
+      }
+    } finally {
+      s.重排中 = false
+    }
     this.发待发单(sessionId)
     return 没排回
+  }
+
+  /**
+   * 调整方向的 ②：拿回**文字已定**的全部待发——交给 pi 的（`clearQueue()`）与缝里挂着的（就地摘，它们挂着的回调摘不到就不送了），
+   * 按镜像里的原先后；去掉这句本身。等转述的留在镜像上，转述完它们自己会去（审查 09-25 I-1(a)）。
+   */
+  private 收回其余(s: NativeSession, 单上的: 待发条目 | undefined): 待发条目[] {
+    const 其余 = s.待发.filter((x) => x.在 !== "转述" && x !== 单上的)
+    for (const x of s.待发.filter((x) => x.在 === "缝")) this.摘条(s, x)
+    this.清空待发(s) // 交给 pi 的：从镜像与 pi 那份一并清掉（就是上面挑出来的那些）
+    if (单上的) this.摘条(s, 单上的) // 缝里的已摘过、pi 的已清过——转述的不会走到这里
+    return 其余
+  }
+
+  /** 交回：有身份的返回 id（后端放回输入框）；没身份的（飞书 / 微信 / 定时）后端没有存根，就地出声（与 `clearQueue` 同一口径） */
+  private 交回(sessionId: SessionId, 这些: { id: string | undefined; 文: string }[]): string[] {
+    for (const x of 这些) {
+      if (!x.id) this.emit({ kind: "notice", sessionId, text: `这句还排着、没有送出去：${x.文}` })
+    }
+    return 这些.flatMap((x) => (x.id ? [x.id] : []))
   }
 
   /**
@@ -2617,7 +2744,7 @@ ${描述}`
   clearQueue(sessionId: SessionId): string[] {
     const s = this.sessions.get(sessionId)
     if (!s || s.待发.length === 0) return []
-    const 未交 = s.待发.filter((x) => x.未进pi)
+    const 未交 = s.待发.filter((x) => x.在 !== "pi")
     const 原来 = this.清空待发(s)
     s.待发 = []
     const 全部 = [...原来, ...未交]

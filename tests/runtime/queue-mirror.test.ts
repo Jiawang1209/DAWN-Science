@@ -53,7 +53,8 @@ function 摆一段(opts: { inFlight?: number; 慢收?: Promise<void>; pi在跑?:
     待发: [],
     pi待发: 0,
     清队中: false,
-    中止中: false,
+    中止中: 0,
+    停止代: 0,
     调整链: undefined,
   })
   const 事件: AgentEvent[] = []
@@ -296,7 +297,7 @@ describe("调整方向（2026-09-25，spec §4.2）", () => {
    *   真 pi 要过几道 await 才立起来，那条缝归 #5 与集成测试；
    * - `abort()`：有一轮在跑就让它收尾（它的 `.finally` 会把我们的 `inFlight` 减回去）；没有（摆一段时手设的 inFlight）就直接放下。
    */
-  const 演停下 = (x: ReturnType<typeof 摆一段>) => {
+  const 演停下 = (x: ReturnType<typeof 摆一段>, o: { 晚一拍?: boolean } = {}) => {
     const 顺序: string[] = []
     let 收这一轮: (() => void) | undefined
     x.pi.abort = async () => {
@@ -314,9 +315,12 @@ describe("调整方向（2026-09-25，spec §4.2）", () => {
       return 原清()
     }
     const 原问 = x.pi.prompt.bind(x.pi)
-    x.pi.prompt = async (text, o) => {
-      if (o?.streamingBehavior) return 原问(text, o)
+    x.pi.prompt = async (text, po?: { streamingBehavior?: "followUp"; preflightResult?: (ok: boolean) => void }) => {
+      if (po?.streamingBehavior) return 原问(text, po)
       顺序.push(`prompt:${text}`)
+      // 真 pi：`prompt()` 开头先过几道 await（输入处理、查 key、查压缩），之后才 `preflightResult(true)`、立起 `isStreaming`
+      if (o.晚一拍) await 等一拍()
+      po?.preflightResult?.(true)
       x.pi.isStreaming = true
       return new Promise<void>((r) => (收这一轮 = r))
     }
@@ -363,12 +367,16 @@ describe("调整方向（2026-09-25，spec §4.2）", () => {
     expect(顺序).toEqual([])
   })
 
-  it("还在准备的那条（还没交给 pi）：说清楚，不动它", async () => {
-    const x = 摆一段({ pi在跑: false })
-    ;(x.内部.sessions.get("s1") as { pending: Promise<void> }).pending = new Promise<void>(() => {})
-    x.rt.write("s1" as never, "撞在缝里", "followUp", "a")
-    await expect(x.rt.redirect("s1" as never, { queueId: "a" })).rejects.toThrow(/还在准备/)
-    expect(x.待发单()).toEqual(["a:followUp"])
+  it("还在转述图片的那条：说清楚，不动它", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})))
+    try {
+      const x = 摆一段({ 要转述: true })
+      x.rt.writeWithImages("s1" as never, "看这张", [{ data: "aGk=", mimeType: "image/png" }], "followUp", "v")
+      await expect(x.rt.redirect("s1" as never, { queueId: "v" })).rejects.toThrow(/还在转述图片/)
+      expect(x.待发单()).toEqual(["v:followUp"])
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it("停不下来：这句改排在最前、其余在后，出声；一句都不丢", async () => {
@@ -416,3 +424,249 @@ describe("调整方向（2026-09-25，spec §4.2）", () => {
     expect(顺序).toEqual(["clearQueue", "abort", "prompt:第一次", "clearQueue", "abort", "prompt:第二次"])
   })
 })
+
+describe("调整方向 · 审查 09-25 补的", () => {
+  /** 与上面的 `演停下` 同一个假 pi，外加：`abort()` 也让缝里那条挂着的 `pending` 收尾 */
+  const 演 = (x: ReturnType<typeof 摆一段>, o: { 晚一拍?: boolean } = {}) => {
+    const 顺序: string[] = []
+    let 收这一轮: (() => void) | undefined
+    let 收旧的: (() => void) | undefined
+    ;(x.内部.sessions.get("s1") as { pending: Promise<void> }).pending = new Promise<void>((r) => (收旧的 = r))
+    x.pi.abort = async () => {
+      顺序.push("abort")
+      x.pi.isStreaming = false
+      if (收这一轮) {
+        const r = 收这一轮
+        收这一轮 = undefined
+        r()
+      } else {
+        x.放下()
+        收旧的?.()
+      }
+    }
+    const 原清 = x.pi.clearQueue.bind(x.pi)
+    x.pi.clearQueue = () => {
+      顺序.push("clearQueue")
+      return 原清()
+    }
+    const 原问 = x.pi.prompt.bind(x.pi)
+    x.pi.prompt = async (text, po?: { streamingBehavior?: "followUp"; preflightResult?: (ok: boolean) => void }) => {
+      if (po?.streamingBehavior) {
+        顺序.push(`排:${text}`)
+        return 原问(text, po)
+      }
+      顺序.push(`prompt:${text}`)
+      if (o.晚一拍) await 等一拍()
+      po?.preflightResult?.(true)
+      x.pi.isStreaming = true
+      return new Promise<void>((r) => (收这一轮 = r))
+    }
+    return 顺序
+  }
+
+  it("I-1(b) 真 pi 晚一拍才立起 isStreaming：其余等它立起来再排，进的是 pi 的单子、不挂在缝里", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x, { 晚一拍: true })
+    x.rt.write("s1" as never, "画个图", "followUp", "b")
+    await 等一拍()
+    expect(await x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })).toEqual([])
+    await 等一拍()
+    expect(顺序).toEqual(["排:画个图", "clearQueue", "abort", "prompt:换个做法", "排:画个图"])
+    expect(x.单.followUp).toEqual(["画个图"])
+    expect(x.待发单()).toEqual(["b:followUp"])
+  })
+
+  it("I-1 调整完、新一轮在跑：对重排的那条再调整方向——可以", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x, { 晚一拍: true })
+    x.rt.write("s1" as never, "画个图", "followUp", "b")
+    await 等一拍()
+    await x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    await 等一拍()
+    expect(await x.rt.redirect("s1" as never, { queueId: "b" })).toEqual([])
+    expect(顺序.slice(-3)).toEqual(["clearQueue", "abort", "prompt:画个图"])
+    expect(x.送到()).toEqual(["n+新轮", "b+新轮"])
+  })
+
+  it("I-1 连着两次 Cmd/Ctrl+回车（真 pi 晚一拍）：第二句起新一轮，其余那条仍在它之后", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x, { 晚一拍: true })
+    x.rt.write("s1" as never, "画个图", "followUp", "b")
+    await 等一拍()
+    const 一 = x.rt.redirect("s1" as never, { queueId: "n1", data: "第一次" })
+    const 二 = x.rt.redirect("s1" as never, { queueId: "n2", data: "第二次" })
+    expect(await Promise.all([一, 二])).toEqual([[], []])
+    await 等一拍()
+    expect(顺序.filter((t) => t.startsWith("prompt:"))).toEqual(["prompt:第一次", "prompt:第二次"])
+    expect(x.单.followUp).toEqual(["画个图"])
+    expect(x.待发单()).toEqual(["b:followUp"])
+    expect(x.送到()).toEqual(["n1+新轮", "n2+新轮"])
+  })
+
+  it("I-1(a) 缝里那条（我们以为在跑、pi 还没立起来）：可以调整方向，按那条起新一轮", async () => {
+    const x = 摆一段({ pi在跑: false })
+    const 顺序 = 演(x)
+    x.rt.write("s1" as never, "撞在缝里", "followUp", "a")
+    expect(await x.rt.redirect("s1" as never, { queueId: "a" })).toEqual([])
+    await 等一拍()
+    expect(顺序).toEqual(["clearQueue", "abort", "prompt:撞在缝里"])
+    expect(x.送到()).toEqual(["a+新轮"]) // 只送一次：旧那一轮收尾时挂着的回调摘不到它了
+  })
+
+  it("I-1(a) 缝里的几条算进其余：与交给 pi 的按原先后一起排到这句后面", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x)
+    x.rt.write("s1" as never, "一", "followUp", "a")
+    await 等一拍()
+    x.pi.isStreaming = false // pi 先放下了、我们的收尾还没到：这条落在缝里
+    x.rt.write("s1" as never, "缝", "followUp", "g")
+    expect(await x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })).toEqual([])
+    await 等一拍()
+    expect(顺序.filter((t) => t.startsWith("prompt:"))).toEqual(["prompt:换个做法"])
+    expect(x.单.followUp).toEqual(["一", "缝"])
+    expect(x.待发单()).toEqual(["a:followUp", "g:followUp"])
+  })
+
+  it("M-4 重排只发一次整份待发单，不先发半份", async () => {
+    const x = 摆一段()
+    演(x, { 晚一拍: true })
+    x.rt.write("s1" as never, "一", "followUp", "b")
+    x.rt.write("s1" as never, "二", "followUp", "c")
+    await 等一拍()
+    const 起 = x.事件.length
+    await x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    await 等一拍()
+    const 单们 = x.事件.slice(起).flatMap((e) => (e.kind === "queue" ? [e.items.map((i) => i.id)] : []))
+    expect(单们).toEqual([["b", "c"]])
+  })
+
+  it("I-2 停下那一步期间按了停止：停止赢——不起新一轮、不重排，全部 id 交回（放回输入框）", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x)
+    const 原停 = x.pi.abort
+    let 放行!: () => void
+    const 慢 = new Promise<void>((r) => (放行 = r))
+    x.pi.abort = async () => {
+      await 慢
+      await 原停()
+    }
+    x.rt.write("s1" as never, "画个图", "followUp", "b")
+    await 等一拍()
+    const 调 = x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    await 等一拍()
+    // 界面的「停止」：先撤单（此刻镜像是空的——其余在调整方向手里）、再中止
+    expect(x.rt.clearQueue("s1" as never)).toEqual([])
+    const 停 = x.rt.abort("s1" as never)
+    放行()
+    expect(await 调).toEqual(["n", "b"])
+    await 停
+    expect(顺序.some((t) => t.startsWith("prompt:"))).toBe(false)
+    expect(x.单.followUp).toEqual([])
+    expect(x.送到()).toEqual([])
+  })
+
+  it("I-2 中止中是计数：停止先完、调整方向还在等收尾——这期间结束的工具仍标已中断", async () => {
+    const x = 摆一段()
+    let 收旧的!: () => void
+    ;(x.内部.sessions.get("s1") as { pending: Promise<void> }).pending = new Promise<void>((r) => (收旧的 = r))
+    x.pi.abort = async () => {}
+    const 调 = x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    await 等一拍()
+    await x.rt.abort("s1" as never) // 它的 finally 不许把调整方向的「中止中」一并放下
+    x.内部.translate("s1", { type: "tool_execution_end", toolCallId: "t1", toolName: "bash", isError: true, result: { content: [{ type: "text", text: "Command aborted" }] } })
+    x.放下()
+    收旧的()
+    await 调
+    expect(x.事件.find((e) => e.kind === "tool_end")).toMatchObject({ toolCallId: "t1", interrupted: true })
+  })
+
+  it("M-1 中止时 pi 报的那次「模型调用失败：aborted」不出声——停止与调整方向都是", async () => {
+    const x = 摆一段()
+    const 报失败 = () =>
+      x.内部.translate("s1", { type: "message_end", message: { role: "assistant", stopReason: "error", errorMessage: "This operation was aborted" } })
+    x.pi.abort = async () => {
+      报失败()
+      x.放下()
+    }
+    await x.rt.abort("s1" as never)
+    ;(x.内部.sessions.get("s1") as { inFlight: number }).inFlight = 1
+    await x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    expect(x.说了().filter((t) => t.includes("模型调用失败"))).toEqual([])
+    // 不在中止时照旧出声
+    报失败()
+    expect(x.说了().filter((t) => t.includes("模型调用失败"))).toHaveLength(1)
+  })
+
+  it("M-2 Cmd/Ctrl+回车带图、模型要转述：等转述完这句起新一轮，其余在它之后", async () => {
+    let 回话!: (r: Response) => void
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => (回话 = r))))
+    try {
+      const x = 摆一段({ 要转述: true })
+      const 顺序 = 演(x, { 晚一拍: true })
+      x.rt.write("s1" as never, "画个图", "followUp", "b")
+      await 等一拍()
+      const 调 = x.rt.redirect("s1" as never, { queueId: "n", data: "看这张", images: [{ data: "aGk=", mimeType: "image/png" }] })
+      await vi.waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled())
+      await 等一拍()
+      expect(顺序.some((t) => t.startsWith("prompt:"))).toBe(false) // 转述没回来：谁都不许先起
+      回话(new Response(JSON.stringify({ choices: [{ message: { content: "一块红色方块" } }] })))
+      expect(await 调).toEqual([])
+      await 等一拍()
+      const 起的 = 顺序.filter((t) => t.startsWith("prompt:"))
+      expect(起的).toHaveLength(1)
+      expect(起的[0]).toContain("看这张")
+      expect(起的[0]).toContain("一块红色方块")
+      expect(x.送到()).toEqual(["n+新轮"])
+      expect(x.单.followUp).toEqual(["画个图"])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it("M-2 转述期间会话被关了：这句与其余的 id 交回，不留未处理的 rejection", async () => {
+    let 回话!: (r: Response) => void
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => (回话 = r))))
+    try {
+      const x = 摆一段({ 要转述: true })
+      演(x)
+      x.rt.write("s1" as never, "画个图", "followUp", "b")
+      await 等一拍()
+      const 调 = x.rt.redirect("s1" as never, { queueId: "n", data: "看这张", images: [{ data: "aGk=", mimeType: "image/png" }] })
+      await vi.waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled())
+      await 等一拍()
+      x.内部.sessions.delete("s1")
+      回话(new Response(JSON.stringify({ choices: [{ message: { content: "一块红色方块" } }] })))
+      expect(await 调).toEqual(["n", "b"])
+      expect(x.送到()).toEqual([])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it("M-2 普通带图一句（不忙）转述期间会话被关了：出声，不留未处理的 rejection", async () => {
+    let 回话!: (r: Response) => void
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => (回话 = r))))
+    try {
+      const x = 摆一段({ 要转述: true, inFlight: 0 })
+      x.rt.writeWithImages("s1" as never, "看这张", [{ data: "aGk=", mimeType: "image/png" }], "followUp", "v")
+      await vi.waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled())
+      x.内部.sessions.delete("s1")
+      回话(new Response(JSON.stringify({ choices: [{ message: { content: "一块红色方块" } }] })))
+      await vi.waitFor(() => expect(x.说了().join("")).toContain("没能送出去"))
+      expect(x.开过的轮).toEqual([])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it("一个接一个的锁：前一次抛了，后一次照样做", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x)
+    const 一 = x.rt.redirect("s1" as never, { queueId: "nope" })
+    const 二 = x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    await expect(一).rejects.toThrow(/不在待发单/)
+    expect(await 二).toEqual([])
+    expect(顺序).toContain("prompt:换个做法")
+  })
+})
+

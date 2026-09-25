@@ -82,6 +82,7 @@ import { ArchivedView, type 归档的会话 } from "./archived.js"
 import type { 会话额外动作 } from "./views.js"
 import { ScheduleView, type ScheduleActions } from "./schedule.js"
 import { setSlashItems, 退回输入框, type SlashItem, type 退回的图 } from "./state/view.js"
+import { 到坞里问 } from "./state/ask-in-dock.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
@@ -2088,28 +2089,29 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [另开中, 设另开中] = useState(false)
   const 另开中Ref = useRef(false)
   // **回新那段的 id**（2026-09-25）：「到坞里问」要把那句作为第一句发进去；没挂上就是 undefined。
-  const 另开到坞 = async (): Promise<string | undefined> => {
+  // `说`：开不成时那一句说给谁。缺省是全局提示；「到坞里问」自己收下它，并进它那一句里说（审查 m-2：只说一次）
+  const 另开到坞 = async (说: (m: string) => void = note): Promise<string | undefined> => {
     if (另开中Ref.current) return undefined
     const 地方 = $侧边地方.get()
     if (!地方) {
-      note(坞没处说 ?? t("这段对话不属于任何项目，坞里没法另开"))
+      说(坞没处说 ?? t("这段对话不属于任何项目，坞里没法另开"))
       return undefined
     }
     另开中Ref.current = true
     设另开中(true)
     try {
-      return await 另开到坞里(地方)
+      return await 另开到坞里(地方, 说)
     } finally {
       另开中Ref.current = false
       设另开中(false)
     }
   }
-  const 另开到坞里 = async (地方: string): Promise<string | undefined> => {
+  const 另开到坞里 = async (地方: string, 说: (m: string) => void): Promise<string | undefined> => {
     let id: string | undefined
     if (地方.startsWith("r:")) {
       const c = connections.find((x) => x.id === 地方.slice(2))
       if (!c) {
-        note(t("这台服务器已经不在连接列表里了，坞里没法另开"))
+        说(t("这台服务器已经不在连接列表里了，坞里没法另开"))
         return undefined
       }
       id = await startRemoteSession({ id: c.id, label: c.label }, { 不切过去: true })
@@ -2118,7 +2120,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     } else {
       const 项目 = projects.find((x) => x.projectId === 地方.slice(2))
       if (!项目 || 项目.temporary) {
-        note(t("这段对话不属于任何项目，坞里没法另开"))
+        说(t("这段对话不属于任何项目，坞里没法另开"))
         return undefined
       }
       id = await 新建任务({ workspace: 项目.workspace, 不切过去: true })
@@ -2128,7 +2130,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       挂进坞(地方, id)
       return id
     }
-    note(t("新的一段已在原来那一处建好；这边已换了地方，没挂进坞里"))
+    说(t("新的一段已在原来那一处建好；这边已换了地方，没挂进坞里"))
     return undefined
   }
   // 命令面板那条走 ref：`actions` 是记住的，而这个函数每次渲染都换
@@ -3842,29 +3844,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        */
       ...(槽 === 主槽 && s.kind === "native"
         ? {
-            onQueueToDock: async (id: string) => {
-              const r = await client.get<{ withdrawn?: 撤回的话[] }>("editQueue", {
-                sessionId: s.sessionId,
-                id,
-                action: "remove",
-              })
-              const 话 = r.withdrawn?.[0]
-              if (!话) return
-              try {
-                const 新 = await 另开到坞Ref.current()
-                if (!新) throw new Error(t("坞里没能另开一段"))
-                打开坞里的对话()
-                await client.get("acquireLease", { sessionId: 新, holder: "user" })
-                await 写进去(新, 话.text, 话.images)
-                // 新那段的标题由这第一句定、落在后端：重取一次，侧栏那一行才不停在「新会话」（与 onSend 同一个理由）
-                const pid = $activeProjectId.get()
-                if (pid) void loadSessions(client, pid)
-                void loadTempSessions(client)
-              } catch (e) {
-                退回输入框(s.sessionId, [话])
-                throw new Error(tf("这句没能到坞里问，已放回输入框：{0}", e instanceof Error ? e.message : String(e)))
-              }
-            },
+            // 顺序与失败规矩在 `到坞里问` 里（state/ask-in-dock.ts，有单测）。另开之后才失败的：新那段**留在坞里**（审查 n-1）
+            onQueueToDock: (id: string) =>
+              到坞里问({
+                取回: () =>
+                  client
+                    .get<{ withdrawn?: 撤回的话[] }>("editQueue", { sessionId: s.sessionId, id, action: "remove" })
+                    .then((r) => r.withdrawn?.[0]),
+                另开: async () => {
+                  let 因: string | undefined
+                  const 新 = await 另开到坞Ref.current((m) => (因 = m))
+                  if (!新) throw new Error(因 ?? t("坞里没能另开一段"))
+                  return 新
+                },
+                打开: 打开坞里的对话,
+                取写权: (新) => client.get("acquireLease", { sessionId: 新, holder: "user" }),
+                写: (新, text, images) => 写进去(新, text, images),
+                退回: (话) => 退回输入框(s.sessionId, [话]),
+                说: note,
+                发完: () => {
+                  // 新那段的标题由这第一句定、落在后端：重取一次，侧栏那一行才不停在「新会话」（与 onSend 同一个理由）
+                  const pid = $activeProjectId.get()
+                  if (pid) void loadSessions(client, pid)
+                  void loadTempSessions(client)
+                },
+              }),
           }
         : {}),
       onSend: (text, images, behavior) =>

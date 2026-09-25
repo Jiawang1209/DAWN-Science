@@ -3167,13 +3167,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 那句不在镜像里（运行时拿着它），`clearQueue` 交不回它；下面 `待发存根.delete` 一删，
        * 等运行时交回 id 时已经找不到原文——字就此没了。一并说出来。
        */
-      for (const 它 of 待发存根.get(sessionId)?.values() ?? []) 撤下.push(它.text)
-      if (撤下.length > 0) {
-        events.ingest(sessionId, {
-          kind: "notice",
-          sessionId,
-          text: `会话停了，这 ${撤下.length} 句还排着、没有送出去：${撤下.join(" / ")}`,
-        })
+      /**
+       * 这些**不一定没送出去**（Task 6 审查 m-5）：多半是调整方向那句（运行时还拿着），
+       * 但也可能是一句刚好送达、送达事件还没来得及删掉存根的。分开说，别一律说成「还排着」。
+       */
+      const 悬着 = [...(待发存根.get(sessionId)?.values() ?? [])].map((它) => 它.text)
+      const 几句: string[] = []
+      if (撤下.length > 0) 几句.push(`这 ${撤下.length} 句还排着、没有送出去：${撤下.join(" / ")}`)
+      if (悬着.length > 0) 几句.push(`这 ${悬着.length} 句正在送、不确定送到没有：${悬着.join(" / ")}`)
+      if (几句.length > 0) {
+        events.ingest(sessionId, { kind: "notice", sessionId, text: `会话停了，${几句.join("；")}` })
       }
       events.setQueued(sessionId, [])
       await sessions.stop(sessionId)

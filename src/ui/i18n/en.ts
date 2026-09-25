@@ -379,6 +379,7 @@ export const EN: Readonly<Record<string, string>> = {
   "到坞里问": "Ask in dock",
   "坞里没能另开一段": "Couldn't open a new chat in the dock",
   "这句没能到坞里问，已放回输入框：{0}": "Couldn't ask this in the dock — it's back in the input box: {0}",
+  "这句没能到坞里问，已放回输入框；坞里新开的那段还空着：{0}": "Couldn't ask this in the dock — it's back in the input box; the new chat in the dock is still empty: {0}",
   "回车排到这一轮后面 · Cmd/Ctrl+回车调整方向": "Enter queues it after this turn · Cmd/Ctrl+Enter redirects now",
   "回车排到这一轮后面": "Enter queues it after this turn",
   "已中断": "Interrupted",

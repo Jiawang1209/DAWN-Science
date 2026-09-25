@@ -61,6 +61,16 @@ test.describe("内核会话", () => {
     await expect(page.locator(".kout-error .kout-ename")).toContainText("ValueError", {
       timeout: 60_000,
     })
+    /**
+     * ②″ **报错默认收起、颜色码画成颜色**（2026-09-25，作者截图里满屏 `[0;31m`）。
+     * 真 IPython 的 traceback 一定带 ANSI——这是唯一拿真码验渲染的地方。
+     */
+    const 报错块 = page.locator(".kout-error").last()
+    await expect(报错块.locator(".kout-trace")).toHaveCount(0)
+    await 报错块.getByRole("button", { name: /展开 traceback/ }).click()
+    await expect(报错块.locator(".kout-trace")).toContainText("ValueError")
+    expect(await 报错块.locator(".kout-trace").innerText()).not.toMatch(/\[[0-9;]*m/)
+    await expect(报错块.locator(".kout-trace [class*='ansi-fg-']").first()).toBeVisible()
 
     /**
      * ②′ **输出到了，等待记号就该停**（2026-08-15 实测补的）。

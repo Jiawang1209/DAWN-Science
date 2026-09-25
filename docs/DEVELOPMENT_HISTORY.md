@@ -34,6 +34,13 @@
     设计契约加扫描：没有 `"steer"`、没有「插队」。
   - **e2e（`d67f78b`）**：新增 `e2e/redirect.spec.ts` 5 条（待发条调整方向、Cmd+回车、到坞里问、三颗按钮 opacity 1、真内核按停止 10 秒内回空闲）；
     `busy-gap.spec.ts` 删插队两条、改按钮名。真内核那条做过变异：拿掉 `signal` 监听 → 红，恢复 → 绿。
+  - **真机之后 ①：内核报错折叠 + ANSI 颜色**（作者：*「中断了之后，会出现报错，这个报错能否折叠起来」*；截图里满屏 `[0;31m`）。
+    根因：`outputs.ts` 说好「ANSI 留到渲染时处理」，渲染层从没处理，`traceback.join("\n")` 原样进 `<pre>`，ESC 不可见只剩残渣——**每一条内核报错都这样**，笔记本同一个组件。
+    新 `src/ui/ansi.ts`（纯解析，SGR 前景 / 背景 30–37·90–97·40–47·100–107·38/48;5;n·38/48;2;r;g;b·39/49·1/22·0；其余 CSI / OSC / 字符集切换一律吞掉）+ `ansi-text.tsx`；
+    颜色落成 `.ansi-fg-*` 类名指向令牌（红绿黄 = danger / success / warning，蓝青品红借 accent，黑白 = 默认前景，256 色 / 真彩按色相归类）——明暗、主题色都跟着走。
+    **不引库**：ansi-to-html 一类产出 HTML 串（要 `dangerouslySetInnerHTML`）或内联色值（绕过令牌）。stdout / stderr、工具行结果同样走它；「复制这段输出」复制的是去码后的文字。
+    报错块默认收起：整行是开关（三角 + `ename: evalue` + 右侧常驻「展开 traceback / 折叠 traceback」）；`KeyboardInterrupt` 或笔记本里被停下那格（`interrupted`）画成与「■ 已中断」同一套中性灰，
+    摘要「KeyboardInterrupt · 已中断」；真报错照旧红。测试：`tests/ui/ansi.test.ts` 14 条、`tests/ui/kernel-error.test.tsx` 10 条；`kernel-session.spec.ts` 用真 IPython 的 traceback 验收起 / 展开 / 无残渣 / 有颜色类。
 - **Impact**: 协议 8.0，旧界面与新后端握手即报不兼容（同仓同发，无外部客户端）。「停止」现在真的停内核。acp / cli / pty / 内核会话行为不变。
   已知接受的小口：调整方向停下那一步的几毫秒里恰好又撞进一句，它在待发条上显示在其余之前、实际在后面送（plan 风险 4）。
 - **Verification**: vitest 251 文件 / 3129 过、10 skipped；typecheck 0；e2e 512 passed / 1 skipped（`sidebar-collapse` 那条按取舍放弃的）+ 内核会话 6 passed，

@@ -40,6 +40,8 @@ import { 默认转录预算 } from "./transcript-budget.js"
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
 import { $跑着的会话, $未读, $artifacts, $cellCount, 是散的任务 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
+import { AnsiText } from "./ansi-text.js"
+import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
@@ -5886,9 +5888,15 @@ function CellNoteRow({ item }: { item: Extract<TranscriptItem, { type: "cell" }>
 export function KernelOutputRow({
   item,
   currentKernel,
+  interrupted,
 }: {
   item: Extract<TranscriptItem, { type: "kernelOutput" }>
   currentKernel?: string | undefined
+  /**
+   * 这条输出所在的那一格是被停下的（笔记本知道：`cell.interrupted`）。
+   * 对话里拿不到 cell，靠 `ename === "KeyboardInterrupt"` 认——那正是中断在 Python 里的样子。
+   */
+  interrupted?: boolean | undefined
 }) {
   const o = item.output
   /**
@@ -5936,7 +5944,10 @@ export function KernelOutputRow({
     return (
       <div className={`kout kout-${o.stream}${stale ? " kout-is-stale" : ""}`}>
         {mark}
-        <pre className="kout-text">{o.text}</pre>
+        {/* stdout / stderr 里也会有颜色码（tqdm、warnings、R 的 message）——同一个解析器 */}
+        <pre className="kout-text">
+          <AnsiText text={o.text} />
+        </pre>
         {/* **截断要说清省了多少**（规格 7.5），不是「已截断」三个字 */}
         {o.truncated ? (
           <p className="kout-note">
@@ -5949,17 +5960,7 @@ export function KernelOutputRow({
   }
 
   if (o.kind === "error") {
-    return (
-      <div className={`kout kout-error${stale ? " kout-is-stale" : ""}`}>
-        {mark}
-        <p className="kout-ename">
-          {o.ename}
-          {o.evalue ? `: ${o.evalue}` : ""}
-        </p>
-        {/* traceback 原样给出。**ANSI 转义留着**——去掉等于丢信息 */}
-        {o.traceback.length > 0 ? <pre className="kout-trace">{o.traceback.join("\n")}</pre> : null}
-      </div>
-    )
+    return <KernelErrorBlock o={o} stale={stale} mark={mark} interrupted={interrupted === true} />
   }
 
   // result / display：按 mime 画
@@ -5983,6 +5984,62 @@ export function KernelOutputRow({
       {/* 还有别的形态可选时说一声。**不摆出来人就不知道有** */}
       {o.alsoAvailable.length > 0 ? (
         <p className="kout-note">另有 {o.alsoAvailable.join(" / ")} 形态</p>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * 内核报错（2026-09-25，作者：「中断了之后，会出现报错，这个报错能否折叠起来」）。
+ *
+ * - **默认收起**：一行 `ename: evalue` 就够判断发生了什么；traceback 往往几十行，
+ *   摊开会把对话推走一整屏。点这一行（或键盘）展开。
+ * - **展开入口一直在**，带字（「展开 traceback」），不是悬停才出现的小三角。
+ * - **ANSI 颜色照着画**（`AnsiText`），不再把 `[0;31m` 当文字显示。
+ * - **中断不是失败**（对错固定红绿）：`KeyboardInterrupt` 或所在那格被停下的，
+ *   画成与「■ 已中断」同一套中性灰，摘要写「KeyboardInterrupt · 已中断」；
+ *   真报错照旧红。
+ */
+function KernelErrorBlock({
+  o,
+  stale,
+  mark,
+  interrupted,
+}: {
+  o: Extract<Extract<TranscriptItem, { type: "kernelOutput" }>["output"], { kind: "error" }>
+  stale: boolean
+  mark: React.ReactNode
+  interrupted: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ename = stripAnsi(o.ename)
+  const evalue = stripAnsi(o.evalue)
+  const 停下的 = interrupted || ename === "KeyboardInterrupt"
+  const 摘要 = 停下的 ? tf("{0} · 已中断", ename || "KeyboardInterrupt") : `${ename}${evalue ? `: ${evalue}` : ""}`
+  const 有细节 = o.traceback.length > 0
+  const 类 = `kout kout-error${停下的 ? " kout-interrupted" : ""}${open ? " open" : ""}${stale ? " kout-is-stale" : ""}`
+  return (
+    <div className={类} data-interrupted={停下的 ? "true" : undefined}>
+      {mark}
+      {有细节 ? (
+        <Button
+          variant="ghost"
+          size="inline"
+          className="kout-err-head"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <三角图标 className={`caret${open ? " open" : ""}`} />
+          <span className="kout-ename">{摘要}</span>
+          <span className="kout-err-toggle">{open ? t("折叠 traceback") : t("展开 traceback")}</span>
+        </Button>
+      ) : (
+        <p className="kout-ename">{摘要}</p>
+      )}
+      {open && 有细节 ? (
+        <pre className="kout-trace">
+          <AnsiText text={o.traceback.join("\n")} />
+        </pre>
       ) : null}
     </div>
   )
@@ -6225,8 +6282,11 @@ function ToolRow({
           {result ? (
             <>
               {/* 命令输出与报错是最常被复制走的东西——贴进搜索框或另一段对话 */}
-              <CopyButton text={item.result ?? result.text} label={t("复制这段输出")} />
-              <pre className="tool-result">{result.text}</pre>
+              {/* 工具结果里也会带颜色码（run_code 的 traceback、命令行输出）：画成颜色，复制时只要文字 */}
+              <CopyButton text={stripAnsi(item.result ?? result.text)} label={t("复制这段输出")} />
+              <pre className="tool-result">
+                <AnsiText text={result.text} />
+              </pre>
               {result.hidden > 0 ? (
                 <Button
                   variant="text"

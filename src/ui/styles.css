@@ -1974,6 +1974,37 @@ pre {
   background: color-mix(in srgb, var(--dawn-danger) 6%, transparent);
 }
 .kout-ename { margin: 0; color: var(--dawn-danger); font-weight: var(--dawn-weight-medium); }
+/* 报错默认收起（2026-09-25）：整行是开关，与工具行同一个形状（三角 + 摘要 + 右侧一句字） */
+.kout-err-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+}
+.kout-err-head .caret { flex: 0 0 auto; width: 0.8em; color: var(--dawn-text-3); }
+.kout-err-head .kout-ename {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kout-error.open .kout-err-head .kout-ename { white-space: normal; overflow-wrap: anywhere; }
+/* 展开入口**带字、常驻**：悬停才出现的东西等于不存在 */
+.kout-err-toggle {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-meta);
+  font-weight: normal;
+}
+/* 被停下的那一格（中断不是失败，对错固定红绿）：与「■ 已中断」同一套中性灰，不借报错的红 */
+.kout-error.kout-interrupted {
+  border-left-color: var(--dawn-stroke-3); /* 与 `.tool.interrupted` 那道默认灰线同一条 */
+  background: transparent;
+}
+.kout-interrupted .kout-ename { color: var(--dawn-text-3); font-weight: normal; }
 .kout-trace {
   margin: var(--dawn-space-1) 0 0;
   color: var(--dawn-text-2);
@@ -1981,6 +2012,22 @@ pre {
   font-size: var(--dawn-code-size);
   overflow-x: auto;
 }
+
+/* ── ANSI 颜色（2026-09-25）：traceback、stdout/stderr、工具结果里的终端颜色码 ──
+   只落到令牌上：明暗、主题色都跟着走。红绿就是对错那两个（它们本来就是终端里的红绿）；
+   蓝 / 青 / 品红没有对应令牌，统一借主题色——它们在 traceback 里是「这里值得看一眼」的标注，
+   不是语义。黑 / 白不出类名：交给默认前景（见 ansi.ts）。 */
+.ansi-fg-red { color: var(--dawn-danger); }
+.ansi-fg-green { color: var(--dawn-success); }
+.ansi-fg-yellow { color: var(--dawn-warning); }
+.ansi-fg-blue, .ansi-fg-magenta, .ansi-fg-cyan { color: var(--dawn-accent); }
+.ansi-fg-gray { color: var(--dawn-text-3); }
+.ansi-bg-red { background: color-mix(in srgb, var(--dawn-danger) 18%, transparent); }
+.ansi-bg-green { background: color-mix(in srgb, var(--dawn-success) 18%, transparent); }
+.ansi-bg-yellow { background: color-mix(in srgb, var(--dawn-warning) 22%, transparent); }
+.ansi-bg-blue, .ansi-bg-magenta, .ansi-bg-cyan { background: var(--dawn-accent-soft); }
+.ansi-bg-gray { background: var(--dawn-fill-3); }
+.ansi-bold { font-weight: var(--dawn-weight-semibold); }
 
 /* 图：**不撑破对话宽度**，也不放大到超过原始尺寸 */
 .kout-img {

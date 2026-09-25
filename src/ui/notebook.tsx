@@ -353,7 +353,7 @@ export function NotebookPanel({
                 <pre className="nb-code">{c.code}</pre>
               )}
               {c.outputs.map((o) => (
-                <KernelOutputRow key={o.id} item={o} />
+                <KernelOutputRow key={o.id} item={o} interrupted={c.interrupted === true} />
               ))}
               {c.interrupted ? <p className="nb-interrupted">{t("（已中断）")}</p> : null}
             </div>

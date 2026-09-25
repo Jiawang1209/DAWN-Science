@@ -8,6 +8,38 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-25 — 调整方向：只留一种排队；待发条「调整方向 / 到坞里问 / 取回」；停止真停内核（学自 Codex；分支 `redirect-queue`）
+
+- **Type**: feat + fix
+- **Motivation**: 09-23 的「插队」（`steer`）要等当前这一步跑完才送——agent 在跑 50 秒的脚本，插的那句就挂 50 秒，作者：*「现在的插队，感觉和排队似的」*。
+  想马上改做没有路；想旁边问一句要三步（知道坞、打开坞、另开一段）。另查出 bug：`run_code` 不收中止信号，按「停止」时 pi 的 `abort()` 等这一轮停下、
+  agent loop 等工具、工具等内核——**停止键要等那段代码自己跑完才停，内核里那段照跑**。
+- **What**（spec `specs/2026-09-25-调整方向-design.md`；plan `plans/2026-09-25-调整方向.md` Task 1–8；提交 `c9f599e`..HEAD，共 15 个）：
+  - **修 bug（`babc2db` `713d0ab`）**：`run_code` 的 `execute` 收 `signal` → 对那台内核发中断（与笔记本「中断」同一个 `对话内核.中断`，远端走同一条通道）；
+    排着还没轮到的段不再写进内核、被中止时内核回到空闲；中断 10 秒不见效先交还 pi、如实说「内核可能还在跑」。
+  - **协议 8.0（破坏性，`624dbd8`）**：`writeToSession.behavior` / `editQueue.action` 的 `steer` 换成 `redirect`；两个响应的 `withdrawn` 都是数组；
+    待发单只剩 `followUp`；`tool` 项加 `interrupted`。mock 同批加「慢慢跑」分支（准入规则 1；`dev:mock` 与 e2e 共用）。
+  - **native `redirect()`（`5df6125` `ef17f49` `8da5843`）**：撤单 → `abort()` 并等停稳 → 这句起新一轮 → 其余按原先后重排（id 不变）；一个接一个做；
+    停不下来改排最前并出声；重排不上的 id 交回。`abort()` 期间结束的工具标 `interrupted`。没人调的 `steer()` 删了。
+    真 pi 上补的三处竞态：①重排**等 pi 真起跑**（`PromptOptions.preflightResult`）再交——早交会落进「以为在跑、pi 说没在跑」的缝，
+    这一轮调整不了、还会抢在下一次调整方向那句前面；缝里的几条（文字已定）也算进「其余」，只有还在转述图片的那条拒；
+    ②**停止赢**：`停止代` 计数，调整方向停下那一步后、等起跑后各对一次，变了就不再起新一轮、id 全交回；pi 预处理期间的停止也停得住新一轮；
+    ③中止时那一声「模型调用失败：This operation was aborted」不再出声（`中止中` 计数）。
+  - **后端（`927e0d8` `45fb42c`）**：`writeToSession` / `editQueue` 的 `redirect` 接到运行时；交回的那几句放回输入框并在转录里说一句；
+    非 native 带 `redirect` → `invalid_request`；报错一致、措辞照实。
+  - **界面（`90a17d0` `866d0c4` `3839739` `4087c4f`）**：待发条每条三颗常驻按钮「调整方向 / 到坞里问 / 取回」（坞里那段没有「到坞里问」）；
+    Cmd/Ctrl+回车 = 直接调整方向（只 native，`canRedirect`；空框的 Cmd+回车不留陈旧的调整）；提示行「回车排到这一轮后面 · Cmd/Ctrl+回车调整方向」；
+    工具行与笔记本那格标「已中断」，中性色、工具组汇总不算失败；调整方向请求没回来之前整条待发条置灰（`queueLocked`）。
+    「到坞里问」抽成纯流程 `src/ui/state/ask-in-dock.ts`：取回 → 坞里另开一段 → 先取写权 → 作为第一句发出 → 打开坞；失败一律说一遍并放回主区输入框。
+    设计契约加扫描：没有 `"steer"`、没有「插队」。
+  - **e2e（`d67f78b`）**：新增 `e2e/redirect.spec.ts` 5 条（待发条调整方向、Cmd+回车、到坞里问、三颗按钮 opacity 1、真内核按停止 10 秒内回空闲）；
+    `busy-gap.spec.ts` 删插队两条、改按钮名。真内核那条做过变异：拿掉 `signal` 监听 → 红，恢复 → 绿。
+- **Impact**: 协议 8.0，旧界面与新后端握手即报不兼容（同仓同发，无外部客户端）。「停止」现在真的停内核。acp / cli / pty / 内核会话行为不变。
+  已知接受的小口：调整方向停下那一步的几毫秒里恰好又撞进一句，它在待发条上显示在其余之前、实际在后面送（plan 风险 4）。
+- **Verification**: vitest 251 文件 / 3129 过、10 skipped；typecheck 0；e2e 512 passed / 1 skipped（`sidebar-collapse` 那条按取舍放弃的）+ 内核会话 6 passed，
+  其中 `redirect.spec.ts` 5 条全过（真内核那条在本机跑了、未跳过）；真 pi 集成 `tests/integration/redirect.test.ts` 证 abort 在 < 10 s 内停下 `sleep 20`、
+  且其余几条进 pi 真正的 followUp 单子；视觉基线 14 张全过、未重存。真机：（作者走一遍后补）。
+
 ### 2026-09-24 — 侧边对话：坞里第八格挂第二段会话，同时跑，只读看主对话（学自 Codex；分支 `side-session`）
 
 - **Type**: feat

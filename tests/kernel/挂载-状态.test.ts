@@ -331,6 +331,34 @@ describe("对话内核 · 空代码 / 退出 / 换新（审查 2026-08-26）", (
     await pB
   })
 
+  it("排着的段还没轮到就被中止：前一段的 idle 被「还有排着的」压下了，轮到它拒掉时要把状态放回 idle", async () => {
+    const { runtime, 收到, 发 } = 假内核()
+    const k = 挂上(runtime)
+    const pA = k.执行(c1, "python", "A")
+    const ctrl = new AbortController()
+    const pB = k.执行(c1, "python", "B", { signal: ctrl.signal })
+    pB.catch(() => {})
+    await new Promise((r) => setTimeout(r, 0))
+    ctrl.abort()
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await pA
+    await expect(pB).rejects.toThrow(/没有跑/)
+    expect(收到).toEqual(["A"])
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "idle" }])
+  })
+
+  it("排在跑着的段后面的空代码：前一段的 idle 被压下了，空段收口时要把状态放回 idle", async () => {
+    const { runtime, 发 } = 假内核()
+    const k = 挂上(runtime)
+    const pA = k.执行(c1, "python", "A")
+    const pB = k.执行(c1, "python", "  ")
+    await new Promise((r) => setTimeout(r, 0))
+    发("c1::python", { kind: "kernel_output", sessionId: "c1::python", entry: { kind: "status", state: "idle", provenance } })
+    await pA
+    await pB
+    expect(k.状态列表(c1)).toEqual([{ language: "python", state: "idle" }])
+  })
+
   it("收() 报的 exited 带 收掉 标记——那不是内核自己退出", async () => {
     const { runtime } = 假内核()
     const 变化: unknown[] = []

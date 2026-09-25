@@ -513,7 +513,15 @@ export class 对话内核 {
     一.排队中++
     const 跑 = 一.队列.then(() => {
       一.排队中--
-      if (opts?.signal?.aborted) return Promise.reject(new Error("这一轮已经停了，这段没有跑"))
+      if (opts?.signal?.aborted) {
+        /**
+         * **不写进内核也得把状态收回来**（审查 2026-09-25）。前一段收尾的那条 `status: idle` 到常驻监听时，
+         * 这段还算在 `排队中` 里，被当成「两段之间的缝」压下了；而这段不写、就不会再有 idle 来——
+         * 不在这里放回 idle，笔记本就永远显示「运行中」。已经 exited / detached 的不动（只收 busy）。
+         */
+        if (一.排队中 === 0 && 一.状态 === "busy") this.置状态(一, "idle")
+        return Promise.reject(new Error("这一轮已经停了，这段没有跑"))
+      }
       return this.真执行(一, 语言, 代码, opts?.开始了)
     })
     一.队列 = 跑.catch(() => {})
@@ -530,7 +538,11 @@ export class 对话内核 {
     const 输出: unknown[] = []
     // 运行时对空代码静默不执行（`KernelRuntime.write` 直接 return），等 idle 等不到——
     // 不收口的话这台永远 busy，后面排的段全卡住。空的就当跑完了，什么都没有
-    if (代码.trim() === "") return Promise.resolve({ 内核会话: 一.内核会话, 语言, 输出 })
+    // 同一个缺口（审查 2026-09-25）：排在跑着的段后面时，前一段的 idle 已被「还有排着的」压下，这里不收回就一直 busy
+    if (代码.trim() === "") {
+      if (一.排队中 === 0 && 一.状态 === "busy") this.置状态(一, "idle")
+      return Promise.resolve({ 内核会话: 一.内核会话, 语言, 输出 })
+    }
 
     /**
      * **写之前先看这台还活着没有**（内核起来就死的兜底之一）。前一段已经把它拖成 exited，

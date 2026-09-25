@@ -142,6 +142,11 @@ const ToolItem = z
     startedAt: z.number().int().nonnegative().optional(),
     /** 结束时刻。有它才停表；**缺它不等于还在跑**，看 `status` */
     endedAt: z.number().int().nonnegative().optional(),
+    /**
+     * 这一步是被停下的（停止 / 调整方向，8.0）。**只在 true 时出现**。有它时 `status` 是 `error`，
+     * 界面标「已中断」而不是「失败」——它没做完，但不是它自己出了错。
+     */
+    interrupted: z.literal(true).optional(),
   })
   .strict()
 
@@ -315,14 +320,14 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 
 /**
- * 一条待发消息（2026-09-23）。`behavior` 是它此刻在 pi 哪张单子上：
- * `followUp` 排队（这一轮彻底完了才送）、`steer` 插队（当前工具跑完、下次调模型前送）。
+ * 一条待发消息（2026-09-23）。`behavior` 8.0 起只剩 `followUp`（这一轮做完才送）——插队删了，想马上改做走调整方向。
+ * 字段留着：界面与摘要按它写「排队中」，日后真有第二种时不必再改形状。
  */
 export const QueuedMessageSchema = z
   .object({
     id: z.string().min(1),
     text: z.string(),
-    behavior: z.enum(["steer", "followUp"]),
+    behavior: z.literal("followUp"),
     /** 附图的缩略图 `data:` URL，与转录里那份同形 */
     images: z.array(z.string()).optional(),
   })

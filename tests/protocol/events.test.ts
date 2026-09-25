@@ -12,6 +12,7 @@
 import { describe, expect, it } from "vitest"
 import {
   KernelStateSchema,
+  QueuedMessageSchema,
   SessionSnapshotSchema,
   SessionUpdateSchema,
   TranscriptItemSchema,
@@ -418,9 +419,12 @@ describe("协议版本 · 5.5", () => {
    * 7.36（2026-09-23）：待发单——`editQueue`、快照 / 更新 `queued`、`abortSession.withdrawn`。纯新增，minor。
    *
    * 7.37（2026-09-24）：侧边对话——`setSideSession`（坞里那段开关 `read_main_session`）。纯新增，minor。
+   *
+   * **8.0（2026-09-25，破坏性）**：调整方向——`writeToSession.behavior` / `editQueue.action` 的 `steer` 换成 `redirect`；
+   *   `editQueue.withdrawn` 改成数组、`writeToSession` 响应可带 `withdrawn`；待发单只剩 `followUp`；`tool` 项加 `interrupted`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("7.37")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.0")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
@@ -469,5 +473,17 @@ describe("kernelOutput · 哪台内核吐的", () => {
 
   it("**只认这两门** —— 不收一个编出来的语言名", () => {
     expect(TranscriptItemSchema.safeParse(一条({ language: "julia" })).success).toBe(false)
+  })
+})
+
+describe("8.0 · 事件一侧", () => {
+  it("tool 项可以带 interrupted: true；别的值不收", () => {
+    const 基 = { type: "tool", id: "t1", name: "bash", input: {}, status: "error" }
+    expect(TranscriptItemSchema.safeParse({ ...基, interrupted: true }).success).toBe(true)
+    expect(TranscriptItemSchema.safeParse({ ...基, interrupted: false }).success).toBe(false)
+  })
+  it("待发单只剩一种：followUp", () => {
+    expect(QueuedMessageSchema.safeParse({ id: "q", text: "x", behavior: "followUp" }).success).toBe(true)
+    expect(QueuedMessageSchema.safeParse({ id: "q", text: "x", behavior: "steer" }).success).toBe(false)
   })
 })

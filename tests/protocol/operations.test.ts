@@ -503,3 +503,28 @@ describe("fakeSshControl（测试专用，7.31）", () => {
     expect(op.response.safeParse({ count: 1 }).success).toBe(true)
   })
 })
+
+describe("8.0 · 调整方向（2026-09-25）", () => {
+  const 写 = (behavior: unknown) =>
+    OPERATIONS.writeToSession.request.safeParse({ sessionId: "s1", data: "hi", as: "user", behavior })
+  const 动 = (action: unknown) => OPERATIONS.editQueue.request.safeParse({ sessionId: "s1", id: "q1", action })
+
+  it("writeToSession.behavior：followUp / redirect；steer 不再收", () => {
+    expect(写("followUp").success).toBe(true)
+    expect(写("redirect").success).toBe(true)
+    expect(写("steer").success).toBe(false)
+  })
+
+  it("editQueue.action：remove / redirect；steer 不再收", () => {
+    expect(动("remove").success).toBe(true)
+    expect(动("redirect").success).toBe(true)
+    expect(动("steer").success).toBe(false)
+  })
+
+  it("两个响应都能带回一串 withdrawn（原文 + 原图）", () => {
+    const 话 = { text: "画个图", images: [{ from: "path", path: "/a.png" }] }
+    expect(OPERATIONS.editQueue.response.parse({ withdrawn: [话] })).toEqual({ withdrawn: [话] })
+    expect(OPERATIONS.writeToSession.response.parse({ withdrawn: [话] })).toEqual({ withdrawn: [话] })
+    expect(OPERATIONS.writeToSession.response.parse({})).toEqual({})
+  })
+})

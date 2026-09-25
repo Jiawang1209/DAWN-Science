@@ -533,8 +533,15 @@
  *
  * 7.37（2026-09-24）：侧边对话（spec `2026-09-24-侧边对话-design.md`）。新增操作 `setSideSession`——
  *   界面告诉后端坞里挂的是哪段、主区是哪段，后端据此给坞里那段开关只读工具 `read_main_session`。全是新增，故 minor。
+ *
+ * **8.0（2026-09-25，破坏性）**：调整方向（学自 Codex，spec `2026-09-25-调整方向-design.md`）。
+ *   `writeToSession.behavior`：`"steer" | "followUp"` → `"followUp" | "redirect"`；`editQueue.action`：`"remove" | "steer"` →
+ *   `"remove" | "redirect"`；`editQueue` 响应的 `withdrawn` 由一条改成数组、`writeToSession` 响应可带 `withdrawn`
+ *   （调整方向时重排不上的那几句交回界面）；待发单 `QueuedMessage.behavior` 只剩 `"followUp"`；
+ *   `tool` 项加可选 `interrupted: true`（停止 / 调整方向时被停下的那一步）。
+ *   **删掉 `steer` 是收窄请求取值**——与 7.0 撤 `setUsageBudget` 同一个理由：不留一个没人调的值躲版本。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "7.37"
+export const WORKBENCH_PROTOCOL_VERSION = "8.0"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

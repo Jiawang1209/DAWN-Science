@@ -1525,15 +1525,14 @@ export const OPERATIONS = {
       /** 必填：不能匿名写。写权可追责的唯一入口（规格 7.1） */
       as: HolderSchema,
       /**
-       * 上一轮**还在跑**时，这一条怎么进去（协议 5.6，2026-08-15）。
+       * 上一轮**还在跑**时，这一条怎么进去（协议 5.6，2026-08-15；8.0 改，2026-09-25）。
        *
-       * 两个词都是 pi 的（`AgentSession.prompt` 的 `streamingBehavior`）：
-       * - `steer` **插队**：当前轮跑完工具、下一次调模型之前送进去。
-       * - `followUp` **排队**：等这一轮再没有工具调用与插队消息了才送。
+       * - `followUp` **排队**：等这一轮做完才送（pi 的 `streamingBehavior: "followUp"`）。
+       * - `redirect` **调整方向**：不经待发单——停掉当前这一步（`run_code` 给内核发中断，bash 等 pi 自带工具走 pi 的中止），
+       *   这句作为一条用户发言起新的一轮，原先排着的照排到它后面（spec `2026-09-25-调整方向-design.md` §4.2）。
+       *   **只有 native 会话有**；别的会话带它 → `invalid_request`。
        *
-       * 我们**不自己造队列**——pi 原生就有这两条，重写一份是
-       * 「学会了，自己写一个」。取回与改插队（7.36）也是坐在 pi 上的：
-       * `clearQueue()` 之后按原样重送，见 `editQueue`。
+       * `steer`（插队：当前这一步做完就送）8.0 删了——作者用下来「插队感觉和排队似的」，想马上改做就用调整方向。
        *
        * **native 会话忙着时，这一句不在写的一刻进转录**（7.36）：它先进待发单（快照的 `queued`），
        * 真送到模型那一刻才作为一条用户发言出现——位置就是模型读到它的位置。
@@ -1542,7 +1541,7 @@ export const OPERATIONS = {
        * `followUp`**——排队不丢消息，而 pi 在流式中没有 behavior 会直接抛错，
        * 那时人打的那句话就没了。
        */
-      behavior: z.enum(["steer", "followUp"]).optional(),
+      behavior: z.enum(["followUp", "redirect"]).optional(),
       /**
        * 随这一轮一起送进模型的图片（协议 4.12；4.13 加了粘贴那一支）。
        *
@@ -1577,7 +1576,11 @@ export const OPERATIONS = {
         )
         .optional(),
     }),
-    response: Empty,
+    /**
+     * `withdrawn`（8.0）：`redirect` 时重排不上的那几句（原先后，原文 + 原图）——界面放回输入框，后端已在转录里说过一句。
+     * 缺省 = 没有。
+     */
+    response: z.object({ withdrawn: z.array(撤回的话).optional() }).strict(),
     mutating: true,
   },
   stopSession: {
@@ -1614,18 +1617,19 @@ export const OPERATIONS = {
     mutating: true,
   },
   /**
-   * 动一条还排着的话（2026-09-23，学自 Codex）。**只有 native 会话有待发单**。
+   * 动一条还排着的话（2026-09-23，学自 Codex；8.0 改）。**只有 native 会话有待发单**。
    *
-   * - `remove` 撤回：从 pi 的单子上拿掉，原文与原图交回来（界面放回输入框，人改完再发）。
-   * - `steer` 改插队：这一条不等这一轮彻底完，当前工具跑完、下次调模型前就送进去。
+   * - `remove` 取回：从 pi 的单子上拿掉，原文与原图交回来（界面放回输入框，人改完再发）。
+   * - `redirect` 调整方向：这一条不再等——停掉当前这一步，它起新的一轮，其余照排（与 `writeToSession` 的 `redirect` 同一件事）。
    *
    * 那条已经不在单上（人按下那一刻 pi 刚好把它送走了）→ `not_found`，界面要说出来。
+   * `withdrawn` 是数组：`remove` 时就是那一条；`redirect` 时是重排不上的那几句（通常没有）。
    */
   editQueue: {
     request: z
-      .object({ sessionId: z.string().min(1), id: z.string().min(1), action: z.enum(["remove", "steer"]) })
+      .object({ sessionId: z.string().min(1), id: z.string().min(1), action: z.enum(["remove", "redirect"]) })
       .strict(),
-    response: z.object({ withdrawn: 撤回的话.optional() }).strict(),
+    response: z.object({ withdrawn: z.array(撤回的话).optional() }).strict(),
     mutating: true,
   },
   /**

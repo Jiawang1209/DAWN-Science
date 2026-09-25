@@ -110,6 +110,22 @@ export const LONG_REPLY = Array.from({ length: 5 }, (_, i) =>
 const 慢速 = { 每段字数: 6, 间隔毫秒: 15 }
 
 /**
+ * **「慢慢跑」= 先说一句、再调一条 20 秒的 bash**（2026-09-25，调整方向；准入规则 1）。
+ *
+ * 调整方向要演「忙着 → 停掉这一步 → 按新的一句接着做」：没有一条会自己拖住的工具，
+ * `dev:mock` 里人按不到那颗按钮，e2e 也只能跟模型赛跑。**只在最后一条是用户话、且那句带「慢慢跑」时**触发——
+ * 拿到工具结果之后那一问最后一条是 `tool`，不触发，所以不循环。用例自己给了 `toolCall` 且这一问它要调的，以用例的为准。
+ */
+export const 慢慢跑 = { toolName: "bash", args: { command: "sleep 20" }, say: "我先跑一段慢的。" }
+function 慢跑工具(body) {
+  const 最后 = body.messages?.at?.(-1)
+  if (最后?.role !== "user") return undefined
+  const c = 最后.content
+  const 文 = typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : ""
+  return 文.includes("慢慢跑") ? 慢慢跑 : undefined
+}
+
+/**
  * 起一个假推理服务器。
  *
  * @param {object} [opts]
@@ -243,7 +259,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = opts.toolCall?.(body)
+      const tool = opts.toolCall?.(body) ?? 慢跑工具(body)
       const stream = body.stream !== false
 
       /**

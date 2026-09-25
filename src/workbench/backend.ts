@@ -894,20 +894,26 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 调整方向时没能重新排上的那几句（2026-09-25）：取出存根交回界面放回输入框，并在转录里说一句——**不许丢**。
    * 返回原先后的原文 + 原图（`writeToSession` / `editQueue` 的 `withdrawn`）。
    */
-  const 交回排着的 = (sessionId: string, ids: readonly string[]) => {
+  const 交回排着的 = (sessionId: string, ids: readonly string[], 按过停止: boolean) => {
     const 话们 = ids.flatMap((id) => {
       const 它 = 取存根(sessionId, id)
       return 它 ? [{ text: 它.text, ...(它.images.length ? { images: 它.images } : {}) }] : []
     })
     if (话们.length > 0) {
+      const 列 = 话们.map((x) => x.text).join(" / ")
       events.ingest(sessionId, {
         kind: "notice",
         sessionId,
-        text: `调整方向时这 ${话们.length} 句没能重新排上，已放回输入框：${话们.map((x) => x.text).join(" / ")}`,
+        // 理由要说对（审查 09-25 nit 4）：调整方向还在等时按了停止，是「停止」把它们撤下的，不是没排上
+        text: 按过停止
+          ? `调整方向时按了停止，这 ${话们.length} 句没有送出去，已放回输入框：${列}`
+          : `调整方向时这 ${话们.length} 句没能重新排上，已放回输入框：${列}`,
       })
     }
     return 话们
   }
+  /** 每段会话按过几次停止：调整方向前后一比，就知道交回的那几句是被停止撤下的（`交回排着的` 的措辞） */
+  const 停止次数 = new Map<string, number>()
   /**
    * 运行时的三种队列事件在这里翻成转录与待发单。**不交给中枢原样吃**——中枢不认得存根。
    * 返回 true = 已处理，调用方别再 `events.ingest`。
@@ -3052,7 +3058,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        */
       const queueId = as === "user" && sessions.supportsQueue(sessionId) ? `q-${randomUUID()}` : undefined
       // 调整方向只有有待发单的会话（native）会：别的会话带它来，说清楚，不假装做了（spec §3）
-      if (behavior === "redirect" && !queueId) throw fault("invalid_request", "这类会话不能调整方向——只有 native 会话有")
+      if (behavior === "redirect" && !queueId) {
+        // 两种原因分开说（审查 09-25 nit 3）：native 会话上 engine 带它来，说「只有 native 有」是假话
+        if (as !== "user") throw fault("invalid_request", "只有人自己发的话能调整方向")
+        throw fault("invalid_request", "这类会话不能调整方向——只有 native 会话有")
+      }
       if (queueId) {
         const 单 = 待发存根.get(sessionId) ?? new Map<string, 存根>()
         待发存根.set(sessionId, 单)
@@ -3064,6 +3074,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          * 转录与记账照待发那条路：送到（`queue_delivered newTurn`）那一刻才进。重排不上的交回界面。
          */
         if (behavior === "redirect") {
+          const 停过 = 停止次数.get(sessionId) ?? 0
           const 没排回 = await sessions.redirect(sessionId, as, {
             queueId: queueId!,
             data: 带前缀,
@@ -3072,7 +3083,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           不在场缓冲.delete(sessionId)
           const title = deriveSessionTitle(data)
           if (title) projects.setSessionTitle(sessionId, title)
-          const withdrawn = 交回排着的(sessionId, 没排回)
+          const withdrawn = 交回排着的(sessionId, 没排回, (停止次数.get(sessionId) ?? 0) !== 停过)
           return withdrawn.length ? { withdrawn } : {}
         }
         sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)
@@ -3127,7 +3138,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          */
         const 消息 = err instanceof Error ? err.message : String(err)
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
-        if (/未在本进程中活动|不存在|没有这个会话/.test(消息)) throw fault原样("not_found", 消息)
+        // `未启动`：调整方向时运行时报的「会话不在」，与 editQueue 映射成同一个码（审查 09-25 nit 2）
+        if (/未在本进程中活动|未启动|不存在|没有这个会话/.test(消息)) throw fault原样("not_found", 消息)
         throw fault原样("invalid_request", 消息)
       }
       return {}
@@ -3159,10 +3171,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
       不在场缓冲.delete(sessionId)
       待发存根.delete(sessionId)
+      停止次数.delete(sessionId)
       return {}
     },
 
     abortSession: async ({ sessionId }) => {
+      停止次数.set(sessionId, (停止次数.get(sessionId) ?? 0) + 1)
       /**
        * **先把排着的撤下来交回界面，再中止**（2026-09-23）。停止是「这一轮不做了」——
        * 排在后面的不该在停下之后自己开一轮；也不能丢，界面把原文与原图放回输入框。
@@ -3195,6 +3209,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 它 = 待发存根.get(sessionId)?.get(id)
       if (!它) throw fault("not_found", "这条已经不在待发单上了——多半刚好送出去了")
       let 没排回: string[]
+      const 停过 = 停止次数.get(sessionId) ?? 0
       try {
         没排回 = await sessions.editQueue(sessionId, id, action, "user")
       } catch (err) {
@@ -3207,7 +3222,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         取存根(sessionId, id)
         return { withdrawn: [{ text: 它.text, ...(它.images.length ? { images: 它.images } : {}) }] }
       }
-      const withdrawn = 交回排着的(sessionId, 没排回)
+      const withdrawn = 交回排着的(sessionId, 没排回, (停止次数.get(sessionId) ?? 0) !== 停过)
       return withdrawn.length ? { withdrawn } : {}
     },
 

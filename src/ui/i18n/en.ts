@@ -380,6 +380,7 @@ export const EN: Readonly<Record<string, string>> = {
   "排到后面": "Queue after this turn",
   "这条已经不在待发单上了——多半刚好送出去了": "That message is no longer queued — it was most likely just sent",
   "这类会话不能调整方向——只有 native 会话有": "This kind of session can't be redirected — only native sessions can",
+  "只有人自己发的话能调整方向": "Only a message you send yourself can redirect",
   "取回": "Take back",
   "待发": "Queued",
   "待发 · {0}": "Queued · {0}",

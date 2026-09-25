@@ -28,7 +28,7 @@ import type { ProviderRegistry } from "../../src/config/schema.js"
 class 有待发单的 extends FakeRuntime {
   readonly 记: string[] = []
   readonly 排过: string[] = []
-  没排回: (那句: 调整的那句) => string[] = () => []
+  没排回: (那句: 调整的那句) => string[] | Promise<string[]> = () => []
   override write(sessionId: SessionId, data: string, _behavior?: "followUp", queueId?: string): void {
     if (queueId) this.排过.push(queueId)
     super.write(sessionId, data)
@@ -38,6 +38,9 @@ class 有待发单的 extends FakeRuntime {
   }
   clearQueue(): string[] {
     return []
+  }
+  async abort(): Promise<void> {
+    this.记.push("abort")
   }
   async redirect(_sessionId: SessionId, 那句: 调整的那句): Promise<string[]> {
     this.记.push(`redirect:${那句.queueId}:${那句.data ?? "（单上的）"}`)
@@ -104,6 +107,47 @@ describe("writeToSession · redirect", () => {
     await expect(ctx.backend.writeToSession({ sessionId: s, data: "x", as: "user", behavior: "redirect" })).rejects.toMatchObject({
       workbenchCode: "invalid_request",
     })
+  })
+})
+
+describe("writeToSession · redirect 的出错与措辞", () => {
+  it("运行时报「未启动」：not_found（与 editQueue 同一个码），存根清掉", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 有待发单的
+    rt.没排回 = () => {
+      throw new Error('会话 "x" 未启动')
+    }
+    const s = await ctx.开一段()
+    await expect(ctx.backend.writeToSession({ sessionId: s, data: "x", as: "user", behavior: "redirect" })).rejects.toMatchObject({
+      workbenchCode: "not_found",
+    })
+    // 存根清掉了：停止时不会把它当排着的交回
+    expect(await ctx.backend.abortSession({ sessionId: s })).toEqual({})
+  })
+
+  it("native 会话但不是人发的：说「只有人能调整方向」，不说「只有 native 有」", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    const err = await ctx.backend.writeToSession({ sessionId: s, data: "x", as: "engine", behavior: "redirect" }).catch((e: unknown) => e)
+    expect(err).toMatchObject({ workbenchCode: "invalid_request" })
+    expect(String((err as Error).message)).not.toContain("native")
+  })
+
+  it("调整方向还在等时按了停止：交回的那几句说是「停止」撤下的，不说「没能重新排上」", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 有待发单的
+    let 放行!: (ids: string[]) => void
+    rt.没排回 = () => new Promise<string[]>((r) => (放行 = r))
+    const s = await ctx.开一段()
+    const 调整 = ctx.backend.writeToSession({ sessionId: s, data: "换个做法", as: "user", behavior: "redirect" })
+    await new Promise((r) => setTimeout(r, 0))
+    await ctx.backend.abortSession({ sessionId: s })
+    放行([...rt.记.flatMap((x) => (x.startsWith("redirect:") ? [x.split(":")[1]!] : []))])
+    expect(await 调整).toEqual({ withdrawn: [{ text: "换个做法" }] })
+    const 说 = ctx.说了(s).join("\n")
+    expect(说).toContain("换个做法")
+    expect(说).toContain("停止")
+    expect(说).not.toContain("没能重新排上")
   })
 })
 

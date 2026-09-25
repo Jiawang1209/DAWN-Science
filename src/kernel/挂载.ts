@@ -493,6 +493,11 @@ export class 对话内核 {
        * 「中断」要知道此刻在内核上跑的是哪一段——排着的那些不该被它标上。
        */
       开始了?: () => void
+      /**
+       * 这段还排着时被中止（停止 / 调整方向，2026-09-25）：轮到它时不写进内核，直接拒。
+       * 已经在跑的那段归调用方去中断（`run_code` 收到中止信号时调 `中断`）——这里只管「还没开始的别开始」。
+       */
+      signal?: AbortSignal
     },
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     let 一 = await this.拿(对话, 语言)
@@ -508,6 +513,7 @@ export class 对话内核 {
     一.排队中++
     const 跑 = 一.队列.then(() => {
       一.排队中--
+      if (opts?.signal?.aborted) return Promise.reject(new Error("这一轮已经停了，这段没有跑"))
       return this.真执行(一, 语言, 代码, opts?.开始了)
     })
     一.队列 = 跑.catch(() => {})

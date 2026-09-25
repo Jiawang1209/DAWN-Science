@@ -5,7 +5,7 @@
  * 报错要带 traceback（不然模型改不动代码）、图不能塞进去（烧 token 且多数模型
  * 在工具结果里看不到图）、而**不说清楚图去哪了，模型会以为没画出来反复重画**。
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { readFileSync } from "node:fs"
 import { createRunCodeTool, 内核指引, 摘要 } from "../../src/tools/run-code.js"
 import { 对话内核 } from "../../src/kernel/挂载.js"
@@ -175,5 +175,120 @@ describe("提示词：笔记本就是 run_code", () => {
   it("native 运行时只在装配给了 kernels 时才追加这句（源码扫描——装配整份运行时太重）", () => {
     const src = readFileSync(new URL("../../src/runtime/native.ts", import.meta.url), "utf8")
     expect(src).toContain("this.opts.kernels ? [内核指引] : []")
+  })
+})
+
+/**
+ * 一台「慢」内核：写进去只吐两行、**不回 idle**；中断时回 KeyboardInterrupt + idle——真内核被 SIGINT 就是这样。
+ * `会停: false` 演「装聋」：卡在不理 SIGINT 的 C 扩展里。听众按集合存：常驻监听与每段自己那只耳朵要同时在。
+ */
+function 慢内核(会停 = true) {
+  const 听众 = new Map<string, Set<(e: unknown) => void>>()
+  const 记: string[] = []
+  const 发给 = (id: string, e: unknown) => {
+    for (const f of [...(听众.get(id) ?? [])]) f(e)
+  }
+  const runtime = {
+    start: async (spec: { sessionId: string }) => ({ sessionId: spec.sessionId, pid: 0 }),
+    attach: (id: string, sink: (e: unknown) => void) => {
+      const 这台 = 听众.get(id) ?? new Set<(e: unknown) => void>()
+      这台.add(sink)
+      听众.set(id, 这台)
+      return () => {
+        这台.delete(sink)
+      }
+    },
+    write: (id: string, code: string) => {
+      记.push(`write:${code}`)
+      发给(id, { kind: "kernel_output", entry: { kind: "stream", stream: "stdout", text: "1\n2\n" } })
+    },
+    abort: async (id: string) => {
+      记.push("interrupt")
+      if (!会停) return
+      发给(id, { kind: "kernel_output", entry: { kind: "error", ename: "KeyboardInterrupt", evalue: "", traceback: [] } })
+      发给(id, { kind: "kernel_output", entry: { kind: "status", state: "idle" } })
+    },
+    stop: async () => {},
+  } as never
+  const 内核 = new 对话内核({
+    runtime,
+    workspaceOf: () => "/w/proj",
+    sessionDirOf: () => "/dir",
+    interpreterOf: () => "/usr/bin/python3",
+  })
+  return { 内核, 记 }
+}
+
+const 等一拍 = () => new Promise((r) => setTimeout(r, 0))
+
+describe("中止（2026-09-25，调整方向 §4.1）：pi 的中止信号 → 那台内核的中断", () => {
+  it("跑到一半被中止：给那台内核发一次中断；结果照实写「已中断」+ 已有输出", async () => {
+    const { 内核, 记 } = 慢内核()
+    const ctrl = new AbortController()
+    const 跑着 = createRunCodeTool({ 对话, 内核 }).execute(
+      "c1",
+      { language: "python", code: "for i in range(100): print(i)" },
+      ctrl.signal,
+    )
+    await vi.waitFor(() => expect(记).toContain("write:for i in range(100): print(i)"))
+    ctrl.abort()
+    const r = await 跑着
+    expect(记.filter((x) => x === "interrupt")).toHaveLength(1)
+    const 文 = r.content[0]!.text
+    expect(文).toContain("已中断")
+    expect(文, "已经吐出来的输出留着").toContain("1\n2")
+    expect(文).toContain("KeyboardInterrupt")
+  })
+
+  it("还没开始就已中止：一个字都不写进内核，也不起内核", async () => {
+    const { 内核, 记 } = 慢内核()
+    const ctrl = new AbortController()
+    ctrl.abort()
+    const r = await createRunCodeTool({ 对话, 内核 }).execute("c1", { language: "python", code: "1" }, ctrl.signal)
+    expect(r.isError).toBe(true)
+    expect(r.content[0]!.text).toContain("没有跑")
+    expect(记).toEqual([])
+  })
+
+  it("排在别的段后面时被中止：马上交还，不去打断前面那段；轮到它时也不写进去", async () => {
+    const { 内核, 记 } = 慢内核()
+    void 内核.执行(对话, "python", "你在笔记本里敲的").catch(() => {})
+    await vi.waitFor(() => expect(记).toContain("write:你在笔记本里敲的"))
+    const ctrl = new AbortController()
+    const 跑着 = createRunCodeTool({ 对话, 内核 }).execute("c1", { language: "python", code: "排着的" }, ctrl.signal)
+    ctrl.abort()
+    const r = await 跑着
+    expect(r.content[0]!.text).toContain("没有跑")
+    expect(记.filter((x) => x === "interrupt"), "排着的不该去打断别人的那段").toEqual([])
+    // 前面那段收尾：排着的这段轮到了，也不写
+    await 内核.中断(对话, "python")
+    await 等一拍()
+    await 等一拍()
+    expect(记).not.toContain("write:排着的")
+  })
+
+  it("中断发了、内核迟迟不停：到点先交还 pi（这一轮要能停下来），并如实说内核可能还在跑", async () => {
+    const { 内核, 记 } = 慢内核(false)
+    const ctrl = new AbortController()
+    const 跑着 = createRunCodeTool({ 对话, 内核, 中断等待毫秒: 20 }).execute(
+      "c1",
+      { language: "python", code: "卡住" },
+      ctrl.signal,
+    )
+    await vi.waitFor(() => expect(记).toContain("write:卡住"))
+    ctrl.abort()
+    const r = await 跑着
+    expect(记).toContain("interrupt")
+    expect(r.isError).toBe(true)
+    expect(r.content[0]!.text).toContain("还没停下")
+  })
+
+  it("给了信号但没中止：照旧，不多发中断", async () => {
+    const r = await 挂上([{ kind: "stream", stream: "stdout", text: "42" }]).execute(
+      "c1",
+      { language: "python", code: "print(42)" },
+      new AbortController().signal,
+    )
+    expect(r.content[0]!.text).toBe("[python 内核]\n42")
   })
 })

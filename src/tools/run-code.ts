@@ -106,10 +106,18 @@ export const 内核指引 =
   "探索、看数据、画图、验证一段逻辑：用 run_code（内核活着，变量保留，用户在右侧的笔记本面板里看得见）。" +
   "只有用户明确要一个可复用的文件时才把脚本写到 analysis/scripts/——写完也可以在 run_code 里跑一遍给用户看。"
 
+/**
+ * 发了中断之后最多等内核这么久回到空闲（2026-09-25）。**等不到就先把结果交还 pi**：这一轮必须停得下来——
+ * 不然「停止」与「调整方向」都会跟着一台卡在不理 SIGINT 的 C 扩展里的内核一起卡住。内核那头如实说「可能还在跑」。
+ */
+export const 中断后最多等 = 10_000
+
 export function createRunCodeTool(opts: {
   /** 这一轮属于哪个对话。**由调用方绑死**，不让模型自己指定 */
   对话: SessionId
   内核: 对话内核
+  /** 测试用：覆盖 `中断后最多等` */
+  中断等待毫秒?: number
 }) {
   return {
     name: "run_code",
@@ -132,31 +140,89 @@ export function createRunCodeTool(opts: {
       "如果工具回「请用户选一个解释器」，把这句话转告用户并等待，不要自己猜路径重试。",
     parameters,
 
-    async execute(_toolCallId: string, params: Params): Promise<ToolResult> {
+    async execute(_toolCallId: string, params: Params, signal?: AbortSignal): Promise<ToolResult> {
       const 语言 = params.language
       if (语言 !== "python" && 语言 !== "R") {
         return text(`language 要给 "python" 或 "R"，收到的是 ${JSON.stringify(语言)}。`, true)
       }
+      const lang = 语言 as 内核语言
       const code = typeof params.code === "string" ? params.code : ""
       if (!code.trim()) return text("code 是空的，没有东西可以跑。", true)
 
+      /**
+       * **中止要真停内核**（2026-09-25，调整方向 spec §4.1）。此前这里不收 `signal`：按「停止」时 pi 等着这个工具返回，
+       * 而这个工具等着内核跑完——停止键按下去，这一轮停不下来，内核里那段照跑。
+       *
+       * 三种情形：
+       *   - 进来时已经中止 → 不跑；
+       *   - 还排在别的段后面（你在笔记本里敲的那格在跑）→ 马上交还，轮到它时 `执行` 也不写进去；
+       *   - 已经在内核上跑 → 对**那台**内核发中断（与笔记本「中断」、协议 `interruptKernel` 同一个 `对话内核.中断`），
+       *     等它回到空闲，已经吐出来的输出照写；`中断后最多等` 还不回来就先交还。
+       */
+      if (signal?.aborted) return text("这一轮已经停了，这段代码没有跑。", true)
+      const 等多久 = opts.中断等待毫秒 ?? 中断后最多等
+      let 已开始 = false
+      /** 发过中断就有它：resolve 成发不出去的原因，发出去了是 undefined */
+      let 中断: Promise<string | undefined> | undefined
+      let 放手!: (why: "没跑" | "超时") => void
+      const 放手了 = new Promise<"没跑" | "超时">((r) => (放手 = r))
+      const 跑 = opts.内核.执行(opts.对话, lang, code, {
+        开始了: () => {
+          已开始 = true
+        },
+        ...(signal ? { signal } : {}),
+      })
+      // 排着时被中止、先交还了 pi：轮到它时 `执行` 会拒掉，那个拒没人等——接住，别成未处理的 rejection
+      跑.catch(() => {})
+      const 发中断 = () => {
+        if (中断) return
+        中断 = opts.内核.中断(opts.对话, lang).then(
+          () => undefined,
+          (e: unknown) => (e instanceof Error ? e.message : String(e)),
+        )
+        const 表 = setTimeout(() => 放手("超时"), 等多久)
+        void 跑.finally(() => clearTimeout(表)).catch(() => {})
+      }
+      const 听 = () => (已开始 ? 发中断() : 放手("没跑"))
+      signal?.addEventListener("abort", 听, { once: true })
+
       try {
-        const r = await opts.内核.执行(opts.对话, 语言 as 内核语言, code)
+        const r = await Promise.race([跑, 放手了])
+        if (r === "没跑") return text("这一轮已经停了，这段代码排在内核里还没轮到，没有跑。", true)
+        if (r === "超时") {
+          const 错 = await 中断
+          return text(
+            `[${lang} 内核]（已中断）\n` +
+              (错
+                ? `中断没发出去：${错}`
+                : `发了中断，内核 ${Math.round(等多久 / 1000)} 秒还没停下——它可能还在跑。`) +
+              "笔记本面板里看得到它的状态，也可以在那儿再按一次「中断」。",
+            true,
+          )
+        }
         const { 文字, 出错了 } = 摘要(r.输出)
+        if (中断) {
+          const 错 = await 中断
+          // 被中断的输出里多半有一条 KeyboardInterrupt（R 没有 ename）——照写，模型要知道停在了哪
+          return text(`[${lang} 内核]（已中断）${错 ? `\n中断没发出去：${错}` : ""}\n${文字}`)
+        }
         /**
          * **代码报错不是工具失败**：模型要看着 traceback 改代码，
          * 把它标成 `isError` 会让有些实现直接中断这一轮。
          * 但**要说清是哪门语言**——两个内核同时挂着时，
          * 「这个错是谁报的」不能靠猜（定案 3）。
          */
-        return text(`[${语言} 内核]${出错了 ? "（代码报错）" : ""}\n${文字}`)
+        return text(`[${lang} 内核]${出错了 ? "（代码报错）" : ""}\n${文字}`)
       } catch (e) {
+        if (signal?.aborted && !已开始) return text("这一轮已经停了，这段代码没有跑。", true)
         /**
          * 起不来、或内核中途死了。**原样说出来**：
          * 「没配 Python 解释器」与「内核崩了」是两回事，
          * 笼统回一句「跑不了」会让模型反复试同一条死路。
          */
         return text(e instanceof Error ? e.message : String(e), true)
+      } finally {
+        signal?.removeEventListener("abort", 听)
       }
     },
   }

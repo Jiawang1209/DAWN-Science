@@ -2,9 +2,10 @@
  * 坞里第八格「对话」（2026-09-24，spec `2026-09-24-侧边对话-design.md` §2）。
  *
  * 一段与主对话**同时跑**的独立会话。空着时：「另开一段」+ 同一个地方的其他会话，点一段挂进来；
- * 挂着时：头上是它的名字、运行中点、两颗**常驻**按钮（换到主区 / 从坞里拿下），其下就是主区那个
- * `ConversationView`——输入框、待发条、权限卡、`@`、附件、斜杠一样不少（§2.3：它自己跑工具，
- * 权限卡弹不出来它就卡住），只省右侧那条轮次刻度尺（`紧凑`）。
+ * 挂着时：就是主区那个 `ConversationView`——输入框、待发条、权限卡、`@`、附件、斜杠一样不少（§2.3：它自己跑工具，
+ * 权限卡弹不出来它就卡住）。2026-09-25 起连长相也一样（作者：「做一个类似于主对话框的效果」）：
+ * 同一条 `.conv-head`（标题 + 用量 + 导出对话，右边再挂坞格的「换到主区」与 ×）、轮次刻度尺、
+ * 主区的底色（输入卡靠它才看得出边）。
  *
  * **叶子组件只发回调**：挂谁、拿下、对调都由 `App.tsx` 做——与坞里别的格同一条纪律。
  */
@@ -17,7 +18,7 @@ import { t } from "./i18n/index.js"
 import { ConversationView } from "./views.js"
 import { 侧槽 } from "./state/side-chat.js"
 
-export type 坞格对话回调 = Omit<ComponentProps<typeof ConversationView>, "session" | "items" | "待发" | "紧凑">
+export type 坞格对话回调 = Omit<ComponentProps<typeof ConversationView>, "session" | "items" | "待发" | "紧凑" | "坞头">
 /** 侧槽里那两样「当前是什么」：权限卡、会话开关。坞格自己订，渲染时交给 App 那份 `对话回调` */
 export type 槽现值 = {
   待答权限: ComponentProps<typeof ConversationView>["待答权限"]
@@ -131,13 +132,23 @@ function 挂着(p: Parameters<typeof SideChat>[0] & { session: SessionSummary })
   // 权限卡与开关也订在这儿、不订在 App 上（审查 M1）：坞里弹一张卡只重渲染坞格，不拖着主区那份转录陪跑
   const 待答权限 = useStore(侧槽.$待答权限)
   const 会话开关们 = useStore(侧槽.$会话开关)
-  return (
-    <div className="side-chat" data-running={p.running ? "1" : undefined}>
-      <header className="side-chat-head">
+  const 标题 = p.session.title ?? t("新对话")
+  /**
+   * 头与主区是同一条 `.conv-head`（2026-09-25，作者：「做一个类似于主对话框的效果」）：
+   * 大标题 + 用量两行，右边「导出对话」、再是坞格自己的两颗。此前坞格单独起一行标题，
+   * 对话自己又一行用量——两行头，哪一行都不像主区那个。
+   */
+  const 坞头 = {
+    标题: (
+      <div className="side-chat-head">
         <span className="side-chat-dot" aria-hidden="true" />
-        <span className="side-chat-title" title={p.session.title ?? t("新对话")}>
-          {p.session.title ?? t("新对话")}
-        </span>
+        <h2 className="side-chat-title" title={标题}>
+          {标题}
+        </h2>
+      </div>
+    ),
+    动作: (
+      <>
         {/* 两颗都**常驻**：悬停才出现的东西必须另有入口，而这两件事在别处没有入口 */}
         <Button variant="ghost" size="sm" className="side-chat-swap" onClick={p.onSwap}>
           {t("换到主区")}
@@ -145,12 +156,33 @@ function 挂着(p: Parameters<typeof SideChat>[0] & { session: SessionSummary })
         <Button variant="ghost" size="icon" className="side-chat-out" aria-label={t("从坞里拿下")} onClick={p.onTakeOut}>
           ×
         </Button>
-      </header>
-      {/* 不假装能看（§2.5）：ACP / CLI 的 agent 没有 read_main_session，这句一直摆着 */}
-      {p.canReadMain === false ? <p className="side-chat-caveat">{t("这个 agent 看不见主对话")}</p> : null}
+      </>
+    ),
+    /* 不假装能看（§2.5）：ACP / CLI 的 agent 没有 read_main_session，这句一直摆在头下面 */
+    注: p.canReadMain === false ? <p className="side-chat-caveat">{t("这个 agent 看不见主对话")}</p> : null,
+  }
+  return (
+    <div className="side-chat" data-running={p.running ? "1" : undefined}>
       {p.conversation ? (
-        <ConversationView key={p.session.sessionId} session={p.session} items={items} 待发={待发} 紧凑 {...p.conversation({ 待答权限, 会话开关们 })} />
-      ) : null}
+        <ConversationView
+          key={p.session.sessionId}
+          session={p.session}
+          items={items}
+          待发={待发}
+          紧凑
+          坞头={坞头}
+          {...p.conversation({ 待答权限, 会话开关们 })}
+        />
+      ) : (
+        /* 回调还没到手的那一拍：头照样画（同一副 `.conv-head`），两颗按钮照样能按 */
+        <>
+          <header className="conv-head">
+            <div className="conv-head-text">{坞头.标题}</div>
+            {坞头.动作}
+          </header>
+          {坞头.注}
+        </>
+      )}
     </div>
   )
 }

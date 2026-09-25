@@ -1,10 +1,14 @@
 /**
  * 坞格「对话」与分栏右键的两处可见性（侧边对话 Task 6 审查修补，2026-09-24）。
  */
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { describe, expect, it, vi } from "vitest"
 import { createEvent, fireEvent, render, screen } from "@testing-library/react"
 import { SideChat } from "../../src/ui/side-chat.js"
 import { SessionTabs } from "../../src/ui/session-tabs.js"
+import { 侧槽 } from "../../src/ui/state/side-chat.js"
+import type { TranscriptItem } from "../../src/protocol/index.js"
 
 const 空 = () => {}
 const 基本 = {
@@ -98,6 +102,54 @@ describe("坞格的几种状态（审查 M7）", () => {
     expect(onTakeOut).toHaveBeenCalledTimes(1)
     // 两颗都常驻：不是悬停才出现的
     expect(getComputedStyle(screen.getByRole("button", { name: "换到主区" })).opacity).not.toBe("0")
+  })
+
+  it("挂着且有回调时：与主区同一条 `.conv-head`——大标题 + 用量、导出对话、换到主区、×；只有一行头，没有 `.conv-title`（2026-09-25）", () => {
+    const 轮 = (id: string, who: "user" | "agent", text: string): TranscriptItem =>
+      ({ type: "turn", id, who, text, final: true, ...(who === "agent" ? { usage: { input: 12, output: 8 } } : {}) }) as TranscriptItem
+    侧槽.setItems([
+      轮("u1", "user", "一"), 轮("a1", "agent", "好"),
+      轮("u2", "user", "二"), 轮("a2", "agent", "好"),
+      轮("u3", "user", "三"), 轮("a3", "agent", "好"),
+    ])
+    const { container } = render(
+      <SideChat
+        session={{ sessionId: "s1", projectId: "P", agentId: "a", kind: "native", title: "坞里这段", state: "alive" } as never}
+        {...基本}
+        canReadMain={false}
+        conversation={() => ({ onSend: 空, onExport: async () => ({ path: "/x.md", turns: 3 }) })}
+      />,
+    )
+    const 头们 = container.querySelectorAll("header")
+    expect(头们).toHaveLength(1)
+    const 头 = 头们[0]!
+    expect(头.classList.contains("conv-head")).toBe(true)
+    // 标题住在主区那一格（`.conv-head-text`），用量在它下面；`.conv-title` 留给主区当判据
+    expect(头.querySelector(".conv-head-text .side-chat-head .side-chat-title")!.textContent).toBe("坞里这段")
+    expect(头.querySelector(".conv-head-text .session-usage")).not.toBeNull()
+    expect(container.querySelector(".conv-title")).toBeNull()
+    for (const 名 of ["导出对话", "换到主区", "从坞里拿下"]) {
+      const b = screen.getByRole("button", { name: 名 })
+      expect(头.contains(b), 名).toBe(true)
+      expect(getComputedStyle(b).opacity).not.toBe("0")
+    }
+    // 看不见主对话那句摆在头下面，不在头里
+    const 注 = container.querySelector(".side-chat-caveat")!
+    expect(头.contains(注)).toBe(false)
+    // 轮次刻度尺照画（窄到放不下时由 CSS 容器查询收起，jsdom 不算那一层）
+    expect(container.querySelector(".side-chat .turn-nav")).not.toBeNull()
+    侧槽.reset()
+  })
+
+  it("输入卡看得出边：挂着态的底是主区那块 `surface-app`，不是与卡面同值的 `surface-panel`（2026-09-25 作者 A）", () => {
+    const css = readFileSync(join(import.meta.dirname, "../../src/ui/styles.css"), "utf8")
+    const tok = readFileSync(join(import.meta.dirname, "../../src/ui/tokens.css"), "utf8")
+    expect(css).toMatch(/\.side-chat:not\(\.side-chat-empty\) \{ background: var\(--dawn-surface-app\); \}/)
+    // 根因：坞底 panel 与卡面 input 在明暗两套里同值——哪天它们分开了，这条注释与判据都该重看
+    const 亮 = tok.slice(0, tok.indexOf("--theme-surface-app: var(--theme-gray-900)"))
+    expect(亮.match(/--theme-surface-panel: ([^;]+);/)![1]).toBe(亮.match(/--theme-surface-input: ([^;]+);/)![1])
+    // 刻度尺只在坞宽到放得下时画
+    expect(css).toMatch(/\.side-chat \.turn-nav \{ display: none; \}\n@container \(min-width: 344px\)/)
   })
 
   it("空态上拖进文件：接住并出声，不让它静静没了（审查 M2）", () => {

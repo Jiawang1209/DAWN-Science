@@ -3766,15 +3766,27 @@ export function ConversationView({
   onOpenSettings,
   待发: 传进来的待发,
   紧凑,
+  坞头,
 }: {
   session: SessionSummary
   /** 待发单（侧边对话，2026-09-24）。**缺省 = 读主槽 `$待发`**——与 `items` 同一个套路 */
   待发?: readonly QueuedMessage[] | undefined
   /**
-   * 窄处（坞里，侧边对话 2026-09-24）：不画右侧轮次刻度尺，也不画标题（坞格自己的头上已经写着）——
-   * 同一个标题一格里写两遍，读屏与 `.conv-title` 判据都会指向两处。缺省 = 都画
+   * 坞里那一段（侧边对话 2026-09-24）。它管两件事：
+   * - 文件拖放 / 粘贴按「落在坞格里的归坞里」分家（见下面 `归我`）；
+   * - 标题不画 `h1.conv-title`，换成 `坞头.标题`——`.conv-title` 是「主区那段」的判据（e2e 夹具就等它），
+   *   一页两个就指向两处。
+   *
+   * 轮次刻度尺**照画**（2026-09-25，作者：「做一个类似于主对话框的效果」）：窄到放不下时由 CSS 的容器查询收起，
+   * 阈值与理由在 styles.css「坞里的对话」那一节。
    */
   紧凑?: boolean | undefined
+  /**
+   * 坞里那一段的头（2026-09-25）：与主区**同一条** `.conv-head`——标题 + 用量两行，右边是动作——
+   * 而不是坞格自己再起一行标题（此前两行头：坞格一行「标题 · 换到主区 · ×」，下面对话自己一行用量）。
+   * `标题` 顶替 `h1.conv-title` 那一格；`动作` 排在头的最右（「换到主区」与 ×，常驻）。
+   */
+  坞头?: { 标题: React.ReactNode; 动作: React.ReactNode; 注?: React.ReactNode } | undefined
   /** 这段会话的产物清单（2026-08-26）。**缺省 = 不画产物条**，两条一起给才画 */
   artifacts?: ArtifactList | undefined
   onOpenArtifact?: ((path: string) => void) | undefined
@@ -4374,7 +4386,7 @@ export function ConversationView({
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
         {/* 标题一行、用量第二行（2026-08-23 作者：「title 应该是换行之后，才是 token 的消耗」） */}
         <div className="conv-head-text">
-          {紧凑 ? null : <h1 className="conv-title">{session.title ?? t("新对话")}</h1>}
+          {紧凑 ? 坞头?.标题 : <h1 className="conv-title">{session.title ?? t("新对话")}</h1>}
           <SessionUsage items={items} />
         </div>
         {/**
@@ -4477,7 +4489,9 @@ export function ConversationView({
           *
           * 不两处都留：**一个动作一个家**。
           */}
+        {坞头?.动作}
       </header>
+      {坞头?.注}
 
       {/**
        * 贴底滚动交给 `use-stick-to-bottom`。
@@ -4487,7 +4501,8 @@ export function ConversationView({
        * 这个库的行为是：贴在底部时才跟随，**一旦用户主动上滚就撒手**。
        */}
       {/* 轮次导航（2026-08-22，学自 dsh-codex-ui）：左缘一条刻度尺，一刻一轮你说的话 */}
-      {紧凑 ? null : <TurnNavigator items={items} 确保可见={行回调.确保可见} />}
+      {/* 坞里也画（2026-09-25）；坞窄到放不下时 CSS 收起它，见 styles.css「坞里的对话」 */}
+      <TurnNavigator items={items} 确保可见={行回调.确保可见} />
       <StickToBottom className="turns" resize="smooth" initial="smooth">
         {/**
           * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：

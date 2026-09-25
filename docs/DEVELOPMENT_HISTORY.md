@@ -41,6 +41,16 @@
     **不引库**：ansi-to-html 一类产出 HTML 串（要 `dangerouslySetInnerHTML`）或内联色值（绕过令牌）。stdout / stderr、工具行结果同样走它；「复制这段输出」复制的是去码后的文字。
     报错块默认收起：整行是开关（三角 + `ename: evalue` + 右侧常驻「展开 traceback / 折叠 traceback」）；`KeyboardInterrupt` 或笔记本里被停下那格（`interrupted`）画成与「■ 已中断」同一套中性灰，
     摘要「KeyboardInterrupt · 已中断」；真报错照旧红。测试：`tests/ui/ansi.test.ts` 14 条、`tests/ui/kernel-error.test.tsx` 10 条；`kernel-session.spec.ts` 用真 IPython 的 traceback 验收起 / 展开 / 无残渣 / 有颜色类。
+  - **真机之后 ②：坞里「对话」长得像主区那段**（作者：*「做一个类似于主对话框的效果」*，点名 A 输入框看不出框、B 没有主区那样的头与轮次刻度尺、C 整段不像一块区域）。
+    A 的根因不在输入卡：坞底 `surface-panel` 在明暗两套里都**恰好等于**卡面 `surface-input`，白卡贴白底；主区的卡浮在 `surface-app` 上才有边。
+    挂着态的 `.side-chat` 换成 `surface-app`——卡、阴影、聚焦环一行没改就与主区一样，整段也成了坞里自成一块的区域（A + C）。
+    B：坞格不再单起一行标题，`ConversationView` 加 `坞头 { 标题, 动作, 注 }`，坞里用主区**同一条** `.conv-head`：大标题（与 `.conv-title` 同一档 22px，
+    类名另起 `.side-chat-title`——`.conv-title` 是 e2e 夹具认「主区那段」的判据）+ 用量 + 「导出对话」+ 常驻的「换到主区」与 ×；
+    坞窄，头排成两行（第一行标题…动作，第二行用量铺满），否则用量被三颗按钮挤成两行。「导出对话」很简单：`exportSession` 只认会话 id，
+    挪进共用的 `对话回调` 按 `s` 绑好，主区与坞里各导各的。轮次刻度尺照画，坞里的对话格窄于 **344px** 时由容器查询收起
+    （让出 32 + 12 之后正文 ≥ 300px，约 21 个 14px 汉字；坞默认宽 380 在阈值之上、最窄 280 在下）。
+    测试：`side-chat-view.test.tsx` +2；`side-session.spec.ts` +1（卡与底不同色且等于主区的底——变异验过：删掉那行底色 → 红；一行头五样常驻；导出 3 轮；压到 300px 尺子收起）。
+    视觉基线：只有「坞里的对话」明暗两张变了（diff 只在坞区域），重存后连跑两遍 14/14 全过；`=all` 顺带重写的另三张（未变，只是重新编码）已还原。
 - **Impact**: 协议 8.0，旧界面与新后端握手即报不兼容（同仓同发，无外部客户端）。「停止」现在真的停内核。acp / cli / pty / 内核会话行为不变。
   已知接受的小口：调整方向停下那一步的几毫秒里恰好又撞进一句，它在待发条上显示在其余之前、实际在后面送（plan 风险 4）。
 - **Verification**: vitest 251 文件 / 3129 过、10 skipped；typecheck 0；e2e 512 passed / 1 skipped（`sidebar-collapse` 那条按取舍放弃的）+ 内核会话 6 passed，

@@ -7202,35 +7202,87 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   flex-direction: column;
 }
 .side-chat { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
+/**
+ * **挂着一段时整格是主区那块底**（2026-09-25，作者：「做一个类似于主对话框的效果」）。
+ *
+ * 坞的底是 `surface-panel`，而它在明暗两套里都**恰好等于** `surface-input`（输入卡的面）——
+ * 所以坞里那张输入卡一直在，只是白卡贴白底、看不出边（作者 A：「输入框没有可见的框」）。
+ * 主区的卡之所以有边，是因为它浮在 `surface-app` 上。这里把对话那一块换成同一块底：
+ * 卡、阴影、聚焦环一行没改就和主区一模一样，对话也因此成了坞里一块自成一体的区域（作者 C）。
+ * 空态不换：它是坞的一格清单，不是一段对话。
+ */
+.side-chat:not(.side-chat-empty) { background: var(--dawn-surface-app); }
+/* 标题那一格（点 + 名字），住在 `.conv-head-text` 里、用量那行上面——与主区 `.conv-title` 同一档大字 */
 .side-chat-head {
   display: flex;
   align-items: center;
   gap: var(--dawn-space-2);
-  padding: var(--dawn-space-2) var(--dawn-space-3);
-  border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
-  white-space: nowrap;
+  min-width: 0;
 }
 .side-chat-title {
   flex: 1 1 auto;
   min-width: 0;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--dawn-ui-size);
+  white-space: nowrap;
+  /* 与 `.conv-title` 同一组值；不共用类名是因为 `.conv-title` 是「主区那段」的判据（e2e 夹具等它） */
+  font-size: var(--dawn-fs-display);
+  letter-spacing: var(--dawn-fs-display-tracking);
+  line-height: 28px;
   font-weight: var(--dawn-weight-semibold);
   color: var(--dawn-text-1);
 }
 .side-chat-dot { width: 6px; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); flex: 0 0 auto; }
-.side-chat[data-running="1"] > .side-chat-head .side-chat-dot,
+.side-chat[data-running="1"] .side-chat-head .side-chat-dot,
 .side-chat-pick[data-running="1"] .side-chat-dot { background: var(--dawn-live); }
-/* 头上两颗**常驻**（悬停才出现的东西必须另有入口，而这两件事别处没有入口） */
-.side-chat-swap, .side-chat-out { flex: 0 0 auto; color: var(--dawn-text-3); }
-.side-chat-swap:hover, .side-chat-out:hover { color: var(--dawn-text-1); }
-.side-chat-caveat { margin: 0; padding: var(--dawn-space-1) var(--dawn-space-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+/* 头上两颗**常驻**（悬停才出现的东西必须另有入口，而这两件事别处没有入口）。
+   与「导出对话」同排、同一种 ghost、同一个字色——三颗并排时一颗亮两颗灰，读起来像两种东西 */
+.side-chat-swap, .side-chat-out { flex: 0 0 auto; }
+/**
+ * **坞里的头排成两行：第一行「标题 … 动作」，第二行用量铺满**（2026-09-25）。
+ *
+ * 主区的头是「左：标题 / 用量两行一列，右：动作」。坞默认 380 宽，右边三颗（导出对话、换到主区、×）
+ * 一占，左边那一列只剩一百六十来 px，用量那行（「1 轮 · 输入 12 · 输出 8 · 缓存 0 · 命中 0%」）被折成两行。
+ * 所以坞里把用量那行放到整条头的宽度上：元素、顺序、字号全与主区相同，只是用量不再与动作抢那一截宽。
+ *
+ * 做法：`.conv-head-text` 拆成 `contents`，标题落第一行第一格，用量占第二行整行，其余（导出、两颗、
+ * 非内置会话的 agent 名 / kind、远端目录、状态）都锁在第一行、往右排。
+ * 列间距不用 `column-gap`：显式的那几条 `auto` 空轨道之间也会各算一道缝，改成每颗自己的左外边距。
+ */
+.side-chat .conv-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(6, auto);
+  column-gap: 0;
+  row-gap: 2px;
+  align-items: center;
+}
+.side-chat .conv-head-text { display: contents; }
+.side-chat .conv-head > * { grid-row: 1; margin-left: var(--dawn-space-2); }
+.side-chat .conv-head .side-chat-head { grid-row: 1; grid-column: 1; }
+.side-chat .conv-head .session-usage { grid-row: 2; grid-column: 1 / -1; }
+.side-chat-caveat { margin: 0; padding: 0 var(--dawn-space-3) var(--dawn-space-1); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 /* 坞窄（最窄 280）：主区那几档 32px 的左右留白在这里吃掉太多行宽，收成 12 */
 .side-chat .conversation { flex: 1; min-height: 0; }
 .side-chat .conv-head,
 .side-chat .turns,
 .side-chat .composer { padding-left: var(--dawn-space-3); padding-right: var(--dawn-space-3); }
+/**
+ * **轮次刻度尺：坞宽到放得下才画**（2026-09-25）。
+ *
+ * 尺子是贴左缘的一条 28px 宽的竖条（`.turn-nav`），主区靠 32px 的左留白给它让位；坞里左右只留 12，
+ * 画出来就压在字上。所以画它时左留白还回 32——代价是一行少 20px。
+ *
+ * **阈值 344px（对话这一格的宽，`.conversation` 是容器）**：让出 32 + 12 之后正文还剩 300px，
+ * 即聊天字号 14px 下约 21 个汉字一行，与坞默认宽 380（正文 336）差不多一个量级；再窄下去
+ * （最窄 280 → 只剩 236，约 16 字）一行就碎得读不成句，这时宁可不要尺子，把 20px 还给正文。
+ * 坞默认宽 380 在阈值之上，所以默认是画的。
+ */
+.side-chat .turn-nav { display: none; }
+@container (min-width: 344px) {
+  .side-chat .turn-nav { display: flex; }
+  .side-chat .conversation:has(> .turn-nav) .turns { padding-left: var(--dawn-space-8); }
+}
 /* 空态：标题、「另开一段」、同处清单，一列摞下来 */
 .side-chat-empty { gap: var(--dawn-space-3); }
 .side-chat-heading { margin: 0; font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); }

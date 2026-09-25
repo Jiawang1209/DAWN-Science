@@ -3639,7 +3639,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 两处各写一遍的话，迟早一处改了、一处没改（发送、中止、权限卡、换模型都是会跟着长的东西）。
    *
    * 全部按 `s` 的 id 绑好；乐观摘卡摘的是 **`槽`** 的 `$待答权限`，不是主槽的。
-   * 只给「这一段自己的事」：导出、底部终端开合、选工作目录、产物条、换 ACP 另起一段、
+   * 只给「这一段自己的事」：底部终端开合、选工作目录、产物条、换 ACP 另起一段、
    * 终端裁剪与内核实例只归主区，由主区那处另给（spec §2.3：坞里其他格仍跟着主对话）。
    *
    * `槽.$待答权限` / `槽.$会话开关` 的当下值由**订着它们的那一处**交进来（`现`）：主槽 App 自己订着，缺省
@@ -3656,6 +3656,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       ...(槽 === 主槽 ? { 引用文件, onOpenReference: 打开引用 } : { 引用文件: 坞引用文件, onOpenReference: 坞打开引用 }),
       loadLocalImage: 读本机图,
       loadGalleryRoots: 载图廊根们,
+      /**
+       * 导出这一段（2026-09-25 起坞里也有）：`exportSession` 只认会话 id，与主区是同一个操作——
+       * 按 `s` 绑好就是坞里那段自己的导出，不借主区的。
+       */
+      onExport: () => client.get<{ path: string; turns: number }>("exportSession", { sessionId: s.sessionId }),
       ...(() => {
         // 这一段的档来自会话开关 `dawn.permission`（原生会话才有）；没有这条开关的会话（acp / cli）不画那颗
         const 开 = 会话开关们?.find((o) => o.id === "dawn.permission")
@@ -4924,7 +4929,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 session={session}
                 /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
                 {...对话回调(session, 主槽)}
-                onExport={() => client.get<{ path: string; turns: number }>("exportSession", { sessionId: session!.sessionId })}
                 artifacts={artifacts}
                 onOpenArtifact={openArtifact}
                 loadThumb={读产物缩略}

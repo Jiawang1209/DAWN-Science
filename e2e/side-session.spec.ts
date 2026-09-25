@@ -88,6 +88,66 @@ test.describe("侧边对话 · native", () => {
     })
   })
 
+  /**
+   * **坞里那段长得像主区那段**（2026-09-25，作者：「做一个类似于主对话框的效果」）。
+   * 作者点名三处：A 输入框看不出边、B 没有主区那样的头（大标题、用量、导出对话）和轮次刻度尺、C 整段不像一块区域。
+   */
+  test("**坞里那段长得像主区**：输入卡看得出边、一行头（标题 + 用量 + 导出对话 + 换到主区 + ×）、刻度尺放得下才画", async ({ dawn }) => {
+    const { page } = dawn
+    await 在项目里开会话(page)
+    await 坞里另开一段(page)
+    for (const 话 of ["你好", "再说一句", "第三句"]) {
+      await 说(坞(page), 话)
+      await expect(坞(page).locator(".turn.agent")).toHaveCount(["你好", "再说一句", "第三句"].indexOf(话) + 1, { timeout: 30_000 })
+    }
+    const 格 = 坞(page).locator(".side-chat")
+
+    await test.step("A/C：卡面与底不同色（此前坞底 panel 与卡面 input 同值，白卡贴白底）", async () => {
+      /** 一块东西「看上去」的底：往上找第一层不透明的（中间几层多半是透明的，只比自己会假绿） */
+      const 看上去的底 = (el: Element) => {
+        let n: Element | null = el
+        while (n && getComputedStyle(n).backgroundColor === "rgba(0, 0, 0, 0)") n = n.parentElement
+        return n ? getComputedStyle(n).backgroundColor : ""
+      }
+      const 卡 = await 格.locator(".composer-box").evaluate(看上去的底)
+      const 底 = await 格.locator(".composer").evaluate(看上去的底)
+      expect(卡).not.toBe(底)
+      const 主区底 = await 主区(page).locator(".composer").evaluate(看上去的底)
+      expect(底, "坞里那段的底就是主区那块底").toBe(主区底)
+    })
+
+    await test.step("B：只有一行头，就是 `.conv-head`；五样都在、都常驻", async () => {
+      await expect(格.locator("header")).toHaveCount(1)
+      const 头 = 格.locator("header.conv-head")
+      await expect(头.locator(".side-chat-title")).toHaveText("你好")
+      await expect(头.locator(".session-usage")).toContainText("3 轮")
+      for (const 名 of ["导出对话", "换到主区", "从坞里拿下"]) {
+        const b = 头.getByRole("button", { name: 名, exact: true })
+        await expect(b).toBeVisible()
+        expect(await b.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+      }
+      // 大字：与主区 `.conv-title` 同一档
+      const [坞字, 主字] = await Promise.all([
+        头.locator(".side-chat-title").evaluate((el) => getComputedStyle(el).fontSize),
+        主区(page).locator(".conv-title").evaluate((el) => getComputedStyle(el).fontSize),
+      ])
+      expect(坞字).toBe(主字)
+      // 导出的是坞里这段：mock 回的轮数就是它的 3 轮
+      await 头.getByRole("button", { name: "导出对话", exact: true }).click()
+      await expect(头).toContainText("已导出 3 轮")
+    })
+
+    await test.step("B：刻度尺——坞默认宽放得下就画；压到 344px 以下收起，正文把留白要回去", async () => {
+      await expect(格.locator(".turn-nav")).toBeVisible()
+      await 坞(page).evaluate((el) => {
+        ;(el as HTMLElement).style.width = "300px"
+      })
+      await expect(格.locator(".turn-nav")).toBeHidden()
+      const 左 = await 格.locator(".turns").evaluate((el) => getComputedStyle(el).paddingLeft)
+      expect(左).toBe("12px")
+    })
+  })
+
   test("**换到主区 / 从坞里拿下**，三颗按钮都看得见（opacity 1）", async ({ dawn }) => {
     const { page } = dawn
     await 主区忙起来(page)

@@ -20,6 +20,7 @@ import type {
   SessionId,
   SessionSpec,
   送法,
+  调整的那句,
 } from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
@@ -441,9 +442,8 @@ export class SessionManager {
 
   /** 写入前必须持有租约。这是规格 7.1 的守卫点——写权可追责的唯一入口。 */
   /**
-   * @param behavior 上一轮**还在跑**时这一条怎么进去（2026-08-15）：
-   *   `steer` 插队、`followUp` 排队。不忙时无意义；忙时缺席读作 `followUp`。
-   *   **这一层只负责传，不判断忙不忙**——那件事只有运行时知道。
+   * @param behavior 上一轮**还在跑**时这一条怎么进去：只有 `followUp` 排队（2026-09-25 起；调整方向走 `redirect`）。
+   *   不忙时无意义；忙时缺席读作 `followUp`。**这一层只负责传，不判断忙不忙**——那件事只有运行时知道。
    */
   write(
     sessionId: SessionId,
@@ -551,8 +551,11 @@ export class SessionManager {
     return typeof this.bound.get(sessionId)?.editQueue === "function"
   }
 
-  /** 撤回一条 / 改插队。写权规则与 `write` 相同：动待发单就是在改「接下来要说什么」 */
-  editQueue(sessionId: SessionId, id: string, action: "remove" | "steer", as: Holder): void {
+  /**
+   * 撤回一条 / 调整方向（2026-09-23；2026-09-25 改插队换成调整方向）。写权规则与 `write` 相同：动待发单就是在改「接下来要说什么」。
+   * 返回调整方向时没能重排上的 id（撤回时是空的）。
+   */
+  async editQueue(sessionId: SessionId, id: string, action: "remove" | "redirect", as: Holder): Promise<string[]> {
     const lease = this.leases.current(sessionId)
     if (!lease || lease.holder !== as) {
       throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)
@@ -560,7 +563,27 @@ export class SessionManager {
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     if (!rt.editQueue) throw new Error("这类会话没有待发单")
-    rt.editQueue(sessionId, id, action)
+    if (action === "remove") {
+      rt.editQueue(sessionId, id)
+      return []
+    }
+    if (!rt.redirect) throw new Error("这类会话不能调整方向")
+    return rt.redirect(sessionId, { queueId: id })
+  }
+
+  /**
+   * 调整方向，Cmd/Ctrl+回车那条路（2026-09-25）：这句不经待发单。写权规则与 `write` 相同。
+   * 返回没能重排上的 id——调用方交回界面放回输入框。
+   */
+  async redirect(sessionId: SessionId, as: Holder, 那句: 调整的那句): Promise<string[]> {
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) {
+      throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)
+    }
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.redirect) throw new Error("这类会话不能调整方向")
+    return rt.redirect(sessionId, 那句)
   }
 
   /**
@@ -653,20 +676,6 @@ export class SessionManager {
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     if (!rt.setModel) throw new Error("该会话的运行时不支持换模型——外部 CLI 的模型由它自己管")
     await rt.setModel(sessionId, provider, model)
-  }
-
-  /** 插一句引导。同样只有 native 有。**写权守卫照旧**——引导也是写入。 */
-  async steer(sessionId: SessionId, text: string, as: Holder): Promise<void> {
-    const lease = this.leases.current(sessionId)
-    if (!lease || lease.holder !== as) {
-      throw new Error(
-        `引导被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`,
-      )
-    }
-    const rt = this.bound.get(sessionId)
-    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
-    if (!rt.steer) throw new Error(`该会话的运行时不支持引导`)
-    await rt.steer(sessionId, text)
   }
 
   /** 转发终端尺寸变化。只有 pty runtime 实现了 resize，其余是空操作。 */

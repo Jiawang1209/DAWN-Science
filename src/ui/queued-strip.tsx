@@ -38,8 +38,9 @@ export function 待发条({
       <p className="queued-head">{tf("待发 · {0}", items.length)}</p>
       <ul>
         {items.map((q) => (
-          <li key={q.id} className={`queued-one ${q.behavior === "steer" ? "steer" : "follow"}`}>
-            <span className="queued-tag">{q.behavior === "steer" ? t("插队中") : t("排队中")}</span>
+          // 8.0 只剩一张单子（插队中没了）；三颗按钮的整份改写是 Task 5
+          <li key={q.id} className="queued-one">
+            <span className="queued-tag">{t("排队中")}</span>
             <span className="queued-text">
               {q.text || tf("{0} 张图", q.images?.length ?? 0)}
             </span>

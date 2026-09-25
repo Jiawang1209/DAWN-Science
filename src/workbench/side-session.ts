@@ -95,7 +95,7 @@ export function 主对话摘要(v: {
 
   if (v.queued.length) {
     行.push(`待发条上还排着 ${v.queued.length} 句：`)
-    for (const q of v.queued) 行.push(`- [${q.behavior === "steer" ? "插队" : "排队"}] ${q.text}`)
+    for (const q of v.queued) 行.push(`- [排队] ${q.text}`)
   }
   if (v.产出.length) {
     // 截断要说清省了多少（规格 7.5）

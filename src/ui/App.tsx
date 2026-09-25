@@ -3795,9 +3795,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       /** 待发单上那两颗（2026-09-23）：撤回的原文与原图放回这段会话的输入框 */
       onEditQueue: (id: string, action: "remove" | "steer") =>
         client
-          .get<{ withdrawn?: 撤回的话 }>("editQueue", { sessionId: s.sessionId, id, action })
+          // 8.0：`withdrawn` 是数组（调整方向时可能交回几句）。接调整方向与「到坞里问」是 Task 6
+          .get<{ withdrawn?: 撤回的话[] }>("editQueue", { sessionId: s.sessionId, id, action })
           .then((r) => {
-            if (r.withdrawn) 退回输入框(s.sessionId, [r.withdrawn])
+            if (r.withdrawn?.length) 退回输入框(s.sessionId, r.withdrawn)
           }),
       onSend: (text, images, behavior) =>
         // **不做本地乐观追加**：事件流是对话的唯一事实来源。

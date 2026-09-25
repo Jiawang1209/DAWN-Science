@@ -1845,8 +1845,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       id: string,
       data: string,
       images?: readonly import("./views.js").图片来源[],
-      /** 上一轮还在跑时怎么进去（协议 5.6）：`steer` 插队、`followUp` 排队 */
-      behavior?: "steer" | "followUp",
+      /** 上一轮还在跑时怎么进去（协议 8.0）：`followUp` 排队、`redirect` 调整方向 */
+      behavior?: "followUp" | "redirect",
     ) => {
       /** 空数组与不给是同一个意思——**别把一个空 `images` 送下去** */
       const 带图 = images && images.length > 0 ? { images: [...images] } : {}
@@ -3793,7 +3793,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }
           : undefined,
       /** 待发单上那两颗（2026-09-23）：撤回的原文与原图放回这段会话的输入框 */
-      onEditQueue: (id: string, action: "remove" | "steer") =>
+      onEditQueue: (id: string, action: "remove" | "redirect") =>
         client
           // 8.0：`withdrawn` 是数组（调整方向时可能交回几句）。接调整方向与「到坞里问」是 Task 6
           .get<{ withdrawn?: 撤回的话[] }>("editQueue", { sessionId: s.sessionId, id, action })

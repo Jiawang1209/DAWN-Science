@@ -63,7 +63,8 @@ export function 汇总工具组(tools: readonly 工具[]): 工具组汇总 {
   let 总: number | undefined = 0
   let 在跑: 工具组汇总["在跑"]
   tools.forEach((x, k) => {
-    if (x.status === "error") 失败++
+    // 被停下的（停止 / 调整方向）不算失败：汇总行说「1 失败」会让人去找一个不存在的错
+    if (x.status === "error" && !x.interrupted) 失败++
     if (x.status === "running") 在跑 = { 第几条: k + 1, 条: x }
     if (总 !== undefined) 总 = x.startedAt !== undefined && x.endedAt !== undefined ? 总 + (x.endedAt - x.startedAt) : undefined
   })

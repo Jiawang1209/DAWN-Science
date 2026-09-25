@@ -84,6 +84,13 @@ describe("工具调用行 · 名称与状态", () => {
       unmount()
     }
   })
+
+  it("被停下的那一步写「已中断」，不写「失败」（调整方向，2026-09-25）", () => {
+    const { container } = show([tool({ status: "error", interrupted: true, result: "Command aborted" })])
+    const row = container.querySelector(".tool")
+    expect(row?.getAttribute("data-interrupted")).toBe("true")
+    expect(row?.querySelector(".tool-status")?.textContent).toBe("已中断")
+  })
 })
 
 describe("工具调用行 · 长结果默认折叠", () => {

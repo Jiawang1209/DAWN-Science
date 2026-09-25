@@ -19,6 +19,7 @@
 import { describe, expect, it } from "vitest"
 import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { EN } from "../../src/ui/i18n/en.js"
 
 const UI_DIR = join(import.meta.dirname, "../../src/ui")
 
@@ -1390,5 +1391,28 @@ describe("设计契约 · 回复时不卡", () => {
   it("**`App.tsx` 不订阅 `$items`**", () => {
     const 代码 = read("App.tsx").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "")
     expect(代码).not.toMatch(/useStore\(\s*\$items\s*\)/)
+  })
+
+  /**
+   * **只留一种排队**（调整方向，2026-09-25）。作者定：插队删掉，想马上改做就用调整方向。
+   * 协议 8.0 已经把 `steer` 收掉——这条盯的是它从别处溜回来：一个 `"steer"` 字面量、一句「插队」的界面文案。
+   * pi 自己的 `streamingBehavior` 仍有 `steer`，我们不用；用了就会在这里红。
+   * 版本史（`protocol/version.ts`）里记着 7.x 的 `steer`，那是历史，不扫。注释不扫（`findLines` 本来就跳过）。
+   */
+  it("**只留一种排队**：代码里没有 `\"steer\"` 字面量，英文表里没有「插队」", () => {
+    const SRC = join(import.meta.dirname, "../../src")
+    const 走 = (d: string): string[] =>
+      readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? 走(join(d, e.name)) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : [],
+      )
+    const 犯的: string[] = []
+    for (const f of 走(SRC)) {
+      if (f.endsWith(join("protocol", "version.ts"))) continue
+      for (const l of findLines(readFileSync(f, "utf8"), (line) => /["'`]steer["'`]/.test(line))) {
+        犯的.push(`${f.slice(SRC.length + 1)}:${l}`)
+      }
+    }
+    for (const [k, v] of Object.entries(EN)) if (k.includes("插队")) 犯的.push(`en.ts：${k} → ${v}`)
+    expect(犯的, "想马上改做走调整方向（redirect），不再有插队").toEqual([])
   })
 })

@@ -67,3 +67,10 @@ describe("汇总工具组", () => {
     expect(汇总工具组([工具("t1"), 工具("t2", { startedAt: undefined })]).总毫秒).toBeUndefined()
   })
 })
+
+describe("被中断的不算失败（调整方向，2026-09-25）", () => {
+  it("汇总行只数真失败", () => {
+    const s = 汇总工具组([工具("a", { status: "error", interrupted: true }), 工具("b", { status: "error" })])
+    expect(s.失败).toBe(1)
+  })
+})

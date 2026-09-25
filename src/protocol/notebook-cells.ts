@@ -124,6 +124,8 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
             code: 认得语言 ? 原始代码 : `# （语言未记录）\n${原始代码}`,
             status: item.status,
             startedAt: item.startedAt,
+            // 停止 / 调整方向时被停下的那一格（2026-09-25）：笔记本里同样写「已中断」，不写失败
+            interrupted: item.interrupted,
           })
         } else {
           close()

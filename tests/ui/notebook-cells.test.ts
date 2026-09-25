@@ -137,3 +137,15 @@ describe("cells()", () => {
     expect(rCell?.outputs[0]?.output).toMatchObject({ text: "2" })
   })
 })
+
+describe("agent 的 run_code 被停下（调整方向，2026-09-25）", () => {
+  it("工具项的 interrupted 透传给 cell；没有就没有这个键", () => {
+    const [停了, 没停] = cells([
+      { ...tool("t1", "python", "sleep(30)", "error"), interrupted: true } as TranscriptItem,
+      { type: "turn", id: "u", who: "user", text: "再来", final: true } as TranscriptItem,
+      tool("t2", "python", "1"),
+    ])
+    expect(停了!.interrupted).toBe(true)
+    expect("interrupted" in 没停!).toBe(false)
+  })
+})

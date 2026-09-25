@@ -4491,7 +4491,7 @@ pre {
 .side-subhead-row .sess-check { margin-right: 24px; }
 
 /**
- * 忙着时那一行提示：**回车插队 / Cmd+回车排队**（2026-08-15）。
+ * 忙着时那一行提示：**回车排队 / Cmd+回车调整方向**（2026-08-15；2026-09-25 改）。
  *
  * 与 `.composer-problem` 共用 `.caveat` 的字号字色，只是它不是错误——
  * 所以不带那个 ⚠，也不用危险色。
@@ -4538,8 +4538,6 @@ pre {
   font-size: var(--dawn-fs-badge);
   color: var(--dawn-text-3);
 }
-/* 插队中的那条：它下一步就会进去——跟主题色走（活着的状态跟主题色，主题色 spec） */
-.queued-one.steer .queued-tag { color: var(--dawn-accent); }
 .queued-text {
   flex: 1 1 auto;
   min-width: 0;

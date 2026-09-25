@@ -3752,6 +3752,9 @@ export function ConversationView({
   onPickModel,
   onAbort,
   onEditQueue,
+  onQueueToDock,
+  canRedirect,
+  queueLocked,
   disabled,
   terminalTrimmed,
   kernelInstanceId,
@@ -3874,18 +3877,27 @@ export function ConversationView({
    * 能等，就能在失败时**把字和图原样还回去**，并且把原因摆在输入卡旁边。
    */
   /**
-   * @param behavior 上一轮**还在跑**时这一条怎么进去（协议 5.6，2026-08-15）：
-   *   `steer` 插队、`followUp` 排队。不忙时不给。
+   * @param behavior 上一轮**还在跑**时这一条怎么进去（协议 8.0，2026-09-25）：
+   *   `followUp` 排队（回车）、`redirect` 调整方向（Cmd/Ctrl+回车，只有 native）。不忙时不给。
    */
   onSend: (
     text: string,
     images?: readonly 图片来源[],
-    behavior?: "steer" | "followUp",
+    behavior?: "followUp" | "redirect",
   ) => void | Promise<void>
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
-  /** 待发单上那两颗：取回 / 改插队（2026-09-23）。只有 native 有待发单 */
-  onEditQueue?: ((id: string, action: "remove" | "steer") => Promise<void>) | undefined
+  /** 待发单上那两颗：取回 / 调整方向（2026-09-25）。只有 native 有待发单 */
+  onEditQueue?: ((id: string, action: "remove" | "redirect") => Promise<void>) | undefined
+  /** 待发单上「到坞里问」（2026-09-25）：只有主区那段给；坞里那段本来就在坞里，不给 = 不画那颗 */
+  onQueueToDock?: ((id: string) => Promise<void>) | undefined
+  /** 这段会不会调整方向（只有 native）。不会的话 Cmd/Ctrl+回车与回车一样是排队，提示行也不提它 */
+  canRedirect?: boolean | undefined
+  /**
+   * 待发条的按钮从外面置灰（复审 m-C，2026-09-25）：Cmd/Ctrl+回车的调整方向那次请求还没回来时由 App 给 true。
+   * 「停止」不受它管——调整方向正在进行时按停止是正当的（停止赢）。
+   */
+  queueLocked?: boolean | undefined
   /** 导出这段对话为 markdown（codex-polish ④）。回落到哪了，好说给人 */
   onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
   /** 输入卡上那颗权限（2026-08-23）：这一段的档、是否跟着默认、选了怎么办 */
@@ -4097,14 +4109,14 @@ export function ConversationView({
    */
   const [发过几次, 设发过几次] = useState(0)
   /**
-   * 这一次提交要的是**插队**还是**排队**（2026-08-15；2026-09-23 对调）。
+   * 这一次提交要不要**调整方向**（2026-08-15 插队；2026-09-25 换成调整方向）。
    *
    * **用 ref 不用 state**：`requestSubmit()` 是同步的，提交处理器紧接着就跑，
    * 而 state 要等下一次渲染才更新——那时这一条早就发出去了。
-   * 每次提交后清回 false：**默认是排队（回车），插队要按住 Cmd/Ctrl**——
-   * 作者 09-23 选的（学自 Codex）：回车只是把话挂上去，打断 agent 要是看清之后的主动选择。
+   * 每次提交后清回 false：**默认是排队（回车），调整方向要按住 Cmd/Ctrl**——
+   * 回车只是把话挂上去，打断 agent 手上这一步要是看清之后的主动选择。
    */
-  const 插队ref = useRef(false)
+  const 调整ref = useRef(false)
   // hooks 不许条件调用：主槽照订，传了就用传进来的（坞里那段）
   const 主槽待发 = useStore($待发)
   const 待发 = 传进来的待发 ?? 主槽待发
@@ -4638,25 +4650,19 @@ export function ConversationView({
            * 看不懂的英文报错。
            */
           /**
-           * **上一轮还在跑：不拦，交给 pi 插队或排队**（2026-08-15 作者要的）。
-           *
-           * 上一版是拦下来说一句「上一条还在回」。**堵住不是答案**——
-           * 作者看过 Hermes 之后要的是：*「对话框依旧能传上去，
-           * 但是却不执行新的内容，而是等上一条结束，再执行新的内容。」*
-           *
-           * 两条路都是 pi 原生的（`AgentSession.prompt` 的 `streamingBehavior`），
-           * 我们只负责说要哪一条：
-           *   回车         → `steer`，插队（当前轮跑完工具、下次调模型之前送进去）
-           *   Cmd/Ctrl+回车 → `followUp`，排队（这一轮彻底完了才送）
+           * **上一轮还在跑：不拦**（2026-08-15 作者要的；2026-09-25 照 Codex 改成两条）：
+           *   回车         → `followUp`，排队（这一轮做完才送）；
+           *   Cmd/Ctrl+回车 → `redirect`，**调整方向**：停掉当前这一步，按这句接着做，排着的照排。
+           * 只有 native 会调整方向（`canRedirect`）；别的会话 Cmd/Ctrl+回车与回车一样是排队——不给一个按了没有那回事的键。
            *
            * **判据仍然挑「界面此刻是不是正告诉你它在忙」**（`busy && onAbort`），
            * 而不是内部那个布尔值：内核会话的 `busy` 恒为真却从不显示「停止」，
            * 上一版只写 `busy` 当场误伤了它，两条内核 e2e 全红。
            */
-          const 要插队 = 插队ref.current
-          插队ref.current = false
+          const 要调整 = 调整ref.current
+          调整ref.current = false
           const 忙着 = busy && !!onAbort
-          const 送法 = 忙着 ? (要插队 ? ("steer" as const) : ("followUp" as const)) : undefined
+          const 送法 = 忙着 ? (要调整 && canRedirect ? ("redirect" as const) : ("followUp" as const)) : undefined
 
           /**
            * **乐观清空，失败还回去。**
@@ -4742,7 +4748,7 @@ export function ConversationView({
          * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
         {onEditQueue ? (
-          <待发条 items={待发} onEdit={onEditQueue} onError={设发送出错} />
+          <待发条 items={待发} onEdit={onEditQueue} onToDock={onQueueToDock} onError={设发送出错} disabled={queueLocked} />
         ) : null}
         <div className="composer-card">
         <div className="composer-box">
@@ -4917,13 +4923,13 @@ export function ConversationView({
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
                 /**
-                 * **光回车 = 排队，Cmd/Ctrl+回车 = 插队**（2026-08-15 学自 Hermes 时是反的；
-                 * 2026-09-23 作者照 Codex 对调：回车不该一手快就打断 agent 正在做的事）。
+                 * **光回车 = 排队，Cmd/Ctrl+回车 = 调整方向**（2026-09-23 作者照 Codex 定回车排队；
+                 * 2026-09-25 Cmd/Ctrl+回车由插队换成调整方向）。
                  *
                  * 记在 ref 上而不是靠事件传下去：这里走的是 `requestSubmit()`，
                  * 提交处理器收到的是 `SubmitEvent`，**按了什么键在那儿已经问不出来了**。
                  */
-                插队ref.current = e.metaKey || e.ctrlKey
+                调整ref.current = e.metaKey || e.ctrlKey
                 e.currentTarget.form?.requestSubmit()
                 return
               }
@@ -4945,7 +4951,7 @@ export function ConversationView({
                * **Esc = 中断这一轮**（2026-08-16 作者要的：*「我在对话的时候，
                * 如果点击 ESC 就是中断对话，模仿一下 Codex」*）。
                *
-               * 中止的入口此前只有那颗按钮，而**框里一有字它就变成「插队」了**
+               * 中止的入口此前只有那颗按钮，而**框里一有字它就变成「排到后面」了**
                * （2026-08-15 学 Hermes 定的）——于是「想停下来」的人得先把
                * 自己打的字删干净。Esc 把这条路补上：**它不看框里有没有东西**。
                *
@@ -5080,7 +5086,9 @@ export function ConversationView({
             * 所以忙着、且框里有东西时，就在这儿明写一行。
             */}
           {busy && onAbort && 有东西要发 ? (
-            <p className="caveat composer-hint">{t("回车排到这一轮后面 · Cmd/Ctrl+回车插队")}</p>
+            <p className="caveat composer-hint">
+              {canRedirect ? t("回车排到这一轮后面 · Cmd/Ctrl+回车调整方向") : t("回车排到这一轮后面")}
+            </p>
           ) : null}
           <div className="composer-controls">
             <span className="composer-gap" aria-hidden="true" />
@@ -5147,7 +5155,7 @@ export function ConversationView({
               * （空的，会被 `if (!text …) return` 挡下，但那是靠运气）。
               */}
             {/**
-              * **忙着而框里有字：这颗是「插队」，不是「停止」**（2026-08-15，学自 Hermes）。
+              * **忙着而框里有字：这颗是「排到后面」，不是「停止」**（2026-08-15，学自 Hermes）。
               *
               * Hermes 的原则写在它 composer 的注释里：*「While busy: text redirects
               * the live turn, attachments queue for the next turn, an empty composer stops.」*
@@ -6033,6 +6041,8 @@ const TOOL_STATUS = {
   ok: { mark: "✓", label: msgid("成功") },
   error: { mark: "✗", label: msgid("失败") },
 } as const
+/** 被停下的那一步（停止 / 调整方向，2026-09-25）：没做完，但不是它自己错了——不写「失败」 */
+const TOOL_INTERRUPTED = { mark: "■", label: msgid("已中断") } as const
 
 /**
  * 这一条跑了多久。**没有开始时刻就什么都不说**——
@@ -6112,7 +6122,7 @@ function ToolRow({
    */
   在组里?: boolean
 }) {
-  const { mark, label: 状态msgid } = TOOL_STATUS[item.status]
+  const { mark, label: 状态msgid } = item.interrupted ? TOOL_INTERRUPTED : TOOL_STATUS[item.status]
   // **表是模块级常量**：在那里 `t()` 会在 `loadLang()` 之前跑，取到的是默认语言
   const label = t(状态msgid)
   const 用时 = useElapsed(item)
@@ -6137,7 +6147,11 @@ function ToolRow({
   const result = foldResult(item.result, expanded)
 
   return (
-    <div className={`tool ${item.status}${open ? " open" : ""}`} data-status={item.status}>
+    <div
+      className={`tool ${item.status}${open ? " open" : ""}`}
+      data-status={item.status}
+      data-interrupted={item.interrupted ? "true" : undefined}
+    >
       {/**
        * 折叠开关就是这一行本身。**整行可点**——只让那个小三角可点，
        * 等于给了一个 8×8 的靶子。

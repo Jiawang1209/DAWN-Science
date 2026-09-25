@@ -47,12 +47,21 @@ export interface RemoteCwd {
 }
 
 /**
- * 上一轮还在跑时，这一条怎么进去（2026-08-15）。
+ * 上一轮还在跑时，这一条怎么进去（2026-08-15；2026-09-25 只剩一种）。
  *
- * **两个词都是 pi 的**（`AgentSession.prompt` 的 `streamingBehavior`）：
- * 我们不自己造队列——那是「学会了，自己写一个」。
+ * 词是 pi 的（`AgentSession.prompt` 的 `streamingBehavior`）：我们不自己造队列——那是「学会了，自己写一个」。
+ * `steer`（插队）2026-09-25 删了：作者用下来「插队感觉和排队似的」。想马上改做走 `redirect()`，不走 `write`。
  */
-export type 送法 = "steer" | "followUp"
+export type 送法 = "followUp"
+
+/**
+ * 调整方向的那一句（2026-09-25）。`data` 给了 = Cmd/Ctrl+回车来的、不在待发单上；不给 = 待发单上那条，按 `queueId` 找。
+ */
+export interface 调整的那句 {
+  queueId: string
+  data?: string | undefined
+  images?: readonly ImageAttachment[] | undefined
+}
 
 export interface SessionSpec {
   sessionId: SessionId
@@ -404,6 +413,8 @@ export type AgentEvent =
       bytes: number
       /** 全文落盘位置。写盘失败时缺省 */
       fullOutputPath?: string
+      /** 停止 / 调整方向时被停下的（2026-09-25）：运行时在 `abort()` 期间收到的结束都带它。只在 true 时出现 */
+      interrupted?: true
     }
   | { kind: "exited"; sessionId: SessionId; exitCode: number; reason?: string }
   /**
@@ -468,11 +479,9 @@ export interface AgentRuntime {
   /** 注册观察者。可多个，互不影响。返回退订函数。 */
   attach(sessionId: SessionId, sink: EventSink): () => void
   /**
-   * @param behavior 上一轮**还在跑**时这一条怎么办（2026-08-15）。
-   *   `steer` 打断插入（pi：在当前轮跑完工具、下一次调模型之前送进去），
-   *   `followUp` 排队（pi：等这一轮再没有工具调用和插队消息了才送）。
+   * @param behavior 上一轮**还在跑**时这一条怎么办（2026-08-15；2026-09-25 只剩 `followUp` 排队）。
    *   **不忙时这个参数没有意义**，忙时缺席读作 `followUp`——
-   *   排队不会丢消息，而 pi 在流式中没有 behavior 会直接抛错。
+   *   排队不会丢消息，而 pi 在流式中没有 behavior 会直接抛错。调整方向走 `redirect()`。
    */
   write(sessionId: SessionId, data: string, behavior?: 送法, queueId?: string): void
   /**
@@ -496,14 +505,21 @@ export interface AgentRuntime {
     queueId?: string,
   ): void
   /**
-   * 动一条还在排着的消息（2026-09-23）。**只有 native 有**——有没有它就是「这类会话有没有待发单」的判据。
+   * 撤回一条还在排着的消息（2026-09-23）。**只有 native 有**——有没有它就是「这类会话有没有待发单」的判据。
    *
    * 带了 `queueId` 的 `write` 才进待发单：忙着就排进 pi，emit `queue`；不忙就当场开一轮并 emit
    * `queue_delivered newTurn: true`。送到时 emit `queue_delivered`。
    *
    * @throws 那条已经不在单上（多半是刚好被 pi 送走了）
    */
-  editQueue?(sessionId: SessionId, id: string, action: "remove" | "steer"): void
+  editQueue?(sessionId: SessionId, id: string): void
+  /**
+   * 调整方向（2026-09-25）：停掉当前这一步，这句起新的一轮，其余排着的照排。**只有 native 有**。
+   * 返回没能重新排上的 id（原先后）——调用方把它们交回界面放回输入框，不许丢。
+   *
+   * @throws 那条已经不在单上 / 还在准备（没交给 pi）
+   */
+  redirect?(sessionId: SessionId, 那句: 调整的那句): Promise<string[]>
   /** 把排着的全部撤下来，返回它们的 id（按原先后）。中止之前先调它：停下之后排着的话不该自己冒出来 */
   clearQueue?(sessionId: SessionId): string[]
   /** 侧边对话：启用 / 停用 `read_main_session`（2026-09-24）。**只有 native 有，有无即判据** */
@@ -543,8 +559,6 @@ export interface AgentRuntime {
    * 壳接好线之后来问一次，再把它当一条 `config_options` 事件并进记录。
    */
   configOptions?(sessionId: SessionId): readonly 会话开关[] | undefined
-  /** 插一句引导，不打断整轮。只有 native 有 */
-  steer?(sessionId: SessionId, text: string): Promise<void>
   resize?(sessionId: SessionId, cols: number, rows: number): void
   stop(sessionId: SessionId): Promise<void>
 }

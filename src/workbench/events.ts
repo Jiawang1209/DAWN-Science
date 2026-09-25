@@ -564,7 +564,9 @@ export class SessionTranscripts {
           id,
           name: event.toolName,
           input: 先前?.type === "tool" ? 先前.input : undefined,
-          status: event.isError ? "error" : "ok",
+          // 被停下的（停止 / 调整方向）：没做完，算 error；`interrupted` 让界面写「已中断」而不是「失败」
+          status: event.isError || event.interrupted ? "error" : "ok",
+          ...(event.interrupted ? { interrupted: true as const } : {}),
           result: event.text,
           // **截断的三件套一起走。** 只传正文等于把「这是残缺品」这个事实丢掉，
           // 界面就只能猜——那正是修复前的样子（规格 7.5）

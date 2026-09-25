@@ -83,6 +83,7 @@ import type {
   RestoredItem,
   ImageAttachment,
   送法,
+  调整的那句,
   会话开关,
 } from "./types.js"
 
@@ -294,14 +295,21 @@ interface NativeSession {
    * **待发单的镜像**（2026-09-23，学自 Codex）。
    *
    * 真正的队列在 pi 那儿（模型读的是那份），镜像只记 pi 没记的：我们的 id、原图、送进去时的原文——
-   * 撤回或改插队要 `clearQueue()` 之后按原样重送，而 pi 的单子里只剩展开过的文字、没有图。
+   * 撤回与调整方向要 `clearQueue()` 之后按原样重送，而 pi 的单子里只剩展开过的文字、没有图。
    * **先后与「送到了没有」一律以 pi 的 `queue_update` 为准**（见 `对账待发`）。
    */
   待发: 待发条目[]
-  /** pi 上一次报的两张单子各有几条。**只认变短**——变短才是「送走了」 */
-  pi待发: { steer: number; followUp: number }
+  /** pi 上一次报的排队单有几条。**只认变短**——变短才是「送走了」 */
+  pi待发: number
   /** 我们自己在 `clearQueue()`：那次变短不是送到，别当成送到 */
   清队中: boolean
+  /**
+   * 正在中止（停止 / 调整方向，2026-09-25）。这期间结束的工具一律标 `interrupted`——
+   * bash 与 `run_code` 同一个判据，不靠认结果文字（pi 的 bash 回 `Command aborted`，`run_code` 回「已中断」，各说各的）。
+   */
+  中止中: boolean
+  /** 调整方向一个接一个做（2026-09-25）：两次挨得太近时，后一次等前一次停稳再动 */
+  调整链: Promise<void> | undefined
 }
 
 /**
@@ -317,7 +325,6 @@ interface 待发条目 {
   id: string | undefined
   文: string
   图: readonly ImageAttachment[] | undefined
-  送法: 送法
   未进pi: boolean
 }
 
@@ -1421,8 +1428,10 @@ export class NativeRuntime implements AgentRuntime {
       sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
       待发: [],
-      pi待发: { steer: 0, followUp: 0 },
+      pi待发: 0,
       清队中: false,
+      中止中: false,
+      调整链: undefined,
     })
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     this.发会话开关(spec.sessionId)
@@ -1599,7 +1608,8 @@ export class NativeRuntime implements AgentRuntime {
     this.emitUsageIfNew(sessionId)
 
     if (e.type === "queue_update") {
-      this.对账待发(sessionId, e.steering?.length ?? 0, e.followUp?.length ?? 0)
+      // 只看排队单：插队（steering）2026-09-25 起我们不再用
+      this.对账待发(sessionId, e.followUp?.length ?? 0)
       return
     }
 
@@ -1704,6 +1714,8 @@ export class NativeRuntime implements AgentRuntime {
           truncated: out.truncated,
           bytes: out.bytes,
           ...(out.fullOutputPath ? { fullOutputPath: out.fullOutputPath } : {}),
+          // 停止 / 调整方向期间结束的：它是被停下的，不是自己做完或自己出错（2026-09-25）
+          ...(this.sessions.get(sessionId)?.中止中 ? { interrupted: true as const } : {}),
         })
         return
       }
@@ -1824,7 +1836,7 @@ export class NativeRuntime implements AgentRuntime {
      */
     const s忙 = (s?.inFlight ?? 0) > 0
     const 条: 待发条目 | undefined = s && s忙
-      ? { id: queueId, 文: data, 图: images, 送法: behavior ?? "followUp", 未进pi: true }
+      ? { id: queueId, 文: data, 图: images, 未进pi: true }
       : undefined
     if (条) {
       s!.待发.push(条)
@@ -1836,7 +1848,7 @@ export class NativeRuntime implements AgentRuntime {
       if (!条) return this.送一轮(sessionId, 文, images, behavior)
       if (!this.摘条(s!, 条)) return
       if (条.id) this.发待发单(sessionId)
-      this.送一轮(sessionId, 文, images, 条.送法, 条.id)
+      this.送一轮(sessionId, 文, images, "followUp", 条.id)
     }
     void 描述图片(端点, images)
       .then((描述) => {
@@ -1878,38 +1890,42 @@ ${描述}`
         : undefined
 
     /**
-     * **上一轮还在跑：交给 pi 的插队 / 排队**（2026-08-15 作者要的）。
+     * **上一轮还在跑：交给 pi 排队**（2026-08-15 作者要的；2026-09-25 只剩排队）。
      *
-     * pi 两条都是原生的（`AgentSession.prompt` 的 `streamingBehavior`）：
-     * `steer` 在当前轮跑完工具、下一次调模型之前送进去；
-     * `followUp` 等这一轮再没有工具调用和插队消息了才送。
-     * **所以我们不自己造队列**——那是「学会了，自己写一个」。
+     * pi 原生的 `followUp`：等这一轮再没有工具调用了才送。**所以我们不自己造队列**——那是「学会了，自己写一个」。
+     * 想马上改做走 `redirect()`（停掉这一步、这句起新一轮）。
      *
      * **不能走下面那套收尾。** 排队时 `prompt()` 收下就返回，
      * 而下面 `.finally` 里发的是 `turn_end` + `cost` + `idle`——
      * 那会让界面以为这一轮已经完了：等待记号消失、停止按钮变回发送，
      * 而模型其实还在跑。所以这里**不碰 `inFlight`、不挂 `pending`**，
      * 只把失败说出来。
-     *
-     * 缺席读作 `followUp`：**排队不会丢消息**，而 pi 在流式中没有 behavior
-     * 会直接抛错——那时人打的那句话就没了。
      */
     if (s.inFlight > 0) {
-      const 送法 = behavior ?? "followUp"
       /**
        * **我们以为在跑、pi 说没在跑**（审查 09-24 #5）：pi 看的是它自己的 `isStreaming`，
        * 它在 `prompt()` 开头要先过几道 await 才立起来、收尾时又比我们的 `.finally` 先放下。
        * 落在这两条缝里的话 pi 会当成新的一轮直接跑——不进单子、对账永远等不到它。
-       * 那就先挂在镜像上（未进 pi），等这一轮收尾再按新一轮送。插队在这里退化成排队：宁可晚，不可乱。
+       * 那就先挂在镜像上（未进 pi），等这一轮收尾再按新一轮送。
        */
       if (!s.session.isStreaming) {
-        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 送法, 未进pi: true }
+        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 未进pi: true }
         s.待发.push(条)
         if (queueId) this.发待发单(sessionId)
         void (s.pending ?? Promise.resolve()).then(() => {
           if (!this.摘条(s, 条)) return // 撤回或停止已经把它拿走了
           if (条.id) this.发待发单(sessionId)
-          this.送一轮(sessionId, 条.文, 条.图, 条.送法, 条.id)
+          /**
+           * 收尾前会话被关了（`stop()` 不清镜像）：`送一轮` 会抛「未启动」——这里是 `void` 的链，
+           * 不接住就是一个未处理的 rejection、这句也无声无息没了。调整方向之后重排的几条都走这条缝（2026-09-25）。
+           */
+          try {
+            this.送一轮(sessionId, 条.文, 条.图, "followUp", 条.id)
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e)
+            if (条.id) this.emit({ kind: "queue_failed", sessionId, id: 条.id, message: msg })
+            else this.emit({ kind: "notice", sessionId, text: `这句没能送出去（${msg}）：${条.文}` })
+          }
         })
         return
       }
@@ -1918,12 +1934,12 @@ ${描述}`
        * 文字为空它就不摘——那条永远挂在它的单子上，此后每一次数数都差一。
        */
       const 文 = data.trim() || !图 ? data : "（见附图）"
-      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 送法, 未进pi: false }
+      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 未进pi: false }
       // **不带 id 的也进镜像**（飞书 / 微信 / 定时的写）：pi 的单子里有它，镜像里就得有它
       s.待发.push(条)
       if (queueId) this.发待发单(sessionId)
       void s.session
-        .prompt(文, { ...(图 ? { images: 图 } : {}), streamingBehavior: 送法 })
+        .prompt(文, { ...(图 ? { images: 图 } : {}), streamingBehavior: "followUp" })
         .catch((err: unknown) => {
           const msg = err instanceof Error ? err.message : String(err)
           this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
@@ -2380,41 +2396,44 @@ ${描述}`
 
   async abort(sessionId: SessionId): Promise<void> {
     /**
-     * **先撤待发单，再中止**（2026-09-23）。反过来的话，中止与撤单之间 pi 可能把一条插队送进去、
+     * **先撤待发单，再中止**（2026-09-23）。反过来的话，中止与撤单之间 pi 可能把一条送进去、
      * 又开一段；而且 pi 中止之后不再续跑，排着的那几条就永远卡在它的队列里。
      * 界面的「停止」会先走 `clearQueue` 把原文要回去；走到这里还剩的（卡死守卫的自动中止）要出声。
      */
     for (const id of this.clearQueue(sessionId)) {
       this.emit({ kind: "queue_failed", sessionId, id, message: "这一轮被中止了，这句还排着、没有送出去" })
     }
-    await this.sessions.get(sessionId)?.session.abort()
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    // 中止期间结束的工具标「已中断」（2026-09-25）；`run_code` 收到中止信号会给内核发中断
+    s.中止中 = true
+    try {
+      await s.session.abort()
+    } finally {
+      s.中止中 = false
+    }
   }
 
   /**
    * pi 报了一次待发单（`queue_update`）。**变短了才是送走了**：
-   * pi 从头送、按文字摘第一条，所以从镜像同一张单子的头上摘掉相应条数。
+   * pi 从头送、按文字摘第一条，所以从镜像头上摘掉相应条数。
    * 变长不管——镜像先进、pi 的输入处理异步后到，那一瞬 pi 比镜像短不代表送到了。
    */
-  private 对账待发(sessionId: SessionId, steer: number, followUp: number): void {
+  private 对账待发(sessionId: SessionId, followUp: number): void {
     const s = this.sessions.get(sessionId)
     if (!s) return
-    const 之前 = s.pi待发
-    s.pi待发 = { steer, followUp }
+    const 少了 = s.pi待发 - followUp
+    s.pi待发 = followUp
     if (s.清队中) return
     let 变了 = false
-    for (const [送法, 少了] of [
-      ["steer", 之前.steer - steer],
-      ["followUp", 之前.followUp - followUp],
-    ] as const) {
-      for (let k = 0; k < 少了; k++) {
-        // pi 的单子里只有交给了它的那些：还在等转述 / 等收尾的不算
-        const i = s.待发.findIndex((x) => x.送法 === 送法 && !x.未进pi)
-        if (i < 0) break
-        const [送走的] = s.待发.splice(i, 1)
-        if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
-        this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })
-        变了 = true
-      }
+    for (let k = 0; k < 少了; k++) {
+      // pi 的单子里只有交给了它的那些：还在等转述 / 等收尾的不算
+      const i = s.待发.findIndex((x) => !x.未进pi)
+      if (i < 0) break
+      const [送走的] = s.待发.splice(i, 1)
+      if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
+      this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })
+      变了 = true
     }
     if (变了) this.发待发单(sessionId)
   }
@@ -2422,10 +2441,9 @@ ${描述}`
   private 发待发单(sessionId: SessionId): void {
     const s = this.sessions.get(sessionId)
     if (!s) return
-    // **按 pi 真正送出的先后排**：插队的那张单子总在排队的前面送
+    // 镜像的先后就是 pi 送出的先后（只剩一张单子）
     const 有身份 = s.待发.filter((x): x is 待发条目 & { id: string } => x.id !== undefined)
-    const 先后 = [...有身份.filter((x) => x.送法 === "steer"), ...有身份.filter((x) => x.送法 === "followUp")]
-    this.emit({ kind: "queue", sessionId, items: 先后.map((x) => ({ id: x.id, behavior: x.送法 })) })
+    this.emit({ kind: "queue", sessionId, items: 有身份.map((x) => ({ id: x.id, behavior: "followUp" as const })) })
   }
 
   /** 按引用摘（同一句话可能没有 id）。摘到了才返回 true——摘不到说明撤回或停止先拿走了 */
@@ -2449,36 +2467,120 @@ ${描述}`
     } finally {
       s.清队中 = false
     }
-    s.pi待发 = { steer: 0, followUp: 0 }
+    s.pi待发 = 0
     return 原来
   }
 
   /**
-   * 撤回一条 / 把一条排队改成插队（2026-09-23）。
+   * 撤回一条（2026-09-23；2026-09-25 改插队删了，调整方向走 `redirect`）。
    *
    * pi 只有「全部清掉」，没有「动其中一条」——所以清掉之后**按原先后重送一遍**。
-   * 先插队后排队（pi 本来就是两张单子，插队的总在排队的前面送）。
    * 重送走 `送一轮` 同一条路：此刻已经空闲的话，第一条开新一轮、其余排在它后面。
    */
-  editQueue(sessionId: SessionId, id: string, action: "remove" | "steer"): void {
+  editQueue(sessionId: SessionId, id: string): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     const 它 = s.待发.find((x) => x.id === id)
     if (!它) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
-    // 还没交给 pi 的（等转述 / 等收尾）：就地改，不碰 pi 的单子
+    // 还没交给 pi 的（等转述 / 等收尾）：就地摘，不碰 pi 的单子
     if (它.未进pi) {
-      if (action === "remove") this.摘条(s, 它)
-      else 它.送法 = "steer"
+      this.摘条(s, 它)
       this.发待发单(sessionId)
       return
     }
-    const 原来 = this.清空待发(s)
-    const 留下 = 原来
-      .filter((x) => !(action === "remove" && x.id === id))
-      .map((x) => (x.id === id ? { ...x, 送法: "steer" as const } : x))
-    const 重送 = [...留下.filter((x) => x.送法 === "steer"), ...留下.filter((x) => x.送法 === "followUp")]
+    const 留下 = this.清空待发(s).filter((x) => x.id !== id)
     this.发待发单(sessionId)
-    for (const x of 重送) this.送一轮(sessionId, x.文, x.图, x.送法, x.id)
+    for (const x of 留下) this.送一轮(sessionId, x.文, x.图, "followUp", x.id)
+  }
+
+  /**
+   * **调整方向**（2026-09-25，学自 Codex；spec `2026-09-25-调整方向-design.md` §4.2）：停掉当前这一步，按这句接着做。
+   *
+   * 四步按顺序做完，**不由界面串三次请求**（作者定的做法一）：
+   *   ① 不忙 → 当普通一句发出去；
+   *   ② `clearQueue()` 拿回 pi 单上所有待发，把这句从中去掉（Cmd/Ctrl+回车来的本来就不在单上）；
+   *   ③ `abort()` 并等 pi 真停下——中止信号传到工具，`run_code` 据此给内核发中断（`tools/run-code.ts`）；
+   *   ④ 这句起新的一轮；其余几条按原先后重排到它后面（id 不变，界面上那几条不闪）。
+   * 先撤单、再中止，与 `abort()` 同一个理由：中止与撤单之间 pi 可能把一条送进去又开一段。
+   *
+   * **哪一步失败都不许丢话**：停不下来 → 这句改排在最前、出声；重排时会话没了 → 那几条的 id 交回调用方，
+   * 后端据此放回输入框。返回的就是这份「没排回」。
+   *
+   * **一个接一个**：两次 Cmd/Ctrl+回车挨得太近时，后一次等前一次停稳再动——并发地各清一次单、各中止一次，
+   * 第二次会把第一次刚重排的那几条当成「其余」再清一遍，而第一句的新一轮也会被它当成「这一步」停掉；
+   * 排成一个接一个，这就是「又改了一次主意」，结果是对的。
+   */
+  redirect(sessionId: SessionId, 那句: 调整的那句): Promise<string[]> {
+    const s = this.sessions.get(sessionId)
+    if (!s) return Promise.reject(new Error(`会话 "${sessionId}" 未启动`))
+    const 这次 = (s.调整链 ?? Promise.resolve()).then(() => this.真调整(sessionId, 那句))
+    s.调整链 = 这次.then(
+      () => undefined,
+      () => undefined,
+    )
+    return 这次
+  }
+
+  private async 真调整(sessionId: SessionId, 那句: 调整的那句): Promise<string[]> {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    /** 单上那条（按 id）；Cmd/Ctrl+回车来的不在单上，带着原文 */
+    const 单上的 = 那句.data === undefined ? s.待发.find((x) => x.id === 那句.queueId) : undefined
+    if (那句.data === undefined) {
+      if (!单上的) throw new Error("这条已经不在待发单上了——多半刚好送出去了")
+      // 等转述 / 等收尾的那条还没交给 pi：它的文字可能还要并进转述，现在拿去起新一轮会丢掉转述
+      if (单上的.未进pi) throw new Error("这句还在准备（转述图片或等这一轮收尾），稍等再调整方向")
+    }
+    const 这句 = {
+      id: 那句.queueId as string | undefined,
+      文: 单上的 ? 单上的.文 : (那句.data ?? ""),
+      图: 单上的 ? 单上的.图 : 那句.images,
+    }
+    const 没排回: string[] = []
+    /**
+     * 送一句：失败（会话在这期间没了）记下 id 交回，不许丢。
+     * 新来的带图走 `writeWithImages`（模型不收图时要转述）；单上的已经转述过、原样走 `送一轮`。
+     */
+    const 送 = (x: { id: string | undefined; 文: string; 图: readonly ImageAttachment[] | undefined }, 新来的: boolean) => {
+      try {
+        if (新来的 && x.图?.length) this.writeWithImages(sessionId, x.文, x.图, "followUp", x.id)
+        else this.送一轮(sessionId, x.文, x.图, "followUp", x.id)
+      } catch (e) {
+        if (x.id) 没排回.push(x.id)
+        else this.emit({ kind: "notice", sessionId, text: `这句没能重新排上（${e instanceof Error ? e.message : String(e)}）：${x.文}` })
+      }
+    }
+    // ① 不忙：就是新的一句
+    if (s.inFlight === 0) {
+      if (单上的) {
+        this.摘条(s, 单上的)
+        this.发待发单(sessionId)
+      }
+      送(这句, !单上的)
+      return 没排回
+    }
+    // ② 撤单。**先不发 `queue`**：界面上的待发条这时不该闪空，重排完再发一次整份
+    const 其余 = this.清空待发(s).filter((x) => x !== 单上的)
+    // ③ 停下这一步
+    let 没停住: string | undefined
+    s.中止中 = true
+    try {
+      await s.session.abort()
+      // 我们自己那一轮的收尾（inFlight 归零、idle 发出）挂在 `pending` 上：等它走完，④ 才是「新的一轮」
+      await s.pending
+    } catch (e) {
+      没停住 = e instanceof Error ? e.message : String(e)
+    } finally {
+      s.中止中 = false
+    }
+    if (没停住 !== undefined) {
+      this.emit({ kind: "notice", sessionId, text: `没能停下这一步（${没停住}），这句改为排队，排在最前` })
+    }
+    // ④ 这句起新的一轮（没停住就排在最前）；其余按原先后排到它后面
+    送(这句, !单上的)
+    for (const x of 其余) 送(x, false)
+    this.发待发单(sessionId)
+    return 没排回
   }
 
   /**
@@ -2524,17 +2626,6 @@ ${描述}`
       if (!x.id) this.emit({ kind: "notice", sessionId, text: `这句还排着、没有送出去：${x.文}` })
     }
     return 全部.flatMap((x) => (x.id ? [x.id] : []))
-  }
-
-  /**
-   * 插一句引导，不打断整轮。
-   *
-   * 与 `write` 的区别：后者是「说完了，该你了」，前者是「你继续，但注意这个」。
-   */
-  async steer(sessionId: SessionId, text: string): Promise<void> {
-    const s = this.sessions.get(sessionId)
-    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
-    await s.session.steer(text)
   }
 
   async stop(sessionId: SessionId): Promise<void> {

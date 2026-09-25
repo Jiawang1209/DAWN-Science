@@ -1,5 +1,5 @@
 /**
- * **上一条还在回时又发一条：排队、插队与待发条**（2026-08-15；2026-09-23 改）。**跑真实构建产物。**
+ * **上一条还在回时又发一条：排队、调整方向与待发条**（2026-08-15；2026-09-23 改；2026-09-25 插队换成调整方向）。**跑真实构建产物。**
  *
  * 作者三次报同一句 `Agent is already processing.`，第一版的修法是**拦住**。
  * 他看过 Hermes 之后要的是另一种：*「对话框依旧能传上去，但是却不执行新的内容，
@@ -7,8 +7,8 @@
  *
  * 09-23 照 Codex 改（spec `2026-09-23-待发消息-design.md`）：
  *   回车         → `followUp`，排队（这一轮彻底完了才送）
- *   Cmd/Ctrl+回车 → `steer`，插队（当前轮跑完工具、下次调模型之前送进去）
- * 排着的话挂在输入框上方的**待发条**上，能「取回」、能改「插队」；
+ *   Cmd/Ctrl+回车 → `redirect`，调整方向（2026-09-25 起；那几条在 `redirect.spec.ts`）
+ * 排着的话挂在输入框上方的**待发条**上，能「取回」、能「调整方向」；
  * **真送到模型那一刻才进转录**——此前写的一刻就进，位置落在 agent 这一轮中间，看着像已经送到了。
  *
  * ## 这条为什么非得在真实产物上跑
@@ -72,18 +72,6 @@ test("**正在回的时候，回车是排队**：挂在待发条上、此刻不�
   await 收尾了(page)
 })
 
-test("**Cmd+回车是插队**：标着「插队中」，工具跑完就送进去", async ({ dawn }) => {
-  const { page } = dawn
-  await 让它忙起来(page)
-
-  await 打一句(page, "插到前面这一句", "ControlOrMeta+Enter")
-  await expect(待发条(page)).toContainText("插队中")
-
-  await expect(page.locator(".turn.user")).toHaveCount(2, { timeout: 60_000 })
-  await expect(page.getByText(/already processing/i)).toHaveCount(0)
-  await 收尾了(page)
-})
-
 test("**取回**：从待发条拿下来、字回到输入框，这句话不会被送出去", async ({ dawn }) => {
   const { page } = dawn
   await 让它忙起来(page)
@@ -98,21 +86,6 @@ test("**取回**：从待发条拿下来、字回到输入框，这句话不会�
   /** 这一轮收尾之后，转录里始终只有第一句 */
   await 收尾了(page)
   await expect(page.locator(".turn.user")).toHaveCount(1)
-})
-
-test("**排队的改插队**：点「插队」，标签变「插队中」，最终照样送到", async ({ dawn }) => {
-  const { page } = dawn
-  await 让它忙起来(page)
-
-  await 打一句(page, "这句要早点进去", "Enter")
-  await expect(待发条(page)).toContainText("排队中")
-  await 待发条(page).getByRole("button", { name: "插队" }).click()
-  await expect(待发条(page)).toContainText("插队中")
-  /** 插队中的那条没有「插队」那颗了——它已经在插队 */
-  await expect(待发条(page).getByRole("button", { name: "插队" })).toHaveCount(0)
-
-  await expect(page.locator(".turn.user")).toHaveCount(2, { timeout: 60_000 })
-  await 收尾了(page)
 })
 
 test("**有待发时按停止**：排着的话回到输入框，停下之后不会自己冒出来", async ({ dawn }) => {
@@ -148,8 +121,8 @@ test("忙着且框里有字时，屏幕上明写着这两条怎么用；待发�
 
   await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
   /** `toBeVisible()` 对 opacity: 0 仍算可见——要量 */
-  for (const 名 of ["插队", "取回"]) {
-    const 键 = 待发条(page).getByRole("button", { name: 名 })
+  for (const 名 of ["调整方向", "到坞里问", "取回"]) {
+    const 键 = 待发条(page).getByRole("button", { name: 名, exact: true })
     await expect(键).toBeVisible()
     expect(await 键.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
   }

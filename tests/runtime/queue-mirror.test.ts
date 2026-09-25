@@ -659,6 +659,68 @@ describe("调整方向 · 审查 09-25 补的", () => {
     }
   })
 
+  it("m-A 停止落在新一轮起跑前（pi 还在 prompt 开头的几道 await）：起跑后再停一次，这一轮不许接着跑；其余交回", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x, { 晚一拍: true })
+    const 演的问 = x.pi.prompt as (text: string, po?: { streamingBehavior?: "followUp"; preflightResult?: (ok: boolean) => void }) => Promise<void>
+    const 演的停 = x.pi.abort
+    // 真 pi：`_isAgentRunActive` 还没立起来时 `abort()` 什么都不做、当场返回；起跑时 `_agentRunAbortRequested` 被复位
+    let 预跑中 = false
+    x.pi.abort = async () => {
+      if (预跑中) {
+        顺序.push("abort(落空)")
+        return
+      }
+      return 演的停()
+    }
+    let 停!: Promise<void>
+    x.pi.prompt = async (text, po?: { streamingBehavior?: "followUp"; preflightResult?: (ok: boolean) => void }) => {
+      if (po?.streamingBehavior) return 演的问(text, po)
+      预跑中 = true
+      const p = 演的问(text, {
+        ...po,
+        preflightResult: (ok: boolean) => {
+          预跑中 = false
+          po?.preflightResult?.(ok)
+        },
+      })
+      停 = x.rt.abort("s1" as never) // 人在这一拍按了停止
+      return p
+    }
+    x.rt.write("s1" as never, "画个图", "followUp", "b")
+    await 等一拍()
+    expect(await x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })).toEqual(["b"])
+    await 停
+    const i = 顺序.indexOf("prompt:换个做法")
+    expect(顺序.slice(i)).toEqual(["prompt:换个做法", "abort(落空)", "abort"])
+    expect(x.pi.isStreaming).toBe(false)
+    expect(x.单.followUp).toEqual([])
+  })
+
+  it("m-B 排在前一次后面等的调整方向（单上那条），期间按了停止：不抛「不在待发单上」，交回空（停止已经把它放回输入框）", async () => {
+    const x = 摆一段()
+    const 顺序 = 演(x)
+    const 原停 = x.pi.abort
+    let 放行!: () => void
+    const 慢 = new Promise<void>((r) => (放行 = r))
+    x.pi.abort = async () => {
+      await 慢
+      await 原停()
+    }
+    x.rt.write("s1" as never, "画个图", "followUp", "b")
+    await 等一拍()
+    const 一 = x.rt.redirect("s1" as never, { queueId: "n", data: "换个做法" })
+    const 二 = x.rt.redirect("s1" as never, { queueId: "b" })
+    await 等一拍()
+    x.rt.clearQueue("s1" as never)
+    const 停 = x.rt.abort("s1" as never)
+    放行()
+    expect(await 一).toEqual(["n", "b"])
+    expect(await 二).toEqual([])
+    await 停
+    expect(顺序.some((t) => t.startsWith("prompt:"))).toBe(false)
+  })
+
   it("一个接一个的锁：前一次抛了，后一次照样做", async () => {
     const x = 摆一段()
     const 顺序 = 演(x)

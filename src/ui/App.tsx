@@ -1852,8 +1852,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 带图 = images && images.length > 0 ? { images: [...images] } : {}
       /** **不忙时不给**：缺席与「排队」在协议上不是一回事 */
       const 带送法 = behavior ? { behavior } : {}
+      const 发 = () =>
+        client.get<{ withdrawn?: 撤回的话[] }>("writeToSession", { sessionId: id, data, as: "user", ...带图, ...带送法 })
+      let r: { withdrawn?: 撤回的话[] }
       try {
-        await client.get("writeToSession", { sessionId: id, data, as: "user", ...带图, ...带送法 })
+        r = await 发()
       } catch (e) {
         /**
          * **被租约挡下时，重取一次再发。**
@@ -1869,8 +1872,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         const 像租约 = e instanceof Error && /租约/.test(e.message)
         if (!像租约) throw e
         await client.get("acquireLease", { sessionId: id, holder: "user" })
-        await client.get("writeToSession", { sessionId: id, data, as: "user", ...带图, ...带送法 })
+        r = await 发()
       }
+      // 调整方向时没能重新排上的几句（协议 8.0）：放回**这段**的输入框——后端已在转录里说过一句
+      if (r.withdrawn?.length) 退回输入框(id, r.withdrawn)
     },
     [client],
   )
@@ -2065,31 +2070,47 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **一次只开一段**（同上）：双击、或按钮与命令面板各点一下，会建出两段，第二段挂上去把第一段顶掉，
    * 第一段就成了列表里一段谁也没要的空会话。建着的时候按钮置灰，面板那条也挡在这里。
    */
+  /**
+   * 哪几段的 Cmd/Ctrl+回车调整方向请求还没回来（复审 m-C，2026-09-25）：那几段的待发条整条置灰。
+   * 按会话记：坞里那段与主区那段各调各的，互不相干。
+   */
+  const [调整中的, 设调整中的] = useState<ReadonlySet<string>>(() => new Set())
+  const 锁着调整 = <T,>(sid: string, p: Promise<T>): Promise<T> => {
+    设调整中的((前) => new Set(前).add(sid))
+    return p.finally(() =>
+      设调整中的((前) => {
+        const n = new Set(前)
+        n.delete(sid)
+        return n
+      }),
+    )
+  }
   const [另开中, 设另开中] = useState(false)
   const 另开中Ref = useRef(false)
-  const 另开到坞 = async () => {
-    if (另开中Ref.current) return
+  // **回新那段的 id**（2026-09-25）：「到坞里问」要把那句作为第一句发进去；没挂上就是 undefined。
+  const 另开到坞 = async (): Promise<string | undefined> => {
+    if (另开中Ref.current) return undefined
     const 地方 = $侧边地方.get()
     if (!地方) {
       note(坞没处说 ?? t("这段对话不属于任何项目，坞里没法另开"))
-      return
+      return undefined
     }
     另开中Ref.current = true
     设另开中(true)
     try {
-      await 另开到坞里(地方)
+      return await 另开到坞里(地方)
     } finally {
       另开中Ref.current = false
       设另开中(false)
     }
   }
-  const 另开到坞里 = async (地方: string) => {
+  const 另开到坞里 = async (地方: string): Promise<string | undefined> => {
     let id: string | undefined
     if (地方.startsWith("r:")) {
       const c = connections.find((x) => x.id === 地方.slice(2))
       if (!c) {
         note(t("这台服务器已经不在连接列表里了，坞里没法另开"))
-        return
+        return undefined
       }
       id = await startRemoteSession({ id: c.id, label: c.label }, { 不切过去: true })
     } else if (地方 === 临时地方) {
@@ -2098,13 +2119,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 项目 = projects.find((x) => x.projectId === 地方.slice(2))
       if (!项目 || 项目.temporary) {
         note(t("这段对话不属于任何项目，坞里没法另开"))
-        return
+        return undefined
       }
       id = await 新建任务({ workspace: 项目.workspace, 不切过去: true })
     }
-    if (!id) return
-    if ($侧边地方.get() === 地方) 挂进坞(地方, id)
-    else note(t("新的一段已在原来那一处建好；这边已换了地方，没挂进坞里"))
+    if (!id) return undefined
+    if ($侧边地方.get() === 地方) {
+      挂进坞(地方, id)
+      return id
+    }
+    note(t("新的一段已在原来那一处建好；这边已换了地方，没挂进坞里"))
+    return undefined
   }
   // 命令面板那条走 ref：`actions` 是记住的，而这个函数每次渲染都换
   const 另开到坞Ref = useRef(另开到坞)
@@ -3792,18 +3817,60 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   .catch(fail)
               }
           : undefined,
-      /** 待发单上那两颗（2026-09-23）：撤回的原文与原图放回这段会话的输入框 */
+      /** 调整方向只有 native 会（spec §3）：别的会话 Cmd/Ctrl+回车照旧是排队 */
+      canRedirect: s.kind === "native",
+      /**
+       * Cmd/Ctrl+回车的调整方向那次请求还没回来：待发条整条置灰（复审 m-C）。那一刻其余几条不在运行时的镜像里，
+       * 点取回 / 调整方向只会得「不在待发单上」。
+       */
+      queueLocked: 调整中的.has(s.sessionId),
+      /**
+       * 待发单上的取回 / 调整方向（2026-09-23；8.0）：取回的、调整方向时没能重排上的，原文与原图放回这段会话的输入框
+       */
       onEditQueue: (id: string, action: "remove" | "redirect") =>
         client
-          // 8.0：`withdrawn` 是数组（调整方向时可能交回几句）。接调整方向与「到坞里问」是 Task 6
           .get<{ withdrawn?: 撤回的话[] }>("editQueue", { sessionId: s.sessionId, id, action })
           .then((r) => {
             if (r.withdrawn?.length) 退回输入框(s.sessionId, r.withdrawn)
           }),
+      /**
+       * **到坞里问**（调整方向，2026-09-25，spec §2）：只有主区那段有——坞里那段本来就在坞里。
+       * 这句从主区待发单上拿走（原文 + 原图）→ 坞里「另开一段」（与坞格那颗同一条路，`另开到坞`：项目、远端、临时那一处都走它）
+       * → 坞打开到「对话」→ 这句作为新那段的第一句发出去。主区不动；坞里原来挂着的那段被新的顶掉（侧栏里还在）。
+       * 另开或发送失败（包括没处另开）：这句放回主区输入框并出声，不丢。
+       * 新那段的写权**先取**（计划风险 7）：坞格的续租是个 effect，挂上那一拍未必已经取到。
+       */
+      ...(槽 === 主槽 && s.kind === "native"
+        ? {
+            onQueueToDock: async (id: string) => {
+              const r = await client.get<{ withdrawn?: 撤回的话[] }>("editQueue", {
+                sessionId: s.sessionId,
+                id,
+                action: "remove",
+              })
+              const 话 = r.withdrawn?.[0]
+              if (!话) return
+              try {
+                const 新 = await 另开到坞Ref.current()
+                if (!新) throw new Error(t("坞里没能另开一段"))
+                打开坞里的对话()
+                await client.get("acquireLease", { sessionId: 新, holder: "user" })
+                await 写进去(新, 话.text, 话.images)
+                // 新那段的标题由这第一句定、落在后端：重取一次，侧栏那一行才不停在「新会话」（与 onSend 同一个理由）
+                const pid = $activeProjectId.get()
+                if (pid) void loadSessions(client, pid)
+                void loadTempSessions(client)
+              } catch (e) {
+                退回输入框(s.sessionId, [话])
+                throw new Error(tf("这句没能到坞里问，已放回输入框：{0}", e instanceof Error ? e.message : String(e)))
+              }
+            },
+          }
+        : {}),
       onSend: (text, images, behavior) =>
         // **不做本地乐观追加**：事件流是对话的唯一事实来源。
         // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
-        写进去(s.sessionId, text, images, behavior)
+        (behavior === "redirect" ? 锁着调整(s.sessionId, 写进去(s.sessionId, text, images, behavior)) : 写进去(s.sessionId, text, images, behavior))
           .then(() => {
             /**
              * 标题是第一句话定的，而**它落在后端**——不重取一次，

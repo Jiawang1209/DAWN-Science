@@ -2,8 +2,10 @@
  * 调整方向（2026-09-25，学自 Codex；spec `2026-09-25-调整方向-design.md` §5）。**跑真实构建产物。**
  *
  * 假模型走 mock 的「慢慢跑」分支（`dev:mock` 里人按的也是它）：带这三个字的一句 → 先说「我先跑一段慢的。」
- * 再调一条 `sleep 20` 的 bash。**20 秒远长于下面每一个断言窗口（10 秒）**——「那一步已中断」在 10 秒内出现，
- * 就只可能是被停下的，不是自己跑完的（`waiting.spec.ts` 里变异测试逼出来的那条纪律）。
+ * 再调一条 `sleep 20` 的 bash。**20 秒远长于「已中断」「新一轮开始」那几个断言窗口（10 秒）**——「那一步已中断」
+ * 在 10 秒内出现，就只可能是被停下的，不是自己跑完的（`waiting.spec.ts` 里变异测试逼出来的那条纪律）。
+ * 坞里那几步的等待是 30 秒（另开一段 + 假模型一轮），**它们不许吃主区那 20 秒**：凡是要主区还在跑的断言，
+ * 都在坞里的等待之前做完、做完就停（Task 7 审查 m-a），不留一笔看不见的时间预算。
  *
  * ## 两处长得一样
  *
@@ -79,8 +81,11 @@ test.describe("调整方向 · 假模型", () => {
     await 开一段临时会话(page)
     await 忙起来(主区(page))
     await 说(主区(page), "直接换个做法", "ControlOrMeta+Enter")
+    /** 任何时候都不上待发条：按下去立刻看一次、中断之后再看、收尾再看 */
+    await expect(待发条(主区(page))).toHaveCount(0)
 
     await expect(主区(page).locator(".tool").first()).toHaveAttribute("data-interrupted", "true", { timeout: 10_000 })
+    await expect(待发条(主区(page))).toHaveCount(0)
     await expect(主区(page).locator(".turn.user").nth(1)).toContainText("直接换个做法")
     await expect(主区(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 10_000 })
     await expect(待发条(主区(page))).toHaveCount(0)
@@ -96,12 +101,16 @@ test.describe("调整方向 · 假模型", () => {
 
     await 坞(page).locator(".side-chat-head").waitFor({ timeout: 30_000 })
     await expect(坞(page).locator(".turn.user").first()).toContainText("旁边问一句：这个目录多大", { timeout: 30_000 })
-    await expect(坞(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
+    /** 主区仍在跑：趁那 20 秒还没用完就断言、随即停掉——下面等坞里回复不再吃主区的时间 */
+    await expect(主区(page).getByRole("button", { name: "停止", exact: true })).toBeVisible()
+    await expect(主区(page).locator(".tool").first()).toHaveAttribute("data-status", "running")
     await expect(待发条(主区(page))).toHaveCount(0)
+    await 停下(主区(page))
+    /** 停下之后框里是空的：那句已经去了坞里，没有被当成排着的退回来 */
+    await expect(框(主区(page))).toHaveValue("")
+    await expect(坞(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
     await expect(主区(page).locator(".conv-title")).toHaveText(标题)
     await expect(主区(page).locator(".turns")).not.toContainText("旁边问一句")
-    await expect(主区(page).getByRole("button", { name: "停止", exact: true })).toBeVisible()
-    await 停下(主区(page))
   })
 
   test("三颗按钮常驻看得见（opacity 1）；坞里那段的待发条没有「到坞里问」；旧的「插队」不见了", async ({ dawn }) => {
@@ -117,6 +126,8 @@ test.describe("调整方向 · 假模型", () => {
       expect(await 键.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
     }
     await expect(待发条(主区(page))).not.toContainText("插队")
+    /** 主区的断言到此为止：先停掉，坞里那段的准备不吃主区 sleep 20 的时间（Task 7 审查 m-a） */
+    await 停下(主区(page))
 
     await 进坞(page, "对话")
     await 坞(page).getByRole("button", { name: "另开一段", exact: true }).click()
@@ -129,7 +140,6 @@ test.describe("调整方向 · 假模型", () => {
     await expect(待发条(坞(page)).getByRole("button", { name: "取回", exact: true })).toBeVisible()
     await expect(待发条(坞(page)).getByRole("button", { name: "到坞里问", exact: true })).toHaveCount(0)
     await 停下(坞(page))
-    await 停下(主区(page))
   })
 })
 

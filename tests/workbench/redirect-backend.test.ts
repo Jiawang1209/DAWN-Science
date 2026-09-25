@@ -150,11 +150,29 @@ describe("writeToSession · redirect 的出错与措辞", () => {
     const 调整 = ctx.backend.writeToSession({ sessionId: s, data: "换个做法", as: "user", behavior: "redirect" })
     await new Promise((r) => setTimeout(r, 0))
     await ctx.backend.stopSession({ sessionId: s })
-    expect(ctx.说了(s).join("\n")).toContain("换个做法")
+    // 运行时还拿着它：说「正在送、不确定送到没有」，不说「还排着」（Task 6 审查 m-5 的措辞分家）
+    expect(ctx.说了(s)).toContain("会话停了，这 1 句正在送、不确定送到没有：换个做法")
+    expect(ctx.说了(s).join("\n")).not.toContain("还排着")
     放行([...rt.记.flatMap((x) => (x.startsWith("redirect:") ? [x.split(":")[1]!] : []))])
     // 运行时晚些交回 id：存根已随会话停掉，不再说第二遍
     expect(await 调整).toEqual({})
     expect(ctx.说了(s).filter((x) => x.includes("换个做法"))).toHaveLength(1)
+  })
+
+  it("关会话时一句还在单上、一句正在调整方向：两种说法各归各（m-5）", async () => {
+    const ctx = make()
+    const rt = ctx.runtime as 有待发单的
+    let 放行!: (ids: string[]) => void
+    rt.没排回 = () => new Promise<string[]>((r) => (放行 = r))
+    const s = await ctx.开一段()
+    await ctx.backend.writeToSession({ sessionId: s, data: "排着的", as: "user", behavior: "followUp" })
+    rt.单上.push(rt.排过[0]!)
+    const 调整 = ctx.backend.writeToSession({ sessionId: s, data: "换个做法", as: "user", behavior: "redirect" })
+    await new Promise((r) => setTimeout(r, 0))
+    await ctx.backend.stopSession({ sessionId: s })
+    expect(ctx.说了(s)).toContain("会话停了，这 1 句还排着、没有送出去：排着的；这 1 句正在送、不确定送到没有：换个做法")
+    放行([])
+    await 调整
   })
 
   it("停止计数只增不减：前一次调整方向里按过停止，不影响后一次的措辞", async () => {

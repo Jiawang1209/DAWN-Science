@@ -38,7 +38,7 @@ import { TurnNavigator } from "./turn-navigator.js"
 import { 默认转录预算 } from "./transcript-budget.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
-import { $跑着的会话, $未读, $artifacts, $cellCount } from "./state/catalog.js"
+import { $跑着的会话, $未读, $artifacts, $cellCount, 是散的任务 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
@@ -1608,7 +1608,8 @@ export function SessionSidebar({
   const 服务器可批量的 = 服务器组.flatMap(([, 些]) => 些)
 
   // **远端的不再落进这两列**：它们有自己的家了
-  const 散的 = 全部任务.filter((t) => !t.workspace && !t.connectionId)
+  // 判据只有一处（`是散的任务`）：坞的 `t:` 地方也问它，两边才说同一组会话
+  const 散的 = 全部任务.filter(是散的任务)
   const 项目组: [string, TaskSummary[]][] = []
   for (const t of 全部任务) {
     if (!t.workspace || t.connectionId) continue

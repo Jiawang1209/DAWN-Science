@@ -286,6 +286,16 @@ export const $tasks = atom<readonly TaskSummary[]>([])
 export const setTasks = (v: readonly TaskSummary[]) => setList($tasks, v)
 
 /**
+ * 这条任务进不进侧栏「会话」那一组（散的：没设路径、也不在服务器上）。**「临时会话」只有这一个定义**
+ * （2026-09-25，侧边对话审查 I1）：侧栏分组、坞的 `t:` 地方、坞里「同处」清单都问它——
+ * 各看各的判据（`temporary` / `temporaryHosts`）时，占着临时根的普通项目名下那些散的会话
+ * 侧栏算「会话」、坞却算成那个项目，另开一段就去临时根本身建了一段项目会话。
+ */
+export function 是散的任务(t: { workspace?: string | undefined; connectionId?: string | undefined }): boolean {
+  return !t.workspace && !t.connectionId
+}
+
+/**
  * **未读**（codex-polish ⑤，2026-08-22，学自 dsh-codex-ui 的未读圆点）：
  * 一段会话在你没看着的时候（不是当前选中）说完了一轮 → 记一个点；点开就清。
  * 持久化 `dawn.global.unread`：重启之后「哪几段回来了还没看」不该忘。人也能手动标回未读。

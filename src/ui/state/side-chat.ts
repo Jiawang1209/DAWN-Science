@@ -5,6 +5,7 @@
  */
 import { atom } from "nanostores"
 import { 创建转录槽 } from "./transcript-slot.js"
+import { 是散的任务 } from "./catalog.js"
 
 export const 侧槽 = 创建转录槽()
 export const $侧边会话id = atom<string | undefined>(undefined)
@@ -42,33 +43,51 @@ export const SIDE_SESSION_KEY = "dawn.project.side-session"
  */
 export const 临时地方 = "t:"
 
+type 任务样 = { sessionId?: string | undefined; workspace?: string | undefined; connectionId?: string | undefined }
+
 /**
- * 一段会话（或此刻选中的项目）落在哪个「地方」。**临时会话落在 `临时地方`**（2026-09-25 改，见那边）：
- * `SessionSummary.projectId` 是必填的——临时会话挂在它那个临时宿主项目名下，只看 projectId
- * 就会算出一个 `p:<临时宿主>`，另开一段就去那个宿主目录建了一段「项目会话」。所以要带上项目清单查 `temporary`。
- * **清单里查不到那个项目**（项目单还没取回）：照旧按 projectId 算——
- * 与分栏那条同一个取舍的反面：那边缺了就不画，这里缺了就先按正式项目挂，清单到手后自会再算一次。
+ * 这段会话在不在侧栏「会话」那一组：**本机的、且它那条任务是散的**（`是散的任务`，侧栏分组同一个判据）。
+ * `t:` 地方与 `同处的会话("t:")` 都只认这一条（2026-09-25，审查 I1）——此前按宿主项目的 `temporary` 判，
+ * 而 `ensureTemporary` 在临时根被普通项目占着时复用那个项目（不改标记），落在它名下的散会话侧栏算「会话」、
+ * 坞却算成 `p:<那个项目>`，另开一段就拿临时根本身当项目目录建了一段项目会话。
+ */
+export function 在会话那一组(
+  s: { sessionId?: string | undefined; remote?: unknown },
+  tasks: readonly 任务样[],
+): boolean {
+  if (s.remote || !s.sessionId) return false
+  const 任务 = tasks.find((t) => t.sessionId === s.sessionId)
+  return !!任务 && 是散的任务(任务)
+}
+
+/**
+ * 一段会话（或此刻选中的项目）落在哪个「地方」。**在侧栏「会话」那一组的落在 `临时地方`**（见 `在会话那一组`），
+ * 其余本机的按 `p:<projectId>`。只给了项目（没选会话）：按项目——「会话」那一组不是一个项目，选不中它。
+ * **任务单里查不到这段**（刚建、任务单还没取回；或它压根没有任务）：照旧按 projectId 算——
+ * 与侧栏同一个结论（那边没有任务就不列进「会话」）。新建任务那条路等任务单到手才进对话（`新建任务`，审查 M1），
+ * 所以刚建的那段不会先算成 `p:<临时宿主>`。
  */
 export function 侧边地方键(
-  s: { projectId?: string | undefined; remote?: { connectionId: string } | undefined },
-  projects: readonly { projectId: string; temporary?: true | undefined }[] = [],
+  s: { sessionId?: string | undefined; projectId?: string | undefined; remote?: { connectionId: string } | undefined },
+  tasks: readonly 任务样[] = [],
 ): string | undefined {
   if (s.remote) return `r:${s.remote.connectionId}`
   if (!s.projectId) return undefined
-  return projects.find((p) => p.projectId === s.projectId)?.temporary ? 临时地方 : `p:${s.projectId}`
+  return 在会话那一组(s, tasks) ? 临时地方 : `p:${s.projectId}`
 }
 
 /**
  * 坞格「同处」清单按地方从哪拨会话里挑（只管「是不是这一处」，归档 / 终端 / 主区 / 已挂着由调用点再筛）。
  * 远端与本机临时会话都住在 `tempSessions`，项目的住在 `sessions`（只有当前项目的）。
+ * **`t:` 列的正是侧栏「会话」那一组**（`在会话那一组`）：`tempSessions` 还装着占着临时根的那个普通项目的
+ * 项目会话（`temporaryHosts` 把它算进来），不筛的话能把一段 `p:` 的会话挂进 `t:`。
  */
-export function 同处的会话<T extends { projectId?: string | undefined; remote?: { connectionId: string } | undefined }>(
-  地方: string,
-  lists: { sessions: readonly T[]; tempSessions: readonly T[] },
-): T[] {
+export function 同处的会话<
+  T extends { sessionId?: string | undefined; projectId?: string | undefined; remote?: { connectionId: string } | undefined },
+>(地方: string, lists: { sessions: readonly T[]; tempSessions: readonly T[]; tasks: readonly 任务样[] }): T[] {
   if (地方.startsWith("r:")) return lists.tempSessions.filter((x) => x.remote?.connectionId === 地方.slice(2))
-  if (地方 === 临时地方) return lists.tempSessions.filter((x) => !x.remote)
-  return lists.sessions.filter((x) => !x.remote && x.projectId === 地方.slice(2))
+  if (地方 === 临时地方) return lists.tempSessions.filter((x) => 在会话那一组(x, lists.tasks))
+  return lists.sessions.filter((x) => !x.remote && x.projectId === 地方.slice(2) && !在会话那一组(x, lists.tasks))
 }
 
 /**

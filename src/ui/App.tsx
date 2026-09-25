@@ -91,7 +91,7 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
-import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话 } from "./state/side-chat.js"
+import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
 import { 主槽 } from "./state/transcript.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
@@ -1376,7 +1376,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       // **任务列表刷新挪出关键路径**（2026-08-27，作者报的「切会话慢」）：
       // 它只喂侧栏的任务列表，不参与「主区找不找得到这段会话」——放后台跑，
       // 别挡着开聊。会话列表那几拨（下面）是找会话用的，留在路上。
-      void loadTasks(client)
+      // 没给路径的那条例外：坞认它在不在「会话」那一组要看任务单，在下面与临时会话一起等（审查 M1）
+      if (workspace) void loadTasks(client)
       /**
        * **给了路径就跟着切到它的项目**（2026-08-12）。
        *
@@ -1395,7 +1396,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           await loadSessions(client, 新家)
         }
       } else {
-        await loadTempSessions(client)
+        /**
+         * **任务单也要等它回来**（2026-09-25，审查 M1）：坞按任务判这段在不在「会话」那一组（`在会话那一组`）。
+         * 只在后台刷的话，第一段临时会话进对话的那几拍里任务单还没有它，坞的地方先算成 `p:<临时宿主>`——
+         * 这时点「另开一段」会说「不属于任何项目」，从清单挂进坞的那段记在 `p:` 下、地方翻回 `t:` 就不见了。
+         * 两问并行，多等的只是两者中较慢的那一个。
+         */
+        await Promise.all([loadTempSessions(client), loadTasks(client)])
       }
       if (t.sessionId) {
         // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
@@ -1898,8 +1905,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 地方从当前会话来；没选会话时退到当前项目。**选了会话、而它的摘要还没取回来时不下结论**——
    * 那一拍算出来的地方是错的，按错的地方挂一次就是把侧槽清空再重订一遍。
    */
-  // 临时会话 / 临时宿主项目落在「会话」那一组那个共用的地方（2026-09-25 作者定的）：带上项目单，让 `侧边地方键` 查 `temporary`
-  const 侧边地方 = session ? 侧边地方键(session, projects) : sessionId ? undefined : projectId ? 侧边地方键({ projectId }, projects) : undefined
+  // 侧栏「会话」那一组的会话落在一个共用的地方 `t:`（2026-09-25 作者定的）：带上任务单——「会话」那一组就是按任务分出来的，
+  // 两边问同一个判据（`在会话那一组`），不看宿主项目的 `temporary`（占着临时根的普通项目也可能是宿主，审查 I1）
+  const 侧边地方 = session ? 侧边地方键(session, tasks) : sessionId ? undefined : projectId ? 侧边地方键({ projectId }) : undefined
   const 侧边地方未定 = !!sessionId && !session
   /**
    * **主区没有地方（什么都没选、也没选项目）时也要载一次**——载的是「没有地方」，坞格变空并说明为什么
@@ -2483,10 +2491,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 if (g.projectId && g.整个 !== false) {
                   await client.get("deleteProject", { projectId: g.projectId })
                   // 整个项目没了：坞里挂的若是这个项目的，它也没了（任务清单未必列全这个项目的会话）
-                  // 临时宿主被整个移除：它的会话在「会话」那一组那一处（`t:`），按那一处算（2026-09-25）
-                  const 那处 = 侧边地方键({ projectId: g.projectId }, $projects.get()) ?? `p:${g.projectId}`
+                  const 那处 = `p:${g.projectId}`
                   if ($侧边地方.get() === 那处) 删掉的.push($侧边会话id.get())
                   删掉的地方.push(那处)
+                  // 它名下散的会话在「会话」那一组（`t:`）——那一处还在、只是少了这几段：按 id 抹，不抹整格（2026-09-25）
+                  for (const x of [...$sessions.get(), ...$tempSessions.get()]) if (x.projectId === g.projectId) 删掉的.push(x.sessionId)
                 } else {
                   // **没有 projectId 也要删得掉**：按 taskId 走（协议 4.9）
                   for (const t of g.tasks) {
@@ -4781,7 +4790,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               {(() => {
                 const 远端 = session.remote?.connectionId
                 const 项目 = projects.find((p) => p.projectId === session.projectId)
-                if (!远端 && (!项目 || 项目.temporary)) return null
+                // 侧栏「会话」那一组的也不画（与坞的 `t:` 同一个判据；宿主可能是占着临时根的普通项目，只看 `temporary` 会漏）
+                if (!远端 && (!项目 || 项目.temporary || 在会话那一组(session, tasks))) return null
                 // 远端会话住在 `tempSessions`（2026-08-23 审查抓的：只筛 `sessions` 时远端那一条分栏永远是空的）
                 const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
                 return (
@@ -5258,7 +5268,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 // 本机临时会话那一处（`t:`）列的是侧栏「会话」那一组（2026-09-25），挑哪拨见 `同处的会话`
                 const 同处 = !坞的地方
                   ? []
-                  : 同处的会话(坞的地方, { sessions, tempSessions })
+                  : 同处的会话(坞的地方, { sessions, tempSessions, tasks })
                       .filter((x) => !x.archivedAt && 能进坞(x) && x.sessionId !== sessionId && x.sessionId !== 侧边id)
                       .map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId) }))
                 return (

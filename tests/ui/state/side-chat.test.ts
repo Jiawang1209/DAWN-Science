@@ -4,8 +4,9 @@
 import { describe, it, expect, beforeEach } from "vitest"
 import {
   $侧边会话id, $侧边地方, $侧边能读主, 侧槽, 挂进坞, 从坞拿下, 载入侧边, 侧边地方键, 能进坞, SIDE_SESSION_KEY,
-  从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话,
+  从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组,
 } from "../../../src/ui/state/side-chat.js"
+import { 是散的任务 } from "../../../src/ui/state/catalog.js"
 
 /** 模块级 atom 不随用例清：不重置的话，用例的结果取决于排在它前面的是谁（Task 6 审查 M7） */
 beforeEach(() => {
@@ -56,20 +57,39 @@ describe("侧边会话按地方记住", () => {
     载入侧边("p:1")
     expect($侧边会话id.get()).toBeUndefined()
   })
-  it("临时会话落在「会话」那一组那个共用的地方（2026-09-25 作者定的，推翻审查 I2）", () => {
-    // 与界面手上的形状一致：SessionSummary.projectId 必填，临时会话的是它那个临时宿主
-    const 项目们 = [{ projectId: "P" }, { projectId: "TMP", temporary: true as const }, { projectId: "TMP2", temporary: true as const }]
+  it("侧栏「会话」那一组的会话落在共用的地方 `t:`（2026-09-25 作者定的；判据与侧栏同一个，审查 I1）", () => {
+    // 与界面手上的形状一致：SessionSummary.projectId 必填，临时会话的是它那个宿主项目；分组看的是任务
+    const 任务们 = [
+      { sessionId: "t1" },
+      { sessionId: "t2" },
+      { sessionId: "p1", workspace: "/proj" },
+      { sessionId: "r1", connectionId: "C" },
+    ]
     expect(临时地方).toBe("t:")
-    expect(侧边地方键({ projectId: "TMP" }, 项目们)).toBe("t:")
+    expect(侧边地方键({ sessionId: "t1", projectId: "TMP" }, 任务们)).toBe("t:")
     // 宿主不止一个也是同一处：「会话」那一组不按宿主劈开
-    expect(侧边地方键({ projectId: "TMP2" }, 项目们)).toBe("t:")
-    expect(侧边地方键({ projectId: "P" }, 项目们)).toBe("p:P")
-    // 远端的临时会话仍按连接算——远端的地方是那台机器，不是那个宿主项目
-    expect(侧边地方键({ projectId: "TMP", remote: { connectionId: "C" } }, 项目们)).toBe("r:C")
-    // 项目单还没到手：先按正式项目算，单到手后界面会再算一次
-    expect(侧边地方键({ projectId: "TMP" }, [])).toBe("p:TMP")
+    expect(侧边地方键({ sessionId: "t2", projectId: "TMP2" }, 任务们)).toBe("t:")
+    expect(侧边地方键({ sessionId: "p1", projectId: "P" }, 任务们)).toBe("p:P")
+    // 远端的仍按连接算——远端的地方是那台机器，不是那个宿主项目
+    expect(侧边地方键({ sessionId: "r1", projectId: "TMP", remote: { connectionId: "C" } }, 任务们)).toBe("r:C")
+    // 任务单里还没有它：按项目算（侧栏那边同样还没把它列进「会话」）
+    expect(侧边地方键({ sessionId: "t1", projectId: "TMP" }, [])).toBe("p:TMP")
+    // 只选了项目、没选会话：按项目
+    expect(侧边地方键({ projectId: "P" }, 任务们)).toBe("p:P")
     // 什么都没有：仍然没有地方（坞格说「还没选项目」）
-    expect(侧边地方键({}, 项目们)).toBeUndefined()
+    expect(侧边地方键({}, 任务们)).toBeUndefined()
+  })
+  it("占着临时根的普通项目当宿主（ensureTemporary 复用它、不改标记）：散的会话是 `t:`，它自己的项目会话是 `p:`（审查 I1）", () => {
+    // X 不是 temporary——旧版按 `temporary` 判，把 x-散 算成 `p:X`，另开一段就拿临时根本身建了一段项目会话
+    const 任务们 = [{ sessionId: "x-散" }, { sessionId: "x-项目", workspace: "/home/u/DAWN/scratch" }]
+    expect(侧边地方键({ sessionId: "x-散", projectId: "X" }, 任务们)).toBe("t:")
+    expect(侧边地方键({ sessionId: "x-项目", projectId: "X" }, 任务们)).toBe("p:X")
+    expect(在会话那一组({ sessionId: "x-散" }, 任务们)).toBe(true)
+    expect(在会话那一组({ sessionId: "x-项目" }, 任务们)).toBe(false)
+    // 判据就是侧栏分组那一个
+    expect(是散的任务({})).toBe(true)
+    expect(是散的任务({ workspace: "/a" })).toBe(false)
+    expect(是散的任务({ connectionId: "C" })).toBe(false)
   })
   it("临时会话那一处挂的那段，换到项目再换回来还在；与项目那一处互不相干", () => {
     挂进坞("p:1", "s1")
@@ -78,7 +98,7 @@ describe("侧边会话按地方记住", () => {
     expect($侧边地方.get()).toBe("t:")
     载入侧边("p:1")
     expect($侧边会话id.get()).toBe("s1")
-    载入侧边(侧边地方键({ projectId: "TMP" }, [{ projectId: "TMP", temporary: true }]))
+    载入侧边(侧边地方键({ sessionId: "t1", projectId: "TMP" }, [{ sessionId: "t1" }]))
     expect($侧边会话id.get()).toBe("t1")
   })
   it("不知道地方也照清槽与两个 atom", () => {
@@ -159,13 +179,30 @@ describe("同处的会话：按地方从哪拨里挑", () => {
     { sessionId: "r1", projectId: "TMP", remote: { connectionId: "C" } },
     { sessionId: "r2", projectId: "TMP", remote: { connectionId: "D" } },
   ]
-  const ids = (地方: string) => 同处的会话(地方, { sessions, tempSessions }).map((x) => x.sessionId)
+  const tasks = [{ sessionId: "t1" }, { sessionId: "t2" }, { sessionId: "p1", workspace: "/p" }, { sessionId: "r1", connectionId: "C" }]
+  const ids = (地方: string) => 同处的会话(地方, { sessions, tempSessions, tasks }).map((x) => x.sessionId)
   it("项目：只要这个项目的；远端：只要这条连接的", () => {
     expect(ids("p:P")).toEqual(["p1"])
     expect(ids("r:C")).toEqual(["r1"])
   })
   it("临时会话那一处：本机的临时会话全列（不分宿主），远端的一段不列", () => {
     expect(ids(临时地方)).toEqual(["t1", "t2"])
+  })
+  it("占着临时根的普通项目 X：`t:` 恰好列侧栏「会话」那一组，`p:X` 只列它的项目会话（审查 I1）", () => {
+    // `listTemporarySessions` 经 `temporaryHosts` 把 X 名下**全部**会话都放进 tempSessions；X 是当前项目时 sessions 也有它们
+    const X的 = [
+      { sessionId: "x-散", projectId: "X" },
+      { sessionId: "x-项目", projectId: "X" },
+    ]
+    const 任务们 = [{ sessionId: "x-散" }, { sessionId: "x-项目", workspace: "/home/u/DAWN/scratch" }]
+    const 列 = (地方: string) =>
+      同处的会话(地方, { sessions: X的, tempSessions: X的, tasks: 任务们 }).map((x) => x.sessionId)
+    expect(列(临时地方)).toEqual(["x-散"])
+    expect(列("p:X")).toEqual(["x-项目"])
+    // 同一个判据两头对得上：列在 `t:` 的每一段，自己的地方键也是 `t:`
+    for (const x of 同处的会话(临时地方, { sessions: X的, tempSessions: X的, tasks: 任务们 })) expect(侧边地方键(x, 任务们)).toBe("t:")
+    // 没有任务的（任务单还没到手）哪边都不算「会话」那一组
+    expect(同处的会话(临时地方, { sessions: [], tempSessions: X的, tasks: [] })).toEqual([])
   })
 })
 

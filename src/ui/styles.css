@@ -1189,6 +1189,8 @@ pre {
 }
 .tool-elapsed + .tool-status { margin-left: var(--dawn-space-2); }
 .tool.error .tool-status { color: var(--dawn-danger); }
+/* 被停下的那一步（停止 / 调整方向，2026-09-25）：没做完但没错——中性灰，不借失败的红（对错固定红绿）。不挂 `.error`，左线就是默认那道灰 */
+.tool.interrupted .tool-status { color: var(--dawn-text-3); }
 .tool-input, .tool-result { margin: 2px 0 0; color: var(--dawn-text-3); white-space: pre-wrap; }
 /* 结果折叠后的展开入口。文案自带「还有 N 行」，不是一个光秃秃的箭头 */
 .tool-expand {
@@ -7002,6 +7004,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-gutter { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); padding-top: 2px; }
 .nb-cell-running .nb-gutter { color: var(--dawn-live); }
 .nb-cell-error .nb-gutter { color: var(--dawn-danger); }
+/* 被中断的那格：槽号照常灰，「（已中断）」那句自己说明白；不借报错的红 */
+.nb-cell-interrupted .nb-gutter { color: var(--dawn-text-3); }
 .nb-body { min-width: 0; display: flex; flex-direction: column; gap: var(--dawn-space-1); }
 .nb-meta { display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 .nb-lang { padding: 0 var(--dawn-space-1); border-radius: var(--dawn-radius-xs); font-weight: var(--dawn-weight-medium); }

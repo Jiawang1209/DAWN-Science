@@ -333,7 +333,8 @@ export function NotebookPanel({
       <StickToBottom className="nb-cells" resize="smooth" initial="smooth">
         <StickToBottom.Content className="nb-cells-inner">
         {cells.map((c) => (
-          <div key={c.id} className={`nb-cell nb-cell-${c.status}`}>
+          // 被中断的那格不挂 `nb-cell-error`（2026-09-25 复审 I-2）：红槽说「它错了」，而它是被停下的
+          <div key={c.id} className={`nb-cell nb-cell-${c.interrupted ? "interrupted" : c.status}`}>
             <span className="nb-gutter">{`[${c.n}]`}</span>
             <div className="nb-body">
               <div className="nb-meta">

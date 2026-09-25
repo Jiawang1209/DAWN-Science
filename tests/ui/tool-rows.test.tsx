@@ -91,6 +91,38 @@ describe("工具调用行 · 名称与状态", () => {
     expect(row?.getAttribute("data-interrupted")).toBe("true")
     expect(row?.querySelector(".tool-status")?.textContent).toBe("已中断")
   })
+
+  it("**已中断长得也不像失败**（复审 I-2）：不挂 error 类、不自己弹开、没有「失败了」那句", () => {
+    // 不走 `show`：它会把收着的点开，而这条要验的正是「没自己弹开」
+    const { container, rerender } = render(
+      <ConversationView session={session} items={[tool({ status: "error", interrupted: true })]} onSend={() => {}} />,
+    )
+    const row = () => container.querySelector(".tool")!
+    expect(row().classList.contains("error"), "挂着 .error 就会画红线、写红字——对错固定红绿，它没错").toBe(false)
+    expect(row().classList.contains("interrupted")).toBe(true)
+    expect(container.querySelector(".tool.error")).toBeNull()
+    expect(row().querySelector(".tool-head")?.getAttribute("aria-expanded"), "报错才自己弹开，被停下的不弹").toBe("false")
+
+    // 跑着跑着被停下（真实的路：先 running 再结束）：同样不弹开
+    rerender(<ConversationView session={session} items={[tool({ status: "running" })]} onSend={() => {}} />)
+    rerender(
+      <ConversationView session={session} items={[tool({ status: "error", interrupted: true })]} onSend={() => {}} />,
+    )
+    expect(row().querySelector(".tool-head")?.getAttribute("aria-expanded")).toBe("false")
+
+    // 点开看：没有结果也不说「失败了但没给原因」
+    fireEvent.click(row().querySelector(".tool-head")!)
+    expect(screen.queryByText("这次调用失败了，但没有给出原因")).toBeNull()
+  })
+
+  it("真失败的照旧：挂 error 类、自己弹开、没有结果就说失败了", () => {
+    const { container } = render(
+      <ConversationView session={session} items={[tool({ status: "error" })]} onSend={() => {}} />,
+    )
+    expect(container.querySelector(".tool.error")).not.toBeNull()
+    expect(container.querySelector(".tool-head")?.getAttribute("aria-expanded")).toBe("true")
+    expect(screen.getByText("这次调用失败了，但没有给出原因")).toBeTruthy()
+  })
 })
 
 describe("工具调用行 · 长结果默认折叠", () => {

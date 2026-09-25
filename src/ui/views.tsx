@@ -4618,6 +4618,14 @@ export function ConversationView({
         onSubmit={(e) => {
           e.preventDefault()
           /**
+           * **这一次按了什么，先读、当场清**（2026-09-25 复审 I-1）：必须在一切 `return` 之前。
+           * 上一版读在「空框就 return」之后——空框按一下 Cmd+回车，ref 留着 true；
+           * 接着打字、用鼠标点「排到后面」，这一句就成了调整方向，**停掉了 agent 手上这一步**，
+           * 而按钮上写的是「排到后面」。
+           */
+          const 要调整 = 调整ref.current
+          调整ref.current = false
+          /**
            * **发送这一刻从 DOM 读，不读渲染闭包里的那份草稿**（2026-09-18）。
            *
            * 组词期间输入框不再往外同步（照 Hermes 的做法），所以「组完词紧接着回车」
@@ -4659,8 +4667,6 @@ export function ConversationView({
            * 而不是内部那个布尔值：内核会话的 `busy` 恒为真却从不显示「停止」，
            * 上一版只写 `busy` 当场误伤了它，两条内核 e2e 全红。
            */
-          const 要调整 = 调整ref.current
-          调整ref.current = false
           const 忙着 = busy && !!onAbort
           const 送法 = 忙着 ? (要调整 && canRedirect ? ("redirect" as const) : ("followUp" as const)) : undefined
 
@@ -6123,6 +6129,12 @@ function ToolRow({
   在组里?: boolean
 }) {
   const { mark, label: 状态msgid } = item.interrupted ? TOOL_INTERRUPTED : TOOL_STATUS[item.status]
+  /**
+   * **被停下的那一步不是「失败」**（2026-09-25 复审 I-2）。协议里它仍是 `status: "error"`（没做完），
+   * 但对错固定红绿——红说的是「它错了」，而它是被你停下的。所以：不挂 `error` 类（不画红线、不写红字）、
+   * 不自己弹开、不补那句「失败了但没给原因」。只换字不换长相，等于没分开。
+   */
+  const 失败 = item.status === "error" && !item.interrupted
   // **表是模块级常量**：在那里 `t()` 会在 `loadLang()` 之前跑，取到的是默认语言
   const label = t(状态msgid)
   const 用时 = useElapsed(item)
@@ -6131,7 +6143,7 @@ function ToolRow({
    * **报错的默认展开。** 用 `item.status` 做初值而不是在 effect 里改——
    * 后者会让错误先折叠一帧再弹开，那一帧的闪动比不折叠更难受。
    */
-  const [open, setOpen] = useState(item.status === "error" && !在组里)
+  const [open, setOpen] = useState(失败 && !在组里)
   /**
    * **跑着跑着才失败的，也要弹开**（2026-09-15 查到）。真实的一条工具调用总是先以 `running` 挂载、
    * 结束时才变 `error`——上面那个初值只管得了「挂载时就已经是错」的那种（打开旧会话），
@@ -6140,15 +6152,15 @@ function ToolRow({
    */
   const 上次状态 = useRef(item.status)
   useEffect(() => {
-    if (item.status === "error" && 上次状态.current !== "error" && !在组里) setOpen(true)
+    if (失败 && 上次状态.current !== "error" && !在组里) setOpen(true)
     上次状态.current = item.status
-  }, [item.status, 在组里])
+  }, [item.status, 失败, 在组里])
   const [expanded, setExpanded] = useState(false)
   const result = foldResult(item.result, expanded)
 
   return (
     <div
-      className={`tool ${item.status}${open ? " open" : ""}`}
+      className={`tool ${item.interrupted ? "interrupted" : item.status}${open ? " open" : ""}`}
       data-status={item.status}
       data-interrupted={item.interrupted ? "true" : undefined}
     >
@@ -6227,7 +6239,7 @@ function ToolRow({
                 </Button>
               ) : null}
             </>
-          ) : item.status === "error" ? (
+          ) : 失败 ? (
             // 失败且无正文。**这一支是本次修复的重点**：此前它渲染成空白
             <p className="caveat">{t("这次调用失败了，但没有给出原因")}</p>
           ) : null}

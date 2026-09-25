@@ -20,6 +20,18 @@ describe("待发条", () => {
     expect(screen.queryByText(/插队/)).toBeNull()
   })
 
+  it("每颗按钮都指到它那一条的原文（aria-describedby）：读屏听得出是哪句（复审 M-7）", () => {
+    render(<待发条 items={两条} onEdit={async () => {}} onToDock={async () => {}} onError={() => {}} />)
+    for (const [i, q] of 两条.entries()) {
+      for (const 名 of ["调整方向", "到坞里问", "取回"]) {
+        const 钮 = screen.getAllByRole("button", { name: 名 })[i]!
+        const 指 = 钮.getAttribute("aria-describedby")
+        expect(指, `${名} #${i}`).toBeTruthy()
+        expect(document.getElementById(指!)?.textContent).toBe(q.text)
+      }
+    }
+  })
+
   it("坞里那段（不给 onToDock）：没有「到坞里问」", () => {
     render(<待发条 items={两条} onEdit={async () => {}} onError={() => {}} />)
     expect(screen.queryByRole("button", { name: "到坞里问" })).toBeNull()

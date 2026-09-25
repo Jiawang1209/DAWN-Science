@@ -912,7 +912,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     }
     return 话们
   }
-  /** 每段会话按过几次停止：调整方向前后一比，就知道交回的那几句是被停止撤下的（`交回排着的` 的措辞） */
+  /**
+   * 每段会话按过几次停止（停止 / 关会话都算）：调整方向前后一比，就知道交回的那几句是被停止撤下的（`交回排着的` 的措辞）。
+   * **只增不减，删会话时才删**（复审 M-1）：此前关会话时清零，「先停一次、再关」读出来 0 === 0，把停止说成了没排上。
+   */
   const 停止次数 = new Map<string, number>()
   /**
    * 运行时的三种队列事件在这里翻成转录与待发单。**不交给中枢原样吃**——中枢不认得存根。
@@ -1452,6 +1455,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       events.forget(sessionId)
       baselines.delete(sessionId)
       不在场缓冲.delete(sessionId)
+      // 会话没了：它的待发存根与停止计数跟着走（复审 M-1；id 不复用，留着只是漏）
+      待发存根.delete(sessionId)
+      停止次数.delete(sessionId)
       /**
        * **任务跟着走**（T3-a，2026-08-12）。
        *
@@ -3138,14 +3144,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          */
         const 消息 = err instanceof Error ? err.message : String(err)
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
-        // `未启动`：调整方向时运行时报的「会话不在」，与 editQueue 映射成同一个码（审查 09-25 nit 2）
-        if (/未在本进程中活动|未启动|不存在|没有这个会话/.test(消息)) throw fault原样("not_found", 消息)
+        // `未启动`：调整方向时运行时报的「会话不在」，与 editQueue 映射成同一个码（审查 09-25 nit 2）。
+        // **锚在运行时那一句上**（复审 M-3）：光写「未启动」会把别的「内核未启动」之类请求层面的错也吞成 not_found
+        if (/未在本进程中活动|会话 ".*" 未启动|不存在|没有这个会话/.test(消息)) throw fault原样("not_found", 消息)
         throw fault原样("invalid_request", 消息)
       }
       return {}
     },
 
     stopSession: async ({ sessionId }) => {
+      停止次数.set(sessionId, (停止次数.get(sessionId) ?? 0) + 1)
       /**
        * **关会话时还排着的话要出声**（审查 09-24 #4）：此前存根一删了事，待发条还挂在快照上，
        * 按「取回」只得到 not_found，字就此没了。撤下来、在转录里留一句、把待发条清掉。
@@ -3154,6 +3162,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const 它 = 取存根(sessionId, id)
         return 它 ? [它.text] : []
       })
+      /**
+       * **不在待发单上、却还有存根的**（2026-09-25 复审 M-1 时查到）：调整方向还在停下那一步时关会话，
+       * 那句不在镜像里（运行时拿着它），`clearQueue` 交不回它；下面 `待发存根.delete` 一删，
+       * 等运行时交回 id 时已经找不到原文——字就此没了。一并说出来。
+       */
+      for (const 它 of 待发存根.get(sessionId)?.values() ?? []) 撤下.push(它.text)
       if (撤下.length > 0) {
         events.ingest(sessionId, {
           kind: "notice",
@@ -3171,7 +3185,6 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 会话停了，攒着没带给模型的那几段也作废：下次起的是另一段上下文
       不在场缓冲.delete(sessionId)
       待发存根.delete(sessionId)
-      停止次数.delete(sessionId)
       return {}
     },
 
@@ -3215,7 +3228,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         const 消息 = err instanceof Error ? err.message : String(err)
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
-        if (/不在待发单|未在本进程|未启动/.test(消息)) throw fault原样("not_found", 消息)
+        if (/不在待发单|未在本进程|会话 ".*" 未启动/.test(消息)) throw fault原样("not_found", 消息)
         throw fault原样("invalid_request", 消息)
       }
       if (action === "remove") {

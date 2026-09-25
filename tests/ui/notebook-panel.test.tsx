@@ -216,6 +216,11 @@ describe("NotebookPanel · cell 流", () => {
     const 标 = screen.getAllByText("（已中断）")
     expect(标).toHaveLength(1)
     expect(标[0]!.closest(".nb-cell")!.textContent).toContain("KeyboardInterrupt")
+    // 复审 I-2：被中断的那格不挂 `nb-cell-error`（红槽说「它错了」）；真报错的照旧挂
+    const 停了 = 标[0]!.closest(".nb-cell")!
+    expect(停了.classList.contains("nb-cell-error")).toBe(false)
+    expect(停了.classList.contains("nb-cell-interrupted")).toBe(true)
+    expect(screen.getByText("[2]").closest(".nb-cell")!.classList.contains("nb-cell-error")).toBe(true)
   })
 
   it("cell 流套在贴底滚动容器里（.nb-cells > .nb-cells-inner）——滚动行为本身归库管", () => {

@@ -9,7 +9,7 @@
  *
  * 真送到模型的那一刻它从这里消失，同时作为一条用户发言出现在转录里——位置就是模型读到它的位置。
  */
-import { useState } from "react"
+import { useId, useState } from "react"
 import type { QueuedMessage } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
@@ -35,6 +35,11 @@ export function 待发条({
 }) {
   // 一次只动一条：按下之后到回执之间再按，会拿一个已经不在单上的 id 去动
   const [忙着的, 设忙着的] = useState<string | undefined>(undefined)
+  /**
+   * 每条三颗按钮的名字各条一样（调整方向 ×N、取回 ×N）：读屏只听得见「调整方向」，不知道是哪句（复审 M-7）。
+   * 按钮用描述关系指到这一条的原文。前缀用 `useId`：主区与坞里各一条待发条，id 不许撞。
+   */
+  const 前缀 = useId()
   if (items.length === 0) return null
   const 灰 = disabled === true || 忙着的 !== undefined
   const 动 = (id: string, 做: () => Promise<void>) => {
@@ -50,19 +55,19 @@ export function 待发条({
         {items.map((q) => (
           <li key={q.id} className="queued-one">
             <span className="queued-tag">{t("排队中")}</span>
-            <span className="queued-text">
+            <span className="queued-text" id={`${前缀}-${q.id}`}>
               {q.text || tf("{0} 张图", q.images?.length ?? 0)}
             </span>
             {q.images?.length ? <span className="queued-imgs">{tf("{0} 张图", q.images.length)}</span> : null}
-            <Button size="xs" variant="ghost" disabled={灰} onClick={() => 动(q.id, () => onEdit(q.id, "redirect"))}>
+            <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "redirect"))}>
               {t("调整方向")}
             </Button>
             {onToDock ? (
-              <Button size="xs" variant="ghost" disabled={灰} onClick={() => 动(q.id, () => onToDock(q.id))}>
+              <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onToDock(q.id))}>
                 {t("到坞里问")}
               </Button>
             ) : null}
-            <Button size="xs" variant="ghost" disabled={灰} onClick={() => 动(q.id, () => onEdit(q.id, "remove"))}>
+            <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "remove"))}>
               {t("取回")}
             </Button>
           </li>

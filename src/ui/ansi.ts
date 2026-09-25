@@ -86,9 +86,59 @@ function 色256(n: number): Ansi色 | undefined {
  *   OSC  `ESC ] … (BEL | ESC \)` —— 终端标题 / 超链接，吞掉
  *   其余 `ESC X` 两字节序列       —— 字符集切换之类，吞掉
  * 也认 8 位 CSI（`\x9b`）。
+ *
+ * 两种残缺（2026-09-25 审查跟进，规格 7.5「不静默丢输出」）：
+ * - **OSC 必须见到终止符**（BEL 或 `ESC \`），且正文不跨行。没终止的 `ESC ]` 落到最后一支，
+ *   **只丢这两个字节**，后面的字照常显示。另一个选项是「吞到行尾」——它会连同行里的真输出一起吞，
+ *   而残留的 `0;title` 至少看得见、能判断；少丢字的那一边赢。
+ *   此前终止符可选，一个孤立的 `ESC ]` 能把后面整段输出吞到下一个 ESC 或全文结尾。
+ * - **文本末尾半截的 CSI**（`ESC[0;3`，clamp 或一次 iopub flush 恰好切在转义中间）整段吞掉——
+ *   它后面已经没有字了，吞掉不丢任何可见输出；不吞则 `0;3` 会作为文字出现。
+ *   只认末尾：文中间的残缺 CSI 后面还有真文字，没法可靠地断出参数到哪结束。
  */
 // eslint-disable-next-line no-control-regex
-const 转义 = /(?:\x1b\[|\x9b)([0-?]*)[ -/]*([@-~])|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[ -/]+[0-~]?|\x1b[@-_]?/g
+const 转义 =
+  /(?:\x1b\[|\x9b)([0-?]*)[ -/]*([@-~])|(?:\x1b\[|\x9b)[0-?]*[ -/]*$|\x1b\][^\x07\x1b\n]*(?:\x07|\x1b\\)|\x1b[ -/]+[0-~]?|\x1b[@-_]?/g
+
+/** 一段里的所有转义码原样拼起来（文字丢掉）——被回车覆盖的那段，颜色状态仍要生效 */
+function 只留转义(段: string): string {
+  let 出 = ""
+  for (const m of 段.matchAll(转义)) 出 += m[0]
+  return 出
+}
+
+/**
+ * 回车覆盖（tqdm 之类的进度条）：每一行里只留最后一次从行首重写的内容。
+ *
+ * 终端语义：裸 `\r` 把光标送回行首，后面的字从第 0 列覆盖。进度条每次重画都写得比上一次长或等长
+ * （tqdm 会补空格），所以「最后一个 `\r` 之后的那段」就是屏幕上看到的那一行。**这不是终端模拟**——
+ * 不做逐列合并；短字覆盖长字时尾巴不保留，对进度条这是对的。
+ *
+ * - `\r\n` 是换行，不是覆盖：原样保留。
+ * - 一段里没有可见字（行尾孤零零的 `\r`、只有 `ESC[2K`）不算覆盖：前一次的内容还在。
+ * - 被覆盖掉的段**文字丢、转义码留**：颜色在第一帧打开、最后一帧没再写，终端里它仍是那个颜色。
+ *
+ * 复制（`stripAnsi`）与显示（`parseAnsi`）都先过这一步，两边永远一致。
+ */
+export function collapseCarriageReturns(text: string): string {
+  if (!text.includes("\r")) return text
+  const 行们 = text.split("\n")
+  return 行们
+    .map((行, 第) => {
+      // 全文最后一行没有 `\n` 跟着：行尾的 `\r` 是裸回车，不是 `\r\n` 的前一半
+      const crlf = 第 < 行们.length - 1 && 行.endsWith("\r")
+      const 体 = crlf ? 行.slice(0, -1) : 行
+      if (!体.includes("\r")) return 行
+      const 段 = 体.split("\r")
+      // 从后往前找最后一段有可见字的——它就是屏幕上那一帧
+      let 留 = 段.length - 1
+      while (留 > 0 && 段[留]!.replace(转义, "") === "") 留--
+      let 出 = ""
+      for (let i = 0; i < 段.length; i++) 出 += i === 留 ? 段[i]! : 只留转义(段[i]!)
+      return crlf ? 出 + "\r" : 出
+    })
+    .join("\n")
+}
 
 interface 状态 {
   fg?: Ansi色 | undefined
@@ -152,6 +202,7 @@ export function parseAnsi(text: string): Ansi片段[] {
     if (s.bold) 片.bold = true
     出.push(片)
   }
+  text = collapseCarriageReturns(text)
   let 上次 = 0
   for (const m of text.matchAll(转义)) {
     推(text.slice(上次, m.index))
@@ -164,5 +215,5 @@ export function parseAnsi(text: string): Ansi片段[] {
 
 /** 只要文字：复制、摘要行、给别处当纯文本用 */
 export function stripAnsi(text: string): string {
-  return text.replace(转义, "")
+  return collapseCarriageReturns(text).replace(转义, "")
 }

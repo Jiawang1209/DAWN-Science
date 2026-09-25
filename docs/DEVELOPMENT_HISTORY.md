@@ -41,6 +41,10 @@
     **不引库**：ansi-to-html 一类产出 HTML 串（要 `dangerouslySetInnerHTML`）或内联色值（绕过令牌）。stdout / stderr、工具行结果同样走它；「复制这段输出」复制的是去码后的文字。
     报错块默认收起：整行是开关（三角 + `ename: evalue` + 右侧常驻「展开 traceback / 折叠 traceback」）；`KeyboardInterrupt` 或笔记本里被停下那格（`interrupted`）画成与「■ 已中断」同一套中性灰，
     摘要「KeyboardInterrupt · 已中断」；真报错照旧红。测试：`tests/ui/ansi.test.ts` 14 条、`tests/ui/kernel-error.test.tsx` 10 条；`kernel-session.spec.ts` 用真 IPython 的 traceback 验收起 / 展开 / 无残渣 / 有颜色类。
+    **审查跟进（三条）**：原文「其余一律吞掉」有两处不实——① 没终止的 OSC（`ESC ]` 后没有 BEL / `ESC \`）会把后面整段输出吞到下一个 ESC 或全文结尾（探针 `"before\x1b]0;title…\nline2"` 只剩 `before`，违反 7.5）；
+    ② 文本末尾半截的 CSI（`ok\x1b[0;3`）留下 `0;3`。现在 OSC 必须见到终止符且正文不跨行，没终止的只丢 `ESC ]` 两字节（「吞到行尾」会连行里的真输出一起吞，少丢字的赢）；末尾半截 CSI 整段吞掉。
+    ③ 新增 `collapseCarriageReturns`：tqdm 之类的 `\r` 进度条每行只留最后一帧（`\r\n` 仍是换行；无可见字的段不算覆盖；被覆盖段的颜色码保留生效）；`parseAnsi` 与 `stripAnsi` 都先过它，显示与「复制这段输出」一致；ToolRow 的复制文字 `useMemo` 缓存。
+    测试：`ansi.test.ts` 14 → 23 条，`tool-rows.test.tsx`、`kernel-error.test.tsx` 各加一条 DOM 用例（变异：关掉折叠 → 7 条红）。
   - **真机之后 ②：坞里「对话」长得像主区那段**（作者：*「做一个类似于主对话框的效果」*，点名 A 输入框看不出框、B 没有主区那样的头与轮次刻度尺、C 整段不像一块区域）。
     A 的根因不在输入卡：坞底 `surface-panel` 在明暗两套里都**恰好等于**卡面 `surface-input`，白卡贴白底；主区的卡浮在 `surface-app` 上才有边。
     挂着态的 `.side-chat` 换成 `surface-app`——卡、阴影、聚焦环一行没改就与主区一样，整段也成了坞里自成一块的区域（A + C）。

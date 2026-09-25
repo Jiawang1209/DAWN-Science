@@ -6229,6 +6229,12 @@ function ToolRow({
   }, [item.status, 失败, 在组里])
   const [expanded, setExpanded] = useState(false)
   const result = foldResult(item.result, expanded)
+  /**
+   * 「复制这段输出」要的纯文字：去颜色码、回车进度条只留最后一帧——与 `<AnsiText>` 画出来的同一套规则
+   * （`collapseCarriageReturns` 按行作用，预览截前 N 行不影响两边一致）。
+   * 缓存住：工具行在流式回复里每一帧都重渲染，结果本身却不变。
+   */
+  const 复制文字 = useMemo(() => (item.result === undefined ? "" : stripAnsi(item.result)), [item.result])
 
   return (
     <div
@@ -6298,7 +6304,7 @@ function ToolRow({
             <>
               {/* 命令输出与报错是最常被复制走的东西——贴进搜索框或另一段对话 */}
               {/* 工具结果里也会带颜色码（run_code 的 traceback、命令行输出）：画成颜色，复制时只要文字 */}
-              <CopyButton text={stripAnsi(item.result ?? result.text)} label={t("复制这段输出")} />
+              <CopyButton text={复制文字} label={t("复制这段输出")} />
               <pre className="tool-result">
                 <AnsiText text={result.text} />
               </pre>

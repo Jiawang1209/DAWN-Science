@@ -123,3 +123,17 @@ describe("内核报错 · 中断不是失败", () => {
     expect(css).toMatch(/\.kout-error\.kout-interrupted \{[^}]*border-left-color: var\(--dawn-stroke-3\)/)
   })
 })
+
+describe("stdout 里的回车进度条（2026-09-25 审查跟进）", () => {
+  it("tqdm 的重画折成最后一帧", () => {
+    const item: 输出项 = {
+      type: "kernelOutput",
+      id: "o2",
+      kernelInstanceId: "k1",
+      kernelRevision: 1,
+      output: { kind: "stream", stream: "stderr", text: "\r 10%|█         | 1/10\r100%|██████████| 10/10\n" },
+    }
+    const { container } = render(<KernelOutputRow item={item} />)
+    expect(container.querySelector(".kout-text")!.textContent).toBe("100%|██████████| 10/10\n")
+  })
+})

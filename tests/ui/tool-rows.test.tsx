@@ -13,7 +13,7 @@
  *      都配一个 `*_truncated` 布尔，不靠一个省略号暗示
  *   4. **error 即使没有 result 也必须说明失败了** —— 失败静默是最坏的一种
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { ConversationView } from "../../src/ui/views.js"
 import type { SessionSummary, TranscriptItem } from "../../src/protocol/index.js"
@@ -255,5 +255,24 @@ describe("工具调用行 · 跑了多久", () => {
     )
     expect(r.container.querySelector('.tool-head[aria-expanded="false"]')).toBeTruthy()
     expect(r.container.querySelector(".tool-elapsed")?.textContent).toContain("已跑")
+  })
+})
+
+describe("工具结果里的回车进度条（2026-09-25 审查跟进）", () => {
+  it("tqdm 只画最后一帧、颜色码不以文字出现；复制出来的与画出来的一致", () => {
+    const 结果 =
+      "\x1b[32mtraining\x1b[0m\n" +
+      "\r  0%|          | 0/10" +
+      "\r 50%|█████     | 5/10" +
+      "\r100%|██████████| 10/10\n" +
+      "done"
+    const { container } = show([tool({ result: 结果 })])
+    const 画 = container.querySelector(".tool-result")!.textContent
+    expect(画).toBe("training\n100%|██████████| 10/10\ndone")
+
+    const 写 = vi.fn(() => Promise.resolve())
+    Object.defineProperty(navigator, "clipboard", { value: { writeText: 写 }, configurable: true })
+    fireEvent.click(screen.getByRole("button", { name: "复制这段输出" }))
+    expect(写).toHaveBeenCalledWith(画)
   })
 })

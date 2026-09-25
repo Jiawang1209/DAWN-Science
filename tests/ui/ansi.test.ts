@@ -116,3 +116,64 @@ describe("stripAnsi", () => {
     expect(stripAnsi(`${E}[0;31mKeyboardInterrupt${E}[0m`)).toBe("KeyboardInterrupt")
   })
 })
+
+describe("残缺与未终止的转义（2026-09-25 审查跟进）", () => {
+  it("未终止的 OSC 不吞掉后面的真输出：只丢 `ESC ]` 两个字节", () => {
+    // 审查者的探针：此前只剩 "before"——后面整段静默消失（规格 7.5）
+    const 输入 = `before${E}]0;title and then lots of real output\nline2`
+    expect(stripAnsi(输入)).toBe("before0;title and then lots of real output\nline2")
+    expect(parseAnsi(输入).map((p) => p.text).join("")).toBe(stripAnsi(输入))
+  })
+
+  it("OSC 的正文不跨行：换行之后才出现的 BEL 不能把中间的行吞掉", () => {
+    expect(stripAnsi(`a${E}]0;t\nb\x07c`)).toBe("a0;t\nb\x07c")
+  })
+
+  it("正常终止的 OSC（BEL / ESC \\）照旧整段吞掉", () => {
+    expect(stripAnsi(`a${E}]0;title\x07b${E}]8;;http://x${E}\\c`)).toBe("abc")
+  })
+
+  it("文本末尾半截的 CSI 整段吞掉，参数不以文字出现", () => {
+    expect(stripAnsi(`ok${E}[0;3`)).toBe("ok")
+    expect(stripAnsi(`a${E}[31`)).toBe("a")
+    expect(stripAnsi(`a\x9b38;5`)).toBe("a")
+    expect(parseAnsi(`ok${E}[0;3`)).toEqual([{ text: "ok" }])
+  })
+})
+
+describe("回车进度条（tqdm）", () => {
+  it("一行里只留最后一个 `\\r` 之后的内容", () => {
+    expect(stripAnsi("10%\r50%\r100%")).toBe("100%")
+    expect(stripAnsi("head\n10%\r50%\r100%\ntail")).toBe("head\n100%\ntail")
+  })
+
+  it("`\\r\\n` 是换行，不是回车覆盖", () => {
+    expect(stripAnsi("a\r\nb\r\n")).toBe("a\r\nb\r\n")
+    expect(stripAnsi("x\ry\r\nz")).toBe("y\r\nz")
+  })
+
+  it("行尾孤零零的 `\\r` 什么也没覆盖：前一次的内容还在", () => {
+    expect(stripAnsi("done\r")).toBe("done")
+    // 只有清行码、没有字的一段也不算覆盖
+    expect(stripAnsi(`50%\r${E}[2K`)).toBe("50%")
+  })
+
+  it("tqdm 样本：只剩最终那一帧，前后的普通行不动", () => {
+    const tqdm =
+      "开始训练\n" +
+      "\r  0%|          | 0/100 [00:00<?, ?it/s]" +
+      "\r 42%|████▏     | 42/100 [00:01<00:01, 41.2it/s]" +
+      "\r100%|██████████| 100/100 [00:02<00:00, 45.0it/s]" +
+      "\r100%|██████████| 100/100 [00:02<00:00, 44.9it/s]\n" +
+      "loss=0.12\n"
+    expect(stripAnsi(tqdm)).toBe(
+      "开始训练\n100%|██████████| 100/100 [00:02<00:00, 44.9it/s]\nloss=0.12\n",
+    )
+    expect(parseAnsi(tqdm).map((p) => p.text).join("")).toBe(stripAnsi(tqdm))
+  })
+
+  it("被覆盖掉的那段里的颜色码仍然生效（状态不丢）", () => {
+    // 颜色在第一帧里打开，最后一帧没再写——终端里最后一帧仍是绿的
+    expect(parseAnsi(`${E}[32m10%\r100%${E}[0m`)).toEqual([{ text: "100%", fg: "green" }])
+  })
+})

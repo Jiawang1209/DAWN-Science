@@ -59,7 +59,7 @@
   已知接受的小口：调整方向停下那一步的几毫秒里恰好又撞进一句，它在待发条上显示在其余之前、实际在后面送（plan 风险 4）。
 - **Verification**: vitest 251 文件 / 3129 过、10 skipped；typecheck 0；e2e 512 passed / 1 skipped（`sidebar-collapse` 那条按取舍放弃的）+ 内核会话 6 passed，
   其中 `redirect.spec.ts` 5 条全过（真内核那条在本机跑了、未跳过）；真 pi 集成 `tests/integration/redirect.test.ts` 证 abort 在 < 10 s 内停下 `sleep 20`、
-  且其余几条进 pi 真正的 followUp 单子；视觉基线 14 张全过、未重存。真机：（作者走一遍后补）。
+  且其余几条进 pi 真正的 followUp 单子；视觉基线 14 张全过、未重存。真机：09-25 作者走过调整方向 / 到坞里问 / 停止，提了两条（中断报错折叠、坞里对话要像主区），改完再看：「暂时没有什么问题了」。
 
 ### 2026-09-24 — 侧边对话：坞里第八格挂第二段会话，同时跑，只读看主对话（学自 Codex；分支 `side-session`）
 

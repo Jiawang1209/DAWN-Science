@@ -89,7 +89,12 @@ import type {
   调整的那句,
   会话开关,
   压缩原因,
+  回退的那句,
+  回退做法,
+  回退回执,
 } from "./types.js"
+import { 检查点存档, 回退不了 } from "../project/checkpoints.js"
+import { 给模型的回退话 } from "./rewind-note.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
 
@@ -230,6 +235,11 @@ export interface NativeRuntimeOptions {
    * 只在明确不需要时置 false（例如纯对话的性能测试）。
    */
   provenance?: boolean
+  /**
+   * 回退这一轮的影子存档（2026-09-27）。**默认开**；远端会话一律不开（服务器上不放任何文件）。
+   * 只在明确不需要时置 false（例如纯对话的性能测试）。
+   */
+  checkpoints?: boolean
   /**
    * 视觉服务（2026-08-20）。**给了才有转述与 `look_at_image`。**
    *
@@ -511,6 +521,8 @@ export class NativeRuntime implements AgentRuntime {
    * 所以 `stop` 不摘它：配对的生死归后端对照表，拿下 / 归档 / 删除时由后端 `setSideTool(id, false)`。
    */
   private readonly 侧边工具开 = new Set<SessionId>()
+  /** 每段本地会话一份影子存档（2026-09-27）。远端与关掉的不在表里——表里没有 = 「没有存档」 */
+  private readonly 存档们 = new Map<SessionId, 检查点存档>()
   /**
    * 正在启动的那一段(审查 debug E4)。`start()` 有一长串 await(解析模型、起 MCP、建 pi 会话),
    * 重复对同一 sessionId 调 start——双击、resubscribe 竞态——会各跑一遍,第二遍的 `sessions.set`
@@ -1320,7 +1332,7 @@ export class NativeRuntime implements AgentRuntime {
      * e2e 的假模型不要 key，所以它没抓到。
      */
     const 子进程凭证 = await this.子进程凭证()
-    const customTools = this.toolsFor(
+    const 原工具 = this.toolsFor(
       spec,
       native,
       mcp工具,
@@ -1329,6 +1341,14 @@ export class NativeRuntime implements AgentRuntime {
       !(Array.isArray(model.input) && !model.input.includes("image")),
       子进程凭证,
     )
+    /**
+     * **回退这一轮：每一件工具执行前，先等这一句的「开头」拍完**（2026-09-27，spec §4.1）。
+     * 包在 `toolsFor()` 的返回值外面而不是它里面那两条 return 上——内置、内核、MCP、插件、`subagent`、团队一件不漏，
+     * 也不必记得「两条 return 都要带上」。同一句后面的工具不再拍（`开轮` 自己判重）；并行的几件排在存档那条链上，等同一张。
+     * `toolsFor()` 回 undefined（既无授权门也关了溯源）时 pi 走自己的内置工具、套不上——那种装配只在测试里有，照实不拍。
+     */
+    const 存档开 = !spec.remote && this.opts.checkpoints !== false
+    const customTools = 存档开 && 原工具 ? 原工具.map((d) => this.套上存档(spec.sessionId, d)) : 原工具
 
     /**
      * **这段对话的记录住在它自己的目录里**（会话续接，2026-08-11）。
@@ -1345,6 +1365,15 @@ export class NativeRuntime implements AgentRuntime {
     const sessionManager = spec.resume
       ? SessionManager.continueRecent(spec.workspace, 记录目录)
       : SessionManager.create(spec.workspace, 记录目录)
+    if (存档开) {
+      const 存档 = new 检查点存档(spec.workspace, join(spec.sessionDir, "checkpoints"), {
+        喊: (话) => this.emit({ kind: "notice", sessionId: spec.sessionId, text: 话 }),
+      })
+      // 续上的旧会话：此刻之前那几句「在开始存档之前」（spec §0.7）。新会话是 null（一句都还没有）。
+      // 存档目录早就在（上次开着存档）时 `记起点` 不改它——那几句照样退得回
+      存档.记起点(sessionManager.getLeafId())
+      this.存档们.set(spec.sessionId, 存档)
+    }
 
     /**
      * **直接告诉它它现在跑在哪个模型上，并且这句话跟着换模型更新**（2026-08-12）。
@@ -2238,6 +2267,8 @@ ${描述}`
           sessionId,
           cost: { visible: false, reason: "该 provider 只报 token，不报金额；token 用量见上下文栏" },
         })
+        // 回退这一轮：这一轮收尾拍一张结尾（只 stat）。不等它——`开轮` / `回退` 排在同一条链上，自然在它之后（2026-09-27）
+        void this.存档们.get(sessionId)?.收尾()
         // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
         this.emit({ kind: "idle", sessionId })
       })
@@ -2970,6 +3001,103 @@ ${描述}`
     if (s) this.按标记设侧边工具(s, on)
   }
 
+  /** 给一件工具套上「先拍开头」。执行时才按 id 取存档与 pi 的记录——装工具那一刻它们还没建出来 */
+  private 套上存档(sessionId: SessionId, 定义: unknown): unknown {
+    const d = 定义 as Record<string, unknown>
+    const original = (d.execute as (...a: unknown[]) => Promise<unknown>).bind(d)
+    return {
+      ...d,
+      execute: async (...a: unknown[]) => {
+        const 存档 = this.存档们.get(sessionId)
+        const s = this.sessions.get(sessionId)
+        const 这句 = s ? this.用户消息们(s).at(-1)?.id : undefined
+        // 永不 reject（拍不上它自己记断档并喊）；这里再兜一层——工具必须照常执行
+        if (存档 && 这句) await 存档.开轮(这句).catch(() => {})
+        return original(...a)
+      },
+    }
+  }
+
+  /**
+   * 当前对话分支上的用户消息，按先后（根 → 叶）。
+   * 与 `history()` 同一个来源 `getBranch()`（2026-09-27 起）：**压缩线之前的那几句也在**——压缩只是往分支上追加一条
+   * `compaction`，前面的条目原样留着；`buildSessionContext()` 才把它们换成摘要。
+   */
+  private 用户消息们(s: NativeSession): { id: string; 文: string }[] {
+    const 分支 = s.sessionManager.getBranch() as unknown as { type?: string; id: string; message?: { role?: string; content?: unknown } }[]
+    return 分支
+      .filter((e) => e.type === "message" && e.message?.role === "user")
+      .map((e) => ({ id: e.id, 文: 取文本((e.message!.content ?? "") as Parameters<typeof 取文本>[0]) }))
+  }
+
+  /**
+   * 把界面那句对到 pi 那句（spec §4.3）：**从后往前数**，再核对原文（pi 那句要包含它——视觉转述会追加描述、图片会变成「（图片）」；
+   * `/` 开头的技能调用会被展开，不核对）。对不上就抛——不猜。
+   *
+   * **压缩线之前那句也照常定位、照常回退**（2026-09-27 查实 pi，与「上下文用量与压缩」交叉）：`navigateTree` 把叶子挪到那句的父条目，
+   * 新路径上没有那条 `compaction`，`buildSessionContext()` 还原的是那之前的**原文**而不是摘要——对话真的回到了那一刻，
+   * 不是「只剩摘要、回不去」。原文可能又长到要压，那是下一轮 pi 自己的过线压缩，照常出声。见 `tests/integration/rewind.test.ts`。
+   */
+  private 定位(sessionId: SessionId, s: NativeSession, 那句: 回退的那句): { entry: string; 之后: string[]; 在存档之前: boolean } {
+    const 们 = this.用户消息们(s)
+    const k = 们.length - 那句.倒数第几句
+    const 它 = 们[k]
+    if (!Number.isInteger(那句.倒数第几句) || 那句.倒数第几句 < 1 || !它 || (!那句.文.startsWith("/") && !它.文.includes(那句.文))) {
+      throw new UserFacingError("这句在 agent 的记录里对不上，回退不了（对话可能被改写过）")
+    }
+    const 起点 = this.存档们.get(sessionId)?.起点()
+    const 存档之前 = new Set(起点 ? (s.sessionManager.getBranch(起点) as unknown as { id: string }[]).map((e) => e.id) : [])
+    return { entry: 它.id, 之后: 们.slice(k).map((x) => x.id), 在存档之前: 存档之前.has(它.id) }
+  }
+
+  private 不许在跑(s: NativeSession): void {
+    if (s.inFlight > 0 || s.session.isStreaming || s.session.isCompacting) throw new UserFacingError("agent 还在跑，停下之后才能回退")
+  }
+
+  async previewRewind(sessionId: SessionId, 那句: 回退的那句) {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    this.不许在跑(s)
+    const 位 = this.定位(sessionId, s, 那句)
+    const 存档 = this.存档们.get(sessionId)
+    if (!存档) return { ok: false as const, reason: "no_archive" as const }
+    return 存档.计划({ 之后的用户: 位.之后, 在存档之前: 位.在存档之前 })
+  }
+
+  /**
+   * 回退（spec §4.2–4.4）。**先文件、后对话**：文件那一半逐个文件报失败、不整体失败（`failed` 带缘故，做了一半也照列）；
+   * 对话那一半（`navigateTree`）没有流式时基本不会失败，真失败了文件已经退了——不抛，回 `conversationError`，让后端如实说「文件退了、对话没撤掉」。
+   * @throws 还在跑 / 对不上 / `回退不了`（在存档之前、断档、扫不动——这时一个文件都还没动，对话也不撤）
+   */
+  async rewind(sessionId: SessionId, 那句: 回退的那句, 做法: 回退做法, 内核们: readonly string[]): Promise<回退回执> {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    this.不许在跑(s)
+    const 位 = this.定位(sessionId, s, 那句)
+    let 回执: 回退回执 = { restored: [], removed: [], keep: [], cannot: [], failed: [] }
+    if (做法 !== "conversation") {
+      const 存档 = this.存档们.get(sessionId)
+      if (!存档) throw new 回退不了("gap")
+      回执 = await 存档.回退({ 之后的用户: 位.之后, 在存档之前: 位.在存档之前 })
+    }
+    if (做法 !== "files") {
+      try {
+        const r = await s.session.navigateTree(位.entry)
+        if (r.cancelled) throw new Error("pi 取消了这次跳转")
+        if (r.editorText !== undefined) 回执 = { ...回执, editorText: r.editorText }
+        // `navigateTree` 经 `_restoreToolsFromTranscript` 重建了工具集：侧边工具按标记再设一次
+        this.按标记设侧边工具(s.session, this.侧边工具开.has(sessionId))
+      } catch (e) {
+        回执 = { ...回执, conversationError: e instanceof Error ? e.message : String(e) }
+      }
+    }
+    // 对话没撤掉时，模型眼里就是「只退了文件」——照那一种留话
+    const 实际 = 回执.conversationError ? (做法 === "conversation" ? undefined : "files") : 做法
+    const 话 = 实际 ? 给模型的回退话(实际, 那句.文, 回执, 内核们) : undefined
+    if (话) await s.session.sendCustomMessage({ customType: "dawn-rewind", content: 话, display: false }, { deliverAs: "nextTurn" })
+    return 回执
+  }
+
   /**
    * 建会话处与 `setSideTool` 共用：启用的工具 = 别的照旧 + （开着时）`read_main_session`。
    * 没装这件工具（没给 `读主对话`）→ 什么都不做，不凭空多一个名字。
@@ -3018,6 +3146,10 @@ ${描述}`
     await s.session.abort().catch(() => {})
     s.收尾?.()
     this.产物们.delete(sessionId)
+    // 等存档那条链排空再放手：这一轮的结尾没拍完就续接，新的那份存档会把它读成「一轮开着没收」（2026-09-27）
+    const 存档 = this.存档们.get(sessionId)
+    this.存档们.delete(sessionId)
+    await 存档?.收尾().catch(() => {})
     // 还在等人答的权限卡一律按拒——会话都没了，5 分钟后再向它发 settled 没有意义
     for (const [id, 等] of [...this.待答]) if (等.sessionId === sessionId) { this.待答.delete(id); 等.答("deny") }
     s.unsubscribe()

@@ -12,6 +12,7 @@
  */
 import type { Cost } from "../protocol/index.js"
 import type { ConsoleEntry } from "../kernel/outputs.js"
+import type { 计划结果, 回退结果 } from "../project/checkpoints.js"
 export type SessionId = string
 
 export interface McpServerSpec {
@@ -62,6 +63,19 @@ export interface 调整的那句 {
   data?: string | undefined
   images?: readonly ImageAttachment[] | undefined
 }
+
+/**
+ * 回退的那一句（2026-09-27）。**从后往前数**：转录与 pi 的分支（`getBranch()`，从根到叶，压缩线之前的也在——
+ * 见 `history()`）都以最新那句收尾；从后往前数，前头不管多了一段还是少了一段（转录丢过一截、界面只还原了一部分）都不错位。
+ * `文` 是转录里那句的原文，运行时拿它核对 pi 那句——对不上就抛，不猜。
+ */
+export interface 回退的那句 {
+  倒数第几句: number
+  文: string
+}
+/** `both` 文件与对话一起 / `files` 只退文件 / `conversation` 只撤对话（文件退不了时的唯一出路） */
+export type 回退做法 = "both" | "files" | "conversation"
+export type 回退回执 = 回退结果 & { editorText?: string; conversationError?: string }
 
 export interface SessionSpec {
   sessionId: SessionId
@@ -556,6 +570,16 @@ export interface AgentRuntime {
    * @throws 那条已经不在单上 / 还在准备（没交给 pi）
    */
   redirect?(sessionId: SessionId, 那句: 调整的那句): Promise<string[]>
+  /**
+   * 回退这一轮 · 预览（2026-09-27）。**只有 native 有，有无即判据**。文件那一半的计划；没有存档（远端、关掉了）→ `{ ok: false, reason: "no_archive" }`。
+   * @throws 还在跑 / 那句对不上
+   */
+  previewRewind?(sessionId: SessionId, 那句: 回退的那句): Promise<计划结果 | { ok: false; reason: "no_archive" }>
+  /**
+   * 回退这一轮 · 执行。`内核们` 是此刻挂着的活内核（由后端从快照里取）——只用来给模型留话。
+   * @throws 还在跑 / 那句对不上 / 文件回退不了（`回退不了`，带缘故）
+   */
+  rewind?(sessionId: SessionId, 那句: 回退的那句, 做法: 回退做法, 内核们: readonly string[]): Promise<回退回执>
   /** 把排着的全部撤下来，返回它们的 id（按原先后）。中止之前先调它：停下之后排着的话不该自己冒出来 */
   clearQueue?(sessionId: SessionId): string[]
   /** 侧边对话：启用 / 停用 `read_main_session`（2026-09-24）。**只有 native 有，有无即判据** */

@@ -343,6 +343,11 @@ export type AgentEvent =
   /** 这段会话的团队变了（team-board，2026-08-22）。整份快照；真相在磁盘，这只是搬一份给界面 */
   | { kind: "team_changed"; sessionId: SessionId; team: import("../protocol/events.js").TeamSnapshot }
   /**
+   * 一版方案交上来了 / 状态变了（先出方案，2026-09-27）。**整条给**，中枢按 `plan:<planId>` 覆盖——
+   * 与 `team_changed` 同一纪律：给的就是当前完整的一份，合并只会多一种「合错了」。
+   */
+  | { kind: "plan"; sessionId: SessionId; plan: import("../protocol/plan.js").方案 }
+  /**
    * **待发单变了**（2026-09-23，学自 Codex）：整份换掉，按 pi 真正送进模型的先后排。
    * 只带 id 与送法——原文与预览在后端的存根里（运行时只认得送给模型的那份）。
    */
@@ -532,6 +537,12 @@ export type RestoredItem =
   | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean; at?: number }
   /** 这里压缩过（2026-09-27）：pi 记录里的 `compaction` 条目，落在它发生的位置。记录里没存起因 */
   | { kind: "compaction"; summary: string; tokensBefore: number }
+  /**
+   * 先出方案（2026-09-27）：方案簿里记着的那次 `propose_plan`，还原成卡片、状态取记录。
+   * **只在 native 的 `history()` 里出现**：由那一条 `tool`（name `propose_plan`）原位换来——一换一，条数不变
+   * （全文搜索数的第几条与转录里的第几条仍是同一个数，见 `history.ts` 文件头）。
+   */
+  | { kind: "plan"; plan: import("../protocol/plan.js").方案 }
 
 /**
  * 一张随消息送进模型的图片（协议 4.12）。
@@ -610,6 +621,12 @@ export interface AgentRuntime {
   clearQueue?(sessionId: SessionId): string[]
   /** 侧边对话：启用 / 停用 `read_main_session`（2026-09-24）。**只有 native 有，有无即判据** */
   setSideTool?(sessionId: SessionId, on: boolean): void
+  /**
+   * 回答一版方案（先出方案，2026-09-27）。**只有 native 有，有无即判据**。
+   * `approve`：存档、结束方案期，回存档路径；`discard`：结束方案期、什么都不存。
+   * @throws 没有这一版 / 不是最新 / 已经答过 / 存不下来（原样）
+   */
+  answerPlan?(sessionId: SessionId, planId: string, action: "approve" | "discard", text?: string): Promise<{ savedPath?: string }>
   /**
    * 接着问一个跑完的子 agent（2026-09-27）。**只有 native 有，有无即判据**。起一轮就返回——过程与结果经 `subagent_event` 出来。
    * @throws 这段会话没装子 agent（没有子进程入口）

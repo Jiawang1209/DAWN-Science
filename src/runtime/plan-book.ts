@@ -137,14 +137,21 @@ export class 方案簿 {
    * 回退之后（2026-09-28）：对话里已经没有那次 `propose_plan` 的几版**摘掉**——卡片跟着转录一起没了，
    * 留在簿里的话它还「能答」（一张看不见的卡能被批）、版本号也接不上。**批准过的留着**：文件已经写进项目、保护照旧，
    * 批准是人的动作，回退对话不撤销它。
-   * @returns 摘掉了几版
+   * 摘完之后最新那一版若是「已被取代」（取代它的那版刚被摘掉），它又是最新的了——**回到「等你看」**，回给调用方发事件。
    */
-  只留(还在的调用: ReadonlySet<string>): number {
+  只留(还在的调用: ReadonlySet<string>): { 摘: number; 复原?: 方案 } {
     const 前 = this.内.方案们.length
     this.内.方案们 = this.内.方案们.filter((p) => p.status === "approved" || 还在的调用.has(p.planId))
     const 摘 = 前 - this.内.方案们.length
-    if (摘 > 0) this.存()
-    return 摘
+    if (摘 === 0) return { 摘 }
+    const 最新 = this.内.方案们.reduce<方案记录 | undefined>((m, p) => (!m || p.version > m.version ? p : m), undefined)
+    let 复原: 方案 | undefined
+    if (最新?.status === "superseded") {
+      最新.status = "proposed"
+      复原 = 公开(最新)
+    }
+    this.存()
+    return 复原 ? { 摘, 复原 } : { 摘 }
   }
 
   private 存(): void {

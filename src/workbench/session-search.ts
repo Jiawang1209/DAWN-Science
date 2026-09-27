@@ -179,7 +179,7 @@ export class 会话全文搜索 {
     const 条目 = 还原.map((x, i) => {
       const item = 还原成条目(x, i)
       // 压缩标记：`可搜小写` 给 undefined（摘要是模型写的，不是这段对话里说过的话）——存成空串，永远不中；它也没有时刻
-      const at = x.kind === "compaction" ? undefined : x.at
+      const at = x.kind === "compaction" || x.kind === "plan" ? undefined : x.at
       return { item, 小: 可搜小写(item) ?? "", ...(at ? { at } : {}) }
     })
     const 项: 缓存项 = { 文件, 条目, 字符: 条目.reduce((n, x) => n + x.小.length, 0), 用过: ++this.钟 }

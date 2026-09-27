@@ -25,6 +25,8 @@ export function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
       ...(x.summary.trim() ? { summary: x.summary } : {}),
     }
   }
+  // 先出方案（2026-09-28）：native 的 `history()` 把簿里有的 `propose_plan` 换成它；id 与中枢收 `plan` 事件时同一个（`plan:<planId>`）
+  if (x.kind === "plan") return { type: "plan", id: `plan:${x.plan.planId}`, ...x.plan }
   return {
     type: "tool",
     id: x.id || `rt${i}`,

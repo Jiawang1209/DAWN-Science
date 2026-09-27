@@ -27,6 +27,9 @@ import {
   createAgentSession,
   createBashToolDefinition,
   createEditToolDefinition,
+  createFindToolDefinition,
+  createGrepToolDefinition,
+  createLsToolDefinition,
   createReadToolDefinition,
   createWriteToolDefinition,
   DefaultResourceLoader,
@@ -38,7 +41,8 @@ import {
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
-import { 还原历史, 取文本 } from "./history.js"
+import { 还原历史, 取文本, 分支转消息 } from "./history.js"
+import { lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 
 /**
  * 回退时界面那句与 pi 那句核对原文（2026-09-27，Task 4 复审收紧；Task 5 复审改成按真名认）。
@@ -73,7 +77,12 @@ import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器 } from "../team/scheduler.js"
 import { createTeamTools, 队长协议 } from "../team/tools.js"
 import { 描述图片 } from "./vision.js"
-import { createMcpTools } from "../tools/mcp-tool.js"
+import { createMcpTools, MCP只读标记 } from "../tools/mcp-tool.js"
+import { createProposePlanTool } from "../tools/propose-plan.js"
+import { createInspectDataTool } from "../tools/inspect-data.js"
+import { 方案期判, 方案指纹, 存档方案, 核对方案, 核对并恢复, type 已批准存档 } from "../policy/plan-mode.js"
+import { 方案簿, 写方案文件, 方案存档正文 } from "./plan-book.js"
+import { 出方案工具名, 看数据工具名, 方案文件名 } from "../protocol/plan.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore, ThinkingLevel } from "@earendil-works/pi-ai"
@@ -538,6 +547,26 @@ export class NativeRuntime implements AgentRuntime {
    * 所以 `stop` 不摘它：配对的生死归后端对照表，拿下 / 归档 / 删除时由后端 `setSideTool(id, false)`。
    */
   private readonly 侧边工具开 = new Set<SessionId>()
+  /**
+   * 每段会话一本方案簿（先出方案，2026-09-27）。**按会话 id 记，`stop` 不摘**：它落盘在会话目录，
+   * 续接时 `start` 重新读一遍；摘了的话停止与重开之间那一拍，已批准文件的保护就不在了。
+   */
+  private readonly 方案簿们 = new Map<SessionId, { 簿: 方案簿; workspace: string; sessionDir: string; 远端?: RemoteLike | undefined }>()
+  private 方案簿(sessionId: SessionId): 方案簿 {
+    return this.方案簿们.get(sessionId)?.簿 ?? new 方案簿(undefined)
+  }
+  /**
+   * 这一轮开头已批准方案的样子（2026-09-28，D3 定案：**人改的不恢复，agent 这一轮改的恢复**）。
+   * 这一轮第一件工具执行前拍（方案期门里，和 `开轮` 同一个时机），一轮收尾时核对、用完就扔。
+   * 指纹分不出是谁改的，**时间分得出**：两轮之间只有人在动；一轮里面动了的，算 agent 的。
+   */
+  /**
+   * 这段会话**我们自己装了**的方案期工具名（`propose_plan` / `inspect_data` / `ls` / `grep` / `find` 里有的那几个）。
+   * **不能用 `getToolDefinition(名)` 判「装了没有」**：pi 的注册表里内置工具一直都在（`noTools: "builtin"` 只是不启用它们），
+   * 远端会话没装我们的 `ls`，一查却查得到 pi 自己那件——启用了就是一件没套任何门、在本机跑的 `ls`（2026-09-28 测出来的）。
+   */
+  private readonly 方案工具名们 = new Map<SessionId, string[]>()
+  private readonly 轮基线 = new Map<SessionId, Promise<(已批准存档 & { planId: string })[]>>()
   /** 每段本地会话一份影子存档（2026-09-27）。远端与关掉的不在表里——表里没有 = 「没有存档」 */
   private readonly 存档们 = new Map<SessionId, 检查点存档>()
   /**
@@ -672,7 +701,19 @@ export class NativeRuntime implements AgentRuntime {
     const s = this.sessions.get(sessionId)
     if (!s) return []
     // 翻法在 `history.ts`（2026-09-27 搬出去）：子 agent 的会话文件读回、全文搜索用同一份
-    return 还原历史(s.sessionManager.getBranch())
+    const 条 = 还原历史(s.sessionManager.getBranch())
+    /**
+     * 先出方案（2026-09-27）：簿里记着的 `propose_plan` 调用**原位**换成卡片（状态取簿里的，含「你改过」——先核对一遍）；
+     * 簿里没有的（簿读坏了、老记录）照旧当工具行，不编一个状态。一换一，条数不变。
+     */
+    const 簿 = this.方案簿(sessionId)
+    if (!条.some((x) => x.kind === "tool" && x.name === 出方案工具名)) return 条
+    await this.刷新文件改过(sessionId, false).catch(() => {})
+    return 条.map((x) => {
+      if (x.kind !== "tool" || x.name !== 出方案工具名) return x
+      const 记 = 簿.找(x.id)
+      return 记 ? { kind: "plan" as const, plan: 记 } : x
+    })
   }
 
   private emit(event: AgentEvent): void {
@@ -873,6 +914,15 @@ export class NativeRuntime implements AgentRuntime {
       createBashToolDefinition(cwd, { exposeSessionEnvironment: false }),
       createEditToolDefinition(cwd),
       createWriteToolDefinition(cwd),
+      /**
+       * 先出方案（2026-09-28）：方案期整件拒 bash，看目录、搜文件只剩这三件——参数是类型化的，`rg` / `fd` 用 `--` 隔开、不过 shell。
+       * 走同一条授权 / 溯源包装。**默认停用、方案期才启用**（`按标记设方案工具`）：出了方案期模型照旧用 bash，
+       * 不多三件它没用过的工具去改变它平时的习惯。
+       *
+       * **远端会话不装**：pi 的 `grep` 只能在本机跑 `rg`（`GrepOperations` 管不到搜索本身）、`find` 要本机的 `fd`，
+       * 装上就是在本机的同名路径上搜——静默错位。远端的方案期因此只有 `read` 与 `inspect_data`（spec §0 2026-09-28 那条注）。
+       */
+      ...(remote ? [] : [createLsToolDefinition(cwd), createGrepToolDefinition(cwd), createFindToolDefinition(cwd)]),
     ] as unknown as (Record<string, unknown> & {
       name: string
       execute: (...a: unknown[]) => Promise<unknown>
@@ -1303,6 +1353,13 @@ export class NativeRuntime implements AgentRuntime {
      * e2e 的假模型不要 key，所以它没抓到。
      */
     const 子进程凭证 = await this.子进程凭证()
+    /**
+     * 方案簿（先出方案，2026-09-27）：**建工具之前**读好——方案期门在 execute 时查它，`history()` 靠它还原卡片。
+     * 读坏了不拦会话，出声。
+     */
+    const 簿 = new 方案簿(join(spec.sessionDir, "plans.json"))
+    this.方案簿们.set(spec.sessionId, { 簿, workspace: spec.workspace, sessionDir: spec.sessionDir, 远端: spec.remote?.executor })
+    if (簿.读坏了) this.emit({ kind: "notice", sessionId: spec.sessionId, text: 簿.读坏了 })
     const 原工具 = this.toolsFor(
       spec,
       native,
@@ -1320,6 +1377,27 @@ export class NativeRuntime implements AgentRuntime {
      */
     const 存档开 = !spec.remote && this.opts.checkpoints !== false
     const customTools = 存档开 && 原工具 ? 原工具.map((d) => this.套上存档(spec.sessionId, d)) : 原工具
+
+    /**
+     * **先出方案（2026-09-27，spec §4.1）：交给 pi 的每一件工具都再套一层方案期门，套在最外面、先判。**
+     *
+     * 顺序是 `方案期门 → 开轮（回退存档）→ 权限门 → 溯源 → 工具`：被方案期拒的那次**什么都没发生**——
+     * 不拍存档、不问权限、不记溯源（`tests/runtime/plan-mode.test.ts`「门的顺序」盯着）。
+     * 两件方案期工具也在这里装：`propose_plan` 每段都装；`inspect_data` 与 `run_code` 同一个条件（有内核、远端要真接了远端）。
+     * 它们建会话时就得在（pi 的 `customTools` 只在建会话时装），默认停用、方案期才启用（`按标记设方案工具`）。
+     * 设计契约扫描盯着：`customTools` 只能是 `方案期包过的` 这一份——换回没包的，门就只剩提示词了。
+     */
+    const 方案工具 = [
+      createProposePlanTool({ 交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
+      ...(this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
+        ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
+        : []),
+    ]
+    const 方案期包过的 = [...(customTools ?? []), ...方案工具].map((d) => this.套方案期门(d as Record<string, unknown>, spec))
+    this.方案工具名们.set(
+      spec.sessionId,
+      方案期工具.filter((n) => 方案期包过的.some((d) => d.name === n)),
+    )
 
     /**
      * **这段对话的记录住在它自己的目录里**（会话续接，2026-08-11）。
@@ -1532,7 +1610,8 @@ export class NativeRuntime implements AgentRuntime {
       settingsManager,
       resourceLoader,
       // 有门时必须关掉内置工具，**否则模型会绕过门去用原始的 bash**（Spike A-2 实测）
-      ...(customTools ? { noTools: "builtin" as const, customTools: customTools as never } : {}),
+      noTools: "builtin" as const,
+      customTools: 方案期包过的 as never,
     })
 
     /**
@@ -1543,6 +1622,8 @@ export class NativeRuntime implements AgentRuntime {
      * 都会重建工具集——以后谁接这两条，之后必须按 `侧边工具开` 再设一次。
      */
     this.按标记设侧边工具(session, this.侧边工具开.has(spec.sessionId))
+    // 方案期那几件：与侧边工具同一个做法，按簿里记的阶段明着设一次（续接回来的方案期也在这里恢复）
+    this.按标记设方案工具(spec.sessionId, session, 簿.阶段 === "planning")
 
     const unsubscribe = session.subscribe((raw) => this.translate(spec.sessionId, raw as PiEvent))
 
@@ -1643,6 +1724,21 @@ export class NativeRuntime implements AgentRuntime {
         ],
       })
     }
+    /**
+     * 先出方案（2026-09-27）：**装了 `propose_plan` 就有这一条**（每段 native 都装）。输入卡那颗开关读它、写它——
+     * 与权限那颗走 `dawn.permission` 同一个做法，不另开协议操作。category `plan`：底部那颗通用菜单不收它（`views.tsx` 的过滤单）。
+     */
+    if (s.session.getToolDefinition(出方案工具名)) {
+      开关.push({
+        id: "dawn.plan",
+        name: "先出方案",
+        description: "开着时只看不改：先交分析方案，你批了再动手",
+        category: "plan",
+        kind: "boolean",
+        current: this.方案簿(sessionId).阶段 === "planning" ? "1" : "",
+        options: [],
+      })
+    }
     if (s.session.supportsThinking()) {
       const 级: { value: ThinkingLevel; name: string }[] = [
         { value: "minimal", name: "最少" },
@@ -1673,6 +1769,9 @@ export class NativeRuntime implements AgentRuntime {
       if (!档) throw new Error("这一版没有接按会话的权限档")
       if (value !== "inherit" && value !== "allow-all" && value !== "ask-risky" && value !== "deny-risky") throw new Error(`不认识的权限档：${value}`)
       档.设(sessionId, value === "inherit" ? undefined : value)
+    } else if (configId === "dawn.plan") {
+      if (value !== "1" && value !== "") throw new Error(`先出方案只收 "1" 或 ""，收到的是：${value}`)
+      this.设方案期(sessionId, value === "1")
     } else if (configId === "dawn.thinking") {
       const 级 = ["minimal", "low", "medium", "high", "xhigh", "max"]
       if (!级.includes(value)) throw new Error(`不认识的推理强度：${value}`)
@@ -2212,6 +2311,45 @@ ${描述}`
      */
     let 起跑了!: () => void
     const 起跑 = new Promise<void>((r) => (起跑了 = r))
+    /** 一轮的同步收尾（`inFlight`、`turn_end`、`cost`、存档收尾、`idle`）。先出方案要核对时排在核对之后 */
+    const 收尾 = (): void => {
+      s.inFlight -= 1
+      /**
+       * **这一轮到此为止——不管是好是坏**（2026-08-11 修）。
+       *
+       * pi 正常跑完时会自己发 `turn_end`；**但 `prompt()` 直接 reject 的那条路
+       * 上一个都没有**（例如 `No API key found for <provider>`——它在发请求之前
+       * 就抛了）。于是那一轮**永远开着**，症状有三层，一层比一层难猜：
+       *   1. 「正在思考」的动图一直转
+       *   2. 界面据「有没有开着的 agent 轮次」算 `busy`，于是它永远为真
+       *   3. **`busy` 为真时模型菜单整个是禁用的**——
+       *      作者报的「对话过程中，依旧不能切换模型」就是这一层。
+       *      而它表现为「点了没反应」，与真正的原因（上一轮没收尾）毫无关系。
+       *
+       * 重复发一次是安全的：`turn_end` 在中枢那边是幂等的（关一个已经关上的轮次
+       * 什么都不做），而漏发一次的代价是上面那三层。
+       */
+      this.emit({ kind: "turn_end", sessionId })
+      /**
+       * **成本：我们知道 token，不知道钱。**
+       *
+       * provider 报的是 token（`s.lastUsage`，上下文栏用的就是它），
+       * **金额一处都没有**——要得到金额只能自己维护一张价目表再乘一遍，
+       * 那是估算，而账本上的估算会被当成事实（不变式 5 禁止编造）。
+       *
+       * 所以如实说「不可见 + 为什么」，而不是让成本栏永远停在
+       * 「尚未记录」——那句话是错的：**我们记了，只是记不到钱。**
+       */
+      this.emit({
+        kind: "cost",
+        sessionId,
+        cost: { visible: false, reason: "该 provider 只报 token，不报金额；token 用量见上下文栏" },
+      })
+      // 回退这一轮：这一轮收尾拍一张结尾（只 stat）。不等它——`开轮` / `回退` 排在同一条链上，自然在它之后（2026-09-27）
+      void this.存档们.get(sessionId)?.收尾()
+      // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
+      this.emit({ kind: "idle", sessionId })
+    }
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
     const run = s.session
       .prompt(data, { ...(图 ? { images: 图 } : {}), preflightResult: () => 起跑了() })
@@ -2226,42 +2364,13 @@ ${描述}`
       })
       .finally(() => {
         起跑了()
-        s.inFlight -= 1
         /**
-         * **这一轮到此为止——不管是好是坏**（2026-08-11 修）。
-         *
-         * pi 正常跑完时会自己发 `turn_end`；**但 `prompt()` 直接 reject 的那条路
-         * 上一个都没有**（例如 `No API key found for <provider>`——它在发请求之前
-         * 就抛了）。于是那一轮**永远开着**，症状有三层，一层比一层难猜：
-         *   1. 「正在思考」的动图一直转
-         *   2. 界面据「有没有开着的 agent 轮次」算 `busy`，于是它永远为真
-         *   3. **`busy` 为真时模型菜单整个是禁用的**——
-         *      作者报的「对话过程中，依旧不能切换模型」就是这一层。
-         *      而它表现为「点了没反应」，与真正的原因（上一轮没收尾）毫无关系。
-         *
-         * 重复发一次是安全的：`turn_end` 在中枢那边是幂等的（关一个已经关上的轮次
-         * 什么都不做），而漏发一次的代价是上面那三层。
+         * 先出方案（2026-09-28，D3）：这一轮动过已批准的方案就恢复、说出来。**在 `inFlight` 放下之前做完**——
+         * 做完之前下一句走排队那条缝（`s.pending` 等的就是这里）：新的一轮若抢在恢复之前拍了底，会把 agent 改坏的那份当成底。
+         * 没有要核对的（绝大多数会话）照旧同步收尾，时序一丝不变。
          */
-        this.emit({ kind: "turn_end", sessionId })
-        /**
-         * **成本：我们知道 token，不知道钱。**
-         *
-         * provider 报的是 token（`s.lastUsage`，上下文栏用的就是它），
-         * **金额一处都没有**——要得到金额只能自己维护一张价目表再乘一遍，
-         * 那是估算，而账本上的估算会被当成事实（不变式 5 禁止编造）。
-         *
-         * 所以如实说「不可见 + 为什么」，而不是让成本栏永远停在
-         * 「尚未记录」——那句话是错的：**我们记了，只是记不到钱。**
-         */
-        this.emit({
-          kind: "cost",
-          sessionId,
-          cost: { visible: false, reason: "该 provider 只报 token，不报金额；token 用量见上下文栏" },
-        })
-        // 回退这一轮：这一轮收尾拍一张结尾（只 stat）。不等它——`开轮` / `回退` 排在同一条链上，自然在它之后（2026-09-27）
-        void this.存档们.get(sessionId)?.收尾()
-        // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
-        this.emit({ kind: "idle", sessionId })
+        const 核 = this.收轮核对(sessionId)
+        return 核 ? 核.then(收尾) : 收尾()
       })
     // 串起来而不是覆盖：连发两轮时，等待必须覆盖两轮，不能只等最后一轮
     s.pending = s.pending ? s.pending.then(() => run) : run
@@ -3035,6 +3144,49 @@ ${描述}`
     if (s) this.按标记设侧边工具(s, on)
   }
 
+  /**
+   * 回答一版方案（先出方案，2026-09-27，spec §4.4）。
+   * **写成功才改状态**：存不下来原样抛，卡片不变、开关不动——人看到原因，还能再按一次。
+   * 本机会话批准时还要在会话目录留一份存档、记指纹（D3 第二道，2026-09-28）：**存档失败 = 批准失败**，
+   * 刚写的方案文件删掉（不留一份簿里不认的「已批准」文件），原样抛。远端会话没有这一道（spec §0 的限制）。
+   */
+  async answerPlan(sessionId: SessionId, planId: string, action: "approve" | "discard", text?: string): Promise<{ savedPath?: string }> {
+    const s = this.sessions.get(sessionId)
+    const 处 = this.方案簿们.get(sessionId)
+    if (!s || !处) throw new Error(`会话 "${sessionId}" 未启动`)
+    const p = 处.簿.可答(planId)
+    if (action === "discard") {
+      const x = 处.簿.作废(planId)
+      this.设方案期(sessionId, false)
+      this.emit({ kind: "plan", sessionId, plan: x })
+      this.发会话开关(sessionId)
+      return {}
+    }
+    const 正文 = text?.trim() || p.markdown
+    const 改过 = 正文 !== p.markdown
+    const 时刻 = new Date()
+    const savedPath = await 写方案文件({
+      workspace: 处.workspace,
+      远端: 处.远端,
+      名: 方案文件名(p.title, 时刻),
+      正文: 方案存档正文({ title: p.title, version: p.version, 正文, 改过, 时刻, sessionId, 模型: s.实际模型 ?? "" }),
+    })
+    let 指纹: { sha256: string; 存档: string } | undefined
+    if (!处.远端) {
+      try {
+        指纹 = await 存档方案({ workspace: 处.workspace, 相对: savedPath, 会话目录: 处.sessionDir })
+      } catch (e) {
+        await rm(join(处.workspace, savedPath), { force: true }).catch(() => {})
+        throw e
+      }
+    }
+    const x = 处.簿.批准(planId, { 正文, savedPath, 时刻: 时刻.getTime(), 改过, ...(指纹 ?? {}) })
+    this.设方案期(sessionId, false)
+    this.emit({ kind: "plan", sessionId, plan: x })
+    this.发会话开关(sessionId)
+    return { savedPath }
+  }
+
   /** 给一件工具套上「先拍开头」。执行时才按 id 取存档与 pi 的记录——装工具那一刻它们还没建出来 */
   private 套上存档(sessionId: SessionId, 定义: unknown): unknown {
     const d = 定义 as Record<string, unknown>
@@ -3050,6 +3202,16 @@ ${描述}`
         return original(...a)
       },
     }
+  }
+
+  /** 当前对话分支上每一次 `propose_plan` 的 toolCallId（= planId） */
+  private 分支上的方案调用(s: NativeSession): Set<string> {
+    const 有 = new Set<string>()
+    for (const m of 分支转消息(s.sessionManager.getBranch() as unknown[])) {
+      if (m.role !== "assistant") continue
+      for (const c of m.content ?? []) if (c.type === "toolCall" && c.name === 出方案工具名) 有.add(c.id)
+    }
+    return 有
   }
 
   /**
@@ -3140,8 +3302,15 @@ ${描述}`
         const r = await s.session.navigateTree(位.entry)
         if (r.cancelled) throw new Error("pi 取消了这次跳转")
         if (r.editorText !== undefined) 回执 = { ...回执, editorText: r.editorText }
-        // `navigateTree` 经 `_restoreToolsFromTranscript` 重建了工具集：侧边工具按标记再设一次
+        // `navigateTree` 经 `_restoreToolsFromTranscript` 重建了工具集：侧边工具、方案期那几件按标记再设一次
         this.按标记设侧边工具(s.session, this.侧边工具开.has(sessionId))
+        this.按标记设方案工具(sessionId, s.session, this.方案簿(sessionId).阶段 === "planning")
+        /**
+         * 方案簿跟着对话走（2026-09-28）：撤掉的那几轮里交的方案，卡片随转录一起没了——簿里也摘掉，
+         * 不然一张看不见的卡还「能答」、下一版的版本号也接不上。批准过的留着（文件在项目里，保护照旧；见 `方案簿.只留`）。
+         */
+        const 留 = this.方案簿(sessionId).只留(this.分支上的方案调用(s))
+        if (留.复原) this.emit({ kind: "plan", sessionId, plan: 留.复原 })
       } catch (e) {
         回执 = { ...回执, conversationError: e instanceof Error ? e.message : String(e) }
       }
@@ -3184,6 +3353,137 @@ ${描述}`
   }
 
   /**
+   * 方案期那几件的启停（先出方案，2026-09-27；`ls` / `grep` / `find` 2026-09-28 加入）。
+   * **没装的不凭空加名字**（与 `按标记设侧边工具` 同一条；远端会话没有那三件、没内核的没有 `inspect_data`）。
+   */
+  private 按标记设方案工具(
+    sessionId: SessionId,
+    s: { getActiveToolNames(): string[]; setActiveToolsByName(names: string[]): void },
+    on: boolean,
+  ): void {
+    const 名 = this.方案工具名们.get(sessionId) ?? []
+    if (名.length === 0) return
+    const 别的 = s.getActiveToolNames().filter((n) => !名.includes(n))
+    s.setActiveToolsByName(on ? [...别的, ...名] : 别的)
+  }
+
+  /** 进 / 出方案期：记进簿、启停那几件工具。**不发开关事件**——调用方（`setConfigOption` / `answerPlan`）发 */
+  private 设方案期(sessionId: SessionId, on: boolean): void {
+    this.方案簿(sessionId).设阶段(on ? "planning" : "off")
+    const s = this.sessions.get(sessionId)?.session
+    if (s) this.按标记设方案工具(sessionId, s, on)
+  }
+
+  /**
+   * 方案期门（spec §4.1）。**每次调用现查簿**：阶段在会话中途会变，门是建会话时装上的——传值的话改了开关不生效。
+   * 拒绝回 `isError` 结果，不抛异常（Spike A-2）。放行的那次先给已批准的方案拍这一轮的底（`记轮基线`），再往里走。
+   * `mcp只读` 读的是 `MCP只读标记`：它一路经过 `套上溯源`、`套上存档` 的展开（`...def`）留到这里。
+   */
+  private 套方案期门(def: Record<string, unknown>, spec: SessionSpec): Record<string, unknown> {
+    const name = String(def.name)
+    const original = (def.execute as (...a: unknown[]) => Promise<unknown>).bind(def)
+    const mcp只读 = def[MCP只读标记] === true
+    return {
+      ...def,
+      execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
+        const 簿 = this.方案簿(spec.sessionId)
+        const 决定 = 方案期判(name, params ?? {}, {
+          方案期: 簿.阶段 === "planning",
+          已批准: 簿.已批准路径(),
+          workspace: spec.workspace,
+          ...(mcp只读 ? { mcp只读: true } : {}),
+        })
+        if (决定.kind === "deny") return { content: [{ type: "text", text: 决定.reason }], isError: true, details: undefined }
+        await this.记轮基线(spec.sessionId)
+        return original(toolCallId, params, signal, onUpdate, ctx)
+      },
+    }
+  }
+
+  /** `propose_plan` 交上来的一版：记进簿，被取代的与新的都发 `plan` 事件 */
+  private 收方案(sessionId: SessionId, toolCallId: string, p: { title: string; plan: string }): { version: number } {
+    const { 新, 被取代 } = this.方案簿(sessionId).收(toolCallId, p.title, p.plan)
+    for (const x of 被取代) this.emit({ kind: "plan", sessionId, plan: x })
+    this.emit({ kind: "plan", sessionId, plan: 新 })
+    return { version: 新.version }
+  }
+
+  /**
+   * 这一轮第一件工具执行前：给已批准的方案文件拍一份底（内容拷进会话目录 `plans/turn/`、记指纹）。同一轮后面的工具等同一张。
+   * 只有本机会话、只有批准时记下了指纹的才拍（远端的见 spec §0 的限制）。**永不 reject**：拍不上出声、这一轮不核对——工具照常执行。
+   * 此刻不在的（人删了）、被换成链接的不拍：那是人的动作，这一轮不替它「恢复」。
+   */
+  private 记轮基线(sessionId: SessionId): Promise<unknown> {
+    const 有 = this.轮基线.get(sessionId)
+    if (有) return 有
+    const 处 = this.方案簿们.get(sessionId)
+    if (!处 || 处.远端) return Promise.resolve()
+    const 批 = 处.簿.已批准存档()
+    if (批.length === 0) return Promise.resolve()
+    const 拍 = (async () => {
+      const 出: (已批准存档 & { planId: string })[] = []
+      for (const r of 批) {
+        const p = join(处.workspace, r.相对)
+        try {
+          if ((await lstat(p)).isSymbolicLink()) continue
+        } catch {
+          continue
+        }
+        const 内容 = await readFile(p)
+        const 底 = join(处.sessionDir, "plans", "turn", r.相对.split("/").pop()!)
+        await mkdir(dirname(底), { recursive: true })
+        await writeFile(底, 内容)
+        出.push({ planId: r.planId, 相对: r.相对, sha256: 方案指纹(内容), 存档: 底 })
+      }
+      return 出
+    })().catch((e: unknown) => {
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: `这一轮开头没能给批准过的方案留底，这一轮结束时不核对它（${e instanceof Error ? e.message : String(e)}）`,
+        failed: true,
+      })
+      return []
+    })
+    this.轮基线.set(sessionId, 拍)
+    return 拍
+  }
+
+  /**
+   * 一轮收尾（2026-09-28，D3 定案）：①这一轮拍过底的，与底比，**这一轮里被改的恢复**并响亮地说；
+   * ②每一份与**批准时**比，不一样就在卡片上记「你改过」（`fileChanged`）——那是人在两轮之间改的，不恢复。
+   * 没有要做的回 undefined（调用方据此保持原来的同步收尾，时序一丝不变）。**永不 reject**。
+   */
+  private 收轮核对(sessionId: SessionId): Promise<void> | undefined {
+    const 处 = this.方案簿们.get(sessionId)
+    const 基线 = this.轮基线.get(sessionId)
+    this.轮基线.delete(sessionId)
+    if (!处 || 处.远端) return undefined
+    if (!基线 && 处.簿.已批准存档().length === 0) return undefined
+    return (async () => {
+      if (基线) {
+        for (const 话 of await 核对并恢复(处.workspace, await 基线)) {
+          this.emit({ kind: "notice", sessionId, text: 话, ...(话.includes("恢复不了") ? { failed: true as const } : {}) })
+        }
+      }
+      await this.刷新文件改过(sessionId, true)
+    })().catch((e: unknown) => {
+      this.emit({ kind: "notice", sessionId, text: `核对批准过的方案时出错：${e instanceof Error ? e.message : String(e)}`, failed: true })
+    })
+  }
+
+  /** 已批准的每一份与批准时比，把「你改过」记进簿；`发` 为真时变了的发 `plan` 事件（`history()` 里不发——卡片由它自己带出去） */
+  private async 刷新文件改过(sessionId: SessionId, 发: boolean): Promise<void> {
+    const 处 = this.方案簿们.get(sessionId)
+    if (!处 || 处.远端) return
+    for (const r of 处.簿.已批准存档()) {
+      const 状 = await 核对方案({ workspace: 处.workspace, 相对: r.相对, sha256: r.sha256 })
+      const x = 处.簿.设文件改过(r.planId, 状 !== "完好")
+      if (x && 发) this.emit({ kind: "plan", sessionId, plan: x })
+    }
+  }
+
+  /**
    * 全部撤下（停止 / 关会话用）：pi 那份与镜像全清，**还没交给 pi 的也一起拿走**（它们的回调摘不到就不发了）。
    * 返回有身份的 id；没身份的（飞书 / 微信 / 定时）后端没有存根，在这里就地出声——不许悄悄丢。
    */
@@ -3223,6 +3523,8 @@ ${描述}`
     await s.session.abort().catch(() => {})
     s.收尾?.()
     this.产物们.delete(sessionId)
+    // 这一轮的方案底（先出方案）：会话都停了，这一轮不会再收尾核对；方案簿本身不摘（见 `方案簿们`）
+    this.轮基线.delete(sessionId)
     // 等存档那条链排空再放手：这一轮的结尾没拍完就续接，新的那份存档会把它读成「一轮开着没收」（2026-09-27）
     const 存档 = this.存档们.get(sessionId)
     this.存档们.delete(sessionId)
@@ -3256,6 +3558,9 @@ function 记当前团队(sessionDir: string, id: string | undefined): void {
     console.error("[团队] 记不住当前团队：", e instanceof Error ? e.message : String(e))
   }
 }
+
+/** 方案期才启用的那几件（先出方案）。`按标记设方案工具` 只动其中这段会话真装了的 */
+const 方案期工具 = [出方案工具名, 看数据工具名, "ls", "grep", "find"]
 
 /** 给权限卡看的一句：工具名 + 主参数 */
 function 摘要(name: string, params: Record<string, unknown>): string {

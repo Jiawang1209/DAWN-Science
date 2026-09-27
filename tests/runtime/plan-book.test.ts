@@ -55,10 +55,13 @@ describe("方案簿", () => {
     簿.批准("c1", { 正文: "m1", savedPath: "a.md", 时刻: 5, 改过: false })
     簿.收("c2", "t", "m2")
     簿.收("c3", "t", "m3")
-    expect(簿.只留(new Set(["c2"]))).toBe(1)
+    // c3 摘掉之后 c2 又是最新的：回到「等你看」
+    expect(簿.只留(new Set(["c2"]))).toEqual({ 摘: 1, 复原: expect.objectContaining({ planId: "c2", status: "proposed" }) })
     expect(簿.找("c3")).toBeUndefined()
+    expect(() => 簿.可答("c2")).not.toThrow()
     expect(簿.找("c1")?.status).toBe("approved")
     expect(簿.收("c4", "t", "m4").新.version).toBe(3)
+    expect(簿.只留(new Set(["c2", "c4"]))).toEqual({ 摘: 0 })
     // 全都不在分支上：批准过的仍在
     簿.只留(new Set())
     expect(簿.已批准路径()).toEqual(["a.md"])

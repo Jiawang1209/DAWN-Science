@@ -8,7 +8,7 @@
  *   · 不标是哪台报的错 → 同时挂着几台时，「这个错是谁报的」只能靠猜
  */
 import { describe, expect, it } from "vitest"
-import { createMcpTools } from "../../src/tools/mcp-tool.js"
+import { createMcpTools, MCP只读标记 } from "../../src/tools/mcp-tool.js"
 import { 造MCP门 } from "../../src/policy/permissions.js"
 import type { McpServer } from "../../src/config/schema.js"
 import type { MCP池 } from "../../src/mcp/客户端.js"
@@ -60,6 +60,17 @@ describe("MCP 工具 · 装配", () => {
   /** **入参 schema 原样转交**：中间加一层翻译就多一个「翻错了没人发现」的地方 */
   it("入参 schema 原样转交，不翻译", () => {
     expect(造().工具[0]!.parameters).toEqual(一个工具.入参)
+  })
+
+  /** 先出方案（2026-09-27，D6）：方案期门认这个标记——**只挂在服务器声明只读的那个上** */
+  it("服务器声明只读的工具带上方案期标记，没声明的没有", () => {
+    const [只读的, 没说的] = createMcpTools({
+      池: 假池().池,
+      名单: [{ 名: "testbox", 服务器: 一台 }],
+      工具: [{ ...一个工具, 全名: "testbox__search", 工具名: "search", 只读: true }, 一个工具],
+    }) as Record<string, unknown>[]
+    expect(只读的![MCP只读标记]).toBe(true)
+    expect(没说的).not.toHaveProperty(MCP只读标记)
   })
 
   it("放行时真的把参数送到了那台服务器", async () => {

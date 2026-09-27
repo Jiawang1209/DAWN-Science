@@ -60,6 +60,18 @@ describe("MCP 客户端 · 对着真服务器", () => {
     }
   })
 
+  /**
+   * **只读声明原样带上，只认 true**（先出方案，2026-09-27，D6）：`search_cases` 声明了 readOnlyHint: true，
+   * `写一行` 明说 false，`echo` 没声明——后两者都不能被当成只读（缺失不等于支持）。
+   */
+  it("服务器声明 readOnlyHint: true 的工具带上 只读；false 与没声明的都没有", async () => {
+    const r = await 池.备好("testbox", 一台())
+    const 找 = (名: string) => r.工具.find((t) => t.工具名 === 名)!
+    expect(找("search_cases").只读).toBe(true)
+    expect(找("写一行")).not.toHaveProperty("只读")
+    expect(找("echo")).not.toHaveProperty("只读")
+  })
+
   /** **工具名带服务器前缀**：两台各有一个 `echo` 时，模型要分得清打给谁 */
   it("工具名带服务器前缀", async () => {
     const r = await 池.备好("testbox", 一台())

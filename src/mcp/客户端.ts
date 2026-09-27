@@ -55,6 +55,11 @@ export interface MCP工具 {
   描述: string
   /** JSON Schema，直接来自服务器。**原样转交，不翻译** */
   入参: unknown
+  /**
+   * 服务器自己声明的 `annotations.readOnlyHint`（先出方案，2026-09-27，D6）。**只在 true 时有**。
+   * 它是服务器的一面之词：方案期据它放行，**仍要过原来那道 MCP 门**（信不信得过、哪一档）。
+   */
+  只读?: true
 }
 
 export interface 一台的结果 {
@@ -269,6 +274,7 @@ export class MCP池 {
         /** **描述缺席就如实说缺席**，不编一句——模型会照着编出来的那句去用它 */
         描述: t.description ?? `${名} 提供的工具 ${t.name}（这台服务器没有给出说明）`,
         入参: t.inputSchema,
+        ...(t.annotations?.readOnlyHint === true ? { 只读: true as const } : {}),
       }))
       this.连着.set(k, { client, transport, 工具, stderr尾巴: 尾巴 })
       return { 服务器名: 名, 工具 }

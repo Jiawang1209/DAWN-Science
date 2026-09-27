@@ -53,6 +53,12 @@ export interface MCP工具装配 {
 }
 
 /**
+ * 方案期门认这个标记（先出方案，2026-09-27，D6；Task 5 的 `套方案期门` 读它，喂给 `方案期判` 的 `mcp只读`）。
+ * **只挂在服务器声明 `readOnlyHint: true` 的那几个上**——没声明、声明 false 的都没有它，方案期一律拒。
+ */
+export const MCP只读标记 = "dawnMcpReadOnly"
+
+/**
  * 造出一组 pi 自定义工具。
  *
  * **一台服务器的每个工具各自成一个**，不是一个 `mcp` 大工具带个 `tool` 参数：
@@ -74,6 +80,7 @@ export function createMcpTools(装配: MCP工具装配): unknown[] {
        */
       description: `【来自 MCP 服务器「${t.服务器名}」】${t.描述}`,
       parameters: t.入参,
+      ...(t.只读 ? { [MCP只读标记]: true } : {}),
 
       async execute(_toolCallId: string, params: Record<string, unknown>): Promise<ToolResult> {
         if (!配) {

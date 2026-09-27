@@ -62,7 +62,8 @@ server.tool("echo", "把收到的话原样回给你。测试用。", { message: 
  * **假 MLAI 的 `search_cases`**（2026-09-15，案例卡片）。回的形状照真 MLAI：一组带 case_id / title / language / cover 的命中。
  * 第三篇没有 cover；第二篇 id 很长，假模型的回复里会把它截短——那正是卡片要认出来的情形。
  */
-server.tool("search_cases", "假的案例检索。测试用。", { query: z.string().optional() }, async () => ({
+// 2026-09-27（先出方案 D6）：照真 MLAI 该有的样子声明只读——方案期据它放行；`写一行` 明说不是只读，`echo` 不声明
+server.tool("search_cases", "假的案例检索。测试用。", { query: z.string().optional() }, { readOnlyHint: true }, async () => ({
   content: [
     {
       type: "text",
@@ -84,6 +85,7 @@ server.tool(
   "写一行",
   "往测试日志里追加一行。这是「真的调到了」的物证。",
   { message: z.string() },
+  { readOnlyHint: false },
   async ({ message }) => {
     const 日志 = process.env.DAWN_MCP_TEST_LOG
     if (!日志) {

@@ -202,7 +202,7 @@ export function EnhanceControl({
     return (
       <div className="enhance-control">
         <Button variant="ghost" size="sm" className="enhance-main" disabled aria-label={reason}>
-          <星图标 className="row-icon" /> {t("优化输入")}
+          <星图标 className="row-icon" /> <span className="enhance-word">{t("优化输入")}</span>
         </Button>
       </div>
     )
@@ -230,7 +230,7 @@ export function EnhanceControl({
           aria-label={空 ? t("先写点什么再优化") : t("优化输入")}
           onClick={() => void 去增强()}
         >
-          <星图标 className="row-icon" /> {t("优化输入")}
+          <星图标 className="row-icon" /> <span className="enhance-word">{t("优化输入")}</span>
         </Button>
       )}
       <Button

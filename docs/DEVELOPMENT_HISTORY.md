@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 窄附栏里仪表只留环 + 数，坞里权限那颗不再被顶出卡外（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 视觉基线「坞里的对话」抓到：坞里那张卡（对话格 380 宽）附栏五样都是 `flex: 0 0 auto`，整句「上下文 <1%」把权限那颗顶出卡外，只剩「●完」；坞开着时主区的工作目录 chip 也从 155px 被挤到约 60px。
+- **What**: `ContextMeter` 把「上下文」放进 `.ctx-meter-word`，按钮 `aria-label` 带全句（快满了那句也是）；`styles.css` 挂在已有的 `.conversation` 容器上（不在附栏另起容器：布局隔离会让 `.menu-scrim` 这类 fixed 遮罩只盖住附栏）：对话格 ≤720px 藏「上下文」三个字，≤440px（只有坞）再藏「优化输入」可见字（它两种态都自带 `aria-label`）。只收仪表时坞里实测仍差约 46px，所以多收了这一颗；挑它不挑「上传文件」是因为后者的字是作者点名要的。
+- **Impact**: 主区坞关着照写「上下文 N%」；坞开着的主区与坞里写「◯ N%」；坞里「优化输入」只剩星 + 箭头。读屏名字不变。已知：坞拖到最窄 280 时附栏仍放不下（未处理）。视觉基线「对话」「坞里的对话」需重存（另一步做）。
+- **Verification**: 新 e2e 两条（坞里权限那颗的盒子在卡内、附栏 `scrollWidth <= clientWidth`、仪表可见字只剩「<1%」而名字是「上下文 <1%」；主区整句可见）；新单测（aria-label 与 span 结构）；`vitest tests/ui` 925/925、typecheck、build、`context-compaction` + `side-session` e2e 全绿；视觉 diff 看过：坞里只剩仪表与优化输入两处差、权限那颗完整。
+
 ### 2026-09-27 — 上下文用量与压缩 e2e：测试旋钮接线、spec §7 各条、旧用例改口径（分支 `agent-basics`，plan Task 8）
 
 - **Type**: test

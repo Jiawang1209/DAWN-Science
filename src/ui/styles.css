@@ -7325,6 +7325,29 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="dim"] .btn.ctx-meter-trigger { color: var(--dawn-text-3); }
 .ctx-meter-ring { flex: none; }
+/**
+ * **窄了只留环 + 数**（2026-09-27）。坞里那张卡（对话格 380 宽）附栏上五样都是 `flex: 0 0 auto`，
+ * 仪表整句写出来就把权限那颗顶出卡外，只剩「●完」。容器是 `.conversation`（它早就是 `inline-size` 容器，
+ * 见「轮次刻度尺」那条）——不在 `.composer-footer` 上另起一个：`container-type` 带布局隔离，
+ * 附栏里的菜单有 `position: fixed` 的点外面遮罩（`.menu-scrim`），隔离之后它只盖得住附栏那一条。
+ *
+ * **阈值 720px（对话这一格的宽）**：主区侧栏展开、坞关着（e2e 缺省 1280 宽，对话格约 1056）整句照写；
+ * 坞开着的主区（约 676）与坞里（380）只写数——前者不收的话，工作目录那颗 chip 被挤到只剩 60px 左右。
+ * 字仍在 DOM 里，按钮的 `aria-label` 带全句：读屏听到的始终是「上下文 37%」。
+ */
+@container (max-width: 720px) {
+  .composer-footer .ctx-meter-word { display: none; }
+}
+/**
+ * **坞那么窄时「优化输入」也只留星**（2026-09-27）。仪表收成「◯ 37%」之后，坞默认宽 380 的附栏仍差约 46px——
+ * 实测：上传文件 88 + 目录 16 + 优化输入 118 + 仪表 48 + 权限 94，加间距与留白比卡宽 356 多出一截。
+ * 挑它而不挑「上传文件」：后者的字是作者点名要的（2026-08-13，`AttachButton` 那段注释），且它的名字就是那几个字；
+ * 「优化输入」两种态都有自己的 `aria-label`，藏掉可见字不改它的名字。忙时那句「…放弃」不在这个 span 里，照写。
+ * 阈值 440：只有坞（默认 380）落进来，主区最窄也远在其上。坞拖到最窄 280 仍放不下——已知，见 DEVELOPMENT_HISTORY。
+ */
+@container (max-width: 440px) {
+  .composer-footer .enhance-word { display: none; }
+}
 .ctx-meter-ring-track { fill: none; stroke: var(--dawn-stroke-3); stroke-width: 2; }
 .ctx-meter-ring-fill { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .ctx-meter-pop {

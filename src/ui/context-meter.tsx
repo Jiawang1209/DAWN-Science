@@ -222,6 +222,7 @@ export function ContextMeter({
         variant="ghost"
         size="inline"
         className="ctx-meter-trigger"
+        aria-label={字}
         aria-haspopup="dialog"
         aria-expanded={开着}
         onClick={() => {
@@ -233,7 +234,13 @@ export function ContextMeter({
         }}
       >
         <圆环 已用={读数.已用} 上限={读数.上限} />
-        {字}
+        {/*
+          * **窄附栏只留环 + 数**（2026-09-27，坞里那张卡）：「上下文」三个字放在自己的 span 里，由 `.composer-footer`
+          * 的容器查询 `display: none` 掉；按钮的名字由 `aria-label` 带全句，读屏听到的始终是「上下文 37%」。
+          * 不用 `.sr-only` 那一类「视觉隐藏」：它的静态位置曾逃出滚动容器（2026-09-16）。
+          */}
+        <span className="ctx-meter-word">{t("上下文")} </span>
+        {读数.档 === "warn" ? tf("{0} · 快满了", 读数.值) : 读数.值}
       </Button>
       {开着 ? (
         <div className="menu ctx-meter-pop" role="dialog" aria-label={t("上下文")}>

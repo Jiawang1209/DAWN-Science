@@ -1,6 +1,6 @@
 /** `/` 菜单的纯逻辑：子 agent 的两条路（2026-08-23 作者：「我现在好像没有把 agent 当作 skill 去做呢？」） */
 import { describe, expect, it } from "vitest"
-import { 斜杠选完, 筛斜杠, 按能压滤 } from "../../src/ui/slash-menu.js"
+import { 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "../../src/ui/slash-menu.js"
 
 const 项 = [
   { kind: "skill" as const, name: "writing-skills", description: "写技能" },
@@ -40,5 +40,23 @@ describe("按能压滤（2026-09-27）", () => {
   })
   it("不能压：只拿掉 compact，别的指令照列", () => {
     expect(按能压滤([压, 别的, 技能], false)).toEqual([别的, 技能])
+  })
+})
+
+describe("/plan（先出方案，2026-09-27）", () => {
+  it("先出方案那一项（command 类的 plan）：选了写 `/plan `", () => {
+    expect(斜杠选完({ kind: "command", name: "plan", description: "" })).toBe("/plan ")
+  })
+  it("方案前缀：`/plan 问题` 拆成开关 + 余下；`/planet` 不算", () => {
+    expect(是方案前缀("/plan 分析一下")).toBe(true)
+    expect(是方案前缀("/plan")).toBe(true)
+    expect(是方案前缀("/plan\n分析")).toBe(true)
+    expect(是方案前缀("/planet")).toBe(false)
+    expect(是方案前缀("说 /plan")).toBe(false)
+    expect(去掉方案前缀("/plan 分析一下")).toBe("分析一下")
+    expect(去掉方案前缀("/plan")).toBe("")
+  })
+  it("按能压滤不碰它", () => {
+    expect(按能压滤([{ kind: "command", name: "plan", description: "" }], false)).toHaveLength(1)
   })
 })

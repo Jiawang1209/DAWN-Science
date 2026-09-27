@@ -107,6 +107,8 @@ export interface Actions {
   compactContext(): void
   /** 回到上一句之前：对最后一句自己说的话点那颗「回到这句之前」（2026-09-27） */
   rewindLast(): void
+  /** 先出方案开 / 关（2026-09-27）。**与输入卡那颗开关、`/plan` 是同一个动作** */
+  togglePlan(): void
 }
 
 export interface CommandContext {
@@ -120,6 +122,8 @@ export interface CommandContext {
   dockOpen?: boolean
   /** 坞里为什么没处另开（没有「地方」）。缺省 = 能开 */
   sideNewUnavailable?: string | undefined
+  /** 这一段的先出方案：开没开、为什么用不了（native 还没报上 `dawn.plan` 时由 App 给原因） */
+  plan?: { on: boolean; unavailable?: string | undefined } | undefined
   /**
    * 当前这段说过话没有（至少一句自己说的话）。「回到上一句之前」据它（spec §2.1）。
    * **缺省 = 没说过**：缺失不等于能用——按了才说「没有可回退的」就是一条点了没反应的命令。
@@ -207,6 +211,26 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "stop abort 停止",
     run: () => actions.abort(),
     ...(abortWhy ? { unavailable: abortWhy } : {}),
+  })
+
+  /**
+   * 先出方案（2026-09-27，D4）。**不可用时照样列着**：搜「方案」搜不到的人分不清是没这功能还是这段会话用不了。
+   * `run` 只转发——与输入卡那颗、`/plan` 是同一个动作。
+   */
+  const 方案为何不能 = !ctx.session
+    ? t("还没有会话")
+    : ctx.session.kind === "kernel" || ctx.session.kind === "pty"
+      ? t("这段不是和模型的对话，没有先出方案")
+      : ctx.session.kind !== "native"
+        ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
+        : ctx.plan?.unavailable
+  out.push({
+    id: "session.plan",
+    title: ctx.plan?.on ? t("退出先出方案") : t("先出方案：先写方案，批了再做"),
+    group: "会话",
+    keywords: "plan mode 方案 预注册 先出方案 /plan",
+    run: () => actions.togglePlan(),
+    ...(方案为何不能 ? { unavailable: 方案为何不能 } : {}),
   })
 
   /**

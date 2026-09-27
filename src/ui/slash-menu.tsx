@@ -28,6 +28,18 @@ export function 斜杠选完(item: SlashItem, draft = ""): string {
 }
 
 /**
+ * `/plan` 开头（后面是空白或没了）——先出方案（2026-09-27，D4）。`/planet` 不算。
+ * 斜杠菜单里那一项是 `command` 类的 `plan`，选了写 `/plan `；发的时候界面拦下来切开关，不送给模型。
+ */
+export function 是方案前缀(text: string): boolean {
+  return /^\/plan(\s|$)/.test(text)
+}
+/** 拆掉 `/plan` 前缀，余下那句（可以是空的） */
+export function 去掉方案前缀(text: string): string {
+  return text.replace(/^\/plan(\s+|$)/, "").trim()
+}
+
+/**
  * 这段能不能压，决定 `/compact` 那一条列不列（2026-09-27）。**只滤 `compact` 这一条**，不滤整个 `command` 类——
  * 以后加别的指令（与压缩无关）不该跟着在外部 agent / 空态里消失（Task 7 复审）。
  */

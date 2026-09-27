@@ -7540,6 +7540,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
  */
 @container (max-width: 440px) {
   .composer-footer .enhance-word { display: none; }
+  /* 「先出方案」同理只留图标（2026-09-27）：名字在 `aria-label` 上，藏掉可见字不改名字；开着时卡顶那条带子用字说清 */
+  .composer-controls .plan-toggle-word { display: none; }
 }
 .ctx-meter-ring-track { fill: none; stroke: var(--dawn-stroke-3); stroke-width: 2; }
 .ctx-meter-ring-fill { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
@@ -7587,3 +7589,92 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   max-height: 20rem;
   overflow: auto;
 }
+
+/* ── 先出方案（2026-09-27）：方案卡、输入卡里那颗开关、输入卡顶上那条带子 ───────────── */
+.plan-card {
+  margin: var(--dawn-space-3) 0;
+  padding: var(--dawn-space-3) var(--dawn-space-4);
+  border-radius: var(--dawn-radius-lg);
+  corner-shape: var(--dawn-corner-shape);
+  background: var(--dawn-surface-panel);
+  border: 1px solid var(--dawn-stroke-2);
+  min-width: 0;
+}
+.plan-card[data-status="approved"] { border-color: var(--dawn-stroke-accent); }
+.plan-card[data-status="superseded"],
+.plan-card[data-status="discarded"] { color: var(--dawn-text-2); }
+.plan-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  font-size: var(--dawn-fs-meta);
+  color: var(--dawn-text-3);
+}
+.plan-card-kicker,
+.plan-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+}
+.plan-card-status { font-weight: var(--dawn-weight-medium); color: var(--dawn-text-2); }
+.plan-card-title {
+  margin: var(--dawn-space-1) 0 var(--dawn-space-2);
+  font-size: var(--dawn-fs-title);
+  font-weight: var(--dawn-weight-semibold);
+  color: var(--dawn-text-1);
+}
+/* 折起来时底下那颗「看全文」常驻（不是悬停才出现）；折的高度走单位令牌 */
+.plan-card-body { min-width: 0; overflow-wrap: anywhere; }
+.plan-card-body[data-folded="true"] { max-height: calc(var(--dawn-unit) * 90); overflow: hidden; }
+.plan-card-edit {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-code-size);
+}
+.plan-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dawn-space-2);
+  margin-top: var(--dawn-space-3);
+}
+.plan-card-hint { margin: var(--dawn-space-1) 0 0; }
+.plan-card-error { margin: var(--dawn-space-1) 0 0; color: var(--dawn-danger); font-size: var(--dawn-fs-meta); }
+.plan-compare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  margin-top: var(--dawn-space-2);
+  font-size: var(--dawn-fs-meta);
+  color: var(--dawn-text-2);
+}
+.plan-compare-path { font-family: var(--dawn-font-mono); color: var(--dawn-text-3); overflow-wrap: anywhere; }
+.plan-compare-sum { margin: 0; }
+.plan-compare-list { flex-basis: 100%; margin: 0; padding-left: var(--dawn-space-4); }
+.plan-compare-list li[data-done="true"] { color: var(--dawn-success); }
+/**
+ * 开关在输入卡那一行的最左边（不在附栏：附栏在坞里已经满了，见 views.tsx 那段注释）。
+ * 按钮本身不缩；外部 agent 时旁边那行原因字可以缩成省略号——全句在 DOM 里，按钮的 `aria-describedby` 指着它。
+ */
+.plan-toggle-wrap { display: inline-flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; min-width: 0; }
+.plan-toggle-wrap[data-unavailable="true"] { flex: 0 1 auto; }
+.plan-toggle { flex: none; white-space: nowrap; }
+.plan-toggle[aria-pressed="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
+.plan-toggle-why {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dawn-fs-meta);
+}
+.plan-band {
+  margin: 0;
+  padding: var(--dawn-space-1) var(--dawn-space-3);
+  border-radius: var(--dawn-radius-composer) var(--dawn-radius-composer) 0 0;
+  background: var(--dawn-accent-soft);
+  color: var(--dawn-accent);
+  font-size: var(--dawn-fs-meta);
+}
+.plan-band + .composer-box { border-top-left-radius: 0; border-top-right-radius: 0; }

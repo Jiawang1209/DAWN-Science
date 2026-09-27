@@ -298,7 +298,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 由它把当下的值交给 `对话回调`。
    */
   useStore($待答权限)
-  useStore($会话开关)
+  const 主区开关们 = useStore($会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
   const rightDockOpen = useStore($rightDockOpen)
@@ -1404,6 +1404,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setView("conversation")
   }, [])
 
+  /**
+   * 空态那颗「先出方案」（2026-09-27）。**state 给渲染、ref 给发送**：`/plan 问题` 在同一次提交里先切开关再调 `onStart`，
+   * 那时 state 还没更新——读 ref 才是按下那一刻的真值。
+   */
+  const 空态方案 = useRef(false)
+  const [空态方案开, 设空态方案开] = useState(false)
+  const 设空态方案 = (v: boolean) => {
+    空态方案.current = v
+    设空态方案开(v)
+  }
+
   const 新建任务 = async (
     opts: {
       workspace?: string | undefined
@@ -1418,6 +1429,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 不切项目、不切会话、不切屏；新会话的 id 回给调用点，由它挂进坞。缺省 = 原样切过去
        */
       不切过去?: boolean | undefined
+      /** 第一句按先出方案发（2026-09-27）：空态那颗开关按着、或打的是 `/plan …` */
+      先出方案?: boolean | undefined
     } = {},
   ): Promise<string | undefined> => {
     const { workspace, firstMessage, images, files } = opts
@@ -1479,6 +1492,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       if (t.sessionId) {
         // 取写权，否则第一句就会被租约挡下（与其余几条建会话的路同一条）
         await 取写权(t.sessionId)
+        /**
+         * 先出方案（2026-09-27）：第一句发出去**之前**打开——这一句要在方案期里被模型读到。
+         * 打不开就当场抛：外面那层把字、图、文件都还回空态，不悄悄按普通方式发出去。
+         */
+        if (opts.先出方案) {
+          await client.get("setSessionConfigOption", { sessionId: t.sessionId, configId: "dawn.plan", value: "1" })
+        }
         /**
          * 空态排队的外部文件（2026-08-25）：会话刚建出来、sessionId 到手，**此刻落盘**。
          * 落进这段会话真实的工作区（没选目录时就是 scratch——`t.workspace` 是准的），
@@ -3801,6 +3821,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         void 另开到坞Ref.current().catch(fail)
       },
       openSideChat: 打开坞里的对话,
+      /** 先出方案开 / 关（2026-09-27）：与输入卡那颗同一个动作——读的是当前这段的会话开关 */
+      togglePlan: () => {
+        const 开 = $会话开关.get()?.find((o) => o.id === "dawn.plan")
+        if (!session || !开) return
+        client.get("setSessionConfigOption", { sessionId: session.sessionId, configId: "dawn.plan", value: 开.current === "1" ? "" : "1" }).catch(fail)
+      },
       /** 命令面板「搜索对话内容」：打开侧栏搜索并切到按内容；侧栏收着先展开（与放大镜那颗同一条） */
       openContentSearch: () => {
         设搜索开着(true)
@@ -3860,6 +3886,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       // 团队模式（team-board）：永远在最前——它不是名册里的一员，是一种做法
       { kind: "team" as const, name: "team", title: t("组一支团队"), description: t("让模型当队长：拉几个子 agent 当成员、拆成带依赖的任务、自动派活；进度在坞里「团队」那一格") },
       // DAWN 自己认的指令（2026-09-27）：`/compact`。只在能压的那段列出（`ConversationView` 按 `onCompact` 滤）
+      // 先出方案（2026-09-27，D4）：选了写 `/plan `，发的时候界面拦下来切开关、不送给模型。外部 agent 那段也列着——发了说原因
+      { kind: "command" as const, name: "plan", title: t("先出方案"), description: t("先写分析方案，你批了再动手；方案期只看不改") },
       { kind: "command" as const, name: "compact", title: t("压缩上下文"), description: t("把早先的对话换成一段摘要交给模型，腾出上下文；后面可以跟一句要保留什么") },
       ...技能单,
       ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) })),
@@ -3918,8 +3946,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         rewinding: !!(session && 回退中们[session.sessionId]),
         // 正在另开的那一下也标出来（Task 6 审查 M4）：面板那条与坞里那颗同一个闸
         sideNewUnavailable: 坞没处说 ?? (另开中 ? t("坞里正在另开一段") : undefined),
+        // 先出方案（2026-09-27）：开没开读主区这段的会话开关；native 还没报上 `dawn.plan` 时说「还没准备好」（非 native 的原因由注册表自己按 kind 写）
+        ...(session
+          ? (() => {
+              const 开 = 主区开关们?.find((o) => o.id === "dawn.plan")
+              return { plan: 开 ? { on: 开.current === "1" } : { on: false, unavailable: t("这段会话还没准备好先出方案，稍等再试") } }
+            })()
+          : {}),
       }),
-    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中, 主区说过话, 回退中们],
+    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中, 主区说过话, 回退中们, 主区开关们],
   )
 
   /**
@@ -3989,6 +4024,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           .get("setSessionConfigOption", { sessionId: s.sessionId, configId, value })
           .catch(fail)
       },
+      /**
+       * 先出方案（2026-09-27）：附栏开关、`/plan`、⌘K 都走同一个会话开关（一个动作一个家）。**只给有 `dawn.plan` 的会话**（native）——
+       * 不给 = 界面灰着。能等：`/plan 问题` 要先切好再发。方案卡的回答也只在这类会话里有。
+       */
+      ...(会话开关们?.some((o) => o.id === "dawn.plan")
+        ? {
+            onSetPlan: (on: boolean) =>
+              client.get("setSessionConfigOption", { sessionId: s.sessionId, configId: "dawn.plan", value: on ? "1" : "" }).then(() => undefined),
+          }
+        : {}),
+      onAnswerPlan: (planId: string, action: "approve" | "discard", text?: string) =>
+        client.get<{ savedPath?: string }>("answerPlan", { sessionId: s.sessionId, planId, action, ...(text ? { text } : {}) }),
       onAnswerPermission: (requestId: string, optionId?: string) => {
         /**
          * **乐观先摘卡**：点了之后卡立刻消失，人才知道自己点中了。
@@ -5360,8 +5407,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               onStart={(agentId, firstMessage, workspace, images, files) =>
                 // **返回 promise**：空态那张卡要据此在失败时把字、图、文件还回去
-                新建任务({ agentId, firstMessage, workspace, images, files }).then(() => undefined)
+                新建任务({ agentId, firstMessage, workspace, images, files, 先出方案: 空态方案.current }).then(() => 设空态方案(false))
               }
+              先出方案={{
+                on: 空态方案开,
+                // 与空态那颗 agent pill 同一个判据；空态发出去用的是 `agentIds[0]`，这里取同一个
+                不能的原因:
+                  providers.agents.find((x) => x.agentId === agentIds[0])?.kind !== "native"
+                    ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
+                    : undefined,
+                onToggle: 设空态方案,
+              }}
               /**
                * **选完立刻进项目，文件树跟着换**（2026-08-19 作者定的）。
                *

@@ -28,13 +28,14 @@ import {
   type 坞房客,
 } from "./state/right-dock.js"
 import type { TranscriptItem, QueuedMessage } from "../protocol/index.js"
-import { 子转录id } from "../protocol/index.js"
+import { 子转录id, 执行那句 } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
 import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 领退回的图 } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
-import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤 } from "./slash-menu.js"
+import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
+import { 方案卡, 先出方案开关 } from "./plan-card.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
 import { 扫引用 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
@@ -3823,6 +3824,8 @@ export function ConversationView({
   onRewind,
   rewinding,
   queueLocked,
+  onSetPlan,
+  onAnswerPlan,
   onCompact,
   取上下文用量,
   disabled,
@@ -4001,6 +4004,13 @@ export function ConversationView({
    * 「停止」不受它管——调整方向正在进行时按停止是正当的（停止赢）。
    */
   queueLocked?: boolean | undefined
+  /**
+   * 先出方案开 / 关（2026-09-27）。**能等**：`/plan 问题` 要先切好开关再发那句。
+   * 不给 = 这段会话没有先出方案开关（非 native，或 native 还没报上 `dawn.plan`），开关灰着。开没开读会话开关 `dawn.plan`。
+   */
+  onSetPlan?: ((on: boolean) => Promise<void>) | undefined
+  /** 回答一版方案（`answerPlan`）。回存档路径；执行那句由这里走 `onSend` 发（它是人的一条发言） */
+  onAnswerPlan?: ((planId: string, action: "approve" | "discard", text?: string) => Promise<{ savedPath?: string }>) | undefined
   /**
    * 压缩这段的上下文（2026-09-27）。**只有 native 给**——`/compact`、仪表弹层「现在压缩」都走它。
    * 不给时 `/compact` 原样发出去（外部 agent 自己认这个命令），`/` 菜单里也不列那一条。
@@ -4424,6 +4434,7 @@ export function ConversationView({
     onRewind: (_id: string) => {},
     确保可见: (_id: string) => {},
     onOpenSubagent: (_toolCallId: string, _index: number) => {},
+    onAnswerPlan: async (_planId: string, _action: "approve" | "discard", _text?: string) => {},
   })
   行回调最新.current = {
     nameOf: (id) => services?.find((sv) => sv.providerId === id)?.name,
@@ -4438,6 +4449,23 @@ export function ConversationView({
     },
     onRewind: (id) => onRewind?.(id),
     onOpenSubagent: (toolCallId, index) => onOpenSubagent?.(子转录id(session.sessionId, toolCallId, index)),
+    /**
+     * 方案卡上的「照这个做 / 照改过的做 / 不做了」（2026-09-27）。批准之后**替人发那句执行话**——
+     * 它是人的一条发言，与手打同一条路（`onSend`）；发不出去就放回输入框并出声，话不丢。
+     * `answerPlan` 自己失败则原样抛回卡片，卡片上说原因（卡片不变、开关不动）。
+     */
+    onAnswerPlan: async (planId, action, text) => {
+      if (!onAnswerPlan) return
+      const r = await onAnswerPlan(planId, action, text)
+      if (action !== "approve" || !r.savedPath) return
+      const 话 = 执行那句(r.savedPath, text !== undefined)
+      try {
+        await onSend(话)
+      } catch (e) {
+        setDraft(session.sessionId, 话)
+        设发送出错(e instanceof Error ? e.message : String(e))
+      }
+    },
     /** 刻度尺点了预算之外的那一轮：把预算放大到刚好含住它（多留 4 条余量），它才有得滚 */
     确保可见: (id) => {
       const 块序 = 块们.findIndex((块) => (块.kind === "group" ? 块.tools.some((t) => t.id === id) : 块.item.id === id))
@@ -4453,6 +4481,7 @@ export function ConversationView({
       onRewind: (id: string) => 行回调最新.current.onRewind(id),
       确保可见: (id: string) => 行回调最新.current.确保可见(id),
       onOpenSubagent: (toolCallId: string, index: number) => 行回调最新.current.onOpenSubagent(toolCallId, index),
+      onAnswerPlan: (planId: string, action: "approve" | "discard", text?: string) => 行回调最新.current.onAnswerPlan(planId, action, text),
     }),
     [],
   )
@@ -4541,6 +4570,14 @@ export function ConversationView({
    */
   const 模型选项 = 会话开关们?.find((o) => o.category === "model")
   const 推理选项 = 会话开关们?.find((o) => o.category === "thought_level")
+  /**
+   * 先出方案（2026-09-27，D7）：开关是会话开关 `dawn.plan`（只有 native 有）。内核 / 终端不画（与上下文仪表同一个判据）；
+   * 别的外部 agent 照画、灰着、旁边写原因。
+   */
+  const 方案开关 = 会话开关们?.find((o) => o.id === "dawn.plan")
+  const 方案开着 = 方案开关?.current === "1"
+  const 画方案开关 = session.kind !== "kernel" && session.kind !== "pty"
+  const 方案不能 = session.kind !== "native" ? t("这个 agent 不归 DAWN 管工具，先出方案用不了") : undefined
 
   return (
     <div className="conversation" ref={对话根}>
@@ -4725,6 +4762,15 @@ export function ConversationView({
                 {...(onOpenWeb ? { onOpenWeb } : {})}
                 {...(loadLocalImage ? { loadLocalImage } : {})}
                 {...(案例表.has(item.id) ? { cases: 案例表.get(item.id), loadGalleryRoots } : {})}
+                {...(item.type === "plan"
+                  ? {
+                      onAnswerPlan: 行回调.onAnswerPlan,
+                      planCanAnswer: !disabled && !busy && Boolean(onAnswerPlan),
+                      ...(artifacts ? { planArtifacts: artifacts } : {}),
+                      ...(onOpenReference ? { onOpenPlanFile: onOpenReference } : {}),
+                      planRemote: Boolean(session.remote),
+                    }
+                  : {})}
                 {...(disabled || busy
                   ? {}
                   : {
@@ -4835,13 +4881,36 @@ export function ConversationView({
            * 框里的字才是人真正打的那句话，**而这条路上文字的真身本来就归 DOM**。
            * `?? ` 那一侧只是兜底：框还没挂上时退回草稿。
            */
-          const text = (输入框.current?.value ?? draft).trim()
+          let text = (输入框.current?.value ?? draft).trim()
           /**
            * **只有图、没有字也算一句话**（协议 4.12）。
            * 「看看这张图」这种意图，人常常懒得打字——
            * 拦下来的话表现是「按了发送什么都没发生」。
            */
           if (!text && 待发图.length === 0 && 待发文件.length === 0) return
+          /**
+           * **`/plan`（先出方案，2026-09-27，D4）**：界面拦下来切开关，**不把 `/plan` 送给模型**。
+           * `/plan 问题` = 打开开关 + 发「问题」；只打 `/plan` = 只打开开关。
+           * 这类会话没有先出方案（D7）→ 说原因、字留在框里，不悄悄按普通方式发出去。
+           */
+          const 原话 = text
+          const 先开方案 = 是方案前缀(text)
+          if (先开方案) {
+            if (!onSetPlan || 方案不能) {
+              设发送出错(方案不能 ?? t("这段会话还没准备好先出方案，稍等再试"))
+              return
+            }
+            text = 去掉方案前缀(text)
+            if (!text && 待发图.length === 0 && 待发文件.length === 0) {
+              clearDraft(session.sessionId)
+              设发送出错(undefined)
+              void onSetPlan(true).catch((e: unknown) => {
+                设发送出错(e instanceof Error ? e.message : String(e))
+                setDraft(session.sessionId, 原话)
+              })
+              return
+            }
+          }
           /**
            * **`/compact` 不当一句话发**（2026-09-27，spec §2.2）：整句是它、没附图也没附文件、且这段能压（`onCompact` 只有 native 给）→ 走压缩，
            * 后面那句作为摘要的额外要求。外部 agent 那边不拦，原样发——Claude Code 之类自己认这个命令，我们不替它做、也不吞掉它。
@@ -4916,6 +4985,8 @@ export function ConversationView({
              * 写进工作区附件目录，然后以 `@相对路径` 拼进这句话——与手敲 `@` 完全同一条路。
              * 没有工作目录就当场出声（规格 7.5），话与文件都还在。
              */
+            // 先切好开关再发：这一句要在方案期里被模型读到。切不成就整句不发（下面 catch 把原话还回去）
+            if (先开方案) await onSetPlan!(true)
             let 终文 = text
             // **令牌还在草稿里的才落盘**：引用栏 ×掉的（令牌被抠掉）就当没发生过——磁盘无痕
             const 活的 = 这次的文件.filter((f) => 终文.includes(`@${f.令牌}`))
@@ -4953,8 +5024,8 @@ export function ConversationView({
                 : onSend(终文)
           })().catch((e: unknown) => {
             设发送出错(e instanceof Error ? e.message : String(e))
-            // **原样还回去**：人不该为一次失败重打一遍、重挑一遍
-            setDraft(session.sessionId, text)
+            // **原样还回去**：人不该为一次失败重打一遍、重挑一遍（`/plan` 那句连前缀一起还）
+            setDraft(session.sessionId, 原话)
             设待发图(这次的图)
             设待发文件(这次的文件)
           })
@@ -4974,6 +5045,12 @@ export function ConversationView({
           <待发条 items={待发} onEdit={onEditQueue} onToDock={onQueueToDock} onError={设发送出错} disabled={queueLocked} />
         ) : null}
         <div className="composer-card">
+        {/* 先出方案开着（2026-09-27，spec §2.1）：按下态的形状不够——扫一眼与读屏都读不出含义，用字说清 */}
+        {方案开着 ? (
+          <p className="plan-band" role="status">
+            {t("先出方案 · 这一段只看不改，方案批了才动手（再按一下「先出方案」退出）")}
+          </p>
+        ) : null}
         <div className="composer-box">
           {/**
             * 待发的图片（协议 4.12，2026-08-13）。
@@ -5314,6 +5391,26 @@ export function ConversationView({
             </p>
           ) : null}
           <div className="composer-controls">
+            {/**
+              * 先出方案（2026-09-27，D4 / D7）：**输入卡里这一行的最左边**，常驻。
+              * 不放附栏：附栏在坞里（对话格 380 宽）已经满了——2026-09-27 实测，只留图标也差约 30px，
+              * 挤进去它会被压成 2px 宽、盖在仪表上（看不见的能力等于不存在）。这一行左半边一直是空的。
+              * `dawn.plan` 开关（`plan` 类）不进附栏那颗通用菜单，走这一颗。外部 agent 灰着、旁边一行字说原因。
+              */}
+            {画方案开关 ? (
+              <先出方案开关
+                on={方案开着}
+                不能的原因={方案不能}
+                onToggle={
+                  方案开关 && onSetPlan
+                    ? (on) => {
+                        设发送出错(undefined)
+                        void onSetPlan(on).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+                      }
+                    : undefined
+                }
+              />
+            ) : null}
             <span className="composer-gap" aria-hidden="true" />
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
@@ -5588,10 +5685,10 @@ export function ConversationView({
               * 一条都不剩时不画（不摆一个点开是空的菜单）。
               */}
             {会话开关们 &&
-            会话开关们.some((o) => !["mode", "model", "thought_level"].includes(o.category ?? "")) &&
+            会话开关们.some((o) => !["mode", "model", "thought_level", "plan"].includes(o.category ?? "")) &&
             onSetConfigOption ? (
               <SessionConfigMenu
-                options={会话开关们.filter((o) => !["mode", "model", "thought_level"].includes(o.category ?? ""))}
+                options={会话开关们.filter((o) => !["mode", "model", "thought_level", "plan"].includes(o.category ?? ""))}
                 onSet={onSetConfigOption}
               />
             ) : null}
@@ -5689,9 +5786,24 @@ function TranscriptRowImpl({
   loadGalleryRoots,
   onOpenSubagent,
   搜索命中,
+  onAnswerPlan,
+  planCanAnswer,
+  planArtifacts,
+  onOpenPlanFile,
+  planRemote,
 }: {
   item: TranscriptItem
   agentId: string
+  /** 方案卡的回答（2026-09-27，先出方案）。**不给 = 此刻不能答**——按钮照画、灰着 */
+  onAnswerPlan?: ((planId: string, action: "approve" | "discard", text?: string) => Promise<void>) | undefined
+  /** 此刻能不能按方案卡上的按钮（agent 在说话 / 只读时 false） */
+  planCanAnswer?: boolean | undefined
+  /** 这段会话的产物清单：批准之后画「对照」（D8）。`$artifacts` 里的同一个对象，`行props相同` 只做身份比 */
+  planArtifacts?: ArtifactList | undefined
+  /** 「打开方案文件」：与 `@` 引用同一条路（坞里文件格打开） */
+  onOpenPlanFile?: ((path: string) => void) | undefined
+  /** 远端会话的产物记不下来，对照照实说「对照不了」 */
+  planRemote?: boolean | undefined
   /** 全文搜索跳到的就是这一条（2026-09-27）：工具行据此自己展开 */
   搜索命中?: boolean | undefined
   /** 点子 agent 的 chip（2026-09-27）：交出 toolCallId 与序号，由 `ConversationView` 绑上会话 id 再往上交 */
@@ -5763,8 +5875,19 @@ function TranscriptRowImpl({
   if (item.type === "compaction") {
     return <CompactionRow item={item} />
   }
-  // 先出方案（2026-09-27）：临时占位，Task 7 换成方案卡
-  if (item.type === "plan") return null
+  // 先出方案（2026-09-27）：方案卡。答的回调按这一版的 planId 绑
+  if (item.type === "plan") {
+    return (
+      <方案卡
+        item={item}
+        能答={planCanAnswer ?? false}
+        onAnswer={onAnswerPlan ? (action, text) => onAnswerPlan(item.planId, action, text) : undefined}
+        onOpenFile={onOpenPlanFile}
+        artifacts={planArtifacts}
+        remote={planRemote}
+      />
+    )
+  }
   const mine = item.who === "user"
 
   /**
@@ -6749,6 +6872,7 @@ export function EmptyConversation({
   enhanceReason,
   onOpenSettings,
   onPickDirectory,
+  先出方案,
 }: {
   agents: readonly string[]
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
@@ -6799,6 +6923,11 @@ export function EmptyConversation({
    */
   onPickDirectory?: (() => Promise<string | null>) | undefined
   onOpenSettings: () => void
+  /**
+   * 空态那颗「先出方案」（2026-09-27）：按下只是记住「第一句按先出方案发」，由 App 在会话建出来、第一句发出去之前打开。
+   * `不能的原因`：选的 agent 不是 native 时给。
+   */
+  先出方案?: { on: boolean; 不能的原因?: string | undefined; onToggle: (on: boolean) => void } | undefined
 }) {
   const first = agents[0]
   /** 这一屏的草稿。**不进 `$drafts`**：那份是按会话分的，而这里还没有会话 */
@@ -7033,9 +7162,25 @@ export function EmptyConversation({
             onSubmit={(e) => {
               e.preventDefault()
               // **与对话里那一份同一条**：组词期间不同步，发送就只能信 DOM（2026-09-18）
-              const t = (输入框.current?.value ?? 草稿).trim()
+              let t = (输入框.current?.value ?? 草稿).trim()
               // **只有图、没有字也算一句话**（与对话里那一份同一条）
               if (!t && 空态图.length === 0 && 空态文件.length === 0) return
+              /**
+               * `/plan`（先出方案，2026-09-27）：与对话里那一份同一条——界面拦下、切开关、余下的照常发。
+               * （这一段里 `t` 盖住了 i18n 的 `t`，不许调 `t()`；原因句由 App 译好了给进来。）
+               */
+              if (是方案前缀(t) && 先出方案) {
+                if (先出方案.不能的原因) {
+                  设开场出错(先出方案.不能的原因)
+                  return
+                }
+                先出方案.onToggle(true)
+                t = 去掉方案前缀(t)
+                if (!t && 空态图.length === 0 && 空态文件.length === 0) {
+                  设草稿("")
+                  return
+                }
+              }
               /**
                * **没有图就只传三个参数。**「空数组」与「不给」在协议上是同一个意思，
                * 而在调用点上不是：多传一个 `undefined` 会让所有
@@ -7239,6 +7384,8 @@ export function EmptyConversation({
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
               <div className="composer-controls">
+                {/* 先出方案（2026-09-27）：与对话里同一处。还没有会话，按下只记住「第一句按先出方案发」 */}
+                {先出方案 ? <先出方案开关 on={先出方案.on} 不能的原因={先出方案.不能的原因} onToggle={先出方案.onToggle} /> : null}
                 <span className="composer-gap" aria-hidden="true" />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。

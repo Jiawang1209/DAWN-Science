@@ -34,6 +34,7 @@
  *   一个小而专注的上下文窗口，把父会话的那一堆再灌一遍就没意义了。
  */
 import { mkdirSync } from "node:fs"
+import { 关掉pi自己下载 } from "../runtime/no-tool-download.js"
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -238,6 +239,8 @@ function emit(msg: SubagentChildMessage): void {
 }
 
 async function main(): Promise<void> {
+  // 子 agent 用的是 pi 原装的 grep / find：缺 rg / fd 时别让它自己去 GitHub 下（2026-09-28，见 `no-tool-download.ts`）
+  关掉pi自己下载()
   let spec: SubagentChildSpec
   try {
     spec = JSON.parse(await readStdin()) as SubagentChildSpec

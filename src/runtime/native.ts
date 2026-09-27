@@ -80,6 +80,7 @@ import { 描述图片 } from "./vision.js"
 import { createMcpTools, MCP只读标记 } from "../tools/mcp-tool.js"
 import { createProposePlanTool } from "../tools/propose-plan.js"
 import { createInspectDataTool } from "../tools/inspect-data.js"
+import { 关掉pi自己下载, 不自己下载 } from "./no-tool-download.js"
 import { 方案期判, 方案指纹, 存档方案, 核对方案, 核对并恢复, type 已批准存档 } from "../policy/plan-mode.js"
 import { 方案簿, 写方案文件, 方案存档正文 } from "./plan-book.js"
 import { 出方案工具名, 看数据工具名, 方案文件名 } from "../protocol/plan.js"
@@ -604,6 +605,11 @@ export class NativeRuntime implements AgentRuntime {
      * 是最难查的一类。
      */
     this.modelsPath = opts.modelsPath
+    /**
+     * pi 的 grep / find 缺 rg / fd 时会悄悄去 GitHub 下（2026-09-28）。**建运行时的地方就是闸口**：
+     * Electron、CLI、测试、冒烟脚本都经过这里；之后派出的子 agent 进程继承这个 env。见 `no-tool-download.ts`
+     */
+    关掉pi自己下载()
   }
 
   /**
@@ -922,7 +928,8 @@ export class NativeRuntime implements AgentRuntime {
        * **远端会话不装**：pi 的 `grep` 只能在本机跑 `rg`（`GrepOperations` 管不到搜索本身）、`find` 要本机的 `fd`，
        * 装上就是在本机的同名路径上搜——静默错位。远端的方案期因此只有 `read` 与 `inspect_data`（spec §0 2026-09-28 那条注）。
        */
-      ...(remote ? [] : [createLsToolDefinition(cwd), createGrepToolDefinition(cwd), createFindToolDefinition(cwd)]),
+      // grep / find 没有 rg / fd 时不让 pi 自己去 GitHub 下（2026-09-28，见 `no-tool-download.ts`）
+      ...(remote ? [] : [createLsToolDefinition(cwd), 不自己下载(createGrepToolDefinition(cwd), "rg"), 不自己下载(createFindToolDefinition(cwd), "fd")]),
     ] as unknown as (Record<string, unknown> & {
       name: string
       execute: (...a: unknown[]) => Promise<unknown>

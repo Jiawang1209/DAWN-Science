@@ -357,7 +357,7 @@ export function startMockInferenceServer(opts = {}) {
        * 用例只能软断言，等于没验。
        */
       if (opts.firstChunkDelayMs) await new Promise((r) => setTimeout(r, opts.firstChunkDelayMs))
-      const 慢 = !tool && 最后一句.includes("慢慢说")
+      const 慢 = !摘要 && !tool && 最后一句.includes("慢慢说")
       for (const chunk of streamChunks(reply, tool, opts.thinking, 慢 ? 慢速.每段字数 : undefined, 用量)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
         /**

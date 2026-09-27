@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 回退这一轮 · 界面：每句下面常驻「↶ 回到这句之前」、确认框逐个文件点名、命令面板一条（分支 `agent-basics`）
+
+- **Type**: feat
+- **Motivation**: spec §2——回退要看得见（常驻、带字，不做悬停才出现）、按之前说清会动哪些文件、内核变量回不去要大声说。
+- **What**: `src/ui/state/rewind.ts`（确认框内容纯函数 + 预览→问→执行→放回输入框流程）、`src/ui/rewind.tsx`（清单正文）、`回退图标`；`views.tsx` 用户气泡动作行在复制 / 修改之后加带字按钮，忙着时灰着、理由走 `aria-description`（设计契约禁 `title=`；不改 `aria-label` 以免换掉名字）；`App.tsx` 主区与坞里那段都接 `onRewind`（只 native），命令面板 `session.rewind`（没说过话时按下出声）；动作行 `flex-wrap`，窄处换行不溢出。
+- **Impact**: 自己的短气泡会被动作行撑宽到约 180px（盒子宽取 max(气泡, 动作行)，为保住「图标对齐气泡左缘」）；视觉基线对话 / 坞里的对话 / 命令面板六张看过 diff 后重存。
+- **Verification**: 新增 `tests/ui/state/rewind.test.ts`、`tests/ui/rewind-button.test.tsx`、commands / 设计契约各一条；vitest 全套 3374 绿、typecheck、build；e2e：composer-history-copy（新增坞里不溢出一条）、palette、context-compaction、side-session、redirect、stick-to-bottom、cost 全绿，视觉基线重存后连验两遍；一次性探针点按钮→确认框→「文件和对话一起回退」→通知出现、原文回输入框，截图确认。
+
 ### 2026-09-27 — 回退复审五条 + `appeared`：转述期间算忙、留话失败不连累回退、账本如实、技能按真名认、关会话等回退（分支 `agent-basics`）
 
 - **Type**: fix

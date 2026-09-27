@@ -11,70 +11,48 @@
  * 与 `看风险()`「不认识的工具一律放行」**相反**：那边放行是因为默认拒会让「加一个工具」变成「悄悄坏掉一个功能」；
  * 这边只在方案期生效、而方案期的承诺是「只看不改」——新工具不表态就拦，宁可多拦，不可漏放。拒绝理由告诉模型怎么办。
  *
- * ## 这里只判，不执行
+ * ## 方案期没有 bash（2026-09-28）
  *
- * 纯函数（除了 `node:path`），逐条可测。**已批准文件的保护**不管在不在方案期都生效（D3）。
+ * 第一版给 bash 配了一张「只读命令名单」逐段判。安全审查半天找出二十来条绕过：引号拆词（`-de''lete`、`'-exec'`）、
+ * 选项缩写（`sort --o=`、`git log --outp=`）、名单里命令的冷门写文件开关（`rg --hostname-bin`、`uniq - out`、`tree -H`、`file --comp`）……
+ * **shell 的词法比我们的正则大**，补一条还有下一条。所以方案期 **bash / powershell 整件拒**，名单删掉——少一段会写错的代码。
+ * 看目录、搜文件改用 pi 自带的 `ls` / `grep` / `find`：参数是类型化的，`rg` / `fd` 用 `--` 隔开、不过 shell。
+ *
+ * ## 已批准的方案文件（D3），两道
+ *
+ * ①**门**（这里的 `碰已批准`，方案期内外都生效）：写工具的路径——大小写不敏感的盘上按不敏感比、`realpath` 过符号链接；
+ *   bash 的字面写入 / 删除目标；bash 目标看不清、却提到 `plans` 或方案文件名的，拒。
+ * ②**指纹**（下半截的 `存档方案` / `核对方案` / `恢复方案` / `核对并恢复`）：门总有看不见的写法（`run_code` 里 `open(…, "w")`、
+ *   通配藏住的路径），所以批准时记 sha256、在会话目录（工作区外）留一份存档；运行时读方案、对照、每轮结束时核对，
+ *   被改了就恢复并**响亮地说**（spec §4.4、计划 Task 5）。
  */
-import { isAbsolute, relative, resolve, sep } from "node:path"
+import { createHash } from "node:crypto"
+import { lstatSync, readlinkSync, realpathSync } from "node:fs"
+import { lstat, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises"
+import { basename, dirname, isAbsolute, join, resolve } from "node:path"
 import { 删除目标, 写入目标, type 门的决定 } from "./permissions.js"
 import { 出方案工具名, 看数据工具名 } from "../protocol/plan.js"
 
-/** 方案期直接放行的工具。**只有这几件**——别的要么有专门的判据（bash、MCP），要么拒 */
-export const 方案期放行: ReadonlySet<string> = new Set(["read", "look_at_image", "read_main_session", 出方案工具名, 看数据工具名])
-
 /**
- * 方案期能跑的只读命令名。**只收看得懂的**：解释器（`python -c`）、`awk`（能 `system()`）、`sed`（`-i`）、`xargs`、`env`（能带着跑别的命令）一概不在。
- * 几个有写文件或跑别的命令开关的（`sort -o`、`uniq 入 出`、`tree -o`、`find -delete`、`rg --pre`、`nvidia-smi -pm`、`git --output`、`file -C`……）在下面单独判。
+ * 方案期直接放行的工具。**只有这几件**——MCP 有专门的判据，别的一律拒。
+ * `ls` / `grep` / `find` 是 pi 的类型化工具（`@earendil-works/pi-coding-agent` `core/tools/{ls,grep,find}.js`），不过 shell。
+ * **运行时得真把这三件交给模型**（计划 Task 5 的注），不然方案期就只剩 `read`。
  */
-const 只读命令名 = new Set([
-  "ls", "pwd", "cat", "head", "tail", "wc", "file", "stat", "du", "df", "tree", "find", "grep", "egrep", "fgrep", "rg",
-  "sort", "uniq", "cut", "tr", "nl", "column", "zcat", "md5sum", "sha256sum", "git", "echo", "which", "uname", "whoami",
-  "nproc", "free", "nvidia-smi", "date",
+export const 方案期放行: ReadonlySet<string> = new Set([
+  "read",
+  "ls",
+  "grep",
+  "find",
+  "look_at_image",
+  "read_main_session",
+  出方案工具名,
+  看数据工具名,
 ])
 
-const 先出方案 = "现在是「先出方案」：只能看、不能改。"
+/** 方案期整件拒的 shell 类工具 */
+const shell工具 = new Set(["bash", "powershell"])
 
-/** 这条 bash 为什么**不算**只读。算只读 → undefined */
-export function 只读命令不成立(原cmd: string): string | undefined {
-  const cmd = 原cmd.replace(/\\\r?\n/g, " ").trim()
-  if (!cmd) return "命令是空的"
-  if (/`|\$\(|<\(|>\(/.test(cmd)) return "里面有命令替换，看不清会跑什么"
-  // 只认两种无害的重定向：丢掉 stderr、并进 stdout。**后面要是词界**——`2>/dev/nullx` 是写一个叫 nullx 的文件
-  const 去掉无害重定向 = cmd.replace(/2>(\/dev\/null|&1)(?=$|[\s;&|])/g, " ")
-  if (/>/.test(去掉无害重定向)) return "会把输出写进文件"
-  // 单个 `&`（丢到后台）也是分句：`ls & rm a` 的第二句同样要判（2026-09-28 实现时补）
-  const 段 = 去掉无害重定向.split(/\|\||&&|;|\n|\||&/).map((s) => s.trim()).filter(Boolean)
-  for (const 句 of 段) {
-    const 词 = 句.split(/\s+/)
-    const 名 = 词[0]!
-    const 参 = 词.slice(1)
-    const 非选项 = 参.filter((w) => !w.startsWith("-"))
-    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(名)) return "带着环境变量赋值，看不清会跑什么"
-    if (!只读命令名.has(名)) return `用到了 ${名}，它不在方案期能跑的只读命令里`
-    if (名 === "find" && 参.some((w) => /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/.test(w))) {
-      return "find 带着会删东西或跑别的命令的动作"
-    }
-    // 短选项可以并在一起（`-ro out`），所以看整串里有没有那个字母（2026-09-28 实现时补）
-    if (名 === "sort" && 参.some((w) => /^(-[^-]*o|--output)/.test(w))) return "sort -o 会写文件"
-    if (名 === "sort" && 参.some((w) => /^--compress-program/.test(w))) return "sort --compress-program 会跑别的命令"
-    if (名 === "uniq" && 非选项.length > 1) return "uniq 的第二个参数是输出文件"
-    if (名 === "tree" && 参.some((w) => /^-[^-]*o/.test(w))) return "tree -o 会写文件"
-    if (名 === "file" && 参.some((w) => /^-[^-]*C|^--compile/.test(w))) return "file -C 会写魔数文件"
-    if (名 === "rg" && 参.some((w) => /^--pre/.test(w))) return "rg --pre 会跑别的命令"
-    // `-Iseconds` 是 -I 带参数，不是 -s
-    if (名 === "date" && 参.some((w) => /^(-(?!I)[A-Za-z]*s|--set)/.test(w))) return "date -s 会改系统时间"
-    if (名 === "nvidia-smi" && 参.some((w) => !/^(-L|--list-gpus|--query-gpu=.*|--format=.*)$/.test(w))) {
-      return "nvidia-smi 只放不带参数、-L 与 --query-gpu"
-    }
-    if (名 === "git" && !/^(status|log|diff|show|ls-files)$/.test(参[0] ?? "")) {
-      return `git ${参[0] ?? ""} 不在只读的那几个（status / log / diff / show / ls-files）里`
-    }
-    // log / diff / show 能把结果写进文件、能跑外部 diff 程序（2026-09-28 实现时补）
-    if (名 === "git" && 参.some((w) => /^--output/.test(w))) return "git --output 会写文件"
-    if (名 === "git" && 参.some((w) => /^--ext-diff/.test(w))) return "git --ext-diff 会跑外部程序"
-  }
-  return undefined
-}
+const 先出方案 = "现在是「先出方案」：只能看、不能改。"
 
 export interface 方案期语境 {
   /** 这段会话此刻在不在方案期 */
@@ -84,28 +62,108 @@ export interface 方案期语境 {
   workspace: string
   /** 这件是 MCP 服务器自己声明 `readOnlyHint: true` 的工具（D6） */
   mcp只读?: boolean
+  /** 文件系统按哪个平台的规矩比路径。缺省 `process.platform`；darwin / win32 大小写不敏感。测试用 */
+  平台?: NodeJS.Platform
 }
 
-/** 一个目标（相对或绝对）是不是某份已批准的方案文件。**只按工作区解析**——命令里的 `cd` 不跟（见计划风险 3） */
-function 是已批准(目标: string, 语境: 方案期语境): boolean {
-  const 绝对 = isAbsolute(目标) ? resolve(目标) : resolve(语境.workspace, 目标)
-  const 相对 = relative(语境.workspace, 绝对).split(sep).join("/")
-  return 语境.已批准.includes(相对)
+// ── 路径：已批准的方案文件 ──
+
+/** 读路径的工具：参数里的路径是读，不算碰（`read` 读方案文件天经地义） */
+const 只读取工具 = new Set(["read", "ls", "grep", "find", "look_at_image", "read_main_session", 看数据工具名, 出方案工具名])
+/** 写类工具里哪些参数名是路径：pi 的 `path`，插件的 `output` / `file_path` / `dest`…… */
+const 路径参数名 = /path|file|output|dest|target/i
+
+/**
+ * 能落到盘上的那个路径：从最长的**已存在**前缀 `realpath`，剩下的原样接上。
+ * 末段是悬空的符号链接时顺着链接走（写会跟着它建文件）。只看**本机**；远端会话的门判不了远端的链接——那条靠指纹。
+ */
+function 真路径(p: string, 深 = 0): string {
+  const 剩: string[] = []
+  let 当前 = p
+  for (;;) {
+    try {
+      return join(realpathSync.native(当前), ...剩)
+    } catch {
+      if (深 < 8) {
+        try {
+          if (lstatSync(当前).isSymbolicLink()) return 真路径(join(resolve(dirname(当前), readlinkSync(当前)), ...剩), 深 + 1)
+        } catch {
+          // 不存在：往上一层
+        }
+      }
+    }
+    const 上 = dirname(当前)
+    if (上 === 当前) return p
+    剩.unshift(basename(当前))
+    当前 = 上
+  }
 }
+
+function 比较形(p: string, 平台: NodeJS.Platform): string {
+  const n = resolve(p).normalize("NFC")
+  return 平台 === "darwin" || 平台 === "win32" ? n.toLowerCase() : n
+}
+
+/** 一个目标（相对或绝对）是不是某份已批准的方案文件。相对路径**只按工作区解析**——命令里的 `cd` 不跟（那种归「看不清」） */
+function 是已批准(目标: string, 语境: 方案期语境): boolean {
+  const 平台 = 语境.平台 ?? process.platform
+  const 绝对 = isAbsolute(目标) ? resolve(目标) : resolve(语境.workspace, 目标)
+  const 目标形 = new Set([绝对, 真路径(绝对)].map((p) => 比较形(p, 平台)))
+  const 工作区们 = [...new Set([resolve(语境.workspace), 真路径(resolve(语境.workspace))])]
+  for (const a of 语境.已批准) {
+    for (const w of 工作区们) {
+      const 批 = resolve(w, a)
+      for (const p of [批, 真路径(批)]) if (目标形.has(比较形(p, 平台))) return true
+    }
+  }
+  return false
+}
+
+/**
+ * 一条 bash 命令提到 `plans`（大小写不论）或某份已批准文件的文件名，而它的**写入 / 删除目标看不清**时拒。
+ * 「看得清」只有一种：每一段都是下面这几个只读命令、没有重定向写（`2>/dev/null` `2>&1` 除外）、没有变量与命令替换。
+ * 别的（`sed -i`、`truncate`、`rm *`、`git checkout --`、`cd plans && rm`、`python -c`……）我们判不出它写不写方案——
+ * 而既然它提到了方案，就不赌。**误伤只落在提到 plans 的命令上**，理由说清。
+ */
+const 提到时能跑的 = new Set(["cat", "head", "tail", "wc", "ls", "stat", "md5sum", "sha256sum", "shasum", "grep"])
+
+function 看得清只读(cmd: string): boolean {
+  if (/[`$\\]|<\(|>\(|<<|\r/.test(cmd)) return false
+  const 去无害 = cmd.replace(/2>(\/dev\/null|&1)(?=$|[\s;&|])/g, " ")
+  if (/>/.test(去无害)) return false
+  const 段 = 去无害.split(/\|\||&&|;|\n|\||&/).map((s) => s.trim()).filter(Boolean)
+  return 段.length > 0 && 段.every((句) => 提到时能跑的.has(句.split(/\s+/)[0]!))
+}
+
+function 提到方案(cmd: string, 语境: 方案期语境): boolean {
+  if (/(^|[\s/'"=])plans([\s/'";&|)]|$)/i.test(cmd)) return true
+  const 低 = cmd.toLowerCase()
+  return 语境.已批准.some((a) => 低.includes(basename(a).toLowerCase()))
+}
+
+const 碰的理由 = (p: string) =>
+  `拒绝改动 ${p}：这是已批准的分析方案（预注册），批准后不改。做法和方案不一样的地方，做完时在回复里逐条说明。`
 
 /** 动了已批准的方案文件 → 拒绝理由；没动 → undefined */
 export function 碰已批准(工具名: string, 参数: Record<string, unknown>, 语境: 方案期语境): string | undefined {
   if (语境.已批准.length === 0) return undefined
-  const 理由 = (p: string) =>
-    `拒绝改动 ${p}：这是已批准的分析方案（预注册），批准后不改。做法和方案不一样的地方，做完时在回复里逐条说明。`
-  if ((工具名 === "write" || 工具名 === "edit") && typeof 参数.path === "string") {
-    return 是已批准(参数.path, 语境) ? 理由(参数.path) : undefined
-  }
-  if (工具名 === "bash" && typeof 参数.command === "string") {
-    const 删 = 删除目标(参数.command)
-    for (const t of [...写入目标(参数.command), ...(删 === "看不清" ? [] : 删)]) {
-      if (是已批准(t, 语境)) return 理由(t)
+  if (shell工具.has(工具名)) {
+    const cmd = typeof 参数.command === "string" ? 参数.command : ""
+    const 删 = 删除目标(cmd)
+    for (const t of [...写入目标(cmd), ...(删 === "看不清" ? [] : 删)]) {
+      if (是已批准(t, 语境)) return 碰的理由(t)
     }
+    if (提到方案(cmd, 语境) && !看得清只读(cmd)) {
+      return (
+        `拒绝执行 \`${cmd}\`：它提到了已批准的方案目录或方案文件，又看不清会写或删什么。` +
+        `已批准的方案（${语境.已批准.join("、")}）批准后不改；要看它用 read。`
+      )
+    }
+    return undefined
+  }
+  if (只读取工具.has(工具名)) return undefined
+  for (const [k, v] of Object.entries(参数)) {
+    if (typeof v === "string" && v && 路径参数名.test(k) && 是已批准(v, 语境)) return 碰的理由(v)
   }
   return undefined
 }
@@ -119,12 +177,13 @@ export function 方案期判(工具名: string, 参数: Record<string, unknown>,
   if (碰) return { kind: "deny", reason: 碰 }
   if (!语境.方案期) return { kind: "allow" }
   if (方案期放行.has(工具名)) return { kind: "allow" }
-  if (工具名 === "bash") {
-    const cmd = typeof 参数.command === "string" ? 参数.command : ""
-    const 不 = 只读命令不成立(cmd)
-    return 不
-      ? { kind: "deny", reason: `${先出方案}\`${cmd}\` ${不}。把这一步写进方案里，批了再做。` }
-      : { kind: "allow" }
+  if (shell工具.has(工具名)) {
+    return {
+      kind: "deny",
+      reason:
+        `${先出方案}方案期不跑 ${工具名}。看目录用 ls，搜内容用 grep，找文件用 find，读文件用 read，` +
+        "看数据的结构用 inspect_data；要跑的命令写进方案，批了再跑。",
+    }
   }
   if (语境.mcp只读) return { kind: "allow" }
   if (工具名 === "run_code") {
@@ -137,3 +196,77 @@ export function 方案期判(工具名: string, 参数: Record<string, unknown>,
   }
   return { kind: "deny", reason: `${先出方案}${工具名} 会改东西，方案期不用。把这一步写进方案（propose_plan），批了再做。` }
 }
+
+// ── 指纹、存档、核对、恢复（D3 第二道，2026-09-28）──
+//
+// 只管**本机**文件。远端会话的方案文件在服务器上：运行时走会话执行器做同样的事（计划 Task 5 的注）。
+
+/** 方案文件的指纹：sha256 十六进制 */
+export function 方案指纹(内容: string | Uint8Array): string {
+  return createHash("sha256").update(内容).digest("hex")
+}
+
+/** 存档放在会话目录的 `plans/` 下，文件名取方案文件名（同一工作区里方案文件名是唯一的：写时 `wx`、重名加 `-2`） */
+export function 存档位置(会话目录: string, 相对: string): string {
+  return join(会话目录, "plans", basename(相对))
+}
+
+/** 批准时调：读工作区里刚写好的方案文件，算指纹，拷一份进会话目录（工作区外，agent 的写工具碰不到它的常规路径） */
+export async function 存档方案(a: { workspace: string; 相对: string; 会话目录: string }): Promise<{ sha256: string; 存档: string }> {
+  const 内容 = await readFile(resolve(a.workspace, a.相对))
+  const 存档 = 存档位置(a.会话目录, a.相对)
+  await mkdir(dirname(存档), { recursive: true })
+  await writeFile(存档, 内容)
+  return { sha256: 方案指纹(内容), 存档 }
+}
+
+/** 工作区里那份还是不是批准时那一份。被换成符号链接也算「被改过」——内容对得上也不行，链接那头随时能变 */
+export async function 核对方案(a: { workspace: string; 相对: string; sha256: string }): Promise<"完好" | "被改过" | "不见了"> {
+  const p = resolve(a.workspace, a.相对)
+  try {
+    if ((await lstat(p)).isSymbolicLink()) return "被改过"
+    return 方案指纹(await readFile(p)) === a.sha256 ? "完好" : "被改过"
+  } catch {
+    return "不见了"
+  }
+}
+
+/**
+ * 从存档写回。存档自己也要对得上指纹，否则抛（不拿一份坏存档去「修」）。
+ * 目标先摘掉（被换成链接的只摘链接，不顺着写到别处），再 `wx` 新建；方案目录本身被换成指向别处的链接 → 抛。
+ */
+export async function 恢复方案(a: { workspace: string; 相对: string; 存档: string; sha256: string }): Promise<void> {
+  const 内容 = await readFile(a.存档)
+  if (方案指纹(内容) !== a.sha256) throw new Error(`方案的存档 ${a.存档} 也对不上批准时的指纹，不拿它恢复`)
+  const p = resolve(a.workspace, a.相对)
+  await mkdir(dirname(p), { recursive: true })
+  const 应在 = resolve(await realpath(a.workspace), dirname(a.相对))
+  if ((await realpath(dirname(p))) !== 应在) throw new Error(`方案目录 ${dirname(a.相对)} 被换成了指向别处的链接，不往那边写`)
+  await rm(p, { recursive: true, force: true })
+  await writeFile(p, 内容, { flag: "wx" })
+}
+
+export interface 已批准存档 {
+  相对: string
+  sha256: string
+  存档: string
+}
+
+/**
+ * 逐份核对，被改的、不见的都恢复；每一份出一句**给人看的**话（运行时把它当通知发出去，不静默修）。完好的不出声。
+ * 恢复失败也出声，说恢复不了、为什么。
+ */
+export async function 核对并恢复(workspace: string, 记录: readonly 已批准存档[]): Promise<string[]> {
+  const 话: string[] = []
+  for (const r of 记录) {
+    if ((await 核对方案({ workspace, 相对: r.相对, sha256: r.sha256 })) === "完好") continue
+    try {
+      await 恢复方案({ workspace, ...r })
+      话.push(`批准过的方案被改动过，已从存档恢复：${r.相对}`)
+    } catch (e) {
+      话.push(`批准过的方案被改动过，恢复不了（${e instanceof Error ? e.message : String(e)}）：${r.相对}`)
+    }
+  }
+  return 话
+}
+

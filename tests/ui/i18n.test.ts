@@ -14,6 +14,7 @@ import { 系统语言 } from "../../src/ui/i18n/index.js"
 import { readFileSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 import { EN } from "../../src/ui/i18n/en.js"
+import { 通知文案 } from "../../src/workbench/desktop-notify.js"
 
 const UI = join(import.meta.dirname, "..", "..", "src", "ui")
 
@@ -115,6 +116,8 @@ describe("双语 · 目录不许与调用点脱节", () => {
     const 用到的 = new Set<string>()
     for (const f of 界面文件()) for (const id of 调用点的msgid(readFileSync(f, "utf8"))) 用到的.add(id)
     for (const id of 后端错误的msgid()) 用到的.add(id)
+    // 桌面通知的话（2026-09-27）：后端出文案、主进程的出口按语言查同一张英文表（`src/electron/desktop-notify.ts`）
+    for (const id of Object.values(通知文案)) 用到的.add(id)
     const 孤儿 = Object.keys(EN).filter((k) => !用到的.has(k))
     expect(孤儿, "没有任何调用点用它们——要么是原文改过了，要么该删").toEqual([])
   })

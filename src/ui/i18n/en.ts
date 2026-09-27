@@ -1645,4 +1645,18 @@ export const EN: Readonly<Record<string, string>> = {
   "接着问": "Ask it",
   "它的回答不会回到主对话": "Its answer does not go back to the main conversation",
   "看 {0}（{1}）": "View {0} ({1})",
+  // 桌面通知（2026-09-27）：通知本身的话。键与 `src/workbench/desktop-notify.ts` 的 `通知文案` 一一对应
+  "「{0}」做完了": "“{0}” is done",
+  "一段对话做完了": "A chat is done",
+  "「{0}」出错了": "“{0}” hit an error",
+  "一段对话出错了": "A chat hit an error",
+  "「{0}」在等你点头": "“{0}” is waiting for your approval",
+  "一段对话在等你点头": "A chat is waiting for your approval",
+  "（没有文字回复）": "(no text reply)",
+  "会话退出了（退出码 {0}）": "The session exited (exit code {0})",
+  "定时「{0}」跑完了": "Scheduled “{0}” finished",
+  "定时「{0}」失败了": "Scheduled “{0}” failed",
+  "定时「{0}」取消了": "Scheduled “{0}” was cancelled",
+  "桌面通知是通的": "Desktop notifications work",
+  "点这一条会回到 DAWN。": "Click this to go back to DAWN.",
 }

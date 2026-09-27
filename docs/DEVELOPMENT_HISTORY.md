@@ -8,21 +8,33 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-27 — 子 agent 看得见 · 界面审查修复：没人看就退订、同步换人、按钮名不撞、焦点、chip 不越界（分支 `agent-basics`）
+### 2026-09-27 — 子 agent 看得见：点 chip 在坞里看它的过程、交回的结果，还能接着问（学自 Codex / Claude app；协议 8.3；分支 `agent-basics`）
 
-- **Type**: fix
-- **Motivation**: 05d5f67 / 9c47abb 审查：切走「子 agent」格或收坞仍订着子转录；坞里那段换了，它派的那个还订着（effect 缺 `侧边id`）；换人时有一帧是「B 的 id + A 的过程与能不能问」；清单/切换条按钮名「✓ explorer」是主区 chip「✓ explorer完成」的子串；chip 那一句用 `50vw` 量，坞里越界。
-- **What**: `state/subagent-view.ts` 新增 `看子agent`（唯一换人入口，先同步清子槽与头信息）、`子转录该放下` / `放下不该看的子转录`；`App.tsx` 那段 effect 依赖改成 `[sessionId, 侧边id, rightDockOpen, rightDockTenant]`，拉取 effect 不再在绘制后清槽。`subagent-pane.tsx`：清单与切换条可及名字改为「看 {agent}（{状态}）」、清单抽成 `memo` 组件、`groups` 只随子 agent 组身份变；打开时焦点落「回到清单」、回到清单落第一颗、同批换人不抢焦点；`no-transcript` 显式分支。`styles.css`：`.chip` 补 `min-width:0`，`.chip-activity` 去掉 `vw`、按 flex 可缩截断。
-- **Impact**: 会话文件太大时后端仍给 `canAsk`（文件在，续问在子进程里读），界面照旧可问——有测试钉住。坞里对话点团队 chip 仍开主区那段的团队（`$团队` 只载主区，没改，另报）。
-- **Verification**: 新增 `tests/ui/subagent-view-state.test.ts`（同步换人、放下判定、App 接线扫描）、`subagent-pane.test.tsx` 加名字/焦点/没会话文件/太大四条、`subagent-chips.test.tsx` 加 CSS 扫描；`vitest run` 全绿（3513）、typecheck、build 通过。
-
-### 2026-09-27 — 子 agent 看得见 · 后端审查修复：子转录的内存上限、读盘上限、回退停掉在答的、id 按盘上那一段认（分支 `agent-basics`）
-
-- **Type**: fix
-- **Motivation**: 审查指出子转录（活着跑完的与读盘建的）在中枢里跟着整个进程活下去；`读子转录` 整份同步读、不设上限，读回的工具结果也不像活着那条路截 16 KiB；回退撤掉 chip 时正在答的续问还在跑；`call.1` 与 `call_1` 落同一个目录却在中枢里各建一段、`forget` 按前缀会误伤 `a:0`；读盘建的快照仍是 `alive`。
-- **What**：`SessionTranscripts.unsubscribe` 退订跑完了、没在答的子转录即放掉，退订主会话时连带它名下没人看着的；每段会话跑完的子转录 LRU 留 20 段（`子转录留存上限`，可注入）；`truncateAt` 多一个回调点名被撤掉的在答者，后端 `rewindTurn` 据此调新增的 `NativeRuntime.abortSubagentFollowUp`（经 `SessionManager`、`AgentRuntime` 可选）；`子目录段` / `同一个子转录` 挪进 `protocol/subagent-id.ts`（`run-dir` 与中枢共用一个安全化），`找子转录` 让 `openSubagent` / `askSubagent` / `subagent_event` 认同一段；`忘掉子转录` 按拆出来的字段比；`读子转录` 先 stat、超 20 MB 抛 `子转录过大`（坞里一条说清多大、在哪的 notice，文件在所以仍可续问），工具结果走与活着同一个 `截工具结果`；读盘建的 `track(..., { 已结束: true })` → 快照 `state: "exited"`。
-- **Impact**：无协议变更、无新 fault msgid。界面不必改；读盘建的子转录快照 `state` 由 `alive` 变 `exited`。
-- **Verification**：新增中枢 7 条、run-dir 3 条、后端 6 条（含越界 id、20 MB、回退停在答的）、运行时 2 条（按 id 停、续问已删定义出声且 `canAsk` 复原）；`npx vitest run` 全绿（3491 通过）；`npm run typecheck` 通过。
+- **Type**: feat + fix
+- **Motivation**: 子 agent 后端早就能跑（独立进程、并发、整组杀、22 份人设），界面上却只有一排 chip、点开只有任务原文——作者的判断是「子 agent 没做」。
+  查实过程在三处被丢：子进程只留文字；父进程攒到退出才解析；会话文件其实落盘了，但 `agentDirOf` 只按序号——**第二次派子 agent 复用 0 号目录，续问会续到别人的会话上**。
+  关掉 DAWN 再开，chip 组整个没了。
+- **What**（spec `specs/2026-09-27-子agent看得见-design.md`；plan `plans/2026-09-27-子agent看得见.md` Task 1–12；本条合并了实现期间的两条审查修复记录）：
+  - **子进程** `src/subagent/child*.ts`：pi 事件翻成 `子事件` 按行吐到 stdout（工具结果 16 KiB 截、说省了多少）；pi 会话落进 `<会话目录>/subagents/<调用>/<序号>/transcript/`。
+  - **执行器**：stdout 按行读、即时转发、只留最后一条 `done`；`续问()` 在同一目录 `resume: true` 再起一个进程（与团队成员续会话同一条路）。
+  - **运行目录** `src/subagent/run-dir.ts`：**按调用分目录**（修掉上面那个串位）；`meta.json` 走临时文件 + rename 原子写，读不了的也给一颗说清楚的 chip；
+    `<调用>` 段安全化（`call.1` 与 `call_1` 认成同一段，与中枢共用 `protocol/subagent-id.ts` 一个写法）；重开之后按 `meta.json` **补回 chip 组**（以前是丢的）。
+  - **工具 / 运行时**：发 `subagent_event`（含 `settled` 与交回的结果）；每段会话一份续问，关会话时整组杀；回退撤掉 chip 时停掉在答的续问（`abortSubagentFollowUp`）。
+  - **中枢** `src/workbench/events.ts`：每个子 agent 一段子转录（`<会话>#sub:<toolCallId>:<序号>`），与会话同一套条目与 revision；chip 带 `activity`（最近一步在做什么）；
+    **子转录不给全听**（不触发飞书 / 微信通知与定时任务）；续问不改 chip；「正在答」的判定是原子的（一次一句）；停 / 回退时掐掉。
+    内存上限：跑完的子转录没人看就放，每段会话 LRU 留 20 段；读盘先 stat、**超 20 MB 拒读并说清多大在哪**（文件在，仍可续问），读回的工具结果同样 16 KiB 截。
+  - **后端**：`openSubagent`（内存里有就订阅、没有就读盘，快照 `exited`）、`askSubagent`（挡在跑 / 在答 / 团队 / 没会话文件，`continueRecent` 找不到文件会新开一份失忆的，这一道不能省）。
+  - **协议 8.3**（minor、纯新增）：chip `activity`、快照 / 更新 `subagent`、两个操作。mock 三支（派子agent / 子任务 / 子任务慢），dev:mock 与 e2e 共用（准入规则 1）。
+  - **界面**（照 Codex / Claude app 的子 agent 视图）：chip 点了在坞里新一格「子 agent」打开——清单 / 同批切换条 / 与主区同一套工具行的过程 / 交回主 agent 的结果 / 格底「接着问它」；
+    **接着问的答复只在这一格，不回主 agent**；在跑的 chip 上常驻一句最近动作；团队成员的 chip 切到「团队」格。没人看就退订、换人同步清槽、按钮可及名「看 {agent}（{状态}）」不与 chip 撞名、焦点落点。
+    坞标签条收紧（标签内距、坞头内距）让九格在默认宽度下都放得下；chip 可缩截断、不越过坞右缘。设计契约加扫描：`SubagentChips` 里不许画逐条过程。
+- **Impact**: 协议 8.2 → 8.3（纯新增）。子 agent 的运行目录换了（按调用分），此前跑过的没有 `meta.json`，重开后那些 chip 组照旧补不回来。团队成员轮行为不变；子 agent 的工具调用仍不进账本（会话文件就是记录）。
+  续问用主对话**此刻**的模型与凭证。**已知限制**：坞里那段对话里点团队 chip，打开的是主区那段的团队（`$团队` 只载主区）。
+- **Verification**: 单测 / 集成覆盖协议 id 往返、mock 三支、子进程事件翻译与截断、真子进程吐过程行 + 会话文件落盘 + `resume` 续上、执行器按行转发、run-dir / meta / 补 chip 组、
+  中枢子转录（含内存上限、回退停在答的、id 归一）、后端 open/ask（含越界 id、20 MB）、坞格与 chip 界面、设计契约扫描。
+  `e2e/subagent-view.spec.ts` 6 条（过程与交回结果且主转录没有那条 read、在跑时那一句、接着问不进主区、关掉再开读盘、看得见 + 九格都在标签条可见框里、长那一句不越界），改 `subagent.spec.ts` 1 处。
+  视觉基线：看过 diff 后重存 4 张（概览 / 坞里的对话 × 明暗）——红只在坞标签条（x 913–1263、y 62–81），另有概览·亮坞边角两像素灰度差 1；`=all` 顺带改写的空态·亮（14 像素、差 1，与本轮无关）已还原；重存后连验 4 遍 14/14。
+  终局全量（02d1aa2 之上）：vitest 3513 过 / 10 跳；typecheck 0；build 过；e2e（`test:e2e:only`，真实构建）536 过 / 1 跳 / 0 红（上一轮「回退这一轮」终局 530）。真机：（作者走一遍后补）。
 
 ### 2026-09-27 — 回退这一轮：每句自己说的话下面「↶ 回到这句之前」；文件与对话一起退，内核没回退要大声说（学自 Claude Code `/rewind`、Codex 逐轮 undo；分支 `agent-basics`）
 

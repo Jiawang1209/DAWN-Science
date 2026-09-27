@@ -46,6 +46,7 @@
 | **调整方向**：待发条「调整方向 / 到坞里问 / 取回」；只留一种排队；Cmd/Ctrl+回车停掉这一步按新的做；停止真停内核（学自 Codex；分支 `redirect-queue`；协议 8.0） | `specs/2026-09-25-调整方向-design.md` + `plans/2026-09-25-调整方向.md` |
 | **上下文用量与压缩**：附栏常驻仪表；pi 的自动压缩出声（转录里一条标记，能看摘要）；`/compact` / ⌘K / 仪表弹层手动压；外部 agent 说「读不到」（学自 Claude Code / Codex；分支 `agent-basics`） | `specs/2026-09-27-上下文用量与压缩-design.md` + `plans/2026-09-27-上下文用量与压缩.md` |
 | **回退这一轮**：每句自己说的话下面「回到这句之前」；影子存档（只用 fs，git 看不见的也退）、对话可一起撤；你后来改的不动、data/raw 不碰、内核没回退要说（学自 Claude Code `/rewind`；协议 8.2；分支 `agent-basics`） | `specs/2026-09-27-回退这一轮-design.md` + `plans/2026-09-27-回退这一轮.md` |
+| **子 agent 看得见**：chip 点了在坞里「子 agent」格看它的过程与交回的结果；在跑时 chip 上一句；重开还在；跑完能接着问（答复不回主 agent；协议 8.3；分支 `agent-basics`） | `specs/2026-09-27-子agent看得见-design.md` + `plans/2026-09-27-子agent看得见.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

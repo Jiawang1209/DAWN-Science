@@ -553,8 +553,12 @@
  * 8.3（2026-09-27）：子 agent 看得见（spec `2026-09-27-子agent看得见-design.md`）。`subagents` 条目的每个 chip 加可选 `activity`；
  *   快照加可选 `subagent`、更新加 `{ type: "subagent" }`（子转录的头信息）；新增操作 `openSubagent`（打开 / 订阅一段子转录，必要时读盘）
  *   与 `askSubagent`（接着问一个跑完的子 agent，答复不回主 agent）。子转录的 id 形如 `<会话>#sub:<toolCallId>:<序号>`（`subagent-id.ts`）。全是新增，故 minor。
+ *
+ * 8.4（2026-09-27）：桌面通知（spec `2026-09-27-桌面通知-design.md`）。三个操作 `desktopGetNotify` / `desktopSetNotify` /
+ *   `desktopTestNotify`（开关形状与微信 / 飞书同一个，多 `lang` 与只读的 `supported`）；事件通道**第五种载荷** `openSession`
+ *   （主进程在通知被点时发，界面据此切会话）。全是新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "8.3"
+export const WORKBENCH_PROTOCOL_VERSION = "8.4"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

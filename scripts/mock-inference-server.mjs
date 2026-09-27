@@ -129,6 +129,27 @@ function 慢跑工具(body) {
 }
 
 /**
+ * **「演一次失败」「演一次权限」**（2026-09-27，桌面通知；准入规则 1）。
+ *
+ * 桌面通知有三种时刻：做完、出错、等你点头。做完随便哪句都行；另两种此前只有夹具级的旋钮
+ * （`failStatus` 让整台服务器都失败、`toolCall` 要写进用例）——**`dev:mock` 里人演不出来**，e2e 也只能整段会话都失败。
+ * - 「演一次失败」→ 这一问回 401（pi 不重试 4xx），会话里出「模型调用失败：…」，桌面通知弹「出错了」；
+ * - 「演一次权限」→ 先说一句、再调一条要联网的 bash：`curl` 打本机 9 号端口，拒连立刻返回、不出本机。
+ *   「请求批准」档下门会弹权限卡；放行了也只是一次失败的本机连接。
+ * 只看**最后一条用户话**；拿到工具结果之后那一问最后一条是 `tool`，不循环。
+ * 两句与已有暗号（「慢慢跑」「慢慢说」「改两个文件」「派子agent」「子任务」「塞满上下文」「长回复」「markdown」「案例卡片」）
+ * 互不为子串，也不含「慢」字（「派子agent」那支拿它分快慢）。
+ */
+export const 演一次权限 = {
+  toolName: "bash",
+  args: { command: "curl -s --max-time 1 http://127.0.0.1:9/ || true" },
+  say: "我要联网看一眼。",
+}
+function 演示工具(body) {
+  return 最后一句用户话(body)?.includes("演一次权限") ? 演一次权限 : undefined
+}
+
+/**
  * **「改两个文件」= 先说一句、再调一条改两个文件的 bash**（2026-09-27，回退这一轮；准入规则 1）。
  *
  * 回退要有东西可退：一个 `out/` 下的新文件（科研仓库常把它写进 `.gitignore`——回退照样要退它）、
@@ -264,6 +285,15 @@ export function startMockInferenceServer(opts = {}) {
       const 是key验证 = 最后一句.trim() === KEY_CHECK_PROMPT
       ;(是key验证 ? keyChecks : requests).push({ url: req.url, body })
 
+      // 演一次失败（桌面通知，2026-09-27）：只这一问 401，会话里其它问照常。
+      // 摘要请求不算——它的 user 那条装着整段对话原文，里面的「演一次失败」是被摘要的话
+      const 是摘要 = 是摘要请求(文本(body.messages?.find?.((m) => m.role === "system" || m.role === "developer")?.content))
+      if (!是key验证 && !是摘要 && 最后一句用户话(body)?.includes("演一次失败")) {
+        res.writeHead(401, { "content-type": "application/json" })
+        res.end(JSON.stringify({ error: { message: "mock：演一次失败", type: "invalid_request_error" } }))
+        return
+      }
+
       /**
        * **说了「markdown」就给那一大段。** 排版这件事看不见就没法改，
        * 而一句暗号里没有标题也没有表格。
@@ -345,7 +375,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
 

@@ -708,6 +708,19 @@ export const UpdatePushSchema = z
 export type UpdatePush = z.infer<typeof UpdatePushSchema>
 
 /**
+ * 点了一条桌面通知（2026-09-27）。**同一条 IPC 通道，第五种载荷**——理由与上面几条一样：再挖一条单向通道就多一处要守的边界。
+ *
+ * 它由**主进程**发（通知的 click 在主进程），不经后端；载荷只说「回到哪段」，界面自己决定是切主区还是开坞。
+ */
+export const OpenSessionPushSchema = z
+  .object({
+    workbenchProtocolVersion: z.string().regex(/^\d+\.\d+$/),
+    openSession: z.string().min(1),
+  })
+  .strict()
+export type OpenSessionPush = z.infer<typeof OpenSessionPushSchema>
+
+/**
  * **这条发言等于没说话**（2026-08-12）。
  *
  * 模型「想一下就去调工具」会留下一条没有正文的发言。判断它的规则

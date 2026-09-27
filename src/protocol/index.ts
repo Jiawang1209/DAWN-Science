@@ -58,6 +58,7 @@ export {
   RemoteListChangedSchema,
   RemoteUpdateSchema,
   UpdatePushSchema,
+  OpenSessionPushSchema,
   SessionSnapshotSchema,
   SessionUpdateSchema,
   SubagentInfoSchema,

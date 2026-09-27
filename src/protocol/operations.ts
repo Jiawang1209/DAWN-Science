@@ -38,6 +38,18 @@ const 更新回执Schema = z
   .object({ 状态: 更新状态Schema, 自动检查: z.boolean() })
   .strict()
 
+/** 桌面通知的回执（get / set 共用，2026-09-27）。形状照微信 / 飞书的通知开关，多 `lang` 与 `supported` */
+const 桌面通知回执Schema = z
+  .object({
+    done: z.boolean(),
+    error: z.boolean(),
+    permission: z.boolean(),
+    quietWhenFocused: z.boolean(),
+    lang: z.enum(["zh", "en"]).optional(),
+    supported: z.boolean(),
+  })
+  .strict()
+
 /** 客户端不能请求无限结果——上限由服务端定，不由调用方定。 */
 export const DEFAULT_PAGE_SIZE = 50
 export const MAX_PAGE_SIZE = 200
@@ -1040,6 +1052,38 @@ export const OPERATIONS = {
     response: z
       .object({ done: z.boolean(), error: z.boolean(), permission: z.boolean(), quietWhenFocused: z.boolean() })
       .strict(),
+    mutating: true,
+  },
+  /**
+   * 桌面通知（2026-09-27，spec `2026-09-27-桌面通知-design.md`）。**四个开关与微信 / 飞书同一个形状**，
+   * 多两个字段：`lang`（通知用哪种语言，界面启动与切语言时报来，存着——界面还没起来时的通知也知道用哪种）、
+   * `supported`（这台系统弹不弹得出来，只读，界面据此出声）。
+   */
+  desktopGetNotify: {
+    request: z.object({}).strict(),
+    response: 桌面通知回执Schema,
+    mutating: false,
+  },
+  desktopSetNotify: {
+    request: z
+      .object({
+        done: z.boolean().optional(),
+        error: z.boolean().optional(),
+        permission: z.boolean().optional(),
+        quietWhenFocused: z.boolean().optional(),
+        lang: z.enum(["zh", "en"]).optional(),
+      })
+      .strict(),
+    response: 桌面通知回执Schema,
+    mutating: true,
+  },
+  /**
+   * 「发一条试试」。macOS 可能静静拦下未签名应用的通知，而 Electron 查不到授权状态——人只能亲眼看一条（spec §0 第 9 条）。
+   * 没弹出来回一个码（`unsupported` 系统不支持 / `no_exit` 这次运行没装配出口），界面各配一句——不回中文原句，英文界面要能译。
+   */
+  desktopTestNotify: {
+    request: z.object({}).strict(),
+    response: z.object({ shown: z.boolean(), reason: z.enum(["unsupported", "no_exit"]).optional() }).strict(),
     mutating: true,
   },
 

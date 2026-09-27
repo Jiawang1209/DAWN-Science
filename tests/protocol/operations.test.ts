@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema, RemoteConnectionSchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("144 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2）", () => {
+  it("147 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 3）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "setRemoteInterpreter",
@@ -96,6 +96,9 @@ describe("操作注册表", () => {
         "feishuBindSession",
         "feishuGetNotify",
         "feishuSetNotify",
+        "desktopGetNotify",
+        "desktopSetNotify",
+        "desktopTestNotify",
         "memoryOverview",
         "memorySuggestions",
         "memoryResolve",
@@ -595,5 +598,27 @@ describe("8.3 · 子 agent 看得见（2026-09-27）", () => {
     expect(OPERATIONS.askSubagent.mutating).toBe(true)
     expect(OPERATIONS.askSubagent.request.safeParse({ transcriptId: "s#sub:c1:0", text: "再说一句" }).success).toBe(true)
     expect(OPERATIONS.askSubagent.request.safeParse({ transcriptId: "s#sub:c1:0", text: "" }).success).toBe(false)
+  })
+})
+
+describe("桌面通知（2026-09-27）", () => {
+  const 回执 = { done: true, error: false, permission: true, quietWhenFocused: true, supported: true }
+  it("get / set 回同一个形状；lang 可选；set 的每个字段都可选", () => {
+    expect(OPERATIONS.desktopGetNotify.response.parse(回执)).toEqual(回执)
+    expect(OPERATIONS.desktopSetNotify.response.parse({ ...回执, lang: "en" })).toMatchObject({ lang: "en" })
+    expect(OPERATIONS.desktopSetNotify.request.parse({})).toEqual({})
+    expect(OPERATIONS.desktopSetNotify.request.parse({ lang: "zh", done: false })).toEqual({ lang: "zh", done: false })
+    expect(() => OPERATIONS.desktopSetNotify.request.parse({ lang: "fr" })).toThrow()
+    expect(() => OPERATIONS.desktopGetNotify.response.parse({ ...回执, supported: undefined })).toThrow()
+  })
+  it("试一条：没弹出来要说为什么（两个码，界面各配一句）", () => {
+    expect(OPERATIONS.desktopTestNotify.response.parse({ shown: true })).toEqual({ shown: true })
+    expect(OPERATIONS.desktopTestNotify.response.parse({ shown: false, reason: "unsupported" })).toMatchObject({ reason: "unsupported" })
+    expect(() => OPERATIONS.desktopTestNotify.response.parse({ shown: false, reason: "别的" })).toThrow()
+  })
+  it("set 与试一条是 mutating，get 不是", () => {
+    expect(isMutating("desktopGetNotify")).toBe(false)
+    expect(isMutating("desktopSetNotify")).toBe(true)
+    expect(isMutating("desktopTestNotify")).toBe(true)
   })
 })

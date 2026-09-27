@@ -429,9 +429,11 @@ describe("协议版本 · 5.5", () => {
    *
    * 8.3（2026-09-27）：子 agent 看得见——chip 加 `activity`；快照 / 更新加 `subagent`（子转录的头信息）；
    *   操作 `openSubagent` / `askSubagent`。纯新增，minor。
+   *
+   * 8.4（2026-09-27）：桌面通知——三个操作 + 事件通道第五种载荷 openSession。纯新增，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.3")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.4")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
@@ -530,5 +532,14 @@ describe("8.3 · 子 agent 看得见（2026-09-27）", () => {
       subagent: { agent: "scout", task: "t", status: "running", canAsk: false, askWhy: "running" },
     }
     expect(SessionUpdateSchema.safeParse(u).success).toBe(true)
+  })
+})
+
+describe("第五种载荷 openSession（桌面通知，2026-09-27）", () => {
+  it("只认 { 版本, openSession }；多一个字段就不认——免得和会话更新混", async () => {
+    const { OpenSessionPushSchema } = await import("../../src/protocol/events.js")
+    expect(OpenSessionPushSchema.safeParse({ workbenchProtocolVersion: "8.4", openSession: "s1" }).success).toBe(true)
+    expect(OpenSessionPushSchema.safeParse({ workbenchProtocolVersion: "8.4", openSession: "" }).success).toBe(false)
+    expect(OpenSessionPushSchema.safeParse({ workbenchProtocolVersion: "8.4", openSession: "s1", revision: 1 }).success).toBe(false)
   })
 })

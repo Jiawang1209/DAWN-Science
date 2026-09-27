@@ -20,9 +20,10 @@
  *
  * **原始数据目录不存、不碰**：判据只有 `在原始数据里()`，目录名只从 `science-layout.ts` 取（设计契约扫描）。
  */
-import { appendFileSync, constants, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { chmod, copyFile, mkdir, rename, stat, unlink } from "node:fs/promises"
-import { dirname, join } from "node:path"
+import { randomBytes } from "node:crypto"
+import { appendFileSync, constants, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, type Stats } from "node:fs"
+import { chmod, copyFile, link, lstat, mkdir, realpath, rename, rmdir, unlink } from "node:fs/promises"
+import { dirname, isAbsolute, join, sep } from "node:path"
 import { fsSnapshot, FS_SNAPSHOT_CAP, type FsEntry } from "./fs-facts.js"
 import { 原始数据目录 } from "../policy/science-layout.js"
 
@@ -67,6 +68,11 @@ export interface 存档选项 {
   /** 失败出声（规格 7.5）：每种原因每段会话只喊一次，不然一轮几十次工具调用就刷几十条 */
   喊?: (话: string) => void
   now?: () => Date
+  /**
+   * **只给测试用**（2026-09-27）：在回退的几个节骨眼上插一脚，演「扫完之后、挪的途中又有人动了它」这类竞争。
+   * `开始挪`：计划算完、第一件挪动之前；`换下之后`：现在那份刚进废纸篓、旧版本还没就位。
+   */
+  插一脚?: (时机: "开始挪" | "换下之后", path: string) => void | Promise<void>
 }
 
 export const 同一版 = (a: Pick<FsEntry, "ino" | "mtimeMs" | "size"> | undefined, b: Pick<FsEntry, "ino" | "mtimeMs" | "size"> | undefined): boolean =>
@@ -76,6 +82,21 @@ export const 同一版 = (a: Pick<FsEntry, "ino" | "mtimeMs" | "size"> | undefin
 export const 在原始数据里 = (p: string): boolean => p === 原始数据目录 || p.startsWith(`${原始数据目录}/`)
 
 const 对象名 = (e: Pick<FsEntry, "ino" | "mtimeMs" | "size">) => `${e.size}-${e.ino}-${String(e.mtimeMs).replace(".", "_")}`
+/** `对象名()` 起出来的只会是这个样子；别的（被人改过的存档）不认——`../x` 会读到存档外面去 */
+const 对象名合法 = (n: unknown): n is string => typeof n === "string" && /^\d+-\d+-[\d_e+-]+$/.test(n)
+
+/**
+ * 存档里的路径只可能是 `fsSnapshot` 给的相对 posix 路径（2026-09-27）。带 `..`、绝对路径、反斜杠的，
+ * 只可能是会话目录被人改过——认了它，回退就会往工作区外面写。
+ */
+export const 路径合法 = (p: unknown): p is string =>
+  typeof p === "string" &&
+  p.length > 0 &&
+  !p.includes("\\") &&
+  !p.includes("\0") &&
+  !isAbsolute(p) &&
+  !/^[A-Za-z]:/.test(p) &&
+  p.split("/").every((s) => s !== "" && s !== "." && s !== "..")
 
 export const 人话字节 = (n: number): string =>
   n >= 1024 ** 3 ? `${Number((n / 1024 ** 3).toFixed(1))} GB` : `${Math.max(1, Math.round(n / 1024 ** 2))} MB`
@@ -127,6 +148,43 @@ export class 回退不了 extends Error {
 type 内部计划 = { ok: false; reason: 文件回退不了 } | { ok: true; 公开: 回退计划; 恢复: { path: string; obj: string; mode: number | undefined }[] }
 const 空计划 = (): 回退计划 => ({ restore: [], remove: [], keep: [], cannot: [] })
 const 说 = (e: unknown) => (e instanceof Error ? e.message : String(e))
+const 码 = (e: unknown) => (e as NodeJS.ErrnoException | undefined)?.code
+
+/** 回退拒绝碰的那种情形：原因写给人看，原样进 `failed` */
+class 不碰 extends Error {}
+
+const 种类 = (st: Stats) =>
+  st.isDirectory() ? "目录" : st.isSymbolicLink() ? "符号链接" : st.isFIFO() ? "管道" : st.isSocket() ? "套接字" : "特殊文件"
+
+/** 只有 ENOENT 算「没有」；别的错（权限、I/O）照抛——不能把「看不见」当成「不存在」然后放心覆盖 */
+async function 看(abs: string): Promise<Stats | undefined> {
+  try {
+    return await lstat(abs)
+  } catch (e) {
+    if (码(e) === "ENOENT") return undefined
+    throw e
+  }
+}
+
+/**
+ * 把 `从` 放到 `到`，**不顶掉**那里已有的东西：`link` 在目标已存在时报 EEXIST（`rename` 会悄悄覆盖）。
+ * 盘不支持硬链接（exFAT、有的网络盘）才退回 `rename`，且只在此刻目标确实不在时——那一瞬的竞争窗口是剩下的风险。
+ */
+async function 不覆盖地放(从: string, 到: string): Promise<void> {
+  try {
+    await link(从, 到)
+  } catch (e) {
+    const c = 码(e)
+    if (c === "EEXIST" || !["EPERM", "ENOTSUP", "EOPNOTSUPP", "EMLINK", "ENOSYS"].includes(c ?? "")) throw e
+    if (await 看(到)) throw Object.assign(new Error(`EEXIST: ${到} 已存在`), { code: "EEXIST" })
+    await rename(从, 到)
+    return
+  }
+  await unlink(从).catch(() => {})
+}
+
+/** 废纸篓清单里的一条：挪了什么、挪到哪、为什么 */
+type 挪动缘由 = "not_there_before" | "replaced" | "appeared_during_rewind" | "put_back"
 
 export class 检查点存档 {
   private readonly 账: string
@@ -153,7 +211,7 @@ export class 检查点存档 {
     mkdirSync(this.对象, { recursive: true })
     for (const 行 of this.读行<账行>(this.账)) this.吃(行)
     let 清: 清单 = new Map()
-    for (const 行 of this.读行<快照行>(this.快照账)) {
+    for (const 行 of this.读快照()) {
       清 = 套(清, 行)
       this.最新 = { id: 行.id, 清单: 清 }
       this.序 = Math.max(this.序, Number(行.id.slice(1)) || 0)
@@ -193,8 +251,8 @@ export class 检查点存档 {
         this.收上一段(id)
         this.记({ op: "open", seg: { kind: "turn", entry, start: id } })
       } catch (e) {
-        this.喊一次("store_error", `回退存档出错了，这一句动的文件以后退不回：${e instanceof Error ? e.message : String(e)}`)
-        this.记({ op: "open", seg: { kind: "gap", entry, reason: "store_error" } })
+        this.喊一次("store_error", `回退存档出错了，这一句动的文件以后退不回：${说(e)}`)
+        this.记不丢({ op: "open", seg: { kind: "gap", entry, reason: "store_error" } })
       }
     })
   }
@@ -209,8 +267,8 @@ export class 检查点存档 {
         if (id) this.记({ op: "end", end: id })
         else this.记({ op: "open", seg: { kind: "gap", reason: "too_many_files" } })
       } catch (e) {
-        this.喊一次("store_error", `回退存档出错了，这一句动的文件以后退不回：${e instanceof Error ? e.message : String(e)}`)
-        this.记({ op: "open", seg: { kind: "gap", reason: "store_error" } })
+        this.喊一次("store_error", `回退存档出错了，这一句动的文件以后退不回：${说(e)}`)
+        this.记不丢({ op: "open", seg: { kind: "gap", reason: "store_error" } })
       }
     })
   }
@@ -225,8 +283,15 @@ export class 检查点存档 {
 
   /**
    * 照计划做。**先拍一张 stat、记一段 `rewind`，做完再拍一张收尾**——回退本身算「我们的」，下一次往前退时不当成你改的。
-   * 改回去的顺序：旧版本先拷到旁边的临时名、设回权限，再把现在那份挪进废纸篓，最后 rename 就位——中途失败，现在那份不丢。
-   * @throws 回退不了（在存档之前 / 断档 / 扫不动）
+   * 改回去的顺序：旧版本先拷到旁边的临时名、设回权限，再把现在那份挪进废纸篓，最后「不覆盖地」就位——中途失败，现在那份不丢。
+   *
+   * 数据安全（2026-09-27 审查复现过的几条，挪的是你的科研文件）：
+   * - **不写到工作区外面**：每一级父目录 `lstat` 过、不许是链接，父目录的 realpath 必须在工作区里——`rm -rf out && ln -s 别处 out` 之后
+   *   不跟着链接写过去；`.dawn`、`.dawn/trash` 是链接也一样。
+   * - **不在没留副本的情况下覆盖或挪走任何东西**：只挪普通文件（目录、链接、管道一律不碰，进 `failed`）；就位用 `link`（目标已有就 EEXIST，
+   *   不像 `rename` 那样悄悄顶掉半路冒出来的那个）。
+   * - **做了什么都要交代，哪怕只做了一半**：挪动阶段不 reject，出事的那一件进 `failed`、已做的照列；废纸篓里先写一份 `manifest.json`，每挪一件追加一条。
+   * @throws 回退不了（在存档之前 / 断档 / 扫不动）——这时一个文件都还没动
    */
   回退(q: 计划问): Promise<回退结果> {
     return this.排(async () => {
@@ -238,44 +303,180 @@ export class 检查点存档 {
       if (!开) throw new 回退不了("too_many_files")
       this.收上一段(开)
       this.记({ op: "open", seg: { kind: "rewind", start: 开 } })
-      const 篓相对 = [".dawn", "trash", `rewind-${this.此刻().toISOString().replace(/[:.]/g, "-")}`].join("/")
+      // 从这里起文件开始动：之后无论出什么事都要走到 finally 把这一段收住、把结果交回去
       let 用过篓 = false
-      const 挪走 = async (p: string) => {
-        const 源 = join(this.workspace, p)
-        if (!existsSync(源)) return
-        const 到 = join(this.workspace, 篓相对, p)
-        await mkdir(dirname(到), { recursive: true })
-        await rename(源, 到)
-        用过篓 = true
-      }
-      for (const p of r.公开.remove) {
+      let 篓相对: string | undefined
+      let 手上 = ""
+      try {
+        const 根实 = await realpath(this.workspace)
+        const 时刻 = this.此刻()
+        let 篓: { 相对: string }
         try {
-          await 挪走(p)
-          结果.removed.push(p)
+          篓 = await this.开废纸篓(根实, 时刻)
         } catch (e) {
-          结果.failed.push({ path: p, message: 说(e) })
+          // 废纸篓开不了（`.dawn` 被换成链接、盘只读）：一件都不挪——没地方留副本就不动
+          for (const p of [...r.公开.remove, ...r.恢复.map((x) => x.path)]) 结果.failed.push({ path: p, message: `废纸篓开不了（${说(e)}），没动它` })
+          return 结果
         }
-      }
-      for (const x of r.恢复) {
-        const 到 = join(this.workspace, x.path)
-        const 临时 = `${到}.dawn-rewind-tmp`
-        try {
-          await mkdir(dirname(到), { recursive: true })
-          await copyFile(join(this.对象, x.obj), 临时, constants.COPYFILE_FICLONE)
-          if (x.mode !== undefined) await chmod(临时, x.mode)
-          await 挪走(x.path)
-          await rename(临时, 到)
-          结果.restored.push(x.path)
-        } catch (e) {
-          await unlink(临时).catch(() => {})
-          结果.failed.push({ path: x.path, message: 说(e) })
+        篓相对 = 篓.相对
+        const 清单 = { rewind: 篓.相对, at: 时刻.toISOString(), planned: { restore: r.公开.restore, remove: r.公开.remove }, moved: [] as { path: string; to: string; why: 挪动缘由 }[], done: false }
+        const 清单名 = this.清单名(r.公开)
+        const 写清单 = () => {
+          try {
+            writeFileSync(join(this.workspace, 篓.相对, 清单名), `${JSON.stringify(清单, null, 2)}\n`)
+          } catch (e) {
+            this.喊一次("manifest", `回退的废纸篓清单写不进去（${说(e)}）：挪走的文件照样在 ${篓.相对}/ 里。`)
+          }
         }
+        写清单()
+
+        /** 把 p 挪进废纸篓。那里本来就没有 → undefined；不是普通文件 → 不碰（抛 `不碰`） */
+        const 挪走 = async (p: string, why: 挪动缘由): Promise<string | undefined> => {
+          const 源 = await this.落点(根实, p, false)
+          const st = await 看(源)
+          if (!st) return undefined
+          if (!st.isFile()) throw new 不碰(`现在那里是${种类(st)}，不是普通文件，没动它`)
+          let 篓里 = `${篓.相对}/${p}`
+          // 同一件挪两次（换下来的那份 + 半路冒出来的那份）：各留各的，不互相顶掉
+          for (let k = 2; await 看(join(this.workspace, 篓里)); k++) 篓里 = `${篓.相对}/${p}~${k}`
+          const 到 = await this.落点(根实, 篓里, true)
+          await rename(源, 到)
+          用过篓 = true
+          清单.moved.push({ path: p, to: 篓里, why })
+          写清单()
+          return 篓里
+        }
+
+        await this.选项.插一脚?.("开始挪", "")
+        for (const p of r.公开.remove) {
+          手上 = p
+          try {
+            if (await 挪走(p, "not_there_before")) 结果.removed.push(p)
+          } catch (e) {
+            结果.failed.push({ path: p, message: 说(e) })
+          }
+        }
+        for (const x of r.恢复) {
+          手上 = x.path
+          let 临时: string | undefined
+          let 换下: string | undefined
+          let 到: string | undefined
+          try {
+            if (!对象名合法(x.obj)) throw new 不碰("存档里这一版的名字不对（存档被改过？），没动它")
+            到 = await this.落点(根实, x.path, true)
+            临时 = `${到}.dawn-rewind-${randomBytes(4).toString("hex")}.tmp`
+            // EXCL：临时名撞上已有的东西就失败，不覆盖
+            await copyFile(join(this.对象, x.obj), 临时, constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE)
+            if (x.mode !== undefined) await chmod(临时, x.mode)
+            换下 = await 挪走(x.path, "replaced")
+            await this.选项.插一脚?.("换下之后", x.path)
+            try {
+              await 不覆盖地放(临时, 到)
+            } catch (e) {
+              if (码(e) !== "EEXIST") throw e
+              // 换下之后原处又冒出一个（别的进程刚写的）：它也先进废纸篓，再试一次；还不行就算了
+              await 挪走(x.path, "appeared_during_rewind")
+              await 不覆盖地放(临时, 到)
+            }
+            临时 = undefined
+            结果.restored.push(x.path)
+          } catch (e) {
+            if (临时) await unlink(临时).catch(() => {})
+            let message = 说(e)
+            if (换下 && 到) {
+              // 现在那份已经进了废纸篓、旧版本没就位：放回原处；放不回就说清它在哪儿
+              try {
+                await 不覆盖地放(join(this.workspace, 换下), 到)
+                清单.moved.push({ path: x.path, to: x.path, why: "put_back" })
+                写清单()
+                message += "；现在那份已放回原处"
+              } catch {
+                message += `；现在那份在 ${换下}`
+              }
+            }
+            结果.failed.push({ path: x.path, message })
+          }
+        }
+        清单.done = true
+        写清单()
+        // 一件都没挪：把只装着清单的空目录收掉（只删我们自己刚建的这两样，不递归）
+        if (!用过篓) {
+          await unlink(join(this.workspace, 篓.相对, 清单名)).catch(() => {})
+          await rmdir(join(this.workspace, 篓.相对)).catch(() => {})
+        }
+      } catch (e) {
+        // 没料到的错：停在这里，已做的照样交代
+        结果.failed.push({ path: 手上, message: `回退中途出错，停在这里：${说(e)}` })
+      } finally {
+        await this.收回退段()
       }
+      return 用过篓 && 篓相对 ? { ...结果, trash: 篓相对 } : 结果
+    })
+  }
+
+  /** 回退做完（或做到一半出了事）：拍一张收尾。拍不上就记断档——不然这一段一直开着，你之后改的会被当成回退改的 */
+  private async 收回退段(): Promise<void> {
+    try {
       const 收 = await this.拍(false)
       if (收) this.记({ op: "end", end: 收 })
-      else this.记({ op: "open", seg: { kind: "gap", reason: "too_many_files" } })
-      return 用过篓 ? { ...结果, trash: 篓相对 } : 结果
-    })
+      else this.记不丢({ op: "open", seg: { kind: "gap", reason: "too_many_files" } })
+    } catch (e) {
+      this.喊一次("store_error", `回退之后没拍上收尾（${说(e)}）：再往前的回退会说「断档」。`)
+      this.记不丢({ op: "open", seg: { kind: "gap", reason: "store_error" } })
+    }
+  }
+
+  /** 工作区下 `.dawn/trash/rewind-<时间>`；同一毫秒来两次就加 `-2`、`-3`——两次回退的东西不能混进一个目录 */
+  private async 开废纸篓(根实: string, 时刻: Date): Promise<{ 相对: string }> {
+    await this.落点(根实, ".dawn/trash/_", true)
+    const 基 = `rewind-${时刻.toISOString().replace(/[:.]/g, "-")}`
+    for (let k = 1; ; k++) {
+      const 名 = k === 1 ? 基 : `${基}-${k}`
+      try {
+        await mkdir(join(this.workspace, ".dawn", "trash", 名))
+        return { 相对: `.dawn/trash/${名}` }
+      } catch (e) {
+        if (码(e) !== "EEXIST" || k > 1000) throw e
+      }
+    }
+  }
+
+  /** 清单叫 `manifest.json`；要挪的文件里正好有一个就叫这个名字（工作区根上的 manifest.json），换个名字，不和它撞 */
+  private 清单名(计划: 回退计划): string {
+    const 占 = new Set([...计划.remove, ...计划.restore].map((p) => p.split("/")[0]))
+    for (let k = 1; ; k++) {
+      const 名 = k === 1 ? "manifest.json" : `manifest-${k}.json`
+      if (!占.has(名)) return 名
+    }
+  }
+
+  /**
+   * 工作区里一条相对路径的绝对位置——前提是**落笔安全**（2026-09-27，审查复现过 `out` 被换成指向外面的链接）：
+   * 每一级父目录 `lstat`，不许是链接、不许是文件；`建` 时缺的父目录一级一级建（不用 `recursive`，它会穿过链接）；
+   * 最后父目录的 realpath 必须在工作区的 realpath 里（`/var` 与 `/private/var` 这种工作区本身是链接的，比 realpath 就对了）。
+   * 父目录不存在且不 `建`：直接返回——目标自然也不存在。
+   */
+  private async 落点(根实: string, p: string, 建: boolean): Promise<string> {
+    if (!路径合法(p)) throw new 不碰(`路径不合法（${p}），没动它`)
+    const 段 = p.split("/")
+    let 当前 = this.workspace
+    for (let k = 0; k < 段.length - 1; k++) {
+      当前 = join(当前, 段[k]!)
+      let st = await 看(当前)
+      if (!st && 建) {
+        await mkdir(当前).catch((e) => {
+          if (码(e) !== "EEXIST") throw e
+        })
+        st = await 看(当前)
+      }
+      const 名 = 段.slice(0, k + 1).join("/")
+      if (!st) return join(this.workspace, p)
+      if (st.isSymbolicLink()) throw new 不碰(`${名} 是符号链接，不跟进去（可能指到工作区外面），没动它`)
+      if (!st.isDirectory()) throw new 不碰(`${名} 现在不是目录（是${种类(st)}），没动它`)
+    }
+    const 父实 = await realpath(dirname(join(this.workspace, p)))
+    if (父实 !== 根实 && !父实.startsWith(根实 + sep)) throw new 不碰(`${p} 实际落在工作区外面（${父实}），没动它`)
+    return join(this.workspace, p)
   }
 
   private 算计划(q: 计划问): 内部计划 {
@@ -297,7 +498,7 @@ export class 检查点存档 {
     let 清: 清单 = new Map()
     let 前: string | undefined
     let S清: 清单 | undefined
-    for (const 行 of this.读行<快照行>(this.快照账)) {
+    for (const 行 of this.读快照()) {
       const 旧 = 清
       清 = 套(清, 行)
       if (S清) for (const p of 变了(旧, 清, 行)) (我们的.has(`${前}>${行.id}`) ? P : 你的).add(p)
@@ -352,6 +553,19 @@ export class 检查点存档 {
     this.吃(行)
   }
 
+  /**
+   * 出错路径上记断档：写不进账本也**不许抛**（`开轮` / `收尾` 答应过永不 reject）。写不进去时这段会话里仍按断档算（内存里记上），
+   * 并喊一声——重开之后账上没有这条，那是盘出了问题，只能说出来。
+   */
+  private 记不丢(行: 账行): void {
+    try {
+      this.记(行)
+    } catch (e) {
+      this.吃(行)
+      this.喊一次("ledger_error", `回退账本写不进去（${说(e)}）：这段会话之后动的文件可能退不回。`)
+    }
+  }
+
   private 吃(行: 账行): void {
     if (行.op === "origin") this.起点值 = 行.leaf
     else if (行.op === "open") this.段们.push({ ...行.seg })
@@ -381,10 +595,44 @@ export class 检查点存档 {
       })
   }
 
+  /**
+   * 读快照账，顺手把不认的条目剔掉（2026-09-27）：路径不合法（`..`、绝对路径、反斜杠）的整条不认，
+   * `obj` 名字不对的只当「这一版没存」。它们只可能来自被改过的会话目录——认了就会往工作区外面写、从存档外面读。
+   */
+  private 读快照(): 快照行[] {
+    let 不认 = 0
+    const 行们 = this.读行<快照行>(this.快照账).flatMap((行) => {
+      if (!行 || typeof 行.id !== "string" || typeof 行.set !== "object" || !行.set || !Array.isArray(行.del)) {
+        不认++
+        return []
+      }
+      const set: Record<string, 清单条> = {}
+      for (const [p, e] of Object.entries(行.set)) {
+        if (!路径合法(p) || !e || typeof e !== "object") {
+          不认++
+          continue
+        }
+        if (e.obj !== undefined && !对象名合法(e.obj)) {
+          不认++
+          const { obj: _丢, ...其余 } = e
+          set[p] = 其余
+        } else set[p] = e
+      }
+      const del = 行.del.filter((p) => 路径合法(p) || (不认++, false))
+      return [{ ...行, set, del }]
+    })
+    if (不认 > 0) this.喊一次("bad_keys", `回退存档里有 ${不认} 条路径或名字不认（存档目录可能被改过），跳过了，回退不会碰它们。`)
+    return 行们
+  }
+
   private 喊一次(键: string, 话: string): void {
     if (this.喊过.has(键)) return
     this.喊过.add(键)
-    this.选项.喊?.(话)
+    try {
+      this.选项.喊?.(话)
+    } catch {
+      // 喊的人自己出错，不能反过来让存档 reject
+    }
   }
 
   private 此刻(): Date {
@@ -425,11 +673,12 @@ export class 检查点存档 {
     const 源 = join(this.workspace, p)
     let st
     try {
-      st = await stat(源)
+      // lstat：扫完之后它被换成了链接，就不跟过去把别处的文件读进存档
+      st = await lstat(源)
     } catch {
       return 条
     }
-    if (!同一版(st, 条)) return 条
+    if (!st.isFile() || !同一版(st, 条)) return 条
     const 名 = 对象名(条)
     const 到 = join(this.对象, 名)
     const mode = st.mode & 0o777
@@ -442,9 +691,11 @@ export class 检查点存档 {
       )
       return { ...条, skip: "over_budget" }
     }
+    // objects 被换成了链接（会话目录被动过）：不往那里写
+    if (lstatSync(this.对象).isSymbolicLink()) throw new Error("回退存档的 objects 目录是符号链接，不往里写")
     await copyFile(源, `${到}.tmp`, constants.COPYFILE_FICLONE)
     // 拷的途中它又被改了：这份不对版，不留
-    if (!同一版(await stat(源), 条)) {
+    if (!同一版(await lstat(源), 条)) {
       await unlink(`${到}.tmp`).catch(() => {})
       return 条
     }

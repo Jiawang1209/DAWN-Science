@@ -3,7 +3,19 @@
  * 真文件系统（临时目录），不 mock `fs`——克隆 / 拷贝 / 权限位这些只有真盘上才说得准。
  */
 import { afterEach, describe, expect, it } from "vitest"
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import {
+  chmodSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { 检查点存档 } from "../../src/project/checkpoints.js"
@@ -264,5 +276,238 @@ describe("影子存档 · 回退", () => {
   it("文件回退不了时抛「回退不了」，带缘故", async () => {
     const { 存 } = 新的()
     await expect(存.回退({ 之后的用户: ["e1"], 在存档之前: true })).rejects.toMatchObject({ reason: "before_archive" })
+  })
+})
+
+/**
+ * 回退挪的是你的科研文件（2026-09-27 审查复现的几条）：**不写到工作区外面、不在没留副本的情况下覆盖或挪走任何东西、
+ * 做了什么（哪怕只做了一半）都要说出来**。
+ */
+describe("影子存档 · 回退的数据安全", () => {
+  it("agent 把目录换成指向外面的链接：不跟进去写，外面的文件一个字节不动", async () => {
+    const { ws, 存 } = 新的()
+    const 外面 = join(dirname(ws), "outside")
+    mkdirSync(外面)
+    writeFileSync(join(外面, "r.csv"), "外面的宝贝")
+    写(ws, "out/r.csv", "v1")
+    await 一轮(存, "e1", () => {
+      rmSync(join(ws, "out"), { recursive: true })
+      symlinkSync(外面, join(ws, "out"))
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r.restored).toEqual([])
+    expect(r.failed.map((x) => x.path)).toEqual(["out/r.csv"])
+    expect(r.failed[0]!.message).toMatch(/链接/)
+    expect(readFileSync(join(外面, "r.csv"), "utf8")).toBe("外面的宝贝")
+    expect(readdirSync(外面)).toEqual(["r.csv"])
+  })
+
+  it(".dawn 是指向外面的链接：不往那里挪，文件原地不动、列进 failed", async () => {
+    const { ws, 存 } = 新的()
+    const 外面 = join(dirname(ws), "outside")
+    mkdirSync(外面)
+    await 一轮(存, "e1", () => 写(ws, "new.txt", "agent 新建"))
+    symlinkSync(外面, join(ws, ".dawn"))
+    const r = await 存.回退(之后("e1"))
+    expect(r.removed).toEqual([])
+    expect(r.failed.map((x) => x.path)).toEqual(["new.txt"])
+    expect(读(ws, "new.txt")).toBe("agent 新建")
+    expect(readdirSync(外面)).toEqual([])
+  })
+
+  it("原处现在是悬空链接：不覆盖它，列进 failed", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "a.txt", "v1")
+    await 一轮(存, "e1", () => {
+      rmSync(join(ws, "a.txt"))
+      symlinkSync("/nonexistent/target", join(ws, "a.txt"))
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r.restored).toEqual([])
+    expect(r.failed.map((x) => x.path)).toEqual(["a.txt"])
+    expect(lstatSync(join(ws, "a.txt")).isSymbolicLink()).toBe(true)
+  })
+
+  it("文件被换成目录：不把整个目录挪进废纸篓，data/raw 原地不动", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "data", "一个叫 data 的文件")
+    await 一轮(存, "e1", () => {
+      rmSync(join(ws, "data"))
+      写(ws, "data/x.csv", "agent")
+    })
+    写(ws, "data/raw/survey.csv", "原始数据")
+    const r = await 存.回退(之后("e1"))
+    expect(r.removed).toEqual(["data/x.csv"])
+    expect(r.failed.map((x) => x.path)).toEqual(["data"])
+    expect(r.failed[0]!.message).toMatch(/目录/)
+    expect(读(ws, "data/raw/survey.csv")).toBe("原始数据")
+  })
+
+  it("目录被换成同名文件：挪走那个文件、目录建回来、里面的文件改回去", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "d/f.txt", "v1")
+    await 一轮(存, "e1", () => {
+      rmSync(join(ws, "d"), { recursive: true })
+      写(ws, "d", "agent 写的文件")
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r).toMatchObject({ restored: ["d/f.txt"], removed: ["d"], failed: [] })
+    expect(读(ws, "d/f.txt")).toBe("v1")
+    expect(读(ws, `${r.trash}/d`)).toBe("agent 写的文件")
+  })
+
+  it("只改了大小写的改名（大小写不敏感的盘）：名字和内容都回来", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "Fig.png", "v1")
+    if (!existsSync(join(ws, "fig.png"))) return // 大小写敏感的盘：这条不适用
+    await 一轮(存, "e1", () => {
+      renameSync(join(ws, "Fig.png"), join(ws, "fig.png"))
+      writeFileSync(join(ws, "fig.png"), "v2")
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r.failed).toEqual([])
+    expect(readdirSync(ws)).toContain("Fig.png")
+    expect(readdirSync(ws)).not.toContain("fig.png")
+    expect(读(ws, "Fig.png")).toBe("v1")
+  })
+
+  it("挪走时那里已经没有了：不列进 removed", async () => {
+    const box: { ws?: string } = {}
+    // 回退里扫的是此刻，所以用插一脚在扫完、开始挪之前删掉它
+    const { ws, 存 } = 新的({ 插一脚: async (时机) => void (时机 === "开始挪" && rmSync(join(box.ws!, "gone.txt"))) })
+    box.ws = ws
+    await 一轮(存, "e1", () => 写(ws, "gone.txt", "x"))
+    const r = await 存.回退(之后("e1"))
+    expect(r.removed).toEqual([])
+    expect(r.failed).toEqual([])
+  })
+
+  it("换下之后原处又冒出一个：它也先进废纸篓，不被覆盖", async () => {
+    const box: { ws?: string } = {}
+    const { ws, 存 } = 新的({ 插一脚: async (时机, p) => void (时机 === "换下之后" && writeFileSync(join(box.ws!, p), "半路冒出来的")) })
+    box.ws = ws
+    写(ws, "a.py", "v1")
+    await 一轮(存, "e1", () => 写(ws, "a.py", "v2"))
+    const r = await 存.回退(之后("e1"))
+    expect(r).toMatchObject({ restored: ["a.py"], failed: [] })
+    expect(读(ws, "a.py")).toBe("v1")
+    const 篓里 = readdirSync(join(ws, r.trash!)).filter((f) => f.startsWith("a.py")).map((f) => 读(ws, `${r.trash}/${f}`))
+    expect(篓里.sort()).toEqual(["v2", "半路冒出来的"].sort())
+  })
+
+  it("最后一步就位失败、放回也失败：failed 里写清现在那份在废纸篓的哪儿", async () => {
+    const box: { ws?: string } = {}
+    const { ws, 存 } = 新的({ 插一脚: async (时机) => void (时机 === "换下之后" && chmodSync(join(box.ws!, "sub"), 0o555)) })
+    box.ws = ws
+    写(ws, "sub/a.py", "v1")
+    await 一轮(存, "e1", () => 写(ws, "sub/a.py", "v2"))
+    try {
+      const r = await 存.回退(之后("e1"))
+      expect(r.restored).toEqual([])
+      expect(r.failed).toHaveLength(1)
+      expect(r.failed[0]!.message).toContain(`${r.trash}/sub/a.py`)
+      expect(读(ws, `${r.trash}/sub/a.py`)).toBe("v2")
+    } finally {
+      ;chmodSync(join(ws, "sub"), 0o755)
+    }
+  })
+
+  it("回退收尾那张拍不上：已做的照样交代，段落以断档收住，之后你改的不会被当成回退的", async () => {
+    let n = 0
+    const { ws, 存, 喊了 } = 新的({
+      now: () => {
+        n++
+        if (炸 && n === 炸) throw new Error("盘满了")
+        return new Date(2026, 8, 27, 10, 0, 0, n)
+      },
+    })
+    let 炸 = 0
+    写(ws, "a.py", "v1")
+    await 一轮(存, "e1", () => 写(ws, "a.py", "v2"))
+    炸 = n + 3 // 回退：开头那张、废纸篓名、收尾那张 ← 第三次炸
+    const r = await 存.回退(之后("e1"))
+    expect(r.restored).toEqual(["a.py"])
+    expect(读(ws, "a.py")).toBe("v1")
+    expect(存.段落().at(-1)).toMatchObject({ kind: "gap", reason: "store_error" })
+    expect(喊了.some((x) => x.includes("盘满了"))).toBe(true)
+  })
+
+  it("挪到一半抛了没料到的错：不 reject，已做的照列，这一段照样收住", async () => {
+    const { ws, 存 } = 新的({
+      插一脚: (时机) => {
+        if (时机 === "换下之后") throw new Error("意外")
+      },
+    })
+    写(ws, "a.py", "v1")
+    await 一轮(存, "e1", () => {
+      写(ws, "a.py", "v2")
+      写(ws, "new.txt", "n")
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r.removed).toEqual(["new.txt"])
+    expect(r.failed.map((x) => x.path)).toEqual(["a.py"])
+    expect(r.failed[0]!.message).toContain("放回原处")
+    expect(读(ws, "a.py")).toBe("v2")
+    expect(存.段落().at(-1)).toMatchObject({ kind: "rewind", end: expect.any(String) })
+  })
+
+  it("废纸篓里有一份清单：挪了什么、从哪儿、为什么", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "a.py", "v1")
+    await 一轮(存, "e1", () => {
+      写(ws, "a.py", "v2")
+      写(ws, "new.txt", "n")
+    })
+    const r = await 存.回退(之后("e1"))
+    const 单 = JSON.parse(读(ws, `${r.trash}/manifest.json`))
+    expect(单.moved).toEqual([
+      { path: "new.txt", to: `${r.trash}/new.txt`, why: "not_there_before" },
+      { path: "a.py", to: `${r.trash}/a.py`, why: "replaced" },
+    ])
+    expect(单.done).toBe(true)
+  })
+
+  it("同一毫秒两次回退：废纸篓各用各的目录", async () => {
+    const { ws, 存 } = 新的({ now: () => new Date("2026-09-27T10:00:00Z") })
+    await 一轮(存, "e1", () => 写(ws, "a.txt", "1"))
+    const r1 = await 存.回退(之后("e1"))
+    await 一轮(存, "e2", () => 写(ws, "b.txt", "2"))
+    const r2 = await 存.回退(之后("e2"))
+    expect(r1.trash).toBeDefined()
+    expect(r2.trash).toBeDefined()
+    expect(r2.trash).not.toBe(r1.trash)
+    expect(读(ws, `${r1.trash}/a.txt`)).toBe("1")
+    expect(读(ws, `${r2.trash}/b.txt`)).toBe("2")
+  })
+
+  it("存档目录被动过手脚（路径带 .. / 绝对路径）：那几条不认，不往外写，喊一声", async () => {
+    const { ws, 存档目录, 重开, 喊了 } = 新的()
+    const 存 = 重开()
+    写(ws, "a.txt", "v1")
+    await 一轮(存, "e1", () => 写(ws, "a.txt", "v2"))
+    const 账 = join(存档目录, "snapshots.jsonl")
+    const 行 = readFileSync(账, "utf8").trim().split("\n").map((l) => JSON.parse(l))
+    const 外 = join(dirname(ws), "escaped.txt")
+    行[0].set["../escaped.txt"] = 行[0].set["a.txt"]
+    行[0].set[外] = 行[0].set["a.txt"]
+    行[1].del.push("../escaped.txt", 外)
+    writeFileSync(账, 行.map((x) => JSON.stringify(x)).join("\n") + "\n")
+    const r = await 重开().回退(之后("e1"))
+    expect(r.restored).toEqual(["a.txt"])
+    expect(existsSync(外)).toBe(false)
+    expect(喊了.some((x) => x.includes("不认"))).toBe(true)
+  })
+
+  it("开轮 / 收尾真的永不 reject：账本写不进去也只喊一声", async () => {
+    const { ws, 存档目录, 存, 喊了 } = 新的()
+    写(ws, "a.txt", "1")
+    rmSync(join(存档目录, "ledger.jsonl"), { force: true })
+    mkdirSync(join(存档目录, "ledger.jsonl"))
+    rmSync(join(存档目录, "snapshots.jsonl"), { force: true })
+    mkdirSync(join(存档目录, "snapshots.jsonl"))
+    await expect(存.开轮("e1")).resolves.toBeUndefined()
+    await expect(存.收尾()).resolves.toBeUndefined()
+    expect(喊了.length).toBeGreaterThan(0)
+    expect(存.段落().at(-1)).toMatchObject({ kind: "gap" })
   })
 })

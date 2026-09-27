@@ -1415,4 +1415,28 @@ describe("设计契约 · 回复时不卡", () => {
     for (const [k, v] of Object.entries(EN)) if (k.includes("插队")) 犯的.push(`en.ts：${k} → ${v}`)
     expect(犯的, "想马上改做走调整方向（redirect），不再有插队").toEqual([])
   })
+
+  /**
+   * **pi 会自己压缩上下文——压了必须出声**（2026-09-27，上下文用量与压缩 spec §1 a / §4 ③）。
+   * 此前 native 的 `translate` 对 `compaction_start` / `compaction_end` 走 `default: return`：pi 一直在静默地压，转录里一个字都没有。
+   * 另一半：`setAutoCompactionEnabled` / `setCompactionEnabled` 会写 pi 的 `settings.json`（`setCompactionEnabled` 末尾 `this.save()`）——
+   * 我们的设置不许悄悄落进 pi 的配置文件；要改压缩参数走 `SettingsManager.applyOverrides`（只在内存里）。
+   */
+  it("**压缩必须出声**：native 的 translate 接 compaction_start / compaction_end；src 里不调会写 pi 配置文件的压缩开关", () => {
+    const SRC = join(import.meta.dirname, "../../src")
+    const native = readFileSync(join(SRC, "runtime", "native.ts"), "utf8")
+    expect(findLines(native, (l) => /e\.type === "compaction_start"/.test(l)), "translate 要接 compaction_start").not.toEqual([])
+    expect(findLines(native, (l) => /e\.type === "compaction_end"/.test(l)), "translate 要接 compaction_end").not.toEqual([])
+    const 走 = (d: string): string[] =>
+      readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? 走(join(d, e.name)) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : [],
+      )
+    const 犯的: string[] = []
+    for (const f of 走(SRC)) {
+      for (const l of findLines(readFileSync(f, "utf8"), (line) => /\.(setAutoCompactionEnabled|setCompactionEnabled)\s*\(/.test(line))) {
+        犯的.push(`${f.slice(SRC.length + 1)}:${l}`)
+      }
+    }
+    expect(犯的, "压缩参数走 applyOverrides（内存里），不写 pi 的 settings.json").toEqual([])
+  })
 })

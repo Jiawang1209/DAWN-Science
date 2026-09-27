@@ -33,6 +33,7 @@ import {
   ModelRuntime,
   SessionManager,
   SettingsManager,
+  calculateContextTokens,
   createSyntheticSourceInfo,
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
@@ -85,6 +86,7 @@ import type {
   送法,
   调整的那句,
   会话开关,
+  压缩原因,
 } from "./types.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
@@ -284,6 +286,13 @@ interface NativeSession {
   lastUsage: { input?: number; output?: number; cacheRead?: number } | undefined
   /** 已经报过的那条用量在 `messages` 里的下标。**按下标判重，不按数值** */
   usageIndexReported: number | undefined
+  /**
+   * 已经报过的那条回复的时间戳（2026-09-27）。**有时间戳时按它判重**：pi 压缩时把 `messages` 换成「摘要 + 最近几条」，
+   * 下标全变了——只按下标认，最后那条老回复会被当成新的再报一次，而账本对 `turn_usage` 是累加的。
+   */
+  usageTsReported: number | undefined
+  /** 手动压缩发出去了、还没见到 `compaction_end`（2026-09-27）。pi 在发 start 之前就失败时没有 end 可等，`compact()` 据此补一句 */
+  压缩待出声: boolean
   /** 该会话的隔离目录。工具输出的全文写在它下面 */
   sessionDir: string
   /**
@@ -354,7 +363,24 @@ interface PiEvent {
   toolName?: string
   args?: unknown
   input?: unknown
-  result?: { isError?: boolean; content?: { type?: string; text?: string }[] }
+  /**
+   * `tool_execution_end` 的工具结果；`compaction_end` 压成了时也叫 `result`（pi 的 `CompactionResult`，2026-09-27）——
+   * 同名不同物，按 `type` 分开读。
+   */
+  result?: {
+    isError?: boolean
+    content?: { type?: string; text?: string }[]
+    summary?: string
+    tokensBefore?: number
+    estimatedTokensAfter?: number
+    usage?: { input?: number; output?: number; cacheRead?: number }
+  }
+  /** `compaction_start` / `compaction_end` 的起因：`manual` / `threshold` / `overflow`（2026-09-27） */
+  reason?: string
+  /** `compaction_end`：被停下了（停止 / 调整方向会 `abortCompaction()`） */
+  aborted?: boolean
+  /** `compaction_end`：超上限那种，压完 pi 会重试刚才那一轮 */
+  willRetry?: boolean
   /**
    * **pi 把「这次失败了」放在事件顶层**（`tool_execution_end.isError`，`pi-agent-core/dist/agent-loop.js`）。
    * 它自带的工具失败时是**抛异常**，pi 接住后造的结果对象里根本没有 `isError`——
@@ -392,6 +418,76 @@ interface PiEvent {
     model?: string
   }
   errorMessage?: string
+}
+
+/** pi 只有这三种起因；认不出的当作过线——多出来的值不许让事件变形（2026-09-27） */
+export function 认原因(r: string | undefined): 压缩原因 {
+  return r === "manual" || r === "overflow" ? r : "threshold"
+}
+
+/**
+ * pi 的压缩失败原因 → 人话（2026-09-27）。认得的几句翻；**认不出的原样透传**（规格 7.5：不吞、不改写别人的话），
+ * 只剥掉 pi 自己加的那层前缀。
+ */
+export function 压缩原因人话(msg: string | undefined): string {
+  const 原 = msg?.trim()
+  if (!原) return "pi 没有给出原因"
+  if (/Nothing to compact/i.test(原)) return "对话还太短，没有可压缩的"
+  if (/Already compacted/i.test(原)) return "刚压缩过，还没有新内容"
+  if (/after one compact-and-retry attempt/i.test(原)) {
+    return "超过上限后压缩重试了一次，还是放不下——换一个上限更大的模型，或者开一段新对话"
+  }
+  const m = /^(?:Compaction failed|Auto-compaction failed|Context overflow recovery failed):\s*([\s\S]+)$/.exec(原)
+  return m ? m[1]!.trim() : 原
+}
+
+/**
+ * pi 的 `compaction_end` → 我们事件的字段（2026-09-27）。**纯函数**，单测直接打它。
+ * 有 `result.summary` = 压完；`aborted` = 停下了（不说失败）；其余 = 没压成，原因翻成人话。
+ */
+export function 压缩收尾字段(
+  e: Pick<PiEvent, "reason" | "result" | "aborted" | "willRetry" | "errorMessage">,
+): Omit<Extract<AgentEvent, { kind: "compaction_end" }>, "kind" | "sessionId"> {
+  const reason = 认原因(e.reason)
+  const r = e.result
+  if (r && typeof r.summary === "string") {
+    const u = r.usage
+    return {
+      reason,
+      status: "done",
+      ...(typeof r.tokensBefore === "number" ? { tokensBefore: Math.round(r.tokensBefore) } : {}),
+      ...(typeof r.estimatedTokensAfter === "number" ? { tokensAfter: Math.round(r.estimatedTokensAfter) } : {}),
+      ...(r.summary.trim() ? { summary: r.summary } : {}),
+      ...(e.willRetry ? { retried: true as const } : {}),
+      // **只发我们声明过的三个字段**——与 `emitUsageIfNew` 同一个理由（协议那边是 `.strict()`）
+      ...(u && (u.input ?? 0) + (u.output ?? 0) > 0
+        ? {
+            usage: {
+              ...(u.input !== undefined ? { input: u.input } : {}),
+              ...(u.output !== undefined ? { output: u.output } : {}),
+              ...(u.cacheRead !== undefined ? { cacheRead: u.cacheRead } : {}),
+            },
+          }
+        : {}),
+    }
+  }
+  if (e.aborted) return { reason, status: "cancelled" }
+  return { reason, status: "failed", error: 压缩原因人话(e.errorMessage) }
+}
+
+/**
+ * 最近一次**真回复**报的上下文大小（2026-09-27）：倒着找第一条没中止、没出错、用量不为零的助手消息，
+ * 用 pi 判线的那个函数（`calculateContextTokens`：`totalTokens`，没有就四项相加）算。
+ * 拿它与 pi 的数一比，就知道 pi 那个数里有没有「按字数估」的一截。
+ */
+function 最后一次真回复(messages: readonly unknown[]): number | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i] as { role?: string; stopReason?: string; usage?: Parameters<typeof calculateContextTokens>[0] } | undefined
+    if (m?.role !== "assistant" || !m.usage || m.stopReason === "aborted" || m.stopReason === "error") continue
+    const n = calculateContextTokens(m.usage)
+    if (n > 0) return n
+  }
+  return undefined
 }
 
 export class NativeRuntime implements AgentRuntime {
@@ -1441,6 +1537,8 @@ export class NativeRuntime implements AgentRuntime {
       inFlight: 0,
       lastUsage: undefined,
       usageIndexReported: undefined,
+      usageTsReported: undefined,
+      压缩待出声: false,
       sessionDir: spec.sessionDir,
       stuck: new StuckGuard(),
       待发: [],
@@ -1548,7 +1646,7 @@ export class NativeRuntime implements AgentRuntime {
    */
   private latestUsage(
     sessionId: SessionId,
-  ): { index: number; usage: { input?: number; output?: number; cacheRead?: number } } | undefined {
+  ): { index: number; ts?: number; usage: { input?: number; output?: number; cacheRead?: number } } | undefined {
     const s = this.sessions.get(sessionId)
     /**
      * **一路都要防空。** 这里在每条事件上都会被调到，而事件可能早于
@@ -1570,7 +1668,8 @@ export class NativeRuntime implements AgentRuntime {
        * 更何况这里真实答案并不是 0。
        */
       if ((u.input ?? 0) + (u.output ?? 0) === 0) continue
-      return { index: i, usage: u }
+      const ts = msgs[i]?.["timestamp"]
+      return { index: i, ...(typeof ts === "number" ? { ts } : {}), usage: u }
     }
     return undefined
   }
@@ -1586,8 +1685,19 @@ export class NativeRuntime implements AgentRuntime {
     const latest = this.latestUsage(sessionId)
     if (!latest) return
     const s = this.sessions.get(sessionId)
-    if (!s || s.usageIndexReported === latest.index) return
+    if (!s) return
+    /**
+     * **同一条回复不报第二次**（2026-09-27 改）。有时间戳按时间戳认：pi 压缩时把 `messages` 换成「摘要 + 最近几条」，
+     * 下标全变了，只按下标认的话最后那条老回复会被当成新的再报一次——`run-recorder.ts` 对 `turn_usage` 是累加的，账本就重复计了。
+     * 没有时间戳（老记录、测试替身）才退回按下标。
+     */
+    const 报过了 =
+      latest.ts !== undefined && s.usageTsReported !== undefined
+        ? latest.ts <= s.usageTsReported
+        : s.usageIndexReported === latest.index
+    if (报过了) return
     s.usageIndexReported = latest.index
+    if (latest.ts !== undefined) s.usageTsReported = latest.ts
     s.lastUsage = latest.usage
     /**
      * **只发我们声明过的那三个字段。**
@@ -1628,6 +1738,23 @@ export class NativeRuntime implements AgentRuntime {
     if (e.type === "queue_update") {
       // 只看排队单：插队（steering）2026-09-25 起我们不再用
       this.对账待发(sessionId, e.followUp?.length ?? 0)
+      return
+    }
+
+    /**
+     * **pi 压缩上下文要出声**（2026-09-27，spec §1 a）。建会话用的是 `SettingsManager.create(…)`、没有任何覆盖，
+     * pi 的默认 `compaction.enabled` 是 true——它一直在自己压，而这两条此前落进下面的 `default: return`，转录里一个字都没有。
+     * 手动（`compact()`）与自动（过线、超上限）走同一对事件；后端把它们收成转录里的一条 `compaction` 项。
+     * **start 一到就发**（作者 2026-09-27：「压缩的时候，最起码要说一下，要压缩上下文了」）——不等压完。
+     */
+    if (e.type === "compaction_start") {
+      this.emit({ kind: "compaction_start", sessionId, reason: 认原因(e.reason) })
+      return
+    }
+    if (e.type === "compaction_end") {
+      const s = this.sessions.get(sessionId)
+      if (s) s.压缩待出声 = false
+      this.emit({ kind: "compaction_end", sessionId, ...压缩收尾字段(e) })
       return
     }
 
@@ -2131,7 +2258,10 @@ ${描述}`
    *   - `contextWindow`：模型自带的上限，**真数**
    *   - `bytes`：系统提示词 / 工具 schema / 对话历史三档的**字节数，不是 token**
    *
-   * `usedTokens` 来自 provider 报的真 usage（`s.lastUsage`，见 `translate`）。
+   * `usedTokens` **只从 pi 的 `getContextUsage()` 取**（2026-09-27 改）：最近一次真回复的 `totalTokens`，加上那之后新加的
+   * 内容按字数估的一截（有这一截就标 `estimated`）。与 pi 判自动压缩线用的是同一族函数——此前我们报 `input + cacheRead`，
+   * 漏了上一次的输出与缓存写入，人看着 80%、pi 按 90% 压了。刚压缩过 pi 给 `tokens: null`，我们给 `afterCompaction`、不给数。
+   * 还没有过回复时不给：pi 那时只数对话，系统提示词与工具说明不在里面，会少算。
    * **拿不到就不给这个字段**，界面显示「尚未采集」，不拿字节去凑。
    *
    * （这段注释一度写着「usage 目前一处都没采集」，而同一个文件下面就在采——
@@ -2153,12 +2283,12 @@ ${描述}`
       // 所以拿不到就不给这个字段，而不是给一个 undefined
       ...(st.model?.id ? { model: st.model.id } : {}),
       ...(st.model?.contextWindow ? { contextWindow: st.model.contextWindow } : {}),
-      // **真 token，来自 provider。** 缺就不给这个字段——
-      // 界面据此显示「尚未采集」，而不是显示 0
-      // **从会话状态取**，不读那个从来没被填上的 `lastUsage` 缓存
-      ...(( ) => {
-        const u = this.latestUsage(sessionId)?.usage
-        return u?.input !== undefined ? { usedTokens: u.input + (u.cacheRead ?? 0) } : {}
+      ...this.已用(s),
+      ...(() => {
+        // 自动压缩线：上限 − 留给摘要的那份（pi 的 `shouldCompact`：`contextTokens > contextWindow - reserveTokens`）
+        if (!st.model?.contextWindow) return {}
+        const 设 = s.session.settingsManager.getCompactionSettings(s.session.model)
+        return 设.enabled ? { compactAt: Math.max(0, st.model.contextWindow - 设.reserveTokens) } : {}
       })(),
       bytes: {
         system: size(st.systemPrompt),
@@ -2166,6 +2296,17 @@ ${描述}`
         history: size(st.messages),
       },
     }
+  }
+
+  /** 已用多少（2026-09-27）。见 `contextUsage` 的头注 */
+  private 已用(s: NativeSession): Pick<ContextUsage, "usedTokens" | "estimated" | "afterCompaction"> {
+    const pi = s.session.getContextUsage()
+    if (pi && pi.tokens === null) return { afterCompaction: true }
+    const 真 = 最后一次真回复(s.session.messages as readonly unknown[])
+    if (真 === undefined) return {}
+    if (!pi || pi.tokens === null) return { usedTokens: 真 }
+    const 数 = Math.round(pi.tokens)
+    return 数 === 真 ? { usedTokens: 数 } : { usedTokens: 数, estimated: true }
   }
 
   /**

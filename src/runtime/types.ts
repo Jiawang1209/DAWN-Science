@@ -318,6 +318,31 @@ export type AgentEvent =
   /** 这一条没能送出去（重送时 pi 抛错、或这一轮被中止时它还排着）。**不许悄悄丢**——后端据此出声 */
   | { kind: "queue_failed"; sessionId: SessionId; id: string; message: string }
   /**
+   * **pi 开始压缩上下文了**（2026-09-27）。手动、过了自动线、超了上限三种都走这一对。
+   * 此前 `translate` 走 `default` 把它吞了——pi 一直在静默地压，转录里一个字都没有。
+   */
+  | { kind: "compaction_start"; sessionId: SessionId; reason: 压缩原因 }
+  /**
+   * **一次压缩结束了**：压完、没压成、被停下都有这一条。**没有 start 的 end 也会有**
+   * （pi 超上限、压完重试过一次仍放不下时只发 end）——后端据此把转录里那条压缩标记收尾，没有就新起一条。
+   */
+  | {
+      kind: "compaction_end"
+      sessionId: SessionId
+      reason: 压缩原因
+      status: "done" | "failed" | "cancelled"
+      tokensBefore?: number
+      /** 压缩后**对话部分**的估值（pi 的 `estimatedTokensAfter`，不含系统提示词与工具说明） */
+      tokensAfter?: number
+      summary?: string
+      /** 没压成的原因，已翻成人话；认不出的原样 */
+      error?: string
+      /** 超上限那种：压完 pi 会重试刚才那一轮 */
+      retried?: true
+      /** 写摘要那一次模型调用花的 token */
+      usage?: { input?: number; output?: number; cacheRead?: number }
+    }
+  /**
    * **一整轮真正结束**（用户发话 → 若干次模型响应与工具执行 → 收工）。
    *
    * 与 `turn_end` 不是一回事，这是 2026-08-09 真机实测才看清的：
@@ -425,6 +450,9 @@ export type AgentEvent =
   /** 重连后认领回来了（定案 10）：同一个会话 id、同一个进程、变量都在。`掉线时在飞` = 掉线那一刻有段代码在跑 */
   | { kind: "reattached"; sessionId: SessionId; 掉线时在飞: boolean }
 
+/** 压缩是谁起的头（pi 的 `compaction_start.reason`）：手动 / 过了自动线 / 超了上限（2026-09-27） */
+export type 压缩原因 = "manual" | "threshold" | "overflow"
+
 export type EventSink = (event: AgentEvent) => void
 
 /**
@@ -438,10 +466,16 @@ export interface ContextUsage {
   /** 模型自带的上下文上限（token）。**真数** */
   contextWindow?: number
   /**
-   * 最近一次请求的输入 token（含缓存命中）。**provider 报的真数。**
-   * 缺省 = 尚未采集，**不是 0**。
+   * **pi 算的「上下文里现在有多少」**（2026-09-27 改；`AgentSession.getContextUsage()`）：最近一次真回复的 `totalTokens`，
+   * 加上那之后新加的内容按字数估的一截。缺省 = 还没有过回复，或刚压缩过——**不是 0**。
    */
   usedTokens?: number
+  /** `usedTokens` 里有一截是估的。只在 true 时出现 */
+  estimated?: true
+  /** 刚压缩过、还没有新回复（此时不给 `usedTokens`）。只在 true 时出现 */
+  afterCompaction?: true
+  /** 自动压缩线（上限 − 留给摘要的那份）。缺省 = 自动压缩关着，或上限不知道 */
+  compactAt?: number
   /** 三档内容的字节数。**不是 token** */
   bytes: { system: number; tools: number; history: number }
 }

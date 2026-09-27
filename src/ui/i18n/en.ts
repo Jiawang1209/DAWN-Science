@@ -1623,4 +1623,7 @@ export const EN: Readonly<Record<string, string>> = {
   "回到上一句之前": "Rewind to before the last message",
   "只有内置对话能回退": "Only built-in chats can rewind",
   "这段还没说过话，没有可回退的": "Nothing has been said in this session yet, so there's nothing to rewind",
+  "这段还没说过话": "Nothing has been said in this session yet",
+  "正在回退，等它做完": "A rewind is in progress; wait for it to finish",
+  "回到那句之前？": "Rewind to before that message?",
 }

@@ -1,8 +1,9 @@
 /**
  * 「回到这句之前」那颗按钮（2026-09-27，spec §2.1）。
  *
- * **常驻、带字**：悬停才出现的等于不存在（`opacity` 用 `getComputedStyle` 量，`toBeVisible()` 对 `opacity: 0` 仍算可见），
- * 只画一个箭头又会被读成「没有这个功能」。
+ * **常驻、带字**：悬停才出现的等于不存在，只画一个箭头又会被读成「没有这个功能」。
+ * 「常驻」量的是真样式表下的 `opacity`——jsdom 不加载 `styles.css`，在这里量永远是 1、什么也证明不了，
+ * 所以那一半交给 e2e（真构建产物里 `getComputedStyle`）。
  */
 import { describe, expect, it, vi } from "vitest"
 import { fireEvent, render, screen } from "@testing-library/react"
@@ -24,8 +25,6 @@ describe("「回到这句之前」（spec §2.1）", () => {
     expect(们).toHaveLength(2)
     // 带字：文字本身在按钮里，不是只有 aria-label
     expect(们[0]!.textContent).toContain("回到这句之前")
-    // 常驻：不靠悬停才显形
-    expect(Number(getComputedStyle(们[0]!).opacity || "1")).toBe(1)
     fireEvent.click(们[1]!)
     expect(onRewind).toHaveBeenCalledWith("u2")
   })
@@ -45,6 +44,25 @@ describe("「回到这句之前」（spec §2.1）", () => {
   it("刚发出去、还没回音（等回话）也算忙：灰着", () => {
     render(<ConversationView session={session} items={[用户("u1", "一")]} onSend={() => {}} onRewind={() => {}} />)
     expect((screen.getByRole("button", { name: "回到这句之前" }) as HTMLButtonElement).disabled).toBe(true)
+  })
+  it("正在压缩上下文也算忙：灰着（与停止键同一个判据）", () => {
+    const 压缩 = { type: "compaction", id: "c1", status: "running" } as TranscriptItem
+    const onRewind = vi.fn()
+    render(<ConversationView session={session} items={[用户("u1", "一"), agent("a1"), 压缩]} onSend={() => {}} onRewind={onRewind} />)
+    const 它 = screen.getByRole("button", { name: "回到这句之前" }) as HTMLButtonElement
+    expect(它.disabled).toBe(true)
+    expect(它.getAttribute("aria-description")).toBe("agent 还在跑，停下之后才能回退")
+    fireEvent.click(它)
+    expect(onRewind).not.toHaveBeenCalled()
+  })
+  it("这段正在回退：灰着，理由是「正在回退，等它做完」；名字不变", () => {
+    const onRewind = vi.fn()
+    render(<ConversationView session={session} items={[用户("u1", "一"), agent("a1")]} onSend={() => {}} onRewind={onRewind} rewinding />)
+    const 它 = screen.getByRole("button", { name: "回到这句之前" }) as HTMLButtonElement
+    expect(它.disabled).toBe(true)
+    expect(它.getAttribute("aria-description")).toBe("正在回退，等它做完")
+    fireEvent.click(它)
+    expect(onRewind).not.toHaveBeenCalled()
   })
   it("会话已退出（disabled）：不画", () => {
     render(<ConversationView session={session} items={[用户("u1", "一"), agent("a1")]} onSend={() => {}} onRewind={() => {}} disabled />)

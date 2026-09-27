@@ -93,8 +93,8 @@ import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
 import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
-import { 主槽 } from "./state/transcript.js"
-import { 回退这一轮, type 回退预览, type 回退回执 } from "./state/rewind.js"
+import { 主槽, $说过话 } from "./state/transcript.js"
+import { 回退这一轮, 找这句, 最后一句, $回退中, type 回退预览, type 回退回执 } from "./state/rewind.js"
 import { RewindDetail } from "./rewind.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
@@ -703,6 +703,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 所以它可以进 effect 依赖，`items` 不行。下面那个 effect 依赖的就是这个区别。
    */
   const busy = useStore($回合进行中)
+  /** 主区这段说过话没有 · 哪几段正在回退（按 sessionId）。都是只在翻转时变的值，壳订得起 */
+  const 主区说过话 = useStore($说过话)
+  const 回退中们 = useStore($回退中)
 
   /**
    * 重取账本：列表 + 最新那条的详情 + 上下文用量。
@@ -3524,11 +3527,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 顺序与失败规矩在 `state/rewind.ts`（有单测）；这里只接线。转录的截断与通知由后端推快照，不在这里改。
    * 主区与坞里那段都走它——按 `sessionId` 绑，原文放回的是**那一段自己**的输入框。
    */
+  /**
+   * 「正在回退」按 `sessionId` 记在 `$回退中`（审查 Important）：`回退这一轮` 从预览起记上、做完 / 失败 / 没选就关框时抹掉，
+   * 同一段连点两下只发一次预览。取消与 Escape 走 `onDismiss`；选了的那条路先调 `选了`，之后再来的 `没选` 被忽略。
+   */
   const 开回退 = (sessionId: string, turnId: string, 这句: string) =>
     回退这一轮({
+      会话: sessionId,
       这句,
       预览: () => client.get<回退预览>("previewRewind", { sessionId, turnId }),
-      问: (内容, 选了) =>
+      问: (内容, 选了, 没选) =>
         setConfirming({
           title: 内容.title,
           detail: <RewindDetail 内容={内容} />,
@@ -3536,6 +3544,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           confirmLabel: 内容.主.label,
           onConfirm: () => 选了(内容.主.做法),
           ...(内容.次 ? { altLabel: 内容.次.label, onAlt: () => 选了(内容.次!.做法) } : {}),
+          onDismiss: 没选,
         }),
       执行: (做法) => client.get<回退回执>("rewindTurn", { sessionId, turnId, mode: 做法 }),
       放回输入框: (text) => 退回输入框(sessionId, [{ text }]),
@@ -3597,12 +3606,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       },
       /**
        * 命令面板「回到上一句之前」（2026-09-27）：主区那段最后一句自己说的话，与点它下面那颗同一个动作。
-       * 读一次 `$items`，不订阅（App 不订阅转录）。一句都还没说过：出声，不是按了没反应。
+       * 读一次 `$items`，不订阅（App 不订阅转录）。「还没说过话」面板那条已经列成不可用（`$说过话`）；
+       * 这里的出声只是兜底——面板打开之后转录才被换掉的那一下。
        */
       rewindLast: () => {
         if (!session || session.kind !== "native") return
-        const 最后 = [...主槽.$items.get()].reverse().find((x) => x.type === "turn" && x.who === "user")
-        if (!最后 || 最后.type !== "turn") {
+        const 最后 = 最后一句(主槽.$items.get())
+        if (!最后) {
           note(t("这段还没说过话，没有可回退的"))
           return
         }
@@ -3694,10 +3704,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     () =>
       buildCommands({
         actions, agents: agentIds, session, busy, view, dockOpen,
+        // 回到上一句之前（spec §2.1）：没说过话、正在回退，都在面板里列成不可用并写缘故
+        saidSomething: 主区说过话,
+        rewinding: !!(session && 回退中们[session.sessionId]),
         // 正在另开的那一下也标出来（Task 6 审查 M4）：面板那条与坞里那颗同一个闸
         sideNewUnavailable: 坞没处说 ?? (另开中 ? t("坞里正在另开一段") : undefined),
       }),
-    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中],
+    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中, 主区说过话, 回退中们],
   )
 
   /**
@@ -3899,9 +3912,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       ...(s.kind === "native"
         ? {
             onRewind: (turnId: string) => {
-              const 它 = 槽.$items.get().find((x) => x.id === turnId)
-              void 开回退(s.sessionId, turnId, 它?.type === "turn" ? 它.text : "")
+              // 找不到那句（转录刚被换掉）：出声拒绝，不拿空字符串开一张「回到「」之前？」的框（审查 e）
+              const 它 = 找这句(槽.$items.get(), turnId)
+              if (!它) {
+                note(tf("回退没成：{0}", t("这句不在对话里了")))
+                return
+              }
+              void 开回退(s.sessionId, 它.id, 它.text)
             },
+            rewinding: !!回退中们[s.sessionId],
           }
         : {}),
       /**

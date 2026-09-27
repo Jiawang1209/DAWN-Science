@@ -3760,6 +3760,7 @@ export function ConversationView({
   onQueueToDock,
   canRedirect,
   onRewind,
+  rewinding,
   queueLocked,
   onCompact,
   取上下文用量,
@@ -3915,6 +3916,11 @@ export function ConversationView({
   canRedirect?: boolean | undefined
   /** 回到这句之前（2026-09-27）：只有 native 给。不给 = 每句下面都不画那颗 */
   onRewind?: ((turnId: string) => void) | undefined
+  /**
+   * 这段正在回退（从预览到做完，App 按 `sessionId` 记着）。给了 true：每句下面那颗灰着，写「正在回退，等它做完」——
+   * 第二下不该跑到后端去碰那句说**发送**的「正在回退，回退完再发」（审查 Important）。
+   */
+  rewinding?: boolean | undefined
   /**
    * 待发条的按钮从外面置灰（复审 m-C，2026-09-25）：Cmd/Ctrl+回车的调整方向那次请求还没回来时由 App 给 true。
    * 「停止」不受它管——调整方向正在进行时按停止是正当的（停止赢）。
@@ -4613,7 +4619,12 @@ export function ConversationView({
                        * 理由是同一个字符串，行的 memo 比得过去——只在忙 / 不忙翻转时每行重渲染一次。
                        */
                       onRewind: 行回调.onRewind,
-                      ...(busy ? { rewindBlocked: t("agent 还在跑，停下之后才能回退") } : {}),
+                      // 正在回退排在「在跑」前面：那一刻真正挡着的是回退本身
+                      ...(rewinding
+                        ? { rewindBlocked: t("正在回退，等它做完") }
+                        : busy
+                          ? { rewindBlocked: t("agent 还在跑，停下之后才能回退") }
+                          : {}),
                     }
                   : {})}
               />

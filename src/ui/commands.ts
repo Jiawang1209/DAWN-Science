@@ -118,6 +118,13 @@ export interface CommandContext {
   dockOpen?: boolean
   /** 坞里为什么没处另开（没有「地方」）。缺省 = 能开 */
   sideNewUnavailable?: string | undefined
+  /**
+   * 当前这段说过话没有（至少一句自己说的话）。「回到上一句之前」据它（spec §2.1）。
+   * **缺省 = 没说过**：缺失不等于能用——按了才说「没有可回退的」就是一条点了没反应的命令。
+   */
+  saidSomething?: boolean | undefined
+  /** 当前这段正在回退（从预览到做完）。缺省 = 没有 */
+  rewinding?: boolean | undefined
 }
 
 const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
@@ -232,15 +239,20 @@ export function buildCommands(ctx: CommandContext): Command[] {
   /**
    * 回到上一句之前（2026-09-27，回退这一轮 spec §2.1）。每句自己说的话下面那颗之外的第二条路——
    * **不可用照样列出**，写清是哪一种：笼统写「不可用」等于没说。
-   * 「这段还没说过话」面板这里判不了（它不看转录），由 `rewindLast` 按下时出声。
+   * 「这段还没说过话」由 App 从转录派生一个布尔交进来（`saidSomething`），不是按下时才说。
+   * 正在回退排在「在跑」前面：那一刻真正挡着的是回退本身。
    */
   const rewindWhy = !ctx.session
     ? t("还没有会话")
     : ctx.session.kind !== "native"
       ? t("只有内置对话能回退")
-      : ctx.busy
-        ? t("agent 还在跑，停下之后才能回退")
-        : undefined
+      : ctx.rewinding
+        ? t("正在回退，等它做完")
+        : ctx.busy
+          ? t("agent 还在跑，停下之后才能回退")
+          : !ctx.saidSomething
+            ? t("这段还没说过话")
+            : undefined
   out.push({
     id: "session.rewind",
     title: t("回到上一句之前"),

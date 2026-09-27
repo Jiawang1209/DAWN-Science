@@ -214,15 +214,23 @@ describe("回到上一句之前（2026-09-27，回退这一轮 spec §2.1）", (
   const 那条 = (over: Partial<Parameters<typeof buildCommands>[0]> = {}) => build(over).find((x) => x.id === "session.rewind")
   it("内置对话、不忙：可用，run 只转发给 actions.rewindLast", () => {
     const a = actions()
-    const c = buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation" }).find((x) => x.id === "session.rewind")!
+    const c = buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation", saidSomething: true }).find((x) => x.id === "session.rewind")!
     expect(c.unavailable).toBeUndefined()
     c.run()
     expect(a.rewindLast).toHaveBeenCalledTimes(1)
   })
   it("不可用照样列出，并说清是哪一种", () => {
     expect(那条({ session: undefined })?.unavailable).toBe("还没有会话")
-    expect(那条({ busy: true })?.unavailable).toBe("agent 还在跑，停下之后才能回退")
+    expect(那条({ busy: true, saidSomething: true })?.unavailable).toBe("agent 还在跑，停下之后才能回退")
     expect(那条({ session: { ...session, kind: "pty" } })?.unavailable).toBe("只有内置对话能回退")
     expect(那条({ session: { ...session, kind: "acp" } })?.unavailable).toBe("只有内置对话能回退")
+  })
+  it("这段还没说过话：照样列出，写「这段还没说过话」（spec §2.1）；缺省也按没说过——缺失不等于能用", () => {
+    expect(那条({ saidSomething: false })?.unavailable).toBe("这段还没说过话")
+    expect(那条({})?.unavailable).toBe("这段还没说过话")
+  })
+  it("这段正在回退：写「正在回退，等它做完」，排在「在跑」之前", () => {
+    expect(那条({ saidSomething: true, rewinding: true })?.unavailable).toBe("正在回退，等它做完")
+    expect(那条({ saidSomething: true, rewinding: true, busy: true })?.unavailable).toBe("正在回退，等它做完")
   })
 })

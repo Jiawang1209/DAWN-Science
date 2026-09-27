@@ -49,6 +49,12 @@ export const $回合进行中 = computed($items, (items) =>
 )
 
 /**
+ * 主区这段说过话没有（至少一句自己说的话，2026-09-27）。命令面板「回到上一句之前」据它列成不可用并写缘故（spec §2.1）。
+ * 与 `$回合进行中` 一样是布尔派生值：壳读它不会跟着每一段字重渲染。
+ */
+export const $说过话 = computed($items, (items) => items.some((i) => i.type === "turn" && i.who === "user"))
+
+/**
  * 笔记本格的 cell 清单，**cell 没变时保持同一个数组**（2026-09-22 从 `App.tsx` 挪来）。
  *
  * `cells()` 每次都造新对象，而正在写的那段话每 33ms 换一次 `$items`——

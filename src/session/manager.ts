@@ -645,6 +645,13 @@ export class SessionManager {
     this.runtimeForSession(sessionId)?.setSideTool?.(sessionId, on)
   }
 
+  /** 接着问一个子 agent（2026-09-27）。**不要求租约**，理由见协议 `askSubagent`。没有这件能力的运行时直接抛 */
+  askSubagent(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void> {
+    const rt = this.runtimeForSession(sessionId)
+    if (!rt?.askSubagent) throw new Error("这类会话没有子 agent，不能接着问")
+    return rt.askSubagent(sessionId, toolCallId, index, agent, text)
+  }
+
   /**
    * 这段会话归哪个运行时：绑着的就是绑着的那个；没绑的只认 native——
    * 与 `resume` 同一条口径（只有 native 续得上，起来时走的就是 `runtimes.native`）。

@@ -483,6 +483,18 @@ export const OPERATIONS = {
     response: Empty,
     mutating: false,
   },
+  /**
+   * 打开一段子 agent 的转录（2026-09-27，spec §2.2 / §2.4）。**本次运行里跑过的直接订阅；没有就读盘建起来再订阅**
+   * （`<会话目录>/subagents/<调用>/<序号>/`：`meta.json` + `transcript/` 里的 pi 会话文件）。退订复用 `unsubscribeSession`。
+   * 找不到是 `not_found`——不回一份空快照：空的会被读成「它什么都没做」。
+   */
+  openSubagent: {
+    request: z.object({ transcriptId: z.string().min(1) }).strict(),
+    response: SessionSnapshotSchema,
+    mutating: false,
+    // 可能读盘、在中枢里建一段子转录：不改数据，但有副作用（与 subscribeSession 同一口径）
+    sideEffects: true,
+  },
 
 
   // ── 可写 ──
@@ -1742,6 +1754,17 @@ export const OPERATIONS = {
         sideGone: z.boolean().optional(),
       })
       .strict(),
+    mutating: true,
+  },
+
+  /**
+   * 接着问一个跑完的子 agent（2026-09-27，spec §2.3 / D3）。**答复不回主 agent**；一次一句（在答时 `conflict`）；
+   * 团队成员、还在跑的、没有会话文件的都不行（`conflict`，文案说清为什么）。要先 `openSubagent`（没打开过是 `not_found`）。
+   * **不要求租约**：写的不是那段会话，是它旁边的一段——与 `setSideSession` 同理。起一轮就回，过程经那段子转录推出来。
+   */
+  askSubagent: {
+    request: z.object({ transcriptId: z.string().min(1), text: z.string().min(1) }).strict(),
+    response: Empty,
     mutating: true,
   },
 

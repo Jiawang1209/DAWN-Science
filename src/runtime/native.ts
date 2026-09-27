@@ -59,7 +59,7 @@ export function 原文对得上(界面: string, pi那句: string, 名单: { 模�
 }
 
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
-import { createSubagentTool } from "../subagent/tool.js"
+import { createSubagentTool, createSubagentFollowUp } from "../subagent/tool.js"
 import { 子运行目录 } from "../subagent/run-dir.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
@@ -929,6 +929,10 @@ export class NativeRuntime implements AgentRuntime {
   private readonly 待答 = new Map<string, { sessionId: SessionId; 答: (答: "allow" | "deny") => void }>()
   /** 每段会话的团队调度器怎么收（`toolsFor` 里登记，`stop` 时调）：关会话不能让成员子进程继续跑 */
   private readonly 团队收尾 = new Map<SessionId, () => void>()
+  /** 每段会话一份「接着问子 agent」（2026-09-27）：与 `subagent` 工具同一份 childOf / context，建会话时一起装 */
+  private readonly 子agent续问 = new Map<SessionId, ReturnType<typeof createSubagentFollowUp>>()
+  /** 正在答的那几轮：关会话时整组杀（中止信号 → 执行器 `杀掉后代`，与主 agent 派的那一轮同一条收尾） */
+  private readonly 续问中 = new Map<SessionId, Set<AbortController>>()
 
   /**
    * **问一句**（2026-08-23，学自 dsh-auto-mode 的 ask）：发一条 `permission_request`（与 ACP 的权限卡同一形状），
@@ -1106,7 +1110,7 @@ export class NativeRuntime implements AgentRuntime {
     const entry = this.opts.subagentChildEntry
     if (!entry) return [...(base ?? []), ...观察过的外部]
 
-    const tool = createSubagentTool({
+    const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       sessionId: spec.sessionId,
       projectRoot: spec.workspace,
       dirs: this.子agent层(spec.workspace),
@@ -1131,7 +1135,10 @@ export class NativeRuntime implements AgentRuntime {
       // 按调用分（2026-09-27，spec §1.1）：`<会话目录>/subagents/<toolCallId>/<序号>/`——meta.json、会话文件都在里面，
       // 重开后补 chip 组（后端 `补子agent组`）与接着问都按这个找
       运行目录: (toolCallId: string, i: number) => 子运行目录(spec.sessionDir, toolCallId, i),
-    })
+    }
+    const tool = createSubagentTool(子agent选项)
+    // 接着问（2026-09-27）：同一份选项——同一个模型、凭证、运行目录；答复不回主 agent，只进那段子转录
+    this.子agent续问.set(spec.sessionId, createSubagentFollowUp(子agent选项))
 
     // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上
     /**
@@ -1559,6 +1566,10 @@ export class NativeRuntime implements AgentRuntime {
       收尾: () => {
         this.团队收尾.get(spec.sessionId)?.()
         this.团队收尾.delete(spec.sessionId)
+        // 正在答的接着问整组杀（2026-09-27）：会话都关了，旁边那一问没人看了，别让它继续烧钱
+        for (const c of this.续问中.get(spec.sessionId) ?? []) c.abort()
+        this.续问中.delete(spec.sessionId)
+        this.子agent续问.delete(spec.sessionId)
       },
       pid,
       pending: undefined,
@@ -2968,6 +2979,31 @@ ${描述}`
    * pi 的 `setActiveToolsByName` 当场重建系统提示词；pi 每次调模型前都重读一遍启用的工具
    * （`prepareNextTurnWithContext`），所以**从下一次调模型起生效，同一轮 run 里也是**——只有正在流式的那一次回复不受影响。
    */
+  /**
+   * 接着问一个跑完的子 agent（2026-09-27，spec §2.3）。**起一轮就返回**：过程与结果经 `subagent_event` 进中枢，
+   * 与主 agent 派的那一轮同一条路。答复不回主 agent。「一次一句」由中枢的 `asking` 管（后端在调这里之前就标上了）。
+   * 那一轮若没走到 `settled` 就抛了，这里补一条失败的 settled——不补的话那一格永远「正在答」、再也问不了。
+   */
+  async askSubagent(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void> {
+    const 续 = this.子agent续问.get(sessionId)
+    if (!续) throw new UserFacingError("这段对话没有装子 agent（没有子进程入口），不能接着问")
+    const c = new AbortController()
+    const 集 = this.续问中.get(sessionId) ?? new Set<AbortController>()
+    集.add(c)
+    this.续问中.set(sessionId, 集)
+    void 续(toolCallId, index, agent, text, c.signal)
+      .catch((e: unknown) => {
+        this.emit({
+          kind: "subagent_event",
+          sessionId,
+          toolCallId,
+          index,
+          event: { kind: "settled", ok: false, followUp: true, error: e instanceof Error ? e.message : String(e) },
+        })
+      })
+      .finally(() => 集.delete(c))
+  }
+
   setSideTool(sessionId: SessionId, on: boolean): void {
     if (on) this.侧边工具开.add(sessionId)
     else this.侧边工具开.delete(sessionId)

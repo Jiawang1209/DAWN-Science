@@ -102,7 +102,8 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { 探测远端解释器, 读远端事实 } from "../remote/interpreters.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
-import { 补子agent组 } from "../subagent/run-dir.js"
+import { 补子agent组, 子运行目录, 读元, 读子转录, 会话文件, 没跑完 } from "../subagent/run-dir.js"
+import { 拆子转录id } from "../protocol/subagent-id.js"
 import { join } from "node:path"
 import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync, lstatSync, globSync } from "node:fs"
 
@@ -2177,6 +2178,97 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     unsubscribeSession: async ({ sessionId }) => {
       events.unsubscribe(sessionId)
+      return {}
+    },
+
+    /**
+     * 打开一段子 agent 的转录（2026-09-27，spec §2.2 / §2.4）。本次运行里跑过的，中枢里已经有，直接订阅；
+     * 没有就读盘：`meta.json` 给头信息与交回的结果，`transcript/` 里的会话文件给过程（与主对话续接同一套翻法）。
+     */
+    openSubagent: async ({ transcriptId }) => {
+      const 拆 = 拆子转录id(transcriptId)
+      if (!拆) throw fault("invalid_request", "这不是一个子 agent 的 id")
+      if (!events.peek(transcriptId)) {
+        const rec = sessions.get(拆.会话)
+        if (!rec) throw fault("not_found", "这个子 agent 所在的对话已经不在了")
+        const dir = 子运行目录(rec.sessionDir, 拆.toolCallId, 拆.序号)
+        const 元 = 读元(dir)
+        if (!元) throw fault("not_found", "这个子 agent 没有留下记录（可能是这个功能上线之前跑的）")
+        let 历史: ReturnType<typeof 读子转录>
+        let 读不了: string | undefined
+        try {
+          历史 = 读子转录(dir)
+        } catch (e) {
+          // 会话文件坏了：如实说，照样把交回的结果给人看——不因为过程读不出来就连结果也藏起来
+          读不了 = e instanceof Error ? e.message : String(e)
+        }
+        const 团队 = 拆.toolCallId.startsWith("team:")
+        const 没跑完的 = 元.status === "running"
+        events.track(transcriptId, "native", { 子转录: true })
+        events.restore(
+          transcriptId,
+          历史
+            ? 历史.map(还原成条目)
+            : [
+                { type: "turn", id: "r0", who: "user", text: 元.task, final: true },
+                {
+                  type: "notice",
+                  id: "r1",
+                  text: 读不了
+                    ? `过程记录读不出来（${读不了}），只有交回的结果。`
+                    : "这一次没有留下过程记录（会话文件没写进盘），只有交回的结果。",
+                },
+              ],
+        )
+        events.设子agent(transcriptId, {
+          agent: 元.agent,
+          task: 元.task,
+          status: 没跑完的 ? "error" : 元.status,
+          ...(没跑完的 ? { error: 没跑完 } : 元.error ? { error: 元.error } : {}),
+          ...(元.result ? { result: 元.result } : {}),
+          canAsk: !团队 && 历史 !== undefined,
+          ...(团队 ? { askWhy: "team" as const } : 历史 === undefined ? { askWhy: "no-transcript" as const } : {}),
+        })
+      }
+      return events.subscribe(transcriptId)
+    },
+
+    /**
+     * 接着问一个跑完的子 agent（2026-09-27，spec §2.3）。先挡：没打开过 / 不能问（在跑、在答、团队、没会话文件）；
+     * 主对话没在运行（关掉 DAWN 又开、还没点进主对话）也挡——续问要用主对话此刻的模型与凭证。
+     * **从查到标 `asking` 全是同步的**（中间没有 await）：两句并发的续问只有一句过得去，另一句 `conflict`。
+     * 运行时起不来 → 在那一格里记一条失败（与答到一半失败同一条路），不另抛：那一格就是人正看着的地方。
+     */
+    askSubagent: async ({ transcriptId, text }) => {
+      const 拆 = 拆子转录id(transcriptId)
+      if (!拆) throw fault("invalid_request", "这不是一个子 agent 的 id")
+      const 信息 = events.peek(transcriptId)?.subagent
+      if (!信息) throw fault("not_found", "先打开这个子 agent 再问")
+      // msgid 逐条写成字面量：`fault-i18n` 扫描只认调用点上的字面量
+      if (!信息.canAsk) {
+        if (信息.askWhy === "running") throw fault("conflict", "它还在跑，跑完才能接着问")
+        if (信息.askWhy === "asking") throw fault("conflict", "它还在答上一句")
+        if (信息.askWhy === "team") throw fault("conflict", "团队成员请在「团队」格里给它发消息")
+        throw fault("conflict", "这一次没有留下会话文件，续不了")
+      }
+      const rec = sessions.get(拆.会话)
+      if (!rec || !sessions.isLive(拆.会话)) throw fault("not_found", "主对话没在运行，先在主区打开它")
+      if (!会话文件(子运行目录(rec.sessionDir, 拆.toolCallId, 拆.序号))) {
+        events.设子agent(transcriptId, { ...信息, canAsk: false, askWhy: "no-transcript" })
+        throw fault("conflict", "这一次没有留下会话文件，续不了")
+      }
+      if (!events.子agent续问开始(transcriptId, text)) throw fault("conflict", "它还在答上一句")
+      try {
+        await sessions.askSubagent(拆.会话, 拆.toolCallId, 拆.序号, 信息.agent, text)
+      } catch (e) {
+        events.ingest(拆.会话, {
+          kind: "subagent_event",
+          sessionId: 拆.会话,
+          toolCallId: 拆.toolCallId,
+          index: 拆.序号,
+          event: { kind: "settled", ok: false, followUp: true, error: e instanceof Error ? e.message : String(e) },
+        })
+      }
       return {}
     },
 

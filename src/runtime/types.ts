@@ -598,6 +598,11 @@ export interface AgentRuntime {
   /** 侧边对话：启用 / 停用 `read_main_session`（2026-09-24）。**只有 native 有，有无即判据** */
   setSideTool?(sessionId: SessionId, on: boolean): void
   /**
+   * 接着问一个跑完的子 agent（2026-09-27）。**只有 native 有，有无即判据**。起一轮就返回——过程与结果经 `subagent_event` 出来。
+   * @throws 这段会话没装子 agent（没有子进程入口）
+   */
+  askSubagent?(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void>
+  /**
    * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。
    */

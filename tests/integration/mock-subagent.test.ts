@@ -55,4 +55,15 @@ describe("mock · 子 agent 三支", () => {
     expect(j.choices[0]!.message.tool_calls).toBeUndefined()
     expect(调了(await 问([{ role: "user", content: "慢慢跑一下" }]))?.args).toEqual({ command: "sleep 20" })
   })
+  it("在坞里接着问（askSubagent，2026-09-27）：续上的那段会话里再问一句 → 直接答默认那句，不再调工具", async () => {
+    const j = await 问([
+      { role: "user", content: "子任务：读一下 README.md" },
+      { role: "assistant", content: null, tool_calls: [{ id: "c", type: "function", function: { name: "read", arguments: "{}" } }] },
+      { role: "tool", tool_call_id: "c", content: "# readme" },
+      { role: "assistant", content: "它是个测试仓库" },
+      { role: "user", content: "再说一句" },
+    ])
+    expect(j.choices[0]!.message.tool_calls).toBeUndefined()
+    expect(j.choices[0]!.message.content).toBeTruthy()
+  })
 })

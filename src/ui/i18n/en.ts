@@ -1626,4 +1626,14 @@ export const EN: Readonly<Record<string, string>> = {
   "这段还没说过话": "Nothing has been said in this session yet",
   "正在回退，等它做完": "A rewind is in progress; wait for it to finish",
   "回到那句之前？": "Rewind to before that message?",
+  // 子 agent 看得见（2026-09-27）
+  "这不是一个子 agent 的 id": "That is not a subagent id",
+  "这个子 agent 所在的对话已经不在了": "The conversation this subagent belonged to is gone",
+  "这个子 agent 没有留下记录（可能是这个功能上线之前跑的）": "This subagent left no record (it probably ran before this feature existed)",
+  "先打开这个子 agent 再问": "Open this subagent first",
+  "主对话没在运行，先在主区打开它": "The main conversation is not running — open it in the main area first",
+  "这一次没有留下会话文件，续不了": "No session file was kept this time, so it cannot be continued",
+  "它还在跑，跑完才能接着问": "It is still running — ask once it finishes",
+  "它还在答上一句": "It is still answering the previous question",
+  "团队成员请在「团队」格里给它发消息": "For team members, message them from the Team pane",
 }

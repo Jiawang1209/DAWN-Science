@@ -122,6 +122,12 @@ interface Entry {
    * （限流 / 过载的自动重试、超上限压完再试同一轮），重试成了那一轮就是做完了，不是出错了。
    */
   本轮失败?: string | undefined
+  /**
+   * 同一次收尾里**更早那句人话**那段出过的失败（2026-09-28 审查）。pi 的 followUp 链：第一句失败、排着的第二句接着出字，
+   * 一整条链只有最后一个 `idle`——「往前走了就清」只该清第二句那段自己的失败，第一句的失败得留到收尾照报。
+   * 人那句进来（`userTurn`）时把 `本轮失败` 挪到这里；它不被「往前走」清掉，`idle` 时优先交出去。
+   */
+  链上失败?: string | undefined
   configOptions:
     | {
         id: string
@@ -391,6 +397,11 @@ export class SessionTranscripts {
   userTurn(sessionId: SessionId, text: string, images?: readonly string[]): void {
     const e = this.entries.get(sessionId)
     if (!e || e.kind === "pty") return
+    // 新的一句人话：前一句那段的失败已经定了，不许被这一句的进展清掉
+    if (e.本轮失败 !== undefined) {
+      e.链上失败 ??= e.本轮失败
+      e.本轮失败 = undefined
+    }
     e.turnSeq += 1
     this.putItem(sessionId, e, {
       type: "turn",
@@ -435,6 +446,9 @@ export class SessionTranscripts {
         // 压缩压到一半会话就停了：pi 的 end 可能在 dispose 之后才到、再也收不到——
         // 那条「正在压缩…」不许永远挂着（2026-09-27 审查抓的），收成「停下了，没有改动」
         this.收掉悬着的压缩(sessionId, e)
+        // 退出不经过 idle：这一段记着的失败到此作废（退出码另有一条通知），不许留到下一次起来之后的第一声收尾
+        e.本轮失败 = undefined
+        e.链上失败 = undefined
         e.state = "exited"
         e.exitCode = event.exitCode
         this.bump(sessionId, e, {
@@ -686,8 +700,9 @@ export class SessionTranscripts {
        * 压缩（`compaction_*`）与回退（`truncateAt`）都不经过这里：pi 的自动压缩与重试都在同一次 `prompt()` 里，idle 只在它真正 resolve 时发一次。
        */
       case "idle": {
-        const 失败 = e.本轮失败
+        const 失败 = e.链上失败 ?? e.本轮失败
         e.本轮失败 = undefined
+        e.链上失败 = undefined
         if (e.子转录) return
         const v: 回合收尾 = { sessionId, kind: e.kind, ...(失败 === undefined ? {} : { 失败 }) }
         for (const cb of [...this.收尾听众]) cb(v)

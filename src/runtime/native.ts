@@ -2217,7 +2217,12 @@ ${描述}`
       .prompt(data, { ...(图 ? { images: 图 } : {}), preflightResult: () => 起跑了() })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
-        this.emit({ kind: "output", sessionId, data: `\n[native runtime 错误] ${msg}\n` })
+        /**
+         * **这一轮没做成**（2026-09-28 审查）：走带 `failed` 的 notice，不走 `output`——
+         * `output` 会被当成模型的回复（桌面通知报成「做完了」、正文是这句报错），还会把这一轮先前记下的失败当「往前走了」清掉。
+         * 话照旧是那句，只是换成系统提示那一格（它本来就不是模型说的）。
+         */
+        this.emit({ kind: "notice", sessionId, text: `[native runtime 错误] ${msg}`, failed: true })
       })
       .finally(() => {
         起跑了()
@@ -2276,7 +2281,8 @@ ${描述}`
     const reason = s.stuck.check(calls)
     if (!reason) return
     s.stuck.reset()
-    this.emit({ kind: "notice", sessionId, text: reason })
+    // 自动中止**算出错**（2026-09-28 定案）：不是人按的停止，是它绕圈被我们停下的——桌面通知报「出错了」，正文就是这句原因
+    this.emit({ kind: "notice", sessionId, text: reason, failed: true })
     void this.abort(sessionId).catch(() => {
       // 中止失败也不能再吞——但此刻原因已经发出去了，用户至少知道发生了什么
     })

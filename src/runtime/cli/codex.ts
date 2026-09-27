@@ -175,7 +175,8 @@ export class CodexDriver {
   /** 出声 + 收口。**没有 `exited`**——会话没结束，只是这一轮没成 */
   private fatal(text: string): void {
     this.settled = true
-    this.opts.emit({ kind: "notice", sessionId: this.opts.sessionId, text })
+    // 这一轮没成：带 `failed`，桌面通知据此报「出错了」而不是「做完了」（2026-09-28 审查）
+    this.opts.emit({ kind: "notice", sessionId: this.opts.sessionId, text, failed: true })
     this.opts.emit({ kind: "idle", sessionId: this.opts.sessionId })
   }
 }

@@ -403,3 +403,97 @@ describe("压缩、回退、子 agent 都不报（2026-09-28，这三样在计�
     expect(c.弹过, "接着问一个子 agent 不发通知").toHaveLength(1)
   })
 })
+
+describe("2026-09-28 审查修的", () => {
+  it("「做完了」的正文只看这一轮：这一轮没出字 → 「（没有文字回复）」，不拿上一轮的回复顶", async () => {
+    const c = 造()
+    c.events.track("a", "native")
+    c.一轮("a", "上一轮的回复")
+    await vi.advanceTimersByTimeAsync(1000)
+    c.events.userTurn("a", "再做一件")
+    c.events.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t", toolName: "bash", input: {} })
+    c.events.ingest("a", { kind: "idle", sessionId: "a" })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(c.弹过.map((n) => n.body)).toEqual([{ msgid: "{0}", args: ["上一轮的回复"] }, { msgid: 通知文案.没有文字, args: [] }])
+  })
+
+  it("定时开的那段：权限卡**照弹**（无人值守不许干等到超时）；它自己的做完 / 出错照旧不弹", async () => {
+    const c = 造()
+    c.events.track("s", "native")
+    c.器.交给定时("s")
+    c.问权限("s")
+    expect(c.弹过.map((n) => n.kind)).toEqual(["permission"])
+    c.一轮("s", "答", "模型调用失败：401")
+    c.events.ingest("s", { kind: "exited", sessionId: "s", exitCode: 2 })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(c.弹过.map((n) => n.kind)).toEqual(["permission"])
+  })
+
+  it("调度器先报结束、那段后收尾：那一声收尾吞掉并放掉这段——之后不用等人说话就按普通会话算", async () => {
+    const c = 造()
+    c.events.track("s", "native")
+    c.器.交给定时("s")
+    c.events.userTurn("s", "任务说明")
+    c.events.ingest("s", { kind: "output", sessionId: "s", data: "写好了" })
+    c.器.定时跑完了("周报", "succeeded", "写好了", "s")
+    c.events.ingest("s", { kind: "idle", sessionId: "s" })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(c.弹过.map((n) => n.kind)).toEqual(["schedule"])
+    const 内 = c.器 as unknown as { 定时的: Set<string>; 定时完了: Set<string> }
+    expect([内.定时的.size, 内.定时完了.size]).toEqual([0, 0])
+  })
+
+  it("报过结束却再没收尾的（会话退出了）不一直攒着：封顶，丢最旧的", () => {
+    const c = 造({ 设置: { done: false, error: false } })
+    for (let i = 0; i < 100; i++) {
+      c.器.交给定时(`s${i}`)
+      c.器.定时跑完了("周报", "succeeded", "好", `s${i}`)
+    }
+    const 内 = c.器 as unknown as { 定时的: Set<string>; 定时完了: Set<string> }
+    expect(内.定时完了.size).toBeLessThanOrEqual(64)
+    expect(内.定时的.size).toBeLessThanOrEqual(64)
+    expect(内.定时完了.has("s99")).toBe(true)
+  })
+
+  it("没看见人那句就开跑的一轮（起轮时停过缺了）：照样认停止——基线取上次收尾，再没有就是 0", async () => {
+    const c = 造()
+    c.events.track("a", "native")
+    c.状态.停过.set("a", 1)
+    c.events.ingest("a", { kind: "idle", sessionId: "a" })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(c.弹过, "这个进程里按过停止、又没有基线 → 不报做完").toHaveLength(0)
+    c.events.ingest("a", { kind: "output", sessionId: "a", data: "接着" })
+    c.events.ingest("a", { kind: "idle", sessionId: "a" })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(c.弹过, "上次收尾记下的基线 1，这轮没再停 → 报").toHaveLength(1)
+    c.状态.停过.set("a", 2)
+    c.events.ingest("a", { kind: "idle", sessionId: "a" })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(c.弹过).toHaveLength(1)
+  })
+
+  it("dispose 之后什么都不弹（退出途中调度器取消那一下）；记着的全清", async () => {
+    const c = 造()
+    c.events.track("a", "native")
+    c.器.交给定时("s")
+    c.问权限("a")
+    c.器.dispose()
+    c.器.定时跑完了("周报", "cancelled", "DAWN 停了", "s")
+    expect(c.器.试一条()).toEqual({ shown: false, reason: "no_exit" })
+    expect(c.弹过.map((n) => n.kind)).toEqual(["permission"])
+    const 内 = c.器 as unknown as Record<"未看" | "问过的" | "定时的" | "定时完了" | "起轮时停过" | "收尾时停过", { size: number }>
+    expect([内.未看.size, 内.问过的.size, 内.定时的.size, 内.定时完了.size, 内.起轮时停过.size, 内.收尾时停过.size]).toEqual([0, 0, 0, 0, 0, 0])
+  })
+
+  it("存着的值逐格校验：类型不对的那一格回落缺省，别的格照用", () => {
+    const 表 = new Map<string, string>([["desktop.notify", JSON.stringify({ done: "yes", error: false, quietWhenFocused: 1, lang: "fr" })]])
+    const s = { get: (k: "desktop.notify") => 表.get(k) }
+    expect(读桌面设置(s)).toEqual({ ...桌面通知缺省, error: false })
+    表.set("desktop.notify", JSON.stringify({ permission: false, lang: "en" }))
+    expect(读桌面设置(s)).toEqual({ ...桌面通知缺省, permission: false, lang: "en" })
+    表.set("desktop.notify", "[1,2]")
+    expect(读桌面设置(s)).toEqual(桌面通知缺省)
+    表.set("desktop.notify", "null")
+    expect(读桌面设置(s)).toEqual(桌面通知缺省)
+  })
+})

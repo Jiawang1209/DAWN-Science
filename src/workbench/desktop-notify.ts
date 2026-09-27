@@ -8,6 +8,7 @@
  * 不同的两处写在 spec §3.1：「做完」认 runtime 的 `idle`（中枢的 `on回合收尾`），不认每次模型响应都会立的 `final`；
  * 「出错」只认带 `failed` 的提示，不认换模型、MCP 那类 notice。
  */
+import { z } from "zod"
 import type { SessionUpdate, TranscriptItem } from "../protocol/index.js"
 import type { SessionId } from "../runtime/types.js"
 import type { 回合收尾 } from "./events.js"
@@ -79,6 +80,23 @@ function 截(s: string): string {
   return 一行.length > 正文最多字 ? `${一行.slice(0, 正文最多字)}…` : 一行
 }
 
+/** 定时报过结束、还没等到那一段最后一声收尾的，最多记这么多 */
+const 定时完了最多 = 64
+
+/**
+ * 「做完了」的正文：**这一轮**最后一句有字的 agent 发言。往回找到人那句就停——
+ * 这一轮没出字就是「没有文字回复」，不许把上一轮的回复当成这一轮的（2026-09-28 审查）
+ */
+function 本轮答复(items: readonly TranscriptItem[]): Extract<TranscriptItem, { type: "turn" }> | undefined {
+  for (let i = items.length - 1; i >= 0; i--) {
+    const x = items[i]!
+    if (x.type !== "turn") continue
+    if (x.who === "user") return undefined
+    if (x.who === "agent" && x.text.trim() !== "") return x
+  }
+  return undefined
+}
+
 /** 收尾后等多久才报「做完了」：这期间这段又动了（排着的下一句、调整方向接着跑）就作废（spec §3.3） */
 export const 收尾静候毫秒 = 1_000
 /** 没有「一轮」可言的会话：终端是字节流，纯内核会话每执行一段就 idle 一次 */
@@ -89,12 +107,38 @@ type 设置表 = {
   set(k: "desktop.notify", v: string, now: string): void
 }
 
+/**
+ * 存着的那把键逐格校验（2026-09-28 审查）：手改成 `{"done":"yes"}` 的那一格回落缺省，别的格照用——
+ * 不许把一个字符串顺着流进协议那头严格的 boolean。
+ */
+const 一格 = <T extends z.ZodType>(t: T) => t.optional().catch(undefined)
+const 存着的形状 = z.object({
+  done: 一格(z.boolean()),
+  error: 一格(z.boolean()),
+  permission: 一格(z.boolean()),
+  quietWhenFocused: 一格(z.boolean()),
+  lang: 一格(z.enum(["zh", "en"])),
+})
+
 export function 读桌面设置(s: Pick<设置表, "get"> | undefined): 桌面通知设置 {
+  let raw: string | undefined
+  let 值: unknown
   try {
-    const raw = s?.get("desktop.notify")
-    return raw ? { ...桌面通知缺省, ...(JSON.parse(raw) as Partial<桌面通知设置>) } : 桌面通知缺省
+    raw = s?.get("desktop.notify")
+    if (!raw) return 桌面通知缺省
+    值 = JSON.parse(raw)
   } catch {
     return 桌面通知缺省
+  }
+  const r = 存着的形状.safeParse(值)
+  if (!r.success) return 桌面通知缺省
+  const v = r.data
+  return {
+    done: v.done ?? 桌面通知缺省.done,
+    error: v.error ?? 桌面通知缺省.error,
+    permission: v.permission ?? 桌面通知缺省.permission,
+    quietWhenFocused: v.quietWhenFocused ?? 桌面通知缺省.quietWhenFocused,
+    ...(v.lang ? { lang: v.lang } : {}),
   }
 }
 
@@ -136,12 +180,20 @@ export class 桌面通知器 {
   /** 已经弹过的那张权限卡（按 requestId 去重，与微信 `问过的` 同一手法） */
   private readonly 问过的 = new Map<SessionId, string>()
   private readonly 起轮时停过 = new Map<SessionId, number>()
+  /**
+   * 上一次收尾时这段停过几次。**起轮那一刻没看见时的基线**（没看见人那句就开跑的一轮）：
+   * 两张表都没有 = 这个进程里没见过这段收尾，`停止次数` 与本器同生同灭（都在内存、都从 0 起），所以基线就是 0。
+   * 选这个而不是落库：计数本身不落库，重启后两边一起归零，比较照样成立（2026-09-28）
+   */
+  private readonly 收尾时停过 = new Map<SessionId, number>()
   private readonly 候着 = new Map<SessionId, ReturnType<typeof setTimeout>>()
   /** 定时开的那几段：它们自己的收尾不报，由调度器报一条「定时…」 */
   private readonly 定时的 = new Set<SessionId>()
   /** 定时已经报过结束的：人从下一句起接着聊，就按普通会话算 */
   private readonly 定时完了 = new Set<SessionId>()
   private readonly 退订: (() => void)[] = []
+  /** dispose 过了：退出途中调度器取消那一下不许再弹（2026-09-28 审查） */
+  private 已收摊 = false
 
   constructor(private readonly d: 桌面通知依赖) {
     this.退订.push(d.events.onAnyUpdate((u) => this.有动静(u)))
@@ -177,7 +229,8 @@ export class 桌面通知器 {
       }
       if (this.问过的.get(sid) === p.requestId) return
       this.问过的.set(sid, p.requestId)
-      if (this.定时的.has(sid) || !this.该弹("permission", sid)) return
+      // 定时开的那段**照弹**（2026-09-28 定案）：无人值守的一轮在等人点头，不说就只能干等到超时
+      if (!this.该弹("permission", sid)) return
       this.发(sid, "permission", [通知文案.等点头, 通知文案.等点头无题], 原话(截(p.title.split("\n")[0] ?? p.title)))
       return
     }
@@ -191,29 +244,35 @@ export class 桌面通知器 {
 
   private 收尾(v: 回合收尾): void {
     const sid = v.sessionId
-    if (不报的种类.has(v.kind) || this.定时的.has(sid)) return
-    const 停过 = this.起轮时停过.get(sid)
+    if (不报的种类.has(v.kind)) return
+    const 停过 = this.起轮时停过.get(sid) ?? this.收尾时停过.get(sid) ?? 0
+    const 现在停过 = this.d.停过几次(sid)
     this.起轮时停过.delete(sid)
+    this.收尾时停过.set(sid, 现在停过)
+    if (this.定时的.has(sid)) {
+      // 调度器已经报过结束：这就是那一次运行的最后一声，之后这段按普通会话算（2026-09-28：不留到下一句人话才放）
+      if (this.定时完了.delete(sid)) this.定时的.delete(sid)
+      return
+    }
     this.不候(sid)
     if (v.失败 !== undefined) {
       if (this.该弹("error", sid)) this.发(sid, "error", [通知文案.出错, 通知文案.出错无题], 原话(截(v.失败)))
       return
     }
-    if (停过 !== undefined && this.d.停过几次(sid) !== 停过) return
+    if (现在停过 !== 停过) return
     this.候着.set(
       sid,
       setTimeout(() => {
         this.候着.delete(sid)
         if (!this.该弹("done", sid)) return
-        const 答 = [...(this.d.events.peek(sid)?.items ?? [])]
-          .reverse()
-          .find((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "agent" && x.text.trim() !== "")
+        const 答 = 本轮答复(this.d.events.peek(sid)?.items ?? [])
         this.发(sid, "done", [通知文案.做完, 通知文案.做完无题], 答 ? 原话(截(答.text)) : 文(通知文案.没有文字))
       }, this.d.静候毫秒 ?? 收尾静候毫秒),
     )
   }
 
   private 发(sid: SessionId, kind: "done" | "error" | "permission", 题: readonly [string, string], 正文: 文案): void {
+    if (this.已收摊) return
     const 标题 = this.d.标题of(sid)?.trim()
     const lang = this.d.设置().lang
     this.d.出口?.弹({ kind, sessionId: sid, title: 标题 ? 文(题[0], 标题) : 文(题[1]), body: 正文, ...(lang ? { lang } : {}) })
@@ -249,6 +308,7 @@ export class 桌面通知器 {
     this.不候(sid)
     this.问过的.delete(sid)
     this.起轮时停过.delete(sid)
+    this.收尾时停过.delete(sid)
     this.定时的.delete(sid)
     this.定时完了.delete(sid)
     this.划掉(sid)
@@ -260,7 +320,16 @@ export class 桌面通知器 {
   }
 
   定时跑完了(名: string, 状态: "succeeded" | "failed" | "cancelled", 摘要: string | undefined, sid: SessionId | undefined): void {
-    if (sid) this.定时完了.add(sid)
+    if (this.已收摊) return
+    if (sid && this.定时的.has(sid)) {
+      this.定时完了.add(sid)
+      // 封顶：从没再收尾、也没人接着聊的（会话退出了）不许一直攒着。丢最旧的——它早就收完尾了
+      for (const 旧 of this.定时完了) {
+        if (this.定时完了.size <= 定时完了最多) break
+        this.定时完了.delete(旧)
+        this.定时的.delete(旧)
+      }
+    }
     const n = this.d.设置()
     if (状态 === "succeeded" ? !n.done : !n.error) return
     if (n.quietWhenFocused && sid !== undefined && this.d.前台() && this.d.在屏上(sid)) return
@@ -280,7 +349,7 @@ export class 桌面通知器 {
   /** 设置里「发一条试试」。不计角标 */
   试一条(): { shown: boolean; reason?: "unsupported" | "no_exit" } {
     const 出口 = this.d.出口
-    if (!出口) return { shown: false, reason: "no_exit" }
+    if (!出口 || this.已收摊) return { shown: false, reason: "no_exit" }
     if (!出口.支持()) return { shown: false, reason: "unsupported" }
     const lang = this.d.设置().lang
     出口.弹({ kind: "test", title: 文(通知文案.试标题), body: 文(通知文案.试正文), ...(lang ? { lang } : {}) })
@@ -288,8 +357,15 @@ export class 桌面通知器 {
   }
 
   dispose(): void {
+    this.已收摊 = true
     for (const t of this.候着.values()) clearTimeout(t)
     this.候着.clear()
+    this.未看.clear()
+    this.问过的.clear()
+    this.起轮时停过.clear()
+    this.收尾时停过.clear()
+    this.定时的.clear()
+    this.定时完了.clear()
     for (const f of this.退订.splice(0)) f()
   }
 }

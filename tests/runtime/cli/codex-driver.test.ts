@@ -146,6 +146,25 @@ describe("出问题时", () => {
     expect(events.some((e) => e.kind === "notice")).toBe(true)
   })
 
+  /** 三条「这一轮没成」都要带 `failed`：不带的话桌面通知把它报成「做完了」（2026-09-28 审查） */
+  const 这样起 = (command: string, args: string[]) => {
+    const events: AgentEvent[] = []
+    const d = new CodexDriver({ sessionId: SESSION, command, args, cwd: process.cwd(), emit: (e) => events.push(e), onThreadId: () => {} })
+    return { d, events }
+  }
+  it.each([
+    ["起不来的命令", "这个命令不存在-dawn", [] as string[]],
+    ["非 0 退出、没给 turn.completed", process.execPath, ["-e", "process.exit(3)"]],
+    ["退出码 0 却没给 turn.completed", process.execPath, ["-e", ""]],
+  ])("%s → notice 带 failed，然后 idle", async (_名, command, args) => {
+    const { d, events } = 这样起(command, args)
+    await d.startTurn("你好")
+    const 提示 = events.filter((e) => e.kind === "notice")
+    expect(提示).toHaveLength(1)
+    expect(提示[0]).toMatchObject({ kind: "notice", failed: true })
+    expect(events.at(-1)?.kind).toBe("idle")
+  })
+
   it("**进程非 0 退出但已经给过 turn.completed** —— 不重复报失败", async () => {
     // codex 实测每轮都往 stderr 打噪声而退出码为 0；这里守的是反面：
     // 一旦这一轮已经正常收口，进程怎么退都不该再多报一次失败

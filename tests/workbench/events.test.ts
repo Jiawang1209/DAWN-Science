@@ -902,6 +902,38 @@ describe("记录中枢 · 回合收尾（桌面通知，2026-09-27）", () => {
     expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native", 失败: "模型调用失败：500" })
   })
 
+  it("pi 的 followUp 链：第一句失败、排着的第二句接着出字 → 收尾照报第一句的失败；第二句自己的失败照旧能被重试清掉", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.userTurn("a", "第一句")
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：401", failed: true })
+    h.userTurn("a", "第二句（排着的，送到了）")
+    h.ingest("a", { kind: "output", sessionId: "a", data: "第二句的回答" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收, "更早那句人话的失败不许被后一句的进展吞掉").toHaveBeenLastCalledWith({ sessionId: "a", kind: "native", 失败: "模型调用失败：401" })
+    // 下一轮从干净开始；同一句人话里失败后重试成了 → 照旧不算
+    h.userTurn("a", "第三句")
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：overloaded", failed: true })
+    h.ingest("a", { kind: "output", sessionId: "a", data: "重试成了" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native" })
+  })
+
+  it("退出不经过 idle：记着的失败作废，不留到下一次的第一声收尾", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.userTurn("a", "第一句")
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：401", failed: true })
+    h.ingest("a", { kind: "exited", sessionId: "a", exitCode: 1 })
+    h.userTurn("a", "重开后")
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native" })
+  })
+
   it("回退（truncateAt）不是收尾", () => {
     const h = hub()
     h.track("a", "native")

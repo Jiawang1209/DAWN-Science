@@ -8,17 +8,35 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-28 — 会话全文搜索 · 界面评审修复：跳转目标用完即撤、面板再叫也聚焦、结果区键盘与语义（分支 `agent-basics`）
+### 2026-09-28 — 会话全文搜索：侧栏「按名字 / 按内容」，搜说过的、回复、跑过的代码，点了跳到那一处（协议 8.5；分支 `agent-basics`）
 
-- **Type**: fix
-- **Motivation**: 评审 `d924972` / `ff78f39` 抓到：App 的 `跳到` 跳完从不清——`ConversationView` 按会话 key 重挂、`已跳` 归零，离开再回来会被拽回旧的那一处（或再说一遍「没找到」），取消归档失败时同样；命令面板「搜索对话内容」在框已开着时只靠 `autoFocus`，焦点落在 body；每敲一个字结果就闪成加载；结果区没有名字与列表语义、键盘进不去。
-- **What**：
-  - `App.tsx`：`跳到` 三处撤——`on跳完`（`ConversationView` 新回调，滚到或找满 12 帧后叫）、`on跳空`（说一句并撤）、换到别的会话（effect 按 `sessionId`，只撤不是那段的目标）；取消归档失败 / `回到那段` 抛错也撤。`取消归档并打开` 改为返回 `"unarchived" | undefined`；`openContentSearch` 递增 `搜索聚焦`。
-  - `views.tsx`：侧栏搜索框收 `聚焦`（每变一次 focus）；按内容时回车 = 开第一处、下箭头 = 焦点进结果（组词中不接）。
-  - `content-search.tsx`：`等` 态带上一批结果——变淡（`.cs-stale`）+ `aria-busy`，不闪加载；结果区 `role="region"` + 名字「对话内容的搜索结果」，卡是 `list`/`listitem`；卡头与各处带 `data-cs-nav`，上下键在其间走；`onOpen` 回 `"unarchived"` 时就地拿掉那张卡的「已归档」与提示。
-  - `search-jump.ts`：`转义属性值`——没有 `CSS.escape` 时退到转义反斜杠、双引号、换行。
-- **Impact**: 无协议变化；新增一条 i18n 文案。行为上：跳过一次之后切走再回来不再滚动 / 描边 / 出声。
-- **Verification**: 新 `tests/ui/app-content-search.test.tsx`（真 `createClient` + 假传输：点一处 → 打开 → 描上；跳后换段再回来不滚不描；找不到只说一次；面板再叫焦点回框）先红后绿；`content-search.test.tsx` 加 250 ms 停顿只搜一次、迟到回复丢弃、旧结果变淡不闪、区域与列表语义、上下键、归档卡就地更新；`search-jump.test.tsx` 加 `on跳完` 与无 `CSS.escape`；`views.test.tsx` 加回车 / 下箭头 / 再聚焦。`npx vitest run` 299 文件 3716 过；`npm run typecheck`、`npm run build` 过。
+- **Type**: feat
+- **Motivation**: 作者要找「上个月哪次跑过 Cox 回归」，侧栏那颗放大镜只搜名字与路径；标题取自第一句，Cox 往往在第二十轮。
+  搜到还要点得过去——而转录只渲染最近 40 块，那一处多半在预算之外。
+- **What**（spec `specs/2026-09-27-会话全文搜索-design.md`；plan `plans/2026-09-27-会话全文搜索.md` Task 1–9）：
+  - **不建索引，扫 pi 记录 + 按文件缓存**：SQLite FTS5 实测搜不到两个字的中文词（unicode61 把一串汉字当一个词、trigram 三个字起——「回归」就搜不到）；
+    写 spec 时量的 130 段 21 MB 冷读 172 ms、热搜 0.35 ms。缓存按 `path + mtimeMs + size` 认，上限 40 M 字符。
+  - **只读**读 pi 记录（`runtime/pi-record.ts`：`parseSessionEntries` + `SessionManager.inMemory` + `getBranch`）；挑文件与 pi `findMostRecentSession` 同一条规则（mtime 最新且 header `cwd` 对得上），搜的与续接读的是同一份。
+    `open` / `continueRecent` 会重写旧版本记录——设计契约扫描覆盖整条搜索路径，禁掉 `open()`、`new SessionManager()`、`.append*()` 与别名导入的 fs 写入口（自带植入违规的自测）。
+  - **顺手修的**：`读子转录` 也改走只读读取（`读记录同步`），不再经 `SessionManager.open` 把旧版本 / 空的子 agent 记录重写一遍（测试：`openSubagent` 之后字节不变）。
+  - **匹配规则一处**（`protocol/search-match.ts`，后端找、界面跳都调它）：子串、NFKC、小写；多个词须**同一条**里都有（一句你说的话 / 一段回复 / 一次工具调用）；至少两个字（按码点数）；片段窗口不劈代理对。
+    工具的参数与**输出**都搜，片段标明「输出里：」。
+  - **与续接同一个还原**：`还原历史` 从 `NativeRuntime.history` 抽出、`还原成条目` 从 `backend.ts` 抽出（续接、子 agent 回读、搜索三处共用）——结果的 `itemId` 就是点开后那一条的 id；活会话按 `nth` 找。
+  - **搜什么**：全部 native 会话（本地与远端，`session_dir` 在本机）；**归档的也搜**，卡上标「已归档」，点开即取消归档；**被压缩掉的更早内容也搜得到**（续接走 `getBranch()`，点开看得到——搜得到就跳得到）；**回退掉的轮次不搜**；外部 CLI / ACP / 终端 / 内核会话数出来说一句。
+    **限制**：子 agent 的转录不搜（它们的话不进结果）。
+  - **预算**：单文件 16 MB 上限（超了计进 `tooLarge`）、文件之间 `setImmediate` 让出主进程、新一次搜索让旧的在下一个文件边界停（`truncated: "time"`，界面丢迟到结果）、单次 5 秒、段数封顶；每种截断都出声说一句。
+  - **协议 8.5**：只读操作 `searchSessionContent`。mock 同批加「跑个 Cox」分支（准入规则 1；`dev:mock` 与 e2e 共用）。
+  - **界面**：侧栏两颗常驻切换「按名字 / 按内容」（缺省按名字，旧行为不变）；结果按段成卡（标题 / 所在 / 已归档 / 日期 / 最新 3 处片段带 `<mark>` / 还有 N 处），250 ms 停顿、加载时旧结果变淡不闪；
+    结果区 `region` + `list` 语义，回车开第一处、上下键在卡与各处间走。命令面板「搜索对话内容」直达（再叫也把焦点放回框）。
+  - **点一处**：走与桌面通知同一个路由（`回到那段`；归档的先 `取消归档并打开`）→ 放宽渲染预算把那一条放进来 → 展开工具组与那一行 → 先让贴底跟随撒手（`stopScroll`）再滚到中间 → 块描边 + CSS Highlight 标词；
+    找不到说「没找到」（不再怪压缩）；跳转目标用完即撤，切走再回来不会被拽回去。
+  - **已知、未在此修**：`rehome` 之后续接起来是空的（原有问题，与搜索无关，记下待查）。
+- **Impact**: 协议 minor（只加操作），旧界面照常握手。按名字模式行为不变。命令面板多一条命令，两张面板基线因此下移一行。
+- **Verification**: 新增 vitest：`search-match`、`history`、`pi-record`（只读、挑最新、cwd）、`session-search`（种类、归档、所在、坏文件、太大、截断、缓存、超时、取消、压缩掉的搜得到而摘要不算）、后端接线、`content-search`、`search-jump`、`app-content-search`（真 `createClient`）、命令转发、设计契约扫描。
+  e2e 新增 `session-search.spec.ts` 9 条（你说的 / 回复 / 工具里的代码、预算之外、重启之后、面板直达、两个字中文、归档点开取消归档、别的项目、快打只留最后一次）。
+  视觉基线：只重存「命令面板」亮 / 暗两张（看过 diff：新命令「搜索对话内容」插在「新建任务」之下，其余行整体下移一行）；重存时顺带改写的「概览-暗色」「空态-亮色」是噪声，已还原；重存后再跑两遍 14/14。
+  终版：`npx vitest run` 299 文件 3716 过 / 10 跳；`npm run typecheck` 0；`npm run build` 过；`npm run test:e2e:only` 562 passed / 1 skipped / 0 failed（23.8 分钟）。
+  真库预算（冷 / 热）与真机三件事：待作者走一遍后补。
 
 ### 2026-09-28 — 桌面通知：做完、出错、等你点头时弹系统通知；点它回到那段；Dock 角标 / 任务栏闪（学自 Codex app / Claude app；协议 8.4；分支 `agent-basics`）
 

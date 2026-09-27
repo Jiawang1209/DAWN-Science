@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 上下文用量与压缩 e2e：测试旋钮接线、spec §7 各条、旧用例改口径（分支 `agent-basics`，plan Task 8）
+
+- **Type**: test
+- **Motivation**: 仪表、压缩标记、三个手动入口都已接上，但没有一条跑真实构建产物的判据；pi 默认保留最近 2 万 token，短对话「没有可压缩的」，e2e 与 dev:mock 里演不出压缩。`context-usage.spec.ts` 仍按旧口径等 12（已用改走 pi `getContextUsage()` 后是 20）。
+- **What**: 测试旋钮 `DAWN_COMPACT_KEEP_RECENT_TOKENS`（`main.ts` → `wiring.ts` 的 `compactKeepRecentTokens` → `NativeRuntime({ compaction })`，只在内存覆盖）；`e2e/fixtures.ts` 选项与 `scripts/dev-mock.mjs` 缺省 1，两边同一个旋钮。新 `e2e/context-compaction.spec.ts` 七条：仪表常驻（量 opacity）、悬停出真数与自动压缩线、移开收、点击钉住；`/compact` 先出「正在压缩上下文…」（MutationObserver 记下出现过）再收成同一条「已压缩」、摘要可展开、仪表说已压缩；⌘K 可用时压得出来；「塞满上下文」自动压缩写「自动：快到上限了」；`/` 菜单选中写 `/compact `；ACP 仪表写读不到、`/` 菜单无那条、⌘K 那条灰着说原因；ACP 里 `/compact` 原样发给 agent。`context-usage.spec.ts` 改口径 12→20 并更正头注。顺手：`slash-menu.tsx` 新 `按能压滤()`，`views.tsx` 两处 `/` 菜单只滤 `compact` 那一条，不再滤掉整个 `command` 类（Task 7 复审）。
+- **Impact**: 真实运行不设旋钮，照 pi 默认；dev:mock 里短对话也能按「现在压缩」。视觉基线 6 张（对话、命令面板、坞里的对话 × 明暗）因仪表与新命令项而红——留给 Task 9 重存，本次未动基线。
+- **Verification**: 新 spec 与 `context-usage.spec.ts` 9 条全过；全套 e2e 514 过 / 6 红（仅上述视觉基线，diff 图确认差异只在仪表与命令面板新行）/ 1 跳过；vitest 3265 过、10 跳过（`slash-menu.test.ts` 加 `按能压滤` 两条）；typecheck 过。
+
 ### 2026-09-27 — 上下文仪表复审修补：键盘焦点、附栏位置、一件事只取一次（分支 `agent-basics`，plan Task 6）
 
 - **Type**: fix

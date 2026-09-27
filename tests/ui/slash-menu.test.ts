@@ -1,6 +1,6 @@
 /** `/` 菜单的纯逻辑：子 agent 的两条路（2026-08-23 作者：「我现在好像没有把 agent 当作 skill 去做呢？」） */
 import { describe, expect, it } from "vitest"
-import { 斜杠选完, 筛斜杠 } from "../../src/ui/slash-menu.js"
+import { 斜杠选完, 筛斜杠, 按能压滤 } from "../../src/ui/slash-menu.js"
 
 const 项 = [
   { kind: "skill" as const, name: "writing-skills", description: "写技能" },
@@ -28,5 +28,17 @@ describe("/compact（2026-09-27）", () => {
   })
   it("按名字筛得到", () => {
     expect(筛斜杠([压], "/comp")).toEqual([压])
+  })
+})
+
+describe("按能压滤（2026-09-27）", () => {
+  const 压 = { kind: "command" as const, name: "compact", title: "压缩上下文", description: "把早先的对话换成一段摘要" }
+  const 别的 = { kind: "command" as const, name: "other", title: "别的指令", description: "与压缩无关" }
+  const 技能 = { kind: "skill" as const, name: "bayesian-modeler", description: "贝叶斯" }
+  it("能压：原样全列", () => {
+    expect(按能压滤([压, 别的, 技能], true)).toEqual([压, 别的, 技能])
+  })
+  it("不能压：只拿掉 compact，别的指令照列", () => {
+    expect(按能压滤([压, 别的, 技能], false)).toEqual([别的, 技能])
   })
 })

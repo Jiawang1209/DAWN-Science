@@ -148,6 +148,8 @@ const child = spawn(
       DAWN_MODELS_JSON: modelsPath,
       // mock 模式跳过凭证守卫(审查 debug G7:现在是独立开关,不再搭在 DAWN_MODELS_JSON 上)
       DAWN_SKIP_CREDENTIAL_GATE: "1",
+      // 压缩（2026-09-27）：保留最近 1 个 token，短对话里「现在压缩」也压得出来（与 e2e 同一个旋钮）；要照 pi 默认时设成空
+      DAWN_COMPACT_KEEP_RECENT_TOKENS: process.env.DAWN_COMPACT_KEEP_RECENT_TOKENS ?? "1",
       DAWN_FAKE_ILINK: weixin.url,
       DAWN_FAKE_FEISHU: feishu.url,
       /**

@@ -33,7 +33,7 @@ import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
 import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 领退回的图 } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
-import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠 } from "./slash-menu.js"
+import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤 } from "./slash-menu.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
 import { 扫引用 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
@@ -4166,10 +4166,7 @@ export function ConversationView({
   }, [退回的图, session.sessionId])
   const 全部斜杠 = useStore($slashItems)
   // `/compact` 那一条只给能压的那段（native）；外部 agent 那边 `/compact` 原样发给它，不替它列
-  const 斜杠单 = useMemo(
-    () => (onCompact ? 全部斜杠 : 全部斜杠.filter((x) => x.kind !== "command")),
-    [全部斜杠, onCompact],
-  )
+  const 斜杠单 = useMemo(() => 按能压滤(全部斜杠, !!onCompact), [全部斜杠, onCompact])
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
   // `@` 菜单：光标位置由输入框报（onSelect），选中下标与 `/` 那份同理由输入框管
@@ -6589,7 +6586,7 @@ export function EmptyConversation({
   const [草稿, 设草稿] = useState("")
   const 全部斜杠 = useStore($slashItems)
   // 还没有会话：没有上下文可压，不列 `/compact`
-  const 斜杠单 = useMemo(() => 全部斜杠.filter((x) => x.kind !== "command"), [全部斜杠])
+  const 斜杠单 = useMemo(() => 按能压滤(全部斜杠, false), [全部斜杠])
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
   const 输入框 = useRef<HTMLTextAreaElement>(null)

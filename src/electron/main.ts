@@ -213,6 +213,11 @@ process.on("uncaughtException", (e) => {
  * 按默认值验一次要等五分钟，那种测试没人会跑。
  */
 const LEASE_TTL = Number(process.env.DAWN_LEASE_TTL ?? "") || undefined
+/**
+ * pi 压缩时「保留最近多少 token」（2026-09-27，测试旋钮，与 `DAWN_LEASE_TTL` 同一个路子）。
+ * pi 默认 2 万：两三句话的对话「没有可压缩的」，手动压缩在 dev:mock 与 e2e 里永远演不出来。真实运行不设，照 pi 的默认。
+ */
+const COMPACT_KEEP_RECENT = Number(process.env.DAWN_COMPACT_KEEP_RECENT_TOKENS ?? "") || undefined
 
 let workbench: Workbench | undefined
 
@@ -772,6 +777,7 @@ app.whenReady().then(() => {
       ...(SCRATCH_ROOT ? { scratchRoot: SCRATCH_ROOT } : {}),
       ...(FAKE_SSH ? { fakeSsh: true } : {}),
       ...(LEASE_TTL ? { leaseTtlSeconds: LEASE_TTL } : {}),
+      ...(COMPACT_KEEP_RECENT ? { compactKeepRecentTokens: COMPACT_KEEP_RECENT } : {}),
       onInternalError: (op, err) => {
         console.error(`[workbench] ${op} 失败:`, err)
         // 打包版没有终端，stderr 谁也看不到；界面上只有「执行失败」四个字——原因要落在 startup.log（2026-08-28 全新演练抓的）

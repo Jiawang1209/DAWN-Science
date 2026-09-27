@@ -27,6 +27,14 @@ export function 斜杠选完(item: SlashItem, draft = ""): string {
   return `用子 agent「${item.name}」来做：`
 }
 
+/**
+ * 这段能不能压，决定 `/compact` 那一条列不列（2026-09-27）。**只滤 `compact` 这一条**，不滤整个 `command` 类——
+ * 以后加别的指令（与压缩无关）不该跟着在外部 agent / 空态里消失（Task 7 复审）。
+ */
+export function 按能压滤(items: readonly SlashItem[], 能压: boolean): SlashItem[] {
+  return 能压 ? [...items] : items.filter((x) => !(x.kind === "command" && x.name === "compact"))
+}
+
 export function 筛斜杠(items: readonly SlashItem[], draft: string): SlashItem[] {
   const q = draft.replace(/^\//, "").replace(/^skill:/, "").trim().toLowerCase()
   if (!q) return [...items]

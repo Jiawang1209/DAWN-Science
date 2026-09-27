@@ -2,8 +2,10 @@
  * 上下文用量（①-B″ · U3）。**跑真实构建产物。**
  *
  * 这条守的是「已用 token」那一半真的接通了。
- * 假后端报 `prompt_tokens: 12`——**面板上必须出现这个数**，
- * 而不是停在「尚未采集」。
+ * 假后端报 `prompt_tokens: 12, completion_tokens: 8, total_tokens: 20`。**2026-09-27 起面板上的数是 20**：
+ * 已用改走 pi 的 `getContextUsage()`（`totalTokens`，含那次的输出）——与 pi 判自动压缩线同一个数；
+ * 此前报的是 `input + cacheRead`（12），人看着的与 pi 压缩时比的不是一个数（spec `2026-09-27-上下文用量与压缩-design.md` §1 e）。
+ * **面板上必须出现这个数**，而不是停在「尚未采集」。
  */
 import { test, expect, 开一段临时会话, 进坞 } from "./fixtures.js"
 
@@ -35,7 +37,7 @@ test("说过一句话之后，上下文面板给出真实的 token 数", async (
    *
    * 现在断言的是完整的那一段，并且**显式地要求它不再说「尚未采集」**。
    */
-  await expect(panel).toContainText("12 / 128k tokens")
+  await expect(panel).toContainText("20 / 128k tokens")
   await expect(panel).not.toContainText("尚未采集")
 })
 

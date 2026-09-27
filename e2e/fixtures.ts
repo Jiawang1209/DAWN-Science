@@ -409,6 +409,8 @@ export interface DawnOptions {
    * 那是租约过期，按默认值要等五分钟。
    */
   leaseTtlSeconds?: number
+  /** pi 压缩时保留最近多少 token（2026-09-27）。压缩那几条给 1——不然两三句话的对话「没有可压缩的」 */
+  compactKeepRecentTokens?: number
   /**
    * 原生目录选择器返回什么（T3-b，2026-08-12）。
    *
@@ -761,6 +763,9 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         ...(process.env["DAWN_SHOW_WINDOW"] === "1" ? {} : { DAWN_HIDE_WINDOW: "1" }),
         ...(dawnOptions.leaseTtlSeconds
           ? { DAWN_LEASE_TTL: String(dawnOptions.leaseTtlSeconds) }
+          : {}),
+        ...(dawnOptions.compactKeepRecentTokens
+          ? { DAWN_COMPACT_KEEP_RECENT_TOKENS: String(dawnOptions.compactKeepRecentTokens) }
           : {}),
         /**
          * 原生目录选择器返回什么（T3-b）。**它是系统模态框，Playwright 驱动不了**。

@@ -145,6 +145,8 @@ export interface CreateWorkbenchOptions {
   terminalScrollbackChars?: number
   /** 写权租约的 TTL（秒）。**默认 300**；e2e 调小它来验过期那条路 */
   leaseTtlSeconds?: number
+  /** pi 压缩时保留最近多少 token（2026-09-27，测试旋钮）。不给 = 照 pi 的默认 */
+  compactKeepRecentTokens?: number
   /**
    * 用假服务器代替真 SSH（②-B · R3）。**mock 模式与 e2e 用**。
    *
@@ -672,6 +674,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   let 读主对话: ((sid: string) => string | undefined) | undefined
   const nativeRuntime = new NativeRuntime({
     credentials: piCredentials,
+    /** 压缩参数（2026-09-27）：只有测试旋钮会给；只在内存里覆盖，不写 pi 的 settings.json */
+    ...(opts.compactKeepRecentTokens ? { compaction: { keepRecentTokens: opts.compactKeepRecentTokens } } : {}),
     /** 侧边对话（2026-09-24）：后端在下面才建，这里晚绑定。**总是给**——给了运行时才装 `read_main_session` */
     读主对话: (sid) => 读主对话?.(sid),
     /** 输入卡上的权限档（codex-polish 第二档）：与上面那道门**读同一张表**，两处不会分家 */

@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 回退复审五条 + `appeared`：转述期间算忙、留话失败不连累回退、账本如实、技能按真名认、关会话等回退（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: Task 5 复审：①空闲时发带图的一句要转述，人那句先进转录、`送一轮` 几秒后才开跑，`inFlight` 为 0 → 回退 / 压缩从这条缝过去，转录与 pi 分叉；②文件退了、对话撤了之后留话失败，整次回退被报成失败 → 后端不截转录、不出通知、不记账；③`rewind:<做法>` 那条 Run 一律 `hasError:false`；④`原文对得上` 把 `/data.csv 看一下` 当技能免核、`/skill:画图`（中文名）`\w` 认不出；⑤回退途中 `stop()` 会在 `navigateTree` 半路拆会话。另：5fad8a9 给 `回退结果` 加了 `appeared`，而 `rewindTurn.response` 是 `.strict()`，带它的回执过不了校验。
+- **What**:
+  - `src/runtime/native.ts`：`NativeSession.转述中` 在 `转述()` 里进出（空闲 / 调整方向两条路都覆盖），`不许在跑` 与 `compact` 把它算作忙；留话 `sendCustomMessage` 失败接住、回执带 `noteError`；`回退` 记下正在进行的那次，`stop()` 摘表之后先等它；`原文对得上` 按 pi 的两条展开路认——`/skill:名` 看记录里那句是否以 `<skill name="名"` 开头，`/名` 查此刻的 `promptTemplates`，其余斜杠开头照常核对（导出供测试）。
+  - `src/runtime/types.ts` `回退回执` 加 `noteError`；`src/protocol/operations.ts` `rewindTurn.response` 加可选 `appeared` / `noteError`（协议仍 8.2，未发布的同一轮）。
+  - `src/workbench/rewind-notice.ts`：`noteError` 出声（「没能把这次回退告诉 agent…」）；`appeared` 数出来、点名去处；没删掉的临时文件照失败列、不说成「没退成」；只冒出来也不说「没有动过文件」。
+  - `src/workbench/backend.ts` / `src/electron/wiring.ts`：`记一次回退` 多一个 `出错`（对话没撤掉 / 有 `failed` / `noteError`）→ Run 的 `hasError`；`filesWritten` 连 `appeared` 一起记。
+- **Impact**: 协议纯新增可选字段；mock 不涉及（回退走真后端 + mock 推理服务器，无独立 mock 分支）。无新 msgid（忙时沿用「agent 还在跑…」「这一轮还没说完…」；通知不经 i18n）。
+- **Verification**: 先红后绿——`tests/runtime/rewind-guards.test.ts`（6：转述期间预览 / 回退 / 压缩都拒、中文技能名、一段根路径、模板名单、技能删了仍认）；`tests/integration/rewind.test.ts` 加真 pi 两条（留话失败回执带 `noteError` 且文件已退；回退途中 `stop()` 次序 navigate → dispose，改前实测为反）+ `/data.csv` 一行；`rewind-backend` 三条、`rewind-notice` 三条、协议一条。rewind + workbench + runtime 630 过；全量 vitest 3374 过 / 10 跳；typecheck 0。
+
 ### 2026-09-27 — 回退这一轮 · 后端两个操作 + 转录截断 + 账本；给模型的话落盘、回退互斥（分支 `agent-basics`）
 
 - **Type**: feat + fix

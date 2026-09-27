@@ -74,7 +74,7 @@ function make(runtime = new 会回退的()) {
     trashItem: async (p) => {
       rmSync(p, { recursive: true, force: true })
     },
-    记一次回退: (sessionId, 做法, 动过的) => 账.push(`${sessionId}:${做法}:${动过的.join(",")}`),
+    记一次回退: (sessionId, 做法, 动过的, 出错) => 账.push(`${sessionId}:${做法}:${动过的.join(",")}${出错 ? ":error" : ""}`),
   })
   const repo = mkdtempSync(join(tmpdir(), "dawn-rewind-be-"))
   dirs.push(repo)
@@ -162,6 +162,35 @@ describe("rewindTurn", () => {
     await backend.rewindTurn({ sessionId, turnId: u2, mode: "both" })
     expect(events.peekItems(sessionId).filter((x) => x.type === "turn")).toHaveLength(2)
     expect(events.peekItems(sessionId).some((x) => x.type === "notice" && x.text.includes("对话没撤掉（boom）"))).toBe(true)
+  })
+  it("给 agent 的话没留成：照常截转录、通知里说出来、账本记一笔带错", async () => {
+    const { backend, events, runtime, 账, 开一段 } = make()
+    runtime.回执 = { ...runtime.回执, noteError: "disk full" }
+    const { sessionId, u2 } = await 开一段()
+    const r = await backend.rewindTurn({ sessionId, turnId: u2, mode: "both" })
+    expect(r).toMatchObject({ noteError: "disk full" })
+    expect(events.peekItems(sessionId).filter((x) => x.type === "turn")).toHaveLength(1)
+    expect(events.peekItems(sessionId).some((x) => x.type === "notice" && x.text.includes("没能把这次回退告诉 agent（disk full）"))).toBe(true)
+    expect(账).toEqual([`${sessionId}:both:a.py:error`])
+  })
+  it("账本如实：对话没撤掉、有文件没退成都算出错；全顺才不算", async () => {
+    const { backend, runtime, 账, 开一段 } = make()
+    const { sessionId, u2 } = await 开一段()
+    runtime.回执 = { ...runtime.回执, conversationError: "boom" }
+    await backend.rewindTurn({ sessionId, turnId: u2, mode: "both" })
+    runtime.回执 = { restored: [], removed: [], keep: [], cannot: [], failed: [{ path: "c.txt", message: "EACCES" }] }
+    await backend.rewindTurn({ sessionId, turnId: u2, mode: "files" })
+    runtime.回执 = { restored: ["a.py"], removed: [], keep: [], cannot: [], failed: [] }
+    await backend.rewindTurn({ sessionId, turnId: u2, mode: "files" })
+    expect(账).toEqual([`${sessionId}:both:a.py:error`, `${sessionId}:files::error`, `${sessionId}:files:a.py`])
+  })
+  it("回执里的 appeared 过得了协议校验", async () => {
+    const { backend, runtime, 开一段 } = make()
+    runtime.回执 = { ...runtime.回执, appeared: [{ path: "t.csv", to: ".dawn/trash/r/t.csv" }] }
+    const { sessionId, u2 } = await 开一段()
+    const { OPERATIONS } = await import("../../src/protocol/operations.js")
+    const r = await backend.rewindTurn({ sessionId, turnId: u2, mode: "files" })
+    expect(OPERATIONS.rewindTurn.response.safeParse(r).success).toBe(true)
   })
   it("文件回退不了 → invalid_request，缘故随 details 出去", async () => {
     const { backend, runtime, 开一段 } = make()

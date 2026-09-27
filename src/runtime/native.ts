@@ -51,12 +51,19 @@ type 历史消息 =
   | { role: "compaction"; summary: string; tokensBefore: number }
 
 /**
- * 回退时界面那句与 pi 那句核对原文（2026-09-27，Task 4 复审收紧）。pi 那句要**包含**界面那句：视觉转述会追加描述、图片会变成「（图片）」。
- * - **只有真的技能 / 斜杠调用才免核**（`/名字` 或 `/名字 参数`——pi 会把它展开成技能正文）；`/Users/…` 这类绝对路径开头的话照常核对。
- * - **空文不许凭 `includes("")` 蒙过去**：只有 pi 那句去掉图片记号之后也是空的（只附了图）才算对上。
+ * 回退时界面那句与 pi 那句核对原文（2026-09-27，Task 4 复审收紧；Task 5 复审改成按真名认）。
+ * pi 那句要**包含**界面那句：视觉转述会追加描述、图片会变成「（图片）」。**只有 pi 真展开过的斜杠调用才免核**——
+ * 按 pi 的两条展开路（`agent-session.js` 的 `_expandSkillCommand` 与 `expandPromptTemplate`）认，不按长相猜：
+ * - `/skill:名 参数`：pi 只在名字是已加载的技能时展开，展开结果以 `<skill name="名"` 开头——**看记录里那句是不是这个开头**
+ *   （技能后来删了也认得出；中文名也认得出——旧的 `\w` 认不出 `/skill:画图`）；
+ * - `/名 参数`：pi 只在名字是提示模板时展开——**查此刻的模板名单**。
+ * 其余斜杠开头的话（`/data.csv 看一下`、`/Users/…`）pi 原样收下，照常核对。
+ * **空文不许凭 `includes("")` 蒙过去**：只有 pi 那句去掉图片记号之后也是空的（只附了图）才算对上。
  */
-function 原文对得上(界面: string, pi那句: string): boolean {
-  if (/^\/[\w:.-]+(?:\s|$)/.test(界面)) return true
+export function 原文对得上(界面: string, pi那句: string, 名单: { 模板: ReadonlySet<string> }): boolean {
+  const 斜杠 = /^\/(\S+)(?:\s|$)/.exec(界面)?.[1]
+  if (斜杠?.startsWith("skill:") && pi那句.startsWith(`<skill name="${斜杠.slice(6)}"`)) return true
+  if (斜杠 && 名单.模板.has(斜杠)) return true
   if (!界面.trim()) return !pi那句.replace(/（图片）|（见附图）/g, "").trim()
   return pi那句.includes(界面)
 }
@@ -369,6 +376,14 @@ interface NativeSession {
    * 第二次会把第一次撤掉的几轮接回来。立着的时候：发话、压缩、预览、再回退一律拒（「正在回退」）。
    */
   回退中: boolean
+  /**
+   * 正在转述图片的有几张单（2026-09-27，Task 5 复审）。空闲时发带图的一句：人那句**现在**就进了转录，`送一轮` 要等转述回来才开跑，
+   * 这几秒 `inFlight` 还是 0——回退、压缩会从这条缝过去（转录撤了那句，pi 随后又收到它）。所以它也算「在忙」（`不许在跑`、`compact`）。
+   * 在 `转述()` 里进出：转述完到 `送一轮` 之间只隔几个微任务，没有别的请求插得进来。
+   */
+  转述中: number
+  /** 正在回退的那一次（2026-09-27，Task 5 复审）：`stop()` 等它做完再拆会话——不然 `navigateTree` 做到一半会话就没了 */
+  回退: Promise<unknown> | undefined
 }
 
 /**
@@ -1631,6 +1646,8 @@ export class NativeRuntime implements AgentRuntime {
       重排中: false,
       调整链: undefined,
       回退中: false,
+      转述中: 0,
+      回退: undefined,
     })
     /**
      * **续接回来的老回复已经记过账了**（2026-09-27，Task 3 审查抓的）：判重标记从记录里最后那条真回复起步。
@@ -2128,7 +2145,9 @@ export class NativeRuntime implements AgentRuntime {
     data: string,
     images: readonly ImageAttachment[],
   ): Promise<string> {
-    const 模型 = this.sessions.get(sessionId)?.session.model?.id ?? "当前模型"
+    const s = this.sessions.get(sessionId)
+    const 模型 = s?.session.model?.id ?? "当前模型"
+    if (s) s.转述中 += 1
     try {
       const 描述 = await 描述图片(端点, images)
       this.emit({
@@ -2148,6 +2167,8 @@ ${描述}`
         text: `视觉转述失败（${e instanceof Error ? e.message : String(e)}），这一轮按原样发出，模型 ${模型} 可能看不到那 ${images.length} 张图。`,
       })
       return data
+    } finally {
+      if (s) s.转述中 -= 1
     }
   }
 
@@ -2413,7 +2434,7 @@ ${描述}`
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法压缩`)
     this.不许在回退(s)
-    if (s.inFlight > 0 || s.session.isCompacting) throw new Error("这一轮还没说完，等它做完或先停止，再压缩上下文")
+    if (s.inFlight > 0 || s.转述中 > 0 || s.session.isCompacting) throw new Error("这一轮还没说完，等它做完或先停止，再压缩上下文")
     s.inFlight += 1
     s.压缩待出声 = true
     const 要求 = instructions?.trim()
@@ -3064,7 +3085,8 @@ ${描述}`
     const 们 = this.用户消息们(s)
     const k = 们.length - 那句.倒数第几句
     const 它 = 们[k]
-    if (!Number.isInteger(那句.倒数第几句) || 那句.倒数第几句 < 1 || !它 || !原文对得上(那句.文, 它.文)) {
+    const 模板 = new Set(s.session.promptTemplates.map((t) => t.name))
+    if (!Number.isInteger(那句.倒数第几句) || 那句.倒数第几句 < 1 || !它 || !原文对得上(那句.文, 它.文, { 模板 })) {
       throw new UserFacingError("这句在 agent 的记录里对不上，回退不了（对话可能被改写过）")
     }
     const 起点 = this.存档们.get(sessionId)?.起点()
@@ -3074,7 +3096,7 @@ ${描述}`
 
   private 不许在跑(s: NativeSession): void {
     this.不许在回退(s)
-    if (s.inFlight > 0 || s.session.isStreaming || s.session.isCompacting) throw new UserFacingError("agent 还在跑，停下之后才能回退")
+    if (s.inFlight > 0 || s.转述中 > 0 || s.session.isStreaming || s.session.isCompacting) throw new UserFacingError("agent 还在跑，停下之后才能回退")
   }
 
   /** 回退期间：发话、压缩、预览、再回退都拒（`回退中` 那条注释）。措辞固定——后端按「正在回退」分码、译成英文 */
@@ -3103,10 +3125,13 @@ ${描述}`
     this.不许在跑(s)
     // **从查完「不在跑」到留完话，整段立着**（Task 4 复审）：检查与置位之间没有 await，不会有第二个人插进来
     s.回退中 = true
+    const 这次 = this.真回退(sessionId, s, 那句, 做法, 内核们)
+    s.回退 = 这次
     try {
-      return await this.真回退(sessionId, s, 那句, 做法, 内核们)
+      return await 这次
     } finally {
       s.回退中 = false
+      s.回退 = undefined
     }
   }
 
@@ -3140,7 +3165,17 @@ ${描述}`
      * 它发的 `message_start/end`（role `custom`）我们不转成任何界面事件：人那一侧的通知由后端写（`回退通知`），不重复一条。
      * 此刻一定不在流式——`回退中` 立着，没人能开新一轮。
      */
-    if (话) await s.session.sendCustomMessage({ customType: "dawn-rewind", content: 话, display: false })
+    /**
+     * **留话失败不许把整次回退报成失败**（Task 5 复审）：走到这里文件已经退了、对话已经撤了——抛出去的话后端不截转录、不出通知、不记账，
+     * 界面与 pi 从此各说各的。接住、随回执带回（`noteError`），后端照常收尾，通知里说「没能告诉 agent」。
+     */
+    if (话) {
+      try {
+        await s.session.sendCustomMessage({ customType: "dawn-rewind", content: 话, display: false })
+      } catch (e) {
+        回执 = { ...回执, noteError: e instanceof Error ? e.message : String(e) }
+      }
+    }
     return 回执
   }
 
@@ -3188,6 +3223,11 @@ ${描述}`
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
     this.sessions.delete(sessionId)
+    /**
+     * **回退做到一半不拆**（Task 5 复审）：`navigateTree` / 留话做到一半就 `dispose`，对话那一半会停在半路。
+     * 表里已经摘掉了——这期间谁也发不进话；等它做完（成败都行，它自己出声）再往下拆。
+     */
+    await s.回退?.catch(() => {})
     // 先中止在跑的一轮，再退订，最后释放——顺序反了会在 dispose 之后收到事件
     await s.session.abort().catch(() => {})
     s.收尾?.()

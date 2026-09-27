@@ -128,6 +128,8 @@ describe("回退这一轮 · 真 pi", () => {
       await expect(runtime.previewRewind(sessionId, { 倒数第几句: 5, 文: "改两个文件" })).rejects.toThrow(/对不上/)
       // 收紧（Task 4 复审）：绝对路径开头不是技能调用、照常核对；空文不许凭 includes("") 蒙过去
       await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "/Users/x/data.csv 看一下" })).rejects.toThrow(/对不上/)
+      // 一段根路径也不是技能（Task 5 复审）：旧的判据把它当 `/名字` 免核了
+      await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "/data.csv 看一下" })).rejects.toThrow(/对不上/)
       await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "" })).rejects.toThrow(/对不上/)
     } finally {
       await runtime.stop(sessionId)
@@ -185,6 +187,52 @@ describe("回退这一轮 · 真 pi", () => {
     } finally {
       await runtime.stop(sessionId)
     }
+  })
+
+  it("给模型的那句话没留成：回退本身照算成功，回执带 noteError（文件已退、对话已撤不许被报成失败）", { timeout: 60_000 }, async () => {
+    const { runtime, sessionId, 说完, 读 } = await 起一段("note-fails")
+    try {
+      await 说完("改两个文件")
+      await 说完("再改两个文件")
+      const 内部 = runtime as unknown as { sessions: Map<string, { session: { sendCustomMessage: unknown } }> }
+      内部.sessions.get(sessionId)!.session.sendCustomMessage = async () => {
+        throw new Error("disk full")
+      }
+      const r = await runtime.rewind(sessionId, { 倒数第几句: 1, 文: "再改两个文件" }, "files", [])
+      expect(r.noteError).toBe("disk full")
+      expect(r.restored).toEqual(["README.md", "out/图.txt"])
+      expect(读("README.md")).toBe("原样\n改过\n")
+    } finally {
+      await runtime.stop(sessionId)
+    }
+  })
+
+  it("回退途中关会话：stop() 等回退做完再拆，对话那一半不会做到一半", { timeout: 60_000 }, async () => {
+    const { runtime, sessionId, 说完, 事件 } = await 起一段("stop-mid")
+    await 说完("改两个文件")
+    await 说完("再改两个文件")
+    const 次序: string[] = []
+    const 内部 = runtime as unknown as { sessions: Map<string, { session: { navigateTree: (...a: unknown[]) => Promise<unknown>; dispose: () => void } }> }
+    const pi = 内部.sessions.get(sessionId)!.session
+    const 原跳 = pi.navigateTree.bind(pi)
+    pi.navigateTree = async (...a: unknown[]) => {
+      // 放慢一拍：让 stop() 的拆会话一定赶在它前头——没有等待的话，这里就是「做到一半会话没了」
+      await new Promise((ok) => setTimeout(ok, 150))
+      const r = await 原跳(...a)
+      次序.push("navigate")
+      return r
+    }
+    const 原拆 = pi.dispose.bind(pi)
+    pi.dispose = () => {
+      次序.push("dispose")
+      原拆()
+    }
+    const 这次 = runtime.rewind(sessionId, { 倒数第几句: 1, 文: "再改两个文件" }, "both", [])
+    await runtime.stop(sessionId)
+    const r = await 这次
+    expect(r.conversationError).toBeUndefined()
+    expect(次序).toEqual(["navigate", "dispose"])
+    expect(事件.some((e) => e.kind === "exited")).toBe(true)
   })
 
   /**

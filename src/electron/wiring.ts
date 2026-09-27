@@ -1347,7 +1347,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       })
     },
     /** 回退这一轮落一条 Run（2026-09-27）：`rewind:<做法>`，动过的文件记进 filesWritten。临时会话没有项目，与删除同一个口径不记 */
-    记一次回退: (sessionId, 做法, 动过的) => {
+    记一次回退: (sessionId, 做法, 动过的, 出错) => {
       const 那段 = sessionStore.get(sessionId)
       if (!那段?.projectId) return
       const 此刻 = new Date().toISOString()
@@ -1360,7 +1360,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         status: "completed",
         startedAt: 此刻,
         finishedAt: 此刻,
-        hasError: false,
+        // 做完了但不全顺（对话没撤掉 / 有文件没退成 / 给模型的话没留成）：如实记错，不粉饰成干净的一次
+        hasError: 出错,
         filesWritten: [...动过的],
         mayIncludeUserEdits: false,
       })

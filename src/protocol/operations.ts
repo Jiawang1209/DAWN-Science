@@ -1714,6 +1714,10 @@ export const OPERATIONS = {
         editorText: z.string().optional(),
         kernels: z.array(z.enum(["python", "R"])),
         conversationError: z.string().min(1).optional(),
+        /** 回退途中新冒出来、挪进回收处的文件（`to` 是挪去的位置，相对工作区） */
+        appeared: z.array(z.object({ path: z.string().min(1), to: z.string().min(1) }).strict()).optional(),
+        /** 文件与对话都退了，只是给模型的那句话没留成——回退本身不算失败 */
+        noteError: z.string().min(1).optional(),
       })
       .strict(),
     mutating: true,

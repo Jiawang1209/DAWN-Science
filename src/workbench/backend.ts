@@ -232,7 +232,7 @@ export interface WorkbenchBackendOptions {
    */
   记一次删除?: (connectionId: string | undefined, 路径: string, 进了废纸篓: boolean) => void
   /** 记一次回退（2026-09-27）。**改变世界的操作要记一条 Run**（不变式 3）；已经发生过的那几轮的 Run 不改不删 */
-  记一次回退?: (sessionId: string, 做法: string, 动过的: readonly string[]) => void
+  记一次回退?: (sessionId: string, 做法: string, 动过的: readonly string[], 出错: boolean) => void
   /** 归档 / 取消归档落账（7.18）。**删除不落**——删除那条账本自己留着，见 `deleteSession` */
   记一次会话?: (event: "archive" | "unarchive", projectId: string | undefined, sessionId: string) => void
   /** 技能的改动也落账（7.17）：启停、导入、删除——都是对磁盘的一次写 */
@@ -3325,9 +3325,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           内核们: kernels,
           图数: 位.图数,
           conversationError: r.conversationError,
+          noteError: r.noteError,
         }),
       )
-      记一次回退?.(sessionId, mode, [...r.restored, ...r.removed])
+      // 账本如实（Task 5 复审）：对话没撤掉、有文件没退成、给模型的话没留成——都不是「一切顺利」
+      记一次回退?.(sessionId, mode, [...r.restored, ...r.removed, ...(r.appeared ?? []).map((a) => a.path)], Boolean(r.conversationError || r.failed.length || r.noteError))
       return { ...r, kernels }
     },
 

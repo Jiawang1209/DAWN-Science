@@ -37,6 +37,35 @@ describe("回退之后对话里那句（spec §2.4）", () => {
     expect(话).toContain("附的 2 张图没放回来，要的话重新附")
     expect(话).toContain("内核里的变量没有回退：R 内核")
   })
+  it("给 agent 的那句没留成要出声：它下一轮可能不知道发生过回退", () => {
+    const 话 = 回退通知({ 这句: "x", 做法: "files", 结果: { ...空, restored: ["a.py"] }, 内核们: [], 图数: 0, noteError: "disk full" })
+    expect(话).toContain("改回去 1 个文件")
+    expect(话).toContain("没能把这次回退告诉 agent（disk full）")
+  })
+  it("回退途中新冒出来的文件：数出来、点名、说挪去了哪", () => {
+    const 话 = 回退通知({
+      这句: "x",
+      做法: "files",
+      结果: { ...空, restored: ["a.py"], appeared: [{ path: "tmp.csv", to: ".dawn/trash/rewind-x/tmp.csv" }, { path: "b.log", to: ".dawn/trash/rewind-x/b.log" }] },
+      内核们: [],
+      图数: 0,
+    })
+    expect(话).toContain("回退途中新冒出来的 2 个文件挪进了回收处：tmp.csv → .dawn/trash/rewind-x/tmp.csv、b.log → .dawn/trash/rewind-x/b.log。")
+    // 只冒出来、别的都没动：不许说「没有动过文件」
+    const 只冒 = 回退通知({ 这句: "x", 做法: "files", 结果: { ...空, appeared: [{ path: "t", to: ".dawn/trash/r/t" }] }, 内核们: [], 图数: 0 })
+    expect(只冒).not.toContain("没有动过文件")
+  })
+  it("没删掉的临时文件照别的失败一样点名，但不说成「没退成」", () => {
+    const 话 = 回退通知({
+      这句: "x",
+      做法: "files",
+      结果: { ...空, restored: ["a.py"], failed: [{ path: ".a.py.dawn-tmp", message: "回退用的临时文件没删掉（EPERM），可以手动删；a.py 本身不受影响" }] },
+      内核们: [],
+      图数: 0,
+    })
+    expect(话).toContain(".a.py.dawn-tmp：回退用的临时文件没删掉（EPERM），可以手动删；a.py 本身不受影响。")
+    expect(话).not.toContain("没退成")
+  })
   it("对话没撤掉要出声", () => {
     expect(回退通知({ 这句: "x", 做法: "both", 结果: 空, 内核们: [], 图数: 0, conversationError: "boom" })).toContain("对话没撤掉（boom）")
   })

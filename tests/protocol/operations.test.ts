@@ -576,5 +576,9 @@ describe("8.2 · 回退这一轮（2026-09-27）", () => {
     expect(请("all").success).toBe(false)
     const 回 = { restored: ["a.py"], removed: [], keep: [], cannot: [], failed: [], kernels: [], editorText: "那句" }
     expect(OPERATIONS.rewindTurn.response.parse(回)).toEqual(回)
+    // 回退途中新冒出来、挪进回收处的；给模型的话没留成（Task 5 复审）
+    const 全 = { ...回, appeared: [{ path: "t.csv", to: ".dawn/trash/r/t.csv" }], noteError: "disk full" }
+    expect(OPERATIONS.rewindTurn.response.parse(全)).toEqual(全)
+    expect(OPERATIONS.rewindTurn.response.safeParse({ ...回, appeared: [{ path: "t.csv" }] }).success).toBe(false)
   })
 })

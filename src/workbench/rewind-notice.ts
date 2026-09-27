@@ -16,12 +16,15 @@ export function 回退通知(x: {
   内核们: readonly string[]
   图数: number
   conversationError?: string | undefined
+  /** 文件与对话都退了、只是给模型的那句话没留成（Task 5 复审）：它下一轮可能不知道发生过回退，要说出来 */
+  noteError?: string | undefined
 }): string {
   const 段: string[] = []
   const r = x.结果
   if (x.做法 !== "conversation" && r) {
     const 动了 = r.restored.length + r.removed.length
-    if (动了 === 0 && r.keep.length === 0 && r.cannot.length === 0 && r.failed.length === 0) {
+    const 冒出来 = r.appeared ?? []
+    if (动了 === 0 && r.keep.length === 0 && r.cannot.length === 0 && r.failed.length === 0 && 冒出来.length === 0) {
       段.push("这句之后 agent 没有动过文件。")
     } else if (动了 > 0) {
       const 放 = r.trash ? `（放在 ${r.trash}/）` : ""
@@ -29,7 +32,11 @@ export function 回退通知(x: {
     }
     if (r.keep.length) 段.push(`${r.keep.map((k) => k.path).join("、")} 你后来改过，没动。`)
     if (r.cannot.length) 段.push(`${r.cannot.map((k) => k.path).join("、")} 退不回（旧版本没存）。`)
-    for (const f of r.failed) 段.push(`${f.path} 没退成（${f.message}）。`)
+    if (冒出来.length) 段.push(`回退途中新冒出来的 ${冒出来.length} 个文件挪进了回收处：${冒出来.map((a) => `${a.path} → ${a.to}`).join("、")}。`)
+    for (const f of r.failed) {
+      // 没删掉的临时文件（存档那边的措辞）不是「没退成」：那个文件本身退好了，只是多留了一个临时文件
+      段.push(f.message.startsWith("回退用的临时文件") ? `${f.path}：${f.message}。` : `${f.path} 没退成（${f.message}）。`)
+    }
   }
   if (x.做法 === "conversation") 段.push("文件没有回退，工作区里还留着被撤掉那几轮的改动。")
   if (x.做法 !== "files") {
@@ -39,6 +46,7 @@ export function 回退通知(x: {
       段.push(`这句和它之后的对话已撤掉，这句放回了输入框${图}。`)
     }
   }
+  if (x.noteError) 段.push(`没能把这次回退告诉 agent（${x.noteError}），它下一轮可能还以为一切照旧，必要时跟它说一声。`)
   if (x.内核们.length) {
     const 谁 = x.内核们.join("、")
     段.push(

@@ -75,7 +75,8 @@ export interface 回退的那句 {
 }
 /** `both` 文件与对话一起 / `files` 只退文件 / `conversation` 只撤对话（文件退不了时的唯一出路） */
 export type 回退做法 = "both" | "files" | "conversation"
-export type 回退回执 = 回退结果 & { editorText?: string; conversationError?: string }
+/** `noteError`：文件与对话都退了，只是给模型的那句话没留成（它下一轮可能不知道发生过回退）——回退本身不算失败 */
+export type 回退回执 = 回退结果 & { editorText?: string; conversationError?: string; noteError?: string }
 
 export interface SessionSpec {
   sessionId: SessionId

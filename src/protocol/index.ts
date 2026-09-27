@@ -104,3 +104,6 @@ export type {
 } from "./operations.js"
 
 export { KERNEL_PACKAGE } from "./kernel-package.js"
+
+export { 出方案工具名, 看数据工具名, 必填小节, 缺的小节, 方案产物, 对得上, 方案对照, 方案文件名, 执行那句 } from "./plan.js"
+export type { 方案, 对照结果 } from "./plan.js"

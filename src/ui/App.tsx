@@ -55,11 +55,12 @@ import {
   type SettingsSection,
 } from "./Settings.js"
 import { SettingsColumn } from "./settings-column.js"
+import { DesktopNotifyPanel, type 桌面通知回执 } from "./desktop-notify-panel.js"
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则 } from "../files/mentions.js"
-import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标 } from "./icons.js"
+import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
@@ -698,6 +699,35 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       onRemoteListChanged: () => void loadConnections(client),
       // 更新的进度（2026-09-06）：**推来的整份状态直接换掉手里那份**，界面不自己算
       onUpdatePush: (u) => 设更新回执(u),
+      /**
+       * 点了一条桌面通知（2026-09-27）：回到那段。**读 atom，不读闭包**——这个 effect 只在 ready / client 变时重跑。
+       * 坞里挂着的那段 → 开坞的「对话」格，主区不动；在任务名单 / 会话列表里 → 与侧栏点一行同一条路；
+       * 都不在（被归档 / 删了）→ 说一句，不静默。
+       *
+       * 判据是「任务 ∪ 当前项目的会话 ∪ 临时会话」而不只是任务：项目里从概览开的那几段未必都在任务名单里。
+       * 归档的任务后端 `listTasks` 已经滤掉了；会话列表里的要自己看 `archivedAt`。
+       * 属于别的项目的那段要**跟着切项目**——与 `onPickTask` 同一条理由（2026-08-13：只切会话 id 不切项目，主区回落成初始画面，看起来就是「点了没反应」）。
+       */
+      onOpenSession: (id) => {
+        if (id === $侧边会话id.get()) {
+          打开坞里的对话()
+          return
+        }
+        const 任务 = $tasks.get().find((x) => x.sessionId === id)
+        const s = [...$tempSessions.get(), ...$sessions.get()].find((x) => x.sessionId === id && !x.archivedAt)
+        if (!任务 && !s) {
+          note(t("那段对话已经不在了（可能已归档或删除）"))
+          return
+        }
+        const pid =
+          s?.projectId ?? (任务?.workspace ? $projects.get().find((p) => p.workspace === 任务.workspace)?.projectId : undefined)
+        if (任务?.workspace && pid) setActiveProjectId(pid)
+        标未读(id, false)
+        setActiveSessionId(id)
+        // 整页设置开着时走 `关掉设置`：它会把被顶掉的坞房客还回去（2026-09-16 那条规矩）
+        if ($view.get() === "settings") 关掉设置()
+        setView("conversation")
+      },
       onProblem: note,
     })
     // **依赖里刻意不放 projectId**：它变化时不该退订重订，
@@ -1962,6 +1992,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
 
   /**
+   * 通知里的字跟界面语言走（桌面通知，2026-09-27）：起来报一次、切语言再报一次。后端存着——
+   * 下次启动、界面还没起来时来的通知也知道用哪种。
+   */
+  useEffect(() => {
+    if (!ready) return
+    client.get("desktopSetNotify", { lang }).catch(fail)
+  }, [ready, client, lang])
+
+  /**
    * 告诉后端谁是谁的侧边（协议 7.37 `setSideSession`）。
    * **主区换会话也要重发**——「主对话」指的是此刻主区里那段（spec §2.5）。
    *
@@ -2879,6 +2918,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 载微信通知 = useCallback(() => client.get<NotifySettings>("weixinGetNotify", {}), [client])
   const 载飞书状态 = useCallback(() => client.get<FeishuStatus>("feishuGetStatus", {}), [client])
   const 载飞书通知 = useCallback(() => client.get<NotifySettings>("feishuGetNotify", {}), [client])
+  /** 桌面通知那一格的 `load`（2026-09-27）。**useCallback**：面板的 effect 依赖它，App 每个 token 都重渲染，内联箭头会让它一直重取 */
+  const 载桌面通知 = useCallback(() => client.get<桌面通知回执>("desktopGetNotify", {}), [client])
   const 微信可绑的 = useSessionChoices(tasks)
 
   const agentLabel = useCallback(
@@ -4111,6 +4152,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       title: t("外观"),
       icon: <外观图标 className="row-icon" />,
       body: <AppearancePanel />,
+    },
+    {
+      /** 桌面通知（2026-09-27）。与「外观」同属应用级偏好，挨着放 */
+      id: "notify",
+      title: t("桌面通知"),
+      icon: <铃图标 className="row-icon" />,
+      body: (
+        <DesktopNotifyPanel
+          load={载桌面通知}
+          save={(patch) => client.get<桌面通知回执>("desktopSetNotify", patch)}
+          test={() => client.get<{ shown: boolean; reason?: "unsupported" | "no_exit" }>("desktopTestNotify", {})}
+        />
+      ),
     },
     {
       id: "atfile",

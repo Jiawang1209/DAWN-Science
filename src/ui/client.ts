@@ -13,6 +13,7 @@ import {
   RemoteUpdateSchema,
   SessionUpdateSchema,
   UpdatePushSchema,
+  OpenSessionPushSchema,
   WORKBENCH_PROTOCOL_VERSION,
   isCompatible,
   type ErrorCode,
@@ -127,6 +128,11 @@ export interface UpdateSubscription {
    * 那份副本与后端分家只是时间问题。
    */
   onUpdatePush?: (u: { 状态: 更新状态; 自动检查: boolean }) => void
+  /**
+   * 点了一条桌面通知（2026-09-27）：**同一条通道的第五种载荷**，只说「回到哪段」。
+   * 切主区还是开坞由界面定——主进程不知道坞里挂的是谁。
+   */
+  onOpenSession?: (sessionId: string) => void
 }
 
 /**
@@ -201,7 +207,7 @@ export function createClient(
      *   - 畸形 / 版本不符 ⇒ 丢弃并出声
      *   - 处理者抛错 ⇒ 出声并继续（一个渲染错误不该让整条流断掉）
      */
-    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote, onRemoteListChanged, onUpdatePush }: UpdateSubscription): () => void {
+    subscribeUpdates({ onUpdate, onResync, onProblem, onRemote, onRemoteListChanged, onUpdatePush, onOpenSession }: UpdateSubscription): () => void {
       const problem = (m: string) => onProblem?.(m)
       const src = eventSource ?? window.dawn?.onEvent
       if (!src) {
@@ -230,6 +236,12 @@ export function createClient(
         const 更新 = UpdatePushSchema.safeParse(raw)
         if (更新.success) {
           onUpdatePush?.({ 状态: 更新.data.update, 自动检查: 更新.data.自动检查 })
+          return
+        }
+        // 点了桌面通知：第五种载荷，同理要在会话那句判据之前认掉
+        const 回到 = OpenSessionPushSchema.safeParse(raw)
+        if (回到.success) {
+          onOpenSession?.(回到.data.openSession)
           return
         }
         const parsed = SessionUpdateSchema.safeParse(raw)

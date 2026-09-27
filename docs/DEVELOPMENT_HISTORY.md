@@ -8,6 +8,19 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 回退这一轮 · 后端两个操作 + 转录截断 + 账本；给模型的话落盘、回退互斥（分支 `agent-basics`）
+
+- **Type**: feat + fix
+- **Motivation**: plan `plans/2026-09-27-回退这一轮.md` Task 5：协议 8.2 的 `previewRewind` / `rewindTurn` 在后端还没有处理器（typecheck 红在这里）。Task 4 复审另记四条：给模型的话走 `deliverAs: "nextTurn"` 只在 pi 内存里，下一句之前重启就丢；`rewind` 查完「不在跑」之后长时间等存档、不上锁（中途发话 / 连按两次会把撤掉的几轮接回来）；没存档时只退文件报 `gap` 而预览报 `no_archive`；原文核对对 `/` 开头一律免核、空文凭 `includes("")` 蒙过去。
+- **What**:
+  - `src/runtime/native.ts`（commit 769c963）：留话改成不带 `deliverAs` 的 `sendCustomMessage`——不在流式时 pi 写进会话文件（`custom_message`），续接后照样进请求；`回退中` 从查忙到留完话整段立着，这期间 `送一轮` / `writeWithImages` / `compact` / 预览 / 再回退都拒（「正在回退，回退完再发」）；无存档抛 `回退不了("no_archive")`；`原文对得上()` 只对 `/名字` 形式免核、空文只对只附了图的那句。检查点存档与 spec §7 写明「收尾之后还在写的后台写手算你改的、留着不退」。
+  - `src/workbench/events.ts` `truncateAt()`：那句起往后撤（压缩标记一起、你敲的 `cell` 留着），清 `openTurnId` / 悬着的 `压缩中`，推一帧快照。
+  - `src/workbench/rewind-notice.ts`：回退之后那句通知（内核那句固定措辞）。
+  - `src/session/manager.ts` `previewRewind` / `rewind`（后者要租约）；`src/workbench/backend.ts` 两个处理器：按转录数「倒数第几句」、远端只许撤对话、对话真撤了才截转录、写通知、`记一次回退`；错误分码——还在跑 / 正在回退 → conflict，对不上 / 文件回退不了（缘故进 details）→ invalid_request，都走可译的 `fault`；`writeToSession` 认「正在回退」→ conflict。
+  - `src/electron/wiring.ts` `记一次回退` → 一条 `rewind:<做法>` Run（filesWritten = 动过的）；`en.ts` 七条 msgid；`fault原样` 名单 `消息` 11 → 14。
+- **Impact**: typecheck 回绿；协议形状不变。回退结果多一种缘故 `no_archive`。留话现在也写进 pi 的会话文件（不显示给人；人那一侧的通知由后端写，重启后转录里不再有这条通知——与其他后端通知同一口径）。
+- **Verification**: 新增 `tests/workbench/rewind-backend.test.ts`（11）、`rewind-notice.test.ts`（4）、`events.test.ts` truncateAt 两条；`tests/integration/rewind.test.ts` 加三条真 pi：回退期间发话 / 压缩 / 预览 / 再回退都拒、没存档报 `no_archive`、**回退 → 停掉 → 续接 → 下一次请求里仍有那句话**（换回 `nextTurn` 时这条红，已验）；对不上那条加绝对路径与空文。全量 vitest 3336 过 / 10 跳；typecheck 0。
+
 ### 2026-09-27 — 回退的数据安全：不写到工作区外面、不无副本覆盖或挪走、做到一半也交代（分支 `agent-basics`）
 
 - **Type**: fix

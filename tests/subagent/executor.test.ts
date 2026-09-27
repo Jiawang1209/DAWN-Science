@@ -308,3 +308,62 @@ describe("中止", () => {
     expect(r.results[0]!.error).toMatch(/超过|秒/)
   })
 })
+
+/** 先吐两条过程、再回 done；done 里回显规格里的 transcript，验它真的传下去了 */
+const 吐过程Child = () => ({
+  command: process.execPath,
+  args: [
+    "-e",
+    `let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s);` +
+      `const w=o=>process.stdout.write(JSON.stringify(o)+"\\n");` +
+      `w({type:"event",event:{kind:"tool_start",toolCallId:"t1",toolName:"read",input:{path:"a"}}});` +
+      `w({type:"event",event:{kind:"output",data:"好"}});` +
+      `w({type:"done",ok:true,output:JSON.stringify(p.transcript)})})`,
+  ],
+})
+
+describe("过程（2026-09-27，子 agent 看得见）", () => {
+  it("event 行按到达顺序交给 onProgress，夹在 started 与 settled 之间；结果照旧取 done", async () => {
+    const 进度: string[] = []
+    const ex = new SubagentExecutor({
+      childOf: 吐过程Child,
+      context: CTX,
+      onProgress: (p) => 进度.push(p.type === "event" ? `event:${p.event.kind}` : p.type),
+    })
+    const r = await ex.run({ mode: "single", agent: "scout", task: "t" }, DEFS)
+    expect(进度).toEqual(["started", "event:tool_start", "event:output", "settled"])
+    expect(r.results[0]!.ok).toBe(true)
+  })
+
+  it("规格里带 transcript：落在 agentDir 下的 transcript/，第一次不续", async () => {
+    const r = await exec(吐过程Child).run({ mode: "single", agent: "scout", task: "t" }, DEFS)
+    expect(JSON.parse(r.results[0]!.output)).toEqual({ dir: "/tmp/w/.dawn/sub-0/transcript", resume: false })
+  })
+
+  it("续问：同一个目录、resume 为真；不发 started / settled（那两条是 chip 与账本的）", async () => {
+    const 进度: string[] = []
+    const ex = new SubagentExecutor({ childOf: 吐过程Child, context: CTX, onProgress: (p) => 进度.push(p.type) })
+    const r = await ex.续问(0, "scout", "再说一句", DEFS)
+    expect(JSON.parse(r.output)).toEqual({ dir: "/tmp/w/.dawn/sub-0/transcript", resume: true })
+    expect(进度).toEqual(["event", "event"])
+  })
+
+  it("续问一个已经没有定义的子 agent：说清楚，不换人", async () => {
+    const r = await exec().续问(0, "已删掉的", "x", DEFS)
+    expect(r.ok).toBe(false)
+    expect(r.error).toContain("已删掉的")
+  })
+
+  it("**一行被拆成两段到达**也拼得回来（按行读，不按 data 块读）", async () => {
+    const 拆着吐 = () => ({
+      command: process.execPath,
+      args: [
+        "-e",
+        `process.stdin.on("data",()=>{}).on("end",()=>{const l=JSON.stringify({type:"done",ok:true,output:"整行"})+"\\n";` +
+          `process.stdout.write(l.slice(0,10));setTimeout(()=>process.stdout.write(l.slice(10)),30)})`,
+      ],
+    })
+    const r = await exec(拆着吐).run({ mode: "single", agent: "scout", task: "t" }, DEFS)
+    expect(r.results[0]!.output).toBe("整行")
+  })
+})

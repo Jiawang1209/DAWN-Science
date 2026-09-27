@@ -32,7 +32,8 @@
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import type { SubagentDefinition } from "./definitions.js"
-import type { SubagentChildSpec } from "./protocol.js"
+import { join } from "node:path"
+import type { SubagentChildSpec, 子事件 } from "./protocol.js"
 import { 按字节截 } from "./clip.js"
 
 /**
@@ -95,6 +96,8 @@ export interface SubagentRunSummary {
 
 export type SubagentProgress =
   | { type: "started"; index: number; agent: string; task: string }
+  /** 子进程吐的一条过程（2026-09-27）。**到一行转一行**——坞里那一格要在跑的时候就看得见 */
+  | { type: "event"; index: number; event: 子事件 }
   | { type: "settled"; index: number; ok: boolean }
 
 /**
@@ -246,6 +249,25 @@ export class SubagentExecutor {
     return { results }
   }
 
+  /**
+   * 续问（2026-09-27，spec §2.3）：在第 `index` 个子 agent 的记录上再跑一轮。**进程是新的，记忆在会话文件里**——
+   * 与团队成员下一轮同一条路（`child.ts` 的 `SessionManager.continueRecent`）。墙钟、整组杀、截断都照 `spawnOne`。
+   *
+   * 不发 `started` / `settled`：那两条是 chip 与账本的，续问不是主 agent 的行动。
+   * 定义被删 / 停用了 → **说清楚，不换人**（与 `one()` 不静默降级同一条）。
+   */
+  async 续问(
+    index: number,
+    agent: string,
+    text: string,
+    definitions: readonly SubagentDefinition[],
+    signal?: AbortSignal,
+  ): Promise<SubagentResult> {
+    const definition = definitions.find((d) => d.name === agent)
+    if (!definition) return fail({ agent, task: text }, `没有名为 "${agent}" 的子 agent 了（定义被删了或停用了），续不了`)
+    return this.spawnOne(definition, { agent, task: text }, index, signal, true)
+  }
+
   private async one(
     index: number,
     task: SubagentTask,
@@ -274,6 +296,8 @@ export class SubagentExecutor {
     task: SubagentTask,
     index: number,
     signal?: AbortSignal,
+    /** 续问（2026-09-27）：续这个运行目录里那份会话，而不是新开一份 */
+    续 = false,
   ): Promise<SubagentResult> {
     const cmd = this.childOf({ definition, agent: task.agent, task: task.task })
 
@@ -295,8 +319,27 @@ export class SubagentExecutor {
         return resolve(fail(task, `子进程起不来：${message(err)}`))
       }
 
-      let out = ""
+      let 行缓冲 = ""
       let err = ""
+      /**
+       * **只留最后一条 `done`**（2026-09-27）。过程行到一行转一行，不攒——此前整串攒到 `close` 才解析，
+       * 过程行进来之后这个串会长到几 MB，而且在跑的时候一行都看不见。
+       * 解析不了的行照旧跳过：那是子进程的噪声（某个库往 stdout 打日志），不该让整个任务失败。
+       */
+      let 最后done: DoneLine | undefined
+      const 收一行 = (line: string) => {
+        const s = line.trim()
+        if (!s.startsWith("{")) return
+        let v: { type?: string; event?: 子事件 }
+        try {
+          v = JSON.parse(s) as { type?: string; event?: 子事件 }
+        } catch {
+          return
+        }
+        if (v.type === "done") 最后done = v as DoneLine
+        // 已收尾（中止 / 超时）之后到的过程不再转：chip 已经 settled，再来一行只会让界面以为它还活着
+        else if (v.type === "event" && v.event && !settled) this.onProgress({ type: "event", index, event: v.event })
+      }
       let settled = false
       // 墙钟(H7):到点按中止同一条路杀干净、报超时
       const 墙钟 = setTimeout(() => {
@@ -321,13 +364,22 @@ export class SubagentExecutor {
 
       child.stdout.setEncoding("utf8")
       child.stderr.setEncoding("utf8")
-      child.stdout.on("data", (d: string) => (out += d))
+      child.stdout.on("data", (d: string) => {
+        行缓冲 += d
+        let i: number
+        while ((i = 行缓冲.indexOf("\n")) >= 0) {
+          收一行(行缓冲.slice(0, i))
+          行缓冲 = 行缓冲.slice(i + 1)
+        }
+      })
       child.stderr.on("data", (d: string) => (err += d))
 
       child.on("error", (e) => done(fail(task, `子进程起不来：${e.message}`)))
 
       child.on("close", (code) => {
-        const report = parseDone(out)
+        if (行缓冲.trim()) 收一行(行缓冲)
+        行缓冲 = ""
+        const report = 最后done
 
         if (!report) {
           // 两种都在这里落地，措辞不同：非 0 退出有码可报；
@@ -377,6 +429,7 @@ export class SubagentExecutor {
       // 规格从 stdin 递进去，**不走命令行参数**：任务文本可以很长，
       // 而且里面什么字符都可能有
       const ctx = this.context
+      const agentDir = ctx.agentDirOf(index)
       const spec: SubagentChildSpec = {
         agent: task.agent,
         task: task.task,
@@ -385,7 +438,9 @@ export class SubagentExecutor {
         // **定义里写了 model 就以定义为准**——子 agent 挑一个便宜模型是常见用法
         model: definition.model ?? ctx.model,
         cwd: ctx.cwd,
-        agentDir: ctx.agentDirOf(index),
+        agentDir,
+        // 会话落在运行目录里（2026-09-27）：坞里那一格重开后读它、接着问时续它
+        transcript: { dir: join(agentDir, "transcript"), resume: 续 },
         ...(definition.tools ? { tools: definition.tools } : {}),
         ...(ctx.modelsPath ? { modelsPath: ctx.modelsPath } : {}),
         ...(ctx.credentials ? { credentials: ctx.credentials } : {}),
@@ -405,28 +460,6 @@ interface DoneLine {
   ok: boolean
   output?: string
   error?: string
-}
-
-/**
- * 取 stdout 里最后一条 `done`。
- *
- * 逐行解析而不是整体 `JSON.parse`：子进程可以先写若干条进度行。
- * **解析不了的行直接跳过**——那是子进程的噪声（比如某个库往 stdout 打日志），
- * 不该让整个任务失败。
- */
-function parseDone(stdout: string): DoneLine | undefined {
-  let found: DoneLine | undefined
-  for (const line of stdout.split("\n")) {
-    const s = line.trim()
-    if (!s.startsWith("{")) continue
-    try {
-      const v = JSON.parse(s) as { type?: string }
-      if (v.type === "done") found = v as DoneLine
-    } catch {
-      continue
-    }
-  }
-  return found
 }
 
 function fail(task: SubagentTask, error: string): SubagentResult {

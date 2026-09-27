@@ -19,8 +19,12 @@ import {
   type QueuedMessage,
   type SessionSnapshot,
   type SessionUpdate,
+  type SubagentInfo,
   type TranscriptItem,
 } from "../protocol/events.js"
+import { 子转录id } from "../protocol/subagent-id.js"
+import type { 子转录事件 } from "../subagent/protocol.js"
+import { 活动一句 } from "../subagent/activity.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/version.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
 
@@ -124,6 +128,13 @@ interface Entry {
   当前模型: string | undefined
   /** 正在压缩的那条标记的 id（2026-09-27）。`compaction_end` 收它；没有（没有 start 的 end）就新起一条 */
   压缩中: string | undefined
+  /**
+   * 这是一段子 agent 的转录（2026-09-27，spec §4.3）。**它的更新不给「全听」**：飞书 / 微信的「答完了」通知
+   * 与定时任务的完成判定只认真会话——子转录第一句是「你」、最后一句是 agent 的 final，不挡的话每派一个子 agent 手机就响一次。
+   */
+  子转录?: true | undefined
+  /** 子转录的头信息（谁、任务、状态、交回的结果、能不能接着问）。只有子转录有 */
+  子agent?: SubagentInfo | undefined
 }
 
 export class SessionTranscripts {
@@ -149,7 +160,7 @@ export class SessionTranscripts {
   }
 
   /** 会话创建时登记。`kind` 决定字节进终端还是进对话，之后不会变。 */
-  track(sessionId: SessionId, kind: "native" | "pty" | "cli" | "kernel" | "acp"): void {
+  track(sessionId: SessionId, kind: "native" | "pty" | "cli" | "kernel" | "acp", opts?: { 子转录?: true }): void {
     if (this.entries.has(sessionId)) return
     this.entries.set(sessionId, {
       kind,
@@ -168,6 +179,7 @@ export class SessionTranscripts {
       思考起于: undefined,
       当前模型: undefined,
       压缩中: undefined,
+      ...(opts?.子转录 ? { 子转录: true as const } : {}),
     })
   }
 
@@ -224,11 +236,23 @@ export class SessionTranscripts {
     this.pinned.delete(sessionId)
   }
 
-  /** 会话彻底不要了时清掉。这是内存，不是账本。 */
+  /** 会话彻底不要了时清掉。这是内存，不是账本。子转录跟着父会话走（2026-09-27）——它们也只是内存 */
   forget(sessionId: SessionId): void {
-    this.entries.delete(sessionId)
-    this.subscribed.delete(sessionId)
-    this.pinned.delete(sessionId)
+    this.忘掉(sessionId)
+    this.忘掉子转录(`${sessionId}#sub:`)
+  }
+
+  private 忘掉(id: SessionId): void {
+    this.entries.delete(id)
+    this.subscribed.delete(id)
+    this.pinned.delete(id)
+  }
+
+  /** 忘掉 id 以这个前缀开头的子转录（`<会话>#sub:` 是全部；`<会话>#sub:<调用>:` 是一次调用那一组） */
+  private 忘掉子转录(前缀: string): void {
+    for (const id of [...this.entries.keys()]) {
+      if (id.startsWith(前缀) && this.entries.get(id)?.子转录) this.忘掉(id)
+    }
   }
 
   dispose(): void {
@@ -583,6 +607,27 @@ export class SessionTranscripts {
         agents.sort((a, b) => a.index - b.index)
 
         this.putItem(sessionId, e, { type: "subagents", id, agents })
+        // 子转录（2026-09-27）：start 开一段；end 不碰它（它由 `subagent_event` 的 settled 收尾，先于 end 到）
+        if (event.kind === "subagent_start") this.开子转录(sessionId, event.toolCallId, event.index, event.agent, event.task)
+        return
+      }
+
+      /**
+       * 子 agent 的一条过程 / 跑完了（2026-09-27，spec §4.3）。过程翻进它那段子转录（与会话同一套归并——
+       * 文本增量并进同一条发言，不是一段一条）；`tool_start` 顺手换掉 chip 上那一句——**只换还在跑、且不是接着问的**：
+       * 接着问是旁边问的，不是主 agent 的事，跑完的 chip 不能被它重新点亮。
+       */
+      case "subagent_event": {
+        const 子 = 子转录id(sessionId, event.toolCallId, event.index)
+        const ce = this.entries.get(子)
+        const ev = event.event
+        if (ce) {
+          if (ev.kind === "settled") this.子agent收尾(子, ce, ev, event.toolCallId)
+          else this.ingest(子, { ...ev, sessionId: 子 } as AgentEvent)
+        }
+        if (ev.kind === "tool_start" && !ce?.子agent?.asking) {
+          this.chip换一句(sessionId, e, event.toolCallId, event.index, 活动一句(ev.toolName, ev.input))
+        }
         return
       }
 
@@ -672,6 +717,10 @@ export class SessionTranscripts {
     if (!e) return false
     const i = e.items.findIndex((x) => x.id === itemId)
     if (i < 0) return false
+    // 撤掉的 chip 组，它们的子转录一起忘（2026-09-27）：chip 没了就再也点不开，留着只是一段够不着的内存
+    for (const x of e.items.slice(i)) {
+      if (x.type === "subagents") this.忘掉子转录(`${sessionId}#sub:${x.id.slice("sub:".length)}:`)
+    }
     e.items = [...e.items.slice(0, i), ...e.items.slice(i).filter((x) => x.type === "cell")]
     e.openTurnId = undefined
     e.思考起于 = undefined
@@ -865,6 +914,72 @@ export class SessionTranscripts {
     this.putItem(sessionId, e, { ...item, thinkingMs: (item.thinkingMs ?? 0) + ms })
   }
 
+  private 开子转录(会话: SessionId, toolCallId: string, index: number, agent: string, task: string): void {
+    const id = 子转录id(会话, toolCallId, index)
+    this.track(id, "native", { 子转录: true })
+    const ce = this.entries.get(id)!
+    ce.子agent = { agent, task, status: "running", canAsk: false, askWhy: "running" }
+    this.userTurn(id, task)
+    this.bump(id, ce, { type: "subagent", subagent: ce.子agent })
+  }
+
+  private 子agent收尾(id: SessionId, ce: Entry, ev: Extract<子转录事件, { kind: "settled" }>, toolCallId: string): void {
+    // 还开着的那段发言收口：子进程被杀时没有 turn_end，不收的话那条永远「还在说」
+    this.ingest(id, { kind: "turn_end", sessionId: id })
+    const 旧 = ce.子agent
+    if (!旧) return
+    const 团队 = toolCallId.startsWith("team:")
+    if (ev.followUp) {
+      // 接着问的那一轮：主 agent 那一轮的 status / result 不动（答复不回主 agent，D3）；失败出声
+      if (!ev.ok) this.notice(id, `这一问没答完：${ev.error ?? "没有给出原因"}`)
+      const { asking: _a, askWhy: _w, ...留 } = 旧
+      ce.子agent = 团队 ? { ...留, canAsk: false, askWhy: "team" } : { ...留, canAsk: true }
+    } else {
+      const { error: _e, askWhy: _w, ...留 } = 旧
+      ce.子agent = {
+        ...留,
+        status: ev.ok ? "ok" : "error",
+        ...(ev.ok ? {} : { error: ev.error ?? "子 agent 失败，但没有给出原因" }),
+        ...(ev.result ? { result: ev.result } : {}),
+        canAsk: !团队,
+        ...(团队 ? { askWhy: "team" as const } : {}),
+      }
+    }
+    this.bump(id, ce, { type: "subagent", subagent: ce.子agent })
+  }
+
+  private chip换一句(sessionId: SessionId, e: Entry, toolCallId: string, index: number, activity: string): void {
+    const id = `sub:${toolCallId}`
+    const prior = e.items.find((i) => i.id === id)
+    if (prior?.type !== "subagents") return
+    const at = prior.agents.findIndex((a) => a.index === index)
+    const a = prior.agents[at]
+    if (!a || a.status !== "running" || a.activity === activity) return
+    this.putItem(sessionId, e, { type: "subagents", id, agents: prior.agents.map((x, i) => (i === at ? { ...x, activity } : x)) })
+  }
+
+  /**
+   * 你在坞里接着问（2026-09-27，spec §2.3）：那句进子转录、标 `asking`。**不能问就回 false**，调用方据此报 `conflict`——
+   * 在答的时候、还在跑的时候、团队成员都不行。**查与标是同一步**（同步、中间不让出）：两次并发的续问只有一次拿得到。
+   */
+  子agent续问开始(id: SessionId, text: string): boolean {
+    const ce = this.entries.get(id)
+    if (!ce?.子agent?.canAsk) return false
+    const { askWhy: _w, ...留 } = ce.子agent
+    ce.子agent = { ...留, asking: true, canAsk: false, askWhy: "asking" }
+    this.userTurn(id, text)
+    this.bump(id, ce, { type: "subagent", subagent: ce.子agent })
+    return true
+  }
+
+  /** 读盘建起来的子转录（后端 `openSubagent`）写头信息；后端发现续不了时也用它改 `canAsk` */
+  设子agent(id: SessionId, info: SubagentInfo): void {
+    const ce = this.entries.get(id)
+    if (!ce) return
+    ce.子agent = info
+    this.bump(id, ce, { type: "subagent", subagent: info })
+  }
+
   /** 写入或覆盖一条 item（按 id），并推送。 */
   private putItem(sessionId: SessionId, e: Entry, item: TranscriptItem): void {
     const i = e.items.findIndex((x) => x.id === item.id)
@@ -907,7 +1022,8 @@ export class SessionTranscripts {
       )
       return
     }
-    for (const cb of [...this.全听]) cb(update)
+    // 子转录不给全听（2026-09-27，见 Entry.子转录）
+    if (!e.子转录) for (const cb of [...this.全听]) cb(update)
     if (!this.subscribed.has(sessionId) && !this.pinned.has(sessionId)) return
     // 复制一份再遍历：监听者可能在回调里退订
     for (const cb of [...this.listeners]) cb(update)
@@ -956,6 +1072,7 @@ export class SessionTranscripts {
       ...(e.team ? { team: e.team } : {}),
       ...(e.kernels ? { kernels: e.kernels } : {}),
       ...(e.queued ? { queued: e.queued } : {}),
+      ...(e.子agent ? { subagent: e.子agent } : {}),
     }
   }
 }

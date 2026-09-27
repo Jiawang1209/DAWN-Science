@@ -8,54 +8,39 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-27 — 回退界面复审六条：正在回退按会话记着、面板写「这段还没说过话」、找不到那句不开框、标题按码点截断（分支 `agent-basics`）
-
-- **Type**: fix
-- **Motivation**: 复审 d12d04c：界面不知道回退正在进行，第二下点击 / 面板会再发一次预览，看到的是说「发送」的「正在回退，回退完再发」；面板「回到上一句之前」在没说过话时要按了才说（spec §2.1 要列成不可用并写缘故）；找不到那句时确认框标题是「回到「」之前？」；`摘` 用 `slice` 会劈开 emoji；压缩中灰掉按钮没有单测；jsdom 里量 `opacity` 什么也证明不了。
-- **What**: `state/rewind.ts` 新增 `$回退中`（key 为 `sessionId`，只在内存）——`回退这一轮` 从预览起记上、执行做完 / 失败、预览失败、框没选就关（`onDismiss`）时抹掉，同一段再来一下什么也不发；新增 `找这句` / `最后一句`；标题 `摘` 按码点截断、多行压一行、无字时用「回到那句之前？」。`ConversationView` 新增 `rewinding`，按钮理由「正在回退，等它做完」排在「在跑」前；`CommandContext` 新增 `saidSomething`（缺省 = 没说过）与 `rewinding`，面板那条分别写「这段还没说过话」「正在回退，等它做完」；`state/transcript.ts` 新增布尔派生 `$说过话` 供壳订阅。App 找不到那句时出声「回退没成：这句不在对话里了」。`rewindLast` 的出声保留为兜底。用户气泡宽度未动（待作者定）。
-- **Impact**: 无协议变化、无新操作；三条新 en 文案。
-- **Verification**: 新增单测：连点两下只发一次预览、各收尾路径放开、选了之后的 `onDismiss` 不提前放开、码点截断 / 多行 / 无字标题、`找这句` / `最后一句`、压缩中按钮灰着、正在回退时按钮与面板的理由；删掉 jsdom 的 opacity 断言（常驻由 e2e 量）。`npx vitest run` 3388 过、typecheck、build 通过。
-
-### 2026-09-27 — 回退这一轮 · 界面：每句下面常驻「↶ 回到这句之前」、确认框逐个文件点名、命令面板一条（分支 `agent-basics`）
-
-- **Type**: feat
-- **Motivation**: spec §2——回退要看得见（常驻、带字，不做悬停才出现）、按之前说清会动哪些文件、内核变量回不去要大声说。
-- **What**: `src/ui/state/rewind.ts`（确认框内容纯函数 + 预览→问→执行→放回输入框流程）、`src/ui/rewind.tsx`（清单正文）、`回退图标`；`views.tsx` 用户气泡动作行在复制 / 修改之后加带字按钮，忙着时灰着、理由走 `aria-description`（设计契约禁 `title=`；不改 `aria-label` 以免换掉名字）；`App.tsx` 主区与坞里那段都接 `onRewind`（只 native），命令面板 `session.rewind`（没说过话时按下出声）；动作行 `flex-wrap`，窄处换行不溢出。
-- **Impact**: 自己的短气泡会被动作行撑宽到约 180px（盒子宽取 max(气泡, 动作行)，为保住「图标对齐气泡左缘」）；视觉基线对话 / 坞里的对话 / 命令面板六张看过 diff 后重存。
-- **Verification**: 新增 `tests/ui/state/rewind.test.ts`、`tests/ui/rewind-button.test.tsx`、commands / 设计契约各一条；vitest 全套 3374 绿、typecheck、build；e2e：composer-history-copy（新增坞里不溢出一条）、palette、context-compaction、side-session、redirect、stick-to-bottom、cost 全绿，视觉基线重存后连验两遍；一次性探针点按钮→确认框→「文件和对话一起回退」→通知出现、原文回输入框，截图确认。
-
-### 2026-09-27 — 回退复审五条 + `appeared`：转述期间算忙、留话失败不连累回退、账本如实、技能按真名认、关会话等回退（分支 `agent-basics`）
-
-- **Type**: fix
-- **Motivation**: Task 5 复审：①空闲时发带图的一句要转述，人那句先进转录、`送一轮` 几秒后才开跑，`inFlight` 为 0 → 回退 / 压缩从这条缝过去，转录与 pi 分叉；②文件退了、对话撤了之后留话失败，整次回退被报成失败 → 后端不截转录、不出通知、不记账；③`rewind:<做法>` 那条 Run 一律 `hasError:false`；④`原文对得上` 把 `/data.csv 看一下` 当技能免核、`/skill:画图`（中文名）`\w` 认不出；⑤回退途中 `stop()` 会在 `navigateTree` 半路拆会话。另：5fad8a9 给 `回退结果` 加了 `appeared`，而 `rewindTurn.response` 是 `.strict()`，带它的回执过不了校验。
-- **What**:
-  - `src/runtime/native.ts`：`NativeSession.转述中` 在 `转述()` 里进出（空闲 / 调整方向两条路都覆盖），`不许在跑` 与 `compact` 把它算作忙；留话 `sendCustomMessage` 失败接住、回执带 `noteError`；`回退` 记下正在进行的那次，`stop()` 摘表之后先等它；`原文对得上` 按 pi 的两条展开路认——`/skill:名` 看记录里那句是否以 `<skill name="名"` 开头，`/名` 查此刻的 `promptTemplates`，其余斜杠开头照常核对（导出供测试）。
-  - `src/runtime/types.ts` `回退回执` 加 `noteError`；`src/protocol/operations.ts` `rewindTurn.response` 加可选 `appeared` / `noteError`（协议仍 8.2，未发布的同一轮）。
-  - `src/workbench/rewind-notice.ts`：`noteError` 出声（「没能把这次回退告诉 agent…」）；`appeared` 数出来、点名去处；没删掉的临时文件照失败列、不说成「没退成」；只冒出来也不说「没有动过文件」。
-  - `src/workbench/backend.ts` / `src/electron/wiring.ts`：`记一次回退` 多一个 `出错`（对话没撤掉 / 有 `failed` / `noteError`）→ Run 的 `hasError`；`filesWritten` 连 `appeared` 一起记。
-- **Impact**: 协议纯新增可选字段；mock 不涉及（回退走真后端 + mock 推理服务器，无独立 mock 分支）。无新 msgid（忙时沿用「agent 还在跑…」「这一轮还没说完…」；通知不经 i18n）。
-- **Verification**: 先红后绿——`tests/runtime/rewind-guards.test.ts`（6：转述期间预览 / 回退 / 压缩都拒、中文技能名、一段根路径、模板名单、技能删了仍认）；`tests/integration/rewind.test.ts` 加真 pi 两条（留话失败回执带 `noteError` 且文件已退；回退途中 `stop()` 次序 navigate → dispose，改前实测为反）+ `/data.csv` 一行；`rewind-backend` 三条、`rewind-notice` 三条、协议一条。rewind + workbench + runtime 630 过；全量 vitest 3374 过 / 10 跳；typecheck 0。
-
-### 2026-09-27 — 回退这一轮 · 后端两个操作 + 转录截断 + 账本；给模型的话落盘、回退互斥（分支 `agent-basics`）
+### 2026-09-27 — 回退这一轮：每句自己说的话下面「↶ 回到这句之前」；文件与对话一起退，内核没回退要大声说（学自 Claude Code `/rewind`、Codex 逐轮 undo；分支 `agent-basics`）
 
 - **Type**: feat + fix
-- **Motivation**: plan `plans/2026-09-27-回退这一轮.md` Task 5：协议 8.2 的 `previewRewind` / `rewindTurn` 在后端还没有处理器（typecheck 红在这里）。Task 4 复审另记四条：给模型的话走 `deliverAs: "nextTurn"` 只在 pi 内存里，下一句之前重启就丢；`rewind` 查完「不在跑」之后长时间等存档、不上锁（中途发话 / 连按两次会把撤掉的几轮接回来）；没存档时只退文件报 `gap` 而预览报 `no_archive`；原文核对对 `/` 开头一律免核、空文凭 `includes("")` 蒙过去。
-- **What**:
-  - `src/runtime/native.ts`（commit 769c963）：留话改成不带 `deliverAs` 的 `sendCustomMessage`——不在流式时 pi 写进会话文件（`custom_message`），续接后照样进请求；`回退中` 从查忙到留完话整段立着，这期间 `送一轮` / `writeWithImages` / `compact` / 预览 / 再回退都拒（「正在回退，回退完再发」）；无存档抛 `回退不了("no_archive")`；`原文对得上()` 只对 `/名字` 形式免核、空文只对只附了图的那句。检查点存档与 spec §7 写明「收尾之后还在写的后台写手算你改的、留着不退」。
-  - `src/workbench/events.ts` `truncateAt()`：那句起往后撤（压缩标记一起、你敲的 `cell` 留着），清 `openTurnId` / 悬着的 `压缩中`，推一帧快照。
-  - `src/workbench/rewind-notice.ts`：回退之后那句通知（内核那句固定措辞）。
-  - `src/session/manager.ts` `previewRewind` / `rewind`（后者要租约）；`src/workbench/backend.ts` 两个处理器：按转录数「倒数第几句」、远端只许撤对话、对话真撤了才截转录、写通知、`记一次回退`；错误分码——还在跑 / 正在回退 → conflict，对不上 / 文件回退不了（缘故进 details）→ invalid_request，都走可译的 `fault`；`writeToSession` 认「正在回退」→ conflict。
-  - `src/electron/wiring.ts` `记一次回退` → 一条 `rewind:<做法>` Run（filesWritten = 动过的）；`en.ts` 七条 msgid；`fault原样` 名单 `消息` 11 → 14。
-- **Impact**: typecheck 回绿；协议形状不变。回退结果多一种缘故 `no_archive`。留话现在也写进 pi 的会话文件（不显示给人；人那一侧的通知由后端写，重启后转录里不再有这条通知——与其他后端通知同一口径）。
-- **Verification**: 新增 `tests/workbench/rewind-backend.test.ts`（11）、`rewind-notice.test.ts`（4）、`events.test.ts` truncateAt 两条；`tests/integration/rewind.test.ts` 加三条真 pi：回退期间发话 / 压缩 / 预览 / 再回退都拒、没存档报 `no_archive`、**回退 → 停掉 → 续接 → 下一次请求里仍有那句话**（换回 `nextTurn` 时这条红，已验）；对不上那条加绝对路径与空文。全量 vitest 3336 过 / 10 跳；typecheck 0。
-
-### 2026-09-27 — 回退的数据安全：不写到工作区外面、不无副本覆盖或挪走、做到一半也交代（分支 `agent-basics`）
-
-- **Type**: fix
-- **Motivation**: 审查用探针复现：`rm -rf out && ln -s 别处 out` 之后回退会**跟着链接写到工作区外面**、还把外面的文件挪进废纸篓；悬空链接被悄悄顶掉；文件被换成目录时整个目录（连 `data/raw`）被挪；就位失败时换下的那份下落不明；回退中途出错整个 reject、段不收；`开轮` / `收尾` 写账失败会 reject。
-- **What**（`src/project/checkpoints.ts`，commit 4dccf18）：`落点()` 逐级 `lstat`（不许链接 / 非目录）+ 父目录 realpath 必须在工作区里，源、目标、`.dawn/trash` 都过它；只挪普通文件；「不在」只认 ENOENT；就位用 `link`+`unlink`（EEXIST 不顶掉，半路冒出的先进废纸篓再试一次）；就位失败把换下的放回，放不回就在 `failed` 里写出废纸篓路径；挪动阶段不 reject、finally 收段（拍不上记 `store_error` 断档）；废纸篓先写 `manifest.json`、每挪一件更新；`记不丢()` 让开轮 / 收尾真不 reject；快照里带 `..` / 绝对路径 / 反斜杠的键与坏对象名不认并喊一声；临时拷贝 `COPYFILE_EXCL`；`removed` 只列真挪了的；同毫秒两次回退废纸篓目录加 `-2`。
-- **Impact**: 回退结果形状不变（`failed` 多了带原因的条目）；废纸篓目录里多一份清单。剩余风险：检查与写之间的瞬时换链接（Node 无 `openat`）；不支持硬链接的盘退回 `rename` 的竞争窗口。
-- **Verification**: 15 条新测试（先红后绿：外指链接、`.dawn` 是链接、悬空链接、文件↔目录互换、只改大小写、半路冒出、就位与放回都失败、收尾拍不上、中途意外、清单、同毫秒、被改过的存档、账本写不进）；`tests/project` 89/89，全量 vitest 3305 过 / 10 跳；审查探针三个场景都安全。
+- **Motivation**: agent 一轮改坏了脚本、覆盖了表、生成了一堆不要的图，没有一步能退回去。审阅那一屏只答「跟 HEAD 比累计改了什么」，还分不清谁改的；
+  科研仓库把 `out/`、`figures/` 写进 `.gitignore`，git 救不了；账本记得改了哪些路径，不记得原来的内容。
+- **What**（spec `specs/2026-09-27-回退这一轮-design.md`；plan `plans/2026-09-27-回退这一轮.md` Task 1–8；本条合并了实现期间的五条分条记录）：
+  - **影子存档** `src/project/checkpoints.ts`：只用 Node `fs`、不依赖 git——`.gitignore` 里的、非 git 目录里的一样存一样退；复用 `fsSnapshot()`；
+    每句第一件工具前拍开头（变过的文件以 `COPYFILE_FICLONE` 存进会话目录 `checkpoints/`），这一轮收尾拍结尾（只 stat）；快照按增量存；段 = `turn` / `rewind` / `gap`。
+    上限：单个文件 50 MB、每段会话 2 GB、工作区文件数沿用 `FS_SNAPSHOT_CAP`；存不下的逐个列在「退不回」，超额只喊一次。`data/raw/` 不存、不拷、不挪、不写（设计契约扫描）。
+  - **回退计划与执行**：我们的区间里变过的 → 改回去；这句之后你改过的 → 不动并列出来。**什么都不删**：新冒出来的与被换下的一律挪进 `.dawn/trash/rewind-<时间>/`，
+    先写 `manifest.json`、每挪一件更新（同毫秒两次加 `-2`）。三种做法：文件和对话一起（主）/ 只回退文件 / 文件退不了时只撤掉对话。
+  - **数据安全（审查探针复现后加固）**：`落点()` 逐级 `lstat` + 父目录 realpath 必须在工作区里——链接指到外面不跟、不写到工作区外；悬空链接不被悄悄顶掉；
+    文件↔目录互换时不整目录挪走（只挪普通文件）；就位用 `link`+`unlink`（EEXIST 不顶掉），失败把换下的放回、放不回就写出废纸篓路径；
+    中途出错不整个 reject，做到一半如实交代（`failed` 带原因）、段照收；每段会话一把回退锁——回退期间发话 / 压缩 / 预览 / 再回退都拒；
+    带图那句转述期间（`inFlight` 还是 0 的那几秒）也算忙；回退途中 `stop()` 先等它做完再拆会话。
+  - **运行时** `src/runtime/native.ts`：给 `toolsFor()` 的返回值每件套「先拍开头」（内置、内核、MCP、插件、subagent、团队一件不漏）；`送一轮` 收尾拍结尾；
+    对话那一半坐 pi 的 `navigateTree(entryId)`，从后往前数、核对原文（`/skill:名` 与 `/模板` 按 pi 的展开认）；**压缩线之前的那句照常定位、照常回退**。
+    给模型留的话用 `sendCustomMessage`（不带 `deliverAs`）写进 pi 会话文件——**重启后仍在**；留话失败不连累已完成的回退（回执带 `noteError`，通知里说）。远端会话不建存档、只能撤对话。
+  - **协议 8.2**（纯新增）：`previewRewind`（只读）/ `rewindTurn`；mock 同批加「改两个文件」分支（准入规则 1）。
+  - **后端**：按转录定位「倒数第几句」；对话真撤了才 `truncateAt()`（笔记本 `cell` 留着）；通知里有活内核就写「文件已回退，内核里的变量没有回退」；
+    账本一条 `rewind:<做法>` 的 Run（`hasError` 如实，`filesWritten` 含冒出来的）；错误分码走可译的 `fault`。
+  - **界面**：用户气泡动作行常驻、带字的「↶ 回到这句之前」（不悬停也看得见；在跑 / 压缩中 / 正在回退时灰着，理由走 `aria-description`）；
+    `ConfirmDialog` 逐个文件列去向、内核那句、退不了的缘故；⌘K「回到上一句之前」（没说过话时列成不可用并写「这段还没说过话」）；主区与坞里那段都接；回退中按会话记着，连点只发一次。
+- **Impact**: 协议 minor（8.1 → 8.2）、纯新增。native 会话多一个 `<会话目录>/checkpoints/`（删会话一起删）；一段会话第一次动手前把工作区存一遍（APFS 上是克隆，别的盘是真拷贝）。
+  `.dawn/trash/` 只增不减（本轮不清）。acp / cli / pty / 内核会话行为不变；远端 native 会话只能撤对话。
+  剩余风险：检查与写之间的瞬时换链接（Node 无 `openat`）；不支持硬链接的盘退回 `rename` 的竞争窗口。
+  **请作者定**：自己的短气泡现在会被动作行撑宽到约 180px（盒子宽取 max(气泡, 动作行)，为保住「图标对齐气泡左缘」）——要不要改成动作行不撑气泡。
+- **Verification**: 单测覆盖存档、计划 / 执行（含 15 条数据安全先红后绿）、协议、通知、后端、界面状态与按钮；真 pi 集成 `tests/integration/rewind.test.ts`
+  （预览、一起回退、只回退文件、在跑时拒、回退期间拒、`no_archive`、回退 → 停掉 → 续接后下一次请求仍有那句话、留话失败、途中 `stop()` 次序、压缩前那句）。
+  `e2e/rewind.spec.ts` 7 条（一起回退含 `out/` 被忽略、只回退文件、你后来改的不动、按钮常驻量 opacity、在跑时灰着、⌘K、坞里那段）；
+  **变异**：去掉「先拍开头」→ 7 条红 5 条（只量按钮的两条照绿，符合预期），已还原。
+  视觉基线：界面那轮（d12d04c）看过 diff 后重存 6 张（对话 / 坞里的对话 / 命令面板 × 明暗，红只在用户气泡下那一行与面板新行）；终局 `test:e2e:visual` 14/14 直接过、未重存。
+  终局全量（635d5a7 之上）：vitest 3388 过 / 10 跳；typecheck 0；build 过；e2e（`test:e2e:only`，真实构建）530 过 / 1 跳 / 0 红（上一轮「上下文用量与压缩」终局 522）。真机：（作者走一遍后补）。
 
 ### 2026-09-27 — 上下文用量与压缩：仪表常驻、pi 的自动压缩出声、`/compact` 手动压（学自 Claude Code / Codex；分支 `agent-basics`）
 

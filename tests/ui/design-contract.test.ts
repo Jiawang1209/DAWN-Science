@@ -17,7 +17,7 @@
  * 直到作者打开发现白屏。那条现在也在这里。
  */
 import { describe, expect, it } from "vitest"
-import { readdirSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { EN } from "../../src/ui/i18n/en.js"
 
@@ -1279,18 +1279,35 @@ describe("设计契约 · 工具名要过得了模型 API", () => {
   it("**代码里写死的工具名都是 `^[a-zA-Z0-9_-]+$`**", () => {
     const 形状 = /^[a-zA-Z0-9_-]+$/
     const 坏的: string[] = []
-    for (const f of ["../../src/tools/run-code.ts", "../../src/tools/mcp-tool.ts", "../../src/tools/subagent.ts"]) {
-      let src: string
-      try {
-        src = readFileSync(new URL(f, import.meta.url), "utf8")
-      } catch {
-        continue // 这个文件可能不存在（工具增减过），不存在不算错
-      }
-      for (const m of src.matchAll(/^\s*name:\s*"([^"]+)"/gm)) {
+    let 读到 = 0
+    for (const f of [
+      "../../src/tools/run-code.ts",
+      "../../src/tools/mcp-tool.ts",
+      "../../src/tools/subagent.ts",
+      "../../src/tools/propose-plan.ts",
+      "../../src/tools/inspect-data.ts",
+    ]) {
+      /**
+       * 2026-09-28：原来是 `new URL(f, import.meta.url)` + `catch { continue }`——这个文件在 jsdom 里跑，
+       * `import.meta.url` 不是 file: 协议，每个文件都抛、都被当成「不存在」跳过，这条扫描一直什么都没扫。
+       * 改成按目录拼路径；不存在照旧不算错，但**一个都没读到**要红。
+       */
+      const 路径 = join(import.meta.dirname, f)
+      if (!existsSync(路径)) continue // 这个文件可能不存在（工具增减过），不存在不算错
+      读到++
+      for (const m of readFileSync(路径, "utf8").matchAll(/^\s*name:\s*"([^"]+)"/gm)) {
         if (!形状.test(m[1]!)) 坏的.push(`${f}：${m[1]}`)
       }
     }
+    expect(读到, "一个工具文件都没读到——路径拼错了，这条扫描形同虚设").toBeGreaterThan(0)
     expect(坏的, "这个名字送进模型会让整轮请求 400，而报错里不会提到它").toEqual([])
+  })
+
+  it("**先出方案的两个工具名**（写在 `protocol/plan.ts` 的常量里）也是 `^[a-zA-Z0-9_-]+$`", () => {
+    const src = readFileSync(join(import.meta.dirname, "../../src/protocol/plan.ts"), "utf8")
+    const 名 = [...src.matchAll(/^export const (出方案工具名|看数据工具名) = "([^"]+)"/gm)].map((m) => m[2]!)
+    expect(名, "两个常量都得找得到——找不到说明改了名字，这条扫描要跟着改").toHaveLength(2)
+    for (const n of 名) expect(n).toMatch(/^[a-zA-Z0-9_-]+$/)
   })
 })
 
@@ -1691,5 +1708,21 @@ describe("pi 扩展与工具启停", () => {
     expect(
       启停违例(`const 别的 = s.getActiveToolNames().filter((n) => n !== X)\ns.setActiveToolsByName(on ? [...别的, READ_MAIN_SESSION] : 别的)`),
     ).toEqual([])
+  })
+})
+
+/**
+ * **先出方案的门不许被绕过**（2026-09-27，spec §4 ③）。
+ *
+ * 方案期「只看不改」是 `native.ts` 给每一件工具套的一层门撑着的——提示词只是帮它规划。那层门挂在一个名字上：
+ * 交给 pi 的 `customTools` 是 `方案期包过的`。哪天有人为了修别的把它换回 `customTools`，**单测照样全绿**
+ * （判据在 `policy/plan-mode.ts` 里逐条测着），而门一次都不会被调——`ToolGate` 当年就是这么闲置了很久的。
+ */
+describe("设计契约 · 先出方案", () => {
+  it("**`native.ts` 交给 pi 的 `customTools` 只能是 `方案期包过的`**", () => {
+    const src = readFileSync(join(import.meta.dirname, "../../src/runtime/native.ts"), "utf8")
+    const 交的 = [...src.matchAll(/customTools:\s*([A-Za-z_\u4e00-\u9fa5][\w\u4e00-\u9fa5]*)/g)].map((m) => m[1])
+    expect(交的.length, "找不到 `customTools:`——建会话那一句改了形状，这条扫描要跟着改").toBeGreaterThan(0)
+    expect(交的.every((x) => x === "方案期包过的"), `交给 pi 的是 ${交的.join("、")}`).toBe(true)
   })
 })

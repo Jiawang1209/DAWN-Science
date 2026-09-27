@@ -8,29 +8,30 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-27 — 窄附栏里仪表只留环 + 数，坞里权限那颗不再被顶出卡外（分支 `agent-basics`）
+### 2026-09-27 — 上下文用量与压缩：仪表常驻、pi 的自动压缩出声、`/compact` 手动压（学自 Claude Code / Codex；分支 `agent-basics`）
 
-- **Type**: fix
-- **Motivation**: 视觉基线「坞里的对话」抓到：坞里那张卡（对话格 380 宽）附栏五样都是 `flex: 0 0 auto`，整句「上下文 <1%」把权限那颗顶出卡外，只剩「●完」；坞开着时主区的工作目录 chip 也从 155px 被挤到约 60px。
-- **What**: `ContextMeter` 把「上下文」放进 `.ctx-meter-word`，按钮 `aria-label` 带全句（快满了那句也是）；`styles.css` 挂在已有的 `.conversation` 容器上（不在附栏另起容器：布局隔离会让 `.menu-scrim` 这类 fixed 遮罩只盖住附栏）：对话格 ≤720px 藏「上下文」三个字，≤440px（只有坞）再藏「优化输入」可见字（它两种态都自带 `aria-label`）。只收仪表时坞里实测仍差约 46px，所以多收了这一颗；挑它不挑「上传文件」是因为后者的字是作者点名要的。
-- **Impact**: 主区坞关着照写「上下文 N%」；坞开着的主区与坞里写「◯ N%」；坞里「优化输入」只剩星 + 箭头。读屏名字不变。已知：坞拖到最窄 280 时附栏仍放不下（未处理）。视觉基线「对话」「坞里的对话」需重存（另一步做）。
-- **Verification**: 新 e2e 两条（坞里权限那颗的盒子在卡内、附栏 `scrollWidth <= clientWidth`、仪表可见字只剩「<1%」而名字是「上下文 <1%」；主区整句可见）；新单测（aria-label 与 span 结构）；`vitest tests/ui` 925/925、typecheck、build、`context-compaction` + `side-session` e2e 全绿；视觉 diff 看过：坞里只剩仪表与优化输入两处差、权限那颗完整。
-
-### 2026-09-27 — 上下文用量与压缩 e2e：测试旋钮接线、spec §7 各条、旧用例改口径（分支 `agent-basics`，plan Task 8）
-
-- **Type**: test
-- **Motivation**: 仪表、压缩标记、三个手动入口都已接上，但没有一条跑真实构建产物的判据；pi 默认保留最近 2 万 token，短对话「没有可压缩的」，e2e 与 dev:mock 里演不出压缩。`context-usage.spec.ts` 仍按旧口径等 12（已用改走 pi `getContextUsage()` 后是 20）。
-- **What**: 测试旋钮 `DAWN_COMPACT_KEEP_RECENT_TOKENS`（`main.ts` → `wiring.ts` 的 `compactKeepRecentTokens` → `NativeRuntime({ compaction })`，只在内存覆盖）；`e2e/fixtures.ts` 选项与 `scripts/dev-mock.mjs` 缺省 1，两边同一个旋钮。新 `e2e/context-compaction.spec.ts` 七条：仪表常驻（量 opacity）、悬停出真数与自动压缩线、移开收、点击钉住；`/compact` 先出「正在压缩上下文…」（MutationObserver 记下出现过）再收成同一条「已压缩」、摘要可展开、仪表说已压缩；⌘K 可用时压得出来；「塞满上下文」自动压缩写「自动：快到上限了」；`/` 菜单选中写 `/compact `；ACP 仪表写读不到、`/` 菜单无那条、⌘K 那条灰着说原因；ACP 里 `/compact` 原样发给 agent。`context-usage.spec.ts` 改口径 12→20 并更正头注。顺手：`slash-menu.tsx` 新 `按能压滤()`，`views.tsx` 两处 `/` 菜单只滤 `compact` 那一条，不再滤掉整个 `command` 类（Task 7 复审）。
-- **Impact**: 真实运行不设旋钮，照 pi 默认；dev:mock 里短对话也能按「现在压缩」。视觉基线 6 张（对话、命令面板、坞里的对话 × 明暗）因仪表与新命令项而红——留给 Task 9 重存，本次未动基线。
-- **Verification**: 新 spec 与 `context-usage.spec.ts` 9 条全过；全套 e2e 514 过 / 6 红（仅上述视觉基线，diff 图确认差异只在仪表与命令面板新行）/ 1 跳过；vitest 3265 过、10 跳过（`slash-menu.test.ts` 加 `按能压滤` 两条）；typecheck 过。
-
-### 2026-09-27 — 上下文仪表复审修补：键盘焦点、附栏位置、一件事只取一次（分支 `agent-basics`，plan Task 6）
-
-- **Type**: fix
-- **Motivation**: Task 6 复审抓到三条要紧的与五条小的：Tab 进「现在压缩」后 150ms 弹层带着焦点卸掉（焦点掉回 body）；仪表插在 `.sess-config` 与 `.perm-pill` 之间把兄弟选择器弄断，native 上仪表掉到左边、ACP 上两个 `margin-left:auto` 撑出一道缝；若干路径无测。
-- **What**: `context-meter.tsx` 焦点处理挪到整块 `.ctx-meter`，块内挪焦不算失焦；`use上下文用量` 三个 effect 合成一个、按上次的值判断（换会话 / 忙→闲 / 不忙时记号变了），压缩开始不取；正在压缩时「现在压缩」灰着说「正在压缩上下文，压完再说」（新 i18n）；`CompactionRow` 挂上时就失败的用 `role="status"`、眼看着失败才 `alert`；`styles.css` 仪表右对齐紧贴权限那颗（native 与 ACP 都是），`calc(100vw - 32px)` 改走 `--dawn-space-8`。
-- **Impact**: 仅界面；无协议改动。`views.tsx` 早已从 `state/transcript.ts` 引 `在压缩`，此次只把结果存成一个变量复用。
-- **Verification**: 先红后绿——`context-meter.test.tsx`（键盘焦点、150ms 内回来不重取、Esc / 点外面收钉住的弹层、取数去重六条）、`compaction-row.test.tsx`（status vs alert）、新 `composer-compact.test.tsx`（`/compact keep X` 走压缩并清框、失败还原并出声、ACP 原样发、DOM 上仪表紧挨权限那颗、正在压缩的原因）、`design-contract` 新扫描（权限那颗的每个前邻都进了 auto 那条的 `:not`，撤掉 CSS 修复时它红）。全套 vitest 3263 过；typecheck、build 过；e2e 截图里仪表在权限那颗左边。
+- **Type**: feat + fix
+- **Motivation**: 作者要 Claude Code / Codex 那样：一眼看得见上下文多满、快满时自动压缩、能手动 `/compact`、压了对话里说清压了什么；并要求（2026-09-27）**压缩一开始就说**，不等压完。
+  写 spec 时查实：**pi 0.86 一直在静默地自动压缩**（`SettingsManager.create` 无覆盖、pi 默认 `compaction.enabled: true`，而 `translate` 对 `compaction_*` 走 `default: return`）；
+  续接时压缩前的来往从界面上消失；压缩后仪表报压缩前的旧数；压缩让用量判重的下标漂移、账本重复计（续接后同理）；仪表的数（`input + cacheRead`）与 pi 判线的数不是一个；`run_code` 给模型的文字没有上限。
+- **What**（spec `specs/2026-09-27-上下文用量与压缩-design.md`；plan `plans/2026-09-27-上下文用量与压缩.md` Task 1–9）：
+  - **协议 8.1（纯新增）**：`compaction` 转录项、`compactSession`、`getContextUsage` 加 `estimated` / `afterCompaction` / `compactAt`；`usedTokens` 口径改成 pi 的 `getContextUsage()`。
+    mock 同批：认 pi 的摘要请求回 `假摘要`（摘要请求永不慢流）、「塞满上下文」报 12 万输入 token（准入规则 1）；测试旋钮 `DAWN_COMPACT_KEEP_RECENT_TOKENS`（dev:mock 与 e2e 同设 1，只在内存覆盖）。
+  - **运行时**：`translate` 接 `compaction_start` / `compaction_end`——start 一到转录里就出「正在压缩上下文…」，end 收成同一条（压完 / 没压成 / 停下了；pi 的英文原因翻成人话，认不出的原样）；
+    已用只从 `getContextUsage()` 取、有估的一截标 `estimated`；用量按时间戳判重，续接时从最后一条还原的回复播种判重记号——压缩后、续接后都不再重复计；
+    `compact()` 忙时拒（spec D8），在 `compaction_start` 之前的失败也出声；压缩参数只走内存覆盖（`resourceLoader.reload()` 之后再套，不写 pi 的 settings.json）；
+    `history()` 改走 `getBranch()`，续接后压缩前后的来往都在、中间一条压缩标记。会话退出时还在转的压缩标记落成「停下了」，不再永远转圈。
+  - **`run_code`**：给模型的文字截到 50 KB（与 pi 的 bash 同一个 `DEFAULT_MAX_BYTES`），头尾各留、中间说省了多少，并提示 Python / R 各怎么少看几行。
+  - **界面**：附栏右侧、紧挨权限那颗常驻仪表（三档颜色）；悬停出弹层（真数 / 估的一截 / 自动压缩线 / 「现在压缩」），点击钉住，键盘焦点留在弹层里；
+    对话格 ≤720px 仪表只留「◯ N%」（读屏名字仍是全句），≤440px（只有坞）再藏「优化输入」的可见字——**这一条请作者确认**（「上传文件」的字是作者点名要的，所以没动它）。
+    转录里的压缩标记（四态、能展开摘要、眼看着失败是 alert）；`/compact`、⌘K「压缩上下文」、弹层「现在压缩」是同一个动作（`App.tsx` 一处 `压缩()`）；`/` 菜单一条。
+    外部 agent（ACP / CLI）仪表写「读不到」、`/` 菜单无那条、⌘K 那条灰着说原因，`/compact` 原样发给 agent。设计契约加扫描：`translate` 必须接两支、`src/` 不调会写 pi 配置文件的压缩开关、权限那颗前邻都进 auto 的 `:not`。
+- **Impact**: 协议 minor（8.0 → 8.1），老界面照旧能连。`getContextUsage.usedTokens` 的数会比以前大（多了上一次输出与缓存写入）——`e2e/context-usage.spec.ts` 由 12 改 20。
+  已知缺口（spec D7 / §6）：压缩那次调用的 token 不进账本（设置 → 用量），标记上写着花了多少；坞拖到最窄 280 时附栏仍放不下。
+  视觉基线重存 6 张（对话、命令面板、坞里的对话 × 明暗）：diff 图看过，红只在附栏仪表（坞开着时主区工作目录 chip 的遮罩随之变窄、坞里「优化输入」字没了）与命令面板新增的「压缩上下文 · 还没有会话」一行及其下各行下移；`=all` 顺带把空态两张容差内漂移（7 / 14 像素、ΔRGB=1）写进了基线。
+- **Verification**: 终局全量：vitest 3266 过 / 10 跳过；typecheck 0；build 过；e2e（`test:e2e:only`，真实构建）522 过 / 1 跳过 / 0 红（Task 8 时是 514 过 + 6 张待重存的视觉基线）。
+  真 pi 集成 `tests/integration/native-compaction.test.ts` 证手动压、自动压、续接；新 `e2e/context-compaction.spec.ts`（仪表常驻量 opacity、悬停 / 钉住、`/compact` 先出「正在压缩」再收成「已压缩」、⌘K、自动压缩、`/` 菜单、ACP 两条）与窄附栏两条（坞里权限那颗在卡内、附栏不溢出）。
+  视觉：重存后连验两遍 14/14。真机：（作者走一遍后补）。
 
 ### 2026-09-25 — 调整方向：只留一种排队；待发条「调整方向 / 到坞里问 / 取回」；停止真停内核（学自 Codex；分支 `redirect-queue`）
 

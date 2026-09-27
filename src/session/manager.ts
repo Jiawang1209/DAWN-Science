@@ -551,6 +551,11 @@ export class SessionManager {
     return typeof this.bound.get(sessionId)?.editQueue === "function"
   }
 
+  /** 这段能不能在 DAWN 里压缩上下文（2026-09-27）。**有无即判据**：只有 native 运行时有 `compact` */
+  supportsCompact(sessionId: SessionId): boolean {
+    return typeof this.runtimeForSession(sessionId)?.compact === "function"
+  }
+
   /**
    * 撤回一条 / 调整方向（2026-09-23；2026-09-25 改插队换成调整方向）。写权规则与 `write` 相同：动待发单就是在改「接下来要说什么」。
    * 返回调整方向时没能重排上的 id（撤回时是空的）。
@@ -584,6 +589,21 @@ export class SessionManager {
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     if (!rt.redirect) throw new Error("这类会话不能调整方向")
     return rt.redirect(sessionId, 那句)
+  }
+
+  /**
+   * 手动压缩上下文（2026-09-27）。写权规则与 `write` 相同：压缩改的是「模型接下来读什么」。
+   * 不等压完——结果经转录里那条 `compaction` 项说。
+   */
+  compact(sessionId: SessionId, as: Holder, instructions?: string): void {
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) {
+      throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)
+    }
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.compact) throw new Error("只有内置对话能压缩上下文——外部 agent 自己管它的上下文")
+    rt.compact(sessionId, instructions)
   }
 
   /**

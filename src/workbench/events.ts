@@ -122,6 +122,8 @@ interface Entry {
    * 没换过时 agent 名本来就是对的。
    */
   当前模型: string | undefined
+  /** 正在压缩的那条标记的 id（2026-09-27）。`compaction_end` 收它；没有（没有 start 的 end）就新起一条 */
+  压缩中: string | undefined
 }
 
 export class SessionTranscripts {
@@ -165,6 +167,7 @@ export class SessionTranscripts {
       turnSeq: 0,
       思考起于: undefined,
       当前模型: undefined,
+      压缩中: undefined,
     })
   }
 
@@ -388,6 +391,35 @@ export class SessionTranscripts {
           text: event.text,
         })
         return
+
+      /**
+       * **一次压缩是转录里的一条**（2026-09-27，spec §2.3）。start 立一条 running，end 把**同一条**收成
+       * done / failed / cancelled（按 id 覆盖）。没有 start 的 end（pi 超上限、压完重试过一次仍放不下时只发 end）新起一条——
+       * 失败必须出声，不能因为没见过开头就丢。
+       */
+      case "compaction_start": {
+        const id = `compact-${++e.turnSeq}`
+        e.压缩中 = id
+        this.putItem(sessionId, e, { type: "compaction", id, status: "running", reason: event.reason })
+        return
+      }
+      case "compaction_end": {
+        const id = e.压缩中 ?? `compact-${++e.turnSeq}`
+        e.压缩中 = undefined
+        this.putItem(sessionId, e, {
+          type: "compaction",
+          id,
+          status: event.status,
+          reason: event.reason,
+          ...(event.tokensBefore !== undefined ? { tokensBefore: event.tokensBefore } : {}),
+          ...(event.tokensAfter !== undefined ? { tokensAfter: event.tokensAfter } : {}),
+          ...(event.summary ? { summary: event.summary } : {}),
+          ...(event.error ? { error: event.error } : {}),
+          ...(event.retried ? { retried: true as const } : {}),
+          ...(event.usage ? { usage: event.usage } : {}),
+        })
+        return
+      }
 
       /**
        * 会话中途换了模型（2026-08-11）。

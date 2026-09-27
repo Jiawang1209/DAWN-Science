@@ -5522,6 +5522,8 @@ function TranscriptRowImpl({
   if (item.type === "cell") {
     return <CellNoteRow item={item} />
   }
+  // 压缩标记（2026-09-27）：占位，界面那一轮换成真组件。它不是发言、不是工具，先跳过
+  if (item.type === "compaction") return null
   const mine = item.who === "user"
 
   /**

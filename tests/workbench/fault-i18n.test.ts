@@ -225,7 +225,8 @@ const 原样透传名单: Record<string, number> = {
   "e.message": 5,
   "r.why": 3,
   // 5 → 8（待发，2026-09-23）：`editQueue` 与 `writeToSession` 同一副分码——运行时的话原样转述
-  "消息": 8,
+  // 8 → 11（上下文压缩，2026-09-27）：`compactSession` 同一副分码——租约 / 没活着 / 其余，运行时的话原样转述
+  "消息": 11,
   "毛病": 2,
   "msg": 1,
 }

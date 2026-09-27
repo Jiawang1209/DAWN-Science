@@ -1536,4 +1536,7 @@ export const EN: Readonly<Record<string, string>> = {
   "坞里正在另开一段": "The dock is already opening a new chat",
   "新的一段已在原来那一处建好；这边已换了地方，没挂进坞里": "The new chat was created in the previous place; you've since moved elsewhere, so it wasn't put in the dock",
   "坞里还没有对话，拖进来的文件没收下——先另开一段或挑一段": "There's no chat in the dock yet, so the files weren't taken — open or pick a chat first",
+  // 上下文用量与压缩（2026-09-27）· 后端的两句拒
+  "只有内置对话能压缩上下文——外部 agent 自己管它的上下文": "Only built-in chats can compact context — external agents manage their own",
+  "这一轮还没说完，等它做完或先停止，再压缩上下文": "This turn isn't finished yet. Wait for it or stop it first, then compact the context",
 }

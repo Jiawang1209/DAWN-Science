@@ -136,7 +136,7 @@ function 越界(workspace: string, path: string): boolean {
  * **工具调用一律记成「已完成」**：结果就在记录里，
  * 而一条永远转圈的「执行中」会让人以为它还在跑。
  */
-function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
+export function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
   if (x.kind === "text") {
     return { type: "turn", id: `r${i}`, who: x.who, text: x.text, final: true }
   }
@@ -3296,6 +3296,26 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // 拿不到时给一个**三档全零、且没有上限**的结果：
       // 上限缺省的含义是"不知道"，界面据此显示「尚未采集」而不是「用了 0%」
       return u ?? { bytes: { system: 0, tools: 0, history: 0 } }
+    },
+
+    /**
+     * 手动压缩（2026-09-27，spec §2.2）。不等压完：开始了就返回，结果看转录里那条 `compaction` 项。
+     * 三种拒法分开说：外部 agent 那类没有这件事（`invalid_request`）、这一轮还在跑（`conflict`，不替人先停掉）、写权不在手上（`conflict`）。
+     */
+    compactSession: async ({ sessionId, instructions }) => {
+      if (!sessions.supportsCompact(sessionId)) {
+        throw fault("invalid_request", "只有内置对话能压缩上下文——外部 agent 自己管它的上下文")
+      }
+      try {
+        sessions.compact(sessionId, "user", instructions)
+      } catch (err) {
+        const 消息 = err instanceof Error ? err.message : String(err)
+        if (/还没说完/.test(消息)) throw fault("conflict", "这一轮还没说完，等它做完或先停止，再压缩上下文")
+        if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
+        if (/未在本进程|未启动/.test(消息)) throw fault原样("not_found", 消息)
+        throw fault原样("internal_error", 消息)
+      }
+      return {}
     },
 
     setSessionModel: async ({ sessionId, provider, model }) => {

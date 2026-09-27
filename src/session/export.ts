@@ -38,6 +38,13 @@ export function 转录成markdown(头: 导出头, items: readonly TranscriptItem
       行.push(`> 工具 ${it.name}（${it.status}${耗}）`, "")
     } else if (it.type === "notice") {
       行.push(`> 提示：${it.text.trim()}`, "")
+    } else if (it.type === "compaction") {
+      // 压缩（2026-09-27）：压完与没压成各写一行；正在压、停下了不写——那两种没有改变任何东西
+      if (it.status === "done") {
+        行.push(`> 上下文已压缩${it.tokensBefore !== undefined ? `（之前约 ${it.tokensBefore} tokens）` : ""}：早先的对话换成了一段摘要交给模型`, "")
+      } else if (it.status === "failed") {
+        行.push(`> 上下文没压缩成：${it.error ?? "没有给出原因"}`, "")
+      }
     }
   }
   行.push("---", `用量合计：输入 ${input} · 输出 ${output} · 缓存 ${cache} token`, "")

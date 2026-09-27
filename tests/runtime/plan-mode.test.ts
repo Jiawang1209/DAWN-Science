@@ -465,4 +465,29 @@ describe("审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只�
     expect(底[0]).toMatch(/^c1-[0-9a-f]{12}\.md$/)
     await rt.stop("p1")
   })
+
+  it("在跑时 / 正在回退时不许答方案（2026-09-28）：说「还在跑」「正在回退」，簿里那版照旧能答", async () => {
+    const { rt, s } = await 起()
+    await rt.setConfigOption("p1", "dawn.plan", "1")
+    await 跑(s, "propose_plan", 假方案, "c1")
+    const 会 = 内(rt).sessions.get("p1")! as unknown as { inFlight: number; 回退中: boolean }
+    会.inFlight = 1
+    await expect(rt.answerPlan!("p1", "c1", "approve")).rejects.toThrow(/还在跑/)
+    await expect(rt.answerPlan!("p1", "c1", "discard")).rejects.toThrow(/还在跑/)
+    会.inFlight = 0
+    会.回退中 = true
+    await expect(rt.answerPlan!("p1", "c1", "approve")).rejects.toThrow(/正在回退/)
+    会.回退中 = false
+    expect(() => (rt as unknown as { 方案簿(id: string): { 可答(p: string): unknown } }).方案簿("p1").可答("c1")).not.toThrow()
+    await rt.stop("p1")
+  })
+
+  it("答方案时不许回退（2026-09-28，两把锁互相认）", async () => {
+    const { rt } = await 起()
+    ;(rt as unknown as { 方案答中: Set<string> }).方案答中.add("p1")
+    await expect(rt.rewind("p1", { 倒数第几句: 1, 文: "x" }, "conversation", [])).rejects.toThrow(/正在处理方案/)
+    await expect(rt.previewRewind("p1", { 倒数第几句: 1, 文: "x" })).rejects.toThrow(/正在处理方案/)
+    ;(rt as unknown as { 方案答中: Set<string> }).方案答中.delete("p1")
+    await rt.stop("p1")
+  })
 })

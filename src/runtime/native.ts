@@ -3179,6 +3179,13 @@ ${描述}`
     if (!s || !处) throw new Error(`会话 "${sessionId}" 未启动`)
     // 字眼以「这一版方案已经」开头：后端据它分成 conflict（与「已经批过」同一类）
     if (this.方案答中.has(sessionId)) throw new Error("这一版方案已经在处理了，稍等")
+    /**
+     * **在跑、正在回退时不答**（2026-09-28 交叉审查）：一轮跑着的时候批准，方案文件落在这一轮的回退存档窗口里——
+     * 之后「回退文件」会把它当 agent 新建的挪进废纸篓（存档那边另有一道：`在方案目录里`）。回退途中批准，簿与分支各说各的。
+     * 措辞固定：后端按「还在跑」「正在回退」分成 conflict、译成英文。
+     */
+    if (s.回退中) throw new UserFacingError("正在回退，等它做完")
+    if (s.inFlight > 0 || s.转述中 > 0) throw new UserFacingError("agent 还在跑，这一轮做完再批方案")
     this.方案答中.add(sessionId)
     try {
       return await this.真答方案(sessionId, s, 处, planId, action, text)
@@ -3292,8 +3299,10 @@ ${描述}`
     return { entry: 它.id, 之后: 们.slice(k).map((x) => x.id), 在存档之前: 存档之前.has(它.id) }
   }
 
-  private 不许在跑(s: NativeSession): void {
+  private 不许在跑(sessionId: SessionId, s: NativeSession): void {
     this.不许在回退(s)
+    // 答方案做到一半（写文件、存档、记簿之间有好几道 await）不回退（2026-09-28）：回退会按那一刻的分支摘簿，两边交错就对不上
+    if (this.方案答中.has(sessionId)) throw new UserFacingError("正在处理方案，处理完再回退")
     if (s.inFlight > 0 || s.转述中 > 0 || s.session.isStreaming || s.session.isCompacting) throw new UserFacingError("agent 还在跑，停下之后才能回退")
   }
 
@@ -3305,7 +3314,7 @@ ${描述}`
   async previewRewind(sessionId: SessionId, 那句: 回退的那句) {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
-    this.不许在跑(s)
+    this.不许在跑(sessionId, s)
     const 位 = this.定位(sessionId, s, 那句)
     const 存档 = this.存档们.get(sessionId)
     if (!存档) return { ok: false as const, reason: "no_archive" as const }
@@ -3320,7 +3329,7 @@ ${描述}`
   async rewind(sessionId: SessionId, 那句: 回退的那句, 做法: 回退做法, 内核们: readonly string[]): Promise<回退回执> {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
-    this.不许在跑(s)
+    this.不许在跑(sessionId, s)
     // **从查完「不在跑」到留完话，整段立着**（Task 4 复审）：检查与置位之间没有 await，不会有第二个人插进来
     s.回退中 = true
     const 这次 = this.真回退(sessionId, s, 那句, 做法, 内核们)

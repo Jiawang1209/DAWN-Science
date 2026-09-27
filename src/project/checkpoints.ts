@@ -25,7 +25,7 @@ import { appendFileSync, constants, existsSync, lstatSync, mkdirSync, readdirSyn
 import { chmod, copyFile, link, lstat, mkdir, realpath, rename, rmdir, unlink } from "node:fs/promises"
 import { dirname, isAbsolute, join, sep } from "node:path"
 import { fsSnapshot, FS_SNAPSHOT_CAP, type FsEntry } from "./fs-facts.js"
-import { 原始数据目录 } from "../policy/science-layout.js"
+import { 原始数据目录, 方案目录 } from "../policy/science-layout.js"
 
 /** 单个文件超过它就不存旧版本（spec §0.3）。改了它，回退时列在「退不回」 */
 export const 单个文件上限 = 50 * 1024 * 1024
@@ -88,6 +88,14 @@ export const 同一版 = (a: Pick<FsEntry, "ino" | "mtimeMs" | "size"> | undefin
 
 /** **唯一的判据**。`p` 是相对工作区的 posix 路径（`fsSnapshot` 给的就是这种） */
 export const 在原始数据里 = (p: string): boolean => p === 原始数据目录 || p.startsWith(`${原始数据目录}/`)
+
+/**
+ * 批准过的方案放在这里（2026-09-28，回退 × 先出方案）。**这里的文件从不算 agent 改的**：方案文件只由人按「批准」写下
+ * （`写方案文件`），门也不许 agent 碰已批准的。批准现在只能在不跑的时候做（`answerPlan` 在跑时拒），这是第二道——
+ * 万一它落进了某一轮的存档窗口，「回退文件」也不会把人批准的方案当成 agent 新建的挪进废纸篓、或改回去。
+ * 不进任何清单（不是「退不了」，是「本来就不是 agent 的」），与你没碰过的文件一样。
+ */
+export const 在方案目录里 = (p: string): boolean => p === 方案目录 || p.startsWith(`${方案目录}/`)
 
 const 对象名 = (e: Pick<FsEntry, "ino" | "mtimeMs" | "size">) => `${e.size}-${e.ino}-${String(e.mtimeMs).replace(".", "_")}`
 /** `对象名()` 起出来的只会是这个样子；别的（被人改过的存档）不认——`../x` 会读到存档外面去 */
@@ -580,6 +588,7 @@ export class 检查点存档 {
     const 公开 = 空计划()
     const 恢复: { path: string; obj: string; mode: number | undefined }[] = []
     for (const p of [...P].sort()) {
+      if (在方案目录里(p)) continue
       if (在原始数据里(p)) {
         公开.cannot.push({ path: p, reason: "raw_data" })
         continue

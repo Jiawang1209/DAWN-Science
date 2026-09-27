@@ -227,4 +227,26 @@ describe("先出方案 · 真 pi", () => {
       await runtime.stop(id)
     }
   })
+
+  /** 总计划「交叉点」那条：批准的方案文件不在回退的「agent 改过的文件」里被误删 */
+  it("回退 × 方案（总计划交叉点）：批准（这一轮停下之后）→ 下一轮 agent 改别的文件 → 只回退文件：方案文件一字不动", { timeout: 60_000 }, async () => {
+    const id = "s-crosspoint"
+    const { runtime, 事件, 说, workspace } = await 起一段(id)
+    try {
+      await runtime.setConfigOption(id, "dawn.plan", "1")
+      await 说("分析一下吸烟和肺功能")
+      const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEvent, { kind: "plan" }>
+      const { savedPath } = await runtime.answerPlan(id, 卡.plan.planId, "approve")
+      const 文件 = join(workspace, savedPath!)
+      const 原文 = readFileSync(文件, "utf8")
+      await 说("改两个文件")
+      expect(readFileSync(join(workspace, "out/图.txt"), "utf8")).toBe("x\n")
+      const r = await runtime.rewind(id, { 倒数第几句: 1, 文: "改两个文件" }, "files", [])
+      expect(r.removed).toEqual(expect.arrayContaining(["out/图.txt"]))
+      expect([...r.removed, ...r.restored, ...r.keep.map((x) => x.path)].filter((p) => p.startsWith("analysis/plans"))).toEqual([])
+      expect(readFileSync(文件, "utf8")).toBe(原文)
+    } finally {
+      await runtime.stop(id)
+    }
+  })
 })

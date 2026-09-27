@@ -1626,6 +1626,9 @@ export const EN: Readonly<Record<string, string>> = {
   "这段还没说过话，没有可回退的": "Nothing has been said in this session yet, so there's nothing to rewind",
   "这段还没说过话": "Nothing has been said in this session yet",
   "正在回退，等它做完": "A rewind is in progress; wait for it to finish",
+  // 先出方案 × 回退（2026-09-28）：批准只在不跑的时候；答方案时不回退
+  "agent 还在跑，这一轮做完再批方案": "The agent is still running; approve the plan once this turn is done",
+  "正在处理方案，处理完再回退": "A plan is being answered; rewind once that's done",
   "回到那句之前？": "Rewind to before that message?",
   // 子 agent 看得见（2026-09-27）
   "这不是一个子 agent 的 id": "That is not a subagent id",

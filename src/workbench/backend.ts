@@ -930,6 +930,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const 消息 = err instanceof Error ? err.message : String(err)
     if (/还在跑/.test(消息)) return fault("conflict", "agent 还在跑，停下之后才能回退")
     if (/正在回退/.test(消息)) return fault("conflict", "正在回退，回退完再发")
+    if (/正在处理方案/.test(消息)) return fault("conflict", "正在处理方案，处理完再回退")
     if (/对不上/.test(消息)) return fault("invalid_request", "这句在 agent 的记录里对不上，回退不了（对话可能被改写过）")
     if (/这类会话不能回退/.test(消息)) return fault("invalid_request", "这类会话不能回退")
     if (/未持有|租约/.test(消息)) return fault原样("conflict", 消息)
@@ -3425,6 +3426,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       } catch (err) {
         const 消息 = err instanceof Error ? err.message : String(err)
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
+        // 在跑 / 正在回退时不答（2026-09-28）：运行时措辞固定，这里译得出
+        if (/还在跑/.test(消息)) throw fault("conflict", "agent 还在跑，这一轮做完再批方案")
+        if (/正在回退/.test(消息)) throw fault("conflict", "正在回退，等它做完")
         if (/没有这一版方案|未在本进程|会话 ".*" 未启动/.test(消息)) throw fault原样("not_found", 消息)
         if (/这一版方案已经/.test(消息)) throw fault原样("conflict", 消息)
         throw fault原样("internal_error", 消息)

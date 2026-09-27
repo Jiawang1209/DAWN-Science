@@ -254,6 +254,22 @@ describe("影子存档 · 回退", () => {
     expect(existsSync(join(ws, "b.py"))).toBe(false)
   })
 
+  it("批准过的方案目录（analysis/plans）不算 agent 改的：一轮里新建的不挪、改的不改回，哪张清单都不进（2026-09-28，回退 × 先出方案）", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "analysis/plans/旧方案.md", "v1\n")
+    await 一轮(存, "e1", () => {
+      写(ws, "analysis/plans/2026-09-28-新方案.md", "批准时写下的\n")
+      写(ws, "analysis/plans/旧方案.md", "v2\n")
+      写(ws, "out/a.txt", "agent 的\n")
+    })
+    const 计划 = await 存.计划(之后("e1"))
+    expect(计划).toEqual({ ok: true, restore: [], remove: ["out/a.txt"], keep: [], cannot: [] })
+    const r = await 存.回退(之后("e1"))
+    expect(r.removed).toEqual(["out/a.txt"])
+    expect(读(ws, "analysis/plans/2026-09-28-新方案.md")).toBe("批准时写下的\n")
+    expect(读(ws, "analysis/plans/旧方案.md")).toBe("v2\n")
+  })
+
   it("data/raw 一个字节都不动", async () => {
     const { ws, 存 } = 新的()
     写(ws, "data/raw/s.csv", "原始\n")

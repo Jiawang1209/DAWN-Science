@@ -83,6 +83,9 @@ describe("answerPlan", () => {
     ["这一版方案已经不是最新的了，看最新那一版", "conflict"],
     ["这一版方案已经批过了", "conflict"],
     ["EACCES: permission denied, open '/w/analysis/plans/x.md'", "internal_error"],
+    // 2026-09-28：在跑 / 正在回退时批准——冲突，不是内部错误
+    ["agent 还在跑，这一轮做完再批方案", "conflict"],
+    ["正在回退，等它做完", "conflict"],
   ])("运行时说「%s」→ %s，原话转述", async (话, 码) => {
     const ctx = make()
     ;(ctx.runtime as 会答方案的).答 = async () => {

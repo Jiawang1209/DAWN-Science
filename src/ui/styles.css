@@ -1782,8 +1782,11 @@ pre {
   gap: 6px;
   margin-top: 4px;
 }
-.chip-slot { display: flex; flex-direction: column; gap: 2px; }
+/* 窄处（坞约 380px）不许被一句长的「在干什么」撑出去（2026-09-27，e2e 量出坞里那颗越过右缘 33px）：
+   槽与 chip 都不超过那一行，那一句是 chip 里唯一可缩的一截 */
+.chip-slot { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 100%; }
 .chip {
+  max-width: 100%;
   padding: 2px 8px;
   border: 1px solid var(--dawn-stroke-3);
   border-radius: var(--dawn-radius-full);
@@ -1804,6 +1807,8 @@ pre {
   margin-left: 6px;
   /* 坞里那段对话的 chip 也走这里：坞约 380px 宽，一句长命令不许把 chip 撑出去 */
   max-width: min(24em, 50vw);
+  min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

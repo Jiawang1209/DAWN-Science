@@ -100,10 +100,12 @@ test.describe("子 agent 真的在独立进程里跑了一次", () => {
     await expect(chips.first()).toHaveAttribute("data-status", "ok")
     await expect(page.locator(".subagents-summary")).toContainText("1/1")
 
-    // 点开才有任务全文——默认铺开就成了日志
+    // 主转录里不铺开任务——点了在坞里「子 agent」那一格看（2026-09-27，子 agent 看得见）
     await expect(page.locator(".chip-task")).toHaveCount(0)
     await chips.first().click()
-    await expect(page.locator(".chip-task")).toContainText("看看这个仓库")
+    await expect(page.getByRole("tab", { name: "子 agent", exact: true })).toHaveAttribute("aria-selected", "true")
+    await expect(page.locator(".subagent-pane")).toContainText("看看这个仓库")
+    await expect(page.locator(".chip-task"), "给了 onOpen 就不该再在主转录里展开").toHaveCount(0)
 
     /**
      * 账本上必须是完整三层：
@@ -287,14 +289,17 @@ test.describe("chain：上一步的真实输出流进了下一步", () => {
     /**
      * chip 上的任务文本是**替换之后**的（`executor.runChain` 先替换再 `one()`）。
      *
-     * 所以点开第二个 chip，应该看得见第一步的真实输出——
+     * 所以点开第二个 chip（坞里「子 agent」那一格），应该看得见第一步的真实输出——
      * 假模型的暗号「假模型已应答」。**这是整条 chain 唯一无法伪造的证据**：
      * 那段文字只可能来自第一个子进程里真的跑过一次模型。
      */
+    // 2026-09-27 起任务原文在坞里「子 agent」那一格：它是子转录里的第一句用户话（交回的结果里也有暗号，所以圈在用户那一句上）
     await chips.nth(1).click()
-    await expect(page.locator(".chip-task")).toContainText("假模型已应答")
+    const 任务 = page.locator(".subagent-pane .turn.user").first()
+    await expect(任务).toContainText("根据这段结论继续", { timeout: 30_000 })
+    await expect(任务).toContainText("假模型已应答")
     // **占位符本身不该留在任务里**——留着它就是把 `{previous}` 四个字发给了模型
-    await expect(page.locator(".chip-task")).not.toContainText("{previous}")
+    await expect(任务).not.toContainText("{previous}")
 
     const rows = await readRuns(dbPath)
     const tool = rows.find((r) => r.request_type === "tool_call:subagent")

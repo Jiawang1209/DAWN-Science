@@ -68,10 +68,11 @@ describe("会话文件读回", () => {
     } as never)
     sm.appendMessage({ role: "toolResult", toolCallId: "t1", toolName: "read", content: [{ type: "text", text: "# readme" }], isError: false, timestamp: 3 } as never)
     expect(会话文件(d)).toMatch(/\.jsonl$/)
+    // `at`（2026-09-27 会话全文搜索）：消息上的 timestamp；工具条目取发起调用那条 assistant 的
     expect(读子转录(d)).toEqual([
-      { kind: "text", who: "user", text: "子任务：读 README" },
-      { kind: "text", who: "agent", text: "我先读一下。" },
-      { kind: "tool", id: "t1", name: "read", input: { path: "README.md" }, result: "# readme" },
+      { kind: "text", who: "user", text: "子任务：读 README", at: 1 },
+      { kind: "text", who: "agent", text: "我先读一下。", at: 2 },
+      { kind: "tool", id: "t1", name: "read", input: { path: "README.md" }, result: "# readme", at: 2 },
     ])
   })
 })

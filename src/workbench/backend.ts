@@ -91,7 +91,7 @@ import { 取本机图片 } from "./本机图片.js"
 import type { SessionTranscripts } from "./events.js"
 import { 侧边对照, 主对话摘要 } from "./side-session.js"
 import { 桌面通知器, 读桌面设置, 写桌面设置, type 桌面通知出口 } from "./desktop-notify.js"
-import type { RestoredItem } from "../runtime/types.js"
+import { 还原成条目 } from "./restored-items.js"
 import type { TranscriptItem } from "../protocol/events.js"
 import { 回退通知 } from "./rewind-notice.js"
 import { 单个文件上限, 存档总上限, 回退不了 } from "../project/checkpoints.js"
@@ -133,36 +133,6 @@ function 产物类型(path: string): Exclude<文件类, "dir"> {
  */
 function 越界(workspace: string, path: string): boolean {
   return 工作区内相对路径(workspace, path) === undefined
-}
-
-/**
- * 一条恢复出来的历史 → 界面认识的条目（会话续接，2026-08-11）。
- *
- * **工具调用一律记成「已完成」**：结果就在记录里，
- * 而一条永远转圈的「执行中」会让人以为它还在跑。
- */
-export function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
-  if (x.kind === "text") {
-    return { type: "turn", id: `r${i}`, who: x.who, text: x.text, final: true }
-  }
-  // 这里压缩过（2026-09-27）：还原成一条已压完的标记。pi 的记录里没存起因，就不写原因（界面也就不写）
-  if (x.kind === "compaction") {
-    return {
-      type: "compaction",
-      id: `rc${i}`,
-      status: "done",
-      ...(x.tokensBefore > 0 ? { tokensBefore: Math.round(x.tokensBefore) } : {}),
-      ...(x.summary.trim() ? { summary: x.summary } : {}),
-    }
-  }
-  return {
-    type: "tool",
-    id: x.id || `rt${i}`,
-    name: x.name,
-    input: x.input,
-    status: x.isError ? "error" : "ok",
-    ...(x.result === undefined ? {} : { result: x.result }),
-  }
 }
 
 /**

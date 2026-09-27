@@ -5,17 +5,22 @@
  * 抄一份就是第二个家——两份翻法迟早各自漂。
  *
  * 取舍见 `native.ts` 的 `history()` 文件注释：thinking 不还原、工具调用还原成「已完成」、压缩条目还原成一条压缩标记。
+ *
+ * **第三个读者**（2026-09-27，会话全文搜索）：搜索在**不起运行时**时读旧对话（`pi-record.ts`），
+ * 它数出来的第几条必须与点进去之后转录里的第几条是同一个数——否则「跳到那一处」跳到的是别处。
+ * 所以三处都调 `还原历史`，由结构保证一致，而不是由几份相似的代码碰巧一致。
  */
 import type { RestoredItem } from "./types.js"
 
 /** pi 记下的一条消息。**只声明我们真的读的那几个字段** */
 export type 历史消息 =
-  | { role: "user"; content: string | { type: string; text?: string }[] }
+  | { role: "user"; content: string | { type: string; text?: string }[]; timestamp?: number }
   | {
       role: "assistant"
       content: ({ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; arguments: unknown } | { type: "thinking" })[]
+      timestamp?: number
     }
-  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[] }
+  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[]; timestamp?: number }
   /** 不是 pi 的消息：`getBranch()` 里的 `compaction` 条目，`history()` 自己造的记号（2026-09-27） */
   | { role: "compaction"; summary: string; tokensBefore: number }
 
@@ -25,6 +30,11 @@ export function 取文本(content: string | { type: string; text?: string }[]): 
   return content
     .map((c) => (c.type === "text" ? (c.text ?? "") : c.type === "image" ? "（图片）" : ""))
     .join("")
+}
+
+/** pi 的 `timestamp` 是毫秒数；缺了、坏了就不给——**缺失不等于 0**（2026-09-27） */
+function 时刻(m: { timestamp?: unknown }): { at: number } | Record<string, never> {
+  return typeof m.timestamp === "number" && Number.isFinite(m.timestamp) && m.timestamp > 0 ? { at: m.timestamp } : {}
 }
 
 /**
@@ -52,7 +62,7 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
     }
     if (m.role === "user") {
       const text = 取文本(m.content)
-      if (text.trim()) 出.push({ kind: "text", who: "user", text })
+      if (text.trim()) 出.push({ kind: "text", who: "user", text, ...时刻(m) })
       continue
     }
     if (m.role === "assistant") {
@@ -60,7 +70,7 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
         .filter((c): c is { type: "text"; text: string } => c.type === "text")
         .map((c) => c.text)
         .join("")
-      if (text.trim()) 出.push({ kind: "text", who: "agent", text })
+      if (text.trim()) 出.push({ kind: "text", who: "agent", text, ...时刻(m) })
       for (const c of m.content ?? []) {
         if (c.type !== "toolCall") continue
         const 条: RestoredItem & { kind: "tool" } = {
@@ -68,6 +78,7 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
           id: c.id,
           name: c.name,
           input: c.arguments,
+          ...时刻(m),
         }
         出.push(条)
         待补结果.set(c.id, 条)
@@ -84,6 +95,7 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
           name: m.toolName,
           input: undefined,
           result: 取文本(m.content),
+          ...时刻(m),
         })
         continue
       }
@@ -91,4 +103,12 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
     }
   }
   return 出
+}
+
+/**
+ * `getBranch()` 的条目 → 恢复条目（2026-09-27）。续接（`native.ts`）、子 agent 读回（`run-dir.ts`）、
+ * 全文搜索（`pi-record.ts`）都调这一个——见文件头「第三个读者」。
+ */
+export function 还原历史(分支: readonly unknown[]): RestoredItem[] {
+  return 消息转历史(分支转消息(分支))
 }

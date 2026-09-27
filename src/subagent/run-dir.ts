@@ -14,7 +14,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { SessionManager } from "@earendil-works/pi-coding-agent"
-import { 分支转消息, 消息转历史 } from "../runtime/history.js"
+import { 还原历史 } from "../runtime/history.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/index.js"
 import { 子目录段 } from "../protocol/subagent-id.js"
@@ -84,7 +84,7 @@ export function 读子转录(dir: string, 上限字节 = 子转录读盘上限�
   // 点一下 chip 就把主进程卡住、内存翻倍。超了就不读，说清多大（规格 7.5：不静默截断）
   const 大小 = statSync(f).size
   if (大小 > 上限字节) throw new 子转录过大(f, 大小, 上限字节)
-  return 消息转历史(分支转消息(SessionManager.open(f).getBranch())).map((x) =>
+  return 还原历史(SessionManager.open(f).getBranch()).map((x) =>
     // 工具结果与活着那条路同一个 16 KiB、同一句「省了多少」
     x.kind === "tool" && x.result !== undefined ? { ...x, result: 截工具结果(x.result).text } : x,
   )

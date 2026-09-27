@@ -523,10 +523,13 @@ export interface ContextUsage {
  * **它不进账本。** 账本记的是「发生过什么」，而这些是**上一次运行时
  * 已经记过的那些**——再记一遍就是把同一件事写两回（不变式 5：账本是事实层）。
  * 所以它只回到界面上，不经过记账员。
+ *
+ * `at`（2026-09-27，会话全文搜索）：这一条的时刻（毫秒，pi 消息上的 `timestamp`）。**拿不到就没有这个字段**。
+ * 续接不用它（`还原成条目` 不读）；全文搜索拿它给结果排序、写日期。
  */
 export type RestoredItem =
-  | { kind: "text"; who: "user" | "agent"; text: string }
-  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean }
+  | { kind: "text"; who: "user" | "agent"; text: string; at?: number }
+  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean; at?: number }
   /** 这里压缩过（2026-09-27）：pi 记录里的 `compaction` 条目，落在它发生的位置。记录里没存起因 */
   | { kind: "compaction"; summary: string; tokensBefore: number }
 

@@ -38,7 +38,7 @@ import {
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
-import { 分支转消息, 消息转历史, 取文本 } from "./history.js"
+import { 还原历史, 取文本 } from "./history.js"
 
 /**
  * 回退时界面那句与 pi 那句核对原文（2026-09-27，Task 4 复审收紧；Task 5 复审改成按真名认）。
@@ -671,8 +671,8 @@ export class NativeRuntime implements AgentRuntime {
   async history(sessionId: SessionId): Promise<RestoredItem[]> {
     const s = this.sessions.get(sessionId)
     if (!s) return []
-    // 翻法在 `history.ts`（2026-09-27 搬出去）：子 agent 的会话文件读回用同一份
-    return 消息转历史(分支转消息(s.sessionManager.getBranch()))
+    // 翻法在 `history.ts`（2026-09-27 搬出去）：子 agent 的会话文件读回、全文搜索用同一份
+    return 还原历史(s.sessionManager.getBranch())
   }
 
   private emit(event: AgentEvent): void {

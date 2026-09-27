@@ -638,6 +638,13 @@ describe("8.5 · 会话全文搜索（2026-09-27）", () => {
     expect(OPERATIONS.searchSessionContent.mutating).toBe(false)
     expect(请求({ query: " cox " }).success).toBe(true)
     expect(请求({ query: " c " }).success).toBe(false)
+    // 2026-09-28：按字（码点）数、空白不算——一个生僻字 / emoji 是两个 UTF-16 单元，也只算一个字
+    expect(请求({ query: "𠀀" }).success).toBe(false)
+    expect(请求({ query: "😀" }).success).toBe(false)
+    expect(请求({ query: "𠀀𠀀" }).success).toBe(true)
+    expect(请求({ query: "回归" }).success).toBe(true)
+    expect(请求({ query: "a b" }).success).toBe(true)
+    expect(请求({ query: "\u3000c\u3000" }).success).toBe(false)
     expect(请求({ query: "x".repeat(201) }).success).toBe(false)
     expect(请求({ query: "cox", limit: 0 }).success).toBe(false)
     expect(请求({ query: "cox", limit: 30 }).success).toBe(true)

@@ -2,7 +2,7 @@
  * 会话全文搜索的匹配规则（2026-09-27，spec §5）。后端找、界面跳用的是同一份——这里把规则钉住。
  */
 import { describe, expect, it } from "vitest"
-import { 取片段, 命中, 定位命中, 拆词, 片段字数 } from "../../src/protocol/search-match.js"
+import { 取片段, 命中, 定位命中, 拆词, 够长, 片段字数 } from "../../src/protocol/search-match.js"
 import type { TranscriptItem } from "../../src/protocol/events.js"
 
 const 话 = (id: string, who: "user" | "agent", text: string): TranscriptItem => ({ type: "turn", id, who, text, final: true })
@@ -82,6 +82,27 @@ describe("定位命中（界面跳过去用）", () => {
 })
 
 describe("边界（2026-09-27 补）", () => {
+  it("NFKC 在命中**之前**改了长度（「㍿」→「株式会社」、「ﬁ」→「fi」）：片段是规整后的字，标记照样落在词上（2026-09-28）", () => {
+    const p = 取片段(话("r0", "user", "㍿的ﬁle 里跑 Cox"), 拆词("cox"))!
+    expect(p.text).toBe("株式会社的file 里跑 Cox")
+    expect(标出(p)).toEqual(["Cox"])
+    const q = 取片段(话("r0", "user", "㍿的ﬁle 里跑 Cox"), 拆词("file"))!
+    expect(标出(q)).toEqual(["file"])
+    expect(命中(话("r0", "user", "ﬁle"), 拆词("fi"))).toBe(true)
+  })
+  it("够长：去掉空白后按码点数到两个字（2026-09-28）", () => {
+    expect(够长("回归")).toBe(true)
+    expect(够长(" c ")).toBe(false)
+    expect(够长("😀")).toBe(false)
+    expect(够长("a b")).toBe(true)
+    expect(够长("ﬁ")).toBe(true) // NFKC 之后是两个字：与后端匹配看到的同一份
+  })
+  it("搜的那份与点开的那份对不上（搜过之后变了）：id 不在、数不到第 nth 处 → undefined，界面说「没找到」，不乱跳（2026-09-28）", () => {
+    const 点开的 = [话("r0", "user", "Cox 回归"), 话("r1", "agent", "好")]
+    expect(定位命中(点开的, { itemId: "r6", nth: 3, 词们: ["cox"] })).toBeUndefined()
+    // id 在、但那条已经不含这些词，且数不到 → 同样 undefined
+    expect(定位命中(点开的, { itemId: "r1", nth: 1, 词们: ["cox"] })).toBeUndefined()
+  })
   it("全角与半角算同一个字：查询与正文都过 NFKC（计划没说，这里定为统一成半角）", () => {
     expect(拆词("ＣＯＸ")).toEqual(["cox"])
     expect(命中(话("r0", "user", "做ＣＯＸ回归"), 拆词("cox"))).toBe(true)

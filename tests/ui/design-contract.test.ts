@@ -1556,14 +1556,52 @@ describe("设计契约 · 桌面通知只有一个出口", () => {
  * 所以读记录的那个文件里只许有只读的入口：`parseSessionEntries` + `SessionManager.inMemory`。
  */
 describe("设计契约 · 全文搜索只读", () => {
-  it("**`src/runtime/pi-record.ts` 不经任何会写盘的入口**", () => {
-    const 文 = readFileSync(join(import.meta.dirname, "../../src/runtime/pi-record.ts"), "utf8")
-    const 犯的 = findLines(
-      文,
-      (l) =>
-        /SessionManager\.(open|create|continueRecent|forkFrom)\s*\(/.test(l) ||
-        /\b(writeFile|appendFile|rename|rm|unlink|mkdir|copyFile|truncate)(Sync)?\s*\(/.test(l),
+  /**
+   * 搜索这条路上的每个文件（2026-09-28 审查补宽）：读记录、搜索器、还原、匹配规则。
+   * `subagent/run-dir.ts` 不在里面（它要写 meta.json），它读会话文件走的是本名单里 `pi-record.ts` 的 `读记录同步`。
+   */
+  const 搜索路径 = [
+    "src/runtime/pi-record.ts",
+    "src/runtime/history.ts",
+    "src/workbench/session-search.ts",
+    "src/workbench/restored-items.ts",
+    "src/protocol/search-match.ts",
+  ]
+  const 写盘的名字 = "writeFile|appendFile|rename|rm|rmdir|unlink|mkdir|mkdtemp|copyFile|cp|truncate|ftruncate|createWriteStream|symlink|link|chmod|chown|utimes"
+  /** 一行里有没有会写盘（或可能写盘）的入口 */
+  const 写盘 = (l: string) =>
+    /SessionManager\.(open|create|continueRecent|forkFrom)\s*\(/.test(l) ||
+    /\bnew\s+SessionManager\s*\(/.test(l) ||
+    /\bopen(Sync)?\s*\(/.test(l) ||
+    /\.append\w*\s*\(/.test(l) ||
+    new RegExp(`\\b(${写盘的名字})(Sync)?\\s*\\(`).test(l)
+  /** 从 fs 引进写盘的名字——**改了名也算**（`import { writeFile as w }` 之后 `w(` 扫不出来） */
+  const 引进写盘 = (文: string) =>
+    [...文.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*["'](?:node:)?fs(?:\/promises)?["']/g)].flatMap((m) =>
+      m[1]!
+        .split(",")
+        .map((x) => x.trim().split(/\s+as\s+/)[0]!.trim())
+        .filter((名) => new RegExp(`^(${写盘的名字}|open)(Sync)?$`).test(名)),
     )
-    expect(犯的, "读 pi 记录只许走 parseSessionEntries + SessionManager.inMemory").toEqual([])
+  function 犯的(文: string): string[] {
+    return [...findLines(文, 写盘), ...引进写盘(文).map((名) => `import ${名}`)]
+  }
+
+  it("**搜索路径上的文件不经任何会写盘的入口**（pi 的 open/create/append…、fs 的写、改了名的写）", () => {
+    for (const f of 搜索路径) {
+      const 文 = readFileSync(join(import.meta.dirname, "../..", f), "utf8")
+      expect(犯的(文), `${f}：读 pi 记录只许走 parseSessionEntries + SessionManager.inMemory`).toEqual([])
+    }
+  })
+
+  it("扫描本身抓得住（种一个违例看它红）", () => {
+    expect(犯的(`const sm = SessionManager.open(f)`)).toHaveLength(1)
+    expect(犯的(`const sm = new SessionManager(cwd, dir)`)).toHaveLength(1)
+    expect(犯的(`sm.appendMessage(m)`)).toHaveLength(1)
+    expect(犯的(`const h = await open(p, "w")`)).toHaveLength(1)
+    expect(犯的(`fs.writeFileSync(p, "")`)).toHaveLength(1)
+    expect(犯的(`import { readFile, writeFile as w } from "node:fs/promises"`)).toEqual(["import writeFile"])
+    expect(犯的(`import {\n  readFileSync,\n  appendFileSync as 追加,\n} from "fs"`)).toEqual(["import appendFileSync"])
+    expect(犯的(`import { readFile, stat } from "node:fs/promises"\nconst x = parseSessionEntries(t)`)).toEqual([])
   })
 })

@@ -76,7 +76,7 @@ export type {
   TeamSnapshot,
 } from "./events.js"
 export { 子转录id, 拆子转录id, 是子转录id } from "./subagent-id.js"
-export { 片段字数, 取片段, 可搜小写, 命中, 命中小写, 定位命中, 拆词, 最短查询, 最多词数, 参数文本 } from "./search-match.js"
+export { 片段字数, 取片段, 可搜小写, 命中, 命中小写, 定位命中, 拆词, 够长, 最短查询, 最多词数, 参数文本 } from "./search-match.js"
 export type { 命中处, 片段, 跳转目标 } from "./search-match.js"
 
 export {

@@ -39,6 +39,14 @@ export function 拆词(query: string): string[] {
   return [...new Set(词们)].slice(0, 最多词数)
 }
 
+/**
+ * 够不够「两个字」（2026-09-28 审查补）：按拆出来的词**连起来的字数**（码点，不是 UTF-16 单元）数。
+ * 协议的请求校验与界面「至少两个字」都调它——一个生僻字 / emoji 占两个 UTF-16 单元，按 `.length` 数会把一个字放过去。
+ */
+export function 够长(query: string): boolean {
+  return [...拆词(query).join("")].length >= 最短查询
+}
+
 /** 工具参数 → 一段人读得懂的字：对象取它的字符串字段（code / command / path…），别的 JSON 化 */
 export function 参数文本(input: unknown): string {
   if (input === undefined || input === null) return ""

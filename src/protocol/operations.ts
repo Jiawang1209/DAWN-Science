@@ -28,6 +28,7 @@ import {
   更新状态Schema,
 } from "./entities.js"
 import { SessionSnapshotSchema } from "./events.js"
+import { 够长 } from "./search-match.js"
 
 /**
  * 更新那六个操作共用的信封（规格 U1）：**完整状态 + 那个开关**。
@@ -2916,7 +2917,8 @@ export const OPERATIONS = {
   searchSessionContent: {
     request: z
       .object({
-        query: z.string().trim().min(2).max(200),
+        /** 「至少两个字」按码点数、空白不算（`够长`，界面同一个判定） */
+        query: z.string().trim().max(200).refine(够长, { message: "至少两个字" }),
         limit: z.int().min(1).max(100).optional(),
       })
       .strict(),

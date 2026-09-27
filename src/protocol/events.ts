@@ -222,6 +222,11 @@ const SubagentsItem = z
           status: z.enum(["running", "ok", "error"]),
           /** 失败原因。**`error` 状态下必须有**——不带原因的失败等于没报 */
           error: z.string().optional(),
+          /**
+           * 在跑的时候它最近在做什么（2026-09-27，spec §2.1 / D5）：`read README.md`、`bash pytest -q`。
+           * **只一句、会被下一句替换**；跑完就没了——chip 组不是日志。
+           */
+          activity: z.string().max(120).optional(),
         })
         .strict(),
     ),
@@ -333,6 +338,33 @@ const CellItem = z
     interrupted: z.literal(true).optional(),
   })
   .strict()
+
+/**
+ * 一段子转录的头信息（2026-09-27，spec §4.4）。**只有子转录的快照有**。
+ *
+ * `status` 永远是主 agent 派的那一轮的结果——你在坞里接着问，不改它（那不是主 agent 的事）；
+ * 接着问的那一轮另标 `asking`。`result` 是**主 agent 拿到的那段原文**（截断了如实写省了多少）。
+ * `askWhy` 是枚举不是句子：文案归界面（i18n），后端只说是哪种情形。
+ */
+export const SubagentInfoSchema = z
+  .object({
+    agent: z.string().min(1),
+    task: z.string(),
+    status: z.enum(["running", "ok", "error"]),
+    error: z.string().optional(),
+    result: z
+      .object({
+        text: z.string(),
+        truncated: z.object({ originalBytes: z.int(), keptBytes: z.int() }).strict().optional(),
+      })
+      .strict()
+      .optional(),
+    asking: z.literal(true).optional(),
+    canAsk: z.boolean(),
+    askWhy: z.enum(["running", "asking", "team", "no-transcript"]).optional(),
+  })
+  .strict()
+export type SubagentInfo = z.infer<typeof SubagentInfoSchema>
 
 /** 一台内核的状态（笔记本，2026-08-26）。由 `挂载.ts` 从内核事件里跟踪 */
 export const KernelStateSchema = z
@@ -551,6 +583,8 @@ export const SessionSnapshotSchema = z
      * 不进转录：转录是「发生过什么」，这是「还没发生的」——送到那一刻它才作为一条用户发言出现。
      */
     queued: z.array(QueuedMessageSchema).optional(),
+    /** 子转录的头信息（2026-09-27）。**缺省 = 这不是一段子转录** */
+    subagent: SubagentInfoSchema.optional(),
   })
   .strict()
 export type SessionSnapshot = z.infer<typeof SessionSnapshotSchema>
@@ -611,6 +645,8 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
   z.object({ ...envelope, type: z.literal("kernels"), kernels: z.array(KernelStateSchema) }).strict(),
   /** 待发单变了（2026-09-23）：整份换掉，与 `team` / `kernels` 同一纪律 */
   z.object({ ...envelope, type: z.literal("queued"), queued: z.array(QueuedMessageSchema) }).strict(),
+  /** 子转录的头信息变了（2026-09-27）：整份换掉，与 `team` / `queued` 同一纪律 */
+  z.object({ ...envelope, type: z.literal("subagent"), subagent: SubagentInfoSchema }).strict(),
   /** 全量重放。客户端发现 revision 跳号后由服务端补发，或订阅时的首帧 */
   z.object({ ...envelope, type: z.literal("snapshot"), snapshot: SessionSnapshotSchema }).strict(),
 ])

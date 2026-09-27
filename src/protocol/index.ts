@@ -60,6 +60,7 @@ export {
   UpdatePushSchema,
   SessionSnapshotSchema,
   SessionUpdateSchema,
+  SubagentInfoSchema,
   TranscriptItemSchema,
 } from "./events.js"
 export type {
@@ -69,9 +70,11 @@ export type {
   RemoteUpdate,
   SessionSnapshot,
   SessionUpdate,
+  SubagentInfo,
   TranscriptItem,
   TeamSnapshot,
 } from "./events.js"
+export { 子转录id, 拆子转录id, 是子转录id } from "./subagent-id.js"
 
 export {
   DEFAULT_PAGE_SIZE,

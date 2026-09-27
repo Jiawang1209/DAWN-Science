@@ -426,9 +426,12 @@ describe("协议版本 · 5.5", () => {
    * 8.1（2026-09-27）：上下文用量与压缩——`compaction` 转录项、`compactSession`、`getContextUsage` 加 `estimated` / `afterCompaction` / `compactAt`。纯新增，minor。
    *
    * **8.2（2026-09-27）**：回退这一轮——`previewRewind` / `rewindTurn`。纯新增。
+   *
+   * 8.3（2026-09-27）：子 agent 看得见——chip 加 `activity`；快照 / 更新加 `subagent`（子转录的头信息）；
+   *   操作 `openSubagent` / `askSubagent`。纯新增，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.2")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.3")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
@@ -504,5 +507,28 @@ describe("8.1 · 压缩标记", () => {
     expect(TranscriptItemSchema.safeParse({ ...基, status: "ok" }).success).toBe(false)
     expect(TranscriptItemSchema.safeParse({ ...基, status: "done", reason: "auto" }).success).toBe(false)
     expect(TranscriptItemSchema.safeParse({ ...基, status: "done", retried: false }).success).toBe(false)
+  })
+})
+
+describe("8.3 · 子 agent 看得见（2026-09-27）", () => {
+  it("chip 可带 `activity`（≤ 120 字），不带也合法", () => {
+    const item = { type: "subagents", id: "sub:c1", agents: [{ index: 0, agent: "scout", task: "t", status: "running", activity: "read README.md" }] }
+    expect(TranscriptItemSchema.safeParse(item).success).toBe(true)
+    const 太长 = { ...item, agents: [{ ...item.agents[0], activity: "x".repeat(121) }] }
+    expect(TranscriptItemSchema.safeParse(太长).success).toBe(false)
+  })
+  it("快照可带 `subagent`；`askWhy` 只收四个枚举", () => {
+    const base = { sessionId: "s#sub:c1:0", kind: "native", revision: 0, items: [], terminal: "", terminalTrimmed: false, state: "alive" }
+    const info = { agent: "scout", task: "t", status: "ok", result: { text: "结论" }, canAsk: true }
+    expect(SessionSnapshotSchema.safeParse({ ...base, subagent: info }).success).toBe(true)
+    expect(SessionSnapshotSchema.safeParse({ ...base, subagent: { ...info, canAsk: false, askWhy: "team" } }).success).toBe(true)
+    expect(SessionSnapshotSchema.safeParse({ ...base, subagent: { ...info, canAsk: false, askWhy: "别的" } }).success).toBe(false)
+  })
+  it("更新 `{ type: \"subagent\" }` 整份换掉", () => {
+    const u = {
+      workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: "s#sub:c1:0", revision: 3, type: "subagent",
+      subagent: { agent: "scout", task: "t", status: "running", canAsk: false, askWhy: "running" },
+    }
+    expect(SessionUpdateSchema.safeParse(u).success).toBe(true)
   })
 })

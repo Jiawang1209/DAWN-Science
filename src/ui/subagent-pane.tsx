@@ -4,7 +4,7 @@
  * 没选中：这段对话派过的子 agent，按调用分组、最新在上；选中：格顶同一批切换条 → 转录（与主区同一套行、折叠组、贴底跟随）
  * → 交回主 agent 的结果 → 接着问（D3）。**叶子组件只发回调**：看谁、接着问都由 `App.tsx` 做。
  */
-import { useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState, type Ref } from "react"
 import { useStore } from "@nanostores/react"
 import { StickToBottom } from "use-stick-to-bottom"
 import type { TranscriptItem } from "../protocol/index.js"
@@ -20,6 +20,19 @@ import { $侧边会话id, 侧槽 } from "./state/side-chat.js"
 
 type 组 = Extract<TranscriptItem, { type: "subagents" }>
 const 记号 = { running: "⏳", ok: "✓", error: "✗" } as const
+type 状态 = keyof typeof 记号
+
+/** 状态的一个词。逐条写成字面量：i18n 扫描只认调用点上的字符串字面量 */
+function 状态词(s: 状态): string {
+  return s === "running" ? t("运行中") : s === "ok" ? t("完成") : t("失败")
+}
+
+/**
+ * 清单与切换条上那颗的可及名字：「看 explorer（完成）」（2026-09-27 审查）。
+ * 原先就是可见文案「✓ explorer」——那是主区 chip「✓ explorer完成」的**子串**，按名字找就同时命中两颗。
+ * 带「看」、状态放括号里：两边谁也不是谁的一部分。
+ */
+const 看它 = (agent: string, s: 状态) => tf("看 {0}（{1}）", agent, 状态词(s))
 
 /** `askWhy` → 一句话。逐条写成字面量：i18n 扫描只认调用点上的字符串字面量 */
 function 为什么不能问(why: string | undefined): string {
@@ -30,6 +43,8 @@ function 为什么不能问(why: string | undefined): string {
       return t("它还在答上一句")
     case "team":
       return t("团队成员请在「团队」格里给它发消息")
+    // 会话文件太大（过程没读）不在这里：文件在，后端照给 canAsk——续问在子进程里读它，不经界面
+    case "no-transcript":
     default:
       return t("这一次没有留下会话文件，续不了")
   }
@@ -50,22 +65,23 @@ export function SubagentPane(p: {
   const 信息 = useStore($子agent信息)
   const [草稿, 设草稿] = useState("")
   const [在发, 设在发] = useState(false)
+  const 清单ref = useRef<HTMLDivElement>(null)
+  const 回ref = useRef<HTMLButtonElement>(null)
+  /**
+   * 焦点（2026-09-27 审查）：打开一个（从「没在看」到「在看」）落在「回到清单」；回到清单落在第一颗。
+   * **同批里换人不动**——人正按着切换条，抢走焦点就是把他的手拨开。挂载时就在看（点 chip 开的）也算「打开」。
+   */
+  const 上一个 = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const 前 = 上一个.current
+    上一个.current = id
+    if (id && !前) 回ref.current?.focus()
+    else if (!id && 前) 清单ref.current?.querySelector<HTMLElement>(".subagent-pick")?.focus()
+  }, [id])
 
   if (!id) {
     if (p.groups.length === 0) return <p className="hint subagent-empty">{t("这段对话还没派过子 agent")}</p>
-    return (
-      <div className="subagent-pane subagent-list">
-        {[...p.groups].reverse().map((g) => (
-          <section key={g.id} className="subagent-list-group">
-            {g.agents.map((a) => (
-              <Button key={a.index} variant="ghost" size="sm" className="subagent-pick" data-status={a.status} onClick={() => p.onPick(g.id.slice("sub:".length), a.index)}>
-                {记号[a.status]} {a.agent}
-              </Button>
-            ))}
-          </section>
-        ))}
-      </div>
-    )
+    return <SubagentList ref={清单ref} groups={p.groups} onPick={p.onPick} />
   }
 
   const 拆 = 拆子转录id(id)
@@ -88,7 +104,7 @@ export function SubagentPane(p: {
   return (
     <div className="subagent-pane" data-status={信息?.status} data-asking={信息?.asking ? "1" : undefined}>
       <header className="subagent-batch">
-        <Button variant="ghost" size="sm" className="subagent-back" onClick={p.onBack}>
+        <Button ref={回ref} variant="ghost" size="sm" className="subagent-back" onClick={p.onBack}>
           {/* 借「产物」详情页回名单那颗的原话（2026-09-27）：「全部子 agent」会让坞格名「子 agent」成了它的子串，按名字找就找不准 */}
           {t("回到清单")}
         </Button>
@@ -101,6 +117,7 @@ export function SubagentPane(p: {
                 className="subagent-sibling"
                 data-status={a.status}
                 aria-pressed={a.index === 拆?.序号}
+                aria-label={看它(a.agent, a.status)}
                 onClick={() => p.onPick(拆!.toolCallId, a.index)}
               >
                 {记号[a.status]} {a.agent}
@@ -111,7 +128,7 @@ export function SubagentPane(p: {
       {信息 ? (
         <h2 className="subagent-title">
           {记号[信息.status]} {信息.agent}
-          <span className="hint">{信息.asking ? t("在答你的问题") : 信息.status === "running" ? t("运行中") : 信息.status === "ok" ? t("完成") : t("失败")}</span>
+          <span className="hint">{信息.asking ? t("在答你的问题") : 状态词(信息.status)}</span>
         </h2>
       ) : null}
       <StickToBottom className="subagent-turns" resize="smooth" initial="smooth">
@@ -159,6 +176,38 @@ export function SubagentPane(p: {
 }
 
 /**
+ * 没选中时的清单：这段对话派过的，按调用分组、最新在上（2026-09-27）。`memo`：`groups` 身份不变就不重画——
+ * 外面那一层只在子 agent 组本身换了身份时才给新的数组。
+ */
+const SubagentList = memo(function SubagentList(p: {
+  ref: Ref<HTMLDivElement>
+  groups: readonly 组[]
+  onPick: (toolCallId: string, index: number) => void
+}) {
+  return (
+    <div ref={p.ref} className="subagent-pane subagent-list">
+      {[...p.groups].reverse().map((g) => (
+        <section key={g.id} className="subagent-list-group">
+          {g.agents.map((a) => (
+            <Button
+              key={a.index}
+              variant="ghost"
+              size="sm"
+              className="subagent-pick"
+              data-status={a.status}
+              aria-label={看它(a.agent, a.status)}
+              onClick={() => p.onPick(g.id.slice("sub:".length), a.index)}
+            >
+              {记号[a.status]} {a.agent}
+            </Button>
+          ))}
+        </section>
+      ))}
+    </div>
+  )
+})
+
+/**
  * 「子 agent」那一格外面那一层（2026-09-27）：清单与同批切换条从哪一槽取。
  *
  * **不在 `App` 上订主槽的 `$items`**（计划原写法）：那会让整个 App 跟着每一段流式字重渲染——
@@ -171,6 +220,17 @@ export function SubagentDock(p: Omit<Parameters<typeof SubagentPane>[0], "groups
   const 父 = id ? 拆子转录id(id)?.会话 : undefined
   const 用侧 = !!父 && 父 !== p.mainSessionId && 父 === 侧id
   const 条目 = useStore(用侧 ? 侧槽.$items : 主槽.$items)
-  const groups = useMemo(() => 条目.filter((x): x is 组 => x.type === "subagents"), [条目])
+  /**
+   * 只认子 agent 组本身的身份（2026-09-27 审查）：流式字每一拍都给 `条目` 一个新数组，
+   * 但子 agent 组没变时（`setList` 保住了没变的条目身份）这里交出上一次那个数组——清单、切换条都不跟着重画。
+   */
+  const 上次 = useRef<readonly 组[]>([])
+  const groups = useMemo(() => {
+    const 新 = 条目.filter((x): x is 组 => x.type === "subagents")
+    const 旧 = 上次.current
+    if (新.length === 旧.length && 新.every((g, i) => g === 旧[i])) return 旧
+    上次.current = 新
+    return 新
+  }, [条目])
   return <SubagentPane groups={groups} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} />
 }

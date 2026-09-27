@@ -1644,4 +1644,5 @@ export const EN: Readonly<Record<string, string>> = {
   "接着问它": "Ask it a follow-up",
   "接着问": "Ask it",
   "它的回答不会回到主对话": "Its answer does not go back to the main conversation",
+  "看 {0}（{1}）": "View {0} ({1})",
 }

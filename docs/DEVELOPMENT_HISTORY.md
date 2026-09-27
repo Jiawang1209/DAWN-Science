@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 子 agent 看得见 · 界面审查修复：没人看就退订、同步换人、按钮名不撞、焦点、chip 不越界（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 05d5f67 / 9c47abb 审查：切走「子 agent」格或收坞仍订着子转录；坞里那段换了，它派的那个还订着（effect 缺 `侧边id`）；换人时有一帧是「B 的 id + A 的过程与能不能问」；清单/切换条按钮名「✓ explorer」是主区 chip「✓ explorer完成」的子串；chip 那一句用 `50vw` 量，坞里越界。
+- **What**: `state/subagent-view.ts` 新增 `看子agent`（唯一换人入口，先同步清子槽与头信息）、`子转录该放下` / `放下不该看的子转录`；`App.tsx` 那段 effect 依赖改成 `[sessionId, 侧边id, rightDockOpen, rightDockTenant]`，拉取 effect 不再在绘制后清槽。`subagent-pane.tsx`：清单与切换条可及名字改为「看 {agent}（{状态}）」、清单抽成 `memo` 组件、`groups` 只随子 agent 组身份变；打开时焦点落「回到清单」、回到清单落第一颗、同批换人不抢焦点；`no-transcript` 显式分支。`styles.css`：`.chip` 补 `min-width:0`，`.chip-activity` 去掉 `vw`、按 flex 可缩截断。
+- **Impact**: 会话文件太大时后端仍给 `canAsk`（文件在，续问在子进程里读），界面照旧可问——有测试钉住。坞里对话点团队 chip 仍开主区那段的团队（`$团队` 只载主区，没改，另报）。
+- **Verification**: 新增 `tests/ui/subagent-view-state.test.ts`（同步换人、放下判定、App 接线扫描）、`subagent-pane.test.tsx` 加名字/焦点/没会话文件/太大四条、`subagent-chips.test.tsx` 加 CSS 扫描；`vitest run` 全绿（3513）、typecheck、build 通过。
+
 ### 2026-09-27 — 子 agent 看得见 · 后端审查修复：子转录的内存上限、读盘上限、回退停掉在答的、id 按盘上那一段认（分支 `agent-basics`）
 
 - **Type**: fix

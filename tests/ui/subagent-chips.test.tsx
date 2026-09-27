@@ -9,6 +9,8 @@
  * 所以这份测试盯的主要是**克制**：默认一行、任务文本不铺开、
  * 失败原因不省略。
  */
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { SubagentChips } from "../../src/ui/views.js"
@@ -120,5 +122,27 @@ describe("点了在坞里看（2026-09-27，子 agent 看得见）", () => {
   it("失败原因照旧不点也看得见", () => {
     render(<SubagentChips item={item([ERR])} onOpen={() => {}} />)
     expect(screen.getByText("子进程以退出码 3 结束")).toBeDefined()
+  })
+})
+
+describe("chip 在窄处不越界（2026-09-27 审查）", () => {
+  const css = readFileSync(join(__dirname, "../../src/ui/styles.css"), "utf8")
+  const 规则 = (sel: string) => {
+    const m = css.match(new RegExp(`\\n${sel.replace(".", "\\.")}\\s*\\{([^}]*)\\}`))
+    expect(m, `${sel} 那条规则不在了——这条扫描要跟着改`).not.toBeNull()
+    return m![1]!
+  }
+  it("槽与 chip 都能比内容窄：max-width 100%、min-width 0", () => {
+    for (const sel of [".chip-slot", ".chip"]) {
+      expect(规则(sel)).toMatch(/max-width:\s*100%/)
+      expect(规则(sel)).toMatch(/min-width:\s*0/)
+    }
+  })
+  it("那一句是可缩的 flex 项、带省略号，**不按视口量**（坞里 `vw` 是错的尺子）", () => {
+    const r = 规则(".chip-activity")
+    expect(r).toMatch(/flex:\s*0 1 auto/)
+    expect(r).toMatch(/min-width:\s*0/)
+    expect(r).toMatch(/text-overflow:\s*ellipsis/)
+    expect(r).not.toMatch(/\dvw\b/)
   })
 })

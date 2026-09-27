@@ -1787,6 +1787,7 @@ pre {
 .chip-slot { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 100%; }
 .chip {
   max-width: 100%;
+  min-width: 0;
   padding: 2px 8px;
   border: 1px solid var(--dawn-stroke-3);
   border-radius: var(--dawn-radius-full);
@@ -1802,13 +1803,12 @@ pre {
 .chip-task { margin: 2px 0 0; color: var(--dawn-text-3); white-space: pre-wrap; }
 /* 在跑时最近那一句（2026-09-27，D5）：跟在状态后面，一行、截断，不撑高 chip */
 .chip-activity {
-  display: inline-block;
-  vertical-align: bottom;
-  margin-left: 6px;
-  /* 坞里那段对话的 chip 也走这里：坞约 380px 宽，一句长命令不许把 chip 撑出去 */
-  max-width: min(24em, 50vw);
-  min-width: 0;
+  /* chip 是 inline-flex（`.btn`）：这一句是唯一让位的那一项，按 chip 实际有多宽截断——不按视口猜（`vw` 在坞里是错的尺子） */
   flex: 0 1 auto;
+  min-width: 0;
+  margin-left: 6px;
+  /* 主区宽屏上也别一句拉满一行 */
+  max-width: 24em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

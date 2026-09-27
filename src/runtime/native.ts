@@ -3541,7 +3541,7 @@ ${描述}`
         kind: "notice",
         sessionId,
         text: `这一轮开头没能给批准过的方案留底，这一轮结束时不核对它（${e instanceof Error ? e.message : String(e)}）`,
-        failed: true,
+        // 不带 failed（2026-09-28，M-1）：这一轮照常在跑，这是一句提醒。带上的话界面收掉「正在等回话」、通知报「出错」——都不对
       })
       return []
     })

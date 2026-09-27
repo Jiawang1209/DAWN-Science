@@ -3,7 +3,7 @@
  * （而且套在最外面）、批准写文件并结束方案期、`plans.json` 续接、`history()` 还原成卡片、D3 的轮基线核对（2026-09-28 定案）。
  */
 import { describe, expect, it, vi } from "vitest"
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { NativeRuntime, type NativeRuntimeOptions } from "../../src/runtime/native.js"
@@ -488,6 +488,18 @@ describe("审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只�
     await expect(rt.rewind("p1", { 倒数第几句: 1, 文: "x" }, "conversation", [])).rejects.toThrow(/正在处理方案/)
     await expect(rt.previewRewind("p1", { 倒数第几句: 1, 文: "x" })).rejects.toThrow(/正在处理方案/)
     ;(rt as unknown as { 方案答中: Set<string> }).方案答中.delete("p1")
+    await rt.stop("p1")
+  })
+
+  it("这一轮开头没能留底：出声但**不是 failed**（M-1，2026-09-28）——它是提醒，不收掉「正在等回话」、不报「出错」", async () => {
+    const { rt, s, 事件, 文件 } = await 批一份()
+    rmSync(文件)
+    mkdirSync(文件) // 读它会 EISDIR：留底失败
+    await 跑(s, "ls", {})
+    await (内(rt).轮基线.get("p1") as Promise<unknown>)
+    const 那句 = 事件.find((e) => e.kind === "notice" && e.text.includes("没能给批准过的方案留底"))
+    expect(那句).toBeDefined()
+    expect(那句).not.toHaveProperty("failed")
     await rt.stop("p1")
   })
 })

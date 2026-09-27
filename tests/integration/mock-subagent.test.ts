@@ -34,9 +34,13 @@ describe("mock · 子 agent 三支", () => {
     expect(c?.args.agent).toBe("data-auditor")
     expect(String(c?.args.task)).toMatch(/^子任务：/)
   })
-  it("「派子agent慢…」→ 任务以「子任务慢」开头", async () => {
+  it("「派子agent慢慢看」→ 任务以「子任务慢」开头", async () => {
     const c = 调了(await 问([{ role: "user", content: "派子agent慢慢看" }]))
     expect(String(c?.args.task)).toMatch(/^子任务慢/)
+  })
+  it("暗号是整句「派子agent慢慢看」，不是一个「慢」字（M-4，2026-09-28）：话里碰巧带「慢」的走快的那支", async () => {
+    const c = 调了(await 问([{ role: "user", content: "派子agent看看慢性病的数据" }]))
+    expect(String(c?.args.task)).toMatch(/^子任务：/)
   })
   it("子进程收到「子任务…」→ 先说一句，再 read README.md", async () => {
     const j = await 问([{ role: "user", content: "子任务：读一下 README.md" }])

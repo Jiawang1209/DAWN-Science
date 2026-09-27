@@ -1279,11 +1279,15 @@ describe("设计契约 · 工具名要过得了模型 API", () => {
   it("**代码里写死的工具名都是 `^[a-zA-Z0-9_-]+$`**", () => {
     const 形状 = /^[a-zA-Z0-9_-]+$/
     const 坏的: string[] = []
+    const 缺的: string[] = []
     let 读到 = 0
     for (const f of [
       "../../src/tools/run-code.ts",
       "../../src/tools/mcp-tool.ts",
-      "../../src/tools/subagent.ts",
+      // 2026-09-28：原写的 `src/tools/subagent.ts` 从来不存在（工具在 `src/subagent/tool.ts`）——「不存在不算错」把它一直漏着
+      "../../src/subagent/tool.ts",
+      "../../src/subagent/child.ts",
+      "../../src/tools/look-at-image.ts",
       "../../src/tools/propose-plan.ts",
       "../../src/tools/inspect-data.ts",
     ]) {
@@ -1293,12 +1297,18 @@ describe("设计契约 · 工具名要过得了模型 API", () => {
        * 改成按目录拼路径；不存在照旧不算错，但**一个都没读到**要红。
        */
       const 路径 = join(import.meta.dirname, f)
-      if (!existsSync(路径)) continue // 这个文件可能不存在（工具增减过），不存在不算错
+      // 2026-09-28（M-5）：少了一个就红——原先「不存在不算错」，工具文件改名 / 挪走之后这条扫描会悄悄少扫一份。
+      // 工具真的删了，就把它从这张名单里删掉（那是一次有意识的决定）
+      if (!existsSync(路径)) {
+        缺的.push(f)
+        continue
+      }
       读到++
       for (const m of readFileSync(路径, "utf8").matchAll(/^\s*name:\s*"([^"]+)"/gm)) {
         if (!形状.test(m[1]!)) 坏的.push(`${f}：${m[1]}`)
       }
     }
+    expect(缺的, "名单上的工具文件找不到——改了名 / 挪了位置就改这张名单，删了就从名单里删").toEqual([])
     expect(读到, "一个工具文件都没读到——路径拼错了，这条扫描形同虚设").toBeGreaterThan(0)
     expect(坏的, "这个名字送进模型会让整轮请求 400，而报错里不会提到它").toEqual([])
   })
@@ -1496,7 +1506,8 @@ describe("设计契约 · 回退这一轮", () => {
   it("**`checkpoints.ts` 不写 `data/raw` 字面量，只用 `原始数据目录`**", () => {
     const 代码 = readFileSync(join(import.meta.dirname, "../../src/project/checkpoints.ts"), "utf8")
     expect(findLines(代码, (l) => /["'`]data\/raw/.test(l))).toEqual([])
-    expect(代码).toMatch(/import \{ 原始数据目录 \} from "\.\.\/policy\/science-layout\.js"/)
+    // 2026-09-28：同一行还引了 `方案目录`（回退不碰批准过的方案）——认名单里有它，不认整行一字不差
+    expect(代码).toMatch(/import \{[^}]*原始数据目录[^}]*\} from "\.\.\/policy\/science-layout\.js"/)
   })
 })
 

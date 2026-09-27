@@ -565,6 +565,7 @@
  *
  * 8.6（2026-09-27）：先出方案（spec `2026-09-27-先出方案-design.md`）。转录条目新增 `plan`（一版方案：正文、版本、
  *   状态、存档路径）；新增操作 `answerPlan`（批准 / 不做了）。开关不加操作——走已有的 `setSessionConfigOption`（`dawn.plan`）。全是新增，故 minor。
+ *   同一轮（未发布，2026-09-28）：`plan` 条目可选 `fileChanged: true`（工作区里那份与批准时不一样了——人两轮之间改过，界面写「你改过」）。纯新增可选字段。
  */
 export const WORKBENCH_PROTOCOL_VERSION = "8.6"
 

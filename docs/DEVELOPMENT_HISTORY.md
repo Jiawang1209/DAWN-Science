@@ -8,13 +8,39 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-28 — 先出方案审查修复：主会话不加载 pi 扩展；轮基线跟着人的话刷新；answerPlan 一次只答一次（分支 `agent-basics`）
+### 2026-09-28 — 先出方案：先交分析方案、你批了再动手；方案期只看不改（门在代码里）；批准的那一版存进 analysis/plans（学自 Claude Code / Codex 的 plan mode；协议 8.6；分支 `agent-basics`）
 
-- **Type**: fix
-- **Motivation**: 审查找出①主会话的 `DefaultResourceLoader` 没带 `noExtensions`，`<工作区>/.pi/extensions` 与 `<会话目录>/pi/extensions` 里的代码会被 import，其工具绕过方案期门与权限门（安全）；②pi 一轮会吸进排队的下一句、调整方向会停下再起，人在轮中改了方案再说「照我改的做」会被恢复掉；③几条小的：双击批准留孤儿 `…-2.md`、停止先扔底再收尾、存档按文件名、`改过` 不去空白、远端写方案 `test -e` 再写不原子、文件名按 UTF-16 截。
-- **What**: `native.ts` 主会话 `noExtensions: true`；`刷新轮基线`（`queue_delivered` newTurn:false 与调整方向停下之前重拍底）；恢复的话补「如果这是你改的，把改动再说一次或重新提方案」（`plan-mode.ts` `恢复后提醒`）；`answerPlan` 按会话防并发、写下文件后任何一步抛都删文件与存档；`stop()` 等在跑那一轮收完尾（≤10 秒）再扔底；存档与轮基线按 `planId` 取名（`方案存档名`）；`改过` 比 trim 后的正文；远端 `写方案文件` 用 `set -C && : >` 原子占名；`方案文件名` 去控制字符、按码位截。设计契约加两条扫描：每个 `DefaultResourceLoader` 带 `noExtensions: true`、每个 `createAgentSession` 传自己的 `resourceLoader`；`setActiveTools*` 只收已启用的与我们装的名字。spec §0 写下「轮外的写者」（团队成员、仍在跑的内核 cell）这条已知限制。
-- **Impact**: 会话目录 `plans/` 下存档文件名从方案文件名改成 `<planId>-<指纹>.md`；已有的 `plans.json` 里记的是绝对存档路径，照旧能读。无协议变化。
-- **Verification**: 新增 `tests/runtime/no-extensions.test.ts`（种一个扩展，确认不 import、工具不进会话；改前红）；`tests/runtime/plan-mode.test.ts` 九条（排队 / 调整方向 / 停止三条经变异验证：去掉修复即红）；`plan-book` 远端四条、`protocol/plan` 文件名、`policy/plan-mode` 存档名；设计契约三条（含种违例）。
+- **Type**: feat
+- **Motivation**: 科研里切分、检验、模型、图、产物要在看到结果之前定下来（轻量预注册）。此前一句话发出去 agent 就开跑；想让它先说方案只能在提示词里求，
+  而它照样可能顺手 `run_code` 一段、写一个文件——靠提示词管住的门等于没有门。
+- **What**（spec `specs/2026-09-27-先出方案-design.md`；plan `plans/2026-09-27-先出方案.md` Task 1–10）：
+  - **一个会话开关**：方案期是每段会话自己的开关 `dawn.plan`（走已有的 `setSessionConfigOption`），不是全局模式；续接后开关、卡片、保护都在（方案簿落盘 `plans.json`）。
+  - **门在最外层、每一件工具都套**：`policy/plan-mode.ts` 纯函数，**默认拒**；`native.ts` 交给 pi 的 `customTools` 只能是 `方案期包过的`（设计契约扫描盯着）。
+    门的顺序：方案期门 → 权限门 → 工具。只放 `read` / `look_at_image` / `read_main_session` / 两件方案工具 / pi 的 `ls` `grep` `find` / 声明 `readOnlyHint` 的 MCP。
+  - **方案期拿掉 bash**：第一版放「看得懂的只读 bash」白名单，对抗审查找出约 20 种绕法（引号拼接、`rg --hostname-bin`、`sort --o=` 之类），白名单整条删掉，bash / powershell 方案期一律拒；
+    改给 pi 那三件**不经 shell** 的 `ls` / `grep` / `find`（参数有类型，没有可注入的命令行）。
+  - **`inspect_data`** 顶替方案期的 `run_code`：代码写死（Python / R），模型给的参数整份编码后塞进去（Python 走 base64 的 JSON、R 走十六进制）——一个字都不进代码原文，无从注入；在对话内核里只看结构，跑完不留变量名。
+  - **`propose_plan`**：五节必填、`terminate: true` 停这一轮；界面画成方案卡「照这个做 / 改一改 / 不做了」，只有最新那一版能按，重写靠在输入框里说。
+  - **批准**（`answerPlan`）：存到 `analysis/plans/<日期>-<标题>.md`（YAML 头；`wx` 打开，**从不覆盖**；远端 `set -C` 原子占名），同时记 sha256 指纹、在会话目录存一份存档；结束方案期，替人发执行那句。一次只答一次（按会话防并发；写下文件后任何一步抛都删掉）。
+  - **D3 轮基线**：已批准的文件门一直拦 agent 的写；漏过门的（门看不见的写法）靠每一轮的基线兜——这一轮里 agent 改的，收尾时从存档恢复并出声；两轮之间人改的留着、卡上记「你改过」（`fileChanged`）。
+    人在轮中说了话（排队的一句被吸进这一轮、调整方向）就重拍一次底，「改了方案 → 照我改的做」不会被恢复。
+  - **MCP**：方案期只放行声明了 `readOnlyHint` 的工具。
+  - **pi 扩展在主会话里关掉**（`noExtensions: true`）：此前 `<工作区>/.pi/extensions` 与 `<会话目录>/pi/extensions` 里的代码会在建会话时被 import，它们的工具绕过方案期门与权限门——**任意代码**。设计契约两条扫描：每个 `DefaultResourceLoader` 带 `noExtensions: true`、每个 `createAgentSession` 传自己的 `resourceLoader`；`setActiveTools*` 只收已启用的与我们装的名字。
+  - **pi 不再悄悄从 GitHub 下 rg / fd**（`PI_OFFLINE=1`，应用与子 agent 都设）：作者机器上的 `rg` 就是 2026-08-22 这样被下下来的。`grep` / `find` 缺二进制时照实说。
+  - **工具名的设计契约扫描此前从没扫到过一个文件**：它用 `new URL(f, import.meta.url)` 解析路径，jsdom 下抛错、`catch` 里 `continue`，于是每个文件都算「不存在」。改用 `import.meta.dirname`，一个文件都没读到就红。
+  - **界面**：开关放在**输入卡里模型那一行的最左边**，常驻（附栏在坞里 380 宽已经满了，实测挤进去会被压成 2px 盖在仪表上）——**偏离 spec 的「附栏」，待作者定**；坞里只留图标（名字在 `aria-label`）。开着时输入卡顶上一条带子用字说清。`/plan`（`/plan 问题` = 开 + 发余下那句，余下的不再当斜杠命令拦）；⌘K 一条。
+    ACP / CLI 灰着、旁边一行字写原因（D7，不是悬停提示）；native 还没报上 `dawn.plan` 时同样灰着、写「还没准备好」；原因字窄时折行，不截省略号。
+  - **D8 对照**：批准后卡上「计划的产物 N 项 · 已生成 M · 计划外 K」，从产物清单现算，不写回方案文件；远端会话照实说对照不了。
+  - **协议 8.6**：转录条目 `plan`、操作 `answerPlan`；mock 同批（准入规则 1）。
+- **已知限制**：远端会话方案期没有 `ls` / `grep` / `find`（pi 只会在本机跑 `rg` / `fd`），只有 `read` 与 `inspect_data`；远端没有 D3 第二道（指纹、轮基线、`fileChanged`），只有门按路径拦。
+  轮外的写者（队长这一轮结束后还在干的团队成员、超时后仍在跑的内核 cell）改的看起来和人改的一样——留着、记「你改过」。人在一轮跑着、又没说话时手改批准文件，会被当成 agent 的改动恢复（出声）。
+- **Impact**: 协议 minor（8.6），纯新增。非 native 会话、定时任务行为不变。`science-layout.ts` 多一个常量 `方案目录`，约定正文与初始化清单未动（D2）。
+  主会话不再加载任何 pi 扩展（行为变化：放在 `.pi/extensions` 里的东西不再生效——DAWN 一直只用 customTools）；pi 不再自动下载 rg / fd。视觉基线重存 12 张（空态、对话、命令面板、概览、设置栏、坞里的对话 × 明暗）。
+- **Verification**: vitest 311 文件 / 3909 过、10 跳过；typecheck 0；build 过；e2e 全量 571 过、1 跳过、1 红（`remote-kernel.spec.ts:269`「内核在背后被杀 → 30 秒内出声」，全量负载下超时；单跑 19 秒过，与本特性无关）（`plan-mode.spec.ts` 10 条：开关、批准存档、门拦写、改一改、不做了、`/plan`、ACP 灰着、坞里只留图标等）。
+  `tests/runtime/no-extensions.test.ts`（种一个扩展，确认不 import；改前红）；`plan-mode` 排队 / 调整方向 / 停止三条经变异验证（去掉修复即红）；设计契约扫描都种过违例。
+  Task 7 审查七条（2026-09-28）：未报上 `dawn.plan` 写原因、答完焦点落回卡片、空态换 agent 后按下作废、`/plan /compact x` 不去压缩、原因字折行、「已批准」不拖空格、批准后发不出去把那句放回输入框、连按两下只答一次——各有单测（第 1–4、6 条改前红；折行那条另加设计契约扫描，末两条是回归保护）。
+  视觉基线：12 张的 diff 逐张看过，红只落在那颗开关（坞里是图标）与命令面板多出的方案那几行及其下移；其余是每通道 ±1 的渲染噪声（命令面板暗色那片玻璃底下的模糊）。重存后连跑两遍 14/14。
+  真机：（作者走一遍后补）。
 
 ### 2026-09-28 — 会话全文搜索：侧栏「按名字 / 按内容」，搜说过的、回复、跑过的代码，点了跳到那一处（协议 8.5；分支 `agent-basics`）
 

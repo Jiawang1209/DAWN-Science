@@ -7301,3 +7301,64 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   line-height: 1.5;
   color: var(--dawn-text-3);
 }
+
+/* ── 上下文仪表（2026-09-27）：附栏右侧，常驻。三档颜色只从令牌来 ───────────── */
+.ctx-meter { position: relative; }
+.ctx-meter .btn.ctx-meter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  font-size: var(--dawn-fs-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--dawn-text-2);
+}
+.ctx-meter[data-level="warn"] .btn.ctx-meter-trigger { color: var(--dawn-warning); }
+.ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
+.ctx-meter[data-level="dim"] .btn.ctx-meter-trigger { color: var(--dawn-text-3); }
+.ctx-meter-ring { flex: none; }
+.ctx-meter-ring-track { fill: none; stroke: var(--dawn-stroke-3); stroke-width: 2; }
+.ctx-meter-ring-fill { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ctx-meter-pop {
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-2));
+  right: 0;
+  width: 20rem;
+  max-width: calc(100vw - 32px);
+  padding: var(--dawn-space-3);
+  display: grid;
+  gap: var(--dawn-space-2);
+  z-index: var(--z-modal);
+  transform-origin: bottom right;
+}
+.ctx-meter-pop .hint, .ctx-meter-head { margin: 0; }
+.ctx-meter-head { font-variant-numeric: tabular-nums; color: var(--dawn-text-1); }
+.ctx-meter-bar { position: relative; height: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-fill-3); overflow: hidden; }
+.ctx-meter-fill { position: absolute; inset: 0 auto 0 0; background: var(--dawn-accent); }
+.ctx-meter[data-level="warn"] .ctx-meter-fill { background: var(--dawn-warning); }
+.ctx-meter[data-level="over"] .ctx-meter-fill { background: var(--dawn-danger); }
+.ctx-meter-line { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--dawn-text-2); }
+
+/* ── 转录里的压缩标记（2026-09-27）：一条分界线，不是一段发言 ───────────── */
+.compaction-mark {
+  margin: var(--dawn-space-3) 0;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  border-top: 1px dashed var(--dawn-stroke-3);
+  border-bottom: 1px dashed var(--dawn-stroke-3);
+}
+.compaction-mark .hint { margin: var(--dawn-space-1) 0 0; }
+.compaction-line { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); }
+.compaction-title { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
+.compaction-mark[data-status="failed"] .compaction-title { color: var(--dawn-danger); }
+.compaction-mark .btn.compaction-toggle { font-size: var(--dawn-fs-badge); color: var(--dawn-text-2); }
+.compaction-meta { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); font-variant-numeric: tabular-nums; }
+.compaction-summary {
+  margin: var(--dawn-space-2) 0 0;
+  padding: var(--dawn-space-2);
+  white-space: pre-wrap;
+  font-size: var(--dawn-fs-badge);
+  color: var(--dawn-text-2);
+  background: var(--dawn-fill-3);
+  border-radius: var(--dawn-radius-sm);
+  max-height: 20rem;
+  overflow: auto;
+}

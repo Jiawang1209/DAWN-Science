@@ -215,8 +215,14 @@ export function ChangesPanel({
 export interface ContextUsage {
   model?: string
   contextWindow?: number
-  /** provider 报的真数。**缺省 = 尚未采集，不是 0** */
+  /** pi 算的「上下文里现在有多少」（2026-09-27 口径）。**缺省 = 还没有过回复或刚压缩过，不是 0** */
   usedTokens?: number
+  /** `usedTokens` 里有一截是估的（最近一次回复之后新加的） */
+  estimated?: true
+  /** 刚压缩过、还没有新回复 */
+  afterCompaction?: true
+  /** 自动压缩线 */
+  compactAt?: number
   bytes: { system: number; tools: number; history: number }
 }
 

@@ -1,0 +1,125 @@
+/**
+ * 上下文仪表（2026-09-27，spec §2.1）：读数纯函数的每一档、`/compact` 识别、仪表常驻与弹层。
+ */
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { act, fireEvent, render, screen } from "@testing-library/react"
+import { ContextMeter, 读仪表, 是压缩命令, type 仪表读数 } from "../../src/ui/context-meter.js"
+
+const 底 = { bytes: { system: 0, tools: 0, history: 0 }, contextWindow: 128_000, compactAt: 111_616 }
+
+describe("读仪表", () => {
+  it("内核 / 终端：不画", () => {
+    expect(读仪表("kernel", undefined)).toBeUndefined()
+    expect(读仪表("pty", undefined)).toBeUndefined()
+  })
+  it("外部 agent：灰着写「读不到」，不能压", () => {
+    for (const k of ["acp", "cli"] as const) {
+      const r = 读仪表(k, undefined)!
+      expect(r).toMatchObject({ 档: "dim", 值: "读不到", 能压: false })
+      expect(r.细节.join("")).toContain("外部 agent")
+    }
+  })
+  it("还没有过回复：「—」并说为什么不先估一个", () => {
+    const r = 读仪表("native", 底)!
+    expect(r.值).toBe("—")
+    expect(r.细节.join("")).toContain("第一次回复之后才知道")
+  })
+  it("有真数：百分比；不足 1% 写 <1%", () => {
+    expect(读仪表("native", { ...底, usedTokens: 20 })!.值).toBe("<1%")
+    expect(读仪表("native", { ...底, usedTokens: 47_200 })).toMatchObject({ 值: "37%", 档: "normal" })
+  })
+  it("有估的一截：写「约」", () => {
+    expect(读仪表("native", { ...底, usedTokens: 47_200, estimated: true })!.值).toBe("约 37%")
+  })
+  it("线的 85% 起是提醒档；过线是 over", () => {
+    expect(读仪表("native", { ...底, usedTokens: 95_000 })!.档).toBe("warn")
+    expect(读仪表("native", { ...底, usedTokens: 111_617 })!.档).toBe("over")
+  })
+  it("刚压缩过：「已压缩」，不给数", () => {
+    const r = 读仪表("native", { ...底, afterCompaction: true })!
+    expect(r.值).toBe("已压缩")
+    expect(r.已用).toBeUndefined()
+  })
+  it("上限拿不到：只写数，并说不会自动压缩", () => {
+    const r = 读仪表("native", { bytes: 底.bytes, usedTokens: 12_300 })!
+    expect(r.值).toBe("12.3k")
+    expect(r.细节.join("")).toContain("不会自动压缩")
+  })
+  it("取数失败：灰着说没取到，不装作有数", () => {
+    const r = 读仪表("native", undefined, "连不上后端")!
+    expect(r).toMatchObject({ 档: "dim", 值: "—" })
+    expect(r.细节.join("")).toContain("连不上后端")
+  })
+})
+
+describe("是压缩命令", () => {
+  it("整句是 /compact：没有要求", () => {
+    expect(是压缩命令("/compact")).toEqual({})
+    expect(是压缩命令("  /COMPACT  ")).toEqual({})
+  })
+  it("后面跟一句：那句是要求", () => {
+    expect(是压缩命令("/compact 保留暗号和图的路径")).toEqual({ instructions: "保留暗号和图的路径" })
+  })
+  it("不是它：/compactx、句中提到、别的斜杠", () => {
+    expect(是压缩命令("/compactx")).toBeUndefined()
+    expect(是压缩命令("请 /compact 一下")).toBeUndefined()
+    expect(是压缩命令("/skill:compact")).toBeUndefined()
+  })
+})
+
+describe("ContextMeter", () => {
+  // 在 beforeEach 里算、不在 describe 体里算：`tests/ui/setup.ts` 的 beforeEach 才把语言切到中文，
+  // describe 体在收集阶段就跑了，那时算出来的细节是英文
+  let 读数: 仪表读数
+  beforeEach(() => {
+    读数 = 读仪表("native", { ...底, usedTokens: 47_200 })!
+  })
+  it("常驻：按钮上就写着比例（不是悬停才出现）", () => {
+    render(<ContextMeter 读数={读数} />)
+    expect(screen.getByRole("button", { name: "上下文 37%" })).toBeTruthy()
+  })
+  it("点开：真数、自动压缩线、「现在压缩」；打开时要一次新数", () => {
+    const onOpen = vi.fn()
+    render(<ContextMeter 读数={读数} onOpen={onOpen} onCompact={async () => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "上下文 37%" }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    const 层 = screen.getByRole("dialog")
+    expect(层.textContent).toContain("47.2k / 128k tokens")
+    expect(层.textContent).toContain("到 111.6k tokens 会自动压缩")
+    expect(screen.getByRole("button", { name: "现在压缩" })).toBeTruthy()
+  })
+  it("悬停就看得到用量，移开就收；点一下钉住，移开不收", () => {
+    vi.useFakeTimers()
+    const onOpen = vi.fn()
+    const { container } = render(<ContextMeter 读数={读数} onOpen={onOpen} />)
+    const 盒 = container.querySelector(".ctx-meter")!
+    fireEvent.mouseEnter(盒)
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("dialog").textContent).toContain("47.2k / 128k tokens")
+    fireEvent.mouseLeave(盒)
+    act(() => vi.advanceTimersByTime(200))
+    expect(screen.queryByRole("dialog")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "上下文 37%" }))
+    fireEvent.mouseLeave(盒)
+    act(() => vi.advanceTimersByTime(200))
+    expect(screen.getByRole("dialog")).toBeTruthy()
+    vi.useRealTimers()
+  })
+  it("忙着：「现在压缩」灰着，旁边写原因", () => {
+    render(<ContextMeter 读数={读数} onCompact={async () => {}} 不能压的原因="这一轮还在跑，做完再压缩" />)
+    fireEvent.click(screen.getByRole("button", { name: "上下文 37%" }))
+    expect((screen.getByRole("button", { name: "现在压缩" }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText("这一轮还在跑，做完再压缩")).toBeTruthy()
+  })
+  it("压缩请求失败：在弹层里出声", async () => {
+    render(<ContextMeter 读数={读数} onCompact={async () => { throw new Error("写入被拒") }} />)
+    fireEvent.click(screen.getByRole("button", { name: "上下文 37%" }))
+    fireEvent.click(screen.getByRole("button", { name: "现在压缩" }))
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", "写入被拒")
+  })
+  it("外部 agent：没有「现在压缩」", () => {
+    render(<ContextMeter 读数={读仪表("acp", undefined)!} onCompact={async () => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "上下文 读不到" }))
+    expect(screen.queryByRole("button", { name: "现在压缩" })).toBeNull()
+  })
+})

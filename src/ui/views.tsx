@@ -16,7 +16,10 @@ import { 在组词 } from "./ime.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
-import { $items, $待发, type 会话开关 } from "./state/transcript.js"
+import { $items, $待发, 在压缩, type 会话开关 } from "./state/transcript.js"
+import { ContextMeter, 读仪表, 是压缩命令, use上下文用量 } from "./context-meter.js"
+import { CompactionRow } from "./compaction-row.js"
+import type { ContextUsage } from "./panels.js"
 import { 待发条 } from "./queued-strip.js"
 import {
   RIGHT_DOCK_MAX,
@@ -3757,6 +3760,8 @@ export function ConversationView({
   onQueueToDock,
   canRedirect,
   queueLocked,
+  onCompact,
+  取上下文用量,
   disabled,
   terminalTrimmed,
   kernelInstanceId,
@@ -3912,6 +3917,13 @@ export function ConversationView({
    * 「停止」不受它管——调整方向正在进行时按停止是正当的（停止赢）。
    */
   queueLocked?: boolean | undefined
+  /**
+   * 压缩这段的上下文（2026-09-27）。**只有 native 给**——`/compact`、仪表弹层「现在压缩」都走它。
+   * 不给时 `/compact` 原样发出去（外部 agent 自己认这个命令），`/` 菜单里也不列那一条。
+   */
+  onCompact?: ((instructions?: string) => Promise<void>) | undefined
+  /** 取这一段的上下文用量（2026-09-27）。只有 native 给；外部 agent 的仪表写「读不到」，不取 */
+  取上下文用量?: (() => Promise<ContextUsage>) | undefined
   /** 导出这段对话为 markdown（codex-polish ④）。回落到哪了，好说给人 */
   onExport?: (() => Promise<{ path: string; turns: number }>) | undefined
   /** 输入卡上那颗权限（2026-08-23）：这一段的档、是否跟着默认、选了怎么办 */
@@ -4152,7 +4164,13 @@ export function ConversationView({
       ),
     ])
   }, [退回的图, session.sessionId])
-  const 斜杠单 = useStore($slashItems)
+  const 全部斜杠 = useStore($slashItems)
+  // `/compact` 那一条只给能压的那段（native）；外部 agent 那边 `/compact` 原样发给它，不替它列
+  // （`as string`：`SlashItem.kind` 的 `command` 在 Task 7 才加，那时去掉断言）
+  const 斜杠单 = useMemo(
+    () => (onCompact ? 全部斜杠 : 全部斜杠.filter((x) => (x.kind as string) !== "command")),
+    [全部斜杠, onCompact],
+  )
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
   // `@` 菜单：光标位置由输入框报（onSelect），选中下标与 `/` 那份同理由输入框管
@@ -4277,7 +4295,8 @@ export function ConversationView({
    * 两种都算「这一轮在跑」：停止按钮、模型菜单的禁用都据它——
    * 而**等回音的那段恰恰是最想按停止的时候**。
    */
-  const 说着 = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)
+  // 正在压缩也算（2026-09-27）：与 `$回合进行中` 同一个判据
+  const 说着 = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final) || 在压缩(items)
   /**
    * 等待期间模型已经在思考了没有。
    *
@@ -4294,6 +4313,15 @@ export function ConversationView({
       .some((i) => i.type === "turn" && i.who === "agent" && (i.thinking ?? "").length > 0)
 
   const busy = 说着 || 等回话 !== undefined
+  /**
+   * 上下文仪表（2026-09-27，spec §2.1）。`压缩记号` 是字符串——`items` 每个字都换一次，而它只在压缩开始 / 收尾时变。
+   */
+  const 压缩记号 = useMemo(
+    () => items.filter((i) => i.type === "compaction").map((i) => `${i.id}:${i.status}`).join(","),
+    [items],
+  )
+  const 上下文 = use上下文用量(session.sessionId, 取上下文用量, busy, 压缩记号)
+  const 仪表 = 读仪表(session.kind, 上下文.usage, 上下文.错)
   /**
    * 每条说完的 agent 发言提到的案例（2026-09-15）。**只随条目变**：流式时每个 token 都重渲染，
    * 而收案例要解析工具返回的 JSON——不记住的话一段长对话每个字都重解析一遍。
@@ -4657,6 +4685,21 @@ export function ConversationView({
            * 拦下来的话表现是「按了发送什么都没发生」。
            */
           if (!text && 待发图.length === 0 && 待发文件.length === 0) return
+          /**
+           * **`/compact` 不当一句话发**（2026-09-27，spec §2.2）：整句是它、没附图也没附文件、且这段能压（`onCompact` 只有 native 给）→ 走压缩，
+           * 后面那句作为摘要的额外要求。外部 agent 那边不拦，原样发——Claude Code 之类自己认这个命令，我们不替它做、也不吞掉它。
+           * 失败（这一轮还在跑、写权不在）照「乐观清空、失败还回去」那一套：话放回框里，原因写在框下。
+           */
+          const 压缩令 = onCompact && 待发图.length === 0 && 待发文件.length === 0 ? 是压缩命令(text) : undefined
+          if (压缩令 && onCompact) {
+            clearDraft(session.sessionId)
+            设发送出错(undefined)
+            void onCompact(压缩令.instructions).catch((e: unknown) => {
+              设发送出错(e instanceof Error ? e.message : String(e))
+              setDraft(session.sessionId, text)
+            })
+            return
+          }
           /**
            * **上一轮还在跑就不许再发**（2026-08-15 作者第三次报同一句报错）。
            *
@@ -5395,6 +5438,18 @@ export function ConversationView({
                 onSet={onSetConfigOption}
               />
             ) : null}
+            {/**
+              * 上下文仪表（2026-09-27，spec §2.1 / D4）：权限左边，**常驻**。内核 / 终端不画（`读仪表` 给 undefined）；
+              * 外部 agent 灰着写「读不到」。这一轮在跑时「现在压缩」灰着并写原因（D8）。
+              */}
+            {仪表 ? (
+              <ContextMeter
+                读数={仪表}
+                onOpen={上下文.重取}
+                {...(onCompact ? { onCompact: () => onCompact() } : {})}
+                {...(busy ? { 不能压的原因: t("这一轮还在跑，做完再压缩") } : {})}
+              />
+            ) : null}
             {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}
           </div>
         </div>
@@ -5522,8 +5577,10 @@ function TranscriptRowImpl({
   if (item.type === "cell") {
     return <CellNoteRow item={item} />
   }
-  // 压缩标记（2026-09-27）：占位，界面那一轮换成真组件。它不是发言、不是工具，先跳过
-  if (item.type === "compaction") return null
+  // 压缩标记（2026-09-27，spec §2.3）：一条分界线，不是发言、不是工具
+  if (item.type === "compaction") {
+    return <CompactionRow item={item} />
+  }
   const mine = item.who === "user"
 
   /**
@@ -6526,7 +6583,9 @@ export function EmptyConversation({
   const first = agents[0]
   /** 这一屏的草稿。**不进 `$drafts`**：那份是按会话分的，而这里还没有会话 */
   const [草稿, 设草稿] = useState("")
-  const 斜杠单 = useStore($slashItems)
+  const 全部斜杠 = useStore($slashItems)
+  // 还没有会话：没有上下文可压，不列 `/compact`（`as string` 同上，Task 7 去掉）
+  const 斜杠单 = useMemo(() => 全部斜杠.filter((x) => (x.kind as string) !== "command"), [全部斜杠])
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
   const 输入框 = useRef<HTMLTextAreaElement>(null)

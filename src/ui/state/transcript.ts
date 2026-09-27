@@ -31,6 +31,13 @@ export const { $items, $待答权限, $会话开关, $待发, upsertItem, dropIt
 export const flushTranscript = 主槽.flush
 
 /**
+ * 有一次压缩正在进行（2026-09-27）。**它也算「这一轮在跑」**：停止键要能按（按了取消压缩），
+ * 这期间回车是排队——pi 在手动压缩时收到新的一句会直接抛。
+ */
+export const 在压缩 = (items: readonly TranscriptItem[]): boolean =>
+  items.some((i) => i.type === "compaction" && i.status === "running")
+
+/**
  * **一整轮是不是还开着**（2026-09-22 从 `App.tsx` 挪来，`perf-render`）。
  *
  * 布尔值，一轮只翻两次；`computed` 值没变就不通知——所以读它的组件
@@ -38,7 +45,7 @@ export const flushTranscript = 主槽.flush
  * （学自 Hermes `chat/index.tsx:299`：*"ChatView must not subscribe to $messages"*）。
  */
 export const $回合进行中 = computed($items, (items) =>
-  items.some((i) => i.type === "turn" && i.who === "agent" && !i.final),
+  items.some((i) => i.type === "turn" && i.who === "agent" && !i.final) || 在压缩(items),
 )
 
 /**

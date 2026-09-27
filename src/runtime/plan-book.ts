@@ -19,17 +19,20 @@ import type { RemoteLike } from "./types.js"
 /** 方案簿在会话目录里的文件名。运行时读写它、全文搜索只读它（`pi-record.ts` 的 `读方案们`） */
 export const 方案簿文件名 = "plans.json"
 
-/** 簿里记的一版：协议里的 `方案` + 批准时的指纹与存档（只有本机会话批准的才有） */
-export type 方案记录 = 方案 & { sha256?: string; 存档?: string }
+/**
+ * 簿里记的一版：协议里的 `方案` + 批准时的指纹与存档（只有本机会话批准的才有）
+ * + `离枝`（2026-09-28）：批准过、但交它的那次 `propose_plan` 已经不在当前对话分支上（回退到它之前了）。见 `只留`。
+ */
+export type 方案记录 = 方案 & { sha256?: string; 存档?: string; 离枝?: true }
 
 interface 簿内容 {
   阶段: "off" | "planning"
   方案们: 方案记录[]
 }
 
-/** 给事件、给 `history()` 的那一份：摘掉只给运行时用的两样 */
+/** 给事件、给 `history()` 的那一份：摘掉只给运行时用的几样 */
 export function 公开(p: 方案记录): 方案 {
-  const { sha256: _指纹, 存档: _存档, ...rest } = p
+  const { sha256: _指纹, 存档: _存档, 离枝: _离枝, ...rest } = p
   return { ...rest }
 }
 
@@ -61,13 +64,14 @@ export class 方案簿 {
     const p = this.内.方案们.find((x) => x.planId === planId)
     return p ? 公开(p) : undefined
   }
+  /** 门要保护的那几份。**离枝的不算**（2026-09-28）：对话里已经没有它，那份文件就是你项目里的一份普通文件 */
   已批准路径(): string[] {
-    return this.内.方案们.flatMap((p) => (p.status === "approved" && p.savedPath ? [p.savedPath] : []))
+    return this.内.方案们.flatMap((p) => (p.status === "approved" && !p.离枝 && p.savedPath ? [p.savedPath] : []))
   }
-  /** 批准时记下了指纹与存档的那几版（本机会话才有）：D3 第二道核对它们 */
+  /** 批准时记下了指纹与存档的那几版（本机会话才有）：D3 第二道核对它们。**离枝的不拍底、不恢复、不记「你改过」** */
   已批准存档(): (已批准存档 & { planId: string })[] {
     return this.内.方案们.flatMap((p) =>
-      p.status === "approved" && p.savedPath && p.sha256 && p.存档 ? [{ planId: p.planId, 相对: p.savedPath, sha256: p.sha256, 存档: p.存档 }] : [],
+      p.status === "approved" && !p.离枝 && p.savedPath && p.sha256 && p.存档 ? [{ planId: p.planId, 相对: p.savedPath, sha256: p.sha256, 存档: p.存档 }] : [],
     )
   }
 
@@ -129,7 +133,8 @@ export class 方案簿 {
    */
   设文件改过(planId: string, 改过: boolean): 方案 | undefined {
     const p = this.内.方案们.find((x) => x.planId === planId)
-    if (!p || Boolean(p.fileChanged) === 改过) return undefined
+    // 离枝的没有卡片（转录里没有它）：不记、不回，调用方也就不发事件
+    if (!p || p.离枝 || Boolean(p.fileChanged) === 改过) return undefined
     if (改过) p.fileChanged = true
     else delete p.fileChanged
     this.存()
@@ -138,23 +143,39 @@ export class 方案簿 {
 
   /**
    * 回退之后（2026-09-28）：对话里已经没有那次 `propose_plan` 的几版**摘掉**——卡片跟着转录一起没了，
-   * 留在簿里的话它还「能答」（一张看不见的卡能被批）、版本号也接不上。**批准过的留着**：文件已经写进项目、保护照旧，
-   * 批准是人的动作，回退对话不撤销它。
-   * 摘完之后最新那一版若是「已被取代」（取代它的那版刚被摘掉），它又是最新的了——**回到「等你看」**，回给调用方发事件。
+   * 留在簿里的话它还「能答」（一张看不见的卡能被批）、版本号也接不上。
+   * **批准过的不摘、记成「离枝」**（2026-09-28 交叉审查定案）：批准是人的动作，回退对话不撤销它，文件留在项目里；
+   * 但卡片已经不在转录里——此前它照旧被 D3 拍底、恢复、记「你改过」，收尾时一个 `plan` 事件把卡片**追加到转录末尾**
+   * （重载又消失），恢复的通知说的是一份看不见的方案。离枝之后：门不保护、D3 不管、不发卡片事件——那份文件是你的一份普通文件。
+   * 它的 propose_plan 回到分支上（目前没有这条路，防御）就摘掉标记。
+   * 摘完之后分支上最新那一版若是「已被取代」（取代它的那版刚被摘掉 / 离枝），它又是最新的了——**回到「等你看」**，回给调用方发事件。
    */
-  只留(还在的调用: ReadonlySet<string>): { 摘: number; 复原?: 方案 } {
+  只留(还在的调用: ReadonlySet<string>): { 摘: number; 离枝?: number; 复原?: 方案 } {
     const 前 = this.内.方案们.length
     this.内.方案们 = this.内.方案们.filter((p) => p.status === "approved" || 还在的调用.has(p.planId))
     const 摘 = 前 - this.内.方案们.length
-    if (摘 === 0) return { 摘 }
-    const 最新 = this.内.方案们.reduce<方案记录 | undefined>((m, p) => (!m || p.version > m.version ? p : m), undefined)
+    let 离枝 = 0
+    let 标记变了 = false
+    for (const p of this.内.方案们) {
+      if (p.status !== "approved") continue
+      const 在 = 还在的调用.has(p.planId)
+      if (!在 && !p.离枝) {
+        p.离枝 = true
+        离枝++
+      } else if (在 && p.离枝) {
+        delete p.离枝
+        标记变了 = true
+      }
+    }
+    if (摘 === 0 && 离枝 === 0 && !标记变了) return { 摘 }
+    const 最新 = this.内.方案们.reduce<方案记录 | undefined>((m, p) => (p.离枝 ? m : !m || p.version > m.version ? p : m), undefined)
     let 复原: 方案 | undefined
     if (最新?.status === "superseded") {
       最新.status = "proposed"
       复原 = 公开(最新)
     }
     this.存()
-    return 复原 ? { 摘, 复原 } : { 摘 }
+    return { 摘, ...(离枝 ? { 离枝 } : {}), ...(复原 ? { 复原 } : {}) }
   }
 
   private 存(): void {

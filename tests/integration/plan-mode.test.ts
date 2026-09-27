@@ -197,4 +197,34 @@ describe("先出方案 · 真 pi", () => {
       await 再.stop(id)
     }
   })
+
+  it("回退 × 方案（2026-09-28）：批准之后回到交方案之前 → 那版离枝：人改文件、下一轮 agent 再改，都不追加卡片、不恢复、不出声", { timeout: 60_000 }, async () => {
+    const id = "s-offbranch"
+    const { runtime, 事件, 说, workspace } = await 起一段(id)
+    try {
+      await runtime.setConfigOption(id, "dawn.plan", "1")
+      await 说("分析一下吸烟和肺功能")
+      const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEvent, { kind: "plan" }>
+      const { savedPath } = await runtime.answerPlan(id, 卡.plan.planId, "approve")
+      const 文件 = join(workspace, savedPath!)
+      await 说(执行那句(savedPath!, false))
+
+      const r = await runtime.rewind(id, { 倒数第几句: 2, 文: "分析一下吸烟和肺功能" }, "conversation", [])
+      expect(r.conversationError).toBeUndefined()
+      const 回退后 = 事件.length
+      writeFileSync(文件, "人改的")
+      // 下一轮里 agent 又动了它（门看不见的写法）：离枝的方案不再归 D3 管，不恢复
+      runtime.attach(id, (e) => {
+        if (e.kind === "tool_end" && e.toolName === "write") writeFileSync(文件, "这一轮里被改了")
+      })
+      await 说(执行那句(savedPath!, false))
+      const 之后 = 事件.slice(回退后)
+      expect(之后.filter((e) => e.kind === "plan"), "离枝的方案不许把卡片追加到转录末尾").toEqual([])
+      expect(通知(之后).filter((t) => t.includes("方案"))).toEqual([])
+      expect(readFileSync(文件, "utf8")).toBe("这一轮里被改了")
+      expect((await runtime.history(id)).some((x) => x.kind === "plan")).toBe(false)
+    } finally {
+      await runtime.stop(id)
+    }
+  })
 })

@@ -56,16 +56,44 @@ describe("方案簿", () => {
     簿.收("c2", "t", "m2")
     簿.收("c3", "t", "m3")
     // c3 摘掉之后 c2 又是最新的：回到「等你看」
-    expect(簿.只留(new Set(["c2"]))).toEqual({ 摘: 1, 复原: expect.objectContaining({ planId: "c2", status: "proposed" }) })
+    expect(簿.只留(new Set(["c1", "c2"]))).toEqual({ 摘: 1, 复原: expect.objectContaining({ planId: "c2", status: "proposed" }) })
     expect(簿.找("c3")).toBeUndefined()
     expect(() => 簿.可答("c2")).not.toThrow()
     expect(簿.找("c1")?.status).toBe("approved")
     expect(簿.收("c4", "t", "m4").新.version).toBe(3)
-    expect(簿.只留(new Set(["c2", "c4"]))).toEqual({ 摘: 0 })
-    // 全都不在分支上：批准过的仍在
+    expect(簿.只留(new Set(["c1", "c2", "c4"]))).toEqual({ 摘: 0 })
+    // 全都不在分支上：批准过的仍在簿里（批准不撤销），但记成「离枝」——不再保护、不再核对（2026-09-28）
     簿.只留(new Set())
-    expect(簿.已批准路径()).toEqual(["a.md"])
+    expect(簿.找("c1")?.status).toBe("approved")
+    expect(簿.已批准路径()).toEqual([])
     expect(() => 簿.可答("c2")).toThrow(/没有这一版方案/)
+  })
+
+  it("离枝（2026-09-28，回退 × 先出方案）：批准过的那版的 propose_plan 不在分支上 → 不保护、不拍底、不核对；公开的那份不带这个标记", () => {
+    const f = join(临时(), "plans.json")
+    const 簿 = new 方案簿(f)
+    簿.收("c1", "t", "m1")
+    簿.批准("c1", { 正文: "m1", savedPath: "analysis/plans/a.md", 时刻: 5, 改过: false, sha256: "ab", 存档: "/s/a.md" })
+    簿.收("c2", "t", "m2")
+    簿.批准("c2", { 正文: "m2", savedPath: "analysis/plans/b.md", 时刻: 6, 改过: false, sha256: "cd", 存档: "/s/b.md" })
+    expect(簿.只留(new Set(["c1"]))).toEqual({ 摘: 0, 离枝: 1 })
+    expect(簿.已批准路径()).toEqual(["analysis/plans/a.md"])
+    expect(簿.已批准存档().map((x) => x.planId)).toEqual(["c1"])
+    expect(簿.找("c2")).not.toHaveProperty("离枝")
+    expect(簿.设文件改过("c2", true), "离枝的不发卡片事件").toBeUndefined()
+    // 落盘：重启之后照样是离枝
+    expect(new 方案簿(f).已批准路径()).toEqual(["analysis/plans/a.md"])
+    // 同一套分支再算一次：没有变化，不重复报
+    expect(簿.只留(new Set(["c1"]))).toEqual({ 摘: 0 })
+  })
+
+  it("离枝的那版不算「最新」：被它取代的上一版（还在分支上）回到「等你看」", () => {
+    const 簿 = new 方案簿(undefined)
+    簿.收("c1", "t", "m1")
+    簿.收("c2", "t", "m2")
+    簿.批准("c2", { 正文: "m2", savedPath: "b.md", 时刻: 6, 改过: false })
+    expect(簿.只留(new Set(["c1"]))).toEqual({ 摘: 0, 离枝: 1, 复原: expect.objectContaining({ planId: "c1", status: "proposed" }) })
+    expect(簿.收("c3", "t", "m3").新.version).toBe(3)
   })
 
   it("落盘：换一本从同一个文件读，阶段与每一版都在", () => {

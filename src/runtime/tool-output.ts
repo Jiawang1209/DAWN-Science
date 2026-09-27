@@ -84,6 +84,26 @@ export function budgetToolResult(text: string, opts: BudgetOptions): BudgetedOut
   return { text: head + marker + tail, truncated: true, bytes, ...(fullOutputPath ? { fullOutputPath } : {}) }
 }
 
+/**
+ * **给模型看的那一份**按字节截（2026-09-27，上下文用量与压缩 spec §1 g / D6）。
+ *
+ * 与 `budgetToolResult` 不是一回事：那个管进事件流的一份、全文写盘；这个管**模型读的**一份，**不写盘**——
+ * `run_code` 的输出来自内核，变量还在内核里，想看全的办法是在内核里取窄（`df.head()`、切片），
+ * 而不是去读一个本机文件（远端会话的模型读不到本机路径）。头尾各一半，中间一行说省了多少、怎么取窄。
+ */
+export function 截给模型(text: string, budget: number, 怎么取窄: string): { text: string; truncated: boolean; bytes: number } {
+  const bytes = Buffer.byteLength(text, "utf8")
+  if (bytes <= budget) return { text, truncated: false, bytes }
+  const half = Math.floor(budget / 2)
+  const head = sliceBytes(text, 0, half)
+  const tail = sliceBytes(text, bytes - half, half)
+  return {
+    text: `${head}\n\n[… 省略约 ${bytes - budget} 字节（共 ${bytes} 字节）。${怎么取窄} …]\n\n${tail}`,
+    truncated: true,
+    bytes,
+  }
+}
+
 /** 写全文。失败返回 undefined —— 调用方负责在正文里说明 */
 function spill(text: string, opts: BudgetOptions): string | undefined {
   try {

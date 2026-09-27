@@ -84,6 +84,26 @@ describe("摘要 · 给模型的那段文字", () => {
   it("`status` 不进摘要 —— 它是边界记号，不是内容", () => {
     expect(摘要([{ kind: "status", state: "busy" }, { kind: "stream", text: "x" }]).文字).toBe("x")
   })
+
+  /**
+   * **给模型的那份有上限**（2026-09-27，上下文用量与压缩 spec D6）：与 pi 自带 bash 同一个数（50 KB）。
+   * 头尾各留一半——报错与最后一行结论在尾巴上；中间一行说省了多少、怎么取窄。**不写盘**：变量还在内核里，取窄比读文件对
+   * （远端会话的模型根本读不到本机路径）。
+   */
+  it("超过 50 KB：头尾各留、中间说省了多少，并指路「在内核里取窄」", () => {
+    const 行 = Array.from({ length: 20_000 }, (_, i) => `row ${i}`).join("\n")
+    const r = 摘要([{ kind: "stream", stream: "stdout", text: 行 }])
+    expect(Buffer.byteLength(r.文字, "utf8")).toBeLessThan(52 * 1024)
+    expect(r.文字).toContain("row 0\n")
+    expect(r.文字).toContain("row 19999")
+    expect(r.文字).toMatch(/省略约 \d+ 字节/)
+    expect(r.文字).toContain("变量还在内核里")
+  })
+
+  it("50 KB 以内：一个字不动", () => {
+    const r = 摘要([{ kind: "stream", stream: "stdout", text: "12438 rows" }])
+    expect(r.文字).toBe("12438 rows")
+  })
 })
 
 describe("run_code · 工具本身", () => {

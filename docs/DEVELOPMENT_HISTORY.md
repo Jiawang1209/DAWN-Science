@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 回退的数据安全：不写到工作区外面、不无副本覆盖或挪走、做到一半也交代（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 审查用探针复现：`rm -rf out && ln -s 别处 out` 之后回退会**跟着链接写到工作区外面**、还把外面的文件挪进废纸篓；悬空链接被悄悄顶掉；文件被换成目录时整个目录（连 `data/raw`）被挪；就位失败时换下的那份下落不明；回退中途出错整个 reject、段不收；`开轮` / `收尾` 写账失败会 reject。
+- **What**（`src/project/checkpoints.ts`，commit 4dccf18）：`落点()` 逐级 `lstat`（不许链接 / 非目录）+ 父目录 realpath 必须在工作区里，源、目标、`.dawn/trash` 都过它；只挪普通文件；「不在」只认 ENOENT；就位用 `link`+`unlink`（EEXIST 不顶掉，半路冒出的先进废纸篓再试一次）；就位失败把换下的放回，放不回就在 `failed` 里写出废纸篓路径；挪动阶段不 reject、finally 收段（拍不上记 `store_error` 断档）；废纸篓先写 `manifest.json`、每挪一件更新；`记不丢()` 让开轮 / 收尾真不 reject；快照里带 `..` / 绝对路径 / 反斜杠的键与坏对象名不认并喊一声；临时拷贝 `COPYFILE_EXCL`；`removed` 只列真挪了的；同毫秒两次回退废纸篓目录加 `-2`。
+- **Impact**: 回退结果形状不变（`failed` 多了带原因的条目）；废纸篓目录里多一份清单。剩余风险：检查与写之间的瞬时换链接（Node 无 `openat`）；不支持硬链接的盘退回 `rename` 的竞争窗口。
+- **Verification**: 15 条新测试（先红后绿：外指链接、`.dawn` 是链接、悬空链接、文件↔目录互换、只改大小写、半路冒出、就位与放回都失败、收尾拍不上、中途意外、清单、同毫秒、被改过的存档、账本写不进）；`tests/project` 89/89，全量 vitest 3305 过 / 10 跳；审查探针三个场景都安全。
+
 ### 2026-09-27 — 上下文用量与压缩：仪表常驻、pi 的自动压缩出声、`/compact` 手动压（学自 Claude Code / Codex；分支 `agent-basics`）
 
 - **Type**: feat + fix

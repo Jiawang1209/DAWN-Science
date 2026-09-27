@@ -52,7 +52,7 @@ describe("searchSessionContent", () => {
     const repo = mkdtempSync(join(tmpdir(), "dawn-cs-repo-"))
     dirs.push(repo)
     const t = (await backend.createTask({ agentId: "ds-chat", workspace: repo })) as { sessionId: string }
-    写一段pi记录(sessions.get(t.sessionId)!.sessionDir, [{ who: "user", text: "做个 Cox 回归" }, { who: "agent", text: "好" }])
+    写一段pi记录(sessions.get(t.sessionId)!.sessionDir, [{ who: "user", text: "做个 Cox 回归" }, { who: "agent", text: "好" }], { cwd: sessions.get(t.sessionId)!.workspace })
     type R = { sessions: { sessionId: string; archived: boolean; place?: { kind: string; name: string } }[] }
     const r = (await backend.searchSessionContent({ query: "cox", limit: 30 })) as R
     expect(r.sessions).toHaveLength(1)
@@ -65,7 +65,7 @@ describe("searchSessionContent", () => {
   it("普通对话（临时项目）不写所在；删掉的会话搜不到", async () => {
     const { backend, sessions } = make()
     const t = (await backend.createTask({ agentId: "ds-chat" })) as { sessionId: string; taskId: string }
-    写一段pi记录(sessions.get(t.sessionId)!.sessionDir, [{ who: "user", text: "Cox 回归" }, { who: "agent", text: "好" }])
+    写一段pi记录(sessions.get(t.sessionId)!.sessionDir, [{ who: "user", text: "Cox 回归" }, { who: "agent", text: "好" }], { cwd: sessions.get(t.sessionId)!.workspace })
     type R = { sessions: { sessionId: string; place?: unknown }[] }
     const r = (await backend.searchSessionContent({ query: "cox" })) as R
     expect(r.sessions[0]!.place).toBeUndefined()

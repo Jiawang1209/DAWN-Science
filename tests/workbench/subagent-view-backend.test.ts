@@ -3,7 +3,7 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import Database from "better-sqlite3"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { SessionManager as PiSessions } from "@earendil-works/pi-coding-agent"
@@ -125,6 +125,24 @@ describe("openSubagent", () => {
     await expect(ctx.backend.openSubagent({ transcriptId: 子转录id(s, "没有", 0) })).rejects.toMatchObject({ workbenchCode: "not_found" })
     await expect(ctx.backend.openSubagent({ transcriptId: 子转录id("不存在的会话", "c1", 0) })).rejects.toMatchObject({ workbenchCode: "not_found" })
     await expect(ctx.backend.openSubagent({ transcriptId: "不是子转录" })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+  })
+  it("**读盘只读**（2026-09-28）：旧版本 / 空的会话文件，打开之后字节一个不变（`SessionManager.open` 会迁移重写、给空文件写 header）", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    const 旧 = [
+      JSON.stringify({ type: "session", id: "old", timestamp: "2026-01-01T00:00:00.000Z", cwd: "/w" }),
+      JSON.stringify({ type: "message", timestamp: "2026-01-01T00:00:01.000Z", message: { role: "user", content: "老记录里的子任务", timestamp: 1 } }),
+      JSON.stringify({ type: "message", timestamp: "2026-01-01T00:00:02.000Z", message: { role: "assistant", content: [{ type: "text", text: "好" }], timestamp: 2 } }),
+    ].join("\n") + "\n"
+    for (const [call, 内容] of [["old1", 旧], ["empty1", ""]] as const) {
+      摆一个(ctx.sessions.get(s)!.sessionDir, call, false)
+      const f = join(子运行目录(ctx.sessions.get(s)!.sessionDir, call, 0), "transcript", "x.jsonl")
+      mkdirSync(dirname(f), { recursive: true })
+      writeFileSync(f, 内容)
+      const snap = await ctx.backend.openSubagent({ transcriptId: 子转录id(s, call, 0) })
+      expect(readFileSync(f, "utf8"), `${call}：打开子 agent 绝不写它的会话文件`).toBe(内容)
+      if (call === "old1") expect(snap.items.map((i) => (i.type === "turn" ? i.text : i.type))).toEqual(["老记录里的子任务", "好"])
+    }
   })
   it("本次运行里跑过的（中枢里已有）：直接订阅，不读盘", async () => {
     const ctx = make()

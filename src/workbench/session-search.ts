@@ -83,7 +83,8 @@ export class 会话全文搜索 {
         notSearchable++
         continue
       }
-      const 文件 = await 最新记录(r.sessionDir)
+      // 与续接读同一个文件（按工作目录过滤，见 `最新记录`）——搜到的 itemId / nth 才落在点开后的那份转录里
+      const 文件 = await 最新记录(r.sessionDir, r.workspace)
       // 还没有一轮说完（pi 等第一条 assistant 才落盘）：没东西可搜，不是「读不了」
       if (!文件) continue
       if (文件.size > (this.deps.单文件上限字节 ?? 单文件上限字节)) {

@@ -21,7 +21,8 @@ function 一段(句们: 一句[] | undefined, over: Partial<SessionRecord> = {})
   dirs.push(d)
   // 每段都往后挪一天（没写记录的也挪）：建的先后与记录里的时刻一致，「先搜新建的」「按时刻排」才验得出来
   序++
-  if (句们) 写一段pi记录(d, 句们, { 起: Date.parse("2026-08-01T00:00:00Z") + 序 * 86_400_000 })
+  // header 的 cwd = 这段的工作目录：搜索与续接一样按它挑文件（`最新记录`）
+  if (句们) 写一段pi记录(d, 句们, { cwd: d, 起: Date.parse("2026-08-01T00:00:00Z") + 序 * 86_400_000 })
   return {
     id: `s${序}-${Math.random().toString(36).slice(2, 6)}`,
     agentId: "ds",
@@ -142,7 +143,7 @@ describe("会话全文搜索 · 缓存", () => {
     await s.搜("cox", 30)
     await s.搜("回归", 30)
     expect(读).toHaveBeenCalledTimes(1)
-    写一段pi记录(a.sessionDir, [{ who: "user", text: "又说了一句 回归" }, { who: "agent", text: "好" }], { 起: Date.parse("2026-12-01T00:00:00Z") })
+    写一段pi记录(a.sessionDir, [{ who: "user", text: "又说了一句 回归" }, { who: "agent", text: "好" }], { cwd: a.workspace, 起: Date.parse("2026-12-01T00:00:00Z") })
     const r = await s.搜("回归", 30)
     expect(读).toHaveBeenCalledTimes(2)
     expect(r.sessions).toHaveLength(1)

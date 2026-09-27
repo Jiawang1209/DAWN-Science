@@ -52,7 +52,7 @@ import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
 import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
-import { StickToBottom } from "use-stick-to-bottom"
+import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
@@ -4456,6 +4456,12 @@ export function ConversationView({
    * 滚之前**逐帧找那个节点**（最多 12 帧）：放进预算、工具组展开、工具行展开是接连几次提交，两帧不一定够。
    */
   const 对话根 = useRef<HTMLDivElement>(null)
+  /**
+   * 贴底滚动的把手（2026-09-28，Task 8 e2e 抓到的，计划「风险 2」）：跳之前先 `stopScroll()` 撒手。
+   * 不撒手的话，正看着的这段（贴着底）里点一处预算之外的命中——放进预算让内容变长，库认为还「贴着底」，
+   * 就把 `scrollIntoView` 滚上去的视野又拽回底部：`data-search-hit` 在，人却看不见它。
+   */
+  const 贴底 = useRef<StickToBottomContext>(null)
   const [搜索命中id, 设搜索命中id] = useState<string | undefined>(undefined)
   const 已跳 = useRef<number | undefined>(undefined)
   useEffect(() => {
@@ -4469,9 +4475,11 @@ export function ConversationView({
     if (id) {
       已跳.current = 目标.起
       设搜索命中id(id)
+      贴底.current?.stopScroll()
       行回调最新.current.确保可见(id)
       let 剩 = 12
       const 试 = () => {
+        贴底.current?.stopScroll()
         if (滚到并高亮(对话根.current, id, 目标.词们) || --剩 <= 0) return
         requestAnimationFrame(试)
       }
@@ -4628,7 +4636,7 @@ export function ConversationView({
       {/* 轮次导航（2026-08-22，学自 dsh-codex-ui）：左缘一条刻度尺，一刻一轮你说的话 */}
       {/* 坞里也画（2026-09-25）；坞窄到放不下时 CSS 收起它，见 styles.css「坞里的对话」 */}
       <TurnNavigator items={items} 确保可见={行回调.确保可见} />
-      <StickToBottom className="turns" resize="smooth" initial="smooth">
+      <StickToBottom className="turns" resize="smooth" initial="smooth" contextRef={贴底}>
         {/**
           * **宽度上限挂在这一层，不挂在 `.turn` 上**（2026-08-13，作者提：
           * *「会话里面会有 Linux 的命令……其长度应该和真实回复的内容的宽度保持一致」*）。

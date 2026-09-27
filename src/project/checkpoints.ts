@@ -21,8 +21,8 @@
  * **原始数据目录不存、不碰**：判据只有 `在原始数据里()`，目录名只从 `science-layout.ts` 取（设计契约扫描）。
  */
 import { appendFileSync, constants, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { copyFile, rename, stat, unlink } from "node:fs/promises"
-import { join } from "node:path"
+import { chmod, copyFile, mkdir, rename, stat, unlink } from "node:fs/promises"
+import { dirname, join } from "node:path"
 import { fsSnapshot, FS_SNAPSHOT_CAP, type FsEntry } from "./fs-facts.js"
 import { 原始数据目录 } from "../policy/science-layout.js"
 
@@ -91,6 +91,42 @@ function 套(旧: 清单, 行: 快照行): 清单 {
 function 变了(旧: 清单, 新: 清单, 行: 快照行): string[] {
   return [...Object.keys(行.set).filter((p) => !同一版(旧.get(p), 新.get(p))), ...行.del]
 }
+
+export interface 回退计划 {
+  restore: string[]
+  remove: string[]
+  keep: { path: string; reason: "changed_after" }[]
+  cannot: { path: string; reason: 跳过原因 | "not_stored"; size?: number }[]
+}
+export type 文件回退不了 = "before_archive" | "gap" | "too_many_files"
+export type 计划结果 = ({ ok: true } & 回退计划) | { ok: false; reason: 文件回退不了 }
+
+/** 第 N 句是哪几条：第 N 句及之后（当前对话分支上）的用户消息 entry id；`在存档之前` 由运行时对着 `起点()` 判 */
+export interface 计划问 {
+  之后的用户: readonly string[]
+  在存档之前: boolean
+}
+
+export interface 回退结果 {
+  restored: string[]
+  removed: string[]
+  keep: 回退计划["keep"]
+  cannot: 回退计划["cannot"]
+  failed: { path: string; message: string }[]
+  /** 挪走的、换下来的放在哪儿（相对工作区，posix）。一个都没挪就没有 */
+  trash?: string
+}
+
+export class 回退不了 extends Error {
+  constructor(readonly reason: 文件回退不了) {
+    super(`文件回退不了（${reason}）`)
+    this.name = "回退不了"
+  }
+}
+
+type 内部计划 = { ok: false; reason: 文件回退不了 } | { ok: true; 公开: 回退计划; 恢复: { path: string; obj: string; mode: number | undefined }[] }
+const 空计划 = (): 回退计划 => ({ restore: [], remove: [], keep: [], cannot: [] })
+const 说 = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 export class 检查点存档 {
   private readonly 账: string
@@ -177,6 +213,132 @@ export class 检查点存档 {
         this.记({ op: "open", seg: { kind: "gap", reason: "store_error" } })
       }
     })
+  }
+
+  /** 回到第 N 句之前，文件这一半会怎样。只读（扫一遍此刻） */
+  计划(q: 计划问): Promise<计划结果> {
+    return this.排(async () => {
+      const r = this.算计划(q)
+      return r.ok ? { ok: true as const, ...r.公开 } : r
+    })
+  }
+
+  /**
+   * 照计划做。**先拍一张 stat、记一段 `rewind`，做完再拍一张收尾**——回退本身算「我们的」，下一次往前退时不当成你改的。
+   * 改回去的顺序：旧版本先拷到旁边的临时名、设回权限，再把现在那份挪进废纸篓，最后 rename 就位——中途失败，现在那份不丢。
+   * @throws 回退不了（在存档之前 / 断档 / 扫不动）
+   */
+  回退(q: 计划问): Promise<回退结果> {
+    return this.排(async () => {
+      const r = this.算计划(q)
+      if (!r.ok) throw new 回退不了(r.reason)
+      const 结果: 回退结果 = { restored: [], removed: [], keep: r.公开.keep, cannot: r.公开.cannot, failed: [] }
+      if (r.公开.remove.length === 0 && r.恢复.length === 0) return 结果
+      const 开 = await this.拍(false)
+      if (!开) throw new 回退不了("too_many_files")
+      this.收上一段(开)
+      this.记({ op: "open", seg: { kind: "rewind", start: 开 } })
+      const 篓相对 = [".dawn", "trash", `rewind-${this.此刻().toISOString().replace(/[:.]/g, "-")}`].join("/")
+      let 用过篓 = false
+      const 挪走 = async (p: string) => {
+        const 源 = join(this.workspace, p)
+        if (!existsSync(源)) return
+        const 到 = join(this.workspace, 篓相对, p)
+        await mkdir(dirname(到), { recursive: true })
+        await rename(源, 到)
+        用过篓 = true
+      }
+      for (const p of r.公开.remove) {
+        try {
+          await 挪走(p)
+          结果.removed.push(p)
+        } catch (e) {
+          结果.failed.push({ path: p, message: 说(e) })
+        }
+      }
+      for (const x of r.恢复) {
+        const 到 = join(this.workspace, x.path)
+        const 临时 = `${到}.dawn-rewind-tmp`
+        try {
+          await mkdir(dirname(到), { recursive: true })
+          await copyFile(join(this.对象, x.obj), 临时, constants.COPYFILE_FICLONE)
+          if (x.mode !== undefined) await chmod(临时, x.mode)
+          await 挪走(x.path)
+          await rename(临时, 到)
+          结果.restored.push(x.path)
+        } catch (e) {
+          await unlink(临时).catch(() => {})
+          结果.failed.push({ path: x.path, message: 说(e) })
+        }
+      }
+      const 收 = await this.拍(false)
+      if (收) this.记({ op: "end", end: 收 })
+      else this.记({ op: "open", seg: { kind: "gap", reason: "too_many_files" } })
+      return 用过篓 ? { ...结果, trash: 篓相对 } : 结果
+    })
+  }
+
+  private 算计划(q: 计划问): 内部计划 {
+    if (q.在存档之前) return { ok: false, reason: "before_archive" }
+    const 候选 = new Set(q.之后的用户)
+    const i = this.段们.findIndex((s) => s.kind === "turn" && 候选.has(s.entry))
+    const 断 = this.段们.some(
+      (s, k) => s.kind === "gap" && ((s.entry !== undefined && 候选.has(s.entry)) || (i >= 0 && k > i)),
+    )
+    if (断) return { ok: false, reason: "gap" }
+    if (i < 0) return { ok: true, 公开: 空计划(), 恢复: [] }
+    const S = (this.段们[i] as Extract<段, { kind: "turn" }>).start
+    const 此刻 = fsSnapshot(this.workspace, this.选项.cap ?? FS_SNAPSHOT_CAP)
+    if (!此刻) return { ok: false, reason: "too_many_files" }
+
+    const 我们的 = new Set(this.段们.flatMap((s) => (s.kind !== "gap" && s.end ? [`${s.start}>${s.end}`] : [])))
+    const P = new Set<string>()
+    const 你的 = new Set<string>()
+    let 清: 清单 = new Map()
+    let 前: string | undefined
+    let S清: 清单 | undefined
+    for (const 行 of this.读行<快照行>(this.快照账)) {
+      const 旧 = 清
+      清 = 套(清, 行)
+      if (S清) for (const p of 变了(旧, 清, 行)) (我们的.has(`${前}>${行.id}`) ? P : 你的).add(p)
+      if (行.id === S) S清 = 清
+      前 = 行.id
+    }
+    if (!S清) return { ok: false, reason: "gap" } // 账上有这段、快照里没有它的开头：当断档，不猜
+    /**
+     * 最后一张 → 此刻：通常是「你的」。例外是最后一段还开着（应用在一轮中途崩了、没拍上结尾）——
+     * 那时它开头到此刻都算「我们的」（spec §7）。
+     */
+    const 末 = this.段们.at(-1)
+    const 末开着 = !!末 && 末.kind !== "gap" && !末.end
+    for (const p of new Set([...清.keys(), ...此刻.keys()])) if (!同一版(清.get(p), 此刻.get(p))) (末开着 ? P : 你的).add(p)
+
+    const 公开 = 空计划()
+    const 恢复: { path: string; obj: string; mode: number | undefined }[] = []
+    for (const p of [...P].sort()) {
+      if (在原始数据里(p)) {
+        公开.cannot.push({ path: p, reason: "raw_data" })
+        continue
+      }
+      if (你的.has(p)) {
+        公开.keep.push({ path: p, reason: "changed_after" })
+        continue
+      }
+      const 旧版 = S清.get(p)
+      const 现 = 此刻.get(p)
+      if (!旧版) {
+        if (现) 公开.remove.push(p)
+        continue
+      }
+      if (同一版(旧版, 现)) continue
+      if (旧版.obj) {
+        公开.restore.push(p)
+        恢复.push({ path: p, obj: 旧版.obj, mode: 旧版.mode })
+        continue
+      }
+      公开.cannot.push({ path: p, reason: 旧版.skip ?? "not_stored", size: 旧版.size })
+    }
+    return { ok: true, 公开, 恢复 }
   }
 
   private 排<T>(f: () => Promise<T>): Promise<T> {

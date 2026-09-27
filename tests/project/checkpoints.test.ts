@@ -132,3 +132,137 @@ describe("影子存档 · 上限与跳过（spec §5）", () => {
     expect(existsSync(join(存档目录, "snapshots.jsonl"))).toBe(true)
   })
 })
+
+/** 演一轮：开头 → agent 动手 → 收尾 */
+async function 一轮(存: 检查点存档, entry: string, 动手: () => void) {
+  await 存.开轮(entry)
+  动手()
+  await 存.收尾()
+}
+const 之后 = (...entries: string[]) => ({ 之后的用户: entries, 在存档之前: false })
+
+describe("影子存档 · 计划（spec §4.2）", () => {
+  it("回到第二句之前：改过的改回去、新建的挪走、没动的不列", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "a.py", "v1\n")
+    写(ws, "keep.md", "不动\n")
+    await 一轮(存, "e1", () => 写(ws, "a.py", "v2 第一句\n"))
+    await 一轮(存, "e2", () => {
+      写(ws, "a.py", "v3 第二句改的\n")
+      写(ws, "out/图.txt", "新的\n")
+    })
+    const r = await 存.计划(之后("e2"))
+    expect(r).toEqual({ ok: true, restore: ["a.py"], remove: ["out/图.txt"], keep: [], cannot: [] })
+  })
+
+  it("这句之后 agent 没动过文件：空计划，不是「不知道」", async () => {
+    const { 存 } = 新的()
+    expect(await 存.计划(之后("e7"))).toEqual({ ok: true, restore: [], remove: [], keep: [], cannot: [] })
+  })
+
+  it("你在两轮之间改的（S 之前）不退；你在之后改的不动", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "a.py", "v1\n")
+    写(ws, "notes.md", "n1\n")
+    await 一轮(存, "e1", () => 写(ws, "a.py", "v2\n"))
+    写(ws, "a.py", "你改的 v2+\n") // 两轮之间你改的
+    await 一轮(存, "e2", () => {
+      写(ws, "a.py", "v3\n")
+      写(ws, "notes.md", "n2 agent\n")
+    })
+    写(ws, "notes.md", "n3 你后来又改\n")
+    const r = await 存.计划(之后("e2"))
+    expect(r).toEqual({ ok: true, restore: ["a.py"], remove: [], keep: [{ path: "notes.md", reason: "changed_after" }], cannot: [] })
+  })
+
+  it("存不了的：too_large 带大小；data/raw 被改了也只列不碰", async () => {
+    const { ws, 存 } = 新的({ 单个上限: 8 })
+    写(ws, "big.csv", "0123456789")
+    写(ws, "data/raw/s.csv", "raw\n")
+    await 一轮(存, "e1", () => {
+      写(ws, "big.csv", "0123456789AB")
+      写(ws, "data/raw/s.csv", "被改了\n")
+    })
+    const r = await 存.计划(之后("e1"))
+    expect(r).toEqual({
+      ok: true,
+      restore: [],
+      remove: [],
+      keep: [],
+      cannot: [
+        { path: "big.csv", reason: "too_large", size: 10 },
+        { path: "data/raw/s.csv", reason: "raw_data" },
+      ],
+    })
+  })
+
+  it("在存档之前 / 之后有断档：文件回退不了，说清是哪一种", async () => {
+    const { ws, 存 } = 新的({ cap: 1 })
+    写(ws, "a", "1")
+    expect(await 存.计划({ 之后的用户: ["e1"], 在存档之前: true })).toEqual({ ok: false, reason: "before_archive" })
+    写(ws, "b", "2")
+    await 存.开轮("e1") // 两个文件 > cap 1 → 断档
+    expect(await 存.计划(之后("e1"))).toEqual({ ok: false, reason: "gap" })
+  })
+})
+
+describe("影子存档 · 回退", () => {
+  it("一起做：改回去、挪进 .dawn/trash、权限位照设；工作区别的文件不动", async () => {
+    const { ws, 存 } = 新的({ now: () => new Date("2026-09-27T10:00:00Z") })
+    写(ws, "run.sh", "echo v1\n")
+    ;(await import("node:fs")).chmodSync(join(ws, "run.sh"), 0o755)
+    写(ws, "other.txt", "别动我\n")
+    await 一轮(存, "e1", () => {
+      写(ws, "run.sh", "echo v2 坏了\n")
+      写(ws, "figures/fig1.png", "PNG")
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r).toMatchObject({ restored: ["run.sh"], removed: ["figures/fig1.png"], failed: [] })
+    expect(r.trash).toBe(".dawn/trash/rewind-2026-09-27T10-00-00-000Z")
+    expect(读(ws, "run.sh")).toBe("echo v1\n")
+    expect((await import("node:fs")).statSync(join(ws, "run.sh")).mode & 0o777).toBe(0o755)
+    expect(existsSync(join(ws, "figures/fig1.png"))).toBe(false)
+    expect(读(ws, `${r.trash}/figures/fig1.png`)).toBe("PNG")
+    expect(读(ws, `${r.trash}/run.sh`), "换下来的那份也在废纸篓").toBe("echo v2 坏了\n")
+    expect(existsSync(join(ws, "figures")), "目录不删").toBe(true)
+    expect(读(ws, "other.txt")).toBe("别动我\n")
+  })
+
+  it("回退本身算「我们的」：只回退文件之后再往前退，不把它当成你改的", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "a.py", "v1\n")
+    await 一轮(存, "e1", () => 写(ws, "a.py", "v2\n"))
+    await 一轮(存, "e2", () => 写(ws, "a.py", "v3\n"))
+    await 存.回退(之后("e2")) // 只回退文件：a.py 回到 v2
+    expect(读(ws, "a.py")).toBe("v2\n")
+    await 一轮(存, "e3", () => 写(ws, "b.py", "新\n"))
+    const r = await 存.回退(之后("e1", "e2", "e3"))
+    expect(r.keep).toEqual([])
+    expect(读(ws, "a.py")).toBe("v1\n")
+    expect(existsSync(join(ws, "b.py"))).toBe(false)
+  })
+
+  it("data/raw 一个字节都不动", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "data/raw/s.csv", "原始\n")
+    await 一轮(存, "e1", () => 写(ws, "data/raw/s.csv", "agent 不该改的\n"))
+    const r = await 存.回退(之后("e1"))
+    expect(r.cannot).toEqual([{ path: "data/raw/s.csv", reason: "raw_data" }])
+    expect(读(ws, "data/raw/s.csv")).toBe("agent 不该改的\n")
+  })
+
+  it("改回去失败（旧版本那份没了）：现在那份不丢，列进 failed", async () => {
+    const { ws, 存档目录, 存 } = 新的()
+    写(ws, "a.py", "v1\n")
+    await 一轮(存, "e1", () => 写(ws, "a.py", "v2\n"))
+    for (const f of readdirSync(join(存档目录, "objects"))) rmSync(join(存档目录, "objects", f))
+    const r = await 存.回退(之后("e1"))
+    expect(r.failed.map((x) => x.path)).toEqual(["a.py"])
+    expect(读(ws, "a.py")).toBe("v2\n")
+  })
+
+  it("文件回退不了时抛「回退不了」，带缘故", async () => {
+    const { 存 } = 新的()
+    await expect(存.回退({ 之后的用户: ["e1"], 在存档之前: true })).rejects.toMatchObject({ reason: "before_archive" })
+  })
+})

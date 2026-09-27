@@ -189,6 +189,36 @@ describe("回退这一轮 · 真 pi", () => {
     }
   })
 
+  /**
+   * 回退之后的叶子要落盘（2026-09-28，M-6）：pi 的 `navigateTree` 只在内存里挪叶子，续接时取**文件里最后一条**当叶子。
+   * 「一起回退」没有内核时不留话、留话失败时，盘上最后一条仍是被撤掉的那一轮——重启之后它就回来了。
+   */
+  it.each([
+    ["一起回退、没有内核（不留话）", "leaf-both", false],
+    ["只撤对话、留话失败", "leaf-note-fails", true],
+  ] as const)("%s：重启之后撤掉的那句不回来", { timeout: 60_000 }, async (_名, 名, 留话失败) => {
+    const 一 = await 起一段(名)
+    await 一.说完("改两个文件")
+    await 一.说完("再改两个文件")
+    if (留话失败) {
+      const 内部 = 一.runtime as unknown as { sessions: Map<string, { session: { sendCustomMessage: unknown } }> }
+      内部.sessions.get(一.sessionId)!.session.sendCustomMessage = async () => {
+        throw new Error("disk full")
+      }
+    }
+    const r = await 一.runtime.rewind(一.sessionId, { 倒数第几句: 1, 文: "再改两个文件" }, 留话失败 ? "conversation" : "both", [])
+    expect(r.conversationError).toBeUndefined()
+    await 一.runtime.stop(一.sessionId)
+
+    const { runtime, sessionId } = await 起一段(名, { resume: true })
+    try {
+      const 用户说过 = (await runtime.history(sessionId)).flatMap((x) => (x.kind === "text" && x.who === "user" ? [x.text] : []))
+      expect(用户说过).toEqual(["改两个文件"])
+    } finally {
+      await runtime.stop(sessionId)
+    }
+  })
+
   it("给模型的那句话没留成：回退本身照算成功，回执带 noteError（文件已退、对话已撤不许被报成失败）", { timeout: 60_000 }, async () => {
     const { runtime, sessionId, 说完, 读 } = await 起一段("note-fails")
     try {

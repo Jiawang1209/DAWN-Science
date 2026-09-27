@@ -3351,10 +3351,12 @@ ${描述}`
       if (!存档) throw new 回退不了("no_archive")
       回执 = await 存档.回退({ 之后的用户: 位.之后, 在存档之前: 位.在存档之前 })
     }
+    let 对话撤了 = false
     if (做法 !== "files") {
       try {
         const r = await s.session.navigateTree(位.entry)
         if (r.cancelled) throw new Error("pi 取消了这次跳转")
+        对话撤了 = true
         if (r.editorText !== undefined) 回执 = { ...回执, editorText: r.editorText }
         // `navigateTree` 经 `_restoreToolsFromTranscript` 重建了工具集：侧边工具、方案期那几件按标记再设一次
         this.按标记设侧边工具(s.session, this.侧边工具开.has(sessionId))
@@ -3384,11 +3386,31 @@ ${描述}`
      * **留话失败不许把整次回退报成失败**（Task 5 复审）：走到这里文件已经退了、对话已经撤了——抛出去的话后端不截转录、不出通知、不记账，
      * 界面与 pi 从此各说各的。接住、随回执带回（`noteError`），后端照常收尾，通知里说「没能告诉 agent」。
      */
+    let 话落盘了 = false
     if (话) {
       try {
         await s.session.sendCustomMessage({ customType: "dawn-rewind", content: 话, display: false })
+        话落盘了 = true
       } catch (e) {
         回执 = { ...回执, noteError: e instanceof Error ? e.message : String(e) }
+      }
+    }
+    /**
+     * **把回退之后的叶子钉在盘上**（2026-09-28，M-6，查实 pi 0.86）：`navigateTree` 只在内存里挪叶子（`branch` / `resetLeaf`，不写条目），
+     * 续接时 `SessionManager._buildIndex` 取**文件里最后一条**当叶子。留话成功时那条 `custom_message` 就挂在新叶子上、顺带把位置写进了文件；
+     * 但「一起回退」没有内核时不留话、留话又可能失败——那时盘上最后一条仍是被撤掉的那一轮，**重启之后撤掉的对话原样回来**
+     * （界面、模型、搜索都看得到它）。补一条 pi 的普通 `custom` 条目：它不进模型上下文（`buildSessionContext` 只认 `custom_message`），
+     * `还原历史` 也不认它，只起「最后一条」的作用。写不进去就出声——不许悄悄留一个重启就失效的回退。
+     */
+    if (对话撤了 && !话落盘了) {
+      try {
+        s.sessionManager.appendCustomEntry("dawn-rewind-leaf", { at: Date.now() })
+      } catch (e) {
+        this.emit({
+          kind: "notice",
+          sessionId,
+          text: `对话撤回的位置没能写进记录（${e instanceof Error ? e.message : String(e)}）：重启之后撤掉的那几句可能又回来`,
+        })
       }
     }
     return 回执

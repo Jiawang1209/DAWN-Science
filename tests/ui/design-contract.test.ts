@@ -1482,3 +1482,35 @@ describe("设计契约 · 回退这一轮", () => {
     expect(代码).toMatch(/import \{ 原始数据目录 \} from "\.\.\/policy\/science-layout\.js"/)
   })
 })
+
+describe("设计契约 · 桌面通知只有一个出口", () => {
+  /**
+   * **系统通知只许从 `src/electron/desktop-notify.ts` 出去**（桌面通知，2026-09-27）。
+   * e2e 看不见系统通知，靠的是那个文件里的假出口（`DAWN_FAKE_NOTIFY=1`）把每一条记下来——
+   * 别处再 `new Notification(` 一次，那一条就绕过了注入缝。渲染进程的 Web `Notification` 同理禁掉
+   * （它在隐藏窗口里的行为随平台而变，而且 e2e 抓不到）。角标（`setBadgeCount`）与任务栏闪（`flashFrame`）同一个理由。
+   */
+  const SRC = join(import.meta.dirname, "../../src")
+  const 出口文件 = join(SRC, "electron", "desktop-notify.ts")
+  const 碰系统 = /\bnew\s+(?:[\w$]+\.)?Notification\s*\(|\bsetBadgeCount\s*\(|\bflashFrame\s*\(/
+  const 走 = (d: string): string[] =>
+    readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? 走(join(d, e.name)) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : [],
+    )
+
+  it("**`new Notification(` / `setBadgeCount(` / `flashFrame(` 只在 `src/electron/desktop-notify.ts`**", () => {
+    const 犯的: string[] = []
+    for (const f of 走(SRC)) {
+      if (f === 出口文件) continue
+      for (const l of findLines(readFileSync(f, "utf8"), (line) => 碰系统.test(line))) 犯的.push(`${f.slice(SRC.length + 1)}:${l}`)
+    }
+    expect(犯的, "系统通知走 src/electron/desktop-notify.ts 的出口（真 / 假同一个 `点了`）").toEqual([])
+  })
+
+  it("出口文件自己确实三样都用了——扫描不是在扫一个空集", () => {
+    const 文 = readFileSync(出口文件, "utf8")
+    expect(文).toMatch(/new\s+d\.Notification\s*\(/)
+    expect(文).toMatch(/setBadgeCount\s*\(/)
+    expect(文).toMatch(/flashFrame\s*\(/)
+  })
+})

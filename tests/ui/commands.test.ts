@@ -42,6 +42,7 @@ function actions(): Actions {
     setTheme: vi.fn(),
     newSideChat: vi.fn(),
     openSideChat: vi.fn(),
+    openContentSearch: vi.fn(),
     compactContext: vi.fn(),
     rewindLast: vi.fn(),
   }
@@ -232,5 +233,15 @@ describe("回到上一句之前（2026-09-27，回退这一轮 spec §2.1）", (
   it("这段正在回退：写「正在回退，等它做完」，排在「在跑」之前", () => {
     expect(那条({ saidSomething: true, rewinding: true })?.unavailable).toBe("正在回退，等它做完")
     expect(那条({ saidSomething: true, rewinding: true, busy: true })?.unavailable).toBe("正在回退，等它做完")
+  })
+})
+describe("命令注册表 · 会话全文搜索（2026-09-27）", () => {
+  it("「搜索对话内容」转发给 openContentSearch；关键词里有全文 / 历史", () => {
+    const a = actions()
+    const c = buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation" }).find((x) => x.id === "session.searchContent")!
+    expect(c.group).toBe("会话")
+    expect(c.keywords).toMatch(/全文/)
+    c.run()
+    expect(a.openContentSearch).toHaveBeenCalledTimes(1)
   })
 })

@@ -40,6 +40,8 @@ import { 扫引用 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 import { 默认转录预算 } from "./transcript-budget.js"
+import { 定位命中, type 跳转目标 } from "../protocol/search-match.js"
+import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
 import { $跑着的会话, $未读, $artifacts, $cellCount, 是散的任务 } from "./state/catalog.js"
@@ -3794,6 +3796,8 @@ export function ConversationView({
   onPickModel,
   onAbort,
   onEditQueue,
+  搜索跳到,
+  on跳空,
   onQueueToDock,
   canRedirect,
   onRewind,
@@ -3949,6 +3953,13 @@ export function ConversationView({
   onAbort?: (() => void) | undefined
   /** 待发单上那两颗：取回 / 调整方向（2026-09-25）。只有 native 有待发单 */
   onEditQueue?: ((id: string, action: "remove" | "redirect") => Promise<void>) | undefined
+  /**
+   * 从全文搜索点进来要跳到的那一处（会话全文搜索，2026-09-27）。**只给主区**——坞里那段对话不接跳转。
+   * 目标不是这段会话的就不理。
+   */
+  搜索跳到?: 跳转目标 | undefined
+  /** 等了 3 秒还没在转录里找到那一处时说一句（不假装跳到了） */
+  on跳空?: ((说: string) => void) | undefined
   /** 待发单上「到坞里问」（2026-09-25）：只有主区那段给；坞里那段本来就在坞里，不给 = 不画那颗 */
   onQueueToDock?: ((id: string) => Promise<void>) | undefined
   /** 这段会不会调整方向（只有 native）。不会的话 Cmd/Ctrl+回车与回车一样是排队，提示行也不提它 */
@@ -4437,6 +4448,47 @@ export function ConversationView({
   const 起点 = Math.max(0, 块们.length - 预算)
   const 可见块 = 起点 > 0 ? 块们.slice(起点) : 块们
   /**
+   * **从全文搜索点进来：找到那一条 → 放进预算 → 等它画出来 → 滚到中间并高亮**（会话全文搜索，2026-09-27，spec §7）。
+   *
+   * 旧对话的历史是订阅之后才异步到的，所以跟着 `items` 重试；从点下去那一刻（`起`）算，3 秒还找不到就出声一次。
+   * 找的规则与后端同一份（`定位命中`：先 id，再第 nth 处）。放进预算走刻度尺那个 `确保可见`——它认得折起来的工具组。
+   * `已跳` 记的是 `起`：同一个目标只跳一次，之后流式来的新条目不会把人拽回去。
+   * 滚之前**逐帧找那个节点**（最多 12 帧）：放进预算、工具组展开、工具行展开是接连几次提交，两帧不一定够。
+   */
+  const 对话根 = useRef<HTMLDivElement>(null)
+  const [搜索命中id, 设搜索命中id] = useState<string | undefined>(undefined)
+  const 已跳 = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    设搜索命中id(undefined)
+    清高亮()
+  }, [session.sessionId])
+  useEffect(() => {
+    const 目标 = 搜索跳到
+    if (!目标 || 目标.sessionId !== session.sessionId || 已跳.current === 目标.起) return
+    const id = 定位命中(items, 目标)
+    if (id) {
+      已跳.current = 目标.起
+      设搜索命中id(id)
+      行回调最新.current.确保可见(id)
+      let 剩 = 12
+      const 试 = () => {
+        if (滚到并高亮(对话根.current, id, 目标.词们) || --剩 <= 0) return
+        requestAnimationFrame(试)
+      }
+      requestAnimationFrame(试)
+      return
+    }
+    const 限 = setTimeout(
+      () => {
+        if (已跳.current === 目标.起) return
+        已跳.current = 目标.起
+        on跳空?.(t("打开了，但在这段对话里没找到那一处——这段对话在搜过之后可能变了，或没能续上"))
+      },
+      Math.max(0, 目标.起 + 3_000 - Date.now()),
+    )
+    return () => clearTimeout(限)
+  }, [搜索跳到, items, session.sessionId, on跳空])
+  /**
    * 框里有没有东西可发。**只有图也算**（协议 4.12）：
    * 「看看这张图」这种意图人常常懒得打字。
    */
@@ -4452,7 +4504,7 @@ export function ConversationView({
   const 推理选项 = 会话开关们?.find((o) => o.category === "thought_level")
 
   return (
-    <div className="conversation">
+    <div className="conversation" ref={对话根}>
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       <header className="conv-head">
@@ -4617,11 +4669,16 @@ export function ConversationView({
              * 分组只在渲染这一层做：条目本身、产物下标、事件流一概不动。
              */
             可见块.map((块) => 块.kind === "group" ? (
-              <ToolGroupRow key={块.key} tools={块.tools} />
+              <ToolGroupRow
+                key={块.key}
+                tools={块.tools}
+                {...(搜索命中id && 块.tools.some((x) => x.id === 搜索命中id) ? { 命中: 搜索命中id } : {})}
+              />
             ) : ((item, 下标) => (
               <TranscriptRow
                 key={块.key}
                 item={item}
+                {...(item.id === 搜索命中id ? { 搜索命中: true } : {})}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
                 nameOf={行回调.nameOf}
@@ -5592,9 +5649,12 @@ function TranscriptRowImpl({
   cases,
   loadGalleryRoots,
   onOpenSubagent,
+  搜索命中,
 }: {
   item: TranscriptItem
   agentId: string
+  /** 全文搜索跳到的就是这一条（2026-09-27）：工具行据此自己展开 */
+  搜索命中?: boolean | undefined
   /** 点子 agent 的 chip（2026-09-27）：交出 toolCallId 与序号，由 `ConversationView` 绑上会话 id 再往上交 */
   onOpenSubagent?: ((toolCallId: string, index: number) => void) | undefined
   /** 这条回复提到的、这一轮 MLAI 工具查到的案例（2026-09-15）。只有说完的 agent 发言才有 */
@@ -5647,7 +5707,7 @@ function TranscriptRowImpl({
     return <p className="caveat">{item.text}</p>
   }
   if (item.type === "tool") {
-    return <ToolRow item={item} />
+    return <ToolRow item={item} {...(搜索命中 ? { 展开: true } : {})} />
   }
   if (item.type === "subagents") {
     const toolCallId = item.id.slice("sub:".length)
@@ -6350,8 +6410,11 @@ function useTick(active: boolean): number {
 function ToolRow({
   item,
   在组里 = false,
+  展开 = false,
 }: {
   item: Extract<TranscriptItem, { type: "tool" }>
+  /** 全文搜索跳到这一行（2026-09-27）：参数与输出都要看得见，输出也不折 */
+  展开?: boolean
   /**
    * 在「连续几条折成一行」的那一组里（2026-09-15）。**组里的一律先收着，失败的也不自己弹开**：
    * 作者选的是「失败只在汇总行里红字出声、点开才看是哪条」——点开组看到的该是逐条一行，
@@ -6387,6 +6450,11 @@ function ToolRow({
     上次状态.current = item.status
   }, [item.status, 失败, 在组里])
   const [expanded, setExpanded] = useState(false)
+  useEffect(() => {
+    if (!展开) return
+    setOpen(true)
+    setExpanded(true)
+  }, [展开])
   const result = foldResult(item.result, expanded)
   /**
    * 「复制这段输出」要的纯文字：去颜色码、回车进度条只留最后一帧——与 `<AnsiText>` 画出来的同一套规则
@@ -6398,6 +6466,7 @@ function ToolRow({
   return (
     <div
       className={`tool ${item.interrupted ? "interrupted" : item.status}${open ? " open" : ""}`}
+      data-item-id={item.id}
       data-status={item.status}
       data-interrupted={item.interrupted ? "true" : undefined}
     >
@@ -6522,11 +6591,21 @@ function 本轮案例(items: readonly TranscriptItem[], 下标: number, 正文: 
 /** 工具组也 memo：`分组转录` 每次都 `slice` 出新数组，按元素身份比（2026-09-22） */
 export const ToolGroupRow = memo(
   ToolGroupRowImpl,
-  (a, b) => a.tools.length === b.tools.length && a.tools.every((x, i) => x === b.tools[i]),
+  (a, b) => a.命中 === b.命中 && a.tools.length === b.tools.length && a.tools.every((x, i) => x === b.tools[i]),
 )
 
-function ToolGroupRowImpl({ tools }: { tools: Extract<TranscriptItem, { type: "tool" }>[] }) {
+function ToolGroupRowImpl({
+  tools,
+  命中,
+}: {
+  tools: Extract<TranscriptItem, { type: "tool" }>[]
+  /** 全文搜索跳到组里的这一条（2026-09-27）：组展开、那一行也展开 */
+  命中?: string | undefined
+}) {
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (命中) setOpen(true)
+  }, [命中])
   const 汇 = 汇总工具组(tools)
   const 在跑 = 汇.在跑
   return (
@@ -6558,7 +6637,7 @@ function ToolGroupRowImpl({ tools }: { tools: Extract<TranscriptItem, { type: "t
       {open ? (
         <div className="tool-group-body">
           {tools.map((x) => (
-            <ToolRow key={x.id} item={x} 在组里 />
+            <ToolRow key={x.id} item={x} 在组里 {...(x.id === 命中 ? { 展开: true } : {})} />
           ))}
         </div>
       ) : null}

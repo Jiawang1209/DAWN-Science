@@ -101,6 +101,8 @@ export interface Actions {
   newSideChat(): void
   /** 开坞并切到「对话」那一格。永远是开，不是切换 */
   openSideChat(): void
+  /** 打开侧栏搜索并切到「按内容」（会话全文搜索，2026-09-27）。**与侧栏那两颗切换是同一件事** */
+  openContentSearch(): void
   /** 压缩当前这段的上下文（2026-09-27）。**与仪表弹层「现在压缩」、输入框里的 `/compact` 是同一个动作** */
   compactContext(): void
   /** 回到上一句之前：对最后一句自己说的话点那颗「回到这句之前」（2026-09-27） */
@@ -184,6 +186,17 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "new task session 新建",
     run: () => actions.newTask(),
     ...(agents.length === 0 ? { unavailable: t("配置里还没有可用的 agent") } : {}),
+  })
+
+  /**
+   * 搜对话内容（2026-09-27）。命令面板只是一个入口：它把侧栏搜索打开、切到「按内容」，结果在侧栏里——一个动作一个家。
+   */
+  out.push({
+    id: "session.searchContent",
+    title: t("搜索对话内容"),
+    group: "会话",
+    keywords: "search content transcript history full-text 全文 历史 搜 找 代码",
+    run: () => actions.openContentSearch(),
   })
 
   const abortWhy = abortUnavailable(ctx)

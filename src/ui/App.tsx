@@ -102,8 +102,9 @@ import { RewindDetail } from "./rewind.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
-import { 回到那段, 通知回段门 } from "./open-session-route.js"
-import { ContentSearchResults, type 搜到的一段 } from "./content-search.js"
+import { 回到那段, 通知回段门, type 回到那段依赖 } from "./open-session-route.js"
+import { ContentSearchResults, type 搜到的一段, type 搜到的一处 } from "./content-search.js"
+import { 拆词, type 跳转目标 } from "../protocol/search-match.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
 import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
@@ -351,11 +352,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     (q: string) => client.get<ResponseOf<"searchSessionContent">>("searchSessionContent", { query: q }),
     [client],
   )
-  /** Task 7 换成真的（跳到那一处）。此刻只打开那段对话 */
-  const 打开搜到的 = (卡: 搜到的一段) => {
-    setActiveSessionId(卡.sessionId)
-    setView("conversation")
-  }
+  /** 全文搜索点了哪一处（2026-09-27）。只传给主区的 `ConversationView`；换会话后它自己不理别人的目标 */
+  const [跳到, 设跳到] = useState<跳转目标 | undefined>(undefined)
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -574,37 +572,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const 回段门 = 通知回段门({
       取: () => client.get<{ sessionId?: string }>("takePendingOpenSession", {}).then((r) => r.sessionId),
       说: fail,
-      路由: (id) =>
-        回到那段(id, {
-          侧边id: () => $侧边会话id.get(),
-          tasks: () => $tasks.get(),
-          sessions: () => [...$tempSessions.get(), ...$sessions.get()],
-          projects: () => $projects.get(),
-          // 别的项目里、不在任务名单里的那段：逐个项目问一遍（临时会话已经在 `$tempSessions` 里了）
-          查后端: async (sid) => {
-            for (const p of $projects.get()) {
-              if (p.temporary) continue
-              const 列 = await client.get<SessionSummary[]>("listSessions", { projectId: p.projectId })
-              const 有 = 列.find((x) => x.sessionId === sid)
-              if (有) return 有
-            }
-            return undefined
-          },
-          开坞: () => {
-            // 整页设置开着时先收掉——与主区那条一样（不然坞在设置底下开着，人看不见）
-            if ($view.get() === "settings") 关掉设置()
-            打开坞里的对话()
-          },
-          切到: (sid, pid) => {
-            if (pid) setActiveProjectId(pid)
-            标未读(sid, false)
-            setActiveSessionId(sid)
-            // 整页设置开着时走 `关掉设置`：它会把被顶掉的坞房客还回去（2026-09-16 那条规矩）
-            if ($view.get() === "settings") 关掉设置()
-            setView("conversation")
-          },
-          说没了: () => note(t("那段对话已经不在了（可能已归档或删除）")),
-        }),
+      路由: (id) => 回到那段(id, 回段依赖()),
     })
     void 头一批.current.then(() => {
       if (!撤了) void 回段门.开门()
@@ -3690,6 +3658,78 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 开回退Ref = useRef(开回退)
   开回退Ref.current = 开回退
 
+  /**
+   * 「回到那段」的依赖（2026-09-28 从通知那条路里抽出来）：**点通知与点全文搜索结果走同一个路由**——
+   * 坞里挂着的开坞、名单里有的与侧栏点一行同一条路、本地没有的先问后端、都没有说一句。读 atom 不读闭包。
+   */
+  const 回段依赖 = (): 回到那段依赖 => ({
+    侧边id: () => $侧边会话id.get(),
+    tasks: () => $tasks.get(),
+    sessions: () => [...$tempSessions.get(), ...$sessions.get()],
+    projects: () => $projects.get(),
+    // 别的项目里、不在任务名单里的那段：逐个项目问一遍（临时会话已经在 `$tempSessions` 里了）
+    查后端: async (sid) => {
+      for (const p of $projects.get()) {
+        if (p.temporary) continue
+        const 列 = await client.get<SessionSummary[]>("listSessions", { projectId: p.projectId })
+        const 有 = 列.find((x) => x.sessionId === sid)
+        if (有) return 有
+      }
+      return undefined
+    },
+    开坞: () => {
+      // 整页设置开着时先收掉——与主区那条一样（不然坞在设置底下开着，人看不见）
+      if ($view.get() === "settings") 关掉设置()
+      打开坞里的对话()
+    },
+    切到: (sid, pid) => {
+      if (pid) setActiveProjectId(pid)
+      标未读(sid, false)
+      setActiveSessionId(sid)
+      // 整页设置开着时走 `关掉设置`：它会把被顶掉的坞房客还回去（2026-09-16 那条规矩）
+      if ($view.get() === "settings") 关掉设置()
+      setView("conversation")
+    },
+    说没了: () => note(t("那段对话已经不在了（可能已归档或删除）")),
+  })
+
+  /** 取消归档并打开（原先写在「已归档」那屏的 `onOpen` 里；2026-09-27 抽出来——全文搜索点到归档了的走同一条） */
+  const 取消归档并打开 = (s: { sessionId: string; projectId?: string | undefined }) => {
+    void client
+      .get("setSessionArchived", { sessionId: s.sessionId, archived: false })
+      .then(async () => {
+        if (s.projectId && !projects.find((p) => p.projectId === s.projectId)?.temporary) setActiveProjectId(s.projectId)
+        if (s.projectId) await loadSessions(client, s.projectId)
+        await loadTasks(client)
+        await 重取归档数()
+        setActiveSessionId(s.sessionId)
+        // 从侧栏搜索点进来时整页设置可能开着：走 `关掉设置`（它会把被顶掉的坞房客还回去）
+        if ($view.get() === "settings") 关掉设置()
+        setView("conversation")
+      })
+      .catch(fail)
+  }
+
+  /**
+   * 点了一条全文搜索结果（2026-09-27，spec §2.3）。**不另开一条打开会话的路**：
+   * 归档了的 → `取消归档并打开`（卡上写着「打开会取消归档」）；其余 → 与点通知同一个 `回到那段`。
+   * 跳到哪一处由主区的 `ConversationView` 做（它手上才有转录）；进了坞或那段已经不在了，目标就撤掉——
+   * 不然之后在主区打开它时会被一个过期的目标拽走。
+   */
+  const 打开搜到的 = (卡: 搜到的一段, 处?: 搜到的一处) => {
+    const 那一处 = 处 ?? 卡.hits[0]
+    设跳到(那一处 ? { sessionId: 卡.sessionId, itemId: 那一处.itemId, nth: 那一处.nth, 词们: 拆词(搜索词), 起: Date.now() } : undefined)
+    if (卡.archived) {
+      取消归档并打开(卡)
+      return
+    }
+    void 回到那段(卡.sessionId, 回段依赖())
+      .then((r) => {
+        if (r === "dock" || r === "gone") 设跳到(undefined)
+      })
+      .catch(fail)
+  }
+
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => 开设置栏(),
@@ -3735,6 +3775,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         void 另开到坞Ref.current().catch(fail)
       },
       openSideChat: 打开坞里的对话,
+      /** 命令面板「搜索对话内容」：打开侧栏搜索并切到按内容；侧栏收着先展开（与放大镜那颗同一条） */
+      openContentSearch: () => {
+        设搜索开着(true)
+        设搜索模式("内容")
+        if ($sidebarCollapsed.get()) setSidebarCollapsed(false)
+      },
       /** 压缩当前这段（2026-09-27）。与仪表弹层、`/compact` 同一个 `压缩` */
       compactContext: () => {
         if (!session) return
@@ -5061,19 +5107,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               remove={(sessionId) => client.get<{ transcriptTrashed: boolean; problem?: string }>("deleteSession", { sessionId }).then(async (r) => { await loadTasks(client); await 重取归档数(); return r })}
               removeAll={() => client.get<{ deleted: number; transcriptsTrashed: number; problems: string[] }>("deleteArchivedSessions", {}).then(async (r) => { await loadTasks(client); await 重取归档数(); return r })}
               问={问一句}
-              onOpen={(s) => {
-                void client
-                  .get("setSessionArchived", { sessionId: s.sessionId, archived: false })
-                  .then(async () => {
-                    if (!projects.find((p) => p.projectId === s.projectId)?.temporary) setActiveProjectId(s.projectId)
-                    await loadSessions(client, s.projectId)
-                    await loadTasks(client)
-                    await 重取归档数()
-                    setActiveSessionId(s.sessionId)
-                    setView("conversation")
-                  })
-                  .catch(fail)
-              }}
+              onOpen={取消归档并打开}
             />
           ) : view === "settings" ? (
             /* **设置不复用项目概览的三栏网格**：仪表盘要一眼看全，
@@ -5192,6 +5226,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <ConversationView
                 key={session.sessionId}
                 session={session}
+                搜索跳到={跳到}
+                on跳空={note}
                 /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
                 {...对话回调(session, 主槽)}
                 artifacts={artifacts}

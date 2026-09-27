@@ -105,11 +105,14 @@ export function ContentSearchResults({
           <Row className="cs-head" onClick={() => onOpen(s)}>
             <span className="cs-title">{s.title ?? t("新会话")}</span>
             {s.archived ? <span className="cs-badge">{t("已归档")}</span> : null}
-            <span className="cs-when">{年月日时分(s.lastAt)}</span>
           </Row>
-          {s.place ? (
-            <p className="cs-place">{s.place.kind === "server" ? tf("服务器 {0}", s.place.name) : tf("项目 {0}", s.place.name)}</p>
-          ) : null}
+          {/* 时刻与所在放第二行（2026-09-28 实测）：与标题挤一行时，侧栏拖到最窄（200）标题只剩一个字 */}
+          <p className="cs-place">
+            <span>{年月日时分(s.lastAt)}</span>
+            {s.place ? (
+              <span>{s.place.kind === "server" ? tf("服务器 {0}", s.place.name) : tf("项目 {0}", s.place.name)}</span>
+            ) : null}
+          </p>
           {s.archived ? <p className="cs-place">{t("打开会取消归档")}</p> : null}
           {s.hits.map((h) => (
             <Row key={`${h.itemId}:${h.nth}`} className="cs-hit" onClick={() => onOpen(s, h)}>

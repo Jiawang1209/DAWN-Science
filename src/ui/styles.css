@@ -4320,7 +4320,7 @@ pre {
   color: var(--dawn-text-1);
 }
 .cs-badge { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
-.cs-when { flex: 0 0 auto; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.cs-place { display: flex; flex-wrap: wrap; column-gap: var(--dawn-space-2); }
 .cs-place, .cs-more {
   margin: 0;
   padding: 0 calc(var(--dawn-space-3) * 2);
@@ -4344,6 +4344,25 @@ pre {
 }
 .cs-mark { background: var(--dawn-accent-soft); color: var(--dawn-text-1); border-radius: var(--dawn-radius-xs); }
 .cs-bad { color: var(--dawn-danger); }
+/**
+ * 跳到的那一条（2026-09-27）：描一圈强调色，2.4 秒里淡掉（`search-jump.ts` 到点再撤掉属性）。
+ * **只淡不移**——设计契约「带位移的动画必须能关」管的是位移，这里只有颜色在变。
+ */
+[data-search-hit="true"] {
+  outline: 2px solid var(--dawn-accent);
+  outline-offset: var(--dawn-space-1);
+  border-radius: var(--dawn-radius-sm);
+  animation: dawn-search-hit 2.4s var(--dawn-ease) forwards;
+}
+@keyframes dawn-search-hit {
+  0%, 60% { outline-color: var(--dawn-accent); }
+  100% { outline-color: transparent; }
+}
+/* 块里的词（CSS Custom Highlight API，`search-jump.ts`）：留到换会话或下一次跳 */
+::highlight(dawn-search-hit) {
+  background-color: var(--dawn-accent-soft);
+  color: var(--dawn-text-1);
+}
 
 /**
  * 排版塌掉时印出来的原文（2026-08-13）。

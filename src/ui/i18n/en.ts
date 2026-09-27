@@ -1703,4 +1703,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 段的记录读不了，没搜": "Couldn't read the records of {0} conversations; they weren't searched",
   "{0} 段的记录太大（超过 32 MB），没搜": "{0} conversations have records over 32 MB; they weren't searched",
   "另有 {0} 段是外部 CLI / ACP / 终端 / 内核会话，内容不在我们手里，没搜": "{0} more are external CLI / ACP / terminal / kernel sessions; their content isn't ours to search",
+  "搜索对话内容": "Search conversation content",
+  "打开了，但在这段对话里没找到那一处——这段对话在搜过之后可能变了，或没能续上": "Opened it, but couldn't find that spot — the conversation may have changed since the search, or it couldn't be resumed",
 }

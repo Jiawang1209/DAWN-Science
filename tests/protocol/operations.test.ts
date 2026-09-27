@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema, RemoteConnectionSchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("140 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1）", () => {
+  it("142 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "setRemoteInterpreter",
@@ -28,6 +28,8 @@ describe("操作注册表", () => {
         "editQueue",
         "setSideSession",
         "compactSession",
+        "previewRewind",
+        "rewindTurn",
         "acquireLease",
         "listArtifacts",
         "runInKernel",
@@ -548,5 +550,31 @@ describe("上下文用量与压缩（2026-09-27）", () => {
     expect(r.safeParse({ ...底, afterCompaction: true }).success).toBe(true)
     expect(r.safeParse({ ...底, estimated: false }).success).toBe(false)
     expect(r.safeParse({ ...底, afterCompaction: false }).success).toBe(false)
+  })
+})
+
+describe("8.2 · 回退这一轮（2026-09-27）", () => {
+  it("previewRewind：只读；文件那一半要么是四张清单，要么是一个缘故", () => {
+    expect(isMutating("previewRewind")).toBe(false)
+    const 好 = {
+      files: { ok: true, restore: ["a.py"], remove: ["out/图.txt"], keep: [{ path: "n.md", reason: "changed_after" }], cannot: [{ path: "big.csv", reason: "too_large", size: 3 }] },
+      kernels: ["python"],
+      limits: { fileBytes: 52428800, totalBytes: 2147483648 },
+    }
+    expect(OPERATIONS.previewRewind.response.parse(好)).toEqual(好)
+    const 坏 = { files: { ok: false, reason: "remote" }, kernels: [], limits: 好.limits }
+    expect(OPERATIONS.previewRewind.response.parse(坏)).toEqual(坏)
+    expect(OPERATIONS.previewRewind.response.safeParse({ ...坏, files: { ok: false, reason: "猜的" } }).success).toBe(false)
+  })
+
+  it("rewindTurn：mutating；做法只有三种", () => {
+    expect(isMutating("rewindTurn")).toBe(true)
+    const 请 = (mode: unknown) => OPERATIONS.rewindTurn.request.safeParse({ sessionId: "s", turnId: "u3", mode })
+    expect(请("both").success).toBe(true)
+    expect(请("files").success).toBe(true)
+    expect(请("conversation").success).toBe(true)
+    expect(请("all").success).toBe(false)
+    const 回 = { restored: ["a.py"], removed: [], keep: [], cannot: [], failed: [], kernels: [], editorText: "那句" }
+    expect(OPERATIONS.rewindTurn.response.parse(回)).toEqual(回)
   })
 })

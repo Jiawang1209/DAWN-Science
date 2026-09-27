@@ -117,12 +117,32 @@ const 慢速 = { 每段字数: 6, 间隔毫秒: 15 }
  * 拿到工具结果之后那一问最后一条是 `tool`，不触发，所以不循环。用例自己给了 `toolCall` 且这一问它要调的，以用例的为准。
  */
 export const 慢慢跑 = { toolName: "bash", args: { command: "sleep 20" }, say: "我先跑一段慢的。" }
-function 慢跑工具(body) {
+/** 这一问的最后一条是用户话时，取它的文字；不是（工具结果之后那一问）→ undefined。两支 mock 工具共用（2026-09-27 抽出） */
+function 最后一句用户话(body) {
   const 最后 = body.messages?.at?.(-1)
   if (最后?.role !== "user") return undefined
   const c = 最后.content
-  const 文 = typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : ""
-  return 文.includes("慢慢跑") ? 慢慢跑 : undefined
+  return typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : ""
+}
+function 慢跑工具(body) {
+  return 最后一句用户话(body)?.includes("慢慢跑") ? 慢慢跑 : undefined
+}
+
+/**
+ * **「改两个文件」= 先说一句、再调一条改两个文件的 bash**（2026-09-27，回退这一轮；准入规则 1）。
+ *
+ * 回退要有东西可退：一个 `out/` 下的新文件（科研仓库常把它写进 `.gitignore`——回退照样要退它）、
+ * 一个原本就有的文件被追加一行。**两条都是 `>>` 追加**：同一句说两遍，第二遍的改动叠在第一遍上，
+ * 于是「回到第二句之前」与「回到第一句之前」看得出不同。中文文件名是刻意的（git 八进制转义那次的教训）。
+ * 与「慢慢跑」同一个规矩：只在最后一条是用户话时触发，拿到工具结果之后那一问不触发，不循环。
+ */
+export const 改两个文件 = {
+  toolName: "bash",
+  args: { command: "mkdir -p out && printf 'x\\n' >> out/图.txt && printf '改过\\n' >> README.md" },
+  say: "我改两个文件。",
+}
+function 改文件工具(body) {
+  return 最后一句用户话(body)?.includes("改两个文件") ? 改两个文件 : undefined
 }
 
 /**
@@ -293,7 +313,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
 

@@ -1633,6 +1633,92 @@ export const OPERATIONS = {
     mutating: true,
   },
   /**
+   * 回退这一轮 · 预览（2026-09-27，spec `2026-09-27-回退这一轮-design.md`）。**只读**：扫一遍工作区、算计划，不动任何东西。
+   *
+   * `turnId` 是转录里那条**用户发言**的 id。`files.ok: false` 时文件那一半做不了，缘故如实给（界面据此只给「只撤掉对话」）：
+   * `remote` 远端会话 / `before_archive` 这句在开始存档之前 / `gap` 之后有一轮没存上档 / `too_many_files` 工作区太大 / `no_archive` 这段会话没有存档。
+   * `kernels`：这段对话此刻挂着的活内核——**文件回得去，内核里的变量回不去**，确认框必须说（规格 7.5）。
+   * `images`：那句附过几张图（撤对话时图放不回输入框，要说）。`limits` 给界面写「超过 50 MB」用，不在界面里写死。
+   */
+  previewRewind: {
+    request: z.object({ sessionId: z.string().min(1), turnId: z.string().min(1) }).strict(),
+    response: z
+      .object({
+        files: z.discriminatedUnion("ok", [
+          z
+            .object({
+              ok: z.literal(true),
+              restore: z.array(z.string().min(1)),
+              remove: z.array(z.string().min(1)),
+              keep: z.array(z.object({ path: z.string().min(1), reason: z.literal("changed_after") }).strict()),
+              cannot: z.array(
+                z
+                  .object({
+                    path: z.string().min(1),
+                    reason: z.enum(["too_large", "over_budget", "raw_data", "not_stored"]),
+                    size: NonNegInt.optional(),
+                  })
+                  .strict(),
+              ),
+            })
+            .strict(),
+          z
+            .object({
+              ok: z.literal(false),
+              reason: z.enum(["remote", "before_archive", "gap", "too_many_files", "no_archive"]),
+            })
+            .strict(),
+        ]),
+        kernels: z.array(z.enum(["python", "R"])),
+        images: NonNegInt.optional(),
+        limits: z.object({ fileBytes: NonNegInt, totalBytes: NonNegInt }).strict(),
+      })
+      .strict(),
+    mutating: false,
+  },
+  /**
+   * 回退这一轮 · 执行（2026-09-27）。写权规则与 `writeToSession` 相同：持租约的才能回退。
+   *
+   * - `both`：文件退回这句之前、对话从这句起撤掉（这句原文回 `editorText`，界面放回输入框）；
+   * - `files`：只退文件，对话不动（运行时给模型留一句「哪些文件退回去了」）；
+   * - `conversation`：只撤对话——文件那一半做不了时的唯一出路（远端、存档之前）。
+   *
+   * 服务端**重新算一遍计划**，不信预览（中间可能又有人改了文件）；回执是真做了什么。
+   * 逐个文件的失败进 `failed`，不整体失败；`conversationError`：文件已经退了、对话没撤掉——要出声，不能吞。
+   * 在跑 → `conflict`；那句不在转录里 → `not_found`；远端带 `files` / `both`、非 native → `invalid_request`。
+   */
+  rewindTurn: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        turnId: z.string().min(1),
+        mode: z.enum(["both", "files", "conversation"]),
+      })
+      .strict(),
+    response: z
+      .object({
+        restored: z.array(z.string().min(1)),
+        removed: z.array(z.string().min(1)),
+        keep: z.array(z.object({ path: z.string().min(1), reason: z.literal("changed_after") }).strict()),
+        cannot: z.array(
+          z
+            .object({
+              path: z.string().min(1),
+              reason: z.enum(["too_large", "over_budget", "raw_data", "not_stored"]),
+              size: NonNegInt.optional(),
+            })
+            .strict(),
+        ),
+        failed: z.array(z.object({ path: z.string().min(1), message: z.string() }).strict()),
+        trash: z.string().min(1).optional(),
+        editorText: z.string().optional(),
+        kernels: z.array(z.enum(["python", "R"])),
+        conversationError: z.string().min(1).optional(),
+      })
+      .strict(),
+    mutating: true,
+  },
+  /**
    * 坞里挂的是哪段、主区是哪段（2026-09-24，侧边对话）。**权威在界面**：挂上 / 拿下 / 主区换了会话时发，
    * 启动时重发一次。后端据此给挂进坞的那段启用 `read_main_session`、给离开的那段停用。
    *

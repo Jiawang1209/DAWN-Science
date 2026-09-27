@@ -424,9 +424,11 @@ describe("协议版本 · 5.5", () => {
    *   `editQueue.withdrawn` 改成数组、`writeToSession` 响应可带 `withdrawn`；待发单只剩 `followUp`；`tool` 项加 `interrupted`。
    *
    * 8.1（2026-09-27）：上下文用量与压缩——`compaction` 转录项、`compactSession`、`getContextUsage` 加 `estimated` / `afterCompaction` / `compactAt`。纯新增，minor。
+   *
+   * **8.2（2026-09-27）**：回退这一轮——`previewRewind` / `rewindTurn`。纯新增。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.1")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.2")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

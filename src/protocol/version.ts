@@ -546,8 +546,11 @@
  *   `getContextUsage` 新增可选 `estimated` / `afterCompaction` / `compactAt`。
  *   **`usedTokens` 的口径变了**：从「最近一次请求的 input + cacheRead」改成 pi 的 `getContextUsage()`
  *   （含上一次输出与缓存写入，再加最近回复之后新加的估值）——与 pi 判自动压缩线同一族函数。形状不变，故仍是 minor。
+ *
+ * 8.2（2026-09-27）：回退这一轮（spec `2026-09-27-回退这一轮-design.md`）——`previewRewind`（只读）/ `rewindTurn`。
+ *   文件那一半坐我们自己的影子存档（`project/checkpoints.ts`），对话那一半坐 pi 的 `navigateTree`。纯新增，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "8.1"
+export const WORKBENCH_PROTOCOL_VERSION = "8.2"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

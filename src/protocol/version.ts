@@ -540,8 +540,14 @@
  *   （调整方向时重排不上的那几句交回界面）；待发单 `QueuedMessage.behavior` 只剩 `"followUp"`；
  *   `tool` 项加可选 `interrupted: true`（停止 / 调整方向时被停下的那一步）。
  *   **删掉 `steer` 是收窄请求取值**——与 7.0 撤 `setUsageBudget` 同一个理由：不留一个没人调的值躲版本。
+ *
+ * 8.1（2026-09-27）：上下文用量与压缩（spec `2026-09-27-上下文用量与压缩-design.md`）。
+ *   转录新增 `compaction` 项（正在压 / 压完 / 没压成 / 停下了，带摘要与前后用量）；新增操作 `compactSession`；
+ *   `getContextUsage` 新增可选 `estimated` / `afterCompaction` / `compactAt`。
+ *   **`usedTokens` 的口径变了**：从「最近一次请求的 input + cacheRead」改成 pi 的 `getContextUsage()`
+ *   （含上一次输出与缓存写入，再加最近回复之后新加的估值）——与 pi 判自动压缩线同一族函数。形状不变，故仍是 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "8.0"
+export const WORKBENCH_PROTOCOL_VERSION = "8.1"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -160,6 +160,44 @@ const NoticeItem = z
   .strict()
 
 /**
+ * 一次上下文压缩（2026-09-27，spec `2026-09-27-上下文用量与压缩-design.md` §2.3）。
+ *
+ * pi 在上下文过线（或人手动要）时把早先的消息换成一段摘要交给模型。**此前这件事一个字都不出现在转录里**——
+ * 模型忘了细节，人看不出为什么。所以每次压缩一定留一条：正在压、压完、没压成、停下了。
+ *
+ * 它不是 `notice`：要能展开摘要、要随状态变（按 id 覆盖），而且「正在压」算「这一轮在跑」（停止键可用）。
+ * **可见的转录不删任何东西**：模型读摘要，人看到的仍是完整来往，这一条就是分界。
+ */
+const CompactionItem = z
+  .object({
+    type: z.literal("compaction"),
+    id: z.string().min(1),
+    status: z.enum(["running", "done", "failed", "cancelled"]),
+    /** 谁起的头：手动 / 过了自动线 / 超了上限。**缺省 = 不知道**（从 pi 的记录恢复出来的那几条，记录里没存） */
+    reason: z.enum(["manual", "threshold", "overflow"]).optional(),
+    /** 压缩前的上下文（pi 算的，最近真回复的用量 + 之后的估值） */
+    tokensBefore: z.int().min(0).optional(),
+    /** 压缩后**对话部分**的估值（不含系统提示词与工具说明）——界面带「约」 */
+    tokensAfter: z.int().min(0).optional(),
+    /** pi 写的那段摘要原文 */
+    summary: z.string().min(1).optional(),
+    /** 没压成的原因（已翻成人话；认不出的原样） */
+    error: z.string().min(1).optional(),
+    /** 超上限那种：压完 pi 会重试刚才那一轮。只在 true 时出现 */
+    retried: z.literal(true).optional(),
+    /** 写摘要那一次模型调用花的 token。**缺席 = 不知道**，不是 0 */
+    usage: z
+      .object({
+        input: z.int().min(0).optional(),
+        output: z.int().min(0).optional(),
+        cacheRead: z.int().min(0).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+
+/**
  * 一次 `subagent` 工具调用里的**一组**子 agent（①-B″ · S1）。
  *
  * **一条记录装一组，不是一个子 agent 一条。**
@@ -316,6 +354,7 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
   SubagentsItem,
   KernelOutputItem,
   CellItem,
+  CompactionItem,
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 

@@ -422,9 +422,11 @@ describe("协议版本 · 5.5", () => {
    *
    * **8.0（2026-09-25，破坏性）**：调整方向——`writeToSession.behavior` / `editQueue.action` 的 `steer` 换成 `redirect`；
    *   `editQueue.withdrawn` 改成数组、`writeToSession` 响应可带 `withdrawn`；待发单只剩 `followUp`；`tool` 项加 `interrupted`。
+   *
+   * 8.1（2026-09-27）：上下文用量与压缩——`compaction` 转录项、`compactSession`、`getContextUsage` 加 `estimated` / `afterCompaction` / `compactAt`。纯新增，minor。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.0")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.1")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
@@ -485,5 +487,20 @@ describe("8.0 · 事件一侧", () => {
   it("待发单只剩一种：followUp", () => {
     expect(QueuedMessageSchema.safeParse({ id: "q", text: "x", behavior: "followUp" }).success).toBe(true)
     expect(QueuedMessageSchema.safeParse({ id: "q", text: "x", behavior: "steer" }).success).toBe(false)
+  })
+})
+
+describe("8.1 · 压缩标记", () => {
+  const 基 = { type: "compaction", id: "c1" }
+  it("四种状态都收；原因可缺（从记录恢复出来的不知道原因）", () => {
+    for (const status of ["running", "done", "failed", "cancelled"]) {
+      expect(TranscriptItemSchema.safeParse({ ...基, status }).success, status).toBe(true)
+    }
+    expect(TranscriptItemSchema.safeParse({ ...基, status: "done", reason: "threshold", tokensBefore: 112_000, tokensAfter: 9_400, summary: "## Goal", usage: { input: 98_000, output: 1_100 } }).success).toBe(true)
+  })
+  it("认不得的状态、原因、retried: false 都不收", () => {
+    expect(TranscriptItemSchema.safeParse({ ...基, status: "ok" }).success).toBe(false)
+    expect(TranscriptItemSchema.safeParse({ ...基, status: "done", reason: "auto" }).success).toBe(false)
+    expect(TranscriptItemSchema.safeParse({ ...基, status: "done", retried: false }).success).toBe(false)
   })
 })

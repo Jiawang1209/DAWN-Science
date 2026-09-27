@@ -60,6 +60,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     cancelUpdate: async () => 更新桩,
     editQueue: async () => ({}),
     setSideSession: async () => ({}),
+    compactSession: async () => ({}),
     applyUpdate: async () => 更新桩,
     fetchLocalImage: async () => ({ mediaType: "image/png", base64: "" }),
     openProject: async () => project,

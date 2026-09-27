@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema, RemoteConnectionSchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("139 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1）", () => {
+  it("140 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "setRemoteInterpreter",
@@ -27,6 +27,7 @@ describe("操作注册表", () => {
         "fetchLocalImage",
         "editQueue",
         "setSideSession",
+        "compactSession",
         "acquireLease",
         "listArtifacts",
         "runInKernel",
@@ -526,5 +527,26 @@ describe("8.0 · 调整方向（2026-09-25）", () => {
     expect(OPERATIONS.editQueue.response.parse({ withdrawn: [话] })).toEqual({ withdrawn: [话] })
     expect(OPERATIONS.writeToSession.response.parse({ withdrawn: [话] })).toEqual({ withdrawn: [话] })
     expect(OPERATIONS.writeToSession.response.parse({})).toEqual({})
+  })
+})
+
+describe("上下文用量与压缩（2026-09-27）", () => {
+  it("compactSession：sessionId 必填，instructions 可选且不许空串", () => {
+    const 压 = OPERATIONS.compactSession.request
+    expect(压.safeParse({ sessionId: "s1" }).success).toBe(true)
+    expect(压.safeParse({ sessionId: "s1", instructions: "保留暗号" }).success).toBe(true)
+    expect(压.safeParse({ sessionId: "s1", instructions: "" }).success).toBe(false)
+    expect(压.safeParse({ sessionId: "s1", 别的: 1 }).success).toBe(false)
+    expect(OPERATIONS.compactSession.mutating).toBe(true)
+  })
+
+  it("getContextUsage：三个新字段都可缺；estimated / afterCompaction 只收 true", () => {
+    const r = OPERATIONS.getContextUsage.response
+    const 底 = { bytes: { system: 1, tools: 2, history: 3 } }
+    expect(r.safeParse(底).success).toBe(true)
+    expect(r.safeParse({ ...底, usedTokens: 20, estimated: true, compactAt: 111_616 }).success).toBe(true)
+    expect(r.safeParse({ ...底, afterCompaction: true }).success).toBe(true)
+    expect(r.safeParse({ ...底, estimated: false }).success).toBe(false)
+    expect(r.safeParse({ ...底, afterCompaction: false }).success).toBe(false)
   })
 })

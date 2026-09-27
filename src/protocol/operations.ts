@@ -1656,14 +1656,16 @@ export const OPERATIONS = {
   },
 
   /**
-   * 上下文用量（①-B″ · U3）。
+   * 上下文用量（①-B″ · U3；2026-09-27 改口径、加三个字段）。
    *
    * **每个字段各自为真，缺的就缺着。** `bytes` 是**字节，不是 token**——
    * `pi-ai` 没有 tokenizer，拿字节占比去凑一个 token 分解就是编造，
    * 而分解不准比不分解更坏：它会让人据此做错决定。
    *
-   * `usedTokens` 暂缺（provider 报的 usage 尚未采集），界面应显示「尚未采集」，
-   * **不要用字节去估**。
+   * `usedTokens` 是 **pi 算的「上下文里现在有多少」**（`AgentSession.getContextUsage()`）：最近一次真回复报的
+   * `totalTokens`（含那次的输出与缓存写入），加上那之后新加的内容按字数估的一截（有这一截时 `estimated: true`）。
+   * **与 pi 判自动压缩线用的是同一族函数**——2026-09-27 前我们报 `input + cacheRead`，人看着 80%、pi 按 90% 压了。
+   * 缺省 = 还没有过回复（pi 那时只数对话，系统提示词与工具说明不在里面，会少算），或刚压缩过（见 `afterCompaction`）。
    */
   getContextUsage: {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
@@ -1672,10 +1674,16 @@ export const OPERATIONS = {
       /** 模型自带的上下文上限（token）。**真数**；缺省 = 不知道 */
       contextWindow: z.int().min(0).optional(),
       /**
-       * 最近一次请求的输入 token（含缓存命中）。**provider 报的真数。**
-       * 缺省 = **尚未采集，不是 0**。
+       * 上下文里现在有多少 token（pi 的 `getContextUsage()`，口径见上；2026-09-27 前是「最近一次请求的 input + cacheRead」）。
+       * 缺省 = **不知道，不是 0**。
        */
       usedTokens: z.int().min(0).optional(),
+      /** `usedTokens` 里有一截是按字数估的（最近一次回复之后新加的）。**只在 true 时出现** */
+      estimated: z.literal(true).optional(),
+      /** 刚压缩过、还没有新回复：此时不知道现在有多少，**不给 `usedTokens`**。只在 true 时出现 */
+      afterCompaction: z.literal(true).optional(),
+      /** 自动压缩线（token）：到这儿 pi 自己压（上限 − 留给摘要的那份）。缺省 = 自动压缩关着，或上限不知道 */
+      compactAt: z.int().min(0).optional(),
       /** 三档内容的**字节数，不是 token** */
       bytes: z.object({
         system: z.int().min(0),
@@ -1684,6 +1692,25 @@ export const OPERATIONS = {
       }),
     }),
     mutating: false,
+  },
+
+  /**
+   * 压缩这段对话的上下文（2026-09-27，spec `2026-09-27-上下文用量与压缩-design.md` §2.2）。**只有 native 有**。
+   *
+   * 坐在 pi 的 `AgentSession.compact(customInstructions)`：早先的消息换成一段摘要交给模型，最近的原样留着。
+   * **不等压完**：开始了就返回；压完、没压成、被停下，都由转录里那条 `compaction` 项说。
+   * 这一轮还在跑 → `conflict`（不替人先停掉这一轮，spec D8）；非 native → `invalid_request`。
+   */
+  compactSession: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        /** `/compact` 后面那句：摘要里要特别保留什么。缺省 = 照 pi 的默认写 */
+        instructions: z.string().min(1).max(2000).optional(),
+      })
+      .strict(),
+    response: Empty,
+    mutating: true,
   },
 
   /**

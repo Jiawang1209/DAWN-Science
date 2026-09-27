@@ -126,6 +126,36 @@ function 慢跑工具(body) {
 }
 
 /**
+ * **pi 的压缩摘要请求**（2026-09-27，上下文用量与压缩；准入规则 1）。
+ *
+ * pi 写摘要时系统提示词是 `SUMMARIZATION_SYSTEM_PROMPT`（`pi-coding-agent/dist/core/compaction/utils.js`），
+ * 开头是 "You are a context summarization assistant."。认出来就回这段固定摘要——e2e 展开压缩标记时认它，
+ * `dev:mock` 里人按「现在压缩」也看得到一段像样的摘要。**先于其余分支判**：摘要请求的 user 那条里装着整段对话原文，
+ * 里面的「慢慢跑」「塞满上下文」都是被摘要的话，不该再触发工具或大用量。
+ */
+export const 假摘要 = [
+  "## Goal",
+  "假摘要：用户在试压缩。",
+  "",
+  "## Progress",
+  "- 说过几句话",
+  "",
+  "## Next Steps",
+  "- 接着聊",
+].join("\n")
+const 是摘要请求 = (系统原文) => 系统原文.includes("context summarization assistant")
+
+/**
+ * **「塞满上下文」= 这一轮报 12 万输入 token**（2026-09-27；准入规则 1）。
+ *
+ * 默认用量是 12 / 8 / 20，上下文永远是空的——仪表的提醒档、pi 的自动压缩在 mock 与 e2e 里都到不了。
+ * 128k 的模型线在 128000 − 16384 = 111616，报 120000 就过线，这一轮收尾时 pi 自己压。
+ * **只看最后一句用户话**：历史里说过一次不该让之后每一轮都「塞满」。
+ */
+const 默认用量 = { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 }
+export const 塞满用量 = { prompt_tokens: 120000, completion_tokens: 8, total_tokens: 120008 }
+
+/**
  * 起一个假推理服务器。
  *
  * @param {object} [opts]
@@ -234,11 +264,15 @@ export function startMockInferenceServer(opts = {}) {
        * （原文前还带着什么参考块，原样复述在前面，e2e 据此断言带没带上下文）；
        * user 里带「只回一个 JSON 对象」= 一次判定，按正文里有没有「相关」「开发」「README」回 JSON。
        */
-      const 系统原文 = 文本(body.messages?.find?.((m) => m.role === "system")?.content)
+      // 有的模型 pi 用 `developer` 角色放系统提示词——两种都认
+      const 系统原文 = 文本(body.messages?.find?.((m) => m.role === "system" || m.role === "developer")?.content)
+      const 摘要 = 是摘要请求(系统原文)
       const 增强 = 系统原文.includes("只输出改写后的提示词")
       const 判定 = 最后一句.includes("只回一个 JSON 对象")
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
-      const reply = 是key验证
+      const reply = 摘要
+        ? 假摘要
+        : 是key验证
         ? "ok"
         : 判定
         ? 最后一句.includes('"related"')
@@ -259,7 +293,8 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = opts.toolCall?.(body) ?? 慢跑工具(body)
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body))
+      const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
 
       /**
@@ -305,7 +340,7 @@ export function startMockInferenceServer(opts = {}) {
 
       if (!stream) {
         res.writeHead(200, { "content-type": "application/json" })
-        res.end(JSON.stringify(nonStreamPayload(reply, tool)))
+        res.end(JSON.stringify(nonStreamPayload(reply, tool, 用量)))
         return
       }
 
@@ -323,7 +358,7 @@ export function startMockInferenceServer(opts = {}) {
        */
       if (opts.firstChunkDelayMs) await new Promise((r) => setTimeout(r, opts.firstChunkDelayMs))
       const 慢 = !tool && 最后一句.includes("慢慢说")
-      for (const chunk of streamChunks(reply, tool, opts.thinking, 慢 ? 慢速.每段字数 : undefined)) {
+      for (const chunk of streamChunks(reply, tool, opts.thinking, 慢 ? 慢速.每段字数 : undefined, 用量)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
         /**
          * **想完之后停一会儿再说话**（2026-08-14，准入规则 1）。
@@ -369,7 +404,7 @@ const 下一个调用id = () => `call_mock_${++调用序号}`
 const MODEL_ID = "mock-model"
 
 /** 把回复切成几段发，**让流式路径真的被走到**——一次性发完等于没测流式 */
-function streamChunks(reply, tool, thinking, 每段字数) {
+function streamChunks(reply, tool, thinking, 每段字数, 用量 = 默认用量) {
   const id = "chatcmpl-mock"
   const head = { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] }
 
@@ -440,12 +475,12 @@ function streamChunks(reply, tool, thinking, 每段字数) {
     {
       id, object: "chat.completion.chunk", model: MODEL_ID,
       choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-      usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 },
+      usage: 用量,
     },
   ]
 }
 
-function nonStreamPayload(reply, tool) {
+function nonStreamPayload(reply, tool, 用量 = 默认用量) {
   return {
     id: "chatcmpl-mock",
     object: "chat.completion",
@@ -457,7 +492,7 @@ function nonStreamPayload(reply, tool) {
         : { role: "assistant", content: reply },
       finish_reason: tool ? "tool_calls" : "stop",
     }],
-    usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 },
+    usage: 用量,
   }
 }
 

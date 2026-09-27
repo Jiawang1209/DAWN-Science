@@ -652,6 +652,11 @@ export class SessionManager {
     return rt.askSubagent(sessionId, toolCallId, index, agent, text)
   }
 
+  /** 停掉正在答的那一问（2026-09-27 审查）。没有这件能力的运行时 → false（它本来也起不了续问） */
+  abortSubagentFollowUp(sessionId: SessionId, toolCallId: string, index: number): boolean {
+    return this.runtimeForSession(sessionId)?.abortSubagentFollowUp?.(sessionId, toolCallId, index) ?? false
+  }
+
   /**
    * 这段会话归哪个运行时：绑着的就是绑着的那个；没绑的只认 native——
    * 与 `resume` 同一条口径（只有 native 续得上，起来时走的就是 `runtimes.native`）。

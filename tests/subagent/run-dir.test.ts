@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync } from "node
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionManager } from "@earendil-works/pi-coding-agent"
-import { 子运行目录, 写元, 读元, 读子转录, 会话文件, 补子agent组, 记录读不出来 } from "../../src/subagent/run-dir.js"
+import { 子运行目录, 写元, 读元, 读子转录, 会话文件, 补子agent组, 记录读不出来, 子转录过大, 子转录读盘上限字节 } from "../../src/subagent/run-dir.js"
 import type { TranscriptItem } from "../../src/protocol/index.js"
 
 const dirs: string[] = []
@@ -73,6 +73,48 @@ describe("会话文件读回", () => {
       { kind: "text", who: "agent", text: "我先读一下。" },
       { kind: "tool", id: "t1", name: "read", input: { path: "README.md" }, result: "# readme" },
     ])
+  })
+})
+
+describe("会话文件读回的上限（2026-09-27 审查）", () => {
+  function 一份(d: string, 工具结果: string) {
+    const sm = SessionManager.create(d, join(d, "transcript"))
+    sm.appendMessage({ role: "user", content: "读大文件", timestamp: 1 } as never)
+    sm.appendMessage({
+      role: "assistant",
+      content: [{ type: "toolCall", id: "t1", name: "bash", arguments: { command: "cat big" } }],
+      api: "openai-completions", provider: "deepseek", model: "m", usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+      stopReason: "toolUse", timestamp: 2,
+    } as never)
+    sm.appendMessage({ role: "toolResult", toolCallId: "t1", toolName: "bash", content: [{ type: "text", text: 工具结果 }], isError: false, timestamp: 3 } as never)
+  }
+  it("缺省上限是 20 MB", () => {
+    expect(子转录读盘上限字节).toBe(20 * 1024 * 1024)
+  })
+  it("文件超过上限：不读，抛 `子转录过大`，话里说清多大、上限多少、全文在哪", () => {
+    const d = 临时()
+    一份(d, "x".repeat(4000))
+    const f = 会话文件(d)!
+    let 抓到: unknown
+    try {
+      读子转录(d, 1024)
+    } catch (e) {
+      抓到 = e
+    }
+    expect(抓到).toBeInstanceOf(子转录过大)
+    const e = 抓到 as 子转录过大
+    expect(e.字节).toBeGreaterThan(1024)
+    expect(e.文件).toBe(f)
+    expect(e.message).toMatch(/过程记录有 \d+\.\d MB，超过读盘上限 0\.0 MB，没有载入；全文在 /)
+  })
+  it("工具结果按活着那条路的 16 KiB 截，说清省了多少字节", () => {
+    const d = 临时()
+    const 大 = "y".repeat(40 * 1024)
+    一份(d, 大)
+    const 工具 = 读子转录(d)!.find((x) => x.kind === "tool")
+    const r = 工具?.kind === "tool" ? 工具.result! : ""
+    expect(Buffer.byteLength(r, "utf8")).toBeLessThan(17 * 1024)
+    expect(r).toContain(`还有 ${40 * 1024 - 16 * 1024} 字节没显示，全文在它的会话文件里`)
   })
 })
 

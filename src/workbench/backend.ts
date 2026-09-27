@@ -102,7 +102,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { 探测远端解释器, 读远端事实 } from "../remote/interpreters.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
-import { 补子agent组, 子运行目录, 读元, 读子转录, 会话文件, 没跑完 } from "../subagent/run-dir.js"
+import { 补子agent组, 子运行目录, 读元, 读子转录, 会话文件, 没跑完, 子转录过大 } from "../subagent/run-dir.js"
 import { 拆子转录id } from "../protocol/subagent-id.js"
 import { join } from "node:path"
 import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync, lstatSync, globSync } from "node:fs"
@@ -2188,7 +2188,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     openSubagent: async ({ transcriptId }) => {
       const 拆 = 拆子转录id(transcriptId)
       if (!拆) throw fault("invalid_request", "这不是一个子 agent 的 id")
-      if (!events.peek(transcriptId)) {
+      // 同一个运行目录只建一段（2026-09-27 审查）：`call.1` 已经在中枢里了，`call_1` 就订那一段，不再读盘建第二份
+      const 已有 = events.找子转录(transcriptId)
+      if (已有) return events.subscribe(已有)
+      {
         const rec = sessions.get(拆.会话)
         if (!rec) throw fault("not_found", "这个子 agent 所在的对话已经不在了")
         const dir = 子运行目录(rec.sessionDir, 拆.toolCallId, 拆.序号)
@@ -2196,15 +2199,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         if (!元) throw fault("not_found", "这个子 agent 没有留下记录（可能是这个功能上线之前跑的）")
         let 历史: ReturnType<typeof 读子转录>
         let 读不了: string | undefined
+        // 会话文件太大、没读（2026-09-27 审查）：文件在，能接着问（续问在子进程里读它，不经这里）
+        let 太大: 子转录过大 | undefined
         try {
           历史 = 读子转录(dir)
         } catch (e) {
           // 会话文件坏了：如实说，照样把交回的结果给人看——不因为过程读不出来就连结果也藏起来
-          读不了 = e instanceof Error ? e.message : String(e)
+          if (e instanceof 子转录过大) 太大 = e
+          else 读不了 = e instanceof Error ? e.message : String(e)
         }
         const 团队 = 拆.toolCallId.startsWith("team:")
         const 没跑完的 = 元.status === "running"
-        events.track(transcriptId, "native", { 子转录: true })
+        const 有会话文件 = 历史 !== undefined || 太大 !== undefined
+        // 读盘建起来的：早就不在跑了（2026-09-27 审查）——快照说 exited，界面不画「正在干活」
+        events.track(transcriptId, "native", { 子转录: true, 已结束: true })
         events.restore(
           transcriptId,
           历史
@@ -2214,9 +2222,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
                 {
                   type: "notice",
                   id: "r1",
-                  text: 读不了
-                    ? `过程记录读不出来（${读不了}），只有交回的结果。`
-                    : "这一次没有留下过程记录（会话文件没写进盘），只有交回的结果。",
+                  text: 太大
+                    ? `${太大.message}。只有交回的结果。`
+                    : 读不了
+                      ? `过程记录读不出来（${读不了}），只有交回的结果。`
+                      : "这一次没有留下过程记录（会话文件没写进盘），只有交回的结果。",
                 },
               ],
         )
@@ -2226,8 +2236,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           status: 没跑完的 ? "error" : 元.status,
           ...(没跑完的 ? { error: 没跑完 } : 元.error ? { error: 元.error } : {}),
           ...(元.result ? { result: 元.result } : {}),
-          canAsk: !团队 && 历史 !== undefined,
-          ...(团队 ? { askWhy: "team" as const } : 历史 === undefined ? { askWhy: "no-transcript" as const } : {}),
+          canAsk: !团队 && 有会话文件,
+          ...(团队 ? { askWhy: "team" as const } : !有会话文件 ? { askWhy: "no-transcript" as const } : {}),
         })
       }
       return events.subscribe(transcriptId)
@@ -2239,9 +2249,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **从查到标 `asking` 全是同步的**（中间没有 await）：两句并发的续问只有一句过得去，另一句 `conflict`。
      * 运行时起不来 → 在那一格里记一条失败（与答到一半失败同一条路），不另抛：那一格就是人正看着的地方。
      */
-    askSubagent: async ({ transcriptId, text }) => {
-      const 拆 = 拆子转录id(transcriptId)
+    askSubagent: async ({ transcriptId: 原样, text }) => {
+      const 拆 = 拆子转录id(原样)
       if (!拆) throw fault("invalid_request", "这不是一个子 agent 的 id")
+      // 中枢里那一段的 id（`call.1` / `call_1` 指同一个目录时认先建的那段，2026-09-27 审查）
+      const transcriptId = events.找子转录(原样) ?? 原样
       const 信息 = events.peek(transcriptId)?.subagent
       if (!信息) throw fault("not_found", "先打开这个子 agent 再问")
       // msgid 逐条写成字面量：`fault-i18n` 扫描只认调用点上的字面量
@@ -3410,7 +3422,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw 回退的错(err)
       }
       // 对话真撤掉了才截转录：转录要与 pi 那条分支说同一件事。压缩标记、那句之后的通知一起走，你敲的 cell 留着
-      if (mode !== "files" && !r.conversationError) events.truncateAt(sessionId, turnId)
+      // 撤掉的 chip 里正在答续问的那几个一起停（2026-09-27 审查）：chip 没了，它答完也没处放，还在烧钱
+      if (mode !== "files" && !r.conversationError) {
+        events.truncateAt(sessionId, turnId, (toolCallId, index) => sessions.abortSubagentFollowUp(sessionId, toolCallId, index))
+      }
       events.notice(
         sessionId,
         回退通知({

@@ -602,6 +602,8 @@ export interface AgentRuntime {
    * @throws 这段会话没装子 agent（没有子进程入口）
    */
   askSubagent?(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void>
+  /** 停掉正在答的那一问（回退撤掉了它的 chip，2026-09-27 审查）。停到了回 true。**只有 native 有** */
+  abortSubagentFollowUp?(sessionId: SessionId, toolCallId: string, index: number): boolean
   /**
    * 中止当前回合。**只有 native 有**——PTY 的中止是往终端送 Ctrl-C，
    * 那是 `write` 的事，语义完全不同，不该挤进同一个方法。

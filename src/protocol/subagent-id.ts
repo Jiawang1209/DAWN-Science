@@ -28,3 +28,22 @@ export function 拆子转录id(id: string): { 会话: string; toolCallId: string
   if (!Number.isInteger(序号) || 序号 < 0) return undefined
   return { 会话: id.slice(0, i), toolCallId: 尾.slice(0, j), 序号 }
 }
+
+/**
+ * toolCallId 在盘上的那一段（2026-09-27 审查）。来自模型提供方，**不许它带着 `..` 或分隔符逃出 subagents/**。
+ * 放在这里而不是 `run-dir.ts`：中枢也要用它判「这两个 id 是不是同一个目录」，而中枢不该为此拉进 pi 的会话读写。
+ */
+export function 子目录段(toolCallId: string): string {
+  return toolCallId.replace(/[^A-Za-z0-9_-]/g, "_") || "_"
+}
+
+/**
+ * 两个子转录 id 是不是**同一个运行目录**（同一会话、同一序号、toolCallId 安全化之后相同）。
+ * `call.1` 与 `call_1` 落在同一个目录——中枢里只该有一段，不然读盘建两份、各自续问，会话文件被两头写。
+ */
+export function 同一个子转录(a: string, b: string): boolean {
+  if (a === b) return true
+  const x = 拆子转录id(a)
+  const y = 拆子转录id(b)
+  return !!x && !!y && x.会话 === y.会话 && x.序号 === y.序号 && 子目录段(x.toolCallId) === 子目录段(y.toolCallId)
+}

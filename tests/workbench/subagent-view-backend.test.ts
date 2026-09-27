@@ -3,9 +3,9 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import Database from "better-sqlite3"
-import { mkdtempSync, rmSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { SessionManager as PiSessions } from "@earendil-works/pi-coding-agent"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
@@ -16,7 +16,7 @@ import { SessionManager } from "../../src/session/manager.js"
 import { ProjectManager } from "../../src/project/manager.js"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
-import type { SessionId } from "../../src/runtime/types.js"
+import type { SessionId, 回退回执 } from "../../src/runtime/types.js"
 import type { SessionSnapshot } from "../../src/protocol/events.js"
 import { createWorkbenchBackend } from "../../src/workbench/backend.js"
 import { memoryCredentials } from "../helpers/credentials.js"
@@ -26,7 +26,15 @@ import { 子运行目录, 写元 } from "../../src/subagent/run-dir.js"
 
 class 会续问的 extends FakeRuntime {
   readonly 问过: string[] = []
+  readonly 停过: string[] = []
   坏了: string | undefined
+  abortSubagentFollowUp(sessionId: SessionId, toolCallId: string, index: number): boolean {
+    this.停过.push(`${sessionId}|${toolCallId}|${index}`)
+    return true
+  }
+  async rewind(): Promise<回退回执> {
+    return { restored: [], removed: [], keep: [], cannot: [], failed: [], editorText: "" }
+  }
   async askSubagent(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void> {
     if (this.坏了) throw new Error(this.坏了)
     this.问过.push(`${sessionId}|${toolCallId}|${index}|${agent}|${text}`)
@@ -47,6 +55,9 @@ function make() {
       ...后端.backend,
       openSubagent: async (r: { transcriptId: string }) => (await 后端.backend.openSubagent(r)) as SessionSnapshot,
       askSubagent: (r: { transcriptId: string; text: string }) => 后端.backend.askSubagent(r),
+      unsubscribeSession: (r: { sessionId: string }) => 后端.backend.unsubscribeSession(r),
+      rewindTurn: (r: { sessionId: string; turnId: string; mode: "conversation" | "files" | "both" }) => 后端.backend.rewindTurn(r),
+      acquireLease: (r: { sessionId: string; holder: "user" }) => 后端.backend.acquireLease(r),
     },
   }
 }
@@ -177,5 +188,93 @@ describe("askSubagent", () => {
     const snap = ctx.events.peek(id)!
     expect(snap.items.some((i) => i.type === "notice" && i.text.includes("没有子进程入口"))).toBe(true)
     expect(snap.subagent).toMatchObject({ canAsk: true, status: "ok" })
+  })
+})
+
+/** 2026-09-27 审查的几条：读盘上限、读盘建的算已结束、退订即放、同一个目录只一段、越界、回退停掉在答的 */
+describe("openSubagent / askSubagent（审查）", () => {
+  it("读盘建起来的：快照 state 是 exited（界面不画「正在干活」）", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    摆一个(ctx.sessions.get(s)!.sessionDir, "c1")
+    const snap = await ctx.backend.openSubagent({ transcriptId: 子转录id(s, "c1", 0) })
+    expect(snap.state).toBe("exited")
+  })
+
+  it("会话文件超过 20 MB：不载入，一条说清多大的 notice + 交回的结果；文件在，照样能接着问", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    const dir = 子运行目录(ctx.sessions.get(s)!.sessionDir, "big", 0)
+    写元(dir, { agent: "data-auditor", task: "读大表", status: "ok", result: { text: "读完了" }, startedAt: 1, endedAt: 2 })
+    mkdirSync(join(dir, "transcript"), { recursive: true })
+    writeFileSync(join(dir, "transcript", "x.jsonl"), Buffer.alloc(21 * 1024 * 1024, 0x20))
+    const snap = await ctx.backend.openSubagent({ transcriptId: 子转录id(s, "big", 0) })
+    const 话 = snap.items.find((i) => i.type === "notice")
+    expect(话?.type === "notice" && 话.text).toMatch(/过程记录有 21\.0 MB，超过读盘上限 20\.0 MB，没有载入/)
+    expect(snap.subagent).toMatchObject({ result: { text: "读完了" }, canAsk: true })
+  })
+
+  it("退订一段读盘建的：中枢放掉它；再打开从盘上重建", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    摆一个(ctx.sessions.get(s)!.sessionDir, "c1")
+    const id = 子转录id(s, "c1", 0)
+    await ctx.backend.openSubagent({ transcriptId: id })
+    await ctx.backend.unsubscribeSession({ sessionId: id })
+    expect(ctx.events.peek(id)).toBeUndefined()
+    expect((await ctx.backend.openSubagent({ transcriptId: id })).subagent?.status).toBe("ok")
+  })
+
+  it("`call.1` 与 `call_1` 指同一个目录：第二次打开订的是已有那一段，中枢里不多出一份", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    摆一个(ctx.sessions.get(s)!.sessionDir, "call_1")
+    const 甲 = await ctx.backend.openSubagent({ transcriptId: 子转录id(s, "call.1", 0) })
+    const 乙 = await ctx.backend.openSubagent({ transcriptId: 子转录id(s, "call_1", 0) })
+    expect(乙.sessionId).toBe(甲.sessionId)
+    expect(ctx.events.peek(子转录id(s, "call_1", 0))).toBeUndefined()
+    // 按另一种写法问，也落在那一段上
+    await ctx.backend.askSubagent({ transcriptId: 子转录id(s, "call_1", 0), text: "再说" })
+    expect(ctx.events.peek(甲.sessionId)?.subagent?.asking).toBe(true)
+  })
+
+  it("越界的 id（`#sub:../..:0`）：干脆地 not_found，不读会话目录外面摆着的记录", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    const sessionDir = ctx.sessions.get(s)!.sessionDir
+    // 不做安全化时 `<会话目录>/subagents/../../0` 会落到会话目录的上一层——在那里摆一份以假乱真的
+    const 外面 = join(dirname(sessionDir), "0")
+    写元(外面, { agent: "冒充的", task: "不该被读到", status: "ok", startedAt: 1, endedAt: 2 })
+    try {
+      await expect(ctx.backend.openSubagent({ transcriptId: `${s}#sub:../..:0` })).rejects.toMatchObject({ workbenchCode: "not_found" })
+      expect(ctx.events.peek(`${s}#sub:../..:0`)).toBeUndefined()
+    } finally {
+      rmSync(外面, { recursive: true, force: true })
+    }
+  })
+
+  it("回退撤掉了一个正在答续问的子 agent：那一问被停掉；撤掉之前的不动", async () => {
+    const ctx = make()
+    const s = await ctx.开一段()
+    await ctx.backend.acquireLease({ sessionId: s, holder: "user" })
+    const 派 = (tc: string) => {
+      ctx.events.ingest(s, { kind: "subagent_start", sessionId: s, toolCallId: tc, index: 0, agent: "scout", task: "t" })
+      ctx.events.ingest(s, { kind: "subagent_event", sessionId: s, toolCallId: tc, index: 0, event: { kind: "settled", ok: true, result: { text: "x" } } })
+    }
+    ctx.events.userTurn(s, "第一句")
+    派("c1")
+    ctx.events.userTurn(s, "第二句")
+    派("c2")
+    const 早 = 子转录id(s, "c1", 0)
+    const 晚 = 子转录id(s, "c2", 0)
+    摆一个(ctx.sessions.get(s)!.sessionDir, "c1")
+    摆一个(ctx.sessions.get(s)!.sessionDir, "c2")
+    await ctx.backend.askSubagent({ transcriptId: 早, text: "问早的" })
+    await ctx.backend.askSubagent({ transcriptId: 晚, text: "问晚的" })
+    const 第二句 = ctx.events.peekItems(s).filter((i) => i.type === "turn" && i.who === "user")[1]!
+    await ctx.backend.rewindTurn({ sessionId: s, turnId: 第二句.id, mode: "conversation" })
+    expect(ctx.runtime.停过).toEqual([`${s}|c2|0`])
+    expect(ctx.events.peek(晚)).toBeUndefined()
+    expect(ctx.events.peek(早)?.subagent?.asking).toBe(true)
   })
 })

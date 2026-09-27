@@ -11,6 +11,8 @@ import { join, resolve } from "node:path"
 import { NativeRuntime } from "../../src/runtime/native.js"
 import type { AgentEvent, SessionSpec } from "../../src/runtime/types.js"
 import type { Credential, CredentialInfo, CredentialStore } from "@earendil-works/pi-ai"
+import { SessionTranscripts } from "../../src/workbench/events.js"
+import { 子转录id } from "../../src/protocol/subagent-id.js"
 
 const fakeCredentials = (): CredentialStore => ({
   async read(providerId): Promise<Credential | undefined> {
@@ -88,5 +90,46 @@ describe("NativeRuntime.askSubagent", () => {
     expect(收尾).toMatchObject({ toolCallId: "c1", index: 0, event: { kind: "settled", ok: false, followUp: true } })
     // chip 与账本的那两种一条都不能有：续问不是主 agent 的行动
     expect(收到.some((e) => e.kind === "subagent_start" || e.kind === "subagent_end")).toBe(false)
+  })
+})
+
+describe("NativeRuntime 续问（2026-09-27 审查）", () => {
+  it("abortSubagentFollowUp：只停点名的那一问（toolCallId 按盘上那一段认），别的照跑；没有就回 false", async () => {
+    const { spec, entry, pid文件 } = 造()
+    const rt = new NativeRuntime({ credentials: fakeCredentials(), subagentChildEntry: entry, subagents: { 自带目录: resolve("agents") } })
+    await rt.start(spec)
+    const 收到: AgentEvent[] = []
+    rt.attach("n1", (e) => 收到.push(e))
+    await rt.askSubagent("n1", "call.1", 0, "data-auditor", "再说一句")
+    await 等(() => existsSync(pid文件))
+    const pid = Number(readFileSync(pid文件, "utf8"))
+    expect(rt.abortSubagentFollowUp("n1", "c-别的", 0)).toBe(false)
+    expect(rt.abortSubagentFollowUp("n1", "call_1", 1)).toBe(false)
+    expect(活着(pid)).toBe(true)
+    expect(rt.abortSubagentFollowUp("n1", "call_1", 0)).toBe(true)
+    await 等(() => !活着(pid))
+    await 等(() => 收到.some((e) => e.kind === "subagent_event" && e.event.kind === "settled"))
+    expect(收到.find((e) => e.kind === "subagent_event" && e.event.kind === "settled")).toMatchObject({ event: { ok: false, followUp: true } })
+    await rt.stop("n1")
+  })
+
+  it("续问一个定义已被删掉的子 agent：失败出声（那一格里一条说清原因的 notice），又能接着问了", async () => {
+    const { spec, entry } = 造()
+    const rt = new NativeRuntime({ credentials: fakeCredentials(), subagentChildEntry: entry, subagents: { 自带目录: resolve("agents") } })
+    await rt.start(spec)
+    const h = new SessionTranscripts({ terminalMaxChars: 1000 })
+    h.track("n1", "native")
+    h.ingest("n1", { kind: "subagent_start", sessionId: "n1", toolCallId: "c1", index: 0, agent: "已删掉的", task: "t" })
+    h.ingest("n1", { kind: "subagent_event", sessionId: "n1", toolCallId: "c1", index: 0, event: { kind: "settled", ok: true, result: { text: "原结论" } } })
+    const 子 = 子转录id("n1", "c1", 0)
+    expect(h.子agent续问开始(子, "再说")).toBe(true)
+    rt.attach("n1", (e) => h.ingest("n1", e))
+    await rt.askSubagent("n1", "c1", 0, "已删掉的", "再说")
+    await 等(() => h.peek(子)?.subagent?.asking !== true)
+    const snap = h.peek(子)!
+    expect(snap.subagent).toMatchObject({ canAsk: true, status: "ok", result: { text: "原结论" } })
+    expect(snap.subagent?.asking).toBeUndefined()
+    expect(snap.items.some((i) => i.type === "notice" && /已删掉的.*定义被删了或停用了/.test(i.text))).toBe(true)
+    await rt.stop("n1")
   })
 })

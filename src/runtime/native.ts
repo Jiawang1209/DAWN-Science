@@ -61,6 +61,7 @@ export function 原文对得上(界面: string, pi那句: string, 名单: { 模�
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool, createSubagentFollowUp } from "../subagent/tool.js"
 import { 子运行目录 } from "../subagent/run-dir.js"
+import { 子目录段 } from "../protocol/subagent-id.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
@@ -932,7 +933,7 @@ export class NativeRuntime implements AgentRuntime {
   /** 每段会话一份「接着问子 agent」（2026-09-27）：与 `subagent` 工具同一份 childOf / context，建会话时一起装 */
   private readonly 子agent续问 = new Map<SessionId, ReturnType<typeof createSubagentFollowUp>>()
   /** 正在答的那几轮：关会话时整组杀（中止信号 → 执行器 `杀掉后代`，与主 agent 派的那一轮同一条收尾） */
-  private readonly 续问中 = new Map<SessionId, Set<AbortController>>()
+  private readonly 续问中 = new Map<SessionId, Set<{ c: AbortController; toolCallId: string; index: number }>>()
 
   /**
    * **问一句**（2026-08-23，学自 dsh-auto-mode 的 ask）：发一条 `permission_request`（与 ACP 的权限卡同一形状），
@@ -1567,7 +1568,7 @@ export class NativeRuntime implements AgentRuntime {
         this.团队收尾.get(spec.sessionId)?.()
         this.团队收尾.delete(spec.sessionId)
         // 正在答的接着问整组杀（2026-09-27）：会话都关了，旁边那一问没人看了，别让它继续烧钱
-        for (const c of this.续问中.get(spec.sessionId) ?? []) c.abort()
+        for (const x of this.续问中.get(spec.sessionId) ?? []) x.c.abort()
         this.续问中.delete(spec.sessionId)
         this.子agent续问.delete(spec.sessionId)
       },
@@ -2988,8 +2989,9 @@ ${描述}`
     const 续 = this.子agent续问.get(sessionId)
     if (!续) throw new UserFacingError("这段对话没有装子 agent（没有子进程入口），不能接着问")
     const c = new AbortController()
-    const 集 = this.续问中.get(sessionId) ?? new Set<AbortController>()
-    集.add(c)
+    const 这一问 = { c, toolCallId, index }
+    const 集 = this.续问中.get(sessionId) ?? new Set<typeof 这一问>()
+    集.add(这一问)
     this.续问中.set(sessionId, 集)
     void 续(toolCallId, index, agent, text, c.signal)
       .catch((e: unknown) => {
@@ -3001,7 +3003,22 @@ ${描述}`
           event: { kind: "settled", ok: false, followUp: true, error: e instanceof Error ? e.message : String(e) },
         })
       })
-      .finally(() => 集.delete(c))
+      .finally(() => 集.delete(这一问))
+  }
+
+  /**
+   * 停掉正在答的那一问（2026-09-27 审查）：回退把它的 chip 撤掉了，答完也没处放、还在烧钱。
+   * toolCallId 按盘上那一段比（与中枢判「同一个子转录」同一个判据）。停到了回 true
+   */
+  abortSubagentFollowUp(sessionId: SessionId, toolCallId: string, index: number): boolean {
+    let 停了 = false
+    for (const x of this.续问中.get(sessionId) ?? []) {
+      if (x.index === index && 子目录段(x.toolCallId) === 子目录段(toolCallId)) {
+        x.c.abort()
+        停了 = true
+      }
+    }
+    return 停了
   }
 
   setSideTool(sessionId: SessionId, on: boolean): void {

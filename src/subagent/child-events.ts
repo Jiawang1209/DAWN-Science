@@ -10,6 +10,21 @@ import { 按字节截 } from "./clip.js"
 
 export const 子事件上限 = { 工具结果字节: 16 * 1024 } as const
 
+/**
+ * 一条工具结果按 16 KiB 截、说清省了多少。**活着的这条路与读盘重建（`读子转录`）共用**（2026-09-27 审查）：
+ * 重开后点开一个 `cat` 过大文件的子 agent，不该比它活着时多送几 MB 给界面。
+ */
+export function 截工具结果(full: string): { text: string; truncated: boolean; bytes: number } {
+  const bytes = Buffer.byteLength(full, "utf8")
+  if (bytes <= 子事件上限.工具结果字节) return { text: full, truncated: false, bytes }
+  const 留 = 按字节截(full, 子事件上限.工具结果字节)
+  return {
+    text: `${留}\n…（还有 ${bytes - Buffer.byteLength(留, "utf8")} 字节没显示，全文在它的会话文件里）`,
+    truncated: true,
+    bytes,
+  }
+}
+
 interface Pi事件 {
   type?: string
   assistantMessageEvent?: { type?: string; delta?: string }
@@ -32,18 +47,14 @@ export function 翻成子事件(raw: unknown): 子事件 | undefined {
       return { kind: "tool_start", toolCallId: String(e.toolCallId ?? ""), toolName: String(e.toolName ?? "?"), input: e.args ?? e.input }
     case "tool_execution_end": {
       const full = (e.result?.content ?? []).map((c) => c.text ?? "").join("")
-      const bytes = Buffer.byteLength(full, "utf8")
-      const 截 = bytes > 子事件上限.工具结果字节
-      const 留 = 截 ? 按字节截(full, 子事件上限.工具结果字节) : full
+      const 截过 = 截工具结果(full)
       return {
         kind: "tool_end",
         toolCallId: String(e.toolCallId ?? ""),
         toolName: String(e.toolName ?? "?"),
         // **两处任一说失败就是失败**——与 native 那句同一个判据（`||` 不是 `??`：false 不是空值）
         isError: Boolean(e.isError || e.result?.isError),
-        text: 截 ? `${留}\n…（还有 ${bytes - Buffer.byteLength(留, "utf8")} 字节没显示，全文在它的会话文件里）` : full,
-        truncated: 截,
-        bytes,
+        ...截过,
       }
     }
     case "turn_end":

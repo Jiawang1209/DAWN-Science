@@ -170,3 +170,111 @@ describe("子转录", () => {
     ).not.toThrow()
   })
 })
+
+/** 2026-09-27 审查：子转录不许跟着整个进程活下去；撤掉在答的要停；id 按盘上那一段认 */
+describe("子转录的内存与身份（审查）", () => {
+  function 派(h: SessionTranscripts, toolCallId: string, index = 0, 收尾 = true) {
+    h.ingest(主, { kind: "subagent_start", sessionId: 主, toolCallId, index, agent: "scout", task: `任务 ${toolCallId}` })
+    if (收尾) h.ingest(主, { kind: "subagent_event", sessionId: 主, toolCallId, index, event: { kind: "settled", ok: true, result: { text: "好" } } })
+    return 子转录id(主, toolCallId, index)
+  }
+  function 新(上限?: number) {
+    const h = new SessionTranscripts({ terminalMaxChars: 1000, ...(上限 === undefined ? {} : { 子转录留存上限: 上限 }) })
+    h.track(主, "native")
+    h.subscribe(主)
+    return h
+  }
+
+  it("退订一段跑完了、没在答的子转录：忘掉它（能从盘上重建）；还在跑的、在答的留着", () => {
+    const h = 新()
+    const 完 = 派(h, "c1")
+    const 跑 = 派(h, "c2", 0, false)
+    const 答 = 派(h, "c3")
+    h.subscribe(完)
+    h.subscribe(跑)
+    h.subscribe(答)
+    h.子agent续问开始(答, "再说")
+    h.unsubscribe(完)
+    h.unsubscribe(跑)
+    h.unsubscribe(答)
+    expect(h.peek(完)).toBeUndefined()
+    expect(h.peek(跑)?.subagent?.status).toBe("running")
+    expect(h.peek(答)?.subagent?.asking).toBe(true)
+  })
+
+  it("退订主会话：它名下跑完了、没人看着的子转录一起忘；有人看着的、还在跑的留着；主会话本身留着", () => {
+    const h = 新()
+    const 没开过 = 派(h, "c1")
+    const 看着 = 派(h, "c2")
+    const 跑 = 派(h, "c3", 0, false)
+    h.subscribe(看着)
+    h.unsubscribe(主)
+    expect(h.peek(没开过)).toBeUndefined()
+    expect(h.peek(看着)).toBeDefined()
+    expect(h.peek(跑)).toBeDefined()
+    expect(h.peek(主)).toBeDefined()
+  })
+
+  it("每段会话跑完了的子转录有上限：超了丢最久没用的；有人看着的不丢", () => {
+    const h = 新(2)
+    const a = 派(h, "c1")
+    h.subscribe(a) // 看着的：再老也不丢
+    const b = 派(h, "c2")
+    const c = 派(h, "c3")
+    const d = 派(h, "c4")
+    expect(h.peek(a)).toBeDefined()
+    expect(h.peek(b)).toBeUndefined()
+    expect(h.peek(c)).toBeUndefined()
+    expect(h.peek(d)).toBeDefined()
+    // 还在跑的不算进「跑完了」，也不会被丢
+    const 跑 = 派(h, "c5", 0, false)
+    派(h, "c6")
+    expect(h.peek(跑)).toBeDefined()
+  })
+
+  it("回退撤掉的 chip 组里正在答续问的：回调点名（调用方据此停掉那一问）；没在答的不点", () => {
+    const h = 新()
+    const 答 = 派(h, "c1")
+    派(h, "c2")
+    h.子agent续问开始(答, "再说")
+    h.userTurn(主, "下一句")
+    派(h, "c3")
+    const u = h.subscribe(主).items.find((i) => i.type === "turn" && i.who === "user")!
+    // c1、c2 在那句之前，不撤；再派一个在答的 c4 在那句之后
+    const 后答 = 派(h, "c4")
+    h.子agent续问开始(后答, "也再说")
+    const 点名: string[] = []
+    expect(h.truncateAt(主, u.id, (tc, i) => 点名.push(`${tc}:${i}`))).toBe(true)
+    expect(点名).toEqual(["c4:0"])
+    expect(h.peek(后答)).toBeUndefined()
+    expect(h.peek(答)).toBeDefined()
+  })
+
+  it("撤掉 toolCallId `a` 那一组不连带 `a:0` 那一组（按字段比，不按前缀）", () => {
+    const h = 新()
+    const 别人 = 派(h, "a:0", 1)
+    h.userTurn(主, "这句")
+    const u = h.subscribe(主).items.find((i) => i.type === "turn" && i.who === "user")!
+    const 这组 = 派(h, "a", 0)
+    h.truncateAt(主, u.id)
+    expect(h.peek(这组)).toBeUndefined()
+    expect(h.peek(别人), "`S#sub:a:` 这个前缀吞掉了 `S#sub:a:0:1`").toBeDefined()
+  })
+
+  it("`call.1` 与 `call_1` 是同一个运行目录：找子转录认得出，子事件进同一段", () => {
+    const h = 新()
+    const 原 = 派(h, "call.1", 0, false)
+    expect(h.找子转录(子转录id(主, "call_1", 0))).toBe(原)
+    expect(h.找子转录(子转录id(主, "call_2", 0))).toBeUndefined()
+    h.ingest(主, { kind: "subagent_event", sessionId: 主, toolCallId: "call_1", index: 0, event: { kind: "output", data: "进来了" } })
+    expect(h.peek(原)!.items.some((i) => i.type === "turn" && i.who === "agent" && i.text === "进来了")).toBe(true)
+  })
+
+  it("读盘建起来的（track 带 已结束）：快照 state 是 exited——界面不画「正在干活」；活着建的是 alive", () => {
+    const h = 新()
+    const 盘 = 子转录id(主, "c9", 0)
+    h.track(盘, "native", { 子转录: true, 已结束: true })
+    expect(h.peek(盘)?.state).toBe("exited")
+    expect(h.peek(派(h, "c1", 0, false))?.state).toBe("alive")
+  })
+})

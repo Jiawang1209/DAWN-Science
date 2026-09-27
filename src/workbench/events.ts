@@ -22,7 +22,7 @@ import {
   type SubagentInfo,
   type TranscriptItem,
 } from "../protocol/events.js"
-import { 子转录id } from "../protocol/subagent-id.js"
+import { 子转录id, 拆子转录id, 是子转录id, 同一个子转录, 子目录段 } from "../protocol/subagent-id.js"
 import type { 子转录事件 } from "../subagent/protocol.js"
 import { 活动一句 } from "../subagent/activity.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/version.js"
@@ -54,7 +54,15 @@ export interface SessionTranscriptsOptions {
    * 工具调用的「跑了多久」要一个稳定的时钟才能断言。
    */
   now?: () => number
+  /**
+   * 每段会话在内存里最多留几段**跑完了、没人看着**的子转录（2026-09-27 审查）。超了按最久没用的丢——
+   * 它们都能从盘上重建（`openSubagent`）；一段派了几百个子 agent 的长对话不该让中枢无界地长。缺省 {@link 子转录留存上限}
+   */
+  子转录留存上限?: number
 }
+
+/** 见 {@link SessionTranscriptsOptions.子转录留存上限} */
+export const 子转录留存上限 = 20
 
 interface Entry {
   /**
@@ -135,6 +143,8 @@ interface Entry {
   子转录?: true | undefined
   /** 子转录的头信息（谁、任务、状态、交回的结果、能不能接着问）。只有子转录有 */
   子agent?: SubagentInfo | undefined
+  /** 最近一次被用到（建、订、看、推）的次序号。子转录超额时丢最久没用的（LRU） */
+  用过: number
 }
 
 export class SessionTranscripts {
@@ -152,6 +162,8 @@ export class SessionTranscripts {
    * 订阅那道门是给界面省事的（没打开的会话不推）；通知恰恰要听的是没打开的那些。
    */
   private readonly 全听 = new Set<(u: SessionUpdate) => void>()
+  /** LRU 的时钟：只增不减的次序号，不是墙钟（同一毫秒里的先后也要分得清） */
+  private 次序 = 0
 
   constructor(private readonly opts: SessionTranscriptsOptions) {}
 
@@ -160,7 +172,11 @@ export class SessionTranscripts {
   }
 
   /** 会话创建时登记。`kind` 决定字节进终端还是进对话，之后不会变。 */
-  track(sessionId: SessionId, kind: "native" | "pty" | "cli" | "kernel" | "acp", opts?: { 子转录?: true }): void {
+  track(
+    sessionId: SessionId,
+    kind: "native" | "pty" | "cli" | "kernel" | "acp",
+    opts?: { 子转录?: true; 已结束?: true },
+  ): void {
     if (this.entries.has(sessionId)) return
     this.entries.set(sessionId, {
       kind,
@@ -169,7 +185,8 @@ export class SessionTranscripts {
       terminal: "",
       terminalTrimmed: false,
       kernelInstanceId: undefined,
-      state: "alive",
+      // 读盘重建的子转录（2026-09-27 审查）：那一段早就不在跑了，快照要说 exited——界面据此不画「正在干活」
+      state: opts?.已结束 ? "exited" : "alive",
       exitCode: undefined,
       openTurnId: undefined,
       configOptions: undefined,
@@ -179,8 +196,20 @@ export class SessionTranscripts {
       思考起于: undefined,
       当前模型: undefined,
       压缩中: undefined,
+      用过: ++this.次序,
       ...(opts?.子转录 ? { 子转录: true as const } : {}),
     })
+  }
+
+  /**
+   * 中枢里指着同一个运行目录的那段子转录的 id（2026-09-27 审查）：先认原样的，再认安全化之后相同的
+   * （`call.1` 与 `call_1` 落在同一个目录，只该有一段）。没有就是 undefined
+   */
+  找子转录(id: SessionId): SessionId | undefined {
+    if (this.entries.has(id)) return id
+    if (!是子转录id(id)) return undefined
+    for (const [k, e] of this.entries) if (e.子转录 && 同一个子转录(k, id)) return k
+    return undefined
   }
 
   /** 推送出口。`electron/main.ts` 把它接到 webContents。 */
@@ -215,17 +244,56 @@ export class SessionTranscripts {
     // 界面**不认这句话的字**：「坞里那段真没了」看的是 `backend.ts` subscribeSession 挂的 `details.gone`（Task 6 复审 F1）
     if (!e) throw new Error(`会话 "${sessionId}" 未在本进程中活动，没有记录可订阅`)
     this.subscribed.add(sessionId)
+    e.用过 = ++this.次序
     return this.snapshot(sessionId, e)
   }
 
   /** 只看一眼，不订阅（侧边读主对话用）。不在本进程 → undefined，由调用方如实说 */
   peek(sessionId: SessionId): SessionSnapshot | undefined {
     const e = this.entries.get(sessionId)
+    if (e) e.用过 = ++this.次序
     return e ? this.snapshot(sessionId, e) : undefined
   }
 
+  /**
+   * 退订。**子转录顺手放掉**（2026-09-27 审查）：退订的是一段跑完了、没在答的子转录 → 忘掉它；
+   * 退订的是主会话 → 它名下跑完了、没在答、没人看着的子转录一起忘。都能从盘上重建（`openSubagent`），
+   * 留着就是一段跟着整个进程活下去的内存。还在跑的、在答的、有人看着的一律留着——它们的下一句还要推。
+   */
   unsubscribe(sessionId: SessionId): void {
     this.subscribed.delete(sessionId)
+    if (是子转录id(sessionId)) {
+      const e = this.entries.get(sessionId)
+      if (e && this.可放掉(sessionId, e)) this.忘掉(sessionId)
+      return
+    }
+    for (const [k, e] of [...this.entries]) {
+      if (e.子转录 && 拆子转录id(k)?.会话 === sessionId && this.可放掉(k, e)) this.忘掉(k)
+    }
+  }
+
+  /** 跑完了、没在答、没人订、没被钉住的子转录——丢了也能从盘上建回来 */
+  private 可放掉(id: SessionId, e: Entry): boolean {
+    const a = e.子agent
+    return !!e.子转录 && !!a && a.status !== "running" && !a.asking && !this.subscribed.has(id) && !this.pinned.has(id)
+  }
+
+  /** 这段会话名下跑完了的子转录超过上限时，丢最久没用的那几段（只丢 {@link 可放掉} 的） */
+  private 收紧子转录(会话: SessionId, 留: SessionId): void {
+    const 上限 = this.opts.子转录留存上限 ?? 子转录留存上限
+    const 跑完的: [SessionId, Entry][] = []
+    for (const [k, e] of this.entries) {
+      if (e.子转录 && e.子agent && e.子agent.status !== "running" && 拆子转录id(k)?.会话 === 会话) 跑完的.push([k, e])
+    }
+    if (跑完的.length <= 上限) return
+    let 多 = 跑完的.length - 上限
+    for (const [k, e] of 跑完的.sort((a, b) => a[1].用过 - b[1].用过)) {
+      if (多 <= 0) break
+      // 刚收尾 / 刚建起来的那一段不丢：后端下一步就要订它
+      if (k === 留 || !this.可放掉(k, e)) continue
+      this.忘掉(k)
+      多--
+    }
   }
 
   pin(sessionId: SessionId): void {
@@ -239,7 +307,7 @@ export class SessionTranscripts {
   /** 会话彻底不要了时清掉。这是内存，不是账本。子转录跟着父会话走（2026-09-27）——它们也只是内存 */
   forget(sessionId: SessionId): void {
     this.忘掉(sessionId)
-    this.忘掉子转录(`${sessionId}#sub:`)
+    this.忘掉子转录(sessionId)
   }
 
   private 忘掉(id: SessionId): void {
@@ -248,10 +316,19 @@ export class SessionTranscripts {
     this.pinned.delete(id)
   }
 
-  /** 忘掉 id 以这个前缀开头的子转录（`<会话>#sub:` 是全部；`<会话>#sub:<调用>:` 是一次调用那一组） */
-  private 忘掉子转录(前缀: string): void {
-    for (const id of [...this.entries.keys()]) {
-      if (id.startsWith(前缀) && this.entries.get(id)?.子转录) this.忘掉(id)
+  /**
+   * 忘掉这段会话的子转录：不给调用就是全部，给了就是那一次调用那一组。
+   * **按拆出来的字段比，不按前缀**（2026-09-27 审查）：前缀 `S#sub:a:` 会连 `a:0` 那次调用（`S#sub:a:0:1`）一起吞掉；
+   * toolCallId 按盘上那一段比（`call.1` 与 `call_1` 是同一组）。
+   */
+  private 忘掉子转录(会话: SessionId, toolCallId?: string, 每段?: (toolCallId: string, index: number, e: Entry) => void): void {
+    for (const [id, e] of [...this.entries]) {
+      if (!e.子转录) continue
+      const 拆 = 拆子转录id(id)
+      if (!拆 || 拆.会话 !== 会话) continue
+      if (toolCallId !== undefined && 子目录段(拆.toolCallId) !== 子目录段(toolCallId)) continue
+      每段?.(拆.toolCallId, 拆.序号, e)
+      this.忘掉(id)
     }
   }
 
@@ -618,7 +695,7 @@ export class SessionTranscripts {
        * 接着问是旁边问的，不是主 agent 的事，跑完的 chip 不能被它重新点亮。
        */
       case "subagent_event": {
-        const 子 = 子转录id(sessionId, event.toolCallId, event.index)
+        const 子 = this.找子转录(子转录id(sessionId, event.toolCallId, event.index)) ?? 子转录id(sessionId, event.toolCallId, event.index)
         const ce = this.entries.get(子)
         const ev = event.event
         if (ce) {
@@ -712,14 +789,22 @@ export class SessionTranscripts {
    * （运行时在压的时候拒回退，这里只是不留一根悬着的指针）。
    * 整份换掉、推一帧快照——与 `restore()` 同一个理由：几十条 dropItem 描述的是同一件事。找不到那条返回 false。
    */
-  truncateAt(sessionId: SessionId, itemId: string): boolean {
+  truncateAt(
+    sessionId: SessionId,
+    itemId: string,
+    /** 被撤掉的子转录里**正在答续问的**那几个（2026-09-27 审查）：调用方据此把那一问停掉——chip 都没了，它答完也没处放 */
+    撤掉在答的?: (toolCallId: string, index: number) => void,
+  ): boolean {
     const e = this.entries.get(sessionId)
     if (!e) return false
     const i = e.items.findIndex((x) => x.id === itemId)
     if (i < 0) return false
     // 撤掉的 chip 组，它们的子转录一起忘（2026-09-27）：chip 没了就再也点不开，留着只是一段够不着的内存
     for (const x of e.items.slice(i)) {
-      if (x.type === "subagents") this.忘掉子转录(`${sessionId}#sub:${x.id.slice("sub:".length)}:`)
+      if (x.type !== "subagents") continue
+      this.忘掉子转录(sessionId, x.id.slice("sub:".length), (tc, n, ce) => {
+        if (ce.子agent?.asking) 撤掉在答的?.(tc, n)
+      })
     }
     e.items = [...e.items.slice(0, i), ...e.items.slice(i).filter((x) => x.type === "cell")]
     e.openTurnId = undefined
@@ -946,6 +1031,8 @@ export class SessionTranscripts {
       }
     }
     this.bump(id, ce, { type: "subagent", subagent: ce.子agent })
+    const 会话 = 拆子转录id(id)?.会话
+    if (会话) this.收紧子转录(会话, id)
   }
 
   private chip换一句(sessionId: SessionId, e: Entry, toolCallId: string, index: number, activity: string): void {
@@ -978,6 +1065,8 @@ export class SessionTranscripts {
     if (!ce) return
     ce.子agent = info
     this.bump(id, ce, { type: "subagent", subagent: info })
+    const 会话 = 拆子转录id(id)?.会话
+    if (会话) this.收紧子转录(会话, id)
   }
 
   /** 写入或覆盖一条 item（按 id），并推送。 */
@@ -995,6 +1084,7 @@ export class SessionTranscripts {
     body: UpdateBody,
   ): void {
     e.revision += 1
+    e.用过 = ++this.次序
     /**
      * **校验不合格就丢掉这一条，但绝不把异常抛回调用方。**
      *

@@ -17,6 +17,8 @@ import { SessionManager } from "@earendil-works/pi-coding-agent"
 import { 分支转消息, 消息转历史 } from "../runtime/history.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/index.js"
+import { 子目录段 } from "../protocol/subagent-id.js"
+import { 截工具结果 } from "./child-events.js"
 
 export interface 子运行元 {
   agent: string
@@ -28,10 +30,8 @@ export interface 子运行元 {
   endedAt?: number
 }
 
-/** toolCallId 来自模型提供方，**不许它带着 `..` 或分隔符逃出 subagents/** */
-function 安全段(s: string): string {
-  return s.replace(/[^A-Za-z0-9_-]/g, "_") || "_"
-}
+/** toolCallId 来自模型提供方，**不许它带着 `..` 或分隔符逃出 subagents/**。与中枢判「同一个目录」共用一个（审查 2026-09-27） */
+const 安全段 = 子目录段
 
 export function 子运行目录(sessionDir: string, toolCallId: string, index: number): string {
   return join(sessionDir, "subagents", 安全段(toolCallId), String(index))
@@ -77,11 +77,35 @@ export function 会话文件(dir: string): string | undefined {
  * 会话文件 → 历史条目（与主对话续接同一套翻法、同一个来源 `getBranch()`——子 agent 跑长了 pi 也会压缩，
  * 走 `buildSessionContext()` 就只剩一段摘要）。没有会话文件 = undefined，调用方如实说「没留下过程记录」
  */
-export function 读子转录(dir: string): RestoredItem[] | undefined {
+export function 读子转录(dir: string, 上限字节 = 子转录读盘上限字节): RestoredItem[] | undefined {
   const f = 会话文件(dir)
   if (!f) return undefined
-  return 消息转历史(分支转消息(SessionManager.open(f).getBranch()))
+  // **先看多大再读**（2026-09-27 审查）：pi 是整份同步读进来的，一个跑了几小时的子 agent 能有上百 MB，
+  // 点一下 chip 就把主进程卡住、内存翻倍。超了就不读，说清多大（规格 7.5：不静默截断）
+  const 大小 = statSync(f).size
+  if (大小 > 上限字节) throw new 子转录过大(f, 大小, 上限字节)
+  return 消息转历史(分支转消息(SessionManager.open(f).getBranch())).map((x) =>
+    // 工具结果与活着那条路同一个 16 KiB、同一句「省了多少」
+    x.kind === "tool" && x.result !== undefined ? { ...x, result: 截工具结果(x.result).text } : x,
+  )
 }
+
+/** 读盘重建时会话文件的上限（2026-09-27 审查）。超了不整份读 */
+export const 子转录读盘上限字节 = 20 * 1024 * 1024
+
+/** 会话文件太大、没读。带着多大与在哪，调用方照实说 */
+export class 子转录过大 extends Error {
+  constructor(
+    readonly 文件: string,
+    readonly 字节: number,
+    readonly 上限: number,
+  ) {
+    super(`过程记录有 ${兆(字节)}，超过读盘上限 ${兆(上限)}，没有载入；全文在 ${文件}`)
+    this.name = "子转录过大"
+  }
+}
+
+const 兆 = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`
 
 /** 这次调用下盘上有记录的那几个，按序号排 */
 export function 子agent组(sessionDir: string, toolCallId: string): { index: number; 元: 子运行元 }[] {

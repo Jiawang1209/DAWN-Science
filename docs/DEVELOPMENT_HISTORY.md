@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 子 agent 看得见 · 后端审查修复：子转录的内存上限、读盘上限、回退停掉在答的、id 按盘上那一段认（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 审查指出子转录（活着跑完的与读盘建的）在中枢里跟着整个进程活下去；`读子转录` 整份同步读、不设上限，读回的工具结果也不像活着那条路截 16 KiB；回退撤掉 chip 时正在答的续问还在跑；`call.1` 与 `call_1` 落同一个目录却在中枢里各建一段、`forget` 按前缀会误伤 `a:0`；读盘建的快照仍是 `alive`。
+- **What**：`SessionTranscripts.unsubscribe` 退订跑完了、没在答的子转录即放掉，退订主会话时连带它名下没人看着的；每段会话跑完的子转录 LRU 留 20 段（`子转录留存上限`，可注入）；`truncateAt` 多一个回调点名被撤掉的在答者，后端 `rewindTurn` 据此调新增的 `NativeRuntime.abortSubagentFollowUp`（经 `SessionManager`、`AgentRuntime` 可选）；`子目录段` / `同一个子转录` 挪进 `protocol/subagent-id.ts`（`run-dir` 与中枢共用一个安全化），`找子转录` 让 `openSubagent` / `askSubagent` / `subagent_event` 认同一段；`忘掉子转录` 按拆出来的字段比；`读子转录` 先 stat、超 20 MB 抛 `子转录过大`（坞里一条说清多大、在哪的 notice，文件在所以仍可续问），工具结果走与活着同一个 `截工具结果`；读盘建的 `track(..., { 已结束: true })` → 快照 `state: "exited"`。
+- **Impact**：无协议变更、无新 fault msgid。界面不必改；读盘建的子转录快照 `state` 由 `alive` 变 `exited`。
+- **Verification**：新增中枢 7 条、run-dir 3 条、后端 6 条（含越界 id、20 MB、回退停在答的）、运行时 2 条（按 id 停、续问已删定义出声且 `canAsk` 复原）；`npx vitest run` 全绿（3491 通过）；`npm run typecheck` 通过。
+
 ### 2026-09-27 — 回退这一轮：每句自己说的话下面「↶ 回到这句之前」；文件与对话一起退，内核没回退要大声说（学自 Claude Code `/rewind`、Codex 逐轮 undo；分支 `agent-basics`）
 
 - **Type**: feat + fix

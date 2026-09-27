@@ -102,6 +102,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { 探测远端解释器, 读远端事实 } from "../remote/interpreters.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
+import { 补子agent组 } from "../subagent/run-dir.js"
 import { join } from "node:path"
 import { mkdirSync, existsSync, writeFileSync, statSync, readdirSync, readFileSync, realpathSync, lstatSync, globSync } from "node:fs"
 
@@ -2135,7 +2136,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             events.ingest(sessionId, e)
           })
           const 历史 = await sessions.history(sessionId)
-          if (历史.length > 0) events.restore(sessionId, 历史.map(还原成条目))
+          // 子 agent 的 chip 组从盘上的 `meta.json` 补回（2026-09-27，spec §2.4）：pi 的会话文件里没有 chip。
+          // 这个功能之前跑的那些盘上没有记录，照旧只有工具行——不编一组出来
+          if (历史.length > 0) events.restore(sessionId, 补子agent组(历史.map(还原成条目), 记录.sessionDir))
           const 开关 = sessions.configOptions(sessionId)
           if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
         } catch (e) {

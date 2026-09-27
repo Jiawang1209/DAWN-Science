@@ -38,17 +38,7 @@ import {
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
-
-/** pi 记下的一条消息。**只声明我们真的读的那几个字段** */
-type 历史消息 =
-  | { role: "user"; content: string | { type: string; text?: string }[] }
-  | {
-      role: "assistant"
-      content: ({ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; arguments: unknown } | { type: "thinking" })[]
-    }
-  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[] }
-  /** 不是 pi 的消息：`getBranch()` 里的 `compaction` 条目，`history()` 自己造的记号（2026-09-27） */
-  | { role: "compaction"; summary: string; tokensBefore: number }
+import { 分支转消息, 消息转历史, 取文本 } from "./history.js"
 
 /**
  * 回退时界面那句与 pi 那句核对原文（2026-09-27，Task 4 复审收紧；Task 5 复审改成按真名认）。
@@ -68,13 +58,6 @@ export function 原文对得上(界面: string, pi那句: string, 名单: { 模�
   return pi那句.includes(界面)
 }
 
-/** 内容可能是一段字符串，也可能是一串块。**图片不还原成文字**，如实标一下 */
-function 取文本(content: string | { type: string; text?: string }[]): string {
-  if (typeof content === "string") return content
-  return content
-    .map((c) => (c.type === "text" ? (c.text ?? "") : c.type === "image" ? "（图片）" : ""))
-    .join("")
-}
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
 import { 挑工具后端 } from "../remote/tools.js"
@@ -686,64 +669,8 @@ export class NativeRuntime implements AgentRuntime {
   async history(sessionId: SessionId): Promise<RestoredItem[]> {
     const s = this.sessions.get(sessionId)
     if (!s) return []
-    const 消息 = (
-      s.sessionManager.getBranch() as { type: string; message?: unknown; summary?: string; tokensBefore?: number }[]
-    ).flatMap((x): 历史消息[] =>
-      x.type === "message" && x.message
-        ? [x.message as 历史消息]
-        : x.type === "compaction"
-          ? [{ role: "compaction", summary: x.summary ?? "", tokensBefore: x.tokensBefore ?? 0 }]
-          : [],
-    )
-    const 出: RestoredItem[] = []
-    const 待补结果 = new Map<string, RestoredItem & { kind: "tool" }>()
-
-    for (const m of 消息) {
-      if (m.role === "compaction") {
-        出.push({ kind: "compaction", summary: m.summary, tokensBefore: m.tokensBefore })
-        continue
-      }
-      if (m.role === "user") {
-        const text = 取文本(m.content)
-        if (text.trim()) 出.push({ kind: "text", who: "user", text })
-        continue
-      }
-      if (m.role === "assistant") {
-        const text = (m.content ?? [])
-          .filter((c): c is { type: "text"; text: string } => c.type === "text")
-          .map((c) => c.text)
-          .join("")
-        if (text.trim()) 出.push({ kind: "text", who: "agent", text })
-        for (const c of m.content ?? []) {
-          if (c.type !== "toolCall") continue
-          const 条: RestoredItem & { kind: "tool" } = {
-            kind: "tool",
-            id: c.id,
-            name: c.name,
-            input: c.arguments,
-          }
-          出.push(条)
-          待补结果.set(c.id, 条)
-        }
-        continue
-      }
-      if (m.role === "toolResult") {
-        const 条 = 待补结果.get(m.toolCallId)
-        // **没见过对应调用的结果也照记**——宁可多一条，不可丢一条
-        if (!条) {
-          出.push({
-            kind: "tool",
-            id: m.toolCallId,
-            name: m.toolName,
-            input: undefined,
-            result: 取文本(m.content),
-          })
-          continue
-        }
-        条.result = 取文本(m.content)
-      }
-    }
-    return 出
+    // 翻法在 `history.ts`（2026-09-27 搬出去）：子 agent 的会话文件读回用同一份
+    return 消息转历史(分支转消息(s.sessionManager.getBranch()))
   }
 
   private emit(event: AgentEvent): void {

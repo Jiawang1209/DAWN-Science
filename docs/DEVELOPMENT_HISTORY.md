@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 一轮只以一句报错收尾也要收：失败 notice 算回音，idle 收掉开着的发言（修 2bd4de9 的回归；分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: `2bd4de9` 把 native `prompt()` reject（没配 key）从 `output` 改成带 `failed` 的 notice。界面「正在等回话」（`views.tsx` 的 `等回话`）只在 agent 说出字 / 内核输出时收——这一轮只有一句 notice，于是永远在等，`busy` 恒真，模型菜单锁在「这一轮还没说完」；`e2e/turn-closes-on-failure.spec.ts` 稳定红。codex `fatal()` 同病，且它只发 notice + idle 不发 `turn_end`，说到一半出错那条发言永远 `final: false`。
+- **What**: 协议 `notice` 条目加可选 `failed: true`（8.4 同轮未发布补，不升号），中枢从 `failed` notice 事件带过去；判据挪进 `src/ui/state/transcript.ts` 的 `有回音了`，failed notice 算回音；中枢 `idle` 时把还开着的 agent 发言收尾（与 `turn_end` 共用 `收尾当前发言`，幂等）。桌面通知不变：仍报「出错了」。
+- **Impact**: 失败的一轮（native 无 key、codex fatal、绕圈自动中止）都能收尾；不再伪造一条 output。
+- **Verification**: 新增 `tests/ui/state/turn-echo.test.ts`（5）与 `events.test.ts` 回归组（4）；vitest 3626 过；typecheck、build 过；e2e turn-closes-on-failure / desktop-notify（含 :348 定时权限卡点回，已不再说「不在了」）/ notify-cold-click / chat / redirect 共 26 过。
+
 ### 2026-09-28 — 桌面通知：点的时候界面没在听也回得去（拉，不只是推；协议 8.4 同轮补 `takePendingOpenSession`；分支 `agent-basics`）
 
 - **Type**: fix

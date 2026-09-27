@@ -558,6 +558,7 @@
  *   `desktopTestNotify`（开关形状与微信 / 飞书同一个，多 `lang` 与只读的 `supported`）；事件通道**第五种载荷** `openSession`
  *   （主进程在通知被点时发，界面据此切会话）；
  *   同一轮（未发布）补 `takePendingOpenSession`（读了就清）：通知被点时窗口还没有 / 页面还没听，推送会丢，界面起来后来**拉**。全是新增，故 minor。
+ *   同一轮（未发布）再补：`notice` 条目可选 `failed: true`（这一轮没做成的那句），界面据它收掉「正在等回话」。纯新增可选字段。
  */
 export const WORKBENCH_PROTOCOL_VERSION = "8.4"
 

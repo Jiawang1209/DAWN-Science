@@ -49,6 +49,25 @@ export const $回合进行中 = computed($items, (items) =>
 )
 
 /**
+ * **从第 `从` 条起，对面有没有回音**——「正在等回话」据它收（2026-09-28 从 `views.tsx` 挪来，好单测）。
+ *
+ * 只认「有东西可读」：agent 说出了字、内核吐了一条输出、或者**这一轮没做成的那句报错**（带 `failed` 的 notice）。
+ * 思考块、工具调用、普通系统提示都不算——它们是过程，不是结果。
+ * 报错那一条是 2026-09-28 补的：没配 key 时 `prompt()` 直接 reject，一轮只有一句 failed notice、没有 agent 发言，
+ * 不算回音的话「在等」永远不收，停止键不消失、模型菜单锁在「这一轮还没说完」（`e2e/turn-closes-on-failure.spec.ts`）。
+ */
+export function 有回音了(items: readonly TranscriptItem[], 从: number): boolean {
+  return items
+    .slice(从)
+    .some(
+      (i) =>
+        (i.type === "turn" && i.who === "agent" && (i.text ?? "").length > 0) ||
+        i.type === "kernelOutput" ||
+        (i.type === "notice" && i.failed === true),
+    )
+}
+
+/**
  * 主区这段说过话没有（至少一句自己说的话，2026-09-27）。命令面板「回到上一句之前」据它列成不可用并写缘故（spec §2.1）。
  * 与 `$回合进行中` 一样是布尔派生值：壳读它不会跟着每一段字重渲染。
  */

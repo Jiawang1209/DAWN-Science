@@ -16,7 +16,7 @@ import { 在组词 } from "./ime.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
-import { $items, $待发, 在压缩, type 会话开关 } from "./state/transcript.js"
+import { $items, $待发, 在压缩, 有回音了, type 会话开关 } from "./state/transcript.js"
 import { ContextMeter, 读仪表, 是压缩命令, use上下文用量 } from "./context-meter.js"
 import { CompactionRow } from "./compaction-row.js"
 import type { ContextUsage } from "./panels.js"
@@ -4302,14 +4302,8 @@ export function ConversationView({
      * `status` 不进转录（它是执行状态不是输出），所以这里不必再筛一次：
      * **能进转录的每一条 `kernelOutput` 都是「有东西可读」**。
      */
-    const 说出字了 = items
-      .slice(等回话)
-      .some(
-        (i) =>
-          (i.type === "turn" && i.who === "agent" && (i.text ?? "").length > 0) ||
-          i.type === "kernelOutput",
-      )
-    if (说出字了) 设等回话(undefined)
+    // 判据住在 `state/transcript.ts` 的 `有回音了`（2026-09-28 挪出去，好单测）
+    if (有回音了(items, 等回话)) 设等回话(undefined)
   }, [items, 等回话, 喊停过])
 
   /**

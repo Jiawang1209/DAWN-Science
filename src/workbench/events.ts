@@ -559,6 +559,8 @@ export class SessionTranscripts {
           type: "notice",
           id: `notice-${++e.turnSeq}`,
           text: event.text,
+          // 带上「这一轮没做成」：界面据它收掉「正在等回话」——这句报错就是这一轮的回音（2026-09-28）
+          ...(event.failed ? { failed: true as const } : {}),
         })
         return
 
@@ -669,27 +671,7 @@ export class SessionTranscripts {
       case "turn_end": {
         // 同上：**只有 PTY 没有回合概念**（字节流），cli 与 native 都有
         if (e.kind === "pty") return
-        // **收尾之前先停表**：清掉 openTurnId 之后就找不到那一条了
-        this.思考停表(sessionId, e)
-        // 收尾当前发言。没有正在累积的发言时什么都不做——
-        // 一个空的 turn 进了记录，界面上就是一个空气泡
-        const open = e.openTurnId
-        e.openTurnId = undefined
-        if (!open) return
-        const item = e.items.find((i) => i.type === "turn" && i.id === open)
-        if (item && item.type === "turn") {
-          /**
-           * **把这一段的 token 用量钉在这条发言上**（2026-08-10）。
-           *
-           * 作者：*「我们现在每次消耗的 token，其实也应该展示出来。」*
-           * 项目概览里的成本栏回答的是「这个项目一共花了多少」，
-           * 而人在对话里想知道的是**这一句花了多少**——两个问题。
-           *
-           * **没有就不给这个字段**：`usage` 缺席表示「不知道」，
-           * 与「花了 0 个 token」在界面上说的话完全不同。
-           */
-          this.putItem(sessionId, e, { ...item, final: true })
-        }
+        this.收尾当前发言(sessionId, e)
         return
       }
 
@@ -700,6 +682,12 @@ export class SessionTranscripts {
        * 压缩（`compaction_*`）与回退（`truncateAt`）都不经过这里：pi 的自动压缩与重试都在同一次 `prompt()` 里，idle 只在它真正 resolve 时发一次。
        */
       case "idle": {
+        /**
+         * **整轮都结束了，还开着的那条发言一并收尾**（2026-09-28）。不是每条失败路都先发 `turn_end`：
+         * codex 的 `fatal()` 只发 notice + idle——说到一半出错，那条发言就永远 `final: false`，界面据它算的「这一轮在跑」恒为真
+         * （停止键不消失、模型菜单锁死）。`idle` 时什么都不在流了，收尾是安全的；与 `turn_end` 同一份实现，幂等。
+         */
+        if (e.kind !== "pty") this.收尾当前发言(sessionId, e)
         const 失败 = e.链上失败 ?? e.本轮失败
         e.本轮失败 = undefined
         e.链上失败 = undefined
@@ -969,6 +957,32 @@ export class SessionTranscripts {
     if (!e) return
     e.queued = queued.length ? queued : undefined
     this.bump(sessionId, e, { type: "queued", queued })
+  }
+
+  /**
+   * 收尾当前发言（`turn_end`，以及 `idle` 兜底）。**幂等**：没有正在累积的发言时什么都不做——
+   * 一个空的 turn 进了记录，界面上就是一个空气泡。
+   */
+  private 收尾当前发言(sessionId: SessionId, e: Entry): void {
+    // **收尾之前先停表**：清掉 openTurnId 之后就找不到那一条了
+    this.思考停表(sessionId, e)
+    const open = e.openTurnId
+    e.openTurnId = undefined
+    if (!open) return
+    const item = e.items.find((i) => i.type === "turn" && i.id === open)
+    if (item && item.type === "turn") {
+      /**
+       * **把这一段的 token 用量钉在这条发言上**（2026-08-10）。
+       *
+       * 作者：*「我们现在每次消耗的 token，其实也应该展示出来。」*
+       * 项目概览里的成本栏回答的是「这个项目一共花了多少」，
+       * 而人在对话里想知道的是**这一句花了多少**——两个问题。
+       *
+       * **没有就不给这个字段**：`usage` 缺席表示「不知道」，
+       * 与「花了 0 个 token」在界面上说的话完全不同。
+       */
+      this.putItem(sessionId, e, { ...item, final: true })
+    }
   }
 
   /** agent 的文本增量：累积进当前发言，推送**累积后的整条**。 */

@@ -977,3 +977,61 @@ describe("记录中枢 · 回合收尾（桌面通知，2026-09-27）", () => {
     expect(收).toHaveBeenCalledWith({ sessionId: "s", kind: "native" })
   })
 })
+
+describe("记录中枢 · 只以一句报错收尾的一轮（2026-09-28 回归）", () => {
+  it("失败的 notice 进转录时带 failed，且合协议；普通系统提示不带", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    const seen = collector(h)
+    h.userTurn("a", "你好")
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "[native runtime 错误] No API key found for nokey", failed: true })
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "普通提示" })
+    const items = h.subscribe("a").items.filter((i) => i.type === "notice")
+    expect(items).toEqual([
+      expect.objectContaining({ text: "[native runtime 错误] No API key found for nokey", failed: true }),
+      expect.not.objectContaining({ failed: expect.anything() }),
+    ])
+    for (const u of seen) expect(SessionUpdateSchema.safeParse(u).success).toBe(true)
+  })
+
+  it("native：prompt() reject → failed notice + turn_end + idle，没有一条开着的 agent 发言；收尾报错", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.userTurn("a", "你好")
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "[native runtime 错误] No API key", failed: true })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    const items = h.subscribe("a").items
+    expect(items.some((i) => i.type === "turn" && i.who === "agent" && !i.final)).toBe(false)
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native", 失败: "[native runtime 错误] No API key" })
+  })
+
+  it("codex fatal()：说到一半只发 notice + idle（没有 turn_end）→ idle 把开着的发言收尾", () => {
+    const h = hub()
+    h.track("c", "cli")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.userTurn("c", "干活")
+    h.ingest("c", { kind: "output", sessionId: "c", data: "我先看看" })
+    h.ingest("c", { kind: "notice", sessionId: "c", text: "codex 出错了", failed: true })
+    h.ingest("c", { kind: "idle", sessionId: "c" })
+    const agent = h.subscribe("c").items.filter((i) => i.type === "turn" && i.who === "agent")
+    expect(agent).toEqual([expect.objectContaining({ text: "我先看看", final: true })])
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "c", kind: "cli", 失败: "codex 出错了" })
+  })
+
+  it("idle 收尾是幂等的：turn_end 已经收过的，idle 不再推一条", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.subscribe("a")
+    h.userTurn("a", "你好")
+    h.ingest("a", { kind: "output", sessionId: "a", data: "hi" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    const seen = collector(h)
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(seen).toEqual([])
+  })
+})

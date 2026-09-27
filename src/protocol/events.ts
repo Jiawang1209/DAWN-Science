@@ -156,6 +156,11 @@ const NoticeItem = z
     type: z.literal("notice"),
     id: z.string().min(1),
     text: z.string().min(1),
+    /**
+     * 这一轮没做成（2026-09-28）：运行时那条带 `failed` 的 notice（没配 key、codex 出错、绕圈被自动中止）。**只在 true 时出现**。
+     * 界面据它收掉「正在等回话」——一轮只以一句报错收尾时，没有 agent 发言可等，不收的话停止键与模型菜单永远锁着。
+     */
+    failed: z.literal(true).optional(),
   })
   .strict()
 

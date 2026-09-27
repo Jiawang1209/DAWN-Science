@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { 图廊根 } from "./case-cards.js"
 import { useStore } from "@nanostores/react"
-import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
+import type { ProjectSummary, ResponseOf, SessionSummary, SessionUpdate } from "../protocol/index.js"
 import { 能上服务器, 拆子转录id, 子转录id } from "../protocol/index.js"
 import {
   AttributionCaveat,
@@ -103,6 +103,7 @@ import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { 回到那段, 通知回段门 } from "./open-session-route.js"
+import { ContentSearchResults, type 搜到的一段 } from "./content-search.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
 import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
@@ -341,6 +342,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const [搜索开着, 设搜索开着] = useState(false)
   const [搜索词, 设搜索词] = useState("")
+  /**
+   * 搜名字还是搜内容（会话全文搜索，2026-09-27）。**打开时缺省「按名字」——旧的行为一个字不变**；
+   * 关掉时回到「按名字」（与「关掉就清空」同一条理由）。命令面板那条直达「按内容」。
+   */
+  const [搜索模式, 设搜索模式] = useState<"名字" | "内容">("名字")
+  const 全文搜 = useCallback(
+    (q: string) => client.get<ResponseOf<"searchSessionContent">>("searchSessionContent", { query: q }),
+    [client],
+  )
+  /** Task 7 换成真的（跳到那一处）。此刻只打开那段对话 */
+  const 打开搜到的 = (卡: 搜到的一段) => {
+    setActiveSessionId(卡.sessionId)
+    setView("conversation")
+  }
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -4627,7 +4642,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onClick={() => {
             const 要开 = !搜索开着
             设搜索开着(要开)
-            if (!要开) 设搜索词("")
+            if (!要开) {
+              设搜索词("")
+              设搜索模式("名字")
+            }
             if (要开 && sidebarCollapsed) setSidebarCollapsed(false)
           }}
         >
@@ -4837,7 +4855,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   onClose: () => {
                     设搜索开着(false)
                     设搜索词("")
+                    设搜索模式("名字")
                   },
+                  mode: 搜索模式,
+                  onMode: 设搜索模式,
+                  内容结果: <ContentSearchResults query={搜索词} search={全文搜} onOpen={打开搜到的} />,
                 },
               }
             : {})}

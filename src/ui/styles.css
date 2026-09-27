@@ -4272,6 +4272,78 @@ pre {
   line-height: 18px;
 }
 .side-search-toggle { color: var(--dawn-text-2); min-width: 32px; width: 32px; height: 32px; }
+/* ── 会话全文搜索（2026-09-27）──────────────────────────────────────────
+ * 两颗切换常驻带字；按下的那颗靠 aria-pressed 标——底色之外还加粗，不只靠颜色一样东西说话。 */
+.side-search-modes {
+  display: flex;
+  gap: var(--dawn-space-1);
+  padding-top: var(--dawn-space-2);
+}
+.side-search-mode[aria-pressed="true"] {
+  background: var(--dawn-row-active);
+  color: var(--dawn-text-1);
+  font-weight: var(--dawn-weight-semibold);
+}
+.cs-status { padding: var(--dawn-space-3); }
+/* 左右不加内距：卡里的行是 `Row`，它自己带「内缩 12 + 内距 12」；说明文字按 `.side-empty` 同一条左缘（24）排 */
+.cs-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-2) 0 var(--dawn-space-3);
+}
+.cs-summary {
+  margin: 0;
+  padding: 0 calc(var(--dawn-space-3) * 2);
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-meta);
+}
+.cs-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-1);
+  padding-top: var(--dawn-space-2);
+  border-top: var(--dawn-hairline) solid var(--dawn-stroke-4);
+}
+/**
+ * **不写 `width`**（2026-09-28 实测抓的）：`.row` 自己是 `calc(100% - 24px)` 加左右 12 的外距，
+ * 调用点再给 `width: 100%` 就是宽出 24px、顶出侧栏右缘。
+ */
+.cs-head { align-items: baseline; }
+.cs-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--dawn-weight-medium);
+  color: var(--dawn-text-1);
+}
+.cs-badge { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.cs-when { flex: 0 0 auto; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.cs-place, .cs-more {
+  margin: 0;
+  padding: 0 calc(var(--dawn-space-3) * 2);
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-meta);
+}
+/* 片段两行截断：够认出是哪一次，不把一张卡撑成一屏 */
+/* 侧栏的行一律不换行（`.sidebar .row`，比单类名重），片段这一行要换——同样的重量压回来 */
+.cs-hit { display: block; text-align: start; }
+.sidebar .row.cs-hit { white-space: normal; }
+.cs-where { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.cs-snippet {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--dawn-text-2);
+  font-size: var(--dawn-fs-meta);
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+.cs-mark { background: var(--dawn-accent-soft); color: var(--dawn-text-1); border-radius: var(--dawn-radius-xs); }
+.cs-bad { color: var(--dawn-danger); }
 
 /**
  * 排版塌掉时印出来的原文（2026-08-13）。

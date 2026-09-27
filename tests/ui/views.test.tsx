@@ -858,3 +858,46 @@ describe("侧栏 · 刚选的那个文件夹立刻出现", () => {
     expect(分区.some((t) => t.startsWith("项目")), "什么都没选，项目那一列就冒出来了").toBe(false)
   })
 })
+
+/**
+ * 侧栏搜索的两颗切换（会话全文搜索，2026-09-27，spec §2.1）：**常驻带字**，按内容时三列让位给结果。
+ */
+describe("侧栏搜索 · 按名字 / 按内容", () => {
+  const 任务行 = (id: string, title: string): TaskSummary => task({ taskId: id, sessionId: id, title })
+  const 画 = (mode: "名字" | "内容", onMode = vi.fn()) =>
+    render(
+      <SessionSidebar
+        {...base}
+        projects={[]}
+        activeProjectId={undefined}
+        tasks={[任务行("a", "甲会话"), 任务行("b", "乙会话")]}
+        search={{ value: "甲", onChange: noop, onClose: noop, mode, onMode, 内容结果: <p data-testid="内容结果">结果</p> }}
+      />,
+    )
+
+  it("两颗切换都看得见、带字；按下的那颗 aria-pressed", () => {
+    const onMode = vi.fn()
+    画("名字", onMode)
+    const 名 = screen.getByRole("button", { name: "按名字" })
+    const 内 = screen.getByRole("button", { name: "按内容" })
+    expect(名.getAttribute("aria-pressed")).toBe("true")
+    expect(内.getAttribute("aria-pressed")).toBe("false")
+    expect(getComputedStyle(内).opacity).not.toBe("0")
+    fireEvent.click(内)
+    expect(onMode).toHaveBeenCalledWith("内容")
+  })
+
+  it("按名字：照旧筛名字，不出内容结果", () => {
+    const { container } = 画("名字")
+    expect(container.querySelectorAll(".session-list li").length).toBe(1)
+    expect(screen.queryByTestId("内容结果")).toBeNull()
+  })
+
+  it("按内容：会话列让位、出内容结果；占位符说清搜的是什么；不出「没有匹配」", () => {
+    const { container } = 画("内容")
+    expect(container.querySelectorAll(".session-list li").length).toBe(0)
+    expect(screen.getByTestId("内容结果")).toBeTruthy()
+    expect(screen.getByPlaceholderText("搜说过的话、回复、跑过的代码（至少两个字）")).toBeTruthy()
+    expect(screen.queryByText(/没有匹配/)).toBeNull()
+  })
+})

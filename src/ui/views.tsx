@@ -1409,11 +1409,20 @@ export function SessionSidebar({
    * 搜索（2026-08-13，作者要的）。**不给就不画那个框**——
    * 与别处同一条：一个进得去、却什么都过滤不了的框比没有更坏。
    *
-   * **它搜的是名字与路径，不是对话内容**。后者要后端出一个全文检索，
-   * 现在没有——而一个看起来什么都能搜、其实只搜标题的框，
-   * 比一个说清楚自己搜什么的更坏（不变式 5）。占位符把范围写出来。
+   * **两种搜法**（2026-09-27，会话全文搜索）：`名字` 照旧搜名字与路径；`内容` 时项目 / 会话 / 服务器三列让位，
+   * 这一片换成 `内容结果`（App 给的 `ContentSearchResults`）。两颗切换常驻带字——占位符也跟着说清搜的是什么
+   * （一个看起来什么都能搜、其实只搜标题的框，比一个说清楚自己搜什么的更坏，不变式 5）。
    */
-  search?: { value: string; onChange: (v: string) => void; onClose: () => void } | undefined
+  search?:
+    | {
+        value: string
+        onChange: (v: string) => void
+        onClose: () => void
+        mode: "名字" | "内容"
+        onMode: (m: "名字" | "内容") => void
+        内容结果?: React.ReactNode
+      }
+    | undefined
   /**
    * 项目那一列多选之后按「删除」。**`整个` 为真 = 这个项目名下的会话全选了**，
    * 连项目记录一起移除；否则只删 `tasks` 里那几段、项目留着（2026-08-21 起
@@ -1583,7 +1592,9 @@ export function SessionSidebar({
    * 匹配的是**标题与路径**，大小写不敏感。**空词等于不筛**，
    * 而不是「什么都不匹配」——缺失不等于某个具体值。
    */
-  const 词 = (search?.value ?? "").trim().toLowerCase()
+  /** 按内容时名字那套筛法不参与：三列整个让位（下面 `全部任务` 为空），「没有匹配」那句也不该出 */
+  const 按内容 = search?.mode === "内容"
+  const 词 = 按内容 ? "" : (search?.value ?? "").trim().toLowerCase()
   /**
    * **拿屏幕上显示的那个名字去比，不是任务表上那个**（2026-08-13 修）。
    *
@@ -1601,7 +1612,7 @@ export function SessionSidebar({
     名字of(t).toLowerCase().includes(词) ||
     (t.workspace ?? "").toLowerCase().includes(词)
 
-  const 全部任务 = [...(tasks ?? [])].filter(命中).sort((a, b) => 名次(a) - 名次(b))
+  const 全部任务 = 按内容 ? [] : [...(tasks ?? [])].filter(命中).sort((a, b) => 名次(a) - 名次(b))
 
   /**
    * **服务器自成一列**（2026-08-14，作者要的）。
@@ -1983,14 +1994,23 @@ export function SessionSidebar({
             className="control side-search-field"
             value={search.value}
             autoFocus
-            placeholder={t("搜索项目与会话的名字")}
-            aria-label={t("搜索项目与会话的名字")}
+            placeholder={search.mode === "内容" ? t("搜说过的话、回复、跑过的代码（至少两个字）") : t("搜索项目与会话的名字")}
+            aria-label={search.mode === "内容" ? t("搜说过的话、回复、跑过的代码（至少两个字）") : t("搜索项目与会话的名字")}
             onChange={(e) => search.onChange(e.target.value)}
             onKeyDown={(e) => {
               // **Esc 关掉它**：这个框遮着一行列表，得有一条不用鼠标的退路
               if (e.key === "Escape") search.onClose()
             }}
           />
+          {/* 两颗切换**常驻、带字**（2026-09-27）：看不见的能力等于不存在 */}
+          <div className="side-search-modes" role="group" aria-label={t("搜什么")}>
+            <Button variant="ghost" size="sm" className="side-search-mode" aria-pressed={search.mode === "名字"} onClick={() => search.onMode("名字")}>
+              {t("按名字")}
+            </Button>
+            <Button variant="ghost" size="sm" className="side-search-mode" aria-pressed={search.mode === "内容"} onClick={() => search.onMode("内容")}>
+              {t("按内容")}
+            </Button>
+          </div>
         </div>
       ) : null}
       <div className="side-actions">
@@ -2061,6 +2081,7 @@ export function SessionSidebar({
         * 顶部动作、横线、底部入口都不动，中间这片超高就出滚轮。
         */}
       <div className="side-scroll">
+      {按内容 ? search?.内容结果 : null}
       {agents.length === 0 ? (
         <div className="pad">
           <p className="hint">{t("配置里还没有可用的 agent")}</p>

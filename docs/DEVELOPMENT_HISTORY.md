@@ -8,21 +8,31 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
-### 2026-09-28 — 一轮只以一句报错收尾也要收：失败 notice 算回音，idle 收掉开着的发言（修 2bd4de9 的回归；分支 `agent-basics`）
+### 2026-09-28 — 桌面通知：做完、出错、等你点头时弹系统通知；点它回到那段；Dock 角标 / 任务栏闪（学自 Codex app / Claude app；协议 8.4；分支 `agent-basics`）
 
-- **Type**: fix
-- **Motivation**: `2bd4de9` 把 native `prompt()` reject（没配 key）从 `output` 改成带 `failed` 的 notice。界面「正在等回话」（`views.tsx` 的 `等回话`）只在 agent 说出字 / 内核输出时收——这一轮只有一句 notice，于是永远在等，`busy` 恒真，模型菜单锁在「这一轮还没说完」；`e2e/turn-closes-on-failure.spec.ts` 稳定红。codex `fatal()` 同病，且它只发 notice + idle 不发 `turn_end`，说到一半出错那条发言永远 `final: false`。
-- **What**: 协议 `notice` 条目加可选 `failed: true`（8.4 同轮未发布补，不升号），中枢从 `failed` notice 事件带过去；判据挪进 `src/ui/state/transcript.ts` 的 `有回音了`，failed notice 算回音；中枢 `idle` 时把还开着的 agent 发言收尾（与 `turn_end` 共用 `收尾当前发言`，幂等）。桌面通知不变：仍报「出错了」。
-- **Impact**: 失败的一轮（native 无 key、codex fatal、绕圈自动中止）都能收尾；不再伪造一条 output。
-- **Verification**: 新增 `tests/ui/state/turn-echo.test.ts`（5）与 `events.test.ts` 回归组（4）；vitest 3626 过；typecheck、build 过；e2e turn-closes-on-failure / desktop-notify（含 :348 定时权限卡点回，已不再说「不在了」）/ notify-cold-click / chat / redirect 共 26 过。
-
-### 2026-09-28 — 桌面通知：点的时候界面没在听也回得去（拉，不只是推；协议 8.4 同轮补 `takePendingOpenSession`；分支 `agent-basics`）
-
-- **Type**: fix
-- **Motivation**: 6b5f986 在「没有窗口时点通知」开新窗口、`did-finish-load` 时推 `openSession`——但界面的事件监听要等 `ready` 才挂，推过去就丢了；就算收到，`$tasks/$sessions/$projects` 还是空的，会误报「那段对话已经不在了」。页面重载时、app 刚启动时点，同一个坑。
-- **What**: 主进程每次点通知先记下那段（`待回的段()`，只留最新、读了就清），再照旧推；推只当「醒一醒」。新操作 `takePendingOpenSession`（mutating，读了就清），主进程经 wiring → backend 注入；假出口的「点」走同一个 `点了通知`，dev:mock / e2e 自动覆盖。界面：`open-session-route.ts` 抽出路由（坞 / 主区 / 别的项目 / 不在了）与「门」——`ready` 且头一批名单（项目、任务、临时会话、当前项目会话）取回之后开门拉一次，门开之前推来的只记着；本地名单没有时先逐项目 `listSessions` 问后端再说「不在了」；坞那条也先收整页设置。删掉 6b5f986 那句 `did-finish-load` 推送（留开窗）。顺手：通知设置面板失败只回滚那一格、乱序回执不盖新的；设计契约的通知扫描改按整份文本扫（抓多行 `new …Notification(`），并多抓 `dock.setBadge(`、`badgeCount =`、解构 / 导入改名。
-- **Impact**: 协议仍是 8.4（同一轮未发布，纯新增），操作 147 → 148。启动取数预算 +1（`app-default-client` 21 → 22）。
-- **Verification**: 新单测（路由五种情形、门的排队 / 冷启动 / 推醒去拉 / 拉失败兜底、`待回的段`、后端操作、面板两条回归）；扫描在 `src/ui/format.ts` 埋一处两行的 `new\n globalThis.Notification(` 确认变红后还原；新 e2e `e2e/notify-cold-click.spec.ts`（窗口导到 `about:blank` 时点通知 → 推送必丢 → 导回后切到那段、不误报，再重载不会被拽回）。`npx vitest run`、`npm run typecheck`、`npm run build` 全过。e2e 模拟不了「没有窗口」：隐藏窗口下按规矩不开窗，且 Playwright 的 page 就是那扇窗。
+- **Type**: feat + fix
+- **Motivation**: 让 agent 跑长任务、切去干别的，回来才发现早做完了——或者权限卡等到超时按拒绝处理了。`src/electron` 里此前一处 `Notification` 都没有，只有绑了微信 / 飞书才推到手机。
+- **What**（spec `specs/2026-09-27-桌面通知-design.md`，§8 记审查后定案；plan `plans/2026-09-27-桌面通知.md` Task 1–9；本条合并了实现期间两条修复记录）：
+  - **三种时刻，每个真回合一条**：中枢新开 `on回合收尾`（runtime 的 `idle` 此前被 `ingest` 静静吃掉）——「做完了」认一轮真收尾，不是每次模型响应都立的 `final`；
+    「做完了」正文只看这一轮（从转录尾往回碰到人那句就停，没出字写「（没有文字回复）」）。**「出错了」只认带内部标记 `failed` 的 notice**（runtime 那几条「这一轮失败了」），换模型 / MCP 那类 notice 不算；
+    失败之后这一轮又往前走了（pi 限流 / 过载自动重试、超上限压完再试成了）就清掉——**救回来的不报**；pi followUp 链上前一句的失败不被后一句的进展吞掉。
+    卡死守卫的自动中止算出错（不是人停的）。「在等你点头」照搬微信通道的权限卡判据。人按了停止（`停止次数` 变了）不报做完；收尾后 1 秒内这段又动了（排着的下一句 / 调整方向）作废。
+    **压缩、回退、子 agent 永远不弹**（都不经过主会话的 `idle`；子转录不给全听）。**定时任务**：一次运行只弹调度器那一条「定时…」，但权限卡照弹（无人值守的一轮不说就干等 60 分钟）。
+  - **`桌面通知器`**（`src/workbench/desktop-notify.ts`，node 下可测）：开关与微信 / 飞书同一个形状（缺省全开，存的设置逐格 zod 校验）+ `lang`；
+    「在屏上」= `setSideSession` 报来的主区 / 坞里那段；窗口在前台且那段在屏上才不弹；角标 = 还没看的几段（看见、答掉权限、删会话都划）；`dispose()` 之后一律不弹。
+  - **唯一出口**（`src/electron/desktop-notify.ts`）：真的——Electron `Notification`、macOS/Linux Dock 数字角标、Windows 任务栏闪（+ AUMID）；
+    假的——`DAWN_FAKE_NOTIFY=1`，e2e 与 dev:mock 共用，记进主进程 `globalThis.__dawn桌面通知`。设计契约加扫描：`new …Notification(` / `setBadgeCount(` / `dock.setBadge(` / `badgeCount =` / `flashFrame(`（含多行、解构、导入改名）只许在出口文件。
+  - **点通知回到那段**：窗口到最前（没有窗口就开一扇）→ 切主区 / 开坞 / 跨项目切过去，不在了说一句。**拉而不只是推**：主进程记下「待回的段」，推 `openSession` 只当「醒一醒」；
+    界面 `ready` 且头一批名单取回后开门拉 `takePendingOpenSession`——没有窗口时点、启动途中点、页面重载时点都不丢，也不误报「那段对话已经不在了」。
+  - **设置**：「外观」下面一格「桌面通知」（铃图标，四个开关 + 「发一条试试」；不支持 / 出口缺席出声；存失败只回滚那一格）；界面语言报给后端，通知里的字跟着走。
+  - **协议 8.3 → 8.4（minor，纯新增）**：`desktopGetNotify` / `desktopSetNotify` / `desktopTestNotify` / `takePendingOpenSession` + 第五种载荷 `openSession`；协议 `notice` 条目加可选 `failed`。mock 加「演一次失败」「演一次权限」两句暗号（准入规则 1）。
+  - **审查里抓到并修掉的回归**：① codex `fatal()` 与 native `prompt()` reject（没配 key）原先被报成「做完了」（native 那条是 output，错误当成了回复）→ 改发带 `failed` 的 notice；
+    ② 那一改之后，只以一句失败 notice 收尾的一轮**永远收不了**（界面「等回话」只认出字，`busy` 恒真、模型菜单锁死）→ failed notice 算回音（`src/ui/state/transcript.ts` 的 `有回音了`），中枢 `idle` 时把开着的 agent 发言收尾。
+- **Impact**: 协议 8.3 → 8.4，旧界面照连；操作 +4。启动取数预算 +1（`app-default-client` 21 → 22）。微信 / 飞书判据不动（spec §0 第 8 条）。设置分类多一行，视觉基线「设置」「设置栏」× 明暗四张重存；`e2e/settings-column.spec.ts` 无计数行 10 → 11。
+- **Verification**: 单测覆盖判定表、静候、停止、权限、角标、定时、文案都在 `EN`、回合收尾与失败清除、真 / 假出口、后端操作与持久化、client 第五种载荷、面板、路由与「门」、回音判据；设计契约扫描做过变异验证（埋两行的 `new\n globalThis.Notification(` 变红后还原）。
+  e2e：`desktop-notify.spec.ts` 16 条（做完、看着不弹、看别的段照弹、正文只看这一轮、点回、坞与跨项目点回、出错、权限、子 agent / 压缩 / 回退不弹、定时两条、设置、试一条）+ `notify-cold-click.spec.ts` 1 条 + `turn-closes-on-failure.spec.ts`。
+  视觉基线：看过 diff——红只在设置分类名单「外观」以下整体下移一行（新行「桌面通知」+ 铃）与选中行的位移，别处无红；`=all` 重存后把顺带改写的三张（命令面板·亮、概览 × 明暗，与本轮无关）还原；重存后连验两遍 14/14。
+  终局全量（8af4549 + 本条改动之上）：vitest 3626 过 / 10 跳；typecheck 0；build 过；e2e（`test:e2e:only`，真实构建）553 过 / 1 跳 / 0 红（上一轮「子 agent 看得见」终局 536）。真机：（作者走一遍后补）。
 
 ### 2026-09-27 — 子 agent 看得见：点 chip 在坞里看它的过程、交回的结果，还能接着问（学自 Codex / Claude app；协议 8.3；分支 `agent-basics`）
 

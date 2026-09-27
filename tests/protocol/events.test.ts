@@ -433,9 +433,11 @@ describe("协议版本 · 5.5", () => {
    * 8.4（2026-09-27）：桌面通知——三个操作 + 事件通道第五种载荷 openSession。纯新增，minor。
    *
    * **8.5（2026-09-27）**：会话全文搜索——加只读操作 `searchSessionContent`。
+   *
+   * **8.6（2026-09-27）**：先出方案——转录条目 `plan`、操作 `answerPlan`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.5")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.6")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
@@ -543,5 +545,24 @@ describe("第五种载荷 openSession（桌面通知，2026-09-27）", () => {
     expect(OpenSessionPushSchema.safeParse({ workbenchProtocolVersion: "8.4", openSession: "s1" }).success).toBe(true)
     expect(OpenSessionPushSchema.safeParse({ workbenchProtocolVersion: "8.4", openSession: "" }).success).toBe(false)
     expect(OpenSessionPushSchema.safeParse({ workbenchProtocolVersion: "8.4", openSession: "s1", revision: 1 }).success).toBe(false)
+  })
+})
+
+describe("8.6 · 转录条目 plan", () => {
+  const 卡 = {
+    type: "plan", id: "plan:c1", planId: "c1", version: 1, title: "t", markdown: "## 问题与假设",
+    status: "proposed",
+  }
+  it("四种状态都收；批准的带路径与时刻、改过的带 edited", () => {
+    for (const status of ["proposed", "approved", "superseded", "discarded"]) {
+      expect(TranscriptItemSchema.safeParse({ ...卡, status }).success, status).toBe(true)
+    }
+    expect(
+      TranscriptItemSchema.safeParse({ ...卡, status: "approved", savedPath: "analysis/plans/x.md", approvedAt: 1, edited: true }).success,
+    ).toBe(true)
+  })
+  it("strict：多一个字段不收；版本从 1 起", () => {
+    expect(TranscriptItemSchema.safeParse({ ...卡, 多的: 1 }).success).toBe(false)
+    expect(TranscriptItemSchema.safeParse({ ...卡, version: 0 }).success).toBe(false)
   })
 })

@@ -384,6 +384,32 @@ export const KernelStateSchema = z
   .strict()
 export type KernelState = z.infer<typeof KernelStateSchema>
 
+/**
+ * 一版分析方案（先出方案，8.6，2026-09-27，spec `2026-09-27-先出方案-design.md` §2.2）。
+ *
+ * **它是转录条目，不是 `pendingPermission` 那种「还没结果的问题」**：方案交过、批过、被取代过都是发生过的事，
+ * 往回翻要看得见批的是哪一版。状态变了按 id 整条覆盖（与 `subagents` 同一纪律）。
+ * 字段与 `src/protocol/plan.ts` 的 `方案` 一一对应（`tests/protocol/events.test.ts` 盯着）。
+ */
+const PlanItem = z
+  .object({
+    type: z.literal("plan"),
+    /** `plan:<planId>`——与工具行的 id 分开，免得按 id 覆盖时撞上 */
+    id: z.string().min(1),
+    planId: z.string().min(1),
+    version: z.int().min(1),
+    title: z.string().min(1),
+    markdown: z.string().min(1),
+    status: z.enum(["proposed", "approved", "superseded", "discarded"]),
+    /** 存档路径，相对工作区。只有批准了才有 */
+    savedPath: z.string().min(1).optional(),
+    approvedAt: z.number().int().nonnegative().optional(),
+    /** 批的是人改过的那一版。**只在 true 时出现** */
+    edited: z.literal(true).optional(),
+  })
+  .strict()
+export type PlanItem = z.infer<typeof PlanItem>
+
 export const TranscriptItemSchema = z.discriminatedUnion("type", [
   TurnItem,
   ToolItem,
@@ -392,6 +418,7 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
   KernelOutputItem,
   CellItem,
   CompactionItem,
+  PlanItem,
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 

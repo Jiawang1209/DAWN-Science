@@ -184,6 +184,50 @@ function 改文件工具(body) {
 }
 
 /**
+ * **方案期 = 交一份五节齐全的假方案**（2026-09-27，先出方案；准入规则 1）。
+ *
+ * **判据看请求的工具表，不看话**：pi 只把启用的工具发过来，`propose_plan` 只在方案期启用——所以「工具表里有它」就是「在方案期」。
+ * 刻意**不拿功能名「先出方案」当暗号**：它是界面上开关、斜杠项、⌘K 的字，也可能进方案期指引（系统提示词）；
+ * 拿它当暗号，哪天它顺着模板进了用户话或系统提示词，这一支就会在不该的时候开火。
+ * - 方案期、一句带「偷跑」→ 调 `write`（演门拦下；与已有暗号互不为子串、不含「慢」字）；别的 → 交方案。
+ * - 不在方案期、最后一句带「照批准的方案做」→ 写方案里的**第一项**产物（对照显示「1 / 2」）。那句是 `执行那句()`
+ *   （`src/protocol/plan.ts`）批准后替人发的，只会从批准那一下来。
+ * 与「慢慢跑」同一个规矩：只在最后一条是用户话时触发，拿到工具结果之后那一问不触发，不循环。
+ * 在工具链的**最后**判：带别的暗号的话照旧走那一支（方案期里它们会被门拦下，那也是要演的）。
+ */
+export const 假方案 = {
+  title: "吸烟与肺功能：分组比较",
+  plan: [
+    "## 问题与假设",
+    "吸烟者的 FEV1 是否低于不吸烟者（假设：低）。",
+    "## 数据与切分",
+    "`data/raw/lung.csv`，全部样本，不切分。",
+    "## 统计检验与模型",
+    "Welch t 检验；线性模型 FEV1 ~ smoking + age + sex。",
+    "## 图",
+    "分组箱线图。",
+    "## 产物",
+    "- `results/tables/mock_summary.csv` —— 分组汇总",
+    "- `figures/fev1_by_smoking.png` —— 箱线图",
+  ].join("\n"),
+}
+export const 交方案 = { toolName: "propose_plan", args: 假方案, say: "我先出一份方案。" }
+export const 偷跑 = { toolName: "write", args: { path: "results/tables/偷跑.csv", content: "a\n1\n" }, say: "我先偷偷写一个。" }
+export const 照方案做 = {
+  toolName: "write",
+  args: { path: "results/tables/mock_summary.csv", content: "group,n\nsmoker,1\n" },
+  say: "照方案做第一步。",
+}
+function 方案工具(body) {
+  const 文 = 最后一句用户话(body)
+  if (文 === undefined) return undefined
+  // Anthropic 形状的工具表是 `{ name }`，OpenAI 的是 `{ function: { name } }`——两种都认
+  const 在方案期 = (body.tools ?? []).some((t) => (t?.function?.name ?? t?.name) === "propose_plan")
+  if (在方案期) return 文.includes("偷跑") ? 偷跑 : 交方案
+  return 文.includes("照批准的方案做") ? 照方案做 : undefined
+}
+
+/**
  * **子 agent 三支**（2026-09-27，子 agent 看得见；准入规则 1）。
  *
  * 主区与子进程共用这一台假服务器，所以**按话分**，不按次数数：
@@ -392,7 +436,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
 

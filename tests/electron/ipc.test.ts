@@ -19,6 +19,7 @@ function backend(): WorkbenchBackend {
     downloadUpdate: async () => 更新桩,
     cancelUpdate: async () => 更新桩,
     editQueue: async () => ({}),
+    answerPlan: async () => ({}),
     setSideSession: async () => ({}),
     compactSession: async () => ({}),
     previewRewind: async () => ({ files: { ok: false as const, reason: "no_archive" as const }, kernels: [], limits: { fileBytes: 0, totalBytes: 0 } }),

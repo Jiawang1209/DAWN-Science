@@ -1701,6 +1701,28 @@ export const OPERATIONS = {
     mutating: true,
   },
   /**
+   * 回答一版方案（先出方案，8.6，2026-09-27，spec §4.5）。**只有 native 会话有**。
+   *
+   * - `approve`：存档到 `analysis/plans/`、这一版标已批准、方案期结束（开关关掉）。`text` = 人改过的正文，不给 = 原文。
+   *   **替人发的那句执行话不在这里发**——界面拿到 `savedPath` 后走 `writeToSession`，那句是人的一条发言，进转录。
+   * - `discard`：这一版标「没采用」，方案期结束，什么都不存。
+   * 「让它重写」不是动作：开关还开着，人在输入框里说哪里不对就行。
+   *
+   * 不是最新那一版 / 已经答过 → `conflict`；查无此版 → `not_found`；非 native → `invalid_request`。要写权（租约）。
+   */
+  answerPlan: {
+    request: z
+      .object({
+        sessionId: z.string().min(1),
+        planId: z.string().min(1),
+        action: z.enum(["approve", "discard"]),
+        text: z.string().min(1).optional(),
+      })
+      .strict(),
+    response: z.object({ savedPath: z.string().min(1).optional() }).strict(),
+    mutating: true,
+  },
+  /**
    * 回退这一轮 · 预览（2026-09-27，spec `2026-09-27-回退这一轮-design.md`）。**只读**：扫一遍工作区、算计划，不动任何东西。
    *
    * `turnId` 是转录里那条**用户发言**的 id。`files.ok: false` 时文件那一半做不了，缘故如实给（界面据此只给「只撤掉对话」）：

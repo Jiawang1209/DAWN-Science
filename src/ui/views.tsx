@@ -1153,6 +1153,20 @@ export function RightDock({
 }) {
   const 产物数 = useStore($artifacts)?.artifacts.length ?? 0
   const cell数 = useStore($cellCount)
+  /**
+   * **当前那格滚进视野**（2026-09-27）。标签条放不下时横着滚、没有滚动条——点 chip 切到「子 agent」、
+   * 从命令面板切到「对话」时，选中的那格可能正好在看不见的那一截里。只动这一条的 `scrollLeft`，不碰外面的滚动。
+   */
+  const 标签条 = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const 条 = 标签条.current
+    const 格 = 条?.querySelector<HTMLElement>(".dock-tab-btn.current")
+    if (!条 || !格) return
+    const 条框 = 条.getBoundingClientRect()
+    const 格框 = 格.getBoundingClientRect()
+    if (格框.left < 条框.left) 条.scrollLeft -= 条框.left - 格框.left
+    else if (格框.right > 条框.right) 条.scrollLeft += 格框.right - 条框.right
+  }, [tenant, width])
   return (
     /**
       * **宽度是那一列给的，不在这儿写死**（2026-08-21 作者截图抓到的：窗口没最大化时
@@ -1182,7 +1196,7 @@ export function RightDock({
         * 「三个之中的第几个」，而那正是这条改动想给的东西。
         */}
       <header className="dock-head">
-        <div className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
+        <div ref={标签条} className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
           {全部房客.map((who) => (
             <Button
               key={who}

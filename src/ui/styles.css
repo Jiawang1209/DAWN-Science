@@ -5290,7 +5290,8 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: var(--dawn-space-2);
-  padding: var(--dawn-space-2) var(--dawn-space-3);
+  /* 左右 space-2（原 space-3）：第九格「子 agent」进来之后省下这 8px，默认宽度下九格才放得下（2026-09-27） */
+  padding: var(--dawn-space-2);
   border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
   /** 标题不换行——侧栏那一整条纪律在这儿同样成立 */
   white-space: nowrap;
@@ -5311,7 +5312,13 @@ pre {
  */
 .right-dock .dock-tabs-row { flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
 .right-dock .dock-tabs-row::-webkit-scrollbar { display: none; }
-.right-dock .dock-tab-btn { flex: 0 0 auto; padding-left: 5px; padding-right: 5px; }
+/*
+ * 第九格「子 agent」2026-09-27 进来之后又放不下了（量过：九格 377px，默认宽度下这一条只有 322px，
+ * 末一格「对话」整个滚到看不见的地方——没有滚动条，等于没有这一格）。再收：格间距 0、左右内边距 3px，
+ * 头部左右内边距 space-2（上面那条）。默认 380 下九格放得下；更窄时照旧横着滚，当前那格自己滚进视野（`RightDock`）。
+ */
+.right-dock .dock-tabs-row { gap: 0; }
+.right-dock .dock-tab-btn { flex: 0 0 auto; padding-left: 3px; padding-right: 3px; }
 .right-dock .dock-tab-btn:hover { color: var(--dawn-text-1); }
 /** 产物格的计数角标 `产物 (N)`（spec 2026-08-26-产物 §5）：只在有产物时画，可访问名不受它影响 */
 .right-dock .dock-tab-badge { margin-left: 4px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }

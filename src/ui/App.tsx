@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { 图廊根 } from "./case-cards.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, SessionSummary, SessionUpdate } from "../protocol/index.js"
-import { 能上服务器 } from "../protocol/index.js"
+import { 能上服务器, 拆子转录id, 子转录id } from "../protocol/index.js"
 import {
   AttributionCaveat,
   ChangesPanel,
@@ -91,7 +91,9 @@ import { CommandPalette } from "./palette.js"
 import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
-import { loadArtifacts, resyncSide } from "./state/sync.js"
+import { loadArtifacts, resyncSide, resyncSubagent } from "./state/sync.js"
+import { $子转录id, 子槽, $子agent信息, 收子转录推送 } from "./state/subagent-view.js"
+import { SubagentDock } from "./subagent-pane.js"
 import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
 import { 主槽, $说过话 } from "./state/transcript.js"
 import { 回退这一轮, 找这句, 最后一句, $回退中, type 回退预览, type 回退回执 } from "./state/rewind.js"
@@ -555,6 +557,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           setSessionCwd(u.sessionId, u.cwd)
           return
         }
+        /**
+         * **子转录是第四条线**（2026-09-27，子 agent 看得见）：排在「开口就算在跑 / 答完退订」那几段之前、处理完就走——
+         * 往下走的话，坞里正看着的那一段答完就被退订，中枢随即把它扔掉。理由见 `收子转录推送`。
+         */
+        if (收子转录推送(u)) return
         /**
          * **哪几段正在跑，在这里记**（2026-08-19）。
          *
@@ -2039,6 +2046,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [ready, client, 侧边id, 取写权])
 
   /**
+   * 坞里「子 agent」那一格正在看的那个（2026-09-27）：取快照灌进子槽、订着它；换看别的 / 放下时退订。
+   * 首次打开与跳号重取同一个函数（`resyncSubagent`）。
+   */
+  const 子id = useStore($子转录id)
+  useEffect(() => {
+    if (!ready || !子id) return
+    子槽.reset()
+    $子agent信息.set(undefined)
+    void resyncSubagent(client, 子id)
+    return () => {
+      client.forgetRevision(子id)
+      client.get("unsubscribeSession", { sessionId: 子id }).catch(fail)
+    }
+  }, [ready, client, 子id])
+
+  /** 主区换了会话：正在看的子 agent 若既不属于主区那段、也不属于坞里那段，放下它（不然格子里挂着别处的过程） */
+  useEffect(() => {
+    const 拆 = 拆子转录id($子转录id.get() ?? "")
+    if (拆 && 拆.会话 !== sessionId && 拆.会话 !== $侧边会话id.get()) $子转录id.set(undefined)
+  }, [sessionId])
+
+  /**
    * 开坞并切到「对话」那一格（侧边对话，2026-09-24）。**永远是「开」**——与 `点开文件面板` 同一个理由：
    * 从命令面板 / 右键点过来，人的意图是「给我看坞里那段」，不会是「把面板关掉」。
    */
@@ -2046,6 +2075,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 设置栏开着时这一列归设置——不先让它让开，坞就只在状态里开着（2026-09-16）
     坞上位()
     setRightDockTenant("chat")
+    setRightDockOpen(true)
+  }, [])
+
+  /**
+   * 点了子 agent 的 chip（2026-09-27，spec §2.1）。**永远是「开」**——与 `打开坞里的对话` 同一个理由。
+   * 团队成员那一轮（`team:`）切到「团队」格（D4）：团队的任务、邮箱、产出都在那儿，成员轮的逐步过程本轮不做。
+   */
+  const 打开子agent = useCallback((transcriptId: string) => {
+    坞上位()
+    if (拆子转录id(transcriptId)?.toolCallId.startsWith("team:")) {
+      setRightDockTenant("team")
+    } else {
+      $子转录id.set(transcriptId)
+      setRightDockTenant("subagent")
+    }
     setRightDockOpen(true)
   }, [])
 
@@ -3735,6 +3779,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       ...(槽 === 主槽 ? { 引用文件, onOpenReference: 打开引用 } : { 引用文件: 坞引用文件, onOpenReference: 坞打开引用 }),
       loadLocalImage: 读本机图,
       loadGalleryRoots: 载图廊根们,
+      /** 点子 agent 的 chip → 坞里「子 agent」那一格（2026-09-27）。坞里那段派的一样点得开：子转录 id 里带着它自己的会话 id，不会串 */
+      onOpenSubagent: 打开子agent,
       /**
        * 导出这一段（2026-09-25 起坞里也有）：`exportSession` 只认会话 id，与主区是同一个操作——
        * 按 `s` 绑好就是坞里那段自己的导出，不借主区的。
@@ -5365,6 +5411,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 </>
               )}
             </div>
+            ) : rightDockTenant === "subagent" ? (
+              /** 「子 agent」那一格（2026-09-27）：清单只列主区那段派过的；正在看的可以是坞里那段派的（切换条从它自己的槽找） */
+              <SubagentDock
+                key={sessionId}
+                mainSessionId={sessionId}
+                onPick={(toolCallId, index) => {
+                  const 父 = 拆子转录id($子转录id.get() ?? "")?.会话 ?? sessionId
+                  if (父) $子转录id.set(子转录id(父, toolCallId, index))
+                }}
+                onBack={() => $子转录id.set(undefined)}
+                onAsk={async (text) => {
+                  const id = $子转录id.get()
+                  if (!id) return
+                  await client.get("askSubagent", { transcriptId: id, text }).catch((e: unknown) => {
+                    fail(e)
+                    throw e
+                  })
+                }}
+              />
             ) : rightDockTenant === "team" ? (
               <TeamPanel key={sessionId} />
             ) : rightDockTenant === "artifacts" ? (

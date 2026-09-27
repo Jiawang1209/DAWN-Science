@@ -4,7 +4,7 @@
  * 没选中：这段对话派过的子 agent，按调用分组、最新在上；选中：格顶同一批切换条 → 转录（与主区同一套行、折叠组、贴底跟随）
  * → 交回主 agent 的结果 → 接着问（D3）。**叶子组件只发回调**：看谁、接着问都由 `App.tsx` 做。
  */
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useStore } from "@nanostores/react"
 import { StickToBottom } from "use-stick-to-bottom"
 import type { TranscriptItem } from "../protocol/index.js"
@@ -15,6 +15,8 @@ import { AgentMarkdown } from "./markdown.js"
 import { TranscriptRow, ToolGroupRow } from "./views.js"
 import { 分组转录 } from "./tool-group.js"
 import { 子槽, $子agent信息, $子转录id } from "./state/subagent-view.js"
+import { 主槽 } from "./state/transcript.js"
+import { $侧边会话id, 侧槽 } from "./state/side-chat.js"
 
 type 组 = Extract<TranscriptItem, { type: "subagents" }>
 const 记号 = { running: "⏳", ok: "✓", error: "✗" } as const
@@ -76,6 +78,8 @@ export function SubagentPane(p: {
     try {
       await p.onAsk(句)
       设草稿("")
+    } catch {
+      // 出声由 `App` 那边做（`fail`）；这里只把草稿留着，人改一改还能再发——吞掉是为了不成一条未处理的拒绝
     } finally {
       设在发(false)
     }
@@ -152,4 +156,21 @@ export function SubagentPane(p: {
       ) : null}
     </div>
   )
+}
+
+/**
+ * 「子 agent」那一格外面那一层（2026-09-27）：清单与同批切换条从哪一槽取。
+ *
+ * **不在 `App` 上订主槽的 `$items`**（计划原写法）：那会让整个 App 跟着每一段流式字重渲染——
+ * `perf-render`（2026-09-22）刚把那条路砍掉。这里只在这一格开着时订，重渲染的只有这一格。
+ * 正在看的那个属于坞里那段（侧边对话）时读侧槽，其余读主槽——切换条上的状态记号两边都是实时的。
+ */
+export function SubagentDock(p: Omit<Parameters<typeof SubagentPane>[0], "groups"> & { mainSessionId: string | undefined }) {
+  const id = useStore($子转录id)
+  const 侧id = useStore($侧边会话id)
+  const 父 = id ? 拆子转录id(id)?.会话 : undefined
+  const 用侧 = !!父 && 父 !== p.mainSessionId && 父 === 侧id
+  const 条目 = useStore(用侧 ? 侧槽.$items : 主槽.$items)
+  const groups = useMemo(() => 条目.filter((x): x is 组 => x.type === "subagents"), [条目])
+  return <SubagentPane groups={groups} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} />
 }

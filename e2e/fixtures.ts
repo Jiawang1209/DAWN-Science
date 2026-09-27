@@ -778,6 +778,11 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
          * 与 `show: false` 是同一个理由：会让人少跑测试。
          */
         DAWN_NO_EXTERNAL: "1",
+        /**
+         * **e2e 里不弹真的系统通知**（桌面通知，2026-09-27）：弹了就是往作者屏幕右上角塞一串横幅。
+         * 假出口把每一条记进主进程 `globalThis.__dawn桌面通知`，用例用下面的 `读桌面通知` / `点桌面通知` 读、点。
+         */
+        DAWN_FAKE_NOTIFY: "1",
         ...(dawnOptions.pickDirectory ? { DAWN_PICK_DIRECTORY: dawnOptions.pickDirectory } : {}),
         ...(dawnOptions.pickFiles ? { DAWN_PICK_FILES: dawnOptions.pickFiles.join(",") } : {}),
       },
@@ -895,6 +900,30 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
 })
 
 export { expect } from "@playwright/test"
+
+/** 假出口记下的一条（桌面通知，2026-09-27）。标题 / 正文是已经按语言译好的字 */
+export interface 桌面通知记录 {
+  kind: "done" | "error" | "permission" | "schedule" | "test"
+  sessionId?: string
+  title: string
+  body: string
+}
+type 假通知台 = { 发过: 桌面通知记录[]; 角标: number; 点(i: number): void; 设前台(v: boolean | undefined): void }
+
+export async function 读桌面通知(app: ElectronApplication): Promise<桌面通知记录[]> {
+  return app.evaluate(() => (globalThis as unknown as { __dawn桌面通知: 假通知台 }).__dawn桌面通知.发过.map((x) => ({ ...x })))
+}
+export async function 桌面角标(app: ElectronApplication): Promise<number> {
+  return app.evaluate(() => (globalThis as unknown as { __dawn桌面通知: 假通知台 }).__dawn桌面通知.角标)
+}
+/** 点第 i 条：走的是与真通知 click 同一个 `点了` */
+export async function 点桌面通知(app: ElectronApplication, i: number): Promise<void> {
+  await app.evaluate((_electron, n) => (globalThis as unknown as { __dawn桌面通知: 假通知台 }).__dawn桌面通知.点(n), i)
+}
+/** 拨「窗口在不在前台」。`undefined` = 交还给真窗口（e2e 里它永远藏着 = 不在前台） */
+export async function 设前台(app: ElectronApplication, v: boolean | undefined): Promise<void> {
+  await app.evaluate((_electron, x) => (globalThis as unknown as { __dawn桌面通知: 假通知台 }).__dawn桌面通知.设前台(x), v)
+}
 
 /** 读数据库验证副作用。**界面说发生了，账本上也得有** */
 export async function readRuns(dbPath: string): Promise<Record<string, unknown>[]> {

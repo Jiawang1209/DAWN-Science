@@ -158,6 +158,8 @@ const child = spawn(
        */
       // 缺省假服务器（准入规则 1：与 e2e 共用一份 mock）；要对着真机器调时 `DAWN_FAKE_SSH=0 npm run dev:mock`
       DAWN_FAKE_SSH: process.env.DAWN_FAKE_SSH ?? "1",
+      // 桌面通知走假出口（与 e2e 同一份，准入规则 1）：控制台打一行「[桌面通知·假]」。要看真横幅：`DAWN_FAKE_NOTIFY=0 npm run dev:mock`
+      DAWN_FAKE_NOTIFY: process.env.DAWN_FAKE_NOTIFY ?? "1",
       // 给了才会真起一台内核；找不到装了 ipykernel 的本机 python 就不给，假服务器上探测解释器仍答得出来
       ...(fakeSshPython ? { DAWN_FAKE_SSH_PYTHON: fakeSshPython } : {}),
       // R 那半同理（2026-09-05）：给了才真起 IRkernel

@@ -5,7 +5,7 @@
  * 装配在 `wiring.ts`、派发在 `workbench/server.ts`、桥接逻辑在 `ipc.ts`——
  * 三者都不认识 Electron，因此都能单独测。这里剩下的部分正是「测不了、也不值得测」的那些。
  */
-import { app, clipboard, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron"
+import { app, clipboard, BrowserWindow, dialog, ipcMain, Notification, safeStorage, shell } from "electron"
 import { fileURLToPath } from "node:url"
 import { extname, join, dirname } from "node:path"
 import { 迁旧数据 } from "./migrate-userdata.js"
@@ -18,6 +18,7 @@ import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, I
 import { 存附件, 附件用量of, 清附件 } from "../files/attachments.js"
 import { 造网页预览, type 网页命令, type 网页预览 } from "./web-preview.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
+import { 真通知出口, 假通知出口 } from "./desktop-notify.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 import { 交接箱 } from "../update/交接.js"
@@ -96,6 +97,11 @@ const FAKE_SSH = process.env.DAWN_FAKE_SSH === "1"
  * 反过来会让某次忘了设的正常启动变成一个看不见的应用。
  */
 const 隐藏窗口 = process.env.DAWN_HIDE_WINDOW === "1"
+/**
+ * **Windows 上不设 AUMID，toast 一条都出不来**（桌面通知，2026-09-27）。值与 `electron-builder.yml` 的 `appId` 一致——
+ * 安装器建的开始菜单快捷方式带的就是它，两边对不上系统也不认。要在第一条通知之前设，放在模块顶层。
+ */
+if (process.platform === "win32") app.setAppUserModelId("science.dawn.app")
 
 /**
  * **启动日志**（2026-08-28，Windows 上「双击完全没反应」之后加的）。
@@ -678,6 +684,35 @@ app.whenReady().then(() => {
   const 装配起点 = Date.now()
   启动日志("后端装配开始")
   try {
+    /**
+     * 点了一条桌面通知（2026-09-27）：窗口回到最前，再告诉界面「回到哪段」（事件通道第五种载荷）。
+     * **隐藏窗口的 e2e 里不 show**——与 `DAWN_HIDE_WINDOW` 同一个理由：测试不许抢作者的焦点。界面照样收到、照样切段。
+     */
+    const 点了通知 = (sessionId: string | undefined): void => {
+      const win = BrowserWindow.getAllWindows()[0]
+      if (!win || win.isDestroyed()) return
+      if (!隐藏窗口) {
+        if (win.isMinimized()) win.restore()
+        win.show()
+        win.focus()
+        if (process.platform === "darwin") app.focus({ steal: true })
+      }
+      if (sessionId) win.webContents.send(IPC_EVENT_CHANNEL, { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, openSession: sessionId })
+    }
+    /** `DAWN_FAKE_NOTIFY=1`：e2e 与 dev:mock 共用的假出口（准入规则 1）；与 `DAWN_FAKE_SSH` 同一套惯例 */
+    const 桌面出口 =
+      process.env.DAWN_FAKE_NOTIFY === "1"
+        ? 假通知出口({ 点了: 点了通知, log: (l) => console.error(l) })
+        : 真通知出口({
+            Notification,
+            app,
+            窗口: () => BrowserWindow.getAllWindows()[0],
+            平台: process.platform,
+            缺省语言: () => (/^zh\b/i.test(app.getLocale()) ? "zh" : "en"),
+            点了: 点了通知,
+            log: (l) => console.error(l),
+          })
+    const 假的前台 = "前台" in 桌面出口 ? () => (桌面出口 as { 前台(): boolean | undefined }).前台() : () => undefined
     workbench = createWorkbench({
       configPath: CONFIG,
       dbPath: DB,
@@ -693,8 +728,9 @@ app.whenReady().then(() => {
        * 这个差别一路带到按钮文案上。
        */
       trashItem: (p: string) => shell.trashItem(p),
-      // 远程助理：人在电脑前（窗口在前台）就不往微信推通知
-      isForeground: () => BrowserWindow.getFocusedWindow() !== null,
+      // 远程助理与桌面通知：人在电脑前（窗口在前台）就不推。假出口拨了「前台」时以它为准（e2e 的窗口永远藏着）
+      isForeground: () => 假的前台() ?? BrowserWindow.getFocusedWindow() !== null,
+      desktopNotify: 桌面出口,
       /**
        * 系统的下载目录（批 4a，2026-08-17）。
        *

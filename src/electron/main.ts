@@ -690,7 +690,18 @@ app.whenReady().then(() => {
      */
     const 点了通知 = (sessionId: string | undefined): void => {
       const win = BrowserWindow.getAllWindows()[0]
-      if (!win || win.isDestroyed()) return
+      if (!win || win.isDestroyed()) {
+        // macOS 关掉窗口后 app 还活着：点通知不许**什么都不发生**（2026-09-28 审查）——开一个窗口，页面载完再切段
+        if (隐藏窗口) return
+        createWindow()
+        const 新 = BrowserWindow.getAllWindows()[0]
+        if (新 && sessionId) {
+          新.webContents.once("did-finish-load", () =>
+            新.webContents.send(IPC_EVENT_CHANNEL, { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, openSession: sessionId }),
+          )
+        }
+        return
+      }
       if (!隐藏窗口) {
         if (win.isMinimized()) win.restore()
         win.show()

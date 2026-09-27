@@ -57,6 +57,8 @@ export function 真通知出口(d: 真出口依赖): 桌面通知出口 {
       const lang = n.lang ?? d.缺省语言()
       const 条 = new d.Notification({ title: 译(n.title, lang), body: 译(n.body, lang) })
       拿着.add(条)
+      // macOS 直接进通知中心的那些不一定来 close：只拿最近 50 条，最老的放手（2026-09-28 审查）
+      if (拿着.size > 50) 拿着.delete(拿着.values().next().value as 通知对象)
       条.on("click", () => {
         拿着.delete(条)
         d.点了(n.sessionId)

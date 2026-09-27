@@ -9,7 +9,7 @@
  * - **不给外部 agent 估数**：ACP / 外部 CLI 自己管上下文，写「读不到」（D5）。
  * - **不轮询**：换会话、这一轮做完、一次压缩结束、打开弹层——四个时刻各取一次（`use上下文用量`）。
  */
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type FocusEvent } from "react"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import { formatTokens } from "./format.js"
@@ -106,7 +106,7 @@ export function use上下文用量(
   const 重取 = useCallback(() => {
     const f = 取ref.current
     if (!f) return
-    const id = sessionId
+    const id = 当前.current
     f().then(
       (usage) => {
         if (当前.current === id) 设态({ id, usage })
@@ -115,16 +115,20 @@ export function use上下文用量(
         if (当前.current === id) 设态({ id, 错: e instanceof Error ? e.message : String(e) })
       },
     )
-  }, [sessionId, 有取])
-  useEffect(() => 重取(), [重取])
-  const 忙过 = useRef(busy)
+  }, [])
+  /**
+   * **一件事只取一次**（2026-09-27 复审）：此前三个 effect 各管一个时刻，而这几个时刻常常同一次渲染一起到——
+   * 换到一段压缩过的会话（换会话 + 记号变了）、压缩结束（记号变了 + `busy` 落下：`说着` 含「正在压缩」），
+   * 各取一次就是两三次。合成一个 effect、按上一次的值判断：
+   * 换会话 → 取；否则 `busy` 真变假 → 取；否则记号变了且不忙 → 取（没有 start 的 end）。压缩开始（变忙）不取——那时的数马上就过时。
+   */
+  const 上次 = useRef<{ id: string; 有取: boolean; busy: boolean; 记号: string } | undefined>(undefined)
   useEffect(() => {
-    if (忙过.current && !busy) 重取()
-    忙过.current = busy
-  }, [busy, 重取])
-  useEffect(() => {
-    if (压缩记号) 重取()
-  }, [压缩记号, 重取])
+    const 前 = 上次.current
+    上次.current = { id: sessionId, 有取, busy, 记号: 压缩记号 }
+    const 该取 = !前 || 前.id !== sessionId || 前.有取 !== 有取 ? true : 前.busy && !busy ? true : 前.记号 !== 压缩记号 && !busy
+    if (该取) 重取()
+  }, [sessionId, 有取, busy, 压缩记号, 重取])
   const 这段 = 态?.id === sessionId ? 态 : undefined
   return { usage: 这段?.usage, 错: 这段?.错, 重取 }
 }
@@ -181,6 +185,14 @@ export function ContextMeter({
     clearTimeout(收的计时.current)
     收的计时.current = setTimeout(() => 设看一眼(false), 150)
   }
+  /**
+   * 焦点挂在**整块**上、不挂在按钮上（2026-09-27 复审 I1）：挂在按钮上时，Tab 进「现在压缩」按钮先失焦，
+   * 150ms 后弹层带着焦点一起卸掉，焦点掉回 body。React 的 onFocus / onBlur 会冒泡；焦点只是在块里挪的那次失焦不算。
+   */
+  const 失焦 = (e: FocusEvent) => {
+    if (e.relatedTarget instanceof Node && 盒.current?.contains(e.relatedTarget)) return
+    出()
+  }
   useEffect(() => () => clearTimeout(收的计时.current), [])
   const [压着, 设压着] = useState(false)
   const [出错, 设出错] = useState<string | undefined>(undefined)
@@ -202,6 +214,8 @@ export function ContextMeter({
       data-level={读数.档}
       onMouseEnter={进}
       onMouseLeave={出}
+      onFocus={进}
+      onBlur={失焦}
       onKeyDown={(e) => e.key === "Escape" && 设开着(false)}
     >
       <Button
@@ -210,8 +224,6 @@ export function ContextMeter({
         className="ctx-meter-trigger"
         aria-haspopup="dialog"
         aria-expanded={开着}
-        onFocus={进}
-        onBlur={出}
         onClick={() => {
           if (!开着) {
             onOpen?.()

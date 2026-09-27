@@ -1074,7 +1074,16 @@ pre {
 /* 附栏自己起一层（见上面 `.composer-footer`）：菜单向上弹时压在输入盒（模型颗、发送键）之上 */
 .composer-footer .perm-pill:first-child,
 .composer-footer .sess-config + .perm-pill { margin-left: var(--dawn-space-2); }
-.composer-footer > .perm-pill:not(.sess-config + .perm-pill) { margin-left: auto; }
+.composer-footer > .perm-pill:not(.sess-config + .perm-pill):not(.ctx-meter + .perm-pill) { margin-left: auto; }
+/**
+ * 上下文仪表（2026-09-27 复审 I2）：**右侧、紧挨在权限那颗左边**，native 与 ACP 都是。
+ * 它插在 `.sess-config` 与 `.perm-pill` 之间，上面那条兄弟选择器就断了——仪表掉到左边、ACP 那边两个 auto 撑出一道缝。
+ * 所以：仪表自己顶到右边（前面有 `.sess-config` 时跟在它后面），权限那颗跟在仪表后面只留一格。
+ * 注意上一条的 `:not(…)` 特异性比下面几条高，**新的前邻要同时加进那条的 `:not`**（`design-contract` 有扫描）。
+ */
+.composer-footer > .ctx-meter { flex: 0 0 auto; margin-left: auto; }
+.composer-footer > .sess-config + .ctx-meter { margin-left: var(--dawn-space-2); }
+.composer-footer > .ctx-meter + .perm-pill { margin-left: var(--dawn-space-1); }
 /**
  * 卡里的文本区：**只负责文字**，盒子归卡。
  *
@@ -7323,7 +7332,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   bottom: calc(100% + var(--dawn-space-2));
   right: 0;
   width: 20rem;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - var(--dawn-space-8));
   padding: var(--dawn-space-3);
   display: grid;
   gap: var(--dawn-space-2);

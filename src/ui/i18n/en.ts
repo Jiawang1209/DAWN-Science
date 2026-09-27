@@ -1559,6 +1559,7 @@ export const EN: Readonly<Record<string, string>> = {
   "上下文 {0} · 快满了": "Context {0} · almost full",
   "现在压缩": "Compact now",
   "这一轮还在跑，做完再压缩": "This turn is still running; compact once it's done",
+  "正在压缩上下文，压完再说": "A compaction is already in progress",
   "也可以在输入框里打 /compact，后面跟一句要保留什么": "You can also type /compact in the input, followed by what to keep",
   // 上下文用量与压缩（2026-09-27）· 转录里的标记
   "你让压的": "you asked",

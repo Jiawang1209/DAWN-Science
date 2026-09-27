@@ -1,5 +1,5 @@
 /**
- * 转录里的压缩标记（2026-09-27，spec §2.3）：四种状态各有说法；摘要能展开；失败是 alert。
+ * 转录里的压缩标记（2026-09-27，spec §2.3）：四种状态各有说法；摘要能展开；失败只在眼看着失败时是 alert。
  */
 import { describe, expect, it } from "vitest"
 import { fireEvent, render, screen } from "@testing-library/react"
@@ -32,9 +32,20 @@ describe("CompactionRow", () => {
     const { container } = render(<CompactionRow item={{ type: "compaction", id: "c", status: "done" }} />)
     expect(container.textContent).not.toMatch(/你让压的|自动：/)
   })
-  it("没压成：alert，写原因", () => {
-    render(<CompactionRow item={{ type: "compaction", id: "c", status: "failed", error: "对话还太短，没有可压缩的" }} />)
-    expect(screen.getByRole("alert").textContent).toContain("上下文没压缩成：对话还太短，没有可压缩的")
+  it("没压成：写原因", () => {
+    const { container } = render(<CompactionRow item={{ type: "compaction", id: "c", status: "failed", error: "对话还太短，没有可压缩的" }} />)
+    expect(container.textContent).toContain("上下文没压缩成：对话还太短，没有可压缩的")
+  })
+  it("挂上时就是没压成（切回这段会话、从记录恢复）：不当 alert 重喊一遍，用 status", () => {
+    render(<CompactionRow item={{ type: "compaction", id: "c", status: "failed", error: "太短" }} />)
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(screen.getByRole("status").textContent).toContain("上下文没压缩成：太短")
+  })
+  it("眼看着从正在压变成没压成：才是 alert", () => {
+    const { rerender } = render(<CompactionRow item={{ type: "compaction", id: "c", status: "running", reason: "manual" }} />)
+    expect(screen.queryByRole("alert")).toBeNull()
+    rerender(<CompactionRow item={{ type: "compaction", id: "c", status: "failed", reason: "manual", error: "太短" }} />)
+    expect(screen.getByRole("alert").textContent).toContain("上下文没压缩成：太短")
   })
   it("停下了：说没有改动", () => {
     const { container } = render(<CompactionRow item={{ type: "compaction", id: "c", status: "cancelled", reason: "manual" }} />)

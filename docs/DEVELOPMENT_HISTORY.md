@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-27 — 上下文仪表复审修补：键盘焦点、附栏位置、一件事只取一次（分支 `agent-basics`，plan Task 6）
+
+- **Type**: fix
+- **Motivation**: Task 6 复审抓到三条要紧的与五条小的：Tab 进「现在压缩」后 150ms 弹层带着焦点卸掉（焦点掉回 body）；仪表插在 `.sess-config` 与 `.perm-pill` 之间把兄弟选择器弄断，native 上仪表掉到左边、ACP 上两个 `margin-left:auto` 撑出一道缝；若干路径无测。
+- **What**: `context-meter.tsx` 焦点处理挪到整块 `.ctx-meter`，块内挪焦不算失焦；`use上下文用量` 三个 effect 合成一个、按上次的值判断（换会话 / 忙→闲 / 不忙时记号变了），压缩开始不取；正在压缩时「现在压缩」灰着说「正在压缩上下文，压完再说」（新 i18n）；`CompactionRow` 挂上时就失败的用 `role="status"`、眼看着失败才 `alert`；`styles.css` 仪表右对齐紧贴权限那颗（native 与 ACP 都是），`calc(100vw - 32px)` 改走 `--dawn-space-8`。
+- **Impact**: 仅界面；无协议改动。`views.tsx` 早已从 `state/transcript.ts` 引 `在压缩`，此次只把结果存成一个变量复用。
+- **Verification**: 先红后绿——`context-meter.test.tsx`（键盘焦点、150ms 内回来不重取、Esc / 点外面收钉住的弹层、取数去重六条）、`compaction-row.test.tsx`（status vs alert）、新 `composer-compact.test.tsx`（`/compact keep X` 走压缩并清框、失败还原并出声、ACP 原样发、DOM 上仪表紧挨权限那颗、正在压缩的原因）、`design-contract` 新扫描（权限那颗的每个前邻都进了 auto 那条的 `:not`，撤掉 CSS 修复时它红）。全套 vitest 3263 过；typecheck、build 过；e2e 截图里仪表在权限那颗左边。
+
 ### 2026-09-25 — 调整方向：只留一种排队；待发条「调整方向 / 到坞里问 / 取回」；停止真停内核（学自 Codex；分支 `redirect-queue`）
 
 - **Type**: feat + fix

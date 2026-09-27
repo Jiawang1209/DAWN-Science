@@ -420,6 +420,18 @@ describe("设计契约 · 已经踩过的坑", () => {
     }
   })
 
+  it("**附栏里权限那颗的每个前邻都进了 auto 那条的 `:not`** —— 否则那条特异性更高，右侧多出一道缝", () => {
+    // 2026-09-27 复审 I2：上下文仪表插在 `.sess-config` 与 `.perm-pill` 之间，兄弟选择器断了——
+    // native 上仪表掉到左边，ACP 上两个 `margin-left: auto` 撑出一道缝。
+    const css = read("styles.css")
+    const 前邻 = new Set([...css.matchAll(/\.composer-footer\s*>?\s*\.([\w-]+)\s*\+\s*\.perm-pill\s*\{/g)].map((m) => m[1]))
+    const auto = /\.composer-footer > \.perm-pill((?::not\([^)]*\))+)\s*\{\s*margin-left:\s*auto/.exec(css)
+    expect(auto, "找不到权限那颗的 margin-left: auto 规则").toBeTruthy()
+    const 排除 = new Set([...auto![1]!.matchAll(/:not\(\.([\w-]+) \+ \.perm-pill\)/g)].map((m) => m[1]))
+    expect(前邻.has("ctx-meter"), "仪表后面的权限那颗要有自己的间距").toBe(true)
+    expect([...前邻].filter((x) => !排除.has(x))).toEqual([])
+  })
+
   it("z-index 不写字面量 —— 跨组件层级一律从 tokens.css 的梯子取", () => {
     const hits = findLines(read("styles.css"), (l) => /z-index:\s*\d/.test(l))
     expect(hits, "styles.css：用 var(--z-*)").toEqual([])

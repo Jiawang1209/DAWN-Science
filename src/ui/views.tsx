@@ -4295,7 +4295,8 @@ export function ConversationView({
    * 而**等回音的那段恰恰是最想按停止的时候**。
    */
   // 正在压缩也算（2026-09-27）：与 `$回合进行中` 同一个判据
-  const 说着 = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final) || 在压缩(items)
+  const 压缩中 = 在压缩(items)
+  const 说着 = items.some((i) => i.type === "turn" && i.who === "agent" && !i.final) || 压缩中
   /**
    * 等待期间模型已经在思考了没有。
    *
@@ -5439,14 +5440,18 @@ export function ConversationView({
             ) : null}
             {/**
               * 上下文仪表（2026-09-27，spec §2.1 / D4）：权限左边，**常驻**。内核 / 终端不画（`读仪表` 给 undefined）；
-              * 外部 agent 灰着写「读不到」。这一轮在跑时「现在压缩」灰着并写原因（D8）。
+              * 外部 agent 灰着写「读不到」。这一轮在跑、或正在压缩时「现在压缩」灰着并写原因（D8）。
               */}
             {仪表 ? (
               <ContextMeter
                 读数={仪表}
                 onOpen={上下文.重取}
                 {...(onCompact ? { onCompact: () => onCompact() } : {})}
-                {...(busy ? { 不能压的原因: t("这一轮还在跑，做完再压缩") } : {})}
+                {...(压缩中
+                  ? { 不能压的原因: t("正在压缩上下文，压完再说") }
+                  : busy
+                    ? { 不能压的原因: t("这一轮还在跑，做完再压缩") }
+                    : {})}
               />
             ) : null}
             {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}

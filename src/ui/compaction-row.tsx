@@ -1,11 +1,12 @@
 /**
  * 转录里的压缩标记（2026-09-27，spec `2026-09-27-上下文用量与压缩-design.md` §2.3）。
  *
- * 每次压缩一定有一条：正在压、压完、没压成（`role="alert"`）、停下了。压完那条说清两件事：
+ * 每次压缩一定有一条：正在压、压完、没压成、停下了。没压成**只在眼看着变成失败时**是 `role="alert"`；
+ * 挂上时就已经失败的（切回这段会话、重挂）用 `role="status"`——不然每切回来一次就被打断喊一遍（2026-09-27 复审）。压完那条说清两件事：
  * **上面的记录都还在**（可见的转录不删任何东西），**模型现在读的是摘要**（点「这次的摘要」看原文）。
  * 按钮不叫「展开 / 收起」——「收起」已经是另一颗按钮的全名（文案互不为子串）。
  */
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import { formatTokens } from "./format.js"
@@ -26,6 +27,8 @@ export function 压缩原因字(r: 压缩项["reason"]): string | undefined {
 
 export function CompactionRow({ item }: { item: 压缩项 }) {
   const [看, 设看] = useState(false)
+  const 挂上时 = useRef(item.status)
+  const 角色 = item.status !== "failed" ? undefined : 挂上时.current === "failed" ? "status" : "alert"
   const 因 = 压缩原因字(item.reason)
   const 题 =
     item.status === "running"
@@ -44,7 +47,7 @@ export function CompactionRow({ item }: { item: 压缩项 }) {
         : tf("之前约 {0} tokens", formatTokens(item.tokensBefore))
       : undefined
   return (
-    <div className="compaction-mark" data-status={item.status} {...(item.status === "failed" ? { role: "alert" } : {})}>
+    <div className="compaction-mark" data-status={item.status} {...(角色 ? { role: 角色 } : {})}>
       <p className="compaction-line">
         <span className="compaction-title">{题}</span>
         {item.status === "done" && 因 ? <span className="compaction-meta">{因}</span> : null}

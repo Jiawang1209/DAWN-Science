@@ -2,8 +2,8 @@
  * 上下文仪表（2026-09-27，spec §2.1）：读数纯函数的每一档、`/compact` 识别、仪表常驻与弹层。
  */
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { act, fireEvent, render, screen } from "@testing-library/react"
-import { ContextMeter, 读仪表, 是压缩命令, type 仪表读数 } from "../../src/ui/context-meter.js"
+import { act, fireEvent, render, renderHook, screen } from "@testing-library/react"
+import { ContextMeter, 读仪表, 是压缩命令, use上下文用量, type 仪表读数 } from "../../src/ui/context-meter.js"
 
 const 底 = { bytes: { system: 0, tools: 0, history: 0 }, contextWindow: 128_000, compactAt: 111_616 }
 
@@ -121,5 +121,114 @@ describe("ContextMeter", () => {
     render(<ContextMeter 读数={读仪表("acp", undefined)!} onCompact={async () => {}} />)
     fireEvent.click(screen.getByRole("button", { name: "上下文 读不到" }))
     expect(screen.queryByRole("button", { name: "现在压缩" })).toBeNull()
+  })
+  it("键盘：聚焦按钮就打开；Tab 进「现在压缩」不收、焦点还在那颗上；焦点离开整块才收", () => {
+    vi.useFakeTimers()
+    try {
+      render(
+        <>
+          <ContextMeter 读数={读数} onCompact={async () => {}} />
+          <input aria-label="外面" />
+        </>,
+      )
+      const 钮 = screen.getByRole("button", { name: "上下文 37%" })
+      act(() => 钮.focus())
+      expect(screen.getByRole("dialog")).toBeTruthy()
+      const 压 = screen.getByRole("button", { name: "现在压缩" })
+      act(() => 压.focus())
+      act(() => vi.advanceTimersByTime(200))
+      expect(screen.getByRole("dialog")).toBeTruthy()
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "现在压缩" }))
+      act(() => (screen.getByLabelText("外面") as HTMLInputElement).focus())
+      act(() => vi.advanceTimersByTime(200))
+      expect(screen.queryByRole("dialog")).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it("150ms 之内移回来：不收，也不再要一次新数", () => {
+    vi.useFakeTimers()
+    try {
+      const onOpen = vi.fn()
+      const { container } = render(<ContextMeter 读数={读数} onOpen={onOpen} />)
+      const 盒 = container.querySelector(".ctx-meter")!
+      fireEvent.mouseEnter(盒)
+      fireEvent.mouseLeave(盒)
+      act(() => vi.advanceTimersByTime(100))
+      fireEvent.mouseEnter(盒)
+      act(() => vi.advanceTimersByTime(200))
+      expect(screen.getByRole("dialog")).toBeTruthy()
+      expect(onOpen).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it("钉住之后：Esc 收", () => {
+    render(<ContextMeter 读数={读数} />)
+    const 钮 = screen.getByRole("button", { name: "上下文 37%" })
+    fireEvent.click(钮)
+    expect(screen.getByRole("dialog")).toBeTruthy()
+    fireEvent.keyDown(钮, { key: "Escape" })
+    expect(screen.queryByRole("dialog")).toBeNull()
+  })
+  it("钉住之后：在外面按下鼠标就收；在弹层里按不收", () => {
+    render(
+      <>
+        <ContextMeter 读数={读数} />
+        <p>外面</p>
+      </>,
+    )
+    fireEvent.click(screen.getByRole("button", { name: "上下文 37%" }))
+    fireEvent.mouseDown(screen.getByRole("dialog"))
+    expect(screen.getByRole("dialog")).toBeTruthy()
+    fireEvent.mouseDown(screen.getByText("外面"))
+    expect(screen.queryByRole("dialog")).toBeNull()
+  })
+})
+
+describe("use上下文用量：一件事只取一次", () => {
+  const 用量 = { bytes: 底.bytes, usedTokens: 1 }
+  type P = { id: string; busy: boolean; 记号: string }
+  const 摆 = (初: P) => {
+    const 取 = vi.fn(async () => 用量)
+    const r = renderHook((p: P) => use上下文用量(p.id, 取, p.busy, p.记号), { initialProps: 初 })
+    return { 取, r }
+  }
+  it("挂上：一次", () => {
+    const { 取 } = 摆({ id: "A", busy: false, 记号: "c1:done" })
+    expect(取).toHaveBeenCalledTimes(1)
+  })
+  it("换到一段压缩过的会话：一次（不是换会话一次、记号变了又一次）", () => {
+    const { 取, r } = 摆({ id: "A", busy: false, 记号: "" })
+    取.mockClear()
+    r.rerender({ id: "B", busy: false, 记号: "c1:done" })
+    expect(取).toHaveBeenCalledTimes(1)
+  })
+  it("换会话时上一段正忙、这一段不忙：一次", () => {
+    const { 取, r } = 摆({ id: "A", busy: true, 记号: "" })
+    取.mockClear()
+    r.rerender({ id: "B", busy: false, 记号: "c1:done" })
+    expect(取).toHaveBeenCalledTimes(1)
+  })
+  it("一次压缩：开始不取；结束（记号变了、busy 同时落下）只取一次", () => {
+    const { 取, r } = 摆({ id: "A", busy: false, 记号: "" })
+    取.mockClear()
+    r.rerender({ id: "A", busy: true, 记号: "c1:running" })
+    expect(取).toHaveBeenCalledTimes(0)
+    r.rerender({ id: "A", busy: false, 记号: "c1:done" })
+    expect(取).toHaveBeenCalledTimes(1)
+  })
+  it("一轮做完：一次", () => {
+    const { 取, r } = 摆({ id: "A", busy: false, 记号: "" })
+    取.mockClear()
+    r.rerender({ id: "A", busy: true, 记号: "" })
+    r.rerender({ id: "A", busy: false, 记号: "" })
+    expect(取).toHaveBeenCalledTimes(1)
+  })
+  it("不忙时冒出一条已压完的（没有 start 的 end）：也取一次", () => {
+    const { 取, r } = 摆({ id: "A", busy: false, 记号: "" })
+    取.mockClear()
+    r.rerender({ id: "A", busy: false, 记号: "c1:failed" })
+    expect(取).toHaveBeenCalledTimes(1)
   })
 })

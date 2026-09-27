@@ -68,11 +68,19 @@ export interface 存档选项 {
   /** 失败出声（规格 7.5）：每种原因每段会话只喊一次，不然一轮几十次工具调用就刷几十条 */
   喊?: (话: string) => void
   now?: () => Date
+}
+
+/**
+ * **只给测试用**的选项（2026-09-27 复审：原先挂在公开的 `存档选项` 上，运行时代码看着像能用的配置）。
+ * 构造函数收的是 `存档选项 & 仅测试选项`，运行时（`native.ts`）只该给 `存档选项` 那一半。
+ */
+export interface 仅测试选项 {
   /**
-   * **只给测试用**（2026-09-27）：在回退的几个节骨眼上插一脚，演「扫完之后、挪的途中又有人动了它」这类竞争。
-   * `开始挪`：计划算完、第一件挪动之前；`换下之后`：现在那份刚进废纸篓、旧版本还没就位。
+   * 在回退的几个节骨眼上插一脚，演「扫完之后、挪的途中又有人动了它」这类竞争。
+   * `开始挪`：计划算完、第一件挪动之前；`换下之后`：现在那份刚进废纸篓、旧版本还没就位；
+   * `链上之后`：旧版本已经硬链到原处、临时名还没删。
    */
-  插一脚?: (时机: "开始挪" | "换下之后", path: string) => void | Promise<void>
+  插一脚?: (时机: "开始挪" | "换下之后" | "链上之后", path: string) => void | Promise<void>
 }
 
 export const 同一版 = (a: Pick<FsEntry, "ino" | "mtimeMs" | "size"> | undefined, b: Pick<FsEntry, "ino" | "mtimeMs" | "size"> | undefined): boolean =>
@@ -86,17 +94,18 @@ const 对象名 = (e: Pick<FsEntry, "ino" | "mtimeMs" | "size">) => `${e.size}-$
 const 对象名合法 = (n: unknown): n is string => typeof n === "string" && /^\d+-\d+-[\d_e+-]+$/.test(n)
 
 /**
- * 存档里的路径只可能是 `fsSnapshot` 给的相对 posix 路径（2026-09-27）。带 `..`、绝对路径、反斜杠的，
+ * 存档里的路径只可能是 `fsSnapshot` 给的相对 posix 路径（2026-09-27）。带 `..`、绝对路径、NUL 的，
  * 只可能是会话目录被人改过——认了它，回退就会往工作区外面写。
+ *
+ * **反斜杠与 `x:` 开头只在 Windows 上不认**（2026-09-27 复审）：在 macOS / Linux 上 `a\b.csv`、`x:foo` 是普通文件名，
+ * agent 真建得出来；一律不认的话回退会悄悄留下它、还告诉你「存档可能被改过」——话都说错了。
+ * 在 Windows 上它们才是分隔符 / 盘符，能把路径带出工作区。平台在调用时读，不在模块加载时定死（测试要换）。
  */
-export const 路径合法 = (p: unknown): p is string =>
-  typeof p === "string" &&
-  p.length > 0 &&
-  !p.includes("\\") &&
-  !p.includes("\0") &&
-  !isAbsolute(p) &&
-  !/^[A-Za-z]:/.test(p) &&
-  p.split("/").every((s) => s !== "" && s !== "." && s !== "..")
+export const 路径合法 = (p: unknown): p is string => {
+  if (typeof p !== "string" || p.length === 0 || p.includes("\0") || isAbsolute(p)) return false
+  if (process.platform === "win32" && (p.includes("\\") || /^[A-Za-z]:/.test(p))) return false
+  return p.split("/").every((s) => s !== "" && s !== "." && s !== "..")
+}
 
 export const 人话字节 = (n: number): string =>
   n >= 1024 ** 3 ? `${Number((n / 1024 ** 3).toFixed(1))} GB` : `${Math.max(1, Math.round(n / 1024 ** 2))} MB`
@@ -134,6 +143,11 @@ export interface 回退结果 {
   keep: 回退计划["keep"]
   cannot: 回退计划["cannot"]
   failed: { path: string; message: string }[]
+  /**
+   * 换下之后原处又冒出来、被一起挪进废纸篓的那几份（2026-09-27 复审：原先只写进 `manifest.json`，界面列不出来）。
+   * 一个都没有就没有这个键。
+   */
+  appeared?: { path: string; to: string }[]
   /** 挪走的、换下来的放在哪儿（相对工作区，posix）。一个都没挪就没有 */
   trash?: string
 }
@@ -170,8 +184,11 @@ async function 看(abs: string): Promise<Stats | undefined> {
 /**
  * 把 `从` 放到 `到`，**不顶掉**那里已有的东西：`link` 在目标已存在时报 EEXIST（`rename` 会悄悄覆盖）。
  * 盘不支持硬链接（exFAT、有的网络盘）才退回 `rename`，且只在此刻目标确实不在时——那一瞬的竞争窗口是剩下的风险。
+ *
+ * 返回 `从` 删不掉时的那个错（2026-09-27 复审）：`link` 成功之后 `从` 还硬链着同一份，删不掉就留在原地——
+ * 原先 `.catch(() => {})` 吞掉了，工作区里多出一个 `*.dawn-rewind-*.tmp` 没人知道。由调用的人决定怎么交代。
  */
-async function 不覆盖地放(从: string, 到: string): Promise<void> {
+async function 不覆盖地放(从: string, 到: string, 链上之后?: () => void | Promise<void>): Promise<unknown> {
   try {
     await link(从, 到)
   } catch (e) {
@@ -179,9 +196,13 @@ async function 不覆盖地放(从: string, 到: string): Promise<void> {
     if (c === "EEXIST" || !["EPERM", "ENOTSUP", "EOPNOTSUPP", "EMLINK", "ENOSYS"].includes(c ?? "")) throw e
     if (await 看(到)) throw Object.assign(new Error(`EEXIST: ${到} 已存在`), { code: "EEXIST" })
     await rename(从, 到)
-    return
+    return undefined
   }
-  await unlink(从).catch(() => {})
+  await 链上之后?.()
+  return unlink(从).then(
+    () => undefined,
+    (e: unknown) => e ?? new Error("unlink 失败"),
+  )
 }
 
 /** 废纸篓清单里的一条：挪了什么、挪到哪、为什么 */
@@ -211,7 +232,7 @@ export class 检查点存档 {
   constructor(
     private readonly workspace: string,
     dir: string,
-    private readonly 选项: 存档选项 = {},
+    private readonly 选项: 存档选项 & 仅测试选项 = {},
   ) {
     this.账 = join(dir, "ledger.jsonl")
     this.快照账 = join(dir, "snapshots.jsonl")
@@ -338,11 +359,25 @@ export class 检查点存档 {
         }
         写清单()
 
-        /** 把 p 挪进废纸篓。那里本来就没有 → undefined；不是普通文件 → 不碰（抛 `不碰`） */
-        const 挪走 = async (p: string, why: 挪动缘由): Promise<string | undefined> => {
+        /**
+         * 把 p 挪进废纸篓。那里本来就没有 → undefined；不是普通文件 → 不碰（抛 `不碰`）。
+         * 例外（2026-09-27 复审）：要改回去的文件，原处现在是个**空目录**——快照里那儿是文件，所以这个目录是后来才有的。
+         * 目录从不进废纸篓；`rmdir` 不递归，里面有东西就失败，照旧当「不碰」。收掉了记在 `收掉的空目录` 里，改回失败时建回来。
+         */
+        const 挪走 = async (p: string, why: 挪动缘由, 收掉的空目录?: string[]): Promise<string | undefined> => {
           const 源 = await this.落点(根实, p, false)
           const st = await 看(源)
           if (!st) return undefined
+          if (st.isDirectory() && 收掉的空目录) {
+            const 收了 = await rmdir(源).then(
+              () => true,
+              () => false,
+            )
+            if (收了) {
+              收掉的空目录.push(源)
+              return undefined
+            }
+          }
           if (!st.isFile()) throw new 不碰(`现在那里是${种类(st)}，不是普通文件，没动它`)
           let 篓里 = `${篓.相对}/${p}`
           // 同一件挪两次（换下来的那份 + 半路冒出来的那份）：各留各的，不互相顶掉
@@ -369,27 +404,38 @@ export class 检查点存档 {
           let 临时: string | undefined
           let 换下: string | undefined
           let 到: string | undefined
+          const 建了: string[] = []
+          const 收掉的空目录: string[] = []
+          const 临时名 = `${x.path}.dawn-rewind-${randomBytes(4).toString("hex")}.tmp`
+          /** 临时名删不掉：它留在工作区里（就位成功时还和那份硬链着），进 `failed` 让你看得见、能手删（2026-09-27 复审） */
+          const 留下临时 = (e: unknown) =>
+            结果.failed.push({ path: 临时名, message: `回退用的临时文件没删掉（${说(e)}），可以手动删；${x.path} 本身不受影响` })
+          const 链上之后 = () => this.选项.插一脚?.("链上之后", x.path)
           try {
             if (!对象名合法(x.obj)) throw new 不碰("存档里这一版的名字不对（存档被改过？），没动它")
-            到 = await this.落点(根实, x.path, true)
-            临时 = `${到}.dawn-rewind-${randomBytes(4).toString("hex")}.tmp`
+            到 = await this.落点(根实, x.path, true, 建了)
+            临时 = join(this.workspace, 临时名)
             // EXCL：临时名撞上已有的东西就失败，不覆盖
             await copyFile(join(this.对象, x.obj), 临时, constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE)
             if (x.mode !== undefined) await chmod(临时, x.mode)
-            换下 = await 挪走(x.path, "replaced")
+            换下 = await 挪走(x.path, "replaced", 收掉的空目录)
             await this.选项.插一脚?.("换下之后", x.path)
+            let 删不掉: unknown
             try {
-              await 不覆盖地放(临时, 到)
+              删不掉 = await 不覆盖地放(临时, 到, 链上之后)
             } catch (e) {
               if (码(e) !== "EEXIST") throw e
               // 换下之后原处又冒出一个（别的进程刚写的）：它也先进废纸篓，再试一次；还不行就算了
-              await 挪走(x.path, "appeared_during_rewind")
-              await 不覆盖地放(临时, 到)
+              const 篓里 = await 挪走(x.path, "appeared_during_rewind")
+              if (篓里) (结果.appeared ??= []).push({ path: x.path, to: 篓里 })
+              删不掉 = await 不覆盖地放(临时, 到, 链上之后)
             }
             临时 = undefined
             结果.restored.push(x.path)
+            if (删不掉) 留下临时(删不掉)
           } catch (e) {
-            if (临时) await unlink(临时).catch(() => {})
+            // ENOENT：临时名压根没拷出来（旧版本那份没了之类），不算留下
+            if (临时) await unlink(临时).catch((e2: unknown) => void (码(e2) !== "ENOENT" && 留下临时(e2)))
             let message = 说(e)
             if (换下 && 到) {
               // 现在那份已经进了废纸篓、旧版本没就位：放回原处；放不回就说清它在哪儿
@@ -402,6 +448,10 @@ export class 检查点存档 {
                 message += `；现在那份在 ${换下}`
               }
             }
+            // 原处那个空目录是为了放文件才收掉的：没放成就建回来，别让你的东西少一样
+            for (const d of 收掉的空目录) await mkdir(d).catch(() => {})
+            // 这次为它建的父目录：由里往外收掉（不递归，里面有东西就失败、留着）；原先就在的一个都不碰
+            for (const d of [...建了].reverse()) await rmdir(d).catch(() => {})
             结果.failed.push({ path: x.path, message })
           }
         }
@@ -463,8 +513,9 @@ export class 检查点存档 {
    * 每一级父目录 `lstat`，不许是链接、不许是文件；`建` 时缺的父目录一级一级建（不用 `recursive`，它会穿过链接）；
    * 最后父目录的 realpath 必须在工作区的 realpath 里（`/var` 与 `/private/var` 这种工作区本身是链接的，比 realpath 就对了）。
    * 父目录不存在且不 `建`：直接返回——目标自然也不存在。
+   * `建了`：这一次真建出来的目录（绝对路径，由外往里）——改回失败时只收这些（2026-09-27 复审）。
    */
-  private async 落点(根实: string, p: string, 建: boolean): Promise<string> {
+  private async 落点(根实: string, p: string, 建: boolean, 建了?: string[]): Promise<string> {
     if (!路径合法(p)) throw new 不碰(`路径不合法（${p}），没动它`)
     const 段 = p.split("/")
     let 当前 = this.workspace
@@ -472,9 +523,13 @@ export class 检查点存档 {
       当前 = join(当前, 段[k]!)
       let st = await 看(当前)
       if (!st && 建) {
-        await mkdir(当前).catch((e) => {
-          if (码(e) !== "EEXIST") throw e
-        })
+        const 当前这级 = 当前
+        await mkdir(当前这级).then(
+          () => 建了?.push(当前这级),
+          (e) => {
+            if (码(e) !== "EEXIST") throw e
+          },
+        )
         st = await 看(当前)
       }
       const 名 = 段.slice(0, k + 1).join("/")
@@ -604,7 +659,7 @@ export class 检查点存档 {
   }
 
   /**
-   * 读快照账，顺手把不认的条目剔掉（2026-09-27）：路径不合法（`..`、绝对路径、反斜杠）的整条不认，
+   * 读快照账，顺手把不认的条目剔掉（2026-09-27）：路径不合法（`..`、绝对路径；Windows 上还有反斜杠、盘符）的整条不认，
    * `obj` 名字不对的只当「这一版没存」。它们只可能来自被改过的会话目录——认了就会往工作区外面写、从存档外面读。
    */
   private 读快照(): 快照行[] {

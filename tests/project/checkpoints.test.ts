@@ -18,7 +18,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
-import { 检查点存档 } from "../../src/project/checkpoints.js"
+import { 检查点存档, 路径合法 } from "../../src/project/checkpoints.js"
 
 const dirs: string[] = []
 afterEach(() => {
@@ -390,6 +390,7 @@ describe("影子存档 · 回退的数据安全", () => {
     await 一轮(存, "e1", () => 写(ws, "a.py", "v2"))
     const r = await 存.回退(之后("e1"))
     expect(r).toMatchObject({ restored: ["a.py"], failed: [] })
+    expect(r.appeared, "半路冒出来的那份也要交代给界面，不只写进清单").toEqual([{ path: "a.py", to: `${r.trash}/a.py~2` }])
     expect(读(ws, "a.py")).toBe("v1")
     const 篓里 = readdirSync(join(ws, r.trash!)).filter((f) => f.startsWith("a.py")).map((f) => 读(ws, `${r.trash}/${f}`))
     expect(篓里.sort()).toEqual(["v2", "半路冒出来的"].sort())
@@ -404,8 +405,9 @@ describe("影子存档 · 回退的数据安全", () => {
     try {
       const r = await 存.回退(之后("e1"))
       expect(r.restored).toEqual([])
-      expect(r.failed).toHaveLength(1)
-      expect(r.failed[0]!.message).toContain(`${r.trash}/sub/a.py`)
+      // sub 只读：临时名也删不掉，一并列出（2026-09-27 复审）——不再悄悄留在工作区里
+      expect(r.failed.map((x) => x.path.replace(/\.dawn-rewind-[0-9a-f]+\.tmp$/, ".tmp")).sort()).toEqual(["sub/a.py", "sub/a.py.tmp"])
+      expect(r.failed.find((x) => x.path === "sub/a.py")!.message).toContain(`${r.trash}/sub/a.py`)
       expect(读(ws, `${r.trash}/sub/a.py`)).toBe("v2")
     } finally {
       ;chmodSync(join(ws, "sub"), 0o755)
@@ -509,5 +511,78 @@ describe("影子存档 · 回退的数据安全", () => {
     await expect(存.收尾()).resolves.toBeUndefined()
     expect(喊了.length).toBeGreaterThan(0)
     expect(存.段落().at(-1)).toMatchObject({ kind: "gap" })
+  })
+})
+
+/** 2026-09-27 复审（4dccf18 之后）的几条小的 */
+describe("影子存档 · 复审补的几条", () => {
+  it("路径合法：反斜杠、`x:` 开头在 macOS / Linux 上是合法文件名；`..`、绝对路径、NUL 哪儿都不认", () => {
+    const 真平台 = process.platform
+    try {
+      Object.defineProperty(process, "platform", { value: "darwin" })
+      expect(路径合法("a\\b.csv")).toBe(true)
+      expect(路径合法("x:foo")).toBe(true)
+      for (const p of ["../a", "a/../b", "/etc/passwd", "a\0b", "", "a//b", "./a"]) expect(路径合法(p), p).toBe(false)
+      Object.defineProperty(process, "platform", { value: "win32" })
+      expect(路径合法("a\\b.csv")).toBe(false)
+      expect(路径合法("x:foo")).toBe(false)
+      expect(路径合法("C:/x")).toBe(false)
+    } finally {
+      Object.defineProperty(process, "platform", { value: 真平台 })
+    }
+  })
+
+  it.skipIf(process.platform === "win32")("agent 建了 a\\b.csv、x:foo：回退照样挪走，不说「存档被改过」", async () => {
+    const { ws, 存, 喊了 } = 新的()
+    await 一轮(存, "e1", () => {
+      写(ws, "a\\b.csv", "1")
+      写(ws, "x:foo", "2")
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r.failed).toEqual([])
+    expect([...r.removed].sort()).toEqual(["a\\b.csv", "x:foo"].sort())
+    expect(existsSync(join(ws, "a\\b.csv"))).toBe(false)
+    expect(喊了.some((x) => x.includes("不认"))).toBe(false)
+  })
+
+  it("就位之后临时名删不掉：它还硬链在工作区里，要列出来", async () => {
+    const box: { ws?: string } = {}
+    const { ws, 存 } = 新的({ 插一脚: async (时机) => void (时机 === "链上之后" && chmodSync(join(box.ws!, "sub"), 0o555)) })
+    box.ws = ws
+    写(ws, "sub/a.py", "v1")
+    await 一轮(存, "e1", () => 写(ws, "sub/a.py", "v2"))
+    try {
+      const r = await 存.回退(之后("e1"))
+      expect(r.restored).toEqual(["sub/a.py"])
+      expect(读(ws, "sub/a.py")).toBe("v1")
+      const 残 = readdirSync(join(ws, "sub")).filter((f) => f.endsWith(".tmp"))
+      expect(残).toHaveLength(1)
+      expect(r.failed).toEqual([{ path: `sub/${残[0]}`, message: expect.stringContaining("临时文件") }])
+    } finally {
+      chmodSync(join(ws, "sub"), 0o755)
+    }
+  })
+
+  it("改回去失败：这次为它建的父目录收掉（由里往外），原先就在的目录不动", async () => {
+    const { ws, 存档目录, 存 } = 新的()
+    写(ws, "p/q/r/a.txt", "v1")
+    await 一轮(存, "e1", () => rmSync(join(ws, "p/q"), { recursive: true }))
+    for (const f of readdirSync(join(存档目录, "objects"))) rmSync(join(存档目录, "objects", f))
+    const r = await 存.回退(之后("e1"))
+    expect(r.failed.map((x) => x.path)).toEqual(["p/q/r/a.txt"])
+    expect(existsSync(join(ws, "p/q")), "这次建的 p/q、p/q/r 收掉").toBe(false)
+    expect(existsSync(join(ws, "p")), "原先就在的 p 不动").toBe(true)
+  })
+
+  it("原处现在是个空目录：收掉它（不递归）再改回去；目录不进废纸篓", async () => {
+    const { ws, 存 } = 新的()
+    写(ws, "a.txt", "v1")
+    await 一轮(存, "e1", () => {
+      rmSync(join(ws, "a.txt"))
+      mkdirSync(join(ws, "a.txt"))
+    })
+    const r = await 存.回退(之后("e1"))
+    expect(r).toMatchObject({ restored: ["a.txt"], failed: [] })
+    expect(读(ws, "a.txt")).toBe("v1")
   })
 })

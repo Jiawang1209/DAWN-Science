@@ -16,7 +16,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { execFileSync, spawn } from "node:child_process"
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { createRequire } from "node:module"
@@ -36,7 +36,7 @@ beforeAll(() => {
   expect(existsSync(CHILD), `${CHILD} 不存在，build:electron 没有产出子侧入口`).toBe(true)
 }, 180_000)
 
-let server: { url: string; close: () => Promise<void> }
+let server: { url: string; close: () => Promise<void>; requests: { body: { messages?: unknown[] } }[] }
 let dir: string
 
 beforeAll(async () => {
@@ -134,5 +134,34 @@ describe("真的起一个子 agent 进程", () => {
     expect(code).toBe(0)
     expect(lastDone(out)?.ok).toBe(false)
     expect(lastDone(out)?.error).toContain("读不懂")
+  }, 120_000)
+})
+
+describe("过程行与会话文件（2026-09-27，子 agent 看得见）", () => {
+  const 行们 = (out: string) =>
+    out.split("\n").filter((l) => l.trim().startsWith("{")).map((l) => JSON.parse(l) as { type: string; event?: { kind: string; toolName?: string } })
+
+  it("「子任务」：stdout 上有 read 的 tool_start / tool_end；会话落在 transcript.dir", async () => {
+    const spec = specFor({ task: "子任务：读一下 README.md" })
+    writeFileSync(join(spec.cwd, "README.md"), "# 一个测试仓库\n")
+    const 记录 = join(dir, `transcript-${Math.round(performance.now() * 1000)}`)
+    const r = await runChild({ ...spec, transcript: { dir: 记录, resume: false } })
+    const 过程 = 行们(r.out).filter((v) => v.type === "event").map((v) => v.event!)
+    expect(过程.find((e) => e.kind === "tool_start")?.toolName, r.err).toBe("read")
+    expect(过程.some((e) => e.kind === "tool_end")).toBe(true)
+    expect(lastDone(r.out)?.ok).toBe(true)
+    expect(readdirSync(记录).some((f) => f.endsWith(".jsonl")), "pi 会话文件应落在 transcript.dir").toBe(true)
+  }, 120_000)
+
+  it("`resume: true` 续上：第二问送到模型的消息里带着第一问", async () => {
+    const spec = specFor({ task: "子任务：读一下 README.md" })
+    writeFileSync(join(spec.cwd, "README.md"), "# 一个测试仓库\n")
+    const 记录 = join(dir, `transcript-${Math.round(performance.now() * 1000)}`)
+    await runChild({ ...spec, transcript: { dir: 记录, resume: false } })
+    await runChild({ ...spec, task: "再说一句", transcript: { dir: 记录, resume: true } })
+    const 最后一问 = JSON.stringify(server.requests.at(-1)?.body.messages ?? [])
+    expect(最后一问).toContain("再说一句")
+    expect(最后一问, "续上了就该带着上一问").toContain("子任务：读一下 README.md")
+    expect(readdirSync(记录).filter((f) => f.endsWith(".jsonl"))).toHaveLength(1)
   }, 120_000)
 })

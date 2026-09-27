@@ -37,6 +37,12 @@ export interface SubagentChildSpec {
   /** provider → apiKey。**只走这里，不进环境变量** */
   credentials?: Record<string, string>
   /**
+   * **子 agent 的会话落在哪**（2026-09-27，子 agent 看得见）。给了就把 pi 会话写进 `dir`，`resume` 时续最近那份——
+   * 与成员模式的 `member.sessionDir` 同一段代码。此前非成员模式不给 sessionManager，pi 写进 `<agentDir>/sessions/--<cwd>--/`，
+   * 文件在、却找不回是哪一次调用的（spec §1.1）。
+   */
+  transcript?: { dir: string; resume: boolean }
+  /**
    * **团队成员模式**（team-board，2026-08-22）。给了就：
    * - 会话记录落在 `sessionDir`，`resume` 为真时**续上一轮的会话文件**（同一个成员下一轮还记得上一轮）——
    *   进程仍是新的，不变式 1 不变；
@@ -51,11 +57,9 @@ export interface SubagentChildSpec {
 }
 
 /**
- * 子 → 父：stdout 上的 NDJSON。
+ * 子 → 父：stdout 上的 NDJSON。最后一行是 `done`。
  *
- * 目前只有 `done` 一种。留着可辨识联合是为了下一片的进度行
- * （界面的 chip 组要显示子 agent 正在调什么工具），
- * **那时加一个成员即可，不必改父侧的解析形状**。
+ * 进度行 2026-09-27 起有了，见 `SubagentEventMessage`——加的是联合里一个成员，父侧的解析形状没改。
  */
 export type SubagentDoneMessage =
   | { type: "done"; ok: true; output: string }
@@ -69,7 +73,37 @@ export interface SubagentCallMessage {
   params: unknown
 }
 
-export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage
+/**
+ * 子 → 父：一条过程（2026-09-27，spec §4.1）。形状就是 `AgentEvent` 同名几种**去掉 `sessionId`**——
+ * 父侧补上子转录的 id 就能原样交给事件中枢，不另写一套归并。用量本轮不吐（spec §4.1）。
+ */
+export type 子事件 =
+  | { kind: "output"; data: string }
+  | { kind: "thinking"; delta: string }
+  | { kind: "tool_start"; toolCallId: string; toolName: string; input: unknown }
+  | { kind: "tool_end"; toolCallId: string; toolName: string; isError: boolean; text: string; truncated: boolean; bytes: number }
+  | { kind: "turn_end" }
+
+export interface SubagentEventMessage {
+  type: "event"
+  event: 子事件
+}
+
+/**
+ * 父侧再加的一种：这一轮跑完了（主 agent 派的那一轮，或你在坞里接着问的那一轮——`followUp`）。
+ * `result` 是主 agent 拿到的那段原文；接着问的那一轮不带它（答复不回主 agent，spec D3）。
+ */
+export type 子转录事件 =
+  | 子事件
+  | {
+      kind: "settled"
+      ok: boolean
+      error?: string
+      result?: { text: string; truncated?: { originalBytes: number; keptBytes: number } }
+      followUp?: true
+    }
+
+export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage | SubagentEventMessage
 
 /** 父 → 子（只在成员模式）：工具调用的回应，一行一条 */
 export interface SubagentParentReply {

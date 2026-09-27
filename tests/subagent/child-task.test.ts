@@ -25,6 +25,8 @@ const SPEC: SubagentChildSpec = {
 
 /** 一个假的 pi 会话：`prompt()` 时按脚本吐事件 */
 function fakeSession(script: {
+  /** prompt() 时先原样吐这些 pi 事件（2026-09-27，子 agent 看得见） */
+  raw?: unknown[]
   deltas?: string[]
   throws?: string
   emitError?: string
@@ -39,6 +41,7 @@ function fakeSession(script: {
         }
       },
       async prompt() {
+        for (const r of script.raw ?? []) cb?.(r)
         for (const d of script.deltas ?? []) {
           cb?.({ type: "message_update", assistantMessageEvent: { type: "text_delta", delta: d } })
         }
@@ -129,5 +132,27 @@ describe("收尾", () => {
       },
     }))
     expect(unsubscribed).toBe(true)
+  })
+})
+
+describe("过程（2026-09-27，子 agent 看得见）", () => {
+  it("每条能翻的 pi 事件都交给 onEvent；`done` 的语义一个字不变", async () => {
+    const 收到: unknown[] = []
+    const r = await runChildTask(
+      SPEC,
+      fakeSession({
+        raw: [
+          { type: "tool_execution_start", toolCallId: "t1", toolName: "read", args: { path: "a" } },
+          { type: "tool_execution_end", toolCallId: "t1", toolName: "read", result: { content: [{ type: "text", text: "内容" }] } },
+        ],
+        deltas: ["结论"],
+      }),
+      (e) => 收到.push(e),
+    )
+    expect(收到.map((e) => (e as { kind: string }).kind)).toEqual(["tool_start", "tool_end", "output"])
+    expect(r).toEqual({ type: "done", ok: true, output: "结论" })
+  })
+  it("不给 onEvent 照旧能跑（老调用方）", async () => {
+    expect(await runChildTask(SPEC, fakeSession({ deltas: ["x"] }))).toEqual({ type: "done", ok: true, output: "x" })
   })
 })

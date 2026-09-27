@@ -33,6 +33,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import type { SubagentDefinition } from "./definitions.js"
 import type { SubagentChildSpec } from "./protocol.js"
+import { 按字节截 } from "./clip.js"
 
 /**
  * 杀掉一个子 agent 进程**连同它派生的后代**（审查 debug H6）。
@@ -354,7 +355,7 @@ export class SubagentExecutor {
           task: task.task,
           ok: true,
           // 截断按字节算，但切在字符边界上——按字节切会把 UTF-8 切成半个汉字
-          output: truncated ? clip(full, this.limits.maxOutputBytes) : full,
+          output: truncated ? 按字节截(full, this.limits.maxOutputBytes) : full,
           outputTruncated: truncated,
           outputBytes: bytes,
         })
@@ -426,20 +427,6 @@ function parseDone(stdout: string): DoneLine | undefined {
     }
   }
   return found
-}
-
-/** 按字节上限裁剪，但切在字符边界 —— 按字节硬切会切出半个汉字 */
-function clip(text: string, maxBytes: number): string {
-  const buf = Buffer.from(text, "utf8")
-  if (buf.byteLength <= maxBytes) return text
-  // `toString` 会把结尾不完整的多字节序列变成替换字符，逐个退到干净为止
-  let end = maxBytes
-  let out = buf.subarray(0, end).toString("utf8")
-  while (end > 0 && out.endsWith("�")) {
-    end--
-    out = buf.subarray(0, end).toString("utf8")
-  }
-  return out
 }
 
 function fail(task: SubagentTask, error: string): SubagentResult {

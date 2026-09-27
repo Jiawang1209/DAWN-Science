@@ -111,13 +111,15 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   await resourceLoader.reload()
 
   /**
-   * **团队成员续会话**（team-board，2026-08-22）：记录落在成员自己的目录；`resume` 时续最近那份。
-   * 这就是「可续聊」——进程是新的，记忆在会话文件里。
+   * 会话落在哪（team-board 2026-08-22；2026-09-27 起非成员也落）：成员落在成员目录、续最近那份（可续聊）；
+   * 普通子 agent 落在 `transcript.dir`——坞里「子 agent」那一格重开后读它，接着问时续它。
+   * 两种都没给（老父进程）：照旧交给 pi 的默认位置。进程是新的，记忆在会话文件里。
    */
-  const sessionManager = spec.member
-    ? spec.member.resume
-      ? SessionManager.continueRecent(spec.cwd, spec.member.sessionDir)
-      : SessionManager.create(spec.cwd, spec.member.sessionDir)
+  const 记录 = spec.member ? { dir: spec.member.sessionDir, resume: spec.member.resume } : spec.transcript
+  const sessionManager = 记录
+    ? 记录.resume
+      ? SessionManager.continueRecent(spec.cwd, 记录.dir)
+      : SessionManager.create(spec.cwd, 记录.dir)
     : undefined
 
   const { session } = await createAgentSession({
@@ -250,7 +252,7 @@ async function main(): Promise<void> {
     return
   }
 
-  emit(await runChildTask(spec, realSession))
+  emit(await runChildTask(spec, realSession, (e) => emit({ type: "event", event: e })))
 }
 
 void main().then(

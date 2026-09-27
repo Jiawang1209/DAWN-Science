@@ -101,6 +101,8 @@ export interface Actions {
   newSideChat(): void
   /** 开坞并切到「对话」那一格。永远是开，不是切换 */
   openSideChat(): void
+  /** 压缩当前这段的上下文（2026-09-27）。**与仪表弹层「现在压缩」、输入框里的 `/compact` 是同一个动作** */
+  compactContext(): void
 }
 
 export interface CommandContext {
@@ -202,6 +204,27 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "delete remove 删除 移除",
     run: () => actions.deleteSession(),
     ...(ctx.session ? {} : { unavailable: t("还没有选中会话") }),
+  })
+
+  /**
+   * 压缩上下文（2026-09-27，spec §2.2）。仪表弹层与 `/compact` 之外的第三条路——**不可用照样列出**，写明是哪一种不可用。
+   */
+  const 压缩why = !ctx.session
+    ? t("还没有会话")
+    : ctx.session.kind === "kernel" || ctx.session.kind === "pty"
+      ? t("这段不是和模型的对话，没有上下文可压")
+      : ctx.session.kind !== "native"
+        ? t("外部 agent 自己管上下文，DAWN 压不了")
+        : ctx.busy
+          ? t("这一轮还在跑，做完再压缩")
+          : undefined
+  out.push({
+    id: "session.compact",
+    title: t("压缩上下文"),
+    group: "会话",
+    keywords: "compact context /compact 压缩 上下文 摘要",
+    run: () => actions.compactContext(),
+    ...(压缩why ? { unavailable: 压缩why } : {}),
   })
 
   /**

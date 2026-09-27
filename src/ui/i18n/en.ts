@@ -1575,4 +1575,10 @@ export const EN: Readonly<Record<string, string>> = {
   "这次的摘要": "This summary",
   "早先的对话换成了一段摘要交给模型；上面的记录都还在，模型现在读的是摘要。": "Earlier conversation was replaced by a summary for the model; the record above is all still here, but the model now reads the summary.",
   "压缩本身用了 输入 {0} · 输出 {1}": "Compacting itself used input {0} · output {1}",
+  // 上下文用量与压缩（2026-09-27）· 命令面板与 / 菜单
+  "压缩上下文": "Compact context",
+  "指令": "Command",
+  "把早先的对话换成一段摘要交给模型，腾出上下文；后面可以跟一句要保留什么": "Replace earlier conversation with a summary for the model to free up context; add what to keep after it",
+  "外部 agent 自己管上下文，DAWN 压不了": "External agents manage their own context; DAWN can't compact it",
+  "这段不是和模型的对话，没有上下文可压": "This session isn't a chat with a model, so there's no context to compact",
 }

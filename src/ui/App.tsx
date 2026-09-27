@@ -3499,6 +3499,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       />
   )
 
+  /**
+   * 压缩一段的上下文（2026-09-27，spec §2.2）。**只此一处实现**：⌘K、仪表弹层「现在压缩」、输入框 `/compact` 都调它。
+   * 被租约挡下时重取一次再发——与 `写进去` 同一个理由（机器睡一觉，续租的定时器冻住了）。
+   */
+  const 压缩 = useCallback(
+    async (id: string, instructions?: string) => {
+      const 发 = () => client.get("compactSession", { sessionId: id, ...(instructions ? { instructions } : {}) })
+      try {
+        await 发()
+      } catch (e) {
+        if (!(e instanceof Error && /租约/.test(e.message))) throw e
+        await client.get("acquireLease", { sessionId: id, holder: "user" })
+        await 发()
+      }
+    },
+    [client],
+  )
+
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => 开设置栏(),
@@ -3544,8 +3562,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         void 另开到坞Ref.current().catch(fail)
       },
       openSideChat: 打开坞里的对话,
+      /** 压缩当前这段（2026-09-27）。与仪表弹层、`/compact` 同一个 `压缩` */
+      compactContext: () => {
+        if (!session) return
+        void 压缩(session.sessionId).catch(fail)
+      },
     }),
-    [client, session, sessions, askDeleteSession, 回到初始画面],
+    [client, session, sessions, askDeleteSession, 回到初始画面, 压缩],
   )
 
   /** 子 agent 名册（命令面板里「派」与「按规矩聊」两组用）。启动取一次，项目切换时再取；停用的不列 */
@@ -3576,6 +3599,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setSlashItems([
       // 团队模式（team-board）：永远在最前——它不是名册里的一员，是一种做法
       { kind: "team" as const, name: "team", title: t("组一支团队"), description: t("让模型当队长：拉几个子 agent 当成员、拆成带依赖的任务、自动派活；进度在坞里「团队」那一格") },
+      // DAWN 自己认的指令（2026-09-27）：`/compact`。只在能压的那段列出（`ConversationView` 按 `onCompact` 滤）
+      { kind: "command" as const, name: "compact", title: t("压缩上下文"), description: t("把早先的对话换成一段摘要交给模型，腾出上下文；后面可以跟一句要保留什么") },
       ...技能单,
       ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) })),
     ])
@@ -3874,6 +3899,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   void loadTempSessions(client)
                 },
               }),
+          }
+        : {}),
+      /**
+       * 上下文仪表与压缩（2026-09-27）：只有 native 给——外部 agent 的仪表由 `读仪表` 写「读不到」，不去取。
+       * 取回来的是**这一段自己的**（主区 / 坞里各取各的），不写全局 `$contextUsage`（那一份归坞里「概览」）。
+       */
+      ...(s.kind === "native"
+        ? {
+            取上下文用量: () => client.get<import("./panels.js").ContextUsage>("getContextUsage", { sessionId: s.sessionId }),
+            onCompact: (instructions?: string) => 压缩(s.sessionId, instructions),
           }
         : {}),
       onSend: (text, images, behavior) =>
@@ -5238,7 +5273,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   {/* **取最近一条带成本的 `agent_turn`**，不是「最新那条 run」——
                       见 `latestCost` 的说明。都没有时面板说「尚未记录」 */}
                   <CostPanel cost={latestCost} />
-                  {/* 上下文用量。**已用 token 尚未采集，面板如实说，不拿字节去凑** */}
+                  {/* 上下文用量：已用来自 pi 的 getContextUsage（真回复的用量 + 之后新加的估一截，估了写「约」）；下表按字节，不拿字节去凑 token（2026-09-27 更正：此前这里说「尚未采集」，08-10 就接上了） */}
                   <ContextPanel usage={contextUsage} />
                   {/* 变量：**三态在界面上分得开**——不支持要说原因，空是真的空 */}
                   <VariablesPanel state={variables} />

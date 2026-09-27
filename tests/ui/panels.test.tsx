@@ -11,6 +11,7 @@ import {
   AttributionCaveat,
   mayIncludeUserEdits,
   ChangesPanel,
+  ContextPanel,
   CostPanel,
   ProvenanceBadge,
   RunsPanel,
@@ -186,5 +187,21 @@ describe("历史栏", () => {
   it("空历史如实说没有", () => {
     render(<RunsPanel runs={[]} />)
     expect(screen.getByText(/还没有记录/)).toBeDefined()
+  })
+})
+
+describe("ContextPanel（2026-09-27 口径）", () => {
+  const 底 = { bytes: { system: 1, tools: 1, history: 1 }, contextWindow: 128_000 }
+  it("有估的一截：写「约」", () => {
+    render(<ContextPanel usage={{ ...底, usedTokens: 57, estimated: true }} />)
+    expect(screen.getByText(/约 57 \/ 128k tokens/)).toBeTruthy()
+  })
+  it("刚压缩过：说等下一次回复", () => {
+    render(<ContextPanel usage={{ ...底, afterCompaction: true }} />)
+    expect(screen.getByText(/刚压缩过，等下一次回复才知道现在用了多少/)).toBeTruthy()
+  })
+  it("给了线：写自动压缩线", () => {
+    render(<ContextPanel usage={{ ...底, usedTokens: 20, compactAt: 111_616 }} />)
+    expect(screen.getByText(/到 111.6k tokens 会自动压缩/)).toBeTruthy()
   })
 })

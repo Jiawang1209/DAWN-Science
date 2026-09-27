@@ -42,6 +42,7 @@ function actions(): Actions {
     setTheme: vi.fn(),
     newSideChat: vi.fn(),
     openSideChat: vi.fn(),
+    compactContext: vi.fn(),
   }
 }
 
@@ -188,5 +189,22 @@ describe("命令注册表 · 随上下文变化", () => {
     const cmds = buildCommands({ actions: a, agents: [], session, busy: false, view: "conversation" })
     cmds.find((c) => c.id === "theme.dark")!.run()
     expect(a.setTheme).toHaveBeenCalledWith("dark")
+  })
+})
+
+describe("压缩上下文（2026-09-27）", () => {
+  const 那条 = (over: Partial<Parameters<typeof buildCommands>[0]> = {}) => build(over).find((x) => x.id === "session.compact")
+  it("内置对话、不忙：可用，run 只转发给 actions.compactContext", () => {
+    const a = actions()
+    const c = buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation" }).find((x) => x.id === "session.compact")!
+    expect(c.unavailable).toBeUndefined()
+    c.run()
+    expect(a.compactContext).toHaveBeenCalledTimes(1)
+  })
+  it("不可用照样列出，并说清是哪一种", () => {
+    expect(那条({ session: undefined })?.unavailable).toBe("还没有会话")
+    expect(那条({ session: { ...session, kind: "acp" } })?.unavailable).toBe("外部 agent 自己管上下文，DAWN 压不了")
+    expect(那条({ session: { ...session, kind: "kernel" } })?.unavailable).toBe("这段不是和模型的对话，没有上下文可压")
+    expect(那条({ busy: true })?.unavailable).toBe("这一轮还在跑，做完再压缩")
   })
 })

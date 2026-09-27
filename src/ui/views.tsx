@@ -4166,9 +4166,8 @@ export function ConversationView({
   }, [退回的图, session.sessionId])
   const 全部斜杠 = useStore($slashItems)
   // `/compact` 那一条只给能压的那段（native）；外部 agent 那边 `/compact` 原样发给它，不替它列
-  // （`as string`：`SlashItem.kind` 的 `command` 在 Task 7 才加，那时去掉断言）
   const 斜杠单 = useMemo(
-    () => (onCompact ? 全部斜杠 : 全部斜杠.filter((x) => (x.kind as string) !== "command")),
+    () => (onCompact ? 全部斜杠 : 全部斜杠.filter((x) => x.kind !== "command")),
     [全部斜杠, onCompact],
   )
   const [斜杠选中, 设斜杠选中] = useState(0)
@@ -6584,8 +6583,8 @@ export function EmptyConversation({
   /** 这一屏的草稿。**不进 `$drafts`**：那份是按会话分的，而这里还没有会话 */
   const [草稿, 设草稿] = useState("")
   const 全部斜杠 = useStore($slashItems)
-  // 还没有会话：没有上下文可压，不列 `/compact`（`as string` 同上，Task 7 去掉）
-  const 斜杠单 = useMemo(() => 全部斜杠.filter((x) => (x.kind as string) !== "command"), [全部斜杠])
+  // 还没有会话：没有上下文可压，不列 `/compact`
+  const 斜杠单 = useMemo(() => 全部斜杠.filter((x) => x.kind !== "command"), [全部斜杠])
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
   const 输入框 = useRef<HTMLTextAreaElement>(null)

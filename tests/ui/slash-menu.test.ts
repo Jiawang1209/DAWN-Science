@@ -20,3 +20,13 @@ describe("斜杠选完", () => {
     expect(筛斜杠(项, "/skill:bayes").map((x) => x.name)).toEqual(["bayesian-modeler"])
   })
 })
+
+describe("/compact（2026-09-27）", () => {
+  const 压 = { kind: "command" as const, name: "compact", title: "压缩上下文", description: "把早先的对话换成一段摘要" }
+  it("选中写 `/compact `，不替人发", () => {
+    expect(斜杠选完(压, "/com")).toBe("/compact ")
+  })
+  it("按名字筛得到", () => {
+    expect(筛斜杠([压], "/comp")).toEqual([压])
+  })
+})

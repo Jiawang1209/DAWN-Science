@@ -243,8 +243,9 @@ const KB = (n: number): string =>
  *   - **上限**：模型自带的 `contextWindow`，真数（拿不到就说拿不到）
  *   - **构成**：三档的字节数与占比，**标题里写死「按字节，不是 token」**
  *
- * 已用了多少 token 目前**尚未采集**（provider 报的 usage 一处都没接），
- * 面板如实说「尚未采集」，不拿字节去凑。
+ * 已用多少来自 pi 的 `getContextUsage()`（2026-09-27）：最近一次真回复的用量，加上那之后新加的内容按字数估的一截——
+ * 有估的就写「约」；刚压缩过就说「等下一次回复」。**拿不到就说拿不到，不拿字节去凑。**
+ * （这段注释 08-10 到 09-27 一直写着「尚未采集」，而那时早已接上。）
  */
 export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   if (!usage) {
@@ -264,15 +265,20 @@ export function ContextPanel({ usage }: { usage: ContextUsage | undefined }) {
   return (
     <Panel title={t("上下文")}>
       <p className="tokens">
-        {usage.usedTokens !== undefined && usage.contextWindow
-          ? `${formatTokens(usage.usedTokens)} / ${formatTokens(usage.contextWindow)} tokens`
-          : usage.usedTokens !== undefined
-            ? tf("已用 {0} tokens（上限拿不到）", formatTokens(usage.usedTokens))
-            : usage.contextWindow
-              ? tf("模型上限 {0} tokens · 已用尚未采集", formatTokens(usage.contextWindow))
-              : t("尚未采集")}
+        {usage.afterCompaction
+          ? t("刚压缩过，等下一次回复才知道现在用了多少")
+          : usage.usedTokens !== undefined && usage.contextWindow
+            ? `${usage.estimated ? tf("约 {0}", formatTokens(usage.usedTokens)) : formatTokens(usage.usedTokens)} / ${formatTokens(usage.contextWindow)} tokens`
+            : usage.usedTokens !== undefined
+              ? tf("已用 {0} tokens（上限拿不到）", formatTokens(usage.usedTokens))
+              : usage.contextWindow
+                ? tf("模型上限 {0} tokens · 已用尚未采集", formatTokens(usage.contextWindow))
+                : t("尚未采集")}
         {usage.model ? ` · ${usage.model}` : ""}
       </p>
+      {usage.compactAt !== undefined && usage.contextWindow ? (
+        <p className="hint">{tf("到 {0} tokens 会自动压缩（给摘要留 {1}）", formatTokens(usage.compactAt), formatTokens(usage.contextWindow - usage.compactAt))}</p>
+      ) : null}
       {/* **这一行是整个面板的要害。** 不写清楚，人就会把下表当成 token 分解 */}
       <p className="hint">{t("下表按字节，不是 token")}</p>
       {/**

@@ -224,3 +224,10 @@ describe("坞房客「笔记本」（2026-08-26）", () => {
     expect(房客名("notebook")).toBe("笔记本")
   })
 })
+
+describe("坞房客「子 agent」（2026-09-27）", () => {
+  it("在名单里，紧挨在团队前面；有名字", () => {
+    expect(全部房客.indexOf("subagent")).toBe(全部房客.indexOf("team") - 1)
+    expect(房客名("subagent")).toBe("子 agent")
+  })
+})

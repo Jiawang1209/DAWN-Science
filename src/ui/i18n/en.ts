@@ -1636,4 +1636,12 @@ export const EN: Readonly<Record<string, string>> = {
   "它还在跑，跑完才能接着问": "It is still running — ask once it finishes",
   "它还在答上一句": "It is still answering the previous question",
   "团队成员请在「团队」格里给它发消息": "For team members, message them from the Team pane",
+  // 子 agent 看得见（2026-09-27）
+  "这段对话还没派过子 agent": "This conversation has not dispatched any subagents yet",
+  "在答你的问题": "Answering your question",
+  "交回主 agent 的结果": "Returned to the main agent",
+  "原始 {0} 字节，主 agent 只拿到前 {1} 字节": "{0} bytes originally; the main agent got only the first {1}",
+  "接着问它": "Ask it a follow-up",
+  "接着问": "Ask it",
+  "它的回答不会回到主对话": "Its answer does not go back to the main conversation",
 }

@@ -20,6 +20,7 @@ import type {
   SessionSnapshot,
   SessionSummary,
 } from "../../protocol/index.js"
+import { 是子转录id } from "../../protocol/index.js"
 import { WorkbenchClientError, type WorkbenchClient } from "../client.js"
 import { note } from "./connection.js"
 import { guard } from "./guard.js"
@@ -44,6 +45,7 @@ import {
 } from "./catalog.js"
 import { $activeSessionId } from "./view.js"
 import { $侧边会话id, 侧槽 } from "./side-chat.js"
+import { 子槽, $子agent信息, $子转录id } from "./subagent-view.js"
 
 /**
  * 失败一律出声（规格 7.5）。
@@ -225,6 +227,8 @@ export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined)
  * 「这条响应属于另一个会话」。少任何一道都会让旧内容倒灌进新会话。
  */
 export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<void> {
+  // 子转录跳了号（2026-09-27）：它不是一段会话，走自己的那条
+  if (是子转录id(sessionId)) return resyncSubagent(c, sessionId)
   // 坞里那段跳了号（侧边对话，2026-09-24）：快照灌进侧槽，**不领 `guard()` 的号**——理由见 `resyncSide`
   if (sessionId === $侧边会话id.get() && sessionId !== $activeSessionId.get()) return resyncSide(c, sessionId)
   const g = guard()
@@ -313,6 +317,30 @@ function 真没了(e: unknown): boolean {
   return typeof d === "object" && d !== null && (d as { gone?: unknown }).gone === true
 }
 let 侧边世代 = 0
+
+/** 子转录那一世代（2026-09-27）：换看另一个子 agent 时，上一个飞在路上的快照作废 */
+let 子世代 = 0
+
+/**
+ * 取一段子转录的快照灌进子槽（2026-09-27）。首次打开与跳号重取都走它。**不领 `guard()` 的号**——
+ * 与 `resyncSide` 同一个理由：那是主区切会话的作废机制，坞里这一格换人不该作废主区的请求。
+ */
+export function resyncSubagent(c: WorkbenchClient, id: string): Promise<void> {
+  const 我的 = ++子世代
+  return c
+    .get<SessionSnapshot>("openSubagent", { transcriptId: id })
+    .then((snap) => {
+      if (我的 !== 子世代 || id !== $子转录id.get()) return
+      子槽.applySnapshot({ items: snap.items })
+      $子agent信息.set(snap.subagent)
+      c.expectRevision(id, snap.revision)
+    })
+    .catch((e: unknown) => {
+      // 已经换看别的了：作废的请求不出声
+      if (id !== $子转录id.get()) return
+      fail(e)
+    })
+}
 
 /**
  * 最新 Run 的详情与溯源。**产出与成本只有 `getRun` 带得来**——`listRuns` 只给摘要。

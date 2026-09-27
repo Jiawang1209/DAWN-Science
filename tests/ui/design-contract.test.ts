@@ -297,6 +297,24 @@ describe("设计契约 · 一个动作一个家", () => {
   })
 })
 
+describe("设计契约 · 子 agent 的过程只在坞里画（2026-09-27）", () => {
+  /**
+   * Codex 的 chip 组要回答的是「N 个并发子 agent 怎么显示才不淹掉对话」——**chip 组，不是树、也不是日志**。
+   * 过程住在坞里「子 agent」那一格（`subagent-pane.tsx`）；主转录里的 `SubagentChips` 一旦画起逐条过程，
+   * 对话就又成了日志。这条可判定：它的函数体里不许出现画转录行的那几个组件。
+   */
+  it("**`SubagentChips` 里不画逐条过程** —— 没有 `TranscriptRow` / `ToolRow` / `ToolGroupRow`", () => {
+    const src = read("views.tsx")
+    const 起 = src.indexOf("export function SubagentChips(")
+    expect(起, "SubagentChips 不在 views.tsx 里了——这条扫描要跟着搬").toBeGreaterThan(0)
+    const 下一个 = /\n(?:export )?(?:function|const|class) /g
+    下一个.lastIndex = 起 + 1
+    const m = 下一个.exec(src)
+    const 体 = src.slice(起, m ? m.index : undefined)
+    expect(体.match(/<(TranscriptRow|ToolRow|ToolGroupRow)\b/g) ?? []).toEqual([])
+  })
+})
+
 describe("设计契约 · 表单控件一律走 .control", () => {
   /**
    * **2026-08-09 由一张截图撞出来的生产缺陷。**

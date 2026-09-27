@@ -1797,6 +1797,20 @@ pre {
 /* 失败原因不折叠：规格 7.5，藏起来就等于没报 */
 .chip-error { margin: 0; font-size: var(--dawn-fs-meta); }
 .chip-task { margin: 2px 0 0; color: var(--dawn-text-3); white-space: pre-wrap; }
+/* 在跑时最近那一句（2026-09-27，D5）：跟在状态后面，一行、截断，不撑高 chip */
+.chip-activity {
+  display: inline-block;
+  vertical-align: bottom;
+  margin-left: 6px;
+  /* 坞里那段对话的 chip 也走这里：坞约 380px 宽，一句长命令不许把 chip 撑出去 */
+  max-width: min(24em, 50vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dawn-text-3);
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-fs-meta);
+}
 
 /* ── PTY 会话的终端视图（2026-08-09 取代原来的折叠 dock）──────────
    终端就是这个会话本身，所以它占满主区域，没有折叠开关。 */
@@ -7351,6 +7365,33 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   line-height: 1.5;
   color: var(--dawn-text-3);
 }
+
+
+/* ── 坞里「子 agent」那一格（2026-09-27，spec `2026-09-27-子agent看得见`）──
+   不用 `.turns`：那是主区转录的判据（e2e 与会话续接的用例都认它），一页两个就指向两处 */
+/* 选中一个时整格让给它：坞体的内边距与滚动归还给格子自己（转录自己贴底滚，结果与输入框钉在底下）——与 `.side-chat` 同一招 */
+.right-dock .dock-body:has(> .subagent-pane:not(.subagent-list)) {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.subagent-pane { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; gap: var(--dawn-space-2); }
+.subagent-empty { padding: var(--dawn-space-4); }
+.subagent-list { overflow-y: auto; padding: var(--dawn-space-2); }
+.subagent-list-group { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: var(--dawn-space-2); border-bottom: 1px solid var(--dawn-stroke-3); }
+.subagent-pick[data-status="error"], .subagent-sibling[data-status="error"] { color: var(--dawn-danger); }
+.subagent-back { flex: 0 0 auto; }
+.subagent-batch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: var(--dawn-space-2) var(--dawn-space-2) 0; }
+.subagent-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); margin: 0; padding: 0 var(--dawn-space-2); font-size: var(--dawn-fs-sub); min-width: 0; overflow-wrap: anywhere; }
+.subagent-turns { flex: 1; min-height: 0; overflow-y: auto; }
+.subagent-turns-inner { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-2); }
+.subagent-result { max-height: 40%; overflow-y: auto; min-width: 0; overflow-wrap: anywhere; margin: 0 var(--dawn-space-2); padding: var(--dawn-space-2); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); }
+.subagent-result-head { margin: 0 0 var(--dawn-space-1); font-size: var(--dawn-fs-label); color: var(--dawn-text-2); }
+.subagent-ask { display: flex; flex-direction: column; gap: var(--dawn-space-1); padding: var(--dawn-space-2); min-width: 0; }
+.subagent-ask-text { resize: vertical; width: 100%; box-sizing: border-box; }
+.subagent-ask-send { align-self: flex-end; }
+.subagent-ask-why { padding: 0 var(--dawn-space-2) var(--dawn-space-2); }
 
 /* ── 上下文仪表（2026-09-27）：附栏右侧，常驻。三档颜色只从令牌来 ───────────── */
 .ctx-meter { position: relative; }

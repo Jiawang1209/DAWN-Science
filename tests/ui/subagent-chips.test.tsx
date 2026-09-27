@@ -104,3 +104,21 @@ describe("空表不渲染任何东西", () => {
     expect(container.textContent).toBe("")
   })
 })
+
+describe("点了在坞里看（2026-09-27，子 agent 看得见）", () => {
+  it("给了 onOpen：点 chip 交出它的序号，**不在主转录里展开任何东西**", () => {
+    const 开: number[] = []
+    render(<SubagentChips item={item([RUNNING, OK])} onOpen={(i) => 开.push(i)} />)
+    fireEvent.click(screen.getByRole("button", { name: /planner/ }))
+    expect(开).toEqual([1])
+    expect(screen.queryByText("做计划")).toBeNull()
+  })
+  it("在跑的那颗带着最近那一句；跑完的不带", () => {
+    render(<SubagentChips item={item([{ ...RUNNING, activity: "bash pytest -q" }, OK])} onOpen={() => {}} />)
+    expect(screen.getByText("bash pytest -q")).toBeDefined()
+  })
+  it("失败原因照旧不点也看得见", () => {
+    render(<SubagentChips item={item([ERR])} onOpen={() => {}} />)
+    expect(screen.getByText("子进程以退出码 3 结束")).toBeDefined()
+  })
+})

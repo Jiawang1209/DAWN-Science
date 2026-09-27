@@ -28,6 +28,7 @@ import {
   type 坞房客,
 } from "./state/right-dock.js"
 import type { TranscriptItem, QueuedMessage } from "../protocol/index.js"
+import { 子转录id } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
@@ -1047,7 +1048,7 @@ export { SideSash }
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
+  return who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "subagent" ? t("子 agent") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
@@ -1055,7 +1056,7 @@ const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAge
 export function 房客快捷键(who: 坞房客): string {
   if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
   // **网页、概览、产物、笔记本、对话暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
-  if (who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat") return ""
+  if (who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat" || who === "subagent") return ""
   return 是Mac ? "⌘P" : "Ctrl+P"
 }
 
@@ -3729,6 +3730,7 @@ export function ConversationView({
   loadThumb,
   loadLocalImage,
   loadGalleryRoots,
+  onOpenSubagent,
   onExport,
   权限,
   引用文件,
@@ -3803,6 +3805,8 @@ export function ConversationView({
   loadLocalImage?: ((url: string) => Promise<string | undefined>) | undefined
   /** 问一次「MCP 服务器名 → 图廊根地址」（案例卡片出现时才问）。只有 HTTP 接的那种有 */
   loadGalleryRoots?: (() => Promise<Record<string, string>>) | undefined
+  /** 点子 agent 的 chip → 在坞里看它（2026-09-27）。交出的是子转录 id；不给就是老样子（点开看任务原文） */
+  onOpenSubagent?: ((transcriptId: string) => void) | undefined
   /**
    * 这段对话的工作目录（T3-b）。**缺省 = 没设 = 这是一段普通对话**。
    *
@@ -4354,6 +4358,7 @@ export function ConversationView({
     onResend: (_text: string) => {},
     onRewind: (_id: string) => {},
     确保可见: (_id: string) => {},
+    onOpenSubagent: (_toolCallId: string, _index: number) => {},
   })
   行回调最新.current = {
     nameOf: (id) => services?.find((sv) => sv.providerId === id)?.name,
@@ -4367,6 +4372,7 @@ export function ConversationView({
       设位置(-1)
     },
     onRewind: (id) => onRewind?.(id),
+    onOpenSubagent: (toolCallId, index) => onOpenSubagent?.(子转录id(session.sessionId, toolCallId, index)),
     /** 刻度尺点了预算之外的那一轮：把预算放大到刚好含住它（多留 4 条余量），它才有得滚 */
     确保可见: (id) => {
       const 块序 = 块们.findIndex((块) => (块.kind === "group" ? 块.tools.some((t) => t.id === id) : 块.item.id === id))
@@ -4381,6 +4387,7 @@ export function ConversationView({
       onResend: (text: string) => 行回调最新.current.onResend(text),
       onRewind: (id: string) => 行回调最新.current.onRewind(id),
       确保可见: (id: string) => 行回调最新.current.确保可见(id),
+      onOpenSubagent: (toolCallId: string, index: number) => 行回调最新.current.onOpenSubagent(toolCallId, index),
     }),
     [],
   )
@@ -4589,6 +4596,7 @@ export function ConversationView({
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
                 nameOf={行回调.nameOf}
+                {...(onOpenSubagent ? { onOpenSubagent: 行回调.onOpenSubagent } : {})}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
                 {...(loadLocalImage ? { loadLocalImage } : {})}
                 {...(案例表.has(item.id) ? { cases: 案例表.get(item.id), loadGalleryRoots } : {})}
@@ -5554,9 +5562,12 @@ function TranscriptRowImpl({
   onPickCase,
   cases,
   loadGalleryRoots,
+  onOpenSubagent,
 }: {
   item: TranscriptItem
   agentId: string
+  /** 点子 agent 的 chip（2026-09-27）：交出 toolCallId 与序号，由 `ConversationView` 绑上会话 id 再往上交 */
+  onOpenSubagent?: ((toolCallId: string, index: number) => void) | undefined
   /** 这条回复提到的、这一轮 MLAI 工具查到的案例（2026-09-15）。只有说完的 agent 发言才有 */
   cases?: readonly 本轮案例[] | undefined
   /** 问一次「MCP 服务器名 → 图廊根地址」（只有 HTTP 接的那种有） */
@@ -5610,7 +5621,8 @@ function TranscriptRowImpl({
     return <ToolRow item={item} />
   }
   if (item.type === "subagents") {
-    return <SubagentChips item={item} />
+    const toolCallId = item.id.slice("sub:".length)
+    return <SubagentChips item={item} onOpen={onOpenSubagent ? (i) => onOpenSubagent(toolCallId, i) : undefined} />
   }
   if (item.type === "kernelOutput") {
     return <KernelOutputRow item={item} currentKernel={currentKernel} />
@@ -6479,7 +6491,7 @@ function 本轮案例(items: readonly TranscriptItem[], 下标: number, 正文: 
  * - 在跑的时候说「第几条、在跑什么」：只写「运行了 N 条」会让人以为已经跑完了。
  */
 /** 工具组也 memo：`分组转录` 每次都 `slice` 出新数组，按元素身份比（2026-09-22） */
-const ToolGroupRow = memo(
+export const ToolGroupRow = memo(
   ToolGroupRowImpl,
   (a, b) => a.tools.length === b.tools.length && a.tools.every((x, i) => x === b.tools[i]),
 )
@@ -7312,8 +7324,14 @@ const CHIP_STATUS = {
  */
 export function SubagentChips({
   item,
+  onOpen,
 }: {
   item: Extract<TranscriptItem, { type: "subagents" }>
+  /**
+   * 点了在坞里看它（2026-09-27，spec §2.1 / D1）。**给了就不在主转录里展开任何东西**——过程住在坞里「子 agent」那一格。
+   * 不给（没接线的调用点）：退回老样子，点开看任务原文。
+   */
+  onOpen?: ((index: number) => void) | undefined
 }) {
   const [open, setOpen] = useState<number | undefined>(undefined)
   // **空表什么都不画**，不留一个空壳占着位置
@@ -7338,11 +7356,13 @@ export function SubagentChips({
                 size="inline"
                 className={`chip ${a.status}`}
                 data-status={a.status}
-                aria-expanded={expanded}
-                onClick={() => setOpen(expanded ? undefined : a.index)}
+                {...(onOpen ? {} : { "aria-expanded": expanded })}
+                onClick={() => (onOpen ? onOpen(a.index) : setOpen(expanded ? undefined : a.index))}
               >
                 {mark} {a.agent}
                 <span className="chip-status">{label}</span>
+                {/* 在跑时最近那一句（D5）：只一句、会被下一句替换，跑完就没了——chip 组不是日志 */}
+                {a.status === "running" && a.activity ? <span className="chip-activity">{a.activity}</span> : null}
               </Button>
               {/**
                * **失败原因不折叠。** 与上面那句「点开才展开细节」看似矛盾，
@@ -7352,7 +7372,7 @@ export function SubagentChips({
               {a.status === "error" ? (
                 <p className="caveat chip-error">{a.error ?? t("失败了，但没有给出原因")}</p>
               ) : null}
-              {expanded ? <pre className="chip-task">{a.task}</pre> : null}
+              {!onOpen && expanded ? <pre className="chip-task">{a.task}</pre> : null}
             </div>
           )
         })}

@@ -37,7 +37,7 @@ import { setValue } from "./identity.js"
  * **`browser` 现在不在这个联合里**——它一点都还没有（全项目 0 处 `webview`），
  * 摆一个点开是空的房客，比不摆更坏。它单开一轮，那时再加进来。
  */
-export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overview" | "web" | "team" | "chat"
+export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overview" | "web" | "subagent" | "team" | "chat"
 
 /**
  * **「概览」2026-08-20 从整屏搬进坞**（作者定的：「换个入口……
@@ -49,8 +49,9 @@ export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overvie
  * 「笔记本」2026-08-26 加（spec `2026-08-26-笔记本`），排在「产物」之后——
  * 两者都是「对话之外再看一眼」的东西，紧挨着。
  * 「对话」2026-09-24 加（spec `2026-09-24-侧边对话`）：坞里跑第二段对话，排在最后。
+ * 「子 agent」2026-09-27 加（spec `2026-09-27-子agent看得见`），排在「团队」前——两者都是「谁在替主 agent 干活」。
  */
-export const 全部房客: readonly 坞房客[] = ["review", "files", "artifacts", "notebook", "overview", "web", "team", "chat"]
+export const 全部房客: readonly 坞房客[] = ["review", "files", "artifacts", "notebook", "overview", "web", "subagent", "team", "chat"]
 
 export const RIGHT_DOCK_TENANT_KEY = "dawn.global.right-dock-tenant"
 export const RIGHT_DOCK_WIDTH_KEY = "dawn.global.right-dock-width"

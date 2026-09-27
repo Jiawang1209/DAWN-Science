@@ -126,6 +126,62 @@ describe("回退这一轮 · 真 pi", () => {
       await 说完("改两个文件")
       await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "不是这句" })).rejects.toThrow(/对不上/)
       await expect(runtime.previewRewind(sessionId, { 倒数第几句: 5, 文: "改两个文件" })).rejects.toThrow(/对不上/)
+      // 收紧（Task 4 复审）：绝对路径开头不是技能调用、照常核对；空文不许凭 includes("") 蒙过去
+      await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "/Users/x/data.csv 看一下" })).rejects.toThrow(/对不上/)
+      await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "" })).rejects.toThrow(/对不上/)
+    } finally {
+      await runtime.stop(sessionId)
+    }
+  })
+
+  it("回退整段立着「正在回退」：这期间发话、压缩、预览、再回退都拒；完了照常能发", { timeout: 60_000 }, async () => {
+    const { runtime, sessionId, 说完 } = await 起一段("mutex")
+    try {
+      await 说完("改两个文件")
+      await 说完("再改两个文件")
+      const 这次 = runtime.rewind(sessionId, { 倒数第几句: 1, 文: "再改两个文件" }, "both", [])
+      expect(() => runtime.write(sessionId, "插一句")).toThrow(/正在回退/)
+      expect(() => runtime.compact(sessionId, undefined)).toThrow(/正在回退/)
+      await expect(runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "再改两个文件" })).rejects.toThrow(/正在回退/)
+      await expect(runtime.rewind(sessionId, { 倒数第几句: 2, 文: "改两个文件" }, "both", [])).rejects.toThrow(/正在回退/)
+      expect((await 这次).editorText).toBe("再改两个文件")
+      // 第二次没有接着按旧分支撤：只撤了一句
+      const 用户说过 = (await runtime.history(sessionId)).flatMap((x) => (x.kind === "text" && x.who === "user" ? [x.text] : []))
+      expect(用户说过).toEqual(["改两个文件"])
+      await 说完("你好")
+    } finally {
+      await runtime.stop(sessionId)
+    }
+  })
+
+  it("没有存档时只退文件：缘故是 no_archive，与预览一致", { timeout: 60_000 }, async () => {
+    const { runtime, sessionId, 说完 } = await 起一段("no-archive", { checkpoints: false })
+    try {
+      await 说完("改两个文件")
+      expect(await runtime.previewRewind(sessionId, { 倒数第几句: 1, 文: "改两个文件" })).toEqual({ ok: false, reason: "no_archive" })
+      await expect(runtime.rewind(sessionId, { 倒数第几句: 1, 文: "改两个文件" }, "files", [])).rejects.toMatchObject({ reason: "no_archive" })
+    } finally {
+      await runtime.stop(sessionId)
+    }
+  })
+
+  it("给模型的那句话落盘：回退之后重启，下一次请求里仍有它", { timeout: 60_000 }, async () => {
+    const 一 = await 起一段("durable-note")
+    await 一.说完("改两个文件")
+    await 一.说完("再改两个文件")
+    await 一.runtime.rewind(一.sessionId, { 倒数第几句: 1, 文: "再改两个文件" }, "files", [])
+    await 一.runtime.stop(一.sessionId)
+
+    const { runtime, sessionId, 说完 } = await 起一段("durable-note", { resume: true })
+    try {
+      const 请求数 = server.requests.length
+      await 说完("你好")
+      const 这次 = JSON.stringify(server.requests.slice(请求数).map((q) => q.body.messages))
+      expect(这次).toContain("rewound workspace files")
+      expect(这次).toContain("README.md")
+      // 它不是人说的话：续接出来的转录里没有它
+      const 用户说过 = (await runtime.history(sessionId)).flatMap((x) => (x.kind === "text" && x.who === "user" ? [x.text] : []))
+      expect(用户说过).toEqual(["改两个文件", "再改两个文件", "你好"])
     } finally {
       await runtime.stop(sessionId)
     }

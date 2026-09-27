@@ -50,6 +50,17 @@ type 历史消息 =
   /** 不是 pi 的消息：`getBranch()` 里的 `compaction` 条目，`history()` 自己造的记号（2026-09-27） */
   | { role: "compaction"; summary: string; tokensBefore: number }
 
+/**
+ * 回退时界面那句与 pi 那句核对原文（2026-09-27，Task 4 复审收紧）。pi 那句要**包含**界面那句：视觉转述会追加描述、图片会变成「（图片）」。
+ * - **只有真的技能 / 斜杠调用才免核**（`/名字` 或 `/名字 参数`——pi 会把它展开成技能正文）；`/Users/…` 这类绝对路径开头的话照常核对。
+ * - **空文不许凭 `includes("")` 蒙过去**：只有 pi 那句去掉图片记号之后也是空的（只附了图）才算对上。
+ */
+function 原文对得上(界面: string, pi那句: string): boolean {
+  if (/^\/[\w:.-]+(?:\s|$)/.test(界面)) return true
+  if (!界面.trim()) return !pi那句.replace(/（图片）|（见附图）/g, "").trim()
+  return pi那句.includes(界面)
+}
+
 /** 内容可能是一段字符串，也可能是一串块。**图片不还原成文字**，如实标一下 */
 function 取文本(content: string | { type: string; text?: string }[]): string {
   if (typeof content === "string") return content
@@ -352,6 +363,12 @@ interface NativeSession {
   重排中: boolean
   /** 调整方向一个接一个做（2026-09-25）：两次挨得太近时，后一次等前一次停稳再动 */
   调整链: Promise<void> | undefined
+  /**
+   * 正在回退（2026-09-27，Task 4 复审）。`rewind()` 从头到尾立着：检查一次「不在跑」之后要等很久的 `存档.回退()`，
+   * 这期间人发一句 → pi 开始流式 → 后面的 `navigateTree` 在文件已经退了之后才失败；连按两次回退，两次都按旧分支定位，
+   * 第二次会把第一次撤掉的几轮接回来。立着的时候：发话、压缩、预览、再回退一律拒（「正在回退」）。
+   */
+  回退中: boolean
 }
 
 /**
@@ -1613,6 +1630,7 @@ export class NativeRuntime implements AgentRuntime {
       停止代: 0,
       重排中: false,
       调整链: undefined,
+      回退中: false,
     })
     /**
      * **续接回来的老回复已经记过账了**（2026-09-27，Task 3 审查抓的）：判重标记从记录里最后那条真回复起步。
@@ -2030,6 +2048,8 @@ export class NativeRuntime implements AgentRuntime {
      * 这个方法是同步签名（`void`），转述是异步的——所以走「先收下、后送出」：
      * pi 的 `prompt()` 本来就允许晚一拍。失败经 notice 出声，不静默吞。
      */
+    // 回退期间当场拒：下面转述那条路先报「送到了」、几秒后才进 `送一轮`——那时再拒，人那句已经进了转录
+    if (s) this.不许在回退(s)
     const 端点 = this.转述端点(sessionId, images)
     if (!端点) {
       this.送一轮(sessionId, data, images, behavior, queueId)
@@ -2141,6 +2161,7 @@ ${描述}`
   ): Promise<void> | undefined {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    this.不许在回退(s)
     const 图 =
       images && images.length > 0
         ? images.map((i) => ({ type: "image" as const, data: i.data, mimeType: i.mimeType }))
@@ -2391,6 +2412,7 @@ ${描述}`
   compact(sessionId: SessionId, instructions?: string): void {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法压缩`)
+    this.不许在回退(s)
     if (s.inFlight > 0 || s.session.isCompacting) throw new Error("这一轮还没说完，等它做完或先停止，再压缩上下文")
     s.inFlight += 1
     s.压缩待出声 = true
@@ -3042,7 +3064,7 @@ ${描述}`
     const 们 = this.用户消息们(s)
     const k = 们.length - 那句.倒数第几句
     const 它 = 们[k]
-    if (!Number.isInteger(那句.倒数第几句) || 那句.倒数第几句 < 1 || !它 || (!那句.文.startsWith("/") && !它.文.includes(那句.文))) {
+    if (!Number.isInteger(那句.倒数第几句) || 那句.倒数第几句 < 1 || !它 || !原文对得上(那句.文, 它.文)) {
       throw new UserFacingError("这句在 agent 的记录里对不上，回退不了（对话可能被改写过）")
     }
     const 起点 = this.存档们.get(sessionId)?.起点()
@@ -3051,7 +3073,13 @@ ${描述}`
   }
 
   private 不许在跑(s: NativeSession): void {
+    this.不许在回退(s)
     if (s.inFlight > 0 || s.session.isStreaming || s.session.isCompacting) throw new UserFacingError("agent 还在跑，停下之后才能回退")
+  }
+
+  /** 回退期间：发话、压缩、预览、再回退都拒（`回退中` 那条注释）。措辞固定——后端按「正在回退」分码、译成英文 */
+  private 不许在回退(s: NativeSession): void {
+    if (s.回退中) throw new UserFacingError("正在回退，回退完再发")
   }
 
   async previewRewind(sessionId: SessionId, 那句: 回退的那句) {
@@ -3073,11 +3101,22 @@ ${描述}`
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     this.不许在跑(s)
+    // **从查完「不在跑」到留完话，整段立着**（Task 4 复审）：检查与置位之间没有 await，不会有第二个人插进来
+    s.回退中 = true
+    try {
+      return await this.真回退(sessionId, s, 那句, 做法, 内核们)
+    } finally {
+      s.回退中 = false
+    }
+  }
+
+  private async 真回退(sessionId: SessionId, s: NativeSession, 那句: 回退的那句, 做法: 回退做法, 内核们: readonly string[]): Promise<回退回执> {
     const 位 = this.定位(sessionId, s, 那句)
     let 回执: 回退回执 = { restored: [], removed: [], keep: [], cannot: [], failed: [] }
     if (做法 !== "conversation") {
       const 存档 = this.存档们.get(sessionId)
-      if (!存档) throw new 回退不了("gap")
+      // 与 `previewRewind` 同一个缘故（Task 4 复审）：没有存档就是没有存档，不是「断档」
+      if (!存档) throw new 回退不了("no_archive")
       回执 = await 存档.回退({ 之后的用户: 位.之后, 在存档之前: 位.在存档之前 })
     }
     if (做法 !== "files") {
@@ -3094,7 +3133,14 @@ ${描述}`
     // 对话没撤掉时，模型眼里就是「只退了文件」——照那一种留话
     const 实际 = 回执.conversationError ? (做法 === "conversation" ? undefined : "files") : 做法
     const 话 = 实际 ? 给模型的回退话(实际, 那句.文, 回执, 内核们) : undefined
-    if (话) await s.session.sendCustomMessage({ customType: "dawn-rewind", content: 话, display: false }, { deliverAs: "nextTurn" })
+    /**
+     * **留话要落盘**（2026-09-27，控制者定案）。原先走 `deliverAs: "nextTurn"`——pi 只把它放在内存里（`_pendingNextTurnMessages`），
+     * 下一句之前重启就没了，模型会以为它改过的文件都还在。现在不带 `deliverAs`：不在流式时 pi 走 `_appendCustomMessage`，
+     * 进 agent 状态、**写进会话文件**（`custom_message` 条目，挂在回退之后的叶子上）、续接后 `buildSessionContext()` 照样带给模型。
+     * 它发的 `message_start/end`（role `custom`）我们不转成任何界面事件：人那一侧的通知由后端写（`回退通知`），不重复一条。
+     * 此刻一定不在流式——`回退中` 立着，没人能开新一轮。
+     */
+    if (话) await s.session.sendCustomMessage({ customType: "dawn-rewind", content: 话, display: false })
     return 回执
   }
 

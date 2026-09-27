@@ -138,8 +138,9 @@ export interface 回退结果 {
   trash?: string
 }
 
+/** `no_archive`：这段会话压根没有存档（远端、关掉了）——由运行时抛，与预览的缘故同名（2026-09-27 Task 4 复审） */
 export class 回退不了 extends Error {
-  constructor(readonly reason: 文件回退不了) {
+  constructor(readonly reason: 文件回退不了 | "no_archive") {
     super(`文件回退不了（${reason}）`)
     this.name = "回退不了"
   }
@@ -186,6 +187,13 @@ async function 不覆盖地放(从: string, 到: string): Promise<void> {
 /** 废纸篓清单里的一条：挪了什么、挪到哪、为什么 */
 type 挪动缘由 = "not_there_before" | "replaced" | "appeared_during_rewind" | "put_back"
 
+/**
+ * 影子存档（2026-09-27）。
+ *
+ * **已知边界：收尾之后还在写的后台写手**（Task 4 复审记下）——bash 里 `&` 放出去的进程、团队成员、内核异步吐出来的文件：
+ * 它们在这一句的「结尾」拍完之后才落盘，存档分不出那是 agent 还是你，只能当成「你后来改过的」（`keep: changed_after`），
+ * **留着不退**。方向是安全的（宁可少退、不会把你的东西覆盖掉），但确认框与通知里会点名它们，别当成 bug。见 spec「已知边界」。
+ */
 export class 检查点存档 {
   private readonly 账: string
   private readonly 快照账: string

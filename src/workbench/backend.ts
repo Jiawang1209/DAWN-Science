@@ -140,6 +140,16 @@ function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
   if (x.kind === "text") {
     return { type: "turn", id: `r${i}`, who: x.who, text: x.text, final: true }
   }
+  // 这里压缩过（2026-09-27）：还原成一条已压完的标记。pi 的记录里没存起因，就不写原因（界面也就不写）
+  if (x.kind === "compaction") {
+    return {
+      type: "compaction",
+      id: `rc${i}`,
+      status: "done",
+      ...(x.tokensBefore > 0 ? { tokensBefore: Math.round(x.tokensBefore) } : {}),
+      ...(x.summary.trim() ? { summary: x.summary } : {}),
+    }
+  }
   return {
     type: "tool",
     id: x.id || `rt${i}`,

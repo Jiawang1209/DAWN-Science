@@ -172,3 +172,100 @@ describe("contextUsage()：数从 pi 来（spec §1 b / e）", () => {
     expect(摆一段({ 自动: false }).rt.contextUsage("s1" as never)!.compactAt).toBeUndefined()
   })
 })
+
+describe("压完的边角：空摘要、零用量不带字段", () => {
+  it("摘要是空白：不带 summary 字段（缺就是缺，不给一个空串）", () => {
+    const f = 压缩收尾字段({ reason: "manual", result: { summary: "  \n", tokensBefore: 10 }, aborted: false, willRetry: false })
+    expect(f.status).toBe("done")
+    expect("summary" in f).toBe(false)
+  })
+
+  it("写摘要那次报的用量全是零：不带 usage 字段", () => {
+    const f = 压缩收尾字段({
+      reason: "threshold",
+      result: { summary: "…", tokensBefore: 10, usage: { input: 0, output: 0, cacheRead: 0 } },
+      aborted: false,
+      willRetry: false,
+    })
+    expect(f.status).toBe("done")
+    expect("usage" in f).toBe(false)
+  })
+})
+
+describe("compact()：手动压缩（spec §2.2 / D8）", () => {
+  const 等一拍 = () => new Promise((r) => setTimeout(r, 0))
+
+  it("这一轮还在跑：拒，说为什么；不去碰 pi", async () => {
+    const x = 摆一段({ inFlight: 1 })
+    let 调了 = false
+    x.pi.compact = async () => {
+      调了 = true
+      return {}
+    }
+    expect(() => x.rt.compact("s1" as never)).toThrow(/这一轮还没说完/)
+    expect(调了).toBe(false)
+  })
+
+  it("pi 正在自己压：同样拒", () => {
+    const x = 摆一段()
+    x.pi.isCompacting = true
+    expect(() => x.rt.compact("s1" as never)).toThrow(/这一轮还没说完/)
+  })
+
+  it("压的期间算「在忙」（inFlight 加一），压完放下；要求原样交给 pi", async () => {
+    const x = 摆一段()
+    let 放行!: () => void
+    let 收到: string | undefined
+    x.pi.compact = (instructions?: string) => {
+      收到 = instructions
+      return new Promise((r) => (放行 = () => r({})))
+    }
+    x.rt.compact("s1" as never, "  保留暗号  ")
+    expect(收到).toBe("保留暗号")
+    expect(x.内部.sessions.get("s1")!["inFlight"]).toBe(1)
+    expect(x.内部.sessions.get("s1")!["压缩待出声"]).toBe(true)
+    放行()
+    await 等一拍()
+    await 等一拍()
+    expect(x.内部.sessions.get("s1")!["inFlight"]).toBe(0)
+    expect(x.内部.sessions.get("s1")!["压缩待出声"]).toBe(false)
+  })
+
+  it("pi 在发 compaction_start 之前就失败了（没有 end 可等）：补一句，不静默", async () => {
+    const x = 摆一段()
+    x.pi.compact = async () => {
+      throw new Error("No model selected")
+    }
+    x.rt.compact("s1" as never)
+    await 等一拍()
+    await 等一拍()
+    expect(x.事件.filter((e) => e.kind === "notice").map((e) => (e as { text: string }).text)).toEqual(["上下文没压缩成：No model selected"])
+    expect(x.内部.sessions.get("s1")!["inFlight"]).toBe(0)
+  })
+
+  it("pi 同步就抛了（还没拿到 promise）：照样补一句、inFlight 放下，不往调用方抛", async () => {
+    const x = 摆一段()
+    x.pi.compact = () => {
+      throw new Error("boom")
+    }
+    expect(() => x.rt.compact("s1" as never)).not.toThrow()
+    await 等一拍()
+    await 等一拍()
+    expect(x.事件.filter((e) => e.kind === "notice").map((e) => (e as { text: string }).text)).toEqual(["上下文没压缩成：boom"])
+    expect(x.内部.sessions.get("s1")!["inFlight"]).toBe(0)
+  })
+
+  it("失败但 pi 已经发过 end：不再补第二句", async () => {
+    const x = 摆一段()
+    x.pi.compact = async () => {
+      x.内部.translate("s1", { type: "compaction_start", reason: "manual" })
+      x.内部.translate("s1", { type: "compaction_end", reason: "manual", aborted: false, willRetry: false, errorMessage: "Compaction failed: Nothing to compact (session too small)" })
+      throw new Error("Nothing to compact (session too small)")
+    }
+    x.rt.compact("s1" as never)
+    await 等一拍()
+    await 等一拍()
+    expect(x.事件.filter((e) => e.kind === "notice")).toEqual([])
+    expect(x.事件.at(-1)).toMatchObject({ kind: "compaction_end", status: "failed", error: "对话还太短，没有可压缩的" })
+  })
+})

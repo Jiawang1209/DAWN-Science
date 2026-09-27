@@ -47,6 +47,8 @@ type 历史消息 =
       content: ({ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; arguments: unknown } | { type: "thinking" })[]
     }
   | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[] }
+  /** 不是 pi 的消息：`getBranch()` 里的 `compaction` 条目，`history()` 自己造的记号（2026-09-27） */
+  | { role: "compaction"; summary: string; tokensBefore: number }
 
 /** 内容可能是一段字符串，也可能是一串块。**图片不还原成文字**，如实标一下 */
 function 取文本(content: string | { type: string; text?: string }[]): string {
@@ -124,6 +126,12 @@ export type ToolGate = (
 ) => import("../policy/permissions.js").门的决定
 
 export interface NativeRuntimeOptions {
+  /**
+   * 压缩参数的覆盖（2026-09-27）。**只在内存里改**（pi 的 `SettingsManager.applyOverrides`），不写 pi 的 `settings.json`
+   * （`setCompactionEnabled` 那一类会 `save()`，设计契约扫描拦着）。缺省 = 照 pi 的默认（留 16384 给摘要、保留最近 2 万 token）。
+   * e2e 与 `dev:mock` 把 `keepRecentTokens` 设成 1——不然短对话「没有可压缩的」，手动压缩在那两处永远演不出来。
+   */
+  compaction?: { keepRecentTokens?: number; reserveTokens?: number }
   /** Office 插件的族开关（设置里那张插件卡；不给 = 不装）。每次建会话时问一遍，改了开关下一段生效 */
   officeEnable?: () => Office开关
   /** 浏览器插件的族开关（2026-08-25，学自 dsh-reef）；同一套约定 */
@@ -291,7 +299,11 @@ interface NativeSession {
    * 下标全变了——只按下标认，最后那条老回复会被当成新的再报一次，而账本对 `turn_usage` 是累加的。
    */
   usageTsReported: number | undefined
-  /** 手动压缩发出去了、还没见到 `compaction_end`（2026-09-27）。pi 在发 start 之前就失败时没有 end 可等，`compact()` 据此补一句 */
+  /**
+   * 手动压缩发出去了、还没见到 `compaction_end`（2026-09-27）。`compact()` 发出时立起、`translate` 见到 end 放下、
+   * `compact()` 收尾时再放下一次。pi 在发 start 之前就失败时没有 end 可等——`compact()` 的失败分支见它还立着就补一句。
+   * 自动压缩不碰它（那条路 pi 必发 end）。
+   */
   压缩待出声: boolean
   /** 该会话的隔离目录。工具输出的全文写在它下面 */
   sessionDir: string
@@ -614,6 +626,12 @@ export class NativeRuntime implements AgentRuntime {
    * 它**刻意不存每句话的原文**——那是对话，不是事实层。
    * 而 pi 为了自己能续接，本来就把消息完整存着。**各取所长，不互相冒充。**
    *
+   * ## 走完整的那条路径，不走「模型读的那一份」（2026-09-27）
+   *
+   * 此前用 `buildSessionContext().messages`——那是给模型的：压缩过的会话里以一条摘要开头、压缩前的来往全不在，
+   * 而这里又不认 `compactionSummary` 这个 role，于是**续接之后前面几十轮凭空没了，没有任何记号**。
+   * 现在用 `getBranch()`（从根到当前叶子的全部条目）：消息照旧还原，`compaction` 条目还原成一条压缩标记，落在它发生的位置。
+   *
    * ## 三条取舍
    *
    * 1. **thinking 不还原**：它是模型的草稿，上一次也没显示给人看。
@@ -624,11 +642,23 @@ export class NativeRuntime implements AgentRuntime {
   async history(sessionId: SessionId): Promise<RestoredItem[]> {
     const s = this.sessions.get(sessionId)
     if (!s) return []
-    const 消息 = s.sessionManager.buildSessionContext().messages as 历史消息[]
+    const 消息 = (
+      s.sessionManager.getBranch() as { type: string; message?: unknown; summary?: string; tokensBefore?: number }[]
+    ).flatMap((x): 历史消息[] =>
+      x.type === "message" && x.message
+        ? [x.message as 历史消息]
+        : x.type === "compaction"
+          ? [{ role: "compaction", summary: x.summary ?? "", tokensBefore: x.tokensBefore ?? 0 }]
+          : [],
+    )
     const 出: RestoredItem[] = []
     const 待补结果 = new Map<string, RestoredItem & { kind: "tool" }>()
 
     for (const m of 消息) {
+      if (m.role === "compaction") {
+        出.push({ kind: "compaction", summary: m.summary, tokensBefore: m.tokensBefore })
+        continue
+      }
       if (m.role === "user") {
         const text = 取文本(m.content)
         if (text.trim()) 出.push({ kind: "text", who: "user", text })
@@ -1410,6 +1440,12 @@ export class NativeRuntime implements AgentRuntime {
       ],
     })
     await resourceLoader.reload()
+    /**
+     * 压缩覆盖**必须在 `resourceLoader.reload()` 之后**（2026-09-27 实测）：那一步里 pi 调 `settingsManager.reload()`，
+     * 从磁盘重新合并全局与项目设置，此前 `applyOverrides` 的东西一并冲掉——放在 `SettingsManager.create` 之后等于没设。
+     * 以后谁接 pi 的 `session.reload()`（它也调 `settingsManager.reload()`），之后要再设一次。
+     */
+    if (this.opts.compaction) settingsManager.applyOverrides({ compaction: { ...this.opts.compaction } })
 
     /**
      * **技能的两个位置，显式指给 pi**（S20，2026-08-15）。
@@ -1549,6 +1585,17 @@ export class NativeRuntime implements AgentRuntime {
       重排中: false,
       调整链: undefined,
     })
+    /**
+     * **续接回来的老回复已经记过账了**（2026-09-27，Task 3 审查抓的）：判重标记从记录里最后那条真回复起步。
+     * 不起步的话续接后的第一条事件就把它当成新用量再报一次——`run-recorder.ts` 对 `turn_usage` 是累加的，账本重复计。
+     */
+    const 已记过 = this.latestUsage(spec.sessionId)
+    const 本段 = this.sessions.get(spec.sessionId)!
+    if (已记过) {
+      本段.usageIndexReported = 已记过.index
+      if (已记过.ts !== undefined) 本段.usageTsReported = 已记过.ts
+      本段.lastUsage = 已记过.usage
+    }
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     this.发会话开关(spec.sessionId)
     return { sessionId: spec.sessionId, pid }
@@ -2296,6 +2343,48 @@ ${描述}`
         history: size(st.messages),
       },
     }
+  }
+
+  /**
+   * 手动压缩（2026-09-27，spec §2.2）。坐在 pi 的 `AgentSession.compact(customInstructions)`。
+   *
+   * - **这一轮还在跑就拒**（spec D8）：pi 的 `compact()` 会先 `abort()` 当前这一轮——一次点击做了两件事，第二件人没要求。
+   *   pi 正在自己压（`isCompacting`）同样拒。
+   * - **压的期间算「在忙」**：`inFlight` 加一、`pending` 串上。这期间人发的话走「以为在跑、pi 说没在跑」那条缝（`送一轮`），
+   *   压完按新一轮送——pi 在手动压缩时收到 `prompt()` 会直接抛（"Cannot submit a prompt while compaction is in progress"）。
+   *   「停止」照常：pi 的 `abort()` 里有 `abortCompaction()`，那时 `compaction_end` 带 `aborted`，标记写「停下了」。
+   * - **不 await**：与 `write()` 同一个契约。成败都由 `translate` 的 `compaction_end` 那一支出声；
+   *   万一 pi 在发 `compaction_start` 之前就失败了（那时没有 end 可等），这里补一句，不静默。
+   *   连同步抛（还没拿到 promise）也收进同一条路——不然 `inFlight` 会永远多一，这段会话从此「一直在忙」。
+   */
+  compact(sessionId: SessionId, instructions?: string): void {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法压缩`)
+    if (s.inFlight > 0 || s.session.isCompacting) throw new Error("这一轮还没说完，等它做完或先停止，再压缩上下文")
+    s.inFlight += 1
+    s.压缩待出声 = true
+    const 要求 = instructions?.trim()
+    let 压: Promise<unknown>
+    try {
+      压 = s.session.compact(要求 || undefined)
+    } catch (err) {
+      压 = Promise.reject(err)
+    }
+    const run = 压
+      .then(
+        () => undefined,
+        (err: unknown) => {
+          if (!s.压缩待出声) return // `compaction_end` 已经说过了
+          const msg = err instanceof Error ? err.message : String(err)
+          this.emit({ kind: "notice", sessionId, text: `上下文没压缩成：${压缩原因人话(msg)}` })
+        },
+      )
+      .finally(() => {
+        s.压缩待出声 = false
+        s.inFlight -= 1
+      })
+    s.pending = s.pending ? s.pending.then(() => run) : run
+    void s.pending
   }
 
   /** 已用多少（2026-09-27）。见 `contextUsage` 的头注 */

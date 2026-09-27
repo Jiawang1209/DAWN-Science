@@ -490,6 +490,8 @@ export interface ContextUsage {
 export type RestoredItem =
   | { kind: "text"; who: "user" | "agent"; text: string }
   | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean }
+  /** 这里压缩过（2026-09-27）：pi 记录里的 `compaction` 条目，落在它发生的位置。记录里没存起因 */
+  | { kind: "compaction"; summary: string; tokensBefore: number }
 
 /**
  * 一张随消息送进模型的图片（协议 4.12）。
@@ -587,6 +589,11 @@ export interface AgentRuntime {
   setConfigOption?(sessionId: SessionId, configId: string, value: string): Promise<void>
   /** 上下文用量。只有 native 有；拿不到时返回 undefined（**缺就是缺**） */
   contextUsage?(sessionId: SessionId): ContextUsage | undefined
+  /**
+   * 手动压缩上下文（2026-09-27）。**只有 native 有**——外部 agent 自己管它的上下文。
+   * 不 await（与 `write` 同一个契约）：结果经 `compaction_start` / `compaction_end` 出声。这一轮还在跑就抛。
+   */
+  compact?(sessionId: SessionId, instructions?: string): void
   /**
    * 这一段现在有哪些开关（codex-polish 第二档，2026-08-22）。
    * **要有这一问**：`start()` 里 emit 的那份在 `attach` 之前就发了，没人听见；

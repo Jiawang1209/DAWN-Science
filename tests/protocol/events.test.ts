@@ -560,6 +560,9 @@ describe("8.6 · 转录条目 plan", () => {
     expect(
       TranscriptItemSchema.safeParse({ ...卡, status: "approved", savedPath: "analysis/plans/x.md", approvedAt: 1, edited: true }).success,
     ).toBe(true)
+    // 2026-09-28：人在两轮之间改过已批准的文件 → 卡片说「你改过」
+    expect(TranscriptItemSchema.safeParse({ ...卡, status: "approved", savedPath: "analysis/plans/x.md", fileChanged: true }).success).toBe(true)
+    expect(TranscriptItemSchema.safeParse({ ...卡, fileChanged: false }).success).toBe(false)
   })
   it("strict：多一个字段不收；版本从 1 起", () => {
     expect(TranscriptItemSchema.safeParse({ ...卡, 多的: 1 }).success).toBe(false)

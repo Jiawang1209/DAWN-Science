@@ -406,6 +406,8 @@ const PlanItem = z
     approvedAt: z.number().int().nonnegative().optional(),
     /** 批的是人改过的那一版。**只在 true 时出现** */
     edited: z.literal(true).optional(),
+    /** 工作区里那份此刻与批准时不一样：人在两轮之间自己改过（2026-09-28，D3）。**只在 true 时出现** */
+    fileChanged: z.literal(true).optional(),
   })
   .strict()
 export type PlanItem = z.infer<typeof PlanItem>

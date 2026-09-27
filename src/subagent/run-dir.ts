@@ -11,7 +11,7 @@
  * **按调用分目录**：此前 `agentDirOf` 只按序号，第二次派子 agent 时序号 0 又写进同一个目录——文件在，对应关系没了（spec §1.1）。
  * 这里只管读写盘；什么时候写由 `tool.ts` 定，什么时候读由后端定。
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { SessionManager } from "@earendil-works/pi-coding-agent"
 import { 分支转消息, 消息转历史 } from "../runtime/history.js"
@@ -41,17 +41,24 @@ export function 子运行目录(sessionDir: string, toolCallId: string, index: n
 export function 写元(dir: string, 元: 子运行元): string | undefined {
   try {
     mkdirSync(dir, { recursive: true })
-    writeFileSync(join(dir, "meta.json"), JSON.stringify(元, null, 2))
+    // 先写临时文件再改名（2026-09-27 审查）：写到一半被杀，留下的是完整的旧版或新版，不是半截 JSON
+    const 临时 = join(dir, `meta.json.${process.pid}.tmp`)
+    writeFileSync(临时, JSON.stringify(元, null, 2))
+    renameSync(临时, join(dir, "meta.json"))
     return undefined
   } catch (e) {
     return e instanceof Error ? e.message : String(e)
   }
 }
 
+const 状态们: readonly unknown[] = ["running", "ok", "error"]
+
 export function 读元(dir: string): 子运行元 | undefined {
   try {
     const v = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8")) as 子运行元
-    return typeof v?.agent === "string" && typeof v.task === "string" ? v : undefined
+    return typeof v?.agent === "string" && v.agent.length > 0 && typeof v.task === "string" && 状态们.includes(v.status)
+      ? v
+      : undefined
   } catch {
     return undefined
   }
@@ -82,12 +89,15 @@ export function 子agent组(sessionDir: string, toolCallId: string): { index: nu
   if (!existsSync(根)) return []
   return readdirSync(根)
     .filter((n) => /^\d+$/.test(n))
-    .map((n) => ({ index: Number(n), 元: 读元(join(根, n)) }))
-    .filter((x): x is { index: number; 元: 子运行元 } => x.元 !== undefined)
+    // 记录读不出来的**照样占一颗 chip、说清楚**（2026-09-27 审查）：悄悄丢掉等于这个子 agent 没存在过（规格 7.5）
+    .map((n) => ({ index: Number(n), 元: 读元(join(根, n)) ?? 记录坏了 }))
     .sort((a, b) => a.index - b.index)
 }
 
 export const 没跑完 = "DAWN 关掉时它还在跑，没有跑完"
+
+export const 记录读不出来 = "这个子 agent 的记录（meta.json）读不出来，看不到它当时的任务与结果"
+const 记录坏了: 子运行元 = { agent: "子 agent", task: "", status: "error", error: 记录读不出来, startedAt: 0 }
 
 /**
  * 重开之后补回 chip 组（spec §2.4）：每条 `subagent` 工具行后面，按盘上的 `meta.json` 插一条 `subagents`。

@@ -3,11 +3,11 @@
  * 里面是 pi 的 agentDir、`transcript/`（会话文件）与我们的 `meta.json`。
  */
 import { afterEach, describe, expect, it } from "vitest"
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs"
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionManager } from "@earendil-works/pi-coding-agent"
-import { 子运行目录, 写元, 读元, 读子转录, 会话文件, 补子agent组 } from "../../src/subagent/run-dir.js"
+import { 子运行目录, 写元, 读元, 读子转录, 会话文件, 补子agent组, 记录读不出来 } from "../../src/subagent/run-dir.js"
 import type { TranscriptItem } from "../../src/protocol/index.js"
 
 const dirs: string[] = []
@@ -34,6 +34,13 @@ describe("meta.json", () => {
     expect(写元(d, { agent: "scout", task: "t", status: "ok", result: { text: "结论" }, startedAt: 1, endedAt: 2 })).toBeUndefined()
     expect(读元(d)).toEqual({ agent: "scout", task: "t", status: "ok", result: { text: "结论" }, startedAt: 1, endedAt: 2 })
     writeFileSync(join(d, "meta.json"), "{坏的")
+    expect(读元(d)).toBeUndefined()
+  })
+  it("写是先临时文件再改名：目录里不留 .tmp；status 不认识的当读不懂", () => {
+    const d = 临时()
+    写元(d, { agent: "scout", task: "t", status: "running", startedAt: 1 })
+    expect(readdirSync(d)).toEqual(["meta.json"])
+    writeFileSync(join(d, "meta.json"), JSON.stringify({ agent: "scout", task: "t", status: "飞了", startedAt: 1 }))
     expect(读元(d)).toBeUndefined()
   })
   it("写不进去时**回一句原因**，不抛——记录失败不该拖垮子 agent，但要出声", () => {
@@ -87,6 +94,15 @@ describe("重开后补 chip 组", () => {
       { index: 0, agent: "scout", task: "t0", status: "ok" },
       { index: 1, agent: "planner", task: "t1", status: "error", error: "DAWN 关掉时它还在跑，没有跑完" },
     ])
+  })
+  it("meta.json 坏了（写到一半被杀）：照样占一颗 chip、说读不出来，不悄悄丢", () => {
+    const s = 临时()
+    const d = 子运行目录(s, "c1", 0)
+    mkdirSync(d, { recursive: true })
+    writeFileSync(join(d, "meta.json"), "{半截")
+    const 出 = 补子agent组([{ type: "tool", id: "c1", name: "subagent", input: {}, status: "ok" } as TranscriptItem], s)
+    const 组 = 出.find((x) => x.type === "subagents")
+    expect(组 && 组.type === "subagents" && 组.agents[0]).toMatchObject({ index: 0, status: "error", error: 记录读不出来 })
   })
   it("盘上没有记录（这个功能之前跑的）：不补，照旧只有工具行", () => {
     const items: TranscriptItem[] = [{ type: "tool", id: "c9", name: "subagent", input: {}, status: "ok" }]

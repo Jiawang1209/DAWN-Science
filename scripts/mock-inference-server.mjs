@@ -117,7 +117,7 @@ const 慢速 = { 每段字数: 6, 间隔毫秒: 15 }
  * 拿到工具结果之后那一问最后一条是 `tool`，不触发，所以不循环。用例自己给了 `toolCall` 且这一问它要调的，以用例的为准。
  */
 export const 慢慢跑 = { toolName: "bash", args: { command: "sleep 20" }, say: "我先跑一段慢的。" }
-/** 这一问的最后一条是用户话时，取它的文字；不是（工具结果之后那一问）→ undefined。两支 mock 工具共用（2026-09-27 抽出） */
+/** 这一问的最后一条是用户话时，取它的文字；不是（工具结果之后那一问）→ undefined。按话触发的几支 mock 工具共用（2026-09-27 抽出） */
 function 最后一句用户话(body) {
   const 最后 = body.messages?.at?.(-1)
   if (最后?.role !== "user") return undefined
@@ -143,6 +143,38 @@ export const 改两个文件 = {
 }
 function 改文件工具(body) {
   return 最后一句用户话(body)?.includes("改两个文件") ? 改两个文件 : undefined
+}
+
+/**
+ * **子 agent 三支**（2026-09-27，子 agent 看得见；准入规则 1）。
+ *
+ * 主区与子进程共用这一台假服务器，所以**按话分**，不按次数数：
+ * - 主区那句带「派子agent」→ 调 `subagent`，交给自带的 `data-auditor`（它的 tools 有 read 与 bash）一个以「子任务」开头的任务；
+ *   带「慢」字 → 任务以「子任务慢」开头；
+ * - 子进程收到「子任务慢…」→ `bash sleep 15`（在跑时 chip 上那一句、坞里那条在跑的工具行都要人看得到）；
+ * - 子进程收到「子任务…」→ 先说一句、再 `read README.md`（坞里有一条工具行可看）。
+ * **「子任务慢」先于「子任务」判**：前者以后者开头，顺序反了慢的那支永远走不到。
+ * 与「慢慢跑」同一个规矩：拿到工具结果之后那一问最后一条是 `tool`，不触发，不循环。
+ */
+export const 派子agent = {
+  toolName: "subagent",
+  args: { agent: "data-auditor", task: "子任务：读一下 README.md，用一句话说它是干什么的" },
+  say: "我派个子 agent 去看看。",
+}
+export const 派子agent慢 = {
+  toolName: "subagent",
+  args: { agent: "data-auditor", task: "子任务慢：跑一段慢的再回话" },
+  say: "我派个子 agent 去跑一段慢的。",
+}
+export const 子任务读 = { toolName: "read", args: { path: "README.md" }, say: "我先读一下 README。" }
+export const 子任务慢 = { toolName: "bash", args: { command: "sleep 15" }, say: "我先等十五秒。" }
+function 子agent工具(body) {
+  const 文 = 最后一句用户话(body)
+  if (文 === undefined) return undefined
+  if (文.includes("派子agent")) return 文.includes("慢") ? 派子agent慢 : 派子agent
+  if (文.startsWith("子任务慢")) return 子任务慢
+  if (文.startsWith("子任务")) return 子任务读
+  return undefined
 }
 
 /**
@@ -313,7 +345,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
 

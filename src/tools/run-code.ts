@@ -94,7 +94,7 @@ export function 摘要(输出: readonly unknown[]): { 文字: string; 出错了:
    * **给模型的那份有上限**（2026-09-27，spec D6）：与 pi 自带 bash 同一个数（`DEFAULT_MAX_BYTES`，50 KB）。
    * 此前不截：一句 `print(df)` 打出十万行，一步就能把上下文撑爆——而那段落在「最近要保留」的一截里，压缩也救不了。
    */
-  const 截 = 截给模型(文字, DEFAULT_MAX_BYTES, "变量还在内核里：用 df.head()、切片或 len() 取窄范围再看，不要整份打印")
+  const 截 = 截给模型(文字, DEFAULT_MAX_BYTES, "变量还在内核里：只看前几行（Python `df.head()`、R `head(df)`）、切片或看长度，不要整份打印")
   return {
     // **什么都没输出也要说一声**：一片空白会被读成「没跑」
     文字: 截.text || "（这段代码没有产生任何输出）",

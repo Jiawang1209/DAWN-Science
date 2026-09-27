@@ -235,7 +235,17 @@ export type AgentEvent =
    * 协议里 `NoticeItem` 一直存在，但在此之前**没有任何东西能产出它**。
    * 卡死守卫是第一个真实的用例：中断必须带原因出声（规格 7.5）。
    */
-  | { kind: "notice"; sessionId: SessionId; text: string }
+  | {
+      kind: "notice"
+      sessionId: SessionId
+      text: string
+      /**
+       * **这一轮失败了**（桌面通知，2026-09-27）。只有「这一轮没做成」那几句带它——换模型、MCP、视觉转述也是 notice，
+       * 但不是失败；照微信那样把每条 notice 都当出错，换一次模型就弹一条「出错了」（spec §3.1）。
+       * 只是 runtime → 中枢的内部标记，**协议里的 notice 条目不变**；中枢收到后记在这段上，`idle` 时交给 `on回合收尾`。
+       */
+      failed?: true
+    }
   /**
    * **agent 在问「能不能」**（A2，2026-08-16，只有 acp 会发）。
    *

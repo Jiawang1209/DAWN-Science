@@ -64,6 +64,13 @@ export interface SessionTranscriptsOptions {
 /** 见 {@link SessionTranscriptsOptions.子转录留存上限} */
 export const 子转录留存上限 = 20
 
+/** 一整轮真正结束（runtime 的 `idle`）。`失败` = 这一轮收尾前出过的第一句「失败了」 */
+export interface 回合收尾 {
+  sessionId: SessionId
+  kind: "native" | "pty" | "cli" | "kernel" | "acp"
+  失败?: string
+}
+
 interface Entry {
   /**
    * `cli` 与 `native` 一样吐结构化事件，**只有 `pty` 是字节流**——
@@ -109,6 +116,12 @@ interface Entry {
   kernels?: KernelState[] | undefined
   /** 待发单（2026-09-23）。缺省 = 没有待发；整份换掉 */
   queued?: QueuedMessage[] | undefined
+  /**
+   * 这一轮收尾之前出过的第一句「失败了」（带 `failed` 的 notice，桌面通知 2026-09-27）。`idle` 时交给 `on回合收尾` 并清空。
+   * 缺省 = 这一轮没失败过。**失败之后这一轮又往前走了**（出字、想、调工具）就清掉：pi 自己会重试
+   * （限流 / 过载的自动重试、超上限压完再试同一轮），重试成了那一轮就是做完了，不是出错了。
+   */
+  本轮失败?: string | undefined
   configOptions:
     | {
         id: string
@@ -162,6 +175,11 @@ export class SessionTranscripts {
    * 订阅那道门是给界面省事的（没打开的会话不推）；通知恰恰要听的是没打开的那些。
    */
   private readonly 全听 = new Set<(u: SessionUpdate) => void>()
+  /**
+   * **一整轮真正结束时**叫的人（桌面通知，2026-09-27）。与 `全听` 分开：`idle` 不产生任何转录条目、也不跳 revision——
+   * 它不是一条更新，是一个时刻。此前 `ingest` 里没有 `case "idle"`，它被静静吃掉了。
+   */
+  private readonly 收尾听众 = new Set<(v: 回合收尾) => void>()
   /** LRU 的时钟：只增不减的次序号，不是墙钟（同一毫秒里的先后也要分得清） */
   private 次序 = 0
 
@@ -230,6 +248,17 @@ export class SessionTranscripts {
     this.全听.add(cb)
     return () => {
       this.全听.delete(cb)
+    }
+  }
+
+  /**
+   * 一整轮真正结束（桌面通知用）。**不看订没订**，与 `onAnyUpdate` 同一个理由。
+   * 子转录不叫（与 `全听` 同一条，见 `Entry.子转录`）；压缩、回退都不经过 `idle`，自然也不叫。
+   */
+  on回合收尾(cb: (v: 回合收尾) => void): () => void {
+    this.收尾听众.add(cb)
+    return () => {
+      this.收尾听众.delete(cb)
     }
   }
 
@@ -340,6 +369,7 @@ export class SessionTranscripts {
     // 在 dispose 后还挂着——退出/重装配时旧通道回调仍会被后续事件触发,pinned 集也残留。
     this.pinned.clear()
     this.全听.clear()
+    this.收尾听众.clear()
   }
 
   /**
@@ -390,6 +420,12 @@ export class SessionTranscripts {
   ingest(sessionId: SessionId, event: AgentEvent): void {
     const e = this.entries.get(sessionId)
     if (!e) return
+
+    // 失败之后这一轮又往前走了（pi 自动重试 / 超上限压完再试成了）：那句失败不再代表这一轮（桌面通知，2026-09-27）。
+    // 压缩那一对不算「往前走」——它既不清、也不记
+    if (e.本轮失败 !== undefined && (event.kind === "output" || event.kind === "thinking" || event.kind === "tool_start")) {
+      e.本轮失败 = undefined
+    }
 
     switch (event.kind) {
       case "started":
@@ -502,6 +538,8 @@ export class SessionTranscripts {
         return
 
       case "notice":
+        // 这一轮失败了：记下第一句，`idle` 时交给桌面通知（2026-09-27）。条目照常进转录
+        if (event.failed) e.本轮失败 ??= event.text
         // 系统提示独立成条。**不并进 agent 的发言**——那会让用户以为是模型说的
         this.putItem(sessionId, e, {
           type: "notice",
@@ -638,6 +676,21 @@ export class SessionTranscripts {
            */
           this.putItem(sessionId, e, { ...item, final: true })
         }
+        return
+      }
+
+      /**
+       * **一整轮真正结束**（桌面通知，2026-09-27）。不产生条目、不 bump——只叫 `on回合收尾` 的人。
+       * 失败那句交出去就清掉：下一轮从干净开始。
+       * **子转录不叫**：与 `全听` 同一条（子 agent 不发通知，spec）。它今天也收不到 idle（子进程的过程里没有这一种），这里是防御。
+       * 压缩（`compaction_*`）与回退（`truncateAt`）都不经过这里：pi 的自动压缩与重试都在同一次 `prompt()` 里，idle 只在它真正 resolve 时发一次。
+       */
+      case "idle": {
+        const 失败 = e.本轮失败
+        e.本轮失败 = undefined
+        if (e.子转录) return
+        const v: 回合收尾 = { sessionId, kind: e.kind, ...(失败 === undefined ? {} : { 失败 }) }
+        for (const cb of [...this.收尾听众]) cb(v)
         return
       }
 

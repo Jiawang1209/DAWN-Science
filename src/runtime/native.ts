@@ -1834,6 +1834,7 @@ export class NativeRuntime implements AgentRuntime {
         kind: "notice",
         sessionId,
         text: 原因 ? `模型调用失败：${原因}` : "模型调用失败，但对方没有给出原因",
+        failed: true,
       })
     }
 

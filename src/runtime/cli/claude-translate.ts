@@ -152,7 +152,7 @@ function fromResult(sessionId: SessionId, e: ClaudeEvent): AgentEvent[] {
   // **出错的一轮要出声**，不是静静地收工（规格 7.5）
   if (e.is_error === true) {
     const why = e.result ?? e.stop_reason ?? "（CLI 没有说明原因）"
-    out.push({ kind: "notice", sessionId, text: `外部 CLI 报告这一轮失败：${why}` })
+    out.push({ kind: "notice", sessionId, text: `外部 CLI 报告这一轮失败：${why}`, failed: true })
   }
   /**
    * **`turn_end` 与 `idle` 是两件事，都要发。**

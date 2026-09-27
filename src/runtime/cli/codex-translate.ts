@@ -129,6 +129,7 @@ export function translateCodexEvent(
         kind: "notice",
         sessionId,
         text: `外部 CLI 报告这一轮失败：${e.error?.message ?? "（没有说明原因）"}`,
+        failed: true,
       },
       // 失败的一轮同样要收尾气泡：**半截话挂在那里比失败本身更让人困惑**
       { kind: "turn_end", sessionId },
@@ -217,7 +218,7 @@ function reason(e: { error?: { message?: string }; message?: string }): string {
 function failure(sessionId: SessionId, why: string, status?: number): AgentEvent[] {
   const head = status ? `外部 CLI 报错（HTTP ${status}）：` : "外部 CLI 报错："
   return [
-    { kind: "notice", sessionId, text: head + why },
+    { kind: "notice", sessionId, text: head + why, failed: true },
     // 失败的一轮同样要收尾气泡：**半截话挂在那里比失败本身更让人困惑**
     { kind: "turn_end", sessionId },
     { kind: "idle", sessionId },

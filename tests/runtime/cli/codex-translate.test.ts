@@ -127,6 +127,7 @@ describe("一轮的结束", () => {
     const { out } = run([{ type: "turn.failed", error: { message: "上游 500" } }])
     expect(out.some((e) => e.kind === "notice")).toBe(true)
     expect(out.some((e) => e.kind === "idle")).toBe(true)
+    expect(out.find((e) => e.kind === "notice"), "桌面通知靠它认「这一轮失败了」").toMatchObject({ failed: true })
   })
 })
 

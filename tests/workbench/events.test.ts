@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 import { SessionUpdateSchema } from "../../src/protocol/events.js"
 import type { SessionUpdate, TranscriptItem } from "../../src/protocol/events.js"
+import type { AgentEvent } from "../../src/runtime/types.js"
 
 const hub = (terminalMaxChars = 1000) => new SessionTranscripts({ terminalMaxChars })
 
@@ -799,5 +800,148 @@ describe("truncateAt（回退这一轮，2026-09-27）", () => {
     expect(t.peekItems("s")).toEqual([])
     t.ingest("s", { kind: "compaction_end", sessionId: "s", reason: "manual", status: "cancelled" })
     expect(t.peekItems("s").filter((x) => x.type === "compaction")).toHaveLength(1)
+  })
+})
+
+describe("记录中枢 · 回合收尾（桌面通知，2026-09-27）", () => {
+  it("runtime 的 idle → 叫一声，带上 kind；没失败就不带「失败」", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.ingest("a", { kind: "output", sessionId: "a", data: "答" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    expect(收, "turn_end 不是收尾——一轮里每次模型响应都有一个").not.toHaveBeenCalled()
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenCalledTimes(1)
+    expect(收).toHaveBeenCalledWith({ sessionId: "a", kind: "native" })
+  })
+
+  it("这一轮出过带 failed 的提示 → 收尾时带上那句（第一句为准）；下一轮清空", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：401", failed: true })
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "第二句", failed: true })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native", 失败: "模型调用失败：401" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native" })
+  })
+
+  it("不带 failed 的提示（换模型、MCP、视觉转述）不算失败", () => {
+    const h = hub()
+    h.track("a", "acp")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "MCP：某台没连上" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenCalledWith({ sessionId: "a", kind: "acp" })
+  })
+
+  it("收尾照样进转录吗？不进——idle 不产生任何条目、不跳 revision", () => {
+    const h = hub()
+    h.track("a", "native")
+    const s0 = h.subscribe("a").revision
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(h.peek("a")!.revision).toBe(s0)
+  })
+
+  it("没追踪的会话不叫；退订之后不叫；dispose 清掉", () => {
+    const h = hub()
+    const 收 = vi.fn()
+    const 退 = h.on回合收尾(收)
+    h.ingest("x", { kind: "idle", sessionId: "x" })
+    expect(收).not.toHaveBeenCalled()
+    h.track("a", "native")
+    退()
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).not.toHaveBeenCalled()
+    const 收2 = vi.fn()
+    h.on回合收尾(收2)
+    h.dispose()
+    h.track("a", "native")
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收2).not.toHaveBeenCalled()
+  })
+
+  // —— 这一轮之后才进来的三件事（压缩、回退、子 agent）：都不是「一轮收尾」 ——
+
+  it("压缩（start / end，成与不成）不是收尾，也不算这一轮失败；压完重试接着答完 = 只叫一声、不带失败", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    // 超上限：那一次模型调用失败 → 压缩（先失败一次再成）→ pi 重试同一轮 → 答完
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：context length exceeded", failed: true })
+    h.ingest("a", { kind: "compaction_start", sessionId: "a", reason: "overflow" })
+    h.ingest("a", { kind: "compaction_end", sessionId: "a", reason: "overflow", status: "failed", error: "压不动" })
+    h.ingest("a", { kind: "compaction_start", sessionId: "a", reason: "overflow" })
+    h.ingest("a", { kind: "compaction_end", sessionId: "a", reason: "overflow", status: "done", retried: true })
+    expect(收, "压缩不是收尾").not.toHaveBeenCalled()
+    h.ingest("a", { kind: "output", sessionId: "a", data: "压完接着答完了" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenCalledTimes(1)
+    expect(收, "失败之后这一轮又往前走了（重试成功）——不算失败").toHaveBeenCalledWith({ sessionId: "a", kind: "native" })
+  })
+
+  it("pi 自动重试：失败之后又调了工具 / 想了 → 前面那句失败作废；最后没再往前走 → 仍算失败", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：overloaded", failed: true })
+    h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "t1", toolName: "read", input: {} })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native" })
+    h.ingest("a", { kind: "thinking", sessionId: "a", delta: "想" })
+    h.ingest("a", { kind: "notice", sessionId: "a", text: "模型调用失败：500", failed: true })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    expect(收).toHaveBeenLastCalledWith({ sessionId: "a", kind: "native", 失败: "模型调用失败：500" })
+  })
+
+  it("回退（truncateAt）不是收尾", () => {
+    const h = hub()
+    h.track("a", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    h.userTurn("a", "第一句")
+    h.ingest("a", { kind: "output", sessionId: "a", data: "答" })
+    h.ingest("a", { kind: "turn_end", sessionId: "a" })
+    h.ingest("a", { kind: "idle", sessionId: "a" })
+    const 那句 = h.peekItems("a").find((x) => x.type === "turn" && x.who === "user")!.id
+    收.mockClear()
+    expect(h.truncateAt("a", 那句)).toBe(true)
+    h.notice("a", "已回退到这句之前")
+    expect(收).not.toHaveBeenCalled()
+  })
+
+  it("子 agent：派出去那一轮、它的收尾、在坞里接着问那一轮——都不叫；子转录上即便来了 idle 也不叫", () => {
+    const h = hub()
+    h.track("s", "native")
+    const 收 = vi.fn()
+    h.on回合收尾(收)
+    const 发 = (e: Extract<AgentEvent, { kind: "subagent_event" }>["event"]) =>
+      h.ingest("s", { kind: "subagent_event", sessionId: "s", toolCallId: "c1", index: 0, event: e })
+    h.ingest("s", { kind: "subagent_start", sessionId: "s", toolCallId: "c1", index: 0, agent: "scout", task: "看看" })
+    发({ kind: "output", data: "看完了" })
+    发({ kind: "turn_end" })
+    发({ kind: "settled", ok: true, result: { text: "好" } })
+    h.ingest("s", { kind: "subagent_end", sessionId: "s", toolCallId: "c1", index: 0, ok: true })
+    const 子 = h.找子转录("s#sub:c1:0")!
+    expect(子).toBeDefined()
+    expect(h.子agent续问开始(子, "再说说")).toBe(true)
+    发({ kind: "output", data: "补充一句" })
+    发({ kind: "settled", ok: false, followUp: true, error: "断了" })
+    // 防御：子转录那段自己不会收到 idle，真来了也不算
+    h.ingest(子, { kind: "idle", sessionId: 子 })
+    h.ingest(子, { kind: "notice", sessionId: 子, text: "x", failed: true })
+    expect(收).not.toHaveBeenCalled()
+    // 主会话那一轮自己收尾照常叫一次
+    h.ingest("s", { kind: "idle", sessionId: "s" })
+    expect(收).toHaveBeenCalledTimes(1)
+    expect(收).toHaveBeenCalledWith({ sessionId: "s", kind: "native" })
   })
 })

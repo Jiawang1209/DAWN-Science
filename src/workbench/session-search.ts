@@ -11,14 +11,19 @@ import type { SessionRecord } from "../store/sessions.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
 import type { ResponseOf } from "../protocol/operations.js"
-import { 最新记录, 读记录, type 记录文件 } from "../runtime/pi-record.js"
+import { readdir, stat } from "node:fs/promises"
+import { join } from "node:path"
+import { 最新记录, 读记录, pi记录目录, type 记录文件 } from "../runtime/pi-record.js"
 import { 还原成条目 } from "./restored-items.js"
 import { 取片段, 可搜小写, 命中小写, 拆词 } from "../protocol/search-match.js"
 
 /** 缓存上限（字符）。缓存里每条存原条目与它的小写全文，所以实际内存约是这个数的两倍多（UTF-16）——40M ≈ 百来 MB 封顶 */
 export const 缓存字符上限 = 40_000_000
-/** 单个记录超过它就不读（计进 `tooLarge`）：写 spec 时实测最大 4.9 MB，32 MB 是「贴了几百张图」那种 */
-export const 单文件上限字节 = 32 * 1024 * 1024
+/**
+ * 单个记录超过它就不读（计进 `tooLarge`）：写 spec 时实测最大 4.9 MB，16 MB 是「贴了几百张图」那种。
+ * 解析在主进程上同步跑，一个文件是一整段不让出的时间——32 MB 冷读能卡 ~300 ms，16 MB 把它压到一半左右（2026-09-28 审查）
+ */
+export const 单文件上限字节 = 16 * 1024 * 1024
 /** 单次搜索的时限：到点交回已经搜过的，`truncated: "time"` */
 export const 单次时限毫秒 = 5_000
 export const 每段最多处 = 3
@@ -50,6 +55,8 @@ export class 会话全文搜索 {
   private readonly 缓存 = new Map<string, 缓存项>()
   private 总字符 = 0
   private 钟 = 0
+  /** 第几次搜索。新的一次开始后，旧的在下一个文件边界停下（界面本来就丢过期的回复，不必读完） */
+  private 代 = 0
 
   constructor(private readonly deps: 搜索依赖) {}
 
@@ -60,6 +67,7 @@ export class 会话全文搜索 {
   async 搜(query: string, limit: number): Promise<结果> {
     const now = this.deps.now ?? Date.now
     const 起 = now()
+    const 我 = ++this.代
     const 词们 = 拆词(query)
     /** **先搜新建的**：到了时限被截掉的是最老的那些（「上个月」比「去年」更可能是人要找的） */
     const 全部 = [...this.deps.records()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -73,8 +81,13 @@ export class 会话全文搜索 {
     let truncated: 结果["truncated"]
     const 卡们: 卡[] = []
 
+    let 第 = 0
     for (const r of 全部) {
-      if (now() - 起 > 单次时限毫秒) {
+      // 文件之间让一口气：解析是同步的，不让的话一次搜索从头到尾占着主进程的事件循环
+      if (第++ > 0) await new Promise<void>((res) => setImmediate(res))
+      // 被新的一次搜索取代：停下，交回已经搜过的。协议里没有「被取代」这一档，借 `time`（同样是「没搜完就停了」）；
+      // 这份回复界面会当过期的丢掉，不会被人看到
+      if (this.代 !== 我 || now() - 起 > 单次时限毫秒) {
         truncated = "time"
         break
       }
@@ -85,9 +98,15 @@ export class 会话全文搜索 {
       }
       // 与续接读同一个文件（按工作目录过滤，见 `最新记录`）——搜到的 itemId / nth 才落在点开后的那份转录里
       const 文件 = await 最新记录(r.sessionDir, r.workspace)
-      // 还没有一轮说完（pi 等第一条 assistant 才落盘）：没东西可搜，不是「读不了」
-      if (!文件) continue
+      if (!文件) {
+        this.扔(r.id)
+        // 还没有一轮说完（pi 等第一条 assistant 才落盘）：没东西可搜，不是「读不了」。
+        // 但目录里明明有记录、只是没有一份对得上这段的工作目录——那是搜不到的一段，要说出来
+        if (await 有非空记录(r.sessionDir)) unreadable++
+        continue
+      }
       if (文件.size > (this.deps.单文件上限字节 ?? 单文件上限字节)) {
+        this.扔(r.id)
         tooLarge++
         continue
       }
@@ -95,6 +114,7 @@ export class 会话全文搜索 {
       try {
         项 = await this.取(r.id, 文件)
       } catch {
+        this.扔(r.id)
         unreadable++
         continue
       }
@@ -104,7 +124,8 @@ export class 会话全文搜索 {
       for (const x of 项.条目) if (命中小写(x.小, 词们)) 中.push({ x, nth: 中.length })
       if (中.length === 0) continue
 
-      const 最新毫秒 = Math.max(0, ...中.map((m) => m.x.at ?? 0))
+      // 不用 `Math.max(...中.map())`：一段里命中几十万处时展开参数会爆栈
+      const 最新毫秒 = 中.reduce((n, m) => Math.max(n, m.x.at ?? 0), 0)
       const place = this.deps.placeOf(r)
       卡们.push({
         sessionId: r.id,
@@ -113,7 +134,8 @@ export class 会话全文搜索 {
         ...(place ? { place } : {}),
         archived: r.archivedAt !== undefined,
         lastAt: new Date(最新毫秒 > 0 ? 最新毫秒 : 文件.mtimeMs).toISOString(),
-        hits: 中.slice(0, 每段最多处).flatMap(({ x, nth }) => {
+        // 列**最新的**几处（转录顺序）：与卡上的时刻（最新那处）一致
+        hits: 中.slice(-每段最多处).flatMap(({ x, nth }) => {
           const 片 = 取片段(x.item, 词们)
           if (!片) return []
           return [
@@ -190,4 +212,23 @@ export class 会话全文搜索 {
       this.扔(最旧)
     }
   }
+}
+
+/** 目录里有没有不是空的 `.jsonl`（空文件是 pi 还没写头，不算「有记录」） */
+async function 有非空记录(sessionDir: string): Promise<boolean> {
+  const dir = pi记录目录(sessionDir)
+  let 名们: string[]
+  try {
+    名们 = (await readdir(dir)).filter((n) => n.endsWith(".jsonl"))
+  } catch {
+    return false
+  }
+  for (const n of 名们) {
+    try {
+      if ((await stat(join(dir, n))).size > 0) return true
+    } catch {
+      // 列目录与 stat 之间被删了：当它不在
+    }
+  }
+  return false
 }

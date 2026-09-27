@@ -4577,7 +4577,16 @@ export function ConversationView({
   const 方案开关 = 会话开关们?.find((o) => o.id === "dawn.plan")
   const 方案开着 = 方案开关?.current === "1"
   const 画方案开关 = session.kind !== "kernel" && session.kind !== "pty"
-  const 方案不能 = session.kind !== "native" ? t("这个 agent 不归 DAWN 管工具，先出方案用不了") : undefined
+  /**
+   * native 但还没报上 `dawn.plan`（会话开关还在路上）：同样灰着、同样**写出原因**（D7：灰着就要看得见为什么），
+   * 用的是 ⌘K 那一条同一句话。
+   */
+  const 方案不能 =
+    session.kind !== "native"
+      ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
+      : !方案开关
+        ? t("这段会话还没准备好先出方案，稍等再试")
+        : undefined
 
   return (
     <div className="conversation" ref={对话根}>
@@ -4916,7 +4925,8 @@ export function ConversationView({
            * 后面那句作为摘要的额外要求。外部 agent 那边不拦，原样发——Claude Code 之类自己认这个命令，我们不替它做、也不吞掉它。
            * 失败（这一轮还在跑、写权不在）照「乐观清空、失败还回去」那一套：话放回框里，原因写在框下。
            */
-          const 压缩令 = onCompact && 待发图.length === 0 && 待发文件.length === 0 ? 是压缩命令(text) : undefined
+          // `/plan /compact x`：`/plan` 已经被剥掉，余下的是**方案期里的一个问题**，不再当斜杠命令拦（否则开关没开、倒去压缩了）
+          const 压缩令 = !先开方案 && onCompact && 待发图.length === 0 && 待发文件.length === 0 ? 是压缩命令(text) : undefined
           if (压缩令 && onCompact) {
             clearDraft(session.sessionId)
             设发送出错(undefined)

@@ -1712,6 +1712,7 @@ export const EN: Readonly<Record<string, string>> = {
   "先出方案": "Draft a plan first",
   "等你看": "Waiting for you",
   "已批准 {0}": "Approved {0}",
+  "已批准": "Approved",
   "已被新的一版取代": "Replaced by a newer version",
   "没采用": "Not used",
   "方案第 {0} 版": "Plan version {0}",

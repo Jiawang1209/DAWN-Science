@@ -114,6 +114,38 @@ describe("方案卡", () => {
     expect(screen.queryByText(/计划的产物/)).toBeNull()
   })
 
+  it("答完之后焦点落回卡片本身，不掉到 <body>（按钮卸掉了）", async () => {
+    const { rerender } = render(<方案卡 item={卡} 能答 onAnswer={async () => {}} />)
+    const 钮 = screen.getByRole("button", { name: "照这个做" })
+    钮.focus()
+    fireEvent.click(钮)
+    rerender(<方案卡 item={{ ...卡, status: "approved", savedPath: "a.md", approvedAt: 1 }} 能答 onAnswer={async () => {}} />)
+    await waitFor(() => expect(document.activeElement).toBe(document.querySelector(".plan-card")))
+    expect(document.activeElement).not.toBe(document.body)
+  })
+
+  it("不做了之后焦点同样落回卡片", async () => {
+    render(<方案卡 item={卡} 能答 onAnswer={async () => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "不做了" }))
+    await waitFor(() => expect(document.activeElement).toBe(document.querySelector(".plan-card")))
+  })
+
+  it("已批准但没有批准时刻：状态就是「已批准」，后面不拖一个空格", () => {
+    render(<方案卡 item={{ ...卡, status: "approved", savedPath: "a.md" }} 能答 />)
+    expect(document.querySelector(".plan-card-status")?.textContent).toBe("已批准")
+  })
+
+  it("照这个做连按两下：只答一次", async () => {
+    let 放行: () => void = () => {}
+    const onAnswer = vi.fn(() => new Promise<void>((r) => { 放行 = r }))
+    render(<方案卡 item={卡} 能答 onAnswer={onAnswer} />)
+    const 钮 = screen.getByRole("button", { name: "照这个做" })
+    fireEvent.click(钮)
+    fireEvent.click(钮)
+    await act(async () => 放行())
+    expect(onAnswer).toHaveBeenCalledTimes(1)
+  })
+
   it("工作区那份被人改过（fileChanged）：卡头写「你改过」", () => {
     render(<方案卡 item={{ ...卡, status: "approved", savedPath: "a.md", approvedAt: 1, fileChanged: true }} 能答 />)
     expect(screen.getByText("你改过")).toBeTruthy()
@@ -175,6 +207,49 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
     expect(screen.getAllByText(/这个 agent 不归 DAWN 管工具，先出方案用不了/)).toHaveLength(2)
   })
 
+  it("native 还没报上 dawn.plan：灰着，旁边写「还没准备好」（D7：灰着要看得见为什么）", () => {
+    render(<ConversationView session={会话} items={[]} onSend={async () => {}} />)
+    expect((screen.getByRole("button", { name: "先出方案" }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText("这段会话还没准备好先出方案，稍等再试")).toBeTruthy()
+  })
+
+  it("/plan /compact x：开方案、把「/compact x」当问题发，不去压缩", async () => {
+    const 次序: string[] = []
+    const onSetPlan = vi.fn(async (on: boolean) => { 次序.push(`plan:${on}`) })
+    const onSend = vi.fn(async (text: string) => { 次序.push(`send:${text}`) })
+    const onCompact = vi.fn(async () => {})
+    render(<ConversationView session={会话} items={[]} onSend={onSend} onCompact={onCompact} 会话开关们={方案开关("")} onSetPlan={onSetPlan} />)
+    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    fireEvent.change(框, { target: { value: "/plan /compact x" } })
+    await act(async () => {
+      fireEvent.keyDown(框, { key: "Enter" })
+    })
+    await waitFor(() => expect(次序).toEqual(["plan:true", "send:/compact x"]))
+    expect(onCompact).not.toHaveBeenCalled()
+  })
+
+  it("批准了、执行那句却发不出去：那句放回输入框，并说原因", async () => {
+    const onSend = vi.fn(async () => { throw new Error("写权不在这里") })
+    const onAnswerPlan = vi.fn(async () => ({ savedPath: "analysis/plans/x.md" }))
+    render(<ConversationView session={会话} items={[卡]} onSend={onSend} 会话开关们={方案开关("1")} onSetPlan={async () => {}} onAnswerPlan={onAnswerPlan} />)
+    fireEvent.click(screen.getByRole("button", { name: "照这个做" }))
+    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    await waitFor(() => expect(框.value).toContain("analysis/plans/x.md"))
+    expect(screen.getByText(/写权不在这里/)).toBeTruthy()
+  })
+
+  it("照这个做连按两下：answerPlan 与执行那句都只走一次", async () => {
+    const onSend = vi.fn(async () => {})
+    const onAnswerPlan = vi.fn(async () => ({ savedPath: "analysis/plans/x.md" }))
+    render(<ConversationView session={会话} items={[卡]} onSend={onSend} 会话开关们={方案开关("1")} onSetPlan={async () => {}} onAnswerPlan={onAnswerPlan} />)
+    const 钮 = screen.getByRole("button", { name: "照这个做" })
+    fireEvent.click(钮)
+    fireEvent.click(钮)
+    await waitFor(() => expect(onSend).toHaveBeenCalled())
+    expect(onAnswerPlan).toHaveBeenCalledTimes(1)
+    expect(onSend).toHaveBeenCalledTimes(1)
+  })
+
   it("只打 /plan：只开开关，不发", async () => {
     const onSetPlan = vi.fn(async () => {})
     const onSend = vi.fn(async () => {})
@@ -224,6 +299,10 @@ describe("空态", () => {
       fireEvent.keyDown(框, { key: "Enter" })
     })
     expect(次序).toEqual(["plan:true", "start:分析一下"])
+  })
+  it("按下之后原因来了（换成不支持的 agent）：不显示按下", () => {
+    render(<EmptyConversation agents={["claude-acp"]} onStart={() => {}} onOpenSettings={() => {}} 先出方案={{ on: true, 不能的原因: "这个 agent 不归 DAWN 管工具，先出方案用不了", onToggle: () => {} }} />)
+    expect(screen.getByRole("button", { name: "先出方案" }).getAttribute("aria-pressed")).toBe("false")
   })
   it("选的 agent 不支持：`/plan` 不开会话、说原因", async () => {
     const onStart = vi.fn()

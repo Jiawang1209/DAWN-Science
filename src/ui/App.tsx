@@ -1414,6 +1414,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     空态方案.current = v
     设空态方案开(v)
   }
+  /** 空态发出去用的是 `agentIds[0]`（与空态那颗 agent pill 同一个判据）：它不是 native 就用不了先出方案 */
+  const 空态方案不能 =
+    providers.agents.find((x) => x.agentId === agentIds[0])?.kind !== "native"
+      ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
+      : undefined
+  // 按下之后换成了不支持的 agent：那一下作废，别留一个「按下 + 灰着」、也别带着它去建会话
+  useEffect(() => {
+    if (空态方案不能 && 空态方案.current) 设空态方案(false)
+  }, [空态方案不能])
 
   const 新建任务 = async (
     opts: {
@@ -5407,15 +5416,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               onStart={(agentId, firstMessage, workspace, images, files) =>
                 // **返回 promise**：空态那张卡要据此在失败时把字、图、文件还回去
-                新建任务({ agentId, firstMessage, workspace, images, files, 先出方案: 空态方案.current }).then(() => 设空态方案(false))
+                // 按下之后换成了不支持的 agent：那一下作废（不带着去建会话，否则新建任务会当场失败）
+                新建任务({ agentId, firstMessage, workspace, images, files, 先出方案: 空态方案.current && !空态方案不能 }).then(() => 设空态方案(false))
               }
               先出方案={{
-                on: 空态方案开,
-                // 与空态那颗 agent pill 同一个判据；空态发出去用的是 `agentIds[0]`，这里取同一个
-                不能的原因:
-                  providers.agents.find((x) => x.agentId === agentIds[0])?.kind !== "native"
-                    ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
-                    : undefined,
+                // 有原因时不显示按下（按下 + 灰着 = 自相矛盾）
+                on: 空态方案开 && !空态方案不能,
+                不能的原因: 空态方案不能,
                 onToggle: 设空态方案,
               }}
               /**

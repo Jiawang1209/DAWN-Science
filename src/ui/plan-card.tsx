@@ -6,7 +6,7 @@
  * 批准之后的「对照」是从产物清单现算的（`方案对照`），不存、不写回方案文件（D8）。
  * 工作区那份在两轮之间被人改过（`fileChanged`，2026-09-28 D3）→ 卡头写「你改过」，不恢复、不拦。
  */
-import { useId, useState } from "react"
+import { useId, useRef, useState } from "react"
 import type { TranscriptItem } from "../protocol/index.js"
 import { 方案产物, 方案对照 } from "../protocol/index.js"
 import type { ArtifactList } from "./state/catalog.js"
@@ -46,26 +46,39 @@ export function 方案卡({
   const 等着 = item.status === "proposed"
   const 灰 = !能答 || 忙 || !onAnswer
   const 长 = item.markdown.split("\n").length > 折起行数
+  /** 卡片本身：答完之后那几颗按钮卸掉，焦点落回这里（不落到 `<body>`，读屏与键盘都还在原处） */
+  const 卡根 = useRef<HTMLElement>(null)
+  /** 同一拍里按两下只算一次：`忙` 是 state，要等下一次渲染才灰；这把锁当场就上 */
+  const 在答 = useRef(false)
   const 答 = (action: "approve" | "discard", text?: string) => {
-    if (!onAnswer) return
+    if (!onAnswer || 在答.current) return
+    在答.current = true
     设忙(true)
     设错(undefined)
     onAnswer(action, text)
-      .then(() => 设改(undefined))
+      .then(() => {
+        设改(undefined)
+        卡根.current?.focus()
+      })
       .catch((e: unknown) => 设错(e instanceof Error ? e.message : String(e)))
-      .finally(() => 设忙(false))
+      .finally(() => {
+        在答.current = false
+        设忙(false)
+      })
   }
   const 态 =
     item.status === "proposed"
       ? t("等你看")
       : item.status === "approved"
-        ? tf("已批准 {0}", item.approvedAt ? new Date(item.approvedAt).toLocaleString() : "")
+        ? item.approvedAt
+          ? tf("已批准 {0}", new Date(item.approvedAt).toLocaleString())
+          : t("已批准")
         : item.status === "superseded"
           ? t("已被新的一版取代")
           : t("没采用")
 
   return (
-    <section className="plan-card" data-status={item.status} aria-label={tf("方案第 {0} 版", item.version)}>
+    <section ref={卡根} tabIndex={-1} className="plan-card" data-status={item.status} aria-label={tf("方案第 {0} 版", item.version)}>
       <header className="plan-card-head">
         <span className="plan-card-kicker">
           <概览图标 />
@@ -224,7 +237,8 @@ export function 先出方案开关({
         size="sm"
         className="plan-toggle"
         aria-label={t("先出方案")}
-        aria-pressed={on}
+        // 有原因就不显示按下：「按下 + 灰着」自相矛盾（空态按下之后换了 agent 就会走到这里）
+        aria-pressed={on && !不能的原因}
         {...(不能的原因 ? { "aria-describedby": 原因id } : {})}
         disabled={!onToggle || Boolean(不能的原因)}
         onClick={() => onToggle?.(!on)}

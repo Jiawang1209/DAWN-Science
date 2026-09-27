@@ -7656,7 +7656,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .plan-compare-list li[data-done="true"] { color: var(--dawn-success); }
 /**
  * 开关在输入卡那一行的最左边（不在附栏：附栏在坞里已经满了，见 views.tsx 那段注释）。
- * 按钮本身不缩；外部 agent 时旁边那行原因字可以缩成省略号——全句在 DOM 里，按钮的 `aria-describedby` 指着它。
+ * 按钮本身不缩；灰着时旁边那行原因字**折成两行也要读得全**——坞那么窄时省略号截掉的正是原因，
+ * 而按钮上不许挂 `title`（设计契约），截掉就没处读了（2026-09-28 审查）。
  */
 .plan-toggle-wrap { display: inline-flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; min-width: 0; }
 .plan-toggle-wrap[data-unavailable="true"] { flex: 0 1 auto; }
@@ -7664,9 +7665,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .plan-toggle[aria-pressed="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
 .plan-toggle-why {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
   font-size: var(--dawn-fs-meta);
 }
 .plan-band {

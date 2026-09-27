@@ -1725,4 +1725,10 @@ describe("设计契约 · 先出方案", () => {
     expect(交的.length, "找不到 `customTools:`——建会话那一句改了形状，这条扫描要跟着改").toBeGreaterThan(0)
     expect(交的.every((x) => x === "方案期包过的"), `交给 pi 的是 ${交的.join("、")}`).toBe(true)
   })
+
+  it("**开关旁那行原因字不许截成省略号**：按钮上不许挂 title，截掉就没处读了（D7，2026-09-28 审查）", () => {
+    const 块 = read("styles.css").match(/\.plan-toggle-why\s*\{([^}]*)\}/)
+    expect(块, "找不到 `.plan-toggle-why` 那一块——改名了，这条扫描要跟着改").toBeTruthy()
+    expect(块![1]).not.toMatch(/text-overflow\s*:\s*ellipsis|white-space\s*:\s*nowrap/)
+  })
 })

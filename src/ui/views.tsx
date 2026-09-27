@@ -1423,6 +1423,11 @@ export function SessionSidebar({
         mode: "名字" | "内容"
         onMode: (m: "名字" | "内容") => void
         内容结果?: React.ReactNode
+        /**
+         * 要一次焦点（2026-09-28 评审）：每变一次就把焦点放进框里。`autoFocus` 只管「框刚出现」那一下——
+         * 框已经开着时从命令面板再叫「搜索对话内容」，面板一关焦点落在 body 上，人还得再点一下框
+         */
+        聚焦?: number | undefined
       }
     | undefined
   /**
@@ -1596,6 +1601,11 @@ export function SessionSidebar({
    */
   /** 按内容时名字那套筛法不参与：三列整个让位（下面 `全部任务` 为空），「没有匹配」那句也不该出 */
   const 按内容 = search?.mode === "内容"
+  const 搜索框 = useRef<HTMLInputElement>(null)
+  const 要聚焦 = search?.聚焦
+  useEffect(() => {
+    if (要聚焦 !== undefined) 搜索框.current?.focus()
+  }, [要聚焦])
   const 词 = 按内容 ? "" : (search?.value ?? "").trim().toLowerCase()
   /**
    * **拿屏幕上显示的那个名字去比，不是任务表上那个**（2026-08-13 修）。
@@ -1993,6 +2003,7 @@ export function SessionSidebar({
       {search ? (
         <div className="side-search">
           <input
+            ref={搜索框}
             className="control side-search-field"
             value={search.value}
             autoFocus
@@ -2002,6 +2013,14 @@ export function SessionSidebar({
             onKeyDown={(e) => {
               // **Esc 关掉它**：这个框遮着一行列表，得有一条不用鼠标的退路
               if (e.key === "Escape") search.onClose()
+              // 按内容时（2026-09-28 评审）：回车开第一处、下箭头进结果（结果里上下键接着走，见 content-search.tsx）
+              if (search.mode !== "内容" || 在组词(e)) return
+              if (e.key !== "Enter" && e.key !== "ArrowDown") return
+              const 第一颗 = e.currentTarget.closest(".sidebar")?.querySelector<HTMLElement>(".cs-results [data-cs-nav]")
+              if (!第一颗) return
+              e.preventDefault()
+              if (e.key === "Enter") 第一颗.click()
+              else 第一颗.focus()
             }}
           />
           {/* 两颗切换**常驻、带字**（2026-09-27）：看不见的能力等于不存在 */}
@@ -3798,6 +3817,7 @@ export function ConversationView({
   onEditQueue,
   搜索跳到,
   on跳空,
+  on跳完,
   onQueueToDock,
   canRedirect,
   onRewind,
@@ -3960,6 +3980,11 @@ export function ConversationView({
   搜索跳到?: 跳转目标 | undefined
   /** 等了 3 秒还没在转录里找到那一处时说一句（不假装跳到了） */
   on跳空?: ((说: string) => void) | undefined
+  /**
+   * 跳到了（滚到并描上，或逐帧找满 12 帧放弃）之后说一声（2026-09-28 评审）：App 据此把目标撤掉。
+   * 不撤的话本组件按会话 key 重挂时 `已跳` 归零，离开再回来会被拽回旧的那一处
+   */
+  on跳完?: (() => void) | undefined
   /** 待发单上「到坞里问」（2026-09-25）：只有主区那段给；坞里那段本来就在坞里，不给 = 不画那颗 */
   onQueueToDock?: ((id: string) => Promise<void>) | undefined
   /** 这段会不会调整方向（只有 native）。不会的话 Cmd/Ctrl+回车与回车一样是排队，提示行也不提它 */
@@ -4464,6 +4489,9 @@ export function ConversationView({
   const 贴底 = useRef<StickToBottomContext>(null)
   const [搜索命中id, 设搜索命中id] = useState<string | undefined>(undefined)
   const 已跳 = useRef<number | undefined>(undefined)
+  /** 读最新的：它变了不该让跳转那条 effect 重跑 */
+  const on跳完Ref = useRef(on跳完)
+  on跳完Ref.current = on跳完
   useEffect(() => {
     设搜索命中id(undefined)
     清高亮()
@@ -4480,7 +4508,10 @@ export function ConversationView({
       let 剩 = 12
       const 试 = () => {
         贴底.current?.stopScroll()
-        if (滚到并高亮(对话根.current, id, 目标.词们) || --剩 <= 0) return
+        if (滚到并高亮(对话根.current, id, 目标.词们) || --剩 <= 0) {
+          on跳完Ref.current?.()
+          return
+        }
         requestAnimationFrame(试)
       }
       requestAnimationFrame(试)

@@ -1685,6 +1685,7 @@ export const EN: Readonly<Record<string, string>> = {
   "搜说过的话、回复、跑过的代码（至少两个字）": "Search what was said, replied or run (2+ characters)",
   "至少两个字": "Type at least 2 characters",
   "正在搜对话内容": "Searching conversations",
+  "对话内容的搜索结果": "Conversation search results",
   "搜索失败：{0}": "Search failed: {0}",
   "没有对话里出现「{0}」": "No conversation mentions “{0}”",
   "{0} 段对话里有": "Found in {0} conversations",

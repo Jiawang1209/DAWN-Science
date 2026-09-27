@@ -354,6 +354,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
   /** 全文搜索点了哪一处（2026-09-27）。只传给主区的 `ConversationView`；换会话后它自己不理别人的目标 */
   const [跳到, 设跳到] = useState<跳转目标 | undefined>(undefined)
+  /**
+   * **目标用完即撤**（2026-09-28 评审）：`ConversationView` 按会话 key 重挂，它的 `已跳` 会归零——
+   * 目标还挂着的话，离开再回来会被拽回旧的那一处（或再说一遍「没找到」）。三处撤：跳完、跳空、换到别的会话。
+   */
+  const 跳完 = useCallback(() => 设跳到(undefined), [])
+  const 跳空 = useCallback((说: string) => {
+    note(说)
+    设跳到(undefined)
+  }, [])
+  /** 命令面板「搜索对话内容」要一次焦点：框已经开着时 `autoFocus` 不会再来一次 */
+  const [搜索聚焦, 设搜索聚焦] = useState(0)
 
   /**
    * 握手。**失败不再是一个终局的 `fatal` 字符串**，而是进重试状态机：
@@ -3694,8 +3705,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   })
 
   /** 取消归档并打开（原先写在「已归档」那屏的 `onOpen` 里；2026-09-27 抽出来——全文搜索点到归档了的走同一条） */
-  const 取消归档并打开 = (s: { sessionId: string; projectId?: string | undefined }) => {
-    void client
+  const 取消归档并打开 = (s: { sessionId: string; projectId?: string | undefined }): Promise<"unarchived" | undefined> =>
+    client
       .get("setSessionArchived", { sessionId: s.sessionId, archived: false })
       .then(async () => {
         if (s.projectId && !projects.find((p) => p.projectId === s.projectId)?.temporary) setActiveProjectId(s.projectId)
@@ -3706,9 +3717,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // 从侧栏搜索点进来时整页设置可能开着：走 `关掉设置`（它会把被顶掉的坞房客还回去）
         if ($view.get() === "settings") 关掉设置()
         setView("conversation")
+        return "unarchived" as const
       })
-      .catch(fail)
-  }
+      .catch((e: unknown) => {
+        fail(e)
+        return undefined
+      })
 
   /**
    * 点了一条全文搜索结果（2026-09-27，spec §2.3）。**不另开一条打开会话的路**：
@@ -3716,19 +3730,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 跳到哪一处由主区的 `ConversationView` 做（它手上才有转录）；进了坞或那段已经不在了，目标就撤掉——
    * 不然之后在主区打开它时会被一个过期的目标拽走。
    */
-  const 打开搜到的 = (卡: 搜到的一段, 处?: 搜到的一处) => {
+  const 打开搜到的 = (卡: 搜到的一段, 处?: 搜到的一处): Promise<"unarchived" | undefined> => {
     const 那一处 = 处 ?? 卡.hits[0]
     设跳到(那一处 ? { sessionId: 卡.sessionId, itemId: 那一处.itemId, nth: 那一处.nth, 词们: 拆词(搜索词), 起: Date.now() } : undefined)
     if (卡.archived) {
-      取消归档并打开(卡)
-      return
+      // 取消归档失败 → 目标也撤掉：不然之后从别处打开这段时会被它拽走。成功 → 卡自己拿掉「已归档」
+      return 取消归档并打开(卡).then((r) => {
+        if (!r) 设跳到(undefined)
+        return r
+      })
     }
-    void 回到那段(卡.sessionId, 回段依赖())
+    return 回到那段(卡.sessionId, 回段依赖())
       .then((r) => {
         if (r === "dock" || r === "gone") 设跳到(undefined)
+        return undefined
       })
-      .catch(fail)
+      .catch((e: unknown) => {
+        设跳到(undefined)
+        fail(e)
+        return undefined
+      })
   }
+  /** 换到别的会话 → 不是它的目标撤掉（点结果那一下先设目标、后换会话，那一次换到的正是目标那段，留着） */
+  useEffect(() => {
+    设跳到((p) => (p && p.sessionId !== sessionId ? undefined : p))
+  }, [sessionId])
 
   const actions = useMemo<Actions>(
     () => ({
@@ -3779,6 +3805,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       openContentSearch: () => {
         设搜索开着(true)
         设搜索模式("内容")
+        设搜索聚焦((n) => n + 1)
         if ($sidebarCollapsed.get()) setSidebarCollapsed(false)
       },
       /** 压缩当前这段（2026-09-27）。与仪表弹层、`/compact` 同一个 `压缩` */
@@ -4906,6 +4933,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   mode: 搜索模式,
                   onMode: 设搜索模式,
                   内容结果: <ContentSearchResults query={搜索词} search={全文搜} onOpen={打开搜到的} />,
+                  聚焦: 搜索聚焦,
                 },
               }
             : {})}
@@ -5227,7 +5255,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 key={session.sessionId}
                 session={session}
                 搜索跳到={跳到}
-                on跳空={note}
+                on跳空={跳空}
+                on跳完={跳完}
                 /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
                 {...对话回调(session, 主槽)}
                 artifacts={artifacts}

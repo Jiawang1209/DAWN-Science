@@ -89,3 +89,106 @@ describe("结果卡", () => {
     expect(screen.getByRole("alert").textContent).toContain("后端没了")
   })
 })
+
+/** 评审补的（2026-09-28）：停顿、迟到、搜下一个词时不闪、列表语义、取消归档之后那张卡 */
+describe("打字与请求", () => {
+  const 结果 = (title: string): 全文结果 => ({ ...一张, sessions: [{ ...一张.sessions[0]!, sessionId: title, title, archived: false }] })
+
+  it("连着打字：停 250 ms 之后只搜一次，搜的是最后那个词", async () => {
+    vi.useFakeTimers()
+    const search = vi.fn(async (q: string) => 结果(q))
+    const { rerender } = render(<ContentSearchResults query="co" search={search} onOpen={vi.fn()} />)
+    for (const q of ["cox", "cox ", "cox 回", "cox 回归"]) {
+      await act(async () => {
+        vi.advanceTimersByTime(100)
+      })
+      rerender(<ContentSearchResults query={q} search={search} onOpen={vi.fn()} />)
+    }
+    expect(search).not.toHaveBeenCalled()
+    await act(async () => {
+      vi.advanceTimersByTime(搜索停顿毫秒)
+    })
+    expect(search).toHaveBeenCalledTimes(1)
+    expect(search).toHaveBeenCalledWith("cox 回归")
+    vi.useRealTimers()
+  })
+
+  it("迟到的回复丢掉：先发的后到，不盖住后发的", async () => {
+    vi.useFakeTimers()
+    const 等着: Record<string, (r: 全文结果) => void> = {}
+    const search = vi.fn((q: string) => new Promise<全文结果>((res) => (等着[q] = res)))
+    const { rerender } = render(<ContentSearchResults query="甲甲" search={search} onOpen={vi.fn()} />)
+    await act(async () => {
+      vi.advanceTimersByTime(搜索停顿毫秒)
+    })
+    rerender(<ContentSearchResults query="乙乙" search={search} onOpen={vi.fn()} />)
+    await act(async () => {
+      vi.advanceTimersByTime(搜索停顿毫秒)
+    })
+    expect(search).toHaveBeenCalledTimes(2)
+    await act(async () => {
+      等着["乙乙"]!(结果("乙的结果"))
+    })
+    await act(async () => {
+      等着["甲甲"]!(结果("甲的结果"))
+    })
+    expect(screen.getByText("乙的结果")).toBeTruthy()
+    expect(screen.queryByText("甲的结果")).toBeNull()
+    vi.useRealTimers()
+  })
+
+  it("搜下一个词时：上一批结果留着（变淡、aria-busy），不闪成加载", async () => {
+    vi.useFakeTimers()
+    const search = vi.fn(async (q: string) => 结果(q))
+    const { rerender } = render(<ContentSearchResults query="甲甲" search={search} onOpen={vi.fn()} />)
+    await act(async () => {
+      vi.advanceTimersByTime(搜索停顿毫秒)
+    })
+    rerender(<ContentSearchResults query="甲甲乙" search={search} onOpen={vi.fn()} />)
+    expect(screen.getByText("甲甲")).toBeTruthy()
+    expect(screen.queryByText("正在搜对话内容")).toBeNull()
+    expect(screen.getByRole("region").getAttribute("aria-busy")).toBe("true")
+    await act(async () => {
+      vi.advanceTimersByTime(搜索停顿毫秒)
+    })
+    expect(screen.getByText("甲甲乙")).toBeTruthy()
+    expect(screen.getByRole("region").getAttribute("aria-busy")).toBe("false")
+    vi.useRealTimers()
+  })
+})
+
+describe("结果区的语义与键盘", () => {
+  it("结果区有名字；卡是列表项", async () => {
+    await 渲染(一张)
+    const 区 = screen.getByRole("region", { name: "对话内容的搜索结果" })
+    expect(区.querySelector('[role="list"]')).toBeTruthy()
+    expect(区.querySelectorAll('[role="listitem"]').length).toBe(1)
+  })
+
+  it("结果里上下键在各处之间挪焦点", async () => {
+    await 渲染(一张)
+    const 可点 = [...document.querySelectorAll<HTMLElement>(".cs-results [data-cs-nav]")]
+    expect(可点.length).toBe(3) // 卡头 + 两处
+    可点[0]!.focus()
+    fireEvent.keyDown(可点[0]!, { key: "ArrowDown" })
+    expect(document.activeElement).toBe(可点[1])
+    fireEvent.keyDown(可点[1]!, { key: "ArrowUp" })
+    expect(document.activeElement).toBe(可点[0])
+  })
+
+  it("打开了一张归档的卡且取消归档成功：「已归档」与提示从这张卡上拿掉", async () => {
+    vi.useFakeTimers()
+    const onOpen = vi.fn(async () => "unarchived" as const)
+    render(<ContentSearchResults query="cox 回归" search={async () => 一张} onOpen={onOpen} />)
+    await act(async () => {
+      vi.advanceTimersByTime(搜索停顿毫秒)
+    })
+    vi.useRealTimers()
+    expect(screen.getByText("已归档")).toBeTruthy()
+    await act(async () => {
+      fireEvent.click(screen.getByText("代码里："))
+    })
+    expect(screen.queryByText("已归档")).toBeNull()
+    expect(screen.queryByText("打开会取消归档")).toBeNull()
+  })
+})

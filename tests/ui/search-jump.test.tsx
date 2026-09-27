@@ -5,6 +5,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, waitFor } from "@testing-library/react"
 import { ConversationView } from "../../src/ui/views.js"
+import { 滚到并高亮 } from "../../src/ui/search-jump.js"
 import { 默认转录预算 } from "../../src/ui/transcript-budget.js"
 import type { SessionSummary, TranscriptItem } from "../../src/protocol/index.js"
 
@@ -79,5 +80,31 @@ describe("跳到那一处", () => {
     )
     await new Promise((r) => setTimeout(r, 50))
     expect(container.querySelector('[data-turn-id="r0"]')).toBeNull()
+  })
+
+  it("跳到了：告诉上面一声（on跳完），App 好把目标撤掉", async () => {
+    const 跳完 = vi.fn()
+    render(
+      <ConversationView session={session} items={长对话()} onSend={() => {}} 搜索跳到={{ sessionId: "s1", itemId: "r0", nth: 0, 词们: ["鲸落"], 起: Date.now() }} on跳完={跳完} />,
+    )
+    await waitFor(() => expect(跳完).toHaveBeenCalledTimes(1))
+  })
+})
+
+describe("滚到并高亮 · 没有 CSS.escape 时", () => {
+  it("照样找得到带引号 / 反斜杠的 id", () => {
+    const 原 = CSS.escape
+    // @ts-expect-error 模拟没有 CSS.escape 的环境
+    CSS.escape = undefined
+    try {
+      const 根 = document.createElement("div")
+      const 行 = document.createElement("div")
+      行.dataset.turnId = 'a"b\\c]'
+      根.appendChild(行)
+      expect(滚到并高亮(根, 'a"b\\c]', [])).toBe(true)
+      expect(行.dataset.searchHit).toBe("true")
+    } finally {
+      CSS.escape = 原
+    }
   })
 })

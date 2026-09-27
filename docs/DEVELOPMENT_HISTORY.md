@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 会话全文搜索 · 界面评审修复：跳转目标用完即撤、面板再叫也聚焦、结果区键盘与语义（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 评审 `d924972` / `ff78f39` 抓到：App 的 `跳到` 跳完从不清——`ConversationView` 按会话 key 重挂、`已跳` 归零，离开再回来会被拽回旧的那一处（或再说一遍「没找到」），取消归档失败时同样；命令面板「搜索对话内容」在框已开着时只靠 `autoFocus`，焦点落在 body；每敲一个字结果就闪成加载；结果区没有名字与列表语义、键盘进不去。
+- **What**：
+  - `App.tsx`：`跳到` 三处撤——`on跳完`（`ConversationView` 新回调，滚到或找满 12 帧后叫）、`on跳空`（说一句并撤）、换到别的会话（effect 按 `sessionId`，只撤不是那段的目标）；取消归档失败 / `回到那段` 抛错也撤。`取消归档并打开` 改为返回 `"unarchived" | undefined`；`openContentSearch` 递增 `搜索聚焦`。
+  - `views.tsx`：侧栏搜索框收 `聚焦`（每变一次 focus）；按内容时回车 = 开第一处、下箭头 = 焦点进结果（组词中不接）。
+  - `content-search.tsx`：`等` 态带上一批结果——变淡（`.cs-stale`）+ `aria-busy`，不闪加载；结果区 `role="region"` + 名字「对话内容的搜索结果」，卡是 `list`/`listitem`；卡头与各处带 `data-cs-nav`，上下键在其间走；`onOpen` 回 `"unarchived"` 时就地拿掉那张卡的「已归档」与提示。
+  - `search-jump.ts`：`转义属性值`——没有 `CSS.escape` 时退到转义反斜杠、双引号、换行。
+- **Impact**: 无协议变化；新增一条 i18n 文案。行为上：跳过一次之后切走再回来不再滚动 / 描边 / 出声。
+- **Verification**: 新 `tests/ui/app-content-search.test.tsx`（真 `createClient` + 假传输：点一处 → 打开 → 描上；跳后换段再回来不滚不描；找不到只说一次；面板再叫焦点回框）先红后绿；`content-search.test.tsx` 加 250 ms 停顿只搜一次、迟到回复丢弃、旧结果变淡不闪、区域与列表语义、上下键、归档卡就地更新；`search-jump.test.tsx` 加 `on跳完` 与无 `CSS.escape`；`views.test.tsx` 加回车 / 下箭头 / 再聚焦。`npx vitest run` 299 文件 3716 过；`npm run typecheck`、`npm run build` 过。
+
 ### 2026-09-28 — 桌面通知：做完、出错、等你点头时弹系统通知；点它回到那段；Dock 角标 / 任务栏闪（学自 Codex app / Claude app；协议 8.4；分支 `agent-basics`）
 
 - **Type**: feat + fix

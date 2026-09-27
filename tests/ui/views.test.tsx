@@ -901,3 +901,58 @@ describe("侧栏搜索 · 按名字 / 按内容", () => {
     expect(screen.queryByText(/没有匹配/)).toBeNull()
   })
 })
+
+/** 评审补的（2026-09-28）：输入框里的键盘——回车开第一处、下箭头进结果；命令面板再叫一次要把焦点拿回来 */
+describe("侧栏搜索 · 按内容时的键盘与焦点", () => {
+  const 结果 = (onOpen: () => void) => (
+    <div className="cs-results">
+      <button data-cs-nav="" onClick={onOpen}>第一处</button>
+      <button data-cs-nav="">第二处</button>
+    </div>
+  )
+  const 画 = (over: { onOpen?: () => void; 聚焦?: number; mode?: "名字" | "内容" } = {}) => {
+    const onOpen = over.onOpen ?? vi.fn()
+    const props = (聚焦: number | undefined) => ({
+      value: "cox",
+      onChange: noop,
+      onClose: noop,
+      mode: over.mode ?? ("内容" as const),
+      onMode: noop,
+      内容结果: 结果(onOpen),
+      ...(聚焦 !== undefined ? { 聚焦 } : {}),
+    })
+    const r = render(<SessionSidebar {...base} projects={[]} activeProjectId={undefined} tasks={[]} search={props(over.聚焦)} />)
+    return {
+      ...r,
+      onOpen,
+      再聚焦: (n: number) => r.rerender(<SessionSidebar {...base} projects={[]} activeProjectId={undefined} tasks={[]} search={props(n)} />),
+    }
+  }
+  const 框 = () => screen.getByPlaceholderText("搜说过的话、回复、跑过的代码（至少两个字）")
+
+  it("回车 = 打开第一处", () => {
+    const { onOpen } = 画()
+    fireEvent.keyDown(框(), { key: "Enter" })
+    expect(onOpen).toHaveBeenCalledTimes(1)
+  })
+
+  it("下箭头 = 焦点进结果的第一颗", () => {
+    画()
+    fireEvent.keyDown(框(), { key: "ArrowDown" })
+    expect(document.activeElement?.textContent).toBe("第一处")
+  })
+
+  it("按名字时回车不去点结果", () => {
+    const { onOpen } = 画({ mode: "名字" })
+    fireEvent.keyDown(screen.getByPlaceholderText("搜索项目与会话的名字"), { key: "Enter" })
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it("框已经开着时再要一次焦点（聚焦 +1）：焦点回到框里", () => {
+    const { 再聚焦 } = 画({ 聚焦: 1 })
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    expect(document.activeElement).not.toBe(框())
+    再聚焦(2)
+    expect(document.activeElement).toBe(框())
+  })
+})

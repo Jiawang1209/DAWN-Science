@@ -13,9 +13,18 @@ function 有高亮API(): boolean {
   return typeof CSS !== "undefined" && "highlights" in CSS && typeof Highlight !== "undefined"
 }
 
+/**
+ * 属性选择器里的值转义（2026-09-28 评审）。有 `CSS.escape` 用它；没有（某些测试环境、老内核）时
+ * 退到只转属性值里真正要紧的两样——反斜杠与双引号，外加换行（选择器里不能裸着）。
+ */
+export function 转义属性值(v: string): string {
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(v)
+  return v.replace(/[\\"]/g, "\\$&").replace(/\n/g, "\\a ")
+}
+
 /** 在 `根` 里找那一条（文字行 `data-turn-id`、工具行 `data-item-id`），滚到中间、描一圈、标词。找不到 → false */
 export function 滚到并高亮(根: HTMLElement | null, id: string, 词们: readonly string[]): boolean {
-  const 转义 = CSS.escape(id)
+  const 转义 = 转义属性值(id)
   const el = 根?.querySelector<HTMLElement>(`[data-turn-id="${转义}"], [data-item-id="${转义}"]`)
   if (!el) return false
   el.scrollIntoView?.({ block: "center" })

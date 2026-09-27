@@ -4291,6 +4291,14 @@ pre {
   flex-direction: column;
   gap: var(--dawn-space-2);
   padding: var(--dawn-space-2) 0 var(--dawn-space-3);
+  transition: opacity var(--dawn-dur-base) var(--dawn-ease);
+}
+/* 搜下一个词时上一批留着、变淡（2026-09-28 评审）：不每敲一个字就闪成加载 */
+.cs-results.cs-stale { opacity: 0.55; }
+.cs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-2);
 }
 .cs-summary {
   margin: 0;

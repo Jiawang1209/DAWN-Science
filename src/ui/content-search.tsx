@@ -20,7 +20,23 @@ export type 搜到的一处 = 搜到的一段["hits"][number]
 
 export const 搜索停顿毫秒 = 250
 
-type 态 = { kind: "等" } | { kind: "好"; r: 全文结果; 词: string } | { kind: "坏"; text: string }
+type 好态 = { kind: "好"; r: 全文结果; 词: string }
+/** `等` 带着上一批结果（2026-09-28 评审）：搜下一个词时旧结果变淡留着，不每敲一个字就闪成加载 */
+type 态 = { kind: "等"; 前?: 好态 | undefined } | 好态 | { kind: "坏"; text: string }
+
+/** 结果区里能走到的那几颗（卡头与各处）。上下键在它们之间挪；输入框里按下箭头进来的是第一颗 */
+export const 可走选择器 = "[data-cs-nav]"
+
+function 挪焦点(e: React.KeyboardEvent<HTMLElement>) {
+  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return
+  const 列 = [...(e.currentTarget.querySelectorAll<HTMLElement>(可走选择器) ?? [])]
+  const i = 列.indexOf(document.activeElement as HTMLElement)
+  if (i < 0) return
+  const 下一个 = 列[e.key === "ArrowDown" ? i + 1 : i - 1]
+  if (!下一个) return
+  e.preventDefault()
+  下一个.focus()
+}
 
 function 处名(h: 搜到的一处): string {
   if (h.where === "user") return t("你：")
@@ -55,16 +71,30 @@ export function ContentSearchResults({
   query: string
   /** **必须是稳定引用**（App 里 `useCallback`）：它变一次就重搜一次 */
   search: (q: string) => Promise<全文结果>
-  onOpen: (卡: 搜到的一段, 处?: 搜到的一处) => void
+  /**
+   * 回 `"unarchived"`（可以是 Promise）= 这张卡原先归档着、现在已取消归档并打开了：
+   * 卡上的「已归档」与「打开会取消归档」就地拿掉（2026-09-28 评审）——不然再点一次它还在说会取消归档
+   */
+  onOpen: (卡: 搜到的一段, 处?: 搜到的一处) => void | "unarchived" | Promise<void | "unarchived">
 }) {
   const 词 = query.trim()
   const [态, 设态] = useState<态>({ kind: "等" })
   const 序 = useRef(0)
+  const [已取消归档, 设已取消归档] = useState<ReadonlySet<string>>(() => new Set())
+  const 打开 = (s: 搜到的一段, h?: 搜到的一处) => {
+    const r = h ? onOpen(s, h) : onOpen(s)
+    if (!s.archived) return
+    void Promise.resolve(r)
+      .then((x) => {
+        if (x === "unarchived") 设已取消归档((p) => new Set(p).add(s.sessionId))
+      })
+      .catch(() => {}) // 失败由 App 出声；这里只是不改卡
+  }
 
   useEffect(() => {
     const 我 = ++序.current
     if (!够长(词)) return
-    设态({ kind: "等" })
+    设态((p) => ({ kind: "等", 前: p.kind === "好" ? p : p.kind === "等" ? p.前 : undefined }))
     const 定时 = setTimeout(() => {
       search(词)
         .then((r) => {
@@ -78,7 +108,7 @@ export function ContentSearchResults({
   }, [词, search])
 
   if (!够长(词)) return <p className="side-empty">{t("至少两个字")}</p>
-  if (态.kind === "等") {
+  if (态.kind === "等" && !态.前) {
     return (
       <div className="cs-status">
         <Loader inline label={t("正在搜对话内容")} />
@@ -92,19 +122,29 @@ export function ContentSearchResults({
       </p>
     )
   }
-  const { r } = 态
+  const 在等 = 态.kind === "等"
+  const 显 = 态.kind === "等" ? 态.前! : 态
+  const { r } = 显
+  const 归档着 = (s: 搜到的一段) => s.archived && !已取消归档.has(s.sessionId)
   return (
-    <div className="cs-results">
+    <div
+      className={在等 ? "cs-results cs-stale" : "cs-results"}
+      role="region"
+      aria-label={t("对话内容的搜索结果")}
+      aria-busy={在等}
+      onKeyDown={挪焦点}
+    >
       {r.sessions.length === 0 ? (
-        <p className="side-empty">{tf("没有对话里出现「{0}」", 态.词)}</p>
+        <p className="side-empty">{tf("没有对话里出现「{0}」", 显.词)}</p>
       ) : (
         <p className="cs-summary">{tf("{0} 段对话里有", r.matchedSessions)}</p>
       )}
+      <div role="list" className="cs-list">
       {r.sessions.map((s) => (
-        <div key={s.sessionId} className="cs-card">
-          <Row className="cs-head" onClick={() => onOpen(s)}>
+        <div key={s.sessionId} className="cs-card" role="listitem">
+          <Row className="cs-head" data-cs-nav="" onClick={() => 打开(s)}>
             <span className="cs-title">{s.title ?? t("新会话")}</span>
-            {s.archived ? <span className="cs-badge">{t("已归档")}</span> : null}
+            {归档着(s) ? <span className="cs-badge">{t("已归档")}</span> : null}
           </Row>
           {/* 时刻与所在放第二行（2026-09-28 实测）：与标题挤一行时，侧栏拖到最窄（200）标题只剩一个字 */}
           <p className="cs-place">
@@ -113,9 +153,9 @@ export function ContentSearchResults({
               <span>{s.place.kind === "server" ? tf("服务器 {0}", s.place.name) : tf("项目 {0}", s.place.name)}</span>
             ) : null}
           </p>
-          {s.archived ? <p className="cs-place">{t("打开会取消归档")}</p> : null}
+          {归档着(s) ? <p className="cs-place">{t("打开会取消归档")}</p> : null}
           {s.hits.map((h) => (
-            <Row key={`${h.itemId}:${h.nth}`} className="cs-hit" onClick={() => onOpen(s, h)}>
+            <Row key={`${h.itemId}:${h.nth}`} className="cs-hit" data-cs-nav="" onClick={() => 打开(s, h)}>
               <span className="cs-where">{处名(h)}</span>
               <span className="cs-snippet">{画片段(h.snippet, h.marks)}</span>
             </Row>
@@ -123,6 +163,7 @@ export function ContentSearchResults({
           {s.moreHits > 0 ? <p className="cs-more">{tf("还有 {0} 处", s.moreHits)}</p> : null}
         </div>
       ))}
+      </div>
       {r.truncated === "sessions" ? (
         <p className="side-empty">{tf("还有 {0} 段也有，没列出来——换个更具体的词", r.matchedSessions - r.sessions.length)}</p>
       ) : null}

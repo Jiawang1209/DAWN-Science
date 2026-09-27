@@ -33,6 +33,11 @@ export class 侧边对照 {
     return this.侧边
   }
 
+  /** 此刻主区是哪段（桌面通知判「在屏上」用，2026-09-27）。界面没报过 / 那段没了 = undefined */
+  当前主(): SessionId | undefined {
+    return this.主
+  }
+
   /** 一段会话没了（归档 / 删除 / 关闭）。它是侧边 → 出；它是主 → 只清主 */
   忘掉(id: SessionId): { 出: SessionId | undefined } {
     if (this.主 === id) this.主 = undefined

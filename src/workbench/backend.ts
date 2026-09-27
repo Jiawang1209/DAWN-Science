@@ -90,6 +90,7 @@ import { fault, fault原样, type WorkbenchBackend } from "./server.js"
 import { 取本机图片 } from "./本机图片.js"
 import type { SessionTranscripts } from "./events.js"
 import { 侧边对照, 主对话摘要 } from "./side-session.js"
+import { 桌面通知器, 读桌面设置, 写桌面设置, type 桌面通知出口 } from "./desktop-notify.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
 import { 回退通知 } from "./rewind-notice.js"
@@ -308,6 +309,11 @@ export interface WorkbenchBackendOptions {
   onEnvironmentFrozen?: (sessionId: string, snapshotId: string) => void
   /** 窗口在不在前台（远程助理：人在电脑前就不推通知）。不给 = 不知道 = 照推 */
   isForeground?: () => boolean
+  /**
+   * 桌面通知的出口（2026-09-27）。主进程给真的，或 `DAWN_FAKE_NOTIFY=1` 时给假的（e2e / dev:mock 共用）。
+   * 不给 = 判断照做、弹不出来，`desktopTestNotify` 如实说。与 `isForeground` 同一个注入缝——后端不 import electron。
+   */
+  desktopNotify?: 桌面通知出口
   /**
    * 用某段会话此刻的模型（或给定 provider + model）问一句（提示词增强，2026-08-21）。
    * 就是 `NativeRuntime.问一句`；不给 = 这次运行没有 native 运行时，增强操作会如实拒绝。
@@ -1771,6 +1777,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const t = (await backend.createTask({ agentId: d.agentId, ...(d.workspace ? { workspace: d.workspace } : {}), ...(d.connectionId ? { connectionId: d.connectionId } : {}) })) as { sessionId?: string }
     const sessionId = t.sessionId
     if (!sessionId) return { status: "failed", error: { code: "no_session", message: "开任务时没有拿到会话" } }
+    // 这段的收尾不单独弹「做完了」——结束时调度器报一条「定时…」（桌面通知，spec §0 第 5 条）
+    桌面.交给定时(sessionId)
     // 这段会话按定义里存的档走（门每次调用都问，所以建好会话、写话之前定就来得及）
     设会话权限?.(sessionId, d.permission)
     projects.setSessionTitle(sessionId, `${d.name} · ${new Date(r.scheduledFor).toLocaleString("zh-CN", { hour12: false })}`)
@@ -1823,6 +1831,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           // 推微信：绑了才发；跟「跑完 / 出错」两个开关走
           void 微信.定时跑完了(d.name, 完.status, 完.summary ?? 完.error?.message, new Date().toLocaleString("zh-CN", { hour12: false })).catch(() => {})
           void 飞书.定时跑完了(d.name, 完.status, 完.summary ?? 完.error?.message, new Date().toLocaleString("zh-CN", { hour12: false })).catch(() => {})
+          桌面.定时跑完了(d.name, 完.status, 完.summary ?? 完.error?.message, 完.sessionId)
           return 完
         },
         补跑窗口毫秒: (定时设置?.补跑窗口分钟 ?? 15) * 60_000,
@@ -1837,8 +1846,26 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 所以后端重启丢了它不要紧。
    */
   const 侧边 = new 侧边对照()
+  /**
+   * 桌面通知（2026-09-27，spec `2026-09-27-桌面通知-design.md`）。听的是同一个中枢；
+   * 「在屏上」= 主区那段或坞里那段（`setSideSession` 报来的，权威在界面）；
+   * 「停过几次」借调整方向留下的 `停止次数`——人按了停止的那一轮不报「做完了」。
+   * 前台不知道（没装配 `isForeground`）= 当不在前台，照弹——与微信「不给 = 不知道 = 照推」同一个口径。
+   */
+  const 桌面 = new 桌面通知器({
+    events,
+    设置: () => 读桌面设置(settings),
+    前台: () => isForeground?.() ?? false,
+    在屏上: (sid) => sid === 侧边.当前主() || sid === 侧边.当前侧边(),
+    标题of: (sid) => sessions.get(sid)?.title,
+    停过几次: (sid) => 停止次数.get(sid) ?? 0,
+    出口: opts.desktopNotify,
+  })
+  opts.注册收摊?.(() => 桌面.dispose())
   /** 一段会话没了（归档 / 删除 / 关闭）：它若挂在坞里，把它的工具停掉——`stop` 不摘那个开关，见 native.ts */
   const 侧边忘掉 = (id: string) => {
+    // 角标里划掉、候着的「做完了」作废（桌面通知，2026-09-27）
+    桌面.忘掉(id)
     const { 出 } = 侧边.忘掉(id)
     if (出) sessions.setSideTool(出, false)
   }
@@ -3458,6 +3485,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const { 进, 出 } = 侧边.设({ side, main })
       if (出) sessions.setSideTool(出, false)
       if (进) sessions.setSideTool(进, true)
+      // 主区 / 坞里换了段：窗口在前台的话，此刻在屏上的那几段算「看见了」（桌面通知的角标，2026-09-27）
+      桌面.看见了()
       if (侧边不在) return { sideGone: true }
       const 侧 = 侧边.当前侧边()
       return 侧 ? { canReadMain: sessions.canReadMain(侧) } : {}
@@ -4785,6 +4814,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       要设置()
       return 飞书.setNotifySettings(patch)
     },
+
+    /* ── 桌面通知（2026-09-27） ── */
+    desktopGetNotify: async () => ({ ...读桌面设置(settings), supported: opts.desktopNotify?.支持() ?? false }),
+    desktopSetNotify: async (patch) => {
+      if (!settings) throw fault("invalid_request", "本次运行没有设置存储，存不了通知开关")
+      return { ...写桌面设置(settings, patch), supported: opts.desktopNotify?.支持() ?? false }
+    },
+    desktopTestNotify: async () => 桌面.试一条(),
   }
 
   // 上次绑过的话，启动就开始听

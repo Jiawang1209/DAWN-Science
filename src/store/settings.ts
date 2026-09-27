@@ -30,6 +30,8 @@ export type SettingKey =
   | "weixin.sessionId"
   | "weixin.boundAt"
   | "weixin.notify"
+  /** 桌面通知的开关与语言（2026-09-27，json；形状见 `workbench/desktop-notify.ts` 的 `桌面通知设置`） */
+  | "desktop.notify"
   | "interpreter.python"
   | "interpreter.r"
   /**

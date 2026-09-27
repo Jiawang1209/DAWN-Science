@@ -64,7 +64,7 @@ function 起一套() {
     runs: {} as never,
     sessions: {} as never,
     registry: { providers: [] } as never,
-    events: {} as never,
+    events: { onAnyUpdate: () => () => {}, on回合收尾: () => () => {} } as never, // 桌面通知器造后端时就订中枢（2026-09-27）
     credentials,
     remote: { store, manager },
   })
@@ -211,7 +211,7 @@ describe("没装配远端时", () => {
       runs: {} as never,
       sessions: {} as never,
       registry: { providers: [] } as never,
-      events: {} as never,
+      events: { onAnyUpdate: () => () => {}, on回合收尾: () => () => {} } as never, // 桌面通知器造后端时就订中枢（2026-09-27）
       credentials: 假钥匙串(),
     })
     await expect(backend.listConnections({})).rejects.toThrow(/没有装配/)

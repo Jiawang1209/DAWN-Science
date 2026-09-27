@@ -123,7 +123,8 @@ function 起一套(opts: { askOnce?: 问; available?: (id: string) => Promise<st
     runs: {} as never,
     sessions: {} as never,
     registry: registry as never,
-    events: {} as never,
+    // 桌面通知器造后端时就订中枢（2026-09-27）：桩得有这两个口
+    events: { onAnyUpdate: () => () => {}, on回合收尾: () => () => {} } as never,
     credentials: 假钥匙串(),
     invalidateCredentials: invalidate,
     models: { available: opts.available ?? (async () => ["deepseek-chat"]), ...(opts.needsBaseUrl ? { needsBaseUrl: opts.needsBaseUrl } : {}) },

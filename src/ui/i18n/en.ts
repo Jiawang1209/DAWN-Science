@@ -1423,6 +1423,7 @@ export const EN: Readonly<Record<string, string>> = {
   "刚连上就没了：{0}": "Connected and then lost: {0}",
   "问不出 {0} 上的家目录，没法决定从哪儿开始": "Could not find the home directory on {0}, so there is nowhere to start from",
   "本次运行没有设置存储，接不了微信": "Settings storage is not wired up in this run, so WeChat cannot be connected",
+  "本次运行没有设置存储，存不了通知开关": "Settings storage is not wired up in this run, so the notification switches cannot be saved",
   "本次运行没有装配全局技能目录": "The global skills folder is not wired up in this run",
   "导进项目要先说是哪个项目": "Importing into a project needs the project named first",
   "没有这个项目：{0}": "No such project: {0}",

@@ -97,6 +97,9 @@ function 起一套(opts: { 续接失败?: string } = {}) {
     ingest: () => {},
     restore: () => {},
     setCwd: () => {},
+    // 桌面通知器造后端时就订中枢（2026-09-27）
+    onAnyUpdate: () => () => {},
+    on回合收尾: () => () => {},
     subscribe: (id: string) => {
       // **续不上就订不上**：事件总线只认此刻活着的那些
       if (续接了.length === 0 || opts.续接失败) throw new Error("会话不在本进程中活动")

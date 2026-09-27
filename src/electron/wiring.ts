@@ -107,6 +107,8 @@ export interface CreateWorkbenchOptions {
   openPath?: (absolutePath: string) => Promise<string>
   /** 窗口在不在前台（远程助理的通知据此闭嘴） */
   isForeground?: () => boolean
+  /** 桌面通知的出口（2026-09-27）。**参数传进来，不在这里 import electron**——与上面几条同一个理由 */
+  desktopNotify?: import("../workbench/desktop-notify.js").桌面通知出口
   /** 扔进废纸篓。**只有主进程碰得到 `shell.trashItem`** */
   trashItem?: (absolutePath: string) => Promise<void>
   /** 系统的下载目录。**只有主进程问得到 `app.getPath("downloads")`** */
@@ -1291,6 +1293,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.downloadsDir ? { downloadsDir: opts.downloadsDir } : {}),
     ...(opts.trashItem ? { trashItem: opts.trashItem } : {}),
     ...(opts.isForeground ? { isForeground: opts.isForeground } : {}),
+    ...(opts.desktopNotify ? { desktopNotify: opts.desktopNotify } : {}),
     // 提示词增强：用会话此刻的模型问一句
     askOnce: (目标, req) => nativeRuntime.问一句(目标, req),
     /** 归档 / 取消归档各落一条 Run（7.18），挂在那段会话自己的项目下 */

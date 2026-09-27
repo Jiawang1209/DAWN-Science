@@ -32,6 +32,14 @@ describe("侧边对照", () => {
     expect(t.忘掉("s")).toEqual({ 出: "s" })
     expect(t.当前侧边()).toBeUndefined()
   })
+
+  it("当前主()：报了主区就记着；主区那段没了清掉（桌面通知判「在屏上」用，2026-09-27）", () => {
+    const d = new 侧边对照()
+    d.设({ side: undefined, main: "m" })
+    expect(d.当前主()).toBe("m")
+    d.忘掉("m")
+    expect(d.当前主()).toBeUndefined()
+  })
 })
 
 const 说 = (id: string, who: "user" | "agent", text: string, final = true): TranscriptItem =>

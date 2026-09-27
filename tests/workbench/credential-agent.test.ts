@@ -33,7 +33,8 @@ function 起一套(available: (providerId: string) => Promise<string[]>, names?:
     runs: {} as never,
     sessions: {} as never,
     registry: registry as never,
-    events: {} as never,
+    // 桌面通知器造后端时就订中枢（2026-09-27）：桩得有这两个口
+    events: { onAnyUpdate: () => () => {}, on回合收尾: () => () => {} } as never,
     credentials: 假钥匙串("deepseek"),
     models: { available, ...(names ? { names } : {}) },
   })

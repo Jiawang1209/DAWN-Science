@@ -1547,3 +1547,23 @@ describe("设计契约 · 桌面通知只有一个出口", () => {
     expect(文).toMatch(/flashFrame\s*\(/)
   })
 })
+
+/**
+ * **全文搜索只读**（2026-09-27，会话全文搜索 spec §4 ③）。
+ *
+ * 搜索读的 pi 记录此刻可能正被一段活着的会话追加。pi 的 `SessionManager.open` / `continueRecent` 遇到旧版本记录
+ * 或空文件会**重写那个文件**（`_rewriteFile`）——搜一下就把别人正在写的文件重写一遍，那是会丢话的。
+ * 所以读记录的那个文件里只许有只读的入口：`parseSessionEntries` + `SessionManager.inMemory`。
+ */
+describe("设计契约 · 全文搜索只读", () => {
+  it("**`src/runtime/pi-record.ts` 不经任何会写盘的入口**", () => {
+    const 文 = readFileSync(join(import.meta.dirname, "../../src/runtime/pi-record.ts"), "utf8")
+    const 犯的 = findLines(
+      文,
+      (l) =>
+        /SessionManager\.(open|create|continueRecent|forkFrom)\s*\(/.test(l) ||
+        /\b(writeFile|appendFile|rename|rm|unlink|mkdir|copyFile|truncate)(Sync)?\s*\(/.test(l),
+    )
+    expect(犯的, "读 pi 记录只许走 parseSessionEntries + SessionManager.inMemory").toEqual([])
+  })
+})

@@ -43,6 +43,7 @@ function actions(): Actions {
     newSideChat: vi.fn(),
     openSideChat: vi.fn(),
     compactContext: vi.fn(),
+    rewindLast: vi.fn(),
   }
 }
 
@@ -206,5 +207,22 @@ describe("压缩上下文（2026-09-27）", () => {
     expect(那条({ session: { ...session, kind: "acp" } })?.unavailable).toBe("外部 agent 自己管上下文，DAWN 压不了")
     expect(那条({ session: { ...session, kind: "kernel" } })?.unavailable).toBe("这段不是和模型的对话，没有上下文可压")
     expect(那条({ busy: true })?.unavailable).toBe("这一轮还在跑，做完再压缩")
+  })
+})
+
+describe("回到上一句之前（2026-09-27，回退这一轮 spec §2.1）", () => {
+  const 那条 = (over: Partial<Parameters<typeof buildCommands>[0]> = {}) => build(over).find((x) => x.id === "session.rewind")
+  it("内置对话、不忙：可用，run 只转发给 actions.rewindLast", () => {
+    const a = actions()
+    const c = buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation" }).find((x) => x.id === "session.rewind")!
+    expect(c.unavailable).toBeUndefined()
+    c.run()
+    expect(a.rewindLast).toHaveBeenCalledTimes(1)
+  })
+  it("不可用照样列出，并说清是哪一种", () => {
+    expect(那条({ session: undefined })?.unavailable).toBe("还没有会话")
+    expect(那条({ busy: true })?.unavailable).toBe("agent 还在跑，停下之后才能回退")
+    expect(那条({ session: { ...session, kind: "pty" } })?.unavailable).toBe("只有内置对话能回退")
+    expect(那条({ session: { ...session, kind: "acp" } })?.unavailable).toBe("只有内置对话能回退")
   })
 })

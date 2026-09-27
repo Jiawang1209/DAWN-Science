@@ -94,6 +94,8 @@ import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide } from "./state/sync.js"
 import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
 import { 主槽 } from "./state/transcript.js"
+import { 回退这一轮, type 回退预览, type 回退回执 } from "./state/rewind.js"
+import { RewindDetail } from "./rewind.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
@@ -3517,6 +3519,32 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     [client],
   )
 
+  /**
+   * 回到这句之前（2026-09-27，spec §2）：预览 → 确认框 → 执行 → 原文放回这段会话的输入框。
+   * 顺序与失败规矩在 `state/rewind.ts`（有单测）；这里只接线。转录的截断与通知由后端推快照，不在这里改。
+   * 主区与坞里那段都走它——按 `sessionId` 绑，原文放回的是**那一段自己**的输入框。
+   */
+  const 开回退 = (sessionId: string, turnId: string, 这句: string) =>
+    回退这一轮({
+      这句,
+      预览: () => client.get<回退预览>("previewRewind", { sessionId, turnId }),
+      问: (内容, 选了) =>
+        setConfirming({
+          title: 内容.title,
+          detail: <RewindDetail 内容={内容} />,
+          safety: 内容.safety,
+          confirmLabel: 内容.主.label,
+          onConfirm: () => 选了(内容.主.做法),
+          ...(内容.次 ? { altLabel: 内容.次.label, onAlt: () => 选了(内容.次!.做法) } : {}),
+        }),
+      执行: (做法) => client.get<回退回执>("rewindTurn", { sessionId, turnId, mode: 做法 }),
+      放回输入框: (text) => 退回输入框(sessionId, [{ text }]),
+      note,
+    })
+  /** `actions` 是记住的，走 ref 拿此刻的那个（与 `另开到坞Ref` 同一个做法） */
+  const 开回退Ref = useRef(开回退)
+  开回退Ref.current = 开回退
+
   const actions = useMemo<Actions>(
     () => ({
       openSettings: () => 开设置栏(),
@@ -3566,6 +3594,19 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       compactContext: () => {
         if (!session) return
         void 压缩(session.sessionId).catch(fail)
+      },
+      /**
+       * 命令面板「回到上一句之前」（2026-09-27）：主区那段最后一句自己说的话，与点它下面那颗同一个动作。
+       * 读一次 `$items`，不订阅（App 不订阅转录）。一句都还没说过：出声，不是按了没反应。
+       */
+      rewindLast: () => {
+        if (!session || session.kind !== "native") return
+        const 最后 = [...主槽.$items.get()].reverse().find((x) => x.type === "turn" && x.who === "user")
+        if (!最后 || 最后.type !== "turn") {
+          note(t("这段还没说过话，没有可回退的"))
+          return
+        }
+        void 开回退Ref.current(session.sessionId, 最后.id, 最后.text)
       },
     }),
     [client, session, sessions, askDeleteSession, 回到初始画面, 压缩],
@@ -3851,6 +3892,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           : undefined,
       /** 调整方向只有 native 会（spec §3）：别的会话 Cmd/Ctrl+回车照旧是排队 */
       canRedirect: s.kind === "native",
+      /**
+       * 回到这句之前（2026-09-27）：只有 native 给（本地、远端都给——远端的确认框只给「只撤掉对话」）。
+       * 那句原文从这段自己的转录槽里取，确认框标题要用它。
+       */
+      ...(s.kind === "native"
+        ? {
+            onRewind: (turnId: string) => {
+              const 它 = 槽.$items.get().find((x) => x.id === turnId)
+              void 开回退(s.sessionId, turnId, 它?.type === "turn" ? 它.text : "")
+            },
+          }
+        : {}),
       /**
        * Cmd/Ctrl+回车的调整方向那次请求还没回来：待发条整条置灰（复审 m-C）。那一刻其余几条不在运行时的镜像里，
        * 点取回 / 调整方向只会得「不在待发单上」。

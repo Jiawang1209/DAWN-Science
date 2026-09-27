@@ -1452,3 +1452,15 @@ describe("设计契约 · 回复时不卡", () => {
     expect(犯的, "压缩参数走 applyOverrides（内存里），不写 pi 的 settings.json").toEqual([])
   })
 })
+
+describe("设计契约 · 回退这一轮", () => {
+  /**
+   * **`data/raw/` 一个字节都不动**（2026-09-27，作者的规矩；spec §5）。存档模块里判断「是不是原始数据」只有一个判据 `在原始数据里()`，
+   * 目录名只从 `science-layout.ts` 的 `原始数据目录` 取——两处各写各的，改一处忘一处时，**存档跳过的目录和门拦的目录就对不上**。
+   */
+  it("**`checkpoints.ts` 不写 `data/raw` 字面量，只用 `原始数据目录`**", () => {
+    const 代码 = readFileSync(join(import.meta.dirname, "../../src/project/checkpoints.ts"), "utf8")
+    expect(findLines(代码, (l) => /["'`]data\/raw/.test(l))).toEqual([])
+    expect(代码).toMatch(/import \{ 原始数据目录 \} from "\.\.\/policy\/science-layout\.js"/)
+  })
+})

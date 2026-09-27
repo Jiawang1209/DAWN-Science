@@ -103,6 +103,8 @@ export interface Actions {
   openSideChat(): void
   /** 压缩当前这段的上下文（2026-09-27）。**与仪表弹层「现在压缩」、输入框里的 `/compact` 是同一个动作** */
   compactContext(): void
+  /** 回到上一句之前：对最后一句自己说的话点那颗「回到这句之前」（2026-09-27） */
+  rewindLast(): void
 }
 
 export interface CommandContext {
@@ -225,6 +227,27 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "compact context /compact 压缩 上下文 摘要",
     run: () => actions.compactContext(),
     ...(压缩why ? { unavailable: 压缩why } : {}),
+  })
+
+  /**
+   * 回到上一句之前（2026-09-27，回退这一轮 spec §2.1）。每句自己说的话下面那颗之外的第二条路——
+   * **不可用照样列出**，写清是哪一种：笼统写「不可用」等于没说。
+   * 「这段还没说过话」面板这里判不了（它不看转录），由 `rewindLast` 按下时出声。
+   */
+  const rewindWhy = !ctx.session
+    ? t("还没有会话")
+    : ctx.session.kind !== "native"
+      ? t("只有内置对话能回退")
+      : ctx.busy
+        ? t("agent 还在跑，停下之后才能回退")
+        : undefined
+  out.push({
+    id: "session.rewind",
+    title: t("回到上一句之前"),
+    group: "会话",
+    keywords: "rewind undo checkpoint 回退 撤销",
+    run: () => actions.rewindLast(),
+    ...(rewindWhy ? { unavailable: rewindWhy } : {}),
   })
 
   /**

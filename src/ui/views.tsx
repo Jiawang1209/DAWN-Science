@@ -48,7 +48,7 @@ import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
-import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
 
@@ -3759,6 +3759,7 @@ export function ConversationView({
   onEditQueue,
   onQueueToDock,
   canRedirect,
+  onRewind,
   queueLocked,
   onCompact,
   取上下文用量,
@@ -3912,6 +3913,8 @@ export function ConversationView({
   onQueueToDock?: ((id: string) => Promise<void>) | undefined
   /** 这段会不会调整方向（只有 native）。不会的话 Cmd/Ctrl+回车与回车一样是排队，提示行也不提它 */
   canRedirect?: boolean | undefined
+  /** 回到这句之前（2026-09-27）：只有 native 给。不给 = 每句下面都不画那颗 */
+  onRewind?: ((turnId: string) => void) | undefined
   /**
    * 待发条的按钮从外面置灰（复审 m-C，2026-09-25）：Cmd/Ctrl+回车的调整方向那次请求还没回来时由 App 给 true。
    * 「停止」不受它管——调整方向正在进行时按停止是正当的（停止赢）。
@@ -4343,6 +4346,7 @@ export function ConversationView({
     nameOf: (_id: string): string | undefined => undefined,
     onPickCase: (_text: string) => {},
     onResend: (_text: string) => {},
+    onRewind: (_id: string) => {},
     确保可见: (_id: string) => {},
   })
   行回调最新.current = {
@@ -4356,6 +4360,7 @@ export function ConversationView({
       void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
       设位置(-1)
     },
+    onRewind: (id) => onRewind?.(id),
     /** 刻度尺点了预算之外的那一轮：把预算放大到刚好含住它（多留 4 条余量），它才有得滚 */
     确保可见: (id) => {
       const 块序 = 块们.findIndex((块) => (块.kind === "group" ? 块.tools.some((t) => t.id === id) : 块.item.id === id))
@@ -4368,6 +4373,7 @@ export function ConversationView({
       nameOf: (id: string) => 行回调最新.current.nameOf(id),
       onPickCase: (text: string) => 行回调最新.current.onPickCase(text),
       onResend: (text: string) => 行回调最新.current.onResend(text),
+      onRewind: (id: string) => 行回调最新.current.onRewind(id),
       确保可见: (id: string) => 行回调最新.current.确保可见(id),
     }),
     [],
@@ -4600,6 +4606,16 @@ export function ConversationView({
                        */
                       onResend: 行回调.onResend,
                     })}
+                {...(onRewind && !disabled
+                  ? {
+                      /**
+                       * 回到这句之前（2026-09-27）：给了 `onRewind` 就画、忙着时灰着带理由（不排队：回退改文件，和正在跑的工具抢同一批文件）。
+                       * 理由是同一个字符串，行的 memo 比得过去——只在忙 / 不忙翻转时每行重渲染一次。
+                       */
+                      onRewind: 行回调.onRewind,
+                      ...(busy ? { rewindBlocked: t("agent 还在跑，停下之后才能回退") } : {}),
+                    }
+                  : {})}
               />
             ))(块.item, 块.下标))
           )}
@@ -5517,6 +5533,8 @@ function TranscriptRowImpl({
   nameOf,
   currentKernel,
   onResend,
+  onRewind,
+  rewindBlocked,
   onOpenWeb,
   generated,
   onOpenArtifact,
@@ -5553,6 +5571,18 @@ function TranscriptRowImpl({
    * **不给就没有「修改」这颗**——一个点了没反应的按钮比没有更坏。
    */
   onResend?: ((text: string) => void) | undefined
+  /**
+   * 回到这句之前（2026-09-27）。**不给就不画**；给了就每句自己说的话下面常驻一颗，**带字**——悬停才出现的等于不存在，
+   * 只画一个箭头又会被读成「没有这个功能」（「新建项目」那颗裸 `＋` 的教训）。
+   */
+  onRewind?: ((turnId: string) => void) | undefined
+  /**
+   * 此刻为什么点不了（agent 在跑）。给了就灰着，理由进 `aria-description`，读屏读得到。
+   * **不用 `title=`**（设计契约：原生提示无样式、有系统延迟）；**也不改 `aria-label`**——那会把按钮的名字换掉，
+   * 按名字找它的人（读屏、用例）就找不到了。看得见的那一半由输入框旁那颗「停止」说：它在，就是在跑。
+   * **不在转录里放 `.sr-only` 的隐藏字**：09-16 那片大空白就是它的静态位置逃到 `.turns` 造成的。
+   */
+  rewindBlocked?: string | undefined
   /**
    * 消息里点到**本机地址**时交给它（批 2，2026-08-18）。
    *
@@ -5870,6 +5900,23 @@ function TranscriptRowImpl({
               onClick={() => 设编辑(item.text)}
             >
               <铅笔图标 />
+            </Button>
+          ) : null}
+          {/**
+           * **回到这句之前**（2026-09-27，spec §2.1）：复制 / 修改之后，动作行里唯一带字的一颗。
+           * 忙着时灰着、不藏——藏起来的话「刚才还在的按钮哪去了」又是一次「没有这个功能」。
+           */}
+          {mine && onRewind ? (
+            <Button
+              variant="ghost"
+              size="inline"
+              className="rewind-btn"
+              disabled={!!rewindBlocked}
+              aria-description={rewindBlocked}
+              onClick={() => onRewind(item.id)}
+            >
+              <回退图标 />
+              {t("回到这句之前")}
             </Button>
           ) : null}
           {/**

@@ -10,7 +10,7 @@
  *   `selectionStart` 与真浏览器不是一回事。
  * - **复制**在单测里是个假的 clipboard，验它等于验我自己写的桩。
  */
-import { test, expect, 开一段临时会话 } from "./fixtures.js"
+import { test, expect, CANNED_REPLY, 开一段临时会话, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 test("**↑ 翻回上一句，↓ 翻回没发出去的那半句**", async ({ dawn }) => {
   const { page } = dawn
@@ -150,8 +150,9 @@ test("**图标对齐气泡左缘**", async ({ dawn }) => {
   // **左缘对齐**：容差 2px 给边框与图标内边距
   expect(Math.abs(第一颗.x - 气泡.x)).toBeLessThanOrEqual(2)
 
-  // 顺带钉住「两颗一样大」：一个 ⧉ 一个 ✎，大小不一样会像是两种东西
-  const 两颗 = page.locator(".turn.user .turn-actions .btn")
+  // 顺带钉住「两颗一样大」：一个 ⧉ 一个 ✎，大小不一样会像是两种东西。
+  // 只数图标那两颗：2026-09-27 起后面还有一颗带字的「回到这句之前」，它本来就不是图标的尺寸
+  const 两颗 = page.locator(".turn.user .turn-actions .btn-icon")
   await expect(两颗).toHaveCount(2)
   const a = (await 两颗.nth(0).boundingBox())!
   const b = (await 两颗.nth(1).boundingBox())!
@@ -185,4 +186,30 @@ test("**七个字的问题占一行**，不被从中间折断", async ({ dawn })
     return Math.round(el.scrollHeight / 行高)
   })
   expect(行数).toBe(1)
+})
+
+/**
+ * **「回到这句之前」在窄处不撑破**（2026-09-27，回退这一轮）。动作行里多了一颗带字的按钮：坞里的对话格只有几百像素宽、
+ * 气泡上限又是它的 82%——上下文仪表在坞里被顶出去过一次，这条量盒子：按钮整颗在对话区里，转录不横向溢出。
+ */
+test("**坞里那段的「回到这句之前」**：整颗看得见，不把对话区撑出横向滚动", async ({ dawn }) => {
+  const { page } = dawn
+  const 坞 = page.locator("aside.right-dock")
+  await 在项目里开会话(page)
+  await 进坞(page, "对话")
+  await 坞.getByRole("button", { name: "另开一段", exact: true }).click()
+  await 坞.locator(".side-chat-head").waitFor({ timeout: 30_000 })
+  const 框 = 坞.getByPlaceholder(/今天帮你做些什么/)
+  await 框.fill("短")
+  await 框.press("Enter")
+  await expect(坞.getByText(CANNED_REPLY)).toHaveCount(1, { timeout: 30_000 })
+
+  const 钮 = 坞.locator(".turn.user").getByRole("button", { name: "回到这句之前", exact: true })
+  await expect(钮).toBeEnabled()
+  expect(Number(await 钮.evaluate((el) => getComputedStyle(el).opacity))).toBe(1)
+  const 盒 = (await 钮.boundingBox())!
+  const 区 = (await 坞.locator(".turns").boundingBox())!
+  expect(盒.x).toBeGreaterThanOrEqual(区.x)
+  expect(盒.x + 盒.width).toBeLessThanOrEqual(区.x + 区.width)
+  expect(await 坞.locator(".turns").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
 })

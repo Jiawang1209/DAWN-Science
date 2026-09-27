@@ -3677,6 +3677,47 @@ pre {
 }
 /* 两颗图标同样大小：一个 ⧉ 一个 ✎，大小不一样会像是两种东西 */
 .turn-actions .btn-icon { width: 1.75rem; height: 1.75rem; font-size: 0.95rem; }
+/**
+ * 回到这句之前（2026-09-27，回退这一轮 spec §2.1）：动作行里唯一带字的一颗——字用次要色、元信息字号，不抢气泡的戏。
+ * 高度与两颗图标一样（1.75rem），一行里三样东西的底边才齐。
+ * **窄处折行、不撑破**：坞里的对话只有几百像素宽，气泡上限又是它的 82%——一行放不下时整颗换到下一行，
+ * 不溢出到对话区外面（上下文仪表在坞里溢出过一次）。字本身不折：「回到这句 / 之前」拆成两行读不成一句话。
+ */
+.turn-actions { flex-wrap: wrap; row-gap: 0; }
+.turn-actions .rewind-btn {
+  height: 1.75rem;
+  gap: var(--dawn-space-1);
+  padding: 0 var(--dawn-space-1);
+  border-radius: var(--dawn-radius-sm);
+  color: var(--dawn-text-2);
+  font-size: var(--dawn-fs-meta);
+  white-space: nowrap;
+}
+/* 确认框正文那张清单：标签一列、路径一列、注在后面；路径长了在任意处折，不撑宽确认框 */
+.rewind-list {
+  margin: 0 0 var(--dawn-space-2);
+  padding: 0;
+  list-style: none;
+}
+.rewind-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--dawn-space-2);
+  align-items: baseline;
+}
+.rewind-tag {
+  flex: none;
+  min-width: 4em;
+  color: var(--dawn-text-2);
+}
+.rewind-path {
+  min-width: 0;
+  font-family: var(--dawn-font-mono);
+  overflow-wrap: anywhere;
+}
+.rewind-note {
+  color: var(--dawn-text-3);
+}
 .turn-edit { width: 100%; min-height: 4.5em; resize: vertical; }
 .turn.editing .bubble { width: 100%; }
 .tool-body > .copy-btn { float: right; }

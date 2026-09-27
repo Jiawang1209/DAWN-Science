@@ -103,6 +103,7 @@ import type { RemoteConnections } from "../remote/connections.js"
 import { 探测远端解释器, 读远端事实 } from "../remote/interpreters.js"
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
+import { 会话全文搜索 } from "./session-search.js"
 import { 补子agent组, 子运行目录, 读元, 读子转录, 会话文件, 没跑完, 子转录过大 } from "../subagent/run-dir.js"
 import { 拆子转录id } from "../protocol/subagent-id.js"
 import { join } from "node:path"
@@ -618,6 +619,22 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 会让人以为真有这么一台。
    */
   const 服务器名 = (id: string) => remote?.store.get(id)?.label
+
+  /**
+   * 会话全文搜索（2026-09-27）。**一个后端一个**：缓存跟着这个进程走，重启就空（冷的那一次按 spec §6 的预算）。
+   * 「在哪」：远端 → 服务器名（拿不到名字就写连接 id，那不好看但是实话）；有用户项目 → 项目名；临时项目 → 不写。
+   * 远端会话的 pi 记录也在本机（`sessionDir` 在本地工作区的 `.dawn/sessions/` 下，服务器上只跑命令），所以同一条路搜。
+   * `registry.agents` 是被原地更新的那个对象（`onProvidersChanged` 不换引用），闭包里每次现取。
+   */
+  const 全文搜索 = new 会话全文搜索({
+    records: () => sessions.list(),
+    kindOf: (agentId) => registry.agents[agentId]?.kind,
+    placeOf: (r) => {
+      if (r.connectionId) return { kind: "server", name: 服务器名(r.connectionId) ?? r.connectionId }
+      const p = r.projectId ? projectStore.get(r.projectId) : undefined
+      return p && !p.temporary ? { kind: "project", name: p.name } : undefined
+    },
+  })
 
   /**
    * 任务那一套装配好了没有。**没装配就如实说**——
@@ -4551,6 +4568,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         return [{ ...projects.toSummary(r.projectId, r, 服务器名), projectName: p.name, workspace: p.workspace }]
       }),
     }),
+
+    /** 会话全文搜索（8.5）。规则与预算见 `session-search.ts` 与 spec §5 / §6 */
+    searchSessionContent: async ({ query, limit }) => 全文搜索.搜(query, limit ?? 30),
 
     deleteArchivedSessions: async () => {
       let deleted = 0

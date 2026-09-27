@@ -556,7 +556,8 @@
  *
  * 8.4（2026-09-27）：桌面通知（spec `2026-09-27-桌面通知-design.md`）。三个操作 `desktopGetNotify` / `desktopSetNotify` /
  *   `desktopTestNotify`（开关形状与微信 / 飞书同一个，多 `lang` 与只读的 `supported`）；事件通道**第五种载荷** `openSession`
- *   （主进程在通知被点时发，界面据此切会话）。全是新增，故 minor。
+ *   （主进程在通知被点时发，界面据此切会话）；
+ *   同一轮（未发布）补 `takePendingOpenSession`（读了就清）：通知被点时窗口还没有 / 页面还没听，推送会丢，界面起来后来**拉**。全是新增，故 minor。
  */
 export const WORKBENCH_PROTOCOL_VERSION = "8.4"
 

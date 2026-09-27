@@ -315,6 +315,11 @@ export interface WorkbenchBackendOptions {
    */
   desktopNotify?: 桌面通知出口
   /**
+   * 取走「点了通知、还没回到的那段」（读了就清，2026-09-28）。主进程拿着——通知是它收的点击。
+   * 不给 = 这次运行没有通知出口，`takePendingOpenSession` 永远答「没有」。
+   */
+  takePendingOpenSession?: () => string | undefined
+  /**
    * 用某段会话此刻的模型（或给定 provider + model）问一句（提示词增强，2026-08-21）。
    * 就是 `NativeRuntime.问一句`；不给 = 这次运行没有 native 运行时，增强操作会如实拒绝。
    */
@@ -4822,6 +4827,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { ...写桌面设置(settings, patch), supported: opts.desktopNotify?.支持() ?? false }
     },
     desktopTestNotify: async () => 桌面.试一条(),
+    takePendingOpenSession: async () => {
+      const sessionId = opts.takePendingOpenSession?.()
+      return sessionId ? { sessionId } : {}
+    },
   }
 
   // 上次绑过的话，启动就开始听

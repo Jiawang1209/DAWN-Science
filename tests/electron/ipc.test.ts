@@ -130,6 +130,7 @@ function backend(): WorkbenchBackend {
     desktopGetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true, supported: true }),
     desktopSetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true, supported: true }),
     desktopTestNotify: async () => ({ shown: true }),
+    takePendingOpenSession: async () => ({}),
     memoryOverview: async () => ({ pending: 0, tracks: [] }),
     memorySuggestions: async () => ({ suggestions: [], pendingSkills: [] }),
     memoryResolve: async () => ({ ok: true, message: "桩" }),

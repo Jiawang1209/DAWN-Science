@@ -3,7 +3,7 @@
  * `failed` 出声、活着的通知有人拿着（被回收之后 click 就不来了）；假出口验记录、点、前台。
  */
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { 真通知出口, 假通知出口, 译 } from "../../src/electron/desktop-notify.js"
+import { 真通知出口, 假通知出口, 待回的段, 译 } from "../../src/electron/desktop-notify.js"
 
 class 假Notification {
   static 支持 = true
@@ -121,5 +121,24 @@ describe("假出口（DAWN_FAKE_NOTIFY=1，e2e 与 dev:mock 共用）", () => {
     expect(回).toHaveBeenCalledTimes(1)
     台.设前台(undefined)
     expect(出口.前台(), "undefined = 交还给真窗口去判").toBeUndefined()
+  })
+})
+
+describe("待回的段（2026-09-28：点通知时窗口没有 / 界面没在听，推送会丢，界面起来后来拉）", () => {
+  it("读了就清；只留最后点的那段；没带会话的那一下不动它", () => {
+    const 段 = 待回的段()
+    expect(段.取()).toBeUndefined()
+    段.记("s1")
+    段.记("s2")
+    段.记(undefined)
+    expect(段.取()).toBe("s2")
+    expect(段.取(), "取走即清：推醒来拉一次、启动再拉一次，不会各切一次").toBeUndefined()
+  })
+  it("假出口的「点」走同一个 `点了`——e2e / dev:mock 里点一下也会记下", () => {
+    const 段 = 待回的段()
+    const 出口 = 假通知出口({ 点了: (id) => 段.记(id) })
+    出口.弹({ kind: "done", sessionId: "s9", title: { msgid: "t", args: [] }, body: { msgid: "b", args: [] } })
+    ;(globalThis as unknown as { __dawn桌面通知: { 点(i: number): void } }).__dawn桌面通知.点(0)
+    expect(段.取()).toBe("s9")
   })
 })

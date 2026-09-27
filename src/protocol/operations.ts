@@ -1086,6 +1086,17 @@ export const OPERATIONS = {
     response: z.object({ shown: z.boolean(), reason: z.enum(["unsupported", "no_exit"]).optional() }).strict(),
     mutating: true,
   },
+  /**
+   * 取走「点了通知、还没回到的那段」（**读了就清**，2026-09-28）。**拉，不只是推**：
+   * 窗口是被这一下点出来的（macOS 关了窗口）、页面正在重载、或 app 还在启动时，事件通道上的 `openSession` 没人听——
+   * 主进程每次点都先记下这一段，界面在 `ready` 且头一批名单取回之后来取一次；被推醒时也来取（取走即清，推与拉不会各切一次）。
+   * 缺 `sessionId` = 没有等着回的。
+   */
+  takePendingOpenSession: {
+    request: z.object({}).strict(),
+    response: z.object({ sessionId: z.string().min(1).optional() }).strict(),
+    mutating: true,
+  },
 
   /**
    * 给已接入的 ACP 标上／摘掉「能上服务器」（协议 7.13，2026-08-21）。

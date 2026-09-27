@@ -1492,7 +1492,28 @@ describe("设计契约 · 桌面通知只有一个出口", () => {
    */
   const SRC = join(import.meta.dirname, "../../src")
   const 出口文件 = join(SRC, "electron", "desktop-notify.ts")
-  const 碰系统 = /\bnew\s+(?:[\w$]+\.)?Notification\s*\(|\bsetBadgeCount\s*\(|\bflashFrame\s*\(/
+  /**
+   * **按整份文本扫，不按行**（2026-09-28 审查）：`new\n  electron.Notification(` 拆成两行的也要抓到。
+   * 多抓三样绕路：`app.dock.setBadge(`（macOS 角标的另一扇门）、`app.badgeCount =`（Linux / macOS 的属性写法）、
+   * 解构 / 导入时改名（`{ Notification: N }`、`Notification as N`——改了名 `new N(` 就逃过了上面那条）。
+   */
+  const 碰系统 = [
+    /\bnew\s+(?:[\p{L}\p{N}_$]+\s*\.\s*)?Notification\s*\(/gu,
+    /\bsetBadgeCount\s*\(/g,
+    /\bflashFrame\s*\(/g,
+    /\bdock\s*\??\.\s*setBadge\s*\(/g,
+    /\bbadgeCount\s*=(?!=)/g,
+    /\{[^{}]*\bNotification\s*:\s*[\p{L}_$][\p{L}\p{N}_$]*\s*[,}]/gu,
+    /\bNotification\s+as\s+[\p{L}_$]/gu,
+  ]
+  /** 整份文本里犯了哪几处：`行号: 那一行`（多行的报起头那一行） */
+  const 犯处 = (文: string): string[] =>
+    碰系统.flatMap((re) =>
+      [...文.matchAll(re)].map((m) => {
+        const 行 = 文.slice(0, m.index).split("\n").length
+        return `${行}: ${文.split("\n")[行 - 1]!.trim()}`
+      }),
+    )
   const 走 = (d: string): string[] =>
     readdirSync(d, { withFileTypes: true }).flatMap((e) =>
       e.isDirectory() ? 走(join(d, e.name)) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : [],
@@ -1502,9 +1523,21 @@ describe("设计契约 · 桌面通知只有一个出口", () => {
     const 犯的: string[] = []
     for (const f of 走(SRC)) {
       if (f === 出口文件) continue
-      for (const l of findLines(readFileSync(f, "utf8"), (line) => 碰系统.test(line))) 犯的.push(`${f.slice(SRC.length + 1)}:${l}`)
+      for (const l of 犯处(readFileSync(f, "utf8"))) 犯的.push(`${f.slice(SRC.length + 1)}:${l}`)
     }
     expect(犯的, "系统通知走 src/electron/desktop-notify.ts 的出口（真 / 假同一个 `点了`）").toEqual([])
+  })
+
+  it("扫描认得出绕路的写法（多行 new、dock.setBadge、badgeCount =、改名）", () => {
+    expect(犯处("const n = new\n  electron.Notification(\n  { title })")).toHaveLength(1)
+    expect(犯处("app.dock.setBadge('3')")).toHaveLength(1)
+    expect(犯处("app.dock?.setBadge('3')")).toHaveLength(1)
+    expect(犯处("app.badgeCount = 3")).toHaveLength(1)
+    expect(犯处("if (app.badgeCount === 3) {}")).toEqual([])
+    expect(犯处("const { Notification: N } = require('electron')")).toHaveLength(1)
+    expect(犯处("import { Notification as N } from 'electron'")).toHaveLength(1)
+    expect(犯处("new 某.Notification()")).toHaveLength(1)
+    expect(犯处("a\nb\nconst n = new\n  electron.Notification(x)")).toEqual(["3: const n = new"])
   })
 
   it("出口文件自己确实三样都用了——扫描不是在扫一个空集", () => {

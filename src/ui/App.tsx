@@ -102,6 +102,7 @@ import { RewindDetail } from "./rewind.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
+import { 回到那段, 通知回段门 } from "./open-session-route.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
 import { NotebookPanel, type 语言 as 内核语言 } from "./notebook.js"
 import { SetupWizard, 读跳过, 记跳过, type 探测结果 } from "./setup-wizard.js"
@@ -355,17 +356,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   useEffect(connect, [connect])
 
+  /**
+   * 头一批名单（项目、任务、临时会话、当前项目的会话）都取回了没有（2026-09-28）。
+   * 点了桌面通知回到那段要等它：名单还是空的时候路由，一定会说「那段对话已经不在了」。
+   * **由下面这个 effect 在同一拍写进来，订阅那个 effect 读**——两个 effect 同依赖、按声明顺序跑，这个在前。
+   */
+  const 头一批 = useRef<Promise<void>>(Promise.resolve())
   useEffect(() => {
     if (!ready) return
-    void loadProjects(client)
+    const 项目 = loadProjects(client)
     void loadCredentials(client)
     void loadProviders(client)
     // 临时会话不属于任何项目，所以它不跟着「当前项目」走，开机就取一次
-    void loadTempSessions(client)
+    const 临时 = loadTempSessions(client)
     // 远端连接名单同理——它不属于任何项目（②-B · R3）
     void loadConnections(client)
     // 任务（T2）：它也不属于任何项目——它就是那个「属于」本身
-    void loadTasks(client)
+    const 任务 = loadTasks(client)
+    // 当前项目的会话：还没选项目时按「有项目就选中第一个」的同一条规矩挑（下面那个 effect 随后会选中同一个、再取一次，无害）
+    头一批.current = Promise.all([项目, 临时, 任务]).then(() => {
+      const pid = $activeProjectId.get() ?? $projects.get().find((p) => !p.temporary)?.projectId
+      return pid ? loadSessions(client, pid) : undefined
+    })
   }, [ready, client])
 
   /**
@@ -539,7 +551,50 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   useEffect(() => {
     if (!ready) return
-    return client.subscribeUpdates({
+    /**
+     * 点通知回到那段（2026-09-28）：每次 ready 一扇新门。门开在头一批名单取回之后，开门时拉一次——
+     * 窗口是点通知点出来的、页面重载过、app 还在启动时点的，那一段都记在主进程里等这一拉。
+     */
+    let 撤了 = false
+    const 回段门 = 通知回段门({
+      取: () => client.get<{ sessionId?: string }>("takePendingOpenSession", {}).then((r) => r.sessionId),
+      说: fail,
+      路由: (id) =>
+        回到那段(id, {
+          侧边id: () => $侧边会话id.get(),
+          tasks: () => $tasks.get(),
+          sessions: () => [...$tempSessions.get(), ...$sessions.get()],
+          projects: () => $projects.get(),
+          // 别的项目里、不在任务名单里的那段：逐个项目问一遍（临时会话已经在 `$tempSessions` 里了）
+          查后端: async (sid) => {
+            for (const p of $projects.get()) {
+              if (p.temporary) continue
+              const 列 = await client.get<SessionSummary[]>("listSessions", { projectId: p.projectId })
+              const 有 = 列.find((x) => x.sessionId === sid)
+              if (有) return 有
+            }
+            return undefined
+          },
+          开坞: () => {
+            // 整页设置开着时先收掉——与主区那条一样（不然坞在设置底下开着，人看不见）
+            if ($view.get() === "settings") 关掉设置()
+            打开坞里的对话()
+          },
+          切到: (sid, pid) => {
+            if (pid) setActiveProjectId(pid)
+            标未读(sid, false)
+            setActiveSessionId(sid)
+            // 整页设置开着时走 `关掉设置`：它会把被顶掉的坞房客还回去（2026-09-16 那条规矩）
+            if ($view.get() === "settings") 关掉设置()
+            setView("conversation")
+          },
+          说没了: () => note(t("那段对话已经不在了（可能已归档或删除）")),
+        }),
+    })
+    void 头一批.current.then(() => {
+      if (!撤了) void 回段门.开门()
+    })
+    const 退订 = client.subscribeUpdates({
       onUpdate: (u: SessionUpdate) => {
         // **直读 atom，不用闭包捕获的值。** 这个订阅只建立一次，
         // 闭包里的 sessionId 会永远停在建立那一刻
@@ -700,36 +755,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       // 更新的进度（2026-09-06）：**推来的整份状态直接换掉手里那份**，界面不自己算
       onUpdatePush: (u) => 设更新回执(u),
       /**
-       * 点了一条桌面通知（2026-09-27）：回到那段。**读 atom，不读闭包**——这个 effect 只在 ready / client 变时重跑。
-       * 坞里挂着的那段 → 开坞的「对话」格，主区不动；在任务名单 / 会话列表里 → 与侧栏点一行同一条路；
-       * 都不在（被归档 / 删了）→ 说一句，不静默。
-       *
-       * 判据是「任务 ∪ 当前项目的会话 ∪ 临时会话」而不只是任务：项目里从概览开的那几段未必都在任务名单里。
-       * 归档的任务后端 `listTasks` 已经滤掉了；会话列表里的要自己看 `archivedAt`。
-       * 属于别的项目的那段要**跟着切项目**——与 `onPickTask` 同一条理由（2026-08-13：只切会话 id 不切项目，主区回落成初始画面，看起来就是「点了没反应」）。
+       * 点了一条桌面通知（2026-09-27）：回到那段。**推只是「醒一醒」**（2026-09-28）——醒了去拉 `takePendingOpenSession`，
+       * 头一批名单没回来之前连拉都先不拉（见 `通知回段门`）。路由规则在 `open-session-route.ts`，读 atom 不读闭包。
        */
-      onOpenSession: (id) => {
-        if (id === $侧边会话id.get()) {
-          打开坞里的对话()
-          return
-        }
-        const 任务 = $tasks.get().find((x) => x.sessionId === id)
-        const s = [...$tempSessions.get(), ...$sessions.get()].find((x) => x.sessionId === id && !x.archivedAt)
-        if (!任务 && !s) {
-          note(t("那段对话已经不在了（可能已归档或删除）"))
-          return
-        }
-        const pid =
-          s?.projectId ?? (任务?.workspace ? $projects.get().find((p) => p.workspace === 任务.workspace)?.projectId : undefined)
-        if (任务?.workspace && pid) setActiveProjectId(pid)
-        标未读(id, false)
-        setActiveSessionId(id)
-        // 整页设置开着时走 `关掉设置`：它会把被顶掉的坞房客还回去（2026-09-16 那条规矩）
-        if ($view.get() === "settings") 关掉设置()
-        setView("conversation")
-      },
+      onOpenSession: (id) => void 回段门.推醒(id),
       onProblem: note,
     })
+    return () => {
+      撤了 = true
+      退订()
+    }
     // **依赖里刻意不放 projectId**：它变化时不该退订重订，
     // 那会在切换的空隙里漏掉更新。回调内部直读 atom 拿最新值
   }, [ready, client])

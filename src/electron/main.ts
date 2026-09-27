@@ -18,7 +18,7 @@ import { IPC_CHANNEL, IPC_EVENT_CHANNEL, IPC_PICK_DIRECTORY, IPC_CAPTURE_PAGE, I
 import { 存附件, 附件用量of, 清附件 } from "../files/attachments.js"
 import { 造网页预览, type 网页命令, type 网页预览 } from "./web-preview.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
-import { 真通知出口, 假通知出口 } from "./desktop-notify.js"
+import { 真通知出口, 假通知出口, 待回的段 } from "./desktop-notify.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 import { 交接箱 } from "../update/交接.js"
@@ -688,18 +688,17 @@ app.whenReady().then(() => {
      * 点了一条桌面通知（2026-09-27）：窗口回到最前，再告诉界面「回到哪段」（事件通道第五种载荷）。
      * **隐藏窗口的 e2e 里不 show**——与 `DAWN_HIDE_WINDOW` 同一个理由：测试不许抢作者的焦点。界面照样收到、照样切段。
      */
+    const 待回 = 待回的段()
     const 点了通知 = (sessionId: string | undefined): void => {
+      // **先记下，再推**（2026-09-28）：推只是「醒一醒」，界面醒来拉 `takePendingOpenSession`；
+      // 没人听的时候（窗口是这一下点出来的、页面在重载、app 还在启动）界面在 ready 且名单取回之后自己来拉
+      待回.记(sessionId)
       const win = BrowserWindow.getAllWindows()[0]
       if (!win || win.isDestroyed()) {
-        // macOS 关掉窗口后 app 还活着：点通知不许**什么都不发生**（2026-09-28 审查）——开一个窗口，页面载完再切段
+        // macOS 关掉窗口后 app 还活着：点通知不许**什么都不发生**（2026-09-28 审查）——开一个窗口；
+        // 切段不在这里推：新页面此刻还没挂监听（它等 ready），推了也是丢。界面起来会来拉上面记下的那段
         if (隐藏窗口) return
         createWindow()
-        const 新 = BrowserWindow.getAllWindows()[0]
-        if (新 && sessionId) {
-          新.webContents.once("did-finish-load", () =>
-            新.webContents.send(IPC_EVENT_CHANNEL, { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, openSession: sessionId }),
-          )
-        }
         return
       }
       if (!隐藏窗口) {
@@ -710,7 +709,7 @@ app.whenReady().then(() => {
       }
       if (sessionId) win.webContents.send(IPC_EVENT_CHANNEL, { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, openSession: sessionId })
     }
-    /** `DAWN_FAKE_NOTIFY=1`：e2e 与 dev:mock 共用的假出口（准入规则 1）；与 `DAWN_FAKE_SSH` 同一套惯例 */
+    /** `DAWN_FAKE_NOTIFY=1`：e2e 与 dev:mock 共用的假出口（准入规则 1）；与 `DAWN_FAKE_SSH` 同一套惯例。假的「点」走同一个 `点了通知`，所以也记 `待回` */
     const 桌面出口 =
       process.env.DAWN_FAKE_NOTIFY === "1"
         ? 假通知出口({ 点了: 点了通知, log: (l) => console.error(l) })
@@ -742,6 +741,7 @@ app.whenReady().then(() => {
       // 远程助理与桌面通知：人在电脑前（窗口在前台）就不推。假出口拨了「前台」时以它为准（e2e 的窗口永远藏着）
       isForeground: () => 假的前台() ?? BrowserWindow.getFocusedWindow() !== null,
       desktopNotify: 桌面出口,
+      takePendingOpenSession: () => 待回.取(),
       /**
        * 系统的下载目录（批 4a，2026-08-17）。
        *

@@ -6,7 +6,7 @@
  *
  * 每个勾选框的无障碍名 = 那一行的名字（`aria-label`）：旁边那个「开 / 关」四行一模一样，按它找就找不准。
  */
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import { Section, Row } from "./Settings.js"
@@ -33,6 +33,13 @@ export function DesktopNotifyPanel({
   const [回执, 设回执] = useState<桌面通知回执 | undefined>(undefined)
   const [出错, 设出错] = useState<string | undefined>(undefined)
   const [试过, 设试过] = useState<string | undefined>(undefined)
+  /**
+   * 回执按序认（2026-09-28 审查）：快点两下，先发的那句后回来不许把后一下盖掉——比已认过的旧的回执不认；
+   * 认的时候，之后又点过、还在路上的那几格保留屏上的值。失败只回滚**这一格**，而且只在这一格之后没再被点过时回滚。
+   */
+  const 序 = useRef(0)
+  const 已认 = useRef(0)
+  const 格序 = useRef<Partial<Record<开关, number>>>({})
   useEffect(() => {
     let 还在 = true
     load()
@@ -69,13 +76,22 @@ export function DesktopNotifyPanel({
               checked={回执[k]}
               onChange={(e) => {
                 const v = e.target.checked
-                const 旧 = 回执
-                设回执({ ...回执, [k]: v })
+                const n = ++序.current
+                格序.current[k] = n
+                设回执((r) => r && { ...r, [k]: v })
                 设出错(undefined)
                 save({ [k]: v })
-                  .then(设回执)
+                  .then((r) => {
+                    if (n < 已认.current) return
+                    已认.current = n
+                    设回执((屏) => {
+                      const 在路上 = 屏 ? (Object.keys(格序.current) as 开关[]).filter((x) => (格序.current[x] ?? 0) > n) : []
+                      return { ...r, ...Object.fromEntries(在路上.map((x) => [x, 屏![x]])) }
+                    })
+                  })
                   .catch((err: unknown) => {
-                    设回执(旧) // 失败回滚，不然屏显开而后端关（与微信那组 审查 debug J8 同一个做法）
+                    // 失败回滚这一格，不然屏显开而后端关（与微信那组 审查 debug J8 同一个做法）
+                    if (格序.current[k] === n) 设回执((r) => r && { ...r, [k]: !v })
                     设出错(err instanceof Error ? err.message : String(err))
                   })
               }}

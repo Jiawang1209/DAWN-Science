@@ -28,7 +28,7 @@ afterEach(() => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
 })
 
-function make(o: { 有出口?: boolean } = {}) {
+function make(o: { 有出口?: boolean; 待回?: () => string | undefined } = {}) {
   const db = new Database(":memory:")
   migrate(db)
   const projectStore = new ProjectStore(db)
@@ -49,6 +49,7 @@ function make(o: { 有出口?: boolean } = {}) {
     trashItem: async (p) => { rmSync(p, { recursive: true, force: true }) },
     isForeground: () => 前台.v,
     ...(o.有出口 === false ? {} : { desktopNotify: 出口 }),
+    ...(o.待回 ? { takePendingOpenSession: o.待回 } : {}),
   })
   const repo = mkdtempSync(join(tmpdir(), "dawn-notify-"))
   dirs.push(repo)
@@ -57,6 +58,18 @@ function make(o: { 有出口?: boolean } = {}) {
     events.ingest(sid, { kind: "permission_request", sessionId: sid, requestId: `r-${sid}`, title: "执行 curl", options: [{ optionId: "a", name: "允许这一次", kind: "allow_once" }] })
   return { backend, events, 弹过, 角标, 前台, 开一段, 问权限 }
 }
+
+describe("takePendingOpenSession（2026-09-28）", () => {
+  it("问主进程要那一段、原样交回；没有就回空对象", async () => {
+    const 队 = ["s1", undefined]
+    const c = make({ 待回: () => 队.shift() })
+    expect(await c.backend.takePendingOpenSession({})).toEqual({ sessionId: "s1" })
+    expect(await c.backend.takePendingOpenSession({})).toEqual({})
+  })
+  it("主进程没接这条缝：永远「没有」，不抛", async () => {
+    expect(await make().backend.takePendingOpenSession({})).toEqual({})
+  })
+})
 
 describe("desktopGetNotify / desktopSetNotify", () => {
   it("缺省全开、supported 如实；改了存下来、只改给了的；lang 存着", async () => {

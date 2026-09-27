@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 桌面通知：点的时候界面没在听也回得去（拉，不只是推；协议 8.4 同轮补 `takePendingOpenSession`；分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 6b5f986 在「没有窗口时点通知」开新窗口、`did-finish-load` 时推 `openSession`——但界面的事件监听要等 `ready` 才挂，推过去就丢了；就算收到，`$tasks/$sessions/$projects` 还是空的，会误报「那段对话已经不在了」。页面重载时、app 刚启动时点，同一个坑。
+- **What**: 主进程每次点通知先记下那段（`待回的段()`，只留最新、读了就清），再照旧推；推只当「醒一醒」。新操作 `takePendingOpenSession`（mutating，读了就清），主进程经 wiring → backend 注入；假出口的「点」走同一个 `点了通知`，dev:mock / e2e 自动覆盖。界面：`open-session-route.ts` 抽出路由（坞 / 主区 / 别的项目 / 不在了）与「门」——`ready` 且头一批名单（项目、任务、临时会话、当前项目会话）取回之后开门拉一次，门开之前推来的只记着；本地名单没有时先逐项目 `listSessions` 问后端再说「不在了」；坞那条也先收整页设置。删掉 6b5f986 那句 `did-finish-load` 推送（留开窗）。顺手：通知设置面板失败只回滚那一格、乱序回执不盖新的；设计契约的通知扫描改按整份文本扫（抓多行 `new …Notification(`），并多抓 `dock.setBadge(`、`badgeCount =`、解构 / 导入改名。
+- **Impact**: 协议仍是 8.4（同一轮未发布，纯新增），操作 147 → 148。启动取数预算 +1（`app-default-client` 21 → 22）。
+- **Verification**: 新单测（路由五种情形、门的排队 / 冷启动 / 推醒去拉 / 拉失败兜底、`待回的段`、后端操作、面板两条回归）；扫描在 `src/ui/format.ts` 埋一处两行的 `new\n globalThis.Notification(` 确认变红后还原；新 e2e `e2e/notify-cold-click.spec.ts`（窗口导到 `about:blank` 时点通知 → 推送必丢 → 导回后切到那段、不误报，再重载不会被拽回）。`npx vitest run`、`npm run typecheck`、`npm run build` 全过。e2e 模拟不了「没有窗口」：隐藏窗口下按规矩不开窗，且 Playwright 的 page 就是那扇窗。
+
 ### 2026-09-27 — 子 agent 看得见：点 chip 在坞里看它的过程、交回的结果，还能接着问（学自 Codex / Claude app；协议 8.3；分支 `agent-basics`）
 
 - **Type**: feat + fix

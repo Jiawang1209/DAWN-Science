@@ -140,3 +140,24 @@ export function 假通知出口(d: { 点了: (sessionId: string | undefined) => 
     前台: () => 台.前台,
   }
 }
+
+/**
+ * 「点了通知、还没回到的那段」（2026-09-28）。主进程每次点都**先记下**，界面来拉时读了就清（`takePendingOpenSession`）。
+ *
+ * 只推不记的第一版会丢：macOS 关了窗口时点通知，新窗口 `did-finish-load` 时界面还没挂上事件监听（它等 `ready`），
+ * 挂上了名单也还是空的——推过去要么没人听，要么被报成「那段对话已经不在了」。页面重载、app 刚启动时点，同一个坑。
+ * **只记最新的一段**：连点两条，人要的是后点的那条。没带会话的那一下（「发一条试试」）不动它。
+ */
+export function 待回的段(): { 记(sessionId: string | undefined): void; 取(): string | undefined } {
+  let 段: string | undefined
+  return {
+    记(sessionId) {
+      if (sessionId) 段 = sessionId
+    },
+    取() {
+      const x = 段
+      段 = undefined
+      return x
+    },
+  }
+}

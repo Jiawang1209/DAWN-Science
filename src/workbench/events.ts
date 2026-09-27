@@ -271,6 +271,20 @@ export class SessionTranscripts {
     })
   }
 
+  /** 还在「正在压缩」的那条收成 cancelled（没有就什么都不做） */
+  private 收掉悬着的压缩(sessionId: SessionId, e: Entry): void {
+    const id = e.压缩中
+    if (id === undefined) return
+    e.压缩中 = undefined
+    const 旧 = e.items.find((x) => x.id === id)
+    this.putItem(sessionId, e, {
+      type: "compaction",
+      id,
+      status: "cancelled",
+      ...(旧 && 旧.type === "compaction" && 旧.reason ? { reason: 旧.reason } : {}),
+    })
+  }
+
   /** 把 runtime 的事件并进记录。 */
   ingest(sessionId: SessionId, event: AgentEvent): void {
     const e = this.entries.get(sessionId)
@@ -281,6 +295,9 @@ export class SessionTranscripts {
         return // 会话建好时状态已是 alive，不必再推一条
 
       case "exited":
+        // 压缩压到一半会话就停了：pi 的 end 可能在 dispose 之后才到、再也收不到——
+        // 那条「正在压缩…」不许永远挂着（2026-09-27 审查抓的），收成「停下了，没有改动」
+        this.收掉悬着的压缩(sessionId, e)
         e.state = "exited"
         e.exitCode = event.exitCode
         this.bump(sessionId, e, {
@@ -398,6 +415,8 @@ export class SessionTranscripts {
        * 失败必须出声，不能因为没见过开头就丢。
        */
       case "compaction_start": {
+        // 上一条还悬着又来一次 start（pi 今天不会这样）：先把旧的收掉，别让它永远「正在压缩」
+        this.收掉悬着的压缩(sessionId, e)
         const id = `compact-${++e.turnSeq}`
         e.压缩中 = id
         this.putItem(sessionId, e, { type: "compaction", id, status: "running", reason: event.reason })

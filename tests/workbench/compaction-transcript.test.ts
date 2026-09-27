@@ -66,6 +66,20 @@ describe("转录中枢 · 压缩", () => {
     }
     expect(条().map((c) => c.type === "compaction" && c.reason)).toEqual(["manual", "threshold"])
   })
+
+  it("压到一半会话停了：那条收成「停下了」，不永远挂着「正在压缩」", () => {
+    const { t, 条 } = 一段()
+    t.ingest("s1" as never, { kind: "compaction_start", sessionId: "s1" as never, reason: "threshold" })
+    t.ingest("s1" as never, { kind: "exited", sessionId: "s1" as never, exitCode: 0 })
+    expect(条()).toEqual([expect.objectContaining({ type: "compaction", status: "cancelled", reason: "threshold" })])
+  })
+
+  it("上一条还悬着又来一次 start：旧的收成「停下了」，新的另起一条", () => {
+    const { t, 条 } = 一段()
+    t.ingest("s1" as never, { kind: "compaction_start", sessionId: "s1" as never, reason: "manual" })
+    t.ingest("s1" as never, { kind: "compaction_start", sessionId: "s1" as never, reason: "threshold" })
+    expect(条().map((c) => c.type === "compaction" && c.status)).toEqual(["cancelled", "running"])
+  })
 })
 
 describe("导出", () => {

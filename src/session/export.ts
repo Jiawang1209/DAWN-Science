@@ -38,6 +38,18 @@ export function 转录成markdown(头: 导出头, items: readonly TranscriptItem
       行.push(`> 工具 ${it.name}（${it.status}${耗}）`, "")
     } else if (it.type === "notice") {
       行.push(`> 提示：${it.text.trim()}`, "")
+    } else if (it.type === "plan") {
+      // 先出方案（2026-09-27）：批准的整段放进去——实验记录里要有「当时定的是什么」；别的状态只留一行
+      const 态 =
+        it.status === "approved"
+          ? `已批准${it.savedPath ? ` · \`${it.savedPath}\`` : ""}`
+          : it.status === "superseded"
+            ? "已被取代"
+            : it.status === "discarded"
+              ? "没采用"
+              : "等人看"
+      行.push(`> 方案第 ${it.version} 版「${it.title}」（${态}）`, "")
+      if (it.status === "approved") 行.push(it.markdown.trim(), "")
     } else if (it.type === "compaction") {
       // 压缩（2026-09-27）：压完与没压成各写一行；正在压、停下了不写——那两种没有改变任何东西
       if (it.status === "done") {

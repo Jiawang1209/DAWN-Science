@@ -1706,4 +1706,6 @@ export const EN: Readonly<Record<string, string>> = {
   "另有 {0} 段是外部 CLI / ACP / 终端 / 内核会话，内容不在我们手里，没搜": "{0} more are external CLI / ACP / terminal / kernel sessions; their content isn't ours to search",
   "搜索对话内容": "Search conversation content",
   "打开了，但在这段对话里没找到那一处——这段对话在搜过之后可能变了，或没能续上": "Opened it, but couldn't find that spot — the conversation may have changed since the search, or it couldn't be resumed",
+  // 先出方案（2026-09-27）· 后端
+  "这类会话没有先出方案——只有 native 会话有": "This kind of session can't plan first — only native sessions can",
 }

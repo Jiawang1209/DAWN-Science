@@ -3413,6 +3413,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /**
+     * 回答一版方案（先出方案，2026-09-27，spec §4.5）。**只转达、不替人发执行话**——那句由界面走 `writeToSession`，是人的一条发言。
+     * 分码照运行时的原话：没有这一版 → not_found；不是最新 / 已经答过 → conflict；存不下来（权限、磁盘、远端断线）→ internal_error，原样说。
+     */
+    answerPlan: async ({ sessionId, planId, action, text }) => {
+      if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
+      if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有先出方案——只有 native 会话有")
+      try {
+        const r = await sessions.answerPlan(sessionId, planId, action, "user", text)
+        return r.savedPath ? { savedPath: r.savedPath } : {}
+      } catch (err) {
+        const 消息 = err instanceof Error ? err.message : String(err)
+        if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
+        if (/没有这一版方案|未在本进程|会话 ".*" 未启动/.test(消息)) throw fault原样("not_found", 消息)
+        if (/这一版方案已经/.test(消息)) throw fault原样("conflict", 消息)
+        throw fault原样("internal_error", 消息)
+      }
+    },
+
+    /**
      * 回退这一轮（2026-09-27，spec §4.3）：界面给的是转录里那条用户发言的 id，这里数出它是**倒数第几句**、连同原文交给运行时。
      * 远端会话不问运行时：文件那一半在服务器上，DAWN 不在那儿存任何东西（spec §0.4）。
      */

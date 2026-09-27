@@ -27,6 +27,7 @@ import type { 子转录事件 } from "../subagent/protocol.js"
 import { 活动一句 } from "../subagent/activity.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/version.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
+import { 出方案工具名 } from "../protocol/plan.js"
 
 /**
  * 更新的载荷部分：信封三件套由中枢补齐。
@@ -524,6 +525,15 @@ export class SessionTranscripts {
         return
       }
 
+      /**
+       * 一版方案交上来了 / 状态变了（先出方案，2026-09-27）：按 `plan:<planId>` 整条覆盖，同一张卡原地变。
+       * 不另叫任何通知——通道与桌面通知只认 `turn` 条目与收尾，方案卡不改变「这一轮答完了没有」。
+       */
+      case "plan": {
+        this.putItem(sessionId, e, { type: "plan", id: `plan:${event.plan.planId}`, ...event.plan })
+        return
+      }
+
       case "config_options": {
         e.configOptions = event.options.map((o) => ({
           ...o,
@@ -767,6 +777,8 @@ export class SessionTranscripts {
       case "tool_start":
         // **要调工具了，说明它想完了**（见 `思考停表`）
         this.思考停表(sessionId, e)
+        // 先出方案（2026-09-27）：propose_plan 不画工具行——它的样子是那张方案卡（`plan` 事件）。一件事两种样子等于两个家
+        if (event.toolName === 出方案工具名) return
         this.putItem(sessionId, e, {
           type: "tool",
           id: event.toolCallId || `tool${e.revision + 1}`,
@@ -785,6 +797,8 @@ export class SessionTranscripts {
         return
 
       case "tool_end": {
+        // 交成了的不画（卡片就是它）；交失败的（缺节）照画——模型要改，人也该看见它交错了
+        if (event.toolName === 出方案工具名 && !event.isError) return
         const id = event.toolCallId || `tool${e.revision + 1}`
         const 先前 = e.items.find((i) => i.id === id)
         // 没见过 start 的 end 也照记——**宁可多一条，不可丢一条**

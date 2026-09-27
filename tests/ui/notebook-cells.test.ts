@@ -148,4 +148,25 @@ describe("agent 的 run_code 被停下（调整方向，2026-09-25）", () => {
     expect(停了!.interrupted).toBe(true)
     expect("interrupted" in 没停!).toBe(false)
   })
+
+  it("inspect_data 也记一格（代码栏说清看的是什么），它的输出挂在这一格上（先出方案，2026-09-27）", () => {
+    const cs = cells([
+      { type: "tool", id: "t1", name: "inspect_data", input: { language: "R", path: "data/raw/a.csv" }, status: "ok" },
+      kout("o1", "R", "形状"),
+    ] as TranscriptItem[])
+    expect(cs).toHaveLength(1)
+    expect(cs[0]).toMatchObject({ who: "agent", language: "R", languageKnown: true, code: "# inspect_data：data/raw/a.csv" })
+    expect(cs[0]!.outputs).toHaveLength(1)
+  })
+
+  it("inspect_data 看内核里的变量：代码栏写变量名；plan 条目既不开也不关 cell", () => {
+    const cs = cells([
+      { type: "tool", id: "t1", name: "inspect_data", input: { language: "python", variable: "df" }, status: "ok" },
+      { type: "plan", id: "plan:c1", planId: "c1", version: 1, title: "t", markdown: "m", status: "proposed" },
+      kout("o1", "python", "列"),
+    ] as TranscriptItem[])
+    expect(cs).toHaveLength(1)
+    expect(cs[0]).toMatchObject({ language: "python", code: "# inspect_data：df" })
+    expect(cs[0]!.outputs).toHaveLength(1)
+  })
 })

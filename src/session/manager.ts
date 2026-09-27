@@ -594,6 +594,32 @@ export class SessionManager {
     return rt.redirect(sessionId, 那句)
   }
 
+  /** 这段会话有没有先出方案（2026-09-27）。**只有 native 有，有无即判据** */
+  supportsPlan(sessionId: SessionId): boolean {
+    return typeof this.bound.get(sessionId)?.answerPlan === "function"
+  }
+
+  /**
+   * 回答一版方案（先出方案，2026-09-27）。写权规则与 `write` 相同：批准之后界面要替人发那句执行话，
+   * 而存档这件事本身也是在改这段会话「接下来做什么」。
+   */
+  async answerPlan(
+    sessionId: SessionId,
+    planId: string,
+    action: "approve" | "discard",
+    as: Holder,
+    text?: string,
+  ): Promise<{ savedPath?: string }> {
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) {
+      throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)
+    }
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.answerPlan) throw new Error("这类会话没有先出方案")
+    return rt.answerPlan(sessionId, planId, action, text)
+  }
+
   /** 回退这一轮 · 预览（2026-09-27）。只读，不要求租约。没有这回事的会话抛 */
   async previewRewind(sessionId: SessionId, 那句: 回退的那句) {
     const rt = this.bound.get(sessionId)

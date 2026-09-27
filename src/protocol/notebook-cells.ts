@@ -127,6 +127,24 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
             // 停止 / 调整方向时被停下的那一格（2026-09-25）：笔记本里同样写「已中断」，不写失败
             interrupted: item.interrupted,
           })
+        } else if (item.name === "inspect_data") {
+          /**
+           * 先出方案的 inspect_data（2026-09-27）：它也在对话内核里跑，笔记本里得有这一格——没有不可见的行动。
+           * 代码是我们写死的那一大段，放进代码栏只会淹掉人要看的东西；只写一行「看的是什么」。
+           */
+          const input = item.input as { language?: unknown; path?: unknown; variable?: unknown } | undefined
+          const 认得语言 = 是已知语言(input?.language)
+          const 看的 = typeof input?.path === "string" ? input.path : typeof input?.variable === "string" ? input.variable : "（未记录）"
+          push({
+            id: item.id,
+            who: "agent",
+            language: 认得语言 ? (input!.language as "python" | "R") : "python",
+            languageKnown: 认得语言,
+            code: `# inspect_data：${看的}`,
+            status: item.status,
+            startedAt: item.startedAt,
+            interrupted: item.interrupted,
+          })
         } else {
           close()
         }
@@ -197,7 +215,7 @@ export function cells(items: readonly TranscriptItem[]): Cell[] {
         break
       }
       default:
-        // notice / subagents：既不开也不关
+        // notice / subagents / plan（先出方案，2026-09-27）：既不开也不关
         break
     }
   }

@@ -5763,6 +5763,8 @@ function TranscriptRowImpl({
   if (item.type === "compaction") {
     return <CompactionRow item={item} />
   }
+  // 先出方案（2026-09-27）：临时占位，Task 7 换成方案卡
+  if (item.type === "plan") return null
   const mine = item.who === "user"
 
   /**

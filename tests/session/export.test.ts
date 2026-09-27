@@ -29,4 +29,15 @@ describe("转录成markdown", () => {
     expect(导出文件名("湿地/蜻蜓: 第二次?", "s1", 时)).toBe("湿地 蜻蜓 第二次 20260823-090507.md")
     expect(导出文件名("   ", "s1", 时)).toBe("s1 20260823-090507.md")
   })
+
+  it("方案：已批准的整段写进去（实验记录里要有它）；别的状态只留一行", () => {
+    const md = 转录成markdown({ title: "t", agentId: "a", createdAt: "x" }, [
+      { type: "plan", id: "plan:c1", planId: "c1", version: 1, title: "旧", markdown: "旧正文", status: "superseded" },
+      { type: "plan", id: "plan:c2", planId: "c2", version: 2, title: "新", markdown: "## 问题与假设\n新正文", status: "approved", savedPath: "analysis/plans/x.md", approvedAt: 1 },
+    ])
+    expect(md).toContain("> 方案第 1 版「旧」（已被取代）")
+    expect(md).not.toContain("旧正文")
+    expect(md).toContain("> 方案第 2 版「新」（已批准 · `analysis/plans/x.md`）")
+    expect(md).toContain("新正文")
+  })
 })

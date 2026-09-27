@@ -1346,6 +1346,25 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         hasError: false,
       })
     },
+    /** 回退这一轮落一条 Run（2026-09-27）：`rewind:<做法>`，动过的文件记进 filesWritten。临时会话没有项目，与删除同一个口径不记 */
+    记一次回退: (sessionId, 做法, 动过的) => {
+      const 那段 = sessionStore.get(sessionId)
+      if (!那段?.projectId) return
+      const 此刻 = new Date().toISOString()
+      runStore.insert({
+        runId: `run-${randomUUID()}`,
+        projectId: 那段.projectId,
+        sessionId,
+        origin: "user",
+        requestType: `rewind:${做法}`,
+        status: "completed",
+        startedAt: 此刻,
+        finishedAt: 此刻,
+        hasError: false,
+        filesWritten: [...动过的],
+        mayIncludeUserEdits: false,
+      })
+    },
     /**
      * **上传落一条 Run**（批 4b · 不变式 5）。
      *

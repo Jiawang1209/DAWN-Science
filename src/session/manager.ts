@@ -21,6 +21,9 @@ import type {
   SessionSpec,
   送法,
   调整的那句,
+  回退的那句,
+  回退做法,
+  回退回执,
 } from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
@@ -589,6 +592,26 @@ export class SessionManager {
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
     if (!rt.redirect) throw new Error("这类会话不能调整方向")
     return rt.redirect(sessionId, 那句)
+  }
+
+  /** 回退这一轮 · 预览（2026-09-27）。只读，不要求租约。没有这回事的会话抛 */
+  async previewRewind(sessionId: SessionId, 那句: 回退的那句) {
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.previewRewind) throw new Error("这类会话不能回退")
+    return rt.previewRewind(sessionId, 那句)
+  }
+
+  /** 回退这一轮 · 执行。写权规则与 `write` 相同：改工作区、改对话，都是在改「接下来从哪儿说」 */
+  async rewind(sessionId: SessionId, as: Holder, 那句: 回退的那句, 做法: 回退做法, 内核们: readonly string[]): Promise<回退回执> {
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) {
+      throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)
+    }
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
+    if (!rt.rewind) throw new Error("这类会话不能回退")
+    return rt.rewind(sessionId, 那句, 做法, 内核们)
   }
 
   /**

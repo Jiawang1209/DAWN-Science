@@ -769,3 +769,35 @@ describe("笔记本（2026-08-26）", () => {
     expect(seen).toHaveLength(0)
   })
 })
+
+describe("truncateAt（回退这一轮，2026-09-27）", () => {
+  it("从那条用户发言起（含）往后撤掉，笔记本里你敲的 cell 留着；推一帧快照", () => {
+    const t = new SessionTranscripts({ terminalMaxChars: 1000 })
+    t.track("s", "native")
+    t.subscribe("s")
+    t.userTurn("s", "第一句")
+    t.userTurn("s", "第二句")
+    const 第二句 = t.peekItems("s").at(-1)!.id
+    const cell = t.beginCell("s", "python", "x = 1")!
+    t.notice("s", "随便一条")
+    const 推了: string[] = []
+    t.onUpdate((u) => 推了.push(u.type))
+    expect(t.truncateAt("s", 第二句)).toBe(true)
+    expect(t.peekItems("s").map((x) => (x.type === "turn" ? x.text : x.type))).toEqual(["第一句", "cell"])
+    expect(t.peekItems("s")[1]!.id).toBe(cell)
+    expect(推了).toContain("snapshot")
+    expect(t.truncateAt("s", "不存在")).toBe(false)
+  })
+
+  it("那句之后的压缩标记一起撤掉；正在压的那条被撤掉之后，迟到的 compaction_end 只落一条", () => {
+    const t = new SessionTranscripts({ terminalMaxChars: 1000 })
+    t.track("s", "native")
+    t.userTurn("s", "第一句")
+    t.ingest("s", { kind: "compaction_start", sessionId: "s", reason: "manual" })
+    const 那句 = t.peekItems("s")[0]!.id
+    expect(t.truncateAt("s", 那句)).toBe(true)
+    expect(t.peekItems("s")).toEqual([])
+    t.ingest("s", { kind: "compaction_end", sessionId: "s", reason: "manual", status: "cancelled" })
+    expect(t.peekItems("s").filter((x) => x.type === "compaction")).toHaveLength(1)
+  })
+})

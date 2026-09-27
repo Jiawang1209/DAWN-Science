@@ -1583,4 +1583,12 @@ export const EN: Readonly<Record<string, string>> = {
   "把早先的对话换成一段摘要交给模型，腾出上下文；后面可以跟一句要保留什么": "Replace earlier conversation with a summary for the model to free up context; add what to keep after it",
   "外部 agent 自己管上下文，DAWN 压不了": "External agents manage their own context; DAWN can't compact it",
   "这段不是和模型的对话，没有上下文可压": "This session isn't a chat with a model, so there's no context to compact",
+  // 回退这一轮（2026-09-27）：后端 fault 的 msgid
+  "这句不在对话里了": "That message is no longer in the chat",
+  "远端会话的文件在服务器上，只能撤掉对话": "In a remote session the files live on the server; only the chat can be removed",
+  "文件回退不了（{0}）": "The files can't be rewound ({0})",
+  "agent 还在跑，停下之后才能回退": "The agent is still running; stop it before rewinding",
+  "正在回退，回退完再发": "A rewind is in progress; send again once it's done",
+  "这句在 agent 的记录里对不上，回退不了（对话可能被改写过）": "This message doesn't match the agent's record, so it can't be rewound (the chat may have been rewritten)",
+  "这类会话不能回退": "This kind of session can't be rewound",
 }

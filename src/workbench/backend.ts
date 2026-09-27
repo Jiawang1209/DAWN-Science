@@ -92,6 +92,8 @@ import type { SessionTranscripts } from "./events.js"
 import { 侧边对照, 主对话摘要 } from "./side-session.js"
 import type { RestoredItem } from "../runtime/types.js"
 import type { TranscriptItem } from "../protocol/events.js"
+import { 回退通知 } from "./rewind-notice.js"
+import { 单个文件上限, 存档总上限, 回退不了 } from "../project/checkpoints.js"
 import { i18n消息, 渲染i18n, type FaultI18n } from "../protocol/fault-i18n.js"
 import { 验一次key, type Key验证结果 } from "./key-validate.js"
 import type { ConnectionRecord, ConnectionStore } from "../store/connections.js"
@@ -229,6 +231,8 @@ export interface WorkbenchBackendOptions {
    * 而且删除不可逆——它比上传更该留下痕迹。
    */
   记一次删除?: (connectionId: string | undefined, 路径: string, 进了废纸篓: boolean) => void
+  /** 记一次回退（2026-09-27）。**改变世界的操作要记一条 Run**（不变式 3）；已经发生过的那几轮的 Run 不改不删 */
+  记一次回退?: (sessionId: string, 做法: string, 动过的: readonly string[]) => void
   /** 归档 / 取消归档落账（7.18）。**删除不落**——删除那条账本自己留着，见 `deleteSession` */
   记一次会话?: (event: "archive" | "unarchive", projectId: string | undefined, sessionId: string) => void
   /** 技能的改动也落账（7.17）：启停、导入、删除——都是对磁盘的一次写 */
@@ -536,7 +540,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, memory, keyCheckTimeoutMs = 8_000 } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, memory, keyCheckTimeoutMs = 8_000 } = opts
 
   /** 记忆没装配就如实拒（与 scratchRoot 同一条：不猜路径、不静默降级） */
   const 要记忆 = () => {
@@ -904,6 +908,34 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 调整方向时没能重新排上的那几句（2026-09-25）：取出存根交回界面放回输入框，并在转录里说一句——**不许丢**。
    * 返回原先后的原文 + 原图（`writeToSession` / `editQueue` 的 `withdrawn`）。
    */
+  /** 转录里那条用户发言 → 倒数第几句 + 原文 + 附了几张图。不在转录里（刚被撤掉 / id 不对）→ not_found（回退这一轮，2026-09-27） */
+  const 定位这句 = (sessionId: string, turnId: string) => {
+    const 用户们 = events
+      .peekItems(sessionId)
+      .filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user")
+    const i = 用户们.findIndex((x) => x.id === turnId)
+    if (i < 0) throw fault("not_found", "这句不在对话里了")
+    const 它 = 用户们[i]!
+    return { 那句: { 倒数第几句: 用户们.length - i, 文: 它.text }, 图数: 它.images?.length ?? 0 }
+  }
+  /** 此刻挂着的活内核（本地远端都算）：文件回得去，它们回不去 */
+  const 活着的内核 = (sessionId: string): ("python" | "R")[] =>
+    (events.peek(sessionId)?.kernels ?? []).filter((k) => k.state !== "exited").map((k) => k.language)
+  /**
+   * 运行时的话按原因分码。认得出的几句走 `fault`（译得了）：还在跑 / 正在回退 → conflict；对不上 / 不能回退 / 文件回退不了 → invalid_request
+   * （缘故随 details 出去，界面别认文本）。其余照 `editQueue` 那副：租约 → conflict；会话不在 → not_found；别的 → invalid_request，原样转述。
+   */
+  const 回退的错 = (err: unknown) => {
+    if (err instanceof 回退不了) return Object.assign(fault("invalid_request", "文件回退不了（{0}）", err.reason), { detail: { reason: err.reason } })
+    const 消息 = err instanceof Error ? err.message : String(err)
+    if (/还在跑/.test(消息)) return fault("conflict", "agent 还在跑，停下之后才能回退")
+    if (/正在回退/.test(消息)) return fault("conflict", "正在回退，回退完再发")
+    if (/对不上/.test(消息)) return fault("invalid_request", "这句在 agent 的记录里对不上，回退不了（对话可能被改写过）")
+    if (/这类会话不能回退/.test(消息)) return fault("invalid_request", "这类会话不能回退")
+    if (/未持有|租约/.test(消息)) return fault原样("conflict", 消息)
+    if (/未在本进程中活动|会话 ".*" 未启动/.test(消息)) return fault原样("not_found", 消息)
+    return fault原样("invalid_request", 消息)
+  }
   const 交回排着的 = (sessionId: string, ids: readonly string[], 按过停止: boolean) => {
     const 话们 = ids.flatMap((id) => {
       const 它 = 取存根(sessionId, id)
@@ -3153,6 +3185,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          *   - 其余(图片收不下等)→ `invalid_request`:是这次请求本身的问题。
          */
         const 消息 = err instanceof Error ? err.message : String(err)
+        // 回退期间运行时拒收（2026-09-27）：认得出的这一句译得了；conflict——等回退完再发就行
+        if (/正在回退/.test(消息)) throw fault("conflict", "正在回退，回退完再发")
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
         // `未启动`：调整方向时运行时报的「会话不在」，与 editQueue 映射成同一个码（审查 09-25 nit 2）。
         // **锚在运行时那一句上**（复审 M-3）：光写「未启动」会把别的「内核未启动」之类请求层面的错也吞成 not_found
@@ -3250,6 +3284,51 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       const withdrawn = 交回排着的(sessionId, 没排回, (停止次数.get(sessionId) ?? 0) !== 停过)
       return withdrawn.length ? { withdrawn } : {}
+    },
+
+    /**
+     * 回退这一轮（2026-09-27，spec §4.3）：界面给的是转录里那条用户发言的 id，这里数出它是**倒数第几句**、连同原文交给运行时。
+     * 远端会话不问运行时：文件那一半在服务器上，DAWN 不在那儿存任何东西（spec §0.4）。
+     */
+    previewRewind: async ({ sessionId, turnId }) => {
+      const 位 = 定位这句(sessionId, turnId)
+      const kernels = 活着的内核(sessionId)
+      const 附加 = { kernels, ...(位.图数 ? { images: 位.图数 } : {}), limits: { fileBytes: 单个文件上限, totalBytes: 存档总上限 } }
+      if (sessions.get(sessionId)?.connectionId) return { files: { ok: false as const, reason: "remote" as const }, ...附加 }
+      try {
+        return { files: await sessions.previewRewind(sessionId, 位.那句), ...附加 }
+      } catch (err) {
+        throw 回退的错(err)
+      }
+    },
+
+    rewindTurn: async ({ sessionId, turnId, mode }) => {
+      const 位 = 定位这句(sessionId, turnId)
+      const kernels = 活着的内核(sessionId)
+      if (mode !== "conversation" && sessions.get(sessionId)?.connectionId) {
+        throw fault("invalid_request", "远端会话的文件在服务器上，只能撤掉对话")
+      }
+      let r
+      try {
+        r = await sessions.rewind(sessionId, "user", 位.那句, mode, kernels)
+      } catch (err) {
+        throw 回退的错(err)
+      }
+      // 对话真撤掉了才截转录：转录要与 pi 那条分支说同一件事。压缩标记、那句之后的通知一起走，你敲的 cell 留着
+      if (mode !== "files" && !r.conversationError) events.truncateAt(sessionId, turnId)
+      events.notice(
+        sessionId,
+        回退通知({
+          这句: 位.那句.文,
+          做法: mode,
+          结果: mode === "conversation" ? undefined : r,
+          内核们: kernels,
+          图数: 位.图数,
+          conversationError: r.conversationError,
+        }),
+      )
+      记一次回退?.(sessionId, mode, [...r.restored, ...r.removed])
+      return { ...r, kernels }
     },
 
     /**

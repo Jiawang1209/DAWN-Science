@@ -661,6 +661,26 @@ export class SessionTranscripts {
   }
 
   /**
+   * 回退这一轮（2026-09-27）：从这条（一条用户发言）起（含）往后都撤掉——**你在笔记本里自己敲的 `cell` 项留着**：
+   * 内核没回退，它们仍是内核里的事实，笔记本那一格还要画它们（`$笔记本cells` 从转录里取）。
+   * 那句之后的压缩标记（`compaction`）跟着撤：pi 的新分支上也没有它。正在压的那条被撤掉了就忘掉它的 id
+   * （运行时在压的时候拒回退，这里只是不留一根悬着的指针）。
+   * 整份换掉、推一帧快照——与 `restore()` 同一个理由：几十条 dropItem 描述的是同一件事。找不到那条返回 false。
+   */
+  truncateAt(sessionId: SessionId, itemId: string): boolean {
+    const e = this.entries.get(sessionId)
+    if (!e) return false
+    const i = e.items.findIndex((x) => x.id === itemId)
+    if (i < 0) return false
+    e.items = [...e.items.slice(0, i), ...e.items.slice(i).filter((x) => x.type === "cell")]
+    e.openTurnId = undefined
+    e.思考起于 = undefined
+    if (e.压缩中 !== undefined && !e.items.some((x) => x.id === e.压缩中)) e.压缩中 = undefined
+    this.bump(sessionId, e, { type: "snapshot", snapshot: this.snapshot(sessionId, e) })
+    return true
+  }
+
+  /**
    * 往对话里留一条**系统提示**（T3-b，2026-08-12）。
    *
    * 第一个用处是「已归入项目 ~/xxx」。**这一行不能省**：设完工作目录之后，

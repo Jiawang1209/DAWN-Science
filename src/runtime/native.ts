@@ -1466,6 +1466,13 @@ export class NativeRuntime implements AgentRuntime {
       agentDir,
       settingsManager,
       /**
+       * **pi 扩展一律不加载**（2026-09-28 审查，安全）：否则 `<工作区>/.pi/extensions` 与 `<会话目录>/pi/extensions` 里的代码
+       * 建会话时被原样 import——它注册的工具不经过方案期门与权限门，还能 `setActiveTools` 启用 pi 没套门的内置工具。
+       * 我们自己的工具全走 `customTools`，一件扩展都不用（子 agent 那边 `src/subagent/child.ts` 同一条）。
+       * 设计契约里有扫描：每个 `DefaultResourceLoader(` / `createAgentSession(` 都得带它。
+       */
+      noExtensions: true,
+      /**
        * **「关」了的技能从清单里剔掉**（skills-manage，2026-08-21）。
        * pi 认 `disable-model-invocation`（模型看不见、`/skill:` 还能调），但不认 `user-invocable: false`；
        * 三档里的「关」= 谁都不给，只能在这儿过滤——读的是文件上那两行，与技能屏同一份真相。

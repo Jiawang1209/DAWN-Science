@@ -1605,3 +1605,91 @@ describe("设计契约 · 全文搜索只读", () => {
     expect(犯的(`import { readFile, stat } from "node:fs/promises"\nconst x = parseSessionEntries(t)`)).toEqual([])
   })
 })
+
+/**
+ * pi 的扩展与工具启停（2026-09-28 审查，安全）。
+ *
+ * ①**每个 `new DefaultResourceLoader(` 都带 `noExtensions: true`，每个 `createAgentSession(` 都传自己建的 `resourceLoader`**
+ *   （不传的话 pi 自己建一个默认的，照样加载扩展）。扩展注册的工具不经过方案期门与权限门。
+ * ②**`setActiveTools*(` 只在两处按标记启停的地方调**，参数只由「已经启用的」与「我们自己装的」那几个名字拼成——
+ *   pi 的注册表里内置工具一直都在（`noTools: "builtin"` 只是不启用），按名字一启用就是一件没套门的工具。
+ */
+describe("pi 扩展与工具启停", () => {
+  const SRC = join(import.meta.dirname, "../../src")
+  const 源文件 = (): { f: string; 文: string }[] =>
+    (readdirSync(SRC, { recursive: true }) as string[])
+      .filter((f) => /\.(ts|tsx|mts)$/.test(f) && !f.endsWith(".d.ts"))
+      .map((f) => ({ f, 文: readFileSync(join(SRC, f), "utf8") }))
+  /** 去掉注释（行注释与块注释），免得说明文字里的名字被当成调用 */
+  const 去注释 = (文: string) => 文.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1")
+  /** 从 `(` 起配对到对应的 `)`，回括号里的文字 */
+  const 括号里 = (文: string, 左: number): string => {
+    let 深 = 0
+    for (let i = 左; i < 文.length; i++) {
+      if (文[i] === "(") 深++
+      else if (文[i] === ")" && --深 === 0) return 文.slice(左 + 1, i)
+    }
+    return 文.slice(左 + 1)
+  }
+  const 调用们 = (文: string, 名: RegExp): { 参数: string; 位: number }[] =>
+    [...文.matchAll(名)].map((m) => ({ 参数: 括号里(文, m.index! + m[0].length - 1), 位: m.index! }))
+
+  function 扩展违例(文0: string): string[] {
+    const 文 = 去注释(文0)
+    return [
+      ...调用们(文, /\bnew\s+DefaultResourceLoader\s*\(/g)
+        .filter((c) => !/\bnoExtensions\s*:\s*true\b/.test(c.参数))
+        .map(() => "DefaultResourceLoader 没带 noExtensions: true"),
+      ...调用们(文, /\bcreateAgentSession\s*\(/g)
+        .filter((c) => !/\bresourceLoader\b/.test(c.参数))
+        .map(() => "createAgentSession 没传自己的 resourceLoader"),
+    ]
+  }
+
+  /** 启停参数里只许出现的名字：已启用的（`别的`，由 getActiveToolNames().filter 来）、我们装的（READ_MAIN_SESSION、方案工具名们） */
+  const 许的名字 = new Set(["on", "别的", "READ_MAIN_SESSION", "名"])
+  function 启停违例(文0: string): string[] {
+    const 文 = 去注释(文0)
+    return 调用们(文, /\.setActiveTools\w*\s*\(/g).flatMap((c) => {
+      const 名们: string[] = c.参数.match(/[\p{L}_$][\p{L}\p{N}_$]*/gu) ?? []
+      const 坏 = 名们.filter((n) => !许的名字.has(n))
+      if (坏.length || /["'`]/.test(c.参数)) return [`setActiveTools 参数里有不认识的名字：${c.参数}`]
+      // 往回找这一段函数体：`别的` 必须由已启用的过滤出来，`名` 必须取自我们装的方案工具名单
+      const 前文 = 文.slice(Math.max(0, c.位 - 600), c.位)
+      if (名们.includes("别的") && !/getActiveToolNames\(\)\s*\.filter\(/.test(前文)) return ["别的 不是由 getActiveToolNames().filter 来的"]
+      if (名们.includes("名") && !/this\.方案工具名们\.get\(/.test(前文)) return ["名 不是取自 this.方案工具名们"]
+      return []
+    })
+  }
+
+  it("每个 DefaultResourceLoader 带 noExtensions: true、每个 createAgentSession 传 resourceLoader", () => {
+    const 犯 = 源文件().flatMap(({ f, 文 }) => 扩展违例(文).map((x) => `${f}：${x}`))
+    expect(犯).toEqual([])
+    // 真有这些调用（扫描没扫空）
+    const 数 = 源文件().reduce((n, { 文 }) => n + 调用们(去注释(文), /\bnew\s+DefaultResourceLoader\s*\(/g).length, 0)
+    expect(数).toBeGreaterThanOrEqual(2)
+  })
+
+  it("setActiveTools* 只用已启用的与我们装的名字", () => {
+    const 犯 = 源文件().flatMap(({ f, 文 }) => 启停违例(文).map((x) => `${f}：${x}`))
+    expect(犯).toEqual([])
+    const 数 = 源文件().reduce((n, { 文 }) => n + 调用们(去注释(文), /\.setActiveTools\w*\s*\(/g).length, 0)
+    expect(数).toBeGreaterThanOrEqual(2)
+  })
+
+  it("扫描本身抓得住（种违例看它红）", () => {
+    expect(扩展违例(`const r = new DefaultResourceLoader({ cwd, agentDir })`)).toHaveLength(1)
+    expect(扩展违例(`const r = new DefaultResourceLoader({ cwd, noExtensions: false })`)).toHaveLength(1)
+    expect(扩展违例(`// noExtensions: true\nconst r = new DefaultResourceLoader({ cwd })`)).toHaveLength(1)
+    expect(扩展违例(`const r = new DefaultResourceLoader({ cwd, noExtensions: true })`)).toEqual([])
+    expect(扩展违例(`await createAgentSession({ cwd, model })`)).toHaveLength(1)
+    expect(扩展违例(`await createAgentSession({ cwd, resourceLoader })`)).toEqual([])
+    expect(启停违例(`s.setActiveToolsByName(["ls"])`)).toHaveLength(1)
+    expect(启停违例(`s.setActiveToolsByName([...s.getActiveToolNames(), "bash"])`)).toHaveLength(1)
+    expect(启停违例(`s.setActiveTools(names)`)).toHaveLength(1)
+    expect(启停违例(`const 别的 = [...all]\ns.setActiveToolsByName(别的)`)).toHaveLength(1)
+    expect(
+      启停违例(`const 别的 = s.getActiveToolNames().filter((n) => n !== X)\ns.setActiveToolsByName(on ? [...别的, READ_MAIN_SESSION] : 别的)`),
+    ).toEqual([])
+  })
+})

@@ -559,8 +559,11 @@
  *   （主进程在通知被点时发，界面据此切会话）；
  *   同一轮（未发布）补 `takePendingOpenSession`（读了就清）：通知被点时窗口还没有 / 页面还没听，推送会丢，界面起来后来**拉**。全是新增，故 minor。
  *   同一轮（未发布）再补：`notice` 条目可选 `failed: true`（这一轮没做成的那句），界面据它收掉「正在等回话」。纯新增可选字段。
+ *
+ * 8.5（2026-09-27）：会话全文搜索（spec `2026-09-27-会话全文搜索-design.md`）。加只读操作 `searchSessionContent`：
+ *   扫 native 会话的 pi 记录，回按段成卡的命中（片段 + 高亮位置 + 与转录同一套的 `itemId` + 第几处 `nth`）与截断计数。只加操作，不动旧形状，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "8.4"
+export const WORKBENCH_PROTOCOL_VERSION = "8.5"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

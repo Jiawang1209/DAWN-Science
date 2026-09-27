@@ -129,6 +129,23 @@ function 慢跑工具(body) {
 }
 
 /**
+ * **「跑个 Cox」= 先说一句、再调一条把 Cox 代码印出来的 bash**（2026-09-27，会话全文搜索；准入规则 1）。
+ *
+ * 全文搜索要搜工具的参数与输出、点过去展开那一行：没有一条确定的工具调用，`dev:mock` 里人搜不到代码，
+ * e2e 也只能靠真模型。与「慢慢跑」同一个触发法——最后一条是用户话、且那句带「跑个 Cox」；
+ * 拿到工具结果之后那一问最后一条是 `tool`，不触发，所以不循环。用例自己给了 `toolCall` 且这一问它要调的，以用例的为准。
+ * 与已有暗号互不为子串（「慢慢跑」含「跑」不含「跑个」），也不含「慢」字（「派子agent」那支拿它分快慢）。
+ */
+export const 跑个Cox = {
+  toolName: "bash",
+  args: { command: 'echo "coxph(Surv(time, status) ~ age, data = lung)"' },
+  say: "我跑一个 Cox 回归。",
+}
+function 跑Cox工具(body) {
+  return 最后一句用户话(body)?.includes("跑个 Cox") ? 跑个Cox : undefined
+}
+
+/**
  * **「演一次失败」「演一次权限」**（2026-09-27，桌面通知；准入规则 1）。
  *
  * 桌面通知有三种时刻：做完、出错、等你点头。做完随便哪句都行；另两种此前只有夹具级的旋钮
@@ -375,7 +392,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
 

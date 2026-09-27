@@ -141,6 +141,7 @@ function backend(): WorkbenchBackend {
     deleteSkill: async () => ({ trashed: true as const }),
     setSessionArchived: async () => ({}),
     listArchivedSessions: async () => ({ sessions: [] }),
+    searchSessionContent: async () => ({ sessions: [], matchedSessions: 0, total: 0, scanned: 0, notSearchable: 0, unreadable: 0, tooLarge: 0, elapsedMs: 0 }),
     deleteArchivedSessions: async () => ({ deleted: 0, transcriptsTrashed: 0, problems: [] }),
     listSchedules: async () => ({ schedules: [] }),
     createSchedule: async () => { throw new Error("stub") },

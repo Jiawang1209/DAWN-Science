@@ -431,9 +431,11 @@ describe("协议版本 · 5.5", () => {
    *   操作 `openSubagent` / `askSubagent`。纯新增，minor。
    *
    * 8.4（2026-09-27）：桌面通知——三个操作 + 事件通道第五种载荷 openSession。纯新增，minor。
+   *
+   * **8.5（2026-09-27）**：会话全文搜索——加只读操作 `searchSessionContent`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.4")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.5")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

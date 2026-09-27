@@ -2902,6 +2902,67 @@ export const OPERATIONS = {
   },
 
   /**
+   * 会话全文搜索（8.5，2026-09-27，spec `2026-09-27-会话全文搜索-design.md`）。**只读**。
+   *
+   * 搜 native 会话的 pi 记录——你说的、agent 回的、工具的参数与输出——不建索引，扫 + 按文件缓存（spec §6）。
+   * 匹配规则在 `search-match.ts`：界面跳过去时数「第几处」用的是同一份。
+   *
+   * - `itemId`：与点开后转录里那一条的 id 同一套（`还原成条目` 给的）；`nth`：这段对话里第几处命中（从 0 数），
+   *   这次运行里早就活着的对话 id 对不上时按它找（spec §7）。
+   * - **截断出声**：`truncated` 说是段数超了 `limit`（`sessions`，`matchedSessions` 是真总数）还是到了 5 秒（`time`，`scanned` / `total`）；
+   *   `notSearchable`（外部 CLI / ACP / 终端 / 内核会话）、`unreadable`（坏文件、没权限）、`tooLarge`（单个记录超过 32 MB）各有一个数。
+   * - `lastAt`：命中那几条里最新的时刻；记录里没有时刻时退回文件的修改时间。卡片按它从新到旧排。
+   */
+  searchSessionContent: {
+    request: z
+      .object({
+        query: z.string().trim().min(2).max(200),
+        limit: z.int().min(1).max(100).optional(),
+      })
+      .strict(),
+    response: z
+      .object({
+        sessions: z.array(
+          z
+            .object({
+              sessionId: z.string().min(1),
+              projectId: z.string().min(1).optional(),
+              title: z.string().min(1).optional(),
+              /** 卡上写的「在哪」：普通对话（临时项目）没有这个字段 */
+              place: z.object({ kind: z.enum(["project", "server"]), name: z.string().min(1) }).strict().optional(),
+              archived: z.boolean(),
+              lastAt: z.string().min(1),
+              hits: z.array(
+                z
+                  .object({
+                    itemId: z.string().min(1),
+                    nth: z.int().min(0),
+                    where: z.enum(["user", "agent", "toolInput", "toolResult"]),
+                    toolName: z.string().min(1).optional(),
+                    snippet: z.string(),
+                    marks: z.array(z.tuple([z.int().min(0), z.int().min(0)])),
+                    at: z.string().min(1).optional(),
+                  })
+                  .strict(),
+              ),
+              moreHits: z.int().min(0),
+            })
+            .strict(),
+        ),
+        matchedSessions: z.int().min(0),
+        total: z.int().min(0),
+        scanned: z.int().min(0),
+        notSearchable: z.int().min(0),
+        unreadable: z.int().min(0),
+        tooLarge: z.int().min(0),
+        truncated: z.enum(["sessions", "time"]).optional(),
+        elapsedMs: z.int().min(0),
+      })
+      .strict(),
+    mutating: false,
+  },
+
+  /**
    * 从工作台移除一个项目（2026-08-10）。
    *
    * **绝不删除磁盘上的文件夹。** 移除的是工作台里的一条记录，

@@ -14,7 +14,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/version.js"
 import { ProjectSummarySchema, RemoteConnectionSchema } from "../../src/protocol/entities.js"
 
 describe("操作注册表", () => {
-  it("148 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 4）", () => {
+  it("149 个操作齐全（… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 4 + 全文搜索 1）", () => {
     expect(operationNames().sort()).toEqual(
       [
         "setRemoteInterpreter",
@@ -100,6 +100,7 @@ describe("操作注册表", () => {
         "desktopSetNotify",
         "desktopTestNotify",
         "takePendingOpenSession",
+        "searchSessionContent",
         "memoryOverview",
         "memorySuggestions",
         "memoryResolve",
@@ -627,5 +628,48 @@ describe("桌面通知（2026-09-27）", () => {
     expect(OPERATIONS.takePendingOpenSession.response.parse({})).toEqual({})
     expect(OPERATIONS.takePendingOpenSession.response.parse({ sessionId: "s1" })).toEqual({ sessionId: "s1" })
     expect(() => OPERATIONS.takePendingOpenSession.response.parse({ sessionId: "" })).toThrow()
+  })
+})
+
+describe("8.5 · 会话全文搜索（2026-09-27）", () => {
+  const 请求 = (x: unknown) => OPERATIONS.searchSessionContent.request.safeParse(x)
+
+  it("只读；query 去空白后至少两个字、至多 200；limit 1–100 可省", () => {
+    expect(OPERATIONS.searchSessionContent.mutating).toBe(false)
+    expect(请求({ query: " cox " }).success).toBe(true)
+    expect(请求({ query: " c " }).success).toBe(false)
+    expect(请求({ query: "x".repeat(201) }).success).toBe(false)
+    expect(请求({ query: "cox", limit: 0 }).success).toBe(false)
+    expect(请求({ query: "cox", limit: 30 }).success).toBe(true)
+    expect(请求({ query: "cox", extra: 1 }).success).toBe(false)
+  })
+
+  it("响应：卡 + 处 + 截断与各种没搜的计数", () => {
+    const r = {
+      sessions: [
+        {
+          sessionId: "s1",
+          projectId: "p1",
+          title: "生存分析",
+          place: { kind: "project", name: "lung" },
+          archived: false,
+          lastAt: "2026-09-03T10:00:00.000Z",
+          hits: [
+            { itemId: "t1", nth: 0, where: "toolInput", toolName: "run_code", snippet: "coxph(…", marks: [[0, 5]], at: "2026-09-03T10:00:00.000Z" },
+          ],
+          moreHits: 2,
+        },
+      ],
+      matchedSessions: 1,
+      total: 7,
+      scanned: 5,
+      notSearchable: 2,
+      unreadable: 0,
+      tooLarge: 0,
+      elapsedMs: 12,
+    }
+    expect(OPERATIONS.searchSessionContent.response.parse(r)).toEqual(r)
+    expect(OPERATIONS.searchSessionContent.response.safeParse({ ...r, truncated: "time" }).success).toBe(true)
+    expect(OPERATIONS.searchSessionContent.response.safeParse({ ...r, truncated: "whatever" }).success).toBe(false)
   })
 })

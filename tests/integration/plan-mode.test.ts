@@ -12,6 +12,10 @@ import { join } from "node:path"
 import { NativeRuntime } from "../../src/runtime/native.js"
 import type { AgentEvent } from "../../src/runtime/types.js"
 import { 执行那句 } from "../../src/protocol/plan.js"
+import { 会话全文搜索 } from "../../src/workbench/session-search.js"
+import { 还原成条目 } from "../../src/workbench/restored-items.js"
+import { 定位命中, 拆词 } from "../../src/protocol/search-match.js"
+import type { TranscriptItem } from "../../src/protocol/events.js"
 // @ts-expect-error -- .mjs 脚本，无类型声明；它同时服务于 npm run dev:mock
 import { startMockInferenceServer, mockModelsJson } from "../../scripts/mock-inference-server.mjs"
 
@@ -151,6 +155,46 @@ describe("先出方案 · 真 pi", () => {
       expect(史.flatMap((x) => (x.kind === "plan" ? [x.plan.version] : []))).toEqual([1, 2])
     } finally {
       await runtime.stop("s-rewind")
+    }
+  })
+
+  it("搜索 × 方案（2026-09-28）：批准过的方案卡与之后那句都搜得到，按 id、按 nth 都跳到对的那一条", { timeout: 60_000 }, async () => {
+    const id = "s-search"
+    const { runtime, 事件, 说, workspace } = await 起一段(id)
+    const sessionDir = join(dir, id, "session")
+    await runtime.setConfigOption(id, "dawn.plan", "1")
+    await 说("分析一下吸烟和肺功能")
+    const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEvent, { kind: "plan" }>
+    await runtime.answerPlan(id, 卡.plan.planId, "approve")
+    await 说("FEV1 再看一眼")
+    await runtime.stop(id)
+
+    const 搜 = new 会话全文搜索({
+      records: () => [{ id, agentId: "ds", workspace, sessionDir, state: "exited", createdAt: "2026-09-28T00:00:00Z", pinned: false, sortOrder: 1 }],
+      kindOf: () => "native",
+      placeOf: () => undefined,
+    })
+    const 结果 = await 搜.搜("FEV1", 30)
+    const 处们 = 结果.sessions[0]!.hits
+    expect(处们.map((h) => [h.itemId, h.nth])).toEqual([
+      [`plan:${卡.plan.planId}`, 0],
+      [expect.stringMatching(/^r\d+$/), 1],
+    ])
+
+    // 点开：续接出来的转录（与后端 `subscribeSession` 恢复的同一套）
+    const 再 = new NativeRuntime({ modelsPath })
+    await 再.start({ sessionId: id, workspace, sessionDir, resume: true, native: { provider: "deepseek", model: "deepseek-flash" } })
+    try {
+      const 点开的: TranscriptItem[] = (await 再.history(id)).map(还原成条目)
+      const 词们 = 拆词("FEV1")
+      for (const h of 处们) expect(定位命中(点开的, { itemId: h.itemId, nth: h.nth, 词们 })).toBe(h.itemId)
+      // 这次运行里一直活着的那段：id 是实时的、对不上——按 nth 数，落在同一条上
+      const 活的 = 点开的.map((x, i) => ({ ...x, id: x.type === "plan" ? x.id : `live${i}` }) as TranscriptItem)
+      const 第二处 = 点开的.findIndex((x) => x.id === 处们[1]!.itemId)
+      expect(定位命中(活的, { itemId: "不在这里", nth: 1, 词们 })).toBe(`live${第二处}`)
+      expect(定位命中(活的, { itemId: "不在这里", nth: 0, 词们 })).toBe(`plan:${卡.plan.planId}`)
+    } finally {
+      await 再.stop(id)
     }
   })
 })

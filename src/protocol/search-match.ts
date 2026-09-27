@@ -8,7 +8,7 @@
  * - 词按空白切开（最多 8 个），**同一条里都要出现**（与的关系）；大小写不敏感；
  * - **中文不分词，子串就是命中**：FTS5 的 unicode61 把一串汉字当一个词、trigram 要三个字起（spec §5 的实测），
  *   而最常搜的正是两个字的中文词；
- * - 一条 = 一句你说的 / 一段 agent 的回复 / 一次工具调用（名字 + 参数 + 输出算一条）；
+ * - 一条 = 一句你说的 / 一段 agent 的回复 / 一次工具调用（名字 + 参数 + 输出算一条）/ 一张方案卡（标题 + 正文，2026-09-28）；
  * - **全角与半角算同一个字**：查询与正文都先过 NFKC（「ＣＯＸ」＝「cox」）。spec 与计划没提这条，2026-09-27 按
  *   「中文输入法里打出全角字母很常见，搜不到又不报错」定下；片段显示的也是 NFKC 之后的字，这样标记的位置才对得上。
  */
@@ -67,9 +67,12 @@ interface 段 {
   text: string
 }
 
-/** 一条里能搜的几段。**只有说的话与工具调用**——notice、内核输出、子 agent 那几种不参与 */
+/** 一条里能搜的几段。**只有说的话、工具调用与方案卡**——notice、内核输出、子 agent 那几种不参与 */
 function 可搜段(x: TranscriptItem): 段[] | undefined {
   if (x.type === "turn") return [{ where: x.who, text: x.text }]
+  // 方案卡（2026-09-28）：标题 + 正文，算 agent 说的（方案是它交的）。续接与搜索都把那次 `propose_plan` 换成它（`换上方案卡`），
+  // 活会话里它也是一张卡——三边数的是同一条
+  if (x.type === "plan") return [{ where: "agent", text: `${x.title}\n${x.markdown}` }]
   if (x.type === "tool") {
     return [
       { where: "toolInput", text: `${x.name}\n${参数文本(x.input)}` },

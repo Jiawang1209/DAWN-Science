@@ -16,6 +16,9 @@ import type { 已批准存档 } from "../policy/plan-mode.js"
 import { 单引号 } from "../remote/ssh.js"
 import type { RemoteLike } from "./types.js"
 
+/** 方案簿在会话目录里的文件名。运行时读写它、全文搜索只读它（`pi-record.ts` 的 `读方案们`） */
+export const 方案簿文件名 = "plans.json"
+
 /** 簿里记的一版：协议里的 `方案` + 批准时的指纹与存档（只有本机会话批准的才有） */
 export type 方案记录 = 方案 & { sha256?: string; 存档?: string }
 

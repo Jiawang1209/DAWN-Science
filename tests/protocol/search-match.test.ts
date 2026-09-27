@@ -149,3 +149,21 @@ describe("边界（2026-09-27 补）", () => {
     expect(取片段(话("r0", "user", "Cox"), [])).toBeUndefined()
   })
 })
+
+describe("方案卡也是一条（2026-09-28，搜索 × 先出方案）", () => {
+  const 卡 = (planId: string, title: string, markdown: string): TranscriptItem =>
+    ({ type: "plan", id: `plan:${planId}`, planId, version: 1, title, markdown, status: "approved" }) as TranscriptItem
+  it("标题与正文都搜得到；片段落在 agent 那一侧（方案是 agent 交的）", () => {
+    const x = 卡("c1", "吸烟与肺功能", "## 统计检验\nWelch t 检验 FEV1")
+    expect(命中(x, 拆词("fev1"))).toBe(true)
+    expect(命中(x, 拆词("肺功能"))).toBe(true)
+    expect(取片段(x, 拆词("fev1"))!.where).toBe("agent")
+  })
+  it("按 id 定位到卡片；卡片之后那处按 nth 数也不歪（卡片参与计数）", () => {
+    const 条们 = [话("r0", "user", "分析肺功能"), 卡("c1", "方案", "看 FEV1"), 话("r3", "user", "FEV1 再看一眼")]
+    expect(定位命中(条们, { itemId: "plan:c1", nth: 0, 词们: ["fev1"] })).toBe("plan:c1")
+    // 活会话的 id 与恢复的不同：按 nth 数，第 1 处是卡片之后那句
+    const 活的 = [话("u1", "user", "分析肺功能"), 卡("c1", "方案", "看 FEV1"), 话("u2", "user", "FEV1 再看一眼")]
+    expect(定位命中(活的, { itemId: "r3", nth: 1, 词们: ["fev1"] })).toBe("u2")
+  })
+})

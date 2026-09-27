@@ -110,4 +110,29 @@ describe("pi 记录 · 只读", () => {
     mkdirSync(pi记录目录(d), { recursive: true })
     expect(await 最新记录(d)).toBeUndefined()
   })
+
+  it("给了会话目录：簿里有的 `propose_plan` 原位换成方案卡（与续接 `history()` 同一个换法）；簿里没有的照旧是工具行（2026-09-28）", async () => {
+    const d = 新目录()
+    const f = 写一段pi记录(d, [
+      { who: "user", text: "分析肺功能" },
+      { who: "agent", text: "我先出一份方案。", 调: { id: "c1", name: "propose_plan", args: { title: "肺功能", plan: "看 FEV1" }, 出: "已交" } },
+      { who: "agent", text: "再来", 调: { id: "c2", name: "propose_plan", args: { title: "第二版", plan: "看 FVC" }, 出: "已交" } },
+    ])
+    writeFileSync(
+      join(d, "plans.json"),
+      JSON.stringify({
+        阶段: "off",
+        方案们: [{ planId: "c1", version: 1, title: "肺功能", markdown: "看 FEV1（改过）", status: "approved", savedPath: "analysis/plans/a.md", sha256: "ab", 存档: "/x" }],
+      }),
+    )
+    const 簿前 = readFileSync(join(d, "plans.json"), "utf8")
+    const r = await 读记录(f, d)
+    expect(r.map((x) => x.kind)).toEqual(["text", "text", "plan", "text", "tool"])
+    expect(r[2]).toEqual({ kind: "plan", plan: { planId: "c1", version: 1, title: "肺功能", markdown: "看 FEV1（改过）", status: "approved", savedPath: "analysis/plans/a.md" } })
+    expect(readFileSync(join(d, "plans.json"), "utf8"), "搜索绝不写盘").toBe(簿前)
+    // 不给会话目录 / 簿读不出来：不编状态，照旧是工具行
+    expect((await 读记录(f)).filter((x) => x.kind === "plan")).toEqual([])
+    writeFileSync(join(d, "plans.json"), "{坏")
+    expect((await 读记录(f, d)).filter((x) => x.kind === "plan")).toEqual([])
+  })
 })

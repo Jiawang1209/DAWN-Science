@@ -14,6 +14,7 @@ import type { ResponseOf } from "../protocol/operations.js"
 import { readdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { 最新记录, 读记录, pi记录目录, type 记录文件 } from "../runtime/pi-record.js"
+import { 方案簿文件名 } from "../runtime/plan-book.js"
 import { 还原成条目 } from "./restored-items.js"
 import { 取片段, 可搜小写, 命中小写, 拆词 } from "../protocol/search-match.js"
 
@@ -33,6 +34,8 @@ type 卡 = 结果["sessions"][number]
 
 interface 缓存项 {
   文件: 记录文件
+  /** 方案簿（`plans.json`）的 mtime：批准 / 改正文 / 回退摘版都只改它、不改 pi 记录——不看它的话缓存会一直给旧的卡片（2026-09-28）。没有簿 = 0 */
+  簿: number
   条目: { item: TranscriptItem; 小: string; at?: number }[]
   字符: number
   用过: number
@@ -46,7 +49,7 @@ export interface 搜索依赖 {
   /** 卡上写的「在哪」。普通对话（临时项目）→ undefined */
   placeOf: (r: SessionRecord) => 卡["place"]
   /** 测试替身用 */
-  读?: (path: string) => Promise<RestoredItem[]>
+  读?: (path: string, sessionDir?: string) => Promise<RestoredItem[]>
   now?: () => number
   单文件上限字节?: number
 }
@@ -112,7 +115,7 @@ export class 会话全文搜索 {
       }
       let 项: 缓存项
       try {
-        项 = await this.取(r.id, 文件)
+        项 = await this.取(r.id, 文件, r.sessionDir)
       } catch {
         this.扔(r.id)
         unreadable++
@@ -169,20 +172,25 @@ export class 会话全文搜索 {
     }
   }
 
-  private async 取(id: string, 文件: 记录文件): Promise<缓存项> {
+  private async 取(id: string, 文件: 记录文件, sessionDir: string): Promise<缓存项> {
     const 有 = this.缓存.get(id)
-    if (有 && 有.文件.path === 文件.path && 有.文件.mtimeMs === 文件.mtimeMs && 有.文件.size === 文件.size) {
+    const 簿 = await stat(join(sessionDir, 方案簿文件名)).then(
+      (s) => s.mtimeMs,
+      () => 0,
+    )
+    if (有 && 有.文件.path === 文件.path && 有.文件.mtimeMs === 文件.mtimeMs && 有.文件.size === 文件.size && 有.簿 === 簿) {
       有.用过 = ++this.钟
       return 有
     }
-    const 还原 = await (this.deps.读 ?? 读记录)(文件.path)
+    // 带上会话目录：簿里有的 `propose_plan` 换成方案卡（与续接同一个换法，见 `读记录`）
+    const 还原 = await (this.deps.读 ?? 读记录)(文件.path, sessionDir)
     const 条目 = 还原.map((x, i) => {
       const item = 还原成条目(x, i)
       // 压缩标记：`可搜小写` 给 undefined（摘要是模型写的，不是这段对话里说过的话）——存成空串，永远不中；它也没有时刻
       const at = x.kind === "compaction" || x.kind === "plan" ? undefined : x.at
       return { item, 小: 可搜小写(item) ?? "", ...(at ? { at } : {}) }
     })
-    const 项: 缓存项 = { 文件, 条目, 字符: 条目.reduce((n, x) => n + x.小.length, 0), 用过: ++this.钟 }
+    const 项: 缓存项 = { 文件, 簿, 条目, 字符: 条目.reduce((n, x) => n + x.小.length, 0), 用过: ++this.钟 }
     this.扔(id)
     this.缓存.set(id, 项)
     this.总字符 += 项.字符

@@ -2,7 +2,7 @@
  * 会话全文搜索的搜索器（2026-09-27，spec §3 / §6）。直接喂会话记录，不起后端。
  */
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { 会话全文搜索, 单次时限毫秒 } from "../../src/workbench/session-search.js"
@@ -183,6 +183,21 @@ describe("会话全文搜索 · 取消（2026-09-28）", () => {
 })
 
 describe("会话全文搜索 · 缓存", () => {
+  it("方案簿变了（批准时改了正文）也重读：搜到的是卡片上此刻的字（2026-09-28）", async () => {
+    const a = 一段([
+      { who: "user", text: "分析肺功能" },
+      { who: "agent", text: "好", 调: { id: "c1", name: "propose_plan", args: { title: "方案", plan: "看 FEV1" }, 出: "已交" } },
+    ])
+    const 簿 = (markdown: string) =>
+      writeFileSync(join(a.sessionDir, "plans.json"), JSON.stringify({ 阶段: "off", 方案们: [{ planId: "c1", version: 1, title: "方案", markdown, status: "approved" }] }))
+    簿("看 FEV1")
+    const s = 造([a])
+    expect((await s.搜("FEV1", 30)).sessions[0]!.hits[0]).toMatchObject({ itemId: "plan:c1", where: "agent" })
+    簿("看 FVC")
+    utimesSync(join(a.sessionDir, "plans.json"), new Date("2027-01-01"), new Date("2027-01-01"))
+    expect((await s.搜("FVC", 30)).sessions[0]!.hits[0]).toMatchObject({ itemId: "plan:c1" })
+  })
+
   it("文件没变不重读；变了（续接追加）才重读；删掉的会话从缓存里扔掉", async () => {
     const a = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
     const 读 = vi.fn(读记录)

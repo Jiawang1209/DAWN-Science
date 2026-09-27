@@ -17,7 +17,9 @@ import { createReadStream, readFileSync } from "node:fs"
 import { readdir, readFile, stat } from "node:fs/promises"
 import { join, resolve } from "node:path"
 import { parseSessionEntries, SessionManager } from "@earendil-works/pi-coding-agent"
-import { 还原历史 } from "./history.js"
+import { 还原历史, 换上方案卡 } from "./history.js"
+import { 公开, 方案簿文件名, type 方案记录 } from "./plan-book.js"
+import type { 方案 } from "../protocol/plan.js"
 import type { RestoredItem } from "./types.js"
 
 /** 一段对话的 pi 记录目录。与 `NativeRuntime.start` 里 `join(agentDir, "sessions")`、`agentDir = join(spec.sessionDir, "pi")` 同一处 */
@@ -97,9 +99,30 @@ async function 读头(path: string): Promise<string | undefined> {
   return undefined
 }
 
-/** 读出来、还原成条目。**只读**——见文件头 */
-export async function 读记录(path: string): Promise<RestoredItem[]> {
-  return 从文本还原(await readFile(path, "utf8"))
+/**
+ * 读出来、还原成条目。**只读**——见文件头。
+ * 给了 `sessionDir`（2026-09-28，搜索 × 先出方案）：再只读地读那段的方案簿，簿里有的 `propose_plan` 换成方案卡——
+ * 与续接 `history()` 同一个 `换上方案卡`，搜到的 `plan:<id>` 与第几处才落在点开后的那一条上。
+ */
+export async function 读记录(path: string, sessionDir?: string): Promise<RestoredItem[]> {
+  const 条 = 从文本还原(await readFile(path, "utf8"))
+  if (sessionDir === undefined) return 条
+  const 方案们 = await 读方案们(sessionDir)
+  return 方案们.size === 0 ? 条 : 换上方案卡(条, (id) => 方案们.get(id))
+}
+
+/**
+ * 一段会话方案簿里的每一版（按 planId），摘掉只给运行时用的指纹与存档（`公开`）。**只读**：不走 `方案簿` 类（它有写盘的入口）。
+ * 没有簿 / 读不出来 → 空：与续接那边「簿读坏了就不换」同一个结果——不编状态。
+ */
+export async function 读方案们(sessionDir: string): Promise<Map<string, 方案>> {
+  try {
+    const 原 = JSON.parse(await readFile(join(sessionDir, 方案簿文件名), "utf8")) as { 方案们?: unknown }
+    const 们 = Array.isArray(原.方案们) ? (原.方案们 as 方案记录[]) : []
+    return new Map(们.filter((p) => p && typeof p.planId === "string").map((p) => [p.planId, 公开(p)]))
+  } catch {
+    return new Map()
+  }
 }
 
 /**

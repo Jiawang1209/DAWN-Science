@@ -41,7 +41,7 @@ import {
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
-import { 还原历史, 取文本, 分支转消息 } from "./history.js"
+import { 还原历史, 取文本, 分支转消息, 换上方案卡 } from "./history.js"
 import { lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 
 /**
@@ -82,7 +82,7 @@ import { createProposePlanTool } from "../tools/propose-plan.js"
 import { createInspectDataTool } from "../tools/inspect-data.js"
 import { 关掉pi自己下载, 不自己下载 } from "./no-tool-download.js"
 import { 方案期判, 方案指纹, 方案存档名, 存档方案, 核对方案, 核对并恢复, type 已批准存档 } from "../policy/plan-mode.js"
-import { 方案簿, 写方案文件, 删方案文件, 方案存档正文 } from "./plan-book.js"
+import { 方案簿, 方案簿文件名, 写方案文件, 删方案文件, 方案存档正文 } from "./plan-book.js"
 import { 出方案工具名, 看数据工具名, 方案文件名 } from "../protocol/plan.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
@@ -720,11 +720,8 @@ export class NativeRuntime implements AgentRuntime {
     const 簿 = this.方案簿(sessionId)
     if (!条.some((x) => x.kind === "tool" && x.name === 出方案工具名)) return 条
     await this.刷新文件改过(sessionId, false).catch(() => {})
-    return 条.map((x) => {
-      if (x.kind !== "tool" || x.name !== 出方案工具名) return x
-      const 记 = 簿.找(x.id)
-      return 记 ? { kind: "plan" as const, plan: 记 } : x
-    })
+    // 换法在 `history.ts`（2026-09-28）：全文搜索读旧记录时用同一个，搜到的 id / 第几处才与点开的一致
+    return 换上方案卡(条, (id) => 簿.找(id))
   }
 
   private emit(event: AgentEvent): void {
@@ -1369,7 +1366,7 @@ export class NativeRuntime implements AgentRuntime {
      * 方案簿（先出方案，2026-09-27）：**建工具之前**读好——方案期门在 execute 时查它，`history()` 靠它还原卡片。
      * 读坏了不拦会话，出声。
      */
-    const 簿 = new 方案簿(join(spec.sessionDir, "plans.json"))
+    const 簿 = new 方案簿(join(spec.sessionDir, 方案簿文件名))
     this.方案簿们.set(spec.sessionId, { 簿, workspace: spec.workspace, sessionDir: spec.sessionDir, 远端: spec.remote?.executor })
     if (簿.读坏了) this.emit({ kind: "notice", sessionId: spec.sessionId, text: 簿.读坏了 })
     const 原工具 = this.toolsFor(

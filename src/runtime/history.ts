@@ -11,6 +11,7 @@
  * 所以三处都调 `还原历史`，由结构保证一致，而不是由几份相似的代码碰巧一致。
  */
 import type { RestoredItem } from "./types.js"
+import { 出方案工具名, type 方案 } from "../protocol/plan.js"
 
 /** pi 记下的一条消息。**只声明我们真的读的那几个字段** */
 export type 历史消息 =
@@ -111,4 +112,19 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
  */
 export function 还原历史(分支: readonly unknown[]): RestoredItem[] {
   return 消息转历史(分支转消息(分支))
+}
+
+/**
+ * 先出方案（2026-09-27；2026-09-28 从 `native.ts` 的 `history()` 搬到这里）：方案簿里记着的那次 `propose_plan` 调用**原位**换成方案卡，
+ * 簿里没有的（簿读坏了、老记录、交失败的那次）照旧是工具行，不编一个状态。一换一，条数不变。
+ *
+ * **续接（`history()`）与全文搜索（`pi-record.ts` 的 `读记录`）都调这一个**——搜索此前不换，同一次调用在搜索那边是 id `<toolCallId>` 的工具行，
+ * 点开后却是 `plan:<toolCallId>` 的卡片：按 id 找不到、按 nth 数也歪（卡片之后的每一处都错一位）。
+ */
+export function 换上方案卡(条: readonly RestoredItem[], 找: (planId: string) => 方案 | undefined): RestoredItem[] {
+  return 条.map((x) => {
+    if (x.kind !== "tool" || x.name !== 出方案工具名) return x
+    const 记 = 找(x.id)
+    return 记 ? { kind: "plan" as const, plan: 记 } : x
+  })
 }

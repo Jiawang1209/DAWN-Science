@@ -68,6 +68,15 @@ describe("文件名与执行那句", () => {
     expect(方案文件名("吸烟与肺功能：分层线性模型", d)).toBe("2026-09-27-吸烟与肺功能-分层线性模型.md")
     expect(方案文件名("a/b c?", d)).toBe("2026-09-27-a-b-c.md")
     expect(方案文件名("  ", d)).toBe("2026-09-27-方案.md")
+    // 2026-09-28 审查：按码位截（不把代理对切成半个），NUL 与控制字符去掉
+    const 表情 = "📊".repeat(45)
+    const 名 = 方案文件名(表情, d)
+    expect(名).toBe(`2026-09-27-${"📊".repeat(40)}.md`)
+    expect(名.isWellFormed()).toBe(true)
+    expect(方案文件名("a\u0000b\u0007c\u001bd\u007f", d)).toBe("2026-09-27-abcd.md")
+    expect(方案文件名("\u0000\u0001", d)).toBe("2026-09-27-方案.md")
+    // 截完落在分隔处：尾巴上不留「-」
+    expect(方案文件名(`${"a".repeat(39)} b`, d)).toBe(`2026-09-27-${"a".repeat(39)}.md`)
   })
   it("执行那句：都带「照批准的方案做」与路径；改过的多一句「以文件为准」", () => {
     expect(执行那句("analysis/plans/x.md", false)).toMatch(/^照批准的方案做：`analysis\/plans\/x\.md`/)

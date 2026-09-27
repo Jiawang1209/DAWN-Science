@@ -3,7 +3,7 @@
  * （而且套在最外面）、批准写文件并结束方案期、`plans.json` 续接、`history()` 还原成卡片、D3 的轮基线核对（2026-09-28 定案）。
  */
 import { describe, expect, it, vi } from "vitest"
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { NativeRuntime, type NativeRuntimeOptions } from "../../src/runtime/native.js"
@@ -318,5 +318,151 @@ describe("续接", () => {
     expect(二.s.getActiveToolNames()).toContain("propose_plan")
     expect((await 跑(二.s, "edit", { path: savedPath!, edits: [{ oldText: "a", newText: "b" }] })).isError).toBe(true)
     await 二.rt.stop("p9")
+  })
+})
+
+describe("审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面", () => {
+  const 批一份 = async () => {
+    const x = await 起()
+    await x.rt.setConfigOption("p1", "dawn.plan", "1")
+    await 跑(x.s, "propose_plan", 假方案, "c1")
+    const { savedPath } = await x.rt.answerPlan!("p1", "c1", "approve")
+    const 文件 = join(x.spec.workspace, savedPath!)
+    return { ...x, 文件, 原文: readFileSync(文件, "utf8") }
+  }
+  type 内部 = {
+    sessions: Map<string, { 待发: { id?: string; 文: string; 图?: unknown; 在: string }[]; pi待发: number; inFlight: number; pending?: Promise<void>; session: { abort(): Promise<void> } }>
+    对账待发(id: string, followUp: number): void
+    送一轮: (...a: unknown[]) => Promise<void>
+    轮基线: Map<string, unknown>
+  }
+  const 内 = (rt: NativeRuntime) => rt as unknown as 内部
+
+  it("排队的一句送进这一轮（queue_delivered）→ 刷新底：人在这一轮里改、再说「照我改的做」，收尾不恢复", async () => {
+    const { rt, s, 事件, 文件 } = await 批一份()
+    await 跑(s, "ls", {}) // 这一轮第一件工具：拍底
+    writeFileSync(文件, "我在这一轮里改的")
+    const 会 = 内(rt).sessions.get("p1")!
+    会.待发.push({ id: "q1", 文: "照我改的做", 图: undefined, 在: "pi" })
+    会.pi待发 = 1
+    内(rt).对账待发("p1", 0) // pi 把它送进了这一轮
+    expect(事件.some((e) => e.kind === "queue_delivered" && e.id === "q1")).toBe(true)
+    await 跑(s, "ls", {})
+    await 收轮(rt)
+    expect(readFileSync(文件, "utf8")).toBe("我在这一轮里改的")
+    expect(通知(事件).some((t) => t.includes("已从存档恢复"))).toBe(false)
+    expect(事件.filter((e) => e.kind === "plan").at(-1)).toMatchObject({ plan: { fileChanged: true } })
+    await rt.stop("p1")
+  })
+
+  it("刷新之后 agent 再改 → 恢复成人改的那份，话里带「如果这是你改的」", async () => {
+    const { rt, s, 事件, 文件 } = await 批一份()
+    await 跑(s, "ls", {})
+    writeFileSync(文件, "人改的")
+    const 会 = 内(rt).sessions.get("p1")!
+    会.待发.push({ id: "q1", 文: "照我改的做", 图: undefined, 在: "pi" })
+    会.pi待发 = 1
+    内(rt).对账待发("p1", 0)
+    await 跑(s, "ls", {})
+    writeFileSync(文件, "agent 改的")
+    await 收轮(rt)
+    expect(readFileSync(文件, "utf8")).toBe("人改的")
+    expect(通知(事件).some((t) => t.includes("已从存档恢复") && t.includes("如果这是你改的，把改动再说一次或重新提方案"))).toBe(true)
+    await rt.stop("p1")
+  })
+
+  it("调整方向停下这一步之前刷新底：人在这一轮里改、Cmd+回车「照我改的做」，被停下那一轮的收尾不恢复", async () => {
+    const { rt, s, 事件, 文件 } = await 批一份()
+    await 跑(s, "ls", {})
+    writeFileSync(文件, "我在这一轮里改的")
+    const 会 = 内(rt).sessions.get("p1")!
+    会.inFlight = 1
+    // 被停下的那一轮：abort 之后它的 finally 做收轮核对（与 `送一轮` 同一个顺序）
+    let 收尾: Promise<void> | undefined
+    会.session.abort = async () => {
+      收尾 = (收轮(rt) ?? Promise.resolve()).then(() => {
+        会.inFlight = 0
+      })
+    }
+    Object.defineProperty(会, "pending", { get: () => 收尾, configurable: true })
+    内(rt).送一轮 = () => Promise.resolve()
+    expect(await rt.redirect!("p1", { queueId: "r1", data: "照我改的做" } as never)).toEqual([])
+    expect(readFileSync(文件, "utf8")).toBe("我在这一轮里改的")
+    expect(通知(事件).some((t) => t.includes("已从存档恢复"))).toBe(false)
+    await rt.stop("p1").catch(() => {})
+  })
+
+  it("answerPlan 双击批准：一次成、一次说「在处理」；只写一份文件、一份存档", async () => {
+    const { rt, s, spec } = await 起()
+    await rt.setConfigOption("p1", "dawn.plan", "1")
+    await 跑(s, "propose_plan", 假方案, "c1")
+    const r = await Promise.allSettled([rt.answerPlan!("p1", "c1", "approve"), rt.answerPlan!("p1", "c1", "approve")])
+    expect(r.filter((x) => x.status === "fulfilled")).toHaveLength(1)
+    expect(String((r.find((x) => x.status === "rejected") as PromiseRejectedResult).reason)).toMatch(/这一版方案已经/)
+    expect(readdirSync(join(spec.workspace, "analysis", "plans"))).toHaveLength(1)
+    expect(readdirSync(join(spec.sessionDir, "plans")).filter((f) => f.endsWith(".md"))).toHaveLength(1)
+    await rt.stop("p1")
+  })
+
+  it("批准与不做了挤在一起：后来的那个说「在处理」，不留孤儿文件", async () => {
+    const { rt, s, spec } = await 起()
+    await rt.setConfigOption("p1", "dawn.plan", "1")
+    await 跑(s, "propose_plan", 假方案, "c1")
+    const r = await Promise.allSettled([rt.answerPlan!("p1", "c1", "approve"), rt.answerPlan!("p1", "c1", "discard")])
+    expect(r[0]!.status).toBe("fulfilled")
+    expect(r[1]!.status).toBe("rejected")
+    expect(readdirSync(join(spec.workspace, "analysis", "plans"))).toHaveLength(1)
+    expect((rt as unknown as { 方案簿(id: string): { 找(p: string): unknown } }).方案簿("p1").找("c1")).toMatchObject({ status: "approved" })
+    await rt.stop("p1")
+  })
+
+  it("写完文件之后哪一步抛（簿存不下）：写下的方案文件与存档都删掉，原样抛", async () => {
+    const { rt, s, spec } = await 起()
+    await rt.setConfigOption("p1", "dawn.plan", "1")
+    await 跑(s, "propose_plan", 假方案, "c1")
+    const 簿 = (rt as unknown as { 方案簿(id: string): { 批准: (...a: unknown[]) => unknown } }).方案簿("p1")
+    簿.批准 = () => {
+      throw new Error("plans.json 写不进去")
+    }
+    await expect(rt.answerPlan!("p1", "c1", "approve")).rejects.toThrow(/plans\.json/)
+    expect(readdirSync(join(spec.workspace, "analysis", "plans"))).toHaveLength(0)
+    expect(existsSync(join(spec.sessionDir, "plans")) ? readdirSync(join(spec.sessionDir, "plans")).filter((f) => f.endsWith(".md")) : []).toHaveLength(0)
+    await rt.stop("p1")
+  })
+
+  it("改过：两头空白不算改过", async () => {
+    const { rt, s, 事件 } = await 起()
+    await rt.setConfigOption("p1", "dawn.plan", "1")
+    await 跑(s, "propose_plan", { ...假方案, plan: `\n${假方案.plan}\n\n` }, "c1")
+    await rt.answerPlan!("p1", "c1", "approve", `  ${假方案.plan}  `)
+    expect(事件.filter((e) => e.kind === "plan").at(-1)).not.toMatchObject({ plan: { edited: true } })
+    await rt.stop("p1")
+  })
+
+  it("停止：等这一轮的收尾核对做完再扔底——停下时 agent 改了的照样恢复", async () => {
+    const { rt, s, 事件, 文件, 原文 } = await 批一份()
+    await 跑(s, "ls", {})
+    writeFileSync(文件, "agent 改了、人按了停止")
+    const 会 = 内(rt).sessions.get("p1")!
+    // 在跑的那一轮：abort 之后下一拍才走到 finally（与 pi 真实的顺序一样：abort 先回，prompt 的 promise 后落）
+    let 放: () => void = () => {}
+    const 落 = new Promise<void>((r) => (放 = r))
+    会.pending = 落.then(() => 收轮(rt) ?? undefined)
+    会.session.abort = async () => {
+      setTimeout(放, 10)
+    }
+    await rt.stop("p1")
+    expect(readFileSync(文件, "utf8")).toBe(原文)
+    expect(通知(事件).some((t) => t.includes("已从存档恢复"))).toBe(true)
+  })
+
+  it("轮基线按 planId 存（不按方案文件名）", async () => {
+    const { rt, s, spec } = await 批一份()
+    await 跑(s, "ls", {})
+    await (内(rt).轮基线.get("p1") as Promise<unknown>)
+    const 底 = readdirSync(join(spec.sessionDir, "plans", "turn"))
+    expect(底).toHaveLength(1)
+    expect(底[0]).toMatch(/^c1-[0-9a-f]{12}\.md$/)
+    await rt.stop("p1")
   })
 })

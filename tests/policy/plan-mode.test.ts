@@ -14,6 +14,8 @@ import {
   方案期放行,
   方案指纹,
   存档方案,
+  方案存档名,
+  恢复后提醒,
   核对方案,
   恢复方案,
   核对并恢复,
@@ -222,15 +224,31 @@ describe("已批准方案的指纹、存档、核对、恢复（D3 第二道，2
 
   it("存档：拷到会话目录 plans/ 下，回指纹与存档路径", async () => {
     const { ws, 会话 } = 搭()
-    const r = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话 })
+    const r = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c-p" })
     expect(r.sha256).toBe(方案指纹("## 问题与假设\n原文\n"))
-    expect(r.存档).toBe(join(会话, "plans", "p.md"))
+    expect(r.存档).toBe(join(会话, "plans", 方案存档名("c-p")))
     expect(readFileSync(r.存档, "utf8")).toBe("## 问题与假设\n原文\n")
+  })
+
+  it("存档按 planId 取名（不按方案文件名）：同名的两份不互相盖；planId 里的怪字符出不了目录", async () => {
+    expect(方案存档名("c1")).not.toBe(方案存档名("c2"))
+    expect(方案存档名("../../etc/passwd")).not.toMatch(/[/\\]|\.\./)
+    expect(方案存档名("a/b")).not.toBe(方案存档名("a_b"))
+    const { ws, 会话 } = 搭()
+    const a = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c1" })
+    writeFileSync(join(ws, "analysis", "plans", "p.md"), "同名的另一份")
+    const b = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c2" })
+    expect(a.存档).not.toBe(b.存档)
+    expect(readFileSync(a.存档, "utf8")).toBe("## 问题与假设\n原文\n")
+  })
+
+  it("恢复的话里带出路：如果是你改的，再说一次或重新提方案", () => {
+    expect(恢复后提醒).toContain("如果这是你改的，把改动再说一次或重新提方案")
   })
 
   it("核对：完好 / 被改过 / 不见了", async () => {
     const { ws, 会话 } = 搭()
-    const { sha256 } = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话 })
+    const { sha256 } = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c-p" })
     expect(await 核对方案({ workspace: ws, 相对: "analysis/plans/p.md", sha256 })).toBe("完好")
     writeFileSync(join(ws, "analysis", "plans", "p.md"), "偷改")
     expect(await 核对方案({ workspace: ws, 相对: "analysis/plans/p.md", sha256 })).toBe("被改过")
@@ -240,7 +258,7 @@ describe("已批准方案的指纹、存档、核对、恢复（D3 第二道，2
 
   it("恢复：从存档写回；被换成符号链接的，先摘链接、不顺着链接写到别处", async () => {
     const { ws, 会话 } = 搭()
-    const { sha256, 存档 } = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话 })
+    const { sha256, 存档 } = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c-p" })
     const 外面 = join(根, "外面.md")
     writeFileSync(外面, "别碰我")
     rmSync(join(ws, "analysis", "plans", "p.md"))
@@ -253,7 +271,7 @@ describe("已批准方案的指纹、存档、核对、恢复（D3 第二道，2
 
   it("恢复：存档本身也对不上指纹 → 原样抛，不写", async () => {
     const { ws, 会话 } = 搭()
-    const { sha256, 存档 } = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话 })
+    const { sha256, 存档 } = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c-p" })
     writeFileSync(存档, "存档也被改了")
     writeFileSync(join(ws, "analysis", "plans", "p.md"), "偷改")
     await expect(恢复方案({ workspace: ws, 相对: "analysis/plans/p.md", 存档, sha256 })).rejects.toThrow(/存档/)
@@ -263,8 +281,8 @@ describe("已批准方案的指纹、存档、核对、恢复（D3 第二道，2
   it("核对并恢复：被改的、不见的都恢复并各出一句响亮的话；完好的不出声", async () => {
     const { ws, 会话 } = 搭()
     writeFileSync(join(ws, "analysis", "plans", "q.md"), "第二份")
-    const a = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话 })
-    const b = await 存档方案({ workspace: ws, 相对: "analysis/plans/q.md", 会话目录: 会话 })
+    const a = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c-p" })
+    const b = await 存档方案({ workspace: ws, 相对: "analysis/plans/q.md", 会话目录: 会话, planId: "c-q" })
     expect(
       await 核对并恢复(ws, [
         { 相对: "analysis/plans/p.md", ...a },
@@ -278,15 +296,15 @@ describe("已批准方案的指纹、存档、核对、恢复（D3 第二道，2
       { 相对: "analysis/plans/q.md", ...b },
     ])
     expect(话).toEqual([
-      "批准过的方案被改动过，已从存档恢复：analysis/plans/p.md",
-      "批准过的方案被改动过，已从存档恢复：analysis/plans/q.md",
+      `批准过的方案被改动过，已从存档恢复：analysis/plans/p.md${恢复后提醒}`,
+      `批准过的方案被改动过，已从存档恢复：analysis/plans/q.md${恢复后提醒}`,
     ])
     expect(readFileSync(join(ws, "analysis", "plans", "q.md"), "utf8")).toBe("第二份")
   })
 
   it("核对并恢复：恢复不了（存档丢了）→ 照样出声，说恢复不了", async () => {
     const { ws, 会话 } = 搭()
-    const a = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话 })
+    const a = await 存档方案({ workspace: ws, 相对: "analysis/plans/p.md", 会话目录: 会话, planId: "c-p" })
     writeFileSync(join(ws, "analysis", "plans", "p.md"), "偷改")
     rmSync(a.存档)
     const 话 = await 核对并恢复(ws, [{ 相对: "analysis/plans/p.md", ...a }])

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 先出方案审查修复：主会话不加载 pi 扩展；轮基线跟着人的话刷新；answerPlan 一次只答一次（分支 `agent-basics`）
+
+- **Type**: fix
+- **Motivation**: 审查找出①主会话的 `DefaultResourceLoader` 没带 `noExtensions`，`<工作区>/.pi/extensions` 与 `<会话目录>/pi/extensions` 里的代码会被 import，其工具绕过方案期门与权限门（安全）；②pi 一轮会吸进排队的下一句、调整方向会停下再起，人在轮中改了方案再说「照我改的做」会被恢复掉；③几条小的：双击批准留孤儿 `…-2.md`、停止先扔底再收尾、存档按文件名、`改过` 不去空白、远端写方案 `test -e` 再写不原子、文件名按 UTF-16 截。
+- **What**: `native.ts` 主会话 `noExtensions: true`；`刷新轮基线`（`queue_delivered` newTurn:false 与调整方向停下之前重拍底）；恢复的话补「如果这是你改的，把改动再说一次或重新提方案」（`plan-mode.ts` `恢复后提醒`）；`answerPlan` 按会话防并发、写下文件后任何一步抛都删文件与存档；`stop()` 等在跑那一轮收完尾（≤10 秒）再扔底；存档与轮基线按 `planId` 取名（`方案存档名`）；`改过` 比 trim 后的正文；远端 `写方案文件` 用 `set -C && : >` 原子占名；`方案文件名` 去控制字符、按码位截。设计契约加两条扫描：每个 `DefaultResourceLoader` 带 `noExtensions: true`、每个 `createAgentSession` 传自己的 `resourceLoader`；`setActiveTools*` 只收已启用的与我们装的名字。spec §0 写下「轮外的写者」（团队成员、仍在跑的内核 cell）这条已知限制。
+- **Impact**: 会话目录 `plans/` 下存档文件名从方案文件名改成 `<planId>-<指纹>.md`；已有的 `plans.json` 里记的是绝对存档路径，照旧能读。无协议变化。
+- **Verification**: 新增 `tests/runtime/no-extensions.test.ts`（种一个扩展，确认不 import、工具不进会话；改前红）；`tests/runtime/plan-mode.test.ts` 九条（排队 / 调整方向 / 停止三条经变异验证：去掉修复即红）；`plan-book` 远端四条、`protocol/plan` 文件名、`policy/plan-mode` 存档名；设计契约三条（含种违例）。
+
 ### 2026-09-28 — 会话全文搜索：侧栏「按名字 / 按内容」，搜说过的、回复、跑过的代码，点了跳到那一处（协议 8.5；分支 `agent-basics`）
 
 - **Type**: feat

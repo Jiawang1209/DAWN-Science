@@ -81,8 +81,8 @@ import { createMcpTools, MCP只读标记 } from "../tools/mcp-tool.js"
 import { createProposePlanTool } from "../tools/propose-plan.js"
 import { createInspectDataTool } from "../tools/inspect-data.js"
 import { 关掉pi自己下载, 不自己下载 } from "./no-tool-download.js"
-import { 方案期判, 方案指纹, 存档方案, 核对方案, 核对并恢复, type 已批准存档 } from "../policy/plan-mode.js"
-import { 方案簿, 写方案文件, 方案存档正文 } from "./plan-book.js"
+import { 方案期判, 方案指纹, 方案存档名, 存档方案, 核对方案, 核对并恢复, type 已批准存档 } from "../policy/plan-mode.js"
+import { 方案簿, 写方案文件, 删方案文件, 方案存档正文 } from "./plan-book.js"
 import { 出方案工具名, 看数据工具名, 方案文件名 } from "../protocol/plan.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
@@ -568,6 +568,11 @@ export class NativeRuntime implements AgentRuntime {
    */
   private readonly 方案工具名们 = new Map<SessionId, string[]>()
   private readonly 轮基线 = new Map<SessionId, Promise<(已批准存档 & { planId: string })[]>>()
+  /**
+   * 正在答方案的会话（2026-09-28 审查）：`answerPlan` 里有好几道 await，双击批准、批准与「不做了」挤在一起时，
+   * 第二次会在第一次写完文件、改簿之前通过 `可答`——留下一份簿里不认的 `…-2.md` 和存档。一段会话同时只答一次。
+   */
+  private readonly 方案答中 = new Set<SessionId>()
   /** 每段本地会话一份影子存档（2026-09-27）。远端与关掉的不在表里——表里没有 = 「没有存档」 */
   private readonly 存档们 = new Map<SessionId, 检查点存档>()
   /**
@@ -2879,6 +2884,8 @@ ${描述}`
       if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
       this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })
       变了 = true
+      // 人的话进了这一轮：方案的底挪到此刻（先出方案 D3，见 `刷新轮基线`）
+      void this.刷新轮基线(sessionId)
     }
     if (变了) this.发待发单(sessionId)
   }
@@ -3016,6 +3023,11 @@ ${描述}`
     const 转述好 = 端点 && 这句.图 ? this.转述(sessionId, 端点, 这句.文, 这句.图) : undefined
     // ② 撤单。**先不发 `queue`**：界面上的待发条这时不该闪空，重排完再发一次整份
     const 其余 = this.收回其余(s, 单上的)
+    /**
+     * 停之前先把方案的底挪到此刻（先出方案 D3，2026-09-28 审查）：被停下的那一轮收尾会核对它——
+     * 人在这一轮里改了方案、按 Cmd/Ctrl+回车说「照我改的做」，不挪的话人改的会被当成 agent 改的恢复掉。
+     */
+    await this.刷新轮基线(sessionId)
     // ③ 停下这一步
     let 没停住: string | undefined
     s.中止中 += 1
@@ -3168,6 +3180,24 @@ ${描述}`
     const s = this.sessions.get(sessionId)
     const 处 = this.方案簿们.get(sessionId)
     if (!s || !处) throw new Error(`会话 "${sessionId}" 未启动`)
+    // 字眼以「这一版方案已经」开头：后端据它分成 conflict（与「已经批过」同一类）
+    if (this.方案答中.has(sessionId)) throw new Error("这一版方案已经在处理了，稍等")
+    this.方案答中.add(sessionId)
+    try {
+      return await this.真答方案(sessionId, s, 处, planId, action, text)
+    } finally {
+      this.方案答中.delete(sessionId)
+    }
+  }
+
+  private async 真答方案(
+    sessionId: SessionId,
+    s: NativeSession,
+    处: { 簿: 方案簿; workspace: string; sessionDir: string; 远端?: RemoteLike | undefined },
+    planId: string,
+    action: "approve" | "discard",
+    text: string | undefined,
+  ): Promise<{ savedPath?: string }> {
     const p = 处.簿.可答(planId)
     if (action === "discard") {
       const x = 处.簿.作废(planId)
@@ -3176,8 +3206,9 @@ ${描述}`
       this.发会话开关(sessionId)
       return {}
     }
-    const 正文 = text?.trim() || p.markdown
-    const 改过 = 正文 !== p.markdown
+    const 正文 = (text?.trim() || p.markdown).trim()
+    // 两头的空白不算改过（2026-09-28 审查）：模型交的原稿常带首尾换行，编辑框一 trim 就成了「你改过」
+    const 改过 = 正文 !== p.markdown.trim()
     const 时刻 = new Date()
     const savedPath = await 写方案文件({
       workspace: 处.workspace,
@@ -3185,18 +3216,21 @@ ${描述}`
       名: 方案文件名(p.title, 时刻),
       正文: 方案存档正文({ title: p.title, version: p.version, 正文, 改过, 时刻, sessionId, 模型: s.实际模型 ?? "" }),
     })
+    /**
+     * **写下文件之后哪一步抛，都把写下的收拾掉**（2026-09-28 审查）：存档失败、簿存不下……
+     * 不留一份簿里不认的「已批准」文件，也不留一份没有主人的存档。原样抛。
+     */
     let 指纹: { sha256: string; 存档: string } | undefined
-    if (!处.远端) {
-      try {
-        指纹 = await 存档方案({ workspace: 处.workspace, 相对: savedPath, 会话目录: 处.sessionDir })
-      } catch (e) {
-        await rm(join(处.workspace, savedPath), { force: true }).catch(() => {})
-        throw e
-      }
+    try {
+      if (!处.远端) 指纹 = await 存档方案({ workspace: 处.workspace, 相对: savedPath, 会话目录: 处.sessionDir, planId })
+      const x = 处.簿.批准(planId, { 正文, savedPath, 时刻: 时刻.getTime(), 改过, ...(指纹 ?? {}) })
+      this.设方案期(sessionId, false)
+      this.emit({ kind: "plan", sessionId, plan: x })
+    } catch (e) {
+      await 删方案文件({ workspace: 处.workspace, 远端: 处.远端, 相对: savedPath })
+      if (指纹) await rm(指纹.存档, { force: true }).catch(() => {})
+      throw e
     }
-    const x = 处.簿.批准(planId, { 正文, savedPath, 时刻: 时刻.getTime(), 改过, ...(指纹 ?? {}) })
-    this.设方案期(sessionId, false)
-    this.emit({ kind: "plan", sessionId, plan: x })
     this.发会话开关(sessionId)
     return { savedPath }
   }
@@ -3430,11 +3464,34 @@ ${描述}`
   private 记轮基线(sessionId: SessionId): Promise<unknown> {
     const 有 = this.轮基线.get(sessionId)
     if (有) return 有
+    const 拍 = this.拍底(sessionId)
+    if (!拍) return Promise.resolve()
+    this.轮基线.set(sessionId, 拍)
+    return 拍
+  }
+
+  /**
+   * **人在这一轮里说了话，底就挪到此刻**（2026-09-28 审查）：pi 的一轮会把排队的下一句吸进来接着跑（`queue_delivered`、`newTurn: false`），
+   * 调整方向会停下这一步再起新的一句——人在这一轮里改了方案、再说「照我改的做」，按旧的底收尾会把人改的当成 agent 改的恢复掉。
+   * 人的话是一个时间点：它之前的改动算人的（留着、卡片记「你改过」），之后的才算 agent 的。
+   * 这一轮还没拍过底（还没跑工具）→ 什么都不做，第一件工具照常拍。**同步换上新的底**（收轮核对随时会来取），回它。
+   */
+  private 刷新轮基线(sessionId: SessionId): Promise<unknown> {
+    const 旧 = this.轮基线.get(sessionId)
+    if (!旧) return Promise.resolve()
+    // 旧的那张写完再拍新的：两张写的是同一个位置
+    const 新 = 旧.then(() => this.拍底(sessionId) ?? [])
+    this.轮基线.set(sessionId, 新)
+    return 新
+  }
+
+  /** 拍一张已批准方案的底（文件拷进会话目录 `plans/turn/`，**按 planId 取名**）。本机会话、有批准过的才拍，否则回 undefined。永不 reject */
+  private 拍底(sessionId: SessionId): Promise<(已批准存档 & { planId: string })[]> | undefined {
     const 处 = this.方案簿们.get(sessionId)
-    if (!处 || 处.远端) return Promise.resolve()
+    if (!处 || 处.远端) return undefined
     const 批 = 处.簿.已批准存档()
-    if (批.length === 0) return Promise.resolve()
-    const 拍 = (async () => {
+    if (批.length === 0) return undefined
+    return (async () => {
       const 出: (已批准存档 & { planId: string })[] = []
       for (const r of 批) {
         const p = join(处.workspace, r.相对)
@@ -3444,7 +3501,7 @@ ${描述}`
           continue
         }
         const 内容 = await readFile(p)
-        const 底 = join(处.sessionDir, "plans", "turn", r.相对.split("/").pop()!)
+        const 底 = join(处.sessionDir, "plans", "turn", 方案存档名(r.planId))
         await mkdir(dirname(底), { recursive: true })
         await writeFile(底, 内容)
         出.push({ planId: r.planId, 相对: r.相对, sha256: 方案指纹(内容), 存档: 底 })
@@ -3459,8 +3516,6 @@ ${描述}`
       })
       return []
     })
-    this.轮基线.set(sessionId, 拍)
-    return 拍
   }
 
   /**
@@ -3535,6 +3590,15 @@ ${描述}`
     await s.回退?.catch(() => {})
     // 先中止在跑的一轮，再退订，最后释放——顺序反了会在 dispose 之后收到事件
     await s.session.abort().catch(() => {})
+    /**
+     * **等在跑的那一轮自己收完尾**（2026-09-28 审查）：`abort()` 先回、`prompt()` 的 finally 后落——那里做先出方案的收轮核对，
+     * 要用这一轮的底；先扔了底，停下时 agent 改坏的方案就不恢复了。停不下来的（pi 挂住）不陪它等：最多 10 秒。
+     */
+    if (s.pending) {
+      let 表: ReturnType<typeof setTimeout> | undefined
+      await Promise.race([s.pending.catch(() => {}), new Promise<void>((r) => (表 = setTimeout(r, 10_000)))])
+      clearTimeout(表)
+    }
     s.收尾?.()
     this.产物们.delete(sessionId)
     // 这一轮的方案底（先出方案）：会话都停了，这一轮不会再收尾核对；方案簿本身不摘（见 `方案簿们`）

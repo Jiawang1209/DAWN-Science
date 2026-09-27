@@ -206,15 +206,25 @@ export function 方案指纹(内容: string | Uint8Array): string {
   return createHash("sha256").update(内容).digest("hex")
 }
 
-/** 存档放在会话目录的 `plans/` 下，文件名取方案文件名（同一工作区里方案文件名是唯一的：写时 `wx`、重名加 `-2`） */
-export function 存档位置(会话目录: string, 相对: string): string {
-  return join(会话目录, "plans", basename(相对))
+/**
+ * 一版方案在会话目录里的文件名：**按 `planId` 取，不按方案文件名**（2026-09-28 审查）——文件名只在一个工作区里唯一，
+ * 换个工作区、或者人删了再批出同名的一份，按文件名存会互相盖掉。`planId` 是模型给的 toolCallId，字符不可控：
+ * 只留安全的几类、截短，再接一段它的指纹，保证不撞、不出目录。
+ */
+export function 方案存档名(planId: string): string {
+  const 净 = planId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 48)
+  return `${净}-${方案指纹(planId).slice(0, 12)}.md`
+}
+
+/** 存档放在会话目录的 `plans/` 下，按 `planId` 取名（见 `方案存档名`） */
+export function 存档位置(会话目录: string, planId: string): string {
+  return join(会话目录, "plans", 方案存档名(planId))
 }
 
 /** 批准时调：读工作区里刚写好的方案文件，算指纹，拷一份进会话目录（工作区外，agent 的写工具碰不到它的常规路径） */
-export async function 存档方案(a: { workspace: string; 相对: string; 会话目录: string }): Promise<{ sha256: string; 存档: string }> {
+export async function 存档方案(a: { workspace: string; 相对: string; 会话目录: string; planId: string }): Promise<{ sha256: string; 存档: string }> {
   const 内容 = await readFile(resolve(a.workspace, a.相对))
-  const 存档 = 存档位置(a.会话目录, a.相对)
+  const 存档 = 存档位置(a.会话目录, a.planId)
   await mkdir(dirname(存档), { recursive: true })
   await writeFile(存档, 内容)
   return { sha256: 方案指纹(内容), 存档 }
@@ -246,6 +256,12 @@ export async function 恢复方案(a: { workspace: string; 相对: string; 存�
   await writeFile(p, 内容, { flag: "wx" })
 }
 
+/**
+ * 恢复之后补的一句（2026-09-28 审查）：指纹分不出是谁改的，一轮里改的都算 agent 的——人在这一轮里改、又没说一声的，也会被恢复。
+ * 所以恢复时把出路说出来。
+ */
+export const 恢复后提醒 = "。如果这是你改的，把改动再说一次或重新提方案"
+
 export interface 已批准存档 {
   相对: string
   sha256: string
@@ -262,7 +278,7 @@ export async function 核对并恢复(workspace: string, 记录: readonly 已批
     if ((await 核对方案({ workspace, 相对: r.相对, sha256: r.sha256 })) === "完好") continue
     try {
       await 恢复方案({ workspace, ...r })
-      话.push(`批准过的方案被改动过，已从存档恢复：${r.相对}`)
+      话.push(`批准过的方案被改动过，已从存档恢复：${r.相对}${恢复后提醒}`)
     } catch (e) {
       话.push(`批准过的方案被改动过，恢复不了（${e instanceof Error ? e.message : String(e)}）：${r.相对}`)
     }

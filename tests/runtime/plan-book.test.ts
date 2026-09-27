@@ -108,23 +108,71 @@ describe("写方案文件（本机）", () => {
 })
 
 describe("写方案文件（远端）", () => {
-  it("走执行器：mkdir -p、test -e 跳过已有的、writeFile", async () => {
-    const 已有 = new Set(["/r/w/analysis/plans/x.md"])
+  /**
+   * 假服务器：`set -C && : > 'p'` 按 noclobber 的语义占位（有了就失败），`test -e` 查在不在，`rm -f` 删。
+   * 2026-09-28 审查：先 `test -e` 再写不是原子的——两次批准挤在一起会写到同一个名字上。
+   */
+  const 假远端 = (已有: Set<string>, o: { 写失败?: boolean; 占位坏?: boolean } = {}) => {
     const 写了: [string, string][] = []
+    const 命令: string[] = []
     const 远端 = {
       async exec(cmd: string) {
-        const m = /^test -e '(.+)'$/.exec(cmd)
-        return { code: m ? (已有.has(m[1]!) ? 0 : 1) : 0, stdout: "", stderr: "" }
+        命令.push(cmd)
+        let m = /^set -C && : > '(.+)'$/.exec(cmd)
+        if (m) {
+          if (o.占位坏) return { code: 1, stdout: "", stderr: "Permission denied" }
+          if (已有.has(m[1]!)) return { code: 1, stdout: "", stderr: "cannot overwrite existing file" }
+          已有.add(m[1]!)
+          return { code: 0, stdout: "", stderr: "" }
+        }
+        m = /^test -e '(.+)'$/.exec(cmd)
+        if (m) return { code: 已有.has(m[1]!) ? 0 : 1, stdout: "", stderr: "" }
+        m = /^rm -f '(.+)'$/.exec(cmd)
+        if (m) {
+          已有.delete(m[1]!)
+          return { code: 0, stdout: "", stderr: "" }
+        }
+        return { code: 0, stdout: "", stderr: "" }
       },
       async readFile() {
         return Buffer.from("")
       },
       async writeFile(p: string, d: string | Buffer) {
+        if (o.写失败) throw new Error("断线了")
         写了.push([p, String(d)])
       },
     }
+    return { 远端, 写了, 命令 }
+  }
+
+  it("走执行器：mkdir -p、noclobber 原子占位（有了的跳过）、writeFile", async () => {
+    const 已有 = new Set(["/r/w/analysis/plans/x.md"])
+    const { 远端, 写了, 命令 } = 假远端(已有)
     expect(await 写方案文件({ workspace: "/r/w", 远端, 名: "x.md", 正文: "一" })).toBe("analysis/plans/x-2.md")
     expect(写了).toEqual([["/r/w/analysis/plans/x-2.md", "一"]])
+    expect(命令.some((c) => c.startsWith("set -C && : > "))).toBe(true)
+  })
+
+  it("两次挤在一起：各占一个名字，不写到同一份上", async () => {
+    const { 远端, 写了 } = 假远端(new Set())
+    const [a, b] = await Promise.all([
+      写方案文件({ workspace: "/r/w", 远端, 名: "x.md", 正文: "一" }),
+      写方案文件({ workspace: "/r/w", 远端, 名: "x.md", 正文: "二" }),
+    ])
+    expect(new Set([a, b])).toEqual(new Set(["analysis/plans/x.md", "analysis/plans/x-2.md"]))
+    expect(写了).toHaveLength(2)
+  })
+
+  it("占位失败又不是因为已有：原样抛（不当成重名一直往后找）", async () => {
+    const { 远端 } = 假远端(new Set(), { 占位坏: true })
+    await expect(写方案文件({ workspace: "/r/w", 远端, 名: "x.md", 正文: "一" })).rejects.toThrow(/Permission denied/)
+  })
+
+  it("占到了却写不进去：把占位删掉再抛", async () => {
+    const 已有 = new Set<string>()
+    const { 远端 } = 假远端(已有, { 写失败: true })
+    await expect(写方案文件({ workspace: "/r/w", 远端, 名: "x.md", 正文: "一" })).rejects.toThrow(/断线/)
+    expect(已有.size).toBe(0)
   })
 })
 

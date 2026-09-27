@@ -8,7 +8,7 @@
  * 簿里每一版比协议里的 `方案` 多两样（2026-09-28，D3 第二道）：批准时的 `sha256` 与存档位置 `存档`。
  * 它们只给运行时核对用，**不进事件**（`公开()` 摘掉）——界面要的只是「文件和批准时一不一样」（`fileChanged`）。
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join, posix } from "node:path"
 import type { 方案 } from "../protocol/plan.js"
 import { 方案目录 } from "../policy/science-layout.js"
@@ -188,8 +188,11 @@ export function 方案存档正文(o: {
 }
 
 /**
- * 写进 `<工作区>/analysis/plans/<名>`，回相对路径。**从不覆盖**：重名加 `-2`、`-3`…（本机用 `wx` 打开，远端先 `test -e`）。
- * 远端会话走那台机器的执行器（`mkdir -p` + `writeFile`）——方案是分析的一部分，与 agent 写的脚本放在同一个项目里。
+ * 写进 `<工作区>/analysis/plans/<名>`，回相对路径。**从不覆盖**：重名加 `-2`、`-3`…
+ * 本机用 `wx` 打开；远端先用 noclobber 原子地占一个空文件（`set -C && : > p`，shell 以 `O_EXCL` 建），占到了再写内容——
+ * 2026-09-28 审查：原先「`test -e` 再写」不是原子的，两次批准挤在一起会写到同一个名字上。占位失败时再 `test -e`：
+ * 在 → 是重名，换下一个；不在 → 是别的原因（没权限……），原样抛。占到了却写不进去 → 把空占位删掉再抛。
+ * 远端会话走那台机器的执行器——方案是分析的一部分，与 agent 写的脚本放在同一个项目里。
  */
 export async function 写方案文件(o: { workspace: string; 远端?: RemoteLike | undefined; 名: string; 正文: string }): Promise<string> {
   const 第 = (i: number) => (i === 1 ? o.名 : o.名.replace(/\.md$/, `-${i}.md`))
@@ -206,14 +209,34 @@ export async function 写方案文件(o: { workspace: string; 远端?: RemoteLik
     }
     throw new Error("同名的方案文件已经有 99 份了，换个标题再批")
   }
+  const 远端 = o.远端
   const 目录 = posix.join(o.workspace, 方案目录)
-  const 建 = await o.远端.exec(`mkdir -p ${单引号(目录)}`)
+  const 建 = await 远端.exec(`mkdir -p ${单引号(目录)}`)
   if (建.code !== 0) throw new Error(`在服务器上建 ${目录} 失败：${建.stderr.trim() || `退出码 ${建.code}`}`)
   for (let i = 1; i < 100; i++) {
     const p = posix.join(目录, 第(i))
-    if ((await o.远端.exec(`test -e ${单引号(p)}`)).code === 0) continue
-    await o.远端.writeFile(p, o.正文)
+    const 占 = await 远端.exec(`set -C && : > ${单引号(p)}`)
+    if (占.code !== 0) {
+      if ((await 远端.exec(`test -e ${单引号(p)}`)).code === 0) continue
+      throw new Error(`在服务器上建 ${p} 失败：${占.stderr.trim() || `退出码 ${占.code}`}`)
+    }
+    try {
+      await 远端.writeFile(p, o.正文)
+    } catch (e) {
+      await 远端.exec(`rm -f ${单引号(p)}`).catch(() => {})
+      throw e
+    }
     return `${方案目录}/${第(i)}`
   }
   throw new Error("同名的方案文件已经有 99 份了，换个标题再批")
+}
+
+/** 删掉 `写方案文件` 写下的那份（批准后面的步骤失败时收拾用）。本机 `rm`，远端 `rm -f`。**永不 reject** */
+export async function 删方案文件(o: { workspace: string; 远端?: RemoteLike | undefined; 相对: string }): Promise<void> {
+  try {
+    if (!o.远端) rmSync(join(o.workspace, o.相对), { force: true })
+    else await o.远端.exec(`rm -f ${单引号(posix.join(o.workspace, o.相对))}`)
+  } catch {
+    // 收拾不了也不盖住原来那个错误
+  }
 }

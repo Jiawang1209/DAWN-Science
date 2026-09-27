@@ -100,13 +100,17 @@ export function 方案对照(
   }
 }
 
-/** `<YYYY-MM-DD>-<标题>.md`，本地日期。不能进文件名的字符与空白换成 `-`，最长 40 字 */
+/**
+ * `<YYYY-MM-DD>-<标题>.md`，本地日期。NUL 与控制字符去掉；不能进文件名的字符与空白换成 `-`；最长 40 个**码位**
+ * （2026-09-28 审查：按 UTF-16 单元截会把表情这类代理对切成半个，写出一个坏文件名）；截完首尾的 `-` 再去一次。
+ */
 export function 方案文件名(标题: string, 时刻: Date): string {
-  const 净 = 标题
+  const 换 = 标题
+    .replace(/\p{Cc}+/gu, "")
     .replace(/[\\/:*?"<>|#：\s]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 40)
+  const 净 = [...换].slice(0, 40).join("").replace(/^-|-$/g, "")
   const p = (n: number) => String(n).padStart(2, "0")
   return `${时刻.getFullYear()}-${p(时刻.getMonth() + 1)}-${p(时刻.getDate())}-${净 || "方案"}.md`
 }

@@ -96,7 +96,7 @@ describe("方案期门套在交给 pi 的工具上", () => {
     await rt.setConfigOption("p1", "dawn.plan", "1")
     const w = await 跑(s, "write", { path: "a.txt", content: "x" })
     expect(w.isError).toBe(true)
-    expect(w.content[0]!.text).toContain("先出方案")
+    expect(w.content[0]!.text).toContain("生成方案")
     expect(existsSync(join(spec.workspace, "a.txt"))).toBe(false)
     // 2026-09-28：方案期 bash 整件拒；看目录走 pi 的 ls
     expect((await 跑(s, "bash", { command: "ls" })).isError).toBe(true)
@@ -140,7 +140,7 @@ describe("方案期门套在交给 pi 的工具上", () => {
     expect(名).toContain("subagent")
     const r = await 跑(s, "subagent", { agent: "x", task: "y" })
     expect(r.isError).toBe(true)
-    expect(r.content[0]!.text).toContain("先出方案")
+    expect(r.content[0]!.text).toContain("生成方案")
     const 团队 = 名.find((n) => n.startsWith("team_"))
     if (团队) expect((await 跑(s, 团队, {})).isError).toBe(true)
     await rt.stop("p1")

@@ -220,15 +220,15 @@ export function buildCommands(ctx: CommandContext): Command[] {
   const 方案为何不能 = !ctx.session
     ? t("还没有会话")
     : ctx.session.kind === "kernel" || ctx.session.kind === "pty"
-      ? t("这段不是和模型的对话，没有先出方案")
+      ? t("这段不是和模型的对话，没有生成方案")
       : ctx.session.kind !== "native"
-        ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
+        ? t("这个 agent 不归 DAWN 管工具，生成方案用不了")
         : ctx.plan?.unavailable
   out.push({
     id: "session.plan",
-    title: ctx.plan?.on ? t("退出先出方案") : t("先出方案：先写方案，批了再做"),
+    title: ctx.plan?.on ? t("退出生成方案") : t("生成方案：先写方案，批了再做"),
     group: "会话",
-    keywords: "plan mode 方案 预注册 先出方案 /plan",
+    keywords: "plan mode 方案 预注册 生成方案 先出方案 /plan",
     run: () => actions.togglePlan(),
     ...(方案为何不能 ? { unavailable: 方案为何不能 } : {}),
   })

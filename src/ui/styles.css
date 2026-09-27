@@ -7518,19 +7518,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="dim"] .btn.ctx-meter-trigger { color: var(--dawn-text-3); }
 .ctx-meter-ring { flex: none; }
-/**
- * **窄了只留环 + 数**（2026-09-27）。坞里那张卡（对话格 380 宽）附栏上五样都是 `flex: 0 0 auto`，
- * 仪表整句写出来就把权限那颗顶出卡外，只剩「●完」。容器是 `.conversation`（它早就是 `inline-size` 容器，
- * 见「轮次刻度尺」那条）——不在 `.composer-footer` 上另起一个：`container-type` 带布局隔离，
- * 附栏里的菜单有 `position: fixed` 的点外面遮罩（`.menu-scrim`），隔离之后它只盖得住附栏那一条。
- *
- * **阈值 720px（对话这一格的宽）**：主区侧栏展开、坞关着（e2e 缺省 1280 宽，对话格约 1056）整句照写；
- * 坞开着的主区（约 676）与坞里（380）只写数——前者不收的话，工作目录那颗 chip 被挤到只剩 60px 左右。
- * 字仍在 DOM 里，按钮的 `aria-label` 带全句：读屏听到的始终是「上下文 37%」。
- */
-@container (max-width: 720px) {
-  .composer-footer .ctx-meter-word { display: none; }
-}
+/* 「窄了只留环 + 数」那条容器查询（2026-09-27）撤了：2026-09-28 起仪表处处只写环 + 数，「上下文」三个字不再画（见 context-meter.tsx） */
 /**
  * **坞那么窄时「优化输入」也只留星**（2026-09-27）。仪表收成「◯ 37%」之后，坞默认宽 380 的附栏仍差约 46px——
  * 实测：上传文件 88 + 目录 16 + 优化输入 118 + 仪表 48 + 权限 94，加间距与留白比卡宽 356 多出一截。
@@ -7540,8 +7528,31 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
  */
 @container (max-width: 440px) {
   .composer-footer .enhance-word { display: none; }
-  /* 「先出方案」同理只留图标（2026-09-27）：名字在 `aria-label` 上，藏掉可见字不改名字；开着时卡顶那条带子用字说清 */
-  .composer-controls .plan-toggle-word { display: none; }
+  /* 「生成方案」同理只留图标（2026-09-27；09-28 随开关搬进附栏）：名字在 `aria-label` 上，藏掉可见字不改名字；开着时卡顶那条带子用字说清 */
+  .composer-footer .plan-toggle-word { display: none; }
+}
+/**
+ * **窄了附栏折成两行**（2026-09-28，「生成方案」搬进附栏之后）。实测坞默认宽（卡 356、附栏内宽 354）：
+ * 上传文件 88 + 目录 16 + 优化输入（只留星）66 + 生成方案（只留图标）36 + 仪表 32 + 权限 94，加间距多出 10px——
+ * 挤进一行的话权限那颗出卡、或开关被压成 2px（09-27 实测）。所以不挤：左边那组（带什么、在哪跑、怎么写）留在第一行，
+ * 右边那组（会话设置 / 仪表 / 权限）整组换到第二行、照旧靠右（`margin-left: auto` 那几条不动）。
+ * 断行靠一个 `order` 夹在两组之间、占满一行的 `::before`——**不靠自然换行**：自然换行会把仪表留在上面、权限单独掉下去靠左。
+ * 断行那一「行」本身零高，行距由它的 `margin-top` 给（`row-gap` 置 0：否则它上下各算一道）。
+ * 阈值 720（对话这一格的宽，与主区「坞开着」同一档）：坞里（380）差 10px；坞开着的主区（约 676）一行虽塞得下，
+ * 工作目录那颗却被挤到只剩 8px（只剩图标，看不出在哪跑）——折两行后它拿回约 220px。720 以上（坞关着的主区）一行放得下、目录还有百来 px。
+ */
+@container (max-width: 720px) {
+  .composer-footer { flex-wrap: wrap; row-gap: var(--dawn-space-1); }
+  /* 强制断行只在右边真有一组时（仪表 / 会话设置）：空态附栏右边只有权限一颗，一行放得下就不折，放不下自然换到下一行、仍靠右 */
+  .composer-footer:has(> .ctx-meter, > .sess-config) { row-gap: 0; }
+  .composer-footer:has(> .ctx-meter, > .sess-config)::before { content: ""; order: 1; flex: 0 0 100%; height: 0; margin-top: var(--dawn-space-1); }
+  .composer-footer:has(> .ctx-meter, > .sess-config) > .sess-config,
+  .composer-footer:has(> .ctx-meter, > .sess-config) > .ctx-meter,
+  .composer-footer:has(> .ctx-meter, > .sess-config) > .perm-pill { order: 2; }
+  /* 目录那颗：换行按它的「假想宽」算——整条路径的宽会把自己挤到单独一行。基准 0、可长、最长到内容宽：只拿第一行剩下的地方；
+     最少留一个图标加一点字，免得基准 0 时被压没 */
+  .composer-footer > .ws-chip,
+  .composer-footer > .ws-chip-group { flex: 1 1 0; max-width: max-content; min-width: var(--dawn-space-10); }
 }
 .ctx-meter-ring-track { fill: none; stroke: var(--dawn-stroke-3); stroke-width: 2; }
 .ctx-meter-ring-fill { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
@@ -7655,7 +7666,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .plan-compare-list { flex-basis: 100%; margin: 0; padding-left: var(--dawn-space-4); }
 .plan-compare-list li[data-done="true"] { color: var(--dawn-success); }
 /**
- * 开关在输入卡那一行的最左边（不在附栏：附栏在坞里已经满了，见 views.tsx 那段注释）。
+ * 开关在附栏里、紧跟「优化输入」（2026-09-28 作者要的，取代 09-27 放在模型那一行最左边的做法；窄了附栏折两行，见上面 720 那条）。
  * 按钮本身不缩；灰着时旁边那行原因字**折成两行也要读得全**——坞那么窄时省略号截掉的正是原因，
  * 而按钮上不许挂 `title`（设计契约），截掉就没处读了（2026-09-28 审查）。
  */

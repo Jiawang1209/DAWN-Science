@@ -3419,7 +3419,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      */
     answerPlan: async ({ sessionId, planId, action, text }) => {
       if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
-      if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有先出方案——只有 native 会话有")
+      if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有生成方案——只有 native 会话有")
       try {
         const r = await sessions.answerPlan(sessionId, planId, action, "user", text)
         return r.savedPath ? { savedPath: r.savedPath } : {}

@@ -52,7 +52,7 @@ export const 方案期放行: ReadonlySet<string> = new Set([
 /** 方案期整件拒的 shell 类工具 */
 const shell工具 = new Set(["bash", "powershell"])
 
-const 先出方案 = "现在是「先出方案」：只能看、不能改。"
+const 先出方案 = "现在是「生成方案」：只能看、不能改。"
 
 export interface 方案期语境 {
   /** 这段会话此刻在不在方案期 */

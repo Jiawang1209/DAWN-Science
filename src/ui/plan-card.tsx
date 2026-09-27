@@ -213,8 +213,8 @@ function 对照({
 }
 
 /**
- * 输入卡上那颗「先出方案」（spec §2.1）。**位置偏离了 spec 的「附栏」**：放在输入卡里模型那一行的最左边——
- * 附栏在坞里已经满了（2026-09-27 实测，见 views.tsx `composer-controls` 那段注释）。**常驻**；不支持时灰着，旁边一行字说原因——不是悬停提示（D7）。
+ * 附栏上那颗「生成方案」（spec §2.1；2026-09-28 由「先出方案」改名）。**在附栏里、紧跟「优化输入」**（2026-09-28 作者要的，
+ * 取代 09-27 放在模型那一行最左边的做法；对话格 ≤720 时附栏折成两行，见 styles.css「窄了附栏折成两行」）。**常驻**；不支持时灰着，旁边一行字说原因——不是悬停提示（D7）。
  * 按下态用 `aria-pressed`，开着时另有输入卡顶上那条带子用文字说清（形状不够，扫一眼与读屏都读不出含义）。
  *
  * **坞里那么窄时只留图标**（`.plan-toggle-word` 由容器查询藏掉，与「优化输入」同一条），
@@ -236,7 +236,7 @@ export function 先出方案开关({
         variant="ghost"
         size="sm"
         className="plan-toggle"
-        aria-label={t("先出方案")}
+        aria-label={t("生成方案")}
         // 有原因就不显示按下：「按下 + 灰着」自相矛盾（空态按下之后换了 agent 就会走到这里）
         aria-pressed={on && !不能的原因}
         {...(不能的原因 ? { "aria-describedby": 原因id } : {})}
@@ -244,7 +244,7 @@ export function 先出方案开关({
         onClick={() => onToggle?.(!on)}
       >
         <概览图标 />
-        <span className="plan-toggle-word">{t("先出方案")}</span>
+        <span className="plan-toggle-word">{t("生成方案")}</span>
       </Button>
       {不能的原因 ? <span id={原因id} className="hint plan-toggle-why">{不能的原因}</span> : null}
     </span>

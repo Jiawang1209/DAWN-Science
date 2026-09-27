@@ -1747,7 +1747,7 @@ export class NativeRuntime implements AgentRuntime {
     if (s.session.getToolDefinition(出方案工具名)) {
       开关.push({
         id: "dawn.plan",
-        name: "先出方案",
+        name: "生成方案",
         description: "开着时只看不改：先交分析方案，你批了再动手",
         category: "plan",
         kind: "boolean",
@@ -1786,7 +1786,7 @@ export class NativeRuntime implements AgentRuntime {
       if (value !== "inherit" && value !== "allow-all" && value !== "ask-risky" && value !== "deny-risky") throw new Error(`不认识的权限档：${value}`)
       档.设(sessionId, value === "inherit" ? undefined : value)
     } else if (configId === "dawn.plan") {
-      if (value !== "1" && value !== "") throw new Error(`先出方案只收 "1" 或 ""，收到的是：${value}`)
+      if (value !== "1" && value !== "") throw new Error(`生成方案只收 "1" 或 ""，收到的是：${value}`)
       this.设方案期(sessionId, value === "1")
     } else if (configId === "dawn.thinking") {
       const 级 = ["minimal", "low", "medium", "high", "xhigh", "max"]

@@ -190,9 +190,9 @@ export function createInspectDataTool(opts: {
     name: 看数据工具名,
     label: 看数据工具名,
     description:
-      "先出方案时看一份表格数据的结构：行列数、列类型、缺失、前几行、非数值列的取值、数值列的分布。" +
+      "生成方案时看一份表格数据的结构：行列数、列类型、缺失、前几行、非数值列的取值、数值列的分布。" +
       "给 path（相对工作区的 csv / tsv / txt / xlsx / xls / parquet / rds）或 variable（内核里已有的一个表）。不做相关、不拟合模型。",
-    promptSnippet: "inspect_data：先出方案时看表格数据的结构",
+    promptSnippet: "inspect_data：生成方案时看表格数据的结构",
     parameters: Type.Object({
       language: Type.Union([Type.Literal("python"), Type.Literal("R")]),
       path: Type.Optional(Type.String({ description: "数据文件，相对工作区" })),

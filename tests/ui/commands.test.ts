@@ -250,14 +250,14 @@ describe("命令注册表 · 会话全文搜索（2026-09-27）", () => {
 describe("先出方案（2026-09-27）", () => {
   const 找 = (over: Partial<Parameters<typeof buildCommands>[0]> = {}) => build(over).find((c) => c.id === "session.plan")!
   it("一条，开着时说「退出」；run 只转发给 actions.togglePlan", () => {
-    expect(找({ plan: { on: false } }).title).toBe("先出方案：先写方案，批了再做")
-    expect(找({ plan: { on: true } }).title).toBe("退出先出方案")
+    expect(找({ plan: { on: false } }).title).toBe("生成方案：先写方案，批了再做")
+    expect(找({ plan: { on: true } }).title).toBe("退出生成方案")
     const a = actions()
     buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation", plan: { on: false } }).find((c) => c.id === "session.plan")!.run()
     expect(a.togglePlan).toHaveBeenCalledTimes(1)
   })
   it("没有会话 / 不支持时照样列着、写原因", () => {
     expect(找({ session: undefined }).unavailable).toBe("还没有会话")
-    expect(找({ plan: { on: false, unavailable: "这个 agent 不归 DAWN 管工具，先出方案用不了" } }).unavailable).toContain("不归 DAWN")
+    expect(找({ plan: { on: false, unavailable: "这个 agent 不归 DAWN 管工具，生成方案用不了" } }).unavailable).toContain("不归 DAWN")
   })
 })

@@ -616,7 +616,7 @@ export class SessionManager {
     }
     const rt = this.bound.get(sessionId)
     if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动`)
-    if (!rt.answerPlan) throw new Error("这类会话没有先出方案")
+    if (!rt.answerPlan) throw new Error("这类会话没有生成方案")
     return rt.answerPlan(sessionId, planId, action, text)
   }
 

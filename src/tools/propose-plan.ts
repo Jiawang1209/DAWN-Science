@@ -23,7 +23,7 @@ const text = (s: string, isError = false): ToolResult => ({
 })
 
 export const 方案期指引 = [
-  "现在是「先出方案」：你只能看、不能改。写文件、run_code、装包、派子 agent 都会被拒——被拒了不要换个办法再试，把那一步写进方案。",
+  "现在是「生成方案」：你只能看、不能改。写文件、run_code、装包、派子 agent 都会被拒——被拒了不要换个办法再试，把那一步写进方案。",
   "要了解数据：read 看小的文本文件；inspect_data 看表格的结构（行列数、列类型、缺失、前几行、单变量分布）。不做相关、不拟合模型——定方案之前不看结果。",
   `想清楚之后调用 propose_plan 交方案。方案是 markdown，必须有这五个二级标题：${必填小节.map((h) => `「## ${h}」`).join("")}。`,
   "「## 产物」下每行一个产物，路径写在反引号里，照项目的科研目录约定落位（图 figures/、表 results/tables/、模型 results/models/、报告 results/reports/、脚本 analysis/scripts/）。",
@@ -38,9 +38,9 @@ export function createProposePlanTool(opts: {
     name: 出方案工具名,
     label: 出方案工具名,
     description:
-      "先出方案时，把分析方案交给用户审。用户批了才开始执行。" +
+      "生成方案时，把分析方案交给用户审。用户批了才开始执行。" +
       `plan 是 markdown，必须有五个二级标题：${必填小节.join("、")}；「产物」一节里每个产物的路径写在反引号里。`,
-    promptSnippet: "propose_plan：先出方案时把分析方案交给用户审",
+    promptSnippet: "propose_plan：生成方案时把分析方案交给用户审",
     promptGuidelines: 方案期指引,
     parameters: Type.Object({
       title: Type.String({ description: "一句话标题，会成为存档文件名的一部分" }),

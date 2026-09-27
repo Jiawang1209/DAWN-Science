@@ -1709,10 +1709,10 @@ export const EN: Readonly<Record<string, string>> = {
   "另有 {0} 段是外部 CLI / ACP / 终端 / 内核会话，内容不在我们手里，没搜": "{0} more are external CLI / ACP / terminal / kernel sessions; their content isn't ours to search",
   "搜索对话内容": "Search conversation content",
   "打开了，但在这段对话里没找到那一处——这段对话在搜过之后可能变了，或没能续上": "Opened it, but couldn't find that spot — the conversation may have changed since the search, or it couldn't be resumed",
-  // 先出方案（2026-09-27）· 后端
-  "这类会话没有先出方案——只有 native 会话有": "This kind of session can't plan first — only native sessions can",
-  // 先出方案（2026-09-27）· 界面
-  "先出方案": "Draft a plan first",
+  // 生成方案（原名先出方案，2026-09-27）· 后端
+  "这类会话没有生成方案——只有 native 会话有": "This kind of session can't generate a plan — only native sessions can",
+  // 生成方案（原名先出方案，2026-09-27）· 界面
+  "生成方案": "Generate a plan",
   "等你看": "Waiting for you",
   "已批准 {0}": "Approved {0}",
   "已批准": "Approved",
@@ -1739,11 +1739,11 @@ export const EN: Readonly<Record<string, string>> = {
   "（已生成）": "(made)",
   "（还没有）": "(not yet)",
   "（计划外）": "(not in the plan)",
-  "这个 agent 不归 DAWN 管工具，先出方案用不了": "DAWN doesn't control this agent's tools, so planning first isn't available",
-  "这段会话还没准备好先出方案，稍等再试": "This session isn't ready to plan first yet; try again in a moment",
-  "这段不是和模型的对话，没有先出方案": "This isn't a conversation with a model, so there's no planning first",
-  "先出方案 · 这一段只看不改，方案批了才动手（再按一下「先出方案」退出）": "Planning first · nothing is changed until you approve a plan (press “Draft a plan first” again to leave)",
+  "这个 agent 不归 DAWN 管工具，生成方案用不了": "DAWN doesn't control this agent's tools, so plan mode isn't available",
+  "这段会话还没准备好生成方案，稍等再试": "This session isn't ready for plan mode yet; try again in a moment",
+  "这段不是和模型的对话，没有生成方案": "This isn't a conversation with a model, so there's no plan mode",
+  "生成方案 · 这一段只看不改，方案批了才动手（再按一下「生成方案」退出）": "Planning · nothing is changed until you approve a plan (press “Generate a plan” again to leave)",
   "先写分析方案，你批了再动手；方案期只看不改": "Write the analysis plan first and act only after you approve it; nothing is changed while planning",
-  "退出先出方案": "Stop planning first",
-  "先出方案：先写方案，批了再做": "Plan first: write a plan, act after approval",
+  "退出生成方案": "Leave plan mode",
+  "生成方案：先写方案，批了再做": "Generate a plan: write it, act after approval",
 }

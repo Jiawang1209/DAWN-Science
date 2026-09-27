@@ -45,11 +45,11 @@ describe("方案期：名单", () => {
     expect(d.kind === "deny" && d.reason).toContain("inspect_data")
   })
 
-  it("写与改、插件、子 agent、团队、没见过的：一律拒，理由说「先出方案」", () => {
+  it("写与改、插件、子 agent、团队、没见过的：一律拒，理由说「生成方案」", () => {
     for (const n of ["write", "edit", "xlsx_write", "browser_click", "subagent", "team_create", "memory_propose", "新来的工具"]) {
       const d = 方案期判(n, { path: "a.txt" }, 语境())
       expect(d.kind, n).toBe("deny")
-      expect(d.kind === "deny" && d.reason, n).toContain("先出方案")
+      expect(d.kind === "deny" && d.reason, n).toContain("生成方案")
     }
   })
 
@@ -100,7 +100,7 @@ describe("方案期：bash / powershell 一律拒（2026-09-28）", () => {
     const d = 方案期判("bash", { command: cmd }, 语境())
     expect(d.kind).toBe("deny")
     const why = d.kind === "deny" ? d.reason : ""
-    expect(why).toContain("先出方案")
+    expect(why).toContain("生成方案")
     // 告诉模型该用什么
     for (const t of ["ls", "grep", "find", "read", "inspect_data"]) expect(why).toContain(t)
   })

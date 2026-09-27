@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 「先出方案」改名「生成方案」、开关搬进附栏紧跟「优化输入」；窄了附栏折两行；上下文仪表处处只写环 + 数（分支 `plan-toggle-footer`）
+
+- **Type**: feat
+- **Motivation**: 作者要的三件：名字改成「生成方案」；开关从模型那一行最左边搬到附栏「优化输入」后面；仪表去掉「上下文」三个字。
+- **What**: 界面、⌘K、`/` 菜单、原因字、后端 fault、方案期门理由与指引里的「先出方案」→「生成方案」（en.ts 同步：Generate a plan / Leave plan mode）；
+  `ConversationView` 与空态的开关挪进 `.composer-footer`、紧跟 `EnhanceControl`；新增容器查询（≤720px）让附栏折两行——`::before` 占满一行夹在两组之间（`order`），
+  右边那组（会话设置 / 仪表 / 权限）整组换到第二行靠右，只在右边真有一组时（`:has(> .ctx-meter, > .sess-config)`）强制；目录那颗在折行模式下 `flex: 1 1 0; max-width: max-content`。
+  仪表的 `.ctx-meter-word` 与 720 那条查询撤掉，`aria-label` 照旧全句。
+- **Impact**: 实测坞默认宽附栏内宽 354，一行差 10px → 折两行；坞开着的主区一行会把目录压到 8px → 折两行后约 220px；坞关着的主区一行。视觉基线 12 张重存（设置两张没动）。
+- **Verification**: `plan-mode.spec.ts` 新增「开关在附栏、紧跟优化输入、权限整颗在卡里、不横向滚、不压扁、不盖仪表」主区 + 坞 + ACP 三处；`context-compaction.spec.ts` 可见字改「<1%」、名字仍断言全句；vitest 311 文件 3927 过 / 10 跳；typecheck、build 过；全套 e2e 572 过 / 1 跳、0 败 0 flaky；视觉基线重存后连验两遍 14/14。
+
 ### 2026-09-28 — 先出方案：先交分析方案、你批了再动手；方案期只看不改（门在代码里）；批准的那一版存进 analysis/plans（学自 Claude Code / Codex 的 plan mode；协议 8.6；分支 `agent-basics`）
 
 - **Type**: feat

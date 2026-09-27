@@ -66,7 +66,9 @@ test.describe("内置对话", () => {
     await expect(钮).toBeVisible()
     // `toBeVisible()` 对 opacity: 0 仍然算可见——直接量
     expect(await 钮.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
-    await expect(钮).toHaveText(/上下文 <1%/)
+    // 2026-09-28 起只写环 + 数；名字仍是全句
+    await expect(钮).toHaveText("<1%")
+    await expect(钮).toHaveAccessibleName("上下文 <1%")
     // 作者 2026-09-27：悬停就看得到用量
     await 钮.hover()
     const 层 = 主区(page).locator(".ctx-meter-pop")
@@ -100,7 +102,8 @@ test.describe("内置对话", () => {
     await expect(条.locator(".compaction-summary")).toContainText("假摘要：用户在试压缩")
     await expect(仪表(主区(page))).toHaveText(/已压缩/)
     await 说完(主区(page), "第三句")
-    await expect(仪表(主区(page))).toHaveText(/上下文 <1%/)
+    await expect(仪表(主区(page))).toHaveText("<1%")
+    await expect(仪表(主区(page))).toHaveAccessibleName("上下文 <1%")
   })
 
   test("**⌘K「压缩上下文」**：内置对话里可用，按下去同样出一条「你让压的」标记", async ({ dawn }) => {
@@ -148,7 +151,7 @@ test.describe("内置对话", () => {
 test.describe("窄附栏", () => {
   /**
    * 2026-09-27 视觉基线抓的：坞里那张卡（对话格 380 宽）附栏五样都不缩，整句「上下文 <1%」把权限那颗顶出卡外，只剩「●完」。
-   * 判据量盒子，不看像素：权限那颗整颗在卡里；仪表只写数、读屏名字仍是全句；主区（坞开着）照样写全句不挤掉工作目录。
+   * 判据量盒子，不看像素：权限那颗整颗在卡里；仪表只写数、读屏名字仍是全句（2026-09-28 起主区也只写数）。
    */
   test("**坞里的输入卡**：仪表只留环 + 数（名字仍是「上下文 …」），权限那颗整颗在卡里", async ({ dawn }) => {
     const { page } = dawn
@@ -161,8 +164,7 @@ test.describe("窄附栏", () => {
     await 说完(坞, "你好")
     const 钮 = 仪表(坞)
     await expect(钮).toHaveAccessibleName(/^上下文 <1%$/)
-    // 「上下文」三个字还在 DOM 里，只是不画——量它自己，不信 toBeVisible（opacity 那类坑）
-    await expect(钮.locator(".ctx-meter-word")).toBeHidden()
+    // 2026-09-28 起处处只写环 + 数：「上下文」三个字不画——量画出来的字，不信 toBeVisible（opacity 那类坑）
     expect(await 钮.evaluate((el) => (el as HTMLElement).innerText.trim())).toBe("<1%")
     const 卡 = await 坞.locator(".composer-card").boundingBox()
     const 权限 = await 坞.locator(".composer-footer .perm-pill").boundingBox()
@@ -173,15 +175,16 @@ test.describe("窄附栏", () => {
     expect(await 坞.locator(".composer-footer").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
   })
 
-  test("**主区（坞关着）写全句**：「上下文 <1%」整句看得见", async ({ dawn }) => {
+  test("**主区（坞关着）也只写数**（2026-09-28 作者要的）：看得见「<1%」，名字仍是「上下文 <1%」", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
     await 等进了对话(page)
     await 说完(主区(page), "你好")
     const 钮 = 仪表(主区(page))
-    await expect(钮.locator(".ctx-meter-word")).toBeVisible()
-    // 环、字、数各是一个弹性项，innerText 在项之间断行——按空白归一再比
-    expect(await 钮.evaluate((el) => (el as HTMLElement).innerText.replace(/\s+/g, " ").trim())).toBe("上下文 <1%")
+    await expect(钮).toHaveAccessibleName(/^上下文 <1%$/)
+    await expect(钮).toBeVisible()
+    // 环与数各是一个弹性项，innerText 在项之间断行——按空白归一再比
+    expect(await 钮.evaluate((el) => (el as HTMLElement).innerText.replace(/\s+/g, " ").trim())).toBe("<1%")
   })
 })
 
@@ -207,7 +210,8 @@ test.describe("外部 agent", () => {
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
     const 钮 = 仪表(主区(page))
-    await expect(钮).toHaveText(/上下文 读不到/)
+    await expect(钮).toHaveText("读不到")
+    await expect(钮).toHaveAccessibleName("上下文 读不到")
     await 钮.click()
     await expect(主区(page).locator(".ctx-meter-pop")).toContainText("外部 agent")
     await expect(主区(page).getByRole("button", { name: "现在压缩" })).toHaveCount(0)

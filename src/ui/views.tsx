@@ -4583,9 +4583,9 @@ export function ConversationView({
    */
   const 方案不能 =
     session.kind !== "native"
-      ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
+      ? t("这个 agent 不归 DAWN 管工具，生成方案用不了")
       : !方案开关
-        ? t("这段会话还没准备好先出方案，稍等再试")
+        ? t("这段会话还没准备好生成方案，稍等再试")
         : undefined
 
   return (
@@ -4900,13 +4900,13 @@ export function ConversationView({
           /**
            * **`/plan`（先出方案，2026-09-27，D4）**：界面拦下来切开关，**不把 `/plan` 送给模型**。
            * `/plan 问题` = 打开开关 + 发「问题」；只打 `/plan` = 只打开开关。
-           * 这类会话没有先出方案（D7）→ 说原因、字留在框里，不悄悄按普通方式发出去。
+           * 这类会话没有生成方案（D7）→ 说原因、字留在框里，不悄悄按普通方式发出去。
            */
           const 原话 = text
           const 先开方案 = 是方案前缀(text)
           if (先开方案) {
             if (!onSetPlan || 方案不能) {
-              设发送出错(方案不能 ?? t("这段会话还没准备好先出方案，稍等再试"))
+              设发送出错(方案不能 ?? t("这段会话还没准备好生成方案，稍等再试"))
               return
             }
             text = 去掉方案前缀(text)
@@ -5058,7 +5058,7 @@ export function ConversationView({
         {/* 先出方案开着（2026-09-27，spec §2.1）：按下态的形状不够——扫一眼与读屏都读不出含义，用字说清 */}
         {方案开着 ? (
           <p className="plan-band" role="status">
-            {t("先出方案 · 这一段只看不改，方案批了才动手（再按一下「先出方案」退出）")}
+            {t("生成方案 · 这一段只看不改，方案批了才动手（再按一下「生成方案」退出）")}
           </p>
         ) : null}
         <div className="composer-box">
@@ -5401,26 +5401,6 @@ export function ConversationView({
             </p>
           ) : null}
           <div className="composer-controls">
-            {/**
-              * 先出方案（2026-09-27，D4 / D7）：**输入卡里这一行的最左边**，常驻。
-              * 不放附栏：附栏在坞里（对话格 380 宽）已经满了——2026-09-27 实测，只留图标也差约 30px，
-              * 挤进去它会被压成 2px 宽、盖在仪表上（看不见的能力等于不存在）。这一行左半边一直是空的。
-              * `dawn.plan` 开关（`plan` 类）不进附栏那颗通用菜单，走这一颗。外部 agent 灰着、旁边一行字说原因。
-              */}
-            {画方案开关 ? (
-              <先出方案开关
-                on={方案开着}
-                不能的原因={方案不能}
-                onToggle={
-                  方案开关 && onSetPlan
-                    ? (on) => {
-                        设发送出错(undefined)
-                        void onSetPlan(on).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
-                      }
-                    : undefined
-                }
-              />
-            ) : null}
             <span className="composer-gap" aria-hidden="true" />
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
@@ -5688,6 +5668,25 @@ export function ConversationView({
               onProblem={设发送出错}
               onNote={设增强说明}
             />
+            {/**
+              * 生成方案（2026-09-27，D4 / D7；2026-09-28 作者要的：从模型那一行最左边搬到附栏、**紧跟「优化输入」**，并改名「生成方案」）。
+              * 常驻。坞那么窄时只留图标；对话格 ≤720 时附栏折成两行（右边仪表 + 权限一组换到第二行靠右）——不挤压：挤进一行它会被压成 2px 宽（2026-09-27 实测）。
+              * `dawn.plan` 开关（`plan` 类）不进附栏那颗通用菜单，走这一颗。外部 agent 灰着、旁边一行字说原因。
+              */}
+            {画方案开关 ? (
+              <先出方案开关
+                on={方案开着}
+                不能的原因={方案不能}
+                onToggle={
+                  方案开关 && onSetPlan
+                    ? (on) => {
+                        设发送出错(undefined)
+                        void onSetPlan(on).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+                      }
+                    : undefined
+                }
+              />
+            ) : null}
             {/**
               * 前三样说「带什么、在哪跑」，右边说「怎么改」：权限那颗是唯一入口（2026-08-23）。
               * **模型（含 ACP 的）与推理强度已钉到顶行**（2026-08-27，作者 #3/#4），
@@ -7394,8 +7393,6 @@ export function EmptyConversation({
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
               <div className="composer-controls">
-                {/* 先出方案（2026-09-27）：与对话里同一处。还没有会话，按下只记住「第一句按先出方案发」 */}
-                {先出方案 ? <先出方案开关 on={先出方案.on} 不能的原因={先出方案.不能的原因} onToggle={先出方案.onToggle} /> : null}
                 <span className="composer-gap" aria-hidden="true" />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
@@ -7536,6 +7533,8 @@ export function EmptyConversation({
                   onProblem={设开场出错}
                   onNote={设增强说明}
                 />
+                {/* 生成方案（2026-09-27；09-28 搬到附栏「优化输入」后面）：与对话里同一处。还没有会话，按下只记住「第一句按生成方案发」 */}
+                {先出方案 ? <先出方案开关 on={先出方案.on} 不能的原因={先出方案.不能的原因} onToggle={先出方案.onToggle} /> : null}
                 {/* 空态屏上那颗改的是**默认**（还没有会话） */}
                 {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}
               </div>

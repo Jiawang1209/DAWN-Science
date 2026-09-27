@@ -118,6 +118,13 @@ export const SUBAGENT_LIMITS = {
    * 又不至于让一个哑掉的进程拖住半小时。到点按「中止」同一条路杀干净、报超时。
    */
   maxWallMs: 10 * 60 * 1000,
+  /**
+   * stdout 上一行的上界（2026-09-27 复审）：过程行到一行转一行，但一个不换行的子进程会让行缓冲无限长。
+   * 超过就整行丢掉、记一笔；万一丢的正是 `done` 那一行，失败原因里说清楚。按字符数量，约 4 MB。
+   */
+  maxLineChars: 4 * 1024 * 1024,
+  /** stderr 只留最后这么多字符（2026-09-27 复审）：它只在失败时拿来说原因，刷屏的日志不该攒进内存 */
+  stderrTailChars: 16 * 1024,
 } as const
 
 export type SubagentLimits = typeof SUBAGENT_LIMITS
@@ -320,7 +327,11 @@ export class SubagentExecutor {
       }
 
       let 行缓冲 = ""
+      /** 正在丢一行超长的（还没等到它的换行） */
+      let 丢弃中 = false
+      let 丢了几行 = 0
       let err = ""
+      let err省了 = false
       /**
        * **只留最后一条 `done`**（2026-09-27）。过程行到一行转一行，不攒——此前整串攒到 `close` 才解析，
        * 过程行进来之后这个串会长到几 MB，而且在跑的时候一行都看不见。
@@ -364,33 +375,58 @@ export class SubagentExecutor {
 
       child.stdout.setEncoding("utf8")
       child.stderr.setEncoding("utf8")
+      /**
+       * 按行切（2026-09-27 复审收紧）：**只在新到的这一块里找换行**——在整个缓冲里反复找是平方级的；
+       * 一行超过 `maxLineChars` 就整行丢掉（记数，收尾时说），不让一个不换行的子进程把父进程撑爆。
+       */
+      const 行上限 = this.limits.maxLineChars
       child.stdout.on("data", (d: string) => {
-        行缓冲 += d
+        let 起 = 0
         let i: number
-        while ((i = 行缓冲.indexOf("\n")) >= 0) {
-          收一行(行缓冲.slice(0, i))
-          行缓冲 = 行缓冲.slice(i + 1)
+        while ((i = d.indexOf("\n", 起)) >= 0) {
+          const 段 = d.slice(起, i)
+          if (丢弃中) 丢弃中 = false
+          else if (行缓冲.length + 段.length > 行上限) 丢了几行++
+          else 收一行(行缓冲 + 段)
+          行缓冲 = ""
+          起 = i + 1
+        }
+        if (丢弃中) return
+        const 余 = d.slice(起)
+        if (行缓冲.length + 余.length > 行上限) {
+          丢弃中 = true
+          丢了几行++
+          行缓冲 = ""
+        } else 行缓冲 += 余
+      })
+      const 尾长 = this.limits.stderrTailChars
+      child.stderr.on("data", (d: string) => {
+        err += d
+        if (err.length > 尾长) {
+          err = err.slice(-尾长)
+          err省了 = true
         }
       })
-      child.stderr.on("data", (d: string) => (err += d))
 
       child.on("error", (e) => done(fail(task, `子进程起不来：${e.message}`)))
 
       child.on("close", (code) => {
-        if (行缓冲.trim()) 收一行(行缓冲)
+        if (!丢弃中 && 行缓冲.trim()) 收一行(行缓冲)
         行缓冲 = ""
         const report = 最后done
 
         if (!report) {
           // 两种都在这里落地，措辞不同：非 0 退出有码可报；
           // 0 退出却没结果是**更糟**的一种——我们根本不知道它做了什么
-          const detail = err.trim() ? `：${err.trim()}` : ""
+          const detail = err.trim() ? `：${err省了 ? `（stderr 前面省了，只留最后 ${尾长} 字）` : ""}${err.trim()}` : ""
+          // 丢过超长行时，结果那一行多半就是被丢的那一行——说出来，别让人以为它什么都没交
+          const 丢 = 丢了几行 > 0 ? `（有 ${丢了几行} 行输出超过 ${行上限} 字被丢掉了，结果可能就在其中）` : ""
           return done(
             fail(
               task,
               code === 0
-                ? `子进程正常退出，但没有给出结果${detail}`
-                : `子进程以退出码 ${code} 结束${detail}`,
+                ? `子进程正常退出，但没有给出结果${丢}${detail}`
+                : `子进程以退出码 ${code} 结束${丢}${detail}`,
             ),
           )
         }

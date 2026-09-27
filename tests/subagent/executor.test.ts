@@ -367,3 +367,50 @@ describe("过程（2026-09-27，子 agent 看得见）", () => {
     expect(r.results[0]!.output).toBe("整行")
   })
 })
+
+/**
+ * 子进程的输出不许把父进程撑爆（2026-09-27 复审提的）：一行没换行的巨串、刷屏的 stderr。
+ * 上界可调，这里调小了验；丢了要出声（规格 7.5）。
+ */
+describe("行缓冲与 stderr 的上界", () => {
+  it("超长的一行整行丢掉、后面的行照常收；丢了什么在结果里说清", async () => {
+    const 巨行 = () => ({
+      command: process.execPath,
+      args: [
+        "-e",
+        `process.stdin.on("data",()=>{}).on("end",()=>{` +
+          `process.stdout.write("{"+"x".repeat(500));process.stdout.write("y".repeat(500)+"\\n");` +
+          `process.stdout.write(JSON.stringify({type:"done",ok:true,output:"还在"})+"\\n")})`,
+      ],
+    })
+    const r = await exec(巨行, { maxLineChars: 200 }).run({ mode: "single", agent: "scout", task: "t" }, DEFS)
+    expect(r.results[0]!.ok).toBe(true)
+    expect(r.results[0]!.output).toBe("还在")
+  })
+
+  it("结果那一行本身超长被丢了：失败，并说是因为超长被丢，不是「没给出结果」", async () => {
+    const 巨结果 = () => ({
+      command: process.execPath,
+      args: [
+        "-e",
+        `process.stdin.on("data",()=>{}).on("end",()=>{` +
+          `process.stdout.write(JSON.stringify({type:"done",ok:true,output:"z".repeat(1000)})+"\\n")})`,
+      ],
+    })
+    const r = await exec(巨结果, { maxLineChars: 200 }).run({ mode: "single", agent: "scout", task: "t" }, DEFS)
+    expect(r.results[0]!.ok).toBe(false)
+    expect(r.results[0]!.error).toMatch(/1 行.*超过.*丢/)
+  })
+
+  it("stderr 只留最后一段，并说前面省了", async () => {
+    const 刷屏 = () => ({
+      command: process.execPath,
+      args: ["-e", `process.stderr.write("头".repeat(300)+"尾巴");process.exit(3)`],
+    })
+    const r = await exec(刷屏, { stderrTailChars: 50 }).run({ mode: "single", agent: "scout", task: "t" }, DEFS)
+    expect(r.results[0]!.ok).toBe(false)
+    expect(r.results[0]!.error).toContain("尾巴")
+    expect(r.results[0]!.error).toMatch(/前面.*省/)
+    expect(r.results[0]!.error!.length).toBeLessThan(150)
+  })
+})

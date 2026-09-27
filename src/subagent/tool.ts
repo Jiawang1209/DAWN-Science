@@ -29,6 +29,7 @@ import {
   type SubagentResult,
 } from "./executor.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
+import { 写元, 读元, type 子运行元 } from "./run-dir.js"
 
 export interface SubagentToolOptions {
   sessionId: SessionId
@@ -47,6 +48,13 @@ export interface SubagentToolOptions {
    * **必填**——少了它每个子 agent 都会报「模型不存在」，而那要跨进程才查得出来。
    */
   context: SubagentContext
+  /**
+   * 第 `index` 个子 agent 在这次调用里的运行目录（2026-09-27）：pi 的 agentDir、会话文件、`meta.json` 都在里面。
+   * **按调用分**——`context.agentDirOf` 只按序号，第二次派子 agent 时序号 0 又写进同一个目录（spec §1.1），
+   * 而 pi 的 `continueRecent` 取目录里最新那份会话：共用目录时接着问第一次的会续上第二次的。
+   * 不给 = 退回 `context.agentDirOf`（老调用方、测试）。
+   */
+  运行目录?: ((toolCallId: string, index: number) => string) | undefined
   /** 账本要听的事件从这里出去 */
   emit: (event: AgentEvent) => void
 }
@@ -99,11 +107,27 @@ const text = (s: string, isError = false): ToolResult => ({
   details: undefined,
 })
 
-export function createSubagentTool(opts: SubagentToolOptions) {
-  const load = (): DefinitionLoad => {
-    const r = opts.dirs ? loadSubagentsFrom(opts.dirs, { 自带停用: opts.自带停用 }) : loadSubagentDefinitions(opts.projectRoot)
-    return { ...r, agents: r.agents.filter((a) => !a.disabled) }
+/** 此刻可用的定义（`disabled` 的不给）。`createSubagentTool` 与续问工厂共用 */
+function 可用定义(opts: SubagentToolOptions): DefinitionLoad {
+  const r = opts.dirs ? loadSubagentsFrom(opts.dirs, { 自带停用: opts.自带停用 }) : loadSubagentDefinitions(opts.projectRoot)
+  return { ...r, agents: r.agents.filter((a) => !a.disabled) }
+}
+
+/** 把 toolCallId 绑进去：executor 只认 `agentDirOf(index)`，**一次调用一个 executor**，于是序号在这次调用里就够分 */
+function 目录于(opts: SubagentToolOptions, toolCallId: string): (index: number) => string {
+  return (i) => (opts.运行目录 ? opts.运行目录(toolCallId, i) : opts.context.agentDirOf(i))
+}
+
+/** 交回主 agent 的那段原文（截断了如实写省了多少）——坞里「交回主 agent 的结果」与 `meta.json` 都存这一份 */
+function 交回的(r: SubagentResult): NonNullable<子运行元["result"]> {
+  return {
+    text: r.output,
+    ...(r.outputTruncated ? { truncated: { originalBytes: r.outputBytes, keptBytes: Buffer.byteLength(r.output, "utf8") } } : {}),
   }
+}
+
+export function createSubagentTool(opts: SubagentToolOptions) {
+  const load = (): DefinitionLoad => 可用定义(opts)
 
   return {
     name: "subagent",
@@ -116,12 +140,24 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       if ("error" in req) return text(req.error, true)
 
       const { agents, problems } = load()
+      const 目录 = 目录于(opts, toolCallId)
+      /** 记录写不进盘要出声（一次就够）：它不拖垮子 agent，但关掉再开就看不到这一次的过程了（规格 7.5） */
+      let 已报写盘失败 = false
+      const 记 = (i: number, 元: 子运行元) => {
+        const 错 = 写元(目录(i), 元)
+        if (错 && !已报写盘失败) {
+          已报写盘失败 = true
+          opts.emit({ kind: "notice", sessionId: opts.sessionId, text: `子 agent 的过程记录没写进盘（${错}）：这一次关掉再开就看不到它的过程了` })
+        }
+      }
       const executor = new SubagentExecutor({
         childOf: opts.childOf,
-        context: opts.context,
+        // 运行目录按调用分（2026-09-27）：executor 只认 `agentDirOf(index)`，这里把 toolCallId 绑进去
+        context: { ...opts.context, agentDirOf: 目录 },
         onProgress: (p) => {
           // **账本靠这两条**。`toolCallId` 让它挂到发起它的那次工具调用下面
           if (p.type === "started") {
+            记(p.index, { agent: p.agent, task: p.task, status: "running", startedAt: Date.now() })
             opts.emit({
               kind: "subagent_start",
               sessionId: opts.sessionId,
@@ -130,6 +166,10 @@ export function createSubagentTool(opts: SubagentToolOptions) {
               agent: p.agent,
               task: p.task,
             })
+          }
+          // 过程一行一行转出去（2026-09-27）：中枢翻进这个子 agent 的子转录，chip 上那一句也从这里来
+          if (p.type === "event") {
+            opts.emit({ kind: "subagent_event", sessionId: opts.sessionId, toolCallId, index: p.index, event: p.event })
           }
           // `settled` 时还拿不到失败原因（执行器只给 ok），
           // 所以 end 事件在下面拿到结果之后再发——**带上原因**
@@ -141,13 +181,24 @@ export function createSubagentTool(opts: SubagentToolOptions) {
 
       // 每个任务发一条 end。**必须带原因**，账本的 terminalReason 靠它
       summary.results.forEach((r, index) => {
+        const 错 = r.error ?? "子 agent 失败，但没有给出原因"
+        const 旧 = 读元(目录(index))
+        if (旧) 记(index, { ...旧, status: r.ok ? "ok" : "error", ...(r.ok ? { result: 交回的(r) } : { error: 错 }), endedAt: Date.now() })
+        // 先收子转录、再收 chip：界面看到 chip 变成完成时，点开那一格里结果已经在了
+        opts.emit({
+          kind: "subagent_event",
+          sessionId: opts.sessionId,
+          toolCallId,
+          index,
+          event: { kind: "settled", ok: r.ok, ...(r.ok ? { result: 交回的(r) } : { error: 错 }) },
+        })
         opts.emit({
           kind: "subagent_end",
           sessionId: opts.sessionId,
           toolCallId,
           index,
           ok: r.ok,
-          ...(r.ok ? {} : { error: r.error ?? "子 agent 失败，但没有给出原因" }),
+          ...(r.ok ? {} : { error: 错 }),
         })
       })
 
@@ -158,6 +209,36 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       // **失败要如实回给模型**，不能只把成功的那些回上去
       return text(body, failed.length > 0)
     },
+  }
+}
+
+/**
+ * 接着问一个跑完的子 agent（2026-09-27，spec §2.3 / D3）。拿同一份 `childOf` / `context` / `运行目录`，
+ * 在**那一次调用**的那个运行目录上 `resume: true` 再起一个进程——与团队成员下一轮同一条路。
+ * toolCallId 每次都传进来、每次一个新 executor：不会续到别的调用那份会话上（`continueRecent` 取目录里最新的那份）。
+ *
+ * **只发 `subagent_event`**（过程 + 一条 `settled`，`followUp: true`、不带 `result`）：chip、账本、主转录、`meta.json`
+ * 一个字都不动——答复不回主 agent（D3）；chip 已经收了，不能被一次续问重新点亮。
+ */
+export function createSubagentFollowUp(opts: SubagentToolOptions) {
+  return async (toolCallId: string, index: number, agent: string, text: string, signal?: AbortSignal): Promise<SubagentResult> => {
+    const executor = new SubagentExecutor({
+      childOf: opts.childOf,
+      context: { ...opts.context, agentDirOf: 目录于(opts, toolCallId) },
+      onProgress: (p) => {
+        // 执行器的续问本来就不发 started / settled；这里再只认 event，两道门
+        if (p.type === "event") opts.emit({ kind: "subagent_event", sessionId: opts.sessionId, toolCallId, index, event: p.event })
+      },
+    })
+    const r = await executor.续问(index, agent, text, 可用定义(opts).agents, signal)
+    opts.emit({
+      kind: "subagent_event",
+      sessionId: opts.sessionId,
+      toolCallId,
+      index,
+      event: { kind: "settled", ok: r.ok, followUp: true, ...(r.ok ? {} : { error: r.error ?? "没有给出原因" }) },
+    })
+    return r
   }
 }
 

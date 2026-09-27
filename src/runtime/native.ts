@@ -60,6 +60,7 @@ export function 原文对得上(界面: string, pi那句: string, 名单: { 模�
 
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool } from "../subagent/tool.js"
+import { 子运行目录 } from "../subagent/run-dir.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
@@ -1123,10 +1124,13 @@ export class NativeRuntime implements AgentRuntime {
         cwd: spec.workspace,
         // **当前生效的那一份**，不是构造时的——见 `useModelsPath`
         ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
-        // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）
+        // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）。2026-09-27 起实际用的是下面按调用分的 `运行目录`
         agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
         ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
       },
+      // 按调用分（2026-09-27，spec §1.1）：`<会话目录>/subagents/<toolCallId>/<序号>/`——meta.json、会话文件都在里面，
+      // 重开后补 chip 组（后端 `补子agent组`）与接着问都按这个找
+      运行目录: (toolCallId: string, i: number) => 子运行目录(spec.sessionDir, toolCallId, i),
     })
 
     // 门只包内置工具时 base 可能是 undefined；那时也要把 subagent 带上

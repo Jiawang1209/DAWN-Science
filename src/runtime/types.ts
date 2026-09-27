@@ -13,6 +13,7 @@
 import type { Cost } from "../protocol/index.js"
 import type { ConsoleEntry } from "../kernel/outputs.js"
 import type { 计划结果, 回退结果 } from "../project/checkpoints.js"
+import type { 子转录事件 } from "../subagent/protocol.js"
 export type SessionId = string
 
 export interface McpServerSpec {
@@ -317,6 +318,17 @@ export type AgentEvent =
       ok: boolean
       /** 失败原因。**`ok` 为 false 时必须有**——不带原因的失败等于没报 */
       error?: string
+    }
+  /**
+   * 一个子 agent 的一条过程，或它这一轮跑完了（2026-09-27，spec §4.2）。**与 `subagent_start/end` 分开**：
+   * 那两条管 chip 与账本（主 agent 的行动）；这一条管坞里那段子转录——你在坞里接着问时也走它，而那不是主 agent 的行动。
+   */
+  | {
+      kind: "subagent_event"
+      sessionId: SessionId
+      toolCallId: string
+      index: number
+      event: 子转录事件
     }
   /** 这段会话的团队变了（team-board，2026-08-22）。整份快照；真相在磁盘，这只是搬一份给界面 */
   | { kind: "team_changed"; sessionId: SessionId; team: import("../protocol/events.js").TeamSnapshot }

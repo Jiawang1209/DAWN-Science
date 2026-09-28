@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import {
   ConversationView,
@@ -7,6 +7,13 @@ import {
   TerminalView,
 } from "../../src/ui/views.js"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../../src/protocol/index.js"
+import { SIDEBAR_FOLDED_KEY, SIDEBAR_PROJECTS_OPEN_KEY } from "../../src/ui/state/sidebar.js"
+
+/** 侧栏收起 / 展开 2026-09-28 起跨重启记着——每条用例从「没表达过偏好」开始，不吃上一条收起的 */
+beforeEach(() => {
+  localStorage.removeItem(SIDEBAR_FOLDED_KEY)
+  localStorage.removeItem(SIDEBAR_PROJECTS_OPEN_KEY)
+})
 
 const project = (over: Partial<ProjectSummary> = {}): ProjectSummary => ({
   projectId: "p1",

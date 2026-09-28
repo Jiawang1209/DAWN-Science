@@ -119,3 +119,74 @@ export function loadSidebar(): { width: number; collapsed: boolean } {
   $sidebarCollapsed.set(折叠)
   return { width: 宽, collapsed: 折叠 }
 }
+
+/**
+ * **侧栏各组收起 / 展开要跨重启活着**（2026-09-28 作者要的）。
+ *
+ * 作者：每次打开，「服务器」那组连同机器都摊开着——收起来，重开又弹开。此前这两份状态只在组件的 `useState` 里。
+ * 定案：*「记住你的收起 / 展开状态，服务器下的机器默认也按照状态进行」*——**只加记忆，默认值一个不改**
+ * （组与机器默认摊开、只有「最近」收着；项目文件夹默认收着、当前会话所在的那个自动展开）。
+ *
+ * 两份各一个 key，因为它们在组件里本来就是两份 state、语义不同：
+ *   - 收起的组与机器：一个集合（「最近」「项目」「服务器」「会话」、机器的 connectionId）；
+ *   - 项目文件夹：路径 → 开 / 关。**明确收起（false）也要记**——那是「别再替我自动展开」，与「没表达过」不同。
+ *
+ * 作用域是 `global`：它们不属于某段会话，是这个人怎么摆侧栏（与侧栏宽度同一类）。
+ * 删掉的机器 / 项目留在存储里的那几个名字不清：它们不再有对应的行，多几个字节换不来一次清理的复杂度。
+ */
+export const SIDEBAR_FOLDED_KEY = "dawn.global.sidebar-folded"
+export const SIDEBAR_PROJECTS_OPEN_KEY = "dawn.global.sidebar-projects-open"
+
+/** 没表达过偏好时收着的那些：「最近」的行是下面各列的抄写，两份同时摊开就是两处长得一样 */
+const 默认收起 = ["最近"] as const
+
+/** 读回收起的组与机器。没存过 = 默认；存的读不懂要出声，回到默认 */
+export function 读收起的组(): ReadonlySet<string> {
+  try {
+    const 原 = localStorage.getItem(SIDEBAR_FOLDED_KEY)
+    if (原 === null) return new Set(默认收起)
+    const v: unknown = JSON.parse(原)
+    if (Array.isArray(v) && v.every((x) => typeof x === "string")) return new Set(v)
+    console.error(`[sidebar] 存储里的收起状态无法识别：${原.slice(0, 200)}，回落到默认`)
+  } catch (e) {
+    console.error("[sidebar] 读不到已保存的收起状态，回落到默认：", e)
+  }
+  return new Set(默认收起)
+}
+
+/** 与 `setSidebarCollapsed` 同一条：这次切换已经生效，写不进去只是重启后不记得——出声，不抛 */
+export function 记收起的组(收起的: ReadonlySet<string>): void {
+  try {
+    localStorage.setItem(SIDEBAR_FOLDED_KEY, JSON.stringify([...收起的]))
+  } catch (e) {
+    console.error("[sidebar] 收起状态保存失败，本次切换仍然生效，但重启后不会被记住：", e)
+  }
+}
+
+/** 读回项目文件夹的开 / 关。没存过 = 空（全走自动展开）；整份读不懂回到空，混进的非布尔条目丢掉——都出声 */
+export function 读项目展开(): ReadonlyMap<string, boolean> {
+  try {
+    const 原 = localStorage.getItem(SIDEBAR_PROJECTS_OPEN_KEY)
+    if (原 === null) return new Map()
+    const v: unknown = JSON.parse(原)
+    if (v === null || typeof v !== "object" || Array.isArray(v)) {
+      console.error(`[sidebar] 存储里的项目展开状态无法识别：${原.slice(0, 200)}，回落到默认`)
+      return new Map()
+    }
+    const 条 = Object.entries(v as Record<string, unknown>)
+    const 好 = 条.filter((e): e is [string, boolean] => typeof e[1] === "boolean")
+    if (好.length !== 条.length) console.error(`[sidebar] 项目展开状态里有 ${条.length - 好.length} 条无法识别，已丢掉`)
+    return new Map(好)
+  } catch (e) {
+    console.error("[sidebar] 读不到已保存的项目展开状态，回落到默认：", e)
+    return new Map()
+  }
+}
+
+export function 记项目展开(展开: ReadonlyMap<string, boolean>): void {
+  try {
+    localStorage.setItem(SIDEBAR_PROJECTS_OPEN_KEY, JSON.stringify(Object.fromEntries(展开)))
+  } catch (e) {
+    console.error("[sidebar] 项目展开状态保存失败，本次切换仍然生效，但重启后不会被记住：", e)
+  }
+}

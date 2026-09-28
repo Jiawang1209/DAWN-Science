@@ -46,6 +46,7 @@ import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
 import { $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
+import { 读收起的组, 记收起的组, 读项目展开, 记项目展开 } from "./state/sidebar.js"
 import { AgentMarkdown } from "./markdown.js"
 import { AnsiText } from "./ansi-text.js"
 import { stripAnsi } from "./ansi.js"
@@ -1272,6 +1273,18 @@ export function RightDock({
   )
 }
 
+/**
+ * 状态**真的变了**才落盘（2026-09-28，侧栏收起 / 展开跨重启记着）。挂上那一刻读回来的值不再写一遍：
+ * 什么都没变就不碰存储（jsdom 里每次写存储还会挂一个定时器——「卸载之后心跳要停」那条就是这么抓到它的）。
+ * 判据是引用：这两份状态每次改都是新对象，读回来的那一份在它第一次被换掉之前一直是同一个。
+ */
+function 变了才记<T>(值: T, 记: (v: T) => void): void {
+  const 初 = useRef(值)
+  useEffect(() => {
+    if (值 !== 初.current) 记(值)
+  }, [值])
+}
+
 export function SessionSidebar({
   服务器名,
   刚选的工作区,
@@ -1541,7 +1554,9 @@ export function SessionSidebar({
    * **每个文件夹各自记**（2026-08-23 作者：「只能打开一个，关闭一个？这里有点儿 bug」）——此前是一个字符串，
    * 开第二个就把第一个顶掉了。`手动` 里没记的那些走默认：装着当前会话的自动展开。
    */
-  const [手动展开, 设手动展开] = useState<ReadonlyMap<string, boolean>>(new Map())
+  // 跨重启记着（2026-09-28 作者要的，见 `state/sidebar.ts` 的 `读项目展开`）
+  const [手动展开, 设手动展开] = useState<ReadonlyMap<string, boolean>>(读项目展开)
+  变了才记(手动展开, 记项目展开)
   const 设展开 = (路径: string, 开: boolean) => 设手动展开((前) => new Map(前).set(路径, 开))
 
   /**
@@ -1572,10 +1587,12 @@ export function SessionSidebar({
    * 收起来的那些（2026-08-15 作者要的）：机器按 `connectionId`，会话那一列用 `"会话"`。
    * **默认全展开**——收起是人的动作，不是我们替他做的决定。
    */
-  const [收起的, 设收起] = useState<ReadonlySet<string>>(
-    // 例外：「最近」默认收起——它的行是下面各列的抄写，两份同时摊开就是两处长得一样（见本文件 2026-08-12 的教训）
-    new Set(["最近"]),
-  )
+  /**
+   * **跨重启记着**（2026-09-28 作者：每次打开「服务器」都摊开，收了重开又弹开）。
+   * 没存过时的默认值没改：「最近」收着——它的行是下面各列的抄写，两份同时摊开就是两处长得一样（本文件 2026-08-12 的教训）。
+   */
+  const [收起的, 设收起] = useState<ReadonlySet<string>>(读收起的组)
+  变了才记(收起的, 记收起的组)
   const 收起了 = (k: string) => 收起的.has(k)
   const 切收起 = (k: string) =>
     设收起((前) => {

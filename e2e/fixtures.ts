@@ -137,7 +137,12 @@ export async function 在项目里开会话(page: Page): Promise<void> {
   // 界面还没刷新到这条新任务上——重载最省事，且走的是真实的启动装配
   await page.reload()
   const 项目 = page.locator(".proj-list .proj-item").first()
-  await 项目.locator(".row").first().click()
+  /**
+   * **文件夹没开才去点**（2026-09-28）。侧栏的开 / 关此前重载即忘，这里就一律点一下「展开」；
+   * 现在记得——同一条用例第二次进来时它已经开着，再点就是收起，下一步找不到会话（memory / session-tabs 两条当场红）。
+   */
+  await expect(项目.locator(".row").first()).toBeVisible()
+  if ((await 项目.locator(".proj-session-list").count()) === 0) await 项目.locator(".row").first().click()
   await 项目.locator(".proj-session-list .sess-item .row").first().click()
 }
 

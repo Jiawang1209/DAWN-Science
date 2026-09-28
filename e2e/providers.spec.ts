@@ -40,6 +40,37 @@ test("**「我能配谁」远多于「我配过谁」**", async ({ dawn }) => {
   expect(await 选项.count()).toBe(n)
 })
 
+/**
+ * **从窄栏进来也数得出来**（2026-09-28 作者撞的：只配了 deepseek，「从 pi 认识的里面挑（0）」，
+ * 下面还写着「内置 provider 均已配置」）。
+ *
+ * 根因：那份清单只在 `view === "settings"`（整页）时取；09-16 起设置默认开的是右边窄栏，
+ * `开设置栏` 还会把 `view` 切走——**窄栏里它从来没被取过**，一直是初始的空数组，
+ * 而空数组恰好渲染成「均已配置」。上面那条走 `进设置`（总是点「展开」进整页），所以一直绿。
+ *
+ * **先存一个 key 再重载**：没有凭证时首启向导那一支也会去取，不存的话没修也绿。
+ */
+test("**从窄栏进「添加模型服务」：配过一家时，可挑的仍是 pi 认识的其余那些**", async ({ dawn }) => {
+  const { page } = dawn
+  await page.evaluate(async () => {
+    const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<unknown> } }
+    await w.dawn.invoke("setCredential", { providerId: "deepseek", secret: "sk-e2e-not-a-real-key" })
+  })
+  await page.reload()
+
+  await page.getByRole("button", { name: "设置", exact: true }).click()
+  const 栏 = page.locator(".settings-column")
+  await expect(栏).toBeVisible()
+  await 栏.locator(".settings-column-list").getByRole("button", { name: "模型服务", exact: true }).click()
+  await 栏.getByRole("button", { name: /添加模型服务/ }).click()
+
+  const 挑 = page.getByRole("radio", { name: /从 pi 认识的里面挑/ })
+  await expect(挑).toBeVisible()
+  await expect(page.getByText("内置 provider 均已配置")).toHaveCount(0)
+  const n = Number(/（(\d+)）/.exec((await 挑.textContent()) ?? "")?.[1] ?? "0")
+  expect(n, "窄栏里那份清单没取到").toBeGreaterThan(10)
+})
+
 test("筛选能把要找的那个捞出来", async ({ dawn }) => {
   const { page } = dawn
   await 开添加(page)

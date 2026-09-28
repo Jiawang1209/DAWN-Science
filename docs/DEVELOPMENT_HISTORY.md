@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 从设置窄栏进「添加模型服务」可挑 0 个、还说「均已配置」：清单只在整页设置时取（分支 `settings-column-fetch`）
+
+- **Type**: fix
+- **Motivation**: 作者只配了 deepseek，点「添加模型服务」看到「从 pi 认识的里面挑（0）」外加「内置 provider 均已配置」，点不进去，一度想全改用自定义端点。
+- **What**: `App.tsx` 两处取数的条件由 `view === "settings"` 改成 `设置在场`（`$设置在场`，窄栏或整页都算）：
+  `listKnownProviders`（pi 认识的 provider）与内核 / 解释器刷新。根因：09-16 起设置默认开右边窄栏，`开设置栏` 还会把 `view` 切走，
+  窄栏里这两份**从没取过**——清单停在初始的 `[]`，而 `[]` 渲染成「均已配置」（空的与「全配过」长得一样）。pi 侧无问题（`getModels()` 不按凭证过滤，读源码核实）。
+- **Impact**: 窄栏里「添加模型服务」列出 pi 认识的其余 provider；窄栏里「内核」也会在打开时刷新。无协议变化。
+- **Verification**: `e2e/providers.spec.ts` 新增「从窄栏进添加模型服务：配过一家时可挑 > 10、不出现均已配置」——先经应用接口存一个 deepseek key 再重载
+  （不存的话首启向导那一支也会取，没修也绿）；改前红在「内置 provider 均已配置」仍在，改后绿。原有那条走 `进设置`（总点「展开」进整页），所以一直没抓到。
+  `providers` + `settings-column` 15/15；vitest 312 文件 3940 过 / 10 跳；全套 e2e 577 过 / 1 跳、0 败。
+
 ### 2026-09-28 — 侧栏各组的收起 / 展开跨重启记着（分支 `sidebar-remember-folds`）
 
 - **Type**: feat

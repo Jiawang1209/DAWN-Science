@@ -1010,11 +1010,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     },
     [client],
   )
+  // 设置在场就取——窄栏也算（2026-09-28：此前只认整页，而窄栏打开时会把 view 切走，窄栏里的「内核」从没刷新过）
   useEffect(() => {
-    if (view !== "settings") return
+    if (!设置在场) return
     refreshKernels()
     refreshInterpreters()
-  }, [view, refreshKernels, refreshInterpreters])
+  }, [设置在场, refreshKernels, refreshInterpreters])
 
   /**
    * 这个会话现在有哪些变量（②-A · K5 · S14）。
@@ -1901,6 +1902,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /**
    * pi 认识的全部 provider（2026-08-10）。**「我能配谁」，不是「我配过谁」**。
    * 只在打开设置时取一次——它不会变，而进设置之前没人看得见它。
+   *
+   * **「打开设置」认 `设置在场`，不认 `view === "settings"`**（2026-09-28 作者撞的）：09-16 起设置默认开右边窄栏，
+   * `开设置栏` 还会把 view 切走——窄栏里这份清单从没被取过，一直是初始的空数组，
+   * 于是「从 pi 认识的里面挑（0）」外加一句「内置 provider 均已配置」：空的长得和「全配过了」一模一样。
    */
   const [knownProviders, setKnownProviders] = useState<{
     providers: string[]
@@ -1912,12 +1917,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }>({ providers: [] })
   useEffect(() => {
     // 设置屏要它；首启向导（没凭证、没跳过时）也要它——服务商下拉从这儿来
-    if (view !== "settings" && !(creds.configured.length === 0 && !跳过向导)) return
+    if (!设置在场 && !(creds.configured.length === 0 && !跳过向导)) return
     client
       .get<typeof knownProviders>("listKnownProviders", {})
       .then(setKnownProviders)
       .catch(fail)
-  }, [view, client, creds.configured.length, 跳过向导])
+  }, [设置在场, client, creds.configured.length, 跳过向导])
 
   /**
    * 删会话。**账本不动**——那句话要在按下之前就在屏幕上，

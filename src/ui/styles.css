@@ -3082,6 +3082,7 @@ pre {
 .model-menu,
 .weblink-menu,
 .slash-menu,
+.ws-pop,
 .sess-hover-card,
 .usage-tip,
 .turn-tick-summary {
@@ -3098,11 +3099,12 @@ pre {
 .agent-menu,
 .model-menu,
 .weblink-menu,
-.slash-menu {
+.slash-menu,
+.ws-pop {
   animation: dawn-pop 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 @media (prefers-reduced-motion: reduce) {
-  .menu, .row-menu, .attach-menu, .agent-menu, .model-menu, .weblink-menu, .slash-menu { animation: dawn-fade 120ms ease-out; }
+  .menu, .row-menu, .attach-menu, .agent-menu, .model-menu, .weblink-menu, .slash-menu, .ws-pop { animation: dawn-fade 120ms ease-out; }
 }
 /* 菜单项：同一个高度、同一个 hover 底（它们是「行」，不是「控件」） */
 .menu .btn,
@@ -3118,6 +3120,7 @@ pre {
 .attach-menu .btn:hover:not(:disabled),
 .agent-menu .btn:hover:not(:disabled),
 .slash-menu .btn:hover:not(:disabled),
+.ws-pop .btn:hover:not(:disabled),
 .model-menu .btn:hover:not(:disabled) {
   background: var(--dawn-row-hover);
 }
@@ -3525,7 +3528,7 @@ pre {
  * **无底色那条是关键**：有底色的 chip 看起来是「一个已经选中的标签」，
  * 没底色的看起来是「一个可以点开的说明」——后者才是它的意思。
  */
-.ws-chip-group { display: flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; }
+.ws-chip-group { position: relative; display: flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; }
 .ws-chip {
   display: inline-flex;
   align-items: center;
@@ -3547,6 +3550,39 @@ pre {
   /* 路径能让多少让多少，但**最多占这么宽**——2026-08-21 增强那颗按钮加进来之后，
      长路径会把右手边的模型 pill 顶到别的按钮上面去 */
   max-width: 14rem;
+}
+/**
+ * 点 chip 弹出的那张小卡（2026-09-28）：chip 上只写文件夹名，**整条绝对路径在这里**——第一行、只读、可选中。
+ * 外壳挂在 `.menu` 那一条共用的浮层上（见 `.menu, .row-menu, …`）；这里只管定位与内距。向上弹：输入卡贴着窗口底。
+ */
+.ws-pop {
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-2));
+  left: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dawn-space-1);
+  width: max-content;
+  min-width: 14rem;
+  max-width: min(32rem, calc(100vw - var(--dawn-space-8)));
+  padding: var(--dawn-space-2);
+  transform-origin: bottom left;
+}
+.ws-pop-path {
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  font-family: var(--dawn-font-mono);
+  font-size: var(--dawn-fs-meta);
+  color: var(--dawn-text-2);
+  text-align: left;
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
+}
+.ws-pop .btn.ws-pop-change {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 6px var(--dawn-space-2);
 }
 /** 「这是一段普通对话」：它是那个状态的**含义**，比 chip 再弱一档 */
 .ws-chip-note { color: var(--dawn-text-4); font-size: var(--dawn-fs-meta); white-space: nowrap; }

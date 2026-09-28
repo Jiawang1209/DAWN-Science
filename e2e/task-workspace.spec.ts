@@ -283,4 +283,36 @@ test.describe("选好目录之后", () => {
     await expect(chip).toBeVisible()
     await expect(chip).toBeEnabled()
   })
+
+  /**
+   * **chip 上只写文件夹名，整条路径点开就有**（2026-09-28 作者要的：*只显示选中文件夹的名字，省地方*）。
+   *
+   * 整条路径不能只剩悬停（本项目为「悬停才出现」被报过两次「没有这个功能」）：
+   * 读屏名字是整条路径，点开的小卡第一行也是；「另选文件夹…」在卡里，选错了照旧能换。
+   */
+  test("**chip 只写文件夹名；点开看得到整条路径，能另选**", async ({ dawn }) => {
+    const { page } = dawn
+    await page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ }).click()
+
+    const 底栏 = page.locator(".composer-card")
+    const 名 = 目标2.split(/[\\/]/).pop()!
+    const 标签 = 底栏.locator(".ws-chip-label").first()
+    await expect(标签).toHaveText(名)
+
+    const chip = 底栏.getByRole("button", { name: `工作目录：${目标2}` })
+    await expect(chip).toBeVisible()
+    await chip.click()
+    const 卡 = page.getByRole("dialog", { name: "工作目录" })
+    await expect(卡.locator(".ws-pop-path")).toHaveText(目标2)
+
+    // Esc 关得掉
+    await page.keyboard.press("Escape")
+    await expect(卡).toHaveCount(0)
+
+    // 「另选文件夹…」真去弹选择器；选完卡收起、chip 照旧写名字
+    await chip.click()
+    await 卡.getByRole("button", { name: "另选文件夹…" }).click()
+    await expect(卡).toHaveCount(0)
+    await expect(标签).toHaveText(名)
+  })
 })

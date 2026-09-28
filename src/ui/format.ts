@@ -77,6 +77,41 @@ export function 短路径(p: string, home?: string): string {
 }
 
 /**
+ * **工作目录那颗 chip 上写什么**（2026-09-28 作者要的：*只显示选中文件夹的名字，省地方*）。
+ *
+ * 只改**显示**——干活、`aria-label`、chip 弹出的那张小卡上用的都还是整条绝对路径。
+ *
+ * - 缺省写最后一段：`/Users/me/work/lung-study` → `lung-study`；末尾的斜杠不算一段；
+ *   Windows 的反斜杠一样认（`C:\x\y` → `y`）。
+ * - **撞名时写两段**：界面认得的另一个目录（`认得的`，即项目列表）最后一段相同，
+ *   只写一段就分不出在哪跑——改写 `…/project-a/data`。
+ * - 根、空串、只有盘符（`/`、`C:\`）没有「名字」，**原样写**：没有名字也好过空白。
+ * - 远端写法 `host:/path`：保留 `host:` 前缀再接名字（`gpu01:lung-study`）——
+ *   在哪台机器上跑与在哪个目录里跑同样要紧。单个字母加冒号是盘符，不算主机。
+ */
+export function 目录显示名(p: string, 认得的: readonly string[] = []): string {
+  const 拆 = (x: string) => {
+    const m = x.match(/^([^\s/\\:]{2,}):(?=[/\\~]|$)/)
+    const 前缀 = m ? `${m[1]}:` : ""
+    const 段 = x.slice(前缀.length).split(/[\\/]+/).filter(Boolean)
+    // 只剩一个盘符（`C:`）等于根
+    const 实段 = 段.length === 1 && /^[A-Za-z]:$/.test(段[0]!) ? [] : 段
+    return { 前缀, 段: 实段 }
+  }
+  const 我 = 拆(p)
+  if (我.段.length === 0) return p
+  const 名 = 我.段[我.段.length - 1]!
+  const 规整 = (x: { 前缀: string; 段: string[] }) => `${x.前缀}${x.段.join("/")}`
+  const 我的键 = 规整(我)
+  const 撞了 = 认得的.some((q) => {
+    const 它 = 拆(q)
+    return 它.段.length > 0 && 它.段[它.段.length - 1] === 名 && 规整(它) !== 我的键
+  })
+  const 显示 = 撞了 && 我.段.length >= 2 ? `…/${我.段.slice(-2).join("/")}` : 名
+  return `${我.前缀}${显示}`
+}
+
+/**
  * 路径的最后一段，用作项目名（T3-a）。
  *
  * **末尾的斜杠不算一段**：`~/work/rna-seq/` 与 `~/work/rna-seq` 是同一个地方，

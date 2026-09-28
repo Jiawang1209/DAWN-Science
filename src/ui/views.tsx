@@ -45,13 +45,13 @@ import { 定位命中, type 跳转目标 } from "../protocol/search-match.js"
 import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
-import { $跑着的会话, $未读, $artifacts, $cellCount, 是散的任务 } from "./state/catalog.js"
+import { $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
 import { AgentMarkdown } from "./markdown.js"
 import { AnsiText } from "./ansi-text.js"
 import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
-import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名 } from "./format.js"
+import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名, 目录显示名 } from "./format.js"
 import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
@@ -104,7 +104,7 @@ export function use现在(): number {
  *   - **没设**：「未设工作目录 · 这是一段普通对话」。
  *     **不设不是「缺了什么」**，它是一个有含义的状态，所以这句话说的是
  *     *不设意味着什么*，而不是催人去设。作者的定义就是这一句。
- *   - **设了**：写出路径，点一下能改。
+ *   - **设了**：写出文件夹名（2026-09-28 起不写整条路径），点一下弹出整条路径与「另选文件夹…」。
  *
  * **常驻，不做悬停才出现**：本项目已经为「悬停才出现的入口」被报过两次
  * 「没有这个功能」，而两次代码都是好的。
@@ -114,7 +114,7 @@ function WorkspaceEntry({
   onPick,
 }: {
   workspace?: string | undefined
-  /** 去弹原生目录选择器（设一个 / 换一个）。**不给就只显示，不画按钮** */
+  /** 去弹原生目录选择器（设一个 / 换一个）。**不给就只显示，不给「换」那一项** */
   onPick?: (() => void) | undefined
 }) {
   /**
@@ -124,58 +124,90 @@ function WorkspaceEntry({
    *
    * **弱一档是有意的**：它是「这句话会在哪儿执行」的注脚，
    * 不该跟正在写的那句话抢。
+   *
+   * **chip 上只写文件夹名**（2026-09-28 作者要的：*只显示选中文件夹的名字，省地方*）。
+   * 整条路径此前被省略号切成 `/var/folders/2t/y0qcl9r50cv…`——前半截谁都认得，要紧的那一段恰恰被切掉。
+   * 撞名（两个项目都叫 `data`）时写两段，规则在 `目录显示名`。**干活用的仍是整条绝对路径**，只改显示。
+   *
+   * **整条路径不靠悬停也够得着**（本项目「悬停才出现的东西必须另有一个入口」）：
+   *   - 可及名字（`aria-label`）是整条路径；
+   *   - 点 chip 弹出一张小卡，第一行就是整条路径（可选中复制），下面才是「另选文件夹…」。
+   * 没设目录时没有路径可看，点一下照旧直接去选。
    */
-  const 文字 = workspace ? 短路径(workspace) : t("选择工作目录")
-  if (!onPick) {
+  const 项目们 = useStore($projects)
+  const [开着, 设开着] = useState(false)
+  const 盒 = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    if (!开着) return
+    const 关 = (e: MouseEvent) => {
+      if (!盒.current?.contains(e.target as Node)) 设开着(false)
+    }
+    document.addEventListener("mousedown", 关)
+    return () => document.removeEventListener("mousedown", 关)
+  }, [开着])
+  if (!workspace) {
+    if (!onPick) return null
     return (
-      <span className="ws-chip" data-ready={workspace ? "1" : undefined} title={workspace ?? undefined}>
-        <文件夹图标 />
-        <span className="ws-chip-label">{文字}</span>
+      <span className="ws-chip-group">
+        <Button variant="ghost" size="sm" className="ws-chip" onClick={onPick}>
+          <文件夹图标 />
+          <span className="ws-chip-label">{t("选择工作目录")}</span>
+          <下拉图标 />
+        </Button>
       </span>
     )
   }
+  const 认得的 = 项目们.filter((p) => !p.temporary).map((p) => p.workspace)
+  const 文字 = 目录显示名(workspace, 认得的)
   return (
-    <span className="ws-chip-group">
+    <span
+      className="ws-chip-group"
+      ref={盒}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && 开着) {
+          e.stopPropagation()
+          设开着(false)
+        }
+      }}
+    >
       <Button
         variant="ghost"
         size="sm"
         className="ws-chip"
-        data-ready={workspace ? "1" : undefined}
+        data-ready="1"
         /**
-         * **那句话从这颗按钮上摘掉了**（2026-08-13）。
-         *
-         * 它此前挂在原生 `title` 上（设计契约明令禁止：无样式、约 500ms
-         * 系统延迟、读屏读不到）。我第一反应是改成 `aria-label`——**错的**：
-         * `aria-label` 会**盖掉可见文案**作为可及名字，于是这颗按钮
-         * 不再叫「选择工作目录」了，五条 e2e 当场红。
-         *
-         * 正确的答案是它压根不该在这儿：
-         *   - 没设路径时，那句「这是一段普通对话」**是作者早就让我删掉的**
-         *     （*「显示『这是一段普通对话』感觉就很无聊」*）——
-         *     chip 自己写着「选择工作目录」，那已经说明没设了；
-         *   - 设了路径时，**完整路径确实有用**，但它属于那段文字本身，
-         *     所以挂在里面那个 `<span>` 上（span 不是按钮，不受那条规则约束）。
+         * 名字是整条路径（2026-09-28）：眼睛看到的文件夹名是它的最后一段，
+         * 所以「读屏念到的包含眼睛看到的」（WCAG 2.5.3）仍然成立。
+         * **不挂 `title`**：设计契约禁止按钮上的原生 title（无样式、约 500ms 延迟、读屏读不到）。
          */
-        onClick={onPick}
+        aria-label={tf("工作目录：{0}", workspace)}
+        aria-haspopup="dialog"
+        aria-expanded={开着}
+        onClick={() => 设开着((v) => !v)}
       >
         <文件夹图标 />
-        {/* 全路径给眼睛：chip 上显示的是缩过的 `短路径` */}
-        <span className="ws-chip-label" title={workspace ?? undefined}>
-          {文字}
-        </span>
+        <span className="ws-chip-label">{文字}</span>
         <下拉图标 />
       </Button>
-      {/**
-        * **不在这里写「这是一段普通对话」**（2026-08-12 撤掉）。
-        *
-        * 我先前把它常驻在 chip 旁边，理由是「说清不设意味着什么」。
-        * 作者：*「显示『这是一段普通对话』感觉就很无聊，workbuddy 里面就不会有。」*
-        *
-        * 他是对的，而我把两件事搞混了：**「不设意味着什么」是一次性的知识，
-        * 不是一个需要每时每刻盯着的状态。** 一句永远在那儿、永远不变的话
-        * 不提供信息，只占地方——它和「未选择」那种占位符是同一类东西。
-        * chip 自己写着「选择工作目录」，那已经说明它还没设了。
-        */}
+      {开着 ? (
+        <div className="ws-pop" role="dialog" aria-label={t("工作目录")}>
+          {/* 只读、可选中：整条绝对路径就是这张卡存在的理由 */}
+          <div className="ws-pop-path">{workspace}</div>
+          {onPick ? (
+            <Button
+              variant="ghost"
+              size="inline"
+              className="ws-pop-change"
+              onClick={() => {
+                设开着(false)
+                onPick()
+              }}
+            >
+              {t("另选文件夹…")}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </span>
   )
 }

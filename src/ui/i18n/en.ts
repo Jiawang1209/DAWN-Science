@@ -307,6 +307,8 @@ export const EN: Readonly<Record<string, string>> = {
   "全选": "Select all",
   "全不选": "Clear",
   "选择工作目录": "Choose folder",
+  "工作目录：{0}": "Working folder: {0}",
+  "另选文件夹…": "Choose another folder…",
   "新任务": "Untitled task",
   "新会话": "Untitled chat",
   "新对话": "Untitled chat",

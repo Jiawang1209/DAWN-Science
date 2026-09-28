@@ -8,6 +8,27 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 模型服务三件：添加时「测试连通」、保存后 key 确定不对就弹出来、只填 key 的那家移除即时生效（协议 8.7；分支 `settings-column-fetch`）
+
+- **Type**: feat + fix
+- **Motivation**: 作者一次提了三件：*「移除模型按钮，也不能立刻移除」*、*「添加模型的时候，其实应该有一个测试按钮，测试 API 是否是通的」*、
+  *「添加完 API 之后，报错了还要弹出来」*（问过：是「验不过时要弹出来」；测试按钮放「添加框里，保存前测」）。
+- **What**:
+  - **移除**（根因）：填 key 时 `确保配过key的都能用` 在内存里自动造 agent，`deleteCredential` 只删 key 不收回——「已配置」把有 agent 在用的 provider 也算进去，
+    这一行要重启才消失（写过连接设置的那条路没事：保存连接会整份重读配置）。现在记下自动造的**对象本身**，删 key 且没有连接设置、且挂着的仍是它时收走；
+    `providers.yaml` 手写的同名 agent 不动。
+  - **测试连通**：新只读操作 `testProviderKey`（协议 8.7）。后端与保存后那次自动验证（B9）**同一句话、同一超时、同一套归类**（`验一次key` / `验证结果条目`），只是 key 用填着的、不落盘。
+    运行时 `NativeRuntime.试一次key`：pi 认识的走 `ModelRuntime.completeSimple(model, ctx, { apiKey })`（pi 的 `resolveProviderAuth` 见覆盖就用，不读不写凭证，读源码核实）；
+    自定义端点还没进运行时，用 `@earendil-works/pi-ai/compat` 的 `completeSimple` 照表单现拼 `Model`。放弃了自己 `fetch`（测的是「我们以为的请求」）与 `setRuntimeApiKey`（运行时全局、会串进正在跑的会话）。
+    界面：两个表单各一颗「测试连通」（不叫「测试」——是「测试视觉模型」的子串），结论在按钮旁：通了带模型名与耗时、key 不对红、没能判定中性；输入一改旧结论撤掉，迟到的回话不盖新的。
+  - **弹出来**：`confirm.tsx` 新 `NoticeDialog`（与确认框同一副外壳，一颗「知道了」、`role=alertdialog`、Esc / 点框外关）；`onSet` 重取 provider 之后，
+    `key没通过` 认出 `kind: "key"` 且非 `soft` 的那条就弹。**没能判定（超时、连不上）不弹**——断网时弹成报错，人会去改一把好 key；它照旧在行下写中性的一句。
+  - 假服务器：key 里带 `bad` 的那一问 key 验证回 401「Incorrect API key provided」（dev:mock 与 e2e 同一处，规则 ①）。
+- **Impact**: 协议 8.6 → 8.7（只加操作，minor）。
+- **Verification**: 单测 `credential-agent.test.ts` +2（收走自动造的 / 手写的不动；前者改前红）、`test-provider-key.test.ts` 7 条（用填着的 key 且钥匙串一字未写、自定义端点原样带、401 硬 / 超时软、挑不出模型与没运行时如实说）。
+  `e2e/provider-test.spec.ts` 6 条：坏 key 红 → 改 key 旧结论撤 → 好 key 通了；没填 key 当场说、不发请求；存坏 key 弹框、「知道了」关、行下红字仍在；存好 key 不弹；
+  只填 key 的 groq 移除即下（**反向验过**：拿掉后端那三行重建即红）；自定义端点测通 / 测坏。`providers` / `base-url` 同跑 14/14 两遍。vitest 313 文件 3949 过 / 10 跳；全套 e2e 583 过 / 1 跳、0 败。
+
 ### 2026-09-28 — 从设置窄栏进「添加模型服务」可挑 0 个、还说「均已配置」：清单只在整页设置时取（分支 `settings-column-fetch`）
 
 - **Type**: fix

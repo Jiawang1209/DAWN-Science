@@ -139,3 +139,38 @@ describe("两次 getProviders 叠着跑（B8 的偶发版）", () => {
     expect(b.unusable, "后起的那次").toEqual([一条])
   })
 })
+
+/**
+ * **移除 key，这一家立刻从「已配置」里下去**（2026-09-28 作者：「移除模型按钮，也不能立刻移除」）。
+ *
+ * 填 key 时 `确保配过key的都能用` 在内存里自动造一个 agent；`deleteCredential` 只删 key、从不收回它，
+ * 而设置里「已配置」把「有 agent 在用的 provider」也算进去——于是这一行一直挂着，重启才消失。
+ * 只收**自动造的那一个**：`providers.yaml` 里手写的 agent 是人的声明，不归这里管。
+ */
+describe("移除 key 之后", () => {
+  type 带providers = 返回 & { providers: { providerId: string }[] }
+  it("自动造的 agent 一起收走，getProviders 里不再有这一家", async () => {
+    const { backend, 取 } = 起一套(async () => ["deepseek-flash"])
+    const 前 = (await 取()) as 带providers
+    expect(前.agents.map((a) => a.agentId)).toEqual(["deepseek"])
+    expect(前.providers.map((p) => p.providerId)).toEqual(["deepseek"])
+
+    await backend.deleteCredential({ providerId: "deepseek" })
+    const 后 = (await 取()) as 带providers
+    expect(后.agents).toEqual([])
+    expect(后.providers).toEqual([])
+  })
+
+  it("配置里手写的同名 agent 不动", async () => {
+    const { backend, registry, 取 } = 起一套(async () => ["deepseek-flash"])
+    ;(registry.agents as Record<string, unknown>)["deepseek"] = {
+      kind: "native",
+      provider: "deepseek",
+      model: "deepseek-v4-pro",
+      capabilities: ["chat", "exec"],
+    }
+    await backend.deleteCredential({ providerId: "deepseek" })
+    const 后 = await 取()
+    expect(后.agents.map((a) => a.agentId)).toEqual(["deepseek"])
+  })
+})

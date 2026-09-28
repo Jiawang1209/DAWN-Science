@@ -1299,6 +1299,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.takePendingOpenSession ? { takePendingOpenSession: opts.takePendingOpenSession } : {}),
     // 提示词增强：用会话此刻的模型问一句
     askOnce: (目标, req) => nativeRuntime.问一句(目标, req),
+    probeKey: (目标, req) => nativeRuntime.试一次key(目标, req),
     /** 归档 / 取消归档各落一条 Run（7.18），挂在那段会话自己的项目下 */
     记一次会话: (event, projectId, sessionId) => {
       if (!projectId) return

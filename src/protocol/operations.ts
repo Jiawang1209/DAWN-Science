@@ -815,6 +815,41 @@ export const OPERATIONS = {
   },
 
   /**
+   * 「测试」：**用填着、还没保存的 key 真发一次**（协议 8.7，2026-09-28 作者要的：*「添加模型的时候，应该有一个测试按钮，测试 API 是否是通的」*）。
+   *
+   * 与保存后那次自动验证（B9，`setCredential` 里）同一句话、同一个 1 token、同一套归类——只是 key 不落盘：
+   * pi 认识的那几家走运行时的 `apiKey` 覆盖；自定义端点还没进运行时，照表单现拼一个模型直接发。
+   * 自定义端点给 `baseUrl`（`api` 缺省 `openai-completions`）与 `model`；pi 认识的不给 `model` 时挑目录里第一个——与造 agent 时挑的是同一个。
+   */
+  testProviderKey: {
+    request: z
+      .object({
+        providerId: z.string().min(1),
+        secret: z.string().min(1),
+        baseUrl: z.string().min(1).optional(),
+        api: z.string().min(1).optional(),
+        model: z.string().min(1).optional(),
+      })
+      .strict(),
+    response: z.discriminatedUnion("ok", [
+      z.object({ ok: z.literal(true), model: z.string().min(1), ms: z.int().min(0) }).strict(),
+      z
+        .object({
+          ok: z.literal(false),
+          /** 「没能判定」（超时、连不上、5xx、认不出）而不是「key 不对」——界面用中性色，不说成错误 */
+          soft: z.boolean(),
+          /** 渲染好的中文 */
+          message: z.string().min(1),
+          /** 同一句话的 msgid 与 args，界面按当前语言 `tf` */
+          i18n: FaultI18nSchema.optional(),
+        })
+        .strict(),
+    ]),
+    /** 出网、不改任何状态——界面别在轮询里调它 */
+    mutating: false,
+  },
+
+  /**
    * 加一个 ACP 适配器（2026-08-19）。
    *
    * 作者：*「你现在要在选择模型的地方加上我们之前开发 ACP 的东西，

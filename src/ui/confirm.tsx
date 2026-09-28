@@ -110,3 +110,43 @@ export function ConfirmDialog({
     </div>
   )
 }
+
+/**
+ * **只告知、不让选**的那种框（2026-09-28）：保存 key 后验证没过，作者要它*「弹出来」*。
+ *
+ * 与上面的 `ConfirmDialog` 同一副外壳，但只有一颗「知道了」、焦点就在它上面——这里没有危险动作，
+ * 回车顺手一按关掉正是想要的。Esc、点框外也关（2026-08-23 作者：「退不出去了」）。
+ */
+export function NoticeDialog({
+  notice,
+  onClose,
+}: {
+  notice: { title: string; detail: React.ReactNode } | undefined
+  onClose: () => void
+}) {
+  if (!notice) return null
+  return (
+    <div
+      className="confirm-backdrop"
+      role="alertdialog"
+      aria-modal="true"
+      aria-label={notice.title}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose()
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="confirm">
+        <h2 className="confirm-title">{notice.title}</h2>
+        <div className="confirm-detail">{notice.detail}</div>
+        <div className="confirm-actions">
+          <Button autoFocus variant="primary" size="sm" onClick={onClose}>
+            {t("知道了")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

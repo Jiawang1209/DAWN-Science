@@ -53,6 +53,8 @@ import {
   WorkspacePanel,
   type KernelRow,
   type SettingsSection,
+  type 测试回话,
+  key没通过,
 } from "./Settings.js"
 import { SettingsColumn } from "./settings-column.js"
 import { DesktopNotifyPanel, type 桌面通知回执 } from "./desktop-notify-panel.js"
@@ -85,7 +87,7 @@ import { ScheduleView, type ScheduleActions } from "./schedule.js"
 import { setSlashItems, 退回输入框, type SlashItem, type 退回的图 } from "./state/view.js"
 import { 到坞里问 } from "./state/ask-in-dock.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
-import { ConfirmDialog, type ConfirmRequest } from "./confirm.js"
+import { ConfirmDialog, NoticeDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
@@ -1369,6 +1371,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /* ── 删除（2026-08-10） ──────────────────────────────────────── */
 
   const [confirming, setConfirming] = useState<ConfirmRequest | undefined>(undefined)
+  /** 保存 key 后验证确定没过——弹出来（2026-09-28 作者要的）；只告知，一颗「知道了」 */
+  const [key没过, 设key没过] = useState<{ title: string; detail: string } | undefined>(undefined)
 
   /**
    * ── 远端连接（②-B · R3/R4）───────────────────────────────────────
@@ -4456,6 +4460,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         .catch(fail)
     }
     {...(knownProviders.problem ? { knownProblem: knownProviders.problem } : {})}
+    // 「测试连通」（协议 8.7）：只问一句、不落盘；失败是回话的一部分（ok: false），不走 `fail`
+    onTest={(req) => client.get<测试回话>("testProviderKey", req)}
     unusable={providers.unusable}
     credentials={creds}
     onSet={(id, secret) =>
@@ -4469,6 +4475,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 「设置完还是看不到 kimi」。
          */
         .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+        /**
+         * **验证确定没过就弹出来**（2026-09-28 作者：*「添加完 API 之后，报错了还要弹出来」*）。
+         * 此前只在那一行底下写一句红字，框一关、行一收就看不见了。「没能判定」（超时、连不上）不弹——见 `key没通过`。
+         */
+        .then(() => {
+          const 话 = key没通过($providers.get().unusable, id)
+          if (话) 设key没过({ title: tf("{0} 的 key 没通过验证", id), detail: 话 })
+        })
         .catch(fail)
     }
     onDelete={(id) =>
@@ -4835,6 +4849,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
       <ConfirmDialog request={confirming} onCancel={() => setConfirming(undefined)} />
+      <NoticeDialog notice={key没过} onClose={() => 设key没过(undefined)} />
 
       {/**
         * 添加 / 编辑一台服务器（②-B · R3）。

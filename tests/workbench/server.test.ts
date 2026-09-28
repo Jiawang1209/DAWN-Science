@@ -72,6 +72,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     getVision: async () => ({ enabled: false, api: "openai-completions", hasSecret: false, ready: false }),
     saveVision: async () => ({ ready: false }),
     testVision: async () => ({ ok: false, text: "桩" }),
+    testProviderKey: async () => ({ ok: false, soft: true, message: "桩" }),
     getDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     setDownloadDir: async () => ({ path: "/下载", isDefault: true }),
     startDownload: async () => ({ transferId: "t1", name: "x", target: "/下载/x" }),

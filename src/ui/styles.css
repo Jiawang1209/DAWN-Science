@@ -3321,6 +3321,10 @@ pre {
 .svc-line select.control { flex: 0 0 14rem; }
 
 .svc-actions { display: flex; align-items: center; gap: var(--dawn-space-2); }
+/* 「测试连通」（2026-09-28）：按钮与结论一行，放不下就折——结论可能是一整句端点原话。通了用固定的绿（对错不跟主题色，见 2026-08-23 主题色） */
+.svc-test { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
+.svc-test > .caveat, .svc-test > .hint { margin: 0; }
+.svc-test-ok { color: var(--dawn-success); font-size: var(--dawn-fs-meta); }
 
 /* 添加入口：**一个按钮**，二选一在点开之后 */
 .svc-add-entry { margin-top: var(--dawn-space-2); }

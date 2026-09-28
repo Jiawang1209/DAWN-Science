@@ -435,9 +435,11 @@ describe("协议版本 · 5.5", () => {
    * **8.5（2026-09-27）**：会话全文搜索——加只读操作 `searchSessionContent`。
    *
    * **8.6（2026-09-27）**：先出方案——转录条目 `plan`、操作 `answerPlan`。
+   *
+   * **8.7（2026-09-28）**：添加模型服务时的「测试」——只读操作 `testProviderKey`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.6")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.7")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

@@ -27,7 +27,7 @@
  * 而左边已经有一条应用侧栏了——**再叠一条会让人不知道自己在哪一层**。
  * 颜色与类名同样不取（那是它的表达，不是事实）。
  */
-import { useEffect, useState, Fragment } from "react"
+import { useEffect, useRef, useState, Fragment } from "react"
 import { 在组词 } from "./ime.js"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
@@ -796,6 +796,7 @@ export function SettingsPanel({
   anthropicProtocol,
   connections,
   onSaveConnection,
+  onTest,
   credentials,
   onSet,
   onDelete,
@@ -825,6 +826,8 @@ export function SettingsPanel({
   /** 全量替换一个 provider 的连接设置。**三样全空 = 取消覆盖** */
   /** 回传 promise 的话，「添加自定义端点」会等它落地再存 key（B9：存 key 当场去端点验一句，端点得先写下） */
   onSaveConnection: (providerId: string, conn: Connection) => void | Promise<unknown>
+  /** 「测试连通」：用填着、还没保存的 key 问一句（协议 8.7）。不给就不画那颗按钮 */
+  onTest?: 测试 | undefined
   credentials: CredentialState
   onSet: (providerId: string, secret: string) => void
   onDelete: (providerId: string) => void
@@ -910,6 +913,7 @@ export function SettingsPanel({
       <添加模型服务
         可挑={known.filter((id) => !已配置.includes(id))}
         needsBaseUrl={needsBaseUrl}
+        onTest={onTest}
         onAddKnown={(id, secret) => {
           onSet(id, secret)
           set展开(id)
@@ -1277,16 +1281,100 @@ const 名字规则 = /^[a-z0-9][a-z0-9-]{0,31}$/
  *   - pi 认识它 → 地址、协议、模型目录它都有，**只缺一把钥匙**
  *   - pi 不认识 → 四样都得你说，尤其是模型清单：**pi 猜不出你的端点上跑着什么**
  */
+/**
+ * 保存 key 之后那次自动验证（B9）**确定是 key 不对**时的那句话；否则 `undefined`（2026-09-28，作者要它弹出来）。
+ * 只认 `kind: "key"` 且不是 `soft`：「没能判定」（超时、连不上）弹成报错，人会去改一把好 key——那一种照旧只在行下写中性的一句。
+ */
+export function key没通过(
+  unusable: readonly { providerId: string; reason: string; soft?: boolean | undefined; kind?: string | undefined; i18n?: { msgid: string; args: (string | number)[] } | undefined }[] | undefined,
+  providerId: string,
+): string | undefined {
+  const u = unusable?.find((x) => x.providerId === providerId && x.kind === "key" && !x.soft)
+  return u ? (u.i18n ? tf(u.i18n.msgid, ...u.i18n.args) : u.reason) : undefined
+}
+
+/** 「测试连通」那一问的请求与回话（协议 8.7 `testProviderKey`，2026-09-28） */
+export type 测试请求 = { providerId: string; secret: string; baseUrl?: string; api?: string; model?: string }
+export type 测试回话 =
+  | { ok: true; model: string; ms: number }
+  | { ok: false; soft: boolean; message: string; i18n?: { msgid: string; args: (string | number)[] } | undefined }
+export type 测试 = (req: 测试请求) => Promise<测试回话>
+
+/**
+ * **「测试连通」**（2026-09-28 作者要的：*「添加模型的时候，应该有一个测试按钮，测试 API 是否是通的」*）。
+ *
+ * 用填着、还没保存的 key 真发一次 1 token——与保存后那次自动验证同一句话、同一套归类，只是不落盘。
+ * 结果就写在按钮旁边：通了带模型名与耗时；key 不对是红的 `.caveat`；没能判定（超时、连不上）是中性的 `.hint`——
+ * 「没能判定」说成错误，人会去改一把好 key（2026-09-01 终审 F7 同一个理由）。
+ *
+ * `指纹` 是这一问依赖的输入拼起来的：**输入一改，旧结论就撤掉**——不然屏幕上那句「通了」说的是上一把 key。
+ * 名字不叫「测试」：它是「测试视觉模型」的子串，按名字找按钮会指向两个东西（设计契约）。
+ */
+function 测试连通({ 取请求, 指纹, onTest }: { 取请求: () => 测试请求 | string; 指纹: string; onTest: 测试 }) {
+  const [在测, set在测] = useState(false)
+  const [结果, set结果] = useState<测试回话 | { 缺: string } | undefined>(undefined)
+  // 第几问：输入改了或又点了一次，上一问迟到的回话不许盖掉新的
+  const 这一问 = useRef(0)
+  useEffect(() => {
+    这一问.current += 1
+    set结果(undefined)
+    set在测(false)
+  }, [指纹])
+  return (
+    <div className="svc-test">
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        disabled={在测}
+        onClick={() => {
+          const req = 取请求()
+          if (typeof req === "string") return set结果({ 缺: req })
+          const 第几问 = ++这一问.current
+          set在测(true)
+          set结果(undefined)
+          onTest(req)
+            .then((r) => {
+              if (第几问 === 这一问.current) set结果(r)
+            })
+            .catch((e: unknown) => {
+              if (第几问 === 这一问.current) set结果({ ok: false, soft: true, message: e instanceof Error ? e.message : String(e) })
+            })
+            .finally(() => {
+              if (第几问 === 这一问.current) set在测(false)
+            })
+        }}
+      >
+        {在测 ? t("正在测…") : t("测试连通")}
+      </Button>
+      {结果 === undefined ? null : "缺" in 结果 ? (
+        <span className="caveat" role="status">⚠ {结果.缺}</span>
+      ) : 结果.ok ? (
+        <span className="svc-test-ok" role="status">
+          {tf("✓ 通了 · {0} · {1} 秒", 结果.model, (结果.ms / 1000).toFixed(1))}
+        </span>
+      ) : (
+        <span className={结果.soft ? "hint" : "caveat"} role="status">
+          {结果.soft ? "" : "⚠ "}
+          {结果.i18n ? tf(结果.i18n.msgid, ...结果.i18n.args) : 结果.message}
+        </span>
+      )}
+    </div>
+  )
+}
+
 function 添加模型服务({
   可挑,
   needsBaseUrl,
   onAddKnown,
   onAddCustom,
+  onTest,
 }: {
   可挑: string[]
   needsBaseUrl?: readonly string[] | undefined
   onAddKnown: (providerId: string, secret: string) => void
   onAddCustom: (providerId: string, conn: Connection, secret: string) => void
+  onTest?: 测试 | undefined
 }) {
   const [开, set开] = useState(false)
   const [路, set路] = useState<"pi" | "自定义">("pi")
@@ -1363,6 +1451,7 @@ function 添加模型服务({
           <从列表里挑
             可挑={可挑}
             needsBaseUrl={needsBaseUrl}
+            onTest={onTest}
             onAdd={(id, secret) => {
               onAddKnown(id, secret)
               set开(false)
@@ -1370,6 +1459,7 @@ function 添加模型服务({
           />
         ) : (
           <自定义端点
+            onTest={onTest}
             onAdd={(id, conn, secret) => {
               onAddCustom(id, conn, secret)
               set开(false)
@@ -1386,10 +1476,12 @@ function 从列表里挑({
   可挑,
   needsBaseUrl,
   onAdd,
+  onTest,
 }: {
   可挑: string[]
   needsBaseUrl?: readonly string[] | undefined
   onAdd: (providerId: string, secret: string) => void
+  onTest?: 测试 | undefined
 }) {
   const [filter, setFilter] = useState("")
   const [选中, set选中] = useState("")
@@ -1460,6 +1552,13 @@ function 从列表里挑({
         />
       </字段>
       {问题 ? <p className="caveat">⚠ {问题}</p> : null}
+      {onTest ? (
+        <测试连通
+          指纹={`${当前}\u0000${key}`}
+          onTest={onTest}
+          取请求={() => (!当前 ? t("先挑一个 provider") : !key.trim() ? t("需要填 key。") : { providerId: 当前, secret: key.trim() })}
+        />
+      ) : null}
       <div className="svc-actions">
         {/* **不叫「添加」**：那两个字是「＋ 添加模型服务」「＋ 添加服务器」的
             一部分，按名字找按钮时会同时指向三个东西——屏幕阅读器与测试都一样 */}
@@ -1479,8 +1578,10 @@ function 从列表里挑({
  */
 function 自定义端点({
   onAdd,
+  onTest,
 }: {
   onAdd: (providerId: string, conn: Connection, secret: string) => void
+  onTest?: 测试 | undefined
 }) {
   const [id, setId] = useState("")
   const [baseUrl, setBaseUrl] = useState("")
@@ -1596,6 +1697,23 @@ function 自定义端点({
         />
       </字段>
       {问题 ? <p className="caveat">⚠ {问题}</p> : null}
+      {onTest ? (
+        <测试连通
+          指纹={[id, baseUrl, api, models, key].join("\u0000")}
+          onTest={onTest}
+          取请求={() => {
+            // 与「加进来」同一套前置检查：缺什么就说什么，不发一个注定失败的请求
+            const 名 = id.trim()
+            if (!名字规则.test(名)) return t("名字只能用小写字母、数字和连字符，且不超过 32 个字符")
+            if (!baseUrl.trim()) return t("要填端点地址——pi 不认识这个服务，猜不出它在哪")
+            const conn = 连接({ baseUrl, api, models })
+            const 第一个 = conn.models?.[0]
+            if (!第一个) return t("要填至少一个模型 id——pi 猜不出你的端点上跑着什么")
+            if (!key.trim()) return t("需要填 key；本地端点可填任意值。")
+            return { providerId: 名, secret: key.trim(), baseUrl: conn.baseUrl ?? baseUrl.trim(), ...(conn.api ? { api: conn.api } : {}), model: 第一个 }
+          }}
+        />
+      ) : null}
       <div className="svc-actions">
         {/* **不叫「添加」**：那两个字是「＋ 添加模型服务」「＋ 添加服务器」的
             一部分，按名字找按钮时会同时指向三个东西——屏幕阅读器与测试都一样 */}

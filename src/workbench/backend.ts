@@ -299,6 +299,15 @@ export interface WorkbenchBackendOptions {
     req: { system?: string; user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
   ) => Promise<{ text: string; model: string }>
   /**
+   * 用**给定的 key**问一句（「测试」按钮，协议 8.7，2026-09-28）。就是 `NativeRuntime.试一次key`。
+   * 给 `baseUrl` = 自定义端点（还没进运行时，照这几样现拼一个模型）；不给 = pi 认识的那家，key 走运行时的 `apiKey` 覆盖。
+   * **不落盘**：钥匙串、配置一样都不碰。不给 = 这次运行没有 native 运行时，`testProviderKey` 如实说测不了。
+   */
+  probeKey?: (
+    目标: { provider: string; model: string; apiKey: string; baseUrl?: string; api?: string },
+    req: { user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+  ) => Promise<{ text: string; model: string }>
+  /**
    * 填 key 时那一次验证最多等多久（B9，2026-09-01）。缺省 8 秒；测试注入一个小的。
    * 到点归 `soft`（没能判定），保存本身早已成功。
    */
@@ -524,7 +533,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
-  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, memory, keyCheckTimeoutMs = 8_000 } = opts
+  const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
 
   /** 记忆没装配就如实拒（与 scratchRoot 同一条：不猜路径、不静默降级） */
   const 要记忆 = () => {
@@ -1085,6 +1094,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 先起的那次记完理由等着显示名，后起的那次进来一清，先起的那次醒来端出去的就是 `unusable: []`——
    * 它要是最后一个落地，向导的门就开了、也没人再问——B8 又回来了，只是变成偶发。
    */
+  /**
+   * 下面自动造的那些 agent，**记对象本身**（2026-09-28）：移除 key 时只收自己造的。
+   * 按对象比而不按名字：配置重读（`setProviderConnection` 等）会把 `registry.agents` 整份换掉，
+   * 那时同名的可能已是 `providers.yaml` 里手写的——那是人的声明，不归这里收。
+   */
+  const 自动造的 = new Map<string, unknown>()
   async function 确保配过key的都能用(): Promise<Map<string, FaultI18n>> {
     // 存 msgid 与 args 而不是渲染好的句子：界面按当前语言 `tf`，端出去时再渲染一份中文 `reason` 给旧读者（B15）
     const 建不出agent的理由 = new Map<string, FaultI18n>()
@@ -1134,6 +1149,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         model,
         capabilities: ["chat", "exec"],
       }
+      自动造的.set(providerId, registry.agents[providerId])
     }
     return 建不出agent的理由
   }
@@ -2032,10 +2048,47 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
+    /**
+     * 「测试」（协议 8.7）：与上面 `setCredential` 那次自动验证**同一句话、同一个超时、同一套归类**——只是 key 用填着的、不落盘。
+     * 一件事只有一种判法：测试说通了、保存后却说 key 不对，那两处必有一处在撒谎。
+     */
+    testProviderKey: async ({ providerId, secret, baseUrl, api, model }) => {
+      const 不通 = (i18n: FaultI18n, soft: boolean) => ({ ok: false as const, soft, message: 渲染i18n(i18n.msgid, i18n.args), i18n })
+      if (!probeKey) return 不通(i18n消息("这次运行没有模型运行时，测不了——保存后发一句试试"), true)
+      const 自定义 = baseUrl !== undefined
+      const 模型 = model ?? (自定义 ? undefined : (await models?.available(providerId).catch((): string[] => []))?.[0])
+      if (!模型) {
+        return 不通(
+          自定义 ? i18n消息("要填至少一个模型 id 才能测") : i18n消息("模型目录里没有 {0} 的模型，挑不出一个来测", providerId),
+          false,
+        )
+      }
+      const 目标 = {
+        provider: providerId,
+        model: 模型,
+        apiKey: secret,
+        ...(自定义 ? { baseUrl, api: api ?? "openai-completions" } : {}),
+      }
+      const 起 = Date.now()
+      const r = await 验一次key((_, req) => probeKey(目标, req), { provider: providerId, model: 模型 }, keyCheckTimeoutMs)
+      if (r.kind === "ok") return { ok: true as const, model: 模型, ms: Date.now() - 起 }
+      const 条 = 验证结果条目(providerId, r)!
+      return 不通(条.i18n, 条.soft)
+    },
+
     deleteCredential: async ({ providerId }) => {
       credentials.delete(providerId)
       invalidateCredentials?.(providerId)
       key验证结果.delete(providerId)
+      /**
+       * **key 没了、也没写连接设置，自动造的那个 agent 一起收走**（2026-09-28 作者：「移除模型按钮，也不能立刻移除」）。
+       * 不收的话它留在内存里，设置里「已配置」把有 agent 在用的 provider 也算进去——这一行要重启才消失。
+       * 写过连接设置的（自建端点不要 key）照旧留着：它的依据还在。
+       */
+      if (!registry.providers?.[providerId] && registry.agents[providerId] === 自动造的.get(providerId)) {
+        delete registry.agents[providerId]
+      }
+      自动造的.delete(providerId)
       return {}
     },
 

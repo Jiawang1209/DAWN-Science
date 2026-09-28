@@ -151,6 +151,7 @@ function 跑Cox工具(body) {
  * 桌面通知有三种时刻：做完、出错、等你点头。做完随便哪句都行；另两种此前只有夹具级的旋钮
  * （`failStatus` 让整台服务器都失败、`toolCall` 要写进用例）——**`dev:mock` 里人演不出来**，e2e 也只能整段会话都失败。
  * - 「演一次失败」→ 这一问回 401（pi 不重试 4xx），会话里出「模型调用失败：…」，桌面通知弹「出错了」；
+ * - key 里带 `bad` 的那把（2026-09-28，「测试」按钮）→ key 验证那一问回 401「Incorrect API key provided」；对话请求照常。
  * - 「演一次权限」→ 先说一句、再调一条要联网的 bash：`curl` 打本机 9 号端口，拒连立刻返回、不出本机。
  *   「请求批准」档下门会弹权限卡；放行了也只是一次失败的本机连接。
  * 只看**最后一条用户话**；拿到工具结果之后那一问最后一条是 `tool`，不循环。
@@ -347,6 +348,14 @@ export function startMockInferenceServer(opts = {}) {
       // **整句相等**才是验证（2026-09-01 终审 F6）：`includes` 会把一句提到「DAWN key check」的对话也劫走
       const 是key验证 = 最后一句.trim() === KEY_CHECK_PROMPT
       ;(是key验证 ? keyChecks : requests).push({ url: req.url, body })
+
+      // 演一把错的 key（「测试」按钮，协议 8.7，2026-09-28）：只管 key 验证那一问——key 里带 `bad` 就 401，
+      // 与真 OpenAI 同一句原话。对话请求不受影响（那条路上的失败另有「演一次失败」）。dev:mock 与 e2e 共用这一处
+      if (是key验证 && /bad/i.test(String(req.headers["authorization"] ?? ""))) {
+        res.writeHead(401, { "content-type": "application/json" })
+        res.end(JSON.stringify({ error: { message: "Incorrect API key provided", type: "invalid_request_error", code: "invalid_api_key" } }))
+        return
+      }
 
       // 演一次失败（桌面通知，2026-09-27）：只这一问 401，会话里其它问照常。
       // 摘要请求不算——它的 user 那条装着整段对话原文，里面的「演一次失败」是被摘要的话

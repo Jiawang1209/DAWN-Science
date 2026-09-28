@@ -87,6 +87,7 @@ import { 出方案工具名, 看数据工具名, 方案文件名 } from "../prot
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore, ThinkingLevel } from "@earendil-works/pi-ai"
+import { completeSimple as 直接问 } from "@earendil-works/pi-ai/compat"
 import type {
   AgentEvent,
   AgentRuntime,
@@ -2733,6 +2734,56 @@ ${描述}`
       .map((c) => c.text)
       .join("")
     return { text, model: `${model.provider}/${model.id}` }
+  }
+
+  /**
+   * **用给定的 key 问一句，不落盘**（「测试」按钮，协议 8.7，2026-09-28）。
+   *
+   * 依赖坐在哪一层（CLAUDE.md 规则）：
+   * - ① pi 认识的那家：`ModelRuntime.completeSimple(model, ctx, { apiKey })`——pi 的 `resolveProviderAuth` 见到 `apiKey` 覆盖就直接用它，
+   *   不读、也不写凭证存储（读源码核实，`pi-ai/dist/auth/resolve.js`）。
+   *   自定义端点：还没保存就不在运行时里，改用 `@earendil-works/pi-ai/compat` 的 `completeSimple`，照表单现拼一个 `Model`。
+   * - ② 放弃了：自己 `fetch` 一个 `/chat/completions`——那测的是「我们以为的请求」，不是 pi 日后真发的那条
+   *   （头、`anthropic-messages` 这类协议差异都会漏）；也放弃了 `setRuntimeApiKey`——它是运行时全局的，会串进正在跑的会话。
+   * - ③ 不变式挂在哪：归类（401 是 key 不对、其余没能判定）不在这里，在后端 `验一次key` / `归类key错误`——与保存后那次自动验证同一处。
+   */
+  async 试一次key(
+    目标: { provider: string; model: string; apiKey: string; baseUrl?: string; api?: string },
+    req: { user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+  ): Promise<{ text: string; model: string }> {
+    const 上下文 = { messages: [{ role: "user" as const, content: req.user, timestamp: Date.now() }] }
+    const 选项 = {
+      apiKey: 目标.apiKey,
+      maxTokens: req.maxTokens,
+      temperature: req.temperature ?? 0,
+      ...(req.signal ? { signal: req.signal } : {}),
+    }
+    const msg =
+      目标.baseUrl === undefined
+        ? await (await this.runtime()).completeSimple(await this.resolveModel(目标.provider, 目标.model), 上下文, 选项)
+        : await 直接问(
+            {
+              id: 目标.model,
+              name: 目标.model,
+              api: (目标.api ?? "openai-completions") as never,
+              provider: 目标.provider as never,
+              baseUrl: 目标.baseUrl,
+              reasoning: false,
+              input: ["text"],
+              cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+              contextWindow: 128_000,
+              maxTokens: 4_096,
+            },
+            上下文,
+            选项,
+          )
+    if (msg.stopReason === "error") throw new Error(msg.errorMessage ?? "模型报错但没说原因")
+    if (msg.stopReason === "aborted") throw Object.assign(new Error("已取消"), { name: "AbortError" })
+    const text = msg.content
+      .filter((c): c is Extract<typeof c, { type: "text" }> => c.type === "text")
+      .map((c) => c.text)
+      .join("")
+    return { text, model: `${目标.provider}/${目标.model}` }
   }
 
   async setModel(sessionId: SessionId, provider: string, modelId: string): Promise<void> {

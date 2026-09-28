@@ -1679,6 +1679,8 @@ describe("pi 扩展与工具启停", () => {
   function 启停违例(文0: string): string[] {
     const 文 = 去注释(文0)
     return 调用们(文, /\.setActiveTools\w*\s*\(/g).flatMap((c) => {
+      // 原样重设已启用的那组（换模型后借它让 pi 重建系统提示词，2026-09-28）：一个名字都没多，放行
+      if (/^\s*[\p{L}_$][\p{L}\p{N}_$]*\.getActiveToolNames\(\)\s*$/u.test(c.参数)) return []
       const 名们: string[] = c.参数.match(/[\p{L}_$][\p{L}\p{N}_$]*/gu) ?? []
       const 坏 = 名们.filter((n) => !许的名字.has(n))
       if (坏.length || /["'`]/.test(c.参数)) return [`setActiveTools 参数里有不认识的名字：${c.参数}`]
@@ -1715,6 +1717,8 @@ describe("pi 扩展与工具启停", () => {
     expect(启停违例(`s.setActiveToolsByName(["ls"])`)).toHaveLength(1)
     expect(启停违例(`s.setActiveToolsByName([...s.getActiveToolNames(), "bash"])`)).toHaveLength(1)
     expect(启停违例(`s.setActiveTools(names)`)).toHaveLength(1)
+    expect(启停违例(`session.setActiveToolsByName(session.getActiveToolNames())`)).toEqual([])
+    expect(启停违例(`session.setActiveToolsByName([...session.getActiveToolNames(), "bash"])`)).toHaveLength(1)
     expect(启停违例(`const 别的 = [...all]\ns.setActiveToolsByName(别的)`)).toHaveLength(1)
     expect(
       启停违例(`const 别的 = s.getActiveToolNames().filter((n) => n !== X)\ns.setActiveToolsByName(on ? [...别的, READ_MAIN_SESSION] : 别的)`),

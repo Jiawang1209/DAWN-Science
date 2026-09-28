@@ -1441,8 +1441,12 @@ export class NativeRuntime implements AgentRuntime {
      * 开始编**：作者收到「我是 pi，基于 Anthropic 的 Claude 模型」，
      * 一个字都不真。**拿掉一份事实，就必须补上一份。**
      *
-     * 这句补的是真的，而且是活的：闭包读 `当前模型`，`setModel` 每次都会改它，
-     * 于是每一轮重建提示词时它都是当下的答案。
+     * 这句补的是真的，而且**必须是活的**。2026-09-28 作者撞的：flash 下问答 flash，同一段换到 v4-pro 再问还答 flash——
+     * 那一轮确实是 v4-pro 答的，是这句没跟着变。`appendSystemPromptOverride` pi 只在 `resourceLoader.reload()` 里调一次、
+     * 存成定稿字符串；我们此前在闭包里改 `当前模型`，**再没人去读它**（注释却写着「每一轮都是当下的答案」）。
+     * 现在这句不进 override，挂在 `getAppendSystemPrompt()` 上现算；换模型时 `设当前模型` 再让 pi 重建一次
+     * （`setActiveToolsByName`，pi 文档：*Also rebuilds the system prompt*）。pi 0.86 按段比对系统提示词，
+     * 下一轮请求自己会补一条只含这一段的系统消息。
      *
      * 用 `appendSystemPromptOverride`（**只补一句**）而不是覆盖整份——
      * pi 那些踩出来的操作指导原样留着，扔掉它们 agent 会当场变笨。
@@ -1527,13 +1531,18 @@ export class NativeRuntime implements AgentRuntime {
         ...(this.opts.kernels ? [内核指引] : []),
         // 技能沉淀指引（2026-08-27，作者点的）：装了 skill_propose 才说——收尾问一句要不要沉淀成技能
         ...(this.opts.memoryEnable?.().skill && !this.opts.memoryEnable().off ? [技能沉淀指引] : []),
-        `You are currently running on the model "${当前模型}". ` +
-          `If the user asks which model you are, answer with exactly this. ` +
-          `Do not guess from environment variables or from earlier turns — ` +
-          `the model can be switched mid-conversation and this line is always current.`,
       ],
     })
     await resourceLoader.reload()
+    // 「你现在是哪个模型」那句现算，不进 reload 时定稿的那份（见上面 `当前模型` 那段）
+    const 定稿补充 = resourceLoader.getAppendSystemPrompt.bind(resourceLoader)
+    resourceLoader.getAppendSystemPrompt = () => [
+      ...定稿补充(),
+      `You are currently running on the model "${当前模型}". ` +
+        `If the user asks which model you are, answer with exactly this. ` +
+        `Do not guess from environment variables or from earlier turns — ` +
+        `the model can be switched mid-conversation and this line is always current.`,
+    ]
     /**
      * 压缩覆盖**必须在 `resourceLoader.reload()` 之后**（2026-09-27 实测）：那一步里 pi 调 `settingsManager.reload()`，
      * 从磁盘重新合并全局与项目设置，此前 `applyOverrides` 的东西一并冲掉——放在 `SettingsManager.create` 之后等于没设。
@@ -1647,9 +1656,10 @@ export class NativeRuntime implements AgentRuntime {
     this.sessions.set(spec.sessionId, {
       session,
       sessionManager,
-      // 换模型时改它，系统提示词里那句「你现在是谁」就跟着变（见上面那段）
+      // 换模型时改它，并让 pi 重建系统提示词——只改变量没人读（2026-09-28 的 bug，见上面 `当前模型` 那段）
       设当前模型: (v: string) => {
         当前模型 = v
+        session.setActiveToolsByName(session.getActiveToolNames())
       },
       /**
        * **起会话时就记下当前是谁**（2026-08-12 修）。
@@ -2759,9 +2769,16 @@ ${描述}`
      * 不是给人看的——人那一侧界面上已经有「已换到 …」那条了，
      * 摆两遍等于同一件事说两回。
      */
+    /**
+     * **走 `session.sendCustomMessage`，不走 `sessionManager.appendCustomMessageEntry`**（2026-09-28）。
+     * 后者只写会话文件、不进 `agent.state.messages`——模型要到重开或压缩、从文件重建上下文之后才看得到，
+     * 当下这段对话里这句等于没说。前者两边都进（与「回退这一轮」的 `dawn-rewind` 同一条路）。
+     * 这里一定不在流式中（上面 `inFlight` 已拦），所以它是立即追加、不触发新一轮。
+     */
     try {
-      s.sessionManager.appendCustomMessageEntry(
-        "dawn-model-change",
+      await s.session.sendCustomMessage({
+        customType: "dawn-model-change",
+        content:
         /**
          * **必须直说「前面那些是旧的」。**
          *
@@ -2777,8 +2794,8 @@ ${描述}`
           `\`env\`, PI_MODEL / PI_PROVIDER values, and any statement you made about ` +
           `which model you are — describe the PREVIOUS model and are now out of date. ` +
           `Do not quote them. If asked which model you are, answer "${modelId}".`,
-        false,
-      )
+        display: false,
+      })
     } catch (e) {
       /**
        * **写不进去不该让换模型失败**：路由已经换成功了，这一句只是让它

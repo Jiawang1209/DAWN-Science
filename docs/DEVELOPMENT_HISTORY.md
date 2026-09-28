@@ -8,6 +8,25 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 同一段对话里换模型后，模型仍自报旧名字：系统提示词那句不更新、换人通知不进上下文（分支 `model-identity-switch`）
+
+- **Type**: fix
+- **Motivation**: 作者：deepseek-flash 下问「你是什么模型」答 flash；同一段换到 deepseek-v4-pro 再问，还答 flash。
+  会话记录里第二条回复的 `model` 是 `deepseek-v4-pro`——**路由换了，是它被告知的身份没换**。
+- **What**（`src/runtime/native.ts`，两处根因都在代码里核实过）：
+  - 系统提示词那句「You are currently running on the model …（this line is always current）」放在 `appendSystemPromptOverride` 里，
+    pi 只在 `resourceLoader.reload()` 时调一次、存成定稿；`设当前模型` 只改闭包变量、没人再读。改为挂在 `resourceLoader.getAppendSystemPrompt()` 上现算，
+    `设当前模型` 之后调 `session.setActiveToolsByName(session.getActiveToolNames())`（pi 公开方法，文档：*Also rebuilds the system prompt*）；
+    pi 0.86 按段比对，下一轮请求头里就是新名字。**放弃了**：`resourceLoader.reload()`（会重载技能 / 扩展并冲掉压缩覆盖）。
+  - 换人通知 `dawn-model-change` 原走 `sessionManager.appendCustomMessageEntry`——只写文件、不进 `agent.state.messages`，
+    重开或压缩前模型看不到。改走 `session.sendCustomMessage({ display: false })`（与「回退这一轮」`dawn-rewind` 同一条路）。
+- **Impact**: 换模型后下一轮就说对自己是谁；旧会话不受影响（建会话时显式传 model，pi 不从记录恢复，起点本来一致）。无协议变化。
+- **Verification**: `e2e/model-identity-in-prompt.spec.ts` 新增「换模型之后下一次请求写的是新模型、带着换人那一句、旧名字那句不在、界面上不出现」——
+  改之前红（请求打到 v4-deep、提示词里仍是 flash），改之后绿；原注释「夹具只有一个模型、验不了」已不实（夹具挂着 flash 与 v4-deep），一并删掉。
+  设计契约「setActiveTools* 只用已启用的与我们装的名字」起初红：扫描只认 `别的` / `名`，不认原样传 `x.getActiveToolNames()`——
+  补上这一种（一个名字都没多），自检里加「原样放行、夹带 "bash" 仍红」。vitest 311 文件 3932 过 / 10 跳；
+  全套 e2e 574 过 / 1 跳 / 1 败——败的是 `session-search`「归档了的也搜得到」（17.4s 超时），单跑 3 遍、整文件 2 遍（9/9）全绿，与换模型无关的负载偶发。
+
 ### 2026-09-28 — 「生成方案」关着时与附栏其它几颗同一档淡（分支 `plan-toggle-dim`）
 
 - **Type**: fix

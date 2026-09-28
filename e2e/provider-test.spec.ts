@@ -107,3 +107,28 @@ test("**自定义端点也能测**：还没保存、不在运行时里，照表�
   await 测.click()
   await expect(结论).toContainText("Incorrect API key")
 })
+
+/**
+ * **只收某个 temperature 的模型，验 key 不能被参数挡住**（2026-09-28 作者撞的：moonshotai-cn 保存后写着
+ * 「没能验证 moonshotai-cn 的 key（invalid temperature: only 0.6 is allowed for this model）——可能是网络」）。
+ * 验 key 那一问此前固定带 `temperature: 0`；现在不带，用服务商自己的默认。假服务器学了 Kimi 的这个脾气。
+ */
+test("**只收 temperature 0.6 的模型（Kimi）**：测试连通照样通，不被参数挡住", async ({ dawn }) => {
+  const { page } = dawn
+  await 进设置(page, "模型服务")
+  await page.getByRole("button", { name: /添加模型服务/ }).click()
+  await page.getByRole("radio", { name: "自定义端点" }).click()
+  await page.getByLabel("新服务的名字").fill("kimi-like")
+  await page.getByLabel("新服务的端点地址").fill(dawn.mockUrl)
+  await page.getByLabel("新服务的模型清单").fill("kimi-k2.6")
+  await page.getByLabel("新服务的 API key").fill("sk-good")
+  await page.getByRole("button", { name: "测试连通" }).click()
+  await expect(page.locator(".svc-test [role=status]")).toHaveText(/✓ 通了 · kimi-k2\.6 · /)
+
+  // 保存后那次自动验证也不许被挡：行下没有「没能验证」那句
+  await page.getByRole("button", { name: "加进来" }).click()
+  await expect.poll(() => dawn.keyChecks.length).toBeGreaterThan(1)
+  const 行 = page.locator(".svc").filter({ hasText: "kimi-like" })
+  await expect(行).toHaveCount(1)
+  await expect(行).not.toContainText("没能验证")
+})

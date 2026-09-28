@@ -2702,7 +2702,8 @@ ${描述}`
    */
   async 问一句(
     目标: { sessionId: SessionId } | { provider: string; model: string },
-    req: { system?: string; user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+    /** `temperature: null` = 不带这个参数、用服务商自己的默认（验 key 用；有的模型只收一个值，2026-09-28）；不给 = 0.3 */
+    req: { system?: string; user: string; maxTokens: number; temperature?: number | null; signal?: AbortSignal },
   ): Promise<{ text: string; model: string }> {
     const runtime = await this.runtime()
     const model =
@@ -2723,7 +2724,7 @@ ${描述}`
       },
       {
         maxTokens: req.maxTokens,
-        temperature: req.temperature ?? 0.3,
+        ...(req.temperature === null ? {} : { temperature: req.temperature ?? 0.3 }),
         ...(req.signal ? { signal: req.signal } : {}),
       },
     )
@@ -2749,13 +2750,13 @@ ${描述}`
    */
   async 试一次key(
     目标: { provider: string; model: string; apiKey: string; baseUrl?: string; api?: string },
-    req: { user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+    req: { user: string; maxTokens: number; temperature?: number | null; signal?: AbortSignal },
   ): Promise<{ text: string; model: string }> {
     const 上下文 = { messages: [{ role: "user" as const, content: req.user, timestamp: Date.now() }] }
     const 选项 = {
       apiKey: 目标.apiKey,
       maxTokens: req.maxTokens,
-      temperature: req.temperature ?? 0,
+      ...(req.temperature === null || req.temperature === undefined ? {} : { temperature: req.temperature }),
       ...(req.signal ? { signal: req.signal } : {}),
     }
     const msg =

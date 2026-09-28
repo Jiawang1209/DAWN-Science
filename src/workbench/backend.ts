@@ -296,7 +296,7 @@ export interface WorkbenchBackendOptions {
    */
   askOnce?: (
     目标: { sessionId: string } | { provider: string; model: string },
-    req: { system?: string; user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+    req: { system?: string; user: string; maxTokens: number; temperature?: number | null; signal?: AbortSignal },
   ) => Promise<{ text: string; model: string }>
   /**
    * 用**给定的 key**问一句（「测试」按钮，协议 8.7，2026-09-28）。就是 `NativeRuntime.试一次key`。
@@ -305,7 +305,7 @@ export interface WorkbenchBackendOptions {
    */
   probeKey?: (
     目标: { provider: string; model: string; apiKey: string; baseUrl?: string; api?: string },
-    req: { user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+    req: { user: string; maxTokens: number; temperature?: number | null; signal?: AbortSignal },
   ) => Promise<{ text: string; model: string }>
   /**
    * 填 key 时那一次验证最多等多久（B9，2026-09-01）。缺省 8 秒；测试注入一个小的。
@@ -1080,7 +1080,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       case "timeout":
         return { i18n: i18n消息("没能验证 {0} 的 key：等了 {1} 秒没回话——可能是网络；发一句试试就知道", providerId, r.seconds), soft: true }
       case "soft":
-        return { i18n: i18n消息("没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道", providerId, r.detail), soft: true }
+        // 回了话（有状态码）就不是网络的事：照实说它回了什么（2026-09-28，Kimi 只收 temperature 0.6 回的 400 曾被说成「可能是网络」）
+        return r.状态 !== undefined
+          ? { i18n: i18n消息("没能验证 {0} 的 key：端点回了 {1}（{2}），不像是 key 的问题；发一句试试就知道", providerId, r.状态, r.detail), soft: true }
+          : { i18n: i18n消息("没能验证 {0} 的 key（{1}）——可能是网络；发一句试试就知道", providerId, r.detail), soft: true }
     }
   }
 

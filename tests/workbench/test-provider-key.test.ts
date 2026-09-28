@@ -76,6 +76,17 @@ describe("testProviderKey", () => {
     expect(r.message).toMatch(/Incorrect API key/)
   })
 
+  it("端点回了 400（参数它不收）→ soft，且**不说「可能是网络」**——它回了话，说的是状态码与原话", async () => {
+    const { backend } = 起一套(async () => {
+      throw new Error('400 {"error":{"message":"invalid temperature: only 0.6 is allowed for this model"}}')
+    })
+    const r = (await backend.testProviderKey({ providerId: "moonshotai-cn", secret: "sk-x" })) as { ok: boolean; soft: boolean; message: string }
+    expect(r).toMatchObject({ ok: false, soft: true })
+    expect(r.message).not.toMatch(/网络/)
+    expect(r.message).toMatch(/400/)
+    expect(r.message).toMatch(/invalid temperature/)
+  })
+
   it("超时 → 没能判定（soft）", async () => {
     const { backend } = 起一套(() => new Promise(() => {}))
     const r = await backend.testProviderKey({ providerId: "deepseek", secret: "sk-x" })

@@ -70,6 +70,13 @@ describe("归类key错误 · 按 pi 真抛的形状", () => {
     expect(归类key错误(new Error('429 {"error":{"message":"rate limited"}}')).kind).toBe("soft")
   })
 
+  it("**有回话的 soft 记下状态码**（2026-09-28：Kimi 回 400 invalid temperature，被说成「可能是网络」）；连不上的没有", () => {
+    const r = 归类key错误(new Error('400 {"error":{"message":"invalid temperature: only 0.6 is allowed for this model"}}'))
+    expect(r).toEqual({ kind: "soft", detail: "invalid temperature: only 0.6 is allowed for this model", 状态: 400 })
+    expect(归类key错误(new Error('502: {"message":"bad gateway"}'))).toMatchObject({ kind: "soft", 状态: 502 })
+    expect(归类key错误(new Error("Connection error."))).not.toHaveProperty("状态")
+  })
+
   it("**认不出的一律 soft，绝不当 hard**——把网络问题说成「key 错了」会让人去改一把好 key", () => {
     expect(归类key错误(new Error("Provider finish_reason: network_error")).kind).toBe("soft")
     expect(归类key错误("不是 Error 的东西").kind).toBe("soft")

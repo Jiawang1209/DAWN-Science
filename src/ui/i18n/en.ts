@@ -308,6 +308,7 @@ export const EN: Readonly<Record<string, string>> = {
   "全不选": "Clear",
   "选择工作目录": "Choose folder",
   "测试连通": "Test connection",
+  "没能验证 {0} 的 key：端点回了 {1}（{2}），不像是 key 的问题；发一句试试就知道": "Couldn't verify the {0} key: the endpoint answered {1} ({2}), which doesn't look like a key problem — send a message to find out",
   "{0} 的 key 没通过验证": "{0}: the key failed verification",
   "知道了": "Got it",
   "✓ 通了 · {0} · {1} 秒": "✓ Connected · {0} · {1} s",

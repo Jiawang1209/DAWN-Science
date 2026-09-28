@@ -3299,6 +3299,17 @@ pre {
   font-size: var(--dawn-fs-meta);
 }
 
+/**
+ * 行下那句问题 / 提醒（验 key 没过、地址多了 `/v1`）与名字**左边对齐**（2026-09-28）：
+ * 它们是卡的直接子元素，此前没有内距，贴着卡的左边框。
+ */
+.svc > .caveat,
+.svc > .hint {
+  margin: 0;
+  padding: 0 var(--dawn-space-3) var(--dawn-space-2);
+  overflow-wrap: anywhere;
+}
+
 .svc-body {
   padding: 0 var(--dawn-space-3) var(--dawn-space-3);
   border-top: 1px solid var(--dawn-stroke-4);

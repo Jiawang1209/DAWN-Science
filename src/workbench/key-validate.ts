@@ -36,7 +36,10 @@
  */
 export const KEY_CHECK_PROMPT = "DAWN key check"
 
-export type Key验证结果 = { kind: "ok" } | { kind: "hard"; detail: string } | { kind: "soft"; detail: string }
+/**
+ * `soft` 的 `状态`：端点**回了话**（开头有 HTTP 状态码）才有。有它就不是网络的事——说「可能是网络」是在误导（2026-09-28，Kimi 回 400 那次）。
+ */
+export type Key验证结果 = { kind: "ok" } | { kind: "hard"; detail: string } | { kind: "soft"; detail: string; 状态?: number }
 
 /** 超过这个长度的原话截掉、说清省了多少（规格 7.5：不静默截断） */
 const 原话上限 = 240
@@ -55,7 +58,9 @@ export function 归类key错误(err: unknown): Exclude<Key验证结果, { kind: 
   const 原话 = err instanceof Error ? err.message : String(err)
   const 状态 = 开头的状态码(原话)
   const hard = 状态 === 401 || 状态 === 403 || (状态 === undefined && 鉴权字样.test(原话))
-  return { kind: hard ? "hard" : "soft", detail: 截(人话(原话)) }
+  const detail = 截(人话(原话))
+  if (hard) return { kind: "hard", detail }
+  return 状态 === undefined ? { kind: "soft", detail } : { kind: "soft", detail, 状态 }
 }
 
 function 开头的状态码(原话: string): number | undefined {
@@ -91,7 +96,7 @@ function 截(s: string): string {
 
 type 问一句 = (
   目标: { provider: string; model: string },
-  req: { user: string; maxTokens: number; temperature?: number; signal?: AbortSignal },
+  req: { user: string; maxTokens: number; temperature?: number | null; signal?: AbortSignal },
 ) => Promise<{ text: string; model: string }>
 
 /**
@@ -116,7 +121,11 @@ export async function 验一次key(
   })
   try {
     const 结果 = await Promise.race([
-      问(目标, { user: KEY_CHECK_PROMPT, maxTokens: 1, temperature: 0, signal: 控.signal }).then(
+      /**
+       * **不带 temperature**（`null`，2026-09-28）：此前固定带 0，Kimi 的 kimi-k2.6 / k3 只收 0.6，一把好 key 被说成「没能验证」。
+       * 验的是「通不通」，不是「答得稳不稳」——用服务商自己的默认，就不会被某家的参数规矩挡住。
+       */
+      问(目标, { user: KEY_CHECK_PROMPT, maxTokens: 1, temperature: null, signal: 控.signal }).then(
         (): Key验证结果 => ({ kind: "ok" }),
         (e: unknown): Key验证结果 => 归类key错误(e),
       ),

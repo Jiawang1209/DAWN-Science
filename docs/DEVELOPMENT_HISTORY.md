@@ -8,6 +8,20 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 验 key 不再带 temperature：Kimi 只收 0.6，好 key 被说成「没能验证……可能是网络」（分支 `settings-column-fetch`）
+
+- **Type**: fix
+- **Motivation**: 作者加 `moonshotai-cn` 后行下写着「没能验证 moonshotai-cn 的 key（invalid temperature: only 0.6 is allowed for this model）——可能是网络」。
+  验 key 那一问（B9 与「测试连通」共用）固定带 `temperature: 0`，Kimi 的 kimi-k2.6 / k3 只收 0.6，回 400；而 400 被归进「没能判定」、话术写成「可能是网络」——两处都误导。
+- **What**: `key-validate.ts` 那一问传 `temperature: null`；`NativeRuntime.问一句` / `试一次key` 见 `null` 就不带这个参数（用服务商默认；`问一句` 不给时仍是 0.3，「优化输入」不受影响）。
+  `归类key错误` 的 `soft` 在原话开头有 HTTP 状态码时记下 `状态`；`验证结果条目` 据此说「端点回了 400（…），不像是 key 的问题」，只有真没回话才说「可能是网络」。
+  假服务器学了 Kimi 的脾气：模型名带 `kimi` 且 temperature 不是 0.6 → 400（dev:mock 与 e2e 同一处）。
+  版面（作者截图名「这里面太乱套了」，并说*「deepseek 那个就很好，按照 deepseek 的来」*）：行下那句问题 / `/v1` 提醒是卡的直接子元素、没有内距，贴着左边框——
+  补 `.svc > .caveat, .svc > .hint` 的内距，与名字左对齐；行本身保持 deepseek 那样一行（我先试的「窄了摘要换第二行」按作者意见撤回）。
+- **Impact**: 只收特定 temperature 的模型（Kimi 等）验 key、测试连通都能通过；有回话的「没能判定」不再误导成网络问题；行下提示与名字对齐。
+- **Verification**: e2e「只收 temperature 0.6 的模型（Kimi）」：改前红，原话与作者截图一字不差；改后测试连通通了、保存后行下没有「没能验证」。单测：`归类key错误` 有回话记状态码、连不上不记；
+  `testProviderKey` 回 400 时不说「网络」、带 400 与原话。模型服务相关 4 个 e2e 文件 18/18 两遍；窄栏截图确认行下提示与名字对齐、视觉基线 14/14 未变。vitest 313 文件 3951 过 / 10 跳；全套 e2e 584 过 / 1 跳、0 败。
+
 ### 2026-09-28 — 模型服务三件：添加时「测试连通」、保存后 key 确定不对就弹出来、只填 key 的那家移除即时生效（协议 8.7；分支 `settings-column-fetch`）
 
 - **Type**: feat + fix

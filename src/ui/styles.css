@@ -7042,6 +7042,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-footer .attach[data-ready] .attach-trigger,
 .composer-footer .ws-chip[data-ready] { color: var(--dawn-text-1); }
 .composer-footer .dock-toggle[aria-pressed="true"] { color: var(--dawn-text-1); }
+/* 「生成方案」关着时同一档淡（2026-09-28 作者报的：别的都灰、它是黑的）；开着走它自己的主题色，见 `.plan-toggle[aria-pressed="true"]` */
+.composer-footer .plan-toggle:not([aria-pressed="true"]) { color: var(--dawn-text-3); }
 
 /* 外部文件的 chip（2026-08-25，学自 dsh-paste-input 的 dock chip）：图标 + 名 + 大小 + ×，一行一颗——
    与图片 chip 不同形（图片是方缩略图），因为它们回答的问题不同：图看内容，文件认名字 */

@@ -8,6 +8,15 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-28 — 「生成方案」关着时与附栏其它几颗同一档淡（分支 `plan-toggle-dim`）
+
+- **Type**: fix
+- **Motivation**: 作者报：附栏里上传文件 / 终端 / 优化输入没启用时都是淡的，只有「生成方案」关着也是黑的。
+- **What**: `styles.css` 附栏静默态那一组加 `.composer-footer .plan-toggle:not([aria-pressed="true"]) { color: var(--dawn-text-3) }`；开着仍走 `.plan-toggle[aria-pressed="true"]` 的主题色 + 输入卡顶上的带子。
+- **Impact**: 纯样式；12 张视觉基线重存（设置栏、命令面板等屏的输入卡里都有这颗）。
+- **Verification**: `composer-ready.spec.ts` 新增「生成方案关着与上传文件同色、打开后不再淡」；先看 diff 只标出这一颗。命令面板暗色那张批量重存后时红时绿——
+  先在 main 上连跑 6 遍全绿取基线，确认是重存写进了少见帧，单独重存后 6 遍全绿；vitest 311 文件 3932 过 / 10 跳；全套 e2e 574 过 / 1 跳、0 败。
+
 ### 2026-09-28 — 工作目录 chip 只写文件夹名；点开小卡看整条路径、「另选文件夹…」（分支 `plan-toggle-footer`）
 
 - **Type**: feat

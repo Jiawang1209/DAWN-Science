@@ -21,6 +21,19 @@ test("**终端**：没开时与上传文件同色，开了转黑色实心", asyn
   expect(开了).not.toBe(淡)
 })
 
+/** 2026-09-28 作者报的：别的都是淡的，只有「生成方案」关着也是黑的 */
+test("**生成方案**：关着时与上传文件同色，打开之后不再是淡的", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  const 淡 = await 颜色(page, ".composer-footer .attach-trigger")
+  const 开关 = page.locator(".composer-footer .plan-toggle").first()
+  await expect(开关).toBeEnabled()
+  expect(await 颜色(page, ".composer-footer .plan-toggle"), "生成方案关着时该与上传文件同色").toBe(淡)
+  await 开关.click()
+  await expect(开关).toHaveAttribute("aria-pressed", "true")
+  expect(await 颜色(page, ".composer-footer .plan-toggle")).not.toBe(淡)
+})
+
 test("**选择工作目录**：项目会话选定了目录，chip 是黑色实心；临时会话没选，是淡的", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)

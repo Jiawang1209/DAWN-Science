@@ -1632,6 +1632,38 @@ describe("设计契约 · 全文搜索只读", () => {
     expect(犯的(`import {\n  readFileSync,\n  appendFileSync as 追加,\n} from "fs"`)).toEqual(["import appendFileSync"])
     expect(犯的(`import { readFile, stat } from "node:fs/promises"\nconst x = parseSessionEntries(t)`)).toEqual([])
   })
+
+  it("搜索也经过的 `续接哪份`（pi-resume.ts）只读：唯一的 open 是只读打开；会写的只有 `续接或新建`，搜索不调它（2026-09-29）", () => {
+    const 文 = readFileSync(join(import.meta.dirname, "../../src/runtime/pi-resume.ts"), "utf8")
+    const 只读段 = 文.replace(/\/\*[\s\S]*?\*\//g, "").replace(/export function 续接或新建[\s\S]*?\n}\n/, "")
+    expect(只读段, "没切掉 `续接或新建`——扫描要跟着改").not.toMatch(/function 续接或新建/)
+    expect(findLines(只读段, 写盘).filter((l) => !l.includes(`openSync(path, "r")`))).toEqual([])
+    const 搜索侧 = 搜索路径.map((f) => readFileSync(join(import.meta.dirname, "../..", f), "utf8")).join("\n")
+    expect(搜索侧).not.toMatch(/续接或新建/)
+  })
+})
+
+/**
+ * **续接不走 pi 的 `continueRecent`**（2026-09-29，普通对话选了文件夹之后上下文断掉）。
+ *
+ * 给它自己的目录时它只认 header 里 `cwd` 等于此刻工作目录的记录；我们的记录目录跟着对话搬家（`rehome`），
+ * header 里还是旧目录 → 一份都对不上 → 悄悄新开一段。主对话、子 agent、团队成员一律走 `pi-resume.ts` 的 `续接或新建`。
+ */
+describe("设计契约 · 续接不走 continueRecent", () => {
+  const SRC = join(import.meta.dirname, "../../src")
+  const 调用 = (l: string) => /\.continueRecent\s*\(/.test(l)
+  it("src 里没有一处调 `continueRecent(`", () => {
+    const 犯 = (readdirSync(SRC, { recursive: true }) as string[])
+      .filter((f) => /\.(ts|tsx|mts)$/.test(f) && !f.endsWith(".d.ts"))
+      .flatMap((f) =>
+        findLines(readFileSync(join(SRC, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, ""), 调用).map((l) => `${f}:${l}`),
+      )
+    expect(犯).toEqual([])
+  })
+  it("扫描本身抓得住", () => {
+    expect(findLines(`const sm = SessionManager.continueRecent(cwd, dir)`, 调用)).toHaveLength(1)
+    expect(findLines(`/** 不走 \`continueRecent\` */`, 调用)).toEqual([])
+  })
 })
 
 /**

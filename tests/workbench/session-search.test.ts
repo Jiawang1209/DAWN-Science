@@ -21,7 +21,6 @@ function 一段(句们: 一句[] | undefined, over: Partial<SessionRecord> = {})
   dirs.push(d)
   // 每段都往后挪一天（没写记录的也挪）：建的先后与记录里的时刻一致，「先搜新建的」「按时刻排」才验得出来
   序++
-  // header 的 cwd = 这段的工作目录：搜索与续接一样按它挑文件（`最新记录`）
   if (句们) 写一段pi记录(d, 句们, { cwd: d, 起: Date.parse("2026-08-01T00:00:00Z") + 序 * 86_400_000 })
   return {
     id: `s${序}-${Math.random().toString(36).slice(2, 6)}`,
@@ -141,12 +140,19 @@ describe("会话全文搜索 · 不搜的与截断都要说出来（2026-09-28 �
     expect(单文件上限字节).toBe(16 * 1024 * 1024)
   })
 
-  it("目录里有记录、却没有一份是这段工作目录的 → unreadable（空缺要说出来）", async () => {
-    const a = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
-    const 别处 = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
-    const r = await 造([{ ...a, workspace: 别处.workspace }]).搜("cox", 30)
+  it("目录里有记录、却没有一份读得出会话 header → unreadable（空缺要说出来）", async () => {
+    const a = 一段(undefined)
+    mkdirSync(pi记录目录(a.sessionDir), { recursive: true })
+    writeFileSync(join(pi记录目录(a.sessionDir), "坏.jsonl"), "不是 JSON\n")
+    const r = await 造([a]).搜("cox", 30)
     expect(r).toMatchObject({ unreadable: 1, scanned: 0 })
     expect(r.sessions).toEqual([])
+  })
+
+  it("搬过家的一段（header 里是旧工作目录）照样搜得到——与续接读同一份（2026-09-29）", async () => {
+    const a = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
+    const r = await 造([{ ...a, workspace: "/proj/搬到这" }]).搜("cox", 30)
+    expect(r).toMatchObject({ unreadable: 0, scanned: 1 })
   })
 })
 
@@ -215,7 +221,7 @@ describe("会话全文搜索 · 缓存", () => {
     expect(s.已缓存段数).toBe(0)
   })
 
-  it("文件变得太大 / 读不了 / 不再对得上工作目录：旧的缓存扔掉", async () => {
+  it("文件变得太大 / 读不了 / 不再读得出 header：旧的缓存扔掉", async () => {
     const a = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
     const b = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
     const c = 一段([{ who: "user", text: "Cox" }, { who: "agent", text: "好" }])
@@ -241,7 +247,7 @@ describe("会话全文搜索 · 缓存", () => {
     expect(s.已缓存段数).toBe(3)
     坏 = true
     写一段pi记录(b.sessionDir, [{ who: "user", text: "又一句" }, { who: "agent", text: "好" }], { cwd: b.workspace, 起: Date.parse("2026-12-01T00:00:00Z") })
-    records[2] = { ...c, workspace: a.workspace }
+    writeFileSync((await 最新记录(c.sessionDir))!.path, "不是 JSON\n")
     const r = await s.搜("cox", 30)
     expect(r.unreadable).toBe(2)
     expect(s.已缓存段数).toBe(1)

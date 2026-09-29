@@ -780,7 +780,8 @@ export class SessionManager {
    * ## 为什么历史不会丢
    *
    * pi 的记录 jsonl 住在 `<workspace>/.dawn/sessions/<id>`——**它在工作目录里面**。
-   * 所以搬家要把那个目录一起搬走，`resume` 才找得到（它走 `continueRecent`）。
+   * 所以搬家要把那个目录一起搬走，`resume` 才找得到（它走 `续接或新建`）。
+   * header 里的 `cwd` 还是旧目录——续接不按它过滤（`pi-resume.ts`；2026-09-29 之前按它过滤，搬完就续成空的）。
    * 只改库不搬目录的话，症状是**它忘了刚才聊过什么，但界面上还显示着**——
    * 一种最难查的失忆。
    *

@@ -99,12 +99,12 @@ export class 会话全文搜索 {
         notSearchable++
         continue
       }
-      // 与续接读同一个文件（按工作目录过滤，见 `最新记录`）——搜到的 itemId / nth 才落在点开后的那份转录里
-      const 文件 = await 最新记录(r.sessionDir, r.workspace)
+      // 与续接读同一个文件（同一个 `续接哪份`，见 `最新记录`）——搜到的 itemId / nth 才落在点开后的那份转录里
+      const 文件 = await 最新记录(r.sessionDir)
       if (!文件) {
         this.扔(r.id)
         // 还没有一轮说完（pi 等第一条 assistant 才落盘）：没东西可搜，不是「读不了」。
-        // 但目录里明明有记录、只是没有一份对得上这段的工作目录——那是搜不到的一段，要说出来
+        // 但目录里明明有记录、只是没有一份读得出会话 header——那是搜不到的一段，要说出来
         if (await 有非空记录(r.sessionDir)) unreadable++
         continue
       }

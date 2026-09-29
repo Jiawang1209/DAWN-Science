@@ -314,6 +314,7 @@ export const EN: Readonly<Record<string, string>> = {
   "✓ 通了 · {0} · {1} 秒": "✓ Connected · {0} · {1} s",
   "工作目录：{0}": "Working folder: {0}",
   "另选文件夹…": "Choose another folder…",
+  "换到另一个项目 = 另起一段对话；原来那段留在「{0}」": "Another project = a new conversation; the previous one stays in “{0}”",
   "新任务": "Untitled task",
   "新会话": "Untitled chat",
   "新对话": "Untitled chat",

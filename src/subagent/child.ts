@@ -35,6 +35,7 @@
  */
 import { mkdirSync } from "node:fs"
 import { 关掉pi自己下载 } from "../runtime/no-tool-download.js"
+import { 续接或新建 } from "../runtime/pi-resume.js"
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -119,7 +120,7 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   const 记录 = spec.member ? { dir: spec.member.sessionDir, resume: spec.member.resume } : spec.transcript
   const sessionManager = 记录
     ? 记录.resume
-      ? SessionManager.continueRecent(spec.cwd, 记录.dir)
+      ? 续接或新建(spec.cwd, 记录.dir)
       : SessionManager.create(spec.cwd, 记录.dir)
     : undefined
 

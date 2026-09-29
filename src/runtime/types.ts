@@ -108,7 +108,7 @@ export interface SessionSpec {
    * 作者：*「之前聊过的，也无法连续上。」*
    *
    * 给了它，pi 会从这个会话自己的记录目录里把上一段对话读回来
-   * （`SessionManager.continueRecent`），于是模型带着原来的上下文继续。
+   * （`pi-resume.ts` 的 `续接或新建`），于是模型带着原来的上下文继续。
    * **缺省 = 全新一段**，与此前完全一致。
    */
   resume?: boolean

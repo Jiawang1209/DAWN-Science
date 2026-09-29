@@ -24,7 +24,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 等进了对话, 在项目里开会话 } from "./fixtures.js"
 
 /**
  * **路径要在夹具起来之前就定下来**：它得通过环境变量喂给主进程
@@ -247,8 +247,8 @@ test.describe("开场卡", () => {
  * agent 已经在用的目录抽走——界面说没有目录，历史里却全是那个目录的路径；
  * 账本也按项目组织，挪出去就与那个项目的产出记录脱钩了。
  *
- * 「文件夹选错了」这个场景没有丢：**「选择工作目录」还在，可以再选一次**，
- * 直接换成对的那个。这条用例把两件事一起钉住——
+ * 「文件夹选错了」这个场景没有丢：**「选择工作目录」还在，可以再选一次**
+ * （2026-09-29 起，已在项目里再选另一个 = 在那边另起一段，见文件末尾两条）。这条用例把两件事一起钉住——
  * **删掉一个能力时，必须同时说清替代路径还在**，否则下一个人会把它加回来。
  */
 test.describe("选好目录之后", () => {
@@ -314,5 +314,88 @@ test.describe("选好目录之后", () => {
     await 卡.getByRole("button", { name: "另选文件夹…" }).click()
     await expect(卡).toHaveCount(0)
     await expect(标签).toHaveText(名)
+  })
+})
+
+/**
+ * **选文件夹的两种情形是两件事**（2026-09-29，作者定的）。
+ *
+ * ① 普通对话聊了几句再选文件夹 = **并进那个项目，上下文接着用**。
+ *    此前界面上话都在、模型却全忘了：pi 的 `continueRecent` 按记录 header 里的 `cwd` 挑文件，
+ *    搬家之后那一份对不上、悄悄新开一段（`src/runtime/pi-resume.ts`）。
+ *    **只有模型收到的 messages 判得出它记不记得**——假模型「还记得暗号吗」就从这一次请求的历史里找。
+ * ② 已在项目 A 里、再选 B = **两个项目，彼此独立**：在 B 另起一段、切过去、不带上下文；原来那段留在 A。
+ */
+const 目标4 = join(tmpdir(), "dawn-ws-e2e-先聊再选")
+const 目标5 = join(tmpdir(), "dawn-ws-e2e-另一个项目")
+const 最后一轮说完 = (page: import("@playwright/test").Page) =>
+  expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0, { timeout: 60_000 })
+
+test.describe("普通对话聊了几句再选目录", () => {
+  test.use({ dawnOptions: { pickDirectory: 目标4 } })
+  test.beforeAll(() => {
+    rmSync(目标4, { recursive: true, force: true })
+    mkdirSync(目标4, { recursive: true })
+  })
+  test.afterAll(() => {
+    rmSync(目标4, { recursive: true, force: true })
+  })
+
+  test("**并进项目，上下文接得上：选完再问，模型还记得之前说的**", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page, "先记住：暗号是蓝鲸")
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    await 最后一轮说完(page)
+
+    await page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ }).click()
+    await expect(page.locator(".turns")).toContainText("已归入项目", { timeout: 30_000 })
+    // 之前那句还在屏幕上（同一段对话，不是新开的）
+    await expect(page.locator(".turns").getByText("先记住：暗号是蓝鲸", { exact: true })).toBeVisible()
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("还记得暗号吗")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".turns")).toContainText("记得，暗号是蓝鲸", { timeout: 30_000 })
+    await expect(page.locator(".turns")).not.toContainText("不记得任何暗号")
+  })
+})
+
+test.describe("已在项目里再选另一个目录", () => {
+  test.use({ dawnOptions: { pickDirectory: 目标5 } })
+  test.beforeAll(() => {
+    rmSync(目标5, { recursive: true, force: true })
+    mkdirSync(目标5, { recursive: true })
+  })
+  test.afterAll(() => {
+    rmSync(目标5, { recursive: true, force: true })
+  })
+
+  test("**两个项目彼此独立：在新目录另起一段、不带上下文；原来那段留在原项目**", async ({ dawn }) => {
+    const { page } = dawn
+    await 在项目里开会话(page)
+    const box = page.getByPlaceholder(/今天帮你做些什么/)
+    await box.fill("先记住：暗号是蓝鲸")
+    await box.press("Enter")
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    await 最后一轮说完(page)
+
+    const chip = page.locator(".composer-card .ws-chip").first()
+    await chip.click()
+    await page.getByRole("dialog", { name: "工作目录" }).getByRole("button", { name: "另选文件夹…" }).click()
+
+    // 主区换成了新目录里的一段空对话：chip 写着新文件夹名，之前那句不在这一屏
+    const 名 = 目标5.split(/[\\/]/).pop()!
+    await expect(page.locator(".composer-card .ws-chip-label").first()).toHaveText(名, { timeout: 30_000 })
+    await expect(page.locator(".turns").getByText("先记住：暗号是蓝鲸", { exact: true })).toHaveCount(0)
+    // 出声：原来那段去哪了
+    await expect(page.getByText(/换到另一个项目 = 另起一段对话/)).toBeVisible()
+    // 没有搬家那一行（那是「并进项目」才有的）
+    await expect(page.locator(".turns")).not.toContainText("已归入项目")
+
+    await box.fill("还记得暗号吗")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".turns")).toContainText("不记得任何暗号", { timeout: 30_000 })
+
+    // 侧栏两个项目：原来那段还在原项目里
+    await expect(page.locator(".proj-list .proj-item")).toHaveCount(2, { timeout: 30_000 })
   })
 })

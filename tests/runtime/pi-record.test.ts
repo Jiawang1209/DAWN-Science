@@ -87,21 +87,18 @@ describe("pi 记录 · 只读", () => {
     expect(f?.size).toBeGreaterThan(0)
   })
 
-  it("给了工作目录：**与 pi 续接挑同一个文件**——mtime 更新但 cwd 不同的（rehome 之前的）跳过；都对不上 → undefined（2026-09-28）", async () => {
+  it("**与续接挑同一个文件**（同一个 `续接哪份`）：不按工作目录挑——header 里是搬家前的旧目录也认；读不出 header 的跳过（2026-09-29）", async () => {
     const d = 新目录()
-    const 这里 = 写一段pi记录(d, [{ who: "user", text: "这里" }, { who: "agent", text: "好" }], { cwd: "/proj/new" })
-    const 别处 = 写一段pi记录(d, [{ who: "user", text: "别处" }, { who: "agent", text: "好" }], { cwd: "/proj/old" })
-    utimesSync(这里, new Date("2026-08-01"), new Date("2026-08-01"))
-    utimesSync(别处, new Date("2026-09-01"), new Date("2026-09-01"))
+    const 旧 = 写一段pi记录(d, [{ who: "user", text: "旧" }, { who: "agent", text: "好" }], { cwd: "/proj/new" })
+    const 搬家前 = 写一段pi记录(d, [{ who: "user", text: "搬家前" }, { who: "agent", text: "好" }], { cwd: "/tmp/普通对话" })
+    utimesSync(旧, new Date("2026-08-01"), new Date("2026-08-01"))
+    utimesSync(搬家前, new Date("2026-09-01"), new Date("2026-09-01"))
     const 坏 = join(pi记录目录(d), "坏.jsonl")
     writeFileSync(坏, "不是 JSON\n")
-    utimesSync(坏, new Date("2026-07-01"), new Date("2026-07-01"))
-    expect((await 最新记录(d))?.path, "不给 cwd：只看 mtime").toBe(别处)
-    expect((await 最新记录(d, "/proj/new/"))?.path).toBe(这里)
-    // 对照 pi 自己：`continueRecent` 用的就是这条规则（夹具可以走 pi 的入口；这几个文件都是当前版本，它不会重写）
-    const { SessionManager } = await import("@earendil-works/pi-coding-agent")
-    expect(SessionManager.continueRecent("/proj/new", pi记录目录(d)).getSessionFile()).toBe(这里)
-    expect(await 最新记录(d, "/proj/else")).toBeUndefined()
+    utimesSync(坏, new Date("2026-09-20"), new Date("2026-09-20"))
+    expect((await 最新记录(d))?.path).toBe(搬家前)
+    const { 续接或新建 } = await import("../../src/runtime/pi-resume.js")
+    expect(续接或新建("/proj/new", pi记录目录(d)).getSessionFile()).toBe(搬家前)
   })
 
   it("没有目录 / 目录里没有记录 → undefined（这段还没有一轮说完），不抛", async () => {

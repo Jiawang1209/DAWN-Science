@@ -118,6 +118,18 @@ const 慢速 = { 每段字数: 6, 间隔毫秒: 15 }
  */
 export const 慢慢跑 = { toolName: "bash", args: { command: "sleep 20" }, say: "我先跑一段慢的。" }
 /** 这一问的最后一条是用户话时，取它的文字；不是（工具结果之后那一问）→ undefined。按话触发的几支 mock 工具共用（2026-09-27 抽出） */
+/**
+ * **上下文接没接上**（2026-09-29，普通对话选了文件夹之后上下文断掉）：问「还记得暗号吗」，
+ * 从**这一次请求带来的历史**里找「暗号是 X」——找得到说「记得，暗号是 X」，找不到说「不记得任何暗号」。
+ * 界面上那几句话一直在，只有模型收到的 messages 才判得出它真记不记得。
+ */
+function 记暗号(body) {
+  const 文本 = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : "")
+  const 之前 = (body.messages ?? []).slice(0, -1).filter((m) => m.role === "user").map((m) => 文本(m.content))
+  const m = 之前.map((t) => /暗号是([^\s，。"]+)/.exec(t)).find(Boolean)
+  return m ? `记得，暗号是${m[1]}` : "不记得任何暗号"
+}
+
 function 最后一句用户话(body) {
   const 最后 = body.messages?.at?.(-1)
   if (最后?.role !== "user") return undefined
@@ -448,6 +460,8 @@ export function startMockInferenceServer(opts = {}) {
           ? 假改写(最后一句)
           : 图片数 > 0
             ? `假模型已应答：我收到了 ${图片数} 张图。`
+            : 最后一句.includes("还记得暗号吗")
+              ? 记暗号(body)
             : 最后一句.includes("长回复")
               ? LONG_REPLY
             : 用户说的.includes("markdown")

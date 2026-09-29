@@ -13,11 +13,12 @@
  *   也放弃 `SessionManager.list` 的 `allMessagesText`：它不含工具调用与输出，也没有逐条的位置。
  * - **不变式挂在**：本文件不出现会写盘的入口——`tests/ui/design-contract.test.ts`「全文搜索只读」。
  */
-import { createReadStream, readFileSync } from "node:fs"
-import { readdir, readFile, stat } from "node:fs/promises"
-import { join, resolve } from "node:path"
+import { readFileSync } from "node:fs"
+import { readFile, stat } from "node:fs/promises"
+import { join } from "node:path"
 import { parseSessionEntries, SessionManager } from "@earendil-works/pi-coding-agent"
 import { 还原历史, 换上方案卡 } from "./history.js"
+import { 续接哪份 } from "./pi-resume.js"
 import { 公开, 方案簿文件名, type 方案记录 } from "./plan-book.js"
 import type { 方案 } from "../protocol/plan.js"
 import type { RestoredItem } from "./types.js"
@@ -34,69 +35,24 @@ export interface 记录文件 {
 }
 
 /**
- * 续接时 pi 读的是哪个文件——**与 pi `findMostRecentSession` 同一条规则**：目录里的 `.jsonl` 按 mtime 从新到旧，
- * 头一个 header 里 `cwd` 等于这段对话工作目录的（`continueRecent(spec.workspace, 记录目录)` 用的是自己的目录，所以 pi 会按 cwd 过滤）。
+ * 续接时读的是哪个文件——**与续接同一个函数**（`pi-resume.ts` 的 `续接哪份`）：目录里的 `.jsonl` 按 mtime 从新到旧、头一个读得出会话 header 的。
  *
- * 2026-09-28 审查补上 cwd 过滤：此前只挑 mtime 最新，`rehome` 之后搜的与续接读的可能是两个文件——
- * 搜到的 `itemId` / `nth` 落在另一份转录里，点过去就跳歪。现在两边读同一个；
+ * 2026-09-28 审查让搜索与续接读同一个文件：此前各挑各的，搜到的 `itemId` / `nth` 落在另一份转录里，点过去就跳歪。
+ * 2026-09-29 起续接不再按 cwd 过滤（搬过家的对话续不上，见 `pi-resume.ts`），这里跟着——**两边是同一个函数，不再是两份长得一样的规则**。
  * 真对不上时（文件在两次之间变了）界面的 `定位命中` 找不到就说「没找到」，不乱跳。
- * `cwd` 缺省 = 不过滤（只给测试与没有工作目录的调用方）。
  *
- * **没有目录 / 没有文件 / 没有 cwd 对得上的 → undefined**：这段对话还没有一轮说完（pi 等第一条 assistant 才落盘），
- * 或者续接也读不到它——不是「读不了」。
+ * **没有目录 / 没有文件 → undefined**：这段对话还没有一轮说完（pi 等第一条 assistant 才落盘）——不是「读不了」。
  */
-export async function 最新记录(sessionDir: string, cwd?: string): Promise<记录文件 | undefined> {
-  const dir = pi记录目录(sessionDir)
-  let 名们: string[]
+export async function 最新记录(sessionDir: string): Promise<记录文件 | undefined> {
+  const path = 续接哪份(pi记录目录(sessionDir))
+  if (path === undefined) return undefined
   try {
-    名们 = (await readdir(dir)).filter((n) => n.endsWith(".jsonl"))
+    const s = await stat(path)
+    return { path, mtimeMs: s.mtimeMs, size: s.size }
   } catch {
+    // 挑中与 stat 之间被删了：当它不在
     return undefined
   }
-  const 文件们: 记录文件[] = []
-  for (const n of 名们) {
-    const p = join(dir, n)
-    try {
-      const s = await stat(p)
-      文件们.push({ path: p, mtimeMs: s.mtimeMs, size: s.size })
-    } catch {
-      // 列目录与 stat 之间被删了：当它不在
-    }
-  }
-  文件们.sort((a, b) => b.mtimeMs - a.mtimeMs)
-  if (cwd === undefined) return 文件们[0]
-  const 要 = resolve(cwd)
-  for (const f of 文件们) {
-    const 头 = await 读头(f.path)
-    if (头 !== undefined && 头 !== "" && resolve(头) === 要) return f
-  }
-  return undefined
-}
-
-/** header 最多往前看这么多字节（pi 的 `MAX_SESSION_HEADER_SCAN_BYTES` 同一个量级）；只读头，不把整份读进来 */
-const 头扫描上限 = 64 * 1024
-
-/** 记录头里的 `cwd`。读不出 / 没有 header → undefined（pi 的发现也是「当它不是一段会话」） */
-async function 读头(path: string): Promise<string | undefined> {
-  let 文 = ""
-  try {
-    for await (const 块 of createReadStream(path, { encoding: "utf8", start: 0, end: 头扫描上限 - 1 })) {
-      文 += 块 as string
-      if (文.includes("\n")) break
-    }
-  } catch {
-    return undefined
-  }
-  for (const 行 of 文.split("\n")) {
-    if (!行.trim()) continue
-    try {
-      const h = JSON.parse(行) as { type?: unknown; cwd?: unknown }
-      if (h.type === "session") return typeof h.cwd === "string" ? h.cwd : undefined
-    } catch {
-      // 坏行：pi 跳过，接着找
-    }
-  }
-  return undefined
 }
 
 /**

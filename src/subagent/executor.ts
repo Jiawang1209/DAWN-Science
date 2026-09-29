@@ -258,7 +258,7 @@ export class SubagentExecutor {
 
   /**
    * 续问（2026-09-27，spec §2.3）：在第 `index` 个子 agent 的记录上再跑一轮。**进程是新的，记忆在会话文件里**——
-   * 与团队成员下一轮同一条路（`child.ts` 的 `SessionManager.continueRecent`）。墙钟、整组杀、截断都照 `spawnOne`。
+   * 与团队成员下一轮同一条路（`child.ts` 的 `续接或新建`）。墙钟、整组杀、截断都照 `spawnOne`。
    *
    * 不发 `started` / `settled`：那两条是 chip 与账本的，续问不是主 agent 的行动。
    * 定义被删 / 停用了 → **说清楚，不换人**（与 `one()` 不静默降级同一条）。

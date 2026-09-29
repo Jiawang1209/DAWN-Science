@@ -109,6 +109,7 @@ import type {
 } from "./types.js"
 import { 检查点存档, 回退不了 } from "../project/checkpoints.js"
 import { 给模型的回退话 } from "./rewind-note.js"
+import { 续接或新建 } from "./pi-resume.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
 
@@ -1416,13 +1417,14 @@ export class NativeRuntime implements AgentRuntime {
      * 而是每个会话一个——于是「接着上一次聊」就是
      * **「把这个目录里最近那段读回来」**，不必在一堆会话里猜是哪一段。
      *
-     * `continueRecent` 在目录为空时会新建一段，所以它对
+     * 续接读哪份见 `pi-resume.ts`（不走 pi 的 `continueRecent`：它按 cwd 过滤，搬过家的对话会续不上）。
+     * 目录为空时新建一段，所以它对
      * 「记录丢了」这种情况是安全的：**退化成一段新对话，而不是报错**。
      * 代价是那时上下文真的没了——这一点由界面说清楚，不在这里假装。
      */
     const 记录目录 = join(agentDir, "sessions")
     const sessionManager = spec.resume
-      ? SessionManager.continueRecent(spec.workspace, 记录目录)
+      ? 续接或新建(spec.workspace, 记录目录)
       : SessionManager.create(spec.workspace, 记录目录)
     if (存档开) {
       const 存档 = new 检查点存档(spec.workspace, join(spec.sessionDir, "checkpoints"), {

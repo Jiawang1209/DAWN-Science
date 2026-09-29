@@ -51,7 +51,7 @@ export interface SubagentToolOptions {
   /**
    * 第 `index` 个子 agent 在这次调用里的运行目录（2026-09-27）：pi 的 agentDir、会话文件、`meta.json` 都在里面。
    * **按调用分**——`context.agentDirOf` 只按序号，第二次派子 agent 时序号 0 又写进同一个目录（spec §1.1），
-   * 而 pi 的 `continueRecent` 取目录里最新那份会话：共用目录时接着问第一次的会续上第二次的。
+   * 而续接（`续接或新建`）取目录里最新那份会话：共用目录时接着问第一次的会续上第二次的。
    * 不给 = 退回 `context.agentDirOf`（老调用方、测试）。
    */
   运行目录?: ((toolCallId: string, index: number) => string) | undefined
@@ -215,7 +215,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
 /**
  * 接着问一个跑完的子 agent（2026-09-27，spec §2.3 / D3）。拿同一份 `childOf` / `context` / `运行目录`，
  * 在**那一次调用**的那个运行目录上 `resume: true` 再起一个进程——与团队成员下一轮同一条路。
- * toolCallId 每次都传进来、每次一个新 executor：不会续到别的调用那份会话上（`continueRecent` 取目录里最新的那份）。
+ * toolCallId 每次都传进来、每次一个新 executor：不会续到别的调用那份会话上（续接取目录里最新的那份）。
  *
  * **只发 `subagent_event`**（过程 + 一条 `settled`，`followUp: true`、不带 `result`）：chip、账本、主转录、`meta.json`
  * 一个字都不动——答复不回主 agent（D3）；chip 已经收了，不能被一次续问重新点亮。

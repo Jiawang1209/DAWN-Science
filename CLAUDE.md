@@ -50,6 +50,7 @@
 | **桌面通知**：做完 / 出错 / 等你点头弹系统通知（一个真回合一条；压缩、回退、子 agent 不弹），点它回到那段（拉而不只是推）；Dock 角标 = 还没看的几段、Windows 任务栏闪；唯一出口 + 假出口（`DAWN_FAKE_NOTIFY`，e2e 与 dev:mock 共用）（学自 Codex / Claude app；协议 8.4；分支 `agent-basics`） | `specs/2026-09-27-桌面通知-design.md` + `plans/2026-09-27-桌面通知.md` |
 | **会话全文搜索**：侧栏「按名字 / 按内容」；搜说过的、回复、工具参数与输出（含跑过的代码），归档的也搜；点了跳到那一处（预算之外也跳得到、工具行展开、词标出来）；不建索引，只读扫 pi 记录 + 按文件缓存（协议 8.5；分支 `agent-basics`） | `specs/2026-09-27-会话全文搜索-design.md` + `plans/2026-09-27-会话全文搜索.md` |
 | **先出方案**：开关（输入卡模型那一行最左边）/ `/plan` / ⌘K；方案期只看不改（门在代码里、默认拒、不给 bash）；方案卡「照这个做 / 改一改 / 不做了」；批准的存进 `analysis/plans/`（不覆盖、指纹 + 存档、轮基线恢复 agent 的改动），卡上对照产物；ACP / CLI 灰着写原因（学自 Claude Code / Codex 的 plan mode；协议 8.6；分支 `agent-basics`） | `specs/2026-09-27-先出方案-design.md` + `plans/2026-09-27-先出方案.md` |
+| **学 dsh 的 GUI**：速度（数据层限频、增量传输、本地回显）、样式（过程分组/轮两层收纳）、反馈；A/B/C 三档建议（分支 `learn-deepseek-harness`） | `docs/学习-dsh-GUI/00-对比与建议.md` |
 | 视觉与交互契约 | `docs/DESIGN.md` |
 | 参考项目在哪、各自教什么 | `docs/REFERENCES.md` |
 | 变更历史（最新在顶） | `docs/DEVELOPMENT_HISTORY.md` |

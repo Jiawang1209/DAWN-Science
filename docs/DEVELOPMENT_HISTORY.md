@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-09-29 — 学 deepseek-harness 的 GUI：速度、对话样式、反馈三方面对比（分支 `learn-deepseek-harness`）
+
+- **Type**: docs
+- **Motivation**: 作者觉得 dsh 的响应速度、对话样式和反馈都值得学，要一份和我们现有代码的对比。
+- **What**: 新目录 `docs/学习-dsh-GUI/`：`00-对比与建议.md`（三张对比表 + 分 A/B/C 三档的 12 条建议 + 「不学的，和为什么」），另有四份带 file:line 的底稿（dsh 的速度、样式、反馈，以及 DAWN 现状）。核心发现：①我们每个 token 都推整条累积文本，两端各做一次 zod 校验，开销随长度平方增长（已亲自核对 `events.ts:1003-1030`）；②用户气泡要等后端推回来才上屏，dsh 在点击那一帧就本地回显；③dsh 把过程分「组 / 轮」两层收纳，组标题写成一句人话，轮做完只剩「已完成，用时 X」。
+- **Impact**: 只加文档，没改代码。
+- **Verification**: 四份底稿由并行子 agent 读源码写成；关键结论逐条回源码抽查过（dsh `assembly.ts:140-156` 三帧 rAF、`incremental.ts:38` 尾 2 块、`MessageItem.tsx` 本地回显；DAWN `events.ts` 推整条）。
+
 ### 2026-09-29 — 新建任务那一屏打开坞里的对话不再带着文件夹；坞里的输入卡与主区同高（分支 `dock-empty-state`）
 
 - **Type**: fix

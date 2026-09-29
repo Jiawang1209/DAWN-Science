@@ -11,6 +11,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react"
 import type { TranscriptItem } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
+import { 是回显 } from "./state/transcript-slot.js"
 
 const 摘要上限 = 48
 
@@ -32,7 +33,7 @@ export const TurnNavigator = memo(TurnNavigatorImpl, (a, b) => 同用户轮(a.it
 
 function 同用户轮(a: readonly TranscriptItem[], b: readonly TranscriptItem[]): boolean {
   if (a === b) return true
-  const 取 = (xs: readonly TranscriptItem[]) => xs.filter((x) => x.type === "turn" && x.who === "user")
+  const 取 = (xs: readonly TranscriptItem[]) => xs.filter((x) => x.type === "turn" && x.who === "user" && !是回显(x.id))
   const x = 取(a)
   const y = 取(b)
   if (x.length !== y.length) return false
@@ -54,7 +55,7 @@ function TurnNavigatorImpl({
   确保可见?: ((id: string) => void) | undefined
 }) {
   const 轮 = useMemo(
-    () => items.filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user").map((x) => ({ id: x.id, 摘要: x.text.replace(/\s+/g, " ").trim().slice(0, 摘要上限) })),
+    () => items.filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user" && !是回显(x.id)).map((x) => ({ id: x.id, 摘要: x.text.replace(/\s+/g, " ").trim().slice(0, 摘要上限) })),
     [items],
   )
   const [悬在, 设悬在] = useState<number | null>(null)

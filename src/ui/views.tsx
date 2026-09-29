@@ -38,10 +38,11 @@ import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
 import { 方案卡, 先出方案开关 } from "./plan-card.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
-import { 扫引用 } from "../files/mentions.js"
+import { 扫引用, 剥掉粘贴标记 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 import { 默认转录预算 } from "./transcript-budget.js"
+import { 是回显 } from "./state/transcript-slot.js"
 import { 定位命中, type 跳转目标 } from "../protocol/search-match.js"
 import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 
@@ -3865,6 +3866,7 @@ export function ConversationView({
   models,
   model,
   onSend,
+  onEcho,
   onPickModel,
   onAbort,
   onEditQueue,
@@ -4024,6 +4026,12 @@ export function ConversationView({
     images?: readonly 图片来源[],
     behavior?: "followUp" | "redirect",
   ) => void | Promise<void>
+  /**
+   * **人按下发送的那一帧先把这句画出来**（2026-09-29，A1，学自 dsh 的 `PendingSubmissionBubble`）。
+   * 只在直接发送（不忙、不进待发条）时调；返回「撤掉它」，发送失败时调。真的那条落地时由槽自己顶掉它。
+   * 不给 = 这类会话不回显（PTY：终端自己回显，后端也不推人话）。
+   */
+  onEcho?: ((text: string, images?: readonly string[]) => () => void) | undefined
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
   /** 待发单上那两颗：取回 / 调整方向（2026-09-25）。只有 native 有待发单 */
@@ -4494,12 +4502,21 @@ export function ConversationView({
   行回调最新.current = {
     nameOf: (id) => services?.find((sv) => sv.providerId === id)?.name,
     onPickCase: (text) => {
-      void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+      const 撤 = busy && onAbort ? undefined : onEcho?.(剥掉粘贴标记(text))
+      void Promise.resolve(onSend(text)).catch((e: unknown) => {
+        撤?.()
+        设发送出错(e instanceof Error ? e.message : String(e))
+      })
       设位置(-1)
     },
     onResend: (text) => {
+      // 回显（A1）：不忙时与手打同样先画出来；忙着时这句会进待发条，不回显
+      const 撤 = busy && onAbort ? undefined : onEcho?.(剥掉粘贴标记(text))
       // 失败要出声（2026-08-23 审查抓的：此前不接 promise，发失败就什么都没发生）
-      void Promise.resolve(onSend(text)).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+      void Promise.resolve(onSend(text)).catch((e: unknown) => {
+        撤?.()
+        设发送出错(e instanceof Error ? e.message : String(e))
+      })
       设位置(-1)
     },
     onRewind: (id) => onRewind?.(id),
@@ -5044,6 +5061,17 @@ export function ConversationView({
           设等回话(items.length)
           设等回话时刻(Date.now())
           设喊停过(false)
+          /**
+           * **回显**（A1）：不忙时这一帧就把这句画进转录，不等后端推回来。
+           * 忙着（进待发条 / 调整方向）不回显——那句话的家是待发条。
+           * 附的图有预览就一起画；`@令牌` 原样显示，真的那条（换成落盘路径）落地时顶掉它。
+           */
+          const 撤回显 = 送法
+            ? undefined
+            : onEcho?.(
+                剥掉粘贴标记(text),
+                这次的图.flatMap((x) => (x.预览 ? [x.预览] : [])),
+              )
           void (async () => {
             /**
              * **外部文件在这一刻落盘**（2026-08-25，学自 dsh-paste-input 的「发送才落盘」）：
@@ -5088,6 +5116,7 @@ export function ConversationView({
                 ? onSend(终文, undefined, 送法)
                 : onSend(终文)
           })().catch((e: unknown) => {
+            撤回显?.()
             设发送出错(e instanceof Error ? e.message : String(e))
             // **原样还回去**：人不该为一次失败重打一遍、重挑一遍（`/plan` 那句连前缀一起还）
             setDraft(session.sessionId, 原话)
@@ -6043,8 +6072,13 @@ function TranscriptRowImpl({
     )
   }
 
+  /**
+   * **回显**（A1）：人刚按下发送、后端还没推回来的那句。与真的长得一样，只少了操作行——
+   * 复制 / 修改 / 回到这句之前都要一个后端认得的 id，它还没有。真的一到就在同一次落地里顶掉它。
+   */
+  const 回显 = 是回显(item.id)
   return (
-    <div className={`turn ${item.who}`} data-turn-id={item.id}>
+    <div className={`turn ${item.who}`} data-turn-id={item.id} {...(回显 ? { "data-echo": "" } : {})}>
       {/**
        * **身份不能只靠底色。**
        *
@@ -6223,7 +6257,7 @@ function TranscriptRowImpl({
        * 动作行多了带字的「回到这句之前」之后，「好」一个字的气泡被撑到约 180px。
        * 现在气泡与动作行是 `.turn-body` 里各自靠右的兄弟，谁也不决定谁的宽度（见 styles.css `.turn.user .turn-body`）。
        */}
-      {item.final ? (
+      {item.final && !回显 ? (
         <div className="turn-actions">
           <CopyButton text={item.text} label={mine ? t("复制我说的这段") : t("复制这段回答")} />
           {/**

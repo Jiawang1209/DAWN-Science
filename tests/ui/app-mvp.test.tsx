@@ -414,7 +414,11 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
     expect(await screen.findByText("在，我在")).toBeDefined()
   })
 
-  it("自己说的话来自事件流，不是本地乐观追加 —— 事件流是对话的唯一事实来源", async () => {
+  /**
+   * 2026-09-29（A1）起按下发送那一帧先画一条**回显**（`data-echo`，没有操作行）——
+   * 但事实仍来自事件流：真的那条推来时顶掉回显，屏幕上始终只有一条。
+   */
+  it("自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条", async () => {
     const h = harness()
     await openAndStart(h)
 
@@ -423,15 +427,21 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
     fireEvent.submit(box.form!)
     await waitFor(() => expect(h.calls.some((c) => c.op === "writeToSession")).toBe(true))
 
-    // 事件还没回来时界面上不该已经有它
-    expect(screen.queryByText("跑一下测试")).toBeNull()
+    // 事件还没回来：只有回显那一条，它没有操作行（复制 / 修改要一个后端认得的 id）
+    const 人话 = () => document.querySelectorAll(".turn.user")
+    expect(人话()).toHaveLength(1)
+    expect(人话()[0]!.hasAttribute("data-echo")).toBe(true)
+    expect(人话()[0]!.querySelector(".turn-actions")).toBeNull()
 
     h.push({
       workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
       sessionId: "s1", revision: 1, type: "item",
       item: { type: "turn", id: "u1", who: "user", text: "跑一下测试", final: true },
     })
-    expect(await screen.findByText("跑一下测试")).toBeDefined()
+    await waitFor(() => expect(人话()[0]?.getAttribute("data-turn-id")).toBe("u1"))
+    expect(人话()).toHaveLength(1)
+    expect(人话()[0]!.hasAttribute("data-echo")).toBe(false)
+    expect(screen.getAllByText("跑一下测试")).toHaveLength(1)
   })
 
   it("新建会话会自动取写权，否则第一句就被租约挡下", async () => {

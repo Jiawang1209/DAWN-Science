@@ -35,6 +35,18 @@ export interface 会话开关 {
  */
 const 攒的间隔毫秒 = 33
 
+/**
+ * **回显**（2026-09-29，A1，学自 dsh 的 `PendingSubmissionBubble`）：人按下发送的那一帧，
+ * 渲染进程在槽里先插一条自己说的话，不等后端把 `u{n}` 推回来。
+ *
+ * 它是一条普通的 user 发言，**只有 id 不同**：`echo:` 开头。画法与真的一样（没有操作行、带 `data-echo`），
+ * 真的那条落地时**在同一次 `$items.set` 里顶掉它**——屏幕上从来不会有两条一样的气泡。
+ * 不进协议：它只活在界面的缓存里，后端永远看不见它。
+ */
+export const 回显前缀 = "echo:"
+export const 是回显 = (id: string): boolean => id.startsWith(回显前缀)
+let 回显序号 = 0
+
 export function 创建转录槽() {
   /** 对话、工具调用、系统提示。**按顺序渲染，不重排** */
   const $items = atom<readonly TranscriptItem[]>([])
@@ -120,6 +132,19 @@ export function 创建转录槽() {
     const prev = $items.get()
     const i = prev.findIndex((x) => x.id === item.id)
     if (i < 0) {
+      /**
+       * 有回显挂着（A1）：**真的人话顶掉最早那条回显，就在它的位置上**；
+       * 别的新条目排在回显**前面**——回显代表「刚按下的那一句」，它之后才轮到这一句引出的东西。
+       * 两件事都在这一次 `set` 里，没有一帧两条气泡。
+       */
+      const 回显处 = prev.findIndex((x) => 是回显(x.id))
+      if (回显处 >= 0) {
+        const next = [...prev]
+        if (item.type === "turn" && item.who === "user") next[回显处] = item
+        else next.splice(回显处, 0, item)
+        $items.set(next)
+        return
+      }
       $items.set([...prev, item])
       return
     }
@@ -141,6 +166,36 @@ export function 创建转录槽() {
 
   function setQueued(q: readonly QueuedMessage[] | undefined): void {
     setList($待发, q ?? [])
+    /**
+     * 界面以为不忙、运行时其实还在忙（晚一拍）时，那句话进的是待发单、不是转录（A1）。
+     * 那时它已经画在待发条上了——回显再挂着就是**两处长得一样的东西**，撤掉。
+     */
+    if (!q || q.length === 0) return
+    const prev = $items.get()
+    const 排着的话 = new Set(q.map((x) => x.text))
+    if (!prev.some((x) => 是回显(x.id) && x.type === "turn" && 排着的话.has(x.text))) return
+    flush()
+    $items.set($items.get().filter((x) => !(是回显(x.id) && x.type === "turn" && 排着的话.has(x.text))))
+  }
+
+  /**
+   * 人刚按下发送：先把这句话画出来（A1）。返回「撤掉它」——发送失败时调；
+   * 真的那条已经顶掉它、或快照 / 切会话已经把它冲掉时，撤是空操作。
+   *
+   * @param images 缩略图地址（能给就给，与真的那条同样画在字上面）
+   */
+  function 回显(text: string, images?: readonly string[]): () => void {
+    flush()
+    回显序号 += 1
+    const id = `${回显前缀}${回显序号}`
+    $items.set([
+      ...$items.get(),
+      { type: "turn", id, who: "user", text, final: true, ...(images && images.length > 0 ? { images: [...images] } : {}) },
+    ])
+    return () => {
+      const prev = $items.get()
+      if (prev.some((x) => x.id === id)) $items.set(prev.filter((x) => x.id !== id))
+    }
   }
 
   /** 快照里「对话组件要读的」那几样整份换掉。主区的终端 / 内核 / 团队由 `transcript.ts` 的 `applySnapshot` 另写 */
@@ -173,7 +228,7 @@ export function 创建转录槽() {
     setQueued(undefined)
   }
 
-  return { $items, $待答权限, $会话开关, $待发, flush, setItems, upsertItem, dropItem, setQueued, applySnapshot, reset }
+  return { $items, $待答权限, $会话开关, $待发, flush, setItems, upsertItem, dropItem, setQueued, applySnapshot, reset, 回显 }
 }
 
 export type 转录槽 = ReturnType<typeof 创建转录槽>

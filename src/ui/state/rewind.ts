@@ -7,6 +7,7 @@ import { atom } from "nanostores"
 import type { ResponseOf } from "../../protocol/operations.js"
 import type { TranscriptItem } from "../../protocol/index.js"
 import { msgid, t, tf } from "../i18n/index.js"
+import { 是回显 } from "./transcript-slot.js"
 
 export type 回退预览 = ResponseOf<"previewRewind">
 export type 回退回执 = ResponseOf<"rewindTurn">
@@ -100,7 +101,8 @@ export function 找这句(items: readonly TranscriptItem[], turnId: string): 那
 export function 最后一句(items: readonly TranscriptItem[]): 那句 | undefined {
   for (let i = items.length - 1; i >= 0; i--) {
     const x = items[i]!
-    if (x.type === "turn" && x.who === "user") return { id: x.id, text: x.text }
+    // 回显（A1）不是后端的一句——回退不到它，跳过
+    if (x.type === "turn" && x.who === "user" && !是回显(x.id)) return { id: x.id, text: x.text }
   }
   return undefined
 }

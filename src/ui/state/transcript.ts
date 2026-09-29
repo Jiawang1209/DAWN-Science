@@ -12,7 +12,7 @@ import type { TranscriptItem, TeamSnapshot, KernelState, QueuedMessage } from ".
 import { sameList, setValue } from "./identity.js"
 import { invalidate } from "./guard.js"
 import { cells as 转录里的cells, type Cell } from "../../protocol/notebook-cells.js"
-import { 创建转录槽, type 待答的权限, type 会话开关 } from "./transcript-slot.js"
+import { 创建转录槽, 是回显, type 待答的权限, type 会话开关 } from "./transcript-slot.js"
 
 /** 两个 interface 搬去了 `transcript-slot.ts`（2026-09-24）；这里转发，旧 import 路径一个字不改 */
 export type { 待答的权限, 会话开关 } from "./transcript-slot.js"
@@ -71,7 +71,8 @@ export function 有回音了(items: readonly TranscriptItem[], 从: number): boo
  * 主区这段说过话没有（至少一句自己说的话，2026-09-27）。命令面板「回到上一句之前」据它列成不可用并写缘故（spec §2.1）。
  * 与 `$回合进行中` 一样是布尔派生值：壳读它不会跟着每一段字重渲染。
  */
-export const $说过话 = computed($items, (items) => items.some((i) => i.type === "turn" && i.who === "user"))
+// 回显（A1）不算：它还没被后端收下，回退不到
+export const $说过话 = computed($items, (items) => items.some((i) => i.type === "turn" && i.who === "user" && !是回显(i.id)))
 
 /**
  * 笔记本格的 cell 清单，**cell 没变时保持同一个数组**（2026-09-22 从 `App.tsx` 挪来）。

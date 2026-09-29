@@ -4300,8 +4300,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             onCompact: (instructions?: string) => 压缩(s.sessionId, instructions),
           }
         : {}),
+      /**
+       * **回显**（2026-09-29，A1）：按下发送那一帧先在**这一段自己的槽**里画出这句。它不是第二个事实来源——
+       * 真的那条经事件回灌进来时在同一次落地里顶掉它（`transcript-slot.ts` 的 `回显`）。
+       * PTY 不给：终端自己回显，后端也不推人话，回显会永远挂着。
+       */
+      ...(s.kind !== "pty" ? { onEcho: 槽.回显 } : {}),
       onSend: (text, images, behavior) =>
-        // **不做本地乐观追加**：事件流是对话的唯一事实来源。
+        // **转录不做本地乐观追加**（回显除外，见上）：事件流是对话的唯一事实来源。
         // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
         (behavior === "redirect" ? 锁着调整(s.sessionId, 写进去(s.sessionId, text, images, behavior)) : 写进去(s.sessionId, text, images, behavior))
           .then(() => {

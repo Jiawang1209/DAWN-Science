@@ -131,6 +131,8 @@ describe("找那一句（审查 e：找不到就不开框）", () => {
     expect(最后一句([u("u1", "一"), a("a1"), u("u2", "二"), a("a2")])).toEqual({ id: "u2", text: "二" })
     expect(最后一句([a("a1")])).toBeUndefined()
     expect(最后一句([])).toBeUndefined()
+    // 回显（A1）还没被后端收下，回退不到它：跳过，落到前一句真的
+    expect(最后一句([u("u1", "一"), a("a1"), u("echo:1", "刚按下")])).toEqual({ id: "u1", text: "一" })
   })
 })
 

@@ -61,7 +61,7 @@ import { DesktopNotifyPanel, type 桌面通知回执 } from "./desktop-notify-pa
 import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
-import { 编文件规则 } from "../files/mentions.js"
+import { 编文件规则, 剥掉粘贴标记 } from "../files/mentions.js"
 import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
 import { Button, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
@@ -889,7 +889,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   /** 切会话：清空 transcript 并作废飞行中的请求，再取新会话的全量快照 */
   useEffect(() => {
-    resetTranscript()
+    // 切到的这一段若挂着自己的回显（空态第一句，A1）就留着：快照到之前那一下不再是「还没有对话」
+    resetTranscript(sessionId)
     if (!sessionId) return
     /**
      * **取完快照要把会话列表也重取一遍**（会话续接，2026-08-11）。
@@ -1597,6 +1598,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 「人还在原地才进对话」那条守卫保留：**他自己切走了就尊重他的选择**。
          */
         if (opts.不切过去) return t.sessionId
+        /**
+         * **回显**（A1 补，空态第一句）：第一句已经写进去了，切过去之后还要等订阅那一份快照回来才看得见它——
+         * 那一下屏幕上是「还没有对话」（探针量到约 40ms）。先把这句作为**这一段的**回显放进主槽，
+         * 切过去时 `resetTranscript(新id)` 留下它，快照（带着真的那条）整份替换时换掉它。
+         * 只在主区此刻没有会话时放：主槽正显示着别的一段的话，放进去就混到那一段里了。
+         * 写失败走不到这里（上面已经抛了），所以不用撤。
+         */
+        if ((首句 || (images && images.length > 0)) && $activeSessionId.get() === undefined) {
+          主槽.回显(
+            剥掉粘贴标记(首句 ?? ""),
+            (images ?? []).flatMap((x) => (x.from === "bytes" ? [`data:${x.mimeType};base64,${x.data}`] : [])),
+            t.sessionId,
+          )
+        }
         setActiveSessionId(t.sessionId)
         if ($view.get() === from) setView("conversation")
       }

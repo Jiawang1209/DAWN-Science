@@ -126,6 +126,27 @@ describe("回显", () => {
     expect(b.$items.get().map((x) => x.id)).toEqual(["u1"])
   })
 
+  it("空态第一句：带归属的回显，切到那一段时 reset(那一段) 留下它，切到别段清掉", () => {
+    const a = 创建转录槽()
+    a.回显("第一句", undefined, "s-new")
+    a.reset("s-new")
+    expect(a.$items.get()).toHaveLength(1)
+    expect(是回显(a.$items.get()[0]!.id)).toBe(true)
+    // 随后的快照带着真的那条：整份替换，始终一条
+    a.applySnapshot({ items: [人("u1", "第一句")] })
+    expect(a.$items.get().map((x) => x.id)).toEqual(["u1"])
+    a.回显("另一句", undefined, "s-new")
+    a.reset("s-other")
+    expect(a.$items.get()).toHaveLength(0)
+  })
+
+  it("不带归属的回显（普通发送）切会话一律清掉，哪怕 reset 给了 id", () => {
+    const a = 创建转录槽()
+    a.回显("甲")
+    a.reset("s1")
+    expect(a.$items.get()).toHaveLength(0)
+  })
+
   it("带图的回显把缩略图一起画", () => {
     const a = 创建转录槽()
     a.回显("", ["data:image/png;base64,AAAA"])

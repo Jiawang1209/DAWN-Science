@@ -178,7 +178,7 @@ export function setKernels(v: readonly KernelState[] | undefined): void {
  * **它同时作废所有飞行中的请求**（`invalidate()`），
  * 所以旧会话的响应回来时会被判为过期，不会把内容倒灌进新会话。
  */
-export function resetTranscript(): void {
+export function resetTranscript(保留回显给?: string): void {
   /**
    * 转录、权限卡、开关、待发单：主槽一并清掉（`transcript-slot.ts` 的 `reset`）。
    *
@@ -190,7 +190,8 @@ export function resetTranscript(): void {
    * 开关也跟着走：切到另一段会话，那颗菜单里的选项本来就不是它的。
    * 待发单也跟着走：那几句话是那一段的，挂在别的会话上面点「撤回」会撤错地方。
    */
-  主槽.reset()
+  // 切到的那一段自己的回显（空态第一句，A1）留下；别的会话的一概清掉
+  主槽.reset(保留回显给)
   if ($terminal.get().length > 0) $terminal.set([])
   setValue($terminalTrimmed, false)
   $团队.set(undefined)

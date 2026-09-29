@@ -59,6 +59,43 @@ test.describe("用户气泡即时上屏", () => {
 })
 
 /**
+ * **空态第一句**（A1 补）：会话是开口那一刻才建的，第一句写进去之后才切进对话；
+ * 切过去到订阅快照回来之间，屏幕上原来是「还没有对话」。现在那一下画的是这一段的回显，
+ * 快照带着真的那条到了再换掉——同样：第一次看见的是回显，任何一刻只有一条。
+ */
+test.describe("回显 · 空态第一句", () => {
+  test("**进对话的第一帧就有这句，从不出现「还没有对话」，也从不两条**", async ({ dawn }) => {
+    const { page } = dawn
+    await page.locator(".composer").waitFor({ timeout: 30_000 })
+
+    const 话 = "空态第一句先上屏"
+    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    await 框.fill(话)
+    await 挂观察(page, 话)
+    // 另记一笔：对话挂上之后有没有出现过「还没有对话」
+    await page.evaluate(() => {
+      const w = window as unknown as { __空过?: boolean }
+      w.__空过 = false
+      new MutationObserver(() => {
+        if (document.querySelector(".conv-title") && document.querySelector(".turns .empty")) w.__空过 = true
+      }).observe(document.body, { childList: true, subtree: true })
+    })
+    await 框.press("Enter")
+
+    const 真的 = page.locator(".turn.user:not([data-echo])", { hasText: 话 })
+    await expect(真的).toHaveCount(1, { timeout: 30_000 })
+    await expect(page.locator(".turns").getByText(CANNED_REPLY)).toBeVisible({ timeout: 30_000 })
+
+    const r = await 读记录(page)
+    expect(r.首条是回显).toBe(true)
+    expect(r.最多).toBe(1)
+    expect(await page.evaluate(() => (window as unknown as { __空过?: boolean }).__空过)).toBe(false)
+    await expect(page.locator(".turn.user")).toHaveCount(1)
+    await expect(page.locator(".turn[data-echo]")).toHaveCount(0)
+  })
+})
+
+/**
  * **发送失败：回显撤掉，话退回输入框。** 造失败的办法与 `send-failure.spec.ts` 同一个：
  * 注入一张「选得到、磁盘上没有」的图，主进程读盘时抛。
  */

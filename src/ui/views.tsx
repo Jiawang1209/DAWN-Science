@@ -4398,7 +4398,8 @@ export function ConversationView({
      * 是**转录自己说得出来的事实**，哪条路发的都算数。
      */
     // 会话已结束就不等了（2026-08-23 审查抓的：死会话以人的发言收尾会永远转「等回话」、发送键变「停止」）
-    const 转录在等 = 最后?.type === "turn" && 最后.who === "user" && !disabled
+    // 回显（A1）不算：它还没被后端收下——空态第一句的回显若被一份不带那句话的快照冲掉，「在等」就会永远挂着、发送键变「停止」
+    const 转录在等 = 最后?.type === "turn" && 最后.who === "user" && !是回显(最后.id) && !disabled
     if (等回话 === undefined) {
       if (转录在等 && !喊停过) {
         设等回话(items.length - 1)
@@ -4531,9 +4532,12 @@ export function ConversationView({
       const r = await onAnswerPlan(planId, action, text)
       if (action !== "approve" || !r.savedPath) return
       const 话 = 执行那句(r.savedPath, text !== undefined)
+      // 回显（A1）：替人发的这句也是人的一条发言，按下「照这个做」就先画出来
+      const 撤 = busy && onAbort ? undefined : onEcho?.(话)
       try {
         await onSend(话)
       } catch (e) {
+        撤?.()
         setDraft(session.sessionId, 话)
         设发送出错(e instanceof Error ? e.message : String(e))
       }

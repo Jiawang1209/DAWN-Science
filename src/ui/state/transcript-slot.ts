@@ -73,6 +73,8 @@ export function 创建转录槽() {
   const $待发 = atom<readonly QueuedMessage[]>([])
 
   const 攒着的 = new Map<string, TranscriptItem>()
+  /** 回显 id → 它属于哪一段（只有空态第一句那条带）。见 `回显` 与 `reset` */
+  const 回显归属 = new Map<string, string>()
   let 攒的定时器: ReturnType<typeof setTimeout> | undefined
 
   /** 把攒着的更新落进 `$items`。**同步**：谁要按顺序落下一条，先调它 */
@@ -183,11 +185,14 @@ export function 创建转录槽() {
    * 真的那条已经顶掉它、或快照 / 切会话已经把它冲掉时，撤是空操作。
    *
    * @param images 缩略图地址（能给就给，与真的那条同样画在字上面）
+   * @param 归属 这条回显属于哪一段（空态第一句用，A1 补）：槽此刻还没在看那一段，
+   *   切过去时 `reset(归属)` 留下它，而不是把它当成上一段的东西清掉
    */
-  function 回显(text: string, images?: readonly string[]): () => void {
+  function 回显(text: string, images?: readonly string[], 归属?: string): () => void {
     flush()
     回显序号 += 1
     const id = `${回显前缀}${回显序号}`
+    if (归属 !== undefined) 回显归属.set(id, 归属)
     $items.set([
       ...$items.get(),
       { type: "turn", id, who: "user", text, final: true, ...(images && images.length > 0 ? { images: [...images] } : {}) },
@@ -221,8 +226,14 @@ export function 创建转录槽() {
    * 点下去答的是别人的问题；挂在别的会话上面点「撤回」会撤错地方。
    * 作废飞行中的请求（`invalidate()`）不在这里：那是主区切会话的事，侧槽清空不该连带作废主区的请求。
    */
-  function reset(): void {
-    setItems([])
+  function reset(保留回显给?: string): void {
+    /**
+     * 空态第一句（A1 补）：会话建好、第一句已写进去，人正被切到这一段——这一段自己的回显留下，
+     * 别的一概清掉。随后的快照带着真的那条，整份替换时把回显一并换走。
+     */
+    const 留 = 保留回显给 === undefined ? [] : $items.get().filter((x) => 是回显(x.id) && 回显归属.get(x.id) === 保留回显给)
+    回显归属.clear()
+    setItems(留)
     $待答权限.set(undefined)
     $会话开关.set(undefined)
     setQueued(undefined)

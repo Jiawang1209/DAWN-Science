@@ -46,6 +46,7 @@ function actions(): Actions {
     compactContext: vi.fn(),
     rewindLast: vi.fn(),
     togglePlan: vi.fn(),
+    enhanceInput: vi.fn(),
   }
 }
 
@@ -259,5 +260,22 @@ describe("先出方案（2026-09-27）", () => {
   it("没有会话 / 不支持时照样列着、写原因", () => {
     expect(找({ session: undefined }).unavailable).toBe("还没有会话")
     expect(找({ plan: { on: false, unavailable: "这个 agent 不归 DAWN 管工具，生成方案用不了" } }).unavailable).toContain("不归 DAWN")
+  })
+})
+
+describe("优化输入（2026-09-29）", () => {
+  const 找 = (over: Partial<Parameters<typeof buildCommands>[0]> = {}) => build(over).find((c) => c.id === "composer.enhance")!
+  it("能按时：run 只转发给 actions.enhanceInput；带快捷键提示", () => {
+    const a = actions()
+    const c = buildCommands({ actions: a, agents: ["ds-chat"], session, busy: false, view: "conversation", enhance: {} }).find((x) => x.id === "composer.enhance")!
+    expect(c.title).toBe("优化输入")
+    expect(c.unavailable).toBeUndefined()
+    expect(c.keybinding).toMatch(/E$/)
+    c.run()
+    expect(a.enhanceInput).toHaveBeenCalledTimes(1)
+  })
+  it("按不了照样列着，原因是那颗按钮报的；缺省（眼前没有主区输入框）也不算能用", () => {
+    expect(找({ enhance: { unavailable: "先写点什么再优化" } }).unavailable).toBe("先写点什么再优化")
+    expect(找().unavailable).toBe("眼前没有输入框，回到对话再用")
   })
 })

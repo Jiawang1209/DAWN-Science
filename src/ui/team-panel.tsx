@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useStore } from "@nanostores/react"
-import { $团队 } from "./state/index.js"
+import { $团队格团队, $团队格来源 } from "./state/team-view.js"
 import { t, tf } from "./i18n/index.js"
 import { Button } from "./primitives.js"
 import { 三角图标 } from "./icons.js"
@@ -207,12 +207,22 @@ function 依赖图({ tasks }: { tasks: readonly 任务[] }) {
 }
 
 export function TeamPanel() {
-  const team = useStore($团队)
+  // 画哪一段的团队由 `team-view.ts` 定：点了坞里那段的团队 chip 就是那段的，否则是主区那段的（2026-09-29）
+  const team = useStore($团队格团队)
+  const 来源 = useStore($团队格来源)
   const [收起的, 设收起的] = useState<ReadonlySet<string>>(new Set())
   const [开着的任务, 设开着的任务] = useState<string | undefined>(undefined)
   const [展开的, 设展开的] = useState<ReadonlySet<string>>(new Set())
   const [成员开, 设成员开] = useState(true)
-  if (!team) return <p className="hint team-empty">{t("这段会话没有团队。对模型说「用团队分工做…」，或在输入框打 /team。")}</p>
+  /** 画的是坞里那段的团队时说一句：格子里的与主区对不上，人会以为看错了（2026-09-29） */
+  const 出处 = 来源 === "侧" ? <p className="hint team-source" data-team-source="side">{t("坞里那段对话的团队")}</p> : null
+  if (!team)
+    return (
+      <div className="team-empty-wrap">
+        {出处}
+        <p className="hint team-empty">{t("这段会话没有团队。对模型说「用团队分工做…」，或在输入框打 /team。")}</p>
+      </div>
+    )
 
   const tasks = team.tasks
   const 完成 = tasks.filter((x) => x.status === "completed").length
@@ -297,6 +307,7 @@ export function TeamPanel() {
 
   return (
     <div className="team-panel" data-team={team.id} data-finished={team.finishedAt ? "1" : "0"}>
+      {出处}
       {/* ① 标题行 */}
       <header className="team-head">
         <h2 className="team-name" data-authored="1">{team.name}</h2>

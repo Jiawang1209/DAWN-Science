@@ -340,3 +340,20 @@ agents:
     await expect(变更).toContainText(产出)
   })
 })
+
+/**
+ * **远端 Authorization 那一行说清只填令牌**（2026-09-29）。作者 09-25 只填了令牌、被拒 `invalid_token`——
+ * 连的时候自动补「Bearer 」（`补认证方案`，单元测试对着真 HTTP 服务器验过），这里验那句话真的画在界面上。
+ */
+test("**远端 Authorization 那一行说清只填令牌就行**", async ({ dawn }) => {
+  const { page } = dawn
+  await 进设置(page, "MCP 服务器")
+  await page.getByText("加一台 MCP 服务器").click()
+  await page.getByRole("textbox", { name: "MCP 服务器的 JSON 配置" }).fill(
+    JSON.stringify({ mcpServers: { cloud: { type: "http", url: "http://127.0.0.1:1/mcp", headers: { Authorization: "Bearer xxx" } } } }),
+  )
+  await page.getByRole("button", { name: "加进来" }).click()
+  await expect(page.locator(".mcp-secret-hint")).toContainText("只填令牌就行")
+  await page.getByRole("button", { name: "删掉 cloud" }).click()
+  await page.locator(".confirm").getByRole("button", { name: "确认删掉" }).click()
+})

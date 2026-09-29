@@ -132,23 +132,26 @@ test("**操作在这一段下面**，不是浮在右上角", async ({ dawn }) =>
 })
 
 /**
- * 操作图标**对齐自己那颗气泡的左缘**（2026-08-12，作者选的）。
+ * 自己那句的操作**靠右排在气泡下面，不撑宽气泡**（2026-09-29，作者批的；取代 2026-08-12 的「对齐气泡左缘」）。
  *
- * 不是「靠到对话区最左」——那样图标会离自己那句话很远，
- * 眼睛要跨过一整行空白才找得到它属于谁。
+ * 旧做法让包裹层取「气泡 / 动作行」的大者，2026-09-27 动作行多了带字的「回到这句之前」之后，
+ * 「好」一个字的气泡被撑到约 180px。现在气泡只按字定宽，动作行右缘与气泡齐、短气泡时可以比它更往左伸。
  */
-test("**图标对齐气泡左缘**", async ({ dawn }) => {
+test("**动作行靠右、不撑宽气泡**：一个字的气泡比它下面那行窄", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下对齐")
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
-  await expect(page.locator(".turns")).toContainText("量一下对齐", { timeout: 30_000 })
+  await expect(page.locator(".turn.user .turn-actions").first()).toBeVisible({ timeout: 30_000 })
 
   const 气泡 = (await page.locator(".turn.user .bubble").first().boundingBox())!
-  const 第一颗 = (await page.locator(".turn.user .turn-actions .btn").first().boundingBox())!
+  const 行 = (await page.locator(".turn.user .turn-actions").first().boundingBox())!
+  const 最后一颗 = (await page.locator(".turn.user .turn-actions .btn").last().boundingBox())!
 
-  // **左缘对齐**：容差 2px 给边框与图标内边距
-  expect(Math.abs(第一颗.x - 气泡.x)).toBeLessThanOrEqual(2)
+  // **气泡不被撑宽**：动作行（至少两颗图标）比「好」一个字宽，气泡却不跟着变宽
+  expect(气泡.width, `气泡 ${气泡.width}px 不该被动作行 ${行.width}px 撑宽`).toBeLessThan(行.width)
+  // **右缘对齐**：容差 2px 给边框与图标内边距
+  expect(Math.abs(最后一颗.x + 最后一颗.width - (气泡.x + 气泡.width))).toBeLessThanOrEqual(2)
 
   // 顺带钉住「两颗一样大」：一个 ⧉ 一个 ✎，大小不一样会像是两种东西。
   // 只数图标那两颗：2026-09-27 起后面还有一颗带字的「回到这句之前」，它本来就不是图标的尺寸

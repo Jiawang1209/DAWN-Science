@@ -44,7 +44,7 @@ import {
   type RunDetail,
 } from "./catalog.js"
 import { $activeSessionId } from "./view.js"
-import { $侧边会话id, 侧槽 } from "./side-chat.js"
+import { $侧边会话id, $侧边团队, 侧槽 } from "./side-chat.js"
 import { 子槽, $子agent信息, $子转录id } from "./subagent-view.js"
 
 /**
@@ -289,6 +289,8 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
         configOptions: snap.configOptions,
         queued: snap.queued,
       })
+      // 它的团队（2026-09-29）：坞里点团队 chip 要看的是这一份，不是主区那段的
+      $侧边团队.set(snap.team)
       c.expectRevision(sessionId, snap.revision)
     })
     .catch((e: unknown) => {

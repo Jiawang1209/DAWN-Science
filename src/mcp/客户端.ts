@@ -160,7 +160,9 @@ export class MCP池 {
      */
     const 要的密钥 = 是远端MCP(配) ? (配.headers ?? []) : (配.env ?? [])
     for (const 变量 of 要的密钥) {
-      const v = this.opts.取密(名, 变量)
+      const 原值 = this.opts.取密(名, 变量)
+      // 只在远端那条补 `Bearer `：本机那条是环境变量，值原样给
+      const v = 是远端MCP(配) && 原值 !== undefined ? 补认证方案(变量, 原值) : 原值
       if (v === undefined || v === "") 缺的.push(变量)
       else env[变量] = v
     }
@@ -174,6 +176,15 @@ export class MCP池 {
      * 只在远端那条查：本机那条走的是环境变量，中文没问题。
      */
     if (是远端MCP(配)) {
+      // 令牌中间断了行（两头的已经去掉）：fetch 会拒绝这个头、报一句看不懂的错——在这里说清楚（审查 09-29）
+      const 断行的 = Object.entries(env).filter(([, v]) => /[\r\n]/.test(v))
+      if (断行的.length > 0) {
+        return {
+          服务器名: 名,
+          工具: [],
+          失败: `${断行的.map(([k]) => k).join("、")} 的值中间有换行——令牌应该是一整行，重新粘一次。`,
+        }
+      }
       const 带中文的 = Object.entries(env).filter(([, v]) => /[^\x00-\xff]/.test(v))
       if (带中文的.length > 0) {
         return {
@@ -369,6 +380,33 @@ export function 摘出文字(r: unknown): string {
   const 文字 = 行.join("\n").trim()
   // **什么都没返回也要说一声**：一片空白会被读成「没调成」
   return 文字 || "（这次调用没有返回任何内容）"
+}
+
+/**
+ * **`Authorization` 只填了令牌，就替人补上 `Bearer `**（2026-09-29）。
+ *
+ * 作者接自己的 MCP，填了一个有效的令牌却拿到 `invalid_token`：
+ * 服务器要的是 `Authorization: Bearer <令牌>`，而「MCP 服务器」那一屏的框
+ * 从没说过要连 `Bearer ` 一起填——**不知道 Bearer 是什么的人只会填令牌**。
+ *
+ * **补在请求头拼出来的这一处，而不是存进钥匙串那一处**：
+ * 这是所有远端头值唯一的出口，填的、以前存下的裸令牌都经过这里，
+ * 已经存着裸令牌的人不用重填就能连上；钥匙串里存的仍是他填的原样。
+ *
+ * 只动名字是 `Authorization`（不分大小写）的头；
+ * 值已经带了方案（`Bearer x`、`bearer x`、`Basic x`、`Token x`……，
+ * 即「一个方案词 + 空白 + 其余」）就原样留着，不会补出两个 `Bearer `。
+ * 空值留空——「没填」要照旧点名，不能被补成一个只有 `Bearer ` 的头。
+ */
+export function 补认证方案(头名: string, 值: string): string {
+  const v = 值.trim()
+  if (头名.toLowerCase() !== "authorization") return 值
+  if (v === "") return v
+  // 只有一个方案词、没有令牌：当作没填（不补出 `Bearer Bearer`），让「还差 Authorization 没填」照旧点名
+  if (/^bearer$/i.test(v)) return ""
+  // RFC 9110 的 auth-scheme 是一个 token；后面至少一个空白再跟凭据
+  if (/^[A-Za-z0-9!#$%&'*+.^_`|~-]+\s+\S/.test(v)) return v
+  return `Bearer ${v}`
 }
 
 /**

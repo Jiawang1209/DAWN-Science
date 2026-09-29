@@ -68,7 +68,7 @@ import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type FeishuStatus, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
 import { 读记忆, 记记忆, type FilesMemory } from "./state/files-memory.js"
-import type { EnhanceMode, EnhanceOutcome } from "./enhance.js"
+import { $优化输入, 请求优化输入, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import {
   AgentSkillsView,
   SubagentsView,
@@ -96,8 +96,9 @@ import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide, resyncSubagent } from "./state/sync.js"
 import { $子转录id, 收子转录推送, 看子agent, 放下不该看的子转录 } from "./state/subagent-view.js"
+import { 看团队, 放下不该看的团队格, $团队格会话 } from "./state/team-view.js"
 import { SubagentDock } from "./subagent-pane.js"
-import { $侧边会话id, $侧边能读主, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
+import { $侧边会话id, $侧边能读主, $侧边团队, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
 import { 主槽, $说过话 } from "./state/transcript.js"
 import { 回退这一轮, 找这句, 最后一句, $回退中, type 回退预览, type 回退回执 } from "./state/rewind.js"
 import { RewindDetail } from "./rewind.js"
@@ -681,8 +682,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         if (u.sessionId === $侧边会话id.get() && u.sessionId !== $activeSessionId.get()) {
           if (u.type === "item") 侧槽.upsertItem(u.item)
           if (u.type === "dropItem") 侧槽.dropItem(u.id)
-          if (u.type === "snapshot") 侧槽.applySnapshot(u.snapshot)
+          if (u.type === "snapshot") {
+            侧槽.applySnapshot(u.snapshot)
+            $侧边团队.set(u.snapshot.team)
+          }
           if (u.type === "queued") 侧槽.setQueued(u.queued)
+          // 它的团队变了（2026-09-29）：整份换掉——与主区那条同一条纪律，只是写进坞里那段自己的一份
+          if (u.type === "team") $侧边团队.set(u.team)
           // 退出了要立刻反映到列表：坞里那格的输入框靠它判断还能不能写（与主区同一句）
           if (u.type === "state" && u.state === "exited") {
             const pid = $activeProjectId.get()
@@ -2173,6 +2179,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * （在这里清是绘制之后——有一帧是「新 id + 旧过程」，2026-09-27 审查）。
    */
   const 子id = useStore($子转录id)
+  const 团队格会话 = useStore($团队格会话)
   useEffect(() => {
     if (!ready || !子id) return
     void resyncSubagent(client, 子id)
@@ -2188,6 +2195,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   useEffect(() => {
     放下不该看的子转录(sessionId)
+  }, [sessionId, 侧边id, rightDockOpen, rightDockTenant])
+
+  /** 「团队」格记下的那一段同理（2026-09-29）：格子不在眼前、或那一段已不在主区也不在坞里，回到缺省（读主区那段） */
+  useEffect(() => {
+    放下不该看的团队格()
   }, [sessionId, 侧边id, rightDockOpen, rightDockTenant])
 
   /**
@@ -2207,7 +2219,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 打开子agent = useCallback((transcriptId: string) => {
     坞上位()
-    if (拆子转录id(transcriptId)?.toolCallId.startsWith("team:")) {
+    const 拆 = 拆子转录id(transcriptId)
+    if (拆?.toolCallId.startsWith("team:")) {
+      // 它属于哪一段就看哪一段的团队（2026-09-29）：坞里那段的 chip 以前打开的是主区那段的团队
+      看团队(拆.会话)
       setRightDockTenant("team")
     } else {
       看子agent(transcriptId)
@@ -3861,6 +3876,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         if (!session || !开) return
         client.get("setSessionConfigOption", { sessionId: session.sessionId, configId: "dawn.plan", value: 开.current === "1" ? "" : "1" }).catch(fail)
       },
+      /** 命令面板「优化输入」（2026-09-29）：叫主区那颗按钮自己的「去增强」——与点它、⌘⇧E 同一个函数 */
+      enhanceInput: 请求优化输入,
       /** 命令面板「搜索对话内容」：打开侧栏搜索并切到按内容；侧栏收着先展开（与放大镜那颗同一条） */
       openContentSearch: () => {
         设搜索开着(true)
@@ -3971,10 +3988,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       还在 = false
     }
   }, [client, projectId, view, 名册代, 当前工作区路径, 载MCP, 载插件])
+  const 优化输入态 = useStore($优化输入)
   const commands = useMemo(
     () =>
       buildCommands({
         actions, agents: agentIds, session, busy, view, dockOpen,
+        // 优化输入（2026-09-29）：能不能按由主区那颗按钮自己报（草稿住在它那儿，App 看不见）
+        enhance: 优化输入态,
         // 回到上一句之前（spec §2.1）：没说过话、正在回退，都在面板里列成不可用并写缘故
         saidSomething: 主区说过话,
         rewinding: !!(session && 回退中们[session.sessionId]),
@@ -3988,7 +4008,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             })()
           : {}),
       }),
-    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中, 主区说过话, 回退中们, 主区开关们],
+    [actions, agentIds, session, busy, view, dockOpen, 坞没处说, 另开中, 主区说过话, 回退中们, 主区开关们, 优化输入态],
   )
 
   /**
@@ -5708,7 +5728,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }}
               />
             ) : rightDockTenant === "team" ? (
-              <TeamPanel key={sessionId} />
+              /** 按它画的那一段重挂（2026-09-29）：展开 / 收起的是那一段的成员与任务，换段不带过去 */
+              <TeamPanel key={团队格会话 ?? sessionId} />
             ) : rightDockTenant === "artifacts" ? (
               /** **产物那一格**（2026-08-26）：下载与文件格同一契约——只有远端会话才给（本地文件没有「下载」这一说） */
               <ArtifactsPanel

@@ -13,7 +13,8 @@
  * 所以每一处都先圈定范围——主区 `main.main`、坞里 `aside.right-dock`——不圈就是子串匹配撞两个。
  */
 import type { Page } from "@playwright/test"
-import { resolve } from "node:path"
+import { join, resolve } from "node:path"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { test, expect, CANNED_REPLY, 在项目里开会话, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 const 主区 = (page: Page) => page.locator("main.main")
@@ -261,5 +262,56 @@ test.describe("侧边对话 · ACP", () => {
     await 挑.click()
     await 坞(page).locator(".side-chat-head").waitFor({ timeout: 30_000 })
     await expect(坞(page).getByText("这个 agent 看不见主对话", { exact: true })).toBeVisible()
+  })
+})
+
+/**
+ * **坞里那段对话的团队 chip 打开的是它自己的团队**（2026-09-29）。此前 `$团队` 只载主区那段：
+ * 主区没组队时点坞里的 chip，团队格说「这段会话没有团队」。从标签栏进团队格仍看主区那段（行为照旧）。
+ */
+test.describe("侧边对话 · 团队 chip", () => {
+  test.use({
+    dawnOptions: {
+      gitInit: true,
+      toolCall: [
+        {
+          toolName: "team_create",
+          when: "审一遍这个仓库",
+          args: {
+            name: "审稿小队",
+            goal: "把这个仓库审一遍",
+            members: [{ name: "踏勘", agent: "scout", role: "先看一眼" }],
+            tasks: [{ id: "t1", subject: "看看仓库里有什么", assignee: "踏勘" }],
+          },
+        },
+      ],
+    },
+  })
+
+  test("**点坞里的团队 chip → 团队格是坞里那段的队，并写明来源；从标签栏进回到主区那段**", async ({ dawn }) => {
+    const { page, workspace } = dawn
+    mkdirSync(join(workspace, ".dawn", "agents"), { recursive: true })
+    writeFileSync(
+      join(workspace, ".dawn", "agents", "scout.md"),
+      "---\nname: scout\ndescription: scout\n---\n你是 scout。用一句话回答。\n",
+    )
+    await 在项目里开会话(page)
+    await 坞里另开一段(page)
+    await 说(坞(page), "/team 审一遍这个仓库")
+    await expect(坞(page).locator(".tool").filter({ hasText: "team_create" }).first()).toHaveAttribute("data-status", "ok", {
+      timeout: 60_000,
+    })
+
+    await 坞(page).locator(".side-chat .chip-group .chip").first().click()
+    const 格 = 坞(page).locator(".team-panel")
+    await expect(格).toBeVisible({ timeout: 30_000 })
+    await expect(格.locator(".team-name")).toHaveText("审稿小队")
+    await expect(格.locator('[data-team-source="side"]')).toBeVisible()
+
+    await 进坞(page, "对话")
+    await 进坞(page, "团队")
+    // 空态不在 `.team-panel` 里（`.team-empty-wrap`）——按坞整格判
+    await expect(坞(page)).toContainText("这段会话没有团队")
+    await expect(坞(page).locator('[data-team-source="side"]')).toHaveCount(0)
   })
 })

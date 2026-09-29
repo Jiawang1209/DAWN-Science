@@ -4,6 +4,7 @@
  * 它的转录是第二个槽——后端权威，这里是缓存，与主槽同一条纪律。
  */
 import { atom } from "nanostores"
+import type { TeamSnapshot } from "../../protocol/index.js"
 import { 创建转录槽 } from "./transcript-slot.js"
 import { 是散的任务 } from "./catalog.js"
 
@@ -11,6 +12,11 @@ export const 侧槽 = 创建转录槽()
 export const $侧边会话id = atom<string | undefined>(undefined)
 /** 坞里那段的运行时读不读得到主对话（`setSideSession` 回的）。缺省 = 还不知道 */
 export const $侧边能读主 = atom<boolean | undefined>(undefined)
+/**
+ * 坞里那段的团队快照（2026-09-29）。与主区的 `$团队` 并排，**作用域 = 坞里挂着的那一段**：换段 / 拿下时与侧槽一起清。
+ * 坞里「团队」格读哪一份见 `team-view.ts`。缺省 = 没建过团队（或还没取到快照）。
+ */
+export const $侧边团队 = atom<TeamSnapshot | undefined>(undefined)
 /**
  * 坞此刻按哪个「地方」挂（`载入侧边` / `挂进坞` 记下的）。**缺省 = 此刻没有地方**
  * （什么都没选、也没选项目）——坞格据此说「没处另开」，不是空白。
@@ -123,6 +129,7 @@ export function 载入侧边(地方: string | undefined): void {
   const id = 地方 ? 读表()[地方] : undefined
   if (id === $侧边会话id.get()) return
   侧槽.reset()
+  $侧边团队.set(undefined)
   $侧边能读主.set(undefined)
   $侧边会话id.set(id)
 }
@@ -141,6 +148,7 @@ export function 从坞拿下(地方: string | undefined = $侧边地方.get()): 
     写表(t)
   }
   侧槽.reset()
+  $侧边团队.set(undefined)
   $侧边能读主.set(undefined)
   $侧边会话id.set(undefined)
 }

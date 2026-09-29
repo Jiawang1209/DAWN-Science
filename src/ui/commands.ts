@@ -33,6 +33,7 @@ import type { ThemeChoice } from "./state/theme.js"
 import type { View } from "./state/view.js"
 
 import { t, tf, msgid } from "./i18n/index.js"
+import { 优化输入快捷键 } from "./enhance.js"
 /**
  * 命令的分组。**它既是键又是标签**（2026-08-13 双语时才看清这一点）。
  *
@@ -109,6 +110,11 @@ export interface Actions {
   rewindLast(): void
   /** 先出方案开 / 关（2026-09-27）。**与输入卡那颗开关、`/plan` 是同一个动作** */
   togglePlan(): void
+  /**
+   * 改写主区输入框里这一版草稿（2026-09-29）。**与输入卡上那颗「优化输入」、⌘⇧E 是同一个动作**：
+   * 转给那颗按钮自己的「去增强」（草稿、档位、撤回栈都在它身上），不另写一份。
+   */
+  enhanceInput(): void
 }
 
 export interface CommandContext {
@@ -131,6 +137,11 @@ export interface CommandContext {
   saidSomething?: boolean | undefined
   /** 当前这段正在回退（从预览到做完）。缺省 = 没有 */
   rewinding?: boolean | undefined
+  /**
+   * 主区那颗「优化输入」报上来的状态（`$优化输入`）。**缺省 = 眼前没有主区输入框**——
+   * 缺失不等于能用：按了没反应的命令比列成不可用更坏。
+   */
+  enhance?: { unavailable?: string | undefined } | undefined
 }
 
 const THEMES: readonly { choice: ThemeChoice; label: string }[] = [
@@ -231,6 +242,21 @@ export function buildCommands(ctx: CommandContext): Command[] {
     keywords: "plan mode 方案 预注册 生成方案 先出方案 /plan",
     run: () => actions.togglePlan(),
     ...(方案为何不能 ? { unavailable: 方案为何不能 } : {}),
+  })
+
+  /**
+   * 优化输入（2026-09-29）。坞那么窄时那颗只剩一颗星、名字只在悬停提示里——悬停才出现的东西要另有入口，这是那个入口。
+   * `run` 只转发；草稿与撤回都归那颗按钮。**不可用照样列着**，原因由那颗按钮报（没 key / 框里空着 / 正在改写）。
+   */
+  const 优化为何不能 = ctx.enhance ? ctx.enhance.unavailable : t("眼前没有输入框，回到对话再用")
+  out.push({
+    id: "composer.enhance",
+    title: t("优化输入"),
+    group: "会话",
+    keywords: "enhance improve rewrite prompt 优化 改写 增强 提示词",
+    keybinding: 优化输入快捷键,
+    run: () => actions.enhanceInput(),
+    ...(优化为何不能 ? { unavailable: 优化为何不能 } : {}),
   })
 
   /**

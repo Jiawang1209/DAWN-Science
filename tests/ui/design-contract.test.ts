@@ -1437,6 +1437,36 @@ describe("设计契约 · 转录区只许有一层滚动", () => {
 })
 
 /**
+ * **自己的气泡只按字定宽，动作行不撑它**（2026-09-29，作者批的）。
+ *
+ * 2026-09-27 起用户气泡下面多了一颗带字的「回到这句之前」，而包裹层 `.turn.user .turn-body` 是 `width: max-content`——
+ * 它取的是**气泡与动作行里宽的那个**，于是「好」一个字的气泡被撑到约 180px。
+ * 判据落在几何的源头上：包裹层**不许按内容定宽**（max/min/fit-content 都是「取子项的大者」），子项各自靠右；
+ * 气泡的 82% 上限留在 `.turn.user .bubble` 上、相对整段。位置本身由 `e2e/composer-history-copy.spec.ts` 量。
+ */
+describe("设计契约 · 自己的气泡只按字定宽", () => {
+  const css = () => readFileSync(join(UI_DIR, "styles.css"), "utf8")
+  function 规则块(text: string, 选择器: string): string {
+    const i = text.indexOf(`\n${选择器} {`)
+    if (i < 0) throw new Error(`找不到规则 ${选择器}`)
+    const j = text.indexOf("}", i)
+    return text.slice(i, j).replace(/\/\*[\s\S]*?\*\//g, "")
+  }
+
+  it("**`.turn.user .turn-body` 不按内容定宽、子项靠右**；上限在气泡自己身上", () => {
+    const text = css()
+    const 包裹 = 规则块(text, ".turn.user .turn-body")
+    expect(包裹, "包裹层按内容定宽 = 取气泡与动作行的大者，短气泡会被动作行撑宽").not.toMatch(
+      /(^|[\s;])(min-|max-)?width: *(max-content|min-content|fit-content)/,
+    )
+    expect(包裹, "子项（气泡、动作行）要各自靠右").toMatch(/align-items: *flex-end/)
+    expect(规则块(text, ".turn.user .bubble"), "气泡的上限要在它自己身上、相对整段").toMatch(/max-width: *82%/)
+    // 没有别的规则再把 `.turn.user .bubble` 放开到 100%（那是旧做法里「上限挪到包裹层」的另一半）
+    expect(text.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/\n\.turn\.user \.bubble \{ *max-width: *100%/)
+  })
+})
+
+/**
  * **壳不订阅整份转录**（2026-09-22，`perf-render`）。
  *
  * 基线：`App` 顶层 `useStore($items)` 时，模型每吐一段字，侧栏、坞、顶栏整壳重渲染，

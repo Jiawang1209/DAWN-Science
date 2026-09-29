@@ -3696,55 +3696,36 @@ pre {
   margin-top: 2px;
 }
 /**
- * **操作一律左对齐**（2026-08-12，作者提）。
- *
- * 上一版让自己那句的操作跟着气泡靠右——读起来是「跟着气泡走」，
- * 但实际后果是**两段对话的操作行左右横跳**，眼睛要来回找。
- * 对齐到同一条竖线上，扫一眼就知道每段下面有什么。
+ * **操作左对齐**（2026-08-12，作者提）：两段对话的操作行不左右横跳，扫一眼就知道每段下面有什么。
+ * **例外：自己那句的动作行靠右**（2026-09-29，作者批的）——它若对齐气泡左缘，就得让包裹层取「气泡 / 动作行」里宽的那个，
+ * 「好」这样的短气泡会被带字的「回到这句之前」撑到约 180px。见下面 `.turn.user .turn-body`。编辑态那一行（不改了 / 发送）不在例外里。
  */
 .turn .turn-actions { justify-content: flex-start; }
 /**
- * **自己那句的操作，对齐到那颗气泡的左缘**（2026-08-12，作者选的）。
+ * 自己那句的操作：**靠右排在气泡下面，不撑宽气泡**（2026-09-29，作者批的）。
  *
- * 不是「靠到对话区最左」——那样图标会离自己那句话很远，
- * 眼睛得跨过一整行空白才找得到它属于谁。
+ * 2026-08-12 起它对齐气泡的左缘，做法是让包裹层的宽度取「气泡 / 动作行」里宽的那个。
+ * 2026-09-27 动作行多了带字的「回到这句之前」（约 180px）之后，**「好」这样的短气泡被撑到约 180px 宽**——
+ * 气泡的宽度应该只由它的字决定。现在包裹层占满这一段、子项各自靠右：
+ * 气泡按字收缩，动作行按自己的内容收缩、右缘与气泡齐，短气泡时它可以比气泡更往左伸。
  */
 .turn-body { display: flex; flex-direction: column; min-width: 0; }
 
 /* 笔记本（2026-08-26）：对话里那一行 cell 痕迹 */
 .turn-cellnote { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); margin: var(--dawn-space-1) 0; }
 /**
- * 自己说的话靠右：盒子缩到气泡那么宽，于是操作行从气泡左缘排起。
+ * 自己说的话靠右：包裹层占满这一段，子项（气泡、动作行）**各自按内容收缩、各自靠右**。
  *
- * **`max-content` 不是 `fit-content`**（2026-08-12 修）。
- * 上一版用 `fit-content`，它在这个 flex 列里会按**可用宽度**收缩——
- * 于是「你是什么模型？」七个字被折成了两行：*「你是什么模 / 型？」*。
- * 作者的原话就是这一屏：*「现在就是这个状态。」*
- *
- * `max-content` 先按**不折行时该有的宽度**算，再由 `max-width` 封顶。
- * 短问句因此保持一行，长的照旧折。
+ * 气泡的上限（82%）因此仍相对整段宽度，与气泡直接放在 `.turn.user` 里时一样——
+ * 「你是什么模型？」这种短问句按不折行的宽度排、长的照旧在 82% 处折（2026-08-12 那两次踩的都是参照系变窄）。
+ * **动作行不参与气泡的宽度**：两者是兄弟、各算各的，没有「盒子宽 = 两者取大」这一步。
  */
 .turn.user .turn-body {
-  width: max-content;
-  /**
-   * **上限挪到这一层，`.bubble` 那条百分比因此要放开**（2026-08-12）。
-   *
-   * 量出来的根因：`.bubble` 的 `max-width: 82%` 原先相对 `.turn`（768px）
-   * → 630px，够宽；我加了这层包裹之后，**82% 变成相对包裹层（122px）→ 100px**，
-   * 于是「你是什么模型？」七个字放不下，被折成两行。
-   * **参照系换了，而百分比不会告诉你这件事。**
-   */
-  max-width: 82%;
-  margin-left: auto;
-  /**
-   * **还要禁止它被压缩。**
-   *
-   * `max-content` 只说「我想要多宽」，而 flex 子项默认 `flex-shrink: 1`——
-   * 想要归想要，照样被压回去。加上这行之前，
-   * 「你是什么模型？」仍然是两行（e2e 量出来 `行数 = 2`）。
-   */
-  flex: 0 0 auto;
+  align-self: stretch;
+  align-items: flex-end;
 }
+/* 动作行一行放不下时（坞里那段）折下去的那颗也靠右，与气泡的右缘同一条线 */
+.turn.user .turn-body > .turn-actions { justify-content: flex-end; }
 /* 两颗图标同样大小：一个 ⧉ 一个 ✎，大小不一样会像是两种东西 */
 .turn-actions .btn-icon { width: 1.75rem; height: 1.75rem; font-size: 0.95rem; }
 /**
@@ -3790,13 +3771,13 @@ pre {
 }
 .turn-edit { width: 100%; min-height: 4.5em; resize: vertical; }
 .turn.editing .bubble { width: 100%; }
+/* 改的时候占满这一段（气泡平时的 82% 上限不管这里）；它没有 `.turn-body`，直接坐在 `.turn.user` 里 */
+.turn.user.editing .bubble { max-width: 100%; }
 .tool-body > .copy-btn { float: right; }
 
 /* 执行中那个会动的记号，跟状态字挨着 */
 .tool-head .thinking { margin-left: var(--dawn-space-2); }
 
-/* 上限已经在 `.turn-body` 上（见那段注释），这里放开，否则会再收一次 82% */
-.turn.user .bubble { max-width: 100%; }
 
 /* 思考（2026-08-12，形态学自 Hermes）。
    **它不是回答**：不进气泡、字更小、色更淡——一眼分出「对自己说的」与「对我说的」 */
@@ -4858,8 +4839,16 @@ pre {
 
 .mcp-secret {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--dawn-space-2);
+}
+
+/* Authorization 那一行下面那句「只填令牌就行」：独占一行，字小一号、颜色退后 */
+.mcp-secret-hint {
+  flex-basis: 100%;
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-badge);
 }
 
 /**
@@ -6262,6 +6251,40 @@ pre {
 .enhance-undo { color: var(--dawn-text-2); }
 /* `.enhance-note` 撤了（2026-08-22）：「先写点什么」那句不再常驻，理由进了 aria-label。没有调用点的样式不留 */
 .enhance-menu { left: 0; right: auto; min-width: 18rem; }
+/**
+ * 「优化输入」的悬停提示：名字 + 快捷键（2026-09-29）。坞里窄到只剩一颗星时靠它认出这颗是什么。
+ * 自己画、不用原生 `title`（设计契约禁的）；壳与 `.accent-tip` 同一副。悬停才出现——另一入口是命令面板「优化输入」。
+ * 菜单开着时不画，免得两块浮层叠在一起。
+ */
+.enhance-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: var(--z-tooltip);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+  padding: var(--dawn-space-1) var(--dawn-space-2);
+  font-size: var(--dawn-fs-badge);
+  color: var(--dawn-text-2);
+  background: var(--dawn-surface-overlay);
+  backdrop-filter: var(--dawn-blur-overlay);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-float);
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+}
+.enhance-tip-why { color: var(--dawn-text-3); }
+.enhance-main:hover + .enhance-tip,
+.enhance-main:focus-visible + .enhance-tip {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity var(--dawn-dur-fast) var(--dawn-ease) 300ms;
+}
+.enhance-control:has(.enhance-menu) .enhance-tip { display: none; }
 .enhance-menu .sess { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .enhance-menu .sub { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .enhance-spin {
@@ -6605,6 +6628,9 @@ pre {
    颜色只有四档：在跑 = 强调色、等待依赖 = 警示色、已交付 = 成功色、未交付 = 淡字色。 */
 .team-panel { padding: var(--dawn-space-3); font-size: var(--dawn-ui-size); display: flex; flex-direction: column; gap: var(--dawn-space-3); }
 .team-empty { padding: var(--dawn-space-3); }
+/* 画的是坞里那段的团队时那一句出处（2026-09-29）：面板自带内距；空态没有面板，自己补上左右与顶 */
+.team-source { margin: 0; }
+.team-empty-wrap > .team-source { padding: var(--dawn-space-3) var(--dawn-space-3) 0; }
 .team-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); }
 .team-name { margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); min-width: 0; }
 .team-pill { font-size: var(--dawn-fs-badge); padding: 1px var(--dawn-space-2); border-radius: var(--dawn-radius-full); background: var(--dawn-row-hover); color: var(--dawn-text-2); }

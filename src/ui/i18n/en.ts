@@ -341,6 +341,8 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 的值": "value for {0}",
   "存下来": "Store secret",
   "去填": "Fill in",
+  "只填令牌就行，连的时候会自动在前面加上「Bearer 」；已经带了 Bearer / Basic 等前缀的原样用。":
+    "Just paste the token — \"Bearer \" is added in front when connecting. Values that already start with Bearer / Basic etc. are used as-is.",
   // MCP「怎么加一台」那一块（2026-08-15）
   // MCP 加一台 / 怎么用（2026-08-15）
   "加一台 MCP 服务器": "Add an MCP server",
@@ -687,6 +689,8 @@ export const EN: Readonly<Record<string, string>> = {
   "填的 key 还用不了，原因在上面": "The key you entered cannot be used yet — see the reason above",
   "还没有 API key——填一个就能用": "No API key yet — add one and this works",
   "先写点什么再优化": "Write something first, then polish",
+  "正在改写，等它回来": "Rewriting now; wait for it to come back",
+  "眼前没有输入框，回到对话再用": "No input box on screen; go back to the conversation first",
   "档位：{0}": "Level: {0}",
   "撤回（{0}）": "Undo ({0})",
   "撤回": "Undo",
@@ -1071,6 +1075,7 @@ export const EN: Readonly<Record<string, string>> = {
   "让模型当队长：拉几个子 agent 当成员、拆成带依赖的任务、自动派活；进度在坞里「团队」那一格": "Let the model captain: pick subagents as members, split the goal into tasks with dependencies, dispatch automatically; progress lives in the dock’s Team pane",
   "待领": "pending",
   "已领": "claimed",
+  "坞里那段对话的团队": "Team of the chat in the dock",
   "这段会话没有团队。对模型说「用团队分工做…」，或在输入框打 /team。": "No team in this session. Ask the model to “do … as a team”, or type /team in the composer.",
   "{0} / {1} 完成": "{0} / {1} done",
   "在跑": "busy",

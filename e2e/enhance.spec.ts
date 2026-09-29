@@ -176,3 +176,28 @@ test("**native 会话没借：那行灰字一个字都不提模型**", async ({ 
   await expect(page.getByText(/带上了：对话第 1–2 轮/)).toBeVisible()
   await expect(page.getByText(/没有可直接调用的模型/)).toHaveCount(0)
 })
+
+/**
+ * **⌘K「优化输入」与那颗按钮是同一个动作**（2026-09-29）。坞那么窄时按钮只剩星标，
+ * 悬停才看得见名字不算入口（「看不见的能力等于不存在」）——命令面板里搜得到它，按下去改写的就是主区那段草稿。
+ */
+test("**⌘K「优化输入」与那颗按钮是同一个动作；框里空着时列着并说为什么**", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+  await page.keyboard.press("ControlOrMeta+k")
+  await page.getByRole("combobox", { name: "搜索命令" }).fill("优化输入")
+  const 行 = page.getByRole("option", { name: /优化输入/ })
+  await expect(行).toHaveAttribute("aria-disabled", "true")
+  await expect(行.locator(".why")).toHaveText("先写点什么再优化")
+  await page.keyboard.press("Escape")
+
+  await 输入框(page).fill("把图画好看点")
+  await page.getByRole("button", { name: /档位：/ }).click()
+  await page.getByRole("menuitemradio", { name: /基础/ }).click()
+  await page.keyboard.press("ControlOrMeta+k")
+  await page.getByRole("combobox", { name: "搜索命令" }).fill("优化输入")
+  await page.getByRole("option", { name: /优化输入/ }).click()
+  await expect(输入框(page)).toHaveValue("改写：把图画好看点", { timeout: 30_000 })
+  await expect(page.getByRole("button", { name: "撤回", exact: true })).toBeVisible()
+})

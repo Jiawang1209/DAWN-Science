@@ -1164,6 +1164,16 @@ export function McpView({
                         {s.missingSecrets.includes(v) ? t("去填") : t("换一个")}
                       </Button>
                     )}
+                    {/**
+                      * **远端的 Authorization 头：说清只填令牌就行**（2026-09-29）。
+                      * 作者只填了令牌、服务器回 `invalid_token`——框从没说过要带 `Bearer `。
+                      * 现在连的时候会自动补上（`补认证方案`），这句让人不必去猜。
+                      */}
+                    {s.url && v.toLowerCase() === "authorization" ? (
+                      <span className="mcp-secret-hint">
+                        {t("只填令牌就行，连的时候会自动在前面加上「Bearer 」；已经带了 Bearer / Basic 等前缀的原样用。")}
+                      </span>
+                    ) : null}
                   </p>
                 ))}
               </li>

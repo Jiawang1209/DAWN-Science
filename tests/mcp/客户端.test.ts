@@ -15,7 +15,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { mkdtempSync, readFileSync, rmSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { MCP池, 摘出文字 } from "../../src/mcp/客户端.js"
+import { MCP池, 摘出文字, 补认证方案 } from "../../src/mcp/客户端.js"
 import type { McpServer } from "../../src/config/schema.js"
 
 const 服务器脚本 = join(process.cwd(), "scripts", "mcp-test-server.mjs")
@@ -340,6 +340,39 @@ describe("远端那种：streamable HTTP", () => {
   })
 
   /**
+   * **只填了令牌也连得上**（2026-09-29）：作者只填令牌拿到 `invalid_token`。
+   * 钥匙串里存的是裸令牌，到服务器那头必须是 `Bearer <令牌>`。
+   */
+  it("**Authorization 只存了裸令牌，到那头是 `Bearer <令牌>`**", async () => {
+    const 裸令牌池 = new MCP池({
+      取密: (服务器名, 变量名) =>
+        服务器名 === "cloud" && 变量名 === "Authorization" ? "  tok-bare42  " : undefined,
+    })
+    try {
+      const 配 = 那台({ headers: ["Authorization"] } as Partial<McpServer>)
+      const r = await 裸令牌池.备好("cloud", 配)
+      expect(r.失败, `没连上：${r.失败}`).toBeUndefined()
+      const 回 = await 裸令牌池.调("cloud", 配, "我收到的头", {})
+      expect(回.文字).toContain("Bearer tok-bare42")
+      expect(回.文字).not.toContain("Bearer Bearer")
+    } finally {
+      await 裸令牌池.全关()
+    }
+  })
+
+  it("**令牌中间断了行：不连，说清是换行**；只有一个「Bearer」当作没填（审查 09-29）", async () => {
+    for (const [值, 该说] of [["tok-a\ntok-b", "换行"], ["Bearer", "Authorization"]] as const) {
+      const 坏池 = new MCP池({ 取密: (服务器名, 变量名) => (变量名 === "Authorization" ? 值 : undefined) })
+      try {
+        const r = await 坏池.备好("cloud", 那台({ headers: ["Authorization"] } as Partial<McpServer>))
+        expect(r.失败).toContain(该说)
+      } finally {
+        await 坏池.全关()
+      }
+    }
+  })
+
+  /**
    * **少了密钥就不连，并说清少的是哪一个**——与 stdio 那条同一条纪律。
    * 静默连上去的话，人会看到一串 401，而 401 与「你没填令牌」之间隔着好几层。
    */
@@ -371,5 +404,40 @@ describe("远端那种：头值只能是 ASCII", () => {
     } finally {
       await 池2.全关()
     }
+  })
+})
+
+/**
+ * **`补认证方案`：裸令牌补 `Bearer `，别的一概不动**（2026-09-29）。
+ */
+describe("补认证方案", () => {
+  it("只有一个「Bearer」、没有令牌 → 当作没填，不补出 Bearer Bearer（审查 09-29）", () => {
+    expect(补认证方案("Authorization", "Bearer")).toBe("")
+    expect(补认证方案("Authorization", "  bearer ")).toBe("")
+  })
+
+  it("裸令牌 → 补上 Bearer，并去掉两头空白", () => {
+    expect(补认证方案("Authorization", "tok-abc")).toBe("Bearer tok-abc")
+    expect(补认证方案("authorization", "  tok-abc\n")).toBe("Bearer tok-abc")
+    expect(补认证方案("AUTHORIZATION", "eyJhbGciOi.eyJzdWIi.sig")).toBe("Bearer eyJhbGciOi.eyJzdWIi.sig")
+  })
+
+  it("已经带了方案的原样留着（不补出两个 Bearer）", () => {
+    expect(补认证方案("Authorization", "Bearer x")).toBe("Bearer x")
+    expect(补认证方案("Authorization", "bearer x")).toBe("bearer x")
+    expect(补认证方案("Authorization", "Basic dXNlcjpwYXNz")).toBe("Basic dXNlcjpwYXNz")
+    expect(补认证方案("Authorization", "Token abc")).toBe("Token abc")
+    expect(补认证方案("Authorization", "Bot abc")).toBe("Bot abc")
+    expect(补认证方案("Authorization", "  Bearer x  ")).toBe("Bearer x")
+  })
+
+  it("别的头名不动", () => {
+    expect(补认证方案("X-Api-Key", "tok-abc")).toBe("tok-abc")
+    expect(补认证方案("Proxy-Authorization", "tok-abc")).toBe("tok-abc")
+  })
+
+  it("空值留空（「没填」照旧点名）", () => {
+    expect(补认证方案("Authorization", "")).toBe("")
+    expect(补认证方案("Authorization", "   ")).toBe("")
   })
 })

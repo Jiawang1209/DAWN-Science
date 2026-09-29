@@ -2044,7 +2044,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   // 侧栏「会话」那一组的会话落在一个共用的地方 `t:`（2026-09-25 作者定的）：带上任务单——「会话」那一组就是按任务分出来的，
   // 两边问同一个判据（`在会话那一组`），不看宿主项目的 `temporary`（占着临时根的普通项目也可能是宿主，审查 I1）
-  const 侧边地方 = session ? 侧边地方键(session, tasks) : sessionId ? undefined : projectId ? 侧边地方键({ projectId }) : undefined
+  /**
+   * **主区还没有会话（新建任务那一屏）→ 坞按「会话」那一组挂**（2026-09-29 作者报的）：
+   * 此前退到「当前项目」，而当前项目是人上一次待过的那个——没选文件夹，坞里「另开一段」却建在那个文件夹里。
+   * 新建任务那一屏不选文件夹就是普通对话，坞里跟着同一条。
+   */
+  const 侧边地方 = session ? 侧边地方键(session, tasks) : sessionId ? undefined : 临时地方
   const 侧边地方未定 = !!sessionId && !session
   /**
    * **主区没有地方（什么都没选、也没选项目）时也要载一次**——载的是「没有地方」，坞格变空并说明为什么

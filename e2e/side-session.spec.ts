@@ -315,3 +315,40 @@ test.describe("侧边对话 · 团队 chip", () => {
     await expect(坞(page).locator('[data-team-source="side"]')).toHaveCount(0)
   })
 })
+
+/**
+ * **新建任务那一屏打开坞里的对话 → 另开的是普通对话**（2026-09-29 作者报的）：
+ * 此前主区没会话时坞退到「当前项目」（人上一次待过的那个），没选文件夹，坞里那段却建在那个文件夹里。
+ * 夹具自带一个项目，正好是那个「上一次待过的」。
+ */
+test("**新建任务那一屏：坞里另开一段是普通对话，不带文件夹**", async ({ dawn }) => {
+  const { page } = dawn
+  await 主区(page).locator(".composer-card").waitFor({ timeout: 30_000 })
+  await 坞里另开一段(page)
+  // 坞里那段落在侧栏「会话」那一组，不在「项目」下
+  const 分区 = await page.locator(".sidebar .side-section").allTextContents()
+  expect(分区.some((t) => t.startsWith("会话"))).toBe(true)
+  await expect(page.locator(".proj-list .proj-item")).toHaveCount(0)
+  // 坞里输入卡上没有文件夹名
+  await expect(坞(page).locator(".composer-card .ws-chip-label")).toHaveCount(0)
+})
+
+/**
+ * **坞里的输入卡与主区同高、底边对齐**（2026-09-29，作者选的「底边对齐 + 同高」）。
+ * 笔记本屏（坞开着）主区附栏折两行，坞里也两行；大屏主区一行放得下，坞里跟着排成一行（「上传文件」只留图标）。
+ * 两种宽度都量：只量一种的话，另一种会悄悄错开一行（实测 1920 下 203 vs 176）。
+ */
+for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
+  test(`**${宽} 宽：坞里的输入卡与主区一样高、底边对齐**`, async ({ dawn }) => {
+    const { page, app } = dawn
+    await app.evaluate(({ BrowserWindow }, [w, h]) => BrowserWindow.getAllWindows()[0]!.setContentSize(w!, h!), [宽, 高])
+    await 开一段临时会话(page, "你好")
+    await 坞里另开一段(page)
+    const 量 = async () => {
+      const 主 = await 主区(page).locator(".composer-card").boundingBox()
+      const 侧 = await 坞(page).locator(".composer-card").boundingBox()
+      return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.y + 主.height - (侧.y + 侧.height))) } : undefined
+    }
+    await expect.poll(量, { timeout: 10_000 }).toEqual({ 高差: 0, 底差: 0 })
+  })
+}

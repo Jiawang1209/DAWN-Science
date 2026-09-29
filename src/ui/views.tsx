@@ -15,6 +15,7 @@ import { PaneBoundary } from "./pane-boundary.js"
 import { 在组词 } from "./ime.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
+import { $主区附栏行数, use报主区附栏行数 } from "./footer-rows.js"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import { $items, $待发, 在压缩, 有回音了, type 会话开关 } from "./state/transcript.js"
 import { ContextMeter, 读仪表, 是压缩命令, use上下文用量 } from "./context-meter.js"
@@ -821,12 +822,14 @@ function AttachButton({
          * 与菜单里那一项同名**不构成歧义**：这颗是 `button`，那三项是
          * `menuitem`——按角色找根本不会互相指到。
          */
+        aria-label={t("上传文件")}
         aria-haspopup="menu"
         aria-expanded={开着}
         onClick={() => 设开着((v) => !v)}
       >
         <实心圆加号图标 />
-        {t("上传文件")}
+        {/* 字包一层（2026-09-29）：坞里跟主区排成一行时只留图标（`footer-rows.ts`）——名字另有 `aria-label`，同一句话 */}
+        <span className="attach-word">{t("上传文件")}</span>
       </Button>
       {开着 ? (
         <div className="menu attach-menu" role="menu" aria-label={t("添加内容")}>
@@ -4086,6 +4089,9 @@ export function ConversationView({
   /** 消息里点到本机地址时交给它（批 2）。**动作的家在 `App.tsx`** */
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
+  // 附栏几行（2026-09-29，坞里的输入卡与主区同高，见 `footer-rows.ts`）：主区这张报、坞里那张读
+  const 附栏ref = use报主区附栏行数(!紧凑)
+  const 主区附栏行数 = useStore($主区附栏行数)
   const 订阅的items = useStore($items)
   const items = 传进来的items ?? 订阅的items
   /**
@@ -5589,7 +5595,8 @@ export function ConversationView({
         </div>
 
           {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
-          <div className="composer-footer">
+          {/* 主区那张报自己几行、坞里那张跟着排（2026-09-29，与主区同高，见 `footer-rows.ts`） */}
+          <div className="composer-footer" ref={附栏ref} data-follow-main={紧凑 && 主区附栏行数 === 1 ? "one-row" : undefined}>
             {/**
               * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
               * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
@@ -6988,6 +6995,8 @@ export function EmptyConversation({
   先出方案?: { on: boolean; 不能的原因?: string | undefined; onToggle: (on: boolean) => void } | undefined
 }) {
   const first = agents[0]
+  // 新建任务这一屏的附栏也报行数：坞里那张跟着排（2026-09-29，见 `footer-rows.ts`）
+  const 空态附栏ref = use报主区附栏行数(true)
   /** 这一屏的草稿。**不进 `$drafts`**：那份是按会话分的，而这里还没有会话 */
   const [草稿, 设草稿] = useState("")
   const 全部斜杠 = useStore($slashItems)
@@ -7512,7 +7521,7 @@ export function EmptyConversation({
             </div>
 
               {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
-              <div className="composer-footer">
+              <div className="composer-footer" ref={空态附栏ref}>
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}

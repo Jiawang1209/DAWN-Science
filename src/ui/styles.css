@@ -1067,6 +1067,19 @@ pre {
 .composer-footer .dock-toggle { flex: 0 0 auto; white-space: nowrap; }
 .composer-footer .ws-chip,
 .composer-footer .ws-entry { min-width: 0; }
+/**
+ * 附栏里它与旁边几颗同高（2026-09-29 作者报的：坞里的输入卡要与主区同高）。
+ * 单独那颗 chip 按 WorkBuddy 量的是 32 高，放进附栏就比旁边的 29 高出 3px——
+ * 主区那段带它、坞里的普通对话不带，两张卡于是差了 3px、上沿对不齐。
+ */
+.composer-footer .ws-chip { min-height: 0; padding-block: 0; height: var(--composer-footer-row); }
+/**
+ * **附栏的每一行一样高**（2026-09-29，同上）：行高 = 普通小按钮的高（29）。只留图标的那几颗（坞里的优化输入 / 生成方案）
+ * 自己只有 26，放进行里也按 29 占位、居中——否则坞里那行比主区矮 3px，排成一行时两张卡差 4px。
+ */
+.composer-footer { --composer-footer-row: 29px; }
+.composer-footer > div,
+.composer-footer > span { display: inline-flex; align-items: center; min-height: var(--composer-footer-row); }
 /* 前三样说「带什么、在哪跑」，权限说「怎么改」——后者靠右，与前者分开 */
 .composer-footer .sess-config { margin-left: auto; }
 /** 权限那颗跟在右边；只有它一颗时它自己顶到右边 */
@@ -7632,6 +7645,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
      最少留一个图标加一点字，免得基准 0 时被压没 */
   .composer-footer > .ws-chip,
   .composer-footer > .ws-chip-group { flex: 1 1 0; max-width: max-content; min-width: var(--dawn-space-10); }
+  /**
+   * **坞里跟着主区排**（2026-09-29，作者选的「底边对齐 + 同高」）：主区附栏一行放得下（大屏）时，坞里那张也排成一行——
+   * 撤掉强制断行、「上传文件」只留图标（名字在 `aria-label` 上），卡高才与主区一样。坞拖得太窄放不下时照旧自然换行。
+   * 主区折两行（笔记本屏、坞开着）时不带这个标记，坞里照旧两行。标记由 `footer-rows.ts` 给。
+   */
+  .composer-footer[data-follow-main="one-row"]:has(> .ctx-meter, > .sess-config)::before { display: none; }
+  .composer-footer[data-follow-main="one-row"]:has(> .ctx-meter, > .sess-config) { row-gap: var(--dawn-space-1); }
+  .composer-footer[data-follow-main="one-row"] .attach-word { display: none; }
 }
 .ctx-meter-ring-track { fill: none; stroke: var(--dawn-stroke-3); stroke-width: 2; }
 .ctx-meter-ring-fill { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }

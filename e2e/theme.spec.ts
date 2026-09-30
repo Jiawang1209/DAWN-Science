@@ -88,7 +88,12 @@ test("**能强制暗色** —— 这是这个 Task 存在的全部理由", async
   expect(luminance(rgb), "暗色下应用底应当是深的").toBeLessThan(0.05)
 })
 
-test("暗色下侧栏比内容区更深 —— 层次靠的是这个，不是装饰", async ({ dawn }) => {
+/**
+ * **2026-10-01 翻面（C16，学 dsh，作者看对比图后定）**：原先是「侧栏比内容区更深」。
+ * dsh 暗色是对话区最深（#151517）、侧栏亮一档（#1b1b1c）：内容是最底下那一层，外壳浮在上面。
+ * 这条守的东西没变——**两者必须拉开一档，层次靠这个**；只是方向反过来了。
+ */
+test("暗色下内容区比侧栏更深 —— 层次靠的是这个，不是装饰", async ({ dawn }) => {
   const { page } = dawn
   await switchTo(page, "暗色")
   const body = parseColor((await styleOf(page, "body")).bg)
@@ -100,7 +105,7 @@ test("暗色下侧栏比内容区更深 —— 层次靠的是这个，不是装
    * 侧栏现在又是不透明的（alpha=1 时这一步是空操作），但下一次有人把它改透明时这里不能再瞎。
    */
   const 合成 = side.rgb.map((c, i) => c * side.alpha + body.rgb[i]! * (1 - side.alpha)) as [number, number, number]
-  expect(luminance(合成)).toBeLessThan(luminance(body.rgb))
+  expect(luminance(合成)).toBeGreaterThan(luminance(body.rgb))
 })
 
 test("选择被记住 —— 重载之后还是暗色", async ({ dawn }) => {

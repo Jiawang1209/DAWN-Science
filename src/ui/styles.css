@@ -1044,7 +1044,12 @@ pre {
 .composer-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid transparent;
+  /**
+   * **一道发丝线**（2026-10-01，C16）。对话区换成纯白之后，白卡贴在白底上只剩一层极淡的阴影——
+   * 作者点名过「输入框看不出边」。dsh 同样是白卡白底，靠的就是细描边 + 轻阴影。
+   * 这推翻了 08-12 照 WorkBuddy 的「无边框」：那时卡下面是浅灰底，阴影够用；现在不够了。
+   */
+  border: 1px solid var(--dawn-stroke-3);
   border-radius: var(--dawn-radius-composer);
   box-shadow: var(--dawn-shadow-composer);
   /* **不许 `overflow: hidden`**：模型与会话设置的菜单都往上弹，剪了就点不到（2026-08-22 e2e 抓的）。圆角由上下两半各自负责 */
@@ -3829,7 +3834,7 @@ pre {
   padding: 1px 5px;
   text-align: center;
   border-radius: var(--dawn-radius-xs);
-  background: var(--dawn-surface-elevated);
+  background: var(--dawn-fill-2); /* 同 `.who-avatar`：白底上白面会消失，用填充 */
   font-family: var(--dawn-font-mono);
   font-variant-numeric: tabular-nums;
 }
@@ -3988,7 +3993,8 @@ pre {
   width: 1.5rem;
   height: 1.5rem;
   border-radius: var(--dawn-radius-full);
-  background: var(--dawn-surface-elevated);
+  /* 填充而不是面色（2026-10-01，C16）：对话区换成纯白之后，白面放在白底上整个圆就没了 */
+  background: var(--dawn-fill-2);
   color: var(--dawn-text-2);
   display: inline-flex;
   align-items: center;

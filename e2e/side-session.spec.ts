@@ -112,7 +112,19 @@ test.describe("侧边对话 · native", () => {
       }
       const 卡 = await 格.locator(".composer-box").evaluate(看上去的底)
       const 底 = await 格.locator(".composer").evaluate(看上去的底)
-      expect(卡).not.toBe(底)
+      /**
+       * **「看得出边」= 底色不同，或者卡上有一道看得见的描边**（2026-10-01 放宽，C16）。
+       * 对话区换成纯白（学 dsh）之后卡与底同为白，边改由 `.composer-card` 的发丝线给——dsh 也是这么做的。
+       * 两样都没有才算退回「白卡贴白底」。
+       */
+      // 量**不聚焦**时的卡：聚焦时描边让位给强调色聚焦环（`.composer-card:focus-within`），那时边当然看得见
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+      const 边 = await 格.locator(".composer-card").evaluate((el) => {
+        const s = getComputedStyle(el)
+        return { 宽: parseFloat(s.borderTopWidth), 色: s.borderTopColor }
+      })
+      const 有边 = 边.宽 > 0 && 边.色 !== "rgba(0, 0, 0, 0)" && 边.色 !== "transparent"
+      expect(卡 !== 底 || 有边, `卡 ${卡} / 底 ${底} / 描边 ${边.宽}px ${边.色}`).toBe(true)
       const 主区底 = await 主区(page).locator(".composer").evaluate(看上去的底)
       expect(底, "坞里那段的底就是主区那块底").toBe(主区底)
     })

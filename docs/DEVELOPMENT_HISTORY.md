@@ -8,6 +8,19 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 底色学 dsh：亮色对话区纯白，暗色对话区最深、侧栏亮一档（C16，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: 作者：*「我觉得他的背景色，也值得我们学习。」* 量了 dsh 源码：亮色对话区 #fff、侧栏 #f9fafb；暗色对话区 #151517、侧栏 #1b1b1c、输入卡 #2c2c2e。我们亮色整页发灰（#f9f9f9 / #f3f3f3），暗色侧栏最深。对比图作者：「可以」。
+- **What**:
+  - `tokens.css`：亮色 `surface-app` gray-50 → gray-0、`surface-sidebar` gray-75 → gray-50；暗色 app → 新 gray-950 #151515、sidebar → 新 gray-850 #1b1b1b、input → 新 gray-725 #2c2c2c（纯中性取最近档，灰阶仍 R=G=B）。
+  - 白底上会消失的小白块：`.who-avatar`、`.thought-secs` 由 `surface-elevated` 改 `fill-2`。
+  - 输入卡 `.composer-card` 不聚焦时加一道 `stroke-3` 发丝线（此前透明）：白卡贴白底只剩极淡阴影，作者点名过「输入框看不出边」；dsh 也是细描边 + 轻阴影。推翻了 08-12 照 WorkBuddy 的「无边框」。
+  - `design-contract` 加两条：亮色对话区是 gray-0、暗色对话区档号大于侧栏；头像圆与思考秒数不用 `surface-*` 底。
+  - e2e 翻面两条并写理由：`theme.spec`「暗色下侧栏比内容区更深」→「内容区比侧栏更深」；`side-session`「卡面与底不同色」放宽为「底色不同或有看得见的描边」，并改为量不聚焦时的卡（聚焦时描边让位给强调色环）。
+- **Impact**: 纯样式，无协议变更。视觉基线 14 张全部重存（每屏底色都变）；输入卡描边又动了 7 张。
+- **Verification**: typecheck；`npm test` 连续两遍 4012 过（第一遍与后台 e2e 同跑时有 1 条失败未复现、未定位到是哪条）；新扫描做过反例（改回旧底色 / 小块改回面色，两条都红）。e2e 全套两段：191 过 + 386 过、2 条即上面翻面的两条；翻面与描边之后相关 17 个 spec 133 过、side-session 9 过；kernel-session 6 过。视觉：底色那轮 14 张逐张看过实际图再重存、连验两遍 14/14；描边那轮 diff 只在输入卡轮廓，重存后「命令面板·暗色」`=all` 写坏，按 CLAUDE.md 拷验证轮 actual.png 作基线，再连验两遍 14/14。真构建截图给作者看。
+
 ### 2026-10-01 — 过程压低、人话抬高：工具行一行灰字、代码块扁平、主题色气泡（C13/C14/C15，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

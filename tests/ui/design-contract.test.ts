@@ -1500,6 +1500,21 @@ describe("设计契约 · 过程压低、人话抬高", () => {
     expect(规则块(css(), '.md [data-streamdown="code-block"]')).not.toMatch(/--dawn-shadow-/)
   })
 
+  it("**底色学 dsh**（C16）：亮色对话区纯白；暗色对话区比侧栏深", () => {
+    const tok = readFileSync(join(UI_DIR, "tokens.css"), "utf8")
+    const 亮 = tok.slice(0, tok.indexOf(":root.dawn-dark {"))
+    const 暗 = tok.slice(tok.indexOf(":root.dawn-dark {"))
+    const 档 = (块: string, 名: string) => Number(块.match(new RegExp(`--theme-surface-${名}: var\\(--theme-gray-(\\d+)\\)`))?.[1])
+    expect(档(亮, "app"), "亮色对话区要是 gray-0（纯白）").toBe(0)
+    expect(档(暗, "app"), "暗色对话区要比侧栏深（档号越大越深）").toBeGreaterThan(档(暗, "sidebar"))
+  })
+
+  it("**小白块不用面色**：头像圆与思考秒数放在对话区上，面色与底同色就消失", () => {
+    for (const 选择器 of [".who-avatar", ".thought-secs"]) {
+      expect(规则块(css(), 选择器), `${选择器} 用了 surface-*`).not.toMatch(/background: *var\(--dawn-surface-/)
+    }
+  })
+
   it("**自己的气泡底色跟着主题色走**", () => {
     expect(规则块(css(), ".turn.user .bubble"), "换主题色时气泡要跟着变——这是 dsh 没有、我们有的").toMatch(
       /background: *color-mix\([^;]*var\(--dawn-accent\)/,

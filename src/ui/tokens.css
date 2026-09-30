@@ -57,9 +57,12 @@
   --theme-gray-550: #4f4f4f;
   --theme-gray-600: #414141;
   --theme-gray-700: #303030;
+  --theme-gray-725: #2c2c2c;
   --theme-gray-750: #282828;
   --theme-gray-800: #212121;
+  --theme-gray-850: #1b1b1b;
   --theme-gray-900: #181818;
+  --theme-gray-950: #151515;
   --theme-gray-1000: #0d0d0d;
 
   /* ── 种子（亮色）。**换肤只需要改这一段** ────────────────────── */
@@ -90,8 +93,15 @@
    * **小到说不出它是渐变**的效果；「面浮起来」这件事由玻璃的半透明与四档阴影在做。
    * **别再把渐变加回这一层**——想加，先拿出一个在基线上稳定的做法。
    */
-  --theme-surface-app: var(--theme-gray-50);
-  --theme-surface-sidebar: var(--theme-gray-75);
+  /**
+   * **对话区纯白、侧栏极淡**（2026-10-01，C16，学 dsh，作者看对比图后定）。
+   * 此前对话区 gray-50、侧栏 gray-75：整页发灰，内容不「亮」。dsh 亮色是 #fff / #f9fafb。
+   * 我们的灰阶保持纯中性（R=G=B），所以侧栏取 gray-50 而不是 dsh 那一档带蓝的灰——差 1/255，看不出来。
+   * 代价：白面（panel / elevated）放在白底上不再「浮」出来——靠描边与阴影分层；
+   * 小的白块（头像圆、思考秒数）改用 `--dawn-fill-*`。
+   */
+  --theme-surface-app: var(--theme-gray-0);
+  --theme-surface-sidebar: var(--theme-gray-50);
   --theme-surface-panel: var(--theme-gray-0);
   --theme-surface-elevated: var(--theme-gray-0);
   /**
@@ -650,12 +660,17 @@
   /* 暗底上要用更亮的一档，否则强调色会沉进背景 */
   --theme-accent: var(--theme-user-accent-dark);
 
-  /* 侧栏最深、内容区抬起——四个相邻档位做出四层高度 */
-  --theme-surface-app: var(--theme-gray-900);
-  --theme-surface-sidebar: var(--theme-gray-1000);
+  /**
+   * **对话区最深、侧栏比它亮一档**（2026-10-01，C16，学 dsh）。
+   * 此前反过来（侧栏 gray-1000 最深、对话区 gray-900）。dsh 暗色是对话区 #151517、侧栏 #1b1b1c、
+   * 输入卡 #2c2c2e：内容是最底下那一层，外壳浮在它上面；输入卡再亮一档，一眼找得到。
+   * 取纯中性的最近档（950 / 850 / 725，为此新加了三档）。
+   */
+  --theme-surface-app: var(--theme-gray-950);
+  --theme-surface-sidebar: var(--theme-gray-850);
   --theme-surface-panel: var(--theme-gray-800);
   --theme-surface-elevated: var(--theme-gray-750);
-  --theme-surface-input: var(--theme-gray-800);
+  --theme-surface-input: var(--theme-gray-725);
 
   /* 暗底上强调色已经够亮，实心按钮直接用它，配深色字 */
   --mix-accent-solid: 100%;

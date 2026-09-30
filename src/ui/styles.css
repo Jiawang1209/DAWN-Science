@@ -1122,23 +1122,26 @@ pre {
 .empty-conv { align-items: center; justify-content: center; }
 .empty-conv .empty { margin: auto; }
 
-/* transcript 里的工具调用 —— 看得见 agent 在干什么 */
+/**
+ * transcript 里的工具调用 —— 看得见 agent 在干什么。
+ *
+ * **一行灰字，没有线也没有底**（2026-09-30，C13，学 dsh）：过程是配角，答复是主角。
+ * 此前左边一道 2px 线 + 右端「成功」，一组工具就是一块带框的区域，比答复还显眼。
+ * 失败不靠那道线出声：✗ + 红字「失败」+ 自动展开，三样都还在。
+ */
 .tool {
-  margin: 6px 0;
-  padding: 6px 10px;
-  border-left: 2px solid var(--dawn-stroke-3);
+  margin: 2px 0;
+  padding: 2px 0;
   font-size: var(--dawn-fs-meta);
 }
-.tool.error { border-left-color: var(--dawn-danger); }
 /**
  * 连续几条工具调用折成的一行（2026-09-15）。**与单条 `.tool` 同一副骨架**——它们是同一类东西，
  * 长得不一样会让人以为是两种。组里有失败时左边那道线**不变红**：作者选的是「只在汇总里标红」，
  * 红线会把这一行整个说成「失败了」，而它多半是九条里错了一条。
  */
 .tool-group {
-  margin: 6px 0;
-  padding: 6px 10px;
-  border-left: 2px solid var(--dawn-stroke-3);
+  margin: 2px 0;
+  padding: 2px 0;
   font-size: var(--dawn-fs-meta);
 }
 .tool-group-head {
@@ -1151,14 +1154,13 @@ pre {
 }
 .tool-group-head .caret { flex: 0 0 auto; width: 0.8em; color: var(--dawn-text-3); }
 .tool-group-head .thinking { margin-left: var(--dawn-space-2); }
-.tool-group-say { flex: 0 1 auto; min-width: 0; color: var(--dawn-text-2); }
+.tool-group-say { flex: 0 1 auto; min-width: 0; color: var(--dawn-text-3); }
+.tool-group-head:hover .tool-group-say { color: var(--dawn-text-1); }
 /* 失败数：与单条失败的状态字同一个红 */
 .tool-group-failed { flex: 0 0 auto; color: var(--dawn-danger); }
-/* 展开后的逐条收进来一格，与单条的 `.tool-body` 同一个缩进；各条自己的左线仍在 */
+/* 展开后的逐条收进来一格，与单条的 `.tool-body` 同一个缩进 */
 .tool-group-body { padding-left: calc(0.8em + 6px); }
-/* 组里的逐条：成功的不再画自己的灰线（外面那道已经是这一组的线，两道灰线叠着只是噪音）；失败的红线留着——它说「是这一条」 */
-.tool-group-body > .tool { margin: 4px 0; padding-left: 8px; border-left-color: transparent; }
-.tool-group-body > .tool.error { border-left-color: var(--dawn-danger); }
+.tool-group-body > .tool { margin: 2px 0; }
 /**
  * 折叠开关就是整行（2026-08-10）。**整行可点**——只让那个小三角可点，
  * 等于给了一个 8×8 的靶子。
@@ -1178,7 +1180,9 @@ pre {
   color: var(--dawn-text-3);
 }
 
-.tool-name { flex: 0 0 auto; color: var(--dawn-text-2); }
+.tool-name { flex: 0 0 auto; color: var(--dawn-text-3); }
+/* 悬停加深：这一行可点，要让人知道 */
+.tool-head:hover .tool-name, .tool-head:hover .tool-peek { color: var(--dawn-text-1); }
 
 /**
  * 折叠时那一行摘要（多半就是命令本身）。
@@ -1210,6 +1214,19 @@ pre {
   font-variant-numeric: tabular-nums;
 }
 .tool-elapsed + .tool-status { margin-left: var(--dawn-space-2); }
+/**
+ * 成功的不写「成功」（C13）：✓ 已经说了，每行尾巴上一个「成功」只是噪音。
+ * **只是看不见，读屏照读**——状态仍不只靠颜色或符号；在跑、失败、已中断照旧写字。
+ */
+.tool.ok .tool-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .tool.error .tool-status { color: var(--dawn-danger); }
 /* 被停下的那一步（停止 / 调整方向，2026-09-25）：没做完但没错——中性灰，不借失败的红（对错固定红绿）。不挂 `.error`，左线就是默认那道灰 */
 .tool.interrupted .tool-status { color: var(--dawn-text-3); }
@@ -1576,12 +1593,16 @@ pre {
 /* ── 代码块 ─────────────────────────────────────────────────────── */
 
 /** 外层容器。streamdown 的 Tailwind 类在这里全都不生效，所以自己画 */
+/**
+ * **平的**（2026-09-30，C14，学 dsh）：淡底 + 0.5px 发丝线，不再浮起来。
+ * 阴影只给浮层（09-10 视觉重做）——代码块是正文的一部分，不是浮层。
+ */
 .md [data-streamdown="code-block"] {
   margin: 0 0 12px;
   border-radius: var(--dawn-radius-md);
   corner-shape: var(--dawn-corner-shape);
-  background: var(--dawn-surface-panel);
-  box-shadow: var(--dawn-shadow-md);
+  background: var(--dawn-fill-4);
+  box-shadow: inset 0 0 0 0.5px var(--dawn-stroke-3);
   overflow: hidden;
 }
 
@@ -1596,7 +1617,6 @@ pre {
   align-items: center;
   height: 28px;
   padding: 0 var(--dawn-space-2);
-  border-bottom: 1px solid var(--dawn-stroke-4);
   color: var(--dawn-text-3);
   font-family: var(--dawn-font-mono);
   font-size: var(--dawn-fs-badge);
@@ -1901,12 +1921,17 @@ pre {
  *
  * 底色取 `surface-sidebar`：它那儿气泡与侧栏是同一个 `#f2f2f2`，
  * **不像是巧合**——自己说的话属于「外壳」，答案才属于「内容」。
+ *
+ * **2026-09-30 改（C15，学 dsh，作者看三列对比图后定）**：灰底在我们的浅灰页面上几乎看不出来，
+ * 过程压低（C13/C14）之后画面整体变「平」、反而不像 dsh——dsh 好看是「过程压低 + 人话抬高」两件一起。
+ * 改成**主题色 11% 的淡底**（跟着外观里一键换色走，这是 dsh 没有的）、四角同为 20px、内边距 10/16（dsh 源码数值）。
+ * 右下缺角不要了：谁说的靠位置与底色已足够。
  */
 .turn.user .bubble {
   max-width: 82%;
-  padding: var(--dawn-space-2) var(--dawn-space-3);
-  border-radius: var(--dawn-radius-bubble) var(--dawn-radius-bubble) 0;
-  background: var(--dawn-surface-sidebar);
+  padding: 10px 16px;
+  border-radius: var(--dawn-radius-bubble);
+  background: color-mix(in srgb, var(--dawn-accent) 11%, var(--dawn-surface-app));
 }
 /* 用户发言用无衬线：`<pre>` 是为了保住换行与空格，**不是为了等宽** */
 .turn.user .text { font-family: var(--dawn-font-sans); }

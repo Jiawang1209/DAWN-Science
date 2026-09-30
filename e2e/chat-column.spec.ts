@@ -96,27 +96,34 @@ test("**窗口放大时这一栏跟着放大，封顶，三条边仍对齐**", a
 })
 
 /**
- * **自己说的那句话，右下角是尖的**（CDP 实测 `_userMessageBubble_`：
- * `border-radius: 16px 16px 0px`）。
+ * **自己说的那句话：四角一样圆，底色是主题色的淡底**（2026-09-30 翻面，C15）。
  *
- * 上一版我把它写成了「全圆角胶囊」，注释里还挂着「实测 100px」——
- * **那个 100px 抓的是页面上另一个元素**。这次是按住文字往上爬到气泡本身读的。
+ * 原先这条盯「右下缺角还在」（08-12 照 WorkBuddy 实测 `16px 16px 0px`）。
+ * **09-30 作者看三列对比图后改了方向**：灰底缺角在浅灰页面上几乎看不见，
+ * 过程压低（C13/C14）之后画面变平；学 dsh「人话抬高」——四角 20px、主题色 11% 淡底。
+ * 谁说的靠位置与底色，不再靠缺口。
  *
- * 形状的意思：那个缺口有方向，指着说话的人。胶囊没有方向，
- * 谁说的全靠位置。所以这条盯的是**缺口还在不在**，不是圆角好不好看。
+ * 所以这条改盯**新形状**：四角相同且不是 0；底色不是透明、也不是侧栏色（旧做法的那个灰）。
  */
-test("**用户气泡右下角不是圆的**", async ({ dawn }) => {
+test("**用户气泡四角一样圆、底色不是侧栏灰**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await page.getByPlaceholder(/今天帮你做些什么/).fill("看看形状")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 
-  const 角 = await page.locator(".turn.user .bubble").first().evaluate((el) => {
+  const 量 = await page.locator(".turn.user .bubble").first().evaluate((el) => {
     const s = getComputedStyle(el)
-    return { 右下: s.borderBottomRightRadius, 左上: s.borderTopLeftRadius }
+    const 探 = document.createElement("span")
+    探.style.backgroundColor = "var(--dawn-surface-sidebar)"
+    document.body.appendChild(探)
+    const 侧栏 = getComputedStyle(探).backgroundColor
+    探.remove()
+    return { 右下: s.borderBottomRightRadius, 左上: s.borderTopLeftRadius, 底: s.backgroundColor, 侧栏 }
   })
-  expect(角.右下).toBe("0px")
-  expect(角.左上).not.toBe("0px")
+  expect(量.右下).toBe(量.左上)
+  expect(量.右下).not.toBe("0px")
+  expect(量.底).not.toBe("rgba(0, 0, 0, 0)")
+  expect(量.底).not.toBe(量.侧栏)
 })
 
 /**

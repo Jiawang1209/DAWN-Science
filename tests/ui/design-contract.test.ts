@@ -1467,6 +1467,47 @@ describe("设计契约 · 自己的气泡只按字定宽", () => {
 })
 
 /**
+ * **过程压低、人话抬高**（2026-09-30，学 dsh 的 C13 / C14 / C15，作者看三列对比图后定）。
+ *
+ * dsh 好看是两件一起：工具过程是一行灰字，用户的话在一个看得清的气泡里。
+ * 只做前一半，画面整体变「平」、反而不像——作者当场指出过。所以两半各配一条扫描。
+ */
+describe("设计契约 · 过程压低、人话抬高", () => {
+  const css = () => readFileSync(join(UI_DIR, "styles.css"), "utf8")
+  function 规则块(text: string, 选择器: string): string {
+    const i = text.indexOf(`\n${选择器} {`)
+    if (i < 0) throw new Error(`找不到规则 ${选择器}`)
+    const j = text.indexOf("}", i)
+    return text.slice(i, j).replace(/\/\*[\s\S]*?\*\//g, "")
+  }
+
+  it("**工具行与工具组没有线也没有底**", () => {
+    const text = css()
+    for (const 选择器 of [".tool", ".tool-group"]) {
+      const 块 = 规则块(text, 选择器)
+      expect(块, `${选择器} 又画了线——过程是配角`).not.toMatch(/(^|[;\s])border(-left)?:/)
+      expect(块, `${选择器} 又有了底`).not.toMatch(/(^|[;\s])background(-color)?:/)
+    }
+  })
+
+  it("**成功的「成功」只对眼睛藏，读屏照读**（不许 display:none / visibility:hidden）", () => {
+    const 块 = 规则块(css(), ".tool.ok .tool-status")
+    expect(块).toMatch(/clip-path: *inset\(50%\)/)
+    expect(块).not.toMatch(/display: *none|visibility: *hidden/)
+  })
+
+  it("**代码块是平的**：不带阴影令牌", () => {
+    expect(规则块(css(), '.md [data-streamdown="code-block"]')).not.toMatch(/--dawn-shadow-/)
+  })
+
+  it("**自己的气泡底色跟着主题色走**", () => {
+    expect(规则块(css(), ".turn.user .bubble"), "换主题色时气泡要跟着变——这是 dsh 没有、我们有的").toMatch(
+      /background: *color-mix\([^;]*var\(--dawn-accent\)/,
+    )
+  })
+})
+
+/**
  * **壳不订阅整份转录**（2026-09-22，`perf-render`）。
  *
  * 基线：`App` 顶层 `useStore($items)` 时，模型每吐一段字，侧栏、坞、顶栏整壳重渲染，

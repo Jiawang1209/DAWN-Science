@@ -73,6 +73,7 @@ import type { ArtifactList } from "./state/catalog.js"
 import { ComposerInputSurface } from "./composer-input-surface.js"
 import { $workStepMode } from "./state/work-steps.js"
 import { 分组已完成过程 } from "./turn-process.js"
+import { 思考段落摘要 } from "./thinking-summary.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
  *
@@ -3712,7 +3713,7 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
  * **秒数只在还在想的时候自己走**：想完了就定住——
  * 一个停不下来的计时器会让人以为它还没结束。
  */
-function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) {
+export function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) {
   const [open, setOpen] = useState(false)
   /**
    * **还在想的时候才装定时器**（与工具那个秒表同一条纪律）：
@@ -3722,6 +3723,7 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
   const [起点] = useState(() => Date.now())
   const now = useTick(在想)
   const 秒 = Math.max(0, Math.round((在想 ? now - 起点 : ms) / 1000))
+  const 摘要 = 思考段落摘要(text, !在想)
 
   return (
     <div className={`thought ${open ? "open" : ""}`}>
@@ -3733,6 +3735,7 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
         onClick={() => setOpen((v) => !v)}
       >
         <三角图标 className={`caret${open ? " open" : ""}`} />
+        {!在想 && 摘要 ? <span className="thought-label">{t("想了")}</span> : null}
         {/* **秒数放在方块里**：它是这一行里唯一会动的东西，要好认 */}
         <span className="thought-secs">{秒}s</span>
         {/**
@@ -3742,8 +3745,11 @@ function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) 
          * 「正在思考」——作者截图里因此出现了两行一模一样的字。
          * 动画那句留着（读屏要听得到状态），文字这句换个说法。
          */}
-        <span className="thought-label">{在想 ? t("思考中") : t("想了一下")}</span>
+        {!在想 && !摘要 ? <span className="thought-label">{t("想了一下")}</span> : null}
+        {在想 ? <span className="thought-label">{t("思考中")}</span> : null}
         {在想 ? <Thinking /> : null}
+        {摘要 ? <span className="thought-preview-separator" aria-hidden="true">·</span> : null}
+        {摘要 ? <span className={`thought-preview${在想 ? " sweeping" : ""}`}>{摘要}</span> : null}
       </Button>
       {open ? <div className="thought-body">{text}</div> : null}
     </div>

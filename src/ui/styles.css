@@ -3872,8 +3872,32 @@ pre {
 /* 思考（2026-08-12，形态学自 Hermes）。
    **它不是回答**：不进气泡、字更小、色更淡——一眼分出「对自己说的」与「对我说的」 */
 .thought { margin-bottom: var(--dawn-space-2); }
-.thought-head { gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: 0.85em; }
+.thought-head { width: 100%; max-width: 100%; min-width: 0; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: 0.85em; }
 .thought-head .caret { flex: 0 0 auto; }
+.thought-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+  -webkit-mask-image: linear-gradient(to right, var(--dawn-text-3) 0%, var(--dawn-text-3) calc(100% - 2em), transparent 100%);
+  mask-image: linear-gradient(to right, var(--dawn-text-3) 0%, var(--dawn-text-3) calc(100% - 2em), transparent 100%);
+}
+.thought-preview-separator { flex: 0 0 auto; }
+@media (prefers-reduced-motion: no-preference) {
+  .thought-preview.sweeping {
+    color: transparent;
+    background-image: linear-gradient(100deg, var(--dawn-text-3) 0%, var(--dawn-text-3) 40%, var(--dawn-text-1) 50%, var(--dawn-text-3) 60%, var(--dawn-text-3) 100%);
+    background-size: 250% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: thought-preview-sweep 2.4s ease-in-out infinite;
+  }
+}
+@keyframes thought-preview-sweep {
+  to { background-position: -150% 0; }
+}
 /* 秒数放在方块里：这一行里唯一会动的东西，要好认 */
 .thought-secs {
   flex: 0 0 auto;

@@ -1586,6 +1586,16 @@ describe("设计契约 · 对话字号只有一根轴", () => {
   })
 })
 
+describe("设计契约 · 思考段落摘要", () => {
+  const css = () => readFileSync(join(UI_DIR, "styles.css"), "utf8")
+
+  it("摘要在行内渐隐；扫光只在用户未减弱动效时启用", () => {
+    expect(css()).toMatch(/\.thought-preview\s*\{[^}]*mask-image: linear-gradient\(/s)
+    expect(css()).toMatch(/@media \(prefers-reduced-motion: no-preference\)\s*\{\s*\.thought-preview\.sweeping\s*\{[^}]*animation: thought-preview-sweep/s)
+    expect(css()).toMatch(/@keyframes thought-preview-sweep\s*\{/)
+  })
+})
+
 /**
  * **壳不订阅整份转录**（2026-09-22，`perf-render`）。
  *

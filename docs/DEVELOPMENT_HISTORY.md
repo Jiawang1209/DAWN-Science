@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 思考中显示已完成段落摘要（C9，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: dsh GUI 计划 C9：思考很长时让人看到最近已经写完的段落，而不是一条不变的「思考中」。
+- **What**:
+  - 纯函数按空行识别已完成段落，只取最近一段的首行；思考仍进行时不泄露末尾未完成段落，结束后末段也成为摘要。
+  - 思考行保留秒数与原文展开；摘要单行显示，右端渐隐，扫光只在系统未启用减弱动效时运行。
+  - 英文界面新增对应完成态文案；组件测试模拟文本增量和完成转换，真实 Electron e2e 检查最终摘要、计时、全文展开与动效偏好。
+- **Impact**: 长思考过程可读到逐段推进的进展；完整思考内容仍可展开查看，减弱动效设置受到遵守。
+- **Verification**: `npm run typecheck`、`npm run build`；摘要/组件/design-contract/i18n 单测 101/101；`npx playwright test e2e/thinking-progress.spec.ts e2e/thinking.spec.ts` 8/8。
+
 ### 2026-10-01 — 对话字号由单一变量驱动（C12，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

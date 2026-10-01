@@ -424,6 +424,7 @@ export const EN: Readonly<Record<string, string>> = {
     "Sending adds a new message at the end; the original stays where it is.",
   "正在思考": "Thinking",
   "想了一下": "thought for a moment",
+  "想了": "Thought for",
   "这一整段对话累计": "across this whole chat",
   "还没有对话": "No messages yet",
   // 只渲染最近若干条（2026-09-22）：更早的没进 DOM，屏幕上要说清

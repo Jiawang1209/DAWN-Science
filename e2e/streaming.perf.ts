@@ -198,6 +198,7 @@ async function 量一轮回复(page: Page, 模式: "重画" | "时间", cpu降�
       组件总数: r.组件总数,
       每次提交平均重跑: r.提交 ? Math.round(r.重跑 / r.提交) : 0,
       重跑总数: r.重跑,
+      输入卡表面重跑次数: r.按名字["ComposerInputSurface"] ?? 0,
       重跑最多的组件: Object.fromEntries(前几),
       提交的花样: Object.fromEntries(花样前几),
     }
@@ -256,6 +257,11 @@ test("回复时的重画次数", async ({ dawn }) => {
   const 结果 = await 跑剧本(page, "重画")
   const 钩子接上了 = await page.evaluate(() => (window as unknown as { __重画?: { 组件总数: number } }).__重画?.组件总数 ?? 0)
   if (!钩子接上了) throw new Error("React 没有接上假 DevTools 钩子——重画数全是 0，不能当数据用")
+  // Sending clears the draft and adds history; busy state also starts and ends. These state
+  // changes may render the composer, but streamed assistant chunks must not make it scale with
+  // token count. Seven permits the first-turn setup edges while still rejecting per-chunk renders.
+  const 超预算 = 结果.filter((x) => Number(x["输入卡表面重跑次数"] ?? 0) > 7)
+  if (超预算.length) throw new Error(`输入卡在单轮流式回复里重跑超过 7 次：${JSON.stringify(超预算, null, 2)}`)
   记下("重画", 结果)
 })
 

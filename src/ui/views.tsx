@@ -70,6 +70,7 @@ import { 分组转录, 汇总工具组 } from "./tool-group.js"
 import { 从工具结果收案例, 本轮提到的案例, type 本轮案例 } from "./case-cards.js"
 import { 案例卡片们 } from "./case-cards-view.js"
 import type { ArtifactList } from "./state/catalog.js"
+import { ComposerInputSurface } from "./composer-input-surface.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
  *
@@ -5212,6 +5213,32 @@ export function ConversationView({
             <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(draft, 艾特位, x.path, x.kind))} />
           ) : null}
           <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => setDraft(session.sessionId, 抠掉引用(draft, p))} />
+          <ComposerInputSurface
+            fingerprint={[
+              session.sessionId,
+              session.kind,
+              draft,
+              高亮滚,
+              busy,
+              disabled,
+              history,
+              位置,
+              斜杠关了,
+              斜杠选中,
+              斜杠单,
+              艾特位?.start,
+              艾特位?.end,
+              艾特选中,
+              艾特关了,
+              艾特态.行,
+              引用文件,
+              onSend,
+              onAbort,
+              onSetPlan,
+              onCompact,
+              onOpenReference,
+            ]}
+          >
           <div className="composer-input-wrap">
           <引用高亮层 text={draft} 滚={高亮滚} />
           <草稿输入框
@@ -5424,6 +5451,7 @@ export function ConversationView({
             }}
           />
           </div>
+          </ComposerInputSurface>
           {/**
            * 右对齐的控件行。学自 Hermes composer `controls.tsx` 的
            * `<div className="ml-auto flex …">`——**控件靠右，输入区靠左**。

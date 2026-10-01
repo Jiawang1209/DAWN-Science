@@ -8,6 +8,16 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 流式回复时隔离输入文本编辑层（B6，分支 `learn-deepseek-harness`）
+
+- **Type**: perf
+- **Motivation**: dsh GUI 计划 B6：长回复逐段到达时，文本输入与高亮不应跟着每次转录更新一起重跑。
+- **What**:
+  - `ComposerInputSurface` 将引用高亮层和 textarea 放进独立 memo 边界；只用会话、草稿、输入历史、菜单状态、忙闲与相关回调等输入状态比较。上下文仪表仍随 token 用量实时刷新，其他控件照各自状态更新。
+  - `perf:streaming` 报告编辑层单轮重跑数，并要求不超过 7 次，以容纳发送清草稿、历史与忙闲切换等必要更新。临时移除 memo 的反例使同一判据失败（8–42 次）；恢复 memo 后每轮 4–7 次。
+- **Impact**: 流式正文不再令 textarea 与引用高亮层按 token 数重跑；没有冻结卡内动态 token 仪表。
+- **Verification**: `npm run typecheck`；`tests/ui/composer-render.test.ts` 2/2；`npm run build`；`npx playwright test -c playwright.perf.config.ts e2e/streaming.perf.ts --grep '回复时的重画次数'` 1/1，0 / 10 / 30 轮历史场景全部低于 7 次。
+
 ### 2026-10-01 — 流式回复输入与 IPC 性能预算进 e2e（C11，分支 `learn-deepseek-harness`）
 
 - **Type**: perf

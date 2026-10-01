@@ -651,6 +651,7 @@ pre {
  * 而那个绿在本项目里已经代表这件事（远端连接的 `alive` 也是它）。
  */
 .sess-when.running { color: var(--dawn-live); }
+.sess-when.waiting-approval { color: var(--dawn-warning); }
 
 /* 远端连接那一行仍然写状态词——**那三个词是作者 2026-08-16 定的** */
 .state.alive { color: var(--dawn-live); }
@@ -4961,6 +4962,7 @@ pre {
 .sess-item .sess .name::before,
 .sess-item .task-row > .name::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-right: 6px; border-radius: var(--dawn-radius-full); background: var(--dawn-text-4); align-self: center; }
 .sess-item[data-running="1"] .sess .name::before { background: var(--dawn-live); }
+.sess-item[data-waiting-approval="1"] .sess .name::before { background: var(--dawn-warning); }
 .sess-title {
   display: block;
   min-width: 0;

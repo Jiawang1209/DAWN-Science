@@ -49,7 +49,7 @@ import { 定位命中, type 跳转目标 } from "../protocol/search-match.js"
 import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
-import { $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
+import { $待批准的会话, $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
 import { 读收起的组, 记收起的组, 读项目展开, 记项目展开 } from "./state/sidebar.js"
 import { AgentMarkdown } from "./markdown.js"
 import { AnsiText } from "./ansi-text.js"
@@ -294,6 +294,7 @@ export function SessionRow({
   副标题,
   详情,
   跑着,
+  等你点头,
   现在,
 }: {
   session: SessionSummary
@@ -359,6 +360,8 @@ export function SessionRow({
    * **你切走了也想知道**。
    */
   跑着?: boolean | undefined
+  /** 等待用户回答权限卡；优先于跑着与未读显示 */
+  等你点头?: boolean | undefined
   /**
    * 「现在」是几点。**由上面统一给，不在这一行里读时钟。**
    *
@@ -466,6 +469,7 @@ export function SessionRow({
        */
       data-state={session.state}
       data-running={跑着 ? "1" : undefined}
+      data-waiting-approval={等你点头 ? "1" : undefined}
       draggable={drag !== undefined}
       onDragStart={drag?.onStart}
       onDragEnd={drag?.onEnd}
@@ -593,12 +597,12 @@ export function SessionRow({
           * 屏幕上那一截是「2d」，而判据与将来的悬停卡要拿得到原文。
           */}
         {/* 未读点（codex-polish ⑤）：不是正看着的那段说完了。跑着的时候不画——跑着本身就是状态 */}
-        {未读 && !跑着 ? <span className="sess-unread" aria-label={t("有新回复")} /> : null}
+        {未读 && !跑着 && !等你点头 ? <span className="sess-unread" aria-label={t("有新回复")} /> : null}
         <span
-          className={`sess-when${跑着 ? " running" : ""}`}
+          className={`sess-when${等你点头 ? " waiting-approval" : 跑着 ? " running" : ""}`}
           data-when={session.lastActiveAt ?? session.createdAt}
         >
-          {跑着 ? t("跑着") : 多久之前(session.lastActiveAt ?? session.createdAt, 现在 ?? Date.now())}
+          {等你点头 ? t("待批准") : 跑着 ? t("跑着") : 多久之前(session.lastActiveAt ?? session.createdAt, 现在 ?? Date.now())}
         </span>
       </Row>
 
@@ -1832,6 +1836,7 @@ export function SessionSidebar({
   const 现在 = use现在()
   const 跑着的 = useStore($跑着的会话)
   const 未读的 = useStore($未读)
+  const 待批准的 = useStore($待批准的会话)
 
   /**
    * 这一行属于哪儿——卡上的第二行。
@@ -1945,6 +1950,7 @@ export function SessionSidebar({
         key={task.taskId}
         session={s}
         跑着={跑着的.has(s.sessionId)}
+        等你点头={待批准的.has(s.sessionId)}
         现在={现在}
         {...(选中它 ? { select: { checked: 已选!.has(task.taskId), onToggle: () => 切一个(task.taskId) } } : {})}
         active={s.sessionId === activeSessionId && view === "conversation"}

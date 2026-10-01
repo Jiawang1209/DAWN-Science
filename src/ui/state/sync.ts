@@ -38,6 +38,7 @@ import {
   setTempSessions,
   setProviders,
   setContextUsage,
+  标记待批准,
   type ArtifactList,
   type CredentialState,
   type Providers,
@@ -261,6 +262,7 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
         // 待发单（2026-09-23）：切回来 / 跳号自愈时，还排着的那几句也要在
         queued: snap.queued,
       })
+      标记待批准(sessionId, Boolean(snap.pendingPermission))
       c.expectRevision(sessionId, snap.revision)
     })
     .catch(fail)
@@ -289,6 +291,7 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
         configOptions: snap.configOptions,
         queued: snap.queued,
       })
+      标记待批准(sessionId, Boolean(snap.pendingPermission))
       // 它的团队（2026-09-29）：坞里点团队 chip 要看的是这一份，不是主区那段的
       $侧边团队.set(snap.team)
       c.expectRevision(sessionId, snap.revision)

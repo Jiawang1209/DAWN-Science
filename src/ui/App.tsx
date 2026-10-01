@@ -212,6 +212,7 @@ import {
   $跑着的会话,
   $未读,
   标记在跑,
+  标记待批准,
   标未读,
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_两栏起点,
@@ -615,6 +616,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 往下走的话，坞里正看着的那一段答完就被退订，中枢随即把它扔掉。理由见 `收子转录推送`。
          */
         if (收子转录推送(u)) return
+        // 审批状态属于整段会话：即使它不是当前会话，侧栏也要优先显示「待批准」。
+        if (u.type === "snapshot") 标记待批准(u.sessionId, Boolean(u.snapshot.pendingPermission))
         /**
          * **哪几段正在跑，在这里记**（2026-08-19）。
          *

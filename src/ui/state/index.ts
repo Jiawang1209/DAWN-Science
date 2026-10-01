@@ -78,6 +78,8 @@ export {
   setConnectionState,
   $跑着的会话,
   标记在跑,
+  $待批准的会话,
+  标记待批准,
   标未读,
   $未读,
   setSessionCwd,

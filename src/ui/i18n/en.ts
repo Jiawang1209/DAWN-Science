@@ -154,6 +154,7 @@ export const EN: Readonly<Record<string, string>> = {
   "完全访问权限": "Full access",
   "完全访问": "Full access",
   "请求批准": "Ask for approval",
+  "待批准": "Approval needed",
   "自动拦截": "Auto-block",
   "环境": "Environment",
   // 机器快照那一支（②-B · R5）。**「系统」不能复用**——那个 msgid 归账本的

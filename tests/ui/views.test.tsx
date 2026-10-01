@@ -8,6 +8,7 @@ import {
 } from "../../src/ui/views.js"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../../src/protocol/index.js"
 import { SIDEBAR_FOLDED_KEY, SIDEBAR_PROJECTS_OPEN_KEY } from "../../src/ui/state/sidebar.js"
+import { 标记待批准, 标记在跑, 标未读 } from "../../src/ui/state/catalog.js"
 
 /** 侧栏收起 / 展开 2026-09-28 起跨重启记着——每条用例从「没表达过偏好」开始，不吃上一条收起的 */
 beforeEach(() => {
@@ -193,6 +194,35 @@ describe("侧栏 · 归类：有路径进项目，没路径进会话", () => {
     // **`alive` 从屏幕上撤了**，但状态没丢——它挪进了 `data-state`
     expect(container.querySelector(".session-list .state")).toBeNull()
     expect(container.querySelector(".session-list .sess-item")?.getAttribute("data-state")).toBeTruthy()
+  })
+
+  it("状态优先级为待批准 > 跑着 > 未读 > 空闲", () => {
+    标记待批准("s1", false)
+    标记在跑("s1", false)
+    标未读("s1", false)
+    标记在跑("s1", true)
+    标未读("s1", true)
+    标记待批准("s1", true)
+    const { container } = render(<SessionSidebar {...base} {...带会话([task()], [session()])} />)
+    const row = container.querySelector<HTMLElement>(".session-list .sess-item")!
+    const when = () => row.querySelector(".sess-when")
+
+    expect(row.dataset["waitingApproval"]).toBe("1")
+    expect(when()?.textContent).toBe("待批准")
+    expect(when()?.classList.contains("waiting-approval")).toBe(true)
+    expect(row.querySelector(".sess-unread")).toBeNull()
+
+    act(() => 标记待批准("s1", false))
+    expect(when()?.textContent).toBe("跑着")
+    expect(when()?.classList.contains("running")).toBe(true)
+    expect(row.querySelector(".sess-unread")).toBeNull()
+
+    act(() => 标记在跑("s1", false))
+    expect(when()?.textContent).not.toBe("待批准")
+    expect(when()?.classList.contains("running")).toBe(false)
+    expect(row.querySelector(".sess-unread")).not.toBeNull()
+
+    标未读("s1", false)
   })
 
   it("**有标题就用标题** —— 同一个 agent 的两段得分得开", () => {

@@ -8,6 +8,16 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 侧栏优先标出等待批准的会话（A4，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: dsh GUI 计划 A4：切到别的会话后仍要一眼看到哪段对话正等自己批准。
+- **What**:
+  - 新增待批准会话集合，按权限快照更新；事件订阅、主区重同步、坞内对话重同步都写入同一状态。
+  - 侧栏状态顺序为「待批准 > 跑着 > 未读 > 空闲」：待批准时行首圆点用 warning 色、右侧显示「待批准」，并隐藏低优先级未读点；用户作答后快照清除该状态。
+- **Impact**: 不改权限协议与会话排序；运行中的底层事实仍保留，侧栏仅把更紧急的待批准状态置顶显示。
+- **Verification**: `npm run typecheck`；`npm test` 320 个文件通过，4037 通过 / 10 跳过；`npm run build` 成功（已有 `eval` 与大包提示）；`npx playwright test e2e/permission.spec.ts --grep '问一句'` 1/1 通过，验证实时标记、warning 样式、状态优先级和回答后清除。
+
 ### 2026-10-01 — 审批卡可用键盘作答，但不抢输入焦点（A3，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

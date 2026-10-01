@@ -233,6 +233,17 @@ export function 标记在跑(sessionId: string, 在跑: boolean): void {
   $跑着的会话.set(下一个)
 }
 
+/** 当前等待用户批准的会话；权限快照变化时由事件订阅与重同步维护。 */
+export const $待批准的会话 = atom<ReadonlySet<string>>(new Set<string>())
+export function 标记待批准(sessionId: string, 待批准: boolean): void {
+  const 当前 = $待批准的会话.get()
+  if (当前.has(sessionId) === 待批准) return
+  const 下一个 = new Set(当前)
+  if (待批准) 下一个.add(sessionId)
+  else 下一个.delete(sessionId)
+  $待批准的会话.set(下一个)
+}
+
 export function setConnectionState(connectionId: string, state: RemoteConnection["state"]): void {
   const 现在 = $connections.get()
   const i = 现在.findIndex((c) => c.id === connectionId)

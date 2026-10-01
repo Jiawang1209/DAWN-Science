@@ -25,9 +25,10 @@ test.describe("key 不对的时候", () => {
     await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
-    const 说明 = page.locator(".turns .caveat")
+    const 说明 = page.locator(".turns .failed-notice")
     await expect(说明).toContainText("模型调用失败", { timeout: 30_000 })
     // **带上对方的原话**：只说「失败了」，人无从判断是 key 错了还是额度没了
+    await 说明.getByText("查看原始错误").click()
     await expect(说明).toContainText("401")
     await expect(说明).toContainText("这个 key 不对")
   })
@@ -39,7 +40,7 @@ test.describe("key 不对的时候", () => {
     await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
-    await expect(page.locator(".turns .caveat")).toContainText("模型调用失败", { timeout: 30_000 })
+    await expect(page.locator(".turns .failed-notice-reason")).toContainText("模型调用失败", { timeout: 30_000 })
     // agent 的气泡里不该有这段话
     await expect(page.locator(".turn.agent .bubble")).toHaveCount(0)
   })

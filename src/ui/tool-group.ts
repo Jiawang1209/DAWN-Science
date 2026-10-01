@@ -46,7 +46,7 @@ export function 分组转录(items: readonly TranscriptItem[]): 转录块[] {
 
 export interface 工具组汇总 {
   条数: number
-  /** 全是 bash 时汇总行说「运行了 N 条命令」，否则说「调用了 N 次工具」 */
+  /** 全是 bash 时汇总行说「跑了 N 条命令」，否则说「调用了 N 次工具」 */
   全是命令: boolean
   失败: number
   /** 正在跑的那一条（取最后一条在跑的）；都跑完了是 undefined */

@@ -33,7 +33,7 @@ test.describe("连续三条命令", () => {
     const 组 = page.locator(".tool-group")
     await expect(组).toHaveCount(1, { timeout: 60_000 })
     const 头 = 组.locator(".tool-group-head")
-    await expect(头).toContainText("运行了 3 条命令", { timeout: 60_000 })
+    await expect(头).toContainText("跑了 3 条命令", { timeout: 60_000 })
     await expect(头).toHaveAttribute("aria-expanded", "false")
 
     // 失败数出声，且是红的（与单条失败同一个颜色）

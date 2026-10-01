@@ -29,6 +29,15 @@ export interface 审阅数据 {
 const 状态字 = (s: 审阅数据["tracked"][number]["status"]) =>
   s === "added" ? t("新增") : s === "deleted" ? t("已删") : t("改动")
 
+function 行数统计({ 新增, 删除 }: { 新增: number; 删除: number }) {
+  return (
+    <span className="review-num">
+      <span className="review-added">+{新增}</span>{" "}
+      <span className="review-removed">−{删除}</span>
+    </span>
+  )
+}
+
 /** `fileDiff` 回来的那一份。**跟 `protocol/operations.ts` 一字不差** */
 export interface 差异结果 {
   diff: string
@@ -222,9 +231,7 @@ export function ReviewPanel({
                 <span className={`review-status ${f.status}`}>{状态字(f.status)}</span>
                 <span className="review-path">{f.path}</span>
                 {/* 二进制文件给不出行数——**说清是「二进制」，不写 +0 −0** */}
-                <span className="review-num">
-                  {f.binary ? t("二进制") : `+${f.added} −${f.removed}`}
-                </span>
+                {f.binary ? <span className="review-num">{t("二进制")}</span> : <行数统计 新增={f.added} 删除={f.removed} />}
               </Button>
             </li>
           ))}
@@ -273,9 +280,7 @@ export function ReviewPanel({
             {选中的 ? <span className={`review-status ${选中的.status}`}>{状态字(选中的.status)}</span> : null}
             <span className="review-path">{选中}</span>
             {选中的 ? (
-              <span className="review-num">
-                {选中的.binary ? t("二进制") : `+${选中的.added} −${选中的.removed}`}
-              </span>
+              选中的.binary ? <span className="review-num">{t("二进制")}</span> : <行数统计 新增={选中的.added} 删除={选中的.removed} />
             ) : null}
           </header>
           {算差异出错 ? (

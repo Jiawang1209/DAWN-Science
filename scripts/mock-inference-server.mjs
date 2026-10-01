@@ -86,6 +86,12 @@ export const MARKDOWN_REPLY = [
   "最后一段。",
 ].join("\n")
 
+/** 长代码测试夹具：让代码自身足够长，验证标题与动作在对话滚动时仍可见。 */
+export const LONG_CODE_REPLY = MARKDOWN_REPLY.replace(
+  "import pandas as pd\ndf = pd.read_csv('sales.csv')\nprint(df.describe())",
+  ["import pandas as pd", "df = pd.read_csv('sales.csv')", ...Array.from({ length: 80 }, (_, i) => `print('row ${i + 1}')`)].join("\n"),
+)
+
 /**
  * **一段长回复**（2026-09-22，分支 `perf-streaming`）：用户这一句里带「长回复」时给它。
  *
@@ -467,6 +473,8 @@ export function startMockInferenceServer(opts = {}) {
               ? "假模型先说出这句，随后因输出长度上限停止。"
             : 最后一句.includes("长回复")
               ? LONG_REPLY
+            : 最后一句.includes("长代码")
+              ? LONG_CODE_REPLY
             : 用户说的.includes("markdown")
               ? MARKDOWN_REPLY
               : 用户说的.includes("案例卡片")

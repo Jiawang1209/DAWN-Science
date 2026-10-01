@@ -884,18 +884,18 @@ pre {
   margin: 0 auto;
 }
 .turn {
-  /**
-   * **消息之间隔得很开**（2026-08-12，CDP 实测 WorkBuddy 是 `64px`）。
-   *
-   * 我们此前是 12px——**这是「挤」的最大来源**，比字号行距都要紧：
-   * 一屏里几段话贴在一起，眼睛分不出哪句是谁说的、哪段结束了。
-   *
-   * 取 40px 而不是 64：**我们一轮里还有工具调用、思考块、当前目录**，
-   * 每条之间都留 64 会把一次回答拉得很长。
-   * 作者定的原则：*「基于我们现在有的内容去贴近。」*
-   */
-  margin: 0 auto var(--dawn-space-10);
+  margin: 0 auto;
 }
+/**
+ * **相邻发言轮之间留 40px**（2026-08-12，CDP 实测 WorkBuddy 是 `64px`）。
+ * 我们此前是 12px，一屏里几段话贴在一起，眼睛难分哪句是谁说的、哪段结束了。
+ * 取 40px 而不是 64：一轮里还有工具调用与思考块，再加 64 会把一次回答拉得很长。
+ * 作者定的原则：*「基于我们现在有的内容去贴近。」*
+ */
+.turn + .turn { margin-top: var(--dawn-space-10); }
+/** 答复与前后过程行之间留中档距离 */
+.tool + .turn,
+.tool-group + .turn { margin-top: var(--dawn-space-4); }
 /**
  * 新消息进场（2026-09-11 视觉重做）。
  *
@@ -1175,7 +1175,7 @@ pre {
   width: fit-content;
   max-width: 100%;
   gap: var(--dawn-space-2);
-  margin: var(--dawn-space-3) 0 var(--dawn-space-1);
+  margin: var(--dawn-space-4) 0 var(--dawn-space-1);
   padding: 2px var(--dawn-space-2);
   color: var(--dawn-text-3);
   font-size: var(--dawn-fs-meta);
@@ -1629,7 +1629,8 @@ pre {
   corner-shape: var(--dawn-corner-shape);
   background: var(--dawn-fill-4);
   box-shadow: inset 0 0 0 0.5px var(--dawn-stroke-3);
-  overflow: hidden;
+  /** `clip` 保留圆角裁切，却不建立滚动容器，里面的 sticky 仍以转录滚动区为参照 */
+  overflow: clip;
 }
 
 /**
@@ -1639,6 +1640,9 @@ pre {
  * Claude / Codex 都是「一条淡色头部 + 右侧动作」，这里照它的形态。
  */
 .md [data-streamdown="code-block-header"] {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-head);
   display: flex;
   align-items: center;
   height: 28px;
@@ -1650,12 +1654,17 @@ pre {
 
 /** 动作组浮到头部那一行的右端 */
 .md [data-streamdown="code-block"] > div:has([data-streamdown="code-block-actions"]) {
+  position: sticky;
+  top: 28px;
+  z-index: var(--z-sibling-lift);
   display: flex;
   justify-content: flex-end;
   height: 0;
 }
 
 .md [data-streamdown="code-block-actions"] {
+  position: sticky;
+  top: 0;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -5899,6 +5908,20 @@ pre {
   font-size: var(--dawn-fs-meta);
 }
 .review-num { flex: 0 0 auto; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); white-space: nowrap; }
+.review-added {
+  display: inline-block;
+  padding: 0 3px;
+  border-radius: var(--dawn-radius-xs);
+  color: var(--dawn-success);
+  background: color-mix(in srgb, var(--dawn-success) 12%, var(--dawn-surface-input));
+}
+.review-removed {
+  display: inline-block;
+  padding: 0 3px;
+  border-radius: var(--dawn-radius-xs);
+  color: var(--dawn-danger);
+  background: color-mix(in srgb, var(--dawn-danger) 12%, var(--dawn-surface-input));
+}
 
 /* ── diff 的排版：**量自 Codex 的构建产物**（2026-08-18）────────────
  *

@@ -14,11 +14,11 @@
  */
 import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
-async function 富回复(page: import("@playwright/test").Page) {
+async function 富回复(page: import("@playwright/test").Page, prompt = "给我一段 markdown") {
   await 开一段临时会话(page)
   const b = page.getByPlaceholder(/今天帮你做些什么/)
   await expect(b).toBeVisible()
-  await b.fill("给我一段 markdown")
+  await b.fill(prompt)
   await b.press("Enter")
   await expect(page.locator(".md table")).toBeVisible({ timeout: 30_000 })
   // The table can arrive before the response finishes streaming. Wait until the
@@ -55,6 +55,37 @@ test("代码块有头部：**语言在左、动作在右**", async ({ dawn }) =>
   const 动作 = (await page.locator('.md [data-streamdown="code-block-actions"]').boundingBox())!
   // 动作整体在语言名右边——**此前它们竖着堆在左边**
   expect(动作.x).toBeGreaterThan(语言.x + 语言.width / 2)
+})
+
+test("长代码滚动时**语言标题与复制操作仍钉在视口上沿**", async ({ dawn }) => {
+  const { page } = dawn
+  await 富回复(page, "给我一段长代码")
+
+  const codeBlock = page.locator('.md [data-code-highlighted]').first()
+  const code = codeBlock.locator("pre")
+  expect((await code.boundingBox())!.height).toBeGreaterThan(600)
+  await expect(codeBlock).toHaveAttribute("data-code-highlighted", "true")
+
+  const header = codeBlock.locator('[data-streamdown="code-block-header"]')
+  const actions = codeBlock.locator('[data-streamdown="code-block-actions"]')
+  await header.scrollIntoViewIfNeeded()
+  const before = await header.boundingBox()
+  const beforeActions = await actions.boundingBox()
+  const scroll = await header.evaluateHandle((element) => {
+    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+      const style = getComputedStyle(parent)
+      if (/(auto|scroll)/.test(style.overflowY) && parent.scrollHeight > parent.clientHeight) return parent
+    }
+    throw new Error("找不到对话转录的滚动容器")
+  })
+  await scroll.evaluate((element) => { element.scrollTop += 120 })
+
+  // sticky 的 top 参照是转录滚动视口（它从窗口 y=140 开始），继续滚时标题应停在原位。
+  await expect.poll(async () => Math.abs(((await header.boundingBox())?.y ?? -10) - before!.y)).toBeLessThan(2)
+  const afterActions = await actions.boundingBox()
+  expect(afterActions!.y).toBeGreaterThanOrEqual(0)
+  expect(Math.abs(afterActions!.y - beforeActions!.y)).toBeLessThan(2)
+  await expect(actions.locator("button").first()).toBeVisible()
 })
 
 test("表格的动作也收拾过 —— **不是三个裸按钮竖着堆在表格上面**", async ({ dawn }) => {

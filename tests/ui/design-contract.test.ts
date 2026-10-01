@@ -1522,6 +1522,44 @@ describe("设计契约 · 过程压低、人话抬高", () => {
   })
 })
 
+describe("设计契约 · 对话节奏与 diff 统计", () => {
+  const css = () => readFileSync(join(UI_DIR, "styles.css"), "utf8")
+  function 规则块(text: string, 选择器: string): string {
+    const i = text.indexOf(`\n${选择器} {`)
+    if (i < 0) throw new Error(`找不到规则 ${选择器}`)
+    const open = text.indexOf("{", i)
+    return 取块(text, open).replace(/\/\*[\s\S]*?\*\//g, "")
+  }
+
+  it("**同轮过程紧、答复与过程中等、轮与轮之间宽**", () => {
+    const text = css()
+    expect(规则块(text, ".tool")).toMatch(/margin: *2px 0/)
+    expect(规则块(text, ".tool-group")).toMatch(/margin: *2px 0/)
+    expect(规则块(text, ".completed-process-head")).toMatch(/margin: *var\(--dawn-space-4\)/)
+    expect(text).toMatch(/\.tool \+ \.turn,\s*\.tool-group \+ \.turn \{ *margin-top: *var\(--dawn-space-4\)/)
+    expect(规则块(text, ".turn + .turn")).toMatch(/margin-top: *var\(--dawn-space-10\)/)
+  })
+
+  it("**代码块标题与复制操作随长代码滚动仍可见**", () => {
+    const text = css()
+    expect(规则块(text, '.md [data-streamdown="code-block"]')).toMatch(/overflow: *clip/)
+    expect(规则块(text, '.md [data-streamdown="code-block-header"]')).toMatch(/position: *sticky/)
+    expect(规则块(text, '.md [data-streamdown="code-block-header"]')).toMatch(/top: *0/)
+    expect(规则块(text, '.md [data-streamdown="code-block"] > div:has([data-streamdown="code-block-actions"])')).toMatch(/position: *sticky/)
+    expect(规则块(text, '.md [data-streamdown="code-block-actions"]')).toMatch(/position: *sticky/)
+  })
+
+  it("**文件列表与选中文件都把增删数拆开并持续带浅色**", () => {
+    const source = read("review.tsx")
+    expect(source).toContain('className="review-added"')
+    expect(source).toContain('className="review-removed"')
+    expect(规则块(css(), ".review-added")).toMatch(/color: *var\(--dawn-success\)/)
+    expect(规则块(css(), ".review-added")).toMatch(/background: *color-mix\(/)
+    expect(规则块(css(), ".review-removed")).toMatch(/color: *var\(--dawn-danger\)/)
+    expect(规则块(css(), ".review-removed")).toMatch(/background: *color-mix\(/)
+  })
+})
+
 /**
  * **壳不订阅整份转录**（2026-09-22，`perf-render`）。
  *

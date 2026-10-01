@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 审批卡可用键盘作答，但不抢输入焦点（A3，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: dsh GUI 计划 A3：让审批卡能用键盘操作，同时保住「问一句」作为安全闸的明确确认。
+- **What**:
+  - 抽出 `PermissionCard`：卡片本身可 Tab 聚焦；点击卡面也会显式聚焦；出现时不自动抢焦点。焦点在卡片内时，Enter 优先选择 `allow_once`（缺席时选第一个 `allow*`），Escape 回答「这一轮先不做」；选项按钮仍可点击。
+  - 组词、重复按键和 Shift/Ctrl/Alt/Meta 修饰键不触发快捷键；卡片常驻显示「回车 允许 · Esc 先不做」，英文界面有对应文案。
+  - 无权限协议变更。
+- **Impact**: 权限卡继续呈现在输入框上方；仅在用户把焦点放进卡片后才处理快捷键，输入框中的回车仍按原有发送行为工作。
+- **Verification**: `npm run typecheck`；`npm test` 319 个文件通过，4028 通过 / 10 跳过；`npm run build` 成功（esbuild 的 `eval` 与 Vite 大包提示仍在）；`npx playwright test e2e/permission.spec.ts` 6/6 通过，覆盖未抢焦点、修饰键忽略、Enter 允许和 Escape 取消。
+
 ### 2026-10-01 — 失败固定在本轮，输出截断时说明怎么继续（A2，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

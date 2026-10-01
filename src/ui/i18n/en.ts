@@ -891,6 +891,8 @@ export const EN: Readonly<Record<string, string>> = {
   "按模型": "By model",
   "按项目": "By project",
   "这次操作要你决定": "This action needs your decision",
+  "回车 允许 · Esc 先不做": "Enter to allow · Esc to skip this turn",
+  "Esc 先不做": "Esc to skip this turn",
   "会话设置": "Session settings",
   "这一轮先不做": "Skip for now",
   "Total：{0} tokens": "Total: {0} tokens",

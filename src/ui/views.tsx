@@ -21,6 +21,7 @@ import { $items, $待发, 在压缩, 有回音了, type 会话开关 } from "./s
 import { ContextMeter, 读仪表, 是压缩命令, use上下文用量 } from "./context-meter.js"
 import { CompactionRow } from "./compaction-row.js"
 import { FailedNotice } from "./failed-notice.js"
+import { PermissionCard } from "./permission-card.js"
 import type { ContextUsage } from "./panels.js"
 import { 待发条 } from "./queued-strip.js"
 import {
@@ -5437,33 +5438,7 @@ export function ConversationView({
             * 我们回过去的 id 它不认，表现是「点了没反应」。
             */}
           {待答权限 && onAnswerPermission ? (
-            <div className="perm-card" role="group" aria-label={t("这次操作要你决定")}>
-              <p className="perm-card-title">{待答权限.title}</p>
-              <div className="perm-card-options">
-                {待答权限.options.map((o) => (
-                  <Button
-                    key={o.optionId}
-                    variant={o.kind.startsWith("allow") ? "primary" : "outline"}
-                    size="sm"
-                    onClick={() => onAnswerPermission(待答权限.requestId, o.optionId)}
-                  >
-                    {o.name}
-                  </Button>
-                ))}
-                {/**
-                  * **「取消」与「拒绝」不是一回事**，所以它单独在这儿：
-                  * 拒绝是一个决定（agent 会据此改道），取消是「这一轮别做了」。
-                  * agent 给的选项里可能只有拒绝，没有取消。
-                  */}
-                <Button
-                  variant="text"
-                  size="sm"
-                  onClick={() => onAnswerPermission(待答权限.requestId, undefined)}
-                >
-                  {t("这一轮先不做")}
-                </Button>
-              </div>
-            </div>
+            <PermissionCard permission={待答权限} onAnswer={onAnswerPermission} />
           ) : null}
           {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}
           {/**

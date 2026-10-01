@@ -25,6 +25,18 @@ describe("创建转录槽", () => {
     expect((a.$items.get()[0] as { text: string }).text).toBe("甲乙")
     vi.useRealTimers()
   })
+  it("按字段追加到已落地或正攒着的 agent turn，找不到目标就明确失败", () => {
+    vi.useFakeTimers()
+    const a = 创建转录槽()
+    a.upsertItem(说("1", "甲"))
+    expect(a.appendItem("1", "text", "乙")).toBe(true)
+    expect(a.appendItem("missing", "text", "不该复活")).toBe(false)
+    a.upsertItem(说("1", "甲乙丙")) // 已攒着的完整 item 要保留后续 append
+    expect(a.appendItem("1", "text", "丁")).toBe(true)
+    a.flush()
+    expect(a.$items.get()[0]).toMatchObject({ text: "甲乙丙丁", final: false })
+    vi.useRealTimers()
+  })
   it("攒的是每槽各一份：一槽 flush 不替另一槽落", () => {
     vi.useFakeTimers()
     const a = 创建转录槽(), b = 创建转录槽()

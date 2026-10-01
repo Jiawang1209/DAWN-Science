@@ -99,7 +99,7 @@ import { $子转录id, 收子转录推送, 看子agent, 放下不该看的子转
 import { 看团队, 放下不该看的团队格, $团队格会话 } from "./state/team-view.js"
 import { SubagentDock } from "./subagent-pane.js"
 import { $侧边会话id, $侧边能读主, $侧边团队, $侧边地方, 侧槽, 侧边地方键, 载入侧边, 挂进坞, 从坞拿下, 能进坞, 从坞表抹掉, 放进坞的做法, 换到主区的做法, 临时地方, 同处的会话, 在会话那一组 } from "./state/side-chat.js"
-import { 主槽, $说过话 } from "./state/transcript.js"
+import { 主槽, appendItem, $说过话 } from "./state/transcript.js"
 import { 回退这一轮, 找这句, 最后一句, $回退中, type 回退预览, type 回退回执 } from "./state/rewind.js"
 import { RewindDetail } from "./rewind.js"
 import type { 转录槽 } from "./state/transcript-slot.js"
@@ -615,7 +615,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * **子转录是第四条线**（2026-09-27，子 agent 看得见）：排在「开口就算在跑 / 答完退订」那几段之前、处理完就走——
          * 往下走的话，坞里正看着的那一段答完就被退订，中枢随即把它扔掉。理由见 `收子转录推送`。
          */
-        if (收子转录推送(u)) return
+        if (收子转录推送(u, (sessionId) => void resyncSession(client, sessionId))) return
         // 审批状态属于整段会话：即使它不是当前会话，侧栏也要优先显示「待批准」。
         if (u.type === "snapshot") 标记待批准(u.sessionId, Boolean(u.snapshot.pendingPermission))
         /**
@@ -684,6 +684,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          */
         if (u.sessionId === $侧边会话id.get() && u.sessionId !== $activeSessionId.get()) {
           if (u.type === "item") 侧槽.upsertItem(u.item)
+          if (u.type === "append" && !侧槽.appendItem(u.id, u.field, u.delta)) void resyncSession(client, u.sessionId)
           if (u.type === "dropItem") 侧槽.dropItem(u.id)
           if (u.type === "snapshot") {
             侧槽.applySnapshot(u.snapshot)
@@ -701,6 +702,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
         if (u.sessionId !== $activeSessionId.get()) return
         if (u.type === "item") upsertItem(u.item)
+        if (u.type === "append" && !appendItem(u.id, u.field, u.delta)) void resyncSession(client, u.sessionId)
         if (u.type === "dropItem") dropItem(u.id) // 服务端摘掉一条(如「只想没说」并进新的)——实时流跟着删(审查 debug F3)
         if (u.type === "bytes") appendBytes(u.data)
         if (u.type === "snapshot") {

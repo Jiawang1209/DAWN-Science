@@ -173,6 +173,13 @@ describe("增量更新", () => {
     ).toBe(true)
   })
 
+  it("append 更新只带 turn id、文本字段与非空增量", () => {
+    const u = { ...base, type: "append", revision: 2, id: "a1", field: "text", delta: "后半句" }
+    expect(SessionUpdateSchema.safeParse(u).success).toBe(true)
+    expect(SessionUpdateSchema.safeParse({ ...u, delta: "" }).success).toBe(false)
+    expect(SessionUpdateSchema.safeParse({ ...u, item: turn() }).success).toBe(false)
+  })
+
   it("state 更新带状态", () => {
     expect(
       SessionUpdateSchema.safeParse({ ...base, type: "state", revision: 2, state: "exited", exitCode: 0 })
@@ -443,9 +450,11 @@ describe("协议版本 · 5.5", () => {
    * **8.6（2026-09-27）**：先出方案——转录条目 `plan`、操作 `answerPlan`。
    *
    * **8.7（2026-09-28）**：添加模型服务时的「测试」——只读操作 `testProviderKey`。
+   * 8.8（2026-10-01）：失败 notice 可带 `rawError`。
+   * 8.9（2026-10-01）：会话更新新增 `append`，增量追加 agent turn 的 `text` / `thinking`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.8")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.9")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

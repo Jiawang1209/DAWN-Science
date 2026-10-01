@@ -26,7 +26,7 @@ export type { 待答的权限, 会话开关 } from "./transcript-slot.js"
  * 坞里那段对话是同一个工厂的第二个实例（`side-chat.ts`）——**攒的逻辑只此一份**。
  */
 export const 主槽 = 创建转录槽()
-export const { $items, $待答权限, $会话开关, $待发, upsertItem, dropItem, setItems, setQueued } = 主槽
+export const { $items, $待答权限, $会话开关, $待发, upsertItem, appendItem, dropItem, setItems, setQueued } = 主槽
 /** 把攒着的更新落进 `$items`。**同步**：谁要按顺序落下一条，先调它 */
 export const flushTranscript = 主槽.flush
 

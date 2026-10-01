@@ -7,7 +7,7 @@
  */
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { SessionUpdate } from "../../src/protocol/index.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 import { 收子转录推送, 子槽, $子agent信息, $子转录id } from "../../src/ui/state/subagent-view.js"
@@ -38,6 +38,16 @@ describe("收子转录推送", () => {
     expect(收子转录推送(包("s1#sub:c1:0", { type: "subagent", subagent: 信息 }))).toBe(true)
     expect($子agent信息.get()).toEqual(信息)
   })
+  it("子转录 append 原位追加；目标缺失时请求该子转录的快照", () => {
+    $子转录id.set("s1#sub:c1:0")
+    expect(收子转录推送(包("s1#sub:c1:0", { type: "item", item: { ...一条, id: "a1", text: "甲", final: false } }))).toBe(true)
+    const resync = vi.fn()
+    expect(收子转录推送(包("s1#sub:c1:0", { type: "append", id: "a1", field: "text", delta: "乙" }), resync)).toBe(true)
+    子槽.flush()
+    expect(子槽.$items.get()[0]).toMatchObject({ text: "甲乙" })
+    expect(收子转录推送(包("s1#sub:c1:0", { type: "append", id: "missing", field: "text", delta: "x" }), resync)).toBe(true)
+    expect(resync).toHaveBeenCalledWith("s1#sub:c1:0")
+  })
   it("别的子转录（没在看）：认下、丢掉——**不许漏到真会话那几段**", () => {
     $子转录id.set("s1#sub:c1:0")
     expect(收子转录推送(包("s1#sub:c1:1", { type: "item", item: 一条 }))).toBe(true)
@@ -49,13 +59,17 @@ describe("收子转录推送", () => {
 describe("App.tsx 里的顺序", () => {
   it("**先分流子转录，再走「答完退订」**——反过来，坞里正看着的那一段答完就被退订、被中枢扔掉", () => {
     const src = readFileSync(join(__dirname, "../../src/ui/App.tsx"), "utf8")
-    const 分流 = src.indexOf("if (收子转录推送(u)) return")
+    const 分流 = src.indexOf("if (收子转录推送(u, (sessionId) => void resyncSession(client, sessionId))) return")
     const 退订 = src.indexOf('client.get("unsubscribeSession", { sessionId: u.sessionId })')
     const 标在跑 = src.indexOf("标记在跑(u.sessionId, true)")
+    const 坞追加 = src.indexOf('if (u.type === "append" && !侧槽.appendItem(u.id, u.field, u.delta))')
+    const 主追加 = src.indexOf('if (u.type === "append" && !appendItem(u.id, u.field, u.delta))')
     expect(分流, "分流那一句不在了——这条扫描要跟着改").toBeGreaterThan(0)
     expect(退订).toBeGreaterThan(0)
     expect(标在跑).toBeGreaterThan(0)
     expect(分流).toBeLessThan(标在跑)
     expect(分流).toBeLessThan(退订)
+    expect(坞追加).toBeGreaterThan(分流)
+    expect(主追加).toBeGreaterThan(分流)
   })
 })

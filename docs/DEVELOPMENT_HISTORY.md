@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 流式文本增量传输（B5，协议 8.9，分支 `learn-deepseek-harness`）
+
+- **Type**: perf
+- **Motivation**: dsh GUI 计划 B5：长回复逐段更新时，避免重复传输已经到达的整段文本，同时保持事件顺序、revision 连续性和订阅恢复正确。
+- **What**:
+  - Workbench 协议新增 `append` 更新，只承载 agent turn 的 `text` / `thinking` 纯后缀；其他字段变化、非 agent 项和新项仍发完整 item。高频后缀约每 16 ms 合并，遇到其他事件、快照或新订阅前先冲刷，保留顺序与 revision。
+  - 主区、侧边会话和子 agent 转录按 item id 追加；目标缺失时请求该会话重同步。新订阅会先冲刷旧缓冲再生成快照，避免 append 先于基线快照。
+  - 审计微信、飞书、桌面通知、远程助理状态、任务完成监听和终端事件消费者：只依赖完整 item 或各自更新类型，忽略 append 不影响最终通知/完成结果；协议版本升至 8.9。
+- **Impact**: 纯文本流式更新只传新 delta；全量 transcript 仍在中枢持有，快照与所有非追加更新保持完整语义。
+- **Verification**: 协议与事件中心单测 116/116；UI/client/subagent 单测 35/35；`npm run typecheck`、`npm run build` 成功；真实 Electron 流式 e2e 1/1，23 个键入样本的 p95 为 17.6 ms，单轮事件 JSON 载荷 6,980 字节（预算 150 ms / 1,000,000 字节）。构建保留已有浏览器工具 direct-eval 与主包体积告警。
+
 ### 2026-10-01 — 延迟 transcript 代码块高亮至回复完成且进入视口（B7，分支 `learn-deepseek-harness`）
 
 - **Type**: perf

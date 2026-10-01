@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { WorkbenchClientError, createClient, type RawResponse } from "../../src/ui/client.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 import { $lang } from "../../src/ui/i18n/index.js"
@@ -146,6 +146,32 @@ describe("客户端 · 握手", () => {
   it("畸形版本号一律判不兼容，而不是放行", async () => {
     const bad = createClient(async () => caps("abc"))
     await expect(bad.handshake()).rejects.toMatchObject({ code: "version_mismatch" })
+  })
+})
+
+describe("客户端 · append 协议更新", () => {
+  it("按 revision 连续交付 append，协议识别失败或跳号才请求快照", () => {
+    let emit: (raw: unknown) => void = () => {}
+    const source = (cb: (raw: unknown) => void) => {
+      emit = cb
+      return () => {}
+    }
+    const c = createClient(undefined, source)
+    c.expectRevision("s1", 0)
+    const seen: unknown[] = []
+    const resync = vi.fn()
+    const problems: string[] = []
+    c.subscribeUpdates({ onUpdate: (u) => seen.push(u), onResync: resync, onProblem: (m) => problems.push(m) })
+
+    emit({ workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: "s1", revision: 1, type: "append", id: "a1", field: "text", delta: "甲" })
+    emit({ workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: "s1", revision: 2, type: "append", id: "a1", field: "text", delta: "乙" })
+
+    expect(seen).toMatchObject([
+      { type: "append", revision: 1, delta: "甲" },
+      { type: "append", revision: 2, delta: "乙" },
+    ])
+    expect(resync).not.toHaveBeenCalled()
+    expect(problems).toEqual([])
   })
 })
 

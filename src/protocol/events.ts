@@ -637,12 +637,19 @@ const envelope = {
 /**
  * 服务端推给界面的增量。
  *
- * `item` 是**按 id 覆盖**的：同一条 turn 在流式过程中会多次更新，
- * 界面按 id 替换即可，不必自己拼接增量。这比旧设计的「文本增量靠 turnId 归拢」
- * 少了一层客户端状态。
+ * `item` 按 id 覆盖；`append` 仅用于同一 agent turn 的纯文本 / 思考追加。
+ * 其余更新仍整条推送，避免客户端猜测如何合并结构变化。
  */
 export const SessionUpdateSchema = z.discriminatedUnion("type", [
   z.object({ ...envelope, type: z.literal("item"), item: TranscriptItemSchema }).strict(),
+  /** 同一条 agent turn 的 text / thinking 纯追加片段（8.9），由 UI 按 id 拼接。 */
+  z.object({
+    ...envelope,
+    type: z.literal("append"),
+    id: z.string().min(1),
+    field: z.enum(["text", "thinking"]),
+    delta: z.string().min(1),
+  }).strict(),
   /**
    * **删掉一条 item**（审查 debug F3）。服务端有时会把一条已经推给订阅者的 item 摘掉——
    * 典型是「只想了一下、还没说话」的那条被并进了新的一条(events.ts `吸收只想没说的`)。

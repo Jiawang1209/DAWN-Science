@@ -157,6 +157,16 @@ export function 创建转录槽() {
     $items.set(next)
   }
 
+  /** 按协议增量追加 agent turn 的文本或思考；目标缺失时返回 false，由调用方请求快照。 */
+  function appendItem(id: string, field: "text" | "thinking", delta: string): boolean {
+    if (!delta) return false
+    const item = 攒着的.get(id) ?? $items.get().find((x) => x.id === id)
+    if (item?.type !== "turn" || item.who !== "agent" || item.final || typeof item[field] !== "string") return false
+    攒着的.set(id, { ...item, [field]: item[field] + delta })
+    攒的定时器 ??= setTimeout(flush, 攒的间隔毫秒)
+    return true
+  }
+
   /** 按 id 从转录里删掉一条（审查 debug F3）：服务端把「只想没说」并进新的一条时,实时流靠它把旧的那条撤掉 */
   function dropItem(id: string): void {
     flush()
@@ -239,7 +249,7 @@ export function 创建转录槽() {
     setQueued(undefined)
   }
 
-  return { $items, $待答权限, $会话开关, $待发, flush, setItems, upsertItem, dropItem, setQueued, applySnapshot, reset, 回显 }
+  return { $items, $待答权限, $会话开关, $待发, flush, setItems, upsertItem, appendItem, dropItem, setQueued, applySnapshot, reset, 回显 }
 }
 
 export type 转录槽 = ReturnType<typeof 创建转录槽>

@@ -56,10 +56,11 @@ export function 放下不该看的子转录(主: string | undefined): void {
  * 答完还会把坞里正看着的这一段退订掉——而中枢会把退订了的、跑完的子转录**扔掉**（8cea39e），格子就空了。
  * 所以 `App` 在那几段之前先问它（`tests/ui/subagent-route.test.ts` 扫这个顺序）。
  */
-export function 收子转录推送(u: SessionUpdate): boolean {
+export function 收子转录推送(u: SessionUpdate, onMissingAppend?: (sessionId: string) => void): boolean {
   if (!是子转录id(u.sessionId)) return false
   if (u.sessionId !== $子转录id.get()) return true
   if (u.type === "item") 子槽.upsertItem(u.item)
+  if (u.type === "append" && !子槽.appendItem(u.id, u.field, u.delta)) onMissingAppend?.(u.sessionId)
   if (u.type === "dropItem") 子槽.dropItem(u.id)
   if (u.type === "snapshot") {
     子槽.applySnapshot(u.snapshot)

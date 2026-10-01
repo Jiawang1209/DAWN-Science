@@ -42,6 +42,9 @@ type UpdateBody = SessionUpdate extends infer T
     : never
   : never
 
+type AppendField = "text" | "thinking"
+type PendingAppend = { id: string; field: AppendField; delta: string }
+
 export interface SessionTranscriptsOptions {
   /**
    * PTY scrollback 的字符上限。
@@ -81,6 +84,9 @@ interface Entry {
   kind: "native" | "pty" | "cli" | "kernel" | "acp"
   revision: number
   items: TranscriptItem[]
+  /** 高频文本 / 思考追加在 16ms 窗口内合并；其他事件与快照会先冲刷 */
+  pendingAppends: PendingAppend[]
+  appendTimer: ReturnType<typeof setTimeout> | undefined
   terminal: string
   terminalTrimmed: boolean
   state: "alive" | "exited"
@@ -207,6 +213,8 @@ export class SessionTranscripts {
       kind,
       revision: 0,
       items: [],
+      pendingAppends: [],
+      appendTimer: undefined,
       terminal: "",
       terminalTrimmed: false,
       kernelInstanceId: undefined,
@@ -279,6 +287,8 @@ export class SessionTranscripts {
     const e = this.entries.get(sessionId)
     // 界面**不认这句话的字**：「坞里那段真没了」看的是 `backend.ts` subscribeSession 挂的 `details.gone`（Task 6 复审 F1）
     if (!e) throw new Error(`会话 "${sessionId}" 未在本进程中活动，没有记录可订阅`)
+    // 先结算旧缓冲，再开放订阅门：新订阅者只拿包含这些字的快照，不会先收到无法应用的 append。
+    if (e.pendingAppends.length > 0) this.冲刷追加(sessionId, e)
     this.subscribed.add(sessionId)
     e.用过 = ++this.次序
     return this.snapshot(sessionId, e)
@@ -347,6 +357,8 @@ export class SessionTranscripts {
   }
 
   private 忘掉(id: SessionId): void {
+    const e = this.entries.get(id)
+    if (e) this.清待追加(e)
     this.entries.delete(id)
     this.subscribed.delete(id)
     this.pinned.delete(id)
@@ -369,6 +381,7 @@ export class SessionTranscripts {
   }
 
   dispose(): void {
+    for (const e of this.entries.values()) this.清待追加(e)
     this.entries.clear()
     this.subscribed.clear()
     this.listeners.clear()
@@ -1169,9 +1182,52 @@ export class SessionTranscripts {
   /** 写入或覆盖一条 item（按 id），并推送。 */
   private putItem(sessionId: SessionId, e: Entry, item: TranscriptItem): void {
     const i = e.items.findIndex((x) => x.id === item.id)
+    const prior = i >= 0 ? e.items[i] : undefined
+    const append = prior ? this.纯追加(prior, item) : undefined
     if (i >= 0) e.items[i] = item
     else e.items.push(item)
-    this.bump(sessionId, e, { type: "item", item })
+    if (append) {
+      this.排队追加(sessionId, e, item.id, append.field, append.delta)
+    } else {
+      this.bump(sessionId, e, { type: "item", item })
+    }
+  }
+
+  /** Only treat the update as append when exactly one agent text field grew and every other field stayed equal. */
+  private 纯追加(prior: TranscriptItem, next: TranscriptItem): { field: AppendField; delta: string } | undefined {
+    if (prior.type !== "turn" || next.type !== "turn" || prior.who !== "agent" || next.who !== "agent" || prior.id !== next.id) return
+    for (const field of ["text", "thinking"] as const) {
+      const before = prior[field]
+      const after = next[field]
+      if (typeof before !== "string" || typeof after !== "string" || after.length <= before.length || !after.startsWith(before)) continue
+      const sameRest = (Object.keys(prior) as (keyof typeof prior)[]).every((key) => key === field || prior[key] === next[key]) &&
+        (Object.keys(next) as (keyof typeof next)[]).every((key) => key === field || prior[key] === next[key])
+      if (sameRest) return { field, delta: after.slice(before.length) }
+    }
+    return
+  }
+
+  private 排队追加(sessionId: SessionId, e: Entry, id: string, field: AppendField, delta: string): void {
+    const last = e.pendingAppends[e.pendingAppends.length - 1]
+    if (last?.id === id && last.field === field) last.delta += delta
+    else e.pendingAppends.push({ id, field, delta })
+    e.appendTimer ??= setTimeout(() => {
+      if (this.entries.get(sessionId) === e) this.冲刷追加(sessionId, e)
+      else this.清待追加(e)
+    }, 16)
+  }
+
+  private 冲刷追加(sessionId: SessionId, e: Entry): void {
+    if (e.appendTimer !== undefined) clearTimeout(e.appendTimer)
+    e.appendTimer = undefined
+    const pending = e.pendingAppends.splice(0)
+    for (const part of pending) this.bump(sessionId, e, { type: "append", ...part })
+  }
+
+  private 清待追加(e: Entry): void {
+    if (e.appendTimer !== undefined) clearTimeout(e.appendTimer)
+    e.appendTimer = undefined
+    e.pendingAppends = []
   }
 
   /** revision +1 并推送。**校验在这里做一次**，畸形更新不该流到界面。 */
@@ -1180,6 +1236,7 @@ export class SessionTranscripts {
     e: Entry,
     body: UpdateBody,
   ): void {
+    if (body.type !== "append" && e.pendingAppends.length > 0) this.冲刷追加(sessionId, e)
     e.revision += 1
     e.用过 = ++this.次序
     /**
@@ -1244,6 +1301,7 @@ export class SessionTranscripts {
   }
 
   private snapshot(sessionId: SessionId, e: Entry): SessionSnapshot {
+    if (e.pendingAppends.length > 0) this.冲刷追加(sessionId, e)
     return {
       sessionId,
       kind: e.kind,

@@ -35,6 +35,7 @@ describe("记录中枢 · 快照与 revision", () => {
     h.ingest("a", { kind: "output", sessionId: "a", data: "你" })
     h.ingest("a", { kind: "output", sessionId: "a", data: "好" })
 
+    h.subscribe("a") // 快照边界先冲掉挂着的 append
     expect(seen.map((u) => u.revision)).toEqual([1, 2])
     expect(h.subscribe("a").revision).toBe(2)
   })
@@ -66,11 +67,106 @@ describe("记录中枢 · 对话累积", () => {
     h.ingest("a", { kind: "output", sessionId: "a", data: "你" })
     h.ingest("a", { kind: "output", sessionId: "a", data: "好" })
 
-    const items = seen.map((u) => (u.type === "item" ? u.item : undefined))
-    expect(items[0]).toMatchObject({ type: "turn", text: "你", final: false })
-    // 第二条推的是**累积后的整条**，界面按 id 覆盖即可，不必自己拼
-    expect(items[1]).toMatchObject({ type: "turn", text: "你好", final: false })
-    expect(new Set(items.map((i) => i?.id)).size).toBe(1)
+    h.subscribe("a")
+    expect(seen[0]).toMatchObject({ type: "item", item: { type: "turn", text: "你", final: false } })
+    expect(seen[1]).toMatchObject({ type: "append", id: "a1", field: "text", delta: "好" })
+    expect(h.peekItems("a")[0]).toMatchObject({ type: "turn", text: "你好", final: false })
+  })
+
+  it("纯文本追加按 16ms 合批，转录真相仍立即累积", () => {
+    vi.useFakeTimers()
+    try {
+      const h = hub()
+      h.track("a", "native")
+      h.subscribe("a")
+      const seen = collector(h)
+
+      h.ingest("a", { kind: "output", sessionId: "a", data: "首" })
+      h.ingest("a", { kind: "output", sessionId: "a", data: "段" })
+      h.ingest("a", { kind: "output", sessionId: "a", data: "落" })
+      expect(seen.map((u) => u.type)).toEqual(["item"])
+      vi.advanceTimersByTime(16)
+      expect(seen).toMatchObject([
+        { type: "item", revision: 1, item: { id: "a1", text: "首" } },
+        { type: "append", revision: 2, id: "a1", field: "text", delta: "段落" },
+      ])
+      expect(h.peekItems("a")[0]).toMatchObject({ text: "首段落", final: false })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("thinking 纯追加也合批，其他更新先冲刷且 revision 连续", () => {
+    vi.useFakeTimers()
+    try {
+      const h = hub()
+      h.track("a", "native")
+      h.subscribe("a")
+      const seen = collector(h)
+
+      h.ingest("a", { kind: "thinking", sessionId: "a", delta: "推理" })
+      h.ingest("a", { kind: "thinking", sessionId: "a", delta: "过程" })
+      h.ingest("a", { kind: "tool_start", sessionId: "a", toolCallId: "c1", toolName: "bash", input: {} })
+      expect(seen.map((u) => [u.type, u.revision])).toEqual([["item", 1], ["append", 2], ["item", 3], ["item", 4]])
+      expect(seen[1]).toMatchObject({ id: "a1", field: "thinking", delta: "过程" })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("取快照前先冲刷待追加内容，revision 与快照中的转录一致", () => {
+    vi.useFakeTimers()
+    try {
+      const h = hub()
+      h.track("a", "native")
+      h.subscribe("a")
+      const seen = collector(h)
+      h.ingest("a", { kind: "output", sessionId: "a", data: "甲" })
+      h.ingest("a", { kind: "output", sessionId: "a", data: "乙" })
+
+      const snap = h.subscribe("a")
+      expect(snap).toMatchObject({ revision: 2, items: [{ id: "a1", text: "甲乙" }] })
+      expect(seen.map((u) => [u.type, u.revision])).toEqual([["item", 1], ["append", 2]])
+      vi.advanceTimersByTime(32)
+      expect(seen).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("新订阅者先拿含待追加内容的快照，不会先收到无法应用的 append", () => {
+    vi.useFakeTimers()
+    try {
+      const h = hub()
+      h.track("a", "native")
+      h.ingest("a", { kind: "output", sessionId: "a", data: "甲" })
+      h.ingest("a", { kind: "output", sessionId: "a", data: "乙" })
+      const seen: SessionUpdate[] = []
+      h.onUpdate((u) => seen.push(u))
+
+      const snap = h.subscribe("a")
+      expect(snap).toMatchObject({ revision: 2, items: [{ id: "a1", text: "甲乙" }] })
+      expect(seen).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("收尾前先冲刷最后的 append，再推 final item", () => {
+    vi.useFakeTimers()
+    try {
+      const h = hub()
+      h.track("a", "native")
+      h.subscribe("a")
+      const seen = collector(h)
+      h.ingest("a", { kind: "output", sessionId: "a", data: "答" })
+      h.ingest("a", { kind: "output", sessionId: "a", data: "案" })
+      h.ingest("a", { kind: "turn_end", sessionId: "a" })
+      expect(seen.map((u) => [u.type, u.revision])).toEqual([["item", 1], ["append", 2], ["item", 3]])
+      expect(seen[2]).toMatchObject({ type: "item", item: { text: "答案", final: true } })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("turn_end 收尾，下一轮换新 id", () => {

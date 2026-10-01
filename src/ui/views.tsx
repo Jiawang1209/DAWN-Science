@@ -136,14 +136,13 @@ function WorkspaceEntry({
    *
    * **chip 上只写文件夹名**（2026-09-28 作者要的：*只显示选中文件夹的名字，省地方*）。
    * 整条路径此前被省略号切成 `/var/folders/2t/y0qcl9r50cv…`——前半截谁都认得，要紧的那一段恰恰被切掉。
-   * 撞名（两个项目都叫 `data`）时写两段，规则在 `目录显示名`。**干活用的仍是整条绝对路径**，只改显示。
+   * 同名目录也只显示末级名称；需要区分时点开 chip 查看完整路径。**干活用的仍是整条绝对路径**，只改显示。
    *
    * **整条路径不靠悬停也够得着**（本项目「悬停才出现的东西必须另有一个入口」）：
    *   - 可及名字（`aria-label`）是整条路径；
    *   - 点 chip 弹出一张小卡，第一行就是整条路径（可选中复制），下面才是「另选文件夹…」。
    * 没设目录时没有路径可看，点一下照旧直接去选。
    */
-  const 项目们 = useStore($projects)
   const [开着, 设开着] = useState(false)
   const 盒 = useRef<HTMLSpanElement>(null)
   useEffect(() => {
@@ -166,8 +165,7 @@ function WorkspaceEntry({
       </span>
     )
   }
-  const 认得的 = 项目们.filter((p) => !p.temporary).map((p) => p.workspace)
-  const 文字 = 目录显示名(workspace, 认得的)
+  const 文字 = 目录显示名(workspace)
   return (
     <span
       className="ws-chip-group"

@@ -83,13 +83,12 @@ export function 短路径(p: string, home?: string): string {
  *
  * - 缺省写最后一段：`/Users/me/work/lung-study` → `lung-study`；末尾的斜杠不算一段；
  *   Windows 的反斜杠一样认（`C:\x\y` → `y`）。
- * - **撞名时写两段**：界面认得的另一个目录（`认得的`，即项目列表）最后一段相同，
- *   只写一段就分不出在哪跑——改写 `…/project-a/data`。
+ * - **撞名仍只写最后一段**：完整路径可以点开 chip 查看；标签保持简短，始终显示所选文件夹名。
  * - 根、空串、只有盘符（`/`、`C:\`）没有「名字」，**原样写**：没有名字也好过空白。
  * - 远端写法 `host:/path`：保留 `host:` 前缀再接名字（`gpu01:lung-study`）——
  *   在哪台机器上跑与在哪个目录里跑同样要紧。单个字母加冒号是盘符，不算主机。
  */
-export function 目录显示名(p: string, 认得的: readonly string[] = []): string {
+export function 目录显示名(p: string): string {
   const 拆 = (x: string) => {
     const m = x.match(/^([^\s/\\:]{2,}):(?=[/\\~]|$)/)
     const 前缀 = m ? `${m[1]}:` : ""
@@ -101,14 +100,7 @@ export function 目录显示名(p: string, 认得的: readonly string[] = []): s
   const 我 = 拆(p)
   if (我.段.length === 0) return p
   const 名 = 我.段[我.段.length - 1]!
-  const 规整 = (x: { 前缀: string; 段: string[] }) => `${x.前缀}${x.段.join("/")}`
-  const 我的键 = 规整(我)
-  const 撞了 = 认得的.some((q) => {
-    const 它 = 拆(q)
-    return 它.段.length > 0 && 它.段[它.段.length - 1] === 名 && 规整(它) !== 我的键
-  })
-  const 显示 = 撞了 && 我.段.length >= 2 ? `…/${我.段.slice(-2).join("/")}` : 名
-  return `${我.前缀}${显示}`
+  return `${我.前缀}${名}`
 }
 
 /**

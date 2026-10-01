@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 工作目录标签始终只显示末级文件夹名
+
+- **Type**: fix
+- **Motivation**: 用户指出选择工作目录后，输入栏标签显示了路径片段；排查发现同名目录时的消歧规则会把上一级目录拼回标签，违反“只显示选中文件夹名字”的要求。
+- **What**: 移除工作目录 chip 的撞名路径拼接；标签始终取末级目录名。完整路径仍保留在可访问名称和点击后展开的小卡中。
+- **Impact**: 标签不再随项目列表变化而显示部分路径；同名目录仍可通过展开查看完整路径区分。
+- **Verification**: `tests/ui/format.test.ts` 30/30、工作目录 Electron e2e 1/1、`npm run typecheck` 与 `npm run build` 通过；mock DAWN 实界面显示 `workspace`，展开卡保留完整路径。
+
 ### 2026-10-01 — 修复 mock 启动配置引用已退役模型
 
 - **Type**: fix

@@ -1584,6 +1584,24 @@ describe("设计契约 · 回复时不卡", () => {
   })
 })
 
+describe("设计契约 · 完成轮答复永远留在过程收纳之外", () => {
+  it("过程分组只有工具调用与 agent 思考的白名单，图片/产物/案例/方案等结果保持独立条目", () => {
+    const source = read("turn-process.ts").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "")
+    const classifier = source.match(/export function 是独立过程\([\s\S]*?\n\}/)?.[0]
+    expect(classifier).toBeTruthy()
+    expect(classifier).toMatch(/item\.type === "tool"/)
+    expect(classifier).toMatch(/item\.type === "turn" && item\.who === "agent" && Boolean\(item\.thinking\)/)
+    expect(classifier).not.toMatch(/kernelOutput|subagents|plan|generated|case/i)
+
+    const view = read("views.tsx")
+    expect(view).toContain("过程归属.get(块.item.id)") // only selected process IDs can suppress a row
+    expect(view).toContain("owner && !过程开着吗(owner) ? null : body")
+    expect(view).toContain("案例表.has(item.id)")
+    expect(view).toContain("generated: 本轮产物")
+    expect(view).toContain("hideThinking: true")
+  })
+})
+
 describe("设计契约 · 回退这一轮", () => {
   /**
    * **`data/raw/` 一个字节都不动**（2026-09-27，作者的规矩；spec §5）。存档模块里判断「是不是原始数据」只有一个判据 `在原始数据里()`，

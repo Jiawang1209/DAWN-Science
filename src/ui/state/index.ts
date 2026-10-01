@@ -148,6 +148,14 @@ export {
 } from "./theme.js"
 
 export {
+  $workStepMode,
+  WORK_STEP_MODE_KEY,
+  loadWorkStepMode,
+  setWorkStepMode,
+  type WorkStepMode,
+} from "./work-steps.js"
+
+export {
   $sidebarWidth,
   $sidebarCollapsed,
   SIDEBAR_WIDTH_KEY,

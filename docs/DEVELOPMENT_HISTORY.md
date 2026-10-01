@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 完成轮过程分层收纳与动作摘要（C8，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: dsh GUI 计划 C8：工具调用与思考属于过程，长转录应能逐轮收纳；回答和可交付内容始终要看得见。
+- **What**:
+  - 工具组完成态汇总为读文件、写文件、命令等动作短句；运行态改为「正在运行 · 命令名」，状态文案至少展示 150 ms。真实失败数仍只在组摘要行标红。
+  - 已完成 agent 轮前增加带用时和步骤数的开合行。简洁/标准两种外观设置落在 `dawn.global.work-step-mode`；默认标准，简洁模式默认收起。非最终 agent 项若兼有面向用户的文字，只收起思考块，保留文字行。
+  - 过程白名单只含工具项与 agent 思考；最终答复、kernelOutput 富图、产物缩略图、案例卡、方案卡不随过程隐藏。核对了当前普通工具 result 以 ANSI 文本绘制，真实图片由内核富输出或独立产物路径呈现。
+  - 新增 `design-contract` 白名单扫描，并增加回合分组、外观持久化、答案/图卡可见、工具组摘要与 150 ms 停留测试。
+- **Impact**: 标准模式保留原本展开的过程内容；选择简洁后可快速跳过已完成轮的工具与思考，同时仍能看到答案及交付结果。
+- **Verification**: `npm run typecheck`；C8/UI 相关测试 156/156（含 design-contract、工具组、设置、case、plan、artifact）；视觉 e2e 14/14；`npm run build` 成功。构建仍报告既有 browser `eval` 与约 1.41 MB 主包警告。
+
 ### 2026-10-01 — 流式文本增量传输（B5，协议 8.9，分支 `learn-deepseek-harness`）
 
 - **Type**: perf

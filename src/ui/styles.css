@@ -1170,6 +1170,18 @@ pre {
 .tool-group-head .thinking { margin-left: var(--dawn-space-2); }
 .tool-group-say { flex: 0 1 auto; min-width: 0; color: var(--dawn-text-3); }
 .tool-group-head:hover .tool-group-say { color: var(--dawn-text-1); }
+.completed-process-head {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: var(--dawn-space-2);
+  margin: var(--dawn-space-3) 0 var(--dawn-space-1);
+  padding: 2px var(--dawn-space-2);
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-meta);
+}
+.completed-process-head:hover { color: var(--dawn-text-1); }
+.completed-process-head .caret { flex: 0 0 auto; width: .8em; }
 /* 失败数：与单条失败的状态字同一个红 */
 .tool-group-failed { flex: 0 0 auto; color: var(--dawn-danger); }
 /* 展开后的逐条收进来一格，与单条的 `.tool-body` 同一个缩进 */

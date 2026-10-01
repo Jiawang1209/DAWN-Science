@@ -36,6 +36,7 @@ import type { FaultI18n, InterpreterCandidate } from "../protocol/index.js"
 import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
+import { $workStepMode, setWorkStepMode } from "./state/work-steps.js"
 import { Eyedropper } from "./eyedropper.js"
 import { ColorPanel } from "./color-panel.js"
 
@@ -309,6 +310,7 @@ const 预置色名 = (n: string): string =>
 
 export function AppearancePanel() {
   const theme = useStore($theme)
+  const workStepMode = useStore($workStepMode)
   const lang = useStore($lang)
   const accent = useStore($accent)
   /**
@@ -511,6 +513,22 @@ export function AppearancePanel() {
             </span>
           </span>
           </div>
+        </div>
+      </Row>
+      <Row name={t("工作步骤展示")} desc={workStepMode === "simple" ? t("简洁：已完成过程收起") : t("标准：已完成过程展开")}>
+        <div className="theme-choices" role="radiogroup" aria-label={t("工作步骤展示")}>
+          {(["simple", "standard"] as const).map((mode) => (
+            <Button
+              key={mode}
+              variant={workStepMode === mode ? "primary" : "secondary"}
+              size="sm"
+              role="radio"
+              aria-checked={workStepMode === mode}
+              onClick={() => setWorkStepMode(mode)}
+            >
+              {t(mode === "simple" ? "简洁" : "标准")}
+            </Button>
+          ))}
         </div>
       </Row>
       {取色中 ? <Eyedropper onPick={setAccent} onClose={() => 设取色中(false)} /> : null}

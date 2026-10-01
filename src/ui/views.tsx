@@ -8,7 +8,7 @@
  * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
  * 打开 app 时要做的事是跟 agent 说话。
  */
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
@@ -66,11 +66,13 @@ import { SideSash } from "./sash.js"
 import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import { 按类分组 } from "./agent-groups.js"
 import { GeneratedStrip, 本轮产物, type 轮产物 } from "./generated-strip.js"
-import { 分组转录, 汇总工具组 } from "./tool-group.js"
+import { 分组转录, 汇总工具组, 工具组人话 } from "./tool-group.js"
 import { 从工具结果收案例, 本轮提到的案例, type 本轮案例 } from "./case-cards.js"
 import { 案例卡片们 } from "./case-cards-view.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { ComposerInputSurface } from "./composer-input-surface.js"
+import { $workStepMode } from "./state/work-steps.js"
+import { 分组已完成过程 } from "./turn-process.js"
 /**
  * **一分钟走一格的「现在」**（2026-08-19）。
  *
@@ -4111,6 +4113,9 @@ export function ConversationView({
   const 主区附栏行数 = useStore($主区附栏行数)
   const 订阅的items = useStore($items)
   const items = 传进来的items ?? 订阅的items
+  const workStepMode = useStore($workStepMode)
+  const [轮次过程展开, 设轮次过程展开] = useState<Record<string, boolean>>({})
+  useEffect(() => 设轮次过程展开({}), [session.sessionId])
   /**
    * 草稿按**会话**取，不是按组件。
    *
@@ -4586,6 +4591,40 @@ export function ConversationView({
   const 块们 = useMemo(() => 分组转录(items), [items])
   const 起点 = Math.max(0, 块们.length - 预算)
   const 可见块 = 起点 > 0 ? 块们.slice(起点) : 块们
+  const 可收过程 = useMemo(() => 分组已完成过程(items), [items])
+  const 块下标 = useMemo(() => {
+    const out = new Map<string, number>()
+    块们.forEach((block, index) => {
+      if (block.kind === "group") block.tools.forEach((tool) => out.set(tool.id, index))
+      else out.set(block.item.id, index)
+    })
+    return out
+  }, [块们])
+  // 若过程开头已在历史预算之外，就不收起其中任何部分，避免出现没有对应按钮的答案。
+  const 可见过程 = useMemo(() => 可收过程.filter((group) => {
+    const firstBlock = 块下标.get(items[group.beforeIndex]?.id ?? group.turnId)
+    const answerBlock = 块下标.get(group.turnId)
+    return firstBlock !== undefined && answerBlock !== undefined && firstBlock >= 起点 && answerBlock >= 起点
+  }), [可收过程, 块下标, 起点, items])
+  const 过程归属 = useMemo(() => {
+    const out = new Map<string, string>()
+    for (const group of 可见过程) for (const id of group.itemIds) out.set(id, group.turnId)
+    return out
+  }, [可见过程])
+  const 思考归属 = useMemo(() => {
+    const out = new Map<string, string>()
+    for (const group of 可见过程) for (const id of group.thinkingTurnIds) out.set(id, group.turnId)
+    return out
+  }, [可见过程])
+  const 过程标题在 = useMemo(() => {
+    const out = new Map<number, (typeof 可见过程)[number]>()
+    for (const group of 可见过程) {
+      const index = 块下标.get(items[group.beforeIndex]?.id ?? group.turnId)
+      if (index !== undefined) out.set(index, group)
+    }
+    return out
+  }, [可见过程, 块下标, items])
+  const 过程开着吗 = (turnId: string) => 轮次过程展开[turnId] ?? workStepMode === "standard"
   /**
    * **从全文搜索点进来：找到那一条 → 放进预算 → 等它画出来 → 滚到中间并高亮**（会话全文搜索，2026-09-27，spec §7）。
    *
@@ -4838,16 +4877,33 @@ export function ConversationView({
              * **连续两条以上的工具调用折成一行**（2026-09-15，`tool-group.ts`）。
              * 分组只在渲染这一层做：条目本身、产物下标、事件流一概不动。
              */
-            可见块.map((块) => 块.kind === "group" ? (
-              <ToolGroupRow
-                key={块.key}
-                tools={块.tools}
-                {...(搜索命中id && 块.tools.some((x) => x.id === 搜索命中id) ? { 命中: 搜索命中id } : {})}
-              />
-            ) : ((item, 下标) => (
+            可见块.map((块, visibleIndex) => {
+              const absoluteIndex = 起点 + visibleIndex
+              const process = 过程标题在.get(absoluteIndex)
+              const open = process ? 过程开着吗(process.turnId) : false
+              const header = process ? (
+                <Button
+                  variant="ghost"
+                  size="inline"
+                  className="completed-process-head"
+                  aria-expanded={open}
+                  onClick={() => 设轮次过程展开((old) => ({ ...old, [process.turnId]: !open }))}
+                >
+                  <三角图标 className={`caret${open ? " open" : ""}`} />
+                  <span>{t("已完成")}</span>
+                  {process.durationMs !== undefined ? <span>{tf("用时 {0}", formatDuration(process.durationMs))}</span> : null}
+                  <span>{tf("{0} 步", process.steps)}</span>
+                </Button>
+              ) : null
+              const body = 块.kind === "group" ? (
+                <ToolGroupRow
+                  tools={块.tools}
+                  {...(搜索命中id && 块.tools.some((x) => x.id === 搜索命中id) ? { 命中: 搜索命中id } : {})}
+                />
+              ) : ((item, 下标) => (
               <TranscriptRow
-                key={块.key}
                 item={item}
+                {...(item.type === "turn" && 思考归属.has(item.id) && !过程开着吗(思考归属.get(item.id)!) ? { hideThinking: true } : {})}
                 {...(item.id === 搜索命中id ? { 搜索命中: true } : {})}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
@@ -4901,7 +4957,18 @@ export function ConversationView({
                     }
                   : {})}
               />
-            ))(块.item, 块.下标))
+              ))(块.item, 块.下标)
+              let owner: string | undefined
+              if (块.kind === "group") {
+                const firstId = 块.tools[0]?.id
+                if (firstId && 块.tools.every((tool) => 过程归属.has(tool.id) && 过程归属.get(tool.id) === 过程归属.get(firstId))) {
+                  owner = 过程归属.get(firstId)
+                }
+              } else {
+                owner = 过程归属.get(块.item.id)
+              }
+              return <Fragment key={块.key}>{header}{owner && !过程开着吗(owner) ? null : body}</Fragment>
+            })
           )}
           {/**
             * **发出去了、还没回音时的那个动记号**（2026-08-13，作者要的）。
@@ -5883,6 +5950,7 @@ function TranscriptRowImpl({
   nameOf,
   currentKernel,
   onResend,
+  hideThinking,
   onRewind,
   rewindBlocked,
   onOpenWeb,
@@ -5942,6 +6010,8 @@ function TranscriptRowImpl({
    * **不给就没有「修改」这颗**——一个点了没反应的按钮比没有更坏。
    */
   onResend?: ((text: string) => void) | undefined
+  /** 已完成轮在简洁模式收纳思考时使用；只隐藏过程字段，答复正文仍留在行内 */
+  hideThinking?: boolean | undefined
   /**
    * 回到这句之前（2026-09-27）。**不给就不画**；给了就每句自己说的话下面常驻一颗，**带字**——悬停才出现的等于不存在，
    * 只画一个箭头又会被读成「没有这个功能」（「新建项目」那颗裸 `＋` 的教训）。
@@ -6151,7 +6221,7 @@ function TranscriptRowImpl({
         * **它不是回答**，所以不进气泡、字号更小、颜色更淡——
         * 一眼要能分出「这是它对自己说的」和「这是它对我说的」。
         */}
-      {!mine && item.thinking ? <ThinkingBlock text={item.thinking} ms={item.thinkingMs} /> : null}
+      {!mine && item.thinking && !hideThinking ? <ThinkingBlock text={item.thinking} ms={item.thinkingMs} /> : null}
       <div className="bubble">
         {/**
           * **发完之后，附的图仍然看得见**（协议 4.14，2026-08-13，
@@ -6885,9 +6955,30 @@ function ToolGroupRowImpl({
     if (命中) setOpen(true)
   }, [命中])
   const 汇 = 汇总工具组(tools)
-  const 在跑 = 汇.在跑
+  const 短句 = 工具组人话(tools)
+  const 当前运行文案 = 短句.find((x): x is Extract<typeof x, { kind: "running" }> => x.kind === "running")
+  const [保留运行文案, 设保留运行文案] = useState(当前运行文案)
+  const 最近开始时间 = tools.at(-1)?.startedAt
+  useEffect(() => {
+    if (当前运行文案) {
+      if (保留运行文案?.label !== 当前运行文案.label) 设保留运行文案(当前运行文案)
+      return
+    }
+    if (!保留运行文案) return
+    const elapsed = 最近开始时间 === undefined ? 150 : Date.now() - 最近开始时间
+    const timer = setTimeout(() => 设保留运行文案(undefined), Math.max(0, 150 - elapsed))
+    return () => clearTimeout(timer)
+  }, [当前运行文案?.label, 保留运行文案?.label, 最近开始时间])
+  const 显示运行文案 = 当前运行文案 ?? 保留运行文案
+  const 已完成短句 = 短句.map((x) => {
+    if (x.kind === "read") return tf("读了 {0} 个文件", x.count)
+    if (x.kind === "write") return tf("写了 {0} 个文件", x.count)
+    if (x.kind === "command") return tf("跑了 {0} 条命令", x.count)
+    if (x.kind === "tool") return tf("调用了 {0} 次 {1}", x.count, x.name)
+    return ""
+  }).filter(Boolean).join("、")
   return (
-    <div className={`tool-group${open ? " open" : ""}`} data-running={在跑 ? "true" : "false"}>
+    <div className={`tool-group${open ? " open" : ""}`} data-running={显示运行文案 ? "true" : "false"}>
       <Button
         variant="ghost"
         size="inline"
@@ -6896,21 +6987,19 @@ function ToolGroupRowImpl({
         onClick={() => setOpen((v) => !v)}
       >
         <三角图标 className={`caret${open ? " open" : ""}`} />
-        <span className="tool-name">{在跑 ? TOOL_STATUS.running.mark : TOOL_STATUS.ok.mark}</span>
-        {在跑 ? (
-          <span className="tool-peek">
-            {tf("正在运行第 {0} 条：{1}", 在跑.第几条, summarize(在跑.条.input).text || 在跑.条.name)}
-          </span>
+        <span className="tool-name">{显示运行文案 ? TOOL_STATUS.running.mark : TOOL_STATUS.ok.mark}</span>
+        {显示运行文案 ? (
+          <span className="tool-peek">{tf("正在运行 · {0}", 显示运行文案.label)}</span>
         ) : (
           <span className="tool-group-say">
-            {汇.全是命令 ? tf("运行了 {0} 条命令", 汇.条数) : tf("调用了 {0} 次工具", 汇.条数)}
+            {已完成短句 || tf("调用了 {0} 次工具", 汇.条数)}
           </span>
         )}
         {汇.失败 > 0 ? <span className="tool-group-failed">{tf("· {0} 条失败", 汇.失败)}</span> : null}
         {汇.总毫秒 !== undefined && 汇.总毫秒 >= 1000 ? (
           <span className="tool-elapsed" title={t("耗时")}>{tf("共 {0}", formatDuration(汇.总毫秒))}</span>
         ) : null}
-        {在跑 ? <Thinking /> : null}
+        {显示运行文案 ? <Thinking /> : null}
       </Button>
       {open ? (
         <div className="tool-group-body">

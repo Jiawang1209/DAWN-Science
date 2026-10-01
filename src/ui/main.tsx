@@ -7,6 +7,7 @@ import { loadAccent } from "./state/accent.js"
 import { loadSidebar } from "./state/sidebar.js"
 import { loadFileTree, loadRightDock } from "./state/right-dock.js"
 import { loadSettingsSection } from "./state/view.js"
+import { loadWorkStepMode } from "./state/work-steps.js"
 import { loadLang } from "./i18n/index.js"
 import { 装上补丢掉的抬起 } from "./mouse-stuck.js"
 import { 装上输入诊断, 输入诊断开着吗 } from "./ime-trace.js"
@@ -50,6 +51,7 @@ loadFileTree()
  * `useEffect` 里就会跟首次渲染赛跑，谁先谁后不是我们说了算。
  */
 loadSettingsSection()
+loadWorkStepMode()
 
 /**
  * **语言也在第一帧之前读回**（2026-08-13）。

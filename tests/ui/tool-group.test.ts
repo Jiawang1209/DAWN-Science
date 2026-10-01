@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest"
 import type { TranscriptItem } from "../../src/protocol/events.js"
-import { 分组转录, 汇总工具组 } from "../../src/ui/tool-group.js"
+import { 分组转录, 汇总工具组, 工具组人话 } from "../../src/ui/tool-group.js"
 
 type 工具 = Extract<TranscriptItem, { type: "tool" }>
 const 工具 = (id: string, extra: Partial<工具> = {}): 工具 => ({
@@ -65,6 +65,21 @@ describe("汇总工具组", () => {
 
   it("**有一条没有起止时刻就不给总耗时**——少算一截的数比不说更坏", () => {
     expect(汇总工具组([工具("t1"), 工具("t2", { startedAt: undefined })]).总毫秒).toBeUndefined()
+  })
+})
+
+describe("工具组人话", () => {
+  it("按文件操作与命令分类成简明摘要", () => {
+    expect(工具组人话([工具("r1", { name: "read" }), 工具("r2", { name: "read" }), 工具("b1")])).toEqual([
+      { kind: "read", count: 2 },
+      { kind: "command", count: 1 },
+    ])
+  })
+
+  it("运行中的命令摘要取真实命令名", () => {
+    expect(工具组人话([工具("b1", { status: "running", input: { command: "pytest -q tests" } })])).toEqual([
+      { kind: "running", label: "pytest" },
+    ])
   })
 })
 

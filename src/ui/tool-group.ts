@@ -76,3 +76,29 @@ export function 汇总工具组(tools: readonly 工具[]): 工具组汇总 {
     总毫秒: 在跑 ? undefined : 总,
   }
 }
+
+export type 工具组短句 =
+  | { kind: "read" | "write" | "command"; count: number }
+  | { kind: "tool"; name: string; count: number }
+  | { kind: "running"; label: string }
+
+/** 把成组工具写成动作摘要；运行中的命令直接说命令名，避免只报「正在运行第 N 条」。 */
+export function 工具组人话(tools: readonly 工具[]): 工具组短句[] {
+  const running = [...tools].reverse().find((x) => x.status === "running")
+  if (running) {
+    const input = running.input && typeof running.input === "object" ? running.input as Record<string, unknown> : undefined
+    const command = [input?.command, input?.cmd, input?.script].find((x): x is string => typeof x === "string")
+    const executable = command?.trim().match(/(?:^|[;&|]\s*)(?:[^\s;&|]+\/)?([^\s;&|]+)/)?.[1]
+    return [{ kind: "running", label: executable || running.name }]
+  }
+
+  const counts = new Map<string, number>()
+  const labels: Record<string, string> = { read: "read", read_file: "read", write: "write", edit: "write", bash: "command" }
+  for (const tool of tools) {
+    const kind = labels[tool.name] ?? `tool:${tool.name}`
+    counts.set(kind, (counts.get(kind) ?? 0) + 1)
+  }
+  return [...counts].map(([kind, count]) =>
+    kind.startsWith("tool:") ? { kind: "tool" as const, name: kind.slice(5), count } : { kind: kind as "read" | "write" | "command", count },
+  )
+}

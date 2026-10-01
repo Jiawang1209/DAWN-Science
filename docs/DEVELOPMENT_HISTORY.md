@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 清理孤立英文翻译与按钮名子串冲突
+
+- **Type**: fix
+- **Motivation**: C10 开发期间按计划复跑全量单测，发现两条早期工具组英文翻译已无调用点；另有「Done by the captain」与已有的「Done」按钮名形成子串关系，违反仓库的 i18n 按钮判据。
+- **What**: 移除未使用的「正在运行第 {0} 条：{1}」和「运行了 {0} 条命令」英文条目；将「队长自己做的」译为「Captain's own work」，保留意思并消除按钮名冲突。
+- **Impact**: 英文目录与实际调用点重新一致；Team 面板中队长分组与完成状态的按钮名称可区分。
+- **Verification**: `npx vitest run tests/ui/i18n.test.ts`，6/6 通过。
+
 ### 2026-10-01 — 完成轮过程分层收纳与动作摘要（C8，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

@@ -34,10 +34,61 @@
  * （`streamdown` / `shiki` / `use-stick-to-bottom`），
  * 放弃项是自己维护消息、工具调用、审批三类渲染器——**那正是我们本来就要自己定的东西**。
  */
-import { Component, useMemo, type ErrorInfo, type ReactNode } from "react"
-import { Streamdown, type Components } from "streamdown"
+import { Component, createContext, useContext, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react"
+import {
+  CodeBlock,
+  CodeBlockContainer,
+  CodeBlockCopyButton,
+  CodeBlockDownloadButton,
+  CodeBlockHeader,
+  Streamdown,
+  type Components,
+  type CustomRendererProps,
+} from "streamdown"
 import { t } from "./i18n/index.js"
 import { 像本机地址吗 } from "../policy/local-url.js"
+import { observeCodeBlockVisibility } from "./code-block-visibility.js"
+import { CODE_LANGUAGES } from "./code-languages.js"
+
+const MarkdownStreamingContext = createContext(false)
+
+function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps) {
+  const waitForTurn = useContext(MarkdownStreamingContext)
+  const element = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (visible || !element.current) return
+    return observeCodeBlockVisibility(element.current, () => setVisible(true))
+  }, [visible])
+
+  const deferHighlight = waitForTurn || isIncomplete || !visible
+  return (
+    <div data-code-highlighted={String(!deferHighlight)} ref={element}>
+      {deferHighlight ? (
+        <CodeBlockContainer language={language} isIncomplete={waitForTurn || isIncomplete}>
+          <CodeBlockHeader language={language} />
+          <div>
+            <div data-streamdown="code-block-actions">
+              <CodeBlockDownloadButton code={code} language={language} />
+              <CodeBlockCopyButton code={code} />
+            </div>
+          </div>
+          <pre><code>{code}</code></pre>
+        </CodeBlockContainer>
+      ) : (
+        <CodeBlock code={code} language={language}>
+          <CodeBlockDownloadButton code={code} language={language} />
+          <CodeBlockCopyButton code={code} />
+        </CodeBlock>
+      )}
+    </div>
+  )
+}
+
+const CODE_PLUGINS = {
+  renderers: [{ language: ["", "plain", "plaintext", "text", "txt", ...CODE_LANGUAGES], component: LazyCodeRenderer }],
+}
 
 /**
  * 把语义标签换回真的 HTML 标签。
@@ -159,16 +210,21 @@ export function AgentMarkdown({
   return (
     <div className={className ? `md ${className}` : "md"}>
       <渲染兜底 text={text}>
-      <Streamdown
-        mode={streaming ? "streaming" : "static"}
-        // **半截围栏不吞掉后文。** 没有它，流式过程中界面会一跳一跳
-        parseIncompleteMarkdown
-        // 动效会跟流式更新抢帧；DESIGN.md：动效跟随状态，永不延迟状态
-        animated={false}
-        components={components}
-      >
-        {text}
-      </Streamdown>
+        <MarkdownStreamingContext.Provider value={streaming}>
+          <Streamdown
+            // Keep the parser tree stable across the streaming → completed transition;
+            // the context controls the highlighter separately from Streamdown's parser mode.
+            mode="streaming"
+            // **半截围栏不吞掉后文。** 没有它，流式过程中界面会一跳一跳
+            parseIncompleteMarkdown
+            // 动效会跟流式更新抢帧；DESIGN.md：动效跟随状态，永不延迟状态
+            animated={false}
+            components={components}
+            plugins={CODE_PLUGINS}
+          >
+            {text}
+          </Streamdown>
+        </MarkdownStreamingContext.Provider>
       </渲染兜底>
     </div>
   )

@@ -21,13 +21,21 @@ async function 富回复(page: import("@playwright/test").Page) {
   await b.fill("给我一段 markdown")
   await b.press("Enter")
   await expect(page.locator(".md table")).toBeVisible({ timeout: 30_000 })
+  // The table can arrive before the response finishes streaming. Wait until the
+  // code renderer is allowed to highlight and the markdown tree stops changing.
+  await expect(page.locator(".thinking")).toHaveCount(0, { timeout: 30_000 })
 }
 
 test("**代码块的每一行是一行** —— 塌成一行的代码没法读", async ({ dawn }) => {
   const { page } = dawn
   await 富回复(page)
 
-  const 文本 = await page.locator(".md pre").first().innerText()
+  const 代码块 = page.locator(".md [data-code-highlighted]").first()
+  await 代码块.scrollIntoViewIfNeeded()
+  await expect(代码块).toHaveAttribute("data-code-highlighted", "true")
+  const 代码 = 代码块.locator("pre")
+  await expect(代码).toContainText("import pandas as pd")
+  const 文本 = await 代码.innerText()
   expect(文本).toContain("import pandas as pd")
   // **三行就是三行**：塌掉的时候这里会是 1
   expect(文本.trim().split("\n").length).toBe(3)
@@ -37,7 +45,10 @@ test("代码块有头部：**语言在左、动作在右**", async ({ dawn }) =>
   const { page } = dawn
   await 富回复(page)
 
-  const header = page.locator('.md [data-streamdown="code-block-header"]')
+  const codeBlock = page.locator(".md [data-code-highlighted]").first()
+  await codeBlock.scrollIntoViewIfNeeded()
+  await expect(codeBlock).toHaveAttribute("data-code-highlighted", "true")
+  const header = codeBlock.locator('[data-streamdown="code-block-header"]')
   await expect(header).toContainText("python")
 
   const 语言 = (await header.boundingBox())!

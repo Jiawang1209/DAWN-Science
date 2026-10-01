@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 延迟 transcript 代码块高亮至回复完成且进入视口（B7，分支 `learn-deepseek-harness`）
+
+- **Type**: perf
+- **Motivation**: dsh GUI 计划 B7：长回复中的代码块不应在流式阶段争用语法高亮，也不应为屏幕外代码块提前解析 Shiki。
+- **What**:
+  - Streamdown/Shiki 支持的 346 个语言 ID 与别名由稳定自定义渲染器处理。回复仍在流式、围栏未闭合或代码块离屏时，保留原始 `<pre>` 和复制/下载按钮；回复完成且共享 IntersectionObserver 观察到代码块进入视口后才挂载高亮组件。
+  - 所有代码块共享一个 IntersectionObserver，命中后逐块解除观察；没有 IO 的环境按可见处理。Shiki 语言清单从运行时元数据导入改成轻量静态列表，避免展开语言动态分包。
+  - Markdown parser 固定使用 streaming 模式，完成态通过上下文传递，避免完成瞬间替换代码块树；既有 Electron e2e 等到回复结束并滚入代码块再断言，覆盖延迟高亮完成后的真实文本与布局。
+- **Impact**: 流式和屏幕外代码块不提前做语法高亮；进入视口且回复完成后仍使用原有 Streamdown/Shiki 样式和复制/下载操作。无协议变更。
+- **Verification**: `npm run typecheck`；相关 UI 单测 12/12；`npx playwright test e2e/markdown-render.spec.ts` 4/4；`npm run build` 成功。UI 构建中高亮分片 0.47 KB，没有生成语言级高亮分包；构建仍提示既有 1.4 MB 主包和浏览器工具 `eval`。
+
 ### 2026-10-01 — 流式回复时隔离输入文本编辑层（B6，分支 `learn-deepseek-harness`）
 
 - **Type**: perf

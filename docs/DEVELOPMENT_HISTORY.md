@@ -8,6 +8,16 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 流式回复输入与 IPC 性能预算进 e2e（C11，分支 `learn-deepseek-harness`）
+
+- **Type**: perf
+- **Motivation**: dsh GUI 计划 C11：在后续流式性能优化前先立可重复的单轮预算，并确保超标确实让判据失败。
+- **What**:
+  - 新增固定预算判据和单测：键入到双 `requestAnimationFrame` 的 p95 延迟上限 150 ms；单轮事件 IPC 的 UTF-8 JSON 载荷上限 1,000,000 字节。边界值通过、超过 1 字节或 1 ms 即拒绝，零余量反例覆盖字节预算。
+  - `streaming.perf.ts` 新增真实 Electron e2e：假模型流 2,013 字符长回复期间继续键入，测输入延迟样本并统计当前隔离会话收到的事件载荷字节；指标与判定结果写入 `perf-results/`。
+- **Impact**: 建立可执行的流式输入响应与事件载荷回归门槛；字节数是序列化载荷大小，不包含 Electron/Chromium IPC framing。
+- **Verification**: `npm run typecheck`；预算单测 3/3；`npm run build`；`npx playwright test -c playwright.perf.config.ts e2e/streaming.perf.ts --grep '单轮事件 IPC 字节数'` 1/1 通过，基线 p95 17.9 ms、37,354 字节、23 个输入样本。
+
 ### 2026-10-01 — 侧栏优先标出等待批准的会话（A4，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

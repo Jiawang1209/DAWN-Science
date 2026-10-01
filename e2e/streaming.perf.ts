@@ -22,6 +22,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import type { Page } from "@playwright/test"
 import { test, 开一段临时会话, 等进了对话 } from "./fixtures.js"
+import { evaluateStreamingBudget, STREAMING_BUDGET } from "./performance-budget.js"
 
 /**
  * 一段 `LONG_REPLY` 的最后一句。**判「这一轮答完了」，不数总数**——
@@ -261,4 +262,74 @@ test("回复时的重画次数", async ({ dawn }) => {
 test("回复时的卡顿（时间）", async ({ dawn }) => {
   const 结果 = await 跑剧本(dawn.page, "时间")
   记下("时间", 结果)
+})
+
+test("流式回复期间的输入延迟与单轮事件 IPC 字节数", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page)
+  await 等进了对话(page)
+
+  // 从真实 Electron event bridge 订阅同一条单向通道，按收到的 JSON UTF-8 字节计数。
+  // 这里只统计载荷，不声称包括 Electron / Chromium 的 IPC framing 开销。
+  await page.evaluate(() => {
+    const w = window as unknown as {
+      dawn: { onEvent: (cb: (raw: unknown) => void) => () => void }
+      __streamMeasure?: { active: boolean; ipcBytes: number; typingMs: number[] }
+    }
+    const m = { active: true, ipcBytes: 0, typingMs: [] as number[] }
+    w.__streamMeasure = m
+    w.dawn.onEvent((raw) => {
+      if (!m.active) return
+      m.ipcBytes += new TextEncoder().encode(JSON.stringify(raw)).byteLength
+    })
+    document.addEventListener("input", (event) => {
+      if (!m.active || !(event.target instanceof HTMLTextAreaElement)) return
+      const began = performance.now()
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (m.active) m.typingMs.push(performance.now() - began)
+        }),
+      )
+    }, true)
+  })
+
+  const box = 输入框(page)
+  await box.fill("慢慢说 长回复 输入延迟预算")
+  await box.press("Enter")
+  // 在长回复逐段到达时继续打字；双 rAF 作为键入后至少经过一次绘制机会的延迟代理。
+  await box.pressSequentially("typing while streaming", { delay: 12 })
+  await page.waitForFunction(
+    (m) => {
+      const last = [...document.querySelectorAll(".turns .turn")].pop()
+      return !!last && last.classList.contains("agent") && (last.textContent ?? "").includes(m as string)
+    },
+    标记,
+    { polling: 100, timeout: 120_000 },
+  )
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+
+  const measurement = await page.evaluate(() => {
+    const m = (window as unknown as {
+      __streamMeasure: { active: boolean; ipcBytes: number; typingMs: number[] }
+    }).__streamMeasure
+    m.active = false
+    const sorted = [...m.typingMs].sort((a, b) => a - b)
+    const p95 = sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)] ?? 0
+    return {
+      typingP95Ms: Math.round(p95 * 10) / 10,
+      ipcBytes: m.ipcBytes,
+      inputSamples: sorted.length,
+    }
+  })
+  const result = {
+    ...measurement,
+    budget: STREAMING_BUDGET,
+    ipcMetric: "UTF-8 JSON payload bytes received on the session event IPC channel",
+    typingMetric: "p95 input-event to double-requestAnimationFrame latency",
+  }
+  记下("预算", [result])
+
+  if (measurement.inputSamples < 5) throw new Error(`输入延迟样本不足，无法判断预算：${JSON.stringify(result)}`)
+  const violations = evaluateStreamingBudget(measurement)
+  if (violations.length) throw new Error(`流式性能预算超限：${violations.join("; ")}\n${JSON.stringify(result, null, 2)}`)
 })

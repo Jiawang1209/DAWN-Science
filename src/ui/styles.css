@@ -767,6 +767,10 @@ pre {
 .ctx-seg.seg-3 { background: color-mix(in srgb, var(--dawn-accent) 25%, transparent); }
 /* 主题三选一。radiogroup 的几何由这里拥有，按钮只负责自己那一格 */
 .theme-choices { display: flex; gap: 6px; margin-bottom: 6px; }
+.chat-size-control { display: flex; align-items: center; gap: var(--dawn-space-3); }
+.chat-size-control input[type="range"] { width: 160px; max-width: 100%; accent-color: var(--dawn-accent); }
+.chat-size-control .chat-size-slider { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.chat-size-control output { min-width: 3.5em; color: var(--dawn-text-2); font-variant-numeric: tabular-nums; text-align: right; }
 .empty { margin: 0; color: var(--dawn-text-3); }
 .caveat { margin: 0 0 8px; color: var(--dawn-warning); }
 .failed-notice { margin: 0 0 var(--dawn-space-3); min-width: 0; }
@@ -846,6 +850,15 @@ pre {
    */
   overflow: clip;
   padding: var(--dawn-space-3) var(--dawn-page-inset-x);
+  /** 对话字号是一根轴；其层级令牌按 15px 基准比例派生 */
+  --dawn-ui-size: calc(var(--dawn-chat-size) * 0.866667);
+  --dawn-fs-display: calc(var(--dawn-chat-size) * 1.466667);
+  --dawn-fs-title: calc(var(--dawn-chat-size) * 1.2);
+  --dawn-fs-sub: calc(var(--dawn-chat-size) * 0.933333);
+  --dawn-fs-meta: calc(var(--dawn-chat-size) * 0.8);
+  --dawn-fs-badge: calc(var(--dawn-chat-size) * 0.733333);
+  --dawn-fs-label: calc(var(--dawn-chat-size) * 0.666667);
+  --dawn-code-size: calc(var(--dawn-chat-size) - 2px);
   font-size: var(--dawn-chat-size);
   line-height: var(--dawn-chat-leading);
 }
@@ -938,7 +951,7 @@ pre {
   to { opacity: 1; }
 }
 /* 说话人名（学自 WorkBuddy）：**它是这段话的归属，不是一个标签**——与正文同色、半粗；图标与名字并排 */
-.turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); margin-bottom: var(--dawn-space-2); }
+.turn .who { display: flex; align-items: center; gap: var(--dawn-space-2); font-size: .8em; font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); margin-bottom: var(--dawn-space-2); }
 /* 输入区在上、控件行在下且右对齐 —— 学自 Hermes composer 的
    `<div className="ml-auto flex …">`。**控件靠右，输入区独占一整行** */
 .composer {
@@ -1583,9 +1596,9 @@ pre {
   font-weight: var(--dawn-weight-semibold);
   line-height: 1.35;
 }
-.md h1 { font-size: var(--dawn-fs-title); }
-.md h2 { font-size: var(--dawn-fs-sub); }
-.md h3 { font-size: var(--dawn-ui-size); }
+.md h1 { font-size: 1.2em; }
+.md h2 { font-size: .933333em; }
+.md h3 { font-size: .866667em; }
 .md h4 { font-size: var(--dawn-chat-size); color: var(--dawn-text-2); }
 
 .md ul,
@@ -3800,7 +3813,11 @@ pre {
 /* 动作行一行放不下时（坞里那段）折下去的那颗也靠右，与气泡的右缘同一条线 */
 .turn.user .turn-body > .turn-actions { justify-content: flex-end; }
 /* 两颗图标同样大小：一个 ⧉ 一个 ✎，大小不一样会像是两种东西 */
-.turn-actions .btn-icon { width: 1.75rem; height: 1.75rem; font-size: 0.95rem; }
+.turn-actions .btn-icon {
+  width: calc(var(--dawn-chat-size) * 1.866667);
+  height: calc(var(--dawn-chat-size) * 1.866667);
+  font-size: calc(var(--dawn-chat-size) * 1.013333);
+}
 /**
  * 回到这句之前（2026-09-27，回退这一轮 spec §2.1）：动作行里唯一带字的一颗——字用次要色、元信息字号，不抢气泡的戏。
  * 高度与两颗图标一样（1.75rem），一行里三样东西的底边才齐。
@@ -4020,8 +4037,8 @@ pre {
 
 /* 说话人：头像 + 名字并排 */
 .who-avatar {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: calc(var(--dawn-chat-size) * 1.6);
+  height: calc(var(--dawn-chat-size) * 1.6);
   border-radius: var(--dawn-radius-full);
   /* 填充而不是面色（2026-10-01，C16）：对话区换成纯白之后，白面放在白底上整个圆就没了 */
   background: var(--dawn-fill-2);
@@ -4029,7 +4046,7 @@ pre {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: calc(var(--dawn-chat-size) * 0.768);
   font-weight: var(--dawn-weight-semibold);
   flex: 0 0 auto;
 }

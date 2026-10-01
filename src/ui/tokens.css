@@ -417,7 +417,7 @@
    * 正文那条量到的是 26.79，来自它 markdown 容器的 `17.143 × 1.786`，
    * 是继承出来的怪值，不是设计值。**取它反复出现的那个数**。
    */
-  --dawn-chat-leading: 26.25px;
+  --dawn-chat-leading: calc(var(--dawn-chat-size) * 1.75);
   /**
    * 代码比正文小两号、行距也更紧。量来的：WorkBuddy `13px / 1.6`。
    *

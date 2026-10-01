@@ -1560,6 +1560,32 @@ describe("设计契约 · 对话节奏与 diff 统计", () => {
   })
 })
 
+describe("设计契约 · 对话字号只有一根轴", () => {
+  const css = () => readFileSync(join(UI_DIR, "styles.css"), "utf8")
+  const tokens = () => readFileSync(join(UI_DIR, "tokens.css"), "utf8")
+  function 规则块(text: string, 选择器: string): string {
+    const i = text.indexOf(`\n${选择器} {`)
+    if (i < 0) throw new Error(`找不到规则 ${选择器}`)
+    return 取块(text, text.indexOf("{", i)).replace(/\/\*[\s\S]*?\*\//g, "")
+  }
+
+  it("**字号根值 15px；行高与代码字都由它派生**", () => {
+    expect(tokens()).toMatch(/--dawn-chat-size: *15px/)
+    expect(tokens()).toMatch(/--dawn-chat-leading: *calc\(var\(--dawn-chat-size\) \* 1\.75\)/)
+    expect(规则块(css(), ".turns")).toMatch(/--dawn-ui-size: *calc\(var\(--dawn-chat-size\) \* 0\.866667\)/)
+    expect(规则块(css(), ".turns")).toMatch(/--dawn-code-size: *calc\(var\(--dawn-chat-size\) - 2px\)/)
+  })
+
+  it("**对话里的文字层级、说话人头像与动作图标跟字号缩放**", () => {
+    expect(规则块(css(), ".md h1")).toMatch(/font-size: *1\.2em/)
+    expect(规则块(css(), ".md h2")).toMatch(/font-size: *\.933333em/)
+    expect(规则块(css(), ".md h3")).toMatch(/font-size: *\.866667em/)
+    expect(规则块(css(), ".turn .who")).toMatch(/font-size: *\.8em/)
+    expect(规则块(css(), ".who-avatar")).toMatch(/width: *calc\(var\(--dawn-chat-size\) \* 1\.6\)/)
+    expect(规则块(css(), ".turn-actions .btn-icon")).toMatch(/width: *calc\(var\(--dawn-chat-size\) \* 1\.866667\)/)
+  })
+})
+
 /**
  * **壳不订阅整份转录**（2026-09-22，`perf-render`）。
  *

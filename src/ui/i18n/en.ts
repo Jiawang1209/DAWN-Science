@@ -523,6 +523,8 @@ export const EN: Readonly<Record<string, string>> = {
   "外观": "Appearance",
   "主题": "Theme",
   "工作步骤展示": "Work steps",
+  "对话字号": "Chat text size",
+  "调整对话正文、行高与图标大小。": "Adjust chat text, line spacing, and icon size.",
   "简洁：已完成过程收起": "Compact: collapse completed work steps",
   "标准：已完成过程展开": "Standard: show completed work steps",
   "用时 {0}": "Took {0}",

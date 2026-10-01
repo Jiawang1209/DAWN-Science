@@ -8,6 +8,17 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 对话字号由单一变量驱动（C12，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: dsh GUI 计划 C12：让用户调整阅读字号，并避免正文、行距、代码与对话图标各用各的尺寸。
+- **What**:
+  - 外观设置新增 13–19px 滑块，默认 15px；偏好保存在 `dawn.global.chat-font-size`，启动时校验并还原。
+  - 对话层级字号、行高、代码字号、说话人头像与轮操作图标按同一根字号缩放；界面外壳和对话外的代码字不随之改变。
+  - Electron e2e 实测默认 15px 尺寸与基线相符，验证调整至 18px 的派生尺寸与重载持久化；视觉截图 14/14 通过，原视觉基线无需更新。
+- **Impact**: 阅读字号可调，选择在重启后保留；默认值下对话正文 15px / 行高 26.25px、标题、头像与图标保持原尺寸。
+- **Verification**: `npm run typecheck`、`npm run build`；C12/UI/design-contract 单测 93/93；全量 `npm test` 为 330 个文件通过，4,075 通过 / 10 跳过；`npx playwright test e2e/chat-size.spec.ts` 1/1；`npm run test:e2e:visual:only` 14/14。
+
 ### 2026-10-01 — 对话节奏、代码块粘性标题与 diff 统计细节（C10，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

@@ -37,6 +37,7 @@ import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
 import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
 import { $workStepMode, setWorkStepMode } from "./state/work-steps.js"
+import { $chatSize, setChatSize } from "./state/chat-size.js"
 import { Eyedropper } from "./eyedropper.js"
 import { ColorPanel } from "./color-panel.js"
 
@@ -311,6 +312,7 @@ const 预置色名 = (n: string): string =>
 export function AppearancePanel() {
   const theme = useStore($theme)
   const workStepMode = useStore($workStepMode)
+  const chatSize = useStore($chatSize)
   const lang = useStore($lang)
   const accent = useStore($accent)
   /**
@@ -529,6 +531,22 @@ export function AppearancePanel() {
               {t(mode === "simple" ? "简洁" : "标准")}
             </Button>
           ))}
+        </div>
+      </Row>
+      <Row name={t("对话字号")} desc={t("调整对话正文、行高与图标大小。")}>
+        <div className="chat-size-control">
+          <input
+            id="chat-font-size"
+            className="control chat-size-slider"
+            type="range"
+            min={13}
+            max={19}
+            step={1}
+            value={chatSize}
+            aria-label={t("对话字号")}
+            onChange={(event) => setChatSize(Number(event.currentTarget.value))}
+          />
+          <output htmlFor="chat-font-size">{chatSize}px</output>
         </div>
       </Row>
       {取色中 ? <Eyedropper onPick={setAccent} onClose={() => 设取色中(false)} /> : null}

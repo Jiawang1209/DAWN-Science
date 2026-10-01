@@ -112,7 +112,7 @@ writeFileSync(
   ds-chat:
     kind: native
     provider: deepseek
-    model: deepseek-v4-flash
+    model: deepseek-flash
     capabilities: [exec, chat]
 `,
 )

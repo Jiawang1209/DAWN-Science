@@ -8,6 +8,16 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 修复 mock 启动配置引用已退役模型
+
+- **Type**: fix
+- **Motivation**: `dev:mock` 创建任务时报 `provider "deepseek" 没有模型 "deepseek-v4-flash"`，因此对话无法启动。
+- **What**:
+  - `dev:mock` 与打包冒烟脚本的 mock agent 改用当前注册的 `deepseek-flash`。
+  - 新增脚本配置契约测试，确认两个启动脚本选用的模型都由 mock provider 提供。
+- **Impact**: mock 开发与打包冒烟流程可创建会话；当前模型标签显示 `deepseek-flash`。
+- **Verification**: 回归测试先因两处旧 ID 失败（2/2），修复后通过（2/2）；类型检查、构建通过；真实 Electron mock 会话成功完成一轮对话，启动日志无 `createTask` 错误。
+
 ### 2026-10-01 — 对齐失败通知与工具组的端到端断言
 
 - **Type**: test

@@ -768,6 +768,14 @@ pre {
 .theme-choices { display: flex; gap: 6px; margin-bottom: 6px; }
 .empty { margin: 0; color: var(--dawn-text-3); }
 .caveat { margin: 0 0 8px; color: var(--dawn-warning); }
+.failed-notice { margin: 0 0 var(--dawn-space-3); min-width: 0; }
+.failed-notice-line { margin: 0; display: flex; align-items: baseline; gap: var(--dawn-space-2); min-width: 0; }
+.failed-notice-dot { flex: 0 0 auto; width: 7px; height: 7px; border-radius: var(--dawn-radius-full); background: var(--dawn-danger); align-self: center; }
+.failed-notice-title { flex: 0 0 auto; color: var(--dawn-danger); font-size: var(--dawn-fs-meta); }
+.failed-notice-reason { min-width: 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.failed-notice-details { margin: var(--dawn-space-1) 0 0 calc(7px + var(--dawn-space-2)); color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.failed-notice-details summary { width: fit-content; cursor: pointer; }
+.failed-notice-details pre { margin: var(--dawn-space-1) 0 0; padding: var(--dawn-space-2); max-width: 100%; overflow: auto; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-fill-2); color: var(--dawn-text-2); font: var(--dawn-fs-badge) var(--dawn-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .unknown { margin: 0 0 4px; font-size: var(--dawn-fs-sub); }
 .amount { margin: 0 0 4px; font-size: var(--dawn-fs-title); }
 .tokens, .hint { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }

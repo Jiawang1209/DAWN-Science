@@ -73,4 +73,37 @@ test.describe("一轮失败之后", () => {
       timeout: 20_000,
     })
   })
+
+})
+
+test.describe("失败提示与截断提示", () => {
+  test("失败固定显示在人能读懂的标题下，原始错误默认折叠", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("演一次失败")
+    await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+
+    const 失败 = page.locator(".failed-notice").last()
+    await expect(失败.getByText("这一轮没做成")).toBeVisible({ timeout: 30_000 })
+    await expect(失败.getByText("模型调用失败")).toBeVisible()
+    const 详情 = 失败.locator("details")
+    await expect(详情).toHaveJSProperty("open", false)
+    await 详情.locator("summary").click()
+    await expect(详情.locator("pre")).toContainText("mock：演一次失败")
+  })
+
+  test("模型因输出上限停止时明确提示可以继续", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("演一次截断")
+    await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+
+    const 失败 = page.locator(".failed-notice").last()
+    await expect(失败).toContainText("回复到了输出上限，被截断了")
+    await expect(失败).toContainText("说「继续」可以接着写")
+  })
 })

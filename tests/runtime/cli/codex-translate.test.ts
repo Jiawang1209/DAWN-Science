@@ -155,9 +155,9 @@ describe("错误事件（2026-08-09 作者试用时撞到）", () => {
     ])
     const notice = out.find((e) => e.kind === "notice")
     expect(notice).toBeDefined()
-    expect((notice as { text: string }).text).toContain("model is not supported")
+    expect(notice).toMatchObject({ text: "外部 CLI 报错（HTTP 400）", rawError: "The 'x' model is not supported" })
     // **不许把整坨 JSON 倒出来**
-    expect((notice as { text: string }).text).not.toContain("invalid_request_error")
+    expect(JSON.stringify(notice)).not.toContain("invalid_request_error")
   })
 
   it("**item 里的 error 同样处理**，不再报成「不认识的事件」", () => {
@@ -165,8 +165,8 @@ describe("错误事件（2026-08-09 作者试用时撞到）", () => {
       { type: "item.completed", item: { id: "i", type: "error", message: "上游拒绝了" } },
     ])
     const notice = out.find((e) => e.kind === "notice")
-    expect((notice as { text: string }).text).toContain("上游拒绝了")
-    expect((notice as { text: string }).text).not.toContain("不认识")
+    expect(notice).toMatchObject({ text: "外部 CLI 报错", rawError: "上游拒绝了" })
+    expect(JSON.stringify(notice)).not.toContain("不认识")
   })
 
   it("**错误也要收口** —— 不收口的话那条气泡永远挂着", () => {

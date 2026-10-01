@@ -161,6 +161,8 @@ const NoticeItem = z
      * 界面据它收掉「正在等回话」——一轮只以一句报错收尾时，没有 agent 发言可等，不收的话停止键与模型菜单永远锁着。
      */
     failed: z.literal(true).optional(),
+    /** 失败原因对应的原始信息；UI 默认折叠显示（A2，2026-10-01） */
+    rawError: z.string().min(1).optional(),
   })
   .strict()
 

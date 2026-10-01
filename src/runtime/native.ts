@@ -1956,12 +1956,22 @@ export class NativeRuntime implements AgentRuntime {
      * pi-ai 的 `lazyStream` 在建流时就失败、写死 `stopReason: "error"`——于是每按一次停止 / 调整方向，
      * 转录里就多一条「模型调用失败：This operation was aborted」。人是故意停的，那不是失败。
      */
+    if (e.type === "message_end" && e.message?.stopReason === "length") {
+      this.emit({
+        kind: "notice",
+        sessionId,
+        text: "回复到了输出上限，被截断了——说「继续」可以接着写",
+        failed: true,
+      })
+    }
+
     if (e.type === "message_end" && e.message?.stopReason === "error" && !((this.sessions.get(sessionId)?.中止中 ?? 0) > 0)) {
       const 原因 = e.message.errorMessage?.trim()
       this.emit({
         kind: "notice",
         sessionId,
-        text: 原因 ? `模型调用失败：${原因}` : "模型调用失败，但对方没有给出原因",
+        text: "模型调用失败",
+        ...(原因 ? { rawError: 原因 } : {}),
         failed: true,
       })
     }
@@ -2389,7 +2399,7 @@ ${描述}`
          * `output` 会被当成模型的回复（桌面通知报成「做完了」、正文是这句报错），还会把这一轮先前记下的失败当「往前走了」清掉。
          * 话照旧是那句，只是换成系统提示那一格（它本来就不是模型说的）。
          */
-        this.emit({ kind: "notice", sessionId, text: `[native runtime 错误] ${msg}`, failed: true })
+        this.emit({ kind: "notice", sessionId, text: "模型请求未能完成", rawError: msg, failed: true })
       })
       .finally(() => {
         起跑了()

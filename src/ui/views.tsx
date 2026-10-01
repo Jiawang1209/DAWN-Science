@@ -20,6 +20,7 @@ import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/in
 import { $items, $待发, 在压缩, 有回音了, type 会话开关 } from "./state/transcript.js"
 import { ContextMeter, 读仪表, 是压缩命令, use上下文用量 } from "./context-meter.js"
 import { CompactionRow } from "./compaction-row.js"
+import { FailedNotice } from "./failed-notice.js"
 import type { ContextUsage } from "./panels.js"
 import { 待发条 } from "./queued-strip.js"
 import {
@@ -5954,6 +5955,7 @@ function TranscriptRowImpl({
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
   if (item.type === "notice") {
+    if (item.failed) return <FailedNotice text={item.text} {...(item.rawError ? { rawError: item.rawError } : {})} />
     return <p className="caveat">{item.text}</p>
   }
   if (item.type === "tool") {

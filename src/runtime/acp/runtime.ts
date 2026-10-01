@@ -796,7 +796,8 @@ export class AcpRuntime implements AgentRuntime {
       this.发(sessionId, {
         kind: "notice",
         sessionId,
-        text: `ACP 这一轮失败了：${e instanceof Error ? e.message : String(e)}`,
+        text: "ACP 这一轮失败了",
+        rawError: e instanceof Error ? e.message : String(e),
         failed: true,
       })
     } finally {

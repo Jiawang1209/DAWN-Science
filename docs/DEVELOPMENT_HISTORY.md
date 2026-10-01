@@ -8,6 +8,18 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-01 — 失败固定在本轮，输出截断时说明怎么继续（A2，分支 `learn-deepseek-harness`）
+
+- **Type**: feat
+- **Motivation**: dsh GUI 计划 A2：失败要有清楚的人话原因和可查的原始错误；模型到输出上限时，要让人知道回复并未完整，并给出下一步。
+- **What**:
+  - 转录 `failed` notice 显示红点、「这一轮没做成」和原因；原始错误以等宽字默认折叠。通知协议新增可选 `rawError`，运行时与记录中枢将概要、诊断原文分开传；桌面失败通知仍包含原始原因。
+  - pi 回报 `stopReason: "length"` 时记录失败提示「回复到了输出上限，被截断了——说『继续』可以接着写」。它告诉用户手动续问，不自动重试或续写。
+  - 共用假推理服务器新增「演一次截断」场景，真实 Electron e2e 覆盖失败详情折叠与截断提示。
+  - Workbench 协议由 8.7 升至 8.8；后续 B5 增量传输计划顺延到 8.9。
+- **Impact**: 不改变普通系统提示的呈现。失败条目新增可选原始错误字段；超长的 native pi 回合会被标作未完成，并按失败通知。
+- **Verification**: `npm run typecheck`；`npm test` 318 个文件通过，4018 通过 / 10 跳过；`npm run build` 成功（Vite 提示大包，esbuild 提示已有浏览器工具中的 `eval`）；`npx playwright test e2e/turn-closes-on-failure.spec.ts --grep '失败固定|模型因输出'` 2/2 通过。
+
 ### 2026-10-01 — 底色学 dsh：亮色对话区纯白，暗色对话区最深、侧栏亮一档（C16，分支 `learn-deepseek-harness`）
 
 - **Type**: feat

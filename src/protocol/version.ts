@@ -569,8 +569,9 @@
  *
  * 8.7（2026-09-28）：添加模型服务时的「测试」——只读操作 `testProviderKey`：用填着、还没保存的 key（自定义端点再带地址 / 协议 / 模型）
  *   真发一次 1 token，回通了（模型、耗时）或没通（`soft` 区分「key 不对」与「没能判定」）。只加操作，故 minor。
+ * 8.8（2026-10-01）：失败的 `notice` 可带可选 `rawError`，供界面折叠展示原始错误；旧 notice 形状不变，故 minor。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "8.7"
+export const WORKBENCH_PROTOCOL_VERSION = "8.8"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -50,6 +50,12 @@ const snapshot = (over: Record<string, unknown> = {}) => ({
 })
 
 describe("transcript 条目", () => {
+  it("失败 notice 可以带可选的原始错误详情", () => {
+    const notice = { type: "notice", id: "n1", text: "模型调用失败", failed: true, rawError: "HTTP 401: invalid key" }
+    expect(TranscriptItemSchema.safeParse(notice).success).toBe(true)
+    expect(TranscriptItemSchema.safeParse({ ...notice, rawError: "" }).success).toBe(false)
+  })
+
   it("turn 必须说明是谁在说、说完没有", () => {
     expect(TranscriptItemSchema.safeParse(turn()).success).toBe(true)
     const { who: _w, ...noWho } = turn()
@@ -439,7 +445,7 @@ describe("协议版本 · 5.5", () => {
    * **8.7（2026-09-28）**：添加模型服务时的「测试」——只读操作 `testProviderKey`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.7")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.8")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

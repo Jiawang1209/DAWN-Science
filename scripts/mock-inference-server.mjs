@@ -163,6 +163,7 @@ function 跑Cox工具(body) {
  * 桌面通知有三种时刻：做完、出错、等你点头。做完随便哪句都行；另两种此前只有夹具级的旋钮
  * （`failStatus` 让整台服务器都失败、`toolCall` 要写进用例）——**`dev:mock` 里人演不出来**，e2e 也只能整段会话都失败。
  * - 「演一次失败」→ 这一问回 401（pi 不重试 4xx），会话里出「模型调用失败：…」，桌面通知弹「出错了」；
+ * - 「演一次截断」→ 流结束原因为 `length`，与真实模型的输出上限结束相同；
  * - 模型名带 `kimi` 且 temperature 不是 0.6 → 400「invalid temperature: only 0.6 is allowed」（学 Kimi，2026-09-28）。
  * - key 里带 `bad` 的那把（2026-09-28，「测试」按钮）→ key 验证那一问回 401「Incorrect API key provided」；对话请求照常。
  * - 「演一次权限」→ 先说一句、再调一条要联网的 bash：`curl` 打本机 9 号端口，拒连立刻返回、不出本机。
@@ -462,6 +463,8 @@ export function startMockInferenceServer(opts = {}) {
             ? `假模型已应答：我收到了 ${图片数} 张图。`
             : 最后一句.includes("还记得暗号吗")
               ? 记暗号(body)
+            : 最后一句.includes("演一次截断")
+              ? "假模型先说出这句，随后因输出长度上限停止。"
             : 最后一句.includes("长回复")
               ? LONG_REPLY
             : 用户说的.includes("markdown")
@@ -473,6 +476,7 @@ export function startMockInferenceServer(opts = {}) {
       const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
+      const finishReason = !摘要 && 最后一句.includes("演一次截断") ? "length" : "stop"
 
       /**
        * **Anthropic Messages 协议的端点也答**（B9，2026-09-01，规则 ①）。
@@ -535,7 +539,7 @@ export function startMockInferenceServer(opts = {}) {
        */
       if (opts.firstChunkDelayMs) await new Promise((r) => setTimeout(r, opts.firstChunkDelayMs))
       const 慢 = !摘要 && !tool && 最后一句.includes("慢慢说")
-      for (const chunk of streamChunks(reply, tool, opts.thinking, 慢 ? 慢速.每段字数 : undefined, 用量)) {
+      for (const chunk of streamChunks(reply, tool, opts.thinking, 慢 ? 慢速.每段字数 : undefined, 用量, finishReason)) {
         res.write(`data: ${JSON.stringify(chunk)}\n\n`)
         /**
          * **想完之后停一会儿再说话**（2026-08-14，准入规则 1）。
@@ -581,7 +585,7 @@ const 下一个调用id = () => `call_mock_${++调用序号}`
 const MODEL_ID = "mock-model"
 
 /** 把回复切成几段发，**让流式路径真的被走到**——一次性发完等于没测流式 */
-function streamChunks(reply, tool, thinking, 每段字数, 用量 = 默认用量) {
+function streamChunks(reply, tool, thinking, 每段字数, 用量 = 默认用量, finishReason = "stop") {
   const id = "chatcmpl-mock"
   const head = { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] }
 
@@ -651,7 +655,7 @@ function streamChunks(reply, tool, thinking, 每段字数, 用量 = 默认用量
     })),
     {
       id, object: "chat.completion.chunk", model: MODEL_ID,
-      choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+      choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
       usage: 用量,
     },
   ]

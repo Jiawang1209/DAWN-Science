@@ -239,6 +239,8 @@ export type AgentEvent =
       kind: "notice"
       sessionId: SessionId
       text: string
+      /** 与人话原因分开的原始错误详情；只在需要保留诊断原文时提供（A2，2026-10-01） */
+      rawError?: string
       /**
        * **这一轮失败了**（桌面通知，2026-09-27）。只有「这一轮没做成」那几句带它——换模型、MCP、视觉转述也是 notice，
        * 但不是失败；照微信那样把每条 notice 都当出错，换一次模型就弹一条「出错了」（spec §3.1）。

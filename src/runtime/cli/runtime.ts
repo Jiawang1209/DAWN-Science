@@ -138,7 +138,8 @@ export class CliRuntime implements AgentRuntime {
       this.emit({
         kind: "notice",
         sessionId,
-        text: `外部 CLI 这一轮没跑起来：${err instanceof Error ? err.message : String(err)}`,
+        text: "外部 CLI 这一轮没跑起来",
+        rawError: err instanceof Error ? err.message : String(err),
         failed: true,
       })
         // **收口**：不发 idle 的话，账本上那条回合会永远 running

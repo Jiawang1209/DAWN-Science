@@ -563,12 +563,13 @@ export class SessionTranscripts {
 
       case "notice":
         // 这一轮失败了：记下第一句，`idle` 时交给桌面通知（2026-09-27）。条目照常进转录
-        if (event.failed) e.本轮失败 ??= event.text
+        if (event.failed) e.本轮失败 ??= event.rawError ? `${event.text}：${event.rawError}` : event.text
         // 系统提示独立成条。**不并进 agent 的发言**——那会让用户以为是模型说的
         this.putItem(sessionId, e, {
           type: "notice",
           id: `notice-${++e.turnSeq}`,
           text: event.text,
+          ...(event.rawError ? { rawError: event.rawError } : {}),
           // 带上「这一轮没做成」：界面据它收掉「正在等回话」——这句报错就是这一轮的回音（2026-09-28）
           ...(event.failed ? { failed: true as const } : {}),
         })

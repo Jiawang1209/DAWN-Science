@@ -979,6 +979,26 @@ describe("记录中枢 · 回合收尾（桌面通知，2026-09-27）", () => {
 })
 
 describe("记录中枢 · 只以一句报错收尾的一轮（2026-09-28 回归）", () => {
+  it("把失败原因和可折叠的原始错误一起记入转录", () => {
+    const h = hub()
+    h.track("a", "native")
+    const seen = collector(h)
+    h.ingest("a", {
+      kind: "notice",
+      sessionId: "a",
+      text: "模型调用失败",
+      rawError: "HTTP 401: invalid key",
+      failed: true,
+    })
+    expect(h.subscribe("a").items.at(-1)).toMatchObject({
+      type: "notice",
+      text: "模型调用失败",
+      rawError: "HTTP 401: invalid key",
+      failed: true,
+    })
+    expect(seen.every((u) => SessionUpdateSchema.safeParse(u).success)).toBe(true)
+  })
+
   it("失败的 notice 进转录时带 failed，且合协议；普通系统提示不带", () => {
     const h = hub()
     h.track("a", "native")

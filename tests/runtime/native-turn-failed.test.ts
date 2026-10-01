@@ -33,6 +33,33 @@ function 摆一段(pi: Record<string, unknown>, stuck: { check?: () => string | 
 }
 
 describe("native：这一轮没做成要带 failed", () => {
+  it("pi 因输出长度上限停止时发出可继续的截断提示", () => {
+    const { 内部, 事件 } = 摆一段({})
+    内部.translate("s1", { type: "message_end", message: { role: "assistant", stopReason: "length" } })
+    expect(事件.filter((e) => e.kind === "notice")).toEqual([
+      {
+        kind: "notice",
+        sessionId: "s1",
+        text: "回复到了输出上限，被截断了——说「继续」可以接着写",
+        failed: true,
+      },
+    ])
+  })
+
+  it("模型调用失败时把人话原因和原始错误分开传递", () => {
+    const { 内部, 事件 } = 摆一段({})
+    内部.translate("s1", { type: "message_end", message: { role: "assistant", stopReason: "error", errorMessage: "HTTP 401: invalid key" } })
+    expect(事件.filter((e) => e.kind === "notice")).toEqual([
+      {
+        kind: "notice",
+        sessionId: "s1",
+        text: "模型调用失败",
+        rawError: "HTTP 401: invalid key",
+        failed: true,
+      },
+    ])
+  })
+
   it("prompt() 直接 reject → 一条带 failed 的 notice（话照旧），没有 output；随后照常 idle", async () => {
     const { rt, 事件 } = 摆一段({
       async prompt(): Promise<void> {
@@ -43,7 +70,7 @@ describe("native：这一轮没做成要带 failed", () => {
     await rt.waitForIdle("s1" as never)
     expect(事件.filter((e) => e.kind === "output"), "报错不是模型的回复").toEqual([])
     const 提示 = 事件.filter((e) => e.kind === "notice")
-    expect(提示).toEqual([{ kind: "notice", sessionId: "s1", text: "[native runtime 错误] No API key found for deepseek", failed: true }])
+    expect(提示).toEqual([{ kind: "notice", sessionId: "s1", text: "模型请求未能完成", rawError: "No API key found for deepseek", failed: true }])
     const 顺序 = 事件.map((e) => e.kind)
     expect(顺序.indexOf("notice")).toBeLessThan(顺序.indexOf("idle"))
   })

@@ -16,6 +16,8 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "这一轮没做成": "This turn failed",
+  "查看原始错误": "Show original error",
   "重新加载": "Reload",
   "正在等模型回话": "Waiting for the model",
   "模型正在思考": "The model is thinking",

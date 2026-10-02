@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.15 build
+npm notice run npm run build:electron && npm run build:ui
+npm notice run dawn-science@0.0.15 build:electron
+npm notice run node scripts/build-electron.mjs
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:325:17:
+      325 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval
+
+build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/
+build-electron: 自带技能已拷进 dist/skills
+build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成
+npm notice run dawn-science@0.0.15 build:ui
+npm notice run vite build
+vite v8.2.1 building client environment for production...
+[2Ktransforming...✓ 567 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/ui/index.html                                        0.59 kB │ gzip:   0.34 kB
+dist/ui/assets/index-DeZuJyvN.css                       169.82 kB │ gzip:  27.67 kB
+dist/ui/assets/mermaid-GHXKKRXX-DJ_RNlqL.js               0.06 kB │ gzip:   0.07 kB
+dist/ui/assets/highlighted-body-OFNGDK62-BKFObeUO.js      0.47 kB │ gzip:   0.32 kB
+dist/ui/assets/addon-fit-DIOBYJe3.js                      1.20 kB │ gzip:   0.49 kB
+dist/ui/assets/addon-web-links-xF2oeMXv.js                2.38 kB │ gzip:   1.16 kB
+dist/ui/assets/addon-unicode11-DcRbtMby.js               25.02 kB │ gzip:   9.07 kB
+dist/ui/assets/xterm-BrIJiJSN.js                        331.45 kB │ gzip:  83.13 kB
+dist/ui/assets/index-CBWnRva2.js                      1,412.54 kB │ gzip: 439.11 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 451ms

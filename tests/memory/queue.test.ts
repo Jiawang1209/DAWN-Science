@@ -25,6 +25,44 @@ describe("建议队列", () => {
     expect(q.take("没有这个")).toBeUndefined()
   })
 
+  it("key 同内容跨工作区、分支范围和无范围建议分别保留", () => {
+    const q = new SuggestionQueue(join(mkdtempSync(join(tmpdir(), "q-")), "SUGGESTIONS.jsonl"))
+    for (const opts of [
+      { workspace: "/project-A", branches: ["main"] },
+      { workspace: "/project-B", branches: ["main"] },
+      { workspace: "/project-A", branches: ["dev"] },
+      { workspace: "/project-A" },
+      {},
+    ]) q.propose("key", "原始数据只读", "scope", opts)
+    expect(q.list()).toHaveLength(5)
+    expect(q.list().every((e) => e.hits === 1)).toBe(true)
+  })
+
+  it("key 规范化工作区和分支集合后去重，兼容旧队列范围", () => {
+    const file = join(mkdtempSync(join(tmpdir(), "q-")), "SUGGESTIONS.jsonl")
+    const q = new SuggestionQueue(file)
+    q.propose("key", "原始数据只读", "scope", { workspace: "/project-A", branches: ["dev", "main"] })
+    const old = q.list()[0]!
+    writeFileSync(file, JSON.stringify({ ...old, workspace: "/project-A/./", branches: [" main ", "dev", "main"] }) + "\n")
+    expect(q.propose("key", "原始数据只读", "again", { workspace: " /project-A/ ", branches: ["main", "dev"] }).hits).toBe(2)
+    expect(q.list()).toHaveLength(1)
+    q.propose("key", "另一条", "scope", { workspace: " /project-A/./ ", branches: [" main ", "dev", "main", ""] })
+    expect(q.list()[1]).toMatchObject({ workspace: "/project-A", branches: ["dev", "main"] })
+  })
+
+  it("全局轨忽略工作区和分支并不保留无效范围", () => {
+    const q = new SuggestionQueue(join(mkdtempSync(join(tmpdir(), "q-")), "SUGGESTIONS.jsonl"))
+    for (const target of ["memory", "user"] as const) {
+      q.propose(target, "全局偏好", "scope", { workspace: "/A", branches: ["main"] })
+      expect(q.propose(target, "全局偏好", "again", { workspace: "/B", branches: ["dev"] }).hits).toBe(2)
+    }
+    expect(q.list()).toHaveLength(2)
+    for (const entry of q.list()) {
+      expect(entry.workspace).toBeUndefined()
+      expect(entry.branches).toBeUndefined()
+    }
+  })
+
   it("C5 更丰富的建议不被短建议吞掉(只按完全相等去重)", () => {
     const q = new SuggestionQueue(join(mkdtempSync(join(tmpdir(), "q-")), "SUGGESTIONS.jsonl"))
     q.propose("memory", "用 uv 管环境", "偏好")

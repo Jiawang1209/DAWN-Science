@@ -58,6 +58,9 @@ interface 条目 {
   traceback?: string[]
   mediaType?: string
   tooLarge?: boolean
+  data?: string
+  truncated?: { originalBytes: number; keptBytes: number }
+  textFallback?: { text: string; truncated?: { originalBytes: number; keptBytes: number } }
 }
 
 /**
@@ -79,13 +82,24 @@ export function 摘要(输出: readonly unknown[]): { 文字: string; 出错了:
       行.push(`${one.ename ?? "错误"}: ${one.evalue ?? ""}${tb ? `\n${tb}` : ""}`)
     } else if (one.kind === "result" || one.kind === "display") {
       const 型 = one.mediaType ?? "未知类型"
-      行.push(
-        型.startsWith("image/")
-          ? `（生成了一张 ${型}，已经显示在对话里；图本身不放进这里）`
-          : one.tooLarge
-            ? `（一份 ${型} 输出，太大没有渲染）`
-            : `（一份 ${型} 输出，已经显示在对话里）`,
-      )
+      if (one.tooLarge) {
+        if (!型.startsWith("image/") && one.textFallback) {
+          行.push(one.textFallback.text)
+          const 截断 = one.textFallback.truncated
+          if (截断) 行.push(`（内核输出已截断：原始 ${截断.originalBytes} 字节，保留 ${截断.keptBytes} 字节）`)
+        }
+        行.push(`（一份 ${型} 输出，太大没有渲染）`)
+      } else if (型.startsWith("image/")) {
+        行.push(`（生成了一张 ${型}，已经显示在对话里；图本身不放进这里）`)
+      } else if (型.startsWith("text/") || 型 === "application/json") {
+        const 内容 = one.textFallback?.text ?? one.data
+        if (内容) 行.push(内容)
+        else 行.push(`（一份 ${型} 输出，已经显示在对话里）`)
+        const 截断 = one.textFallback ? one.textFallback.truncated : one.truncated
+        if (截断) 行.push(`（内核输出已截断：原始 ${截断.originalBytes} 字节，保留 ${截断.keptBytes} 字节）`)
+      } else {
+        行.push(`（一份 ${型} 输出，已经显示在对话里）`)
+      }
     }
     // `status` 不进摘要：它是边界记号，不是内容
   }

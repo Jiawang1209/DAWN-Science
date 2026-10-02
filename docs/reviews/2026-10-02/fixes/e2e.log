@@ -1,0 +1,290 @@
+npm notice run dawn-science@0.0.15 npx
+npm notice run 'playwright' test e2e/composer-sizing.spec.ts e2e/paste-input.spec.ts e2e/plan-mode.spec.ts e2e/session-tabs.spec.ts e2e/schedule.spec.ts e2e/remote-connections.spec.ts e2e/notebook.spec.ts e2e/rewind.spec.ts e2e/memory.spec.ts
+
+Running 69 tests using 1 worker
+
+(node:59070) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65106/2ee0af0e-37d4-4ac0-9b8f-68eae23f4f8c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/composer-sizing.spec.ts:3:1 › 输入区随内容增高，达到上限才滚动，清空后收回 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65159/7f3a45e2-706f-4527-89d8-78f6dce3d998
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/memory.spec.ts:10:1 › 插件第三张卡三工具;记忆屏空态如实说 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65174/b840ca2d-9f08-420c-ad17-88052ec0ef67
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/memory.spec.ts:33:3 › 提议 → 角标 → 采纳 → 新会话注入 › 整链路(判据走假服务器收到的 system,不走屏幕) (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65194/a1035d45-8309-4493-a0db-5e6e5464bb10
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/notebook.spec.ts:59:3 › 笔记本 · 真内核链路 › agent 跑的与人敲的落在同一台内核；下一条消息给模型带前缀、转录只显示人敲的 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65242/1d38e169-8de8-4c54-b5a6-d4a9b9040693
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/notebook.spec.ts:163:3 › 笔记本 · 非 native 会话 › cli 会话打开笔记本 → 明说没有内核，不画输入框 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65263/ee730657-b7eb-4935-b04c-097d17ff18cd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/paste-input.spec.ts:20:1 › **粘贴外部文件 = 替你敲一个 @**：草稿出 @令牌、引用栏出 chip；发送落盘、令牌换写成真实路径 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65300/896669ec-cf32-4ed8-bd49-25063ce23802
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/paste-input.spec.ts:46:1 › **引用栏 ×掉 = 磁盘无痕**；上传键的黑色实心跟着熄灭 (2.0s)
+[主进程] Debugger ending on ws://127.0.0.1:65331/add68bd0-3ad5-4ebb-bf23-54cd71f6ebc9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/paste-input.spec.ts:60:1 › **拖拽外部文件也进 @**；概览里能看到用量并两步清理 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65374/c79216cb-4476-455f-a47c-ac3236ec973a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/paste-input.spec.ts:85:1 › **光标不在输入框也能粘**（页面级监听），照样进 @ (2.0s)
+[主进程] Debugger ending on ws://127.0.0.1:65406/bbd360f7-77c9-4466-adc8-2788ef21a32e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/paste-input.spec.ts:98:1 › **Finder 式复制（只有 file:// uri-list）**：草稿出 @、发送后换写真实路径 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65441/9aea1791-aabd-4231-8ab4-204a1a21b6ec
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/paste-input.spec.ts:124:1 › **空态也收**：粘一个文件 → @ 进草稿 → 第一句话建会话后落盘、令牌换写 (2.0s)
+[主进程] Debugger ending on ws://127.0.0.1:65464/c8244d38-2e89-4e06-92c1-86fe63054f2e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/paste-input.spec.ts:142:1 › **粘贴的图能点开看大图**（学 Codex）：点缩略图开层、Esc 关 (2.2s)
+[主进程] Debugger ending on ws://127.0.0.1:65487/69422e5c-c926-42f3-994a-7c9ed64baa35
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/paste-input.spec.ts:166:1 › **@ 在输入框里带灰底**（学 Codex）：手敲与粘贴同一份高亮；镜像层与输入框逐像素同框 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65506/59304fde-a56b-4663-9a17-11c1819fae83
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/paste-input.spec.ts:185:1 › **空态的高亮也不飘**：英雄区的 text-align 摸不进镜像层 (1.8s)
+[主进程] Debugger ending on ws://127.0.0.1:65532/59649a79-2c66-46e8-8fe0-2478ed06ebe3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/plan-mode.spec.ts:90:3 › 先出方案 · 假模型 › **开关 → 方案卡 → 照这个做**：文件真存进 analysis/plans、开关关了、执行话进转录、对照 1 / 2 (5.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49237/2a6e2dcf-edbc-4039-9589-3ed0c00e0815
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/plan-mode.spec.ts:112:3 › 先出方案 · 假模型 › **方案期「偷跑」**：那次 write 被门拦下，磁盘上没有那个文件，理由说「生成方案」 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49251/054d5f8a-db29-49eb-8386-a7a05324229a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/plan-mode.spec.ts:129:3 › 先出方案 · 假模型 › **改一改**：批的是改过的正文，文件里是改过的，执行那句说以文件为准 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49272/339dbe09-80c7-42ce-b220-ae268dab04b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/plan-mode.spec.ts:145:3 › 先出方案 · 假模型 › **不做了**：什么都不存，开关关了，卡片写「没采用」 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49293/3aff851b-b704-4dfc-adfd-e01b951f611a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/plan-mode.spec.ts:154:3 › 先出方案 · 假模型 › **`/plan 问题`**：不把 /plan 送给模型、开关打开、问题照发、方案卡出来 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49309/ad093da3-2e1d-43de-bb3f-72c9a6450fef
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/plan-mode.spec.ts:166:3 › 先出方案 · 假模型 › 三颗按钮与开关常驻看得见（opacity 1） (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49333/509c94d5-b646-4bb1-accb-9c95be5d6c96
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/plan-mode.spec.ts:185:3 › 先出方案 · 假模型 › **人在两轮之间改了方案文件**：留着、卡片写「你改过」 (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「分析一下吸烟和肺功能」做完了 — 我先出一份方案。
+[主进程] Debugger ending on ws://127.0.0.1:49366/120a6ca2-6156-4898-abf3-53529bcb0569
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/plan-mode.spec.ts:217:3 › 先出方案 · agent 这一轮改了批准过的方案 › **恢复并出声**：文件回到批准时的样子，转录里一句「已从存档恢复」，卡片不写「你改过」 (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49397/ce874cd4-6b59-4dcc-bc5d-e961211cd6c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/plan-mode.spec.ts:240:3 › 先出方案 · 坞里的对话 › **开关只留图标、方案卡与带子不撑破坞** (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49426/40ca2a25-7123-4e7e-ac9a-927d0d264b16
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/plan-mode.spec.ts:304:3 › 先出方案 · 不支持的会话 › **ACP 会话**：开关灰着，旁边一行字说原因（不是悬停提示） (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49481/025c00a4-649b-4dfe-bc20-ffbe3c852800
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/remote-connections.spec.ts:53:1 › **整条路**：加一台 → 连上 → 断开 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49531/c13eb38e-5db0-467a-bf0b-1a2f41e5d6a9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/remote-connections.spec.ts:108:1 › **连不上时说清是为什么**，就在那一行上 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49577/cace617f-c746-4b60-b689-b7c2850ae51a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/remote-connections.spec.ts:131:1 › **口令不回显**，且改别的字段不会把它弄丢 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49632/d372582c-62d8-424f-b193-ae2d24643ab7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/remote-connections.spec.ts:156:1 › **入口看得见**：不是悬停才出现的 ＋ (1.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49676/bb8a37b8-4efe-4fe6-898a-d2a209c0fd3f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/remote-connections.spec.ts:170:1 › 删掉一台：**先说会连带发生什么**，再删 (1.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49719/fd5fdfaf-0405-4e4f-a29e-2c088a89130b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/remote-connections.spec.ts:192:1 › **在服务器上开一段对话**：起点是家目录，命令打到那台机器 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49783/60b49d50-4a20-4836-8df7-10961901d5ea
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/remote-connections.spec.ts:228:1 › **命令跑在远端，`cd` 之后粘住** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49852/2e7b1a3d-ff2f-45fc-be52-63f17c42cde3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  32 e2e/remote-connections.spec.ts:267:1 › 断线重连 › **断开 → 连接 → 同一段会话里的命令仍然打到远端** (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49958/4e0a85fa-796d-47f0-8cfc-58b32e0b05ec
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  33 e2e/remote-connections.spec.ts:310:1 › **在服务器上开的对话，出现在侧栏的「服务器」收纳里** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49990/2c64147e-2b1e-4f02-b2c7-4bcd665f0846
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/remote-connections.spec.ts:339:1 › **同一台机器上的多段对话，收在同一台底下** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50003/2f2600ce-7898-4b5e-8e2f-286426392066
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  35 e2e/remote-connections.spec.ts:376:1 › **服务器行与会话行同一条线**：左缘、名字、状态词都对齐 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/assets/index-DHxb7af3.js:75 [i18n] 英文里没有这一句，先按中文显示："简洁"
+[渲染进程] [i18n] 英文里没有这一句，先按中文显示："简洁"
+[主进程] Debugger ending on ws://127.0.0.1:50027/007677b0-1c71-4859-812a-f0c797143f3e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  36 e2e/remote-connections.spec.ts:431:1 › **切了语言，那三个词不变**：alive / connecting / exited (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/assets/index-DHxb7af3.js:75 [i18n] 英文里没有这一句，先按中文显示："简洁"
+[渲染进程] [i18n] 英文里没有这一句，先按中文显示："简洁"
+[主进程] Debugger ending on ws://127.0.0.1:50050/c20b34b8-e543-443a-bb16-18955a9470cb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  37 e2e/remote-connections.spec.ts:483:1 › **服务器那三颗动作不换行、不被裁**：英文 + 最窄侧栏 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50088/1fd36a3a-cd18-4930-a913-08bbd0ec9254
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  38 e2e/remote-connections.spec.ts:572:1 › **动作条挤爆时裁掉而不换行** (1.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/assets/index-DHxb7af3.js:75 [i18n] 英文里没有这一句，先按中文显示："简洁"
+[渲染进程] [i18n] 英文里没有这一句，先按中文显示："简洁"
+[主进程] Debugger ending on ws://127.0.0.1:50117/ad78fc16-682f-4a70-b46f-313fa032dd6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  39 e2e/remote-connections.spec.ts:622:1 › **侧栏所有固定入口都不换行**：中英 × 最窄侧栏 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50143/6cd96fef-7e10-46ba-90b9-0440b47ae5d8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  40 e2e/remote-connections.spec.ts:678:1 › **远端会话的文件面板长在那台服务器上**，不是本机 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50169/2baf08a6-6720-4b9b-a88a-429b8f7924c1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  41 e2e/remote-connections.spec.ts:705:1 › 远端树上，目录点得开，文件点了是预览 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50203/5c031d8f-865b-4a8b-8186-fe90769a6f41
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  42 e2e/remote-connections.spec.ts:721:1 › 远端文件面板按名字搜，结果是那台机器上的 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50215/93ba43f9-3305-4be5-908b-f67e08b98b5e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  43 e2e/remote-connections.spec.ts:746:1 › **远端文件下得下来**，而且说得出落在哪儿 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50229/28405283-654c-4e77-afbf-117111e5bb88
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  44 e2e/remote-connections.spec.ts:778:1 › 下载同一个文件两次，第二份另存，不覆盖第一份 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50250/6ae729db-4672-4e50-ad61-f353a706a4c8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  45 e2e/remote-connections.spec.ts:819:3 › 下载落点 › **设置里改了下载目录，文件就落在那儿** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50265/a54816f0-1511-4dc7-9cce-8c715a147113
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  46 e2e/remote-connections.spec.ts:868:1 › 本地文件没有「下载」那颗按钮 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50273/e0a046dd-cc9c-415c-964b-9d4b14f7cd1e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  47 e2e/remote-connections.spec.ts:890:3 › 上传 › **传上去、撞名问三选一、落一条账** (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50289/7ea7e152-f588-465a-b121-1a5f441ca3b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  48 e2e/remote-connections.spec.ts:938:1 › 远端删除说「永久」，本地说「废纸篓」，且都落账 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50304/934036ad-de32-4b9e-9f58-af988940d16e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  49 e2e/remote-connections.spec.ts:1007:1 › 删目录：「⋯」常驻可见，确认框说得出有多少个文件 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50326/089bc663-d66a-4a01-b62b-af0aa80a0732
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  50 e2e/remote-connections.spec.ts:1056:1 › 拖拽：落在哪一行就亮哪一行；拿不到本机路径要出声 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50334/7b0f22ef-4950-4b97-9e09-39cfae2fc32c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  51 e2e/remote-connections.spec.ts:1119:1 › **服务器收纳里的会话，拖到哪就排到哪** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50347/8eb879fd-2219-4ddd-916f-8e3539006904
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  52 e2e/remote-connections.spec.ts:1183:1 › **隔了几天再看，那一行写的是「上次连上是多久前」** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50360/35339cb6-88e0-44c4-ae92-71ba96e18962
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  53 e2e/remote-connections.spec.ts:1234:3 › 远端建会话的准入 › 第一位是不借手的 ACP：服务器上的「新对话」跳过它，用 API 那一路 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50373/a67f1450-9fea-49bd-8059-7162a1945101
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  54 e2e/remote-connections.spec.ts:1267:1 › **服务器收纳里的机器名（短的）贴着三角，不漂到中间** (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50383/e8b7c136-c4bd-4b60-9276-c26798376533
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  55 e2e/remote-connections.spec.ts:1283:1 › **服务器收纳里的机器名：一行截断，悬停弹全名** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50395/d42eb622-f7f3-4662-91ae-e6ca3809b8bf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  56 e2e/remote-connections.spec.ts:1309:1 › **机器行的勾选框落在时间那一列** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「改两个文件」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50407/d7660fac-fc0d-42a1-8ffa-7ec27a143caf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  57 e2e/rewind.spec.ts:45:3 › git 仓库、out/ 被忽略 › 两句之后回到第二句之前：文件与对话一起退，那句回到输入框，out/ 里的也退了 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50423/88a2c59a-8efc-473f-be9e-fb70993ff1e5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  58 e2e/rewind.spec.ts:73:3 › 非 git 工作区 › 只回退文件：回到第一句之前——新建的挪进 .dawn/trash，对话两句都在 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50438/a8910af8-40aa-4a1e-8f7a-6b36978ad4d9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  59 e2e/rewind.spec.ts:91:3 › 非 git 工作区 › 你后来改过的不动：确认框列在「不动」，回退之后还是你改的样子 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50462/b9ba8599-da6b-416c-b44c-e939a5c4e501
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  60 e2e/rewind.spec.ts:104:3 › 非 git 工作区 › 按钮常驻、带字：不悬停 opacity 也是 1 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50474/b941c2c0-eb30-41b1-a14f-49480088e136
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  61 e2e/rewind.spec.ts:117:3 › 非 git 工作区 › 在跑时灰着，理由读得到；停下之后能点 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50487/211be796-efcf-42cc-b799-7e840e8d076d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  62 e2e/rewind.spec.ts:134:3 › 非 git 工作区 › 命令面板「回到上一句之前」：与点按钮落到同一处——确认框、文件退回、那句回到输入框 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「改两个文件」做完了 — （没有文字回复）
+[主进程] Debugger ending on ws://127.0.0.1:50496/0602cfc2-3302-4cd5-8ee6-d1aa1f94c983
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  63 e2e/rewind.spec.ts:157:3 › 非 git 工作区 › 坞里那段：一起回退之后文件回来、那句回到坞里的输入框 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「早报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50514/88bfb28e-17a6-410a-b8d0-18b6c917e682
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  64 e2e/schedule.spec.ts:8:1 › **建一条、立即跑一次、记录成功、会话留在项目里；暂停与删除** (5.2s)
+[主进程] Debugger ending on ws://127.0.0.1:50544/142fb264-d2e6-4c42-ad18-86bd10b89e5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  65 e2e/schedule.spec.ts:57:1 › **坏输入当场说**：没填说明、每周一天没选 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50552/046b89a1-99d2-4fb0-97e5-cff09e7d10e2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  66 e2e/schedule.spec.ts:96:3 › 对话里建 › **agent 调 dawn_schedule_create → 建成暂停的、回话说清 → 「定时」里按恢复** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「月报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50564/268fe06d-1c4f-41d5-94b4-c7facd72b8f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  67 e2e/schedule.spec.ts:122:1 › **第二档的计划与筛**：每月、每 N 天、权限档标签、记录按状态筛 (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50587/cfa59efa-8f9e-42c7-9724-67ea8a03dbb6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  68 e2e/session-tabs.spec.ts:7:1 › **同一个项目下的会话横着排；点了切过去；＋ 在同一处再开一段；散的会话没有这一条** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50607/0bcf6301-0b3c-47c5-b876-31799bf7af88
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  69 e2e/session-tabs.spec.ts:33:1 › **`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的） (1.6s)
+
+  69 passed (2.7m)

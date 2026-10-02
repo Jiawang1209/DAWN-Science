@@ -1,0 +1,98 @@
+npm notice run dawn-science@0.0.15 npx
+npm notice run 'playwright' test e2e/composer-sizing.spec.ts e2e/plan-mode.spec.ts e2e/paste-input.spec.ts e2e/session-tabs.spec.ts
+
+Running 22 tests using 1 worker
+
+(node:24214) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54761/eb0cb285-783b-4e55-9404-a199daf9940a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/composer-sizing.spec.ts:3:1 › 输入区随内容增高，达到上限才滚动，清空后收回 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54789/f7520b21-a137-441d-84fa-ba9cb9ad8d98
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/paste-input.spec.ts:20:1 › **粘贴外部文件 = 替你敲一个 @**：草稿出 @令牌、引用栏出 chip；发送落盘、令牌换写成真实路径 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54803/b57c175f-b593-4d1a-bf0f-e11221f74bd5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/paste-input.spec.ts:46:1 › **引用栏 ×掉 = 磁盘无痕**；上传键的黑色实心跟着熄灭 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54813/6d07feab-4b34-4678-9ede-a65eae4018e7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/paste-input.spec.ts:60:1 › **拖拽外部文件也进 @**；概览里能看到用量并两步清理 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54831/93629bf3-713b-46c2-b853-3bebb7590be9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/paste-input.spec.ts:85:1 › **光标不在输入框也能粘**（页面级监听），照样进 @ (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54845/34478296-ac68-45e4-b8da-a0dc06e26070
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/paste-input.spec.ts:98:1 › **Finder 式复制（只有 file:// uri-list）**：草稿出 @、发送后换写真实路径 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54859/fd79d6b9-6f28-49a2-8480-e3f48be93d16
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/paste-input.spec.ts:124:1 › **空态也收**：粘一个文件 → @ 进草稿 → 第一句话建会话后落盘、令牌换写 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54876/3f7cfb89-6165-445c-8b4d-29ffe1476910
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/paste-input.spec.ts:142:1 › **粘贴的图能点开看大图**（学 Codex）：点缩略图开层、Esc 关 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54890/3599b517-8ed8-4f19-be8b-e8419c6f6837
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/paste-input.spec.ts:166:1 › **@ 在输入框里带灰底**（学 Codex）：手敲与粘贴同一份高亮；镜像层与输入框逐像素同框 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54899/ec0e2cb2-745b-4f4b-9279-fdd00c4c8d9b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/paste-input.spec.ts:185:1 › **空态的高亮也不飘**：英雄区的 text-align 摸不进镜像层 (1.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54907/7d9e6732-424f-46c2-8010-921bdf85238c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/plan-mode.spec.ts:90:3 › 先出方案 · 假模型 › **开关 → 方案卡 → 照这个做**：文件真存进 analysis/plans、开关关了、执行话进转录、对照 1 / 2 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54931/cb6c9803-4c9d-4600-af8b-b6a3083dc90d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/plan-mode.spec.ts:112:3 › 先出方案 · 假模型 › **方案期「偷跑」**：那次 write 被门拦下，磁盘上没有那个文件，理由说「生成方案」 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「分析一下吸烟和肺功能」做完了 — 我先出一份方案。
+[主进程] Debugger ending on ws://127.0.0.1:54943/cd53ee1b-00d9-4983-a870-c953c457abc4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/plan-mode.spec.ts:129:3 › 先出方案 · 假模型 › **改一改**：批的是改过的正文，文件里是改过的，执行那句说以文件为准 (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54968/c7fa2c43-1961-423a-88be-eb715041b615
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/plan-mode.spec.ts:145:3 › 先出方案 · 假模型 › **不做了**：什么都不存，开关关了，卡片写「没采用」 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54982/1b175eda-e9d9-49ef-8a37-d7ae9c4ea3b8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/plan-mode.spec.ts:154:3 › 先出方案 · 假模型 › **`/plan 问题`**：不把 /plan 送给模型、开关打开、问题照发、方案卡出来 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54992/70b41ff8-c462-4b14-bbd4-9a42ec72eef5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/plan-mode.spec.ts:166:3 › 先出方案 · 假模型 › 三颗按钮与开关常驻看得见（opacity 1） (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55004/7f267a2e-be65-40ed-ba10-0007d8114d6f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/plan-mode.spec.ts:185:3 › 先出方案 · 假模型 › **人在两轮之间改了方案文件**：留着、卡片写「你改过」 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55023/178678f1-3bdd-49bd-9973-c587d29bf497
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/plan-mode.spec.ts:217:3 › 先出方案 · agent 这一轮改了批准过的方案 › **恢复并出声**：文件回到批准时的样子，转录里一句「已从存档恢复」，卡片不写「你改过」 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55037/649cf21a-42fa-4758-a8e4-38d5d8454a18
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/plan-mode.spec.ts:240:3 › 先出方案 · 坞里的对话 › **开关只留图标、方案卡与带子不撑破坞** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55052/5f10956a-dc33-469c-8aad-6e7d9b1d86fa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/plan-mode.spec.ts:304:3 › 先出方案 · 不支持的会话 › **ACP 会话**：开关灰着，旁边一行字说原因（不是悬停提示） (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55076/0185de00-ab06-4fec-bf16-7c002bc54f17
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/session-tabs.spec.ts:7:1 › **同一个项目下的会话横着排；点了切过去；＋ 在同一处再开一段；散的会话没有这一条** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55091/a053c23b-721d-4eb4-8a6e-9cf12846bbfa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/session-tabs.spec.ts:33:1 › **`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的） (1.6s)
+
+  22 passed (47.0s)

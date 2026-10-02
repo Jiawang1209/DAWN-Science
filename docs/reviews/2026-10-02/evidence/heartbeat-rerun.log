@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.15 npx
+npm notice run 'vitest' run tests/kernel/heartbeat.integration.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  12:56:51
+   Duration  917ms (transform 29ms, setup 0ms, import 36ms, tests 760ms, environment 0ms)
+

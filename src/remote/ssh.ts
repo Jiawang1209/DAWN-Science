@@ -39,7 +39,7 @@
 import { createReadStream, createWriteStream } from "node:fs"
 import { rename as 改名, rm as 删掉, stat as 本地stat } from "node:fs/promises"
 import { pipeline } from "node:stream/promises"
-import { createHash } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import type { Client, ClientChannel, ConnectConfig, SFTPWrapper } from "ssh2"
 
 /** 一台远端机器怎么连。**密码不在这里**——它由上层从钥匙串取了再传进来 */
@@ -427,7 +427,7 @@ export class RemoteExecutor {
    *
    * ## 「半截文件必须消失」这条保证在这儿，不在调用方
    *
-   * 先落到 `<目标>.dawn-part`，传完才改名过去（同目录内改名是原子的）；
+   * 先落到每次传输独立的 `<目标>.dawn-part-<id>`，传完才改名过去（同目录内改名是原子的）；
    * 出错或取消就把 part 删掉。
    *
    * **放在调用方的话，每多一个调用方就多一次忘记的机会**——
@@ -444,7 +444,7 @@ export class RemoteExecutor {
   ): Promise<void> {
     const s = await this.sftp()
     const 总共 = (await this.stat(远端)).size
-    const part = `${本地}.dawn-part`
+    const part = `${本地}.dawn-part-${randomUUID()}`
     let 已传 = 0
     const rs = s.createReadStream(远端)
     rs.on("data", (块: string | Buffer) => {
@@ -452,7 +452,7 @@ export class RemoteExecutor {
       opts.进度?.(已传, 总共)
     })
     try {
-      await pipeline(rs, createWriteStream(part), ...(opts.signal ? [{ signal: opts.signal }] : []))
+      await pipeline(rs, createWriteStream(part, { flags: "wx" }), ...(opts.signal ? [{ signal: opts.signal }] : []))
       await 改名(part, 本地)
     } catch (e) {
       // **清干净**。清不掉也别把清理的错盖住原来那个——原因才是要说的那句
@@ -477,7 +477,7 @@ export class RemoteExecutor {
   ): Promise<void> {
     const s = await this.sftp()
     const 总共 = (await 本地stat(本地)).size
-    const part = `${远端}.dawn-part`
+    const part = `${远端}.dawn-part-${randomUUID()}`
     let 已传 = 0
     const rs = createReadStream(本地)
     rs.on("data", (块: string | Buffer) => {
@@ -485,7 +485,7 @@ export class RemoteExecutor {
       opts.进度?.(已传, 总共)
     })
     try {
-      await pipeline(rs, s.createWriteStream(part), ...(opts.signal ? [{ signal: opts.signal }] : []))
+      await pipeline(rs, s.createWriteStream(part, { flags: "wx" }), ...(opts.signal ? [{ signal: opts.signal }] : []))
       if (opts.覆盖) await this.unlink(远端).catch(() => {})
       await this.rename(part, 远端)
     } catch (e) {

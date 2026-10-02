@@ -57,20 +57,26 @@ export interface 表格 {
 }
 
 /**
- * 认分隔符。**看第一行里谁最多**，不按扩展名猜——
- * 「叫 .csv 的分号文件」在欧洲区域设置下遍地都是，
- * 按扩展名认的话，整张表会被读成**一列**。
+ * 认分隔符：只数引号外的分隔符，优先选择前十条记录里列数一致的候选。
+ * 单行或一致性相同时选择列数最多的；都没有则当成逗号（单列文件）。
  */
-export function 认分隔符(第一行: string): "," | "\t" | ";" {
-  const 数 = (c: string) => 第一行.split(c).length - 1
-  const 候选: ["," | "\t" | ";", number][] = [
-    [",", 数(",")],
-    ["\t", 数("\t")],
-    [";", 数(";")],
-  ]
-  候选.sort((a, b) => b[1] - a[1])
-  // 一个都没有 → 当成逗号（单列文件），**不报错**：单列也是一张表
-  return 候选[0]![1] > 0 ? 候选[0]![0] : ","
+export function 认分隔符(正文: string | readonly string[]): "," | "\t" | ";" {
+  const 行 = (typeof 正文 === "string" ? 接回引号里的换行(正文.split(/\r\n|\r|\n/)) : 正文)
+    .filter((l) => l.trim() !== "")
+    .slice(0, 10)
+  const 候选 = ([",", "\t", ";"] as const).map((分隔符) => {
+    const 次数 = new Map<number, number>()
+    let 总数 = 0
+    for (const l of 行) {
+      // 复用实际切行的引号和转义规则，避免检测与解析对同一字段说两种话。
+      const n = 切一行(l, 分隔符).length - 1
+      总数 += n
+      if (n > 0) 次数.set(n, (次数.get(n) ?? 0) + 1)
+    }
+    return { 分隔符, 一致行数: Math.max(0, ...次数.values()), 总数 }
+  })
+  候选.sort((a, b) => b.一致行数 - a.一致行数 || b.总数 - a.总数)
+  return 候选[0]!.总数 > 0 ? 候选[0]!.分隔符 : ","
 }
 
 /**
@@ -159,14 +165,13 @@ export function 推断列类型(值们: string[]): 列类型 {
  * 只看「有没有分隔符」的话，任何一段中文都会因为顿号、逗号被判成表。
  */
 export function 像表格吗(正文: string): boolean {
-  const 行 = 正文
-    .split(/\r\n|\r|\n/)
+  const 行 = 接回引号里的换行(正文.split(/\r\n|\r|\n/))
     .filter((l) => l.trim() !== "")
     .slice(0, 10)
   // **少于两行说明不了任何事**：一行没法验证「对齐」，而对齐才是判据
   if (行.length < 2) return false
 
-  const 分隔符 = 认分隔符(行[0]!)
+  const 分隔符 = 认分隔符(行)
   const 列数 = 行.map((l) => 切一行(l, 分隔符).length)
   // 单列不算表——那就是普通文本，一行一句
   if (列数[0]! < 2) return false
@@ -195,7 +200,7 @@ export function 读成表(正文: string, 完整: boolean, 行上限: number = �
     return { columns: [], rows: [], rowsRead: 0, delimiter: ",", ...(完整 ? { totalRows: 0 } : {}) }
   }
 
-  const 分隔符 = 认分隔符(全部行[0]!)
+  const 分隔符 = 认分隔符(全部行.slice(0, 10))
   const 表头 = 切一行(全部行[0]!, 分隔符)
   const 数据行 = 全部行.slice(1)
   const 取的行 = 数据行.slice(0, 行上限).map((l) => 切一行(l, 分隔符))

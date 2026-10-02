@@ -4,12 +4,12 @@
  * 模型对注入轨只能**提议**:`memory_propose` 落到这里,用户在记忆屏
  * 采纳/归档/拒绝后才动真文件。JSONL 一行一条,原子写。
  *
- * **同轨同内容(空白归一、互含)去重记 hits**——反复浮现的事实攒出频次,
+ * **同轨同作用域同内容(空白归一)去重记 hits**——反复浮现的事实攒出频次,
  * 用户确认时有权重可看。这是「确认制不淹死人」的关键一招。
  */
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { randomUUID } from "node:crypto"
-import { dirname } from "node:path"
+import { dirname, resolve } from "node:path"
 import { scanThreat, withLock, type 记忆轨 } from "./store.js"
 
 export interface 建议条 {
@@ -27,6 +27,9 @@ export interface 建议条 {
 }
 
 const 归一 = (s: string) => String(s ?? "").replace(/\s+/g, " ").trim()
+
+const 工作区归一 = (workspace?: string) => workspace?.trim() ? resolve(workspace.trim()) : undefined
+const 分支归一 = (branches?: string[]) => [...new Set((branches ?? []).map((b) => b.trim()).filter(Boolean))].sort()
 
 export class SuggestionQueue {
   constructor(private readonly file: string) {}
@@ -66,7 +69,7 @@ export class SuggestionQueue {
   }
 
   /**
-   * 入队。同轨且内容归一后相等/互含 → 不新增,原条 hits+1(理由取新的)。
+   * 入队。同轨同作用域且内容归一后相等 → 不新增,原条 hits+1(理由取新的)。
    * 威胁内容在队列口就拒——脏东西不许排队等着骗确认。
    */
   propose(
@@ -79,13 +82,21 @@ export class SuggestionQueue {
     if (!正) return { ok: false, message: "记忆:提议内容为空" }
     const 险 = scanThreat(正)
     if (险) return { ok: false, message: 险 }
+    // 只有 key 轨有项目/分支作用域；全局轨不能因调用方附带的上下文被拆成多条。
+    const workspace = target === "key" ? 工作区归一(opts?.workspace) : undefined
+    const branches = target === "key" ? 分支归一(opts?.branches) : []
     const now = new Date().toISOString()
     return withLock(dirname(this.file), () => {
       const entries = this.readAll()
       const n = 归一(正)
       // **只按完全相等去重**(审查 debug C5):旧实现用「互相包含」,把「用 uv 管环境,禁 conda,
       // 数据只读」这类更丰富的新建议当成旧短句「用 uv 管环境」的重复,只 hits+1、内容整段丢弃。
-      const 旧 = entries.find((e) => e.target === target && 归一(e.content) === n)
+      const 旧 = entries.find((e) => e.target === target && 归一(e.content) === n && (
+        target !== "key" || (
+          工作区归一(e.workspace) === workspace &&
+          JSON.stringify(分支归一(e.branches)) === JSON.stringify(branches)
+        )
+      ))
       if (旧) {
         旧.hits += 1
         旧.lastSeen = now
@@ -101,8 +112,8 @@ export class SuggestionQueue {
         reason: String(reason ?? "").trim(),
         hits: 1,
         lastSeen: now,
-        ...(opts?.workspace ? { workspace: opts.workspace } : {}),
-        ...(opts?.branches && opts.branches.length > 0 ? { branches: opts.branches } : {}),
+        ...(workspace ? { workspace } : {}),
+        ...(branches.length > 0 ? { branches } : {}),
       })
       this.writeAll(entries)
       return { ok: true, message: "已进待确认队列,用户采纳后写入(下一段会话生效)", hits: 1 }

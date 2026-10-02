@@ -46,6 +46,35 @@ describe("整列缩放", () => {
     expect(d.单元格总数).toBe(0)
   })
 
+  it("旧零变为非零时不是纯缩放，保留所有单元格变化", () => {
+    const d = 比两张表(表("值\n0\n1\n2"), 表("值\n999\n1000\n2000"))
+    expect(d.整列缩放).toEqual([])
+    expect(d.单元格总数).toBe(3)
+    expect(d.单元格[0]).toEqual({ row: 0, column: "值", from: "0", to: "999" })
+  })
+
+  it.each([1000, -2, 0])("零保持零时支持因子 %s", (factor) => {
+    const d = 比两张表(表("值\n0\n1\n2"), 表(`值\n0\n${factor}\n${2 * factor}`))
+    expect(d.整列缩放).toEqual([{ column: "值", factor }])
+    expect(d.单元格总数).toBe(0)
+  })
+
+  it("全零列没有可识别的缩放因子", () => {
+    expect(比两张表(表("值\n0\n0"), 表("值\n0\n0")).整列缩放).toEqual([])
+  })
+
+  it("非零新值的比值下溢不能误报零因子", () => {
+    const d = 比两张表(表("值\n1e308\n1e308"), 表("值\n1e-308\n2e-308"))
+    expect(d.整列缩放).toEqual([])
+    expect(d.单元格总数).toBe(2)
+  })
+
+  it("有限输入的比值溢出时不能报告无限缩放", () => {
+    const d = 比两张表(表("值\n1e-308\n2e-308"), 表("值\n1e308\n1e308"))
+    expect(d.整列缩放).toEqual([])
+    expect(d.单元格总数).toBe(2)
+  })
+
   it("比值不一致就不是缩放，老老实实报格", () => {
     const d = 比两张表(表("样本,值\nA,1\nB,2\n"), 表("样本,值\nA,10\nB,30\n"))
     expect(d.整列缩放).toEqual([])

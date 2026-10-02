@@ -60,6 +60,23 @@ describe("心跳 · 沉默", () => {
     expect(心.停了()).toBe(false)
   })
 
+  it("重连期没回音但确认活着：下一周期恢复，不再确认，也不停止", async () => {
+    const ping = vi.fn<() => Promise<boolean>>()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValue(true)
+    const 沉默 = vi.fn(async () => "活着" as const)
+    const 心 = 造({ ping, 沉默 })
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(心.沉默过几次()).toBe(1)
+    expect(心.停了()).toBe(false)
+    expect(沉默).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(ping).toHaveBeenCalledTimes(3)
+    expect(心.沉默过几次()).toBe(1)
+    expect(沉默).toHaveBeenCalledTimes(1)
+    expect(心.停了()).toBe(false)
+  })
+
   it("确认「死了」→ 停下，不再 ping", async () => {
     const ping = vi.fn(async () => false)
     const 心 = 造({ ping, 沉默: async () => "死了" })

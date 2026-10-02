@@ -76,6 +76,8 @@ export interface RichPayload {
   truncated?: Truncation
   /** 这份输出还带了哪些别的 mime。**摆出来**，人才知道有别的形态可选 */
   alsoAvailable: string[]
+  /** 给模型的纯文字回退，界面的富输出仍用 data。单独应用文字上限。 */
+  textFallback?: { text: string; truncated?: Truncation }
   provenance: Provenance
 }
 
@@ -148,6 +150,9 @@ export function translateOutput(tagged: TaggedMessage): ConsoleEntry[] {
       {
         kind: t === "execute_result" ? "result" : "display",
         ...picked,
+        ...(picked.mediaType !== "text/plain" && !picked.mediaType.startsWith("image/") && bundle["text/plain"] !== undefined
+          ? { textFallback: clampText(Array.isArray(bundle["text/plain"]) ? bundle["text/plain"].map(String).join("") : String(bundle["text/plain"])) }
+          : {}),
         alsoAvailable: Object.keys(bundle).filter((m) => m !== picked.mediaType),
         provenance,
       },

@@ -1,0 +1,2 @@
+npm notice run dawn-science@0.0.15 typecheck
+npm notice run tsc --noEmit

@@ -112,7 +112,7 @@ export function 比两张表(旧: 表格, 新: 表格): 表格差异 {
    * ── 整列缩放：**逐列看，比逐格看有意义得多**。
    *
    * 一列里只要有一格不是数，这一列就不谈缩放——**认不出不等于可以猜**。
-   * `0` 那些格跳过：任何因子乘 0 都是 0，它不带信息。
+   * `0 → 0` 不提供因子信息；`0 → 非零` 则直接否定纯缩放。
    */
   const 整列缩放: { column: string; factor: number }[] = []
   const 被缩放的列 = new Set<number>()
@@ -128,8 +128,19 @@ export function 比两张表(旧: 表格, 新: 表格): 表格差异 {
           全是数 = false
           break
         }
-        if (a === 0) continue
-        比值.push(b / a)
+        if (a === 0) {
+          if (b !== 0) {
+            全是数 = false
+            break
+          }
+          continue
+        }
+        const 比 = b / a
+        if (!Number.isFinite(比) || (比 === 0 && b !== 0)) {
+          全是数 = false
+          break
+        }
+        比值.push(比)
       }
       if (!全是数 || 比值.length < 2) continue
       const f = 比值[0]!

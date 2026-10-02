@@ -41,7 +41,9 @@ describe("开心跳口（真 zmq）", () => {
       await rep.bind(`tcp://127.0.0.1:${端口}`)
       应答 = true
       起回声(rep, () => 应答)
-      expect(await 口.ping()).toBe(true)
+      // bind 完成只代表重新监听；REQ 的断线检测/重连异步，首个 300ms 探针仍可能超时。
+      // 像生产心跳一样逐次重试，验证同一个 relaxed REQ 最终恢复，单次超时保持 300ms。
+      await expect.poll(() => 口!.ping(), { timeout: 3000, interval: 50 }).toBe(true)
     } finally {
       口?.关()
       rep.close()

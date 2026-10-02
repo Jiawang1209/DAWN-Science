@@ -1,0 +1,90 @@
+{
+  "futureStart": {
+    "expected": "2026-11-01T01:00:00.000Z",
+    "actual": null
+  },
+  "dstGap": {
+    "expectedLocal": "03:30 (advance through missing hour)",
+    "actualUtc": "2026-03-08T06:30:00.000Z",
+    "actualLocal": "01:30 (before requested time)"
+  },
+  "quotedDelimiter": {
+    "expectedColumns": 2,
+    "actual": {
+      "columns": [
+        {
+          "name": "id;group;note,value",
+          "inferred": "文本",
+          "missing": 0
+        }
+      ],
+      "rows": [
+        [
+          "a,1"
+        ],
+        [
+          "b,2"
+        ]
+      ],
+      "rowsRead": 2,
+      "totalRows": 2,
+      "delimiter": ";"
+    }
+  },
+  "zeroCellDiff": {
+    "expected": "Report 0 -> 999 separately; not a uniform scale",
+    "actual": {
+      "行": {
+        "旧": 3,
+        "新": 3,
+        "增": 0,
+        "减": 0
+      },
+      "列": [],
+      "整列缩放": [
+        {
+          "column": "x",
+          "factor": 1000
+        }
+      ],
+      "单元格": [],
+      "单元格总数": 0
+    }
+  },
+  "kernelResult": {
+    "expected": "42 present in tool result",
+    "actual": {
+      "文字": "（一份 text/plain 输出，已经显示在对话里）",
+      "出错了": false
+    }
+  },
+  "memoryScope": {
+    "expected": "Two separately scoped suggestions",
+    "actual": [
+      {
+        "id": "32b14a32-b5bb-43b6-bdec-c600ee6e3dd8",
+        "time": "2026-10-02T04:58:46.398Z",
+        "target": "key",
+        "content": "原始数据只读",
+        "reason": "project B",
+        "hits": 2,
+        "lastSeen": "2026-10-02T04:58:46.399Z",
+        "workspace": "/project-A",
+        "branches": [
+          "main"
+        ]
+      }
+    ]
+  },
+  "concurrentDownloads": {
+    "expected": "Distinct reserved paths",
+    "actual": [
+      "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-review-R21Z99/result.csv",
+      "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-review-R21Z99/result.csv"
+    ]
+  },
+  "memoryIoFailure": {
+    "expected": "Keep suggestion after storage exception",
+    "actualPending": 0
+  }
+}

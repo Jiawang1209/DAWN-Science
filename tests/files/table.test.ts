@@ -29,6 +29,16 @@ describe("认分隔符 · 看内容，不看扩展名", () => {
   it("一个都没有 → 当成逗号（单列文件也是一张表，不报错）", () => {
     expect(认分隔符("只有一列")).toBe(",")
   })
+  it("忽略引号里的候选分隔符及转义引号", () => {
+    expect(认分隔符('"id;group;note",value')).toBe(",")
+    expect(认分隔符('"id"";group;note";value')).toBe(";")
+    expect(认分隔符('"id,group,note"\tvalue')).toBe("\t")
+  })
+
+  it("首行候选混杂时以多行列数一致性判断", () => {
+    expect(认分隔符("id;group;note,value\na,1\nb,2")).toBe(",")
+  })
+
   it("谁多算谁 —— 一行里几种都有时不猜错", () => {
     expect(认分隔符("a,b;c;d;e")).toBe(";")
   })
@@ -80,6 +90,27 @@ describe("推断列类型 · 猜出来的东西要能说清是猜的", () => {
 
 describe("读成表", () => {
   const 样本 = "name,age,score\n小明,12,1.5\n小红,,2.5\n"
+
+  it("带引号和分号的表头仍读成逗号分隔的两列", () => {
+    const csv = '"id;group;note",value\na,1\nb,2'
+    const t = 读成表(csv, true)
+    expect(t.delimiter).toBe(",")
+    expect(t.columns.map((c) => c.name)).toEqual(["id;group;note", "value"])
+    expect(t.rows).toEqual([["a", "1"], ["b", "2"]])
+    expect(像表格吗(csv)).toBe(true)
+  })
+
+  it("读表与文本表格判断都使用多行一致性", () => {
+    const csv = "id;group;note,value\na,1\nb,2"
+    expect(读成表(csv, true).delimiter).toBe(",")
+    expect(像表格吗(csv)).toBe(true)
+  })
+
+  it("多行引号字段中的候选分隔符不影响判断", () => {
+    const csv = '"id;group;\nnote",value\na,1\nb,2'
+    expect(读成表(csv, true).columns.map((c) => c.name)).toEqual(["id;group;\nnote", "value"])
+    expect(像表格吗(csv)).toBe(true)
+  })
 
   it("列名、行数、每列类型与缺失都对", () => {
     const t = 读成表(样本, true)

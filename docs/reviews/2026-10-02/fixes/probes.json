@@ -1,0 +1,124 @@
+{
+  "futureStart": {
+    "expected": "2026-11-01T01:00:00.000Z",
+    "actual": "2026-11-01T01:00:00.000Z"
+  },
+  "dstGap": {
+    "expectedLocal": "03:30 (advance through missing hour)",
+    "actualUtc": "2026-03-08T07:30:00.000Z",
+    "actualLocal": "03:30 (advanced through missing hour)"
+  },
+  "quotedDelimiter": {
+    "expectedColumns": 2,
+    "actual": {
+      "columns": [
+        {
+          "name": "id;group;note",
+          "inferred": "文本",
+          "missing": 0
+        },
+        {
+          "name": "value",
+          "inferred": "整数",
+          "missing": 0
+        }
+      ],
+      "rows": [
+        [
+          "a",
+          "1"
+        ],
+        [
+          "b",
+          "2"
+        ]
+      ],
+      "rowsRead": 2,
+      "totalRows": 2,
+      "delimiter": ","
+    }
+  },
+  "zeroCellDiff": {
+    "expected": "Report 0 -> 999 separately; not a uniform scale",
+    "actual": {
+      "行": {
+        "旧": 3,
+        "新": 3,
+        "增": 0,
+        "减": 0
+      },
+      "列": [],
+      "整列缩放": [],
+      "单元格": [
+        {
+          "row": 0,
+          "column": "x",
+          "from": "0",
+          "to": "999"
+        },
+        {
+          "row": 1,
+          "column": "x",
+          "from": "1",
+          "to": "1000"
+        },
+        {
+          "row": 2,
+          "column": "x",
+          "from": "2",
+          "to": "2000"
+        }
+      ],
+      "单元格总数": 3
+    }
+  },
+  "kernelResult": {
+    "expected": "42 present in tool result",
+    "actual": {
+      "文字": "42",
+      "出错了": false
+    }
+  },
+  "memoryScope": {
+    "expected": "Two separately scoped suggestions",
+    "actual": [
+      {
+        "id": "0a7f8ece-a4e0-42ca-96cc-346abce8a814",
+        "time": "2026-10-02T05:28:40.727Z",
+        "target": "key",
+        "content": "原始数据只读",
+        "reason": "project A",
+        "hits": 1,
+        "lastSeen": "2026-10-02T05:28:40.727Z",
+        "workspace": "/project-A",
+        "branches": [
+          "main"
+        ]
+      },
+      {
+        "id": "a1883f9e-6eb2-46be-86a6-60dece9f0e88",
+        "time": "2026-10-02T05:28:40.728Z",
+        "target": "key",
+        "content": "原始数据只读",
+        "reason": "project B",
+        "hits": 1,
+        "lastSeen": "2026-10-02T05:28:40.728Z",
+        "workspace": "/project-B",
+        "branches": [
+          "dev"
+        ]
+      }
+    ]
+  },
+  "concurrentDownloads": {
+    "expected": "Distinct reserved paths",
+    "actual": [
+      "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-review-ko17AA/result.csv",
+      "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-review-ko17AA/result (1).csv"
+    ]
+  },
+  "memoryIoFailure": {
+    "expected": "Keep suggestion after storage exception",
+    "actualPending": 1
+  }
+}

@@ -700,6 +700,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     目标: string
   }
   const 传输们 = new Map<string, 传输记录>()
+  // 同步保留名字：传输完成前最终文件还不存在，不能只靠 stat/exists。
+  const 下载目标们 = new Set<string>()
+  const 上传目标们 = new Set<string>()
+  const 上传键 = (connectionId: string, path: string) => JSON.stringify([connectionId, path])
   /**
    * 传输到终态后延时回收(审查 debug F10)。此前 `传输们` 只增不减——每传一个文件留一条,
    * 长时间跑一堆传输后内存里全是 done/failed 的僵尸记录。保留一小段(客户端还在轮 `transferStatus`,
@@ -776,13 +780,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 默默覆盖是这里唯一不能选的：**你可能正在覆盖昨天那一版结果**。
    */
   const 不覆盖的名字 = (p: string) => {
-    if (!existsSync(p)) return p
-    const 点 = p.lastIndexOf(".")
-    const 主 = 点 > p.lastIndexOf("/") ? p.slice(0, 点) : p
-    const 尾 = 点 > p.lastIndexOf("/") ? p.slice(点) : ""
+    const 可用 = (path: string) => !existsSync(path) && !下载目标们.has(path)
+    if (可用(p)) return p
+    const 尾 = extname(p)
+    const 主 = 尾 ? p.slice(0, -尾.length) : p
     for (let i = 1; i < 1000; i++) {
       const 试 = `${主} (${i})${尾}`
-      if (!existsSync(试)) return 试
+      if (可用(试)) return 试
     }
     throw fault("invalid_request", "{0} 这个名字已经有上千份了，换个下载目录吧", p)
   }
@@ -2953,12 +2957,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         m.queue.putBack(条)
         return { ok: false, message: "key 建议需要项目工作区——带上 workspace 再采纳（建议留在队列里）" }
       }
-      const r =
-        decision === "approve"
-          ? m.store.add(终轨, 终文, ctx)
-          // 归档一条建议 = **一步直落归档文件**（审查 debug Cx）。此前是 add 到主轨→archive 两步非原子:
-          // archive 按前 40 字匹配,撞多条就失败,而那时条目已经在主轨上、会被注入——与「归档=不注入」相反。
-          : m.store.addArchived(终轨, 终文, ctx)
+      let r: ReturnType<typeof m.store.add>
+      try {
+        r =
+          decision === "approve"
+            ? m.store.add(终轨, 终文, ctx)
+            // 直接归档，不先写主轨，避免失败时留下可注入的条目。
+            : m.store.addArchived(终轨, 终文, ctx)
+      } catch (error) {
+        try {
+          m.queue.putBack(条)
+        } catch {
+          // 队列本身也不可写时仍保留原存储异常，不能让回滚异常掩盖根因。
+        }
+        throw error
+      }
       if (!r.ok && !r.duplicate) {
         m.queue.putBack(条)
         return { ok: false, message: `${r.message}（建议留在队列里）` }
@@ -3893,6 +3906,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       mkdirSync(目录, { recursive: true })
       const name = path.split("/").filter(Boolean).at(-1) ?? "下载"
       const 目标 = 不覆盖的名字(join(目录, name))
+      下载目标们.add(目标)
       const id = `tr-${randomUUID()}`
       const ac = new AbortController()
       const 一条: 传输记录 = { 已传: 0, 状态: "running", ac, 目标 }
@@ -3919,7 +3933,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           一条.状态 = ac.signal.aborted ? "cancelled" : "failed"
           一条.错 = err instanceof Error ? err.message : String(err)
         })
-        .finally(() => 终结传输(id)) // 终态后延时回收(F10)
+        .finally(() => { 下载目标们.delete(目标); 终结传输(id) })
       return { transferId: id, name, target: 目标 }
     },
 
@@ -4088,7 +4102,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         .stat(目标)
         .then(() => true)
         .catch(() => false)
-      if (已经有了) {
+      const 正在上传 = (path: string) => 上传目标们.has(上传键(connectionId, path))
+      if (已经有了 || 正在上传(目标)) {
         if (onConflict === "ask") return { kind: "conflict" as const, name }
         if (onConflict === "keepBoth") {
           const 点 = name.lastIndexOf(".")
@@ -4098,7 +4113,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           for (let i = 1; i < 1000 && !找到; i++) {
             const 试 = `${根}/${主} (${i})${尾}`
             const 有 = await e.stat(试).then(() => true).catch(() => false)
-            if (!有) {
+            if (!有 && !正在上传(试)) {
               目标 = 试
               找到 = true
             }
@@ -4107,7 +4122,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         }
       }
 
+      if (正在上传(目标)) throw fault("conflict", "{0} 正在上传，等它结束后再试", 目标)
       const 本地大小 = statSync(localPath).size
+      const 占位 = 上传键(connectionId, 目标)
+      上传目标们.add(占位)
       const id = `tr-${randomUUID()}`
       const ac = new AbortController()
       const 一条: 传输记录 = { 已传: 0, 总共: 本地大小, 状态: "running", ac, 目标 }
@@ -4137,7 +4155,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           // **失败也记**：「它试过往一个只读目录传东西」本身就是事实
           记一次上传?.(connectionId, 目标, 本地大小, 一条.错)
         })
-        .finally(() => 终结传输(id)) // 终态后延时回收(F10)
+        .finally(() => { 上传目标们.delete(占位); 终结传输(id) })
       return { kind: "started" as const, transferId: id, target: 目标 }
     },
 

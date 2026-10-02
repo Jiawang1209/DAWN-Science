@@ -6,7 +6,7 @@
  *
  * **带时区**，但不引 luxon：四种计划只需要「某时区的 y-m-d HH:mm 对应哪个 UTC 时刻」，
  * `Intl.DateTimeFormat` 的 `formatToParts` 能把一个 UTC 时刻折成该时区的本地分量，
- * 两次迭代就能反解（夏令时切换那一小时除外——那时取靠后的那个解，与 luxon 的行为一致）。
+ * 用切换前后的偏移反解：重复时段取第一次，夏令时空洞按偏移变化向后平移。
  */
 
 export type 计划 =
@@ -61,18 +61,22 @@ export function 本地分量(ms: number, zone: string): { y: number; m: number; 
   return { y: Number(取["year"]), m: Number(取["month"]), d: Number(取["day"]), h: Number(取["hour"]) % 24, mi: Number(取["minute"]), wd }
 }
 
-/** 该时区的 y-m-d h:mi 是哪个 UTC 时刻（ISO）。夏令时空洞取靠后的解 */
+/** 该时区的 y-m-d h:mi 是哪个 UTC 时刻（ISO）。重复取早，空洞向后平移 */
 export function 本地时刻转UTC(y: number, m: number, d: number, h: number, mi: number, zone: string): string {
-  // 先把本地分量当成 UTC，再用「那一刻在该时区显示的分量」与目标的差去修正，两轮收敛
-  let 猜 = Date.UTC(y, m - 1, d, h, mi)
-  for (let i = 0; i < 2; i++) {
-    const 本 = 本地分量(猜, zone)
-    const 显示 = Date.UTC(本.y, 本.m - 1, 本.d, 本.h, 本.mi)
-    const 差 = 显示 - Date.UTC(y, m - 1, d, h, mi)
-    if (差 === 0) break
-    猜 -= 差
+  const 目标 = Date.UTC(y, m - 1, d, h, mi)
+  const 显示时刻 = (t: number): number => {
+    const 本 = 本地分量(t, zone)
+    return Date.UTC(本.y, 本.m - 1, 本.d, 本.h, 本.mi)
   }
-  return new Date(猜).toISOString()
+  // 两侧采样涵盖切换前后偏移；不固定偏移为整小时，也不在空洞中迭代振荡。
+  const 偏移 = new Set([-一天, 0, 一天].map(差 => 显示时刻(目标 + 差) - (目标 + 差)))
+  const 候选 = [...偏移].map(差 => 目标 - 差).sort((a, b) => a - b)
+  const 精确 = 候选.find(t => 显示时刻(t) === 目标)
+  if (精确 !== undefined) return new Date(精确).toISOString()
+  // 不存在的本地时间取显示在目标之后的候选，例如 02:30 → 03:30。
+  const 靠后 = 候选.filter(t => 显示时刻(t) > 目标)
+    .sort((a, b) => 显示时刻(a) - 显示时刻(b))[0]!
+  return new Date(靠后).toISOString()
 }
 
 const 分钟 = 60_000
@@ -97,8 +101,19 @@ export function 下一次(p: 计划, after: string): string | null {
   }
   const [h, mi] = p.time.split(":").map(Number) as [number, number]
   const 本 = 本地分量(a, p.timeZone)
-  // 从「after 那天」起逐天找第一个严格大于 after 且合规则的候选；每周最多看 8 天、每月最多 62 天、每 N 天最多 N+1 天
-  const 最多 = p.kind === "monthly" ? 62 : p.kind === "everyDays" ? p.everyDays + 1 : 8
+  if (p.kind === "everyDays") {
+    const [sy, sm, sd] = p.start.split("-").map(Number) as [number, number, number]
+    const 差 = Math.round((Date.UTC(本.y, 本.m - 1, 本.d) - Date.UTC(sy, sm - 1, sd)) / 一天)
+    const 第几次 = Math.max(0, Math.ceil(差 / p.everyDays))
+    const 候选 = (k: number): string => {
+      const [y, m, d] = 加天(sy, sm, sd, k * p.everyDays)
+      return 本地时刻转UTC(y, m, d, h, mi, p.timeZone)
+    }
+    const t = 候选(第几次)
+    return Date.parse(t) > a ? t : 候选(第几次 + 1)
+  }
+  // 从 after 那天起逐天找；每周最多看 8 天、每月最多 62 天。
+  const 最多 = p.kind === "monthly" ? 62 : 8
   for (let i = 0; i <= 最多; i++) {
     const [y, m, d] = 加天(本.y, 本.m, 本.d, i)
     if (!这天合规则(p, y, m, d)) continue
@@ -134,7 +149,21 @@ export function 最近一次到期(p: 计划, now: string): string | null {
   }
   const [h, mi] = p.time.split(":").map(Number) as [number, number]
   const 本 = 本地分量(n, p.timeZone)
-  const 最多 = p.kind === "monthly" ? 62 : p.kind === "everyDays" ? p.everyDays + 1 : 8
+  if (p.kind === "everyDays") {
+    const [sy, sm, sd] = p.start.split("-").map(Number) as [number, number, number]
+    const 差 = Math.round((Date.UTC(本.y, 本.m - 1, 本.d) - Date.UTC(sy, sm - 1, sd)) / 一天)
+    let 第几次 = Math.floor(差 / p.everyDays)
+    if (第几次 < 0) return null
+    const 候选 = (k: number): string => {
+      const [y, m, d] = 加天(sy, sm, sd, k * p.everyDays)
+      return 本地时刻转UTC(y, m, d, h, mi, p.timeZone)
+    }
+    const t = 候选(第几次)
+    if (Date.parse(t) <= n) return t
+    第几次--
+    return 第几次 < 0 ? null : 候选(第几次)
+  }
+  const 最多 = p.kind === "monthly" ? 62 : 8
   for (let i = 0; i <= 最多; i++) {
     const [y, m, d] = 加天(本.y, 本.m, 本.d, -i)
     if (!这天合规则(p, y, m, d)) continue

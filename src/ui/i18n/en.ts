@@ -1491,6 +1491,7 @@ export const EN: Readonly<Record<string, string>> = {
   "算不出 {0} 的差异：{1}": "Could not compute the diff for {0}: {1}",
   "找不到 {0}：{1}": "Could not find {0}: {1}",
   "不能删工作区本身——要删就删里面的东西": "The workspace itself cannot be deleted — delete things inside it instead",
+  "{0} 正在上传，等它结束后再试": "{0} is being uploaded; wait for it to finish and try again",
   "{0} 这个名字在那台机器上已经有上千份了": "There are already over a thousand files named {0} on that machine",
   "没有这次传输：{0}": "No such transfer: {0}",
   "工作目录要写绝对路径，收到「{0}」": "The working folder must be an absolute path; got “{0}”",

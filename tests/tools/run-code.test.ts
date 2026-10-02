@@ -8,6 +8,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { readFileSync } from "node:fs"
 import { createRunCodeTool, 内核指引, 摘要 } from "../../src/tools/run-code.js"
+import { translateOutput } from "../../src/kernel/outputs.js"
 import { 对话内核 } from "../../src/kernel/挂载.js"
 import type { SessionId } from "../../src/runtime/types.js"
 
@@ -42,6 +43,47 @@ const 跑 = (工具: ReturnType<typeof createRunCodeTool>, p: Record<string, unk
   工具.execute("c1", p as { language?: unknown; code?: unknown })
 
 describe("摘要 · 给模型的那段文字", () => {
+  it("表达式的 text/plain 结果直接交给模型", () => {
+    expect(摘要([{ kind: "result", mediaType: "text/plain", data: "42" }]).文字).toBe("42")
+    expect(摘要([{ kind: "display", mediaType: "application/json", data: '{"mean": 3.14}' }]).文字).toContain('"mean": 3.14')
+  })
+
+  it("富表格保留纯文字回退，界面继续拿 HTML", () => {
+    const output = translateOutput({
+      message: { header: { msg_id: "m", msg_type: "execute_result" }, parent_header: {}, metadata: {}, content: {
+        data: { "text/html": "<table><tr><td>3.14</td></tr></table>", "text/plain": ["mean\n", "3.14"] },
+      } },
+      provenance: { kernelInstanceId: "k", kernelRevision: 1 },
+    })
+    expect(output[0]).toMatchObject({ mediaType: "text/html", data: "<table><tr><td>3.14</td></tr></table>" })
+    expect(摘要(output).文字).toBe("mean\n3.14")
+  })
+
+  it("超大 HTML 不渲染，但纯文字回退仍给模型并说明截断", () => {
+    const output = translateOutput({
+      message: { header: { msg_id: "large", msg_type: "execute_result" }, parent_header: {}, metadata: {}, content: {
+        data: { "text/html": "x".repeat(5 * 1024 * 1024 + 1), "text/plain": "mean 3.14" },
+      } },
+      provenance: { kernelInstanceId: "k", kernelRevision: 1 },
+    })
+    expect(output[0]).toMatchObject({ tooLarge: true, data: "", textFallback: { text: "mean 3.14" } })
+    expect(摘要(output).文字).toContain("mean 3.14")
+    expect(摘要(output).文字).toContain("太大没有渲染")
+    expect(摘要([{ kind: "display", mediaType: "text/html", tooLarge: true,
+      textFallback: { text: "mean 3.14", truncated: { originalBytes: 200000, keptBytes: 102400 } },
+    }]).文字).toContain("原始 200000 字节，保留 102400 字节")
+    expect(摘要([{ kind: "display", mediaType: "image/png", tooLarge: true,
+      data: "image bytes", textFallback: { text: "image fallback" },
+    }]).文字).toBe("（一份 image/png 输出，太大没有渲染）")
+  })
+
+  it("表达式结果也受工具输出上限约束", () => {
+    const r = 摘要([{ kind: "result", mediaType: "text/plain", data: "数值\n".repeat(20000) }])
+    expect(r.文字).toContain("数值")
+    expect(r.文字).toContain("省略约")
+    expect(Buffer.byteLength(r.文字)).toBeLessThan(52 * 1024)
+  })
+
   it("stdout 原样给，stderr 单独标 —— 混在一起会让人漏看报错", () => {
     const r = 摘要([
       { kind: "stream", stream: "stdout", text: "12438 rows" },

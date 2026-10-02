@@ -84,6 +84,20 @@ describe("stat", () => {
 })
 
 describe("下载", () => {
+  it("直接并发下载同一目标时，临时文件互不干扰", async () => {
+    const r = await 连上()
+    try {
+      const 到 = join(临时, "same.csv")
+      const results = await Promise.allSettled([
+        r.download(`${假家目录}/数据/样本.csv`, 到),
+        r.download(`${假家目录}/数据/样本.csv`, 到),
+      ])
+      expect(results.map(x => x.status)).toEqual(["fulfilled", "fulfilled"])
+      expect(readFileSync(到, "utf8")).toBe("id,值\n1,3.14\n2,2.72\n")
+      expect(readdirSync(临时)).toEqual(["same.csv"])
+    } finally { r.close() }
+  })
+
   it("内容一字不差", async () => {
     const r = await 连上()
     const 到 = join(临时, "样本.csv")

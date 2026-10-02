@@ -1016,8 +1016,6 @@ pre {
   display: flex;
   flex-direction: column;
   gap: var(--dawn-space-2);
-  /* 更舒展：WorkBuddy 的输入区留白明显大，且**输入框本身就高**——
-     一个矮框会让人觉得「只能写一句」 */
   /**
    * **按 WorkBuddy 运行中的 DOM 实测改**（2026-08-12）。
    *
@@ -1033,7 +1031,6 @@ pre {
    * 一个只靠阴影浮起来的面看起来是「可以往里写东西的地方」。
    */
   padding: var(--dawn-space-3) var(--dawn-space-3) var(--dawn-space-2);
-  min-height: 8.5rem;
   background: var(--dawn-surface-input);
   border-radius: var(--dawn-radius-composer) var(--dawn-radius-composer) 0 0;
 }
@@ -1132,15 +1129,18 @@ pre {
  * 是按 `\binput\b` 匹配的，`-input` 会被它命中。
  * 规则说的是「加 class，不要抄属性」，这里正是在加 class。
  *
- * `resize: vertical` 留着：圆角卡里那个拖拽角不算好看，
- * **但为了好看去掉一个能用的东西是亏的**。
+ * 文本区随 DOM 内容增高，到 240px（小窗口为视口的 30%）后才滚动。
+ * 使用浏览器原生内容尺寸，中文组词、外部草稿写回和宽度变化都会直接参与布局。
  */
 .composer-field {
+  field-sizing: content;
   min-height: 44px; /* 规范 §3.5：文本区 712×44 */
+  max-height: max(44px, min(240px, 30vh));
+  overflow-y: auto;
   padding: var(--dawn-space-2);
   border: 0;
   background: transparent;
-  resize: vertical;
+  resize: none;
   font-size: var(--dawn-chat-size);
   line-height: var(--dawn-chat-leading);
 }
@@ -7275,6 +7275,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
    不写 z-index：两者都定位过，textarea 在 DOM 后面天然压在镜像层上 */
 .composer-input-wrap > textarea.composer-field { position: relative; text-align: start; }
 .composer-hl {
+  field-sizing: fixed;
   position: absolute;
   inset: 0;
   pointer-events: none;

@@ -40,7 +40,7 @@ import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
 import { 方案卡, 先出方案开关 } from "./plan-card.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
-import { 扫引用, 剥掉粘贴标记 } from "../files/mentions.js"
+import { 扫引用, 扫内核指令, 剥掉粘贴标记 } from "../files/mentions.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 import { 默认转录预算 } from "./transcript-budget.js"
@@ -987,7 +987,7 @@ export function 引用高亮层({ text, 滚 }: { text: string; 滚: number }) {
   useEffect(() => {
     if (层.current) 层.current.scrollTop = 滚
   })
-  const 引用们 = 扫引用(text)
+  const 引用们 = [...扫引用(text), ...扫内核指令(text)].sort((a, b) => a.start - b.start)
   if (引用们.length === 0) return null
   const 段: React.ReactNode[] = []
   let pos = 0
@@ -3859,6 +3859,7 @@ export function ConversationView({
   onExport,
   权限,
   引用文件,
+  护粘贴,
   onOpenReference,
   session,
   items: 传进来的items,
@@ -4099,6 +4100,7 @@ export function ConversationView({
   权限?: { 当前: 权限档; 跟随默认: boolean; onPick: (档: 权限档, 也作为默认: boolean) => void } | undefined
   /** `@` 引用工作区文件（2026-08-23，学自 dsh-at-file）：文件在哪、怎么取；点引用栏怎么开 */
   引用文件?: 引用文件源 | undefined
+  护粘贴?: boolean | undefined
   onOpenReference?: ((path: string) => void) | undefined
   disabled?: boolean | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
@@ -5283,7 +5285,7 @@ export function ConversationView({
           {艾特位 ? (
             <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(draft, 艾特位, x.path, x.kind))} />
           ) : null}
-          <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => setDraft(session.sessionId, 抠掉引用(draft, p))} />
+          <AtRail draft={draft} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p, kind) => setDraft(session.sessionId, 抠掉引用(draft, p, kind))} />
           <ComposerInputSurface
             fingerprint={[
               session.sessionId,
@@ -5303,6 +5305,7 @@ export function ConversationView({
               艾特关了,
               艾特态.行,
               引用文件,
+              护粘贴,
               onSend,
               onAbort,
               onSetPlan,
@@ -5367,7 +5370,7 @@ export function ConversationView({
               }
               if (粘的是图(e)) e.preventDefault()
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
-              else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
+              else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
             }}
             placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
@@ -7073,6 +7076,7 @@ export function EmptyConversation({
   dockOpen,
   权限,
   引用文件,
+  护粘贴,
   onOpenReference,
   onEnhance,
   onCancelEnhance,
@@ -7097,6 +7101,7 @@ export function EmptyConversation({
   dockOpen?: boolean | undefined
   /** `@` 引用：选了工作目录才有源；没有就在菜单里说清 */
   引用文件?: 引用文件源 | undefined
+  护粘贴?: boolean | undefined
   onOpenReference?: ((path: string) => void) | undefined
   /** 提示词增强（2026-08-21）。空态屏用配置里第一个 API 模型 */
   onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
@@ -7463,7 +7468,7 @@ export function EmptyConversation({
               {艾特位 ? (
                 <AtMenu 态={艾特态} selected={艾特选中} 有源={Boolean(引用文件)} onHover={设艾特选中} onPick={(x) => 写回(艾特选完(草稿, 艾特位, x.path, x.kind))} />
               ) : null}
-              <AtRail draft={草稿} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p) => 设草稿(抠掉引用(草稿, p))} />
+              <AtRail draft={草稿} 正在打={艾特位?.start} onOpen={onOpenReference} onRemove={(p, kind) => 设草稿(抠掉引用(草稿, p, kind))} />
               <div className="composer-input-wrap">
               <引用高亮层 text={草稿} 滚={空高亮滚} />
               <草稿输入框
@@ -7515,7 +7520,7 @@ export function EmptyConversation({
                     return
                   }
                   if (粘的是图(e)) e.preventDefault()
-                  else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }))
+                  else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
                 }}
                 placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
                 onKeyDown={(e) => {

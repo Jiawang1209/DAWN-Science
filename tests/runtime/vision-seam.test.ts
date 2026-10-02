@@ -6,6 +6,7 @@
  * 端到端那一半（mock 服务器真收到转述文字）归 e2e。
  */
 import { describe, expect, it, vi } from "vitest"
+import { 本轮内核语言, 内核请求标记 } from "../../src/kernel/shortcuts.js"
 import { NativeRuntime } from "../../src/runtime/native.js"
 import type { AgentEvent } from "../../src/runtime/types.js"
 
@@ -59,6 +60,21 @@ describe("writeWithImages 的分岔", () => {
       expect(送了[0]!.data).toContain("qwen-vl 转述")
       expect(送了[0]!.images).toEqual(一张图)
       expect(说了.join("")).toContain("已由 qwen-vl 转述")
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it("图片转述后仍保留本轮指定语言与待发原文身份", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: "图表" } }] }))))
+    try {
+      const { rt, 送了 } = 摆一段({ vision: () => 端点 })
+      const data = "@R 看这张" + "\n\n" + 内核请求标记(["R"])
+      rt.writeWithImages("s1" as never, data, 一张图)
+      await vi.waitFor(() => expect(送了).toHaveLength(1))
+      expect(送了[0]!.data).toContain(data)
+      expect(送了[0]!.data).toContain("图表")
+      expect(本轮内核语言([{ role: "user", content: 送了[0]!.data }])).toEqual(["R"])
     } finally {
       vi.unstubAllGlobals()
     }

@@ -1185,7 +1185,6 @@ export const EN: Readonly<Record<string, string>> = {
   "先选一个工作目录，才有文件可以引用": "Pick a working directory first — then there are files to reference",
   "正在找…": "Looking…",
   "没有对上的文件": "No matching file",
-  "↑↓ 挑，回车引用；→ 进目录": "↑↓ to choose, Enter to reference, → to enter a directory",
   "引用的文件": "Referenced files",
   "不引用 {0}": "Drop reference {0}",
 
@@ -1779,4 +1778,11 @@ export const EN: Readonly<Record<string, string>> = {
   "先写分析方案，你批了再动手；方案期只看不改": "Write the analysis plan first and act only after you approve it; nothing is changed while planning",
   "退出生成方案": "Leave plan mode",
   "生成方案：先写方案，批了再做": "Generate a plan: write it, act after approval",
+  "不使用 @{0}": "Do not use @{0}",
+  "会话不存在：{0}": "Session does not exist: {0}",
+  "使用 R 或 Python 内核运行代码": "Run code in R or Python",
+  "使用 R 内核运行代码": "Run code in R",
+  "使用 Python 内核运行代码": "Run code in Python",
+  "↑↓ 挑，回车选择；→ 进目录": "↑↓ choose, Enter select; → open directory",
+  "这类会话没有 run_code 内核，请在内置模型会话中使用 @R、@Py 或 @RPython": "This session has no run_code kernel. Use @R, @Py, or @RPython in a built-in model chat",
 }

@@ -151,6 +151,25 @@ describe("真实后端 · 经服务端端到端", () => {
     repo = newRepo()
   })
 
+  it("@R 指令附给模型但不伪装成文件引用；下一句不会继承", async () => {
+    writeFileSync(join(repo, "R"), "not a shortcut file")
+    writeFileSync(join(repo, "data.csv"), "x\n1")
+    const task = await ctx.backend.createTask({ agentId: "ds-chat", workspace: repo }) as { sessionId: string }
+    await ctx.backend.acquireLease({ sessionId: task.sessionId, holder: "user" })
+    await ctx.backend.writeToSession({ sessionId: task.sessionId, as: "user", data: "@R 看 @data.csv" })
+    expect(ctx.runtime.written.at(-1)).toContain('<run-code-request languages="R">')
+    expect(ctx.runtime.written.at(-1)).toContain('<workspace-reference path="data.csv"')
+    expect(ctx.runtime.written.at(-1)).not.toContain('<workspace-reference path="R"')
+    await ctx.backend.writeToSession({ sessionId: task.sessionId, as: "user", data: "普通问题" })
+    expect(ctx.runtime.written.at(-1)).toBe("普通问题")
+  })
+
+  it("非 native 会话使用内核入口明确拒绝，不写入终端", async () => {
+    const task = await ctx.backend.createTask({ agentId: "claude-code", workspace: repo }) as { sessionId: string }
+    await expect(ctx.backend.writeToSession({ sessionId: task.sessionId, as: "user", data: "@Py 算一下" })).rejects.toThrow(/没有 run_code/)
+    expect(ctx.runtime.written).toEqual([])
+  })
+
   it("browserObserve 没开如实说；browserFrame 响亮拒（2026-08-25 旁观面）", async () => {
     const d = (await ctx.backend.browserObserve({})) as { open: boolean; history: unknown[] }
     expect(d.open).toBe(false)

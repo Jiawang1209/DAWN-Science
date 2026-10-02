@@ -139,6 +139,8 @@ export function createRunCodeTool(opts: {
   内核: 对话内核
   /** 测试用：覆盖 `中断后最多等` */
   中断等待毫秒?: number
+  /** 只约束已经送达的本轮消息；未指定时保留自动选语言的行为。 */
+  允许语言?: () => readonly 内核语言[] | undefined
 }) {
   return {
     name: "run_code",
@@ -167,6 +169,8 @@ export function createRunCodeTool(opts: {
         return text(`language 要给 "python" 或 "R"，收到的是 ${JSON.stringify(语言)}。`, true)
       }
       const lang = 语言 as 内核语言
+      const allowed = opts.允许语言?.()
+      if (allowed && !allowed.includes(lang)) return text(`本次消息指定使用 ${allowed.join("、")}，请用允许的语言调用 run_code。`, true)
       const code = typeof params.code === "string" ? params.code : ""
       if (!code.trim()) return text("code 是空的，没有东西可以跑。", true)
 

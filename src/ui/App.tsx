@@ -4055,6 +4055,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const switchProblem = 换模型问题[s.sessionId]
     return {
       // 主区那段用主区的根；坞里那段用它自己的（见 `坞引用文件`）
+      护粘贴: 艾特设置.ignorePasted,
       ...(槽 === 主槽 ? { 引用文件, onOpenReference: 打开引用 } : { 引用文件: 坞引用文件, onOpenReference: 坞打开引用 }),
       loadLocalImage: 读本机图,
       loadGalleryRoots: 载图廊根们,
@@ -5480,6 +5481,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               权限={{ 当前: 权限档, onPick: (档) => 设默认档(档) }}
               dockOpen={dockOpen}
               引用文件={引用文件}
+              护粘贴={艾特设置.ignorePasted}
               onOpenReference={打开引用}
               onToggleDock={toggleDock}
               onEnhance={去增强(undefined)}

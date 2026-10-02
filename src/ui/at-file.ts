@@ -2,7 +2,8 @@
  * 输入卡上 `@` 菜单的纯逻辑（2026-08-23，学自 dsh-at-file）。
  * 识别语法从 `files/mentions.ts` 取，这里只管：光标前是不是在打一个 `@`、选完怎么写回草稿、候选怎么排。
  */
-import { 扫引用, 粘贴标记 } from "../files/mentions.js"
+import { 认内核快捷 } from "../kernel/shortcuts.js"
+import { 扫引用, 扫内核指令, 粘贴标记 } from "../files/mentions.js"
 
 export interface 艾特位置 {
   /** `@` 所在下标 */
@@ -30,15 +31,16 @@ export function 在打艾特(draft: string, caret: number): 艾特位置 | undef
 }
 
 /** 选了一条：写成 `@路径 `（目录是 `@路径/ `）；→ 钻目录则是 `@路径/` 不加空格、菜单不关 */
-export function 艾特选完(draft: string, 位: 艾特位置, path: string, kind: "file" | "dir", 钻进去 = false): { draft: string; caret: number } {
+export function 艾特选完(draft: string, 位: 艾特位置, path: string, kind: "file" | "dir" | "kernel", 钻进去 = false): { draft: string; caret: number } {
   const 令牌 = `@${path}${kind === "dir" ? "/" : ""}${钻进去 ? "" : " "}`
   const 新 = draft.slice(0, 位.start) + 令牌 + draft.slice(位.end)
   return { draft: 新, caret: 位.start + 令牌.length }
 }
 
 /** 从草稿里抠掉一个引用（引用栏的 ×）。跟着的那个空格一起抠 */
-export function 抠掉引用(draft: string, path: string): string {
-  const r = 扫引用(draft).find((x) => x.path === path)
+export function 抠掉引用(draft: string, path: string, kind?: "kernel" | "file"): string {
+  const file = kind === "kernel" ? undefined : 扫引用(draft).find(x => x.path === path)
+  const r = file ?? (kind === "file" ? undefined : 扫内核指令(draft).find(x => x.token === path))
   if (!r) return draft
   const end = draft[r.end] === " " ? r.end + 1 : r.end
   return draft.slice(0, r.start) + draft.slice(end)
@@ -137,11 +139,12 @@ function 给名字打分(name: string, q: string): number {
 
 export interface 候选行 {
   path: string
-  kind: "file" | "dir"
+  kind: "file" | "dir" | "kernel"
   /** 主标题：文件名；重名时把父目录写进来——人眼扫的是主标题，不靠描述行救 */
   name: string
   /** 父目录，根下的没有 */
   dir?: string
+  description?: string
 }
 
 export function 成候选行(条: readonly 路径条目[]): 候选行[] {
@@ -155,6 +158,6 @@ export function 成候选行(条: readonly 路径条目[]): 候选行[] {
     const 名 = 段.at(-1)!
     const dir = 段.slice(0, -1).join("/")
     const 重名 = (计数.get(名) ?? 0) > 1
-    return { path: x.path, kind: x.kind, name: 重名 && dir ? `${名} - ${dir}` : 名, ...(dir ? { dir } : {}) }
+    return { path: 认内核快捷(x.path) ? `./${x.path}` : x.path, kind: x.kind, name: 重名 && dir ? `${名} - ${dir}` : 名, ...(dir ? { dir } : {}) }
   })
 }

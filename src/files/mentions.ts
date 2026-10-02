@@ -1,3 +1,5 @@
+import { 认内核快捷, type 快捷语言 } from "../kernel/shortcuts.js"
+
 /**
  * `@路径` 引用（2026-08-23，学自 omdsh-dev/dsh-at-file，解读在 `ccb_hive_code_learn/dsh-at-file-解读.md`）。
  *
@@ -44,7 +46,7 @@ export function 扫引用(text: string): 引用[] {
     // 先剥尾随标点，再剥目录形式的尾 `/`
     const 去标点 = 原.replace(尾随标点, "")
     const path = 去标点.replace(/\/+$/, "")
-    if (!path || 见过.has(path)) continue
+    if (!path || 认内核快捷(去标点) || 见过.has(path)) continue
     见过.add(path)
     出.push({ path, start: m.index, end: m.index + 1 + 去标点.length })
   }
@@ -136,4 +138,38 @@ export function 编文件规则(rules: readonly 文件规则[]): (name: string) 
         : ((re) => (n: string) => re.test(n))(new RegExp(r.pattern, r.caseSensitive ? "" : "i")),
     )
   return (name) => 判.some((f) => f(name))
+}
+
+
+/** 手动内核入口；粘贴保护、邮箱、代码示例及带路径的文件名不触发。 */
+export function 扫内核指令(text: string) {
+  let fence: { char: string; length: number } | undefined
+  const masked = text.split(/(?<=\n)/).map(line => {
+    const run = /^ {0,3}(`{3,}|~{3,})/.exec(line)
+    if (fence) {
+      if (run && run[1]![0] === fence.char && run[1]!.length >= fence.length && line.slice(run[0].length).trim() === "") fence = undefined
+      return line.replace(/[^\n]/g, " ")
+    }
+    if (run && !(run[1]![0] === "`" && line.slice(run[0].length).includes("`"))) {
+      fence = { char: run[1]![0]!, length: run[1]!.length }
+      return line.replace(/[^\n]/g, " ")
+    }
+    return /^(?: {4}|\t| {0,3}>)/.test(line) ? line.replace(/[^\n]/g, " ") : line
+  }).join("")
+  // CommonMark 的行内代码可用任意长度反引号，也可跨行；只匹配同长度的收尾。
+  const visible = masked.replace(/(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g, m => m.replace(/[^\n]/g, " "))
+  const out: { token: string; languages: readonly 快捷语言[]; description: string; start: number; end: number }[] = []
+  for (const m of visible.matchAll(引用令牌)) {
+    if (m.index > 0 && !/\s/.test(visible[m.index - 1]!)) continue
+    const raw = m[1]!.replace(尾随标点, "")
+    const shortcut = 认内核快捷(raw)
+    if (!shortcut) continue
+    out.push({ ...shortcut, start: m.index, end: m.index + raw.length + 1 })
+  }
+  return out
+}
+
+export function 请求内核语言(text: string): 快捷语言[] {
+  const requested = new Set(扫内核指令(text).flatMap(x => [...x.languages]))
+  return (["R", "python"] as const).filter(x => requested.has(x))
 }

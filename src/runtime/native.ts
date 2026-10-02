@@ -67,6 +67,7 @@ import { createSubagentTool, createSubagentFollowUp } from "../subagent/tool.js"
 import { 子运行目录 } from "../subagent/run-dir.js"
 import { 子目录段 } from "../protocol/subagent-id.js"
 import { 挑工具后端 } from "../remote/tools.js"
+import { 本轮内核语言, 内核请求标记 } from "../kernel/shortcuts.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
@@ -1091,7 +1092,7 @@ export class NativeRuntime implements AgentRuntime {
      */
     const 内核工具 =
       this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
-        ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
+        ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels, 允许语言: () => 本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? []) })]
         : []
 
     /**
@@ -2238,10 +2239,13 @@ export class NativeRuntime implements AgentRuntime {
         text: `模型 ${模型} 收不了图，这 ${images.length} 张已由 ${端点.model} 转述给它。`,
       })
       // **图仍然带着**：转录里人要看得见原图；pi 那边不收就丢，无所谓
-      return `${data}
+      const 文 = `${data}
 
 [以下是随消息附上的 ${images.length} 张图片，由视觉模型 ${端点.model} 转述]
 ${描述}`
+      // 转述追加在后，但不能丢掉本轮内核约束；保留原 data 连续文本供待发身份核对。
+      const 语言 = 本轮内核语言([{ role: "user", content: data }])
+      return 语言 ? `${文}\n\n${内核请求标记(语言)}` : 文
     } catch (e: unknown) {
       this.emit({
         kind: "notice",

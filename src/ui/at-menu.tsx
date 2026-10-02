@@ -16,9 +16,10 @@ import { t, tf } from "./i18n/index.js"
 import { 文件类按名字 } from "./file-kind.js"
 import { 类型图标, type Listing, type SearchResult } from "./files.js"
 import { 成候选行, 排路径, type 候选行, type 路径条目 } from "./at-file.js"
-import { 扫引用, 护住粘贴的艾特 } from "../files/mentions.js"
+import { 扫引用, 扫内核指令, 护住粘贴的艾特 } from "../files/mentions.js"
 import { 用选中项跟滚 } from "./slash-menu.js"
-import { 关闭图标 } from "./icons.js"
+import { 内核快捷们 } from "../kernel/shortcuts.js"
+import { 关闭图标, 终端图标 } from "./icons.js"
 
 /** 菜单最多摆多少条（dsh-at-file 也是 50：可滚的视口） */
 export const 最多候选 = 50
@@ -50,8 +51,8 @@ function 去根(根: string, p: string): string {
  * 粘贴时护住 `@`（第二档）：剪贴板里的文字有 `@x` 就接管这次粘贴——把标记塞进去再写进草稿。
  * 只有文字、且真有 `@` 才接管；不然让浏览器照常粘。回 true = 接管了。
  */
-export function 接管粘贴(e: React.ClipboardEvent<HTMLTextAreaElement>, 源: 引用文件源 | undefined, 写: (草稿: string, caret: number) => void): boolean {
-  if (!源?.护粘贴) return false
+export function 接管粘贴(e: React.ClipboardEvent<HTMLTextAreaElement>, 源: 引用文件源 | undefined, 写: (草稿: string, caret: number) => void, 护粘贴 = 源?.护粘贴 ?? true): boolean {
+  if (!护粘贴) return false
   const 文 = e.clipboardData.getData("text/plain")
   if (!文) return false
   const 护 = 护住粘贴的艾特(文)
@@ -119,7 +120,14 @@ export function use艾特候选(query: string | undefined, 源: 引用文件源 
       },
     )
   }, [query, 源])
-  return query === undefined ? { 行: [], 忙: false } : 态
+  if (query === undefined) return { 行: [], 忙: false }
+  const 描述 = {
+    R: t("使用 R 内核运行代码"), Py: t("使用 Python 内核运行代码"),
+    RPython: t("使用 R 或 Python 内核运行代码"),
+  }
+  const 快捷 = 内核快捷们.filter(x => x.token.toLowerCase().startsWith(query.toLowerCase()))
+    .map(x => ({ path: x.token, name: `@${x.token}`, kind: "kernel" as const, description: 描述[x.token] }))
+  return { ...(源 ? 态 : { 忙: false }), 行: [...快捷, ...(源 ? 态.行 : [])].slice(0, 最多候选) }
 }
 
 export function AtMenu({
@@ -138,7 +146,7 @@ export function AtMenu({
 }) {
   const 列 = useMemo(() => 态.行, [态.行])
   const 跟滚 = 用选中项跟滚(selected)
-  if (!有源) {
+  if (!有源 && 列.length === 0) {
     return (
       <div className="slash-menu at-menu" role="listbox" aria-label={t("引用工作区文件")}>
         <p className="hint slash-empty">{t("先选一个工作目录，才有文件可以引用")}</p>
@@ -161,14 +169,14 @@ export function AtMenu({
             onMouseMove={() => { if (i !== selected) onHover(i) }}
             onClick={() => onPick(x)}
           >
-            <span className="at-icon"><类型图标 类={文件类按名字(x.path.split("/").at(-1)!, x.kind)} /></span>
+            <span className="at-icon">{x.kind === "kernel" ? <终端图标 /> : <类型图标 类={文件类按名字(x.path.split("/").at(-1)!, x.kind)} />}</span>
             <span className="slash-name at-name">{x.name}</span>
-            {x.dir ? <span className="slash-desc at-dir">{x.dir}</span> : null}
+            {x.description || x.dir ? <span className="slash-desc at-dir">{x.description ?? x.dir}</span> : null}
           </Button>
         ))
       )}
       {列.length > 0 && 态.说明 ? <p className="hint slash-foot">{态.说明}</p> : null}
-      <p className="hint slash-foot">{t("↑↓ 挑，回车引用；→ 进目录")}</p>
+      <p className="hint slash-foot">{t("↑↓ 挑，回车选择；→ 进目录")}</p>
     </div>
   )
 }
@@ -177,18 +185,21 @@ export function AtMenu({
  * 引用栏：草稿里有几个 `@路径` 就几行，摆在输入框上方（dsh-at-file 的 dock）。
  * **从草稿 parse 出来的视图，不是另一份状态**——× 是从草稿里抠掉那几个字。
  */
-export function AtRail({ draft, 正在打, onOpen, onRemove }: { draft: string; /** 光标正在打的那个 `@` 的下标——还没打完的不进栏 */ 正在打?: number | undefined; onOpen?: ((path: string) => void) | undefined; onRemove: (path: string) => void }) {
-  const 引用们 = 扫引用(draft).filter((r) => r.start !== 正在打)
+export function AtRail({ draft, 正在打, onOpen, onRemove }: { draft: string; /** 光标正在打的那个 `@` 的下标——还没打完的不进栏 */ 正在打?: number | undefined; onOpen?: ((path: string) => void) | undefined; onRemove: (path: string, kind: "kernel" | "file") => void }) {
+  const 引用们 = [
+    ...扫内核指令(draft).map(x => ({ path: x.token, start: x.start, end: x.end, kernel: true })),
+    ...扫引用(draft).map(x => ({ ...x, kernel: false })),
+  ].filter((r, i, all) => r.start !== 正在打 && all.findIndex(x => x.path === r.path && x.kernel === r.kernel) === i)
   if (引用们.length === 0) return null
   return (
     <ul className="at-rail" aria-label={t("引用的文件")}>
       {引用们.map((r) => (
-        <li key={r.path} className="at-rail-row">
-          <Button variant="ghost" size="inline" className="at-rail-path" onClick={() => onOpen?.(r.path)} disabled={!onOpen}>
-            <类型图标 类={文件类按名字(r.path.split("/").at(-1)!, "file")} />
-            <span className="at-rail-name">{r.path}</span>
+        <li key={`${r.kernel ? "kernel" : "file"}:${r.path}`} className="at-rail-row">
+          <Button variant="ghost" size="inline" className="at-rail-path" onClick={() => onOpen?.(r.path)} disabled={r.kernel || !onOpen}>
+            {r.kernel ? <终端图标 /> : <类型图标 类={文件类按名字(r.path.split("/").at(-1)!, "file")} />}
+            <span className="at-rail-name">{r.kernel ? `@${r.path}` : r.path}</span>
           </Button>
-          <Button variant="ghost" size="icon" className="at-rail-x" aria-label={tf("不引用 {0}", r.path)} onClick={() => onRemove(r.path)}>
+          <Button variant="ghost" size="icon" className="at-rail-x" aria-label={r.kernel ? tf("不使用 @{0}", r.path) : tf("不引用 {0}", r.path)} onClick={() => onRemove(r.path, r.kernel ? "kernel" : "file")}>
             <关闭图标 />
           </Button>
         </li>

@@ -95,3 +95,10 @@ describe("第二档 · 文件名过滤规则", () => {
     expect(编文件规则([{ kind: "regex", pattern: "(", caseSensitive: false }])("anything")).toBe(false)
   })
 })
+
+
+describe("内核快捷入口不是文件引用", () => {
+  it("保留三个入口，显式相对路径与同名前缀仍是文件", () => {
+    expect(扫引用("@R @Py @RPython @./R @R.csv @Py/" ).map(r => r.path)).toEqual(["./R", "R.csv", "Py"])
+  })
+})

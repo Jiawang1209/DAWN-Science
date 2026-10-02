@@ -32,7 +32,8 @@ import { 科研目录, 约定正文, pi会读的指令文件, 我们写的指令
 import type { ShellEnvironment } from "../env/snapshot.js"
 import { deriveSessionTitle } from "../session/title.js"
 import { readFile } from "node:fs/promises"
-import { 展开引用, 剥掉粘贴标记, 规则的毛病, type 文件规则 } from "../files/mentions.js"
+import { 内核请求标记 } from "../kernel/shortcuts.js"
+import { 请求内核语言, 展开引用, 剥掉粘贴标记, 规则的毛病, type 文件规则 } from "../files/mentions.js"
 import { extname } from "node:path"
 import { resizeImage } from "@earendil-works/pi-coding-agent"
 import type { AgentEvent, ImageAttachment } from "../runtime/types.js"
@@ -3285,7 +3286,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 本地 `stat` 相对工作区、远端相对那段会话的当前目录；本地会话对远端路径、远端会话对本地路径都不认。
        */
       // 粘贴标记只活在草稿里：引用扫完（带标记的不算）就剥掉，模型与转录都不该见到它
-      const 发出去的 = 剥掉粘贴标记(as === "user" ? (await 附上引用(sessionId, data)).text : data)
+      const 语言请求 = as === "user" ? 请求内核语言(data) : []
+      if (语言请求.length) {
+        const rec = sessions.get(sessionId)
+        if (!rec) throw fault("not_found", "会话不存在：{0}", sessionId)
+        if (registry.agents[rec.agentId]?.kind !== "native" || !opts.kernels || (rec.connectionId && !opts.kernels.能起远端())) {
+          throw fault("invalid_request", "这类会话没有 run_code 内核，请在内置模型会话中使用 @R、@Py 或 @RPython")
+        }
+      }
+      const 引用文 = 剥掉粘贴标记(as === "user" ? (await 附上引用(sessionId, data)).text : data)
+      const 发出去的 = 语言请求.length ? `${引用文}\n\n${内核请求标记(语言请求)}` : 引用文
       data = 剥掉粘贴标记(data)
       // 你不在场时在内核里跑过的（笔记本，spec §4）：拼进模型看的那份，转录里仍只是你那句话
       const 攒的 = as === "user" ? 缓冲前缀(sessionId) : undefined

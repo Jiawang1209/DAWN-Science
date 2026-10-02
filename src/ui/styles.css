@@ -1129,13 +1129,13 @@ pre {
  * 是按 `\binput\b` 匹配的，`-input` 会被它命中。
  * 规则说的是「加 class，不要抄属性」，这里正是在加 class。
  *
- * 文本区随 DOM 内容增高，到 240px（小窗口为视口的 30%）后才滚动。
+ * 文本区随 DOM 内容增高，到 120px（小窗口为视口的 15%）后才滚动。
  * 使用浏览器原生内容尺寸，中文组词、外部草稿写回和宽度变化都会直接参与布局。
  */
 .composer-field {
   field-sizing: content;
   min-height: 44px; /* 规范 §3.5：文本区 712×44 */
-  max-height: max(44px, min(240px, 30vh));
+  max-height: max(44px, min(120px, 15vh));
   overflow-y: auto;
   padding: var(--dawn-space-2);
   border: 0;
@@ -1981,8 +1981,9 @@ pre {
   border-radius: var(--dawn-radius-bubble);
   background: color-mix(in srgb, var(--dawn-accent) 11%, var(--dawn-surface-app));
 }
-/* 用户发言用无衬线：`<pre>` 是为了保住换行与空格，**不是为了等宽** */
+/* 用户发言仍走 Markdown，但段落和列表文字保留手动换行及空格。 */
 .turn.user .text { font-family: var(--dawn-font-sans); }
+.turn.user .text :is(p, li) { white-space: pre-wrap; }
 .turn.agent .bubble { min-width: 0; }
 
 /* ── 空态：欢迎区与开场建议 ──────────────────────────────────────── */

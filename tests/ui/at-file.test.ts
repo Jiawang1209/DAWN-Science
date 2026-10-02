@@ -70,3 +70,12 @@ describe("成候选行", () => {
     ])
   })
 })
+
+
+it("内核入口选择、删除和同名文件的显式路径", () => {
+  expect(艾特选完("@P", { start: 0, end: 2, query: "P" }, "Py", "kernel")).toEqual({ draft: "@Py ", caret: 4 })
+  expect(抠掉引用("@R 统计 @a.csv", "R")).toBe("统计 @a.csv")
+  expect(抠掉引用("@R @R/ 文件", "R", "kernel")).toBe("@R/ 文件")
+  expect(抠掉引用("@R @R/ 文件", "R", "file")).toBe("@R 文件")
+  expect(成候选行([{ path: "R", kind: "file" }])[0]).toMatchObject({ path: "./R", name: "R" })
+})

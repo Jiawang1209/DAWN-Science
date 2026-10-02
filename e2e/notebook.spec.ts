@@ -74,7 +74,7 @@ test.describe("笔记本 · 真内核链路", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
     const 输入 = page.getByPlaceholder(/今天帮你做些什么/)
-    await 输入.fill("算一下")
+    await 输入.fill("@Py 算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // ③ 笔记本里出现一条 cell，输出 42

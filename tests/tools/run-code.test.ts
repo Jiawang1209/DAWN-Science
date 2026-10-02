@@ -354,3 +354,21 @@ describe("中止（2026-09-25，调整方向 §4.1）：pi 的中止信号 → �
     expect(r.content[0]!.text).toBe("[python 内核]\n42")
   })
 })
+
+
+describe("本轮快捷入口限制语言", () => {
+  it.each([["R", "python"], ["python", "R"]] as const)("指定 %s 不启动 %s；下一轮没指定时不遗留限制", async (right, wrong) => {
+    const execute = vi.fn().mockResolvedValue({ 输出: [] })
+    let allowed: readonly ("R" | "python")[] | undefined = [right]
+    const tool = createRunCodeTool({ 对话, 内核: { 执行: execute } as unknown as 对话内核,
+      允许语言: () => allowed,
+    } as Parameters<typeof createRunCodeTool>[0])
+    expect(await 跑(tool, { language: wrong, code: "1+1" })).toMatchObject({ isError: true })
+    expect(execute).not.toHaveBeenCalled()
+    await 跑(tool, { language: right, code: "1+1" })
+    expect(execute).toHaveBeenCalledWith(对话, right, "1+1", expect.anything())
+    allowed = undefined
+    await 跑(tool, { language: wrong, code: "1+1" })
+    expect(execute).toHaveBeenCalledTimes(2)
+  })
+})

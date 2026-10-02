@@ -23,7 +23,8 @@ test.describe("对话里", () => {
     const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
     await expect(菜单).toBeVisible()
     // 浏览模式：根下的东西，目录在前
-    await expect(菜单.getByRole("option").first()).toContainText("data")
+    await expect(菜单.getByRole("option").first()).toContainText("@RPython")
+    await expect(菜单.getByRole("option", { name: /^data/ })).toBeVisible()
     await expect(菜单.getByRole("option", { name: /notes\.md/ })).toBeVisible()
 
     // 打几个字按名找：`cit` 命中深处的 cities.csv，主标题是文件名、下面一行父目录

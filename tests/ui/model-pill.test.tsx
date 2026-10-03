@@ -8,7 +8,7 @@
  * 跨服务那条真链路在 `e2e/cross-service-switch.spec.ts`。
  */
 import { describe, expect, it, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import { ModelPill, type ModelChoice } from "../../src/ui/views.js"
 
 const 一家的: ModelChoice[] = [
@@ -108,24 +108,100 @@ describe("模型选择器", () => {
 describe("模型选择器 · ACP 适配器", () => {
   const acp = [{ agentId: "claude-code-acp", label: "claude-code-acp" }]
 
-  it("**ACP 单独一组，带 ACP 标记**，点一条 → onPickAgent 收到 agentId", () => {
+  it("ACP 使用服务名分组（兼容没有目录查询的调用点），点一条 → onPickAgent 收到 agentId", () => {
     const onPickAgent = vi.fn()
     开({ agents: acp, onPickAgent })
     const 菜单 = screen.getByRole("menu", { name: "切换模型" })
     const 组头 = [...菜单.querySelectorAll(".model-group-head")].map((x) => x.textContent)
-    expect(组头).toContain("ACP 适配器")
+    expect(组头).toContain("claude-code-acp")
     const 条 = screen.getByRole("menuitem", { name: /claude-code-acp/ })
-    expect(条.textContent).toContain("ACP")
+    expect(条.textContent).toBe("claude-code-acp")
     fireEvent.click(条)
     expect(onPickAgent).toHaveBeenCalledWith("claude-code-acp")
   })
 
-  /**
-   * **ACP 会话里这颗仍然不画**——2026-08-19 作者定的，`acp-agent.spec.ts` 守着。
-   * 这一组只长在 API 会话的菜单里：有了「从 API 换去 claude」这扇门就够。
-   */
-  it("**只有 ACP、没有模型时照样不画** —— 不把 08-19 撤掉的东西请回来", () => {
+  it("没有 API 模型时仍可选择 ACP", () => {
     render(<ModelPill choices={[]} current={undefined} onPick={() => {}} agents={acp} onPickAgent={() => {}} />)
-    expect(screen.queryByRole("button")).toBeNull()
+    expect(screen.queryByRole("button")).not.toBeNull()
   })
 })
+
+it("ACP 分别读取模型目录、按服务分组，只显示模型名并传递正确的模型 id", async () => {
+  const pick = vi.fn()
+  const load = vi.fn(async (agentId: string) => ({ configId: "model", models: [{ id: "gpt-x", name: "GPT-X", description: "更贵更强" }] }))
+  开({
+    kind: "acp", currentAgentId: "claude-acp",
+    acpModelOption: { id: "model", name: "模型", category: "model", kind: "select", current: "sonnet", options: [{ value: "sonnet", name: "Sonnet", description: "能力说明" }] },
+    agents: [{ agentId: "claude-acp", label: "claude-acp" }, { agentId: "codex-acp", label: "codex-acp" }],
+    onLoadAcpModels: load, onPickAcpModel: pick,
+  })
+  const row = await screen.findByRole("menuitem", { name: "GPT-X" })
+  expect(load).toHaveBeenCalledExactlyOnceWith("codex-acp")
+  expect(row.closest(".model-group")?.querySelector(".model-group-head")?.textContent).toBe("codex-acp")
+  expect(screen.getByRole("menuitemradio", { name: "Sonnet" }).getAttribute("aria-checked")).toBe("true")
+  expect(screen.queryByText("更贵更强")).toBeNull()
+  expect(screen.queryByText("能力说明")).toBeNull()
+  fireEvent.click(row)
+  expect(pick).toHaveBeenCalledWith("codex-acp", "model", "gpt-x")
+})
+
+it("一个适配器目录失败不会隐藏 API 或其他 ACP 的模型", async () => {
+  开({ agents: [{ agentId: "codex-acp", label: "codex-acp" }], onLoadAcpModels: async () => { throw new Error("尚未登录") }, onPickAcpModel: vi.fn() })
+  expect((await screen.findByRole("status")).textContent).toContain("尚未登录")
+  expect(screen.getByRole("menuitem", { name: /^deepseek-flash/ })).toBeTruthy()
+})
+
+it("默认角色没有具体模型信息时不列为模型，也不显示推荐说明", async () => {
+  开({ agents: [{ agentId: "claude-acp", label: "claude-acp" }], onLoadAcpModels: async () => ({ configId: "model", models: [{ id: "default", name: "Default (recommended)", description: "Use the recommended model" }, { id: "opus", name: "Opus", description: "Opus 4.8 · 更贵更强" }] }), onPickAcpModel: vi.fn() })
+  expect(await screen.findByRole("menuitem", { name: "Opus 4.8" })).toBeTruthy()
+  expect(screen.queryByText("Default (recommended)")).toBeNull()
+  expect(screen.queryByText("更贵更强")).toBeNull()
+})
+
+it("删除配置后，即使当前 ACP 会话还在，也不再显示该分组或缓存模型", async () => {
+  const base = { choices: 一家的, current: undefined, kind: "acp" as const, currentAgentId: "claude-acp", onPick: vi.fn(), onPickAcpModel: vi.fn(), onLoadAcpModels: vi.fn(async () => ({ configId: "model", models: [{ id: "gpt-x", name: "GPT-X" }] })), acpModelOption: { id: "model", name: "模型", category: "model", kind: "select" as const, current: "sonnet", options: [{ value: "sonnet", name: "Sonnet" }] } }
+  const { rerender } = render(<ModelPill {...base} agents={[{ agentId: "claude-acp", label: "claude-acp" }, { agentId: "codex-acp", label: "codex-acp" }]} />)
+  fireEvent.click(screen.getByRole("button", { expanded: false }))
+  expect(await screen.findByRole("menuitem", { name: "GPT-X" })).toBeTruthy()
+  rerender(<ModelPill {...base} agents={[]} />)
+  expect(screen.queryByRole("menuitem", { name: "GPT-X" })).toBeNull()
+  expect(screen.queryByRole("menuitemradio", { name: "Sonnet" })).toBeNull()
+  expect(screen.queryByText("claude-acp")).toBeNull()
+  expect(screen.queryByText("codex-acp")).toBeNull()
+})
+
+ it("菜单打开时新增 ACP 配置会立即读取模型", async () => {
+  const load = vi.fn(async () => ({ configId: "model", models: [{ id: "new", name: "New model" }] }))
+  const base = { choices: 一家的, current: undefined, onPick: vi.fn(), onPickAcpModel: vi.fn(), onLoadAcpModels: load }
+  const { rerender } = render(<ModelPill {...base} agents={[]} />)
+  fireEvent.click(screen.getByRole("button", { expanded: false }))
+  rerender(<ModelPill {...base} agents={[{ agentId: "codex-acp", label: "codex-acp" }]} />)
+  expect(await screen.findByRole("menuitem", { name: "New model" })).toBeTruthy()
+ })
+
+ it("删除后同名重新配置，旧请求不能回填替代配置的目录", async () => {
+  let resolveOld!: (value: import("../../src/ui/views.js").AcpModelCatalog) => void
+  const load = vi.fn().mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve })).mockResolvedValue({ configId: "model", models: [{ id: "new", name: "New model" }] })
+  const base = { choices: 一家的, current: undefined, onPick: vi.fn(), onPickAcpModel: vi.fn(), onLoadAcpModels: load }
+  const agents = [{ agentId: "codex-acp", label: "codex-acp" }]
+  const { rerender } = render(<ModelPill {...base} agents={agents} />)
+  fireEvent.click(screen.getByRole("button", { expanded: false }))
+  rerender(<ModelPill {...base} agents={[]} />)
+  rerender(<ModelPill {...base} agents={agents} />)
+  expect(await screen.findByRole("menuitem", { name: "New model" })).toBeTruthy()
+  await act(async () => resolveOld({ configId: "model", models: [{ id: "old", name: "Old model" }] }))
+  expect(screen.queryByRole("menuitem", { name: "Old model" })).toBeNull()
+  expect(screen.getByRole("menuitem", { name: "New model" })).toBeTruthy()
+ })
+
+ it("同一 ACP 的命令参数修改后，重新读取模型目录", async () => {
+  const load = vi.fn().mockResolvedValueOnce({ configId: "model", models: [{ id: "old", name: "Old model" }] }).mockResolvedValueOnce({ configId: "model", models: [{ id: "new", name: "New model" }] })
+  const base = { choices: 一家的, current: undefined, onPick: vi.fn(), onPickAcpModel: vi.fn(), onLoadAcpModels: load }
+  const { rerender } = render(<ModelPill {...base} agents={[{ agentId: "codex-acp", label: "codex-acp", catalogKey: "before" }]} />)
+  fireEvent.click(screen.getByRole("button", { expanded: false }))
+  expect(await screen.findByRole("menuitem", { name: "Old model" })).toBeTruthy()
+  rerender(<ModelPill {...base} agents={[{ agentId: "codex-acp", label: "codex-acp", catalogKey: "after" }]} />)
+  expect(await screen.findByRole("menuitem", { name: "New model" })).toBeTruthy()
+  expect(screen.queryByRole("menuitem", { name: "Old model" })).toBeNull()
+  expect(load).toHaveBeenCalledTimes(2)
+ })

@@ -42,6 +42,7 @@ import {
   SideSash,
   TerminalView,
   type ModelChoice,
+  type AcpModelCatalog,
   type ServiceChoice,
   DockSwitch,
   RightDock, 挑文件 } from "./views.js"
@@ -1815,16 +1816,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 作者：*「我在点击服务器连接的时候，肯定是要点击新对话的，那么这个页面
    * 现在就应该保持不变，然后在选择模型的时候，就应该显示出有 claude-code-acp 才对。」*
    *
-   * ACP 换不了模型也换不了家，所以这一步是**另起一段**：远端会话就起在同一台
+   * API 与 ACP 跨运行时切换要另起一段；ACP 模型仍由适配器自己切换。远端会话起在同一台
    * 服务器上，本地的就起在同一个工作目录。
    *
    * **空会话直接顶替**：点服务器建出来的那段「新对话」还一个字没说，
    * 这时人想的是「改用 claude」而不是「再来一段」——留着那段空的，
    * 侧栏里就多一条永远空着的「新对话」。有历史的会话不动，另开一段。
    */
-  const 用ACP另起一段 = async (agentId: string) => {
-    if (!session) return
-    const 旧任务 = 当前任务
+  const 换运行时另起一段 = async (agentId: string, choice?: ModelChoice, source = session, acpChoice?: { configId: string; value: string }, sourceSlot = 主槽) => {
+    if (!source) return
+    const 原侧边地方 = sourceSlot === 侧槽 ? $侧边地方.get() : undefined
+    const 当前源 = () => sourceSlot === 侧槽 ? $侧边会话id.get() : $activeSessionId.get()
+    const 旧任务 = tasks.find((t) => t.sessionId === source.sessionId)
     /**
      * **「空」看 `session.title`，不看 `items`**（2026-08-21 审查抓到的）：
      * 切会话那一瞬 `$items` 被清空、快照回来之前它一直是空的——
@@ -1832,24 +1835,46 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * `title` 的定义就是「还没说过话」（协议 2.12），而且它跟着会话摘要走、不会被清。
      * 两个都空才算空：宁可多留一条空会话，不冒删掉历史的险。
      */
-    const 是空的 = !session.title && $items.get().length === 0
+    const 是空的 = source.sessionId === 当前源() && !source.title && sourceSlot.$items.get().length === 0
     const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
       agentId,
-      ...(session.remote
-        ? { connectionId: session.remote.connectionId }
+      ...(source.remote
+        ? { connectionId: source.remote.connectionId }
         : 旧任务?.workspace
           ? { workspace: 旧任务.workspace }
           : {}),
     })
     if (!t.sessionId) throw new Error("任务建好了却没有会话——这一步不该悄悄过去")
-    if (是空的 && 旧任务) {
+    if (choice || acpChoice) {
+      try {
+        if (acpChoice) {
+          await client.get("setSessionConfigOption", { sessionId: t.sessionId, ...acpChoice })
+        } else if (choice) {
+          await client.get("setSessionModel", {
+            sessionId: t.sessionId,
+            ...(choice.provider ? { provider: choice.provider } : {}),
+            model: choice.model,
+          })
+          setSessionModel(t.sessionId, choice.model, choice.provider)
+        }
+      } catch (error) {
+        await client.get("deleteTask", { taskId: t.taskId }).catch(() => {})
+        throw error
+      }
+    }
+    if (是空的 && 旧任务 && 当前源() === source.sessionId && sourceSlot.$items.get().length === 0
+      && ![...$tempSessions.get(), ...$sessions.get()].find((s) => s.sessionId === source.sessionId)?.title) {
       // **新的起来了再删旧的**；删不掉只是多一条空会话，不该拦住切换
       await client.get("deleteTask", { taskId: 旧任务.taskId }).catch(() => {})
     }
     await Promise.all([loadTasks(client), loadTempSessions(client), loadConnections(client)])
     if (projectId) await loadSessions(client, projectId)
-    setActiveSessionId(t.sessionId)
-    setView("conversation")
+    if (sourceSlot === 侧槽) {
+      if (原侧边地方 && 当前源() === source.sessionId) 挂进坞(原侧边地方, t.sessionId)
+    } else {
+      setActiveSessionId(t.sessionId)
+      setView("conversation")
+    }
     await 取写权(t.sessionId)
   }
 
@@ -3147,32 +3172,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const modelChoicesOf = (s: SessionSummary): ModelChoice[] => {
     const agentCfg = agentCfgOf(s)
-    return (
-    /**
-     * **ACP 那条没有这颗 pill**（2026-08-19，作者报的）。
-     *
-     * 作者：*「我在调用 codex-acp 的时候，发送旁边的还显示的是 cli。」*
-     * 他看到的是那颗 pill 上写着**「CLI 默认」**——那句兜底文案是给 `cli`
-     * 写的（*「当前未知时如实标『CLI 默认』」*），ACP 落进去纯属误伤。
-     *
-     * 而比文案更糟的是**那颗 pill 本身不该在这儿**：它列的是
-     * 各家 provider 的模型，点一下会去改这段会话的模型——
-     * 可 **ACP 里根本没有「换模型」这个操作**（`ModelPill` 上面那段注写着）。
-     * ACP 的模型是适配器自己广播的，走的是左边那颗会话开关
-     * （claude 那台上就写着 `Sonnet`）。
-     *
-     * 给空清单而不是加一个 `kind !== "acp"` 的渲染判断：
-     * `ModelPill` 本来就有「没得选就不画」这条（`choices.length === 0`），
-     * **同一件事不写第二遍**。
-     */
-    agentCfg?.kind === "acp"
-      ? []
-      : agentCfg?.kind === "cli"
-        ? (agentCfg.models ?? []).map((m) => ({ model: m }))
-        : providers.providers.flatMap((p) =>
-            (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),
-          )
-    )
+    return agentCfg?.kind === "cli"
+      ? (agentCfg.models ?? []).map((m) => ({ model: m }))
+      : providers.providers.flatMap((p) =>
+          (p.available ?? []).map((m) => ({ provider: p.providerId, model: m })),
+        )
   }
 
   /**
@@ -4119,6 +4123,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       },
       ...(待答权限 ? { 待答权限 } : {}),
       ...(会话开关们 ? { 会话开关们 } : {}),
+      onLoadAcpModels: (agentId: string) => client.get<AcpModelCatalog>("getAcpModels", { agentId }),
+      onPickAcpModel: (agentId: string, configId: string, value: string) => {
+        if (s.kind === "acp" && s.agentId === agentId) {
+          void client.get("setSessionConfigOption", { sessionId: s.sessionId, configId, value }).catch(fail)
+        } else {
+          void 换运行时另起一段(agentId, undefined, s, { configId, value }, 槽).catch(fail)
+        }
+      },
       onSetConfigOption: (configId: string, value: string) => {
         client
           .get("setSessionConfigOption", { sessionId: s.sessionId, configId, value })
@@ -4162,7 +4174,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        */
       acpAgents: (s.remote ? 远端能用的agentIds : agentIds)
         .filter((id) => providers.agents.find((a) => a.agentId === id)?.kind === "acp")
-        .map((id) => ({ agentId: id, label: agentLabel(id) })),
+        .map((id) => ({ agentId: id, label: agentLabel(id), catalogKey: providers.agents.find((a) => a.agentId === id)?.catalogKey })),
       models: modelChoicesOf(s),
       model: currentModelOf(s),
       agentLabel,
@@ -4203,6 +4215,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           })
       },
       onPickModel: (c: ModelChoice) => {
+        if (s.kind === "acp") {
+          const ids = s.remote ? 远端能用的agentIds : agentIds
+          const target = providers.agents.find((a) =>
+            a.kind === "native" && ids.includes(a.agentId) && a.provider === c.provider,
+          ) ?? providers.agents.find((a) => a.kind === "native" && ids.includes(a.agentId))
+          if (!target) {
+            fail(new Error(t("还没有 API key——填一个就能用")))
+            return
+          }
+          void 换运行时另起一段(target.agentId, c, s, undefined, 槽).catch(fail)
+          return
+        }
         /**
          * **`provider` 只有 native 有。**
          *
@@ -5457,7 +5481,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     { onPickWorkspace: () => void 选工作目录(当前任务.taskId) }
                   : {})}
                 onPickAgent={(id) => {
-                  void 用ACP另起一段(id).catch(fail)
+                  void 换运行时另起一段(id).catch(fail)
                 }}
                 onToggleDock={toggleDock}
                 dockOpen={dockOpen}

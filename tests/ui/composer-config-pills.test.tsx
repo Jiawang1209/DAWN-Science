@@ -122,10 +122,10 @@ describe("顶行：模型与推理强度钉在发送键左边", () => {
     expect(弹层.textContent).not.toContain("推理强度")
   })
 
-  it("**ACP 会话**：models 为空时模型走 config-pill，模型与推理都在顶行；底部菜单里没有模型/推理/权限档", () => {
+  it("**ACP 会话**：没有 API 模型时 ACP 模型仍走统一选择器，模型与推理都在顶行；底部菜单里没有模型/推理/权限档", () => {
     const { container } = render(
       <ConversationView
-        session={session({ kind: "native" })}
+        session={session({ kind: "acp" })}
         items={[]}
         onSend={() => {}}
         models={[]}
@@ -135,8 +135,8 @@ describe("顶行：模型与推理强度钉在发送键左边", () => {
       />,
     )
     const 顶行 = container.querySelector(".composer-controls")!
-    // models 为空 → ModelPill 不画
-    expect(顶行.querySelector(".model-pill")).toBeNull()
+    // 没有 API 模型也保留统一模型选择器
+    expect(顶行.querySelector(".model-pill")).not.toBeNull()
     // 顶行两颗 config-pill：模型 + 推理
     const 两颗 = 顶行.querySelectorAll(".config-pill")
     expect(两颗).toHaveLength(2)

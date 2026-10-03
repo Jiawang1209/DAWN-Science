@@ -2871,6 +2871,7 @@ function SessionConfigMenu({
 }: {
   options: readonly 会话开关[]
   onSet: (configId: string, value: string) => void
+
 }) {
   const [开着, 设开着] = useState(false)
   const 盒 = useRef<HTMLDivElement>(null)
@@ -3032,9 +3033,7 @@ function SessionConfigMenu({
  * 那颗菜单画的是**一串**开关；这颗只画**一条**：同一副菜单长相，
  * 触发器上写的是这一条当前选了谁。
  *
- * ACP 会话没有「换模型」这个操作（`models` 为空、`ModelPill` 自己不画），
- * 模型只是这串开关里 `category: "model"` 的一条——于是它也走这颗，
- * 摆进顶行同一个槽位，让 ACP 的模型和内置对话的模型落在一处。
+ * ACP 模型由统一的 ModelPill 处理；这里保留推理强度等其他会话开关。
  */
 function ConfigPill({
   option,
@@ -3420,6 +3419,24 @@ export interface ModelChoice {
  * pi 自己的 `isStreaming` 在 prompt 开始前是 false，不可信——Spike E 查出来的）。
  * 这里把理由**提前显示出来**，而不是等人点了才报错。
  */
+export type AcpModelCatalog = {
+  configId: string
+  current?: string | undefined
+  models: readonly { id: string; name: string; description?: string | undefined }[]
+}
+
+/** 默认/自动是适配器的角色名，不冒充具体模型；同一具体名字只显示一次。 */
+function acpMenuModels(catalog: AcpModelCatalog) {
+  const models = new Map<string, { id: string; name: string }>()
+  for (const model of catalog.models) {
+    const name = 拆模型名(model.name, model.description).主
+    if (/^(default(?:\s*\(.*\))?|auto)$/i.test(name.trim())) continue
+    const old = models.get(name)
+    if (!old || model.id === catalog.current) models.set(name, { id: model.id, name })
+  }
+  return [...models.values()]
+}
+
 export function ModelPill({
   choices,
   current,
@@ -3428,10 +3445,19 @@ export function ModelPill({
   serviceLabel,
   onConfigure,
   kind,
+  label,
   agents,
   onPickAgent,
+  currentAgentId,
+  acpModelOption,
+  onLoadAcpModels,
+  onPickAcpModel,
 }: {
   /** 能换到哪些。native 会话是「所有配好的服务 × 各自的模型」 */
+  currentAgentId?: string | undefined
+  acpModelOption?: 会话开关 | undefined
+  onLoadAcpModels?: ((agentId: string) => Promise<AcpModelCatalog>) | undefined
+  onPickAcpModel?: ((agentId: string, configId: string, value: string) => void) | undefined
   choices: readonly ModelChoice[]
   /** 当前这一轮用的是谁。**provider 也要**——两家可以有同名模型 */
   current: { provider?: string | undefined; model: string } | undefined
@@ -3447,6 +3473,7 @@ export function ModelPill({
    * 它决定了能不能就地换服务、模型清单从哪来、「CLI 默认」是什么意思。
    */
   kind?: SessionSummary["kind"] | undefined
+  label?: string | undefined
   /**
    * **ACP 适配器也列在这里**（2026-08-21，作者在服务器上建会话时报的）。
    *
@@ -3457,18 +3484,37 @@ export function ModelPill({
    * 能上服务器的 agent 建会话，而这颗 pill 只列 API 模型——`remoteCapable`
    * 标记、后端的拒绝逻辑都对，只是没有门能走到它。
    *
-   * ACP 换不了模型也换不了家（2026-08-19 那段注写着），所以点它**不是就地换**，
-   * 由 `onPickAgent` 的实现者决定怎么办（App 里：另起一段；空会话就顶替）。
-   * 这一组单独列、带 ACP 标记，**不与 API 那几组混在一起**——
-   * 2026-08-11 那次「点了以为换模型、结果新开对话」正是因为两种语义长得一样。
-   *
-   * **不给就不画这一组**：旧调用点一个字不受影响。
+   * 每个已配置适配器各自分组列出模型。模型 id 和配置项 id 都来自适配器，
+   * 同一适配器就地换模型，跨运行时由 App 创建新会话。
+   * `catalogKey` 是命令及参数的指纹，配置修改后使旧目录失效。
    */
-  agents?: readonly { agentId: string; label: string }[] | undefined
+  agents?: readonly { agentId: string; label: string; catalogKey?: string | undefined }[] | undefined
   onPickAgent?: ((agentId: string) => void) | undefined
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
+  type CatalogState = AcpModelCatalog | "loading" | { error: string }
+  const [catalogs, setCatalogs] = useState<Record<string, { key: string; value: CatalogState }>>({})
+  const configuredIds = JSON.stringify((agents ?? []).map((a) => [a.agentId, a.catalogKey ?? ""]))
+  useEffect(() => {
+    const keys = new Map((agents ?? []).map((a) => [a.agentId, a.catalogKey ?? ""]))
+    setCatalogs((old) => Object.fromEntries(Object.entries(old).filter(([id, entry]) => keys.get(id) === entry.key)))
+    let cancelled = false
+    if (open && onLoadAcpModels) for (const agent of agents ?? []) {
+      if (agent.agentId === currentAgentId && acpModelOption) continue
+      const key = agent.catalogKey ?? ""
+      const cached = catalogs[agent.agentId]
+      if (cached?.key === key && cached.value !== "loading" && !("error" in cached.value)) continue
+      const save = (value: CatalogState) => setCatalogs((old) => ({ ...old, [agent.agentId]: { key, value } }))
+      save("loading")
+      void onLoadAcpModels(agent.agentId).then(
+        (catalog) => { if (!cancelled) save(catalog) },
+        (error: unknown) => { if (!cancelled) save({ error: error instanceof Error ? error.message : String(error) }) },
+      )
+    }
+    // 配置增删、命令修改或关掉菜单后，旧请求不能回填下一代目录。
+    return () => { cancelled = true }
+  }, [open, configuredIds, currentAgentId, Boolean(acpModelOption)])
 
   useEffect(() => {
     if (!open) return
@@ -3486,17 +3532,20 @@ export function ModelPill({
    * 那条件逼着配置去钉一个 `model`，而钉模型会**覆盖用户自己 CLI 的配置**。
    * 当前未知时如实标「CLI 默认」——**那是实情，不是缺陷**。
    */
-  /**
-   * **ACP 会话里这颗仍然不画**（2026-08-19 作者定的，`acp-agent.spec.ts` 守着）：
-   * 那时它的模型由左边那颗会话开关说。ACP 那一组只长在 API 会话的菜单里——
-   * 「从 API 换去 claude」有门就够了，不为它把 08-19 撤掉的东西请回来。
-   */
-  if (choices.length === 0) return null
-  const acp列表 = agents ?? []
+  // 同一个菜单提供 API 模型和各个已配置 ACP 的模型。
+  if (choices.length === 0 && !acpModelOption && !(agents?.length && (onPickAgent || onPickAcpModel))) return null
+  const acp列表 = [...(agents ?? [])]
+  if (agents === undefined && currentAgentId && acpModelOption && !acp列表.some((a) => a.agentId === currentAgentId)) {
+    acp列表.push({ agentId: currentAgentId, label: currentAgentId })
+  }
 
   const 同一条 = (c: ModelChoice) => c.model === current?.model && c.provider === current?.provider
   const 叫什么 = (p: string | undefined) => (p ? (serviceLabel?.(p) ?? p) : "CLI")
-  const 当前名 = current?.model ?? t("CLI 默认")
+  const 当前ACP项 = acpModelOption?.options.find((o) => o.value === acpModelOption.current)
+  const ACP当前名 = 当前ACP项 ? 拆模型名(当前ACP项.name, 当前ACP项.description).主 : undefined
+  const 当前名 = kind === "acp"
+    ? ACP当前名 && !/^(default(?:\s*\(.*\))?|auto)$/i.test(ACP当前名.trim()) ? ACP当前名 : label ?? "ACP"
+    : current?.model ?? t("CLI 默认")
   const 当前标 = 叫什么(current?.provider).slice(0, 1).toUpperCase()
 
   /**
@@ -3517,7 +3566,7 @@ export function ModelPill({
   }
 
   return (
-    <div className="pill model-pill" ref={box}>
+    <div className={`pill model-pill${kind === "acp" && acpModelOption ? " config-pill" : ""}`} data-config={kind === "acp" && acpModelOption ? "model" : undefined} ref={box}>
       {/**
         * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
         *
@@ -3530,7 +3579,7 @@ export function ModelPill({
       <Button
         variant="ghost"
         size="sm"
-        className="model-trigger"
+        className={`model-trigger${kind === "acp" && acpModelOption ? " sess-config-trigger" : ""}`}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={tf("当前模型：{0}。点击切换", 当前名)}
@@ -3545,7 +3594,7 @@ export function ModelPill({
 
       {open ? (
         <div
-          className="model-menu"
+          className={`model-menu${kind === "acp" && acpModelOption ? " sess-config-menu" : ""}`}
           role="menu"
           aria-label={t("切换模型")}
           tabIndex={-1}
@@ -3592,32 +3641,35 @@ export function ModelPill({
                 </ul>
               </li>
             ))}
-            {acp列表.length > 0 && onPickAgent ? (
-              <li className="model-group">
-                <p className="model-group-head">{t("ACP 适配器")}</p>
-                <ul>
-                  {acp列表.map((a) => (
-                    <li key={a.agentId}>
-                      <Row
-                        role="menuitem"
-                        aria-disabled={Boolean(busy)}
-                        onClick={() => {
-                          if (busy) return
-                          setOpen(false)
-                          onPickAgent(a.agentId)
-                        }}
-                      >
-                        {/* **ACP 标记写字，不靠首字母**：它不是哪一家，是另一条路 */}
-                        <span className="svc-mark kind-mark" aria-hidden="true">
-                          ACP
-                        </span>
-                        <span className="name">{a.label}</span>
-                      </Row>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ) : null}
+            {acp列表.map((agent) => {
+              const currentOption = agent.agentId === currentAgentId ? acpModelOption : undefined
+              const catalog = currentOption
+                ? { configId: currentOption.id, current: currentOption.current, models: currentOption.options.map((o) => ({ id: o.value, name: o.name, description: o.description })) }
+                : catalogs[agent.agentId]?.key === (agent.catalogKey ?? "") ? catalogs[agent.agentId]?.value : undefined
+              return (
+                <li className="model-group" key={agent.agentId}>
+                  <p className="model-group-head">{agent.agentId}</p>
+                  <ul>
+                    {!catalog && !onLoadAcpModels ? <li><Row role="menuitem" aria-disabled={Boolean(busy)} onClick={() => { if (!busy) { setOpen(false); onPickAgent?.(agent.agentId) } }}>{agent.label}</Row></li> :
+                    !catalog || catalog === "loading" ? <li className="hint pad">{t("正在读取模型列表")}</li> :
+                    "error" in catalog ? <li className="hint pad" role="status">{catalog.error}</li> :
+                    acpMenuModels(catalog).length === 0 ? <li className="hint pad">{t("适配器未提供模型列表")}</li> : acpMenuModels(catalog).map((m) => {
+                      const selected = agent.agentId === currentAgentId && m.id === catalog.current
+                      const name = m.name
+                      return <li key={m.id}>
+                        <Row role={agent.agentId === currentAgentId ? "menuitemradio" : "menuitem"}
+                          aria-checked={agent.agentId === currentAgentId ? selected : undefined}
+                          active={selected} aria-disabled={Boolean(busy)}
+                          onClick={() => { if (!busy) { setOpen(false); onPickAcpModel?.(agent.agentId, catalog.configId, m.id) } }}>
+                          <span className="sess-config-opt-name">{name}</span>
+                          {selected ? <勾图标 className="model-check" /> : null}
+                        </Row>
+                      </li>
+                    })}
+                  </ul>
+                </li>
+              )
+            })}
           </ul>
           {/**
             * **配置自定义模型**（2026-08-12，学自 WorkBuddy 那个浮层的底一条）。
@@ -3865,6 +3917,8 @@ export function ConversationView({
   items: 传进来的items,
   acpAgents,
   onPickAgent,
+  onLoadAcpModels,
+  onPickAcpModel,
   agentLabel,
   services,
   currentServiceLabel,
@@ -3958,8 +4012,10 @@ export function ConversationView({
    * 此前这儿有个 `agents` 参数，2026-08-12 把下组挪走之后就没人读它了——
    * 于是 T3「远端只列手能到服务器的」那条过滤实际上没有任何界面在显示。
    */
-  acpAgents?: readonly { agentId: string; label: string }[] | undefined
+  acpAgents?: readonly { agentId: string; label: string; catalogKey?: string | undefined }[] | undefined
   onPickAgent?: ((agentId: string) => void) | undefined
+  onLoadAcpModels?: ((agentId: string) => Promise<AcpModelCatalog>) | undefined
+  onPickAcpModel?: ((agentId: string, configId: string, value: string) => void) | undefined
   /**
    * 能换到哪些模型。**2026-08-11 起跨服务**：native 会话拿到的是
    * 「所有配好的服务 × 各自的模型」，按服务分组。
@@ -5578,12 +5634,19 @@ export function ConversationView({
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
               * 不摆一个点开是空的菜单。
               */}
-                        {models && onPickModel ? (
+            {models && onPickModel ? (
               <ModelPill
                 choices={models}
                 current={model}
                 busy={busy}
                 kind={session.kind}
+                label={agentLabel?.(session.agentId) ?? session.agentId}
+                currentAgentId={session.agentId}
+                acpModelOption={模型选项}
+                onLoadAcpModels={onLoadAcpModels}
+                onPickAcpModel={onPickAcpModel ?? ((agentId, configId, value) => {
+                  if (agentId === session.agentId) onSetConfigOption?.(configId, value)
+                })}
                 onPick={onPickModel}
                 {...(acpAgents ? { agents: acpAgents } : {})}
                 {...(onPickAgent ? { onPickAgent } : {})}
@@ -5594,14 +5657,12 @@ export function ConversationView({
             {/**
               * **模型固定钉在发送键左边**（2026-08-27，作者 #4）。
               *
-              * 内置 / cli 会话走上面那颗 `ModelPill`。**ACP 会话 `models` 为空**
-              * （`ModelPill` 自己不画），它的模型只是会话开关里 `category: "model"`
+              * 内置 / cli 会话走上面那颗 `ModelPill`。ACP 会话在现有模型菜单里切换 API 或适配器，
+              * 它自己的模型仍由会话开关里 `category: "model"`
               * 的一条——此前它掉进底部那颗 `SessionConfigMenu`，摆在了权限旁边。
               * 现在把它捞回顶行同一个槽位：**不论哪类会话，模型都在这儿。**
               */}
-            {(!models || models.length === 0) && 模型选项 && onSetConfigOption ? (
-              <ConfigPill option={模型选项} onSet={onSetConfigOption} />
-            ) : null}
+
             {/**
               * **推理强度紧跟模型、在发送键之前**（2026-08-27，作者 #3）。
               *

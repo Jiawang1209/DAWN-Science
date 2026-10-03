@@ -16,7 +16,7 @@
  * 那正是「打包成本地软件」最先会咬人的地方。
  */
 import { resolve } from "node:path"
-import { test, expect, 等进了对话, 用某个agent开一段, readRuns } from "./fixtures.js"
+import { test, expect, 等进了对话, 用某个agent开一段, readRuns, CANNED_REPLY, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 const 假ACP = resolve(import.meta.dirname, "..", "scripts", "fake-acp-agent.mjs")
 
@@ -27,6 +27,11 @@ const PROVIDERS = `agents:
     model: deepseek-flash
     capabilities: [chat, exec]
   claude-acp:
+    kind: acp
+    command: node
+    args: ["${假ACP}"]
+    capabilities: [chat, exec]
+  codex-acp:
     kind: acp
     command: node
     args: ["${假ACP}"]
@@ -61,24 +66,7 @@ test.describe("ACP", () => {
      * 「为什么这次它没问我就删了文件」永远说不清。
      */
     await expect(page.locator(".conv-head .kind")).toHaveText("ACP")
-    /**
-     * **发送键旁边不该有那颗模型 pill**（2026-08-19 作者报的）。
-     *
-     * 作者：*「我在调用 codex-acp 的时候，发送旁边的还显示的是 cli。」*
-     * 他看到的是那颗 pill 上写着**「CLI 默认」**——那句兜底是给 `cli` 写的。
-     *
-     * 而根子不在文案：**ACP 里没有「换模型」这个操作**，
-     * 那颗 pill 列的却是各家 provider 的模型，点下去会去改这段会话的模型。
-     * ACP 的模型由适配器广播，走的是左边那颗会话开关。
-     *
-     * 此前这一处**没有任何判据**：上面那条盯的是对话头上那个 `.kind`，
-     * 而作者眼睛落在 composer 里。**同一个类名、两个地方**，
-     * 于是「头上对了」被当成了「都对了」，而 composer 那边错了三个月。
-     */
-    await expect(
-      page.locator(".composer-card .model-pill"),
-      "ACP 会话上不该有模型 pill——它列的是各家 provider 的模型，而 ACP 换不了模型",
-    ).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "切换服务", exact: true })).toHaveCount(0)
     // **但模型这件事没有消失**：它移到了发送键左边那颗模型 pill 上（假 agent 报的是 `Sonnet`）
     await expect(
       page.locator('.config-pill[data-config="model"] .sess-config-trigger'),
@@ -97,6 +85,95 @@ test.describe("ACP", () => {
      * 那三个点一直转——本项目为「一个永远在转的记号」撤过一次功能。
      */
     await expect(page.locator(".waiting")).toHaveCount(0, { timeout: 30_000 })
+  })
+
+  for (const agent of ["claude-acp", "codex-acp"]) {
+    test(`${agent} 可以切回 API，旧对话仍保留`, async ({ dawn }) => {
+      const { page } = dawn
+      await 用某个agent开一段(page, new RegExp(agent))
+      await 等进了对话(page)
+      await page.getByPlaceholder(/今天帮你做些什么/).fill("保留这段 ACP 对话")
+      await page.getByRole("button", { name: "发送", exact: true }).click()
+      await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible()
+      await expect(page.locator(".waiting")).toHaveCount(0)
+      await expect(page.getByRole("button", { name: "切换服务", exact: true })).toHaveCount(0)
+      await page.locator('.config-pill[data-config="model"] .sess-config-trigger').click()
+      await page.locator('.config-pill[data-config="model"] .sess-config-menu').getByRole("menuitem", { name: "deepseek-flash" }).click()
+      await expect(page.locator(".conv-head .kind")).toHaveCount(0)
+      await expect(page.locator(".model-name")).toContainText("deepseek-flash")
+      await expect(page.getByText("保留这段 ACP 对话", { exact: true }).first()).toBeVisible()
+      await page.getByPlaceholder(/今天帮你做些什么/).fill("API 切回成功")
+      await page.getByRole("button", { name: "发送", exact: true }).click()
+      await expect(page.getByText(/假 ACP agent 已应答/)).toHaveCount(0)
+      await expect(page.getByText(CANNED_REPLY).last()).toBeVisible()
+    })
+  }
+
+  for (const source of ["claude-acp", "API"]) {
+  test(`${source} 菜单按服务分组，点另一个适配器的模型即可切换`, async ({ dawn }) => {
+    const { page } = dawn
+    if (source === "API") await 开一段临时会话(page)
+    else await 用某个agent开一段(page, /claude-acp/)
+    await 等进了对话(page)
+    await page.locator(".model-trigger").click()
+    const menu = page.getByRole("menu", { name: "切换模型" })
+    const group = (name: string) => menu.locator(".model-group").filter({ has: page.locator(".model-group-head", { hasText: new RegExp(`^${name}$`) }) })
+    await expect(group("DeepSeek").getByRole("menuitem", { name: /deepseek-flash/ })).toBeVisible()
+    await expect(group("claude-acp").getByRole(source === "API" ? "menuitem" : "menuitemradio", { name: "Sonnet", exact: true })).toBeVisible()
+    await expect(group("codex-acp").getByRole("menuitem", { name: "Opus", exact: true })).toBeVisible()
+    await expect(menu).not.toContainText("更贵更强")
+    await expect(menu.locator(".model-group-head", { hasText: /^ACP 适配器$/ })).toHaveCount(0)
+    await expect(menu).not.toContainText("切换服务会新建对话")
+    await group("codex-acp").getByRole("menuitem", { name: "Opus", exact: true }).click()
+    await expect(page.locator(".conv-agent")).toHaveText("codex-acp")
+    await expect(page.locator('.config-pill[data-config="model"] .sess-config-trigger')).toContainText("Opus")
+  })
+
+  }
+
+  test("侧边对话切换 ACP 与 API，主区保持原对话", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+    const main = page.locator("main.main")
+    await main.getByPlaceholder(/今天帮你做些什么/).fill("主区原对话")
+    await main.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(main.getByText(CANNED_REPLY).last()).toBeVisible()
+    await 进坞(page, "对话")
+    const side = page.locator("aside.right-dock")
+    await side.getByRole("button", { name: "另开一段", exact: true }).click()
+    await side.getByPlaceholder(/今天帮你做些什么/).waitFor()
+    await side.locator(".model-trigger").click()
+    const group = side.locator(".model-group").filter({ has: page.locator(".model-group-head", { hasText: /^codex-acp$/ }) })
+    await group.getByRole("menuitem", { name: "Opus", exact: true }).click()
+    await expect(side.locator(".model-name")).toHaveText("Opus")
+    await expect(main.locator(".turns")).toContainText("主区原对话")
+    await side.locator(".model-trigger").click()
+    await side.getByRole("menuitem", { name: "deepseek-flash", exact: true }).click()
+    await expect(side.locator(".model-name")).toHaveText("deepseek-flash")
+    await expect(main.locator(".turns")).toContainText("主区原对话")
+    await side.getByPlaceholder(/今天帮你做些什么/).fill("侧边回到 API")
+    await side.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(side.getByText(CANNED_REPLY).last()).toBeVisible()
+  })
+
+  test("空 ACP 对话切回 API 时顶替空会话", async ({ dawn }) => {
+    const { page } = dawn
+    await 用某个agent开一段(page, /codex-acp/)
+    await 等进了对话(page)
+    const count = await page.locator(".session-list > li").count()
+    const wrap = page.locator(".composer-footer .plan-toggle-wrap")
+    await expect(wrap.getByRole("button", { name: "生成方案" })).toBeDisabled()
+    await expect(wrap.getByRole("tooltip")).toBeHidden()
+    await wrap.focus()
+    await expect(wrap.getByRole("tooltip")).toBeVisible()
+    await expect(page.getByRole("button", { name: "切换服务", exact: true })).toHaveCount(0)
+    await page.locator('.config-pill[data-config="model"] .sess-config-trigger').click()
+    await page.locator('.config-pill[data-config="model"] .sess-config-menu').getByRole("menuitem", { name: "deepseek-flash" }).click()
+    await expect(page.locator(".conv-head .kind")).toHaveCount(0)
+    await expect(page.locator(".model-name")).toContainText("deepseek-flash")
+    await expect(page.locator(".session-list > li")).toHaveCount(count)
+    await expect(page.getByRole("button", { name: "生成方案", exact: true })).toBeEnabled()
   })
 
   /**
@@ -270,26 +347,8 @@ test.describe("ACP 会话开关", () => {
     await 模型触发.click()
     const 模型菜单 = page.locator('.config-pill[data-config="model"] .sess-config-menu')
 
-    /**
-     * ② **每一项底下那句说明要画出来**（2026-08-19 作者报的）。
-     *
-     * 作者：*「我竟然看到了 Default(recommended) 而不是 Opus 呢？」*
-     * 量过真适配器：那一项它自己就叫 `Default (recommended)`，
-     * **而它到底是谁写在 `description` 里**（`Opus 4.6 · Most capable…`）。
-     * 我们一路把它收到了界面，然后没画——**答案就在载荷里，我们没显示**。
-     * 假 agent 里 `更贵更强` 正是 `Opus` 那个模型选项的 `description`，所以它落在**模型**这颗菜单里。
-     */
-    await expect(模型菜单, "选项底下那句说明没画出来").toContainText("更贵更强")
-
-    /**
-     * ③ 选一个，**它真的换了**（按钮上的字跟着变）——这就证明选择经
-     * `onSetConfigOption` 送了过去。
-     *
-     * **名字前缀锚定，不再 `exact`**（2026-08-19）：说明进了按钮里面，
-     * 于是可访问名字成了「Opus 更贵更强」——**那是有意的**，
-     * 读屏正要据此决定点不点。`^` 保住了精确性：
-     * 这一列里没有第二个以 Opus 开头的。
-     */
+    // 只列模型名，不显示价格、能力或推荐说明。
+    await expect(模型菜单).not.toContainText("更贵更强")
     await 模型菜单.getByRole("menuitemradio", { name: /^Opus/ }).click()
     await expect(模型触发).toContainText("Opus", { timeout: 20_000 })
 
@@ -337,7 +396,7 @@ test.describe("ACP 会话开关", () => {
      * 「Default (recommended)」是适配器自己给的名字——**它在选择的地方
      * 等于什么都没说**，而「它是谁」就写在旁边那句说明里。
      */
-    test("**选择的地方写具体模型，角色名退到第二行**", async ({ dawn }) => {
+    test("**选择的地方只写具体模型，不显示角色或推荐说明**", async ({ dawn }) => {
       const { page } = dawn
       await 用某个agent开一段(page, /claude-acp/)
       await 等进了对话(page)
@@ -353,9 +412,8 @@ test.describe("ACP 会话开关", () => {
         .first()
       await expect(头一项.locator(".sess-config-opt-name")).toHaveText("Opus 4.6")
       // 角色名与说明都还在，只是退到第二行——**不是把它们扔掉**
-      await expect(头一项.locator(".sess-config-opt-desc")).toHaveText(
-        "Default (recommended) · 最能干的那个",
-      )
+      await expect(头一项.locator(".sess-config-opt-desc")).toHaveCount(0)
+      await expect(头一项).not.toContainText("Default (recommended)")
     })
   })
 
@@ -478,3 +536,21 @@ test.describe("ACP 用我们的工具", () => {
     expect(工具账[0]?.["origin"]).toBe("agent")
   })
 })
+
+test.describe("ACP 切换等待期间", () => {
+  test.use({ dawnOptions: { providersYaml: PROVIDERS, gitInit: true, env: { FAKE_ACP_NEW_DELAY_MS: "1500" } } })
+  test("原空对话在切换期间收到首句时，保留这段对话", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await 等进了对话(page)
+    const count = await page.locator(".session-list > li").count()
+    await page.locator(".model-trigger").click()
+    const group = page.locator(".model-group").filter({ has: page.locator(".model-group-head", { hasText: /^codex-acp$/ }) })
+    await group.getByRole("menuitem", { name: "Opus", exact: true }).click()
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("切换期间新发的首句")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.locator(".conv-agent")).toHaveText("codex-acp")
+    await expect(page.locator(".session-list > li")).toHaveCount(count + 1)
+    await expect(page.locator(".session-list").getByText("切换期间新发的首句", { exact: true })).toBeVisible()
+  })
+ })

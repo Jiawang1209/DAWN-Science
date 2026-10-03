@@ -231,7 +231,12 @@ export function 先出方案开关({
 }) {
   const 原因id = useId()
   return (
-    <span className="plan-toggle-wrap" data-unavailable={不能的原因 ? "true" : undefined}>
+    <span
+      className="plan-toggle-wrap"
+      data-unavailable={不能的原因 ? "true" : undefined}
+      tabIndex={不能的原因 ? 0 : undefined}
+      aria-describedby={不能的原因 ? 原因id : undefined}
+    >
       <Button
         variant="ghost"
         size="sm"
@@ -246,7 +251,7 @@ export function 先出方案开关({
         <概览图标 />
         <span className="plan-toggle-word">{t("生成方案")}</span>
       </Button>
-      {不能的原因 ? <span id={原因id} className="hint plan-toggle-why">{不能的原因}</span> : null}
+      {不能的原因 ? <span id={原因id} role="tooltip" className="hint plan-toggle-why">{不能的原因}</span> : null}
     </span>
   )
 }

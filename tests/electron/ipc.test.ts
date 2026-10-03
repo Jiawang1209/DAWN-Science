@@ -43,6 +43,7 @@ function backend(): WorkbenchBackend {
     fileDiff: async () => ({ diff: "" }),
     transferStatus: async () => ({ transferred: 0, state: "running" as const }),
     cancelTransfer: async () => ({}),
+    getAcpModels: async () => ({ configId: "model", models: [{ id: "sonnet", name: "Sonnet" }] }),
     getProviders: async () => ({ agents: [], providers: [] }),
     listCredentials: async () => ({ configured: [], encrypted: false }),
     setCredential: async () => ({}),

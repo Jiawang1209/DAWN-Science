@@ -301,7 +301,7 @@ test.describe("先出方案 · 不支持的会话", () => {
     },
   })
 
-  test("**ACP 会话**：开关灰着，旁边一行字说原因（不是悬停提示）", async ({ dawn }) => {
+  test("**ACP 会话**：开关灰着，仅悬停时显示原因", async ({ dawn }) => {
     const { page } = dawn
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
@@ -309,7 +309,11 @@ test.describe("先出方案 · 不支持的会话", () => {
     await expect(开关(主区(page))).toBeDisabled()
     const 原因 = 主区(page).locator(".plan-toggle-why")
     await expect(原因).toHaveText("这个 agent 不归 DAWN 管工具，生成方案用不了")
-    expect(await 原因.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+    await expect(原因).toBeHidden()
+    await 主区(page).locator(".plan-toggle-wrap").hover()
+    await expect(原因).toBeVisible()
+    await page.locator(".conv-head").hover()
+    await expect(原因).toBeHidden()
     /** 灰着也在附栏里、紧跟「优化输入」，原因字不把附栏撑出卡 */
     expect(await 量开关位置(主区(page))).toEqual([])
   })

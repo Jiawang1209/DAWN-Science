@@ -225,6 +225,7 @@ async function 处理(msg) {
   }
 
   if (method === "session/new") {
+    if (process.env["FAKE_ACP_NEW_DELAY_MS"]) await 睡(Number(process.env["FAKE_ACP_NEW_DELAY_MS"]))
     会话目录 = params?.cwd ?? 会话目录
     新建参数 = params
     /**

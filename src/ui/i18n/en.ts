@@ -266,7 +266,6 @@ export const EN: Readonly<Record<string, string>> = {
   "没有匹配「{0}」的项目或会话": "Nothing matches “{0}”",
   "已连接 {0}": "Connected to {0}",
   "未配置任何模型": "No model configured",
-  "已连接": "Connected",
   "未连接": "Not connected",
   "连接中…": "Working on it…",
   "连接": "Connect",
@@ -487,6 +486,8 @@ export const EN: Readonly<Record<string, string>> = {
   "选择 agent": "Choose an agent",
   "切换服务或新建会话": "Switch provider or start a new chat",
   "新建会话": "Start a new chat",
+  "正在读取模型列表": "Loading models",
+  "适配器未提供模型列表": "No models reported by the adapter",
   "CLI 默认": "CLI default",
   "这一轮还没说完，先等它结束或中止": "This turn is still going — wait for it or stop it first",
 

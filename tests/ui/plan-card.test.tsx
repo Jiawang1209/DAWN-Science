@@ -161,10 +161,14 @@ describe("附栏开关", () => {
     fireEvent.click(钮)
     expect(onToggle).toHaveBeenCalledWith(true)
   })
-  it("不支持：灰着，**旁边一行字**说原因（不是悬停提示）", () => {
+  it("不支持：按钮禁用，原因关联悬停提示和可聚焦的外层", () => {
     render(<先出方案开关 on={false} 不能的原因="这个 agent 不归 DAWN 管工具，生成方案用不了" />)
     expect((screen.getByRole("button", { name: "生成方案" }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText("这个 agent 不归 DAWN 管工具，生成方案用不了")).toBeTruthy()
+    const 原因 = screen.getByRole("tooltip")
+    expect(原因.textContent).toBe("这个 agent 不归 DAWN 管工具，生成方案用不了")
+    const 包 = document.querySelector(".plan-toggle-wrap")!
+    expect(包.getAttribute("tabindex")).toBe("0")
+    expect(包.getAttribute("aria-describedby")).toBe(原因.id)
   })
 })
 

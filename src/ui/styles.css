@@ -7896,20 +7896,35 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .plan-compare-list li[data-done="true"] { color: var(--dawn-success); }
 /**
  * 开关在附栏里、紧跟「优化输入」（2026-09-28 作者要的，取代 09-27 放在模型那一行最左边的做法；窄了附栏折两行，见上面 720 那条）。
- * 按钮本身不缩；灰着时旁边那行原因字**折成两行也要读得全**——坞那么窄时省略号截掉的正是原因，
- * 而按钮上不许挂 `title`（设计契约），截掉就没处读了（2026-09-28 审查）。
+ * 按钮本身不缩；禁用原因仅悬停或键盘聚焦时显示（2026-10-03 用户要求）。
+ * 用主题浮层代替原生 title，窄坞中也能换行读全。
  */
-.plan-toggle-wrap { display: inline-flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; min-width: 0; }
+.plan-toggle-wrap { position: relative; display: inline-flex; align-items: center; gap: var(--dawn-space-1); flex: 0 0 auto; min-width: 0; }
 .plan-toggle-wrap[data-unavailable="true"] { flex: 0 1 auto; }
 .plan-toggle { flex: none; white-space: nowrap; }
 .plan-toggle[aria-pressed="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
 .plan-toggle-why {
-  min-width: 0;
+  pointer-events: none;
+  display: none;
+  position: absolute;
+  bottom: calc(100% + var(--dawn-space-1));
+  left: 0;
+  z-index: var(--z-tooltip);
+  width: max-content;
+  max-width: min(280px, 70vw);
+  padding: var(--dawn-space-2);
+  border-radius: var(--dawn-radius-sm);
+  background: var(--dawn-surface-elevated);
+  border: 1px solid var(--dawn-stroke-1);
+  color: var(--dawn-text-1);
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.25;
   font-size: var(--dawn-fs-meta);
 }
+.plan-toggle-wrap:hover .plan-toggle-why,
+.plan-toggle-wrap:focus-within .plan-toggle-why { display: block; }
+
 .plan-band {
   margin: 0;
   padding: var(--dawn-space-1) var(--dawn-space-3);

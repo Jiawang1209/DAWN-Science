@@ -374,6 +374,8 @@ export const OPERATIONS = {
           provider: z.string().optional(),
           model: z.string().optional(),
           command: z.string().optional(),
+          /** ACP 命令及参数的指纹，用于配置变更后的目录缓存失效。 */
+          catalogKey: z.string().optional(),
           /**
            * cli：这个 agent 能选哪些模型（**由配置声明**，Spike H）。
            * 两个外部 CLI 都没有「列出可选项」的接口，所以只能问配置。
@@ -1966,7 +1968,6 @@ export const OPERATIONS = {
     mutating: true,
   },
 
-
   /**
    * 列出本机能用的内核（②-A · K2）。
    *
@@ -2192,6 +2193,17 @@ export const OPERATIONS = {
       .strict(),
     response: Empty,
     mutating: true,
+  },
+
+  /** 读取已配置 ACP 适配器的实际模型选项，不发送推理请求。 */
+  getAcpModels: {
+    request: z.object({ agentId: z.string().min(1) }).strict(),
+    response: z.object({
+      configId: z.string(),
+      current: z.string().optional(),
+      models: z.array(z.object({ id: z.string(), name: z.string(), description: z.string().optional() }).strict()),
+    }).strict(),
+    mutating: false,
   },
 
   /**
@@ -3254,7 +3266,6 @@ export const OPERATIONS = {
     response: z.object({ reordered: z.int().min(0) }).strict(),
     mutating: true,
   },
-
 
   /**
    * 写一个 provider 的连接设置（2026-08-10）。

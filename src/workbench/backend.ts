@@ -10,6 +10,7 @@
  * msgid 是带 `{0}` 的中文原文，**插值走 args、不拼模板串**——拼进去的译不了（B15，2026-09-01）；
  * 原样透传别人的话用 `fault原样`，每一处登记在 `tests/workbench/fault-i18n.test.ts` 的名单里。
  */
+import { probeAcpModels } from "../runtime/acp/models.js"
 import type { ProviderRegistry } from "../config/schema.js"
 import { 插件册 } from "../tools/plugins.js"
 import { 旁观, 截一帧 } from "../tools/browser/session.js"
@@ -24,7 +25,7 @@ import {
 import { 描述图片 } from "../runtime/vision.js"
 import { homedir } from "node:os"
 import { execFile, execFileSync } from "node:child_process"
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { 探测机器, 本地执行 } from "../env/probe.js"
@@ -1930,6 +1931,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 摘要
     },
 
+    /** 目录探测只使用已配置的命令，不接受客户端任意启动命令。 */
+    getAcpModels: async ({ agentId }) => {
+      const def = registry.agents[agentId]
+      if (!def || def.kind !== "acp") throw fault("invalid_request", "配置里没有叫「{0}」的 agent", agentId)
+      return probeAcpModels({ command: def.command, args: def.args })
+    },
+
     /**
      * 界面要列出可选 agent 才能新建会话，要列出 provider 才能填凭证。
      *
@@ -1956,7 +1964,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         agents: Object.entries(registry.agents).map(([agentId, def]) => ({
           agentId,
           kind: def.kind,
-          ...(def.kind === "acp" ? { remoteCapable: def.remoteCapable } : {}),
+          ...(def.kind === "acp" ? { remoteCapable: def.remoteCapable, catalogKey: createHash("sha256").update(JSON.stringify([def.command, def.args])).digest("hex") } : {}),
           ...(def.kind === "native"
             ? { provider: def.provider, model: def.model }
             : {

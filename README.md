@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="packaging/icon.png" alt="DAWN Science — R + Python" width="128" height="128">
+
 # DAWN Science
 
 **Data Agent Workbench with Notebooks — for science.**

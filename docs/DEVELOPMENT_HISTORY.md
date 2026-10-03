@@ -8,6 +8,22 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-03 — README 展示正式 RP 图标
+
+- **Type**: docs
+- **Motivation**: 用户要求仓库 README 使用已确认的新 RP 标识。
+- **What**: 在 README 顶部居中品牌区加入 128×128 图标，直接引用 `packaging/icon.png`，与应用打包资源保持一致。
+- **Impact**: 仓库首页展示蓝 R、黄 P、深蓝底图标；无额外资源副本，无功能改动。
+- **Verification**: 确认 README 相对路径指向存在的 1024×1024 PNG，显示尺寸及替代文本正确；`git diff --check` 通过。
+
+### 2026-10-03 — 统一 RP 应用与托盘图标
+
+- **Type**: chore
+- **Motivation**: 用户确认新的蓝 R、黄 P、深蓝圆角底标识，要求清楚体现 R 与 Python。
+- **What**: 新增无字体依赖的 `packaging/rp-mark.svg`；更新生成脚本，同源生成应用 SVG/1024² PNG 和透明底托盘 SVG/36² PNG；替换日出托盘内嵌资源，沿用 macOS template image。
+- **Impact**: 后续打包采用 RP 图标，重新启动新构建后顶部托盘采用 RP；不修改已安装应用，不涉及协议或数据变更。资源可通过 `npm run make-icon` 重建。
+- **Verification**: 图标生成成功；Electron nativeImage 检查两份 PNG 尺寸、透明角和非空不透明像素；目视检查应用图标；`npm run typecheck`、`npm run build` 通过，真实 Electron 托盘 e2e 1/1 通过。尚未安装/检查新打包应用在系统 Dock 的显示。
+
 ### 2026-10-01 — 工作目录标签始终只显示末级文件夹名
 
 - **Type**: fix

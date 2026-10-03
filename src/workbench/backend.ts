@@ -4317,17 +4317,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **工作区从项目取，不从请求取**——让调用方传工作区，
      * 等于把路径守卫的起点也交给它，那守卫就形同虚设。
      */
-    listDirectory: async ({ projectId, connectionId, path, includeIgnored }) => {
+    listDirectory: async ({ projectId, sessionId, connectionId, path, includeIgnored }) => {
       if (connectionId) return 远端列目录(connectionId, path)
-      const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
+      const p = sessionId ? sessions.get(sessionId) : projectStore.get(projectId!)
+      if (!p) throw fault("not_found", "文件浏览目标不存在")
+      if (sessionId && sessions.get(sessionId)?.connectionId) throw fault("invalid_request", "远端会话请按 connectionId 浏览")
       return listWorkspaceDirectory(p.workspace, path, {
         ...(includeIgnored === undefined ? {} : { includeIgnored }),
       })
     },
 
     /** 按文件名搜（7.16）。本地走 fs、远端走 SFTP，**同一个走法**（`files/search.ts`） */
-    searchFiles: async ({ projectId, connectionId, path, query }) => {
+    searchFiles: async ({ projectId, sessionId, connectionId, path, query }) => {
       if (connectionId) {
         const e = 连着的(connectionId)
         return 搜文件名(
@@ -4336,8 +4337,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           query,
         )
       }
-      const p = projectStore.get(projectId!)
-      if (!p) throw fault("not_found", "没有这个项目：{0}", String(projectId))
+      const p = sessionId ? sessions.get(sessionId) : projectStore.get(projectId!)
+      if (!p) throw fault("not_found", "文件浏览目标不存在")
+      if (sessionId && sessions.get(sessionId)?.connectionId) throw fault("invalid_request", "远端会话请按 connectionId 浏览")
       // 起点也要过守卫：越界的 path 在这里就抛。
       // **根用人给的相对路径，不用守卫回来的绝对路径**——那是 realpath，
       // macOS 上 `/var` 会变成 `/private/var`，再 `relative()` 回去就是一串 `..`

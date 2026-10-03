@@ -119,6 +119,12 @@ contextBridge.exposeInMainWorld("dawn", {
     }
   },
 
+  onTrayNewTask: (cb: () => void) => {
+    const listener = () => cb()
+    ipcRenderer.on("dawn:tray-new-task", listener)
+    return () => ipcRenderer.removeListener("dawn:tray-new-task", listener)
+  },
+
   onEvent: (cb: (raw: unknown) => void) => {
     const listener = (_e: IpcRendererEvent, payload: unknown) => cb(payload)
     ipcRenderer.on(EVENT_CHANNEL, listener)

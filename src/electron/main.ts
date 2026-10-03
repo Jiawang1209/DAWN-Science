@@ -5,7 +5,7 @@
  * 装配在 `wiring.ts`、派发在 `workbench/server.ts`、桥接逻辑在 `ipc.ts`——
  * 三者都不认识 Electron，因此都能单独测。这里剩下的部分正是「测不了、也不值得测」的那些。
  */
-import { app, clipboard, BrowserWindow, dialog, ipcMain, Notification, safeStorage, shell } from "electron"
+import { app, clipboard, Tray, Menu, nativeImage, BrowserWindow, dialog, ipcMain, Notification, safeStorage, shell } from "electron"
 import { fileURLToPath } from "node:url"
 import { extname, join, dirname } from "node:path"
 import { 迁旧数据 } from "./migrate-userdata.js"
@@ -23,6 +23,7 @@ import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile } from "./credentials.js"
 import { 交接箱 } from "../update/交接.js"
 import { 本机机器id } from "../update/机器id.js"
+import { 托盘图标 } from "./tray-icon.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
 
 /**
@@ -227,6 +228,36 @@ const COMPACT_KEEP_RECENT = Number(process.env.DAWN_COMPACT_KEEP_RECENT_TOKENS ?
 
 let workbench: Workbench | undefined
 
+let 托盘: Tray | undefined
+let 正在退出 = false
+app.on("before-quit", () => { 正在退出 = true })
+function 显示主窗口(): BrowserWindow | undefined {
+  let win = BrowserWindow.getAllWindows()[0]
+  if (!win) { createWindow(); win = BrowserWindow.getAllWindows()[0] }
+  if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus() }
+  return win
+}
+function 创建托盘(): void {
+  if (隐藏窗口 && process.env.DAWN_TEST_TRAY !== "1") return
+  // 内嵌 PNG，打包版无需依赖外置资源路径；macOS 模板图标随菜单栏主题变色。
+  const 图 = nativeImage.createFromDataURL(托盘图标).resize({ width: process.platform === "darwin" ? 18 : 32, height: process.platform === "darwin" ? 18 : 32 })
+  if (process.platform === "darwin") 图.setTemplateImage(true)
+  托盘 = new Tray(图)
+  托盘.setToolTip("DAWN Science")
+  const 菜单 = Menu.buildFromTemplate([
+    { label: "显示主窗口", click: () => { 显示主窗口() } },
+    { label: "新建会话", click: () => { 显示主窗口()?.webContents.send("dawn:tray-new-task") } },
+    { type: "separator" },
+    { label: "退出 DAWN Science", click: () => app.quit() },
+  ])
+  托盘.on("right-click", () => 托盘?.popUpContextMenu(菜单))
+  托盘.on("click", () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (win?.isVisible() && !win.isMinimized()) win.hide()
+    else 显示主窗口()
+  })
+}
+
 function createWindow(): void {
   启动日志("开窗口")
   const win = new BrowserWindow({
@@ -397,7 +428,10 @@ function createWindow(): void {
     }
     网页 = undefined
   }
-  win.on("close", 拆掉网页)
+  win.on("close", (event) => {
+    if (托盘 && !正在退出) { event.preventDefault(); win.hide(); return }
+    拆掉网页()
+  })
   app.on("before-quit", 拆掉网页)
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -603,8 +637,10 @@ app.whenReady().then(() => {
    * 用户（和测试）看到的是**没有窗口**——最难查的一种失败。
    */
   createWindow()
+  创建托盘()
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (!隐藏窗口) 显示主窗口()
+    else if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 
   /**
@@ -1039,7 +1075,7 @@ app.whenReady().then(() => {
 })
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit()
+  if (!托盘 && process.platform !== "darwin") app.quit()
 })
 
 /**

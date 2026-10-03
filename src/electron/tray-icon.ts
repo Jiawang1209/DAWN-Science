@@ -1,0 +1,2 @@
+// DAWN 日出标识：透明背景，macOS 用作 template image。
+export const 托盘图标 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAZ0lEQVR4nO2VQQqAMAwE+/9P670qkmaXpHQGcpKOEyg6BhzINU05BP1BUAtcWy97CcoenJ9/jSwoEhuNkhF9kT1sVWwJykptd6bS8ZC18Cg3k7hcH8Y6gdrXLgjeiP6rsrNfEADA0dxSHa1Th44IswAAAABJRU5ErkJggg=="

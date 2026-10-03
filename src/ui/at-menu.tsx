@@ -77,12 +77,12 @@ export interface 候选状态 {
  * 取回来的结果在本地排。
  */
 export function use艾特候选(query: string | undefined, 源: 引用文件源 | undefined): 候选状态 {
-  const [态, 设态] = useState<候选状态>({ 行: [], 忙: false })
+  const [态, 设态] = useState<候选状态 & { source?: 引用文件源 | undefined; query?: string | undefined }>({ 行: [], 忙: false })
   const 序 = useRef(0)
   useEffect(() => {
-    if (query === undefined || !源) return
     const 这次 = ++序.current
-    设态((前) => ({ ...前, 忙: true }))
+    设态({ 行: [], 忙: query !== undefined && Boolean(源), source: 源, query })
+    if (query === undefined || !源) return
     const 跑 = async (): Promise<候选状态> => {
       const q = query.replaceAll("\\", "/")
       // 浏览：空、或以 `/` 结尾——列那一层
@@ -113,10 +113,10 @@ export function use艾特候选(query: string | undefined, 源: 引用文件源 
     }
     void 跑().then(
       (s) => {
-        if (序.current === 这次) 设态(s)
+        if (序.current === 这次) 设态({ ...s, source: 源, query })
       },
       (e: unknown) => {
-        if (序.current === 这次) 设态({ 行: [], 忙: false, 说明: e instanceof Error ? e.message : String(e) })
+        if (序.current === 这次) 设态({ source: 源, query, 行: [], 忙: false, 说明: e instanceof Error ? e.message : String(e) })
       },
     )
   }, [query, 源])
@@ -127,7 +127,8 @@ export function use艾特候选(query: string | undefined, 源: 引用文件源 
   }
   const 快捷 = 内核快捷们.filter(x => x.token.toLowerCase().startsWith(query.toLowerCase()))
     .map(x => ({ path: x.token, name: `@${x.token}`, kind: "kernel" as const, description: 描述[x.token] }))
-  return { ...(源 ? 态 : { 忙: false }), 行: [...快捷, ...(源 ? 态.行 : [])].slice(0, 最多候选) }
+  const 当前态 = 源 && 态.source === 源 && 态.query === query ? 态 : { 行: [], 忙: Boolean(源) }
+  return { ...当前态, 行: [...快捷, ...当前态.行].slice(0, 最多候选) }
 }
 
 export function AtMenu({

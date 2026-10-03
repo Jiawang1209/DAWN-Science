@@ -2640,6 +2640,7 @@ export const OPERATIONS = {
       .object({
         /** 本地：这个项目的工作区。与 `connectionId` **二选一** */
         projectId: z.string().min(1).optional(),
+        sessionId: z.string().min(1).optional(),
         /**
          * 远端：这台服务器（②-B 的连接 id，7.5 起）。
          *
@@ -2652,9 +2653,9 @@ export const OPERATIONS = {
         includeIgnored: z.boolean().optional(),
       })
       .strict()
-      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
+      .refine((r) => [r.projectId, r.sessionId, r.connectionId].filter(Boolean).length === 1, {
         // **两个都给或都不给，都是调用方没想清楚在看哪台机器**
-        message: "projectId 与 connectionId 要给且只给一个",
+        message: "projectId、sessionId 与 connectionId 要给且只给一个",
       }),
     response: z
       .object({
@@ -2686,14 +2687,15 @@ export const OPERATIONS = {
     request: z
       .object({
         projectId: z.string().min(1).optional(),
+        sessionId: z.string().min(1).optional(),
         connectionId: z.string().min(1).optional(),
         /** 从哪儿搜起：本地相对工作区（空 = 根），远端绝对路径 */
         path: z.string().default(""),
         query: z.string().min(1),
       })
       .strict()
-      .refine((r) => Boolean(r.projectId) !== Boolean(r.connectionId), {
-        message: "projectId 与 connectionId 要给且只给一个",
+      .refine((r) => [r.projectId, r.sessionId, r.connectionId].filter(Boolean).length === 1, {
+        message: "projectId、sessionId 与 connectionId 要给且只给一个",
       }),
     response: z
       .object({

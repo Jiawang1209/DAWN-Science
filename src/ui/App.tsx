@@ -532,17 +532,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // 这套壳里没装更新（无头 / 测试替身）——**不出声**：
         // 它不是用户要求的动作，界面上少一行而已
       })
-    const 定时 = setTimeout(() => {
+    const 查更新 = () => {
       client
         .get<更新回执>("checkUpdate", {})
         .then((r) => {
           if (还在) 设更新回执(r)
         })
         .catch(() => {})
-    }, 5_000)
+    }
+    const 定时 = setTimeout(查更新, 5_000)
+    const 周期 = setInterval(查更新, 60 * 60 * 1000)
     return () => {
       还在 = false
       clearTimeout(定时)
+      clearInterval(周期)
     }
   }, [ready, client])
 
@@ -1207,20 +1210,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const searchFiles = useCallback(
     async (query: string, 根: string): Promise<SearchResult> => {
       if (文件所在) return await client.get<SearchResult>("searchFiles", { connectionId: 文件所在.connectionId, path: 根, query })
-      if (!projectId) throw new Error(t("还没有选中项目"))
-      return await client.get<SearchResult>("searchFiles", { projectId, path: 根, query })
+      if (!sessionId && !projectId) throw new Error(t("还没有选中项目"))
+      return await client.get<SearchResult>("searchFiles", { ...(sessionId ? { sessionId } : { projectId }), path: 根, query })
     },
-    [client, projectId, 文件所在],
+    [client, projectId, sessionId, 文件所在],
   )
   const loadDir = useCallback(
     async (path: string): Promise<Listing> => {
       if (文件所在) {
         return await client.get("listDirectory", { connectionId: 文件所在.connectionId, path })
       }
-      if (!projectId) throw new Error(t("还没有选中项目"))
-      return await client.get("listDirectory", { projectId, path })
+      if (!sessionId && !projectId) throw new Error(t("还没有选中项目"))
+      return await client.get("listDirectory", { ...(sessionId ? { sessionId } : { projectId }), path })
     },
-    [client, projectId, 文件所在],
+    [client, projectId, sessionId, 文件所在],
   )
 
   /**
@@ -1240,6 +1243,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       // **跟着当前会话所在的机器**（批 3）：远端会话读那台服务器上的
       const 去哪读 = 文件所在
         ? { connectionId: 文件所在.connectionId, path }
+        : sessionId
+          ? { sessionId, path }
         : projectId
           ? { projectId, path }
           : undefined
@@ -1249,7 +1254,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         .then((c) => { if (票 === 读票.current) setFileContent(c) })
         .catch(fail)
     },
-    [client, projectId, 文件所在],
+    [client, projectId, sessionId, 文件所在],
   )
 
   /**
@@ -1336,7 +1341,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 远端会话跟着那台机器、令牌相对它的当前目录。**没有项目 / 没有远端 = 没有源**——菜单里要说清。
    */
   /** `@` 引用的第二档设置（7.23）：粘贴不算、文件名过滤。跟着当前项目的工作区取（那一套规则按工作区存） */
-  const 当前工作区路径 = projects.find((p) => p.projectId === projectId)?.workspace
+  const tasks = useStore($tasks)
+  const 当前工作区路径 = sessionId
+    ? (tasks.find((t) => t.sessionId === sessionId)?.workspace ?? tasks.find((t) => t.sessionId === sessionId)?.scratchWorkspace)
+    : undefined
   const [艾特设置, 设艾特设置] = useState<艾特设置>({ ignorePasted: true, globalRules: [] })
   /** 线那头回的东西不信到底：缺字段就按默认（测试里的假 client 对不认识的操作回 `{}`） */
   const 整理艾特设置 = (r: Partial<艾特设置> | undefined): 艾特设置 => ({
@@ -1346,10 +1354,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   })
   useEffect(() => {
     if (!ready) return
+    let 作废 = false
+    设艾特设置({ ignorePasted: true, globalRules: [] })
     client
       .get<艾特设置>("getAtFileSettings", 当前工作区路径 ? { workspace: 当前工作区路径 } : {})
-      .then((r) => 设艾特设置(整理艾特设置(r)))
-      .catch(fail)
+      .then((r) => { if (!作废) 设艾特设置(整理艾特设置(r)) })
+      .catch((e) => { if (!作废) fail(e) })
+    return () => { 作废 = true }
   }, [client, ready, 当前工作区路径])
   const 改艾特设置 = useCallback(
     (patch: { ignorePasted?: boolean; globalRules?: 艾特设置["globalRules"]; workspaceRules?: 艾特设置["globalRules"] }) => {
@@ -1362,8 +1373,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
   const 滤掉 = useMemo(() => 编文件规则([...艾特设置.globalRules, ...(艾特设置.workspaceRules ?? [])]), [艾特设置])
   const 引用文件 = useMemo(
-    () => (projectId || 文件所在 ? { 根: 文件所在?.cwd ?? "", loadDir, search: searchFiles, 滤掉, 护粘贴: 艾特设置.ignorePasted } : undefined),
-    [projectId, 文件所在, loadDir, searchFiles, 滤掉, 艾特设置.ignorePasted],
+    () => (sessionId || 文件所在 ? { 根: 文件所在?.cwd ?? "", loadDir, search: searchFiles, 滤掉, 护粘贴: 艾特设置.ignorePasted } : undefined),
+    [sessionId, 文件所在, loadDir, searchFiles, 滤掉, 艾特设置.ignorePasted],
   )
   /** 点引用栏那一行：远端读那台机器；本地打开坞里的预览（readFile 那条路） */
   const 打开引用 = useCallback((path: string) => openFile(文件所在 ? `${文件所在.cwd.replace(/\/+$/, "")}/${path}` : path), [openFile, 文件所在])
@@ -1393,7 +1404,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 正在编辑哪一台、哪一台正在连、上一次操作出了什么错。
    */
   const connections = useStore($connections)
-  const tasks = useStore($tasks)
 
   /**
    * **新建任务**（T2/T3）：建出来 + 进去聊。
@@ -1420,6 +1430,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setActiveSessionId(undefined)
     setView("conversation")
   }, [])
+
+  useEffect(() => window.dawn?.onTrayNewTask?.(回到初始画面), [回到初始画面])
 
   /**
    * 空态那颗「先出方案」（2026-09-27）。**state 给渲染、ref 给发送**：`/plan 问题` 在同一次提交里先切开关再调 `onStart`，

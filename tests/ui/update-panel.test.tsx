@@ -33,6 +33,14 @@ const 有新版 = (over: Record<string, unknown> = {}): 更新回执 => ({
 })
 
 describe("侧栏那一行", () => {
+  it("左下角下载图标单击即开始下载，不需要先展开卡片", () => {
+    const actions = 空动作()
+    render(<更新侧栏行 回执={有新版()} 动作={actions} />)
+    fireEvent.click(screen.getByRole("button", { name: "下载新版本 0.0.3" }))
+    expect(actions.下载).toHaveBeenCalledTimes(1)
+    expect(screen.getByText(/你在/)).toBeTruthy()
+  })
+
   it("有新版时在，而且**真的看得见**（带文字、不是 opacity:0）", () => {
     render(<更新侧栏行 回执={有新版()} 动作={空动作()} />)
     const 行 = screen.getByRole("button", { name: /有新版本 0\.0\.3/ })

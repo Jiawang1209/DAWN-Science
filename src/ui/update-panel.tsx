@@ -16,7 +16,7 @@
  */
 import { useState } from "react"
 import { Button } from "./primitives.js"
-import { 上箭头图标 } from "./icons.js"
+import { 上箭头图标, 下载图标 } from "./icons.js"
 import { t, tf } from "./i18n/index.js"
 import type { 更新状态 } from "../protocol/index.js"
 
@@ -91,6 +91,12 @@ export function 更新侧栏行({ 回执, 动作 }: { 回执: 更新回执 | und
 
   return (
     <div className="update-entry">
+      {s.阶段 === "available" && s.安装.能 ? (
+        <Button className="update-download-icon" aria-label={tf("下载新版本 {0}", 号(s.版本))}
+          onClick={() => { 设开着(true); 动作.下载() }}>
+          <下载图标 />
+        </Button>
+      ) : null}
       <Button
         variant="ghost"
         size="inline"

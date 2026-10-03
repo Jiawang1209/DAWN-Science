@@ -16,6 +16,7 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "下载新版本 {0}": "Download version {0}",
   "这一轮没做成": "This turn failed",
   "查看原始错误": "Show original error",
   "重新加载": "Reload",
@@ -1495,6 +1496,8 @@ export const EN: Readonly<Record<string, string>> = {
   "没有这次传输：{0}": "No such transfer: {0}",
   "工作目录要写绝对路径，收到「{0}」": "The working folder must be an absolute path; got “{0}”",
   "本次运行没有装配设置存储": "Settings storage is not wired up in this run",
+  "文件浏览目标不存在": "File browsing target does not exist",
+  "远端会话请按 connectionId 浏览": "Browse remote chats using connectionId",
   "没有这段会话：{0}": "No such chat: {0}",
   "远端会话请按 connectionId 读（路径是那台机器上的绝对路径）": "Read remote chats by connectionId (the path is an absolute path on that machine)",
   "本次运行没有装配配置文件路径": "The config file path is not wired up in this run",

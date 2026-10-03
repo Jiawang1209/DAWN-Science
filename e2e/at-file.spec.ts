@@ -81,16 +81,25 @@ test.describe("对话里", () => {
   })
 })
 
-/** 空态屏那张输入卡也得兑现同一句承诺（夹具已认领了 workspace，所以这里有源） */
-test("空态屏：`@` 同样弹菜单、能挑", async ({ dawn }) => {
+/** 启动空态不继承项目文件。 */
+test("启动空态及普通会话：不泄漏项目文件", async ({ dawn }) => {
   const { page, workspace } = dawn
-  writeFileSync(join(workspace, "plan.md"), "# 计划\n")
+  writeFileSync(join(workspace, "project-only.md"), "project")
   const 框 = page.getByPlaceholder(/今天帮你做些什么/)
-  await 框.fill("@pla")
   const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
-  await 菜单.getByRole("option", { name: /plan\.md/ }).click()
-  await expect(框).toHaveValue("@plan.md ")
-  await expect(page.getByRole("list", { name: "引用的文件" })).toContainText("plan.md")
+  await 框.fill("@")
+  await expect(菜单.getByRole("option")).toHaveCount(3)
+  await 在项目里开会话(page)
+  await 框.fill("@project-only")
+  await expect(菜单.getByRole("option", { name: /project-only/ })).toBeVisible()
+  await page.getByRole("button", { name: "新建任务", exact: true }).click()
+  await 框.fill("@")
+  await expect(菜单.getByRole("option")).toHaveCount(3)
+  await 框.fill("你好")
+  await 框.press("Enter")
+  await expect(page.getByText("假模型已应答").last()).toBeVisible({ timeout: 30_000 })
+  await 框.fill("@project-only")
+  await expect(菜单.getByRole("option")).toHaveCount(0)
 })
 
 /**

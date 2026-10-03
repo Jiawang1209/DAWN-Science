@@ -394,6 +394,22 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(wa).not.toBe(wb)
   })
 
+  it("文件浏览与搜索按普通会话自己的目录隔离", async () => {
+    const a = await 开一段()
+    const b = await 开一段()
+    const root = new SessionStore(ctx.db).get(a)!.workspace
+    writeFileSync(join(root, "only-a.txt"), "A")
+    const listed = await ctx.server.handle("listDirectory", { sessionId: a, path: "" })
+    expect(JSON.stringify(listed)).toContain("only-a.txt")
+    const other = await ctx.server.handle("searchFiles", { sessionId: b, query: "only-a", path: "" })
+    expect(other.ok).toBe(true)
+    expect(JSON.stringify(other)).not.toContain("only-a.txt")
+    const escape = await ctx.server.handle("listDirectory", { sessionId: a, path: ".." })
+    expect(escape.ok).toBe(false)
+    const mixed = await ctx.server.handle("listDirectory", { sessionId: a, projectId: "other", path: "" })
+    expect(mixed.ok).toBe(false)
+  })
+
   it("无租约写入 → conflict，而不是 internal_error", async () => {
     const sid = await 开一段(repo)
 

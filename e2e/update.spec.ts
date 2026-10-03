@@ -21,10 +21,7 @@ test("侧栏长出「有新版本」，点开能下、下完能装", async ({ da
   expect(await 行.evaluate((el) => getComputedStyle(el).opacity)).not.toBe("0")
   await expect(行).toContainText("9.9.9")
 
-  await 行.click()
-  await expect(page.locator(".update-card")).toContainText("你在")
-
-  await page.getByRole("button", { name: "更新到 9.9.9" }).click()
+  await page.getByRole("button", { name: "下载新版本 9.9.9" }).click()
   // 下完之后才有这颗；**不自动重启**（规格 U4）
   await page.getByRole("button", { name: "重启并更新" }).waitFor({ timeout: 60_000 })
 

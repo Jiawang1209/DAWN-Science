@@ -7910,3 +7910,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   font-size: var(--dawn-fs-meta);
 }
 .plan-band + .composer-box { border-top-left-radius: 0; border-top-right-radius: 0; }
+
+/* 左下角的新版本入口：保持可见，单击直接下载。 */
+.update-download-icon {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  padding: 10px;
+  margin: 6px 8px;
+  border: 0;
+  border-radius: var(--dawn-radius-full);
+  background: var(--dawn-update-pink);
+  color: var(--dawn-update-on-pink);
+  align-items: center;
+  justify-content: center;
+}
+.update-download-icon:hover { background: var(--dawn-update-pink-hover); }
+.update-download-icon svg { width: 24px; height: 24px; }

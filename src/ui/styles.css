@@ -440,6 +440,9 @@ pre {
 /* 品牌字：标题的字重与颜色——**可点不等于要变成一个按钮的样子**；悬停才回强调色 */
 .topbar .brand { font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); padding: 0; }
 .topbar .brand:hover { color: var(--dawn-accent); }
+.brand-stack { display: flex; align-items: center; gap: var(--dawn-space-2); flex-shrink: 0; }
+.brand-version { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); font-family: var(--dawn-font-mono); line-height: 1.2; }
+
 .topbar .spacer { flex: 1; }
 .statusbar {
   display: flex;
@@ -785,6 +788,9 @@ pre {
 .amount { margin: 0 0 4px; font-size: var(--dawn-fs-title); }
 .tokens, .hint { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
 .hint.pad { padding: 0 12px 8px; margin: 0; }
+.status-notice { display: inline-flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; }
+.status-notice-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .stat-row, .file-list, .run-list { list-style: none; margin: 0; padding: 0; }
 .stat-row { display: flex; gap: 14px; }
 .file-list li, .run-list li { padding: var(--dawn-space-1) 0; border-bottom: 1px solid var(--dawn-stroke-4); }

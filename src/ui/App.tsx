@@ -1,3 +1,4 @@
+import { StatusNotices } from "./status-notices.js"
 /**
  * 外壳。
  *
@@ -3118,6 +3119,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return currentProvider ? serviceLabel(currentProvider) : undefined
   }
 
+  // 跟随主区正在使用的服务；中途换模型后优先读取会话值。
+  const 状态栏模型名 = session
+    ? currentServiceLabelOf(session) ?? (agentCfgOf(session) ? agentLabel(session.agentId) : undefined)
+    : !没有钥匙 && agentIds[0] ? agentLabel(agentIds[0]) : undefined
+  const 连接说明 = !ready ? t("未连接")
+    : 状态栏模型名 ? tf("已连接 {0}", 状态栏模型名) : t("未配置任何模型")
+
   /**
    * 能选哪些模型。**所有配好的服务 × 各自的模型**（2026-08-12 放开）。
    *
@@ -4823,9 +4831,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           * 实测 WorkBuddy 的侧栏顶栏里，「收起侧边栏」与「搜索」也是紧挨着的
           * （32×32，间距 36），我们照这个关系排。
           */}
-        <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
-          DAWN Science
-        </Button>
+        <div className="brand-stack">
+          <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
+            DAWN Science
+          </Button>
+          {更新回执 ? (
+            <span className="brand-version">v{更新回执.状态.当前.replace(/^v/, "")}</span>
+          ) : null}
+        </div>
         {/**
           * **折叠侧栏**（2026-08-13，作者要的）。
           *
@@ -5955,7 +5968,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <CommandPalette commands={commands} />
 
       <div className="statusbar">
-        <span>{ready ? t("已连接") : t("未连接")}</span>
+        <span>{连接说明}</span>
         {没有钥匙 ? (
           /**
            * **不说「native agent」。** 那是我们内部的词，作者已经为它抱怨过一次
@@ -5976,11 +5989,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             {t("还没有填任何 API key，暂时不能对话——点这里填一个")}
           </Button>
         ) : null}
-        {notes.map((n, i) => (
-          <span key={i} className="hint">
-            {n}
-          </span>
-        ))}
+        <StatusNotices notes={notes} />
       </div>
     </div>
   )

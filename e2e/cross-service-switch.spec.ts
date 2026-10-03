@@ -43,6 +43,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   // 开一段 DeepSeek 的对话，先说一句
   await 开一段临时会话(page)
   await 等进了对话(page)
+  await expect(page.locator(".statusbar > span").first()).toHaveText("已连接 DeepSeek", { timeout: 5000 })
   await page.getByPlaceholder(/今天帮你做些什么/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 60_000 })
@@ -68,6 +69,7 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
 
   // 换完，那颗 pill 自己就对上了
   await expect(page.locator(".composer .model-pill")).toContainText(另一家的)
+  await expect(page.locator(".statusbar > span").first()).toHaveText("已连接 other")
 
   // ① 还是同一段：会话没多，前面说过的话还在
   expect(await page.locator(".session-list > li").count()).toBe(会话数)

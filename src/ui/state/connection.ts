@@ -50,6 +50,15 @@ export const $ready = atom(false)
 export const $notes = atom<readonly string[]>([])
 
 const MAX_NOTES = 4
+const NOTE_LIFETIME_MS = 30_000
+const noteTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+/** 关闭一条历史提示，不改变当前连接/会话状态。 */
+export function dismissNote(message: string): void {
+  clearTimeout(noteTimers.get(message))
+  noteTimers.delete(message)
+  $notes.set($notes.get().filter((n) => n !== message))
+}
 
 /**
  * 记一条提示。
@@ -60,7 +69,14 @@ const MAX_NOTES = 4
 export function note(message: string): void {
   const prev = $notes.get()
   if (prev.at(-1) === message) return
-  $notes.set([...prev, message].slice(-MAX_NOTES))
+  // 相同内容再次出现时，撤掉旧计时器，避免旧回调删除新提示。
+  clearTimeout(noteTimers.get(message))
+  const next = [...prev.filter((n) => n !== message), message].slice(-MAX_NOTES)
+  for (const [text, timer] of noteTimers) {
+    if (!next.includes(text)) { clearTimeout(timer); noteTimers.delete(text) }
+  }
+  $notes.set(next)
+  noteTimers.set(message, setTimeout(() => dismissNote(message), NOTE_LIFETIME_MS))
 }
 
 /** 开始（或重新开始）连接。**exhausted 之后走这里回到 connecting** */

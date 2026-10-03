@@ -17,6 +17,7 @@ test("全新配置目录能起来，且落在对话首页", async ({ dawn }) => 
   // 品牌名出现 = React 根真的挂上了。
   // 2026-08-08 有过一次「窗口开着但 React 根已死」，终端里一个字都没有
   await expect(page.locator(".brand")).toHaveText("DAWN Science")
+  await expect(page.locator(".statusbar > span").first()).toHaveText("未配置任何模型", { timeout: 5000 })
 
   // **对话是首页。** 不是统计面板——初版把「偶尔查的东西」做成了打开就看的东西
   await expect(page.locator(".conversation")).toBeVisible()

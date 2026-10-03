@@ -3,7 +3,7 @@
  *
  * 三条不显然的：
  *   1. **节流用「上次成功查完的时刻」**，失败不前移它——否则一次超时会把接下来
- *      24 小时全堵死，而人完全看不出为什么再也不提示了。
+ *      1 小时全堵死，而人完全看不出为什么再也不提示了。
  *   2. **自动那次失败不打扰、手动那次失败必须出声**（规格 7.5 的分寸）：
  *      前者没人要求过，后者是人刚刚亲手要的。这里只负责把 `failed` 算出来，
  *      「说不说」由调用方按 `自动` 决定。
@@ -14,7 +14,7 @@ import { 挑资源, type 平台事实 } from "./资源.js"
 import type { 发布源, 发布一条 } from "./发布源.js"
 import { 盘面默认值, type 更新盘面, type 更新状态, type 可装性 } from "./状态.js"
 
-const 一天 = 24 * 3600_000
+const 自动检查间隔 = 3600_000
 
 export interface 管家选项 {
   当前版本: string
@@ -53,13 +53,13 @@ export class 更新管家 {
   }
 
   /**
-   * @param 自动 启动时那次（受「auto」开关与 24 小时节流约束）；false = 人自己点的
+   * @param 自动 启动时那次（受「auto」开关与 1 小时节流约束）；false = 人自己点的
    */
   async 检查({ 自动 }: { 自动: boolean }): Promise<更新状态> {
     const 盘 = this.盘()
     if (自动) {
       if (!盘.auto) return this.状态
-      if (盘.lastCheckedAt !== undefined && this.现在() - 盘.lastCheckedAt < 一天) return this.状态
+      if (盘.lastCheckedAt !== undefined && this.现在() - 盘.lastCheckedAt < 自动检查间隔) return this.状态
     }
     this.状态 = { 阶段: "checking", 当前: this.o.当前版本 }
     let 一条: 发布一条 | undefined

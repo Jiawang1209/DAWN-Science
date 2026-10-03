@@ -8,7 +8,7 @@
 import { expect } from "@playwright/test"
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
-import { test } from "./fixtures.js"
+import { test, 进设置 } from "./fixtures.js"
 
 test.use({ dawnOptions: { fakeUpdate: { version: "9.9.9", packageBytes: 256 * 1024 } } })
 
@@ -20,6 +20,36 @@ test("侧栏长出「有新版本」，点开能下、下完能装", async ({ da
   // **看得见**：`toBeVisible()` 对 opacity:0 仍然算可见，所以直接量（这个项目栽过两次）
   expect(await 行.evaluate((el) => getComputedStyle(el).opacity)).not.toBe("0")
   await expect(行).toContainText("9.9.9")
+
+  // 更新入口与设置保持同一行高，下载图形不能用 SVG 默认大尺寸撑开侧栏。
+  const 设置 = page.locator(".sidebar").getByRole("button", { name: "设置", exact: true })
+  const 设置框 = await 设置.boundingBox()
+  const 更新框 = await page.locator(".update-actions").boundingBox()
+  const 下载框 = await page.locator(".update-download-icon").boundingBox()
+  const 图形框 = await page.locator(".update-download-icon svg").boundingBox()
+  expect(设置框).not.toBeNull()
+  expect(更新框!.height).toBeLessThanOrEqual(设置框!.height + 1)
+  expect(下载框!.height).toBeLessThanOrEqual(设置框!.height)
+  expect(图形框!.width).toBe(14)
+  expect(图形框!.height).toBe(14)
+
+  // 与外观的主题色实时同步，浅色背景时前景也自动切换。
+  await 进设置(page, "外观")
+  const 下载按钮 = page.locator(".update-download-icon")
+  const 读按钮色 = () => 下载按钮.evaluate((el) => {
+    const 样本 = document.createElement("span")
+    样本.style.backgroundColor = "var(--dawn-accent-solid)"
+    document.body.append(样本)
+    const 跟随主题 = getComputedStyle(el).backgroundColor === getComputedStyle(样本).backgroundColor
+    样本.remove()
+    return { 跟随主题, foreground: getComputedStyle(el).color, icon: getComputedStyle(el.querySelector("svg")!).color }
+  })
+  await page.getByRole("radio", { name: "蓝", exact: true }).click()
+  await expect.poll(读按钮色).toEqual({ 跟随主题: true, foreground: "rgb(255, 255, 255)", icon: "rgb(255, 255, 255)" })
+  const 色值 = page.getByLabel("颜色值，可输入 HEX 或 RGB")
+  await 色值.fill("#ffd240")
+  await 色值.press("Enter")
+  await expect.poll(读按钮色).toEqual({ 跟随主题: true, foreground: "rgb(13, 13, 13)", icon: "rgb(13, 13, 13)" })
 
   await page.getByRole("button", { name: "下载新版本 9.9.9" }).click()
   // 下完之后才有这颗；**不自动重启**（规格 U4）

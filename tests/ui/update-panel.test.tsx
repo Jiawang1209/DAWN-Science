@@ -5,6 +5,7 @@
  * **装不了时说得出为什么**、**忽略之后侧栏没了但关于里还在**、
  * **失败的原话在屏幕上**。
  */
+import { 下载图标, 勾图标 } from "../../src/ui/icons.js"
 import { describe, expect, it, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "../../src/ui/update-panel.js"
@@ -33,6 +34,21 @@ const 有新版 = (over: Record<string, unknown> = {}): 更新回执 => ({
 })
 
 describe("侧栏那一行", () => {
+  it.each(["available", "downloading", "ready"])("%s 使用符合状态含义的图标", (阶段) => {
+    const 预期图标 = 阶段 === "ready" ? 勾图标 : 下载图标
+    const { container } = render(<><预期图标 className="expected-icon" /><更新侧栏行
+      回执={有新版({ 阶段, 已下: 1, 共: 10, 包路径: "/tmp/update.zip" })} 动作={空动作()} /></>)
+    expect(container.querySelector(".update-row svg path")?.getAttribute("d"))
+      .toBe(container.querySelector(".expected-icon path")?.getAttribute("d"))
+  })
+  it("下载入口为紧凑按钮，图形限制为小图标", () => {
+    render(<更新侧栏行 回执={有新版()} 动作={空动作()} />)
+    const 下载 = screen.getByRole("button", { name: "下载新版本 0.0.3" })
+    expect(下载.className).toContain("btn-icon")
+    expect(下载.className).toContain("btn-primary")
+    expect(下载.querySelector("svg")?.getAttribute("class")).toContain("update-dot")
+    expect(下载.parentElement?.className).toBe("update-actions")
+  })
   it("左下角下载图标单击即开始下载，不需要先展开卡片", () => {
     const actions = 空动作()
     render(<更新侧栏行 回执={有新版()} 动作={actions} />)

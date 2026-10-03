@@ -16,7 +16,7 @@ export interface 更新回执 {
 export interface 更新服务 {
   /** 不联网，读缓存 */
   状态(): 更新回执
-  /** @param force 人亲手点的：无视 24 小时节流 */
+  /** @param force 人亲手点的：无视 1 小时节流 */
   检查(force: boolean): Promise<更新回执>
   设偏好(改: { auto?: boolean | undefined; ignore?: string | undefined }): 更新回执
   下载(): Promise<更新回执>

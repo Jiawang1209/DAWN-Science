@@ -517,7 +517,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **开应用先读缓存**（不联网），侧栏那一行立刻画得出来；
    * **5 秒后才去查**——查更新不许挤在启动路径上，那条路上已经有钥匙串与后端装配了。
    *
-   * 节流（24 小时）与「启动时自动检查」那个开关都由后端说了算：
+   * 节流（1 小时）与「启动时自动检查」那个开关都由后端说了算：
    * 界面只负责在这里敲一下门，policy 只有一份（规格 U2）。
    */
   useEffect(() => {
@@ -554,7 +554,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       p.then(设更新回执).catch((e) => note(e instanceof Error ? e.message : String(e)))
     }
     return {
-      // 人亲手点的那次：**无视 24 小时节流**，失败也**必须出声**（规格 7.5）
+      // 人亲手点的那次：**无视 1 小时节流**，失败也**必须出声**（规格 7.5）
       检查: () => {
         设更新查着(true)
         client

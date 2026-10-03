@@ -51,17 +51,17 @@ const 建 = (
 }
 
 describe("节流（规格 U2）", () => {
-  it("距上次查不足 24 小时：一个请求都不发", async () => {
+  it("距上次查不足 1 小时：一个请求都不发", async () => {
     const { 源, 调用 } = 假源(async () => 一条("0.0.3"))
     const 现在 = 1_000_000_000_000
-    const 管家 = 建(源, { lastCheckedAt: 现在 - 60_000 }, 现在)
+    const 管家 = 建(源, { lastCheckedAt: 现在 - (3600_000 - 1) }, 现在)
     await 管家.检查({ 自动: true })
     expect(调用.次).toBe(0)
   })
-  it("超过 24 小时才查", async () => {
+  it.each([3600_000, 2 * 3600_000])("距上次成功检查 %i 毫秒允许自动检查", async (间隔) => {
     const { 源, 调用 } = 假源(async () => 一条("0.0.3"))
     const 现在 = 1_000_000_000_000
-    const 管家 = 建(源, { lastCheckedAt: 现在 - 25 * 3600_000 }, 现在)
+    const 管家 = 建(源, { lastCheckedAt: 现在 - 间隔 }, 现在)
     await 管家.检查({ 自动: true })
     expect(调用.次).toBe(1)
   })
@@ -135,12 +135,12 @@ describe("失败要带原话（规格 7.5）", () => {
     expect(s.阶段).toBe("failed")
     expect(s.阶段 === "failed" && s.原话).toContain("超时 10 秒")
   })
-  it("失败之后 lastCheckedAt 不前移——否则一次超时会把接下来 24 小时全堵死", async () => {
+  it("失败之后 lastCheckedAt 不前移——否则一次超时会把接下来 1 小时全堵死", async () => {
     const { 源, 调用 } = 假源(async () => {
       throw new Error("GitHub 回了 403")
     })
     const 现在 = 1_000_000_000_000
-    let 盘: Record<string, unknown> = { auto: true, lastCheckedAt: 现在 - 25 * 3600_000 }
+    let 盘: Record<string, unknown> = { auto: true, lastCheckedAt: 现在 - 2 * 3600_000 }
     const 管家 = new 更新管家({
       当前版本: "0.0.2",
       源,
@@ -153,7 +153,7 @@ describe("失败要带原话（规格 7.5）", () => {
     })
     await 管家.检查({ 自动: true })
     expect(调用.次).toBe(1)
-    expect(盘.lastCheckedAt).toBe(现在 - 25 * 3600_000)
+    expect(盘.lastCheckedAt).toBe(现在 - 2 * 3600_000)
   })
 })
 

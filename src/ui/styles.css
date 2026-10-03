@@ -7516,6 +7516,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
  * 这个项目在 2026-08-10 一天里栽过两次「看不见的能力等于不存在」。
  */
 .update-entry { flex-shrink: 0; }
+.update-actions { display: flex; align-items: center; }
+.update-actions .update-row { flex: 1; min-width: 0; width: auto; margin-right: 0; }
+.update-download-icon { flex-shrink: 0; margin-right: var(--dawn-space-3); }
 
 /** 图标与文字挨着、一起靠左——与上面那些入口行同一个读法 */
 .update-row { width: 100%; justify-content: flex-start; gap: var(--dawn-space-2); }
@@ -7911,20 +7914,5 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .plan-band + .composer-box { border-top-left-radius: 0; border-top-right-radius: 0; }
 
-/* 左下角的新版本入口：保持可见，单击直接下载。 */
-.update-download-icon {
-  display: inline-flex;
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  padding: 10px;
-  margin: 6px 8px;
-  border: 0;
-  border-radius: var(--dawn-radius-full);
-  background: var(--dawn-update-pink);
-  color: var(--dawn-update-on-pink);
-  align-items: center;
-  justify-content: center;
-}
-.update-download-icon:hover { background: var(--dawn-update-pink-hover); }
-.update-download-icon svg { width: 24px; height: 24px; }
+/* 图标跟随按钮的主题色前景，浅色主题色时自动使用深色。 */
+.update-download-icon svg { color: inherit; }

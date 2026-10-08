@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1788835569109,
+  "lastScanned": 1790776876246,
   "projectRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
   "techStack": {
     "languages": [
@@ -52,8 +52,8 @@
     "runtime": "Node.js 22"
   },
   "build": {
-    "buildCommand": "S=/private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad; npm run build > $S/build2.log 2>&1 && echo BUILD_OK && for i in 1 2; do npx playwright test e2e/kernel-session.spec.ts --reporter=line 2>&1 | LC_ALL=C grep -aE \"passed|failed\" | tail -2; done",
-    "testCommand": "rm -f tests/kernel/probe-slowjoiner.integration.test.ts && npm run typecheck 2>&1 | tail -2 && echo TYPECHECK_OK && npm test > /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad/unit-fix.log 2>&1; tail -5 /private/tmp/claude-501/-Users-liuyue-Desktop-Github-repos-dawn-science/eb3bac49-ecc6-4996-b4b3-84e4b821a0a9/scratchpad/unit-fix.log",
+    "buildCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; grep -ln \"composer-card\" e2e/*.spec.ts | tr '\\n' ' '; echo; npm run build > /tmp/claude-501/b.log 2>&1 || tail -5 /tmp/claude-501/b.log; npx vitest run tests/ui 2>&1 | grep -E \"Tests \"; npx playwright test e2e/theme.spec.ts e2e/side-session.spec.ts $(grep -ln \"composer-card\" e2e/*.spec.ts | grep -v visual | tr '\\n' ' ') 2>&1 | grep -E \"✘|passed|failed\"",
+    "testCommand": "cd /Users/liuyue/Desktop/Github_repos/dawn-science; cat > /tmp/claude-501/entry.md <<'EOF'\n### 2026-10-01 — 底色学 dsh：亮色对话区纯白，暗色对话区最深、侧栏亮一档（C16，分支 `learn-deepseek-harness`）\n\n- **Type**: feat\n- **Motivation**: 作者：*「我觉得他的背景色，也值得我们学习。」* 量了 dsh 源码：亮色对话区 #fff、侧栏 #f9fafb；暗色对话区 #151517、侧栏 #1b1b1c、输入卡 #2c2c2e。我们亮色整页发灰（#f9f9f9 / #f3f3f3），暗色侧栏最深。对比图作者：「可以」。\n- **What**:\n  - `tokens.css`：亮色 `surface-app` gray-50 → gray-0、`surface-sidebar` gray-75 → gray-50；暗色 app → 新 gray-950 #151515、sidebar → 新 gray-850 #1b1b1b、input → 新 gray-725 #2c2c2c（纯中性取最近档，灰阶仍 R=G=B）。\n  - 白底上会消失的小白块：`.who-avatar`、`.thought-secs` 由 `surface-elevated` 改 `fill-2`。\n  - 输入卡 `.composer-card` 不聚焦时加一道 `stroke-3` 发丝线（此前透明）：白卡贴白底只剩极淡阴影，作者点名过「输入框看不出边」；dsh 也是细描边 + 轻阴影。推翻了 08-12 照 WorkBuddy 的「无边框」。\n  - `design-contract` 加两条：亮色对话区是 gray-0、暗色对话区档号大于侧栏；头像圆与思考秒数不用 `surface-*` 底。\n  - e2e 翻面两条并写理由：`theme.spec`「暗色下侧栏比内容区更深」→「内容区比侧栏更深」；`side-session`「卡面与底不同色」放宽为「底色不同或有看得见的描边」，并改为量不聚焦时的卡（聚焦时描边让位给强调色环）。\n- **Impact**: 纯样式，无协议变更。视觉基线 14 张全部重存（每屏底色都变）；输入卡描边又动了 7 张。\n- **Verification**: typecheck；`npm test` 连续两遍 4012 过（第一遍与后台 e2e 同跑时有 1 条失败未复现、未定位到是哪条）；新扫描做过反例（改回旧底色 / 小块改回面色，两条都红）。e2e 全套两段：191 过 + 386 过、2 条即上面翻面的两条；翻面与描边之后相关 17 个 spec 133 过、side-session 9 过；kernel-session 6 过。视觉：底色那轮 14 张逐张看过实际图再重存、连验两遍 14/14；描边那轮 diff 只在输入卡轮廓，重存后「命令面板·暗色」`=all` 写坏，按 CLAUDE.md 拷验证轮 actual.png 作基线，再连验两遍 14/14。真构建截图给作者看。\n\nEOF\npython3 - <<'EOF'\np='docs/DEVELOPMENT_HISTORY.md'; s=open(p).read(); e=open('/tmp/claude-501/entry.md').read()\ni=s.index('### 2026-10-01 — 过程压低'); s=s[:i]+e+s[i:]; open(p,'w').write(s)\nEOF\ngit add docs src e2e tests; git status --short | grep -v omc; git commit -q -m \"feat(theme): learn dsh's grounds — white conversation in light, darkest conversation in dark\n\nLight: conversation surface gray-50 -> white, sidebar gray-75 -> gray-50. Dark:\nconversation deepest (new gray-950), sidebar one step lighter (new gray-850), input\ncard lighter again (new gray-725), all pure-neutral nearest to dsh's values. Small\nwhite chips (avatar, thinking seconds) move to a fill token so they survive on white;\nthe composer card gets a hairline so it still reads as a card on white. Two e2e\nchecks flipped with reasons, two design-contract scans added, visual baselines\nre-saved.\" && git log --oneline -3",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {
@@ -84,6 +84,7 @@
       "dev:mock": "node scripts/dev-mock.mjs",
       "test:e2e": "npm run build && playwright test --grep-invert \"内核会话|解释器路径\" && playwright test e2e/kernel-session.spec.ts",
       "test:e2e:only": "playwright test --grep-invert \"内核会话|解释器路径\"",
+      "perf:streaming": "playwright test -c playwright.perf.config.ts",
       "test:e2e:kernel": "playwright test e2e/kernel-session.spec.ts",
       "test:e2e:visual": "npm run build && playwright test e2e/visual.spec.ts",
       "test:e2e:visual:only": "playwright test e2e/visual.spec.ts",
@@ -124,7 +125,7 @@
       "path": "agents",
       "purpose": null,
       "fileCount": 22,
-      "lastAccessed": 1788835569075,
+      "lastAccessed": 1790776876227,
       "keyFiles": [
         "bayesian-modeler.md",
         "bioinformatician.md",
@@ -137,14 +138,14 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1788835569076,
+      "lastAccessed": 1790776876228,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 8,
-      "lastAccessed": 1788835569081,
+      "lastAccessed": 1790776876230,
       "keyFiles": [
         "DESIGN.md",
         "DEVELOPMENT_HISTORY.md",
@@ -156,8 +157,8 @@
     "e2e": {
       "path": "e2e",
       "purpose": null,
-      "fileCount": 112,
-      "lastAccessed": 1788835569083,
+      "fileCount": 131,
+      "lastAccessed": 1790776876231,
       "keyFiles": [
         "accent.spec.ts",
         "acp-agent.spec.ts",
@@ -170,14 +171,14 @@
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 0,
-      "lastAccessed": 1788835569085,
+      "lastAccessed": 1790776876231,
       "keyFiles": []
     },
     "packaging": {
       "path": "packaging",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1788835569085,
+      "lastAccessed": 1790776876231,
       "keyFiles": [
         "entitlements.mac.plist",
         "icon.png"
@@ -186,21 +187,18 @@
     "release": {
       "path": "release",
       "purpose": null,
-      "fileCount": 22,
-      "lastAccessed": 1788835569086,
+      "fileCount": 3,
+      "lastAccessed": 1790776876232,
       "keyFiles": [
-        "DAWN-Science-0.0.1-linux-amd64.deb",
-        "DAWN-Science-0.0.1-linux-arm64.AppImage",
-        "DAWN-Science-0.0.1-linux-arm64.deb",
-        "DAWN-Science-0.0.1-linux-x86_64.AppImage",
-        "DAWN-Science-0.0.1-mac-arm64.dmg"
+        "builder-debug.yml",
+        "builder-effective-config.yaml"
       ]
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 20,
-      "lastAccessed": 1788835569087,
+      "lastAccessed": 1790776876232,
       "keyFiles": [
         "build-electron.mjs",
         "dawn-mcp-server.mjs",
@@ -212,15 +210,15 @@
     "skills": {
       "path": "skills",
       "purpose": null,
-      "fileCount": 0,
-      "lastAccessed": 1788835569088,
+      "fileCount": 1,
+      "lastAccessed": 1790776876232,
       "keyFiles": []
     },
     "spikes": {
       "path": "spikes",
       "purpose": null,
       "fileCount": 11,
-      "lastAccessed": 1788835569089,
+      "lastAccessed": 1790776876233,
       "keyFiles": [
         "FINDINGS.md",
         "a-pi-embed.ts",
@@ -233,7 +231,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1788835569090,
+      "lastAccessed": 1790776876233,
       "keyFiles": [
         "cli.ts",
         "errors.ts"
@@ -243,27 +241,27 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1788835569091,
+      "lastAccessed": 1790776876233,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
-      "fileCount": 9,
-      "lastAccessed": 1788835569093,
+      "fileCount": 10,
+      "lastAccessed": 1790776876233,
       "keyFiles": [
         "cost-wiring.test.ts",
         "first-run.test.ts",
+        "packaging-config.test.ts",
         "provenance-probe.test.ts",
-        "run-recorder.test.ts",
-        "source-hygiene.test.ts"
+        "run-recorder.test.ts"
       ]
     },
     "src/config": {
       "path": "src/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1788835569101,
+      "lastAccessed": 1790776876233,
       "keyFiles": [
         "loader.ts",
         "mcp-writer.ts",
@@ -274,7 +272,7 @@
       "path": "tests/config",
       "purpose": "Configuration files",
       "fileCount": 5,
-      "lastAccessed": 1788835569102,
+      "lastAccessed": 1790776876234,
       "keyFiles": [
         "mcp-writer.test.ts",
         "models-json.test.ts",
@@ -284,165 +282,303 @@
   },
   "hotPaths": [
     {
-      "path": "e2e/_probe.spec.ts",
-      "accessCount": 9,
-      "lastAccessed": 1788877267159,
+      "path": "src/runtime/native.ts",
+      "accessCount": 20,
+      "lastAccessed": 1790577265704,
       "type": "file"
     },
     {
       "path": "docs/DEVELOPMENT_HISTORY.md",
-      "accessCount": 9,
-      "lastAccessed": 1788880872143,
+      "accessCount": 17,
+      "lastAccessed": 1790689657723,
       "type": "file"
     },
     {
-      "path": "src/ui/back-to-bottom.tsx",
+      "path": "src/ui/App.tsx",
+      "accessCount": 12,
+      "lastAccessed": 1790683686114,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-坞里的对话-·-亮色/坞里的对话-亮色-diff.png",
+      "accessCount": 12,
+      "lastAccessed": 1790787188625,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-命令面板-·-亮色/命令面板-亮色-diff.png",
+      "accessCount": 11,
+      "lastAccessed": 1790688203017,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-坞里的对话-·-亮色/坞里的对话-亮色-actual.png",
+      "accessCount": 10,
+      "lastAccessed": 1790785087873,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-25-调整方向.md",
+      "accessCount": 8,
+      "lastAccessed": 1790499882805,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-概览-·-亮色/概览-亮色-diff.png",
       "accessCount": 6,
-      "lastAccessed": 1788879867364,
+      "lastAccessed": 1790691107823,
       "type": "file"
     },
     {
-      "path": "src/ui/styles.css",
+      "path": "docs/superpowers/specs/2026-09-25-调整方向-design.md",
       "accessCount": 5,
-      "lastAccessed": 1788879361446,
+      "lastAccessed": 1790499882119,
       "type": "file"
     },
     {
-      "path": "tests/ui/back-to-bottom.test.ts",
-      "accessCount": 3,
-      "lastAccessed": 1788879115991,
+      "path": "src/workbench/events.ts",
+      "accessCount": 5,
+      "lastAccessed": 1790546079727,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/plans/2026-09-08-回到底部浮标.md",
+      "path": "test-results/visual-坞里的对话-·-暗色/坞里的对话-暗色-diff.png",
+      "accessCount": 5,
+      "lastAccessed": 1790784190609,
+      "type": "file"
+    },
+    {
+      "path": "e2e/side-session.spec.ts",
+      "accessCount": 5,
+      "lastAccessed": 1790787116084,
+      "type": "file"
+    },
+    {
+      "path": "e2e/__screenshots__/坞里的对话-亮色-darwin.png",
+      "accessCount": 4,
+      "lastAccessed": 1790516474259,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-概览-·-亮色/概览-亮色-actual.png",
+      "accessCount": 4,
+      "lastAccessed": 1790785087501,
+      "type": "file"
+    },
+    {
+      "path": "test-results/visual-坞里的对话-·-暗色/坞里的对话-暗色-actual.png",
+      "accessCount": 4,
+      "lastAccessed": 1790785094957,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-正式签名与公证-design.md",
       "accessCount": 3,
-      "lastAccessed": 1788879122919,
+      "lastAccessed": 1790500359286,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-会话全文搜索-design.md",
+      "accessCount": 3,
+      "lastAccessed": 1790501360736,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-上下文用量与压缩-design.md",
+      "accessCount": 3,
+      "lastAccessed": 1790506777600,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-agent基本功-总计划.md",
+      "accessCount": 3,
+      "lastAccessed": 1790506818505,
       "type": "file"
     },
     {
       "path": "src/ui/views.tsx",
       "accessCount": 3,
-      "lastAccessed": 1788879185371,
+      "lastAccessed": 1790686225166,
       "type": "file"
     },
     {
-      "path": "src/ui/notebook.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1788879206241,
-      "type": "file"
-    },
-    {
-      "path": "tests/ui/design-contract.test.ts",
-      "accessCount": 3,
-      "lastAccessed": 1788880101439,
-      "type": "file"
-    },
-    {
-      "path": "e2e/stick-to-bottom.spec.ts",
-      "accessCount": 3,
-      "lastAccessed": 1788880290833,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/enhance.tsx",
+      "path": "docs/superpowers/specs/2026-09-27-先出方案-design.md",
       "accessCount": 2,
-      "lastAccessed": 1788874848541,
+      "lastAccessed": 1790537900509,
       "type": "file"
     },
     {
-      "path": "docs/superpowers/specs/2026-09-08-回到底部浮标-design.md",
-      "accessCount": 2,
-      "lastAccessed": 1788879122344,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/i18n/en.ts",
-      "accessCount": 2,
-      "lastAccessed": 1788879219710,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/session-tabs.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1788880203130,
-      "type": "file"
-    },
-    {
-      "path": "test-results/visual-命令面板-·-暗色/命令面板-暗色-diff.png",
-      "accessCount": 2,
-      "lastAccessed": 1788916812438,
-      "type": "file"
-    },
-    {
-      "path": "src/ui/mouse-stuck.ts",
+      "path": "docs/superpowers/specs/2026-09-23-待发消息-design.md",
       "accessCount": 1,
-      "lastAccessed": 1788839502902,
+      "lastAccessed": 1790174421033,
       "type": "file"
     },
     {
-      "path": "tests/ui/mouse-stuck.test.ts",
+      "path": "src/ui/queued-strip.tsx",
       "accessCount": 1,
-      "lastAccessed": 1788839616285,
+      "lastAccessed": 1790174798159,
       "type": "file"
     },
     {
-      "path": "test-results/visual-设置-·-亮色/设置-亮色-diff.png",
+      "path": "tests/runtime/queue-mirror.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1788841531632,
+      "lastAccessed": 1790175073472,
       "type": "file"
     },
     {
-      "path": "test-results/visual-设置-·-亮色/设置-亮色-expected.png",
+      "path": "docs/superpowers/specs/2026-09-24-侧边对话-design.md",
       "accessCount": 1,
-      "lastAccessed": 1788841550007,
+      "lastAccessed": 1790237547006,
       "type": "file"
     },
     {
-      "path": "test-results/visual-设置-·-亮色/设置-亮色-actual.png",
+      "path": "docs/superpowers/plans/2026-09-24-侧边对话.md",
       "accessCount": 1,
-      "lastAccessed": 1788841550059,
+      "lastAccessed": 1790237987359,
       "type": "file"
     },
     {
-      "path": "src/ui/ime-trace.ts",
+      "path": "tests/workbench/side-session.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1788841847037,
+      "lastAccessed": 1790238081666,
       "type": "file"
     },
     {
-      "path": "src/ui/ime.ts",
+      "path": "src/workbench/side-session.ts",
       "accessCount": 1,
-      "lastAccessed": 1788874994284,
+      "lastAccessed": 1790238103345,
       "type": "file"
     },
     {
-      "path": "tests/ui/ime.test.ts",
+      "path": "src/tools/read-main-session.ts",
       "accessCount": 1,
-      "lastAccessed": 1788875012862,
+      "lastAccessed": 1790238418482,
       "type": "file"
     },
     {
-      "path": "src/ui/icons.tsx",
+      "path": "tests/workbench/side-session-backend.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1788878871965,
+      "lastAccessed": 1790239010669,
       "type": "file"
     },
     {
-      "path": "src/ui/agent-browser.tsx",
+      "path": "src/ui/state/transcript-slot.ts",
       "accessCount": 1,
-      "lastAccessed": 1788880063701,
+      "lastAccessed": 1790239429488,
       "type": "file"
     },
     {
-      "path": "src/ui/turn-navigator.tsx",
+      "path": "src/ui/side-chat.tsx",
       "accessCount": 1,
-      "lastAccessed": 1788880174912,
+      "lastAccessed": 1790241459685,
       "type": "file"
     },
     {
-      "path": "tests/ui/enhance-note.test.ts",
+      "path": "e2e/zz-side-shot.spec.ts",
       "accessCount": 1,
-      "lastAccessed": 1788909882346,
+      "lastAccessed": 1790242071101,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/state/side-resync.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790263641614,
+      "type": "file"
+    },
+    {
+      "path": "e2e/fixtures.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790264249410,
+      "type": "file"
+    },
+    {
+      "path": "test-results/side-session-侧边对话-·-ACP-ACP-那段挂进坞，直说它看不见主对话-/test-failed-1.png",
+      "accessCount": 1,
+      "lastAccessed": 1790264424326,
+      "type": "file"
+    },
+    {
+      "path": "e2e/visual.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790267033018,
+      "type": "file"
+    },
+    {
+      "path": "e2e/__screenshots__/坞里的对话-暗色-darwin.png",
+      "accessCount": 1,
+      "lastAccessed": 1790267043021,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/state/catalog.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790292814876,
+      "type": "file"
+    },
+    {
+      "path": "tests/kernel/挂载-状态.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790300580168,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/composer-redirect.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1790304307944,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/state/ask-in-dock.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790305176341,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/state/ask-in-dock.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790305223729,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/ansi.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790314431698,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/ansi.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790314470783,
+      "type": "file"
+    },
+    {
+      "path": "src/ui/ansi-text.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1790314478532,
+      "type": "file"
+    },
+    {
+      "path": "tests/ui/kernel-error.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1790314561764,
+      "type": "file"
+    },
+    {
+      "path": "e2e/kernel-session.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1790314630415,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-子agent看得见-design.md",
+      "accessCount": 1,
+      "lastAccessed": 1790500545813,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-正式签名与公证.md",
+      "accessCount": 1,
+      "lastAccessed": 1790500725227,
       "type": "file"
     }
   ],

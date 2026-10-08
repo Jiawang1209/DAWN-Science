@@ -1,3 +1,4 @@
+import { 标记待回答 } from "./catalog.js"
 /**
  * 把后端的真相同步进缓存。
  *
@@ -263,6 +264,7 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
         queued: snap.queued,
       })
       标记待批准(sessionId, Boolean(snap.pendingPermission))
+      标记待回答(sessionId, snap.items.some((x) => x.type === "question" && x.state === "pending"))
       c.expectRevision(sessionId, snap.revision)
     })
     .catch(fail)
@@ -292,6 +294,7 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
         queued: snap.queued,
       })
       标记待批准(sessionId, Boolean(snap.pendingPermission))
+      标记待回答(sessionId, snap.items.some((x) => x.type === "question" && x.state === "pending"))
       // 它的团队（2026-09-29）：坞里点团队 chip 要看的是这一份，不是主区那段的
       $侧边团队.set(snap.team)
       c.expectRevision(sessionId, snap.revision)

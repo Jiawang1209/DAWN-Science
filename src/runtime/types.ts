@@ -285,6 +285,7 @@ export type AgentEvent =
       options: readonly { optionId: string; name: string; kind: string }[]
     }
   /** 一次询问答完了 / 超时了 / 取消了（2026-08-23，原生会话的「问一句」）：卡要消失 */
+  | { kind: "question"; sessionId: SessionId; question: import("../protocol/questions.js").QuestionRecord }
   | { kind: "permission_settled"; sessionId: SessionId; requestId: string }
   /**
    * 一次工具调用的**文件事实**（不变式 5：从 git 事实算，不听 agent 声明）。
@@ -546,6 +547,7 @@ export type RestoredItem =
    * **只在 native 的 `history()` 里出现**：由那一条 `tool`（name `propose_plan`）原位换来——一换一，条数不变
    * （全文搜索数的第几条与转录里的第几条仍是同一个数，见 `history.ts` 文件头）。
    */
+  | { kind: "question"; question: import("../protocol/questions.js").QuestionRecord; at?: number }
   | { kind: "plan"; plan: import("../protocol/plan.js").方案 }
 
 /**
@@ -656,6 +658,7 @@ export interface AgentRuntime {
    * `optionId` 缺省 = 取消（协议里那个 `outcome: "cancelled"`）——
    * **它与「拒绝」不是一回事**：拒绝是一个决定，取消是「这一轮不做了」。
    */
+  answerQuestion?(sessionId: SessionId, requestId: string, answer?: import("../protocol/questions.js").QuestionAnswer): void
   answerPermission?(sessionId: SessionId, requestId: string, optionId?: string): void
   /**
    * 改一个会话开关（A3，**只有 acp 有**）。

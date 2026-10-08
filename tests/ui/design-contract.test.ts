@@ -939,7 +939,8 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
      * 两个都是对的词——**那颗 `＋` 此前没有文字，正是本项目栽过两次的
      * 「看不见的能力等于不存在」**，不该为了躲开子串再把它藏回去。
      */
-    const 放行 = new Set(["设置|去设置", "文件|上传文件"])
+    // 用户指定问答按钮为“跳过”；首启“先跳过”属于另一输入面，测试使用 exact。
+    const 放行 = new Set(["设置|去设置", "文件|上传文件", "跳过|先跳过"])
     const 撞的: string[] = []
     for (const a of 名字) {
       for (const b of 名字) {
@@ -1957,5 +1958,21 @@ describe("设计契约 · 先出方案", () => {
     const 块 = read("styles.css").match(/\.plan-toggle-why\s*\{([^}]*)\}/)
     expect(块, "找不到 `.plan-toggle-why` 那一块——改名了，这条扫描要跟着改").toBeTruthy()
     expect(块![1]).not.toMatch(/text-overflow\s*:\s*ellipsis|white-space\s*:\s*nowrap/)
+  })
+})
+
+// Structured questions are a human interaction, outside process folding and permissions.
+describe("结构化澄清问答", () => {
+  it("卡片独立于输入组件，按会话回答；UI 不调用权限操作", () => {
+    const card = read("question-card.tsx")
+    expect(card).not.toMatch(/answerPermission|runtime\//)
+    expect(card).toContain("在组词(e)")
+    expect(card).toContain("locked.current")
+    const views = read("views.tsx")
+    expect(views).toContain('className="composer-card" hidden={questionTakeover}')
+    expect(views).toContain("useQuestionTakeover(session.sessionId, pendingQuestions)")
+    expect(views.indexOf("<QuestionCard")).toBeLessThan(views.indexOf("<ComposerInputSurface", views.indexOf("<QuestionCard")))
+    expect(read("turn-process.ts")).not.toMatch(/item\.type === "question"/)
+    expect(read("App.tsx")).toContain('sessionId: s.sessionId, requestId')
   })
 })

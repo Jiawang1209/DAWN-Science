@@ -1,3 +1,7 @@
+import { $待回答的会话 } from "./state/catalog.js"
+import { QuestionCard, QuestionSummary, useQuestionTakeover } from "./question-card.js"
+import { clearQuestionDraft } from "./question-drafts.js"
+import type { QuestionAnswer } from "../protocol/index.js"
 /**
  * 会话侧栏、对话视图、终端 dock。
  *
@@ -297,6 +301,7 @@ export function SessionRow({
   详情,
   跑着,
   等你点头,
+  等你回答,
   现在,
 }: {
   session: SessionSummary
@@ -364,6 +369,7 @@ export function SessionRow({
   跑着?: boolean | undefined
   /** 等待用户回答权限卡；优先于跑着与未读显示 */
   等你点头?: boolean | undefined
+  等你回答?: boolean | undefined
   /**
    * 「现在」是几点。**由上面统一给，不在这一行里读时钟。**
    *
@@ -480,6 +486,7 @@ export function SessionRow({
       data-state={session.state}
       data-running={跑着 ? "1" : undefined}
       data-waiting-approval={等你点头 ? "1" : undefined}
+      data-waiting-answer={等你回答 ? "1" : undefined}
       onContextMenu={onDelete || onRename || onPin || onMove || onArchive || onExtra
         ? (e) => {
             e.preventDefault()
@@ -615,10 +622,10 @@ export function SessionRow({
         {/* 未读点（codex-polish ⑤）：不是正看着的那段说完了。跑着的时候不画——跑着本身就是状态 */}
         {未读 && !跑着 && !等你点头 ? <span className="sess-unread" aria-label={t("有新回复")} /> : null}
         <span
-          className={`sess-when${等你点头 ? " waiting-approval" : 跑着 ? " running" : ""}`}
+          className={`sess-when${等你点头 ? " waiting-approval" : 等你回答 ? " waiting-answer" : 跑着 ? " running" : ""}`}
           data-when={session.lastActiveAt ?? session.createdAt}
         >
-          {等你点头 ? t("待批准") : 跑着 ? t("跑着") : 多久之前(session.lastActiveAt ?? session.createdAt, 现在 ?? Date.now())}
+          {等你点头 ? t("待批准") : 等你回答 ? t("等你回答") : 跑着 ? t("跑着") : 多久之前(session.lastActiveAt ?? session.createdAt, 现在 ?? Date.now())}
         </span>
       </Row>
 
@@ -1853,6 +1860,7 @@ export function SessionSidebar({
   const 跑着的 = useStore($跑着的会话)
   const 未读的 = useStore($未读)
   const 待批准的 = useStore($待批准的会话)
+  const 待回答的 = useStore($待回答的会话)
 
   /**
    * 这一行属于哪儿——卡上的第二行。
@@ -1967,6 +1975,7 @@ export function SessionSidebar({
         session={s}
         跑着={跑着的.has(s.sessionId)}
         等你点头={待批准的.has(s.sessionId)}
+        等你回答={待回答的.has(s.sessionId)}
         现在={现在}
         {...(选中它 ? { select: { checked: 已选!.has(task.taskId), onToggle: () => 切一个(task.taskId) } } : {})}
         active={s.sessionId === activeSessionId && view === "conversation"}
@@ -3940,6 +3949,7 @@ export function ConversationView({
   switchProblem,
   待答权限,
   onAnswerPermission,
+  onAnswerQuestion,
   会话开关们,
   onSetConfigOption,
   onToggleDock,
@@ -4060,6 +4070,7 @@ export function ConversationView({
    */
   待答权限?: { requestId: string; title: string; options: readonly { optionId: string; name: string; kind: string }[] } | undefined
   /** 回答那次询问。`optionId` 缺省 = 取消（与「拒绝」不是一回事） */
+  onAnswerQuestion?: ((requestId: string, answer?: QuestionAnswer) => Promise<void>) | undefined
   onAnswerPermission?: ((requestId: string, optionId?: string) => void) | undefined
   /**
    * 这一段会话可以调的开关（A3，只有 acp 有）。
@@ -4192,6 +4203,11 @@ export function ConversationView({
   const 主区附栏行数 = useStore($主区附栏行数)
   const 订阅的items = useStore($items)
   const items = 传进来的items ?? 订阅的items
+  const pendingQuestions = useMemo(() => items.filter((item) => item.type === "question").filter((item) => item.state === "pending"), [items])
+  const questionTakeover = useQuestionTakeover(session.sessionId, pendingQuestions) && Boolean(onAnswerQuestion)
+  useEffect(() => {
+    for (const item of items) if (item.type === "question" && (item.state === "answered" || item.state === "cancelled")) clearQuestionDraft(session.sessionId, item.requestId)
+  }, [items, session.sessionId])
   const workStepMode = useStore($workStepMode)
   const [轮次过程展开, 设轮次过程展开] = useState<Record<string, boolean>>({})
   useEffect(() => 设轮次过程展开({}), [session.sessionId])
@@ -5297,7 +5313,8 @@ export function ConversationView({
         {onEditQueue ? (
           <待发条 items={待发} onEdit={onEditQueue} onToDock={onQueueToDock} onNewSession={onNewSession} onError={设发送出错} disabled={queueLocked} />
         ) : null}
-        <div className="composer-card">
+        {onAnswerQuestion ? pendingQuestions.map((record) => <QuestionCard key={record.requestId} sessionId={session.sessionId} record={record} onAnswer={(answer) => onAnswerQuestion(record.requestId, answer)} />) : null}
+        <div className="composer-card" hidden={questionTakeover}>
         {/* 先出方案开着（2026-09-27，spec §2.1）：按下态的形状不够——扫一眼与读屏都读不出含义，用字说清 */}
         {方案开着 ? (
           <p className="plan-band" role="status">
@@ -6153,6 +6170,7 @@ function TranscriptRowImpl({
       />
     )
   }
+  if (item.type === "question") return <QuestionSummary record={item} expanded={搜索命中} />
   const mine = item.who === "user"
 
   /**

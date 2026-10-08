@@ -335,3 +335,12 @@ export function 标未读(sessionId: string, 未读: boolean): void {
     console.error("[未读] 记不住，本次仍然生效：", e)
   }
 }
+
+export const $待回答的会话 = atom<ReadonlySet<string>>(new Set())
+export function 标记待回答(sessionId: string, pending: boolean): void {
+  const old = $待回答的会话.get()
+  if (old.has(sessionId) === pending) return
+  const next = new Set(old)
+  if (pending) next.add(sessionId); else next.delete(sessionId)
+  $待回答的会话.set(next)
+}

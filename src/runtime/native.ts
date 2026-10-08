@@ -1,3 +1,6 @@
+import { QuestionRequests } from "../questions/requests.js"
+import { createAskUserQuestionTool } from "../tools/ask-user-question.js"
+import { type QuestionAnswer } from "../protocol/questions.js"
 /**
  * Native 运行时：坐 pi 第三层 `createAgentSession()`。
  *
@@ -569,6 +572,8 @@ export class NativeRuntime implements AgentRuntime {
    * **不能用 `getToolDefinition(名)` 判「装了没有」**：pi 的注册表里内置工具一直都在（`noTools: "builtin"` 只是不启用它们），
    * 远端会话没装我们的 `ls`，一查却查得到 pi 自己那件——启用了就是一件没套任何门、在本机跑的 `ls`（2026-09-28 测出来的）。
    */
+  private readonly questionBooks = new Map<SessionId, QuestionRequests>()
+
   private readonly 方案工具名们 = new Map<SessionId, string[]>()
   private readonly 轮基线 = new Map<SessionId, Promise<(已批准存档 & { planId: string })[]>>()
   /**
@@ -715,7 +720,11 @@ export class NativeRuntime implements AgentRuntime {
     const s = this.sessions.get(sessionId)
     if (!s) return []
     // 翻法在 `history.ts`（2026-09-27 搬出去）：子 agent 的会话文件读回、全文搜索用同一份
-    const 条 = 还原历史(s.sessionManager.getBranch())
+    const 条 = 还原历史(s.sessionManager.getBranch()).map((x): RestoredItem => {
+      if (x.kind !== "question") return x
+      const saved = this.questionBooks.get(sessionId)?.get(x.question.requestId)
+      return saved ? { ...x, question: saved } : x
+    })
     /**
      * 先出方案（2026-09-27）：簿里记着的 `propose_plan` 调用**原位**换成卡片（状态取簿里的，含「你改过」——先核对一遍）；
      * 簿里没有的（簿读坏了、老记录）照旧当工具行，不编一个状态。一换一，条数不变。
@@ -1027,6 +1036,12 @@ export class NativeRuntime implements AgentRuntime {
         ],
       })
     })
+  }
+
+  answerQuestion(sessionId: SessionId, requestId: string, answer?: QuestionAnswer): void {
+    const book = this.questionBooks.get(sessionId)
+    if (!book) throw new Error("该会话没有可回答的提问")
+    book.answer(sessionId, requestId, answer)
   }
 
   answerPermission(sessionId: SessionId, requestId: string, optionId?: string): void {
@@ -1399,13 +1414,16 @@ export class NativeRuntime implements AgentRuntime {
      * 它们建会话时就得在（pi 的 `customTools` 只在建会话时装），默认停用、方案期才启用（`按标记设方案工具`）。
      * 设计契约扫描盯着：`customTools` 只能是 `方案期包过的` 这一份——换回没包的，门就只剩提示词了。
      */
+    const questions = new QuestionRequests(spec.sessionId, spec.sessionDir, (question) => this.emit({ kind: "question", sessionId: spec.sessionId, question }))
+    this.questionBooks.set(spec.sessionId, questions)
+    const questionTool = createAskUserQuestionTool((id, qs, signal) => questions.ask(id, qs, signal))
     const 方案工具 = [
       createProposePlanTool({ 交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
       ...(this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
         ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
         : []),
     ]
-    const 方案期包过的 = [...(customTools ?? []), ...方案工具].map((d) => this.套方案期门(d as Record<string, unknown>, spec))
+    const 方案期包过的 = [...(customTools ?? []), questionTool, ...方案工具].map((d) => this.套方案期门(d as Record<string, unknown>, spec))
     this.方案工具名们.set(
       spec.sessionId,
       方案期工具.filter((n) => 方案期包过的.some((d) => d.name === n)),
@@ -3705,6 +3723,7 @@ ${描述}`
      */
     await s.回退?.catch(() => {})
     // 先中止在跑的一轮，再退订，最后释放——顺序反了会在 dispose 之后收到事件
+    this.questionBooks.get(sessionId)?.interrupt()
     await s.session.abort().catch(() => {})
     /**
      * **等在跑的那一轮自己收完尾**（2026-09-28 审查）：`abort()` 先回、`prompt()` 的 finally 后落——那里做先出方案的收轮核对，

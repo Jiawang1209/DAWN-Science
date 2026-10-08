@@ -232,6 +232,19 @@ export const 假方案 = {
     "- `figures/fev1_by_smoking.png` —— 箱线图",
   ].join("\n"),
 }
+export const 假问题 = { questions: [
+  { id: "scope", header: "分析范围", question: "这次需要分析哪些样本？", options: [{ label: "全部样本（推荐）", description: "保留所有符合条件的样本。" }, { label: "仅健康组", description: "只分析健康组样本。" }] },
+  { id: "metrics", header: "分析指标", question: "需要输出哪些指标？", multi_select: true, options: [{ label: "多样性" }, { label: "丰度" }] },
+  { id: "note", header: "补充信息", question: "还有需要遵守的要求吗？" },
+] }
+function 澄清工具(body) {
+  const last = 最后一句用户话(body) ?? ""
+  if (!last.includes("结构化澄清")) return undefined
+  if (!body.tools?.some((t) => t.function?.name === "ask_user_question")) return undefined
+  const lastUser = body.messages.findLastIndex((m) => m.role === "user")
+  if (body.messages.slice(lastUser + 1).some((m) => m.role === "tool")) return undefined
+  return { toolName: "ask_user_question", args: 假问题, say: "我需要先确认几个分析选择。", ...(last.includes("带写入") ? { extraCalls: [{ toolName: "write", args: { path: "results/tables/after-question.txt", content: "answered-first" } }] } : {}) }
+}
 export const 交方案 = { toolName: "propose_plan", args: 假方案, say: "我先出一份方案。" }
 export const 偷跑 = { toolName: "write", args: { path: "results/tables/偷跑.csv", content: "a\n1\n" }, say: "我先偷偷写一个。" }
 export const 照方案做 = {
@@ -452,7 +465,8 @@ export function startMockInferenceServer(opts = {}) {
       const 增强 = 系统原文.includes("只输出改写后的提示词")
       const 判定 = 最后一句.includes("只回一个 JSON 对象")
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
-      const reply = 摘要
+      const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
+      const reply = 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"
@@ -481,7 +495,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
       const finishReason = !摘要 && 最后一句.includes("演一次截断") ? "length" : "stop"
@@ -622,10 +636,10 @@ function streamChunks(reply, tool, thinking, 每段字数, 用量 = 默认用量
         choices: [{
           index: 0,
           delta: {
-            tool_calls: [{
-              index: 0, id: 下一个调用id(), type: "function",
-              function: { name: tool.toolName, arguments: JSON.stringify(tool.args) },
-            }],
+            tool_calls: [tool, ...(tool.extraCalls ?? [])].map((call, index) => ({
+              index, id: 下一个调用id(), type: "function",
+              function: { name: call.toolName, arguments: JSON.stringify(call.args) },
+            })),
           },
           finish_reason: null,
         }],

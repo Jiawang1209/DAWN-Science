@@ -1,0 +1,171 @@
+import { existsSync, readFileSync } from "node:fs"
+import { join } from "node:path"
+import { test, expect, 在项目里开会话, 等进了对话, 进坞 } from "./fixtures.js"
+
+test("结构化澄清：多题、单选、多选补充、跳过；模型收到答案继续；重载恢复只读", async ({ dawn }, testInfo) => {
+ const { page, requests } = dawn
+ await 在项目里开会话(page); await 等进了对话(page)
+ const main = page.locator("main.main")
+ const input = main.getByPlaceholder(/今天帮你做些什么/)
+ await input.fill("请做结构化澄清"); await input.press("Enter")
+ const card = main.locator(".question-card")
+ await expect(card).toContainText("这次需要分析哪些样本？", { timeout: 30000 })
+ await expect(input).toBeHidden()
+ await expect(main.locator(".composer-footer")).toBeHidden()
+ const geometry = await card.evaluate((el) => ({
+  height: el.getBoundingClientRect().height,
+  answerHeight: el.querySelector("textarea")!.getBoundingClientRect().height,
+  titleSize: parseFloat(getComputedStyle(el.querySelector("h3")!).fontSize),
+  textSize: parseFloat(getComputedStyle(el).fontSize),
+ }))
+ expect(geometry.height).toBeLessThanOrEqual(300)
+ expect(geometry.answerHeight).toBeLessThanOrEqual(36)
+ expect(geometry.titleSize).toBeLessThanOrEqual(geometry.textSize)
+ await testInfo.attach("question-geometry", { body: JSON.stringify(geometry), contentType: "application/json" })
+ await expect(page.locator(".sess-when").filter({ hasText: "等你回答" })).toHaveCount(1)
+ await card.getByRole("radio", { name: /全部样本/ }).check()
+ await card.getByRole("button", { name: "收起提问" }).click()
+ await expect(input).toBeVisible()
+ await input.fill("保留这段聊天草稿")
+ await expect(card.getByRole("button", { name: "展开提问" })).toBeVisible()
+ await card.getByRole("button", { name: "展开提问" }).click()
+ await expect(input).toBeHidden()
+ await expect(card.getByRole("radio", { name: /全部样本/ })).toBeChecked()
+ await page.screenshot({ path: testInfo.outputPath("questions.png") })
+ await card.getByRole("button", { name: "下一题" }).click()
+ await card.getByRole("checkbox", { name: "多样性" }).check()
+ await card.getByRole("checkbox", { name: "丰度" }).check()
+ await card.getByRole("textbox", { name: "输入你的答案" }).fill("加上均匀度")
+ await card.getByRole("button", { name: "下一题" }).click()
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await expect(card).toHaveCount(0)
+ await expect(input).toBeVisible()
+ await expect(input).toHaveValue("保留这段聊天草稿")
+ await expect(main.locator(".turn.agent").last()).toContainText("收到澄清答案", { timeout: 30000 })
+ const bodies = (requests as { body: { messages?: { role: string; content?: unknown }[] } }[]).map((r) => r.body)
+ const result = bodies.flatMap((b) => b.messages ?? []).find((m) => m.role === "tool" && String(m.content).includes('"answers"'))
+ expect(JSON.parse(String(result?.content))).toEqual({ answers: [
+ { id: "scope", selected: ["全部样本（推荐）"] },
+ { id: "metrics", selected: ["多样性", "丰度"], custom: "加上均匀度" },
+ { id: "note", selected: [] },
+ ] })
+ await page.reload()
+ await page.getByRole("button", { name: /^请做结构化澄清 / }).click()
+ await expect(main.locator(".question-summary")).toContainText("已回答", { timeout: 30000 })
+ await expect(card).toHaveCount(0)
+ await main.locator(".question-summary summary").click()
+ await expect(main.locator(".question-summary")).toContainText("加上均匀度")
+ await expect(input).toBeVisible()
+})
+
+test("停止等待使提问中断；取消提问返回取消结果", async ({ dawn }) => {
+ const { page } = dawn
+ await 在项目里开会话(page); await 等进了对话(page)
+ const main = page.locator("main.main"), input = main.getByPlaceholder(/今天帮你做些什么/)
+ await input.fill("结构化澄清"); await input.press("Enter")
+ await expect(main.locator(".question-card")).toBeVisible({ timeout: 30000 })
+ await main.locator(".question-card").getByRole("button", { name: "收起提问" }).click()
+ await main.getByRole("button", { name: "停止", exact: true }).click()
+ await expect(main.locator(".question-card")).toHaveCount(0)
+ await expect(main.locator(".question-summary")).toContainText("提问已中断")
+ await input.fill("再次结构化澄清"); await input.press("Enter")
+ await expect(main.locator(".question-card")).toBeVisible({ timeout: 30000 })
+ await main.getByRole("button", { name: "不再提问" }).click()
+ await expect(main.locator(".question-card")).toHaveCount(0)
+ await expect(main.locator(".question-summary").last()).toContainText("已取消提问")
+ await expect(input).toBeVisible()
+ await expect(main.locator(".turn.agent").last()).toContainText('"cancelled":true', { timeout: 30000 })
+})
+
+
+test("切换会话保留草稿；侧边问答与主区隔离；调整方向撤销原提问", async ({ dawn }) => {
+ const { page } = dawn
+ await 在项目里开会话(page); await 等进了对话(page)
+ const main = page.locator("main.main"), input = main.getByPlaceholder(/今天帮你做些什么/)
+ await input.fill("草稿结构化澄清"); await input.press("Enter")
+ const card = main.locator(".question-card")
+ await expect(card).toBeVisible({ timeout: 30000 })
+ await card.getByRole("textbox").fill("仅主区健康组")
+ await page.getByRole("button", { name: "新建任务", exact: true }).click()
+ await page.getByRole("button", { name: /^草稿结构化澄清 / }).click()
+ await expect(card.getByRole("textbox")).toHaveValue("仅主区健康组")
+ await 进坞(page, "对话")
+ const side = page.locator("aside.right-dock")
+ await side.getByRole("button", { name: "另开一段", exact: true }).click()
+ await side.locator(".side-chat-head").waitFor()
+ const sideInput = side.getByPlaceholder(/今天帮你做些什么/)
+ await sideInput.fill("侧边结构化澄清"); await sideInput.press("Enter")
+ const sideCard = side.locator(".question-card")
+ await expect(sideCard).toBeVisible({ timeout: 30000 })
+ await expect(sideInput).toBeHidden()
+ await expect(sideCard.getByRole("textbox")).toHaveValue("")
+ await sideCard.getByRole("radio", { name: /仅健康组/ }).check()
+ await expect(card.getByRole("textbox")).toHaveValue("仅主区健康组")
+ await sideCard.getByRole("button", { name: "不再提问" }).click()
+ await expect(sideCard).toHaveCount(0)
+ await expect(sideInput).toBeVisible()
+ await expect(card).toBeVisible()
+ await card.getByRole("button", { name: "收起提问" }).click()
+ await input.fill("直接继续别的任务"); await input.press("ControlOrMeta+Enter")
+ await expect(card).toHaveCount(0)
+ await expect(main.locator(".question-summary")).toContainText("提问已中断")
+ await expect(main.locator(".turn.agent").last()).toContainText("假模型已应答", { timeout: 30000 })
+})
+
+test("生成方案阶段可澄清，回答后仍处于只读方案期", async ({ dawn }) => {
+ const { page } = dawn
+ await 在项目里开会话(page); await 等进了对话(page)
+ const main = page.locator("main.main")
+ await main.getByRole("button", { name: "生成方案", exact: true }).click()
+ const input = main.getByPlaceholder(/今天帮你做些什么/)
+ await input.fill("方案前结构化澄清"); await input.press("Enter")
+ const card = main.locator(".question-card")
+ await expect(card).toBeVisible({ timeout: 30000 })
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await expect(card).toHaveCount(0)
+ await expect(main.getByRole("button", { name: "生成方案", exact: true })).toHaveAttribute("aria-pressed", "true")
+ await expect(main.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
+ await input.fill("请交方案"); await input.press("Enter")
+ await expect(main.locator(".plan-card")).toBeVisible({ timeout: 30000 })
+})
+
+test("暗色主题与窄窗：提问不横向溢出，正文可滚动，操作仍能点击", async ({ dawn }, testInfo) => {
+ const { page } = dawn
+ await page.getByRole("button", { name: "设置", exact: true }).click()
+ await page.getByRole("button", { name: "展开", exact: true }).click()
+ await page.getByRole("radio", { name: "暗色", exact: true }).click()
+ await page.getByRole("button", { name: "返回", exact: true }).click()
+ await 在项目里开会话(page); await 等进了对话(page)
+ const main = page.locator("main.main"), input = main.getByPlaceholder(/今天帮你做些什么/)
+ await input.fill("暗色结构化澄清"); await input.press("Enter")
+ const card = main.locator(".question-card")
+ await expect(card).toBeVisible({ timeout: 30000 })
+ await expect(page.locator("html.dawn-dark")).toHaveCount(1)
+ expect(await card.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+ await page.screenshot({ path: testInfo.outputPath("questions-dark.png") })
+ await page.setViewportSize({ width: 900, height: 650 })
+ expect(await card.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+ await card.getByRole("button", { name: "不再提问" }).click()
+ await expect(card).toHaveCount(0)
+})
+
+
+test("同一模型消息问答后接写入：等待答案期间绝不提前执行后续工具", async ({ dawn }) => {
+ const { page, workspace } = dawn
+ await 在项目里开会话(page); await 等进了对话(page)
+ const main = page.locator("main.main"), input = main.getByPlaceholder(/今天帮你做些什么/)
+ const file = join(workspace, "results/tables/after-question.txt")
+ await input.fill("结构化澄清带写入"); await input.press("Enter")
+ const card = main.locator(".question-card")
+ await expect(card).toBeVisible({ timeout: 30000 })
+ // Observe the asynchronous writer across multiple frames, not just the first render.
+ await page.waitForTimeout(300)
+ expect(existsSync(file)).toBe(false)
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await card.getByRole("button", { name: "跳过", exact: true }).click()
+ await expect.poll(() => existsSync(file)).toBe(true)
+ expect(readFileSync(file, "utf8")).toBe("answered-first")
+})

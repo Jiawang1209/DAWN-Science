@@ -28,6 +28,7 @@ describe("操作注册表", () => {
         "fetchLocalImage",
         "editQueue",
         "answerPlan",
+        "answerQuestion",
         "setSideSession",
         "compactSession",
         "previewRewind",

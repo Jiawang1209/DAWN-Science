@@ -3616,6 +3616,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 再把那张卡从快照上摘掉。反过来的话，卡先没了而 agent 还等着，
      * 中间那一拍屏幕上什么都没有——人会以为自己点漏了。
      */
+    answerQuestion: async ({ sessionId, requestId, answer }) => {
+      sessions.answerQuestion(sessionId, requestId, answer)
+      return {}
+    },
+
     answerPermission: async ({ sessionId, requestId, optionId }) => {
       sessions.answerPermission(sessionId, requestId, optionId)
       events.清权限询问(sessionId)

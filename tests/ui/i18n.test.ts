@@ -196,9 +196,11 @@ describe("双语 · 英文那一面也要守中文那边的规矩", () => {
       .map((k) => EN[k])
       .filter((v): v is string => v !== undefined)
     const 撞上的: string[] = []
+    // 同中文契约：问答的 Skip 与首启 Skip for now 保留各自语义，精确查找。
+    const 放行 = new Set(["Skip|Skip for now"])
     for (const a of 英文) {
       for (const b of 英文) {
-        if (a !== b && b.includes(a)) 撞上的.push(`${JSON.stringify(a)} ⊂ ${JSON.stringify(b)}`)
+        if (a !== b && b.includes(a) && !放行.has(`${a}|${b}`)) 撞上的.push(`${JSON.stringify(a)} ⊂ ${JSON.stringify(b)}`)
       }
     }
     expect([...new Set(撞上的)], "按名字找就找不准了——换一个说法").toEqual([])

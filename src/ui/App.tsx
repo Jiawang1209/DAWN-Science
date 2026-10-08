@@ -1,3 +1,4 @@
+import { 标记待回答 } from "./state/catalog.js"
 import { StatusNotices } from "./status-notices.js"
 /**
  * 外壳。
@@ -622,7 +623,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          */
         if (收子转录推送(u, (sessionId) => void resyncSession(client, sessionId))) return
         // 审批状态属于整段会话：即使它不是当前会话，侧栏也要优先显示「待批准」。
-        if (u.type === "snapshot") 标记待批准(u.sessionId, Boolean(u.snapshot.pendingPermission))
+        if (u.type === "snapshot") {
+          标记待批准(u.sessionId, Boolean(u.snapshot.pendingPermission))
+          标记待回答(u.sessionId, u.snapshot.items.some((x) => x.type === "question" && x.state === "pending"))
+        }
+        if (u.type === "item" && u.item.type === "question") 标记待回答(u.sessionId, u.item.state === "pending")
         /**
          * **哪几段正在跑，在这里记**（2026-08-19）。
          *
@@ -4159,6 +4164,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         : {}),
       onAnswerPlan: (planId: string, action: "approve" | "discard", text?: string) =>
         client.get<{ savedPath?: string }>("answerPlan", { sessionId: s.sessionId, planId, action, ...(text ? { text } : {}) }),
+      onAnswerQuestion: (requestId, answer) => client.get("answerQuestion", { sessionId: s.sessionId, requestId, ...(answer ? { answer } : {}) }).then(() => undefined),
       onAnswerPermission: (requestId: string, optionId?: string) => {
         /**
          * **乐观先摘卡**：点了之后卡立刻消失，人才知道自己点中了。

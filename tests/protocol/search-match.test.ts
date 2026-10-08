@@ -167,3 +167,8 @@ describe("方案卡也是一条（2026-09-28，搜索 × 先出方案）", () =>
     expect(定位命中(活的, { itemId: "r3", nth: 1, 词们: ["fev1"] })).toBe("u2")
   })
 })
+it("问答转成卡片后，原题和用户自由答案仍可搜到", () => {
+ const item: TranscriptItem = { type: "question", id: "question:c", requestId: "c", state: "answered", questions: [{ id: "q", question: "分析哪些样本？" }], answer: { answers: [{ id: "q", selected: [], custom: "健康组样本" }] } }
+ expect(命中(item, 拆词("健康组"))).toBe(true)
+ expect(命中(item, 拆词("哪些样本"))).toBe(true)
+})

@@ -59,6 +59,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     downloadUpdate: async () => 更新桩,
     cancelUpdate: async () => 更新桩,
     editQueue: async () => ({}),
+    answerQuestion: async () => ({}),
     answerPlan: async () => ({}),
     setSideSession: async () => ({}),
     compactSession: async () => ({}),

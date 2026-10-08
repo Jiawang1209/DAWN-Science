@@ -25,6 +25,7 @@
  * **不发事件、不要求界面道歉**：把正常契约当成故障来播报，是把噪音当成诚实。
  */
 import { z } from "zod"
+import { QuestionRecordSchema } from "./questions.js"
 import { RemoteStateSchema, 更新状态Schema } from "./entities.js"
 
 /** 一条对话发言。native 会话由 pi 的文本增量累积而成 */
@@ -423,6 +424,7 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
   CellItem,
   CompactionItem,
   PlanItem,
+  QuestionRecordSchema.safeExtend({ type: z.literal("question"), id: z.string().min(1) }),
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>
 

@@ -72,6 +72,10 @@ function 可搜段(x: TranscriptItem): 段[] | undefined {
   if (x.type === "turn") return [{ where: x.who, text: x.text }]
   // 方案卡（2026-09-28）：标题 + 正文，算 agent 说的（方案是它交的）。续接与搜索都把那次 `propose_plan` 换成它（`换上方案卡`），
   // 活会话里它也是一张卡——三边数的是同一条
+  if (x.type === "question") return [
+    { where: "toolInput", text: `ask_user_question\n${JSON.stringify(x.questions)}` },
+    ...(x.answer ? [{ where: "toolResult" as const, text: JSON.stringify(x.answer) }] : []),
+  ]
   if (x.type === "plan") return [{ where: "agent", text: `${x.title}\n${x.markdown}` }]
   if (x.type === "tool") {
     return [

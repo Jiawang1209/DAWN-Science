@@ -557,6 +557,12 @@ export class SessionManager {
    * 别的运行时压根不会问，所以这里静静地什么都不做是对的
    * （与「能力缺席」那条一致：**没有这个能力不是错误**）。
    */
+  answerQuestion(sessionId: SessionId, requestId: string, answer?: import("../protocol/questions.js").QuestionAnswer): void {
+    const runtime = this.bound.get(sessionId)
+    if (!runtime?.answerQuestion) throw new Error("该运行时不支持结构化提问")
+    runtime.answerQuestion(sessionId, requestId, answer)
+  }
+
   answerPermission(sessionId: SessionId, requestId: string, optionId?: string): void {
     this.bound.get(sessionId)?.answerPermission?.(sessionId, requestId, optionId)
   }

@@ -1,3 +1,4 @@
+import { QuestionAnswerSchema } from "./questions.js"
 /**
  * Workbench Protocol 的操作契约（Task 2.2）。
  *
@@ -2185,6 +2186,12 @@ export const OPERATIONS = {
    * 它与「拒绝」不是一回事：拒绝是一个决定（agent 会据此改道），
    * 取消是「这一轮别做了」。混成一个的话，agent 收到的信号是错的。
    */
+  answerQuestion: {
+    request: z.object({ sessionId: z.string().min(1), requestId: z.string().min(1), answer: QuestionAnswerSchema.optional() }).strict(),
+    response: Empty,
+    mutating: true,
+  },
+
   answerPermission: {
     request: z
       .object({

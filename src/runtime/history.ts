@@ -1,3 +1,4 @@
+import { ASK_USER_QUESTION, QuestionsSchema, validateQuestionAnswer } from "../protocol/questions.js"
 /**
  * pi 的会话记录 → 界面认识的历史条目（会话续接 2026-08-11；2026-09-27 从 `native.ts` 搬出来）。
  *
@@ -103,7 +104,20 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
       条.result = 取文本(m.content)
     }
   }
-  return 出
+  return 出.map((item): RestoredItem => {
+    if (item.kind !== "tool" || item.name !== ASK_USER_QUESTION) return item
+    const parsed = QuestionsSchema.safeParse((item.input as { questions?: unknown } | undefined)?.questions)
+    if (!parsed.success) return item
+    let question: import("../protocol/questions.js").QuestionRecord = { requestId: item.id, questions: parsed.data, state: "interrupted" }
+    if (item.result) {
+      try {
+        const result = JSON.parse(item.result)
+        if (result.answers) question = { ...question, state: "answered", answer: validateQuestionAnswer(parsed.data, result) }
+        else if (result.state === "cancelled") question = { ...question, state: "cancelled" }
+      } catch { /* Unreadable or interrupted results stay visibly interrupted. */ }
+    }
+    return { kind: "question", question, ...(item.at ? { at: item.at } : {}) }
+  })
 }
 
 /**

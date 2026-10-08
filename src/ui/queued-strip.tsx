@@ -18,6 +18,7 @@ export function 待发条({
   items,
   onEdit,
   onToDock,
+  onNewSession,
   onError,
   disabled,
 }: {
@@ -26,6 +27,8 @@ export function 待发条({
   onEdit: (id: string, action: "remove" | "redirect") => Promise<void>
   /** 到坞里问。**不给 = 不画那颗**（坞里那段） */
   onToDock?: ((id: string) => Promise<void>) | undefined
+  /** 在当前项目或服务器下另开一段会话，不移动这条待发消息 */
+  onNewSession?: (() => Promise<void> | void) | undefined
   onError: (message: string) => void
   /**
    * 从外面把整条置灰（复审 m-C，2026-09-25）：Cmd/Ctrl+回车的调整方向走的是 `writeToSession`，这条不知道它在进行——
@@ -65,6 +68,11 @@ export function 待发条({
             {onToDock ? (
               <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onToDock(q.id))}>
                 {t("到坞里问")}
+              </Button>
+            ) : null}
+            {onNewSession ? (
+              <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, async () => { await onNewSession() })}>
+                {t("新增会话")}
               </Button>
             ) : null}
             <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "remove"))}>

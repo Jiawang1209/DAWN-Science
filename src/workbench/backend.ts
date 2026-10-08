@@ -1179,6 +1179,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     agentId: string,
     workspaceOverride?: string,
     remoteSpec?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
+    contextFromSessionId?: string,
   ) {
     const project = requireProject(projectId)
     /**
@@ -1205,7 +1206,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         ? 探一台机器(workspace, remoteSpec?.connectionId)
         : Promise.resolve(undefined),
       sessions
-        .create(agentId, workspace, { projectId, ...(remoteSpec ? { remote: remoteSpec } : {}) })
+        .create(agentId, workspace, {
+          projectId,
+          ...(remoteSpec ? { remote: remoteSpec } : {}),
+          ...(contextFromSessionId ? { contextFromSessionId } : {}),
+        })
         .catch((err: unknown) => {
           if (err instanceof UserFacingError) throw fault原样("invalid_request", err.message)
           throw err
@@ -1218,6 +1223,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     // 先登记再接线：attach 的回调可能同步就来一条事件
     const kind = registry.agents[agentId]?.kind ?? "native"
     events.track(rec.id, kind)
+    if (contextFromSessionId && kind === "native") {
+      /** 新会话虽已在运行，UI 账本刚 `track` 出来仍是空的；把 fork 的历史灌入首次快照。 */
+      const history = await sessions.history(rec.id)
+      if (history.length > 0) events.restore(rec.id, history.map(还原成条目))
+    }
     sessions.attach(rec.id, (e) => {
       // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
       // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
@@ -2419,7 +2429,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      */
     listTasks: async () => 任务库().list(),
 
-    createTask: async ({ agentId, workspace, connectionId }) => {
+    createTask: async ({ agentId, workspace, connectionId, contextFromSessionId }) => {
       const store = 任务库()
       if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
       /**
@@ -2473,7 +2483,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 此前 `connectionId` 只被记进任务、没往下传，会话起在本机——
        * 任务上标着「远端」而活跑在本地，是两件事对不上。
        */
-      const 远端参数 = connectionId ? await 造远端参数(connectionId) : undefined
+      const sourceSession = contextFromSessionId ? sessions.get(contextFromSessionId) : undefined
+      if (contextFromSessionId && !sourceSession) throw fault("not_found", "要继承的会话已经不存在")
+      const 远端参数 = connectionId
+        ? await 造远端参数(connectionId, sourceSession?.remoteCwd)
+        : undefined
       /**
        * **没给工作目录的对话各自一个目录**（2026-08-23 审查抓的）：此前传 `undefined` 下去，`起一个会话` 退回临时项目的根——
        * 所有散的对话共用一个目录，文件互相可见、互相覆盖；而 `setTaskWorkspace(undefined)` 那条路早就是各自一个子目录。两条路现在一样。
@@ -2484,6 +2498,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         agentId,
         去处,
         远端参数?.spec as never,
+        contextFromSessionId,
       )
       远端参数?.认领(会话.sessionId)
 

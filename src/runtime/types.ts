@@ -84,6 +84,8 @@ export interface SessionSpec {
   workspace: string
   /** per-session 隔离配置目录，绝不使用用户全局配置 */
   sessionDir: string
+  /** native 会话从另一段 pi transcript 分叉，保留完整对话与模型切换历史 */
+  forkFrom?: string
   /**
    * 仅 native runtime 使用：pi 的 provider id 与 model id。
    *

@@ -70,4 +70,15 @@ describe("待发条", () => {
     expect(按钮们).toHaveLength(6)
     for (const b of 按钮们) expect((b as HTMLButtonElement).disabled).toBe(true)
   })
+
+  it("在调整方向和到坞里问之后新增会话，取回仍排在最后", () => {
+    const onNewSession = vi.fn(async () => {})
+    render(<待发条 items={[两条[0]!]} onEdit={async () => {}} onToDock={async () => {}} onNewSession={onNewSession} onError={() => {}} />)
+    const 操作顺序 = [...document.querySelectorAll(".queued-one button")].map((button) => button.textContent?.trim())
+    expect(操作顺序).toEqual(["调整方向", "到坞里问", "新增会话", "取回"])
+
+    fireEvent.click(screen.getByRole("button", { name: "新增会话" }))
+    expect(onNewSession).toHaveBeenCalledTimes(1)
+  })
+
 })

@@ -4161,9 +4161,17 @@ pre {
  *   作者先说「靠右 18px」，随即更正为「靠左边，而不是靠右边」。
  */
 .side-bulk { margin-left: auto; font-weight: 400; margin-right: 12px; }
+.side-section-toggle {
+  display: grid;
+  grid-template-columns: 16px 16px 3em max-content;
+  column-gap: var(--dawn-space-1);
+  justify-content: start;
+  text-align: left;
+}
+.side-section-toggle .side-section-icon { margin-right: 0; }
 .side-section-title { display: inline-block; min-width: 3em; }
 /* 两个类名：`.side-count` 那条 `margin-left: auto` 写在后面，单类名压不过它 */
-.side-section .side-section-count { margin-left: var(--dawn-space-1); flex: 0 0 auto; }
+.side-section .side-section-count { margin-left: 0; flex: 0 0 auto; }
 /**
  * 选择模式那一条。**数字常驻**：「删掉 3 段对话」比「删掉选中的」
  * 可判断得多——按下之前就该知道自己要删掉几个。
@@ -7019,6 +7027,9 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
 .session-tabs::-webkit-scrollbar { display: none; }
+.session-tab-wrap[draggable="true"] { cursor: grab; }
+.session-tab-wrap.dragging { opacity: 0.45; }
+.session-tab-wrap.drop-target { box-shadow: inset 2px 0 var(--dawn-accent); }
 /* 每个分栏等宽（2026-08-23 作者：「长度不应该跟着 title 变化，太长了就用 … 展示」）；
    2026-08-27 加：一格 = 标签 + 一颗 ×（收进归档），× 在选中/悬停时露出 */
 .session-tab-wrap {

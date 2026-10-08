@@ -393,16 +393,24 @@ export function SessionRow({
    */
   const 按钮 = useRef<HTMLButtonElement>(null)
   const [位置, 设位置] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
-  const 打开菜单 = () => {
-    const r = 按钮.current?.getBoundingClientRect()
-    if (r) {
-      /**
-       * **开在行的右侧**（作者的原话）。贴着按钮右边一点，垂直居中对齐它。
-       * 下面放不下就往上翻——**宁可翻上去，也不要露半截**。
-       */
-      const 高 = 200
-      const top = Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8)
-      设位置({ top, left: r.right + 6 })
+  const 打开菜单 = (指针?: { x: number; y: number }) => {
+    if (指针) {
+      // 右键直接在指针旁打开；给菜单留出空间，避免贴着窗口边缘被裁掉。
+      设位置({
+        top: Math.max(8, Math.min(指针.y, window.innerHeight - 248)),
+        left: Math.max(8, Math.min(指针.x, window.innerWidth - 224)),
+      })
+    } else {
+      const r = 按钮.current?.getBoundingClientRect()
+      if (r) {
+        /**
+         * **开在行的右侧**（作者的原话）。贴着按钮右边一点，垂直居中对齐它。
+         * 下面放不下就往上翻——**宁可翻上去，也不要露半截**。
+         */
+        const 高 = 200
+        const top = Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8)
+        设位置({ top, left: r.right + 6 })
+      }
     }
     setMenu(true)
   }
@@ -472,6 +480,12 @@ export function SessionRow({
       data-state={session.state}
       data-running={跑着 ? "1" : undefined}
       data-waiting-approval={等你点头 ? "1" : undefined}
+      onContextMenu={onDelete || onRename || onPin || onMove || onArchive || onExtra
+        ? (e) => {
+            e.preventDefault()
+            打开菜单({ x: e.clientX, y: e.clientY })
+          }
+        : undefined}
       draggable={drag !== undefined}
       onDragStart={drag?.onStart}
       onDragEnd={drag?.onEnd}
@@ -3944,6 +3958,7 @@ export function ConversationView({
   on跳空,
   on跳完,
   onQueueToDock,
+  onNewSession,
   canRedirect,
   onRewind,
   rewinding,
@@ -4122,6 +4137,8 @@ export function ConversationView({
   on跳完?: (() => void) | undefined
   /** 待发单上「到坞里问」（2026-09-25）：只有主区那段给；坞里那段本来就在坞里，不给 = 不画那颗 */
   onQueueToDock?: ((id: string) => Promise<void>) | undefined
+  /** 待发条上另开一段会话；不给时不画入口 */
+  onNewSession?: (() => Promise<void> | void) | undefined
   /** 这段会不会调整方向（只有 native）。不会的话 Cmd/Ctrl+回车与回车一样是排队，提示行也不提它 */
   canRedirect?: boolean | undefined
   /** 回到这句之前（2026-09-27）：只有 native 给。不给 = 每句下面都不画那颗 */
@@ -5278,7 +5295,7 @@ export function ConversationView({
          * 环画在里面的话，卡的边缘和环会成为两条相距 8px 的线。
          */}
         {onEditQueue ? (
-          <待发条 items={待发} onEdit={onEditQueue} onToDock={onQueueToDock} onError={设发送出错} disabled={queueLocked} />
+          <待发条 items={待发} onEdit={onEditQueue} onToDock={onQueueToDock} onNewSession={onNewSession} onError={设发送出错} disabled={queueLocked} />
         ) : null}
         <div className="composer-card">
         {/* 先出方案开着（2026-09-27，spec §2.1）：按下态的形状不够——扫一眼与读屏都读不出含义，用字说清 */}

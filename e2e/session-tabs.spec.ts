@@ -30,6 +30,31 @@ test("**同一个项目下的会话横着排；点了切过去；＋ 在同一�
   await expect(page.getByRole("tablist", { name: "同一处的会话" })).toHaveCount(0)
 })
 
+test("主区页签可拖动排序，顺序重启后仍由会话列表保存", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("页签排序第一段")
+  await page.keyboard.press("Enter")
+  await expect(page.getByText("假模型已应答").last()).toBeVisible({ timeout: 30_000 })
+  await 在项目里开会话(page)
+
+  const 栏 = page.getByRole("tablist", { name: "同一处的会话" })
+  const 顺序 = () => 栏.locator(".session-tab-title").allTextContents()
+  const 拖动前 = await 顺序()
+  await 栏.locator(".session-tab-wrap").nth(1).dragTo(栏.locator(".session-tab-wrap").nth(0))
+  await expect.poll(顺序).not.toEqual(拖动前)
+  const 拖动后 = await 顺序()
+
+  // 重载会回到初始页；重新从项目列表选中会话后，再检查服务端保存的顺序。
+  await page.reload()
+  const 项目 = page.locator(".proj-list .proj-item").first()
+  await expect(项目).toBeVisible()
+  if ((await 项目.locator(".proj-session-list").count()) === 0) await 项目.locator(".row").first().click()
+  await 项目.locator(".proj-session-list .sess-item .row").first().click()
+  const 重开后的栏 = page.getByRole("tablist", { name: "同一处的会话" })
+  await expect.poll(() => 重开后的栏.locator(".session-tab-title").allTextContents()).toEqual(拖动后)
+})
+
 test("**`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的）", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)

@@ -30,7 +30,10 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   // 归一段进归档，「已归档 N」那一行才出现
   await page.locator(".session-list .sess-item").filter({ hasText: "散的" }).locator(".row-more").click()
   await page.getByRole("menuitem", { name: "收进归档" }).click()
-  await expect(page.getByRole("button", { name: /已归档/ })).toBeVisible()
+  await expect(page.getByRole("button", { name: /^已归档 \d+$/ })).toBeVisible()
+  await 开一段临时会话(page, "会话分区对齐")
+  // 让“会话”标题留在布局里，但收起新建的会话行，沿用之前几何测试的侧栏高度。
+  await page.locator(".side-section-toggle").filter({ hasText: "会话" }).click()
 
   const 右缘 = (s: string) => page.evaluate((sel) => [...document.querySelectorAll(sel)].map((e) => Math.round(e.getBoundingClientRect().right)), s)
 
@@ -48,6 +51,9 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
   const 分区数 = await 左缘(".side-section-count")
   expect(分区数.length, "最近 / 项目 / 服务器 的计数没找全（「会话」那段已归档，那一列不在）").toBeGreaterThanOrEqual(3)
   expect([...new Set(分区数)], `分区计数的左缘不在一列：${分区数}`).toHaveLength(1)
+  const 标题左缘 = await 左缘(".side-section-title")
+  expect(标题左缘.length, "最近 / 项目 / 服务器 / 会话的标题没找全").toBeGreaterThanOrEqual(4)
+  expect([...new Set(标题左缘)], `分区标题的左缘不在一列：${标题左缘}`).toHaveLength(1)
 
   const 固定入口 = await 右缘(".side-action .side-count")
   // 「远端服务器」那一行：数字在 188 那条线上，三角到数字 10、三角到侧栏右边 10——作者定的三个数，
@@ -58,7 +64,9 @@ test("**收尾那一列与数字那一列，各自只有一条右缘**（含服�
     const s = document.querySelector(".sidebar")!.getBoundingClientRect()
     return { 数字到三角: Math.round(k.left - c.right), 三角到侧栏右边: Math.round(s.right - k.right) }
   })
-  expect(远端几何).toEqual({ 数字到三角: 10, 三角到侧栏右边: 10 })
+  // Electron 的字体与变换盒会产生不到 1px 的小数差；取整后允许 1px 的量测误差。
+  expect(Math.abs(远端几何.数字到三角 - 10)).toBeLessThanOrEqual(1)
+  expect(Math.abs(远端几何.三角到侧栏右边 - 10)).toBeLessThanOrEqual(1)
   const 远端 = await 右缘(".remote-head .side-count")
   const 机器 = await 右缘(".side-subhead .side-count")
   const 时间 = await 右缘(".sess-when")

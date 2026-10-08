@@ -5,7 +5,7 @@
  *
  * 散的（临时）会话没有「同一处」，不画这一条。
  */
-import { useEffect, useRef, useState, type MouseEvent } from "react"
+import { useEffect, useRef, useState, type DragEvent, type MouseEvent } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
@@ -29,6 +29,7 @@ export function SessionTabs({
   onNew,
   onClose,
   onPutInDock,
+  onReorder,
 }: {
   tabs: readonly 分栏项[]
   current: string
@@ -42,8 +43,12 @@ export function SessionTabs({
    * **右键是看不见的入口**——坞的「对话」页签与命令面板是另两条，不靠它被发现。
    */
   onPutInDock?: ((sessionId: string) => void) | undefined
+  /** 同一处的会话按新顺序保存；不给时页签不可拖动 */
+  onReorder?: ((orderedIds: string[]) => void) | undefined
 }) {
   const 当前 = useRef<HTMLDivElement>(null)
+  const [拖动中, 设拖动中] = useState<string | undefined>(undefined)
+  const [落点, 设落点] = useState<string | undefined>(undefined)
   /** 右键开着的那格菜单：哪一段、开在哪 */
   const [菜单, 设菜单] = useState<{ sessionId: string; title: string; top: number; left: number } | undefined>(undefined)
   const 菜单项 = useRef<HTMLButtonElement>(null)
@@ -68,6 +73,18 @@ export function SessionTabs({
   /** 在 (x, y) 给那一格开菜单：下面、右边放不下就往里收（与文件树那份菜单同一个算法，高度只有一项） */
   const 开菜单 = (x: 分栏项, clientX: number, clientY: number) =>
     设菜单({ sessionId: x.sessionId, title: x.title, top: Math.min(clientY, window.innerHeight - 48), left: Math.min(clientX, window.innerWidth - 160) })
+  const 放下 = (目标: string) => {
+    设落点(undefined)
+    const from = tabs.findIndex((x) => x.sessionId === 拖动中)
+    const to = tabs.findIndex((x) => x.sessionId === 目标)
+    设拖动中(undefined)
+    if (from < 0 || to < 0 || from === to) return
+    const ids = tabs.map((x) => x.sessionId)
+    const [id] = ids.splice(from, 1)
+    if (!id) return
+    ids.splice(ids.indexOf(目标), 0, id)
+    onReorder?.(ids)
+  }
   // 切到哪个就把哪个滚进视野——分栏多了会横向滚
   useEffect(() => {
     // jsdom 没有 scrollIntoView（同 slash-menu 那处）——CI 的 mac runner 上它以未处理异常的形式把整轮测试打红过（2026-08-28）
@@ -84,10 +101,28 @@ export function SessionTabs({
           <div
             key={x.sessionId}
             {...(选中 ? { ref: 当前 } : {})}
-            className={`session-tab-wrap${选中 ? " current" : ""}`}
+            className={`session-tab-wrap${选中 ? " current" : ""}${拖动中 === x.sessionId ? " dragging" : ""}${落点 === x.sessionId && 拖动中 !== x.sessionId ? " drop-target" : ""}`}
             data-running={x.running ? "1" : undefined}
             data-unread={x.unread ? "1" : undefined}
             data-in-dock={x.inDock ? "1" : undefined}
+            draggable={onReorder !== undefined}
+            onDragStart={onReorder ? (e: DragEvent<HTMLDivElement>) => {
+              e.dataTransfer.effectAllowed = "move"
+              e.dataTransfer.setData("text/plain", x.sessionId)
+              设拖动中(x.sessionId)
+            } : undefined}
+            onDragOver={onReorder ? (e: DragEvent<HTMLDivElement>) => {
+              e.preventDefault()
+              设落点(x.sessionId)
+            } : undefined}
+            onDrop={onReorder ? (e: DragEvent<HTMLDivElement>) => {
+              e.preventDefault()
+              放下(x.sessionId)
+            } : undefined}
+            onDragEnd={onReorder ? () => {
+              设拖动中(undefined)
+              设落点(undefined)
+            } : undefined}
             {...(onPutInDock && x.canDock !== false
               ? {
                   onContextMenu: (e: MouseEvent) => {

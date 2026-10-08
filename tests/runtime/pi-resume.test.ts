@@ -10,7 +10,7 @@ import { mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionManager } from "@earendil-works/pi-coding-agent"
-import { 续接哪份, 续接或新建 } from "../../src/runtime/pi-resume.js"
+import { 读最后模型切换, 续接哪份, 续接或新建 } from "../../src/runtime/pi-resume.js"
 import { pi记录目录 } from "../../src/runtime/pi-record.js"
 import { 写一段pi记录 } from "../helpers/pi-record.js"
 
@@ -55,6 +55,27 @@ describe("续接 · 搬过家的对话接得上", () => {
     utimesSync(坏, new Date("2026-09-20"), new Date("2026-09-20"))
     writeFileSync(join(pi记录目录(d), "zzz.txt"), "不是记录")
     expect(续接哪份(pi记录目录(d))).toBe(新)
+  })
+
+  it("分叉时沿用当前分支最后一次显式切换的模型", () => {
+    const d = 新目录()
+    const path = 写一段pi记录(d, [{ who: "user", text: "先聊一句" }, { who: "agent", text: "好的" }], { cwd: "/a" })
+    const sm = SessionManager.open(path)
+    sm.appendModelChange("openai", "gpt-test")
+    expect(读最后模型切换(path)).toEqual({ provider: "openai", model: "gpt-test" })
+  })
+
+  it("没有显式切换记录时，沿用最近一条模型回复的实际 provider/model", () => {
+    const d = 新目录()
+    const path = 写一段pi记录(d, [{ who: "user", text: "先聊一句" }, { who: "agent", text: "好的" }], { cwd: "/a" })
+    SessionManager.open(path).appendMessage({
+      role: "assistant",
+      content: [{ type: "text", text: "实际模型回答" }],
+      provider: "openai",
+      model: "gpt-test",
+      stopReason: "stop",
+    } as never)
+    expect(读最后模型切换(path)).toEqual({ provider: "openai", model: "gpt-test" })
   })
 
   it("没有目录 / 没有记录 → 新开一段（不抛）", () => {

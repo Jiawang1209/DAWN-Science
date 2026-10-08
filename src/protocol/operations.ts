@@ -581,6 +581,8 @@ export const OPERATIONS = {
         agentId: z.string().min(1),
         workspace: z.string().min(1).optional(),
         connectionId: z.string().min(1).optional(),
+        /** 从已有 native 会话分叉完整历史；新会话继续使用同一 agent 与运行环境 */
+        contextFromSessionId: z.string().min(1).optional(),
       })
       .strict(),
     response: TaskSummarySchema,

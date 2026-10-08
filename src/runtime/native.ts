@@ -1424,9 +1424,11 @@ export class NativeRuntime implements AgentRuntime {
      * 代价是那时上下文真的没了——这一点由界面说清楚，不在这里假装。
      */
     const 记录目录 = join(agentDir, "sessions")
-    const sessionManager = spec.resume
-      ? 续接或新建(spec.workspace, 记录目录)
-      : SessionManager.create(spec.workspace, 记录目录)
+    const sessionManager = spec.forkFrom
+      ? SessionManager.forkFrom(spec.forkFrom, spec.workspace, 记录目录, { id: spec.sessionId })
+      : spec.resume
+        ? 续接或新建(spec.workspace, 记录目录)
+        : SessionManager.create(spec.workspace, 记录目录)
     if (存档开) {
       const 存档 = new 检查点存档(spec.workspace, join(spec.sessionDir, "checkpoints"), {
         喊: (话) => this.emit({ kind: "notice", sessionId: spec.sessionId, text: 话 }),

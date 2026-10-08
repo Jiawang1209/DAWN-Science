@@ -91,7 +91,7 @@ test.describe("调整方向 · 假模型", () => {
     await expect(待发条(主区(page))).toHaveCount(0)
   })
 
-  test("**到坞里问**：坞打开到「对话」、新那段第一句是这句；主区标题不变、待发单少一条、仍在跑", async ({ dawn }) => {
+  test("**到坞里问**：坞打开到「对话」、新问题接在继承历史后；主区标题不变、待发单少一条、仍在跑", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
     await 忙起来(主区(page))
@@ -100,7 +100,8 @@ test.describe("调整方向 · 假模型", () => {
     await 一条(主区(page), "旁边问一句").getByRole("button", { name: "到坞里问", exact: true }).click()
 
     await 坞(page).locator(".side-chat-head").waitFor({ timeout: 30_000 })
-    await expect(坞(page).locator(".turn.user").first()).toContainText("旁边问一句：这个目录多大", { timeout: 30_000 })
+    await expect(坞(page).locator(".turn.user").first()).toContainText("慢慢跑一下", { timeout: 30_000 })
+    await expect(坞(page).locator(".turn.user").last()).toContainText("旁边问一句：这个目录多大", { timeout: 30_000 })
     /** 主区仍在跑：趁那 20 秒还没用完就断言、随即停掉——下面等坞里回复不再吃主区的时间 */
     await expect(主区(page).getByRole("button", { name: "停止", exact: true })).toBeVisible()
     await expect(主区(page).locator(".tool").first()).toHaveAttribute("data-status", "running")

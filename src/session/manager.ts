@@ -27,6 +27,7 @@ import type {
 } from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
+import { 读最后模型切换, 续接哪份 } from "../runtime/pi-resume.js"
 
 export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
 
@@ -209,6 +210,8 @@ export class SessionManager {
     workspace: string,
     opts: {
       projectId?: string
+      /** 从同一 native agent 的会话完整分叉历史；不复用会话目录。 */
+      contextFromSessionId?: string
       /**
        * 这段对话长在一台远端服务器上（②-B · R4′）。
        *
@@ -223,8 +226,21 @@ export class SessionManager {
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
     if (!def) throw new UserFacingError(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
 
+    const source = opts.contextFromSessionId ? this.store.get(opts.contextFromSessionId) : undefined
+    if (opts.contextFromSessionId && !source) throw new UserFacingError("要继承的会话已经不存在")
+    if (source) {
+      const sourceDef = this.registry.agents[source.agentId]
+      if (def.kind !== "native" || sourceDef?.kind !== "native" || source.agentId !== agentId) {
+        throw new UserFacingError("新增会话只能继承同一个 native agent 的对话")
+      }
+      if ((source.connectionId ?? undefined) !== (opts.remote?.connectionId ?? undefined)) {
+        throw new UserFacingError("新增会话必须沿用原会话的本地或服务器运行环境")
+      }
+    }
+
     const id = randomUUID()
     const sessionDir = join(workspace, ".dawn", "sessions", id)
+    const forkTranscript = source ? 续接哪份(join(source.sessionDir, "pi", "sessions")) : undefined
     ensureDawnDirIgnored(workspace)
     seedSubagentExample(workspace)
     const rec: NewSessionRecord = {
@@ -248,6 +264,7 @@ export class SessionManager {
       workspace,
       sessionDir,
       ...(opts.remote ? { remote: { executor: opts.remote.executor, cwd: opts.remote.cwd } } : {}),
+      ...(forkTranscript ? { forkFrom: forkTranscript } : {}),
     }
     if (def.kind === "native") {
       // 凭证的有无在这里检查，而不是加载配置时：**桌面应用不该因为还没填 key 就起不来**，
@@ -260,7 +277,10 @@ export class SessionManager {
         )
       }
       // provider 的合法性已由 config/loader 的 assertProviders 在加载期保证
-      spec.native = { provider: def.provider, model: def.model }
+      spec.native = (forkTranscript ? 读最后模型切换(forkTranscript) : undefined) ?? {
+        provider: def.provider,
+        model: def.model,
+      }
     }
 
     /**

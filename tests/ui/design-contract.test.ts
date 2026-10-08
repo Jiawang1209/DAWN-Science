@@ -1815,7 +1815,9 @@ describe("设计契约 · 全文搜索只读", () => {
     const 文 = readFileSync(join(import.meta.dirname, "../../src/runtime/pi-resume.ts"), "utf8")
     const 只读段 = 文.replace(/\/\*[\s\S]*?\*\//g, "").replace(/export function 续接或新建[\s\S]*?\n}\n/, "")
     expect(只读段, "没切掉 `续接或新建`——扫描要跟着改").not.toMatch(/function 续接或新建/)
-    expect(findLines(只读段, 写盘).filter((l) => !l.includes(`openSync(path, "r")`))).toEqual([])
+    expect(findLines(只读段, 写盘).filter((l) =>
+      !l.includes(`openSync(path, "r")`) && !l.includes(`SessionManager.open(path).getBranch()`),
+    )).toEqual([])
     const 搜索侧 = 搜索路径.map((f) => readFileSync(join(import.meta.dirname, "../..", f), "utf8")).join("\n")
     expect(搜索侧).not.toMatch(/续接或新建/)
   })

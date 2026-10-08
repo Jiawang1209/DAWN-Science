@@ -45,6 +45,25 @@ export function 续接或新建(cwd: string, dir: string): SessionManager {
   return f ? SessionManager.open(f, dir, cwd) : SessionManager.create(cwd, dir)
 }
 
+/** 分叉会话优先沿用当前分支最后一次显式模型切换，再回退到最近回复的实际模型。 */
+export function 读最后模型切换(path: string): { provider: string; model: string } | undefined {
+  try {
+    const branch = SessionManager.open(path).getBranch()
+    const switched = branch.findLast((e) => e.type === "model_change")
+    if (switched?.type === "model_change") return { provider: switched.provider, model: switched.modelId }
+    const reply = branch.findLast((e) => e.type === "message" && e.message.role === "assistant")
+    if (reply?.type === "message" && reply.message.role === "assistant") {
+      const message = reply.message as { provider?: unknown; model?: unknown }
+      if (typeof message.provider === "string" && typeof message.model === "string") {
+        return { provider: message.provider, model: message.model }
+      }
+    }
+    return undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** 头一个读得出的行是 `type: "session"`。坏行 pi 跳过接着找，这里同样 */
 function 有会话头(path: string): boolean {
   let 文 = ""

@@ -45,6 +45,16 @@ test("**操作入口看得见** —— 不该先猜到有这个东西", async ({
   expect(await more.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
 })
 
+test("侧栏会话右键直接打开与“…”相同的操作菜单", async ({ dawn }) => {
+  const { page } = dawn
+  await 建(page, "右键菜单测试", 1)
+
+  await page.locator(".sess-item").filter({ hasText: "右键菜单测试" }).click({ button: "right" })
+
+  await expect(page.getByRole("menuitem", { name: "重命名" })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "收进归档" })).toBeVisible()
+})
+
 test("重命名：**就地改，不用 window.prompt**（Electron 里它直接抛错）", async ({ dawn }) => {
   const { page } = dawn
   await 建(page, "本来的名字", 1)

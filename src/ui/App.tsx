@@ -1460,6 +1460,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       workspace?: string | undefined
       firstMessage?: string | undefined
       agentId?: string | undefined
+      /** 从当前 native 会话分叉完整历史与模型状态 */
+      contextFromSessionId?: string | undefined
       /** 第一句话带的图（协议 4.13）。**空态那一屏也能粘图** */
       images?: readonly import("./views.js").图片来源[] | undefined
       /** 空态排队的外部文件（2026-08-25）：会话建出来之后在这里落盘、拼 `@`——空态自己没有 sessionId */
@@ -1473,7 +1475,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       先出方案?: boolean | undefined
     } = {},
   ): Promise<string | undefined> => {
-    const { workspace, firstMessage, images, files } = opts
+    const { workspace, firstMessage, images, files, contextFromSessionId } = opts
     const agentId = opts.agentId ?? agentIds[0]
     if (!agentId) {
       note(t("配置里还没有可用的 agent——先去设置里加一个"))
@@ -1497,6 +1499,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // **不给就是不给**：`workspace: undefined` 与「没设」是同一件事，
         // 而空串会被记成「设了一个空路径」——那是第三种状态，没人想要
         ...(workspace ? { workspace } : {}),
+        ...(contextFromSessionId ? { contextFromSessionId } : {}),
       })
       // **任务列表刷新挪出关键路径**（2026-08-27，作者报的「切会话慢」）：
       // 它只喂侧栏的任务列表，不参与「主区找不找得到这段会话」——放后台跑，
@@ -1887,10 +1890,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const startRemoteSession = async (
     c: { id: string; label: string },
     /** 建好了不切过去（坞里「另开一段」用，2026-09-24）：主区不动，id 回给调用点 */
-    opts: { 不切过去?: boolean } = {},
+    opts: { 不切过去?: boolean; agentId?: string; contextFromSessionId?: string } = {},
   ): Promise<string | undefined> => {
     // **只从手能到服务器的里面挑**（T3）；codex-acp / cli / kernel 会在本机跑，不算
-    const agentId = 远端能用的agentIds[0]
+    const agentId = opts.agentId ?? 远端能用的agentIds[0]
     if (!agentId) {
       setConnProblem(
         t("没有能在服务器上干活的 agent——API 模型可以，标了「能上服务器」的 ACP 适配器（如 Claude Code）也可以"),
@@ -1913,6 +1916,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
         agentId,
         connectionId: c.id,
+        ...(opts.contextFromSessionId ? { contextFromSessionId: opts.contextFromSessionId } : {}),
       })
       await Promise.all([loadConnections(client), loadTasks(client), loadTempSessions(client)])
       if (!t.sessionId) throw new Error("任务建好了却没有会话——这一步不该悄悄过去")
@@ -2338,9 +2342,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }
   const [另开中, 设另开中] = useState(false)
   const 另开中Ref = useRef(false)
-  // **回新那段的 id**（2026-09-25）：「到坞里问」要把那句作为第一句发进去；没挂上就是 undefined。
+  // **回新那段的 id**（2026-09-25）：「到坞里问」要把那句接在继承的历史后发送；没挂上就是 undefined。
   // `说`：开不成时那一句说给谁。缺省是全局提示；「到坞里问」自己收下它，并进它那一句里说（审查 m-2：只说一次）
-  const 另开到坞 = async (说: (m: string) => void = note): Promise<string | undefined> => {
+  const 另开到坞 = async (
+    说: (m: string) => void = note,
+    inherit?: { agentId: string; contextFromSessionId: string },
+  ): Promise<string | undefined> => {
     if (另开中Ref.current) return undefined
     const 地方 = $侧边地方.get()
     if (!地方) {
@@ -2350,13 +2357,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     另开中Ref.current = true
     设另开中(true)
     try {
-      return await 另开到坞里(地方, 说)
+      return await 另开到坞里(地方, 说, inherit)
     } finally {
       另开中Ref.current = false
       设另开中(false)
     }
   }
-  const 另开到坞里 = async (地方: string, 说: (m: string) => void): Promise<string | undefined> => {
+  const 另开到坞里 = async (
+    地方: string,
+    说: (m: string) => void,
+    inherit?: { agentId: string; contextFromSessionId: string },
+  ): Promise<string | undefined> => {
     let id: string | undefined
     if (地方.startsWith("r:")) {
       const c = connections.find((x) => x.id === 地方.slice(2))
@@ -2364,16 +2375,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         说(t("这台服务器已经不在连接列表里了，坞里没法另开"))
         return undefined
       }
-      id = await startRemoteSession({ id: c.id, label: c.label }, { 不切过去: true })
+      id = await startRemoteSession({ id: c.id, label: c.label }, { 不切过去: true, ...inherit })
     } else if (地方 === 临时地方) {
-      id = await 新建任务({ 不切过去: true })
+      id = await 新建任务({ 不切过去: true, ...inherit })
     } else {
       const 项目 = projects.find((x) => x.projectId === 地方.slice(2))
       if (!项目 || 项目.temporary) {
         说(t("这段对话不属于任何项目，坞里没法另开"))
         return undefined
       }
-      id = await 新建任务({ workspace: 项目.workspace, 不切过去: true })
+      id = await 新建任务({ workspace: 项目.workspace, 不切过去: true, ...inherit })
     }
     if (!id) return undefined
     if ($侧边地方.get() === 地方) {
@@ -4322,7 +4333,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       /**
        * **到坞里问**（调整方向，2026-09-25，spec §2）：只有主区那段有——坞里那段本来就在坞里。
        * 这句从主区待发单上拿走（原文 + 原图）→ 坞里「另开一段」（与坞格那颗同一条路，`另开到坞`：项目、远端、临时那一处都走它）
-       * → 坞打开到「对话」→ 这句作为新那段的第一句发出去。主区不动；坞里原来挂着的那段被新的顶掉（侧栏里还在）。
+       * → 坞打开到「对话」→ 这句接在继承的历史后发出去。主区不动；坞里原来挂着的那段被新的顶掉（侧栏里还在）。
        * 另开或发送失败（包括没处另开）：这句放回主区输入框并出声，不丢。
        * 新那段的写权**先取**（计划风险 7）：坞格的续租是个 effect，挂上那一拍未必已经取到。
        */
@@ -4337,7 +4348,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     .then((r) => r.withdrawn?.[0]),
                 另开: async () => {
                   let 因: string | undefined
-                  const 新 = await 另开到坞Ref.current((m) => (因 = m))
+                  const 新 = await 另开到坞Ref.current((m) => (因 = m), {
+                    agentId: s.agentId,
+                    contextFromSessionId: s.sessionId,
+                  })
                   if (!新) throw new Error(因 ?? t("坞里没能另开一段"))
                   return 新
                 },
@@ -5407,6 +5421,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                       }
                       void 归档几段([id]).catch(fail)
                     }}
+                    onReorder={reorderSessions}
                     /**
                      * 右键「放进坞里」（侧边对话，2026-09-24）。**同一段只在一处、主区赢**（Task 5 那个 effect）：
                      * 放的是主区这段，就得先把主区切到同处另一段——与上面 `onClose` 同一条——
@@ -5452,6 +5467,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 on跳完={跳完}
                 /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
                 {...对话回调(session, 主槽)}
+                onNewSession={async () => {
+                  const connectionId = session.remote?.connectionId
+                  if (connectionId) {
+                    const c = connections.find((x) => x.id === connectionId)
+                    if (!c) throw new Error("找不到这台服务器的连接配置")
+                    await startRemoteSession({ id: c.id, label: c.label }, {
+                      agentId: session.agentId,
+                      ...(session.kind === "native" ? { contextFromSessionId: session.sessionId } : {}),
+                    })
+                    return
+                  }
+                  const project = projects.find((p) => p.projectId === session.projectId && !p.temporary)
+                  await 新建任务({
+                    ...(project ? { workspace: project.workspace } : {}),
+                    agentId: session.agentId,
+                    ...(session.kind === "native" ? { contextFromSessionId: session.sessionId } : {}),
+                  })
+                }}
                 artifacts={artifacts}
                 onOpenArtifact={openArtifact}
                 loadThumb={读产物缩略}

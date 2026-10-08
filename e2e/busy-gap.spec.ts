@@ -103,6 +103,30 @@ test("**有待发时按停止**：排着的话回到输入框，停下之后不�
   await expect(page.locator(".turn.user")).toHaveCount(1)
 })
 
+test("待发条上的“新增会话”继承主会话上下文，原待发内容仍留在旧会话", async ({ dawn }) => {
+  const { page } = dawn
+  await 让它忙起来(page)
+  await 打一句(page, "这条仍留在原会话", "Enter")
+  const 原待发 = 待发条(page).locator(".queued-one").filter({ hasText: "这条仍留在原会话" })
+  await expect(原待发).toBeVisible()
+  const 会话数 = await page.locator(".session-list .sess-item").count()
+
+  await 原待发.getByRole("button", { name: "新增会话", exact: true }).click()
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(会话数 + 1)
+  const 当前会话 = page.locator(".session-list .sess-item.current")
+  await expect(当前会话).toBeVisible()
+  await expect(当前会话).not.toContainText("看一下这个目录")
+  await expect(page.locator(".turn.user").first()).toContainText("看一下这个目录")
+
+  const 原会话行 = page.locator(".session-list .sess-item").filter({ hasText: "看一下这个目录" }).first()
+  await expect(原会话行).toBeVisible()
+  await 原会话行.click()
+  await expect(待发条(page)).toContainText("这条仍留在原会话")
+
+  await page.getByRole("button", { name: "停止", exact: true }).click()
+  await expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
+})
+
 /**
  * **两条路都要看得见**（「看不见的能力等于不存在」）。
  * 只写在无障碍标签里不算——这个项目为此栽过两次。
@@ -121,7 +145,7 @@ test("忙着且框里有字时，屏幕上明写着这两条怎么用；待发�
 
   await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
   /** `toBeVisible()` 对 opacity: 0 仍算可见——要量 */
-  for (const 名 of ["调整方向", "到坞里问", "取回"]) {
+  for (const 名 of ["调整方向", "到坞里问", "新增会话", "取回"]) {
     const 键 = 待发条(page).getByRole("button", { name: 名, exact: true })
     await expect(键).toBeVisible()
     expect(await 键.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")

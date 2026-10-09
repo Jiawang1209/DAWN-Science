@@ -228,10 +228,25 @@ describe("提示词：笔记本就是 run_code", () => {
     expect(tool.description).toContain(".ipynb")
   })
 
-  it("系统提示那句：探索用 run_code，只有要可复用文件才写 analysis/scripts/", () => {
+  it("系统提示先判断执行意图，保留内核与脚本的载体规则", () => {
+    expect(内核指引).toMatch(/咨询.*解释.*比较方法.*讨论方案/)
+    expect(内核指引).toContain("不要自动运行代码")
+    expect(内核指引).toContain("仅提及文件、附带数据或挂载了内核，不代表需要运行")
+    expect(内核指引).toContain("明确要求计算")
+    expect(内核指引).toContain("已授权任务")
+    expect(内核指引).toContain("ask_user_question")
+    expect(内核指引).toContain("不代表授权")
+    expect(内核指引).toContain("bash")
     expect(内核指引).toContain("run_code")
     expect(内核指引).toContain("analysis/scripts/")
     expect(内核指引).toContain("笔记本")
+  })
+
+  it("工具说明同步收紧意图边界，不把数据分析话题本身当作执行要求", () => {
+    const tool = 挂上([])
+    expect(tool.description).toContain("只有确实需要执行计算时")
+    expect(tool.description).toContain("咨询或讨论方案不调用本工具")
+    expect(tool.description).toContain("ask_user_question")
   })
 
   it("native 运行时只在装配给了 kernels 时才追加这句（源码扫描——装配整份运行时太重）", () => {

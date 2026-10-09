@@ -48,6 +48,8 @@ import {
 import { $activeSessionId } from "./view.js"
 import { $侧边会话id, $侧边团队, 侧槽 } from "./side-chat.js"
 import { 子槽, $子agent信息, $子转录id } from "./subagent-view.js"
+import { beginSessionRecovery } from "./session-recovery.js"
+import { sessionStateSnapshotWriter } from "./catalog.js"
 
 /**
  * 失败一律出声（规格 7.5）。
@@ -234,10 +236,14 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
   // 坞里那段跳了号（侧边对话，2026-09-24）：快照灌进侧槽，**不领 `guard()` 的号**——理由见 `resyncSide`
   if (sessionId === $侧边会话id.get() && sessionId !== $activeSessionId.get()) return resyncSide(c, sessionId)
   const g = guard()
+  const finishRecovery = beginSessionRecovery(sessionId)
+  const applyState = sessionStateSnapshotWriter(sessionId)
   return c
     .get<SessionSnapshot>("subscribeSession", { sessionId })
     .then((snap) => {
-      if (g.stale() || snap.sessionId !== $activeSessionId.get()) return
+      finishRecovery()
+      if (g.stale() || snap.sessionId !== sessionId || snap.sessionId !== $activeSessionId.get()) return
+      if (snap.state) applyState(snap.state)
       /**
        * **初次订阅这一路也要带上「当前是什么」**（A3，2026-08-16 补）。
        *
@@ -267,7 +273,10 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
       标记待回答(sessionId, snap.items.some((x) => x.type === "question" && x.state === "pending"))
       c.expectRevision(sessionId, snap.revision)
     })
-    .catch(fail)
+    .catch((e: unknown) => {
+      finishRecovery(e instanceof Error ? e.message : String(e))
+      if (!g.stale() && sessionId === $activeSessionId.get()) fail(e)
+    })
 }
 
 /**
@@ -282,10 +291,14 @@ export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<vo
 export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void> {
   const 我的 = ++侧边世代
   const 作废 = () => 我的 !== 侧边世代 || sessionId !== $侧边会话id.get() || sessionId === $activeSessionId.get()
+  const finishRecovery = beginSessionRecovery(sessionId)
+  const applyState = sessionStateSnapshotWriter(sessionId)
   return c
     .get<SessionSnapshot>("subscribeSession", { sessionId })
     .then((snap) => {
+      finishRecovery()
       if (作废() || snap.sessionId !== sessionId) return
+      if (snap.state) applyState(snap.state)
       // 「当前是什么」的那几样（权限卡、开关、待发单）同样要带上——理由见 `resyncSession` 里 A3 那段
       侧槽.applySnapshot({
         items: snap.items,
@@ -300,6 +313,7 @@ export function resyncSide(c: WorkbenchClient, sessionId: string): Promise<void>
       c.expectRevision(sessionId, snap.revision)
     })
     .catch((e: unknown) => {
+      finishRecovery(e instanceof Error ? e.message : String(e))
       // 已经不是坞里那段了（例如后端答了 `sideGone`、界面刚把它拿下）：那是一次作废的请求，不出声——
       // 拿下那边已经说过一句了，这里再报一条「没有这个会话」只是噪音
       if (sessionId !== $侧边会话id.get()) return

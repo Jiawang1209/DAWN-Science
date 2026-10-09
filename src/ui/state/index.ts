@@ -249,6 +249,7 @@ import {
 } from "./view.js"
 import { invalidate as invalidateGeneration } from "./guard.js"
 import { 停掉核验追问 } from "./sync.js"
+import { $sessionRecovery } from "./session-recovery.js"
 
 /**
  * 把全部状态清回初始值。
@@ -266,6 +267,7 @@ import { 停掉核验追问 } from "./sync.js"
  * 那条路径也应当走这里，而不是各自 `set()` 一遍。
  */
 export function resetAllState(): void {
+  $sessionRecovery.set({})
   $connection.set({ phase: "connecting" })
   $ready.set(false)
   $notes.set([])

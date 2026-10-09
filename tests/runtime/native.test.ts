@@ -81,6 +81,16 @@ describe("NativeRuntime · 契约", () => {
 describe("NativeRuntime · 重入与启动期停止(审查 debug E4/E5)", () => {
   const 活spec = () => specFor({ provider: "deepseek", model: "deepseek-flash" })
 
+  it("停掉后旧观察者不再收到同 id 续接的新生命周期，避免重复记账", async () => {
+    const r=runtime(), spec=活spec(), events: AgentEvent[]=[]
+    await r.start(spec)
+    r.attach(spec.sessionId,e=>events.push(e))
+    await r.stop(spec.sessionId)
+    await r.start({...spec,resume:true})
+    await r.stop(spec.sessionId)
+    expect(events.filter(e=>e.kind==="exited")).toHaveLength(1)
+  })
+
   it("**已在运行的会话不许重复 start** —— 否则旧会话被静默丢、事件翻倍(E4)", async () => {
     const r = runtime()
     const spec = 活spec()

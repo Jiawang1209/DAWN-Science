@@ -115,6 +115,23 @@ export const setSessions = (v: readonly SessionSummary[]) => setList($sessions, 
  */
 export const $tempSessions = atom<readonly SessionSummary[]>([])
 export const setTempSessions = (v: readonly SessionSummary[]) => setList($tempSessions, v)
+
+/** 订阅快照与状态推送是此刻的权威，不能继续拿旧名单禁用输入。 */
+const sessionStateVersions = new Map<string, number>()
+export function setSessionState(id: string, state: "alive" | "exited"): void {
+  sessionStateVersions.set(id, (sessionStateVersions.get(id) ?? 0) + 1)
+  for (const list of [$sessions, $tempSessions]) {
+    const rows = list.get()
+    if (!rows.some((s) => s.sessionId === id && s.state !== state)) continue
+    list.set(rows.map((s) => s.sessionId === id ? { ...s, state } : s))
+  }
+}
+
+/** 请求飞行期间若收到新状态推送，旧快照不再有权覆盖它。 */
+export function sessionStateSnapshotWriter(id: string): (state: "alive" | "exited") => void {
+  const version = sessionStateVersions.get(id)
+  return (state) => { if (sessionStateVersions.get(id) === version) setSessionState(id, state) }
+}
 export const setRuns = (v: readonly RunSummary[]) => setList($runs, v)
 export const setRunDetail = (v: RunDetail | undefined) => setValue($runDetail, v)
 export const setProvenance = (v: ProvenanceLink | undefined) => setValue($provenance, v)

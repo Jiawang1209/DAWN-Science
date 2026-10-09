@@ -190,6 +190,8 @@ export class SessionManager {
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
   private readonly bound = new Map<SessionId, AgentRuntime>()
+  private readonly resuming = new Map<SessionId, Promise<SessionRecord>>()
+  private readonly exitListeners = new Map<SessionId, () => void>()
 
   constructor(opts: SessionManagerOptions) {
     this.store = opts.store
@@ -369,28 +371,34 @@ export class SessionManager {
       this.bound.set(id, runtime)
       this.store.updateState(id, "alive", { pid: handle.pid })
       // 进程自行退出时把退出码回写入库——否则库里会永远停在 alive
-      runtime.attach(id, (e) => {
-        if (e.kind === "exited") {
-          // 测试收摊先关库、pty 随后才报 exited——库关了就没什么可记的（2026-08-28 CI 上抓到）
-          if (this.store.isOpen()) this.store.updateState(id, "exited", { exitCode: e.exitCode })
-          // 运行时自己退了就解绑、放租约（2026-08-23 审查抓的：此前 `isLive()` 仍 true、`resume()` 见 bound 就不重拉，再发话落到死 runtime）
-          if (this.bound.get(id) === runtime) this.bound.delete(id)
-          this.leases.release(id)
-        }
-      })
+      this.watchExit(id, runtime)
       /**
        * **从库里读回来**，不拿内存里那份拼一个。
-       * `sortOrder` 是入库那一刻由数据库定的（`MAX + 1`），
-       * 在这里补一个值等于猜——而它正是列表顺序的依据。
+       * `sortOrder` 是入库那一刻由数据库定的（`MAX + 1`）。
        */
       const saved = this.store.get(id)
       if (!saved) throw new Error(`会话 ${id} 刚入库就读不到了`)
       return saved
     } catch (err) {
-      // 启动失败也要落库，绝不把会话留在 starting
       this.store.updateState(id, "exited", { exitCode: -1 })
       throw err
     }
+  }
+
+  private watchExit(id: SessionId, runtime: AgentRuntime): void {
+    this.exitListeners.get(id)?.()
+    this.exitListeners.set(id, runtime.attach(id, (e) => {
+      if (e.kind === "exited") {
+        if (this.bound.get(id) !== runtime) return
+        // 测试收摊先关库、pty 随后才报 exited——库关了就没什么可记的（2026-08-28 CI 上抓到）
+        if (this.store.isOpen()) this.store.updateState(id, "exited", { exitCode: e.exitCode })
+        // 运行时自己退了就解绑、放租约（2026-08-23 审查抓的：此前 `isLive()` 仍 true、`resume()` 见 bound 就不重拉，再发话落到死 runtime）
+        if (this.bound.get(id) === runtime) this.bound.delete(id)
+        this.leases.release(id)
+        this.exitListeners.get(id)?.()
+        this.exitListeners.delete(id)
+      }
+    }))
   }
 
   attach(sessionId: SessionId, sink: EventSink): () => void {
@@ -419,9 +427,23 @@ export class SessionManager {
     sessionId: SessionId,
     remote?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
   ): Promise<SessionRecord> {
+    const pending = this.resuming.get(sessionId)
+    if (pending) return pending
+    const p = this.resumeOnce(sessionId, remote)
+    this.resuming.set(sessionId, p)
+    try { return await p } finally { this.resuming.delete(sessionId) }
+  }
+
+  private async resumeOnce(
+    sessionId: SessionId,
+    remote?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
+  ): Promise<SessionRecord> {
     const rec = this.store.get(sessionId)
     if (!rec) throw new UserFacingError(`没有这个会话：${sessionId}`)
-    if (this.bound.has(sessionId)) return rec
+    if (this.bound.has(sessionId)) {
+      if (rec.state !== "alive") this.store.updateState(sessionId, "alive")
+      return this.store.get(sessionId)!
+    }
 
     const def = this.registry.agents[rec.agentId]
     if (!def) throw new UserFacingError(`未知的 agent "${rec.agentId}"，请检查 providers.yaml 的 agents 段`)
@@ -450,6 +472,7 @@ export class SessionManager {
     const handle = await this.runtimes.native.start(spec)
     this.bound.set(sessionId, this.runtimes.native)
     this.store.updateState(sessionId, "alive", { pid: handle.pid })
+    this.watchExit(sessionId, this.runtimes.native)
     return this.store.get(sessionId)!
   }
 
@@ -867,6 +890,8 @@ export class SessionManager {
     if (rt) await rt.stop(sessionId)
     this.store.updateState(sessionId, "exited")
     this.bound.delete(sessionId)
+    this.exitListeners.get(sessionId)?.()
+    this.exitListeners.delete(sessionId)
     this.leases.release(sessionId)
   }
 

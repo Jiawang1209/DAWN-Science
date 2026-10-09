@@ -7951,6 +7951,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 /* Expanded human questions own the composer seat, independent of process folding. */
 .composer-card[hidden] { display: none; }
+.session-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-meta);
+}
+.session-recovery > span { min-width: 0; overflow-wrap: anywhere; }
+.session-recovery > button { flex-shrink: 0; }
 .question-card { border: .5px solid var(--dawn-stroke-1); border-radius: var(--dawn-radius-composer); box-sizing: border-box; padding: 10px 12px; margin-bottom: 8px; max-height: min(300px, 33vh); font-size: var(--dawn-fs-sub); line-height: 1.4; overflow-y: auto; background: var(--dawn-surface-app); }
 .question-card-head, .question-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .question-card-head { justify-content: space-between; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }

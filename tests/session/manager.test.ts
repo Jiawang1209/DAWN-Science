@@ -53,6 +53,25 @@ describe("SessionManager · 创建与销毁", () => {
     ctx = makeManager()
   })
 
+  it("外部启动对账误写 exited：仍绑定的会话恢复 alive，不重建运行时", async () => {
+    const s = await ctx.mgr.create("ds-agent", "/tmp/w")
+    ctx.store.reconcileOnStartup()
+    expect(ctx.mgr.isLive(s.id)).toBe(true)
+    expect((await ctx.mgr.resume(s.id)).state).toBe("alive")
+    expect(ctx.store.get(s.id)?.state).toBe("alive")
+  })
+
+  it("重启续接后的运行时退出仍落库并解绑", async () => {
+    const s = await ctx.mgr.create("ds-agent", "/tmp/w")
+    await ctx.mgr.stop(s.id)
+    const runtime = new FakeRuntime()
+    ctx.mgr = new SessionManager({ store: ctx.store, registry, runtimes: {native: runtime, pty: runtime}, workspaceRoot: "/tmp/dawn-test" })
+    await ctx.mgr.resume(s.id)
+    await runtime.stop(s.id)
+    expect(ctx.store.get(s.id)?.state).toBe("exited")
+    expect(ctx.mgr.isLive(s.id)).toBe(false)
+  })
+
   it("创建会话：先落库，再启动运行时", async () => {
     const s = await ctx.mgr.create("ds-agent", "/tmp/w")
     expect(ctx.store.get(s.id)?.state).toBe("alive")

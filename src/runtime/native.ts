@@ -3751,6 +3751,8 @@ ${描述}`
     // 收全部只在退出时兜底;按会话收才让长时间跑不积压一堆死内核。
     void this.opts.kernels?.收(sessionId).catch(() => {})
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
+    // 同 id 可以续接；上一段生命周期的观察者不能留下来重复记账和推送。
+    this.sinks.delete(sessionId)
   }
 }
 

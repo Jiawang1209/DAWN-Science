@@ -96,6 +96,7 @@ export interface CreateWorkbenchOptions {
   dbPath: string
   readOnly?: boolean
   onInternalError?: (operation: string, err: unknown) => void
+  sessionDiagnostic?: (line: string) => void
   /** 凭证库。**app 自己管凭证**，不要求用户手写进配置文件 */
   credentials: CredentialsPort
   /**
@@ -979,6 +980,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const events = new SessionTranscripts({
     terminalMaxChars: opts.terminalScrollbackChars ?? DEFAULT_TERMINAL_SCROLLBACK_CHARS,
   })
+  events.onAnyUpdate((u) => {
+    if (u.type === "state") opts.sessionDiagnostic?.(`会话 ${u.sessionId} 状态=${u.state}${u.exitCode === undefined ? "" : ` exitCode=${u.exitCode}`}`)
+  })
 
   // 环境快照落库（S17）。**内容寻址**：同一个环境反复开会话只存一行
   const environments = new EnvironmentStore(db)
@@ -1219,6 +1223,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })()
 
   const backend = createWorkbenchBackend({
+    sessionDiagnostic: opts.sessionDiagnostic,
     ...(更新服务 ? { 更新: 更新服务 } : {}),
     // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）
     kernels: 对话的内核,

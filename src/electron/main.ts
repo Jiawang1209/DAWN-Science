@@ -25,6 +25,7 @@ import { 交接箱 } from "../update/交接.js"
 import { 本机机器id } from "../update/机器id.js"
 import { 托盘图标 } from "./tray-icon.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
+import { acquireDatabaseInstance } from "./single-instance.js"
 
 /**
  * 配置落在 `userData`，**不是 `process.cwd()`**。
@@ -180,6 +181,12 @@ function 启动日志(行: string): void {
   }
 }
 启动日志(`主进程模块已加载 · ${process.platform}/${process.arch} · electron ${process.versions.electron} · packaged=${app.isPackaged} · exe=${process.execPath}`)
+// 必须在迁移、打开数据库和启动对账之前；第二实例不能写第一实例的状态。
+if (!acquireDatabaseInstance(app, DB)) {
+  启动日志("已有实例使用此数据库，本次退出")
+  app.exit(0)
+}
+app.on("second-instance", () => { if (app.isReady()) 显示主窗口() })
 /**
  * 主进程没接住的异常：Electron 默认会弹框，但 ESM 里 whenReady 之前抛的不一定弹——自己兜一层，先写日志再弹。
  *
@@ -760,6 +767,7 @@ app.whenReady().then(() => {
           })
     const 假的前台 = "前台" in 桌面出口 ? () => (桌面出口 as { 前台(): boolean | undefined }).前台() : () => undefined
     workbench = createWorkbench({
+      sessionDiagnostic: 启动日志,
       configPath: CONFIG,
       dbPath: DB,
       // 凭证由 app 管：加密交给 OS（macOS Keychain / DPAPI / libsecret）

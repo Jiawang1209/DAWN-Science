@@ -98,6 +98,8 @@ import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide, resyncSubagent } from "./state/sync.js"
+import { $sessionRecovery } from "./state/session-recovery.js"
+import { setSessionState } from "./state/catalog.js"
 import { $子转录id, 收子转录推送, 看子agent, 放下不该看的子转录 } from "./state/subagent-view.js"
 import { 看团队, 放下不该看的团队格, $团队格会话 } from "./state/team-view.js"
 import { SubagentDock } from "./subagent-pane.js"
@@ -261,6 +263,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const projects = useStore($projects)
   const sessions = useStore($sessions)
   const tempSessions = useStore($tempSessions)
+  const sessionRecovery = useStore($sessionRecovery)
   const 跑着的会话 = useStore($跑着的会话)
   const 未读的 = useStore($未读)
   const runs = useStore($runs)
@@ -676,7 +679,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           // **不 return**：下面还要把这一条 upsert 进当前会话的 transcript
         }
         // 会话没了就不可能还在跑。**重启之后什么都没在跑，那是实话**
-        if (u.type === "state" && u.state === "exited") 标记在跑(u.sessionId, false)
+        if (u.type === "state") {
+          setSessionState(u.sessionId, u.state)
+          if (u.state === "exited") 标记在跑(u.sessionId, false)
+        }
         if (u.sessionId === $dockSessionId.get()) {
           if (u.type === "bytes") appendDockBytes(u.data)
           // 快照里的终端是**一整段字符串**（不是片段数组）
@@ -760,7 +766,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 不整份重取：断线抖动时重取会打出一串请求，
        * 而列表回来之前界面显示的仍是旧的。
        */
-      onRemote: (u) => setConnectionState(u.connectionId, u.state),
+      onRemote: (u) => {
+        setConnectionState(u.connectionId, u.state)
+        if (u.state.kind !== "ready") return
+        for (const id of new Set([$activeSessionId.get(), $侧边会话id.get()])) {
+          if (!id || $sessionRecovery.get()[id]?.pending) continue
+          const s = [...$sessions.get(), ...$tempSessions.get()].find((s) => s.sessionId === id)
+          if (s?.kind === "native" && s.remote?.connectionId === u.connectionId &&
+            (s.state === "exited" || $sessionRecovery.get()[id]?.error)) void 恢复会话(id)
+        }
+      },
       /**
        * 名单里那行字变了（远程内核，2026-09-03）：**整份重取。**
        *
@@ -1941,6 +1956,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     } finally {
       setConnBusy(undefined)
     }
+  }
+
+  const 恢复会话 = async (id: string) => {
+    if ($sessionRecovery.get()[id]?.pending) return
+    await (id === $activeSessionId.get() ? resyncSession(client, id) : resyncSide(client, id))
+    const pid = $activeProjectId.get()
+    await Promise.all([loadTempSessions(client), ...(pid ? [loadSessions(client, pid)] : [])])
+    if (!$sessionRecovery.get()[id]?.error) await 取写权(id)
   }
 
   const connectRemote = async (id: string) => {
@@ -4275,7 +4298,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             fail(e)
           })
       },
-      disabled: s.state === "exited",
+      recovery: sessionRecovery[s.sessionId],
+      onResume: s.kind === "native" ? () => { void 恢复会话(s.sessionId).catch(fail) } : undefined,
+      disabled: s.state === "exited" || Boolean(sessionRecovery[s.sessionId]?.pending || sessionRecovery[s.sessionId]?.error),
       /**
        * **哪些会话停得下来**（A3，2026-08-16 加了 acp）。
        *

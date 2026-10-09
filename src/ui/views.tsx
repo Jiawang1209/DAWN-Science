@@ -3963,6 +3963,8 @@ export function ConversationView({
   onEcho,
   onPickModel,
   onAbort,
+  onResume,
+  recovery,
   onEditQueue,
   搜索跳到,
   on跳空,
@@ -4132,6 +4134,8 @@ export function ConversationView({
   onEcho?: ((text: string, images?: readonly string[]) => () => void) | undefined
   /** 中止当前回合。native 会话才有 */
   onAbort?: (() => void) | undefined
+  onResume?: (() => void) | undefined
+  recovery?: import("./state/session-recovery.js").SessionRecovery | undefined
   /** 待发单上那两颗：取回 / 调整方向（2026-09-25）。只有 native 有待发单 */
   onEditQueue?: ((id: string, action: "remove" | "redirect") => Promise<void>) | undefined
   /**
@@ -5315,6 +5319,14 @@ export function ConversationView({
         ) : null}
         {onAnswerQuestion ? pendingQuestions.map((record) => <QuestionCard key={record.requestId} sessionId={session.sessionId} record={record} onAnswer={(answer) => onAnswerQuestion(record.requestId, answer)} />) : null}
         <div className="composer-card" hidden={questionTakeover}>
+        {onResume && (disabled || recovery?.pending || recovery?.error) ? (
+          <div className="session-recovery" role="status">
+            <span>{recovery?.error ?? (recovery?.pending ? t("正在恢复原会话…") : t("会话已暂停，可以接着聊"))}</span>
+            <Button variant="ghost" size="inline" type="button" disabled={recovery?.pending} onClick={onResume}>
+              {recovery?.pending ? t("正在恢复…") : t("重新连接并继续")}
+            </Button>
+          </div>
+        ) : null}
         {/* 先出方案开着（2026-09-27，spec §2.1）：按下态的形状不够——扫一眼与读屏都读不出含义，用字说清 */}
         {方案开着 ? (
           <p className="plan-band" role="status">

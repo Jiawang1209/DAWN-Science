@@ -455,7 +455,12 @@ export class SessionTranscripts {
 
     switch (event.kind) {
       case "started":
-        return // 会话建好时状态已是 alive，不必再推一条
+        if (e.state === "exited") {
+          e.state = "alive"
+          e.exitCode = undefined
+          this.bump(sessionId, e, { type: "state", state: "alive" })
+        }
+        return
 
       case "exited":
         // 压缩压到一半会话就停了：pi 的 end 可能在 dispose 之后才到、再也收不到——

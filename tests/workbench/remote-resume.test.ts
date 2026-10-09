@@ -58,7 +58,7 @@ function 假客户端(): SshClientLike {
 
 type 续接记录 = { sessionId: string; remote?: { cwd: { get(): string }; executor: unknown } }
 
-function 起一套(opts: { 续接失败?: string } = {}) {
+function 起一套(opts: { 续接失败?: string; 旧快照?: boolean } = {}) {
   const db = new Database(":memory:")
   migrate(db)
   const credentials = 假钥匙串()
@@ -89,6 +89,7 @@ function 起一套(opts: { 续接失败?: string } = {}) {
     },
     attach: () => {},
     history: async () => [],
+    configOptions: () => undefined,
   }
 
   const 订阅了: string[] = []
@@ -102,7 +103,7 @@ function 起一套(opts: { 续接失败?: string } = {}) {
     on回合收尾: () => () => {},
     subscribe: (id: string) => {
       // **续不上就订不上**：事件总线只认此刻活着的那些
-      if (续接了.length === 0 || opts.续接失败) throw new Error("会话不在本进程中活动")
+      if (!opts.旧快照 && (续接了.length === 0 || opts.续接失败)) throw new Error("会话不在本进程中活动")
       订阅了.push(id)
       return { sessionId: id, events: [] }
     },
@@ -125,6 +126,17 @@ function 起一套(opts: { 续接失败?: string } = {}) {
 }
 
 describe("续接一段长在服务器上的旧对话", () => {
+  it("主区与侧区同时订阅只恢复一次", async () => {
+    const { backend, 存, 会话记录, 续接了 } = 起一套()
+    const c=await 存({label:"server",host:"example.test",username:"user"})
+    会话记录["connectionId"]=c.id
+    await Promise.all([backend.subscribeSession({sessionId:"sess-1"}),backend.subscribeSession({sessionId:"sess-1"})])
+    expect(续接了).toHaveLength(1)
+  })
+  it("中枢仍有旧快照时，恢复失败不能被订阅成功掩盖", async () => {
+    const { backend } = 起一套({ 续接失败: "服务器连接超时", 旧快照: true })
+    await expect(backend.subscribeSession({ sessionId: "sess-1" })).rejects.toThrow("服务器连接超时")
+  })
   it("**要连回那台机器**，不是在本机悄悄起一个同名的", async () => {
     const { backend, 存, 会话记录, 续接了 } = 起一套()
     const c = await 存({ label: "gs191", host: "gs191.example", username: "user" })

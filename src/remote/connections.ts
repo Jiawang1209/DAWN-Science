@@ -86,10 +86,11 @@ export class RemoteConnections {
    * （那会连带杀掉它上面所有会话的当前目录与后台任务）。
    */
   async connect(rec: ConnectionRecord): Promise<RemoteState> {
-    if (this.状态.get(rec.id)?.kind === "ready") return this.stateOf(rec.id)
     // 正在连就共用那一次（2026-08-23 审查抓的：两处并发 connect 会造两个 executor，前一个的 SSH 永不 end）
+    // ready 推送早于登录环境捕获；必须先等在飞的连接，不能抢读一个空 HOME。
     const 在飞 = this.连接中.get(rec.id)
     if (在飞) return 在飞
+    if (this.状态.get(rec.id)?.kind === "ready") return this.stateOf(rec.id)
     const p = this.真连(rec).finally(() => this.连接中.delete(rec.id))
     this.连接中.set(rec.id, p)
     return p

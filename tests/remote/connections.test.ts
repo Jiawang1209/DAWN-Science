@@ -52,6 +52,17 @@ function 假客户端(opts: { 认证失败?: boolean } = {}) {
 }
 
 describe("连接管理器", () => {
+  it("ready 推送期间再次 connect，仍须等登录环境捕获完成", async () => {
+    const { c }=假客户端()
+    let second: Promise<unknown> | undefined
+    let home: string | undefined
+    const m=new RemoteConnections({createClient:()=>c,secretFor:()=>"pw",onState:(_,s)=>{
+      if(s.kind==="ready") second=m.connect(记录()).then(()=>{home=m.executorOf("c1")?.loginEnv()["HOME"]})
+    }})
+    await m.connect(记录())
+    await second
+    expect(home).toBe("/home/u")
+  })
   it("没试过的一律 idle —— **那是实话**，不是「没连上」", () => {
     const m = new RemoteConnections({ createClient: () => 假客户端().c, secretFor: () => undefined })
     expect(m.stateOf("没见过").kind).toBe("idle")

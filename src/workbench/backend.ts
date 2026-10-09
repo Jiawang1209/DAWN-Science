@@ -159,6 +159,7 @@ export interface CredentialsPort {
 }
 
 export interface WorkbenchBackendOptions {
+  sessionDiagnostic?: ((line: string) => void) | undefined
   /**
    * 这台跑在假 SSH 上（`DAWN_FAKE_SSH=1`，7.31）。**只为 `fakeSshControl` 放不放行**——
    * 别的地方一律不看它：真假之分应当只体现在「造哪种客户端」那一处。
@@ -535,6 +536,7 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
+  const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
 
   /** 记忆没装配就如实拒（与 scratchRoot 同一条：不猜路径、不静默降级） */
@@ -2186,93 +2188,105 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     subscribeSession: async ({ sessionId }) => {
-      /**
-       * **点进一段旧对话，就把它续起来**（会话续接，2026-08-11）。
-       *
-       * 作者：*「之前聊过的，也无法连续上。」*
-       *
-       * 关掉应用之后 agent 进程没了，对话内容也只活在内存里，
-       * 于是重开之后点进去是一片空白、且不能说话。
-       *
-       * 续接放在**订阅**这一步，而不是另开一个操作让界面去调：
-       * 「我要看这段对话」与「我要接着聊」在人那里是同一个动作。
-       *
-       * **续不上不算错**——CLI / 终端 / 内核那些本来就续不了，
-       * 旧记录也可能已经没了。那时照旧回一份空的记录，
-       * 界面显示「已退出」，与从前完全一致。**不假装续上了。**
-       */
-      const 记录 = sessions.get(sessionId)
-      /** 续接为什么没成。**留着**，下面那句订阅失败时要拿它说话 */
-      let 没续上因为: string | undefined
-      if (!sessions.isLive(sessionId) && 记录) {
-        try {
-          /**
-           * **长在服务器上的那些，要连回那台机器再续**（2026-08-19 修）。
-           *
-           * 作者：*「点击服务器里面以前的会话的时候，连接不上之前的历史会话。」*
-           *
-           * 此前这里是光秃秃一个 `resume(sessionId)`——而 `resume()` 的第二个
-           * 参数恰恰是那台机器的执行器。不传的话，这段对话被拿到**本机**拉起，
-           * 工作目录是一条远端路径、本地根本不存在，于是必然失败。
-           * 与 2026-08-14 那次「任务标着远端、活跑在本机」是同一种错，
-           * 只是这一次发生在**续接**而不是**新建**。
-           */
-          const 远端参数 = 记录.connectionId
-            ? await 造远端参数(记录.connectionId, 记录.remoteCwd)
-            : undefined
-          await sessions.resume(sessionId, 远端参数?.spec as never)
-          远端参数?.认领(sessionId)
-          events.track(sessionId, "native")
-          sessions.attach(sessionId, (e) => {
-            // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
-            // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
-            // 账本出错不许拖垮呈现（先记账是为了顺序，不是为了让它成为单点）
-            try {
-              runRecorder?.ingest(e)
-            } catch (err) {
-              console.error("[账本] 记事件失败，转录照常：", err)
-            }
-            if (接队列事件(sessionId, e)) return
-            events.ingest(sessionId, e)
-          })
-          const 历史 = await sessions.history(sessionId)
-          // 子 agent 的 chip 组从盘上的 `meta.json` 补回（2026-09-27，spec §2.4）：pi 的会话文件里没有 chip。
-          // 这个功能之前跑的那些盘上没有记录，照旧只有工具行——不编一组出来
-          if (历史.length > 0) events.restore(sessionId, 补子agent组(历史.map(还原成条目), 记录.sessionDir))
-          const 开关 = sessions.configOptions(sessionId)
-          if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
-        } catch (e) {
-          /**
-           * **不再静默吞掉**（规格 7.5，2026-08-19）。
-           *
-           * 从前这里是个空的 `catch {}`，于是无论「这类会话本来就续不了」
-           * 还是「那台服务器连不上」，界面看到的都是同一句
-           * 「不在本进程中活动」——那句话对**任何**原因都成立，
-           * 所以它其实什么都没说。作者报的正是这个：点了，一片空白，没人告诉他为什么。
-           *
-           * **也不在这里直接抛**：续不上未必意味着这次订阅要失败
-           * （本来就活着的、或者根本没记录的，下面那句照样成得了），
-           * 所以把原因记下来，交给真正失败的那一处去说。
-           */
-          没续上因为 = e instanceof Error ? e.message : String(e)
+      const pending = subscribing.get(sessionId)
+      if (pending) return pending
+      const subscribe = (async () => {
+        /**
+         * **点进一段旧对话，就把它续起来**（会话续接，2026-08-11）。
+         *
+         * 作者：*「之前聊过的，也无法连续上。」*
+         *
+         * 关掉应用之后 agent 进程没了，对话内容也只活在内存里，
+         * 于是重开之后点进去是一片空白、且不能说话。
+         *
+         * 续接放在**订阅**这一步，而不是另开一个操作让界面去调：
+         * 「我要看这段对话」与「我要接着聊」在人那里是同一个动作。
+         *
+         * **续不上要明确报错**——CLI / 终端 / 内核那些本来就续不了，
+         * 旧记录也可能已经没了。历史快照可读不代表还能写，
+         * 失败原因要显示，并允许可恢复的 API 会话在原处重试。
+         */
+        const 记录 = sessions.get(sessionId)
+        // 本进程仍在运行才是活跃的依据；修复被另一个旧实例误写的数据库状态。
+        if (记录?.state === "exited" && sessions.isLive(sessionId)) await sessions.resume(sessionId)
+        /** 续接为什么没成。**留着**，下面那句订阅失败时要拿它说话 */
+        let 没续上因为: string | undefined
+        if (!sessions.isLive(sessionId) && 记录) {
+          try {
+            /**
+             * **长在服务器上的那些，要连回那台机器再续**（2026-08-19 修）。
+             *
+             * 作者：*「点击服务器里面以前的会话的时候，连接不上之前的历史会话。」*
+             *
+             * 此前这里是光秃秃一个 `resume(sessionId)`——而 `resume()` 的第二个
+             * 参数恰恰是那台机器的执行器。不传的话，这段对话被拿到**本机**拉起，
+             * 工作目录是一条远端路径、本地根本不存在，于是必然失败。
+             * 与 2026-08-14 那次「任务标着远端、活跑在本机」是同一种错，
+             * 只是这一次发生在**续接**而不是**新建**。
+             */
+            const 远端参数 = 记录.connectionId
+              ? await 造远端参数(记录.connectionId, 记录.remoteCwd)
+              : undefined
+            await sessions.resume(sessionId, 远端参数?.spec as never)
+            远端参数?.认领(sessionId)
+            events.track(sessionId, "native")
+            events.ingest(sessionId, { kind: "started", sessionId, pid: 0 })
+            sessions.attach(sessionId, (e) => {
+              // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
+              // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
+              // 账本出错不许拖垮呈现（先记账是为了顺序，不是为了让它成为单点）
+              try {
+                runRecorder?.ingest(e)
+              } catch (err) {
+                console.error("[账本] 记事件失败，转录照常：", err)
+              }
+              if (接队列事件(sessionId, e)) return
+              events.ingest(sessionId, e)
+            })
+            const 历史 = await sessions.history(sessionId)
+            // 子 agent 的 chip 组从盘上的 `meta.json` 补回（2026-09-27，spec §2.4）：pi 的会话文件里没有 chip。
+            // 这个功能之前跑的那些盘上没有记录，照旧只有工具行——不编一组出来
+            if (历史.length > 0) events.restore(sessionId, 补子agent组(历史.map(还原成条目), 记录.sessionDir))
+            const 开关 = sessions.configOptions(sessionId)
+            if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
+          } catch (e) {
+            /**
+             * **不再静默吞掉**（规格 7.5，2026-08-19）。
+             *
+             * 从前这里是个空的 `catch {}`，于是无论「这类会话本来就续不了」
+             * 还是「那台服务器连不上」，界面看到的都是同一句
+             * 「不在本进程中活动」——那句话对**任何**原因都成立，
+             * 所以它其实什么都没说。作者报的正是这个：点了，一片空白，没人告诉他为什么。
+             *
+             * **也不在这里直接抛**：续不上未必意味着这次订阅要失败
+             * （本来就活着的、或者根本没记录的，下面那句照样成得了），
+             * 所以把原因记下来，交给真正失败的那一处去说。
+             */
+            没续上因为 = e instanceof Error ? e.message : String(e)
+            opts.sessionDiagnostic?.(`会话 ${sessionId} 恢复失败：${没续上因为}`)
+          }
         }
-      }
-      try {
-        return events.subscribe(sessionId)
-      } catch (err) {
-        // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
-        // 界面要能分辨它和「数据库炸了」
-        //
-        // **知道真原因就说真原因**：那一句泛泛的话留给「确实只是没活着」。
-        //
-        // **压根没有这段记录时挂 `gone: true`**（Task 6 复审 F1）：与 `setSideSession` 判 `sideGone` 同一个判据
-        // （`!sessions.get(id)`），界面据此判「坞里那段真没了、交给 sideGone 说」，不再去认错误文本
-        throw fault原样(
-          "not_found",
-          没续上因为 ?? (err instanceof Error ? err.message : String(err)),
-          记录 ? undefined : { gone: true },
-        )
-      }
+        // 旧快照可读不等于恢复成功；不能让下面的 subscribe 吞掉真实失败。
+        try {
+          if (没续上因为) throw new Error(没续上因为)
+          return events.subscribe(sessionId)
+        } catch (err) {
+          // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
+          // 界面要能分辨它和「数据库炸了」
+          //
+          // **知道真原因就说真原因**：那一句泛泛的话留给「确实只是没活着」。
+          //
+          // **压根没有这段记录时挂 `gone: true`**（Task 6 复审 F1）：与 `setSideSession` 判 `sideGone` 同一个判据
+          // （`!sessions.get(id)`），界面据此判「坞里那段真没了、交给 sideGone 说」，不再去认错误文本
+          throw fault原样(
+            "not_found",
+            没续上因为 ?? (err instanceof Error ? err.message : String(err)),
+            记录 ? undefined : { gone: true },
+          )
+        }
+      })()
+      subscribing.set(sessionId, subscribe)
+      try { return await subscribe } finally { subscribing.delete(sessionId) }
     },
 
     unsubscribeSession: async ({ sessionId }) => {
@@ -3426,6 +3440,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     stopSession: async ({ sessionId }) => {
+      opts.sessionDiagnostic?.(`会话 ${sessionId} 收到关闭请求`)
       停止次数.set(sessionId, (停止次数.get(sessionId) ?? 0) + 1)
       /**
        * **关会话时还排着的话要出声**（审查 09-24 #4）：此前存根一删了事，待发条还挂在快照上，

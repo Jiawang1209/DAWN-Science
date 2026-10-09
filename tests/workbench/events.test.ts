@@ -19,6 +19,16 @@ function collector(h: SessionTranscripts) {
 }
 
 describe("记录中枢 · 快照与 revision", () => {
+  it("已结束会话续接后快照恢复 alive，保留原转录", () => {
+    const h = hub()
+    h.track("a", "native")
+    h.ingest("a", { kind: "output", sessionId: "a", data: "旧回复" })
+    h.ingest("a", { kind: "exited", sessionId: "a", exitCode: 0 })
+    h.ingest("a", { kind: "started", sessionId: "a", pid: 0 })
+    expect(h.subscribe("a").state).toBe("alive")
+    expect(h.subscribe("a").items).toHaveLength(1)
+    expect(h.subscribe("a").exitCode).toBeUndefined()
+  })
   it("新会话的快照是空的，revision 0", () => {
     const h = hub()
     h.track("a", "native")

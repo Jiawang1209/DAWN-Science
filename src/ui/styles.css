@@ -1150,6 +1150,13 @@ pre {
   font-size: var(--dawn-chat-size);
   line-height: var(--dawn-chat-leading);
 }
+/* 占位文字折行不撑高空输入框；真实输入继续使用上面的原生自动高度。 */
+.composer-field:placeholder-shown {
+  field-sizing: fixed;
+  height: 44px;
+  white-space: pre;
+  overflow: hidden;
+}
 .composer-field:focus-visible { outline: none; }
 .abort { margin-left: auto; }
 .empty-conv { align-items: center; justify-content: center; }

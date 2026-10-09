@@ -539,6 +539,33 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
 
+  const 会话事件接线 = new Map<string, () => void>()
+
+  /** 创建、恢复与工作目录迁移共用；收摊等 exited 再退订，保留停止期间的最后一笔账。 */
+  function 接上会话事件(sessionId: string): void {
+    会话事件接线.get(sessionId)?.()
+    const 退订 = sessions.attach(sessionId, (e) => {
+      try {
+        try {
+          runRecorder?.ingest(e)
+        } catch (err) {
+          console.error("[账本] 记事件失败，转录照常：", err)
+        }
+        if (!接队列事件(sessionId, e)) events.ingest(sessionId, e)
+      } finally {
+        if (e.kind === "exited") {
+          会话事件接线.get(sessionId)?.()
+          会话事件接线.delete(sessionId)
+        }
+      }
+    })
+    会话事件接线.set(sessionId, 退订)
+    // start 在 attach 之前发生；迁移沿用旧转录，需要明确恢复 alive 与当前开关。
+    events.ingest(sessionId, { kind: "started", sessionId, pid: sessions.get(sessionId)?.pid ?? 0 })
+    const 开关 = sessions.configOptions(sessionId)
+    if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
+  }
+
   /** 记忆没装配就如实拒（与 scratchRoot 同一条：不猜路径、不静默降级） */
   const 要记忆 = () => {
     if (!memory) throw fault("internal_error", "本次运行没有装配记忆")
@@ -1230,21 +1257,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const history = await sessions.history(rec.id)
       if (history.length > 0) events.restore(rec.id, history.map(还原成条目))
     }
-    sessions.attach(rec.id, (e) => {
-      // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
-      // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
-      // 账本出错不许拖垮呈现（先记账是为了顺序，不是为了让它成为单点）
-      try {
-        runRecorder?.ingest(e)
-      } catch (err) {
-        console.error("[账本] 记事件失败，转录照常：", err)
-      }
-      if (接队列事件(rec.id, e)) return
-      events.ingest(rec.id, e)
-    })
-    // 开关那份在 attach 之前就 emit 过了、没人听见——接好线再问一次（codex-polish 第二档）
-    const 开关 = sessions.configOptions(rec.id)
-    if (开关 && 开关.length > 0) events.ingest(rec.id, { kind: "config_options", sessionId: rec.id, options: 开关 })
+    接上会话事件(rec.id)
     // PTY 的「命令」不可观测（只有字节流），可观测的是会话本身
     if (kind === "pty") runRecorder?.beginPtySession(rec.id)
 
@@ -2230,25 +2243,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             await sessions.resume(sessionId, 远端参数?.spec as never)
             远端参数?.认领(sessionId)
             events.track(sessionId, "native")
-            events.ingest(sessionId, { kind: "started", sessionId, pid: 0 })
-            sessions.attach(sessionId, (e) => {
-              // **先记账再呈现**（2026-08-26）：中枢推 `artifactsChanged` 时客户端会回头查账本，
-              // `filesCreated` 必须已经落库。两者都是同步的，这一行顺序就是那条保证。
-              // 账本出错不许拖垮呈现（先记账是为了顺序，不是为了让它成为单点）
-              try {
-                runRecorder?.ingest(e)
-              } catch (err) {
-                console.error("[账本] 记事件失败，转录照常：", err)
-              }
-              if (接队列事件(sessionId, e)) return
-              events.ingest(sessionId, e)
-            })
+            接上会话事件(sessionId)
             const 历史 = await sessions.history(sessionId)
             // 子 agent 的 chip 组从盘上的 `meta.json` 补回（2026-09-27，spec §2.4）：pi 的会话文件里没有 chip。
             // 这个功能之前跑的那些盘上没有记录，照旧只有工具行——不编一组出来
             if (历史.length > 0) events.restore(sessionId, 补子agent组(历史.map(还原成条目), 记录.sessionDir))
-            const 开关 = sessions.configOptions(sessionId)
-            if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
           } catch (e) {
             /**
              * **不再静默吞掉**（规格 7.5，2026-08-19）。
@@ -2560,6 +2559,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const 归属 = workspace ? projects.open(workspace) : projects.ensureTemporary(要有临时根())
         try {
           await sessions.rehome(t.sessionId, 去处, 归属.projectId)
+          接上会话事件(t.sessionId)
         } catch (e) {
           throw fault原样("invalid_request", e instanceof Error ? e.message : String(e))
         }

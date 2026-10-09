@@ -362,5 +362,18 @@ for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
       return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.y + 主.height - (侧.y + 侧.height))) } : undefined
     }
     await expect.poll(量, { timeout: 10_000 }).toEqual({ 高差: 0, 底差: 0 })
+    // 空占位文字不撑高；真实内容仍能增高，清空后收回。
+    const input = 框(坞(page))
+    const 空高 = await input.evaluate(el => el.getBoundingClientRect().height)
+    expect(空高).toBe(44)
+    expect(await input.evaluate(el => el.scrollHeight)).toBeLessThanOrEqual(
+      await input.evaluate(el => el.clientHeight + 1),
+    )
+    await input.fill("第一行\n第二行\n第三行")
+    await expect.poll(() => input.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(空高)
+    await input.fill("")
+    await expect.poll(() => input.evaluate(el => el.getBoundingClientRect().height)).toBe(空高)
+    await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+    await test.info().attach("aligned-composers", { body: await page.screenshot(), contentType: "image/png" })
   })
 }

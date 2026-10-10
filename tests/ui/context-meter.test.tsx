@@ -78,7 +78,7 @@ describe("ContextMeter", () => {
     render(<ContextMeter 读数={读数} />)
     expect(screen.getByRole("button", { name: "上下文 37%" })).toBeTruthy()
   })
-  it("按钮上只写环 + 数（2026-09-28，处处如此）：「上下文」三个字不画，按钮名字由 aria-label 带全句（快满了也是）", () => {
+  it("按钮上只写环 + 数（2026-09-28，处处如此）：「上下文」三个字不画，提醒档仍只显示百分比，读屏保留提醒", () => {
     const { container, rerender } = render(<ContextMeter 读数={读数} />)
     const 钮 = screen.getByRole("button", { name: "上下文 37%" })
     expect(钮.getAttribute("aria-label")).toBe("上下文 37%")
@@ -86,7 +86,7 @@ describe("ContextMeter", () => {
     expect(钮.textContent).toBe("37%")
     rerender(<ContextMeter 读数={{ ...读数, 档: "warn" }} />)
     expect(screen.getByRole("button", { name: "上下文 37% · 快满了" })).toBeTruthy()
-    expect(container.querySelector(".ctx-meter-trigger")?.textContent).toBe("37% · 快满了")
+    expect(container.querySelector(".ctx-meter-trigger")?.textContent).toBe("37%")
   })
   it("点开：真数、自动压缩线、「现在压缩」；打开时要一次新数", () => {
     const onOpen = vi.fn()

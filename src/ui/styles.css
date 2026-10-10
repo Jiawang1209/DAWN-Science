@@ -7753,7 +7753,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   font-variant-numeric: tabular-nums;
   color: var(--dawn-text-2);
 }
-.ctx-meter[data-level="warn"] .btn.ctx-meter-trigger { color: var(--dawn-warning); }
+.ctx-meter[data-level="warn"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="dim"] .btn.ctx-meter-trigger { color: var(--dawn-text-3); }
 .ctx-meter-ring { flex: none; }

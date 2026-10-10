@@ -18,6 +18,17 @@
 import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
 
 test.describe("自带技能", () => {
+  test("分析交付技能可以通过 /skill:analysis-delivery 展开正文", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:analysis-delivery 把这次分析整理成交付")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    const 请求 = JSON.stringify(dawn.requests)
+    expect(请求).toContain("不重启、不清空用户正在使用的内核")
+    expect(请求).toContain("独立完整重跑通过 / 部分或缩小范围验证")
+  })
+
   /**
    * 让假模型**把它收到的系统提示原样回一句**。
    *
@@ -35,6 +46,7 @@ test.describe("自带技能", () => {
     /** 两个自带技能的名字都该在系统提示里 */
     expect(全部, "自带技能没进系统提示——四层接线断了一层").toContain("dataset-first-look")
     expect(全部).toContain("reproducible-analysis")
+    expect(全部).toContain("analysis-delivery")
     /**
      * **教它怎么写技能的那一个**（2026-08-15 作者提的）。
      *
@@ -71,6 +83,7 @@ test.describe("两屏", () => {
     const 屏 = page.locator(".skills-page")
     await expect(屏).toContainText("dataset-first-look")
     await expect(屏).toContainText("reproducible-analysis")
+    await expect(屏).toContainText("analysis-delivery")
     await expect(屏).toContainText("writing-skills")
     /** **来处要标出来**：自带的与你写的不是一回事 */
     await expect(屏).toContainText("自带")

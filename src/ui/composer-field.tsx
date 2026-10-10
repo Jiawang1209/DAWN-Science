@@ -38,6 +38,8 @@ type 透传 = Omit<ComponentPropsWithoutRef<"textarea">, "value" | "defaultValue
 export interface 草稿输入框属性 extends 透传 {
   /** 外面认为框里该是什么。**只在它与框里不同的时候才写进 DOM** */
   值: string
+  /** Empty-field ghost text; only Tab turns it into a draft. */
+  suggestion?: string | undefined
   /**
    * 框里的字变了。组词途中也会报——往外同步是安全的。
    *
@@ -50,7 +52,7 @@ export interface 草稿输入框属性 extends 透传 {
 export const 草稿输入框 = forwardRef<HTMLTextAreaElement, 草稿输入框属性>(function 草稿输入框(
   // `onChange` 与 `value`/`defaultValue` 在类型上就被挡在外面（见 `透传`）：
   // 这个框的值只走 `值` / `on值变` 这一对，多一条路就多一种把它改回受控的写法
-  { 值, on值变, onCompositionStart, onCompositionEnd, className, ...透传 },
+  { 值, on值变, suggestion, placeholder, onKeyDown, onCompositionStart, onCompositionEnd, className, ...透传 },
    外面的ref,
 ) {
   const 框 = useRef<HTMLTextAreaElement>(null)
@@ -89,6 +91,18 @@ export const 草稿输入框 = forwardRef<HTMLTextAreaElement, 草稿输入框�
   return (
     <textarea
       {...透传}
+      placeholder={值 === "" && suggestion ? suggestion : placeholder}
+      data-ghost={值 === "" && !!suggestion ? "true" : undefined}
+      onKeyDown={(e) => {
+        if (suggestion && !e.currentTarget.value && !组词中.current && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          e.preventDefault()
+          e.currentTarget.value = suggestion
+          e.currentTarget.selectionStart = e.currentTarget.selectionEnd = suggestion.length
+          on值变(suggestion, suggestion.length)
+          return
+        }
+        onKeyDown?.(e)
+      }}
       className={类名}
       defaultValue={值}
       onChange={(e) => {

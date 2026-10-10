@@ -7991,3 +7991,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 .question-head-actions, .question-primary-actions { display: flex; align-items: center; gap: 6px; }
 .question-next-icon, .question-expand-icon { transform: rotate(180deg); }
+
+/* Suggested next messages remain placeholders until explicitly accepted with Tab. */
+.composer-field[data-ghost="true"]::placeholder { color: var(--dawn-text-3); opacity: 1; }

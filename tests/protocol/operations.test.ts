@@ -44,6 +44,7 @@ describe("操作注册表", () => {
         "addAcpAgent",
         "removeAgent",
         "setAcpRemoteCapable",
+        "suggestNextPrompt",
         "enhancePrompt",
         "cancelEnhance",
         "weixinBindSession",

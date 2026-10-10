@@ -17,6 +17,7 @@ import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
 import { 在组词 } from "./ime.js"
+import { useNextPrompt } from "./next-prompt.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import { $主区附栏行数, use报主区附栏行数 } from "./footer-rows.js"
@@ -3954,6 +3955,7 @@ export function ConversationView({
   onSetConfigOption,
   onToggleDock,
   onEnhance,
+  onSuggestNextPrompt,
   onCancelEnhance,
   enhanceReason,
   dockOpen,
@@ -4082,6 +4084,8 @@ export function ConversationView({
   onSetConfigOption?: ((configId: string, value: string) => void) | undefined
   /** 掀开／收起底部终端。**与命令面板里那条是同一个动作** */
   onToggleDock?: (() => void) | undefined
+  /** 空框下一句建议，仅 API 会话；Tab 接受，不自动发送。 */
+  onSuggestNextPrompt?: ((turnId: string) => Promise<{ text: string }>) | undefined
   /** 提示词增强（2026-08-21）。不给 = 这段会话做不了（ACP / CLI），那颗按钮不画 */
   onEnhance?: ((req: { text: string; mode: EnhanceMode; requestId: string }) => Promise<EnhanceOutcome>) | undefined
   onCancelEnhance?: ((requestId: string) => Promise<unknown>) | undefined
@@ -4784,6 +4788,15 @@ export function ConversationView({
    * 「看看这张图」这种意图人常常懒得打字。
    */
   const 有东西要发 = draft.trim().length > 0 || 待发图.length > 0
+  const lastTurn = items.filter((i) => i.type === "turn").at(-1)
+  const suggestionTurnId = lastTurn?.type === "turn" && lastTurn.who === "agent" && lastTurn.final ? lastTurn.id : ""
+  const nextPrompt = useNextPrompt(
+    `${session.sessionId}:${suggestionTurnId}:${model?.provider ?? ""}:${model?.model ?? ""}`,
+    session.kind === "native" && !busy && !disabled && pendingQuestions.length === 0 && !待答权限 && draft === "" && 待发图.length === 0 && 待发文件.length === 0,
+    onSuggestNextPrompt,
+    suggestionTurnId,
+  )
+
   const [导出中, 设导出中] = useState(false)
   const [导出说, 设导出说] = useState<导出提示态 | undefined>(undefined)
 
@@ -5421,6 +5434,7 @@ export function ConversationView({
             ref={输入框}
             className="control composer-field"
             值={draft}
+            suggestion={nextPrompt}
             on值变={(v, 光标位) => { setDraft(session.sessionId, v); 设光标(光标位); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
             onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
             onScroll={(e) => 设高亮滚(e.currentTarget.scrollTop)}

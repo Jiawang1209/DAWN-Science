@@ -573,7 +573,8 @@
  * 8.9（2026-10-01）：`SessionUpdate` 新增 `append`，按 id 与 `text` / `thinking` 字段发送纯追加 delta；其他更新形状不变，故 minor。
  * 8.10（2026-10-08）：新增结构化 question 条目与 answerQuestion 操作，问答状态随快照同步。
  */
-export const WORKBENCH_PROTOCOL_VERSION = "8.10"
+/** 8.11: optional native-session next-prompt suggestion. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.11"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

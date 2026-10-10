@@ -8,6 +8,15 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-10 — 空输入框下一句灰色建议
+
+- **Type**: feat
+- **Motivation**: 用户要求对话进展后的下一句建议以灰色提示显示在空输入框中，只有 Tab 接受才变成真实文字。
+- **What**: 新增 tool-free 建议请求与协议 8.11 的 suggestNextPrompt；API 会话使用当前模型及最多六条最终对话摘要（每条 2000 字），15 秒超时。主区与侧边复用空框 placeholder；Tab 接受后写入草稿，Enter 不接受，Shift+Tab 保留导航，IME 组词不抢键。开始输入、附件、运行中、待答问题和会话不可用时隐藏；请求身份隔离迟到回复。组件内有界缓存，失败只留诊断，不阻碍正常聊天。ACP/CLI 不自动借用 API 模型。
+- **Verification**: 15 个相关 Vitest 文件 298/298 通过；类型检查、构建、diff check 通过。最终真实 Electron 4/4 通过，覆盖主区灰色提示/Enter/Tab、侧边与主区草稿隔离、既有输入高度和换行。人工检查灰色及接受后截图。模型使用隔离假服务，未用真实服务评估建议质量；构建仍有既有 eval 与大 chunk 警告。
+- **Evidence**: `tmp/next-prompt-verification/{ghost,accepted}.png`；`e2e/next-prompt.spec.ts`；规格和计划 `docs/superpowers/{specs,plans}/2026-10-10-next-prompt-ghost*`。
+- **Git**: 用户审阅截图并授权本地提交及合并 main；提交前复验 15 文件 298 项单测、类型检查与 diff check 通过，采用本地快进集成。未推送，未替换已安装应用。
+
 ### 2026-10-09 — 工作目录迁移与输入框修复本地集成
 
 - **Type**: integration

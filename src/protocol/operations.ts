@@ -902,6 +902,12 @@ export const OPERATIONS = {
    * 设计：`docs/superpowers/specs/2026-08-21-提示词增强-design.md`。
    * 用这段会话此刻的模型另起一问把草稿改写，不进转录不进账本。
    */
+  /** Optional ghost text; never submits a message. Native sessions only. */
+  suggestNextPrompt: {
+    request: z.object({ sessionId: z.string().min(1), turnId: z.string().min(1) }).strict(),
+    response: z.object({ text: z.string().max(120) }).strict(),
+    mutating: true,
+  },
   enhancePrompt: {
     request: z
       .object({

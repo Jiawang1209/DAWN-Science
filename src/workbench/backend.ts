@@ -50,6 +50,7 @@ import { 是远端MCP, 能上服务器 } from "../config/schema.js"
 import { WeixinChannel, type WeixinOps } from "../channels/weixin/channel.js"
 import { FeishuChannel, type FeishuOps } from "../channels/feishu/channel.js"
 import { fakeFeishuSdk, realFeishuSdk, type FeishuSdk } from "../channels/feishu/sdk.js"
+import { nextPrompt } from "../suggestions/next-prompt.js"
 import { 增强 } from "../enhance/enhance.js"
 import { 搜文件名 } from "../files/search.js"
 import { 转录成markdown, 导出文件名 } from "../session/export.js"
@@ -4794,6 +4795,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     /* ── 提示词增强（7.15） ── */
+    suggestNextPrompt: async ({ sessionId, turnId }) => {
+      const rec = sessions.get(sessionId)
+      if (!rec || !askOnce || registry.agents[rec.agentId]?.kind !== "native") return { text: "" }
+      const turns = events.peekItems(rec.id).filter((i): i is Extract<typeof i, { type: "turn" }> => i.type === "turn" && i.final && !!i.text.trim())
+      const last = turns.at(-1)
+      if (!last || last.who !== "agent" || last.id !== turnId) return { text: "" }
+      try {
+        const text = await nextPrompt(turns, (req) => askOnce({ sessionId: rec.id }, req))
+        const latest = events.peekItems(rec.id).filter((i) => i.type === "turn").at(-1)
+        return { text: latest?.id === turnId ? text : "" }
+      } catch (error) {
+        console.warn("[suggestNextPrompt]", error instanceof Error ? error.name : "request failed")
+        return { text: "" }
+      }
+    },
     enhancePrompt: async ({ text, mode, sessionId, requestId }) => {
       if (!askOnce) throw fault("invalid_request", "这次运行没有 native 运行时，做不了提示词增强")
       const rec = sessionId ? sessions.get(sessionId) : undefined

@@ -466,7 +466,7 @@ export function startMockInferenceServer(opts = {}) {
       const 判定 = 最后一句.includes("只回一个 JSON 对象")
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
       const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
-      const reply = 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const reply = 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"

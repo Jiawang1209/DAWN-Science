@@ -454,7 +454,7 @@ describe("协议版本 · 5.5", () => {
    * 8.9（2026-10-01）：会话更新新增 `append`，增量追加 agent turn 的 `text` / `thinking`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.10")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.11")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

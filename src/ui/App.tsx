@@ -4222,6 +4222,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       ...(currentServiceLabel ? { currentServiceLabel } : {}),
       ...(switchProblem ? { switchProblem } : {}),
       onEnhance: 去增强(s.sessionId),
+      onSuggestNextPrompt: s.kind === "native" ? (turnId: string) => client.get<{ text: string }>("suggestNextPrompt", { sessionId: s.sessionId, turnId }) : undefined,
       onCancelEnhance: 取消增强,
       enhanceReason: 有API模型 ? undefined : t("还没有 API key——填一个就能用"),
       /**

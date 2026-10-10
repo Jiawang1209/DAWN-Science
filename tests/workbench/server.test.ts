@@ -164,6 +164,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     weixinBindSession: async () => ({ ok: true as const }),
     weixinGetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
     weixinSetNotify: async () => ({ done: true, error: true, permission: true, quietWhenFocused: true }),
+    suggestNextPrompt: async () => ({ text: "" }),
     enhancePrompt: async () => ({ text: "", usedContext: null, model: "x" }),
     cancelEnhance: async () => ({ ok: true as const }),
     searchFiles: async () => ({ matches: [], visited: 0, skippedDirs: 0, unreadable: 0 }),
